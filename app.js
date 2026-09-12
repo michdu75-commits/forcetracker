@@ -1317,7 +1317,6 @@ function _provFood(vals){
        ensemble : c'est le seul couple sur lequel on peut diviser sans se tromper.* */
     const q=numFR((document.getElementById('af-prop')||{}).value)||_afRef.q;
     if(q>0){
-      const f=100/q;
       p.q=q; p.u='g';
       /* ⚖️⭐ LA DÉCIMALE (10/09/2026) — `_per100d1` SERVAIT DÉJÀ 7 PORTES, PAS CELLE-CI.
          Open Food Facts, CIQUAL, les marques, l'étiquette photo et le scan gardent une décimale
@@ -1333,9 +1332,10 @@ function _provFood(vals){
          chiffres identiques) — parce que le pour-100 g se redérive toujours des TOTAUX, jamais
          du pour-100 g précédent. *L'arrondi n'est pas un cumul, c'est une perte sèche, une
          fois — et elle se paie à chaque redimensionnement ensuite.*
-         ⭐ Et ça ne change rien à l'écran : `_qtyRescale` arrondit déjà les 4 champs à l'entier. */
-      p.per100={kcal:_per100d1((+vals.kcal||0)*f), prot:_per100d1((+vals.prot||0)*f),
-                carbs:_per100d1((+vals.carbs||0)*f), fat:_per100d1((+vals.fat||0)*f)};
+         ⭐ Et ça ne change rien à l'écran : `_qtyRescale` arrondit déjà les 4 champs à l'entier.
+         ⭐ La formule elle-même vit dans `_per100Derive` depuis l'étape 2 (12/09) — ici la masse
+         EST la quantité affichée, puisqu'on est en grammes. */
+      p.per100=_per100Derive(vals, q);
     }
   }
   /* 🍽️⛔⛔ ft-v1183 — LA PORTION DESCEND ENFIN JUSQU'À LA DONNÉE (R4). C'est LE correctif :
@@ -1367,11 +1367,7 @@ function _provFood(vals){
        ⛔ On n'écrase jamais un pour-100 g déjà connu (scan, CIQUAL) : une déclaration ne passe
        pas devant une valeur publiée (R32 — mesuré > estimé > déclaré). */
     const masse=n*(+_afPortionPoids||0);
-    if(!p.per100 && masse>0){
-      const f=100/masse;
-      p.per100={kcal:_per100d1((+vals.kcal||0)*f), prot:_per100d1((+vals.prot||0)*f),
-                carbs:_per100d1((+vals.carbs||0)*f), fat:_per100d1((+vals.fat||0)*f)};
-    }
+    if(!p.per100){ const d=_per100Derive(vals, masse); if(d) p.per100=d; }
   }
   return p;
 }
@@ -1591,6 +1587,36 @@ function _ref100(nom, kcal, prot, carbs, fat, opts){
    seconde source de vérité (R2) — exactement ce que cette étape supprime. */
 function _per100De(r){
   return r ? {kcal:r.kcal100, prot:r.prot100, carbs:r.carbs100, fat:r.fat100} : null;
+}
+/* ═══════════ UN SEUL PROPRIÉTAIRE DU POUR-100 g DÉRIVÉ (12/09/2026, étape 2 du plan) ═══════════
+   TROIS endroits écrivaient la même algèbre — `totaux × 100 / masse`, macro par macro, arrondie à
+   la décimale — en la RETAPANT : `_provFood` branche grammes, `_provFood` branche portions, et
+   `saveEditFood` quand la définition de portion change. *Trois copies d'une formule de physique
+   scolaire, et la seule question était laquelle oublierait la prochaine correction.*
+   ⚠️ **CE N'EST PAS UNE SUPPOSITION, C'EST DÉJÀ ARRIVÉ SUR CES LIGNES-LÀ** : en ft-v1188, le
+   passage de `Math.round` à `_per100d1` a dû être posé sur **deux** d'entre elles le même jour,
+   après l'avoir été sur 7 autres portes en ft-v1170 (§59 de `BUGS.md`, la porte jumelle).
+
+   ⛔⛔ C'EST UNE EXTRACTION, PAS UNE UNIFORMISATION. Les trois sites sont **strictement
+   identiques** : même formule, même `_per100d1`, même métier — *dériver*. Rien n'est redressé au
+   passage, et le critère de l'étape est BINAIRE : l'instantané des 5 sondes (`tools/instantane_1b23.js`)
+   doit être **identique octet pour octet** avant et après, sinon on annule.
+
+   ⛔⛔ ET `_per100SuitLaPortion` RESTE DEHORS, EXPRÈS. Elle porte **la même algèbre** — on serait
+   tenté de l'absorber ici — mais elle **VÉRIFIE**, elle ne **DÉRIVE** pas : elle recalcule pour
+   savoir si un pour-100 g d'avant *venait* d'une portion, avec sa tolérance de 0,6. L'y fondre
+   changerait son métier, pas son code. *Deux fonctions qui calculent pareil ne font pas forcément
+   la même chose ; ce qu'on factorise est l'INTENTION, jamais la ressemblance.*
+
+   ⭐ ELLE REND `null` QUAND ELLE NE SAIT PAS (masse nulle, négative, illisible) — et ce `null` ne
+   se remplace jamais par un défaut : sans masse, il n'y a pas de pour-100 g, il y a une absence
+   (R29). C'est cette réponse-là qui, chez `saveEditFood`, EFFACE le pour-100 g devenu orphelin. */
+function _per100Derive(vals, masse){
+  const m=+masse||0;
+  if(!(m>0)) return null;
+  const f=100/m;
+  return {kcal:_per100d1((+vals.kcal||0)*f), prot:_per100d1((+vals.prot||0)*f),
+          carbs:_per100d1((+vals.carbs||0)*f), fat:_per100d1((+vals.fat||0)*f)};
 }
 /* 📷⛔⛔ LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR, ET LAISSE LA PERSONNE LÀ (ft-v1163)
    Michel, après trois versions passées sur la même ligne : *« c'est super chiant en fait, même
@@ -5314,12 +5340,10 @@ function saveEditFood(){
       if(nom) e.portionLabel=nom; else delete e.portionLabel;
       if(pds>0&&pds<10000) e.portionWeightG=pds; else delete e.portionWeightG;
       if(suivait){
-        const masse=(+e.q||0)*(+e.portionWeightG||0);
-        if(masse>0){
-          const f=100/masse;   // ⭐ recalculé depuis la NOUVELLE définition et les NOUVEAUX totaux (décision ④)
-          e.per100={kcal:_per100d1((+e.kcal||0)*f), prot:_per100d1((+e.prot||0)*f),
-                    carbs:_per100d1((+e.carbs||0)*f), fat:_per100d1((+e.fat||0)*f)};
-        }else if(e.per100) delete e.per100;   // ⛔ le poids retiré emporte ce qui en dépendait
+        // ⭐ recalculé depuis la NOUVELLE définition et les NOUVEAUX totaux (décision ④)
+        const d=_per100Derive(e, (+e.q||0)*(+e.portionWeightG||0));
+        if(d) e.per100=d;
+        else if(e.per100) delete e.per100;   // ⛔ le poids retiré emporte ce qui en dépendait
       }
       /* ⭐ ET LE FAVORI SUIT (décision ⑤ de Michel), CE QU'IL NE FAISAIT PAS : mesuré, corriger
          « 1 steak = 150 g » dans l'édition laissait le favori à 125 g — la vieille copie

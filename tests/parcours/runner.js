@@ -34008,6 +34008,159 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     appels===9, appels+' occurrences');
 }
 
+/* ═══════════ CCXCI — ÉTAPE 2 DU PLAN NUTRITION : LE POUR-100 g DÉRIVÉ (12/09/2026) ═══════════
+   TROIS sites retapaient `totaux × 100 / masse`, macro par macro, arrondi à la décimale :
+   `_provFood` branche grammes, `_provFood` branche portions, `saveEditFood`. Ils passent par un
+   propriétaire unique, `_per100Derive`.
+   ⭐⭐ COMME POUR CCXC, CE BLOC NE FAIT PAS LE MÊME MÉTIER QUE L'INSTANTANÉ. `tools/instantane_1b23.js`
+   prouve qu'aucune valeur n'a bougé AUJOURD'HUI (11 sondes, identiques octet pour octet, même
+   sha256). Il est ponctuel. Ce bloc-ci est PERMANENT : il fige les garanties, pas les chiffres
+   d'un jour — et surtout la garantie qu'on ne voit dans aucun instantané : *que la formule n'existe
+   qu'à UN endroit.* */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    o.fn=typeof _per100Derive;
+
+    /* ⛔ LE CAS DE MICHEL, CELUI QUI A COÛTÉ ft-v1188 : 1 part de 140 g valant 355/30/44/6.
+       En arrondi ENTIER les lipides tombent à 4, et redemander 280 g affiche 11 g au lieu de 12
+       (−8,3 %). C'est la raison d'être de la décimale, et elle se fige ici. */
+    o.michel=JSON.stringify(_per100Derive({kcal:355,prot:30,carbs:44,fat:6},140));
+    // une masse qui tombe mal : 133 g. En `Math.round` on lirait 75 / 5 / 1 / 2.
+    o.decimale=JSON.stringify(_per100Derive({kcal:100,prot:7,carbs:1,fat:3},133));
+    /* ⭐ ELLE REND `null` QUAND ELLE NE SAIT PAS (R29) — et ce `null` n'est pas décoratif :
+       c'est LUI qui, chez `saveEditFood`, efface un pour-100 g devenu orphelin. */
+    o.sansMasse=[_per100Derive({kcal:1,prot:1,carbs:1,fat:1},0),
+                 _per100Derive({kcal:1,prot:1,carbs:1,fat:1},-5),
+                 _per100Derive({kcal:1,prot:1,carbs:1,fat:1},'abc'),
+                 _per100Derive({kcal:1,prot:1,carbs:1,fat:1})];
+    /* ⛔ LE `?:` N'EST PAS DE LA PRUDENCE VAGUE, IL EST PAYÉ : écrit sans lui, `Object.keys(null)`
+       LÈVE, l'`evaluate` entier est rejeté et le bloc DISPARAÎT de la passe — qui ne rougit pas
+       pour autant. C'est §61 : *un témoin qui MEURT ressemble à un témoin qui passe.* Mesuré ici,
+       la mutation « le propriétaire rend toujours null » tuait la sonde ; elle fait maintenant
+       6 rouges nommés. */
+    const un=_per100Derive({kcal:1,prot:1,carbs:1,fat:1},100);
+    o.champs=un?Object.keys(un).sort().join(','):'RIEN';
+
+    /* ── les 3 sites conduits par leur VRAIE porte (BUGS.md §58 : vérifier la fonction n'est
+       pas vérifier l'appel). Mêmes fixtures que l'instantané, à dessein. ── */
+    const prov=(vals,poser)=>{ _afSetSrc(null); _afRef=null; _afPortionPoids=0; _afPortionLabel='';
+                               poser(); const r=_provFood(vals); _afSetSrc(null); return r.per100; };
+    o.grammes=JSON.stringify(prov({kcal:355,prot:30,carbs:44,fat:6},()=>{
+      _afRef={base:{kcal:355,prot:30,carbs:44,fat:6},q:140,u:'g',src:'decl'};
+      const e=document.getElementById('af-prop'); if(e) e.value='140';
+    }));
+    o.portions=JSON.stringify(prov({kcal:400,prot:32,carbs:0,fat:28},()=>{
+      _afSetSrc({saisie:'manuel',origine:'utilisateur'});
+      _afRef={base:{kcal:400,prot:32,carbs:0,fat:28},q:2,u:'',src:'portion'};
+      _afUnite='portion'; _afPortions=2; _afPortionPose=true;
+      _afPortionPoids=125; _afPortionLabel='steak';
+    }));
+    o.portions210=JSON.stringify(prov({kcal:500,prot:20,carbs:60,fat:18},()=>{
+      _afSetSrc({saisie:'manuel',origine:'utilisateur'});
+      _afRef={base:{kcal:500,prot:20,carbs:60,fat:18},q:3,u:'',src:'portion'};
+      _afUnite='portion'; _afPortions=3; _afPortionPose=true;
+      _afPortionPoids=70; _afPortionLabel='part';
+    }));
+    /* ⛔ NON-RÉGRESSION R32 (mesuré > estimé > déclaré) : un pour-100 g SCANNÉ ne se fait jamais
+       écraser par une déclaration de portion. C'est le `!p.per100` du site, pas la formule. */
+    o.scanProtege=JSON.stringify(prov({kcal:400,prot:32,carbs:0,fat:28},()=>{
+      _afSetSrc({saisie:'scan',origine:'off',per100:{kcal:48.3,prot:6.1,carbs:10.1,fat:3.2}});
+      _afRef={base:{kcal:400,prot:32,carbs:0,fat:28},q:2,u:'',src:'portion'};
+      _afUnite='portion'; _afPortions=2; _afPortionPose=true;
+      _afPortionPoids=125; _afPortionLabel='steak';
+    }));
+
+    /* ── 3ᵉ site : l'écran MODIFIER. On corrige 125 → 150 g, le pour-100 g doit SUIVRE. ── */
+    const ligne=()=>({date:'2026-09-12',meal:'midi',ts:99,name:'Steak',kcal:400,prot:32,carbs:0,fat:28,
+                      per100:{kcal:160,prot:12.8,carbs:0,fat:11.2},q:2,u:'portion',
+                      portionLabel:'steak',portionWeightG:125});
+    S.foodLog=[ligne()];
+    openEditFood(99);
+    const nom=document.getElementById('ef-pnom'); if(nom){ nom.value='steak'; _efPortionNomSaisi(); }
+    const pds=document.getElementById('ef-ppoids'); if(pds){ pds.value='150'; _efPortionPoidsSaisi(); }
+    saveEditFood();
+    let e=(S.foodLog||[]).find(x=>x.ts===99);
+    o.edition=JSON.stringify(e?{per100:e.per100,q:e.q,u:e.u,pw:e.portionWeightG}:null);
+
+    /* ⛔⛔ ET LE CHEMIN DU `null`, celui qu'on oublie de tester : le poids EFFACÉ emporte le
+       pour-100 g qui en dépendait. Sans lui, l'aliment garderait une référence calculée sur une
+       définition que la personne vient de retirer. */
+    S.foodLog=[ligne()];
+    openEditFood(99);
+    const pds2=document.getElementById('ef-ppoids'); if(pds2){ pds2.value=''; _efPortionPoidsSaisi(); }
+    saveEditFood();
+    e=(S.foodLog||[]).find(x=>x.ts===99);
+    o.poidsRetire=e?('per100' in e)+'/'+('portionWeightG' in e):'ligne perdue';
+
+    /* ⛔ ET LA VÉRIFICATRICE RESTE UNE VÉRIFICATRICE : elle porte la même algèbre, on serait
+       tenté de l'absorber dans le propriétaire — mais elle ne DÉRIVE pas, elle dit si un
+       pour-100 g d'avant VENAIT d'une portion, à 0,6 près. Deux fonctions qui calculent pareil ne
+       font pas la même chose. */
+    o.suitFn=typeof _per100SuitLaPortion;
+    o.suitOui=_per100SuitLaPortion({q:2,pw:125,kcal:400,prot:32,carbs:0,fat:28,
+                                    per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}});
+    o.suitNon=_per100SuitLaPortion({q:2,pw:125,kcal:400,prot:32,carbs:0,fat:28,
+                                    per100:{kcal:48.3,prot:6.1,carbs:10.1,fat:3.2}});
+    o.suitTolere=_per100SuitLaPortion({q:2,pw:125,kcal:400,prot:32,carbs:0,fat:28,
+                                    per100:{kcal:160.5,prot:12.8,carbs:0,fat:11.2}});
+    return o;
+  });
+
+  t('CCXCI ÉTAPE 2 — `_per100Derive` existe', R.fn==='function', R.fn);
+  t('CCXCI ⛔⛔ le cas de ft-v1188 : 355/30/44/6 sur 140 g → 253,6 / 21,4 / 31,4 / 4,3',
+    R.michel==='{"kcal":253.6,"prot":21.4,"carbs":31.4,"fat":4.3}', R.michel);
+  t('CCXCI ⛔ UNE décimale, pas l\'entier (133 g → 75,2 / 5,3 / 0,8 / 2,3)',
+    R.decimale==='{"kcal":75.2,"prot":5.3,"carbs":0.8,"fat":2.3}', R.decimale);
+  t('CCXCI ⛔⛔ sans masse utilisable elle rend `null` — elle ne devine pas (R29)',
+    JSON.stringify(R.sansMasse)==='[null,null,null,null]', JSON.stringify(R.sansMasse));
+  t('CCXCI ⛔ elle rend EXACTEMENT les 4 macros, pas un champ de plus',
+    R.champs==='carbs,fat,kcal,prot', R.champs);
+
+  t('CCXCI ⭐ site 1 — `_provFood` en GRAMMES passe par le propriétaire (140 g)',
+    R.grammes==='{"kcal":253.6,"prot":21.4,"carbs":31.4,"fat":4.3}', R.grammes);
+  t('CCXCI ⭐ site 2 — `_provFood` en PORTIONS (2 × 125 g)',
+    R.portions==='{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2}', R.portions);
+  t('CCXCI ⭐ ... et sur une masse qui tombe mal (3 × 70 g = 210 g)',
+    R.portions210==='{"kcal":238.1,"prot":9.5,"carbs":28.6,"fat":8.6}', R.portions210);
+  t('CCXCI ⛔ non-régression R32 : un pour-100 g SCANNÉ n\'est pas écrasé par la portion',
+    R.scanProtege==='{"kcal":48.3,"prot":6.1,"carbs":10.1,"fat":3.2}', R.scanProtege);
+
+  t('CCXCI ⭐ site 3 — l\'écran MODIFIER : 125 → 150 g, le pour-100 g suit (133,3 / 10,7 / 0 / 9,3)',
+    R.edition==='{"per100":{"kcal":133.3,"prot":10.7,"carbs":0,"fat":9.3},"q":2,"u":"portion","pw":150}',
+    R.edition);
+  t('CCXCI ⛔⛔ ... et le poids EFFACÉ emporte le pour-100 g (le chemin du `null`)',
+    R.poidsRetire==='false/false', R.poidsRetire);
+
+  t('CCXCI ⛔⛔ `_per100SuitLaPortion` VÉRIFIE toujours, elle n\'a pas été absorbée',
+    R.suitFn==='function' && R.suitOui===true && R.suitNon===false && R.suitTolere===true,
+    R.suitFn+' · suit '+R.suitOui+' · ailleurs '+R.suitNon+' · tolérance '+R.suitTolere);
+}
+
+/* ⛔⛔ ET LE TÉMOIN QUI COMPTE LES ENDROITS — la garantie qu'aucun parcours ne peut donner.
+   Un parcours prouve que les 3 sites marchent ; il ne peut pas prouver qu'il n'existe pas une 4ᵉ
+   copie de la formule ailleurs dans le fichier. C'est pourtant EXACTEMENT ce qui est arrivé ici :
+   `Math.round` → `_per100d1` a dû être posé sur 7 portes en ft-v1170, puis sur ces 2 sites-là en
+   ft-v1188 (§59 de `BUGS.md`). On lit donc la SOURCE SERVIE, et on exige un seul propriétaire. */
+{
+  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const estCommentaire=l=>{const x=l.trim();
+    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
+  const aLaMain=src.split('\n')
+    .filter(l=>/\{kcal:_per100d1\(/.test(l) && !estCommentaire(l)).length;
+  const appels=(src.match(/_per100Derive\(/g)||[]).length;
+  const verif=(src.match(/_per100SuitLaPortion\(/g)||[]).length;
+  t('CCXCI ⛔⛔ la formule `{kcal:_per100d1(…)}` n\'existe QU\'À UN endroit : le propriétaire',
+    aLaMain===1, aLaMain+' occurrences de code');
+  t('CCXCI ⭐ les 3 sites passent par `_per100Derive` (3 appels + 1 déclaration)',
+    appels===4, appels+' occurrences');
+  t('CCXCI ⛔ `_per100SuitLaPortion` garde sa propre tolérance de 0,6 (elle n\'a pas fondu)',
+    verif===2 && /<=0\.6/.test(src), verif+' occurrences');
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,

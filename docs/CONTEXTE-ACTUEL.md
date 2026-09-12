@@ -20,7 +20,35 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1193` — 🏗️ **phase 0a + étape 1a du plan Nutrition.**
+- **Version en ligne (live) :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
+  et le périmètre du plan était FAUX pour les deux autres étapes.**
+  Michel valide la phase 0a **sur iPhone** et donne le feu vert pour **1b, 2 et 3** — avec la
+  consigne qui décide de tout : *« si une divergence réelle apparaît, mesure-la et **arrête-toi
+  avant de la corriger au passage** »*.
+  ⛔⛔ **La divergence est apparue AVANT la première ligne de code, et elle porte sur le PLAN** :
+  **1b** = **≥ 15** sites (le plan disait 5) · **2** = **3** ✅ (le seul juste) · **3** = la règle
+  stricte est écrite **7 fois en 2 formes** (le plan disait 6 — presque juste), ⛔ **mais il ne
+  comptait que la moitié GRAMMES** : la moitié **PORTIONS** ajoute **9 lignes**, soit **16
+  décisions** sur l'unité.
+  ⛔ **Et les défauts DIVERGENT** — `q` vaut 0 **ou** null · `portionWeightG` vaut 0, null **ou la
+  clé est absente** · `origine` vaut null, `'utilisateur'` **ou** `'reprise'`. *Choisir serait une
+  DÉCISION, pas un rangement.*
+  ⚠️ **Pourquoi le compteur s'est trompé** : `addFoodEntry` construit ses macros en **raccourci
+  ES6** — aucun `kcal:` dans la ligne, donc invisible à un motif `kcal\s*:`. Nouvelle famille
+  **`BUGS.md` §63**.
+  ⭐ **Livré : l'étape 2 SEULE** — les 3 sites qui retapaient `totaux × 100 / masse` deviennent
+  `_per100Derive()`. ⛔ `_per100SuitLaPortion` reste **dehors** : même algèbre, mais elle
+  **vérifie**, elle ne **dérive** pas — *on factorise l'intention, jamais la ressemblance*.
+  ⭐ **Critère binaire atteint** : les **11 sondes** de `tools/instantane_1b23.js` sont identiques
+  **octet pour octet**, même sha256 `ace2a744dc89e6ec` — 1b et 3 comprises, donc l'extraction n'a
+  pas débordé.
+  ⏭️ **EN ATTENTE DE MICHEL — deux questions** : ① 1b et 3 se font-elles sur leur périmètre RÉEL
+  (3× plus gros) ou re-découpées ? ② les défauts divergents s'harmonisent-ils (= une décision
+  produit) ? Écrites dans `docs/JOURNAL-DE-TEST.md`. **Le hub et la douane restent après.**
+  📣 **Toujours ouverts** : `S.savedFoods` perdu entre deux onglets · l'écart `48,3` / `48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1193` — 🏗️ **phase 0a + étape 1a du plan Nutrition.**
   Michel valide `docs/PLAN-NUTRITION.pdf` : *« exécute la phase 0 puis l'étape 1a »*.
   ⭐ **Phase 0a** : le poids du paquet **ne se rendait pas** — mesuré, la pastille « 📦 410 g (le
   paquet entier) » survivait d'un aliment au suivant (sonde `tools/sonde_fuites_nutrition.js`,

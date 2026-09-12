@@ -3656,3 +3656,46 @@ fermer une fuite**.
 qui dit **une seule fois** la distinction entre *« j'oublie l'aliment »* et *« je remets l'écran à
 plat pour le MÊME aliment »* — 2 appelants sur 13.
 
+
+## §63 — ⛔⛔ UN MOTIF DE RECHERCHE QUI SUPPOSE UNE **SYNTAXE** NE COMPTE PAS LES ENDROITS *(12/09/2026, ft-v1194)*
+
+**À quoi on la reconnaît** : un inventaire donne un chiffre **rond et rassurant** (« 6 sites »,
+« 8 portes »), et un balayage fait autrement en trouve **deux à trois fois plus** — sans qu'aucune
+des deux mesures soit bâclée.
+
+**Le cas** : le plan d'exécution du chantier Nutrition annonçait **6** sites pour l'étape 3 et **5**
+pour l'étape 1b. Mesuré site par site : **~17** et **≥ 15**. Le compteur n'était pas négligent, il
+était **aveugle à une écriture** — `addFoodEntry`, la porte la plus utilisée de tout l'écran,
+construit ses macros en **raccourci ES6** :
+
+```js
+const _e=Object.assign({date:…, name:…, kcal, prot, carbs, fat, ts:Date.now()}, _provFood({kcal,prot,carbs,fat}));
+```
+
+Il n'y a **pas un seul `kcal:`** dans cette ligne. Un motif `kcal\s*:` ne la voit pas — et ne
+signale rien, puisqu'il trouve les autres.
+
+> **Un motif qui suppose une syntaxe ne compte pas les endroits : il compte les endroits écrits
+> comme on les imaginait.**
+
+**Pourquoi c'est coûteux** : le chiffre sert ensuite à **dimensionner un chantier**. Une extraction
+« de 6 sites » qu'on découvre à 17 en cours de route se termine de deux façons, toutes deux
+mauvaises — on livre à moitié, ou on élargit en silence un périmètre que personne n'a validé.
+*Un inventaire faux ne se manifeste pas comme une erreur : il se manifeste comme un plan qui
+déborde.*
+
+**Ce qui l'attrape** :
+- **compter deux fois, autrement** — par motif de texte **et** par ce que la fonction *fait*
+  (ici : « qui écrit dans `S.foodLog` ? », qui trouve les 3 écrivains quelle que soit leur syntaxe) ;
+- **croiser avec les appelants** : la porte principale d'un écran ne peut pas être absente d'un
+  inventaire de cet écran — si elle l'est, c'est le compteur qui a tort ;
+- et **dire le chiffre avec sa méthode** : *« 6 lignes correspondent au motif X »* est vérifiable,
+  *« il y a 6 sites »* ne l'est pas.
+
+**Le réflexe** : avant d'écrire un nombre dans un plan, se demander **ce que le motif ne peut pas
+voir** — le raccourci ES6, l'appel indirect, le champ construit par `Object.assign`, la clé
+calculée. Puis chercher ce cas-là **exprès**.
+
+*Voisine de **§58** (vérifier la fonction n'est pas vérifier l'appel) et de **§61** (un outil de
+mesure tronqué ressemble à un code sans défaut) : les trois disent la même chose à trois endroits —
+**l'instrument fait partie de la mesure**.*

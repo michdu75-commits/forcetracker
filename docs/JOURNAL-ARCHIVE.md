@@ -8016,3 +8016,48 @@ Tests : **parcours 3424/3424** (+9, bloc **CCLXXXI**), **calculs 339/339**, musc
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1051**, conclusion `success` sur `9253161e`. ⛔ Ni backend ni worker attendus. ⚠️ *Au passage : l'API a rendu l'étape « Déployer sur GitHub Pages » comme `in_progress` pendant 13 minutes alors que le run était déjà terminé — un état périmé, pas un déploiement lent. **Vérifier le RUN, pas seulement l'étape.***
 
 Tests : **parcours 3437/3437** (+13, bloc **CCLXXXII**), **calculs 339/339**, muscles, croisés, dates, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 5 mutations** — ① l'écran de fin non ouvert → **12 rouges** · ② le cardio non reconnu comme validant → **3 rouges**, exactement les trois cas de cardio seul · ③ l'échauffement **avant** qui ne compte plus → **1 rouge**, exactement ce cas · ④ le socle non employé → **12 rouges** (après mes deux corrections) · ⑤ la régression de ft-v1184 → **0 rouge ici**, mais elle mord dans le bloc **CCLXXXI** qui la couvre — *je le dis plutôt que de prétendre l'avoir testée*. Fichiers : `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1185. |
+
+**ft-v1186 — 🏷️⚖️ LA PORTION NOMMÉE : `portionLabel` + `portionWeightG` — ET MON REFUS ÉTAIT MAL FONDÉ** — Michel, en relisant ft-v1183 : ***« 1 portion = 300 kcal, poids inconnu » ne suffit pas — je veux savoir si la portion représente 1 steak, 1 yaourt, 1 dose, 1 part***.
+
+**⛔⛔⛔ IL A RAISON, ET LA FORME DE MON ERREUR VAUT PLUS QUE LE CORRECTIF.** J'avais refusé `portionWeightG` en écrivant *« cet état n'existe pas »*, mesure à l'appui : déclarer un poids fait basculer l'app en grammes, donc le champ ne se remplirait jamais. **Chaque maillon était vrai et la conclusion était fausse** — j'ai mesuré ce que l'app **FAIT** et conclu sur ce qu'elle **DOIT** faire.
+
+👉 ***Une mesure du comportement actuel ne peut JAMAIS justifier un refus de BESOIN.*** Elle décrit ce qui est, pas ce qui manque. Le seul refus qu'elle autorise est *« ce champ est aujourd'hui inutile »* — jamais *« il ne servira jamais »*. ⚠️ Ce n'est pas **R28** (une limite non vérifiée) : ici la limite **était** vérifiée. C'est la **question** qui était mauvaise.
+
+**⭐ SON CAS TRANCHE TOUT EN UNE LIGNE** : *« 1 steak = 125 g, 2 steaks = 250 g — je ne veux pas que ça devienne `q:250, u:'g'`, car on perd l'information « 2 steaks » »*. **Basculer en grammes est une PERTE, pas une simplification.**
+
+**⭐⭐ CE QUI EST LIVRÉ, SUR SES 6 DÉCISIONS** :
+
+| | décision | ce qui est fait |
+|---|---|---|
+| ① | `portionLabel` **stocké** | nom court au singulier, **jamais deviné** · 8 puces + champ libre |
+| ② | `portionWeightG` **à part** | poids d'**UNE** portion · la **masse totale reste DÉRIVÉE** (`q × poids`) |
+| ③ | référence **dérivée** | `totaux ÷ q` — sa mesure 601/3 a tranché |
+| ④ | `per100` écrit **et recalculé** | depuis `q × portionWeightG`, jamais vérité indépendante |
+| ⑤ | le **favori se rafraîchit** | sa **définition** seulement, jamais ses macros |
+| ⑥ | « 2 steaks » dans le journal | **chantier séparé**, juste après |
+
+**⛔ LES PUCES NE SONT PAS DU CONFORT** (steak · part · tranche · yaourt · dose · sachet · bol · assiette) : *taper une étiquette au clavier à chaque repas sur un téléphone ne tiendrait pas trois jours, et **un champ qu'on ne remplit plus est pire qu'un champ absent** — il donne l'illusion que l'information existe.* ⭐ Et **l'étiquette ne se saisit qu'une fois par ALIMENT** : la reprise la repropose, exactement comme le pour-100 g depuis ft-v1042.
+
+**⛔⛔ LE PIÈGE STRUCTUREL, NOMMÉ AVANT D'ÊTRE COMMIS** : `_afPortionPoids` **n'est pas** `_afPoidsDeclare`. Le premier est le poids d'**une portion**, le second celui de **ce qui est affiché** (le total). *Deux notions, deux variables, jamais la même* — consigne écrite de Michel, et c'est la famille **« deux sources qui se contredisent »** de `BUGS.md`.
+
+**⭐ ET LE POIDS D'UNE PORTION NE RESCALE RIEN** : savoir qu'un steak pèse 125 g ne change pas ce qu'on a mangé — les 4 valeurs ne bougent pas (mesuré : 240/16 avant **et** après). *C'est toute la différence avec `af-poids`*, et deux témoins la figent.
+
+**⛔⛔⛔ LE SEUL ROUGE DE LA VERSION, TROUVÉ PAR LA MESURE AVANT LIVRAISON.** Reprendre « 2 steaks de 125 g » **rouvrait le champ GRAMMES** — parce qu'un pour-100 g existait — et l'écran perdait le « 2 ». ***La donnée était intacte, l'écran mentait***, et c'est mot pour mot ce que Michel refuse au point 2. ⭐ Corrigé sur **les deux portes** (R8) : **le pour-100 g ne décide plus de l'unité**. *L'unité appartient à la personne, pas à la richesse de la fiche.* ⛔ **ft-v1042 n'est pas touchée** (un aliment scanné n'est pas compté en portions) — un témoin de non-régression le fige.
+
+**⚠️ ET LA LISTE BLANCHE DE `_provFood` A OUBLIÉ UN CHAMP POUR LA 4ᵉ FOIS** — c'est écrit **trois fois en majuscules juste au-dessus**. Cette fois un **témoin dédié** fige la traversée, au lieu de compter sur l'attention.
+
+**📣 RÈGLE D'OR #11 — L'ANNONCE EST À L'ÉCRAN**, au moment où ça sert : le bloc portions gagne des puces et deux champs **visibles**, et la définition s'écrit dessous. Aucune pop-up, **rien n'est obligatoire** — la définition est facultative, et son absence se dit (**R24/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les lignes déjà abîmées ne sont pas réparées**, la migration des 17 jours reste **intacte** · ⛔ ni cru/cuit, ni recherche/CIQUAL, ni scan · ⛔ le journal du jour n'affiche toujours **aucune** quantité — c'est le chantier ⑥, décidé séparé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+⚠️⚠️ **33ᵉ COLLISION DE VERSION** : session-B a publié **ft-v1184 et ft-v1185** pendant que je posais ma ligne de partage. **Mon push a échoué en non-fast-forward** — *le vrai verrou a encore joué, rien n'a été écrasé*. Convention du dépôt : **la première publiée garde le numéro** → je suis passé en ft-v1186.
+
+**⚠️⚠️ ET LA PASSE COMPLÈTE A ROUGI SUR DEUX TÉMOINS DE ft-v1183 — QUI FIGEAIENT UNE FORMULATION, PAS LEUR GARANTIE.** Ils exigeaient le motif exact *« 1 portion = 300 kcal »* ; en ajoutant le NOM, la phrase devient *« 1 portion = portion non définie, poids inconnu · 300 kcal »*. ⭐ **La garantie — *une portion ne s'affiche jamais sans sa définition, et ce qu'on ignore est dit* — est intacte, et même plus forte** : l'écran annonce désormais aussi que le nom manque. ⛔ **Ce n'est pas un témoin qu'on desserre pour faire passer du code** : le comportement figé n'a pas changé, c'est le motif qui figeait plus que lui (le cas exact de **ft-v1176**). Motifs resserrés sur les trois exigences réelles, **et ÉPROUVÉS** — retirer la définition, taire le poids inconnu ou supprimer le nombre de portions les fait toujours rougir. *La différence entre une mise au point et un assouplissement se mesure, et je l'ai mesurée.*
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1054**, `conclusion: success` à **19:54:25 UTC** sur `fcab2a18`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la liste filtrée `status: completed`* — la leçon de ft-v1182.
+
+Tests : **parcours 3451/3451 sur l'arbre FINAL** (+14, bloc **CCLXXXI**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 15 MUTATIONS, TOUTES MORDENT** — l'étiquette retirée · le poids retiré · ⭐ **le poids qui ferait basculer l'unité** (3 rouges, exactement ce que Michel refuse) · le `per100` dérivé supprimé · la définition qui ne revient pas à la reprise · ⭐ **le pour-100 g qui reprend la main sur l'unité** (le rouge d'origine, rejoué) · la définition qui traverse d'un aliment à l'autre (3 rouges) · le favori qui garde sa vieille définition · le favori dont on écrase les macros · l'export CSV amputé · le « poids inconnu » qui ne se dit plus · la liste « Mes aliments » qui perd la définition.
+
+⚠️⚠️ **ET LA MÊME LEÇON POUR LA TROISIÈME FOIS DE SUITE** : une mutation **ne mordait pas** — écraser les macros du favori — et ce n'était **pas** du code inutile, c'était un **trou de témoin** : ma fixture mettait **600 des deux côtés**, donc l'écrasement était *invisible*. Fixture rendue discriminante (favori 600, repas 500), **14ᵉ témoin écrit**, la mutation mord. 👉 ***Une protection sans témoin n'est pas une protection*** — et une fixture où les deux valeurs coïncident ne peut rien voir.
+
+Fichiers : `app.js`, `setup.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1186. |
