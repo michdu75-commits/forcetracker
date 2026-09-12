@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1194`** (prochaine : `ft-v1195`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1195`** (prochaine : `ft-v1196`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,38 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1195 — ✂️ LE REDÉCOUPAGE DE 1b ET 3, ET LA PREMIÈRE SOUS-ÉTAPE · UNE PAIRE DE FONCTIONS QUE PERSONNE N'AVAIT COMPTÉE** — Michel tranche les deux questions laissées ouvertes par ft-v1194 : ⛔ ***« je ne veux pas traiter 1b et 3 en un seul gros chantier — redécoupe-les en sous-étapes plus petites, mesurables et réversibles »*** · ⛔⛔ ***« je ne veux pas harmoniser maintenant les défauts divergents (0, null, clé absente, origine différente) : à ce stade, on doit les TRANSPORTER explicitement sans les corriger »***.
+
+**⭐⭐ ET LA MESURE A NOMMÉ CE QUI CHANGE LE DÉCOUPAGE, QUE NI LE PLAN NI MON BALAYAGE N'AVAIENT VU** : `quickFillFood` et `_afSuggPrendreLocale` partagent **36 lignes utiles IDENTIQUES** — diff normalisé, 81 et 99 lignes utiles, **40 % de squelette commun**. 👉 ***Ce ne sont pas quinze sites éparpillés : c'est LA REPRISE D'UN ALIMENT À L'ÉCRAN, ÉCRITE DEUX FOIS.*** L'une prend l'item dans « Mes aliments », l'autre dans la recherche du journal, et à partir de là elles font la même chose.
+
+**⚠️ ET L'HISTORIQUE LE DISAIT DÉJÀ — on ne l'avait jamais COMPTÉ** : ft-v973, ft-v975, ft-v984 et ft-v1176 ont **chacune** porté un correctif d'une porte à l'autre, et les commentaires du code le répètent mot pour mot (*« le mécanisme existait, posé sur une seule des deux portes — pour la 6ᵉ fois dans ce fichier »*). **4 des 9 sous-étapes portent sur cette paire** : c'est là qu'est le gisement. Découpage complet dans **`docs/SOUS-ETAPES-1B-3.md`**.
+
+**⭐ LIVRÉ : LA SOUS-ÉTAPE 1b-i SEULE**, la seule strictement extractive. Deux endroits recopiaient le même bloc **caractère pour caractère** pour dire à `_provFood` ce qu'une ligne déjà enregistrée portait comme quantité — `rejouerRepas` (rejouer un repas d'hier) et `quickAddFood` (ajouter depuis la liste) → **`_srcRepriseQ(src, qOk)`**, `{q, u, per100, portionLabel, portionWeightG}`.
+
+**⛔⛔ `qOk` N'EST PAS CALCULÉ DEDANS, ET C'EST TOUT LE DÉCOUPAGE.** Le test *« cette quantité est-elle utilisable ? »* est le sujet de **l'étape 3**. L'absorber ferait deux extractions dans une seule sous-étape — donc *un retour arrière qui ne peut plus être partiel*. ⭐ **Une sous-étape réversible est une sous-étape qui ne fait qu'UNE chose**, et un témoin de périmètre l'exige explicitement.
+
+**⛔⛔ ET CE QUI N'EST PAS DEDANS COMPTE AUTANT : `sourceId`/`etat` restent chez `quickAddFood` seul.** Le rejeu ne les a **jamais** posés. La divergence est **TRANSPORTÉE, pas corrigée** — les lui donner changerait la **provenance enregistrée** d'une ligne rejouée, qui affirmerait venir d'un code-barres qu'on n'a pas relu (**R33** : la provenance ne ment pas). **Deux témoins figent les deux moitiés** : l'un exige leur ABSENCE au rejeu, l'autre leur PRÉSENCE à la porte directe.
+
+**⭐ LE CRITÈRE ÉTAIT BINAIRE, ET IL EST ATTEINT** : les **11 sondes** de `tools/instantane_1b23.js` sont **identiques octet pour octet** avant et après — **même sha256 `ace2a744dc89e6ec`**, le même qu'en ft-v1194.
+
+**⚖️ ET LE DOCUMENT DIT MAINTENANT QUAND UNE HARMONISATION DEVIENT UNE DÉCISION PRODUIT**, avec un critère qui ne dépend pas du code : *est-ce que le changement modifie ce qui est ÉCRIT dans `S.foodLog` ou `S.savedFoods` ?* **Quatre cas nommés** — la provenance du rejeu · l'unification `0`/`null`/clé absente · faire accepter les portions aux 5 sites « grammes seuls » · les trois formulations d'`origine`. **Tant qu'elles ne sont pas tranchées, chaque sous-étape les transporte et les fige.** *C'est le seul moyen qu'une harmonisation future soit un CHOIX et pas un effet de bord découvert trois versions plus tard.*
+
+**⚠️⚠️ UN TÉMOIN À MOI MESURAIT UN ÉTAT INATTEIGNABLE, ET LA SONDE L'A DIT AVANT LA PASSE.** Mon témoin du défaut appelait `_srcRepriseQ({name:'Nu'}, true)` : avec `qOk` vrai et pas de `q`, `+undefined` vaut **NaN** — que `JSON.stringify` sérialise en **`null`**. 👉 *Le témoin aurait été vert sur un NaN en croyant voir un `null`*, et sur un état que les deux portes ne peuvent pas produire (`qOk` n'est vrai que si `+q>0`). Réécrit avec `false`, le cas réel. **Un témoin qui fige un état inatteignable ne protège rien, et masque le type réel de ce qu'il mesure.**
+
+**⚠️⚠️⚠️ ET LE CONTRÔLE NÉGATIF A CORRIGÉ MON TÉMOIN DE PÉRIMÈTRE — c'est la trouvaille de la version.** La mutation *« l'étape 3 faite au passage »* rendait **0 rouge**. Ma 1ʳᵉ version comptait les **LIGNES** portant le motif : extraire la règle dans un propriétaire laisse le motif écrit **une fois dans ce propriétaire, plus une fois chez l'autre appelant** — le compte restait à 2, et le témoin passait au **vert sur exactement ce qu'il devait interdire**. 👉 ***Compter les occurrences d'un motif ne dit pas QUI décide.*** Le témoin exige désormais que **les DEUX fonctions portent la règle chacune dans son propre corps** : si l'une délègue, elle ne la porte plus, et il rougit. **C'est `BUGS.md` §63 retourné contre mon propre témoin**, écrite la veille.
+
+**⚠️ ET MA PREMIÈRE MUTERATION DE CE CAS ÉTAIT MAL FAITE, DIT PARCE QUE ÇA RESSERVIRA** : elle déclarait le helper **à l'intérieur** de `quickAddFood`, donc le motif restait dans son corps et le témoin corrigé ne rougissait toujours pas. *Une mutation mal placée ressemble trait pour trait à un témoin aveugle.* Refaite avec le helper posé **hors** de la fonction : **1 rouge, exactement lui** — et le contrôle inverse (la règle retirée du rejeu) rougit pareil.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun comportement ne bouge : deux copies d'un bloc deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 8 autres sous-étapes ne sont pas faites** — elles sont écrites, ordonnées et dépendancées dans `docs/SOUS-ETAPES-1B-3.md` · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (étape 4) ni la **douane** (étape 5) · ⛔ `S.savedFoods` et l'écart **48,3 / 48** restent ouverts · ⛔ ni l'historique ni les migrations. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT** (R18) : à vérifier après le push.
+
+Tests : **parcours 3578/3578 sur l'arbre FINAL** (+14, bloc **CCXCII**) — ⭐ **total prédit = total obtenu** (3564 + 14, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — **aucun trou nouveau**. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT** — ① le propriétaire rend un objet vide → **7 rouges** · ② `qOk` ignoré → **3** · ③ `portionWeightG` rend `0` (la fausse harmonisation) → **2** · ④ `per100` retiré → **4** · ⑤ `portionLabel` retiré → **4** · ⑥ ⭐ **`sourceId`/`etat` donnés au rejeu** → **1 rouge, exactement le témoin qui protège l'écart** · ⑦ l'inverse, la porte directe les perd → **1** · ⑧ **débordement : l'étape 3 faite au passage** → **1** *(après réécriture du témoin — voir plus haut)* · ⑨ une 2ᵉ copie du bloc réapparaît → **2** · ⑩ la règle retirée du rejeu (contrôle) → **1**.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md` (nouveau), `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1195. |
 
 **ft-v1194 — 🧮 UN SEUL PROPRIÉTAIRE POUR LE POUR-100 g DÉRIVÉ · ET LE PÉRIMÈTRE DU PLAN ÉTAIT FAUX POUR LES DEUX AUTRES ÉTAPES** — Michel valide la phase 0a **sur iPhone** (la pastille « 410 g » ne survit pas au passage à un autre aliment) et donne le feu vert : ***« tu peux maintenant poursuivre le plan prévu : étape 1b ; étape 2 ; étape 3 »***, même méthode que 1a — *« extraction sans changement de comportement · témoins avant modification · instantané avant/après · aucune valeur attendue ne doit bouger · mutations négatives qui doivent mordre »*.
 

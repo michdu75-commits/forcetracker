@@ -20,7 +20,35 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
+- **Version en ligne (live) :** `ft-v1195` — ✂️ **le redécoupage de 1b et 3, et la sous-étape 1b-i.**
+  Michel tranche : ⛔ *« je ne veux pas traiter 1b et 3 en un seul gros chantier — redécoupe-les en
+  sous-étapes plus petites, mesurables et réversibles »* · ⛔⛔ *« je ne veux pas harmoniser
+  maintenant les défauts divergents : à ce stade on doit les **TRANSPORTER** explicitement sans les
+  corriger »*.
+  ⭐⭐ **Ce que la mesure a nommé, et qui change le découpage** : `quickFillFood` et
+  `_afSuggPrendreLocale` partagent **36 lignes utiles IDENTIQUES** (40 % de squelette commun) — *ce
+  ne sont pas quinze sites éparpillés, c'est la reprise d'un aliment à l'écran, **écrite deux
+  fois***. Et l'historique le disait déjà : ft-v973/975/984/1176 ont chacune porté un correctif
+  d'une porte à l'autre. **4 des 9 sous-étapes portent sur cette paire.**
+  📄 **Découpage complet : `docs/SOUS-ETAPES-1B-3.md`** — périmètre, sites, instantané, mutations,
+  rollback et dépendances pour chacune.
+  ⭐ **Livré : 1b-i SEULE** — le bloc `{q,u,per100,portionLabel,portionWeightG}` repris d'une ligne
+  existante devient `_srcRepriseQ(src, qOk)`. ⛔ `qOk` reste calculé par **chaque appelant** :
+  l'étape 3 n'est pas touchée, un témoin de périmètre l'exige. ⛔ `sourceId`/`etat` restent chez
+  `quickAddFood` seul — **écart transporté**, deux témoins figent les deux moitiés.
+  ⭐ **Critère binaire atteint** : les 11 sondes de `tools/instantane_1b23.js` sont identiques
+  **octet pour octet**, même sha256 `ace2a744dc89e6ec`.
+  ⚠️⚠️ **Le contrôle négatif a corrigé mon témoin de périmètre** : il comptait les **lignes**
+  portant le motif — or extraire la règle en laisse une dans le propriétaire et une chez l'autre
+  appelant, donc le compte restait à 2 et le témoin passait **au vert sur ce qu'il devait
+  interdire**. *Compter les occurrences d'un motif ne dit pas QUI décide.*
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations** qui sont des **décisions produit** (critère :
+  *est-ce que ça modifie ce qui est ÉCRIT dans `S.foodLog`/`S.savedFoods` ?*), listées au §3 du
+  découpage. **Le hub et la douane restent après.**
+  📣 **Toujours ouverts** : `S.savedFoods` entre deux onglets · l'écart `48,3` / `48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
   et le périmètre du plan était FAUX pour les deux autres étapes.**
   Michel valide la phase 0a **sur iPhone** et donne le feu vert pour **1b, 2 et 3** — avec la
   consigne qui décide de tout : *« si une divergence réelle apparaît, mesure-la et **arrête-toi
@@ -47,7 +75,6 @@
   produit) ? Écrites dans `docs/JOURNAL-DE-TEST.md`. **Le hub et la douane restent après.**
   📣 **Toujours ouverts** : `S.savedFoods` perdu entre deux onglets · l'écart `48,3` / `48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
-
 - **Version précédente :** `ft-v1193` — 🏗️ **phase 0a + étape 1a du plan Nutrition.**
   Michel valide `docs/PLAN-NUTRITION.pdf` : *« exécute la phase 0 puis l'étape 1a »*.
   ⭐ **Phase 0a** : le poids du paquet **ne se rendait pas** — mesuré, la pastille « 📦 410 g (le
