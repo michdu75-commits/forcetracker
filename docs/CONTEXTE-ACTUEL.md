@@ -6,6 +6,16 @@
 
 ---
 
+- ⛔⛔ **LA NUTRITION EST RÉSERVÉE À session-A — CONSIGNE DE MICHEL, 12/09/2026** : *« non, tu ne
+  touches surtout pas à la nutrition s'il te plaît »*. Le plan (phases 0/1a/1b/2/3, le hub, la
+  douane), `S.savedFoods`, l'écart 48,3 / 48, les défauts divergents : **tout cela appartient à
+  l'autre session**, y compris les questions listées comme « ouvertes » plus bas.
+  👉 **Ce que ça interdit concrètement** : ouvrir `app.js` côté nutrition, proposer un correctif,
+  ou même « juste mesurer » — *une mesure se termine toujours par l'envie de corriger*.
+  ⚠️ **Pourquoi c'est écrit ICI** : ce document liste les chantiers nutrition en attente, et sans
+  cette ligne le prochain à le lire les prendrait pour du travail disponible. **R30** — un refus
+  volontaire s'écrit avec sa raison, sinon il redevient un bug.
+
 - ⏳ **EN ATTENTE DE MICHEL — la passe de vérification du prochain import, vers le 06/10/2026.**
   Sa décision du 08/09 : *« je verrais ça dans 4 semaines quand je vais remettre un programme,
   mets-le dans le journal et on fera l'essai à ce moment-là »*. ⛔ **Il ne réimporte rien d'ici
