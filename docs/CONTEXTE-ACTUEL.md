@@ -20,7 +20,27 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1197` — 🏷️ **1b-ii : la provenance reprise · et une
+- **Version en ligne (live) :** `ft-v1198` — 📋 **1b-iii : le noyau d'un item de liste · et le
+  plan annonçait DEUX divergences, il n'y en a qu'UNE.**
+  ⭐ **Test d'entrée passé** (sa consigne permanente) : **3 sites réels** — les deux branches de
+  `_buildFoodQuickItems` et `toggleFavFood`. **9 champs strictement identiques** mesurés champ par
+  champ → **`_itemListe(src)`**.
+  ⛔⛔ **Le document se trompait pour la 3ᵉ sous-étape d'affilée** : il annonçait que `q` valait
+  `0` ici et `null` là, et en déduisait un propriétaire **à paramètre**. **Mesuré : `q` ne diverge
+  pas** (`+X.q>0?+X.q:0` aux trois). **Seul `portionWeightG` diverge** (`0` · `0` · `null`).
+  👉 *Le paramètre était dimensionné pour deux écarts alors qu'il n'y en a qu'un* — **il n'a pas
+  été écrit**. `portionWeightG` et `fav` restent **écrits chez chaque appelant**.
+  ⛔ Et `origine`/`sourceId`/`etat` ne bougent pas : **une seule copie**.
+  ⚠️ **Sonde ouverte, pas crue — et juste cette fois** (après deux étiquettes fausses de suite).
+  ⭐ **Instantané identique octet pour octet**, sha `7a52c37da93e17a3`.
+  ⚠️ **Deux pièges d'outillage** : mon témoin listait **8 clés au lieu de 9** et rougissait sur du
+  code **sain** ; et une mutation ne mordait pas parce qu'elle frappait **une autre fonction**
+  portant le même motif. *Une mutation mal placée est indiscernable d'un témoin aveugle.*
+  ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations.** **5 sous-étapes réelles restantes** avant le hub.
+  📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone.**
+
+- **Version précédente :** `ft-v1197` — 🏷️ **1b-ii : la provenance reprise · et une
   sous-étape de mon propre plan qui n'avait RIEN à extraire.**
   ⛔⛔ **LE FAIT DE LA VERSION EST UNE SOUS-ÉTAPE SUPPRIMÉE.** La suivante dans l'ordre était
   **1b-iv** (l'export CSV), décrite comme *« la moins risquée du lot »*. Mesuré avant la moindre
@@ -55,7 +75,7 @@
   📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
 
-- **Version précédente :** `ft-v1196` — 🔍 **sous-étape 3-i : un propriétaire pour « cette
+- **Avant :** `ft-v1196` — 🔍 **sous-étape 3-i : un propriétaire pour « cette
   quantité est-elle reprenable ? », et la sonde qui ne couvrait rien.**
   Michel : *« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois »*, mêmes règles.
   ⭐ **Livré** : le TEST écrit deux fois (`rejouerRepas` · `quickAddFood`) devient **`_qReprenable(src)`**

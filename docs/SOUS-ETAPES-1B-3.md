@@ -96,7 +96,7 @@ transporté**, figé par deux témoins (l'un exige leur absence, l'autre leur pr
   fasse au code* : il aurait **validé n'importe quelle extraction**. Corrigée en remplissant par
   `_afSuggLocales()`, la vraie fonction de production, **avec un garde qui LÈVE si la liste est vide**.
 
-### 1b-iii — l'item de liste affichée
+### 1b-iii — l'item de liste affichée ✅ **LIVRÉE (ft-v1198)**
 
 | | |
 |---|---|
@@ -112,6 +112,17 @@ transporté**, figé par deux témoins (l'un exige leur absence, l'autre leur pr
 copies.*
 
 ⚖️ **POINT DE DÉCISION PRODUIT n°2** — voir §3.
+
+**⛔⛔ CE QUE LA MESURE A CORRIGÉ DANS CETTE FICHE (12/09) — LE PLAN ANNONÇAIT DEUX DIVERGENCES,
+IL N'Y EN A QU'UNE.** Mesuré champ par champ sur les 3 sites :
+- ⛔ **`q` NE diverge PAS** : il vaut `+X.q>0?+X.q:0` **aux trois**. La phrase ci-dessus était fausse.
+- ⭐ **Seul `portionWeightG` diverge** : `0` aux deux branches de la liste, **`null`** au favori.
+
+👉 ***Le propriétaire ne prend donc AUCUN paramètre `{vide:…}`*** : il était dimensionné pour deux
+écarts alors qu'il n'y en a qu'un, et *un paramètre inutile déplace la divergence DANS le
+propriétaire au lieu de la laisser visible chez les appelants*. **9 champs strictement identiques**
+partent dans `_itemListe(src)` ; `portionWeightG` et `fav` restent **écrits chez chaque appelant**.
+⛔ Et `origine`/`sourceId`/`etat` ne bougent pas : **une seule copie** (branche récents).
 
 ### 1b-iv — l'export CSV ⛔ **ÉCARTÉE (12/09/2026) — IL N'Y A RIEN À EXTRAIRE**
 
@@ -238,6 +249,7 @@ qu'on découvre trois versions plus tard.
   ├─ 1b-ii  ✅ livrée (ft-v1197)
   │
   └─ suite ──┬─ 3-ii     ┐
+             ├─ 1b-iii ✅ livrée (ft-v1198)
              ├─ 3-iii    │  les 4 sous-étapes de la PAIRE
              ├─ 3-v ─────┤  quickFillFood / _afSuggPrendreLocale
              └─ 1b-v ────┘
