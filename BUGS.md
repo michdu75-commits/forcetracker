@@ -3622,6 +3622,15 @@ d'attente sur une passe **déjà terminée** tourne alors indéfiniment. C'est l
 👉 *Les trois cas — sortie tronquée, sortie vide, motif qui se matche lui-même — ont la même
 signature : **l'outil de mesure se décrit comme un résultat**.*
 
+⛔⛔ **4ᵉ PAIEMENT, LE 12/09/2026 (ft-v1195), ET IL A COÛTÉ UNE PASSE ENTIÈRE.** Même motif, mais
+avec `xargs kill` au bout : `pgrep -f "node tests/parcours/runner.js" | xargs -r kill` **a tué son
+propre shell** (exit 144) **et** le runner. Résultat : une passe arrêtée à mi-parcours, log figé
+sur `Target page, context or browser has been closed`… et **0 rouge affiché**.
+👉 ***Une passe tuée par accident est indiscernable d'une passe verte tant qu'on ne compte pas.***
+**Le remède, qui ne peut pas se retourner contre lui-même** : ne pas filtrer sur le motif, mais
+sur le processus — `for pid in $(pgrep -x node); do tr '\0' ' ' < /proc/$pid/cmdline | grep -q …`.
+*Un shell ne s'appelle pas `node`.*
+
 ## §62 — ⛔⛔ UNE PROTECTION QUI NE TENAIT QUE PAR L'ABSENCE DE MÉNAGE *(11/09/2026, ft-v1193)*
 
 **À quoi on la reconnaît** : un correctif **juste**, qui nettoie enfin une variable oubliée, fait
@@ -3699,3 +3708,41 @@ calculée. Puis chercher ce cas-là **exprès**.
 *Voisine de **§58** (vérifier la fonction n'est pas vérifier l'appel) et de **§61** (un outil de
 mesure tronqué ressemble à un code sans défaut) : les trois disent la même chose à trois endroits —
 **l'instrument fait partie de la mesure**.*
+
+---
+
+## §64 — ⛔⛔ UN TÉMOIN QUI LIT LA SOURCE NE SAIT PAS DISTINGUER LE **CODE** DE CE QUI EN **PARLE** *(12/09/2026, ft-v1195)*
+
+**À quoi on la reconnaît** : un témoin de source (« il ne doit plus rester aucune occurrence de X »)
+devient **rouge en réaction à un COMMENTAIRE** — souvent celui qu'on vient d'écrire pour expliquer
+qu'on a justement supprimé X.
+
+**Le cas**, deux fois dans la même demi-heure, sur le même témoin :
+- il comptait **7 copies pour 6** — parce que la ligne du **propriétaire** contient forcément la
+  conversion qu'il cherche : *c'est son métier* ;
+- puis il comptait comme copie la **note R30** qui **CITE** `10-n` pour expliquer pourquoi
+  `_rirTxt` a été retirée.
+
+> **Un témoin qui ne distingue pas le code de ce qui en PARLE finit par interdire d'écrire la
+> documentation du correctif.**
+
+**Pourquoi c'est vicieux** : le témoin n'est pas cassé, il est **trop littéral** — et sa punition
+tombe sur exactement la bonne pratique du dépôt (**R27** : écrire le *pourquoi* à côté de ce qu'il
+protège). Le réflexe naturel devient alors *« j'enlève le commentaire pour faire passer le test »*,
+c'est-à-dire **payer en mémoire** ce qu'on a gagné en vérification.
+
+**Ce qui l'attrape** :
+- **retirer les commentaires avant de compter** (`/* … */` et `// …`, sans casser les `://` des URL)
+  et **exclure la ligne du propriétaire** — les deux tiennent en deux `replace` ;
+- **faire échouer le témoin exprès** avec une variante qui **échappe au motif** (ici `10 - +n`) :
+  si rien ne rougit, le témoin ne protège que l'orthographe, pas la règle ;
+- et poser **deux verrous de nature différente** — « aucune copie dans la source » (littéral) **et**
+  « le propriétaire est vraiment appelé » (structurel). C'est le second qui a mordu sur la variante
+  évasive.
+
+**Le réflexe** : quand un témoin lit du **texte de code**, se demander d'abord *« qu'est-ce qu'il
+compterait dans une PHRASE ? »* — puis écrire la phrase et vérifier qu'il l'ignore.
+
+*Déjà rencontrée en **ft-v1193** (le témoin « plus aucune traduction » comptait le commentaire qui
+citait le motif supprimé) : c'est donc la **2ᵉ fois**, d'où la famille. Sœur de **§61** (l'outil
+tronqué) et **§63** (le motif qui suppose une syntaxe) — **l'instrument fait partie de la mesure**.*

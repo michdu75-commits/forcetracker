@@ -1314,9 +1314,16 @@ function _estRpe(){ return _echelleReserve()==='rpe'; }
    serait recopiée partout si on ne la nommait pas — puis un jour l'une des copies dirait 9. */
 function _rpeDeRir(n){ return (n===null||n===undefined)?null:(10-n); }
 
-/* Le libellé COURT d'un cran (les boutons de la barre de repos). */
+/* Le libellé COURT d'un cran (les boutons de la barre de repos).
+   ⛔ UN CRAN QUI N'EN EST PAS UN NE PRODUIT RIEN. Avant ft-v1195, `null` sortait « 10 » en RPE —
+   c'est-à-dire l'affirmation « série à l'échec » pour une série que PERSONNE n'a notée, la
+   confusion exacte que ft-v1154 a corrigée partout ailleurs. Un blanc se voit ; un chiffre
+   crédible et faux ne se voit pas (R29). Inatteignable aujourd'hui (les appelants bornent n),
+   d'où le choix de le rendre inoffensif plutôt que de compter sur eux pour toujours. */
 function _reserveBoutonTxt(n){
-  if(_estRpe()) return (n>=RIR_MAX?'≤'+(10-RIR_MAX):String(10-n));
+  const rpe=_rpeDeRir(n);
+  if(rpe===null) return '';
+  if(_estRpe()) return (n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(rpe));
   return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+':String(n)));
 }
 /* La question posée dans la barre de repos. ⛔ Elle NOMME l'échelle : sans ça, « 8 » veut dire
@@ -1333,14 +1340,21 @@ function _reserveEchecTxt(){
 /* Le badge de la colonne « précédent ». ⭐ `@8` est la notation standard du RPE (« 80×8 @8 ») —
    on emprunte la convention du milieu plutôt que d'en inventer une. */
 function _reserveBadgeTxt(n){
-  if(_estRpe()) return '@'+(n>=RIR_MAX?'≤'+(10-RIR_MAX):String(10-n));
+  const rpe=_rpeDeRir(n);
+  if(rpe===null) return '';
+  if(_estRpe()) return '@'+(n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(rpe));
   return (n>=RIR_MAX?RIR_MAX+'+':String(n))+'r';
 }
-function _rirTxt(n){
-  if(n===null) return '';
-  if(_estRpe()) return (n===0?'RPE 10 (échec)':(n>=RIR_MAX?'RPE ≤'+(10-RIR_MAX):'RPE '+(10-n)));
-  return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+ en réserve':n+' en réserve'));
-}
+/* ⛔⛔ `_rirTxt` A ÉTÉ RETIRÉE ICI LE 12/09/2026 (ft-v1195) — R30 : un retrait s'écrit avec sa
+   raison, sinon quelqu'un le « répare » dans six mois.
+   Elle donnait le libellé LONG d'un cran (« 2 en réserve », « RPE 10 (échec) »). Mesuré : elle
+   n'a JAMAIS été appelée par l'app — née sans appelant en ft-v1038, et `10-n` n'apparaissait dans
+   aucun écran. Son seul lecteur était un témoin du banc, qui croyait vérifier le libellé d'échec
+   affiché en RPE alors que l'écran passe par `_reserveEchecTxt()` (`BUGS.md` §58).
+   ⛔ ET ELLE ÉTAIT PÉRIMÉE DEUX FOIS : elle rendait « échec » pour un RIR 0 et « RPE 10 (échec) »
+   en RPE — précisément ce que ft-v1154 a corrigé (*« X et RIR 0 ne doivent surtout pas être
+   considérés comme la même donnée »*). Une fonction morte ne se met pas à jour : elle attend
+   qu'on la rebranche pour dire une chose fausse. */
 /* 🎯 « PRÉCÉDENT » SE LIT PAR RÔLE, PAS PAR POSITION (15/08/2026)
    Capture de Michel, en séance : *« regarde y'a pas une couille là ? »*. Sur ses 6 lignes, les 3
    premières sont une MONTÉE EN CHARGE que l'app venait d'ajouter (5×27,5 · 3×37,5 · 2×50), et la
@@ -1420,7 +1434,7 @@ function toggleSet(ei,si){
        qui se contredisent* — la famille de bugs la plus vicieuse du projet (R2).
        ⚠️ L'ORDRE COMPTE : une préférence posée sur CET exercice gagne (elle est plus précise),
        puis le réglage de la personne, puis 90 s seulement si elle n'a jamais rien réglé. */
-    const defForEx=isAbdo?30:(savedPref||S.defRest||90);
+    const defForEx=isAbdo?30:(savedPref||reposDefaut());
     const restByType={N:defForEx,É:45,X:240,W:45,E:240};
     const restLabels={É:'Échauffement',X:'Récup. à l\'échec',W:'Échauffement',E:'Récup. à l\'échec'};
     const lbl=document.getElementById('rest-label');
@@ -5232,7 +5246,7 @@ function skipRest(){const cb=_restDoneCb;stopRest();if(cb)cb();}
 // qu'ajouter/retirer 15s à répétition). Mémorise aussi la préférence pour l'exercice.
 function openRestEdit(){
   const mi=document.getElementById('re-min'),se=document.getElementById('re-sec');
-  const left=restStartTs?Math.max(5,_restLeft()):(restTot||S.defRest||130);
+  const left=restStartTs?Math.max(5,_restLeft()):(restTot||reposDefaut());
   if(mi)mi.value=Math.floor(left/60);
   if(se)se.value=left%60;
   const ov=document.getElementById('ov-rest-edit');if(ov)ov.classList.add('open');
@@ -9208,7 +9222,7 @@ function _cleanProgEditExercises(){
    ⚠️ Le placeholder ne peut pas connaître la charge du palier (on édite un programme, pas une
    série en cours) : il annonce donc le repos d'échauffement de base, comme avant. */
 function _defRestForType(type){
-  const _n=(typeof S!=='undefined' && +S.defRest>0) ? +S.defRest : 90;
+  const _n=reposDefaut();                              // ⏱️ un seul propriétaire (state.js, ft-v1195)
   return type==='É'||type==='W'?_REPOS_PALIER.leger:((type==='X'||type==='E')?240:(type==='D'?20:_n));
 }
 // Formate des secondes en 1'30 / 45s (affichage type PDF)

@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1194`** (prochaine : `ft-v1195`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1195`** (prochaine : `ft-v1196`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,32 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1195 — 🔧 LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE », CORRIGÉS — ET AUCUN N'ÉTAIT VISIBLE À L'ÉCRAN** — Michel lève lui-même l'ordre qu'il avait posé le matin (*« on refera un état des lieux quand j'aurai fini les bugs de la nutrition »*) : ***« vas-y corrige tout »***.
+
+**⛔⛔ LE CONTRAT EST DONC CELUI DES EXTRACTIONS NUTRITION, ET POUR LA MÊME RAISON** : les trois constats sont **des pièges pour plus tard, pas des bugs qu'on subit** — donc *aucune valeur affichée ne doit bouger*. Une passe verte ne prouve pas ça (elle prouve que ce que les témoins **regardent** n'a pas bougé) : d'où un **instantané** avant/après, `tools/instantane_seance_audit.js`, rejouable.
+
+**⭐ ① LA FONCTION ÉCRITE POUR EMPÊCHER UNE RECOPIE AVAIT ÉTÉ RECOPIÉE.** `_rpeDeRir` portait ce commentaire : *« la conversion n'a qu'un seul endroit… c'est justement pour ça qu'elle serait recopiée partout — **puis un jour l'une des copies dirait 9** »*. Mesuré : **appelée 0 fois**, et `10−n` retapée à la main dans **3 fonctions / 6 occurrences**. 👉 *L'avertissement était écrit juste au-dessus du code qui l'ignore* (**R2**). Un seul propriétaire désormais, et un **témoin de SOURCE** refuse toute nouvelle copie.
+
+**⛔⛔ UN GARDE AJOUTÉ AU PASSAGE, ET IL EST DE LA FAMILLE ft-v1154** : hors de l'échelle, un cran `null` sortait **« 10 »** en RPE — c'est-à-dire l'affirmation *« série à l'échec »* pour une série que **personne n'a notée**. C'est exactement la confusion que Michel a fait corriger partout ailleurs (*« X et RIR 0 ne doivent surtout pas être considérés comme la même donnée »*). Il rend `''`. ⚠️ **Inatteignable aujourd'hui** (les appelants bornent le cran) : rendu inoffensif **plutôt que confié à eux pour toujours** — *un blanc se voit, un chiffre crédible et faux ne se voit pas* (**R29**).
+
+**⭐ ② UNE FONCTION MORTE, ET UN TÉMOIN QUI RASSURAIT SUR ELLE.** `_rirTxt` n'était appelée par **aucun** fichier servi — seulement par un témoin du banc, qui croyait vérifier le libellé d'échec en RPE alors que l'écran passe par `_reserveEchecTxt` (**`BUGS.md` §58**). ⛔ **Et elle était PÉRIMÉE DEUX FOIS** : elle rendait *« échec »* pour un RIR 0 et *« RPE 10 (échec) »* — précisément ce que **ft-v1154** a corrigé. 👉 ***Une fonction morte ne se met pas à jour : elle attend qu'on la rebranche pour dire une chose fausse.*** Retirée **avec sa raison à sa place** (**R30**) ; le témoin remis sur le vrai chemin, celui qui **lit l'écran**.
+
+**⭐ ③ TROIS RÉPONSES À UNE SEULE QUESTION.** *« Combien de repos si la personne n'a rien réglé ? »* valait **130** (`state.js`), **120** (`app.js` ×2) et **90** (`log.js` ×3). ⚠️ **Dormant** — `load()` pose toujours `S.defRest` — **mais déjà mordu** : en **ft-v1080**, l'éditeur de programme annonçait *90 s* quand la séance appliquait *130*. Un propriétaire (`reposDefaut()`), **6 sites rebranchés**, et un témoin de source interdit tout repli numérique recollé à `S.defRest`.
+
+**⭐⭐ LE CORRECTIF DIT EN UNE SEULE MESURE** : dans l'instantané, le bloc **« vraie vie »** (le réglage posé) est **identique octet pour octet** avant/après — et le bloc **« état impossible »** (réglage absent) rend désormais **exactement le même sha** que lui (`f393110eb9c5c1d7`). *Le repli a cessé de changer quoi que ce soit.* ⛔ Les **4 seules cellules** qui bougent dans tout l'instantané sont le cran `null`, documenté ci-dessus.
+
+**⚠️⚠️ ET DEUX FOIS MON PROPRE TÉMOIN S'EST TROMPÉ DE CIBLE — LA MÊME FAMILLE QUE §61/§63.** ① il comptait **7 copies pour 6** : la ligne du **propriétaire** contient forcément la conversion, c'est son métier ; ② puis il comptait comme copie **le commentaire R30 qui CITE `10-n` pour expliquer le retrait** — *un témoin qui ne distingue pas le code de ce qui en PARLE finit par interdire d'écrire la documentation du correctif*. C'est le piège de **ft-v1193**, repayé à trois semaines d'écart. 👉 ***L'instrument fait partie de la mesure.***
+
+**⚠️⚠️ ET J'AI CASSÉ DEUX DE MES PROPRES RÈGLES D'OUTILLAGE DANS LA MÊME MINUTE — dit parce que ça resservira.** ① J'ai corrigé un **commentaire** de `state.js` — un fichier **servi** — *pendant* que la passe tournait : c'est **§60** mot pour mot. ⭐ Prouvé inerte (le fichier **débarrassé de ses commentaires** est identique au caractère près avant/après), **mais la passe a quand même été relancée à neuf** : *une règle qu'on contourne parce qu'on a la preuve que c'était sans danger cette fois-ci n'est plus une règle.* ② En voulant l'arrêter, `pgrep -f "…runner.js" | xargs kill` a **tué mon propre shell** — le motif est dans sa propre ligne de commande. C'est le piège de **ft-v1189 et ft-v1193**, payé une **troisième** fois ; le remède est de filtrer sur `/proc/<pid>/cmdline` au lieu du motif. ⛔⛔ **Et le résultat de cette passe avortée est le pire des trois** : elle s'est arrêtée à mi-parcours en affichant **0 rouge** — *exactement §61*, une passe interrompue ressemble trait pour trait à une passe verte.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, rien n'est à faire : trois pièges de maintenance sont désamorcés (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la nutrition n'est PAS touchée** — consigne de Michel le même jour (*« tu ne touches surtout pas à la nutrition »*), c'est le chantier de l'autre session · ⛔ aucun autre orphelin de `log.js` n'est retiré (les 11 documentés restent, **R30**) · ⛔ ni le RIR lui-même, ni le RPE, ni le stockage, ni Milo. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne doit avoir changé, et c'est précisément ce qu'il y a à vérifier.
+
+Tests : **parcours 3583/3583 sur l'arbre FINAL** (+19, bloc **CCXCII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — aucun trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 11 MUTATIONS, TOUTES MORDENT, chacune sur son témoin** — ① le propriétaire rend un chiffre au lieu de `null` → **2** · ② une copie de la conversion réapparaît → **1** · ③ le propriétaire redevient décoratif → **1** · ④ le garde « pas un cran » retiré → **2** · ⑤ `_rirTxt` remise en place → **1** · ⑥ l'écran n'affiche plus le libellé du propriétaire → **1** · ⑦ le repos ignore le réglage de la personne → **1** · ⑧ un site garde son propre repli → **2** · ⑨ le repli n'est plus celui de l'installation → **1** · ⑩ les règles par TYPE avalées → **1** · ⭐ ⑪ **une copie qui ÉCHAPPE au motif** (`10 - +n`) → **1 rouge, exactement le second verrou** — *c'est elle qui prouve que le témoin « le propriétaire est vraiment appelé » n'est pas décoratif.*
+
+Fichiers : `log.js`, `state.js`, `app.js`, `coach.js`, `tests/parcours/runner.js`, `tools/instantane_seance_audit.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1195. |
 
 **ft-v1194 — 🧮 UN SEUL PROPRIÉTAIRE POUR LE POUR-100 g DÉRIVÉ · ET LE PÉRIMÈTRE DU PLAN ÉTAIT FAUX POUR LES DEUX AUTRES ÉTAPES** — Michel valide la phase 0a **sur iPhone** (la pastille « 410 g » ne survit pas au passage à un autre aliment) et donne le feu vert : ***« tu peux maintenant poursuivre le plan prévu : étape 1b ; étape 2 ; étape 3 »***, même méthode que 1a — *« extraction sans changement de comportement · témoins avant modification · instantané avant/après · aucune valeur attendue ne doit bouger · mutations négatives qui doivent mordre »*.
 
@@ -707,41 +733,6 @@ Tests : **parcours 3481/3481 sur l'arbre FINAL** (+18, bloc **CCLXXXV**), **calc
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1060**, `conclusion: success` à **08:52:22 UTC** sur `fb392db4`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la liste filtrée `status: completed`* — la leçon de ft-v1182.
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1188. |
-
-**ft-v1187 — 🔗 RATTACHER UN EXERCICE PERSO AU CATALOGUE EN UN GESTE — L'APP SAVAIT LA RÉPONSE ET NE LA PROPOSAIT PAS** — Michel, capture de sa séance du 9 sept : ***« Tirage vertical c'est pas bon non plus »***.
-
-**⭐⭐ MESURÉ AVANT DE CODER, ET LE RAPPROCHEUR N'EST PAS EN CAUSE.** `_matchExercise('Tirage vertical')` rend **« Tirage Poulie Haute (Lat Pulldown) » à 95 %, via « équivalence connue »** — c'est **ft-v1170, livrée le 08/09**. Son programme a été importé **avant**, donc le nom est figé dans son historique. 👉 *L'app ne réécrit pas le passé toute seule* (**R29**), et c'est voulu.
-
-**⛔⛔ LE VRAI TROU EST DANS LA RÉPARATION, PAS DANS L'IMPORT.** La fusion existe depuis longtemps — `_saveCustomExEdit` → `_mergeCustomInto` → `_renameExEverywhere`, qui déplace **séances + records + programmes + séance en cours** — mais elle n'est atteinte que si le nom retapé tombe **PILE** sur un nom du catalogue. Or `_normEx` **aplatit** la ponctuation sans la supprimer :
-
-| ce qu'on tape | clé obtenue | fusion ? |
-|---|---|---|
-| `Tirage Poulie Haute (Lat Pulldown)` | `tirage poulie haute lat pulldown` | ✅ |
-| **`Tirage Poulie Haute`** (la forme naturelle) | `tirage poulie haute` | ⛔ **aucune** |
-
-👉 ***Taper la forme naturelle ne fusionne rien : ça renomme le fantôme, et on en a DEUX.*** Sur un téléphone, avec un « (Lat Pulldown) » à écrire de mémoire. Et l'écran d'édition n'avait **aucun** bouton de rattachement — mesuré : 5 contrôles, le mot `rattach` absent du HTML.
-
-**⭐ ON N'INVENTE NI MÉCANISME NI SEUIL (R13/R2).** La fusion est **celle qui existait** ; et *« est-ce assez sûr ? »* a **déjà un propriétaire** — le `tier` de `_matchExercise`. On propose **exactement** quand l'import aurait rattaché tout seul (`tier==='auto'`), jamais dans la zone grise.
-
-**⛔⛔ ET LA ZONE GRISE RESTE MUETTE, C'EST LE GARDE-FOU DE LA VERSION** : « développé épaules guidé » — **le cas ambigu de Michel** en ft-v1172 — sort à **67 % / `confirm`**, et le bandeau ne dit rien. *Si l'expert hésite, l'app se tait* (**R29**). Un rattachement faux couperait un historique en deux, en silence.
-
-**⚠️ LA SOURCE DE LA FUSION EST TOUJOURS `_editingCustomExName`, jamais le contenu du champ** : c'est l'historique de l'exercice **réel** qu'on déplace, pas celui d'un nom en cours de frappe. Le bandeau **nomme les deux côtés** — *« C'est « Tirage Poulie Haute (Lat Pulldown) » du catalogue. Rattacher déplace l'historique et les records de « Tirage vertical », puis supprime le doublon. »* — pour que la décision soit facile (**R29** : informer sans décider).
-
-**⭐ EN CRÉATION ON INFORME, SANS BOUTON** : il n'y a aucun historique à déplacer, et on n'empêche personne de créer son exercice (**R24**). *C'est pourtant la porte par laquelle les fantômes NAISSENT, et elle était muette.*
-
-**📣 RÈGLE D'OR #11 — LE BANDEAU EST L'ANNONCE**, à l'écran au moment où ça sert. Aucune pop-up, aucun point rouge : rien n'est à faire tant qu'on n'ouvre pas un exercice perso (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne répare RIEN tout seul** — c'est la personne qui tape « Rattacher », par choix. ⛔ Ni l'import, ni le rapprocheur, ni `_EX_EQUIV` ne sont touchés. ⛔ Et rien n'est proposé dans la zone grise, **exprès**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1057**, `conclusion: success` à **07:13:56 UTC** sur `cdeb642f`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la LISTE filtrée `status: completed`* — la leçon de ft-v1182.
-
-Tests : **parcours 3463/3463** (+12, bloc **CCLXXXIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations, TOUTES MORDENT** — ① le bandeau neutralisé → **7 rouges** · ② le seuil `auto` retiré (zone grise acceptée) → **2 rouges**, exactement l'exercice neuf et le cas ambigu · ③ le garde « c'est déjà ce nom-là » retiré → **1** · ④ le bouton de fusion affiché même en création → **1** · ⑤ le câblage `oninput` du champ retiré → **1** · ⑥ `_setCexFormMode` qui n'appelle plus le bandeau → **6**.
-
-**⚠️⚠️ ET UN TROU DE TÉMOIN TROUVÉ PAR LA MUTATION ⑤, POUR LA TROISIÈME VERSION DE SUITE.** Ma 1ʳᵉ version **appelait `_majCexRattacher()` à la main** dans les témoins de silence : retirer le `oninput` du champ ne faisait alors rougir **personne**, et le câblage aurait ressemblé à de la décoration. Les témoins **tapent désormais pour de vrai** (événement `input` dispatché). ⭐ **Honnêteté sur cette mutation** : elle ne fait **qu'un** rouge, celui de la création — et c'est **structurel, pas un oubli** : *un témoin qui affirme « le bandeau est CACHÉ » ne peut pas distinguer « correctement muet » de « fil débranché »*. **Seul un témoin qui attend du VISIBLE attrape un câblage mort.**
-
-**⚠️ ET MON HARNAIS DE MUTATION M'A MENTI AU PASSAGE** : il coupait la sortie à `tail -4`, donc un rouge en 8ᵉ position sur 12 était **invisible** — j'ai lu « 0 rouge » sur une mutation qui mordait, et j'ai failli en conclure que le câblage était mort. 👉 ***Un outil de mesure tronqué ressemble à un code sans défaut.***
-
-Fichiers : `log.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1187. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

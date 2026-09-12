@@ -10,8 +10,28 @@
 function _authCode(){ try{ return localStorage.getItem('ft4_authcode')||''; }catch(e){ return ''; } }
 function _setAuthCode(c){ try{ if(c) localStorage.setItem('ft4_authcode',c); else localStorage.removeItem('ft4_authcode'); }catch(e){} }
 let _chartPts=[];
+/* ⏱️ LE REPOS PAR DÉFAUT — UN SEUL PROPRIÉTAIRE (12/09/2026, ft-v1195)
+   Michel : *« vas-y corrige tout »*, sur le 3ᵉ constat de l'audit de l'onglet Séance.
+   ⛔⛔ MESURÉ AVANT, site par site : la même question — *« combien de repos si la personne n'a
+   rien réglé ? »* — avait TROIS réponses, et elles ne se répartissaient même pas par fichier :
+     · **130** → ici (l'installation) · `coach.js` (`_rythmeSeance`) · `log.js` (la barre de repos)
+     · **120** → `app.js` ×2 (`_dureeSeanceMin`, `calcSessionCalories`)
+     · **90**  → `log.js` ×2 (`startRest`, `_defRestForType`)
+   👉 **`log.js` se contredisait à lui-même** (130 dans la barre, 90 dans le chrono et l'éditeur),
+   ce qui est le signe le plus net qu'il ne s'agissait pas d'un choix mais d'un oubli (R2).
+   ⚠️ DORMANT, PAS INOFFENSIF : `load()` pose toujours `S.defRest`, donc les replis ne se
+   déclenchent jamais — c'est pour ça que personne ne l'a vu. Mais la divergence a DÉJÀ mordu
+   une fois, en ft-v1080 : l'éditeur de programme annonçait 90 s en placeholder quand la séance
+   appliquait 130. *Une valeur en double finit toujours par être lue au mauvais endroit.*
+   ⭐ Le propriétaire répond à la question complète (« son réglage, sinon le défaut »), et pas
+   seulement au défaut : sinon chaque appelant réécrirait le `||` et on y reviendrait. */
+const REPOS_DEFAUT = 130;
+function reposDefaut(){
+  const n = (typeof S!=='undefined') ? +S.defRest : NaN;
+  return (n>0) ? n : REPOS_DEFAUT;
+}
 let S={
-  bw:80,barW:20,defRest:130,
+  bw:80,barW:20,defRest:REPOS_DEFAUT,
   gender:'H',age:30,height:175,activityLevel:1.55,
   workType:'bureau',smoker:false,halo:'on',haloColor:'59,130,246',haloDir:'top',
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
@@ -76,7 +96,7 @@ function load(){
   try{
     S.bw=parseFloat(localStorage.getItem('ft4_bw')||'0')||0;
     S.barW=parseFloat(localStorage.getItem('ft4_bar')||'20')||20;
-    S.defRest=parseInt(localStorage.getItem('ft4_rest')||'130')||130;
+    S.defRest=parseInt(localStorage.getItem('ft4_rest')||String(REPOS_DEFAUT))||REPOS_DEFAUT;
     S.expandAll=localStorage.getItem('ft4_expandall')==='1'; // option « tout dérouler » les exercices en séance (retour Emma)
     // MODE alimentaire — un seul à la fois : ils se contredisent (on n'est pas kéto ET low carb).
     // '' | keto | lowcarb | paleo | mediterraneen. ⚠️ RÉTROCOMPAT : les comptes qui avaient

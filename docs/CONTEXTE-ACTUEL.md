@@ -30,20 +30,41 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- 🏗️ **AUDIT D'ARCHITECTURE DE L'ONGLET SÉANCE — FAIT LE 12/09, RIEN CORRIGÉ (décision de Michel).**
-  *« Note dans les journaux, on refera un état des lieux quand j'aurai fini les bugs de la nutrition. »*
+- ✅ **AUDIT D'ARCHITECTURE DE L'ONGLET SÉANCE — FAIT LE 12/09, ET SES 3 CONSTATS CORRIGÉS (ft-v1195).**
   ⭐ **Verdict : l'architecture est saine.** 1603 fonctions pour **1602 noms distincts** (le seul
   doublon est un helper local), **0 collision** sur 533 `const`/`let`, 7 portes d'entrée / 2 de sortie
   cohérentes, et les deux questions centrales (« séance valide ? », « séance ouverte ? ») ont chacune
   **un propriétaire unique**.
-  ⚠️ **Trois constats en attente** : ① `_rpeDeRir` appelée **0 fois** pendant que sa conversion est
-  recopiée **6 fois** · ② `_rirTxt` **morte en prod**, vivante dans un témoin (§58) · ③ `S.defRest`
-  a **trois** valeurs de repli (130/120/90), dormant mais déjà mordu en ft-v1080.
-  ⛔ **Trois fausses pistes écartées AVEC leur raison** (`startHour`, le verrou d'écran, le repli de
-  `state.js`) — écrites pour que personne ne les « répare » dans six mois (**R30**).
-  👉 **Détail chiffré : `docs/SUIVI-AUDIT.md` · candidats de témoins : `docs/JOURNAL-DE-TEST.md`.**
+  ⭐⭐ **Michel a levé lui-même son propre ordre** (*« on refera un état des lieux quand j'aurai fini
+  les bugs de la nutrition »*) après avoir lu les constats en clair : ***« vas-y corrige tout »***.
+  ✅ **Les trois sont corrigés** : ① `_rpeDeRir` redevient le seul propriétaire de la conversion
+  (elle était appelée **0 fois** pendant que `10−n` était retapée **6 fois**) · ② `_rirTxt`, morte
+  en prod et **périmée deux fois**, est retirée avec sa raison (**R30**) et son témoin remis sur le
+  vrai chemin (§58) · ③ `reposDefaut()` remplace les **trois** replis divergents (130/120/90).
+  ⛔ **Trois fausses pistes restent écartées AVEC leur raison** (`startHour`, le verrou d'écran, le
+  repli de `state.js`) — écrites pour que personne ne les « répare » dans six mois (**R30**).
+  👉 **Détail chiffré : `docs/SUIVI-AUDIT.md` · les témoins : bloc CCXCII du banc parcours.**
 
-- **Version en ligne (live) :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
+- **Version en ligne (live) :** `ft-v1195` — 🔧 **les 3 constats de l'audit « onglet Séance »,
+  corrigés — et aucun n'était visible à l'écran.** Michel lève lui-même l'ordre qu'il avait posé le
+  matin : ***« vas-y corrige tout »***.
+  ⛔⛔ **Donc le contrat est celui des extractions nutrition** : ce sont des *pièges pour plus tard*,
+  pas des bugs subis → **aucune valeur affichée ne doit bouger**, prouvé par
+  `tools/instantane_seance_audit.js` (avant/après, rejouable).
+  ⭐ ① `_rpeDeRir` était **appelée 0 fois** pendant que `10−n` était retapée dans **3 fonctions /
+  6 occurrences** — *l'avertissement était écrit juste au-dessus du code qui l'ignore* (**R2**).
+  ⛔ **Garde ajouté** : hors échelle, un cran `null` sortait **« 10 »** en RPE, c'est-à-dire
+  « série à l'échec » pour une série **non notée** — la confusion de ft-v1154. Il rend `''`.
+  ⭐ ② `_rirTxt` **morte en production** et **périmée deux fois**, retirée avec sa raison (**R30**) ;
+  son témoin remis sur le **vrai** chemin (`_reserveEchecTxt`, §58).
+  ⭐ ③ `reposDefaut()` remplace **trois** replis (130 / 120 / 90) — dormant, mais **déjà mordu** en
+  ft-v1080.
+  ⭐⭐ **Le correctif dit en une mesure** : le bloc « vraie vie » de l'instantané est **identique
+  octet pour octet**, et le bloc « état impossible » rend désormais **le même sha** que lui.
+  ⚠️ **À vérifier par Michel sur Safari/iPhone** — en principe **rien** n'a changé, et c'est
+  exactement ça qu'il y a à vérifier.
+
+- **Version précédente :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
   et le périmètre du plan était FAUX pour les deux autres étapes.**
   Michel valide la phase 0a **sur iPhone** et donne le feu vert pour **1b, 2 et 3** — avec la
   consigne qui décide de tout : *« si une divergence réelle apparaît, mesure-la et **arrête-toi

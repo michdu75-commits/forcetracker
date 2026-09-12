@@ -153,10 +153,16 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 
 > Demande de Michel : *« fais un check de l'architecture de l'onglet séance, vérifie tout ce qui peut
 > arriver, vérifie s'il n'y a pas des incohérences, des fonctions en double »*.
-> ⛔ **LECTURE ET MESURE UNIQUEMENT — aucune ligne de production n'a été modifiée.**
-> ⛔⛔ **DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état des lieux
-> quand j'aurai fini les bugs de la nutrition »*. 👉 **Rien n'est corrigé pour l'instant, et c'est
-> volontaire** — les trois constats ci-dessous attendent la fin du chantier nutrition.
+> ⛔ **L'AUDIT LUI-MÊME : lecture et mesure uniquement — aucune ligne de production n'a été modifiée.**
+> ⛔⛔ **PREMIÈRE DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état
+> des lieux quand j'aurai fini les bugs de la nutrition »*.
+> ✅✅ **PUIS IL L'A LEVÉE LUI-MÊME, DEUX HEURES PLUS TARD** : après avoir lu les trois constats en
+> clair, ***« vas-y corrige tout »***. 👉 **LES TROIS SONT CORRIGÉS EN ft-v1195** — le détail est
+> dans le journal des versions (`CLAUDE.md`) ; ce qui suit reste le **constat d'origine**, gardé
+> intact parce que c'est lui qui dit *pourquoi* c'était un piège (**R30** : on garde la raison,
+> pas seulement la décision).
+> ⭐ **Ce que la correction a coûté, mesuré** : 19 témoins permanents (bloc CCXCII), 11 mutations
+> qui mordent, et un instantané avant/après qui prouve que **rien n'a bougé à l'écran**.
 
 ### ✅ Ce qui est SAIN (mesuré)
 
@@ -172,7 +178,7 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 | le champ `cardio.min` (le faux bug de ft-v1184) | **entièrement disparu** — `duration` partout |
 | orphelins de `log.js` | **13 sur 422**, dont **11 avec une trace écrite** |
 
-### ⭐ CONSTAT n°1 — la fonction écrite pour empêcher une recopie a été recopiée
+### ✅ CONSTAT n°1 — CORRIGÉ (ft-v1195) — la fonction écrite pour empêcher une recopie a été recopiée
 
 `_rpeDeRir(n)` porte ce commentaire : *« LA CONVERSION N'A QU'UN SEUL ENDROIT. Elle est triviale, et
 c'est justement pour ça qu'elle serait recopiée partout si on ne la nommait pas — **puis un jour l'une
@@ -183,14 +189,14 @@ fonctions** (`_reserveBoutonTxt` · `_reserveBadgeTxt` · `_rirTxt`), **6 occurr
 👉 Si `RIR_MAX` ou le barème bougent, il faut corriger **6 endroits** au lieu d'un. *L'avertissement
 était écrit juste au-dessus du code qui l'ignore* (**R2**).
 
-### ⚠️ CONSTAT n°2 — une fonction morte en production, vivante dans un témoin
+### ✅ CONSTAT n°2 — CORRIGÉ (ft-v1195) — une fonction morte en production, vivante dans un témoin
 
 `_rirTxt` n'apparaît **nulle part** dans les 10 fichiers servis ni dans `index.html`, sauf à sa propre
 déclaration. Elle n'est appelée que par **un témoin** (`tests/parcours/runner.js`), qui croit vérifier
 le libellé d'échec en RPE — or l'écran affiche `_reserveEchecTxt()`.
 👉 **`BUGS.md` §58** : *vérifier la fonction n'est pas vérifier l'appel.*
 
-### ⚠️ CONSTAT n°3 — trois valeurs de repli pour le même réglage
+### ✅ CONSTAT n°3 — CORRIGÉ (ft-v1195) — trois valeurs de repli pour le même réglage
 
 `S.defRest` (temps de repos par défaut) a **trois replis différents** selon l'endroit :
 

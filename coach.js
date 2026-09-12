@@ -155,7 +155,7 @@ function _rythmeSeance(){
     // ⚠️ PAS ASSEZ D'HISTORIQUE → on ne se tait pas, mais on DIT que c'est une estimation.
     // Elle est DÉDUITE de son temps de repos réglé, pas inventée : repos + ~40 s d'exécution
     // + ~30 s pour charger/décharger et se replacer.
-    const repos=(+S.defRest||130);
+    const repos=reposDefaut();                         // ⏱️ un seul propriétaire (state.js, ft-v1195)
     return {min:Math.round(((repos+70)/60)*10)/10, n:0, mesure:false};
   }catch(e){ return null; }
 }

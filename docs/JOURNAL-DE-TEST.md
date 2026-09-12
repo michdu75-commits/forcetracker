@@ -2752,13 +2752,20 @@ comme un chantier qui déborde* (R23/R28).
 
 ---
 
-### 🟡 À TRIER — TROIS CONSTATS DE L'AUDIT « ONGLET SÉANCE », EN ATTENTE (12/09/2026)
+### 🔵 PROMUE — LES TROIS CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09 → CORRIGÉS EN ft-v1195, 19 témoins permanents)
 
 Audit d'architecture demandé par Michel, **lecture seule**. Détail complet et chiffré :
 `docs/SUIVI-AUDIT.md` § « Audit d'architecture — l'onglet Séance ».
 
-⛔⛔ **DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état des lieux
-quand j'aurai fini les bugs de la nutrition »*. **Rien n'est corrigé, et c'est volontaire.**
+⛔⛔ **PREMIÈRE DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état
+des lieux quand j'aurai fini les bugs de la nutrition »*.
+✅✅ **PUIS IL L'A LEVÉE LUI-MÊME, DEUX HEURES PLUS TARD**, après avoir lu les trois constats en
+clair : ***« vas-y corrige tout »***. **Les trois sont corrigés en ft-v1195** — bloc **CCXCII**,
+**19 témoins**, **11 mutations qui mordent**, et un instantané avant/après
+(`tools/instantane_seance_audit.js`) qui prouve que **rien n'a bougé à l'écran**.
+⭐ **Ce que ça confirme du critère de ce fichier** : les trois étaient marqués *« promouvables —
+leur attendu est vérifiable par du CODE »*, et ils l'étaient. **Ce qui les retenait n'était pas le
+critère, c'était l'ordre des chantiers** — c'est-à-dire une décision, pas une limite technique.
 
 | # | constat | vérifiable par du code ? |
 |---|---|---|

@@ -16767,7 +16767,12 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
     /* ── LA BASCULE ── */
     setEchelleReserve('rpe');
     o.rpe=lire(); o.rpeBadge=_reserveBadgeTxt(2); o.rpeExtreme=_reserveBadgeTxt(4);
-    o.rpeEchec=_rirTxt(0); o.rpeTxt=_rirTxt(2);
+    /* ⛔⛔ CE TÉMOIN LISAIT `_rirTxt`, QUI N'ÉTAIT AFFICHÉE NULLE PART (corrigé 12/09, ft-v1195).
+       Il croyait vérifier le libellé d'échec en RPE ; l'écran, lui, passe par `_reserveEchecTxt`.
+       *Vérifier la fonction n'est pas vérifier l'appel* (`BUGS.md` §58). Le voici sur le vrai
+       chemin — et `_rirTxt` a été retirée du code (R30, sa raison est écrite à sa place). */
+    o.rpeEchec=_reserveEchecTxt();
+    o.rpeBoutons0=_reserveBoutonTxt(0);
     /* ⛔⛔ LA DONNEE N'A PAS BOUGE — le temoin central. */
     o.donnee=S.wkt.exs[0].sets[0].rir;
     o.rirDeSet=_rirDeSet(S.wkt.exs[0].sets[0]);
@@ -33895,6 +33900,167 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     t('CCLXXXIX ⛔⛔ ... et le jour de l\'AUTRE variante se charge vraiment quand on le tape',
       R.autreVarianteChargeable===true);
   }
+}
+
+
+/* ═══ CCXCII. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
+   Michel, après avoir lu les trois constats : *« vas-y corrige tout »*. Il lève lui-même l'ordre
+   qu'il avait posé le matin même (*« on refera un état des lieux quand j'aurai fini les bugs de
+   la nutrition »*).
+
+   ⛔⛔ LES TROIS SONT INVISIBLES À L'ÉCRAN AUJOURD'HUI — ce sont des pièges pour plus tard, pas
+   des bugs qu'on subit. Donc ce bloc ne peut PAS se contenter de vérifier que le correctif est
+   là : l'essentiel est de figer que **rien n'a bougé pour la personne**. La preuve chiffrée est
+   dans `tools/instantane_seance_audit.js` (comparaison octet pour octet, avant/après) ; ici on
+   fige les GARANTIES, qui doivent survivre aux versions suivantes.
+   *Un instantané prouve qu'on n'a rien cassé aujourd'hui ; un témoin empêche de le casser demain.*
+
+   ⚠️ LES LIBELLÉS ATTENDUS SONT RECOPIÉS DE L'INSTANTANÉ « AVANT », pas réinventés — un attendu
+   écrit APRÈS coup se contente de décrire le code qu'on vient d'écrire, et ne peut plus le
+   contredire. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={}; const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR:'+e.message; } };
+    const crans=[0,1,2,3,4];
+
+    /* ── CONSTAT n°1 — un seul propriétaire pour « RPE = 10 − RIR » ── */
+    o.owner   = (typeof _rpeDeRir==='function');
+    o.ownerOK = o.owner && crans.map(n=>_rpeDeRir(n)).join(',');
+    /* ⛔ R29 : une fonction qui ne sait pas rend `null`, et ce `null` ne devient jamais un défaut. */
+    o.ownerNull = o.owner && (_rpeDeRir(null)===null) && (_rpeDeRir(undefined)===null);
+
+    /* ── LES LIBELLÉS, DANS LES DEUX ÉCHELLES (ce que la personne LIT) ── */
+    S.echelleReserve='rir';
+    o.rirBouton = crans.map(n=>String(sur(()=>_reserveBoutonTxt(n)))).join('|');
+    o.rirBadge  = crans.map(n=>String(sur(()=>_reserveBadgeTxt(n)))).join('|');
+    S.echelleReserve='rpe';
+    o.rpeBouton = crans.map(n=>String(sur(()=>_reserveBoutonTxt(n)))).join('|');
+    o.rpeBadge  = crans.map(n=>String(sur(()=>_reserveBadgeTxt(n)))).join('|');
+    /* ⭐ Et par le VRAI appel de la colonne « précédent », pas par la fonction seule (§58). */
+    o.prevRpe   = [_prevRirBadge({rir:2}),_prevRirBadge({rir:0}),_prevRirBadge({rir:4}),
+                   _prevRirBadge({rir:2,type:'X'})].join('|');
+    S.echelleReserve='rir';
+    o.prevRir   = [_prevRirBadge({rir:2}),_prevRirBadge({rir:0}),_prevRirBadge({rir:4}),
+                   _prevRirBadge({rir:2,type:'X'})].join('|');
+
+    /* ⛔ HORS DE L'ÉCHELLE, ON NE DIT RIEN — et surtout pas un chiffre crédible. Avant, en RPE,
+       un cran `null` sortait « 10 » : c'est-à-dire l'affirmation « série à l'échec » pour une
+       série que personne n'a notée — exactement la confusion que ft-v1154 a corrigée ailleurs. */
+    S.echelleReserve='rpe';
+    o.horsEchelleRpe = [_reserveBoutonTxt(null),_reserveBadgeTxt(null),
+                        _reserveBoutonTxt(undefined),_reserveBadgeTxt(undefined)].join('|');
+    S.echelleReserve='rir';
+    o.horsEchelleRir = [_reserveBoutonTxt(null),_reserveBadgeTxt(null)].join('|');
+
+    /* ── CONSTAT n°2 — `_rirTxt` n'existe plus, et l'écran passe par `_reserveEchecTxt` ── */
+    o.rirTxtPartie = (typeof _rirTxt==='undefined');
+    /* ⭐⭐ LE VRAI CHEMIN : une série taguée `X` fige la barre, et c'est CE rendu qu'on lit —
+       vérifier la fonction n'est pas vérifier l'appel (§58). */
+    S.wkt={date:today(),start:Date.now()-600000,exs:[{name:'Développé Couché',
+      sets:[{kg:80,reps:8,done:true,type:'X',rest:150}]}]};
+    persist();
+    _rirCible={ei:0,si:0};
+    if(typeof _renderRirRow==='function') _renderRirRow();
+    const zone=document.getElementById('rest-rir');
+    o.echecAffiche=((zone&&zone.querySelector('.rir-lbl'))||{}).textContent||'';
+    o.echecProprio=sur(()=>_reserveEchecTxt());
+
+    /* ── CONSTAT n°3 — un seul repli pour le repos par défaut ── */
+    const seance={date:'2026-09-12',duration:3600,exs:[
+      {name:'Développé Couché',sets:[{kg:80,reps:8,done:true},{kg:80,reps:8,done:true},{kg:80,reps:6,done:true}]},
+      {name:'Squat',sets:[{kg:100,reps:5,done:true},{kg:100,reps:5,done:true}]}]};
+    o.reposProprio = (typeof reposDefaut==='function');
+    /* ⭐ LE RÉGLAGE DE LA PERSONNE GAGNE TOUJOURS — c'est ce que le repli ne doit pas manger. */
+    S.defRest=180;
+    o.regle = o.reposProprio && [reposDefaut(), _defRestForType(''), _rythmeSeance().min].join('|');
+    /* ⛔ PUIS L'ÉTAT IMPOSSIBLE : plus de réglage du tout. Les trois sites doivent dire LA MÊME
+       chose — avant, ils disaient 90, 120 et 130 selon le fichier. */
+    delete S.defRest;
+    o.sansReglage = o.reposProprio && {
+      proprio: reposDefaut(),
+      log:     _defRestForType(''),
+      coach:   _rythmeSeance().min,
+      app:     _dureeSeanceMin(seance,5,0).min
+    };
+    S.defRest=130;
+    /* ⛔ ET LES RÈGLES PAR TYPE NE SONT PAS AVALÉES AU PASSAGE (échauffement, échec, dropset). */
+    o.parType = ['É','W','X','E','D'].map(t=>_defRestForType(t)).join('|');
+    return o;
+  });
+
+  console.log('\n-- CCXCII. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
+  t('CCXCII ① le propriétaire de la conversion RPE existe', R.owner===true);
+  t('CCXCII ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
+  t('CCXCII ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
+  t('CCXCII ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
+  t('CCXCII ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
+  t('CCXCII ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
+  t('CCXCII ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
+  t('CCXCII ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
+    R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir">·0r</span>|<span class="prev-rir">·4+r</span>|'
+    && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir">·@10</span>|<span class="prev-rir">·@≤6</span>|',
+    'RIR '+R.prevRir+' · RPE '+R.prevRpe);
+  t('CCXCII ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
+    R.horsEchelleRpe==='|||' && R.horsEchelleRir==='|', 'RPE ['+R.horsEchelleRpe+'] · RIR ['+R.horsEchelleRir+']');
+  t('CCXCII ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
+  t('CCXCII ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
+    R.echecAffiche===R.echecProprio && /une répétition n'est pas passée/.test(R.echecAffiche),
+    'écran : "'+R.echecAffiche+'" · propriétaire : "'+R.echecProprio+'"');
+  t('CCXCII ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
+  t('CCXCII ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
+    R.regle==='180|180|4.2', 'reçu : '+R.regle);
+  t('CCXCII ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
+    R.sansReglage && R.sansReglage.log===R.sansReglage.proprio
+      && R.sansReglage.coach===Math.round(((R.sansReglage.proprio+70)/60)*10)/10
+      && Math.abs(R.sansReglage.app-(5*(30+R.sansReglage.proprio)/60))<0.01,
+    'reçu : '+JSON.stringify(R.sansReglage));
+  t('CCXCII ③ ... et ce repli est celui de l\'installation (130 s)',
+    R.sansReglage && R.sansReglage.proprio===130, 'reçu : '+(R.sansReglage||{}).proprio);
+  t('CCXCII ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
+    R.parType==='45|45|240|240|20', 'reçu : '+R.parType);
+
+  /* ⛔⛔ ET LE TÉMOIN QUI EMPÊCHE LA RECHUTE — il lit la SOURCE, parce qu'une copie de la
+     conversion peut très bien donner le bon chiffre aujourd'hui et diverger dans six mois.
+     C'est tout l'objet du constat n°1 : le code était juste, le risque était la duplication. */
+  (()=>{
+    const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+    const proprio=/function _rpeDeRir\(/.test(lg);
+    /* ⚠️⚠️ DEUX RÉGLAGES DE L'INSTRUMENT, CHACUN PAYÉ SUR CE TÉMOIN-LÀ (12/09) :
+       ① la ligne du PROPRIÉTAIRE est retirée — elle contient forcément la conversion, c'est son
+          métier ; sans ça le témoin annonce 7 copies pour 6, et on cherche une septième qui
+          n'existe pas ;
+       ② les COMMENTAIRES sont retirés — la note R30 qui explique le retrait de `_rirTxt` CITE le
+          motif `10-n`, et le témoin la comptait comme une copie. *Un témoin qui ne distingue pas
+          le code de ce qui en PARLE finit par interdire d'écrire la documentation du correctif*
+          (déjà vu en ft-v1193, repayé ici).
+       👉 *L'instrument fait partie de la mesure* (`BUGS.md` §61 / §63).
+       le `-` ASCII seulement : les commentaires écrivent « RPE = 10 − RIR » avec un vrai moins */
+    const horsProprio=lg.replace(/\/\*[\s\S]*?\*\//g,'')          // blocs /* … */
+                        .replace(/(^|[^:])\/\/.*$/gm,'$1')        // // … (sans casser les URL)
+                        .split('\n').filter(l=>!/function _rpeDeRir\(/.test(l)).join('\n');
+    const copies=(horsProprio.match(/10\s*-\s*(n|RIR_MAX)\b/g)||[]);
+    const appels=(lg.match(/_rpeDeRir\s*\(/g)||[]).length-1;   // -1 : sa propre déclaration
+    t('CCXCII ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
+      'trouvé : '+JSON.stringify(copies));
+    t('CCXCII ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
+      appels>=2, appels+' appel(s)');
+  })();
+
+  /* ⛔ MÊME LOGIQUE POUR LE REPOS : un repli numérique recollé à `S.defRest` dans un fichier
+     servi, et les trois valeurs recommencent à diverger — en silence, puisque c'est dormant. */
+  (()=>{
+    const mauvais=[];
+    ['log.js','app.js','coach.js','screens.js','tracking.js','setup.js'].forEach(f=>{
+      const src=fs.readFileSync(path.join(ROOT,f),'utf8');
+      (src.match(/S\.defRest\s*(\|\|\s*\d+|[?:]\s*\d+)/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
+      (src.match(/\+S\.defRest\s*>\s*0\s*\)\s*\?/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
+    });
+    t('CCXCII ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
+      mauvais.length===0, mauvais.join(' · '));
+  })();
 }
 
 

@@ -552,7 +552,7 @@ function _dureeSeanceMin(session, nSets, dureeFormuleMin){
     if(!douteuse) return {min:borne(ch), src:'chrono'};
   }
   // ③ estimation — le réglage de repos de la personne, rien d'autre
-  const rest = (typeof S!=='undefined' && S.defRest) ? S.defRest : 120;
+  const rest = reposDefaut();                          // ⏱️ un seul propriétaire (state.js, ft-v1195)
   const est = borne(nSets*(30+rest)/60);
   return {min: est || dureeFormuleMin, src: est ? 'estimee' : 'formule'};
 }
@@ -718,7 +718,7 @@ function _facteurCharge(kg, rm1){
 }
 function calcSessionCalories(session) {
   const bw = S.bw || 80;
-  const restSec = S.defRest || 120;
+  const restSec = reposDefaut();                       // ⏱️ un seul propriétaire (state.js, ft-v1195)
   const exs = session.exs || session.exercises || [];
   
   let totalCals = 0;
