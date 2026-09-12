@@ -285,8 +285,10 @@ F.append(P("1. Le perimetre : ce que le plan annonce, ce que la mesure donne", '
 F.append(tableau(
     ["etape", "perimetre du plan", "perimetre MESURE", "fait ?"],
     [["<b>1b</b> &mdash; la &laquo; forme aliment &raquo;", "5 sites",
-      "<b>%d lignes</b> portent " % FORME_ALIMENT + C % 'portionWeightG' +
-      " a elles seules, en <b>3 formes</b>", "<b>non</b>"],
+      "<b>%d lignes</b> portent le SEUL champ " % FORME_ALIMENT + C % 'portionWeightG' +
+      " <i>(recompte ici)</i>. Le balayage donne <b>au moins 15</b> lecteurs/ecrivains de "
+      "la forme aliment, en <b>3 ecritures differentes</b> <i>(mesure a la main, PAS "
+      "recomptee par ce generateur)</i>", "<b>non</b>"],
      ["<b>2</b> &mdash; le pour-100 g derive", "3 sites",
       "<b>3</b> &mdash; <i>le seul juste</i>", "<b>livree</b>"],
      ["<b>3</b> &mdash; &laquo; quantite utilisable ? &raquo;", "6 sites",
@@ -381,7 +383,7 @@ F.append(P("5. Pourquoi le compteur s'est trompe (nouvelle famille &sect;63)", '
 F.append(bloc_code(AVEUGLE))
 F.append(P("<b>Meme cause pour l'export CSV</b> de " + C % 'setup.js' + " : <b>%d colonnes</b> aux "
            "noms <b>francais</b> (" % COLONNES + C % 'quantite, unite, portion_label...' +
-           "), avec sa liste figee a part. Aucun motif pensé pour le schema interne ne peut la voir."))
+           "), avec sa liste figee a part. Aucun motif pense pour le schema interne ne peut la voir."))
 F.append(encadre(
     "LA FAMILLE, ECRITE DANS `BUGS.md` &sect;63",
     "<b><i>Un motif de recherche qui suppose une SYNTAXE ne compte pas les endroits : il compte "
@@ -396,8 +398,9 @@ F.append(encadre(
     " ? &raquo;, qui trouve les <b>%d</b> ecrivains quelle que soit leur syntaxe) ; croiser avec "
     "les appelants (<i>la porte principale d'un ecran ne peut pas etre absente d'un inventaire de "
     "cet ecran</i>) ; et <b>dire le chiffre avec sa methode</b> &mdash; <i>&laquo; %d lignes "
-    "correspondent au motif X &raquo;</i> est verifiable, <i>&laquo; il y a %d sites &raquo;</i> ne "
-    "l'est pas." % (ECRIVAINS, REGLE_G + REGLE_P, REGLE_G + REGLE_P) +
+    "correspondent au motif X, recompte a chaque generation &raquo;</i> se verifie ; "
+    "<i>&laquo; il y a %d sites &raquo;</i> ne se verifie pas, parce qu'on ne sait meme pas "
+    "ce qui a ete compte." % (ECRIVAINS, REGLE_G + REGLE_P, 6) +
     "<br/><br/>Soeur de <b>&sect;58</b> (<i>verifier la fonction n'est pas verifier l'appel</i>) et "
     "de <b>&sect;61</b> (<i>un outil de mesure tronque ressemble a un code sans defaut</i>) : les "
     "trois disent la meme chose a trois endroits &mdash; <b>l'instrument fait partie de la mesure</b>."))
@@ -415,7 +418,7 @@ F.append(tableau(
      ["Calculs / muscles / croises / dates",
       "<b>339</b> / <b>241</b> / <b>50</b> / <b>9</b>, tous verts"],
      ["Donnees classees face a Milo",
-      "<b>aucun trou nouveau</b> (les 2 connus restent inchangés)"],
+      "<b>aucun trou nouveau</b> (les 2 connus restent inchanges)"],
      ["<b>Controle negatif</b>", "<b>8 mutations, TOUTES mordent</b>, chacune sur son temoin"],
      ["Deploiement (R18)", "run <b>#1091</b>, " + C % 'success' + " a 08:02:02 UTC"]],
     [62 * mm, 103 * mm]))
