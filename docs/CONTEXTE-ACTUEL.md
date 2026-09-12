@@ -29,7 +29,7 @@
   `_afSuggPrendreLocale` partagent **36 lignes utiles IDENTIQUES** (40 % de squelette commun) — *ce
   ne sont pas quinze sites éparpillés, c'est la reprise d'un aliment à l'écran, **écrite deux
   fois***. Et l'historique le disait déjà : ft-v973/975/984/1176 ont chacune porté un correctif
-  d'une porte à l'autre. **4 des 9 sous-étapes portent sur cette paire.**
+  d'une porte à l'autre. **5 des 10 sous-étapes portent sur cette paire.**
   📄 **Découpage complet : `docs/SOUS-ETAPES-1B-3.md`** — périmètre, sites, instantané, mutations,
   rollback et dépendances pour chacune.
   ⭐ **Livré : 1b-i SEULE** — le bloc `{q,u,per100,portionLabel,portionWeightG}` repris d'une ligne

@@ -25,7 +25,7 @@ journal (`_afSuggLoc`) — et à partir de là, elles font la même chose.
 du code le répètent mot pour mot : *« le mécanisme existait, posé sur une seule des deux portes —
 pour la 6ᵉ fois dans ce fichier »*.
 
-👉 **4 des 9 sous-étapes ci-dessous portent sur cette paire.** C'est là qu'est le gisement.
+👉 **5 des 10 sous-étapes ci-dessous portent sur cette paire** (1b-ii · 1b-v · 3-ii · 3-iii · 3-v). C'est là qu'est le gisement.
 
 ---
 
