@@ -31,6 +31,7 @@ SW = open(os.path.join(ROOT, 'sw.js'), encoding='utf-8').read()
 SONDE = open(os.path.join(ROOT, 'tools', 'instantane_1b23.js'), encoding='utf-8').read()
 SETUP = open(os.path.join(ROOT, 'setup.js'), encoding='utf-8').read()
 DEC = open(os.path.join(ROOT, 'docs', 'SOUS-ETAPES-1B-3.md'), encoding='utf-8').read()
+BUGS = open(os.path.join(ROOT, 'BUGS.md'), encoding='utf-8').read()
 
 VERSION = (re.search(r"const CACHE = '(ft-v\d+)'", SW) or [None, '?'])[1]
 
@@ -102,6 +103,10 @@ if TOTAL_SE != 10:
 if ECARTEES != 1:
     raise SystemExit('%d sous-etape(s) ecartee(s), pas 1 : tout le §2 parle d\'un cas unique.'
                      % ECARTEES)
+RECIDIVE_ECRITE = 'RÉCIDIVE LE 12/09/2026' in BUGS
+if not RECIDIVE_ECRITE:
+    raise SystemExit('La recidive §60 n\'est plus ecrite dans BUGS.md : le §6 de ce document '
+                     'affirme qu\'elle y a ete consignee.')
 if not (ORIG_REPRISE and ORIG_UTILISATEUR and ORIG_DUR):
     raise SystemExit('Les trois formulations divergentes d\'`origine` ne sont plus toutes la : '
                      'une harmonisation a eu lieu, ce que le §4 dit ne PAS avoir fait.')
@@ -412,7 +417,31 @@ F.append(encadre(
     "sonde LEVE si la liste qu'elle est censee conduire est vide.</i>"))
 
 # ── 6 ──
-F.append(P("6. Les mesures", 'h1'))
+F.append(P("6. Et j'ai refait une faute que j'avais moi-meme documentee", 'h1'))
+F.append(P("En eprouvant les gardes de ce document, j'ai mute deux fichiers de l'application "
+           "<b>pendant que la passe de tests tournait</b>. Le serveur du banc relit les fichiers "
+           "<b>a chaque requete</b> : tout bloc qui demarre pendant la fenetre recoit la version "
+           "cassee, et rend des rouges <b>plausibles</b> sur du code sain.", 'p'))
+F.append(encadre(
+    "CE QUE LA RECIDIVE AJOUTE A LA REGLE, ET C'EST LA SEULE RAISON DE L'ECRIRE",
+    "La regle existait, <b>ecrite par moi</b>, apres l'avoir payee une premiere fois. Mais elle "
+    "parlait du <b>controle negatif du CORRECTIF</b>."
+    "<br/><br/>Or <b>un document a ses gardes aussi, et les eprouver mute les memes fichiers</b>. "
+    "Le geste est identique&nbsp;; seule l'<b>intention</b> differe &mdash; et <i>l'intention n'est "
+    "pas ce que le serveur du banc lit</i>."
+    "<br/><br/>=&gt; <b>La regle se generalise : pendant une passe, aucun fichier servi ne bouge, "
+    "quelle que soit la RAISON de le faire.</b> Controle negatif du code, gardes d'un PDF, essai "
+    "rapide, mesure de curiosite &mdash; meme interdit."))
+F.append(P("=&gt; <b><i>Une regle qu'on a ecrite soi-meme, apres l'avoir payee, ne suffit pas a "
+           "empecher le geste.</i></b> Ce qui a limite les degats n'est pas la regle, c'est le "
+           "reflexe : passe <b>arretee immediatement</b>, les trois fichiers <b>verifies restaures "
+           "au diff</b>, puis <b>relancee de zero sans rien toucher</b>. Elle a rendu le total "
+           "exactement predit. <i>Rien n'a ete conclu sur une passe faussee &mdash; c'est la seule "
+           "chose qui compte une fois la faute commise.</i>", 'p'))
+F.append(P("La section correspondante du catalogue de bugs a ete completee : elle portait trois "
+           "cas, elle en porte un de plus, et c'est <b>celui de son propre auteur</b>.", 'petit'))
+
+F.append(P("7. Les mesures", 'h1'))
 F.append(tableau(
     ["preuve", "resultat"],
     [["Instantane (%d cles), avant / apres" % SONDES,
@@ -436,7 +465,7 @@ F.append(encadre(
     "rougissent.</i>", VERT))
 
 # ── 7 ──
-F.append(P("7. Ce qui reste", 'h1'))
+F.append(P("8. Ce qui reste", 'h1'))
 F.append(tableau(
     ["sujet", "etat"],
     [["Les %d sous-etapes restantes" % RESTANTES,
