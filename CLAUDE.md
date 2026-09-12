@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1193`** (prochaine : `ft-v1194`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1194`** (prochaine : `ft-v1195`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,42 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1194 — 🧮 UN SEUL PROPRIÉTAIRE POUR LE POUR-100 g DÉRIVÉ · ET LE PÉRIMÈTRE DU PLAN ÉTAIT FAUX POUR LES DEUX AUTRES ÉTAPES** — Michel valide la phase 0a **sur iPhone** (la pastille « 410 g » ne survit pas au passage à un autre aliment) et donne le feu vert : ***« tu peux maintenant poursuivre le plan prévu : étape 1b ; étape 2 ; étape 3 »***, même méthode que 1a — *« extraction sans changement de comportement · témoins avant modification · instantané avant/après · aucune valeur attendue ne doit bouger · mutations négatives qui doivent mordre »*.
+
+**⭐⭐ ET C'EST SA PROPRE CONSIGNE QUI DÉCIDE DE CETTE VERSION** : ***« si une régression ou une divergence réelle apparaît pendant l'extraction, mesure-la et ARRÊTE-TOI avant de la "corriger au passage" »***. La divergence est apparue **avant** la première ligne de code — et elle porte sur **le périmètre écrit dans le plan**, pas sur le code.
+
+| étape | périmètre du plan | périmètre **mesuré** | fait ? |
+|---|---|---|---|
+| **1b** — la « forme aliment » | 5 sites | **≥ 15**, en **3 formes** | ⛔ **non** |
+| **2** — le pour-100 g dérivé | 3 sites | **3** ✅ | ⭐ **livrée** |
+| **3** — « quantité utilisable ? » | 6 sites | **7 écritures** en 2 formes · **+ 9 lignes** de la moitié PORTIONS, ignorée | ⛔ **non** |
+
+**⛔⛔ CE NE SONT PAS DES ÉCARTS DE COMPTAGE, CE SONT DES DÉFAUTS QUI DIVERGENT** — et c'est ce qui interdit l'extraction mécanique : `q` vaut tantôt **0** tantôt **null** · `portionWeightG` vaut **0**, **null**, ou **la clé est absente** · `origine` vaut **null**, **`'utilisateur'`** ou **`'reprise'`**. 👉 *Choisir une valeur ne serait pas un rangement, ce serait une DÉCISION qui change des lignes enregistrées.*
+
+**⚠️⚠️ ET J'AI FAILLI LIVRER, SUR L'ÉTAPE 3, EXACTEMENT LE GENRE DE CHIFFRE QUE JE REPROCHE AU PLAN.** Ma première rédaction annonçait *« ~17 sites, ≥ 3 écritures de la règle »*, en citant `_provFood` @1232 contre @1311 comme deux écritures non équivalentes. **Relu ligne à ligne avant de pousser : c'est faux.** @1311 ne pose pas la même question — elle interroge `_afRef` (l'état de l'écran), pas `_afSrc` (la provenance) — et son `===` strict y est **nécessaire** : `_afRef.u` vaut `''` dans l'état « portions », donc un `!u` permissif ferait tomber une portion dans la branche grammes. ⛔ **Le décompte mesuré** : la règle stricte est écrite **7 fois en 2 formes** (5 grammes seuls · 2 acceptant les portions) — *le « 6 » du plan était presque juste*. **Ce que le plan a raté, c'est la moitié PORTIONS** (`u==='portion'`, **9 lignes**, ajoutée en ft-v1183/1186 et jamais réintégrée à l'inventaire) : **16 décisions** sur l'unité au total. 👉 ***Un chiffre rond se vérifie ligne à ligne — surtout quand il sert à démontrer qu'un autre chiffre était faux.***
+
+**⚠️⚠️ POURQUOI LE COMPTEUR S'EST TROMPÉ, ET ÇA RESSERVIRA** : `addFoodEntry` — **la porte la plus utilisée de l'écran** — construit ses macros en **raccourci ES6** : `{date:…, name:…, kcal, prot, carbs, fat, ts:…}`. Il n'y a **pas un seul `kcal:`** dans cette ligne, donc **aucun motif `kcal\s*:` ne peut la voir** — et il ne signale rien, puisqu'il trouve les autres. Même cause pour l'**export CSV** de `setup.js` (13 colonnes aux noms **français**, liste figée à part). 👉 ***Un motif qui suppose une syntaxe ne compte pas les endroits : il compte les endroits écrits comme on les imaginait.*** Nouvelle famille **`BUGS.md` §63** — sœur de §58 (*vérifier la fonction n'est pas vérifier l'appel*) et §61 (*un outil de mesure tronqué ressemble à un code sans défaut*) : **l'instrument fait partie de la mesure**.
+
+**⭐ CE QUI EST DONC LIVRÉ : L'ÉTAPE 2 SEULE**, sur le seul périmètre **strictement vérifié**. Trois endroits retapaient `totaux × 100 / masse`, macro par macro, arrondi à la décimale — `_provFood` branche **grammes**, `_provFood` branche **portions**, `saveEditFood` quand la définition de portion change. Ils deviennent **`_per100Derive(vals, masse)`**.
+
+**⛔ ET LA DUPLICATION AVAIT DÉJÀ COÛTÉ, SUR CES LIGNES-LÀ** : en **ft-v1188**, le passage de `Math.round` à `_per100d1` a dû être posé sur **deux** d'entre elles, après l'avoir été sur **7 autres portes** en ft-v1170 (§59, la porte jumelle). *La question n'était pas de savoir si la 3ᵉ copie serait oubliée, mais quand.*
+
+**⛔⛔ `_per100SuitLaPortion` RESTE DEHORS, EXPRÈS — et c'est le point de conception de la version.** Elle porte **la même algèbre**, à 6 lignes du propriétaire : on est tenté de l'absorber. Mais elle **VÉRIFIE** (*« ce pour-100 g venait-il d'une portion ? »*, à 0,6 près), elle ne **DÉRIVE** pas. 👉 ***Ce qu'on factorise est l'INTENTION, jamais la ressemblance*** — deux fonctions qui calculent pareil ne font pas la même chose. Un témoin fige qu'elle est toujours là, avec sa tolérance.
+
+**⭐ ELLE REND `null` QUAND ELLE NE SAIT PAS** (masse nulle, négative, illisible), et ce `null` n'est pas décoratif : c'est **lui** qui, dans `saveEditFood`, **efface** un pour-100 g devenu orphelin quand la personne retire le poids de sa portion (**R29** — un `null` ne se remplace jamais par un défaut).
+
+**⭐ LE CRITÈRE ÉTAIT BINAIRE, ET IL EST ATTEINT** : l'instantané des **11 sondes** (`tools/instantane_1b23.js`, rejouable) est **identique octet pour octet** avant et après — **même sha256 `ace2a744dc89e6ec`**. ⭐ *Et il couvre aussi les sondes de 1b et 3, qui n'ont pas bougé non plus* : c'est la preuve que l'extraction n'a pas débordé.
+
+**⚠️ UNE MUTATION A TUÉ MA SONDE AU LIEU DE LA FAIRE ROUGIR, ET C'EST §61 EN MINIATURE.** Le témoin des 4 macros écrivait `Object.keys(_per100Derive(…))` : avec le propriétaire muté pour rendre `null`, ça **lève**, l'`evaluate` entier est rejeté, et **le bloc disparaît de la passe sans qu'elle rougisse**. Rendu défensif (`un ? … : 'RIEN'`), la mutation fait désormais **7 rouges nommés**. *Un témoin qui MEURT ressemble à un témoin qui passe* — la raison est écrite à l'endroit exact.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun comportement ne bouge : trois copies d'une formule deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les étapes 1b et 3 ne sont PAS faites** — leur vrai périmètre attend l'arbitrage de Michel (écrit dans `docs/JOURNAL-DE-TEST.md`) · ⛔ ni le **hub** (étape 4) ni la **douane** (étape 5), qu'il a explicitement mis après · ⛔ `S.savedFoods` reste ouvert (décision produit) · ⛔ l'écart **48,3 vs 48** reste hors périmètre · ⛔ ni l'historique, ni les migrations, ni Milo, ni les séances. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3564/3564 sur l'arbre FINAL** (+15, bloc **CCXCI**) — ⭐ **et le total est le SEUL signal d'une passe tronquée : 3549 + 15 = 3564 attendus, 3564 obtenus** (§61, la leçon de ft-v1192 appliquée). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — **aucun trou nouveau** (les 2 connus, `badges` et `dayStateLog`, restent inchangés). ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS, TOUTES MORDENT, chacune sur son témoin** — ① le propriétaire rend toujours `null` → **7 rouges** · ② le garde « pas de masse » retiré → **2**, exactement les deux témoins du `null` · ③ retour à `Math.round` (la régression ft-v1188 rejouée) → **7** · ④ site 1 nourri d'une mauvaise masse → **1**, exactement lui · ⑤ le garde `!p.per100` retiré → **1**, exactement le scan protégé (R32) · ⑥ le poids effacé n'efface plus → **1** · ⑦ la vérificatrice tolère tout → **2** · ⑧ une 2ᵉ copie de la formule réapparaît → **2**, exactement les deux compteurs de source.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1194. |
 
 **ft-v1193 — 🏗️ PHASE 0a + ÉTAPE 1a DU PLAN NUTRITION — UNE FUITE FERMÉE, UN CONSTRUCTEUR UNIQUE, ET UNE RÉGRESSION ATTRAPÉE PAR LE BANC** — Michel valide `docs/PLAN-NUTRITION.pdf` : ***« exécute la phase 0 puis l'étape 1a, avec les témoins et les critères écrits dans ce plan »***.
 
