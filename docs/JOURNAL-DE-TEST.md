@@ -2779,3 +2779,29 @@ les retient n'est pas le critère, c'est **l'ordre des chantiers** — décision
 ⚠️ **Et le n°2 est le plus intéressant des trois** : c'est un témoin qui **rassure sur une fonction
 que l'écran n'emploie plus**. Le corriger ne change rien pour la personne — ça change ce que le banc
 PROUVE. *Un témoin qui fige une fonction morte compte dans le total et ne protège rien.*
+
+---
+
+### 🟡 À TRIER — TROIS CONSTATS DE L'AUDIT « ACCUEIL + PROGRÈS » (12/09/2026)
+
+Audit d'architecture fait **pendant** la passe de ft-v1195 (Michel : *« ok tu peux bosser en
+attendant ? »*), **en lecture seule**, nutrition exclue. Détail chiffré :
+`docs/SUIVI-AUDIT.md` § « Audit d'architecture — Accueil + Progrès ».
+
+| # | constat | vérifiable par du code ? |
+|---|---|---|
+| A | la règle de **rythme** des questions proactives (*« ≥ 3 séances, au plus 1 question/semaine »*) est retapée **à l'identique dans 3 fonctions** (`_pendingGap`, `_pendingEnrich`, `_pendingConfirm`) | ✅ **oui** — un témoin peut exiger un propriétaire unique et compter les copies |
+| B | un **commentaire annonce 3 jours** là où les trois gardes disent **7** (`skipGap`, tracking.js) | ✅ **oui** — mais c'est une correction d'une ligne, sans témoin à écrire |
+| C | *« cette série compte-t-elle pour un record ? »* a **un propriétaire nommé** (`_serieFaitFoiPourPR`) et **2 copies**, dont une (`finalImportHist`) **sans filtre de type** | ✅ **oui** — et le témoin est facile : importer un historique portant une série d'échauffement |
+
+**⭐⭐ C EST LE PLUS INTÉRESSANT, ET IL M'A PRESQUE FAIT ANNONCER UN BUG FAUX.** La copie sans
+filtre laisserait un **échauffement créer un record**… mais l'import d'historique **force le type**
+deux lignes plus haut (`type = s.type==='D' ? 'D' : ''`), donc aucun `'É'` ne l'atteint.
+👉 *Le chemin n'est juste que **par accident*** — c'est `BUGS.md` **§62**. ⚠️ **Et la bombe est
+amorcée juste à côté** : l'import de **programme** produit bel et bien des séries `'É'`. Le jour où
+l'historique apprendra à lire une colonne de type (**c'est déjà écrit côté serveur**), le record
+partira d'un échauffement, **en silence**.
+
+**⛔ Rien n'est corrigé** : Michel n'a pas demandé de toucher à ces écrans, et le correctif de C
+touche le **calcul des records** — l'objet le plus sensible de l'app après les séances elles-mêmes
+(**R29** : le coût d'une erreur décide). *On mesure, on écrit, il tranche.*

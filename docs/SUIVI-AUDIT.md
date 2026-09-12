@@ -263,3 +263,72 @@ synthèse pour relecture extérieure : `docs/CONTRE-AUDIT-2026-08-24.pdf`.*
 
 *(historique : 23/08/2026, nuit — `ft-v985` en ligne. Ajout : le bloc personnel de Milo
 mesuré générique à 92 % (`AUDIT-CONTEXTE-MILO.md` §14) et le plafond dépassé chez un profil blessé.*
+
+---
+
+## 🏠📈 AUDIT D'ARCHITECTURE — ACCUEIL + PROGRÈS (12/09/2026)
+
+> Fait **pendant** la passe de ft-v1195, à la demande de Michel (*« ok tu peux bosser en attendant ? »*).
+> ⛔ **LECTURE ET MESURE UNIQUEMENT — aucune ligne de production n'a été modifiée.**
+> ⛔⛔ **La nutrition est hors périmètre** (consigne du jour) : l'écran Nutrition n'est pas ouvert.
+> Même méthode que l'audit de l'onglet Séance : ① règles recopiées · ② deux sources pour la même
+> question (**R2**) · ③ code orphelin (**R30** : on cherche la décision avant de conclure).
+
+**Périmètre mesuré** : tout ce qu'appellent `renderHome`, `renderProgress` et `renderChart`, à
+**profondeur 2** — **133 fonctions**.
+
+### ✅ Ce qui est SAIN (mesuré)
+
+| ce qui a été compté | résultat |
+|---|---|
+| orphelins dans le périmètre | **0 sur 133** |
+| deux sources pour « combien de séances ce mois-ci ? » | **non** — l'Accueil et le bilan mensuel répondent à **deux questions différentes** (le mois courant · un mois donné) |
+| `S.progExos \|\| BIG4` (les exercices suivis) | **4 replis**, même forme que `S.defRest`… mais **aucune divergence** : les quatre disent `BIG4`. *Signalé, pas à corriger* |
+
+### ⭐ CONSTAT A — la règle de RYTHME des questions proactives est écrite 3 fois
+
+*« Au plus une question par semaine, et pas avant 3 séances »* est retapée à l'identique dans
+**`_pendingGap`**, **`_pendingEnrich`** et **`_pendingConfirm`** (tracking.js) :
+
+```js
+if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
+if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
+```
+
+⛔ **Ce n'est pas un détail de style** : c'est la règle qui protège la personne de l'interrogatoire
+(**Constitution P-rythme**, `BUGS-DE-PHILOSOPHIE.md`). Trois copies = le jour où l'une passe à 10
+jours, **deux autres continuent à 7**, et personne ne le voit — le symptôme serait *« Milo me
+demande trop de trucs »*, c'est-à-dire un bug de **comportement**, pas de calcul.
+⚠️ **La quatrième `_pending*` n'en est pas une copie** : `_pendingFreqContext` pose une question
+**différente** (assez de semaines pour juger une tendance). Vérifié, pas supposé.
+
+### ⚠️ CONSTAT B — un commentaire annonce 3 jours là où le code dit 7
+
+`tracking.js` (dans `skipGap`) : `S.registre.lastObsAt=today();  // respecte le plafond (pas
+d'autre question avant 3 jours)` — **le plafond est de 7 jours** dans les trois gardes ci-dessus.
+👉 *Un commentaire faux sur le nombre exact que quelqu'un viendra changer est pire qu'aucun
+commentaire* (**R23**, appliqué au code).
+
+### ⭐⭐ CONSTAT C — « cette série compte-t-elle pour un record ? » : un propriétaire et deux copies
+
+| endroit | la condition employée |
+|---|---|
+| `finishWorkout` (log.js) | **`_serieFaitFoiPourPR(s)`** ✅ le propriétaire nommé |
+| `saveSessEdits` (setup.js) | `s.done && s.kg && s.reps && s.type!=='É' && s.type!=='W'` — **recopiée à la main**, identique aujourd'hui |
+| `finalImportHist` (log.js) | `s.done && s.kg && s.reps` — ⛔ **sans aucun filtre de type** |
+
+**⚠️⚠️ ET J'AI FAILLI ANNONCER UN BUG QUI N'EN EST PAS UN.** La 3ᵉ ligne laisse passer un
+**échauffement**… sauf que l'import d'historique **force le type deux lignes plus haut** :
+`const type = s.type==='D' ? 'D' : '';`. Aucun `'É'` ne peut donc l'atteindre.
+👉 **Le chemin n'est juste que PAR ACCIDENT** — protégé par une contrainte posée ailleurs, pas par
+sa propre condition. C'est exactement `BUGS.md` **§62** (*une protection qui ne tient que par
+l'absence de ménage*). ⚠️ **Et la bombe est amorcée à côté** : l'import de **programme**, lui,
+produit bien des séries `'É'` (`_typeAt` traduit le `W` du backend). Le jour où l'historique
+apprendra à lire une colonne de type — ce qui est déjà écrit côté serveur — **un échauffement
+créera un record**, en silence.
+
+### 📋 Ce qu'on en fait
+
+**Rien pour l'instant** — c'est une mesure, pas un correctif, et Michel n'a pas demandé de toucher
+à ces écrans. Les trois constats sont **promouvables** (leur attendu est vérifiable par du code) et
+sont déposés dans `docs/JOURNAL-DE-TEST.md`.
