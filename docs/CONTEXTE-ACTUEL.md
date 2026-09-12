@@ -48,6 +48,7 @@
   **dernière ligne** d'un JSON multi-ligne (donc `}`) et rendait *« SONDE MORTE »* partout, **y
   compris sur du code sain**. §61 pour la **4ᵉ fois**. *Le contrôle sain est le seul témoin du
   harnais lui-même.*
+  ✅ **Déploiement vérifié vert (R18)** : run **#1100**, `success` à 14:10:53 UTC sur `175213ff`.
   ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations** (décisions produit, §3 du découpage).
   **Le hub et la douane restent après.** 📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**

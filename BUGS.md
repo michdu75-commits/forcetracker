@@ -3601,13 +3601,28 @@ aussi grave : **un contrôle qui échoue pour une raison qui n'est pas son sujet
 qu'elle prétend mesurer. Elle ne ment jamais sur ce qu'elle a vu — elle **se tait sur ce qu'elle
 n'a pas vu**, et ce silence est indiscernable d'un succès.
 
-**Les trois cas vécus, en cinq jours :**
+**Les cinq cas vécus :**
 
 | quand | l'outil | ce qu'il affichait | ce qui manquait |
 |---|---|---|---|
 | ft-v1187 | harnais de mutation coupé à `tail -4` | « 0 rouge » | un rouge en 8ᵉ position sur 12 |
 | ft-v1192 | passe complète arrêtée sur `b.close()` | **« 3479 ✅ · 0 ❌ »** | **56 témoins jamais exécutés** |
 | ft-v1190 | (passe faussée par ma propre fixture) | vert | le cas réel |
+| ft-v1193 | le runner **plante** sur `null` | « 0 rouge » sur une sortie **vide** | la passe entière |
+| **ft-v1196** | harnais lisant la **DERNIÈRE LIGNE** d'un JSON **multi-ligne** | **« SONDE MORTE » × 10** | **tout** — y compris le **contrôle sain** |
+
+**⭐⭐ ET LE CAS ft-v1196 RETOURNE LA FAMILLE, CE QUI LA REND ENFIN FACILE À ATTRAPER.** Les quatre
+premiers cas affichaient du **vert** ; celui-ci affichait du **rouge partout** — *« SONDE MORTE »*
+sur les 10 mutations. Il était donc tentant de conclure que les mutations mordaient toutes, ou que
+le code était cassé. 👉 ***Ce qui a tranché n'est aucune des dix : c'est le CONTRÔLE SAIN, lancé en
+premier, qui rendait « SONDE MORTE » sur du code intact.*** Cause : la sonde imprime un JSON
+**multi-ligne** et le harnais prenait `stdout.split('\n')[-1]`, donc `}`.
+
+**⛔ La règle qui en sort, et elle coûte une ligne** : *un harnais de mutation commence TOUJOURS par
+le cas sain, et son résultat attendu est écrit à l'avance.* Sans lui, on ne distingue pas *« la
+mutation mord »* de *« l'instrument est mort »* — et un résultat **uniforme**, vert ou rouge, est le
+signe de l'instrument, jamais celui du code. *Un harnais uniforme ressemble à un code uniformément
+cassé, exactement comme un harnais tronqué ressemble à un code sans défaut.*
 
 **Pourquoi c'est une famille à part, et pas « un bug de test »** : un test FAUX finit par rougir sur
 autre chose. Un outil TRONQUÉ, lui, **conforte** — il donne exactement le signal qu'on espérait.
