@@ -34161,6 +34161,134 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     verif===2 && /<=0\.6/.test(src), verif+' occurrences');
 }
 
+/* ═══ CCXCII — SOUS-ÉTAPE 1b-i : LA QUANTITÉ REPRISE D'UNE LIGNE EXISTANTE (12/09/2026) ═══
+   Michel, après la mesure du périmètre : ⛔ *« redécoupe 1b et 3 en sous-étapes plus petites,
+   mesurables et réversibles »* · ⛔⛔ *« je ne veux pas harmoniser maintenant les défauts
+   divergents : on doit les TRANSPORTER explicitement sans les corriger »*.
+
+   ⭐⭐ CE BLOC FIGE DEUX CHOSES DE NATURE OPPOSÉE, ET C'EST VOULU.
+   ① ce que l'extraction garantit (un seul propriétaire, les mêmes valeurs) ;
+   ② ce qu'elle s'INTERDIT — la divergence `sourceId`/`etat` entre les deux portes.
+   *Sans le second, rien n'empêcherait un futur « rangement » d'harmoniser en silence ce que
+   Michel a explicitement demandé de laisser en l'état.* */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    o.fn=typeof _srcRepriseQ;
+
+    const LIGNE={name:'Steak', kcal:400, prot:32, carbs:0, fat:28,
+                 per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}, q:2, u:'portion',
+                 portionLabel:'steak', portionWeightG:125,
+                 origine:'off', sourceId:'3021690201123', etat:'tel-que-vendu'};
+    const r1=_srcRepriseQ(LIGNE, true);
+    o.champs=r1?Object.keys(r1).sort().join(','):'RIEN';
+    o.avecQ=JSON.stringify(r1);
+    o.sansQ=JSON.stringify(_srcRepriseQ(LIGNE, false));
+    /* ⛔ LE DÉFAUT TRANSPORTÉ TEL QUEL : `portionWeightG` rend `null`, pas `0`. Ça ressemble à
+       une coquille ; c'est ce que le code faisait, donc c'est ce qu'on garde (consigne de
+       Michel). Le jour où ça change, c'est une DÉCISION, et ce témoin la rendra visible.
+       ⚠⚠ ET ON PASSE `false`, PAS `true`, APRÈS MESURE : avec `true` sur une ligne SANS `q`,
+       `+undefined` vaut **NaN** — que `JSON.stringify` sérialise en `null`. Le témoin aurait
+       donc été vert sur un NaN en croyant voir un `null`, et sur un état que les deux portes
+       ne peuvent pas produire (`qOk` n'est vrai que si `+q>0`). *Un témoin qui fige un état
+       inatteignable ne protège rien, et masque le type réel de ce qu'il mesure.* */
+    o.nu=JSON.stringify(_srcRepriseQ({name:'Nu', kcal:1}, false));
+    // `u` retombe sur 'g' quand elle manque — mais seulement si la quantité est acceptée
+    o.uParDefaut=JSON.stringify(_srcRepriseQ({q:150}, true));
+
+    /* ── bout en bout ① : REJOUER UN REPAS ─────────────────────────────────────
+       `_repasHabituels` exige la MÊME signature sur 2 dates, la dernière n'étant pas
+       aujourd'hui — on conduit donc la vraie porte, pas la fonction (BUGS.md §58). */
+    const ITEM=d=>Object.assign({date:d, meal:'midi', ts:Date.parse(d)}, LIGNE);
+    S.foodLog=[ITEM('2026-09-01'), ITEM('2026-09-02')];
+    const sig=(_repasHabituels()[0]||{}).sig||'';
+    o.sig=!!sig;
+    if(sig){
+      const avant=S.foodLog.length;
+      rejouerRepas(sig,'midi');
+      const n=S.foodLog[S.foodLog.length-1];
+      o.rejeu=(S.foodLog.length===avant+1) ? JSON.stringify(
+        {q:n.q,u:n.u,pl:n.portionLabel,pw:n.portionWeightG,p100:!!n.per100}) : 'rien ajoute';
+      /* ⛔⛔ LA DIVERGENCE TRANSPORTÉE : le rejeu n'a JAMAIS posé `sourceId`/`etat`.
+         Les lui donner changerait la provenance ENREGISTRÉE — décision produit (1b-ii). */
+      o.rejeuProv=JSON.stringify({src:n.sourceId, etat:n.etat, origine:n.origine});
+    }
+
+    /* ── bout en bout ② : AJOUTER DEPUIS LA LISTE (la porte jumelle) ───────────── */
+    S.foodLog=[]; _afMeal='midi';
+    _afQuickItems=[Object.assign({}, LIGNE)];
+    quickAddFood(0);
+    const m=(S.foodLog||[])[0]||{};
+    o.direct=JSON.stringify({q:m.q,u:m.u,pl:m.portionLabel,pw:m.portionWeightG,p100:!!m.per100});
+    // ⭐ celle-ci, elle, les pose — et c'est l'autre moitié de l'écart
+    o.directProv=JSON.stringify({src:m.sourceId, etat:m.etat, origine:m.origine});
+    return o;
+  });
+
+  t('CCXCII 1b-i — `_srcRepriseQ` existe', R.fn==='function', R.fn);
+  t('CCXCII ⛔ elle rend EXACTEMENT 5 champs, pas un de plus',
+    R.champs==='per100,portionLabel,portionWeightG,q,u', R.champs);
+  t('CCXCII ⭐ quantité acceptée : `q`, `u` et la définition de portion traversent',
+    R.avecQ==='{"q":2,"u":"portion","per100":{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2},'+
+              '"portionLabel":"steak","portionWeightG":125}', R.avecQ);
+  t('CCXCII ⛔ quantité REFUSÉE : `q` et `u` tombent à `null`, le reste traverse quand même',
+    R.sansQ==='{"q":null,"u":null,"per100":{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2},'+
+              '"portionLabel":"steak","portionWeightG":125}', R.sansQ);
+  t('CCXCII ⛔⛔ le DÉFAUT est transporté tel quel : `portionWeightG` rend `null`, PAS `0`',
+    R.nu==='{"q":null,"u":null,"per100":null,"portionLabel":null,"portionWeightG":null}', R.nu);
+  t('CCXCII ⛔ `u` retombe sur « g » quand elle manque',
+    R.uParDefaut==='{"q":150,"u":"g","per100":null,"portionLabel":null,"portionWeightG":null}',
+    R.uParDefaut);
+
+  t('CCXCII ⛔ CONTRÔLE — le repas habituel est bien reconnu (sinon le témoin suivant ne mesure rien)',
+    R.sig===true, 'signature trouvée : '+R.sig);
+  t('CCXCII ⭐ bout en bout — REJOUER un repas garde « 2 portions de 125 g »',
+    R.rejeu==='{"q":2,"u":"portion","pl":"steak","pw":125,"p100":true}', R.rejeu);
+  t('CCXCII ⛔⛔ ... et le rejeu n\'écrit TOUJOURS PAS `sourceId`/`etat` (écart TRANSPORTÉ, 1b-ii)',
+    R.rejeuProv==='{"src":null,"etat":null,"origine":"reprise"}', R.rejeuProv);
+  t('CCXCII ⭐ bout en bout — AJOUTER depuis la liste garde la même quantité',
+    R.direct==='{"q":2,"u":"portion","pl":"steak","pw":125,"p100":true}', R.direct);
+  t('CCXCII ⭐ ... et cette porte-ci pose BIEN `sourceId`/`etat` — l\'autre moitié de l\'écart',
+    R.directProv==='{"src":"3021690201123","etat":"tel-que-vendu","origine":"reprise"}',
+    R.directProv);
+}
+
+/* ⛔⛔ LES TÉMOINS DE SOURCE — un parcours ne peut pas prouver qu'il n'existe pas une 3ᵉ copie,
+   ni que la sous-étape est restée DANS SON PÉRIMÈTRE. Les deux se lisent dans le fichier servi. */
+{
+  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const estCommentaire=l=>{const x=l.trim();
+    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
+  const lignes=src.split('\n').filter(l=>!estCommentaire(l));
+  const aLaMain=lignes.filter(l=>/q\s*:\s*_?qOk\s*\?/.test(l)).length;
+  const appels=(src.match(/_srcRepriseQ\(/g)||[]).length;
+  /* ⛔⛔ ET LE TÉMOIN DE PÉRIMÈTRE : l'étape 3 ne doit PAS avoir été faite au passage. `qOk`
+     reste calculé PAR CHAQUE APPELANT — *une sous-étape qui déborde sur la suivante n'est plus
+     réversible*.
+     ⚠️⚠️ ET IL A FALLU L'ÉCRIRE DEUX FOIS : ma 1ʳᵉ version comptait les LIGNES portant le motif,
+     et la mutation « l'étape 3 faite au passage » rendait **0 rouge** — parce qu'extraire la
+     règle dans un propriétaire laisse le motif écrit… une fois dans ce propriétaire, plus une
+     fois chez l'autre appelant. Le compte restait à 2, et le témoin passait au vert sur
+     exactement ce qu'il devait interdire.
+     👉 ***Compter les occurrences d'un motif ne dit pas QUI décide.*** On exige donc que les
+     DEUX fonctions le portent **chacune dans son propre corps** : si l'une délègue, elle ne le
+     porte plus, et le témoin rougit. C'est `BUGS.md` §63 retourné contre mon propre témoin. */
+  const corpsDe=n=>{const m=new RegExp('^function '+n+'\\(.*?^\\}','ms').exec(src);
+                    return m?m[0]:'';};
+  const RE_P=/\+\w+\.q>0 && \(!\w+\.u\|\|\w+\.u==='g'\|\|\w+\.u==='portion'\)/;
+  const formeP=['rejouerRepas','quickAddFood'].filter(n=>RE_P.test(corpsDe(n))).length;
+  t('CCXCII ⛔⛔ le bloc `q:qOk?…` n\'existe QU\'À UN endroit : le propriétaire',
+    aLaMain===1, aLaMain+' occurrences de code');
+  t('CCXCII ⭐ les 2 portes passent par `_srcRepriseQ` (2 appels + 1 déclaration)',
+    appels===3, appels+' occurrences');
+  t('CCXCII ⛔⛔ PÉRIMÈTRE — `rejouerRepas` ET `quickAddFood` calculent ENCORE `qOk` eux-mêmes '+
+    '(l\'étape 3 n\'a pas été faite au passage)',
+    formeP===2, formeP+' fonctions sur 2 portent la règle en propre');
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,

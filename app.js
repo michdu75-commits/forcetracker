@@ -1618,6 +1618,37 @@ function _per100Derive(vals, masse){
   return {kcal:_per100d1((+vals.kcal||0)*f), prot:_per100d1((+vals.prot||0)*f),
           carbs:_per100d1((+vals.carbs||0)*f), fat:_per100d1((+vals.fat||0)*f)};
 }
+/* ═══════════ LA QUANTITÉ REPRISE D'UNE LIGNE EXISTANTE (12/09/2026, sous-étape 1b-i) ═══════════
+   Michel, après la mesure du périmètre : ⛔ *« je ne veux pas traiter 1b et 3 en un seul gros
+   chantier — redécoupe-les en sous-étapes plus petites, mesurables et réversibles »*, et
+   ⛔⛔ *« je ne veux pas harmoniser maintenant les défauts divergents : à ce stade on doit les
+   TRANSPORTER explicitement sans les corriger »*.
+
+   DEUX endroits recopiaient le même bloc, **caractère pour caractère** (aux noms de variable
+   près), pour dire à `_provFood` ce qu'une ligne déjà enregistrée portait comme quantité :
+   `rejouerRepas` (rejouer un repas d'hier) et `quickAddFood` (ajouter depuis la liste).
+
+   ⛔⛔ `qOk` N'EST PAS CALCULÉ ICI, ET C'EST TOUT LE DÉCOUPAGE. Le test *« cette quantité
+   est-elle utilisable ? »* est le sujet de l'étape **3**, pas de celle-ci — l'absorber ferait
+   deux extractions dans une seule sous-étape, donc un retour arrière qui ne peut plus être
+   partiel. *Une sous-étape réversible est une sous-étape qui ne fait qu'une chose.*
+
+   ⛔⛔ ET CE QUI N'EST **PAS** ICI EST AUSSI IMPORTANT : `sourceId` et `etat` restent chez
+   `quickAddFood` seul — `rejouerRepas` ne les a jamais posés. **La divergence est TRANSPORTÉE,
+   pas corrigée.** Les lui donner changerait la provenance ENREGISTRÉE d'une ligne rejouée :
+   c'est une **décision produit** (sous-étape 1b-ii), pas un rangement. Un témoin l'interdit.
+
+   ⚠️ Les défauts sont recopiés tels quels, y compris ce qui ressemble à une coquille :
+   `portionWeightG` rend `null` (et non `0`) quand il n'y a rien — parce que c'est ce que le
+   code faisait. *On extrait ce qui existe, on ne redresse rien au passage.* */
+function _srcRepriseQ(src, qOk){
+  const s = src || {};
+  return { q: qOk ? +s.q : null,
+           u: qOk ? (s.u || 'g') : null,
+           per100: s.per100 || null,
+           portionLabel: s.portionLabel || null,
+           portionWeightG: +s.portionWeightG > 0 ? +s.portionWeightG : null };
+}
 /* 📷⛔⛔ LE SCAN TROUVE LE PRODUIT, N'A AUCUNE VALEUR, ET LAISSE LA PERSONNE LÀ (ft-v1163)
    Michel, après trois versions passées sur la même ligne : *« c'est super chiant en fait, même
    la ratatouille ne change pas les valeurs sur l'onglet poids. Et même par portion, ça dépend de
@@ -2210,9 +2241,10 @@ function rejouerRepas(sig, meal){
        ⭐ On garde la protection (la quantité vient de l'ITEM, jamais du DOM) et on transmet ce
        qui est écrit. *Sans ça, rejouer un repas tuerait les portions qu'on vient de sauver.* */
     const qOk=(+e.q>0 && (!e.u||e.u==='g'||e.u==='portion'));
-    if(typeof _afSetSrc==='function')_afSetSrc({saisie:'liste',origine:'reprise',
-      q:qOk?+e.q:null, u:qOk?(e.u||'g'):null, per100:e.per100||null,
-      portionLabel:e.portionLabel||null, portionWeightG:+e.portionWeightG>0?+e.portionWeightG:null});
+    /* ⛔ PAS de `sourceId`/`etat` ici, et ce n'est pas un oubli : le rejeu n'en a jamais posé.
+       Les ajouter changerait la provenance enregistrée — décision produit, sous-étape 1b-ii. */
+    if(typeof _afSetSrc==='function')_afSetSrc(
+      Object.assign({saisie:'liste',origine:'reprise'}, _srcRepriseQ(e, qOk)));
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
     S.foodLog.push(Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,
       qOk?{}:{q:null,u:null}));
@@ -2866,11 +2898,13 @@ function quickAddFood(i){
      n'acceptait que les grammes. *Une porte ouverte en aval ne sert à rien si l'amont filtre
      encore* — mesuré sur une ligne « 2 portions », qui repartait morte. */
   const _qOk=(+it.q>0 && (!it.u||it.u==='g'||it.u==='portion'));
-  _afSetSrc({saisie:'liste', origine:'reprise',
-             q:_qOk ? +it.q : null, u:_qOk ? (it.u||'g') : null,
-             per100:it.per100||null, sourceId:it.sourceId||null, etat:it.etat||null,
-             /* 🏷️ ft-v1186 — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant. */
-             portionLabel:it.portionLabel||null, portionWeightG:+it.portionWeightG>0?+it.portionWeightG:null});
+  /* 🏷️ ft-v1186 — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant : le nom et le
+     poids de la portion voyagent avec la quantité, dans `_srcRepriseQ`.
+     ⭐ `sourceId`/`etat` restent ICI, en plus : cette porte-ci les a toujours posés (R33 — la
+     provenance ne ment pas), et le rejeu ne les a jamais eus. L'écart est transporté. */
+  _afSetSrc(Object.assign({saisie:'liste', origine:'reprise'},
+                          _srcRepriseQ(it, _qOk),
+                          {sourceId:it.sourceId||null, etat:it.etat||null}));
   S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
   _afSetSrc(null);
   _unhideFood(it.name);

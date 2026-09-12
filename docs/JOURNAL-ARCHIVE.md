@@ -8061,3 +8061,38 @@ Tests : **parcours 3451/3451 sur l'arbre FINAL** (+14, bloc **CCLXXXI**), **calc
 ⚠️⚠️ **ET LA MÊME LEÇON POUR LA TROISIÈME FOIS DE SUITE** : une mutation **ne mordait pas** — écraser les macros du favori — et ce n'était **pas** du code inutile, c'était un **trou de témoin** : ma fixture mettait **600 des deux côtés**, donc l'écrasement était *invisible*. Fixture rendue discriminante (favori 600, repas 500), **14ᵉ témoin écrit**, la mutation mord. 👉 ***Une protection sans témoin n'est pas une protection*** — et une fixture où les deux valeurs coïncident ne peut rien voir.
 
 Fichiers : `app.js`, `setup.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1186. |
+
+**ft-v1187 — 🔗 RATTACHER UN EXERCICE PERSO AU CATALOGUE EN UN GESTE — L'APP SAVAIT LA RÉPONSE ET NE LA PROPOSAIT PAS** — Michel, capture de sa séance du 9 sept : ***« Tirage vertical c'est pas bon non plus »***.
+
+**⭐⭐ MESURÉ AVANT DE CODER, ET LE RAPPROCHEUR N'EST PAS EN CAUSE.** `_matchExercise('Tirage vertical')` rend **« Tirage Poulie Haute (Lat Pulldown) » à 95 %, via « équivalence connue »** — c'est **ft-v1170, livrée le 08/09**. Son programme a été importé **avant**, donc le nom est figé dans son historique. 👉 *L'app ne réécrit pas le passé toute seule* (**R29**), et c'est voulu.
+
+**⛔⛔ LE VRAI TROU EST DANS LA RÉPARATION, PAS DANS L'IMPORT.** La fusion existe depuis longtemps — `_saveCustomExEdit` → `_mergeCustomInto` → `_renameExEverywhere`, qui déplace **séances + records + programmes + séance en cours** — mais elle n'est atteinte que si le nom retapé tombe **PILE** sur un nom du catalogue. Or `_normEx` **aplatit** la ponctuation sans la supprimer :
+
+| ce qu'on tape | clé obtenue | fusion ? |
+|---|---|---|
+| `Tirage Poulie Haute (Lat Pulldown)` | `tirage poulie haute lat pulldown` | ✅ |
+| **`Tirage Poulie Haute`** (la forme naturelle) | `tirage poulie haute` | ⛔ **aucune** |
+
+👉 ***Taper la forme naturelle ne fusionne rien : ça renomme le fantôme, et on en a DEUX.*** Sur un téléphone, avec un « (Lat Pulldown) » à écrire de mémoire. Et l'écran d'édition n'avait **aucun** bouton de rattachement — mesuré : 5 contrôles, le mot `rattach` absent du HTML.
+
+**⭐ ON N'INVENTE NI MÉCANISME NI SEUIL (R13/R2).** La fusion est **celle qui existait** ; et *« est-ce assez sûr ? »* a **déjà un propriétaire** — le `tier` de `_matchExercise`. On propose **exactement** quand l'import aurait rattaché tout seul (`tier==='auto'`), jamais dans la zone grise.
+
+**⛔⛔ ET LA ZONE GRISE RESTE MUETTE, C'EST LE GARDE-FOU DE LA VERSION** : « développé épaules guidé » — **le cas ambigu de Michel** en ft-v1172 — sort à **67 % / `confirm`**, et le bandeau ne dit rien. *Si l'expert hésite, l'app se tait* (**R29**). Un rattachement faux couperait un historique en deux, en silence.
+
+**⚠️ LA SOURCE DE LA FUSION EST TOUJOURS `_editingCustomExName`, jamais le contenu du champ** : c'est l'historique de l'exercice **réel** qu'on déplace, pas celui d'un nom en cours de frappe. Le bandeau **nomme les deux côtés** — *« C'est « Tirage Poulie Haute (Lat Pulldown) » du catalogue. Rattacher déplace l'historique et les records de « Tirage vertical », puis supprime le doublon. »* — pour que la décision soit facile (**R29** : informer sans décider).
+
+**⭐ EN CRÉATION ON INFORME, SANS BOUTON** : il n'y a aucun historique à déplacer, et on n'empêche personne de créer son exercice (**R24**). *C'est pourtant la porte par laquelle les fantômes NAISSENT, et elle était muette.*
+
+**📣 RÈGLE D'OR #11 — LE BANDEAU EST L'ANNONCE**, à l'écran au moment où ça sert. Aucune pop-up, aucun point rouge : rien n'est à faire tant qu'on n'ouvre pas un exercice perso (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne répare RIEN tout seul** — c'est la personne qui tape « Rattacher », par choix. ⛔ Ni l'import, ni le rapprocheur, ni `_EX_EQUIV` ne sont touchés. ⛔ Et rien n'est proposé dans la zone grise, **exprès**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1057**, `conclusion: success` à **07:13:56 UTC** sur `cdeb642f`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur la LISTE filtrée `status: completed`* — la leçon de ft-v1182.
+
+Tests : **parcours 3463/3463** (+12, bloc **CCLXXXIII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations, TOUTES MORDENT** — ① le bandeau neutralisé → **7 rouges** · ② le seuil `auto` retiré (zone grise acceptée) → **2 rouges**, exactement l'exercice neuf et le cas ambigu · ③ le garde « c'est déjà ce nom-là » retiré → **1** · ④ le bouton de fusion affiché même en création → **1** · ⑤ le câblage `oninput` du champ retiré → **1** · ⑥ `_setCexFormMode` qui n'appelle plus le bandeau → **6**.
+
+**⚠️⚠️ ET UN TROU DE TÉMOIN TROUVÉ PAR LA MUTATION ⑤, POUR LA TROISIÈME VERSION DE SUITE.** Ma 1ʳᵉ version **appelait `_majCexRattacher()` à la main** dans les témoins de silence : retirer le `oninput` du champ ne faisait alors rougir **personne**, et le câblage aurait ressemblé à de la décoration. Les témoins **tapent désormais pour de vrai** (événement `input` dispatché). ⭐ **Honnêteté sur cette mutation** : elle ne fait **qu'un** rouge, celui de la création — et c'est **structurel, pas un oubli** : *un témoin qui affirme « le bandeau est CACHÉ » ne peut pas distinguer « correctement muet » de « fil débranché »*. **Seul un témoin qui attend du VISIBLE attrape un câblage mort.**
+
+**⚠️ ET MON HARNAIS DE MUTATION M'A MENTI AU PASSAGE** : il coupait la sortie à `tail -4`, donc un rouge en 8ᵉ position sur 12 était **invisible** — j'ai lu « 0 rouge » sur une mutation qui mordait, et j'ai failli en conclure que le câblage était mort. 👉 ***Un outil de mesure tronqué ressemble à un code sans défaut.***
+
+Fichiers : `log.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1187. |
