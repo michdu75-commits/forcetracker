@@ -149,6 +149,86 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 
 ---
 
+## 🏗️ AUDIT D'ARCHITECTURE — L'ONGLET SÉANCE (12/09/2026)
+
+> Demande de Michel : *« fais un check de l'architecture de l'onglet séance, vérifie tout ce qui peut
+> arriver, vérifie s'il n'y a pas des incohérences, des fonctions en double »*.
+> ⛔ **LECTURE ET MESURE UNIQUEMENT — aucune ligne de production n'a été modifiée.**
+> ⛔⛔ **DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état des lieux
+> quand j'aurai fini les bugs de la nutrition »*. 👉 **Rien n'est corrigé pour l'instant, et c'est
+> volontaire** — les trois constats ci-dessous attendent la fin du chantier nutrition.
+
+### ✅ Ce qui est SAIN (mesuré)
+
+| ce qui a été compté | résultat |
+|---|---|
+| fonctions déclarées / noms distincts | **1603 / 1602** → **un seul doublon** |
+| le doublon en question | `t`, helper **local imbriqué** dans deux fonctions différentes → portées séparées, **inoffensif** |
+| collisions de `const`/`let` de premier niveau | **0** sur 533 noms |
+| portes qui **créent** une séance | **7**, toutes identifiées |
+| portes qui la **détruisent** | **2** (`clearWkt`, `finishWorkout`) — et elles nettoient le stockage **à l'identique** |
+| « la séance est-elle valide ? » | **un seul propriétaire** (`finishWorkout`) |
+| « y a-t-il une séance ouverte ? » | **un seul propriétaire** (`_seanceOuverte`), avec replis explicites et documentés |
+| le champ `cardio.min` (le faux bug de ft-v1184) | **entièrement disparu** — `duration` partout |
+| orphelins de `log.js` | **13 sur 422**, dont **11 avec une trace écrite** |
+
+### ⭐ CONSTAT n°1 — la fonction écrite pour empêcher une recopie a été recopiée
+
+`_rpeDeRir(n)` porte ce commentaire : *« LA CONVERSION N'A QU'UN SEUL ENDROIT. Elle est triviale, et
+c'est justement pour ça qu'elle serait recopiée partout si on ne la nommait pas — **puis un jour l'une
+des copies dirait 9**. »*
+
+**Mesuré** : elle est appelée **0 fois**, et la conversion `10-n` est retapée à la main dans **3
+fonctions** (`_reserveBoutonTxt` · `_reserveBadgeTxt` · `_rirTxt`), **6 occurrences** au total.
+👉 Si `RIR_MAX` ou le barème bougent, il faut corriger **6 endroits** au lieu d'un. *L'avertissement
+était écrit juste au-dessus du code qui l'ignore* (**R2**).
+
+### ⚠️ CONSTAT n°2 — une fonction morte en production, vivante dans un témoin
+
+`_rirTxt` n'apparaît **nulle part** dans les 10 fichiers servis ni dans `index.html`, sauf à sa propre
+déclaration. Elle n'est appelée que par **un témoin** (`tests/parcours/runner.js`), qui croit vérifier
+le libellé d'échec en RPE — or l'écran affiche `_reserveEchecTxt()`.
+👉 **`BUGS.md` §58** : *vérifier la fonction n'est pas vérifier l'appel.*
+
+### ⚠️ CONSTAT n°3 — trois valeurs de repli pour le même réglage
+
+`S.defRest` (temps de repos par défaut) a **trois replis différents** selon l'endroit :
+
+| endroit | repli |
+|---|---|
+| `state.js` (installation) | **130** |
+| `app.js` ×2 | **120** |
+| `log.js` ×2 (`defForEx`, `_defRestForType`) | **90** |
+
+⚠️ **Dormant aujourd'hui** — `S.defRest` est toujours posé au chargement, donc les replis ne se
+déclenchent pas. Mais **cette divergence a déjà mordu une fois** (ft-v1080, le placeholder de l'éditeur
+de programmes qui annonçait 90 s quand la séance appliquait 130).
+
+### ⛔ TROIS PISTES ÉCARTÉES PAR LA MESURE (R30 — écrites avec leur raison)
+
+*Elles avaient l'air de vrais défauts. Les laisser sans raison écrite, c'est garantir que quelqu'un
+les « répare » dans six mois.*
+
+1. **`startHour` posé par 2 portes sur 7** → **pas un défaut** : `toggleSet` le (re)pose à la 1ʳᵉ série
+   validée (règle de Michel du 14/08), et les **4 lecteurs** ont tous un repli sur l'horodatage.
+2. **`finishWorkout` n'appelle pas `_syncWakeLock`** → **pas un défaut** : `goScreen` l'appelle à
+   **chaque** changement d'écran (`screens.js`), et `finishWorkout` fait `goScreen('home')`.
+   *`clearWkt` l'appelle explicitement parce qu'il, LUI, ne change pas d'écran.*
+3. **Le repli « étroit » de `state.js`** (qui perdrait le brouillon d'un **cardio seul**) →
+   **inatteignable** : vérifié fonction par fonction, **aucun `persist()` ne part avant le chargement
+   de `log.js`**.
+
+### ⚠️ ET DEUX FOIS MON PROPRE OUTIL DE MESURE M'A MENTI (`BUGS.md` §61)
+
+- ma 1ʳᵉ liste d'orphelins en annonçait **19** : je ne comptais que `nom(`, donc un gestionnaire posé
+  **sans parenthèses** (`el.onmove = _exDragMove`) passait pour mort. **6 faux positifs.**
+- mon compteur d'accolades a placé **10 appels de `persist()` « au premier niveau »** — tous étaient en
+  réalité dans des fonctions ou dans des **commentaires**.
+
+👉 *Les deux fois, la mesure trop grossière donnait un résultat **plus alarmant** que la réalité.*
+
+---
+
 ## 🔁 Comment tenir ce fichier
 
 - Un sujet **change d'état**, il ne se duplique pas.

@@ -2687,3 +2687,88 @@ d'autre que Michel, la question se rouvre — avec cette mesure déjà faite.*
 
 ⛔ **Ne devient pas un scénario** : l'attendu est *« est-ce trouvable »*, pas un état vérifiable par
 du code.
+
+---
+
+## 🧮 12/09/2026 — LE PÉRIMÈTRE ÉCRIT DANS LE PLAN NUTRITION EST FAUX POUR 1b ET 3 *(mesuré, non corrigé — en attente de Michel)*
+
+**État : à trancher.** Michel a donné le feu vert pour **1b, 2 et 3** avec une consigne qui décide
+de la suite : *« si une régression ou une divergence réelle apparaît pendant l'extraction, mesure-la
+et **arrête-toi avant de la corriger au passage** »*. La divergence est apparue **avant** de coder.
+
+| étape | périmètre écrit dans `docs/PLAN-NUTRITION.pdf` | périmètre **mesuré** |
+|---|---|---|
+| **1b** — la « forme aliment » | 5 sites | **≥ 15**, en **3 formes** |
+| **2** — le pour-100 g dérivé | 3 sites | **3** ✅ *(le seul juste — livré en ft-v1194)* |
+| **3** — « cette quantité est-elle utilisable ? » | 6 sites | **7 écritures** en **2 formes** · **+ 9 lignes** de la moitié PORTIONS, ignorée |
+
+**⚠️⚠️ ET J'AI FAILLI ÉCRIRE ICI LE MÊME GENRE DE CHIFFRE QUE CELUI QUE JE REPROCHE AU PLAN.** Ma
+première rédaction annonçait *« ~17 sites et ≥ 3 écritures de la règle »* pour l'étape 3, en citant
+`_provFood` @1232 contre @1311 comme deux écritures **non équivalentes** de la même règle. **Relu
+ligne à ligne : c'est faux.** @1311 ne pose pas la même question (elle interroge `_afRef`, l'état de
+l'écran, pas `_afSrc`, la provenance de l'aliment) et son `===` y est **nécessaire** — `_afRef.u`
+vaut `''` dans l'état « portions », donc un `!u` permissif ferait tomber une portion dans la branche
+grammes. ⛔ **Le vrai décompte, mesuré** : la règle stricte est écrite **7 fois en 2 formes**
+(5 grammes seuls · 2 acceptant les portions) — *le « 6 » du plan était presque juste*. **Ce que le
+plan a raté, c'est la moitié PORTIONS** (`u==='portion'`, **9 lignes**, ajoutée en ft-v1183/1186 et
+jamais réintégrée à l'inventaire), ce qui porte l'ensemble à **16 décisions** sur l'unité.
+👉 *Un chiffre rond se vérifie ligne à ligne, y compris — surtout — quand il sert à démontrer qu'un
+autre chiffre était faux.*
+
+**⛔ ET CE NE SONT PAS DE PETITS ÉCARTS DE COMPTAGE : les défauts DIVERGENT d'un site à l'autre**,
+ce qui interdit une extraction mécanique — choisir une valeur serait une **décision**, pas un
+rangement :
+
+- **`q`** vaut tantôt `0`, tantôt `null` ;
+- **`portionWeightG`** vaut tantôt `0`, tantôt `null`, tantôt **la clé est absente** ;
+- **`origine`** vaut `null`, `'utilisateur'` **ou** `'reprise'`.
+
+*L'instantané `tools/instantane_1b23.js` fige ces trois écarts exprès : il est ce qui empêche de les
+harmoniser « au passage » sans s'en apercevoir.*
+
+**⚠️ POURQUOI LE COMPTEUR S'EST TROMPÉ** — et c'est la partie qui resservira : `addFoodEntry`, la
+porte **la plus utilisée** de l'écran, construit ses macros en **raccourci ES6** (`{…, kcal, prot,
+carbs, fat, ts:…}`). Il n'y a **pas un seul `kcal:`** dans cette ligne, donc aucun motif `kcal\s*:`
+ne peut la voir. Nouvelle famille **`BUGS.md` §63** : *un motif qui suppose une syntaxe compte les
+endroits écrits comme on les imaginait.* L'export CSV de `setup.js` (10 champs, noms **français**,
+liste de colonnes figée à part) était invisible pour la même raison.
+
+**⛔ Ce qui a été fait et ce qui ne l'a pas été** : l'**étape 2** est livrée (ft-v1194), son
+périmètre étant le seul **strictement vérifié** — 3 sites, même formule, même `_per100d1`, même
+métier. **1b et 3 n'ont pas été touchées.** *Les faire « quand même » aurait été élargir en silence
+un périmètre que personne n'a validé — exactement ce que sa consigne interdit.*
+
+**❓ CE QUI ATTEND UNE DÉCISION** (deux questions, pas une) :
+1. **1b et 3 se font-elles sur leur périmètre RÉEL** (~15 et ~17 sites, donc un chantier 3× plus
+   gros que prévu), ou **re-découpées** en morceaux plus petits ?
+2. **Les défauts divergents s'harmonisent-ils ?** Si oui, c'est une décision produit — elle change
+   des valeurs enregistrées. Si non, la « forme aliment » unique devra les **transporter**, ce qui
+   limite beaucoup l'intérêt de l'étape.
+
+⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo,
+c'est un arbitrage de périmètre. Il est écrit ici pour **ne pas disparaître avec la session** (R27)
+et parce qu'un chiffre faux dans un plan ne se manifeste jamais comme une erreur — *il se manifeste
+comme un chantier qui déborde* (R23/R28).
+
+---
+
+### 🟡 À TRIER — TROIS CONSTATS DE L'AUDIT « ONGLET SÉANCE », EN ATTENTE (12/09/2026)
+
+Audit d'architecture demandé par Michel, **lecture seule**. Détail complet et chiffré :
+`docs/SUIVI-AUDIT.md` § « Audit d'architecture — l'onglet Séance ».
+
+⛔⛔ **DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état des lieux
+quand j'aurai fini les bugs de la nutrition »*. **Rien n'est corrigé, et c'est volontaire.**
+
+| # | constat | vérifiable par du code ? |
+|---|---|---|
+| 1 | **`_rpeDeRir` appelée 0 fois**, et sa conversion `10-n` recopiée à la main dans **3 fonctions / 6 occurrences** — alors que son propre commentaire annonce *« un jour l'une des copies dirait 9 »* | ✅ **oui** — un témoin peut compter les occurrences de `10-` hors du propriétaire |
+| 2 | **`_rirTxt` morte en production**, appelée uniquement par un témoin qui croit vérifier le libellé d'échec en RPE (l'écran affiche `_reserveEchecTxt`) | ✅ **oui** — mais c'est le **témoin** qu'il faut corriger, pas le code |
+| 3 | **`S.defRest` : trois valeurs de repli** (130 / 120 / 90) pour le même réglage. **Dormant** (la valeur est toujours posée) mais la divergence a **déjà mordu** en ft-v1080 | ✅ **oui** — un témoin peut exiger un seul repli nommé |
+
+⭐ **Les trois sont promouvables** : leur attendu est vérifiable par du code, pas par le goût. Ce qui
+les retient n'est pas le critère, c'est **l'ordre des chantiers** — décision de Michel.
+
+⚠️ **Et le n°2 est le plus intéressant des trois** : c'est un témoin qui **rassure sur une fonction
+que l'écran n'emploie plus**. Le corriger ne change rien pour la personne — ça change ce que le banc
+PROUVE. *Un témoin qui fige une fonction morte compte dans le total et ne protège rien.*
