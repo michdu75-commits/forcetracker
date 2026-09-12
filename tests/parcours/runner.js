@@ -33678,7 +33678,19 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     await _lookupBarcode('3021690201123','scan',false); await d(400);
     const sc=scTop();
     const paq=document.getElementById('af-bc-paquet'); if(paq&&vis('af-bc-paquet')) paq.click();
-    await d(700);
+    /* ⚠️⚠️ LA MÊME LEÇON QU'AU CAS ②, ET IL A FALLU DEUX PASSES POUR LA VOIR ICI (12/09/2026).
+       ft-v1191 a rendu le cas ② déterministe (attendre que le défilement se STABILISE au lieu de
+       parier sur une durée) — et la correction n'a PAS été posée sur le cas ①, qui lisait
+       `dansLaVue` après un `d(700)` fixe. Sous la charge d'une passe complète, le défilement
+       `smooth` est encore EN VOL à cet instant : le témoin rougissait, et il passait 3/3 en isolé.
+       👉 ***R8, la porte jumelle — dans le banc d'essai lui-même.*** Coût mesuré : deux passes
+       complètes (~70 min) pour établir qu'un rouge n'était pas dû au correctif de ft-v1200.
+       ⭐ Attendre une CONDITION ne peut jamais rendre rouge un témoin vert : on ne fait que
+       cesser de mesurer la machine. */
+    await d(120);
+    {let a=-1,bb=sc?sc.scrollTop:0,n=0;
+     while(sc && a!==bb && n<25){ a=bb; await d(80); bb=sc.scrollTop; n++; }
+     o.cas1Tours=n;}
     o.cas1={alerteVue:vis('af-coherence'), dansLaVue:dansLaVue('af-coherence'),
             kcal:(document.getElementById('af-kcal')||{}).value,
             txt:((document.getElementById('af-coherence')||{}).textContent||'').replace(/\s+/g,' ').slice(0,160)};
