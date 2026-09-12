@@ -484,6 +484,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 6 sous-étapes restantes** ne sont pas faites · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1104**, job `deploy` **`success`** à **14:54:37 UTC** sur `a7d6e172` — l'étape « Déployer sur GitHub Pages » close à **14:54:35**. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196, où un `in_progress` avec `updated_at` figé cachait un déploiement déjà réussi. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1197 reste à confirmer par Michel.*
+
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_1bii_pdf.py`, `docs/SOUS-ETAPE-1BII.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1197. |
 
 **ft-v1196 — 🔍 SOUS-ÉTAPE 3-i : UN PROPRIÉTAIRE POUR « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » · ET LA SONDE QUI NE COUVRAIT RIEN** — Michel : ***« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois, en gardant exactement les mêmes règles »*** — une seule chose · sonde/instantané avant si nécessaire · aucun changement de comportement · divergences transportées, pas harmonisées · mutations qui mordent · rollback simple.

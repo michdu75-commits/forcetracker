@@ -50,6 +50,7 @@
   ⛔ **Et j'ai refait §60** : muté des fichiers **servis pendant ma propre passe**. Vu tout de
   suite → passe **relancée de zéro**. *Le contrôle négatif d'un PDF se fait avant ou après, jamais
   pendant.*
+  ✅ **Déploiement vérifié vert (R18)** : run **#1104**, job `deploy` `success` à 14:54:37 UTC.
   ⏭️ **EN ATTENTE DE MICHEL — les 4 harmonisations.** **6 sous-étapes restantes.**
   📣 **Toujours ouverts** : `S.savedFoods` · l'écart `48,3`/`48`.
   ⚠️ **À vérifier par Michel sur Safari/iPhone.**
