@@ -20,7 +20,32 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1199` — 🔢 **3-ii : la pastille « ta dernière quantité » ·
+- **Version en ligne (live) :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
+  dernière fois) » qui SURVIVAIT à l'aliment suivant.**
+  ⭐⭐ **Le chemin vaut autant que le correctif** : défaut trouvé la veille en étendant la sonde
+  de 3-ii, **mesuré**, **écrit dans `docs/JOURNAL-DE-TEST.md`** — et **pas corrigé**, parce
+  qu'une sous-étape d'extraction ne change aucun comportement. Il a attendu **son propre feu
+  vert**, donné par Michel. *C'est exactement ce que le journal de test existe pour permettre.*
+  ⛔ **6 témoins rouges sur le code d'origine** : `_bcProposerDerniere(0)` n'était appelée que
+  par `openAddFood` et par le hub, donc jamais **entre deux aliments** d'une même ouverture ;
+  et le site qui la repose vit **dans un garde** (`if(P && it.u!=='portion' && …)`) qu'un
+  aliment **en portions** ou **sans pour-100 g** ne franchit pas.
+  ⭐ **Une ligne chez le propriétaire** (`_afOublierAliment`), donc les **13 portes** d'un coup
+  (**R2**) — jamais recopiée porte par porte (leçon ft-v1193).
+  ⛔⛔ **Le point de conception : elle n'est PAS sous `garderPaquet`.** Les deux drapeaux se
+  ressemblent et **ne nomment pas la même chose** — le paquet vient du produit qu'on *poursuit*
+  (produit SCANNÉ), la pastille d'une *reprise antérieure*. L'y mettre reproduirait le bug sur
+  les deux portes qu'on croit protéger : **2 rouges** le prouvent.
+  ⚠️ **Un témoin à moi était aveugle**, trahi par un écart d'**un seul rouge** : il comptait la
+  ligne de **commentaire** qui cite l'appel. Famille de ft-v1193, reposée dans le témoin qui
+  protège le correctif la documentant — il retire désormais les blocs **entiers**.
+  ⭐ **Instantané de l'extraction inchangé**, sha `b8f06e45d8c91fcc` : le correctif ne déplace
+  pas le sol du chantier.
+  ⛔ **Hors périmètre, figé par 2 témoins** : `_qGrammes`, `_qReprenable`, les portions.
+  Tests : **parcours 3649/3649**, **6 mutations toutes mordantes sur leur propre témoin**,
+  contrôle sain à 0 rouge avant ET après.
+
+- **Version précédente :** `ft-v1199` — 🔢 **3-ii : la pastille « ta dernière quantité » ·
   et un défaut RÉEL trouvé par la sonde, mesuré et NON corrigé.**
   ⭐ **Test d'entrée passé** : 2 copies strictement identiques → **`_qGrammes(src)`**.
   ⭐ **Elle rend un NOMBRE, pas un booléen** — `_qGrammes(x) > 0` **est** la condition, donc

@@ -8256,3 +8256,32 @@ Tests : **parcours 3524/3524 sur l'arbre FINAL** (+11, bloc **CCLXXXVIII**), **c
 ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je **ne peux pas** lire le `sw.js` réellement servi. La vérification s'arrête à l'API — *le run est vert, l'app affichant ft-v1191 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/BUG-KCAL-MACROS.pdf`, `tools/gen_kcal_macros_pdf.py`. sw.js ft-v1191. |
+
+**ft-v1192 — 🅰️🅱️ L'ALTERNANCE SEMAINE A / SEMAINE B DANS LE SÉLECTEUR DE JOUR** — Michel, capture du sélecteur de son Powerbuilding (J3A « Semaine A » · J3B « Semaine B ») : ***« est-ce que la semaine A/B sont en charge ? »***, puis ***« À et b »***.
+
+**⛔ MESURÉ AVANT DE CODER : NON, rien n'était géré.** `openDaySel` listait les jours **à plat**, sans aucune notion de variante — *c'est lui qui devait se souvenir où il en était.*
+
+**⭐⭐ ET L'INFORMATION EXISTAIT DÉJÀ.** `getProgCurrentWeek(prog)` calcule la semaine en cours et s'affiche même en **« Semaine 2 / 4 »** sur la carte du programme. 👉 ***Elle ne descendait simplement pas jusqu'à la DÉCISION*** — **R4** en miniature : *une information qui reste dans un écran et n'atteint pas celui où l'on CHOISIT n'existe pas pour la personne.*
+
+**⭐ CE QUI EST LIVRÉ** : le jour de la variante en cours porte un repère — *« 👉 ta semaine B (semaine 2 / 8) »*. Semaine 1 → **A**, 2 → **B**, 3 → **A**… (convention confirmée par Michel).
+
+**⛔⛔ ON MET EN AVANT, ON NE CHOISIT PAS.** Le jour de l'autre variante reste **cliquable, au même endroit, avec la même apparence** : une semaine peut se décaler, on peut vouloir refaire la A (**R24** informer sans bloquer · **R29** on ne tranche pas à sa place). **Deux témoins figent cette garantie**, dont un qui **CHARGE vraiment** l'autre variante — et la mutation qui grise le bouton rougit exactement là.
+
+**⚠️ LA LIMITE EST DITE PLUTÔT QUE CACHÉE** : l'app ne **sait** pas que « A » et « B » forment une paire, elle ne voit que des **libellés** — il faut le **deviner**. C'est acceptable ici parce que le **coût d'une erreur est faible** (un jour mis en avant à tort, on tape l'autre), et le garde-fou est l'**APPARIEMENT** : rien ne s'affiche tant qu'on n'a pas trouvé un **A et** un **B** portant **le même numéro de jour**. *Un « J3A » solitaire ne déclenche rien.*
+
+**⛔⛔ ET CE QU'ON NE SAIT PAS, ON SE TAIT** : sans `startDate` ni `weeks`, `_varianteDeLaSemaine` rend `null`. ⚠️ *Le piège était juste à côté* — `getProgCurrentWeek` rend **1 par défaut** dans ce cas, et s'en servir afficherait *« ta semaine A »* **avec l'aplomb d'un calcul** alors que ce serait une valeur de repli. **Une fonction qui ne sait pas doit rendre `null`, et ce `null` ne se remplace jamais par un défaut** (**R29**).
+
+**⚠️ LES LIBELLÉS DES TÉMOINS SONT RECOPIÉS DE SA CAPTURE, PAS INVENTÉS** — *une détection qui marche sur des libellés fabriqués ne prouve rien sur les siens.*
+
+**📣 RÈGLE D'OR #11 — LE REPÈRE EST L'ANNONCE**, à l'écran au moment où ça sert. Aucune pop-up, aucun point rouge, rien à faire (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne charge rien tout seul** · ⛔ ça ne renomme ni ne réordonne aucun jour · ⛔ ça ne gère que **A/B**, pas A/B/C · ⛔ et un programme **sans numéro de jour** (« Haut du corps A ») n'est **pas** apparié — la base est le numéro, c'est écrit et assumé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1081**, `conclusion: success` à **08:31:05 UTC** sur `0c5643cc`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
+
+**⚠️⚠️ ET MA PASSE COMPLÈTE ÉTAIT FAUSSE — ELLE S'EST ARRÊTÉE EN ROUTE SANS AUCUN ROUGE.** J'avais posé le bloc **après** `b.close()`, dans la zone des blocs qui **n'ouvrent pas de navigateur** (ils lisent les fichiers source avec `fs`). Il a demandé une page déjà fermée → *« Target page, context or browser has been closed »* → **toute la fin de la passe est tombée** : **56 témoins n'ont jamais tourné**, les 11 miens **et les 45 d'après**.
+👉 ***Et elle affichait « 3479 ✅ · 0 ❌ ».*** **Aucun rouge.** *Un runner qui s'interrompt ne rougit pas : il ressemble trait pour trait à une passe verte.* ⛔ **Le TOTAL est la seule chose qui trahit une passe tronquée — et il ne se lit pas seul, il se COMPARE à la passe précédente** (3524 + 11 = **3535** attendus ; j'en avais **3479**). Bloc remis avant `b.close()`, **avec la raison écrite à l'endroit exact** pour que le prochain ne le repose pas là. C'est la même famille que le harnais coupé à `tail -4` en ft-v1187 : *un outil de mesure tronqué ressemble à un code sans défaut* — nouvelle famille **`BUGS.md` §61**.
+
+Tests : **parcours 3535/3535 sur l'arbre FINAL** (+11, bloc **CCLXXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations, TOUTES MORDENT** — ① le repère non calculé → **3 rouges** · ② l'alternance figée sur A → **1**, exactement la semaine 2 · ③ on invente une semaine qu'on ne connaît pas → **2**, exactement les deux cas sans donnée · ④ l'appariement retiré → **1**, exactement le J3A solitaire · ⑤ le badge non affiché → **3** · ⑥ ⭐ **on BLOQUE l'autre variante** → **1 rouge**, exactement le témoin qui protège ce droit.
+
+Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1192. |

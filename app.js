@@ -5230,6 +5230,34 @@ function _afOublierAliment(opts){
      ailleurs.* Un paramètre nommé, sur le propriétaire unique, dit la distinction UNE fois. */
   try{ if(!(opts && opts.garderPaquet)){ _bcPaquetG=0; _bcPaquetTxt='';
          if(typeof _bcProposerPaquet==='function') _bcProposerPaquet(); } }catch(e){}
+  /* ↩⛔⛔ ET LA PASTILLE « LA DERNIÈRE FOIS » MEURT AUSSI AVEC L'ALIMENT (12/09/2026).
+     C'était la JUMELLE EXACTE du poids de paquet juste au-dessus, restée ouverte le jour même
+     où on fermait sa sœur : ft-v1193 a donné à cette fonction le rendu de `_bcProposerPaquet`,
+     et pas celui de `_bcProposerDerniere`. ***R8, la porte jumelle, à l'intérieur même du
+     correctif censé fermer une fuite*** — le motif exact que ce fichier documente depuis
+     `_bcCategories` (ft-v1191).
+     ⛔ Mesuré à la sonde en ft-v1199, PUIS écrit dans `docs/JOURNAL-DE-TEST.md` sans être
+     corrigé, parce qu'une sous-étape d'extraction ne change aucun comportement : reprendre un
+     aliment à 150 g, puis en prendre un autre **en portions** sans fermer l'écran, laissait
+     « ↩ 150 g (la dernière fois) » affiché **sur le mauvais aliment**.
+     ⛔ Deux causes cumulées, les mêmes que pour le paquet : `_bcProposerDerniere(0)` n'était
+     appelée que par `openAddFood` (donc à l'OUVERTURE, jamais ENTRE deux aliments) et par le
+     hub `_offRemplirFormulaire` ; et le site qui la repose vit DANS un garde
+     (`if(P && it.u!=='portion' && …)` où `P = it.per100`), donc un aliment en portions ou sans
+     pour-100 g ne le franchit pas et ne touche à rien.
+
+     ⛔⛔ ELLE N'EST PAS SOUS `garderPaquet`, ET C'EST LE POINT DE CONCEPTION — les deux drapeaux
+     ne nomment pas la même chose. `garderPaquet` dit *« le poids vient du produit qu'on
+     POURSUIT »* : ses 2 appelants (`_bcSansValeurs`, `_calAppliquer`) travaillent sur le produit
+     SCANNÉ, dont le paquet vient de ce scan-là. Une pastille « la dernière fois », elle, ne peut
+     venir que d'une **reprise antérieure** (`quickFillFood` / `_afSuggPrendreLocale` sont les
+     deux seules à la poser) — donc sur ces portes-là c'est forcément un reliquat. *La mettre
+     sous le drapeau reproduirait le bug sur les deux portes qu'on croit protéger*, et un témoin
+     de source l'interdit.
+     ⭐ Et l'appel est sans danger pour ce qui est tapé : à `q<=0`, `_bcProposerDerniere` cache
+     seulement, elle ne touche pas au champ — c'est écrit dans son propre corps, et figé par un
+     témoin de périmètre. */
+  try{ if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0); }catch(e){}
   const bp=document.getElementById('af-bc-portion');
   if(bp){ bp.style.display='none'; bp.textContent=''; delete bp.dataset.q; }
   /* ⛔ La moitié « portions/grammes » — et c'est elle qui vidait le champ relu par `_afMajAncre`. */

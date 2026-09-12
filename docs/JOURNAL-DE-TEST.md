@@ -4,10 +4,33 @@
 > questions ou les discussions que l'on peut avoir, on remplit ce fichier, 1 semaine, 1 mois et un jour
 > on aura plus questions »*.
 
-### 🟡 La pastille « ↩ … g (la dernière fois) » SURVIT à l'aliment suivant *(mesuré 12/09/2026, ft-v1199)*
+### 🟢 La pastille « ↩ … g (la dernière fois) » SURVIVAIT à l'aliment suivant *(mesuré 12/09/2026 en ft-v1199 — **CORRIGÉ en ft-v1200**)*
 
-**État : 🟡 à trier — MESURÉ, NON CORRIGÉ** (trouvé en étendant la sonde pour 3-ii ; hors périmètre
-d'une sous-étape d'extraction, qui ne change aucun comportement).
+**État : 🟢 promue → correctif livré (ft-v1200), figé par 11 témoins de navigateur + 4 de source
+(bloc CCXCVII).** ⭐ **Et le chemin compte autant que le correctif** : le défaut a été **mesuré,
+puis écrit ICI sans être corrigé**, parce qu'il a été trouvé pendant une sous-étape d'extraction —
+laquelle ne change **aucun** comportement, et dont le critère est un instantané identique octet
+pour octet. Il a donc attendu **son propre feu vert**, donné par Michel le lendemain :
+*« je te donne le feu vert pour corriger uniquement ce défaut, dans un correctif séparé du chantier
+d'extraction »*. 👉 ***C'est exactement ce que ce fichier existe pour permettre*** — sans lui, le
+défaut avait deux issues et une seule était bon marché : être corrigé au passage (donc casser le
+critère de la sous-étape), ou disparaître avec la session (**R27**).
+
+**⛔ Ce que le correctif a coûté, et qui n'était pas prévu** : `garderPaquet` ne devait **pas** le
+conditionner. Les deux drapeaux se ressemblent et ne nomment pas la même chose — le paquet
+appartient au produit qu'on **poursuit** (`_bcSansValeurs`, `_calAppliquer` travaillent sur le
+produit *scanné*), la pastille « la dernière fois » ne peut venir que d'une **reprise antérieure**.
+*Recopier le drapeau aurait reproduit le bug sur les deux portes qu'on croyait protéger.*
+⚠️ **Et un témoin à moi était aveugle** : il comptait la ligne de **commentaire** qui cite
+`_bcProposerDerniere(0)`, donc il restait vert avec le correctif retiré. Trahi par un **écart d'un
+seul rouge** entre la mutation et le code d'origine — *un total qu'on explique au lieu de
+l'accepter*. C'est la famille de ft-v1193, reposée dans le témoin qui protège le correctif la
+documentant.
+
+---
+
+**Le relevé d'origine, gardé tel quel** (il dit ce qui a été mesuré avant qu'on ait le droit d'y
+toucher) :
 
 **Ce qui est mesuré**, à la sonde, dans un navigateur :
 
@@ -42,6 +65,12 @@ l'appel manquant **changerait ce que l'écran affiche** — c'est un correctif, 
 ⏭️ **Le correctif tiendrait en une ligne** dans `_afOublierAliment`, à côté de celui du paquet :
 `try{ _bcProposerDerniere(0); }catch(e){}`. **Un témoin devra figer les deux moitiés**, comme
 pour le paquet en ft-v1193.
+
+**✅ SUITE (ft-v1200) — la ligne prévue était la bonne, la CONDITION ne l'était pas.** Le correctif
+livré est bien cette ligne, chez le propriétaire, donc sur les 13 portes d'un coup (**R2**). ⚠️ Mais
+la note ci-dessus disait *« à côté de celui du paquet »* — et la mettre **sous le même drapeau**
+(`garderPaquet`) aurait reproduit le défaut sur `_bcSansValeurs` et `_calAppliquer`. *Une ligne
+juste posée sous la mauvaise condition reste un bug*, et c'est la mutation qui l'a montré.
 
 ---
 

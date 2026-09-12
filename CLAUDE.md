@@ -157,7 +157,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1199`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1200`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1199`** (prochaine : `ft-v1200`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1200`** (prochaine : `ft-v1201`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **8** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -446,6 +446,37 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1200 — 🩹 CORRECTIF SÉPARÉ : LA PASTILLE « ↩ … g (LA DERNIÈRE FOIS) » QUI SURVIVAIT À L'ALIMENT SUIVANT · ET LES DEUX DRAPEAUX QUI NE NOMMENT PAS LA MÊME CHOSE** — Michel valide 3-ii puis isole le sujet : ***« avant de continuer les 4 sous-étapes restantes, je veux traiter séparément le défaut réel découvert sur la pastille »***, avec ⛔ une consigne explicite — ***« ne profite pas de ce correctif pour modifier `_qGrammes`, `_qReprenable`, les portions ou une autre règle métier »***.
+
+**⭐⭐ LE CHEMIN VAUT AUTANT QUE LE CORRECTIF, ET C'EST LUI LE FAIT DE LA VERSION.** Ce défaut a été **trouvé la veille** en étendant la sonde de 3-ii, **mesuré**, **écrit dans `docs/JOURNAL-DE-TEST.md` avec son correctif d'une ligne** — et **délibérément pas corrigé**, parce qu'une sous-étape d'extraction ne change **aucun** comportement et que son critère est un instantané identique octet pour octet. 👉 ***Il a attendu son propre feu vert, et il l'a eu.*** *C'est exactement ce que le journal de test existe pour permettre* : sans lui, un défaut trouvé en chemin n'a que deux issues, être corrigé au passage (donc casser le critère de la sous-étape) ou disparaître avec la session (**R27**).
+
+**⛔ LE DÉFAUT, REPRODUIT AVANT D'ÊTRE TOUCHÉ — 6 TÉMOINS ROUGES sur le code d'origine.** `_bcProposerDerniere(0)` n'était appelée que par `openAddFood` (donc **à l'ouverture de l'écran**, jamais **entre deux aliments** d'une même ouverture) et par le hub `_offRemplirFormulaire` ; et le site qui la repose vit **dans un garde** (`if(P && it.u!=='portion' && …)` où `P = it.per100`). Un aliment **en portions**, ou **sans pour-100 g**, ne le franchit pas — et celle du précédent restait affichée **sur le mauvais aliment**. ⭐ **Les deux portes rougissaient** (`quickFillFood` et `_afSuggPrendreLocale`, **R8**), et la contre-épreuve, elle, était **déjà verte** : *elle mesure la fonctionnalité, pas l'effacement.*
+
+**⭐ LE CORRECTIF EST UNE LIGNE CHEZ LE PROPRIÉTAIRE** — `_afOublierAliment`, donc **les 13 portes d'un coup** (**R2**), jamais recopiée porte par porte. C'est la leçon de ft-v1193 écrite noir sur blanc : *un patron qu'on recopie à chaque porte EST la duplication que ce chantier supprime ailleurs.*
+
+**⛔⛔ ET LE POINT DE CONCEPTION EST AILLEURS QUE DANS LA LIGNE : ELLE N'EST PAS SOUS `garderPaquet`.** Le journal de test disait *« à côté de celui du paquet »* — vrai pour l'endroit, **faux pour la condition**.
+
+| drapeau | ce qu'il dit | ses appelants |
+|---|---|---|
+| `garderPaquet` | *« le poids vient du produit qu'on **POURSUIT** »* | `_bcSansValeurs` · `_calAppliquer` — le produit **SCANNÉ** |
+| la pastille | *« une quantité reprise **AVANT** »* | `quickFillFood` · `_afSuggPrendreLocale` — les 2 seules à la poser |
+
+👉 ***Les deux drapeaux se ressemblent et ne nomment pas la même chose.*** Mettre la pastille sous celui du paquet **reproduirait le bug sur les deux portes qu'on croit protéger** — *une ligne juste posée sous la mauvaise condition reste un bug*. **Mesuré : la mutation qui l'y met fait 2 rouges**, dont un témoin de source.
+
+**⭐ ET C'EST LA JUMELLE EXACTE DU DÉFAUT `_bcPaquetG` FERMÉ EN ft-v1193** : ce jour-là `_afOublierAliment` a reçu le rendu de `_bcProposerPaquet`, **et pas celui-ci**. **R8, la porte jumelle, à l'intérieur même du correctif censé fermer sa sœur** — troisième variable de la même fonction après `_bcCategories` (ft-v1191) et `_bcPaquetG` (ft-v1193).
+
+**⚠️⚠️ UN TÉMOIN À MOI ÉTAIT AVEUGLE, ET C'EST UN ÉCART D'UN SEUL ROUGE QUI L'A TRAHI.** La mutation « correctif retiré » rendait **5 rouges** là où le code d'origine en donnait **6**. En cherchant l'écart au lieu de l'accepter : mon témoin de source comptait la ligne de **COMMENTAIRE** qui *cite* `_bcProposerDerniere(0)` pour expliquer le défaut — le filtre ligne-à-ligne ne retire que les lignes commençant par `*`, `//`, `/*` ou un accent grave, or les continuations de ce fichier commencent par `⛔`, `⭐`, `👉`. 👉 ***C'est la famille de ft-v1193 — un témoin qui ne distingue pas le code de ce qui en PARLE — reposée par moi dans le témoin censé protéger le correctif qui la documente.*** Il retire désormais les blocs de commentaire **entiers** : immunisé pour de bon.
+
+**⭐ ET L'INSTANTANÉ DE L'EXTRACTION EST INCHANGÉ — sha256 `b8f06e45d8c91fcc`, le même qu'en ft-v1199.** *Le correctif ne déplace pas le sol du chantier*, et c'est vérifiable : la sonde remet la pastille à zéro **explicitement** à chaque cas (posé en ft-v1199 à cause de ce défaut), donc elle reste indépendante du correctif — *une sonde qui dépendrait de lui changerait de sens le jour où il régresserait*.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une pastille cesse de mentir (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **`_qGrammes`, `_qReprenable` et les portions sont intactes** — 2 témoins de hors-périmètre le figent, consigne explicite de Michel · ⛔ ni 1b-v, ni 3-iii, ni 3-iv, ni 3-v · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3649/3649 sur l'arbre FINAL** (+16, bloc **CCXCVII**) — **total prédit = total obtenu** (3633 + 16, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 6 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① le correctif retiré → **6** (la fuite revient par les deux portes) · ② ⭐ **mis sous `garderPaquet`** → **2**, exactement les deux témoins de ce périmètre · ③ on POSE au lieu de RENDRE → **7** · ④ sur-nettoyage (le champ tapé est effacé) → **1**, exactement ⑩ · ⑤ recopié chez UN appelant au lieu du propriétaire → **4** · ⑥ le paquet cesse de survivre à `garderPaquet` (contrôle : ⑨ est-il décoratif ?) → **1**, exactement lui.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1200. |
 
 **ft-v1199 — 🔢 3-ii : LA PASTILLE « TA DERNIÈRE QUANTITÉ » · ET UN DÉFAUT RÉEL TROUVÉ PAR LA SONDE, MESURÉ ET NON CORRIGÉ** — Michel valide 1b-iii et redemande la même méthode, avec le **test d'entrée** en tête.
 
@@ -692,35 +723,6 @@ Tests : **parcours 3549/3549 sur l'arbre FINAL** (+14, bloc **CCXC**), **calculs
 **⭐ ET UN TÉMOIN PLUS ANCIEN A FAIT SON TRAVAIL CONTRE MOI** : le contrôle *« les constructions de `_bcNutr` sont bien trouvées »* a rougi — parce que son voisin (*« aucune construction ne ré-arrondit »*) était passé **VERT sur une liste VIDE**. Sans lui, l'étape 1a aurait transformé une vraie garantie en vert décoratif, **en silence**. Réécrit sur le propriétaire unique ; la garantie ne s'affaiblit pas, elle se déplace.
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_ref100.js`, `tools/sonde_fuites_nutrition.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1193. |
-
-**ft-v1192 — 🅰️🅱️ L'ALTERNANCE SEMAINE A / SEMAINE B DANS LE SÉLECTEUR DE JOUR** — Michel, capture du sélecteur de son Powerbuilding (J3A « Semaine A » · J3B « Semaine B ») : ***« est-ce que la semaine A/B sont en charge ? »***, puis ***« À et b »***.
-
-**⛔ MESURÉ AVANT DE CODER : NON, rien n'était géré.** `openDaySel` listait les jours **à plat**, sans aucune notion de variante — *c'est lui qui devait se souvenir où il en était.*
-
-**⭐⭐ ET L'INFORMATION EXISTAIT DÉJÀ.** `getProgCurrentWeek(prog)` calcule la semaine en cours et s'affiche même en **« Semaine 2 / 4 »** sur la carte du programme. 👉 ***Elle ne descendait simplement pas jusqu'à la DÉCISION*** — **R4** en miniature : *une information qui reste dans un écran et n'atteint pas celui où l'on CHOISIT n'existe pas pour la personne.*
-
-**⭐ CE QUI EST LIVRÉ** : le jour de la variante en cours porte un repère — *« 👉 ta semaine B (semaine 2 / 8) »*. Semaine 1 → **A**, 2 → **B**, 3 → **A**… (convention confirmée par Michel).
-
-**⛔⛔ ON MET EN AVANT, ON NE CHOISIT PAS.** Le jour de l'autre variante reste **cliquable, au même endroit, avec la même apparence** : une semaine peut se décaler, on peut vouloir refaire la A (**R24** informer sans bloquer · **R29** on ne tranche pas à sa place). **Deux témoins figent cette garantie**, dont un qui **CHARGE vraiment** l'autre variante — et la mutation qui grise le bouton rougit exactement là.
-
-**⚠️ LA LIMITE EST DITE PLUTÔT QUE CACHÉE** : l'app ne **sait** pas que « A » et « B » forment une paire, elle ne voit que des **libellés** — il faut le **deviner**. C'est acceptable ici parce que le **coût d'une erreur est faible** (un jour mis en avant à tort, on tape l'autre), et le garde-fou est l'**APPARIEMENT** : rien ne s'affiche tant qu'on n'a pas trouvé un **A et** un **B** portant **le même numéro de jour**. *Un « J3A » solitaire ne déclenche rien.*
-
-**⛔⛔ ET CE QU'ON NE SAIT PAS, ON SE TAIT** : sans `startDate` ni `weeks`, `_varianteDeLaSemaine` rend `null`. ⚠️ *Le piège était juste à côté* — `getProgCurrentWeek` rend **1 par défaut** dans ce cas, et s'en servir afficherait *« ta semaine A »* **avec l'aplomb d'un calcul** alors que ce serait une valeur de repli. **Une fonction qui ne sait pas doit rendre `null`, et ce `null` ne se remplace jamais par un défaut** (**R29**).
-
-**⚠️ LES LIBELLÉS DES TÉMOINS SONT RECOPIÉS DE SA CAPTURE, PAS INVENTÉS** — *une détection qui marche sur des libellés fabriqués ne prouve rien sur les siens.*
-
-**📣 RÈGLE D'OR #11 — LE REPÈRE EST L'ANNONCE**, à l'écran au moment où ça sert. Aucune pop-up, aucun point rouge, rien à faire (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ça ne charge rien tout seul** · ⛔ ça ne renomme ni ne réordonne aucun jour · ⛔ ça ne gère que **A/B**, pas A/B/C · ⛔ et un programme **sans numéro de jour** (« Haut du corps A ») n'est **pas** apparié — la base est le numéro, c'est écrit et assumé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1081**, `conclusion: success` à **08:31:05 UTC** sur `0c5643cc`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés).
-
-**⚠️⚠️ ET MA PASSE COMPLÈTE ÉTAIT FAUSSE — ELLE S'EST ARRÊTÉE EN ROUTE SANS AUCUN ROUGE.** J'avais posé le bloc **après** `b.close()`, dans la zone des blocs qui **n'ouvrent pas de navigateur** (ils lisent les fichiers source avec `fs`). Il a demandé une page déjà fermée → *« Target page, context or browser has been closed »* → **toute la fin de la passe est tombée** : **56 témoins n'ont jamais tourné**, les 11 miens **et les 45 d'après**.
-👉 ***Et elle affichait « 3479 ✅ · 0 ❌ ».*** **Aucun rouge.** *Un runner qui s'interrompt ne rougit pas : il ressemble trait pour trait à une passe verte.* ⛔ **Le TOTAL est la seule chose qui trahit une passe tronquée — et il ne se lit pas seul, il se COMPARE à la passe précédente** (3524 + 11 = **3535** attendus ; j'en avais **3479**). Bloc remis avant `b.close()`, **avec la raison écrite à l'endroit exact** pour que le prochain ne le repose pas là. C'est la même famille que le harnais coupé à `tail -4` en ft-v1187 : *un outil de mesure tronqué ressemble à un code sans défaut* — nouvelle famille **`BUGS.md` §61**.
-
-Tests : **parcours 3535/3535 sur l'arbre FINAL** (+11, bloc **CCLXXXIX**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 6 mutations, TOUTES MORDENT** — ① le repère non calculé → **3 rouges** · ② l'alternance figée sur A → **1**, exactement la semaine 2 · ③ on invente une semaine qu'on ne connaît pas → **2**, exactement les deux cas sans donnée · ④ l'appariement retiré → **1**, exactement le J3A solitaire · ⑤ le badge non affiché → **3** · ⑥ ⭐ **on BLOQUE l'autre variante** → **1 rouge**, exactement le témoin qui protège ce droit.
-
-Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `BUGS.md`. sw.js ft-v1192. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

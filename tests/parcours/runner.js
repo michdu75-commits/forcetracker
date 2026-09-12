@@ -34766,6 +34766,182 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'une des deux a disparu');
 }
 
+/* ══════════ BLOC CCXCVII — 🩹 la pastille « ↩ … g (la dernière fois) » qui SURVIVAIT à
+   l'aliment suivant. CORRECTIF SÉPARÉ du chantier d'extraction (feu vert explicite de Michel).
+
+   ⛔⛔ LE DÉFAUT, MESURÉ À LA SONDE EN ft-v1199 ET ÉCRIT AVANT D'AVOIR LE DROIT DE LE CORRIGER :
+   `_bcProposerDerniere(0)` n'était appelée que par `openAddFood()` et par le hub
+   `_offRemplirFormulaire` — donc la pastille se rendait à l'OUVERTURE de l'écran, jamais ENTRE
+   deux aliments d'une même ouverture. Et le site qui la repose vit DANS un garde
+   (`if(P && it.u!=='portion' && …)` où `P = it.per100`) : un aliment en PORTIONS, ou SANS
+   pour-100 g, ne le franchit pas — et celle du précédent restait affichée, sur le mauvais aliment.
+   👉 C'est la JUMELLE EXACTE du défaut `_bcPaquetG` fermé en ft-v1193 (R8, la porte jumelle) :
+   ce jour-là `_afOublierAliment` a reçu le rendu de `_bcProposerPaquet`, et pas celui-ci. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    const P100={kcal:66.7,prot:0.7,carbs:1.3,fat:2};
+    const lire=()=>{ const b=document.getElementById('af-bc-last');
+      return b ? {vue:b.style.display==='inline-block', q:(b.dataset&&b.dataset.q)||'ABSENT'} : 'ABSENT'; };
+    /* ⛔ On pose la pastille par la VRAIE porte de production, jamais à la main : un état
+       fabriqué prouverait que le correctif nettoie un décor, pas ce que l'app affiche. */
+    const poserA=(g)=>{ _afSetSrc(null);
+      _afQuickItems=[{name:'Aliment A', kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:g, u:'g', fav:false}];
+      quickFillFood(0); };
+
+    /* ① LE TÉMOIN DU BUG, NU : on pose la pastille, on OUBLIE L'ALIMENT, et rien d'autre.
+       C'est le geste que `_afOublierAliment` existe pour couvrir — sans passer par une porte
+       qui pourrait la reposer d'elle-même. */
+    poserA(150); o.apresPose=JSON.stringify(lire());
+    try{ _afOublierAliment(); }catch(e){}
+    o.apresOubli=JSON.stringify(lire());
+
+    /* ② LE SCÉNARIO EXACT DE MICHEL, porte « Mes aliments » : aliment A en grammes, puis sans
+       fermer l'écran un aliment B EN PORTIONS — qui saute le garde, donc ne repose rien. */
+    poserA(150);
+    _afQuickItems=[{name:'Aliment B', kcal:100,prot:1,carbs:2,fat:3, per100:P100,
+                    q:2, u:'portion', portionLabel:'part', portionWeightG:120, fav:false}];
+    quickFillFood(0);
+    o.bPortions=JSON.stringify(lire());
+
+    /* ③ LE MÊME, PAR L'AUTRE PORTE (R8) — `_afSuggPrendreLocale`, la recherche du journal.
+       Elle lit `_afSuggLoc[i]`, PAS `S.foodLog` : le piège mesuré le 12/09. */
+    poserA(150);
+    S.foodLog=[{date:'2026-09-01', meal:'midi', ts:1, name:'Aliment C',
+                kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:2, u:'portion',
+                portionLabel:'part', portionWeightG:120}];
+    persist();
+    _afSuggLoc=_afSuggLocales('Aliment C');
+    o.listeC=_afSuggLoc.length;
+    if(_afSuggLoc.length) _afSuggPrendreLocale(0);
+    o.cPortions=JSON.stringify(lire());
+
+    /* ④ L'AUTRE MOITIÉ DU GARDE : un aliment B SANS pour-100 g. Il ne franchit pas
+       `if(P && …)` non plus, et il est en GRAMMES — donc il ne peut pas être confondu
+       avec le cas « portions ». */
+    poserA(150);
+    _afQuickItems=[{name:'Aliment D', kcal:100,prot:1,carbs:2,fat:3, q:90, u:'g', fav:false}];
+    quickFillFood(0);
+    o.dSansPer100=JSON.stringify(lire());
+
+    /* ⑤⭐ LA CONTRE-ÉPREUVE — et c'est elle qui distingue un correctif d'un simple effacement :
+       un aliment B qui a SA PROPRE dernière quantité en grammes doit voir SA pastille apparaître.
+       Un correctif qui se contenterait d'éteindre casserait la fonctionnalité en la « réparant ». */
+    poserA(150);
+    _afQuickItems=[{name:'Aliment E', kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:200, u:'g', fav:false}];
+    quickFillFood(0);
+    o.eContreEpreuve=JSON.stringify(lire());
+
+    /* ⑥⛔⛔ `garderPaquet` NE DOIT PAS CONDITIONNER LA PASTILLE, et c'est LE point de conception.
+       Les 2 appelants qui le passent (`_bcSansValeurs`, `_calAppliquer`) poursuivent le produit
+       SCANNÉ — dont le poids de paquet vient de CE scan. La pastille « la dernière fois », elle,
+       ne peut venir que d'une reprise ANTÉRIEURE : la garder reproduirait le bug sur ces deux
+       portes. Les deux drapeaux ne nomment pas la même chose. */
+    poserA(150);
+    try{ _bcPaquetG=410; if(typeof _bcProposerPaquet==='function') _bcProposerPaquet(); }catch(e){}
+    try{ _afOublierAliment({garderPaquet:true}); }catch(e){}
+    o.gpPastille=JSON.stringify(lire());
+    o.gpPaquet=(typeof _bcPaquetG!=='undefined')?_bcPaquetG:'ABSENT';
+
+    /* ⑦⛔ PÉRIMÈTRE — le correctif ne doit PAS effacer ce que la personne a tapé.
+       `_bcProposerDerniere(q<=0)` ne touche pas au champ, exprès (« une fonction qui nettoie
+       plus que son sujet finit par effacer celui d'un autre ») : on le fige. */
+    poserA(150);
+    const g=document.getElementById('af-bc-grams'); if(g) g.value='77';
+    try{ _afOublierAliment(); }catch(e){}
+    o.champ=(document.getElementById('af-bc-grams')||{}).value;
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCXCVII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCXCVII ① ⭐ la pastille est bien POSÉE par la vraie porte avant toute mesure — sinon les '+
+    'témoins suivants seraient verts sur un écran vide',
+    !!(j(X.apresPose)&&j(X.apresPose).vue&&j(X.apresPose).q==='150'), X.apresPose);
+  t('CCXCVII ② ⛔⛔ LE TÉMOIN DU BUG — `_afOublierAliment()` Rend la pastille : elle disparaît '+
+    'avec l\'aliment qu\'elle décrivait (R15)',
+    !!(j(X.apresOubli)&&j(X.apresOubli).vue===false&&j(X.apresOubli).q==='ABSENT'), X.apresOubli);
+  t('CCXCVII ③ ⛔ scénario de Michel, porte « Mes aliments » : un aliment B EN PORTIONS ne garde '+
+    'pas le « 150 g » de A',
+    !!(j(X.bPortions)&&j(X.bPortions).vue===false), X.bPortions);
+  t('CCXCVII ④ ⭐ la liste locale est bien garnie (sinon la porte ③ ne conduirait rien)',
+    X.listeC>0, 'longueur='+X.listeC);
+  t('CCXCVII ⑤ ⛔ LA PORTE JUMELLE (R8) — même garantie par `_afSuggPrendreLocale`',
+    !!(j(X.cPortions)&&j(X.cPortions).vue===false), X.cPortions);
+  t('CCXCVII ⑥ ⛔ l\'autre moitié du garde : un aliment SANS pour-100 g ne garde rien non plus',
+    !!(j(X.dSansPer100)&&j(X.dSansPer100).vue===false), X.dSansPer100);
+  t('CCXCVII ⑦ ⭐⭐ CONTRE-ÉPREUVE — un aliment qui a SA PROPRE dernière quantité en grammes '+
+    'voit SA pastille (200), pas celle d\'avant (150) : on corrige une fuite, on ne coupe pas '+
+    'la fonctionnalité',
+    !!(j(X.eContreEpreuve)&&j(X.eContreEpreuve).vue===true&&j(X.eContreEpreuve).q==='200'),
+    X.eContreEpreuve);
+  t('CCXCVII ⑧ ⛔⛔ PÉRIMÈTRE — `garderPaquet` ne conditionne PAS la pastille : elle part quand '+
+    'même (les 2 portes qui le passent poursuivent le produit SCANNÉ, jamais une reprise)',
+    !!(j(X.gpPastille)&&j(X.gpPastille).vue===false), X.gpPastille);
+  t('CCXCVII ⑨ ⛔ …et le poids du paquet, lui, SURVIT toujours à `garderPaquet` — la garantie de '+
+    'ft-v1174 n\'est pas affaiblie au passage',
+    X.gpPaquet===410, 'paquet='+X.gpPaquet);
+  t('CCXCVII ⑩ ⛔ PÉRIMÈTRE — le correctif n\'efface PAS ce que la personne a tapé dans le champ',
+    X.champ==='77', 'champ='+X.champ);
+  t('CCXCVII ⑪ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
+    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
+  /* ⭐ LE CORRECTIF VIT CHEZ LE PROPRIÉTAIRE, PAS RECOPIÉ CHEZ LES APPELANTS. C'est la leçon
+     écrite en ft-v1193 : « un patron qu'on recopie à chaque porte EST la duplication que ce
+     chantier supprime ailleurs ». Une ligne, dans `_afOublierAliment`, donc les 13 portes. */
+  /* ⚠️⚠️ CES DEUX TÉMOINS LISENT DU CODE **SANS SES BLOCS DE COMMENTAIRE**, ET C'EST UNE
+     CORRECTION PAYÉE (12/09/2026). Ma 1ʳᵉ version réutilisait le filtre ligne-à-ligne des blocs
+     voisins — il ne retire que les lignes qui COMMENCENT par une étoile, deux barres, une barre
+     étoile ou un accent grave. Or les lignes de continuation des commentaires de ce fichier
+     commencent par ⛔, ⭐, 👉… donc elles SURVIVENT au filtre. Et le commentaire du correctif
+     CITE `_bcProposerDerniere(0)` pour expliquer le défaut : le témoin ⑫ restait donc VERT avec
+     le correctif retiré.
+     ⛔ Mesuré, pas supposé : la mutation « correctif retiré » rendait 5 rouges au lieu de 6, et
+     c'est cet écart d'UN qui a trahi le témoin aveugle. *Un total qu'on explique au lieu de
+     l'accepter.*
+     👉 ***C'est la famille de ft-v1193 — un témoin qui ne distingue pas le code de ce qui en
+     PARLE*** — reposée par moi dans le témoin censé protéger le correctif qui la documente.
+     ⭐ Retirer les blocs ENTIERS immunise le témoin pour de bon : n'importe quel commentaire
+     futur pourra citer l'appel sans le rendre muet. */
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corpsOubli=(codeSeul.match(/function _afOublierAliment\(opts\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCVII ⑫ ⭐ le correctif est posé dans `_afOublierAliment` — une fois, pour les 13 portes '+
+    '(R2), pas recopié porte par porte',
+    corpsOubli.length>0 && /_bcProposerDerniere\(0\)/.test(corpsOubli),
+    'absent du corps du propriétaire (commentaires retirés)');
+  /* ⛔⛔ Et il n'est PAS sous le drapeau du paquet — la mutation qui l'y met doit rougir. */
+  const sousGarde=/garderPaquet[^\n]*\{[^\n]*_bcProposerDerniere\(0\)/.test(corpsOubli);
+  t('CCXCVII ⑬ ⛔⛔ PÉRIMÈTRE DE SOURCE — la pastille n\'est pas rendue SOUS `garderPaquet` : '+
+    'les deux drapeaux ne nomment pas la même chose',
+    corpsOubli.length>0 && !sousGarde, 'la pastille est passée sous le drapeau du paquet');
+  /* ⛔ CONSIGNE EXPLICITE DE MICHEL : ce correctif ne touche à AUCUNE règle métier. */
+  const nbG=(sansComm.match(/_qGrammes\(/g)||[]).length;
+  t('CCXCVII ⑭ ⛔ HORS PÉRIMÈTRE — `_qGrammes` est intacte (1 déclaration + 2 appels) et refuse '+
+    'toujours les portions',
+    nbG===3 && /function _qGrammes\(src\)\{/.test(sansComm) &&
+    !/portion/.test((sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'occurrences='+nbG);
+  t('CCXCVII ⑮ ⛔ HORS PÉRIMÈTRE — `_qReprenable` est intacte, portions comprises',
+    /function _qReprenable\(src\)\{/.test(sansComm) &&
+    /=== 'portion'/.test((sansComm.match(/function _qReprenable\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'la règle voisine a bougé');
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,
