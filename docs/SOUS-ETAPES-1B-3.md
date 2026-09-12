@@ -128,12 +128,27 @@ colonnes figée à part) : elle a sa place dans le découpage précisément pour
 a raté, c'est la **moitié PORTIONS** : **9 lignes** de plus, ajoutées en ft-v1183/1186 et jamais
 réintégrées à l'inventaire. **16 décisions** sur l'unité au total.
 
-### 3-i — la forme « avec portions »
+### 3-i — la forme « avec portions » ✅ **LIVRÉE (ft-v1196)**
 - **Sites** : `rejouerRepas` (@2212) · `quickAddFood` (@2868) — **2, identiques**
-- **Fonction** : `_qReprenable(src)` → booléen
-- **Instantané** : ✅ couvert (`3_regle_avec_portions`, `3_via_quickAddFood`)
-- **Mutations** : la règle retirée · les portions refusées · les grammes refusés · l'unité absente refusée
+- **Fonction** : `app.js` → `_qReprenable(src)` → booléen
+- **Instantané** : ✅ couvert — **après extension** (voir ci-dessous)
+- **Mutations** : ① la règle rend toujours `true` · ② les portions refusées · ③ le `ml` accepté · ④ la quantité négative acceptée · ⑤ l'unité absente refusée · ⑥⑦ une porte reprend sa propre copie · ⑧ **débordement** (3-ii/iii/iv faites au passage) · ⑨ elle ne rend plus un booléen · ⑩ le garde `src||{}` retiré
+- **Rollback** : `git revert` — 1 fonction + 2 appels
 - ⭐ **C'est la suite naturelle de 1b-i** : le même couple de fonctions, l'autre moitié de la ligne.
+
+> ⚠️⚠️ **CORRECTION — CE DOCUMENT DISAIT « INSTANTANÉ : COUVERT », ET C'ÉTAIT À MOITIÉ FAUX**
+> (mesuré le 12/09 avant de coder). ⛔ `3_regle_avec_portions` **recopie la règle DANS la sonde**
+> (`const regleP = c => …`) : elle n'appelle aucun code de production, donc elle ne peut **rien**
+> détecter d'une extraction — c'est une **table de vérité**, pas une couverture. ⛔ Et
+> `3_via_quickAddFood` ne conduit **qu'une** des deux portes : **`rejouerRepas` n'était sondé par
+> rien**.
+> ⭐ **Corrigé avant toute modification de code** : la sonde `3_via_rejouerRepas` comble la moitié
+> manquante (12 sondes au lieu de 11). ⚠️ Et le commentaire de l'instantané annonçait *« les six
+> sites conduits par leur VRAIE porte »* pour une boucle qui n'en conduit **qu'une** — *c'est le
+> miroir du commentaire de ft-v1190, qui annonçait une portée plus ÉTROITE que le code : dans les
+> deux cas, il dispense le lecteur suivant d'aller vérifier.*
+> 👉 **Leçon à appliquer aux sous-étapes suivantes** : avant d'écrire « instantané couvert »,
+> **ouvrir la sonde** et vérifier qu'elle conduit la production, pas une copie de la règle.
 
 ### 3-ii — la pastille « ta dernière quantité »
 - **Sites** : `quickFillFood` (@2777) · `_afSuggPrendreLocale` (@3924) — **2, identiques**
@@ -179,7 +194,7 @@ qu'on découvre trois versions plus tard.
 ```
 1b-i  ✅ livrée (ft-v1195)
   │
-  ├─ 3-i      (même couple de fonctions, l'autre moitié de la ligne)
+  ├─ 3-i   ✅ livrée (ft-v1196)
   │
   ├─ 1b-iv    (isolée — mais PRÉREQUIS : écrire la sonde CSV d'abord)
   │

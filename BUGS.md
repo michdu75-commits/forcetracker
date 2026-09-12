@@ -3475,6 +3475,29 @@ négatif attrape la rechute.*
 ft-v1158 — « vérifier la fonction n'est pas vérifier l'appel » : celle-ci en est la version
 **temporelle** au lieu de spatiale.*
 
+**⭐⭐ ET LA MÊME FAMILLE FRAPPE LES SONDES, PAS SEULEMENT LES TÉMOINS *(12/09/2026, ft-v1196)*.**
+L'instantané du chantier Nutrition portait deux sondes nommées `3_regle_grammes_seuls` et
+`3_regle_avec_portions`. Mesuré avant la sous-étape 3-i : elles **RECOPIENT la règle dans la
+sonde** —
+
+```js
+const regleP = c => (+c.q>0 && (!c.u||c.u==='g'||c.u==='portion'));   // dans la SONDE
+```
+
+— donc elles **n'appellent aucun code de production**, et ne peuvent rien détecter d'une
+extraction. Ce sont des **tables de vérité**, ce qui est utile, mais ce n'est **pas** de la
+couverture. Et la seule sonde qui conduisait vraiment une porte n'en conduisait **qu'une sur deux**.
+
+> **Une sonde qui recopie la règle mesure ce qu'on CROYAIT écrire, pas ce qui est exécuté.**
+
+⚠️ **Le signe qui aurait dû alerter était dans le commentaire lui-même** : il annonçait *« les six
+sites conduits par leur VRAIE porte »* pour une boucle qui n'en conduit **qu'une**. *C'est le
+miroir du commentaire de ft-v1190, qui annonçait une portée plus ÉTROITE que le code — dans les
+deux sens, un commentaire qui décrit mal sa portée dispense le lecteur suivant d'aller vérifier.*
+
+**Le réflexe** : avant d'écrire « instantané couvert », **ouvrir la sonde** et chercher le nom de
+la fonction de production dedans. S'il n'y est pas, la sonde ne couvre rien.
+
 
 ---
 

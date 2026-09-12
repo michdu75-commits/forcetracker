@@ -34265,28 +34265,138 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   const lignes=src.split('\n').filter(l=>!estCommentaire(l));
   const aLaMain=lignes.filter(l=>/q\s*:\s*_?qOk\s*\?/.test(l)).length;
   const appels=(src.match(/_srcRepriseQ\(/g)||[]).length;
-  /* ⛔⛔ ET LE TÉMOIN DE PÉRIMÈTRE : l'étape 3 ne doit PAS avoir été faite au passage. `qOk`
-     reste calculé PAR CHAQUE APPELANT — *une sous-étape qui déborde sur la suivante n'est plus
-     réversible*.
-     ⚠️⚠️ ET IL A FALLU L'ÉCRIRE DEUX FOIS : ma 1ʳᵉ version comptait les LIGNES portant le motif,
-     et la mutation « l'étape 3 faite au passage » rendait **0 rouge** — parce qu'extraire la
-     règle dans un propriétaire laisse le motif écrit… une fois dans ce propriétaire, plus une
-     fois chez l'autre appelant. Le compte restait à 2, et le témoin passait au vert sur
-     exactement ce qu'il devait interdire.
-     👉 ***Compter les occurrences d'un motif ne dit pas QUI décide.*** On exige donc que les
-     DEUX fonctions le portent **chacune dans son propre corps** : si l'une délègue, elle ne le
-     porte plus, et le témoin rougit. C'est `BUGS.md` §63 retourné contre mon propre témoin. */
+  /* ⛔⛔ CE TÉMOIN A CHANGÉ DE FORME EN ft-v1196, ET LA GARANTIE S'EST DÉPLACÉE SANS S'AFFAIBLIR.
+     En 1b-i il exigeait que `rejouerRepas` ET `quickAddFood` calculent ENCORE `qOk` **chacun dans
+     son propre corps** — c'était le garde-fou qui empêchait la sous-étape de déborder sur l'étape
+     3. ⭐ **La sous-étape 3-i EST précisément celle qui le retire**, sur décision de Michel
+     (*« continue, une sous-étape à la fois »*) : la règle a désormais un propriétaire,
+     `_qReprenable`.
+     👉 On n'efface donc pas la garantie, **on la retourne** : la règle « avec portions » doit
+     exister à **UN SEUL** endroit, et les deux portes doivent l'APPELER. *La différence entre
+     un témoin qu'on retire et un témoin qui se déplace se mesure : les deux mutations qui le
+     faisaient rougir en 1b-i (une porte qui délègue · la règle retirée d'une porte) le font
+     toujours rougir, par l'autre bout.*
+     ⚠️ ET ON GARDE LE PRINCIPE APPRIS EN 1b-i : on ne compte pas les occurrences d'un motif —
+     *ça ne dit pas QUI décide* — on regarde le corps de chaque fonction. */
   const corpsDe=n=>{const m=new RegExp('^function '+n+'\\(.*?^\\}','ms').exec(src);
                     return m?m[0]:'';};
-  const RE_P=/\+\w+\.q>0 && \(!\w+\.u\|\|\w+\.u==='g'\|\|\w+\.u==='portion'\)/;
-  const formeP=['rejouerRepas','quickAddFood'].filter(n=>RE_P.test(corpsDe(n))).length;
+  const RE_P=/\(!\w+\.u \|\| \w+\.u === 'g' \|\| \w+\.u === 'portion'\)/;
+  const regleAilleurs=lignes.filter(l=>RE_P.test(l)).length;
+  const appellent=['rejouerRepas','quickAddFood']
+    .filter(n=>/_qReprenable\(/.test(corpsDe(n))).length;
   t('CCXCII ⛔⛔ le bloc `q:qOk?…` n\'existe QU\'À UN endroit : le propriétaire',
     aLaMain===1, aLaMain+' occurrences de code');
   t('CCXCII ⭐ les 2 portes passent par `_srcRepriseQ` (2 appels + 1 déclaration)',
     appels===3, appels+' occurrences');
-  t('CCXCII ⛔⛔ PÉRIMÈTRE — `rejouerRepas` ET `quickAddFood` calculent ENCORE `qOk` eux-mêmes '+
-    '(l\'étape 3 n\'a pas été faite au passage)',
-    formeP===2, formeP+' fonctions sur 2 portent la règle en propre');
+  t('CCXCII ⛔⛔ 3-i — la règle « avec portions » n\'existe QU\'À UN endroit : `_qReprenable`',
+    regleAilleurs===1, regleAilleurs+' écritures de la règle');
+  t('CCXCII ⭐ ... et les DEUX portes l\'APPELLENT (la garantie de 1b-i, retournée)',
+    appellent===2, appellent+' fonctions sur 2 appellent `_qReprenable`');
+}
+
+/* ═══ CCXCIII — SOUS-ÉTAPE 3-i : « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » (12/09/2026) ═══
+   La suite naturelle de 1b-i : même couple de fonctions, l'AUTRE moitié de la ligne. Le bloc
+   `{q,u,per100,…}` a son propriétaire depuis ft-v1195 ; le TEST qui décide si la quantité passe
+   restait écrit deux fois → `_qReprenable(src)`.
+
+   ⭐⭐ CE BLOC FIGE AUSSI CE QU'ON N'A PAS FAIT, et c'est la moitié qui compte : les **5** sites
+   « grammes seuls » (3-ii/iii/iv) ne sont **PAS** touchés. *Les deux règles se ressemblent à un
+   `||` près et ne disent pas la même chose* — les fondre serait un changement de comportement,
+   pas une extraction. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    o.fn=typeof _qReprenable;
+
+    /* ⛔ LA TABLE DE VÉRITÉ, conduite sur la fonction de PRODUCTION (pas une règle recopiée :
+       c'est justement le défaut de la sonde `3_regle_avec_portions`, mesuré le 12/09). */
+    const CAS=[{q:120,u:'g'},{q:2,u:'portion'},{q:0,u:'g'},{q:150,u:'ml'},{q:80,u:null},{q:-5,u:'g'}];
+    o.table=JSON.stringify(CAS.map(c=>_qReprenable(c)));
+    /* ⛔ Elle ne PLANTE pas sur rien du tout — les portes l'appellent après un garde, mais une
+       règle qui lève déplace le défaut au lieu de le dire (R29). */
+    /* ⛔⛔ LE `try` N'EST PAS DE LA PRUDENCE VAGUE, IL EST PAYÉ : sans lui, une règle qui LÈVE
+       sur `null` fait rejeter l'`evaluate` entier — le bloc DISPARAÎT de la passe, qui ne
+       rougit pas pour autant (§61). Mesuré ici : la mutation « le garde `src||{}` retiré »
+       tuait la sonde ; elle fait maintenant un rouge NOMMÉ. */
+    try{ o.rien=JSON.stringify([_qReprenable(null), _qReprenable(undefined), _qReprenable({})]); }
+    catch(err){ o.rien='LÈVE : '+String(err && err.message || err); }
+    /* ⛔ Elle rend un BOOLÉEN et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire. */
+    const av={q:2,u:'portion',per100:null};
+    const r=_qReprenable(av);
+    o.pur=(typeof r==='boolean') && JSON.stringify(av)==='{"q":2,"u":"portion","per100":null}';
+
+    /* ── bout en bout, les DEUX portes ─────────────────────────────────────── */
+    const LIGNE=(q,u)=>({name:'Steak', kcal:400, prot:32, carbs:0, fat:28,
+                         per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}, q:q, u:u,
+                         portionLabel:'steak', portionWeightG:125});
+    const parListe=(q,u)=>{ S.foodLog=[]; _afMeal='midi'; _afQuickItems=[LIGNE(q,u)];
+                            quickAddFood(0);
+                            const m=(S.foodLog||[])[0]||{}; return {q:m.q,u:m.u}; };
+    o.listePortion=JSON.stringify(parListe(2,'portion'));
+    o.listeMl=JSON.stringify(parListe(150,'ml'));
+
+    const parRejeu=(q,u)=>{
+      const it=LIGNE(q,u);
+      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},it),
+                 Object.assign({date:'2026-09-02',meal:'midi',ts:2},it)];
+      const sig=(_repasHabituels()[0]||{}).sig||'';
+      if(!sig) return 'pas de repas habituel';
+      const n0=S.foodLog.length; rejouerRepas(sig,'midi');
+      const l=S.foodLog[S.foodLog.length-1];
+      return (S.foodLog.length>n0 && l) ? {q:l.q,u:l.u} : 'rien ajoute';
+    };
+    o.rejeuPortion=JSON.stringify(parRejeu(2,'portion'));
+    o.rejeuMl=JSON.stringify(parRejeu(150,'ml'));
+    return o;
+  });
+
+  t('CCXCIII 3-i — `_qReprenable` existe', R.fn==='function', R.fn);
+  t('CCXCIII ⭐ la table de vérité, conduite sur la PRODUCTION : g ✓ · portion ✓ · 0 ✗ · ml ✗ · sans unité ✓ · négatif ✗',
+    R.table==='[true,true,false,false,true,false]', R.table);
+  t('CCXCIII ⛔ `ml` est REFUSÉ — sans densité, un volume ne dit pas ce que pèse l\'aliment (R29)',
+    JSON.parse(R.table)[3]===false, R.table);
+  t('CCXCIII ⛔ elle ne plante pas sur `null` / `undefined` / objet vide',
+    R.rien==='[false,false,false]', R.rien);
+  t('CCXCIII ⛔ elle rend un BOOLÉEN et ne modifie pas ce qu\'on lui passe', R.pur===true);
+
+  t('CCXCIII ⭐ bout en bout — AJOUTER depuis la liste garde « 2 portions »',
+    R.listePortion==='{"q":2,"u":"portion"}', R.listePortion);
+  t('CCXCIII ⛔ ... et refuse les 150 ml (la ligne part sans quantité, honnêtement inconnue)',
+    R.listeMl==='{"q":null,"u":null}', R.listeMl);
+  t('CCXCIII ⭐ bout en bout — REJOUER un repas garde « 2 portions »',
+    R.rejeuPortion==='{"q":2,"u":"portion"}', R.rejeuPortion);
+  t('CCXCIII ⛔ ... et refuse les 150 ml, exactement pareil',
+    R.rejeuMl==='{"q":null,"u":null}', R.rejeuMl);
+}
+
+/* ⛔⛔ LES TÉMOINS DE SOURCE — et celui du PÉRIMÈTRE est le plus important des deux.
+   Un parcours prouve que la règle marche ; il ne peut pas prouver qu'on n'a pas fait au passage
+   les sous-étapes SUIVANTES. Or 3-ii, 3-iii et 3-iv portent une règle qui ressemble à celle-ci à
+   un `||` près — et les fondre serait un changement de comportement. */
+{
+  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const estCommentaire=l=>{const x=l.trim();
+    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
+  const lignes=src.split('\n').filter(l=>!estCommentaire(l));
+  const appels=(src.match(/_qReprenable\(/g)||[]).length;
+  /* ⛔⛔ LA RÈGLE « GRAMMES SEULS » DOIT ÊTRE ENCORE ÉCRITE **5 FOIS**. Ce n'est pas une dette
+     qu'on tolère, c'est le PÉRIMÈTRE de cette sous-étape : ces 5 sites alimentent un champ en
+     grammes, ils refusent les portions **exprès**. Le jour où ce compte tombe à 1, c'est que
+     3-ii/iii/iv ont été faites — et ce témoin doit alors se DÉPLACER, pas disparaître. */
+  /* ⚠️ LES `\s*` NE SONT PAS DÉCORATIFS : `_provFood` @1232 écrit `(!_afSrc.u || _afSrc.u==='g')`
+     AVEC des espaces autour du `||`, les quatre autres sans. Ma 1ʳᵉ version comptait 4 au lieu
+     de 5 — et c'est la passe de RÉFÉRENCE qui l'a dit, avant la moindre mutation. *Un témoin
+     de source se vérifie d'abord contre le code SAIN : s'il rougit là, il ne mesure pas ce
+     qu'il croit.* */
+  const grammesSeuls=lignes.filter(l=>/q>0\s*&&\s*\(!\w+\.u\s*\|\|\s*\w+\.u\s*===?\s*'g'\)/.test(l)).length;
+  t('CCXCIII ⭐ les 2 portes passent par `_qReprenable` (2 appels + 1 déclaration)',
+    appels===3, appels+' occurrences');
+  t('CCXCIII ⛔⛔ PÉRIMÈTRE — la règle « grammes seuls » est TOUJOURS écrite 5 fois '+
+    '(3-ii/iii/iv n\'ont pas été faites au passage)',
+    grammesSeuls===5, grammesSeuls+' écritures');
 }
 
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.

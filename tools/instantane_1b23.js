@@ -150,8 +150,15 @@ const snap=await p.evaluate(async()=>{
   out['3_regle_grammes_seuls']=J(CAS.map(c=>[c.q, c.u, regleG(c)]));
   out['3_regle_avec_portions']=J(CAS.map(c=>[c.q, c.u, regleP(c)]));
 
-  /* ⛔ ET SURTOUT : les six sites conduits par leur VRAIE porte, pas la regle recopiee.
-     *Verifier la regle n'est pas verifier l'appel* (BUGS.md §58). */
+  /* ⛔⛔ CE COMMENTAIRE ANNONCAIT « LES SIX SITES » ET LA BOUCLE N'EN CONDUIT QU'UN (12/09/2026).
+     Mesure faite avant la sous-etape 3-i : cette boucle ne conduit que `quickAddFood`, et les deux
+     sondes `3_regle_*` ci-dessus RECOPIENT la regle dans la sonde (`const regleG/regleP = ...`) —
+     elles n'appellent aucun code de production, donc elles ne peuvent RIEN detecter d'une
+     extraction. Ce sont des tables de verite, pas une couverture.
+     👉 Un commentaire qui annonce une portee plus LARGE que le code est le miroir de celui de
+        ft-v1190 (qui en annoncait une plus etroite) : dans les deux cas il dispense le lecteur
+        suivant d'aller verifier. La sonde `3_via_rejouerRepas` ci-dessous comble la moitie
+        manquante — *verifier la regle n'est pas verifier l'appel* (BUGS.md §58). */
   const viaRejeu=[];
   CAS.forEach((cs,i)=>{
     S.foodLog=[]; S.savedFoods=[];
@@ -163,6 +170,27 @@ const snap=await p.evaluate(async()=>{
     viaRejeu.push([cs.q, cs.u, l?J({q:l.q,u:l.u}):null]);
   });
   out['3_via_quickAddFood']=J(viaRejeu);
+
+  /* ⭐ LA MOITIE QUI MANQUAIT : `rejouerRepas`, la SECONDE porte qui porte la meme regle.
+     ⚠️ `_repasHabituels` exige la MEME signature sur 2 dates dont la derniere n'est pas
+     aujourd'hui — on conduit donc la vraie porte, avec sa vraie condition d'entree. */
+  const viaRejeuRepas=[];
+  CAS.forEach((cs,i)=>{
+    const base={name:'R'+i, kcal:100, prot:1, carbs:2, fat:3, q:cs.q, u:cs.u,
+                per100:{kcal:50,prot:0.5,carbs:1,fat:1.5}};
+    S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, base),
+               Object.assign({date:'2026-09-02', meal:'midi', ts:2}, base)];
+    const sig=(_repasHabituels()[0]||{}).sig||'';
+    let res=null;
+    if(sig){
+      const avant=S.foodLog.length;
+      try{ rejouerRepas(sig,'midi'); }catch(e){}
+      const l=(S.foodLog||[])[S.foodLog.length-1];
+      res=(S.foodLog.length>avant && l) ? J({q:l.q,u:l.u}) : 'rien ajoute';
+    }
+    viaRejeuRepas.push([cs.q, cs.u, res]);
+  });
+  out['3_via_rejouerRepas']=J(viaRejeuRepas);
 
   return out;
 });

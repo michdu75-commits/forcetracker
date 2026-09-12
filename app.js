@@ -1641,6 +1641,28 @@ function _per100Derive(vals, masse){
    ⚠️ Les défauts sont recopiés tels quels, y compris ce qui ressemble à une coquille :
    `portionWeightG` rend `null` (et non `0`) quand il n'y a rien — parce que c'est ce que le
    code faisait. *On extrait ce qui existe, on ne redresse rien au passage.* */
+/* ═══════ « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » (12/09/2026, sous-étape 3-i) ═══════
+   La question que `_srcRepriseQ` reçoit en paramètre, et qui restait écrite **deux fois** —
+   c'est l'AUTRE moitié de la ligne, chez les deux mêmes portes : `rejouerRepas` et `quickAddFood`.
+
+   ⭐ CE QU'ELLE DIT : une quantité reprise d'une ligne enregistrée n'est utilisable que si elle
+   est **positive** ET exprimée dans une unité qu'on sait redimensionner — les **grammes**, les
+   **portions**, ou **rien du tout** (auquel cas `_srcRepriseQ` retombe sur « g »).
+   ⛔ `ml` est REFUSÉ, et ce n'est pas un oubli : sans densité, un volume ne dit pas ce que pèse
+   l'aliment, et on n'invente pas une densité (R29).
+
+   ⛔⛔ ELLE ACCEPTE LES PORTIONS, ET C'EST LA MOITIÉ « AVEC PORTIONS » — pas la règle des
+   **5 autres** sites, qui n'acceptent que les grammes parce qu'ils alimentent un champ en
+   grammes. *Les deux règles se ressemblent à un `||` près et ne disent pas la même chose* :
+   les fondre serait un changement de comportement, pas une extraction (sous-étapes 3-ii/iii/iv,
+   et c'est l'une des 4 décisions produit qui attendent Michel).
+
+   ⚠️ Elle rend un BOOLÉEN et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire.
+   *Une sous-étape réversible est une sous-étape qui ne fait qu'une chose.* */
+function _qReprenable(src){
+  const s = src || {};
+  return (+s.q > 0 && (!s.u || s.u === 'g' || s.u === 'portion'));
+}
 function _srcRepriseQ(src, qOk){
   const s = src || {};
   return { q: qOk ? +s.q : null,
@@ -2240,7 +2262,7 @@ function rejouerRepas(sig, meal){
        que `quickAddFood` avant ft-v1176 — des lignes que plus rien ne peut redimensionner.
        ⭐ On garde la protection (la quantité vient de l'ITEM, jamais du DOM) et on transmet ce
        qui est écrit. *Sans ça, rejouer un repas tuerait les portions qu'on vient de sauver.* */
-    const qOk=(+e.q>0 && (!e.u||e.u==='g'||e.u==='portion'));
+    const qOk=_qReprenable(e);
     /* ⛔ PAS de `sourceId`/`etat` ici, et ce n'est pas un oubli : le rejeu n'en a jamais posé.
        Les ajouter changerait la provenance enregistrée — décision produit, sous-étape 1b-ii. */
     if(typeof _afSetSrc==='function')_afSetSrc(
@@ -2897,7 +2919,7 @@ function quickAddFood(i){
      blanche de `_provFood` aux portions, et cette ligne rendait quand même `q:null` : elle
      n'acceptait que les grammes. *Une porte ouverte en aval ne sert à rien si l'amont filtre
      encore* — mesuré sur une ligne « 2 portions », qui repartait morte. */
-  const _qOk=(+it.q>0 && (!it.u||it.u==='g'||it.u==='portion'));
+  const _qOk=_qReprenable(it);
   /* 🏷️ ft-v1186 — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant : le nom et le
      poids de la portion voyagent avec la quantité, dans `_srcRepriseQ`.
      ⭐ `sourceId`/`etat` restent ICI, en plus : cette porte-ci les a toujours posés (R33 — la
