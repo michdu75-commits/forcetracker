@@ -69,9 +69,17 @@ const R=await p.evaluate(async()=>{
          'Soulevé de Terre':{kg:171,reps:3,rm1:186,date:J(9)}};
   S.weightLog=[{date:J(21),kg:84.9},{date:J(7),kg:84.1},{date:J(1),kg:83.7}];
   S.sleepLog=[{date:J(2),hours:6.4,energy:3},{date:J(1),hours:7.3,energy:4}];
-  S.healthProfile='Tendinite épaule droite en 2023, gênant au développé militaire.';
+  /* ⚠️ FORME RÉELLE, VÉRIFIÉE DANS LE CODE (coach.js) : un OBJET, pas une chaîne. Ma 1ʳᵉ version
+     écrivait une chaîne — `S.healthProfile` sortait donc « absent du contexte », ce qui aurait
+     été un faux bug ÉNORME (c'est la donnée du Gardien). *Un test qui n'emploie pas le schéma de
+     la production ne teste rien, il rassure.* */
+  S.healthProfile={injuries:['Tendinite épaule droite (2023)'],conditions:[],notes:'Gênant au développé militaire.'};
   S.registre={facts:{},observations:[],updatedAt:'',lastObsAt:''};
-  S.coachMemory=[{d:J(12), t:'Prépare un déménagement en octobre, moins de temps en salle.'}];
+  /* ⚠️⚠️ ET CELLE-CI CHANGE LA CARTE : `S.coachMemory` est une CHAÎNE, et surtout elle n'est PAS
+     dans `buildCoachContext` — elle part dans un CHAMP SÉPARÉ du message (`coachMemory:`), à côté
+     de `context`, `history` et `message`. Une sonde qui ne mesure que le contexte ne peut pas la
+     voir, et conclurait à tort qu'elle se perd. */
+  S.coachMemory='Prépare un déménagement en octobre, moins de temps en salle.';
   S.strengthGoals={'Développé Couché':120};
   S.exRestPref={'Squat à la Barre':213};
   S.programmes=[{name:'Powerbuilding 8 semaines',weeks:8,startDate:J(14),
@@ -81,6 +89,9 @@ const R=await p.evaluate(async()=>{
   /* ── LE TEXTE RÉELLEMENT ENVOYÉ ────────────────────────────────────────────────────── */
   let txt='';
   try{ txt=buildCoachContext(); }catch(e){ return {err:'buildCoachContext a levé : '+e.message}; }
+  /* ⭐ CE QUE MILO REÇOIT N'EST PAS QUE LE CONTEXTE : le message envoyé porte `context`,
+     `coachMemory`, `history` et `message`. On mesure donc les DEUX, et on dit lequel porte quoi. */
+  const memo=(typeof S.coachMemory==='string')?S.coachMemory:'';
 
   /* ── DÉCOUPAGE EN SECTIONS (les titres que le prompt se donne à lui-même) ──────────── */
   const lignes=txt.split('\n');
@@ -101,12 +112,34 @@ const R=await p.evaluate(async()=>{
   sections.push(cour);
 
   /* ── OÙ CHAQUE EMPREINTE ATTERRIT ─────────────────────────────────────────────────── */
+  /* ⚠️ LA SONDE DOIT CONNAÎTRE LES FORMES D'AFFICHAGE, sinon elle crie « absent » sur une donnée
+     bien présente : 213 s s'écrit « 3 min 33 s », 83.7 s'écrit « 83,7 », 1.62 parfois « 1,62 ».
+     Ma 1ʳᵉ version ne cherchait que la valeur brute et annonçait 11 absences — dont la plupart
+     étaient des ARTEFACTS DE MESURE (`BUGS.md` §61/§63 : l'instrument fait partie de la mesure). */
+  const formes=(val)=>{
+    const out=new Set([String(val), String(val).replace('.',',')]);
+    const n=+val;
+    if(!isNaN(n) && n>=60 && Number.isInteger(n)){            // secondes → « 3 min 33 s »
+      const m=Math.floor(n/60), r=n%60;
+      out.add(m+' min'+(r?' '+r+' s':''));
+    }
+    return [...out];
+  };
+  /* ⛔⛔ ET LA BORNE EST OBLIGATOIRE, elle a été payée : ma 2ᵉ version ajoutait la valeur ARRONDIE
+     aux formes cherchées — « 1,62 » devenait « 2 », et le niveau d'activité sortait à **123
+     occurrences dans 10 sections**. Une sonde trop permissive ne trouve pas des doublons : elle
+     en FABRIQUE. On exige donc que le nombre ne soit pas collé à un autre chiffre. */
+  const compte=(corps,f)=>{
+    const esc=f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const re=/^[\d]/.test(f) ? new RegExp('(?<![\\d,.])'+esc+'(?![\\d,.])','g')
+                             : new RegExp(esc,'g');
+    return (corps.match(re)||[]).length;
+  };
   const cherche=(val)=>{
-    const s=String(val).replace('.',','), s2=String(val);
     const ou=[];
     sections.forEach(sec=>{
       const corps=sec.lignes.join('\n');
-      const n=(corps.split(s).length-1)+(s!==s2?(corps.split(s2).length-1):0);
+      let n=0; formes(val).forEach(f=>{ if(f) n+=compte(corps,f); });
       if(n>0) ou.push({titre:sec.titre,n});
     });
     return ou;
@@ -136,12 +169,18 @@ const R=await p.evaluate(async()=>{
     'prénom (S.name)':'Empreinte'
   };
   const carteMots={};
+  /* ⚠️ INSENSIBLE À LA CASSE : le contexte écrit « Powerbuilding » là où `S.discipline` vaut
+     « powerbuilding », et « impédance » là où `S.scaleType` vaut « impedance ». Ma 1ʳᵉ version,
+     sensible à la casse ET aux accents, les déclarait absentes toutes les deux. */
+  const sansAccent=t=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   Object.entries(mots).forEach(([k,v])=>{
-    const ou=[];
+    const ou=[]; const cible=sansAccent(v);
     sections.forEach(sec=>{
-      const n=sec.lignes.join('\n').split(v).length-1;
+      const n=sansAccent(sec.lignes.join('\n')).split(cible).length-1;
       if(n>0) ou.push({titre:sec.titre,n});
     });
+    /* la mémoire longue ne vit PAS dans le contexte : on la cherche là où elle est vraiment */
+    if(!ou.length && sansAccent(memo).includes(cible)) ou.push({titre:'(champ SÉPARÉ « coachMemory » du message)',n:1});
     carteMots[k]=ou;
   });
 
