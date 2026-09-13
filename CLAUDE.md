@@ -459,6 +459,51 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
+**📋 1b-v ⛔ ÉCARTÉE — ET 1b ET 3 SONT TERMINÉES · 13/09/2026, SANS NOUVELLE VERSION** — Michel valide 3-v et impose le recomptage pour la dernière sous-étape : ***« recompte entièrement son périmètre réel dans le code servi ; ne te fie pas au plan écrit ; distingue bien l'écran d'ajout (`_af*`) de l'écran d'édition (`_ef*`) ; si le test d'entrée montre qu'il n'y a plus au moins deux copies d'une même forme, n'invente pas de propriétaire »***.
+
+**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ**, et c'est dit plutôt que subi : la règle du projet est *« ne pas bumper si la modif ne concerne que le backend »*, et la même logique vaut ici (seuls `tests/`, `tools/` et les journaux changent). *Un bump gratuit fait re-télécharger l'app à tout le monde pour rien.*
+
+**⭐ LE BALAYAGE COMPLET, REFAIT LE JOUR MÊME** — les **12 écritures** des quatre variables de portion, classées par **MÉTIER** et non par ressemblance :
+
+| métier | sites | état |
+|---|---|---|
+| **hydratation depuis une SOURCE** | `_afReprendreDefPortion` + ses 2 appelants · **`openEditFood`** | le 1ᵉʳ est le propriétaire livré par 3-v ; le 2ᵉ est **seul de sa forme** |
+| **saisie à l'ÉCRAN** (puce · nom · poids, × 2 écrans) | 5 sites | *autre métier* — la personne tape, rien n'est repris |
+| **déclaration / remise à plat** | 3 sites | — |
+
+👉 ***Il ne reste qu'UN site d'hydratation non propriétarisé, et il écrit d'AUTRES variables.*** **Test d'entrée : 1 copie** → on ne crée pas de propriétaire pour une forme unique (**R19**), exactement comme 1b-iv.
+
+**⛔⛔ ET DEUX MESURES INTERDISENT DE LE FONDRE AVEC LE PROPRIÉTAIRE `_af`.** ① Les deux formes **ne sont pas strictement identiques** — `(+X.portionWeightG>0)?` contre `+X.portionWeightG>0?`, parenthèses comprises. ② Et surtout **elles n'ont pas le même garde** : l'écran d'ajout **refuse** si `u!=='portion'`, l'écran d'édition hydrate **sans aucun garde d'unité**.
+
+**⭐⭐ CETTE DIVERGENCE A ÉTÉ MESURÉE BOUT EN BOUT, ET ELLE EST JUSTIFIÉE — c'est le fait de la sous-étape.** Sur **la même ligne**, enregistrée **en grammes** mais portant une étiquette de portion (état réel : `_provFood` recopie `portionLabel` sans condition d'unité) :
+
+| écran | définition reprise ? | son unité à l'ouverture |
+|---|---|---|
+| **ÉDITION** | ✅ `part` / 120 g | **`portion`, TOUJOURS** (forcé à chaque ouverture) |
+| **AJOUT** | ⛔ vide / 0 | **`g`** — il suit l'unité de la source |
+
+👉 ***Les deux gardes diffèrent parce que les deux écrans ne partent pas du même état.*** L'écran d'édition est **toujours** en mode portions, donc une définition de portion y a **toujours** du sens. **Ce n'est pas une incohérence : c'est la même intention appliquée à deux états différents.** *Ce qu'on factorise est l'INTENTION, jamais la ressemblance* — la règle qui avait déjà écarté `_per100SuitLaPortion` en ft-v1194.
+
+**⭐ ET C'EST POUR ÇA QUE JE N'AI PAS CRIÉ AU DÉFAUT.** La première lecture donnait *« l'écran d'édition oublie un garde »* — une conclusion plausible, et fausse. **C'est la mesure des DEUX côtés qui a tranché** : lire un seul bout aurait produit un correctif qui casse l'écran d'édition. *Une divergence ne se juge pas sur la ligne qui diverge, mais sur l'état dans lequel elle s'exécute.*
+
+**⭐⭐ LE TÉMOIN ⑨ FIGE LA RAISON, PAS SEULEMENT LE FAIT** : il vérifie que `openEditFood` force encore `_efUnite='portion'` à l'ouverture. ***Le jour où ce fait tombera, la divergence redeviendra un vrai défaut à réexaminer — et un rouge le dira.*** *Un témoin qui fige un comportement protège le présent ; un témoin qui fige sa RAISON protège la décision.*
+
+**⛔⛔ ET LE BLOC CCCI PROTÈGE UNE ABSENCE, PAS UNE EXTRACTION** (**R30**) : sans lui, `openEditFood` ressemble trait pour trait à un site qu'on a oublié de brancher, et le suivant « réparerait » une décision — c'est le cas vécu du calculateur de plaques. **Mesuré : la mutation « je répare l'oubli » fait 4 rouges.**
+
+**⚠️ SONDE : elle n'observait AUCUNE variable `_ef*`.** Elle conduit `openEditFood` depuis l'étape 2, mais n'y lit que la **ligne enregistrée** — jamais l'état de l'écran d'édition. *Conduire n'est pas observer.* Étendue de **21 à 23 clés AVANT toute conclusion**, et elle mesure les **deux écrans sur les mêmes cas** : c'est la comparaison qui fait la preuve, pas la lecture d'un seul côté.
+
+**⭐ CRITÈRE BINAIRE ATTEINT, ET IL EST PLUS FORT QUE D'HABITUDE** : non seulement l'instantané est identique (sha256 `1fc6df1198aee8e1`), mais **aucun fichier servi n'a changé du tout** — vérifié par liste de noms, pas par relecture.
+
+**⭐⭐ BILAN DU DÉCOUPAGE, MESURÉ** : sur les **10** sous-étapes décrites le 12/09, **2 étaient vides** (1b-iv, 1b-v) et **5 périmètres écrits sur 8 vérifiés étaient faux** — jamais deux fois de la même façon. 👉 ***Les deux sous-étapes vides ont été trouvées par le même geste : compter les copies AVANT d'écrire une ligne.*** Sans ce test d'entrée, on aurait créé **deux propriétaires à un seul appelant**, c'est-à-dire de la complexité sans contrepartie (**R19**) — et personne ne l'aurait jamais vu, puisque rien n'aurait rougi.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **le hub et la douane ne sont PAS commencés** — consigne de Michel, ils attendent son feu vert · ⛔ **le garde `!_bcNutr` non bloquant** (mesuré en ft-v1203) reste **hors périmètre**, mesure conservée, cause documentée, **pas de correction sans feu vert séparé** · ⛔ `S.savedFoods` multi-onglets, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts.
+
+Tests : **parcours 3710/3710 sur l'arbre FINAL** (+11, bloc **CCCI**) — **total prédit = total obtenu** (3699 + 11, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 7 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① ⭐⭐ **« je répare l'oubli » : `openEditFood` branché sur le propriétaire de l'AUTRE écran** → **4** · ② le propriétaire de l'ajout absorbe les jumelles `_ef*` → **1, exactement lui** · ③ ⭐⭐ **« j'harmonise » : le garde d'unité posé sur l'écran d'édition** → **1** · ④ l'écran d'édition n'ouvre plus en portions (la raison tombe) → **2**, dont le témoin de la raison · ⑤ une 2ᵉ copie de la forme `_ef*` apparaît → **1**, exactement le test d'entrée · ⑥ régression 3-v : une porte reperd son propriétaire → **1** · ⑦ l'édition cesse d'hydrater (contrôle : ① mesure-t-il vraiment ?) → **1**.
+
+Fichiers : `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
+
 **ft-v1203 — 🍽️ 3-v : LA DÉFINITION DE PORTION REPRISE · LA MOITIÉ DU TRAVAIL ÉTAIT DÉJÀ FAITE, ET LA FRONTIÈRE QUI RESTE EST HORS D'ATTEINTE** — Michel valide 3-iv et rétrograde explicitement le plan : ⭐ ***« considère le plan comme un ordre de travail, pas comme une source de chiffres ; recompte le périmètre réel le jour même »*** · ***« si un propriétaire existe déjà, branche l'appelant dessus au lieu de recréer une abstraction »*** · ***« conserve les témoins de source lorsque la dérive serait invisible à l'exécution »***.
 
 **⭐ TEST D'ENTRÉE PASSÉ — ET POUR LA PREMIÈRE FOIS DEPUIS QUATRE SOUS-ÉTAPES, LE PLAN DIT VRAI SUR LA MOITIÉ QU'IL DÉCRIT.** `quickFillFood` @3005 et `_afSuggPrendreLocale` @4156 portaient `if(X.u==='portion'){ _afPortionLabel=String(X.portionLabel||'').slice(0,24); _afPortionPoids=+X.portionWeightG>0?+X.portionWeightG:0; }` **strictement identiques**, au nom de variable près — mesuré : **exactement 2 copies** → **`_afReprendreDefPortion(src)`**.
