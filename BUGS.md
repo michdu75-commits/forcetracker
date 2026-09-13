@@ -3793,3 +3793,28 @@ calculée. Puis chercher ce cas-là **exprès**.
 *Voisine de **§58** (vérifier la fonction n'est pas vérifier l'appel) et de **§61** (un outil de
 mesure tronqué ressemble à un code sans défaut) : les trois disent la même chose à trois endroits —
 **l'instrument fait partie de la mesure**.*
+
+### ⭐⭐ RÉCIDIVE MESURÉE : **QUATRE sous-étapes d'affilée** *(13/09/2026, ft-v1195 → ft-v1202)*
+
+Le plan corrigé après ce cas a été redécoupé en sous-étapes, chacune avec son **périmètre écrit**.
+Sur les quatre suivantes, **le périmètre écrit était faux les quatre fois**, et jamais de la même
+façon — ce qui est justement ce qui le rend dangereux :
+
+| sous-étape | ce que le plan disait | ce que la mesure disait |
+|---|---|---|
+| **1b-ii** | « 4 sites » | **3** — le 4ᵉ construit un *item de liste*, pas une provenance |
+| **1b-iii** | « `q` et `portionWeightG` divergent tous les deux » | **une seule** des deux divergeait |
+| **1b-iv** | « la sous-étape la moins risquée du lot » | ⛔ **rien à extraire** : une seule copie |
+| **3-iv** | « les **deux** branches, **le seul** endroit qui écrit » | **1 copie de chaque forme** · **5** écritures |
+
+> ⭐ **Ce qu'on en tire, et qui vaut plus que les quatre corrections** : un document de plan reste
+> utile pour **ORDONNER** le travail — quoi avant quoi, quoi bloque quoi. Il n'est **jamais** une
+> source pour un **chiffre**. *Un périmètre écrit la veille est une hypothèse ; seul un comptage
+> refait le jour même est une mesure.*
+
+⚠️ **Et la 4ᵉ ajoute une nuance que les trois premières n'avaient pas** : le test d'entrée
+(*« y a-t-il au moins 2 copies ? »*) protège contre la **CRÉATION** d'un propriétaire pour une
+forme unique — il ne s'applique **pas** à l'ajout d'un appelant à un propriétaire qui **existe
+déjà**. Appliqué aveuglément, il aurait laissé la dernière copie écrite de la règle en dur pour
+toujours. *Une règle de garde qui déborde de son domaine devient elle-même une fausse limite*
+(**R28**).

@@ -219,10 +219,39 @@ réintégrées à l'inventaire. **16 décisions** sur l'unité au total.
   recopiées de 3-ii n'auraient **jamais** franchi le garde, et les six cas auraient rendu la même
   valeur (le piège de ft-v1199, évité parce qu'on l'a cherché d'avance).
 
-### 3-iv — `_provFood` : les deux branches d'écriture
-- **Sites** : @1232 (grammes) · @1237 (portions) — **le seul endroit qui ÉCRIT `p.q`/`p.u`**
-- ⛔ **À faire EN DERNIER** des formes : tout le reste *lit*, celui-ci *décide*. Une erreur ici se
-  retrouve dans les lignes enregistrées.
+### 3-iv — `_provFood` : la liste blanche de la provenance — ✅ **LIVRÉE (ft-v1202)**
+- **Ce que ce paragraphe annonçait** : *« Sites : @1232 (grammes) · @1237 (portions) — le seul
+  endroit qui ÉCRIT `p.q`/`p.u` »*.
+- ⛔⛔ **FAUX SUR LES DEUX POINTS — et c'est la 4ᵉ sous-étape d'affilée dont le périmètre écrit ici
+  ne résiste pas à la mesure.**
+
+| ce que le plan disait | ce que la **mesure** dit |
+|---|---|
+| « les **deux** branches @1232/@1237 » | **1 copie de CHAQUE forme.** Elles se ressemblent, elles ne disent pas la même chose : l'une teste les grammes et écrit `u:'g'`, l'autre teste les portions et écrit `u:'portion'` |
+| « le **SEUL** endroit qui écrit `p.q`/`p.u` » | **5 écritures** : @1232 · @1237 · @1300 (code-barres) · @1320 (poids déclaré) · @1355 (portions à l'écran) |
+
+- ⭐ Les 3 écritures supplémentaires lisent l'**état de l'écran**, pas `_afSrc` — ce ne sont pas
+  des copies non plus, et elles ne bougent pas. Un témoin fige que leur compte reste à **5**.
+- ⭐⭐ **3-iv se réduit donc à BRANCHER la dernière copie écrite sur `_qGrammes`**, qui avait déjà
+  3 appelants. ***Le test d'entrée protège contre la CRÉATION d'un propriétaire pour une forme
+  unique ; il n'interdit pas d'ajouter un appelant à un propriétaire qui existe*** (R19) — sans
+  quoi la dernière copie de la règle resterait écrite en dur pour toujours.
+- ⛔ **La branche PORTIONS ne bouge pas** : 1 écriture, aucun propriétaire existant. *On ne crée
+  pas de propriétaire pour une forme unique* — c'est la règle qui a fait écarter 1b-iv.
+- ⛔ **Le garde `if(_afSrc)` reste chez l'appelant** : il dit *« une source existe »*, un état de
+  l'écran — pas *« cette quantité est-elle des grammes »*. Le métier du propriétaire s'arrête à la
+  quantité. Deux témoins le figent (un de comportement, un de source).
+- ⭐⭐ **Et la mutation n°2 est la démonstration de la consigne de Michel** : la règle **réécrite
+  sur place** au lieu d'appeler le propriétaire rend **5 rouges, TOUS sur des témoins de SOURCE** —
+  chaque témoin de comportement reste vert, parce qu'une règle réécrite dit exactement la même
+  chose à l'exécution. ***Une dérive de conception peut être invisible à l'exécution***, et c'est
+  précisément ce qu'un témoin de source achète.
+
+### 3-v — la reprise des portions à l'écran
+- **Sites** : `quickFillFood` (@2842-2843) · `_afSuggPrendreLocale` (@3996-3997) — **2 × 2 lignes identiques**
+- **Dépendance** : ⛔ **avant 1b-v**
+- ⚠️ **Test d'entrée à refaire avant de coder** : les quatre derniers périmètres écrits ici étaient
+  faux. Ce document sert à **ordonner** le travail, jamais de source pour un **chiffre**.
 
 ### 3-v — la reprise des portions à l'écran
 - **Sites** : `quickFillFood` (@2842-2843) · `_afSuggPrendreLocale` (@3996-3997) — **2 × 2 lignes identiques**
@@ -262,13 +291,13 @@ qu'on découvre trois versions plus tard.
   │
   └─ suite ──┬─ 3-ii     ┐
              ├─ 1b-iii ✅ livrée (ft-v1198)
-             ├─ 3-iii    │  les 4 sous-étapes de la PAIRE
+             ├─ 3-ii   ✅ livrée (ft-v1199)
+             ├─ 3-iii  ✅ livrée (ft-v1201)
+             ├─ 3-iv   ✅ livrée (ft-v1202) — la liste blanche, le seul qui ÉCRIT
              ├─ 3-v ─────┤  quickFillFood / _afSuggPrendreLocale
              └─ 1b-v ────┘
                   │
-                  └─ 3-iv   (en dernier : le seul qui ÉCRIT)
-                       │
-                       └─ hub (étape 4) ─ douane (étape 5)
+                  └─ hub (étape 4) ─ douane (étape 5)
 ```
 
 ⛔ **Le hub et la douane restent après** — consigne explicite de Michel, inchangée.

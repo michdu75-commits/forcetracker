@@ -1228,8 +1228,19 @@ function _provFood(vals){
        de savoir si 323 kcal valaient 100, 250 ou 300 g. C'est la forme des lignes « quantité
        vide » relevées dans l'export réel (steak haché, 24/08 · 25/08 · 28/08).
        ⛔ Uniquement en grammes, et seulement si la valeur est plausible : on transmet ce qu'on
-       sait, on ne complète pas ce qu'on ignore (R29). */
-    if(+_afSrc.q>0 && (!_afSrc.u || _afSrc.u==='g')){ p.q=+_afSrc.q; p.u='g'; }
+       sait, on ne complète pas ce qu'on ignore (R29).
+       ⚖️⭐ ft-v1202 (3-iv) — LA DERNIÈRE COPIE ÉCRITE DE LA RÈGLE « GRAMMES SEULS » REJOINT SON
+       PROPRIÉTAIRE `_qGrammes` (posé en ft-v1199). Ce n'est pas une extraction : il n'y a QU'UNE
+       copie de cette forme-ci, et on ne crée pas de propriétaire pour une forme unique (R19).
+       C'est un **branchement** — le propriétaire existe déjà et avait 3 appelants.
+       👉 Pourquoi ça vaut le coup quand même : la règle était écrite ici ET dans le propriétaire,
+       donc deux endroits pouvaient diverger. `_qGrammes` rend un NOMBRE exprès (ft-v1199) : la
+       condition s'écrit `>0` sans réécrire la règle, et la valeur est ce même nombre.
+       ⛔ ET LE GARDE `if(_afSrc)` RESTE DEHORS, EXPRÈS : il dit « une source existe », un état de
+       l'écran — pas « cette quantité est-elle des grammes ». Le métier du propriétaire s'arrête à
+       la quantité. */
+    const _gProv=_qGrammes(_afSrc);
+    if(_gProv>0){ p.q=_gProv; p.u='g'; }
     /* 🍽️ ft-v1183 — ET LA PORTION AUSSI. Mesuré : un ajout DIRECT (`quickAddFood`) d'une ligne
        notée « 2 portions » repartait en `q:null, u:null` — la quantité était dans `it`, la liste
        blanche la jetait parce qu'elle n'acceptait que les grammes. *Recopier une quantité connue

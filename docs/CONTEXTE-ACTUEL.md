@@ -20,7 +20,35 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1201` — 🔢 **3-iii : le bloc « poids repris en grammes ».**
+- **Version en ligne (live) :** `ft-v1202` — ⚖️ **3-iv : la liste blanche de la provenance.**
+  ⛔⛔ **Ce n'est PAS une extraction, et le plan était faux pour la 4ᵉ fois.** Il annonçait
+  *« les deux branches @1232/@1237 »* et *« le SEUL endroit qui écrit `p.q`/`p.u` »*.
+  **Mesuré** : **1 copie de chaque forme** (elles se ressemblent, l'une teste les grammes et
+  écrit `u='g'`, l'autre les portions et écrit `u='portion'`), et **5 écritures** de `p.q`/`p.u`
+  — les 3 autres (@1300 code-barres · @1320 poids déclaré · @1355 portions à l'écran) lisent
+  **l'état de l'écran**, pas `_afSrc`.
+  ⭐⭐ **3-iv se réduit donc à BRANCHER la dernière copie écrite sur `_qGrammes`**, qui avait
+  déjà 3 appelants. *Le test d'entrée protège contre la CRÉATION d'un propriétaire pour une
+  forme unique — il n'interdit pas d'ajouter un appelant à un propriétaire qui existe* (R19).
+  ⛔ **La branche PORTIONS ne bouge pas** (1 écriture, aucun propriétaire) et **le garde
+  `if(_afSrc)` reste chez l'appelant** : il dit *« une source existe »*, pas *« est-ce des
+  grammes »*. Le métier du propriétaire s'arrête à la quantité.
+  ⭐⭐ **LA MUTATION QUI VAUT LA VERSION** : la règle **réécrite sur place** au lieu d'appeler le
+  propriétaire rend **5 rouges, TOUS sur des témoins de SOURCE** — chaque témoin de comportement
+  reste vert. ***Une dérive de conception peut être invisible à l'exécution***, la consigne de
+  Michel issue de 3-iii, démontrée le lendemain.
+  ⭐ **Sonde ouverte avant le BEFORE, et elle observait déjà** : `3_via_quickAddFood` et
+  `3_via_rejouerRepas` conduisent les deux vraies portes et lisent `q`/`u` sur la ligne
+  **enregistrée** — 6 issues distinctes sur 6 cas, donc discriminante. **Aucune clé ajoutée.**
+  Instantané **identique octet pour octet**, sha `57b13433fbaa1c60`.
+  ⭐ **Témoin de périmètre de 3-i déplacé pour la 4ᵉ fois, et il tombe à ZÉRO écriture** :
+  5 → 3+2 → 1 → **0**, avec **5 occurrences** de `_qGrammes` (1 déclaration + 4 appels). *À 0 il
+  ne se supprime pas : il devient le gardien du RETOUR de la duplication.*
+  ⭐ **Les 3 témoins frères déplacés ENSEMBLE cette fois** (CCXCIII · CCXCVI · CCXCVII) — R8
+  appliquée d'avance, après l'avoir payée la veille.
+  Tests : **8 mutations toutes mordantes**, contrôle sain **0 rouge avant ET après**.
+
+- **Version précédente :** `ft-v1201` — 🔢 **3-iii : le bloc « poids repris en grammes ».**
   ⭐ **Test d'entrée passé sur LES DEUX MOITIÉS** : condition **et** corps de 3 lignes
   (`_afUnite='g'` · `_afPoidsDeclare=+X.q` · `_afQtyNom=_afNomCourant()`), **2 copies de
   chaque** → **`_afReprendreGrammes(src)`**.
@@ -38,7 +66,7 @@
   ⚠️ **Un compteur à moi était aveugle**, attrapé **avant** de publier le chiffre (5 au lieu de 4).
   Tests : **parcours 3667/3667** (écart de +1 expliqué : un témoin ajouté à CCXCIII), **9 mutations toutes mordantes**, contrôle sain 0 rouge.
 
-- **Version précédente :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
+- **Avant :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
   dernière fois) » qui SURVIVAIT à l'aliment suivant.**
   ⭐⭐ **Le chemin vaut autant que le correctif** : défaut trouvé la veille en étendant la sonde
   de 3-ii, **mesuré**, **écrit dans `docs/JOURNAL-DE-TEST.md`** — et **pas corrigé**, parce

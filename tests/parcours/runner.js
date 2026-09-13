@@ -34425,12 +34425,17 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      déborder sur 3-ii/iii/iv. ② En ft-v1199 (3-ii) : 3 écritures + 2 appelants de `_qGrammes`.
      ③ En ft-v1201 (3-iii) : **1 seule écriture** — `_provFood` @1232, le SEUL site qui ÉCRIT
      `p.q`/`p.u`, réservé à 3-iv — **+ 4 appelants**.
+     ④ En ft-v1202 (3-iv) : **ZÉRO écriture** — la dernière copie a rejoint le propriétaire, qui
+     compte désormais **5 occurrences** (1 déclaration + 4 appels).
      ⭐ La garantie ne s'affaiblit pas : elle change de forme. Et c'est vérifiable — les mutations
-     qui la faisaient rougir hier la font rougir aujourd'hui, par l'autre bout.
-     ⛔ Le jour où elle tombera à 0, ce sera que 3-iv a été faite. */
-  t('CCXCIII ⛔⛔ PÉRIMÈTRE — la règle « grammes seuls » n\'est plus écrite qu\'UNE fois '+
-    '(3-ii et 3-iii faites ; 3-iv PAS faite au passage)',
-    grammesSeuls===1, grammesSeuls+' écritures');
+     qui la faisaient rougir hier la font rougir aujourd'hui, par l'autre bout : le témoin
+     n'autorise plus AUCUNE réécriture de la règle, où que ce soit dans le fichier.
+     ⛔ Il ne se supprime pas maintenant qu'il vaut 0 : à 0 il devient le gardien du RETOUR de la
+     duplication — c'est exactement ce qu'un témoin de source protège et qu'aucun parcours ne
+     peut voir (une 2ᵉ copie de la règle ne change RIEN à l'exécution tant qu'elle dit pareil). */
+  t('CCXCIII ⛔⛔ PÉRIMÈTRE — la règle « grammes seuls » n\'est plus écrite NULLE PART en dur '+
+    '(3-ii, 3-iii et 3-iv faites : un seul propriétaire)',
+    grammesSeuls===0, grammesSeuls+' écritures');
   /* ⚠️⚠️ CELUI-CI LIT LE CODE SANS SES BLOCS DE COMMENTAIRE ENTIERS, et c'est une correction
      payée en ft-v1200 puis re-mesurée ici AVANT d'écrire le chiffre. Le filtre ligne-à-ligne
      employé juste au-dessus (`lignes`) ne retire que les lignes qui COMMENCENT par une étoile,
@@ -34441,9 +34446,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
                     .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
   const nbG=(codeSeul.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCIII ⭐ …et `_qGrammes` a désormais 3 appelants (1 déclaration + 3 appels : les 2 '+
-    'pastilles de 3-ii, plus le propriétaire de 3-iii)',
-    nbG===4, nbG+' occurrences hors commentaires');
+  t('CCXCIII ⭐ …et `_qGrammes` a désormais 4 appelants (1 déclaration + 4 appels : les 2 '+
+    'pastilles de 3-ii, le propriétaire de 3-iii, la liste blanche de 3-iv)',
+    nbG===5, nbG+' occurrences hors commentaires');
 }
 
 /* ══════════ BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ══════════
@@ -34805,9 +34810,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   const codeSeulG=src.replace(/\/\*[\s\S]*?\*\//g,'')
                      .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
   const nb=(codeSeulG.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVI ⑪ ⭐ `_qGrammes` a 3 appelants (1 déclaration + 3 appels : les 2 pastilles de 3-ii, '+
-    'plus le propriétaire de 3-iii)',
-    nb===4, 'occurrences hors commentaires='+nb);
+  t('CCXCVI ⑪ ⭐ `_qGrammes` a 4 appelants (1 déclaration + 4 appels : les 2 pastilles de 3-ii, '+
+    'le propriétaire de 3-iii, la liste blanche de 3-iv)',
+    nb===5, 'occurrences hors commentaires='+nb);
   const corps=(sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
   t('CCXCVI ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
     '`_qReprenable` n\'est PAS entré dedans (les fondre serait un changement de comportement)',
@@ -34987,9 +34992,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      lignes de commentaire qui CITENT l'appel. ⛔ Ce que ce témoin protège ne change pas : il
      doit toujours vérifier que `_qGrammes` **refuse les portions**, la consigne de ft-v1200. */
   const nbG=(codeSeul.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVII ⑭ ⛔ HORS PÉRIMÈTRE — `_qGrammes` est intacte (1 déclaration + 3 appels) et refuse '+
+  t('CCXCVII ⑭ ⛔ HORS PÉRIMÈTRE — `_qGrammes` est intacte (1 déclaration + 4 appels) et refuse '+
     'toujours les portions',
-    nbG===4 && /function _qGrammes\(src\)\{/.test(codeSeul) &&
+    nbG===5 && /function _qGrammes\(src\)\{/.test(codeSeul) &&
     !/portion/.test((codeSeul.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
     'occurrences hors commentaires='+nbG);
   t('CCXCVII ⑮ ⛔ HORS PÉRIMÈTRE — `_qReprenable` est intacte, portions comprises',
@@ -35139,6 +35144,123 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     /function _qReprenable\(src\)\{/.test(codeSeul) &&
     /=== 'portion'/.test((codeSeul.match(/function _qReprenable\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
     'la règle voisine a bougé');
+}
+
+/* ══════════ BLOC CCXCIX — ⚖️ 3-iv : la liste blanche de la provenance (ft-v1202) ══════════
+   ⛔⛔ TEST D'ENTRÉE : CE N'EST PAS UNE EXTRACTION, et le plan le disait faux pour la 4ᵉ fois.
+   Il annonçait « les DEUX branches @1232/@1237 » et « le SEUL endroit qui écrit `p.q`/`p.u` ».
+   Mesuré : **1 copie de chaque forme** (elles se ressemblent mais l'une teste les grammes et
+   écrit `u:'g'`, l'autre teste les portions et écrit `u:'portion'`), et **5 écritures** de
+   `p.q`/`p.u` — les 3 autres (@1300 code-barres · @1320 poids déclaré · @1355 portions à
+   l'écran) lisent l'ÉTAT DE L'ÉCRAN, pas `_afSrc`. Aucune n'est une copie.
+   👉 3-iv se réduit donc à BRANCHER la dernière copie écrite sur `_qGrammes`, qui avait déjà
+   3 appelants. Le test d'entrée protège contre la CRÉATION d'un propriétaire pour une forme
+   unique — il n'interdit pas d'ajouter un appelant à un propriétaire qui existe.
+   ⛔ La branche PORTIONS ne bouge pas : 1 écriture, aucun propriétaire existant. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    const P100={kcal:50,prot:0.5,carbs:1,fat:1.5};
+    const CAS=[['grammes',{q:120,u:'g'}], ['sans unité',{q:80}],
+               ['portions',{q:2,u:'portion',portionLabel:'part',portionWeightG:120}],
+               ['zéro',{q:0,u:'g'}], ['négatif',{q:-5,u:'g'}], ['millilitres',{q:250,u:'ml'}]];
+
+    /* ── porte 1 : l'ajout DIRECT depuis la liste (`quickAddFood`) ── */
+    const A={}; let labA=null;
+    CAS.forEach(([nom,q])=>{
+      S.foodLog=[]; S.savedFoods=[];
+      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100}, q)];
+      _afMeal='midi';
+      try{ quickAddFood(0); }catch(e){}
+      const l=(S.foodLog||[])[0];
+      A[nom]= l ? {q:l.q,u:l.u} : 'RIEN AJOUTÉ';
+      if(nom==='portions'&&l) labA={lab:l.portionLabel,pds:l.portionWeightG};
+    });
+    o.direct=JSON.stringify(A); o.labelDirect=JSON.stringify(labA);
+
+    /* ── porte 2 : le REJEU d'un repas (R8, la porte jumelle) ──
+       ⚠️ `_repasHabituels` exige la MÊME signature sur 2 dates : on conduit la vraie porte
+       avec sa vraie condition d'entrée, jamais `_provFood` en direct (BUGS.md §58). */
+    const B={};
+    CAS.forEach(([nom,q])=>{
+      const base=Object.assign({name:'B '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100}, q);
+      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},base),
+                 Object.assign({date:'2026-09-02',meal:'midi',ts:2},base)];
+      const sig=(_repasHabituels()[0]||{}).sig||'';
+      if(!sig){ B[nom]='PAS DE SIGNATURE'; return; }
+      const avant=S.foodLog.length;
+      try{ rejouerRepas(sig,'midi'); }catch(e){}
+      const l=(S.foodLog||[])[S.foodLog.length-1];
+      B[nom]= (S.foodLog.length>avant && l) ? {q:l.q,u:l.u} : 'RIEN AJOUTÉ';
+    });
+    o.rejeu=JSON.stringify(B);
+
+    /* ⭐ LE CAS DE PÉRIMÈTRE : `_afSrc` ABSENT. Le garde `if(_afSrc)` reste chez l'appelant —
+       la provenance doit sortir « quantité inconnue » sans que le propriétaire soit consulté. */
+    try{ _afSetSrc(null); }catch(e){}
+    try{ const p=_provFood({kcal:100,prot:1,carbs:2,fat:3});
+         o.sansSrc=JSON.stringify({q:p.q,u:p.u}); }catch(e){ o.sansSrc='LÈVE : '+String(e&&e.message||e); }
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCXCIX ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  const A=j(X.direct)||{}, B=j(X.rejeu)||{};
+  t('CCXCIX ① ⭐ porte DIRECTE — 120 g traversent la liste blanche',
+    !!(A['grammes']&&A['grammes'].q===120&&A['grammes'].u==='g'), JSON.stringify(A['grammes']));
+  t('CCXCIX ② ⭐ porte DIRECTE — une quantité SANS unité est lue en grammes (80 g)',
+    !!(A['sans unité']&&A['sans unité'].q===80&&A['sans unité'].u==='g'), JSON.stringify(A['sans unité']));
+  t('CCXCIX ③ ⛔⛔ HORS PÉRIMÈTRE — la branche PORTIONS n\'a PAS bougé : « 2 portions » '+
+    'traversent toujours, telles quelles',
+    !!(A['portions']&&A['portions'].q===2&&A['portions'].u==='portion'), JSON.stringify(A['portions']));
+  t('CCXCIX ④ ⛔ zéro · négatif · millilitres ressortent sans quantité (honnêtement inconnue, R29)',
+    ['zéro','négatif','millilitres'].every(n=>A[n]&&A[n].q===null&&A[n].u===null),
+    JSON.stringify(A));
+  t('CCXCIX ⑤ ⛔ NON-RÉGRESSION ft-v1183/1180 — l\'étiquette de portion et son poids traversent '+
+    'toujours (une portion sans « de quoi » ne vaut rien)',
+    !!(j(X.labelDirect)&&j(X.labelDirect).lab==='part'&&j(X.labelDirect).pds===120), X.labelDirect);
+  t('CCXCIX ⑥ ⛔ PORTE JUMELLE (R8) — le REJEU d\'un repas donne EXACTEMENT la même table',
+    JSON.stringify(A)===JSON.stringify(B), JSON.stringify(A)+' | '+JSON.stringify(B));
+  t('CCXCIX ⑦ ⛔⛔ PÉRIMÈTRE — sans source, la provenance sort « quantité inconnue » : le garde '+
+    '`if(_afSrc)` est resté CHEZ L\'APPELANT, il n\'est pas entré dans le propriétaire',
+    X.sansSrc==='{"q":null,"u":null}', X.sansSrc);
+  t('CCXCIX ⑧ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — et Michel l'a posé en consigne après 3-iii : *une dérive de conception
+   peut être invisible à l'exécution*, donc on garde les témoins de source quand ils protègent
+   une frontière que les tests de comportement ne peuvent pas voir. C'est exactement le cas ici :
+   remettre la règle en dur à côté de l'appel ne changerait RIEN à l'écran tant qu'elle dit
+   pareil — et c'est précisément comme ça que deux copies recommencent à diverger. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corps=(codeSeul.match(/function _provFood\(vals\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCIX ⑨ ⭐ la liste blanche APPELLE `_qGrammes` (une fois) au lieu de réécrire la règle',
+    corps.length>0 && (corps.match(/_qGrammes\(/g)||[]).length===1,
+    'occurrences dans _provFood='+(corps.match(/_qGrammes\(/g)||[]).length);
+  t('CCXCIX ⑩ ⛔⛔ PÉRIMÈTRE DE SOURCE — les 5 écritures de `p.q` sont TOUJOURS LÀ : les 3 autres '+
+    '(code-barres · poids déclaré · portions à l\'écran) lisent l\'écran, pas `_afSrc` — ce ne '+
+    'sont pas des copies et elles ne bougent pas',
+    (corps.match(/p\.q\s*=/g)||[]).length===5, 'écritures de p.q='+(corps.match(/p\.q\s*=/g)||[]).length);
+  t('CCXCIX ⑪ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_afSrc` n\'est PAS entré dans `_qGrammes` : le garde '+
+    'd\'état reste chez l\'appelant, le métier du propriétaire s\'arrête à la quantité',
+    !/_afSrc/.test((codeSeul.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'le propriétaire lit une globale de ses appelants');
+  t('CCXCIX ⑫ ⛔ HORS PÉRIMÈTRE — la branche PORTIONS est toujours écrite en dur, une fois '+
+    '(1 copie, aucun propriétaire : on n\'en crée pas pour une forme unique — R19)',
+    (corps.match(/_afSrc\.u===?'portion'/g)||[]).length===1,
+    'écritures de la branche portions='+(corps.match(/_afSrc\.u===?'portion'/g)||[]).length);
 }
 
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
