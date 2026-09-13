@@ -202,10 +202,22 @@ réintégrées à l'inventaire. **16 décisions** sur l'unité au total.
 - **Sites** : `quickFillFood` (@2777) · `_afSuggPrendreLocale` (@3924) — **2, identiques**
 - **Instantané** : ⚠️ à étendre (la pastille n'est pas sondée)
 
-### 3-iii — l'ouverture du bloc code-barres
-- **Sites** : `quickFillFood` (@2828) · `_afSuggPrendreLocale` (@3980) — **2, identiques**
-- ⛔ **Attention** : le garde `!_bcNutr` fait partie du motif et **n'est pas** la règle de quantité.
-  Il ne part pas avec.
+### 3-iii — l'ouverture du bloc « poids repris en grammes » ✅ **LIVRÉE (ft-v1201)**
+- **Sites** : `quickFillFood` · `_afSuggPrendreLocale` — **2, mesurés identiques**
+- ⭐ **Et le test d'entrée portait sur LES DEUX MOITIÉS** : la **condition** *et* le **corps de
+  3 lignes** (`_afUnite='g'` · `_afPoidsDeclare=+X.q` · `_afQtyNom=_afNomCourant()`) sont
+  strictement identiques, au nom de variable près. **2 copies de chaque** → `_afReprendreGrammes(src)`.
+- ⭐⭐ **C'est la sous-étape qui tient la promesse de 3-ii** : `_qGrammes` rend un NOMBRE, donc la
+  condition s'écrit `_qGrammes(src) > 0` **sans réécrire la règle une 3ᵉ fois**.
+- ⛔ **Le garde `!_bcNutr` n'est PAS parti avec**, comme annoncé : il dit *« aucun pour-100 g n'est
+  posé »* — une question sur l'**état de l'écran**, pas sur la quantité de la ligne. L'absorber
+  ferait deux extractions en une **et** rendrait le propriétaire dépendant d'une globale que ses
+  appelants contrôlent. Un témoin de source l'interdit ; la mutation qui l'y met rougit.
+- ⚠️ **Mesure qui a décidé des fixtures, et qui n'était pas dans le plan** : les blocs de **3-ii et
+  3-iii sont MUTUELLEMENT EXCLUSIFS** sur la même entrée — `_bcNutr` est posé par le bloc du
+  pour-100 g, donc celui-ci ne s'exécute **que lorsque l'autre ne s'est pas exécuté**. Des fixtures
+  recopiées de 3-ii n'auraient **jamais** franchi le garde, et les six cas auraient rendu la même
+  valeur (le piège de ft-v1199, évité parce qu'on l'a cherché d'avance).
 
 ### 3-iv — `_provFood` : les deux branches d'écriture
 - **Sites** : @1232 (grammes) · @1237 (portions) — **le seul endroit qui ÉCRIT `p.q`/`p.u`**

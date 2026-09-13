@@ -1679,6 +1679,39 @@ function _qGrammes(src){
   const s = src || {};
   return (+s.q > 0 && (!s.u || s.u === 'g')) ? +s.q : 0;
 }
+/* ⚖️ 3-iii (ft-v1201) — « CETTE LIGNE REPRISE POSE-T-ELLE SON POIDS SUR L'ÉCRAN ? »
+   Les deux portes de reprise (`quickFillFood` · `_afSuggPrendreLocale`) portaient la MÊME
+   condition ET le MÊME corps de trois lignes, au nom de variable près. Mesuré : exactement
+   2 copies de chaque.
+
+   ⭐ ET C'EST ICI QUE 3-ii TIENT SA PROMESSE : `_qGrammes` rend un NOMBRE, donc la condition
+   s'écrit `_qGrammes(src) > 0` sans réécrire la règle une troisième fois. *Un seul propriétaire
+   pour la règle, un second pour ce qu'on en fait.*
+
+   ⛔⛔ LE GARDE `!_bcNutr` N'EST PAS DEDANS, ET C'EST LE PÉRIMÈTRE DE LA SOUS-ÉTAPE.
+   Il dit *« aucun pour-100 g n'est posé »* — c'est une question sur l'ÉTAT DE L'ÉCRAN, pas sur
+   la quantité de la ligne. L'absorber ferait deux extractions en une, et surtout rendrait le
+   propriétaire dépendant d'une variable globale que ses appelants contrôlent. Il reste donc
+   écrit chez chacun, où il se lit. ⭐ Mesuré : les deux blocs sont MUTUELLEMENT EXCLUSIFS —
+   `_bcNutr` est posé par le bloc du pour-100 g juste au-dessus, donc celui-ci ne s'exécute que
+   lorsque l'autre ne s'est pas exécuté. Une sonde qui ignore ça ne franchit jamais le garde.
+
+   ⛔⛔ ET ON N'Y AJOUTE PAS `_afPoidsPose` — le commentaire vient de `_afSuggPrendreLocale`, il
+   DÉMÉNAGE ici avec le code qu'il explique. Essayé en ft-v1176, la mesure l'a refusé : il
+   rouvrait le bug après un aller-retour d'unité. Ce drapeau dit *« la personne a déclaré un
+   poids pour ce qui est AFFICHÉ »* ; un poids hérité d'une entrée enregistrée n'est pas cela.
+   **On ne touche pas à ce qui marche** (R30).
+
+   ⭐ Et ces deux lignes SONT le modèle : l'audit du 08/09 a mesuré que ce chemin rendait déjà
+   79 kcal pour 110 g là où `quickFillFood` en rendait 274 — c'est de là que vient ft-v1176. On
+   n'a rien inventé, on a porté ce qui était ici sur la porte jumelle (R8). */
+function _afReprendreGrammes(src){
+  const g = _qGrammes(src);
+  if(!(g > 0)) return false;
+  _afUnite = 'g'; _afPoidsDeclare = g;
+  _afQtyNom = _afNomCourant();   // 🏷️ ft-v1180 : cette quantité décrit CET aliment
+  return true;
+}
 
 function _qReprenable(src){
   const s = src || {};
@@ -2947,10 +2980,7 @@ function quickFillFood(i){
      quantité, `_afRef.q` (380) ne correspond plus à ce qu'elle voit (79). Préserver cette base
      périmée, c'est réapparier des totaux à une autre quantité — la faute même du jour.
      *La différence avec ft-v1173 n'est pas le geste, c'est QUI a posé le poids.* */
-  if(!_bcNutr && +it.q>0 && (!it.u||it.u==='g')){
-    _afUnite='g'; _afPoidsDeclare=+it.q;
-    _afQtyNom=_afNomCourant();   // 🏷️ ft-v1180 : cette quantite decrit CET aliment
-  }
+  if(!_bcNutr) _afReprendreGrammes(it);
   /* Se tait tout seul si un pour-100 g existe (`if(_bcNutr) → cacher`) : R2, un seul réglage
      de quantité visible à la fois. */
   if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise d'un aliment : la source change
@@ -4107,18 +4137,7 @@ function _afSuggPrendreLocale(i){
      ⭐ R13 : rien n'est réinventé, on emprunte le mécanisme du poids déclaré (`_afPoidsDeclare`),
      et le libellé « que tu as indiqué » reste VRAI — elle l'a indiqué la fois d'avant.
      ⛔ Grammes seulement, et jamais par-dessus un pour-100 g (qui a déjà son propre champ). */
-  if(!_bcNutr && +e.q>0 && (!e.u||e.u==='g')){
-    /* ⭐ CES DEUX LIGNES SONT LE MODÈLE, et l'audit du 08/09 l'a confirmé en les mesurant : sur
-       une entrée sans pour-100 g, ce chemin-ci rendait déjà **79 kcal** pour 110 g là où
-       `quickFillFood` en rendait **274**. C'est de là que vient le correctif de ft-v1176 — on
-       n'a rien inventé, on a porté ce qui était ici sur la porte jumelle (R8).
-       ⛔⛔ ET ON N'Y AJOUTE PAS `_afPoidsPose` — j'ai essayé en ft-v1176, la mesure l'a refusé :
-       il rouvrait le bug après un aller-retour d'unité (voir le commentaire de `quickFillFood`).
-       Ce drapeau dit *« la personne a déclaré un poids pour ce qui est AFFICHÉ »* ; un poids
-       hérité d'une entrée enregistrée n'est pas cela. **On ne touche pas à ce qui marche** (R30). */
-    _afUnite='g'; _afPoidsDeclare=+e.q;
-    _afQtyNom=_afNomCourant();   // 🏷️ ft-v1180 : cette quantite decrit CET aliment
-  }
+  if(!_bcNutr) _afReprendreGrammes(e);
   if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise depuis le journal : la source change
   /* 🍽️ ft-v1183 — LA JUMELLE DE `quickFillFood` (R8). Les deux portes de reprise se corrigent
      ENSEMBLE : c'est la faute que ce fichier passe son temps à rattraper, six fois recensées. */

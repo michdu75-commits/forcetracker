@@ -20,7 +20,25 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
+- **Version en ligne (live) :** `ft-v1201` — 🔢 **3-iii : le bloc « poids repris en grammes ».**
+  ⭐ **Test d'entrée passé sur LES DEUX MOITIÉS** : condition **et** corps de 3 lignes
+  (`_afUnite='g'` · `_afPoidsDeclare=+X.q` · `_afQtyNom=_afNomCourant()`), **2 copies de
+  chaque** → **`_afReprendreGrammes(src)`**.
+  ⭐⭐ **C'est la sous-étape qui tient la promesse de 3-ii** : `_qGrammes` rend un NOMBRE, donc
+  `_qGrammes(src) > 0` **est** la condition — la règle n'est pas réécrite une 3ᵉ fois.
+  ⛔⛔ **Le garde `!_bcNutr` n'est PAS parti avec** : c'est une question sur l'**état de l'écran**,
+  pas sur la quantité. ⚠️ La mutation qui l'absorbe **ne change aucun comportement** — elle ne
+  rougit que sur le **témoin de source**. *C'est pour ça qu'il existe.*
+  ⭐⭐ **Mesure qui a décidé des fixtures** : les blocs de **3-ii et 3-iii sont mutuellement
+  exclusifs** (`_bcNutr` est posé par celui du pour-100 g). Des fixtures recopiées de 3-ii
+  n'auraient jamais franchi le garde.
+  ⚠️ **Sonde : elle conduisait, elle n'observait pas** — étendue de **17 à 19 clés AVANT le
+  BEFORE**. Instantané **identique**, sha `57b13433fbaa1c60`.
+  ⭐ **Témoin de périmètre de 3-i déplacé pour la 3ᵉ fois** : 5 → 3+2 → **1 écriture + 3 appelants**.
+  ⚠️ **Un compteur à moi était aveugle**, attrapé **avant** de publier le chiffre (5 au lieu de 4).
+  Tests : **parcours 3666/3666**, **9 mutations toutes mordantes**, contrôle sain 0 rouge.
+
+- **Version précédente :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
   dernière fois) » qui SURVIVAIT à l'aliment suivant.**
   ⭐⭐ **Le chemin vaut autant que le correctif** : défaut trouvé la veille en étendant la sonde
   de 3-ii, **mesuré**, **écrit dans `docs/JOURNAL-DE-TEST.md`** — et **pas corrigé**, parce

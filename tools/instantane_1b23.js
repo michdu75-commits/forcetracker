@@ -352,6 +352,70 @@ const snap=await p.evaluate(async()=>{
   });
   out['3ii_pastille_afSuggPrendreLocale']=J(pastLocale);
 
+  /* ══ 3-iii — LE BLOC « POIDS REPRIS EN GRAMMES » ══════════════════════════════════════════
+     ⚠️⚠️ LA SONDE CONDUISAIT DEJA CES DEUX PORTES, MAIS NE LES OBSERVAIT PAS SUR CE POINT.
+     Les cles `1bii_*` lisent `_afSrc`, les cles `3ii_*` lisent la pastille — AUCUNE ne lit
+     `_afUnite` / `_afPoidsDeclare` / `_afQtyNom`, qui est exactement ce que 3-iii deplace.
+     L'instantane serait donc reste identique quoi qu'on fasse a ce bloc.
+     *Conduire n'est pas observer* — la lecon de ft-v1199, cherchee cette fois AVANT le BEFORE.
+
+     ⛔⛔ ET LES CAS SONT L'INVERSE DE CEUX DE 3-ii, CE N'EST PAS UN DETAIL : le bloc de 3-iii
+     est garde par `!_bcNutr`, et `_bcNutr` est pose par le bloc de 3-ii lui-meme (celui du
+     pour-100 g). Les deux sites sont donc MUTUELLEMENT EXCLUSIFS sur la meme entree : pour
+     atteindre 3-iii il faut un aliment SANS pour-100 g. Des fixtures recopiees de 3-ii
+     n'auraient jamais franchi le garde — et les six cas auraient rendu la meme valeur. */
+  const CAS_G = [
+    {name:'G grammes',    kcal:100, prot:1, carbs:2, fat:3, q:150, u:'g'},
+    {name:'G sans unite', kcal:100, prot:1, carbs:2, fat:3, q:80},
+    {name:'G portions',   kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion', portionLabel:'part', portionWeightG:120},
+    {name:'G zero',       kcal:100, prot:1, carbs:2, fat:3, q:0, u:'g'},
+    {name:'G negatif',    kcal:100, prot:1, carbs:2, fat:3, q:-5, u:'g'},
+    {name:'G millilitres',kcal:100, prot:1, carbs:2, fat:3, q:250, u:'ml'},
+    /* ⭐ LE CAS DE PERIMETRE : grammes valides MAIS un pour-100 g present. Le garde `!_bcNutr`
+       doit bloquer. C'est lui qui fige que le garde N'EST PAS la regle de quantite et ne part
+       pas avec elle. */
+    {name:'G grammes AVEC pour-100g', kcal:100, prot:1, carbs:2, fat:3, q:150, u:'g',
+     per100:{kcal:66.7, prot:0.7, carbs:1.3, fat:2}},
+  ];
+  const lireTrio = () => {
+    const u  = (typeof _afUnite!=='undefined') ? _afUnite : 'ABSENT';
+    const pd = (typeof _afPoidsDeclare!=='undefined') ? _afPoidsDeclare : 'ABSENT';
+    const nm = (typeof _afQtyNom!=='undefined') ? _afQtyNom : 'ABSENT';
+    return {unite:u, poids:pd, nom:nm};
+  };
+  /* ⛔ On remet le trio a plat AVANT chaque cas, par la VRAIE fonction de production
+     (`_afResetUnite`), sinon le cas « portions » lirait le reliquat du cas precedent —
+     le piege exact paye en ft-v1199. */
+  const remettreAPlat = () => { try{ _afResetUnite(); }catch(e){} };
+
+  const gQuickFill=[];
+  CAS_G.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      gQuickFill.push([cs.name, J(lireTrio())]);
+    }catch(e){ gQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3iii_poids_quickFillFood']=J(gQuickFill);
+
+  const gLocale=[];
+  CAS_G.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      gLocale.push([cs.name, J(lireTrio())]);
+    }catch(e){ gLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3iii_poids_afSuggPrendreLocale']=J(gLocale);
+
   return out;
 });
 
