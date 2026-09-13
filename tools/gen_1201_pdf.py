@@ -103,7 +103,7 @@ if TOTAL_SE != 10 or LIVREES != 6 or ECARTEES != 1 or RESTANTES != 3:
 #    encore — donc une valeur esperee presentee comme mesuree.
 #    => Le document refuse de se produire tant que le journal ne porte pas un total REEL, et il
 #       recopie CE total, pas celui que j'avais en tete.
-PASSE = os.environ.get('FT_PASSE') or '/tmp/passe1201.log'
+PASSE = os.environ.get('FT_PASSE') or '/tmp/passe1201b.log'
 try:
     _log = open(PASSE, encoding='utf-8', errors='replace').read()
 except Exception:
@@ -391,7 +391,8 @@ F.append(tableau(
      ["Controle negatif", "<b>9 mutations, toutes mordent sur leur PROPRE temoin</b> ; controle sain "
       "a 0 rouge <b>avant ET apres</b>"],
      ["Passe complete", "<b>%d / %d</b> &mdash; <i>lu dans le journal de la passe, pas ecrit a la "
-      "main</i> &middot; total predit = total obtenu (3649 + 17)" % (PASSE_OK, PASSE_OK)],
+      "main</i> &middot; ecart de +1 EXPLIQUE, pas accepte (3649 + 17 = 3666 predits ; le +1 est "
+      "un temoin ajoute au bloc voisin)" % (PASSE_OK, PASSE_OK)],
      ["Autres bancs", "calculs 339/339 &middot; muscles 241/241 &middot; croises 50/50 &middot; "
       "dates 9/9 &middot; donnees : aucun trou nouveau"],
      ["Non-regression figee", C % '_afPoidsPose' + " n'est <b>pas</b> pose par ce chemin &mdash; "

@@ -36,7 +36,7 @@
   BEFORE**. Instantané **identique**, sha `57b13433fbaa1c60`.
   ⭐ **Témoin de périmètre de 3-i déplacé pour la 3ᵉ fois** : 5 → 3+2 → **1 écriture + 3 appelants**.
   ⚠️ **Un compteur à moi était aveugle**, attrapé **avant** de publier le chiffre (5 au lieu de 4).
-  Tests : **parcours 3666/3666**, **9 mutations toutes mordantes**, contrôle sain 0 rouge.
+  Tests : **parcours 3667/3667** (écart de +1 expliqué : un témoin ajouté à CCXCIII), **9 mutations toutes mordantes**, contrôle sain 0 rouge.
 
 - **Version précédente :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
   dernière fois) » qui SURVIVAIT à l'aliment suivant.**
