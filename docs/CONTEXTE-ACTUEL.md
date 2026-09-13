@@ -20,6 +20,34 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
+- **Version en ligne (live) :** `ft-v1204` — 🔀 **ÉTAPE 4 : LE HUB DE PRÉPARATION** (⛔ **pas la
+  douane** — Michel la veut après, sur feu vert séparé). Détail complet : **`docs/HUB-NUTRITION.md`**.
+  ⭐ **Cartographie faite avant toute ligne** : **12 fonctions** appellent `_afOublierAliment`, par
+  RÔLE — **5** passaient déjà par `_offRemplirFormulaire`, **4** préparaient l'écran à la main,
+  **3** ne préparent pas un aliment (ouverture · repli sans valeurs · ajout direct sans écran).
+  ⚠️ **Le premier relevé était faux** : `readFoodLabel` et `scanBarcodeIA` **ne sont pas des
+  portes** (7 lignes, elles ouvrent le sélecteur de fichier) — l'extracteur ratait les
+  `async function`. *Attrapé par une ligne de points qui ne pouvait pas être vide.*
+  ⭐⭐ **Noyau commun mesuré geste par geste** : `onFoodLabelFile` recopiait **8 des 13 gestes** de
+  l'autre porte et en **omettait 5** → le hub ne prend **que les 8**. *Un hub qui fait plus que le
+  noyau commun avale une porte au lieu de la faire converger.*
+  ⛔ **Ce qu'il ne fait pas, figé par 7 témoins** : aucune validation, aucune correction, aucun
+  blocage, ni `S.foodLog`, ni provenance, ni quantité/unité/pour-100 g/portion, **et aucun
+  propriétaire de 1b/3**.
+  ⛔ **Non-fusion par ressemblance** : `quickFillFood` (**4/8**) et `_afSuggPrendreLocale` (**5/8**)
+  restent dehors — les brancher **ajouterait** des gestes.
+  ⚠️ **Un extracteur de témoin rendait du VIDE et 2 témoins passaient à vide** — trahi par le seul
+  qui teste une **présence**, rouge sur du code sain. Il **lève** désormais.
+  ⭐ **Portée réelle mesurée : 2 appelants, mais 6 portes sur 12 atteignent le hub** (les 5 du
+  groupe A *indirectement*). ⚠️ Le 1ᵉʳ compte disait **7** — il dérivait les portes servies d'un
+  ensemble auquel `_offRemplirFormulaire` **n'appartient pas** (elle n'est pas une porte).
+  *Un sous-ensemble supposé est une mesure qu'on n'a pas faite.*
+  Sonde **23 → 25 clés**, instantané **identique** (`cfcffd90645abe53`), **14 mutations toutes
+  mordantes**, contrôle sain 0 rouge avant ET après.
+  📄 PDF pour GPT : `docs/ETAPE4-HUB.pdf` — **21 gardes**, dont ceux du **négatif** (ils refusent de
+  produire si le hub s'est mis à valider, corriger, écrire, ou s'il a absorbé un geste omis),
+  **17 mutations sur un arbre COPIÉ**, toutes refusées.
+
 - ⭐⭐ **1b ET 3 SONT TERMINÉES — 8 livrées, 2 écartées, 0 restante.** Le chantier de découpage
   ouvert le 12/09 est clos. **Prochaine étape : le hub (étape 4), puis la douane (étape 5)** — sur
   feu vert de Michel.
@@ -38,7 +66,7 @@
   Tests : **7 mutations toutes mordantes** (la ① — *« je répare l'oubli »* — en fait **4**),
   contrôle sain 0 rouge avant ET après.
 
-- **Version en ligne (live) :** `ft-v1203` — 🍽️ **3-v : la définition de portion reprise d'une source.**
+- **Version précédente :** `ft-v1203` — 🍽️ **3-v : la définition de portion reprise d'une source.**
   ⭐ **Test d'entrée passé — et pour la 1ʳᵉ fois depuis 4 sous-étapes, le plan dit VRAI sur la
   moitié qu'il décrit** : `quickFillFood` et `_afSuggPrendreLocale` portaient
   `if(X.u==='portion'){ _afPortionLabel=…; _afPortionPoids=… }` **strictement identiques** —
@@ -60,7 +88,7 @@
   variables**, et `openEditFood` écrit les **jumelles `_ef*`** (autre écran).
   Tests : **11 mutations toutes mordantes**, contrôle sain 0 rouge avant ET après.
 
-- **Version précédente :** `ft-v1202` — ⚖️ **3-iv : la liste blanche de la provenance.**
+- **Avant :** `ft-v1202` — ⚖️ **3-iv : la liste blanche de la provenance.**
   ⛔⛔ **Ce n'est PAS une extraction, et le plan était faux pour la 4ᵉ fois.** Il annonçait
   *« les deux branches @1232/@1237 »* et *« le SEUL endroit qui écrit `p.q`/`p.u` »*.
   **Mesuré** : **1 copie de chaque forme** (elles se ressemblent, l'une teste les grammes et

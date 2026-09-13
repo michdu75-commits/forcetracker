@@ -157,7 +157,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1203`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1204`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1203`** (prochaine : `ft-v1204`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1204`** (prochaine : `ft-v1205`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > 📄 **UN PDF POUR GPT À CHAQUE LIVRAISON — consigne de Michel du 13/09/2026** : *« fais un PDF à
 > chaque fois stp pour GPT »*. **Écrite ici plutôt que ré-appliquée** : il l'avait demandée **8 fois
@@ -748,40 +748,6 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOU
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1104**, job `deploy` **`success`** à **14:54:37 UTC** sur `a7d6e172` — l'étape « Déployer sur GitHub Pages » close à **14:54:35**. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196, où un `in_progress` avec `updated_at` figé cachait un déploiement déjà réussi. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1197 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_1bii_pdf.py`, `docs/SOUS-ETAPE-1BII.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1197. |
-
-**ft-v1196 — 🔍 SOUS-ÉTAPE 3-i : UN PROPRIÉTAIRE POUR « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » · ET LA SONDE QUI NE COUVRAIT RIEN** — Michel : ***« continue selon `docs/SOUS-ETAPES-1B-3.md`, une sous-étape à la fois, en gardant exactement les mêmes règles »*** — une seule chose · sonde/instantané avant si nécessaire · aucun changement de comportement · divergences transportées, pas harmonisées · mutations qui mordent · rollback simple.
-
-**⭐ CE QUI EST LIVRÉ** : la suite naturelle de 1b-i, sur **le même couple de fonctions** (`rejouerRepas` · `quickAddFood`). Le bloc `{q, u, per100, …}` a son propriétaire depuis ft-v1195 ; le **TEST** qui décide si la quantité passe restait écrit deux fois → **`_qReprenable(src)`**. Elle rend un **booléen** et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire. Accepte les grammes, les **portions** et l'unité absente ; refuse `0`, le négatif, et les **ml** — *sans densité, un volume ne dit pas ce que PÈSE l'aliment, et on n'invente pas une densité* (**R29**).
-
-**⛔⛔ MAIS LE FAIT DE CETTE VERSION EST AVANT LE CODE, ET IL PORTE SUR MON PROPRE DOCUMENT.** `docs/SOUS-ETAPES-1B-3.md` annonçait pour 3-i ⭐ *« instantané : couvert »*. **Ouvert la sonde : à moitié faux.**
-- `3_regle_avec_portions` **RECOPIE la règle dans la sonde** (`const regleP = c => …`) et **n'appelle pas une seule ligne de production** → elle ne peut **rien** détecter d'une extraction. *C'est une table de vérité, pas une couverture.*
-- et `3_via_quickAddFood` ne conduisait qu'**UNE** des deux portes — ⛔ **`rejouerRepas` n'était sondé par rien.**
-
-👉 ***Une sonde qui recopie la règle mesure ce qu'on CROYAIT écrire, pas ce qui est exécuté.*** Le critère de chaque sous-étape étant **binaire** (l'instantané identique octet pour octet), un instantané qui ne conduit pas la production **ne peut pas remplir ce rôle** : il resterait identique quoi qu'on fasse au code. **`BUGS.md` §58 complétée côté SONDE** — le réflexe est d'**ouvrir la sonde et d'y chercher le nom de la fonction de production** ; s'il n'y est pas, elle ne couvre rien.
-
-**⭐ CORRIGÉ AVANT TOUTE LIGNE DE CODE**, comme la règle de découpage l'exige : `3_via_rejouerRepas` écrite, l'instantané passe de **11 à 12 clés**, et le **BEFORE capturé avec la sonde étendue** — *l'étendre après l'extraction aurait donné un avant/après incomparable.*
-
-**⚠️ ET LE SIGNE ÉTAIT DANS LE COMMENTAIRE LUI-MÊME** : il annonçait *« les six sites conduits par leur VRAIE porte »* pour une boucle qui n'en conduit qu'**une**. 👉 **C'est le miroir exact de ft-v1190**, dont le commentaire annonçait une portée plus **ÉTROITE** que le code. *Dans les deux sens, un commentaire qui décrit mal sa portée dispense le lecteur suivant d'aller vérifier.*
-
-**⛔⛔ CE QUE 3-i N'A PAS FAIT, ET C'EST LA MOITIÉ QUI COMPTE : LES 5 SITES « GRAMMES SEULS » SONT INTACTS.** Ils refusent les portions **exprès** — ils alimentent un champ **en grammes**. Les deux règles se ressemblent à un `||` près et **ne disent pas la même chose** : les fondre serait un **changement de comportement**, pas une extraction (sous-étapes **3-ii/iii/iv**, et l'une des 4 décisions produit qui attendent Michel). **Un témoin de périmètre exige que ce compte reste à 5.**
-
-**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 1b-i SE DÉPLACE, IL N'EST PAS SUPPRIMÉ.** Il exigeait que *les deux portes calculent encore `qOk` chacune dans son corps* (le garde-fou qui empêchait 1b-i de déborder sur l'étape 3) ; il exige maintenant que *la règle vive à **UN SEUL** endroit et que les deux portes l'**APPELLENT*** — puisque 3-i est précisément la sous-étape qui retire le premier. ⭐ **Et la différence entre un témoin qu'on retire et un témoin qui se déplace se MESURE** : les deux mutations qui le faisaient rougir en 1b-i le font toujours rougir, par l'autre bout.
-
-**⚠️⚠️ CRITÈRE BINAIRE ATTEINT — ET LA SHA QUE J'AVAIS PUBLIÉE ÉTAIT FAUSSE.** L'instantané des 12 sondes est **identique octet pour octet** avant/après, **diff vide** — mais sa sha256 est **`d5b0572cafcc4477`**, pas le `64099b39025027ec` annoncé dans mon message de commit, qui venait d'une **version intermédiaire de la sonde**. Vérifié en rejouant la sonde **actuelle** sur l'`app.js` d'**AVANT** 3-i : **même sha des deux côtés**. 👉 ***Une sha publiée qu'on ne peut pas reproduire est pire que pas de sha*** — elle transforme un critère vérifiable en affirmation d'autorité.
-
-**⚠️⚠️ ET MON HARNAIS DE MUTATION ÉTAIT MORT — C'EST LE CONTRÔLE SAIN QUI L'A DIT, PAS UNE INTUITION.** Les 10 mutations rendaient toutes *« SONDE MORTE »*… **y compris le contrôle sur du code sain**. Cause : la sonde imprime un **JSON multi-ligne**, et mon harnais prenait la **DERNIÈRE LIGNE** — donc `}`, qui n'est pas du JSON. 👉 ***Un harnais uniforme ressemble à un code uniformément cassé.*** C'est **§61 pour la 4ᵉ fois** (le `tail -4` de ft-v1187 · le runner planté de ft-v1193 · la passe tronquée de ft-v1192). **Le contrôle sain n'est pas une formalité : il est le seul témoin du harnais lui-même.**
-
-**⚠️ ET UN GARDE DE MON PROPRE PDF ÉTAIT AVEUGLE, TROUVÉ EN L'ÉPROUVANT.** Celui qui protège `3_via_rejouerRepas` cherchait le nom **n'importe où dans le fichier** — or il apparaît **aussi dans un commentaire**. Renommer la **clé** le laissait muet. Recorrigé pour lire l'**ensemble des clés réellement écrites**. *C'est le défaut de ft-v1193 (un témoin qui ne distingue pas le code de ce qui en PARLE), reposé par moi dans l'outil qui documente ce défaut.*
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun comportement ne bouge : un test écrit deux fois devient un propriétaire unique (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 8 autres sous-étapes ne sont pas faites** · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (étape 4) ni la **douane** (étape 5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts — *le périmètre de Michel, respecté*. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-Tests : **parcours 3590/3590 sur l'arbre FINAL** — ⭐ **et le total a demandé une explication au lieu d'être accepté** : 3578 + 11 (bloc **CCXCIII**) = 3589 prédits, **3590 obtenus**. L'écart est la **réécriture du témoin de périmètre de CCXCII**, qui passe de 14 à 15 assertions (§61 : *le total est la seule chose qui trahit une passe tronquée* — encore faut-il expliquer un écart de +1). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — aucun trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge** — ① le propriétaire rend toujours `true` → **4 rouges** · ② toujours `false` → **4** · ③ le test `>0` retiré → **2** · ④ les portions refusées → **4** · ⑤ les `ml` acceptés → **3** · ⑥ `rejouerRepas` garde sa copie → **2** · ⑦ `quickAddFood` garde sa copie → **2** · ⑧ **débordement : un site « grammes seuls » fondu dans la règle large** → **3**, dont le témoin de périmètre · ⑨ une 2ᵉ copie de la règle réapparaît → **1** · ⑩ le garde `src||{}` retiré (**celle qui TUAIT la sonde**) → **1 rouge nommé**, grâce au `try/catch` posé exprès.
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1100**, `conclusion: success` à **14:10:53 UTC** sur `175213ff`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Et l'API a d'abord montré le symptôme du run bloqué** — `status: in_progress` avec un `updated_at` **figé**, comme en ft-v1190. ⭐ *Ce sont les JOBS qui ont tranché* : l'étape « Déployer sur GitHub Pages » était **`success` à 14:10:51**, seul le nettoyage traînait. 👉 **Un run « en cours » n'est pas un déploiement en attente : l'étape qui compte peut être finie.** ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1196 reste à confirmer par Michel.*
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_3i_pdf.py`, `docs/SOUS-ETAPE-3I.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1196. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.

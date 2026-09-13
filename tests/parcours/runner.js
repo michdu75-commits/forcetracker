@@ -35532,6 +35532,197 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'occurrences='+(codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length);
 }
 
+/* ══════════ BLOC CCCII — 🔀 ÉTAPE 4 : LE HUB DE PRÉPARATION (ft-v1204) ══════════
+   ⭐ CARTOGRAPHIE FAITE AVANT TOUTE LIGNE : **12 fonctions** appellent `_afOublierAliment`,
+   classées par RÔLE — 5 passaient déjà par `_offRemplirFormulaire`, 4 préparaient l'écran à la
+   main, 3 ne préparent pas un aliment (ouverture · repli sans valeurs · ajout direct sans écran).
+   ⛔⛔ ET LE NOYAU COMMUN A ÉTÉ MESURÉ GESTE PAR GESTE, pas estimé : `onFoodLabelFile` recopiait
+   **8 des 13 gestes** de `_offRemplirFormulaire` — et en omettait **5**. Le hub ne prend donc
+   QUE les 8. *Un hub qui fait plus que le noyau commun n'est pas un chemin commun : c'est une
+   porte qui en avale une autre.*
+   ⛔⛔ LE HUB N'EST PAS LA DOUANE — consigne explicite de Michel. Il PRÉPARE : il ne juge pas si
+   une ligne est valide, ne corrige aucune valeur, ne bloque aucun enregistrement, et ne touche
+   ni à la quantité, ni à l'unité, ni au pour-100 g, ni à la provenance, ni à la portion, ni à
+   `S.foodLog`. **Sept témoins figent chacun de ces « ne fait pas ».** */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=typeof _afPreparerEcran;
+    const G=(id)=>document.getElementById(id);
+    const lire=()=>({gr:G('af-bc-grams')?G('af-bc-grams').value:'ABSENT',
+                     por:G('af-bc-portion')?(G('af-bc-portion').textContent||'').trim():'ABSENT',
+                     nom:G('af-bc-name')?(G('af-bc-name').textContent||'').trim():'ABSENT',
+                     row:G('af-bc-row')?G('af-bc-row').style.display:'ABSENT',
+                     desc:G('af-desc')?G('af-desc').value:'ABSENT',
+                     pose:(typeof _bcQtyPose!=='undefined')?_bcQtyPose:'ABSENT'});
+    /* ⛔ On SALIT l'écran avant chaque cas : un champ « déjà vide » serait indiscernable d'un
+       champ « vidé par le hub », et le témoin passerait au vert sur un reliquat. */
+    const salir=()=>{ if(G('af-bc-grams'))G('af-bc-grams').value='ZZZ';
+                      if(G('af-desc'))G('af-desc').value='ZZZ';
+                      if(G('af-bc-name'))G('af-bc-name').textContent='ZZZ';
+                      if(G('af-bc-row'))G('af-bc-row').style.display='none';
+                      try{ _bcQtyPose=true; }catch(e){} };
+
+    /* ── ① le hub, appelé seul ── */
+    try{ _afOublierAliment(); }catch(e){}
+    try{ _afResetUnite(); }catch(e){}
+    salir();
+    _bcNutr=_ref100('Poudre', 380, 75, 8, 5);
+    _afPreparerEcran(_bcNutr, 30, 'portion fabricant', 'la fiche produit');
+    o.hubSeul=JSON.stringify(lire());
+
+    /* ── ② CE QUE LE HUB NE TOUCHE PAS — on pose un état AVANT, on le relit APRÈS ── */
+    S.foodLog=[{date:'2026-09-01',meal:'midi',ts:1,name:'Témoin',kcal:100,prot:1,carbs:2,fat:3}];
+    persist();
+    _afSetSrc({saisie:'temoin', origine:'temoin', sourceId:'zz:1', etat:'tel-que-vendu'});
+    const srcAvant=JSON.stringify((typeof _afLireSrc==='function')?_afLireSrc():_afSrc);
+    _afUnite='g'; _afPoidsDeclare=42; _afPortions=3; _afPortionLabel='part'; _afPortionPoids=77;
+    const logAvant=JSON.stringify(S.foodLog);
+    salir();
+    _bcNutr=_ref100('Banane', 89, 1.1, 23, 0.3);
+    _afPreparerEcran(_bcNutr, 0, 'portion fabricant', 'la fiche produit');
+    o.intact=JSON.stringify({
+      foodLog:  JSON.stringify(S.foodLog)===logAvant,
+      provenance: JSON.stringify((typeof _afLireSrc==='function')?_afLireSrc():_afSrc)===srcAvant,
+      unite:_afUnite, poids:_afPoidsDeclare, portions:_afPortions,
+      label:_afPortionLabel, portionPoids:_afPortionPoids});
+
+    /* ── ③ ÉQUIVALENCE DE LA MIGRATION : la séquence écrite à la main dans `onFoodLabelFile`
+           AVANT ft-v1204, rejouée telle quelle, contre le hub avec les mêmes libellés. ── */
+    const mains=(nut,serv)=>{ const g=parseFloat(serv)>0?parseFloat(serv):0;
+      if(G('af-bc-grams'))G('af-bc-grams').value='';
+      _bcQtyPose=false;
+      _bcProposerPortion(g,'lu sur l\'étiquette'); _bcQsrc(g,'l\'étiquette');
+      if(G('af-bc-name'))G('af-bc-name').textContent=nut.name+' · '+nut.kcal100+' kcal/100g (lu sur l\'étiquette)';
+      if(G('af-bc-row'))G('af-bc-row').style.display='block';
+      G('af-desc').value=nut.name; _bcApplyGrams(); };
+    const paires=[];
+    [[30,'Poudre',380],[0,'Banane',89],['abc','Flou',100]].forEach(([sv,nm,kc])=>{
+      salir(); _bcNutr=_ref100(nm,kc,1,2,3); mains(_bcNutr,sv); const a=JSON.stringify(lire());
+      salir(); _bcNutr=_ref100(nm,kc,1,2,3);
+      _afPreparerEcran(_bcNutr, sv, 'lu sur l\'étiquette', 'l\'étiquette', ' (lu sur l\'étiquette)');
+      paires.push([nm, a===JSON.stringify(lire()), a, JSON.stringify(lire())]);
+    });
+    o.equiv=JSON.stringify(paires);
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCCII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCII ① ⭐ `_afPreparerEcran` existe', X.type==='function', 'type='+X.type);
+  const H=j(X.hubSeul)||{};
+  t('CCCII ② ⭐ le hub prépare l\'écran : champ vidé · portion proposée · nom · ligne visible · '+
+    'description · le drapeau « quantité posée » retombe',
+    H.gr==='' && /30 g \(portion fabricant\)/.test(H.por||'') && H.nom==='Poudre · 380 kcal/100g'
+    && H.row==='block' && H.desc==='Poudre' && H.pose===false, JSON.stringify(H));
+
+  const I=j(X.intact)||{};
+  t('CCCII ③ ⛔⛔ LE HUB NE TOUCHE PAS `S.foodLog` — consigne explicite de Michel',
+    I.foodLog===true, 'le journal a changé');
+  t('CCCII ④ ⛔⛔ …ni la PROVENANCE (`_afSrc`) : elle appartient à chaque porte, pas au hub',
+    I.provenance===true, 'la provenance a changé');
+  t('CCCII ⑤ ⛔⛔ …ni la QUANTITÉ, l\'UNITÉ, le NOMBRE de portions, l\'ÉTIQUETTE ni son POIDS — '+
+    'les propriétaires extraits en 1b/3 restent seuls maîtres',
+    I.unite==='g' && I.poids===42 && I.portions===3 && I.label==='part' && I.portionPoids===77,
+    JSON.stringify(I));
+  const E=j(X.equiv)||[];
+  t('CCCII ⑥ ⭐⭐ ÉQUIVALENCE DE LA MIGRATION — la séquence écrite à la main dans `onFoodLabelFile` '+
+    'et le hub produisent EXACTEMENT le même écran, sur les 3 cas (portion · sans portion · '+
+    'portion illisible)',
+    E.length===3 && E.every(p=>p[1]===true), JSON.stringify(E).slice(0,300));
+  t('CCCII ⑦ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils protègent la FRONTIÈRE du hub, que le comportement ne montre pas :
+   un hub qui absorberait un geste de plus resterait vert à l'écran tant que la porte absorbée
+   n'est pas jouée. C'est la consigne de Michel depuis 3-iv, appliquée à une frontière neuve. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corps=(codeSeul.match(/function _afPreparerEcran\([^)]*\)\{[\s\S]*?\n\}/)||[''])[0];
+  const nb=(codeSeul.match(/_afPreparerEcran\(/g)||[]).length;
+  t('CCCII ⑧ ⭐ le hub a exactement 2 APPELANTS (1 déclaration + 2 appels)',
+    nb===3, 'occurrences='+nb);
+  t('CCCII ⑨ ⛔⛔ PÉRIMÈTRE DE SOURCE — le hub N\'EST PAS LA DOUANE : aucun `_afSetSrc`, aucun '+
+    '`S.foodLog`, aucun `toast`, aucune validation. Il PRÉPARE, il ne décide pas',
+    corps.length>0 && !/_afSetSrc|S\.foodLog|toast\(/.test(corps), 'corps='+corps.slice(0,180));
+  t('CCCII ⑩ ⛔⛔ PÉRIMÈTRE DE SOURCE — les 5 gestes que `onFoodLabelFile` ne fait PAS ne sont pas '+
+    'entrés dans le hub (pastille « la dernière fois » · paquet · état · carte santé)',
+    corps.length>0 && !/_bcProposerDerniere|_bcProposerPaquet|_bcPaquetG|_afNoteEtat|FoodHealth/.test(corps),
+    'corps='+corps.slice(0,180));
+  t('CCCII ⑪ ⛔⛔ PÉRIMÈTRE DE SOURCE — le hub ne touche à AUCUN propriétaire de 1b/3 '+
+    '(`_qGrammes`, `_qReprenable`, `_afReprendreGrammes`, `_afReprendreDefPortion`, '+
+    '`_afReprendrePortions`, `_srcRepriseQ`, `_srcProvenance`, `_itemListe`, `_per100Derive`)',
+    corps.length>0 && !/_qGrammes|_qReprenable|_afReprendre|_srcReprise|_srcProvenance|_itemListe|_per100Derive/.test(corps),
+    'corps='+corps.slice(0,180));
+  /* ⛔⛔ LE TÉMOIN DE NON-FUSION — celui que Michel a demandé nommément : *« vérifie qu'aucune
+     porte n'est fusionnée simplement parce qu'elle ressemble à une autre »*. Mesuré : ces deux
+     portes ne font que 4/8 et 5/8 du noyau. Les brancher AJOUTERAIT des gestes. */
+  /* ⚠️⚠️ CET EXTRACTEUR RENDAIT UNE CHAÎNE VIDE, ET DEUX TÉMOINS PASSAIENT À VIDE.
+     La regex était écrite `'\\\\('` dans la source — soit, côté chaîne JS, un ANTISLASH suivi
+     d'une ouverture de groupe, au lieu d'une parenthèse littérale. Elle ne trouvait donc AUCUN
+     corps, et les témoins ⑫/⑬ testent une ABSENCE (`!/x/.test('')` est vrai) : ils étaient
+     verts sans rien mesurer.
+     👉 ***Un témoin qui ne peut pas rougir ne mesure rien, il rassure*** — et c'est ⑭, le seul
+     qui teste une PRÉSENCE, qui l'a trahi en rougissant sur du code parfaitement sain.
+     ⭐ D'où la règle de ft-v1198 : *un témoin de source se vérifie D'ABORD contre le code SAIN*.
+     ⛔ Et le garde ci-dessous rend l'erreur impossible à refaire : un corps introuvable LÈVE
+     au lieu de rendre du vide. */
+  const f=(n)=>{ const m=codeSeul.match(new RegExp('function '+n+'\\([^)]*\\)\\{[\\s\\S]*?\\n\\}'));
+                 if(!m) throw new Error('corps introuvable : '+n+' — extracteur cassé, pas code sain');
+                 return m[0]; };
+  t('CCCII ⑫ ⛔⛔ NON-FUSION PAR RESSEMBLANCE — `quickFillFood` et `_afSuggPrendreLocale` ne sont '+
+    'PAS branchées : elles ne font que 4/8 et 5/8 du noyau (ni portion proposée, ni recalcul), '+
+    'donc les y brancher AJOUTERAIT des gestes',
+    !/_afPreparerEcran/.test(f('quickFillFood')) && !/_afPreparerEcran/.test(f('_afSuggPrendreLocale')),
+    'une porte a été fusionnée par ressemblance');
+  t('CCCII ⑬ ⛔ NON-FUSION — `quickAddFood` (ajout DIRECT, sans écran) et `openAddFood` '+
+    '(l\'ouverture, pas une porte d\'aliment) restent dehors aussi',
+    !/_afPreparerEcran/.test(f('quickAddFood')) && !/_afPreparerEcran/.test(f('openAddFood')),
+    'une porte sans écran a été branchée sur un préparateur d\'écran');
+  t('CCCII ⑭ ⛔ HORS PÉRIMÈTRE — les 5 gestes propres à `_offRemplirFormulaire` sont toujours '+
+    'chez elle (pastille · paquet · provenance · état · carte santé)',
+    /_bcProposerDerniere/.test(f('_offRemplirFormulaire')) &&
+    /_bcPaquetG/.test(f('_offRemplirFormulaire')) &&
+    /_afSetSrc/.test(f('_offRemplirFormulaire')) &&
+    /_afNoteEtat/.test(f('_offRemplirFormulaire')),
+    'un geste propre a été absorbé par le hub');
+  /* ⭐⭐ LA PORTÉE RÉELLE — ce témoin existe parce que je me suis trompé en l'écrivant.
+     J'ai d'abord annoncé « 7 portes sur 12 » : je dérivais les portes SERVIES de l'ensemble des
+     PORTES, alors que `_offRemplirFormulaire` n'en est pas une — elle n'appelle pas
+     `_afOublierAliment`, ce sont ses CINQ appelants qui le font.
+     👉 ***Un sous-ensemble supposé est une mesure qu'on n'a pas faite.***
+     ⛔ Et l'extracteur borne chaque corps par la DÉCLARATION SUIVANTE, jamais par un `\n}` :
+     la première version bornait par `\nfunction NOM(`, ratait les `async function`, et
+     attribuait les appels de `onFoodLabelFile` à `readFoodLabel` — qui n'est pas une porte. */
+  {
+    const L=codeSeul.split('\n'), D=[];
+    L.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) D.push([i,m[1]]); });
+    const corpsDe=(nom)=>{ const k=D.findIndex(d=>d[1]===nom);
+      if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+      return L.slice(D[k][0], k+1<D.length?D[k+1][0]:L.length).join('\n'); };
+    const PORTES=D.map(d=>d[1]).filter(n=>n!=='_afOublierAliment'
+                                        && corpsDe(n).includes('_afOublierAliment('));
+    const SERVIES=PORTES.filter(n=>corpsDe(n).includes('_offRemplirFormulaire(')
+                                || corpsDe(n).includes('_afPreparerEcran('));
+    t('CCCII ⑮ ⭐⭐ PORTÉE RÉELLE — 12 portes appellent `_afOublierAliment`, et 6 atteignent le '+
+      'hub (les 5 du groupe A via `_offRemplirFormulaire`, + `onFoodLabelFile` en direct). '+
+      '⛔ `_offRemplirFormulaire` N\'EST PAS une porte : 2 appelants ≠ 2 portes',
+      PORTES.length===12 && SERVIES.length===6,
+      'portes='+PORTES.length+' servies='+SERVIES.length+' → '+SERVIES.join(','));
+  }
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,
