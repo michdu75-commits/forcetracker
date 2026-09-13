@@ -1,7 +1,20 @@
 # 🤝 Protocole de coordination — deux sessions en parallèle
 
 > **Proposé le 13/09/2026**, à la demande de Michel, à partir du dossier `DOSSIER-GPT-SEPARATION`.
-> ⛔⛔ **PROPOSITION SEULE — RIEN N'EST MODIFIÉ, RIEN N'EST APPLIQUÉ.** ⛔ Nutrition non approchée.
+> ## ✅ VALIDÉ ET APPLIQUÉ LE 13/09/2026
+> Michel : *« je valide le protocole suivant pour application immédiate »*. Les règles sont écrites
+> dans **`CLAUDE.md` (règle 13)** et **`docs/REGLES-OR.md#13`**, et les 4 conditions de validité
+> d'une passe sont outillées par **`tools/passe_valide.sh`** (5 mutations éprouvées, toutes mordent).
+>
+> ⏳ **DEUX POINTS NE SONT PAS TRANCHÉS, DONC PAS APPLIQUÉS** — et ils restent décrits ci-dessous
+> **tels quels**, comme propositions, pour qu'on n'aille pas croire plus tard qu'ils ont été oubliés
+> (**R30**) :
+> - **§3 — les journaux en append-only + ajout en fin** : ça coûte la lisibilité anti-chronologique,
+>   l'arbitrage appartient à Michel ;
+> - **§2 — les 10 minutes d'attente de la passe** : ⛔ *non proposé*, aucune mesure ne prouve qu'une
+>   attente plus courte serait sûre.
+>
+> ⛔ Nutrition non approchée.
 > ⛔ Aucun framework, aucun build, aucune CI : tout ce qui suit tient avec les outils du dépôt.
 
 ---

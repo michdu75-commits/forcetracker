@@ -103,6 +103,97 @@ Documenter n'est PAS une étape séparée « pour plus tard » : ça fait partie
 
 ---
 
+
+### ⚙️ LE PROTOCOLE OPÉRATIONNEL — validé par Michel le 13/09/2026
+
+Le journal de partage évite le **doublon de travail**. Ce protocole-ci évite les **collisions
+d'identifiants** — et c'est une mesure qui l'a fondé : en une seule journée, **5 publications** de
+l'autre session, **3 renumérotations** du même travail, **2 collisions** de numéros de bloc, et
+**une passe de 25 minutes rendue périmée**. ⭐ *Le code, lui, a fusionné sans un seul conflit les
+trois fois.* **Deux agents qui ne se marchent pas dessus dans le code se marchent dessus dans la
+NUMÉROTATION.**
+
+**① AUCUN NUMÉRO DE VERSION PENDANT LE TRAVAIL.** `sw.js` garde le numéro de `master` ; le bump se
+fait **au moment du push**, après le `git fetch`. ⭐ *Aucun outil à adapter* : `check_regles.py`
+vérifie la **cohérence** entre `sw.js`, `CLAUDE.md` et `CONTEXTE-ACTUEL.md`, pas la nouveauté du
+numéro. ⛔ **Et un identifiant temporaire préfixé ne marcherait PAS ici** : le motif est
+`ft-v(\d+)`, chiffres stricts — un `ft-vB-3` casserait les contrôles. *Mesuré avant de proposer.*
+
+**② LES NOUVEAUX BLOCS DE TESTS SONT PRÉFIXÉS PAR SESSION** (`B-CCCIII`), **et jamais renommés
+ensuite**. ⭐ *Aucun outil ne lit ces numéros* — le préfixe est gratuit. **L'avantage n'est pas le
+préfixe, c'est qu'il n'y a plus JAMAIS de renommage** : l'opération exacte qui, le 13/09, a renommé
+**13 témoins de l'autre session** en même temps que les miens. ⛔ **Les blocs existants ne bougent
+pas** : on ne renumérote pas le passé.
+
+**③ AUCUN REMPLACEMENT GLOBAL.** Toute modification est **bornée au bloc ou à la fonction visée**.
+👉 *« Pas de renommage aveugle » ne suffit pas comme règle — on ne sait pas qu'on est aveugle.* La
+règle utilisable est celle-ci : ***un remplacement global suppose que l'identifiant est unique, ce
+qui est précisément faux au moment où l'on renumérote pour cause de collision.***
+
+**④ TROIS NIVEAUX DE VÉRIFICATION, ET LE DERNIER N'EST PAS NÉGOCIABLE**
+
+| Moment | Quoi | Durée |
+|---|---|---|
+| pendant le travail | le **harnais du bloc en cours** + les **mutations** | quelques secondes |
+| avant de proposer | les **5 petits bancs** + `check_regles.py` | ~2 min |
+| ⛔ **avant de publier** | **la passe complète, ENTIÈRE, sur l'arbre refusionné** | ~25 min |
+
+⛔ **Et un sous-ensemble rapide ne remplace PAS la passe complète — c'est mesuré, pas supposé** : les
+5 petits bancs ont **zéro occurrence** de tout ce qui a été corrigé le 13/09 (`_pdfToText`,
+`pagesTotal`, `reposDefaut`, `_rpeDeRir`). *Ils auraient attrapé 0 défaut sur 5.* **Un sous-ensemble
+rapide n'est pas une passe abrégée : c'est une autre mesure, qui regarde ailleurs.**
+
+**⑤ UNE PASSE N'EST VALIDE QUE SI LES QUATRE CONDITIONS SONT RÉUNIES** — `tools/passe_valide.sh`
+les vérifie, et **chacune vient d'un échec vécu le 13/09** :
+
+| # | Condition | L'échec qui l'a fondée |
+|---|---|---|
+| ① | la **ligne de total** existe | une passe s'est arrêtée à mi-parcours **en affichant 0 rouge** — *une passe interrompue ressemble trait pour trait à une passe verte* |
+| ② | **le runner lui-même** a terminé correctement | ma commande finissait par un `tail` : elle a répondu **« exit 0 »** sur un runner en erreur |
+| ③ | **l'arbre n'a pas changé** | une passe décrit l'arbre qu'elle a **lu**, pas celui qu'on pousse |
+| ④ | **aucun commit concurrent** sur `origin/master` | ⛔ **la seule qui manquait** — et c'est elle qui a rendu une passe périmée après 25 minutes |
+
+⚠️ **Et les rouges se comptent ancrés en début de ligne** (`^\s+❌`) : un `❌` dans le **libellé**
+d'un témoin n'est pas un échec. *Vécu : `grep -c "❌"` annonçait 3 rouges pour 0.*
+
+**⑥ SI UNE AUTRE SESSION PUBLIE PENDANT LA PASSE, LA PASSE EST PÉRIMÉE.** On refusionne, on vérifie
+les témoins de périmètre, on renumérote si besoin, **on relance**. ⛔ *Aucun feu vert sur l'ancienne
+passe.*
+
+**⑦ LES TÉMOINS DE PÉRIMÈTRE** — un test qui échoue si un chantier **déborde** sur le territoire de
+l'autre. Cibles : une **fonction qui ne doit pas être migrée** · un **plafond qui ne doit pas
+bouger** · des **appelants qui restent sur l'ancien contrat** · un **module qui ne doit pas lire ou
+écrire une structure** · un **fichier partagé**.
+⛔ **Chacun est éprouvé sur le code SAIN d'abord, puis cassé par mutation.** *Un témoin qui rougit
+sur du code juste est un témoin faux — et c'est arrivé le 13/09 : un garde bornait à « 1400
+caractères après la déclaration » pour un corps de 836, donc il débordait sur la fonction voisine.*
+👉 ***Une borne en distance de caractères n'est pas une borne de fonction.***
+
+**⑧ CHAQUE INSTANTANÉ DÉCLARE CE QU'IL CONDUIT, CE QU'IL OBSERVE, ET CE QU'IL NE COUVRE PAS.**
+> *Un instantané identique octet pour octet est une forte preuve locale de non-régression
+> **uniquement sur les chemins réellement conduits par la sonde**. Il ne prouve pas que « rien n'a
+> changé partout ».*
+
+⚠️ **Et « conduire » n'est pas « observer »** : une sonde peut appeler une fonction sans jamais lire
+ce qu'elle change à l'écran. *Une sonde qui n'atteint pas la ligne visée mesure l'écran d'avant —
+et elle est verte, ce qui est le pire des cas.*
+
+**⑨ LA SESSION QUI PUBLIE EN DERNIER EST CELLE QUI REFUSIONNE**, vérifie les témoins, relance la
+passe complète et **pose le numéro final**.
+⚠️ **Ce n'est pas un verrou, et il faut le dire** : les sessions vivent dans des conteneurs séparés,
+sans canal direct. *C'est un panneau d'affichage, pas une serrure.* ⭐ **Son utilité n'est pas
+d'empêcher deux publications, c'est de décider QUI refusionne** — sans discussion à chaque fois.
+
+**⏳ CE QUI N'EST PAS TRANCHÉ, ET N'EST DONC PAS APPLIQUÉ** (décision de Michel, 13/09) :
+- le passage des journaux en **append-only + ajout en fin** — ça coûte la lisibilité anti-chronologique ;
+- toute **optimisation des 10 minutes d'attente** de la passe (610 700 ms mesurés, **41 %** de sa
+  durée). ⛔ *Non proposé : aucune mesure ne prouve qu'une attente plus courte serait sûre, et ce
+  serait la « petite modif sans conséquence supposée » que le projet interdit.*
+
+**📄 Le protocole complet, avec ses mesures : `docs/PROTOCOLE-DEUX-SESSIONS.md`.**
+
+---
+
 **14. 📄 UN PDF À CHAQUE FIN DE SESSION — la livraison n'est pas finie tant que Michel n'a que du terminal.**
 
 *« Et n'oublie pas le PDF à chaque fin de session stp »* (Michel, 13/09/2026) — **après l'avoir
