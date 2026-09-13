@@ -33687,10 +33687,24 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        complètes (~70 min) pour établir qu'un rouge n'était pas dû au correctif de ft-v1200.
        ⭐ Attendre une CONDITION ne peut jamais rendre rouge un témoin vert : on ne fait que
        cesser de mesurer la machine. */
-    await d(120);
-    {let a=-1,bb=sc?sc.scrollTop:0,n=0;
-     while(sc && a!==bb && n<25){ a=bb; await d(80); bb=sc.scrollTop; n++; }
-     o.cas1Tours=n;}
+    /* ⛔⛔ ET MA PREMIÈRE ATTENTE ÉTAIT FAUSSE, D'UNE FAÇON QUI RESSERVIRA (12/09/2026).
+       J'avais recopié la boucle « attendre que `scrollTop` se stabilise » du cas ②. Elle sortait
+       AU PREMIER TOUR (`tours:1`), et le témoin rougissait quand même — avec `apresReset:75`,
+       c'est-à-dire un défilement ENCORE EN VOL après une remise à zéro.
+       👉 ***Une boucle de stabilité qui démarre AVANT le mouvement mesure « rien ne bouge
+       encore » et le lit comme « le mouvement est fini ».*** Le défilement `smooth` ne commence
+       pas au clic : sous charge, il commence après. Deux échantillons égaux au départ ne
+       prouvent donc rien du tout.
+       ⭐ On attend la CONDITION RÉELLEMENT MESURÉE — « l'alerte est-elle à la vue ? » — au lieu
+       d'un proxy. Le témoin garde tout son mordant : si elle n'y vient jamais, la boucle épuise
+       ses tours et l'assertion échoue, exactement comme avant. Puis on exige la stabilité sur
+       TROIS échantillons consécutifs, parce que le cas ② remet `scrollTop` à zéro juste après et
+       qu'un défilement en vol le fait repartir tout seul. */
+    {let n=0; while(n<40 && !dansLaVue('af-coherence')){ await d(80); n++; } o.cas1Tours=n;}
+    {let eg=0,prev=sc?sc.scrollTop:0,n=0;
+     while(sc && eg<3 && n<40){ await d(80); const v=sc.scrollTop;
+       eg = (v===prev) ? eg+1 : 0; prev=v; n++; }
+     o.cas1Stable=n;}
     o.cas1={alerteVue:vis('af-coherence'), dansLaVue:dansLaVue('af-coherence'),
             kcal:(document.getElementById('af-kcal')||{}).value,
             txt:((document.getElementById('af-coherence')||{}).textContent||'').replace(/\s+/g,' ').slice(0,160)};
