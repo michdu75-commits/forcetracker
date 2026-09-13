@@ -2922,3 +2922,44 @@ et le mesurer vaut mieux que l'affirmer.
 
 ⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
 Écrit ici pour ne pas disparaître avec la session (**R27**).
+
+---
+
+## 🏷️ 13/09/2026 — LE TYPE DE SÉRIE À L'IMPORT D'HISTORIQUE : il n'est pas PERDU, il n'est **jamais ÉMIS**
+
+> État : **à trier — décision produit attendue**. Mesuré en lecture seule, aucune ligne modifiée.
+
+Michel ouvre un chantier pour « préserver le type de série lors de l'import d'historique », sur la
+prémisse que `const type=s.type==='D'?'D':''` (log.js) **écrase** le type en amont du calcul des
+records. ⛔ **La mesure dit autre chose, et il vaut mieux le dire que coder sur une prémisse fausse.**
+
+**① LE MODÈLE N'A PAS LE DROIT D'ÉMETTRE UN ÉCHAUFFEMENT POUR L'HISTORIQUE.** Le prompt
+`importHistory` du Worker porte, mot pour mot : *« TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set).
+JAMAIS "E" ni "W". »* Et la normalisation serveur l'applique : `worker.js:591` fait
+`s.type = s.type === 'D' ? 'D' : '';` — **la même ligne que le client**.
+
+**② LA RÈGLE EST ÉCRITE 3 FOIS, DANS 3 FICHIERS** (R2) : `worker.js:591` (le chemin **vivant** —
+`importHistory` est dans `AI_PROXY_ACTIONS`), `Code.js:2484` (le repli Apps Script, dormant), et
+`log.js:7461` (le client). 👉 ***La ligne du client n'est pas la cause : c'est la 3ᵉ copie d'un
+contrat serveur, et donc une DÉFENSE si le modèle désobéit.*** La retirer seule ne libérerait rien.
+
+**③ LE CHEMIN PROGRAMME, LUI, SAIT DÉJÀ FAIRE — et son propriétaire existe.** `importProgram`
+possède une règle 8 (« colonne TYPE DE SÉRIE ») et un champ `setTypePerSet` qui peut valoir `'W'` ;
+côté app, **`_typeAt` (log.js:7034)** traduit `'W'` → `'É'` **une fois, à l'entrée**, avec R33 écrite
+juste au-dessus. ⛔ **`importHistory` n'a ni cette règle, ni ce champ, ni cette traduction.**
+
+**④ CE QUI SE PERD VRAIMENT AUJOURD'HUI EST AILLEURS, ET C'EST UN TYPE INCONNU.** Un type que le
+modèle inventerait (`'W'`, `'E'`, `'ECH'`, n'importe quoi) devient **`''` silencieusement**, c'est-à-dire
+**une série de travail** — exactement ce que Michel dit ne pas vouloir. Il n'existe aucun compteur,
+aucun message, aucune trace.
+
+**⑤ ET UNE MIGRATION A DÉTRUIT LES DROPSETS EXISTANTS.** `state.js:413`, gardée par `ft4_stmig1`
+(one-time) : `W→É`, `E→X`, et ⛔ **`D→N`**. Elle a déjà tourné sur les vrais appareils. Les imports
+postérieurs gardent bien leur `'D'` (mesuré : l'instantané rend `types:'"D"'`), mais **les dropsets
+présents au moment où elle a tourné sont devenus des séries normales**. Le nombre exact n'est pas
+mesurable depuis ce conteneur (aucun accès aux données réelles).
+
+👉 **Conséquence** : atteindre l'objectif (*« un échauffement importé reste un échauffement »*) demande
+de toucher le **prompt du Worker** et sa **normalisation** — donc un déploiement backend, et un
+changement de ce qu'on demande au modèle (**R34** : ça se valide au banc d'essai). **Rien de tout cela
+n'est dans le périmètre strict posé par Michel.** Mesuré, écrit, laissé à sa décision.
