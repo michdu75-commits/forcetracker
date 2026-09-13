@@ -1504,8 +1504,16 @@ function saveSessEdits(){
   let vol=0;
   _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
   _sessEdits.volume=Math.round(vol);
+  /* 🏅 C1 (13/09/2026) — LA RÈGLE D'ÉLIGIBILITÉ N'EST PLUS RECOPIÉE ICI. Elle disait exactement
+     la même chose que `_serieFaitFoiPourPR` (log.js), et c'est précisément le problème : deux
+     écritures d'une même règle finissent par diverger, la seule question est quand (**R2**).
+     ⛔ Appel DIRECT, sans garde `typeof` : `log.js` est chargé AVANT `setup.js` dans
+     `index.html`, et cette fonction ne s'exécute que sur une action de la personne, longtemps
+     après le chargement. *Un garde avec repli écrit à la main serait la copie qu'on retire.*
+     ⚠️ Aucun changement de comportement : mesuré sur les 6 types × fait/pas fait, instantané
+     identique (`tools/instantane_records.js`). */
   _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{
-    if(s.done&&s.kg&&s.reps&&s.type!=='É'&&s.type!=='W'){
+    if(_serieFaitFoiPourPR(s)){
       s.rm1=bz(s.kg,s.reps);
       const cur=S.prs[ex.name];
       if(!cur||s.rm1>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:s.rm1,date:_sessEdits.date};

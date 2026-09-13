@@ -36262,6 +36262,161 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   })();
 }
 
+/* ═══ B-CCCVI. CONSTAT C — « cette série compte-t-elle pour un record ? » ═══════════════════
+   (13/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel, en donnant le feu vert : *« supprimer les copies et dépendances accidentelles autour
+   du calcul des records, SANS changer le comportement actuel mesuré »*, en **deux sous-étapes
+   séparées et réversibles**.
+
+   ⛔⛔ LE CONTRAT EST BINAIRE : aucun record ne bouge. La preuve chiffrée est dans
+   `tools/instantane_records.js` (les deux chemins conduits par leur VRAIE porte, `S.prs` relu
+   en entier). Ici on fige les garanties.
+
+   ⭐⭐ ET LA PROTECTION DU CAS FUTUR EST UNE **COMPOSITION**, pas un seul témoin — c'est dit
+   plutôt que masqué. Aujourd'hui aucun `'É'` ne peut atteindre la règle à l'import (le type est
+   écrasé deux lignes plus haut), donc **aucun témoin de comportement ne peut le montrer sur ce
+   chemin**. La garantie tient en deux faits vérifiés séparément :
+     ① la règle employée à l'import EST le propriétaire (témoin de SOURCE) ;
+     ② le propriétaire REFUSE un échauffement (témoin de comportement, sur lui-même).
+   *Un témoin qui prétendrait montrer les deux d'un coup mentirait sur ce qu'il mesure.* */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const prs=()=>Object.keys(S.prs||{}).sort()
+      .map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ')||'(aucun)';
+
+    /* ── C1 : l'ÉDITION d'une séance, par sa vraie porte ── */
+    const editer=(sets)=>{
+      const ts=1750000002000;
+      S.prs={};
+      S.sessions=[{id:ts, ts, date:'2026-09-01', volume:0,
+                   exs:[{name:'Développé Couché', sets}]}];
+      openSessDetail(ts); saveSessEdits();
+      return {prs:prs(), volume:S.sessions[0].volume};
+    };
+    o.c1Travail  = sur(()=>editer([{kg:100,reps:5,done:true,type:'',rm1:0}]));
+    o.c1Echauff  = sur(()=>editer([{kg:200,reps:3,done:true,type:'É',rm1:0}]));
+    o.c1W        = sur(()=>editer([{kg:180,reps:2,done:true,type:'W',rm1:0}]));
+    o.c1Drop     = sur(()=>editer([{kg:130,reps:6,done:true,type:'D',rm1:0}]));
+    o.c1PasFaite = sur(()=>editer([{kg:250,reps:1,done:false,type:'',rm1:0}]));
+    /* ⛔ Le cas qui compte : l'échauffement est PLUS LOURD que la série de travail. Si la règle
+       débordait, c'est lui qui poserait le faux record — et le chiffre le dirait. */
+    o.c1Melange  = sur(()=>editer([
+      {kg:200,reps:3,done:true,type:'É',rm1:0},
+      {kg:120,reps:8,done:true,type:'',rm1:0},
+      {kg:130,reps:6,done:true,type:'D',rm1:0}]));
+
+    /* ── C2 : l'IMPORT d'historique, par sa vraie porte ──
+       ⚠️ AFFECTATION NUE, SANS `window.` : `_histExtracted` est un `let` de premier niveau de
+       `log.js`, donc une liaison LEXICALE globale, pas une propriété de `window`. Écrire
+       `window._histExtracted=…` crée une SECONDE variable que `finalImportHist` ne lit jamais :
+       elle sort par « Aucune séance à importer » et le témoin est vert **en ne mesurant rien**.
+       *Vécu sur la sonde de cette version même.* */
+    const importer=(sets)=>{
+      S.prs={}; S.sessions=[]; S.customExercises=[];
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets}]}]};
+      _histConflicts=[];
+      finalImportHist();
+      return {prs:prs(), seances:(S.sessions||[]).length,
+              types:(((S.sessions[0]||{}).exs||[])[0]||{sets:[]}).sets.map(s=>'"'+s.type+'"').join('/')};
+    };
+    o.c2Travail = sur(()=>importer([{kg:100,reps:5,type:''}]));
+    o.c2Drop    = sur(()=>importer([{kg:130,reps:6,type:'D'}]));
+    /* ⛔⛔ L'ÉTAT D'AUJOURD'HUI, FIGÉ TEL QUEL : un échauffement importé POSE le record, parce
+       que son type est écrasé à '' avant d'atteindre la règle. C2 ne corrige PAS ça — il
+       supprime la dépendance accidentelle. *Figer l'état réel, même gênant, est ce qui permet
+       de voir le jour où il changera.* */
+    o.c2EchauffLourd = sur(()=>importer([
+      {kg:200,reps:3,type:'É'},
+      {kg:120,reps:8,type:''},
+      {kg:130,reps:6,type:'D'}]));
+
+    /* ── LE PROPRIÉTAIRE, POUR LUI-MÊME (la moitié ② de la composition) ── */
+    o.proprio = ['','É','W','D','N','X'].map(t=>
+      t+':'+sur(()=>String(_serieFaitFoiPourPR({done:true,kg:100,reps:5,type:t})))).join(' ');
+    o.proprioBords = [
+      'pasFaite:'+sur(()=>String(_serieFaitFoiPourPR({done:false,kg:100,reps:5,type:''}))),
+      'kg0:'     +sur(()=>String(_serieFaitFoiPourPR({done:true,kg:0,reps:5,type:''}))),
+      'reps0:'   +sur(()=>String(_serieFaitFoiPourPR({done:true,kg:100,reps:0,type:''}))),
+      'null:'    +sur(()=>String(_serieFaitFoiPourPR(null)))
+    ].join(' ');
+    return o;
+  });
+
+  console.log('\n-- B-CCCVI. Constat C : la règle d\'éligibilité aux records --');
+  t('B-CCCVI ① C1 — une série de travail éditée pose bien le record',
+    R.c1Travail && R.c1Travail.prs==='Développé Couché=100x5' && R.c1Travail.volume===500,
+    JSON.stringify(R.c1Travail));
+  t('B-CCCVI ① C1 — un ÉCHAUFFEMENT n\'en pose aucun, même à 200 kg',
+    R.c1Echauff && R.c1Echauff.prs==='(aucun)' && R.c1Echauff.volume===0, JSON.stringify(R.c1Echauff));
+  t('B-CCCVI ① C1 — une série W non plus',
+    R.c1W && R.c1W.prs==='(aucun)', JSON.stringify(R.c1W));
+  t('B-CCCVI ① C1 — un DROP SET, si (il compte, c\'est la règle)',
+    R.c1Drop && R.c1Drop.prs==='Développé Couché=130x6', JSON.stringify(R.c1Drop));
+  t('B-CCCVI ① C1 — une série NON FAITE non plus',
+    R.c1PasFaite && R.c1PasFaite.prs==='(aucun)', JSON.stringify(R.c1PasFaite));
+  t('B-CCCVI ① ⭐ C1 — échauffement 200 kg + travail 120 kg : le record vient du DROP SET, pas de l\'échauffement',
+    R.c1Melange && R.c1Melange.prs==='Développé Couché=130x6' && R.c1Melange.volume===1740,
+    JSON.stringify(R.c1Melange));
+
+  t('B-CCCVI ② C2 — une séance importée est bien créée et pose son record',
+    R.c2Travail && R.c2Travail.seances===1 && R.c2Travail.prs==='Squat à la Barre=100x5',
+    JSON.stringify(R.c2Travail));
+  t('B-CCCVI ② C2 — le drop set traverse l\'import en gardant son type',
+    R.c2Drop && R.c2Drop.types==='"D"' && R.c2Drop.prs==='Squat à la Barre=130x6',
+    JSON.stringify(R.c2Drop));
+  /* ⛔⛔ CE TÉMOIN FIGE UN ÉTAT QUI N'EST PAS SATISFAISANT, ET C'EST VOULU (R30). Aujourd'hui
+     l'import ÉCRASE le type, donc l'échauffement de 200 kg pose le record. C2 ne change pas ça ;
+     il supprime la dépendance accidentelle qui rendait ce chemin « juste par accident ».
+     *Le jour où l'import saura lire une colonne de type, ce témoin rougira — et il devra
+     rougir : c'est lui qui dira que la protection est enfin active.* */
+  t('B-CCCVI ② ⛔ C2 — ÉTAT ACTUEL FIGÉ : le type est écrasé à l\'import, donc l\'échauffement pose le record',
+    R.c2EchauffLourd && R.c2EchauffLourd.types==='""/""/"D"'
+      && R.c2EchauffLourd.prs==='Squat à la Barre=200x3', JSON.stringify(R.c2EchauffLourd));
+
+  t('B-CCCVI ③ ⭐ le PROPRIÉTAIRE refuse É et W, accepte le reste (moitié ② de la composition)',
+    R.proprio===':true É:false W:false D:true N:true X:true',
+    'reçu : '+R.proprio);
+  t('B-CCCVI ③ ... et il refuse les séries incomplètes',
+    R.proprioBords==='pasFaite:false kg0:false reps0:false null:false', 'reçu : '+R.proprioBords);
+
+  /* ══ TÉMOINS DE SOURCE — ils tiennent ce qu'aucun écran ne peut montrer ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const su=sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8'));
+    /* ⛔ Le propriétaire ne bouge PAS d'un caractère : c'est lui la référence de tout le bloc. */
+    t('B-CCCVI ④ ⛔ SOURCE — le propriétaire est intact',
+      /function _serieFaitFoiPourPR\(s\)\{\s*return !!\(s && s\.done && s\.kg && s\.reps && s\.type!=='É' && s\.type!=='W'\);/.test(lg), '');
+    /* ⛔ C1 : la recopie à la main a disparu de `saveSessEdits`. */
+    t('B-CCCVI ④ ⛔ SOURCE — C1 : plus AUCUNE recopie de la règle dans `saveSessEdits`',
+      !/if\(s\.done&&s\.kg&&s\.reps&&s\.type!=='É'&&s\.type!=='W'\)\{/.test(su)
+      && /_sessEdits\.exs\.forEach\(ex=>ex\.sets\.forEach\(s=>\{\s*if\(_serieFaitFoiPourPR\(s\)\)\{/.test(su), '');
+    /* ⛔⛔ C2 : LA MOITIÉ ① DE LA COMPOSITION. Aucun témoin de comportement ne peut la montrer
+       sur ce chemin — c'est exactement pourquoi elle est tenue par la source. */
+    t('B-CCCVI ⑤ ⛔⛔ SOURCE — C2 : l\'import emploie le PROPRIÉTAIRE, plus sa condition locale',
+      !/if\(!s\.done\|\|!s\.kg\|\|!s\.reps\)return;/.test(lg)
+      && /\(ex\.sets\|\|\[\]\)\.forEach\(s=>\{\s*if\(!_serieFaitFoiPourPR\(s\)\)return;/.test(lg), '');
+    /* ⛔ PÉRIMÈTRE — ce que Michel a explicitement laissé dehors. */
+    const appels=(lg.match(/_serieFaitFoiPourPR\s*\(/g)||[]).length-1;   // -1 : sa déclaration
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — `finishWorkout` garde ses 2 appels du propriétaire (rien n\'y change)',
+      appels===3, appels+' appel(s) dans log.js (2 finishWorkout + 1 import)');
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — l\'écrasement du type à l\'import n\'est PAS touché (C2 ne change pas le calcul)',
+      /const type=s\.type==='D'\?'D':'';/.test(lg), '');
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — le recalcul des records (setup.js) est intact, son repli compris',
+      /typeof _serieFaitFoiPourPR==='function' \? !_serieFaitFoiPourPR\(st\)/.test(su), '');
+    /* ⛔ NUTRITION — consigne absolue de Michel : rien de ce chantier ne l'approche. */
+    t('B-CCCVI ⑦ ⛔ NUTRITION — le propriétaire des records n\'est appelé nulle part dans `app.js`',
+      !/_serieFaitFoiPourPR/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8'))), '');
+  })();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
