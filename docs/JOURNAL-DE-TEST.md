@@ -2869,3 +2869,32 @@ et le mesurer vaut mieux que l'affirmer.
 
 ⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
 Écrit ici pour ne pas disparaître avec la session (**R27**).
+
+---
+
+## 🔬 `estimateFoodAI` n'a AUCUN filet de fiabilité — il n'atteint pas `_ref100` (13/09/2026, ft-v1207)
+
+**État : à trier** · *mesuré en construisant le résolveur, non corrigé (périmètre fermé par Michel).*
+
+Le chantier ft-v1207 a posé **un seul propriétaire** de la décision « cette énergie est-elle
+tenable ? » : le résolveur, branché sur **`_ref100`**, le normaliseur du pour-100 g. Ses **8
+appelants** sont donc tous couverts d'un coup — c'est tout l'intérêt.
+
+**⛔ Il y a une 9ᵉ porte, et elle passe à côté.** `estimateFoodAI` (l'estimation d'un aliment
+décrit en toutes lettres) **n'appelle pas `_ref100`** : elle écrit **directement** les champs de
+l'écran, et elle n'a **volontairement pas** de pour-100 g — ce qu'elle produit est une estimation
+pour la portion décrite, pas une fiche produit. *Ce n'est donc pas un oubli de branchement : les
+deux fonctions ne manipulent pas le même objet.*
+
+**⚠️ Mais la conséquence est réelle** : une estimation dont les protéines et les lipides
+dépasseraient l'énergie annoncée ne serait attrapée par **rien**, alors que la même incohérence
+venant d'un code-barres est désormais expliquée à l'écran.
+
+**Ce qu'il faudrait décider (et ce n'est pas à moi de le faire) :**
+- la loi doit-elle s'appliquer à une **estimation** comme à une **fiche** ? (l'erreur n'a pas le
+  même coût : personne ne « croit » une estimation comme on croit une étiquette) ;
+- ou bien l'écran doit-il seulement **redire** que c'est une estimation ?
+
+⛔ **Non corrigé** : le périmètre de ft-v1207 est fermé nommément par Michel, et ceci n'y est pas.
+⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
+Écrit ici pour ne pas disparaître avec la session (**R27**).

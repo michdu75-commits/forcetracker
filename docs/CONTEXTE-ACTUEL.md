@@ -20,6 +20,31 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
+- 🔬 **ft-v1207 — LE GEL A ÉTÉ LEVÉ POUR UN SEUL CHANTIER : la fiabilité énergie / macros en
+  entrée** (feu vert de Michel du 13/09). ⛔ **Consigne** : *« je ne veux pas un correctif
+  spécifique aux lentilles Raynal — je veux que le problème soit traité pour TOUS les aliments et
+  toutes les sources »*, et *« ne recrée pas huit variantes du même contrôle »*.
+  ⭐ **Un seul résolveur**, branché sur `_ref100` (le normaliseur du pour-100 g, 8 appelants) : un
+  seul propriétaire, zéro patch porte par porte.
+  ⭐⭐ **Une LOI, pas un seuil** : protéines 4 et lipides 9 kcal/g (UE 1169/2011 annexe XIV), tous
+  les autres contributeurs ≥ 0 → **E ≥ 4P + 9L**. **Tolérance dérivée de la précision reçue.**
+  **0 faux positif sur 3 607 aliments** (CIQUAL 3 484 + marques 123), remesuré à chaque génération
+  du PDF. Sur le cas témoin : plancher 53,2 · tolérance 0,7 · il manque 4,9.
+  ⛔ **Une donnée saisie ou reprise par la personne n'est JAMAIS réécrite** (`manuel` · `reprise` ·
+  `historique`) : elle est classée, pas remplacée.
+  ⛔ **Aucune correction silencieuse** : la valeur brute, le champ d'origine, la méthode, la raison
+  et la confiance partent **avec la ligne**, et l'écran affiche les deux valeurs.
+  📊 **Mesure avant / après sur la douane** : les lignes de ce type qui l'atteignaient en
+  `energie_incoherente` passent de **7 à 2** — et les 2 restantes sont **exactement** les origines
+  utilisateur, par conception.
+  ⛔ **Hors périmètre, mesuré mais non corrigé** : `estimateFoodAI` ne passe pas par `_ref100`
+  (il écrit les champs de l'écran directement, sans pour-100 g) · `S.savedFoods` multi-onglets ·
+  la traçabilité de `saveEditFood` · les lignes à zéro · `rejouerRepas` · les `ml` · l'écart
+  **48,3 / 48** · l'historique · les migrations.
+  ⚠️ **La question « d'où vient le 48,3 » reste ouverte** : le proxy refuse Open Food Facts (403),
+  et le code fait converger les deux hypothèses vers la même valeur. ⭐ **Mais le résolveur
+  ENREGISTRE désormais le champ qui a servi** — elle devient mesurable au prochain scan.
+
 - 🧊🧊 **PHASE D'OBSERVATION RÉELLE — LE CHANTIER NUTRITION EST GELÉ** (décision de Michel,
   13/09/2026, après validation de l'étape 6). *« Ne modifie plus son comportement sans nouveau feu
   vert explicite. »*
@@ -42,7 +67,17 @@
   lire `docs/JOURNAL-DE-PARTAGE.md`, poser sa ligne AVANT de coder) **avant toute** modification
   Nutrition.
 
-- **Version en ligne (live) :** `ft-v1206` — 📊 **ÉTAPE 6 : L'OBSERVATION RÉELLE DE LA DOUANE.**
+- **Version en ligne (live) :** `ft-v1207` — 🔬 **FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE.**
+  Un **seul résolveur** branché sur `_ref100` (8 appelants) : traité pour **tous** les aliments et
+  **toutes** les sources, jamais pour un produit. ⭐⭐ **Une LOI, pas un seuil** — `E ≥ 4P + 9L`
+  (UE 1169/2011 annexe XIV), **tolérance dérivée de la précision reçue**, **0 faux positif sur
+  3 607 aliments** remesuré à chaque génération du PDF. ⛔ **Aucune correction silencieuse** : la
+  trace part avec la ligne et l'écran affiche les deux valeurs. ⛔ **Une donnée saisie ou reprise
+  par la personne n'est jamais réécrite.** 📊 La douane est **intacte** (21 règles) et les
+  `energie_incoherente` de ce type passent de **7 à 2** — les 2 restantes étant exactement les
+  origines utilisateur. Détail : **`docs/FIABILITE-ENERGIE-MACROS.pdf`**.
+
+- **Version précédente :** `ft-v1206` — 📊 **ÉTAPE 6 : L'OBSERVATION RÉELLE DE LA DOUANE.**
   Elle tourne sur les **vraies écritures** et COMPTE ce qu'elle voit, pour qu'on décide un jour sur
   des chiffres. ⛔ **Toujours aucun blocage, aucune correction**, et **aucune des 21 règles ne
   change** (témoin). Détail : **`docs/DOUANE-NUTRITION.md` §Étape 6**.

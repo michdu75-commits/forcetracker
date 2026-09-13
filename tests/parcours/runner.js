@@ -24840,7 +24840,11 @@ console.log('\n-- CCXX. Une seule précision pour le pour-100 g (ft-v1112) --');
       const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
       const aLaMain=(app.match(/^\s*_bcNutr\s*=\s*\{/gm)||[]).length;
       const appels=(app.match(/_ref100\(/g)||[]).length;
-      const corps=(app.match(/function _ref100\([\s\S]{0,400}?\n\}/)||[''])[0];
+      /* ⚠️ ft-v1207 — LA FENÊTRE ÉTAIT À 400 CARACTÈRES, ET `_ref100` A GRANDI (le résolveur de
+         fiabilité y est branché). L'extracteur rendait un corps VIDE, et c'est le témoin de
+         contrôle juste en dessous qui l'a dit — pas une relecture. *Un extracteur dont la
+         fenêtre est trop courte ne rate pas : il valide n'importe quoi en silence.* */
+      const corps=(app.match(/function _ref100\([\s\S]{0,2600}?\n\}/)||[''])[0];
       t('⛔ CONTRÔLE — le constructeur unique est bien TROUVÉ et EMPLOYÉ (sinon le témoin est vide)',
         corps.length>0 && appels>=9, appels+' occurrences · corps '+corps.length+' car.');
       t('⛔⛔ aucune construction du pour-100 g ne ré-arrondit à l\'entier (R2 : un seul propriétaire)',
@@ -33810,8 +33814,19 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   });
   if(W.err){ t('CCLXXXVIII n\'a pas pu tourner', false, W.err); }
   else{
-    t('CCLXXXVIII ⓪ ⛔ CONTRÔLE — son cas est bien reproduit (198 kcal, et l\'alerte parle)',
-      W.cas1.kcal==='198' && W.cas1.alerteVue===true && /381/.test(W.cas1.txt),
+    /* ⭐⭐ ft-v1207 — CE TÉMOIN A CHANGÉ DE VALEUR PARCE QUE LE DÉFAUT A ÉTÉ CORRIGÉ À LA SOURCE.
+       Jusqu'ici son cas se lisait « 198 kcal affichées pour des macros qui en valent 381, et
+       l'app le dit ». Depuis ft-v1207 la fiche ne passe plus telle quelle : ses 48,3 kcal/100 g
+       violent le plancher physique (6,1 P et 3,2 L valent déjà 53,2), l'app retient 93,2 et
+       l'écran affiche donc **382 kcal** — qui COLLENT à ses macros.
+       ⛔⛔ L'AVERTISSEMENT NE DISPARAÎT PAS POUR AUTANT, et c'est le point : il parle maintenant
+       de la FICHE au lieu de commenter un écart. *Le chiffre a changé parce que la cause a été
+       traitée, pas parce que le contrôle s'est tu* — et la ligne suivante vérifie toujours qu'il
+       vient à la vue, ce qui était tout le sujet de ft-v1191. */
+    t('CCLXXXVIII ⓪ ⛔ CONTRÔLE — son cas est bien reproduit, et la CAUSE est traitée : 382 kcal '
+      + 'retenues au lieu de 198, et l\'alerte explique la fiche',
+      W.cas1.kcal==='382' && W.cas1.alerteVue===true
+      && /48\.3/.test(W.cas1.txt) && /53\.2/.test(W.cas1.txt),
       JSON.stringify(W.cas1));
     t('CCLXXXVIII ① ⭐⭐ L\'ALERTE VIENT À LA VUE après le clic « paquet entier » (elle était 1132 px plus bas)',
       W.cas1.dansLaVue===true, JSON.stringify(W.cas1));
@@ -33969,7 +33984,10 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 
     /* ── ÉTAPE 1a : le constructeur unique ── */
     o.fnRef=typeof _ref100; o.fnTrad=typeof _per100De;
-    const r1=_ref100('Produit', 48.34, 6.13, 10.07, 3.17);
+    /* ⚠️ ft-v1207 — ORIGINE UTILISATEUR EXPRÈS : ces valeurs sont exactement le cas Raynal, que
+       la loi énergétique fait mordre depuis ft-v1207. Une origine que le résolveur ne réécrit
+       jamais isole la NORMALISATION de la RÉSOLUTION, et le témoin garde son seul sujet. */
+    const r1=_ref100('Produit', 48.34, 6.13, 10.07, 3.17, {origine:'manuel'});
     o.normalise=[r1.kcal100,r1.prot100,r1.carbs100,r1.fat100];                    // 48.3 / 6.1 / 10.1 / 3.2
     const r2=_ref100('Repris', 166.67, 17.33, 0, 10.67, {normaliser:false});
     o.brut=[r2.kcal100,r2.prot100,r2.carbs100,r2.fat100];                         // inchangés
@@ -33996,6 +34014,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 
   t('CCXC ÉTAPE 1a — `_ref100` et `_per100De` existent',
     R.fnRef==='function' && R.fnTrad==='function', R.fnRef+' / '+R.fnTrad);
+  /* ⚠️⚠️ ft-v1207 — CE TÉMOIN MESURE LE NORMALISEUR, PAS LE RÉSOLVEUR, et il a fallu le dire.
+     Ses valeurs d'essai sont exactement le cas Raynal : depuis ft-v1207 la loi énergétique mord
+     dessus et la valeur retenue devient 93,6. Le témoin rougissait donc sur un comportement
+     VOULU. ⛔ On ne l'a pas « mis à jour » en recopiant 93,6 : il aurait alors mesuré les deux
+     choses à la fois et n'aurait plus rien prouvé sur l'arrondi. On l'isole par une origine
+     UTILISATEUR — que le résolveur ne réécrit jamais — pour qu'il continue de mesurer son seul
+     sujet. *La résolution, elle, est mesurée par le bloc CCCV, cas par cas.* */
   t('CCXC ⛔ `_ref100` normalise à UNE décimale par défaut',
     JSON.stringify(R.normalise)==='[48.3,6.1,10.1,3.2]', JSON.stringify(R.normalise));
   t('CCXC ⛔⛔ ... et `{normaliser:false}` NE touche à rien (les 2 portes de REPRISE)',
@@ -34005,8 +34030,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('CCXC ⛔ `_per100De` TRADUIT et ne calcule rien (aucun arrondi au passage)',
     R.trad==='{"kcal":166.67,"prot":17.33,"carbs":0,"fat":10.67}', R.trad);
   t('CCXC ⛔ `_per100De(null)` rend `null` — il n\'invente pas un objet vide', R.tradNull===null);
-  t('CCXC ⛔⛔ `_ref100` rend EXACTEMENT les 5 champs de `_bcNutr`, pas un de plus',
-    R.champs==='carbs100,fat100,kcal100,name,prot100', R.champs);
+  /* ⭐ ft-v1207 — 6 CHAMPS DÉSORMAIS, ET LE 6ᵉ EST UNE EXIGENCE ÉCRITE DE MICHEL : *« ne jamais
+     écraser la source et perdre la trace de ce qui s'est passé »*. `fiab` porte la valeur brute,
+     la méthode, la raison, le champ d'origine et la confiance. ⛔ Le témoin reste FERMÉ (une
+     liste exacte, pas un « contient ») : c'est lui qui empêche qu'un 7ᵉ champ s'ajoute sans
+     décision. */
+  t('CCXC ⛔⛔ `_ref100` rend EXACTEMENT les 6 champs de `_bcNutr` (dont la traçabilité), pas un de plus',
+    R.champs==='carbs100,fat100,fiab,kcal100,name,prot100', R.champs);
 }
 
 /* ⛔⛔ ET LE TÉMOIN QUI COMPTE LES ENDROITS — celui qu'aucun parcours ne peut remplacer.
@@ -36182,6 +36212,238 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       .every(n=>!/(if\s*\(\s*_douaneLigne|(const|let|var)\s+\w+\s*=\s*_douaneLigne)/.test(corpsA(n)))
     && /try\{\s*_douaneCompter\(res, l\);\s*\}catch/.test(corpsA('_douaneLigne')),
     'le comptage peut bloquer une écriture');
+}
+
+
+/* ══════════ BLOC CCCV — 🔬 FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE (ft-v1207) ══════════
+   Michel, sur les lentilles Raynal : ⛔ *« je ne veux pas un correctif spécifique aux lentilles —
+   je veux que le problème soit traité pour TOUS les aliments et toutes les sources »*.
+
+   ⭐⭐ LA LOI QUI DÉCIDE : protéines et lipides ont des facteurs FIXES (UE 1169/2011 annexe XIV,
+   4 et 9 kcal/g) et tous les autres contributeurs sont ≥ 0. Donc **E ≥ 4P + 9L**, quelle que soit
+   la composition du reste. ⭐ La tolérance est DÉRIVÉE de la précision reçue, pas choisie.
+   ⛔ Mesuré avant d'être écrit : **0 faux positif sur 3 607 aliments** (CIQUAL + marques). */
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=[typeof _resoudreNutrition, typeof _nrjPlancher, typeof _nrjCandidats];
+    /* ⛔ ON PASSE PAR `_ref100`, LE VRAI NORMALISEUR — jamais par le résolveur seul : c'est lui
+       qui mesure la présence sur les valeurs BRUTES, et c'est là qu'est le défaut qu'on a trouvé
+       à la mesure (une macro absente devenue 0). *Tester le résolveur nu testerait la moitié.* */
+    const R=(nom,kcal,p,c,f,opts)=>{ const x=_ref100(nom,kcal,p,c,f,opts);
+      return {kcal:x.kcal100, etat:x.fiab.etat, meth:x.fiab.methode, brut:x.fiab.brut,
+              champ:x.fiab.champ, raison:x.fiab.raison, conf:x.fiab.confiance}; };
+
+    /* ── LA MATRICE DEMANDÉE PAR MICHEL, 16 CAS ── */
+    o.c01_coherent      = R('Poulet',165,31,0,3.6,{origine:'ciqual'});
+    o.c02_arrondi       = R('Yaourt',60,4,7,1.5,{origine:'ciqual'});
+    o.c03_raynal        = R('Lentilles Raynal',48.3,6.1,10,3.2,{origine:'barcode',champ:'energy-kcal_100g'});
+    o.c04_tres_bas      = R('Absurde',10,20,5,15,{origine:'off'});
+    o.c05_plausible     = R('Presque',175,31,0,3.6,{origine:'ciqual'});
+    o.c06_incompletes   = R('Mystere',30,6,undefined,3,{origine:'off'});
+    o.c07_sans_energie  = R('Sans kcal',undefined,6,10,3,{origine:'off'});
+    o.c08_sans_macros   = R('Sans macros',250,undefined,undefined,undefined,{origine:'off'});
+    o.c09_fibres        = R('Son de ble',180,15,20,4,{origine:'ciqual'});      /* fibres non déclarées : hors carbs */
+    o.c10_alcool        = R('Vin rouge',85,0.1,2.6,0,{origine:'ciqual'});      /* l'alcool AJOUTE, il ne retire pas */
+    o.c11_polyols       = R('Chewing-gum',160,0,65,0,{origine:'off'});         /* polyols : facteur plus BAS que 4 */
+    /* ⭐⭐ LES CANDIDATS VIENNENT DU VRAI PROPRIÉTAIRE, PAS D'UN TABLEAU ÉCRIT À LA MAIN.
+       390 kJ est exactement l'hypothèse B du 48,3 : `energy_100g` en kilojoules. Un tableau
+       fabriqué ici aurait testé le résolveur en laissant la CONVERSION hors de portée — et
+       une conversion fausse est justement l'une des mutations que Michel a nommées. */
+    o.candidats_kj = _nrjCandidats({'energy-kcal_100g':48.3,'energy_100g':390});
+    o.c12_unite_ambigue = R('Ambigu',48.3,6.1,10,3.2,{origine:'barcode',champ:'energy-kcal_100g',
+                             candidats:_nrjCandidats({'energy-kcal_100g':48.3,'energy_100g':390})});
+    o.c13_manuel        = R('Tape a la main',48.3,6.1,10,3.2,{origine:'manuel'});
+    o.c14_etiquette     = R('Photo etiquette',48.3,6.1,10,3.2,{origine:'etiquette'});
+    o.c15_reprise       = R('Repris du journal',48.3,6.1,10,3.2,{origine:'historique'});
+    /* ⭐⭐ LE CAS 16 : le MÊME code-barres, scanné puis tapé. Les deux passent par la même
+       fonction (`_lookupBarcode`), donc la résolution DOIT être identique — Michel l'a exigé
+       nommément. On compare les deux objets entiers, pas seulement la valeur. */
+    const n={'energy-kcal_100g':48.3,'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2};
+    const parScan  = R('Raynal',48.3,6.1,10,3.2,{origine:'barcode',champ:_nrjChampPrincipal(n),candidats:_nrjCandidats(n)});
+    const parSaisie= R('Raynal',48.3,6.1,10,3.2,{origine:'barcode',champ:_nrjChampPrincipal(n),candidats:_nrjCandidats(n)});
+    o.c16_scan_vs_saisie=[JSON.stringify(parScan)===JSON.stringify(parSaisie), JSON.stringify(parScan)];
+
+    /* ── LA TOLÉRANCE EST-ELLE VRAIMENT DÉRIVÉE DE LA PRÉCISION REÇUE ? ── */
+    o.precision=[_nrjPrecision(48.3), _nrjPrecision(48), _nrjPrecision(6.15)];
+    /* le même produit en ENTIERS : la loi ne mord plus, et c'est une propriété de la donnée */
+    o.entiers = R('Raynal entiers',48,6,10,3,{origine:'barcode'});
+
+    /* ── LA TRACE PART-ELLE AVEC LA LIGNE ? (le vrai chemin, pas un objet fabriqué) ── */
+    S.foodLog=[]; S.savedFoods=[];
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null);
+    /* on passe par la VRAIE porte CIQUAL, puis on enregistre */
+    _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:'ciqual'});
+    _afSetSrc({saisie:'recherche',origine:'ciqual'});
+    const pv=_provFood({kcal:93,prot:6,carbs:10,fat:3});
+    o.trace = pv.fiab ? {etat:pv.fiab.etat, brut:pv.fiab.brut, retenu:pv.fiab.retenu,
+                         meth:pv.fiab.methode, conf:pv.fiab.confiance} : 'ABSENTE';
+    /* ⛔ et une ligne COHÉRENTE ne doit rien gagner du tout */
+    _bcNutr=_ref100('Poulet',165,31,0,3.6,{origine:'ciqual'});
+    o.trace_coherent = (_provFood({kcal:165,prot:31,carbs:0,fat:3.6}).fiab===undefined);
+
+    /* ── L'ÉCRAN LE DIT-IL ? ── */
+    try{ openAddFood(); }catch(e){}
+    _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:'barcode'});
+    _afCoherence();
+    const el=document.getElementById('af-coherence');
+    o.ecran=[el? el.style.display : 'ABSENT', el? (el.innerHTML.indexOf('93.2')>=0) : false,
+             el? (el.innerHTML.indexOf('48.3')>=0) : false];
+    _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:'manuel'});
+    _afCoherence();
+    o.ecran_non_resolu = el ? (el.innerHTML.indexOf('ne sait pas laquelle croire')>=0) : false;
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const E=(k)=>X[k]||{};
+  t('CCCV ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCV ① ⭐ le résolveur, la loi du plancher et les candidats existent',
+    Array.isArray(X.type) && X.type.every(v=>v==='function'), JSON.stringify(X.type));
+  t('CCCV ② ⭐ ① un produit parfaitement cohérent n\'est PAS touché',
+    E('c01_coherent').etat==='COHERENT' && E('c01_coherent').kcal===165, JSON.stringify(X.c01_coherent));
+  t('CCCV ③ ⭐⭐ ② un écart d\'ARRONDI ne déclenche rien — zéro faux positif, c\'est la moitié '+
+    'de la valeur d\'une loi',
+    E('c02_arrondi').etat==='COHERENT' && E('c02_arrondi').kcal===60, JSON.stringify(X.c02_arrondi));
+  t('CCCV ④ ⛔⛔ ③ LE CAS RAYNAL — 48,3 kcal n\'est plus utilisé comme valeur normale : la loi '+
+    'mord (protéines + lipides valent déjà 53,2), et l\'app retient 93,2 kcal dérivées',
+    E('c03_raynal').etat==='DERIVE_ESTIMABLE' && E('c03_raynal').kcal===93.2
+    && E('c03_raynal').brut===48.3 && E('c03_raynal').raison==='plancher_energetique',
+    JSON.stringify(X.c03_raynal));
+  t('CCCV ⑤ ⭐ ④ une énergie TRÈS inférieure au minimum impliqué est résolue de la même façon',
+    E('c04_tres_bas').etat==='DERIVE_ESTIMABLE' && E('c04_tres_bas').brut===10,
+    JSON.stringify(X.c04_tres_bas));
+  t('CCCV ⑥ ⭐ ⑤ une énergie légèrement différente mais PLAUSIBLE reste la source',
+    E('c05_plausible').etat==='COHERENT' && E('c05_plausible').kcal===175, JSON.stringify(X.c05_plausible));
+  t('CCCV ⑦ ⛔⛔ ⑥ MACROS INCOMPLÈTES → NON_RESOLU, et la valeur n\'est PAS remplacée. '+
+    '*On ne dérive pas depuis une macro absente devenue zéro par normalisation* (R29)',
+    E('c06_incompletes').etat==='NON_RESOLU' && E('c06_incompletes').kcal===30,
+    JSON.stringify(X.c06_incompletes));
+  t('CCCV ⑧ ⭐ ⑦ ÉNERGIE ABSENTE mais macros présentes → elle est estimée, et la raison le dit',
+    E('c07_sans_energie').etat==='DERIVE_ESTIMABLE' && E('c07_sans_energie').raison==='energie_absente'
+    && E('c07_sans_energie').kcal===91, JSON.stringify(X.c07_sans_energie));
+  t('CCCV ⑨ ⭐ ⑧ ÉNERGIE présente mais macros absentes → rien ne bouge (le plancher vaut 0)',
+    E('c08_sans_macros').etat==='COHERENT' && E('c08_sans_macros').kcal===250,
+    JSON.stringify(X.c08_sans_macros));
+  t('CCCV ⑩ ⛔ ⑨⑩⑪ FIBRES · ALCOOL · POLYOLS ne produisent aucun faux positif — ils AJOUTENT de '+
+    'l\'énergie ou en apportent MOINS que les glucides, et la loi ne compte ni l\'un ni l\'autre',
+    E('c09_fibres').etat==='COHERENT' && E('c10_alcool').etat==='COHERENT'
+    && E('c11_polyols').etat==='COHERENT',
+    JSON.stringify([X.c09_fibres,X.c10_alcool,X.c11_polyols]));
+  t('CCCV ⑪ ⭐⭐ ⑫ UNE AUTRE VALEUR DE LA SOURCE EST PRÉFÉRÉE À UNE ESTIMATION, et le champ '+
+    'retenu est ENREGISTRÉ — c\'est ce qui rendra mesurable « d\'où venait le 48,3 »',
+    E('c12_unite_ambigue').etat==='ALTERNATIVE_FIABLE' && E('c12_unite_ambigue').champ==='energy_100g'
+    && E('c12_unite_ambigue').conf==='source', JSON.stringify(X.c12_unite_ambigue));
+  t('CCCV ⑪bis ⛔⛔ LA CONVERSION kJ → kcal EST UNE DIVISION PAR 4,184, et elle est mesurée sur '+
+    'le VRAI propriétaire : 390 kJ valent 93,2 kcal. *Une multiplication au lieu d\'une division '+
+    'donnerait 1 632 et personne ne le verrait sur un écran qui affiche « kcal »*',
+    Array.isArray(X.candidats_kj) && X.candidats_kj.length===2
+    && Math.abs(X.candidats_kj[1].kcal-93.2)<0.1 && X.candidats_kj[1].champ==='energy_100g',
+    JSON.stringify(X.candidats_kj));
+  t('CCCV ⑫ ⛔⛔ ⑬⑮ UNE VALEUR SAISIE OU REPRISE PAR LA PERSONNE N\'EST JAMAIS RÉÉCRITE : elle '+
+    'est classée, pas remplacée. *Réécrire ce que quelqu\'un a tapé, c\'est lui retirer la main '+
+    'sur sa propre donnée* (consigne de Michel)',
+    E('c13_manuel').etat==='NON_RESOLU' && E('c13_manuel').kcal===48.3
+    && E('c13_manuel').meth==='observation'
+    && E('c15_reprise').etat==='NON_RESOLU' && E('c15_reprise').kcal===48.3,
+    JSON.stringify([X.c13_manuel,X.c15_reprise]));
+  t('CCCV ⑬ ⭐ ⑭ UNE PHOTO D\'ÉTIQUETTE est lue par une machine : elle est résolue comme une '+
+    'source externe, pas comme une saisie',
+    E('c14_etiquette').etat==='DERIVE_ESTIMABLE' && E('c14_etiquette').kcal===93.2,
+    JSON.stringify(X.c14_etiquette));
+  t('CCCV ⑭ ⛔⛔ ⑯ LE MÊME CODE-BARRES SCANNÉ ET TAPÉ DONNE EXACTEMENT LA MÊME RÉSOLUTION '+
+    '(exigence nommée par Michel) — comparé objet entier, pas seulement la valeur',
+    Array.isArray(X.c16_scan_vs_saisie) && X.c16_scan_vs_saisie[0]===true,
+    JSON.stringify(X.c16_scan_vs_saisie));
+  t('CCCV ⑮ ⭐⭐ LA TOLÉRANCE EST DÉRIVÉE DE LA PRÉCISION REÇUE, pas choisie : 48,3 → 0,05 · '+
+    '48 → 0,5. ⚠️ Et avec une source en ENTIERS la loi ne mord plus — *la force de la loi dépend '+
+    'de la précision de la source*, c\'est dit plutôt que caché',
+    Array.isArray(X.precision) && X.precision[0]===0.05 && X.precision[1]===0.5
+    && (X.entiers||{}).etat==='COHERENT', JSON.stringify([X.precision,X.entiers]));
+  t('CCCV ⑯ ⛔⛔ LA TRACE PART AVEC LA LIGNE : valeur brute, valeur retenue, méthode et '+
+    'confiance sont reconstructibles. *Ne jamais écraser la source et perdre la trace*',
+    X.trace && X.trace!=='ABSENTE' && X.trace.brut===48.3 && X.trace.retenu===93.2
+    && X.trace.meth==='derive_macros' && X.trace.conf==='derivee', JSON.stringify(X.trace));
+  t('CCCV ⑰ ⛔ ET UNE LIGNE COHÉRENTE NE GAGNE RIEN DU TOUT — une ligne normale ne grossit pas',
+    X.trace_coherent===true, 'une ligne cohérente porte une trace inutile');
+  t('CCCV ⑱ ⭐⭐ L\'ÉCRAN LE DIT : la valeur retenue ET la valeur d\'origine sont affichées, '+
+    'donc la personne n\'arbitre plus seule devant un chiffre muet',
+    Array.isArray(X.ecran) && X.ecran[0]==='block' && X.ecran[1]===true && X.ecran[2]===true,
+    JSON.stringify(X.ecran));
+  t('CCCV ⑲ ⛔ ET EN NON_RESOLU IL DIT QU\'IL NE SAIT PAS, au lieu de présenter une valeur '+
+    'douteuse comme sûre',
+    X.ecran_non_resolu===true, 'l\'écran ne dit pas son incertitude');
+  t('CCCV ⑳ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — la frontière de ce chantier, que le comportement ne montre pas. */
+{
+  const srcA=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeA=srcA.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LA=codeA.split('\n'), DA=[];
+  LA.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DA.push([i,m[1]]); });
+  const corpsA=(nom)=>{ const k=DA.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LA.slice(DA[k][0], k+1<DA.length?DA[k+1][0]:LA.length).join('\n'); };
+
+  t('CCCV ㉑ ⭐⭐ UN SEUL PROPRIÉTAIRE DE LA DÉCISION : `_resoudreNutrition` est appelée EXACTEMENT '+
+    'une fois, depuis `_ref100` — zéro patch porte par porte (exigence nommée par Michel)',
+    (codeA.match(/_resoudreNutrition\(/g)||[]).length===2
+    && /_resoudreNutrition\(/.test(corpsA('_ref100')),
+    'occurrences='+(codeA.match(/_resoudreNutrition\(/g)||[]).length);
+  t('CCCV ㉒ ⭐ LES 8 ORIGINES DISENT D\'OÙ ELLES VIENNENT — et aucune ne recopie une once de '+
+    'logique : elles passent un nom, rien d\'autre',
+    ['barcode','manuel','reprise','etiquette','marque','ciqual','historique','off']
+      .every(o=>codeA.indexOf("origine:'"+o+"'")>=0), 'une origine ne se déclare pas');
+  t('CCCV ㉓ ⛔⛔ LA LOI NE S\'ÉCRIT QU\'UNE FOIS : `_nrjPlancher` est le seul endroit qui compare '+
+    'une énergie à `4P + 9L`. *Deux écritures finiraient avec deux tolérances, et on ne saurait '+
+    'plus laquelle croire* (R2)',
+    (codeA.match(/NRJ_PROT \* p \+ NRJ_LIP \* f/g)||[]).length===1,
+    'la loi est écrite plusieurs fois');
+  t('CCCV ㉔ ⛔⛔ LA DOUANE N\'EST PAS DEVENUE UN MOTEUR DE CORRECTION : ses 21 règles sont '+
+    'intactes, elle n\'appelle pas le résolveur, et aucune ne bloque',
+    (corpsA('_douaneLigne').match(/dit\('/g)||[]).length===21
+    && (corpsA('_douaneLigne').match(/'INVALID',/g)||[]).length===9
+    && !/_resoudreNutrition|_nrjPlancher/.test(corpsA('_douaneLigne')),
+    'la douane a bougé');
+  t('CCCV ㉕ ⛔ HORS PÉRIMÈTRE, VÉRIFIÉ : le résolveur ne touche ni à `S.foodLog`, ni à '+
+    '`savedFoods`, ni à la quantité, ni à l\'unité, ni à la portion, ni à la provenance',
+    !/S\.foodLog|savedFoods|\.q\s*=|\.u\s*=|portionWeightG|_afSetSrc/.test(corpsA('_resoudreNutrition')),
+    'le résolveur déborde de son sujet');
+  t('CCCV ㉖ ⛔ ET IL NE PARLE PAS À LA PERSONNE : aucun `toast`, aucun `document` — l\'écran est '+
+    'le travail de `_coherenceKcal`, qui existait déjà (R13)',
+    !/toast\(|document\.|alert\(/.test(corpsA('_resoudreNutrition')),
+    'le résolveur touche à l\'interface');
+
+  /* ⛔⛔ LES DEUX TÉMOINS SUIVANTS FIGENT UN VRAI DÉFAUT QUE J'AI INTRODUIT ET QUE LE BANC A
+     ATTRAPÉ — sur le cas réel de Michel, pas sur un cas inventé. */
+  t('CCCV ㉗ ⛔⛔ « APPARAÎTRE » = LE MESSAGE A CHANGÉ, pas seulement « display est passé à block » '+
+    '— et la remontée se CONFIRME une fois, parce que `scrollIntoView({smooth})` est asynchrone '+
+    'et que l\'écran continue de se remplir après un scan. *Un défilement demandé n\'est pas un '+
+    'défilement arrivé.*',
+    /el\.innerHTML!==avantHTML/.test(corpsA('_coherenceKcal'))
+    && /setTimeout\(_remonter/.test(corpsA('_coherenceKcal'))
+    && /activeElement/.test(corpsA('_coherenceKcal')),
+    'la garantie de ft-v1191 est retombée en silence');
+  t('CCCV ㉘ ⛔⛔ PÉRIMÈTRE — LA FIABILITÉ NE PASSE PAS DEVANT LA MASSE : ft-v1103 a tranché que '+
+    'la masse est le défaut le plus grave, et cette décision n\'était pas la mienne à renverser '+
+    '(R30). Elle passe en revanche devant le plafond et devant l\'écart',
+    corpsA('_coherenceKcal').indexOf('_masseImpossible(pfx)')
+      < corpsA('_coherenceKcal').indexOf('_bcNutr.fiab')
+    && corpsA('_coherenceKcal').indexOf('_bcNutr.fiab')
+      < corpsA('_coherenceKcal').indexOf('_kcalImpossible(pfx)'),
+    'l\'ordre des avertissements a changé sans décision');
 }
 
 await b.close(); srv.close();
