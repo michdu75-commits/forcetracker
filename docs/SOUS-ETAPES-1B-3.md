@@ -253,10 +253,6 @@ réintégrées à l'inventaire. **16 décisions** sur l'unité au total.
 - ⚠️ **Test d'entrée à refaire avant de coder** : les quatre derniers périmètres écrits ici étaient
   faux. Ce document sert à **ordonner** le travail, jamais de source pour un **chiffre**.
 
-### 3-v — la reprise des portions à l'écran
-- **Sites** : `quickFillFood` (@2842-2843) · `_afSuggPrendreLocale` (@3996-3997) — **2 × 2 lignes identiques**
-- **Dépendance** : ⛔ **avant 1b-v**
-
 ---
 
 ## 3️⃣ ⚖️ À QUEL MOMENT UNE HARMONISATION DEVIENT UNE **DÉCISION PRODUIT**
