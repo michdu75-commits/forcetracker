@@ -103,6 +103,39 @@ Documenter n'est PAS une étape séparée « pour plus tard » : ça fait partie
 
 ---
 
+**14. 📄 UN PDF À CHAQUE FIN DE SESSION — la livraison n'est pas finie tant que Michel n'a que du terminal.**
+
+*« Et n'oublie pas le PDF à chaque fin de session stp »* (Michel, 13/09/2026) — **après l'avoir
+demandé quatre fois dans la même journée**, à chaque étude et à chaque plan. ⭐ **C'est le mécanisme
+des règles d'or qui se déclenche** (`docs/ORIGINE-DES-REGLES.md`) : *« quand Michel répète une
+consigne deux fois, ne pas la ré-appliquer : l'ÉCRIRE »*.
+
+**⛔⛔ POURQUOI CE N'EST PAS UN CONFORT.** Michel n'est ni développeur ni programmeur (**règle #10**),
+et **il ne relit pas un terminal** : une réponse en scrollback est perdue dès la session close, alors
+qu'un PDF se rouvre sur le téléphone, se relit dans le métro, **se transmet à GPT ou à un testeur**,
+et se garde. *Un travail qui ne vit que dans un terminal n'a été livré qu'à moitié.*
+
+**Ce qui déclenche un PDF** — une étude, un audit, un plan, un dossier pour une IA extérieure, un
+compte rendu de fin de tâche. ⛔ **Pas** un échange court, une question, un correctif d'une ligne :
+*un PDF par message serait exactement la gouvernance lourde que **R19** interdit.*
+
+**⭐ Les règles de fabrication, payées par l'expérience :**
+- **hors du dépôt, toujours** — le dépôt est **public**, et ces documents portent des mesures, des
+  extraits de son historique et parfois ses fichiers. Ils vivent dans le bac à sable et partent par
+  la fiche de fichier ;
+- **autonome** — il se lit **sans** le dépôt et sans la conversation, surtout s'il part chez GPT ;
+- **daté dans son nom** — deux documents du même sujet ne s'écrasent pas, et on sait de quand date
+  celui qu'on rouvre trois mois plus tard (c'est la règle des exports CSV, appliquée à nous-mêmes) ;
+- ⚠️ **et on le VÉRIFIE après génération** : rouvrir le fichier produit et y chercher les chiffres
+  clés. *Un PDF muet ressemble trait pour trait à un PDF réussi* — et une génération qui plante à
+  mi-parcours rend un fichier parfaitement valide, simplement incomplet (**`BUGS.md` §61**).
+
+**⚠️ Et ce qu'un PDF ne remplace JAMAIS** : la réponse en clair dans la conversation. *Le PDF est la
+mémoire, le message est la réponse* — lui envoyer un fichier en disant « c'est dedans » l'oblige à
+faire le travail de lecture qu'on venait de lui épargner (**R25** : la pop-up annonce, l'aide explique).
+
+---
+
 **13. 🤝 DEUX SESSIONS À LA FOIS = DEUX FOIS LE MÊME TRAVAIL — le journal de partage se lit AVANT de coder.**
 
 **Le cas vécu, et il est daté.** Le 24/08/2026, **deux sessions Claude ont écrit ft-v991 et ft-v992 chacune de son côté**, sans le savoir : mêmes correctifs, même scénario de banc d'essai, mêmes témoins — textes différents, travail fait deux fois. Découvert **seulement au moment de pousser**, quand git a refusé le push. Il a fallu fusionner à la main : la branche de l'autre session a servi de base, et seul ce qu'elle n'avait pas y a été greffé. *Rien n'a été perdu, mais une demi-journée de calcul l'a été.*
