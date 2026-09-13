@@ -36066,6 +36066,202 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     && /const imgs=await _pdfToImages\(f\); pages=imgs\.map/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))), '');
 }
 
+/* ═══ B-CCCV. LE RYTHME DES QUESTIONS PROACTIVES — constats A et B de l'audit Accueil/Progrès ═══
+   (13/09/2026 · bloc préfixé **B-** par le protocole deux sessions, et il ne sera JAMAIS renommé.)
+
+   ⛔⛔ CE QUI EST PROTÉGÉ N'EST PAS UN CALCUL, C'EST UN COMPORTEMENT. La règle *« au plus une
+   question par semaine, pas avant 3 séances »* est ce qui empêche Milo de tourner à
+   l'INTERROGATOIRE (`docs/BUGS-DE-PHILOSOPHIE.md`). Elle était retapée **4 fois** pour le plafond
+   hebdo et **3 fois** pour le garde des séances. Le jour où l'une serait passée à 10 jours, les
+   autres auraient continué à 7 — et le symptôme, *« Milo me demande trop de trucs »*, n'apparaît
+   dans AUCUN test de calcul et sur AUCUN écran.
+
+   ⭐ LA PREUVE CHIFFRÉE EST AILLEURS : `tools/instantane_rythme_questions.js` compare la sortie
+   des 4 fonctions octet pour octet, avant/après (identique, sha `a3d38cefe4d4e20f`). Ici on fige
+   les GARANTIES. *Un instantané prouve qu'on n'a rien cassé aujourd'hui ; un témoin empêche de
+   le casser demain.*
+
+   ⚠️⚠️ ET UNE MUTATION RESTE VOLONTAIREMENT SANS TÉMOIN DE COMPORTEMENT, avec sa raison :
+   le seuil de `maybeProposeObservation` (4 séances) est **masqué** par celui de `_obsCandidates`
+   (4 aussi). Le muter seul ne change RIEN à l'écran — c'est la famille du constat C, *un chemin
+   qui n'est juste que grâce à une contrainte posée ailleurs*. Il n'est donc tenu que par un
+   témoin de SOURCE, et c'est dit plutôt que masqué. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const jMoins=n=>new Date(new Date(today()+'T12:00:00').getTime()-n*864e5).toISOString().slice(0,10);
+    const seances=n=>{const a=[];for(let i=0;i<n;i++)a.push({date:jMoins(i+1),ts:Date.now()-i*864e5,exs:[]});return a;};
+    const etat=(n,ageJours,extra)=>{
+      S.sessions=seances(n);
+      S.coachQuiz={answers:{},confirmedAt:{}};
+      S.registre=Object.assign({facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},
+        gapForce:null, lastObsAt: ageJours===null?'':jMoins(ageJours)}, extra||{});
+    };
+    const champ=f=>{try{const r=f();return r?r.field:null;}catch(e){return 'ERREUR';}};
+
+    /* ── LE PLAFOND HEBDO, AUX BORDS (6 ≠ 7) ── */
+    etat(10,6);  o.gap6=champ(_pendingGap);   o.enr6=champ(_pendingEnrich);
+    etat(10,7);  o.gap7=champ(_pendingGap);   o.enr7=champ(_pendingEnrich);
+    etat(10,0);  o.gap0=champ(_pendingGap);
+    /* ⛔ une date DANS LE FUTUR (téléphone remis à l'heure) ne doit PAS faire taire l'app :
+       c'est le rôle du `dl>=0`, et il se garde. */
+    S.sessions=seances(10);
+    S.coachQuiz={answers:{},confirmedAt:{}};
+    S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,
+                lastObsAt:new Date(Date.now()+3*864e5).toISOString().slice(0,10)};
+    o.gapFutur=champ(_pendingGap);
+
+    /* ── LE GARDE DES SÉANCES, AU BORD (2 ≠ 3) ── */
+    etat(2,null); o.gapS2=champ(_pendingGap); o.enrS2=champ(_pendingEnrich);
+    etat(3,null); o.gapS3=champ(_pendingGap); o.enrS3=champ(_pendingEnrich);
+    /* ⛔ le garde dit `(s.date||s.ts)` : une séance qui n'a NI l'une NI l'autre ne compte pas. */
+    S.sessions=[{date:jMoins(1),exs:[]},{ts:Date.now(),exs:[]},{exs:[]}];
+    S.coachQuiz={answers:{},confirmedAt:{}};
+    S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,lastObsAt:''};
+    o.gapDeuxFormes=champ(_pendingGap);          // 2 séances valides + 1 vide → doit se taire
+    /* ⚠️ CE CAS-CI EST NÉ DU CONTRÔLE NÉGATIF. Avec le cas du dessus SEUL, la mutation « on ne
+       compte plus que les séances qui ont une DATE » restait verte : 2 valides deviennent 1, et
+       les deux versions se taisent pour la même raison apparente. Il faut donc un cas où le `||`
+       DÉCIDE — 3 séances qui n'ont QUE l'horodatage. *Un témoin qui donne le bon résultat pour
+       la mauvaise raison n'est pas un témoin.* */
+    S.sessions=[{ts:Date.now(),exs:[]},{ts:Date.now()-864e5,exs:[]},{ts:Date.now()-2*864e5,exs:[]}];
+    S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,lastObsAt:''};
+    o.gapSansDate=champ(_pendingGap);            // 3 séances horodatées → doit parler
+
+    /* ── LE CONFIRMER (il a son propre chemin, et son report est de 30 jours) ── */
+    const confirmEtat=(n,age,skip)=>{
+      S.sessions=seances(n);
+      S.coachQuiz={answers:{place:'salle',time:'60',othersport:'aucun autre sport'},
+                   confirmedAt:{place:jMoins(400),time:jMoins(400),othersport:jMoins(400)}};
+      S.registre={facts:{},observations:[],updatedAt:'',gapForce:null,lastObsAt:jMoins(age),
+                  gapSkips:{}, confirmSkips: skip===null?{}:{place:jMoins(skip)}};
+    };
+    confirmEtat(2,30,null);  o.cfS2=champ(_pendingConfirm);
+    confirmEtat(3,30,null);  o.cfS3=champ(_pendingConfirm);
+    confirmEtat(10,6,null);  o.cf6=champ(_pendingConfirm);
+    confirmEtat(10,30,29);   o.cfSkip29=champ(_pendingConfirm);
+    confirmEtat(10,30,30);   o.cfSkip30=champ(_pendingConfirm);
+
+    /* ── LE REPORT « PLUS TARD » DU GAP : 7 jours, une règle VOISINE qu'on n'avale pas ──
+       ⚠️ les réponses restent VIDES exprès : sinon le champ est sauté parce qu'il est *déjà
+       rempli*, et le témoin ne mesurerait plus le report du tout. */
+    const gapSkipEtat=skip=>{
+      S.sessions=seances(10);
+      S.coachQuiz={answers:{},confirmedAt:{}};
+      S.registre={facts:{},observations:[],updatedAt:'',gapForce:null,lastObsAt:jMoins(30),
+                  gapSkips:{place:jMoins(skip)}, confirmSkips:{}};
+    };
+    gapSkipEtat(6); o.gapSkip6=champ(_pendingGap);
+    gapSkipEtat(7); o.gapSkip7=champ(_pendingGap);
+
+    /* ── LE CHEMIN PRIORITAIRE : `gapForce` PASSE OUTRE le plafond, exprès ──
+       C'est la suite directe d'une action de la personne (« Confirmer → Non »). Un correctif qui
+       poserait le plafond AVANT ce bypass le casserait, et rien d'autre ne le verrait. */
+    etat(10,0,{gapForce:'place'});  o.prioPlafond=champ(_pendingGap);
+    etat(0,0,{gapForce:'place'});   o.prioZeroSeance=champ(_pendingGap);
+
+    /* ── LE SEUIL PROPRE AUX OBSERVATIONS : 4, pas 3 ──
+       Séances EN SEMAINE uniquement, pour que le candidat `weekday_only` existe : sans ça le
+       seuil n'est jamais le facteur limitant, et le témoin serait vert quoi qu'on fasse. */
+    const semaine=n=>{const a=[];let j=1;
+      while(a.length<n){const d=new Date(new Date(today()+'T12:00:00').getTime()-j*864e5);
+        const jr=d.getDay();
+        if(jr!==0&&jr!==6)a.push({date:d.toISOString().slice(0,10),ts:d.getTime(),startHour:19,exs:[]});
+        j++;}
+      return a;};
+    [3,4].forEach(n=>{
+      S.sessions=semaine(n);
+      S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,lastObsAt:''};
+      try{ maybeProposeObservation(); }catch(e){}
+      o['obs'+n]=(S.registre.observations||[]).length>0?'POSEE':'rien';
+    });
+    return o;
+  });
+
+  console.log('\n-- B-CCCV. Le rythme des questions proactives (audit Accueil/Progrès) --');
+  t('B-CCCV ① le plafond hebdo tient : à 6 jours l\'app se tait',
+    R.gap6===null && R.enr6===null, 'gap='+R.gap6+' enrich='+R.enr6);
+  t('B-CCCV ① ... et à 7 jours elle reparle (le bord exact, pas « à peu près »)',
+    R.gap7==='place' && R.enr7==='othersport', 'gap='+R.gap7+' enrich='+R.enr7);
+  t('B-CCCV ① ... le jour même, silence', R.gap0===null, 'reçu : '+R.gap0);
+  t('B-CCCV ① ⛔ une date DANS LE FUTUR ne fait PAS taire l\'app (le garde `dl>=0` se garde)',
+    R.gapFutur==='place', 'reçu : '+R.gapFutur);
+  t('B-CCCV ② pas de question avant 3 séances', R.gapS2===null && R.enrS2===null,
+    'gap='+R.gapS2+' enrich='+R.enrS2);
+  t('B-CCCV ② ... et à 3 séances, oui', R.gapS3==='place' && R.enrS3==='othersport',
+    'gap='+R.gapS3+' enrich='+R.enrS3);
+  t('B-CCCV ② ⛔ une séance sans date NI horodatage ne compte pas', R.gapDeuxFormes===null,
+    'reçu : '+R.gapDeuxFormes);
+  t('B-CCCV ② ⛔ ... mais 3 séances qui n\'ont QUE l\'horodatage comptent bien (le `||` décide)',
+    R.gapSansDate==='place', 'reçu : '+R.gapSansDate);
+  t('B-CCCV ③ le Confirmer suit la MÊME règle de séances', R.cfS2===null && R.cfS3==='place',
+    '2 séances='+R.cfS2+' · 3 séances='+R.cfS3);
+  t('B-CCCV ③ ... et le MÊME plafond hebdo', R.cf6===null, 'reçu : '+R.cf6);
+  t('B-CCCV ③ ⛔ PÉRIMÈTRE — son report « Plus tard » reste à 30 jours, pas 7',
+    R.cfSkip29==='time' && R.cfSkip30==='place', 'J-29='+R.cfSkip29+' · J-30='+R.cfSkip30);
+  t('B-CCCV ④ ⛔ PÉRIMÈTRE — le report « Plus tard » du Gap reste à 7 jours',
+    R.gapSkip6==='freq' && R.gapSkip7==='place', 'J-6='+R.gapSkip6+' · J-7='+R.gapSkip7);
+  t('B-CCCV ⑤ ⛔ le chemin PRIORITAIRE passe outre le plafond hebdo (action de la personne)',
+    R.prioPlafond==='place', 'reçu : '+R.prioPlafond);
+  t('B-CCCV ⑤ ... et outre le garde des séances', R.prioZeroSeance==='place', 'reçu : '+R.prioZeroSeance);
+  t('B-CCCV ⑥ ⛔ PÉRIMÈTRE — les observations gardent LEUR seuil (rien à 3, posée à 4)',
+    R.obs3==='rien' && R.obs4==='POSEE', '3 séances='+R.obs3+' · 4 séances='+R.obs4);
+
+  /* ══ LES TÉMOINS DE SOURCE — ils tiennent ce que l'écran ne peut pas montrer ══
+     Une règle réécrite à la main dit exactement la même chose à l'exécution : les témoins de
+     comportement ci-dessus resteraient TOUS verts. C'est précisément ce qu'un témoin de source
+     achète, et c'est mesuré (mutation : la règle recopiée ne fait rougir que ceux-là). */
+  (()=>{
+    const brut=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8');
+    /* ⚠️ On retire les COMMENTAIRES avant de compter : la note qui EXPLIQUE l'extraction cite
+       forcément la forme qu'elle remplace. *Un témoin qui ne distingue pas le code de ce qui en
+       PARLE finit par interdire d'écrire la documentation du correctif* (ft-v1193, ft-v1203). */
+    const src=brut.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const copiesPlafond=(src.match(/dl>=0\s*&&\s*dl<7\s*\)\s*return/g)||[]);
+    const copiesSeances=(src.match(/\(s\.date\|\|s\.ts\)\)\.length<3/g)||[]);
+    t('B-CCCV ⑦ ⛔ SOURCE — plus AUCUNE copie du plafond hebdo dans `tracking.js`',
+      copiesPlafond.length===0, 'trouvé : '+copiesPlafond.join(' · '));
+    t('B-CCCV ⑦ ⛔ SOURCE — plus AUCUNE copie du garde « 3 séances »',
+      copiesSeances.length===0, 'trouvé : '+copiesSeances.join(' · '));
+    /* ⛔ Et les propriétaires doivent être VRAIMENT appelés, sinon ils deviennent décoratifs et
+       le code repart en copies sans qu'aucun témoin ci-dessus ne bouge. */
+    const appelsPlafond=(src.match(/_plafondHebdoAtteint\s*\(/g)||[]).length-1;   // -1 : sa déclaration
+    const appelsSeances=(src.match(/_assezDeSeancesPourDemander\s*\(/g)||[]).length-1;
+    t('B-CCCV ⑦ ... et le plafond a bien ses 4 appelants', appelsPlafond===4, appelsPlafond+' appel(s)');
+    t('B-CCCV ⑦ ... et le garde des séances ses 3 appelants', appelsSeances===3, appelsSeances+' appel(s)');
+    /* ⛔⛔ LE TÉMOIN QUI TIENT LA MUTATION INVISIBLE. Le seuil de `maybeProposeObservation` est
+       4, et il est MASQUÉ par celui de `_obsCandidates` : le fondre avec le propriétaire (3) ne
+       changerait RIEN à l'écran. Mesuré — la mutation ne fait rougir que cette ligne-ci. */
+    t('B-CCCV ⑧ ⛔ SOURCE — `maybeProposeObservation` garde SON seuil de 4 (jamais fondu avec le propriétaire)',
+      /\(s\.date\|\|s\.ts\)\)\.length<4\)return;/.test(src)
+      && !/if\(!_assezDeSeancesPourDemander\(\)\)return;[^n]/.test(src), '');
+    t('B-CCCV ⑧ ⛔ SOURCE — `_obsCandidates` garde le sien aussi (c\'est LUI le vrai garde-fou)',
+      /if\(sess\.length<4\)return out;/.test(src), '');
+    /* ⛔ Constat B : plus aucun commentaire n'annonce un nombre de jours que le code contredit. */
+    t('B-CCCV ⑨ ⛔ constat B — aucun commentaire n\'annonce « 3 jours » dans tracking.js',
+      !/avant 3 jours|espacement 3 j/.test(brut), '');
+    /* ⚠️⚠️ CE TÉMOIN A ROUGI SUR DU CODE PARFAITEMENT SAIN, ET LA CAUSE RESSERVIRA. Il exigeait
+       « `dl>=0 && dl<7` n'apparaît qu'UNE fois » — il en trouvait **3**, et les deux autres sont
+       le report « Plus tard » du Gap et celui de l'Enrichir, qui s'écrivent EXACTEMENT pareil et
+       ne disent pas du tout la même chose (l'un fait taire TOUTE question une semaine, l'autre
+       met UN champ de côté). 👉 *Un motif qui ne distingue pas deux règles jumelles ne compte
+       pas des copies, il compte des ressemblances* (`BUGS.md` §63). On sépare donc par ce qu'elles
+       FONT : le plafond fait `return` (il coupe), le report fait `continue` (il passe au champ
+       suivant). ⭐ *Et c'est le contrôle sur le code SAIN qui l'a dit, pas une relecture.* */
+    const coupe=(src.match(/dl>=0\s*&&\s*dl<7[^;]*;?\s*\)?\s*return/g)||[]);
+    const proprio=(src.match(/return\s+dl>=0\s*&&\s*dl<7;/g)||[]);
+    const reports=(src.match(/if\(dl>=0&&dl<7\)continue;/g)||[]);
+    t('B-CCCV ⑨ ... et le seul `<7` qui COUPE une question est celui du propriétaire',
+      coupe.length===0 && proprio.length===1,
+      'coupures hors propriétaire : '+coupe.length+' · propriétaire : '+proprio.length);
+    t('B-CCCV ⑨ ⛔ PÉRIMÈTRE — les 2 reports « Plus tard » à 7 jours sont intacts (règle VOISINE, pas une copie)',
+      reports.length===2, 'trouvé '+reports.length+' report(s)');
+  })();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
