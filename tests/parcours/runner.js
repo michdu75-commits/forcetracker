@@ -35733,6 +35733,211 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
    la seule chose qui trahit une passe tronquée — il se COMPARE à la passe précédente, il ne
    se lit pas seul. (Même famille que le harnais coupé à `tail -4` en ft-v1187 :
    un outil de mesure tronqué ressemble à un code sans défaut.) */
+
+/* ══════════ BLOC CCCIII — 🛃 ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE (ft-v1205) ══════════
+   Michel donne le feu vert pour la douane SEULE, et ⛔ en MODE OBSERVATION UNIQUEMENT :
+   *« je ne veux pas encore de correction automatique ni de blocage utilisateur »* — `OK`, `WARN`
+   et `INVALID` écrivent TOUS normalement. *« Le but est d'abord de mesurer ce qui sortirait rouge
+   avant de décider quelles règles deviennent réellement bloquantes. »*
+
+   ⛔⛔ LA MOITIÉ DE CES TÉMOINS PROUVE UNE ABSENCE, ET C'EST VOULU : une douane qui se mettrait
+   à corriger « parce que c'est l'endroit logique » ne ferait rougir AUCUN parcours — l'écran
+   afficherait la même chose, la ligne enregistrée serait simplement devenue différente en
+   silence. C'est la leçon de ft-v1202 posée sur un objet plus dangereux.
+
+   ⚠️ ET LES 9 RÈGLES `INVALID` NE MORDENT SUR AUCUNE LIGNE RÉELLE (mesuré : 0/29). Un témoin qui
+   se contenterait de constater ça serait un vert qui ne peut pas rougir (ft-v994) : on ÉPROUVE
+   donc chaque famille avec une ligne fabriquée exprès, pour prouver que la branche existe. */
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const cx=await ctx.newPage(); const errs=[];
+  cx.on('pageerror',e=>errs.push(e.message));
+  await cx.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await cx.goto('http://localhost:'+PORT+'/index.html');
+  await cx.waitForTimeout(2300);
+
+  const X=await cx.evaluate(()=>{
+    const o={};
+    try{
+      o.type=typeof _douaneLigne;
+      if(o.type!=='function'){ o.FATAL='_douaneLigne absente'; return o; }
+
+      const LIGNE_SAINE=()=>({date:'2026-09-01', meal:'dejeuner', name:'Poulet roti', ts:1757700000000,
+                              kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g',
+                              per100:{kcal:133,prot:20,carbs:0,fat:5.3},
+                              v:1, saisie:'liste', origine:'off', sourceId:'off:123',
+                              etat:'valide', modifie:false});
+
+      /* ① un cas SAIN rend OK */
+      o.sain=_douaneLigne(LIGNE_SAINE(),'test').etat;
+
+      /* ② un cas DOUTEUX rend WARN — et on vérifie QUELLE règle, pas seulement la couleur */
+      const douteux=Object.assign(LIGNE_SAINE(),{u:'portion', q:2, portionLabel:'part'});
+      delete douteux.portionWeightG; delete douteux.per100;
+      const rd=_douaneLigne(douteux,'test');
+      o.douteux=[rd.etat, rd.regles.indexOf('portion_sans_poids')>=0];
+
+      /* ③ LE CAS QUE MICHEL A NOMMÉ : 48 kcal avec des macros incompatibles.
+         ⛔ Il doit rester WARN — *« tant qu'aucune règle produit n'a décidé quelle source a
+         raison »*. S'il devenait INVALID, la douane trancherait un débat produit. */
+      const r48=_douaneLigne(Object.assign(LIGNE_SAINE(),
+                  {kcal:48, prot:20, carbs:30, fat:15, per100:{kcal:48,prot:20,carbs:30,fat:15}}),'test');
+      o.cas48=[r48.etat, r48.regles.indexOf('energie_incoherente')>=0];
+
+      /* ④ LES 9 FAMILLES `INVALID` SONT-ELLES ATTEIGNABLES ? Une par une, sur du fabriqué. */
+      const inval={};
+      const essai=(nom,patch,suppr)=>{ const l=LIGNE_SAINE(); Object.assign(l,patch||{});
+        (suppr||[]).forEach(k=>delete l[k]);
+        const r=_douaneLigne(l,'test'); inval[nom]=[r.etat, r.regles.indexOf(nom)>=0]; };
+      essai('nom_absent',        {name:'   '});
+      essai('date_absente',      {}, ['date']);
+      essai('repas_absent',      {}, ['meal']);
+      essai('horodatage_absent', {ts:0});
+      essai('macro_non_finie',   {prot:NaN});
+      essai('macro_negative',    {fat:-3});
+      essai('quantite_non_finie',{q:Infinity});
+      essai('quantite_negative', {q:-5});
+      essai('per100_non_fini',   {per100:{kcal:NaN,prot:1,carbs:1,fat:1}});
+      o.invalides=inval;
+
+      /* ⑤ ⛔⛔ ELLE NE MODIFIE AUCUN CHAMP — la preuve octet pour octet demandée par Michel.
+         On sérialise à clés TRIÉES avant et après : sans le tri, un simple réordonnancement
+         passerait pour une mutation, et une vraie mutation pourrait passer inaperçue. */
+      const tri=(x)=>JSON.stringify(x, Object.keys(x).sort());
+      const mut=[];
+      [LIGNE_SAINE(),
+       Object.assign(LIGNE_SAINE(),{u:'portion',q:2,portionLabel:'part'}),
+       Object.assign(LIGNE_SAINE(),{q:-5, prot:NaN}),
+       {name:'nu', date:'2026-09-01', meal:'dejeuner', ts:1}].forEach((l,i)=>{
+        const av=tri(l); _douaneLigne(l,'test'); mut.push([i, av===tri(l)]);
+      });
+      o.entree_intacte=mut;
+
+      /* ⑥ ⛔ ELLE NE BLOQUE RIEN : les trois états écrivent. On conduit un VRAI écrivain
+         (`quickAddFood`) sur une ligne que la douane juge INVALID, et on vérifie qu'elle est
+         quand même enregistrée. */
+      S.foodLog=[]; S.savedFoods=[];
+      try{ _afSetSrc(null); }catch(e){}
+      try{ _afOublierAliment(); }catch(e){}
+      _afQuickItems=[{name:'Ligne cassée', kcal:-10, prot:0, carbs:0, fat:0, fav:false}];
+      _afMeal='dejeuner';
+      quickAddFood(0);
+      const ecrite=(S.foodLog||[])[0]||null;
+      o.invalid_ecrit_quand_meme=[ (S.foodLog||[]).length,
+                                   ecrite? _douaneLigne(ecrite,'test').etat : 'RIEN' ];
+
+      /* ⑦ ⛔ ELLE N'ÉCRIT PAS DANS `S.foodLog` : on l'appelle 5 fois, la longueur ne bouge pas. */
+      S.foodLog=[Object.assign(LIGNE_SAINE(),{ts:7})];
+      const avantLen=S.foodLog.length;
+      for(let i=0;i<5;i++) _douaneLigne(S.foodLog[0],'test');
+      o.foodlog_intact=[avantLen, S.foodLog.length];
+
+      /* ⑧ ⛔ SON CARNET D'OBSERVATION NE PART NULLE PART : ni dans `S`, ni dans `localStorage`.
+         Il rend le résultat testable sans rien changer à ce qui est enregistré. */
+      persist();
+      const brut=localStorage.getItem('ft4_foodlog')||'';
+      o.carnet_prive=[ Object.keys(S).indexOf('douaneVus')<0 && Object.keys(S).indexOf('_douaneVus')<0,
+                       brut.indexOf('douane')<0,
+                       JSON.stringify(S).indexOf('douaneVus')<0 ];
+    }catch(e){ o.FATAL=String(e&&e.message||e); }
+    return o;
+  });
+
+  t('CCCIII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCIII ① ⭐ `_douaneLigne` existe', X.type==='function', 'type='+X.type);
+  t('CCCIII ② ⭐ un cas SAIN rend OK', X.sain==='OK', 'etat='+X.sain);
+  t('CCCIII ③ ⭐ un cas DOUTEUX rend WARN, et il NOMME la règle qui a mordu',
+    X.douteux && X.douteux[0]==='WARN' && X.douteux[1]===true, JSON.stringify(X.douteux));
+  t('CCCIII ④ ⛔⛔ LE CAS NOMMÉ PAR MICHEL — 48 kcal avec des macros incompatibles reste un '+
+    'AVERTISSEMENT, jamais un refus : aucune règle produit n\'a décidé quelle source a raison',
+    X.cas48 && X.cas48[0]==='WARN' && X.cas48[1]===true, JSON.stringify(X.cas48));
+  t('CCCIII ⑤ ⭐⭐ LES 9 FAMILLES `INVALID` SONT ATTEIGNABLES — mesuré 0/29 sur les lignes '+
+    'réelles, donc sans cette épreuve ce serait un vert qui ne peut pas rougir (ft-v994)',
+    X.invalides && Object.keys(X.invalides).length===9 &&
+    Object.keys(X.invalides).every(k=>X.invalides[k][0]==='INVALID' && X.invalides[k][1]===true),
+    JSON.stringify(X.invalides));
+  t('CCCIII ⑥ ⛔⛔ ELLE NE MODIFIE AUCUN CHAMP — entrée identique octet pour octet, sur 4 formes',
+    Array.isArray(X.entree_intacte) && X.entree_intacte.length===4 &&
+    X.entree_intacte.every(m=>m[1]===true), JSON.stringify(X.entree_intacte));
+  t('CCCIII ⑦ ⛔⛔ ELLE NE BLOQUE RIEN — une ligne qu\'elle juge INVALID est enregistrée quand '+
+    'même (consigne explicite : le mode observation ne refuse aucune écriture)',
+    X.invalid_ecrit_quand_meme && X.invalid_ecrit_quand_meme[0]===1 &&
+    X.invalid_ecrit_quand_meme[1]==='INVALID', JSON.stringify(X.invalid_ecrit_quand_meme));
+  t('CCCIII ⑧ ⛔ ELLE N\'ÉCRIT PAS DANS `S.foodLog` : 5 appels, longueur inchangée',
+    X.foodlog_intact && X.foodlog_intact[0]===X.foodlog_intact[1], JSON.stringify(X.foodlog_intact));
+  t('CCCIII ⑨ ⛔ SON CARNET D\'OBSERVATION RESTE PRIVÉ : ni dans `S`, ni dans le stockage du '+
+    'téléphone — il observe la FORME, il ne collecte pas ce que la personne mange (P3 · R36)',
+    Array.isArray(X.carnet_prive) && X.carnet_prive.every(v=>v===true), JSON.stringify(X.carnet_prive));
+  t('CCCIII ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — ils protègent la FRONTIÈRE de la douane, que le comportement ne montre
+   pas : une douane qui se mettrait à corriger une valeur laisserait tous les parcours verts,
+   puisque l'écran n'afficherait rien de différent. C'est la consigne de Michel depuis 3-iv,
+   posée ici sur l'objet qui touche à ce qui est ENREGISTRÉ. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const L=codeSeul.split('\n'), D=[];
+  L.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) D.push([i,m[1]]); });
+  const corpsDe=(nom)=>{ const k=D.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return L.slice(D[k][0], k+1<D.length?D[k+1][0]:L.length).join('\n'); };
+  const corps=corpsDe('_douaneLigne');
+
+  /* ⭐⭐ LES 4 ÉCRIVAINS RÉELS, RECOMPTÉS DEPUIS LE CODE — pas recopiés d'un plan.
+     Un écrivain d'une ligne de journal est une fonction qui POUSSE dans `S.foodLog`… ou qui
+     MUTE un de ses éléments puis persiste. `saveEditFood` est du second genre : une recherche
+     sur `push` la raterait, et c'est exactement ce qui rendait ce recomptage nécessaire. */
+  const POUSSEURS=D.map(d=>d[1]).filter(n=>/S\.foodLog\.push\(/.test(corpsDe(n)));
+  t('CCCIII ⑪ ⭐ LES 3 POUSSEURS SONT CEUX ATTENDUS — aucun écrivain n\'est apparu ni n\'a disparu',
+    POUSSEURS.length===3 && ['rejouerRepas','quickAddFood','addFoodEntry']
+      .every(n=>POUSSEURS.indexOf(n)>=0), 'pousseurs='+POUSSEURS.join(','));
+  t('CCCIII ⑫ ⭐⭐ LES 4 ÉCRIVAINS PASSENT PAR LA DOUANE — y compris `saveEditFood`, qui ne '+
+    'pousse RIEN (elle mute en place puis persiste)',
+    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
+      .every(n=>/_douaneLigne\(/.test(corpsDe(n))), 'un écrivain contourne la douane');
+  t('CCCIII ⑬ ⛔ AUCUN AUTRE APPELANT — la douane a exactement 4 sites d\'observation (1 par '+
+    'écrivain), plus sa déclaration',
+    (codeSeul.match(/_douaneLigne\(/g)||[]).length===5,
+    'occurrences='+(codeSeul.match(/_douaneLigne\(/g)||[]).length);
+
+  /* ⛔⛔ CE QUE LA DOUANE N'A PAS LE DROIT DE FAIRE — la liste est celle de Michel, mot pour mot. */
+  t('CCCIII ⑭ ⛔⛔ PÉRIMÈTRE DE SOURCE — ELLE N\'ÉCRIT RIEN : aucune affectation sur la ligne '+
+    'reçue, aucun `delete`, aucun `Object.assign` sur elle, aucun `S.foodLog`, aucun `persist`',
+    corps.length>0 && !/S\.foodLog/.test(corps) && !/persist\(/.test(corps)
+    && !/\bdelete\s+l\./.test(corps) && !/Object\.assign\(\s*l\b/.test(corps)
+    && !/\bl\.\w+\s*=[^=]/.test(corps), 'la douane écrit dans ce qu\'elle observe');
+  t('CCCIII ⑮ ⛔⛔ PÉRIMÈTRE DE SOURCE — AUCUNE INTERFACE : ni `toast`, ni `document`, ni '+
+    '`alert`, ni `showConfirm`. Elle observe, elle ne parle pas à la personne',
+    corps.length>0 && !/toast\(|document\.|alert\(|showConfirm\(|innerHTML/.test(corps),
+    'la douane touche à l\'interface');
+  t('CCCIII ⑯ ⛔⛔ PÉRIMÈTRE DE SOURCE — ELLE NE TOUCHE NI AU HUB NI AUX PROPRIÉTAIRES DE 1b/3 '+
+    '(`_afPreparerEcran`, `_provFood`, `_qGrammes`, `_qReprenable`, `_afReprendre…`, '+
+    '`_srcProvenance`, `_srcRepriseQ`, `_itemListe`, `_per100Derive`) — elle LIT la forme '+
+    'finale, elle ne la RECONSTRUIT pas, sinon elle deviendrait un second hub (R2)',
+    corps.length>0 && !/_afPreparerEcran|_provFood|_qGrammes|_qReprenable|_afReprendre|_srcProvenance|_srcRepriseQ|_itemListe|_per100Derive|_bcNutr/.test(corps),
+    'la douane recalcule ce qu\'un propriétaire calcule déjà');
+  t('CCCIII ⑰ ⛔⛔ PÉRIMÈTRE DE SOURCE — AUCUN ÉCRIVAIN N\'EST DEVENU CONDITIONNEL : la valeur '+
+    'rendue par la douane n\'est testée nulle part, donc elle ne peut bloquer aucune écriture',
+    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
+      .every(n=>!/(if\s*\(\s*_douaneLigne|_douaneLigne\([^)]*\)\s*[.=!<>&|?]|(const|let|var)\s+\w+\s*=\s*_douaneLigne)/.test(corpsDe(n))),
+    'un écrivain lit le verdict de la douane — ce serait un blocage déguisé');
+  /* ⭐ LE COMPTE DES RÈGLES EST FIGÉ : 9 structurelles + 12 de cohérence. Sans ce témoin, une
+     règle qui disparaîtrait ne ferait rougir personne — la douane rendrait simplement OK plus
+     souvent, ce qui ressemble à un progrès. */
+  t('CCCIII ⑱ ⭐ LES 21 RÈGLES SONT TOUJOURS LÀ (9 `INVALID` + 12 `WARN`) — une règle qui '+
+    'disparaît rend la douane plus silencieuse, ce qui ressemble à un progrès',
+    (corps.match(/dit\('/g)||[]).length===21 &&
+    (corps.match(/'INVALID',/g)||[]).length===9,
+    'regles='+(corps.match(/dit\('/g)||[]).length+' invalid='+(corps.match(/'INVALID',/g)||[]).length);
+  t('CCCIII ⑲ ⛔ LE SEUIL ÉNERGÉTIQUE RESTE RELATIF **ET** ABSOLU — le relatif seul mord sur un '+
+    'café à 2 kcal et sur les macros arrondies à l\'entier par l\'écran d\'édition',
+    /d\s*>=\s*25\s*&&\s*d\s*\/\s*b\s*>\s*0\.30/.test(corps), 'seuil énergétique modifié');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

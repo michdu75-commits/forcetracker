@@ -157,7 +157,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1204`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1205`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1204`** (prochaine : `ft-v1205`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1205`** (prochaine : `ft-v1206`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > 📄 **UN PDF POUR GPT À CHAQUE LIVRAISON — consigne de Michel du 13/09/2026** : *« fais un PDF à
 > chaque fois stp pour GPT »*. **Écrite ici plutôt que ré-appliquée** : il l'avait demandée **8 fois
@@ -458,6 +458,46 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1205 — 🛃 ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE · UN 4ᵉ ÉCRIVAIN QUI NE POUSSE RIEN, ET DES RÈGLES MESURÉES AVANT D'ÊTRE ÉCRITES** — Michel valide le hub et ouvre l'étape 5, avec ⛔ **une borne qui décide de tout** : ***« je ne veux pas encore de correction automatique ni de blocage utilisateur »*** — `OK` → écriture normale · `WARN` → écriture normale · **`INVALID` → écriture normale aussi**. ⭐ ***« Le but est d'abord de MESURER ce qui sortirait rouge avant de décider quelles règles deviennent réellement bloquantes. »*** Conception complète : **`docs/DOUANE-NUTRITION.md`**.
+
+**⭐⭐ LE FAIT DE LA VERSION EST UN ÉCRIVAIN QU'UNE RECHERCHE SUR `push` RATE.** Recomptage fait avant toute ligne — **4 écrivains réels** d'une ligne de journal, et ils n'ont pas tous la même forme :
+
+| écrivain | forme de l'écriture |
+|---|---|
+| `addFoodEntry` · `quickAddFood` | `S.foodLog.push(…)` |
+| `rejouerRepas` | `push` **dans une boucle** — plusieurs lignes d'un coup |
+| ⚠️ **`saveEditFood`** | ⛔ **aucun `push`** : elle **mute en place** un élément déjà dans le tableau, puis `persist()` |
+
+👉 ***Un balayage sur `S.foodLog.push` en trouve trois sur quatre, et le quatrième est une vraie ligne enregistrée.*** ⛔ **Écartés AVEC leur raison** (**R30**) : `removeFoodEntry` (supprime), `_vcApplyPersona` (persona de test), `_applyRestoreData` (restauration), `load`/`_fusionnerAvecLeDisque` (chargement disque) — *ils remplacent ou retirent, ils n'enregistrent pas une ligne issue d'une saisie.*
+
+**⭐⭐ LES 21 RÈGLES N'ONT PAS ÉTÉ RECOPIÉES D'UNE LISTE, ELLES ONT ÉTÉ MESURÉES** — consigne de Michel : *« ne transforme pas automatiquement cette liste en règles ; mesure d'abord ce qui existe réellement dans les données »*. Les candidates ont été passées sur les **29 lignes réellement écrites** (4 écrivains × 8 formes) **avant qu'une seule ligne de douane n'existe**, et **deux ont été jetées à la mesure** : ⓵ *« une portion sans étiquette »* — un nom absent n'est pas une incohérence ; ⓶ **un seuil énergétique purement relatif**, qui mordait sur un café à 2 kcal et sur les macros arrondies à l'entier par l'écran d'édition. ⭐ Le seuil retenu est **relatif ET absolu** (≥ 25 kcal *et* > 30 %). *Une règle qui mord sur un café noir ne mesure pas une incohérence, elle mesure un arrondi.*
+
+**⭐ RÉPARTITION MESURÉE : 12 OK · 17 WARN · 0 INVALID** (+ 3 formes que l'écran d'ajout **refuse de lui-même**). ⛔⛔ **ET LES 9 FAMILLES `INVALID` NE MORDENT SUR AUCUNE LIGNE RÉELLE** — un témoin qui se contenterait de le constater serait *un vert qui ne peut pas rougir* (ft-v994). **Chacune est donc éprouvée une par une sur une ligne fabriquée exprès** : nom vide, date retirée, horodatage à zéro, une macro à `NaN`, une quantité à `Infinity`… les neuf rendent bien `INVALID`, et chacune nomme sa propre règle.
+
+**⛔⛔ LE CAS QUE MICHEL A NOMMÉ RESTE UN AVERTISSEMENT** : *« une incohérence énergétique comme 48 kcal/100 g avec des macros incompatibles doit rester un WARN tant qu'aucune règle produit n'a décidé quelle source a raison »*. 👉 **La douane dit qu'il y a désaccord ; elle ne dit pas qui a raison.** La mutation qui passe ce cas en `INVALID` fait rougir exactement le témoin qui le protège.
+
+**⛔⛔ DEUX DIVERGENCES RÉELLES DÉCOUVERTES — MESURÉES, ÉCRITES, NON CORRIGÉES** (règle du projet depuis ft-v1200). ⓵ ⭐⭐ **Une ligne ÉDITÉE perd sa traçabilité** : `saveEditFood` ne pose ni `v`, ni `saisie`, ni `modifie` — elle n'appelle pas `_provFood`, elle hérite de ce que la ligne portait déjà. Mesuré : **8 lignes sur 8** sortent `WARN` sur `tracabilite_absente`, et **zéro ailleurs** — la règle sépare parfaitement l'écrivain qui *mute* de ceux qui *poussent*. *Ce n'est pas un défaut de la ligne, c'est une divergence d'architecture entre les écrivains.* ⓶ **Une ligne entièrement à zéro est REFUSÉE par l'écran d'ajout et ACCEPTÉE par les trois autres écrivains.** ⭐ La douane ne tranche pas ce désaccord — **elle le rend visible**. ⛔ Et elle ne confond pas une valeur **absente**, un **0 légitime** (l'eau fait vraiment 0 kcal) et une valeur **invalide** : seule la troisième est structurelle.
+
+**⭐ CRITÈRE BINAIRE ATTEINT, ET DEUX FOIS PLUTÔT QU'UNE.** ① L'instantané de **ce qui est écrit** est identique **octet pour octet après CHACUN des 4 branchements** — sha256 `226a7e9c523cae3f`. ② Et la preuve que Michel a demandée nommément : l'objet **AVANT et APRÈS** la douane, sérialisé **à clés triées**, est identique sur les **29 lignes** (`ENTREE INTACTE`) *et* sur 4 formes fabriquées. *Sans le tri des clés, un simple réordonnancement passerait pour une mutation — et une vraie mutation pourrait passer inaperçue.*
+
+**⛔⛔ LA MOITIÉ DES TÉMOINS PROUVE UNE ABSENCE, ET C'EST LE CŒUR DU SUJET** : une douane qui se mettrait à corriger « parce que c'est l'endroit logique » ne ferait rougir **aucun** parcours — l'écran afficherait la même chose, seule la ligne enregistrée serait devenue différente, **en silence**. **9 témoins de source** figent donc ce qu'elle ne fait pas, dont un qui vérifie qu'**aucun écrivain ne LIT son verdict** : un blocage déguisé ne peut pas entrer sans rougir.
+
+**⛔ ET SON CARNET D'OBSERVATION NE COLLECTE PAS CE QUE LA PERSONNE MANGE** : 50 derniers verdicts en mémoire, **jamais persistés**, et ils ne portent **que** l'état, le nom de l'écrivain et les noms de règles — ni le nom de l'aliment, ni ses valeurs. *Elle observe la FORME, pas le repas* (Constitution **P3** · **R36**).
+
+**⚠️⚠️ ET UN GARDE À MOI ÉTAIT AVEUGLE — LA FAMILLE DE ft-v1193, REPOSÉE PAR MOI POUR LA TROISIÈME FOIS.** Celui qui vérifie que la sonde conduit les 4 écrivains cherchait leur nom **n'importe où** dans le fichier — or ces noms vivent aussi dans le **docblock qui les explique**. Renommer le vrai appel le laissait muet : **18 mutations sur 19** seulement. Il lit désormais la sonde **sans ses commentaires** et cherche l'**appel** (`nom(`), pas le mot. ⭐ *Et c'est le contrôle négatif qui l'a dit, pas une relecture* — **un garde qu'on n'éprouve pas est une affirmation, pas une garantie.** ⚠️ Deux de mes mutations étaient elles-mêmes invalides : elles ne retiraient **qu'un** des deux sites d'appel, donc le garde voyait encore l'autre. *Une mutation qui ne fait pas ce qu'elle annonce est indiscernable d'un garde aveugle.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune valeur enregistrée ne bouge : un point d'observation est posé (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **aucune règle n'est bloquante** — consigne explicite, *« ne rends aucune règle bloquante sans un nouveau feu vert séparé »* ; la mesure existe pour que cette décision se prenne sur des chiffres · ⛔ **les 2 divergences ne sont pas harmonisées** (décisions produit) · ⛔ `S.savedFoods` multi-onglets, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts · ⛔ le garde `!_bcNutr` non bloquant (ft-v1203) attend toujours son feu vert séparé. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+⚠️ **UNE RÉSERVE DITE PLUTÔT QUE CACHÉE** : la répartition porte sur **8 formes construites**, pas sur le vrai journal de Michel. *Savoir quelles règles mordent sur des données réelles demande de faire tourner la douane en vrai — c'est précisément ce que le mode observation rend possible.*
+
+📄 **PDF POUR GPT** : `docs/ETAPE5-DOUANE.pdf` (6 p., 18ᵉ de la série), généré par `tools/gen_douane_pdf.py` — **26 gardes**, et ⭐ **la répartition y est LUE dans la mesure, jamais recopiée** : le générateur refuse de produire si le fichier de mesure manque, s'il porte un `INVALID`, si une entrée a été mutée, ou si `tracabilite_absente` ne mord plus 8 fois. **20 mutations éprouvées sur un arbre COPIÉ** (§60 par construction, arbre revérifié identique au dépôt à la fin), **toutes refusent**, contrôle sain vert **avant ET après**.
+
+Tests : **parcours 3746/3746 sur l'arbre FINAL** (+20, bloc **CCCIII**) — **total prédit = total obtenu** (3726 + 20, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 16 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① ⭐⭐ **la douane corrige une quantité** → **2** · ② elle remplace une unité → **1** · ③ elle crée un `per100` → **1** · ④ elle modifie la provenance → **2** · ⑤ ⭐⭐ **elle bloque un `INVALID`** (un écrivain lit son verdict) → **2** · ⑥ elle ajoute un `toast` → **1** · ⑦ un écrivain contourne la douane → **2** · ⑧ ⭐ **elle absorbe une logique du hub** (elle rappelle `_provFood`) → **3** · ⑨ ⭐⭐ **le 4ᵉ écrivain contourne** (`saveEditFood`, celui qui ne pousse rien) → **2** · ⑩ elle écrit dans `S.foodLog` → **1** · ⑪ une règle `INVALID` disparaît → **2** · ⑫ ⭐⭐ **le cas des 48 kcal devient `INVALID`** → **2** · ⑬ le seuil énergétique devient purement relatif → **1** · ⑭ le carnet part dans l'état persisté → **1** · ⑮ la douane rend toujours `OK` → **4** · ⑯ une 5ᵉ occurrence apparaît → **1**, exactement le témoin du compte d'appelants.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_douane.js` (nouveau), `tools/gen_douane_pdf.py` (nouveau), `docs/ETAPE5-DOUANE.pdf`, `sw.js`, `CLAUDE.md`, `docs/DOUANE-NUTRITION.md` (nouveau), `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1205. |
 
 **ft-v1204 — 🔀 ÉTAPE 4 : LE HUB DE PRÉPARATION · ET CE QU'IL REFUSE DE FAIRE EST LA MOITIÉ DE SA DÉFINITION** — Michel valide la clôture de 1b/3 et ouvre l'étape 4, avec ⛔ **une borne explicite** : ***« je ne veux PAS encore la douane. Le hub doit d'abord être construit et validé seul »***, et un cahier des charges en négatif — ***« ne décide pas encore si une ligne est valide · ne corrige aucune valeur · ne bloque aucun enregistrement · ne modifie ni quantité, ni unité, ni per100, ni provenance, ni portion · ne touche pas encore à `S.foodLog` »***. Conception complète : **`docs/HUB-NUTRITION.md`**.
 
@@ -716,39 +756,6 @@ Tests : **parcours 3633/3633 sur l'arbre FINAL** (+13, bloc **CCXCVI**) — **to
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1112**, l'étape « Déployer sur GitHub Pages » **`success` à 19:16:04 UTC** sur `5f16740e`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *l'étape est verte, l'app affichant ft-v1199 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1199. |
-
-**ft-v1198 — 📋 1b-iii : LE NOYAU D'UN ITEM DE LISTE · ET LE PLAN ANNONÇAIT DEUX DIVERGENCES, IL N'Y EN A QU'UNE** — Michel valide 1b-ii et pose le **test d'entrée** en consigne permanente : ***« avant toute extraction, vérifie d'abord qu'il y a réellement au moins deux copies »*** · ***« extrait uniquement ce qui est strictement identique »*** · ***« toute divergence métier reste visible chez les appelants »***.
-
-**⭐ TEST D'ENTRÉE PASSÉ** : **3 sites réels** — `_buildFoodQuickItems` branche **favoris** et branche **récents**, plus `toggleFavFood` (le favori enregistré).
-
-**⭐⭐ ET LE NOYAU A ÉTÉ MESURÉ CHAMP PAR CHAMP, PAS ESTIMÉ** : **9 champs strictement identiques aux trois** — `name` · `kcal`/`prot`/`carbs`/`fat` en `||0` · `per100` · `q` · `u` · `portionLabel`. Ils deviennent **`_itemListe(src)`**.
-
-**⛔⛔ ET LE DOCUMENT SE TROMPE À MOITIÉ, POUR LA TROISIÈME SOUS-ÉTAPE D'AFFILÉE.** Il annonçait : *« `q` vaut `0` chez `_buildFoodQuickItems` et `null` chez `toggleFavFood` ; `portionWeightG` pareil »*, et en déduisait un propriétaire à **paramètre** — `_itemListe(src, {vide:0})` vs `{vide:null}`.
-
-| champ | ce que le plan disait | ce que la MESURE dit |
-|---|---|---|
-| `q` | « `0` ici, `null` là » | ⛔ **`+X.q>0?+X.q:0` aux TROIS sites** — il ne diverge pas |
-| `portionWeightG` | « pareil » | ⭐ **la SEULE vraie divergence** : `0` · `0` · **`null`** |
-
-👉 ***Le paramètre était dimensionné pour deux écarts alors qu'il n'y en a qu'un.*** **Il n'a donc pas été écrit** : `portionWeightG` et `fav` restent **écrits chez chaque appelant**, où l'écart se lit à l'œil nu. *Un paramètre inutile déplace la divergence DANS le propriétaire au lieu de la laisser visible* — c'est exactement ce que la consigne interdit.
-
-**⛔ ET `origine`/`sourceId`/`etat` NE BOUGENT PAS** : cette forme n'existe qu'**à la branche récents**, **une seule copie**. *On ne crée pas de propriétaire pour une forme unique* (la règle qui a fait écarter 1b-iv la veille) — et une mutation qui les y ferait entrer rougit.
-
-**⚠️ SONDE : OUVERTE, PAS CRUE — et l'étiquette était juste cette fois.** `1b_buildFoodQuickItems` appelle **la production** avec les **deux** branches garnies (`savedFoods` ET `foodLog`), et `1b_toggleFavFood_complet`/`_nu` conduisent `toggleFavFood` deux fois, **dont le cas `null`**. ⭐ *Après deux étiquettes fausses de suite (3-i « couvert » alors que non, 1b-iv « aucune sonde » alors que si), celle-ci tient — vérifiée en l'ouvrant, pas en la lisant.*
-
-**⭐ CRITÈRE BINAIRE ATTEINT** : instantané **identique octet pour octet** avant/après, **sha256 `7a52c37da93e17a3`**, diff vide.
-
-**⚠️ MON TÉMOIN DE PÉRIMÈTRE ÉTAIT FAUX, ET LE CODE SAIN L'A DIT.** Le témoin ② listait les clés attendues du propriétaire : j'en avais écrit **8 au lieu de 9**, en oubliant `name`. Il rougissait sur du code parfaitement juste. 👉 ***Un témoin de source se vérifie d'abord contre le code SAIN*** — s'il rougit là, c'est l'attendu qui est faux, pas le code. *Corrigé avant toute mutation, sinon j'aurais cherché un bug qui n'existait pas.*
-
-**⚠️⚠️ ET UNE MUTATION NE MORDAIT PAS — MAIS LA CAUSE N'ÉTAIT PAS UN TÉMOIN MANQUANT.** *« `per100` perdu »* rendait **0 rouge**. En cherchant pourquoi au lieu de conclure : **`_srcRepriseQ` porte le MÊME motif** (`per100: s.per100 || null,`) et **vient AVANT dans le fichier** — ma mutation frappait donc **l'autre fonction**, dont les témoins vivent dans un autre bloc. 👉 ***Une mutation mal placée est indiscernable d'un témoin aveugle.*** Réancrée sur deux lignes contiguës propres à `_itemListe` : **2 rouges, exactement les deux témoins du pour-100 g**. *C'est le piège de ft-v1195, repayé — et il resservira, parce que plus on extrait de propriétaires, plus les motifs se ressemblent d'une fonction à l'autre.*
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : trois copies d'un objet deviennent une (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la divergence `portionWeightG` n'est PAS harmonisée** — décision produit n°2, en attente · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1108**, `conclusion: success` à **17:10:07 UTC** sur `7dd2bc45`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1198 reste à confirmer par Michel.*
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1198. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

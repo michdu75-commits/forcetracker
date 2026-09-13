@@ -20,7 +20,33 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1204` — 🔀 **ÉTAPE 4 : LE HUB DE PRÉPARATION** (⛔ **pas la
+- **Version en ligne (live) :** `ft-v1205` — 🛃 **ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE**,
+  en ⛔ **MODE OBSERVATION UNIQUEMENT** (consigne de Michel : *« pas encore de correction
+  automatique ni de blocage utilisateur »*). `OK`, `WARN` et **`INVALID` écrivent TOUS
+  normalement** — le but est de **mesurer** avant de décider quelles règles deviendront
+  bloquantes. Détail complet : **`docs/DOUANE-NUTRITION.md`**.
+  ⭐⭐ **4 écrivains réels recomptés avant toute ligne**, et le 4ᵉ **ne pousse rien** :
+  `saveEditFood` mute en place puis `persist()` — *une recherche sur `S.foodLog.push` en trouve
+  trois sur quatre*. Écartés avec leur raison : `removeFoodEntry`, `_vcApplyPersona`,
+  `_applyRestoreData`, `load`/`_fusionnerAvecLeDisque`.
+  ⭐⭐ **21 règles MESURÉES avant d'être écrites** (9 `INVALID` + 12 `WARN`), sur les 29 lignes
+  réellement écrites — **2 candidates jetées à la mesure** (une portion sans étiquette ; un seuil
+  énergétique purement relatif, qui mordait sur un café à 2 kcal).
+  ⭐ **Répartition : 12 OK · 17 WARN · 0 INVALID.** Les 9 familles `INVALID` ne mordent sur aucune
+  ligne réelle → **chacune est éprouvée sur du fabriqué**, sinon ce serait un vert qui ne peut pas
+  rougir.
+  ⛔⛔ **2 divergences réelles découvertes, mesurées, NON corrigées** : ① une ligne **éditée** perd
+  sa traçabilité (`v`/`saisie`/`modifie` jamais posés — 8 lignes sur 8) ; ② une ligne entièrement
+  à zéro est **refusée** par l'écran d'ajout et **acceptée** par les trois autres écrivains.
+  ⭐ Instantané **identique après chacun des 4 branchements** (`226a7e9c523cae3f`), et l'objet
+  **avant/après douane identique à clés triées** sur les 29 lignes.
+  ⚠️ **Un garde à moi était aveugle** (il cherchait un nom au lieu d'un APPEL, donc le docblock le
+  rendait muet) — la famille de ft-v1193, reposée une 3ᵉ fois, attrapée par le contrôle négatif.
+  **16 mutations toutes mordantes**, contrôle sain 0 rouge avant ET après.
+  📄 PDF pour GPT : `docs/ETAPE5-DOUANE.pdf` — **26 gardes**, la répartition y est **lue dans la
+  mesure**, jamais recopiée ; **20 mutations sur un arbre COPIÉ**, toutes refusées.
+
+- **Version précédente :** `ft-v1204` — 🔀 **ÉTAPE 4 : LE HUB DE PRÉPARATION** (⛔ **pas la
   douane** — Michel la veut après, sur feu vert séparé). Détail complet : **`docs/HUB-NUTRITION.md`**.
   ⭐ **Cartographie faite avant toute ligne** : **12 fonctions** appellent `_afOublierAliment`, par
   RÔLE — **5** passaient déjà par `_offRemplirFormulaire`, **4** préparaient l'écran à la main,

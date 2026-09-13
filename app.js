@@ -2377,6 +2377,115 @@ function _repasHabituels(){
     .sort((a,b)=>(b.n-a.n)||b.dernier.localeCompare(a.dernier))
     .slice(0,3);
 }
+/* 🛃⭐ ft-v1205 — ÉTAPE 5, LA DOUANE DU JOURNAL ALIMENTAIRE : UN SEUL POINT D'OBSERVATION,
+   POSÉ JUSTE AVANT L'ÉCRITURE FINALE DANS `S.foodLog`.
+
+   Feu vert de Michel après validation du hub : *« créer un point unique de contrôle juste avant
+   l'écriture finale dans `S.foodLog`, afin que toutes les lignes qui vont réellement être
+   enregistrées puissent être observées avec les mêmes règles »*.
+
+   ⛔⛔ PREMIÈRE VERSION = OBSERVATION UNIQUEMENT, ET C'EST UNE CONSIGNE, PAS UNE PRUDENCE :
+   *« je ne veux pas encore de correction automatique ni de blocage utilisateur »*.
+   `OK` → écriture normale · `WARN` → écriture normale · **`INVALID` → écriture normale aussi**.
+   ⭐ *« Le but est d'abord de MESURER ce qui sortirait rouge avant de décider quelles règles
+   deviennent réellement bloquantes. »* Rendre une règle bloquante demande un feu vert séparé.
+
+   ⛔⛔ CE QU'ELLE NE FAIT PAS, ET CHAQUE POINT EST FIGÉ PAR UN TÉMOIN : elle ne corrige pas `q`,
+   ne choisit pas d'unité, ne convertit pas une portion en grammes, ne crée ni ne modifie un
+   `per100`, ne tranche pas entre les calories et les macros, ne devine pas un poids de portion,
+   ne touche pas à la provenance, ne normalise rien en silence, n'écrit pas dans `S.foodLog`,
+   n'affiche aucun `toast`, ne touche ni au hub `_afPreparerEcran` ni aux propriétaires de 1b/3.
+   ⭐ **Elle LIT la forme finale. Elle ne la reconstruit pas** — sinon elle deviendrait un second
+   hub, et le calcul existerait à deux endroits (R2).
+
+   ⚠️ LES RÈGLES N'ONT PAS ÉTÉ RECOPIÉES D'UNE LISTE, ELLES ONT ÉTÉ MESURÉES.
+   Michel : *« ne transforme pas automatiquement cette liste en règles ; mesure d'abord ce qui
+   existe réellement dans les données »*. Les 21 ci-dessous ont été passées sur les **29 lignes
+   réellement écrites** par les 4 écrivains sur 8 formes réelles, AVANT d'être écrites ici — et
+   deux candidates ont été jetées à la mesure : *« une portion sans étiquette »* (ce n'est pas une
+   incohérence, juste un nom absent) et un seuil énergétique purement relatif, qui mordait sur un
+   café à 2 kcal. Le seuil retenu est **relatif ET absolu**.
+
+   ⛔ LE CAS QUE MICHEL A NOMMÉ RESTE UN AVERTISSEMENT : *« une incohérence énergétique comme
+   48 kcal/100 g avec des macros incompatibles doit rester un WARN tant qu'aucune règle produit
+   n'a décidé quelle source a raison »*. La douane dit qu'il y a désaccord ; elle ne dit pas qui a
+   raison, et elle ne choisit pas.
+
+   ⚠️ ET ELLE DISTINGUE TROIS CHOSES QUE LE CODE CONFOND SOUVENT (consigne de Michel) :
+   une valeur **absente** (`undefined`/`null`), un **0 légitime** (l'eau fait 0 kcal, et c'est
+   vrai), et une valeur **invalide** (`NaN`, `Infinity`, un négatif). Seule la troisième est
+   structurelle ; le 0 n'est jamais une erreur en soi. */
+const DOUANE_V = 1;
+/* Mémoire d'observation, volontairement minuscule et VOLATILE : elle rend le résultat
+   « explicite et testable » (demande de Michel) sans rien changer à ce qui est enregistré.
+   ⛔ Elle ne part NI dans `S`, NI dans `localStorage`, NI au cloud — un témoin le vérifie. */
+let _douaneVus = [];
+function _douaneLigne(ligne, ecrivain){
+  const l = ligne || {};
+  const fini = x => (typeof x === 'number' && isFinite(x));
+  const pos  = x => fini(x) && x > 0;
+  const MACROS = ['kcal','prot','carbs','fat'];
+  const regles = [];
+  const dit = (nom, grave, vrai) => { if(vrai) regles.push({r:nom, g:grave}); };
+
+  /* ── ① STRUCTURE : la ligne ne peut pas être interprétée du tout ────────────────────── */
+  dit('nom_absent',        'INVALID', !(typeof l.name === 'string' && l.name.trim().length > 0));
+  dit('date_absente',      'INVALID', !(typeof l.date === 'string' && l.date.length > 0));
+  dit('repas_absent',      'INVALID', !(typeof l.meal === 'string' && l.meal.length > 0));
+  dit('horodatage_absent', 'INVALID', !pos(+l.ts));
+  /* ⚠️ `undefined` n'est PAS invalide ici : une macro absente est une macro absente. Ce qui est
+     invalide, c'est une macro PRÉSENTE et non lisible (NaN, Infinity, chaîne). */
+  dit('macro_non_finie',   'INVALID', MACROS.some(k => l[k] !== undefined && l[k] !== null && !fini(l[k])));
+  dit('macro_negative',    'INVALID', MACROS.some(k => fini(l[k]) && l[k] < 0));
+  dit('quantite_non_finie','INVALID', l.q !== undefined && l.q !== null && !fini(l.q));
+  dit('quantite_negative', 'INVALID', fini(l.q) && l.q < 0);
+  dit('per100_non_fini',   'INVALID', !!l.per100 && MACROS.some(k =>
+        l.per100[k] !== undefined && l.per100[k] !== null && !fini(l.per100[k])));
+
+  /* ── ② COHÉRENCE : la ligne s'interprète, mais quelque chose ne va pas ensemble ─────── */
+  dit('unite_sans_quantite', 'WARN', !!l.u && !pos(+l.q));
+  dit('quantite_sans_unite', 'WARN', pos(+l.q) && !l.u);
+  dit('unite_inconnue',      'WARN', !!l.u && ['g','ml','portion'].indexOf(l.u) < 0);
+  /* ⚠️ `ml` n'est PAS invalide — l'app l'enregistre vraiment aujourd'hui. Il est seulement
+     inexploitable pour remettre une quantité : sans densité, un volume ne dit pas ce que
+     l'aliment PÈSE, et on n'invente pas une densité (R29). */
+  dit('unite_non_reprenable','WARN', l.u === 'ml');
+  dit('portion_sans_poids',  'WARN', l.u === 'portion' && !pos(+l.portionWeightG));
+  dit('grammes_sans_per100', 'WARN', l.u === 'g' && pos(+l.q) && !l.per100);
+  /* ⛔ « aucune valeur » ≠ « des zéros » : l'eau à 0 kcal est légitime. La règle dit seulement
+     qu'AUCUNE des quatre n'est strictement positive — mesuré, c'est exactement ce que l'écran
+     d'ajout refuse déjà de sa propre initiative, pendant que les trois autres écrivains
+     l'acceptent. La douane ne tranche pas ce désaccord, elle le rend visible. */
+  dit('aucune_valeur',       'WARN', !MACROS.some(k => pos(+l[k])));
+  dit('tracabilite_absente', 'WARN', l.v === undefined || l.saisie === undefined);
+  dit('provenance_orpheline','WARN', !!l.sourceId && !l.origine);
+
+  /* ── ③ ARITHMÉTIQUE : deux nombres de la même ligne se contredisent ─────────────────── */
+  /* Seuil RELATIF ET ABSOLU. Le relatif seul mord sur les petites valeurs (un café à 2 kcal,
+     une macro arrondie à l'entier par l'écran d'édition) ; l'absolu seul rate les gros écarts
+     proportionnels. Mesuré : ce couple ne mord que sur le cas volontairement incohérent. */
+  const ecarte = (a, b) => { const d = Math.abs(a - b); return b > 0 && d >= 25 && d / b > 0.30; };
+  const _k = +l.kcal || 0, _p = +l.prot || 0, _c = +l.carbs || 0, _f = +l.fat || 0;
+  dit('energie_incoherente', 'WARN',
+      _k > 0 && (_p > 0 || _c > 0 || _f > 0) && ecarte(_k, 4*_p + 4*_c + 9*_f));
+  dit('portion_masse_incoherente', 'WARN',
+      l.u === 'portion' && pos(+l.q) && pos(+l.portionWeightG) && !!l.per100 && _k > 0 &&
+      ecarte(_k, (+l.per100.kcal || 0) * (+l.q) * (+l.portionWeightG) / 100));
+  dit('per100_incoherent_avec_ligne', 'WARN',
+      l.u === 'g' && pos(+l.q) && !!l.per100 && _k > 0 &&
+      ecarte(_k, (+l.per100.kcal || 0) * (+l.q) / 100));
+
+  const etat = regles.some(x => x.g === 'INVALID') ? 'INVALID'
+             : regles.length ? 'WARN' : 'OK';
+  const res = { v: DOUANE_V, etat: etat, regles: regles.map(x => x.r),
+                ecrivain: String(ecrivain || '?') };
+  /* ⛔ On garde les 50 derniers verdicts, et RIEN d'autre : ni la ligne, ni son nom, ni ses
+     valeurs. La douane observe la FORME, elle ne collecte pas ce que la personne mange
+     (Constitution P3 · R36 : ce qui décrit la personne reste chez elle). */
+  _douaneVus.push({ ts: res.etat, e: res.ecrivain, r: res.regles.join(',') });
+  if(_douaneVus.length > 50) _douaneVus = _douaneVus.slice(-50);
+  return res;
+}
 /* Rejoue un repas : ses aliments sont ajoutés à AUJOURD'HUI, sur le même moment de la journée.
    ⚠️ La provenance dit « reprise » (brique 0) — ce n'est ni une mesure fraîche ni une saisie
    manuelle, et l'écrire évite qu'un chiffre repris passe un jour pour une mesure. */
@@ -2416,8 +2525,10 @@ function rejouerRepas(sig, meal){
     if(typeof _afSetSrc==='function')_afSetSrc(
       Object.assign({saisie:'liste',origine:'reprise'}, _srcRepriseQ(e, qOk)));
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
-    S.foodLog.push(Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,
-      qOk?{}:{q:null,u:null}));
+    const _l=Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,
+      qOk?{}:{q:null,u:null});
+    _douaneLigne(_l,'rejouerRepas');   /* 🛃 observation seule : ni correction, ni blocage */
+    S.foodLog.push(_l);
   });
   if(typeof _afSetSrc==='function')_afSetSrc(av);   // on rend le marqueur (R15)
   persist();
@@ -3105,7 +3216,9 @@ function quickAddFood(i){
                              `it.per100||null`), donc l'objet final ne bouge pas d'un octet —
                              c'est l'instantane qui le prouve, pas ce commentaire. */
                           _srcProvenance(it)));
-  S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
+  const _l=Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals));
+  _douaneLigne(_l,'quickAddFood');   /* 🛃 observation seule : ni correction, ni blocage */
+  S.foodLog.push(_l);
   _afSetSrc(null);
   _unhideFood(it.name);
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
@@ -4309,6 +4422,7 @@ function addFoodEntry(){
   if(!S.foodLog)S.foodLog=[];
   const _e=Object.assign({date:_journalJourActif(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()},
     _provFood({kcal,prot,carbs,fat}));
+  _douaneLigne(_e,'addFoodEntry');   /* 🛃 observation seule : ni correction, ni blocage */
   S.foodLog.push(_e);
   _majDefFavori(_e);   // 🏷️ ft-v1186 — le favori ne garde pas une définition périmée (décision de Michel)
   _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
@@ -5604,6 +5718,11 @@ function saveEditFood(){
       _majDefFavori(e);
     }
   }
+  /* 🛃 LE 4ᵉ ÉCRIVAIN, ET LE SEUL QUI NE POUSSE RIEN : il mute en place une ligne déjà dans
+     `S.foodLog`. Une recherche sur `S.foodLog.push` le rate complètement — c'est pourtant une
+     vraie ligne enregistrée. On observe donc ici, quand tous les champs sont posés et juste
+     AVANT `persist()`, qui est l'écriture réelle de cet écrivain. */
+  _douaneLigne(e,'saveEditFood');   /* observation seule : ni correction, ni blocage */
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();

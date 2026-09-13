@@ -8468,3 +8468,37 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `to
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1104**, job `deploy` **`success`** à **14:54:37 UTC** sur `a7d6e172` — l'étape « Déployer sur GitHub Pages » close à **14:54:35**. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196, où un `in_progress` avec `updated_at` figé cachait un déploiement déjà réussi. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1197 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_1bii_pdf.py`, `docs/SOUS-ETAPE-1BII.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1197. |
+
+
+**ft-v1198 — 📋 1b-iii : LE NOYAU D'UN ITEM DE LISTE · ET LE PLAN ANNONÇAIT DEUX DIVERGENCES, IL N'Y EN A QU'UNE** — Michel valide 1b-ii et pose le **test d'entrée** en consigne permanente : ***« avant toute extraction, vérifie d'abord qu'il y a réellement au moins deux copies »*** · ***« extrait uniquement ce qui est strictement identique »*** · ***« toute divergence métier reste visible chez les appelants »***.
+
+**⭐ TEST D'ENTRÉE PASSÉ** : **3 sites réels** — `_buildFoodQuickItems` branche **favoris** et branche **récents**, plus `toggleFavFood` (le favori enregistré).
+
+**⭐⭐ ET LE NOYAU A ÉTÉ MESURÉ CHAMP PAR CHAMP, PAS ESTIMÉ** : **9 champs strictement identiques aux trois** — `name` · `kcal`/`prot`/`carbs`/`fat` en `||0` · `per100` · `q` · `u` · `portionLabel`. Ils deviennent **`_itemListe(src)`**.
+
+**⛔⛔ ET LE DOCUMENT SE TROMPE À MOITIÉ, POUR LA TROISIÈME SOUS-ÉTAPE D'AFFILÉE.** Il annonçait : *« `q` vaut `0` chez `_buildFoodQuickItems` et `null` chez `toggleFavFood` ; `portionWeightG` pareil »*, et en déduisait un propriétaire à **paramètre** — `_itemListe(src, {vide:0})` vs `{vide:null}`.
+
+| champ | ce que le plan disait | ce que la MESURE dit |
+|---|---|---|
+| `q` | « `0` ici, `null` là » | ⛔ **`+X.q>0?+X.q:0` aux TROIS sites** — il ne diverge pas |
+| `portionWeightG` | « pareil » | ⭐ **la SEULE vraie divergence** : `0` · `0` · **`null`** |
+
+👉 ***Le paramètre était dimensionné pour deux écarts alors qu'il n'y en a qu'un.*** **Il n'a donc pas été écrit** : `portionWeightG` et `fav` restent **écrits chez chaque appelant**, où l'écart se lit à l'œil nu. *Un paramètre inutile déplace la divergence DANS le propriétaire au lieu de la laisser visible* — c'est exactement ce que la consigne interdit.
+
+**⛔ ET `origine`/`sourceId`/`etat` NE BOUGENT PAS** : cette forme n'existe qu'**à la branche récents**, **une seule copie**. *On ne crée pas de propriétaire pour une forme unique* (la règle qui a fait écarter 1b-iv la veille) — et une mutation qui les y ferait entrer rougit.
+
+**⚠️ SONDE : OUVERTE, PAS CRUE — et l'étiquette était juste cette fois.** `1b_buildFoodQuickItems` appelle **la production** avec les **deux** branches garnies (`savedFoods` ET `foodLog`), et `1b_toggleFavFood_complet`/`_nu` conduisent `toggleFavFood` deux fois, **dont le cas `null`**. ⭐ *Après deux étiquettes fausses de suite (3-i « couvert » alors que non, 1b-iv « aucune sonde » alors que si), celle-ci tient — vérifiée en l'ouvrant, pas en la lisant.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : instantané **identique octet pour octet** avant/après, **sha256 `7a52c37da93e17a3`**, diff vide.
+
+**⚠️ MON TÉMOIN DE PÉRIMÈTRE ÉTAIT FAUX, ET LE CODE SAIN L'A DIT.** Le témoin ② listait les clés attendues du propriétaire : j'en avais écrit **8 au lieu de 9**, en oubliant `name`. Il rougissait sur du code parfaitement juste. 👉 ***Un témoin de source se vérifie d'abord contre le code SAIN*** — s'il rougit là, c'est l'attendu qui est faux, pas le code. *Corrigé avant toute mutation, sinon j'aurais cherché un bug qui n'existait pas.*
+
+**⚠️⚠️ ET UNE MUTATION NE MORDAIT PAS — MAIS LA CAUSE N'ÉTAIT PAS UN TÉMOIN MANQUANT.** *« `per100` perdu »* rendait **0 rouge**. En cherchant pourquoi au lieu de conclure : **`_srcRepriseQ` porte le MÊME motif** (`per100: s.per100 || null,`) et **vient AVANT dans le fichier** — ma mutation frappait donc **l'autre fonction**, dont les témoins vivent dans un autre bloc. 👉 ***Une mutation mal placée est indiscernable d'un témoin aveugle.*** Réancrée sur deux lignes contiguës propres à `_itemListe` : **2 rouges, exactement les deux témoins du pour-100 g**. *C'est le piège de ft-v1195, repayé — et il resservira, parce que plus on extrait de propriétaires, plus les motifs se ressemblent d'une fonction à l'autre.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : trois copies d'un objet deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la divergence `portionWeightG` n'est PAS harmonisée** — décision produit n°2, en attente · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1108**, `conclusion: success` à **17:10:07 UTC** sur `7dd2bc45`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1198 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1198. |
