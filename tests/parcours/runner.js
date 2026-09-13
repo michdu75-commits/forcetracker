@@ -35418,6 +35418,120 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     !/_efPortion/.test(corps), 'les jumelles ont bougé');
 }
 
+/* ══════════ BLOC CCCI — 📋 1b-v : ÉCARTÉE, et la divergence est JUSTIFIÉE (13/09/2026) ══════════
+   ⛔⛔ CE BLOC NE PROTÈGE PAS UNE EXTRACTION : IL PROTÈGE UNE ABSENCE (R30 — *un retrait volontaire
+   qui ne laisse aucune trace redevient un bug, parce que du code orphelin ressemble à un oubli*).
+
+   ⭐ TEST D'ENTRÉE : balayage complet des 12 écritures des 4 variables de portion, classées par
+   MÉTIER et non par ressemblance — ① hydratation depuis une SOURCE (le propriétaire `_af` de 3-v,
+   ses 2 appelants, **plus `openEditFood`**) · ② saisie à l'ÉCRAN (5 sites) · ③ déclarations et
+   remise à plat (3 sites). 👉 **Il ne reste qu'UN site non propriétarisé, et il écrit d'AUTRES
+   variables.** Une copie : on ne crée pas de propriétaire (R19).
+
+   ⛔⛔ ET LA MESURE VA PLUS LOIN QUE LE COMPTAGE : LES DEUX FORMES NE DOIVENT PAS CONVERGER.
+   L'écran d'AJOUT refuse la définition si l'unité n'est pas « portion » ; l'écran d'ÉDITION
+   l'hydrate sans garde. *Ça ressemble à une incohérence, et c'en est une seulement si on oublie
+   que les deux écrans partent d'états différents* : `openEditFood` force `_efUnite='portion'` à
+   chaque ouverture, donc une définition de portion y a toujours du sens ; l'écran d'ajout, lui,
+   suit l'unité de la source. **Les deux gardes diffèrent à raison.** Les fondre serait exactement
+   l'erreur que ce chantier évite ailleurs. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    /* ⭐ LE CAS QUI PORTE TOUT : une ligne EN GRAMMES qui porte quand même une étiquette de
+       portion. `_provFood` recopie `portionLabel` sans condition d'unité, donc l'état existe. */
+    const LIGNE={q:150, u:'g', portionLabel:'part', portionWeightG:120,
+                 kcal:100, prot:1, carbs:2, fat:3};
+
+    /* ── écran d'ÉDITION ── */
+    S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:7777, name:'Cas EF'}, LIGNE)];
+    persist();
+    _efPortionLabel='ZZZ'; _efPortionPoids=-1;   // témoin : on doit voir une VRAIE écriture
+    openEditFood(7777);
+    o.edition=JSON.stringify({label:_efPortionLabel, poids:_efPortionPoids, unite:_efUnite});
+
+    /* ── écran d'AJOUT, MÊME ligne ── */
+    S.foodLog=[]; S.savedFoods=[];
+    try{ _afOublierAliment(); }catch(e){}
+    try{ _afResetUnite(); }catch(e){}
+    _afSetSrc(null);
+    _afPortionLabel='ZZZ'; _afPortionPoids=-1;
+    _afQuickItems=[Object.assign({name:'Cas AF', fav:false}, LIGNE)];
+    quickFillFood(0);
+    o.ajout=JSON.stringify({label:_afPortionLabel, poids:_afPortionPoids, unite:_afUnite});
+
+    /* ── contre-épreuve : la MÊME ligne en PORTIONS doit hydrater les DEUX ── */
+    const P={q:2, u:'portion', portionLabel:'bol', portionWeightG:90,
+             kcal:100, prot:1, carbs:2, fat:3};
+    S.foodLog=[]; S.savedFoods=[];
+    try{ _afOublierAliment(); }catch(e){}
+    try{ _afResetUnite(); }catch(e){}
+    _afSetSrc(null);
+    _afPortionLabel='ZZZ'; _afPortionPoids=-1;
+    _afQuickItems=[Object.assign({name:'Cas AF portions', fav:false}, P)];
+    quickFillFood(0);
+    o.ajoutPortions=JSON.stringify({label:_afPortionLabel, poids:_afPortionPoids});
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCCI ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  const E=j(X.edition)||{}, A=j(X.ajout)||{};
+  t('CCCI ① ⭐⭐ DIVERGENCE MESURÉE — sur une ligne EN GRAMMES portant une étiquette, l\'écran '+
+    'd\'ÉDITION hydrate la définition (part / 120)',
+    E.label==='part' && E.poids===120, JSON.stringify(E));
+  t('CCCI ② ⭐⭐ …et l\'écran d\'AJOUT, sur la MÊME ligne, ne l\'hydrate PAS (vide / 0)',
+    A.label==='' && A.poids===0, JSON.stringify(A));
+  t('CCCI ③ ⛔⛔ ET LA RAISON EST MESURÉE, PAS SUPPOSÉE — les deux écrans ne partent pas du même '+
+    'état : l\'édition ouvre TOUJOURS en « portion », l\'ajout suit l\'unité de la source',
+    E.unite==='portion' && A.unite==='g', 'édition='+E.unite+' · ajout='+A.unite);
+  t('CCCI ④ ⭐ CONTRE-ÉPREUVE — sur une ligne en PORTIONS, l\'écran d\'ajout hydrate bien '+
+    '(la divergence porte sur le garde d\'unité, pas sur la reprise elle-même)',
+    !!(j(X.ajoutPortions)&&j(X.ajoutPortions).label==='bol'&&j(X.ajoutPortions).poids===90),
+    X.ajoutPortions);
+  t('CCCI ⑤ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils figent un ÉCARTEMENT, pas une extraction.
+   ⛔ Sans eux, `openEditFood` ressemble à un site qu'on a oublié de brancher — et le suivant
+   « réparerait » une décision. C'est exactement le cas vécu du calculateur de plaques (R30). */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const hydratEf=codeSeul.split('\n').filter(l=>/_efPortionLabel\s*=\s*String\(\w+\.portionLabel/.test(l));
+  t('CCCI ⑥ ⛔⛔ TEST D\'ENTRÉE FIGÉ — la forme `_ef*` n\'existe qu\'UNE fois : on ne crée pas de '+
+    'propriétaire pour une forme unique (R19), comme pour 1b-iv',
+    hydratEf.length===1, hydratEf.length+' copies de la forme _ef');
+  const corpsAf=(codeSeul.match(/function _afReprendreDefPortion\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCCI ⑦ ⛔⛔ PÉRIMÈTRE DE SOURCE — le propriétaire de l\'écran d\'AJOUT n\'a pas absorbé les '+
+    'jumelles `_ef*` : même grandeur, AUTRE écran, autre état de départ',
+    corpsAf.length>0 && !/_efPortion/.test(corpsAf), 'corps='+corpsAf.slice(0,140));
+  const corpsOuvre=(codeSeul.match(/function openEditFood\(ts\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCCI ⑧ ⛔⛔ PÉRIMÈTRE DE SOURCE — `openEditFood` n\'appelle PAS le propriétaire de l\'écran '+
+    'd\'ajout : l\'y brancher écrirait dans les MAUVAISES variables et lui imposerait un garde '+
+    'd\'unité que son état de départ contredit',
+    corpsOuvre.length>0 && !/_afReprendreDefPortion/.test(corpsOuvre),
+    'openEditFood appelle le propriétaire de l\'autre écran');
+  t('CCCI ⑨ ⛔ …et l\'écran d\'édition force toujours son unité à « portion » à l\'ouverture — '+
+    'c\'est CE fait qui justifie l\'absence de garde, et s\'il tombe la divergence devient un vrai '+
+    'défaut à réexaminer',
+    /_efUnite='portion';/.test(corpsOuvre), 'le garde d\'entrée de l\'écran d\'édition a changé');
+  t('CCCI ⑩ ⛔ NON-RÉGRESSION 3-v — les 2 portes de l\'écran d\'ajout passent toujours par leur '+
+    'propriétaire (1 déclaration + 2 appels)',
+    (codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length===3,
+    'occurrences='+(codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length);
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,

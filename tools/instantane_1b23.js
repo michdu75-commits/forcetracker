@@ -487,6 +487,65 @@ const snap=await p.evaluate(async()=>{
   });
   out['3v_defportion_afSuggPrendreLocale']=J(pLocale);
 
+  /* ══ 1b-v — L'HYDRATATION DE L'ECRAN D'EDITION, ET LA DIVERGENCE DE GARDE ══════════════════
+     ⚠️⚠️ AUCUNE DES 21 CLES N'OBSERVAIT UNE SEULE VARIABLE `_ef*`. La sonde conduit bien
+     `openEditFood` depuis l'etape 2 (cle `2c_edition_portion`), mais elle n'y lit que la LIGNE
+     ENREGISTREE — jamais l'etat de l'ecran d'edition. *Conduire n'est pas observer.*
+
+     ⛔⛔ CE QU'ON MESURE ICI N'EST PAS UNE EXTRACTION, C'EST UNE DIVERGENCE. Les deux ecrans
+     hydratent la meme grandeur depuis une ligne reprise, et ils n'ont PAS le meme garde :
+       · ecran d'AJOUT    : `_afReprendreDefPortion` REFUSE si `u !== 'portion'` ;
+       · ecran d'EDITION  : `openEditFood` hydrate SANS AUCUN garde d'unite.
+     Une ligne enregistree EN GRAMMES qui porte quand meme un `portionLabel` (c'est possible :
+     `_provFood` recopie l'etiquette sans condition d'unite) est donc traitee differemment par
+     les deux ecrans. On le MESURE au lieu de le deduire — puis on l'ecrit sans le corriger. */
+  const CAS_EF = [
+    {nom:'EF portion complete', q:2,   u:'portion', portionLabel:'part', portionWeightG:120},
+    {nom:'EF portion sans poids', q:2, u:'portion', portionLabel:'bol'},
+    /* ⭐⭐ LE CAS QUI PORTE TOUT : en GRAMMES, mais l'etiquette de portion est la. */
+    {nom:'EF grammes AVEC etiquette', q:150, u:'g', portionLabel:'part', portionWeightG:120},
+    {nom:'EF grammes nu', q:150, u:'g'},
+  ];
+  const efHydrate=[];
+  CAS_EF.forEach((cs,i)=>{
+    try{
+      const ts=7000+i;
+      S.foodLog=[Object.assign({date:_journalJourActif?_journalJourActif():'2026-09-01',
+                                meal:'midi', ts:ts, name:cs.nom,
+                                kcal:100, prot:1, carbs:2, fat:3}, cs)];
+      delete S.foodLog[0].nom;
+      persist();
+      /* ⛔ On remet l'etat de l'ecran d'edition a une valeur TEMOIN avant chaque cas : sans ca
+         un cas lirait le reliquat du precedent et la sonde serait verte sur un reliquat
+         (le piege paye en ft-v1199). `openEditFood` remet `_efUnite` et consorts elle-meme,
+         mais PAS `_efPortionLabel`/`_efPortionPoids` — justement ce qu'on mesure. */
+      _efPortionLabel='ZZZ'; _efPortionPoids=-1;
+      openEditFood(ts);
+      efHydrate.push([cs.nom, J({label:_efPortionLabel, poids:_efPortionPoids,
+                                 unite:(typeof _efUnite!=='undefined')?_efUnite:'ABSENT'})]);
+    }catch(e){ efHydrate.push([cs.nom, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bv_hydratation_openEditFood']=J(efHydrate);
+
+  /* ⭐ ET LE MEME JEU DE CAS PASSE PAR L'ECRAN D'AJOUT : c'est la COMPARAISON qui fait la
+     mesure, pas la lecture d'un seul cote. Sans elle on affirmerait une divergence qu'on n'a
+     vue que d'un bout. */
+  const afHydrate=[];
+  CAS_EF.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[];
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afPortionLabel='ZZZ'; _afPortionPoids=-1;
+      _afQuickItems=[Object.assign({name:cs.nom, kcal:100, prot:1, carbs:2, fat:3, fav:false}, cs)];
+      delete _afQuickItems[0].nom;
+      quickFillFood(0);
+      afHydrate.push([cs.nom, J({label:_afPortionLabel, poids:_afPortionPoids,
+                                 unite:(typeof _afUnite!=='undefined')?_afUnite:'ABSENT'})]);
+    }catch(e){ afHydrate.push([cs.nom, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bv_hydratation_ecranAjout']=J(afHydrate);
+
   return out;
 });
 

@@ -20,6 +20,24 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
+- ⭐⭐ **1b ET 3 SONT TERMINÉES — 8 livrées, 2 écartées, 0 restante.** Le chantier de découpage
+  ouvert le 12/09 est clos. **Prochaine étape : le hub (étape 4), puis la douane (étape 5)** — sur
+  feu vert de Michel.
+  📋 **1b-v ⛔ ÉCARTÉE le 13/09, sans nouvelle version** (aucun fichier servi modifié, donc **`sw.js`
+  n'est PAS bumpé** — même logique que « ne pas bumper si seul `Code.js` change »).
+  **Balayage complet** : les 12 écritures des 4 variables de portion, classées par métier —
+  hydratation depuis une **source** (le propriétaire de 3-v + `openEditFood`) · saisie à l'**écran**
+  (5 sites) · déclaration/remise à plat (3). 👉 **Un seul site non propriétarisé, qui écrit
+  d'AUTRES variables. Test d'entrée : 1 copie.**
+  ⛔⛔ **Et la divergence mesurée est JUSTIFIÉE** : sur la même ligne en grammes portant une
+  étiquette, l'écran d'**édition** hydrate la définition, l'écran d'**ajout** non. *Parce que
+  `openEditFood` force `_efUnite='portion'` à chaque ouverture* — une définition de portion y a
+  toujours du sens ; l'écran d'ajout, lui, suit la source. **Les fondre serait l'erreur.**
+  ⭐ **Le témoin ⑨ fige la RAISON, pas seulement le fait** : si l'écran d'édition cesse d'ouvrir en
+  portions, la divergence redevient un vrai défaut — et un rouge le dira.
+  Tests : **7 mutations toutes mordantes** (la ① — *« je répare l'oubli »* — en fait **4**),
+  contrôle sain 0 rouge avant ET après.
+
 - **Version en ligne (live) :** `ft-v1203` — 🍽️ **3-v : la définition de portion reprise d'une source.**
   ⭐ **Test d'entrée passé — et pour la 1ʳᵉ fois depuis 4 sous-étapes, le plan dit VRAI sur la
   moitié qu'il décrit** : `quickFillFood` et `_afSuggPrendreLocale` portaient

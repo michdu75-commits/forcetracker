@@ -159,25 +159,51 @@ fichier et **lit le CSV produit** (échappement de la virgule, BOM, provenance, 
 miroir de 3-i, où l'étiquette annonçait « couvert » pour une sonde qui ne couvrait rien.*
 👉 **Dans les deux sens, l'étiquette ne remplace pas l'ouverture du fichier.**
 
-### 1b-v — l'hydratation des écrans
+### 1b-v — l'hydratation des écrans ⛔ **ÉCARTÉE (13/09/2026) — IL N'Y A PLUS RIEN À EXTRAIRE**
 
-| | |
-|---|---|
-| **Périmètre écrit** | poser `_afPortionLabel` / `_afPortionPoids` / `_efPortion*` depuis une ligne reprise |
-| **Sites écrits** | `quickFillFood` (@2842) · `_afSuggPrendreLocale` (@3996) · `openEditFood` (@4186) · `_afSetUnite` (@4941) |
-| **Dépendance** | ✅ **LEVÉE** — 3-v est livrée (ft-v1203) |
+> ⚠️ **Elle reste écrite ici AVEC SA RAISON, elle ne disparaît pas** (**R30**) : un site non
+> propriétarisé ressemble trait pour trait à un oubli, et le suivant « réparerait » une décision.
+> C'est le cas vécu du calculateur de plaques. **Un bloc de témoins (CCCI) fige l'écartement.**
 
-⚠️⚠️ **5ᵉ ÉCART DE PÉRIMÈTRE, MESURÉ LE 13/09 PENDANT 3-v — à relire avant de coder** :
+**⭐ LE BALAYAGE COMPLET, refait le jour même dans le code servi** — les **12 écritures** des quatre
+variables de portion, classées par **métier** et non par ressemblance :
 
-| ce que le plan annonce | ce que la **mesure** dit |
-|---|---|
-| `quickFillFood` · `_afSuggPrendreLocale` | ⛔ **déjà faits par 3-v** — ils appellent le propriétaire |
-| `_afSetUnite` @4941 | ⛔ **elle n'écrit NI `_afPortionLabel` NI `_afPortionPoids`**, pas une seule fois |
-| `openEditFood` @4186 | ⚠️ elle écrit les **jumelles `_ef*`** (écran d'ÉDITION), pas `_af*` — **1 site, pas une copie** |
+| métier | sites | état |
+|---|---|---|
+| **hydratation depuis une SOURCE** | `_afReprendreDefPortion` (+ ses 2 appelants) · **`openEditFood`** | le 1ᵉʳ est le propriétaire livré par 3-v ; le 2ᵉ est **seul de sa forme** |
+| **saisie à l'ÉCRAN** | puce · nom · poids, **× 2 écrans** = 5 sites | *autre métier* — la personne tape, rien n'est repris |
+| **déclaration / remise à plat** | 3 sites | — |
 
-👉 **Il ne reste donc qu'UN site, qui écrit d'autres variables.** Le test d'entrée s'appliquera :
-*on ne crée pas de propriétaire pour une forme unique* (**R19**) — et fondre `_af*` et `_ef*` serait
-une **refonte de deux écrans**, pas une extraction. **Recompter le jour même avant toute ligne.**
+👉 **Il ne reste qu'UN site d'hydratation non propriétarisé, et il écrit d'AUTRES variables.**
+**Test d'entrée : 1 copie** → *on ne crée pas de propriétaire pour une forme unique* (**R19**),
+exactement comme 1b-iv.
+
+**⛔⛔ ET DEUX MESURES INTERDISENT DE LE FONDRE AVEC LE PROPRIÉTAIRE `_af` :**
+
+1. **Les deux formes ne sont pas strictement identiques** — `(+X.portionWeightG>0)?` contre
+   `+X.portionWeightG>0?`. Sémantiquement pareil, **textuellement différent** : la consigne dit
+   *« n'extrais que ce qui est strictement identique »*.
+2. ⭐⭐ **Et surtout, elles n'ont pas le même garde** : l'écran d'**ajout** refuse si
+   `u !== 'portion'` ; l'écran d'**édition** hydrate **sans aucun garde d'unité**.
+
+**⭐⭐ CETTE DIVERGENCE A ÉTÉ MESURÉE BOUT EN BOUT, ET ELLE EST JUSTIFIÉE** — c'est le fait qui
+décide de la sous-étape. Sur **la même ligne**, enregistrée **en grammes** mais portant une
+étiquette de portion (état réel : `_provFood` recopie `portionLabel` sans condition d'unité) :
+
+| écran | définition reprise ? | son unité à l'ouverture |
+|---|---|---|
+| **ÉDITION** | ✅ `part` / 120 g | **`portion`, toujours** (forcé à chaque ouverture) |
+| **AJOUT** | ⛔ vide / 0 | **`g`** — il suit l'unité de la source |
+
+👉 ***Les deux gardes diffèrent parce que les deux écrans ne partent pas du même état.*** L'écran
+d'édition est **toujours** en mode portions, donc une définition de portion y a **toujours** du
+sens ; l'écran d'ajout, lui, suit la source. **Ce n'est pas une incohérence : c'est la même
+intention appliquée à deux états différents.** Les fondre serait précisément l'erreur que ce
+chantier évite partout ailleurs — *ce qu'on factorise est l'INTENTION, jamais la ressemblance*.
+
+⚠️ **Le témoin ⑨ du bloc CCCI fige la RAISON, pas seulement le fait** : il vérifie que l'écran
+d'édition force encore son unité à « portion » à l'ouverture. **Le jour où ce fait tombera, la
+divergence redeviendra un vrai défaut à réexaminer** — et un rouge le dira.
 
 ---
 
@@ -304,24 +330,32 @@ qu'on découvre trois versions plus tard.
 ## 4️⃣ ORDRE PROPOSÉ, ET CE QUI BLOQUE QUOI
 
 ```
-1b-i  ✅ livrée (ft-v1195)
-  │
-  ├─ 3-i   ✅ livrée (ft-v1196)
-  │
-  ├─ 1b-iv    ⛔ ÉCARTÉE — rien à extraire (une seule copie). Raison écrite ci-dessus.
-  │
-  ├─ 1b-ii  ✅ livrée (ft-v1197)
-  │
-  └─ suite ──┬─ 3-ii     ┐
-             ├─ 1b-iii ✅ livrée (ft-v1198)
-             ├─ 3-ii   ✅ livrée (ft-v1199)
-             ├─ 3-iii  ✅ livrée (ft-v1201)
-             ├─ 3-iv   ✅ livrée (ft-v1202) — la liste blanche, le seul qui ÉCRIT
-             ├─ 3-v    ✅ livrée (ft-v1203) — la définition de portion
-             └─ 1b-v ────┘  dépendance LEVÉE ; périmètre réel à remesurer
-                  │
-                  └─ hub (étape 4) ─ douane (étape 5)
+1b-i    ✅ livrée (ft-v1195)   la quantité reprise
+1b-ii   ✅ livrée (ft-v1197)   la provenance reprise
+1b-iii  ✅ livrée (ft-v1198)   l'item de liste
+1b-iv   ⛔ ÉCARTÉE            rien à extraire — 1 copie. Raison écrite ci-dessus.
+1b-v    ⛔ ÉCARTÉE            rien à extraire — 1 copie, et les formes NE DOIVENT PAS
+                              converger (deux écrans, deux états de départ).
+
+3-i     ✅ livrée (ft-v1196)   « cette quantité est-elle reprenable ? »
+3-ii    ✅ livrée (ft-v1199)   la pastille « ta dernière quantité »
+3-iii   ✅ livrée (ft-v1201)   le bloc « poids repris en grammes »
+3-iv    ✅ livrée (ft-v1202)   la liste blanche — le seul site qui ÉCRIT
+3-v     ✅ livrée (ft-v1203)   la définition de portion
+
+        ══════════════════════════════════════════════════════
+         1b ET 3 SONT TERMINÉES : 8 livrées · 2 écartées · 0 restante
+        ══════════════════════════════════════════════════════
+                          │
+                          └─ hub (étape 4) ─ douane (étape 5)
 ```
+
+⭐ **Bilan du découpage, mesuré** : sur **10** sous-étapes décrites le 12/09, **2 étaient vides**
+(1b-iv, 1b-v) et **5 périmètres écrits sur 8 vérifiés étaient faux** — jamais deux fois de la même
+façon. *Un document de plan ordonne le travail ; il n'est jamais une source pour un chiffre.*
+👉 **Et les deux sous-étapes vides ont été trouvées par le même geste** : compter les copies **avant**
+d'écrire une ligne. Sans ce test d'entrée, on aurait créé **deux propriétaires à un seul appelant** —
+de la complexité sans contrepartie (**R19**).
 
 ⛔ **Le hub et la douane restent après** — consigne explicite de Michel, inchangée.
 
