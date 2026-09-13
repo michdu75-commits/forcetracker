@@ -109,7 +109,16 @@ for k in ('3v_defportion_quickFillFood', '3v_defportion_afSuggPrendreLocale'):
     if k not in CLES:
         raise SystemExit('La sonde n OBSERVE plus la definition (%s manque) : le §4 raconte '
                          'precisement qu elle POSAIT sans jamais relire.' % k)
-if 'bcNutr' not in SONDE:
+# ⚠️⚠️ CE GARDE ETAIT AVEUGLE A SA PREMIERE ECRITURE, ET LA MUTATION G8 L'A DIT.
+#    Il cherchait `bcNutr` N'IMPORTE OU dans le fichier — or le mot vit aussi dans le COMMENTAIRE
+#    qui explique pourquoi on le lit. Retirer la vraie lecture le laissait muet : 12 mutations sur
+#    13 mordaient, celle-la passait au vert.
+#    C'est la famille de ft-v1193 (un temoin qui ne distingue pas le code de ce qui en PARLE),
+#    reposee par moi dans le garde cense proteger cette mesure precise.
+#    => on lit le fichier SANS ses blocs de commentaire, et on cherche l'AFFECTATION de la cle.
+_SONDE_CODE = re.sub(r'/\*[\s\S]*?\*/', '', SONDE)
+_SONDE_CODE = '\n'.join(l for l in _SONDE_CODE.split('\n') if not l.strip().startswith('//'))
+if not re.search(r'bcNutr\s*:', _SONDE_CODE):
     raise SystemExit('La sonde ne LIT plus `_bcNutr` : c est elle qui a fait tomber la decouverte '
                      'du §4, et sans elle le document affirme une mesure qu il ne fait pas.')
 if N_TEMOINS != 19:
@@ -344,7 +353,7 @@ F.append(tableau(
     [["la <b>definition</b> : quelle portion, combien elle pese",
       "<b>2 copies strictement identiques</b> &mdash; c'est ce qui est extrait ici"],
      ["le <b>nombre</b> de portions",
-      "⛔ <b>deja fait</b> : " + C % '_afReprendrePortions(n)' + " existe, et les <b>deux portes y "
+      "X <b>deja fait</b> : " + C % '_afReprendrePortions(n)' + " existe, et les <b>deux portes y "
       "sont branchees</b> depuis trois semaines. <b>%d occurrences</b> (1 declaration + 2 appels)"
       % N_NOMBRE_OWNER]],
     [55 * mm, 110 * mm]))
@@ -368,10 +377,10 @@ F.append(tableau(
      ["portion sans poids", "etiquette reprise, poids a <b>0</b> &mdash; <i>on ne devine pas un "
       "poids</i> (R29)"],
      ["portion sans nom", "poids repris, etiquette <b>vide</b>"],
-     ["<b>en grammes</b>", "⛔ <b>rien n'est repris</b> &mdash; une definition de portion "
+     ["<b>en grammes</b>", "X <b>rien n'est repris</b> &mdash; une definition de portion "
       "n'appartient pas a un aliment pese"],
      ["poids nul ou negatif", "<b>0</b>, jamais une valeur de remplacement"],
-     ["<b>portion AVEC un pour-100 g</b>", "⭐ <b>repris quand meme</b> &mdash; c'est le cas qui "
+     ["<b>portion AVEC un pour-100 g</b>", "* <b>repris quand meme</b> &mdash; c'est le cas qui "
       "porte tout le §4"]],
     [45 * mm, 120 * mm]))
 F.append(P("=&gt; <b>Les deux portes donnent exactement la meme table sur les 6 cas</b> &mdash; "
@@ -389,7 +398,7 @@ F.append(encadre(
     "devrait mesurer.</i></b> Les deux temoins de source de ce bloc ne sont donc pas un supplement "
     "de prudence : ils sont <b>les seuls possibles</b>. La mutation qui absorbe le garde dans le "
     "proprietaire rend <b>1 rouge, uniquement lui</b> &mdash; tout le reste passe au vert."
-    "<br/><br/>⛔ <b>Et ce garde redondant n'est PAS retire.</b> Il est inutile aujourd'hui ; il "
+    "<br/><br/>X <b>Et ce garde redondant n'est PAS retire.</b> Il est inutile aujourd'hui ; il "
     "serait <b>le seul</b> le jour ou quelqu'un retirerait le " + C % "u!=='portion'" + " d'a cote. "
     "<i>Un garde inutile aujourd'hui peut etre le seul garde demain.</i> Mesure, ecrit dans le "
     "journal de test, <b>non corrige</b> &mdash; une extraction ne change aucun comportement.",
@@ -426,7 +435,7 @@ F.append(tableau(
       "il est <b>dans</b> le proprietaire, parce qu'il fait partie de son metier : <i>reprendre une "
       "definition de portion</i>. Le retirer ferait passer celle d'un aliment pese"]],
     [50 * mm, 115 * mm]))
-F.append(P("⚠️ <b>5e ecart de perimetre du plan, decouvert au passage &mdash; il porte sur la "
+F.append(P("/!\ <b>5e ecart de perimetre du plan, decouvert au passage &mdash; il porte sur la "
            "sous-etape SUIVANTE.</b> Le plan annonce 4 sites pour " + C % '1b-v' + ". Mesure : "
            + C % '_afSetUnite' + " <b>n'ecrit NI</b> " + C % '_afPortionLabel' + " <b>NI</b> "
            + C % '_afPortionPoids' + " (<b>%d fois</b>) ; les deux portes de reprise sont faites "
@@ -450,7 +459,7 @@ F.append(tableau(
       "dates 9/9 &middot; donnees : aucun trou nouveau"],
      ["Ecran", "<b>rien ne change</b>"]],
     [42 * mm, 123 * mm]))
-F.append(P("⚠️ <b>Et une mutation avait d'abord un ancrage INVALIDE</b> : " + C % 'const s = src || {};'
+F.append(P("/!\ <b>Et une mutation avait d'abord un ancrage INVALIDE</b> : " + C % 'const s = src || {};'
            + " existe <b>6 fois</b> dans le fichier &mdash; elle frappait un autre proprietaire. "
            "<i>Plus on extrait de proprietaires, plus les motifs se ressemblent d'une fonction a "
            "l'autre</i>, et une mutation mal placee est indiscernable d'un temoin aveugle. Reancree "
@@ -462,9 +471,9 @@ F.append(tableau(
     ["", ""],
     [["Sous-etapes restantes avant le hub", "<b>%d</b> &mdash; sur %d au plan, %d livrees, %d "
       "ecartee : " % (RESTANTES, TOTAL_SE, LIVREES, ECARTEES) + C % '1b-v' + " seule"],
-     ["Dependance de " + C % '1b-v', "✅ <b>levee</b> &mdash; elle attendait 3-v, qui est livree. "
+     ["Dependance de " + C % '1b-v', "OUI <b>levee</b> &mdash; elle attendait 3-v, qui est livree. "
       "Mais son perimetre ecrit est faux (voir §6) : <b>a recompter le jour meme</b>"],
-     ["Defaut reel decouvert ?", "⭐ <b>oui</b> &mdash; le garde qui ne peut jamais bloquer. "
+     ["Defaut reel decouvert ?", "* <b>oui</b> &mdash; le garde qui ne peut jamais bloquer. "
       "<b>Mesure, cause documentee, NON corrige</b>, en attente d'un feu vert separe"],
      ["Le hub et la douane", "apres 1b et 3, consigne inchangee"],
      ["Favoris entre onglets, ecart 48,3 / 48", "ouverts, non corriges"],
