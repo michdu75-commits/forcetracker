@@ -159,13 +159,51 @@ fichier et **lit le CSV produit** (échappement de la virgule, BOM, provenance, 
 miroir de 3-i, où l'étiquette annonçait « couvert » pour une sonde qui ne couvrait rien.*
 👉 **Dans les deux sens, l'étiquette ne remplace pas l'ouverture du fichier.**
 
-### 1b-v — l'hydratation des écrans
+### 1b-v — l'hydratation des écrans ⛔ **ÉCARTÉE (13/09/2026) — IL N'Y A PLUS RIEN À EXTRAIRE**
 
-| | |
-|---|---|
-| **Périmètre** | poser `_afPortionLabel` / `_afPortionPoids` / `_efPortion*` depuis une ligne reprise |
-| **Sites** | `quickFillFood` (@2842) · `_afSuggPrendreLocale` (@3996) · `openEditFood` (@4186) · `_afSetUnite` (@4941) |
-| **Dépendance** | ⛔ **après 3-v** — les deux moitiés sont entrelacées ligne à ligne |
+> ⚠️ **Elle reste écrite ici AVEC SA RAISON, elle ne disparaît pas** (**R30**) : un site non
+> propriétarisé ressemble trait pour trait à un oubli, et le suivant « réparerait » une décision.
+> C'est le cas vécu du calculateur de plaques. **Un bloc de témoins (CCCI) fige l'écartement.**
+
+**⭐ LE BALAYAGE COMPLET, refait le jour même dans le code servi** — les **12 écritures** des quatre
+variables de portion, classées par **métier** et non par ressemblance :
+
+| métier | sites | état |
+|---|---|---|
+| **hydratation depuis une SOURCE** | `_afReprendreDefPortion` (+ ses 2 appelants) · **`openEditFood`** | le 1ᵉʳ est le propriétaire livré par 3-v ; le 2ᵉ est **seul de sa forme** |
+| **saisie à l'ÉCRAN** | puce · nom · poids, **× 2 écrans** = 5 sites | *autre métier* — la personne tape, rien n'est repris |
+| **déclaration / remise à plat** | 3 sites | — |
+
+👉 **Il ne reste qu'UN site d'hydratation non propriétarisé, et il écrit d'AUTRES variables.**
+**Test d'entrée : 1 copie** → *on ne crée pas de propriétaire pour une forme unique* (**R19**),
+exactement comme 1b-iv.
+
+**⛔⛔ ET DEUX MESURES INTERDISENT DE LE FONDRE AVEC LE PROPRIÉTAIRE `_af` :**
+
+1. **Les deux formes ne sont pas strictement identiques** — `(+X.portionWeightG>0)?` contre
+   `+X.portionWeightG>0?`. Sémantiquement pareil, **textuellement différent** : la consigne dit
+   *« n'extrais que ce qui est strictement identique »*.
+2. ⭐⭐ **Et surtout, elles n'ont pas le même garde** : l'écran d'**ajout** refuse si
+   `u !== 'portion'` ; l'écran d'**édition** hydrate **sans aucun garde d'unité**.
+
+**⭐⭐ CETTE DIVERGENCE A ÉTÉ MESURÉE BOUT EN BOUT, ET ELLE EST JUSTIFIÉE** — c'est le fait qui
+décide de la sous-étape. Sur **la même ligne**, enregistrée **en grammes** mais portant une
+étiquette de portion (état réel : `_provFood` recopie `portionLabel` sans condition d'unité) :
+
+| écran | définition reprise ? | son unité à l'ouverture |
+|---|---|---|
+| **ÉDITION** | ✅ `part` / 120 g | **`portion`, toujours** (forcé à chaque ouverture) |
+| **AJOUT** | ⛔ vide / 0 | **`g`** — il suit l'unité de la source |
+
+👉 ***Les deux gardes diffèrent parce que les deux écrans ne partent pas du même état.*** L'écran
+d'édition est **toujours** en mode portions, donc une définition de portion y a **toujours** du
+sens ; l'écran d'ajout, lui, suit la source. **Ce n'est pas une incohérence : c'est la même
+intention appliquée à deux états différents.** Les fondre serait précisément l'erreur que ce
+chantier évite partout ailleurs — *ce qu'on factorise est l'INTENTION, jamais la ressemblance*.
+
+⚠️ **Le témoin ⑨ du bloc CCCI fige la RAISON, pas seulement le fait** : il vérifie que l'écran
+d'édition force encore son unité à « portion » à l'ouverture. **Le jour où ce fait tombera, la
+divergence redeviendra un vrai défaut à réexaminer** — et un rouge le dira.
 
 ---
 
@@ -202,19 +240,71 @@ réintégrées à l'inventaire. **16 décisions** sur l'unité au total.
 - **Sites** : `quickFillFood` (@2777) · `_afSuggPrendreLocale` (@3924) — **2, identiques**
 - **Instantané** : ⚠️ à étendre (la pastille n'est pas sondée)
 
-### 3-iii — l'ouverture du bloc code-barres
-- **Sites** : `quickFillFood` (@2828) · `_afSuggPrendreLocale` (@3980) — **2, identiques**
-- ⛔ **Attention** : le garde `!_bcNutr` fait partie du motif et **n'est pas** la règle de quantité.
-  Il ne part pas avec.
+### 3-iii — l'ouverture du bloc « poids repris en grammes » ✅ **LIVRÉE (ft-v1201)**
+- **Sites** : `quickFillFood` · `_afSuggPrendreLocale` — **2, mesurés identiques**
+- ⭐ **Et le test d'entrée portait sur LES DEUX MOITIÉS** : la **condition** *et* le **corps de
+  3 lignes** (`_afUnite='g'` · `_afPoidsDeclare=+X.q` · `_afQtyNom=_afNomCourant()`) sont
+  strictement identiques, au nom de variable près. **2 copies de chaque** → `_afReprendreGrammes(src)`.
+- ⭐⭐ **C'est la sous-étape qui tient la promesse de 3-ii** : `_qGrammes` rend un NOMBRE, donc la
+  condition s'écrit `_qGrammes(src) > 0` **sans réécrire la règle une 3ᵉ fois**.
+- ⛔ **Le garde `!_bcNutr` n'est PAS parti avec**, comme annoncé : il dit *« aucun pour-100 g n'est
+  posé »* — une question sur l'**état de l'écran**, pas sur la quantité de la ligne. L'absorber
+  ferait deux extractions en une **et** rendrait le propriétaire dépendant d'une globale que ses
+  appelants contrôlent. Un témoin de source l'interdit ; la mutation qui l'y met rougit.
+- ⚠️ **Mesure qui a décidé des fixtures, et qui n'était pas dans le plan** : les blocs de **3-ii et
+  3-iii sont MUTUELLEMENT EXCLUSIFS** sur la même entrée — `_bcNutr` est posé par le bloc du
+  pour-100 g, donc celui-ci ne s'exécute **que lorsque l'autre ne s'est pas exécuté**. Des fixtures
+  recopiées de 3-ii n'auraient **jamais** franchi le garde, et les six cas auraient rendu la même
+  valeur (le piège de ft-v1199, évité parce qu'on l'a cherché d'avance).
 
-### 3-iv — `_provFood` : les deux branches d'écriture
-- **Sites** : @1232 (grammes) · @1237 (portions) — **le seul endroit qui ÉCRIT `p.q`/`p.u`**
-- ⛔ **À faire EN DERNIER** des formes : tout le reste *lit*, celui-ci *décide*. Une erreur ici se
-  retrouve dans les lignes enregistrées.
+### 3-iv — `_provFood` : la liste blanche de la provenance — ✅ **LIVRÉE (ft-v1202)**
+- **Ce que ce paragraphe annonçait** : *« Sites : @1232 (grammes) · @1237 (portions) — le seul
+  endroit qui ÉCRIT `p.q`/`p.u` »*.
+- ⛔⛔ **FAUX SUR LES DEUX POINTS — et c'est la 4ᵉ sous-étape d'affilée dont le périmètre écrit ici
+  ne résiste pas à la mesure.**
 
-### 3-v — la reprise des portions à l'écran
-- **Sites** : `quickFillFood` (@2842-2843) · `_afSuggPrendreLocale` (@3996-3997) — **2 × 2 lignes identiques**
-- **Dépendance** : ⛔ **avant 1b-v**
+| ce que le plan disait | ce que la **mesure** dit |
+|---|---|
+| « les **deux** branches @1232/@1237 » | **1 copie de CHAQUE forme.** Elles se ressemblent, elles ne disent pas la même chose : l'une teste les grammes et écrit `u:'g'`, l'autre teste les portions et écrit `u:'portion'` |
+| « le **SEUL** endroit qui écrit `p.q`/`p.u` » | **5 écritures** : @1232 · @1237 · @1300 (code-barres) · @1320 (poids déclaré) · @1355 (portions à l'écran) |
+
+- ⭐ Les 3 écritures supplémentaires lisent l'**état de l'écran**, pas `_afSrc` — ce ne sont pas
+  des copies non plus, et elles ne bougent pas. Un témoin fige que leur compte reste à **5**.
+- ⭐⭐ **3-iv se réduit donc à BRANCHER la dernière copie écrite sur `_qGrammes`**, qui avait déjà
+  3 appelants. ***Le test d'entrée protège contre la CRÉATION d'un propriétaire pour une forme
+  unique ; il n'interdit pas d'ajouter un appelant à un propriétaire qui existe*** (R19) — sans
+  quoi la dernière copie de la règle resterait écrite en dur pour toujours.
+- ⛔ **La branche PORTIONS ne bouge pas** : 1 écriture, aucun propriétaire existant. *On ne crée
+  pas de propriétaire pour une forme unique* — c'est la règle qui a fait écarter 1b-iv.
+- ⛔ **Le garde `if(_afSrc)` reste chez l'appelant** : il dit *« une source existe »*, un état de
+  l'écran — pas *« cette quantité est-elle des grammes »*. Le métier du propriétaire s'arrête à la
+  quantité. Deux témoins le figent (un de comportement, un de source).
+- ⭐⭐ **Et la mutation n°2 est la démonstration de la consigne de Michel** : la règle **réécrite
+  sur place** au lieu d'appeler le propriétaire rend **5 rouges, TOUS sur des témoins de SOURCE** —
+  chaque témoin de comportement reste vert, parce qu'une règle réécrite dit exactement la même
+  chose à l'exécution. ***Une dérive de conception peut être invisible à l'exécution***, et c'est
+  précisément ce qu'un témoin de source achète.
+
+### 3-v — la définition de portion reprise d'une source — ✅ **LIVRÉE (ft-v1203)**
+- ⭐ **Et pour la première fois depuis quatre sous-étapes, le plan disait VRAI sur la moitié qu'il
+  décrivait** : `quickFillFood` et `_afSuggPrendreLocale` portaient
+  `if(X.u==='portion'){ _afPortionLabel=…; _afPortionPoids=… }` **strictement identiques** —
+  **exactement 2 copies** → **`_afReprendreDefPortion(src)`**.
+- ⛔⛔ **MAIS L'AUTRE MOITIÉ ÉTAIT DÉJÀ FAITE, et le plan ne le savait pas** : le **NOMBRE** de
+  portions a **déjà son propriétaire**, `_afReprendrePortions(n)`, et **les deux portes y sont
+  branchées depuis ft-v1183/1186**. *La consigne « si un propriétaire existe déjà, branche
+  l'appelant dessus au lieu de recréer une abstraction » était honorée avant même de commencer.*
+- ⛔⛔ **Le point de conception est une ASYMÉTRIE DE CONDITION** : la ligne de la définition n'a
+  **aucun** garde ; celle du nombre, juste en dessous, porte **`!_bcNutr`**. Les fondre sous un seul
+  garde changerait le comportement.
+- ⚠️⚠️ **ET LA MESURE VA PLUS LOIN QUE LA CONSIGNE : cette asymétrie est INATTEIGNABLE.** Le bloc qui
+  pose `_bcNutr` se garde lui-même par `u!=='portion'`, et `quickFillFood` remet `_bcNutr=null` en
+  entrant — donc **le `!_bcNutr` de la ligne voisine ne peut jamais bloquer**. Mesuré à la sonde sur
+  les 6 cas. 👉 *Aucun témoin de comportement ne peut protéger cette frontière : non plus « invisible
+  à l'exécution » mais **hors d'atteinte**.* Écrit dans `docs/JOURNAL-DE-TEST.md`, **non corrigé**.
+- ⛔ **Hors périmètre, figé par témoins** : la ligne du nombre (2 copies chez les appelants) ·
+  `_afReprendrePortions` · les **jumelles `_ef*`** de l'écran d'édition (même grandeur, **autre
+  écran**, séparation documentée le 10/09 — les fondre serait une refonte).
 
 ---
 
@@ -240,24 +330,32 @@ qu'on découvre trois versions plus tard.
 ## 4️⃣ ORDRE PROPOSÉ, ET CE QUI BLOQUE QUOI
 
 ```
-1b-i  ✅ livrée (ft-v1195)
-  │
-  ├─ 3-i   ✅ livrée (ft-v1196)
-  │
-  ├─ 1b-iv    ⛔ ÉCARTÉE — rien à extraire (une seule copie). Raison écrite ci-dessus.
-  │
-  ├─ 1b-ii  ✅ livrée (ft-v1197)
-  │
-  └─ suite ──┬─ 3-ii     ┐
-             ├─ 1b-iii ✅ livrée (ft-v1198)
-             ├─ 3-iii    │  les 4 sous-étapes de la PAIRE
-             ├─ 3-v ─────┤  quickFillFood / _afSuggPrendreLocale
-             └─ 1b-v ────┘
-                  │
-                  └─ 3-iv   (en dernier : le seul qui ÉCRIT)
-                       │
-                       └─ hub (étape 4) ─ douane (étape 5)
+1b-i    ✅ livrée (ft-v1195)   la quantité reprise
+1b-ii   ✅ livrée (ft-v1197)   la provenance reprise
+1b-iii  ✅ livrée (ft-v1198)   l'item de liste
+1b-iv   ⛔ ÉCARTÉE            rien à extraire — 1 copie. Raison écrite ci-dessus.
+1b-v    ⛔ ÉCARTÉE            rien à extraire — 1 copie, et les formes NE DOIVENT PAS
+                              converger (deux écrans, deux états de départ).
+
+3-i     ✅ livrée (ft-v1196)   « cette quantité est-elle reprenable ? »
+3-ii    ✅ livrée (ft-v1199)   la pastille « ta dernière quantité »
+3-iii   ✅ livrée (ft-v1201)   le bloc « poids repris en grammes »
+3-iv    ✅ livrée (ft-v1202)   la liste blanche — le seul site qui ÉCRIT
+3-v     ✅ livrée (ft-v1203)   la définition de portion
+
+        ══════════════════════════════════════════════════════
+         1b ET 3 SONT TERMINÉES : 8 livrées · 2 écartées · 0 restante
+        ══════════════════════════════════════════════════════
+                          │
+                          └─ hub (étape 4) ─ douane (étape 5)
 ```
+
+⭐ **Bilan du découpage, mesuré** : sur **10** sous-étapes décrites le 12/09, **2 étaient vides**
+(1b-iv, 1b-v) et **5 périmètres écrits sur 8 vérifiés étaient faux** — jamais deux fois de la même
+façon. *Un document de plan ordonne le travail ; il n'est jamais une source pour un chiffre.*
+👉 **Et les deux sous-étapes vides ont été trouvées par le même geste** : compter les copies **avant**
+d'écrire une ligne. Sans ce test d'entrée, on aurait créé **deux propriétaires à un seul appelant** —
+de la complexité sans contrepartie (**R19**).
 
 ⛔ **Le hub et la douane restent après** — consigne explicite de Michel, inchangée.
 

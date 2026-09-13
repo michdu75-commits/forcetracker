@@ -4,10 +4,33 @@
 > questions ou les discussions que l'on peut avoir, on remplit ce fichier, 1 semaine, 1 mois et un jour
 > on aura plus questions »*.
 
-### 🟡 La pastille « ↩ … g (la dernière fois) » SURVIT à l'aliment suivant *(mesuré 12/09/2026, ft-v1199)*
+### 🟢 La pastille « ↩ … g (la dernière fois) » SURVIVAIT à l'aliment suivant *(mesuré 12/09/2026 en ft-v1199 — **CORRIGÉ en ft-v1200**)*
 
-**État : 🟡 à trier — MESURÉ, NON CORRIGÉ** (trouvé en étendant la sonde pour 3-ii ; hors périmètre
-d'une sous-étape d'extraction, qui ne change aucun comportement).
+**État : 🟢 promue → correctif livré (ft-v1200), figé par 11 témoins de navigateur + 4 de source
+(bloc CCXCVII).** ⭐ **Et le chemin compte autant que le correctif** : le défaut a été **mesuré,
+puis écrit ICI sans être corrigé**, parce qu'il a été trouvé pendant une sous-étape d'extraction —
+laquelle ne change **aucun** comportement, et dont le critère est un instantané identique octet
+pour octet. Il a donc attendu **son propre feu vert**, donné par Michel le lendemain :
+*« je te donne le feu vert pour corriger uniquement ce défaut, dans un correctif séparé du chantier
+d'extraction »*. 👉 ***C'est exactement ce que ce fichier existe pour permettre*** — sans lui, le
+défaut avait deux issues et une seule était bon marché : être corrigé au passage (donc casser le
+critère de la sous-étape), ou disparaître avec la session (**R27**).
+
+**⛔ Ce que le correctif a coûté, et qui n'était pas prévu** : `garderPaquet` ne devait **pas** le
+conditionner. Les deux drapeaux se ressemblent et ne nomment pas la même chose — le paquet
+appartient au produit qu'on **poursuit** (`_bcSansValeurs`, `_calAppliquer` travaillent sur le
+produit *scanné*), la pastille « la dernière fois » ne peut venir que d'une **reprise antérieure**.
+*Recopier le drapeau aurait reproduit le bug sur les deux portes qu'on croyait protéger.*
+⚠️ **Et un témoin à moi était aveugle** : il comptait la ligne de **commentaire** qui cite
+`_bcProposerDerniere(0)`, donc il restait vert avec le correctif retiré. Trahi par un **écart d'un
+seul rouge** entre la mutation et le code d'origine — *un total qu'on explique au lieu de
+l'accepter*. C'est la famille de ft-v1193, reposée dans le témoin qui protège le correctif la
+documentant.
+
+---
+
+**Le relevé d'origine, gardé tel quel** (il dit ce qui a été mesuré avant qu'on ait le droit d'y
+toucher) :
 
 **Ce qui est mesuré**, à la sonde, dans un navigateur :
 
@@ -42,6 +65,12 @@ l'appel manquant **changerait ce que l'écran affiche** — c'est un correctif, 
 ⏭️ **Le correctif tiendrait en une ligne** dans `_afOublierAliment`, à côté de celui du paquet :
 `try{ _bcProposerDerniere(0); }catch(e){}`. **Un témoin devra figer les deux moitiés**, comme
 pour le paquet en ft-v1193.
+
+**✅ SUITE (ft-v1200) — la ligne prévue était la bonne, la CONDITION ne l'était pas.** Le correctif
+livré est bien cette ligne, chez le propriétaire, donc sur les 12 portes d'un coup (**R2**) — ⚠️ *et ce chiffre a été RECOMPTÉ : le code dit « 13 » à 3 endroits depuis ft-v1193, c'est faux, il y en a 12 depuis toujours (vérifié sur l'historique). Les commentaires du code partiront à la prochaine version.*. ⚠️ Mais
+la note ci-dessus disait *« à côté de celui du paquet »* — et la mettre **sous le même drapeau**
+(`garderPaquet`) aurait reproduit le défaut sur `_bcSansValeurs` et `_calAppliquer`. *Une ligne
+juste posée sous la mauvaise condition reste un bug*, et c'est la mutation qui l'a montré.
 
 ---
 
@@ -2846,3 +2875,50 @@ partira d'un échauffement, **en silence**.
 **⛔ Rien n'est corrigé** : Michel n'a pas demandé de toucher à ces écrans, et le correctif de C
 touche le **calcul des records** — l'objet le plus sensible de l'app après les séances elles-mêmes
 (**R29** : le coût d'une erreur décide). *On mesure, on écrit, il tranche.*
+## 🍽️ Le garde `!_bcNutr` de la ligne « nombre de portions » ne peut JAMAIS bloquer *(13/09/2026, trouvé pendant 3-v — mesuré, NON corrigé)*
+
+**État : 🟡 à trier — attend un feu vert séparé de Michel.**
+
+**Ce que c'est.** Les deux portes de reprise (`quickFillFood`, `_afSuggPrendreLocale`) portent deux
+lignes adjacentes qui se ressemblent beaucoup :
+
+```js
+_afReprendreDefPortion(it);                                  // la DÉFINITION — aucun garde
+if(!_bcNutr && +it.q>0 && it.u==='portion' && …) _afReprendrePortions(+it.q);   // le NOMBRE
+```
+
+À la lecture, elles ont **des conditions différentes** : la définition se reprend toujours, le
+nombre seulement si aucun pour-100 g n'est posé. **Mesuré le 13/09 : cette différence est
+inatteignable.**
+
+**La chaîne, mesurée ligne à ligne :**
+1. `quickFillFood` commence par `_afOublierAliment()`, qui fait `_bcNutr=null` ;
+2. le seul endroit qui pose `_bcNutr` dans cette fonction est gardé par **`it.u!=='portion'`** ;
+3. la branche `else` remet `_bcNutr=null` ;
+4. donc si `it.u==='portion'`, **`_bcNutr` vaut toujours `null`** quand la ligne 2 s'exécute.
+
+👉 **Le `!_bcNutr` de la ligne du NOMBRE est un garde qui ne peut pas être faux.** Vérifié à la
+sonde, sur les 6 cas de `3v_defportion_*` : `bcNutr: false` partout, **y compris sur la fixture qui
+porte un `per100`** — celle qui était précisément conçue pour le poser.
+
+**⛔ Ce n'est PAS un bug de comportement** : l'app fait exactement ce qu'il faut. C'est une
+**condition redondante**, et elle coûte deux choses :
+- elle fait **croire** à un lecteur que les deux lignes diffèrent, alors qu'elles ne peuvent pas —
+  donc quelqu'un pourrait les « harmoniser » en se croyant prudent ;
+- et surtout, elle est **la seule chose qui protège** le jour où quelqu'un retirerait le
+  `u!=='portion'` du bloc du pour-100 g. *Un garde inutile aujourd'hui peut être le seul garde
+  demain — c'est pour ça qu'on ne le retire pas à la légère.*
+
+**⛔ NON CORRIGÉ, et c'est la méthode** : 3-v est une extraction, elle ne change **aucun**
+comportement, et son critère est un instantané identique octet pour octet. Toucher à ce garde —
+dans un sens ou dans l'autre — changerait ce que le code dit de lui-même. **Attend un feu vert
+séparé**, comme la pastille de ft-v1199 → ft-v1200.
+
+**⭐ Et c'est la consigne de Michel poussée d'un cran.** Il a écrit : *« conserve les témoins de
+source lorsque la dérive serait invisible à l'exécution »*. Ici la dérive n'est pas seulement
+invisible — elle est **hors d'atteinte** : aucune fixture ne peut faire rougir un témoin de
+comportement sur cette frontière. Les témoins ⑭ et ⑯ du bloc CCC sont donc **les seuls possibles**,
+et le mesurer vaut mieux que l'affirmer.
+
+⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
+Écrit ici pour ne pas disparaître avec la session (**R27**).

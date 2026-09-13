@@ -352,6 +352,200 @@ const snap=await p.evaluate(async()=>{
   });
   out['3ii_pastille_afSuggPrendreLocale']=J(pastLocale);
 
+  /* ══ 3-iii — LE BLOC « POIDS REPRIS EN GRAMMES » ══════════════════════════════════════════
+     ⚠️⚠️ LA SONDE CONDUISAIT DEJA CES DEUX PORTES, MAIS NE LES OBSERVAIT PAS SUR CE POINT.
+     Les cles `1bii_*` lisent `_afSrc`, les cles `3ii_*` lisent la pastille — AUCUNE ne lit
+     `_afUnite` / `_afPoidsDeclare` / `_afQtyNom`, qui est exactement ce que 3-iii deplace.
+     L'instantane serait donc reste identique quoi qu'on fasse a ce bloc.
+     *Conduire n'est pas observer* — la lecon de ft-v1199, cherchee cette fois AVANT le BEFORE.
+
+     ⛔⛔ ET LES CAS SONT L'INVERSE DE CEUX DE 3-ii, CE N'EST PAS UN DETAIL : le bloc de 3-iii
+     est garde par `!_bcNutr`, et `_bcNutr` est pose par le bloc de 3-ii lui-meme (celui du
+     pour-100 g). Les deux sites sont donc MUTUELLEMENT EXCLUSIFS sur la meme entree : pour
+     atteindre 3-iii il faut un aliment SANS pour-100 g. Des fixtures recopiees de 3-ii
+     n'auraient jamais franchi le garde — et les six cas auraient rendu la meme valeur. */
+  const CAS_G = [
+    {name:'G grammes',    kcal:100, prot:1, carbs:2, fat:3, q:150, u:'g'},
+    {name:'G sans unite', kcal:100, prot:1, carbs:2, fat:3, q:80},
+    {name:'G portions',   kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion', portionLabel:'part', portionWeightG:120},
+    {name:'G zero',       kcal:100, prot:1, carbs:2, fat:3, q:0, u:'g'},
+    {name:'G negatif',    kcal:100, prot:1, carbs:2, fat:3, q:-5, u:'g'},
+    {name:'G millilitres',kcal:100, prot:1, carbs:2, fat:3, q:250, u:'ml'},
+    /* ⭐ LE CAS DE PERIMETRE : grammes valides MAIS un pour-100 g present. Le garde `!_bcNutr`
+       doit bloquer. C'est lui qui fige que le garde N'EST PAS la regle de quantite et ne part
+       pas avec elle. */
+    {name:'G grammes AVEC pour-100g', kcal:100, prot:1, carbs:2, fat:3, q:150, u:'g',
+     per100:{kcal:66.7, prot:0.7, carbs:1.3, fat:2}},
+  ];
+  const lireTrio = () => {
+    const u  = (typeof _afUnite!=='undefined') ? _afUnite : 'ABSENT';
+    const pd = (typeof _afPoidsDeclare!=='undefined') ? _afPoidsDeclare : 'ABSENT';
+    const nm = (typeof _afQtyNom!=='undefined') ? _afQtyNom : 'ABSENT';
+    return {unite:u, poids:pd, nom:nm};
+  };
+  /* ⛔ On remet le trio a plat AVANT chaque cas, par la VRAIE fonction de production
+     (`_afResetUnite`), sinon le cas « portions » lirait le reliquat du cas precedent —
+     le piege exact paye en ft-v1199. */
+  const remettreAPlat = () => { try{ _afResetUnite(); }catch(e){} };
+
+  const gQuickFill=[];
+  CAS_G.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      gQuickFill.push([cs.name, J(lireTrio())]);
+    }catch(e){ gQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3iii_poids_quickFillFood']=J(gQuickFill);
+
+  const gLocale=[];
+  CAS_G.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      gLocale.push([cs.name, J(lireTrio())]);
+    }catch(e){ gLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3iii_poids_afSuggPrendreLocale']=J(gLocale);
+
+  /* ══ 3-v — LA DEFINITION DE PORTION REPRISE D'UNE SOURCE ═══════════════════════════════════
+     ⚠️⚠️ AUCUNE DES 19 CLES NE LISAIT `_afPortionLabel` / `_afPortionPoids`. La sonde les POSE
+     bien en fixture (lignes 95/116/123), mais poser n'est pas lire : apres avoir conduit une
+     porte, rien ne les relisait. L'instantane serait donc reste identique quoi qu'on fasse a
+     la ligne visee — et il aurait valide n'importe quelle extraction.
+     *Conduire n'est pas observer, et POSER encore moins* — la lecon de ft-v1199, cherchee
+     d'avance pour la troisieme fois.
+
+     ⛔⛔ ET LE CAS QUI COMPTE LE PLUS EST CELUI AVEC UN POUR-100 g. La ligne de la DEFINITION
+     n'est PAS gardee par `!_bcNutr` ; celle du NOMBRE de portions, juste en dessous, l'est.
+     Les deux se ressemblent, sont adjacentes, et n'ont pas la meme condition : fondre l'une
+     dans l'autre changerait le comportement. Ce cas-la est le seul qui puisse le montrer. */
+  const CAS_P = [
+    {name:'P portion complete', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'part', portionWeightG:120},
+    {name:'P portion sans poids', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'bol'},
+    {name:'P portion sans nom', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionWeightG:90},
+    /* ⛔ Le garde d'unite : en grammes, la definition ne doit PAS etre reprise. */
+    {name:'P en grammes', kcal:100, prot:1, carbs:2, fat:3, q:150, u:'g',
+     portionLabel:'jamais', portionWeightG:999},
+    /* ⛔ Un poids de portion aberrant ou nul ne passe pas a 0 par hasard : on fige la regle. */
+    {name:'P poids nul', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'part', portionWeightG:0},
+    /* ⭐⭐ LE CAS DE PERIMETRE — l'asymetrie de condition, et rien d'autre ne peut la mesurer :
+       un pour-100 g est present, donc `_bcNutr` est pose, donc la ligne du NOMBRE est sautee.
+       La DEFINITION, elle, doit quand meme etre reprise. */
+    {name:'P portion AVEC pour-100g', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'pot', portionWeightG:150,
+     per100:{kcal:66.7, prot:0.7, carbs:1.3, fat:2}},
+  ];
+  /* ⚠️⚠️ `bcNutr` EST LU, ET CE N'EST PAS DECORATIF. Ma 1re version supposait qu'un `per100`
+     suffisait a poser `_bcNutr` — c'est vrai pour un aliment en GRAMMES (cas de 3-iii), FAUX
+     pour un aliment en PORTIONS : le bloc du pour-100 g porte `it.u!=='portion'` dans son propre
+     garde, donc il se saute lui-meme. La sonde DIT donc l'etat au lieu de le supposer. */
+  const lireDef = () => ({
+    label: (typeof _afPortionLabel!=='undefined') ? _afPortionLabel : 'ABSENT',
+    poids: (typeof _afPortionPoids!=='undefined') ? _afPortionPoids : 'ABSENT',
+    portions: (typeof _afPortions!=='undefined') ? _afPortions : 'ABSENT',
+    bcNutr: !!(typeof _bcNutr!=='undefined' && _bcNutr),
+  });
+
+  const pQuickFill=[];
+  CAS_P.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      pQuickFill.push([cs.name, J(lireDef())]);
+    }catch(e){ pQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3v_defportion_quickFillFood']=J(pQuickFill);
+
+  const pLocale=[];
+  CAS_P.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      pLocale.push([cs.name, J(lireDef())]);
+    }catch(e){ pLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3v_defportion_afSuggPrendreLocale']=J(pLocale);
+
+  /* ══ 1b-v — L'HYDRATATION DE L'ECRAN D'EDITION, ET LA DIVERGENCE DE GARDE ══════════════════
+     ⚠️⚠️ AUCUNE DES 21 CLES N'OBSERVAIT UNE SEULE VARIABLE `_ef*`. La sonde conduit bien
+     `openEditFood` depuis l'etape 2 (cle `2c_edition_portion`), mais elle n'y lit que la LIGNE
+     ENREGISTREE — jamais l'etat de l'ecran d'edition. *Conduire n'est pas observer.*
+
+     ⛔⛔ CE QU'ON MESURE ICI N'EST PAS UNE EXTRACTION, C'EST UNE DIVERGENCE. Les deux ecrans
+     hydratent la meme grandeur depuis une ligne reprise, et ils n'ont PAS le meme garde :
+       · ecran d'AJOUT    : `_afReprendreDefPortion` REFUSE si `u !== 'portion'` ;
+       · ecran d'EDITION  : `openEditFood` hydrate SANS AUCUN garde d'unite.
+     Une ligne enregistree EN GRAMMES qui porte quand meme un `portionLabel` (c'est possible :
+     `_provFood` recopie l'etiquette sans condition d'unite) est donc traitee differemment par
+     les deux ecrans. On le MESURE au lieu de le deduire — puis on l'ecrit sans le corriger. */
+  const CAS_EF = [
+    {nom:'EF portion complete', q:2,   u:'portion', portionLabel:'part', portionWeightG:120},
+    {nom:'EF portion sans poids', q:2, u:'portion', portionLabel:'bol'},
+    /* ⭐⭐ LE CAS QUI PORTE TOUT : en GRAMMES, mais l'etiquette de portion est la. */
+    {nom:'EF grammes AVEC etiquette', q:150, u:'g', portionLabel:'part', portionWeightG:120},
+    {nom:'EF grammes nu', q:150, u:'g'},
+  ];
+  const efHydrate=[];
+  CAS_EF.forEach((cs,i)=>{
+    try{
+      const ts=7000+i;
+      S.foodLog=[Object.assign({date:_journalJourActif?_journalJourActif():'2026-09-01',
+                                meal:'midi', ts:ts, name:cs.nom,
+                                kcal:100, prot:1, carbs:2, fat:3}, cs)];
+      delete S.foodLog[0].nom;
+      persist();
+      /* ⛔ On remet l'etat de l'ecran d'edition a une valeur TEMOIN avant chaque cas : sans ca
+         un cas lirait le reliquat du precedent et la sonde serait verte sur un reliquat
+         (le piege paye en ft-v1199). `openEditFood` remet `_efUnite` et consorts elle-meme,
+         mais PAS `_efPortionLabel`/`_efPortionPoids` — justement ce qu'on mesure. */
+      _efPortionLabel='ZZZ'; _efPortionPoids=-1;
+      openEditFood(ts);
+      efHydrate.push([cs.nom, J({label:_efPortionLabel, poids:_efPortionPoids,
+                                 unite:(typeof _efUnite!=='undefined')?_efUnite:'ABSENT'})]);
+    }catch(e){ efHydrate.push([cs.nom, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bv_hydratation_openEditFood']=J(efHydrate);
+
+  /* ⭐ ET LE MEME JEU DE CAS PASSE PAR L'ECRAN D'AJOUT : c'est la COMPARAISON qui fait la
+     mesure, pas la lecture d'un seul cote. Sans elle on affirmerait une divergence qu'on n'a
+     vue que d'un bout. */
+  const afHydrate=[];
+  CAS_EF.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[];
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afPortionLabel='ZZZ'; _afPortionPoids=-1;
+      _afQuickItems=[Object.assign({name:cs.nom, kcal:100, prot:1, carbs:2, fat:3, fav:false}, cs)];
+      delete _afQuickItems[0].nom;
+      quickFillFood(0);
+      afHydrate.push([cs.nom, J({label:_afPortionLabel, poids:_afPortionPoids,
+                                 unite:(typeof _afUnite!=='undefined')?_afUnite:'ABSENT'})]);
+    }catch(e){ afHydrate.push([cs.nom, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['1bv_hydratation_ecranAjout']=J(afHydrate);
+
   return out;
 });
 

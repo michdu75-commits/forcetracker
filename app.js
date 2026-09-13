@@ -1228,8 +1228,19 @@ function _provFood(vals){
        de savoir si 323 kcal valaient 100, 250 ou 300 g. C'est la forme des lignes « quantité
        vide » relevées dans l'export réel (steak haché, 24/08 · 25/08 · 28/08).
        ⛔ Uniquement en grammes, et seulement si la valeur est plausible : on transmet ce qu'on
-       sait, on ne complète pas ce qu'on ignore (R29). */
-    if(+_afSrc.q>0 && (!_afSrc.u || _afSrc.u==='g')){ p.q=+_afSrc.q; p.u='g'; }
+       sait, on ne complète pas ce qu'on ignore (R29).
+       ⚖️⭐ ft-v1202 (3-iv) — LA DERNIÈRE COPIE ÉCRITE DE LA RÈGLE « GRAMMES SEULS » REJOINT SON
+       PROPRIÉTAIRE `_qGrammes` (posé en ft-v1199). Ce n'est pas une extraction : il n'y a QU'UNE
+       copie de cette forme-ci, et on ne crée pas de propriétaire pour une forme unique (R19).
+       C'est un **branchement** — le propriétaire existe déjà et avait 3 appelants.
+       👉 Pourquoi ça vaut le coup quand même : la règle était écrite ici ET dans le propriétaire,
+       donc deux endroits pouvaient diverger. `_qGrammes` rend un NOMBRE exprès (ft-v1199) : la
+       condition s'écrit `>0` sans réécrire la règle, et la valeur est ce même nombre.
+       ⛔ ET LE GARDE `if(_afSrc)` RESTE DEHORS, EXPRÈS : il dit « une source existe », un état de
+       l'écran — pas « cette quantité est-elle des grammes ». Le métier du propriétaire s'arrête à
+       la quantité. */
+    const _gProv=_qGrammes(_afSrc);
+    if(_gProv>0){ p.q=_gProv; p.u='g'; }
     /* 🍽️ ft-v1183 — ET LA PORTION AUSSI. Mesuré : un ajout DIRECT (`quickAddFood`) d'une ligne
        notée « 2 portions » repartait en `q:null, u:null` — la quantité était dans `it`, la liste
        blanche la jetait parce qu'elle n'acceptait que les grammes. *Recopier une quantité connue
@@ -1678,6 +1689,64 @@ function _per100Derive(vals, masse){
 function _qGrammes(src){
   const s = src || {};
   return (+s.q > 0 && (!s.u || s.u === 'g')) ? +s.q : 0;
+}
+/* ⚖️ 3-iii (ft-v1201) — « CETTE LIGNE REPRISE POSE-T-ELLE SON POIDS SUR L'ÉCRAN ? »
+   Les deux portes de reprise (`quickFillFood` · `_afSuggPrendreLocale`) portaient la MÊME
+   condition ET le MÊME corps de trois lignes, au nom de variable près. Mesuré : exactement
+   2 copies de chaque.
+
+   ⭐ ET C'EST ICI QUE 3-ii TIENT SA PROMESSE : `_qGrammes` rend un NOMBRE, donc la condition
+   s'écrit `_qGrammes(src) > 0` sans réécrire la règle une troisième fois. *Un seul propriétaire
+   pour la règle, un second pour ce qu'on en fait.*
+
+   ⛔⛔ LE GARDE `!_bcNutr` N'EST PAS DEDANS, ET C'EST LE PÉRIMÈTRE DE LA SOUS-ÉTAPE.
+   Il dit *« aucun pour-100 g n'est posé »* — c'est une question sur l'ÉTAT DE L'ÉCRAN, pas sur
+   la quantité de la ligne. L'absorber ferait deux extractions en une, et surtout rendrait le
+   propriétaire dépendant d'une variable globale que ses appelants contrôlent. Il reste donc
+   écrit chez chacun, où il se lit. ⭐ Mesuré : les deux blocs sont MUTUELLEMENT EXCLUSIFS —
+   `_bcNutr` est posé par le bloc du pour-100 g juste au-dessus, donc celui-ci ne s'exécute que
+   lorsque l'autre ne s'est pas exécuté. Une sonde qui ignore ça ne franchit jamais le garde.
+
+   ⛔⛔ ET ON N'Y AJOUTE PAS `_afPoidsPose` — le commentaire vient de `_afSuggPrendreLocale`, il
+   DÉMÉNAGE ici avec le code qu'il explique. Essayé en ft-v1176, la mesure l'a refusé : il
+   rouvrait le bug après un aller-retour d'unité. Ce drapeau dit *« la personne a déclaré un
+   poids pour ce qui est AFFICHÉ »* ; un poids hérité d'une entrée enregistrée n'est pas cela.
+   **On ne touche pas à ce qui marche** (R30).
+
+   ⭐ Et ces deux lignes SONT le modèle : l'audit du 08/09 a mesuré que ce chemin rendait déjà
+   79 kcal pour 110 g là où `quickFillFood` en rendait 274 — c'est de là que vient ft-v1176. On
+   n'a rien inventé, on a porté ce qui était ici sur la porte jumelle (R8). */
+function _afReprendreGrammes(src){
+  const g = _qGrammes(src);
+  if(!(g > 0)) return false;
+  _afUnite = 'g'; _afPoidsDeclare = g;
+  _afQtyNom = _afNomCourant();   // 🏷️ ft-v1180 : cette quantité décrit CET aliment
+  return true;
+}
+/* 🍽️⚖️ ft-v1203 (3-v) — LA DÉFINITION DE PORTION REPRISE D'UNE SOURCE, UN SEUL PROPRIÉTAIRE.
+   Deux endroits la recopiaient caractère pour caractère (`quickFillFood` et
+   `_afSuggPrendreLocale`, les deux portes de reprise — R8) : *« quelle portion, et combien
+   pèse-t-elle »*. Posée en ft-v1186 pour que l'étiquette ne se retape pas à chaque repas.
+   ⛔⛔ ELLE NE PREND PAS LE **NOMBRE** DE PORTIONS, ET CE N'EST PAS UN OUBLI : il a déjà son
+   propriétaire, `_afReprendrePortions(n)`, auquel les deux portes sont branchées depuis
+   ft-v1183/1186. *Quand un propriétaire existe, on lui ajoute un appelant — on n'en recrée pas
+   un deuxième qui dirait la même chose.*
+   ⛔⛔ ET ELLE N'EST PAS GARDÉE PAR `!_bcNutr`, contrairement à la ligne du NOMBRE juste en
+   dessous chez les appelants. Les deux lignes sont adjacentes, se ressemblent, et **n'ont pas
+   la même condition** : la définition se reprend même lorsqu'un pour-100 g est posé. Les fondre
+   sous un seul garde changerait le comportement.
+   ⚠️ MESURÉ LE 13/09 : cette asymétrie est aujourd'hui **INATTEIGNABLE** par ces deux portes —
+   le bloc qui pose `_bcNutr` porte `u!=='portion'` dans son propre garde, donc un aliment en
+   portions ne peut pas le poser. Le `!_bcNutr` de la ligne voisine ne peut donc jamais bloquer.
+   C'est écrit dans `docs/JOURNAL-DE-TEST.md` et **non corrigé ici** (une extraction ne change
+   aucun comportement). 👉 Conséquence : *aucun témoin de comportement ne peut protéger cette
+   frontière* — seul un témoin de SOURCE le peut, et c'est exactement pourquoi il existe. */
+function _afReprendreDefPortion(src){
+  const s = src || {};
+  if(s.u !== 'portion') return false;
+  _afPortionLabel = String(s.portionLabel || '').slice(0, 24);
+  _afPortionPoids = +s.portionWeightG > 0 ? +s.portionWeightG : 0;
+  return true;
 }
 
 function _qReprenable(src){
@@ -2947,10 +3016,7 @@ function quickFillFood(i){
      quantité, `_afRef.q` (380) ne correspond plus à ce qu'elle voit (79). Préserver cette base
      périmée, c'est réapparier des totaux à une autre quantité — la faute même du jour.
      *La différence avec ft-v1173 n'est pas le geste, c'est QUI a posé le poids.* */
-  if(!_bcNutr && +it.q>0 && (!it.u||it.u==='g')){
-    _afUnite='g'; _afPoidsDeclare=+it.q;
-    _afQtyNom=_afNomCourant();   // 🏷️ ft-v1180 : cette quantite decrit CET aliment
-  }
+  if(!_bcNutr) _afReprendreGrammes(it);
   /* Se tait tout seul si un pour-100 g existe (`if(_bcNutr) → cacher`) : R2, un seul réglage
      de quantité visible à la fois. */
   if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise d'un aliment : la source change
@@ -2961,7 +3027,7 @@ function quickFillFood(i){
      multiplicateur à 1. C'est lui la source de `base` — on divise ensuite, on n'anticipe pas. */
   /* 🏷️ ft-v1186 — LA DÉFINITION REVIENT AVEC LA QUANTITÉ, sinon l'étiquette se retaperait à
      chaque repas et le champ finirait vide (le sort de tout champ qu'on ne remplit plus). */
-  if(it.u==='portion'){ _afPortionLabel=String(it.portionLabel||'').slice(0,24); _afPortionPoids=+it.portionWeightG>0?+it.portionWeightG:0; }
+  _afReprendreDefPortion(it);
   if(!_bcNutr && +it.q>0 && it.u==='portion' && typeof _afReprendrePortions==='function') _afReprendrePortions(+it.q);
   if(typeof _afNoteEtat==='function') _afNoteEtat(it.name||'');
   toast('Pré-rempli — ajuste la quantité si besoin, puis « Ajouter au journal » ✅','info');
@@ -4107,23 +4173,12 @@ function _afSuggPrendreLocale(i){
      ⭐ R13 : rien n'est réinventé, on emprunte le mécanisme du poids déclaré (`_afPoidsDeclare`),
      et le libellé « que tu as indiqué » reste VRAI — elle l'a indiqué la fois d'avant.
      ⛔ Grammes seulement, et jamais par-dessus un pour-100 g (qui a déjà son propre champ). */
-  if(!_bcNutr && +e.q>0 && (!e.u||e.u==='g')){
-    /* ⭐ CES DEUX LIGNES SONT LE MODÈLE, et l'audit du 08/09 l'a confirmé en les mesurant : sur
-       une entrée sans pour-100 g, ce chemin-ci rendait déjà **79 kcal** pour 110 g là où
-       `quickFillFood` en rendait **274**. C'est de là que vient le correctif de ft-v1176 — on
-       n'a rien inventé, on a porté ce qui était ici sur la porte jumelle (R8).
-       ⛔⛔ ET ON N'Y AJOUTE PAS `_afPoidsPose` — j'ai essayé en ft-v1176, la mesure l'a refusé :
-       il rouvrait le bug après un aller-retour d'unité (voir le commentaire de `quickFillFood`).
-       Ce drapeau dit *« la personne a déclaré un poids pour ce qui est AFFICHÉ »* ; un poids
-       hérité d'une entrée enregistrée n'est pas cela. **On ne touche pas à ce qui marche** (R30). */
-    _afUnite='g'; _afPoidsDeclare=+e.q;
-    _afQtyNom=_afNomCourant();   // 🏷️ ft-v1180 : cette quantite decrit CET aliment
-  }
+  if(!_bcNutr) _afReprendreGrammes(e);
   if(typeof _afMajAncre==='function') _afMajAncre(true);   // reprise depuis le journal : la source change
   /* 🍽️ ft-v1183 — LA JUMELLE DE `quickFillFood` (R8). Les deux portes de reprise se corrigent
      ENSEMBLE : c'est la faute que ce fichier passe son temps à rattraper, six fois recensées. */
   /* 🏷️ ft-v1186 — la jumelle : les deux portes de reprise se corrigent ENSEMBLE (R8). */
-  if(e.u==='portion'){ _afPortionLabel=String(e.portionLabel||'').slice(0,24); _afPortionPoids=+e.portionWeightG>0?+e.portionWeightG:0; }
+  _afReprendreDefPortion(e);
   if(!_bcNutr && +e.q>0 && e.u==='portion' && typeof _afReprendrePortions==='function') _afReprendrePortions(+e.q);
   _afNoteEtat(e.name||'');
   _afSuggVider();
@@ -5230,6 +5285,34 @@ function _afOublierAliment(opts){
      ailleurs.* Un paramètre nommé, sur le propriétaire unique, dit la distinction UNE fois. */
   try{ if(!(opts && opts.garderPaquet)){ _bcPaquetG=0; _bcPaquetTxt='';
          if(typeof _bcProposerPaquet==='function') _bcProposerPaquet(); } }catch(e){}
+  /* ↩⛔⛔ ET LA PASTILLE « LA DERNIÈRE FOIS » MEURT AUSSI AVEC L'ALIMENT (12/09/2026).
+     C'était la JUMELLE EXACTE du poids de paquet juste au-dessus, restée ouverte le jour même
+     où on fermait sa sœur : ft-v1193 a donné à cette fonction le rendu de `_bcProposerPaquet`,
+     et pas celui de `_bcProposerDerniere`. ***R8, la porte jumelle, à l'intérieur même du
+     correctif censé fermer une fuite*** — le motif exact que ce fichier documente depuis
+     `_bcCategories` (ft-v1191).
+     ⛔ Mesuré à la sonde en ft-v1199, PUIS écrit dans `docs/JOURNAL-DE-TEST.md` sans être
+     corrigé, parce qu'une sous-étape d'extraction ne change aucun comportement : reprendre un
+     aliment à 150 g, puis en prendre un autre **en portions** sans fermer l'écran, laissait
+     « ↩ 150 g (la dernière fois) » affiché **sur le mauvais aliment**.
+     ⛔ Deux causes cumulées, les mêmes que pour le paquet : `_bcProposerDerniere(0)` n'était
+     appelée que par `openAddFood` (donc à l'OUVERTURE, jamais ENTRE deux aliments) et par le
+     hub `_offRemplirFormulaire` ; et le site qui la repose vit DANS un garde
+     (`if(P && it.u!=='portion' && …)` où `P = it.per100`), donc un aliment en portions ou sans
+     pour-100 g ne le franchit pas et ne touche à rien.
+
+     ⛔⛔ ELLE N'EST PAS SOUS `garderPaquet`, ET C'EST LE POINT DE CONCEPTION — les deux drapeaux
+     ne nomment pas la même chose. `garderPaquet` dit *« le poids vient du produit qu'on
+     POURSUIT »* : ses 2 appelants (`_bcSansValeurs`, `_calAppliquer`) travaillent sur le produit
+     SCANNÉ, dont le paquet vient de ce scan-là. Une pastille « la dernière fois », elle, ne peut
+     venir que d'une **reprise antérieure** (`quickFillFood` / `_afSuggPrendreLocale` sont les
+     deux seules à la poser) — donc sur ces portes-là c'est forcément un reliquat. *La mettre
+     sous le drapeau reproduirait le bug sur les deux portes qu'on croit protéger*, et un témoin
+     de source l'interdit.
+     ⭐ Et l'appel est sans danger pour ce qui est tapé : à `q<=0`, `_bcProposerDerniere` cache
+     seulement, elle ne touche pas au champ — c'est écrit dans son propre corps, et figé par un
+     témoin de périmètre. */
+  try{ if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0); }catch(e){}
   const bp=document.getElementById('af-bc-portion');
   if(bp){ bp.style.display='none'; bp.textContent=''; delete bp.dataset.q; }
   /* ⛔ La moitié « portions/grammes » — et c'est elle qui vidait le champ relu par `_afMajAncre`. */

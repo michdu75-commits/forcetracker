@@ -3725,6 +3725,40 @@ fermer une fuite**.
 qui dit **une seule fois** la distinction entre *« j'oublie l'aliment »* et *« je remets l'écran à
 plat pour le MÊME aliment »* — 2 appelants sur 13.
 
+### ⏱️ La récidive de §61 : **une attente qui démarre avant le mouvement** *(12/09/2026, ft-v1200)*
+
+**À quoi on la reconnaît** : un témoin rougit **en passe complète** et passe **3 fois sur 3 en
+isolé**. La tentation est immédiate et fausse : *« c'est un flake »*.
+
+**Le cas** : `CCLXXXVIII ①` mesure qu'un avertissement **vient à la vue** après un clic. ft-v1191
+avait déjà rendu le cas ② déterministe — *attendre que le défilement se stabilise au lieu de parier
+sur un délai* — et la correction n'avait **pas** été posée sur le cas ①. **R8, dans le banc d'essai
+lui-même.**
+
+**⛔⛔ Et ma première correction était fausse, d'une façon qui resservira.** J'ai recopié la boucle
+« attendre que `scrollTop` se stabilise ». Elle sortait **au premier tour** (`tours:1`) et le témoin
+rougissait toujours, avec `apresReset:75` — *un défilement encore en vol après une remise à zéro*.
+
+> **Une boucle de stabilité qui démarre AVANT le mouvement mesure « rien ne bouge encore »
+> et le lit comme « le mouvement est fini ».**
+
+Un défilement `smooth` ne commence pas au clic ; **sous charge il commence plus tard**. Deux
+échantillons égaux au départ ne prouvent donc rien du tout — et la boucle rend un verdict de
+stabilité sur un mouvement qui n'a pas eu lieu.
+
+**Le bon geste** : attendre **la condition réellement mesurée** (*« l'alerte est-elle à la vue ? »*),
+pas un proxy — puis exiger la stabilité sur **trois échantillons consécutifs** si un geste suivant
+dépend de l'immobilité. ⭐ **Le témoin n'en devient pas creux, et ça se vérifie** : avec
+`_amenerALaVue` neutralisée, il rougit toujours. *Une boucle qui sonde la condition échoue
+honnêtement quand la condition n'arrive jamais.*
+
+**⚠️ Ce que ça a coûté, mesuré** : **trois passes complètes** (~100 min) pour établir qu'un rouge
+n'était pas dû au correctif livré — et, en chemin, **une conclusion annoncée trop tôt** (*« le
+contrôle tranche, c'est mon correctif »*) sur **un** échantillon de chaque côté, contre un témoin
+déjà connu pour être instable. 👉 ***Un contre-exemple à n=1 ne tranche pas contre un flake
+documenté*** : reproduire avant de conclure vaut **dans les deux sens**, y compris quand la mesure
+semble accuser son propre travail.
+
 
 ## §63 — ⛔⛔ UN MOTIF DE RECHERCHE QUI SUPPOSE UNE **SYNTAXE** NE COMPTE PAS LES ENDROITS *(12/09/2026, ft-v1194)*
 
@@ -3806,3 +3840,27 @@ compterait dans une PHRASE ? »* — puis écrire la phrase et vérifier qu'il l
 *Déjà rencontrée en **ft-v1193** (le témoin « plus aucune traduction » comptait le commentaire qui
 citait le motif supprimé) : c'est donc la **2ᵉ fois**, d'où la famille. Sœur de **§61** (l'outil
 tronqué) et **§63** (le motif qui suppose une syntaxe) — **l'instrument fait partie de la mesure**.*
+### ⭐⭐ RÉCIDIVE MESURÉE : **QUATRE sous-étapes d'affilée** *(13/09/2026, ft-v1195 → ft-v1202)*
+
+Le plan corrigé après ce cas a été redécoupé en sous-étapes, chacune avec son **périmètre écrit**.
+Sur les quatre suivantes, **le périmètre écrit était faux les quatre fois**, et jamais de la même
+façon — ce qui est justement ce qui le rend dangereux :
+
+| sous-étape | ce que le plan disait | ce que la mesure disait |
+|---|---|---|
+| **1b-ii** | « 4 sites » | **3** — le 4ᵉ construit un *item de liste*, pas une provenance |
+| **1b-iii** | « `q` et `portionWeightG` divergent tous les deux » | **une seule** des deux divergeait |
+| **1b-iv** | « la sous-étape la moins risquée du lot » | ⛔ **rien à extraire** : une seule copie |
+| **3-iv** | « les **deux** branches, **le seul** endroit qui écrit » | **1 copie de chaque forme** · **5** écritures |
+
+> ⭐ **Ce qu'on en tire, et qui vaut plus que les quatre corrections** : un document de plan reste
+> utile pour **ORDONNER** le travail — quoi avant quoi, quoi bloque quoi. Il n'est **jamais** une
+> source pour un **chiffre**. *Un périmètre écrit la veille est une hypothèse ; seul un comptage
+> refait le jour même est une mesure.*
+
+⚠️ **Et la 4ᵉ ajoute une nuance que les trois premières n'avaient pas** : le test d'entrée
+(*« y a-t-il au moins 2 copies ? »*) protège contre la **CRÉATION** d'un propriétaire pour une
+forme unique — il ne s'applique **pas** à l'ajout d'un appelant à un propriétaire qui **existe
+déjà**. Appliqué aveuglément, il aurait laissé la dernière copie écrite de la règle en dur pour
+toujours. *Une règle de garde qui déborde de son domaine devient elle-même une fausse limite*
+(**R28**).

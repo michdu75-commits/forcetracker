@@ -33683,7 +33683,33 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     await _lookupBarcode('3021690201123','scan',false); await d(400);
     const sc=scTop();
     const paq=document.getElementById('af-bc-paquet'); if(paq&&vis('af-bc-paquet')) paq.click();
-    await d(700);
+    /* ⚠️⚠️ LA MÊME LEÇON QU'AU CAS ②, ET IL A FALLU DEUX PASSES POUR LA VOIR ICI (12/09/2026).
+       ft-v1191 a rendu le cas ② déterministe (attendre que le défilement se STABILISE au lieu de
+       parier sur une durée) — et la correction n'a PAS été posée sur le cas ①, qui lisait
+       `dansLaVue` après un `d(700)` fixe. Sous la charge d'une passe complète, le défilement
+       `smooth` est encore EN VOL à cet instant : le témoin rougissait, et il passait 3/3 en isolé.
+       👉 ***R8, la porte jumelle — dans le banc d'essai lui-même.*** Coût mesuré : deux passes
+       complètes (~70 min) pour établir qu'un rouge n'était pas dû au correctif de ft-v1200.
+       ⭐ Attendre une CONDITION ne peut jamais rendre rouge un témoin vert : on ne fait que
+       cesser de mesurer la machine. */
+    /* ⛔⛔ ET MA PREMIÈRE ATTENTE ÉTAIT FAUSSE, D'UNE FAÇON QUI RESSERVIRA (12/09/2026).
+       J'avais recopié la boucle « attendre que `scrollTop` se stabilise » du cas ②. Elle sortait
+       AU PREMIER TOUR (`tours:1`), et le témoin rougissait quand même — avec `apresReset:75`,
+       c'est-à-dire un défilement ENCORE EN VOL après une remise à zéro.
+       👉 ***Une boucle de stabilité qui démarre AVANT le mouvement mesure « rien ne bouge
+       encore » et le lit comme « le mouvement est fini ».*** Le défilement `smooth` ne commence
+       pas au clic : sous charge, il commence après. Deux échantillons égaux au départ ne
+       prouvent donc rien du tout.
+       ⭐ On attend la CONDITION RÉELLEMENT MESURÉE — « l'alerte est-elle à la vue ? » — au lieu
+       d'un proxy. Le témoin garde tout son mordant : si elle n'y vient jamais, la boucle épuise
+       ses tours et l'assertion échoue, exactement comme avant. Puis on exige la stabilité sur
+       TROIS échantillons consécutifs, parce que le cas ② remet `scrollTop` à zéro juste après et
+       qu'un défilement en vol le fait repartir tout seul. */
+    {let n=0; while(n<40 && !dansLaVue('af-coherence')){ await d(80); n++; } o.cas1Tours=n;}
+    {let eg=0,prev=sc?sc.scrollTop:0,n=0;
+     while(sc && eg<3 && n<40){ await d(80); const v=sc.scrollTop;
+       eg = (v===prev) ? eg+1 : 0; prev=v; n++; }
+     o.cas1Stable=n;}
     o.cas1={alerteVue:vis('af-coherence'), dansLaVue:dansLaVue('af-coherence'),
             kcal:(document.getElementById('af-kcal')||{}).value,
             txt:((document.getElementById('af-coherence')||{}).textContent||'').replace(/\s+/g,' ').slice(0,160)};
@@ -34560,16 +34586,35 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   const grammesSeuls=lignes.filter(l=>/q>0\s*&&\s*\(!\w+\.u\s*\|\|\s*\w+\.u\s*===?\s*'g'\)/.test(l)).length;
   t('CCXCIII ⭐ les 2 portes passent par `_qReprenable` (2 appels + 1 déclaration)',
     appels===3, appels+' occurrences');
-  /* ⛔⛔ CE TÉMOIN S'EST DÉPLACÉ EN ft-v1199, IL N'A PAS ÉTÉ AFFAIBLI.
-     Il exigeait « la règle est écrite 5 fois » — c'était le garde-fou qui empêchait 3-i de
-     déborder sur 3-ii/iii/iv. La sous-étape 3-ii a été faite EXPRÈS : elle donne au
-     propriétaire `_qGrammes` ses 2 premiers appelants (la pastille), donc il reste
-     **3 écritures + 2 appelants**. La garantie ne s'affaiblit pas : elle change de forme,
-     exactement comme le témoin de 1b-i s'est déplacé en 3-i.
-     ⛔ Le jour où elle tombera à 1, ce sera que 3-iii a été faite ; à 0, que 3-iv l'a été. */
-  t('CCXCIII ⛔⛔ PÉRIMÈTRE — la règle « grammes seuls » n\'est plus écrite que 3 fois '+
-    '(3-ii faite ; 3-iii et 3-iv PAS faites au passage)',
-    grammesSeuls===3, grammesSeuls+' écritures');
+  /* ⛔⛔ CE TÉMOIN S'EST DÉPLACÉ TROIS FOIS, IL N'A JAMAIS ÉTÉ AFFAIBLI.
+     ① En 3-i il exigeait « la règle est écrite 5 fois » — le garde-fou qui empêchait 3-i de
+     déborder sur 3-ii/iii/iv. ② En ft-v1199 (3-ii) : 3 écritures + 2 appelants de `_qGrammes`.
+     ③ En ft-v1201 (3-iii) : **1 seule écriture** — `_provFood` @1232, le SEUL site qui ÉCRIT
+     `p.q`/`p.u`, réservé à 3-iv — **+ 4 appelants**.
+     ④ En ft-v1202 (3-iv) : **ZÉRO écriture** — la dernière copie a rejoint le propriétaire, qui
+     compte désormais **5 occurrences** (1 déclaration + 4 appels).
+     ⭐ La garantie ne s'affaiblit pas : elle change de forme. Et c'est vérifiable — les mutations
+     qui la faisaient rougir hier la font rougir aujourd'hui, par l'autre bout : le témoin
+     n'autorise plus AUCUNE réécriture de la règle, où que ce soit dans le fichier.
+     ⛔ Il ne se supprime pas maintenant qu'il vaut 0 : à 0 il devient le gardien du RETOUR de la
+     duplication — c'est exactement ce qu'un témoin de source protège et qu'aucun parcours ne
+     peut voir (une 2ᵉ copie de la règle ne change RIEN à l'exécution tant qu'elle dit pareil). */
+  t('CCXCIII ⛔⛔ PÉRIMÈTRE — la règle « grammes seuls » n\'est plus écrite NULLE PART en dur '+
+    '(3-ii, 3-iii et 3-iv faites : un seul propriétaire)',
+    grammesSeuls===0, grammesSeuls+' écritures');
+  /* ⚠️⚠️ CELUI-CI LIT LE CODE SANS SES BLOCS DE COMMENTAIRE ENTIERS, et c'est une correction
+     payée en ft-v1200 puis re-mesurée ici AVANT d'écrire le chiffre. Le filtre ligne-à-ligne
+     employé juste au-dessus (`lignes`) ne retire que les lignes qui COMMENCENT par une étoile,
+     deux barres, une barre-étoile ou un accent grave — or le docblock de `_afReprendreGrammes`
+     cite `_qGrammes(src) > 0` sur une ligne de continuation qui commence par un mot.
+     ⛔ Mesuré : **5** occurrences via `lignes`, **4** hors commentaires. *Le chiffre juste est
+     celui qui ne compte pas ce qui PARLE du code.* */
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const nbG=(codeSeul.match(/_qGrammes\(/g)||[]).length;
+  t('CCXCIII ⭐ …et `_qGrammes` a désormais 4 appelants (1 déclaration + 4 appels : les 2 '+
+    'pastilles de 3-ii, le propriétaire de 3-iii, la liste blanche de 3-iv)',
+    nbG===5, nbG+' occurrences hors commentaires');
 }
 
 /* ══════════ BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ══════════
@@ -34919,9 +34964,21 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      finit par interdire d'écrire la documentation de ce qu'il protège (leçon ft-v1193). */
   const sansComm=src.split('\n').filter(l=>{const x=l.trim();
     return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
-  const nb=(sansComm.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVI ⑪ ⭐ les 2 portes passent par `_qGrammes` (1 déclaration + 2 appels)',
-    nb===3, 'occurrences='+nb);
+  /* ⚠️⚠️ CE TÉMOIN A ROUGI EN ft-v1201, ET POUR DEUX RAISONS À LA FOIS — la passe complète l'a
+     attrapé, mes harnais isolés ne l'exécutaient pas.
+     ① Il figeait un état PÉRIMÉ : 3-iii ajoute LÉGITIMEMENT un 3ᵉ appelant (`_afReprendreGrammes`).
+        Comme le témoin de périmètre, il se DÉPLACE — il ne se supprime pas.
+     ② Et il comptait avec le filtre LIGNE-À-LIGNE, qui trouve 5 occurrences là où il y en a 4 :
+        le docblock du nouveau propriétaire CITE `_qGrammes(src) > 0` sur une ligne qui commence
+        par un mot, donc elle survit au filtre.
+     👉 ***J'avais corrigé ce compteur dans le bloc de 3-iii et PAS dans les deux anciens*** —
+     R8, la porte jumelle, dans mes propres témoins. Ils retirent désormais les blocs entiers. */
+  const codeSeulG=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                     .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const nb=(codeSeulG.match(/_qGrammes\(/g)||[]).length;
+  t('CCXCVI ⑪ ⭐ `_qGrammes` a 4 appelants (1 déclaration + 4 appels : les 2 pastilles de 3-ii, '+
+    'le propriétaire de 3-iii, la liste blanche de 3-iv)',
+    nb===5, 'occurrences hors commentaires='+nb);
   const corps=(sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
   t('CCXCVI ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
     '`_qReprenable` n\'est PAS entré dedans (les fondre serait un changement de comportement)',
@@ -34930,6 +34987,715 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'pas une',
     /function _qReprenable\(src\)\{/.test(sansComm) && /=== 'portion'/.test(sansComm),
     'une des deux a disparu');
+}
+
+/* ══════════ BLOC CCXCVII — 🩹 la pastille « ↩ … g (la dernière fois) » qui SURVIVAIT à
+   l'aliment suivant. CORRECTIF SÉPARÉ du chantier d'extraction (feu vert explicite de Michel).
+
+   ⛔⛔ LE DÉFAUT, MESURÉ À LA SONDE EN ft-v1199 ET ÉCRIT AVANT D'AVOIR LE DROIT DE LE CORRIGER :
+   `_bcProposerDerniere(0)` n'était appelée que par `openAddFood()` et par le hub
+   `_offRemplirFormulaire` — donc la pastille se rendait à l'OUVERTURE de l'écran, jamais ENTRE
+   deux aliments d'une même ouverture. Et le site qui la repose vit DANS un garde
+   (`if(P && it.u!=='portion' && …)` où `P = it.per100`) : un aliment en PORTIONS, ou SANS
+   pour-100 g, ne le franchit pas — et celle du précédent restait affichée, sur le mauvais aliment.
+   👉 C'est la JUMELLE EXACTE du défaut `_bcPaquetG` fermé en ft-v1193 (R8, la porte jumelle) :
+   ce jour-là `_afOublierAliment` a reçu le rendu de `_bcProposerPaquet`, et pas celui-ci. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    const P100={kcal:66.7,prot:0.7,carbs:1.3,fat:2};
+    const lire=()=>{ const b=document.getElementById('af-bc-last');
+      return b ? {vue:b.style.display==='inline-block', q:(b.dataset&&b.dataset.q)||'ABSENT'} : 'ABSENT'; };
+    /* ⛔ On pose la pastille par la VRAIE porte de production, jamais à la main : un état
+       fabriqué prouverait que le correctif nettoie un décor, pas ce que l'app affiche. */
+    const poserA=(g)=>{ _afSetSrc(null);
+      _afQuickItems=[{name:'Aliment A', kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:g, u:'g', fav:false}];
+      quickFillFood(0); };
+
+    /* ① LE TÉMOIN DU BUG, NU : on pose la pastille, on OUBLIE L'ALIMENT, et rien d'autre.
+       C'est le geste que `_afOublierAliment` existe pour couvrir — sans passer par une porte
+       qui pourrait la reposer d'elle-même. */
+    poserA(150); o.apresPose=JSON.stringify(lire());
+    try{ _afOublierAliment(); }catch(e){}
+    o.apresOubli=JSON.stringify(lire());
+
+    /* ② LE SCÉNARIO EXACT DE MICHEL, porte « Mes aliments » : aliment A en grammes, puis sans
+       fermer l'écran un aliment B EN PORTIONS — qui saute le garde, donc ne repose rien. */
+    poserA(150);
+    _afQuickItems=[{name:'Aliment B', kcal:100,prot:1,carbs:2,fat:3, per100:P100,
+                    q:2, u:'portion', portionLabel:'part', portionWeightG:120, fav:false}];
+    quickFillFood(0);
+    o.bPortions=JSON.stringify(lire());
+
+    /* ③ LE MÊME, PAR L'AUTRE PORTE (R8) — `_afSuggPrendreLocale`, la recherche du journal.
+       Elle lit `_afSuggLoc[i]`, PAS `S.foodLog` : le piège mesuré le 12/09. */
+    poserA(150);
+    S.foodLog=[{date:'2026-09-01', meal:'midi', ts:1, name:'Aliment C',
+                kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:2, u:'portion',
+                portionLabel:'part', portionWeightG:120}];
+    persist();
+    _afSuggLoc=_afSuggLocales('Aliment C');
+    o.listeC=_afSuggLoc.length;
+    if(_afSuggLoc.length) _afSuggPrendreLocale(0);
+    o.cPortions=JSON.stringify(lire());
+
+    /* ④ L'AUTRE MOITIÉ DU GARDE : un aliment B SANS pour-100 g. Il ne franchit pas
+       `if(P && …)` non plus, et il est en GRAMMES — donc il ne peut pas être confondu
+       avec le cas « portions ». */
+    poserA(150);
+    _afQuickItems=[{name:'Aliment D', kcal:100,prot:1,carbs:2,fat:3, q:90, u:'g', fav:false}];
+    quickFillFood(0);
+    o.dSansPer100=JSON.stringify(lire());
+
+    /* ⑤⭐ LA CONTRE-ÉPREUVE — et c'est elle qui distingue un correctif d'un simple effacement :
+       un aliment B qui a SA PROPRE dernière quantité en grammes doit voir SA pastille apparaître.
+       Un correctif qui se contenterait d'éteindre casserait la fonctionnalité en la « réparant ». */
+    poserA(150);
+    _afQuickItems=[{name:'Aliment E', kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:200, u:'g', fav:false}];
+    quickFillFood(0);
+    o.eContreEpreuve=JSON.stringify(lire());
+
+    /* ⑥⛔⛔ `garderPaquet` NE DOIT PAS CONDITIONNER LA PASTILLE, et c'est LE point de conception.
+       Les 2 appelants qui le passent (`_bcSansValeurs`, `_calAppliquer`) poursuivent le produit
+       SCANNÉ — dont le poids de paquet vient de CE scan. La pastille « la dernière fois », elle,
+       ne peut venir que d'une reprise ANTÉRIEURE : la garder reproduirait le bug sur ces deux
+       portes. Les deux drapeaux ne nomment pas la même chose. */
+    poserA(150);
+    try{ _bcPaquetG=410; if(typeof _bcProposerPaquet==='function') _bcProposerPaquet(); }catch(e){}
+    try{ _afOublierAliment({garderPaquet:true}); }catch(e){}
+    o.gpPastille=JSON.stringify(lire());
+    o.gpPaquet=(typeof _bcPaquetG!=='undefined')?_bcPaquetG:'ABSENT';
+
+    /* ⑦⛔ PÉRIMÈTRE — le correctif ne doit PAS effacer ce que la personne a tapé.
+       `_bcProposerDerniere(q<=0)` ne touche pas au champ, exprès (« une fonction qui nettoie
+       plus que son sujet finit par effacer celui d'un autre ») : on le fige. */
+    poserA(150);
+    const g=document.getElementById('af-bc-grams'); if(g) g.value='77';
+    try{ _afOublierAliment(); }catch(e){}
+    o.champ=(document.getElementById('af-bc-grams')||{}).value;
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCXCVII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCXCVII ① ⭐ la pastille est bien POSÉE par la vraie porte avant toute mesure — sinon les '+
+    'témoins suivants seraient verts sur un écran vide',
+    !!(j(X.apresPose)&&j(X.apresPose).vue&&j(X.apresPose).q==='150'), X.apresPose);
+  t('CCXCVII ② ⛔⛔ LE TÉMOIN DU BUG — `_afOublierAliment()` Rend la pastille : elle disparaît '+
+    'avec l\'aliment qu\'elle décrivait (R15)',
+    !!(j(X.apresOubli)&&j(X.apresOubli).vue===false&&j(X.apresOubli).q==='ABSENT'), X.apresOubli);
+  t('CCXCVII ③ ⛔ scénario de Michel, porte « Mes aliments » : un aliment B EN PORTIONS ne garde '+
+    'pas le « 150 g » de A',
+    !!(j(X.bPortions)&&j(X.bPortions).vue===false), X.bPortions);
+  t('CCXCVII ④ ⭐ la liste locale est bien garnie (sinon la porte ③ ne conduirait rien)',
+    X.listeC>0, 'longueur='+X.listeC);
+  t('CCXCVII ⑤ ⛔ LA PORTE JUMELLE (R8) — même garantie par `_afSuggPrendreLocale`',
+    !!(j(X.cPortions)&&j(X.cPortions).vue===false), X.cPortions);
+  t('CCXCVII ⑥ ⛔ l\'autre moitié du garde : un aliment SANS pour-100 g ne garde rien non plus',
+    !!(j(X.dSansPer100)&&j(X.dSansPer100).vue===false), X.dSansPer100);
+  t('CCXCVII ⑦ ⭐⭐ CONTRE-ÉPREUVE — un aliment qui a SA PROPRE dernière quantité en grammes '+
+    'voit SA pastille (200), pas celle d\'avant (150) : on corrige une fuite, on ne coupe pas '+
+    'la fonctionnalité',
+    !!(j(X.eContreEpreuve)&&j(X.eContreEpreuve).vue===true&&j(X.eContreEpreuve).q==='200'),
+    X.eContreEpreuve);
+  t('CCXCVII ⑧ ⛔⛔ PÉRIMÈTRE — `garderPaquet` ne conditionne PAS la pastille : elle part quand '+
+    'même (les 2 portes qui le passent poursuivent le produit SCANNÉ, jamais une reprise)',
+    !!(j(X.gpPastille)&&j(X.gpPastille).vue===false), X.gpPastille);
+  t('CCXCVII ⑨ ⛔ …et le poids du paquet, lui, SURVIT toujours à `garderPaquet` — la garantie de '+
+    'ft-v1174 n\'est pas affaiblie au passage',
+    X.gpPaquet===410, 'paquet='+X.gpPaquet);
+  t('CCXCVII ⑩ ⛔ PÉRIMÈTRE — le correctif n\'efface PAS ce que la personne a tapé dans le champ',
+    X.champ==='77', 'champ='+X.champ);
+  t('CCXCVII ⑪ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
+    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
+  /* ⭐ LE CORRECTIF VIT CHEZ LE PROPRIÉTAIRE, PAS RECOPIÉ CHEZ LES APPELANTS. C'est la leçon
+     écrite en ft-v1193 : « un patron qu'on recopie à chaque porte EST la duplication que ce
+     chantier supprime ailleurs ». Une ligne, dans `_afOublierAliment`, donc les 13 portes. */
+  /* ⚠️⚠️ CES DEUX TÉMOINS LISENT DU CODE **SANS SES BLOCS DE COMMENTAIRE**, ET C'EST UNE
+     CORRECTION PAYÉE (12/09/2026). Ma 1ʳᵉ version réutilisait le filtre ligne-à-ligne des blocs
+     voisins — il ne retire que les lignes qui COMMENCENT par une étoile, deux barres, une barre
+     étoile ou un accent grave. Or les lignes de continuation des commentaires de ce fichier
+     commencent par ⛔, ⭐, 👉… donc elles SURVIVENT au filtre. Et le commentaire du correctif
+     CITE `_bcProposerDerniere(0)` pour expliquer le défaut : le témoin ⑫ restait donc VERT avec
+     le correctif retiré.
+     ⛔ Mesuré, pas supposé : la mutation « correctif retiré » rendait 5 rouges au lieu de 6, et
+     c'est cet écart d'UN qui a trahi le témoin aveugle. *Un total qu'on explique au lieu de
+     l'accepter.*
+     👉 ***C'est la famille de ft-v1193 — un témoin qui ne distingue pas le code de ce qui en
+     PARLE*** — reposée par moi dans le témoin censé protéger le correctif qui la documente.
+     ⭐ Retirer les blocs ENTIERS immunise le témoin pour de bon : n'importe quel commentaire
+     futur pourra citer l'appel sans le rendre muet. */
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corpsOubli=(codeSeul.match(/function _afOublierAliment\(opts\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCVII ⑫ ⭐ le correctif est posé dans `_afOublierAliment` — une fois, pour les 13 portes '+
+    '(R2), pas recopié porte par porte',
+    corpsOubli.length>0 && /_bcProposerDerniere\(0\)/.test(corpsOubli),
+    'absent du corps du propriétaire (commentaires retirés)');
+  /* ⛔⛔ Et il n'est PAS sous le drapeau du paquet — la mutation qui l'y met doit rougir. */
+  const sousGarde=/garderPaquet[^\n]*\{[^\n]*_bcProposerDerniere\(0\)/.test(corpsOubli);
+  t('CCXCVII ⑬ ⛔⛔ PÉRIMÈTRE DE SOURCE — la pastille n\'est pas rendue SOUS `garderPaquet` : '+
+    'les deux drapeaux ne nomment pas la même chose',
+    corpsOubli.length>0 && !sousGarde, 'la pastille est passée sous le drapeau du paquet');
+  /* ⛔ CONSIGNE EXPLICITE DE MICHEL : ce correctif ne touche à AUCUNE règle métier. */
+  /* ⚠️ LA JUMELLE DU TÉMOIN DE CCXCVI — même double défaut, corrigée dans le même mouvement :
+     l'état figé était périmé (3-iii ajoute un 3ᵉ appelant) ET le compteur était aveugle aux
+     lignes de commentaire qui CITENT l'appel. ⛔ Ce que ce témoin protège ne change pas : il
+     doit toujours vérifier que `_qGrammes` **refuse les portions**, la consigne de ft-v1200. */
+  const nbG=(codeSeul.match(/_qGrammes\(/g)||[]).length;
+  t('CCXCVII ⑭ ⛔ HORS PÉRIMÈTRE — `_qGrammes` est intacte (1 déclaration + 4 appels) et refuse '+
+    'toujours les portions',
+    nbG===5 && /function _qGrammes\(src\)\{/.test(codeSeul) &&
+    !/portion/.test((codeSeul.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'occurrences hors commentaires='+nbG);
+  t('CCXCVII ⑮ ⛔ HORS PÉRIMÈTRE — `_qReprenable` est intacte, portions comprises',
+    /function _qReprenable\(src\)\{/.test(sansComm) &&
+    /=== 'portion'/.test((sansComm.match(/function _qReprenable\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'la règle voisine a bougé');
+}
+
+/* ══════════ BLOC CCXCVIII — 🔢 3-iii : le bloc « poids repris en grammes » (ft-v1201) ══════════
+   ⭐ TEST D'ENTRÉE : 2 copies STRICTEMENT identiques — `quickFillFood` et `_afSuggPrendreLocale`
+   portaient la même condition ET le même corps de 3 lignes, au nom de variable près.
+   ⛔⛔ ET LES CAS SONT L'INVERSE DE CEUX DE 3-ii : le bloc est gardé par `!_bcNutr`, que le bloc
+   du pour-100 g pose lui-même. Les deux sites sont MUTUELLEMENT EXCLUSIFS sur la même entrée —
+   pour atteindre celui-ci il faut un aliment SANS pour-100 g. Des fixtures recopiées de 3-ii
+   n'auraient jamais franchi le garde, et les six cas auraient rendu la même valeur. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=typeof _afReprendreGrammes;
+    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
+    try{
+      o.table=JSON.stringify([
+        _afReprendreGrammes({q:150,u:'g'}), _afReprendreGrammes({q:80}),
+        _afReprendreGrammes({q:2,u:'portion'}), _afReprendreGrammes({q:0,u:'g'}),
+        _afReprendreGrammes({q:-5,u:'g'}), _afReprendreGrammes({q:250,u:'ml'}),
+        _afReprendreGrammes(null), _afReprendreGrammes({})]);
+    }catch(e){ o.table='LÈVE : '+String(e&&e.message||e); }
+
+    const lire=()=>({unite:(typeof _afUnite!=='undefined')?_afUnite:'ABSENT',
+                     poids:(typeof _afPoidsDeclare!=='undefined')?_afPoidsDeclare:'ABSENT',
+                     nom:(typeof _afQtyNom!=='undefined')?_afQtyNom:'ABSENT'});
+    /* ⛔ On repart d'un écran à plat par la VRAIE fonction de production : sans ça un cas
+       lirait le reliquat du précédent — le piège payé en ft-v1199. */
+    const plat=()=>{ try{ _afResetUnite(); }catch(e){} };
+
+    const CAS=[['grammes',{q:150,u:'g'}], ['sans unité',{q:80}], ['portions',{q:2,u:'portion',portionLabel:'p',portionWeightG:120}],
+               ['zéro',{q:0,u:'g'}], ['négatif',{q:-5,u:'g'}], ['millilitres',{q:250,u:'ml'}]];
+    const P100={kcal:66.7,prot:0.7,carbs:1.3,fat:2};
+
+    /* ── porte 1 : « Mes aliments » ── */
+    const A={};
+    CAS.forEach(([nom,q])=>{
+      try{ _afOublierAliment(); }catch(e){}
+      plat(); _afSetSrc(null);
+      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,fav:false}, q)];
+      quickFillFood(0);
+      A[nom]=lire();
+    });
+    o.quickFill=JSON.stringify(A);
+
+    /* ── porte 2 : la recherche du journal (R8, la porte jumelle) ── */
+    const B={};
+    CAS.forEach(([nom,q])=>{
+      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1,name:'B '+nom,
+                                kcal:100,prot:1,carbs:2,fat:3}, q)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      plat(); _afSetSrc(null);
+      _afSuggLoc=_afSuggLocales('B '+nom);
+      B[nom]= _afSuggLoc.length ? (_afSuggPrendreLocale(0), lire()) : 'LISTE VIDE';
+    });
+    o.locale=JSON.stringify(B);
+
+    /* ⭐ LE CAS DE PÉRIMÈTRE : grammes VALIDES mais un pour-100 g présent → le garde `!_bcNutr`
+       doit bloquer. C'est lui qui fige que le garde n'est PAS la règle de quantité. */
+    try{ _afOublierAliment(); }catch(e){}
+    plat(); _afSetSrc(null);
+    _afQuickItems=[{name:'Avec pour-100g',kcal:100,prot:1,carbs:2,fat:3,q:150,u:'g',per100:P100,fav:false}];
+    quickFillFood(0);
+    o.avecPer100=JSON.stringify(lire());
+    o.bcNutrPose=!!(typeof _bcNutr!=='undefined' && _bcNutr);
+
+    /* ⛔ NON-RÉGRESSION ft-v1176 : `_afPoidsPose` ne doit PAS être posé par ce chemin. */
+    try{ _afOublierAliment(); }catch(e){}
+    plat(); _afSetSrc(null);
+    _afQuickItems=[{name:'Sans pose',kcal:100,prot:1,carbs:2,fat:3,q:150,u:'g',fav:false}];
+    quickFillFood(0);
+    o.poidsPose=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:'ABSENT';
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCXCVIII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCXCVIII ① ⭐ `_afReprendreGrammes` existe', X.type==='function', 'type='+X.type);
+  t('CCXCVIII ② ⭐ elle rend VRAI quand la quantité est reprenable en grammes, FAUX sinon — '+
+    'grammes · sans unité acceptés ; portions · 0 · négatif · ml · rien refusés',
+    X.table==='[true,true,false,false,false,false,false,false]', X.table);
+
+  const A=j(X.quickFill)||{}, B=j(X.locale)||{};
+  ['grammes','sans unité'].forEach((n,i)=>{
+    const att=[150,80][i];
+    t('CCXCVIII '+(i===0?'③':'④')+' ⭐ porte « Mes aliments » — '+n+' : le poids est posé ('+att+' g)',
+      !!(A[n]&&A[n].unite==='g'&&A[n].poids===att&&A[n].nom==='A '+n), JSON.stringify(A[n]));
+    t('CCXCVIII '+(i===0?'⑤':'⑥')+' ⛔ PORTE JUMELLE (R8) — recherche du journal, '+n+' : idem',
+      !!(B[n]&&B[n].unite==='g'&&B[n].poids===att&&B[n].nom==='B '+n), JSON.stringify(B[n]));
+  });
+  t('CCXCVIII ⑦ ⛔ portions · zéro · négatif · millilitres ne posent RIEN, aux deux portes',
+    ['portions','zéro','négatif','millilitres'].every(n=>
+      A[n]&&A[n].unite==='portion'&&A[n].poids===0&&A[n].nom==='' &&
+      B[n]&&B[n].unite==='portion'&&B[n].poids===0&&B[n].nom===''),
+    JSON.stringify({A,B}).slice(0,200));
+  t('CCXCVIII ⑧ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas '+
+    '(au nom de l\'aliment près)',
+    JSON.stringify(Object.keys(A).map(n=>[A[n].unite,A[n].poids]))===
+    JSON.stringify(Object.keys(B).map(n=>[B[n].unite,B[n].poids])),
+    JSON.stringify(A)+' | '+JSON.stringify(B));
+  t('CCXCVIII ⑨ ⛔⛔ PÉRIMÈTRE — le garde `!_bcNutr` reste CHEZ LES APPELANTS : une quantité en '+
+    'grammes parfaitement valide ne pose RIEN quand un pour-100 g est présent',
+    !!(j(X.avecPer100)&&j(X.avecPer100).unite==='portion'&&j(X.avecPer100).poids===0) && X.bcNutrPose===true,
+    X.avecPer100+' · _bcNutr posé='+X.bcNutrPose);
+  t('CCXCVIII ⑩ ⛔ NON-RÉGRESSION ft-v1176 — ce chemin ne pose toujours PAS `_afPoidsPose` '+
+    '(le drapeau dit « la personne a déclaré un poids pour ce qui est AFFICHÉ »)',
+    X.poidsPose===false, 'poidsPose='+X.poidsPose);
+  t('CCXCVIII ⑪ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page.
+   ⛔ Les blocs de commentaire sont retirés ENTIERS : la leçon de ft-v1200, où un témoin comptait
+   la ligne qui CITE le motif au lieu de celle qui l'exécute. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const nb=(codeSeul.match(/_afReprendreGrammes\(/g)||[]).length;
+  t('CCXCVIII ⑫ ⭐ les 2 portes passent par le propriétaire (1 déclaration + 2 appels)',
+    nb===3, 'occurrences='+nb);
+  const corps=(codeSeul.match(/function _afReprendreGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCVIII ⑬ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_bcNutr` n\'est PAS entré dans le propriétaire : '+
+    'c\'est une question sur l\'ÉTAT DE L\'ÉCRAN, pas sur la quantité de la ligne',
+    corps.length>0 && !/_bcNutr/.test(corps), 'corps='+corps.slice(0,140));
+  t('CCXCVIII ⑭ ⭐ …et il s\'appuie sur `_qGrammes` au lieu de réécrire la règle (la promesse '+
+    'de 3-ii, tenue)',
+    /_qGrammes\(/.test(corps), 'le propriétaire réécrit la règle au lieu de l\'appeler');
+  t('CCXCVIII ⑮ ⛔ PÉRIMÈTRE — `_afPoidsPose` n\'est pas posé dans le propriétaire (R30 : on ne '+
+    'touche pas à ce qui marche)',
+    corps.length>0 && !/_afPoidsPose/.test(corps), 'corps='+corps.slice(0,140));
+  t('CCXCVIII ⑯ ⛔ HORS PÉRIMÈTRE — `_qReprenable` est intacte, portions comprises',
+    /function _qReprenable\(src\)\{/.test(codeSeul) &&
+    /=== 'portion'/.test((codeSeul.match(/function _qReprenable\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'la règle voisine a bougé');
+}
+
+/* ══════════ BLOC CCXCIX — ⚖️ 3-iv : la liste blanche de la provenance (ft-v1202) ══════════
+   ⛔⛔ TEST D'ENTRÉE : CE N'EST PAS UNE EXTRACTION, et le plan le disait faux pour la 4ᵉ fois.
+   Il annonçait « les DEUX branches @1232/@1237 » et « le SEUL endroit qui écrit `p.q`/`p.u` ».
+   Mesuré : **1 copie de chaque forme** (elles se ressemblent mais l'une teste les grammes et
+   écrit `u:'g'`, l'autre teste les portions et écrit `u:'portion'`), et **5 écritures** de
+   `p.q`/`p.u` — les 3 autres (@1300 code-barres · @1320 poids déclaré · @1355 portions à
+   l'écran) lisent l'ÉTAT DE L'ÉCRAN, pas `_afSrc`. Aucune n'est une copie.
+   👉 3-iv se réduit donc à BRANCHER la dernière copie écrite sur `_qGrammes`, qui avait déjà
+   3 appelants. Le test d'entrée protège contre la CRÉATION d'un propriétaire pour une forme
+   unique — il n'interdit pas d'ajouter un appelant à un propriétaire qui existe.
+   ⛔ La branche PORTIONS ne bouge pas : 1 écriture, aucun propriétaire existant. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    const P100={kcal:50,prot:0.5,carbs:1,fat:1.5};
+    const CAS=[['grammes',{q:120,u:'g'}], ['sans unité',{q:80}],
+               ['portions',{q:2,u:'portion',portionLabel:'part',portionWeightG:120}],
+               ['zéro',{q:0,u:'g'}], ['négatif',{q:-5,u:'g'}], ['millilitres',{q:250,u:'ml'}]];
+
+    /* ── porte 1 : l'ajout DIRECT depuis la liste (`quickAddFood`) ── */
+    const A={}; let labA=null;
+    CAS.forEach(([nom,q])=>{
+      S.foodLog=[]; S.savedFoods=[];
+      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100}, q)];
+      _afMeal='midi';
+      try{ quickAddFood(0); }catch(e){}
+      const l=(S.foodLog||[])[0];
+      A[nom]= l ? {q:l.q,u:l.u} : 'RIEN AJOUTÉ';
+      if(nom==='portions'&&l) labA={lab:l.portionLabel,pds:l.portionWeightG};
+    });
+    o.direct=JSON.stringify(A); o.labelDirect=JSON.stringify(labA);
+
+    /* ── porte 2 : le REJEU d'un repas (R8, la porte jumelle) ──
+       ⚠️ `_repasHabituels` exige la MÊME signature sur 2 dates : on conduit la vraie porte
+       avec sa vraie condition d'entrée, jamais `_provFood` en direct (BUGS.md §58). */
+    const B={};
+    CAS.forEach(([nom,q])=>{
+      const base=Object.assign({name:'B '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100}, q);
+      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},base),
+                 Object.assign({date:'2026-09-02',meal:'midi',ts:2},base)];
+      const sig=(_repasHabituels()[0]||{}).sig||'';
+      if(!sig){ B[nom]='PAS DE SIGNATURE'; return; }
+      const avant=S.foodLog.length;
+      try{ rejouerRepas(sig,'midi'); }catch(e){}
+      const l=(S.foodLog||[])[S.foodLog.length-1];
+      B[nom]= (S.foodLog.length>avant && l) ? {q:l.q,u:l.u} : 'RIEN AJOUTÉ';
+    });
+    o.rejeu=JSON.stringify(B);
+
+    /* ⭐ LE CAS DE PÉRIMÈTRE : `_afSrc` ABSENT. Le garde `if(_afSrc)` reste chez l'appelant —
+       la provenance doit sortir « quantité inconnue » sans que le propriétaire soit consulté. */
+    try{ _afSetSrc(null); }catch(e){}
+    try{ const p=_provFood({kcal:100,prot:1,carbs:2,fat:3});
+         o.sansSrc=JSON.stringify({q:p.q,u:p.u}); }catch(e){ o.sansSrc='LÈVE : '+String(e&&e.message||e); }
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCXCIX ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  const A=j(X.direct)||{}, B=j(X.rejeu)||{};
+  t('CCXCIX ① ⭐ porte DIRECTE — 120 g traversent la liste blanche',
+    !!(A['grammes']&&A['grammes'].q===120&&A['grammes'].u==='g'), JSON.stringify(A['grammes']));
+  t('CCXCIX ② ⭐ porte DIRECTE — une quantité SANS unité est lue en grammes (80 g)',
+    !!(A['sans unité']&&A['sans unité'].q===80&&A['sans unité'].u==='g'), JSON.stringify(A['sans unité']));
+  t('CCXCIX ③ ⛔⛔ HORS PÉRIMÈTRE — la branche PORTIONS n\'a PAS bougé : « 2 portions » '+
+    'traversent toujours, telles quelles',
+    !!(A['portions']&&A['portions'].q===2&&A['portions'].u==='portion'), JSON.stringify(A['portions']));
+  t('CCXCIX ④ ⛔ zéro · négatif · millilitres ressortent sans quantité (honnêtement inconnue, R29)',
+    ['zéro','négatif','millilitres'].every(n=>A[n]&&A[n].q===null&&A[n].u===null),
+    JSON.stringify(A));
+  t('CCXCIX ⑤ ⛔ NON-RÉGRESSION ft-v1183/1180 — l\'étiquette de portion et son poids traversent '+
+    'toujours (une portion sans « de quoi » ne vaut rien)',
+    !!(j(X.labelDirect)&&j(X.labelDirect).lab==='part'&&j(X.labelDirect).pds===120), X.labelDirect);
+  t('CCXCIX ⑥ ⛔ PORTE JUMELLE (R8) — le REJEU d\'un repas donne EXACTEMENT la même table',
+    JSON.stringify(A)===JSON.stringify(B), JSON.stringify(A)+' | '+JSON.stringify(B));
+  t('CCXCIX ⑦ ⛔⛔ PÉRIMÈTRE — sans source, la provenance sort « quantité inconnue » : le garde '+
+    '`if(_afSrc)` est resté CHEZ L\'APPELANT, il n\'est pas entré dans le propriétaire',
+    X.sansSrc==='{"q":null,"u":null}', X.sansSrc);
+  t('CCXCIX ⑧ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — et Michel l'a posé en consigne après 3-iii : *une dérive de conception
+   peut être invisible à l'exécution*, donc on garde les témoins de source quand ils protègent
+   une frontière que les tests de comportement ne peuvent pas voir. C'est exactement le cas ici :
+   remettre la règle en dur à côté de l'appel ne changerait RIEN à l'écran tant qu'elle dit
+   pareil — et c'est précisément comme ça que deux copies recommencent à diverger. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corps=(codeSeul.match(/function _provFood\(vals\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCXCIX ⑨ ⭐ la liste blanche APPELLE `_qGrammes` (une fois) au lieu de réécrire la règle',
+    corps.length>0 && (corps.match(/_qGrammes\(/g)||[]).length===1,
+    'occurrences dans _provFood='+(corps.match(/_qGrammes\(/g)||[]).length);
+  t('CCXCIX ⑩ ⛔⛔ PÉRIMÈTRE DE SOURCE — les 5 écritures de `p.q` sont TOUJOURS LÀ : les 3 autres '+
+    '(code-barres · poids déclaré · portions à l\'écran) lisent l\'écran, pas `_afSrc` — ce ne '+
+    'sont pas des copies et elles ne bougent pas',
+    (corps.match(/p\.q\s*=/g)||[]).length===5, 'écritures de p.q='+(corps.match(/p\.q\s*=/g)||[]).length);
+  t('CCXCIX ⑪ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_afSrc` n\'est PAS entré dans `_qGrammes` : le garde '+
+    'd\'état reste chez l\'appelant, le métier du propriétaire s\'arrête à la quantité',
+    !/_afSrc/.test((codeSeul.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'le propriétaire lit une globale de ses appelants');
+  t('CCXCIX ⑫ ⛔ HORS PÉRIMÈTRE — la branche PORTIONS est toujours écrite en dur, une fois '+
+    '(1 copie, aucun propriétaire : on n\'en crée pas pour une forme unique — R19)',
+    (corps.match(/_afSrc\.u===?'portion'/g)||[]).length===1,
+    'écritures de la branche portions='+(corps.match(/_afSrc\.u===?'portion'/g)||[]).length);
+}
+
+/* ══════════ BLOC CCC — 🍽️ 3-v : la définition de portion reprise (ft-v1203) ══════════
+   ⭐ TEST D'ENTRÉE PASSÉ, et pour la 1ʳᵉ fois depuis 4 sous-étapes le plan dit vrai sur la moitié
+   qu'il décrit : `quickFillFood` et `_afSuggPrendreLocale` portaient
+   `if(X.u==='portion'){ _afPortionLabel=…; _afPortionPoids=… }` **strictement identiques**.
+   ⛔⛔ MAIS L'AUTRE MOITIÉ ÉTAIT DÉJÀ FAITE : le NOMBRE de portions a son propriétaire depuis
+   ft-v1183/1186 (`_afReprendrePortions`), et les deux portes y sont déjà branchées. *Quand un
+   propriétaire existe, on lui ajoute un appelant — on n'en recrée pas un deuxième.*
+   ⚠️⚠️ ET L'ASYMÉTRIE DE CONDITION EST INATTEIGNABLE, MESURÉE : la ligne de la DÉFINITION n'a pas
+   de garde, celle du NOMBRE porte `!_bcNutr` — mais le bloc qui pose `_bcNutr` se garde lui-même
+   par `u!=='portion'`, donc un aliment en portions ne peut PAS le poser. Aucun témoin de
+   comportement ne peut donc protéger cette frontière : les témoins de SOURCE sont seuls. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=typeof _afReprendreDefPortion;
+    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
+    try{
+      o.table=JSON.stringify([
+        _afReprendreDefPortion({u:'portion',portionLabel:'part',portionWeightG:120}),
+        _afReprendreDefPortion({u:'portion',portionLabel:'bol'}),
+        _afReprendreDefPortion({u:'g',portionLabel:'jamais',portionWeightG:999}),
+        _afReprendreDefPortion({}), _afReprendreDefPortion(null)]);
+    }catch(e){ o.table='LÈVE : '+String(e&&e.message||e); }
+
+    const lire=()=>({lab:(typeof _afPortionLabel!=='undefined')?_afPortionLabel:'ABSENT',
+                     pds:(typeof _afPortionPoids!=='undefined')?_afPortionPoids:'ABSENT',
+                     n:(typeof _afPortions!=='undefined')?_afPortions:'ABSENT',
+                     bc:!!(typeof _bcNutr!=='undefined' && _bcNutr)});
+    /* ⛔ Remise à plat par la VRAIE fonction de production : sans elle un cas lirait le
+       reliquat du précédent — le piège payé en ft-v1199. */
+    const plat=()=>{ try{ _afResetUnite(); }catch(e){} };
+
+    const CAS=[['complete',{q:2,u:'portion',portionLabel:'part',portionWeightG:120}],
+               ['sans poids',{q:2,u:'portion',portionLabel:'bol'}],
+               ['sans nom',{q:2,u:'portion',portionWeightG:90}],
+               ['en grammes',{q:150,u:'g',portionLabel:'jamais',portionWeightG:999}],
+               ['poids nul',{q:2,u:'portion',portionLabel:'part',portionWeightG:0}],
+               /* ⭐ le cas qui porte un pour-100 g : la DÉFINITION doit quand même être reprise */
+               ['avec pour-100g',{q:2,u:'portion',portionLabel:'pot',portionWeightG:150,
+                                  per100:{kcal:66.7,prot:0.7,carbs:1.3,fat:2}}]];
+
+    /* ── porte 1 : « Mes aliments » ── */
+    const A={};
+    CAS.forEach(([nom,q])=>{
+      S.foodLog=[]; S.savedFoods=[];
+      try{ _afOublierAliment(); }catch(e){}
+      plat(); _afSetSrc(null);
+      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,fav:false}, q)];
+      quickFillFood(0);
+      A[nom]=lire();
+    });
+    o.quickFill=JSON.stringify(A);
+
+    /* ── porte 2 : la recherche du journal (R8, la porte jumelle) ── */
+    const B={};
+    CAS.forEach(([nom,q])=>{
+      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1,name:'B '+nom,
+                                kcal:100,prot:1,carbs:2,fat:3}, q)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      plat(); _afSetSrc(null);
+      _afSuggLoc=_afSuggLocales('B '+nom);
+      B[nom]= _afSuggLoc.length ? (_afSuggPrendreLocale(0), lire()) : 'LISTE VIDE';
+    });
+    o.locale=JSON.stringify(B);
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCC ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCC ① ⭐ `_afReprendreDefPortion` existe', X.type==='function', 'type='+X.type);
+  t('CCC ② ⭐ elle rend VRAI sur une portion, FAUX sur les grammes, l\'objet vide et `null`',
+    X.table==='[true,true,false,false,false]', X.table);
+
+  const A=j(X.quickFill)||{}, B=j(X.locale)||{};
+  t('CCC ③ ⭐ porte « Mes aliments » — la définition complète revient (part / 120 g)',
+    !!(A['complete']&&A['complete'].lab==='part'&&A['complete'].pds===120), JSON.stringify(A['complete']));
+  t('CCC ④ ⛔ PORTE JUMELLE (R8) — recherche du journal : idem',
+    !!(B['complete']&&B['complete'].lab==='part'&&B['complete'].pds===120), JSON.stringify(B['complete']));
+  t('CCC ⑤ ⛔ le garde d\'unité : en GRAMMES rien n\'est repris, aux deux portes '+
+    '(une définition n\'appartient pas à un aliment pesé)',
+    !!(A['en grammes']&&A['en grammes'].lab===''&&A['en grammes'].pds===0 &&
+       B['en grammes']&&B['en grammes'].lab===''&&B['en grammes'].pds===0),
+    JSON.stringify([A['en grammes'],B['en grammes']]));
+  t('CCC ⑥ ⛔ un poids absent, nul ou négatif ressort à 0 — on ne devine pas un poids (R29)',
+    ['sans poids','poids nul'].every(n=>A[n]&&A[n].pds===0&&B[n]&&B[n].pds===0),
+    JSON.stringify([A['sans poids'],A['poids nul']]));
+  t('CCC ⑦ ⛔ un nom absent ressort vide, le poids passe quand même',
+    !!(A['sans nom']&&A['sans nom'].lab===''&&A['sans nom'].pds===90), JSON.stringify(A['sans nom']));
+  t('CCC ⑧ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LA MÊME TABLE sur les 6 cas',
+    JSON.stringify(Object.keys(A).map(n=>[A[n].lab,A[n].pds]))===
+    JSON.stringify(Object.keys(B).map(n=>[B[n].lab,B[n].pds])),
+    JSON.stringify(A)+' | '+JSON.stringify(B));
+  t('CCC ⑨ ⛔ NON-RÉGRESSION ft-v1183 — le NOMBRE de portions est toujours repris (2), et il ne '+
+    'passe PAS par ce propriétaire : il a le sien',
+    ['complete','sans poids','sans nom','poids nul','avec pour-100g'].every(n=>A[n]&&A[n].n===2),
+    JSON.stringify(Object.keys(A).map(n=>[n,A[n].n])));
+  t('CCC ⑩ ⚠️ MESURE, PAS SUPPOSITION — un aliment en PORTIONS ne pose jamais `_bcNutr` : le bloc '+
+    'du pour-100 g se garde lui-même par `u!==\'portion\'`. Le cas « avec pour-100g » le prouve, '+
+    'et sa définition est reprise quand même',
+    !!(A['avec pour-100g']&&A['avec pour-100g'].bc===false&&A['avec pour-100g'].lab==='pot'
+       &&A['avec pour-100g'].pds===150), JSON.stringify(A['avec pour-100g']));
+  t('CCC ⑪ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — et ici ils ne sont pas un supplément, ils sont les SEULS possibles.
+   L'asymétrie que ce bloc protège (la définition sans garde, le nombre sous `!_bcNutr`) est
+   INATTEIGNABLE par ces deux portes : aucun fixture ne peut la faire rougir à l'exécution.
+   ⭐ C'est la consigne de Michel poussée d'un cran — non plus « invisible à l'exécution » mais
+   « hors d'atteinte ». Un témoin de comportement ne remplacera jamais celui-ci. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const m=codeSeul.match(/function _afReprendreDefPortion\(src\)\{[\s\S]*?\n\}/);
+  const corps=m?m[0]:'';
+  const hors=m?(codeSeul.slice(0,m.index)+codeSeul.slice(m.index+corps.length)):codeSeul;
+  const nb=(codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length;
+  t('CCC ⑫ ⭐ les 2 portes passent par le propriétaire (1 déclaration + 2 appels)',
+    nb===3, 'occurrences='+nb);
+  t('CCC ⑬ ⛔⛔ PÉRIMÈTRE DE SOURCE — la définition n\'est plus écrite en dur NULLE PART hors du '+
+    'propriétaire (à 0, ce témoin devient le gardien du RETOUR de la duplication)',
+    hors.split('\n').filter(l=>/_afPortionLabel\s*=\s*String\(\w+\.portionLabel/.test(l)).length===0,
+    'copies restantes hors du propriétaire');
+  t('CCC ⑭ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_bcNutr` n\'est PAS entré dans le propriétaire. AUCUN '+
+    'témoin de comportement ne peut voir cette dérive : elle est inatteignable, pas seulement '+
+    'invisible',
+    corps.length>0 && !/_bcNutr/.test(corps), 'corps='+corps.slice(0,160));
+  t('CCC ⑮ ⛔⛔ PÉRIMÈTRE DE SOURCE — le propriétaire ne touche PAS `_afPortions` : le NOMBRE a '+
+    'déjà le sien (`_afReprendrePortions`), et deux propriétaires pour la même grandeur seraient '+
+    'la duplication que ce chantier supprime (R2)',
+    corps.length>0 && !/_afPortions\b/.test(corps), 'corps='+corps.slice(0,160));
+  t('CCC ⑯ ⛔ HORS PÉRIMÈTRE — la ligne du NOMBRE est TOUJOURS écrite 2 fois chez les appelants, '+
+    'gardée par `!_bcNutr` : on ne l\'a pas absorbée au passage',
+    codeSeul.split('\n').filter(l=>/!_bcNutr\s*&&[\s\S]*_afReprendrePortions/.test(l)).length===2,
+    'lignes du nombre='+codeSeul.split('\n').filter(l=>/!_bcNutr\s*&&[\s\S]*_afReprendrePortions/.test(l)).length);
+  t('CCC ⑰ ⛔ HORS PÉRIMÈTRE — `_afReprendrePortions` est intacte (1 déclaration + 2 appels)',
+    (codeSeul.match(/_afReprendrePortions\(/g)||[]).length===3,
+    'occurrences='+(codeSeul.match(/_afReprendrePortions\(/g)||[]).length);
+  t('CCC ⑱ ⛔⛔ HORS PÉRIMÈTRE — les JUMELLES `_ef*` de l\'écran d\'ÉDITION ne sont pas absorbées : '+
+    'même grandeur, AUTRE écran (séparation documentée le 10/09). Les fondre serait une refonte, '+
+    'pas une extraction',
+    /let _efPortionLabel='', _efPortionPoids=0;/.test(codeSeul) &&
+    !/_efPortion/.test(corps), 'les jumelles ont bougé');
+}
+
+/* ══════════ BLOC CCCI — 📋 1b-v : ÉCARTÉE, et la divergence est JUSTIFIÉE (13/09/2026) ══════════
+   ⛔⛔ CE BLOC NE PROTÈGE PAS UNE EXTRACTION : IL PROTÈGE UNE ABSENCE (R30 — *un retrait volontaire
+   qui ne laisse aucune trace redevient un bug, parce que du code orphelin ressemble à un oubli*).
+
+   ⭐ TEST D'ENTRÉE : balayage complet des 12 écritures des 4 variables de portion, classées par
+   MÉTIER et non par ressemblance — ① hydratation depuis une SOURCE (le propriétaire `_af` de 3-v,
+   ses 2 appelants, **plus `openEditFood`**) · ② saisie à l'ÉCRAN (5 sites) · ③ déclarations et
+   remise à plat (3 sites). 👉 **Il ne reste qu'UN site non propriétarisé, et il écrit d'AUTRES
+   variables.** Une copie : on ne crée pas de propriétaire (R19).
+
+   ⛔⛔ ET LA MESURE VA PLUS LOIN QUE LE COMPTAGE : LES DEUX FORMES NE DOIVENT PAS CONVERGER.
+   L'écran d'AJOUT refuse la définition si l'unité n'est pas « portion » ; l'écran d'ÉDITION
+   l'hydrate sans garde. *Ça ressemble à une incohérence, et c'en est une seulement si on oublie
+   que les deux écrans partent d'états différents* : `openEditFood` force `_efUnite='portion'` à
+   chaque ouverture, donc une définition de portion y a toujours du sens ; l'écran d'ajout, lui,
+   suit l'unité de la source. **Les deux gardes diffèrent à raison.** Les fondre serait exactement
+   l'erreur que ce chantier évite ailleurs. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    /* ⭐ LE CAS QUI PORTE TOUT : une ligne EN GRAMMES qui porte quand même une étiquette de
+       portion. `_provFood` recopie `portionLabel` sans condition d'unité, donc l'état existe. */
+    const LIGNE={q:150, u:'g', portionLabel:'part', portionWeightG:120,
+                 kcal:100, prot:1, carbs:2, fat:3};
+
+    /* ── écran d'ÉDITION ── */
+    S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:7777, name:'Cas EF'}, LIGNE)];
+    persist();
+    _efPortionLabel='ZZZ'; _efPortionPoids=-1;   // témoin : on doit voir une VRAIE écriture
+    openEditFood(7777);
+    o.edition=JSON.stringify({label:_efPortionLabel, poids:_efPortionPoids, unite:_efUnite});
+
+    /* ── écran d'AJOUT, MÊME ligne ── */
+    S.foodLog=[]; S.savedFoods=[];
+    try{ _afOublierAliment(); }catch(e){}
+    try{ _afResetUnite(); }catch(e){}
+    _afSetSrc(null);
+    _afPortionLabel='ZZZ'; _afPortionPoids=-1;
+    _afQuickItems=[Object.assign({name:'Cas AF', fav:false}, LIGNE)];
+    quickFillFood(0);
+    o.ajout=JSON.stringify({label:_afPortionLabel, poids:_afPortionPoids, unite:_afUnite});
+
+    /* ── contre-épreuve : la MÊME ligne en PORTIONS doit hydrater les DEUX ── */
+    const P={q:2, u:'portion', portionLabel:'bol', portionWeightG:90,
+             kcal:100, prot:1, carbs:2, fat:3};
+    S.foodLog=[]; S.savedFoods=[];
+    try{ _afOublierAliment(); }catch(e){}
+    try{ _afResetUnite(); }catch(e){}
+    _afSetSrc(null);
+    _afPortionLabel='ZZZ'; _afPortionPoids=-1;
+    _afQuickItems=[Object.assign({name:'Cas AF portions', fav:false}, P)];
+    quickFillFood(0);
+    o.ajoutPortions=JSON.stringify({label:_afPortionLabel, poids:_afPortionPoids});
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCCI ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  const E=j(X.edition)||{}, A=j(X.ajout)||{};
+  t('CCCI ① ⭐⭐ DIVERGENCE MESURÉE — sur une ligne EN GRAMMES portant une étiquette, l\'écran '+
+    'd\'ÉDITION hydrate la définition (part / 120)',
+    E.label==='part' && E.poids===120, JSON.stringify(E));
+  t('CCCI ② ⭐⭐ …et l\'écran d\'AJOUT, sur la MÊME ligne, ne l\'hydrate PAS (vide / 0)',
+    A.label==='' && A.poids===0, JSON.stringify(A));
+  t('CCCI ③ ⛔⛔ ET LA RAISON EST MESURÉE, PAS SUPPOSÉE — les deux écrans ne partent pas du même '+
+    'état : l\'édition ouvre TOUJOURS en « portion », l\'ajout suit l\'unité de la source',
+    E.unite==='portion' && A.unite==='g', 'édition='+E.unite+' · ajout='+A.unite);
+  t('CCCI ④ ⭐ CONTRE-ÉPREUVE — sur une ligne en PORTIONS, l\'écran d\'ajout hydrate bien '+
+    '(la divergence porte sur le garde d\'unité, pas sur la reprise elle-même)',
+    !!(j(X.ajoutPortions)&&j(X.ajoutPortions).label==='bol'&&j(X.ajoutPortions).poids===90),
+    X.ajoutPortions);
+  t('CCCI ⑤ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — ils figent un ÉCARTEMENT, pas une extraction.
+   ⛔ Sans eux, `openEditFood` ressemble à un site qu'on a oublié de brancher — et le suivant
+   « réparerait » une décision. C'est exactement le cas vécu du calculateur de plaques (R30). */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const hydratEf=codeSeul.split('\n').filter(l=>/_efPortionLabel\s*=\s*String\(\w+\.portionLabel/.test(l));
+  t('CCCI ⑥ ⛔⛔ TEST D\'ENTRÉE FIGÉ — la forme `_ef*` n\'existe qu\'UNE fois : on ne crée pas de '+
+    'propriétaire pour une forme unique (R19), comme pour 1b-iv',
+    hydratEf.length===1, hydratEf.length+' copies de la forme _ef');
+  const corpsAf=(codeSeul.match(/function _afReprendreDefPortion\(src\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCCI ⑦ ⛔⛔ PÉRIMÈTRE DE SOURCE — le propriétaire de l\'écran d\'AJOUT n\'a pas absorbé les '+
+    'jumelles `_ef*` : même grandeur, AUTRE écran, autre état de départ',
+    corpsAf.length>0 && !/_efPortion/.test(corpsAf), 'corps='+corpsAf.slice(0,140));
+  const corpsOuvre=(codeSeul.match(/function openEditFood\(ts\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('CCCI ⑧ ⛔⛔ PÉRIMÈTRE DE SOURCE — `openEditFood` n\'appelle PAS le propriétaire de l\'écran '+
+    'd\'ajout : l\'y brancher écrirait dans les MAUVAISES variables et lui imposerait un garde '+
+    'd\'unité que son état de départ contredit',
+    corpsOuvre.length>0 && !/_afReprendreDefPortion/.test(corpsOuvre),
+    'openEditFood appelle le propriétaire de l\'autre écran');
+  t('CCCI ⑨ ⛔ …et l\'écran d\'édition force toujours son unité à « portion » à l\'ouverture — '+
+    'c\'est CE fait qui justifie l\'absence de garde, et s\'il tombe la divergence devient un vrai '+
+    'défaut à réexaminer',
+    /_efUnite='portion';/.test(corpsOuvre), 'le garde d\'entrée de l\'écran d\'édition a changé');
+  t('CCCI ⑩ ⛔ NON-RÉGRESSION 3-v — les 2 portes de l\'écran d\'ajout passent toujours par leur '+
+    'propriétaire (1 déclaration + 2 appels)',
+    (codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length===3,
+    'occurrences='+(codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length);
 }
 
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
