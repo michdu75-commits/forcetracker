@@ -7503,8 +7503,18 @@ function finalImportHist(){
   const importedAsc=S.sessions.filter(s=>s.importedHistory).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   importedAsc.forEach(sess=>{
     (sess.exs||[]).forEach(ex=>{
+      /* 🏅 C2 (13/09/2026) — LA DÉPENDANCE ACCIDENTELLE EST SUPPRIMÉE. Cette ligne disait
+         `if(!s.done||!s.kg||!s.reps)return;` — **sans aucun filtre de type**. Elle n'était juste
+         que parce que l'import ÉCRASE le type quelques lignes plus haut (`const type=s.type==='D'
+         ?'D':'';`), donc aucun `'É'` ne pouvait l'atteindre. ⛔ *Un chemin qui n'est juste que
+         grâce à une contrainte posée ailleurs n'est pas sûr : il est en sursis* (`BUGS.md` §62).
+         ⚠️ AUCUN CHANGEMENT AUJOURD'HUI, et c'est mesuré : après l'écrasement les types valent
+         `''` ou `'D'`, que le propriétaire accepte tous les deux — instantané identique.
+         ⭐ CE QUE ÇA ACHÈTE : le jour où l'import saura lire une colonne de type (le serveur
+         sait déjà l'envoyer), un échauffement sera refusé **par sa propre condition**, et non
+         par la chance. */
       (ex.sets||[]).forEach(s=>{
-        if(!s.done||!s.kg||!s.reps)return;
+        if(!_serieFaitFoiPourPR(s))return;
         const rm=bz(s.kg,s.reps);
         const cur=S.prs[ex.name];
         if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};

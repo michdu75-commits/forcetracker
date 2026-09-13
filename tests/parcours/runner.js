@@ -36337,6 +36337,34 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       {kg:120,reps:8,type:''},
       {kg:130,reps:6,type:'D'}]));
 
+    /* ⭐⭐ LE CAS FUTUR, CONDUIT POUR DE VRAI — et il n'a PAS besoin d'être simulé.
+       La boucle des records de `finalImportHist` ne relit pas seulement les séances qu'elle
+       vient de créer : elle refait `S.sessions.filter(s=>s.importedHistory)`, donc **toutes**
+       les séances déjà marquées importées. Une séance importée qui porte un `'É'` — ce que
+       produira l'import le jour où il lira une colonne de type — traverse donc la VRAIE
+       fonction, sans que l'écrasement de type puisse la protéger.
+       👉 *La protection n'est plus une composition de deux faits : elle se mesure.*
+       ⛔ Avant C2, ce cas posait un record d'échauffement de 250 kg — mesuré, pas déduit.
+       ⚠️ ET ON DIT EXACTEMENT CE QUI EST CONSTRUIT : le CHEMIN est réel (la boucle relit bien
+       toutes les séances importées), la DONNÉE est fabriquée à dessein. Aucune séance produite
+       par l'app d'aujourd'hui ne peut porter ce `'É'`, puisque l'import l'écrase — c'est
+       précisément la raison d'être de C2, et c'est pour ça que ce témoin est le seul endroit
+       où la garantie devient visible. */
+    o.c2FuturEchauffement = sur(()=>{
+      S.prs={}; S.customExercises=[];
+      S.sessions=[{ id:1, ts:1, date:'2026-07-01', importedHistory:true, volume:0, exs:[
+        {name:'Soulevé de Terre', sets:[
+          {kg:250,reps:3,done:true,type:'É',rm1:0},   // ⛔ échauffement LOURD, type PRÉSERVÉ
+          {kg:150,reps:8,done:true,type:'',rm1:0}     // la vraie série de travail
+        ]}
+      ]}];
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets:[{kg:100,reps:5,type:''}]}]}]};
+      _histConflicts=[];
+      finalImportHist();
+      return prs();
+    });
+
     /* ── LE PROPRIÉTAIRE, POUR LUI-MÊME (la moitié ② de la composition) ── */
     o.proprio = ['','É','W','D','N','X'].map(t=>
       t+':'+sur(()=>String(_serieFaitFoiPourPR({done:true,kg:100,reps:5,type:t})))).join(' ');
@@ -36380,6 +36408,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     R.c2EchauffLourd && R.c2EchauffLourd.types==='""/""/"D"'
       && R.c2EchauffLourd.prs==='Squat à la Barre=200x3', JSON.stringify(R.c2EchauffLourd));
 
+  /* ⭐⭐ LE TÉMOIN QUI JUSTIFIE TOUTE LA SOUS-ÉTAPE C2. Une séance importée portant un `'É'`
+     traverse la vraie boucle des records. AVANT C2 : le record est « 250x3 », l'échauffement.
+     APRÈS : il est « 150x8 », la série de travail. *C'est le seul témoin du bloc qui, s'il
+     rougit un jour, dira qu'un échauffement est redevenu un record.* */
+  t('B-CCCVI ② ⭐⭐ C2 — CAS FUTUR : une séance importée portant un « É » ne crée PLUS de record d\'échauffement',
+    R.c2FuturEchauffement==='Soulevé de Terre=150x8 | Squat à la Barre=100x5',
+    'reçu : '+R.c2FuturEchauffement);
   t('B-CCCVI ③ ⭐ le PROPRIÉTAIRE refuse É et W, accepte le reste (moitié ② de la composition)',
     R.proprio===':true É:false W:false D:true N:true X:true',
     'reçu : '+R.proprio);
@@ -36411,6 +36446,15 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       /const type=s\.type==='D'\?'D':'';/.test(lg), '');
     t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — le recalcul des records (setup.js) est intact, son repli compris',
       /typeof _serieFaitFoiPourPR==='function' \? !_serieFaitFoiPourPR\(st\)/.test(su), '');
+    /* ⛔⛔ LE VOLUME N'EST PAS LES RECORDS, ET CE TÉMOIN EST NÉ DU CONTRÔLE NÉGATIF. La mutation
+       « le volume appelle le propriétaire des records » est restée VERTE : elle est
+       numériquement neutre (une charge ou un nombre de reps nul ajoute 0 au volume de toute
+       façon). Elle n'en est pas moins une **fusion par ressemblance** — « cette série compte-t-elle
+       dans le volume ? » et « fait-elle foi pour un record ? » sont deux questions, et rien ne
+       garantit qu'elles resteront d'accord. *Une dérive invisible à l'exécution ne se tient que
+       par la source.* */
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — la règle du VOLUME reste distincte de celle des records',
+      /_sessEdits\.exs\.forEach\(ex=>ex\.sets\.forEach\(s=>\{if\(s\.done&&s\.type!=='É'&&s\.type!=='W'\)vol\+=/.test(su), '');
     /* ⛔ NUTRITION — consigne absolue de Michel : rien de ce chantier ne l'approche. */
     t('B-CCCVI ⑦ ⛔ NUTRITION — le propriétaire des records n\'est appelé nulle part dans `app.js`',
       !/_serieFaitFoiPourPR/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8'))), '');
