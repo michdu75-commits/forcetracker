@@ -36402,10 +36402,24 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     (codeA.match(/_resoudreNutrition\(/g)||[]).length===2
     && /_resoudreNutrition\(/.test(corpsA('_ref100')),
     'occurrences='+(codeA.match(/_resoudreNutrition\(/g)||[]).length);
-  t('CCCV ㉒ ⭐ LES 8 ORIGINES DISENT D\'OÙ ELLES VIENNENT — et aucune ne recopie une once de '+
-    'logique : elles passent un nom, rien d\'autre',
-    ['barcode','manuel','reprise','etiquette','marque','ciqual','historique','off']
-      .every(o=>codeA.indexOf("origine:'"+o+"'")>=0), 'une origine ne se déclare pas');
+  /* ⚠️⚠️ ft-v1208 — CE TÉMOIN ÉTAIT AVEUGLE, ET C'EST LE CONTRÔLE NÉGATIF QUI L'A DIT.
+     Il cherchait `origine:'X'` N'IMPORTE OÙ dans le fichier — or plusieurs de ces noms vivent
+     AUSSI dans `_afSetSrc`, qui décrit la provenance de la LIGNE. Mesuré : débrancher l'origine
+     `ciqual` de `_ref100` le laissait parfaitement vert, parce que l'autre occurrence suffisait.
+     👉 ***C'est le jumeau EXACT d'un garde du générateur de PDF corrigé la veille — corrigé là,
+     pas ici*** (**R8**, la porte jumelle, dans le banc d'essai lui-même).
+     Il lit désormais les APPELS de `_ref100`, et la liste doit être FERMÉE : ni une de moins
+     (une porte débranchée), ni une de plus (une origine inventée qui ne serait classée nulle
+     part par le résolveur). */
+  {
+    const _origVues = (codeA.match(/_ref100\((?:[^;])*?origine:'(\w+)'/g)||[])
+      .map(x=>(x.match(/origine:'(\w+)'$/)||[])[1]).filter(Boolean).sort();
+    t('CCCV ㉒ ⭐ LES 8 ORIGINES SONT PASSÉES À `_ref100` — et aucune ne recopie une once de '+
+      'logique : elles passent un nom, rien d\'autre',
+      JSON.stringify(_origVues)===JSON.stringify(
+        ['barcode','ciqual','etiquette','historique','manuel','marque','off','reprise']),
+      'origines réellement passées à `_ref100` : '+JSON.stringify(_origVues));
+  }
   t('CCCV ㉓ ⛔⛔ LA LOI NE S\'ÉCRIT QU\'UNE FOIS : `_nrjPlancher` est le seul endroit qui compare '+
     'une énergie à `4P + 9L`. *Deux écritures finiraient avec deux tolérances, et on ne saurait '+
     'plus laquelle croire* (R2)',
@@ -36444,6 +36458,198 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     && corpsA('_coherenceKcal').indexOf('_bcNutr.fiab')
       < corpsA('_coherenceKcal').indexOf('_kcalImpossible(pfx)'),
     'l\'ordre des avertissements a changé sans décision');
+}
+
+
+/* ══════════ BLOC CCCVI — 📱 LE CAS RÉEL DE LA CAPTURE iPHONE, DE BOUT EN BOUT (ft-v1208) ══════════
+   Michel envoie une capture de son iPhone le 13/09 à 20:02 : lentilles Raynal & Roquelaure
+   (3021690201123), 410 g, **198 kcal** pour 25 P / 41 G / 13 L, avec l'ANCIEN encadré
+   « 198 kcal ne colle pas à ces macros… » et son bouton « Mettre 381 kcal ».
+
+   ⭐⭐ CE BLOC EXISTE PARCE QUE LE BANC NE POUVAIT PAS RÉPONDRE. Le bloc CCCV éprouve
+   `_ref100` **isolément**, cas par cas — il ne conduit JAMAIS la chaîne complète
+   *code-barres → formulaire → 410 g → valeurs affichées*. Or c'est exactement cette chaîne que
+   la capture montre. 👉 ***Un banc qui teste la pièce ne répond pas à une question posée sur
+   la machine*** : il a fallu écrire une sonde jetable pour trancher, alors qu'un témoin
+   permanent aurait répondu en une passe.
+
+   ⛔⛔ ET LA CAUSE DE LA CAPTURE N'ÉTAIT PAS UN DÉFAUT DE CODE — c'est dit plutôt que masqué.
+   Mesuré : le déploiement était vert 1 h 30 avant, le résolveur s'applique bien, et
+   `_majPeutSAppliquer` retenait le rechargement parce que l'écran courant n'était pas
+   l'Accueil (décision de ft-v1184). *Le code était juste ; c'est la VERSION SERVIE qui ne
+   l'était pas.* Ces témoins figent donc le comportement attendu pour que la question ne se
+   repose jamais — et la mutation ⑤ du contrôle négatif réintroduit exactement l'écran de la
+   capture. */
+console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const v=id=>(document.getElementById(id)||{}).value;
+    const coh=()=>{const e=document.getElementById('af-coherence');
+      return {vu:!!e&&e.style.display!=='none', txt:e?(e.textContent||'').replace(/\s+/g,' '):''};};
+    /* ⚠️ LA FICHE EST CELLE DE LA CAPTURE, PAS UNE INVENTION : 410 g de paquet, portion
+       fabricant 205 g, et un pour-100 g qui redonne EXACTEMENT 198/25/41/13 à 410 g. */
+    const FICHE={product_name:'Lentilles Cuisinées à l\'Auvergnate', brands:'Raynal & Roquelaure',
+      quantity:'410 g', serving_quantity:205,
+      nutriments:{'energy-kcal_100g':48.3,'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2}};
+    const SAIN={product_name:'Blanc de poulet', brands:'Test', quantity:'200 g', serving_quantity:100,
+      nutriments:{'energy-kcal_100g':165,'proteins_100g':31,'carbohydrates_100g':0,'fat_100g':3.6}};
+    let FICHE_COURANTE=FICHE;
+    const vrai=window.fetch;
+    window.fetch=async(u,i)=>{const s=String(u);
+      if(s.indexOf('openfoodfacts')>=0&&/product\//.test(s))return{ok:true,json:async()=>({status:1,product:FICHE_COURANTE})};
+      if(s.indexOf('openfoodfacts')>=0)return{ok:true,json:async()=>({products:[]})};
+      return vrai(u,i);};
+
+    /* ── LE PARCOURS EXACT DE LA CAPTURE ── */
+    const jouer=async(saisie)=>{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320);
+      await _lookupBarcode('3021690201123',saisie,false); await d(450);
+      const g=document.getElementById('af-bc-grams'); g.value='410';
+      g.dispatchEvent(new Event('input',{bubbles:true})); await d(400);
+      return { kcal:v('af-kcal'), prot:v('af-prot'), carbs:v('af-carbs'), fat:v('af-fat'),
+               qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh() };
+    };
+    o.scan   = await jouer('scan');
+    o.tape   = await jouer('manuel');
+    /* ⛔ on compare les DEUX RÉSOLUTIONS ENTIÈRES, pas seulement la valeur affichée */
+    o.identiques = JSON.stringify(o.scan.bc.fiab)===JSON.stringify(o.tape.bc.fiab)
+                && o.scan.kcal===o.tape.kcal;
+
+    /* ── LA LIGNE RÉELLEMENT ENREGISTRÉE ── */
+    _afSetSrc({saisie:'scan',origine:'off',sourceId:'3021690201123',etat:'tel-que-vendu',
+               per100:_per100De(_bcNutr)});
+    const pv=_provFood({kcal:+v('af-kcal'),prot:+v('af-prot'),carbs:+v('af-carbs'),fat:+v('af-fat')});
+    o.ligne = pv.fiab ? JSON.parse(JSON.stringify(pv.fiab)) : 'ABSENTE';
+    o.per100 = pv.per100 || null;
+
+    /* ── NON-RÉGRESSION : un produit cohérent ne bouge pas d'un iota ── */
+    FICHE_COURANTE=SAIN;
+    o.sain = await (async()=>{ S.foodLog=[]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320);
+      await _lookupBarcode('0000000000000','scan',false); await d(450);
+      const g=document.getElementById('af-bc-grams'); g.value='100';
+      g.dispatchEvent(new Event('input',{bubbles:true})); await d(350);
+      const pv2=_provFood({kcal:+v('af-kcal'),prot:+v('af-prot'),carbs:+v('af-carbs'),fat:+v('af-fat')});
+      return {kcal:v('af-kcal'), etat:_bcNutr.fiab.etat, coh:coh(), trace:pv2.fiab===undefined}; })();
+    FICHE_COURANTE=FICHE;
+
+    /* ── LE DISCRIMINANT QUI A TRANCHÉ « A / B / C » : les 8 origines PARLENT ── */
+    o.origines={};
+    for(const or of ['barcode','off','ciqual','marque','etiquette','manuel','reprise','historique']){
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(120);
+      _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:or});
+      const g=document.getElementById('af-bc-grams'); if(g) g.value='410';
+      if(typeof _bcApplyGrams==='function'){ try{_bcApplyGrams();}catch(e){} }
+      _afCoherence(); await d(50);
+      const c=coh();
+      o.origines[or]={etat:_bcNutr.fiab.etat, kcal:v('af-kcal'),
+                      parle:c.vu && c.txt.indexOf('\u{1F52C}')===0,
+                      ancienEncadre:/ne colle pas à ces macros/.test(c.txt)};
+    }
+    window.fetch=vrai;
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)}; }
+  });
+
+  t('CCCVI ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCVI ① ⛔⛔ LA CAPTURE, REJOUÉE DE BOUT EN BOUT — le même code-barres à 410 g ne donne '+
+    'PLUS 198 kcal mais 382, et les macros de la capture sont inchangées (25 / 41 / 13)',
+    (X.scan||{}).kcal==='382' && X.scan.prot==='25' && X.scan.carbs==='41' && X.scan.fat==='13'
+    && X.scan.qty==='410', JSON.stringify(X.scan&&{k:X.scan.kcal,p:X.scan.prot,c:X.scan.carbs,f:X.scan.fat}));
+  t('CCCVI ② ⛔⛔ … ET L\'ANCIEN ENCADRÉ A DISPARU : plus de « ne colle pas à ces macros » ni de '+
+    'bouton « Mettre 381 kcal » — c\'est l\'avertissement de FIABILITÉ qui parle, et il nomme '+
+    'les deux valeurs',
+    X.scan && X.scan.coh.vu===true && X.scan.coh.txt.indexOf('\u{1F52C}')===0
+    && /48\.3/.test(X.scan.coh.txt) && /93\.2/.test(X.scan.coh.txt)
+    && !/ne colle pas à ces macros/.test(X.scan.coh.txt), (X.scan||{}).coh&&X.scan.coh.txt.slice(0,120));
+  t('CCCVI ③ ⭐⭐ SCANNÉ ET TAPÉ : la MÊME résolution, objet entier comparé (exigence nommée par '+
+    'Michel), et la même valeur à l\'écran',
+    X.identiques===true, JSON.stringify([X.scan&&X.scan.kcal, X.tape&&X.tape.kcal]));
+  t('CCCVI ④ ⛔ 48,3 N\'EST PLUS UNE VALEUR DE CONFIANCE : le pour-100 g retenu est 93,2 et '+
+    'l\'état est `DERIVE_ESTIMABLE`',
+    X.scan && X.scan.bc.kcal100===93.2 && X.scan.bc.fiab.etat==='DERIVE_ESTIMABLE'
+    && X.scan.bc.fiab.brut===48.3, JSON.stringify(X.scan&&X.scan.bc.fiab));
+  t('CCCVI ⑤ ⛔⛔ LA TRACE BRUTE PART AVEC LA LIGNE — et `champSource` SURVIT À LA DÉRIVATION. '+
+    '*Le code calculait le champ d\'origine, le transportait, puis le jetait exactement là où on '+
+    'le cherchait* (défaut trouvé par la trace runtime du 13/09)',
+    X.ligne && X.ligne!=='ABSENTE' && X.ligne.brut===48.3 && X.ligne.retenu===93.2
+    && X.ligne.champ==='P/G/L' && X.ligne.champSource==='energy-kcal_100g',
+    JSON.stringify(X.ligne));
+  t('CCCVI ⑥ ⭐ … et le pour-100 g enregistré porte la valeur RETENUE, pas la brute',
+    X.per100 && X.per100.kcal===93.2, JSON.stringify(X.per100));
+  t('CCCVI ⑦ ⛔ NON-RÉGRESSION — un produit cohérent scanné par le même chemin ne bouge pas, '+
+    'n\'affiche aucun avertissement, et sa ligne ne gagne aucune trace',
+    X.sain && X.sain.kcal==='165' && X.sain.etat==='COHERENT'
+    && X.sain.coh.vu===false && X.sain.trace===true, JSON.stringify(X.sain));
+  t('CCCVI ⑧ ⭐⭐ LE DISCRIMINANT QUI A TRANCHÉ LA CAPTURE — sous cette version, **les 8 origines** '+
+    'font parler l\'avertissement de fiabilité ; seule la RÉÉCRITURE de la valeur diffère. '+
+    '*C\'est pour ça que l\'absence de cet avertissement sur la capture prouvait une version '+
+    'périmée, quelle que soit la porte employée.*',
+    X.origines && Object.keys(X.origines).length===8
+    && Object.keys(X.origines).every(k=>X.origines[k].parle===true)
+    && Object.keys(X.origines).every(k=>X.origines[k].ancienEncadre===false),
+    JSON.stringify(X.origines));
+  t('CCCVI ⑨ ⛔ … et la frontière tient : les 5 origines EXTERNES retiennent 382, les 3 origines '+
+    'UTILISATEUR gardent 198 sans être réécrites',
+    X.origines
+    && ['barcode','off','ciqual','marque','etiquette'].every(k=>X.origines[k].kcal==='382')
+    && ['manuel','reprise','historique'].every(k=>X.origines[k].kcal==='198'),
+    JSON.stringify(X.origines&&Object.keys(X.origines).map(k=>k+':'+X.origines[k].kcal)));
+  t('CCCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — ce que le comportement ne montre pas. */
+{
+  const srcB=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeB=srcB.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LB=codeB.split('\n'), DB=[];
+  LB.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DB.push([i,m[1]]); });
+  const corpsB=(nom)=>{ const k=DB.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LB.slice(DB[k][0], k+1<DB.length?DB[k+1][0]:LB.length).join('\n'); };
+
+  t('CCCVI ⑪ ⛔⛔ `champSource` EST POSÉ UNE SEULE FOIS ET N\'EST JAMAIS RÉÉCRIT — c\'est toute '+
+    'la différence avec `champ`, qui dit d\'où vient la valeur RETENUE et change donc de branche '+
+    'en branche',
+    (corpsB('_resoudreNutrition').match(/champSource\s*:/g)||[]).length===1
+    && !/res\.champSource\s*=/.test(corpsB('_resoudreNutrition')),
+    'champSource est réécrit ou dupliqué');
+  t('CCCVI ⑫ ⛔ … et il traverse jusqu\'à la ligne enregistrée (sinon il ne sert à rien)',
+    /champSource\s*:\s*z\.champSource/.test(corpsB('_provFood')),
+    'la trace de la ligne ne porte pas le champ source');
+  t('CCCVI ⑬ ⛔⛔ AUCUN CAS PARTICULIER RAYNAL — interdiction explicite de Michel : pas de test '+
+    'sur le code-barres, pas de 93,2 en dur, pas de nom de produit dans la décision',
+    !/3021690201123/.test(codeB) && !/93\.2/.test(corpsB('_resoudreNutrition'))
+    && !/[Rr]aynal/.test(corpsB('_resoudreNutrition')) && !/[Rr]aynal/.test(corpsB('_ref100')),
+    'un cas particulier s\'est glissé dans la décision');
+  t('CCCVI ⑭ ⛔ HORS PÉRIMÈTRE — le garde qui retient le rechargement N\'A PAS ÉTÉ TOUCHÉ : '+
+    'c\'est une décision de ft-v1184 (*ne pas arracher l\'écran*), pas un oubli (**R30**). '+
+    '*C\'est elle qui explique la capture, et ce n\'était pas à moi de la renverser.*',
+    /_curScreen\s*&&\s*window\._curScreen!=='home'|window\._curScreen&&window\._curScreen!=='home'/
+      .test(corpsB('_majPeutSAppliquer'))
+    && /_finishing/.test(corpsB('_majPeutSAppliquer'))
+    && /_evRunning/.test(corpsB('_majPeutSAppliquer')),
+    'le garde de mise à jour a bougé');
+  t('CCCVI ⑮ ⛔ HORS PÉRIMÈTRE — la douane n\'a pas bougé (21 règles, 9 `INVALID`, aucun appel '+
+    'au résolveur)',
+    (corpsB('_douaneLigne').match(/dit\('/g)||[]).length===21
+    && (corpsB('_douaneLigne').match(/'INVALID',/g)||[]).length===9
+    && !/_resoudreNutrition|_nrjPlancher/.test(corpsB('_douaneLigne')),
+    'la douane a bougé');
 }
 
 await b.close(); srv.close();

@@ -426,7 +426,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1207`** (prochaine : `ft-v1208`).
+> **Version actuelle : `ft-v1208`** (prochaine : `ft-v1209`).
 > 🧊🧊 **LE CHANTIER NUTRITION EST EN PHASE D'OBSERVATION RÉELLE — NE PAS Y TOUCHER (décision de Michel, 13/09/2026, après validation de l'étape 6).** *« Je ne veux pas lancer un nouveau chantier Nutrition pour l'instant. Ne modifie plus son comportement sans nouveau feu vert explicite. »* ⛔ **Ce qui est GELÉ, nommément** : les **21 règles** de la douane · aucune ne devient **bloquante** · aucun **seuil** · les **divergences déjà connues** (elles restent telles quelles) · `savedFoods` · l'écart **48,3 / 48** · l'historique et les migrations · **le format du carnet d'observation**. ⭐ **Ce qu'on attend** : ≥ **100 lignes** réellement observées · les **4 écrivains** vus au moins une fois (`addFoodEntry` · `quickAddFood` · `rejouerRepas` · `saveEditFood`) · idéalement **2 semaines** · et surtout une **couverture** suffisante des formes réellement rencontrées. ⚠️⚠️ **ET LA CONSIGNE QUI COMPTE LE PLUS QUAND LE RAPPORT ARRIVERA** : *« une règle qui n'a jamais mordu ne doit PAS être considérée automatiquement comme inutile — il faut vérifier que les formes capables de la déclencher ont réellement été rencontrées »*. 👉 *Sans cette vérification, « jamais mordu » se lit « à supprimer », et on retirerait un garde-fou parce que le cas ne s'est pas encore présenté.* Le rapport se lit dans **Profil → Admin → « 📊 Douane — observation du journal »**.
  Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
@@ -460,6 +460,49 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1208 — 📱 LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE · LE CODE ÉTAIT JUSTE, LA VERSION SERVIE NE L'ÉTAIT PAS** — Michel envoie une capture de son iPhone (13/09, 20:02) : lentilles Raynal à 410 g, **198 kcal**, l'ancien encadré *« ne colle pas à ces macros »* et son bouton *« Mettre 381 kcal »* — soit exactement le comportement que ft-v1207 était censé avoir supprimé. ⛔ **Sa consigne décide de tout** : ***« ne corrige rien avant d'avoir tranché A / B / C »***, ***« ne considère pas la capture comme une preuve que ft-v1207 est cassée tant que tu n'as pas d'abord vérifié qu'elle est réellement exécutée »***.
+
+**⭐⭐ VERDICT : B — ET CHAQUE BRANCHE EST FERMÉE PAR UNE MESURE, PAS PAR UN RAISONNEMENT.**
+
+| branche | ce qui la ferme |
+|---|---|
+| **A** — pas déployée | ⛔ **tombe** : déploiement Pages `success` sur `7e8d3ea9` à **16:32:51 UTC**, soit **1 h 30 avant** la capture |
+| **C** — exécutée mais le résolveur n'atteint pas le code-barres | ⛔ **tombe** : trace runtime complète du chemin réel sur le code servi — **410 g → 382 kcal**, avertissement 🔬 présent, trace posée sur la ligne, **0 erreur JS** |
+| **B** — déployée mais version périmée servie | ✅ **retenue** |
+
+**⭐⭐ ET LA PREUVE QUE C'EST B EST DANS LA CAPTURE ELLE-MÊME — c'est le geste qui a tout décidé.** Mesuré sur les **8 origines** : sous ft-v1207, **toutes** font parler l'avertissement 🔬 ; seule la **RÉÉCRITURE** de la valeur diffère (externes → 382, utilisateur → 198). Or la capture ne montre **aucun** 🔬, mais l'**ancien** encadré. 👉 ***Donc ce code n'a pas été exécuté, quelle que soit la porte employée*** — la démonstration ne dépend plus de savoir par quelle porte l'aliment est entré.
+
+**⭐ ET LE PAYLOAD NE PEUT PAS SAUVER L'HYPOTHÈSE INVERSE** : balayage exhaustif des **54 pour-100 g** qui affichent exactement `198 / 25 / 41 / 13` à 410 g — **la loi mord sur les 54**. *Il n'existe aucune fiche compatible avec la capture que ft-v1207 aurait laissée passer.*
+
+**⭐⭐ LA CAUSE EST MESURÉE, PAS DÉDUITE.** `_majPeutSAppliquer` retient le rechargement tant que `_curScreen !== 'home'` :
+
+| écran | la mise à jour s'applique ? |
+|---|---|
+| **Accueil** | ✅ oui |
+| **Nutrition · Séance · Progrès · Profil · Coach** | ⛔ **non — retenue** |
+
+Michel était sur l'écran **Nutrition**. La version était **téléchargée et activée** (`skipWaiting`), le rechargement **retenu**, et ⚠️ **hors séance la personne n'est prévenue de RIEN** : le message *« Mise à jour disponible »* n'existe que pendant une séance. ⛔⛔ **CE GARDE N'A PAS ÉTÉ TOUCHÉ** — c'est la décision de **ft-v1184** (*ne pas arracher l'écran sous les doigts de quelqu'un*), pas un oubli, et la « réparer » sans feu vert serait exactement ce que **R30** interdit. *Mesurée, figée par un témoin de hors-périmètre, rendue à Michel dans `docs/JOURNAL-DE-TEST.md`.*
+
+**⛔⛔ CE QUI EST CORRIGÉ EST UN AUTRE DÉFAUT, ET C'EST LA TRACE QUI L'A TROUVÉ — contre le §3 de sa demande.** Il écrivait : *« le nouveau code est censé tracer le champ source utilisé »*. **Il ne le fait pas dans le seul cas qui l'intéresse** : en `DERIVE_ESTIMABLE`, `res.champ` est **écrasé** par `'P/G/L'` (et par le nom de l'autre champ en `ALTERNATIVE_FIABLE`). 👉 ***Le code calculait l'information, la transportait, puis la jetait exactement là où on la cherchait.*** `champSource` survit désormais à **toutes** les branches et part **avec la ligne** — la question *« d'où vient le 48,3 »* devient mesurable au prochain scan. ⭐ **Correctif générique** : aucun test sur le code-barres, aucun 93,2 en dur, aucun nom de produit dans la décision (un témoin l'épingle).
+
+**⭐⭐ LE BANC GAGNE CE QUI LUI MANQUAIT, ET C'EST LA LEÇON QUI SERVIRA LE PLUS.** Le bloc CCCV éprouve `_ref100` **isolément**, cas par cas — il ne conduit **jamais** la chaîne *code-barres → formulaire → 410 g → valeurs affichées*. Or c'est **exactement** cette chaîne que la capture montre. 👉 ***Un banc qui teste la PIÈCE ne répond pas à une question posée sur la MACHINE*** : il a fallu une sonde jetable pour trancher, là où un témoin permanent aurait répondu en une passe. Le bloc **CCCVI** la conduit désormais de bout en bout, avec le code-barres réel et les 410 g réels — **la capture est rejouée à chaque passe**.
+
+**⚠️⚠️ ET UN TÉMOIN ÉTAIT AVEUGLE — LE JUMEAU EXACT D'UN GARDE CORRIGÉ LA VEILLE.** Celui des 8 origines cherchait `origine:'X'` **n'importe où** dans le fichier ; or ces noms vivent **aussi** dans `_afSetSrc` (la provenance de la ligne). **Mesuré : débrancher l'origine `ciqual` de `_ref100` le laissait parfaitement vert.** 👉 ***J'avais corrigé ce garde dans le générateur du PDF la veille, et pas son jumeau dans le banc*** — **R8**, la porte jumelle, à l'intérieur du banc d'essai lui-même. Il lit désormais les **appels** de `_ref100`, et la liste est **FERMÉE** : il rougit sur une origine en moins **comme** sur une origine en trop.
+
+**⚠️ CE QUE JE NE PEUX TOUJOURS PAS FAIRE, DIT PLUTÔT QUE DEVINÉ** (§3) : Open Food Facts reste injoignable depuis ce conteneur — **403 sur les trois domaines essayés**. **L'origine exacte du 48,3 n'est donc toujours pas mesurable d'ici.** ⭐ Mais elle le devient **sur le téléphone** : `champSource` est maintenant enregistré avec la ligne au prochain scan.
+
+**⭐ INSTANTANÉ IDENTIQUE OCTET POUR OCTET** (sha `226a7e9c523cae3f`, le même depuis ft-v1205) : **aucune ligne déjà écrite ne change** — le correctif n'ajoute qu'un champ de traçabilité aux lignes déjà signalées.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune valeur affichée ne bouge : un champ de traçabilité cesse d'être écrasé, et le banc gagne un témoin bout en bout.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** (périmètre de Michel, §6) : ⛔ `S.savedFoods` · l'historique · les migrations · les `ml` · `saveEditFood` · les lignes à zéro · la provenance de `rejouerRepas` · **les 21 règles de la douane** · `estimateFoodAI` (chantier séparé). ⛔ **Et le garde de mise à jour reste tel quel** : la question *« faut-il prévenir hors séance ? »* est **écrite et rendue à Michel**, pas tranchée par moi. ⚠️ **Michel doit vérifier sur Safari/iPhone** — et le geste est nommé : **revenir sur l'Accueil 🏠**, l'app se recharge seule et affiche « Application mise à jour ».
+
+Tests : **parcours 3813/3813 sur l'arbre FINAL** (bloc **CCCVI**, 16 témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** — ① ⭐⭐ **LA CAPTURE RÉINTRODUITE** (la valeur résolue n'est plus appliquée : 198 revient, l'ancien encadré aussi) → **4** · ② `champSource` écrasé comme `champ` → **2** · ③ la trace ne porte plus le champ source → **2** · ④ ⭐ **une origine débranchée de `_ref100`** → **1, exactement le témoin refermé** · ④bis ⭐ **une origine inventée en trop** → **1, le même** (la liste est fermée dans les deux sens) · ⑤ un cas particulier Raynal → **1** · ⑥ ⛔ **hors périmètre : le garde de mise à jour « réparé »** → **1, exactement lui** · ⑦ ⛔ hors périmètre : la douane perd une règle → **1** · ⑧ la loi devient trop stricte (le produit sain est réécrit) → **1** · ⑨ scanné ≠ tapé → **3**.
+
+📄 **PDF POUR GPT** : `docs/CAPTURE-IPHONE-TRANCHEE.pdf` (**21ᵉ** de la série), généré par `tools/gen_1208_pdf.py` — **53 gardes**, **13 mutations éprouvées sur un arbre COPIÉ**, toutes refusent, contrôle sain vert avant ET après. ⭐ Ses gardes les plus utiles protègent des **absences** : que le champ source ne soit jamais réécrit, que le garde de mise à jour n'ait pas été « réparé », qu'aucun cas particulier ne se soit glissé dans la décision, et que le témoin des 8 origines ne redevienne pas aveugle. ⚠️⚠️ **ET LE CONTRÔLE NÉGATIF A ENCORE TROUVÉ DEUX GARDES FAIBLES À MOI** — dont un qui n'était pas ce qu'il paraissait. ① *« la branche de dérivation écrase bien `champ` »* : mesuré, `res.champ = 'P/G/L'` existe **deux fois** (dérivation normale **et** énergie absente), donc n'en exiger qu'une laissait l'autre satisfaire le garde — 👉 **et c'est ma MUTATION qui était invalide, pas le garde** : elle n'en retirait qu'une. *Une mutation qui ne fait pas ce qu'elle annonce est indiscernable d'un garde aveugle* — je l'avais écrit en ft-v1205, je viens de le repayer. ② Le garde qui vérifie que le bloc conduit la vraie chaîne se satisfaisait du **second** scan (celui du produit sain) quand on retirait le premier : il **compte** désormais, et le bloc est **borné** au lieu d'être « tout ce qui suit ».
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1208. |
 
 **ft-v1207 — 🔬 LA FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE · UNE LOI, PAS UN SEUIL — ET LE POINT COMMUN EXISTAIT DÉJÀ** — Michel lève le gel Nutrition **pour ce seul chantier**, avec ⛔ **la borne qui décide de tout** : ***« je ne veux pas un correctif spécifique aux lentilles Raynal. Je veux que le problème soit traité pour TOUS les aliments et toutes les sources concernées »***, ***« ne recrée pas huit variantes du même contrôle »***, ***« ne jamais écraser la source et perdre la trace de ce qui s'est passé »***, ***« les données explicitement saisies par l'utilisateur ne doivent pas être réécrites arbitrairement comme une donnée externe »***. ⛔ **Comportement explicitement interdit après ce chantier** : *« 48,3 utilisé normalement + simple warning »*.
 
@@ -740,33 +783,6 @@ Tests : **parcours 3680/3680 sur l'arbre FINAL** (+13, bloc **CCXCIX**) — **to
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1202. |
 
-**ft-v1201 — 🔢 3-iii : LE BLOC « POIDS REPRIS EN GRAMMES » · LA PROMESSE DE 3-ii TENUE, ET DEUX BLOCS MUTUELLEMENT EXCLUSIFS** — Michel valide le correctif ft-v1200 et relance le chantier sur les 4 sous-étapes restantes, avec ⭐ **une règle NOUVELLE tirée de ft-v1200** : ***« si un défaut réel est découvert pendant une extraction : le mesurer · l'écrire au journal avec sa cause · ne pas le corriger dans la sous-étape · attendre un feu vert séparé »***.
-
-**⭐ TEST D'ENTRÉE PASSÉ, ET SUR LES DEUX MOITIÉS** — `quickFillFood` et `_afSuggPrendreLocale` portaient la **condition** ET le **corps de 3 lignes** (`_afUnite='g'` · `_afPoidsDeclare=+X.q` · `_afQtyNom=_afNomCourant()`) **strictement identiques**, au nom de variable près. Mesuré : exactement **2 copies de chaque** → **`_afReprendreGrammes(src)`**.
-
-**⭐⭐ C'EST LA SOUS-ÉTAPE QUI TIENT LA PROMESSE DE 3-ii.** `_qGrammes` rend un **NOMBRE** précisément pour ça : la condition s'écrit `_qGrammes(src) > 0` **sans réécrire la règle une 3ᵉ fois**. *Un propriétaire pour la règle, un second pour ce qu'on en fait* — et c'est pour cette raison que 3-ii avait refusé de rendre un booléen.
-
-**⛔⛔ LE GARDE `!_bcNutr` N'EST PAS PARTI AVEC, ET C'EST LE PÉRIMÈTRE.** Il dit *« aucun pour-100 g n'est posé »* — une question sur l'**ÉTAT DE L'ÉCRAN**, pas sur la quantité de la ligne. L'absorber ferait **deux extractions en une** *et* rendrait le propriétaire dépendant d'une globale que ses appelants contrôlent. ⚠️ **Et la mutation qui l'y met ne change AUCUN comportement** — elle ne rougit que sur le **témoin de source**. 👉 ***C'est exactement pourquoi un témoin de source existe à côté des témoins de comportement*** : une dérive de conception peut être invisible à l'exécution.
-
-**⭐⭐ ET LA MESURE QUI A DÉCIDÉ DES FIXTURES N'ÉTAIT PAS DANS LE PLAN : LES BLOCS DE 3-ii ET 3-iii SONT MUTUELLEMENT EXCLUSIFS.** `_bcNutr` est posé par le bloc du pour-100 g (celui de 3-ii) ; donc celui de 3-iii ne s'exécute **que lorsque l'autre ne s'est pas exécuté**. 👉 **Des fixtures recopiées de 3-ii n'auraient jamais franchi le garde**, et les six cas auraient rendu la même valeur — *le piège de ft-v1199, évité cette fois parce qu'on l'a cherché d'avance au lieu de le découvrir.*
-
-**⚠️ SONDE : ELLE CONDUISAIT, ELLE N'OBSERVAIT PAS.** Les clés `1bii_*` lisent `_afSrc`, les `3ii_*` lisent la pastille — **aucune** ne lisait `_afUnite`/`_afPoidsDeclare`/`_afQtyNom`, donc l'instantané serait resté identique **quoi qu'on fasse à ce bloc**. Étendue de **17 à 19 clés AVANT le BEFORE**. ⭐ *La leçon de ft-v1199 appliquée d'avance, pas repayée.*
-
-**⭐ CRITÈRE BINAIRE ATTEINT** : instantané **identique octet pour octet** avant/après — **sha256 `57b13433fbaa1c60`**, diff vide.
-
-**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 3-i SE DÉPLACE POUR LA 3ᵉ FOIS** : **5 écritures** (3-i) → **3 + 2 appelants** (3-ii) → **1 SEULE écriture** — `_provFood` @1232, le seul site qui **ÉCRIT** `p.q`/`p.u`, réservé à **3-iv** — **+ 3 appelants** de `_qGrammes`. *La garantie ne s'affaiblit pas, elle change de forme, et les mutations d'hier la font toujours rougir par l'autre bout.*
-
-**⚠️⚠️ UN DE MES COMPTEURS ÉTAIT AVEUGLE — MESURÉ AVANT D'ÉCRIRE LE CHIFFRE, pas après.** Le filtre ligne-à-ligne du bloc voisin trouvait **5** occurrences de `_qGrammes` là où il y en a **4** : une ligne de mon propre docblock la **CITE** et commence par un mot, donc elle survit au filtre. 👉 ***C'est le témoin aveugle de ft-v1200, attrapé avant qu'il ne publie un chiffre faux*** — le témoin retire désormais les blocs de commentaire **entiers**. *La leçon d'hier appliquée d'avance : c'est le seul progrès qui compte.*
-
-**⭐ ET UN COMMENTAIRE A DÉMÉNAGÉ AU LIEU D'ÊTRE SUPPRIMÉ** : celui de `_afSuggPrendreLocale` qui explique pourquoi `_afPoidsPose` **n'est pas** posé (essayé en ft-v1176, refusé par la mesure) suit le code qu'il explique. *Un commentaire qui reste derrière quand son code part devient faux le jour même.* Deux témoins figent cette non-régression.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : deux copies d'un bloc deviennent une (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **3 sous-étapes restantes** — `3-iv` (la dernière des formes, le seul site qui ÉCRIT), `3-v`, puis `1b-v` · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts · ⛔ **aucun défaut réel découvert cette fois** — donc rien à écrire au journal de test. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-Tests : **parcours 3667/3667 sur l'arbre FINAL** (+18, bloc **CCXCVIII** 17 · plus 1 témoin ajouté à **CCXCIII**) — ⭐ **et l'écart de +1 a été EXPLIQUÉ au lieu d'être accepté** : 3649 + 17 = 3666 prédits, **3667 obtenus**, la différence étant le témoin qui compte les appelants de `_qGrammes` (CCXCIII passe de 11 à 12 assertions). *Le total est le seul signal d'une passe tronquée — encore faut-il expliquer un écart de +1* (§61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 9 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① le propriétaire ne pose jamais rien → **5** · ② il pose même une quantité refusée → **2** · ③ il réécrit la règle au lieu d'appeler `_qGrammes` → **1**, exactement le témoin de la promesse · ④ ⭐ **débordement : `!_bcNutr` absorbé** → **1**, *uniquement* le témoin de source · ⑤ une porte garde sa copie → **1** · ⑥ la porte jumelle oubliée (**R8**) → **4** · ⑦ débordement inverse : les portions acceptées → **3** · ⑧ `_afQtyNom` oublié → **4** · ⑨ `_afPoidsPose` posé au passage (la régression ft-v1176 rejouée) → **2**.
-
-Fichiers : `app.js`, `tools/instantane_1b23.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1201. |
 
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.

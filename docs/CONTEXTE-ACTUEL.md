@@ -67,7 +67,26 @@
   lire `docs/JOURNAL-DE-PARTAGE.md`, poser sa ligne AVANT de coder) **avant toute** modification
   Nutrition.
 
-- **Version en ligne (live) :** `ft-v1207` — 🔬 **FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE.**
+- **Version en ligne (live) :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
+  Michel a envoyé une capture montrant encore l'ancien comportement (198 kcal) **1 h 30 après** le
+  déploiement de ft-v1207. ⭐⭐ **Verdict : B — la version servie était périmée, le code était
+  juste.** Le résolveur s'applique bien au chemin code-barres (trace runtime : 410 g → **382 kcal**).
+  ⛔ **La cause, mesurée** : `_majPeutSAppliquer` retient le rechargement tant que l'écran courant
+  n'est pas l'**Accueil** (décision de ft-v1184), et ⚠️ **hors séance la personne n'est prévenue de
+  RIEN**. **Ce garde n'est PAS touché** (R30) ; la question est écrite dans
+  `docs/JOURNAL-DE-TEST.md` et rendue à Michel.
+  👉 ⭐ **LE GESTE, s'il revoit une vieille version** : revenir sur l'**Accueil 🏠** → l'app se
+  recharge seule et affiche « Application mise à jour ».
+  ⭐ **Ce qui est corrigé** : `champSource` était **écrasé** en `DERIVE_ESTIMABLE`, donc le champ
+  d'origine du 48,3 était jeté exactement dans le cas qui l'intéresse. Il survit désormais et part
+  avec la ligne.
+  ⭐⭐ **Et le banc gagne ce qui lui manquait** : le bloc CCCV éprouvait `_ref100` **isolément** ;
+  le bloc **CCCVI** conduit la chaîne complète *code-barres → 410 g → écran*. *Un banc qui teste la
+  pièce ne répond pas à une question posée sur la machine.*
+  ⚠️ Open Food Facts reste injoignable (403) : **l'origine exacte du 48,3 n'est pas mesurable
+  d'ici**, mais elle le devient sur le téléphone au prochain scan.
+
+- **Version précédente :** `ft-v1207` — 🔬 **FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE.**
   Un **seul résolveur** branché sur `_ref100` (8 appelants) : traité pour **tous** les aliments et
   **toutes** les sources, jamais pour un produit. ⭐⭐ **Une LOI, pas un seuil** — `E ≥ 4P + 9L`
   (UE 1169/2011 annexe XIV), **tolérance dérivée de la précision reçue**, **0 faux positif sur

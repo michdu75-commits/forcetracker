@@ -2898,3 +2898,41 @@ venant d'un code-barres est désormais expliquée à l'écran.
 ⛔ **Non corrigé** : le périmètre de ft-v1207 est fermé nommément par Michel, et ceci n'y est pas.
 ⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
 Écrit ici pour ne pas disparaître avec la session (**R27**).
+
+---
+
+## 🔄 Une mise à jour en attente ne se dit PAS hors séance — et ça m'a coûté une session entière (13/09/2026, ft-v1208)
+
+**État : à trier** · *mesuré en traçant la capture iPhone de Michel, non corrigé (c'est une
+décision produit, pas un bug).*
+
+**Le cas vécu, et il est cher.** Michel envoie une capture qui montre l'ancien comportement des
+lentilles Raynal **1 h 30 après** le déploiement de ft-v1207. Question légitime : le chantier
+est-il cassé ? Il a fallu une trace runtime complète, un balayage de 54 payloads et une
+contre-épreuve sur 8 origines pour établir que **non** — la version servie était simplement
+périmée.
+
+**La cause, mesurée** : `_majPeutSAppliquer` retient le rechargement tant que
+`_curScreen !== 'home'`. Mesuré : `home` → **true** ; `nutrition` · `log` · `progress` ·
+`setup` · `coach` → **false**. C'est la décision de **ft-v1184** (*ne pas arracher l'écran sous
+les doigts de quelqu'un*), et elle est juste.
+
+**⛔ Mais il manque la moitié qui la rend vivable** : le message « Mise à jour disponible »
+n'existe **que pendant une séance**. Hors séance — donc dans l'immense majorité des cas — la
+personne n'est prévenue de **rien**. Elle peut rester des heures sur une version périmée en
+croyant tester la nouvelle.
+
+👉 ***Le garde protège l'écran, il ne protège pas la personne contre le fait de ne pas savoir.***
+Et le coût ne se voit pas : il se paie en confiance (« le correctif ne marche pas ») et en
+sessions de diagnostic sur un code parfaitement sain.
+
+**Ce qu'il faudrait décider (et ce n'est pas à moi de le faire) :**
+- une **pastille discrète** permanente quand un rechargement est en attente, hors séance aussi ?
+- ou appliquer la mise à jour sur **plus d'écrans** que l'Accueil (ceux où rien n'est en cours de
+  saisie) ?
+- ou ne rien changer et considérer que c'est le prix de la règle #4 ?
+
+⛔ **Non corrigé** : `_majPeutSAppliquer` est une décision assumée, et la « réparer » sans feu
+vert serait exactement ce que **R30** interdit. Un témoin de hors-périmètre l'épingle en l'état.
+⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
+Écrit ici pour ne pas disparaître avec la session (**R27**).

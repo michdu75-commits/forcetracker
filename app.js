@@ -1390,8 +1390,8 @@ function _provFood(vals){
     if(typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab && _bcNutr.fiab.etat!=='COHERENT'){
       const z=_bcNutr.fiab;
       p.fiab={ etat:z.etat, methode:z.methode, raison:z.raison,
-               brut:z.brut, retenu:z.kcal, champ:z.champ, confiance:z.confiance,
-               origine:z.origine };
+               brut:z.brut, retenu:z.kcal, champ:z.champ, champSource:z.champSource,
+               confiance:z.confiance, origine:z.origine };
     }
   }catch(e){}
   return p;
@@ -1712,8 +1712,17 @@ function _resoudreNutrition(brut, opts){
   const dit_ = (v, x) => (v === undefined) ? (x !== undefined && x !== null && x !== '' && isFinite(+x)) : !!v;
   const aK = dit_(pr.kcal, brut.kcal), aP = dit_(pr.prot, p), aC = dit_(pr.carbs, c), aF = dit_(pr.fat, f);
   const complet = aP && aC && aF;
+  /* ⛔⛔ ft-v1208 — `champSource` NE SE RÉÉCRIT JAMAIS, ET C'EST UN VRAI DÉFAUT CORRIGÉ.
+     `champ` dit *« d'où vient la valeur RETENUE »* — il est donc écrasé par `'P/G/L'` quand on
+     dérive, et par le nom de l'autre champ quand on prend une alternative. ⚠️ Résultat mesuré à
+     la trace runtime : dans le cas qui a déclenché tout ce chantier (`DERIVE_ESTIMABLE`), le nom
+     du champ qui portait la valeur douteuse était **jeté** — *le code calculait l'information,
+     la transportait, puis la perdait exactement là où on la cherchait*.
+     👉 `champSource` dit *« d'où venait la valeur BRUTE »*, et il survit à toutes les branches :
+     c'est lui qui rendra enfin mesurable « d'où vient le 48,3 » au prochain scan. */
   const res = { kcal: (+k || 0), etat: 'COHERENT', methode: 'source', raison: '',
-                brut: (+k || 0), champ: String(o.champ || ''), confiance: 'source',
+                brut: (+k || 0), champ: String(o.champ || ''),
+                champSource: String(o.champ || ''), confiance: 'source',
                 origine: origine };
 
   const viol = _nrjPlancher(k, p, f);
