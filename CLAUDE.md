@@ -453,7 +453,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⛔ LE DÉFAUT, REPRODUIT AVANT D'ÊTRE TOUCHÉ — 6 TÉMOINS ROUGES sur le code d'origine.** `_bcProposerDerniere(0)` n'était appelée que par `openAddFood` (donc **à l'ouverture de l'écran**, jamais **entre deux aliments** d'une même ouverture) et par le hub `_offRemplirFormulaire` ; et le site qui la repose vit **dans un garde** (`if(P && it.u!=='portion' && …)` où `P = it.per100`). Un aliment **en portions**, ou **sans pour-100 g**, ne le franchit pas — et celle du précédent restait affichée **sur le mauvais aliment**. ⭐ **Les deux portes rougissaient** (`quickFillFood` et `_afSuggPrendreLocale`, **R8**), et la contre-épreuve, elle, était **déjà verte** : *elle mesure la fonctionnalité, pas l'effacement.*
 
-**⭐ LE CORRECTIF EST UNE LIGNE CHEZ LE PROPRIÉTAIRE** — `_afOublierAliment`, donc **les 13 portes d'un coup** (**R2**), jamais recopiée porte par porte. C'est la leçon de ft-v1193 écrite noir sur blanc : *un patron qu'on recopie à chaque porte EST la duplication que ce chantier supprime ailleurs.*
+**⭐ LE CORRECTIF EST UNE LIGNE CHEZ LE PROPRIÉTAIRE** — `_afOublierAliment`, donc **les 12 portes d'un coup** (**R2**), jamais recopiée porte par porte. C'est la leçon de ft-v1193 écrite noir sur blanc : *un patron qu'on recopie à chaque porte EST la duplication que ce chantier supprime ailleurs.*
 
 **⛔⛔ ET LE POINT DE CONCEPTION EST AILLEURS QUE DANS LA LIGNE : ELLE N'EST PAS SOUS `garderPaquet`.** Le journal de test disait *« à côté de celui du paquet »* — vrai pour l'endroit, **faux pour la condition**.
 
@@ -712,7 +712,7 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `sw
 
 **📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une pastille cesse de mentir (**R19/R25**).
 
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ l'historique · les migrations · la réécriture des 13 portes · le hub rendu obligatoire (étape 4) · la douane (étape 5) · ⛔ et **aucun changement de comportement** aux étapes 1-2-3, c'était le contrat. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ l'historique · les migrations · la réécriture des 13 portes *(⚠️ **chiffre FAUX, recompté le 13/09/2026 : il y en a 12**, et l'historique dit que ça l'a toujours été — écrit ici une fois puis recopié dans 3 commentaires du code et dans tous les textes de ft-v1200, sans que personne le recompte. `BUGS.md` §63 retournée contre son auteur. Ligne laissée telle quelle, la correction s'AJOUTE.)* · le hub rendu obligatoire (étape 4) · la douane (étape 5) · ⛔ et **aucun changement de comportement** aux étapes 1-2-3, c'était le contrat. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
 
 Tests : **parcours 3549/3549 sur l'arbre FINAL** (+14, bloc **CCXC**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou. ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS, TOUTES MORDENT** — ① `_ref100` rend `null` → **le runner MEURT** (elle mord au maximum) · ② `_per100d1` retiré · ③ `_per100De` rend un objet vide · ④ le poids du paquet n'est plus effacé → **3 rouges** · ⑤ la variable est propre mais **l'écran n'est pas repeint** → **2** · ⑥ `garderPaquet` ignoré → **2**, exactement les deux témoins de la ratatouille · ⑦ `{normaliser:false}` ignoré · ⑧ `maxNom` ignoré.
 

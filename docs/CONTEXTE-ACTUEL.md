@@ -30,7 +30,7 @@
   par `openAddFood` et par le hub, donc jamais **entre deux aliments** d'une même ouverture ;
   et le site qui la repose vit **dans un garde** (`if(P && it.u!=='portion' && …)`) qu'un
   aliment **en portions** ou **sans pour-100 g** ne franchit pas.
-  ⭐ **Une ligne chez le propriétaire** (`_afOublierAliment`), donc les **13 portes** d'un coup
+  ⭐ **Une ligne chez le propriétaire** (`_afOublierAliment`), donc les **12 portes** d'un coup
   (**R2**) — jamais recopiée porte par porte (leçon ft-v1193).
   ⛔⛔ **Le point de conception : elle n'est PAS sous `garderPaquet`.** Les deux drapeaux se
   ressemblent et **ne nomment pas la même chose** — le paquet vient du produit qu'on *poursuit*

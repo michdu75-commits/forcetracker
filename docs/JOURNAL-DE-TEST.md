@@ -67,7 +67,7 @@ l'appel manquant **changerait ce que l'écran affiche** — c'est un correctif, 
 pour le paquet en ft-v1193.
 
 **✅ SUITE (ft-v1200) — la ligne prévue était la bonne, la CONDITION ne l'était pas.** Le correctif
-livré est bien cette ligne, chez le propriétaire, donc sur les 13 portes d'un coup (**R2**). ⚠️ Mais
+livré est bien cette ligne, chez le propriétaire, donc sur les 12 portes d'un coup (**R2**) — ⚠️ *et ce chiffre a été RECOMPTÉ : le code dit « 13 » à 3 endroits depuis ft-v1193, c'est faux, il y en a 12 depuis toujours (vérifié sur l'historique). Les commentaires du code partiront à la prochaine version.*. ⚠️ Mais
 la note ci-dessus disait *« à côté de celui du paquet »* — et la mettre **sous le même drapeau**
 (`garderPaquet`) aurait reproduit le défaut sur `_bcSansValeurs` et `_calAppliquer`. *Une ligne
 juste posée sous la mauvaise condition reste un bug*, et c'est la mutation qui l'a montré.
