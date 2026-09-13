@@ -20,7 +20,32 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1205` — 🛃 **ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE**,
+- **Version en ligne (live) :** `ft-v1206` — 📊 **ÉTAPE 6 : L'OBSERVATION RÉELLE DE LA DOUANE.**
+  Elle tourne sur les **vraies écritures** et COMPTE ce qu'elle voit, pour qu'on décide un jour sur
+  des chiffres. ⛔ **Toujours aucun blocage, aucune correction**, et **aucune des 21 règles ne
+  change** (témoin). Détail : **`docs/DOUANE-NUTRITION.md` §Étape 6**.
+  ⭐⭐ **Ce qui est gardé est une liste FERMÉE** : écrivain · verdict · noms de règles · forme
+  (déduite de `u`/`q` seuls) · un **booléen** « avait-elle un identifiant de source » · compteurs.
+  ⛔ **Jamais** : nom d'aliment, quantité, kcal, macros, commentaire, identifiant source, date.
+  ⭐ **Le catalogue des 21 règles n'est recopié nulle part** — il se remplit tout seul (**R2**) ;
+  une liste recopiée aurait menti *en silence*.
+  ⭐⭐ **La preuve est un CANARI** : un aliment aux valeurs reconnaissables enregistré par un vrai
+  écrivain, puis 11 chaînes cherchées dans ce qui a été stocké — aucune n'y est, **et le témoin
+  exige que le carnet ait bien enregistré** (sinon l'absence serait triviale).
+  ⛔ **Les 3 mutations de fuite ne changent RIEN à l'écran** : sans le canari elles passeraient.
+  ⛔ Carnet dans **sa propre clé** `ft4_douane_obs`, hors de `S` → hors sauvegarde et hors cloud.
+  Borné à 40 combinaisons, remise à zéro sans toucher au journal.
+  📋 **Rapport** : Profil → Admin → « Douane — observation du journal ». Il **pose** les 3 questions
+  produit et n'y répond pas.
+  ⚠️ **Deux erreurs à moi, attrapées par le contrôle négatif** : un garde que la parenthèse
+  fermante désamorçait, et **un mini-harnais non régénéré** — je testais l'ancien témoin en croyant
+  tester le nouveau. *Un harnais périmé est indiscernable d'un témoin aveugle.*
+  ⭐ Instantané de ce qui est écrit **identique** (`226a7e9c523cae3f`). **18 mutations** sur le code
+  + **19** sur les gardes du PDF, toutes mordantes, contrôle sain 0 rouge avant ET après.
+  📄 PDF : `docs/ETAPE6-OBSERVATION.pdf` — **25 gardes**, qui protègent une **promesse** avant un
+  chiffre.
+
+- **Version précédente :** `ft-v1205` — 🛃 **ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE**,
   en ⛔ **MODE OBSERVATION UNIQUEMENT** (consigne de Michel : *« pas encore de correction
   automatique ni de blocage utilisateur »*). `OK`, `WARN` et **`INVALID` écrivent TOUS
   normalement** — le but est de **mesurer** avant de décider quelles règles deviendront

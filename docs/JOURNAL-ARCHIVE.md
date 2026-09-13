@@ -8502,3 +8502,38 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `to
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1108**, `conclusion: success` à **17:10:07 UTC** sur `7dd2bc45`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1198 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1198. |
+
+
+**ft-v1199 — 🔢 3-ii : LA PASTILLE « TA DERNIÈRE QUANTITÉ » · ET UN DÉFAUT RÉEL TROUVÉ PAR LA SONDE, MESURÉ ET NON CORRIGÉ** — Michel valide 1b-iii et redemande la même méthode, avec le **test d'entrée** en tête.
+
+**⭐ TEST D'ENTRÉE PASSÉ : 2 copies STRICTEMENT identiques** — `_bcProposerDerniere((+X.q>0 && (!X.u||X.u==='g')) ? +X.q : 0)` chez `quickFillFood` et `_afSuggPrendreLocale`, au nom de variable près → **`_qGrammes(src)`**.
+
+**⭐⭐ ET LES 5 SITES « GRAMMES SEULS » ONT ÉTÉ MAPPÉS AVANT DE CHOISIR : ILS N'ONT PAS LA MÊME FORME.**
+
+| ligne | forme | sous-étape |
+|---|---|---|
+| `_provFood` @1232 | `if(cond){ p.q=…; p.u='g' }` — **ÉCRIT** | 3-iv |
+| **@2878 · @4033** | `(cond) ? +X.q : 0` — une **valeur** | **3-ii, livrée** |
+| @2929 · @4089 | `if(!_bcNutr && cond){` | 3-iii |
+
+👉 ***Ce qui est commun aux CINQ est la condition ; ce qui est commun aux DEUX de 3-ii est l'expression entière.*** ⭐ **Elle rend donc un NOMBRE, pas un booléen** — et ce n'est pas un détail : `_qGrammes(x) > 0` **est** exactement la condition, donc 3-iii et 3-iv lui ajouteront leurs appelants **sans réécrire la règle**. *Un seul propriétaire pour trois sous-étapes.*
+
+**⛔⛔ CE N'EST PAS `_qReprenable`, ET LA DIFFÉRENCE EST LE POINT DE CONCEPTION.** Celle de 3-i **accepte les portions** ; celle-ci les **refuse**, parce que ses appelants alimentent un champ **en grammes**. Elles se ressemblent à un `||` près et ne disent pas la même chose — les fondre serait un **changement de comportement**. **Deux témoins figent qu'elles restent DEUX**, et les mutations qui les fusionnent *dans un sens comme dans l'autre* rougissent.
+
+**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 3-i SE DÉPLACE, IL N'EST PAS AFFAIBLI.** Il exigeait *« la règle est écrite **5 fois** »* — c'était le garde-fou qui empêchait 3-i de déborder. 3-ii ayant été faite **exprès**, c'est désormais **3 écritures + 2 appelants**, avec la raison écrite à l'endroit exact **et ce que deviendra le compte après 3-iii et 3-iv**. *Deuxième fois qu'un témoin de périmètre se déplace au lieu de disparaître.*
+
+**⛔⛔ ET LA SONDE A TROUVÉ UN VRAI DÉFAUT, HORS PÉRIMÈTRE — MESURÉ, ÉCRIT, NON CORRIGÉ.** `_afOublierAliment` **ne rend PAS** la pastille « la dernière fois » : seule `openAddFood` le fait. Donc **entre deux aliments d'une même ouverture**, celle du précédent **reste affichée** quand le site est sauté — un aliment **en portions**, ou sans pour-100 g. Mesuré à la sonde : après un aliment à 150 g, un aliment en portions garde *« ↩ 150 g (la dernière fois) »* **sur le mauvais aliment**. 👉 ***C'est la JUMELLE EXACTE du défaut du PAQUET corrigé en ft-v1193*** — à cette date `_afOublierAliment` a reçu le rendu de `_bcProposerPaquet`, **et pas celui-ci**. **R8, à l'intérieur même du correctif qui a fermé sa sœur.** ⛔ **Non corrigé ici** : une extraction ne change **aucun** comportement, et son critère est un instantané identique — poser l'appel manquant changerait ce que l'écran affiche. *Écrit dans `docs/JOURNAL-DE-TEST.md` avec sa mesure et son correctif d'une ligne, et laissé à Michel.*
+
+**⚠️⚠️ ET LA SONDE M'A APPRIS OÙ VIT LA LIGNE, À MES DÉPENS.** Le site de la pastille est **dans un garde** : `if(P && it.u!=='portion' && …)` où `P = it.per100`. **Mes 6 premiers cas n'avaient pas de `per100`** → le bloc était **sauté**, `_bcProposerDerniere` jamais appelée, et **les six rendaient la même valeur** — un reliquat. 👉 ***Une sonde qui n'atteint pas la ligne visée mesure l'écran d'avant, pas la règle.*** *Et elle est verte, ce qui est le pire des cas.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : l'instantané passe de **15 à 17 clés** — les deux portes étaient **conduites** depuis 1b-ii, mais **rien ne LISAIT `#af-bc-last`**, donc il serait resté identique quoi qu'on fasse à la pastille. ***Conduire n'est pas observer.*** Identique **octet pour octet** avant/après, sha256 **`b8f06e45d8c91fcc`**.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : deux copies d'une règle deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la pastille périmée n'est PAS corrigée** (mesurée, écrite, décision de Michel) · ⛔ ni 3-iii, ni 3-iv, ni 1b-v · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3633/3633 sur l'arbre FINAL** (+13, bloc **CCXCVI**) — **total prédit = total obtenu** (3620 + 13). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 11 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge sur 13 témoins** — ① rend toujours 0 → **3** · ② la règle ignorée → **3** · ③ le test `>0` retiré → **1** · ④ ⭐ **débordement : les portions acceptées (fusion avec `_qReprenable`)** → **2**, dont le témoin de périmètre · ⑤ les `ml` acceptés → **3** · ⑥ l'unité absente refusée → **3** · ⑦ elle rend un booléen → **3** · ⑧/⑨ une porte garde sa copie → **1** chacune · ⑩ ⭐ **débordement INVERSE : `_qReprenable` perd ses portions** → **1**, exactement le témoin qui protège les deux règles · ⑪ une porte appelle la mauvaise → **1**. ⭐ **Mutations ancrées sur la signature de `_qGrammes`** : `_qReprenable` porte un motif très proche et vit **juste après** dans le fichier — la leçon de la veille, appliquée d'avance.
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1112**, l'étape « Déployer sur GitHub Pages » **`success` à 19:16:04 UTC** sur `5f16740e`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *l'étape est verte, l'app affichant ft-v1199 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1199. |
