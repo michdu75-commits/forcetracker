@@ -36494,9 +36494,23 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     const v=id=>(document.getElementById(id)||{}).value;
     const coh=()=>{const e=document.getElementById('af-coherence');
       return {vu:!!e&&e.style.display!=='none', txt:e?(e.textContent||'').replace(/\s+/g,' '):''};};
-    /* ⚠️ LA FICHE EST CELLE DE LA CAPTURE, PAS UNE INVENTION : 410 g de paquet, portion
-       fabricant 205 g, et un pour-100 g qui redonne EXACTEMENT 198/25/41/13 à 410 g. */
+    /* ⛔⛔ ft-v1208 (2ᵉ capture) — MA PREMIÈRE FIXTURE ÉTAIT PLUS PAUVRE QUE LA VRAIE FICHE, ET
+       J'AVAIS ÉCRIT « la capture est rejouée à chaque passe ». C'était faux.
+       ⭐⭐ La 2ᵉ capture de Michel (23:23) a révélé ce que je ne pouvais pas lire depuis le
+       conteneur : la fiche porte **DEUX** valeurs énergétiques qui se contredisent —
+       `energy-kcal_100g` = 48,3 (fausse) **et** `energy-kj_100g` ≈ 415 kJ = 99,2 kcal (cohérente).
+       Le vrai produit passe donc par `ALTERNATIVE_FIABLE` (on prend l'autre valeur DE LA SOURCE),
+       pas par `DERIVE_ESTIMABLE` — et mon banc éprouvait la mauvaise branche.
+       👉 ***Un test qui n'emploie pas le schéma de la production ne teste rien, il rassure***
+       (leçon `docs/SUIVI-AUDIT.md`, repayée ici sur une fixture que j'avais moi-même appauvrie).
+       ⭐ La fiche COMPLÈTE est reproduite ci-dessous (415 kJ redonne 99,2 au dixième, vérifié), et
+       la même fiche PRIVÉE de son kJ reste éprouvée juste après : les deux branches sont couvertes. */
     const FICHE={product_name:'Lentilles Cuisinées à l\'Auvergnate', brands:'Raynal & Roquelaure',
+      quantity:'410 g', serving_quantity:205,
+      nutriments:{'energy-kcal_100g':48.3,'energy-kj_100g':415,
+                  'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2}};
+    /* ⛔ LA MÊME FICHE SANS SON SECOND CHAMP : c'est le cas où l'app n'a plus que les macros. */
+    const FICHE_SANS_KJ={product_name:'Lentilles Cuisinées à l\'Auvergnate', brands:'Raynal & Roquelaure',
       quantity:'410 g', serving_quantity:205,
       nutriments:{'energy-kcal_100g':48.3,'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2}};
     const SAIN={product_name:'Blanc de poulet', brands:'Test', quantity:'200 g', serving_quantity:100,
@@ -36521,6 +36535,13 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     };
     o.scan   = await jouer('scan');
     o.tape   = await jouer('manuel');
+    FICHE_COURANTE=FICHE_SANS_KJ;
+    o.sansKj = await jouer('scan');
+    /* ⛔ ON REJOUE LA VRAIE FICHE AVANT DE LIRE LA LIGNE : sans ça, les témoins de traçabilité
+       mesureraient l'état laissé par la fiche appauvrie. *Remettre la source ne suffit pas, il
+       faut rejouer le chemin* — deux témoins l'ont dit en rougissant. */
+    FICHE_COURANTE=FICHE;
+    o.scan = await jouer('scan');
     /* ⛔ on compare les DEUX RÉSOLUTIONS ENTIÈRES, pas seulement la valeur affichée */
     o.identiques = JSON.stringify(o.scan.bc.fiab)===JSON.stringify(o.tape.bc.fiab)
                 && o.scan.kcal===o.tape.kcal;
@@ -36558,37 +36579,79 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
                       parle:c.vu && c.txt.indexOf('\u{1F52C}')===0,
                       ancienEncadre:/ne colle pas à ces macros/.test(c.txt)};
     }
+    /* ⛔⛔ LES DEUX GARDES DU CHOIX DE CANDIDAT, ÉPROUVÉS — et ils ne l'étaient par RIEN.
+       Mesuré au contrôle négatif : les retirer laissait le banc entièrement vert, parce que le
+       vrai produit a un second champ **valide** et **proche des macros**. *Un garde que rien ne
+       peut faire rougir ne mesure rien, il rassure* (ft-v994). On fabrique donc les deux fiches
+       qui les sollicitent : un second champ qui viole AUSSI la loi, et un second champ absurde. */
+    const parCand=(kj)=>{ const n={'energy-kcal_100g':48.3,'energy-kj_100g':kj,
+        'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2};
+      const r=_ref100('x',48.3,6.1,10,3.2,{origine:'barcode',champ:_nrjChampPrincipal(n),
+                                           candidats:_nrjCandidats(n)});
+      return {kcal100:r.kcal100, etat:r.fiab.etat, champ:r.fiab.champ}; };
+    o.cand_absurde= parCand(3000);   /* 717 kcal : tenable pour la loi, très loin des macros */
+    /* ⛔⛔ ET LE GARDE « le candidat viole AUSSI la loi » A BESOIN D'UN AUTRE ALIMENT — mesuré,
+       pas supposé. Sur les lentilles, un candidat sous le plancher (52,5) est forcément à plus de
+       30 % sous les macros (65,2) : *l'autre garde l'attrape toujours en premier, donc celui-ci
+       est inatteignable ici*. Il faut un aliment où le plancher et l'estimation coïncident —
+       une huile (0 g de glucides) : plancher 900, macros 900. Un second champ à 850 viole la loi
+       tout en restant à 5,6 % des macros. 👉 ***Deux gardes qui se recouvrent sur un produit ne
+       se recouvrent pas sur tous*** — et c'est la seule façon de les éprouver séparément. */
+    {
+      const n={'energy-kcal_100g':700,'energy-kj_100g':3556.4,
+               'proteins_100g':0,'carbohydrates_100g':0,'fat_100g':100};
+      const r=_ref100('Huile',700,0,0,100,{origine:'barcode',champ:_nrjChampPrincipal(n),
+                                           candidats:_nrjCandidats(n)});
+      o.huile={kcal100:r.kcal100, etat:r.fiab.etat, champ:r.fiab.champ,
+               cands:_nrjCandidats(n).map(c=>Math.round(c.kcal*10)/10)};
+    }
+
     window.fetch=vrai;
     return o;
    }catch(e){ return {FATAL:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)}; }
   });
 
   t('CCCVI ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
-  t('CCCVI ① ⛔⛔ LA CAPTURE, REJOUÉE DE BOUT EN BOUT — le même code-barres à 410 g ne donne '+
-    'PLUS 198 kcal mais 382, et les macros de la capture sont inchangées (25 / 41 / 13)',
-    (X.scan||{}).kcal==='382' && X.scan.prot==='25' && X.scan.carbs==='41' && X.scan.fat==='13'
+  t('CCCVI ① ⛔⛔ LA CAPTURE, REJOUÉE DE BOUT EN BOUT AVEC LA VRAIE FICHE — le même code-barres '+
+    'à 410 g ne donne PLUS 198 kcal mais 407, et les macros de la capture sont inchangées '+
+    '(25 / 41 / 13)',
+    (X.scan||{}).kcal==='407' && X.scan.prot==='25' && X.scan.carbs==='41' && X.scan.fat==='13'
     && X.scan.qty==='410', JSON.stringify(X.scan&&{k:X.scan.kcal,p:X.scan.prot,c:X.scan.carbs,f:X.scan.fat}));
+  t('CCCVI ①bis ⭐⭐ ET C\'EST UNE VALEUR **DE LA SOURCE**, PAS UNE ESTIMATION — la fiche porte '+
+    'DEUX énergies qui se contredisent, l\'app prend celle qui tient debout. *On préfère toujours '+
+    'une donnée à un calcul*, et c\'est mesuré sur le vrai produit : 99,2 (source) l\'emporte sur '+
+    '93,2 (macros)',
+    X.scan && X.scan.bc.fiab.etat==='ALTERNATIVE_FIABLE'
+    && X.scan.bc.fiab.methode==='autre_champ_source'
+    && X.scan.bc.fiab.champ==='energy-kj_100g' && X.scan.bc.kcal100===99.2,
+    JSON.stringify(X.scan&&X.scan.bc.fiab));
+  t('CCCVI ①ter ⛔ LA MÊME FICHE PRIVÉE DE SON SECOND CHAMP retombe sur les macros : 382 kcal et '+
+    '`DERIVE_ESTIMABLE`. *Les deux branches sont éprouvées sur le même produit, pas une seule.*',
+    X.sansKj && X.sansKj.kcal==='382' && X.sansKj.bc.fiab.etat==='DERIVE_ESTIMABLE'
+    && X.sansKj.bc.fiab.champ==='P/G/L',
+    JSON.stringify(X.sansKj&&{k:X.sansKj.kcal, e:X.sansKj.bc.fiab.etat}));
   t('CCCVI ② ⛔⛔ … ET L\'ANCIEN ENCADRÉ A DISPARU : plus de « ne colle pas à ces macros » ni de '+
     'bouton « Mettre 381 kcal » — c\'est l\'avertissement de FIABILITÉ qui parle, et il nomme '+
     'les deux valeurs',
     X.scan && X.scan.coh.vu===true && X.scan.coh.txt.indexOf('\u{1F52C}')===0
-    && /48\.3/.test(X.scan.coh.txt) && /93\.2/.test(X.scan.coh.txt)
+    && /48\.3/.test(X.scan.coh.txt) && /99\.2/.test(X.scan.coh.txt)
+    && /energy-kj_100g/.test(X.scan.coh.txt)
     && !/ne colle pas à ces macros/.test(X.scan.coh.txt), (X.scan||{}).coh&&X.scan.coh.txt.slice(0,120));
   t('CCCVI ③ ⭐⭐ SCANNÉ ET TAPÉ : la MÊME résolution, objet entier comparé (exigence nommée par '+
     'Michel), et la même valeur à l\'écran',
     X.identiques===true, JSON.stringify([X.scan&&X.scan.kcal, X.tape&&X.tape.kcal]));
-  t('CCCVI ④ ⛔ 48,3 N\'EST PLUS UNE VALEUR DE CONFIANCE : le pour-100 g retenu est 93,2 et '+
-    'l\'état est `DERIVE_ESTIMABLE`',
-    X.scan && X.scan.bc.kcal100===93.2 && X.scan.bc.fiab.etat==='DERIVE_ESTIMABLE'
-    && X.scan.bc.fiab.brut===48.3, JSON.stringify(X.scan&&X.scan.bc.fiab));
+  t('CCCVI ④ ⛔ 48,3 N\'EST PLUS UNE VALEUR DE CONFIANCE : le pour-100 g retenu est 99,2, et la '+
+    'valeur brute reste nommée',
+    X.scan && X.scan.bc.kcal100===99.2 && X.scan.bc.fiab.brut===48.3,
+    JSON.stringify(X.scan&&X.scan.bc.fiab));
   t('CCCVI ⑤ ⛔⛔ LA TRACE BRUTE PART AVEC LA LIGNE — et `champSource` SURVIT À LA DÉRIVATION. '+
     '*Le code calculait le champ d\'origine, le transportait, puis le jetait exactement là où on '+
     'le cherchait* (défaut trouvé par la trace runtime du 13/09)',
-    X.ligne && X.ligne!=='ABSENTE' && X.ligne.brut===48.3 && X.ligne.retenu===93.2
-    && X.ligne.champ==='P/G/L' && X.ligne.champSource==='energy-kcal_100g',
+    X.ligne && X.ligne!=='ABSENTE' && X.ligne.brut===48.3 && X.ligne.retenu===99.2
+    && X.ligne.champ==='energy-kj_100g' && X.ligne.champSource==='energy-kcal_100g',
     JSON.stringify(X.ligne));
   t('CCCVI ⑥ ⭐ … et le pour-100 g enregistré porte la valeur RETENUE, pas la brute',
-    X.per100 && X.per100.kcal===93.2, JSON.stringify(X.per100));
+    X.per100 && X.per100.kcal===99.2, JSON.stringify(X.per100));
   t('CCCVI ⑦ ⛔ NON-RÉGRESSION — un produit cohérent scanné par le même chemin ne bouge pas, '+
     'n\'affiche aucun avertissement, et sa ligne ne gagne aucune trace',
     X.sain && X.sain.kcal==='165' && X.sain.etat==='COHERENT'
@@ -36607,6 +36670,17 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     && ['barcode','off','ciqual','marque','etiquette'].every(k=>X.origines[k].kcal==='382')
     && ['manuel','reprise','historique'].every(k=>X.origines[k].kcal==='198'),
     JSON.stringify(X.origines&&Object.keys(X.origines).map(k=>k+':'+X.origines[k].kcal)));
+  t('CCCVI ⑨bis ⛔⛔ UN SECOND CHAMP QUI VIOLE AUSSI LA LOI EST REFUSÉ — on ne remplace pas une '+
+    'valeur impossible par une autre valeur impossible. ⚠️ Éprouvé sur une HUILE, parce que sur '+
+    'les lentilles l\'autre garde l\'attrape toujours en premier : *deux gardes qui se recouvrent '+
+    'sur un produit ne se recouvrent pas sur tous*',
+    (X.huile||{}).etat==='DERIVE_ESTIMABLE' && X.huile.kcal100===900 && X.huile.champ==='P/G/L',
+    JSON.stringify(X.huile));
+  t('CCCVI ⑨ter ⛔⛔ … ET UN SECOND CHAMP ABSURDE AUSSI : 717 kcal passe le plancher mais s\'écarte '+
+    'de 669 % des macros. *Passer la loi ne suffit pas à être crédible* — sinon une erreur de '+
+    'saisie d\'un facteur 1000 dans la base deviendrait notre valeur de confiance',
+    (X.cand_absurde||{}).etat==='DERIVE_ESTIMABLE' && X.cand_absurde.kcal100===93.2,
+    JSON.stringify(X.cand_absurde));
   t('CCCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
   await pg.close(); await ctx.close();
 }

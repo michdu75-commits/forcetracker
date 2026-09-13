@@ -461,6 +461,35 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
+**📱 2ᵉ CAPTURE : ÇA MARCHE — ET ELLE RÉPOND ENFIN À LA QUESTION DU 48,3 · 13/09/2026, SANS NOUVELLE VERSION** — Michel renvoie une capture à 23:23, une fois passé par l'Accueil : **407 kcal** pour 410 g, et l'avertissement 🔬 qui dit *« l'app utilise 99.2 kcal/100 g, l'autre valeur de la fiche (`energy-kj_100g`) »*.
+
+**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ** : seuls `tests/`, `tools/` et les journaux changent. *Un bump gratuit fait re-télécharger l'app à tout le monde pour rien.*
+
+**⭐⭐ LA QUESTION OUVERTE DEPUIS ft-v1207 EST TRANCHÉE, ET PAS PAR MOI : PAR SON ÉCRAN.** La fiche Open Food Facts porte **DEUX** valeurs énergétiques qui se contredisent :
+
+| champ de la fiche | valeur | verdict |
+|---|---|---|
+| `energy-kcal_100g` | **48,3 kcal** | ⛔ **fausse** — ses protéines et lipides valent déjà 53,2 |
+| `energy-kj_100g` | **≈ 415 kJ = 99,2 kcal** | ✅ **cohérente** — à 6,4 % des macros |
+
+👉 ***C'est l'hypothèse A : le 48,3 est une erreur DANS LA BASE, pas une conversion ratée de l'app.*** ⭐ **Et le correctif de la veille a servi immédiatement** : la ligne enregistrée porte `champSource: 'energy-kcal_100g'` — sans lui, ce champ aurait été écrasé et la réponse serait repartie avec.
+
+**⭐⭐ ET L'APP A PRIS LE BON CHEMIN SANS QU'ON LUI DISE** : elle a préféré **une valeur de la source** (99,2) à une **estimation** depuis les macros (93,2). *L'ordre de priorité — une donnée avant un calcul — vérifié sur un vrai produit et non sur une fixture.* Reproduction **exacte** en runtime : même nom (« · 99.2 kcal/100g »), même 407 kcal, même message au caractère près.
+
+**⛔⛔ ET CETTE CAPTURE A MONTRÉ UN DÉFAUT DANS MON BANC, PAS DANS L'APP — c'est le fait du jour.** Ma fixture de ft-v1208 **inventait une fiche plus pauvre que la vraie** (sans le second champ), donc elle éprouvait la **dérivation** pendant que le vrai produit passe par l'**alternative**. J'avais écrit dans le journal *« la capture est rejouée à chaque passe »* — **c'était faux**. 👉 ***Un test qui n'emploie pas le schéma de la production ne teste rien, il rassure*** (`docs/SUIVI-AUDIT.md`, repayée sur une fixture que j'avais moi-même appauvrie). Les **deux** branches sont désormais éprouvées sur le même produit.
+
+**⛔⛔ ET LE CONTRÔLE NÉGATIF A TROUVÉ DEUX GARDES QUE RIEN N'ÉPROUVAIT** — ni CCCVI, ni CCCV : *« le second champ viole aussi la loi »* et *« le second champ est absurde »*. Les retirer laissait le banc **entièrement vert**, parce que le vrai produit a un second champ **valide** et **proche des macros**. ⭐⭐ **Et le premier a demandé un AUTRE ALIMENT** : sur les lentilles, un candidat sous le plancher (52,5) est **forcément** à plus de 30 % sous les macros (65,2) — *l'autre garde l'attrape toujours en premier, donc celui-ci y est inatteignable*. Il fallait un aliment où plancher et estimation coïncident : une **huile** (0 g de glucides, plancher 900 = macros 900). 👉 ***Deux gardes qui se recouvrent sur un produit ne se recouvrent pas sur tous*** — et c'est la seule façon de les éprouver séparément.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ rien n'est corrigé dans l'app — **elle faisait déjà ce qu'il fallait** · ⛔ le garde de mise à jour reste intact (**R30**), la question « prévenir hors séance ? » est toujours rendue à Michel · ⛔ `savedFoods`, l'historique, les migrations, les `ml`, `saveEditFood`, `rejouerRepas`, les 21 règles de la douane et `estimateFoodAI` restent hors périmètre. ⚠️ **Une donnée fausse dans Open Food Facts reste fausse** : la corriger à la source est un geste que Michel peut faire sur le site, et qui profiterait à tout le monde.
+
+Tests : **parcours 3817/3817 sur l'arbre FINAL** (bloc **CCCVI** porté à **20** témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 4 MUTATIONS CIBLÉES, TOUTES MORDENT, contrôle sain à 0 rouge avant ET après** — ① les valeurs de la source sont ignorées (on estime toujours) → **6** · ② la conversion du second champ est fausse → **6** · ③ un second champ qui **viole aussi la loi** est accepté → **1** (éprouvé sur l'huile) · ④ un second champ **absurde** est accepté → **1**.
+
+📄 **PDF POUR GPT** : `docs/CAPTURE-IPHONE-TRANCHEE.pdf` régénéré (**56 gardes**) — il porte désormais la vraie fiche et la réponse au 48,3. ⚠️ **Et deux de ses nouveaux gardes se laissaient satisfaire par une SOUS-CHAÎNE** (`FICHE_SANS_KJ` est contenu dans `FICHE_SANS_KJx`) : *le piège de `presentsX` de la veille, reposé le lendemain*. Fermés sur la déclaration **et** l'usage.
+
+Fichiers : `tests/parcours/runner.js`, `tools/gen_1208_pdf.py`, `docs/CAPTURE-IPHONE-TRANCHEE.pdf`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
+
 **ft-v1208 — 📱 LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE · LE CODE ÉTAIT JUSTE, LA VERSION SERVIE NE L'ÉTAIT PAS** — Michel envoie une capture de son iPhone (13/09, 20:02) : lentilles Raynal à 410 g, **198 kcal**, l'ancien encadré *« ne colle pas à ces macros »* et son bouton *« Mettre 381 kcal »* — soit exactement le comportement que ft-v1207 était censé avoir supprimé. ⛔ **Sa consigne décide de tout** : ***« ne corrige rien avant d'avoir tranché A / B / C »***, ***« ne considère pas la capture comme une preuve que ft-v1207 est cassée tant que tu n'as pas d'abord vérifié qu'elle est réellement exécutée »***.
 
 **⭐⭐ VERDICT : B — ET CHAQUE BRANCHE EST FERMÉE PAR UNE MESURE, PAS PAR UN RAISONNEMENT.**

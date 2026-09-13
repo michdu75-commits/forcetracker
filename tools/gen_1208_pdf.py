@@ -380,8 +380,24 @@ N_CCCVI = len(re.findall(r"t\('CCCVI ", RUN))
 
 if VERSION != 'ft-v1208':
     raise SystemExit('Le cache servi annonce %s : ce document parle de ft-v1208.' % VERSION)
-if N_CCCVI != 16:
-    raise SystemExit('Le bloc CCCVI porte %d temoins, pas 16 : le document cite ce chiffre.' % N_CCCVI)
+if N_CCCVI != 20:
+    raise SystemExit('Le bloc CCCVI porte %d temoins, pas 20 : le document cite ce chiffre.' % N_CCCVI)
+# [!!] LA 2e CAPTURE A REVELE LA VRAIE FICHE : elle porte DEUX energies. Le document en depend
+#    entierement, donc la fixture du banc doit etre celle-la — une fixture appauvrie eprouverait
+#    la mauvaise branche, ce qui est exactement l erreur que ce document raconte.
+_c = RUN[RUN.index('BLOC CCCVI'):RUN.index('TÉMOINS DE SOURCE', RUN.index('BLOC CCCVI'))]
+if "'energy-kj_100g':415" not in _c:
+    raise SystemExit('LA FIXTURE DU BANC N EST PLUS LA VRAIE FICHE : sans son second champ '
+                     'energetique, le banc eprouve la derivation alors que le vrai produit passe '
+                     'par l alternative — c est le defaut que le §4 raconte.')
+# [/!\] SOUS-CHAINE : « FICHE_SANS_KJ » est contenu dans « FICHE_SANS_KJx ». On exige la
+#    DECLARATION et un USAGE, sinon renommer la variable satisfait encore le garde.
+if not re.search(r'const FICHE_SANS_KJ\s*=', _c) or 'FICHE_COURANTE=FICHE_SANS_KJ;' not in _c:
+    raise SystemExit('La fiche PRIVEE de son second champ n est plus eprouvee : le §4 affirme que '
+                     'les DEUX branches sont couvertes sur le meme produit.')
+if not re.search(r'o\.huile\s*=', _c) or 'X.huile' not in RUN:
+    raise SystemExit('Le garde « le candidat viole aussi la loi » n est plus eprouve : mesure, il '
+                     'est inatteignable sur les lentilles et n a de sens que sur une huile.')
 # [!!] LE GARDE CENTRAL DE CE DOCUMENT : `champSource` ne doit JAMAIS etre reecrit. C est le seul
 #    correctif de la version, et sa disparition ne changerait RIEN a l ecran — donc seul le code
 #    peut le dire.
@@ -470,8 +486,9 @@ H.append(tableau(
       '[X] <b>tombe</b> : deploiement Pages <b>success</b> sur <font face="Courier">7e8d3ea9</font> '
       'a <b>16:32:51 UTC</b>, soit <b>1 h 30 avant</b> la capture'],
      ['<b>C</b> &mdash; executee, mais le resolveur n atteint pas le chemin code-barres',
-      '[X] <b>tombe</b> : trace runtime complete sur le code servi &mdash; <b>410 g donne 382 kcal</b>, '
-      'pas 198 ; l avertissement de fiabilite parle ; la trace est posee sur la ligne ; <b>0 erreur JS</b>'],
+      '[X] <b>tombe</b> : trace runtime complete sur le code servi &mdash; <b>410 g ne donne plus '
+      '198 kcal</b> ; l avertissement de fiabilite parle ; la trace est posee sur la ligne ; '
+      '<b>0 erreur JS</b>'],
      ['<b>B</b> &mdash; deployee, mais version perimee servie', '<b>retenue</b>']],
     [58 * mm, 107 * mm]))
 H.append(Spacer(1, 4))
@@ -541,12 +558,27 @@ H.append(P('[/!\\] <b>Et un temoin etait aveugle &mdash; le jumeau exact d un ga
            'origine en moins <b>comme</b> sur une origine en trop. <i>C est la meme famille de '
            'defaut, corrigee d un cote et pas de l autre.</i>', 'p'))
 
-H.append(P('5. Ce que je ne peux toujours pas faire', 'h1'))
-H.append(P('[/!\\] Open Food Facts reste <b>injoignable</b> depuis ce conteneur &mdash; <b>403 sur '
-           'les trois domaines essayes</b>. <b>L origine exacte du 48,3 n est donc toujours pas '
-           'mesurable ici</b>, et c est dit plutot que devine. [*] Mais elle le devient <b>sur le '
-           'telephone</b> : le champ d origine est maintenant enregistre avec la ligne au prochain '
-           'scan.', 'p'))
+H.append(P('5. L origine du 48,3 &mdash; la reponse, apportee par une seconde capture', 'h1'))
+H.append(P('[/!\\] Open Food Facts reste <b>injoignable</b> depuis ce conteneur (403 sur les trois '
+           'domaines essayes). La question ne pouvait donc pas etre tranchee ici. [*] <b>Elle l a '
+           'ete par l ecran de Michel</b>, une fois la bonne version servie &mdash; et c est '
+           'exactement ce que le champ d origine conserve devait permettre.', 'p'))
+H.append(encadre(
+    'La fiche se contredit elle-meme',
+    'Elle porte <b>DEUX</b> valeurs energetiques : <b>energy-kcal_100g = 48,3</b> (fausse) et '
+    '<b>energy-kj_100g env. 415 kJ = 99,2 kcal</b> (coherente, a 6,4 % des macros). [*] C est '
+    'donc l <b>hypothese A</b> : <b>le 48,3 est une erreur DANS LA BASE</b>, pas une conversion '
+    'ratee de l application. [*] Et l app a pris le bon chemin sans qu on lui dise : elle a prefere '
+    '<b>une valeur de la source</b> (99,2) a une <b>estimation</b> depuis les macros (93,2) '
+    '&mdash; l ordre de priorite, verifie sur un vrai produit.', VERT))
+H.append(Spacer(1, 4))
+H.append(P('[/!\\] <b>Et cette capture a montre un defaut dans mon BANC, pas dans l app</b> : ma '
+           'fixture inventait une fiche <b>plus pauvre</b> que la vraie (sans second champ), donc '
+           'elle eprouvait la <b>derivation</b> pendant que le vrai produit passe par l '
+           '<b>alternative</b>. J avais ecrit &laquo; la capture est rejouee a chaque passe &raquo; '
+           '&mdash; c etait faux. <i>Un test qui n emploie pas le schema de la production ne teste '
+           'rien, il rassure.</i> Les <b>deux</b> branches sont desormais eprouvees sur le meme '
+           'produit.', 'p'))
 
 H.append(P('6. Ce qui prouve tout ce qui precede', 'h1'))
 H.append(P('Passe complete verte sur l arbre final : <b>%d / %d</b>. Instantane de ce qui est '
@@ -565,7 +597,11 @@ H.append(tableau(
      ['<b>hors perimetre</b> : le garde de mise a jour &laquo; repare &raquo;', '1 &mdash; exactement lui'],
      ['<b>hors perimetre</b> : la douane perd une regle', '1'],
      ['la loi devient trop stricte (un produit sain est reecrit)', '1'],
-     ['le meme code-barres scanne et tape divergent', '3']],
+     ['le meme code-barres scanne et tape divergent', '3'],
+     ['<b>les valeurs de la source sont ignorees</b> (on estime toujours)', '<b>6</b>'],
+     ['la conversion du second champ est fausse', '<b>6</b>'],
+     ['un second champ qui viole aussi la loi est accepte', '1 &mdash; eprouve sur une huile'],
+     ['un second champ absurde est accepte', '1']],
     [125 * mm, 40 * mm]))
 H.append(Spacer(1, 4))
 H.append(P('[*] <b>Les dix mordent, et le controle sain est a zero rouge avant ET apres.</b>', 'petit'))

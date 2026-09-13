@@ -67,6 +67,19 @@
   lire `docs/JOURNAL-DE-PARTAGE.md`, poser sa ligne AVANT de coder) **avant toute** modification
   Nutrition.
 
+- ✅ **CONFIRMÉ SUR L'iPHONE DE MICHEL (13/09, 23:23) — ET LA QUESTION DU 48,3 EST TRANCHÉE.**
+  Une fois passé par l'Accueil : **407 kcal** pour 410 g, avertissement 🔬 présent.
+  ⭐⭐ **La fiche Open Food Facts se contredit elle-même** : `energy-kcal_100g` = **48,3** (fausse,
+  ses protéines et lipides valent déjà 53,2) et `energy-kj_100g` ≈ **415 kJ = 99,2 kcal**
+  (cohérente, à 6,4 % des macros). 👉 **Hypothèse A : l'erreur est DANS LA BASE**, pas dans l'app.
+  ⭐ Et l'app a préféré **une valeur de la source** (99,2) à une **estimation** (93,2) — l'ordre de
+  priorité vérifié sur un vrai produit.
+  ⛔ **Une donnée fausse dans OFF reste fausse** : la corriger sur le site profiterait à tout le
+  monde — geste que Michel peut faire, pas moi.
+  ⚠️ **Et cette capture a montré un défaut dans le BANC, pas dans l'app** : ma fixture inventait
+  une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
+  branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
+
 - **Version en ligne (live) :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
   Michel a envoyé une capture montrant encore l'ancien comportement (198 kcal) **1 h 30 après** le
   déploiement de ft-v1207. ⭐⭐ **Verdict : B — la version servie était périmée, le code était
