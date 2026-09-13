@@ -35836,9 +35836,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
          Il rend le résultat testable sans rien changer à ce qui est enregistré. */
       persist();
       const brut=localStorage.getItem('ft4_foodlog')||'';
-      o.carnet_prive=[ Object.keys(S).indexOf('douaneVus')<0 && Object.keys(S).indexOf('_douaneVus')<0,
+      /* ⭐ ft-v1206 : le carnet est devenu des COMPTEURS PERSISTÉS dans leur PROPRE clé. Ce
+         témoin ne teste donc plus l'absence d'une liste volatile (ce qui serait devenu vide de
+         sens) mais le fait que RIEN de la douane n'entre dans `S` — donc ni dans la sauvegarde,
+         ni dans la synchronisation cloud, qui partent toutes deux de `S`. */
+      o.carnet_prive=[ Object.keys(S).some(k=>/douane/i.test(k))===false,
                        brut.indexOf('douane')<0,
-                       JSON.stringify(S).indexOf('douaneVus')<0 ];
+                       JSON.stringify(S).toLowerCase().indexOf('douane')<0 ];
     }catch(e){ o.FATAL=String(e&&e.message||e); }
     return o;
   });
@@ -35936,6 +35940,248 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('CCCIII ⑲ ⛔ LE SEUIL ÉNERGÉTIQUE RESTE RELATIF **ET** ABSOLU — le relatif seul mord sur un '+
     'café à 2 kcal et sur les macros arrondies à l\'entier par l\'écran d\'édition',
     /d\s*>=\s*25\s*&&\s*d\s*\/\s*b\s*>\s*0\.30/.test(corps), 'seuil énergétique modifié');
+}
+
+
+/* ══════════ BLOC CCCIV — 📊 ÉTAPE 6 : L'OBSERVATION RÉELLE DE LA DOUANE (ft-v1206) ══════════
+   Michel valide le mode observation et demande de le faire tourner sur les VRAIES écritures :
+   *« obtenir un rapport agrégé des WARN / INVALID rencontrés en usage réel, SANS STOCKER le
+   contenu des repas ni les valeurs nutritionnelles personnelles »*.
+
+   ⛔⛔ AUCUNE RÈGLE NE CHANGE, AUCUN BLOCAGE, AUCUNE CORRECTION. Ce bloc ne prouve qu'une chose :
+   que les compteurs comptent juste, et qu'ils ne contiennent RIEN de ce que la personne a mangé.
+
+   ⭐⭐ LE TÉMOIN CENTRAL EST UN CANARI. On conduit un VRAI écrivain avec un nom et des valeurs
+   reconnaissables, puis on cherche ces valeurs dans ce qui a été stocké. ⛔ Et le même témoin
+   vérifie que le carnet a bien ENREGISTRÉ quelque chose — sinon l'absence du canari serait
+   trivialement vraie, et la promesse de confidentialité deviendrait *un vert qui ne peut pas
+   rougir* (ft-v994). */
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=[typeof _douaneCompter, typeof _douaneRapport, typeof _douaneCarnet];
+    const CLE='ft4_douane_obs';
+    const vider=()=>{ try{ localStorage.removeItem(CLE); }catch(e){}
+                      S.foodLog=[]; S.savedFoods=[];
+                      try{ _afSetSrc(null); }catch(e){}
+                      try{ _afOublierAliment(); }catch(e){} };
+    const carnet=()=>{ try{ return JSON.parse(localStorage.getItem(CLE)||'null'); }catch(e){ return null; } };
+    const ecrire=(it)=>{ _afQuickItems=[Object.assign({fav:false},it)]; _afMeal='dejeuner';
+                         quickAddFood(0); };
+
+    /* ① Au départ le carnet n'existe pas, et UNE VRAIE écriture le crée. */
+    vider();
+    o.avant = carnet();
+    ecrire({name:'Poulet', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g',
+            per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    const c1=carnet();
+    o.apres_une_ligne = c1 ? [c1.n, c1.etats.OK, c1.etats.WARN, c1.etats.INVALID] : null;
+
+    /* ② Le verdict compté est bien celui que la douane rend. */
+    vider();
+    ecrire({name:'Bol', kcal:120, prot:3, carbs:14, fat:5, q:2, u:'portion', portionLabel:'bol'});
+    const c2=carnet();
+    o.warn_compte = c2 ? [c2.etats.OK, c2.etats.WARN, (c2.regles||{}).portion_sans_poids] : null;
+
+    /* ③ Les écrivains sont distingués — on en conduit DEUX pour de vrai. */
+    vider();
+    ecrire({name:'A', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    S.foodLog=[{date:'2026-09-01',meal:'dejeuner',ts:1,name:'B',kcal:100,prot:5,carbs:10,fat:3,q:100,u:'g'},
+               {date:'2026-09-02',meal:'dejeuner',ts:2,name:'B',kcal:100,prot:5,carbs:10,fat:3,q:100,u:'g'}];
+    const sig=(_repasHabituels()[0]||{}).sig||'';
+    if(sig) rejouerRepas(sig,'dejeuner');
+    const c3=carnet();
+    o.par_ecrivain = c3 ? Object.keys(c3.ecrivains).sort() : null;
+
+    /* ④ Les FORMES sont classées à partir de `u`/`q` seuls. */
+    vider();
+    ecrire({name:'G', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    ecrire({name:'P', kcal:100, prot:5, carbs:10, fat:3, q:2, u:'portion', portionLabel:'p', portionWeightG:50, per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    ecrire({name:'N', kcal:100, prot:5, carbs:10, fat:3});
+    const c4=carnet();
+    o.formes = c4 && c4.ecrivains.quickAddFood ? c4.ecrivains.quickAddFood.formes : null;
+
+    /* ⑤ Le compteur de source est un BOOLÉEN — il suit la divergence de ft-v1205 sans jamais
+       garder l'identifiant. */
+    vider();
+    ecrire({name:'S1', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g',
+            sourceId:'off:1234567890', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    ecrire({name:'S2', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    const c5=carnet();
+    const E5=c5&&c5.ecrivains.quickAddFood;
+    o.source_booleen = E5 ? [E5.avecSource, E5.sansSource,
+                             JSON.stringify(c5).indexOf('1234567890')<0] : null;
+
+    /* ⑥ Le CATALOGUE des règles se renseigne tout seul — il n'est recopié nulle part. */
+    o.catalogue = c5 ? (c5.catalogue||[]).length : null;
+
+    /* ⑦ ⭐⭐ LE CANARI — la preuve qu'aucune donnée de repas n'est stockée.
+       ⛔ On vérifie AUSSI que le carnet a bien enregistré : sans ça, un carnet vide passerait
+       le test sans rien prouver. */
+    vider();
+    ecrire({name:'ZZCANARIMICHELXY', kcal:7777, prot:6666, carbs:5555, fat:4444,
+            q:3333, u:'g', sourceId:'off:ZZCANARISOURCE',
+            per100:{kcal:9999, prot:8888, carbs:2222, fat:1111}});
+    const brut = localStorage.getItem(CLE)||'';
+    const interdits = ['ZZCANARI','ZZCANARISOURCE','7777','6666','5555','4444','3333',
+                       '9999','8888','2222','1111'];
+    o.canari = [ brut.length>0,
+                 brut.indexOf('quickAddFood')>=0,          /* il a VRAIMENT enregistré */
+                 interdits.filter(x=>brut.indexOf(x)>=0) ];
+    /* et le canari ne doit pas non plus fuir par une AUTRE clé que la douane aurait posée */
+    const autres=[];
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+      if(k===CLE) continue;
+      if(/douane/i.test(k)) autres.push(k); }
+    o.pas_d_autre_cle = autres;
+
+    /* ⑧ Le carnet SURVIT : c'est tout l'intérêt d'observer un usage réel sur plusieurs jours. */
+    const avantRechargement = localStorage.getItem(CLE);
+    load();                                   /* le vrai chargement de l'app */
+    o.survit = [ localStorage.getItem(CLE)===avantRechargement,
+                 JSON.stringify(S).toLowerCase().indexOf('douane')<0 ];
+
+    /* ⑨ Le rapport se lit, et il POSE les 3 questions de Michel sans y répondre. */
+    const r=_douaneRapport();
+    o.rapport = [ r.length>100,
+                  r.indexOf('quickAddFood')>=0,
+                  r.indexOf('JAMAIS MORDU')>=0,
+                  r.indexOf('ZZCANARI')<0,
+                  r.indexOf('7777')<0 ];
+
+    /* ⑩ À zéro ligne, le rapport le DIT au lieu de diviser par zéro. */
+    vider();
+    const r0=_douaneRapport();
+    o.rapport_vide = [ r0.indexOf('Aucune ligne observée')>=0, r0.indexOf('NaN')<0 ];
+
+    /* ⑪ La remise à zéro efface le carnet et NE TOUCHE PAS au journal alimentaire. */
+    ecrire({name:'X', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    const nAvant=(S.foodLog||[]).length;
+    _douaneRemiseAZero();
+    o.remise = [ localStorage.getItem(CLE)===null, (S.foodLog||[]).length===nAvant ];
+
+    /* ⑫ Le carnet ne CHANGE rien à la ligne enregistrée : on compare la ligne écrite avec et
+       sans carnet disponible. */
+    vider();
+    ecrire({name:'Cmp', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g', per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    const l1=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l1.ts; delete l1.date;
+    vider();
+    ecrire({name:'Cmp', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g', per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    const l2=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l2.ts; delete l2.date;
+    o.ligne_stable = JSON.stringify(l1)===JSON.stringify(l2) && Object.keys(l1).length>10;
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  t('CCCIV ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCIV ① ⭐ le carnet, le compteur et le rapport existent',
+    Array.isArray(X.type) && X.type.every(v=>v==='function'), JSON.stringify(X.type));
+  t('CCCIV ② ⭐ une VRAIE écriture crée le carnet et l\'incrémente (avant : rien)',
+    X.avant===null && Array.isArray(X.apres_une_ligne) && X.apres_une_ligne[0]===1
+    && X.apres_une_ligne[1]===1, JSON.stringify([X.avant, X.apres_une_ligne]));
+  t('CCCIV ③ ⭐ le verdict compté est celui que la douane rend — et la RÈGLE est comptée par nom',
+    Array.isArray(X.warn_compte) && X.warn_compte[0]===0 && X.warn_compte[1]===1
+    && X.warn_compte[2]===1, JSON.stringify(X.warn_compte));
+  t('CCCIV ④ ⭐ les écrivains sont distingués (deux vrais écrivains conduits)',
+    Array.isArray(X.par_ecrivain) && X.par_ecrivain.length===2
+    && X.par_ecrivain.indexOf('quickAddFood')>=0 && X.par_ecrivain.indexOf('rejouerRepas')>=0,
+    JSON.stringify(X.par_ecrivain));
+  t('CCCIV ⑤ ⭐ les FORMES sont classées depuis `u`/`q` seuls : grammes · portion · sans_quantite',
+    X.formes && X.formes.grammes===1 && X.formes.portion===1 && X.formes.sans_quantite===1,
+    JSON.stringify(X.formes));
+  t('CCCIV ⑥ ⛔⛔ LE COMPTEUR DE SOURCE EST UN BOOLÉEN — il suit la divergence de ft-v1205 '+
+    '(`rejouerRepas` perd `sourceId`) sans jamais garder l\'identifiant lui-même',
+    Array.isArray(X.source_booleen) && X.source_booleen[0]===1 && X.source_booleen[1]===1
+    && X.source_booleen[2]===true, JSON.stringify(X.source_booleen));
+  t('CCCIV ⑦ ⭐ LE CATALOGUE DES 21 RÈGLES SE RENSEIGNE TOUT SEUL — aucune liste recopiée, donc '+
+    'rien à faire diverger le jour où une règle change (R2)',
+    X.catalogue===21, 'catalogue='+X.catalogue);
+  t('CCCIV ⑧ ⛔⛔⛔ LE CANARI — AUCUNE DONNÉE DE REPAS N\'EST STOCKÉE : on enregistre un aliment '+
+    'au nom et aux valeurs reconnaissables, et RIEN de tout ça ne se retrouve dans le carnet. '+
+    'Et le carnet a bien enregistré (sinon l\'absence serait triviale)',
+    Array.isArray(X.canari) && X.canari[0]===true && X.canari[1]===true
+    && Array.isArray(X.canari[2]) && X.canari[2].length===0,
+    'fuites='+JSON.stringify(X.canari));
+  t('CCCIV ⑨ ⛔ LE CARNET N\'A QU\'UNE SEULE CLÉ : rien d\'autre ne s\'écrit ailleurs sous son nom',
+    Array.isArray(X.pas_d_autre_cle) && X.pas_d_autre_cle.length===0,
+    JSON.stringify(X.pas_d_autre_cle));
+  t('CCCIV ⑩ ⭐ IL SURVIT AU RECHARGEMENT (c\'est tout l\'intérêt d\'observer un usage réel) — '+
+    'et il n\'entre toujours pas dans `S`, donc ni dans la sauvegarde ni dans le cloud',
+    Array.isArray(X.survit) && X.survit[0]===true && X.survit[1]===true, JSON.stringify(X.survit));
+  t('CCCIV ⑪ ⭐ LE RAPPORT se lit, nomme les écrivains, POSE la question des règles qui ne '+
+    'mordent jamais — et ne porte aucune trace du canari',
+    Array.isArray(X.rapport) && X.rapport.every(v=>v===true), JSON.stringify(X.rapport));
+  t('CCCIV ⑫ ⛔ À ZÉRO LIGNE, LE RAPPORT LE DIT au lieu de diviser par zéro',
+    Array.isArray(X.rapport_vide) && X.rapport_vide.every(v=>v===true), JSON.stringify(X.rapport_vide));
+  t('CCCIV ⑬ ⛔ LA REMISE À ZÉRO efface les compteurs et NE TOUCHE PAS au journal alimentaire',
+    Array.isArray(X.remise) && X.remise[0]===true && X.remise[1]===true, JSON.stringify(X.remise));
+  t('CCCIV ⑭ ⛔⛔ LA LIGNE ENREGISTRÉE NE BOUGE PAS : deux écritures identiques donnent la même '+
+    'ligne, le carnet n\'a rien changé',
+    X.ligne_stable===true, 'la ligne a changé');
+  t('CCCIV ⑮ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — le carnet touche au STOCKAGE : c'est précisément le genre de code qui
+   peut se mettre à garder « juste un petit champ en plus » sans qu'aucun écran ne change. */
+{
+  const srcA=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeA=srcA.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LA=codeA.split('\n'), DA=[];
+  LA.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DA.push([i,m[1]]); });
+  const corpsA=(nom)=>{ const k=DA.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LA.slice(DA[k][0], k+1<DA.length?DA[k+1][0]:LA.length).join('\n'); };
+  const cCompter=corpsA('_douaneCompter');
+
+  t('CCCIV ⑯ ⛔⛔ PÉRIMÈTRE DE SOURCE — LE COMPTEUR NE GARDE AUCUN CHAMP DE REPAS : ni `name`, '+
+    'ni `kcal`, ni `prot`, ni `carbs`, ni `fat`, ni `q`, ni `per100`, ni `sourceId`, ni `date`, '+
+    'ni `meal`. Il ne lit que `u`/`q` (pour la forme) et l\'EXISTENCE d\'un `sourceId`',
+    cCompter.length>0
+    && !/\bligne\.(name|kcal|prot|carbs|fat|per100|date|meal|portionLabel)\b/.test(cCompter)
+    && !/\bl\.(name|kcal|prot|carbs|fat|per100|date|meal)\b/.test(cCompter)
+    /* ⚠️ CE MOTIF ÉTAIT AVEUGLE : il refusait `ligne.sourceId` suivi d'un caractère « parlant »,
+       donc il laissait passer `E.src = String(ligne.sourceId);` — la parenthèse fermante le
+       désamorçait. On compte désormais les OCCURRENCES (une seule, celle du booléen) et on
+       refuse toute forme qui RANGE la valeur. ⭐ Le canari, lui, l'avait attrapée : *un test de
+       comportement et un témoin de source ne se remplacent pas, ils se complètent.* */
+    && (cCompter.match(/ligne\.sourceId/g)||[]).length===1
+    && !/String\(\s*ligne\.sourceId/.test(cCompter)
+    && !/=\s*ligne\.sourceId/.test(cCompter),
+    'le compteur garde un champ de repas');
+  t('CCCIV ⑰ ⛔⛔ PÉRIMÈTRE DE SOURCE — LE COMPTEUR N\'ÉCRIT NI DANS `S`, NI DANS LA LIGNE, '+
+    'NI DANS LE JOURNAL : il n\'écrit que sa propre clé',
+    cCompter.length>0 && !/\bS\.\w+\s*=/.test(cCompter) && !/S\.foodLog/.test(cCompter)
+    && !/\bligne\.\w+\s*=[^=]/.test(cCompter) && !/persist\(/.test(cCompter)
+    && (cCompter.match(/localStorage\.setItem\(/g)||[]).length===1
+    && /DOUANE_OBS_CLE/.test(cCompter)
+    /* ⛔ et le carnet ne peut pas grossir sans fin : les combinaisons sont BORNÉES */
+    && /DOUANE_COMBOS_MAX/.test(cCompter), 'le compteur écrit ailleurs que dans sa clé');
+  t('CCCIV ⑱ ⛔⛔ LE CARNET N\'EST PAS SYNCHRONISÉ : la sauvegarde cloud ne le mentionne nulle '+
+    'part — elle part de `S`, et rien de la douane n\'y entre',
+    !/douane/i.test(fs.readFileSync(ROOT+'/setup.js','utf8')
+                      .replace(/\/\*[\s\S]*?\*\//g,'')
+                      .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n')),
+    'setup.js mentionne la douane — vérifier que ce n\'est pas la sauvegarde');
+  t('CCCIV ⑲ ⛔ LES 21 RÈGLES DE ft-v1205 SONT INTACTES — l\'étape 6 ne devait en changer AUCUNE',
+    (corpsA('_douaneLigne').match(/dit\('/g)||[]).length===21
+    && (corpsA('_douaneLigne').match(/'INVALID',/g)||[]).length===9,
+    'une règle a bougé');
+  t('CCCIV ⑳ ⛔⛔ TOUJOURS AUCUN BLOCAGE : aucun écrivain ne lit le verdict, et le compteur ne '+
+    'peut pas en empêcher un (il est appelé dans un `try` qui avale tout)',
+    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
+      .every(n=>!/(if\s*\(\s*_douaneLigne|(const|let|var)\s+\w+\s*=\s*_douaneLigne)/.test(corpsA(n)))
+    && /try\{\s*_douaneCompter\(res, l\);\s*\}catch/.test(corpsA('_douaneLigne')),
+    'le comptage peut bloquer une écriture');
 }
 
 await b.close(); srv.close();

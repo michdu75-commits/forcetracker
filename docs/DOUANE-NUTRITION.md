@@ -188,3 +188,102 @@ une par une** sur une ligne fabriquée exprès, pour prouver que la branche exis
 - ⛔ Les **3 divergences** ci-dessus : décisions produit, pas corrections.
 - ⛔ Hors périmètre inchangé : `savedFoods` multi-onglets · l'écart **48,3 / 48** · l'historique ·
   les migrations · les harmonisations produit · le garde `!_bcNutr` non bloquant (ft-v1203).
+
+---
+
+# 📊 ÉTAPE 6 — L'OBSERVATION RÉELLE (ft-v1206)
+
+> Feu vert de Michel après validation du mode observation : *« faire tourner `_douaneLigne(...)`
+> sur les vraies lignes réellement produites par l'application et obtenir un rapport agrégé des
+> WARN / INVALID rencontrés en usage réel, **sans stocker le contenu des repas ni les valeurs
+> nutritionnelles personnelles** »*.
+>
+> ⛔ **Rien ne change à la douane** : les 21 règles sont intactes, aucune n'est bloquante, aucune
+> ligne n'est corrigée. Un témoin épingle les 21 règles et leurs 9 `INVALID`.
+
+## 1️⃣ COMMENT C'EST BRANCHÉ
+
+Les 4 écrivains appellent déjà `_douaneLigne` depuis ft-v1205. **Rien n'est rebranché** : c'est
+`_douaneLigne` elle-même qui, après avoir rendu son verdict, appelle **`_douaneCompter(res, l)`**.
+
+```
+écrivain → _douaneLigne → verdict → _douaneCompter → compteurs (clé ft4_douane_obs)
+                                 ↘ écriture INCHANGÉE
+```
+
+⭐ L'appel est enveloppé dans un `try` qui avale tout : **le comptage ne peut pas empêcher une
+écriture**, même s'il plantait. Un témoin le fige.
+
+## 2️⃣ CE QUI EST COLLECTÉ — la liste est fermée
+
+| gardé | pourquoi |
+|---|---|
+| l'**écrivain** (4 valeurs) | comparer les 4 chemins entre eux |
+| le **verdict** (`OK`/`WARN`/`INVALID`) | la répartition |
+| les **noms** des règles qui ont mordu | savoir lesquelles servent |
+| la **forme** (`grammes` · `portion` · `ml` · `sans_quantite` · `autre`) | déduite de `u`/`q` **seuls** |
+| un **booléen** « la ligne avait-elle un `sourceId` » | suivre la divergence `rejouerRepas` |
+| des **compteurs** et le **catalogue** des règles | le rapport |
+
+⛔ **Jamais** : nom d'aliment · quantité réelle · kcal · protéines · glucides · lipides ·
+commentaire · description de repas · **identifiant source** · date d'un repas.
+👉 *Rien qui permette de reconstruire ce que la personne a mangé.* (**R36** · Constitution **P3**)
+
+⭐ **Le catalogue des 21 règles n'est recopié nulle part** : il se remplit tout seul au premier
+appel (`dit()` enregistre chaque nom), donc une règle ajoutée ou renommée suit sans divergence
+possible (**R2**).
+
+## 3️⃣ LA PREUVE QU'AUCUNE DONNÉE DE REPAS N'EST STOCKÉE — un CANARI
+
+On enregistre, **par un vrai écrivain**, un aliment nommé `ZZCANARIMICHELXY` avec des valeurs
+reconnaissables (`7777`, `6666`, `5555`, `4444`, `3333`, `9999`, `8888`, `2222`, `1111`) et un
+`sourceId` `off:ZZCANARISOURCE`. Puis on lit **ce qui a été réellement stocké** et on y cherche
+ces 11 chaînes.
+
+⛔⛔ **Et le même témoin vérifie que le carnet a bien enregistré** (`quickAddFood` y figure) —
+*sans ça, un carnet vide passerait le test sans rien prouver*, et la promesse de confidentialité
+serait un vert qui ne peut pas rougir (ft-v994).
+
+⭐⭐ **Les trois mutations de fuite** — garder le nom · garder les calories · garder l'identifiant
+de source au lieu du booléen — **ne changent rien à l'écran**. Sans le canari, elles passeraient
+toutes les trois. *C'est exactement le genre de dérive qu'aucun parcours ne peut voir.*
+
+## 4️⃣ OÙ IL VIT, ET POURQUOI IL N'EN SORT PAS
+
+- **sa propre clé** `ft4_douane_obs`, **hors de `S`** → donc hors de la sauvegarde, hors de la
+  synchronisation cloud, hors de tout export. Trois témoins le figent, dont un qui lit `setup.js`.
+- **borné** : 40 combinaisons maximum, le reste tombe dans `(autres)`.
+- **remise à zéro d'un bouton** — et un témoin vérifie qu'elle **ne touche pas au journal
+  alimentaire**.
+- **il survit au rechargement** : c'est tout l'intérêt d'observer un usage réel sur plusieurs
+  jours.
+
+## 5️⃣ COMMENT LIRE LE RAPPORT
+
+**Profil → Admin → « 📊 Douane — observation du journal » → Voir le rapport.**
+Boutons *Copier* (pour me l'envoyer) et *Repartir de zéro* (compteurs seulement).
+
+Le rapport donne, dans l'ordre : le **nombre de lignes observées** et la période · les
+**verdicts** · le détail **par écrivain** (verdicts, formes, avec/sans identifiant de source) ·
+les **règles qui ont mordu** · ⭐ **les règles qui n'ont JAMAIS mordu** · les **combinaisons**
+les plus fréquentes.
+
+⛔ Il **pose** les trois questions produit et **n'y répond pas** :
+① quelles règles sont purement théoriques ? ② lesquelles signalent du réel mais doivent **rester**
+des avertissements ? ③ lesquelles pourraient devenir bloquantes sans casser un usage légitime ?
+
+## 6️⃣ COMBIEN DE TEMPS OBSERVER AVANT DE DÉCIDER
+
+⚠️ **Je ne tranche pas — voici sur quoi la décision peut s'appuyer.**
+
+| repère | pourquoi celui-là |
+|---|---|
+| **≥ 100 lignes** | en dessous, une règle qui mord 1 fois sur 20 peut ne jamais apparaître par hasard |
+| **les 4 écrivains vus au moins une fois** | `rejouerRepas` et `saveEditFood` sont rares : sans eux, la moitié des divergences mesurées reste invisible |
+| **≥ 2 semaines** | un usage réel contient des semaines chargées et des semaines creuses ; une seule semaine ne dit rien de la variété des formes |
+
+⭐ **Le vrai critère n'est pas le temps, c'est la COUVERTURE** : une règle ne peut être déclarée
+*« purement théorique »* que si les formes qui la déclencheraient ont **réellement été produites**.
+👉 *Une règle qui n'a jamais mordu parce que le cas ne s'est jamais présenté n'est pas une règle
+inutile — c'est une règle non éprouvée.* Le rapport donne les formes rencontrées précisément pour
+qu'on puisse faire la différence.

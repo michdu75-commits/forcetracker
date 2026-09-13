@@ -2416,17 +2416,22 @@ function _repasHabituels(){
    vrai), et une valeur **invalide** (`NaN`, `Infinity`, un négatif). Seule la troisième est
    structurelle ; le 0 n'est jamais une erreur en soi. */
 const DOUANE_V = 1;
-/* Mémoire d'observation, volontairement minuscule et VOLATILE : elle rend le résultat
-   « explicite et testable » (demande de Michel) sans rien changer à ce qui est enregistré.
-   ⛔ Elle ne part NI dans `S`, NI dans `localStorage`, NI au cloud — un témoin le vérifie. */
-let _douaneVus = [];
+/* Le catalogue des noms de règles, rempli par `dit()` au premier appel — jamais écrit à la main. */
+const DOUANE_REGLES = [];
 function _douaneLigne(ligne, ecrivain){
   const l = ligne || {};
   const fini = x => (typeof x === 'number' && isFinite(x));
   const pos  = x => fini(x) && x > 0;
   const MACROS = ['kcal','prot','carbs','fat'];
   const regles = [];
-  const dit = (nom, grave, vrai) => { if(vrai) regles.push({r:nom, g:grave}); };
+  /* ⭐ `dit` RENSEIGNE AUSSI LE CATALOGUE (ft-v1206) : le rapport d'observation a besoin de
+     savoir quelles règles n'ont JAMAIS mordu, et recopier leur liste ailleurs l'aurait fait
+     diverger le jour où quelqu'un en ajoute une (R2). Ici, elle se remplit toute seule au
+     premier appel — toutes les règles sont évaluées à chaque fois, seul leur booléen diffère. */
+  const dit = (nom, grave, vrai) => {
+    if(DOUANE_REGLES.indexOf(nom) < 0) DOUANE_REGLES.push(nom);
+    if(vrai) regles.push({r:nom, g:grave});
+  };
 
   /* ── ① STRUCTURE : la ligne ne peut pas être interprétée du tout ────────────────────── */
   dit('nom_absent',        'INVALID', !(typeof l.name === 'string' && l.name.trim().length > 0));
@@ -2479,12 +2484,195 @@ function _douaneLigne(ligne, ecrivain){
              : regles.length ? 'WARN' : 'OK';
   const res = { v: DOUANE_V, etat: etat, regles: regles.map(x => x.r),
                 ecrivain: String(ecrivain || '?') };
-  /* ⛔ On garde les 50 derniers verdicts, et RIEN d'autre : ni la ligne, ni son nom, ni ses
-     valeurs. La douane observe la FORME, elle ne collecte pas ce que la personne mange
-     (Constitution P3 · R36 : ce qui décrit la personne reste chez elle). */
-  _douaneVus.push({ ts: res.etat, e: res.ecrivain, r: res.regles.join(',') });
-  if(_douaneVus.length > 50) _douaneVus = _douaneVus.slice(-50);
+  /* ⛔ ON NE GARDE QUE DE LA STRUCTURE : ni la ligne, ni son nom, ni ses valeurs. La douane
+     observe la FORME, elle ne collecte pas ce que la personne mange (Constitution P3 · R36 :
+     ce qui décrit la personne reste chez elle).
+     ⭐ ft-v1206 : les 50 derniers verdicts en mémoire sont devenus des COMPTEURS AGRÉGÉS, pour
+     que l'observation survive au redémarrage de l'app — une liste volatile ne pouvait rien dire
+     d'un usage réel sur plusieurs jours. La liste et les compteurs auraient été deux mémoires du
+     même fait (R2) : il n'en reste qu'une. */
+  try{ _douaneCompter(res, l); }catch(e){}
   return res;
+}
+/* 📊⭐ ft-v1206 — ÉTAPE 6 : L'OBSERVATION RÉELLE, ET ELLE NE GARDE QUE DE LA STRUCTURE.
+
+   Michel valide le mode observation et demande de le faire tourner pour de vrai :
+   *« faire tourner `_douaneLigne(...)` sur les vraies lignes réellement produites par
+   l'application et obtenir un rapport agrégé des WARN / INVALID rencontrés en usage réel,
+   SANS STOCKER le contenu des repas ni les valeurs nutritionnelles personnelles »*.
+
+   ⛔⛔ RIEN NE CHANGE À LA DOUANE. Les 21 règles sont intactes, aucune ne devient bloquante,
+   aucune ligne n'est corrigée. Ce bloc ne fait que COMPTER ce que la douane a déjà dit.
+
+   ⭐⭐ CE QUI EST GARDÉ — et la liste est fermée, pas « à peu près » :
+     · l'ÉCRIVAIN (4 valeurs possibles, du vocabulaire fixe)
+     · le VERDICT (OK / WARN / INVALID)
+     · les NOMS des règles qui ont mordu (vocabulaire fixe, 21 valeurs)
+     · la FORME (`grammes` · `portion` · `ml` · `sans_quantite` · `autre`)
+     · un booléen « la ligne portait-elle un identifiant de source » — le BOOLÉEN, jamais l'id
+     · des COMPTEURS
+   ⛔⛔ CE QUI N'EST JAMAIS GARDÉ : le nom de l'aliment · la quantité réelle · les calories ·
+   les protéines · les glucides · les lipides · un commentaire · une description de repas ·
+   l'identifiant source · la date d'un repas. **Rien qui permette de reconstruire ce que la
+   personne a mangé.**
+
+   👉 C'est **R36** appliqué à notre propre diagnostic : *ce qui décrit LE MONDE se compte, ce
+   qui décrit LA PERSONNE reste chez elle* (Constitution **P3**).
+
+   ⛔ ET LE CARNET VIT DANS SA PROPRE CLÉ, HORS DE `S` : il n'est donc dans aucune sauvegarde,
+   aucune synchronisation cloud, aucun export. Rien ne sort du téléphone. Un témoin le vérifie
+   en conduisant les vrais écrivains avec un CANARI (un nom et des valeurs reconnaissables) puis
+   en cherchant ce canari dans ce qui a été stocké — *une promesse de confidentialité qu'aucun
+   test ne peut faire rougir n'est qu'une intention.* */
+const DOUANE_OBS_CLE = 'ft4_douane_obs';
+const DOUANE_OBS_V = 1;
+const DOUANE_COMBOS_MAX = 40;   /* borne dure : le carnet ne peut pas grossir sans fin */
+function _douaneCarnet(){
+  try{
+    const brut = localStorage.getItem(DOUANE_OBS_CLE);
+    const o = brut ? JSON.parse(brut) : null;
+    if(o && o.v === DOUANE_OBS_V) return o;
+  }catch(e){}
+  return { v: DOUANE_OBS_V, depuis: null, maj: null, n: 0,
+           etats: { OK:0, WARN:0, INVALID:0 }, ecrivains: {}, regles: {}, combos: {},
+           catalogue: [] };
+}
+/* ⚠️ LA FORME EST DÉDUITE DE `u` ET `q` SEULS — jamais du nom, jamais des valeurs.
+   Elle répond à *« de quelle façon la quantité est-elle exprimée ? »*, pas à *« qu'est-ce que
+   c'était ? »*. C'est précisément la frontière que Michel a tracée. */
+function _douaneForme(l){
+  const q = +(l && l.q), u = (l && l.u) || '';
+  if(!(q > 0)) return 'sans_quantite';
+  if(u === 'g') return 'grammes';
+  if(u === 'portion') return 'portion';
+  if(u === 'ml') return 'ml';
+  return 'autre';
+}
+function _douaneCompter(res, ligne){
+  let c;
+  try{ c = _douaneCarnet(); }catch(e){ return; }
+  /* le jour, pas l'heure : savoir « depuis quand on observe » n'exige pas de savoir à quelle
+     heure la personne mange (R36 — la granularité fait partie de la donnée). */
+  const jour = (new Date()).toISOString().slice(0, 10);
+  if(!c.depuis) c.depuis = jour;
+  c.maj = jour;
+  c.n++;
+  if(c.etats[res.etat] === undefined) c.etats[res.etat] = 0;
+  c.etats[res.etat]++;
+  const e = String(res.ecrivain || '?').slice(0, 24);
+  const E = c.ecrivains[e] || (c.ecrivains[e] = { n:0, OK:0, WARN:0, INVALID:0,
+                                                  formes:{}, avecSource:0, sansSource:0 });
+  E.n++; if(E[res.etat] === undefined) E[res.etat] = 0; E[res.etat]++;
+  const f = _douaneForme(ligne);
+  E.formes[f] = (E.formes[f] || 0) + 1;
+  /* ⛔ LE BOOLÉEN, PAS L'IDENTIFIANT. Il sert à suivre la divergence mesurée en ft-v1205
+     (`rejouerRepas` perd `sourceId` là où `quickAddFood` le garde) sans jamais permettre de
+     retrouver l'aliment. */
+  if(ligne && ligne.sourceId) E.avecSource++; else E.sansSource++;
+  (res.regles || []).forEach(r => { c.regles[r] = (c.regles[r] || 0) + 1; });
+  if((res.regles || []).length){
+    const k = res.regles.slice().sort().join('+');
+    if(c.combos[k] !== undefined) c.combos[k]++;
+    else if(Object.keys(c.combos).length < DOUANE_COMBOS_MAX) c.combos[k] = 1;
+    else c.combos['(autres)'] = (c.combos['(autres)'] || 0) + 1;
+  }
+  /* le catalogue est du vocabulaire fixe (21 noms de règles), pas une donnée de repas */
+  c.catalogue = (typeof DOUANE_REGLES !== 'undefined') ? DOUANE_REGLES.slice() : [];
+  try{ localStorage.setItem(DOUANE_OBS_CLE, JSON.stringify(c)); }catch(e){}
+}
+/* 📋 LE RAPPORT — du texte, lisible, et construit UNIQUEMENT depuis les compteurs.
+   ⭐ Il est écrit pour répondre aux trois questions produit de Michel, et il les pose
+   explicitement au lieu d'y répondre à sa place :
+     ① quelles règles ne mordent JAMAIS sur de vraies lignes ?
+     ② lesquelles signalent du réel mais doivent RESTER des avertissements ?
+     ③ lesquelles pourraient devenir bloquantes sans casser un usage légitime ?
+   ⛔ Aucune de ces trois questions n'est tranchée ici : le rapport donne les chiffres. */
+function _douaneRapport(){
+  const c = _douaneCarnet();
+  const L = [];
+  const pct = (x) => c.n ? ' (' + Math.round(x * 100 / c.n) + ' %)' : '';
+  L.push('DOUANE — OBSERVATION RÉELLE (aucun blocage, aucune correction)');
+  if(!c.n) return L.concat(['', 'Aucune ligne observée pour l\'instant.',
+                            'Le compteur démarre au prochain aliment enregistré.']).join('\n');
+  L.push('Du ' + c.depuis + ' au ' + c.maj + ' — ' + c.n + ' ligne' + (c.n > 1 ? 's' : '') + ' observée' + (c.n > 1 ? 's' : ''));
+  L.push('');
+  L.push('VERDICTS');
+  ['OK','WARN','INVALID'].forEach(k => L.push('  ' + k.padEnd(8) + String(c.etats[k] || 0).padStart(5) + pct(c.etats[k] || 0)));
+  L.push('');
+  L.push('PAR ÉCRIVAIN');
+  Object.keys(c.ecrivains).sort().forEach(k => {
+    const E = c.ecrivains[k];
+    L.push('  ' + k);
+    L.push('      ' + E.n + ' ligne(s) — OK ' + (E.OK||0) + ' · WARN ' + (E.WARN||0) + ' · INVALID ' + (E.INVALID||0));
+    const fs = Object.keys(E.formes).sort().map(f => f + ' ' + E.formes[f]).join(' · ');
+    if(fs) L.push('      formes : ' + fs);
+    L.push('      identifiant de source : ' + E.avecSource + ' avec · ' + E.sansSource + ' sans');
+  });
+  L.push('');
+  L.push('RÈGLES QUI ONT MORDU');
+  const vues = Object.keys(c.regles).sort((a,b) => c.regles[b] - c.regles[a]);
+  if(!vues.length) L.push('  aucune — toutes les lignes observées sont sorties OK');
+  vues.forEach(r => L.push('  ' + String(c.regles[r]).padStart(5) + '  ' + r + pct(c.regles[r])));
+  L.push('');
+  L.push('RÈGLES QUI N\'ONT JAMAIS MORDU  (question ① : purement théoriques ?)');
+  /* ⭐ LE CATALOGUE DES 21 RÈGLES N'EST PAS RECOPIÉ ICI : il est RENSEIGNÉ par `dit()` au premier
+     appel de la douane, puis rangé dans le carnet. Une règle ajoutée, retirée ou renommée suit
+     donc toute seule — *une liste recopiée aurait divergé le jour où quelqu'un touche aux règles*
+     (R2). Et comme il est rangé avec les compteurs, il survit au redémarrage de l'app. */
+  const jamais = (c.catalogue || []).filter(r => !c.regles[r]);
+  if(!jamais.length) L.push('  aucune — les ' + (c.catalogue||[]).length +
+                            ' règles ont toutes mordu au moins une fois');
+  jamais.forEach(r => L.push('  ' + r));
+  L.push('');
+  L.push('COMBINAISONS LES PLUS FRÉQUENTES');
+  const cb = Object.keys(c.combos).sort((a,b) => c.combos[b] - c.combos[a]).slice(0, 10);
+  if(!cb.length) L.push('  aucune');
+  cb.forEach(k => L.push('  ' + String(c.combos[k]).padStart(5) + '  ' + k));
+  L.push('');
+  L.push('À DÉCIDER (questions ② et ③) — ce rapport donne les chiffres, pas la décision :');
+  L.push('  ② une règle fréquente sur un usage LÉGITIME doit rester un avertissement ;');
+  L.push('  ③ une règle rare, ou qui ne mord que sur des lignes vraiment cassées,');
+  L.push('     pourrait devenir bloquante sans gêner personne.');
+  L.push('  ⛔ Aucune règle n\'est bloquante aujourd\'hui, et aucune ne le deviendra sans');
+  L.push('     un feu vert explicite.');
+  L.push('');
+  L.push('CE QUI N\'EST PAS DANS CE RAPPORT, PAR CONSTRUCTION : aucun nom d\'aliment, aucune');
+  L.push('quantité réelle, aucune calorie, aucune macro, aucun identifiant de source, aucune');
+  L.push('date de repas. Le carnet ne quitte pas le téléphone.');
+  return L.join('\n');
+}
+/* 📊 L'AFFICHAGE DU RAPPORT — Profil → Admin. Il n'y a pas d'autre façon pour Michel de LIRE
+   ce que la douane observe sur son propre téléphone : le carnet ne sort pas de l'appareil, donc
+   aucun outil d'ici ne peut le lire. *Une mesure qu'on ne peut pas consulter n'existe pas* —
+   c'est la leçon du Google Sheet (ft-v715) et des 4 sondes de diagnostic (ft-v716).
+   ⛔ Lecture seule : ce bouton n'écrit rien, ne corrige rien, ne bloque rien. */
+function loadDouaneAdmin(){
+  const el = document.getElementById('admin-douane'); if(!el) return;
+  let txt = '';
+  try{ txt = _douaneRapport(); }catch(e){ txt = 'Rapport indisponible : ' + (e && e.message || e); }
+  el.innerHTML = '<pre id="douane-rapport" style="white-space:pre-wrap;word-break:break-word;'
+    + 'font-size:11.5px;line-height:1.5;color:var(--t2);background:var(--bg3);border-radius:8px;'
+    + 'padding:10px 12px;margin:0;font-family:\'SF Mono\',ui-monospace,monospace;"></pre>'
+    + '<div style="display:flex;gap:8px;margin-top:8px;">'
+    + '<button class="btn btn-bg2" onclick="_douaneCopier()" style="flex:1;padding:10px;font-size:13px;">📋 Copier</button>'
+    + '<button class="btn btn-bg2" onclick="_douaneVider()" style="flex:1;padding:10px;font-size:13px;color:var(--red);">↺ Repartir de zéro</button>'
+    + '</div>';
+  document.getElementById('douane-rapport').textContent = txt;   /* textContent : rien n'est interprété */
+}
+function _douaneCopier(){
+  const p = document.getElementById('douane-rapport'); if(!p) return;
+  try{ navigator.clipboard.writeText(p.textContent||''); toast('Rapport copié 📋','success'); }
+  catch(e){ toast('Copie impossible sur ce navigateur','error'); }
+}
+function _douaneVider(){
+  showConfirm('Repartir de zéro ?',
+    'Les compteurs d\'observation sont remis à zéro. ⛔ Ton journal alimentaire n\'est pas touché : '
+    + 'ce carnet ne contient que des compteurs, aucun aliment.',
+    () => { _douaneRemiseAZero(); loadDouaneAdmin(); toast('Compteurs remis à zéro','success'); },
+    'Remettre à zéro');
+}
+function _douaneRemiseAZero(){
+  try{ localStorage.removeItem(DOUANE_OBS_CLE); }catch(e){}
 }
 /* Rejoue un repas : ses aliments sont ajoutés à AUJOURD'HUI, sur le même moment de la journée.
    ⚠️ La provenance dit « reprise » (brique 0) — ce n'est ni une mesure fraîche ni une saisie
