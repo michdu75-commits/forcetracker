@@ -3716,6 +3716,40 @@ fermer une fuite**.
 qui dit **une seule fois** la distinction entre *« j'oublie l'aliment »* et *« je remets l'écran à
 plat pour le MÊME aliment »* — 2 appelants sur 13.
 
+### ⏱️ La récidive de §61 : **une attente qui démarre avant le mouvement** *(12/09/2026, ft-v1200)*
+
+**À quoi on la reconnaît** : un témoin rougit **en passe complète** et passe **3 fois sur 3 en
+isolé**. La tentation est immédiate et fausse : *« c'est un flake »*.
+
+**Le cas** : `CCLXXXVIII ①` mesure qu'un avertissement **vient à la vue** après un clic. ft-v1191
+avait déjà rendu le cas ② déterministe — *attendre que le défilement se stabilise au lieu de parier
+sur un délai* — et la correction n'avait **pas** été posée sur le cas ①. **R8, dans le banc d'essai
+lui-même.**
+
+**⛔⛔ Et ma première correction était fausse, d'une façon qui resservira.** J'ai recopié la boucle
+« attendre que `scrollTop` se stabilise ». Elle sortait **au premier tour** (`tours:1`) et le témoin
+rougissait toujours, avec `apresReset:75` — *un défilement encore en vol après une remise à zéro*.
+
+> **Une boucle de stabilité qui démarre AVANT le mouvement mesure « rien ne bouge encore »
+> et le lit comme « le mouvement est fini ».**
+
+Un défilement `smooth` ne commence pas au clic ; **sous charge il commence plus tard**. Deux
+échantillons égaux au départ ne prouvent donc rien du tout — et la boucle rend un verdict de
+stabilité sur un mouvement qui n'a pas eu lieu.
+
+**Le bon geste** : attendre **la condition réellement mesurée** (*« l'alerte est-elle à la vue ? »*),
+pas un proxy — puis exiger la stabilité sur **trois échantillons consécutifs** si un geste suivant
+dépend de l'immobilité. ⭐ **Le témoin n'en devient pas creux, et ça se vérifie** : avec
+`_amenerALaVue` neutralisée, il rougit toujours. *Une boucle qui sonde la condition échoue
+honnêtement quand la condition n'arrive jamais.*
+
+**⚠️ Ce que ça a coûté, mesuré** : **trois passes complètes** (~100 min) pour établir qu'un rouge
+n'était pas dû au correctif livré — et, en chemin, **une conclusion annoncée trop tôt** (*« le
+contrôle tranche, c'est mon correctif »*) sur **un** échantillon de chaque côté, contre un témoin
+déjà connu pour être instable. 👉 ***Un contre-exemple à n=1 ne tranche pas contre un flake
+documenté*** : reproduire avant de conclure vaut **dans les deux sens**, y compris quand la mesure
+semble accuser son propre travail.
+
 
 ## §63 — ⛔⛔ UN MOTIF DE RECHERCHE QUI SUPPOSE UNE **SYNTAXE** NE COMPTE PAS LES ENDROITS *(12/09/2026, ft-v1194)*
 
