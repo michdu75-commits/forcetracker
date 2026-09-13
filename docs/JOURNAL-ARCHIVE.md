@@ -8426,3 +8426,45 @@ Tests : **parcours 3590/3590 sur l'arbre FINAL** — ⭐ **et le total a demand�
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1100**, `conclusion: success` à **14:10:53 UTC** sur `175213ff`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Et l'API a d'abord montré le symptôme du run bloqué** — `status: in_progress` avec un `updated_at` **figé**, comme en ft-v1190. ⭐ *Ce sont les JOBS qui ont tranché* : l'étape « Déployer sur GitHub Pages » était **`success` à 14:10:51**, seul le nettoyage traînait. 👉 **Un run « en cours » n'est pas un déploiement en attente : l'étape qui compte peut être finie.** ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1196 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_3i_pdf.py`, `docs/SOUS-ETAPE-3I.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1196. |
+
+
+**ft-v1197 — 🏷️ 1b-ii : LA PROVENANCE REPRISE · ET UNE SOUS-ÉTAPE DE MON PROPRE PLAN QUI N'AVAIT RIEN À EXTRAIRE** — Michel : ***« continue selon le découpage, une sous-étape à la fois »***, puis ***« après avoir bossé, fais-moi un PDF direct pour GPT »***.
+
+**⛔⛔ LE FAIT DE LA VERSION EST UNE SOUS-ÉTAPE SUPPRIMÉE, PAS LE CODE LIVRÉ.** La suivante dans l'ordre était **1b-iv** (l'export CSV), que mon propre document décrivait comme ⭐ *« la sous-étape la moins risquée du lot »*. **Mesuré avant la moindre ligne : elle est VIDE.**
+- `NUTRI_COLONNES` et sa construction de ligne existent **une seule fois** dans tout le code servi ;
+- **aucun import ne les relit** ;
+- et le partage était **DÉJÀ fait au bon niveau** : `_csvFichier(colonnes, lignes, …)` est le propriétaire commun, appelé par l'export **nutrition ET poids**, bien avant ce chantier.
+
+👉 ***Une extraction exige au moins DEUX copies.*** En sortir une créerait un propriétaire à **un seul appelant** — pas du rangement, de la complexité sans contrepartie (**R19**).
+
+**⭐⭐ ET L'ERREUR QUI L'A FAIT ENTRER DANS LE PLAN VAUT PLUS QUE LA SOUS-ÉTAPE.** Sa justification écrite était *« c'est elle qui était invisible au compteur »* — **vrai**, c'est le cas d'école de `BUGS.md` §63 (ft-v1194). Mais j'en ai tiré la mauvaise conclusion : j'ai versé au découpage **tout ce que le compteur avait raté**, sans jamais demander, site par site, **s'il était DUPLIQUÉ**. 👉 ***Un site qu'un compteur défaillant a manqué n'est pas pour autant un site à extraire*** : *réparer l'instrument* et *refaire l'inventaire* sont deux gestes différents, et j'avais fait le premier en croyant avoir fait le second. **Le test d'entrée est désormais écrit : compter les copies AVANT de décrire une sous-étape.**
+
+**⚠️ ET SON ÉTIQUETTE « INSTANTANÉ » ÉTAIT FAUSSE DES DEUX CÔTÉS** : elle annonçait *« AUCUNE sonde aujourd'hui — prérequis absolu »*, or le bloc **CCIV** conduit **vraiment** `exportNutritionCsv()`, intercepte la remise du fichier et **lit le CSV produit**. 👉 **C'est le miroir exact de ft-v1196**, où l'étiquette disait *« couvert »* pour une sonde qui ne couvrait rien. ***Dans les deux sens, l'étiquette ne remplace pas l'ouverture du fichier.*** ⛔ **1b-iv reste écrite à sa place AVEC SA RAISON** (**R30**) — une sous-étape effacée ressemble à un oubli, et quelqu'un la remettrait dans six mois. ⭐ **Les 8 autres ont été auditées au même test : toutes tiennent.** Une seule était vide sur dix.
+
+**⭐ CE QUI EST DONC LIVRÉ : 1b-ii**, la provenance recopiée d'une ligne existante — `{sourceId, etat, per100}` → **`_srcProvenance(src)`**, 3 appelants.
+
+**⛔⛔ ET LA COUPE EST DICTÉE PAR LES DIVERGENCES, PAS PAR LA RESSEMBLANCE.** `origine` et `saisie` sont sur la même ligne et ressemblent au reste — **ils ne disent pas la même chose aux trois portes** :
+
+| porte | `origine` | `saisie` |
+|---|---|---|
+| « Mes aliments » | `it.origine\|\|'reprise'` | `'liste'` |
+| recherche du journal | `e.origine\|\|'utilisateur'` | `'historique'` |
+| ajout direct | **`'reprise'` en dur** | `'liste'` |
+
+⭐ **Mesuré à la sonde** : une ligne venue d'un code-barres (`origine:'off'`) se réenregistre par la porte directe en **`'reprise'`**. ⛔ **Ce n'est pas un bug** — la source n'est pas conservée sur les favoris, donc en hériter **affirmerait une provenance qu'on n'a pas relue** (**R33**). 👉 **Les unifier changerait ce que le journal DIT DE LUI-MÊME** : décision produit n°4, **transportée et figée par 2 témoins de périmètre**. *Un écart qu'on lit dans le code ne se perd pas ; un écart absorbé dans un propriétaire, si.*
+
+**⭐ ET LE PÉRIMÈTRE DU DOCUMENT ÉTAIT FAUX AUSSI, EN PLUS PETIT** : le 4ᵉ site qu'il citait (`_buildFoodQuickItems`) **n'en est pas un** — il construit un **item de liste**, pas une provenance (c'est 1b-iii) ; et `quickAddFood` ne porte que **la paire**, son `per100` lui venant de `_srcRepriseQ` depuis ft-v1195.
+
+**⚠️⚠️ MA SONDE ÉTAIT MORTE, ET JE L'AI VU AVANT DE CAPTURER LE BEFORE — c'est le moment qui compte, pas l'erreur.** Ma 1ʳᵉ version appelait `_afSuggPrendreLocale(0)` après avoir garni `S.foodLog` : **elle lit `_afSuggLoc[i]`, pas `S.foodLog`**, donc elle sortait au 3ᵉ caractère (`if(!e) return`) et la sonde rendait **`ABSENT` partout**. 👉 ***Un BEFORE capturé avec une sonde morte est pire qu'aucun BEFORE, parce qu'il PRODUIT une preuve*** : il serait resté identique quoi qu'on fasse au code, donc il aurait **validé n'importe quelle extraction**. Corrigée en remplissant par `_afSuggLocales()`, la **vraie** fonction de production, **avec un garde qui LÈVE si la liste est vide**. *C'est le piège d'`openSessDetail(0)` de ft-v1189, repayé.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : la sonde passe de **12 à 15 clés** (3 portes réellement conduites), et l'instantané est **identique octet pour octet** avant/après — **sha256 `7a52c37da93e17a3`**, diff vide.
+
+**⛔⛔ ET J'AI REFAIT §60 : J'AI MUTÉ DES FICHIERS SERVIS PENDANT MA PROPRE PASSE.** En éprouvant les gardes du PDF, j'ai muté `app.js` et `setup.js` **alors que la passe tournait** — exactement la faute que j'ai documentée en ft-v1190, dans le fichier qui la documente. ⭐ **Rien n'a été conclu à tort parce que je l'ai vu tout de suite** : passe **arrêtée**, fichiers vérifiés restaurés, **passe relancée de zéro sans rien toucher**. 👉 ***La règle ne suffit pas : il faut que le geste soit impossible au mauvais moment.*** Le contrôle négatif d'un PDF se fait **avant de lancer la passe, ou après** — jamais pendant, comme celui du code.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : trois champs recopiés deviennent un propriétaire (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **les 6 sous-étapes restantes** ne sont pas faites · ⛔ **aucun défaut divergent n'est harmonisé** · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1104**, job `deploy` **`success`** à **14:54:37 UTC** sur `a7d6e172` — l'étape « Déployer sur GitHub Pages » close à **14:54:35**. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196, où un `in_progress` avec `updated_at` figé cachait un déploiement déjà réussi. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1197 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_1bii_pdf.py`, `docs/SOUS-ETAPE-1BII.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1197. |
