@@ -6336,12 +6336,34 @@ async function _pdfToImages(f){
   }
   return pages;
 }
+/* 📐 LE CONTRAT DE LECTURE — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, décision de Michel)
+   ⛔⛔ UNE LECTURE PARTIELLE N'EST PAS UN SUCCÈS, et ce n'est pas non plus une exception :
+   c'est un ÉTAT, qui doit remonter jusqu'à l'appelant.
+   MESURÉ LE 13/09 sur les vrais fichiers de Michel, avec la vraie bibliothèque : `_pdfToText`
+   rendait **682 lignes d'un fichier de 22 pages SANS RIEN SIGNALER** (plafond `MAX_PAGES=15`,
+   **31 % du contenu jamais lu**). *Une lecture partielle était indiscernable d'une lecture
+   complète* — et pour une cascade de crans, c'est **un succès qui ment**, plus dangereux qu'un
+   échec : le cran s'arrête sur un résultat incomplet et le cran suivant n'est jamais appelé.
+   ⛔ `raison` est un CODE, jamais un message d'interface : un texte affichable ici serait un
+   second propriétaire de ce que voit la personne, et les deux divergeraient (R2). L'affichage
+   se décide CHEZ L'APPELANT. */
+const LIRE_COMPLET = 'COMPLETE';   // tout le document a été lu
+const LIRE_PARTIEL = 'PARTIAL';    // lu, mais pas en entier → ne JAMAIS traiter comme un succès
+const LIRE_INCONNU = 'UNKNOWN';    // rien d'exploitable → on peut descendre d'un cran
+
 // Extraction de la COUCHE TEXTE d'un PDF (100% local, 0 IA) — pour le Mode Test VM.
-// Regroupe les fragments par ligne via leur coordonnée Y. Renvoie [] si PDF scanné (pas de texte).
+// Regroupe les fragments par ligne via leur coordonnée Y.
+// Rend le contrat ci-dessus : {etat, lignes, pagesLues, pagesTotal, raison}.
 async function _pdfToText(f){
   const pdf=await _pdfOuvrir(f);   // même porte d'entrée que _pdfToImages (R2)
+  /* ⛔ MAX_PAGES NE BOUGE PAS DANS CE CHANTIER — consigne de Michel, mot pour mot : « pas de
+     correction silencieuse du plafond de pages sans d'abord rendre la troncature observable ».
+     Le relever, le supprimer ou découper le document est une DÉCISION SÉPARÉE, qui se prendra
+     en VOYANT le chiffre (mémoire d'un vieil iPhone, durée de lecture, taille d'envoi). */
   const MAX_PAGES=15, lines=[];
-  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
+  const pagesTotal=pdf.numPages;
+  const pagesLues=Math.min(pagesTotal,MAX_PAGES);
+  for(let i=1;i<=pagesLues;i++){
     const page=await pdf.getPage(i);
     const tc=await page.getTextContent();
     const rows=[];
@@ -6359,7 +6381,15 @@ async function _pdfToText(f){
       if(txt) lines.push(txt);
     });
   }
-  return lines;
+  /* ⭐ L'ORDRE DES TESTS EST UN CHOIX, PAS UN HASARD : « rien lu » l'emporte sur « tronqué ».
+     Un document de 22 pages dont les 15 premières n'ont AUCUN texte doit rendre UNKNOWN, pas
+     PARTIAL — parce que la seule chose utile à en faire est de DESCENDRE D'UN CRAN (l'OCR).
+     Rendre PARTIAL annoncerait « lu en partie » avec zéro ligne : la cascade s'arrêterait sur
+     un résultat vide en croyant avoir réussi à moitié. ⛔ Figé par un témoin, pour que ce choix
+     ne soit pas « corrigé » par quelqu'un qui le lirait comme une inversion (R30). */
+  if(!lines.length)        return {etat:LIRE_INCONNU, lignes:lines, pagesLues, pagesTotal, raison:'aucune_couche_texte'};
+  if(pagesLues<pagesTotal) return {etat:LIRE_PARTIEL, lignes:lines, pagesLues, pagesTotal, raison:'plafond_pages'};
+  return {etat:LIRE_COMPLET, lignes:lines, pagesLues, pagesTotal, raison:''};
 }
 async function addImportFile(input){
   const files=[...input.files];if(!files.length)return;

@@ -7867,10 +7867,21 @@ async function _vmCustomPdf(input){
   if(!(/\.pdf$/i.test(f.name)||f.type==='application/pdf')){ toast('Choisis un fichier PDF','error'); return; }
   toast('Lecture du PDF…','info');
   try{
-    const lines=await _pdfToText(f);
-    if(!lines.length){ toast('Ce PDF est une image scannée (aucun texte à lire) — colle la liste à la main.','error'); return; }
-    ta.value=lines.join('\n');
-    toast(lines.length+' lignes lues — vérifie puis « Lancer le test »','success');
+    /* 📐 LE CONTRAT DE LECTURE (13/09/2026) — `_pdfToText` ne rend plus un tableau nu mais
+       {etat, lignes, pagesLues, pagesTotal, raison}. ⛔⛔ ET C'EST ICI QUE SE DÉCIDE CE QUE LA
+       PERSONNE VOIT : la fonction de lecture rend un CODE (`plafond_pages`), jamais une phrase.
+       ⭐ Le cas qui a fondé tout ce chantier est le PARTIAL : avant, un document de 22 pages
+       rendait ses 15 premières « avec succès » — le Mode Test tournait sur les deux tiers d'un
+       programme sans que personne ne puisse le savoir. Désormais on le DIT, et on donne quand
+       même les lignes lues : une lecture partielle n'est pas un échec, c'est un résultat dont
+       il faut connaître la limite. */
+    const r=await _pdfToText(f);
+    if(r.etat===LIRE_INCONNU){ toast('Ce PDF est une image scannée (aucun texte à lire) — colle la liste à la main.','error'); return; }
+    ta.value=r.lignes.join('\n');
+    if(r.etat===LIRE_PARTIEL)
+      toast('⚠️ '+r.pagesLues+' pages lues sur '+r.pagesTotal+' — la fin du document manque. Vérifie avant de lancer.','info');
+    else
+      toast(r.lignes.length+' lignes lues — vérifie puis « Lancer le test »','success');
   }catch(e){ toast('Impossible de lire ce PDF','error'); }
 }
 function _vmBenchCustomRun(){

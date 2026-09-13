@@ -33903,7 +33903,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 }
 
 
-/* ═══ CCXCVI. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
+/* ═══ CCCII. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
    Michel, après avoir lu les trois constats : *« vas-y corrige tout »*. Il lève lui-même l'ordre
    qu'il avait posé le matin même (*« on refera un état des lieux quand j'aurai fini les bugs de
    la nutrition »*).
@@ -33991,35 +33991,35 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     return o;
   });
 
-  console.log('\n-- CCXCVI. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
-  t('CCXCVI ① le propriétaire de la conversion RPE existe', R.owner===true);
-  t('CCXCVI ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
-  t('CCXCVI ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
-  t('CCXCVI ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
-  t('CCXCVI ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
-  t('CCXCVI ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
-  t('CCXCVI ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
-  t('CCXCVI ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
+  console.log('\n-- CCCII. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
+  t('CCCII ① le propriétaire de la conversion RPE existe', R.owner===true);
+  t('CCCII ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
+  t('CCCII ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
+  t('CCCII ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
+  t('CCCII ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
+  t('CCCII ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
+  t('CCCII ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
+  t('CCCII ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
     R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir">·0r</span>|<span class="prev-rir">·4+r</span>|'
     && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir">·@10</span>|<span class="prev-rir">·@≤6</span>|',
     'RIR '+R.prevRir+' · RPE '+R.prevRpe);
-  t('CCXCVI ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
+  t('CCCII ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
     R.horsEchelleRpe==='|||' && R.horsEchelleRir==='|', 'RPE ['+R.horsEchelleRpe+'] · RIR ['+R.horsEchelleRir+']');
-  t('CCXCVI ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
-  t('CCXCVI ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
+  t('CCCII ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
+  t('CCCII ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
     R.echecAffiche===R.echecProprio && /une répétition n'est pas passée/.test(R.echecAffiche),
     'écran : "'+R.echecAffiche+'" · propriétaire : "'+R.echecProprio+'"');
-  t('CCXCVI ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
-  t('CCXCVI ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
+  t('CCCII ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
+  t('CCCII ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
     R.regle==='180|180|4.2', 'reçu : '+R.regle);
-  t('CCXCVI ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
+  t('CCCII ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
     R.sansReglage && R.sansReglage.log===R.sansReglage.proprio
       && R.sansReglage.coach===Math.round(((R.sansReglage.proprio+70)/60)*10)/10
       && Math.abs(R.sansReglage.app-(5*(30+R.sansReglage.proprio)/60))<0.01,
     'reçu : '+JSON.stringify(R.sansReglage));
-  t('CCXCVI ③ ... et ce repli est celui de l\'installation (130 s)',
+  t('CCCII ③ ... et ce repli est celui de l\'installation (130 s)',
     R.sansReglage && R.sansReglage.proprio===130, 'reçu : '+(R.sansReglage||{}).proprio);
-  t('CCXCVI ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
+  t('CCCII ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
     R.parType==='45|45|240|240|20', 'reçu : '+R.parType);
 
   /* ⛔⛔ ET LE TÉMOIN QUI EMPÊCHE LA RECHUTE — il lit la SOURCE, parce qu'une copie de la
@@ -34043,9 +34043,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                         .split('\n').filter(l=>!/function _rpeDeRir\(/.test(l)).join('\n');
     const copies=(horsProprio.match(/10\s*-\s*(n|RIR_MAX)\b/g)||[]);
     const appels=(lg.match(/_rpeDeRir\s*\(/g)||[]).length-1;   // -1 : sa propre déclaration
-    t('CCXCVI ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
+    t('CCCII ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
       'trouvé : '+JSON.stringify(copies));
-    t('CCXCVI ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
+    t('CCCII ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
       appels>=2, appels+' appel(s)');
   })();
 
@@ -34058,7 +34058,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       (src.match(/S\.defRest\s*(\|\|\s*\d+|[?:]\s*\d+)/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
       (src.match(/\+S\.defRest\s*>\s*0\s*\)\s*\?/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
     });
-    t('CCXCVI ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
+    t('CCCII ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
       mauvais.length===0, mauvais.join(' · '));
   })();
 }
@@ -34879,34 +34879,34 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
    }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
   });
   console.log('\n== BLOC CCXCVI — 🔢 3-ii : la pastille « ta dernière quantité » (ft-v1199) ==');
-  if(X.err){ t('CCXCVI bloc exécuté', false, X.err); }
+  if(X.err){ t('CCCII bloc exécuté', false, X.err); }
   else{
-    t('CCXCVI ① `_qGrammes` existe', X.type==='function', X.type);
-    t('CCXCVI ② ⭐ elle rend un NOMBRE : 150 · 80 · 0 (portions) · 0 · 0 · 0 (ml) · 0 · 0 — '+
+    t('CCCII ① `_qGrammes` existe', X.type==='function', X.type);
+    t('CCCII ② ⭐ elle rend un NOMBRE : 150 · 80 · 0 (portions) · 0 · 0 · 0 (ml) · 0 · 0 — '+
       'et c\'est ce qui evite une duplication en 3-iii/3-iv (`>0` EST la condition)',
       X.table==='[150,80,0,0,0,0,0,0]', String(X.table));
 
     ['qf','loc'].forEach((k,i)=>{
       const nom = i===0 ? 'PORTE « Mes aliments »' : 'PORTE « recherche du journal »';
       const r = X[k] || {};
-      t('CCXCVI '+(i===0?'③':'⑥')+' ⭐ '+nom+' : les grammes sont reproposés (150), '+
+      t('CCCII '+(i===0?'③':'⑥')+' ⭐ '+nom+' : les grammes sont reproposés (150), '+
         'et l\'unité ABSENTE aussi (80)',
         r['grammes'] && r['grammes'].vue===true && r['grammes'].q==='150'
         && r['sans unité'] && r['sans unité'].q==='80', JSON.stringify([r['grammes'],r['sans unité']]));
-      t('CCXCVI '+(i===0?'④':'⑦')+' ⛔ '+nom+' : les PORTIONS ne proposent rien — la règle '+
+      t('CCCII '+(i===0?'④':'⑦')+' ⛔ '+nom+' : les PORTIONS ne proposent rien — la règle '+
         'refuse ce que `_qReprenable` accepte, et c\'est voulu',
         r['portions'] && r['portions'].vue===false, JSON.stringify(r['portions']));
-      t('CCXCVI '+(i===0?'⑤':'⑧')+' ⛔ '+nom+' : zéro, négatif et millilitres ne proposent rien '+
+      t('CCCII '+(i===0?'⑤':'⑧')+' ⛔ '+nom+' : zéro, négatif et millilitres ne proposent rien '+
         '(sans densité, un volume ne dit pas ce que PÈSE l\'aliment — R29)',
         r['zéro'] && r['zéro'].vue===false && r['négatif'] && r['négatif'].vue===false
         && r['millilitres'] && r['millilitres'].vue===false,
         JSON.stringify([r['zéro'],r['négatif'],r['millilitres']]));
     });
-    t('CCXCVI ⑨ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas — '+
+    t('CCCII ⑨ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas — '+
       'c\'est ce qui rend l\'extraction légitime',
       JSON.stringify(X.qf)===JSON.stringify(X.loc),
       JSON.stringify(X.qf)+' vs '+JSON.stringify(X.loc));
-    t('CCXCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
+    t('CCCII ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
   await cx.close();
 }
@@ -34920,13 +34920,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   const sansComm=src.split('\n').filter(l=>{const x=l.trim();
     return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
   const nb=(sansComm.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVI ⑪ ⭐ les 2 portes passent par `_qGrammes` (1 déclaration + 2 appels)',
+  t('CCCII ⑪ ⭐ les 2 portes passent par `_qGrammes` (1 déclaration + 2 appels)',
     nb===3, 'occurrences='+nb);
   const corps=(sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCXCVI ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
+  t('CCCII ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
     '`_qReprenable` n\'est PAS entré dedans (les fondre serait un changement de comportement)',
     corps.length>0 && !/portion/.test(corps), 'corps='+corps.slice(0,140));
-  t('CCXCVI ⑬ ⛔ et `_qReprenable` existe TOUJOURS à côté, avec ses portions — deux règles, '+
+  t('CCCII ⑬ ⛔ et `_qReprenable` existe TOUJOURS à côté, avec ses portions — deux règles, '+
     'pas une',
     /function _qReprenable\(src\)\{/.test(sansComm) && /=== 'portion'/.test(sansComm),
     'une des deux a disparu');
@@ -35505,6 +35505,167 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
   t('CCXLVIII ⛔ la fusion reste un CHOIX : aucune fusion automatique n\'a été ajoutée (R29)',
     /function mergeExercises\(keep,remove\)/.test(srcSet) && /showConfirm\(/.test(srcSet)
     && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
+}
+
+/* ═══ CCCIII. LE CONTRAT DE LECTURE D'UN PDF — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, A1) ═══
+   Michel, après la mesure du matin sur ses vrais fichiers : *« aujourd'hui un import peut réussir
+   silencieusement alors qu'il est tronqué »*. `_pdfToText` rendait **682 lignes d'un fichier de
+   22 pages sans rien signaler** (plafond MAX_PAGES=15) — une lecture partielle était indiscernable
+   d'une lecture complète.
+
+   ⚠️⚠️ TÉMOINS PAR STUB DE `pdfjsLib`, ET C'EST UN CHOIX, PAS UN PIS-ALLER :
+   ① aucun binaire (1,34 Mo) ni PDF personnel n'entre dans le dépôt ;
+   ② le nombre de pages et le texte sont CONTRÔLÉS, donc les 3 états sont déterministes et
+      rejouables sur n'importe quelle machine — un vrai PDF de 22 pages ne le serait pas.
+   ⛔ CE QUI EST ÉPROUVÉ ICI EST NOTRE LOGIQUE DE CONTRAT, PAS pdf.js. La vraie bibliothèque a été
+   mesurée séparément le 13/09 (programme 87 lignes/384 ms, historique 682/413 ms, contrôle négatif
+   à 0 ligne). *Dire ce qu'un test ne couvre pas fait partie du test.* */
+{
+  console.log('\n-- CCCIII. Le contrat de lecture d\'un PDF (A1) --');
+
+  const R = await p.evaluate(async () => {
+    const out = {};
+    const vrai = window.pdfjsLib;          // ⛔ on RESTAURE à la fin : ne rien laisser derrière soi
+
+    /* Le stub : `_pdfOuvrir` appelle `_loadPDFJS()` (qui sort à sa 1re ligne si pdfjsLib existe)
+       puis `pdfjsLib.getDocument(...).promise`. On lui rend un document dont on choisit le nombre
+       de pages et le contenu. Les fragments sont donnés DANS LE DÉSORDRE exprès, pour que le
+       regroupement par Y et le tri par X restent éprouvés (non-régression). */
+    const poser = (nbPages, avecTexte) => {
+      window.pdfjsLib = {
+        GlobalWorkerOptions: {},
+        getDocument(){
+          return { promise: Promise.resolve({
+            numPages: nbPages,
+            getPage(i){
+              return Promise.resolve({ getTextContent(){
+                if(!avecTexte) return Promise.resolve({items:[]});
+                return Promise.resolve({items:[
+                  {str:'monde', transform:[0,0,0,0, 50, 700]},   // x=50, même ligne
+                  {str:'page'+i, transform:[0,0,0,0, 10, 680]},  // ligne du dessous
+                  {str:'bonjour',transform:[0,0,0,0, 10, 700]}   // x=10 : doit passer DEVANT « monde »
+                ]});
+              }});
+            }
+          })};
+        }
+      };
+    };
+    const lire = async () => {
+      const f = new File([new Uint8Array([37,80,68,70])], 'x.pdf', {type:'application/pdf'});
+      try { return await window._pdfToText(f); } catch(e){ return {erreur:String(e&&e.message||e)}; }
+    };
+
+    poser(3, true);   out.complet = await lire();
+    poser(22, true);  out.partiel = await lire();
+    poser(1, false);  out.inconnu = await lire();
+    poser(22, false); out.videEtTronque = await lire();     // les deux à la fois
+
+    out.constantes = { c: typeof LIRE_COMPLET!=='undefined' && LIRE_COMPLET,
+                       p: typeof LIRE_PARTIEL!=='undefined' && LIRE_PARTIEL,
+                       i: typeof LIRE_INCONNU!=='undefined' && LIRE_INCONNU };
+    if(vrai) window.pdfjsLib = vrai; else delete window.pdfjsLib;
+    return out;
+  });
+
+  /* ⛔ CONTRÔLE SAIN DU HARNAIS, AVANT TOUT LE RESTE : si le stub n'atteint pas la fonction, TOUS
+     les témoins qui suivent seraient verts pour la mauvaise raison (BUGS.md §61). */
+  t('CCCIII ⛔ le stub atteint bien la vraie fonction (sinon tout ce qui suit est faux)',
+    !!R.complet && !R.complet.erreur && typeof R.complet.etat==='string',
+    'reçu : '+JSON.stringify(R.complet).slice(0,120));
+
+  t('CCCIII ① COMPLETE sur un PDF entièrement lu',
+    R.complet.etat==='COMPLETE' && R.complet.pagesLues===3 && R.complet.pagesTotal===3,
+    'reçu : '+R.complet.etat+' '+R.complet.pagesLues+'/'+R.complet.pagesTotal);
+  t('CCCIII ① ⛔ `raison` est VIDE sur un succès (une raison sur un COMPLETE est un signal faux)',
+    R.complet.raison==='', 'reçu : '+JSON.stringify(R.complet.raison));
+
+  t('CCCIII ② ⭐ PARTIAL sur 22 pages plafonnées à 15 — LE DÉFAUT DU JOUR, RENDU OBSERVABLE',
+    R.partiel.etat==='PARTIAL' && R.partiel.pagesLues===15 && R.partiel.pagesTotal===22,
+    'reçu : '+R.partiel.etat+' '+R.partiel.pagesLues+'/'+R.partiel.pagesTotal);
+  t('CCCIII ② ⛔ la raison NOMME la cause (`plafond_pages`), ce n\'est pas un message d\'interface',
+    R.partiel.raison==='plafond_pages', 'reçu : '+JSON.stringify(R.partiel.raison));
+  t('CCCIII ② ⭐ et les lignes LUES sont quand même rendues : un partiel n\'est pas un échec',
+    Array.isArray(R.partiel.lignes) && R.partiel.lignes.length===30,
+    'reçu : '+(R.partiel.lignes||[]).length+' lignes');
+
+  t('CCCIII ③ UNKNOWN sur un PDF sans couche texte',
+    R.inconnu.etat==='UNKNOWN' && R.inconnu.lignes.length===0 && R.inconnu.raison==='aucune_couche_texte',
+    'reçu : '+R.inconnu.etat+' / '+R.inconnu.raison);
+
+  /* ⛔ L'ORDRE DES TESTS EST UN CHOIX DÉLIBÉRÉ, FIGÉ ICI (R30) : « rien lu » l'emporte sur
+     « tronqué ». Un 22 pages sans aucun texte doit rendre UNKNOWN — la seule chose utile à en
+     faire est de DESCENDRE D'UN CRAN vers l'OCR. PARTIAL annoncerait « lu en partie » avec zéro
+     ligne : la cascade s'arrêterait sur un résultat vide en croyant avoir réussi à moitié. */
+  t('CCCIII ④ ⛔ vide ET tronqué → UNKNOWN gagne (pour que la cascade descende, pas qu\'elle s\'arrête)',
+    R.videEtTronque.etat==='UNKNOWN' && R.videEtTronque.raison==='aucune_couche_texte',
+    'reçu : '+R.videEtTronque.etat+' / '+R.videEtTronque.raison);
+
+  t('CCCIII ⑤ pagesLues ≤ pagesTotal, et les deux > 0 dès que le fichier s\'ouvre',
+    [R.complet,R.partiel,R.inconnu,R.videEtTronque].every(x=>x.pagesLues>0 && x.pagesTotal>0 && x.pagesLues<=x.pagesTotal), '');
+
+  /* ⛔ NON-RÉGRESSION : le regroupement par Y et le tri par X ne doivent pas avoir bougé. Les
+     fragments sont fournis dans le désordre ; « bonjour » (x=10) doit passer devant « monde »
+     (x=50) sur la même ligne, et la ligne du haut (y=700) avant celle du bas (y=680). */
+  t('CCCIII ⑥ ⛔ l\'assemblage des lignes est intact (Y décroissant, X croissant)',
+    R.complet.lignes[0]==='bonjour monde' && R.complet.lignes[1]==='page1',
+    'reçu : '+JSON.stringify((R.complet.lignes||[]).slice(0,2)));
+
+  t('CCCIII ⑦ les 3 états sont les valeurs attendues',
+    R.constantes.c==='COMPLETE' && R.constantes.p==='PARTIAL' && R.constantes.i==='UNKNOWN',
+    'reçu : '+JSON.stringify(R.constantes));
+
+  /* ══ TÉMOINS DE SOURCE ══ */
+  const srcLog = fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  const srcCoach = fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  /* ⛔ On retire les commentaires AVANT de compter : un témoin qui ne distingue pas le CODE de ce
+     qui en PARLE finit par interdire d'écrire la documentation du correctif (BUGS.md §64). */
+  const sansCom = s => s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  const logC = sansCom(srcLog), coachC = sansCom(srcCoach);
+
+  /* ⭐⭐ LE TÉMOIN QUI PORTE TOUT LE CHANTIER. La forme retenue (un objet) a une faiblesse dite :
+     un appelant NON migré échoue FERMÉ mais avec un message trompeur (« PDF vide » sur un PDF
+     lisible). Ce n'est pas bruyant — c'est muet-mais-sûr. Le garde-fou n'est donc pas la forme,
+     c'est CE témoin : chaque appelant de `_pdfToText` doit lire `.etat`. Sans lui, une migration
+     incomplète serait VERTE. */
+  const appelants = coachC.split('\n').map((l,i)=>({l,i})).filter(x=>/_pdfToText\s*\(/.test(x.l));
+  t('CCCIII ⑧ ⭐ SOURCE — `_pdfToText` a toujours exactement UN appelant, et il est dans coach.js',
+    appelants.length===1 && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
+    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')))
+    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))),
+    'appelants dans coach.js : '+appelants.length);
+  t('CCCIII ⑧ ⭐⭐ SOURCE — l\'appelant LIT `.etat` (le seul garde-fou d\'une migration complète)',
+    /const\s+r\s*=\s*await\s+_pdfToText\(f\)/.test(coachC) && /r\.etat\s*===\s*LIRE_INCONNU/.test(coachC)
+    && /r\.etat\s*===\s*LIRE_PARTIEL/.test(coachC),
+    'l\'appelant ne consulte pas les trois états');
+  t('CCCIII ⑧ ⛔ SOURCE — il ne teste plus la LONGUEUR pour décider (l\'ancienne forme est partie)',
+    !/const\s+lines\s*=\s*await\s+_pdfToText/.test(coachC) && !/if\(!lines\.length\)/.test(coachC), '');
+
+  /* ⛔ Les trois valeurs ne s'écrivent qu'aux constantes : une chaîne 'PARTIAL' retapée ailleurs
+     est exactement la recopie que ce contrat existe pour éviter (R2). */
+  const litteraux = (logC+coachC).match(/'(COMPLETE|PARTIAL|UNKNOWN)'/g)||[];
+  t('CCCIII ⑨ ⛔ SOURCE — les 3 valeurs ne sont écrites QU\'aux constantes (aucune recopie)',
+    litteraux.length===3, 'trouvé '+litteraux.length+' littéraux : '+litteraux.join(' '));
+
+  /* ══ PÉRIMÈTRE — ce que Michel a explicitement exclu de A1 ══ */
+  t('CCCIII ⑩ ⛔ PÉRIMÈTRE — MAX_PAGES vaut TOUJOURS 15 (on rend la troncature observable, on ne la corrige pas)',
+    /const\s+MAX_PAGES=15,\s*lines=\[\]/.test(logC), '');
+  /* ⚠️ CE TÉMOIN A ÉTÉ FAUX AU 1ᵉʳ JET, ET LA CAUSE RESSERVIRA : il bornait la recherche à
+     « 1400 caractères après `_pdfToImages` » pour vérifier qu'aucun `etat:LIRE_` n'y apparaît.
+     Or le corps de `_pdfToImages` fait **836 caractères**, et `_pdfToText` — qui rend bel et
+     bien le contrat — commence juste après : le garde débordait sur la fonction VOISINE et
+     rougissait sur du code parfaitement sain. *Une borne en distance de caractères n'est pas
+     une borne de fonction* (BUGS.md §63, reposé). On découpe donc le CORPS réel, jusqu'à son
+     `return pages;`, et on cherche dedans. */
+  const corpsImages = (()=>{ const i=logC.indexOf('async function _pdfToImages(f){');
+    if(i<0) return null; const j=logC.indexOf('return pages;', i); return j<0?null:logC.slice(i,j); })();
+  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — `_pdfToImages` n\'est PAS migrée (A2 attend le feu vert nutrition)',
+    corpsImages!==null && !/etat:\s*LIRE_/.test(corpsImages) && !/pagesTotal/.test(corpsImages),
+    corpsImages===null?'corps introuvable':'le contrat a débordé sur _pdfToImages');
+  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — les 4 appelants de `_pdfToImages` lisent toujours `.length` (rien n\'a bougé chez eux)',
+    /const pages=await _pdfToImages\(f\);\s*\n?\s*if\(!pages\.length\)/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
+    && (logC.match(/const pages=await _pdfToImages\(f\);/g)||[]).length===2
+    && /const imgs=await _pdfToImages\(f\); pages=imgs\.map/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))), '');
 }
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
