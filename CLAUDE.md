@@ -159,7 +159,8 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1205`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1206`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1204`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -428,7 +429,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1205`** (prochaine : `ft-v1206`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1206`** (prochaine : `ft-v1207`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v1204`** (prochaine : `ft-v1205`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > 📄 **UN PDF POUR GPT À CHAQUE LIVRAISON — consigne de Michel du 13/09/2026** : *« fais un PDF à
 > chaque fois stp pour GPT »*. **Écrite ici plutôt que ré-appliquée** : il l'avait demandée **8 fois
@@ -461,7 +463,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
-**ft-v1205 — 📐 A1 : UNE LECTURE DE PDF DIT ENFIN QU'ELLE EST TRONQUÉE — `COMPLETE` / `PARTIAL` / `UNKNOWN`** — Michel valide le plan et ses 4 décisions produit, puis ouvre **A1 SEUL** : ***« d'abord formaliser le contrat de résultat d'un import »*** · ***« une lecture partielle n'est PAS une exception technique et ne doit jamais être assimilée à un succès complet »***.
+**ft-v1206 — 📐 A1 : UNE LECTURE DE PDF DIT ENFIN QU'ELLE EST TRONQUÉE — `COMPLETE` / `PARTIAL` / `UNKNOWN`** — Michel valide le plan et ses 4 décisions produit, puis ouvre **A1 SEUL** : ***« d'abord formaliser le contrat de résultat d'un import »*** · ***« une lecture partielle n'est PAS une exception technique et ne doit jamais être assimilée à un succès complet »***.
 
 **⭐⭐ LE DÉFAUT CORRIGÉ A ÉTÉ MESURÉ LE MATIN MÊME, AVEC LA VRAIE BIBLIOTHÈQUE, SUR SES VRAIS FICHIERS.** `_pdfToText` rendait **682 lignes d'un document de 22 pages — sans le moindre signal** (`MAX_PAGES=15`, **31 % du contenu jamais lu** ; et `_pdfToImages`, le chemin qui part à l'IA, plafonne à **8**, soit **64 %**). 👉 ***Une lecture partielle était indiscernable d'une lecture complète*** — pour une cascade de crans, c'est **un succès qui ment**, plus dangereux qu'un échec : le cran s'arrête sur un résultat incomplet et le suivant n'est jamais appelé.
 
@@ -487,9 +489,9 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 Tests : **bloc CCCIII, 18 témoins, 18 ✅ · 0 ❌.** ⛔ **CONTRÔLE NÉGATIF : 12 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge AVANT ET APRÈS** — ① le contrat rend toujours `COMPLETE` → **2** · ② le plafond n'est plus compté → **3** · ③ `pagesTotal` recopié depuis `pagesLues` → **2** · ④ une raison posée sur un succès → **1** · ⑤ ⭐ l'ordre s'inverse (`PARTIAL` gagne sur `UNKNOWN`) → **1** · ⑥ la raison devient un message d'interface → **1** · ⑦ le tri par X perdu → **1** · ⑧ ⛔ `MAX_PAGES` relevé en douce → **4** · ⑨ ⛔ `_pdfToImages` migrée au passage → **1** · ⑩ l'appelant revient à la liste nue → **2** · ⑪ ⭐ **l'appelant IGNORE le `PARTIAL`** (le défaut du jour, revenu) → **1** · ⑫ un littéral `'PARTIAL'` recopié à la main → **2**.
 
-Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CHANTIER-IMPORTS.md`, `docs/PLAN-CONTRAT-IMPORTS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1205. |
+Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CHANTIER-IMPORTS.md`, `docs/PLAN-CONTRAT-IMPORTS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1206. |
 
-**ft-v1204 — 🔧 LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE », CORRIGÉS — ET AUCUN N'ÉTAIT VISIBLE À L'ÉCRAN** — Michel lève lui-même l'ordre qu'il avait posé le matin (*« on refera un état des lieux quand j'aurai fini les bugs de la nutrition »*) : ***« vas-y corrige tout »***.
+**ft-v1205 — 🔧 LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE », CORRIGÉS — ET AUCUN N'ÉTAIT VISIBLE À L'ÉCRAN** — Michel lève lui-même l'ordre qu'il avait posé le matin (*« on refera un état des lieux quand j'aurai fini les bugs de la nutrition »*) : ***« vas-y corrige tout »***.
 
 **⛔⛔ LE CONTRAT EST DONC CELUI DES EXTRACTIONS NUTRITION, ET POUR LA MÊME RAISON** : les trois constats sont **des pièges pour plus tard, pas des bugs qu'on subit** — donc *aucune valeur affichée ne doit bouger*. Une passe verte ne prouve pas ça (elle prouve que ce que les témoins **regardent** n'a pas bougé) : d'où un **instantané** avant/après, `tools/instantane_seance_audit.js`, rejouable.
 
@@ -513,7 +515,49 @@ Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md
 
 Tests : **parcours 3583/3583 sur l'arbre FINAL** (+19, bloc **CCCII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — aucun trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 11 MUTATIONS, TOUTES MORDENT, chacune sur son témoin** — ① le propriétaire rend un chiffre au lieu de `null` → **2** · ② une copie de la conversion réapparaît → **1** · ③ le propriétaire redevient décoratif → **1** · ④ le garde « pas un cran » retiré → **2** · ⑤ `_rirTxt` remise en place → **1** · ⑥ l'écran n'affiche plus le libellé du propriétaire → **1** · ⑦ le repos ignore le réglage de la personne → **1** · ⑧ un site garde son propre repli → **2** · ⑨ le repli n'est plus celui de l'installation → **1** · ⑩ les règles par TYPE avalées → **1** · ⭐ ⑪ **une copie qui ÉCHAPPE au motif** (`10 - +n`) → **1 rouge, exactement le second verrou** — *c'est elle qui prouve que le témoin « le propriétaire est vraiment appelé » n'est pas décoratif.*
 
-Fichiers : `log.js`, `state.js`, `app.js`, `coach.js`, `tests/parcours/runner.js`, `tools/instantane_seance_audit.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1204. |
+Fichiers : `log.js`, `state.js`, `app.js`, `coach.js`, `tests/parcours/runner.js`, `tools/instantane_seance_audit.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1205. |
+**ft-v1204 — 🔀 ÉTAPE 4 : LE HUB DE PRÉPARATION · ET CE QU'IL REFUSE DE FAIRE EST LA MOITIÉ DE SA DÉFINITION** — Michel valide la clôture de 1b/3 et ouvre l'étape 4, avec ⛔ **une borne explicite** : ***« je ne veux PAS encore la douane. Le hub doit d'abord être construit et validé seul »***, et un cahier des charges en négatif — ***« ne décide pas encore si une ligne est valide · ne corrige aucune valeur · ne bloque aucun enregistrement · ne modifie ni quantité, ni unité, ni per100, ni provenance, ni portion · ne touche pas encore à `S.foodLog` »***. Conception complète : **`docs/HUB-NUTRITION.md`**.
+
+**⭐ CARTOGRAPHIE FAITE AVANT TOUTE LIGNE — 12 fonctions, classées par RÔLE et non par ressemblance.**
+
+| groupe | fonctions | état |
+|---|---|---|
+| **A** — passent **déjà** par `_offRemplirFormulaire` | `_lookupBarcode` · `_calAppliquer` · `_afSuggPrendreMarque` · `_afSuggPrendreCiqual` · `_afSuggPrendreOff` | **5**, migrées d'un coup par leur hub |
+| **B** — préparent l'écran **à la main** | `quickFillFood` · `_afSuggPrendreLocale` · `onFoodLabelFile` · `estimateFoodAI` | **1 seule** migrée |
+| **C** — **ne préparent pas un aliment** | `openAddFood` (l'ouverture) · `_bcSansValeurs` (repli « sans valeurs ») · `quickAddFood` (ajout **direct**, sans écran) | hors sujet par nature |
+
+**⚠️⚠️ ET MON PREMIER RELEVÉ ÉTAIT FAUX — §63 DANS MON PROPRE INSTRUMENT.** Il attribuait des appels à `readFoodLabel` et `scanBarcodeIA` : ⛔ **ce ne sont PAS des portes** — 7 lignes chacune, elles n'ouvrent que le sélecteur de fichier. Les vraies sont **`onFoodLabelFile`** et **`estimateFoodAI`**. Cause : mon extracteur bornait les corps par `\nfunction NAME(` et **ratait les `async function`**. 👉 ***Attrapé par une ligne de points qui ne pouvait pas être vide*** — pas par une relecture. *Un motif qui suppose une syntaxe ne compte pas les endroits, il compte les endroits écrits comme on les imaginait.*
+
+**⭐⭐ LE NOYAU COMMUN EST MESURÉ GESTE PAR GESTE, PAS ESTIMÉ.** `onFoodLabelFile` recopiait **8 des 13 gestes** de `_offRemplirFormulaire` — et **son propre commentaire le dénonçait depuis ft-v1163** : *« c'est exactement ce que faisait `_offRemplirFormulaire` »*. ⛔ **Mais elle en OMET 5** (pastille « la dernière fois » · paquet · état · carte santé · provenance). 👉 ***Le hub ne prend donc QUE les 8*** — `_afPreparerEcran(nut, portion, etiquettePortion, sourcePortion, suffixeNom)`. *Un hub qui fait plus que le noyau commun n'est pas un chemin commun : c'est une porte qui en avale une autre.*
+
+**⛔⛔ ET LES TROIS LIBELLÉS RESTENT DES PARAMÈTRES.** Chaque porte sait *d'où vient* le nombre qu'elle propose — « portion fabricant », « lu sur l'étiquette », ou **l'enseigne** pour un produit de marque. Le hub, lui, ne le sait pas : **une formule unique lui ferait inventer une source**. *C'est une DONNÉE propre à la porte, pas une règle à factoriser.*
+
+**⭐ UNE PORTE MIGRÉE À LA FOIS, INSTANTANÉ VÉRIFIÉ APRÈS CHACUNE.** Et la première migration **change l'ordre** dans `_offRemplirFormulaire` : les 8 gestes deviennent contigus, donc la pastille et le paquet passent **après** le nom et le recalcul. 👉 ***Mesuré, pas supposé*** — instantané identique, `cfcffd90645abe53`. *La question « est-ce que l'ordre compte ? » ne se répond pas en lisant le code.*
+
+**⛔⛔ CE QUE LE HUB NE FAIT PAS — 7 TÉMOINS, ET C'EST LA MOITIÉ DE SA DÉFINITION** : aucune validation · aucune correction · aucun blocage · ni `S.foodLog` · ni la provenance · ni la quantité, l'unité, le pour-100 g ou la portion · **et aucun propriétaire de 1b/3**. ⭐ **Chacun est figé DEUX FOIS quand c'est possible** — un témoin de comportement (on pose un état, on appelle le hub, on relit) *et* un témoin de source. *Le hub PRÉPARE ; la douane validera plus tard.*
+
+**⭐⭐ NON-FUSION PAR RESSEMBLANCE — la question que Michel a posée nommément.** Mesuré, part du noyau faite en propre : `quickFillFood` **4/8**, `_afSuggPrendreLocale` **5/8**, `_bcSansValeurs` 2/8, `estimateFoodAI` 1/8, `openAddFood` 1/8, `quickAddFood` **0/8** (aucun écran). 👉 ***Les y brancher AJOUTERAIT des gestes*** — elles restent dehors, et deux témoins le figent. La mutation *« quickFillFood ressemble, je la branche aussi »* fait **2 rouges**.
+
+**⚠️⚠️ ET UN EXTRACTEUR DE TÉMOIN RENDAIT DU VIDE — DEUX TÉMOINS PASSAIENT À VIDE.** La regex était écrite `'\\\\('` côté source, soit **un antislash suivi d'une ouverture de groupe** au lieu d'une parenthèse littérale : elle ne trouvait **aucun** corps. Or ⑫ et ⑬ testent une **ABSENCE** (`!/x/.test('')` est vrai) — ils étaient **verts sans rien mesurer**. 👉 ***C'est ⑭, le SEUL qui teste une PRÉSENCE, qui l'a trahi en rougissant sur du code parfaitement sain.*** *Un témoin qui ne peut pas rougir ne mesure rien, il rassure* — et la règle de ft-v1198 (*un témoin de source se vérifie d'abord contre le code SAIN*) a servi exactement à ça. **L'extracteur LÈVE désormais** au lieu de rendre du vide : l'erreur est impossible à refaire.
+
+**⚠️ ET J'AI CORRIGÉ CETTE ANALYSE DANS LE MAUVAIS SENS AVANT DE LA CORRIGER DANS LE BON.** Mon premier diagnostic était juste ; un test `node -e` m'a fait dire *« je me suis trompé, `f()` rend bien des corps non vides »* — **le shell avait mangé mes antislashes**, donc je testais une regex différente de celle du fichier. C'est la lecture du **fichier lui-même** (`cat -A`) qui a tranché. 👉 ***Un test qui n'emploie pas exactement le texte du fichier ne teste pas le fichier*** — famille §58, appliquée à un shell au lieu d'un appelant.
+
+**⚠️ SONDE : aucune des 23 clés ne lisait l'ÉCRAN PRÉPARÉ.** Elles observent `_afSrc`, la pastille, le trio grammes, la définition de portion — **jamais** le champ des grammes, la portion proposée, le nom, la ligne visible ni la description, qui sont *exactement* ce que le hub déplace. **23 → 25 clés AVANT le BEFORE**, et elle conduit **les deux chemins sur un jeu de cas commun** — *c'est la comparaison qui fait la preuve*. ⭐ Elle **salit** l'écran avant chaque cas : sans ça, un champ « déjà vide » serait indiscernable d'un champ « vidé par le hub ».
+
+**⚠️⚠️ ET J'AI FAILLI PUBLIER « 7 PORTES SUR 12 » POUR 6 — attrapé en écrivant le garde, pas en relisant.** Mon compte des portes servies partait de `MIGREES ⊆ PORTES` ; or ⛔ **`_offRemplirFormulaire` n'est PAS une porte** — elle n'appelle pas `_afOublierAliment`, ce sont ses **5 appelants** qui le font. Le hub a donc **2 appelants**, et **6 portes sur 12** l'atteignent (les 5 du groupe A indirectement + `onFoodLabelFile` en direct). 👉 ***Le chiffre n'est devenu faux qu'au moment où j'ai voulu le DÉRIVER d'un ensemble auquel il n'appartient pas.*** *Un sous-ensemble supposé est une mesure qu'on n'a pas faite* — et c'est un garde qui recompte, pas une relecture, qui l'a dit. ⭐ **Le témoin ⑮ fige donc les DEUX nombres** (12 portes · 6 servies) au lieu du seul qui m'avait trompé — *un témoin qui ne fige que le chiffre publié laisse revenir le raisonnement qui l'a rendu faux*.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : deux portes convergent vers un chemin commun (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la DOUANE n'est pas commencée** — consigne explicite, elle attend la validation du hub seul · ⛔ **3 portes du groupe B non migrées** : les faire converger **changerait leur comportement**, donc c'est une **décision produit**, pas une extraction · ⛔ `S.savedFoods` multi-onglets, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts · ⛔ le garde `!_bcNutr` non bloquant (mesuré en ft-v1203) attend toujours son **feu vert séparé**. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+📄 **PDF POUR GPT** : `docs/ETAPE4-HUB.pdf` (5 p., 16ᵉ de la série), généré par `tools/gen_hub_pdf.py` — **21 gardes**, et ⭐ **ceux qui comptent sont ceux du NÉGATIF** : ils refusent de produire si le hub s'est mis à **valider**, à **corriger**, à **écrire au journal**, ou s'il a **absorbé** un des 5 gestes que `onFoodLabelFile` ne fait pas. *Un hub qui déborde reste vert à l'écran — c'est précisément pour ça que le garde lit le CODE et pas le comportement.* **17 mutations éprouvées sur un arbre COPIÉ** (§60 par construction, l'arbre revérifié identique au dépôt à la fin), **toutes refusent**, contrôle sain vert **avant ET après**.
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1130**, l'étape « Déployer sur GitHub Pages » **`success` à 13:12:12 UTC** sur `068446a4`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *l'étape est verte, l'app affichant ft-v1204 reste à confirmer par Michel.*
+
+Tests : **parcours 3726/3726 sur l'arbre FINAL** (+16, bloc **CCCII**) — **total prédit = total obtenu** (3710 + 16, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 14 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① ⭐⭐ **« je finis le hub » : la pastille absorbée dedans** → **1**, exactement le témoin des 5 gestes omis · ② ⭐⭐ **« le hub pose aussi la provenance »** (il devient la douane) → **2** · ③ ⭐⭐ **« le hub valide »** (douane prématurée) → **1** · ④ le hub écrit au journal → **2** · ⑤ ⭐⭐ **fusion par ressemblance** (`quickFillFood` branchée) → **2** · ⑥ le champ n'est plus vidé → **2** · ⑦ le drapeau ne retombe plus → **2** · ⑧ le hub touche un propriétaire de 1b/3 → **2** · ⑨ la 2ᵉ porte reprend sa copie à la main → **2** · ⑩ un geste **propre** de la 1ʳᵉ porte absorbé → **1** · ⑪ le libellé devient une formule unique → **1**, exactement le témoin d'équivalence · ⭐⭐ **et 3 mutations pour le témoin de PORTÉE ⑮, écrit après coup** : ⑫ une porte du groupe A cesse de passer par le chemin commun (6 → 5) → **1, exactement lui** · ⑬ `readFoodLabel` redevient une porte (l'erreur §63 rejouée, 12 → 13) → **1, exactement lui** · ⑭ `onFoodLabelFile` reprend sa copie à la main → **2** (⑧ et ⑮). ⚠️ **Et mon harnais de mutation lisait le MAUVAIS arbre au 1ᵉʳ jet** : un `sed` avait avalé le `||` de `process.argv[2]||process.cwd()`, donc les 3 mutations tournaient contre le dépôt **sain** — *0 rouge partout, et un 0 rouge ressemble à un témoin aveugle*. C'est **§61 encore** : le contrôle sain n'est pas une formalité, il est le seul témoin du harnais.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_hub_pdf.py`, `docs/ETAPE4-HUB.pdf`, `sw.js`, `CLAUDE.md`, `docs/HUB-NUTRITION.md` (nouveau), `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1204. |
+
 **📋 1b-v ⛔ ÉCARTÉE — ET 1b ET 3 SONT TERMINÉES · 13/09/2026, SANS NOUVELLE VERSION** — Michel valide 3-v et impose le recomptage pour la dernière sous-étape : ***« recompte entièrement son périmètre réel dans le code servi ; ne te fie pas au plan écrit ; distingue bien l'écran d'ajout (`_af*`) de l'écran d'édition (`_ef*`) ; si le test d'entrée montre qu'il n'y a plus au moins deux copies d'une même forme, n'invente pas de propriétaire »***.
 
 **⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ**, et c'est dit plutôt que subi : la règle du projet est *« ne pas bumper si la modif ne concerne que le backend »*, et la même logique vaut ici (seuls `tests/`, `tools/` et les journaux changent). *Un bump gratuit fait re-télécharger l'app à tout le monde pour rien.*
@@ -729,39 +773,6 @@ Tests : **parcours 3633/3633 sur l'arbre FINAL** (+13, bloc **CCXCVI**) — **to
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1112**, l'étape « Déployer sur GitHub Pages » **`success` à 19:16:04 UTC** sur `5f16740e`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *l'étape est verte, l'app affichant ft-v1199 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1199. |
-
-**ft-v1198 — 📋 1b-iii : LE NOYAU D'UN ITEM DE LISTE · ET LE PLAN ANNONÇAIT DEUX DIVERGENCES, IL N'Y EN A QU'UNE** — Michel valide 1b-ii et pose le **test d'entrée** en consigne permanente : ***« avant toute extraction, vérifie d'abord qu'il y a réellement au moins deux copies »*** · ***« extrait uniquement ce qui est strictement identique »*** · ***« toute divergence métier reste visible chez les appelants »***.
-
-**⭐ TEST D'ENTRÉE PASSÉ** : **3 sites réels** — `_buildFoodQuickItems` branche **favoris** et branche **récents**, plus `toggleFavFood` (le favori enregistré).
-
-**⭐⭐ ET LE NOYAU A ÉTÉ MESURÉ CHAMP PAR CHAMP, PAS ESTIMÉ** : **9 champs strictement identiques aux trois** — `name` · `kcal`/`prot`/`carbs`/`fat` en `||0` · `per100` · `q` · `u` · `portionLabel`. Ils deviennent **`_itemListe(src)`**.
-
-**⛔⛔ ET LE DOCUMENT SE TROMPE À MOITIÉ, POUR LA TROISIÈME SOUS-ÉTAPE D'AFFILÉE.** Il annonçait : *« `q` vaut `0` chez `_buildFoodQuickItems` et `null` chez `toggleFavFood` ; `portionWeightG` pareil »*, et en déduisait un propriétaire à **paramètre** — `_itemListe(src, {vide:0})` vs `{vide:null}`.
-
-| champ | ce que le plan disait | ce que la MESURE dit |
-|---|---|---|
-| `q` | « `0` ici, `null` là » | ⛔ **`+X.q>0?+X.q:0` aux TROIS sites** — il ne diverge pas |
-| `portionWeightG` | « pareil » | ⭐ **la SEULE vraie divergence** : `0` · `0` · **`null`** |
-
-👉 ***Le paramètre était dimensionné pour deux écarts alors qu'il n'y en a qu'un.*** **Il n'a donc pas été écrit** : `portionWeightG` et `fav` restent **écrits chez chaque appelant**, où l'écart se lit à l'œil nu. *Un paramètre inutile déplace la divergence DANS le propriétaire au lieu de la laisser visible* — c'est exactement ce que la consigne interdit.
-
-**⛔ ET `origine`/`sourceId`/`etat` NE BOUGENT PAS** : cette forme n'existe qu'**à la branche récents**, **une seule copie**. *On ne crée pas de propriétaire pour une forme unique* (la règle qui a fait écarter 1b-iv la veille) — et une mutation qui les y ferait entrer rougit.
-
-**⚠️ SONDE : OUVERTE, PAS CRUE — et l'étiquette était juste cette fois.** `1b_buildFoodQuickItems` appelle **la production** avec les **deux** branches garnies (`savedFoods` ET `foodLog`), et `1b_toggleFavFood_complet`/`_nu` conduisent `toggleFavFood` deux fois, **dont le cas `null`**. ⭐ *Après deux étiquettes fausses de suite (3-i « couvert » alors que non, 1b-iv « aucune sonde » alors que si), celle-ci tient — vérifiée en l'ouvrant, pas en la lisant.*
-
-**⭐ CRITÈRE BINAIRE ATTEINT** : instantané **identique octet pour octet** avant/après, **sha256 `7a52c37da93e17a3`**, diff vide.
-
-**⚠️ MON TÉMOIN DE PÉRIMÈTRE ÉTAIT FAUX, ET LE CODE SAIN L'A DIT.** Le témoin ② listait les clés attendues du propriétaire : j'en avais écrit **8 au lieu de 9**, en oubliant `name`. Il rougissait sur du code parfaitement juste. 👉 ***Un témoin de source se vérifie d'abord contre le code SAIN*** — s'il rougit là, c'est l'attendu qui est faux, pas le code. *Corrigé avant toute mutation, sinon j'aurais cherché un bug qui n'existait pas.*
-
-**⚠️⚠️ ET UNE MUTATION NE MORDAIT PAS — MAIS LA CAUSE N'ÉTAIT PAS UN TÉMOIN MANQUANT.** *« `per100` perdu »* rendait **0 rouge**. En cherchant pourquoi au lieu de conclure : **`_srcRepriseQ` porte le MÊME motif** (`per100: s.per100 || null,`) et **vient AVANT dans le fichier** — ma mutation frappait donc **l'autre fonction**, dont les témoins vivent dans un autre bloc. 👉 ***Une mutation mal placée est indiscernable d'un témoin aveugle.*** Réancrée sur deux lignes contiguës propres à `_itemListe` : **2 rouges, exactement les deux témoins du pour-100 g**. *C'est le piège de ft-v1195, repayé — et il resservira, parce que plus on extrait de propriétaires, plus les motifs se ressemblent d'une fonction à l'autre.*
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : trois copies d'un objet deviennent une (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la divergence `portionWeightG` n'est PAS harmonisée** — décision produit n°2, en attente · ⛔ ni le **hub** (4) ni la **douane** (5) · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
-
-✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1108**, `conclusion: success` à **17:10:07 UTC** sur `7dd2bc45`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1198 reste à confirmer par Michel.*
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1198. |
 
 > **+ ft-v712** : le **rangement des exercices par MATÉRIEL** dans le sélecteur (8 bacs : Barre · Poids libre · Guidé · Poids du corps · Élastique · TRX/Sangles · Cardio · Polyvalent). `_eqTestOn()` (log.js) = `return true;`, gardée en fonction comme `_isNutriBeta()`.
 > Réglage manuel des calories/macros · Objectif « Perte de gras + muscle » (recomposition) · « maxi » dans les reps · pointeur Journal — **ouverts à TOUS** le 27/07/2026 (décision Michel « tout pour tout le monde »). `_isNutriBeta()` (screens.js) = `return true;` (gardée en fonction pour ne pas chasser les usages). Annoncés via WHATS_NEW **v46/47/48** + red dots `reps-maxi`/`manual-kcal`/`goal-recomp`.

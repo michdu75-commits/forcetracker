@@ -1918,6 +1918,44 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
    appelants existants n'en passent pas et gardent donc `'off'`, au caractère près. Il existe
    pour le calibrage à la main, qui doit s'enregistrer comme « étiquette » et surtout PAS comme
    une fiche Open Food Facts — *une provenance fausse est pire que pas de provenance* (R33). */
+/* 🔀⭐ ft-v1204 — ÉTAPE 4, LE HUB : LE NOYAU COMMUN DE PRÉPARATION DE L'ÉCRAN D'AJOUT.
+   Feu vert de Michel après la clôture de 1b/3 : *« faire converger les portes d'entrée Nutrition
+   vers un chemin commun de préparation d'un aliment, SANS modifier ce qui est enregistré »*.
+
+   ⭐ CE QU'IL POSSÈDE — et uniquement ça : les **8 gestes strictement communs** mesurés entre
+   `_offRemplirFormulaire` (5 portes derrière lui) et `onFoodLabelFile` (qui les recopiait à la
+   main, son propre commentaire disait déjà *« c'est exactement ce que faisait
+   `_offRemplirFormulaire` »*) — vider le champ · retomber `_bcQtyPose` · proposer la portion ·
+   écrire d'où vient ce nombre · poser le nom · montrer la ligne · poser la description ·
+   recalculer.
+
+   ⛔⛔ CE QU'IL NE POSSÈDE PAS, ET CE N'EST PAS UN OUBLI : `_bcProposerDerniere` · le **paquet**
+   (`_bcPaquetG`/`_bcProposerPaquet`) · `_afNoteEtat` · la **carte santé** · et surtout
+   `_afSetSrc`. Mesuré : `onFoodLabelFile` **ne fait aucun de ces cinq gestes**. Les absorber
+   changerait son comportement — *un hub qui fait plus que le noyau commun n'est plus un
+   chemin commun, c'est une porte qui en avale une autre.*
+
+   ⛔⛔ ET IL NE DÉCIDE RIEN. Il ne juge pas si la ligne est valide, ne corrige aucune valeur, ne
+   bloque aucun enregistrement, ne touche ni à la quantité, ni à l'unité, ni au pour-100 g, ni à
+   la provenance, ni à la portion, ni à `S.foodLog`. ***Le hub PRÉPARE ; la douane validera plus
+   tard*** — consigne explicite de Michel, et un témoin de source le fige.
+
+   ⚠️ LES TROIS LIBELLÉS SONT DES PARAMÈTRES, PAS DES RÈGLES : chaque porte nomme *d'où vient*
+   le nombre qu'elle propose (« portion fabricant » / « lu sur l'étiquette »…). C'est une
+   DONNÉE propre à la porte — la fondre en une formule unique ferait dire à l'écran d'où vient
+   un nombre qu'il ne sait pas. */
+function _afPreparerEcran(nut, portion, etiquettePortion, sourcePortion, suffixeNom){
+  const g = parseFloat(portion) > 0 ? parseFloat(portion) : 0;
+  const gramsEl = document.getElementById('af-bc-grams'); if(gramsEl) gramsEl.value = '';
+  _bcQtyPose = false;   // ⛔ remplir depuis une fiche n'est pas un choix — le drapeau retombe ici
+  _bcProposerPortion(g, etiquettePortion);
+  _bcQsrc(g, sourcePortion);
+  const nameEl = document.getElementById('af-bc-name');
+  if(nameEl) nameEl.textContent = nut.name + ' · ' + nut.kcal100 + ' kcal/100g' + (suffixeNom || '');
+  const row = document.getElementById('af-bc-row'); if(row) row.style.display = 'block';
+  const descEl = document.getElementById('af-desc'); if(descEl) descEl.value = nut.name;
+  _bcApplyGrams();
+}
 function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
   /* ⚖️⛔⛔ LE CHAMP RESTE VIDE, LA PORTION DEVIENT UNE PASTILLE (option A, décision de Michel).
      ⛔ AVANT : `const g = serv>0 ? serv : 100;` puis `gramsEl.value=g;` — et cette valeur
@@ -1931,26 +1969,28 @@ function _offRemplirFormulaire(p, sourceId, saisie, codeDouteux, origine){
      ⛔ ET LE REPLI À 100 DISPARAÎT AVEC : un produit sans portion déclarée n'a **aucune** quantité
      à proposer, donc on n'en propose aucune (R29). */
   const serv=parseFloat(p.serving_quantity)||0;
-  const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value='';
-  _bcQtyPose=false;   // ⛔ remplir depuis une fiche n'est pas un choix — le drapeau retombe ici
-  _bcProposerPortion(serv, (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0)
-                            ? _bcNutr.name.split(' · ').pop() : 'portion fabricant');
-  /* ⛔ LE NOMBRE GARDE SA SOURCE ÉCRITE À CÔTÉ (ft-v1105) — et pour un produit de marque, la
-     source est l'ENSEIGNE, pas « la fiche produit » : c'est elle qui publie ce poids. */
-  _bcQsrc(serv, (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0)
-                  ? _bcNutr.name.split(' · ').pop() : 'la fiche produit');
+  /* 🔀 ft-v1204 — PREMIÈRE PORTE MIGRÉE SUR LE HUB. Les 8 gestes communs vivent désormais dans
+     `_afPreparerEcran` ; ce qui reste ici est ce que cette porte-là fait EN PLUS.
+     ⛔ LE NOMBRE GARDE SA SOURCE ÉCRITE À CÔTÉ (ft-v1105) — et pour un produit de marque, la
+     source est l'ENSEIGNE, pas « la fiche produit » : c'est elle qui publie ce poids. C'est une
+     DONNÉE propre à cette porte, donc elle passe en paramètre et ne migre pas dans le hub. */
+  const deMarque = (origine==='marque' && _bcNutr && _bcNutr.name && _bcNutr.name.indexOf(' · ')>0);
+  _afPreparerEcran(_bcNutr, serv,
+                   deMarque ? _bcNutr.name.split(' · ').pop() : 'portion fabricant',
+                   deMarque ? _bcNutr.name.split(' · ').pop() : 'la fiche produit');
   /* ⛔ Un scan NEUF n'a pas de « dernière fois » : la pastille d'un aliment précédent doit
-     disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché. */
+     disparaître, sinon elle proposerait le poids de quelqu'un d'autre que le produit affiché.
+     ⛔⛔ ELLE NE MIGRE PAS DANS LE HUB : `onFoodLabelFile` ne la fait pas. L'y mettre changerait
+     SON comportement — et un hub qui fait plus que le noyau commun avale une porte au lieu de
+     la faire converger. */
   if(typeof _bcProposerDerniere==='function') _bcProposerDerniere(0);
   /* 📦 ft-v1174 — LE PROPRIÉTAIRE UNIQUE DU POIDS DE PAQUET (R2). Tous les remplissages passent
      ici, y compris ceux qui n'ont PAS de produit OFF (CIQUAL, marque, étiquette recopiée) : ils
-     posent donc 0, et la pastille du produit précédent ne peut pas survivre. */
+     posent donc 0, et la pastille du produit précédent ne peut pas survivre.
+     ⛔⛔ NE MIGRE PAS NON PLUS, pour la même raison mesurée : `onFoodLabelFile` n'a pas de
+     produit OFF, donc aucun poids de paquet à lire. */
   _bcPaquetG = (typeof _offPoidsPaquet==='function') ? _offPoidsPaquet(p&&p.quantity) : 0;
   if(typeof _bcProposerPaquet==='function') _bcProposerPaquet();
-  const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g';
-  const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
-  document.getElementById('af-desc').value=_bcNutr.name;
-  _bcApplyGrams();
   // ⚠️ Les valeurs d'Open Food Facts sont « TELLES QUE VENDUES » : un paquet de pâtes scanné
   //    donne les valeurs SÈCHES. On enregistre donc `per100` et l'`origine` — c'est ce qui
   //    permettra, quand la base d'aliments existera, de rattraper l'état sans re-demander.
@@ -3185,15 +3225,14 @@ async function onFoodLabelFile(input){
        d'étiquette remplissait le champ avec `d.serving`, ou 100 par défaut : c'est exactement
        ce que faisait `_offRemplirFormulaire`. *Corriger une porte et pas sa jumelle est la faute
        que ce fichier recense dix fois.* */
-    const g=parseFloat(d.serving)>0?parseFloat(d.serving):0;
-    const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value='';
-    _bcQtyPose=false;
-    _bcProposerPortion(g, 'lu sur l\'étiquette');
-    _bcQsrc(g, 'l\'étiquette');       // ⛔ le nombre garde sa source écrite à côté (ft-v1105)
-    const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g (lu sur l\'étiquette)';
-    const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
-    document.getElementById('af-desc').value=_bcNutr.name;
-    _bcApplyGrams();
+    /* 🔀 ft-v1204 — DEUXIÈME PORTE MIGRÉE SUR LE HUB, et c'est celle que son propre commentaire
+       dénonçait depuis ft-v1163 : *« c'est exactement ce que faisait `_offRemplirFormulaire` »*.
+       Mesuré avant de toucher : elle recopiait **8 des 13 gestes** de l'autre porte, à
+       l'identique, et en omettait 5 — d'où un hub qui ne prend QUE les 8.
+       ⛔ Les trois libellés restent ICI : ils disent *d'où vient* le nombre proposé, et cette
+       porte-là le sait (« lu sur l'étiquette »), le hub non. */
+    _afPreparerEcran(_bcNutr, d.serving, 'lu sur l\'étiquette', 'l\'étiquette',
+                     ' (lu sur l\'étiquette)');
     _afSetSrc({saisie:'photo-ia',origine:'etiquette',
       per100:_per100De(_bcNutr),
       attendu:_afLuFormulaire()});

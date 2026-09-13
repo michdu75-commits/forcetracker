@@ -546,6 +546,92 @@ const snap=await p.evaluate(async()=>{
   });
   out['1bv_hydratation_ecranAjout']=J(afHydrate);
 
+  /* ══ ÉTAPE 4 — LE HUB DE PRÉPARATION : L'ÉCRAN TEL QU'IL EST PRÉPARÉ ══════════════════════
+     ⚠️⚠️ AUCUNE DES 23 CLÉS NE LIT L'ÉCRAN PRÉPARÉ. Elles observent `_afSrc`, la pastille « la
+     dernière fois », le trio grammes, la définition de portion — jamais `af-bc-portion`,
+     `af-bc-qsrc`, `af-bc-name`, `af-bc-row`, `af-desc` ni le champ des grammes, qui sont
+     exactement ce que le hub va déplacer. *Conduire n'est pas observer* (ft-v1199/1203).
+
+     ⛔⛔ ET ON CONDUIT LES DEUX PORTES SUR UN JEU DE CAS COMMUN : `_offRemplirFormulaire` (le
+     hub partiel existant, 5 portes derrière lui) et `onFoodLabelFile` (la porte qui reconstruit
+     8 de ses 13 gestes à la main). *C'est la COMPARAISON qui fera la preuve, pas la lecture
+     d'un seul côté* — la leçon de 1b-v, appliquée d'avance. */
+  const lireEcran = () => {
+    const g = (id) => document.getElementById(id);
+    const por = g('af-bc-portion'), qs = g('af-bc-qsrc'), nm = g('af-bc-name'),
+          row = g('af-bc-row'), desc = g('af-desc'), gr = g('af-bc-grams');
+    return {
+      grammes:   gr ? gr.value : 'ABSENT',
+      portion:   por ? {txt:(por.textContent||'').trim(), q:por.dataset?por.dataset.q:undefined,
+                        vu:por.style.display!=='none'} : 'ABSENT',
+      qsrc:      qs ? {txt:(qs.textContent||'').trim().slice(0,60), vu:qs.style.display!=='none'} : 'ABSENT',
+      nom:       nm ? (nm.textContent||'').trim() : 'ABSENT',
+      rowVisible: row ? (row.style.display==='block') : 'ABSENT',
+      desc:      desc ? desc.value : 'ABSENT',
+      qtyPose:   (typeof _bcQtyPose!=='undefined') ? _bcQtyPose : 'ABSENT',
+      paquetG:   (typeof _bcPaquetG!=='undefined') ? _bcPaquetG : 'ABSENT',
+    };
+  };
+  /* ⛔ On salit l'écran AVANT chaque cas, avec des valeurs qui ne peuvent pas être produites par
+     la préparation elle-même : sans ça un champ « déjà vide » serait indiscernable d'un champ
+     « vidé par le hub », et le témoin passerait au vert sur un reliquat. */
+  const salir = () => {
+    const g=(id)=>document.getElementById(id);
+    const gr=g('af-bc-grams'); if(gr) gr.value='ZZZ';
+    const de=g('af-desc');     if(de) de.value='ZZZ';
+    const nm=g('af-bc-name');  if(nm) nm.textContent='ZZZ';
+    const row=g('af-bc-row');  if(row) row.style.display='none';
+    try{ _bcQtyPose=true; }catch(e){}
+  };
+
+  const CAS_HUB = [
+    {nom:'H fiche avec portion', p:{serving_quantity:30, quantity:'500 g', nutriments:{}},
+     nut:['Poudre', 380, 75, 8, 5]},
+    {nom:'H fiche sans portion',  p:{serving_quantity:0, nutriments:{}},
+     nut:['Banane', 89, 1.1, 23, 0.3]},
+    {nom:'H portion non numérique', p:{serving_quantity:'abc', nutriments:{}},
+     nut:['Flou', 100, 5, 10, 2]},
+  ];
+
+  const viaHub=[];
+  CAS_HUB.forEach(cs=>{
+    try{
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null); salir();
+      _bcNutr=_ref100(cs.nut[0], cs.nut[1], cs.nut[2], cs.nut[3], cs.nut[4]);
+      _offRemplirFormulaire(cs.p, null, 'scan', false, 'off');
+      viaHub.push([cs.nom, J(lireEcran())]);
+    }catch(e){ viaHub.push([cs.nom, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['hub_offRemplirFormulaire']=J(viaHub);
+
+  /* ⭐ LA PORTE QUI RECONSTRUIT À LA MAIN — on ne peut pas conduire `onFoodLabelFile` (elle part
+     d'un fichier et d'un appel réseau), donc on rejoue EXACTEMENT sa séquence de préparation,
+     telle qu'elle est écrite dans le code servi. ⚠️ C'est une LIMITE, et elle se dit : cette
+     clé mesure la séquence, pas la fonction. Le témoin de source du bloc CCCII, lui, vérifie
+     que la fonction appelle bien le hub — les deux ensemble couvrent ce qu'aucune ne couvre
+     seule (BUGS.md §58). */
+  const viaEtiquette=[];
+  CAS_HUB.forEach(cs=>{
+    try{
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null); salir();
+      _bcNutr=_ref100(cs.nut[0], cs.nut[1], cs.nut[2], cs.nut[3], cs.nut[4]);
+      const g=parseFloat(cs.p.serving_quantity)>0?parseFloat(cs.p.serving_quantity):0;
+      const gramsEl=document.getElementById('af-bc-grams'); if(gramsEl) gramsEl.value='';
+      _bcQtyPose=false;
+      _bcProposerPortion(g, 'lu sur l\'étiquette');
+      _bcQsrc(g, 'l\'étiquette');
+      const nameEl=document.getElementById('af-bc-name');
+      if(nameEl) nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g (lu sur l\'étiquette)';
+      const row=document.getElementById('af-bc-row'); if(row) row.style.display='block';
+      document.getElementById('af-desc').value=_bcNutr.name;
+      _bcApplyGrams();
+      viaEtiquette.push([cs.nom, J(lireEcran())]);
+    }catch(e){ viaEtiquette.push([cs.nom, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['hub_sequence_etiquette']=J(viaEtiquette);
+
   return out;
 });
 
