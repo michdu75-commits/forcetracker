@@ -20,6 +20,28 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
+- 🧊🧊 **PHASE D'OBSERVATION RÉELLE — LE CHANTIER NUTRITION EST GELÉ** (décision de Michel,
+  13/09/2026, après validation de l'étape 6). *« Ne modifie plus son comportement sans nouveau feu
+  vert explicite. »*
+  ⛔ **Gelé nommément** : les 21 règles de la douane · aucune ne devient bloquante · aucun seuil ·
+  les divergences connues · `savedFoods` · l'écart 48,3 / 48 · l'historique et les migrations ·
+  **le format du carnet d'observation**.
+  ⭐ **Ce qu'on attend avant toute décision** : ≥ **100 lignes** observées · les **4 écrivains** vus
+  au moins une fois · idéalement **2 semaines** · et surtout une **couverture** suffisante des
+  formes rencontrées.
+  📋 Michel enverra le rapport (**Profil → Admin → « 📊 Douane — observation du journal »**). On
+  fera alors une analyse **séparée** pour trancher : ① quelles règles mordent réellement ·
+  ② lesquelles restent des `WARN` · ③ lesquelles sont des **divergences d'architecture** à
+  corriger · ④ lesquelles pourraient devenir bloquantes · ⑤ lesquelles ne sont **pas encore
+  éprouvées**.
+  ⚠️⚠️ **LA CONSIGNE À NE PAS OUBLIER CE JOUR-LÀ** : *une règle qui n'a jamais mordu n'est PAS
+  automatiquement inutile* — il faut d'abord vérifier que **les formes capables de la déclencher
+  ont réellement été rencontrées**. 👉 *Sans cette vérification, « jamais mordu » se lit « à
+  supprimer », et on retire un garde-fou parce que le cas ne s'est pas encore présenté.*
+  🤝 Et si une autre session a publié entre-temps : **protocole deux sessions** (`git fetch --all`,
+  lire `docs/JOURNAL-DE-PARTAGE.md`, poser sa ligne AVANT de coder) **avant toute** modification
+  Nutrition.
+
 - **Version en ligne (live) :** `ft-v1206` — 📊 **ÉTAPE 6 : L'OBSERVATION RÉELLE DE LA DOUANE.**
   Elle tourne sur les **vraies écritures** et COMPTE ce qu'elle voit, pour qu'on décide un jour sur
   des chiffres. ⛔ **Toujours aucun blocage, aucune correction**, et **aucune des 21 règles ne

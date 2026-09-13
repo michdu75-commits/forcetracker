@@ -1,5 +1,15 @@
 # 🛃 La DOUANE du journal alimentaire — étape 5
 
+> ## 🧊 ÉTAT AU 13/09/2026 : **PHASE D'OBSERVATION RÉELLE — GELÉ**
+>
+> Les étapes 5 (la douane) et 6 (l'observation) sont **validées par Michel** et **plus rien ne
+> bouge** tant qu'il n'a pas donné un nouveau feu vert explicite.
+> ⛔ **Ne pas toucher** : les 21 règles · leur gravité · les seuils · les divergences connues ·
+> `savedFoods` · l'écart 48,3 / 48 · l'historique · les migrations · **le format du carnet**.
+> ⭐ **On attend des chiffres réels** : ≥ 100 lignes, les 4 écrivains vus, ~2 semaines, et surtout
+> une **couverture** suffisante des formes.
+> ⚠️ *Une règle qui n'a jamais mordu n'est pas inutile : elle peut être **non éprouvée**.*
+
 > **Créée le 13/09/2026**, sur feu vert de Michel après validation du hub (ft-v1204) :
 > ⛔ *« la douane doit être construite et validée séparément. Je ne veux pas encore de correction
 > automatique ni de blocage utilisateur. »*
