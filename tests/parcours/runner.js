@@ -34793,9 +34793,21 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      finit par interdire d'écrire la documentation de ce qu'il protège (leçon ft-v1193). */
   const sansComm=src.split('\n').filter(l=>{const x=l.trim();
     return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
-  const nb=(sansComm.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVI ⑪ ⭐ les 2 portes passent par `_qGrammes` (1 déclaration + 2 appels)',
-    nb===3, 'occurrences='+nb);
+  /* ⚠️⚠️ CE TÉMOIN A ROUGI EN ft-v1201, ET POUR DEUX RAISONS À LA FOIS — la passe complète l'a
+     attrapé, mes harnais isolés ne l'exécutaient pas.
+     ① Il figeait un état PÉRIMÉ : 3-iii ajoute LÉGITIMEMENT un 3ᵉ appelant (`_afReprendreGrammes`).
+        Comme le témoin de périmètre, il se DÉPLACE — il ne se supprime pas.
+     ② Et il comptait avec le filtre LIGNE-À-LIGNE, qui trouve 5 occurrences là où il y en a 4 :
+        le docblock du nouveau propriétaire CITE `_qGrammes(src) > 0` sur une ligne qui commence
+        par un mot, donc elle survit au filtre.
+     👉 ***J'avais corrigé ce compteur dans le bloc de 3-iii et PAS dans les deux anciens*** —
+     R8, la porte jumelle, dans mes propres témoins. Ils retirent désormais les blocs entiers. */
+  const codeSeulG=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                     .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const nb=(codeSeulG.match(/_qGrammes\(/g)||[]).length;
+  t('CCXCVI ⑪ ⭐ `_qGrammes` a 3 appelants (1 déclaration + 3 appels : les 2 pastilles de 3-ii, '+
+    'plus le propriétaire de 3-iii)',
+    nb===4, 'occurrences hors commentaires='+nb);
   const corps=(sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
   t('CCXCVI ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
     '`_qReprenable` n\'est PAS entré dedans (les fondre serait un changement de comportement)',
@@ -34970,12 +34982,16 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'les deux drapeaux ne nomment pas la même chose',
     corpsOubli.length>0 && !sousGarde, 'la pastille est passée sous le drapeau du paquet');
   /* ⛔ CONSIGNE EXPLICITE DE MICHEL : ce correctif ne touche à AUCUNE règle métier. */
-  const nbG=(sansComm.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVII ⑭ ⛔ HORS PÉRIMÈTRE — `_qGrammes` est intacte (1 déclaration + 2 appels) et refuse '+
+  /* ⚠️ LA JUMELLE DU TÉMOIN DE CCXCVI — même double défaut, corrigée dans le même mouvement :
+     l'état figé était périmé (3-iii ajoute un 3ᵉ appelant) ET le compteur était aveugle aux
+     lignes de commentaire qui CITENT l'appel. ⛔ Ce que ce témoin protège ne change pas : il
+     doit toujours vérifier que `_qGrammes` **refuse les portions**, la consigne de ft-v1200. */
+  const nbG=(codeSeul.match(/_qGrammes\(/g)||[]).length;
+  t('CCXCVII ⑭ ⛔ HORS PÉRIMÈTRE — `_qGrammes` est intacte (1 déclaration + 3 appels) et refuse '+
     'toujours les portions',
-    nbG===3 && /function _qGrammes\(src\)\{/.test(sansComm) &&
-    !/portion/.test((sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
-    'occurrences='+nbG);
+    nbG===4 && /function _qGrammes\(src\)\{/.test(codeSeul) &&
+    !/portion/.test((codeSeul.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
+    'occurrences hors commentaires='+nbG);
   t('CCXCVII ⑮ ⛔ HORS PÉRIMÈTRE — `_qReprenable` est intacte, portions comprises',
     /function _qReprenable\(src\)\{/.test(sansComm) &&
     /=== 'portion'/.test((sansComm.match(/function _qReprenable\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
