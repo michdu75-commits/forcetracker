@@ -34879,34 +34879,34 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
    }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
   });
   console.log('\n== BLOC CCXCVI — 🔢 3-ii : la pastille « ta dernière quantité » (ft-v1199) ==');
-  if(X.err){ t('CCCII bloc exécuté', false, X.err); }
+  if(X.err){ t('CCXCVI bloc exécuté', false, X.err); }
   else{
-    t('CCCII ① `_qGrammes` existe', X.type==='function', X.type);
-    t('CCCII ② ⭐ elle rend un NOMBRE : 150 · 80 · 0 (portions) · 0 · 0 · 0 (ml) · 0 · 0 — '+
+    t('CCXCVI ① `_qGrammes` existe', X.type==='function', X.type);
+    t('CCXCVI ② ⭐ elle rend un NOMBRE : 150 · 80 · 0 (portions) · 0 · 0 · 0 (ml) · 0 · 0 — '+
       'et c\'est ce qui evite une duplication en 3-iii/3-iv (`>0` EST la condition)',
       X.table==='[150,80,0,0,0,0,0,0]', String(X.table));
 
     ['qf','loc'].forEach((k,i)=>{
       const nom = i===0 ? 'PORTE « Mes aliments »' : 'PORTE « recherche du journal »';
       const r = X[k] || {};
-      t('CCCII '+(i===0?'③':'⑥')+' ⭐ '+nom+' : les grammes sont reproposés (150), '+
+      t('CCXCVI '+(i===0?'③':'⑥')+' ⭐ '+nom+' : les grammes sont reproposés (150), '+
         'et l\'unité ABSENTE aussi (80)',
         r['grammes'] && r['grammes'].vue===true && r['grammes'].q==='150'
         && r['sans unité'] && r['sans unité'].q==='80', JSON.stringify([r['grammes'],r['sans unité']]));
-      t('CCCII '+(i===0?'④':'⑦')+' ⛔ '+nom+' : les PORTIONS ne proposent rien — la règle '+
+      t('CCXCVI '+(i===0?'④':'⑦')+' ⛔ '+nom+' : les PORTIONS ne proposent rien — la règle '+
         'refuse ce que `_qReprenable` accepte, et c\'est voulu',
         r['portions'] && r['portions'].vue===false, JSON.stringify(r['portions']));
-      t('CCCII '+(i===0?'⑤':'⑧')+' ⛔ '+nom+' : zéro, négatif et millilitres ne proposent rien '+
+      t('CCXCVI '+(i===0?'⑤':'⑧')+' ⛔ '+nom+' : zéro, négatif et millilitres ne proposent rien '+
         '(sans densité, un volume ne dit pas ce que PÈSE l\'aliment — R29)',
         r['zéro'] && r['zéro'].vue===false && r['négatif'] && r['négatif'].vue===false
         && r['millilitres'] && r['millilitres'].vue===false,
         JSON.stringify([r['zéro'],r['négatif'],r['millilitres']]));
     });
-    t('CCCII ⑨ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas — '+
+    t('CCXCVI ⑨ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas — '+
       'c\'est ce qui rend l\'extraction légitime',
       JSON.stringify(X.qf)===JSON.stringify(X.loc),
       JSON.stringify(X.qf)+' vs '+JSON.stringify(X.loc));
-    t('CCCII ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
+    t('CCXCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
   await cx.close();
 }
@@ -34920,13 +34920,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   const sansComm=src.split('\n').filter(l=>{const x=l.trim();
     return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
   const nb=(sansComm.match(/_qGrammes\(/g)||[]).length;
-  t('CCCII ⑪ ⭐ les 2 portes passent par `_qGrammes` (1 déclaration + 2 appels)',
+  t('CCXCVI ⑪ ⭐ les 2 portes passent par `_qGrammes` (1 déclaration + 2 appels)',
     nb===3, 'occurrences='+nb);
   const corps=(sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCCII ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
+  t('CCXCVI ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
     '`_qReprenable` n\'est PAS entré dedans (les fondre serait un changement de comportement)',
     corps.length>0 && !/portion/.test(corps), 'corps='+corps.slice(0,140));
-  t('CCCII ⑬ ⛔ et `_qReprenable` existe TOUJOURS à côté, avec ses portions — deux règles, '+
+  t('CCXCVI ⑬ ⛔ et `_qReprenable` existe TOUJOURS à côté, avec ses portions — deux règles, '+
     'pas une',
     /function _qReprenable\(src\)\{/.test(sansComm) && /=== 'portion'/.test(sansComm),
     'une des deux a disparu');
