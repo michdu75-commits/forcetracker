@@ -7431,6 +7431,8 @@ function finalImportHist(){
      graphes et le contexte de Milo.
      ⭐ ET ON LE DIT : un rejet silencieux est indiscernable d'un import réussi (**R29**). */
   let _seriesEcartees=0, _seancesDateKO=0, _seancesVides=0;
+  /* 🏷️ Le compteur des types non reconnus — voir la note à l'endroit où il s'incrémente. */
+  let _typesInconnus=0;
   sessionsAsc.forEach((sess,si)=>{
     const origIdx=sessions.indexOf(sess);
     const conflict=_histConflicts.find(c=>c.idx===origIdx);
@@ -7458,6 +7460,21 @@ function finalImportHist(){
         return ok;
       }).map(s=>{
         const kg=s.kg||0,reps=s.reps||0;
+        /* 🏷️ ÉTAPE 1 (13/09/2026) — L'INVENTION SILENCIEUSE S'ARRÊTE ICI.
+           La ligne du dessous ramène TOUT ce qui n'est pas 'D' à '' — c'est le contrat serveur,
+           recopié côté client comme dernier filet si le modèle désobéit à son prompt. ⛔ On ne
+           la retire PAS : elle est mesurée identique à celle du Worker et à celle d'Apps Script
+           sur tout le domaine (les 3 disent la même chose pour '', D, W, É, X, ECH, N, inconnu,
+           absent et null). Ce qui manquait n'était pas la règle, c'était la TRACE.
+           ⭐⭐ ET « CONSERVER LE TYPE BRUT » SERAIT PIRE, C'EST MESURÉ : `_serieFaitFoiPourPR`
+           n'exclut que 'É' et 'W', donc un type inconnu gardé tel quel devient ÉLIGIBLE AU
+           RECORD — y compris `'ECH'`, qui *signifie* échauffement. *Un type préservé mais
+           incompris est plus dangereux qu'un type normalisé, parce qu'il a l'air d'avoir été
+           préservé.*
+           ⛔ On ne change donc RIEN à ce qui est stocké (aucun risque, aucune régression) : on
+           COMPTE, et on le DIT dans l'annonce qui existe déjà (R13 — `_ecarts`). */
+        const _brut=(s&&s.type!=null)?String(s.type):'';
+        if(_brut!==''&&_brut!=='D')_typesInconnus++;
         const type=s.type==='D'?'D':'';
         // Volume : tout sauf Échauffement (W). Drop set D compte.
         if(type!=='W'&&type!=='É')vol+=kg*reps;
@@ -7537,6 +7554,10 @@ function finalImportHist(){
   if(_seancesDateKO)_ecarts.push(_seancesDateKO+' séance'+(_seancesDateKO>1?'s':'')+' sans date lisible');
   if(_seancesVides)_ecarts.push(_seancesVides+' séance'+(_seancesVides>1?'s':'')+' sans exercice lisible');
   if(_seriesEcartees)_ecarts.push(_seriesEcartees+' série'+(_seriesEcartees>1?'s':'')+' hors limites (poids ou répétitions)');
+  /* ⛔ ON NOMME CE QU'ON A FAIT, PAS CE QU'ON A JETÉ : ces séries sont bien importées, c'est
+     leur TYPE qui n'a pas été reconnu et qui est devenu « normal ». Le dire est tout l'objet
+     de l'étape 1 — *une normalisation annoncée n'est plus une invention* (R29). */
+  if(_typesInconnus)_ecarts.push(_typesInconnus+' série'+(_typesInconnus>1?'s':'')+' au type non reconnu, importée'+(_typesInconnus>1?'s':'')+' en série'+(_typesInconnus>1?'s':'')+' normale'+(_typesInconnus>1?'s':''));
   toast(addedCount+' séance'+(addedCount>1?'s':'')+' importée'+(addedCount>1?'s':'')+' dans l\'historique ✅'
     +(_ecarts.length?' — '+_ecarts.join(', ')+' mise'+(_seancesDateKO+_seriesEcartees>1?'s':'')+' de côté':''),'success');
 }

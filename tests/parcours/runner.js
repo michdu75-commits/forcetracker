@@ -36461,6 +36461,134 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   })();
 }
 
+/* ═══ B-CCCVII. ÉTAPE 1 — UN TYPE NON RECONNU NE PASSE PLUS EN SILENCE ═══════════════════════
+   (13/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel, après le dossier qui a corrigé la prémisse : *« un type inconnu ne doit plus devenir
+   silencieusement une série de travail normale »*, et ⛔ *« ne pas casser le filet de sécurité
+   côté client simplement parce que le serveur est censé normaliser avant »*.
+
+   ⭐⭐ CE QUI A ÉTÉ MESURÉ AVANT D'ÉCRIRE UNE LIGNE, et qui décide de tout :
+   ① les **3 copies** de la règle (`worker.js` · `Code.js` · `log.js`) rendent **exactement la
+      même chose** sur tout le domaine — '', D, W, É, X, ECH, N, inconnu, absent, null, 'd' ;
+   ② ⛔ **« conserver le type brut » serait PIRE** : `_serieFaitFoiPourPR` n'exclut que 'É' et
+      'W', donc un type inconnu gardé tel quel devient **ÉLIGIBLE AU RECORD** — y compris
+      `'ECH'`, qui *signifie* échauffement. *Un type préservé mais incompris est plus dangereux
+      qu'un type normalisé, parce qu'il a l'air d'avoir été préservé.*
+   👉 D'où le choix : **on ne change RIEN à ce qui est stocké** (aucun risque, aucune
+   régression — instantané identique, sha `345d3db35bebb9d2`), **on compte et on l'annonce**. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const prs=()=>Object.keys(S.prs||{}).sort()
+      .map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ')||'(aucun)';
+
+    /* ⚠️ AFFECTATION NUE : `_histExtracted` est un `let` de premier niveau de `log.js`, donc une
+       liaison LEXICALE globale et PAS une propriété de `window`. Avec `window.`, la fonction
+       sort par « Aucune séance à importer » et le témoin est vert **en ne mesurant rien**. */
+    const importer=(sets)=>{
+      S.prs={}; S.sessions=[]; S.customExercises=[];
+      const t=document.getElementById('toast'); if(t)t.textContent='';
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets}]}]};
+      _histConflicts=[];
+      finalImportHist();
+      const ex=((S.sessions[0]||{}).exs||[])[0]||{sets:[]};
+      return { stocke: ex.sets.map(s=>'"'+s.type+'"').join('/'),
+               record: prs(),
+               annonce: (document.getElementById('toast')||{}).textContent||'' };
+    };
+
+    /* ── LA MATRICE DES TYPES, par le VRAI chemin ── */
+    o.matrice={};
+    ['', 'D', 'W', 'É', 'X', 'ECH', 'zzz-inconnu'].forEach(t=>{
+      o.matrice[t||'(vide)']=sur(()=>importer([{kg:100,reps:5,type:t}]));
+    });
+    /* type ABSENT et type null : deux façons de ne rien dire, et elles ne doivent pas compter. */
+    o.absent = sur(()=>importer([{kg:100,reps:5}]));
+    o.nul    = sur(()=>importer([{kg:100,reps:5,type:null}]));
+
+    /* ── LE COMPTE : plusieurs séries, plusieurs types ── */
+    o.melange = sur(()=>importer([
+      {kg:100,reps:5,type:''},          // normal   → ne compte pas
+      {kg:110,reps:4,type:'D'},         // dropset  → ne compte pas
+      {kg:250,reps:3,type:'W'},         // inconnu  → compte
+      {kg:120,reps:6,type:'ECH'}        // inconnu  → compte
+    ]));
+    /* ⛔ Et le cas où TOUT est connu : l'annonce ne doit RIEN dire de plus. */
+    o.toutConnu = sur(()=>importer([
+      {kg:100,reps:5,type:''},{kg:110,reps:4,type:'D'}]));
+    return o;
+  });
+
+  console.log('\n-- B-CCCVII. Étape 1 : un type non reconnu ne passe plus en silence --');
+  const M=R.matrice||{};
+  /* ⛔ CE QUI EST STOCKÉ NE CHANGE PAS — c'est la garantie de non-régression. */
+  t('B-CCCVII ① le type normal reste normal', M['(vide)'] && M['(vide)'].stocke==='""',
+    JSON.stringify(M['(vide)']));
+  t('B-CCCVII ① le DROPSET reste un dropset', M['D'] && M['D'].stocke==='"D"', JSON.stringify(M['D']));
+  t('B-CCCVII ① ⛔ un type absent ne compte pas comme inconnu',
+    R.absent && R.absent.stocke==='""' && !/type non reconnu/.test(R.absent.annonce),
+    JSON.stringify(R.absent));
+  t('B-CCCVII ① ⛔ un type `null` non plus (deux façons de ne rien dire)',
+    R.nul && R.nul.stocke==='""' && !/type non reconnu/.test(R.nul.annonce), JSON.stringify(R.nul));
+
+  /* ⭐ LE CŒUR DE L'ÉTAPE : les 4 valeurs non prévues par le contrat sont ANNONCÉES. */
+  ['W','É','X','ECH','zzz-inconnu'].forEach(k=>{
+    t('B-CCCVII ② ⭐ le type '+JSON.stringify(k)+' est ANNONCÉ comme non reconnu',
+      M[k] && /1 série au type non reconnu, importée en série normale/.test(M[k].annonce),
+      JSON.stringify(M[k]));
+    t('B-CCCVII ② ... et il est bien normalisé en série normale (rien ne change côté données)',
+      M[k] && M[k].stocke==='""', JSON.stringify(M[k]));
+  });
+
+  t('B-CCCVII ③ le COMPTE est juste : 2 inconnus sur 4 séries',
+    R.melange && /2 séries au type non reconnu, importées en séries normales/.test(R.melange.annonce),
+    JSON.stringify(R.melange));
+  t('B-CCCVII ③ ⛔ et quand tout est connu, l\'annonce ne dit RIEN de plus',
+    R.toutConnu && !/type non reconnu/.test(R.toutConnu.annonce), JSON.stringify(R.toutConnu));
+  /* ⛔⛔ LE RECORD NE BOUGE PAS. L'étape 1 ne touche pas aux records : elle rend visible une
+     normalisation, elle ne la change pas. Un `'W'` de 250 kg pose TOUJOURS le record aujourd'hui
+     — c'est exactement ce que l'étape 2 corrigera, et le figer ici permet de le voir changer. */
+  t('B-CCCVII ④ ⛔ ÉTAT ACTUEL FIGÉ — un « W » de 250 kg pose encore le record (l\'étape 2 le corrigera)',
+    M['W'] && M['W'].record==='Squat à la Barre=100x5', JSON.stringify(M['W'] && M['W'].record));
+
+  /* ══ TÉMOINS DE SOURCE — les frontières backend/client, et le filet ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const wk=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    const cd=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+    const st=sansCom(fs.readFileSync(path.join(ROOT,'state.js'),'utf8'));
+    /* ⛔⛔ LE FILET CLIENT N'EST PAS RETIRÉ. Michel, mot pour mot : *« ne pas casser le filet de
+       sécurité côté client simplement parce que le serveur est censé normaliser avant »*.
+       Les 3 copies restent, et leur nombre est figé. */
+    t('B-CCCVII ⑤ ⛔ SOURCE — le filet CLIENT est toujours là',
+      lg.indexOf("const type=s.type==='D'?'D':''")>=0, '');
+    t('B-CCCVII ⑤ ⛔ SOURCE — le Worker (chemin VIVANT) garde la sienne',
+      (wk.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1, '');
+    t('B-CCCVII ⑤ ⛔ SOURCE — Apps Script (repli) garde la sienne : les deux ne divergent pas',
+      (cd.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1, '');
+    /* ⛔ Le compteur ne doit PAS se transformer en filtre : les séries entrent toutes. */
+    t('B-CCCVII ⑥ ⛔ le compteur COMPTE, il ne filtre pas (aucun `return` sur un type inconnu)',
+      /if\(_brut!==''&&_brut!=='D'\)_typesInconnus\+\+;/.test(lg)
+      && !/_typesInconnus\+\+;\s*return/.test(lg), '');
+    /* ⛔ PÉRIMÈTRE — la migration D→N ne peut pas rejouer, et on ne la corrige pas. */
+    t('B-CCCVII ⑦ ⛔ PÉRIMÈTRE — la migration D→N est toujours one-time (elle ne peut pas rejouer)',
+      /if\(!localStorage\.getItem\('ft4_stmig1'\)\)\{/.test(st)
+      && /else if\(s\.type==='D'\)s\.type='N';/.test(st), '');
+    t('B-CCCVII ⑦ ⛔ PÉRIMÈTRE — aucune migration corrective n\'a été ajoutée',
+      !/stmig2|remigD|repairDrop/i.test(st), '');
+    /* ⛔ NUTRITION — consigne absolue. */
+    t('B-CCCVII ⑧ ⛔ NUTRITION — `_typesInconnus` n\'existe nulle part dans `app.js`',
+      !/_typesInconnus/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  })();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
