@@ -35708,6 +35708,173 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
    la seule chose qui trahit une passe tronquée — il se COMPARE à la passe précédente, il ne
    se lit pas seul. (Même famille que le harnais coupé à `tail -4` en ft-v1187 :
    un outil de mesure tronqué ressemble à un code sans défaut.) */
+/* ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE —
+   « Target page, context or browser has been closed », la passe s'arrête SANS TOTAL, et une
+   passe sans total ressemble trait pour trait à une passe verte (`BUGS.md` §61).
+   ⛔ C'est arrivé le 13/09 : l'avertissement était déjà écrit NEUF FOIS dans ce fichier, et je
+   l'ai quand même posé après. *Un avertissement répété neuf fois protège tout le monde sauf
+   celui qui écrit le dixième bloc.*
+   ═══ CCCIII. LE CONTRAT DE LECTURE D'UN PDF — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, A1) ═══
+   Michel, après la mesure du matin sur ses vrais fichiers : *« aujourd'hui un import peut réussir
+   silencieusement alors qu'il est tronqué »*. `_pdfToText` rendait **682 lignes d'un fichier de
+   22 pages sans rien signaler** (plafond MAX_PAGES=15) — une lecture partielle était indiscernable
+   d'une lecture complète.
+
+   ⚠️⚠️ TÉMOINS PAR STUB DE `pdfjsLib`, ET C'EST UN CHOIX, PAS UN PIS-ALLER :
+   ① aucun binaire (1,34 Mo) ni PDF personnel n'entre dans le dépôt ;
+   ② le nombre de pages et le texte sont CONTRÔLÉS, donc les 3 états sont déterministes et
+      rejouables sur n'importe quelle machine — un vrai PDF de 22 pages ne le serait pas.
+   ⛔ CE QUI EST ÉPROUVÉ ICI EST NOTRE LOGIQUE DE CONTRAT, PAS pdf.js. La vraie bibliothèque a été
+   mesurée séparément le 13/09 (programme 87 lignes/384 ms, historique 682/413 ms, contrôle négatif
+   à 0 ligne). *Dire ce qu'un test ne couvre pas fait partie du test.* */
+{
+  console.log('\n-- CCCIII. Le contrat de lecture d\'un PDF (A1) --');
+
+  const R = await p.evaluate(async () => {
+    const out = {};
+    const vrai = window.pdfjsLib;          // ⛔ on RESTAURE à la fin : ne rien laisser derrière soi
+
+    /* Le stub : `_pdfOuvrir` appelle `_loadPDFJS()` (qui sort à sa 1re ligne si pdfjsLib existe)
+       puis `pdfjsLib.getDocument(...).promise`. On lui rend un document dont on choisit le nombre
+       de pages et le contenu. Les fragments sont donnés DANS LE DÉSORDRE exprès, pour que le
+       regroupement par Y et le tri par X restent éprouvés (non-régression). */
+    const poser = (nbPages, avecTexte) => {
+      window.pdfjsLib = {
+        GlobalWorkerOptions: {},
+        getDocument(){
+          return { promise: Promise.resolve({
+            numPages: nbPages,
+            getPage(i){
+              return Promise.resolve({ getTextContent(){
+                if(!avecTexte) return Promise.resolve({items:[]});
+                return Promise.resolve({items:[
+                  {str:'monde', transform:[0,0,0,0, 50, 700]},   // x=50, même ligne
+                  {str:'page'+i, transform:[0,0,0,0, 10, 680]},  // ligne du dessous
+                  {str:'bonjour',transform:[0,0,0,0, 10, 700]}   // x=10 : doit passer DEVANT « monde »
+                ]});
+              }});
+            }
+          })};
+        }
+      };
+    };
+    const lire = async () => {
+      const f = new File([new Uint8Array([37,80,68,70])], 'x.pdf', {type:'application/pdf'});
+      try { return await window._pdfToText(f); } catch(e){ return {erreur:String(e&&e.message||e)}; }
+    };
+
+    poser(3, true);   out.complet = await lire();
+    poser(22, true);  out.partiel = await lire();
+    poser(1, false);  out.inconnu = await lire();
+    poser(22, false); out.videEtTronque = await lire();     // les deux à la fois
+
+    out.constantes = { c: typeof LIRE_COMPLET!=='undefined' && LIRE_COMPLET,
+                       p: typeof LIRE_PARTIEL!=='undefined' && LIRE_PARTIEL,
+                       i: typeof LIRE_INCONNU!=='undefined' && LIRE_INCONNU };
+    if(vrai) window.pdfjsLib = vrai; else delete window.pdfjsLib;
+    return out;
+  });
+
+  /* ⛔ CONTRÔLE SAIN DU HARNAIS, AVANT TOUT LE RESTE : si le stub n'atteint pas la fonction, TOUS
+     les témoins qui suivent seraient verts pour la mauvaise raison (BUGS.md §61). */
+  t('CCCIII ⛔ le stub atteint bien la vraie fonction (sinon tout ce qui suit est faux)',
+    !!R.complet && !R.complet.erreur && typeof R.complet.etat==='string',
+    'reçu : '+JSON.stringify(R.complet).slice(0,120));
+
+  t('CCCIII ① COMPLETE sur un PDF entièrement lu',
+    R.complet.etat==='COMPLETE' && R.complet.pagesLues===3 && R.complet.pagesTotal===3,
+    'reçu : '+R.complet.etat+' '+R.complet.pagesLues+'/'+R.complet.pagesTotal);
+  t('CCCIII ① ⛔ `raison` est VIDE sur un succès (une raison sur un COMPLETE est un signal faux)',
+    R.complet.raison==='', 'reçu : '+JSON.stringify(R.complet.raison));
+
+  t('CCCIII ② ⭐ PARTIAL sur 22 pages plafonnées à 15 — LE DÉFAUT DU JOUR, RENDU OBSERVABLE',
+    R.partiel.etat==='PARTIAL' && R.partiel.pagesLues===15 && R.partiel.pagesTotal===22,
+    'reçu : '+R.partiel.etat+' '+R.partiel.pagesLues+'/'+R.partiel.pagesTotal);
+  t('CCCIII ② ⛔ la raison NOMME la cause (`plafond_pages`), ce n\'est pas un message d\'interface',
+    R.partiel.raison==='plafond_pages', 'reçu : '+JSON.stringify(R.partiel.raison));
+  t('CCCIII ② ⭐ et les lignes LUES sont quand même rendues : un partiel n\'est pas un échec',
+    Array.isArray(R.partiel.lignes) && R.partiel.lignes.length===30,
+    'reçu : '+(R.partiel.lignes||[]).length+' lignes');
+
+  t('CCCIII ③ UNKNOWN sur un PDF sans couche texte',
+    R.inconnu.etat==='UNKNOWN' && R.inconnu.lignes.length===0 && R.inconnu.raison==='aucune_couche_texte',
+    'reçu : '+R.inconnu.etat+' / '+R.inconnu.raison);
+
+  /* ⛔ L'ORDRE DES TESTS EST UN CHOIX DÉLIBÉRÉ, FIGÉ ICI (R30) : « rien lu » l'emporte sur
+     « tronqué ». Un 22 pages sans aucun texte doit rendre UNKNOWN — la seule chose utile à en
+     faire est de DESCENDRE D'UN CRAN vers l'OCR. PARTIAL annoncerait « lu en partie » avec zéro
+     ligne : la cascade s'arrêterait sur un résultat vide en croyant avoir réussi à moitié. */
+  t('CCCIII ④ ⛔ vide ET tronqué → UNKNOWN gagne (pour que la cascade descende, pas qu\'elle s\'arrête)',
+    R.videEtTronque.etat==='UNKNOWN' && R.videEtTronque.raison==='aucune_couche_texte',
+    'reçu : '+R.videEtTronque.etat+' / '+R.videEtTronque.raison);
+
+  t('CCCIII ⑤ pagesLues ≤ pagesTotal, et les deux > 0 dès que le fichier s\'ouvre',
+    [R.complet,R.partiel,R.inconnu,R.videEtTronque].every(x=>x.pagesLues>0 && x.pagesTotal>0 && x.pagesLues<=x.pagesTotal), '');
+
+  /* ⛔ NON-RÉGRESSION : le regroupement par Y et le tri par X ne doivent pas avoir bougé. Les
+     fragments sont fournis dans le désordre ; « bonjour » (x=10) doit passer devant « monde »
+     (x=50) sur la même ligne, et la ligne du haut (y=700) avant celle du bas (y=680). */
+  t('CCCIII ⑥ ⛔ l\'assemblage des lignes est intact (Y décroissant, X croissant)',
+    R.complet.lignes[0]==='bonjour monde' && R.complet.lignes[1]==='page1',
+    'reçu : '+JSON.stringify((R.complet.lignes||[]).slice(0,2)));
+
+  t('CCCIII ⑦ les 3 états sont les valeurs attendues',
+    R.constantes.c==='COMPLETE' && R.constantes.p==='PARTIAL' && R.constantes.i==='UNKNOWN',
+    'reçu : '+JSON.stringify(R.constantes));
+
+  /* ══ TÉMOINS DE SOURCE ══ */
+  const srcLog = fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  const srcCoach = fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  /* ⛔ On retire les commentaires AVANT de compter : un témoin qui ne distingue pas le CODE de ce
+     qui en PARLE finit par interdire d'écrire la documentation du correctif (BUGS.md §64). */
+  const sansCom = s => s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  const logC = sansCom(srcLog), coachC = sansCom(srcCoach);
+
+  /* ⭐⭐ LE TÉMOIN QUI PORTE TOUT LE CHANTIER. La forme retenue (un objet) a une faiblesse dite :
+     un appelant NON migré échoue FERMÉ mais avec un message trompeur (« PDF vide » sur un PDF
+     lisible). Ce n'est pas bruyant — c'est muet-mais-sûr. Le garde-fou n'est donc pas la forme,
+     c'est CE témoin : chaque appelant de `_pdfToText` doit lire `.etat`. Sans lui, une migration
+     incomplète serait VERTE. */
+  const appelants = coachC.split('\n').map((l,i)=>({l,i})).filter(x=>/_pdfToText\s*\(/.test(x.l));
+  t('CCCIII ⑧ ⭐ SOURCE — `_pdfToText` a toujours exactement UN appelant, et il est dans coach.js',
+    appelants.length===1 && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
+    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')))
+    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))),
+    'appelants dans coach.js : '+appelants.length);
+  t('CCCIII ⑧ ⭐⭐ SOURCE — l\'appelant LIT `.etat` (le seul garde-fou d\'une migration complète)',
+    /const\s+r\s*=\s*await\s+_pdfToText\(f\)/.test(coachC) && /r\.etat\s*===\s*LIRE_INCONNU/.test(coachC)
+    && /r\.etat\s*===\s*LIRE_PARTIEL/.test(coachC),
+    'l\'appelant ne consulte pas les trois états');
+  t('CCCIII ⑧ ⛔ SOURCE — il ne teste plus la LONGUEUR pour décider (l\'ancienne forme est partie)',
+    !/const\s+lines\s*=\s*await\s+_pdfToText/.test(coachC) && !/if\(!lines\.length\)/.test(coachC), '');
+
+  /* ⛔ Les trois valeurs ne s'écrivent qu'aux constantes : une chaîne 'PARTIAL' retapée ailleurs
+     est exactement la recopie que ce contrat existe pour éviter (R2). */
+  const litteraux = (logC+coachC).match(/'(COMPLETE|PARTIAL|UNKNOWN)'/g)||[];
+  t('CCCIII ⑨ ⛔ SOURCE — les 3 valeurs ne sont écrites QU\'aux constantes (aucune recopie)',
+    litteraux.length===3, 'trouvé '+litteraux.length+' littéraux : '+litteraux.join(' '));
+
+  /* ══ PÉRIMÈTRE — ce que Michel a explicitement exclu de A1 ══ */
+  t('CCCIII ⑩ ⛔ PÉRIMÈTRE — MAX_PAGES vaut TOUJOURS 15 (on rend la troncature observable, on ne la corrige pas)',
+    /const\s+MAX_PAGES=15,\s*lines=\[\]/.test(logC), '');
+  /* ⚠️ CE TÉMOIN A ÉTÉ FAUX AU 1ᵉʳ JET, ET LA CAUSE RESSERVIRA : il bornait la recherche à
+     « 1400 caractères après `_pdfToImages` » pour vérifier qu'aucun `etat:LIRE_` n'y apparaît.
+     Or le corps de `_pdfToImages` fait **836 caractères**, et `_pdfToText` — qui rend bel et
+     bien le contrat — commence juste après : le garde débordait sur la fonction VOISINE et
+     rougissait sur du code parfaitement sain. *Une borne en distance de caractères n'est pas
+     une borne de fonction* (BUGS.md §63, reposé). On découpe donc le CORPS réel, jusqu'à son
+     `return pages;`, et on cherche dedans. */
+  const corpsImages = (()=>{ const i=logC.indexOf('async function _pdfToImages(f){');
+    if(i<0) return null; const j=logC.indexOf('return pages;', i); return j<0?null:logC.slice(i,j); })();
+  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — `_pdfToImages` n\'est PAS migrée (A2 attend le feu vert nutrition)',
+    corpsImages!==null && !/etat:\s*LIRE_/.test(corpsImages) && !/pagesTotal/.test(corpsImages),
+    corpsImages===null?'corps introuvable':'le contrat a débordé sur _pdfToImages');
+  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — les 4 appelants de `_pdfToImages` lisent toujours `.length` (rien n\'a bougé chez eux)',
+    /const pages=await _pdfToImages\(f\);\s*\n?\s*if\(!pages\.length\)/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
+    && (logC.match(/const pages=await _pdfToImages\(f\);/g)||[]).length===2
+    && /const imgs=await _pdfToImages\(f\); pages=imgs\.map/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -36273,166 +36440,6 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
     && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
 }
 
-/* ═══ CCCIII. LE CONTRAT DE LECTURE D'UN PDF — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, A1) ═══
-   Michel, après la mesure du matin sur ses vrais fichiers : *« aujourd'hui un import peut réussir
-   silencieusement alors qu'il est tronqué »*. `_pdfToText` rendait **682 lignes d'un fichier de
-   22 pages sans rien signaler** (plafond MAX_PAGES=15) — une lecture partielle était indiscernable
-   d'une lecture complète.
-
-   ⚠️⚠️ TÉMOINS PAR STUB DE `pdfjsLib`, ET C'EST UN CHOIX, PAS UN PIS-ALLER :
-   ① aucun binaire (1,34 Mo) ni PDF personnel n'entre dans le dépôt ;
-   ② le nombre de pages et le texte sont CONTRÔLÉS, donc les 3 états sont déterministes et
-      rejouables sur n'importe quelle machine — un vrai PDF de 22 pages ne le serait pas.
-   ⛔ CE QUI EST ÉPROUVÉ ICI EST NOTRE LOGIQUE DE CONTRAT, PAS pdf.js. La vraie bibliothèque a été
-   mesurée séparément le 13/09 (programme 87 lignes/384 ms, historique 682/413 ms, contrôle négatif
-   à 0 ligne). *Dire ce qu'un test ne couvre pas fait partie du test.* */
-{
-  console.log('\n-- CCCIII. Le contrat de lecture d\'un PDF (A1) --');
-
-  const R = await p.evaluate(async () => {
-    const out = {};
-    const vrai = window.pdfjsLib;          // ⛔ on RESTAURE à la fin : ne rien laisser derrière soi
-
-    /* Le stub : `_pdfOuvrir` appelle `_loadPDFJS()` (qui sort à sa 1re ligne si pdfjsLib existe)
-       puis `pdfjsLib.getDocument(...).promise`. On lui rend un document dont on choisit le nombre
-       de pages et le contenu. Les fragments sont donnés DANS LE DÉSORDRE exprès, pour que le
-       regroupement par Y et le tri par X restent éprouvés (non-régression). */
-    const poser = (nbPages, avecTexte) => {
-      window.pdfjsLib = {
-        GlobalWorkerOptions: {},
-        getDocument(){
-          return { promise: Promise.resolve({
-            numPages: nbPages,
-            getPage(i){
-              return Promise.resolve({ getTextContent(){
-                if(!avecTexte) return Promise.resolve({items:[]});
-                return Promise.resolve({items:[
-                  {str:'monde', transform:[0,0,0,0, 50, 700]},   // x=50, même ligne
-                  {str:'page'+i, transform:[0,0,0,0, 10, 680]},  // ligne du dessous
-                  {str:'bonjour',transform:[0,0,0,0, 10, 700]}   // x=10 : doit passer DEVANT « monde »
-                ]});
-              }});
-            }
-          })};
-        }
-      };
-    };
-    const lire = async () => {
-      const f = new File([new Uint8Array([37,80,68,70])], 'x.pdf', {type:'application/pdf'});
-      try { return await window._pdfToText(f); } catch(e){ return {erreur:String(e&&e.message||e)}; }
-    };
-
-    poser(3, true);   out.complet = await lire();
-    poser(22, true);  out.partiel = await lire();
-    poser(1, false);  out.inconnu = await lire();
-    poser(22, false); out.videEtTronque = await lire();     // les deux à la fois
-
-    out.constantes = { c: typeof LIRE_COMPLET!=='undefined' && LIRE_COMPLET,
-                       p: typeof LIRE_PARTIEL!=='undefined' && LIRE_PARTIEL,
-                       i: typeof LIRE_INCONNU!=='undefined' && LIRE_INCONNU };
-    if(vrai) window.pdfjsLib = vrai; else delete window.pdfjsLib;
-    return out;
-  });
-
-  /* ⛔ CONTRÔLE SAIN DU HARNAIS, AVANT TOUT LE RESTE : si le stub n'atteint pas la fonction, TOUS
-     les témoins qui suivent seraient verts pour la mauvaise raison (BUGS.md §61). */
-  t('CCCIII ⛔ le stub atteint bien la vraie fonction (sinon tout ce qui suit est faux)',
-    !!R.complet && !R.complet.erreur && typeof R.complet.etat==='string',
-    'reçu : '+JSON.stringify(R.complet).slice(0,120));
-
-  t('CCCIII ① COMPLETE sur un PDF entièrement lu',
-    R.complet.etat==='COMPLETE' && R.complet.pagesLues===3 && R.complet.pagesTotal===3,
-    'reçu : '+R.complet.etat+' '+R.complet.pagesLues+'/'+R.complet.pagesTotal);
-  t('CCCIII ① ⛔ `raison` est VIDE sur un succès (une raison sur un COMPLETE est un signal faux)',
-    R.complet.raison==='', 'reçu : '+JSON.stringify(R.complet.raison));
-
-  t('CCCIII ② ⭐ PARTIAL sur 22 pages plafonnées à 15 — LE DÉFAUT DU JOUR, RENDU OBSERVABLE',
-    R.partiel.etat==='PARTIAL' && R.partiel.pagesLues===15 && R.partiel.pagesTotal===22,
-    'reçu : '+R.partiel.etat+' '+R.partiel.pagesLues+'/'+R.partiel.pagesTotal);
-  t('CCCIII ② ⛔ la raison NOMME la cause (`plafond_pages`), ce n\'est pas un message d\'interface',
-    R.partiel.raison==='plafond_pages', 'reçu : '+JSON.stringify(R.partiel.raison));
-  t('CCCIII ② ⭐ et les lignes LUES sont quand même rendues : un partiel n\'est pas un échec',
-    Array.isArray(R.partiel.lignes) && R.partiel.lignes.length===30,
-    'reçu : '+(R.partiel.lignes||[]).length+' lignes');
-
-  t('CCCIII ③ UNKNOWN sur un PDF sans couche texte',
-    R.inconnu.etat==='UNKNOWN' && R.inconnu.lignes.length===0 && R.inconnu.raison==='aucune_couche_texte',
-    'reçu : '+R.inconnu.etat+' / '+R.inconnu.raison);
-
-  /* ⛔ L'ORDRE DES TESTS EST UN CHOIX DÉLIBÉRÉ, FIGÉ ICI (R30) : « rien lu » l'emporte sur
-     « tronqué ». Un 22 pages sans aucun texte doit rendre UNKNOWN — la seule chose utile à en
-     faire est de DESCENDRE D'UN CRAN vers l'OCR. PARTIAL annoncerait « lu en partie » avec zéro
-     ligne : la cascade s'arrêterait sur un résultat vide en croyant avoir réussi à moitié. */
-  t('CCCIII ④ ⛔ vide ET tronqué → UNKNOWN gagne (pour que la cascade descende, pas qu\'elle s\'arrête)',
-    R.videEtTronque.etat==='UNKNOWN' && R.videEtTronque.raison==='aucune_couche_texte',
-    'reçu : '+R.videEtTronque.etat+' / '+R.videEtTronque.raison);
-
-  t('CCCIII ⑤ pagesLues ≤ pagesTotal, et les deux > 0 dès que le fichier s\'ouvre',
-    [R.complet,R.partiel,R.inconnu,R.videEtTronque].every(x=>x.pagesLues>0 && x.pagesTotal>0 && x.pagesLues<=x.pagesTotal), '');
-
-  /* ⛔ NON-RÉGRESSION : le regroupement par Y et le tri par X ne doivent pas avoir bougé. Les
-     fragments sont fournis dans le désordre ; « bonjour » (x=10) doit passer devant « monde »
-     (x=50) sur la même ligne, et la ligne du haut (y=700) avant celle du bas (y=680). */
-  t('CCCIII ⑥ ⛔ l\'assemblage des lignes est intact (Y décroissant, X croissant)',
-    R.complet.lignes[0]==='bonjour monde' && R.complet.lignes[1]==='page1',
-    'reçu : '+JSON.stringify((R.complet.lignes||[]).slice(0,2)));
-
-  t('CCCIII ⑦ les 3 états sont les valeurs attendues',
-    R.constantes.c==='COMPLETE' && R.constantes.p==='PARTIAL' && R.constantes.i==='UNKNOWN',
-    'reçu : '+JSON.stringify(R.constantes));
-
-  /* ══ TÉMOINS DE SOURCE ══ */
-  const srcLog = fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
-  const srcCoach = fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
-  /* ⛔ On retire les commentaires AVANT de compter : un témoin qui ne distingue pas le CODE de ce
-     qui en PARLE finit par interdire d'écrire la documentation du correctif (BUGS.md §64). */
-  const sansCom = s => s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
-  const logC = sansCom(srcLog), coachC = sansCom(srcCoach);
-
-  /* ⭐⭐ LE TÉMOIN QUI PORTE TOUT LE CHANTIER. La forme retenue (un objet) a une faiblesse dite :
-     un appelant NON migré échoue FERMÉ mais avec un message trompeur (« PDF vide » sur un PDF
-     lisible). Ce n'est pas bruyant — c'est muet-mais-sûr. Le garde-fou n'est donc pas la forme,
-     c'est CE témoin : chaque appelant de `_pdfToText` doit lire `.etat`. Sans lui, une migration
-     incomplète serait VERTE. */
-  const appelants = coachC.split('\n').map((l,i)=>({l,i})).filter(x=>/_pdfToText\s*\(/.test(x.l));
-  t('CCCIII ⑧ ⭐ SOURCE — `_pdfToText` a toujours exactement UN appelant, et il est dans coach.js',
-    appelants.length===1 && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
-    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')))
-    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))),
-    'appelants dans coach.js : '+appelants.length);
-  t('CCCIII ⑧ ⭐⭐ SOURCE — l\'appelant LIT `.etat` (le seul garde-fou d\'une migration complète)',
-    /const\s+r\s*=\s*await\s+_pdfToText\(f\)/.test(coachC) && /r\.etat\s*===\s*LIRE_INCONNU/.test(coachC)
-    && /r\.etat\s*===\s*LIRE_PARTIEL/.test(coachC),
-    'l\'appelant ne consulte pas les trois états');
-  t('CCCIII ⑧ ⛔ SOURCE — il ne teste plus la LONGUEUR pour décider (l\'ancienne forme est partie)',
-    !/const\s+lines\s*=\s*await\s+_pdfToText/.test(coachC) && !/if\(!lines\.length\)/.test(coachC), '');
-
-  /* ⛔ Les trois valeurs ne s'écrivent qu'aux constantes : une chaîne 'PARTIAL' retapée ailleurs
-     est exactement la recopie que ce contrat existe pour éviter (R2). */
-  const litteraux = (logC+coachC).match(/'(COMPLETE|PARTIAL|UNKNOWN)'/g)||[];
-  t('CCCIII ⑨ ⛔ SOURCE — les 3 valeurs ne sont écrites QU\'aux constantes (aucune recopie)',
-    litteraux.length===3, 'trouvé '+litteraux.length+' littéraux : '+litteraux.join(' '));
-
-  /* ══ PÉRIMÈTRE — ce que Michel a explicitement exclu de A1 ══ */
-  t('CCCIII ⑩ ⛔ PÉRIMÈTRE — MAX_PAGES vaut TOUJOURS 15 (on rend la troncature observable, on ne la corrige pas)',
-    /const\s+MAX_PAGES=15,\s*lines=\[\]/.test(logC), '');
-  /* ⚠️ CE TÉMOIN A ÉTÉ FAUX AU 1ᵉʳ JET, ET LA CAUSE RESSERVIRA : il bornait la recherche à
-     « 1400 caractères après `_pdfToImages` » pour vérifier qu'aucun `etat:LIRE_` n'y apparaît.
-     Or le corps de `_pdfToImages` fait **836 caractères**, et `_pdfToText` — qui rend bel et
-     bien le contrat — commence juste après : le garde débordait sur la fonction VOISINE et
-     rougissait sur du code parfaitement sain. *Une borne en distance de caractères n'est pas
-     une borne de fonction* (BUGS.md §63, reposé). On découpe donc le CORPS réel, jusqu'à son
-     `return pages;`, et on cherche dedans. */
-  const corpsImages = (()=>{ const i=logC.indexOf('async function _pdfToImages(f){');
-    if(i<0) return null; const j=logC.indexOf('return pages;', i); return j<0?null:logC.slice(i,j); })();
-  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — `_pdfToImages` n\'est PAS migrée (A2 attend le feu vert nutrition)',
-    corpsImages!==null && !/etat:\s*LIRE_/.test(corpsImages) && !/pagesTotal/.test(corpsImages),
-    corpsImages===null?'corps introuvable':'le contrat a débordé sur _pdfToImages');
-  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — les 4 appelants de `_pdfToImages` lisent toujours `.length` (rien n\'a bougé chez eux)',
-    /const pages=await _pdfToImages\(f\);\s*\n?\s*if\(!pages\.length\)/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
-    && (logC.match(/const pages=await _pdfToImages\(f\);/g)||[]).length===2
-    && /const imgs=await _pdfToImages\(f\); pages=imgs\.map/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))), '');
-}
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
