@@ -461,6 +461,38 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
+**📱 VALIDATION iPHONE RÉELLE DU CAS RAYNAL — VÉRIFIÉ, FIGÉ, RIEN CHANGÉ · 13/09/2026, SANS NOUVELLE VERSION** — Michel donne sa capture comme **témoin iPhone réel** du chemin complet et demande de le **vérifier et figer sans ouvrir de chantier** : ⛔ ***« Ne change rien au comportement si tout correspond au contrat actuel. »***
+
+**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ.** Seuls `tests/`, `tools/` et la doc changent. ⛔ **Et aucun comportement n'a été touché** : tout correspondait déjà.
+
+**✅ LES 7 POINTS, MESURÉS EN RUNTIME SUR LE CODE DÉPLOYÉ** — en conduisant les **vraies portes**, pas en appelant les fonctions à la main :
+
+| question | réponse mesurée |
+|---|---|
+| état | **`ALTERNATIVE_FIABLE`** — et non `DERIVE_ESTIMABLE` |
+| méthode / confiance | `autre_champ_source` · **`source`** |
+| champ retenu | **`energy-kj_100g`** — 415 / 4,184 = **99,187…** → **99,2** |
+| champ d'origine du brut | **`energy-kcal_100g`** (`champSource`) |
+| valeur brute | **48,3**, conservée avec la ligne |
+| 410 g | **407 kcal** · 25 · 41 · 13 |
+| scan = tapé | **oui** — écran, résolution et ligne identiques |
+
+**⭐⭐ ET LA QUESTION « RIEN N'EST RECALCULÉ INUTILEMENT » EST MESURÉE, PAS AFFIRMÉE.** L'estimation depuis les macros est appelée **une seule fois**, elle rend **93,2** — et c'est **99,2** qui est retenu. 👉 ***Elle sert de JUGE de crédibilité, jamais de source*** : c'est elle qui refuse un second champ absurde (un champ à 3 000 kJ deviendrait sinon notre valeur de confiance). ⛔ **On ne la supprime donc pas « pour économiser »** — trois produits et une addition ferment une vraie faille.
+
+**⛔⛔ ET UN DÉFAUT DE TÉMOIN A ÉTÉ TROUVÉ EN ÉCRIVANT CETTE VALIDATION.** Mon témoin « scan = tapé » passait `saisie:'manuel'` — **une valeur qui n'existe pas en production** : la vraie porte `_manualBarcode` enregistre **`'code-tape'`**. **Le témoin était vert par accident.** 👉 ***Vérifier la fonction n'est pas vérifier l'appel*** (`BUGS.md` §58). Il remplit désormais le champ et appelle la porte, comme la personne — et un témoin frère vérifie que la **provenance**, elle, distingue bien les deux (`scan` contre `code-tape`, contrat posé le 23/08 après un retour de Michel).
+
+**📄 LE CAS EST ÉCRIT : `docs/VALIDATION-IPHONE-RAYNAL.md`** — la transcription exacte de la capture, la conclusion factuelle en 8 points, la mesure de l'estimation-juge, et la liste des témoins qui figent chaque fait. ⚠️ **La capture est TRANSCRITE, pas embarquée** : c'est une photo de son écran et le dépôt est **public** ; ce qui doit être figé, ce sont les **valeurs**. *Une image ne peut pas rougir ; un témoin, si.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **aucun correctif** — tout était conforme · ⛔ périmètre nommé par Michel intact : la **douane**, `savedFoods`, l'historique, les migrations, les `ml`, `saveEditFood`, `rejouerRepas`, l'**estimation IA**, les autres règles Nutrition. ⚠️ **Et la donnée reste fausse chez Open Food Facts** : la corriger à la source profiterait à tous ceux qui scannent ce produit — geste que Michel peut faire, pas l'app.
+
+Tests : **parcours 3819/3819 sur l'arbre FINAL** (bloc **CCCVI** porté à **22** témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 4 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge avant ET après** — ① ⭐⭐ **la valeur d'Atwater est retenue au lieu du candidat de la source** → **7** · ② la porte tapée change d'étiquette de provenance → **1, exactement ③bis** · ③ les deux portes divergent → **1, exactement ③** · ④ la méthode ment (« dérivé » alors qu'on a pris la source) → **2**.
+
+📄 **PDF POUR GPT** : `docs/CAPTURE-IPHONE-TRANCHEE.pdf` régénéré (**60 gardes**, **5 mutations** de plus, toutes refusent) — dont quatre qui protègent le **document de validation** lui-même : il doit exister, et porter ses 8 faits. ⚠️ **Et j'ai cassé mon propre générateur en l'écrivant** : j'ai nommé une variable `_v`, qui **écrase le validateur de police** du même nom — un `'str' object is not callable` à 170 lignes de là. *Un nom court réutilisé coûte plus cher qu'un nom long.*
+
+Fichiers : `tests/parcours/runner.js`, `docs/VALIDATION-IPHONE-RAYNAL.md` (nouveau), `tools/gen_1208_pdf.py`, `docs/CAPTURE-IPHONE-TRANCHEE.pdf`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
+
 **📱 2ᵉ CAPTURE : ÇA MARCHE — ET ELLE RÉPOND ENFIN À LA QUESTION DU 48,3 · 13/09/2026, SANS NOUVELLE VERSION** — Michel renvoie une capture à 23:23, une fois passé par l'Accueil : **407 kcal** pour 410 g, et l'avertissement 🔬 qui dit *« l'app utilise 99.2 kcal/100 g, l'autre valeur de la fiche (`energy-kj_100g`) »*.
 
 **⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ** : seuls `tests/`, `tools/` et les journaux changent. *Un bump gratuit fait re-télécharger l'app à tout le monde pour rien.*

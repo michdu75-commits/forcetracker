@@ -36534,7 +36534,22 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
                qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh() };
     };
     o.scan   = await jouer('scan');
-    o.tape   = await jouer('manuel');
+    /* ⛔⛔ ft-v1208 (validation iPhone) — LA PORTE TAPÉE EST CONDUITE PAR SA VRAIE FONCTION.
+       Avant, ce témoin passait `saisie:'manuel'` — **une valeur qui n'existe pas en production** :
+       `_manualBarcode` enregistre `'code-tape'`. Le résultat était juste par accident.
+       👉 ***Vérifier la fonction n'est pas vérifier l'appel*** (`BUGS.md` §58). On remplit le champ
+       et on appelle la porte, comme la personne le fait. */
+    o.tape   = await (async()=>{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320);
+      const m=document.getElementById('af-bc-manual'); if(m) m.value='3021690201123';
+      _manualBarcode(); await d(700);
+      const g=document.getElementById('af-bc-grams'); g.value='410';
+      g.dispatchEvent(new Event('input',{bubbles:true})); await d(400);
+      return { kcal:v('af-kcal'), prot:v('af-prot'), carbs:v('af-carbs'), fat:v('af-fat'),
+               qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh(),
+               saisie:(_afSrc||{}).saisie }; })();
     FICHE_COURANTE=FICHE_SANS_KJ;
     o.sansKj = await jouer('scan');
     /* ⛔ ON REJOUE LA VRAIE FICHE AVANT DE LIRE LA LIGNE : sans ça, les témoins de traçabilité
@@ -36589,6 +36604,7 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
       const r=_ref100('x',48.3,6.1,10,3.2,{origine:'barcode',champ:_nrjChampPrincipal(n),
                                            candidats:_nrjCandidats(n)});
       return {kcal100:r.kcal100, etat:r.fiab.etat, champ:r.fiab.champ}; };
+    o.atwater = _nrjAtwater(6.1,10,3.2);   /* ce que l'estimation aurait donné : 93,2 */
     o.cand_absurde= parCand(3000);   /* 717 kcal : tenable pour la loi, très loin des macros */
     /* ⛔⛔ ET LE GARDE « le candidat viole AUSSI la loi » A BESOIN D'UN AUTRE ALIMENT — mesuré,
        pas supposé. Sur les lentilles, un candidat sous le plancher (52,5) est forcément à plus de
@@ -36637,9 +36653,16 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     && /48\.3/.test(X.scan.coh.txt) && /99\.2/.test(X.scan.coh.txt)
     && /energy-kj_100g/.test(X.scan.coh.txt)
     && !/ne colle pas à ces macros/.test(X.scan.coh.txt), (X.scan||{}).coh&&X.scan.coh.txt.slice(0,120));
-  t('CCCVI ③ ⭐⭐ SCANNÉ ET TAPÉ : la MÊME résolution, objet entier comparé (exigence nommée par '+
-    'Michel), et la même valeur à l\'écran',
-    X.identiques===true, JSON.stringify([X.scan&&X.scan.kcal, X.tape&&X.tape.kcal]));
+  t('CCCVI ③ ⭐⭐ SCANNÉ ET TAPÉ : la MÊME résolution, objet entier comparé, et les mêmes quatre '+
+    'valeurs à l\'écran — par les DEUX vraies portes (`_lookupBarcode` et `_manualBarcode`), pas '+
+    'par un paramètre inventé',
+    X.identiques===true && X.tape && X.tape.prot===X.scan.prot && X.tape.carbs===X.scan.carbs
+    && X.tape.fat===X.scan.fat && X.tape.qty===X.scan.qty,
+    JSON.stringify([X.scan&&X.scan.kcal, X.tape&&X.tape.kcal]));
+  t('CCCVI ③bis ⛔ … ET LA PROVENANCE, ELLE, DISTINGUE BIEN LES DEUX : `scan` contre `code-tape`. '+
+    '*Le résultat est le même, la façon dont il est entré ne l\'est pas* — c\'est le contrat posé '+
+    'le 23/08 après un retour de Michel',
+    X.tape && X.tape.saisie==='code-tape', 'saisie enregistrée : '+JSON.stringify(X.tape&&X.tape.saisie));
   t('CCCVI ④ ⛔ 48,3 N\'EST PLUS UNE VALEUR DE CONFIANCE : le pour-100 g retenu est 99,2, et la '+
     'valeur brute reste nommée',
     X.scan && X.scan.bc.kcal100===99.2 && X.scan.bc.fiab.brut===48.3,
@@ -36681,6 +36704,13 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     'saisie d\'un facteur 1000 dans la base deviendrait notre valeur de confiance',
     (X.cand_absurde||{}).etat==='DERIVE_ESTIMABLE' && X.cand_absurde.kcal100===93.2,
     JSON.stringify(X.cand_absurde));
+  t('CCCVI ⑨quater ⭐⭐ AUCUNE VALEUR N\'EST RECALCULÉE DEPUIS LES MACROS QUAND LA SOURCE EN A UNE '+
+    'QUI TIENT — question posée nommément par Michel. Mesuré : l\'estimation vaut 93,2, la valeur '+
+    'retenue est 99,2 (celle de la fiche). *Atwater sert de JUGE de crédibilité, jamais de source* '+
+    '— et c\'est lui qui refuse un second champ absurde (témoin ⑨ter)',
+    X.scan && X.scan.bc.kcal100===99.2 && X.atwater===93.2
+    && X.scan.bc.fiab.methode==='autre_champ_source' && X.scan.bc.fiab.confiance==='source',
+    JSON.stringify({retenu:X.scan&&X.scan.bc.kcal100, atwater:X.atwater}));
   t('CCCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
   await pg.close(); await ctx.close();
 }

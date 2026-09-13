@@ -67,6 +67,14 @@
   lire `docs/JOURNAL-DE-PARTAGE.md`, poser sa ligne AVANT de coder) **avant toute** modification
   Nutrition.
 
+- 📱 **LE CAS RAYNAL EST FIGÉ COMME TÉMOIN iPHONE RÉEL → `docs/VALIDATION-IPHONE-RAYNAL.md`.**
+  Les 7 points demandés par Michel sont **mesurés en runtime** : `ALTERNATIVE_FIABLE` · champ
+  `energy-kj_100g` · brut **48,3** conservé · retenu **99,2** · **407 kcal** à 410 g · scan = saisie
+  manuelle. ⛔ **Aucun changement de comportement — tout était conforme.**
+  ⭐⭐ **Et « rien n'est recalculé inutilement » est mesuré** : l'estimation est appelée **une fois**,
+  rend 93,2, et c'est **99,2 qui est retenu**. *Elle sert de JUGE, jamais de source* — c'est elle qui
+  refuse un second champ absurde. **On ne la supprime pas « pour économiser ».**
+
 - ✅ **CONFIRMÉ SUR L'iPHONE DE MICHEL (13/09, 23:23) — ET LA QUESTION DU 48,3 EST TRANCHÉE.**
   Une fois passé par l'Accueil : **407 kcal** pour 410 g, avertissement 🔬 présent.
   ⭐⭐ **La fiche Open Food Facts se contredit elle-même** : `energy-kcal_100g` = **48,3** (fausse,

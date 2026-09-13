@@ -380,8 +380,29 @@ N_CCCVI = len(re.findall(r"t\('CCCVI ", RUN))
 
 if VERSION != 'ft-v1208':
     raise SystemExit('Le cache servi annonce %s : ce document parle de ft-v1208.' % VERSION)
-if N_CCCVI != 20:
-    raise SystemExit('Le bloc CCCVI porte %d temoins, pas 20 : le document cite ce chiffre.' % N_CCCVI)
+if N_CCCVI != 22:
+    raise SystemExit('Le bloc CCCVI porte %d temoins, pas 22 : le document cite ce chiffre.' % N_CCCVI)
+# [!!] LA PORTE TAPEE DOIT ETRE CONDUITE PAR SA VRAIE FONCTION. Un temoin qui passe une valeur de
+#    provenance inventee valide par accident — c est le defaut trouve en ecrivant la validation.
+if '_manualBarcode()' not in RUN:
+    raise SystemExit('Le banc ne conduit plus la VRAIE porte du code-barres tape : « verifier la '
+                     'fonction n est pas verifier l appel ».')
+if "'code-tape'" not in CODE:
+    raise SystemExit('La provenance « code-tape » a disparu du code servi : le document affirme '
+                     'que le resultat est le meme mais que la provenance distingue les deux portes.')
+# [!!] LE DOCUMENT DE VALIDATION EST LE TEMOIN ECRIT DU CAS REEL.
+_VAL = os.path.join(ROOT, 'docs', 'VALIDATION-IPHONE-RAYNAL.md')
+if not os.path.exists(_VAL):
+    raise SystemExit('docs/VALIDATION-IPHONE-RAYNAL.md a disparu : c est le temoin ecrit du cas '
+                     'reel, demande nommement par Michel.')
+# [/!\] `_valTxt`, PAS `_v` : `_v` est le validateur de police defini plus bas, et le renommer
+#    par accident casse tout le rendu avec un « str object is not callable » sans rapport.
+_valTxt = open(_VAL, encoding='utf-8').read()
+for _f in ('ALTERNATIVE_FIABLE', 'energy-kj_100g', 'energy-kcal_100g', '99,2', '48,3', '407 kcal',
+           'code-tape', '3021690201123'):
+    if _f not in _valTxt:
+        raise SystemExit('Le document de validation ne porte plus « %s » : c est un des faits '
+                         'qu il est cense figer.' % _f)
 # [!!] LA 2e CAPTURE A REVELE LA VRAIE FICHE : elle porte DEUX energies. Le document en depend
 #    entierement, donc la fixture du banc doit etre celle-la — une fixture appauvrie eprouverait
 #    la mauvaise branche, ce qui est exactement l erreur que ce document raconte.
