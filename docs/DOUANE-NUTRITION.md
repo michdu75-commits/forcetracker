@@ -47,6 +47,29 @@ enregistrée.*** C'est précisément ce qui rendait le recomptage nécessaire.
 
 *Ils remplacent ou retirent ; ils n'enregistrent pas une ligne issue d'une saisie.*
 
+
+### ✅ Le compte a été re-fait de façon indépendante, par 5 méthodes qui ne se parlent pas
+
+Un balayage adversarial (syntaxe directe · alias de tableau · mutation d'un **élément** ·
+remontée depuis la **persistance** · départ du **métier**, écran par écran) a re-cherché les
+écrivains sans connaître mon relevé. **Il trouve exactement les mêmes 4**, et les mêmes exclusions.
+
+⭐⭐ **Et il a vérifié trois choses que mon propre balayage ne pouvait pas voir** :
+
+| vérification | résultat |
+|---|---|
+| accès par **crochets** (`S['foodLog']`) — invisible à toute recherche sur `S.foodLog.` | **zéro occurrence** |
+| **fuite de références vives** : une ligne du journal qui s'échappe par référence et serait mutée ailleurs | `_afSuggLocales` et `_repasHabituels` en font fuir — ⭐ **aucun de leurs consommateurs ne les mute** |
+| `_majDefFavori` · `_qtyRescale` — appelées juste après une écriture | la 1ʳᵉ écrit dans `S.savedFoods`, la 2ᵉ dans des champs du DOM : **ni l'une ni l'autre ne touche à la ligne** |
+
+👉 ***C'est la seule façon de prouver qu'il n'y a pas de 5ᵉ écrivain*** : un scan sur `S.foodLog`
+ne peut pas voir une ligne mutée à travers une référence obtenue ailleurs.
+
+⚠️ **Une nuance relevée au passage, hors périmètre** : `_fusionnerAvecLeDisque` remplace le journal
+**depuis l'intérieur de `persist()`** — un chemin système, pas un écrivain de ligne, mais bon à
+savoir avant de toucher à la persistance. Et `finalImportMeal` est un **faux ami** : elle a tout
+l'air d'une porte nutrition et **n'écrit rien** dans le journal.
+
 ---
 
 ## 2️⃣ LA FORME EXACTE JUSTE AVANT L'ÉCRITURE — et elle n'est pas la même partout
