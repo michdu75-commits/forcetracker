@@ -35263,6 +35263,161 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'écritures de la branche portions='+(corps.match(/_afSrc\.u===?'portion'/g)||[]).length);
 }
 
+/* ══════════ BLOC CCC — 🍽️ 3-v : la définition de portion reprise (ft-v1203) ══════════
+   ⭐ TEST D'ENTRÉE PASSÉ, et pour la 1ʳᵉ fois depuis 4 sous-étapes le plan dit vrai sur la moitié
+   qu'il décrit : `quickFillFood` et `_afSuggPrendreLocale` portaient
+   `if(X.u==='portion'){ _afPortionLabel=…; _afPortionPoids=… }` **strictement identiques**.
+   ⛔⛔ MAIS L'AUTRE MOITIÉ ÉTAIT DÉJÀ FAITE : le NOMBRE de portions a son propriétaire depuis
+   ft-v1183/1186 (`_afReprendrePortions`), et les deux portes y sont déjà branchées. *Quand un
+   propriétaire existe, on lui ajoute un appelant — on n'en recrée pas un deuxième.*
+   ⚠️⚠️ ET L'ASYMÉTRIE DE CONDITION EST INATTEIGNABLE, MESURÉE : la ligne de la DÉFINITION n'a pas
+   de garde, celle du NOMBRE porte `!_bcNutr` — mais le bloc qui pose `_bcNutr` se garde lui-même
+   par `u!=='portion'`, donc un aliment en portions ne peut PAS le poser. Aucun témoin de
+   comportement ne peut donc protéger cette frontière : les témoins de SOURCE sont seuls. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=typeof _afReprendreDefPortion;
+    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
+    try{
+      o.table=JSON.stringify([
+        _afReprendreDefPortion({u:'portion',portionLabel:'part',portionWeightG:120}),
+        _afReprendreDefPortion({u:'portion',portionLabel:'bol'}),
+        _afReprendreDefPortion({u:'g',portionLabel:'jamais',portionWeightG:999}),
+        _afReprendreDefPortion({}), _afReprendreDefPortion(null)]);
+    }catch(e){ o.table='LÈVE : '+String(e&&e.message||e); }
+
+    const lire=()=>({lab:(typeof _afPortionLabel!=='undefined')?_afPortionLabel:'ABSENT',
+                     pds:(typeof _afPortionPoids!=='undefined')?_afPortionPoids:'ABSENT',
+                     n:(typeof _afPortions!=='undefined')?_afPortions:'ABSENT',
+                     bc:!!(typeof _bcNutr!=='undefined' && _bcNutr)});
+    /* ⛔ Remise à plat par la VRAIE fonction de production : sans elle un cas lirait le
+       reliquat du précédent — le piège payé en ft-v1199. */
+    const plat=()=>{ try{ _afResetUnite(); }catch(e){} };
+
+    const CAS=[['complete',{q:2,u:'portion',portionLabel:'part',portionWeightG:120}],
+               ['sans poids',{q:2,u:'portion',portionLabel:'bol'}],
+               ['sans nom',{q:2,u:'portion',portionWeightG:90}],
+               ['en grammes',{q:150,u:'g',portionLabel:'jamais',portionWeightG:999}],
+               ['poids nul',{q:2,u:'portion',portionLabel:'part',portionWeightG:0}],
+               /* ⭐ le cas qui porte un pour-100 g : la DÉFINITION doit quand même être reprise */
+               ['avec pour-100g',{q:2,u:'portion',portionLabel:'pot',portionWeightG:150,
+                                  per100:{kcal:66.7,prot:0.7,carbs:1.3,fat:2}}]];
+
+    /* ── porte 1 : « Mes aliments » ── */
+    const A={};
+    CAS.forEach(([nom,q])=>{
+      S.foodLog=[]; S.savedFoods=[];
+      try{ _afOublierAliment(); }catch(e){}
+      plat(); _afSetSrc(null);
+      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,fav:false}, q)];
+      quickFillFood(0);
+      A[nom]=lire();
+    });
+    o.quickFill=JSON.stringify(A);
+
+    /* ── porte 2 : la recherche du journal (R8, la porte jumelle) ── */
+    const B={};
+    CAS.forEach(([nom,q])=>{
+      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1,name:'B '+nom,
+                                kcal:100,prot:1,carbs:2,fat:3}, q)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      plat(); _afSetSrc(null);
+      _afSuggLoc=_afSuggLocales('B '+nom);
+      B[nom]= _afSuggLoc.length ? (_afSuggPrendreLocale(0), lire()) : 'LISTE VIDE';
+    });
+    o.locale=JSON.stringify(B);
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+  t('CCC ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCC ① ⭐ `_afReprendreDefPortion` existe', X.type==='function', 'type='+X.type);
+  t('CCC ② ⭐ elle rend VRAI sur une portion, FAUX sur les grammes, l\'objet vide et `null`',
+    X.table==='[true,true,false,false,false]', X.table);
+
+  const A=j(X.quickFill)||{}, B=j(X.locale)||{};
+  t('CCC ③ ⭐ porte « Mes aliments » — la définition complète revient (part / 120 g)',
+    !!(A['complete']&&A['complete'].lab==='part'&&A['complete'].pds===120), JSON.stringify(A['complete']));
+  t('CCC ④ ⛔ PORTE JUMELLE (R8) — recherche du journal : idem',
+    !!(B['complete']&&B['complete'].lab==='part'&&B['complete'].pds===120), JSON.stringify(B['complete']));
+  t('CCC ⑤ ⛔ le garde d\'unité : en GRAMMES rien n\'est repris, aux deux portes '+
+    '(une définition n\'appartient pas à un aliment pesé)',
+    !!(A['en grammes']&&A['en grammes'].lab===''&&A['en grammes'].pds===0 &&
+       B['en grammes']&&B['en grammes'].lab===''&&B['en grammes'].pds===0),
+    JSON.stringify([A['en grammes'],B['en grammes']]));
+  t('CCC ⑥ ⛔ un poids absent, nul ou négatif ressort à 0 — on ne devine pas un poids (R29)',
+    ['sans poids','poids nul'].every(n=>A[n]&&A[n].pds===0&&B[n]&&B[n].pds===0),
+    JSON.stringify([A['sans poids'],A['poids nul']]));
+  t('CCC ⑦ ⛔ un nom absent ressort vide, le poids passe quand même',
+    !!(A['sans nom']&&A['sans nom'].lab===''&&A['sans nom'].pds===90), JSON.stringify(A['sans nom']));
+  t('CCC ⑧ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LA MÊME TABLE sur les 6 cas',
+    JSON.stringify(Object.keys(A).map(n=>[A[n].lab,A[n].pds]))===
+    JSON.stringify(Object.keys(B).map(n=>[B[n].lab,B[n].pds])),
+    JSON.stringify(A)+' | '+JSON.stringify(B));
+  t('CCC ⑨ ⛔ NON-RÉGRESSION ft-v1183 — le NOMBRE de portions est toujours repris (2), et il ne '+
+    'passe PAS par ce propriétaire : il a le sien',
+    ['complete','sans poids','sans nom','poids nul','avec pour-100g'].every(n=>A[n]&&A[n].n===2),
+    JSON.stringify(Object.keys(A).map(n=>[n,A[n].n])));
+  t('CCC ⑩ ⚠️ MESURE, PAS SUPPOSITION — un aliment en PORTIONS ne pose jamais `_bcNutr` : le bloc '+
+    'du pour-100 g se garde lui-même par `u!==\'portion\'`. Le cas « avec pour-100g » le prouve, '+
+    'et sa définition est reprise quand même',
+    !!(A['avec pour-100g']&&A['avec pour-100g'].bc===false&&A['avec pour-100g'].lab==='pot'
+       &&A['avec pour-100g'].pds===150), JSON.stringify(A['avec pour-100g']));
+  t('CCC ⑪ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close();
+}
+
+/* ⚠️ Témoins de SOURCE — et ici ils ne sont pas un supplément, ils sont les SEULS possibles.
+   L'asymétrie que ce bloc protège (la définition sans garde, le nombre sous `!_bcNutr`) est
+   INATTEIGNABLE par ces deux portes : aucun fixture ne peut la faire rougir à l'exécution.
+   ⭐ C'est la consigne de Michel poussée d'un cran — non plus « invisible à l'exécution » mais
+   « hors d'atteinte ». Un témoin de comportement ne remplacera jamais celui-ci. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const m=codeSeul.match(/function _afReprendreDefPortion\(src\)\{[\s\S]*?\n\}/);
+  const corps=m?m[0]:'';
+  const hors=m?(codeSeul.slice(0,m.index)+codeSeul.slice(m.index+corps.length)):codeSeul;
+  const nb=(codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length;
+  t('CCC ⑫ ⭐ les 2 portes passent par le propriétaire (1 déclaration + 2 appels)',
+    nb===3, 'occurrences='+nb);
+  t('CCC ⑬ ⛔⛔ PÉRIMÈTRE DE SOURCE — la définition n\'est plus écrite en dur NULLE PART hors du '+
+    'propriétaire (à 0, ce témoin devient le gardien du RETOUR de la duplication)',
+    hors.split('\n').filter(l=>/_afPortionLabel\s*=\s*String\(\w+\.portionLabel/.test(l)).length===0,
+    'copies restantes hors du propriétaire');
+  t('CCC ⑭ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_bcNutr` n\'est PAS entré dans le propriétaire. AUCUN '+
+    'témoin de comportement ne peut voir cette dérive : elle est inatteignable, pas seulement '+
+    'invisible',
+    corps.length>0 && !/_bcNutr/.test(corps), 'corps='+corps.slice(0,160));
+  t('CCC ⑮ ⛔⛔ PÉRIMÈTRE DE SOURCE — le propriétaire ne touche PAS `_afPortions` : le NOMBRE a '+
+    'déjà le sien (`_afReprendrePortions`), et deux propriétaires pour la même grandeur seraient '+
+    'la duplication que ce chantier supprime (R2)',
+    corps.length>0 && !/_afPortions\b/.test(corps), 'corps='+corps.slice(0,160));
+  t('CCC ⑯ ⛔ HORS PÉRIMÈTRE — la ligne du NOMBRE est TOUJOURS écrite 2 fois chez les appelants, '+
+    'gardée par `!_bcNutr` : on ne l\'a pas absorbée au passage',
+    codeSeul.split('\n').filter(l=>/!_bcNutr\s*&&[\s\S]*_afReprendrePortions/.test(l)).length===2,
+    'lignes du nombre='+codeSeul.split('\n').filter(l=>/!_bcNutr\s*&&[\s\S]*_afReprendrePortions/.test(l)).length);
+  t('CCC ⑰ ⛔ HORS PÉRIMÈTRE — `_afReprendrePortions` est intacte (1 déclaration + 2 appels)',
+    (codeSeul.match(/_afReprendrePortions\(/g)||[]).length===3,
+    'occurrences='+(codeSeul.match(/_afReprendrePortions\(/g)||[]).length);
+  t('CCC ⑱ ⛔⛔ HORS PÉRIMÈTRE — les JUMELLES `_ef*` de l\'écran d\'ÉDITION ne sont pas absorbées : '+
+    'même grandeur, AUTRE écran (séparation documentée le 10/09). Les fondre serait une refonte, '+
+    'pas une extraction',
+    /let _efPortionLabel='', _efPortionPoids=0;/.test(codeSeul) &&
+    !/_efPortion/.test(corps), 'les jumelles ont bougé');
+}
+
 /* ⚠️ CE BLOC DOIT RESTER AVANT `b.close()` — leçon payée le 11/09/2026.
    Je l'avais posé APRÈS, dans la zone des blocs qui n'ouvrent PAS de navigateur (ils lisent
    les fichiers source avec `fs`). Il a demandé une page déjà fermée, a levé « Target page,

@@ -2819,3 +2819,53 @@ un périmètre que personne n'a validé — exactement ce que sa consigne interd
 c'est un arbitrage de périmètre. Il est écrit ici pour **ne pas disparaître avec la session** (R27)
 et parce qu'un chiffre faux dans un plan ne se manifeste jamais comme une erreur — *il se manifeste
 comme un chantier qui déborde* (R23/R28).
+
+---
+
+## 🍽️ Le garde `!_bcNutr` de la ligne « nombre de portions » ne peut JAMAIS bloquer *(13/09/2026, trouvé pendant 3-v — mesuré, NON corrigé)*
+
+**État : 🟡 à trier — attend un feu vert séparé de Michel.**
+
+**Ce que c'est.** Les deux portes de reprise (`quickFillFood`, `_afSuggPrendreLocale`) portent deux
+lignes adjacentes qui se ressemblent beaucoup :
+
+```js
+_afReprendreDefPortion(it);                                  // la DÉFINITION — aucun garde
+if(!_bcNutr && +it.q>0 && it.u==='portion' && …) _afReprendrePortions(+it.q);   // le NOMBRE
+```
+
+À la lecture, elles ont **des conditions différentes** : la définition se reprend toujours, le
+nombre seulement si aucun pour-100 g n'est posé. **Mesuré le 13/09 : cette différence est
+inatteignable.**
+
+**La chaîne, mesurée ligne à ligne :**
+1. `quickFillFood` commence par `_afOublierAliment()`, qui fait `_bcNutr=null` ;
+2. le seul endroit qui pose `_bcNutr` dans cette fonction est gardé par **`it.u!=='portion'`** ;
+3. la branche `else` remet `_bcNutr=null` ;
+4. donc si `it.u==='portion'`, **`_bcNutr` vaut toujours `null`** quand la ligne 2 s'exécute.
+
+👉 **Le `!_bcNutr` de la ligne du NOMBRE est un garde qui ne peut pas être faux.** Vérifié à la
+sonde, sur les 6 cas de `3v_defportion_*` : `bcNutr: false` partout, **y compris sur la fixture qui
+porte un `per100`** — celle qui était précisément conçue pour le poser.
+
+**⛔ Ce n'est PAS un bug de comportement** : l'app fait exactement ce qu'il faut. C'est une
+**condition redondante**, et elle coûte deux choses :
+- elle fait **croire** à un lecteur que les deux lignes diffèrent, alors qu'elles ne peuvent pas —
+  donc quelqu'un pourrait les « harmoniser » en se croyant prudent ;
+- et surtout, elle est **la seule chose qui protège** le jour où quelqu'un retirerait le
+  `u!=='portion'` du bloc du pour-100 g. *Un garde inutile aujourd'hui peut être le seul garde
+  demain — c'est pour ça qu'on ne le retire pas à la légère.*
+
+**⛔ NON CORRIGÉ, et c'est la méthode** : 3-v est une extraction, elle ne change **aucun**
+comportement, et son critère est un instantané identique octet pour octet. Toucher à ce garde —
+dans un sens ou dans l'autre — changerait ce que le code dit de lui-même. **Attend un feu vert
+séparé**, comme la pastille de ft-v1199 → ft-v1200.
+
+**⭐ Et c'est la consigne de Michel poussée d'un cran.** Il a écrit : *« conserve les témoins de
+source lorsque la dérive serait invisible à l'exécution »*. Ici la dérive n'est pas seulement
+invisible — elle est **hors d'atteinte** : aucune fixture ne peut faire rougir un témoin de
+comportement sur cette frontière. Les témoins ⑭ et ⑯ du bloc CCC sont donc **les seuls possibles**,
+et le mesurer vaut mieux que l'affirmer.
+
+⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
+Écrit ici pour ne pas disparaître avec la session (**R27**).

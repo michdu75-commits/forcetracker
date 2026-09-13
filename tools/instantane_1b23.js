@@ -416,6 +416,77 @@ const snap=await p.evaluate(async()=>{
   });
   out['3iii_poids_afSuggPrendreLocale']=J(gLocale);
 
+  /* ══ 3-v — LA DEFINITION DE PORTION REPRISE D'UNE SOURCE ═══════════════════════════════════
+     ⚠️⚠️ AUCUNE DES 19 CLES NE LISAIT `_afPortionLabel` / `_afPortionPoids`. La sonde les POSE
+     bien en fixture (lignes 95/116/123), mais poser n'est pas lire : apres avoir conduit une
+     porte, rien ne les relisait. L'instantane serait donc reste identique quoi qu'on fasse a
+     la ligne visee — et il aurait valide n'importe quelle extraction.
+     *Conduire n'est pas observer, et POSER encore moins* — la lecon de ft-v1199, cherchee
+     d'avance pour la troisieme fois.
+
+     ⛔⛔ ET LE CAS QUI COMPTE LE PLUS EST CELUI AVEC UN POUR-100 g. La ligne de la DEFINITION
+     n'est PAS gardee par `!_bcNutr` ; celle du NOMBRE de portions, juste en dessous, l'est.
+     Les deux se ressemblent, sont adjacentes, et n'ont pas la meme condition : fondre l'une
+     dans l'autre changerait le comportement. Ce cas-la est le seul qui puisse le montrer. */
+  const CAS_P = [
+    {name:'P portion complete', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'part', portionWeightG:120},
+    {name:'P portion sans poids', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'bol'},
+    {name:'P portion sans nom', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionWeightG:90},
+    /* ⛔ Le garde d'unite : en grammes, la definition ne doit PAS etre reprise. */
+    {name:'P en grammes', kcal:100, prot:1, carbs:2, fat:3, q:150, u:'g',
+     portionLabel:'jamais', portionWeightG:999},
+    /* ⛔ Un poids de portion aberrant ou nul ne passe pas a 0 par hasard : on fige la regle. */
+    {name:'P poids nul', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'part', portionWeightG:0},
+    /* ⭐⭐ LE CAS DE PERIMETRE — l'asymetrie de condition, et rien d'autre ne peut la mesurer :
+       un pour-100 g est present, donc `_bcNutr` est pose, donc la ligne du NOMBRE est sautee.
+       La DEFINITION, elle, doit quand meme etre reprise. */
+    {name:'P portion AVEC pour-100g', kcal:100, prot:1, carbs:2, fat:3, q:2, u:'portion',
+     portionLabel:'pot', portionWeightG:150,
+     per100:{kcal:66.7, prot:0.7, carbs:1.3, fat:2}},
+  ];
+  /* ⚠️⚠️ `bcNutr` EST LU, ET CE N'EST PAS DECORATIF. Ma 1re version supposait qu'un `per100`
+     suffisait a poser `_bcNutr` — c'est vrai pour un aliment en GRAMMES (cas de 3-iii), FAUX
+     pour un aliment en PORTIONS : le bloc du pour-100 g porte `it.u!=='portion'` dans son propre
+     garde, donc il se saute lui-meme. La sonde DIT donc l'etat au lieu de le supposer. */
+  const lireDef = () => ({
+    label: (typeof _afPortionLabel!=='undefined') ? _afPortionLabel : 'ABSENT',
+    poids: (typeof _afPortionPoids!=='undefined') ? _afPortionPoids : 'ABSENT',
+    portions: (typeof _afPortions!=='undefined') ? _afPortions : 'ABSENT',
+    bcNutr: !!(typeof _bcNutr!=='undefined' && _bcNutr),
+  });
+
+  const pQuickFill=[];
+  CAS_P.forEach(cs=>{
+    try{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afQuickItems=[Object.assign({fav:false}, cs)];
+      quickFillFood(0);
+      pQuickFill.push([cs.name, J(lireDef())]);
+    }catch(e){ pQuickFill.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3v_defportion_quickFillFood']=J(pQuickFill);
+
+  const pLocale=[];
+  CAS_P.forEach(cs=>{
+    try{
+      S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:1}, cs)];
+      persist();
+      try{ _afOublierAliment(); }catch(e){}
+      remettreAPlat(); _afSetSrc(null);
+      _afSuggLoc = _afSuggLocales(cs.name);
+      if(!_afSuggLoc.length) throw new Error('liste locale VIDE — la sonde ne conduirait rien');
+      _afSuggPrendreLocale(0);
+      pLocale.push([cs.name, J(lireDef())]);
+    }catch(e){ pLocale.push([cs.name, 'LEVE : '+String(e&&e.message||e)]); }
+  });
+  out['3v_defportion_afSuggPrendreLocale']=J(pLocale);
+
   return out;
 });
 

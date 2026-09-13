@@ -1723,6 +1723,31 @@ function _afReprendreGrammes(src){
   _afQtyNom = _afNomCourant();   // 🏷️ ft-v1180 : cette quantité décrit CET aliment
   return true;
 }
+/* 🍽️⚖️ ft-v1203 (3-v) — LA DÉFINITION DE PORTION REPRISE D'UNE SOURCE, UN SEUL PROPRIÉTAIRE.
+   Deux endroits la recopiaient caractère pour caractère (`quickFillFood` et
+   `_afSuggPrendreLocale`, les deux portes de reprise — R8) : *« quelle portion, et combien
+   pèse-t-elle »*. Posée en ft-v1186 pour que l'étiquette ne se retape pas à chaque repas.
+   ⛔⛔ ELLE NE PREND PAS LE **NOMBRE** DE PORTIONS, ET CE N'EST PAS UN OUBLI : il a déjà son
+   propriétaire, `_afReprendrePortions(n)`, auquel les deux portes sont branchées depuis
+   ft-v1183/1186. *Quand un propriétaire existe, on lui ajoute un appelant — on n'en recrée pas
+   un deuxième qui dirait la même chose.*
+   ⛔⛔ ET ELLE N'EST PAS GARDÉE PAR `!_bcNutr`, contrairement à la ligne du NOMBRE juste en
+   dessous chez les appelants. Les deux lignes sont adjacentes, se ressemblent, et **n'ont pas
+   la même condition** : la définition se reprend même lorsqu'un pour-100 g est posé. Les fondre
+   sous un seul garde changerait le comportement.
+   ⚠️ MESURÉ LE 13/09 : cette asymétrie est aujourd'hui **INATTEIGNABLE** par ces deux portes —
+   le bloc qui pose `_bcNutr` porte `u!=='portion'` dans son propre garde, donc un aliment en
+   portions ne peut pas le poser. Le `!_bcNutr` de la ligne voisine ne peut donc jamais bloquer.
+   C'est écrit dans `docs/JOURNAL-DE-TEST.md` et **non corrigé ici** (une extraction ne change
+   aucun comportement). 👉 Conséquence : *aucun témoin de comportement ne peut protéger cette
+   frontière* — seul un témoin de SOURCE le peut, et c'est exactement pourquoi il existe. */
+function _afReprendreDefPortion(src){
+  const s = src || {};
+  if(s.u !== 'portion') return false;
+  _afPortionLabel = String(s.portionLabel || '').slice(0, 24);
+  _afPortionPoids = +s.portionWeightG > 0 ? +s.portionWeightG : 0;
+  return true;
+}
 
 function _qReprenable(src){
   const s = src || {};
@@ -3002,7 +3027,7 @@ function quickFillFood(i){
      multiplicateur à 1. C'est lui la source de `base` — on divise ensuite, on n'anticipe pas. */
   /* 🏷️ ft-v1186 — LA DÉFINITION REVIENT AVEC LA QUANTITÉ, sinon l'étiquette se retaperait à
      chaque repas et le champ finirait vide (le sort de tout champ qu'on ne remplit plus). */
-  if(it.u==='portion'){ _afPortionLabel=String(it.portionLabel||'').slice(0,24); _afPortionPoids=+it.portionWeightG>0?+it.portionWeightG:0; }
+  _afReprendreDefPortion(it);
   if(!_bcNutr && +it.q>0 && it.u==='portion' && typeof _afReprendrePortions==='function') _afReprendrePortions(+it.q);
   if(typeof _afNoteEtat==='function') _afNoteEtat(it.name||'');
   toast('Pré-rempli — ajuste la quantité si besoin, puis « Ajouter au journal » ✅','info');
@@ -4153,7 +4178,7 @@ function _afSuggPrendreLocale(i){
   /* 🍽️ ft-v1183 — LA JUMELLE DE `quickFillFood` (R8). Les deux portes de reprise se corrigent
      ENSEMBLE : c'est la faute que ce fichier passe son temps à rattraper, six fois recensées. */
   /* 🏷️ ft-v1186 — la jumelle : les deux portes de reprise se corrigent ENSEMBLE (R8). */
-  if(e.u==='portion'){ _afPortionLabel=String(e.portionLabel||'').slice(0,24); _afPortionPoids=+e.portionWeightG>0?+e.portionWeightG:0; }
+  _afReprendreDefPortion(e);
   if(!_bcNutr && +e.q>0 && e.u==='portion' && typeof _afReprendrePortions==='function') _afReprendrePortions(+e.q);
   _afNoteEtat(e.name||'');
   _afSuggVider();

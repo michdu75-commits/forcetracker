@@ -20,7 +20,29 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
-- **Version en ligne (live) :** `ft-v1202` — ⚖️ **3-iv : la liste blanche de la provenance.**
+- **Version en ligne (live) :** `ft-v1203` — 🍽️ **3-v : la définition de portion reprise d'une source.**
+  ⭐ **Test d'entrée passé — et pour la 1ʳᵉ fois depuis 4 sous-étapes, le plan dit VRAI sur la
+  moitié qu'il décrit** : `quickFillFood` et `_afSuggPrendreLocale` portaient
+  `if(X.u==='portion'){ _afPortionLabel=…; _afPortionPoids=… }` **strictement identiques** —
+  **2 copies** → **`_afReprendreDefPortion(src)`**.
+  ⛔⛔ **Mais l'autre moitié était DÉJÀ FAITE** : le **nombre** de portions a son propriétaire
+  (`_afReprendrePortions`) et les deux portes y sont branchées depuis ft-v1183/1186. *La consigne
+  « branche au lieu de recréer » était honorée avant de commencer.*
+  ⛔⛔ **Le point de conception est une asymétrie de condition** : la définition n'a aucun garde, le
+  nombre porte `!_bcNutr`. Les fondre changerait le comportement.
+  ⚠️⚠️ **Et la mesure va plus loin que la consigne : l'asymétrie est INATTEIGNABLE.** Le bloc qui
+  pose `_bcNutr` se garde par `u!=='portion'`, et `quickFillFood` remet `_bcNutr=null` en entrant —
+  **ce garde ne peut jamais bloquer**. 👉 *Aucun témoin de comportement ne peut protéger cette
+  frontière : non plus « invisible à l'exécution » mais **hors d'atteinte**.* Mesuré, écrit dans
+  `docs/JOURNAL-DE-TEST.md`, **non corrigé** (feu vert séparé).
+  ⚠️ **Sonde : elle POSAIT sans jamais relire** — `_afPortionLabel`/`_afPortionPoids` étaient en
+  fixture depuis toujours, aucune clé ne les observait. **19 → 21 clés AVANT le BEFORE.** Instantané
+  **identique**, sha `8d352131a8cde6cf`.
+  ⚠️ **5ᵉ écart de périmètre du plan, sur 1b-v** : `_afSetUnite` **n'écrit aucune des deux
+  variables**, et `openEditFood` écrit les **jumelles `_ef*`** (autre écran).
+  Tests : **11 mutations toutes mordantes**, contrôle sain 0 rouge avant ET après.
+
+- **Version précédente :** `ft-v1202` — ⚖️ **3-iv : la liste blanche de la provenance.**
   ⛔⛔ **Ce n'est PAS une extraction, et le plan était faux pour la 4ᵉ fois.** Il annonçait
   *« les deux branches @1232/@1237 »* et *« le SEUL endroit qui écrit `p.q`/`p.u` »*.
   **Mesuré** : **1 copie de chaque forme** (elles se ressemblent, l'une teste les grammes et
@@ -48,7 +70,7 @@
   appliquée d'avance, après l'avoir payée la veille.
   Tests : **8 mutations toutes mordantes**, contrôle sain **0 rouge avant ET après**.
 
-- **Version précédente :** `ft-v1201` — 🔢 **3-iii : le bloc « poids repris en grammes ».**
+- **Avant :** `ft-v1201` — 🔢 **3-iii : le bloc « poids repris en grammes ».**
   ⭐ **Test d'entrée passé sur LES DEUX MOITIÉS** : condition **et** corps de 3 lignes
   (`_afUnite='g'` · `_afPoidsDeclare=+X.q` · `_afQtyNom=_afNomCourant()`), **2 copies de
   chaque** → **`_afReprendreGrammes(src)`**.
@@ -66,7 +88,7 @@
   ⚠️ **Un compteur à moi était aveugle**, attrapé **avant** de publier le chiffre (5 au lieu de 4).
   Tests : **parcours 3667/3667** (écart de +1 expliqué : un témoin ajouté à CCXCIII), **9 mutations toutes mordantes**, contrôle sain 0 rouge.
 
-- **Avant :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
+- **Encore avant :** `ft-v1200` — 🩹 **CORRECTIF SÉPARÉ : la pastille « ↩ … g (la
   dernière fois) » qui SURVIVAIT à l'aliment suivant.**
   ⭐⭐ **Le chemin vaut autant que le correctif** : défaut trouvé la veille en étendant la sonde
   de 3-ii, **mesuré**, **écrit dans `docs/JOURNAL-DE-TEST.md`** — et **pas corrigé**, parce

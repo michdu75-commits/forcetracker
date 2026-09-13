@@ -163,9 +163,21 @@ miroir de 3-i, où l'étiquette annonçait « couvert » pour une sonde qui ne c
 
 | | |
 |---|---|
-| **Périmètre** | poser `_afPortionLabel` / `_afPortionPoids` / `_efPortion*` depuis une ligne reprise |
-| **Sites** | `quickFillFood` (@2842) · `_afSuggPrendreLocale` (@3996) · `openEditFood` (@4186) · `_afSetUnite` (@4941) |
-| **Dépendance** | ⛔ **après 3-v** — les deux moitiés sont entrelacées ligne à ligne |
+| **Périmètre écrit** | poser `_afPortionLabel` / `_afPortionPoids` / `_efPortion*` depuis une ligne reprise |
+| **Sites écrits** | `quickFillFood` (@2842) · `_afSuggPrendreLocale` (@3996) · `openEditFood` (@4186) · `_afSetUnite` (@4941) |
+| **Dépendance** | ✅ **LEVÉE** — 3-v est livrée (ft-v1203) |
+
+⚠️⚠️ **5ᵉ ÉCART DE PÉRIMÈTRE, MESURÉ LE 13/09 PENDANT 3-v — à relire avant de coder** :
+
+| ce que le plan annonce | ce que la **mesure** dit |
+|---|---|
+| `quickFillFood` · `_afSuggPrendreLocale` | ⛔ **déjà faits par 3-v** — ils appellent le propriétaire |
+| `_afSetUnite` @4941 | ⛔ **elle n'écrit NI `_afPortionLabel` NI `_afPortionPoids`**, pas une seule fois |
+| `openEditFood` @4186 | ⚠️ elle écrit les **jumelles `_ef*`** (écran d'ÉDITION), pas `_af*` — **1 site, pas une copie** |
+
+👉 **Il ne reste donc qu'UN site, qui écrit d'autres variables.** Le test d'entrée s'appliquera :
+*on ne crée pas de propriétaire pour une forme unique* (**R19**) — et fondre `_af*` et `_ef*` serait
+une **refonte de deux écrans**, pas une extraction. **Recompter le jour même avant toute ligne.**
 
 ---
 
@@ -247,11 +259,26 @@ réintégrées à l'inventaire. **16 décisions** sur l'unité au total.
   chose à l'exécution. ***Une dérive de conception peut être invisible à l'exécution***, et c'est
   précisément ce qu'un témoin de source achète.
 
-### 3-v — la reprise des portions à l'écran
-- **Sites** : `quickFillFood` (@2842-2843) · `_afSuggPrendreLocale` (@3996-3997) — **2 × 2 lignes identiques**
-- **Dépendance** : ⛔ **avant 1b-v**
-- ⚠️ **Test d'entrée à refaire avant de coder** : les quatre derniers périmètres écrits ici étaient
-  faux. Ce document sert à **ordonner** le travail, jamais de source pour un **chiffre**.
+### 3-v — la définition de portion reprise d'une source — ✅ **LIVRÉE (ft-v1203)**
+- ⭐ **Et pour la première fois depuis quatre sous-étapes, le plan disait VRAI sur la moitié qu'il
+  décrivait** : `quickFillFood` et `_afSuggPrendreLocale` portaient
+  `if(X.u==='portion'){ _afPortionLabel=…; _afPortionPoids=… }` **strictement identiques** —
+  **exactement 2 copies** → **`_afReprendreDefPortion(src)`**.
+- ⛔⛔ **MAIS L'AUTRE MOITIÉ ÉTAIT DÉJÀ FAITE, et le plan ne le savait pas** : le **NOMBRE** de
+  portions a **déjà son propriétaire**, `_afReprendrePortions(n)`, et **les deux portes y sont
+  branchées depuis ft-v1183/1186**. *La consigne « si un propriétaire existe déjà, branche
+  l'appelant dessus au lieu de recréer une abstraction » était honorée avant même de commencer.*
+- ⛔⛔ **Le point de conception est une ASYMÉTRIE DE CONDITION** : la ligne de la définition n'a
+  **aucun** garde ; celle du nombre, juste en dessous, porte **`!_bcNutr`**. Les fondre sous un seul
+  garde changerait le comportement.
+- ⚠️⚠️ **ET LA MESURE VA PLUS LOIN QUE LA CONSIGNE : cette asymétrie est INATTEIGNABLE.** Le bloc qui
+  pose `_bcNutr` se garde lui-même par `u!=='portion'`, et `quickFillFood` remet `_bcNutr=null` en
+  entrant — donc **le `!_bcNutr` de la ligne voisine ne peut jamais bloquer**. Mesuré à la sonde sur
+  les 6 cas. 👉 *Aucun témoin de comportement ne peut protéger cette frontière : non plus « invisible
+  à l'exécution » mais **hors d'atteinte**.* Écrit dans `docs/JOURNAL-DE-TEST.md`, **non corrigé**.
+- ⛔ **Hors périmètre, figé par témoins** : la ligne du nombre (2 copies chez les appelants) ·
+  `_afReprendrePortions` · les **jumelles `_ef*`** de l'écran d'édition (même grandeur, **autre
+  écran**, séparation documentée le 10/09 — les fondre serait une refonte).
 
 ---
 
@@ -290,8 +317,8 @@ qu'on découvre trois versions plus tard.
              ├─ 3-ii   ✅ livrée (ft-v1199)
              ├─ 3-iii  ✅ livrée (ft-v1201)
              ├─ 3-iv   ✅ livrée (ft-v1202) — la liste blanche, le seul qui ÉCRIT
-             ├─ 3-v ─────┤  quickFillFood / _afSuggPrendreLocale
-             └─ 1b-v ────┘
+             ├─ 3-v    ✅ livrée (ft-v1203) — la définition de portion
+             └─ 1b-v ────┘  dépendance LEVÉE ; périmètre réel à remesurer
                   │
                   └─ hub (étape 4) ─ douane (étape 5)
 ```
