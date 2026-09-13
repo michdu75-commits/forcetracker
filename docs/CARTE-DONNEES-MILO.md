@@ -58,7 +58,7 @@ Tout ce qui suit a été **revérifié dans le texte réel** avant d'être écri
                                ▼
                   ┌────────────────────────────────────┐
                   │  buildCoachContext()  — coach.js   │  ~79 000 à 83 000 caractères
-                  │  13 sections                       │  reconstruit à CHAQUE message
+                  │  25 sections                       │  reconstruit à CHAQUE message
                   └────────────┬───────────────────────┘
                                │  + coachMemory (champ SÉPARÉ)
                                │  + history (8 derniers messages)
@@ -154,23 +154,39 @@ là où le code dit **7**.
 
 | Morceau | Contenu | Taille mesurée |
 |---|---|---|
-| `context` | `buildCoachContext()` — 13 sections | **~79 000 à 83 000 caractères** |
+| `context` | `buildCoachContext()` — **25** sections | **~79 000 à 83 000 caractères** |
 | `coachMemory` | la mémoire longue — **champ séparé**, pas dans le contexte | variable |
 | `history` | les **8** derniers messages | variable |
 | `message` | ce que la personne écrit | court |
 
 ### 6.2 Les sections, par taille (mesuré)
 
-| Section | Caractères | Part |
-|---|---|---|
-| **TA PERSONNALITÉ** (les consignes) | **31 091** | **~39 %** |
-| NUTRITION | 14 105 | 18 % |
-| CYCLE DE FORCE | 14 097 | 18 % |
-| PROFIL ATHLÈTE | 11 616 | 15 % |
-| DERNIÈRES SÉANCES | 3 817 | 5 % |
-| Récupération · Objectifs · Programmes · Records · Poids · Instant · Check-in | ~4 800 | 6 % |
+> ⛔⛔ **CE TABLEAU ÉTAIT FAUX — CORRIGÉ LE 13/09/2026.** Mon découpeur exigeait **70 % de capitales
+> sur toute la ligne** pour reconnaître un titre : il rejetait donc
+> `MÉTHODE DE COACHING (très important) :` et **collait ses 14 000 caractères à la section
+> précédente**. 👉 ***Un découpeur trop strict ne perd pas des sections : il les COLLE à leur
+> voisine, et le voisin devient énorme.*** Les deux chiffres que j'avais annoncés à Michel étaient
+> donc des **agrégats**, pas des sections : *« TA PERSONNALITÉ 31 091 / 39 % »* (réel : **4 192 /
+> 5,1 %**) et *« CYCLE DE FORCE 14 097 »* (réel : **38 car.** quand aucun cycle n'est actif).
+> Mesure complète et corrigée : **`docs/TROIS-AXES-AUTONOMIE.md` §3**.
 
-⭐ **Les 3/4 du contexte sont des CONSIGNES et des CADRES, pas les données de la personne.**
+| Section | Caractères | Part | Nature |
+|---|---|---|---|
+| ÉTAT DU JOUR & CHECK-IN | **18 409** | 22,6 % | consignes |
+| MÉTHODE DE COACHING | **14 053** | 17,3 % | consignes |
+| NUTRITION | **13 178** | 16,2 % | consignes |
+| **PROFIL ATHLÈTE** | 6 189 | 7,6 % | **données** |
+| ⚖️ LES CHARGES QUE TU ÉCRIS… | 5 454 | 6,7 % | consignes |
+| TA PERSONNALITÉ | 4 192 | 5,1 % | consignes |
+| **DERNIÈRES SÉANCES** | 3 124 | 3,8 % | **données** |
+| RETENIR DURABLEMENT · GARDIEN · COHÉRENCE · CHOISIR LES DONNÉES | 7 765 | 9,5 % | consignes |
+| **RÉCUPÉRATION & SOMMEIL** | 1 461 | 1,8 % | **données** (⛔ hors cache) |
+| **CYCLE DE FORCE** (aucun cycle actif) | **38** | 0,05 % | **données** |
+| Le reste (15 sections) | ~7 500 | 9,2 % | mixte |
+| **Total** | **81 376** | — | **25 sections** |
+
+⭐ **Ce ne sont pas « les 3/4 », ce sont plus de 5/6** : **68 664 car. de CONSIGNES (84,4 %)** contre
+**12 712 car. de DONNÉES (15,6 %)**. *Le chiffre corrigé est plus fort que le faux.*
 
 ### 6.3 Les constats vérifiés un par un (demande explicite de Michel)
 
@@ -182,7 +198,7 @@ là où le code dit **7**.
 | **poids / dernière pesée répétés ?** | ⚠️ **OUI, 3 sections chacun** (Profil athlète · Objectifs · Poids & composition). |
 | **charges principales répétées ?** | ⚠️ **OUI, 2 sections** (Records personnels · Dernières séances). |
 | **discipline / objectif / priorités répétés ?** | ⚠️ **OUI** : discipline 2 sections · objectif **4** sections · priorités 2 sections. |
-| **taille du contexte** | **~79 000 à 83 000 caractères** selon le profil (≈ 20 000 jetons), 13 sections. |
+| **taille du contexte** | **~79 000 à 83 000 caractères** selon le profil (≈ 20 000 jetons), **25** sections — ⚠️ *« 13 » était une erreur de mon découpeur, corrigée le 13/09.* |
 | ⭐ **douleur du jour transmise ?** | ✅ **OUI** — `énergie · moral · douleur(s) du jour: épaule (côté droit) · note`. *Ma première mesure disait non : c'était ma fixture.* |
 | ⭐ **blessure déclarée transmise ?** | ✅ **OUI**, deux fois et **exprès** : au **Gardien** (en tête, sécurité) et au Profil santé. |
 | ⭐ **sommeil transmis ?** | ✅ **OUI**, via un propriétaire unique `_nuit()` qui **unit** la saisie et la montre. |
@@ -227,9 +243,9 @@ là où le code dit **7**.
 
 | Sujet | Constat |
 |---|---|
-| **Les 3/4 du contexte sont des consignes** (31 091 car. rien que « ta personnalité ») | ⛔ **non arbitrable ici** : savoir si une consigne « sert » demande un **banc d'essai API** |
-| **Le cycle de force : 14 097 car. envoyés à chaque message** | ⚠️ y compris quand **aucun cycle n'est en cours**. Candidat n°1 à l'allègement — **à mesurer** |
-| **La nutrition : 14 105 car.** | hors périmètre aujourd'hui |
+| **Plus de 5/6 du contexte sont des consignes** (68 664 car. sur 81 376) | ⛔ **non arbitrable ici** : savoir si une consigne « sert » demande un **banc d'essai API** |
+| ~~**Le cycle de force : 14 097 car. envoyés à chaque message**~~ | ⛔⛔ **AFFIRMATION RETIRÉE LE 13/09 — ELLE ÉTAIT FAUSSE.** Mesuré : **38 caractères** (*« Aucun cycle actif »*). **L'app fait déjà ce que je proposais de faire** — et sa taille FIXE préserve le cache. *C'est le modèle à copier, pas le problème.* La question n°4 posée à GPT n'a donc pas lieu d'être. |
+| **La nutrition : 13 178 car.** | hors périmètre aujourd'hui |
 | **Ce que l'app fait déjà sans IA** | 1RM, volume, calories, TDEE, macros, récupération, semaine de cycle, PR, calendrier, corrélations, durée de séance |
 | **Ce qui dépend vraiment d'une IA** | **14 actions**, dont : conversation, **import de programme**, **import d'historique**, lecture de bilan corporel, prise de sang, code-barres, résumé de mémoire |
 
@@ -268,13 +284,13 @@ séance · muscles travaillés · alternance semaine A/B · avertissements de co
 
 ### Ce qui pourrait être retiré du contexte — **à mesurer, pas à décider**
 
-- Le bloc **cycle de force** (14 097 car.) **quand aucun cycle n'est en cours**.
+- ⛔ ~~Le bloc **cycle de force** quand aucun cycle n'est en cours~~ — **rien à retirer, mesuré à 38 car.**
 - Les **répétitions** du poids et de l'objectif (3 et 4 sections).
 - ⚠️ Tout le reste relève du banc d'essai : **une section « inutile » est une hypothèse, un doublon est un fait**.
 
 ### Ce qui exige obligatoirement un banc d'essai API avant décision
 
-1. Retirer quoi que ce soit des **consignes** (31 091 car.).
+1. Retirer quoi que ce soit des **consignes** (68 664 car.).
 2. Ajouter `dayStateLog`, les **badges** ou le **tour de taille** — *ajouter change aussi ce que Milo reçoit*.
 3. Réduire les doublons du contexte.
 4. Toute réponse à *« Milo s'en sert-il vraiment ? »* — **sans exception**.
