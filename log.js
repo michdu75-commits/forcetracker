@@ -6181,6 +6181,37 @@ let _histPhotos=[],_histExtracted=null,_histConflicts=[];
    rechargement se lirait comme appartenant à l'import qu'on vient de faire (**R29**). */
 let _histDiag=null;
 
+/* 🧬 L'EMPREINTE DES DONNÉES UTILISATEUR — UN SEUL PROPRIÉTAIRE, APPELÉ DEUX FOIS (R2).
+   ⛔⛔ C'EST LE POINT DE CONCEPTION DE TOUTE LA VALIDATION NON DESTRUCTIVE, et il tient dans
+   une phrase : *la capture et la comparaison doivent employer EXACTEMENT la même projection.*
+   Si l'avant regardait les dates et l'après les volumes, la comparaison dirait « identique »
+   sur deux états différents — et ce serait un vert qui ne peut pas rougir (ft-v994).
+   ⭐ Pourquoi une empreinte et pas un simple compteur : *un import qui remplacerait une séance
+   au lieu d'en ajouter une laisserait le NOMBRE inchangé.* Le compte seul ne prouve rien.
+   ⚠️ Ce qu'elle couvre est dit : les séances (date · nb d'exercices · volume) et les records
+   (nom · 1RM · date). Elle ne couvre PAS le contenu série par série — ce serait plus lourd à
+   calculer sur un long historique pour une garantie que `finalImportHist` rend déjà inutile
+   (toute écriture y est concentrée, mesuré par fermeture transitive sur 168 fonctions). */
+function _empreinteDonnees(){
+  const ses=(S.sessions||[]);
+  let txt='';
+  for(let i=0;i<ses.length;i++){
+    const s=ses[i]||{};
+    /* ⚠️ `vol` ET `volume` : les deux orthographes existent selon l'écrivain (la séance en
+       direct pose `vol`, l'import pose `volume`). En regarder une seule rendrait l'empreinte
+       aveugle à la moitié de l'historique. */
+    txt+=(s.date||'')+'#'+((s.exs||[]).length)+'#'+(s.vol||s.volume||0)+'|';
+  }
+  const noms=Object.keys(S.prs||{}).sort();
+  for(let i=0;i<noms.length;i++){
+    const r=S.prs[noms[i]]||{};
+    txt+=noms[i]+'#'+(r.rm1||0)+'#'+(r.date||'')+'|';
+  }
+  let h=0x811c9dc5;                       // FNV-1a 32 bits — pas de crypto ici, on compare
+  for(let i=0;i<txt.length;i++){ h^=txt.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  return {seances:ses.length, records:noms.length, sha:('0000000'+h.toString(16)).slice(-8)};
+}
+
 /* 📷 ft-v1178 — UN SCAN NE MEURT PLUS EN ROUVRANT LA FENÊTRE. R2 : un seul propriétaire pour
    les trois imports (programme, historique, repas).
    ⛔⛔ LE DÉFAUT, ET IL N'EST PAS OÙ ON LE CROIT. Michel : *« si on fait une mauvaise manip on
@@ -7205,7 +7236,20 @@ function removeHistPhoto(i){
 // Chaque lot est analysé séparément, puis les séances de tous les lots sont fusionnées.
 const _HIST_BATCH=3;
 async function _histAnalyzeBatch(imgs){
-  const r=await fetch(_aiUrl('importHistory'),{method:'POST',redirect:'follow',
+  /* 🔬 LA DESTINATION SE RELÈVE ICI, AVANT L'APPEL — et c'est un VRAI TROU qui a été trouvé en
+     auditant la validation, pas une coquetterie. `_aiUrl` RETOMBE sur Apps Script si
+     `AI_PROXY_URL` est vide ou absente. Donc « le Worker a répondu » n'était pas prouvable : il
+     était SUPPOSÉ. ⛔ *Un diagnostic qui ne dit pas QUI a répondu ne peut pas valider un
+     déploiement de Worker* — c'est précisément la question que ce chantier doit fermer.
+     ⚠️ Relevé AVANT le `fetch`, pas après : une tentative qui échoue doit dire où elle allait.
+     Sinon un Worker injoignable serait indiscernable d'un Worker jamais appelé. */
+  const _dest=_aiUrl('importHistory');
+  if(_histDiag){
+    _histDiag.appels++;
+    if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL&&_dest===AI_PROXY_URL)_histDiag.versWorker++;
+    else _histDiag.versAutre++;
+  }
+  const r=await fetch(_dest,{method:'POST',redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({action:'importHistory',images:imgs,catalogue:_catalogueImport()})});
   const raw=await r.text();
@@ -7256,21 +7300,46 @@ function renderImportDiagAdmin(){
   const L=(k,v,c)=>'<div style="display:flex;justify-content:space-between;gap:10px;">'
     +'<span style="color:var(--t3);">'+k+'</span>'
     +'<strong style="color:'+(c||'var(--t1)')+';">'+v+'</strong></div>';
-  if(!_histDiag||!_histDiag.lots){
+  /* ⛔ LE SEUIL EST `appels`, PLUS `lots` — et la nuance est tout l'objet de la validation.
+     `lots` compte les réponses BIEN FORMÉES ; un Worker injoignable en donne zéro. Se taire dans
+     ce cas afficherait « aucun import observé » alors qu'un appel a bel et bien été tenté, et on
+     conclurait à tort que rien n'est parti. *Une panne de transport ne doit pas ressembler à une
+     absence de test.* */
+  if(!_histDiag||!_histDiag.appels){
     el.innerHTML='<div style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);'
       +'border-radius:8px;padding:10px 12px;font-family:\'SF Mono\',ui-monospace,monospace;">'
       +'Aucun import observé depuis le chargement de l\'app.</div>';
     return;
   }
-  const tous=_histDiag.lotsAvecChamp===_histDiag.lots;
+  const VERT='var(--green,#30d158)', ORANGE='var(--orange,#ff9f0a)', ROUGE='var(--red)';
+  /* 🔬 QUI A RÉPONDU. Trois cas, jamais fondus : le Worker seul, Apps Script (le repli), ou un
+     mélange si les deux ont servi pendant la même analyse. */
+  const dest=_histDiag.versAutre===0?'OUI':(_histDiag.versWorker===0?'NON (Apps Script)':'MIXTE');
+  const destCoul=_histDiag.versAutre===0?VERT:(_histDiag.versWorker===0?ROUGE:ORANGE);
+  /* ⛔ LA PRÉSENCE DU CHAMP NE SE LIT QUE SUR LES LOTS RÉELLEMENT REÇUS : la rapporter aux
+     tentatives ferait passer une panne réseau pour un backend non déployé — deux causes
+     opposées, deux correctifs opposés. */
+  const tous=_histDiag.lots>0&&_histDiag.lotsAvecChamp===_histDiag.lots;
   const aucun=_histDiag.lotsAvecChamp===0;
-  const etat=aucun?'NON':(tous?'OUI':'PARTIEL');
-  const coul=aucun?'var(--red)':(tous?'var(--green,#30d158)':'var(--orange,#ff9f0a)');
+  const etat=!_histDiag.lots?'—':(aucun?'NON':(tous?'OUI':'PARTIEL'));
+  const coul=!_histDiag.lots?'var(--t3)':(aucun?ROUGE:(tous?VERT:ORANGE));
+  /* 🧬 LA PREUVE DE NON-ÉCRITURE, RECALCULÉE MAINTENANT PAR LE MÊME PROPRIÉTAIRE.
+     ⛔ Elle n'est pas un drapeau qu'on aurait posé en partant : un drapeau dit ce qu'on CROYAIT
+     faire, une empreinte dit ce qui EST. */
+  const apres=_empreinteDonnees(), av=_histDiag.avant||{};
+  const intact=av.sha===apres.sha&&av.seances===apres.seances&&av.records===apres.records;
   el.innerHTML='<div style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);'
     +'border-radius:8px;padding:10px 12px;font-family:\'SF Mono\',ui-monospace,monospace;">'
+    +L('Worker réellement appelé', dest, destCoul)
+    +L('Réponse reçue', _histDiag.lots+' / '+_histDiag.appels+' lot'+(_histDiag.appels>1?'s':''),
+       _histDiag.lots===_histDiag.appels?VERT:ORANGE)
     +L('Compteur typesNormalises reçu', etat, coul)
-    +L('Valeur', aucun?'—':String(_histDiag.valeur))
+    +L('Valeur', (!_histDiag.lots||aucun)?'—':String(_histDiag.valeur))
     +L('Lots avec le champ', _histDiag.lotsAvecChamp+' / '+_histDiag.lots)
+    +L('Écriture dans S.sessions', intact?'NON':'⚠️ OUI', intact?VERT:ROUGE)
+    +L('Séances / records', (intact?apres.seances+' / '+apres.records
+         :av.seances+'→'+apres.seances+' / '+av.records+'→'+apres.records), intact?'var(--t1)':ROUGE)
+    +L('Empreinte', intact?apres.sha:(av.sha||'?')+'→'+apres.sha, intact?'var(--t1)':ROUGE)
     +L('Import observé à', _histDiag.quand)
     +'</div>';
 }
@@ -7295,7 +7364,12 @@ async function analyzeHistPhotos(){
   for(let i=0;i<_histPhotos.length;i+=_HIST_BATCH)batches.push(_histPhotos.slice(i,i+_HIST_BATCH));
   /* ⛔ REMIS À ZÉRO AVANT le premier appel : sans ça, un import qui échoue laisserait le
      diagnostic du précédent à l'écran, et on le lirait comme celui d'aujourd'hui. */
-  _histDiag={lots:0, lotsAvecChamp:0, valeur:0, quand:new Date().toISOString().slice(11,19)};
+  /* 🧬 L'ÉTAT UTILISATEUR EST CAPTURÉ ICI, AVANT LE PREMIER APPEL RÉSEAU — c'est ce qui rend la
+     preuve « rien n'a été écrit » VÉRIFIABLE au lieu d'être affirmée. ⛔ Capturé au même endroit
+     que la remise à zéro du diagnostic, exprès : les deux décrivent le même import, et les
+     séparer laisserait un avant qui ne correspond pas à l'après. */
+  _histDiag={lots:0, lotsAvecChamp:0, valeur:0, appels:0, versWorker:0, versAutre:0,
+             avant:_empreinteDonnees(), quand:new Date().toISOString().slice(11,19)};
   const allSessions=[];
   let _histTypesNormalises=0;   // ⛔ remis à zéro à CHAQUE analyse : un reliquat compterait deux fois
   let failed=0,lastErr='';

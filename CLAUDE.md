@@ -430,7 +430,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1211`** (prochaine : `ft-v1212`).
+> **Version actuelle : `ft-v1212`** (prochaine : `ft-v1213`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -470,7 +470,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
-**ft-v1211 — 🏁 QUATRE MOTEURS DE DÉCODAGE AU BANC · ET LE BOUTON QUE J'AVAIS REMIS LA VEILLE EST RETIRÉ** — Michel repart du dossier `SCANNER-CAMERA-LOCAL-1.pdf` et change de stratégie : ⛔ ***« je ne veux PAS partir du principe que ZXing actuel est forcément la meilleure solution »*** — comparer **ZXing actuel · Html5-QRCode · zxing-wasm · Quagga2** sur des fixtures plus dures, avec un tableau comparatif. ⛔⛔ ***« NE RÉACTIVE PAS le scanner dans l'interface utilisateur… Aucun bouton utilisateur tant que je n'ai pas tranché. »*** Dossier : **`docs/BANC-MOTEURS-CODEBARRES.md`** · mesures : **`docs/banc-moteurs-mesures.json`**.
+**ft-v1212 — 🏁 QUATRE MOTEURS DE DÉCODAGE AU BANC · ET LE BOUTON QUE J'AVAIS REMIS LA VEILLE EST RETIRÉ** — Michel repart du dossier `SCANNER-CAMERA-LOCAL-1.pdf` et change de stratégie : ⛔ ***« je ne veux PAS partir du principe que ZXing actuel est forcément la meilleure solution »*** — comparer **ZXing actuel · Html5-QRCode · zxing-wasm · Quagga2** sur des fixtures plus dures, avec un tableau comparatif. ⛔⛔ ***« NE RÉACTIVE PAS le scanner dans l'interface utilisateur… Aucun bouton utilisateur tant que je n'ai pas tranché. »*** Dossier : **`docs/BANC-MOTEURS-CODEBARRES.md`** · mesures : **`docs/banc-moteurs-mesures.json`**.
 
 **⛔⛔ LA PREMIÈRE CHOSE FAITE EST DE DÉFAIRE LA VEILLE.** ft-v1210 avait remis le bouton « 📷 Scanner le code-barres avec la caméra » en tête de l'écran d'ajout. **Il est retiré**, avec sa raison écrite sur place (**R30**). ⭐ **Et le moteur reste entier** : `openBarcodeScanner`, `scanBarcode`, la machine à états, les 31 témoins des blocs CCCVIII/CCCIX. *C'est la porte qui est fermée, pas le moteur* — deux témoins le figent **dans les deux sens** : ils rougissent si le bouton revient **et** si le moteur disparaît. ⚠️ **Le témoin ⑩ de CCCVIII disait exactement l'inverse la veille** ; il a été retourné plutôt que supprimé, parce qu'un témoin qui disparaît ne laisse aucune trace de la décision.
 
@@ -520,7 +520,7 @@ Tests : **parcours TOTAL/TOTAL sur l'arbre FINAL** (bloc **CCCX**, 10 témoins).
 
 📄 **PDF POUR GPT** : `DOSSIER-GPT-BANC-MOTEURS-CODEBARRES-14-09-2026.pdf` (**25ᵉ** de la série, **hors dépôt** — règle d'or #14), généré par `tools/gen_banc_pdf.py`, **37 gardes**. ⭐ Ses plus utiles protègent des **décisions** : que la porte soit restée fermée, que le **moteur** soit resté là, que le conflit ne soit pas avalé, que les bibliothèques candidates ne soient pas entrées dans le dépôt, et que le verdict ne monte pas d'un cran.
 
-Fichiers : `index.html`, `app.js`, `tests/parcours/runner.js`, `tools/gen_banc_pdf.py` (nouveau), `tools/gen_scanner_pdf.py`, `docs/BANC-MOTEURS-CODEBARRES.md` (nouveau), `docs/banc-moteurs-mesures.json` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1211. |
+Fichiers : `index.html`, `app.js`, `tests/parcours/runner.js`, `tools/gen_banc_pdf.py` (nouveau), `tools/gen_scanner_pdf.py`, `docs/BANC-MOTEURS-CODEBARRES.md` (nouveau), `docs/banc-moteurs-mesures.json` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1212. |
 
 **ft-v1210 — 📷 LE SCANNER CAMÉRA LOCAL REVIENT · ET LA CONTRE-ENQUÊTE CORRIGE MA PROPRE CONCLUSION DE LA VEILLE** — Michel apporte une information qui oblige à rouvrir l'historique : *« au moment où l'ancien scanner avait été testé puis retiré, la base Open Food Facts telle qu'on l'utilise aujourd'hui n'existait pas encore »* · ⛔ ***« ne considère pas comme acquis que le mauvais fonctionnement historique venait d'un lookup cassé »*** · ⛔⛔ ***« ne remets PAS immédiatement le bouton en production »***. Objectif produit : ***« caméra → décodage LOCAL → EAN → chemin de lookup ACTUEL → même résultat que le code tapé → 0 appel IA »***, et **LOCAL D'ABORD, IA EN SECOURS**. Dossier : **`docs/SCANNER-CAMERA-LOCAL.md`**.
 
@@ -565,6 +565,46 @@ Tests : **parcours TOTAL/TOTAL sur l'arbre FINAL** (blocs **CCCVIII** 19 témoin
 Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `tools/gen_scanner_pdf.py`, `docs/SCANNER-CAMERA-LOCAL.md`, `docs/SCANNER-CAMERA-LOCAL.pdf`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1210.
 
 ⚠️ **RENUMÉROTÉE ft-v1209 → ft-v1210 À LA FUSION** : session-B avait publié sa ft-v1209 pendant que je travaillais. **C'est git qui l'a dit, pas le journal de partage** — le push a été refusé en non-fast-forward. *Le journal évite le doublon de travail, git évite l'écrasement de code* (règle d'or #13). Les deux versions sont conservées, la sienne en premier dans `sw.js`. |
+
+**ft-v1211 — 🔬 LE PROTOCOLE DE VALIDATION DE L'ÉTAPE 1b EST FERMÉ · ET CE QUI A ÉTÉ CONSTRUIT EST UN REFUS** — Michel refuse les deux seules façons de tester qui restaient : ***« je ne veux PAS réimporter des séances déjà présentes juste pour faire un test »*** · ***« je ne veux pas non plus importer une fausse séance puis la supprimer ensuite »***. Sa demande : ***« éprouver la chaîne production réelle de `typesNormalises` SANS écrire quoi que ce soit dans `S.sessions` »***.
+
+**⭐⭐ L'AUDIT A ÉTÉ FAIT AVANT TOUTE LIGNE, ET IL A RENDU LE CHANTIER PRESQUE VIDE.** Fermeture transitive sur **168 fonctions** atteintes depuis le chemin d'import — pas une lecture à l'œil, un découpage du **corps réel** de chaque fonction (comptage d'accolades, en ignorant chaînes et commentaires) :
+
+| fonction | ce qu'elle écrit |
+|---|---|
+| `openImportHist` · `addHistPhoto` · `addHistFile` · `histGoStep` | **rien** |
+| `analyzeHistPhotos` | **rien** |
+| `_histAnalyzeBatch` | **le seul appel réseau**, rien d'autre |
+| `_vmMatchHist` · `_renderHistPreview` · `closeImportHist` · `histRecommencer` | **rien** |
+| **`finalImportHist`** | `S.sessions` · `S.prs` · `S.histImports` · `persist()` · sync cloud · badges · signalement d'exercice |
+
+👉 ***L'aperçu (étape 4) est DÉJÀ un point d'arrêt non destructif***, et `closeImportHist` ne fait que retirer une classe CSS.
+
+**⛔⛔ DONC AUCUN MODE TEST N'A ÉTÉ CRÉÉ, ET C'EST LA DÉCISION DE LA VERSION.** Un bouton « Tester le transport » serait un **second chemin** — précisément ce que Michel interdit (*« pas de test qui contourne le Worker, pas d'autre route que l'import réel »*). *Un mode test qui n'emprunte pas le chemin de production ne valide pas le chemin de production : il valide le mode test.* Le chemin **réel** devient auto-témoin. ⭐ Bénéfice mesuré : les mutations *« un mode test devient persistant »* et *« un fallback transforme le test en vrai import »* deviennent **sans objet** — il n'y a rien à détourner.
+
+**⚠️⚠️ LE SEUL VRAI TROU, ET IL EST SÉRIEUX** : `_aiUrl` **RETOMBE sur Apps Script** si `AI_PROXY_URL` est vide. Donc *« le Worker a répondu »* n'était **pas prouvable** — il était **supposé**. Or c'est exactement la question que ce test doit fermer. La destination est désormais relevée **AVANT** le `fetch` (une tentative qui échoue doit dire où elle allait, sinon un Worker injoignable est indiscernable d'un Worker jamais appelé) et affichée : `OUI` / `NON (Apps Script)` / `MIXTE`.
+
+**⭐ `_empreinteDonnees()` — UN SEUL PROPRIÉTAIRE, APPELÉ DES DEUX CÔTÉS (R2).** C'est le point de conception : *la capture et la comparaison doivent employer exactement la même projection*. Si l'avant regardait les dates et l'après les volumes, la comparaison dirait « identique » sur deux états différents. ⭐ **Et c'est une empreinte, pas un compteur** : *un import qui remplacerait une séance au lieu d'en ajouter une laisserait le NOMBRE inchangé.* Un témoin le prouve — même nombre, empreinte différente.
+
+**📋 L'ÉCRAN ADMIN PORTE LES 7 LIGNES DEMANDÉES**, dont ⭐ **« Écriture dans `S.sessions` : NON » RECALCULÉE** à l'affichage, jamais un drapeau posé en partant : *un drapeau dit ce qu'on CROYAIT faire, une empreinte dit ce qui EST*.
+
+**⚠️⚠️ DEUX ERREURS D'INSTRUMENT, ET LA PREMIÈRE EST UNE RÉCIDIVE À 24 HEURES.** ① Mon témoin du repli faisait `Object.defineProperty(window,'AI_PROXY_URL',{value:''})` — **il était VERT EN NE MESURANT RIEN** : `AI_PROXY_URL` est un `const` de premier niveau, donc il vit dans l'environnement lexical global et **n'est pas une propriété de `window`**. J'ai créé une seconde variable que `_aiUrl` ne lit jamais, et le témoin se rabattait sur sa clause de sortie *« non rejouable »*. 👉 ***C'est le piège de `window._histExtracted`, que j'avais documenté moi-même la veille dans ft-v1209.*** Le banc sert désormais un `constants.js` à constante vide — le vrai `_aiUrl` retombe pour de bon. ⛔ **Et la clause de sortie est supprimée** : *un témoin qui a le droit de ne pas mesurer finit par ne pas mesurer.*
+
+**⭐⭐ ② ET LE TÉMOIN CORRIGÉ A ROUGI POUR UNE VRAIE RAISON, QUI COMPTE POUR LE PROTOCOLE** : `analyzeHistPhotos` commence par le **mur premium**. Sur un compte **gratuit** ayant déjà importé une fois, le document **n'atteint JAMAIS le Worker** — le diagnostic afficherait « aucun import observé » et on conclurait à tort à une panne de transport. *Deux causes opposées, deux correctifs opposés.*
+
+**⭐⭐ ET UNE MUTATION N'A MORDU SUR RIEN AU PREMIER JET — elle a révélé un vrai trou.** *« Le mode test fabrique `typesNormalises` »* : **0 rouge**. Cause mesurée — `d.data.typesNormalises` est lu **DEUX FOIS** dans `_histAnalyzeBatch`, pour **deux consommateurs** : le diagnostic Admin (`_histDiag.valeur`) et le **total transporté** (`_histExtracted.typesNormalises`), lequel produit le message *« N séries au type non reconnu »* **montré à la personne**. Fabriquer l'un laissait l'autre parfaitement sincère. 👉 ***Un champ lu deux fois est deux champs tant que rien ne vérifie qu'ils sont d'accord.*** Trois témoins le font désormais (comportement × 2 valeurs + source). ⛔ **Non refactorisé** : les deux expressions sont identiques aujourd'hui, il n'y a pas de défaut à corriger — seulement une divergence à rendre impossible en silence.
+
+**⚠️ ET UNE ÉCRITURE RESTE ATTEIGNABLE, DITE PLUTÔT QUE MASQUÉE** : depuis l'aperçu, taper « rattacher » puis chercher un exercice inexistant déclenche `_signalerRechercheVide`, qui écrit `S.reportedRechVide` et `ft4_rep_rech` (la liste anti-doublon des recherches vides, **R36**). ⛔ Ni séance, ni record, ni historique — et il faut un geste délibéré de plus. *Le chemin d'appel est nommé, pas deviné* : `_renderHistPreview → histRattacher → _impPickOuvre → openExPicker → filterEx → _signalerRechercheVide`.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran utilisateur ne change, aucune donnée ne bouge : la carte Admin livrée en ft-v1209 dit simplement plus de choses (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **l'ÉTAPE 2 n'est pas ouverte** — prompt `importHistory` inchangé des deux côtés, aucun `setTypePerSet` historique, `_typeAt` non branché, normalisation `D`/`''` intacte, records intacts, aucune migration · ⛔ **Nutrition, Milo, programmes, scanner : 0 ligne** — `app.js` et `index.html` ne sont **pas touchés**, la carte Admin existait déjà · ⛔ `_signalerRechercheVide` n'est pas modifiée (**R30** : c'est une décision de ft-v1169, pas un oubli).
+
+⚠️⚠️ **ET LE TEST QUI COMPTE N'EST TOUJOURS PAS FAIT** : le Worker déployé reste injoignable depuis le conteneur (`403`). Verdict tant que Michel n'a pas fait son import iPhone : ***ÉTAPE 1B PUBLIÉE MAIS TEST PRODUCTION NON DESTRUCTIF EN ATTENTE***.
+
+Tests : **bloc B-CCCX, 33 témoins**, verts sur l'arbre final. ⛔ **CONTRÔLE NÉGATIF : 14 mutations — les 10 nommées par Michel + 4 miennes — contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** (`BUGS.md` §60 par construction).
+
+Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `coach.js`, ni `tracking.js`, ni `setup.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1211. |
 
 **ft-v1209 — 🔬 LE TYPE DE SÉRIE NE DISPARAÎT PLUS EN SILENCE · ET UN CHEMIN QUI N'ÉTAIT JUSTE QUE PAR ACCIDENT** — six chantiers menés un par un, chacun mesuré avant d'être touché, tous publiés dans **le même bump** parce qu'aucun n'avait été déployé.
 

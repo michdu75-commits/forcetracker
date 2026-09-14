@@ -6,6 +6,16 @@
 
 ---
 
+- 🔬 **ft-v1211 — LE PROTOCOLE DE VALIDATION DE L'ÉTAPE 1b EST FERMÉ (14/09/2026).**
+  Michel refuse de réimporter de vraies séances **et** refuse d'en importer une fausse pour la
+  supprimer. ⭐⭐ **L'audit a rendu le chantier presque vide** : fermeture transitive sur **168
+  fonctions**, **toute** l'écriture est concentrée dans `finalImportHist` — donc **l'aperçu est
+  DÉJÀ un point d'arrêt non destructif**. ⛔⛔ **Aucun mode test n'a donc été créé** : un bouton
+  « tester » serait un **second chemin**, et *un mode test qui n'emprunte pas le chemin de
+  production valide le mode test, pas la production*. ⚠️ **Le seul vrai trou** : `_aiUrl`
+  **retombe** sur Apps Script si `AI_PROXY_URL` est vide — *« le Worker a répondu »* était
+  **supposé**, pas prouvé. Il est désormais **mesuré et affiché**.
+  ⛔⛔ **VERDICT : `ÉTAPE 1B PUBLIÉE MAIS TEST PRODUCTION NON DESTRUCTIF EN ATTENTE`.**
 - 🏁 **BANC D'ESSAI DE 4 MOTEURS DE DÉCODAGE LOCAUX — ET LE BOUTON DU SCANNER EST RETIRÉ (14/09/2026).**
   ⛔⛔ **LA CONSIGNE D'ABORD** : Michel — *« NE RÉACTIVE PAS le scanner dans l'interface
   utilisateur. Aucun bouton utilisateur tant que je n'ai pas tranché »*. **Le bouton livré la
@@ -194,7 +204,7 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1211` — 🏁 **BANC D'ESSAI DE 4 MOTEURS, ET LE BOUTON DU
+- **Version en ligne (live) :** `ft-v1212` — 🏁 **BANC D'ESSAI DE 4 MOTEURS, ET LE BOUTON DU
   SCANNER EST RETIRÉ.** Michel : *« aucun bouton utilisateur tant que je n'ai pas tranché »* —
   **le moteur reste en place et reste éprouvé**, seule la porte est fermée (deux témoins la figent
   dans les deux sens). ⭐ **zxing-wasm 86,2 %** contre **77,5 %** au ZXing servi, **25× plus
@@ -202,6 +212,13 @@
   **91,3 %**, un 3ᵉ moteur **+0,0**. ⛔ **Le plafond est la MISE AU POINT, pas le moteur.**
   ⛔ **Verdict : `C — zxing-wasm en principal + Quagga2 en repli local`. AUCUNE RÉACTIVATION
   UTILISATEUR AVANT TEST IPHONE.** 👉 `docs/BANC-MOTEURS-CODEBARRES.md`.
+
+- **Version précédente :** `ft-v1211` *(session-B)* — 🔬 **LA VALIDATION NON DESTRUCTIVE DE L'ÉTAPE 1b.**
+  L'écran Admin porte 7 lignes, dont **qui a répondu** (Worker / Apps Script) et ⭐ **« Écriture
+  dans `S.sessions` : NON » recalculée** par une empreinte, pas affirmée par un drapeau.
+  ⛔ Aucun écran utilisateur ne change, `app.js` et `index.html` ne sont pas touchés.
+  ⚠️ **Le test qui compte n'est toujours pas fait** — Michel doit conduire un document jusqu'à
+  l'**aperçu**, puis **s'arrêter là**. 👉 entrée `ft-v1211` de `CLAUDE.md`.
 
 - **Version précédente :** `ft-v1210` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
   CONTRÔLÉE.** Le bouton « Scanner le code-barres avec la caméra » revenait **en premier** dans
