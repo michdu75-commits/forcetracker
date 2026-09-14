@@ -36895,9 +36895,18 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('B-CCCIX ③ ⭐ 2 lots dont un seul porte le champ → PARTIEL, jamais « OUI »',
     R.partiel && R.partiel.present==='PARTIEL' && R.partiel.lots==='1 / 2',
     JSON.stringify(R.partiel));
+  /* ⚠️⚠️ CE TÉMOIN A ROUGI EN ft-v1211, ET IL AVAIT RAISON DE ROUGIR : son INTENTION tient
+     (*une ancienne observation ne doit pas passer pour la nouvelle*), mais son EXPRESSION
+     encodait l'ancien rendu. Depuis que le seuil d'affichage est le nombre de TENTATIVES et
+     non de réponses, un échec réseau n'affiche plus « aucun import observé » — il dit
+     « 0 / 1 lot ». C'était le but : *une panne de transport ne doit pas ressembler à une
+     absence de test.*
+     ⛔ On ne le supprime pas et on ne l'affaiblit pas : on teste la MÊME intention sur le
+     nouveau contrat, et plus strictement — l'ancienne valeur `3` doit avoir DISPARU. */
   t('B-CCCIX ④ ⭐ une ancienne observation ne passe PAS pour la nouvelle',
     R.avantEchec && R.avantEchec.present==='OUI' && R.avantEchec.valeur==='3'
-      && R.apresEchec && R.apresEchec.vide===true,
+      && R.apresEchec && R.apresEchec.valeur!=='3' && R.apresEchec.present!=='OUI'
+      && R.apresEchec.lots==='0 / 0',
     'avant='+JSON.stringify(R.avantEchec)+' après='+JSON.stringify(R.apresEchec));
   t('B-CCCIX ⑤ ⛔ aucune série n\'est filtrée, aucun type ne change',
     R.donnees && R.donnees.series===2 && R.donnees.types==='""/"D"',
@@ -36942,9 +36951,14 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     /* ⛔ L'écran affiche la présence SÉPARÉMENT de la valeur — deux lignes, pas une. */
     t('B-CCCIX ⑧ ⛔ l\'écran Admin porte bien la carte et son conteneur',
       /id="admin-import-diag"/.test(html) && /onclick="renderImportDiagAdmin\(\)"/.test(html), '');
+    /* ⚠️ ROUGI EN ft-v1211 POUR LA MÊME RAISON : la ligne « Valeur » a gagné un garde
+       (`!_histDiag.lots`), pour ne pas afficher un nombre quand AUCUNE réponse n'est arrivée.
+       Le fait à protéger n'a jamais été l'orthographe de la condition, c'est que **présence et
+       valeur soient deux lignes séparées** — donc on le teste, lui. */
     t('B-CCCIX ⑧ ⛔ SOURCE — présence et valeur sont DEUX lignes distinctes',
       /L\('Compteur typesNormalises reçu', etat, coul\)/.test(lg)
-      && /L\('Valeur', aucun\?'—':String\(_histDiag\.valeur\)\)/.test(lg), '');
+      && /L\('Valeur', [^\n]*_histDiag\.valeur/.test(lg)
+      && !/L\('Compteur typesNormalises reçu'[^\n]*_histDiag\.valeur/.test(lg), '');
   })();
 }
 
