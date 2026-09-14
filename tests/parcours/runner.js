@@ -24845,7 +24845,11 @@ console.log('\n-- CCXX. Une seule précision pour le pour-100 g (ft-v1112) --');
       const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
       const aLaMain=(app.match(/^\s*_bcNutr\s*=\s*\{/gm)||[]).length;
       const appels=(app.match(/_ref100\(/g)||[]).length;
-      const corps=(app.match(/function _ref100\([\s\S]{0,400}?\n\}/)||[''])[0];
+      /* ⚠️ ft-v1207 — LA FENÊTRE ÉTAIT À 400 CARACTÈRES, ET `_ref100` A GRANDI (le résolveur de
+         fiabilité y est branché). L'extracteur rendait un corps VIDE, et c'est le témoin de
+         contrôle juste en dessous qui l'a dit — pas une relecture. *Un extracteur dont la
+         fenêtre est trop courte ne rate pas : il valide n'importe quoi en silence.* */
+      const corps=(app.match(/function _ref100\([\s\S]{0,2600}?\n\}/)||[''])[0];
       t('⛔ CONTRÔLE — le constructeur unique est bien TROUVÉ et EMPLOYÉ (sinon le témoin est vide)',
         corps.length>0 && appels>=9, appels+' occurrences · corps '+corps.length+' car.');
       t('⛔⛔ aucune construction du pour-100 g ne ré-arrondit à l\'entier (R2 : un seul propriétaire)',
@@ -33815,8 +33819,19 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   });
   if(W.err){ t('CCLXXXVIII n\'a pas pu tourner', false, W.err); }
   else{
-    t('CCLXXXVIII ⓪ ⛔ CONTRÔLE — son cas est bien reproduit (198 kcal, et l\'alerte parle)',
-      W.cas1.kcal==='198' && W.cas1.alerteVue===true && /381/.test(W.cas1.txt),
+    /* ⭐⭐ ft-v1207 — CE TÉMOIN A CHANGÉ DE VALEUR PARCE QUE LE DÉFAUT A ÉTÉ CORRIGÉ À LA SOURCE.
+       Jusqu'ici son cas se lisait « 198 kcal affichées pour des macros qui en valent 381, et
+       l'app le dit ». Depuis ft-v1207 la fiche ne passe plus telle quelle : ses 48,3 kcal/100 g
+       violent le plancher physique (6,1 P et 3,2 L valent déjà 53,2), l'app retient 93,2 et
+       l'écran affiche donc **382 kcal** — qui COLLENT à ses macros.
+       ⛔⛔ L'AVERTISSEMENT NE DISPARAÎT PAS POUR AUTANT, et c'est le point : il parle maintenant
+       de la FICHE au lieu de commenter un écart. *Le chiffre a changé parce que la cause a été
+       traitée, pas parce que le contrôle s'est tu* — et la ligne suivante vérifie toujours qu'il
+       vient à la vue, ce qui était tout le sujet de ft-v1191. */
+    t('CCLXXXVIII ⓪ ⛔ CONTRÔLE — son cas est bien reproduit, et la CAUSE est traitée : 382 kcal '
+      + 'retenues au lieu de 198, et l\'alerte explique la fiche',
+      W.cas1.kcal==='382' && W.cas1.alerteVue===true
+      && /48\.3/.test(W.cas1.txt) && /53\.2/.test(W.cas1.txt),
       JSON.stringify(W.cas1));
     t('CCLXXXVIII ① ⭐⭐ L\'ALERTE VIENT À LA VUE après le clic « paquet entier » (elle était 1132 px plus bas)',
       W.cas1.dansLaVue===true, JSON.stringify(W.cas1));
@@ -33929,7 +33944,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 }
 
 
-/* ═══ CCCIV. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
+/* ═══ B-CCCIV. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
    Michel, après avoir lu les trois constats : *« vas-y corrige tout »*. Il lève lui-même l'ordre
    qu'il avait posé le matin même (*« on refera un état des lieux quand j'aurai fini les bugs de
    la nutrition »*).
@@ -34018,34 +34033,34 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   });
 
   console.log('\n-- CCCIV. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
-  t('CCCIV ① le propriétaire de la conversion RPE existe', R.owner===true);
-  t('CCCIV ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
-  t('CCCIV ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
-  t('CCCIV ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
-  t('CCCIV ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
-  t('CCCIV ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
-  t('CCCIV ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
-  t('CCCIV ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
+  t('B-CCCIV ① le propriétaire de la conversion RPE existe', R.owner===true);
+  t('B-CCCIV ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
+  t('B-CCCIV ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
+  t('B-CCCIV ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
+  t('B-CCCIV ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
+  t('B-CCCIV ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
+  t('B-CCCIV ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
+  t('B-CCCIV ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
     R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir">·0r</span>|<span class="prev-rir">·4+r</span>|'
     && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir">·@10</span>|<span class="prev-rir">·@≤6</span>|',
     'RIR '+R.prevRir+' · RPE '+R.prevRpe);
-  t('CCCIV ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
+  t('B-CCCIV ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
     R.horsEchelleRpe==='|||' && R.horsEchelleRir==='|', 'RPE ['+R.horsEchelleRpe+'] · RIR ['+R.horsEchelleRir+']');
-  t('CCCIV ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
-  t('CCCIV ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
+  t('B-CCCIV ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
+  t('B-CCCIV ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
     R.echecAffiche===R.echecProprio && /une répétition n'est pas passée/.test(R.echecAffiche),
     'écran : "'+R.echecAffiche+'" · propriétaire : "'+R.echecProprio+'"');
-  t('CCCIV ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
-  t('CCCIV ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
+  t('B-CCCIV ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
+  t('B-CCCIV ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
     R.regle==='180|180|4.2', 'reçu : '+R.regle);
-  t('CCCIV ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
+  t('B-CCCIV ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
     R.sansReglage && R.sansReglage.log===R.sansReglage.proprio
       && R.sansReglage.coach===Math.round(((R.sansReglage.proprio+70)/60)*10)/10
       && Math.abs(R.sansReglage.app-(5*(30+R.sansReglage.proprio)/60))<0.01,
     'reçu : '+JSON.stringify(R.sansReglage));
-  t('CCCIV ③ ... et ce repli est celui de l\'installation (130 s)',
+  t('B-CCCIV ③ ... et ce repli est celui de l\'installation (130 s)',
     R.sansReglage && R.sansReglage.proprio===130, 'reçu : '+(R.sansReglage||{}).proprio);
-  t('CCCIV ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
+  t('B-CCCIV ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
     R.parType==='45|45|240|240|20', 'reçu : '+R.parType);
 
   /* ⛔⛔ ET LE TÉMOIN QUI EMPÊCHE LA RECHUTE — il lit la SOURCE, parce qu'une copie de la
@@ -34069,9 +34084,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                         .split('\n').filter(l=>!/function _rpeDeRir\(/.test(l)).join('\n');
     const copies=(horsProprio.match(/10\s*-\s*(n|RIR_MAX)\b/g)||[]);
     const appels=(lg.match(/_rpeDeRir\s*\(/g)||[]).length-1;   // -1 : sa propre déclaration
-    t('CCCIV ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
+    t('B-CCCIV ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
       'trouvé : '+JSON.stringify(copies));
-    t('CCCIV ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
+    t('B-CCCIV ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
       appels>=2, appels+' appel(s)');
   })();
 
@@ -34084,7 +34099,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       (src.match(/S\.defRest\s*(\|\|\s*\d+|[?:]\s*\d+)/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
       (src.match(/\+S\.defRest\s*>\s*0\s*\)\s*\?/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
     });
-    t('CCCIV ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
+    t('B-CCCIV ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
       mauvais.length===0, mauvais.join(' · '));
   })();
 }
@@ -34135,7 +34150,10 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 
     /* ── ÉTAPE 1a : le constructeur unique ── */
     o.fnRef=typeof _ref100; o.fnTrad=typeof _per100De;
-    const r1=_ref100('Produit', 48.34, 6.13, 10.07, 3.17);
+    /* ⚠️ ft-v1207 — ORIGINE UTILISATEUR EXPRÈS : ces valeurs sont exactement le cas Raynal, que
+       la loi énergétique fait mordre depuis ft-v1207. Une origine que le résolveur ne réécrit
+       jamais isole la NORMALISATION de la RÉSOLUTION, et le témoin garde son seul sujet. */
+    const r1=_ref100('Produit', 48.34, 6.13, 10.07, 3.17, {origine:'manuel'});
     o.normalise=[r1.kcal100,r1.prot100,r1.carbs100,r1.fat100];                    // 48.3 / 6.1 / 10.1 / 3.2
     const r2=_ref100('Repris', 166.67, 17.33, 0, 10.67, {normaliser:false});
     o.brut=[r2.kcal100,r2.prot100,r2.carbs100,r2.fat100];                         // inchangés
@@ -34162,6 +34180,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 
   t('CCXC ÉTAPE 1a — `_ref100` et `_per100De` existent',
     R.fnRef==='function' && R.fnTrad==='function', R.fnRef+' / '+R.fnTrad);
+  /* ⚠️⚠️ ft-v1207 — CE TÉMOIN MESURE LE NORMALISEUR, PAS LE RÉSOLVEUR, et il a fallu le dire.
+     Ses valeurs d'essai sont exactement le cas Raynal : depuis ft-v1207 la loi énergétique mord
+     dessus et la valeur retenue devient 93,6. Le témoin rougissait donc sur un comportement
+     VOULU. ⛔ On ne l'a pas « mis à jour » en recopiant 93,6 : il aurait alors mesuré les deux
+     choses à la fois et n'aurait plus rien prouvé sur l'arrondi. On l'isole par une origine
+     UTILISATEUR — que le résolveur ne réécrit jamais — pour qu'il continue de mesurer son seul
+     sujet. *La résolution, elle, est mesurée par le bloc CCCV, cas par cas.* */
   t('CCXC ⛔ `_ref100` normalise à UNE décimale par défaut',
     JSON.stringify(R.normalise)==='[48.3,6.1,10.1,3.2]', JSON.stringify(R.normalise));
   t('CCXC ⛔⛔ ... et `{normaliser:false}` NE touche à rien (les 2 portes de REPRISE)',
@@ -34171,8 +34196,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('CCXC ⛔ `_per100De` TRADUIT et ne calcule rien (aucun arrondi au passage)',
     R.trad==='{"kcal":166.67,"prot":17.33,"carbs":0,"fat":10.67}', R.trad);
   t('CCXC ⛔ `_per100De(null)` rend `null` — il n\'invente pas un objet vide', R.tradNull===null);
-  t('CCXC ⛔⛔ `_ref100` rend EXACTEMENT les 5 champs de `_bcNutr`, pas un de plus',
-    R.champs==='carbs100,fat100,kcal100,name,prot100', R.champs);
+  /* ⭐ ft-v1207 — 6 CHAMPS DÉSORMAIS, ET LE 6ᵉ EST UNE EXIGENCE ÉCRITE DE MICHEL : *« ne jamais
+     écraser la source et perdre la trace de ce qui s'est passé »*. `fiab` porte la valeur brute,
+     la méthode, la raison, le champ d'origine et la confiance. ⛔ Le témoin reste FERMÉ (une
+     liste exacte, pas un « contient ») : c'est lui qui empêche qu'un 7ᵉ champ s'ajoute sans
+     décision. */
+  t('CCXC ⛔⛔ `_ref100` rend EXACTEMENT les 6 champs de `_bcNutr` (dont la traçabilité), pas un de plus',
+    R.champs==='carbs100,fat100,fiab,kcal100,name,prot100', R.champs);
 }
 
 /* ⛔⛔ ET LE TÉMOIN QUI COMPTE LES ENDROITS — celui qu'aucun parcours ne peut remplacer.
@@ -35905,7 +35935,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
    ⛔ C'est arrivé le 13/09 : l'avertissement était déjà écrit NEUF FOIS dans ce fichier, et je
    l'ai quand même posé après. *Un avertissement répété neuf fois protège tout le monde sauf
    celui qui écrit le dixième bloc.*
-   ═══ CCCIII. LE CONTRAT DE LECTURE D'UN PDF — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, A1) ═══
+   ═══ B-CCCIII. LE CONTRAT DE LECTURE D'UN PDF — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, A1) ═══
    Michel, après la mesure du matin sur ses vrais fichiers : *« aujourd'hui un import peut réussir
    silencieusement alors qu'il est tronqué »*. `_pdfToText` rendait **682 lignes d'un fichier de
    22 pages sans rien signaler** (plafond MAX_PAGES=15) — une lecture partielle était indiscernable
@@ -35968,26 +35998,26 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 
   /* ⛔ CONTRÔLE SAIN DU HARNAIS, AVANT TOUT LE RESTE : si le stub n'atteint pas la fonction, TOUS
      les témoins qui suivent seraient verts pour la mauvaise raison (BUGS.md §61). */
-  t('CCCIII ⛔ le stub atteint bien la vraie fonction (sinon tout ce qui suit est faux)',
+  t('B-CCCIII ⛔ le stub atteint bien la vraie fonction (sinon tout ce qui suit est faux)',
     !!R.complet && !R.complet.erreur && typeof R.complet.etat==='string',
     'reçu : '+JSON.stringify(R.complet).slice(0,120));
 
-  t('CCCIII ① COMPLETE sur un PDF entièrement lu',
+  t('B-CCCIII ① COMPLETE sur un PDF entièrement lu',
     R.complet.etat==='COMPLETE' && R.complet.pagesLues===3 && R.complet.pagesTotal===3,
     'reçu : '+R.complet.etat+' '+R.complet.pagesLues+'/'+R.complet.pagesTotal);
-  t('CCCIII ① ⛔ `raison` est VIDE sur un succès (une raison sur un COMPLETE est un signal faux)',
+  t('B-CCCIII ① ⛔ `raison` est VIDE sur un succès (une raison sur un COMPLETE est un signal faux)',
     R.complet.raison==='', 'reçu : '+JSON.stringify(R.complet.raison));
 
-  t('CCCIII ② ⭐ PARTIAL sur 22 pages plafonnées à 15 — LE DÉFAUT DU JOUR, RENDU OBSERVABLE',
+  t('B-CCCIII ② ⭐ PARTIAL sur 22 pages plafonnées à 15 — LE DÉFAUT DU JOUR, RENDU OBSERVABLE',
     R.partiel.etat==='PARTIAL' && R.partiel.pagesLues===15 && R.partiel.pagesTotal===22,
     'reçu : '+R.partiel.etat+' '+R.partiel.pagesLues+'/'+R.partiel.pagesTotal);
-  t('CCCIII ② ⛔ la raison NOMME la cause (`plafond_pages`), ce n\'est pas un message d\'interface',
+  t('B-CCCIII ② ⛔ la raison NOMME la cause (`plafond_pages`), ce n\'est pas un message d\'interface',
     R.partiel.raison==='plafond_pages', 'reçu : '+JSON.stringify(R.partiel.raison));
-  t('CCCIII ② ⭐ et les lignes LUES sont quand même rendues : un partiel n\'est pas un échec',
+  t('B-CCCIII ② ⭐ et les lignes LUES sont quand même rendues : un partiel n\'est pas un échec',
     Array.isArray(R.partiel.lignes) && R.partiel.lignes.length===30,
     'reçu : '+(R.partiel.lignes||[]).length+' lignes');
 
-  t('CCCIII ③ UNKNOWN sur un PDF sans couche texte',
+  t('B-CCCIII ③ UNKNOWN sur un PDF sans couche texte',
     R.inconnu.etat==='UNKNOWN' && R.inconnu.lignes.length===0 && R.inconnu.raison==='aucune_couche_texte',
     'reçu : '+R.inconnu.etat+' / '+R.inconnu.raison);
 
@@ -35995,21 +36025,21 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      « tronqué ». Un 22 pages sans aucun texte doit rendre UNKNOWN — la seule chose utile à en
      faire est de DESCENDRE D'UN CRAN vers l'OCR. PARTIAL annoncerait « lu en partie » avec zéro
      ligne : la cascade s'arrêterait sur un résultat vide en croyant avoir réussi à moitié. */
-  t('CCCIII ④ ⛔ vide ET tronqué → UNKNOWN gagne (pour que la cascade descende, pas qu\'elle s\'arrête)',
+  t('B-CCCIII ④ ⛔ vide ET tronqué → UNKNOWN gagne (pour que la cascade descende, pas qu\'elle s\'arrête)',
     R.videEtTronque.etat==='UNKNOWN' && R.videEtTronque.raison==='aucune_couche_texte',
     'reçu : '+R.videEtTronque.etat+' / '+R.videEtTronque.raison);
 
-  t('CCCIII ⑤ pagesLues ≤ pagesTotal, et les deux > 0 dès que le fichier s\'ouvre',
+  t('B-CCCIII ⑤ pagesLues ≤ pagesTotal, et les deux > 0 dès que le fichier s\'ouvre',
     [R.complet,R.partiel,R.inconnu,R.videEtTronque].every(x=>x.pagesLues>0 && x.pagesTotal>0 && x.pagesLues<=x.pagesTotal), '');
 
   /* ⛔ NON-RÉGRESSION : le regroupement par Y et le tri par X ne doivent pas avoir bougé. Les
      fragments sont fournis dans le désordre ; « bonjour » (x=10) doit passer devant « monde »
      (x=50) sur la même ligne, et la ligne du haut (y=700) avant celle du bas (y=680). */
-  t('CCCIII ⑥ ⛔ l\'assemblage des lignes est intact (Y décroissant, X croissant)',
+  t('B-CCCIII ⑥ ⛔ l\'assemblage des lignes est intact (Y décroissant, X croissant)',
     R.complet.lignes[0]==='bonjour monde' && R.complet.lignes[1]==='page1',
     'reçu : '+JSON.stringify((R.complet.lignes||[]).slice(0,2)));
 
-  t('CCCIII ⑦ les 3 états sont les valeurs attendues',
+  t('B-CCCIII ⑦ les 3 états sont les valeurs attendues',
     R.constantes.c==='COMPLETE' && R.constantes.p==='PARTIAL' && R.constantes.i==='UNKNOWN',
     'reçu : '+JSON.stringify(R.constantes));
 
@@ -36027,26 +36057,26 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      c'est CE témoin : chaque appelant de `_pdfToText` doit lire `.etat`. Sans lui, une migration
      incomplète serait VERTE. */
   const appelants = coachC.split('\n').map((l,i)=>({l,i})).filter(x=>/_pdfToText\s*\(/.test(x.l));
-  t('CCCIII ⑧ ⭐ SOURCE — `_pdfToText` a toujours exactement UN appelant, et il est dans coach.js',
+  t('B-CCCIII ⑧ ⭐ SOURCE — `_pdfToText` a toujours exactement UN appelant, et il est dans coach.js',
     appelants.length===1 && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
     && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')))
     && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))),
     'appelants dans coach.js : '+appelants.length);
-  t('CCCIII ⑧ ⭐⭐ SOURCE — l\'appelant LIT `.etat` (le seul garde-fou d\'une migration complète)',
+  t('B-CCCIII ⑧ ⭐⭐ SOURCE — l\'appelant LIT `.etat` (le seul garde-fou d\'une migration complète)',
     /const\s+r\s*=\s*await\s+_pdfToText\(f\)/.test(coachC) && /r\.etat\s*===\s*LIRE_INCONNU/.test(coachC)
     && /r\.etat\s*===\s*LIRE_PARTIEL/.test(coachC),
     'l\'appelant ne consulte pas les trois états');
-  t('CCCIII ⑧ ⛔ SOURCE — il ne teste plus la LONGUEUR pour décider (l\'ancienne forme est partie)',
+  t('B-CCCIII ⑧ ⛔ SOURCE — il ne teste plus la LONGUEUR pour décider (l\'ancienne forme est partie)',
     !/const\s+lines\s*=\s*await\s+_pdfToText/.test(coachC) && !/if\(!lines\.length\)/.test(coachC), '');
 
   /* ⛔ Les trois valeurs ne s'écrivent qu'aux constantes : une chaîne 'PARTIAL' retapée ailleurs
      est exactement la recopie que ce contrat existe pour éviter (R2). */
   const litteraux = (logC+coachC).match(/'(COMPLETE|PARTIAL|UNKNOWN)'/g)||[];
-  t('CCCIII ⑨ ⛔ SOURCE — les 3 valeurs ne sont écrites QU\'aux constantes (aucune recopie)',
+  t('B-CCCIII ⑨ ⛔ SOURCE — les 3 valeurs ne sont écrites QU\'aux constantes (aucune recopie)',
     litteraux.length===3, 'trouvé '+litteraux.length+' littéraux : '+litteraux.join(' '));
 
   /* ══ PÉRIMÈTRE — ce que Michel a explicitement exclu de A1 ══ */
-  t('CCCIII ⑩ ⛔ PÉRIMÈTRE — MAX_PAGES vaut TOUJOURS 15 (on rend la troncature observable, on ne la corrige pas)',
+  t('B-CCCIII ⑩ ⛔ PÉRIMÈTRE — MAX_PAGES vaut TOUJOURS 15 (on rend la troncature observable, on ne la corrige pas)',
     /const\s+MAX_PAGES=15,\s*lines=\[\]/.test(logC), '');
   /* ⚠️ CE TÉMOIN A ÉTÉ FAUX AU 1ᵉʳ JET, ET LA CAUSE RESSERVIRA : il bornait la recherche à
      « 1400 caractères après `_pdfToImages` » pour vérifier qu'aucun `etat:LIRE_` n'y apparaît.
@@ -36057,10 +36087,10 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      `return pages;`, et on cherche dedans. */
   const corpsImages = (()=>{ const i=logC.indexOf('async function _pdfToImages(f){');
     if(i<0) return null; const j=logC.indexOf('return pages;', i); return j<0?null:logC.slice(i,j); })();
-  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — `_pdfToImages` n\'est PAS migrée (A2 attend le feu vert nutrition)',
+  t('B-CCCIII ⑪ ⛔ PÉRIMÈTRE — `_pdfToImages` n\'est PAS migrée (A2 attend le feu vert nutrition)',
     corpsImages!==null && !/etat:\s*LIRE_/.test(corpsImages) && !/pagesTotal/.test(corpsImages),
     corpsImages===null?'corps introuvable':'le contrat a débordé sur _pdfToImages');
-  t('CCCIII ⑪ ⛔ PÉRIMÈTRE — les 4 appelants de `_pdfToImages` lisent toujours `.length` (rien n\'a bougé chez eux)',
+  t('B-CCCIII ⑪ ⛔ PÉRIMÈTRE — les 4 appelants de `_pdfToImages` lisent toujours `.length` (rien n\'a bougé chez eux)',
     /const pages=await _pdfToImages\(f\);\s*\n?\s*if\(!pages\.length\)/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
     && (logC.match(/const pages=await _pdfToImages\(f\);/g)||[]).length===2
     && /const imgs=await _pdfToImages\(f\); pages=imgs\.map/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))), '');
@@ -36916,6 +36946,1380 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       /L\('Compteur typesNormalises reçu', etat, coul\)/.test(lg)
       && /L\('Valeur', aucun\?'—':String\(_histDiag\.valeur\)\)/.test(lg), '');
   })();
+}
+
+/* ══════════ BLOC CCCIII — 🛃 ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE (ft-v1205) ══════════
+   Michel donne le feu vert pour la douane SEULE, et ⛔ en MODE OBSERVATION UNIQUEMENT :
+   *« je ne veux pas encore de correction automatique ni de blocage utilisateur »* — `OK`, `WARN`
+   et `INVALID` écrivent TOUS normalement. *« Le but est d'abord de mesurer ce qui sortirait rouge
+   avant de décider quelles règles deviennent réellement bloquantes. »*
+
+   ⛔⛔ LA MOITIÉ DE CES TÉMOINS PROUVE UNE ABSENCE, ET C'EST VOULU : une douane qui se mettrait
+   à corriger « parce que c'est l'endroit logique » ne ferait rougir AUCUN parcours — l'écran
+   afficherait la même chose, la ligne enregistrée serait simplement devenue différente en
+   silence. C'est la leçon de ft-v1202 posée sur un objet plus dangereux.
+
+   ⚠️ ET LES 9 RÈGLES `INVALID` NE MORDENT SUR AUCUNE LIGNE RÉELLE (mesuré : 0/29). Un témoin qui
+   se contenterait de constater ça serait un vert qui ne peut pas rougir (ft-v994) : on ÉPROUVE
+   donc chaque famille avec une ligne fabriquée exprès, pour prouver que la branche existe. */
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const cx=await ctx.newPage(); const errs=[];
+  cx.on('pageerror',e=>errs.push(e.message));
+  await cx.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await cx.goto('http://localhost:'+PORT+'/index.html');
+  await cx.waitForTimeout(2300);
+
+  const X=await cx.evaluate(()=>{
+    const o={};
+    try{
+      o.type=typeof _douaneLigne;
+      if(o.type!=='function'){ o.FATAL='_douaneLigne absente'; return o; }
+
+      const LIGNE_SAINE=()=>({date:'2026-09-01', meal:'dejeuner', name:'Poulet roti', ts:1757700000000,
+                              kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g',
+                              per100:{kcal:133,prot:20,carbs:0,fat:5.3},
+                              v:1, saisie:'liste', origine:'off', sourceId:'off:123',
+                              etat:'valide', modifie:false});
+
+      /* ① un cas SAIN rend OK */
+      o.sain=_douaneLigne(LIGNE_SAINE(),'test').etat;
+
+      /* ② un cas DOUTEUX rend WARN — et on vérifie QUELLE règle, pas seulement la couleur */
+      const douteux=Object.assign(LIGNE_SAINE(),{u:'portion', q:2, portionLabel:'part'});
+      delete douteux.portionWeightG; delete douteux.per100;
+      const rd=_douaneLigne(douteux,'test');
+      o.douteux=[rd.etat, rd.regles.indexOf('portion_sans_poids')>=0];
+
+      /* ③ LE CAS QUE MICHEL A NOMMÉ : 48 kcal avec des macros incompatibles.
+         ⛔ Il doit rester WARN — *« tant qu'aucune règle produit n'a décidé quelle source a
+         raison »*. S'il devenait INVALID, la douane trancherait un débat produit. */
+      const r48=_douaneLigne(Object.assign(LIGNE_SAINE(),
+                  {kcal:48, prot:20, carbs:30, fat:15, per100:{kcal:48,prot:20,carbs:30,fat:15}}),'test');
+      o.cas48=[r48.etat, r48.regles.indexOf('energie_incoherente')>=0];
+
+      /* ④ LES 9 FAMILLES `INVALID` SONT-ELLES ATTEIGNABLES ? Une par une, sur du fabriqué. */
+      const inval={};
+      const essai=(nom,patch,suppr)=>{ const l=LIGNE_SAINE(); Object.assign(l,patch||{});
+        (suppr||[]).forEach(k=>delete l[k]);
+        const r=_douaneLigne(l,'test'); inval[nom]=[r.etat, r.regles.indexOf(nom)>=0]; };
+      essai('nom_absent',        {name:'   '});
+      essai('date_absente',      {}, ['date']);
+      essai('repas_absent',      {}, ['meal']);
+      essai('horodatage_absent', {ts:0});
+      essai('macro_non_finie',   {prot:NaN});
+      essai('macro_negative',    {fat:-3});
+      essai('quantite_non_finie',{q:Infinity});
+      essai('quantite_negative', {q:-5});
+      essai('per100_non_fini',   {per100:{kcal:NaN,prot:1,carbs:1,fat:1}});
+      o.invalides=inval;
+
+      /* ⑤ ⛔⛔ ELLE NE MODIFIE AUCUN CHAMP — la preuve octet pour octet demandée par Michel.
+         On sérialise à clés TRIÉES avant et après : sans le tri, un simple réordonnancement
+         passerait pour une mutation, et une vraie mutation pourrait passer inaperçue. */
+      const tri=(x)=>JSON.stringify(x, Object.keys(x).sort());
+      const mut=[];
+      [LIGNE_SAINE(),
+       Object.assign(LIGNE_SAINE(),{u:'portion',q:2,portionLabel:'part'}),
+       Object.assign(LIGNE_SAINE(),{q:-5, prot:NaN}),
+       {name:'nu', date:'2026-09-01', meal:'dejeuner', ts:1}].forEach((l,i)=>{
+        const av=tri(l); _douaneLigne(l,'test'); mut.push([i, av===tri(l)]);
+      });
+      o.entree_intacte=mut;
+
+      /* ⑥ ⛔ ELLE NE BLOQUE RIEN : les trois états écrivent. On conduit un VRAI écrivain
+         (`quickAddFood`) sur une ligne que la douane juge INVALID, et on vérifie qu'elle est
+         quand même enregistrée. */
+      S.foodLog=[]; S.savedFoods=[];
+      try{ _afSetSrc(null); }catch(e){}
+      try{ _afOublierAliment(); }catch(e){}
+      _afQuickItems=[{name:'Ligne cassée', kcal:-10, prot:0, carbs:0, fat:0, fav:false}];
+      _afMeal='dejeuner';
+      quickAddFood(0);
+      const ecrite=(S.foodLog||[])[0]||null;
+      o.invalid_ecrit_quand_meme=[ (S.foodLog||[]).length,
+                                   ecrite? _douaneLigne(ecrite,'test').etat : 'RIEN' ];
+
+      /* ⑦ ⛔ ELLE N'ÉCRIT PAS DANS `S.foodLog` : on l'appelle 5 fois, la longueur ne bouge pas. */
+      S.foodLog=[Object.assign(LIGNE_SAINE(),{ts:7})];
+      const avantLen=S.foodLog.length;
+      for(let i=0;i<5;i++) _douaneLigne(S.foodLog[0],'test');
+      o.foodlog_intact=[avantLen, S.foodLog.length];
+
+      /* ⑧ ⛔ SON CARNET D'OBSERVATION NE PART NULLE PART : ni dans `S`, ni dans `localStorage`.
+         Il rend le résultat testable sans rien changer à ce qui est enregistré. */
+      persist();
+      const brut=localStorage.getItem('ft4_foodlog')||'';
+      /* ⭐ ft-v1206 : le carnet est devenu des COMPTEURS PERSISTÉS dans leur PROPRE clé. Ce
+         témoin ne teste donc plus l'absence d'une liste volatile (ce qui serait devenu vide de
+         sens) mais le fait que RIEN de la douane n'entre dans `S` — donc ni dans la sauvegarde,
+         ni dans la synchronisation cloud, qui partent toutes deux de `S`. */
+      o.carnet_prive=[ Object.keys(S).some(k=>/douane/i.test(k))===false,
+                       brut.indexOf('douane')<0,
+                       JSON.stringify(S).toLowerCase().indexOf('douane')<0 ];
+    }catch(e){ o.FATAL=String(e&&e.message||e); }
+    return o;
+  });
+
+  t('CCCIII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCIII ① ⭐ `_douaneLigne` existe', X.type==='function', 'type='+X.type);
+  t('CCCIII ② ⭐ un cas SAIN rend OK', X.sain==='OK', 'etat='+X.sain);
+  t('CCCIII ③ ⭐ un cas DOUTEUX rend WARN, et il NOMME la règle qui a mordu',
+    X.douteux && X.douteux[0]==='WARN' && X.douteux[1]===true, JSON.stringify(X.douteux));
+  t('CCCIII ④ ⛔⛔ LE CAS NOMMÉ PAR MICHEL — 48 kcal avec des macros incompatibles reste un '+
+    'AVERTISSEMENT, jamais un refus : aucune règle produit n\'a décidé quelle source a raison',
+    X.cas48 && X.cas48[0]==='WARN' && X.cas48[1]===true, JSON.stringify(X.cas48));
+  t('CCCIII ⑤ ⭐⭐ LES 9 FAMILLES `INVALID` SONT ATTEIGNABLES — mesuré 0/29 sur les lignes '+
+    'réelles, donc sans cette épreuve ce serait un vert qui ne peut pas rougir (ft-v994)',
+    X.invalides && Object.keys(X.invalides).length===9 &&
+    Object.keys(X.invalides).every(k=>X.invalides[k][0]==='INVALID' && X.invalides[k][1]===true),
+    JSON.stringify(X.invalides));
+  t('CCCIII ⑥ ⛔⛔ ELLE NE MODIFIE AUCUN CHAMP — entrée identique octet pour octet, sur 4 formes',
+    Array.isArray(X.entree_intacte) && X.entree_intacte.length===4 &&
+    X.entree_intacte.every(m=>m[1]===true), JSON.stringify(X.entree_intacte));
+  t('CCCIII ⑦ ⛔⛔ ELLE NE BLOQUE RIEN — une ligne qu\'elle juge INVALID est enregistrée quand '+
+    'même (consigne explicite : le mode observation ne refuse aucune écriture)',
+    X.invalid_ecrit_quand_meme && X.invalid_ecrit_quand_meme[0]===1 &&
+    X.invalid_ecrit_quand_meme[1]==='INVALID', JSON.stringify(X.invalid_ecrit_quand_meme));
+  t('CCCIII ⑧ ⛔ ELLE N\'ÉCRIT PAS DANS `S.foodLog` : 5 appels, longueur inchangée',
+    X.foodlog_intact && X.foodlog_intact[0]===X.foodlog_intact[1], JSON.stringify(X.foodlog_intact));
+  t('CCCIII ⑨ ⛔ SON CARNET D\'OBSERVATION RESTE PRIVÉ : ni dans `S`, ni dans le stockage du '+
+    'téléphone — il observe la FORME, il ne collecte pas ce que la personne mange (P3 · R36)',
+    Array.isArray(X.carnet_prive) && X.carnet_prive.every(v=>v===true), JSON.stringify(X.carnet_prive));
+  t('CCCIII ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await cx.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — ils protègent la FRONTIÈRE de la douane, que le comportement ne montre
+   pas : une douane qui se mettrait à corriger une valeur laisserait tous les parcours verts,
+   puisque l'écran n'afficherait rien de différent. C'est la consigne de Michel depuis 3-iv,
+   posée ici sur l'objet qui touche à ce qui est ENREGISTRÉ. */
+{
+  const src=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
+                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const L=codeSeul.split('\n'), D=[];
+  L.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) D.push([i,m[1]]); });
+  const corpsDe=(nom)=>{ const k=D.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return L.slice(D[k][0], k+1<D.length?D[k+1][0]:L.length).join('\n'); };
+  const corps=corpsDe('_douaneLigne');
+
+  /* ⭐⭐ LES 4 ÉCRIVAINS RÉELS, RECOMPTÉS DEPUIS LE CODE — pas recopiés d'un plan.
+     Un écrivain d'une ligne de journal est une fonction qui POUSSE dans `S.foodLog`… ou qui
+     MUTE un de ses éléments puis persiste. `saveEditFood` est du second genre : une recherche
+     sur `push` la raterait, et c'est exactement ce qui rendait ce recomptage nécessaire. */
+  const POUSSEURS=D.map(d=>d[1]).filter(n=>/S\.foodLog\.push\(/.test(corpsDe(n)));
+  t('CCCIII ⑪ ⭐ LES 3 POUSSEURS SONT CEUX ATTENDUS — aucun écrivain n\'est apparu ni n\'a disparu',
+    POUSSEURS.length===3 && ['rejouerRepas','quickAddFood','addFoodEntry']
+      .every(n=>POUSSEURS.indexOf(n)>=0), 'pousseurs='+POUSSEURS.join(','));
+  t('CCCIII ⑫ ⭐⭐ LES 4 ÉCRIVAINS PASSENT PAR LA DOUANE — y compris `saveEditFood`, qui ne '+
+    'pousse RIEN (elle mute en place puis persiste)',
+    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
+      .every(n=>/_douaneLigne\(/.test(corpsDe(n))), 'un écrivain contourne la douane');
+  t('CCCIII ⑬ ⛔ AUCUN AUTRE APPELANT — la douane a exactement 4 sites d\'observation (1 par '+
+    'écrivain), plus sa déclaration',
+    (codeSeul.match(/_douaneLigne\(/g)||[]).length===5,
+    'occurrences='+(codeSeul.match(/_douaneLigne\(/g)||[]).length);
+
+  /* ⛔⛔ CE QUE LA DOUANE N'A PAS LE DROIT DE FAIRE — la liste est celle de Michel, mot pour mot. */
+  t('CCCIII ⑭ ⛔⛔ PÉRIMÈTRE DE SOURCE — ELLE N\'ÉCRIT RIEN : aucune affectation sur la ligne '+
+    'reçue, aucun `delete`, aucun `Object.assign` sur elle, aucun `S.foodLog`, aucun `persist`',
+    corps.length>0 && !/S\.foodLog/.test(corps) && !/persist\(/.test(corps)
+    && !/\bdelete\s+l\./.test(corps) && !/Object\.assign\(\s*l\b/.test(corps)
+    && !/\bl\.\w+\s*=[^=]/.test(corps), 'la douane écrit dans ce qu\'elle observe');
+  t('CCCIII ⑮ ⛔⛔ PÉRIMÈTRE DE SOURCE — AUCUNE INTERFACE : ni `toast`, ni `document`, ni '+
+    '`alert`, ni `showConfirm`. Elle observe, elle ne parle pas à la personne',
+    corps.length>0 && !/toast\(|document\.|alert\(|showConfirm\(|innerHTML/.test(corps),
+    'la douane touche à l\'interface');
+  t('CCCIII ⑯ ⛔⛔ PÉRIMÈTRE DE SOURCE — ELLE NE TOUCHE NI AU HUB NI AUX PROPRIÉTAIRES DE 1b/3 '+
+    '(`_afPreparerEcran`, `_provFood`, `_qGrammes`, `_qReprenable`, `_afReprendre…`, '+
+    '`_srcProvenance`, `_srcRepriseQ`, `_itemListe`, `_per100Derive`) — elle LIT la forme '+
+    'finale, elle ne la RECONSTRUIT pas, sinon elle deviendrait un second hub (R2)',
+    corps.length>0 && !/_afPreparerEcran|_provFood|_qGrammes|_qReprenable|_afReprendre|_srcProvenance|_srcRepriseQ|_itemListe|_per100Derive|_bcNutr/.test(corps),
+    'la douane recalcule ce qu\'un propriétaire calcule déjà');
+  t('CCCIII ⑰ ⛔⛔ PÉRIMÈTRE DE SOURCE — AUCUN ÉCRIVAIN N\'EST DEVENU CONDITIONNEL : la valeur '+
+    'rendue par la douane n\'est testée nulle part, donc elle ne peut bloquer aucune écriture',
+    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
+      .every(n=>!/(if\s*\(\s*_douaneLigne|_douaneLigne\([^)]*\)\s*[.=!<>&|?]|(const|let|var)\s+\w+\s*=\s*_douaneLigne)/.test(corpsDe(n))),
+    'un écrivain lit le verdict de la douane — ce serait un blocage déguisé');
+  /* ⭐ LE COMPTE DES RÈGLES EST FIGÉ : 9 structurelles + 12 de cohérence. Sans ce témoin, une
+     règle qui disparaîtrait ne ferait rougir personne — la douane rendrait simplement OK plus
+     souvent, ce qui ressemble à un progrès. */
+  t('CCCIII ⑱ ⭐ LES 21 RÈGLES SONT TOUJOURS LÀ (9 `INVALID` + 12 `WARN`) — une règle qui '+
+    'disparaît rend la douane plus silencieuse, ce qui ressemble à un progrès',
+    (corps.match(/dit\('/g)||[]).length===21 &&
+    (corps.match(/'INVALID',/g)||[]).length===9,
+    'regles='+(corps.match(/dit\('/g)||[]).length+' invalid='+(corps.match(/'INVALID',/g)||[]).length);
+  t('CCCIII ⑲ ⛔ LE SEUIL ÉNERGÉTIQUE RESTE RELATIF **ET** ABSOLU — le relatif seul mord sur un '+
+    'café à 2 kcal et sur les macros arrondies à l\'entier par l\'écran d\'édition',
+    /d\s*>=\s*25\s*&&\s*d\s*\/\s*b\s*>\s*0\.30/.test(corps), 'seuil énergétique modifié');
+}
+
+
+/* ══════════ BLOC CCCIV — 📊 ÉTAPE 6 : L'OBSERVATION RÉELLE DE LA DOUANE (ft-v1206) ══════════
+   Michel valide le mode observation et demande de le faire tourner sur les VRAIES écritures :
+   *« obtenir un rapport agrégé des WARN / INVALID rencontrés en usage réel, SANS STOCKER le
+   contenu des repas ni les valeurs nutritionnelles personnelles »*.
+
+   ⛔⛔ AUCUNE RÈGLE NE CHANGE, AUCUN BLOCAGE, AUCUNE CORRECTION. Ce bloc ne prouve qu'une chose :
+   que les compteurs comptent juste, et qu'ils ne contiennent RIEN de ce que la personne a mangé.
+
+   ⭐⭐ LE TÉMOIN CENTRAL EST UN CANARI. On conduit un VRAI écrivain avec un nom et des valeurs
+   reconnaissables, puis on cherche ces valeurs dans ce qui a été stocké. ⛔ Et le même témoin
+   vérifie que le carnet a bien ENREGISTRÉ quelque chose — sinon l'absence du canari serait
+   trivialement vraie, et la promesse de confidentialité deviendrait *un vert qui ne peut pas
+   rougir* (ft-v994). */
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=[typeof _douaneCompter, typeof _douaneRapport, typeof _douaneCarnet];
+    const CLE='ft4_douane_obs';
+    const vider=()=>{ try{ localStorage.removeItem(CLE); }catch(e){}
+                      S.foodLog=[]; S.savedFoods=[];
+                      try{ _afSetSrc(null); }catch(e){}
+                      try{ _afOublierAliment(); }catch(e){} };
+    const carnet=()=>{ try{ return JSON.parse(localStorage.getItem(CLE)||'null'); }catch(e){ return null; } };
+    const ecrire=(it)=>{ _afQuickItems=[Object.assign({fav:false},it)]; _afMeal='dejeuner';
+                         quickAddFood(0); };
+
+    /* ① Au départ le carnet n'existe pas, et UNE VRAIE écriture le crée. */
+    vider();
+    o.avant = carnet();
+    ecrire({name:'Poulet', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g',
+            per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    const c1=carnet();
+    o.apres_une_ligne = c1 ? [c1.n, c1.etats.OK, c1.etats.WARN, c1.etats.INVALID] : null;
+
+    /* ② Le verdict compté est bien celui que la douane rend. */
+    vider();
+    ecrire({name:'Bol', kcal:120, prot:3, carbs:14, fat:5, q:2, u:'portion', portionLabel:'bol'});
+    const c2=carnet();
+    o.warn_compte = c2 ? [c2.etats.OK, c2.etats.WARN, (c2.regles||{}).portion_sans_poids] : null;
+
+    /* ③ Les écrivains sont distingués — on en conduit DEUX pour de vrai. */
+    vider();
+    ecrire({name:'A', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    S.foodLog=[{date:'2026-09-01',meal:'dejeuner',ts:1,name:'B',kcal:100,prot:5,carbs:10,fat:3,q:100,u:'g'},
+               {date:'2026-09-02',meal:'dejeuner',ts:2,name:'B',kcal:100,prot:5,carbs:10,fat:3,q:100,u:'g'}];
+    const sig=(_repasHabituels()[0]||{}).sig||'';
+    if(sig) rejouerRepas(sig,'dejeuner');
+    const c3=carnet();
+    o.par_ecrivain = c3 ? Object.keys(c3.ecrivains).sort() : null;
+
+    /* ④ Les FORMES sont classées à partir de `u`/`q` seuls. */
+    vider();
+    ecrire({name:'G', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    ecrire({name:'P', kcal:100, prot:5, carbs:10, fat:3, q:2, u:'portion', portionLabel:'p', portionWeightG:50, per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    ecrire({name:'N', kcal:100, prot:5, carbs:10, fat:3});
+    const c4=carnet();
+    o.formes = c4 && c4.ecrivains.quickAddFood ? c4.ecrivains.quickAddFood.formes : null;
+
+    /* ⑤ Le compteur de source est un BOOLÉEN — il suit la divergence de ft-v1205 sans jamais
+       garder l'identifiant. */
+    vider();
+    ecrire({name:'S1', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g',
+            sourceId:'off:1234567890', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    ecrire({name:'S2', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    const c5=carnet();
+    const E5=c5&&c5.ecrivains.quickAddFood;
+    o.source_booleen = E5 ? [E5.avecSource, E5.sansSource,
+                             JSON.stringify(c5).indexOf('1234567890')<0] : null;
+
+    /* ⑥ Le CATALOGUE des règles se renseigne tout seul — il n'est recopié nulle part. */
+    o.catalogue = c5 ? (c5.catalogue||[]).length : null;
+
+    /* ⑦ ⭐⭐ LE CANARI — la preuve qu'aucune donnée de repas n'est stockée.
+       ⛔ On vérifie AUSSI que le carnet a bien enregistré : sans ça, un carnet vide passerait
+       le test sans rien prouver. */
+    vider();
+    ecrire({name:'ZZCANARIMICHELXY', kcal:7777, prot:6666, carbs:5555, fat:4444,
+            q:3333, u:'g', sourceId:'off:ZZCANARISOURCE',
+            per100:{kcal:9999, prot:8888, carbs:2222, fat:1111}});
+    const brut = localStorage.getItem(CLE)||'';
+    const interdits = ['ZZCANARI','ZZCANARISOURCE','7777','6666','5555','4444','3333',
+                       '9999','8888','2222','1111'];
+    o.canari = [ brut.length>0,
+                 brut.indexOf('quickAddFood')>=0,          /* il a VRAIMENT enregistré */
+                 interdits.filter(x=>brut.indexOf(x)>=0) ];
+    /* et le canari ne doit pas non plus fuir par une AUTRE clé que la douane aurait posée */
+    const autres=[];
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+      if(k===CLE) continue;
+      if(/douane/i.test(k)) autres.push(k); }
+    o.pas_d_autre_cle = autres;
+
+    /* ⑧ Le carnet SURVIT : c'est tout l'intérêt d'observer un usage réel sur plusieurs jours. */
+    const avantRechargement = localStorage.getItem(CLE);
+    load();                                   /* le vrai chargement de l'app */
+    o.survit = [ localStorage.getItem(CLE)===avantRechargement,
+                 JSON.stringify(S).toLowerCase().indexOf('douane')<0 ];
+
+    /* ⑨ Le rapport se lit, et il POSE les 3 questions de Michel sans y répondre. */
+    const r=_douaneRapport();
+    o.rapport = [ r.length>100,
+                  r.indexOf('quickAddFood')>=0,
+                  r.indexOf('JAMAIS MORDU')>=0,
+                  r.indexOf('ZZCANARI')<0,
+                  r.indexOf('7777')<0 ];
+
+    /* ⑩ À zéro ligne, le rapport le DIT au lieu de diviser par zéro. */
+    vider();
+    const r0=_douaneRapport();
+    o.rapport_vide = [ r0.indexOf('Aucune ligne observée')>=0, r0.indexOf('NaN')<0 ];
+
+    /* ⑪ La remise à zéro efface le carnet et NE TOUCHE PAS au journal alimentaire. */
+    ecrire({name:'X', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    const nAvant=(S.foodLog||[]).length;
+    _douaneRemiseAZero();
+    o.remise = [ localStorage.getItem(CLE)===null, (S.foodLog||[]).length===nAvant ];
+
+    /* ⑫ Le carnet ne CHANGE rien à la ligne enregistrée : on compare la ligne écrite avec et
+       sans carnet disponible. */
+    vider();
+    ecrire({name:'Cmp', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g', per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    const l1=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l1.ts; delete l1.date;
+    vider();
+    ecrire({name:'Cmp', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g', per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    const l2=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l2.ts; delete l2.date;
+    o.ligne_stable = JSON.stringify(l1)===JSON.stringify(l2) && Object.keys(l1).length>10;
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  t('CCCIV ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCIV ① ⭐ le carnet, le compteur et le rapport existent',
+    Array.isArray(X.type) && X.type.every(v=>v==='function'), JSON.stringify(X.type));
+  t('CCCIV ② ⭐ une VRAIE écriture crée le carnet et l\'incrémente (avant : rien)',
+    X.avant===null && Array.isArray(X.apres_une_ligne) && X.apres_une_ligne[0]===1
+    && X.apres_une_ligne[1]===1, JSON.stringify([X.avant, X.apres_une_ligne]));
+  t('CCCIV ③ ⭐ le verdict compté est celui que la douane rend — et la RÈGLE est comptée par nom',
+    Array.isArray(X.warn_compte) && X.warn_compte[0]===0 && X.warn_compte[1]===1
+    && X.warn_compte[2]===1, JSON.stringify(X.warn_compte));
+  t('CCCIV ④ ⭐ les écrivains sont distingués (deux vrais écrivains conduits)',
+    Array.isArray(X.par_ecrivain) && X.par_ecrivain.length===2
+    && X.par_ecrivain.indexOf('quickAddFood')>=0 && X.par_ecrivain.indexOf('rejouerRepas')>=0,
+    JSON.stringify(X.par_ecrivain));
+  t('CCCIV ⑤ ⭐ les FORMES sont classées depuis `u`/`q` seuls : grammes · portion · sans_quantite',
+    X.formes && X.formes.grammes===1 && X.formes.portion===1 && X.formes.sans_quantite===1,
+    JSON.stringify(X.formes));
+  t('CCCIV ⑥ ⛔⛔ LE COMPTEUR DE SOURCE EST UN BOOLÉEN — il suit la divergence de ft-v1205 '+
+    '(`rejouerRepas` perd `sourceId`) sans jamais garder l\'identifiant lui-même',
+    Array.isArray(X.source_booleen) && X.source_booleen[0]===1 && X.source_booleen[1]===1
+    && X.source_booleen[2]===true, JSON.stringify(X.source_booleen));
+  t('CCCIV ⑦ ⭐ LE CATALOGUE DES 21 RÈGLES SE RENSEIGNE TOUT SEUL — aucune liste recopiée, donc '+
+    'rien à faire diverger le jour où une règle change (R2)',
+    X.catalogue===21, 'catalogue='+X.catalogue);
+  t('CCCIV ⑧ ⛔⛔⛔ LE CANARI — AUCUNE DONNÉE DE REPAS N\'EST STOCKÉE : on enregistre un aliment '+
+    'au nom et aux valeurs reconnaissables, et RIEN de tout ça ne se retrouve dans le carnet. '+
+    'Et le carnet a bien enregistré (sinon l\'absence serait triviale)',
+    Array.isArray(X.canari) && X.canari[0]===true && X.canari[1]===true
+    && Array.isArray(X.canari[2]) && X.canari[2].length===0,
+    'fuites='+JSON.stringify(X.canari));
+  t('CCCIV ⑨ ⛔ LE CARNET N\'A QU\'UNE SEULE CLÉ : rien d\'autre ne s\'écrit ailleurs sous son nom',
+    Array.isArray(X.pas_d_autre_cle) && X.pas_d_autre_cle.length===0,
+    JSON.stringify(X.pas_d_autre_cle));
+  t('CCCIV ⑩ ⭐ IL SURVIT AU RECHARGEMENT (c\'est tout l\'intérêt d\'observer un usage réel) — '+
+    'et il n\'entre toujours pas dans `S`, donc ni dans la sauvegarde ni dans le cloud',
+    Array.isArray(X.survit) && X.survit[0]===true && X.survit[1]===true, JSON.stringify(X.survit));
+  t('CCCIV ⑪ ⭐ LE RAPPORT se lit, nomme les écrivains, POSE la question des règles qui ne '+
+    'mordent jamais — et ne porte aucune trace du canari',
+    Array.isArray(X.rapport) && X.rapport.every(v=>v===true), JSON.stringify(X.rapport));
+  t('CCCIV ⑫ ⛔ À ZÉRO LIGNE, LE RAPPORT LE DIT au lieu de diviser par zéro',
+    Array.isArray(X.rapport_vide) && X.rapport_vide.every(v=>v===true), JSON.stringify(X.rapport_vide));
+  t('CCCIV ⑬ ⛔ LA REMISE À ZÉRO efface les compteurs et NE TOUCHE PAS au journal alimentaire',
+    Array.isArray(X.remise) && X.remise[0]===true && X.remise[1]===true, JSON.stringify(X.remise));
+  t('CCCIV ⑭ ⛔⛔ LA LIGNE ENREGISTRÉE NE BOUGE PAS : deux écritures identiques donnent la même '+
+    'ligne, le carnet n\'a rien changé',
+    X.ligne_stable===true, 'la ligne a changé');
+  t('CCCIV ⑮ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — le carnet touche au STOCKAGE : c'est précisément le genre de code qui
+   peut se mettre à garder « juste un petit champ en plus » sans qu'aucun écran ne change. */
+{
+  const srcA=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeA=srcA.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LA=codeA.split('\n'), DA=[];
+  LA.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DA.push([i,m[1]]); });
+  const corpsA=(nom)=>{ const k=DA.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LA.slice(DA[k][0], k+1<DA.length?DA[k+1][0]:LA.length).join('\n'); };
+  const cCompter=corpsA('_douaneCompter');
+
+  t('CCCIV ⑯ ⛔⛔ PÉRIMÈTRE DE SOURCE — LE COMPTEUR NE GARDE AUCUN CHAMP DE REPAS : ni `name`, '+
+    'ni `kcal`, ni `prot`, ni `carbs`, ni `fat`, ni `q`, ni `per100`, ni `sourceId`, ni `date`, '+
+    'ni `meal`. Il ne lit que `u`/`q` (pour la forme) et l\'EXISTENCE d\'un `sourceId`',
+    cCompter.length>0
+    && !/\bligne\.(name|kcal|prot|carbs|fat|per100|date|meal|portionLabel)\b/.test(cCompter)
+    && !/\bl\.(name|kcal|prot|carbs|fat|per100|date|meal)\b/.test(cCompter)
+    /* ⚠️ CE MOTIF ÉTAIT AVEUGLE : il refusait `ligne.sourceId` suivi d'un caractère « parlant »,
+       donc il laissait passer `E.src = String(ligne.sourceId);` — la parenthèse fermante le
+       désamorçait. On compte désormais les OCCURRENCES (une seule, celle du booléen) et on
+       refuse toute forme qui RANGE la valeur. ⭐ Le canari, lui, l'avait attrapée : *un test de
+       comportement et un témoin de source ne se remplacent pas, ils se complètent.* */
+    && (cCompter.match(/ligne\.sourceId/g)||[]).length===1
+    && !/String\(\s*ligne\.sourceId/.test(cCompter)
+    && !/=\s*ligne\.sourceId/.test(cCompter),
+    'le compteur garde un champ de repas');
+  t('CCCIV ⑰ ⛔⛔ PÉRIMÈTRE DE SOURCE — LE COMPTEUR N\'ÉCRIT NI DANS `S`, NI DANS LA LIGNE, '+
+    'NI DANS LE JOURNAL : il n\'écrit que sa propre clé',
+    cCompter.length>0 && !/\bS\.\w+\s*=/.test(cCompter) && !/S\.foodLog/.test(cCompter)
+    && !/\bligne\.\w+\s*=[^=]/.test(cCompter) && !/persist\(/.test(cCompter)
+    && (cCompter.match(/localStorage\.setItem\(/g)||[]).length===1
+    && /DOUANE_OBS_CLE/.test(cCompter)
+    /* ⛔ et le carnet ne peut pas grossir sans fin : les combinaisons sont BORNÉES */
+    && /DOUANE_COMBOS_MAX/.test(cCompter), 'le compteur écrit ailleurs que dans sa clé');
+  t('CCCIV ⑱ ⛔⛔ LE CARNET N\'EST PAS SYNCHRONISÉ : la sauvegarde cloud ne le mentionne nulle '+
+    'part — elle part de `S`, et rien de la douane n\'y entre',
+    !/douane/i.test(fs.readFileSync(ROOT+'/setup.js','utf8')
+                      .replace(/\/\*[\s\S]*?\*\//g,'')
+                      .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n')),
+    'setup.js mentionne la douane — vérifier que ce n\'est pas la sauvegarde');
+  t('CCCIV ⑲ ⛔ LES 21 RÈGLES DE ft-v1205 SONT INTACTES — l\'étape 6 ne devait en changer AUCUNE',
+    (corpsA('_douaneLigne').match(/dit\('/g)||[]).length===21
+    && (corpsA('_douaneLigne').match(/'INVALID',/g)||[]).length===9,
+    'une règle a bougé');
+  t('CCCIV ⑳ ⛔⛔ TOUJOURS AUCUN BLOCAGE : aucun écrivain ne lit le verdict, et le compteur ne '+
+    'peut pas en empêcher un (il est appelé dans un `try` qui avale tout)',
+    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
+      .every(n=>!/(if\s*\(\s*_douaneLigne|(const|let|var)\s+\w+\s*=\s*_douaneLigne)/.test(corpsA(n)))
+    && /try\{\s*_douaneCompter\(res, l\);\s*\}catch/.test(corpsA('_douaneLigne')),
+    'le comptage peut bloquer une écriture');
+}
+
+
+/* ══════════ BLOC CCCV — 🔬 FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE (ft-v1207) ══════════
+   Michel, sur les lentilles Raynal : ⛔ *« je ne veux pas un correctif spécifique aux lentilles —
+   je veux que le problème soit traité pour TOUS les aliments et toutes les sources »*.
+
+   ⭐⭐ LA LOI QUI DÉCIDE : protéines et lipides ont des facteurs FIXES (UE 1169/2011 annexe XIV,
+   4 et 9 kcal/g) et tous les autres contributeurs sont ≥ 0. Donc **E ≥ 4P + 9L**, quelle que soit
+   la composition du reste. ⭐ La tolérance est DÉRIVÉE de la précision reçue, pas choisie.
+   ⛔ Mesuré avant d'être écrit : **0 faux positif sur 3 607 aliments** (CIQUAL + marques). */
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={};
+    o.type=[typeof _resoudreNutrition, typeof _nrjPlancher, typeof _nrjCandidats];
+    /* ⛔ ON PASSE PAR `_ref100`, LE VRAI NORMALISEUR — jamais par le résolveur seul : c'est lui
+       qui mesure la présence sur les valeurs BRUTES, et c'est là qu'est le défaut qu'on a trouvé
+       à la mesure (une macro absente devenue 0). *Tester le résolveur nu testerait la moitié.* */
+    const R=(nom,kcal,p,c,f,opts)=>{ const x=_ref100(nom,kcal,p,c,f,opts);
+      return {kcal:x.kcal100, etat:x.fiab.etat, meth:x.fiab.methode, brut:x.fiab.brut,
+              champ:x.fiab.champ, raison:x.fiab.raison, conf:x.fiab.confiance}; };
+
+    /* ── LA MATRICE DEMANDÉE PAR MICHEL, 16 CAS ── */
+    o.c01_coherent      = R('Poulet',165,31,0,3.6,{origine:'ciqual'});
+    o.c02_arrondi       = R('Yaourt',60,4,7,1.5,{origine:'ciqual'});
+    o.c03_raynal        = R('Lentilles Raynal',48.3,6.1,10,3.2,{origine:'barcode',champ:'energy-kcal_100g'});
+    o.c04_tres_bas      = R('Absurde',10,20,5,15,{origine:'off'});
+    o.c05_plausible     = R('Presque',175,31,0,3.6,{origine:'ciqual'});
+    o.c06_incompletes   = R('Mystere',30,6,undefined,3,{origine:'off'});
+    o.c07_sans_energie  = R('Sans kcal',undefined,6,10,3,{origine:'off'});
+    o.c08_sans_macros   = R('Sans macros',250,undefined,undefined,undefined,{origine:'off'});
+    o.c09_fibres        = R('Son de ble',180,15,20,4,{origine:'ciqual'});      /* fibres non déclarées : hors carbs */
+    o.c10_alcool        = R('Vin rouge',85,0.1,2.6,0,{origine:'ciqual'});      /* l'alcool AJOUTE, il ne retire pas */
+    o.c11_polyols       = R('Chewing-gum',160,0,65,0,{origine:'off'});         /* polyols : facteur plus BAS que 4 */
+    /* ⭐⭐ LES CANDIDATS VIENNENT DU VRAI PROPRIÉTAIRE, PAS D'UN TABLEAU ÉCRIT À LA MAIN.
+       390 kJ est exactement l'hypothèse B du 48,3 : `energy_100g` en kilojoules. Un tableau
+       fabriqué ici aurait testé le résolveur en laissant la CONVERSION hors de portée — et
+       une conversion fausse est justement l'une des mutations que Michel a nommées. */
+    o.candidats_kj = _nrjCandidats({'energy-kcal_100g':48.3,'energy_100g':390});
+    o.c12_unite_ambigue = R('Ambigu',48.3,6.1,10,3.2,{origine:'barcode',champ:'energy-kcal_100g',
+                             candidats:_nrjCandidats({'energy-kcal_100g':48.3,'energy_100g':390})});
+    o.c13_manuel        = R('Tape a la main',48.3,6.1,10,3.2,{origine:'manuel'});
+    o.c14_etiquette     = R('Photo etiquette',48.3,6.1,10,3.2,{origine:'etiquette'});
+    o.c15_reprise       = R('Repris du journal',48.3,6.1,10,3.2,{origine:'historique'});
+    /* ⭐⭐ LE CAS 16 : le MÊME code-barres, scanné puis tapé. Les deux passent par la même
+       fonction (`_lookupBarcode`), donc la résolution DOIT être identique — Michel l'a exigé
+       nommément. On compare les deux objets entiers, pas seulement la valeur. */
+    const n={'energy-kcal_100g':48.3,'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2};
+    const parScan  = R('Raynal',48.3,6.1,10,3.2,{origine:'barcode',champ:_nrjChampPrincipal(n),candidats:_nrjCandidats(n)});
+    const parSaisie= R('Raynal',48.3,6.1,10,3.2,{origine:'barcode',champ:_nrjChampPrincipal(n),candidats:_nrjCandidats(n)});
+    o.c16_scan_vs_saisie=[JSON.stringify(parScan)===JSON.stringify(parSaisie), JSON.stringify(parScan)];
+
+    /* ── LA TOLÉRANCE EST-ELLE VRAIMENT DÉRIVÉE DE LA PRÉCISION REÇUE ? ── */
+    o.precision=[_nrjPrecision(48.3), _nrjPrecision(48), _nrjPrecision(6.15)];
+    /* le même produit en ENTIERS : la loi ne mord plus, et c'est une propriété de la donnée */
+    o.entiers = R('Raynal entiers',48,6,10,3,{origine:'barcode'});
+
+    /* ── LA TRACE PART-ELLE AVEC LA LIGNE ? (le vrai chemin, pas un objet fabriqué) ── */
+    S.foodLog=[]; S.savedFoods=[];
+    try{ _afOublierAliment(); }catch(e){}
+    _afSetSrc(null);
+    /* on passe par la VRAIE porte CIQUAL, puis on enregistre */
+    _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:'ciqual'});
+    _afSetSrc({saisie:'recherche',origine:'ciqual'});
+    const pv=_provFood({kcal:93,prot:6,carbs:10,fat:3});
+    o.trace = pv.fiab ? {etat:pv.fiab.etat, brut:pv.fiab.brut, retenu:pv.fiab.retenu,
+                         meth:pv.fiab.methode, conf:pv.fiab.confiance} : 'ABSENTE';
+    /* ⛔ et une ligne COHÉRENTE ne doit rien gagner du tout */
+    _bcNutr=_ref100('Poulet',165,31,0,3.6,{origine:'ciqual'});
+    o.trace_coherent = (_provFood({kcal:165,prot:31,carbs:0,fat:3.6}).fiab===undefined);
+
+    /* ── L'ÉCRAN LE DIT-IL ? ── */
+    try{ openAddFood(); }catch(e){}
+    _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:'barcode'});
+    _afCoherence();
+    const el=document.getElementById('af-coherence');
+    o.ecran=[el? el.style.display : 'ABSENT', el? (el.innerHTML.indexOf('93.2')>=0) : false,
+             el? (el.innerHTML.indexOf('48.3')>=0) : false];
+    _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:'manuel'});
+    _afCoherence();
+    o.ecran_non_resolu = el ? (el.innerHTML.indexOf('ne sait pas laquelle croire')>=0) : false;
+
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+  });
+
+  const E=(k)=>X[k]||{};
+  t('CCCV ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCV ① ⭐ le résolveur, la loi du plancher et les candidats existent',
+    Array.isArray(X.type) && X.type.every(v=>v==='function'), JSON.stringify(X.type));
+  t('CCCV ② ⭐ ① un produit parfaitement cohérent n\'est PAS touché',
+    E('c01_coherent').etat==='COHERENT' && E('c01_coherent').kcal===165, JSON.stringify(X.c01_coherent));
+  t('CCCV ③ ⭐⭐ ② un écart d\'ARRONDI ne déclenche rien — zéro faux positif, c\'est la moitié '+
+    'de la valeur d\'une loi',
+    E('c02_arrondi').etat==='COHERENT' && E('c02_arrondi').kcal===60, JSON.stringify(X.c02_arrondi));
+  t('CCCV ④ ⛔⛔ ③ LE CAS RAYNAL — 48,3 kcal n\'est plus utilisé comme valeur normale : la loi '+
+    'mord (protéines + lipides valent déjà 53,2), et l\'app retient 93,2 kcal dérivées',
+    E('c03_raynal').etat==='DERIVE_ESTIMABLE' && E('c03_raynal').kcal===93.2
+    && E('c03_raynal').brut===48.3 && E('c03_raynal').raison==='plancher_energetique',
+    JSON.stringify(X.c03_raynal));
+  t('CCCV ⑤ ⭐ ④ une énergie TRÈS inférieure au minimum impliqué est résolue de la même façon',
+    E('c04_tres_bas').etat==='DERIVE_ESTIMABLE' && E('c04_tres_bas').brut===10,
+    JSON.stringify(X.c04_tres_bas));
+  t('CCCV ⑥ ⭐ ⑤ une énergie légèrement différente mais PLAUSIBLE reste la source',
+    E('c05_plausible').etat==='COHERENT' && E('c05_plausible').kcal===175, JSON.stringify(X.c05_plausible));
+  t('CCCV ⑦ ⛔⛔ ⑥ MACROS INCOMPLÈTES → NON_RESOLU, et la valeur n\'est PAS remplacée. '+
+    '*On ne dérive pas depuis une macro absente devenue zéro par normalisation* (R29)',
+    E('c06_incompletes').etat==='NON_RESOLU' && E('c06_incompletes').kcal===30,
+    JSON.stringify(X.c06_incompletes));
+  t('CCCV ⑧ ⭐ ⑦ ÉNERGIE ABSENTE mais macros présentes → elle est estimée, et la raison le dit',
+    E('c07_sans_energie').etat==='DERIVE_ESTIMABLE' && E('c07_sans_energie').raison==='energie_absente'
+    && E('c07_sans_energie').kcal===91, JSON.stringify(X.c07_sans_energie));
+  t('CCCV ⑨ ⭐ ⑧ ÉNERGIE présente mais macros absentes → rien ne bouge (le plancher vaut 0)',
+    E('c08_sans_macros').etat==='COHERENT' && E('c08_sans_macros').kcal===250,
+    JSON.stringify(X.c08_sans_macros));
+  t('CCCV ⑩ ⛔ ⑨⑩⑪ FIBRES · ALCOOL · POLYOLS ne produisent aucun faux positif — ils AJOUTENT de '+
+    'l\'énergie ou en apportent MOINS que les glucides, et la loi ne compte ni l\'un ni l\'autre',
+    E('c09_fibres').etat==='COHERENT' && E('c10_alcool').etat==='COHERENT'
+    && E('c11_polyols').etat==='COHERENT',
+    JSON.stringify([X.c09_fibres,X.c10_alcool,X.c11_polyols]));
+  t('CCCV ⑪ ⭐⭐ ⑫ UNE AUTRE VALEUR DE LA SOURCE EST PRÉFÉRÉE À UNE ESTIMATION, et le champ '+
+    'retenu est ENREGISTRÉ — c\'est ce qui rendra mesurable « d\'où venait le 48,3 »',
+    E('c12_unite_ambigue').etat==='ALTERNATIVE_FIABLE' && E('c12_unite_ambigue').champ==='energy_100g'
+    && E('c12_unite_ambigue').conf==='source', JSON.stringify(X.c12_unite_ambigue));
+  t('CCCV ⑪bis ⛔⛔ LA CONVERSION kJ → kcal EST UNE DIVISION PAR 4,184, et elle est mesurée sur '+
+    'le VRAI propriétaire : 390 kJ valent 93,2 kcal. *Une multiplication au lieu d\'une division '+
+    'donnerait 1 632 et personne ne le verrait sur un écran qui affiche « kcal »*',
+    Array.isArray(X.candidats_kj) && X.candidats_kj.length===2
+    && Math.abs(X.candidats_kj[1].kcal-93.2)<0.1 && X.candidats_kj[1].champ==='energy_100g',
+    JSON.stringify(X.candidats_kj));
+  t('CCCV ⑫ ⛔⛔ ⑬⑮ UNE VALEUR SAISIE OU REPRISE PAR LA PERSONNE N\'EST JAMAIS RÉÉCRITE : elle '+
+    'est classée, pas remplacée. *Réécrire ce que quelqu\'un a tapé, c\'est lui retirer la main '+
+    'sur sa propre donnée* (consigne de Michel)',
+    E('c13_manuel').etat==='NON_RESOLU' && E('c13_manuel').kcal===48.3
+    && E('c13_manuel').meth==='observation'
+    && E('c15_reprise').etat==='NON_RESOLU' && E('c15_reprise').kcal===48.3,
+    JSON.stringify([X.c13_manuel,X.c15_reprise]));
+  t('CCCV ⑬ ⭐ ⑭ UNE PHOTO D\'ÉTIQUETTE est lue par une machine : elle est résolue comme une '+
+    'source externe, pas comme une saisie',
+    E('c14_etiquette').etat==='DERIVE_ESTIMABLE' && E('c14_etiquette').kcal===93.2,
+    JSON.stringify(X.c14_etiquette));
+  t('CCCV ⑭ ⛔⛔ ⑯ LE MÊME CODE-BARRES SCANNÉ ET TAPÉ DONNE EXACTEMENT LA MÊME RÉSOLUTION '+
+    '(exigence nommée par Michel) — comparé objet entier, pas seulement la valeur',
+    Array.isArray(X.c16_scan_vs_saisie) && X.c16_scan_vs_saisie[0]===true,
+    JSON.stringify(X.c16_scan_vs_saisie));
+  t('CCCV ⑮ ⭐⭐ LA TOLÉRANCE EST DÉRIVÉE DE LA PRÉCISION REÇUE, pas choisie : 48,3 → 0,05 · '+
+    '48 → 0,5. ⚠️ Et avec une source en ENTIERS la loi ne mord plus — *la force de la loi dépend '+
+    'de la précision de la source*, c\'est dit plutôt que caché',
+    Array.isArray(X.precision) && X.precision[0]===0.05 && X.precision[1]===0.5
+    && (X.entiers||{}).etat==='COHERENT', JSON.stringify([X.precision,X.entiers]));
+  t('CCCV ⑯ ⛔⛔ LA TRACE PART AVEC LA LIGNE : valeur brute, valeur retenue, méthode et '+
+    'confiance sont reconstructibles. *Ne jamais écraser la source et perdre la trace*',
+    X.trace && X.trace!=='ABSENTE' && X.trace.brut===48.3 && X.trace.retenu===93.2
+    && X.trace.meth==='derive_macros' && X.trace.conf==='derivee', JSON.stringify(X.trace));
+  t('CCCV ⑰ ⛔ ET UNE LIGNE COHÉRENTE NE GAGNE RIEN DU TOUT — une ligne normale ne grossit pas',
+    X.trace_coherent===true, 'une ligne cohérente porte une trace inutile');
+  t('CCCV ⑱ ⭐⭐ L\'ÉCRAN LE DIT : la valeur retenue ET la valeur d\'origine sont affichées, '+
+    'donc la personne n\'arbitre plus seule devant un chiffre muet',
+    Array.isArray(X.ecran) && X.ecran[0]==='block' && X.ecran[1]===true && X.ecran[2]===true,
+    JSON.stringify(X.ecran));
+  t('CCCV ⑲ ⛔ ET EN NON_RESOLU IL DIT QU\'IL NE SAIT PAS, au lieu de présenter une valeur '+
+    'douteuse comme sûre',
+    X.ecran_non_resolu===true, 'l\'écran ne dit pas son incertitude');
+  t('CCCV ⑳ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — la frontière de ce chantier, que le comportement ne montre pas. */
+{
+  const srcA=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeA=srcA.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LA=codeA.split('\n'), DA=[];
+  LA.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DA.push([i,m[1]]); });
+  const corpsA=(nom)=>{ const k=DA.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LA.slice(DA[k][0], k+1<DA.length?DA[k+1][0]:LA.length).join('\n'); };
+
+  t('CCCV ㉑ ⭐⭐ UN SEUL PROPRIÉTAIRE DE LA DÉCISION : `_resoudreNutrition` est appelée EXACTEMENT '+
+    'une fois, depuis `_ref100` — zéro patch porte par porte (exigence nommée par Michel)',
+    (codeA.match(/_resoudreNutrition\(/g)||[]).length===2
+    && /_resoudreNutrition\(/.test(corpsA('_ref100')),
+    'occurrences='+(codeA.match(/_resoudreNutrition\(/g)||[]).length);
+  /* ⚠️⚠️ ft-v1208 — CE TÉMOIN ÉTAIT AVEUGLE, ET C'EST LE CONTRÔLE NÉGATIF QUI L'A DIT.
+     Il cherchait `origine:'X'` N'IMPORTE OÙ dans le fichier — or plusieurs de ces noms vivent
+     AUSSI dans `_afSetSrc`, qui décrit la provenance de la LIGNE. Mesuré : débrancher l'origine
+     `ciqual` de `_ref100` le laissait parfaitement vert, parce que l'autre occurrence suffisait.
+     👉 ***C'est le jumeau EXACT d'un garde du générateur de PDF corrigé la veille — corrigé là,
+     pas ici*** (**R8**, la porte jumelle, dans le banc d'essai lui-même).
+     Il lit désormais les APPELS de `_ref100`, et la liste doit être FERMÉE : ni une de moins
+     (une porte débranchée), ni une de plus (une origine inventée qui ne serait classée nulle
+     part par le résolveur). */
+  {
+    const _origVues = (codeA.match(/_ref100\((?:[^;])*?origine:'(\w+)'/g)||[])
+      .map(x=>(x.match(/origine:'(\w+)'$/)||[])[1]).filter(Boolean).sort();
+    t('CCCV ㉒ ⭐ LES 8 ORIGINES SONT PASSÉES À `_ref100` — et aucune ne recopie une once de '+
+      'logique : elles passent un nom, rien d\'autre',
+      JSON.stringify(_origVues)===JSON.stringify(
+        ['barcode','ciqual','etiquette','historique','manuel','marque','off','reprise']),
+      'origines réellement passées à `_ref100` : '+JSON.stringify(_origVues));
+  }
+  t('CCCV ㉓ ⛔⛔ LA LOI NE S\'ÉCRIT QU\'UNE FOIS : `_nrjPlancher` est le seul endroit qui compare '+
+    'une énergie à `4P + 9L`. *Deux écritures finiraient avec deux tolérances, et on ne saurait '+
+    'plus laquelle croire* (R2)',
+    (codeA.match(/NRJ_PROT \* p \+ NRJ_LIP \* f/g)||[]).length===1,
+    'la loi est écrite plusieurs fois');
+  t('CCCV ㉔ ⛔⛔ LA DOUANE N\'EST PAS DEVENUE UN MOTEUR DE CORRECTION : ses 21 règles sont '+
+    'intactes, elle n\'appelle pas le résolveur, et aucune ne bloque',
+    (corpsA('_douaneLigne').match(/dit\('/g)||[]).length===21
+    && (corpsA('_douaneLigne').match(/'INVALID',/g)||[]).length===9
+    && !/_resoudreNutrition|_nrjPlancher/.test(corpsA('_douaneLigne')),
+    'la douane a bougé');
+  t('CCCV ㉕ ⛔ HORS PÉRIMÈTRE, VÉRIFIÉ : le résolveur ne touche ni à `S.foodLog`, ni à '+
+    '`savedFoods`, ni à la quantité, ni à l\'unité, ni à la portion, ni à la provenance',
+    !/S\.foodLog|savedFoods|\.q\s*=|\.u\s*=|portionWeightG|_afSetSrc/.test(corpsA('_resoudreNutrition')),
+    'le résolveur déborde de son sujet');
+  t('CCCV ㉖ ⛔ ET IL NE PARLE PAS À LA PERSONNE : aucun `toast`, aucun `document` — l\'écran est '+
+    'le travail de `_coherenceKcal`, qui existait déjà (R13)',
+    !/toast\(|document\.|alert\(/.test(corpsA('_resoudreNutrition')),
+    'le résolveur touche à l\'interface');
+
+  /* ⛔⛔ LES DEUX TÉMOINS SUIVANTS FIGENT UN VRAI DÉFAUT QUE J'AI INTRODUIT ET QUE LE BANC A
+     ATTRAPÉ — sur le cas réel de Michel, pas sur un cas inventé. */
+  t('CCCV ㉗ ⛔⛔ « APPARAÎTRE » = LE MESSAGE A CHANGÉ, pas seulement « display est passé à block » '+
+    '— et la remontée se CONFIRME une fois, parce que `scrollIntoView({smooth})` est asynchrone '+
+    'et que l\'écran continue de se remplir après un scan. *Un défilement demandé n\'est pas un '+
+    'défilement arrivé.*',
+    /el\.innerHTML!==avantHTML/.test(corpsA('_coherenceKcal'))
+    && /setTimeout\(_remonter/.test(corpsA('_coherenceKcal'))
+    && /activeElement/.test(corpsA('_coherenceKcal')),
+    'la garantie de ft-v1191 est retombée en silence');
+  t('CCCV ㉘ ⛔⛔ PÉRIMÈTRE — LA FIABILITÉ NE PASSE PAS DEVANT LA MASSE : ft-v1103 a tranché que '+
+    'la masse est le défaut le plus grave, et cette décision n\'était pas la mienne à renverser '+
+    '(R30). Elle passe en revanche devant le plafond et devant l\'écart',
+    corpsA('_coherenceKcal').indexOf('_masseImpossible(pfx)')
+      < corpsA('_coherenceKcal').indexOf('_bcNutr.fiab')
+    && corpsA('_coherenceKcal').indexOf('_bcNutr.fiab')
+      < corpsA('_coherenceKcal').indexOf('_kcalImpossible(pfx)'),
+    'l\'ordre des avertissements a changé sans décision');
+}
+
+
+/* ══════════ BLOC CCCVI — 📱 LE CAS RÉEL DE LA CAPTURE iPHONE, DE BOUT EN BOUT (ft-v1208) ══════════
+   Michel envoie une capture de son iPhone le 13/09 à 20:02 : lentilles Raynal & Roquelaure
+   (3021690201123), 410 g, **198 kcal** pour 25 P / 41 G / 13 L, avec l'ANCIEN encadré
+   « 198 kcal ne colle pas à ces macros… » et son bouton « Mettre 381 kcal ».
+
+   ⭐⭐ CE BLOC EXISTE PARCE QUE LE BANC NE POUVAIT PAS RÉPONDRE. Le bloc CCCV éprouve
+   `_ref100` **isolément**, cas par cas — il ne conduit JAMAIS la chaîne complète
+   *code-barres → formulaire → 410 g → valeurs affichées*. Or c'est exactement cette chaîne que
+   la capture montre. 👉 ***Un banc qui teste la pièce ne répond pas à une question posée sur
+   la machine*** : il a fallu écrire une sonde jetable pour trancher, alors qu'un témoin
+   permanent aurait répondu en une passe.
+
+   ⛔⛔ ET LA CAUSE DE LA CAPTURE N'ÉTAIT PAS UN DÉFAUT DE CODE — c'est dit plutôt que masqué.
+   Mesuré : le déploiement était vert 1 h 30 avant, le résolveur s'applique bien, et
+   `_majPeutSAppliquer` retenait le rechargement parce que l'écran courant n'était pas
+   l'Accueil (décision de ft-v1184). *Le code était juste ; c'est la VERSION SERVIE qui ne
+   l'était pas.* Ces témoins figent donc le comportement attendu pour que la question ne se
+   repose jamais — et la mutation ⑤ du contrôle négatif réintroduit exactement l'écran de la
+   capture. */
+console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
+    const v=id=>(document.getElementById(id)||{}).value;
+    const coh=()=>{const e=document.getElementById('af-coherence');
+      return {vu:!!e&&e.style.display!=='none', txt:e?(e.textContent||'').replace(/\s+/g,' '):''};};
+    /* ⛔⛔ ft-v1208 (2ᵉ capture) — MA PREMIÈRE FIXTURE ÉTAIT PLUS PAUVRE QUE LA VRAIE FICHE, ET
+       J'AVAIS ÉCRIT « la capture est rejouée à chaque passe ». C'était faux.
+       ⭐⭐ La 2ᵉ capture de Michel (23:23) a révélé ce que je ne pouvais pas lire depuis le
+       conteneur : la fiche porte **DEUX** valeurs énergétiques qui se contredisent —
+       `energy-kcal_100g` = 48,3 (fausse) **et** `energy-kj_100g` ≈ 415 kJ = 99,2 kcal (cohérente).
+       Le vrai produit passe donc par `ALTERNATIVE_FIABLE` (on prend l'autre valeur DE LA SOURCE),
+       pas par `DERIVE_ESTIMABLE` — et mon banc éprouvait la mauvaise branche.
+       👉 ***Un test qui n'emploie pas le schéma de la production ne teste rien, il rassure***
+       (leçon `docs/SUIVI-AUDIT.md`, repayée ici sur une fixture que j'avais moi-même appauvrie).
+       ⭐ La fiche COMPLÈTE est reproduite ci-dessous (415 kJ redonne 99,2 au dixième, vérifié), et
+       la même fiche PRIVÉE de son kJ reste éprouvée juste après : les deux branches sont couvertes. */
+    const FICHE={product_name:'Lentilles Cuisinées à l\'Auvergnate', brands:'Raynal & Roquelaure',
+      quantity:'410 g', serving_quantity:205,
+      nutriments:{'energy-kcal_100g':48.3,'energy-kj_100g':415,
+                  'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2}};
+    /* ⛔ LA MÊME FICHE SANS SON SECOND CHAMP : c'est le cas où l'app n'a plus que les macros. */
+    const FICHE_SANS_KJ={product_name:'Lentilles Cuisinées à l\'Auvergnate', brands:'Raynal & Roquelaure',
+      quantity:'410 g', serving_quantity:205,
+      nutriments:{'energy-kcal_100g':48.3,'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2}};
+    const SAIN={product_name:'Blanc de poulet', brands:'Test', quantity:'200 g', serving_quantity:100,
+      nutriments:{'energy-kcal_100g':165,'proteins_100g':31,'carbohydrates_100g':0,'fat_100g':3.6}};
+    let FICHE_COURANTE=FICHE;
+    const vrai=window.fetch;
+    window.fetch=async(u,i)=>{const s=String(u);
+      if(s.indexOf('openfoodfacts')>=0&&/product\//.test(s))return{ok:true,json:async()=>({status:1,product:FICHE_COURANTE})};
+      if(s.indexOf('openfoodfacts')>=0)return{ok:true,json:async()=>({products:[]})};
+      return vrai(u,i);};
+
+    /* ── LE PARCOURS EXACT DE LA CAPTURE ── */
+    const jouer=async(saisie)=>{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320);
+      await _lookupBarcode('3021690201123',saisie,false); await d(450);
+      const g=document.getElementById('af-bc-grams'); g.value='410';
+      g.dispatchEvent(new Event('input',{bubbles:true})); await d(400);
+      return { kcal:v('af-kcal'), prot:v('af-prot'), carbs:v('af-carbs'), fat:v('af-fat'),
+               qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh() };
+    };
+    o.scan   = await jouer('scan');
+    /* ⛔⛔ ft-v1208 (validation iPhone) — LA PORTE TAPÉE EST CONDUITE PAR SA VRAIE FONCTION.
+       Avant, ce témoin passait `saisie:'manuel'` — **une valeur qui n'existe pas en production** :
+       `_manualBarcode` enregistre `'code-tape'`. Le résultat était juste par accident.
+       👉 ***Vérifier la fonction n'est pas vérifier l'appel*** (`BUGS.md` §58). On remplit le champ
+       et on appelle la porte, comme la personne le fait. */
+    o.tape   = await (async()=>{
+      S.foodLog=[]; S.savedFoods=[]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320);
+      const m=document.getElementById('af-bc-manual'); if(m) m.value='3021690201123';
+      _manualBarcode(); await d(700);
+      const g=document.getElementById('af-bc-grams'); g.value='410';
+      g.dispatchEvent(new Event('input',{bubbles:true})); await d(400);
+      return { kcal:v('af-kcal'), prot:v('af-prot'), carbs:v('af-carbs'), fat:v('af-fat'),
+               qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh(),
+               saisie:(_afSrc||{}).saisie }; })();
+    FICHE_COURANTE=FICHE_SANS_KJ;
+    o.sansKj = await jouer('scan');
+    /* ⛔ ON REJOUE LA VRAIE FICHE AVANT DE LIRE LA LIGNE : sans ça, les témoins de traçabilité
+       mesureraient l'état laissé par la fiche appauvrie. *Remettre la source ne suffit pas, il
+       faut rejouer le chemin* — deux témoins l'ont dit en rougissant. */
+    FICHE_COURANTE=FICHE;
+    o.scan = await jouer('scan');
+    /* ⛔ on compare les DEUX RÉSOLUTIONS ENTIÈRES, pas seulement la valeur affichée */
+    o.identiques = JSON.stringify(o.scan.bc.fiab)===JSON.stringify(o.tape.bc.fiab)
+                && o.scan.kcal===o.tape.kcal;
+
+    /* ── LA LIGNE RÉELLEMENT ENREGISTRÉE ── */
+    _afSetSrc({saisie:'scan',origine:'off',sourceId:'3021690201123',etat:'tel-que-vendu',
+               per100:_per100De(_bcNutr)});
+    const pv=_provFood({kcal:+v('af-kcal'),prot:+v('af-prot'),carbs:+v('af-carbs'),fat:+v('af-fat')});
+    o.ligne = pv.fiab ? JSON.parse(JSON.stringify(pv.fiab)) : 'ABSENTE';
+    o.per100 = pv.per100 || null;
+
+    /* ── NON-RÉGRESSION : un produit cohérent ne bouge pas d'un iota ── */
+    FICHE_COURANTE=SAIN;
+    o.sain = await (async()=>{ S.foodLog=[]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320);
+      await _lookupBarcode('0000000000000','scan',false); await d(450);
+      const g=document.getElementById('af-bc-grams'); g.value='100';
+      g.dispatchEvent(new Event('input',{bubbles:true})); await d(350);
+      const pv2=_provFood({kcal:+v('af-kcal'),prot:+v('af-prot'),carbs:+v('af-carbs'),fat:+v('af-fat')});
+      return {kcal:v('af-kcal'), etat:_bcNutr.fiab.etat, coh:coh(), trace:pv2.fiab===undefined}; })();
+    FICHE_COURANTE=FICHE;
+
+    /* ── LE DISCRIMINANT QUI A TRANCHÉ « A / B / C » : les 8 origines PARLENT ── */
+    o.origines={};
+    for(const or of ['barcode','off','ciqual','marque','etiquette','manuel','reprise','historique']){
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(120);
+      _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:or});
+      const g=document.getElementById('af-bc-grams'); if(g) g.value='410';
+      if(typeof _bcApplyGrams==='function'){ try{_bcApplyGrams();}catch(e){} }
+      _afCoherence(); await d(50);
+      const c=coh();
+      o.origines[or]={etat:_bcNutr.fiab.etat, kcal:v('af-kcal'),
+                      parle:c.vu && c.txt.indexOf('\u{1F52C}')===0,
+                      ancienEncadre:/ne colle pas à ces macros/.test(c.txt)};
+    }
+    /* ⛔⛔ LES DEUX GARDES DU CHOIX DE CANDIDAT, ÉPROUVÉS — et ils ne l'étaient par RIEN.
+       Mesuré au contrôle négatif : les retirer laissait le banc entièrement vert, parce que le
+       vrai produit a un second champ **valide** et **proche des macros**. *Un garde que rien ne
+       peut faire rougir ne mesure rien, il rassure* (ft-v994). On fabrique donc les deux fiches
+       qui les sollicitent : un second champ qui viole AUSSI la loi, et un second champ absurde. */
+    const parCand=(kj)=>{ const n={'energy-kcal_100g':48.3,'energy-kj_100g':kj,
+        'proteins_100g':6.1,'carbohydrates_100g':10,'fat_100g':3.2};
+      const r=_ref100('x',48.3,6.1,10,3.2,{origine:'barcode',champ:_nrjChampPrincipal(n),
+                                           candidats:_nrjCandidats(n)});
+      return {kcal100:r.kcal100, etat:r.fiab.etat, champ:r.fiab.champ}; };
+    o.atwater = _nrjAtwater(6.1,10,3.2);   /* ce que l'estimation aurait donné : 93,2 */
+    o.cand_absurde= parCand(3000);   /* 717 kcal : tenable pour la loi, très loin des macros */
+    /* ⛔⛔ ET LE GARDE « le candidat viole AUSSI la loi » A BESOIN D'UN AUTRE ALIMENT — mesuré,
+       pas supposé. Sur les lentilles, un candidat sous le plancher (52,5) est forcément à plus de
+       30 % sous les macros (65,2) : *l'autre garde l'attrape toujours en premier, donc celui-ci
+       est inatteignable ici*. Il faut un aliment où le plancher et l'estimation coïncident —
+       une huile (0 g de glucides) : plancher 900, macros 900. Un second champ à 850 viole la loi
+       tout en restant à 5,6 % des macros. 👉 ***Deux gardes qui se recouvrent sur un produit ne
+       se recouvrent pas sur tous*** — et c'est la seule façon de les éprouver séparément. */
+    {
+      const n={'energy-kcal_100g':700,'energy-kj_100g':3556.4,
+               'proteins_100g':0,'carbohydrates_100g':0,'fat_100g':100};
+      const r=_ref100('Huile',700,0,0,100,{origine:'barcode',champ:_nrjChampPrincipal(n),
+                                           candidats:_nrjCandidats(n)});
+      o.huile={kcal100:r.kcal100, etat:r.fiab.etat, champ:r.fiab.champ,
+               cands:_nrjCandidats(n).map(c=>Math.round(c.kcal*10)/10)};
+    }
+
+    window.fetch=vrai;
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)}; }
+  });
+
+  t('CCCVI ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCVI ① ⛔⛔ LA CAPTURE, REJOUÉE DE BOUT EN BOUT AVEC LA VRAIE FICHE — le même code-barres '+
+    'à 410 g ne donne PLUS 198 kcal mais 407, et les macros de la capture sont inchangées '+
+    '(25 / 41 / 13)',
+    (X.scan||{}).kcal==='407' && X.scan.prot==='25' && X.scan.carbs==='41' && X.scan.fat==='13'
+    && X.scan.qty==='410', JSON.stringify(X.scan&&{k:X.scan.kcal,p:X.scan.prot,c:X.scan.carbs,f:X.scan.fat}));
+  t('CCCVI ①bis ⭐⭐ ET C\'EST UNE VALEUR **DE LA SOURCE**, PAS UNE ESTIMATION — la fiche porte '+
+    'DEUX énergies qui se contredisent, l\'app prend celle qui tient debout. *On préfère toujours '+
+    'une donnée à un calcul*, et c\'est mesuré sur le vrai produit : 99,2 (source) l\'emporte sur '+
+    '93,2 (macros)',
+    X.scan && X.scan.bc.fiab.etat==='ALTERNATIVE_FIABLE'
+    && X.scan.bc.fiab.methode==='autre_champ_source'
+    && X.scan.bc.fiab.champ==='energy-kj_100g' && X.scan.bc.kcal100===99.2,
+    JSON.stringify(X.scan&&X.scan.bc.fiab));
+  t('CCCVI ①ter ⛔ LA MÊME FICHE PRIVÉE DE SON SECOND CHAMP retombe sur les macros : 382 kcal et '+
+    '`DERIVE_ESTIMABLE`. *Les deux branches sont éprouvées sur le même produit, pas une seule.*',
+    X.sansKj && X.sansKj.kcal==='382' && X.sansKj.bc.fiab.etat==='DERIVE_ESTIMABLE'
+    && X.sansKj.bc.fiab.champ==='P/G/L',
+    JSON.stringify(X.sansKj&&{k:X.sansKj.kcal, e:X.sansKj.bc.fiab.etat}));
+  t('CCCVI ② ⛔⛔ … ET L\'ANCIEN ENCADRÉ A DISPARU : plus de « ne colle pas à ces macros » ni de '+
+    'bouton « Mettre 381 kcal » — c\'est l\'avertissement de FIABILITÉ qui parle, et il nomme '+
+    'les deux valeurs',
+    X.scan && X.scan.coh.vu===true && X.scan.coh.txt.indexOf('\u{1F52C}')===0
+    && /48\.3/.test(X.scan.coh.txt) && /99\.2/.test(X.scan.coh.txt)
+    && /energy-kj_100g/.test(X.scan.coh.txt)
+    && !/ne colle pas à ces macros/.test(X.scan.coh.txt), (X.scan||{}).coh&&X.scan.coh.txt.slice(0,120));
+  t('CCCVI ③ ⭐⭐ SCANNÉ ET TAPÉ : la MÊME résolution, objet entier comparé, et les mêmes quatre '+
+    'valeurs à l\'écran — par les DEUX vraies portes (`_lookupBarcode` et `_manualBarcode`), pas '+
+    'par un paramètre inventé',
+    X.identiques===true && X.tape && X.tape.prot===X.scan.prot && X.tape.carbs===X.scan.carbs
+    && X.tape.fat===X.scan.fat && X.tape.qty===X.scan.qty,
+    JSON.stringify([X.scan&&X.scan.kcal, X.tape&&X.tape.kcal]));
+  t('CCCVI ③bis ⛔ … ET LA PROVENANCE, ELLE, DISTINGUE BIEN LES DEUX : `scan` contre `code-tape`. '+
+    '*Le résultat est le même, la façon dont il est entré ne l\'est pas* — c\'est le contrat posé '+
+    'le 23/08 après un retour de Michel',
+    X.tape && X.tape.saisie==='code-tape', 'saisie enregistrée : '+JSON.stringify(X.tape&&X.tape.saisie));
+  t('CCCVI ④ ⛔ 48,3 N\'EST PLUS UNE VALEUR DE CONFIANCE : le pour-100 g retenu est 99,2, et la '+
+    'valeur brute reste nommée',
+    X.scan && X.scan.bc.kcal100===99.2 && X.scan.bc.fiab.brut===48.3,
+    JSON.stringify(X.scan&&X.scan.bc.fiab));
+  t('CCCVI ⑤ ⛔⛔ LA TRACE BRUTE PART AVEC LA LIGNE — et `champSource` SURVIT À LA DÉRIVATION. '+
+    '*Le code calculait le champ d\'origine, le transportait, puis le jetait exactement là où on '+
+    'le cherchait* (défaut trouvé par la trace runtime du 13/09)',
+    X.ligne && X.ligne!=='ABSENTE' && X.ligne.brut===48.3 && X.ligne.retenu===99.2
+    && X.ligne.champ==='energy-kj_100g' && X.ligne.champSource==='energy-kcal_100g',
+    JSON.stringify(X.ligne));
+  t('CCCVI ⑥ ⭐ … et le pour-100 g enregistré porte la valeur RETENUE, pas la brute',
+    X.per100 && X.per100.kcal===99.2, JSON.stringify(X.per100));
+  t('CCCVI ⑦ ⛔ NON-RÉGRESSION — un produit cohérent scanné par le même chemin ne bouge pas, '+
+    'n\'affiche aucun avertissement, et sa ligne ne gagne aucune trace',
+    X.sain && X.sain.kcal==='165' && X.sain.etat==='COHERENT'
+    && X.sain.coh.vu===false && X.sain.trace===true, JSON.stringify(X.sain));
+  t('CCCVI ⑧ ⭐⭐ LE DISCRIMINANT QUI A TRANCHÉ LA CAPTURE — sous cette version, **les 8 origines** '+
+    'font parler l\'avertissement de fiabilité ; seule la RÉÉCRITURE de la valeur diffère. '+
+    '*C\'est pour ça que l\'absence de cet avertissement sur la capture prouvait une version '+
+    'périmée, quelle que soit la porte employée.*',
+    X.origines && Object.keys(X.origines).length===8
+    && Object.keys(X.origines).every(k=>X.origines[k].parle===true)
+    && Object.keys(X.origines).every(k=>X.origines[k].ancienEncadre===false),
+    JSON.stringify(X.origines));
+  t('CCCVI ⑨ ⛔ … et la frontière tient : les 5 origines EXTERNES retiennent 382, les 3 origines '+
+    'UTILISATEUR gardent 198 sans être réécrites',
+    X.origines
+    && ['barcode','off','ciqual','marque','etiquette'].every(k=>X.origines[k].kcal==='382')
+    && ['manuel','reprise','historique'].every(k=>X.origines[k].kcal==='198'),
+    JSON.stringify(X.origines&&Object.keys(X.origines).map(k=>k+':'+X.origines[k].kcal)));
+  t('CCCVI ⑨bis ⛔⛔ UN SECOND CHAMP QUI VIOLE AUSSI LA LOI EST REFUSÉ — on ne remplace pas une '+
+    'valeur impossible par une autre valeur impossible. ⚠️ Éprouvé sur une HUILE, parce que sur '+
+    'les lentilles l\'autre garde l\'attrape toujours en premier : *deux gardes qui se recouvrent '+
+    'sur un produit ne se recouvrent pas sur tous*',
+    (X.huile||{}).etat==='DERIVE_ESTIMABLE' && X.huile.kcal100===900 && X.huile.champ==='P/G/L',
+    JSON.stringify(X.huile));
+  t('CCCVI ⑨ter ⛔⛔ … ET UN SECOND CHAMP ABSURDE AUSSI : 717 kcal passe le plancher mais s\'écarte '+
+    'de 669 % des macros. *Passer la loi ne suffit pas à être crédible* — sinon une erreur de '+
+    'saisie d\'un facteur 1000 dans la base deviendrait notre valeur de confiance',
+    (X.cand_absurde||{}).etat==='DERIVE_ESTIMABLE' && X.cand_absurde.kcal100===93.2,
+    JSON.stringify(X.cand_absurde));
+  t('CCCVI ⑨quater ⭐⭐ AUCUNE VALEUR N\'EST RECALCULÉE DEPUIS LES MACROS QUAND LA SOURCE EN A UNE '+
+    'QUI TIENT — question posée nommément par Michel. Mesuré : l\'estimation vaut 93,2, la valeur '+
+    'retenue est 99,2 (celle de la fiche). *Atwater sert de JUGE de crédibilité, jamais de source* '+
+    '— et c\'est lui qui refuse un second champ absurde (témoin ⑨ter)',
+    X.scan && X.scan.bc.kcal100===99.2 && X.atwater===93.2
+    && X.scan.bc.fiab.methode==='autre_champ_source' && X.scan.bc.fiab.confiance==='source',
+    JSON.stringify({retenu:X.scan&&X.scan.bc.kcal100, atwater:X.atwater}));
+  t('CCCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — ce que le comportement ne montre pas. */
+{
+  const srcB=fs.readFileSync(ROOT+'/app.js','utf8');
+  const codeB=srcB.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LB=codeB.split('\n'), DB=[];
+  LB.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DB.push([i,m[1]]); });
+  const corpsB=(nom)=>{ const k=DB.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LB.slice(DB[k][0], k+1<DB.length?DB[k+1][0]:LB.length).join('\n'); };
+
+  t('CCCVI ⑪ ⛔⛔ `champSource` EST POSÉ UNE SEULE FOIS ET N\'EST JAMAIS RÉÉCRIT — c\'est toute '+
+    'la différence avec `champ`, qui dit d\'où vient la valeur RETENUE et change donc de branche '+
+    'en branche',
+    (corpsB('_resoudreNutrition').match(/champSource\s*:/g)||[]).length===1
+    && !/res\.champSource\s*=/.test(corpsB('_resoudreNutrition')),
+    'champSource est réécrit ou dupliqué');
+  t('CCCVI ⑫ ⛔ … et il traverse jusqu\'à la ligne enregistrée (sinon il ne sert à rien)',
+    /champSource\s*:\s*z\.champSource/.test(corpsB('_provFood')),
+    'la trace de la ligne ne porte pas le champ source');
+  t('CCCVI ⑬ ⛔⛔ AUCUN CAS PARTICULIER RAYNAL — interdiction explicite de Michel : pas de test '+
+    'sur le code-barres, pas de 93,2 en dur, pas de nom de produit dans la décision',
+    !/3021690201123/.test(codeB) && !/93\.2/.test(corpsB('_resoudreNutrition'))
+    && !/[Rr]aynal/.test(corpsB('_resoudreNutrition')) && !/[Rr]aynal/.test(corpsB('_ref100')),
+    'un cas particulier s\'est glissé dans la décision');
+  t('CCCVI ⑭ ⛔ HORS PÉRIMÈTRE — le garde qui retient le rechargement N\'A PAS ÉTÉ TOUCHÉ : '+
+    'c\'est une décision de ft-v1184 (*ne pas arracher l\'écran*), pas un oubli (**R30**). '+
+    '*C\'est elle qui explique la capture, et ce n\'était pas à moi de la renverser.*',
+    /_curScreen\s*&&\s*window\._curScreen!=='home'|window\._curScreen&&window\._curScreen!=='home'/
+      .test(corpsB('_majPeutSAppliquer'))
+    && /_finishing/.test(corpsB('_majPeutSAppliquer'))
+    && /_evRunning/.test(corpsB('_majPeutSAppliquer')),
+    'le garde de mise à jour a bougé');
+  t('CCCVI ⑮ ⛔ HORS PÉRIMÈTRE — la douane n\'a pas bougé (21 règles, 9 `INVALID`, aucun appel '+
+    'au résolveur)',
+    (corpsB('_douaneLigne').match(/dit\('/g)||[]).length===21
+    && (corpsB('_douaneLigne').match(/'INVALID',/g)||[]).length===9
+    && !/_resoudreNutrition|_nrjPlancher/.test(corpsB('_douaneLigne')),
+    'la douane a bougé');
+}
+
+
+/* ══════════ BLOC CCCVII — 🔌 LE CHEMIN RÉSEAU DU CODE-BARRES (14/09/2026) ══════════
+   Michel : ⛔ *« prouver exactement ce qui se passe quand un utilisateur scanne un code-barres,
+   et vérifier que ce chemin n'appelle ni Milo, ni Anthropic, ni aucun autre service IA »* —
+   ⭐ *« je veux une preuve, pas une hypothèse »*.
+
+   ⭐⭐ CE BLOC MESURE LE RÉSEAU, PAS L'INTENTION. Il intercepte `fetch`, classe chaque appel par
+   DOMAINE, et fige le contrat mesuré. ⛔⛔ Et le contrat réel n'est pas celui qu'on imagine :
+
+     · code-barres TAPÉ          -> 1 appel, openfoodfacts.org, ZÉRO IA
+     · photo du code-barres      -> 2 appels : 1 Worker IA (readBarcode) + 1 openfoodfacts.org
+     · scanner caméra (ZXing)    -> décodage 100 % LOCAL, mais AUCUNE porte d'entrée
+
+   👉 ***Le seul « scan » atteignable depuis l'écran est la photo lue par l'IA*** — et c'est écrit
+   dans le libellé de son bouton (« IA lit les chiffres ») et décompté du quota.
+   ⛔ CE N'EST PAS UN DÉFAUT : ft-v388 (11/07/2026) a RETIRÉ le bouton caméra (« peu fiable »),
+   et ft-v871 a reposé la question à Michel sans rien toucher (**R30**). Ces témoins figent la
+   situation telle qu'elle est décidée — ils ne la réparent pas.
+
+   ⚠️ ON NE FIGE PAS « le scan ne fait aucun appel IA » : ce serait figer un contrat FAUX. On fige
+   le vrai — *un témoin qui affirme ce qu'on aurait aimé lire ne protège rien.* */
+console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const d=ms=>new Promise(x=>setTimeout(x,ms)), o={};
+    const EAN='3083681011791';
+    const FICHE={product_name:'Produit test', brands:'Test', quantity:'100 g', serving_quantity:50,
+      nutriments:{'energy-kcal_100g':250,'proteins_100g':10,'carbohydrates_100g':30,'fat_100g':9}};
+    let journal=[];
+    const vrai=window.fetch;
+    /* ⛔ AUCUNE requête ne PART : on note l'URL et on répond à la place. C'est ce qui rend la
+       mesure exacte — on compte ce que l'app DEMANDE, pas ce que le réseau laisse passer. */
+    window.fetch=async(u,i)=>{
+      const url=String(u&&u.url||u);
+      journal.push(url);
+      if(url.indexOf('openfoodfacts')>=0) return {ok:true, json:async()=>({status:1,product:FICHE})};
+      if(url.indexOf('workers.dev')>=0||url.indexOf('script.google.com')>=0)
+        return {ok:true, json:async()=>({status:'ok', barcode:EAN})};
+      return {ok:true, json:async()=>({})};
+    };
+    const IA=/workers\.dev|script\.google\.com|anthropic|claude/i;
+    const bilan=()=>({ total:journal.length,
+      off: journal.filter(u=>/openfoodfacts\.org/.test(u)).length,
+      ia:  journal.filter(u=>IA.test(u)).length,
+      autres: journal.filter(u=>!/openfoodfacts\.org/.test(u)&&!IA.test(u)).length,
+      domaines: journal.map(u=>{try{return new URL(u,location.href).host;}catch(e){return '?';}}) });
+    const reset=()=>{ journal=[]; };
+    const ouvrir=async()=>{ document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320); };
+
+    /* ═══ A. CODE-BARRES TAPÉ — la vraie porte, conduite par sa vraie fonction ═══ */
+    S.foodLog=[];S.savedFoods=[];S.foodAiUses=0;persist();
+    await ouvrir(); reset();
+    const mi=document.getElementById('af-bc-manual'); if(mi) mi.value=EAN;
+    _manualBarcode(); await d(700);
+    o.tape = bilan();
+    o.tape_res = { bc:JSON.parse(JSON.stringify(_bcNutr||null)), saisie:(_afSrc||{}).saisie,
+                   quotaIA:S.foodAiUses||0 };
+
+    /* ═══ B. PHOTO DU CODE-BARRES — le seul « scan » atteignable ═══ */
+    await ouvrir(); reset();
+    const bin=Uint8Array.from(atob('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q=='), ch=>ch.charCodeAt(0));
+    const dt=new DataTransfer(); dt.items.add(new File([bin],'code.jpg',{type:'image/jpeg'}));
+    const inp=document.getElementById('af-bc-photo-input');
+    o.photo_champ = !!inp;
+    if(inp){ inp.files=dt.files; await onBarcodePhotoIA(inp); await d(800); }
+    o.photo = bilan();
+    o.photo_res = { bc:JSON.parse(JSON.stringify(_bcNutr||null)), saisie:(_afSrc||{}).saisie,
+                    quotaIA:S.foodAiUses||0 };
+
+    /* ═══ C. LES DEUX PORTES DONNENT-ELLES LE MÊME OBJET ? ═══ */
+    o.meme_objet = JSON.stringify(o.tape_res.bc)===JSON.stringify(o.photo_res.bc);
+
+    /* ═══ D. LE SCANNER CAMÉRA : présent, local, et sans porte ═══ */
+    o.scanner = { openBarcodeScanner:typeof openBarcodeScanner, scanBarcode:typeof scanBarcode,
+                  af_bc_input_existe: !!document.getElementById('af-bc-input') };
+    reset(); try{ scanBarcodePhoto(); }catch(e){}
+    o.scanner_repli_appels = journal.length;
+
+    window.fetch=vrai;
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)}; }
+  });
+
+  t('CCCVII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCVII ① ⛔⛔ CODE-BARRES TAPÉ = ZÉRO APPEL IA. Un seul appel réseau, vers Open Food Facts, '+
+    'et rien d\'autre — ni Worker, ni Apps Script, ni Anthropic',
+    X.tape && X.tape.ia===0 && X.tape.off===1 && X.tape.total===1 && X.tape.autres===0,
+    JSON.stringify(X.tape));
+  t('CCCVII ② ⛔ … et le quota IA ne bouge pas d\'un cran', (X.tape_res||{}).quotaIA===0,
+    JSON.stringify(X.tape_res&&X.tape_res.quotaIA));
+  t('CCCVII ③ ⛔⛔ LA PHOTO DU CODE-BARRES FAIT **UN** APPEL IA — c\'est le contrat RÉEL, et on le '+
+    'fige tel quel. *Figer « le scan ne fait aucun appel IA » serait figer un contrat faux, et un '+
+    'témoin qui affirme ce qu\'on aurait aimé lire ne protège rien.*',
+    X.photo && X.photo.ia===1 && X.photo.off===1 && X.photo.total===2 && X.photo.autres===0,
+    JSON.stringify(X.photo));
+  t('CCCVII ④ ⭐ … et il est DÉCOMPTÉ du quota gratuit : la personne ne paie pas un appel sans le '+
+    'savoir', (X.photo_res||{}).quotaIA===1, JSON.stringify(X.photo_res&&X.photo_res.quotaIA));
+  t('CCCVII ⑤ ⭐ … et la provenance enregistrée DIT que c\'est l\'IA qui a lu les chiffres '+
+    '(`photo-code-ia`), pas un décodage vérifié',
+    (X.photo_res||{}).saisie==='photo-code-ia' && (X.tape_res||{}).saisie==='code-tape',
+    JSON.stringify([X.tape_res&&X.tape_res.saisie, X.photo_res&&X.photo_res.saisie]));
+  t('CCCVII ⑥ ⭐⭐ LES DEUX PORTES CONVERGENT : même lookup produit, même normaliseur, même '+
+    'résolveur — et le MÊME OBJET final, comparé en entier',
+    X.meme_objet===true && X.tape_res && X.tape_res.bc && X.tape_res.bc.kcal100===250
+    && X.tape_res.bc.fiab.etat==='COHERENT',
+    JSON.stringify([X.tape_res&&X.tape_res.bc&&X.tape_res.bc.kcal100,
+                    X.photo_res&&X.photo_res.bc&&X.photo_res.bc.kcal100]));
+  t('CCCVII ⑦ ⛔ LE SEUL DOMAINE INTERROGÉ POUR LE PRODUIT EST OPEN FOOD FACTS — aucun autre '+
+    'service ne voit passer le code-barres',
+    X.tape && X.tape.domaines.length===1 && X.tape.domaines[0]==='world.openfoodfacts.org'
+    && X.photo && X.photo.domaines.filter(h=>h==='world.openfoodfacts.org').length===1,
+    JSON.stringify([X.tape&&X.tape.domaines, X.photo&&X.photo.domaines]));
+  t('CCCVII ⑧ ⛔ ÉTAT CONSTATÉ, PAS RÉPARÉ (**R30**) — le scanner caméra existe, son élément de '+
+    'repli a été retiré en ft-v388, et son bouton de repli ne fait donc AUCUN appel. *ft-v871 a '+
+    'reposé la question à Michel ; tant qu\'il n\'a pas tranché, on fige l\'état, on ne le change pas.*',
+    X.scanner && X.scanner.openBarcodeScanner==='function'
+    && X.scanner.af_bc_input_existe===false && X.scanner_repli_appels===0,
+    JSON.stringify([X.scanner, X.scanner_repli_appels]));
+  t('CCCVII ⑨ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — un appel réseau ajouté ne se voit pas forcément à l'écran. */
+{
+  const srcC=fs.readFileSync(ROOT+'/app.js','utf8');
+  const cstC=fs.readFileSync(ROOT+'/constants.js','utf8');
+  const codeC=srcC.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LC=codeC.split('\n'), DC=[];
+  LC.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DC.push([i,m[1]]); });
+  const corpsC=(nom)=>{ const k=DC.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LC.slice(DC[k][0], k+1<DC.length?DC[k+1][0]:LC.length).join('\n'); };
+
+  t('CCCVII ⑩ ⛔⛔ LA RECHERCHE PRODUIT N\'INTERROGE QU\'OPEN FOOD FACTS — deux URL en cascade, '+
+    'même domaine, et aucune autre',
+    (corpsC('_offFetchProduct').match(/https:\/\/world\.openfoodfacts\.org/g)||[]).length===2
+    && !/workers\.dev|script\.google\.com|_aiUrl/.test(corpsC('_offFetchProduct')),
+    'la recherche produit a changé de destination');
+  t('CCCVII ⑪ ⛔⛔ LA PORTE TAPÉE NE TOUCHE À AUCUN SERVICE IA : ni `_aiUrl`, ni le Worker, ni '+
+    '`estimateFoodAI`, ni aucune action du proxy IA',
+    !/_aiUrl|workers\.dev|estimateFoodAI|readBarcode/.test(corpsC('_manualBarcode'))
+    && !/_aiUrl|workers\.dev|estimateFoodAI/.test(corpsC('_lookupBarcode')),
+    'un appel IA s\'est glissé dans la porte tapée ou dans le lookup');
+  t('CCCVII ⑫ ⛔ … ET LE LOOKUP PRODUIT NON PLUS : c\'est le point de convergence des deux portes, '+
+    'donc un appel IA posé là toucherait TOUT LE MONDE',
+    (corpsC('_lookupBarcode').match(/fetch\(/g)||[]).length===0
+    && /_offFetchProduct\(/.test(corpsC('_lookupBarcode')),
+    'le lookup produit fait un fetch en direct au lieu de passer par son propriétaire');
+  t('CCCVII ⑬ ⭐ L\'UNIQUE APPEL IA DU CHEMIN CODE-BARRES EST `readBarcode`, et il est déclaré '+
+    'comme tel dans la liste des actions du proxy — *rien ne part vers l\'IA sans y être inscrit*',
+    /'readBarcode'/.test(cstC) && /AI_PROXY_ACTIONS/.test(cstC)
+    && (corpsC('onBarcodePhotoIA').match(/_aiUrl\(/g)||[]).length===1
+    && /_aiUrl\('readBarcode'\)/.test(corpsC('onBarcodePhotoIA')),
+    'l\'appel IA de la photo a changé de forme');
+  t('CCCVII ⑭ ⛔⛔ LE DÉCODAGE CAMÉRA EST 100 % LOCAL : ZXing est chargé depuis le dépôt '+
+    '(`./lib/zxing.min.js`), jamais d\'un CDN, et le scanner ne fait aucun `fetch`',
+    /\.\/lib\/zxing\.min\.js/.test(corpsC('_loadZXing'))
+    && !/https?:/.test(corpsC('_loadZXing'))
+    && (corpsC('openBarcodeScanner').match(/fetch\(/g)||[]).length===0,
+    'le décodage caméra est parti chercher quelque chose sur le réseau');
+}
+
+/* ══ BLOC CCCVIII — LE SCANNER CAMÉRA LOCAL, CONDUIT DEVANT UNE CAMÉRA (14/09/2026) ══════════
+   Michel ouvre un chantier séparé : *« lire un code-barres sans appel IA, puis utiliser
+   exactement le même lookup Open Food Facts que le code tapé »* — et ⛔ *« je ne veux PAS
+   réactiver aveuglément un ancien bouton jugé peu fiable »*.
+
+   ⭐⭐ CE BLOC LANCE UN SECOND NAVIGATEUR AVEC UNE CAMÉRA FACTICE qui FILME un vrai EAN-13.
+   Sans ça, on ne peut éprouver que le DÉCODEUR ; or la question porte sur la CHAÎNE
+   (caméra → ZXing → `_lookupBarcode` → Open Food Facts). C'est la leçon de ft-v1208 :
+   *un banc qui teste la PIÈCE ne répond pas à une question posée sur la MACHINE.*
+
+   ⛔⛔ ET CE BLOC FIGE LA RÉALITÉ MESURÉE, PAS LE CONTRAT ESPÉRÉ. Le scanner déclenche
+   aujourd'hui DEUX lookups pour un seul scan (course mesurée à 28 ms). Écrire un témoin
+   « un seul lookup » serait figer un contrat FAUX — la leçon de ft-v1207. Le témoin ⑤ dit
+   donc que le défaut EXISTE ; il rougira le jour où il sera corrigé, et c'est voulu : il
+   force à revenir ici plutôt qu'à corriger en silence. */
+{
+  const os=require('os');
+  /* EAN-13 : encodeur de référence, puis un Y4M que Chromium prend pour une caméra.
+     ⚠️ LA ZONE DE SILENCE SE COMPTE EN MODULES, PAS EN PIXELS — la norme en exige 9 à 11.
+     Une marge fixe en pixels fait échouer les codes vus de PRÈS, et ma première mesure du
+     14/09 a conclu « trop proche = illisible » alors que c'était MA fixture (§63). */
+  const _L=['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
+  const _G=['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
+  const _R=['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
+  const _P=['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
+  const modulesEAN=(e)=>{const d=[...e].map(Number);let s='101';const p=_P[d[0]];
+    for(let i=1;i<=6;i++)s+=(p[i-1]==='L'?_L:_G)[d[i]];s+='01010';
+    for(let i=7;i<=12;i++)s+=_R[d[i]];return s+'101';};
+  const cleEAN=(e12)=>{let s=0;for(let i=0;i<12;i++)s+=(+e12[i])*(i%2?3:1);return String((10-s%10)%10);};
+  function ecrireY4M(f,ean,flou){
+    const W=640,H=480,N=10,m=modulesEAN(ean);
+    const mod=Math.max(1,Math.floor(W/(m.length+24)));   // ≥ 12 modules de silence de chaque côté
+    const x0=Math.floor((W-m.length*mod)/2), haut=Math.floor(H*0.45), y0=Math.floor((H-haut)/2);
+    const blanche=Buffer.alloc(W,235), barres=Buffer.alloc(W,235);
+    for(let i=0;i<m.length;i++) if(m[i]==='1') barres.fill(16,x0+i*mod,x0+i*mod+mod);
+    if(flou){ const src=Buffer.from(barres);
+      for(let x=0;x<W;x++){ const a=Math.max(0,x-flou),b2=Math.min(W,x+flou+1);
+        let s=0; for(let k=a;k<b2;k++)s+=src[k]; barres[x]=Math.round(s/(b2-a)); } }
+    const Y=Buffer.concat(Array.from({length:H},(_,y)=>(y>=y0&&y<y0+haut)?barres:blanche));
+    const UV=Buffer.alloc((W/2)*(H/2),128);
+    const parts=[Buffer.from('YUV4MPEG2 W'+W+' H'+H+' F25:1 Ip A1:1 C420jpeg\n')];
+    for(let i=0;i<N;i++) parts.push(Buffer.from('FRAME\n'),Y,UV,UV);
+    fs.writeFileSync(f,Buffer.concat(parts));
+  }
+  const EAN_NET='3083681011791';                          // Cassegrain, code-barres réel
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ftcam-'));
+  const fNet=path.join(dir,'net.y4m'), fFlou=path.join(dir,'flou.y4m');
+  const cleOK = cleEAN(EAN_NET.slice(0,12))===EAN_NET[12];
+  ecrireY4M(fNet,EAN_NET,0); ecrireY4M(fFlou,EAN_NET,4);
+
+  async function devantLaCamera(fichier){
+    const b2=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+      args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',
+            '--use-file-for-fake-video-capture='+fichier]});
+    const c2=await b2.newContext({serviceWorkers:'block',viewport:{width:390,height:844},
+      timezoneId:'Europe/Paris',permissions:['camera']});
+    const p2=await c2.newPage(); const e2=[]; p2.on('pageerror',e=>e2.push(e.message));
+    await p2.addInitScript(seedScript({}));
+    await p2.goto('http://localhost:'+PORT+'/index.html');
+    await p2.waitForTimeout(2200);
+    const res=await p2.evaluate(async ()=>{
+     try{
+      const o={reseau:[],lookups:[]};
+      /* `fetch` intercepté et classé par DOMAINE : aucune requête ne part, on compte ce que
+         l'app DEMANDE. Open Food Facts répond une fiche témoin — le réseau réel n'est pas
+         joignable d'ici, et ce n'est pas lui qu'on mesure. */
+      window.fetch=function(u){
+        const url=String((u&&u.url)||u||''); let dom=''; try{dom=new URL(url,location.href).hostname;}catch(e){dom='?';}
+        o.reseau.push(dom);
+        if(/openfoodfacts/.test(dom)) return Promise.resolve(new Response(JSON.stringify({status:1,product:{
+          product_name:'Cassoulet témoin', brands:'Témoin', quantity:'840 g',
+          nutriments:{'energy-kcal_100g':120,proteins_100g:6,carbohydrates_100g:12,fat_100g:4}}}),
+          {status:200,headers:{'Content-Type':'application/json'}}));
+        return Promise.resolve(new Response('{}',{status:200}));
+      };
+      const vraiLookup=window._lookupBarcode;
+      window._lookupBarcode=function(ean,saisie){ o.lookups.push({ean,saisie:saisie===undefined?'(aucune)':saisie});
+        return vraiLookup.apply(this,arguments); };
+      let flux=null;
+      const gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia=function(c){ o.contraintes=JSON.stringify(c);
+        return gum(c).then(s=>{flux=s;return s;}); };
+
+      openAddFood(); await new Promise(r=>setTimeout(r,150));
+      openBarcodeScanner();                                  // ⚠️ la VRAIE porte, pas le décodeur
+      for(let i=0;i<40;i++){ await new Promise(r=>setTimeout(r,100));
+        const ov=document.getElementById('ov-bc-scan'); if(ov&&!ov.classList.contains('open')){o.luToutSeul=true;break;} }
+      const v=document.getElementById('bc-video');
+      o.video={w:v&&v.videoWidth,h:v&&v.videoHeight};
+      if(!o.luToutSeul){ await _bcCaptureFrame(); await new Promise(r=>setTimeout(r,600)); }
+      const ov=document.getElementById('ov-bc-scan');
+      o.ecranFerme=!!(ov&&!ov.classList.contains('open'));
+      o.statut=(document.getElementById('bc-scan-status')||{}).textContent||'';
+      await new Promise(r=>setTimeout(r,300));
+      o.fluxCoupe = flux ? flux.getTracks().every(t=>t.readyState==='ended') : 'aucun flux';
+      o.off=o.reseau.filter(d=>/openfoodfacts/.test(d)).length;
+      o.ia =o.reseau.filter(d=>/workers\.dev|script\.google\.com/.test(d)).length;
+      o.quotaIA=(S.foodAiUses||0);
+      o.src=(typeof _afSrc==='object'&&_afSrc)?{saisie:_afSrc.saisie,origine:_afSrc.origine,sourceId:_afSrc.sourceId}:null;
+      o.kcal=(document.getElementById('af-kcal')||{}).value||'';
+      o.ligne=((document.getElementById('af-bc-row')||{}).style||{}).display||'';
+      return o;
+     }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+    });
+    res.erreursJS=e2;
+    await b2.close();
+    return res;
+  }
+
+  const CAM=await devantLaCamera(fNet);
+  const FLOU=await devantLaCamera(fFlou);
+  try{ fs.rmSync(dir,{recursive:true,force:true}); }catch(e){}
+
+  const srcApp=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const srcIdx=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  const srcScr=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+  const corpsA=(n)=>{const m=srcApp.match(new RegExp('(?:async )?function '+n+'\\([\\s\\S]*?\\n\\}'));
+    if(!m) throw new Error('corps introuvable : '+n); return m[0];};
+
+  console.log('\n═══ CCCVIII. LE SCANNER CAMÉRA LOCAL — conduit devant une caméra ═══');
+  t('CCCVIII ⓪ la sonde caméra a tourné (pas de FATAL, pas d\'erreur JS)',
+    !CAM.FATAL && !FLOU.FATAL && CAM.erreursJS.length===0,
+    (CAM.FATAL||'')+' '+(FLOU.FATAL||'')+' '+JSON.stringify(CAM.erreursJS));
+  t('CCCVIII ⓪bis le code-barres témoin porte une clé de contrôle VALIDE (sinon ZXing le refuse '+
+    'et le témoin suivant serait vert pour la mauvaise raison)', cleOK===true, '');
+  t('CCCVIII ① ⛔⛔ LE SCANNER CAMÉRA FAIT **ZÉRO** APPEL IA — ni Worker Cloudflare, ni Apps '+
+    'Script. Le décodage est entièrement local, et c\'est le fait qui décide du chantier',
+    CAM.ia===0 && CAM.quotaIA===0, JSON.stringify({ia:CAM.ia,quota:CAM.quotaIA,dom:CAM.reseau}));
+  t('CCCVIII ② ⭐ … et il LIT réellement le code depuis le flux vidéo : l\'écran se ferme, la '+
+    'fiche produit remplit le formulaire', CAM.ecranFerme===true && CAM.kcal==='120' && CAM.ligne==='block',
+    JSON.stringify({ferme:CAM.ecranFerme,kcal:CAM.kcal,ligne:CAM.ligne}));
+  t('CCCVIII ③ ⭐⭐ … et il passe par LE MÊME lookup produit que le code tapé : `_lookupBarcode` '+
+    'avec le bon numéro, puis Open Food Facts. Le scanner ne crée AUCUN chemin nutrition nouveau',
+    CAM.lookups.length>0 && CAM.lookups.every(l=>l.ean===EAN_NET) && CAM.off>=1,
+    JSON.stringify(CAM.lookups));
+  t('CCCVIII ④ ⭐ … et la provenance enregistrée le distingue du code tapé ET de la lecture IA',
+    CAM.src && CAM.src.saisie!=='code-tape' && CAM.src.saisie!=='photo-code-ia' && CAM.src.sourceId===EAN_NET,
+    JSON.stringify(CAM.src));
+  /* ⛔⛔ UNE COURSE MESURÉE, ET C'EST UN TÉMOIN DE SOURCE QUI LA FIGE — PAS UN COMPORTEMENT.
+     Mesuré le 14/09 devant la caméra factice : le callback CONTINU de ZXing et le bouton
+     « Capturer » peuvent lire le même code à 28 ms d'intervalle et tirer CHACUN son
+     `_lookupBarcode` → deux requêtes Open Food Facts pour un seul scan.
+     ⚠️⚠️ MAIS ELLE EST INTERMITTENTE : selon qui gagne, on observe 1 ou 2 lookups — la première
+     version de ce témoin comptait « exactement 2 » et rougissait au hasard.
+     👉 *Un témoin qui dépend du vainqueur d'une course ne mesure pas la course, il mesure la
+     charge de la machine.* La course, elle, est STRUCTURELLE et se lit dans la source :
+     `_bcCaptureFrame` ne pose `_bcScanning=false` qu'APRÈS son `await` de décodage (~500 ms),
+     pendant lesquelles le décodage continu reste armé.
+     ⛔ NON CORRIGÉ : défaut trouvé pendant un audit — la règle du projet (depuis ft-v1200) dit
+     de le mesurer, l'écrire, et attendre un feu vert séparé. Ce témoin tombera le jour de la
+     correction, et c'est voulu : il force à repasser ici au lieu de corriger en silence. */
+  /* ⚠️⚠️ MA PREMIÈRE VERSION DE CE TÉMOIN ÉTAIT AVEUGLE, et le contrôle négatif l'a dit :
+     elle cherchait « un `_bcScanning=false` APRÈS l'await ». Or il en existe un de toute façon
+     (celui du succès) — donc AJOUTER le désarmement avant l'await, c'est-à-dire CORRIGER la
+     course, laissait le témoin parfaitement vert. 👉 *Un motif qui cherche une présence ne peut
+     pas mesurer un ORDRE.* Il mesure désormais ce qui compte vraiment : qu'AUCUN désarmement
+     n'existe AVANT l'await. */
+  t('CCCVIII ⑤ ⛔⛔ DÉFAUT CONNU ET NON CORRIGÉ — LA COURSE EST DANS LA SOURCE : `_bcCaptureFrame` '+
+    'ne désarme le décodage continu qu\'APRÈS son await, donc les deux peuvent tirer chacun son '+
+    'lookup. *Intermittent à l\'exécution, déterministe dans le code.*',
+    (()=>{ const c=corpsA('_bcCaptureFrame');
+      const i=c.indexOf('await reader.decodeFromImageUrl');
+      return i>0 && !/_bcScanning\s*=\s*false/.test(c.slice(0,i))
+             && /_bcScanning\s*=\s*false/.test(c.slice(i)); })(),
+    'la course a changé de forme (corrigée ?) — remesurer et mettre à jour docs/SCANNER-CAMERA-LOCAL.md');
+  t('CCCVIII ⑤bis ⛔ … et les DEUX lecteurs appellent bien le même lookup commun, chacun de son '+
+    'côté : c\'est ce qui rend la course possible',
+    (corpsA('openBarcodeScanner').match(/_lookupBarcode\(/g)||[]).length===1
+    && (corpsA('_bcCaptureFrame').match(/_lookupBarcode\(/g)||[]).length===1, '');
+  t('CCCVIII ⑤ter ⭐ … et un scan réussi ne tire JAMAIS plus de deux lookups : la course en ajoute '+
+    'au plus un, elle ne boucle pas', CAM.lookups.length>=1 && CAM.lookups.length<=2 && CAM.off<=2,
+    JSON.stringify({lookups:CAM.lookups.length,off:CAM.off}));
+  t('CCCVIII ⑥ ⭐⭐ LA CAMÉRA EST COUPÉE APRÈS SUCCÈS : toutes les pistes vidéo sont `ended`. '+
+    '*Une fuite qui ne se voit que sur le téléphone de quelqu\'un* (ft-v1091)',
+    CAM.fluxCoupe===true, JSON.stringify(CAM.fluxCoupe));
+  t('CCCVIII ⑦ ⛔ SUR UN CODE ILLISIBLE (flou) : rien n\'est inventé — ZÉRO lookup, ZÉRO appel IA, '+
+    'et un message qui dit quoi faire. *Le repli n\'est PAS un appel IA automatique*',
+    FLOU.lookups.length===0 && FLOU.off===0 && FLOU.ia===0 && /recule|mise au point/i.test(FLOU.statut),
+    JSON.stringify({lk:FLOU.lookups.length,off:FLOU.off,ia:FLOU.ia,statut:FLOU.statut.slice(0,60)}));
+  t('CCCVIII ⑧ ⭐ … et la caméra reste OUVERTE pour réessayer (on ne ferme pas l\'écran sous les '+
+    'doigts de quelqu\'un qui vise encore)', FLOU.ecranFerme===false && FLOU.fluxCoupe===false,
+    JSON.stringify({ferme:FLOU.ecranFerme,coupe:FLOU.fluxCoupe}));
+  t('CCCVIII ⑨ ⭐ les contraintes caméra demandent bien l\'objectif ARRIÈRE et de la haute '+
+    'résolution (sans ça : « caméra ouverte mais ne lit pas », le défaut de ft-v378)',
+    /environment/.test(CAM.contraintes||'') && /1920/.test(CAM.contraintes||''),
+    CAM.contraintes||'');
+  t('CCCVIII ⑩ ⛔⛔ LA PORTE RESTE FERMÉE : aucun bouton d\'`index.html` n\'appelle le scanner. '+
+    'C\'est la décision de ft-v388, pas un oubli — elle ne se renverse pas sans Michel (R30)',
+    !/scanBarcode\s*\(\s*\)/.test(srcIdx) && !/openBarcodeScanner/.test(srcIdx),
+    'le scanner a retrouvé une porte : c\'est une décision produit, relire ft-v388 et ft-v871');
+  t('CCCVIII ⑪ ⚠️ … et son bouton de repli photo est MORT : `scanBarcodePhoto` cherche '+
+    '`af-bc-input`, retiré avec ft-v388. Mesuré, écrit, NON réparé — invisible tant que la porte '+
+    'est murée, mais c\'est un bug le jour où on la rouvre',
+    /af-bc-input/.test(corpsA('scanBarcodePhoto')) && !/id="af-bc-input"/.test(srcIdx), '');
+  t('CCCVIII ⑫ ⚠️ … et le décodage LOCAL d\'une photo (`onBarcodeFile`, provenance `photo-code`) '+
+    'est orphelin lui aussi : il est le seul chemin photo SANS IA, et rien ne l\'appelle',
+    /'photo-code'/.test(corpsA('onBarcodeFile')) && (srcApp.match(/onBarcodeFile\(/g)||[]).length===1
+    && !/onBarcodeFile/.test(srcIdx), '');
+  t('CCCVIII ⑬ ⛔ ZXing est chargé DEPUIS LE DÉPÔT, jamais d\'un CDN — un décodage « local » qui '+
+    'télécharge sa bibliothèque ailleurs n\'est plus local',
+    /'\.\/lib\/zxing\.min\.js'/.test(corpsA('_loadZXing')) && !/https?:/.test(corpsA('_loadZXing')), '');
+  t('CCCVIII ⑭ ⭐ le décodeur est bridé aux 4 formats de produits (EAN-13/8, UPC-A/E) avec '+
+    'TRY_HARDER — mesuré le 14/09 : sans ces réglages, un code vu en paysage n\'est plus lu du tout',
+    /TRY_HARDER/.test(corpsA('_bcHints')) && /EAN_13/.test(corpsA('_bcHints'))
+    && /UPC_A/.test(corpsA('_bcHints')), '');
+  t('CCCVIII ⑮ ⛔ l\'écran du scanner est déclaré dans la table de fermeture : glisser, Échap ou '+
+    'le bouton retour coupent la caméra au lieu de la laisser tourner (ft-v1091/1092)',
+    /'ov-bc-scan':'closeBarcodeScanner'/.test(srcScr)
+    && /stopStreams/.test(corpsA('closeBarcodeScanner')), '');
 }
 
 await b.close(); srv.close();

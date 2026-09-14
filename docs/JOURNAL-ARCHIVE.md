@@ -8471,6 +8471,7 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `to
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `tools/gen_1bii_pdf.py`, `docs/SOUS-ETAPE-1BII.pdf`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1197. |
 
+
 **ft-v1198 — 📋 1b-iii : LE NOYAU D'UN ITEM DE LISTE · ET LE PLAN ANNONÇAIT DEUX DIVERGENCES, IL N'Y EN A QU'UNE** — Michel valide 1b-ii et pose le **test d'entrée** en consigne permanente : ***« avant toute extraction, vérifie d'abord qu'il y a réellement au moins deux copies »*** · ***« extrait uniquement ce qui est strictement identique »*** · ***« toute divergence métier reste visible chez les appelants »***.
 
 **⭐ TEST D'ENTRÉE PASSÉ** : **3 sites réels** — `_buildFoodQuickItems` branche **favoris** et branche **récents**, plus `toggleFavFood` (le favori enregistré).
@@ -8503,3 +8504,97 @@ Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `to
 ✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1108**, `conclusion: success` à **17:10:07 UTC** sur `7dd2bc45`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *le run est vert, l'app affichant ft-v1198 reste à confirmer par Michel.*
 
 Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1198. |
+
+
+**ft-v1199 — 🔢 3-ii : LA PASTILLE « TA DERNIÈRE QUANTITÉ » · ET UN DÉFAUT RÉEL TROUVÉ PAR LA SONDE, MESURÉ ET NON CORRIGÉ** — Michel valide 1b-iii et redemande la même méthode, avec le **test d'entrée** en tête.
+
+**⭐ TEST D'ENTRÉE PASSÉ : 2 copies STRICTEMENT identiques** — `_bcProposerDerniere((+X.q>0 && (!X.u||X.u==='g')) ? +X.q : 0)` chez `quickFillFood` et `_afSuggPrendreLocale`, au nom de variable près → **`_qGrammes(src)`**.
+
+**⭐⭐ ET LES 5 SITES « GRAMMES SEULS » ONT ÉTÉ MAPPÉS AVANT DE CHOISIR : ILS N'ONT PAS LA MÊME FORME.**
+
+| ligne | forme | sous-étape |
+|---|---|---|
+| `_provFood` @1232 | `if(cond){ p.q=…; p.u='g' }` — **ÉCRIT** | 3-iv |
+| **@2878 · @4033** | `(cond) ? +X.q : 0` — une **valeur** | **3-ii, livrée** |
+| @2929 · @4089 | `if(!_bcNutr && cond){` | 3-iii |
+
+👉 ***Ce qui est commun aux CINQ est la condition ; ce qui est commun aux DEUX de 3-ii est l'expression entière.*** ⭐ **Elle rend donc un NOMBRE, pas un booléen** — et ce n'est pas un détail : `_qGrammes(x) > 0` **est** exactement la condition, donc 3-iii et 3-iv lui ajouteront leurs appelants **sans réécrire la règle**. *Un seul propriétaire pour trois sous-étapes.*
+
+**⛔⛔ CE N'EST PAS `_qReprenable`, ET LA DIFFÉRENCE EST LE POINT DE CONCEPTION.** Celle de 3-i **accepte les portions** ; celle-ci les **refuse**, parce que ses appelants alimentent un champ **en grammes**. Elles se ressemblent à un `||` près et ne disent pas la même chose — les fondre serait un **changement de comportement**. **Deux témoins figent qu'elles restent DEUX**, et les mutations qui les fusionnent *dans un sens comme dans l'autre* rougissent.
+
+**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 3-i SE DÉPLACE, IL N'EST PAS AFFAIBLI.** Il exigeait *« la règle est écrite **5 fois** »* — c'était le garde-fou qui empêchait 3-i de déborder. 3-ii ayant été faite **exprès**, c'est désormais **3 écritures + 2 appelants**, avec la raison écrite à l'endroit exact **et ce que deviendra le compte après 3-iii et 3-iv**. *Deuxième fois qu'un témoin de périmètre se déplace au lieu de disparaître.*
+
+**⛔⛔ ET LA SONDE A TROUVÉ UN VRAI DÉFAUT, HORS PÉRIMÈTRE — MESURÉ, ÉCRIT, NON CORRIGÉ.** `_afOublierAliment` **ne rend PAS** la pastille « la dernière fois » : seule `openAddFood` le fait. Donc **entre deux aliments d'une même ouverture**, celle du précédent **reste affichée** quand le site est sauté — un aliment **en portions**, ou sans pour-100 g. Mesuré à la sonde : après un aliment à 150 g, un aliment en portions garde *« ↩ 150 g (la dernière fois) »* **sur le mauvais aliment**. 👉 ***C'est la JUMELLE EXACTE du défaut du PAQUET corrigé en ft-v1193*** — à cette date `_afOublierAliment` a reçu le rendu de `_bcProposerPaquet`, **et pas celui-ci**. **R8, à l'intérieur même du correctif qui a fermé sa sœur.** ⛔ **Non corrigé ici** : une extraction ne change **aucun** comportement, et son critère est un instantané identique — poser l'appel manquant changerait ce que l'écran affiche. *Écrit dans `docs/JOURNAL-DE-TEST.md` avec sa mesure et son correctif d'une ligne, et laissé à Michel.*
+
+**⚠️⚠️ ET LA SONDE M'A APPRIS OÙ VIT LA LIGNE, À MES DÉPENS.** Le site de la pastille est **dans un garde** : `if(P && it.u!=='portion' && …)` où `P = it.per100`. **Mes 6 premiers cas n'avaient pas de `per100`** → le bloc était **sauté**, `_bcProposerDerniere` jamais appelée, et **les six rendaient la même valeur** — un reliquat. 👉 ***Une sonde qui n'atteint pas la ligne visée mesure l'écran d'avant, pas la règle.*** *Et elle est verte, ce qui est le pire des cas.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : l'instantané passe de **15 à 17 clés** — les deux portes étaient **conduites** depuis 1b-ii, mais **rien ne LISAIT `#af-bc-last`**, donc il serait resté identique quoi qu'on fasse à la pastille. ***Conduire n'est pas observer.*** Identique **octet pour octet** avant/après, sha256 **`b8f06e45d8c91fcc`**.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : deux copies d'une règle deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la pastille périmée n'est PAS corrigée** (mesurée, écrite, décision de Michel) · ⛔ ni 3-iii, ni 3-iv, ni 1b-v · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique et les migrations restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3633/3633 sur l'arbre FINAL** (+13, bloc **CCXCVI**) — **total prédit = total obtenu** (3620 + 13). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 11 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge sur 13 témoins** — ① rend toujours 0 → **3** · ② la règle ignorée → **3** · ③ le test `>0` retiré → **1** · ④ ⭐ **débordement : les portions acceptées (fusion avec `_qReprenable`)** → **2**, dont le témoin de périmètre · ⑤ les `ml` acceptés → **3** · ⑥ l'unité absente refusée → **3** · ⑦ elle rend un booléen → **3** · ⑧/⑨ une porte garde sa copie → **1** chacune · ⑩ ⭐ **débordement INVERSE : `_qReprenable` perd ses portions** → **1**, exactement le témoin qui protège les deux règles · ⑪ une porte appelle la mauvaise → **1**. ⭐ **Mutations ancrées sur la signature de `_qGrammes`** : `_qReprenable` porte un motif très proche et vit **juste après** dans le fichier — la leçon de la veille, appliquée d'avance.
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1112**, l'étape « Déployer sur GitHub Pages » **`success` à 19:16:04 UTC** sur `5f16740e`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *l'étape est verte, l'app affichant ft-v1199 reste à confirmer par Michel.*
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `tools/instantane_1b23.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1199. |
+
+**ft-v1200 — 🩹 CORRECTIF SÉPARÉ : LA PASTILLE « ↩ … g (LA DERNIÈRE FOIS) » QUI SURVIVAIT À L'ALIMENT SUIVANT · ET LES DEUX DRAPEAUX QUI NE NOMMENT PAS LA MÊME CHOSE** — Michel valide 3-ii puis isole le sujet : ***« avant de continuer les 4 sous-étapes restantes, je veux traiter séparément le défaut réel découvert sur la pastille »***, avec ⛔ une consigne explicite — ***« ne profite pas de ce correctif pour modifier `_qGrammes`, `_qReprenable`, les portions ou une autre règle métier »***.
+
+**⭐⭐ LE CHEMIN VAUT AUTANT QUE LE CORRECTIF, ET C'EST LUI LE FAIT DE LA VERSION.** Ce défaut a été **trouvé la veille** en étendant la sonde de 3-ii, **mesuré**, **écrit dans `docs/JOURNAL-DE-TEST.md` avec son correctif d'une ligne** — et **délibérément pas corrigé**, parce qu'une sous-étape d'extraction ne change **aucun** comportement et que son critère est un instantané identique octet pour octet. 👉 ***Il a attendu son propre feu vert, et il l'a eu.*** *C'est exactement ce que le journal de test existe pour permettre* : sans lui, un défaut trouvé en chemin n'a que deux issues, être corrigé au passage (donc casser le critère de la sous-étape) ou disparaître avec la session (**R27**).
+
+**⛔ LE DÉFAUT, REPRODUIT AVANT D'ÊTRE TOUCHÉ — 6 TÉMOINS ROUGES sur le code d'origine.** `_bcProposerDerniere(0)` n'était appelée que par `openAddFood` (donc **à l'ouverture de l'écran**, jamais **entre deux aliments** d'une même ouverture) et par le hub `_offRemplirFormulaire` ; et le site qui la repose vit **dans un garde** (`if(P && it.u!=='portion' && …)` où `P = it.per100`). Un aliment **en portions**, ou **sans pour-100 g**, ne le franchit pas — et celle du précédent restait affichée **sur le mauvais aliment**. ⭐ **Les deux portes rougissaient** (`quickFillFood` et `_afSuggPrendreLocale`, **R8**), et la contre-épreuve, elle, était **déjà verte** : *elle mesure la fonctionnalité, pas l'effacement.*
+
+**⭐ LE CORRECTIF EST UNE LIGNE CHEZ LE PROPRIÉTAIRE** — `_afOublierAliment`, donc **les 12 portes d'un coup** (**R2**), jamais recopiée porte par porte. C'est la leçon de ft-v1193 écrite noir sur blanc : *un patron qu'on recopie à chaque porte EST la duplication que ce chantier supprime ailleurs.*
+
+**⛔⛔ ET LE POINT DE CONCEPTION EST AILLEURS QUE DANS LA LIGNE : ELLE N'EST PAS SOUS `garderPaquet`.** Le journal de test disait *« à côté de celui du paquet »* — vrai pour l'endroit, **faux pour la condition**.
+
+| drapeau | ce qu'il dit | ses appelants |
+|---|---|---|
+| `garderPaquet` | *« le poids vient du produit qu'on **POURSUIT** »* | `_bcSansValeurs` · `_calAppliquer` — le produit **SCANNÉ** |
+| la pastille | *« une quantité reprise **AVANT** »* | `quickFillFood` · `_afSuggPrendreLocale` — les 2 seules à la poser |
+
+👉 ***Les deux drapeaux se ressemblent et ne nomment pas la même chose.*** Mettre la pastille sous celui du paquet **reproduirait le bug sur les deux portes qu'on croit protéger** — *une ligne juste posée sous la mauvaise condition reste un bug*. **Mesuré : la mutation qui l'y met fait 2 rouges**, dont un témoin de source.
+
+**⭐ ET C'EST LA JUMELLE EXACTE DU DÉFAUT `_bcPaquetG` FERMÉ EN ft-v1193** : ce jour-là `_afOublierAliment` a reçu le rendu de `_bcProposerPaquet`, **et pas celui-ci**. **R8, la porte jumelle, à l'intérieur même du correctif censé fermer sa sœur** — troisième variable de la même fonction après `_bcCategories` (ft-v1191) et `_bcPaquetG` (ft-v1193).
+
+**⚠️⚠️ UN TÉMOIN À MOI ÉTAIT AVEUGLE, ET C'EST UN ÉCART D'UN SEUL ROUGE QUI L'A TRAHI.** La mutation « correctif retiré » rendait **5 rouges** là où le code d'origine en donnait **6**. En cherchant l'écart au lieu de l'accepter : mon témoin de source comptait la ligne de **COMMENTAIRE** qui *cite* `_bcProposerDerniere(0)` pour expliquer le défaut — le filtre ligne-à-ligne ne retire que les lignes commençant par `*`, `//`, `/*` ou un accent grave, or les continuations de ce fichier commencent par `⛔`, `⭐`, `👉`. 👉 ***C'est la famille de ft-v1193 — un témoin qui ne distingue pas le code de ce qui en PARLE — reposée par moi dans le témoin censé protéger le correctif qui la documente.*** Il retire désormais les blocs de commentaire **entiers** : immunisé pour de bon.
+
+**⭐ ET L'INSTANTANÉ DE L'EXTRACTION EST INCHANGÉ — sha256 `b8f06e45d8c91fcc`, le même qu'en ft-v1199.** *Le correctif ne déplace pas le sol du chantier*, et c'est vérifiable : la sonde remet la pastille à zéro **explicitement** à chaque cas (posé en ft-v1199 à cause de ce défaut), donc elle reste indépendante du correctif — *une sonde qui dépendrait de lui changerait de sens le jour où il régresserait*.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît : une pastille cesse de mentir (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **`_qGrammes`, `_qReprenable` et les portions sont intactes** — 2 témoins de hors-périmètre le figent, consigne explicite de Michel · ⛔ ni 1b-v, ni 3-iii, ni 3-iv, ni 3-v · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3649/3649 sur l'arbre FINAL** (+16, bloc **CCXCVII**) — **total prédit = total obtenu** (3633 + 16, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 6 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① le correctif retiré → **6** (la fuite revient par les deux portes) · ② ⭐ **mis sous `garderPaquet`** → **2**, exactement les deux témoins de ce périmètre · ③ on POSE au lieu de RENDRE → **7** · ④ sur-nettoyage (le champ tapé est effacé) → **1**, exactement ⑩ · ⑤ recopié chez UN appelant au lieu du propriétaire → **4** · ⑥ le paquet cesse de survivre à `garderPaquet` (contrôle : ⑨ est-il décoratif ?) → **1**, exactement lui.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1200. |
+
+**ft-v1201 — 🔢 3-iii : LE BLOC « POIDS REPRIS EN GRAMMES » · LA PROMESSE DE 3-ii TENUE, ET DEUX BLOCS MUTUELLEMENT EXCLUSIFS** — Michel valide le correctif ft-v1200 et relance le chantier sur les 4 sous-étapes restantes, avec ⭐ **une règle NOUVELLE tirée de ft-v1200** : ***« si un défaut réel est découvert pendant une extraction : le mesurer · l'écrire au journal avec sa cause · ne pas le corriger dans la sous-étape · attendre un feu vert séparé »***.
+
+**⭐ TEST D'ENTRÉE PASSÉ, ET SUR LES DEUX MOITIÉS** — `quickFillFood` et `_afSuggPrendreLocale` portaient la **condition** ET le **corps de 3 lignes** (`_afUnite='g'` · `_afPoidsDeclare=+X.q` · `_afQtyNom=_afNomCourant()`) **strictement identiques**, au nom de variable près. Mesuré : exactement **2 copies de chaque** → **`_afReprendreGrammes(src)`**.
+
+**⭐⭐ C'EST LA SOUS-ÉTAPE QUI TIENT LA PROMESSE DE 3-ii.** `_qGrammes` rend un **NOMBRE** précisément pour ça : la condition s'écrit `_qGrammes(src) > 0` **sans réécrire la règle une 3ᵉ fois**. *Un propriétaire pour la règle, un second pour ce qu'on en fait* — et c'est pour cette raison que 3-ii avait refusé de rendre un booléen.
+
+**⛔⛔ LE GARDE `!_bcNutr` N'EST PAS PARTI AVEC, ET C'EST LE PÉRIMÈTRE.** Il dit *« aucun pour-100 g n'est posé »* — une question sur l'**ÉTAT DE L'ÉCRAN**, pas sur la quantité de la ligne. L'absorber ferait **deux extractions en une** *et* rendrait le propriétaire dépendant d'une globale que ses appelants contrôlent. ⚠️ **Et la mutation qui l'y met ne change AUCUN comportement** — elle ne rougit que sur le **témoin de source**. 👉 ***C'est exactement pourquoi un témoin de source existe à côté des témoins de comportement*** : une dérive de conception peut être invisible à l'exécution.
+
+**⭐⭐ ET LA MESURE QUI A DÉCIDÉ DES FIXTURES N'ÉTAIT PAS DANS LE PLAN : LES BLOCS DE 3-ii ET 3-iii SONT MUTUELLEMENT EXCLUSIFS.** `_bcNutr` est posé par le bloc du pour-100 g (celui de 3-ii) ; donc celui de 3-iii ne s'exécute **que lorsque l'autre ne s'est pas exécuté**. 👉 **Des fixtures recopiées de 3-ii n'auraient jamais franchi le garde**, et les six cas auraient rendu la même valeur — *le piège de ft-v1199, évité cette fois parce qu'on l'a cherché d'avance au lieu de le découvrir.*
+
+**⚠️ SONDE : ELLE CONDUISAIT, ELLE N'OBSERVAIT PAS.** Les clés `1bii_*` lisent `_afSrc`, les `3ii_*` lisent la pastille — **aucune** ne lisait `_afUnite`/`_afPoidsDeclare`/`_afQtyNom`, donc l'instantané serait resté identique **quoi qu'on fasse à ce bloc**. Étendue de **17 à 19 clés AVANT le BEFORE**. ⭐ *La leçon de ft-v1199 appliquée d'avance, pas repayée.*
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : instantané **identique octet pour octet** avant/après — **sha256 `57b13433fbaa1c60`**, diff vide.
+
+**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 3-i SE DÉPLACE POUR LA 3ᵉ FOIS** : **5 écritures** (3-i) → **3 + 2 appelants** (3-ii) → **1 SEULE écriture** — `_provFood` @1232, le seul site qui **ÉCRIT** `p.q`/`p.u`, réservé à **3-iv** — **+ 3 appelants** de `_qGrammes`. *La garantie ne s'affaiblit pas, elle change de forme, et les mutations d'hier la font toujours rougir par l'autre bout.*
+
+**⚠️⚠️ UN DE MES COMPTEURS ÉTAIT AVEUGLE — MESURÉ AVANT D'ÉCRIRE LE CHIFFRE, pas après.** Le filtre ligne-à-ligne du bloc voisin trouvait **5** occurrences de `_qGrammes` là où il y en a **4** : une ligne de mon propre docblock la **CITE** et commence par un mot, donc elle survit au filtre. 👉 ***C'est le témoin aveugle de ft-v1200, attrapé avant qu'il ne publie un chiffre faux*** — le témoin retire désormais les blocs de commentaire **entiers**. *La leçon d'hier appliquée d'avance : c'est le seul progrès qui compte.*
+
+**⭐ ET UN COMMENTAIRE A DÉMÉNAGÉ AU LIEU D'ÊTRE SUPPRIMÉ** : celui de `_afSuggPrendreLocale` qui explique pourquoi `_afPoidsPose` **n'est pas** posé (essayé en ft-v1176, refusé par la mesure) suit le code qu'il explique. *Un commentaire qui reste derrière quand son code part devient faux le jour même.* Deux témoins figent cette non-régression.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : deux copies d'un bloc deviennent une (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **3 sous-étapes restantes** — `3-iv` (la dernière des formes, le seul site qui ÉCRIT), `3-v`, puis `1b-v` · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts · ⛔ **aucun défaut réel découvert cette fois** — donc rien à écrire au journal de test. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+Tests : **parcours 3667/3667 sur l'arbre FINAL** (+18, bloc **CCXCVIII** 17 · plus 1 témoin ajouté à **CCXCIII**) — ⭐ **et l'écart de +1 a été EXPLIQUÉ au lieu d'être accepté** : 3649 + 17 = 3666 prédits, **3667 obtenus**, la différence étant le témoin qui compte les appelants de `_qGrammes` (CCXCIII passe de 11 à 12 assertions). *Le total est le seul signal d'une passe tronquée — encore faut-il expliquer un écart de +1* (§61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 9 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① le propriétaire ne pose jamais rien → **5** · ② il pose même une quantité refusée → **2** · ③ il réécrit la règle au lieu d'appeler `_qGrammes` → **1**, exactement le témoin de la promesse · ④ ⭐ **débordement : `!_bcNutr` absorbé** → **1**, *uniquement* le témoin de source · ⑤ une porte garde sa copie → **1** · ⑥ la porte jumelle oubliée (**R8**) → **4** · ⑦ débordement inverse : les portions acceptées → **3** · ⑧ `_afQtyNom` oublié → **4** · ⑨ `_afPoidsPose` posé au passage (la régression ft-v1176 rejouée) → **2**.
+
+Fichiers : `app.js`, `tools/instantane_1b23.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1201. |

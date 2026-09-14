@@ -1051,6 +1051,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
       <div id="admin-health" style="margin-top:4px;"></div>
     </div>
+    <!-- 📊 L'OBSERVATION DE LA DOUANE (ft-v1206). La douane tourne depuis ft-v1205 et ne bloque
+         RIEN : elle regarde passer chaque ligne du journal alimentaire et dit OK / WARN / INVALID.
+         Ce carnet compte ce qu'elle a vu EN VRAI, pour qu'on décide sur des chiffres et pas sur
+         une intuition quelles règles pourraient un jour devenir bloquantes.
+         ⛔ Il ne garde QUE de la structure : aucun nom d'aliment, aucune quantité, aucune
+         calorie, aucune macro, aucun identifiant de source. Il ne quitte pas le téléphone. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">📊 Douane — observation du journal</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Ce que la douane a vu passer <strong>en usage réel</strong> : combien de lignes, combien d'alertes, et <strong>quelles règles ne se déclenchent jamais</strong>. Sert à décider, plus tard, lesquelles pourraient devenir bloquantes. <strong>Aucune donnée de repas n'est gardée</strong> — ni nom, ni quantité, ni calories.</div>
+      <button class="btn btn-bg2" onclick="loadDouaneAdmin()" style="padding:11px;font-size:14px;">📊 Voir le rapport</button>
+      <div id="admin-douane" style="margin-top:4px;"></div>
+    </div>
     <!-- 🔬 Le diagnostic d'import : il prouve la PRÉSENCE du champ, pas sa valeur. Sur un vrai
          document la valeur sera 0 — et 0 ne prouve rien tant qu'on ne sait pas si le champ est
          arrivé. C'est tout l'objet de cette carte, et elle se lit depuis l'iPhone, sans console. -->

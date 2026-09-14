@@ -6,6 +6,24 @@
 
 ---
 
+- 📷 **CHANTIER OUVERT — LE SCANNER CAMÉRA LOCAL, AUDITÉ MAIS PAS RÉACTIVÉ (14/09/2026).**
+  Michel : *« lire un code-barres sans appel IA, puis utiliser exactement le même lookup Open Food
+  Facts que le code tapé »* · ⛔ *« ne remets PAS immédiatement le bouton en production »*.
+  ⭐⭐ **La cause du retrait est mesurée dans git** : le scanner live a vécu **2 h 37** le 11/07, et
+  pendant **~1 h** de ces 2 h 37 la recherche produit **rejetait TOUS les produits** (ft-v377) —
+  *un code parfaitement décodé affichait « produit introuvable »*. Le retrait n'a tenté **aucune**
+  correction (6 lignes d'`index.html`). ⛔ **Mais ça ne le blanchit pas** : un vrai symptôme iPhone
+  persistait après le correctif ft-v378.
+  ⭐ **Décodeur mesuré : 17 cas sur 20 à 3/3.** Seul vrai ennemi : le **flou dès 2 px** —
+  *sur un téléphone, « flou » s'appelle « mise au point »*.
+  ⭐ **Réseau prouvé** : scanner → **0 appel IA**, quota inchangé, **même `_lookupBarcode`**,
+  même objet produit que le code tapé. Le banc conduit désormais une **vraie caméra** (bloc CCCVIII).
+  ⛔⛔ **4 défauts mesurés et NON corrigés** (feu vert séparé) : la **course** à deux lookups · le
+  bouton de repli **mort** · le décodage **local** d'une photo orphelin · la provenance implicite.
+  ⭐⭐ **VERDICT : RÉACTIVER AVEC FALLBACK IA** — après ces 4 correctifs **et** la validation iPhone.
+  ⚠️ **La fiabilité mobile n'est PAS mesurée d'ici** (ni caméra ni Safari dans ce conteneur) : un
+  **protocole iPhone** (5 produits, 5 gestes) attend Michel.
+  👉 Dossier : **`docs/SCANNER-CAMERA-LOCAL.md`** · PDF : `docs/SCANNER-CAMERA-LOCAL.pdf`.
 - ⛔⛔ **LA NUTRITION EST RÉSERVÉE À session-A — CONSIGNE DE MICHEL, 12/09/2026** : *« non, tu ne
   touches surtout pas à la nutrition s'il te plaît »*. Le plan (phases 0/1a/1b/2/3, le hub, la
   douane), `S.savedFoods`, l'écart 48,3 / 48, les défauts divergents : **tout cela appartient à
@@ -50,6 +68,168 @@
   ⚠️ Sur la hauteur, je n'ai **pas** de preuve : pas de WebKit ici, et aucune décision écrite
   n'expliquait le `dvh` d'origine.
 
+- 🔬 **ft-v1207 — LE GEL A ÉTÉ LEVÉ POUR UN SEUL CHANTIER : la fiabilité énergie / macros en
+  entrée** (feu vert de Michel du 13/09). ⛔ **Consigne** : *« je ne veux pas un correctif
+  spécifique aux lentilles Raynal — je veux que le problème soit traité pour TOUS les aliments et
+  toutes les sources »*, et *« ne recrée pas huit variantes du même contrôle »*.
+  ⭐ **Un seul résolveur**, branché sur `_ref100` (le normaliseur du pour-100 g, 8 appelants) : un
+  seul propriétaire, zéro patch porte par porte.
+  ⭐⭐ **Une LOI, pas un seuil** : protéines 4 et lipides 9 kcal/g (UE 1169/2011 annexe XIV), tous
+  les autres contributeurs ≥ 0 → **E ≥ 4P + 9L**. **Tolérance dérivée de la précision reçue.**
+  **0 faux positif sur 3 607 aliments** (CIQUAL 3 484 + marques 123), remesuré à chaque génération
+  du PDF. Sur le cas témoin : plancher 53,2 · tolérance 0,7 · il manque 4,9.
+  ⛔ **Une donnée saisie ou reprise par la personne n'est JAMAIS réécrite** (`manuel` · `reprise` ·
+  `historique`) : elle est classée, pas remplacée.
+  ⛔ **Aucune correction silencieuse** : la valeur brute, le champ d'origine, la méthode, la raison
+  et la confiance partent **avec la ligne**, et l'écran affiche les deux valeurs.
+  📊 **Mesure avant / après sur la douane** : les lignes de ce type qui l'atteignaient en
+  `energie_incoherente` passent de **7 à 2** — et les 2 restantes sont **exactement** les origines
+  utilisateur, par conception.
+  ⛔ **Hors périmètre, mesuré mais non corrigé** : `estimateFoodAI` ne passe pas par `_ref100`
+  (il écrit les champs de l'écran directement, sans pour-100 g) · `S.savedFoods` multi-onglets ·
+  la traçabilité de `saveEditFood` · les lignes à zéro · `rejouerRepas` · les `ml` · l'écart
+  **48,3 / 48** · l'historique · les migrations.
+  ⚠️ **La question « d'où vient le 48,3 » reste ouverte** : le proxy refuse Open Food Facts (403),
+  et le code fait converger les deux hypothèses vers la même valeur. ⭐ **Mais le résolveur
+  ENREGISTRE désormais le champ qui a servi** — elle devient mesurable au prochain scan.
+
+- 🧊🧊 **PHASE D'OBSERVATION RÉELLE — LE CHANTIER NUTRITION EST GELÉ** (décision de Michel,
+  13/09/2026, après validation de l'étape 6). *« Ne modifie plus son comportement sans nouveau feu
+  vert explicite. »*
+  ⛔ **Gelé nommément** : les 21 règles de la douane · aucune ne devient bloquante · aucun seuil ·
+  les divergences connues · `savedFoods` · l'écart 48,3 / 48 · l'historique et les migrations ·
+  **le format du carnet d'observation**.
+  ⭐ **Ce qu'on attend avant toute décision** : ≥ **100 lignes** observées · les **4 écrivains** vus
+  au moins une fois · idéalement **2 semaines** · et surtout une **couverture** suffisante des
+  formes rencontrées.
+  📋 Michel enverra le rapport (**Profil → Admin → « 📊 Douane — observation du journal »**). On
+  fera alors une analyse **séparée** pour trancher : ① quelles règles mordent réellement ·
+  ② lesquelles restent des `WARN` · ③ lesquelles sont des **divergences d'architecture** à
+  corriger · ④ lesquelles pourraient devenir bloquantes · ⑤ lesquelles ne sont **pas encore
+  éprouvées**.
+  ⚠️⚠️ **LA CONSIGNE À NE PAS OUBLIER CE JOUR-LÀ** : *une règle qui n'a jamais mordu n'est PAS
+  automatiquement inutile* — il faut d'abord vérifier que **les formes capables de la déclencher
+  ont réellement été rencontrées**. 👉 *Sans cette vérification, « jamais mordu » se lit « à
+  supprimer », et on retire un garde-fou parce que le cas ne s'est pas encore présenté.*
+  🤝 Et si une autre session a publié entre-temps : **protocole deux sessions** (`git fetch --all`,
+  lire `docs/JOURNAL-DE-PARTAGE.md`, poser sa ligne AVANT de coder) **avant toute** modification
+  Nutrition.
+
+- 🔌 **LE CHEMIN RÉSEAU DU CODE-BARRES EST PROUVÉ ET FIGÉ** (bloc CCCVII, 15 témoins).
+  Mesuré en runtime, `fetch` intercepté et classé par domaine : **code tapé → 1 appel Open Food
+  Facts, ZÉRO IA** · **photo du code-barres → 1 appel Worker IA (`readBarcode`, Haiku 4.5) + 1
+  appel Open Food Facts**, décompté du quota de 25 essais.
+  ⛔⛔ **Et la question était mal posée** : le scanner **caméra ZXing** (100 % local, 0 réseau)
+  existe dans le code mais **n'a aucun bouton** — donc *le seul « scan » atteignable est la photo
+  lue par l'IA*, ce qui est écrit dans le libellé du bouton. **ft-v388 l'a retiré exprès**
+  (« peu fiable »), **ft-v871** avait déjà reposé la question → **R30, rien touché**.
+  ⚠️ **Conséquence mesurée, non corrigée** : `scanBarcodePhoto` cherche `af-bc-input`, retiré avec
+  ft-v388 → le bouton « Prendre une photo à la place » du scanner **ne fait rien**. Invisible
+  aujourd'hui (le scanner est inatteignable), mais il redevient un bug si on rouvre la porte.
+  👉 **Décision attendue de Michel** : rouvrir le scan caméra local, ou l'assumer retiré.
+
+- 📱 **LE CAS RAYNAL EST FIGÉ COMME TÉMOIN iPHONE RÉEL → `docs/VALIDATION-IPHONE-RAYNAL.md`.**
+  Les 7 points demandés par Michel sont **mesurés en runtime** : `ALTERNATIVE_FIABLE` · champ
+  `energy-kj_100g` · brut **48,3** conservé · retenu **99,2** · **407 kcal** à 410 g · scan = saisie
+  manuelle. ⛔ **Aucun changement de comportement — tout était conforme.**
+  ⭐⭐ **Et « rien n'est recalculé inutilement » est mesuré** : l'estimation est appelée **une fois**,
+  rend 93,2, et c'est **99,2 qui est retenu**. *Elle sert de JUGE, jamais de source* — c'est elle qui
+  refuse un second champ absurde. **On ne la supprime pas « pour économiser ».**
+
+- ✅ **CONFIRMÉ SUR L'iPHONE DE MICHEL (13/09, 23:23) — ET LA QUESTION DU 48,3 EST TRANCHÉE.**
+  Une fois passé par l'Accueil : **407 kcal** pour 410 g, avertissement 🔬 présent.
+  ⭐⭐ **La fiche Open Food Facts se contredit elle-même** : `energy-kcal_100g` = **48,3** (fausse,
+  ses protéines et lipides valent déjà 53,2) et `energy-kj_100g` ≈ **415 kJ = 99,2 kcal**
+  (cohérente, à 6,4 % des macros). 👉 **Hypothèse A : l'erreur est DANS LA BASE**, pas dans l'app.
+  ⭐ Et l'app a préféré **une valeur de la source** (99,2) à une **estimation** (93,2) — l'ordre de
+  priorité vérifié sur un vrai produit.
+  ⛔ **Une donnée fausse dans OFF reste fausse** : la corriger sur le site profiterait à tout le
+  monde — geste que Michel peut faire, pas moi.
+  ⚠️ **Et cette capture a montré un défaut dans le BANC, pas dans l'app** : ma fixture inventait
+  une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
+  branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
+
+- **Version en ligne (live) :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
+  Michel a envoyé une capture montrant encore l'ancien comportement (198 kcal) **1 h 30 après** le
+  déploiement de ft-v1207. ⭐⭐ **Verdict : B — la version servie était périmée, le code était
+  juste.** Le résolveur s'applique bien au chemin code-barres (trace runtime : 410 g → **382 kcal**).
+  ⛔ **La cause, mesurée** : `_majPeutSAppliquer` retient le rechargement tant que l'écran courant
+  n'est pas l'**Accueil** (décision de ft-v1184), et ⚠️ **hors séance la personne n'est prévenue de
+  RIEN**. **Ce garde n'est PAS touché** (R30) ; la question est écrite dans
+  `docs/JOURNAL-DE-TEST.md` et rendue à Michel.
+  👉 ⭐ **LE GESTE, s'il revoit une vieille version** : revenir sur l'**Accueil 🏠** → l'app se
+  recharge seule et affiche « Application mise à jour ».
+  ⭐ **Ce qui est corrigé** : `champSource` était **écrasé** en `DERIVE_ESTIMABLE`, donc le champ
+  d'origine du 48,3 était jeté exactement dans le cas qui l'intéresse. Il survit désormais et part
+  avec la ligne.
+  ⭐⭐ **Et le banc gagne ce qui lui manquait** : le bloc CCCV éprouvait `_ref100` **isolément** ;
+  le bloc **CCCVI** conduit la chaîne complète *code-barres → 410 g → écran*. *Un banc qui teste la
+  pièce ne répond pas à une question posée sur la machine.*
+  ⚠️ Open Food Facts reste injoignable (403) : **l'origine exacte du 48,3 n'est pas mesurable
+  d'ici**, mais elle le devient sur le téléphone au prochain scan.
+
+- **Version précédente :** `ft-v1207` — 🔬 **FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE.**
+  Un **seul résolveur** branché sur `_ref100` (8 appelants) : traité pour **tous** les aliments et
+  **toutes** les sources, jamais pour un produit. ⭐⭐ **Une LOI, pas un seuil** — `E ≥ 4P + 9L`
+  (UE 1169/2011 annexe XIV), **tolérance dérivée de la précision reçue**, **0 faux positif sur
+  3 607 aliments** remesuré à chaque génération du PDF. ⛔ **Aucune correction silencieuse** : la
+  trace part avec la ligne et l'écran affiche les deux valeurs. ⛔ **Une donnée saisie ou reprise
+  par la personne n'est jamais réécrite.** 📊 La douane est **intacte** (21 règles) et les
+  `energie_incoherente` de ce type passent de **7 à 2** — les 2 restantes étant exactement les
+  origines utilisateur. Détail : **`docs/FIABILITE-ENERGIE-MACROS.pdf`**.
+
+- **Version précédente :** `ft-v1206` — 📊 **ÉTAPE 6 : L'OBSERVATION RÉELLE DE LA DOUANE.**
+  Elle tourne sur les **vraies écritures** et COMPTE ce qu'elle voit, pour qu'on décide un jour sur
+  des chiffres. ⛔ **Toujours aucun blocage, aucune correction**, et **aucune des 21 règles ne
+  change** (témoin). Détail : **`docs/DOUANE-NUTRITION.md` §Étape 6**.
+  ⭐⭐ **Ce qui est gardé est une liste FERMÉE** : écrivain · verdict · noms de règles · forme
+  (déduite de `u`/`q` seuls) · un **booléen** « avait-elle un identifiant de source » · compteurs.
+  ⛔ **Jamais** : nom d'aliment, quantité, kcal, macros, commentaire, identifiant source, date.
+  ⭐ **Le catalogue des 21 règles n'est recopié nulle part** — il se remplit tout seul (**R2**) ;
+  une liste recopiée aurait menti *en silence*.
+  ⭐⭐ **La preuve est un CANARI** : un aliment aux valeurs reconnaissables enregistré par un vrai
+  écrivain, puis 11 chaînes cherchées dans ce qui a été stocké — aucune n'y est, **et le témoin
+  exige que le carnet ait bien enregistré** (sinon l'absence serait triviale).
+  ⛔ **Les 3 mutations de fuite ne changent RIEN à l'écran** : sans le canari elles passeraient.
+  ⛔ Carnet dans **sa propre clé** `ft4_douane_obs`, hors de `S` → hors sauvegarde et hors cloud.
+  Borné à 40 combinaisons, remise à zéro sans toucher au journal.
+  📋 **Rapport** : Profil → Admin → « Douane — observation du journal ». Il **pose** les 3 questions
+  produit et n'y répond pas.
+  ⚠️ **Deux erreurs à moi, attrapées par le contrôle négatif** : un garde que la parenthèse
+  fermante désamorçait, et **un mini-harnais non régénéré** — je testais l'ancien témoin en croyant
+  tester le nouveau. *Un harnais périmé est indiscernable d'un témoin aveugle.*
+  ⭐ Instantané de ce qui est écrit **identique** (`226a7e9c523cae3f`). **18 mutations** sur le code
+  + **19** sur les gardes du PDF, toutes mordantes, contrôle sain 0 rouge avant ET après.
+  📄 PDF : `docs/ETAPE6-OBSERVATION.pdf` — **25 gardes**, qui protègent une **promesse** avant un
+  chiffre.
+
+- **Version précédente :** `ft-v1205` — 🛃 **ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE**,
+  en ⛔ **MODE OBSERVATION UNIQUEMENT** (consigne de Michel : *« pas encore de correction
+  automatique ni de blocage utilisateur »*). `OK`, `WARN` et **`INVALID` écrivent TOUS
+  normalement** — le but est de **mesurer** avant de décider quelles règles deviendront
+  bloquantes. Détail complet : **`docs/DOUANE-NUTRITION.md`**.
+  ⭐⭐ **4 écrivains réels recomptés avant toute ligne**, et le 4ᵉ **ne pousse rien** :
+  `saveEditFood` mute en place puis `persist()` — *une recherche sur `S.foodLog.push` en trouve
+  trois sur quatre*. Écartés avec leur raison : `removeFoodEntry`, `_vcApplyPersona`,
+  `_applyRestoreData`, `load`/`_fusionnerAvecLeDisque`.
+  ⭐⭐ **21 règles MESURÉES avant d'être écrites** (9 `INVALID` + 12 `WARN`), sur les 29 lignes
+  réellement écrites — **2 candidates jetées à la mesure** (une portion sans étiquette ; un seuil
+  énergétique purement relatif, qui mordait sur un café à 2 kcal).
+  ⭐ **Répartition : 12 OK · 17 WARN · 0 INVALID.** Les 9 familles `INVALID` ne mordent sur aucune
+  ligne réelle → **chacune est éprouvée sur du fabriqué**, sinon ce serait un vert qui ne peut pas
+  rougir.
+  ⛔⛔ **2 divergences réelles découvertes, mesurées, NON corrigées** : ① une ligne **éditée** perd
+  sa traçabilité (`v`/`saisie`/`modifie` jamais posés — 8 lignes sur 8) ; ② une ligne entièrement
+  à zéro est **refusée** par l'écran d'ajout et **acceptée** par les trois autres écrivains.
+  ⭐ Instantané **identique après chacun des 4 branchements** (`226a7e9c523cae3f`), et l'objet
+  **avant/après douane identique à clés triées** sur les 29 lignes.
+  ⚠️ **Un garde à moi était aveugle** (il cherchait un nom au lieu d'un APPEL, donc le docblock le
+  rendait muet) — la famille de ft-v1193, reposée une 3ᵉ fois, attrapée par le contrôle négatif.
+  **16 mutations toutes mordantes**, contrôle sain 0 rouge avant ET après.
+  📄 PDF pour GPT : `docs/ETAPE5-DOUANE.pdf` — **26 gardes**, la répartition y est **lue dans la
+  mesure**, jamais recopiée ; **20 mutations sur un arbre COPIÉ**, toutes refusées.
+
+- **Version précédente :** `ft-v1204` — 🔀 **ÉTAPE 4 : LE HUB DE PRÉPARATION** (⛔ **pas la
 - ✅ **AUDIT D'ARCHITECTURE DE L'ONGLET SÉANCE — FAIT LE 12/09, ET SES 3 CONSTATS CORRIGÉS (ft-v1195).**
   ⭐ **Verdict : l'architecture est saine.** 1603 fonctions pour **1602 noms distincts** (le seul
   doublon est un helper local), **0 collision** sur 533 `const`/`let`, 7 portes d'entrée / 2 de sortie

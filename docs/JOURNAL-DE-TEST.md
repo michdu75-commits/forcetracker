@@ -2963,3 +2963,109 @@ mesurable depuis ce conteneur (aucun accès aux données réelles).
 de toucher le **prompt du Worker** et sa **normalisation** — donc un déploiement backend, et un
 changement de ce qu'on demande au modèle (**R34** : ça se valide au banc d'essai). **Rien de tout cela
 n'est dans le périmètre strict posé par Michel.** Mesuré, écrit, laissé à sa décision.
+## 🔬 `estimateFoodAI` n'a AUCUN filet de fiabilité — il n'atteint pas `_ref100` (13/09/2026, ft-v1207)
+
+**État : à trier** · *mesuré en construisant le résolveur, non corrigé (périmètre fermé par Michel).*
+
+Le chantier ft-v1207 a posé **un seul propriétaire** de la décision « cette énergie est-elle
+tenable ? » : le résolveur, branché sur **`_ref100`**, le normaliseur du pour-100 g. Ses **8
+appelants** sont donc tous couverts d'un coup — c'est tout l'intérêt.
+
+**⛔ Il y a une 9ᵉ porte, et elle passe à côté.** `estimateFoodAI` (l'estimation d'un aliment
+décrit en toutes lettres) **n'appelle pas `_ref100`** : elle écrit **directement** les champs de
+l'écran, et elle n'a **volontairement pas** de pour-100 g — ce qu'elle produit est une estimation
+pour la portion décrite, pas une fiche produit. *Ce n'est donc pas un oubli de branchement : les
+deux fonctions ne manipulent pas le même objet.*
+
+**⚠️ Mais la conséquence est réelle** : une estimation dont les protéines et les lipides
+dépasseraient l'énergie annoncée ne serait attrapée par **rien**, alors que la même incohérence
+venant d'un code-barres est désormais expliquée à l'écran.
+
+**Ce qu'il faudrait décider (et ce n'est pas à moi de le faire) :**
+- la loi doit-elle s'appliquer à une **estimation** comme à une **fiche** ? (l'erreur n'a pas le
+  même coût : personne ne « croit » une estimation comme on croit une étiquette) ;
+- ou bien l'écran doit-il seulement **redire** que c'est une estimation ?
+
+⛔ **Non corrigé** : le périmètre de ft-v1207 est fermé nommément par Michel, et ceci n'y est pas.
+⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
+Écrit ici pour ne pas disparaître avec la session (**R27**).
+
+---
+
+## 🔄 Une mise à jour en attente ne se dit PAS hors séance — et ça m'a coûté une session entière (13/09/2026, ft-v1208)
+
+**État : à trier** · *mesuré en traçant la capture iPhone de Michel, non corrigé (c'est une
+décision produit, pas un bug).*
+
+**Le cas vécu, et il est cher.** Michel envoie une capture qui montre l'ancien comportement des
+lentilles Raynal **1 h 30 après** le déploiement de ft-v1207. Question légitime : le chantier
+est-il cassé ? Il a fallu une trace runtime complète, un balayage de 54 payloads et une
+contre-épreuve sur 8 origines pour établir que **non** — la version servie était simplement
+périmée.
+
+**La cause, mesurée** : `_majPeutSAppliquer` retient le rechargement tant que
+`_curScreen !== 'home'`. Mesuré : `home` → **true** ; `nutrition` · `log` · `progress` ·
+`setup` · `coach` → **false**. C'est la décision de **ft-v1184** (*ne pas arracher l'écran sous
+les doigts de quelqu'un*), et elle est juste.
+
+**⛔ Mais il manque la moitié qui la rend vivable** : le message « Mise à jour disponible »
+n'existe **que pendant une séance**. Hors séance — donc dans l'immense majorité des cas — la
+personne n'est prévenue de **rien**. Elle peut rester des heures sur une version périmée en
+croyant tester la nouvelle.
+
+👉 ***Le garde protège l'écran, il ne protège pas la personne contre le fait de ne pas savoir.***
+Et le coût ne se voit pas : il se paie en confiance (« le correctif ne marche pas ») et en
+sessions de diagnostic sur un code parfaitement sain.
+
+**Ce qu'il faudrait décider (et ce n'est pas à moi de le faire) :**
+- une **pastille discrète** permanente quand un rechargement est en attente, hors séance aussi ?
+- ou appliquer la mise à jour sur **plus d'écrans** que l'Accueil (ceux où rien n'est en cours de
+  saisie) ?
+- ou ne rien changer et considérer que c'est le prix de la règle #4 ?
+
+⛔ **Non corrigé** : `_majPeutSAppliquer` est une décision assumée, et la « réparer » sans feu
+vert serait exactement ce que **R30** interdit. Un témoin de hors-périmètre l'épingle en l'état.
+⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
+Écrit ici pour ne pas disparaître avec la session (**R27**).
+
+---
+
+### 🟣 📷 LE SCANNER CAMÉRA LOCAL : quatre défauts mesurés, aucun corrigé (14/09/2026)
+
+> **État : à trancher par Michel.** Mesurés pendant l'audit du chantier « scanner caméra local »
+> (`docs/SCANNER-CAMERA-LOCAL.md`), figés par le bloc **CCCVIII** du parcours, **non corrigés** —
+> la règle du projet depuis ft-v1200 : *un défaut trouvé pendant un audit se mesure, s'écrit, et
+> attend un feu vert séparé.*
+
+**① ⭐⭐ Une COURSE : jusqu'à deux lookups Open Food Facts pour un seul scan.** Mesurée devant une
+caméra factice : le callback **continu** de ZXing et le bouton **« Capturer »** ont lu le même
+code à **28 ms d'intervalle** et tiré **chacun** son `_lookupBarcode`. Cause structurelle :
+`_bcCaptureFrame` ne pose `_bcScanning=false` qu'**après** son `await` de décodage (~500 ms),
+pendant lesquelles le décodage continu reste armé.
+
+⚠️ **Elle est INTERMITTENTE** — selon qui gagne, on observe 1 ou 2 lookups. ⭐ **Et sur un
+téléphone elle est PLUS probable, pas moins** : le décodage continu y est rapide, donc il a toutes
+les chances de tirer pendant les ~500 ms de la capture.
+
+**② Le bouton de repli photo est mort.** `scanBarcodePhoto()` cherche l'élément `af-bc-input`,
+**retiré avec ft-v388**. Le bouton *« 🖼️ Prendre une photo à la place »* de l'écran du scanner
+ferme l'overlay et **ne fait rien** — 0 appel mesuré. *Invisible aujourd'hui puisque le scanner
+lui-même est inatteignable ; c'est un bug le jour où on rouvre la porte.*
+
+**③ Le décodage LOCAL d'une photo est orphelin.** `onBarcodeFile` (provenance `photo-code`) est
+le **seul chemin photo sans IA**, et rien ne l'appelle. 👉 Aujourd'hui, photographier un
+code-barres passe **forcément** par l'IA — alors qu'un décodage local existe, déjà écrit, et qu'il
+**vérifie la clé de contrôle** là où l'IA ne la vérifie pas.
+
+**④ Le scanner ne dit pas sa provenance explicitement.** Les deux appels écrivent
+`_lookupBarcode(code)` sans argument ; la valeur par défaut `'scan'` rattrape. Le résultat est
+juste, la ligne d'appel ne le dit pas.
+
+**⚠️ Et une question de nommage, rendue à Michel**
+
+Il demande une provenance **`camera-code-local`**. Elle **existe déjà sous le nom `scan`**, et le
+contrat des quatre chemins est écrit dans `app.js` depuis le 23/08. Renommer coûterait ① des
+lignes de journal déjà enregistrées portant un nom disparu — **et l'historique est hors
+périmètre** — ② un **cinquième** nom pour une chose qui en a un.
+
+👉 **Recommandation : garder `scan`, et rendre l'appel explicite.** *Décision de Michel.*

@@ -1265,6 +1265,7 @@ function _provFood(vals){
        Et une kcal DÉRIVÉE des macros ne doit jamais se relire comme une valeur publiée (R32). */
     if(_afSrc.doute)p.doute=String(_afSrc.doute).slice(0,90);
     if(_afSrc.kcalDerivee===true)p.kcalDerivee=true;
+
     const a=_afSrc.attendu;
     if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
   }
@@ -1380,6 +1381,19 @@ function _provFood(vals){
     const masse=n*(+_afPortionPoids||0);
     if(!p.per100){ const d=_per100Derive(vals, masse); if(d) p.per100=d; }
   }
+  /* 🔬 ft-v1207 — LA TRACE DE FIABILITÉ PART AVEC LA LIGNE, ET SEULEMENT QUAND IL S'EST PASSÉ
+     QUELQUE CHOSE. Michel : *« ne jamais écraser la source et perdre la trace de ce qui s'est
+     passé »*. On garde donc la valeur BRUTE reçue, la valeur RETENUE, la méthode, la raison, le
+     champ d'origine et le niveau de confiance — de quoi reconstruire la décision après coup.
+     ⛔ Rien n'est ajouté quand la source est cohérente : une ligne normale ne grossit pas. */
+  try{
+    if(typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab && _bcNutr.fiab.etat!=='COHERENT'){
+      const z=_bcNutr.fiab;
+      p.fiab={ etat:z.etat, methode:z.methode, raison:z.raison,
+               brut:z.brut, retenu:z.kcal, champ:z.champ, champSource:z.champSource,
+               confiance:z.confiance, origine:z.origine };
+    }
+  }catch(e){}
   return p;
 }
 function _loadZXing(){
@@ -1588,10 +1602,216 @@ function _per100d1(x){ const v=+x||0; return Math.round(v*10)/10; }
    ⚠️ `maxNom` existe parce que les portes ne coupent pas toutes pareil : 60 partout, **80** pour
    l'étiquette recopiée à la main. Ce n'est pas une coquille à harmoniser ici — c'est un écart
    qu'on TRANSPORTE tel quel, pour que l'instantané ne bouge pas. */
+/* ⭐ LES AUTRES VALEURS ÉNERGÉTIQUES DU MÊME PAYLOAD — un seul propriétaire, deux appelants
+   (le code-barres et la recherche Open Food Facts). C'est ce qui permet au résolveur de
+   préférer une seconde valeur de la SOURCE plutôt que d'estimer, et c'est aussi ce qui
+   ENREGISTRE quel champ a servi : la question « d'où vient le 48,3 ? » devient mesurable au
+   prochain scan au lieu de rester une supposition. */
+function _nrjCandidats(n){
+  const o = n || {}, out = [];
+  if(+o['energy-kcal_100g'] > 0) out.push({kcal:+o['energy-kcal_100g'], champ:'energy-kcal_100g'});
+  if(+o['energy-kj_100g'] > 0)   out.push({kcal:+o['energy-kj_100g']/4.184, champ:'energy-kj_100g'});
+  if(+o['energy_100g'] > 0)      out.push({kcal:+o['energy_100g']/4.184, champ:'energy_100g'});
+  return out;
+}
+/* ⭐ Et le champ RÉELLEMENT utilisé pour la valeur principale — la moitié de la réponse à la
+   question de Michel. ⛔ Il reproduit l'ordre de `_lookupBarcode`/`_afSuggKcal100`, il ne le
+   décide pas : changer l'ordre ici sans changer là-bas ferait mentir la trace. */
+function _nrjChampPrincipal(n){
+  const o = n || {};
+  return (+o['energy-kcal_100g'] > 0) ? 'energy-kcal_100g'
+       : (+o['energy_100g'] > 0) ? 'energy_100g(kJ→kcal)' : 'aucun';
+}
+/* 🔬⭐⭐ ft-v1207 — LA FIABILITÉ ÉNERGIE / MACROS EN ENTRÉE : UN SEUL RÉSOLVEUR, 8 ORIGINES.
+
+   Michel, sur les lentilles Raynal (3021690201123, 48,3 kcal/100 g pour 6,1 P / 10 G / 3,2 L) :
+   ⛔ *« je ne veux pas un correctif spécifique aux lentilles — je veux que le problème soit traité
+   pour TOUS les aliments et toutes les sources »*, et ⛔ *« la douane reste une dernière barrière
+   d'observation, je ne veux PAS la transformer en moteur de correction »*.
+
+   ⭐⭐ LE POINT COMMUN EXISTAIT DÉJÀ : `_ref100`. C'est le normaliseur du pour-100 g, il a
+   **8 appelants** (code-barres · calibrage étiquette · Mes aliments · photo d'étiquette · marques ·
+   CIQUAL · journal local · recherche OFF), et sa sortie `_bcNutr` est *exactement* ce que l'écran
+   affiche et ce que `_bcApplyGrams` multiplie. **Résoudre là, c'est résoudre partout** — et c'est
+   la seule façon de ne pas repartir dans un patch porte par porte.
+
+   ⭐⭐ LA LOI, PAS UN SEUIL — c'est la règle de ce fichier depuis ft-v1162, et elle s'applique ici.
+   Le Règlement UE 1169/2011 (annexe XIV) fixe les facteurs : **protéines 4 kcal/g, lipides 9**.
+   Tous les autres contributeurs sont **positifs ou nuls** : glucides 4 · polyols 2,4 ·
+   érythritol 0 · fibres 2 · alcool 7 · acides organiques 3. Donc, quelle que soit la composition
+   du reste :
+
+       ⭐ E ≥ 4·P + 9·L        ← un PLANCHER PHYSIQUE, pas une comparaison approximative
+
+   👉 C'est exactement l'argument que Michel demandait : *les composants énergétiques
+   supplémentaires ne peuvent pas expliquer une énergie PLUS BASSE.* Rien ne retire d'énergie.
+
+   ⭐ LA TOLÉRANCE EST DÉRIVÉE DE LA PRÉCISION REÇUE, PAS CHOISIE (R29, et le voisin
+   `_kcalImpossibleVals` fait pareil) : une valeur écrite « 6,1 » est connue à ±0,05 ; une valeur
+   écrite « 6 » à ±0,5. La tolérance vaut donc `4·p(P) + 9·p(L) + p(kcal)` — elle s'élargit toute
+   seule quand la source est moins précise, au lieu de prétendre à une exactitude qu'elle n'a pas.
+
+   ⛔⛔ MESURÉ AVANT D'ÊTRE ÉCRIT, sur les deux tables que l'app embarque : **0 faux positif sur
+   3 607 aliments** (CIQUAL 3 484 + `marques.json` 123) — le protocole exact de ft-v1162.
+   Sur Raynal : plancher **53,2 kcal**, tolérance **0,7**, il en **manque 4,9**. *Même si les 10 g
+   de glucides ne valaient RIEN, les protéines et les lipides seuls dépassent déjà les 48,3.*
+
+   ⚠️ ET LA LIMITE EST DITE : avec une source en **entiers** (6 / 3), la tolérance monte à 7 kcal et
+   la loi ne mord plus. **La force de la loi dépend de la précision de la source** — c'est une
+   propriété de la donnée, pas un défaut du contrôle.
+
+   ⛔⛔ CE QUE LE RÉSOLVEUR NE FAIT PAS : il ne touche **jamais** à une valeur que la personne a
+   saisie ou reprise elle-même (`manuel` · `reprise` · `historique`) — il la CLASSE, il ne la
+   réécrit pas. *Une donnée qu'on a tapée soi-même n'est pas une donnée externe* (consigne de
+   Michel). Et il n'écrase **jamais** la source : la valeur brute, le champ d'origine, la méthode
+   et la raison partent avec la ligne. */
+const NRJ_PROT = 4, NRJ_LIP = 9;          /* UE 1169/2011 annexe XIV — facteurs FIXES */
+const NRJ_GLU = 4;                        /* pour l'estimation Atwater, pas pour le plancher */
+/* Les origines dont la valeur vient de la PERSONNE : on observe, on ne réécrit pas. */
+const NRJ_ORIGINES_UTILISATEUR = ['manuel', 'reprise', 'historique'];
+/* ⭐ Demi-unité du dernier chiffre significatif de la valeur TELLE QU'ELLE EST DONNÉE.
+   `48.3` → 0,05 · `48` → 0,5. C'est ce qui rend la tolérance dérivée plutôt que choisie. */
+function _nrjPrecision(x){
+  const v = +x;
+  if(!isFinite(v)) return 0.5;
+  const s = String(Math.abs(v));
+  const i = s.indexOf('.');
+  if(i < 0) return 0.5;
+  const d = s.length - i - 1;
+  return d > 3 ? 0.0005 : 0.5 * Math.pow(10, -d);   /* un flottant long vient d'un calcul, pas d'une étiquette */
+}
+/* ⛔ Rend `null` s'il n'y a rien à dire, sinon le détail de l'IMPOSSIBILITÉ. Jamais un booléen
+   nu : le rapport à la personne et la trace ont besoin des trois nombres. */
+function _nrjPlancher(kcal, prot, fat){
+  const k = +kcal, p = +prot || 0, f = +fat || 0;
+  if(!(k > 0)) return null;
+  if(!(p > 0) && !(f > 0)) return null;             /* sans protéine ni lipide, le plancher vaut 0 */
+  const sol = NRJ_PROT * p + NRJ_LIP * f;
+  const tol = NRJ_PROT * _nrjPrecision(prot) + NRJ_LIP * _nrjPrecision(fat) + _nrjPrecision(kcal);
+  if(k >= sol - tol) return null;
+  return { kcal: k, plancher: Math.round(sol * 10) / 10, tol: Math.round(tol * 100) / 100,
+           manque: Math.round((sol - k) * 10) / 10 };
+}
+/* L'estimation Atwater. ⚠️ Elle n'est PAS la loi : elle sert à choisir entre des candidats et à
+   proposer une valeur dérivée, jamais à décider qu'une donnée est fausse. */
+function _nrjAtwater(prot, carbs, fat){
+  return NRJ_PROT * (+prot || 0) + NRJ_GLU * (+carbs || 0) + NRJ_LIP * (+fat || 0);
+}
+/* ⭐⭐ LE RÉSOLVEUR — UN SEUL PROPRIÉTAIRE DE CETTE DÉCISION.
+   Rend TOUJOURS un objet complet, même quand il ne change rien : c'est ce qui permet de
+   reconstruire après coup ce qui s'est passé (demande explicite de Michel).
+     { kcal, etat, methode, raison, brut, champ, confiance }
+   États : COHERENT · ALTERNATIVE_FIABLE · DERIVE_ESTIMABLE · NON_RESOLU */
+function _resoudreNutrition(brut, opts){
+  const o = opts || {};
+  const origine = String(o.origine || 'inconnue');
+  const k = +brut.kcal, p = brut.prot, c = brut.carbs, f = brut.fat;
+  /* ⛔ La présence vient de l'appelant, qui l'a lue sur les valeurs BRUTES. Sans elle, une macro
+     absente devenue `0` par normalisation passerait pour une vraie valeur. */
+  const pr = o.presents || {};
+  const dit_ = (v, x) => (v === undefined) ? (x !== undefined && x !== null && x !== '' && isFinite(+x)) : !!v;
+  const aK = dit_(pr.kcal, brut.kcal), aP = dit_(pr.prot, p), aC = dit_(pr.carbs, c), aF = dit_(pr.fat, f);
+  const complet = aP && aC && aF;
+  /* ⛔⛔ ft-v1208 — `champSource` NE SE RÉÉCRIT JAMAIS, ET C'EST UN VRAI DÉFAUT CORRIGÉ.
+     `champ` dit *« d'où vient la valeur RETENUE »* — il est donc écrasé par `'P/G/L'` quand on
+     dérive, et par le nom de l'autre champ quand on prend une alternative. ⚠️ Résultat mesuré à
+     la trace runtime : dans le cas qui a déclenché tout ce chantier (`DERIVE_ESTIMABLE`), le nom
+     du champ qui portait la valeur douteuse était **jeté** — *le code calculait l'information,
+     la transportait, puis la perdait exactement là où on la cherchait*.
+     👉 `champSource` dit *« d'où venait la valeur BRUTE »*, et il survit à toutes les branches :
+     c'est lui qui rendra enfin mesurable « d'où vient le 48,3 » au prochain scan. */
+  const res = { kcal: (+k || 0), etat: 'COHERENT', methode: 'source', raison: '',
+                brut: (+k || 0), champ: String(o.champ || ''),
+                champSource: String(o.champ || ''), confiance: 'source',
+                origine: origine };
+
+  const viol = _nrjPlancher(k, p, f);
+  /* ⭐ L'ÉNERGIE ABSENTE EST UN CAS À PART, et Michel l'a demandé nommément : elle n'est pas
+     « incohérente », elle MANQUE. Si les trois macros sont là, on peut l'estimer ; sinon on ne
+     sait pas, et on le dit. ⛔ Une valeur saisie par la personne n'est jamais complétée d'office. */
+  if(!aK || !(k > 0)){
+    if(NRJ_ORIGINES_UTILISATEUR.indexOf(origine) >= 0) return res;
+    if(complet && _nrjAtwater(p, c, f) > 0){
+      res.kcal = Math.round(_nrjAtwater(p, c, f) * 10) / 10;
+      res.etat = 'DERIVE_ESTIMABLE'; res.methode = 'derive_macros';
+      res.raison = 'energie_absente'; res.champ = 'P/G/L'; res.confiance = 'derivee';
+    }
+    return res;
+  }
+  if(!viol) return res;                              /* la loi ne dit rien : on garde la source */
+
+  res.raison = 'plancher_energetique';
+  res.detail = viol;
+
+  /* ⛔ UNE DONNÉE SAISIE OU REPRISE PAR LA PERSONNE N'EST JAMAIS RÉÉCRITE.
+     On la classe — donc l'écran peut le dire et la douane le compter — mais la valeur reste la
+     sienne. *Réécrire ce que quelqu'un a tapé, c'est lui retirer la main sur sa propre donnée.* */
+  if(NRJ_ORIGINES_UTILISATEUR.indexOf(origine) >= 0){
+    res.etat = 'NON_RESOLU'; res.methode = 'observation'; res.confiance = 'utilisateur';
+    return res;
+  }
+
+  /* ① UNE AUTRE VALEUR ÉNERGÉTIQUE DU MÊME PAYLOAD EST-ELLE, ELLE, TENABLE ?
+     ⭐ C'est ce qui répond à la question « d'où vient le 48,3 » : le champ retenu est enregistré,
+     donc au prochain scan on saura si la source portait une seconde valeur cohérente. */
+  const cands = Array.isArray(o.candidats) ? o.candidats : [];
+  for(let i = 0; i < cands.length; i++){
+    const cand = cands[i];
+    if(!cand || !(+cand.kcal > 0)) continue;
+    if(Math.abs(+cand.kcal - (+k || 0)) < 0.51) continue;      /* c'est la même valeur */
+    if(_nrjPlancher(cand.kcal, p, f)) continue;                 /* elle viole aussi la loi */
+    if(complet){
+      const att = _nrjAtwater(p, c, f);
+      if(att > 0 && Math.abs(+cand.kcal - att) / att > 0.30) continue;   /* pas plus crédible */
+    }
+    res.kcal = Math.round(+cand.kcal * 10) / 10;
+    res.etat = 'ALTERNATIVE_FIABLE'; res.methode = 'autre_champ_source';
+    res.champ = String(cand.champ || '?'); res.confiance = 'source';
+    return res;
+  }
+
+  /* ② LES MACROS SONT-ELLES COMPLÈTES AU POINT DE PORTER UNE ESTIMATION ?
+     ⛔ « complètes » veut dire PRÉSENTES, pas « supérieures à zéro » : une huile a 0 g de
+     glucides, et c'est une vraie valeur (R29 — on ne confond pas absent et zéro légitime). */
+  if(complet){
+    const att = _nrjAtwater(p, c, f);
+    if(att > 0){
+      res.kcal = Math.round(att * 10) / 10;
+      res.etat = 'DERIVE_ESTIMABLE'; res.methode = 'derive_macros';
+      res.champ = 'P/G/L'; res.confiance = 'derivee';
+      return res;
+    }
+  }
+
+  /* ③ SINON ON NE SAIT PAS, ET ON LE DIT. ⛔ Aucune invention silencieuse : la valeur douteuse
+     reste affichée telle quelle, mais elle est marquée — l'écran demandera l'étiquette. */
+  res.etat = 'NON_RESOLU'; res.methode = 'aucune'; res.confiance = 'inconnue';
+  return res;
+}
 function _ref100(nom, kcal, prot, carbs, fat, opts){
   const n = (opts && opts.normaliser===false) ? (x=>+x||0) : _per100d1;
-  return { name:String(nom==null?'':nom).slice(0, (opts && opts.maxNom) || 60),
-           kcal100:n(kcal), prot100:n(prot), carbs100:n(carbs), fat100:n(fat) };
+  const f = { name:String(nom==null?'':nom).slice(0, (opts && opts.maxNom) || 60),
+              kcal100:n(kcal), prot100:n(prot), carbs100:n(carbs), fat100:n(fat) };
+  /* 🔬 ft-v1207 — LE RÉSOLVEUR DE FIABILITÉ, ICI ET NULLE PART AILLEURS.
+     C'est le seul endroit qui voit passer les 8 origines APRÈS normalisation et AVANT que
+     l'écran n'affiche quoi que ce soit. ⛔ On résout sur les valeurs NORMALISÉES : la précision
+     dont la tolérance est dérivée doit être celle qui sera affichée, pas celle d'un flottant
+     intermédiaire. */
+  /* ⛔⛔ LA PRÉSENCE SE MESURE SUR LES ARGUMENTS **BRUTS**, JAMAIS APRÈS NORMALISATION.
+     Défaut trouvé à la mesure, pas à la relecture : `_per100d1` transforme `undefined` en `0`,
+     donc une macro ABSENTE arrivait au résolveur comme un zéro et il dérivait quand même. C'est
+     exactement la distinction que Michel a demandée — *valeur absente, 0 légitime, valeur
+     invalide sont trois choses différentes* (R29). Une huile a vraiment 0 g de glucides ; une
+     fiche sans glucides n'a rien du tout. */
+  const _pres = (x) => (x !== undefined && x !== null && x !== '' && isFinite(+x));
+  f.fiab = _resoudreNutrition({ kcal:f.kcal100, prot:f.prot100, carbs:f.carbs100, fat:f.fat100 },
+                              { origine:(opts && opts.origine) || 'inconnue',
+                                champ:(opts && opts.champ) || '',
+                                candidats:(opts && opts.candidats) || [],
+                                presents:{ kcal:_pres(kcal), prot:_pres(prot),
+                                           carbs:_pres(carbs), fat:_pres(fat) } });
+  if(f.fiab.etat==='ALTERNATIVE_FIABLE' || f.fiab.etat==='DERIVE_ESTIMABLE') f.kcal100 = f.fiab.kcal;
+  return f;
 }
 /* La traduction `kcal100…` → `per100.kcal…`, à un seul endroit. ⛔ Elle ne CALCULE rien : si elle
    se mettait à arrondir ou à compléter, elle cesserait d'être une traduction et deviendrait une
@@ -1902,7 +2122,8 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   _bcPaquetTxt=_paquetLu;         // ⬅ idem depuis la phase 0a (voir le commentaire plus haut)
   _bcNutr=_ref100((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')
                     +(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':''),
-                  kcal100, n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g']);
+                  kcal100, n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g'],
+                  {origine:'barcode', champ:_nrjChampPrincipal(n), candidats:_nrjCandidats(n)});
   if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100)
     return _bcSansValeurs(_bcNutr.name, {saisie:saisie||'scan', origine:'off', sourceId:ean,
       codeDouteux:codeDouteux===true, cause:'« '+_bcNutr.name+' » trouvé, mais sa fiche n\'a aucune valeur.'});
@@ -2084,7 +2305,7 @@ function _calAppliquer(){
      👉 *C'est la porte jumelle (R8), à l'intérieur même du correctif censé fermer une fuite.*
      On met de côté, on oublie, on repose — comme partout ailleurs dans ce fichier. */
   try{ _afOublierAliment({garderPaquet:true}); }catch(e){}   // on calibre CE produit, pas un autre
-  _bcNutr=_ref100(nom, kcal, prot, carbs, fat, {maxNom:80});
+  _bcNutr=_ref100(nom, kcal, prot, carbs, fat, {maxNom:80, origine:'manuel'});
   /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
      par défaut, que la personne remplace par sa dose), et une provenance qui dit la vérité. */
   /* 📦 ft-v1174 — LE POIDS DU PAQUET TRAVERSE LE CALIBRAGE, et c'est LE cas de Michel. Sa
@@ -2377,6 +2598,303 @@ function _repasHabituels(){
     .sort((a,b)=>(b.n-a.n)||b.dernier.localeCompare(a.dernier))
     .slice(0,3);
 }
+/* 🛃⭐ ft-v1205 — ÉTAPE 5, LA DOUANE DU JOURNAL ALIMENTAIRE : UN SEUL POINT D'OBSERVATION,
+   POSÉ JUSTE AVANT L'ÉCRITURE FINALE DANS `S.foodLog`.
+
+   Feu vert de Michel après validation du hub : *« créer un point unique de contrôle juste avant
+   l'écriture finale dans `S.foodLog`, afin que toutes les lignes qui vont réellement être
+   enregistrées puissent être observées avec les mêmes règles »*.
+
+   ⛔⛔ PREMIÈRE VERSION = OBSERVATION UNIQUEMENT, ET C'EST UNE CONSIGNE, PAS UNE PRUDENCE :
+   *« je ne veux pas encore de correction automatique ni de blocage utilisateur »*.
+   `OK` → écriture normale · `WARN` → écriture normale · **`INVALID` → écriture normale aussi**.
+   ⭐ *« Le but est d'abord de MESURER ce qui sortirait rouge avant de décider quelles règles
+   deviennent réellement bloquantes. »* Rendre une règle bloquante demande un feu vert séparé.
+
+   ⛔⛔ CE QU'ELLE NE FAIT PAS, ET CHAQUE POINT EST FIGÉ PAR UN TÉMOIN : elle ne corrige pas `q`,
+   ne choisit pas d'unité, ne convertit pas une portion en grammes, ne crée ni ne modifie un
+   `per100`, ne tranche pas entre les calories et les macros, ne devine pas un poids de portion,
+   ne touche pas à la provenance, ne normalise rien en silence, n'écrit pas dans `S.foodLog`,
+   n'affiche aucun `toast`, ne touche ni au hub `_afPreparerEcran` ni aux propriétaires de 1b/3.
+   ⭐ **Elle LIT la forme finale. Elle ne la reconstruit pas** — sinon elle deviendrait un second
+   hub, et le calcul existerait à deux endroits (R2).
+
+   ⚠️ LES RÈGLES N'ONT PAS ÉTÉ RECOPIÉES D'UNE LISTE, ELLES ONT ÉTÉ MESURÉES.
+   Michel : *« ne transforme pas automatiquement cette liste en règles ; mesure d'abord ce qui
+   existe réellement dans les données »*. Les 21 ci-dessous ont été passées sur les **29 lignes
+   réellement écrites** par les 4 écrivains sur 8 formes réelles, AVANT d'être écrites ici — et
+   deux candidates ont été jetées à la mesure : *« une portion sans étiquette »* (ce n'est pas une
+   incohérence, juste un nom absent) et un seuil énergétique purement relatif, qui mordait sur un
+   café à 2 kcal. Le seuil retenu est **relatif ET absolu**.
+
+   ⛔ LE CAS QUE MICHEL A NOMMÉ RESTE UN AVERTISSEMENT : *« une incohérence énergétique comme
+   48 kcal/100 g avec des macros incompatibles doit rester un WARN tant qu'aucune règle produit
+   n'a décidé quelle source a raison »*. La douane dit qu'il y a désaccord ; elle ne dit pas qui a
+   raison, et elle ne choisit pas.
+
+   ⚠️ ET ELLE DISTINGUE TROIS CHOSES QUE LE CODE CONFOND SOUVENT (consigne de Michel) :
+   une valeur **absente** (`undefined`/`null`), un **0 légitime** (l'eau fait 0 kcal, et c'est
+   vrai), et une valeur **invalide** (`NaN`, `Infinity`, un négatif). Seule la troisième est
+   structurelle ; le 0 n'est jamais une erreur en soi. */
+const DOUANE_V = 1;
+/* Le catalogue des noms de règles, rempli par `dit()` au premier appel — jamais écrit à la main. */
+const DOUANE_REGLES = [];
+function _douaneLigne(ligne, ecrivain){
+  const l = ligne || {};
+  const fini = x => (typeof x === 'number' && isFinite(x));
+  const pos  = x => fini(x) && x > 0;
+  const MACROS = ['kcal','prot','carbs','fat'];
+  const regles = [];
+  /* ⭐ `dit` RENSEIGNE AUSSI LE CATALOGUE (ft-v1206) : le rapport d'observation a besoin de
+     savoir quelles règles n'ont JAMAIS mordu, et recopier leur liste ailleurs l'aurait fait
+     diverger le jour où quelqu'un en ajoute une (R2). Ici, elle se remplit toute seule au
+     premier appel — toutes les règles sont évaluées à chaque fois, seul leur booléen diffère. */
+  const dit = (nom, grave, vrai) => {
+    if(DOUANE_REGLES.indexOf(nom) < 0) DOUANE_REGLES.push(nom);
+    if(vrai) regles.push({r:nom, g:grave});
+  };
+
+  /* ── ① STRUCTURE : la ligne ne peut pas être interprétée du tout ────────────────────── */
+  dit('nom_absent',        'INVALID', !(typeof l.name === 'string' && l.name.trim().length > 0));
+  dit('date_absente',      'INVALID', !(typeof l.date === 'string' && l.date.length > 0));
+  dit('repas_absent',      'INVALID', !(typeof l.meal === 'string' && l.meal.length > 0));
+  dit('horodatage_absent', 'INVALID', !pos(+l.ts));
+  /* ⚠️ `undefined` n'est PAS invalide ici : une macro absente est une macro absente. Ce qui est
+     invalide, c'est une macro PRÉSENTE et non lisible (NaN, Infinity, chaîne). */
+  dit('macro_non_finie',   'INVALID', MACROS.some(k => l[k] !== undefined && l[k] !== null && !fini(l[k])));
+  dit('macro_negative',    'INVALID', MACROS.some(k => fini(l[k]) && l[k] < 0));
+  dit('quantite_non_finie','INVALID', l.q !== undefined && l.q !== null && !fini(l.q));
+  dit('quantite_negative', 'INVALID', fini(l.q) && l.q < 0);
+  dit('per100_non_fini',   'INVALID', !!l.per100 && MACROS.some(k =>
+        l.per100[k] !== undefined && l.per100[k] !== null && !fini(l.per100[k])));
+
+  /* ── ② COHÉRENCE : la ligne s'interprète, mais quelque chose ne va pas ensemble ─────── */
+  dit('unite_sans_quantite', 'WARN', !!l.u && !pos(+l.q));
+  dit('quantite_sans_unite', 'WARN', pos(+l.q) && !l.u);
+  dit('unite_inconnue',      'WARN', !!l.u && ['g','ml','portion'].indexOf(l.u) < 0);
+  /* ⚠️ `ml` n'est PAS invalide — l'app l'enregistre vraiment aujourd'hui. Il est seulement
+     inexploitable pour remettre une quantité : sans densité, un volume ne dit pas ce que
+     l'aliment PÈSE, et on n'invente pas une densité (R29). */
+  dit('unite_non_reprenable','WARN', l.u === 'ml');
+  dit('portion_sans_poids',  'WARN', l.u === 'portion' && !pos(+l.portionWeightG));
+  dit('grammes_sans_per100', 'WARN', l.u === 'g' && pos(+l.q) && !l.per100);
+  /* ⛔ « aucune valeur » ≠ « des zéros » : l'eau à 0 kcal est légitime. La règle dit seulement
+     qu'AUCUNE des quatre n'est strictement positive — mesuré, c'est exactement ce que l'écran
+     d'ajout refuse déjà de sa propre initiative, pendant que les trois autres écrivains
+     l'acceptent. La douane ne tranche pas ce désaccord, elle le rend visible. */
+  dit('aucune_valeur',       'WARN', !MACROS.some(k => pos(+l[k])));
+  dit('tracabilite_absente', 'WARN', l.v === undefined || l.saisie === undefined);
+  dit('provenance_orpheline','WARN', !!l.sourceId && !l.origine);
+
+  /* ── ③ ARITHMÉTIQUE : deux nombres de la même ligne se contredisent ─────────────────── */
+  /* Seuil RELATIF ET ABSOLU. Le relatif seul mord sur les petites valeurs (un café à 2 kcal,
+     une macro arrondie à l'entier par l'écran d'édition) ; l'absolu seul rate les gros écarts
+     proportionnels. Mesuré : ce couple ne mord que sur le cas volontairement incohérent. */
+  const ecarte = (a, b) => { const d = Math.abs(a - b); return b > 0 && d >= 25 && d / b > 0.30; };
+  const _k = +l.kcal || 0, _p = +l.prot || 0, _c = +l.carbs || 0, _f = +l.fat || 0;
+  dit('energie_incoherente', 'WARN',
+      _k > 0 && (_p > 0 || _c > 0 || _f > 0) && ecarte(_k, 4*_p + 4*_c + 9*_f));
+  dit('portion_masse_incoherente', 'WARN',
+      l.u === 'portion' && pos(+l.q) && pos(+l.portionWeightG) && !!l.per100 && _k > 0 &&
+      ecarte(_k, (+l.per100.kcal || 0) * (+l.q) * (+l.portionWeightG) / 100));
+  dit('per100_incoherent_avec_ligne', 'WARN',
+      l.u === 'g' && pos(+l.q) && !!l.per100 && _k > 0 &&
+      ecarte(_k, (+l.per100.kcal || 0) * (+l.q) / 100));
+
+  const etat = regles.some(x => x.g === 'INVALID') ? 'INVALID'
+             : regles.length ? 'WARN' : 'OK';
+  const res = { v: DOUANE_V, etat: etat, regles: regles.map(x => x.r),
+                ecrivain: String(ecrivain || '?') };
+  /* ⛔ ON NE GARDE QUE DE LA STRUCTURE : ni la ligne, ni son nom, ni ses valeurs. La douane
+     observe la FORME, elle ne collecte pas ce que la personne mange (Constitution P3 · R36 :
+     ce qui décrit la personne reste chez elle).
+     ⭐ ft-v1206 : les 50 derniers verdicts en mémoire sont devenus des COMPTEURS AGRÉGÉS, pour
+     que l'observation survive au redémarrage de l'app — une liste volatile ne pouvait rien dire
+     d'un usage réel sur plusieurs jours. La liste et les compteurs auraient été deux mémoires du
+     même fait (R2) : il n'en reste qu'une. */
+  try{ _douaneCompter(res, l); }catch(e){}
+  return res;
+}
+/* 📊⭐ ft-v1206 — ÉTAPE 6 : L'OBSERVATION RÉELLE, ET ELLE NE GARDE QUE DE LA STRUCTURE.
+
+   Michel valide le mode observation et demande de le faire tourner pour de vrai :
+   *« faire tourner `_douaneLigne(...)` sur les vraies lignes réellement produites par
+   l'application et obtenir un rapport agrégé des WARN / INVALID rencontrés en usage réel,
+   SANS STOCKER le contenu des repas ni les valeurs nutritionnelles personnelles »*.
+
+   ⛔⛔ RIEN NE CHANGE À LA DOUANE. Les 21 règles sont intactes, aucune ne devient bloquante,
+   aucune ligne n'est corrigée. Ce bloc ne fait que COMPTER ce que la douane a déjà dit.
+
+   ⭐⭐ CE QUI EST GARDÉ — et la liste est fermée, pas « à peu près » :
+     · l'ÉCRIVAIN (4 valeurs possibles, du vocabulaire fixe)
+     · le VERDICT (OK / WARN / INVALID)
+     · les NOMS des règles qui ont mordu (vocabulaire fixe, 21 valeurs)
+     · la FORME (`grammes` · `portion` · `ml` · `sans_quantite` · `autre`)
+     · un booléen « la ligne portait-elle un identifiant de source » — le BOOLÉEN, jamais l'id
+     · des COMPTEURS
+   ⛔⛔ CE QUI N'EST JAMAIS GARDÉ : le nom de l'aliment · la quantité réelle · les calories ·
+   les protéines · les glucides · les lipides · un commentaire · une description de repas ·
+   l'identifiant source · la date d'un repas. **Rien qui permette de reconstruire ce que la
+   personne a mangé.**
+
+   👉 C'est **R36** appliqué à notre propre diagnostic : *ce qui décrit LE MONDE se compte, ce
+   qui décrit LA PERSONNE reste chez elle* (Constitution **P3**).
+
+   ⛔ ET LE CARNET VIT DANS SA PROPRE CLÉ, HORS DE `S` : il n'est donc dans aucune sauvegarde,
+   aucune synchronisation cloud, aucun export. Rien ne sort du téléphone. Un témoin le vérifie
+   en conduisant les vrais écrivains avec un CANARI (un nom et des valeurs reconnaissables) puis
+   en cherchant ce canari dans ce qui a été stocké — *une promesse de confidentialité qu'aucun
+   test ne peut faire rougir n'est qu'une intention.* */
+const DOUANE_OBS_CLE = 'ft4_douane_obs';
+const DOUANE_OBS_V = 1;
+const DOUANE_COMBOS_MAX = 40;   /* borne dure : le carnet ne peut pas grossir sans fin */
+function _douaneCarnet(){
+  try{
+    const brut = localStorage.getItem(DOUANE_OBS_CLE);
+    const o = brut ? JSON.parse(brut) : null;
+    if(o && o.v === DOUANE_OBS_V) return o;
+  }catch(e){}
+  return { v: DOUANE_OBS_V, depuis: null, maj: null, n: 0,
+           etats: { OK:0, WARN:0, INVALID:0 }, ecrivains: {}, regles: {}, combos: {},
+           catalogue: [] };
+}
+/* ⚠️ LA FORME EST DÉDUITE DE `u` ET `q` SEULS — jamais du nom, jamais des valeurs.
+   Elle répond à *« de quelle façon la quantité est-elle exprimée ? »*, pas à *« qu'est-ce que
+   c'était ? »*. C'est précisément la frontière que Michel a tracée. */
+function _douaneForme(l){
+  const q = +(l && l.q), u = (l && l.u) || '';
+  if(!(q > 0)) return 'sans_quantite';
+  if(u === 'g') return 'grammes';
+  if(u === 'portion') return 'portion';
+  if(u === 'ml') return 'ml';
+  return 'autre';
+}
+function _douaneCompter(res, ligne){
+  let c;
+  try{ c = _douaneCarnet(); }catch(e){ return; }
+  /* le jour, pas l'heure : savoir « depuis quand on observe » n'exige pas de savoir à quelle
+     heure la personne mange (R36 — la granularité fait partie de la donnée). */
+  const jour = (new Date()).toISOString().slice(0, 10);
+  if(!c.depuis) c.depuis = jour;
+  c.maj = jour;
+  c.n++;
+  if(c.etats[res.etat] === undefined) c.etats[res.etat] = 0;
+  c.etats[res.etat]++;
+  const e = String(res.ecrivain || '?').slice(0, 24);
+  const E = c.ecrivains[e] || (c.ecrivains[e] = { n:0, OK:0, WARN:0, INVALID:0,
+                                                  formes:{}, avecSource:0, sansSource:0 });
+  E.n++; if(E[res.etat] === undefined) E[res.etat] = 0; E[res.etat]++;
+  const f = _douaneForme(ligne);
+  E.formes[f] = (E.formes[f] || 0) + 1;
+  /* ⛔ LE BOOLÉEN, PAS L'IDENTIFIANT. Il sert à suivre la divergence mesurée en ft-v1205
+     (`rejouerRepas` perd `sourceId` là où `quickAddFood` le garde) sans jamais permettre de
+     retrouver l'aliment. */
+  if(ligne && ligne.sourceId) E.avecSource++; else E.sansSource++;
+  (res.regles || []).forEach(r => { c.regles[r] = (c.regles[r] || 0) + 1; });
+  if((res.regles || []).length){
+    const k = res.regles.slice().sort().join('+');
+    if(c.combos[k] !== undefined) c.combos[k]++;
+    else if(Object.keys(c.combos).length < DOUANE_COMBOS_MAX) c.combos[k] = 1;
+    else c.combos['(autres)'] = (c.combos['(autres)'] || 0) + 1;
+  }
+  /* le catalogue est du vocabulaire fixe (21 noms de règles), pas une donnée de repas */
+  c.catalogue = (typeof DOUANE_REGLES !== 'undefined') ? DOUANE_REGLES.slice() : [];
+  try{ localStorage.setItem(DOUANE_OBS_CLE, JSON.stringify(c)); }catch(e){}
+}
+/* 📋 LE RAPPORT — du texte, lisible, et construit UNIQUEMENT depuis les compteurs.
+   ⭐ Il est écrit pour répondre aux trois questions produit de Michel, et il les pose
+   explicitement au lieu d'y répondre à sa place :
+     ① quelles règles ne mordent JAMAIS sur de vraies lignes ?
+     ② lesquelles signalent du réel mais doivent RESTER des avertissements ?
+     ③ lesquelles pourraient devenir bloquantes sans casser un usage légitime ?
+   ⛔ Aucune de ces trois questions n'est tranchée ici : le rapport donne les chiffres. */
+function _douaneRapport(){
+  const c = _douaneCarnet();
+  const L = [];
+  const pct = (x) => c.n ? ' (' + Math.round(x * 100 / c.n) + ' %)' : '';
+  L.push('DOUANE — OBSERVATION RÉELLE (aucun blocage, aucune correction)');
+  if(!c.n) return L.concat(['', 'Aucune ligne observée pour l\'instant.',
+                            'Le compteur démarre au prochain aliment enregistré.']).join('\n');
+  L.push('Du ' + c.depuis + ' au ' + c.maj + ' — ' + c.n + ' ligne' + (c.n > 1 ? 's' : '') + ' observée' + (c.n > 1 ? 's' : ''));
+  L.push('');
+  L.push('VERDICTS');
+  ['OK','WARN','INVALID'].forEach(k => L.push('  ' + k.padEnd(8) + String(c.etats[k] || 0).padStart(5) + pct(c.etats[k] || 0)));
+  L.push('');
+  L.push('PAR ÉCRIVAIN');
+  Object.keys(c.ecrivains).sort().forEach(k => {
+    const E = c.ecrivains[k];
+    L.push('  ' + k);
+    L.push('      ' + E.n + ' ligne(s) — OK ' + (E.OK||0) + ' · WARN ' + (E.WARN||0) + ' · INVALID ' + (E.INVALID||0));
+    const fs = Object.keys(E.formes).sort().map(f => f + ' ' + E.formes[f]).join(' · ');
+    if(fs) L.push('      formes : ' + fs);
+    L.push('      identifiant de source : ' + E.avecSource + ' avec · ' + E.sansSource + ' sans');
+  });
+  L.push('');
+  L.push('RÈGLES QUI ONT MORDU');
+  const vues = Object.keys(c.regles).sort((a,b) => c.regles[b] - c.regles[a]);
+  if(!vues.length) L.push('  aucune — toutes les lignes observées sont sorties OK');
+  vues.forEach(r => L.push('  ' + String(c.regles[r]).padStart(5) + '  ' + r + pct(c.regles[r])));
+  L.push('');
+  L.push('RÈGLES QUI N\'ONT JAMAIS MORDU  (question ① : purement théoriques ?)');
+  /* ⭐ LE CATALOGUE DES 21 RÈGLES N'EST PAS RECOPIÉ ICI : il est RENSEIGNÉ par `dit()` au premier
+     appel de la douane, puis rangé dans le carnet. Une règle ajoutée, retirée ou renommée suit
+     donc toute seule — *une liste recopiée aurait divergé le jour où quelqu'un touche aux règles*
+     (R2). Et comme il est rangé avec les compteurs, il survit au redémarrage de l'app. */
+  const jamais = (c.catalogue || []).filter(r => !c.regles[r]);
+  if(!jamais.length) L.push('  aucune — les ' + (c.catalogue||[]).length +
+                            ' règles ont toutes mordu au moins une fois');
+  jamais.forEach(r => L.push('  ' + r));
+  L.push('');
+  L.push('COMBINAISONS LES PLUS FRÉQUENTES');
+  const cb = Object.keys(c.combos).sort((a,b) => c.combos[b] - c.combos[a]).slice(0, 10);
+  if(!cb.length) L.push('  aucune');
+  cb.forEach(k => L.push('  ' + String(c.combos[k]).padStart(5) + '  ' + k));
+  L.push('');
+  L.push('À DÉCIDER (questions ② et ③) — ce rapport donne les chiffres, pas la décision :');
+  L.push('  ② une règle fréquente sur un usage LÉGITIME doit rester un avertissement ;');
+  L.push('  ③ une règle rare, ou qui ne mord que sur des lignes vraiment cassées,');
+  L.push('     pourrait devenir bloquante sans gêner personne.');
+  L.push('  ⛔ Aucune règle n\'est bloquante aujourd\'hui, et aucune ne le deviendra sans');
+  L.push('     un feu vert explicite.');
+  L.push('');
+  L.push('CE QUI N\'EST PAS DANS CE RAPPORT, PAR CONSTRUCTION : aucun nom d\'aliment, aucune');
+  L.push('quantité réelle, aucune calorie, aucune macro, aucun identifiant de source, aucune');
+  L.push('date de repas. Le carnet ne quitte pas le téléphone.');
+  return L.join('\n');
+}
+/* 📊 L'AFFICHAGE DU RAPPORT — Profil → Admin. Il n'y a pas d'autre façon pour Michel de LIRE
+   ce que la douane observe sur son propre téléphone : le carnet ne sort pas de l'appareil, donc
+   aucun outil d'ici ne peut le lire. *Une mesure qu'on ne peut pas consulter n'existe pas* —
+   c'est la leçon du Google Sheet (ft-v715) et des 4 sondes de diagnostic (ft-v716).
+   ⛔ Lecture seule : ce bouton n'écrit rien, ne corrige rien, ne bloque rien. */
+function loadDouaneAdmin(){
+  const el = document.getElementById('admin-douane'); if(!el) return;
+  let txt = '';
+  try{ txt = _douaneRapport(); }catch(e){ txt = 'Rapport indisponible : ' + (e && e.message || e); }
+  el.innerHTML = '<pre id="douane-rapport" style="white-space:pre-wrap;word-break:break-word;'
+    + 'font-size:11.5px;line-height:1.5;color:var(--t2);background:var(--bg3);border-radius:8px;'
+    + 'padding:10px 12px;margin:0;font-family:\'SF Mono\',ui-monospace,monospace;"></pre>'
+    + '<div style="display:flex;gap:8px;margin-top:8px;">'
+    + '<button class="btn btn-bg2" onclick="_douaneCopier()" style="flex:1;padding:10px;font-size:13px;">📋 Copier</button>'
+    + '<button class="btn btn-bg2" onclick="_douaneVider()" style="flex:1;padding:10px;font-size:13px;color:var(--red);">↺ Repartir de zéro</button>'
+    + '</div>';
+  document.getElementById('douane-rapport').textContent = txt;   /* textContent : rien n'est interprété */
+}
+function _douaneCopier(){
+  const p = document.getElementById('douane-rapport'); if(!p) return;
+  try{ navigator.clipboard.writeText(p.textContent||''); toast('Rapport copié 📋','success'); }
+  catch(e){ toast('Copie impossible sur ce navigateur','error'); }
+}
+function _douaneVider(){
+  showConfirm('Repartir de zéro ?',
+    'Les compteurs d\'observation sont remis à zéro. ⛔ Ton journal alimentaire n\'est pas touché : '
+    + 'ce carnet ne contient que des compteurs, aucun aliment.',
+    () => { _douaneRemiseAZero(); loadDouaneAdmin(); toast('Compteurs remis à zéro','success'); },
+    'Remettre à zéro');
+}
+function _douaneRemiseAZero(){
+  try{ localStorage.removeItem(DOUANE_OBS_CLE); }catch(e){}
+}
 /* Rejoue un repas : ses aliments sont ajoutés à AUJOURD'HUI, sur le même moment de la journée.
    ⚠️ La provenance dit « reprise » (brique 0) — ce n'est ni une mesure fraîche ni une saisie
    manuelle, et l'écrire évite qu'un chiffre repris passe un jour pour une mesure. */
@@ -2416,8 +2934,10 @@ function rejouerRepas(sig, meal){
     if(typeof _afSetSrc==='function')_afSetSrc(
       Object.assign({saisie:'liste',origine:'reprise'}, _srcRepriseQ(e, qOk)));
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
-    S.foodLog.push(Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,
-      qOk?{}:{q:null,u:null}));
+    const _l=Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,
+      qOk?{}:{q:null,u:null});
+    _douaneLigne(_l,'rejouerRepas');   /* 🛃 observation seule : ni correction, ni blocage */
+    S.foodLog.push(_l);
   });
   if(typeof _afSetSrc==='function')_afSetSrc(av);   // on rend le marqueur (R15)
   persist();
@@ -3001,7 +3521,7 @@ function quickFillFood(i){
      ⛔ ft-v1042 n'est PAS touchée : un aliment scanné n'est pas compté en portions, donc son
      champ grammes s'ouvre exactement comme avant. Un témoin de non-régression le fige. */
   if(P && it.u!=='portion' && (+P.kcal>0 || +P.prot>0 || +P.carbs>0 || +P.fat>0)){
-    _bcNutr=_ref100(it.name, P.kcal, P.prot, P.carbs, P.fat, {normaliser:false});
+    _bcNutr=_ref100(it.name, P.kcal, P.prot, P.carbs, P.fat, {normaliser:false, origine:'reprise'});
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : PROPOSÉE, plus imposée — le champ reste vide, la pastille offre le rappel. */
     if(g) g.value='';
@@ -3105,7 +3625,9 @@ function quickAddFood(i){
                              `it.per100||null`), donc l'objet final ne bouge pas d'un octet —
                              c'est l'instantane qui le prouve, pas ce commentaire. */
                           _srcProvenance(it)));
-  S.foodLog.push(Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
+  const _l=Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals));
+  _douaneLigne(_l,'quickAddFood');   /* 🛃 observation seule : ni correction, ni blocage */
+  S.foodLog.push(_l);
   _afSetSrc(null);
   _unhideFood(it.name);
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
@@ -3212,7 +3734,8 @@ async function onFoodLabelFile(input){
     if(!d||d.status!=='ok'){toast('Étiquette illisible — rapproche-toi, éclaire, ou saisis à la main','error');return;}
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (photo d'etiquette). */
   try{ _afOublierAliment(); }catch(e){}
-    _bcNutr=_ref100(d.name||'Produit', d.kcal100, d.prot100, d.carbs100, d.fat100);
+    _bcNutr=_ref100(d.name||'Produit', d.kcal100, d.prot100, d.carbs100, d.fat100,
+                    {origine:'etiquette'});
     /* ⛔⛔ LA JUMELLE (ft-v1163, R8) — même défaut, même correctif, un seul propriétaire.
        Michel : *« ça risque de merder aussi pour le scan du code-barres ou l'étiquette,
        c'est pareil »*. Il avait raison : cette ligne était le clone exacte de celle du
@@ -3771,7 +4294,7 @@ function _afSuggPrendreMarque(i){
   const a=_marques.a[idx];
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (proposition marque). */
   try{ _afOublierAliment(); }catch(e){}
-  _bcNutr=_ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6]);
+  _bcNutr=_ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6], {origine:'marque'});
   const sid=('marque:'+a[0]+':'+a[1]).slice(0,32);
   _offRemplirFormulaire({serving_quantity:a[7]||0, nutriments:{}}, sid, 'marque', false, 'marque');
   /* ⛔ LA PROVENANCE DIT CE QU'ELLE EST, y compris quand les kcal ont été DÉRIVÉES des macros
@@ -3797,7 +4320,7 @@ function _afSuggPrendreCiqual(i){
      3 484), et on les jetait ici même, à la lecture. */
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (proposition CIQUAL). */
   try{ _afOublierAliment(); }catch(e){}
-  _bcNutr=_ref100(a[1], a[3], a[4], a[5], a[6]);
+  _bcNutr=_ref100(a[1], a[3], a[4], a[5], a[6], {origine:'ciqual'});
   /* ⚠️ PAS D'ÉTAT « tel-que-vendu » DANS LA PROVENANCE, et c'est une vraie différence avec
      Open Food Facts : un produit emballé donne toujours ses valeurs TELLES QUE VENDUES (donc
      sèches pour des pâtes), alors que CIQUAL dit l'état EN TOUTES LETTRES dans le nom — « Riz
@@ -4152,7 +4675,7 @@ function _afSuggPrendreLocale(i){
   const P=e.per100;
   /* 🍽️ ft-v1186 — la porte JUMELLE, même règle (R8). */
   if(P && e.u!=='portion' && (+P.kcal>0 || +P.prot>0 || +P.carbs>0 || +P.fat>0)){
-    _bcNutr=_ref100(e.name, P.kcal, P.prot, P.carbs, P.fat, {normaliser:false});
+    _bcNutr=_ref100(e.name, P.kcal, P.prot, P.carbs, P.fat, {normaliser:false, origine:'historique'});
     const g=document.getElementById('af-bc-grams');
     /* ⚖️ ft-v1051 : la JUMELLE (R8) — le même correctif, sur le chemin « reprendre depuis le journal ». */
     if(g) g.value='';
@@ -4231,7 +4754,8 @@ function _afSuggPrendreOff(i){
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (recherche Open Food Facts par nom). */
   try{ _afOublierAliment(); }catch(e){}
   _bcNutr=_ref100(_afSuggNom(p), _afSuggKcal100(p),
-                  n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g']);
+                  n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g'],
+                  {origine:'off', champ:_nrjChampPrincipal(n), candidats:_nrjCandidats(n)});
   _offRemplirFormulaire(p, p.code||null, 'recherche');
   _afSuggVider();
   toast('Ajuste la quantité ✅','success');
@@ -4309,6 +4833,7 @@ function addFoodEntry(){
   if(!S.foodLog)S.foodLog=[];
   const _e=Object.assign({date:_journalJourActif(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()},
     _provFood({kcal,prot,carbs,fat}));
+  _douaneLigne(_e,'addFoodEntry');   /* 🛃 observation seule : ni correction, ni blocage */
   S.foodLog.push(_e);
   _majDefFavori(_e);   // 🏷️ ft-v1186 — le favori ne garde pas une définition périmée (décision de Michel)
   _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
@@ -4881,9 +5406,32 @@ function _coherenceKcal(pfx, corrigeur){
      amènera. C'est **R24** : on informe, on ne se met pas en travers. */
   const _a=document.activeElement;
   const enTrainDeTaper = !!(_a && _a.id && new RegExp('^'+pfx+'-(kcal|prot|carbs|fat)$').test(_a.id));
-  const montrer = ()=>{ el.style.display='block';
-                        if(!etaitVu && !enTrainDeTaper && typeof _amenerALaVue==='function')
-                          _amenerALaVue(el); };
+  /* ⭐⭐ ft-v1207 — « APPARAÎTRE » NE VEUT PAS DIRE SEULEMENT « PASSER DE CACHÉ À VISIBLE ».
+     ⛔⛔ C'EST UN VRAI DÉFAUT QUE J'AI INTRODUIT ET QUE LE BANC A ATTRAPÉ, sur le cas réel de
+     Michel lui-même : l'avertissement de fiabilité s'affiche dès le scan, donc `etaitVu` était
+     déjà vrai au clic « paquet entier » — et la garantie de ft-v1191 (*un avertissement qu'on
+     ne voit qu'en défilant ne protège que ceux qui défilaient déjà*) tombait en silence.
+     👉 On compare donc le MESSAGE, pas seulement la visibilité : un message qui change est une
+     apparition. ⛔ Et les deux gardes de ft-v1191 tiennent entiers — on ne remonte pas à chaque
+     appel (un message identique ne bouge rien) ni sous les doigts de quelqu'un qui tape. */
+  const avantHTML = el.innerHTML;
+  /* ⛔⛔ ET LA REMONTÉE SE CONFIRME UNE FOIS, PARCE QUE `scrollIntoView({smooth})` EST ASYNCHRONE.
+     Mesuré sur le cas réel de Michel : au scan d'un code-barres, l'écran continue de se remplir
+     APRÈS l'appel (pastilles, listes, note d'état) — le défilement en vol est perdu, et l'alerte
+     restait à 1 284 px sous la zone visible en se croyant amenée. *Un défilement demandé n'est
+     pas un défilement arrivé.* On repasse donc UNE fois, ~0,3 s plus tard ; `_amenerALaVue` ne
+     bouge rien si l'élément est déjà à la vue, et le garde de frappe est réévalué à cet
+     instant-là — quelqu'un qui s'est mis à taper entre-temps n'aura pas l'écran arraché. */
+  const _remonter = ()=>{
+    const a2=document.activeElement;
+    if(a2 && a2.id && new RegExp('^'+pfx+'-(kcal|prot|carbs|fat)$').test(a2.id)) return;
+    if(typeof _amenerALaVue==='function') _amenerALaVue(el);
+  };
+  const montrer = ()=>{ const aChange = el.innerHTML!==avantHTML;
+                        el.style.display='block';
+                        if((!etaitVu || aChange) && !enTrainDeTaper){
+                          _remonter(); setTimeout(_remonter, 300);
+                        } };
   const g=id=>numFR((document.getElementById(pfx+'-'+id)||{}).value)||0;
   const nom=String((document.getElementById(pfx+'-'+(pfx==='af'?'desc':'name'))||{}).value||'');
   const kcal=g('kcal'), theo=4*g('prot')+4*g('carbs')+9*g('fat');
@@ -4897,6 +5445,45 @@ function _coherenceKcal(pfx, corrigeur){
       +'<b>'+masse.q+' g</b>. Un aliment ne peut pas contenir plus de matière qu\'il ne pèse.'
       +'<div style="color:var(--t3);margin-top:6px;">Soit la quantité, soit une des trois valeurs '
       +'est à revoir — <b>l\'app ne peut pas savoir laquelle</b>, elle ne touche à rien.</div>';
+    montrer(); return;
+  }
+  /* 🔬⭐⭐ ft-v1207 — PUIS LA FIABILITÉ DE LA SOURCE, ET ELLE NE PASSE PAS DEVANT LA MASSE.
+     ⚠️ MA PREMIÈRE VERSION LA METTAIT EN TÊTE, ET C'ÉTAIT ÉCRASER UNE DÉCISION DÉJÀ PRISE :
+     ft-v1103 dit « la masse d'abord, c'est le défaut le plus grave des deux », et cette
+     décision n'était pas la mienne à renverser (R30). La masse parle de ce que la personne
+     est en train de faire MAINTENANT ; la fiabilité parle de la fiche d'origine.
+     ⛔ EN REVANCHE ELLE PASSE DEVANT LE PLAFOND ET DEVANT L'ÉCART : ces deux-là comparent des
+     valeurs qui, à ce stade, ont DÉJÀ été résolues — expliquer l'origine du chiffre vaut mieux
+     que commenter le chiffre corrigé. ⚠️ Conséquence assumée et dite : quand la source est
+     signalée, le bouton « Mettre N kcal » de l'écart ne s'affiche pas. En `NON_RESOLU` c'est
+     voulu — *« lis l'étiquette » vaut mieux qu'un bouton qui applique une supposition* ; dans
+     les deux autres états l'écart a disparu de lui-même, puisque la valeur a été résolue.
+     ⛔ On enrichit le propriétaire qui existe déjà (R13) : une deuxième boîte d'avertissement
+     aurait fini par contredire celle-ci.
+     ⚠️ Seulement sur l'écran d'AJOUT : `_bcNutr` n'existe pas dans la modale de modification. */
+  if(pfx==='af' && typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab
+     && _bcNutr.fiab.etat!=='COHERENT'){
+    const z=_bcNutr.fiab;
+    const laRaison = (z.raison==='energie_absente')
+      ? 'La fiche ne donne <b>pas de calories</b>.'
+      : 'La fiche annonce <b>'+z.brut+' kcal/100 g</b>, mais ses protéines et ses lipides en '
+        +'valent déjà <b>'+((z.detail&&z.detail.plancher)||'—')+'</b> à eux seuls — '
+        +'<b>même si les glucides ne comptaient pour rien</b>.';
+    if(z.etat==='NON_RESOLU'){
+      el.innerHTML='🔬 '+laRaison+' <b>L\'app ne sait pas laquelle croire</b>, et elle ne touche '
+        +'à rien.<div style="color:var(--t3);margin-top:6px;">Le plus sûr : lis l\'étiquette et '
+        +'tape les valeurs pour 100 g.</div>';
+    }else{
+      /* ⚠️ `z.kcal` — PAS `z.retenu` : `retenu` est le nom que la TRACE porte dans `_provFood`,
+         il n'existe pas sur l'objet du résolveur. *Le témoin ⑱ a attrapé ce défaut chez moi ;
+         à l'écran il affichait « undefined kcal/100 g » sans lever la moindre erreur.* */
+      el.innerHTML='🔬 '+laRaison+' L\'app utilise <b>'+z.kcal+' kcal/100 g</b>'
+        +(z.etat==='ALTERNATIVE_FIABLE'
+            ? ', l\'autre valeur de la fiche (<b>'+z.champ+'</b>).'
+            : ', calculées depuis les macros.')
+        +'<div style="color:var(--t3);margin-top:6px;">La valeur d\'origine ('+z.brut+') est '
+        +'conservée avec la ligne. Si tu as l\'étiquette, tu peux corriger.</div>';
+    }
     montrer(); return;
   }
   /* ⚡ PUIS LE PLAFOND PHYSIQUE (ft-v1162), AVANT l'heuristique — et l'ordre est le sujet :
@@ -5604,6 +6191,11 @@ function saveEditFood(){
       _majDefFavori(e);
     }
   }
+  /* 🛃 LE 4ᵉ ÉCRIVAIN, ET LE SEUL QUI NE POUSSE RIEN : il mute en place une ligne déjà dans
+     `S.foodLog`. Une recherche sur `S.foodLog.push` le rate complètement — c'est pourtant une
+     vraie ligne enregistrée. On observe donc ici, quand tous les champs sont posés et juste
+     AVANT `persist()`, qui est l'écriture réelle de cet écrivain. */
+  _douaneLigne(e,'saveEditFood');   /* observation seule : ni correction, ni blocage */
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
   renderFoodJournal();
