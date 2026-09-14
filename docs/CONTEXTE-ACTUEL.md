@@ -67,6 +67,19 @@
   lire `docs/JOURNAL-DE-PARTAGE.md`, poser sa ligne AVANT de coder) **avant toute** modification
   Nutrition.
 
+- 🔌 **LE CHEMIN RÉSEAU DU CODE-BARRES EST PROUVÉ ET FIGÉ** (bloc CCCVII, 15 témoins).
+  Mesuré en runtime, `fetch` intercepté et classé par domaine : **code tapé → 1 appel Open Food
+  Facts, ZÉRO IA** · **photo du code-barres → 1 appel Worker IA (`readBarcode`, Haiku 4.5) + 1
+  appel Open Food Facts**, décompté du quota de 25 essais.
+  ⛔⛔ **Et la question était mal posée** : le scanner **caméra ZXing** (100 % local, 0 réseau)
+  existe dans le code mais **n'a aucun bouton** — donc *le seul « scan » atteignable est la photo
+  lue par l'IA*, ce qui est écrit dans le libellé du bouton. **ft-v388 l'a retiré exprès**
+  (« peu fiable »), **ft-v871** avait déjà reposé la question → **R30, rien touché**.
+  ⚠️ **Conséquence mesurée, non corrigée** : `scanBarcodePhoto` cherche `af-bc-input`, retiré avec
+  ft-v388 → le bouton « Prendre une photo à la place » du scanner **ne fait rien**. Invisible
+  aujourd'hui (le scanner est inatteignable), mais il redevient un bug si on rouvre la porte.
+  👉 **Décision attendue de Michel** : rouvrir le scan caméra local, ou l'assumer retiré.
+
 - 📱 **LE CAS RAYNAL EST FIGÉ COMME TÉMOIN iPHONE RÉEL → `docs/VALIDATION-IPHONE-RAYNAL.md`.**
   Les 7 points demandés par Michel sont **mesurés en runtime** : `ALTERNATIVE_FIABLE` · champ
   `energy-kj_100g` · brut **48,3** conservé · retenu **99,2** · **407 kcal** à 410 g · scan = saisie

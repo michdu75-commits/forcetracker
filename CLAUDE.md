@@ -461,6 +461,41 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
 
+**🔌 LE CHEMIN RÉSEAU DU CODE-BARRES, PROUVÉ — ET LA QUESTION ÉTAIT MAL POSÉE, PAS LA RÉPONSE · 14/09/2026, SANS NOUVELLE VERSION** — Michel : ⛔ ***« prouver exactement ce qui se passe quand un utilisateur scanne un code-barres, et vérifier que ce chemin n'appelle ni Milo, ni Anthropic, ni aucun autre service IA »*** · ***« je veux une preuve, pas une hypothèse »***.
+
+**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ.** Seuls `tests/` et les journaux changent. ⛔ **Et aucun comportement n'a été touché.**
+
+**⭐⭐ LA MESURE : `fetch` INTERCEPTÉ ET CLASSÉ PAR DOMAINE, sur le code-barres `3083681011791`.** Aucune requête ne part : on compte ce que l'app **DEMANDE**, pas ce que le réseau laisse passer.
+
+| porte | appels | domaines | appels IA |
+|---|---|---|---|
+| **code-barres TAPÉ** | **1** | `world.openfoodfacts.org` | **0** |
+| **photo du code-barres** | **2** | `dry-field-e931.forcetracker-app.workers.dev` + `world.openfoodfacts.org` | **1** |
+
+**⛔⛔ ET LA VRAIE RÉPONSE EST PLUS NUANCÉE QUE LA QUESTION — c'est le fait de la journée.** Michel demandait *« le scan appelle-t-il l'IA ? »* en supposant qu'un scan caméra existe. **Mesuré : il n'y en a pas.** Le scanner **ZXing** (décodage **100 % local**, bibliothèque servie depuis le dépôt, **zéro réseau**) est bien dans le code — `openBarcodeScanner`, `scanBarcode` — mais ⛔ **aucun bouton ne l'appelle**. 👉 ***Le seul « scan » atteignable depuis l'écran est la photo lue par l'IA***, et c'est écrit dans le libellé de son bouton : *« 📷 Ou photographier le code-barres (**IA lit les chiffres**) »*.
+
+**⛔ CE N'EST PAS UN DÉFAUT, ET JE NE L'AI PAS « RÉPARÉ » (R30).** Deux entrées d'archive le disent : **ft-v388** (11/07/2026) — *« Ancien bouton 📷 scanner caméra (**peu fiable**) **RETIRÉ**, remplacé par la saisie du numéro (rapide et fiable) »* — et **ft-v871**, qui avait déjà reposé la question à Michel **sans rien toucher**. *La décision existe et elle est écrite ; ce n'était pas à moi de la renverser.*
+
+**⚠️ UNE CONSÉQUENCE MESURÉE AU PASSAGE, NON CORRIGÉE** : `scanBarcodePhoto` cherche l'élément `af-bc-input`, **retiré avec ft-v388**. Donc le bouton *« 🖼️ Prendre une photo à la place »* du scanner caméra ferme l'overlay et **ne fait rien** — **0 appel mesuré**. ⭐ **Invisible aujourd'hui** puisque le scanner lui-même est inatteignable : *un bouton mort derrière une porte murée ne dérange personne, mais il redevient un bug le jour où on rouvre la porte.* Figé par un témoin, rendu à Michel.
+
+**⭐⭐ LES DEUX PORTES CONVERGENT, ET C'EST VÉRIFIÉ SUR L'OBJET ENTIER** : `_manualBarcode` et `onBarcodePhotoIA` appellent toutes deux **`_lookupBarcode`** → `_offFetchProduct` → `_ref100` → le résolveur. **Même objet final**, comparé en entier. ⭐ Et la **provenance** les distingue quand même : `code-tape` contre `photo-code-ia` — *le résultat est le même, la façon dont il est entré ne l'est pas, et la seconde n'a **pas** de clé de contrôle vérifiée* (**R33**).
+
+**📊 LE COÛT DE L'UNIQUE APPEL IA, MESURÉ DANS LE WORKER** : modèle **Claude Haiku 4.5**, **`max_tokens: 100`**, **une** image redimensionnée à **1 100 px / qualité 0,85**, prompt d'une quinzaine de lignes. Décompté sur les **25 essais gratuits** (`FOOD_AI_FREE_LIMIT`), illimité en Premium. ⚠️ **Je ne chiffre pas un prix** : les tarifs ne se devinent pas, ils se lisent sur la facture.
+
+**⛔ CE QUE COÛTERAIT SON RETRAIT — mesuré, pas proposé** (§6 de sa demande, *« je déciderai ensuite »*) : ① **le scan peut fonctionner sans IA** — ZXing est **déjà dans le dépôt** et décode en local ; ② mais il a été retiré **parce qu'il était jugé peu fiable** en juillet ; ③ et ⭐ **ZXing vérifie la clé de contrôle du code-barres, l'IA non** — d'où le garde `_eanValide` posé exprès après la lecture IA. 👉 ***Retirer l'appel IA ne coûte rien techniquement ; ça coûte le confort de photographier au lieu de taper treize chiffres.*** **Aucune décision prise.**
+
+**⛔⛔ ET ON NE FIGE PAS « le scan ne fait aucun appel IA » — ce serait figer un contrat FAUX.** Le témoin fige le contrat **réel** : la photo fait **exactement un** appel IA, **annoncé** dans le libellé et **décompté** du quota. *Un témoin qui affirme ce qu'on aurait aimé lire ne protège rien.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **aucun correctif** — rien n'a été trouvé de cassé dans le chemin mesuré · ⛔ le **scanner caméra orphelin** et son **bouton de repli mort** sont **figés en l'état**, pas réparés (**R30**, décision de Michel attendue) · ⛔ périmètre Nutrition intact : la douane, `savedFoods`, l'historique, les migrations, les `ml`, `saveEditFood`, `rejouerRepas`, l'estimation IA.
+
+Tests : **parcours 3834/3834 sur l'arbre FINAL** (bloc **CCCVII**, 15 témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS SUR LE BANC, TOUTES MORDENT, contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** — ① **la photo passe par `estimateFoodAI`** → **5** · ② **le code TAPÉ appelle le Worker IA** → **3** · ③ ⭐⭐ **le LOOKUP COMMUN appelle le Worker IA** (un appel posé là toucherait les deux portes) → **5** · ④ **scan et saisie divergent** (la photo n'utilise plus le même lookup) → **4** · ⑤ la recherche produit change de destination → **4** · ⑥ ZXing part d'un CDN au lieu du dépôt → **1, exactement lui** · ⑦ l'appel IA n'est plus décompté du quota → **1, exactement lui** · ⑧ la provenance ne distingue plus l'IA d'un décodage vérifié → **1, exactement lui**. ⚠️ **Et ma mutation ⑦ était invalide au premier jet** : la ligne de décompte existe **trois fois** (étiquette · photo du code · estimation), je n'en changeais qu'une. Ré-ancrée sur le commentaire qui la précède, unique à cette porte — *une mutation qui ne fait pas ce qu'elle annonce est indiscernable d'un garde aveugle*, écrit en ft-v1205 et repayé ici.
+
+📄 **PDF POUR GPT** : `docs/CHEMIN-RESEAU-CODEBARRES.pdf` (**22ᵉ** de la série), généré par `tools/gen_reseau_pdf.py` — **78 gardes** qui recomptent chaque fait depuis le code servi, **13 mutations éprouvées sur un arbre COPIÉ**, toutes refusent, contrôle sain vert avant ET après, arbre revérifié identique au dépôt à la fin. ⭐ Ses gardes les plus utiles protègent une **ABSENCE** : que le scanner caméra n'ait pas retrouvé de porte d'entrée (*« relire ft-v388 et ft-v871 avant de republier ce document »*), qu'aucun appel IA ne se soit glissé dans le lookup commun, et que la recherche produit n'ait pas changé de destination. ⚠️⚠️ **ET LE CONTRÔLE NÉGATIF A TROUVÉ UN GARDE AVEUGLE À MOI, sur le fait le plus délicat du document.** Celui du quota était écrit `'FOOD_AI_FREE_LIMIT' not in C and 'foodAiUses' not in C` : ***un `and` entre deux ABSENCES est un `ou` entre deux PRÉSENCES*** — il suffisait qu'un des deux mots reste pour qu'il se taise. **Mesuré : retirer l'INCRÉMENT en laissant les deux contrôles de mur le laissait parfaitement vert.** 👉 ***Lire un plafond n'est pas le décompter*** — il cherche désormais l'**écriture** `S.foodAiUses = (S.foodAiUses||0)+1`, seule preuve du décompte, et la lecture du plafond **séparément** : deux faits, deux gardes. *Un garde qu'on n'éprouve pas est une affirmation, pas une garantie.*
+
+Fichiers : `tests/parcours/runner.js`, `tools/gen_reseau_pdf.py` (nouveau), `docs/CHEMIN-RESEAU-CODEBARRES.pdf` (nouveau), `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
+
 **📱 VALIDATION iPHONE RÉELLE DU CAS RAYNAL — VÉRIFIÉ, FIGÉ, RIEN CHANGÉ · 13/09/2026, SANS NOUVELLE VERSION** — Michel donne sa capture comme **témoin iPhone réel** du chemin complet et demande de le **vérifier et figer sans ouvrir de chantier** : ⛔ ***« Ne change rien au comportement si tout correspond au contrat actuel. »***
 
 **⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ.** Seuls `tests/`, `tools/` et la doc changent. ⛔ **Et aucun comportement n'a été touché** : tout correspondait déjà.

@@ -36756,6 +36756,177 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     'la douane a bougé');
 }
 
+
+/* ══════════ BLOC CCCVII — 🔌 LE CHEMIN RÉSEAU DU CODE-BARRES (14/09/2026) ══════════
+   Michel : ⛔ *« prouver exactement ce qui se passe quand un utilisateur scanne un code-barres,
+   et vérifier que ce chemin n'appelle ni Milo, ni Anthropic, ni aucun autre service IA »* —
+   ⭐ *« je veux une preuve, pas une hypothèse »*.
+
+   ⭐⭐ CE BLOC MESURE LE RÉSEAU, PAS L'INTENTION. Il intercepte `fetch`, classe chaque appel par
+   DOMAINE, et fige le contrat mesuré. ⛔⛔ Et le contrat réel n'est pas celui qu'on imagine :
+
+     · code-barres TAPÉ          -> 1 appel, openfoodfacts.org, ZÉRO IA
+     · photo du code-barres      -> 2 appels : 1 Worker IA (readBarcode) + 1 openfoodfacts.org
+     · scanner caméra (ZXing)    -> décodage 100 % LOCAL, mais AUCUNE porte d'entrée
+
+   👉 ***Le seul « scan » atteignable depuis l'écran est la photo lue par l'IA*** — et c'est écrit
+   dans le libellé de son bouton (« IA lit les chiffres ») et décompté du quota.
+   ⛔ CE N'EST PAS UN DÉFAUT : ft-v388 (11/07/2026) a RETIRÉ le bouton caméra (« peu fiable »),
+   et ft-v871 a reposé la question à Michel sans rien toucher (**R30**). Ces témoins figent la
+   situation telle qu'elle est décidée — ils ne la réparent pas.
+
+   ⚠️ ON NE FIGE PAS « le scan ne fait aucun appel IA » : ce serait figer un contrat FAUX. On fige
+   le vrai — *un témoin qui affirme ce qu'on aurait aimé lire ne protège rien.* */
+console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
+{
+  const ctx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await ctx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
+  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html');
+  await pg.waitForTimeout(2300);
+
+  const X=await pg.evaluate(async()=>{
+   try{
+    const d=ms=>new Promise(x=>setTimeout(x,ms)), o={};
+    const EAN='3083681011791';
+    const FICHE={product_name:'Produit test', brands:'Test', quantity:'100 g', serving_quantity:50,
+      nutriments:{'energy-kcal_100g':250,'proteins_100g':10,'carbohydrates_100g':30,'fat_100g':9}};
+    let journal=[];
+    const vrai=window.fetch;
+    /* ⛔ AUCUNE requête ne PART : on note l'URL et on répond à la place. C'est ce qui rend la
+       mesure exacte — on compte ce que l'app DEMANDE, pas ce que le réseau laisse passer. */
+    window.fetch=async(u,i)=>{
+      const url=String(u&&u.url||u);
+      journal.push(url);
+      if(url.indexOf('openfoodfacts')>=0) return {ok:true, json:async()=>({status:1,product:FICHE})};
+      if(url.indexOf('workers.dev')>=0||url.indexOf('script.google.com')>=0)
+        return {ok:true, json:async()=>({status:'ok', barcode:EAN})};
+      return {ok:true, json:async()=>({})};
+    };
+    const IA=/workers\.dev|script\.google\.com|anthropic|claude/i;
+    const bilan=()=>({ total:journal.length,
+      off: journal.filter(u=>/openfoodfacts\.org/.test(u)).length,
+      ia:  journal.filter(u=>IA.test(u)).length,
+      autres: journal.filter(u=>!/openfoodfacts\.org/.test(u)&&!IA.test(u)).length,
+      domaines: journal.map(u=>{try{return new URL(u,location.href).host;}catch(e){return '?';}}) });
+    const reset=()=>{ journal=[]; };
+    const ouvrir=async()=>{ document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openAddFood(); await d(320); };
+
+    /* ═══ A. CODE-BARRES TAPÉ — la vraie porte, conduite par sa vraie fonction ═══ */
+    S.foodLog=[];S.savedFoods=[];S.foodAiUses=0;persist();
+    await ouvrir(); reset();
+    const mi=document.getElementById('af-bc-manual'); if(mi) mi.value=EAN;
+    _manualBarcode(); await d(700);
+    o.tape = bilan();
+    o.tape_res = { bc:JSON.parse(JSON.stringify(_bcNutr||null)), saisie:(_afSrc||{}).saisie,
+                   quotaIA:S.foodAiUses||0 };
+
+    /* ═══ B. PHOTO DU CODE-BARRES — le seul « scan » atteignable ═══ */
+    await ouvrir(); reset();
+    const bin=Uint8Array.from(atob('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q=='), ch=>ch.charCodeAt(0));
+    const dt=new DataTransfer(); dt.items.add(new File([bin],'code.jpg',{type:'image/jpeg'}));
+    const inp=document.getElementById('af-bc-photo-input');
+    o.photo_champ = !!inp;
+    if(inp){ inp.files=dt.files; await onBarcodePhotoIA(inp); await d(800); }
+    o.photo = bilan();
+    o.photo_res = { bc:JSON.parse(JSON.stringify(_bcNutr||null)), saisie:(_afSrc||{}).saisie,
+                    quotaIA:S.foodAiUses||0 };
+
+    /* ═══ C. LES DEUX PORTES DONNENT-ELLES LE MÊME OBJET ? ═══ */
+    o.meme_objet = JSON.stringify(o.tape_res.bc)===JSON.stringify(o.photo_res.bc);
+
+    /* ═══ D. LE SCANNER CAMÉRA : présent, local, et sans porte ═══ */
+    o.scanner = { openBarcodeScanner:typeof openBarcodeScanner, scanBarcode:typeof scanBarcode,
+                  af_bc_input_existe: !!document.getElementById('af-bc-input') };
+    reset(); try{ scanBarcodePhoto(); }catch(e){}
+    o.scanner_repli_appels = journal.length;
+
+    window.fetch=vrai;
+    return o;
+   }catch(e){ return {FATAL:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)}; }
+  });
+
+  t('CCCVII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
+  t('CCCVII ① ⛔⛔ CODE-BARRES TAPÉ = ZÉRO APPEL IA. Un seul appel réseau, vers Open Food Facts, '+
+    'et rien d\'autre — ni Worker, ni Apps Script, ni Anthropic',
+    X.tape && X.tape.ia===0 && X.tape.off===1 && X.tape.total===1 && X.tape.autres===0,
+    JSON.stringify(X.tape));
+  t('CCCVII ② ⛔ … et le quota IA ne bouge pas d\'un cran', (X.tape_res||{}).quotaIA===0,
+    JSON.stringify(X.tape_res&&X.tape_res.quotaIA));
+  t('CCCVII ③ ⛔⛔ LA PHOTO DU CODE-BARRES FAIT **UN** APPEL IA — c\'est le contrat RÉEL, et on le '+
+    'fige tel quel. *Figer « le scan ne fait aucun appel IA » serait figer un contrat faux, et un '+
+    'témoin qui affirme ce qu\'on aurait aimé lire ne protège rien.*',
+    X.photo && X.photo.ia===1 && X.photo.off===1 && X.photo.total===2 && X.photo.autres===0,
+    JSON.stringify(X.photo));
+  t('CCCVII ④ ⭐ … et il est DÉCOMPTÉ du quota gratuit : la personne ne paie pas un appel sans le '+
+    'savoir', (X.photo_res||{}).quotaIA===1, JSON.stringify(X.photo_res&&X.photo_res.quotaIA));
+  t('CCCVII ⑤ ⭐ … et la provenance enregistrée DIT que c\'est l\'IA qui a lu les chiffres '+
+    '(`photo-code-ia`), pas un décodage vérifié',
+    (X.photo_res||{}).saisie==='photo-code-ia' && (X.tape_res||{}).saisie==='code-tape',
+    JSON.stringify([X.tape_res&&X.tape_res.saisie, X.photo_res&&X.photo_res.saisie]));
+  t('CCCVII ⑥ ⭐⭐ LES DEUX PORTES CONVERGENT : même lookup produit, même normaliseur, même '+
+    'résolveur — et le MÊME OBJET final, comparé en entier',
+    X.meme_objet===true && X.tape_res && X.tape_res.bc && X.tape_res.bc.kcal100===250
+    && X.tape_res.bc.fiab.etat==='COHERENT',
+    JSON.stringify([X.tape_res&&X.tape_res.bc&&X.tape_res.bc.kcal100,
+                    X.photo_res&&X.photo_res.bc&&X.photo_res.bc.kcal100]));
+  t('CCCVII ⑦ ⛔ LE SEUL DOMAINE INTERROGÉ POUR LE PRODUIT EST OPEN FOOD FACTS — aucun autre '+
+    'service ne voit passer le code-barres',
+    X.tape && X.tape.domaines.length===1 && X.tape.domaines[0]==='world.openfoodfacts.org'
+    && X.photo && X.photo.domaines.filter(h=>h==='world.openfoodfacts.org').length===1,
+    JSON.stringify([X.tape&&X.tape.domaines, X.photo&&X.photo.domaines]));
+  t('CCCVII ⑧ ⛔ ÉTAT CONSTATÉ, PAS RÉPARÉ (**R30**) — le scanner caméra existe, son élément de '+
+    'repli a été retiré en ft-v388, et son bouton de repli ne fait donc AUCUN appel. *ft-v871 a '+
+    'reposé la question à Michel ; tant qu\'il n\'a pas tranché, on fige l\'état, on ne le change pas.*',
+    X.scanner && X.scanner.openBarcodeScanner==='function'
+    && X.scanner.af_bc_input_existe===false && X.scanner_repli_appels===0,
+    JSON.stringify([X.scanner, X.scanner_repli_appels]));
+  t('CCCVII ⑨ 0 erreur JS', errs.length===0, errs.join(' | '));
+  await pg.close(); await ctx.close();
+}
+
+/* ⚠️ TÉMOINS DE SOURCE — un appel réseau ajouté ne se voit pas forcément à l'écran. */
+{
+  const srcC=fs.readFileSync(ROOT+'/app.js','utf8');
+  const cstC=fs.readFileSync(ROOT+'/constants.js','utf8');
+  const codeC=srcC.replace(/\/\*[\s\S]*?\*\//g,'')
+                  .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const LC=codeC.split('\n'), DC=[];
+  LC.forEach((l,i)=>{ const m=l.match(/^(?:async )?function (\w+)\(/); if(m) DC.push([i,m[1]]); });
+  const corpsC=(nom)=>{ const k=DC.findIndex(d=>d[1]===nom);
+    if(k<0) throw new Error('déclaration introuvable : '+nom+' — extracteur cassé, pas code sain');
+    return LC.slice(DC[k][0], k+1<DC.length?DC[k+1][0]:LC.length).join('\n'); };
+
+  t('CCCVII ⑩ ⛔⛔ LA RECHERCHE PRODUIT N\'INTERROGE QU\'OPEN FOOD FACTS — deux URL en cascade, '+
+    'même domaine, et aucune autre',
+    (corpsC('_offFetchProduct').match(/https:\/\/world\.openfoodfacts\.org/g)||[]).length===2
+    && !/workers\.dev|script\.google\.com|_aiUrl/.test(corpsC('_offFetchProduct')),
+    'la recherche produit a changé de destination');
+  t('CCCVII ⑪ ⛔⛔ LA PORTE TAPÉE NE TOUCHE À AUCUN SERVICE IA : ni `_aiUrl`, ni le Worker, ni '+
+    '`estimateFoodAI`, ni aucune action du proxy IA',
+    !/_aiUrl|workers\.dev|estimateFoodAI|readBarcode/.test(corpsC('_manualBarcode'))
+    && !/_aiUrl|workers\.dev|estimateFoodAI/.test(corpsC('_lookupBarcode')),
+    'un appel IA s\'est glissé dans la porte tapée ou dans le lookup');
+  t('CCCVII ⑫ ⛔ … ET LE LOOKUP PRODUIT NON PLUS : c\'est le point de convergence des deux portes, '+
+    'donc un appel IA posé là toucherait TOUT LE MONDE',
+    (corpsC('_lookupBarcode').match(/fetch\(/g)||[]).length===0
+    && /_offFetchProduct\(/.test(corpsC('_lookupBarcode')),
+    'le lookup produit fait un fetch en direct au lieu de passer par son propriétaire');
+  t('CCCVII ⑬ ⭐ L\'UNIQUE APPEL IA DU CHEMIN CODE-BARRES EST `readBarcode`, et il est déclaré '+
+    'comme tel dans la liste des actions du proxy — *rien ne part vers l\'IA sans y être inscrit*',
+    /'readBarcode'/.test(cstC) && /AI_PROXY_ACTIONS/.test(cstC)
+    && (corpsC('onBarcodePhotoIA').match(/_aiUrl\(/g)||[]).length===1
+    && /_aiUrl\('readBarcode'\)/.test(corpsC('onBarcodePhotoIA')),
+    'l\'appel IA de la photo a changé de forme');
+  t('CCCVII ⑭ ⛔⛔ LE DÉCODAGE CAMÉRA EST 100 % LOCAL : ZXing est chargé depuis le dépôt '+
+    '(`./lib/zxing.min.js`), jamais d\'un CDN, et le scanner ne fait aucun `fetch`',
+    /\.\/lib\/zxing\.min\.js/.test(corpsC('_loadZXing'))
+    && !/https?:/.test(corpsC('_loadZXing'))
+    && (corpsC('openBarcodeScanner').match(/fetch\(/g)||[]).length===0,
+    'le décodage caméra est parti chercher quelque chose sur le réseau');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
