@@ -36948,6 +36948,281 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   })();
 }
 
+/* ═══ B-CCCX. LA VALIDATION NON DESTRUCTIVE DE L'ÉTAPE 1b ════════════════════════════════════
+   (14/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel refuse de réimporter de vraies séances, et refuse aussi d'en importer une fausse pour
+   la supprimer ensuite : ⛔ *« je veux éprouver la chaîne production réelle de `typesNormalises`
+   SANS écrire quoi que ce soit dans `S.sessions` »*.
+
+   ⭐⭐ LA DÉCISION DE CONCEPTION EST UN REFUS, ET C'EST LE FAIT DU BLOC : **on ne crée AUCUN mode
+   test.** L'audit (fermeture transitive sur 168 fonctions atteintes depuis le chemin d'import)
+   montre que TOUTE l'écriture est concentrée dans `finalImportHist` — donc l'aperçu est DÉJÀ un
+   point d'arrêt non destructif. Un bouton « tester » serait un **second chemin**, c'est-à-dire
+   exactement ce que Michel interdit (*« pas de test qui contourne le Worker, pas d'autre route
+   que l'import réel »*). ⛔ *Un mode test qui n'emprunte pas le chemin de production ne valide
+   pas le chemin de production, il valide le mode test.*
+
+   ⚠️ CE QUI EST MAÎTRISÉ ICI, ET C'EST DIT : `fetch` est remplacé pour rendre des réponses
+   choisies — c'est la FRONTIÈRE RÉSEAU, pas la fonction. Tout ce qui est en deçà est la vraie
+   chaîne, conduite pour de bon. ⛔ **Ce bloc n'éprouve donc PAS le Worker déployé** : il éprouve
+   que le diagnostic dit la VÉRITÉ sur ce qui s'est passé. Le Worker réel, c'est le test iPhone
+   de Michel, et c'est précisément pour ça que la destination est désormais affichée. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1500);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=async f=>{ try{ return await f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const lu=()=>{
+      renderImportDiagAdmin();
+      const h=(document.getElementById('admin-import-diag')||{}).innerHTML||'';
+      const c=re=>{const m=h.match(re);return m?m[1]:null;};
+      return { worker:  c(/Worker réellement appelé<\/span><strong[^>]*>([^<]*)</),
+               recue:   c(/Réponse reçue<\/span><strong[^>]*>([^<]*)</),
+               present: c(/Compteur typesNormalises reçu<\/span><strong[^>]*>([^<]*)</),
+               valeur:  c(/Valeur<\/span><strong[^>]*>([^<]*)</),
+               lots:    c(/Lots avec le champ<\/span><strong[^>]*>([^<]*)</),
+               ecrit:   c(/Écriture dans S\.sessions<\/span><strong[^>]*>([^<]*)</),
+               compte:  c(/Séances \/ records<\/span><strong[^>]*>([^<]*)</),
+               vide:    /Aucun import observé/.test(h) };
+    };
+    const SESS=[{date:'2026-08-15',exercises:[{name:'Squat à la Barre',
+                 sets:[{kg:100,reps:5,type:''},{kg:110,reps:4,type:'D'}]}]}];
+    const rep=n=>({status:'ok',data:{sessions:JSON.parse(JSON.stringify(SESS)),typesNormalises:n}});
+
+    /* ⭐ L'ÉTAT UTILISATEUR EST FABRIQUÉ AVANT, ET IL N'EST PAS VIDE : un historique vide rendrait
+       « rien n'a bougé » trivialement vrai. *Une garantie éprouvée sur zéro donnée ne garantit
+       rien.* On pose donc de vraies séances et de vrais records préexistants. */
+    const poserEtat=()=>{
+      S.sessions=[{id:1,ts:1,date:'2026-07-01',volume:1200,exs:[{name:'Développé Couché',
+                   sets:[{kg:80,reps:8,done:true,type:'',rm1:0}]}]},
+                  {id:2,ts:2,date:'2026-07-03',volume:900,exs:[{name:'Squat à la Barre',
+                   sets:[{kg:120,reps:5,done:true,type:'',rm1:0}]}]}];
+      S.prs={'Développé Couché':{kg:80,reps:8,rm1:100,date:'2026-07-01'},
+             'Squat à la Barre':{kg:120,reps:5,rm1:135,date:'2026-07-03'}};
+      S.histImports=0;
+      return {n:S.sessions.length, prs:Object.keys(S.prs).length,
+              json:JSON.stringify(S.sessions)+'||'+JSON.stringify(S.prs), imp:S.histImports};
+    };
+    /* ⛔ ON CONDUIT `analyzeHistPhotos`, LA VRAIE PORTE — et on N'APPELLE PAS `finalImportHist`.
+       C'est exactement le geste que le protocole iPhone demande à Michel. */
+    const conduire=async(reponses,nPhotos,url)=>{
+      let i=0;
+      window.fetch=async(u)=>{ o._urlVue=String(u); const r=reponses[Math.min(i++,reponses.length-1)];
+        return {ok:true, text:async()=>JSON.stringify(r)}; };
+      _histPhotos=[]; for(let k=0;k<(nPhotos||1);k++)_histPhotos.push({type:'image/jpeg',data:'x'});
+      await analyzeHistPhotos();
+    };
+
+    /* ── ① LE CAS NOMINAL : l'analyse seule, rien d'écrit ── */
+    o.etat0 = poserEtat();
+    await sur(()=>conduire([rep(0)],1));
+    o.apresAnalyse = lu();
+    o.etat1 = {n:S.sessions.length, prs:Object.keys(S.prs).length,
+               json:JSON.stringify(S.sessions)+'||'+JSON.stringify(S.prs), imp:S.histImports};
+
+    /* ── ② `finalImportHist` A-T-ELLE ÉTÉ APPELÉE ? On l'espionne, on ne le suppose pas. ── */
+    o.etat0b = poserEtat();
+    const vrai=finalImportHist; let appels=0;
+    window.finalImportHist=finalImportHist=function(){ appels++; return vrai.apply(this,arguments); };
+    await sur(()=>conduire([rep(0)],1));
+    o.appelsPendantAnalyse = appels;
+
+    /* ── ③ ET UN VRAI IMPORT MARCHE TOUJOURS (§10.10) — sinon on aurait « protégé » en cassant ── */
+    await sur(()=>{ finalImportHist(); });
+    o.appelsApres = appels;
+    o.etat2 = {n:S.sessions.length, prs:Object.keys(S.prs).length, imp:S.histImports};
+    o.apresVraiImport = lu();
+    window.finalImportHist=finalImportHist=vrai;
+
+    /* ── ④ LA DESTINATION : Worker (nominal) puis repli Apps Script ── */
+    o.etat0c = poserEtat();
+    await sur(()=>conduire([rep(0)],1));
+    o.destWorker = lu().worker;
+    o.urlWorker  = o._urlVue;
+    /* ⚠️⚠️ LE REPLI SE MESURE PLUS BAS, SUR UNE PAGE SERVIE SANS WORKER — et pas ici.
+       Ma première version faisait `Object.defineProperty(window,'AI_PROXY_URL',{value:''})` :
+       ⛔ **elle était VERTE en ne mesurant RIEN.** `AI_PROXY_URL` est un `const` de premier
+       niveau, donc il vit dans l'environnement lexical global et n'est **pas** une propriété de
+       `window` — j'ai créé une SECONDE variable que `_aiUrl` ne lit jamais, et le témoin se
+       rabattait sur sa clause de sortie « non rejouable ».
+       👉 *C'est exactement le piège de `window._histExtracted` (ft-v1209), que j'avais documenté
+       moi-même la veille.* Un `const` ne se réécrit pas : on sert donc un `constants.js` dont la
+       constante est vide, et le vrai `_aiUrl` retombe pour de bon. */
+
+    /* ── ⑤ MULTI-LOTS : le PARTIEL survit, et rien n'est écrit non plus (§8) ── */
+    o.etat0d = poserEtat();
+    await sur(()=>conduire([rep(1),{status:'ok',data:{sessions:JSON.parse(JSON.stringify(SESS))}}],
+                           _HIST_BATCH+1));
+    o.multi = lu();
+    o.etat3 = {n:S.sessions.length, json:JSON.stringify(S.sessions)+'||'+JSON.stringify(S.prs)};
+
+    /* ── ⑥ UN ÉCHEC RÉSEAU NE DOIT PAS RESSEMBLER À « AUCUN TEST » ── */
+    o.etat0e = poserEtat();
+    await sur(async()=>{
+      window.fetch=async()=>{ throw new Error('réseau coupé'); };
+      _histPhotos=[{type:'image/jpeg',data:'x'}];
+      await analyzeHistPhotos();
+    });
+    o.echec = lu();
+    o.etat4 = {n:S.sessions.length};
+
+    /* ── ⑦ L'EMPREINTE VOIT-ELLE UN REMPLACEMENT À NOMBRE CONSTANT ? ──
+       ⛔ C'est la raison d'être de l'empreinte : un compteur seul dirait « inchangé ». */
+    o.empreinte = await sur(()=>{
+      poserEtat();
+      const a=_empreinteDonnees();
+      S.sessions[0].volume=9999;              // même nombre de séances, contenu différent
+      const b=_empreinteDonnees();
+      S.sessions[0].volume=1200;
+      const c=_empreinteDonnees();
+      return {memeNombre:a.seances===b.seances, shaDiffere:a.sha!==b.sha, shaRevenu:a.sha===c.sha};
+    });
+    return o;
+  });
+
+  /* 🔌 LE REPLI APPS SCRIPT, MESURÉ SUR DU VRAI CODE : on sert `constants.js` avec
+     `AI_PROXY_URL` vidée — l'état exact d'un déploiement sans Worker — et on regarde ce que
+     l'écran DIT. ⛔ Rien n'est simulé côté app : c'est `_aiUrl` qui retombe, pour de bon. */
+  await p.route('**/constants.js', async route=>{
+    const src=fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+    await route.fulfill({status:200, contentType:'text/javascript',
+      body:src.replace(/const AI_PROXY_URL='[^']*';/, "const AI_PROXY_URL='';")});
+  });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1500);
+  const RR = await p.evaluate(async()=>{
+    const SESS=[{date:'2026-08-15',exercises:[{name:'Squat à la Barre',
+                 sets:[{kg:100,reps:5,type:''}]}]}];
+    let vue=null;
+    window.fetch=async(u)=>{ vue=String(u);
+      return {ok:true, text:async()=>JSON.stringify({status:'ok',data:{sessions:SESS,typesNormalises:0}})}; };
+    S.sessions=[]; S.prs={};
+    /* ⚠️⚠️ CE TÉMOIN A ROUGI POUR UNE VRAIE RAISON, ET ELLE COMPTE POUR LE PROTOCOLE iPHONE :
+       **le MUR PREMIUM se referme avant l'appel réseau.** `analyzeHistPhotos` commence par
+       `if(!S.premium && (S.histImports||0)>=HIST_FREE_LIMIT){ showHistWall(); return; }` —
+       et l'import réel joué plus haut avait incrémenté `S.histImports` à 1 **et persisté**.
+       👉 *Sur un compte gratuit ayant déjà importé une fois, le document n'atteint JAMAIS le
+       Worker* : le diagnostic afficherait « aucun import observé » et on conclurait à tort à
+       une panne de transport. On pose donc l'état fidèle à la production de Michel (premium). */
+    S.premium=true;
+    _histPhotos=[{type:'image/jpeg',data:'x'}];
+    try{ await analyzeHistPhotos(); }catch(e){}
+    renderImportDiagAdmin();
+    const h=(document.getElementById('admin-import-diag')||{}).innerHTML||'';
+    const m=h.match(/Worker réellement appelé<\/span><strong[^>]*>([^<]*)</);
+    return {constanteVide:(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL===''),
+            worker:m?m[1]:null, url:vue};
+  });
+  await p.unroute('**/constants.js');
+
+  console.log('\n-- B-CCCX. La validation NON DESTRUCTIVE de l\'étape 1b --');
+  /* ── LE CŒUR : l'analyse conduit le vrai chemin et n'écrit RIEN ── */
+  t('B-CCCX ① le diagnostic est alimenté par le vrai chemin d\'analyse',
+    R.apresAnalyse && R.apresAnalyse.vide===false && R.apresAnalyse.present==='OUI',
+    JSON.stringify(R.apresAnalyse));
+  t('B-CCCX ① ⛔⛔ AUCUNE ÉCRITURE dans `S.sessions` après l\'analyse seule',
+    R.etat0 && R.etat1 && R.etat0.n===R.etat1.n && R.etat0.json===R.etat1.json,
+    JSON.stringify(R.etat0&&{n:R.etat0.n})+' → '+JSON.stringify(R.etat1&&{n:R.etat1.n}));
+  t('B-CCCX ① ⛔ aucun record modifié',
+    R.etat0 && R.etat1 && R.etat0.prs===R.etat1.prs, R.etat0&&(R.etat0.prs+' → '+R.etat1.prs));
+  t('B-CCCX ① ⛔ aucun historique consommé (`S.histImports` inchangé)',
+    R.etat0 && R.etat1 && R.etat0.imp===R.etat1.imp, R.etat0&&(R.etat0.imp+' → '+R.etat1.imp));
+  t('B-CCCX ① ⭐ et l\'écran le DIT : « Écriture dans S.sessions : NON »',
+    R.apresAnalyse && R.apresAnalyse.ecrit==='NON', JSON.stringify(R.apresAnalyse));
+  t('B-CCCX ① l\'écran montre le compte réel des données intactes',
+    R.apresAnalyse && R.apresAnalyse.compte==='2 / 2', JSON.stringify(R.apresAnalyse));
+
+  /* ── ② LA PORTE D'ÉCRITURE N'EST JAMAIS FRANCHIE PAR L'ANALYSE ── */
+  t('B-CCCX ② ⛔⛔ `finalImportHist` n\'est PAS appelée par le chemin d\'analyse',
+    R.appelsPendantAnalyse===0, 'appels='+R.appelsPendantAnalyse);
+
+  /* ── ③ ET UN VRAI IMPORT MARCHE TOUJOURS (§10.10) ── */
+  t('B-CCCX ③ ⭐ un vrai import écrit bel et bien (on n\'a pas « protégé » en cassant)',
+    R.appelsApres===1 && R.etat2 && R.etat2.n>R.etat0b.n && R.etat2.imp===R.etat0b.imp+1,
+    JSON.stringify(R.etat2));
+  t('B-CCCX ③ ⭐ et l\'écran cesse alors de dire « NON » — il ne ment pas dans l\'autre sens',
+    R.apresVraiImport && R.apresVraiImport.ecrit!=='NON', JSON.stringify(R.apresVraiImport));
+
+  /* ── ④ QUI A RÉPONDU ── */
+  t('B-CCCX ④ ⭐⭐ la destination est le Worker, et l\'écran le dit',
+    R.destWorker==='OUI' && /workers\.dev/.test(String(R.urlWorker||'')),
+    R.destWorker+' url='+R.urlWorker);
+  /* ⛔ PLUS DE CLAUSE DE SORTIE : la version précédente acceptait « non rejouable » et passait
+     donc sans jamais mesurer. *Un témoin qui a le droit de ne pas mesurer finit par ne pas
+     mesurer.* Il exige maintenant que la constante soit RÉELLEMENT vide ET que l'écran le dise. */
+  t('B-CCCX ④ ⛔⛔ sans Worker configuré, l\'écran dit « NON (Apps Script) » — il ne ment pas',
+    RR && RR.constanteVide===true && RR.worker==='NON (Apps Script)'
+      && !/workers\.dev/.test(String(RR.url||'')), JSON.stringify(RR));
+
+  /* ── ⑤ MULTI-LOTS (§8) ── */
+  t('B-CCCX ⑤ ⭐ plusieurs lots : PARTIEL survit, jamais réduit à un booléen',
+    R.multi && R.multi.present==='PARTIEL' && R.multi.lots==='1 / 2', JSON.stringify(R.multi));
+  t('B-CCCX ⑤ ⛔ et le multi-lots n\'écrit rien non plus',
+    R.etat0d && R.etat3 && R.etat0d.json===R.etat3.json, '');
+  t('B-CCCX ⑤ tous les lots sont conduits (réponse reçue = 2 / 2)',
+    R.multi && R.multi.recue==='2 / 2 lots', JSON.stringify(R.multi&&R.multi.recue));
+
+  /* ── ⑥ UNE PANNE NE RESSEMBLE PAS À UNE ABSENCE DE TEST ── */
+  t('B-CCCX ⑥ ⭐⭐ un échec réseau n\'affiche PAS « aucun import observé »',
+    R.echec && R.echec.vide===false, JSON.stringify(R.echec));
+  t('B-CCCX ⑥ ⛔ il dit 0 réponse reçue sur 1 tentative, et ne prétend pas à un champ',
+    R.echec && R.echec.recue==='0 / 1 lot' && R.echec.present==='—', JSON.stringify(R.echec));
+  t('B-CCCX ⑥ ⛔ et un échec réseau n\'écrit rien non plus',
+    R.etat0e && R.etat4 && R.etat0e.n===R.etat4.n, '');
+
+  /* ── ⑦ L'EMPREINTE EST PLUS FORTE QU'UN COMPTEUR ── */
+  t('B-CCCX ⑦ ⭐⭐ un remplacement À NOMBRE CONSTANT est vu par l\'empreinte',
+    R.empreinte && R.empreinte.memeNombre===true && R.empreinte.shaDiffere===true
+      && R.empreinte.shaRevenu===true, JSON.stringify(R.empreinte));
+
+  /* ══ TÉMOINS DE SOURCE ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const brut=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+    /* ⛔⛔ AUCUN MODE TEST — c'est la décision, et sans témoin elle se perdrait à la première
+       relecture bien intentionnée (**R30**). */
+    t('B-CCCX ⑧ ⛔⛔ SOURCE — aucun mode test, aucun drapeau de simulation d\'import',
+      !/_histModeTest|_histTestOnly|modeTestImport|_histDryRun|dryRun/i.test(lg), '');
+    t('B-CCCX ⑧ ⛔ SOURCE — aucune seconde route : `importHistory` n\'est demandé qu\'à UN endroit',
+      (lg.match(/_aiUrl\('importHistory'\)/g)||[]).length===1, '');
+    /* ⛔ La capture et la comparaison DOIVENT employer la même projection (R2). */
+    t('B-CCCX ⑧ ⭐⭐ SOURCE — l\'empreinte a UN propriétaire, appelé des deux côtés',
+      (lg.match(/function _empreinteDonnees\(\)/g)||[]).length===1
+      && (lg.match(/_empreinteDonnees\(\)/g)||[]).length===3, '');
+    t('B-CCCX ⑧ ⛔ SOURCE — l\'avant est capturé AVANT le premier appel réseau',
+      /_histDiag=\{[\s\S]{0,220}avant:_empreinteDonnees\(\)[\s\S]{0,120}const allSessions=\[\];/.test(lg), '');
+    t('B-CCCX ⑧ ⛔ SOURCE — la destination est relevée AVANT le `fetch`, pas après',
+      /const _dest=_aiUrl\('importHistory'\);[\s\S]{0,320}const r=await fetch\(_dest,/.test(lg), '');
+    t('B-CCCX ⑧ ⛔ SOURCE — `analyzeHistPhotos` n\'appelle jamais `finalImportHist`',
+      (()=>{ const i=lg.indexOf('async function analyzeHistPhotos()');
+             const j=lg.indexOf('function _vmMatchHist');
+             return i>0 && j>i && !/finalImportHist/.test(lg.slice(i,j)); })(), '');
+    t('B-CCCX ⑧ ⛔ SOURCE — le diagnostic n\'est toujours pas persisté',
+      !/ft4_[a-z]*diag|S\.histDiag|localStorage[^\n]*_histDiag/.test(lg), '');
+    t('B-CCCX ⑧ ⛔ SOURCE — l\'empreinte ne collecte aucun nom d\'exercice ni contenu de série',
+      (()=>{ const i=brut.indexOf('function _empreinteDonnees()');
+             const j=brut.indexOf('}', brut.indexOf('return {seances:', i));
+             const c=sansCom(brut.slice(i,j));
+             return i>0 && !/\.name|\.sets|\.reps|\.kg/.test(c); })(), '');
+    /* ⛔ PÉRIMÈTRE — l'étape 2 reste fermée, Nutrition intacte. */
+    t('B-CCCX ⑨ ⛔ NUTRITION — rien de ce chantier n\'existe dans `app.js`',
+      !/_empreinteDonnees|_histDiag|renderImportDiagAdmin|versWorker/.test(
+        fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+    t('B-CCCX ⑨ ⛔ PÉRIMÈTRE — le propriétaire des records est intact',
+      /function _serieFaitFoiPourPR\(s\)\{\s*return !!\(s && s\.done && s\.kg && s\.reps && s\.type!=='É' && s\.type!=='W'\);/.test(lg), '');
+    t('B-CCCX ⑨ ⛔ PÉRIMÈTRE — la normalisation client est intacte, une seule fois',
+      (lg.match(/const type=s\.type==='D'\?'D':''/g)||[]).length===1, '');
+    t('B-CCCX ⑨ ⛔ PÉRIMÈTRE — l\'étape 2 reste fermée (prompt inchangé des deux côtés)',
+      fs.readFileSync(path.join(ROOT,'worker.js'),'utf8')
+        .includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".')
+      && fs.readFileSync(path.join(ROOT,'Code.js'),'utf8')
+        .includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".'), '');
+  })();
+}
+
 /* ══════════ BLOC CCCIII — 🛃 ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE (ft-v1205) ══════════
    Michel donne le feu vert pour la douane SEULE, et ⛔ en MODE OBSERVATION UNIQUEMENT :
    *« je ne veux pas encore de correction automatique ni de blocage utilisateur »* — `OK`, `WARN`
