@@ -2552,13 +2552,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div id="af-quick-list"></div>
     <!-- Code-barres + score santé : gratuit pour tout le monde (client-side, 0 token ; affiché par openAddFood) -->
     <div id="af-barcode-block" style="display:none;">
-      <!-- 📷 ft-v1210 — LE SCANNER CAMÉRA LOCAL REVIENT, EN PREMIER ET EXPRÈS.
-           Il est le plus rapide ET le seul totalement gratuit (décodage 100 % local, zéro appel
-           IA, zéro quota) : *la porte d'entrée par défaut ne doit jamais être celle qui coûte*
-           (R24, la règle d'ordre posée en ft-v871). La photo lue par l'IA reste dessous, en
-           secours volontaire — jamais déclenchée toute seule. -->
-      <button class="btn" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;background:var(--red);color:#fff;font-weight:700;">📷 Scanner le code-barres avec la caméra</button>
-      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Ou tape les chiffres écrits sous le code :</div>
+      <!-- ⛔⛔ PAS DE BOUTON « scanner avec la caméra » ICI — ET C'EST VOLONTAIRE (R30).
+           ft-v1210 l'avait remis en tête de cet écran ; Michel l'a fait RETIRER le lendemain :
+           « NE RÉACTIVE PAS le scanner dans l'interface utilisateur. Aucun bouton utilisateur
+           tant que je n'ai pas tranché » (14/09/2026), le temps d'un banc d'essai qui compare
+           plusieurs moteurs de décodage locaux (ZXing, Html5-QRCode, zxing-wasm, Quagga2).
+           ⚠️ Le code du scanner (openBarcodeScanner / scanBarcode / la machine à états
+           _bcPrendreLaMain) reste EN PLACE et testé : c'est la PORTE qui est fermée, pas le
+           moteur. Ne pas « réparer » cette absence — un témoin du banc la fige dans les deux
+           sens. La réactivation attend le verdict du banc PUIS un test iPhone réel. -->
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Tape les chiffres écrits sous le code :</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
         <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>

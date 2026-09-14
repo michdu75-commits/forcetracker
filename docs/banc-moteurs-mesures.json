@@ -1,0 +1,373 @@
+{
+ "genere_par": "tools/banc_moteurs (scratchpad, hors depot)",
+ "date": "2026-09-14",
+ "versions": {
+  "zxingWasmCpp": "0b2d9a8fc81f420f369928c24331091ff0525976",
+  "zxingWasmVer": "3.1.4",
+  "quagga": null,
+  "h5q": null
+ },
+ "passes": 3,
+ "codes": [
+  "3083681011791",
+  "3021690201123",
+  "3017620422003",
+  "5449000000996",
+  "8000500310427",
+  "7622210449283"
+ ],
+ "reseau_pendant_le_banc": [
+  "/lib/zxing_reader.wasm"
+ ],
+ "erreurs_js": 0,
+ "moteurs": {
+  "ZXing-js (servi)": {
+   "n": 414,
+   "justes": 321,
+   "pct": 77.5,
+   "ean_faux": 0,
+   "rejetes": 0,
+   "ms_moy": 28.1,
+   "ms_p95": 131.6,
+   "ms_max": 188.5,
+   "durs_pct": 75.5
+  },
+  "Html5-QRCode": {
+   "n": 414,
+   "justes": 285,
+   "pct": 68.8,
+   "ean_faux": 0,
+   "rejetes": 0,
+   "ms_moy": 13.2,
+   "ms_p95": 28.3,
+   "ms_max": 69.8,
+   "durs_pct": 63.7
+  },
+  "zxing-wasm": {
+   "n": 414,
+   "justes": 357,
+   "pct": 86.2,
+   "ean_faux": 0,
+   "rejetes": 0,
+   "ms_moy": 1.1,
+   "ms_p95": 3.5,
+   "ms_max": 8.1,
+   "durs_pct": 81.4
+  },
+  "Quagga2 (cadre)": {
+   "n": 414,
+   "justes": 360,
+   "pct": 87.0,
+   "ean_faux": 0,
+   "rejetes": 0,
+   "ms_moy": 17.0,
+   "ms_p95": 28.3,
+   "ms_max": 50,
+   "durs_pct": 88.2
+  },
+  "Quagga2 (scene)": {
+   "n": 414,
+   "justes": 78,
+   "pct": 18.8,
+   "ean_faux": 12,
+   "rejetes": 0,
+   "ms_moy": 49.1,
+   "ms_p95": 69,
+   "ms_max": 103.6,
+   "durs_pct": 17.6
+  }
+ },
+ "par_cas": {
+  "01 net": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "02 flou leger (1 px)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "03 flou moyen (2 px)": {
+   "ZXing-js (servi)": "0/18",
+   "Html5-QRCode": "0/18",
+   "zxing-wasm": "0/18",
+   "Quagga2 (cadre)": "0/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "04 flou fort (3 px)": {
+   "ZXing-js (servi)": "0/18",
+   "Html5-QRCode": "0/18",
+   "zxing-wasm": "0/18",
+   "Quagga2 (cadre)": "0/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "05 de pres (mod 8)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "6/18"
+  },
+  "06 de loin (mod 1.6)": {
+   "ZXing-js (servi)": "15/18",
+   "Html5-QRCode": "15/18",
+   "zxing-wasm": "15/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "07 petit code (mod 2)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "08 rotation legere 8": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "18/18"
+  },
+  "09 rotation forte 35": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "18/18"
+  },
+  "10 rotation 90 (portrait)": {
+   "ZXing-js (servi)": "0/18",
+   "Html5-QRCode": "0/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "0/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "11 faible lumiere (25%)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "0/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "12 reflet (0.72)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "13 faible contraste": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "0/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "14 courbure 70 (cylindre)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "15 courbure 100 (forte)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "3/18"
+  },
+  "16 perspective 0.35": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "17 recadrage serre (3 mod)": {
+   "ZXing-js (servi)": "0/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "18 zone de silence norme (11 mod)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "19 zone de silence limite (7 mod)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "3/18"
+  },
+  "20 bouge leger (3 px)": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "21 flou + reflet": {
+   "ZXing-js (servi)": "0/18",
+   "Html5-QRCode": "0/18",
+   "zxing-wasm": "0/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "12/18"
+  },
+  "22 courbure + perspective": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "18/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "0/18"
+  },
+  "23 cumul realiste": {
+   "ZXing-js (servi)": "18/18",
+   "Html5-QRCode": "0/18",
+   "zxing-wasm": "18/18",
+   "Quagga2 (cadre)": "18/18",
+   "Quagga2 (scene)": "18/18"
+  }
+ },
+ "pretraitement": {
+  "aucun": {
+   "ZXing-js (servi)": 107,
+   "zxing-wasm": 119,
+   "Quagga2 (cadre)": 120,
+   "Html5-QRCode": 95
+  },
+  "gris": {
+   "ZXing-js (servi)": 107,
+   "zxing-wasm": 119,
+   "Quagga2 (cadre)": 120,
+   "Html5-QRCode": 95
+  },
+  "niveaux (etirement)": {
+   "ZXing-js (servi)": 107,
+   "zxing-wasm": 119,
+   "Quagga2 (cadre)": 120,
+   "Html5-QRCode": 113
+  },
+  "nettete legere": {
+   "ZXing-js (servi)": 113,
+   "zxing-wasm": 107,
+   "Quagga2 (cadre)": 94,
+   "Html5-QRCode": 95
+  },
+  "binarisation Otsu": {
+   "ZXing-js (servi)": 107,
+   "zxing-wasm": 119,
+   "Quagga2 (cadre)": 108,
+   "Html5-QRCode": 113
+  },
+  "agrandissement x2": {
+   "ZXing-js (servi)": 108,
+   "zxing-wasm": 124,
+   "Quagga2 (cadre)": 120,
+   "Html5-QRCode": 96
+  },
+  "recadrage centre 70%": {
+   "ZXing-js (servi)": 0,
+   "zxing-wasm": 0,
+   "Quagga2 (cadre)": 0,
+   "Html5-QRCode": 0
+  },
+  "redressement simple": {
+   "ZXing-js (servi)": 107,
+   "zxing-wasm": 119,
+   "Quagga2 (cadre)": 120,
+   "Html5-QRCode": 95
+  }
+ },
+ "resolution_flou": {
+  "ZXing-js (servi)": {
+   "net (capture apres mise au point)": 1,
+   "direct legerement flou (0.8 px)": 3,
+   "direct flou (1.5 px)": 6
+  },
+  "zxing-wasm": {
+   "net (capture apres mise au point)": 1,
+   "direct legerement flou (0.8 px)": 3,
+   "direct flou (1.5 px)": 6
+  },
+  "Quagga2 (cadre)": {
+   "net (capture apres mise au point)": 1,
+   "direct legerement flou (0.8 px)": 2,
+   "direct flou (1.5 px)": 3
+  },
+  "Html5-QRCode": {
+   "net (capture apres mise au point)": 1,
+   "direct legerement flou (0.8 px)": 3,
+   "direct flou (1.5 px)": 6
+  }
+ },
+ "cascades": {
+  "N": 138,
+  "seuls": {
+   "ZXing-js (servi) / aucun": 107,
+   "zxing-wasm / aucun": 119,
+   "zxing-wasm / agrandissement x2": 124,
+   "Quagga2 (cadre) / aucun": 120,
+   "Html5-QRCode / aucun": 95,
+   "Html5-QRCode / niveaux (etirement)": 113
+  },
+  "paires": {
+   "zxing-wasm/aucun + Quagga2 (cadre)/aucun": 126,
+   "zxing-wasm/agrandissement x2 + Quagga2 (cadre)/aucun": 126,
+   "ZXing-js (servi)/aucun + zxing-wasm/agrandissement x2": 124,
+   "zxing-wasm/aucun + zxing-wasm/agrandissement x2": 124,
+   "zxing-wasm/agrandissement x2 + Html5-QRCode/aucun": 124,
+   "zxing-wasm/agrandissement x2 + Html5-QRCode/niveaux (etirement)": 124,
+   "ZXing-js (servi)/aucun + Quagga2 (cadre)/aucun": 120,
+   "Quagga2 (cadre)/aucun + Html5-QRCode/aucun": 120
+  },
+  "plafond": 126,
+  "jamais_lu": [
+   "03 flou moyen (2 px)",
+   "04 flou fort (3 px)"
+  ]
+ },
+ "desaccords": {
+  "EAN-8 accepte": 12,
+  "EAN-13 seul": 0,
+  "sans Quagga2 (scene), EAN-8 accepte": 0
+ },
+ "pretraitement_total_images": 138,
+ "ean_faux_observes": [
+  [
+   "Quagga2 (scene)",
+   "05 de pres (mod 8)",
+   "3083681011791",
+   "11151791"
+  ],
+  [
+   "Quagga2 (scene)",
+   "07 petit code (mod 2)",
+   "3021690201123",
+   "90171123"
+  ],
+  [
+   "Quagga2 (scene)",
+   "13 faible contraste",
+   "3083681011791",
+   "79255158"
+  ],
+  [
+   "Quagga2 (scene)",
+   "20 bouge leger (3 px)",
+   "3021690201123",
+   "90171123"
+  ]
+ ]
+}

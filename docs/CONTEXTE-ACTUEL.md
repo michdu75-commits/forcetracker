@@ -6,6 +6,32 @@
 
 ---
 
+- 🏁 **BANC D'ESSAI DE 4 MOTEURS DE DÉCODAGE LOCAUX — ET LE BOUTON DU SCANNER EST RETIRÉ (14/09/2026).**
+  ⛔⛔ **LA CONSIGNE D'ABORD** : Michel — *« NE RÉACTIVE PAS le scanner dans l'interface
+  utilisateur. Aucun bouton utilisateur tant que je n'ai pas tranché »*. **Le bouton livré la
+  veille en ft-v1210 est donc RETIRÉ** ; le **moteur reste en place et reste éprouvé** — *c'est la
+  porte qui est fermée, pas le moteur*, et deux témoins le figent **dans les deux sens**.
+  ⭐⭐ **LE RÉSULTAT** : **zxing-wasm 86,2 %** contre **77,5 %** au ZXing-js servi, en étant
+  **25× plus rapide** (1,1 ms contre 28,1) — et **seul à lire un code en portrait 90°**.
+  **Html5-QRCode 68,8 %** : c'est **le même moteur** (un fork de zxing-js dans `third_party/`)
+  avec ⛔ **`TRY_HARDER` forcé à `false` en dur**. **Quagga2 (cadré) 87,0 %**, et **nettement plus
+  tolérant au flou**.
+  ⭐ **Meilleur duo : zxing-wasm + Quagga2 (cadré) = 91,3 %.** ⛔ **Un 3ᵉ moteur apporte
+  EXACTEMENT 0.**
+  ⛔⛔ **LE DANGER MESURÉ** : Quagga2 en mode « scène » produit des **EAN-8 de clé PARFAITEMENT
+  VALIDE lus à l'intérieur d'un EAN-13** (12 occurrences) — *un code faux dont la clé est juste ne
+  peut être attrapé par RIEN en aval*. D'où l'état **`conflit`** (§18) : deux codes valides
+  différents ⇒ **0 recherche**, on redemande une capture. *Jamais « prendre le premier ».*
+  ⭐⭐ **LE VRAI PLAFOND N'EST PAS LE MOTEUR, C'EST LA MISE AU POINT** : les 12 images que
+  **personne** ne lit sont **toutes des flous**, et un flou coûte **3 à 6 fois la résolution**.
+  ⛔ **Prétraitements : presque tous rejetés par la mesure** (la netteté est une PERTE de −12/−26
+  pour les deux meilleurs ; le **recadrage central détruit tout** en mangeant la zone de silence).
+  ⭐ **Construit et éprouvé** : `_bcFusionnerCandidats` (3 états, déduplication AVANT le conflit,
+  `_eanValide` reste le seul propriétaire de la clé — **R2**), sur le **chemin vivant**.
+  ⚠️ **Les 3 bibliothèques candidates ne sont PAS dans le dépôt** (un garde du PDF le refuse).
+  ⛔⛔ **VERDICT : `C — ZXING + FALLBACK LOCAL SECONDAIRE`**, avec **zxing-wasm en moteur
+  principal**. Dossier : `docs/BANC-MOTEURS-CODEBARRES.md` · mesures :
+  `docs/banc-moteurs-mesures.json`. **AUCUNE RÉACTIVATION UTILISATEUR AVANT TEST IPHONE.**
 - 📷 **ft-v1210 — LE SCANNER CAMÉRA LOCAL EST REVENU, EN RÉACTIVATION CONTRÔLÉE (14/09/2026).**
   ⛔⛔ **VERDICT : `PRÊT POUR TEST IPHONE`, et rien de plus fort** — *« ne déclare pas le scanner
   définitivement réactivé avant mon retour iPhone »* (un garde du PDF refuse de produire si le
@@ -168,9 +194,20 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1210` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
-  CONTRÔLÉE.** Le bouton « Scanner le code-barres avec la caméra » revient **en premier** dans
-  l'écran d'ajout (gratuit et sans IA) ; la photo lue par l'IA reste en **secours volontaire**.
+- **Version en ligne (live) :** `ft-v1211` — 🏁 **BANC D'ESSAI DE 4 MOTEURS, ET LE BOUTON DU
+  SCANNER EST RETIRÉ.** Michel : *« aucun bouton utilisateur tant que je n'ai pas tranché »* —
+  **le moteur reste en place et reste éprouvé**, seule la porte est fermée (deux témoins la figent
+  dans les deux sens). ⭐ **zxing-wasm 86,2 %** contre **77,5 %** au ZXing servi, **25× plus
+  rapide** · **Html5-QRCode = le MÊME moteur** avec `TRY_HARDER` **forcé à `false`** · meilleur duo
+  **91,3 %**, un 3ᵉ moteur **+0,0**. ⛔ **Le plafond est la MISE AU POINT, pas le moteur.**
+  ⛔ **Verdict : `C — zxing-wasm en principal + Quagga2 en repli local`. AUCUNE RÉACTIVATION
+  UTILISATEUR AVANT TEST IPHONE.** 👉 `docs/BANC-MOTEURS-CODEBARRES.md`.
+
+- **Version précédente :** `ft-v1210` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
+  CONTRÔLÉE.** Le bouton « Scanner le code-barres avec la caméra » revenait **en premier** dans
+  l'écran d'ajout (gratuit et sans IA) ; la photo lue par l'IA restait en **secours volontaire**.
+  ⚠️ **Ce bouton a été RETIRÉ dès le lendemain** sur décision de Michel (voir ft-v1211) ; tout le
+  reste de la version — machine à états, course fermée, provenance, repli IA volontaire — tient.
   ⛔ **Verdict : `PRÊT POUR TEST IPHONE`** — la fiabilité mobile n'est pas mesurable d'ici.
   👉 `docs/SCANNER-CAMERA-LOCAL.md`.
 

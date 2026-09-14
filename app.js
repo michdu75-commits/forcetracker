@@ -1460,14 +1460,67 @@ function _bcPrendreLaMain(code){
    code a été lu, et elle peut le relancer ou le corriger.
    *C'est l'erreur de juillet rendue impossible à refaire : « je n'ai pas lu le code » et « j'ai lu
    le code mais la base ne le connaît pas » ne se ressemblent plus.* */
+/* ═══ LE PROPRIÉTAIRE DU « QUEL CODE PART À LA RECHERCHE ? » (§7 de Michel) ═══
+ * Cible posée par Michel : MOTEUR(S) → candidat EAN → validation → déduplication
+ * → UN SEUL `_lookupBarcode`. ⛔ Aucun moteur ne décide, aucun n'appelle la
+ * recherche produit lui-même, aucun ne possède la moindre logique nutrition :
+ * chacun PROPOSE, celui-ci tranche.
+ *
+ * ⭐ Il ne réécrit pas la clé de contrôle : `_eanValide` existait déjà et reste
+ * le seul endroit qui la connaît (R2 — une règle, un propriétaire).
+ *
+ * ⛔⛔ LES TROIS ÉTATS, ET LE TROISIÈME EST CELUI QUI COMPTE :
+ *   'aucun'   — personne n'a lu           → 0 recherche
+ *   'valide'  — un seul code, validé      → 1 recherche
+ *   'conflit' — deux codes VALIDES et DIFFÉRENTS → ⛔ 0 recherche
+ * Michel, 14/09 : « jamais prendre le premier et continuer. Aucune invention. »
+ * La déduplication passe AVANT le conflit : deux moteurs qui lisent le MÊME
+ * code ne se contredisent pas, ils se confirment.
+ *
+ * ⚠️ Aujourd'hui un seul moteur alimente cette fonction (ZXing), donc elle rend
+ * toujours 'aucun' ou 'valide' — le 'conflit' est inatteignable en production.
+ * Il est écrit et éprouvé MAINTENANT, pas plus tard : c'est le garde-fou qui
+ * doit exister AVANT qu'un second moteur arrive, jamais après. Mesuré au banc
+ * d'essai du 14/09 : les seuls désaccords observés produisaient un EAN-8 de
+ * clé PARFAITEMENT VALIDE lu à l'intérieur d'un EAN-13 — c'est-à-dire un code
+ * que rien, en aval, n'aurait pu reconnaître comme faux. */
+function _bcFusionnerCandidats(props){
+  const valides=[];
+  (props||[]).forEach(p=>{
+    const brut=String((p&&p.code!=null?p.code:p)||'').replace(/\D/g,'');
+    if(_eanValide(brut)===true) valides.push({code:brut, moteur:(p&&p.moteur)||'?'});
+  });
+  if(!valides.length) return {etat:'aucun', code:null, recherches:0};
+  const distincts=valides.map(v=>v.code).filter((c,i,a)=>a.indexOf(c)===i);
+  if(distincts.length>1)
+    return {etat:'conflit', code:null, recherches:0, candidats:distincts,
+            moteurs:valides.map(v=>v.moteur+':'+v.code)};
+  return {etat:'valide', code:distincts[0], recherches:1,
+          confirme:valides.length, moteurs:valides.map(v=>v.moteur)};
+}
+
 async function _bcTraiterCode(code){
   if(!_bcPrendreLaMain(code)) return false;
   const st=document.getElementById('bc-scan-status');
-  if(st) st.textContent='✅ Code lu : '+code+' — recherche du produit…';
-  const inp=document.getElementById('af-bc-manual'); if(inp) inp.value=code;
+  /* Le candidat passe par le propriétaire même quand il est SEUL : un chemin qui
+     ne serait juste que parce qu'il n'y a qu'un moteur serait juste par accident
+     (`BUGS.md` §62), et il faudrait s'en souvenir le jour où on en ajoute un. */
+  const f=_bcFusionnerCandidats([{code:code, moteur:'zxing'}]);
+  if(f.etat==='conflit'){
+    if(st) st.textContent='⚠️ Deux lectures différentes — vise à nouveau le code.';
+    _bcSetEtat('SCANNING');
+    return false;
+  }
+  if(f.etat!=='valide'){
+    if(st) st.textContent='⚠️ Code illisible — rapproche-toi un peu et réessaie.';
+    _bcSetEtat('SCANNING');
+    return false;
+  }
+  if(st) st.textContent='✅ Code lu : '+f.code+' — recherche du produit…';
+  const inp=document.getElementById('af-bc-manual'); if(inp) inp.value=f.code;
   closeBarcodeScanner();
   _bcSetEtat('LOOKUP');
-  try{ await _lookupBarcode(code, 'camera-code-local'); }
+  try{ await _lookupBarcode(f.code, 'camera-code-local'); }
   finally{ _bcSetEtat('TERMINE'); }
   return true;
 }

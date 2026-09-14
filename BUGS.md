@@ -3864,3 +3864,48 @@ forme unique — il ne s'applique **pas** à l'ajout d'un appelant à un propri�
 déjà**. Appliqué aveuglément, il aurait laissé la dernière copie écrite de la règle en dur pour
 toujours. *Une règle de garde qui déborde de son domaine devient elle-même une fausse limite*
 (**R28**).
+
+---
+
+## §65 — ⛔⛔ UN MOTIF DE PROCESSUS QUI SE TROUVE LUI-MÊME : `pgrep -f` MENT DANS LES DEUX SENS *(14/09/2026, banc des moteurs)*
+
+**À quoi on la reconnaît** : on lance une passe en arrière-plan, on l'attend avec
+`until ! pgrep -f "tests/parcours/runner.js"; do sleep; done`… et l'attente ne se termine
+**jamais**, même une fois la passe morte depuis longtemps. Ou l'inverse : on veut l'arrêter avec
+`pkill -f "…runner.js"` et **on tue son propre shell**.
+
+**La cause est la même dans les deux cas, et elle est bête** : `pgrep -f` compare le motif à la
+**ligne de commande complète** de chaque processus — **y compris celle du shell qui porte le motif**.
+Donc :
+
+- la boucle d'attente **se voit elle-même** et ne sort pas ;
+- pire, **plusieurs** boucles d'attente empilées se voient les unes les autres, et la dernière
+  survit à toutes les tentatives d'arrêt.
+
+**Ce que ça a coûté ici** : j'ai cru pendant plusieurs minutes qu'une passe tournait encore
+**alors qu'elle était morte**, j'ai tenté de la tuer trois fois, et j'ai fini par conclure à tort
+que le `kill` ne marchait pas. ⭐ *Un instrument qui rend toujours « en cours » est indiscernable
+d'un travail qui n'avance pas* — c'est la famille §61 (l'outil de mesure tronqué), appliquée cette
+fois à la **détection de processus** au lieu du comptage de témoins.
+
+**⚠️ ET C'EST LA QUATRIÈME FOIS.** ft-v1189, ft-v1193 et ft-v1205 ont chacune paye la variante
+« `pkill -f` tue mon propre shell ». La variante « `pgrep -f` ne sort jamais » est la même cause
+vue de l'autre côté, et je ne l'avais pas reconnue parce que le **symptôme** est inversé.
+
+**Ce qui protège** — lire `/proc/<pid>/cmdline` et **ancrer sur le début** de la ligne :
+
+```bash
+vivant(){ for p in /proc/[0-9]*; do
+    cl=$(tr '\0' ' ' < $p/cmdline 2>/dev/null) || continue
+    case "$cl" in "node tests/parcours/runner.js"*) return 0;; esac
+  done; return 1; }
+until ! vivant; do sleep 15; done
+```
+
+Le `case` ancré au **début** ne peut pas matcher un shell dont la ligne commence par `/bin/bash -c
+source …`. ⭐ Et c'est aussi ce qui rend l'arrêt sûr : on collecte les PID par ce même filtre, au
+lieu de laisser `pkill` choisir.
+
+👉 ***La règle générale : un motif qui cherche un processus ne doit jamais pouvoir se trouver
+lui-même.*** Si le motif est écrit dans la commande qui le cherche, il faut l'ancrer, ou le
+chercher ailleurs que dans sa propre ligne de commande.

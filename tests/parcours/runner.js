@@ -38328,11 +38328,14 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'résolution (sans ça : « caméra ouverte mais ne lit pas », le défaut de ft-v378)',
     /environment/.test(CAM.contraintes||'') && /1920/.test(CAM.contraintes||''),
     CAM.contraintes||'');
-  t('CCCVIII ⑩ ⭐⭐ LA PORTE EST ROUVERTE (ft-v1210) — et le scanner est le PREMIER bouton, '+
-    'avant la saisie et avant l\'IA : *la porte d\'entrée par défaut ne doit jamais être celle qui '+
-    'coûte* (R24). Réactivation contrôlée demandée par Michel, pas un retour en arrière silencieux',
-    /onclick="scanBarcode\(\)"/.test(srcIdx)
-    && srcIdx.indexOf('scanBarcode()') < srcIdx.indexOf('scanBarcodeIA()'), '');
+  t('CCCVIII ⑩ ⛔⛔ LA PORTE EST REFERMÉE, ET C\'EST UNE DÉCISION ÉCRITE (R30) — Michel, 14/09 : '+
+    '« NE RÉACTIVE PAS le scanner dans l\'interface utilisateur. Aucun bouton utilisateur tant que '+
+    'je n\'ai pas tranché ». Le MOTEUR reste en place et testé, seule la PORTE est fermée : le '+
+    'témoin rougit dans les deux sens — si le bouton revient, ET si le moteur disparaît',
+    !/onclick="scanBarcode\(\)"/.test(srcIdx)
+    && /Aucun bouton utilisateur/.test(srcIdx)
+    && /function scanBarcode\b/.test(srcApp)
+    && /function openBarcodeScanner\b/.test(srcApp), '');
   t('CCCVIII ⑪ ⛔⛔ AUCUN BOUTON MORT : les trois orphelines de ft-v388 sont SUPPRIMÉES '+
     '(`scanBarcodePhoto`, `_bcPhotoFallback`, `onBarcodeFile`), et plus rien ne cherche '+
     '`af-bc-input`. *Michel : « je ne veux aucun bouton mort ».*',
@@ -38425,6 +38428,116 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     '(le banc est plus lent qu\'un téléphone, donc c\'est un PLAFOND, pas une prédiction)',
     typeof CAM.msLecture==='number' && CAM.msLecture>0 && CAM.msLecture<40000,
     JSON.stringify({ms:CAM.msLecture}));
+}
+
+/* ══ BLOC CCCX — LE PROPRIÉTAIRE DU CANDIDAT, ET LE DÉSACCORD QUI NE S'AVALE PAS ══
+   Michel, 14/09/2026, §7 et §18 du chantier « banc d'essai de plusieurs moteurs » :
+     « MOTEUR(S) → candidat EAN → validerCodeBarre() → déduplication → 1 _lookupBarcode() »
+     « Aucun moteur ne doit posséder sa propre logique Nutrition. »
+     « Si deux moteurs produisent deux EAN valides différents sur la même image : état =
+       conflit ; aucun lookup ; demander une nouvelle capture. Aucune invention. »
+
+   ⭐⭐ POURQUOI CES TÉMOINS EXISTENT ALORS QU'UN SEUL MOTEUR TOURNE AUJOURD'HUI.
+   Le banc d'essai du 14/09 a mesuré les désaccords réels entre 4 moteurs sur les mêmes
+   images : les 12 observés rendaient un **EAN-8 de clé PARFAITEMENT VALIDE**, lu à
+   l'intérieur d'un EAN-13 (Quagga2 en mode « scène » : sa localisation trouve un
+   sous-morceau du code et le lit comme un code entier). 👉 *Un code faux dont la clé de
+   contrôle est juste ne peut être attrapé par RIEN en aval* — ni par le validateur, ni
+   par la recherche produit, qui rendra simplement « produit inconnu » ou, pire, un AUTRE
+   produit. Le seul endroit où ça s'attrape est ici, au moment de la fusion.
+   ⛔ D'où la règle : le garde-fou s'écrit AVANT le second moteur, jamais après. */
+{
+  const pgX = await b.newPage();
+  await pgX.addInitScript(seedScript({}));
+  await pgX.goto('http://127.0.0.1:'+PORT+'/index.html');
+  await pgX.waitForFunction('typeof _bcFusionnerCandidats==="function"', null, {timeout:20000});
+  const F = async (props)=> await pgX.evaluate(p=>{
+    const r=_bcFusionnerCandidats(p);
+    return {etat:r.etat, code:r.code, recherches:r.recherches, confirme:r.confirme||0,
+            candidats:r.candidats||null};
+  }, props);
+
+  const aucun   = await F([]);
+  const illis   = await F([{code:'', moteur:'a'}]);
+  const seul    = await F([{code:'3083681011791', moteur:'a'}]);
+  const cleKo   = await F([{code:'3083681011792', moteur:'a'}]);   // dernier chiffre faux
+  const memeDeux= await F([{code:'3083681011791',moteur:'a'},{code:'3083681011791',moteur:'b'}]);
+  const conflit = await F([{code:'3083681011791',moteur:'a'},{code:'3021690201123',moteur:'b'}]);
+  const conf8   = await F([{code:'3083681011791',moteur:'a'},{code:'11151791',moteur:'b'}]);
+  const unBon   = await F([{code:'3083681011792',moteur:'a'},{code:'3021690201123',moteur:'b'}]);
+  const espaces = await F([{code:' 308 368 101 1791 ', moteur:'a'}]);
+  const srcApp2 = fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const srcIdx2 = fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  /* ⚠️ LE CORPS SANS SES COMMENTAIRES — la famille ft-v1193/1203/1210, repayée trois fois :
+     un garde qui cherche un mot « n'importe où » mesure la DOCUMENTATION, pas le code. */
+  const sansCom2 = (x)=>x.replace(/\/\*[\s\S]*?\*\//g,' ')
+    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corpsTC = (()=>{ const i=srcApp2.indexOf('async function _bcTraiterCode');
+    return i<0?'':sansCom2(srcApp2.slice(i, srcApp2.indexOf('\nfunction ', i+10))); })();
+  const corpsFU = (()=>{ const i=srcApp2.indexOf('function _bcFusionnerCandidats');
+    return i<0?'':sansCom2(srcApp2.slice(i, srcApp2.indexOf('async function _bcTraiterCode'))); })();
+
+  t('CCCX ① ⭐⭐ DEUX MOTEURS QUI SE CONTREDISENT ⇒ ÉTAT « conflit », ET ZÉRO RECHERCHE — '+
+    '« jamais prendre le premier et continuer » (Michel, §18). *Ce n\'est pas un détail : '+
+    'les 12 désaccords mesurés au banc rendaient un EAN-8 de clé VALIDE, donc indétectable '+
+    'partout ailleurs.*',
+    conflit.etat==='conflit' && conflit.recherches===0 && conflit.code===null
+    && conf8.etat==='conflit' && conf8.recherches===0,
+    JSON.stringify({conflit, conf8}));
+
+  t('CCCX ② ⭐ … et le conflit n\'est PAS étouffé : les deux candidats sont nommés, pour que '+
+    'la trace dise ce qui s\'est passé au lieu d\'un silence',
+    Array.isArray(conflit.candidats) && conflit.candidats.length===2
+    && conflit.candidats.indexOf('3083681011791')>=0 && conflit.candidats.indexOf('3021690201123')>=0,
+    JSON.stringify(conflit.candidats));
+
+  t('CCCX ③ ⭐⭐ DEUX MOTEURS QUI LISENT LE MÊME CODE NE SE CONTREDISENT PAS, ILS SE CONFIRMENT : '+
+    'la déduplication passe AVANT le conflit, et il ne part QU\'UNE recherche',
+    memeDeux.etat==='valide' && memeDeux.code==='3083681011791'
+    && memeDeux.recherches===1 && memeDeux.confirme===2,
+    JSON.stringify(memeDeux));
+
+  t('CCCX ④ ⛔ LA CLÉ DE CONTRÔLE EST VÉRIFIÉE, et un code dont elle est fausse est REJETÉ — '+
+    'il ne devient pas un candidat, donc il ne peut pas créer de conflit non plus',
+    cleKo.etat==='aucun' && cleKo.recherches===0
+    && unBon.etat==='valide' && unBon.code==='3021690201123' && unBon.recherches===1,
+    JSON.stringify({cleKo, unBon}));
+
+  t('CCCX ⑤ ⛔ AUCUN CANDIDAT ⇒ AUCUNE RECHERCHE : « code non lu » ne déclenche jamais un appel '+
+    'réseau à tout hasard',
+    aucun.etat==='aucun' && aucun.recherches===0
+    && illis.etat==='aucun' && illis.recherches===0,
+    JSON.stringify({aucun, illis}));
+
+  t('CCCX ⑥ ⭐ un seul moteur, un seul code valide ⇒ EXACTEMENT une recherche (et les espaces '+
+    'd\'une saisie ne changent rien au code retenu)',
+    seul.etat==='valide' && seul.code==='3083681011791' && seul.recherches===1
+    && espaces.etat==='valide' && espaces.code==='3083681011791',
+    JSON.stringify({seul, espaces}));
+
+  t('CCCX ⑦ ⭐⭐ LE PROPRIÉTAIRE EST SUR LE CHEMIN VIVANT, PAS À CÔTÉ — `_bcTraiterCode` passe '+
+    'par lui même avec un seul moteur, et n\'appelle `_lookupBarcode` qu\'avec le code que le '+
+    'propriétaire a retenu. *Un chemin qui ne serait juste que parce qu\'il n\'y a qu\'un moteur '+
+    'serait juste par accident* (BUGS.md §62)',
+    /_bcFusionnerCandidats\(/.test(corpsTC)
+    && /_lookupBarcode\(\s*f\.code\s*,/.test(corpsTC)
+    && !/_lookupBarcode\(\s*code\s*[,)]/.test(corpsTC),
+    corpsTC.slice(0,220));
+
+  t('CCCX ⑧ ⛔ LA CLÉ N\'EST PAS RÉÉCRITE : le propriétaire du calcul reste `_eanValide`, et la '+
+    'fusion ne contient aucune arithmétique de contrôle recopiée (R2)',
+    /_eanValide\(/.test(corpsFU) && !/%\s*10/.test(corpsFU), '');
+
+  t('CCCX ⑨ ⛔⛔ LE PROPRIÉTAIRE NE SAIT RIEN DE LA NUTRITION : ni valeurs, ni journal, ni douane, '+
+    'ni provenance — « aucun moteur ne doit posséder sa propre logique Nutrition » (§16)',
+    !/(_ref100|foodLog|_douaneLigne|savedFoods|_afSetSrc|_offFetchProduct|persist\()/.test(corpsFU), '');
+
+  t('CCCX ⑩ ⛔⛔ ET LA PORTE RESTE FERMÉE PENDANT CE CHANTIER : aucun bouton n\'appelle le '+
+    'scanner dans l\'écran d\'ajout (Michel, 14/09 : « aucun bouton utilisateur tant que je n\'ai '+
+    'pas tranché »), alors que le moteur, lui, est toujours là et toujours éprouvé',
+    !/onclick="scanBarcode\(\)"/.test(srcIdx2)
+    && /function scanBarcode\b/.test(srcApp2) && /function openBarcodeScanner\b/.test(srcApp2), '');
+  await pgX.close();
 }
 
 await b.close(); srv.close();

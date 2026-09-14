@@ -3069,3 +3069,60 @@ lignes de journal déjà enregistrées portant un nom disparu — **et l'histori
 périmètre** — ② un **cinquième** nom pour une chose qui en a un.
 
 👉 **Recommandation : garder `scan`, et rendre l'appel explicite.** *Décision de Michel.*
+
+
+---
+
+### ⚪ ÉCARTÉE — *« faut-il retirer l'EAN-8 de la liste des formats ? »* (14/09/2026, banc des moteurs)
+
+Le chiffre brut dit **oui** : sur le banc, accepter l'EAN-8 produit **12 désaccords entre moteurs
+et 12 codes faux** ; le retirer les ramène à **0**.
+
+⛔ **Et pourtant on le garde, parce que le chiffre ne dit pas d'où il vient.** Les 12 cas
+proviennent **exclusivement de Quagga2 en mode « scène »** — un mode que le verdict ne propose pas
+d'utiliser. Mesuré : **toute combinaison de moteurs sans lui donne 0 désaccord et 0 code faux,
+EAN-8 compris**. Et l'EAN-8 est un **vrai format**, celui des petits emballages alimentaires : le
+retirer rendrait ces produits inscannables.
+
+⭐ **Le garde-fou reste néanmoins écrit** : si un jour le mode scène tourne, un EAN-8 devra être
+**confirmé par un second moteur** — `_bcFusionnerCandidats` sait déjà le faire (`confirme`).
+
+👉 *Un chiffre qui dit « retire » sans dire « pourquoi ça arrive » n'est pas une décision.*
+
+---
+
+### 🟡 QUE DIT-ON À LA PERSONNE PENDANT QUE LE SCANNER NE LIT PAS ? (14/09/2026)
+
+**Mesuré au banc** : un flou de **2 px n'est lu par AUCUN des 4 moteurs**, et un flou léger coûte
+déjà **3× la résolution**. Sur un téléphone, « flou » s'appelle **mise au point**.
+
+👉 ***Donc la vraie décision produit n'est pas « quel moteur », c'est « que dit-on pendant que ça
+ne lit pas ».*** Aujourd'hui : un message générique, et la caméra reste ouverte.
+
+**La question** : faut-il dire **« rapproche-toi »** / **« stabilise »** plutôt que *« code
+illisible »* ? ⭐ *L'attendu est vérifiable par du code* (le texte affiché selon l'état mesuré),
+donc c'est promouvable — **mais le BON texte relève du juge humain.**
+
+---
+
+### 🟣 JUGE HUMAIN — au bout de combien de temps la personne abandonne-t-elle ? (14/09/2026)
+
+C'est ce qui décide si le **repli IA** mérite un rappel visuel après N secondes.
+⛔ **Pas un déclenchement automatique** — décision de ft-v1210, un appel payant exige un geste —
+mais peut-être une **mise en avant** du bouton existant. Ne se mesure pas depuis un conteneur.
+
+---
+
+### 🟡 LA PROVENANCE D'UN CODE SCANNÉ ATTEINT-ELLE MILO ? (14/09/2026)
+
+**Mesuré au banc** : un décodeur peut rendre un **code faux dont la clé de contrôle est juste**.
+L'app refuse aujourd'hui ce cas (état `conflit`), **mais si un jour un seul moteur se trompe, rien
+ne l'attrape.**
+
+La provenance **existe déjà** (`camera-code-local` contre `code-tape`, et la seconde n'a pas de
+clé vérifiée — **R33**). **La question est : atteint-elle Milo ?** Devrait-il savoir que *« ce
+produit vient d'un scan, pas d'une saisie »* avant de commenter une ligne du journal ?
+
+👉 *C'est **R4** posée sur une donnée qui existe déjà — la famille de bugs la plus coûteuse du
+projet, et le signe est toujours le même : la donnée est là, elle n'atteint pas celui qui en a
+besoin.*

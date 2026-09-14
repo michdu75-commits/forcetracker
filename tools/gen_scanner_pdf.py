@@ -107,13 +107,18 @@ if _iC < 0 or _iL < 0 or _iC > _iL or 'Code lu' not in C_TRAI:
                      'et c est ce qui empeche « je n ai pas lu le code » de se confondre avec '
                      '« la base ne connait pas le produit ». L erreur de juillet redevient possible.')
 
-# ═══ [!!] LA PORTE EST ROUVERTE, ET LE SCANNER PASSE EN PREMIER (R24) ═════════════════════════
-if 'onclick="scanBarcode()"' not in IDX:
-    raise SystemExit('Le bouton du scanner a disparu de l ecran : ce document raconte une '
-                     'reactivation controlee.')
-if IDX.index('scanBarcode()') > IDX.index('scanBarcodeIA()'):
-    raise SystemExit('Le scanner local ne passe plus AVANT la photo IA : la porte d entree par '
-                     'defaut redevient celle qui coute (R24).')
+# ═══ [!!] LA PORTE EST REFERMEE (Michel, 14/09) — ET LE MOTEUR RESTE EN PLACE ════════════════
+# ft-v1210 avait remis le bouton dans l ecran d ajout ; Michel l a fait retirer le lendemain :
+# « NE REACTIVE PAS le scanner dans l interface utilisateur. Aucun bouton utilisateur tant que je
+# n ai pas tranche. » Ce garde rougit dans les DEUX sens : si le bouton revient sans decision, et
+# si le moteur disparait (ce serait retirer ce que le banc d essai est en train de mesurer).
+if 'onclick="scanBarcode()"' in IDX:
+    raise SystemExit('Le bouton du scanner est revenu dans l ecran : Michel a explicitement '
+                     'demande « aucun bouton utilisateur tant que je n ai pas tranche ». '
+                     'Relire sa consigne du 14/09 avant de republier ce document.')
+if not re.search(r'function openBarcodeScanner\b', CODE) or not re.search(r'function scanBarcode\b', CODE):
+    raise SystemExit('Le moteur du scanner a disparu : c est la PORTE qui est fermee, pas le '
+                     'moteur — et c est lui que le banc d essai mesure.')
 
 # ═══ [!!] AUCUN BOUTON MORT — les trois orphelines sont parties, avec leur raison ═════════════
 for _f in ('scanBarcodePhoto', '_bcPhotoFallback', 'onBarcodeFile'):
@@ -300,6 +305,16 @@ H.append(P('Le scanner camera local &mdash; reactivation controlee', 'titre'))
 H.append(P('14/09/2026 &middot; Force Tracker %s &middot; %d gardes recomptent ce document depuis '
            'le code servi et refusent de le produire si un fait tombe.' % (VERSION, N_GARDES),
            'sous'))
+
+H.append(P('0. AVERTISSEMENT &mdash; LE BOUTON A ETE RETIRE LE LENDEMAIN', 'h'))
+H.append(P('Ce dossier decrit la reactivation controlee livree en <b>ft-v1210</b>, bouton compris. '
+           '<b>Michel l a fait retirer le 14/09</b> : <i>&laquo; NE REACTIVE PAS le scanner dans '
+           'l interface utilisateur. Aucun bouton utilisateur tant que je n ai pas tranche &raquo;</i>, '
+           'le temps d un banc d essai qui compare plusieurs moteurs de decodage locaux. '
+           '<b>Tout ce qui suit reste vrai du MOTEUR</b> (la machine a etats, la course fermee, le '
+           'numero montre avant la recherche, le repli IA volontaire) &mdash; seule la <b>porte</b> '
+           'de l ecran d ajout est refermee, et un garde de ce generateur le verifie desormais dans '
+           'les deux sens.', 'p'))
 
 H.append(P('1. La chronologie de juillet &mdash; CORRIGEE', 'h'))
 H.append(P('Michel apporte une information qui oblige a rouvrir l enquete : <i>&laquo; au moment '
