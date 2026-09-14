@@ -36753,6 +36753,171 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   })();
 }
 
+/* ═══ B-CCCIX. LE DIAGNOSTIC D'IMPORT — prouver la PRÉSENCE du champ, pas sa valeur ═══════════
+   (14/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel choisit l'option B : *« dans l'écran Admin, afficher explicitement : Compteur
+   typesNormalises reçu : OUI / NON … Le but principal est de prouver la PRÉSENCE du champ, pas
+   seulement sa valeur »*, et ⛔ *« ne déduis pas la présence à partir de la valeur numérique »*.
+
+   ⭐⭐ POURQUOI CETTE INSTRUMENTATION EXISTE, EN UNE MESURE : sur un vrai document,
+   `typesNormalises` vaudra **0** (le prompt interdit au modèle d'émettre un type inconnu). Or le
+   client retombe **aussi sur 0** quand le champ est **absent**. *Les deux cas sont indiscernables
+   par la valeur* — donc un test en production ne prouverait rien. La présence se constate par
+   `hasOwnProperty`, jamais par un `>0`.
+
+   ⛔ INSTRUMENTATION SEULE : aucune donnée importée ne change (instantané identique, sha
+   `345d3db35bebb9d2`), aucune série n'est filtrée, aucun record ne bouge, l'étape 2 reste fermée.
+
+   ⚠️ CE QUI EST MAÎTRISÉ ICI, ET C'EST DIT : `fetch` est remplacé pour rendre des réponses
+   choisies — c'est la FRONTIÈRE RÉSEAU, pas la fonction. Tout ce qui est en deçà (`_histAnalyzeBatch`,
+   `analyzeHistPhotos`, la détection, le rendu) est la VRAIE chaîne, conduite pour de bon. Le
+   Worker déployé, lui, n'est pas joignable d'ici — cela reste à éprouver en salle. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1500);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=async f=>{ try{ return await f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const lu=()=>{
+      renderImportDiagAdmin();
+      const h=(document.getElementById('admin-import-diag')||{}).innerHTML||'';
+      const champ=(re)=>{const m=h.match(re);return m?m[1]:null;};
+      return { present: champ(/Compteur typesNormalises reçu<\/span><strong[^>]*>([^<]*)</),
+               valeur:  champ(/Valeur<\/span><strong[^>]*>([^<]*)</),
+               lots:    champ(/Lots avec le champ<\/span><strong[^>]*>([^<]*)</),
+               vide:    /Aucun import observé/.test(h) };
+    };
+    const SESS=[{date:'2026-08-15',exercises:[{name:'Squat à la Barre',
+                 sets:[{kg:100,reps:5,type:''},{kg:110,reps:4,type:'D'}]}]}];
+    /* ⭐ `reponses` est une LISTE : un élément par lot, donc on peut rendre le champ sur l'un et
+       pas sur l'autre — c'est le seul moyen d'atteindre le cas PARTIEL. */
+    const conduire=async(reponses, nPhotos)=>{
+      S.prs={}; S.sessions=[];
+      let i=0;
+      window.fetch=async()=>{ const r=reponses[Math.min(i++,reponses.length-1)];
+        return {ok:true, text:async()=>JSON.stringify(r)}; };
+      _histPhotos=[]; for(let k=0;k<(nPhotos||1);k++)_histPhotos.push({type:'image/jpeg',data:'x'});
+      await analyzeHistPhotos();
+      return lu();
+    };
+    const avecChamp=n=>({status:'ok',data:{sessions:JSON.parse(JSON.stringify(SESS)),typesNormalises:n}});
+    const sansChamp=()=>({status:'ok',data:{sessions:JSON.parse(JSON.stringify(SESS))}});
+
+    /* ── ① AVANT TOUT IMPORT ──
+       ⚠️ ENVELOPPÉ, ET C'EST LE CONTRÔLE NÉGATIF QUI L'A EXIGÉ : sans ça, une mutation qui
+       retire l'état « aucun import » fait LEVER le rendu (`_histDiag` est `null`), donc le bloc
+       entier plante et le harnais affiche « 0 rouge » — indiscernable d'un bloc vert (§61).
+       *Un témoin doit rougir, pas planter.* */
+    o.avant = await sur(()=>lu());
+
+    /* ── ② LES QUATRE CAS DEMANDÉS ── */
+    o.absent = await sur(()=>conduire([sansChamp()]));
+    o.zero   = await sur(()=>conduire([avecChamp(0)]));
+    o.un     = await sur(()=>conduire([avecChamp(1)]));
+    o.trois  = await sur(()=>conduire([avecChamp(3)]));
+
+    /* ── ③ LE CAS PARTIEL : 2 lots (4 photos, taille de lot 3), un seul porte le champ ──
+       ⛔ Un booléen le cacherait, et un lot répondu par un backend non déployé fausserait le
+       total sans qu'on le voie. */
+    o.partiel = await sur(()=>conduire([avecChamp(2), sansChamp()], 4));
+
+    /* ── ④ UNE ANCIENNE OBSERVATION NE DOIT PAS PASSER POUR LA NOUVELLE ──
+       On enchaîne un import RÉUSSI avec le champ, puis un import qui ÉCHOUE (réseau). Le
+       diagnostic doit repartir de zéro, pas afficher « OUI / 3 ». */
+    await sur(()=>conduire([avecChamp(3)]));
+    o.avantEchec = lu();
+    o.apresEchec = await sur(async()=>{
+      window.fetch=async()=>{ throw new Error('reseau coupe'); };
+      _histPhotos=[{type:'image/jpeg',data:'x'}];
+      await analyzeHistPhotos();
+      return lu();
+    });
+
+    /* ── ⑤ LES DONNÉES : elles ne doivent pas bouger d'un iota ── */
+    /* ⚠️ IL FAUT LES DEUX FONCTIONS, ET MON TÉMOIN L'AVAIT OUBLIÉ : `analyzeHistPhotos` ne fait
+       qu'EXTRAIRE (elle remplit `_histExtracted` et montre l'aperçu) ; c'est `finalImportHist`
+       qui écrit dans `S.sessions`. Sans elle, le témoin lisait 0 série et 0 record — et il
+       rougissait sur du code parfaitement sain. *Conduire la première moitié d'un chemin, c'est
+       mesurer la moitié qu'on n'a pas conduite.* */
+    o.donnees = await sur(async()=>{
+      const r=await conduire([avecChamp(2)]);
+      _histConflicts=[]; finalImportHist();
+      const ex=((S.sessions[0]||{}).exs||[])[0]||{sets:[]};
+      return { lu:r, series:ex.sets.length, types:ex.sets.map(s=>'"'+s.type+'"').join('/'),
+               record:Object.keys(S.prs||{}).sort().map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ') };
+    });
+    return o;
+  });
+
+  console.log('\n-- B-CCCIX. Le diagnostic d\'import (écran Admin) --');
+  t('B-CCCIX ① avant tout import, l\'écran le DIT au lieu de montrer un vieux chiffre',
+    R.avant && R.avant.vide===true, JSON.stringify(R.avant));
+  t('B-CCCIX ② champ ABSENT → présence NON, valeur « — »',
+    R.absent && R.absent.present==='NON' && R.absent.valeur==='—', JSON.stringify(R.absent));
+  t('B-CCCIX ② ⭐⭐ champ PRÉSENT À 0 → présence OUI (c\'est TOUT l\'objet de l\'option B)',
+    R.zero && R.zero.present==='OUI' && R.zero.valeur==='0', JSON.stringify(R.zero));
+  t('B-CCCIX ② champ présent à 1 → OUI, 1',
+    R.un && R.un.present==='OUI' && R.un.valeur==='1', JSON.stringify(R.un));
+  t('B-CCCIX ② champ présent à 3 → OUI, 3',
+    R.trois && R.trois.present==='OUI' && R.trois.valeur==='3', JSON.stringify(R.trois));
+  t('B-CCCIX ③ ⭐ 2 lots dont un seul porte le champ → PARTIEL, jamais « OUI »',
+    R.partiel && R.partiel.present==='PARTIEL' && R.partiel.lots==='1 / 2',
+    JSON.stringify(R.partiel));
+  t('B-CCCIX ④ ⭐ une ancienne observation ne passe PAS pour la nouvelle',
+    R.avantEchec && R.avantEchec.present==='OUI' && R.avantEchec.valeur==='3'
+      && R.apresEchec && R.apresEchec.vide===true,
+    'avant='+JSON.stringify(R.avantEchec)+' après='+JSON.stringify(R.apresEchec));
+  t('B-CCCIX ⑤ ⛔ aucune série n\'est filtrée, aucun type ne change',
+    R.donnees && R.donnees.series===2 && R.donnees.types==='""/"D"',
+    JSON.stringify(R.donnees));
+  /* ⚠️ MON ATTENDU ÉTAIT FAUX, PAS LE CODE : j'avais écrit « 100x5 » de tête. Mesuré,
+     `bz(110,4)=120` bat `bz(100,5)=112,5` — c'est donc le DROP SET qui pose le record, et c'est
+     exactement la règle (un `'D'` fait foi). *Un attendu écrit de mémoire teste la mémoire.* */
+  t('B-CCCIX ⑤ ⛔ le record est celui qu\'il aurait été sans l\'instrumentation (le drop set, 1RM le plus haut)',
+    R.donnees && R.donnees.record==='Squat à la Barre=110x4', JSON.stringify(R.donnees));
+
+  /* ══ TÉMOINS DE SOURCE ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const wk=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    const cd=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+    /* ⛔⛔ LA PRÉSENCE NE SE DÉDUIT JAMAIS DE LA VALEUR — c'est la consigne, et c'est le défaut
+       que cette sous-étape existe pour éviter. */
+    t('B-CCCIX ⑥ ⛔⛔ SOURCE — la présence est constatée par `hasOwnProperty`, jamais par un `>0`',
+      /Object\.prototype\.hasOwnProperty\.call\(d\.data,'typesNormalises'\)/.test(lg)
+      && !/_histDiag[\s\S]{0,120}typesNormalises>0\)\s*\{?\s*_histDiag\.lotsAvecChamp/.test(lg), '');
+    t('B-CCCIX ⑥ ⛔ SOURCE — le diagnostic est remis à zéro AVANT le premier appel réseau',
+      /_histDiag=\{lots:0, lotsAvecChamp:0, valeur:0[\s\S]{0,200}const allSessions=\[\];/.test(lg), '');
+    t('B-CCCIX ⑥ ⛔ SOURCE — il n\'est pas persisté (il décrit l\'import COURANT)',
+      /let _histDiag=null;/.test(lg) && !/ft4_[a-z]*diag|S\.histDiag/.test(lg), '');
+    t('B-CCCIX ⑥ ⛔ SOURCE — aucune donnée du document n\'entre dans le diagnostic',
+      !/_histDiag\.(nom|name|exercices|sessions|sets|date[^s])/.test(lg), '');
+    /* ⛔ PÉRIMÈTRE — l'instrumentation ne touche ni la logique ni `app.js`. */
+    t('B-CCCIX ⑦ ⛔ NUTRITION — l\'instrumentation n\'existe nulle part dans `app.js`',
+      !/_histDiag|admin-import-diag|renderImportDiagAdmin/.test(
+        fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+    t('B-CCCIX ⑦ ⛔ PÉRIMÈTRE — la normalisation backend est strictement identique',
+      (wk.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (cd.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (lg.match(/const type=s\.type==='D'\?'D':''/g)||[]).length===1, '');
+    t('B-CCCIX ⑦ ⛔ PÉRIMÈTRE — l\'étape 2 reste fermée (prompt inchangé des deux côtés)',
+      wk.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".')
+      && cd.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".'), '');
+    t('B-CCCIX ⑦ ⛔ PÉRIMÈTRE — le propriétaire des records est intact',
+      /function _serieFaitFoiPourPR\(s\)\{\s*return !!\(s && s\.done && s\.kg && s\.reps && s\.type!=='É' && s\.type!=='W'\);/.test(lg), '');
+    /* ⛔ L'écran affiche la présence SÉPARÉMENT de la valeur — deux lignes, pas une. */
+    t('B-CCCIX ⑧ ⛔ l\'écran Admin porte bien la carte et son conteneur',
+      /id="admin-import-diag"/.test(html) && /onclick="renderImportDiagAdmin\(\)"/.test(html), '');
+    t('B-CCCIX ⑧ ⛔ SOURCE — présence et valeur sont DEUX lignes distinctes',
+      /L\('Compteur typesNormalises reçu', etat, coul\)/.test(lg)
+      && /L\('Valeur', aucun\?'—':String\(_histDiag\.valeur\)\)/.test(lg), '');
+  })();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

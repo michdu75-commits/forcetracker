@@ -6170,6 +6170,16 @@ function _doCreateCustomEx(name,grp){
 // ─── IMPORT PROGRAMME PAR PHOTO ──────────────────────────────
 let _impPhotos=[],_impExtracted=null,_impMode='new';
 let _histPhotos=[],_histExtracted=null,_histConflicts=[];
+/* 🔬 DIAGNOSTIC D'IMPORT — INSTRUMENTATION SEULE, aucune logique métier.
+   ⛔⛔ CE QU'IL SERT À PROUVER N'EST PAS UNE VALEUR, C'EST UNE PRÉSENCE. Sur un vrai
+   document, `typesNormalises` vaudra 0 (le prompt interdit au modèle d'émettre un type
+   inconnu) — et le client retombe AUSSI sur 0 quand le champ est absent. *Les deux cas sont
+   indiscernables par la valeur.* On enregistre donc la PRÉSENCE séparément, avec
+   `hasOwnProperty` : ⛔ jamais déduite d'un `>0`, sinon on remesurerait le trou qu'on ferme.
+   ⛔ AUCUNE DONNÉE DU DOCUMENT N'ENTRE ICI : deux compteurs de lots et un nombre.
+   ⚠️ NON PERSISTÉ, exprès — il décrit L'IMPORT COURANT. Une valeur qui survivrait au
+   rechargement se lirait comme appartenant à l'import qu'on vient de faire (**R29**). */
+let _histDiag=null;
 
 /* 📷 ft-v1178 — UN SCAN NE MEURT PLUS EN ROUVRANT LA FENÊTRE. R2 : un seul propriétaire pour
    les trois imports (programme, historique, repas).
@@ -7213,6 +7223,16 @@ async function _histAnalyzeBatch(imgs){
       .filter(e=>e&&typeof e==='object'&&e.name)
       .map(e=>Object.assign({}, e, {sets: Array.isArray(e.sets)?e.sets.filter(t=>t&&typeof t==='object'):[]}))
   }));
+  /* 🔬 LA PRÉSENCE SE CONSTATE ICI, SUR L'OBJET REÇU — et par `hasOwnProperty`, jamais par la
+     valeur : un backend pas encore déployé n'envoie pas le champ, un backend à jour l'envoie à 0,
+     et ces deux cas doivent se distinguer à l'écran. */
+  if(_histDiag){
+    _histDiag.lots++;
+    if(Object.prototype.hasOwnProperty.call(d.data,'typesNormalises')){
+      _histDiag.lotsAvecChamp++;
+      _histDiag.valeur+=(+d.data.typesNormalises>0)?+d.data.typesNormalises:0;
+    }
+  }
   /* 🏷️ LE COMPTE DU BACKEND VOYAGE AVEC LE LOT. ⛔ Un OBJET, pas un tableau avec des propriétés
      attachées : cette fonction n'a qu'UN appelant, donc la migration est complète et un appelant
      oublié serait impossible à rater. *La compatibilité parfaite serait ici le défaut* — c'est la
@@ -7220,6 +7240,39 @@ async function _histAnalyzeBatch(imgs){
      ⚠️ Un backend qui n'envoie pas le champ (version antérieure au déploiement) donne 0 : le
      comportement d'avant, à l'identique. */
   return {sessions, typesNormalises:(+d.data.typesNormalises>0)?+d.data.typesNormalises:0};
+}
+/* 🔬 L'AFFICHAGE DU DIAGNOSTIC — écran Admin. Il vit ICI, avec la donnée qu'il montre, et non
+   dans `app.js` : un seul fichier produit et affiche cet état, et le chantier Nutrition (qui vit
+   dans `app.js`) n'est approché à aucun moment.
+   ⛔ IL N'AFFICHE QUE CE QU'IL A VU. Trois états, jamais confondus :
+     · aucun import depuis le chargement  → on le DIT, on ne montre pas un vieux chiffre ;
+     · champ reçu sur tous les lots       → OUI, avec la valeur ;
+     · champ reçu sur une PARTIE des lots → PARTIEL, parce qu'un booléen cacherait ce cas.
+   ⚠️ Le cas PARTIEL n'est pas de la coquetterie : avec plusieurs pages, un seul lot répondu par
+   un backend non déployé suffirait à fausser le total, et un « OUI » le masquerait. */
+function renderImportDiagAdmin(){
+  const el=document.getElementById('admin-import-diag');
+  if(!el)return;
+  const L=(k,v,c)=>'<div style="display:flex;justify-content:space-between;gap:10px;">'
+    +'<span style="color:var(--t3);">'+k+'</span>'
+    +'<strong style="color:'+(c||'var(--t1)')+';">'+v+'</strong></div>';
+  if(!_histDiag||!_histDiag.lots){
+    el.innerHTML='<div style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);'
+      +'border-radius:8px;padding:10px 12px;font-family:\'SF Mono\',ui-monospace,monospace;">'
+      +'Aucun import observé depuis le chargement de l\'app.</div>';
+    return;
+  }
+  const tous=_histDiag.lotsAvecChamp===_histDiag.lots;
+  const aucun=_histDiag.lotsAvecChamp===0;
+  const etat=aucun?'NON':(tous?'OUI':'PARTIEL');
+  const coul=aucun?'var(--red)':(tous?'var(--green,#30d158)':'var(--orange,#ff9f0a)');
+  el.innerHTML='<div style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);'
+    +'border-radius:8px;padding:10px 12px;font-family:\'SF Mono\',ui-monospace,monospace;">'
+    +L('Compteur typesNormalises reçu', etat, coul)
+    +L('Valeur', aucun?'—':String(_histDiag.valeur))
+    +L('Lots avec le champ', _histDiag.lotsAvecChamp+' / '+_histDiag.lots)
+    +L('Import observé à', _histDiag.quand)
+    +'</div>';
 }
 // Limite premium : import de journal gratuit = 1 seul au total (illimité en premium).
 // ⚠️ Ne concerne QUE l'import de journal — l'import de PROGRAMME n'est pas limité.
@@ -7240,6 +7293,9 @@ async function analyzeHistPhotos(){
   const statusEl=document.getElementById('hist-s3-status');
   const batches=[];
   for(let i=0;i<_histPhotos.length;i+=_HIST_BATCH)batches.push(_histPhotos.slice(i,i+_HIST_BATCH));
+  /* ⛔ REMIS À ZÉRO AVANT le premier appel : sans ça, un import qui échoue laisserait le
+     diagnostic du précédent à l'écran, et on le lirait comme celui d'aujourd'hui. */
+  _histDiag={lots:0, lotsAvecChamp:0, valeur:0, quand:new Date().toISOString().slice(11,19)};
   const allSessions=[];
   let _histTypesNormalises=0;   // ⛔ remis à zéro à CHAQUE analyse : un reliquat compterait deux fois
   let failed=0,lastErr='';

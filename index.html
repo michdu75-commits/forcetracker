@@ -1051,6 +1051,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
       <div id="admin-health" style="margin-top:4px;"></div>
     </div>
+    <!-- 🔬 Le diagnostic d'import : il prouve la PRÉSENCE du champ, pas sa valeur. Sur un vrai
+         document la valeur sera 0 — et 0 ne prouve rien tant qu'on ne sait pas si le champ est
+         arrivé. C'est tout l'objet de cette carte, et elle se lit depuis l'iPhone, sans console. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔬 Import historique — diagnostic</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Après un import de journal, dit si le backend a bien renvoyé le compteur <strong>typesNormalises</strong> — et <strong>séparément</strong> sa valeur. Un « 0 » ne veut rien dire tant qu'on ignore si le champ est arrivé.</div>
+      <button class="btn btn-bg2" onclick="renderImportDiagAdmin()" style="padding:11px;font-size:14px;">🔬 Voir le dernier import</button>
+      <div id="admin-import-diag" style="margin-top:4px;"></div>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">📥 Idées reçues des testeurs</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Lis toutes les idées <strong>directement dans l'app</strong>, sans ouvrir tes mails. Les <strong>photos</strong>, elles, restent dans <strong>forcetracker.app@gmail.com</strong> (le mail te prévient).</div>
