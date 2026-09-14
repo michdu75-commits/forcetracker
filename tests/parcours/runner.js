@@ -38631,7 +38631,12 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     && (corpsAnu('_bcCaptureFrame').match(/_lookupBarcode\(/g)||[]).length===0
     && /_bcTraiterCode\(/.test(corpsAnu('openBarcodeScanner'))
     && /_bcTraiterCode\(/.test(corpsAnu('_bcCaptureFrame'))
-    && (srcApp.match(/_lookupBarcode\(code\s*,\s*'camera-code-local'\)/g)||[]).length===1, '');
+    /* ⚠️ ft-v1211 : l'argument est passé de `code` (le candidat BRUT) à `f.code` (celui que le
+       propriétaire `_bcFusionnerCandidats` a validé). Le témoin épinglait le littéral d'avant et
+       rougissait donc sur un code MEILLEUR. Il exige désormais la forme du propriétaire ET
+       refuse le retour du brut — *un témoin qui fige un littéral fige une époque, pas une règle.* */
+    && (srcApp.match(/_lookupBarcode\(\s*f\.code\s*,\s*'camera-code-local'\s*\)/g)||[]).length===1
+    && !/_lookupBarcode\(\s*code\s*,\s*'camera-code-local'/.test(srcApp), '');
   t('CCCVIII ⑤ter ⛔ … et le verrou REFUSE un second passage : hors de l\'état SCANNING, '+
     '`_bcPrendreLaMain` rend faux et rien ne part',
     CAM.verrou && CAM.verrou.depuisIDLE===false && CAM.verrou.depuisSCANNING===true
@@ -38698,8 +38703,10 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'le numéro lu n\'est plus montré avant la recherche — la confusion de juillet revient');
   t('CCCIX ② ⭐⭐ LA PROVENANCE DU SCANNER EST EXPLICITE, jamais une valeur par défaut : '+
     '`camera-code-local` est passée en dur à l\'appel, et elle est distincte des deux autres',
+    /* ⚠️ ft-v1211 : même correction que CCCVIII ⑤bis — la provenance reste en dur à l'appel, mais
+       le code passé est maintenant celui du propriétaire (`f.code`), pas le candidat brut. */
     CAM.src && CAM.src.saisie==='camera-code-local'
-    && /_lookupBarcode\(code,\s*'camera-code-local'\)/.test(corpsAnu('_bcTraiterCode')),
+    && /_lookupBarcode\(\s*f\.code\s*,\s*'camera-code-local'\s*\)/.test(corpsAnu('_bcTraiterCode')),
     JSON.stringify(CAM.src));
   t('CCCIX ②bis ⭐ … et les trois provenances demandées par Michel coexistent sans ambiguïté',
     /'camera-code-local'/.test(srcApp) && /'code-tape'/.test(srcApp) && /'photo-code-ia'/.test(srcApp)

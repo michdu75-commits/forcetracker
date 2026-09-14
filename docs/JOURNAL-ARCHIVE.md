@@ -8777,3 +8777,43 @@ Tests : **parcours TOTAL/TOTAL sur l'arbre FINAL** (bloc **CCCX**, 10 témoins).
 📄 **PDF POUR GPT** : `DOSSIER-GPT-BANC-MOTEURS-CODEBARRES-14-09-2026.pdf` (**25ᵉ** de la série, **hors dépôt** — règle d'or #14), généré par `tools/gen_banc_pdf.py`, **37 gardes**. ⭐ Ses plus utiles protègent des **décisions** : que la porte soit restée fermée, que le **moteur** soit resté là, que le conflit ne soit pas avalé, que les bibliothèques candidates ne soient pas entrées dans le dépôt, et que le verdict ne monte pas d'un cran.
 
 Fichiers : `index.html`, `app.js`, `tests/parcours/runner.js`, `tools/gen_banc_pdf.py` (nouveau), `tools/gen_scanner_pdf.py`, `docs/BANC-MOTEURS-CODEBARRES.md` (nouveau), `docs/banc-moteurs-mesures.json` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1211. |
+
+
+**ft-v1202 — ⚖️ 3-iv : LA LISTE BLANCHE DE LA PROVENANCE · CE N'EST PAS UNE EXTRACTION, ET LA MUTATION QUI LE PROUVE EST INVISIBLE À L'ÉCRAN** — Michel valide 3-iii et donne la suite, avec ⭐ **une consigne NOUVELLE tirée d'elle** : ***« une dérive de conception peut être invisible à l'exécution. Donc conserve les témoins de SOURCE quand ils protègent une frontière d'architecture que les tests de comportement ne peuvent pas voir »*** · ***« laisser les gardes d'état chez les appelants s'ils ne font pas partie du métier du propriétaire »***.
+
+**⛔⛔ TEST D'ENTRÉE : 3-iv N'EST PAS UNE EXTRACTION, ET LE PÉRIMÈTRE ÉCRIT DANS LE PLAN EST FAUX POUR LA 4ᵉ SOUS-ÉTAPE D'AFFILÉE.**
+
+| ce que le plan disait | ce que la **mesure** dit |
+|---|---|
+| « les **deux** branches @1232/@1237 » | **1 copie de CHAQUE forme.** Elles se ressemblent et ne disent pas la même chose : l'une teste les grammes et écrit `u:'g'`, l'autre teste les portions et écrit `u:'portion'` |
+| « le **SEUL** endroit qui écrit `p.q`/`p.u` » | **5 écritures** : @1232 · @1237 · @1300 (code-barres) · @1320 (poids déclaré) · @1355 (portions à l'écran) |
+
+Les trois supplémentaires lisent **l'état de l'écran**, pas `_afSrc` — ce ne sont pas des copies non plus, et **elles ne bougent pas** (un témoin fige leur compte à 5).
+
+**⭐⭐ 3-iv SE RÉDUIT DONC À *BRANCHER* LA DERNIÈRE COPIE ÉCRITE SUR `_qGrammes`, QUI AVAIT DÉJÀ 3 APPELANTS.** Aucun propriétaire n'est créé. 👉 ***Le test d'entrée protège contre la CRÉATION d'un propriétaire pour une forme unique ; il n'interdit pas d'ajouter un appelant à un propriétaire qui existe.*** Appliqué aveuglément, il aurait laissé **la dernière copie écrite de la règle en dur pour toujours** — *une règle de garde qui déborde de son domaine devient elle-même une fausse limite* (**R28**).
+
+**⛔ ET LA BRANCHE PORTIONS NE BOUGE PAS** : 1 écriture, aucun propriétaire existant. En créer un pour elle violerait précisément le test d'entrée — c'est la règle qui a fait **écarter 1b-iv**.
+
+**⛔⛔ LE GARDE `if(_afSrc)` RESTE CHEZ L'APPELANT, EXPRÈS — c'est la consigne de Michel appliquée.** Il dit *« une source existe »*, un **état de l'écran** ; pas *« cette quantité est-elle des grammes »*. **Le métier du propriétaire s'arrête à la quantité.** Deux témoins le figent, un de comportement (sans source, la provenance sort « quantité inconnue ») et un de source (`_afSrc` n'apparaît pas dans `_qGrammes`).
+
+**⭐⭐ ET LA MUTATION N°2 EST LA DÉMONSTRATION DE SA CONSIGNE, LE LENDEMAIN DU JOUR OÙ IL L'A ÉCRITE.** La règle **réécrite sur place** au lieu d'appeler le propriétaire rend **5 rouges, TOUS sur des témoins de SOURCE** — **chaque** témoin de comportement reste vert, parce qu'une règle réécrite dit exactement la même chose à l'exécution. 👉 ***Une dérive de conception peut être invisible à l'exécution*** : un banc qui ne regarde que des comportements laisserait revenir la duplication sans un seul rouge. *C'est exactement ce qu'un témoin de source achète, et c'est mesuré.*
+
+**⭐ SONDE : OUVERTE AVANT LE BEFORE, ET ELLE OBSERVAIT DÉJÀ — vérifié, pas supposé.** `3_via_quickAddFood` et `3_via_rejouerRepas` conduisent les **deux vraies portes** et lisent `q`/`u` sur la **ligne enregistrée**, que `_provFood` écrit par `Object.assign`. **6 issues distinctes sur 6 cas** : elle discrimine, ce n'est pas un reliquat. **Aucune clé ajoutée** — pour la première fois de la série, la sonde n'avait pas besoin d'être étendue.
+
+**⭐ CRITÈRE BINAIRE ATTEINT** : instantané **identique octet pour octet** avant/après — **sha256 `57b13433fbaa1c60`**, le même qu'en ft-v1201, diff vide.
+
+**⭐ LE TÉMOIN DE PÉRIMÈTRE DE 3-i SE DÉPLACE POUR LA 4ᵉ FOIS, ET IL TOMBE À ZÉRO** : **5 écritures** (3-i) → **3 + 2 appelants** (3-ii) → **1 seule** (3-iii) → **AUCUNE**, avec **5 occurrences** de `_qGrammes` (1 déclaration + 4 appels). ⛔ **Il ne se supprime pas maintenant qu'il vaut 0** : *à 0 il devient le gardien du RETOUR de la duplication* — et c'est précisément ce qu'aucun parcours ne peut voir.
+
+**⭐ ET LES 3 TÉMOINS FRÈRES ONT ÉTÉ DÉPLACÉS ENSEMBLE CETTE FOIS** (CCXCIII · CCXCVI · CCXCVII), au lieu d'être découverts rouges par la passe comme la veille. **R8 appliquée d'avance, après l'avoir payée une fois.**
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change : la dernière copie d'une règle rejoint son propriétaire (**R19/R25**).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **2 sous-étapes restantes** — `3-v` (la reprise des portions à l'écran), puis `1b-v` (l'hydratation des écrans, qui en dépend) · ⛔ ni le **hub** ni la **douane** · ⛔ `S.savedFoods`, l'écart **48,3 / 48**, l'historique, les migrations et les harmonisations produit restent ouverts · ⛔ **aucun défaut réel découvert cette fois** — rien à écrire au journal de test · ⛔ les commentaires périmés « 13 portes » d'`app.js` (3 endroits, corrigés dans la doc en ft-v1200) attendent toujours : les toucher ici élargirait le diff d'une sous-étape dont le rollback doit rester d'un commit. ⚠️ **Michel doit vérifier sur Safari/iPhone.**
+
+📄 **PDF POUR GPT** : `docs/SOUS-ETAPE-3IV.pdf` (4 p., 14ᵉ de la série), généré par `tools/gen_1202_pdf.py` — **17 gardes** qui recomptent chaque chiffre depuis le code servi et **refusent de produire** si un fait tombe ; **13 mutations éprouvées sur un arbre COPIÉ** (§60 par construction), toutes refusent, contrôle sain vert avant ET après. ⭐ **Et un garde a trouvé une vraie erreur à moi, dans la doc de ce chantier** : mon édition de `docs/SOUS-ETAPES-1B-3.md` avait **dupliqué le titre `### 3-v`** — le compteur annonçait *« 11 sous-étapes, 3 restantes »* au lieu de 10 / 2. *Un outil qui recompte au lieu de recopier attrape les fautes de son propre auteur.* ⚠️ **Et mon pied de page disait « quatorze gardes » pour 17** — le piège du socle recopié, mesuré avant publication cette fois.
+
+✅ **DÉPLOIEMENT VÉRIFIÉ VERT** (R18) : **run #1121**, l'étape « Déployer sur GitHub Pages » **`success` à 10:27:01 UTC** sur `9b020d14`. ⛔ Ni backend ni worker attendus (`Code.js`/`worker.js` non touchés). ⭐ *Lu sur les JOBS, pas sur le statut du run* — la leçon de ft-v1196. ⚠️ **Limite dite** : le proxy de ce conteneur refuse `github.io` (403), donc je ne peux pas lire le `sw.js` réellement servi — *l'étape est verte, l'app affichant ft-v1202 reste à confirmer par Michel.*
+
+Tests : **parcours 3680/3680 sur l'arbre FINAL** (+13, bloc **CCXCIX**) — **total prédit = total obtenu** (3667 + 13, §61). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après** — ① le propriétaire n'est jamais consulté → **6** · ② ⭐⭐ **la règle réécrite sur place** → **5, TOUS de source, zéro comportement** · ③ ⛔ débordement : le garde `_afSrc` absorbé dans le propriétaire → **5** · ④ ⛔ débordement : `_qGrammes` accepte les portions → **8** · ⑤ ⛔ débordement inverse : la branche portions supprimée → **4** · ⑥ l'unité écrite est fausse → **2** · ⑦ une des 3 écritures « état de l'écran » disparaît (contrôle du témoin des 5) → **1, exactement lui** · ⑧ l'étiquette de portion cesse de traverser (régression ft-v1183) → **1, exactement lui**.
+
+Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/SOUS-ETAPES-1B-3.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1202. |
