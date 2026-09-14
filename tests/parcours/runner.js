@@ -28245,11 +28245,19 @@ console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1154) --');
        témoins suivants seraient verts sur une chaîne vide. */
     t('CCL ⛔⛔ CONTRÔLE — la ligne « RIR — LE COMPTE EXACT » atteint vraiment le contexte',
       !!R.ligne, JSON.stringify(R.ligne).slice(0,140));
-    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 5 séances affichées × (2 N validées + 1 X) = 15 séries
-       de travail, dont 10 notées (le RIR2 + l'échec de chaque séance). L'échauffement, la 6ᵉ
-       séance et la série non validée sont dehors. */
-    t('CCL ⭐⭐ le compte est EXACT sur la fenêtre affichée : 10 notées sur 15 séries de travail',
-      R.annonce==='10' && R.denom==='15', 'annoncé '+R.annonce+' / '+R.denom+' — '+R.ligne);
+    /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION : 5 séances affichées × (2 N validées + 1 X).
+       L'échauffement, la 6ᵉ séance et la série non validée sont dehors.
+       ⚠️⚠️ CE TÉMOIN A ROUGI EN ft-v1213, ET IL AVAIT RAISON DE ROUGIR — il portait le contrat de
+       ft-v1154, qui comptait **délibérément** les `X` dans le numérateur ET le dénominateur, avec
+       cette raison écrite : *« compter les RIRn écrits sous-compterait exactement les séries les
+       plus dures »*. La raison était juste ; le LIBELLÉ, lui, disait « portent un RIR » — donc un
+       `X` sans RIR était annoncé comme en portant un.
+       ⭐ Michel tranche le 14/09 : *« ne fusionne pas deux concepts différents sous un même
+       libellé »*. Le compte devient donc un vrai compteur de RIR (5 sur 10), **et la préoccupation
+       de ft-v1154 est CONSERVÉE** : les 5 échecs sont nommés à part, avec « l'effort y est connu ».
+       👉 *On ne perd pas l'information, on cesse de la confondre avec une autre.* */
+    t('CCL ⭐⭐ le compte est EXACT sur la fenêtre affichée : 5 RIR notés sur 10 séries N',
+      R.annonce==='5' && R.denom==='10', 'annoncé '+R.annonce+' / '+R.denom+' — '+R.ligne);
     /* ⛔ L'ÉCHEC COMPTE COMME NOTÉ — le piège le plus facile de la version : `_rirDeSet` rend 0
        pour un `X`, mais la LIGNE n'écrit pas « RIR0 » (R2, le tag le dit déjà). Compter les
        « RIRn » écrits sous-compterait donc exactement les séries les plus dures. */
@@ -28261,12 +28269,23 @@ console.log('\n-- CCL. Le compte exact des RIR notés (ft-v1154) --');
        version : la ligne n'écrit pas « RIR0 » sur un `X` (le tag le dit déjà, R2), et depuis
        ft-v1154 `_rirDeSet` rend même `null` dessus. Compter les « RIRn » ÉCRITS sous-compterait
        donc exactement les séries les plus dures, celles dont l'effort est le mieux connu. */
-    t('CCL ⛔ un « (X) » compte comme effort CONNU (sans être un RIR de 0)',
-      (+R.annonce) === R.rirEcrits + R.echecs && R.echecs>0,
+    /* ⛔⛔ L'INTENTION DE ft-v1154 SURVIT, SOUS UNE AUTRE FORME — et c'est elle qu'on protège :
+       l'effort des séries les plus dures ne doit PAS disparaître du compte rendu. Il n'est plus
+       fondu dans le chiffre du RIR, il est **nommé à part**. Le témoin vérifie donc les deux :
+       le compte du RIR vaut exactement les « RIRn » réellement écrits, ET les échecs sont
+       annoncés séparément avec leur nombre exact. *Séparer n'est pas perdre.* */
+    t('CCL ⛔ le compte du RIR vaut exactement les « RIRn » ÉCRITS (les X n\'y sont plus fondus)',
+      (+R.annonce) === R.rirEcrits && R.echecs>0,
       'annoncé '+R.annonce+' · RIRn écrits '+R.rirEcrits+' · (X) '+R.echecs);
-    /* ⛔ L'échauffement n'est pas de l'effort à déclarer : 15 et non 20. */
-    t('CCL ⛔ les séries d\'échauffement ne sont PAS dans le dénominateur',
-      R.denom==='15', 'dénominateur annoncé : '+R.denom);
+    t('CCL ⛔⛔ ... et l\'effort des « (X) » n\'est PAS PERDU : il est nommé à part, avec son nombre',
+      new RegExp(R.echecs+' séries? (?:sont allées|est allée) à l\'ÉCHEC').test(R.ligne)
+      && /l'effort y est connu/.test(R.ligne) && /ce n'est PAS un RIR/.test(R.ligne),
+      'échecs='+R.echecs+' — '+R.ligne);
+    /* ⛔ L'échauffement n'est pas de l'effort à déclarer : 10, et non 15 (les X) ni 20 (+ les
+       échauffements). *Le dénominateur répond à « sur combien de séries POUVAIS-je avoir un
+       RIR ? » — une série allée à l'échec n'en a pas par définition, et un échauffement non plus.* */
+    t('CCL ⛔ ni les échauffements ni les X ne sont dans le dénominateur',
+      R.denom==='10', 'dénominateur annoncé : '+R.denom);
     /* ⛔⛔ Le cas de Michel, et c'est celui qui compte : ZÉRO noté. Le vide doit être DIT et
        interdit d'interprétation — sinon on retombe sur « ne conclus rien » que personne
        n'applique faute de savoir combien il en manque. */
