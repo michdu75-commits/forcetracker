@@ -6,24 +6,25 @@
 
 ---
 
-- 📷 **CHANTIER OUVERT — LE SCANNER CAMÉRA LOCAL, AUDITÉ MAIS PAS RÉACTIVÉ (14/09/2026).**
-  Michel : *« lire un code-barres sans appel IA, puis utiliser exactement le même lookup Open Food
-  Facts que le code tapé »* · ⛔ *« ne remets PAS immédiatement le bouton en production »*.
-  ⭐⭐ **La cause du retrait est mesurée dans git** : le scanner live a vécu **2 h 37** le 11/07, et
-  pendant **~1 h** de ces 2 h 37 la recherche produit **rejetait TOUS les produits** (ft-v377) —
-  *un code parfaitement décodé affichait « produit introuvable »*. Le retrait n'a tenté **aucune**
-  correction (6 lignes d'`index.html`). ⛔ **Mais ça ne le blanchit pas** : un vrai symptôme iPhone
-  persistait après le correctif ft-v378.
-  ⭐ **Décodeur mesuré : 17 cas sur 20 à 3/3.** Seul vrai ennemi : le **flou dès 2 px** —
-  *sur un téléphone, « flou » s'appelle « mise au point »*.
-  ⭐ **Réseau prouvé** : scanner → **0 appel IA**, quota inchangé, **même `_lookupBarcode`**,
-  même objet produit que le code tapé. Le banc conduit désormais une **vraie caméra** (bloc CCCVIII).
-  ⛔⛔ **4 défauts mesurés et NON corrigés** (feu vert séparé) : la **course** à deux lookups · le
-  bouton de repli **mort** · le décodage **local** d'une photo orphelin · la provenance implicite.
-  ⭐⭐ **VERDICT : RÉACTIVER AVEC FALLBACK IA** — après ces 4 correctifs **et** la validation iPhone.
-  ⚠️ **La fiabilité mobile n'est PAS mesurée d'ici** (ni caméra ni Safari dans ce conteneur) : un
-  **protocole iPhone** (5 produits, 5 gestes) attend Michel.
-  👉 Dossier : **`docs/SCANNER-CAMERA-LOCAL.md`** · PDF : `docs/SCANNER-CAMERA-LOCAL.pdf`.
+- 📷 **ft-v1209 — LE SCANNER CAMÉRA LOCAL EST REVENU, EN RÉACTIVATION CONTRÔLÉE (14/09/2026).**
+  ⛔⛔ **VERDICT : `PRÊT POUR TEST IPHONE`, et rien de plus fort** — *« ne déclare pas le scanner
+  définitivement réactivé avant mon retour iPhone »* (un garde du PDF refuse de produire si le
+  document monte d'un cran).
+  ⭐⭐ **LA CONTRE-ENQUÊTE A CORRIGÉ MA CONCLUSION DE LA VEILLE** : Open Food Facts était là depuis
+  le **08/07**, et le correctif du lookup (ft-v377) est un **ANCÊTRE** du retrait — le clone testé
+  sur iPhone le contenait. ⛔ **Le bug de lookup n'explique donc PAS le retrait du scanner live.**
+  ⭐ Il explique l'AUTRE jugement : *« photo unique trop fragile »*, écrit pendant les **2 j 19 h**
+  où le lookup rejetait tous les produits — et c'est lui qui a motivé la construction du scanner.
+  ⭐⭐ **La course est née du correctif censé sauver le scanner** (ft-v378, 15:40 ; retrait à 17:10).
+  ⭐ **Corrigé** : machine à états `IDLE→SCANNING→CODE_TROUVE→LOOKUP→TERMINE` avec **un seul
+  verrou** (1 lookup mesuré **sous course provoquée**) · provenance **`camera-code-local`**
+  explicite · **aucun bouton mort** (3 orphelines supprimées) · **le numéro lu est montré AVANT la
+  recherche** (§16) · repli IA **volontaire**, jamais automatique.
+  ⛔ **Mesuré et tranché** : aucun traitement d'image n'aide ZXing (**3/18 partout**) · la liste de
+  4 formats **divise par 3** le coût d'un échec de TRY_HARDER.
+  ⚠️ **La fiabilité iPhone n'est PAS mesurée d'ici** (ni caméra ni Safari) : **protocole en 6
+  produits et 5 gestes** dans `docs/SCANNER-CAMERA-LOCAL.md`. Décision finale après son retour :
+  **A** réactiver · **B** avec fallback IA · **C** améliorer encore l'UX/autofocus · **D** ne pas.
 
 - ⏳ **EN ATTENTE DE MICHEL — la passe de vérification du prochain import, vers le 06/10/2026.**
   Sa décision du 08/09 : *« je verrais ça dans 4 semaines quand je vais remettre un programme,
@@ -120,7 +121,13 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
+- **Version en ligne (live) :** `ft-v1209` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
+  CONTRÔLÉE.** Le bouton « Scanner le code-barres avec la caméra » revient **en premier** dans
+  l'écran d'ajout (gratuit et sans IA) ; la photo lue par l'IA reste en **secours volontaire**.
+  ⛔ **Verdict : `PRÊT POUR TEST IPHONE`** — la fiabilité mobile n'est pas mesurable d'ici.
+  👉 `docs/SCANNER-CAMERA-LOCAL.md`.
+
+- **Version précédente :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
   Michel a envoyé une capture montrant encore l'ancien comportement (198 kcal) **1 h 30 après** le
   déploiement de ft-v1207. ⭐⭐ **Verdict : B — la version servie était périmée, le code était
   juste.** Le résolveur s'applique bien au chemin code-barres (trace runtime : 410 g → **382 kcal**).

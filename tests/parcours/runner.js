@@ -37010,10 +37010,28 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
       navigator.mediaDevices.getUserMedia=function(c){ o.contraintes=JSON.stringify(c);
         return gum(c).then(s=>{flux=s;return s;}); };
 
+      const tDeb=performance.now();
       openAddFood(); await new Promise(r=>setTimeout(r,150));
       openBarcodeScanner();                                  // ⚠️ la VRAIE porte, pas le décodeur
+      /* ⭐⭐ ON PROVOQUE LA COURSE AU LIEU DE L'ATTENDRE : on martèle « Capturer » pendant toute
+         la lecture continue. Avant ft-v1209 cela produisait DEUX lookups ; le verrou doit
+         maintenant n'en laisser passer qu'un. *Une course qu'on n'a pas provoquée n'est pas
+         mesurée, elle est espérée.* */
+      o.marteau=true;
+      (async()=>{ for(let i=0;i<45 && o.marteau;i++){ await new Promise(r=>setTimeout(r,110));
+        try{ if(typeof _bcCaptureFrame==='function') _bcCaptureFrame(); }catch(e){} } })();
       for(let i=0;i<40;i++){ await new Promise(r=>setTimeout(r,100));
         const ov=document.getElementById('ov-bc-scan'); if(ov&&!ov.classList.contains('open')){o.luToutSeul=true;break;} }
+      /* ⏱️ §11 DE MICHEL : ouverture de l'écran → code lu, mesuré en conduisant les vraies portes.
+         ⚠️ Ce banc rend la vidéo en LOGICIEL et martèle « Capturer » : le chiffre est un PLAFOND
+         large, pas une prédiction de téléphone. *Le dire vaut mieux que de le publier comme une
+         performance.* */
+      o.msJusquALecture=Math.round(performance.now()-tDeb);
+      /* ⚠️ ON ARRÊTE LE MARTEAU AVANT DE LIRE LE STATUT : sinon la dernière capture en cours
+         laisse « Lecture… » à l'écran et on mesurerait MON marteau, pas ce que la personne voit
+         quand elle arrête d'appuyer. */
+      o.marteau=false;
+      await new Promise(r=>setTimeout(r,900));
       const v=document.getElementById('bc-video');
       o.video={w:v&&v.videoWidth,h:v&&v.videoHeight};
       if(!o.luToutSeul){ await _bcCaptureFrame(); await new Promise(r=>setTimeout(r,600)); }
@@ -37025,7 +37043,21 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
       o.off=o.reseau.filter(d=>/openfoodfacts/.test(d)).length;
       o.ia =o.reseau.filter(d=>/workers\.dev|script\.google\.com/.test(d)).length;
       o.quotaIA=(S.foodAiUses||0);
+      /* ⭐ LE VERROU, ÉPROUVÉ À LA MAIN APRÈS LE SCAN : on repose l'état et on vérifie que
+         `_bcPrendreLaMain` refuse hors SCANNING et refuse un second passage. *Le comportement
+         sous course dit QUE ça marche ; ceci dit POURQUOI.* */
+      try{
+        _bcSetEtat('IDLE');
+        const a=_bcPrendreLaMain('3083681011791');
+        _bcSetEtat('SCANNING');
+        const b2=_bcPrendreLaMain('3083681011791');
+        const et=_bcEtat;
+        const c2=_bcPrendreLaMain('3083681011791');
+        o.verrou={depuisIDLE:a, depuisSCANNING:b2, etatApres:et, deuxiemeFois:c2};
+      }catch(e){ o.verrou={ERR:String(e&&e.message||e)}; }
       o.src=(typeof _afSrc==='object'&&_afSrc)?{saisie:_afSrc.saisie,origine:_afSrc.origine,sourceId:_afSrc.sourceId}:null;
+      o.champCode=(document.getElementById('af-bc-manual')||{}).value||'';
+      o.msLecture=o.msJusquALecture||0;
       o.kcal=(document.getElementById('af-kcal')||{}).value||'';
       o.ligne=((document.getElementById('af-bc-row')||{}).style||{}).display||'';
       return o;
@@ -37045,6 +37077,14 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
   const srcScr=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
   const corpsA=(n)=>{const m=srcApp.match(new RegExp('(?:async )?function '+n+'\\([\\s\\S]*?\\n\\}'));
     if(!m) throw new Error('corps introuvable : '+n); return m[0];};
+  /* ⚠️⚠️ LE CORPS SANS SES COMMENTAIRES — et ce n'est pas du confort.
+     Mesuré le 14/09 par le contrôle négatif : le témoin qui exigeait `stopStreams` dans
+     `closeBarcodeScanner` restait VERT quand on retirait l'appel, parce que le mot vit aussi dans
+     le commentaire qui l'explique. 👉 *Un garde qui ne distingue pas le CODE de ce qui en PARLE
+     mesure la documentation* — c'est la famille de ft-v1193/1203, reposée ici par moi. */
+  const sansComA=(t)=>t.replace(/\/\*[\s\S]*?\*\//g,' ')
+    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corpsAnu=(n)=>sansComA(corpsA(n));
 
   console.log('\n═══ CCCVIII. LE SCANNER CAMÉRA LOCAL — conduit devant une caméra ═══');
   t('CCCVIII ⓪ la sonde caméra a tourné (pas de FATAL, pas d\'erreur JS)',
@@ -37065,40 +37105,31 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
   t('CCCVIII ④ ⭐ … et la provenance enregistrée le distingue du code tapé ET de la lecture IA',
     CAM.src && CAM.src.saisie!=='code-tape' && CAM.src.saisie!=='photo-code-ia' && CAM.src.sourceId===EAN_NET,
     JSON.stringify(CAM.src));
-  /* ⛔⛔ UNE COURSE MESURÉE, ET C'EST UN TÉMOIN DE SOURCE QUI LA FIGE — PAS UN COMPORTEMENT.
-     Mesuré le 14/09 devant la caméra factice : le callback CONTINU de ZXing et le bouton
-     « Capturer » peuvent lire le même code à 28 ms d'intervalle et tirer CHACUN son
-     `_lookupBarcode` → deux requêtes Open Food Facts pour un seul scan.
-     ⚠️⚠️ MAIS ELLE EST INTERMITTENTE : selon qui gagne, on observe 1 ou 2 lookups — la première
-     version de ce témoin comptait « exactement 2 » et rougissait au hasard.
-     👉 *Un témoin qui dépend du vainqueur d'une course ne mesure pas la course, il mesure la
-     charge de la machine.* La course, elle, est STRUCTURELLE et se lit dans la source :
-     `_bcCaptureFrame` ne pose `_bcScanning=false` qu'APRÈS son `await` de décodage (~500 ms),
-     pendant lesquelles le décodage continu reste armé.
-     ⛔ NON CORRIGÉ : défaut trouvé pendant un audit — la règle du projet (depuis ft-v1200) dit
-     de le mesurer, l'écrire, et attendre un feu vert séparé. Ce témoin tombera le jour de la
-     correction, et c'est voulu : il force à repasser ici au lieu de corriger en silence. */
-  /* ⚠️⚠️ MA PREMIÈRE VERSION DE CE TÉMOIN ÉTAIT AVEUGLE, et le contrôle négatif l'a dit :
-     elle cherchait « un `_bcScanning=false` APRÈS l'await ». Or il en existe un de toute façon
-     (celui du succès) — donc AJOUTER le désarmement avant l'await, c'est-à-dire CORRIGER la
-     course, laissait le témoin parfaitement vert. 👉 *Un motif qui cherche une présence ne peut
-     pas mesurer un ORDRE.* Il mesure désormais ce qui compte vraiment : qu'AUCUN désarmement
-     n'existe AVANT l'await. */
-  t('CCCVIII ⑤ ⛔⛔ DÉFAUT CONNU ET NON CORRIGÉ — LA COURSE EST DANS LA SOURCE : `_bcCaptureFrame` '+
-    'ne désarme le décodage continu qu\'APRÈS son await, donc les deux peuvent tirer chacun son '+
-    'lookup. *Intermittent à l\'exécution, déterministe dans le code.*',
-    (()=>{ const c=corpsA('_bcCaptureFrame');
-      const i=c.indexOf('await reader.decodeFromImageUrl');
-      return i>0 && !/_bcScanning\s*=\s*false/.test(c.slice(0,i))
-             && /_bcScanning\s*=\s*false/.test(c.slice(i)); })(),
-    'la course a changé de forme (corrigée ?) — remesurer et mettre à jour docs/SCANNER-CAMERA-LOCAL.md');
-  t('CCCVIII ⑤bis ⛔ … et les DEUX lecteurs appellent bien le même lookup commun, chacun de son '+
-    'côté : c\'est ce qui rend la course possible',
-    (corpsA('openBarcodeScanner').match(/_lookupBarcode\(/g)||[]).length===1
-    && (corpsA('_bcCaptureFrame').match(/_lookupBarcode\(/g)||[]).length===1, '');
-  t('CCCVIII ⑤ter ⭐ … et un scan réussi ne tire JAMAIS plus de deux lookups : la course en ajoute '+
-    'au plus un, elle ne boucle pas', CAM.lookups.length>=1 && CAM.lookups.length<=2 && CAM.off<=2,
+  /* ⭐⭐ LA COURSE EST FERMÉE EN ft-v1209 — et ces témoins figent la garantie, pas le défaut.
+     AVANT : le callback CONTINU de ZXing et le bouton « Capturer » pouvaient lire le même code à
+     28 ms d'intervalle et tirer CHACUN son `_lookupBarcode` (mesuré le 14/09).
+     ⚠️ La course était INTERMITTENTE — selon qui gagnait, 1 ou 2 lookups. Un témoin qui comptait
+     « exactement 2 » rougissait au hasard : *il ne mesurait pas la course, il mesurait la charge
+     de la machine.* On mesure donc les DEUX faces : le verrou dans la source, et le comportement
+     sous course PROVOQUÉE (la sonde martèle « Capturer » pendant tout le scan). */
+  t('CCCVIII ⑤ ⭐⭐ UN CODE ACCEPTÉ = AU PLUS UN TRAITEMENT PRODUIT, même en martelant « Capturer » '+
+    'pendant toute la lecture continue. *C\'est la propriété que Michel a demandée, et elle est '+
+    'mesurée sous course provoquée, pas supposée.*',
+    CAM.lookups.length===1 && CAM.off===1,
     JSON.stringify({lookups:CAM.lookups.length,off:CAM.off}));
+  t('CCCVIII ⑤bis ⭐⭐ … et le verrou est UN SEUL PROPRIÉTAIRE dans la source : les deux lecteurs '+
+    'passent par `_bcTraiterCode`, et AUCUN n\'appelle `_lookupBarcode` en direct. *Un booléen posé '+
+    'à deux endroits n\'est pas un verrou, c\'est une intention.*',
+    (corpsAnu('openBarcodeScanner').match(/_lookupBarcode\(/g)||[]).length===0
+    && (corpsAnu('_bcCaptureFrame').match(/_lookupBarcode\(/g)||[]).length===0
+    && /_bcTraiterCode\(/.test(corpsAnu('openBarcodeScanner'))
+    && /_bcTraiterCode\(/.test(corpsAnu('_bcCaptureFrame'))
+    && (srcApp.match(/_lookupBarcode\(code\s*,\s*'camera-code-local'\)/g)||[]).length===1, '');
+  t('CCCVIII ⑤ter ⛔ … et le verrou REFUSE un second passage : hors de l\'état SCANNING, '+
+    '`_bcPrendreLaMain` rend faux et rien ne part',
+    CAM.verrou && CAM.verrou.depuisIDLE===false && CAM.verrou.depuisSCANNING===true
+    && CAM.verrou.deuxiemeFois===false && CAM.verrou.etatApres==='CODE_TROUVE',
+    JSON.stringify(CAM.verrou));
   t('CCCVIII ⑥ ⭐⭐ LA CAMÉRA EST COUPÉE APRÈS SUCCÈS : toutes les pistes vidéo sont `ended`. '+
     '*Une fuite qui ne se voit que sur le téléphone de quelqu\'un* (ft-v1091)',
     CAM.fluxCoupe===true, JSON.stringify(CAM.fluxCoupe));
@@ -37113,29 +37144,103 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'résolution (sans ça : « caméra ouverte mais ne lit pas », le défaut de ft-v378)',
     /environment/.test(CAM.contraintes||'') && /1920/.test(CAM.contraintes||''),
     CAM.contraintes||'');
-  t('CCCVIII ⑩ ⛔⛔ LA PORTE RESTE FERMÉE : aucun bouton d\'`index.html` n\'appelle le scanner. '+
-    'C\'est la décision de ft-v388, pas un oubli — elle ne se renverse pas sans Michel (R30)',
-    !/scanBarcode\s*\(\s*\)/.test(srcIdx) && !/openBarcodeScanner/.test(srcIdx),
-    'le scanner a retrouvé une porte : c\'est une décision produit, relire ft-v388 et ft-v871');
-  t('CCCVIII ⑪ ⚠️ … et son bouton de repli photo est MORT : `scanBarcodePhoto` cherche '+
-    '`af-bc-input`, retiré avec ft-v388. Mesuré, écrit, NON réparé — invisible tant que la porte '+
-    'est murée, mais c\'est un bug le jour où on la rouvre',
-    /af-bc-input/.test(corpsA('scanBarcodePhoto')) && !/id="af-bc-input"/.test(srcIdx), '');
-  t('CCCVIII ⑫ ⚠️ … et le décodage LOCAL d\'une photo (`onBarcodeFile`, provenance `photo-code`) '+
-    'est orphelin lui aussi : il est le seul chemin photo SANS IA, et rien ne l\'appelle',
-    /'photo-code'/.test(corpsA('onBarcodeFile')) && (srcApp.match(/onBarcodeFile\(/g)||[]).length===1
-    && !/onBarcodeFile/.test(srcIdx), '');
+  t('CCCVIII ⑩ ⭐⭐ LA PORTE EST ROUVERTE (ft-v1209) — et le scanner est le PREMIER bouton, '+
+    'avant la saisie et avant l\'IA : *la porte d\'entrée par défaut ne doit jamais être celle qui '+
+    'coûte* (R24). Réactivation contrôlée demandée par Michel, pas un retour en arrière silencieux',
+    /onclick="scanBarcode\(\)"/.test(srcIdx)
+    && srcIdx.indexOf('scanBarcode()') < srcIdx.indexOf('scanBarcodeIA()'), '');
+  t('CCCVIII ⑪ ⛔⛔ AUCUN BOUTON MORT : les trois orphelines de ft-v388 sont SUPPRIMÉES '+
+    '(`scanBarcodePhoto`, `_bcPhotoFallback`, `onBarcodeFile`), et plus rien ne cherche '+
+    '`af-bc-input`. *Michel : « je ne veux aucun bouton mort ».*',
+    !/function scanBarcodePhoto/.test(srcApp) && !/function _bcPhotoFallback/.test(srcApp)
+    && !/function onBarcodeFile/.test(srcApp)
+    && !/getElementById\('af-bc-input'\)/.test(srcApp) && !/id="af-bc-input"/.test(srcIdx), '');
+  t('CCCVIII ⑫ ⭐ … et leur retrait est ÉCRIT avec sa raison, pas silencieux (R30) — sinon le '+
+    'suivant « répare » une décision',
+    /RETIRÉS EN ft-v1209/.test(srcApp) && /onBarcodeFile` RETIRÉE en ft-v1209/.test(srcApp)
+    && /'photo-code'/.test(srcApp), '');
   t('CCCVIII ⑬ ⛔ ZXing est chargé DEPUIS LE DÉPÔT, jamais d\'un CDN — un décodage « local » qui '+
     'télécharge sa bibliothèque ailleurs n\'est plus local',
-    /'\.\/lib\/zxing\.min\.js'/.test(corpsA('_loadZXing')) && !/https?:/.test(corpsA('_loadZXing')), '');
+    /'\.\/lib\/zxing\.min\.js'/.test(corpsAnu('_loadZXing')) && !/https?:/.test(corpsAnu('_loadZXing')), '');
   t('CCCVIII ⑭ ⭐ le décodeur est bridé aux 4 formats de produits (EAN-13/8, UPC-A/E) avec '+
     'TRY_HARDER — mesuré le 14/09 : sans ces réglages, un code vu en paysage n\'est plus lu du tout',
-    /TRY_HARDER/.test(corpsA('_bcHints')) && /EAN_13/.test(corpsA('_bcHints'))
-    && /UPC_A/.test(corpsA('_bcHints')), '');
+    /TRY_HARDER/.test(corpsAnu('_bcHints')) && /EAN_13/.test(corpsAnu('_bcHints'))
+    && /UPC_A/.test(corpsAnu('_bcHints')), '');
   t('CCCVIII ⑮ ⛔ l\'écran du scanner est déclaré dans la table de fermeture : glisser, Échap ou '+
     'le bouton retour coupent la caméra au lieu de la laisser tourner (ft-v1091/1092)',
     /'ov-bc-scan':'closeBarcodeScanner'/.test(srcScr)
     && /stopStreams/.test(corpsA('closeBarcodeScanner')), '');
+  /* == CCCIX - LES GARANTIES DE LA REACTIVATION CONTROLEE (ft-v1209) =====================
+     Michel, §12 : il veut que soient PROUVES le zero-IA du local, le lookup unique, la
+     provenance explicite, le repli IA volontaire, et — §16 — que « produit non trouve » ne
+     puisse plus se confondre avec « code non lu ». C'est l'erreur de juillet rendue
+     impossible a refaire. */
+  console.log('\n═══ CCCIX. LA RÉACTIVATION CONTRÔLÉE — ce qu\'elle garantit ═══');
+  t('CCCIX ① ⭐⭐ §16 — LE NUMÉRO LU EST ÉCRIT À L\'ÉCRAN AVANT LA RECHERCHE : même si la base ne '+
+    'connaît pas le produit, la personne VOIT que son code a été lu. *« Je n\'ai pas lu le code » '+
+    'et « j\'ai lu le code mais la base ne le connaît pas » ne se ressemblent plus.*',
+    CAM.champCode===EAN_NET, JSON.stringify(CAM.champCode));
+  t('CCCIX ①bis ⭐ … et c\'est écrit dans la SOURCE, dans le propriétaire du verrou : le champ de '+
+    'saisie est rempli AVANT l\'appel au lookup',
+    (()=>{ const c=corpsAnu('_bcTraiterCode');
+      const iC=c.indexOf('af-bc-manual'), iL=c.indexOf('_lookupBarcode(');
+      return iC>0 && iL>0 && iC<iL && /Code lu/.test(c); })(),
+    'le numéro lu n\'est plus montré avant la recherche — la confusion de juillet revient');
+  t('CCCIX ② ⭐⭐ LA PROVENANCE DU SCANNER EST EXPLICITE, jamais une valeur par défaut : '+
+    '`camera-code-local` est passée en dur à l\'appel, et elle est distincte des deux autres',
+    CAM.src && CAM.src.saisie==='camera-code-local'
+    && /_lookupBarcode\(code,\s*'camera-code-local'\)/.test(corpsAnu('_bcTraiterCode')),
+    JSON.stringify(CAM.src));
+  t('CCCIX ②bis ⭐ … et les trois provenances demandées par Michel coexistent sans ambiguïté',
+    /'camera-code-local'/.test(srcApp) && /'code-tape'/.test(srcApp) && /'photo-code-ia'/.test(srcApp)
+    && (srcApp.match(/_lookupBarcode\([^)]*'code-tape'/g)||[]).length===1
+    && (srcApp.match(/_lookupBarcode\([^)]*'photo-code-ia'/g)||[]).length===1, '');
+  /* ⛔⛔ LE TÉMOIN LE PLUS IMPORTANT DU BLOC : aucun appel IA sans geste.
+     Michel : « un appel payant doit nécessiter un geste utilisateur ». On vérifie donc qu'AUCUN
+     déclencheur automatique n'existe dans le scanner — ni minuteur, ni compteur d'échecs — et
+     que le seul chemin vers l'IA part d'un onclick. */
+  t('CCCIX ③ ⛔⛔ AUCUN APPEL IA AUTOMATIQUE : le scanner ne contient ni minuteur ni compteur '+
+    'd\'échecs qui appellerait l\'IA, et le SEUL chemin vers elle part d\'un bouton',
+    !/setTimeout[\s\S]{0,80}(scanBarcodeIA|_aiUrl|_bcReplIA)/.test(corpsAnu('openBarcodeScanner'))
+    && !/setTimeout[\s\S]{0,80}(scanBarcodeIA|_aiUrl|_bcReplIA)/.test(corpsAnu('_bcCaptureFrame'))
+    && !/scanBarcodeIA|_aiUrl/.test(corpsAnu('_bcTraiterCode'))
+    && /onclick="_bcReplIA\(\)"/.test(corpsAnu('openBarcodeScanner'))
+    && /scanBarcodeIA\(\)/.test(corpsAnu('_bcReplIA')), '');
+  t('CCCIX ③bis ⛔ … et sur un code ILLISIBLE, rien ne part tout seul : 0 lookup, 0 appel IA, le '+
+    'quota intact, et l\'écran propose l\'IA sans la déclencher',
+    FLOU.ia===0 && FLOU.quotaIA===0 && FLOU.lookups.length===0
+    && /_bcReplIA/.test(corpsAnu('openBarcodeScanner')),
+    JSON.stringify({ia:FLOU.ia,quota:FLOU.quotaIA}));
+  t('CCCIX ④ ⭐ LE REPLI IA COUPE LA CAMÉRA AVANT de passer la main : on ne laisse pas un flux '+
+    'vidéo tourner derrière le sélecteur de photo',
+    (()=>{ const c=corpsAnu('_bcReplIA');
+      return c.indexOf('closeBarcodeScanner()')>=0
+        && c.indexOf('closeBarcodeScanner()')<c.indexOf('scanBarcodeIA'); })(), '');
+  t('CCCIX ⑤ ⛔ LA FERMETURE N\'ÉCRASE PAS UN TRAITEMENT EN COURS : `closeBarcodeScanner` ne remet '+
+    'l\'état à IDLE que s\'il valait encore SCANNING. *Sinon elle rouvrirait la porte au second '+
+    'lecteur — c\'est-à-dire la course qu\'on vient de fermer.*',
+    /_bcEtat==='SCANNING'\)\s*_bcSetEtat\('IDLE'\)/.test(corpsA('closeBarcodeScanner')), '');
+  t('CCCIX ⑥ ⭐ LA CAMÉRA EST COUPÉE PAR DEUX CHEMINS : le lecteur ZXing ET les pistes portées par '+
+    'la balise vidéo — si le lecteur a été remplacé, la vidéo tient encore le flux',
+    /stopStreams/.test(corpsAnu('closeBarcodeScanner'))
+    && /srcObject[\s\S]{0,160}getTracks\(\)[\s\S]{0,90}\.stop\(\)/.test(corpsAnu('closeBarcodeScanner')), '');
+  t('CCCIX ⑦ ⛔⛔ HORS PÉRIMÈTRE — LE SCANNER N\'A AUCUNE LOGIQUE NUTRITIONNELLE : il fournit un '+
+    'EAN et appelle le chemin existant. Ni macros, ni portions, ni quantités, ni journal',
+    (()=>{ const c=corpsAnu('_bcTraiterCode')+corpsAnu('_bcCaptureFrame')+corpsAnu('openBarcodeScanner');
+      return !/_ref100|_resoudreNutrition|_douaneLigne|S\.foodLog|savedFoods|_provFood|kcal100|_afPortion/.test(c); })(),
+    'le scanner s\'est mis à faire de la nutrition : il ne doit fournir qu\'un numéro');
+  /* ⛔ §13 DE MICHEL — « la photo IA ne décrémente plus son quota » doit faire rougir quelqu'un.
+     Le contrôle négatif l'a trouvé AVEUGLE dans ce bloc : la mutation ne touchait que CCCVII, qui
+     n'est pas dans le harnais du scanner. *Un témoin qui vit dans un autre bloc ne protège pas
+     celui-ci.* On épingle donc ici l'INCRÉMENT lui-même — lire le plafond ne le décompte pas. */
+  t('CCCIX ⑦bis ⛔ … et l\'unique appel IA du repli reste DÉCOMPTÉ du quota gratuit : la personne '+
+    'ne paie pas un essai sans le savoir',
+    /S\.foodAiUses\s*=\s*\(\s*S\.foodAiUses\s*\|\|\s*0\s*\)\s*\+\s*1/.test(corpsAnu('onBarcodePhotoIA'))
+    && /FOOD_AI_FREE_LIMIT/.test(corpsAnu('onBarcodePhotoIA')), '');
+  t('CCCIX ⑧ ⭐ PERFORMANCE MESURÉE : la caméra est prête et le code est lu en un temps borné '+
+    '(le banc est plus lent qu\'un téléphone, donc c\'est un PLAFOND, pas une prédiction)',
+    typeof CAM.msLecture==='number' && CAM.msLecture>0 && CAM.msLecture<40000,
+    JSON.stringify({ms:CAM.msLecture}));
 }
 
 await b.close(); srv.close();
