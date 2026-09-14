@@ -19,7 +19,8 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const http=require('http'), fs=require('fs'), path=require('path');
 const ROOT=path.resolve(__dirname,'../..');
 const M={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json',
-         '.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2'};
+         '.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2',
+         '.wasm':'application/wasm'};
 const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);if(p==='/')p='/index.html';
   const f=path.join(ROOT,p);
   if(!f.startsWith(ROOT)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){r.writeHead(404);return r.end('404');}
@@ -38868,6 +38869,192 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     !/onclick="scanBarcode\(\)"/.test(srcIdx2)
     && /function scanBarcode\b/.test(srcApp2) && /function openBarcodeScanner\b/.test(srcApp2), '');
   await pgX.close();
+}
+
+/* ══ BLOC CCCXI — LE BANC IPHONE : UN MOTEUR INTERCHANGEABLE, PAS UN SECOND CHEMIN ══
+   Michel, 14/09/2026 : éprouver sur un vrai iPhone l'architecture que le banc synthétique a
+   désignée (zxing-wasm principal, Quagga2 CADRÉ en repli sur capture fixe), ⛔ **sans rouvrir
+   le bouton scanner pour les utilisateurs**.
+
+   ⭐⭐ CE QUE CES TÉMOINS PROTÈGENT EST UNE FRONTIÈRE, PAS UN COMPORTEMENT. Le risque de ce
+   chantier n'est pas qu'il marche mal : c'est qu'il devienne un SECOND CHEMIN qui contourne la
+   fusion, ou qu'un repli moteur silencieux fasse croire qu'on teste WebAssembly alors que
+   ZXing-js tourne. Aucun parcours utilisateur ne peut voir ça.
+
+   ⚠️ ET LA LEÇON DE ft-v1212 EST APPLIQUÉE ICI D'AVANCE : on épingle la RÈGLE et le
+   PROPRIÉTAIRE, jamais le littéral d'un appel. Deux témoins ont rougi hier pour avoir figé
+   `_lookupBarcode(code, …)` alors que le code était devenu `f.code` — meilleur. */
+{
+  const srcA=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const srcI=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  const srcW=fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
+  /* le corps SANS ses commentaires — sinon on mesure la documentation (famille ft-v1193/1210) */
+  const nu=(x)=>x.replace(/\/\*[\s\S]*?\*\//g,' ')
+    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  const corpsN=(n)=>{ const m=srcA.match(new RegExp('(?:async )?function '+n+'\\s*\\('));
+    if(!m) return ''; let i=srcA.indexOf('{',m.index+m[0].length-1),p=0,j=i;
+    while(j<srcA.length){ if(srcA[j]==='{')p++; else if(srcA[j]==='}'){p--; if(!p) return nu(srcA.slice(i,j+1));} j++; }
+    return nu(srcA.slice(i)); };
+  const AN=nu(srcA), IN=srcI.replace(/<!--[\s\S]*?-->/g,' ');
+
+  t('CCCXI ① ⛔⛔ LE BOUTON UTILISATEUR RESTE ABSENT — la garantie n°1 de Michel : « je ne veux '+
+    'toujours PAS réactiver le bouton scanner pour les utilisateurs ». Le témoin rougit dans les '+
+    'DEUX sens : si un bouton revient, ET si le moteur disparaît',
+    !/onclick="scanBarcode\(\)"/.test(IN)
+    && !/onclick="openBarcodeScanner\(/.test(IN)
+    && /function scanBarcode\b/.test(srcA) && /function openBarcodeScanner\b/.test(srcA), '');
+
+  t('CCCXI ② ⭐⭐ LA SEULE PORTE DU BANC EST L\'ADMIN, et elle est GARDÉE DANS LA FONCTION — un '+
+    'bouton qui appelle `ouvrirBancScanner` ne suffit pas : c\'est elle qui refuse. *Une porte '+
+    'gardée par son bouton n\'est pas gardée* (R13 : le mécanisme existait déjà)',
+    /_isAdminUnlocked\(\)/.test(corpsN('ouvrirBancScanner'))
+    && (IN.match(/onclick="ouvrirBancScanner\(/g)||[]).length===3, '');
+
+  t('CCCXI ③ ⛔⛔ AUCUN REPLI MOTEUR SILENCIEUX : le chargeur RAPPORTE le moteur réellement '+
+    'actif et la CAUSE du repli, et l\'écran affiche les deux. *Croire qu\'on teste WASM alors '+
+    'que ZXing-js tourne est pire que ne pas tester du tout* (Michel, §21)',
+    /_bcMoteurActif\s*=\s*actif/.test(corpsN('_bcChargerMoteur'))
+    && /cause/.test(corpsN('_bcChargerMoteur'))
+    && /Moteur demandé/.test(AN) && /Moteur réellement actif/.test(AN)
+    && /Cause du repli/.test(AN), '');
+
+  t('CCCXI ④ ⛔⛔ QUAGGA2 N\'EST JAMAIS EN MODE SCÈNE dans le chemin candidat : `locate:false` '+
+    'uniquement. Mesuré au banc, le mode scène rend des EAN-8 de clé VALIDE lus À L\'INTÉRIEUR '+
+    'd\'un EAN-13 (3083681011791 → 11151791) — *un code faux dont la clé est juste ne peut être '+
+    'attrapé par RIEN en aval*',
+    /locate:\s*false/.test(corpsN('_bcDecoderImage'))
+    && !/locate:\s*true/.test(AN), '');
+
+  t('CCCXI ⑤ ⭐⭐ LE BANC N\'EST PAS UN SECOND CHEMIN : le décodeur ne parle JAMAIS au lookup. '+
+    '`_bcDecoderImage` et `_bcChargerMoteur` ne connaissent ni `_lookupBarcode`, ni la fusion, '+
+    'ni la validation — ils rendent un candidat brut, un point c\'est tout',
+    !/_lookupBarcode/.test(corpsN('_bcDecoderImage'))
+    && !/_bcFusionnerCandidats/.test(corpsN('_bcDecoderImage'))
+    && !/_eanValide/.test(corpsN('_bcDecoderImage'))
+    && !/_lookupBarcode/.test(corpsN('_bcChargerMoteur')), '');
+
+  t('CCCXI ⑥ ⛔⛔ LE BANC NE TOUCHE PAS LA NUTRITION : ni journal, ni douane, ni résolveur, ni '+
+    'portions, ni persistance. « Scanner = code, Nutrition = produit » (Michel, §16)',
+    ['_ref100','foodLog','_douaneLigne','savedFoods','_afSetSrc','_offFetchProduct','persist(',
+     '_resoudreNutrition','_provFood'].every(m=>
+       !corpsN('_bcDecoderImage').includes(m) && !corpsN('_bcChargerMoteur').includes(m)
+       && !corpsN('ouvrirBancScanner').includes(m) && !corpsN('_bcRenduDiag').includes(m)
+       && !corpsN('_bcCapacitesCamera').includes(m)), '');
+
+  t('CCCXI ⑦ ⛔⛔ ZÉRO APPEL IA SUR LE CHEMIN LOCAL : aucune des fonctions du banc n\'appelle le '+
+    'proxy IA ni ne décompte le quota. Le repli IA reste un BOUTON, dans un autre chemin',
+    ['_bcDecoderImage','_bcChargerMoteur','ouvrirBancScanner','_bcCapacitesCamera','_bcRenduDiag']
+      .every(f=>!/(estimateFoodAI|scanBarcodeIA|foodAiUses|AI_PROXY|aiUrl|_aiUrl)/.test(corpsN(f))), '');
+
+  t('CCCXI ⑧ ⭐⭐ LES MOTEURS NE SONT PAS PRÉCHARGÉS — ils ne pèsent pas sur le démarrage. '+
+    '`sw.js` les tient HORS de sa liste d\'installation (le précédent CIQUAL, écrit trois lignes '+
+    'plus haut), et ils ne sont chargés que par `_bcChargerMoteur`',
+    !/'\.\/lib\/zxing_reader\.wasm'/.test(nu(srcW))
+    && !/'\.\/lib\/quagga\.min\.js'/.test(nu(srcW))
+    && !/'\.\/lib\/zxing-wasm\.js'/.test(nu(srcW))
+    && /lib\/zxing-wasm\.js/.test(corpsN('_bcChargerMoteur'))
+    && /lib\/quagga\.min\.js/.test(corpsN('_bcChargerMoteur'))
+    && !/<script[^>]+lib\/(zxing-wasm|quagga)/.test(IN), '');
+
+  t('CCCXI ⑨ ⛔ AUCUN PRÉTRAITEMENT REJETÉ PAR LE BANC N\'EST REVENU : ni recadrage central (il '+
+    'mange la zone de silence : −100 %), ni netteté (−12 et −26 pour les deux meilleurs), ni '+
+    'binarisation, ni agrandissement automatique. *Bonne image + bonne mise au point + bon moteur*',
+    /* ⚠️ MON PREMIER GARDE ÉTAIT AVEUGLE, et le contrôle négatif l'a dit : il cherchait un
+       `0.7` DANS le `drawImage`, or la mutation le posait sur la ligne d'avant
+       (`z.width=canvas.width*0.7`). 👉 *Un garde qui cherche la forme d'un prétraitement en
+       ratera toujours une.* L'invariant juste est plus simple ET plus fort : **le décodeur ne
+       FABRIQUE aucun canvas** — il décode celui qu'on lui donne. Tout prétraitement, quel
+       qu'il soit, passe par la création d'un canvas ou d'un ImageData réécrit. */
+    !/createElement\(\s*['"]canvas['"]\s*\)/.test(corpsN('_bcDecoderImage'))
+    && !/putImageData/.test(corpsN('_bcDecoderImage'))
+    && !/(sharp|unsharp|convolu|Otsu|binaris)/i.test(corpsN('_bcDecoderImage')), '');
+
+  t('CCCXI ⑩ ⭐⭐ RIEN N\'EST INVENTÉ SUR L\'AUTOFOCUS : ce que l\'API ne donne pas sort « non '+
+    'observable », jamais un faux OK. Michel : « n\'invente pas un état focus = OK ». Et la '+
+    'fonction lit VRAIMENT le navigateur (`getSettings`/`getCapabilities`), qui n\'existaient '+
+    'nulle part dans le code avant ce chantier',
+    /non observable/.test(corpsN('_bcCapacitesCamera'))
+    && /getCapabilities/.test(corpsN('_bcCapacitesCamera'))
+    && /getSettings/.test(corpsN('_bcCapacitesCamera'))
+    && /getSupportedConstraints/.test(corpsN('_bcCapacitesCamera'))
+    /* ⛔ et il ne recopie JAMAIS la contrainte demandée dans le champ observé */
+    && !/focus\s*=\s*['"]continuous['"]/.test(corpsN('_bcCapacitesCamera')), '');
+
+  t('CCCXI ⑪ ⭐⭐ LE NUMÉRO COMPLET EST AFFICHÉ, jamais remplacé par « produit trouvé » : c\'est '+
+    'LE premier critère du test réel, parce qu\'un moteur peut rendre un EAN faux dont la clé '+
+    'est juste',
+    /* ⚠️ ET CELUI-CI AUSSI ÉTAIT AVEUGLE : il vérifiait la PRÉSENCE de `l.code`, qui survit
+       parfaitement à `l.code ? 'produit trouvé' : '— rien lu —'`. *Mentionner la variable
+       n'est pas l'afficher.* Il exige désormais la forme qui met le NUMÉRO à l'écran. */
+    /* ⚠️⚠️ ET MA CORRECTION ÉTAIT FAUSSE SUR DU CODE SAIN — deuxième fois en cinq minutes.
+       J'interdisais tout `l.code ?`, or il sert légitimement à choisir la COULEUR du texte.
+       *Un garde plus strict que la contrainte réelle refuse du travail juste* (ft-v1209).
+       On épingle donc la FORME D'AFFICHAGE `(l.code||…)` et on interdit les libellés qui
+       remplaceraient le numéro — ce que la mutation faisait exactement. */
+    /\(l\.code\s*\|\|/.test(corpsN('_bcRenduDiag'))
+    && !/(produit trouv|Code trouv)/i.test(corpsN('_bcRenduDiag'))
+    && /monospace/.test(corpsN('_bcRenduDiag'))
+    && /rien lu/.test(corpsN('_bcRenduDiag')), '');
+
+  t('CCCXI ⑫ ⭐⭐ LE REPLI LOCAL EST *LOCAL* ET NE TOURNE QUE SUR LA CAPTURE : Quagga2 n\'est '+
+    'sollicité qu\'après un échec du moteur principal sur la frame capturée — jamais en continu '+
+    '(16× le CPU pour un gain qui n\'existe que sur les images ratées)',
+    /quagga-cadre/.test(corpsN('_bcCaptureFrame'))
+    && !/quagga/i.test(corpsN('openBarcodeScanner')), '');
+
+  t('CCCXI ⑬ ⛔ LE BANC S\'ARRÊTE AVANT LA NUTRITION, et c\'est explicite : en mode banc, la '+
+    'chaîne rend le code validé sans lancer le chemin produit — *le test compare des NUMÉROS, '+
+    'il n\'enregistre pas des repas*',
+    /_bcBanc/.test(corpsN('_bcTraiterCode'))
+    && /_bcFusionnerCandidats\(/.test(corpsN('_bcTraiterCode')), '');
+
+  /* ⭐ Et la chaîne réelle tourne : on conduit le propriétaire par les mêmes portes que le banc. */
+  const pgY = await b.newPage();
+  await pgY.addInitScript(seedScript({}));
+  await pgY.goto('http://127.0.0.1:'+PORT+'/index.html');
+  await pgY.waitForFunction('typeof _bcFusionnerCandidats==="function" && typeof _bcDecoderImage==="function"',
+                            null, {timeout:20000});
+  const F=async(p)=>await pgY.evaluate(x=>{const r=_bcFusionnerCandidats(x);
+    return {etat:r.etat, code:r.code, recherches:r.recherches, confirme:r.confirme||0};}, p);
+
+  const memeDeux = await F([{code:'3083681011791',moteur:'zxing-wasm'},
+                            {code:'3083681011791',moteur:'quagga-cadre'}]);
+  const conflit  = await F([{code:'3083681011791',moteur:'zxing-wasm'},
+                            {code:'3021690201123',moteur:'quagga-cadre'}]);
+  const conf8    = await F([{code:'3083681011791',moteur:'zxing-wasm'},
+                            {code:'11151791',moteur:'quagga-cadre'}]);
+  const invalide = await F([{code:'3083681011792',moteur:'zxing-wasm'}]);
+  const rien     = await F([]);
+
+  t('CCCXI ⑭ ⭐⭐ LES DEUX MOTEURS DU BANC SUR LE MÊME CODE ⇒ CONFIRMATION, ET UN SEUL LOOKUP — '+
+    'c\'est exactement le scénario live+capture que Michel veut fermer',
+    memeDeux.etat==='valide' && memeDeux.recherches===1 && memeDeux.confirme===2
+    && memeDeux.code==='3083681011791', JSON.stringify(memeDeux));
+
+  t('CCCXI ⑮ ⭐⭐ DEUX MOTEURS QUI SE CONTREDISENT ⇒ CONFLIT, ZÉRO LOOKUP — y compris le cas '+
+    'RÉEL mesuré au banc : un EAN-8 de clé valide lu dans un EAN-13',
+    conflit.etat==='conflit' && conflit.recherches===0
+    && conf8.etat==='conflit' && conf8.recherches===0,
+    JSON.stringify({conflit, conf8}));
+
+  t('CCCXI ⑯ ⛔ CLÉ FAUSSE ⇒ 0 LOOKUP · AUCUN CANDIDAT ⇒ 0 LOOKUP — le banc ne déclenche jamais '+
+    'un appel réseau à tout hasard',
+    invalide.etat==='aucun' && invalide.recherches===0
+    && rien.etat==='aucun' && rien.recherches===0,
+    JSON.stringify({invalide, rien}));
+
+  t('CCCXI ⑰ ⭐ LE PROPRIÉTAIRE DE LA CLÉ RESTE `_eanValide` : la fusion le consulte et ne '+
+    'recopie aucune arithmétique de contrôle (R2)',
+    /_eanValide\(/.test(corpsN('_bcFusionnerCandidats'))
+    && !/%\s*10/.test(corpsN('_bcFusionnerCandidats')), '');
+
+  t('CCCXI ⑱ ⛔⛔ HORS PÉRIMÈTRE — aucun moteur du banc n\'est référencé dans un chemin '+
+    'utilisateur : ni dans l\'écran d\'ajout d\'aliment, ni au démarrage',
+    !/ZXingWASM/.test(corpsN('openAddFood')||'x')
+    && !/Quagga/.test(corpsN('openAddFood')||'x')
+    && !/(ZXingWASM|Quagga)/.test(corpsN('onLoad')||'x'), '');
+
+  await pgY.close();
 }
 
 await b.close(); srv.close();

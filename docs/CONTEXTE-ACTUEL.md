@@ -204,7 +204,19 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1212` — 🏁 **BANC D'ESSAI DE 4 MOTEURS, ET LE BOUTON DU
+- **Version en ligne (live) :** `ft-v1213` — 📱 **LE BANC IPHONE RÉEL DU SCANNER.**
+  ⛔⛔ **Le bouton utilisateur reste ABSENT** — un témoin rougit dans les deux sens. L'accès
+  passe par **Profil → Admin**, et le garde vit **dans la fonction**, pas sur le bouton.
+  ⭐⭐ **Ce n'est PAS un second chemin** : seul le décodeur devient un paramètre, la fusion et
+  le lookup restent ceux de la production. ⛔⛔ **Aucun repli moteur silencieux** : l'écran dit
+  « moteur demandé » vs « moteur réellement actif » + la cause. ⭐⭐ **L'autofocus était demandé
+  et JAMAIS vérifié** (`getCapabilities()` n'existait nulle part) — le diagnostic écrit
+  désormais **« non observable »** plutôt qu'un faux OK. ⛔ Quagga2 **cadré uniquement**, sur la
+  capture seulement. ⭐ Le **numéro complet** est affiché, jamais « produit trouvé ».
+  ⛔ Moteurs **hors préchargement** (précédent CIQUAL). **AUCUNE RÉACTIVATION UTILISATEUR AVANT
+  RÉSULTATS IPHONE.** 👉 `docs/BANC-IPHONE-SCANNER.md`.
+
+- **Version précédente :** `ft-v1212` — 🏁 **BANC D'ESSAI DE 4 MOTEURS, ET LE BOUTON DU
   SCANNER EST RETIRÉ.** Michel : *« aucun bouton utilisateur tant que je n'ai pas tranché »* —
   **le moteur reste en place et reste éprouvé**, seule la porte est fermée (deux témoins la figent
   dans les deux sens). ⭐ **zxing-wasm 86,2 %** contre **77,5 %** au ZXing servi, **25× plus

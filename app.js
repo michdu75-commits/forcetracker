@@ -1412,8 +1412,130 @@ function _loadZXing(){
     document.head.appendChild(s);
   });
 }
+
+/* ═══════════ LE BANC IPHONE — LE MOTEUR DEVIENT INTERCHANGEABLE, RIEN D'AUTRE ═══════════
+ * Michel, 14/09/2026 : le banc synthétique a tranché (zxing-wasm 86,2 % contre 77,5 % au
+ * ZXing servi ; + Quagga2 cadré sur capture fixe = 91,3 %), mais ⛔ **Safari/iOS, l'autofocus
+ * réel et le comportement WebAssembly n'ont PAS pu être éprouvés depuis un conteneur**.
+ *
+ * ⭐⭐ LE CHOIX QUI DÉCIDE DE TOUT : CE N'EST PAS UN SECOND CHEMIN.
+ * Seul le DÉCODEUR devient un paramètre. La machine à états, `_bcPrendreLaMain`,
+ * `_bcTraiterCode`, `_bcFusionnerCandidats`, `_eanValide` et le lookup produit restent
+ * EXACTEMENT ceux de la production. *Un mode test qui n'emprunte pas le chemin de production
+ * valide le mode test, pas la production.*
+ *
+ * ⛔⛔ AUCUN REPLI MOTEUR SILENCIEUX. `_bcChargerMoteur` RAPPORTE ce qui tourne vraiment :
+ * si zxing-wasm ne charge pas sur Safari, l'écran écrit « demandé : zxing-wasm / actif :
+ * ZXing-js » + la cause. *Croire qu'on teste WASM alors que c'est ZXing-js qui tourne est
+ * pire que ne pas tester du tout.* */
+const _BC_MOTEURS = ['zxing-js','zxing-wasm','quagga-cadre'];
+let _bcMoteurDemande='zxing-js', _bcMoteurActif='zxing-js', _bcMoteurCause='';
+let _bcBanc=false;                      // true = ouvert depuis Profil → Admin
+let _bcDiag=null;                       // le journal du banc (jamais persisté)
+
+function _bcDiagNeuf(){
+  return {ouvert:Date.now(), demande:'', actif:'', cause:'', msCharge:0, msPret:0,
+          lectures:[], camera:null, wasmCharge:false, quaggaCharge:false,
+          appelsIA:0, lookups:0};
+}
+function _bcDiagNote(o){ if(_bcDiag) _bcDiag.lectures.push(Object.assign({t:Date.now()},o||{})); _bcRenduDiag(); }
+
+/* Charge le décodeur demandé. ⛔ Ne ment JAMAIS : rend {actif, cause}. */
+function _bcChargerMoteur(nom){
+  const t0=Date.now();
+  const script=(src,pret)=>new Promise((res,rej)=>{
+    if(pret()){res();return;}
+    const s=document.createElement('script'); s.src=src;
+    s.onload=()=>pret()?res():rej(new Error('chargé mais absent de window'));
+    s.onerror=()=>rej(new Error('fichier non chargé'));
+    document.head.appendChild(s);
+  });
+  const fini=(actif,cause)=>{ _bcMoteurActif=actif; _bcMoteurCause=cause||'';
+    if(_bcDiag){ _bcDiag.demande=nom; _bcDiag.actif=actif; _bcDiag.cause=cause||'';
+      _bcDiag.msCharge=Date.now()-t0;
+      _bcDiag.wasmCharge=!!(window.ZXingWASM&&window.ZXingWASM.readBarcodesFromImageData);
+      _bcDiag.quaggaCharge=!!window.Quagga; }
+    return {actif, cause:cause||''}; };
+  _bcMoteurDemande=nom;
+  if(nom==='zxing-wasm'){
+    return script('./lib/zxing-wasm.js', ()=>window.ZXingWASM&&window.ZXingWASM.readBarcodesFromImageData)
+      .then(()=>{
+        ZXingWASM.prepareZXingModule({
+          overrides:{ locateFile:(p,pre)=> String(p).endsWith('.wasm') ? './lib/zxing_reader.wasm' : pre+p },
+          fireImmediately:true });
+        return ZXingWASM.getZXingModule();
+      })
+      .then(()=>fini('zxing-wasm',''))
+      /* ⛔ Le repli existe (sans lui le banc ne pourrait rien lire du tout sur un Safari
+         récalcitrant) — mais il est ANNONCÉ, jamais silencieux. C'est la consigne §21. */
+      .catch(e=>_loadZXing().then(()=>fini('zxing-js','zxing-wasm indisponible : '+(e&&e.message||e)))
+                            .catch(e2=>fini('aucun','zxing-wasm ET zxing-js indisponibles : '+(e2&&e2.message||e2))));
+  }
+  if(nom==='quagga-cadre'){
+    return script('./lib/quagga.min.js', ()=>!!window.Quagga)
+      .then(()=>fini('quagga-cadre',''))
+      .catch(e=>_loadZXing().then(()=>fini('zxing-js','Quagga2 indisponible : '+(e&&e.message||e)))
+                            .catch(e2=>fini('aucun',String(e2&&e2.message||e2))));
+  }
+  return _loadZXing().then(()=>fini('zxing-js','')).catch(e=>fini('aucun',String(e&&e.message||e)));
+}
+
+/* Décode UNE image (canvas) avec le moteur ACTIF. Rend {code, moteur, ms}.
+ * ⛔ Aucun prétraitement : le banc a mesuré que le recadrage central détruit tout (il mange la
+ * zone de silence), que la netteté artificielle fait PERDRE 12 et 26 cas aux deux meilleurs
+ * moteurs, et que gris/binarisation/redressement n'apportent rien. *Bonne image + bonne mise
+ * au point + bon moteur* — le reste est une usine à gaz mesurée comme nuisible. */
+async function _bcDecoderImage(canvas){
+  const t0=Date.now();
+  const rendu=(code)=>({code:code||'', moteur:_bcMoteurActif, ms:Date.now()-t0});
+  try{
+    if(_bcMoteurActif==='zxing-wasm'){
+      const x=canvas.getContext('2d',{willReadFrequently:true});
+      const d=x.getImageData(0,0,canvas.width,canvas.height);
+      const r=await ZXingWASM.readBarcodesFromImageData(d,{
+        tryHarder:true, tryRotate:true, tryInvert:true,
+        formats:['EAN-13','EAN-8','UPC-A','UPC-E'], maxNumberOfSymbols:1});
+      return rendu(r&&r[0]&&r[0].text);
+    }
+    if(_bcMoteurActif==='quagga-cadre'){
+      /* ⛔⛔ MODE CADRE (`locate:false`) ET JAMAIS MODE SCÈNE. Mesuré au banc : en mode scène,
+         Quagga2 lit un EAN-8 de clé de contrôle PARFAITEMENT VALIDE à l'INTÉRIEUR d'un EAN-13
+         (3083681011791 → 11151791, 12 occurrences). *Un code faux dont la clé est juste ne peut
+         être attrapé par RIEN en aval.* Michel : « interdiction de mettre Quagga2 mode scène
+         dans le chemin candidat ». Un témoin permanent le fige. */
+      const url=canvas.toDataURL('image/png');
+      const r=await new Promise(res=>{
+        Quagga.decodeSingle({src:url, numOfWorkers:0, locate:false,
+          inputStream:{size:Math.max(canvas.width,800)},
+          decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader']}}, d=>res(d));
+      });
+      return rendu(r&&r.codeResult&&r.codeResult.code);
+    }
+    const rd=new ZXing.BrowserMultiFormatReader(_bcHints());
+    const res=await rd.decodeFromImageUrl(canvas.toDataURL('image/jpeg',0.95));
+    try{ rd.reset(); }catch(e){}
+    return rendu(res&&res.getText&&res.getText());
+  }catch(e){ return rendu(''); }
+}
 // Le bouton « Scanner un code-barres » ouvre le scanner EN DIRECT (façon Yuka).
-function scanBarcode(){ openBarcodeScanner(); }
+// ⛔ AUCUN BOUTON UTILISATEUR NE L'APPELLE — voir le commentaire d'index.html (R30).
+function scanBarcode(){ _bcBanc=false; _bcMoteurDemande='zxing-js'; _bcDiag=null; openBarcodeScanner(); }
+
+/* ═══ L'UNIQUE PORTE DU BANC IPHONE — Profil → Admin, rien d'autre ═══
+ * ⛔⛔ R13 : aucun mécanisme nouveau. `_isAdminUnlocked()` garde déjà 16 outils de
+ * diagnostic, et l'onglet Admin s'ouvre par 5 taps sur le logo. *Construire un système de
+ * drapeaux pour un test de deux semaines coûterait plus cher que le test.* */
+let _bcReplinCadre=true;
+function ouvrirBancScanner(moteur, avecQuagga){
+  if(typeof _isAdminUnlocked==='function' && !_isAdminUnlocked()){
+    toast('Réservé à l\'admin','error'); return;
+  }
+  _bcBanc=true;
+  _bcMoteurDemande=(_BC_MOTEURS.indexOf(moteur)>=0?moteur:'zxing-wasm');
+  _bcReplinCadre=(avecQuagga!==false);
+  _bcDiag=_bcDiagNeuf();
+  openBarcodeScanner();
+}
 /* ⛔ RETIRÉS EN ft-v1210 — `scanBarcodePhoto` et `_bcPhotoFallback` (R30, écrit plutôt que
    silencieux). Ils ouvraient l'élément `af-bc-input`, **supprimé avec ft-v388** : le bouton
    « 🖼️ Prendre une photo à la place » fermait l'écran et ne faisait RIEN — 0 appel mesuré.
@@ -1505,16 +1627,32 @@ async function _bcTraiterCode(code){
   /* Le candidat passe par le propriétaire même quand il est SEUL : un chemin qui
      ne serait juste que parce qu'il n'y a qu'un moteur serait juste par accident
      (`BUGS.md` §62), et il faudrait s'en souvenir le jour où on en ajoute un. */
-  const f=_bcFusionnerCandidats([{code:code, moteur:'zxing'}]);
+  const f=_bcFusionnerCandidats([{code:code, moteur:_bcMoteurActif}]);
+  if(_bcDiag && _bcDiag.lectures.length){
+    const der=_bcDiag.lectures[_bcDiag.lectures.length-1];
+    der.fusion=f.etat+(f.etat==='conflit'?' ('+(f.candidats||[]).join(' vs ')+')':'')
+              +' · recherches='+f.recherches;
+  }
   if(f.etat==='conflit'){
     if(st) st.textContent='⚠️ Deux lectures différentes — vise à nouveau le code.';
-    _bcSetEtat('SCANNING');
+    _bcSetEtat('SCANNING'); _bcRenduDiag();
     return false;
   }
   if(f.etat!=='valide'){
     if(st) st.textContent='⚠️ Code illisible — rapproche-toi un peu et réessaie.';
-    _bcSetEtat('SCANNING');
+    _bcSetEtat('SCANNING'); _bcRenduDiag();
     return false;
+  }
+  if(_bcDiag) _bcDiag.lookups++;
+  /* ⭐⭐ LE BANC S'ARRÊTE AVANT LA NUTRITION. Michel : « scanner = code, Nutrition = produit ».
+     Dans le banc, le chemin s'arrête sur l'EAN validé — le but du test est de comparer le
+     NUMÉRO LU au numéro imprimé, pas d'enregistrer des repas pendant un essai. En production
+     (banc fermé), la ligne d'après part vers le chemin produit existant, inchangé. */
+  if(_bcBanc){
+    if(st) st.textContent='✅ Code lu : '+f.code;
+    _bcSetEtat('SCANNING');                 // on reste ouvert pour enchaîner les essais
+    _bcDernierCode=''; _bcRenduDiag();
+    return true;
   }
   if(st) st.textContent='✅ Code lu : '+f.code+' — recherche du produit…';
   const inp=document.getElementById('af-bc-manual'); if(inp) inp.value=f.code;
@@ -1552,6 +1690,11 @@ async function openBarcodeScanner(){
       +'<div style="position:absolute;left:6%;right:6%;top:40%;height:20%;border:3px solid rgba(255,45,85,.95);border-radius:8px;pointer-events:none;"></div>'
     +'</div>'
     +'<div id="bc-scan-status" style="font-size:12px;color:var(--t3);margin-top:8px;min-height:16px;">Démarrage de la caméra…</div>'
+    /* ⛔ LE PANNEAU DE DIAGNOSTIC N'EXISTE QUE DANS LE BANC : en usage normal il n'est même
+       pas dans le HTML, donc rien à cacher par CSS et rien qui puisse fuiter. */
+    +(_bcBanc?'<div id="bc-diag" style="margin-top:10px;padding:8px;border-radius:10px;'
+      +'background:var(--bg2);border:1px solid var(--sep);text-align:left;max-height:34vh;overflow:auto;">'
+      +'<div style="color:var(--t3);font-size:12px;">Initialisation…</div></div>':'')
     +'<button id="bc-capture-btn" class="btn" style="width:100%;margin-top:10px;background:var(--red);color:#fff;font-weight:700;" onclick="_bcCaptureFrame()">📸 Capturer le code</button>'
     /* ⛔⛔ LE REPLI IA EST UN BOUTON, JAMAIS UN BASCULEMENT (consigne de Michel, §6) :
        *« un appel payant doit nécessiter un geste utilisateur »*. Aucun minuteur, aucun compteur
@@ -1563,17 +1706,28 @@ async function openBarcodeScanner(){
   ov.classList.add('open');
   _bcT0=Date.now(); _bcDernierCode='';
   try{
-    await _loadZXing();
+    const ch=await _bcChargerMoteur(_bcMoteurDemande);
+    /* ⭐⭐ LE MOTEUR LIVE : zxing-wasm n'a pas de lecture continue à lui, donc le FLUX reste
+       piloté par ZXing-js (qui sait décoder une vidéo), et chaque frame est ensuite remise au
+       moteur ACTIF. ⚠️ Dit plutôt que masqué : quand le moteur actif est zxing-wasm, le
+       « live » est donc un ZXing-js qui déclenche, et zxing-wasm qui tranche — le diagnostic
+       l'affiche, et c'est précisément la capture fixe qui éprouve zxing-wasm seul. */
+    if(ch.actif!=='zxing-js' && ch.actif!=='aucun') await _loadZXing();
     _bcReader=new ZXing.BrowserMultiFormatReader(_bcHints());
     const video=document.getElementById('bc-video');
     _bcSetEtat('SCANNING');
     // Haute résolution → le code-barres a assez de pixels pour être décodé (sinon « caméra ouverte mais ne lit pas »)
     await _bcReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},advanced:[{focusMode:'continuous'}]}}, video, (result)=>{
       // ⭐ le verrou décide : si « Capturer » est déjà passé, cet appel ne fait rien
-      if(result) _bcTraiterCode(result.getText&&result.getText());
+      if(result){
+        const c=result.getText&&result.getText();
+        if(_bcDiag) _bcDiagNote({voie:'live', moteur:_bcMoteurActif, code:c||'', ms:Date.now()-_bcT0});
+        _bcTraiterCode(c);
+      }
       // erreur "NotFound" entre les frames = normal, on ignore
     });
     try{ const v=document.getElementById('bc-video'); if(v&&v.play)v.play().catch(()=>{}); }catch(e){}
+    if(_bcDiag){ _bcDiag.msPret=Date.now()-_bcT0; _bcDiag.camera=_bcCapacitesCamera(); _bcRenduDiag(); }
     const st=document.getElementById('bc-scan-status');
     if(st&&_bcEtat==='SCANNING')st.textContent='Vise le code-barres… ou appuie sur « Capturer ».';
   }catch(e){
@@ -1594,12 +1748,30 @@ async function _bcCaptureFrame(){
   try{
     const c=document.createElement('canvas');
     c.width=video.videoWidth; c.height=video.videoHeight;
-    c.getContext('2d').drawImage(video,0,0,c.width,c.height);
-    const url=c.toDataURL('image/jpeg',0.95);
-    const reader=new ZXing.BrowserMultiFormatReader(_bcHints());
-    let code='';
-    try{ const res=await reader.decodeFromImageUrl(url); code=res&&res.getText&&res.getText(); }catch(e){ code=''; }
-    try{ reader.reset(); }catch(e){}
+    c.getContext('2d',{willReadFrequently:true}).drawImage(video,0,0,c.width,c.height);
+    let code='', parQui='';
+    /* ⭐ LA CAPTURE FIXE : c'est ICI que le banc synthétique dit que tout se joue. Mesuré, une
+       image NETTE se lit à 1 pixel par module, un flou léger en exige 3, un flou franc 6 —
+       *le flou coûte 3 à 6 fois la résolution*. Donc une capture prise APRÈS la mise au point
+       bat le décodage continu d'un flux flou. */
+    const r1=await _bcDecoderImage(c);
+    code=r1.code; parQui=r1.moteur;
+    /* ⭐⭐ LE REPLI LOCAL DU §2, ET IL EST *LOCAL* : si le moteur principal échoue sur la
+       capture, Quagga2 EN MODE CADRE tente sa chance sur LA MÊME image. Mesuré au banc : il
+       rattrape « flou + reflet », que les trois moteurs de la famille ZXing ratent tous.
+       ⛔ Il ne tourne QUE sur la capture, jamais en continu (16× le CPU pour un gain qui
+       n'existe que sur les images ratées par le premier), et ⛔ il n'appelle aucune IA. */
+    if(!code && _bcBanc && _bcReplinCadre){
+      const av=_bcMoteurActif;
+      const ch=await _bcChargerMoteur('quagga-cadre');
+      if(ch.actif==='quagga-cadre'){
+        const r2=await _bcDecoderImage(c);
+        if(r2.code){ code=r2.code; parQui='quagga-cadre'; }
+      }
+      _bcMoteurActif=av;                                  // on rend la main au principal
+    }
+    if(_bcDiag) _bcDiagNote({voie:'capture', moteur:parQui||_bcMoteurActif, code:code||'', ms:r1.ms,
+                             px:c.width+'x'+c.height});
     /* ⭐⭐ LE VERROU TRANCHE ICI, ET C'EST TOUT CE QUI A CHANGÉ : pendant les ~500 ms de décodage
        ci-dessus, le décodage continu a pu lire le même code. `_bcTraiterCode` rend alors `false`
        et on ne fait RIEN — au lieu de tirer un second lookup. */
@@ -1611,6 +1783,99 @@ async function _bcCaptureFrame(){
    ⚠️ `scanBarcodeIA()` fait un `input.click()` : sur iOS il doit rester dans la MÊME tâche que le
    geste de l'utilisateur, donc on l'appelle en direct, sans `setTimeout` (leçon ft-v871). */
 function _bcReplIA(){ closeBarcodeScanner(); if(typeof scanBarcodeIA==='function') scanBarcodeIA(); }
+
+/* ═══ CE QUE LA CAMÉRA DIT VRAIMENT — ET « NON OBSERVABLE » QUAND ELLE NE DIT RIEN ═══
+ * ⛔⛔ LE DÉFAUT QUE CETTE FONCTION EXISTE POUR RENDRE VISIBLE : `openBarcodeScanner` demande
+ * `advanced:[{focusMode:'continuous'}]` — et une contrainte `advanced` est IGNORÉE EN SILENCE
+ * si le navigateur ne la supporte pas. Mesuré le 14/09 : ni `getCapabilities()` ni
+ * `getSettings()` n'existaient nulle part dans le code servi. 👉 *On demandait l'autofocus
+ * continu sans jamais savoir s'il était appliqué.*
+ *
+ * ⛔ Michel : « si Safari ne permet pas de savoir réellement l'état autofocus, dis-le.
+ * N'invente pas un état focus = OK. » Donc chaque champ que l'API ne fournit pas sort
+ * littéralement `non observable` — jamais une valeur par défaut rassurante. */
+function _bcCapacitesCamera(){
+  const NO='non observable';
+  const o={objectif:NO, largeur:NO, hauteur:NO, cadence:NO, focus:NO, focusDemande:'continuous',
+           zoom:NO, torche:NO, contraintesSupportees:NO, piste:NO};
+  try{
+    const v=document.getElementById('bc-video');
+    const tr=v&&v.srcObject&&v.srcObject.getVideoTracks&&v.srcObject.getVideoTracks()[0];
+    if(!tr) return o;
+    o.piste=tr.label||NO;
+    try{
+      const s=tr.getSettings?tr.getSettings():null;
+      if(s){
+        if(s.facingMode) o.objectif=s.facingMode;
+        if(s.width) o.largeur=String(s.width);
+        if(s.height) o.hauteur=String(s.height);
+        if(s.frameRate) o.cadence=String(Math.round(s.frameRate))+' img/s';
+        /* ⭐ `focusMode` n'est PAS dans les réglages standard : s'il est absent, on ne
+           prétend pas qu'il vaut « continuous » parce qu'on l'a demandé. */
+        if(s.focusMode) o.focus=String(s.focusMode)+' (confirmé par le navigateur)';
+      }
+    }catch(e){}
+    try{
+      const c=tr.getCapabilities?tr.getCapabilities():null;
+      if(c){
+        if(c.focusMode) o.focus=(o.focus===NO?'exposé, valeur non lue':o.focus)+' · possibles : '+[].concat(c.focusMode).join('/');
+        if(c.zoom) o.zoom=(c.zoom.min!=null?c.zoom.min+'→'+c.zoom.max:'exposé');
+        if(c.torch!=null) o.torche=String(c.torch);
+        if(o.largeur===NO && c.width) o.largeur='max '+c.width.max;
+      } else { o.focus=NO; }
+    }catch(e){}
+    try{
+      const sup=navigator.mediaDevices&&navigator.mediaDevices.getSupportedConstraints
+        ? navigator.mediaDevices.getSupportedConstraints() : null;
+      if(sup) o.contraintesSupportees=Object.keys(sup).filter(k=>sup[k]).join(', ')||NO;
+    }catch(e){}
+  }catch(e){}
+  return o;
+}
+
+/* Le panneau de diagnostic — ⛔ il n'existe QUE dans le banc Admin. */
+function _bcRenduDiag(){
+  const b=document.getElementById('bc-diag'); if(!b||!_bcDiag) return;
+  const d=_bcDiag, c=d.camera||{}, NO='non observable';
+  const li=(k,v,fort)=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;">'
+    +'<span style="color:var(--t3);">'+k+'</span><span style="color:'+(fort?'var(--red)':'var(--t1)')
+    +';font-weight:'+(fort?'800':'600')+';text-align:right;word-break:break-all;">'+v+'</span></div>';
+  const menteur = d.demande && d.actif && d.demande!==d.actif;
+  let h='<div style="font-size:12px;line-height:1.5;">';
+  h+=li('Moteur demandé', d.demande||'—');
+  h+=li('Moteur réellement actif', d.actif||'—', menteur);
+  if(menteur) h+=li('Cause du repli', d.cause||'—', true);
+  h+=li('zxing-wasm chargé', d.wasmCharge?'OUI':'NON');
+  h+=li('Quagga2 chargé', d.quaggaCharge?'OUI':'NON');
+  h+=li('Chargement moteur', d.msCharge+' ms');
+  h+=li('Caméra prête', d.msPret?d.msPret+' ms':'—');
+  h+='<div style="height:6px;"></div>';
+  h+=li('Objectif', c.objectif||NO);
+  h+=li('Résolution réelle', (c.largeur&&c.hauteur&&c.largeur!==NO)?(c.largeur+'×'+c.hauteur):NO);
+  h+=li('Cadence', c.cadence||NO);
+  h+=li('Autofocus demandé', c.focusDemande||'—');
+  h+=li('Autofocus observé', c.focus||NO, (c.focus||NO)===NO);
+  h+=li('Zoom', c.zoom||NO);
+  h+=li('Piste', (c.piste||NO).slice(0,40));
+  h+='<div style="height:6px;"></div>';
+  h+=li('Appels IA', String(d.appelsIA), d.appelsIA>0);
+  h+=li('Lookups produit', String(d.lookups), d.lookups>1);
+  if(d.lectures.length){
+    h+='<div style="height:6px;border-top:1px solid var(--sep);margin-top:6px;padding-top:6px;"></div>';
+    d.lectures.slice(-6).forEach((l,i)=>{
+      h+='<div style="padding:3px 0;border-bottom:1px dotted var(--sep);">'
+        +'<b style="color:var(--t1);">'+(l.voie||'?')+'</b> · '+(l.moteur||'?')+' · '+(l.ms||0)+' ms'
+        /* ⭐⭐ LE NUMÉRO COMPLET, JAMAIS « produit trouvé » : c'est le PREMIER critère du test
+           réel, parce qu'un moteur peut rendre un EAN faux dont la clé est juste. */
+        +'<div style="font-family:monospace;font-size:14px;font-weight:800;color:'
+        +(l.code?'var(--t1)':'var(--t3)')+';letter-spacing:1px;">'+(l.code||'— rien lu —')+'</div>'
+        +(l.fusion?'<div style="color:var(--t3);">fusion : '+l.fusion+'</div>':'')
+        +'</div>';
+    });
+  }
+  h+='</div>';
+  b.innerHTML=h;
+}
 function closeBarcodeScanner(){
   /* ⛔ NE REMET PAS L'ÉTAT À `IDLE` : quand un code vient d'être accepté, la fermeture fait partie
      du traitement (`CODE_TROUVE` → `LOOKUP`). Écraser l'état ici rouvrirait la porte au second

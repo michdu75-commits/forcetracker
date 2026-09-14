@@ -1063,6 +1063,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadDouaneAdmin()" style="padding:11px;font-size:14px;">📊 Voir le rapport</button>
       <div id="admin-douane" style="margin-top:4px;"></div>
     </div>
+    <!-- 📱 LE BANC IPHONE DU SCANNER — la SEULE porte vers les moteurs de décodage, et elle est
+         derrière l'Admin (R13 : `_isAdminUnlocked()` garde déjà 16 outils, on n'invente pas un
+         système de drapeaux pour un test de deux semaines).
+         ⛔⛔ CE N'EST PAS UNE RÉACTIVATION : l'écran d'ajout d'aliment n'a toujours AUCUN bouton
+         scanner, et un témoin permanent rougit si l'un revient. Michel, 14/09 : « je ne veux
+         toujours PAS réactiver le bouton scanner pour les utilisateurs ».
+         ⭐ Le banc n'est pas un second chemin : il change le MOTEUR, et laisse la machine à
+         états, la fusion et la validation exactement telles qu'elles sont en production. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">📱 Banc scanner — test iPhone réel</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Éprouve les moteurs de décodage sur la <strong>vraie caméra</strong>. L'écran affiche le <strong>numéro complet lu</strong>, le moteur <strong>réellement</strong> actif, et ce que la caméra dit d'elle-même — ou <strong>« non observable »</strong> quand Safari ne le dit pas. <strong>Aucun appel IA</strong>, et <strong>aucun enregistrement</strong> dans le journal alimentaire.</div>
+      <button class="btn btn-bg2" onclick="ouvrirBancScanner('zxing-wasm',false)" style="padding:11px;font-size:14px;">Ⓐ zxing-wasm seul</button>
+      <button class="btn btn-bg2" onclick="ouvrirBancScanner('zxing-wasm',true)" style="padding:11px;font-size:14px;">Ⓑ zxing-wasm + Quagga2 cadré sur capture</button>
+      <button class="btn btn-bg2" onclick="ouvrirBancScanner('zxing-js',false)" style="padding:11px;font-size:14px;">Ⓣ témoin — ZXing-js actuel</button>
+    </div>
     <!-- 🔬 Le diagnostic d'import : il prouve la PRÉSENCE du champ, pas sa valeur. Sur un vrai
          document la valeur sera 0 — et 0 ne prouve rien tant qu'on ne sait pas si le champ est
          arrivé. C'est tout l'objet de cette carte, et elle se lit depuis l'iPhone, sans console. -->

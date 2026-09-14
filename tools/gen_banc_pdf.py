@@ -88,24 +88,60 @@ for _f in ('openBarcodeScanner', 'scanBarcode', '_bcTraiterCode', '_bcPrendreLaM
 # ═══ [!!] LES BIBLIOTHEQUES CANDIDATES NE SONT PAS ENTREES DANS LE DEPOT ══════════════════════
 # Le banc vit dans le scratchpad. Une bibliotheque qui arrive dans lib/ sans decision serait une
 # reactivation deguisee — et elle serait SERVIE a tout le monde.
+# [/!\] CE GARDE A CHANGE LE 14/09 AU SOIR, ET LE DIRE FAIT PARTIE DU TRAVAIL.
+#       Il interdisait TOUTE bibliotheque du banc dans lib/. Michel a ensuite demande le banc
+#       iPhone reel : zxing-wasm et Quagga2 doivent donc etre SERVIS pour que son telephone
+#       puisse les charger. L interdiction devient donc plus precise au lieu de sauter :
+#         - Html5-QRCode reste INTERDIT (le banc l a mesure comme une regression : 68,8 %) ;
+#         - zxing-wasm et Quagga2 sont autorises DANS lib/, mais JAMAIS dans le prechargement
+#           du service worker, et JAMAIS atteignables par un bouton utilisateur.
+#       *Un garde qu on assouplit sans dire pourquoi est un garde qu on a contourne.*
 _LIB = os.path.join(ROOT, 'lib')
 _presents = os.listdir(_LIB) if os.path.isdir(_LIB) else []
-for _interdit in ('html5-qrcode', 'zxing_reader.wasm', 'zxwasm', 'quagga'):
-    for _f in _presents:
-        if _interdit in _f.lower():
-            raise SystemExit('UNE BIBLIOTHEQUE DU BANC EST ENTREE DANS lib/ : %s. Le banc doit '
-                             'rester hors du depot tant que Michel n a pas tranche — sinon elle '
-                             'est servie a tout le monde.' % _f)
+for _f in _presents:
+    if 'html5-qrcode' in _f.lower():
+        raise SystemExit('Html5-QRCode est entre dans lib/ : le banc l a mesure comme une '
+                         'REGRESSION (68,8 %% contre 77,5 %%), c est le meme moteur avec '
+                         'TRY_HARDER force a false. Il n a rien a faire dans le depot.')
+# ... et ceux qui sont autorises doivent rester HORS du prechargement.
+for _m in ('zxing_reader.wasm', 'quagga.min.js', 'zxing-wasm.js'):
+    if "'./lib/%s'" % _m in re.sub(r'/\*[\s\S]*?\*/', ' ', SW):
+        raise SystemExit('`%s` est entre dans la liste de PRECHARGEMENT du service worker : ce '
+                         'serait ~1,1 Mo re-telecharge par tout le monde a chaque version, pour '
+                         'des moteurs que personne n atteint. C est le precedent CIQUAL, et la '
+                         'regle d or #4.' % _m)
 # [/!\] CE GARDE LIT LE CODE, PAS CE QUI EN PARLE — et sa premiere version ne le faisait pas :
 #       il refusait de produire a cause du COMMENTAIRE d index.html qui explique le chantier et
 #       nomme les quatre candidats. C est la famille ft-v1193/1203/1205/1210, repayee une fois de
 #       plus par moi. *Un garde qui ne distingue pas le CODE de ce qui en PARLE mesure la
 #       documentation.* On retire donc les commentaires JS et HTML avant de chercher.
 IDX_NU = re.sub(r'<!--[\s\S]*?-->', ' ', IDX)
-for _interdit in ('html5-qrcode', 'zxing-wasm', 'ZXingWASM', 'Quagga'):
+# Html5-QRCode reste banni du code servi (regression mesuree). zxing-wasm et Quagga2 y sont
+# desormais attendus — mais UNIQUEMENT derriere le banc Admin : aucun bouton de l ecran d ajout
+# d aliment ne doit les nommer, et le chargement doit rester paresseux.
+for _interdit in ('html5-qrcode', 'Html5Qrcode'):
     if _interdit in APP_NU or _interdit in IDX_NU:
-        raise SystemExit('« %s » est reference dans le CODE d un fichier servi : aucun second '
-                         'moteur ne doit entrer avant la decision de Michel.' % _interdit)
+        raise SystemExit('« %s » est reference dans le CODE d un fichier servi : le banc l a '
+                         'mesure comme une REGRESSION, il n a rien a y faire.' % _interdit)
+if re.search(r'<script[^>]+lib/(zxing-wasm|quagga)', IDX_NU):
+    raise SystemExit('Un moteur du banc est charge par une balise <script> d index.html : il '
+                     'partirait au DEMARRAGE de l app. Le chargement doit rester paresseux, '
+                     'declenche par l ouverture du banc (regle d or #4).')
+if 'onclick="ouvrirBancScanner(' not in IDX:
+    raise SystemExit('La carte Admin du banc iPhone a disparu d index.html : c est la SEULE '
+                     'porte vers les moteurs, et le document decrit son protocole.')
+if not re.search(r'_isAdminUnlocked\(\)', corps('ouvrirBancScanner')):
+    raise SystemExit('La porte du banc n est plus gardee DANS SA FONCTION : un bouton qui appelle '
+                     'la fonction ne suffit pas, c est elle qui doit refuser.')
+if not re.search(r'locate:\s*false', corps('_bcDecoderImage')) or re.search(r'locate:\s*true', APP_NU):
+    raise SystemExit('QUAGGA2 EST PASSE EN MODE SCENE : le banc a mesure qu il y rend des EAN-8 '
+                     'de cle VALIDE lus a l interieur d un EAN-13 (3083681011791 -> 11151791). '
+                     'Michel : « interdiction de mettre Quagga2 mode scene dans le chemin '
+                     'candidat ». Un code faux dont la cle est juste ne peut etre attrape par '
+                     'RIEN en aval.')
+if 'non observable' not in corps('_bcCapacitesCamera'):
+    raise SystemExit('Le diagnostic camera n ecrit plus « non observable » : Michel a demande de '
+                     'ne JAMAIS inventer un etat focus = OK quand l API ne le dit pas.')
 
 # ═══ [!!] LE CONFLIT ENTRE MOTEURS NE S AVALE PAS (§18) ═══════════════════════════════════════
 _FU = sans_com(corps('_bcFusionnerCandidats'))
