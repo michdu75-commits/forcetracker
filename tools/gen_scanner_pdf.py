@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Genere docs/SCANNER-CAMERA-LOCAL.pdf — l audit du scanner camera local avant reactivation.
-   Vingt-troisieme document de la serie.
+"""Genere docs/SCANNER-CAMERA-LOCAL.pdf — la reactivation controlee du scanner camera local,
+   et la CONTRE-ENQUETE sur la chronologie de juillet. Vingt-quatrieme document de la serie.
 
 TOUS LES FAITS SONT RECOMPTES A CHAQUE GENERATION, DEPUIS LE CODE SERVI ET DEPUIS LE BANC.
-Un document qui affirme « le scanner n a pas de porte d entree » sans le remesurer affirme un
-souvenir — et cette affirmation-la est exactement celle qui decide du chantier.
+Et les gardes les plus utiles protegent des DECISIONS : que la course reste fermee, que le repli
+IA reste volontaire, que le numero lu reste montre avant la recherche, et que le verdict ne monte
+pas d un cran sans le retour iPhone de Michel.
 
 CONTRAINTE DE POLICE : WinAnsi/cp1252 — pas d emoji, entites nommees comprises.
 """
@@ -16,8 +17,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-                                KeepTogether)
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 
 ROOT = os.environ.get('FT_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +26,6 @@ OUT = os.environ.get('FT_OUT') or os.path.join(ROOT, 'docs', 'SCANNER-CAMERA-LOC
 APP = open(os.path.join(ROOT, 'app.js'), encoding='utf-8').read()
 IDX = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
 SCR = open(os.path.join(ROOT, 'screens.js'), encoding='utf-8').read()
-CST = open(os.path.join(ROOT, 'constants.js'), encoding='utf-8').read()
 SW = open(os.path.join(ROOT, 'sw.js'), encoding='utf-8').read()
 RUN = open(os.path.join(ROOT, 'tests', 'parcours', 'runner.js'), encoding='utf-8').read()
 DOC = open(os.path.join(ROOT, 'docs', 'SCANNER-CAMERA-LOCAL.md'), encoding='utf-8').read()
@@ -42,150 +41,157 @@ def sans_com(t):
 CODE = sans_com(APP)
 
 
-def corps(nom, src=None):
-    s = src if src is not None else CODE
-    m = re.search(r'(?:async )?function ' + nom + r'\([\s\S]*?\n\}', s)
+def corps(nom):
+    m = re.search(r'(?:async )?function ' + nom + r'\([\s\S]*?\n\}', CODE)
     if not m:
         raise SystemExit('Corps introuvable : %s — le PDF decrit une fonction qui a disparu.' % nom)
     return m.group(0)
 
 
-C_SCANNER = corps('openBarcodeScanner')
-C_CAPTURE = corps('_bcCaptureFrame')
-C_CLOSE = corps('closeBarcodeScanner')
-C_ZXING = corps('_loadZXing')
-C_HINTS = corps('_bcHints')
-C_PHOTO = corps('scanBarcodePhoto')
-C_FICHIER = corps('onBarcodeFile')
-C_LOOKUP = corps('_lookupBarcode')
+C_SCAN = corps('openBarcodeScanner')
+C_CAPT = corps('_bcCaptureFrame')
+C_TRAI = corps('_bcTraiterCode')
+C_PREN = corps('_bcPrendreLaMain')
+C_CLOS = corps('closeBarcodeScanner')
+C_ZX = corps('_loadZXing')
+C_HINT = corps('_bcHints')
+C_IA = corps('_bcReplIA')
+C_LOOK = corps('_lookupBarcode')
 C_OFF = corps('_offFetchProduct')
 
-# ── [!!] LE FAIT QUI DECIDE DU CHANTIER : la porte est-elle toujours muree ? ──────────────────
-if re.search(r'scanBarcode\s*\(\s*\)', IDX) or 'openBarcodeScanner' in IDX:
-    raise SystemExit('LE SCANNER A RETROUVE UNE PORTE D ENTREE : ce document raconte qu il n en a '
-                     'pas, et son verdict dit « ne pas reactiver tout de suite ». Relire ft-v388, '
-                     'ft-v871 et docs/SCANNER-CAMERA-LOCAL.md avant de republier.')
-if 'scanBarcodeIA()' not in IDX:
-    raise SystemExit('Le bouton de la photo lue par l IA a disparu de l ecran : le document le cite '
-                     'comme le seul « scan » atteignable aujourd hui.')
+# ═══ [!!] LE VERROU — la garantie centrale du chantier ════════════════════════════════════════
+if "_bcEtat!=='SCANNING'" not in C_PREN:
+    raise SystemExit('LE VERROU A CHANGE : `_bcPrendreLaMain` ne refuse plus hors de l etat '
+                     'SCANNING. Toute la garantie « un code = au plus un lookup » repose dessus.')
+for _e in ('IDLE', 'SCANNING', 'CODE_TROUVE', 'LOOKUP', 'TERMINE'):
+    if "'%s'" % _e not in CODE:
+        raise SystemExit('L etat %s a disparu de la machine a etats : le document la decrit en '
+                         'cinq etats nommes.' % _e)
+if re.search(r'\b_bcScanning\b', CODE):
+    raise SystemExit('LE BOOLEEN `_bcScanning` EST REVENU : c est lui qui portait la course '
+                     '(pose par DEUX lecteurs). Le document raconte qu il a ete remplace par un '
+                     'seul proprietaire d etat.')
+# [/!\] LES DEUX LECTEURS PASSENT PAR LE VERROU, ET AUCUN N APPELLE LE LOOKUP EN DIRECT.
+for _n, _c in (('openBarcodeScanner', C_SCAN), ('_bcCaptureFrame', C_CAPT)):
+    if '_lookupBarcode(' in _c:
+        raise SystemExit('`%s` appelle le lookup EN DIRECT : il contourne le verrou, et la course '
+                         'que ce document declare fermee est rouverte.' % _n)
+    if '_bcTraiterCode(' not in _c:
+        raise SystemExit('`%s` ne passe plus par `_bcTraiterCode` : le verrou n a plus qu un seul '
+                         'lecteur, donc il ne verrouille plus rien.' % _n)
+if len(re.findall(r"_lookupBarcode\(code,\s*'camera-code-local'\)", CODE)) != 1:
+    raise SystemExit('Le lookup du scanner n est plus appele exactement une fois avec sa '
+                     'provenance explicite : le document affirme un seul point de passage.')
 
-# ── [!!] ZERO IA DANS LE CHEMIN LOCAL — l affirmation centrale ────────────────────────────────
-for _n, _c in (('openBarcodeScanner', C_SCANNER), ('_bcCaptureFrame', C_CAPTURE),
-               ('onBarcodeFile', C_FICHIER), ('_lookupBarcode', C_LOOKUP)):
+# ═══ [!!] ZERO IA DANS LE CHEMIN LOCAL, ET AUCUN DECLENCHEMENT AUTOMATIQUE ════════════════════
+for _n, _c in (('openBarcodeScanner', C_SCAN), ('_bcCaptureFrame', C_CAPT),
+               ('_bcTraiterCode', C_TRAI), ('_lookupBarcode', C_LOOK)):
     if re.search(r'_aiUrl|workers\.dev|estimateFoodAI|readBarcode', _c):
         raise SystemExit('UN APPEL IA S EST GLISSE DANS `%s` : tout le document affirme que le '
                          'chemin camera est 100 %% local.' % _n)
+for _n, _c in (('openBarcodeScanner', C_SCAN), ('_bcCaptureFrame', C_CAPT)):
+    if re.search(r'setTimeout[\s\S]{0,80}(scanBarcodeIA|_aiUrl|_bcReplIA)', _c):
+        raise SystemExit('UN DECLENCHEMENT AUTOMATIQUE DE L IA est apparu dans `%s` : Michel a '
+                         'ecrit qu un appel payant doit necessiter un geste utilisateur.' % _n)
+if 'onclick="_bcReplIA()"' not in C_SCAN:
+    raise SystemExit('Le repli IA n est plus un bouton de l ecran du scanner : le document le '
+                     'presente comme le SEUL chemin vers l IA, et volontaire.')
+if 'scanBarcodeIA' not in C_IA or C_IA.index('closeBarcodeScanner()') > C_IA.index('scanBarcodeIA'):
+    raise SystemExit('Le repli IA ne coupe plus la camera AVANT de passer la main : un flux video '
+                     'tournerait derriere le selecteur de photo.')
 
-# ── [!!] LE DECODAGE EST LOCAL, ET LA BIBLIOTHEQUE VIENT DU DEPOT ─────────────────────────────
-if "'./lib/zxing.min.js'" not in C_ZXING or re.search(r'https?:', C_ZXING):
-    raise SystemExit('ZXing n est plus charge depuis le depot : un decodage « local » qui '
-                     'telecharge sa bibliotheque ailleurs n est plus local.')
-if not os.path.exists(os.path.join(ROOT, 'lib', 'zxing.min.js')):
-    raise SystemExit('lib/zxing.min.js est absent du depot : le chemin local n existe plus.')
-if re.search(r'fetch\(', C_SCANNER) or re.search(r'fetch\(', C_CAPTURE):
-    raise SystemExit('Le scanner fait desormais un appel reseau de lui-meme : le document affirme '
-                     'que seul le lookup produit parle au reseau.')
+# ═══ [!!] §16 — LE NUMERO LU EST MONTRE AVANT LA RECHERCHE ════════════════════════════════════
+_iC, _iL = C_TRAI.find('af-bc-manual'), C_TRAI.find('_lookupBarcode(')
+if _iC < 0 or _iL < 0 or _iC > _iL or 'Code lu' not in C_TRAI:
+    raise SystemExit('LE NUMERO LU N EST PLUS MONTRE AVANT LA RECHERCHE : c est le §16 de Michel, '
+                     'et c est ce qui empeche « je n ai pas lu le code » de se confondre avec '
+                     '« la base ne connait pas le produit ». L erreur de juillet redevient possible.')
 
-# ── [!!] LE POINT DE CONVERGENCE : les deux lecteurs passent par le lookup commun ─────────────
-N_SCAN_LOOKUP = len(re.findall(r'_lookupBarcode\(', C_SCANNER))
-N_CAP_LOOKUP = len(re.findall(r'_lookupBarcode\(', C_CAPTURE))
-if N_SCAN_LOOKUP != 1 or N_CAP_LOOKUP != 1:
-    raise SystemExit('Les deux lecteurs du scanner n appellent plus exactement une fois le lookup '
-                     'commun (%d / %d) : c est ce qui rend la course possible, et le document la '
-                     'decrit ainsi.' % (N_SCAN_LOOKUP, N_CAP_LOOKUP))
-if '_offFetchProduct(' not in C_LOOKUP:
-    raise SystemExit('Le lookup produit ne passe plus par son proprietaire : le document decrit un '
-                     'point de convergence unique avec le code tape.')
+# ═══ [!!] LA PORTE EST ROUVERTE, ET LE SCANNER PASSE EN PREMIER (R24) ═════════════════════════
+if 'onclick="scanBarcode()"' not in IDX:
+    raise SystemExit('Le bouton du scanner a disparu de l ecran : ce document raconte une '
+                     'reactivation controlee.')
+if IDX.index('scanBarcode()') > IDX.index('scanBarcodeIA()'):
+    raise SystemExit('Le scanner local ne passe plus AVANT la photo IA : la porte d entree par '
+                     'defaut redevient celle qui coute (R24).')
+
+# ═══ [!!] AUCUN BOUTON MORT — les trois orphelines sont parties, avec leur raison ═════════════
+for _f in ('scanBarcodePhoto', '_bcPhotoFallback', 'onBarcodeFile'):
+    if re.search(r'function ' + _f + r'\(', CODE):
+        raise SystemExit('`%s` est revenue : elle etait orpheline depuis ft-v388, et Michel a '
+                         'ecrit « je ne veux aucun bouton mort ».' % _f)
+if "getElementById('af-bc-input')" in CODE or 'id="af-bc-input"' in IDX:
+    raise SystemExit('L element `af-bc-input` est revenu : c est le bouton mort de ft-v388.')
+if 'RETIRÉS EN ft-v1210' not in APP or 'onBarcodeFile` RETIRÉE en ft-v1210' not in APP:
+    raise SystemExit('Le retrait des orphelines n est plus ECRIT avec sa raison (R30) : sans ca, '
+                     'le suivant « repare » une decision.')
+
+# ═══ [!!] LE SCANNER N A AUCUNE LOGIQUE NUTRITIONNELLE ════════════════════════════════════════
+_TOUT = C_TRAI + C_CAPT + C_SCAN
+if re.search(r'_ref100|_resoudreNutrition|_douaneLigne|S\.foodLog|savedFoods|_provFood|kcal100', _TOUT):
+    raise SystemExit('LE SCANNER S EST MIS A FAIRE DE LA NUTRITION : Michel a ecrit qu il ne doit '
+                     'fournir qu un EAN et appeler le chemin existant.')
+if '_offFetchProduct(' not in C_LOOK:
+    raise SystemExit('Le lookup produit ne passe plus par son proprietaire.')
 if len(re.findall(r'https://world\.openfoodfacts\.org', C_OFF)) != 2:
     raise SystemExit('La recherche produit n interroge plus exactement deux URL Open Food Facts.')
 
-# ── [!!] LA COURSE : mesuree, NON corrigee — c est une decision rendue a Michel ───────────────
-_i = C_CAPTURE.find('await reader.decodeFromImageUrl')
-if _i <= 0:
-    raise SystemExit('La capture manuelle ne decode plus par `decodeFromImageUrl` : la course '
-                     'decrite au paragraphe 2 a change de forme, remesurer.')
-if re.search(r'_bcScanning\s*=\s*false', C_CAPTURE[:_i]):
-    raise SystemExit('LA COURSE A ETE CORRIGEE : le document la presente comme un defaut CONNU et '
-                     'NON corrige, et son paragraphe 7 la met dans ce qui reste a faire. Mettre le '
-                     'document a jour avant de republier.')
-if not re.search(r'_bcScanning\s*=\s*false', C_CAPTURE[_i:]):
-    raise SystemExit('Le desarmement du decodage continu a disparu de la capture : remesurer.')
-
-# ── [!!] LES TROIS DEFAUTS DECRITS EXISTENT ENCORE (sinon le paragraphe 2 ment) ───────────────
-if 'af-bc-input' not in C_PHOTO:
-    raise SystemExit('`scanBarcodePhoto` ne cherche plus `af-bc-input` : le defaut n2 du document '
-                     'a ete repare, mettre le document a jour.')
-if 'id="af-bc-input"' in IDX:
-    raise SystemExit('L element `af-bc-input` est revenu dans l ecran : le bouton de repli n est '
-                     'plus mort, le document le dit pourtant.')
-if "'photo-code'" not in C_FICHIER:
-    raise SystemExit('`onBarcodeFile` ne pose plus la provenance `photo-code` : le document la cite '
-                     'comme le seul chemin photo sans IA.')
-if len(re.findall(r'onBarcodeFile\(', APP)) != 1 or 'onBarcodeFile' in IDX:
-    raise SystemExit('`onBarcodeFile` n est plus orphelin : le document affirme que rien ne '
-                     'l appelle.')
-if re.search(r"_lookupBarcode\(code\s*,", C_SCANNER) or re.search(r"_lookupBarcode\(code\s*,", C_CAPTURE):
-    raise SystemExit('Le scanner dit desormais sa provenance explicitement : le defaut n4 du '
-                     'document a ete corrige, mettre le document a jour.')
-
-# ── [!!] LA PROVENANCE : quatre chemins distincts, et la valeur par defaut ────────────────────
-for _p in ("'scan'", "'photo-code'", "'photo-code-ia'", "'code-tape'"):
-    if _p not in APP:
-        raise SystemExit('La provenance %s a disparu : le paragraphe 5 decrit quatre chemins '
-                         'distincts.' % _p)
-if "saisie||'scan'" not in CODE:
-    raise SystemExit('La provenance par defaut du lookup n est plus `scan` : le paragraphe 5 '
-                     'explique que le scanner compte dessus.')
-
-# ── [!!] LE CYCLE DE VIE DE LA CAMERA (les correctifs ft-v1091/1092 tiennent) ─────────────────
-if 'stopStreams' not in C_CLOSE or '.reset()' not in C_CLOSE:
-    raise SystemExit('La fermeture du scanner ne coupe plus le flux : *une fuite qui ne se voit '
-                     'que sur le telephone de quelqu un*.')
-if "'ov-bc-scan':'closeBarcodeScanner'" not in SCR:
-    raise SystemExit('L ecran du scanner est sorti de la table de fermeture : glisser ou le bouton '
-                     'retour laisserait la camera allumee (ft-v1091/1092).')
-
-# ── [!!] LES REGLAGES DU DECODEUR, mesures utiles le 14/09 ────────────────────────────────────
-if 'TRY_HARDER' not in C_HINTS:
+# ═══ [!!] LE DECODAGE RESTE LOCAL, ET SES REGLAGES SONT CEUX QU ON A MESURES ══════════════════
+if "'./lib/zxing.min.js'" not in C_ZX or re.search(r'https?:', C_ZX):
+    raise SystemExit('ZXing n est plus charge depuis le depot : un decodage « local » qui '
+                     'telecharge sa bibliotheque ailleurs n est plus local.')
+if not os.path.exists(os.path.join(ROOT, 'lib', 'zxing.min.js')):
+    raise SystemExit('lib/zxing.min.js est absent du depot.')
+if 'TRY_HARDER' not in C_HINT:
     raise SystemExit('TRY_HARDER a disparu : mesure du 14/09, sans lui un code vu en paysage n est '
-                     'plus lu du tout (0/3).')
-_FORMATS = ['EAN_13', 'EAN_8', 'UPC_A', 'UPC_E']
-for _f in _FORMATS:
-    if _f not in C_HINTS:
-        raise SystemExit('Le format %s a disparu des reglages du decodeur.' % _f)
+                     'plus lu du tout.')
+_FMT = ['EAN_13', 'EAN_8', 'UPC_A', 'UPC_E']
+for _f in _FMT:
+    if _f not in C_HINT:
+        raise SystemExit('Le format %s a disparu des reglages.' % _f)
+if len(re.findall(r'ZXing\.BarcodeFormat\.', C_HINT)) != len(_FMT):
+    raise SystemExit('La liste des formats n en compte plus exactement %d : le document justifie '
+                     'ce chiffre par une mesure (elle divise par 3 le cout d un echec).' % len(_FMT))
+# [/!\] LA CAMERA EST COUPEE PAR DEUX CHEMINS — le lecteur ET la balise video.
+if 'stopStreams' not in C_CLOS or '.reset()' not in C_CLOS:
+    raise SystemExit('La fermeture ne coupe plus le lecteur ZXing.')
+if not re.search(r'srcObject[\s\S]{0,160}getTracks\(\)[\s\S]{0,90}\.stop\(\)', C_CLOS):
+    raise SystemExit('La fermeture ne coupe plus les pistes portees par la balise video : si le '
+                     'lecteur a ete remplace, la camera reste allumee.')
+if not re.search(r"_bcEtat==='SCANNING'\)\s*_bcSetEtat\('IDLE'\)", C_CLOS):
+    raise SystemExit('La fermeture ECRASE desormais un traitement en cours : elle rouvrirait la '
+                     'porte au second lecteur, c est-a-dire la course qu on vient de fermer.')
+if "'ov-bc-scan':'closeBarcodeScanner'" not in SCR:
+    raise SystemExit('L ecran du scanner est sorti de la table de fermeture (ft-v1091/1092).')
 
-# ── [!!] LES CONTRAINTES CAMERA (le correctif ft-v378) ────────────────────────────────────────
-if 'environment' not in C_SCANNER or '1920' not in C_SCANNER:
-    raise SystemExit('Les contraintes camera ont change : sans objectif arriere ni haute '
-                     'resolution, c est « camera ouverte mais ne lit pas » (ft-v378).')
-if 'focusMode' not in C_SCANNER:
-    raise SystemExit('La demande de mise au point continue a disparu : c est le reglage qui vise '
-                     'le defaut le plus probable du retrait (cause E).')
-
-# ── [!!] LE BANC : le bloc CCCVIII existe, il conduit une VRAIE camera ────────────────────────
-N_CCCVIII = len(re.findall(r"t\('CCCVIII ", RUN))
-if N_CCCVIII != 19:
-    raise SystemExit('Le bloc CCCVIII porte %d temoins, pas 19 : le document cite ce chiffre.'
-                     % N_CCCVIII)
-for _a in ('--use-fake-device-for-media-stream', '--use-file-for-fake-video-capture',
-           'YUV4MPEG2'):
+# ═══ [!!] LE BANC : deux blocs, et il conduit une VRAIE camera ════════════════════════════════
+N_VIII = len(re.findall(r"t\('CCCVIII ", RUN))
+N_IX = len(re.findall(r"t\('CCCIX ", RUN))
+if N_VIII != 19 or N_IX != 12:
+    raise SystemExit('Les blocs du banc portent %d et %d temoins, pas 19 et 12 : le document cite '
+                     'ces chiffres.' % (N_VIII, N_IX))
+for _a in ('--use-fake-device-for-media-stream', '--use-file-for-fake-video-capture', 'YUV4MPEG2'):
     if _a not in RUN:
         raise SystemExit('Le banc ne conduit plus une vraie camera (%s manquant) : sans elle il '
                          'n eprouve que le DECODEUR, et la question porte sur la CHAINE.' % _a)
 if '3083681011791' not in RUN:
-    raise SystemExit('Le banc n emploie plus un code-barres reel : une fixture inventee ne prouve '
-                     'rien sur un vrai produit.')
-# [/!\] La zone de silence se compte en MODULES — l erreur de fixture du 14/09, figee ici pour
-#       qu elle ne revienne pas : une marge en pixels fait echouer les codes vus de pres.
+    raise SystemExit('Le banc n emploie plus un code-barres reel.')
 if not re.search(r'm\.length\+24', RUN):
     raise SystemExit('La zone de silence du generateur de code-barres n est plus exprimee en '
                      'MODULES : c est l erreur de fixture du 14/09, elle ferait conclure a tort '
                      '« code vu de pres = illisible ».')
+# [/!\] LA COURSE DOIT ETRE PROVOQUEE, PAS ATTENDUE — sinon le temoin mesure la chance.
+# [/!\] LE PIEGE DE LA SOUS-CHAINE, REPOSE PAR MOI : « o.marteau » est contenu dans
+#       « o.marteauX ». Mesure du 14/09 : renommer le drapeau laissait ce garde parfaitement vert.
+#       C'est la famille de `presentsX` (ft-v1207). On epingle donc les DEUX usages reels — la
+#       condition de boucle et l'arret avant lecture du statut — avec leur ponctuation.
+if ('_bcCaptureFrame()' not in RUN or 'o.marteau=true;' not in RUN
+        or 'o.marteau=false;' not in RUN or '&& o.marteau;' not in RUN):
+    raise SystemExit('Le banc ne PROVOQUE plus la course (il ne martele plus « Capturer », ou il '
+                     'ne s arrete plus avant de lire le statut) : un temoin qui ATTEND la course '
+                     'mesure la charge de la machine, pas la course.')
 
-# ── [!!] LE DOCUMENT LUI-MEME porte son verdict et ses limites ────────────────────────────────
-# [/!\] Les gardes du document comparent SANS accent ni apostrophe : le document est ecrit en
-#       francais accentue, le generateur en ASCII. Un garde qui ne normalise pas se tait pour la
-#       mauvaise raison — mesure le 14/09, il a d abord refuse un verdict pourtant present.
+# ═══ [!!] LE DOCUMENT : sa chronologie corrigee, ses limites, et son verdict ═══════════════════
 _ACC = str.maketrans('àâäéèêëîïôöùûüç', 'aaaeeeeiioouuuc')
 
 
@@ -194,17 +200,38 @@ def _plat(t):
 
 
 DOC_PLAT = _plat(DOC)
-if 'reactiver avec fallback ia' not in DOC_PLAT:
-    raise SystemExit('Le document a perdu son verdict : c est ce que Michel a demande en sortie.')
-for _s in ('2 h 37', 'ft-v377', 'ft-v378', 'ft-v388', 'zone de silence'):
+if 'pret pour test iphone' not in DOC_PLAT:
+    raise SystemExit('Le document a perdu son verdict : Michel a demande PRET POUR TEST IPHONE, '
+                     'et rien de plus fort.')
+# [/!\] CE GARDE CHERCHE UNE AFFIRMATION, PAS UN MOT — et sa premiere version ne le faisait pas.
+#       Mesure du 14/09 : il refusait le document parce que la CITATION DE MICHEL y figure
+#       (« ne declare pas le scanner definitivement reactive »). *Un garde qui ne voit pas la
+#       negation refuse exactement la phrase qui dit de ne pas le faire.* On exige donc qu un
+#       « ne ... pas » precede chaque occurrence, dans les 60 caracteres qui la precedent.
+for _interdit in ('definitivement reactive', 'reactive definitivement', 'validee sur iphone'):
+    for _m in re.finditer(re.escape(_interdit), DOC_PLAT):
+        _avant = DOC_PLAT[max(0, _m.start() - 60):_m.start()]
+        if not re.search(r'\bne\b|\bpas\b|\bjamais\b|\baucun', _avant):
+            raise SystemExit('LE VERDICT EST MONTE D UN CRAN SANS LE RETOUR IPHONE : « %s » est '
+                             'AFFIRME dans le document (contexte : %r). Michel a ecrit de ne pas '
+                             'le faire.' % (_interdit, _avant[-50:]))
+for _s in ('ft-v377', 'ft-v378', 'ft-v388', 'merge-base', '2 j 19 h', 'zone de silence'):
     if _plat(_s) not in DOC_PLAT:
-        raise SystemExit('Le document a perdu un fait de son enquete : %s' % _s)
-if "n'est pas mesuree" not in DOC_PLAT and "n'est pas mesure" not in DOC_PLAT:
-    raise SystemExit('Le document ne dit plus que la fiabilite iPhone N EST PAS mesuree d ici : '
-                     'c est la limite la plus importante a ne pas taire.')
-for _s in ('protocole iphone', 'ne pas reactiver', 'course'):
-    if _s not in DOC_PLAT:
-        raise SystemExit('Le document a perdu une section attendue : %s' % _s)
+        raise SystemExit('Le document a perdu un fait de la contre-enquete : %s' % _s)
+# [/!\] LA DATE D ENTREE D OPEN FOOD FACTS EST LE FAIT QUI CORRIGE LA PREMISSE — on epingle
+#       l AFFIRMATION, pas le nombre : « 08/07 » apparait ailleurs dans le tableau, donc chercher
+#       la chaine seule laissait passer la suppression de la phrase qui compte.
+if not re.search(r"l ?.?integration date du ?.{0,6}08/07", _plat(DOC).replace('*', '')):
+    raise SystemExit('Le document n affirme plus QUAND Open Food Facts est entre dans le projet : '
+                     'c est le fait qui corrige la premisse de Michel, et sans lui la contre-'
+                     'enquete perd son point de depart.')
+# [/!\] LA CORRECTION EXPLICITE : le document doit DIRE que sa conclusion precedente etait trop
+#       forte. Un dossier qui se corrige en silence vaut moins qu un dossier qui se corrige.
+if "n'explique pas le retrait" not in DOC_PLAT.replace(' ', ' '):
+    raise SystemExit('Le document ne CORRIGE plus explicitement sa conclusion precedente sur le '
+                     'lookup : Michel a demande que la correction soit explicite.')
+if "n'est pas mesuree" not in DOC_PLAT:
+    raise SystemExit('Le document ne dit plus que la fiabilite iPhone N EST PAS mesuree d ici.')
 
 N_GARDES = len(re.findall(r'raise SystemExit', open(os.path.abspath(__file__),
                                                     encoding='utf-8').read()))
@@ -214,7 +241,6 @@ ROUGE = colors.HexColor('#C0392B')
 ENCRE = colors.HexColor('#1A1A1A')
 GRIS = colors.HexColor('#5A5A5A')
 FOND = colors.HexColor('#F4F4F2')
-VERT = colors.HexColor('#1E7A4B')
 
 ss = getSampleStyleSheet()
 S = {
@@ -234,19 +260,19 @@ S = {
                             leading=11, textColor=ENCRE),
 }
 
+
 def _v(txt):
-    """Refuse tout caractere que WinAnsi/cp1252 ne sait pas coder — la police du PDF ne le
-    dessinerait pas, et un carre noir dans un document destine a etre partage passe inapercu a
-    la relecture.
-    [/!\\] MESURE DU 14/09 : ma premiere version testait la plage latin-1 (`[^\\x00-\\xff]`) et
-    refusait donc le tiret cadratin, que cp1252 code pourtant en 0x97. *Un controle plus strict
-    que la contrainte reelle refuse du travail juste* — il encode vraiment, au lieu de deviner."""
+    """Refuse tout caractere que WinAnsi/cp1252 ne sait pas coder — la police ne le dessinerait
+    pas, et un carre noir dans un document partage passe inapercu a la relecture.
+    [/!\\] Il ENCODE au lieu de deviner : une version anterieure testait la plage latin-1 et
+    refusait le tiret cadratin, que cp1252 code pourtant en 0x97. *Un controle plus strict que la
+    contrainte reelle refuse du travail juste.*"""
     nu = html.unescape(re.sub(r'<[^>]+>', '', txt))
     for i, ch in enumerate(nu):
         try:
             ch.encode('cp1252')
         except UnicodeEncodeError:
-            raise SystemExit('CARACTERE HORS cp1252 dans le PDF : %r (contexte : %r)'
+            raise SystemExit('CARACTERE HORS cp1252 : %r (contexte : %r)'
                              % (ch, nu[max(0, i - 30):i + 30]))
     return txt
 
@@ -270,147 +296,139 @@ def T(lignes, largeurs, entete=True):
 
 
 H = []
-H.append(P('Le scanner camera local', 'titre'))
-H.append(P('Audit avant reactivation &mdash; 14/09/2026 &middot; Force Tracker %s &middot; '
-           '%d gardes recomptent ce document depuis le code servi et refusent de le produire si '
-           'un fait tombe.' % (VERSION, N_GARDES), 'sous'))
+H.append(P('Le scanner camera local &mdash; reactivation controlee', 'titre'))
+H.append(P('14/09/2026 &middot; Force Tracker %s &middot; %d gardes recomptent ce document depuis '
+           'le code servi et refusent de le produire si un fait tombe.' % (VERSION, N_GARDES),
+           'sous'))
 
-H.append(P('Ce que Michel a demande', 'h'))
-H.append(P('<i>&laquo; Lire un code-barres sans appel IA, puis utiliser exactement le meme lookup '
-           'Open Food Facts que le code tape. &raquo;</i> Et la borne qui decide de tout : '
-           '<b>&laquo; je ne veux PAS reactiver aveuglement un ancien bouton juge peu fiable. Je '
-           'veux comprendre exactement pourquoi il avait ete retire et mesurer si ce probleme '
-           'existe encore &raquo;</b>.', 'p'))
-H.append(P('<b>Rien n a ete reactive.</b> Aucun fichier servi n est modifie ; le bouton reste '
-           'mure tant que Michel n a pas tranche.', 'p'))
-
-H.append(P('1. Pourquoi il avait ete retire &mdash; la chronologie, lue dans git', 'h'))
+H.append(P('1. La chronologie de juillet &mdash; CORRIGEE', 'h'))
+H.append(P('Michel apporte une information qui oblige a rouvrir l enquete : <i>&laquo; au moment '
+           'ou l ancien scanner avait ete teste puis retire, la base Open Food Facts telle qu on '
+           'l utilise aujourd hui n existait pas encore &raquo;</i>, et <b>&laquo; ne considere '
+           'pas comme acquis que le mauvais fonctionnement venait d un lookup casse &raquo;</b>. '
+           '<b>Il avait raison de le demander, et la verification change la conclusion.</b>', 'p'))
 H.append(T([
-    ['heure (11/07/2026)', 'version', 'ce qui s est passe'],
-    ['14:33', 'ft-v376', '<b>le scanner camera live est cree</b> (ZXing continu, objectif arriere, '
-                         'EAN/UPC, TRY_HARDER)'],
-    ['15:29', 'ft-v377', '<b>la recherche produit etait CASSEE</b> : <i>&laquo; v2 renvoie '
-                         "<i>success</i> pas 1 &mdash; tout etait rejete introuvable &raquo;</i>"],
-    ['15:40', 'ft-v378', 'correctif <i>&laquo; camera ouverte mais ne lit pas &raquo;</i> : 1080p, '
-                         'bouton Capturer, mise au point continue'],
-    ['16:57', 'ft-v384', 'saisie manuelle ajoutee &mdash; <i>&laquo; repli quand le scan galere &raquo;</i>'],
-    ['<b>17:10</b>', '&mdash;', '<b>retrait</b> : <i>&laquo; trop capricieux iPhone &raquo;</i>'],
-], [26 * mm, 20 * mm, 119 * mm]))
-H.append(P('<b>Trois faits que cette chronologie donne.</b> <b>(1)</b> Le scanner live a vecu '
-           '<b>2 h 37</b>. <b>(2)</b> Pendant environ une heure de ces 2 h 37, la recherche produit '
-           'rejetait <b>TOUS</b> les produits &mdash; un code parfaitement decode affichait donc '
-           '<i>&laquo; produit introuvable &raquo;</i>, ce qui ressemble trait pour trait a un '
-           'scanner qui ne marche pas. <b>(3)</b> Le retrait n a tente <b>aucune</b> correction : '
-           'le commit touche <b>index.html seulement, 6 lignes</b>.', 'p'))
-H.append(P('<b>Ce que la chronologie ne permet PAS de conclure.</b> Elle ne blanchit pas le '
-           'scanner : le correctif ft-v378 nomme un vrai symptome iPhone, et 1 h 17 plus tard le '
-           'message de ft-v384 parle encore d un <i>scan qui galere</i>. Un probleme iPhone reel '
-           'persistait apres le correctif.', 'p'))
+    ['moment (2026)', 'fait mesure dans git'],
+    ['<b>08/07 20:41</b>', '<b>Open Food Facts entre dans le projet</b> (ft-v331), trois jours '
+                           'avant le scanner live'],
+    ['11/07 10:20', 'note : <i>&laquo; photo unique trop fragile, verifie en test &raquo;</i>'],
+    ['11/07 14:33', 'le scanner camera <b>live</b> est cree (ft-v376)'],
+    ['<b>11/07 15:29</b>', '<b>le lookup est REPARE</b> (ft-v377)'],
+    ['11/07 15:40', 'correctif <i>&laquo; camera ouverte mais ne lit pas &raquo;</i> (ft-v378) : '
+                    '1080p + bouton Capturer'],
+    ['11/07 16:47', 'clone <b>deploye pour test iPhone</b>'],
+    ['11/07 16:57', 'saisie manuelle : <i>&laquo; repli quand le scan galere &raquo;</i>'],
+    ['<b>11/07 17:10</b>', '<b>retrait</b> : <i>&laquo; trop capricieux iPhone &raquo;</i>'],
+], [28 * mm, 137 * mm]))
+H.append(P('<b>(1) Open Food Facts ETAIT la.</b> La fonction de recherche produit au moment du '
+           'retrait est, a quelques champs pres, celle d aujourd hui. <i>Sur la lettre la premisse '
+           'est donc inexacte &mdash; mais sur le fond elle vise juste</i> : tout ce qui ENTOURE ce '
+           'lookup est posterieur (le normaliseur, le resolveur energie/macros, la douane, CIQUAL, '
+           'le hub). En juillet, le lookup ne prenait meme pas d argument de provenance.', 'p'))
+H.append(P('<b>(2) Le correctif du lookup est un ANCETRE du retrait</b> &mdash; verifie par '
+           '<b>git merge-base</b> &mdash; et le clone reellement teste sur iPhone a 16:47 '
+           'contenait <b>les deux correctifs</b>. <b>Donc le jugement &laquo; trop capricieux '
+           'iPhone &raquo; a ete porte sur un lookup repare : le bug de lookup n explique PAS le '
+           'retrait du scanner live.</b> C est la correction principale apportee a ce dossier.', 'p'))
+H.append(P('<b>(3) En revanche il explique l AUTRE jugement, celui qui a tout declenche.</b> La '
+           'note <i>&laquo; photo unique trop fragile &raquo;</i> a ete ecrite pendant les '
+           '<b>2 jours et 19 heures</b> ou le lookup rejetait TOUS les produits &mdash; et c est '
+           'ce jugement-la qui a motive la construction du scanner live. <i>L erreur de confusion '
+           'a bien eu lieu ; elle s est produite un cran plus tot que je ne l avais ecrit.</i>', 'p'))
+H.append(P('<b>Et la trouvaille de la contre-enquete : la course est nee du correctif.</b> Le '
+           'bouton &laquo; Capturer &raquo; est arrive a <b>15:40</b> avec le desarmement pose '
+           'APRES son await ; le scanner a ete retire <b>1 h 30 plus tard</b>. Deux lookups pour un '
+           'scan, c est deux <i>&laquo; Recherche du produit... &raquo;</i> et un formulaire rempli '
+           'deux fois. <b>Mecanisme mesure, cause non prouvee</b> &mdash; mais il n existe plus.', 'p'))
 
-H.append(P('2. La fiabilite du decodeur, mesuree', 'h'))
-H.append(P('Trois vrais codes-barres encodes en EAN-13 selon la norme, degrades, decodes par le '
-           'ZXing <b>reellement servi</b>. <b>17 cas sur 20 passent a 3/3.</b>', 'p'))
+H.append(P('2. Ce qui a ete corrige', 'h'))
 H.append(T([
-    ['ce qui passe', 'ce qui ne passe pas'],
-    ['net &middot; code petit ou eloigne &middot; code vu de pres &middot; incline 5 a 20 degres '
-     '&middot; incline 90 degres &middot; flou 1 px &middot; faible lumiere (25 %) &middot; '
-     'contraste ecrase &middot; reflet metal (voile 75 %) &middot; cumul realiste',
-     '<b>incline 45 degres</b><br/><b>flou des 2 px</b><br/>reflet quasi opaque (90 %)'],
-], [105 * mm, 60 * mm]))
-H.append(P('<b>Le flou est le seul vrai ennemi, et brutalement : 1 px passe, 2 px ne passe plus.</b> '
-           'La lumiere ne gene pas, le contraste non plus, l inclinaison jusqu a 20 degres non plus. '
-           '<b>Sur un telephone, &laquo; flou &raquo; s appelle &laquo; mise au point &raquo;</b> '
-           '&mdash; c est exactement le symptome de ft-v378, et cela designe la cause la plus '
-           'probable du retrait.', 'p'))
-H.append(P('<b>Une erreur de mesure, dite plutot que cachee.</b> Ma premiere passe concluait '
-           '<i>&laquo; code vu de pres : 0/3 &raquo;</i>. C etait ma fixture : je laissais une marge '
-           'blanche de <b>20 pixels</b> alors que la norme EAN-13 exige une zone de silence de '
-           '<b>9 a 11 MODULES</b>. A 8 px par module, 20 px ne valent que 2,5 modules. Corrige : '
-           '<b>3/3</b>. <i>Un parametre exprime dans la mauvaise unite ne mesure pas le code, il '
-           'mesure le test.</i>', 'p'))
+    ['#', 'correction', 'preuve'],
+    ['1', '<b>La course</b> : un seul proprietaire d etat (IDLE, SCANNING, CODE_TROUVE, LOOKUP, '
+          'TERMINE). Tout code decode passe par un verrou unique.',
+          '1 lookup sous course <b>provoquee</b> (le banc martele Capturer)'],
+    ['2', '<b>Provenance explicite</b> : camera-code-local passee en dur, jamais heritee.',
+          'temoin de comportement + de source'],
+    ['3', '<b>Aucun bouton mort</b> : les trois orphelines de ft-v388 sont supprimees, avec leur '
+          'raison ecrite (R30).', 'temoin de source'],
+    ['4', '<b>Le numero lu est montre AVANT la recherche</b> (le §16 de Michel).',
+          'le champ porte l EAN a l ecran'],
+    ['5', '<b>Le repli IA est un bouton</b> : ni minuteur, ni compteur d echecs.',
+          'temoin de source + 0 IA sur code illisible'],
+    ['6', '<b>La camera est coupee par deux chemins</b> : le lecteur ZXing ET les pistes de la '
+          'balise video.', 'pistes <i>ended</i> apres succes'],
+], [8 * mm, 100 * mm, 57 * mm]))
 
-H.append(P('3. Le chemin reseau, mesure devant une camera', 'h'))
-H.append(P('Le banc lance un second navigateur avec une <b>camera factice</b> qui filme un vrai '
-           'EAN-13, et <b>fetch</b> est intercepte et classe par domaine. Sans elle, on n eprouve '
-           'que le DECODEUR ; or la question porte sur la CHAINE.', 'p'))
+H.append(P('3. §8 &mdash; le traitement d image n apporte RIEN (mesure)', 'h'))
+H.append(P('Michel : <i>&laquo; avant d ajouter sharpen, contraste, binarisation... prouve que '
+           'cela ameliore reellement ZXing &raquo;</i>. Mesure sur <b>18 cas durs</b> :', 'p'))
+H.append(T([
+    ['traitement', 'reussites', 'cout'],
+    ['<b>aucun</b>', '<b>3/18</b>', '152 ms'],
+    ['contraste x2,2', '3/18', '174 ms'],
+    ['nettete + desaturation', '3/18', '163 ms'],
+    ['binarisation d Otsu (seuil calcule)', '3/18', '169 ms'],
+    ['agrandissement x2', '3/18', '<b>258 ms</b>'],
+], [70 * mm, 45 * mm, 50 * mm]))
+H.append(P('<b>Aucun traitement ne fait passer un seul cas de plus</b>, et l agrandissement coute '
+           '+70 %% de temps pour rien. <b>Il n y aura donc pas d usine a gaz</b> : le facteur '
+           'limitant est l autofocus, et aucun post-traitement ne rattrape une image molle.', 'p'))
+
+H.append(P('4. §9 &mdash; les formats : la liste n est pas un caprice', 'h'))
+H.append(T([
+    ['reglage', 'succes', 'echec', 'lit le paysage'],
+    ['<b>4 formats + TRY_HARDER</b> (retenu)', '3 ms', '<b>140 ms</b>', 'oui'],
+    ['4 formats seuls', '2 ms', '8 ms', '<b>non</b>'],
+    ['TRY_HARDER seul', '5 ms', '<b>436 ms</b>', 'oui'],
+    ['aucun reglage', '2 ms', '21 ms', '<b>non</b>'],
+], [62 * mm, 28 * mm, 32 * mm, 43 * mm]))
+H.append(P('<b>TRY_HARDER apporte le paysage ; la liste de 4 formats divise par 3 le cout d un '
+           'echec.</b> C est elle qui rend TRY_HARDER abordable &mdash; ~7 tentatives par seconde '
+           'en lecture continue. Formats retenus : <b>EAN-13</b> (Europe), <b>EAN-8</b> (petits '
+           'emballages), <b>UPC-A/E</b> (produits americains). Pas un de plus : chaque format '
+           'supplementaire rallonge <b>chaque frame ratee</b> sans rien lire de nouveau.', 'p'))
+
+H.append(P('5. Le chemin reseau', 'h'))
 H.append(T([
     ['', 'scanner camera', 'code tape', 'photo IA'],
-    ['appels IA', '<b>0</b>', '0', '1'],
+    ['appels IA', '<b>0</b>', '0', '<b>1</b>'],
     ['quota des 25 essais', '<b>inchange</b>', 'inchange', '<b>+1</b>'],
-    ['lookups Open Food Facts', '1 ou 2 (la course)', '1', '1'],
-    ['provenance', 'scan', 'code-tape', 'photo-code-ia'],
+    ['lookups Open Food Facts', '<b>1</b> (course fermee)', '1', '1'],
+    ['provenance', 'camera-code-local', 'code-tape', 'photo-code-ia'],
     ['resultat produit', '<b>identique</b>', 'identique', 'identique'],
-], [45 * mm, 42 * mm, 34 * mm, 34 * mm]))
-H.append(P('<b>Le point le plus important est acquis : le scanner ne cree aucun chemin nutrition '
-           'nouveau.</b> Il appelle le meme lookup que la saisie manuelle ; le resolveur, la douane '
-           'et le journal ne voient aucune difference. Sur un code illisible : <b>0 lookup, 0 appel '
-           'IA</b>, un message qui dit quoi faire, et la camera reste ouverte pour reessayer.', 'p'))
+], [45 * mm, 43 * mm, 33 * mm, 34 * mm]))
+H.append(P('<b>Le scanner ne possede aucune logique nutritionnelle</b> &mdash; un garde verifie '
+           'qu il ne touche ni le normaliseur, ni le resolveur, ni la douane, ni le journal, ni les '
+           'portions. <i>Il fournit un numero et appelle le chemin existant.</i> Sur un code '
+           'illisible : <b>0 lookup, 0 appel IA, quota intact</b>, un message qui dit quoi faire, '
+           'et la camera reste ouverte pour reessayer.', 'p'))
 
-H.append(P('4. Les quatre defauts trouves dans le code orphelin', 'h'))
-H.append(T([
-    ['#', 'defaut', 'etat'],
-    ['1', '<b>La course</b> : le decodage continu et le bouton Capturer peuvent lire le meme code a '
-          '28 ms d intervalle et tirer chacun son lookup. Cause structurelle : la capture ne desarme '
-          'le continu qu APRES son await de decodage.', 'mesure, <b>non corrige</b>'],
-    ['2', 'Le bouton de repli photo cherche un element retire avec ft-v388 : il ne fait rien.',
-          'mesure, <b>non corrige</b>'],
-    ['3', 'Le decodage LOCAL d une photo (le seul chemin photo sans IA) est orphelin lui aussi.',
-          'mesure, <b>non corrige</b>'],
-    ['4', 'Le scanner ne dit pas sa provenance explicitement ; la valeur par defaut rattrape.',
-          'mesure, <b>non corrige</b>'],
-], [8 * mm, 112 * mm, 45 * mm]))
-H.append(P('<b>La course est INTERMITTENTE, et cela a d abord produit un mauvais temoin &mdash; le '
-           'mien.</b> Selon qui gagne, on observe 1 ou 2 lookups ; ma premiere version comptait '
-           '&laquo; exactement 2 &raquo; et passait au rouge des que la machine etait moins chargee. '
-           '<b>Un temoin qui depend du vainqueur d une course ne mesure pas la course, il mesure la '
-           'charge de la machine.</b> C est un temoin de SOURCE qui la fige.', 'p'))
+H.append(P('6. Ce que je ne peux pas prouver d ici', 'h'))
+H.append(P('<b>Ce conteneur n a ni camera ni Safari.</b> Ne sont PAS mesures : la fiabilite sur '
+           'iPhone, le comportement reel de l autofocus (pourtant le facteur limitant), le passage '
+           'en arriere-plan et le retour, et la cadence reelle de la lecture continue (le banc rend '
+           'la video en logiciel &mdash; son chiffre est un plafond large, pas une prediction). '
+           '<b>Et une honnetete sur l enquete</b> : que la course ait <i>cause</i> le retrait de '
+           'juillet est un mecanisme plausible, pas un fait etabli. Le fait etabli est qu elle '
+           'existait ce jour-la.', 'p'))
 
-H.append(P('5. L UX proposee &mdash; local d abord, IA en secours', 'h'))
-H.append(P('L ecran d ajout gagne <b>un seul</b> bouton (&laquo; scanner avec la camera &raquo;), et '
-           'le repli IA apparait <b>dans l ecran du scanner, apres un echec</b> &mdash; la ou la '
-           'personne est bloquee, pas dans une liste de boutons qu elle doit trier a l avance. '
-           '<i>Le seul moment ou l on sait qu il faut l IA, c est apres un echec.</i>', 'p'))
-H.append(P('<b>Ce qu il ne faut pas faire : le basculement automatique.</b> Enchainer sur l IA apres '
-           'N echecs serait un appel payant declenche sans geste &mdash; le quota se viderait sans '
-           'que la personne l ait demande, et <b>un code flou restera flou</b> : on paierait un appel '
-           'pour echouer deux fois. <b>Le repli doit rester un bouton.</b>', 'p'))
-
-H.append(P('6. Le verdict : REACTIVER AVEC FALLBACK IA', 'h'))
-H.append(T([
-    ['ce qui plaide pour', 'ce qui empeche de le faire tout de suite'],
-    ['le decodeur passe <b>17 cas sur 20</b><br/>'
-     '<b>zero appel IA</b>, aucun quota touche<br/>'
-     'le <b>meme lookup</b> que le code tape<br/>'
-     'une des deux causes du retrait est <b>deja reparee</b><br/>'
-     'deux correctifs de cycle de vie depuis (ft-v1091/1092)<br/>'
-     'le bouton <b>Capturer marche du premier coup</b>',
-     'la <b>course</b> doit etre corrigee<br/>'
-     'le <b>bouton de repli mort</b> doit etre repare ou retire<br/>'
-     'le <b>repli IA contextuel</b> doit etre ecrit<br/>'
-     '<b>la cause Safari/iPhone n est pas mesurable d ici</b>'],
-], [82 * mm, 83 * mm]))
-H.append(P('<b>Pourquoi pas &laquo; ne pas reactiver &raquo; :</b> la mesure ne soutient pas le '
-           'jugement de juillet. Le decodeur n est pas mauvais, et la fenetre sur laquelle il a ete '
-           'juge durait 2 h 37 et contenait une panne de lookup qui faisait echouer tous les '
-           'produits. <b>Pourquoi pas &laquo; reactiver &raquo; tout court :</b> le flou casse tout '
-           'des 2 px, et le flou sur un telephone s appelle la mise au point.', 'p'))
-
-H.append(P('7. Ce que je ne peux pas prouver d ici', 'h'))
-H.append(P('<b>Ce conteneur n a ni camera ni Safari.</b> La fiabilite mobile <b>n est pas mesuree</b>, '
-           'et je ne la presente pas comme telle. Le document porte un protocole iPhone en cinq '
-           'produits et cinq gestes, a executer par Michel une fois le bouton rebranche. '
-           '<i>Le vrai critere final reste l iPhone, et il n est pas encore passe.</i>', 'p'))
+H.append(P('7. Verdict : PRET POUR TEST IPHONE', 'h'))
+H.append(P('<b>Et rien de plus fort.</b> Michel : <i>&laquo; ne declare pas le scanner '
+           'definitivement reactive avant mon retour iPhone &raquo;</i> &mdash; un garde de ce '
+           'generateur refuse de produire si le document monte d un cran. Le protocole iPhone tient '
+           'en 6 produits et 5 gestes, et son critere est le sien : <b>est-ce qu un utilisateur '
+           'normal arrive a scanner rapidement la majorite de ses produits sans s enerver ?</b>', 'p'))
 
 H.append(Spacer(1, 8))
-H.append(P('Mesures figees par le bloc CCCVIII de tests/parcours/runner.js (%d temoins), conduit '
-           'devant une camera factice qui filme un vrai EAN-13. Ce PDF est produit par '
-           'tools/gen_scanner_pdf.py : ses %d gardes recomptent chaque fait depuis le code servi et '
-           'refusent de produire si l un d eux tombe &mdash; y compris si le scanner retrouve une '
-           'porte d entree, si la course est corrigee, ou si le banc cesse de conduire une vraie '
-           'camera.' % (N_CCCVIII, N_GARDES), 'petit'))
+H.append(P('Mesures figees par les blocs CCCVIII (%d temoins, le scanner conduit devant une camera '
+           'factice qui filme un vrai EAN-13) et CCCIX (%d temoins, les garanties de la '
+           'reactivation). Ce PDF est produit par tools/gen_scanner_pdf.py : ses %d gardes '
+           'recomptent chaque fait depuis le code servi.'
+           % (N_VIII, N_IX, N_GARDES), 'petit'))
 
 SimpleDocTemplate(OUT, pagesize=A4, leftMargin=22 * mm, rightMargin=22 * mm,
                   topMargin=18 * mm, bottomMargin=16 * mm,
-                  title='Le scanner camera local - audit avant reactivation',
+                  title='Le scanner camera local - reactivation controlee',
                   author='Force Tracker').build(H)
-print('OK %s  (%s, %d temoins CCCVIII, %d gardes)' % (OUT, VERSION, N_CCCVIII, N_GARDES))
+print('OK %s  (%s, CCCVIII %d + CCCIX %d temoins, %d gardes)'
+      % (OUT, VERSION, N_VIII, N_IX, N_GARDES))

@@ -1,17 +1,355 @@
-# 📷 Le scanner caméra local — audit avant réactivation
+# 📷 Le scanner caméra local — réactivation contrôlée
 
-> **Chantier ouvert par Michel le 14/09/2026**, après le dossier réseau du code-barres.
-> Objectif écrit par lui : *« lire un code-barres sans appel IA, puis utiliser exactement le même
-> lookup Open Food Facts que le code tapé »*.
+> **Chantier ouvert par Michel le 14/09/2026**, en deux temps : d'abord un audit, puis — le même
+> jour, après une information qu'il apporte — une **contre-enquête** et une **réactivation
+> contrôlée**.
 >
-> ⛔ **Sa borne décide de tout** : *« je ne veux PAS réactiver aveuglément un ancien bouton jugé peu
-> fiable. Je veux comprendre exactement pourquoi il avait été retiré et mesurer si ce problème existe
-> encore »* · *« ne remets PAS immédiatement le bouton en production »*.
+> ⭐ Objectif produit, écrit par lui :
+> *« caméra iPhone → décodage LOCAL → numéro EAN → chemin de lookup produit ACTUEL → même résultat
+> que le code tapé → 0 appel IA »*, et seulement si le local échoue : *« bouton volontaire → photo
+> avec IA »*.
 >
-> ⚠️ **Ce document ne réactive rien.** Il mesure, il propose, il rend un verdict. Le bouton reste
-> muré tant que Michel n'a pas tranché.
+> **LOCAL D'ABORD · IA EN SECOURS · aucun basculement automatique.**
+>
+> ⛔ **Verdict de ce document : `PRÊT POUR TEST IPHONE`, et rien de plus fort.**
+> *« Ne déclare pas le scanner définitivement réactivé avant mon retour iPhone. »*
 
 ---
+
+## 1. La chronologie historique — CORRIGÉE
+
+### ⚠️ Ce que la version précédente de ce document affirmait, et qui était trop fort
+
+> *« Pendant ~1 h de ces 2 h 37, la recherche produit rejetait TOUS les produits. Un code
+> parfaitement décodé affichait donc "produit introuvable", ce qui ressemble trait pour trait à un
+> scanner qui ne marche pas. »*
+
+Michel a demandé de rouvrir ce point : *« ne considère pas comme acquis que le mauvais
+fonctionnement historique venait d'un lookup Open Food Facts cassé »*. **Il avait raison de le
+demander, et la vérification change la conclusion.**
+
+### Ce que dit l'historique git réel
+
+| moment (2026) | version | fait mesuré |
+|---|---|---|
+| **08/07 20:41** | ft-v331 | **Open Food Facts entre dans le projet** — `world.openfoodfacts.org`, avec le scan photo ZXing |
+| 11/07 10:20 | — | note de chantier : *« photo unique trop fragile, vérifié en test »* |
+| **11/07 14:33** | ft-v376 | le scanner caméra **live** est créé |
+| **11/07 15:29** | ft-v377 | **le lookup est RÉPARÉ** — *« v2 renvoie `success` pas 1 → tout était rejeté introuvable »* |
+| 11/07 15:40 | ft-v378 | correctif *« caméra ouverte mais ne lit pas »* : 1080p + bouton « Capturer » |
+| 11/07 16:46-47 | — | clone régénéré et **déployé pour test iPhone** |
+| 11/07 16:57 | ft-v384 | saisie manuelle — *« repli quand le scan galère »* |
+| **11/07 17:10** | — | **retrait** : *« trop capricieux iPhone »* |
+
+### ⭐⭐ Les trois faits qui corrigent la conclusion précédente
+
+**① Open Food Facts ÉTAIT là.** L'intégration date du **08/07**, trois jours avant le scanner live.
+La fonction de recherche produit au moment du retrait est, à quelques champs près, **celle
+d'aujourd'hui** (v2 puis repli v0). ⚠️ *Sur la lettre, la prémisse de Michel est donc inexacte —
+mais sur le fond elle vise juste* : **tout ce qui entoure ce lookup est postérieur** — `_ref100`,
+le résolveur énergie/macros, la douane, CIQUAL, « Mes aliments », le hub de préparation. En juillet,
+`_lookupBarcode(ean)` ne prenait **même pas** d'argument de provenance.
+
+**② Le correctif du lookup est un ANCÊTRE du retrait — vérifié par `git merge-base`.** Et le clone
+**réellement testé sur iPhone à 16:47** contenait **ft-v377 ET ft-v378**.
+
+> 👉 **Donc le jugement « trop capricieux iPhone » a été porté sur un lookup RÉPARÉ et sur un
+> scanner déjà corrigé.** ⛔ **Le bug de lookup n'explique PAS le retrait du scanner live.**
+> *C'est la correction principale apportée à ce dossier.*
+
+**③ En revanche, il explique l'AUTRE jugement — celui qui a tout déclenché.** La note du 11/07 à
+10:20, *« photo unique trop fragile, vérifié en test »*, a été écrite pendant les **2 jours et
+19 heures** où le lookup rejetait **tous** les produits (08/07 20:41 → 11/07 15:29).
+
+> 👉 **C'est ce jugement-là qui a motivé la construction du scanner live** — et il a été rendu sur
+> un chemin dont la recherche produit était cassée. *L'erreur de confusion a bien eu lieu ; elle
+> s'est produite un cran plus tôt que je ne l'avais écrit.*
+
+### ⭐⭐ Et la trouvaille de la contre-enquête : la course est née du correctif
+
+`_bcCaptureFrame` — le bouton « Capturer » — est arrivé en **ft-v378, à 15:40**, avec le
+désarmement du décodage continu posé **après** son `await`. **Le scanner a été retiré 1 h 30 plus
+tard.**
+
+> ⚠️ **Mécanisme mesuré, cause non prouvée.** Deux lookups pour un scan, c'est deux
+> *« Recherche du produit… »* et un formulaire rempli deux fois. **Ça ressemble beaucoup à
+> « capricieux ».** Je ne peux pas prouver que Michel l'a vécu — mais le défaut existait, il est
+> arrivé au pire moment, et il n'existe plus.
+
+### Le classement A → E demandé
+
+| cause | verdict |
+|---|---|
+| **A — décodage caméra** | ⛔ **écartée comme cause première** : 17 cas sur 20 décodés (§3) |
+| **B — lookup produit de l'époque** | ⛔ **écartée pour le scanner LIVE** (le correctif était en place) · ✅ **retenue pour le jugement sur la PHOTO** (2 j 19 h de lookup cassé) |
+| **C — iPhone / autofocus** | ⭐⭐ **la plus probable, et la seule qui reste** — le flou casse tout dès 2 px |
+| **D — UX / cycle de vie caméra** | ⚠️ **partielle** : deux correctifs de fermeture ne sont arrivés qu'en ft-v1091/1092, trois semaines plus tard |
+| **E — problème actuel différent** | ✅ **la course à deux lookups** — née le jour même du retrait, corrigée aujourd'hui |
+
+---
+
+## 2. Ce qui a été corrigé (ft-v1210)
+
+### ① La course : un seul propriétaire de l'état
+
+**Avant** : un booléen `_bcScanning`, posé par **deux** lecteurs. **Après** : une machine à états
+avec **un seul verrou**.
+
+```
+IDLE → SCANNING → CODE_TROUVE → LOOKUP → TERMINE
+```
+
+Tout code décodé, **d'où qu'il vienne**, passe par `_bcPrendreLaMain(code)` : le premier lecteur
+prend la main, le second trouve la porte fermée et ne fait **rien**.
+
+> ⭐⭐ **Propriété garantie et MESURÉE SOUS COURSE PROVOQUÉE** : le banc martèle « Capturer »
+> pendant toute la lecture continue. Résultat, trois passes identiques : **1 lookup, 1 requête
+> Open Food Facts, 0 appel IA.**
+>
+> ⚠️ **La course était intermittente, et mon premier témoin l'a payé** : il comptait « exactement
+> 2 lookups » et **rougissait dès que la machine était moins chargée**. *Un témoin qui dépend du
+> vainqueur d'une course ne mesure pas la course, il mesure la charge de la machine.*
+
+### ② La provenance, explicite
+
+`camera-code-local` est passée **en dur** à l'appel, jamais héritée d'une valeur par défaut.
+
+| provenance | ce que c'est | clé de contrôle |
+|---|---|---|
+| `camera-code-local` | décodage ZXing depuis la caméra | ✅ vérifiée |
+| `code-tape` | chiffres tapés | ⛔ non |
+| `photo-code-ia` | chiffres lus par un modèle | ⛔ non |
+
+⚠️ **Deux noms ne sont plus produits mais restent lisibles** : `scan` (l'ancien nom du décodage
+caméra) et `photo-code` (le décodage local d'une photo, retiré avec `onBarcodeFile`). *Une
+provenance qu'on ne sait plus lire est pire qu'une provenance qu'on ne produit plus.*
+
+### ③ Plus aucun bouton mort
+
+`scanBarcodePhoto`, `_bcPhotoFallback` et `onBarcodeFile` sont **supprimées** — orphelines depuis
+ft-v388, et rien à rebrancher : le bouton **« 📸 Capturer »** fait le même travail en mieux, en
+décodant la frame que la personne est **en train de viser**.
+
+### ④ §16 — « code non lu » ne peut plus se confondre avec « produit non trouvé »
+
+Dès qu'un code est accepté, **avant** la recherche :
+- le statut affiche **« ✅ Code lu : 3083681011791 — recherche du produit… »** ;
+- le **champ de saisie est rempli** avec le numéro.
+
+> 👉 Même si Open Food Facts ne connaît pas le produit, **le numéro reste à l'écran**. La personne
+> voit que son code a été lu, et peut relancer ou corriger. *C'est l'erreur de juillet rendue
+> impossible à refaire.*
+
+### ⑤ Le repli IA : un bouton, jamais un basculement
+
+Dans l'écran du scanner : **« 📸 Prendre une photo avec l'IA »**. ⛔ Aucun minuteur, aucun compteur
+d'échecs, aucun déclenchement « parce que le code est flou » — et un témoin permanent le vérifie
+dans la source.
+
+> *Un code flou restera flou : l'IA lit aussi mal une image molle. On paierait un appel pour
+> échouer deux fois.*
+
+### ⑥ La caméra, coupée par deux chemins
+
+`closeBarcodeScanner` coupe le **lecteur ZXing** *et* les pistes portées par la **balise vidéo** —
+si le lecteur a été remplacé entre-temps, la vidéo tient encore le flux. Et elle ne remet l'état à
+`IDLE` que s'il valait encore `SCANNING` : *sinon elle rouvrirait la porte au second lecteur,
+c'est-à-dire la course qu'on vient de fermer.*
+
+---
+
+## 3. La fiabilité du décodeur, mesurée
+
+Trois vrais codes-barres encodés en EAN-13 selon la norme, dégradés, décodés par le ZXing
+**réellement servi**. **17 cas sur 20 passent à 3/3.**
+
+| ce qui passe | ce qui ne passe pas |
+|---|---|
+| net · petit · éloigné · **vu de près** · incliné 5-20° · **90°** · flou 1 px · **lumière à 25 %** · contraste écrasé · **reflet métal 75 %** · cumul réaliste | **incliné 45°** · **flou dès 2 px** · reflet quasi opaque |
+
+⭐⭐ **Le flou est le seul vrai ennemi, et brutalement : 1 px passe, 2 px ne passe plus.**
+👉 *Sur un téléphone, « flou » s'appelle « mise au point ».*
+
+> ⚠️ **Une erreur de mesure à moi, gardée ici parce qu'elle se reposera.** Ma première passe
+> concluait *« code vu de près : 0/3 »*. **C'était ma fixture, pas ZXing** : je laissais une marge
+> blanche de **20 pixels**, alors que la norme EAN-13 exige une **zone de silence de 9 à 11
+> MODULES**. À 8 px par module, 20 px ne valent que **2,5 modules**. Corrigé → **3/3**.
+> 👉 ***Un paramètre exprimé dans la mauvaise unité ne mesure pas le code, il mesure le test***
+> (`BUGS.md` §63). Un garde du PDF refuse désormais que la zone de silence repasse en pixels.
+
+### ⛔ §8 — le traitement d'image n'apporte RIEN (mesuré, pas supposé)
+
+Michel : *« avant d'ajouter sharpen, contraste, binarisation… prouve que cela améliore réellement
+ZXing »*. Mesuré sur **18 cas durs** :
+
+| traitement | réussites | coût |
+|---|---|---|
+| **aucun** | **3/18** | 152 ms |
+| contraste ×2,2 | **3/18** | 174 ms |
+| netteté + désaturation | **3/18** | 163 ms |
+| **binarisation d'Otsu** (seuil calculé, pas un 128 arbitraire) | **3/18** | 169 ms |
+| agrandissement ×2 | **3/18** | **258 ms** |
+
+> 👉 ***Aucun traitement ne fait passer un seul cas de plus.*** L'agrandissement coûte **+70 %** de
+> temps pour rien. **Il n'y aura donc pas d'usine à gaz** : le facteur limitant est l'autofocus, et
+> aucun post-traitement ne rattrape une image molle.
+
+### ⭐ §9 — les formats : la liste n'est pas un caprice
+
+| réglage | succès | **échec** | lit le paysage |
+|---|---|---|---|
+| **4 formats + TRY_HARDER** *(retenu)* | 3 ms | **140 ms** | ✅ |
+| 4 formats seuls | 2 ms | 8 ms | ⛔ |
+| TRY_HARDER seul | 5 ms | **436 ms** | ✅ |
+| aucun réglage | 2 ms | 21 ms | ⛔ |
+
+> ⭐ **TRY_HARDER apporte le paysage ; la liste de 4 formats divise par 3 le coût d'un échec.**
+> *C'est elle qui rend TRY_HARDER abordable* — 140 ms par frame ratée, soit ~7 tentatives par
+> seconde en lecture continue.
+
+**Formats retenus, avec leur justification** : **EAN-13** (Europe, l'écrasante majorité) ·
+**EAN-8** (petits emballages) · **UPC-A** et **UPC-E** (produits américains, présents en rayon).
+⛔ **Pas un de plus** : chaque format supplémentaire rallonge **chaque frame ratée** sans rien lire
+de nouveau.
+
+### Performance
+
+| | mesuré |
+|---|---|
+| décodage **réussi** d'une image | **2-3 ms** |
+| décodage **échoué** (réglages retenus) | **140 ms** |
+| capture manuelle complète | **~480 ms** |
+
+⚠️ **La cadence de la lecture continue n'est PAS mesurable ici** : ce conteneur rend la vidéo en
+**logiciel**. Le chiffre du banc est un **plafond large**, pas une prédiction de téléphone — et le
+dire vaut mieux que de le publier comme une performance.
+
+---
+
+## 4. Le chemin réseau
+
+```
+caméra → ZXing local → EAN → _bcTraiterCode → _lookupBarcode('camera-code-local')
+       → _offFetchProduct → Open Food Facts → _ref100 → résolveur → écran
+```
+
+| | scanner caméra | code tapé | photo IA |
+|---|---|---|---|
+| appels **IA** | ⭐ **0** | 0 | **1** |
+| quota des 25 essais | **inchangé** | inchangé | **+1** |
+| lookups Open Food Facts | ⭐ **1** *(course fermée)* | 1 | 1 |
+| provenance | `camera-code-local` | `code-tape` | `photo-code-ia` |
+| résultat produit | **identique** | identique | identique |
+
+⛔ **Le scanner ne possède aucune logique nutritionnelle** — un témoin vérifie qu'il ne touche ni
+`_ref100`, ni le résolveur, ni la douane, ni `S.foodLog`, ni les portions, ni les quantités. *Il
+fournit un numéro, et appelle le chemin existant.*
+
+**Sur un code illisible** : **0 lookup · 0 appel IA · quota intact**, un message qui dit quoi
+faire, et la caméra **reste ouverte** pour réessayer.
+
+---
+
+## 5. Le cycle de vie de la caméra (§10)
+
+| situation | mesuré ici | à vérifier sur iPhone |
+|---|---|---|
+| ouverture | ✅ contraintes arrière + 1080p demandées | ✅ |
+| **permission refusée** | ✅ message + écran gardé ouvert avec ses sorties | ✅ |
+| caméra indisponible | ✅ même chemin | ✅ |
+| lookup réussi | ✅ **pistes `ended`** | ✅ (voyant vert éteint) |
+| lookup échoué | ✅ caméra gardée pour réessayer | ✅ |
+| fermeture (« Annuler ») | ✅ | ✅ |
+| glisser · Échap · **bouton retour** | ✅ passent par `closeBarcodeScanner` (ft-v1091/1092) | ✅ |
+| réouverture | ✅ état remis à `SCANNING` | ✅ |
+| **passage en arrière-plan / retour** | ⛔ **non mesurable ici** | ⚠️ **à tester** |
+| navigation vers un autre onglet | ⛔ **non mesurable ici** | ⚠️ **à tester** |
+
+---
+
+## 6. Le protocole iPhone — à exécuter par Michel
+
+⚠️ **Rien de ce qui suit n'est validé par moi.** Ce conteneur n'a ni caméra ni Safari : **la
+fiabilité mobile n'est pas mesurée**, et je ne la présenterai pas comme telle.
+
+**Pour chaque produit** : ouvrir le scanner · chronométrer grossièrement · noter si l'autofocus
+accroche · le nombre de tentatives · le **numéro détecté** · le **produit trouvé ou non** ·
+vérifier qu'**aucune IA** n'est utilisée · puis, si le local échoue, essayer le repli IA.
+
+| # | produit | ce qu'on cherche |
+|---|---|---|
+| 1 | **Cassegrain `3083681011791`** | le cas nominal, carton mat |
+| 2 | **Raynal `3021690201123`** | l'avertissement 🔬 doit apparaître (fiche à valeur énergétique fausse) |
+| 3 | un code **parfaitement plat** | la référence haute |
+| 4 | une **boîte cylindrique** | le code courbé |
+| 5 | un emballage **brillant / métallique** | le reflet (tient jusqu'à 75 % de voile au banc) |
+| 6 | un code **légèrement abîmé** | là où le repli IA devient utile |
+
+**Et les variations** : téléphone proche · un peu plus loin · petit angle · code courbé · léger
+mouvement · éclairage moyen.
+
+**Les cinq gestes qui décident :**
+
+1. **Le scan est-il plus rapide que taper 13 chiffres ?** — le seul vrai critère d'adoption.
+2. **La mise au point accroche-t-elle** à ~15-20 cm ? (le flou est l'ennemi mesuré)
+3. **« Capturer » sauve-t-il** les cas où la lecture continue n'aboutit pas ?
+4. **La caméra s'éteint-elle** à chaque sortie — « Annuler », glisser, bouton retour ? (voyant vert)
+5. **Deux scans d'affilée** : le second marche-t-il aussi bien ?
+
+⭐ **Et le test qui vaut tous les autres, posé par Michel lui-même** :
+
+> *« Est-ce qu'un utilisateur normal arrive à scanner rapidement la majorité de ses produits sans
+> s'énerver ? »*
+
+---
+
+## 7. Ce que je ne peux pas prouver d'ici
+
+- ⛔ **La fiabilité sur Safari/iPhone** — ni caméra ni Safari dans ce conteneur.
+- ⛔ **Le comportement de l'autofocus réel**, qui est pourtant le facteur limitant mesuré.
+- ⛔ **Le passage en arrière-plan et le retour au premier plan.**
+- ⛔ **La cadence réelle** de la lecture continue sur un téléphone (le banc rend en logiciel).
+- ⚠️ Et une honnêteté sur l'enquête : que la course ait *causé* le retrait de juillet est un
+  **mécanisme plausible**, pas un fait établi. Le fait établi est qu'elle existait ce jour-là.
+
+---
+
+## 8. Verdict
+
+### ⭐ **PRÊT POUR TEST IPHONE**
+
+⛔ **Et rien de plus fort.** Michel : *« ne déclare pas le scanner définitivement réactivé avant mon
+retour iPhone »*.
+
+**Ce qui est fait** : la course fermée par une machine à états · la provenance explicite · aucun
+bouton mort · le repli IA volontaire · le numéro lu montré avant la recherche · la caméra coupée par
+deux chemins · le scanner sans aucune logique nutritionnelle.
+
+**Ce qui reste à décider, après l'iPhone**, parmi les quatre options de Michel :
+**A** réactiver définitivement · **B** réactiver avec fallback IA · **C** réactiver mais améliorer
+encore l'UX / l'autofocus · **D** ne pas réactiver.
+
+---
+
+*Mesures figées par les blocs **CCCVIII** (19 témoins, le scanner conduit devant une caméra factice)
+et **CCCIX** (12 témoins, les garanties de la réactivation) de `tests/parcours/runner.js`.
+Chemin réseau du code-barres : `docs/CHEMIN-RESEAU-CODEBARRES.pdf`.*
+
+---
+
+# 📎 Annexe — la version du MATIN, conservée telle quelle
+
+> ⛔ **Elle n'est pas effacée, elle est datée** (règle du projet : *un document s'AJOUTE ou se
+> DÉPLACE, il ne s'écrase pas*). C'est l'audit rendu le 14/09 au matin, **avant** que Michel
+> apporte l'information sur Open Food Facts et que la contre-enquête corrige sa conclusion.
+>
+> ⚠️ **Ce qu'elle dit de faux, et qui est corrigé au §1 ci-dessus** : elle laisse entendre que la
+> panne de lookup peut expliquer le jugement négatif porté sur le **scanner live**. C'est faux —
+> le correctif était en place et le clone testé sur iPhone le contenait. *On garde le texte pour
+> que la correction reste vérifiable, pas pour le croire.*
+>
+> ⭐ **Ce qu'elle garde de vrai** : toutes les mesures du décodeur, le cycle de vie de la caméra,
+> et les quatre défauts trouvés — dont trois sont corrigés en ft-v1210.
 
 ## 1. Pourquoi le scanner avait été retiré
 

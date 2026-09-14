@@ -2552,12 +2552,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div id="af-quick-list"></div>
     <!-- Code-barres + score santé : gratuit pour tout le monde (client-side, 0 token ; affiché par openAddFood) -->
     <div id="af-barcode-block" style="display:none;">
-      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Code-barres du produit — tape les chiffres écrits sous le code :</div>
+      <!-- 📷 ft-v1210 — LE SCANNER CAMÉRA LOCAL REVIENT, EN PREMIER ET EXPRÈS.
+           Il est le plus rapide ET le seul totalement gratuit (décodage 100 % local, zéro appel
+           IA, zéro quota) : *la porte d'entrée par défaut ne doit jamais être celle qui coûte*
+           (R24, la règle d'ordre posée en ft-v871). La photo lue par l'IA reste dessous, en
+           secours volontaire — jamais déclenchée toute seule. -->
+      <button class="btn" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;background:var(--red);color:#fff;font-weight:700;">📷 Scanner le code-barres avec la caméra</button>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Ou tape les chiffres écrits sous le code :</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
         <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
       </div>
-      <button class="btn btn-bg2" onclick="scanBarcodeIA()" style="width:100%;margin-bottom:12px;">📷 Ou photographier le code-barres (IA lit les chiffres)</button>
+      <button class="btn btn-bg2" onclick="scanBarcodeIA()" style="width:100%;margin-bottom:12px;">📸 Ou photographier le code-barres (IA lit les chiffres)</button>
       <input type="file" id="af-bc-photo-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodePhotoIA(this)">
     </div>
     <!-- Produit sans code / étiquette : photo IA -->

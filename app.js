@@ -1100,10 +1100,16 @@ let _bcPaquetG=0, _bcPaquetTxt='';
    ⚠️ DEUX AXES, PAS UN (corrigé par le contre-audit du 18/08) : `saisie` dit COMMENT c'est
    entré, `origine` dit D'OÙ VIENT LE CHIFFRE. Les confondre perd l'information dans les deux
    sens — « manuel » finirait par désigner deux choses différentes selon le contexte.
-       code-barres scanné (caméra)  → saisie:'scan'           origine:'off'
-       code-barres photographié     → saisie:'photo-code'     origine:'off'
-       code-barres lu par l'IA      → saisie:'photo-code-ia'  origine:'off'
-       code-barres TAPÉ à la main   → saisie:'code-tape'      origine:'off'
+       code-barres scanné (caméra)  → saisie:'camera-code-local'  origine:'off'
+       code-barres lu par l'IA      → saisie:'photo-code-ia'      origine:'off'
+       code-barres TAPÉ à la main   → saisie:'code-tape'          origine:'off'
+     ⚠️ DEUX NOMS NE SONT PLUS PRODUITS MAIS RESTENT LISIBLES (ft-v1210) :
+       'scan' ......... l'ancien nom du décodage caméra, renommé `camera-code-local` à la
+                        demande de Michel (*« ne laisse pas cette provenance dépendre d'une
+                        valeur par défaut »*) — des lignes déjà enregistrées le portent.
+       'photo-code' ... le décodage LOCAL d'une photo, retiré avec `onBarcodeFile` : orphelin
+                        depuis ft-v388, et « Capturer » fait mieux (il lit la frame visée).
+     *Une provenance qu'on ne sait plus lire est pire qu'une provenance qu'on ne produit plus.*
        aliment tapé à la main → saisie:'manuel'  origine:'utilisateur'
        photo d'étiquette    → saisie:'photo-ia'  origine:'etiquette'
        phrase estimée par l'IA → saisie:'ia-texte' origine:'ia'
@@ -1408,13 +1414,73 @@ function _loadZXing(){
 }
 // Le bouton « Scanner un code-barres » ouvre le scanner EN DIRECT (façon Yuka).
 function scanBarcode(){ openBarcodeScanner(); }
-// Repli : ancienne méthode photo unique (input file caméra).
-function scanBarcodePhoto(){ const inp=document.getElementById('af-bc-input'); if(inp){inp.value='';inp.click();} }
-function _bcPhotoFallback(){ closeBarcodeScanner(); scanBarcodePhoto(); }
+/* ⛔ RETIRÉS EN ft-v1210 — `scanBarcodePhoto` et `_bcPhotoFallback` (R30, écrit plutôt que
+   silencieux). Ils ouvraient l'élément `af-bc-input`, **supprimé avec ft-v388** : le bouton
+   « 🖼️ Prendre une photo à la place » fermait l'écran et ne faisait RIEN — 0 appel mesuré.
+   Michel : *« je ne veux aucun bouton mort »*. Et il n'y avait rien à réparer : le bouton
+   « 📸 Capturer » du scanner fait déjà mieux — il décode **la frame que la personne est en train
+   de viser**, sans lui demander de reprendre une photo.
+   ⛔ `onBarcodeFile` (décodage LOCAL d'une photo, provenance `photo-code`) part avec eux, pour
+   la même raison : orpheline depuis ft-v388, et « Capturer » couvre son métier.
+   ⚠️ La provenance `photo-code` reste NOMMÉE dans la table ci-dessous : des lignes déjà
+   enregistrées peuvent la porter, et une provenance qu'on ne sait plus lire est pire qu'une
+   provenance qu'on ne produit plus. */
 
 // ─── SCANNER CODE-BARRES EN DIRECT (caméra live + ZXing continu) ─────────────
-let _bcReader=null, _bcScanning=false;
+/* ⛔⛔ UN SEUL PROPRIÉTAIRE DE L'ÉTAT (ft-v1210, demande de Michel : *« pas plusieurs booléens
+   indépendants impossibles à raisonner »*).
+   AVANT : un booléen `_bcScanning`, posé par DEUX lecteurs — le décodage continu et le bouton
+   « Capturer ». Mesuré le 14/09 devant une caméra factice : les deux lisaient le même code à
+   **28 ms d'intervalle** et tiraient CHACUN son `_lookupBarcode` → **deux requêtes produit pour
+   un seul scan**. La cause : `_bcCaptureFrame` ne désarmait qu'APRÈS son `await` de décodage
+   (~500 ms), pendant lesquelles le continu restait armé.
+   ⭐⭐ ET CETTE COURSE EST NÉE AVEC LE CORRECTIF CENSÉ SAUVER LE SCANNER : le bouton
+   « Capturer » est arrivé en **ft-v378, le 11/07/2026 à 15:40**, et le scanner a été retiré
+   **1 h 30 plus tard** pour « trop capricieux iPhone ». *Deux « Recherche du produit… » et un
+   formulaire rempli deux fois ressemblent beaucoup à « capricieux ».* Mécanisme mesuré, cause
+   non prouvée — mais il n'existe plus.
+   👉 LA PROPRIÉTÉ GARANTIE : **un code accepté = AU PLUS un traitement produit.** Le premier
+   lecteur qui arrive prend la main ; le second trouve la porte fermée et ne fait rien. */
+const _BC_ETATS=['IDLE','SCANNING','CODE_TROUVE','LOOKUP','TERMINE'];
+let _bcReader=null, _bcEtat='IDLE', _bcDernierCode='', _bcT0=0;
+function _bcSetEtat(e){ if(_BC_ETATS.indexOf(e)<0) return; _bcEtat=e; }
+/* ⭐ LE VERROU, ET IL EST LE SEUL : tout code décodé passe par ici, d'où qu'il vienne.
+   Il rend `true` si ce lecteur a pris la main, `false` s'il arrive trop tard — et un `false`
+   n'est pas une erreur, c'est le fonctionnement normal de la course. */
+function _bcPrendreLaMain(code){
+  if(_bcEtat!=='SCANNING') return false;          // quelqu'un est déjà passé
+  if(!code) return false;
+  _bcSetEtat('CODE_TROUVE');
+  _bcDernierCode=String(code);
+  return true;
+}
+/* ⭐⭐ §16 DE MICHEL : *« si le produit n'est pas trouvé, cela ne signifie PAS que le scanner n'a
+   pas lu le code »*. On SÉPARE donc les deux étapes, et le numéro lu est écrit dans le champ de
+   saisie AVANT la recherche : même si la base ne connaît pas le produit, la personne VOIT que son
+   code a été lu, et elle peut le relancer ou le corriger.
+   *C'est l'erreur de juillet rendue impossible à refaire : « je n'ai pas lu le code » et « j'ai lu
+   le code mais la base ne le connaît pas » ne se ressemblent plus.* */
+async function _bcTraiterCode(code){
+  if(!_bcPrendreLaMain(code)) return false;
+  const st=document.getElementById('bc-scan-status');
+  if(st) st.textContent='✅ Code lu : '+code+' — recherche du produit…';
+  const inp=document.getElementById('af-bc-manual'); if(inp) inp.value=code;
+  closeBarcodeScanner();
+  _bcSetEtat('LOOKUP');
+  try{ await _lookupBarcode(code, 'camera-code-local'); }
+  finally{ _bcSetEtat('TERMINE'); }
+  return true;
+}
 function _bcHints(){
+  /* ⭐ LES DEUX RÉGLAGES SE COMPLÈTENT, ET C'EST MESURÉ (14/09/2026, sur de vrais EAN-13) :
+       · TRY_HARDER seul ......... lit le paysage, mais 436 ms par frame ratée
+       · les 4 formats seuls ..... 8 ms par frame ratée, mais NE LIT PAS le paysage
+       · les deux ensemble ....... lit le paysage pour 140 ms par frame ratée
+     👉 *La liste de formats n'est pas un caprice : c'est elle qui rend TRY_HARDER abordable*
+     — elle divise par 3 le coût d'un échec, soit ~7 tentatives par seconde en lecture continue.
+     ⛔ Et on n'en ajoute pas d'autres : les codes alimentaires sont EAN-13 (Europe), EAN-8
+     (petits emballages), UPC-A/E (produits américains). Tout format en plus rallonge chaque
+     frame ratée sans rien lire de nouveau. */
   try{
     const h=new Map();
     h.set(ZXing.DecodeHintType.TRY_HARDER,true);
@@ -1434,35 +1500,42 @@ async function openBarcodeScanner(){
     +'</div>'
     +'<div id="bc-scan-status" style="font-size:12px;color:var(--t3);margin-top:8px;min-height:16px;">Démarrage de la caméra…</div>'
     +'<button id="bc-capture-btn" class="btn" style="width:100%;margin-top:10px;background:var(--red);color:#fff;font-weight:700;" onclick="_bcCaptureFrame()">📸 Capturer le code</button>'
-    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="_bcPhotoFallback()">🖼️ Prendre une photo à la place</button>'
+    /* ⛔⛔ LE REPLI IA EST UN BOUTON, JAMAIS UN BASCULEMENT (consigne de Michel, §6) :
+       *« un appel payant doit nécessiter un geste utilisateur »*. Aucun minuteur, aucun compteur
+       d'échecs, aucun déclenchement « parce que le code est flou » ne l'appelle — et un témoin
+       permanent le vérifie. *Le local d'abord, l'IA en secours.* */
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="_bcReplIA()">📸 Prendre une photo avec l\'IA</button>'
     +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="closeBarcodeScanner()">Annuler</button>'
     +'</div>';
   ov.classList.add('open');
+  _bcT0=Date.now(); _bcDernierCode='';
   try{
     await _loadZXing();
     _bcReader=new ZXing.BrowserMultiFormatReader(_bcHints());
     const video=document.getElementById('bc-video');
-    _bcScanning=true;
+    _bcSetEtat('SCANNING');
     // Haute résolution → le code-barres a assez de pixels pour être décodé (sinon « caméra ouverte mais ne lit pas »)
     await _bcReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},advanced:[{focusMode:'continuous'}]}}, video, (result)=>{
-      if(result&&_bcScanning){
-        const code=result.getText&&result.getText();
-        if(code){ _bcScanning=false; closeBarcodeScanner(); _lookupBarcode(code); }
-      }
+      // ⭐ le verrou décide : si « Capturer » est déjà passé, cet appel ne fait rien
+      if(result) _bcTraiterCode(result.getText&&result.getText());
       // erreur "NotFound" entre les frames = normal, on ignore
     });
     try{ const v=document.getElementById('bc-video'); if(v&&v.play)v.play().catch(()=>{}); }catch(e){}
-    const st=document.getElementById('bc-scan-status'); if(st)st.textContent='Vise le code-barres… ou appuie sur « Capturer ».';
-  }catch(e){
     const st=document.getElementById('bc-scan-status');
-    if(st)st.textContent='Caméra indisponible ici — utilise « Prendre une photo » ou saisis à la main.';
-    // overlay laissé ouvert avec le bouton photo en repli
+    if(st&&_bcEtat==='SCANNING')st.textContent='Vise le code-barres… ou appuie sur « Capturer ».';
+  }catch(e){
+    /* ⚠️ Permission refusée, caméra indisponible, ZXing qui ne charge pas : trois causes, un seul
+       message utile — et l'écran RESTE ouvert avec ses deux sorties (l'IA et « Annuler »). */
+    _bcSetEtat('IDLE');
+    const st=document.getElementById('bc-scan-status');
+    if(st)st.textContent='Caméra indisponible — autorise l\'accès, ou utilise la photo IA, ou tape le code à la main.';
   }
 }
 // Capture manuelle : lit l'image en direct de la caméra (déjà cadrée + focalisée) → décodage ZXing.
 async function _bcCaptureFrame(){
   const video=document.getElementById('bc-video');
   const st=document.getElementById('bc-scan-status');
+  if(_bcEtat!=='SCANNING'){ return; }          // ⭐ un code est déjà pris en charge
   if(!video||!video.videoWidth){ if(st)st.textContent='Caméra pas encore prête, réessaie dans 1 s…'; return; }
   if(st)st.textContent='Lecture…';
   try{
@@ -1474,33 +1547,43 @@ async function _bcCaptureFrame(){
     let code='';
     try{ const res=await reader.decodeFromImageUrl(url); code=res&&res.getText&&res.getText(); }catch(e){ code=''; }
     try{ reader.reset(); }catch(e){}
-    if(code){ _bcScanning=false; closeBarcodeScanner(); _lookupBarcode(code); }
-    else if(st){ st.textContent='Pas lu — recule un peu (~15-20 cm), attends la mise au point, remplis le cadre rouge, puis recapture.'; }
-  }catch(e){ if(st)st.textContent='Souci de capture — réessaie ou « Prendre une photo ».'; }
+    /* ⭐⭐ LE VERROU TRANCHE ICI, ET C'EST TOUT CE QUI A CHANGÉ : pendant les ~500 ms de décodage
+       ci-dessus, le décodage continu a pu lire le même code. `_bcTraiterCode` rend alors `false`
+       et on ne fait RIEN — au lieu de tirer un second lookup. */
+    if(code){ await _bcTraiterCode(code); }
+    else if(st&&_bcEtat==='SCANNING'){ st.textContent='Pas lu — recule un peu (~15-20 cm), attends la mise au point, remplis le cadre rouge, puis recapture. Ou utilise la photo IA.'; }
+  }catch(e){ if(st&&_bcEtat==='SCANNING')st.textContent='Souci de capture — réessaie, ou utilise la photo IA.'; }
 }
+/* ⭐ LE SEUL CHEMIN VERS L'IA DEPUIS LE SCANNER — et il part d'un tap.
+   ⚠️ `scanBarcodeIA()` fait un `input.click()` : sur iOS il doit rester dans la MÊME tâche que le
+   geste de l'utilisateur, donc on l'appelle en direct, sans `setTimeout` (leçon ft-v871). */
+function _bcReplIA(){ closeBarcodeScanner(); if(typeof scanBarcodeIA==='function') scanBarcodeIA(); }
 function closeBarcodeScanner(){
-  _bcScanning=false;
+  /* ⛔ NE REMET PAS L'ÉTAT À `IDLE` : quand un code vient d'être accepté, la fermeture fait partie
+     du traitement (`CODE_TROUVE` → `LOOKUP`). Écraser l'état ici rouvrirait la porte au second
+     lecteur — c'est-à-dire ré-ouvrirait exactement la course qu'on vient de fermer. */
+  if(_bcEtat==='SCANNING') _bcSetEtat('IDLE');
   try{ if(_bcReader)_bcReader.reset(); }catch(e){}
   try{ if(_bcReader&&_bcReader.stopStreams)_bcReader.stopStreams(); }catch(e){}
   _bcReader=null;
+  /* ⚠️ CEINTURE ET BRETELLES SUR LE FLUX : `reset()` appelle bien `stopStreams()`, mais si le
+     lecteur a été remplacé entre-temps, la balise vidéo peut encore tenir un flux. On coupe donc
+     ce que la vidéo porte, pas seulement ce que le lecteur croit tenir. *Une caméra qui reste
+     allumée ne se voit que sur le téléphone de quelqu'un.* */
+  try{
+    const v=document.getElementById('bc-video');
+    if(v&&v.srcObject&&v.srcObject.getTracks){ v.srcObject.getTracks().forEach(t=>{try{t.stop();}catch(e){}}); v.srcObject=null; }
+  }catch(e){}
   const ov=document.getElementById('ov-bc-scan'); if(ov)ov.classList.remove('open');
 }
-async function onBarcodeFile(input){
-  const f=input.files&&input.files[0];if(!f)return;
-  const url=URL.createObjectURL(f);
-  toast('Lecture du code-barres…','info');
-  try{
-    await _loadZXing();
-    const reader=new ZXing.BrowserMultiFormatReader();
-    let code='';
-    try{const result=await reader.decodeFromImageUrl(url);code=result&&result.getText&&result.getText();}
-    catch(e){code='';}
-    try{reader.reset&&reader.reset();}catch(e){}
-    URL.revokeObjectURL(url);
-    if(!code){toast('Code-barres illisible — rapproche-toi ou saisis à la main','error');return;}
-    await _lookupBarcode(code, 'photo-code');   // décodé par ZXing : la clé de contrôle est vérifiée
-  }catch(e){URL.revokeObjectURL(url);toast('Erreur scan : '+(e.message||e),'error');}
-}
+/* ⛔ `onBarcodeFile` RETIRÉE en ft-v1210 (R30, avec sa raison plutôt qu'en silence).
+   Elle décodait LOCALEMENT une photo de code-barres (provenance `photo-code`) — donc sans IA et
+   avec vérification de la clé de contrôle, ce qui en faisait un bon chemin. **Mais elle était
+   orpheline depuis ft-v388** : son seul déclencheur, l'élément `af-bc-input`, avait été supprimé
+   avec le bouton du scanner. Michel, 14/09 : *« je ne veux aucun bouton mort »*.
+   👉 Et il n'y avait rien à rebrancher : le bouton « 📸 Capturer » du scanner fait **le même
+   travail en mieux** — il décode la frame que la personne est en train de viser, au lieu de lui
+   demander de reprendre une photo. *On ne garde pas deux portes pour un seul métier.* */
 // Récupère un produit Open Food Facts — essaie l'API v2 (champs) PUIS v0 (repli).
 // ⚠️ Tolérant sur le champ « status » : v2 ne renvoie pas toujours status===1 pour un produit trouvé
 // (ancien bug : le produit existait mais était rejeté « introuvable »). On considère « trouvé » dès que
