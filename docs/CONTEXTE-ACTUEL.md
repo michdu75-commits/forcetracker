@@ -149,7 +149,8 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
+- **Version en ligne (live) :** `ft-v1209` — 🔬 **LE TYPE DE SÉRIE NE DISPARAÎT PLUS EN SILENCE.** Six chantiers publiés dans le même bump (rythme des questions · C1/C2 les records · compteur client · compteur backend avant normalisation · diagnostic Admin). ⛔ **Rien ne change pour l'utilisateur** : instantané des records identique octet pour octet. ⚠️ **Le test qui compte n'est pas fait** — Michel doit faire un vrai import iPhone puis ouvrir Admin ; verdict tant qu'il ne l'a pas fait : *publiée mais test production en attente*.
+- **Version précédente :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
   Michel a envoyé une capture montrant encore l'ancien comportement (198 kcal) **1 h 30 après** le
   déploiement de ft-v1207. ⭐⭐ **Verdict : B — la version servie était périmée, le code était
   juste.** Le résolveur s'applique bien au chemin code-barres (trace runtime : 410 g → **382 kcal**).
@@ -247,7 +248,7 @@
 
 - **Version précédente :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
 
-- **Version en ligne (live) :** `ft-v1206` — 📐 **A1 : une lecture de PDF dit enfin
+- **Version précédente :** (jamais déployée sous ce numéro — devenue une **section de `ft-v1209`**) — 📐 **A1 : une lecture de PDF dit enfin
   qu'elle est TRONQUÉE.** `_pdfToText` rend `{etat, lignes, pagesLues, pagesTotal, raison}` avec
   **COMPLETE / PARTIAL / UNKNOWN**, décision de Michel : *« une lecture partielle n'est PAS une
   exception technique et ne doit jamais être assimilée à un succès complet »*.
