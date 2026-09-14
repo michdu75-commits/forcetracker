@@ -6,6 +6,17 @@
 
 ---
 
+- 🔬 **ft-v1211 — LE PROTOCOLE DE VALIDATION DE L'ÉTAPE 1b EST FERMÉ (14/09/2026).**
+  Michel refuse de réimporter de vraies séances **et** refuse d'en importer une fausse pour la
+  supprimer. ⭐⭐ **L'audit a rendu le chantier presque vide** : fermeture transitive sur **168
+  fonctions**, **toute** l'écriture est concentrée dans `finalImportHist` — donc **l'aperçu est
+  DÉJÀ un point d'arrêt non destructif**. ⛔⛔ **Aucun mode test n'a donc été créé** : un bouton
+  « tester » serait un **second chemin**, et *un mode test qui n'emprunte pas le chemin de
+  production valide le mode test, pas la production*. ⚠️ **Le seul vrai trou** : `_aiUrl`
+  **retombe** sur Apps Script si `AI_PROXY_URL` est vide — *« le Worker a répondu »* était
+  **supposé**, pas prouvé. Il est désormais **mesuré et affiché**.
+  ⛔⛔ **VERDICT : `ÉTAPE 1B PUBLIÉE MAIS TEST PRODUCTION NON DESTRUCTIF EN ATTENTE`.**
+
 - 📷 **ft-v1210 — LE SCANNER CAMÉRA LOCAL EST REVENU, EN RÉACTIVATION CONTRÔLÉE (14/09/2026).**
   ⛔⛔ **VERDICT : `PRÊT POUR TEST IPHONE`, et rien de plus fort** — *« ne déclare pas le scanner
   définitivement réactivé avant mon retour iPhone »* (un garde du PDF refuse de produire si le
@@ -168,7 +179,14 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1210` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
+- **Version en ligne (live) :** `ft-v1211` — 🔬 **LA VALIDATION NON DESTRUCTIVE DE L'ÉTAPE 1b.**
+  L'écran Admin porte 7 lignes, dont **qui a répondu** (Worker / Apps Script) et ⭐ **« Écriture
+  dans `S.sessions` : NON » recalculée** par une empreinte, pas affirmée par un drapeau.
+  ⛔ Aucun écran utilisateur ne change, `app.js` et `index.html` ne sont pas touchés.
+  ⚠️ **Le test qui compte n'est toujours pas fait** — Michel doit conduire un document jusqu'à
+  l'**aperçu**, puis **s'arrêter là**. 👉 entrée `ft-v1211` de `CLAUDE.md`.
+
+- **Version précédente :** `ft-v1210` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
   CONTRÔLÉE.** Le bouton « Scanner le code-barres avec la caméra » revient **en premier** dans
   l'écran d'ajout (gratuit et sans IA) ; la photo lue par l'IA reste en **secours volontaire**.
   ⛔ **Verdict : `PRÊT POUR TEST IPHONE`** — la fiabilité mobile n'est pas mesurable d'ici.

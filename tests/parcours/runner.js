@@ -36986,7 +36986,16 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                lots:    c(/Lots avec le champ<\/span><strong[^>]*>([^<]*)</),
                ecrit:   c(/Écriture dans S\.sessions<\/span><strong[^>]*>([^<]*)</),
                compte:  c(/Séances \/ records<\/span><strong[^>]*>([^<]*)</),
-               vide:    /Aucun import observé/.test(h) };
+               vide:    /Aucun import observé/.test(h),
+               /* ⭐⭐ LE TOTAL D'EXTRACTION, PAS SEULEMENT L'ÉCRAN. `d.data.typesNormalises` est
+                  lu DEUX FOIS dans `_histAnalyzeBatch`, pour deux consommateurs : le diagnostic
+                  Admin (`_histDiag.valeur`) et le total qui voyage avec le lot
+                  (`_histExtracted.typesNormalises`), lequel produit le message « N séries au
+                  type non reconnu » montré à la personne. ⛔ *Deux lectures du même champ
+                  peuvent diverger en silence* — mesuré : fabriquer la seconde laissait la
+                  première parfaitement sincère, et AUCUN témoin ne rougissait. */
+               extrait: (_histExtracted&&_histExtracted.typesNormalises),
+               diagVal: (_histDiag&&_histDiag.valeur) };
     };
     const SESS=[{date:'2026-08-15',exercises:[{name:'Squat à la Barre',
                  sets:[{kg:100,reps:5,type:''},{kg:110,reps:4,type:'D'}]}]}];
@@ -37022,6 +37031,14 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     o.apresAnalyse = lu();
     o.etat1 = {n:S.sessions.length, prs:Object.keys(S.prs).length,
                json:JSON.stringify(S.sessions)+'||'+JSON.stringify(S.prs), imp:S.histImports};
+
+    /* ── ①bis LES DEUX LECTURES DU MÊME CHAMP DOIVENT DIRE LA MÊME CHOSE ── */
+    poserEtat();
+    await sur(()=>conduire([rep(3)],1));
+    o.deuxLectures3 = lu();
+    poserEtat();
+    await sur(()=>conduire([rep(0)],1));
+    o.deuxLectures0 = lu();
 
     /* ── ② `finalImportHist` A-T-ELLE ÉTÉ APPELÉE ? On l'espionne, on ne le suppose pas. ── */
     o.etat0b = poserEtat();
@@ -37134,6 +37151,19 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('B-CCCX ① l\'écran montre le compte réel des données intactes',
     R.apresAnalyse && R.apresAnalyse.compte==='2 / 2', JSON.stringify(R.apresAnalyse));
 
+  /* ── ①bis LE TOTAL TRANSPORTÉ N'EST PAS FABRIQUÉ ──
+     ⚠️ CES DEUX TÉMOINS EXISTENT PARCE QUE LA MUTATION « le mode test fabrique typesNormalises »
+     NE MORDAIT SUR RIEN : le diagnostic lit `d.data.typesNormalises` à un endroit, le total
+     transporté le relit à un autre. *Un champ lu deux fois est deux champs tant que rien ne
+     vérifie qu'ils sont d'accord.* */
+  t('B-CCCX ①bis ⭐⭐ le total transporté est celui du backend, pas une valeur fabriquée',
+    R.deuxLectures3 && R.deuxLectures3.extrait===3 && R.deuxLectures3.valeur==='3',
+    JSON.stringify(R.deuxLectures3));
+  t('B-CCCX ①bis ⭐⭐ et les DEUX lectures du même champ sont d\'accord (écran = transport)',
+    R.deuxLectures3 && R.deuxLectures3.extrait===R.deuxLectures3.diagVal
+      && R.deuxLectures0 && R.deuxLectures0.extrait===0 && R.deuxLectures0.diagVal===0,
+    JSON.stringify([R.deuxLectures3,R.deuxLectures0]));
+
   /* ── ② LA PORTE D'ÉCRITURE N'EST JAMAIS FRANCHIE PAR L'ANALYSE ── */
   t('B-CCCX ② ⛔⛔ `finalImportHist` n\'est PAS appelée par le chemin d\'analyse',
     R.appelsPendantAnalyse===0, 'appels='+R.appelsPendantAnalyse);
@@ -37186,6 +37216,10 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        relecture bien intentionnée (**R30**). */
     t('B-CCCX ⑧ ⛔⛔ SOURCE — aucun mode test, aucun drapeau de simulation d\'import',
       !/_histModeTest|_histTestOnly|modeTestImport|_histDryRun|dryRun/i.test(lg), '');
+    /* ⛔ Les deux lectures bornent la valeur de la MÊME façon. Si l'une dérivait, l'écran et le
+       message montré à la personne diraient deux nombres différents, sans que rien ne plante. */
+    t('B-CCCX ⑧ ⭐ SOURCE — les deux lectures de `typesNormalises` emploient la MÊME expression',
+      (lg.match(/\(\+d\.data\.typesNormalises>0\)\?\+d\.data\.typesNormalises:0/g)||[]).length===2, '');
     t('B-CCCX ⑧ ⛔ SOURCE — aucune seconde route : `importHistory` n\'est demandé qu\'à UN endroit',
       (lg.match(/_aiUrl\('importHistory'\)/g)||[]).length===1, '');
     /* ⛔ La capture et la comparaison DOIVENT employer la même projection (R2). */
