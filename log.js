@@ -1314,9 +1314,16 @@ function _estRpe(){ return _echelleReserve()==='rpe'; }
    serait recopiée partout si on ne la nommait pas — puis un jour l'une des copies dirait 9. */
 function _rpeDeRir(n){ return (n===null||n===undefined)?null:(10-n); }
 
-/* Le libellé COURT d'un cran (les boutons de la barre de repos). */
+/* Le libellé COURT d'un cran (les boutons de la barre de repos).
+   ⛔ UN CRAN QUI N'EN EST PAS UN NE PRODUIT RIEN. Avant ft-v1195, `null` sortait « 10 » en RPE —
+   c'est-à-dire l'affirmation « série à l'échec » pour une série que PERSONNE n'a notée, la
+   confusion exacte que ft-v1154 a corrigée partout ailleurs. Un blanc se voit ; un chiffre
+   crédible et faux ne se voit pas (R29). Inatteignable aujourd'hui (les appelants bornent n),
+   d'où le choix de le rendre inoffensif plutôt que de compter sur eux pour toujours. */
 function _reserveBoutonTxt(n){
-  if(_estRpe()) return (n>=RIR_MAX?'≤'+(10-RIR_MAX):String(10-n));
+  const rpe=_rpeDeRir(n);
+  if(rpe===null) return '';
+  if(_estRpe()) return (n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(rpe));
   return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+':String(n)));
 }
 /* La question posée dans la barre de repos. ⛔ Elle NOMME l'échelle : sans ça, « 8 » veut dire
@@ -1333,14 +1340,21 @@ function _reserveEchecTxt(){
 /* Le badge de la colonne « précédent ». ⭐ `@8` est la notation standard du RPE (« 80×8 @8 ») —
    on emprunte la convention du milieu plutôt que d'en inventer une. */
 function _reserveBadgeTxt(n){
-  if(_estRpe()) return '@'+(n>=RIR_MAX?'≤'+(10-RIR_MAX):String(10-n));
+  const rpe=_rpeDeRir(n);
+  if(rpe===null) return '';
+  if(_estRpe()) return '@'+(n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(rpe));
   return (n>=RIR_MAX?RIR_MAX+'+':String(n))+'r';
 }
-function _rirTxt(n){
-  if(n===null) return '';
-  if(_estRpe()) return (n===0?'RPE 10 (échec)':(n>=RIR_MAX?'RPE ≤'+(10-RIR_MAX):'RPE '+(10-n)));
-  return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+ en réserve':n+' en réserve'));
-}
+/* ⛔⛔ `_rirTxt` A ÉTÉ RETIRÉE ICI LE 12/09/2026 (ft-v1195) — R30 : un retrait s'écrit avec sa
+   raison, sinon quelqu'un le « répare » dans six mois.
+   Elle donnait le libellé LONG d'un cran (« 2 en réserve », « RPE 10 (échec) »). Mesuré : elle
+   n'a JAMAIS été appelée par l'app — née sans appelant en ft-v1038, et `10-n` n'apparaissait dans
+   aucun écran. Son seul lecteur était un témoin du banc, qui croyait vérifier le libellé d'échec
+   affiché en RPE alors que l'écran passe par `_reserveEchecTxt()` (`BUGS.md` §58).
+   ⛔ ET ELLE ÉTAIT PÉRIMÉE DEUX FOIS : elle rendait « échec » pour un RIR 0 et « RPE 10 (échec) »
+   en RPE — précisément ce que ft-v1154 a corrigé (*« X et RIR 0 ne doivent surtout pas être
+   considérés comme la même donnée »*). Une fonction morte ne se met pas à jour : elle attend
+   qu'on la rebranche pour dire une chose fausse. */
 /* 🎯 « PRÉCÉDENT » SE LIT PAR RÔLE, PAS PAR POSITION (15/08/2026)
    Capture de Michel, en séance : *« regarde y'a pas une couille là ? »*. Sur ses 6 lignes, les 3
    premières sont une MONTÉE EN CHARGE que l'app venait d'ajouter (5×27,5 · 3×37,5 · 2×50), et la
@@ -1420,7 +1434,7 @@ function toggleSet(ei,si){
        qui se contredisent* — la famille de bugs la plus vicieuse du projet (R2).
        ⚠️ L'ORDRE COMPTE : une préférence posée sur CET exercice gagne (elle est plus précise),
        puis le réglage de la personne, puis 90 s seulement si elle n'a jamais rien réglé. */
-    const defForEx=isAbdo?30:(savedPref||S.defRest||90);
+    const defForEx=isAbdo?30:(savedPref||reposDefaut());
     const restByType={N:defForEx,É:45,X:240,W:45,E:240};
     const restLabels={É:'Échauffement',X:'Récup. à l\'échec',W:'Échauffement',E:'Récup. à l\'échec'};
     const lbl=document.getElementById('rest-label');
@@ -5232,7 +5246,7 @@ function skipRest(){const cb=_restDoneCb;stopRest();if(cb)cb();}
 // qu'ajouter/retirer 15s à répétition). Mémorise aussi la préférence pour l'exercice.
 function openRestEdit(){
   const mi=document.getElementById('re-min'),se=document.getElementById('re-sec');
-  const left=restStartTs?Math.max(5,_restLeft()):(restTot||S.defRest||130);
+  const left=restStartTs?Math.max(5,_restLeft()):(restTot||reposDefaut());
   if(mi)mi.value=Math.floor(left/60);
   if(se)se.value=left%60;
   const ov=document.getElementById('ov-rest-edit');if(ov)ov.classList.add('open');
@@ -6156,6 +6170,16 @@ function _doCreateCustomEx(name,grp){
 // ─── IMPORT PROGRAMME PAR PHOTO ──────────────────────────────
 let _impPhotos=[],_impExtracted=null,_impMode='new';
 let _histPhotos=[],_histExtracted=null,_histConflicts=[];
+/* 🔬 DIAGNOSTIC D'IMPORT — INSTRUMENTATION SEULE, aucune logique métier.
+   ⛔⛔ CE QU'IL SERT À PROUVER N'EST PAS UNE VALEUR, C'EST UNE PRÉSENCE. Sur un vrai
+   document, `typesNormalises` vaudra 0 (le prompt interdit au modèle d'émettre un type
+   inconnu) — et le client retombe AUSSI sur 0 quand le champ est absent. *Les deux cas sont
+   indiscernables par la valeur.* On enregistre donc la PRÉSENCE séparément, avec
+   `hasOwnProperty` : ⛔ jamais déduite d'un `>0`, sinon on remesurerait le trou qu'on ferme.
+   ⛔ AUCUNE DONNÉE DU DOCUMENT N'ENTRE ICI : deux compteurs de lots et un nombre.
+   ⚠️ NON PERSISTÉ, exprès — il décrit L'IMPORT COURANT. Une valeur qui survivrait au
+   rechargement se lirait comme appartenant à l'import qu'on vient de faire (**R29**). */
+let _histDiag=null;
 
 /* 📷 ft-v1178 — UN SCAN NE MEURT PLUS EN ROUVRANT LA FENÊTRE. R2 : un seul propriétaire pour
    les trois imports (programme, historique, repas).
@@ -6322,12 +6346,34 @@ async function _pdfToImages(f){
   }
   return pages;
 }
+/* 📐 LE CONTRAT DE LECTURE — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, décision de Michel)
+   ⛔⛔ UNE LECTURE PARTIELLE N'EST PAS UN SUCCÈS, et ce n'est pas non plus une exception :
+   c'est un ÉTAT, qui doit remonter jusqu'à l'appelant.
+   MESURÉ LE 13/09 sur les vrais fichiers de Michel, avec la vraie bibliothèque : `_pdfToText`
+   rendait **682 lignes d'un fichier de 22 pages SANS RIEN SIGNALER** (plafond `MAX_PAGES=15`,
+   **31 % du contenu jamais lu**). *Une lecture partielle était indiscernable d'une lecture
+   complète* — et pour une cascade de crans, c'est **un succès qui ment**, plus dangereux qu'un
+   échec : le cran s'arrête sur un résultat incomplet et le cran suivant n'est jamais appelé.
+   ⛔ `raison` est un CODE, jamais un message d'interface : un texte affichable ici serait un
+   second propriétaire de ce que voit la personne, et les deux divergeraient (R2). L'affichage
+   se décide CHEZ L'APPELANT. */
+const LIRE_COMPLET = 'COMPLETE';   // tout le document a été lu
+const LIRE_PARTIEL = 'PARTIAL';    // lu, mais pas en entier → ne JAMAIS traiter comme un succès
+const LIRE_INCONNU = 'UNKNOWN';    // rien d'exploitable → on peut descendre d'un cran
+
 // Extraction de la COUCHE TEXTE d'un PDF (100% local, 0 IA) — pour le Mode Test VM.
-// Regroupe les fragments par ligne via leur coordonnée Y. Renvoie [] si PDF scanné (pas de texte).
+// Regroupe les fragments par ligne via leur coordonnée Y.
+// Rend le contrat ci-dessus : {etat, lignes, pagesLues, pagesTotal, raison}.
 async function _pdfToText(f){
   const pdf=await _pdfOuvrir(f);   // même porte d'entrée que _pdfToImages (R2)
+  /* ⛔ MAX_PAGES NE BOUGE PAS DANS CE CHANTIER — consigne de Michel, mot pour mot : « pas de
+     correction silencieuse du plafond de pages sans d'abord rendre la troncature observable ».
+     Le relever, le supprimer ou découper le document est une DÉCISION SÉPARÉE, qui se prendra
+     en VOYANT le chiffre (mémoire d'un vieil iPhone, durée de lecture, taille d'envoi). */
   const MAX_PAGES=15, lines=[];
-  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
+  const pagesTotal=pdf.numPages;
+  const pagesLues=Math.min(pagesTotal,MAX_PAGES);
+  for(let i=1;i<=pagesLues;i++){
     const page=await pdf.getPage(i);
     const tc=await page.getTextContent();
     const rows=[];
@@ -6345,7 +6391,15 @@ async function _pdfToText(f){
       if(txt) lines.push(txt);
     });
   }
-  return lines;
+  /* ⭐ L'ORDRE DES TESTS EST UN CHOIX, PAS UN HASARD : « rien lu » l'emporte sur « tronqué ».
+     Un document de 22 pages dont les 15 premières n'ont AUCUN texte doit rendre UNKNOWN, pas
+     PARTIAL — parce que la seule chose utile à en faire est de DESCENDRE D'UN CRAN (l'OCR).
+     Rendre PARTIAL annoncerait « lu en partie » avec zéro ligne : la cascade s'arrêterait sur
+     un résultat vide en croyant avoir réussi à moitié. ⛔ Figé par un témoin, pour que ce choix
+     ne soit pas « corrigé » par quelqu'un qui le lirait comme une inversion (R30). */
+  if(!lines.length)        return {etat:LIRE_INCONNU, lignes:lines, pagesLues, pagesTotal, raison:'aucune_couche_texte'};
+  if(pagesLues<pagesTotal) return {etat:LIRE_PARTIEL, lignes:lines, pagesLues, pagesTotal, raison:'plafond_pages'};
+  return {etat:LIRE_COMPLET, lignes:lines, pagesLues, pagesTotal, raison:''};
 }
 async function addImportFile(input){
   const files=[...input.files];if(!files.length)return;
@@ -7164,11 +7218,61 @@ async function _histAnalyzeBatch(imgs){
      de `sess.exercises` en aval ; les rustiner un par un, c'est en oublier un. Ce qui entre
      doit être de la bonne FORME, et ça se décide ici. */
   const brutes = Array.isArray(d.data.sessions) ? d.data.sessions : [];
-  return brutes.filter(x=>x&&typeof x==='object').map(x=>Object.assign({}, x, {
+  const sessions = brutes.filter(x=>x&&typeof x==='object').map(x=>Object.assign({}, x, {
     exercises: (Array.isArray(x.exercises)?x.exercises:[])
       .filter(e=>e&&typeof e==='object'&&e.name)
       .map(e=>Object.assign({}, e, {sets: Array.isArray(e.sets)?e.sets.filter(t=>t&&typeof t==='object'):[]}))
   }));
+  /* 🔬 LA PRÉSENCE SE CONSTATE ICI, SUR L'OBJET REÇU — et par `hasOwnProperty`, jamais par la
+     valeur : un backend pas encore déployé n'envoie pas le champ, un backend à jour l'envoie à 0,
+     et ces deux cas doivent se distinguer à l'écran. */
+  if(_histDiag){
+    _histDiag.lots++;
+    if(Object.prototype.hasOwnProperty.call(d.data,'typesNormalises')){
+      _histDiag.lotsAvecChamp++;
+      _histDiag.valeur+=(+d.data.typesNormalises>0)?+d.data.typesNormalises:0;
+    }
+  }
+  /* 🏷️ LE COMPTE DU BACKEND VOYAGE AVEC LE LOT. ⛔ Un OBJET, pas un tableau avec des propriétés
+     attachées : cette fonction n'a qu'UN appelant, donc la migration est complète et un appelant
+     oublié serait impossible à rater. *La compatibilité parfaite serait ici le défaut* — c'est la
+     leçon d'A1, appliquée d'avance.
+     ⚠️ Un backend qui n'envoie pas le champ (version antérieure au déploiement) donne 0 : le
+     comportement d'avant, à l'identique. */
+  return {sessions, typesNormalises:(+d.data.typesNormalises>0)?+d.data.typesNormalises:0};
+}
+/* 🔬 L'AFFICHAGE DU DIAGNOSTIC — écran Admin. Il vit ICI, avec la donnée qu'il montre, et non
+   dans `app.js` : un seul fichier produit et affiche cet état, et le chantier Nutrition (qui vit
+   dans `app.js`) n'est approché à aucun moment.
+   ⛔ IL N'AFFICHE QUE CE QU'IL A VU. Trois états, jamais confondus :
+     · aucun import depuis le chargement  → on le DIT, on ne montre pas un vieux chiffre ;
+     · champ reçu sur tous les lots       → OUI, avec la valeur ;
+     · champ reçu sur une PARTIE des lots → PARTIEL, parce qu'un booléen cacherait ce cas.
+   ⚠️ Le cas PARTIEL n'est pas de la coquetterie : avec plusieurs pages, un seul lot répondu par
+   un backend non déployé suffirait à fausser le total, et un « OUI » le masquerait. */
+function renderImportDiagAdmin(){
+  const el=document.getElementById('admin-import-diag');
+  if(!el)return;
+  const L=(k,v,c)=>'<div style="display:flex;justify-content:space-between;gap:10px;">'
+    +'<span style="color:var(--t3);">'+k+'</span>'
+    +'<strong style="color:'+(c||'var(--t1)')+';">'+v+'</strong></div>';
+  if(!_histDiag||!_histDiag.lots){
+    el.innerHTML='<div style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);'
+      +'border-radius:8px;padding:10px 12px;font-family:\'SF Mono\',ui-monospace,monospace;">'
+      +'Aucun import observé depuis le chargement de l\'app.</div>';
+    return;
+  }
+  const tous=_histDiag.lotsAvecChamp===_histDiag.lots;
+  const aucun=_histDiag.lotsAvecChamp===0;
+  const etat=aucun?'NON':(tous?'OUI':'PARTIEL');
+  const coul=aucun?'var(--red)':(tous?'var(--green,#30d158)':'var(--orange,#ff9f0a)');
+  el.innerHTML='<div style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);'
+    +'border-radius:8px;padding:10px 12px;font-family:\'SF Mono\',ui-monospace,monospace;">'
+    +L('Compteur typesNormalises reçu', etat, coul)
+    +L('Valeur', aucun?'—':String(_histDiag.valeur))
+    +L('Lots avec le champ', _histDiag.lotsAvecChamp+' / '+_histDiag.lots)
+    +L('Import observé à', _histDiag.quand)
+    +'</div>';
 }
 // Limite premium : import de journal gratuit = 1 seul au total (illimité en premium).
 // ⚠️ Ne concerne QUE l'import de journal — l'import de PROGRAMME n'est pas limité.
@@ -7189,13 +7293,20 @@ async function analyzeHistPhotos(){
   const statusEl=document.getElementById('hist-s3-status');
   const batches=[];
   for(let i=0;i<_histPhotos.length;i+=_HIST_BATCH)batches.push(_histPhotos.slice(i,i+_HIST_BATCH));
-  const allSessions=[];let failed=0,lastErr='';
+  /* ⛔ REMIS À ZÉRO AVANT le premier appel : sans ça, un import qui échoue laisserait le
+     diagnostic du précédent à l'écran, et on le lirait comme celui d'aujourd'hui. */
+  _histDiag={lots:0, lotsAvecChamp:0, valeur:0, quand:new Date().toISOString().slice(11,19)};
+  const allSessions=[];
+  let _histTypesNormalises=0;   // ⛔ remis à zéro à CHAQUE analyse : un reliquat compterait deux fois
+  let failed=0,lastErr='';
   for(let b=0;b<batches.length;b++){
     if(statusEl)statusEl.textContent=batches.length>1
       ?`Analyse du lot ${b+1} / ${batches.length} (${batches[b].length} page${batches[b].length>1?'s':''})…`
       :'Milo extrait les séances et leurs dates depuis tes pages';
     try{
-      const sess=await _histAnalyzeBatch(batches[b]);
+      const lot=await _histAnalyzeBatch(batches[b]);
+      const sess=lot.sessions;
+      _histTypesNormalises+=lot.typesNormalises;
       // Coupure de séance entre 2 lots (une séance à cheval sur 2 pages) :
       // même date en fin de lot précédent et début de lot suivant → fusion des exercices
       if(allSessions.length&&sess.length){
@@ -7225,7 +7336,7 @@ async function analyzeHistPhotos(){
     return;
   }
   if(failed)toast(failed+' lot'+(failed>1?'s':'')+' non lu'+(failed>1?'s':'')+' — vérifie l\'aperçu, tu pourras réimporter les pages manquantes','info');
-  _histExtracted={sessions:allSessions};
+  _histExtracted={sessions:allSessions, typesNormalises:_histTypesNormalises};
   _vmMatchHist();   // VM : rattache les exos aux références EXLIB (mêmes stats, pas de doublon) AVANT l'aperçu
   _renderHistPreview();
   histGoStep(4);
@@ -7387,6 +7498,19 @@ function finalImportHist(){
      graphes et le contexte de Milo.
      ⭐ ET ON LE DIT : un rejet silencieux est indiscernable d'un import réussi (**R29**). */
   let _seriesEcartees=0, _seancesDateKO=0, _seancesVides=0;
+  /* 🏷️ LE PROPRIÉTAIRE UNIQUE DU TOTAL, ET IL EST EN DEUX COUCHES DISJOINTES.
+     ① ce que le BACKEND a normalisé avant de nous l'envoyer (`typesNormalises`) — c'est le seul
+        endroit où le type brut existait encore, et sans lui 5 valeurs inconnues sur 5
+        disparaissaient sans trace sur le chemin vivant (mesuré) ;
+     ② ce que le FILET CLIENT attrape lui-même, plus bas, sur ce qu'il a REÇU.
+     ⛔⛔ AUCUN DOUBLE COMPTAGE, ET CE N'EST PAS UNE PRÉCAUTION MAIS UNE PROPRIÉTÉ : le backend
+     rend `''` pour ce qu'il a compté, donc le filet client, qui ne regarde QUE ce qu'il reçoit,
+     voit `''` et ne compte rien. Pour une même série, **au plus un** des deux compteurs monte.
+     Le cas où le second monte est exactement celui où le premier n'a pas tourné — un
+     fournisseur qui contourne la normalisation. *Les deux couches ne se recouvrent pas : elles
+     se relaient.*
+     ⚠️ Repli à 0 si le champ est absent (backend pas encore déployé) : comportement d'avant. */
+  let _typesInconnus=(_histExtracted&&+_histExtracted.typesNormalises>0)?+_histExtracted.typesNormalises:0;
   sessionsAsc.forEach((sess,si)=>{
     const origIdx=sessions.indexOf(sess);
     const conflict=_histConflicts.find(c=>c.idx===origIdx);
@@ -7414,6 +7538,21 @@ function finalImportHist(){
         return ok;
       }).map(s=>{
         const kg=s.kg||0,reps=s.reps||0;
+        /* 🏷️ ÉTAPE 1 (13/09/2026) — L'INVENTION SILENCIEUSE S'ARRÊTE ICI.
+           La ligne du dessous ramène TOUT ce qui n'est pas 'D' à '' — c'est le contrat serveur,
+           recopié côté client comme dernier filet si le modèle désobéit à son prompt. ⛔ On ne
+           la retire PAS : elle est mesurée identique à celle du Worker et à celle d'Apps Script
+           sur tout le domaine (les 3 disent la même chose pour '', D, W, É, X, ECH, N, inconnu,
+           absent et null). Ce qui manquait n'était pas la règle, c'était la TRACE.
+           ⭐⭐ ET « CONSERVER LE TYPE BRUT » SERAIT PIRE, C'EST MESURÉ : `_serieFaitFoiPourPR`
+           n'exclut que 'É' et 'W', donc un type inconnu gardé tel quel devient ÉLIGIBLE AU
+           RECORD — y compris `'ECH'`, qui *signifie* échauffement. *Un type préservé mais
+           incompris est plus dangereux qu'un type normalisé, parce qu'il a l'air d'avoir été
+           préservé.*
+           ⛔ On ne change donc RIEN à ce qui est stocké (aucun risque, aucune régression) : on
+           COMPTE, et on le DIT dans l'annonce qui existe déjà (R13 — `_ecarts`). */
+        const _brut=(s&&s.type!=null)?String(s.type):'';
+        if(_brut!==''&&_brut!=='D')_typesInconnus++;
         const type=s.type==='D'?'D':'';
         // Volume : tout sauf Échauffement (W). Drop set D compte.
         if(type!=='W'&&type!=='É')vol+=kg*reps;
@@ -7459,8 +7598,18 @@ function finalImportHist(){
   const importedAsc=S.sessions.filter(s=>s.importedHistory).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   importedAsc.forEach(sess=>{
     (sess.exs||[]).forEach(ex=>{
+      /* 🏅 C2 (13/09/2026) — LA DÉPENDANCE ACCIDENTELLE EST SUPPRIMÉE. Cette ligne disait
+         `if(!s.done||!s.kg||!s.reps)return;` — **sans aucun filtre de type**. Elle n'était juste
+         que parce que l'import ÉCRASE le type quelques lignes plus haut (`const type=s.type==='D'
+         ?'D':'';`), donc aucun `'É'` ne pouvait l'atteindre. ⛔ *Un chemin qui n'est juste que
+         grâce à une contrainte posée ailleurs n'est pas sûr : il est en sursis* (`BUGS.md` §62).
+         ⚠️ AUCUN CHANGEMENT AUJOURD'HUI, et c'est mesuré : après l'écrasement les types valent
+         `''` ou `'D'`, que le propriétaire accepte tous les deux — instantané identique.
+         ⭐ CE QUE ÇA ACHÈTE : le jour où l'import saura lire une colonne de type (le serveur
+         sait déjà l'envoyer), un échauffement sera refusé **par sa propre condition**, et non
+         par la chance. */
       (ex.sets||[]).forEach(s=>{
-        if(!s.done||!s.kg||!s.reps)return;
+        if(!_serieFaitFoiPourPR(s))return;
         const rm=bz(s.kg,s.reps);
         const cur=S.prs[ex.name];
         if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
@@ -7483,6 +7632,10 @@ function finalImportHist(){
   if(_seancesDateKO)_ecarts.push(_seancesDateKO+' séance'+(_seancesDateKO>1?'s':'')+' sans date lisible');
   if(_seancesVides)_ecarts.push(_seancesVides+' séance'+(_seancesVides>1?'s':'')+' sans exercice lisible');
   if(_seriesEcartees)_ecarts.push(_seriesEcartees+' série'+(_seriesEcartees>1?'s':'')+' hors limites (poids ou répétitions)');
+  /* ⛔ ON NOMME CE QU'ON A FAIT, PAS CE QU'ON A JETÉ : ces séries sont bien importées, c'est
+     leur TYPE qui n'a pas été reconnu et qui est devenu « normal ». Le dire est tout l'objet
+     de l'étape 1 — *une normalisation annoncée n'est plus une invention* (R29). */
+  if(_typesInconnus)_ecarts.push(_typesInconnus+' série'+(_typesInconnus>1?'s':'')+' au type non reconnu, importée'+(_typesInconnus>1?'s':'')+' en série'+(_typesInconnus>1?'s':'')+' normale'+(_typesInconnus>1?'s':''));
   toast(addedCount+' séance'+(addedCount>1?'s':'')+' importée'+(addedCount>1?'s':'')+' dans l\'historique ✅'
     +(_ecarts.length?' — '+_ecarts.join(', ')+' mise'+(_seancesDateKO+_seriesEcartees>1?'s':'')+' de côté':''),'success');
 }
@@ -9208,7 +9361,7 @@ function _cleanProgEditExercises(){
    ⚠️ Le placeholder ne peut pas connaître la charge du palier (on édite un programme, pas une
    série en cours) : il annonce donc le repos d'échauffement de base, comme avant. */
 function _defRestForType(type){
-  const _n=(typeof S!=='undefined' && +S.defRest>0) ? +S.defRest : 90;
+  const _n=reposDefaut();                              // ⏱️ un seul propriétaire (state.js, ft-v1195)
   return type==='É'||type==='W'?_REPOS_PALIER.leger:((type==='X'||type==='E')?240:(type==='D'?20:_n));
 }
 // Formate des secondes en 1'30 / 45s (affichage type PDF)

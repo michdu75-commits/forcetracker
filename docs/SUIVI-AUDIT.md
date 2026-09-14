@@ -149,6 +149,92 @@ Elles valent plus que les correctifs, parce qu'elles se rappliquent :
 
 ---
 
+## 🏗️ AUDIT D'ARCHITECTURE — L'ONGLET SÉANCE (12/09/2026)
+
+> Demande de Michel : *« fais un check de l'architecture de l'onglet séance, vérifie tout ce qui peut
+> arriver, vérifie s'il n'y a pas des incohérences, des fonctions en double »*.
+> ⛔ **L'AUDIT LUI-MÊME : lecture et mesure uniquement — aucune ligne de production n'a été modifiée.**
+> ⛔⛔ **PREMIÈRE DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état
+> des lieux quand j'aurai fini les bugs de la nutrition »*.
+> ✅✅ **PUIS IL L'A LEVÉE LUI-MÊME, DEUX HEURES PLUS TARD** : après avoir lu les trois constats en
+> clair, ***« vas-y corrige tout »***. 👉 **LES TROIS SONT CORRIGÉS EN ft-v1195** — le détail est
+> dans le journal des versions (`CLAUDE.md`) ; ce qui suit reste le **constat d'origine**, gardé
+> intact parce que c'est lui qui dit *pourquoi* c'était un piège (**R30** : on garde la raison,
+> pas seulement la décision).
+> ⭐ **Ce que la correction a coûté, mesuré** : 19 témoins permanents (bloc CCXCII), 11 mutations
+> qui mordent, et un instantané avant/après qui prouve que **rien n'a bougé à l'écran**.
+
+### ✅ Ce qui est SAIN (mesuré)
+
+| ce qui a été compté | résultat |
+|---|---|
+| fonctions déclarées / noms distincts | **1603 / 1602** → **un seul doublon** |
+| le doublon en question | `t`, helper **local imbriqué** dans deux fonctions différentes → portées séparées, **inoffensif** |
+| collisions de `const`/`let` de premier niveau | **0** sur 533 noms |
+| portes qui **créent** une séance | **7**, toutes identifiées |
+| portes qui la **détruisent** | **2** (`clearWkt`, `finishWorkout`) — et elles nettoient le stockage **à l'identique** |
+| « la séance est-elle valide ? » | **un seul propriétaire** (`finishWorkout`) |
+| « y a-t-il une séance ouverte ? » | **un seul propriétaire** (`_seanceOuverte`), avec replis explicites et documentés |
+| le champ `cardio.min` (le faux bug de ft-v1184) | **entièrement disparu** — `duration` partout |
+| orphelins de `log.js` | **13 sur 422**, dont **11 avec une trace écrite** |
+
+### ✅ CONSTAT n°1 — CORRIGÉ (ft-v1195) — la fonction écrite pour empêcher une recopie a été recopiée
+
+`_rpeDeRir(n)` porte ce commentaire : *« LA CONVERSION N'A QU'UN SEUL ENDROIT. Elle est triviale, et
+c'est justement pour ça qu'elle serait recopiée partout si on ne la nommait pas — **puis un jour l'une
+des copies dirait 9**. »*
+
+**Mesuré** : elle est appelée **0 fois**, et la conversion `10-n` est retapée à la main dans **3
+fonctions** (`_reserveBoutonTxt` · `_reserveBadgeTxt` · `_rirTxt`), **6 occurrences** au total.
+👉 Si `RIR_MAX` ou le barème bougent, il faut corriger **6 endroits** au lieu d'un. *L'avertissement
+était écrit juste au-dessus du code qui l'ignore* (**R2**).
+
+### ✅ CONSTAT n°2 — CORRIGÉ (ft-v1195) — une fonction morte en production, vivante dans un témoin
+
+`_rirTxt` n'apparaît **nulle part** dans les 10 fichiers servis ni dans `index.html`, sauf à sa propre
+déclaration. Elle n'est appelée que par **un témoin** (`tests/parcours/runner.js`), qui croit vérifier
+le libellé d'échec en RPE — or l'écran affiche `_reserveEchecTxt()`.
+👉 **`BUGS.md` §58** : *vérifier la fonction n'est pas vérifier l'appel.*
+
+### ✅ CONSTAT n°3 — CORRIGÉ (ft-v1195) — trois valeurs de repli pour le même réglage
+
+`S.defRest` (temps de repos par défaut) a **trois replis différents** selon l'endroit :
+
+| endroit | repli |
+|---|---|
+| `state.js` (installation) | **130** |
+| `app.js` ×2 | **120** |
+| `log.js` ×2 (`defForEx`, `_defRestForType`) | **90** |
+
+⚠️ **Dormant aujourd'hui** — `S.defRest` est toujours posé au chargement, donc les replis ne se
+déclenchent pas. Mais **cette divergence a déjà mordu une fois** (ft-v1080, le placeholder de l'éditeur
+de programmes qui annonçait 90 s quand la séance appliquait 130).
+
+### ⛔ TROIS PISTES ÉCARTÉES PAR LA MESURE (R30 — écrites avec leur raison)
+
+*Elles avaient l'air de vrais défauts. Les laisser sans raison écrite, c'est garantir que quelqu'un
+les « répare » dans six mois.*
+
+1. **`startHour` posé par 2 portes sur 7** → **pas un défaut** : `toggleSet` le (re)pose à la 1ʳᵉ série
+   validée (règle de Michel du 14/08), et les **4 lecteurs** ont tous un repli sur l'horodatage.
+2. **`finishWorkout` n'appelle pas `_syncWakeLock`** → **pas un défaut** : `goScreen` l'appelle à
+   **chaque** changement d'écran (`screens.js`), et `finishWorkout` fait `goScreen('home')`.
+   *`clearWkt` l'appelle explicitement parce qu'il, LUI, ne change pas d'écran.*
+3. **Le repli « étroit » de `state.js`** (qui perdrait le brouillon d'un **cardio seul**) →
+   **inatteignable** : vérifié fonction par fonction, **aucun `persist()` ne part avant le chargement
+   de `log.js`**.
+
+### ⚠️ ET DEUX FOIS MON PROPRE OUTIL DE MESURE M'A MENTI (`BUGS.md` §61)
+
+- ma 1ʳᵉ liste d'orphelins en annonçait **19** : je ne comptais que `nom(`, donc un gestionnaire posé
+  **sans parenthèses** (`el.onmove = _exDragMove`) passait pour mort. **6 faux positifs.**
+- mon compteur d'accolades a placé **10 appels de `persist()` « au premier niveau »** — tous étaient en
+  réalité dans des fonctions ou dans des **commentaires**.
+
+👉 *Les deux fois, la mesure trop grossière donnait un résultat **plus alarmant** que la réalité.*
+
+---
+
 ## 🔁 Comment tenir ce fichier
 
 - Un sujet **change d'état**, il ne se duplique pas.
@@ -177,3 +263,72 @@ synthèse pour relecture extérieure : `docs/CONTRE-AUDIT-2026-08-24.pdf`.*
 
 *(historique : 23/08/2026, nuit — `ft-v985` en ligne. Ajout : le bloc personnel de Milo
 mesuré générique à 92 % (`AUDIT-CONTEXTE-MILO.md` §14) et le plafond dépassé chez un profil blessé.*
+
+---
+
+## 🏠📈 AUDIT D'ARCHITECTURE — ACCUEIL + PROGRÈS (12/09/2026)
+
+> Fait **pendant** la passe de ft-v1195, à la demande de Michel (*« ok tu peux bosser en attendant ? »*).
+> ⛔ **LECTURE ET MESURE UNIQUEMENT — aucune ligne de production n'a été modifiée.**
+> ⛔⛔ **La nutrition est hors périmètre** (consigne du jour) : l'écran Nutrition n'est pas ouvert.
+> Même méthode que l'audit de l'onglet Séance : ① règles recopiées · ② deux sources pour la même
+> question (**R2**) · ③ code orphelin (**R30** : on cherche la décision avant de conclure).
+
+**Périmètre mesuré** : tout ce qu'appellent `renderHome`, `renderProgress` et `renderChart`, à
+**profondeur 2** — **133 fonctions**.
+
+### ✅ Ce qui est SAIN (mesuré)
+
+| ce qui a été compté | résultat |
+|---|---|
+| orphelins dans le périmètre | **0 sur 133** |
+| deux sources pour « combien de séances ce mois-ci ? » | **non** — l'Accueil et le bilan mensuel répondent à **deux questions différentes** (le mois courant · un mois donné) |
+| `S.progExos \|\| BIG4` (les exercices suivis) | **4 replis**, même forme que `S.defRest`… mais **aucune divergence** : les quatre disent `BIG4`. *Signalé, pas à corriger* |
+
+### ⭐ CONSTAT A — la règle de RYTHME des questions proactives est écrite 3 fois
+
+*« Au plus une question par semaine, et pas avant 3 séances »* est retapée à l'identique dans
+**`_pendingGap`**, **`_pendingEnrich`** et **`_pendingConfirm`** (tracking.js) :
+
+```js
+if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
+if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
+```
+
+⛔ **Ce n'est pas un détail de style** : c'est la règle qui protège la personne de l'interrogatoire
+(**Constitution P-rythme**, `BUGS-DE-PHILOSOPHIE.md`). Trois copies = le jour où l'une passe à 10
+jours, **deux autres continuent à 7**, et personne ne le voit — le symptôme serait *« Milo me
+demande trop de trucs »*, c'est-à-dire un bug de **comportement**, pas de calcul.
+⚠️ **La quatrième `_pending*` n'en est pas une copie** : `_pendingFreqContext` pose une question
+**différente** (assez de semaines pour juger une tendance). Vérifié, pas supposé.
+
+### ⚠️ CONSTAT B — un commentaire annonce 3 jours là où le code dit 7
+
+`tracking.js` (dans `skipGap`) : `S.registre.lastObsAt=today();  // respecte le plafond (pas
+d'autre question avant 3 jours)` — **le plafond est de 7 jours** dans les trois gardes ci-dessus.
+👉 *Un commentaire faux sur le nombre exact que quelqu'un viendra changer est pire qu'aucun
+commentaire* (**R23**, appliqué au code).
+
+### ⭐⭐ CONSTAT C — « cette série compte-t-elle pour un record ? » : un propriétaire et deux copies
+
+| endroit | la condition employée |
+|---|---|
+| `finishWorkout` (log.js) | **`_serieFaitFoiPourPR(s)`** ✅ le propriétaire nommé |
+| `saveSessEdits` (setup.js) | `s.done && s.kg && s.reps && s.type!=='É' && s.type!=='W'` — **recopiée à la main**, identique aujourd'hui |
+| `finalImportHist` (log.js) | `s.done && s.kg && s.reps` — ⛔ **sans aucun filtre de type** |
+
+**⚠️⚠️ ET J'AI FAILLI ANNONCER UN BUG QUI N'EN EST PAS UN.** La 3ᵉ ligne laisse passer un
+**échauffement**… sauf que l'import d'historique **force le type deux lignes plus haut** :
+`const type = s.type==='D' ? 'D' : '';`. Aucun `'É'` ne peut donc l'atteindre.
+👉 **Le chemin n'est juste que PAR ACCIDENT** — protégé par une contrainte posée ailleurs, pas par
+sa propre condition. C'est exactement `BUGS.md` **§62** (*une protection qui ne tient que par
+l'absence de ménage*). ⚠️ **Et la bombe est amorcée à côté** : l'import de **programme**, lui,
+produit bien des séries `'É'` (`_typeAt` traduit le `W` du backend). Le jour où l'historique
+apprendra à lire une colonne de type — ce qui est déjà écrit côté serveur — **un échauffement
+créera un record**, en silence.
+
+### 📋 Ce qu'on en fait
+
+**Rien pour l'instant** — c'est une mesure, pas un correctif, et Michel n'a pas demandé de toucher
+à ces écrans. Les trois constats sont **promouvables** (leur attendu est vérifiable par du code) et
+sont déposés dans `docs/JOURNAL-DE-TEST.md`.

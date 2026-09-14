@@ -2163,7 +2163,7 @@ function _obsCandidates(){
   const out=[];
   try{
     const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));
-    if(sess.length<4)return out; // le bon moment : pas avant 4 séances (baissé de 8 → 4 pour que Milo commence à apprendre plus tôt ; l'espacement 3 j + le seuil de confiance protègent la qualité)
+    if(sess.length<4)return out; // le bon moment : pas avant 4 séances (baissé de 8 → 4 pour que Milo commence à apprendre plus tôt ; l'espacement entre deux questions + le seuil de confiance protègent la qualité)
     const now=new Date(), dayMs=864e5, N=sess.length;
     const sdate=s=>new Date(s.date?s.date+'T12:00:00':new Date(s.ts).toISOString());
     // A) Semaine vs week-end
@@ -2198,6 +2198,30 @@ function _obsCandidates(){
   }catch(e){console.warn('[FT obs] candidates',e);}
   return out;
 }
+/* ⏱️ UN SEUL PROPRIÉTAIRE DU « RYTHME DES QUESTIONS PROACTIVES » (13/09/2026, constat A de
+   l'audit Accueil/Progrès). Cette règle — *au plus une question par semaine* — protège la
+   personne de l'INTERROGATOIRE (Constitution, `docs/BUGS-DE-PHILOSOPHIE.md`). Elle était
+   retapée **4 fois** à l'identique : le jour où l'une serait passée à 10 jours, les trois
+   autres auraient continué à 7, et le symptôme aurait été *« Milo me demande trop de trucs »*
+   — un bug de COMPORTEMENT, que ni un test de calcul ni un écran ne montre (R2).
+   ⛔ ELLE NE BOUGE PAS D'UN CARACTÈRE. `dl>=0` est volontaire et se garde : une date DANS LE
+   FUTUR (téléphone remis à l'heure) ne doit pas faire taire l'app pour toujours.
+   ⚠️ Rend `false` quand il n'y a pas de date — c'est-à-dire « rien ne bloque », exactement ce
+   que faisait le `if(last)` d'origine. */
+function _plafondHebdoAtteint(){
+  const last=S.registre&&S.registre.lastObsAt;
+  if(!last)return false;
+  const dl=(new Date(today())-new Date(last))/864e5;
+  return dl>=0 && dl<7;
+}
+/* 🗓️ Et son jumeau : *pas avant quelques séances* — on ne questionne pas quelqu'un le jour où
+   il installe l'app. Écrit 3 fois lui aussi.
+   ⛔ `maybeProposeObservation` NE L'EMPLOIE PAS, et c'est voulu : son seuil est 4, pas 3, avec
+   sa raison écrite à côté (« baissé de 8 → 4 »). *Deux seuils qui se ressemblent ne sont pas
+   deux copies* — les fondre changerait le comportement d'une des quatre. */
+function _assezDeSeancesPourDemander(){
+  return (S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length>=3;
+}
 // Décide s'il faut PROPOSER une nouvelle observation (le bon moment + une à la fois + seuil de confiance).
 function maybeProposeObservation(){
   try{
@@ -2206,8 +2230,7 @@ function maybeProposeObservation(){
     const obs=S.registre.observations;
     if(obs.some(o=>o&&o.status==='pending'))return;                 // une à la fois
     if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<4)return; // le bon moment (baissé de 8 → 4)
-    const last=S.registre.lastObsAt;                                 // PROACTIF : au plus 1 question/semaine
-    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return;}
+    if(_plafondHebdoAtteint())return;                                // PROACTIF : au plus 1 question/semaine
     const known=new Set(obs.map(o=>o&&o.key));                       // ne jamais re-proposer une clé déjà décidée
     const cands=_obsCandidates().filter(c=>c.confidence>=0.7&&!known.has(c.key));
     if(!cands.length)return;
@@ -2265,12 +2288,11 @@ function _pendingGap(){
       if(spec)return {field:spec.field, ask:spec.ask, options:spec.q.opts};
     }
     // le bon moment : quelques séances derrière soi (pas dès le tout 1er jour)
-    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
+    if(!_assezDeSeancesPourDemander())return null;
     // PROACTIF : au plus 1 question par SEMAINE (filet de sécurité — cf. docs/PROFIL-VIVANT.md).
     // Partagé (via lastObsAt) avec les observations → jamais deux questions proactives la même semaine.
     // (Les futures questions CONTEXTUELLES — déclaré/réalisé — pourront passer outre ce plafond.)
-    const last=S.registre.lastObsAt;
-    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
+    if(_plafondHebdoAtteint())return null;
     const skips=S.registre.gapSkips||{};
     for(const g of _profileGapSpecs()){
       if(ans[g.field])continue;                       // déjà rempli → ce n'est plus un manque
@@ -2314,7 +2336,11 @@ function skipGap(field){
     if(!S.registre.gapSkips)S.registre.gapSkips={};
     S.registre.gapSkips[field]=today();
     if(S.registre.gapForce===field)S.registre.gapForce=null;
-    S.registre.lastObsAt=today();                     // respecte le plafond (pas d'autre question avant 3 jours)
+    /* ⚠️ Ce commentaire annonçait « pas d'autre question avant 3 JOURS » — le code en dit 7
+       depuis toujours (constat B, 13/09/2026). Il ne cite donc plus de nombre : le seul endroit
+       qui en porte un est `_plafondHebdoAtteint`. *Un commentaire qui répète un chiffre que
+       quelqu'un viendra changer ailleurs est pire qu'aucun commentaire* (R23 appliqué au code). */
+    S.registre.lastObsAt=today();                     // respecte le plafond (cf. _plafondHebdoAtteint)
     persist();
     if(typeof _renderObsCard==='function')_renderObsCard();
     if(typeof toast==='function')toast("Pas de souci, on verra plus tard.",'info');
@@ -2506,9 +2532,8 @@ function _pendingEnrich(){
       const spec=_enrichSpecs().find(g=>g.field===gf);
       if(spec)return {field:spec.field, ask:spec.ask, options:spec.options};
     }
-    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
-    const last=S.registre.lastObsAt;                                  // PROACTIF : au plus 1 question/semaine (partagé)
-    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
+    if(!_assezDeSeancesPourDemander())return null;
+    if(_plafondHebdoAtteint())return null;                            // PROACTIF : au plus 1 question/semaine (partagé)
     const skips=S.registre.gapSkips||{};
     for(const g of _enrichSpecs()){
       if(ans[g.field])continue;                                       // déjà répondu → on ne redemande pas
@@ -2571,11 +2596,10 @@ function _confirmPromptOf(field,label){
 function _pendingConfirm(){
   try{
     if(!S.registre)return null;
-    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
+    if(!_assezDeSeancesPourDemander())return null;
     const ans=(S.coachQuiz&&S.coachQuiz.answers)||{};
     const conf=(S.coachQuiz&&S.coachQuiz.confirmedAt)||{};
-    const last=S.registre.lastObsAt;                               // PROACTIF : ≤1 question/semaine (partagé)
-    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
+    if(_plafondHebdoAtteint())return null;                         // PROACTIF : ≤1 question/semaine (partagé)
     const skips=S.registre.confirmSkips||{};
     let lazy=false;
     for(const field of ['place','time','othersport']){

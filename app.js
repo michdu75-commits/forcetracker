@@ -552,7 +552,7 @@ function _dureeSeanceMin(session, nSets, dureeFormuleMin){
     if(!douteuse) return {min:borne(ch), src:'chrono'};
   }
   // ③ estimation — le réglage de repos de la personne, rien d'autre
-  const rest = (typeof S!=='undefined' && S.defRest) ? S.defRest : 120;
+  const rest = reposDefaut();                          // ⏱️ un seul propriétaire (state.js, ft-v1195)
   const est = borne(nSets*(30+rest)/60);
   return {min: est || dureeFormuleMin, src: est ? 'estimee' : 'formule'};
 }
@@ -718,7 +718,7 @@ function _facteurCharge(kg, rm1){
 }
 function calcSessionCalories(session) {
   const bw = S.bw || 80;
-  const restSec = S.defRest || 120;
+  const restSec = reposDefaut();                       // ⏱️ un seul propriétaire (state.js, ft-v1195)
   const exs = session.exs || session.exercises || [];
   
   let totalCals = 0;
@@ -1103,7 +1103,7 @@ let _bcPaquetG=0, _bcPaquetTxt='';
        code-barres scanné (caméra)  → saisie:'camera-code-local'  origine:'off'
        code-barres lu par l'IA      → saisie:'photo-code-ia'      origine:'off'
        code-barres TAPÉ à la main   → saisie:'code-tape'          origine:'off'
-     ⚠️ DEUX NOMS NE SONT PLUS PRODUITS MAIS RESTENT LISIBLES (ft-v1209) :
+     ⚠️ DEUX NOMS NE SONT PLUS PRODUITS MAIS RESTENT LISIBLES (ft-v1210) :
        'scan' ......... l'ancien nom du décodage caméra, renommé `camera-code-local` à la
                         demande de Michel (*« ne laisse pas cette provenance dépendre d'une
                         valeur par défaut »*) — des lignes déjà enregistrées le portent.
@@ -1414,7 +1414,7 @@ function _loadZXing(){
 }
 // Le bouton « Scanner un code-barres » ouvre le scanner EN DIRECT (façon Yuka).
 function scanBarcode(){ openBarcodeScanner(); }
-/* ⛔ RETIRÉS EN ft-v1209 — `scanBarcodePhoto` et `_bcPhotoFallback` (R30, écrit plutôt que
+/* ⛔ RETIRÉS EN ft-v1210 — `scanBarcodePhoto` et `_bcPhotoFallback` (R30, écrit plutôt que
    silencieux). Ils ouvraient l'élément `af-bc-input`, **supprimé avec ft-v388** : le bouton
    « 🖼️ Prendre une photo à la place » fermait l'écran et ne faisait RIEN — 0 appel mesuré.
    Michel : *« je ne veux aucun bouton mort »*. Et il n'y avait rien à réparer : le bouton
@@ -1427,7 +1427,7 @@ function scanBarcode(){ openBarcodeScanner(); }
    provenance qu'on ne produit plus. */
 
 // ─── SCANNER CODE-BARRES EN DIRECT (caméra live + ZXing continu) ─────────────
-/* ⛔⛔ UN SEUL PROPRIÉTAIRE DE L'ÉTAT (ft-v1209, demande de Michel : *« pas plusieurs booléens
+/* ⛔⛔ UN SEUL PROPRIÉTAIRE DE L'ÉTAT (ft-v1210, demande de Michel : *« pas plusieurs booléens
    indépendants impossibles à raisonner »*).
    AVANT : un booléen `_bcScanning`, posé par DEUX lecteurs — le décodage continu et le bouton
    « Capturer ». Mesuré le 14/09 devant une caméra factice : les deux lisaient le même code à
@@ -1576,7 +1576,7 @@ function closeBarcodeScanner(){
   }catch(e){}
   const ov=document.getElementById('ov-bc-scan'); if(ov)ov.classList.remove('open');
 }
-/* ⛔ `onBarcodeFile` RETIRÉE en ft-v1209 (R30, avec sa raison plutôt qu'en silence).
+/* ⛔ `onBarcodeFile` RETIRÉE en ft-v1210 (R30, avec sa raison plutôt qu'en silence).
    Elle décodait LOCALEMENT une photo de code-barres (provenance `photo-code`) — donc sans IA et
    avec vérification de la clé de contrôle, ce qui en faisait un bon chemin. **Mais elle était
    orpheline depuis ft-v388** : son seul déclencheur, l'élément `af-bc-input`, avait été supprimé

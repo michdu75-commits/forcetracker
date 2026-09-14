@@ -2822,6 +2822,59 @@ comme un chantier qui déborde* (R23/R28).
 
 ---
 
+### 🔵 PROMUE — LES TROIS CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09 → CORRIGÉS EN ft-v1195, 19 témoins permanents)
+
+Audit d'architecture demandé par Michel, **lecture seule**. Détail complet et chiffré :
+`docs/SUIVI-AUDIT.md` § « Audit d'architecture — l'onglet Séance ».
+
+⛔⛔ **PREMIÈRE DÉCISION DE MICHEL, LE JOUR MÊME** : *« note dans les journaux, on refera un état
+des lieux quand j'aurai fini les bugs de la nutrition »*.
+✅✅ **PUIS IL L'A LEVÉE LUI-MÊME, DEUX HEURES PLUS TARD**, après avoir lu les trois constats en
+clair : ***« vas-y corrige tout »***. **Les trois sont corrigés en ft-v1195** — bloc **CCXCII**,
+**19 témoins**, **11 mutations qui mordent**, et un instantané avant/après
+(`tools/instantane_seance_audit.js`) qui prouve que **rien n'a bougé à l'écran**.
+⭐ **Ce que ça confirme du critère de ce fichier** : les trois étaient marqués *« promouvables —
+leur attendu est vérifiable par du CODE »*, et ils l'étaient. **Ce qui les retenait n'était pas le
+critère, c'était l'ordre des chantiers** — c'est-à-dire une décision, pas une limite technique.
+
+| # | constat | vérifiable par du code ? |
+|---|---|---|
+| 1 | **`_rpeDeRir` appelée 0 fois**, et sa conversion `10-n` recopiée à la main dans **3 fonctions / 6 occurrences** — alors que son propre commentaire annonce *« un jour l'une des copies dirait 9 »* | ✅ **oui** — un témoin peut compter les occurrences de `10-` hors du propriétaire |
+| 2 | **`_rirTxt` morte en production**, appelée uniquement par un témoin qui croit vérifier le libellé d'échec en RPE (l'écran affiche `_reserveEchecTxt`) | ✅ **oui** — mais c'est le **témoin** qu'il faut corriger, pas le code |
+| 3 | **`S.defRest` : trois valeurs de repli** (130 / 120 / 90) pour le même réglage. **Dormant** (la valeur est toujours posée) mais la divergence a **déjà mordu** en ft-v1080 | ✅ **oui** — un témoin peut exiger un seul repli nommé |
+
+⭐ **Les trois sont promouvables** : leur attendu est vérifiable par du code, pas par le goût. Ce qui
+les retient n'est pas le critère, c'est **l'ordre des chantiers** — décision de Michel.
+
+⚠️ **Et le n°2 est le plus intéressant des trois** : c'est un témoin qui **rassure sur une fonction
+que l'écran n'emploie plus**. Le corriger ne change rien pour la personne — ça change ce que le banc
+PROUVE. *Un témoin qui fige une fonction morte compte dans le total et ne protège rien.*
+
+---
+
+### 🟡 À TRIER — TROIS CONSTATS DE L'AUDIT « ACCUEIL + PROGRÈS » (12/09/2026)
+
+Audit d'architecture fait **pendant** la passe de ft-v1195 (Michel : *« ok tu peux bosser en
+attendant ? »*), **en lecture seule**, nutrition exclue. Détail chiffré :
+`docs/SUIVI-AUDIT.md` § « Audit d'architecture — Accueil + Progrès ».
+
+| # | constat | vérifiable par du code ? |
+|---|---|---|
+| A | la règle de **rythme** des questions proactives (*« ≥ 3 séances, au plus 1 question/semaine »*) est retapée **à l'identique dans 3 fonctions** (`_pendingGap`, `_pendingEnrich`, `_pendingConfirm`) | ✅ **oui** — un témoin peut exiger un propriétaire unique et compter les copies |
+| B | un **commentaire annonce 3 jours** là où les trois gardes disent **7** (`skipGap`, tracking.js) | ✅ **oui** — mais c'est une correction d'une ligne, sans témoin à écrire |
+| C | *« cette série compte-t-elle pour un record ? »* a **un propriétaire nommé** (`_serieFaitFoiPourPR`) et **2 copies**, dont une (`finalImportHist`) **sans filtre de type** | ✅ **oui** — et le témoin est facile : importer un historique portant une série d'échauffement |
+
+**⭐⭐ C EST LE PLUS INTÉRESSANT, ET IL M'A PRESQUE FAIT ANNONCER UN BUG FAUX.** La copie sans
+filtre laisserait un **échauffement créer un record**… mais l'import d'historique **force le type**
+deux lignes plus haut (`type = s.type==='D' ? 'D' : ''`), donc aucun `'É'` ne l'atteint.
+👉 *Le chemin n'est juste que **par accident*** — c'est `BUGS.md` **§62**. ⚠️ **Et la bombe est
+amorcée juste à côté** : l'import de **programme** produit bel et bien des séries `'É'`. Le jour où
+l'historique apprendra à lire une colonne de type (**c'est déjà écrit côté serveur**), le record
+partira d'un échauffement, **en silence**.
+
+**⛔ Rien n'est corrigé** : Michel n'a pas demandé de toucher à ces écrans, et le correctif de C
+touche le **calcul des records** — l'objet le plus sensible de l'app après les séances elles-mêmes
+(**R29** : le coût d'une erreur décide). *On mesure, on écrit, il tranche.*
 ## 🍽️ Le garde `!_bcNutr` de la ligne « nombre de portions » ne peut JAMAIS bloquer *(13/09/2026, trouvé pendant 3-v — mesuré, NON corrigé)*
 
 **État : 🟡 à trier — attend un feu vert séparé de Michel.**
@@ -2872,6 +2925,44 @@ et le mesurer vaut mieux que l'affirmer.
 
 ---
 
+## 🏷️ 13/09/2026 — LE TYPE DE SÉRIE À L'IMPORT D'HISTORIQUE : il n'est pas PERDU, il n'est **jamais ÉMIS**
+
+> État : **à trier — décision produit attendue**. Mesuré en lecture seule, aucune ligne modifiée.
+
+Michel ouvre un chantier pour « préserver le type de série lors de l'import d'historique », sur la
+prémisse que `const type=s.type==='D'?'D':''` (log.js) **écrase** le type en amont du calcul des
+records. ⛔ **La mesure dit autre chose, et il vaut mieux le dire que coder sur une prémisse fausse.**
+
+**① LE MODÈLE N'A PAS LE DROIT D'ÉMETTRE UN ÉCHAUFFEMENT POUR L'HISTORIQUE.** Le prompt
+`importHistory` du Worker porte, mot pour mot : *« TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set).
+JAMAIS "E" ni "W". »* Et la normalisation serveur l'applique : `worker.js:591` fait
+`s.type = s.type === 'D' ? 'D' : '';` — **la même ligne que le client**.
+
+**② LA RÈGLE EST ÉCRITE 3 FOIS, DANS 3 FICHIERS** (R2) : `worker.js:591` (le chemin **vivant** —
+`importHistory` est dans `AI_PROXY_ACTIONS`), `Code.js:2484` (le repli Apps Script, dormant), et
+`log.js:7461` (le client). 👉 ***La ligne du client n'est pas la cause : c'est la 3ᵉ copie d'un
+contrat serveur, et donc une DÉFENSE si le modèle désobéit.*** La retirer seule ne libérerait rien.
+
+**③ LE CHEMIN PROGRAMME, LUI, SAIT DÉJÀ FAIRE — et son propriétaire existe.** `importProgram`
+possède une règle 8 (« colonne TYPE DE SÉRIE ») et un champ `setTypePerSet` qui peut valoir `'W'` ;
+côté app, **`_typeAt` (log.js:7034)** traduit `'W'` → `'É'` **une fois, à l'entrée**, avec R33 écrite
+juste au-dessus. ⛔ **`importHistory` n'a ni cette règle, ni ce champ, ni cette traduction.**
+
+**④ CE QUI SE PERD VRAIMENT AUJOURD'HUI EST AILLEURS, ET C'EST UN TYPE INCONNU.** Un type que le
+modèle inventerait (`'W'`, `'E'`, `'ECH'`, n'importe quoi) devient **`''` silencieusement**, c'est-à-dire
+**une série de travail** — exactement ce que Michel dit ne pas vouloir. Il n'existe aucun compteur,
+aucun message, aucune trace.
+
+**⑤ ET UNE MIGRATION A DÉTRUIT LES DROPSETS EXISTANTS.** `state.js:413`, gardée par `ft4_stmig1`
+(one-time) : `W→É`, `E→X`, et ⛔ **`D→N`**. Elle a déjà tourné sur les vrais appareils. Les imports
+postérieurs gardent bien leur `'D'` (mesuré : l'instantané rend `types:'"D"'`), mais **les dropsets
+présents au moment où elle a tourné sont devenus des séries normales**. Le nombre exact n'est pas
+mesurable depuis ce conteneur (aucun accès aux données réelles).
+
+👉 **Conséquence** : atteindre l'objectif (*« un échauffement importé reste un échauffement »*) demande
+de toucher le **prompt du Worker** et sa **normalisation** — donc un déploiement backend, et un
+changement de ce qu'on demande au modèle (**R34** : ça se valide au banc d'essai). **Rien de tout cela
+n'est dans le périmètre strict posé par Michel.** Mesuré, écrit, laissé à sa décision.
 ## 🔬 `estimateFoodAI` n'a AUCUN filet de fiabilité — il n'atteint pas `_ref100` (13/09/2026, ft-v1207)
 
 **État : à trier** · *mesuré en construisant le résolveur, non corrigé (périmètre fermé par Michel).*

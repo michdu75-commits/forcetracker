@@ -122,7 +122,7 @@ for _f in ('scanBarcodePhoto', '_bcPhotoFallback', 'onBarcodeFile'):
                          'ecrit « je ne veux aucun bouton mort ».' % _f)
 if "getElementById('af-bc-input')" in CODE or 'id="af-bc-input"' in IDX:
     raise SystemExit('L element `af-bc-input` est revenu : c est le bouton mort de ft-v388.')
-if 'RETIRÉS EN ft-v1209' not in APP or 'onBarcodeFile` RETIRÉE en ft-v1209' not in APP:
+if 'RETIRÉS EN ft-v1210' not in APP or 'onBarcodeFile` RETIRÉE en ft-v1210' not in APP:
     raise SystemExit('Le retrait des orphelines n est plus ECRIT avec sa raison (R30) : sans ca, '
                      'le suivant « repare » une decision.')
 

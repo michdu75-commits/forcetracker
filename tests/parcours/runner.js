@@ -16767,7 +16767,12 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
     /* ── LA BASCULE ── */
     setEchelleReserve('rpe');
     o.rpe=lire(); o.rpeBadge=_reserveBadgeTxt(2); o.rpeExtreme=_reserveBadgeTxt(4);
-    o.rpeEchec=_rirTxt(0); o.rpeTxt=_rirTxt(2);
+    /* ⛔⛔ CE TÉMOIN LISAIT `_rirTxt`, QUI N'ÉTAIT AFFICHÉE NULLE PART (corrigé 12/09, ft-v1195).
+       Il croyait vérifier le libellé d'échec en RPE ; l'écran, lui, passe par `_reserveEchecTxt`.
+       *Vérifier la fonction n'est pas vérifier l'appel* (`BUGS.md` §58). Le voici sur le vrai
+       chemin — et `_rirTxt` a été retirée du code (R30, sa raison est écrite à sa place). */
+    o.rpeEchec=_reserveEchecTxt();
+    o.rpeBoutons0=_reserveBoutonTxt(0);
     /* ⛔⛔ LA DONNEE N'A PAS BOUGE — le temoin central. */
     o.donnee=S.wkt.exs[0].sets[0].rir;
     o.rirDeSet=_rirDeSet(S.wkt.exs[0].sets[0]);
@@ -33939,6 +33944,167 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 }
 
 
+/* ═══ B-CCCIV. LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE » (12/09/2026, ft-v1195) ═══════════
+   Michel, après avoir lu les trois constats : *« vas-y corrige tout »*. Il lève lui-même l'ordre
+   qu'il avait posé le matin même (*« on refera un état des lieux quand j'aurai fini les bugs de
+   la nutrition »*).
+
+   ⛔⛔ LES TROIS SONT INVISIBLES À L'ÉCRAN AUJOURD'HUI — ce sont des pièges pour plus tard, pas
+   des bugs qu'on subit. Donc ce bloc ne peut PAS se contenter de vérifier que le correctif est
+   là : l'essentiel est de figer que **rien n'a bougé pour la personne**. La preuve chiffrée est
+   dans `tools/instantane_seance_audit.js` (comparaison octet pour octet, avant/après) ; ici on
+   fige les GARANTIES, qui doivent survivre aux versions suivantes.
+   *Un instantané prouve qu'on n'a rien cassé aujourd'hui ; un témoin empêche de le casser demain.*
+
+   ⚠️ LES LIBELLÉS ATTENDUS SONT RECOPIÉS DE L'INSTANTANÉ « AVANT », pas réinventés — un attendu
+   écrit APRÈS coup se contente de décrire le code qu'on vient d'écrire, et ne peut plus le
+   contredire. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={}; const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR:'+e.message; } };
+    const crans=[0,1,2,3,4];
+
+    /* ── CONSTAT n°1 — un seul propriétaire pour « RPE = 10 − RIR » ── */
+    o.owner   = (typeof _rpeDeRir==='function');
+    o.ownerOK = o.owner && crans.map(n=>_rpeDeRir(n)).join(',');
+    /* ⛔ R29 : une fonction qui ne sait pas rend `null`, et ce `null` ne devient jamais un défaut. */
+    o.ownerNull = o.owner && (_rpeDeRir(null)===null) && (_rpeDeRir(undefined)===null);
+
+    /* ── LES LIBELLÉS, DANS LES DEUX ÉCHELLES (ce que la personne LIT) ── */
+    S.echelleReserve='rir';
+    o.rirBouton = crans.map(n=>String(sur(()=>_reserveBoutonTxt(n)))).join('|');
+    o.rirBadge  = crans.map(n=>String(sur(()=>_reserveBadgeTxt(n)))).join('|');
+    S.echelleReserve='rpe';
+    o.rpeBouton = crans.map(n=>String(sur(()=>_reserveBoutonTxt(n)))).join('|');
+    o.rpeBadge  = crans.map(n=>String(sur(()=>_reserveBadgeTxt(n)))).join('|');
+    /* ⭐ Et par le VRAI appel de la colonne « précédent », pas par la fonction seule (§58). */
+    o.prevRpe   = [_prevRirBadge({rir:2}),_prevRirBadge({rir:0}),_prevRirBadge({rir:4}),
+                   _prevRirBadge({rir:2,type:'X'})].join('|');
+    S.echelleReserve='rir';
+    o.prevRir   = [_prevRirBadge({rir:2}),_prevRirBadge({rir:0}),_prevRirBadge({rir:4}),
+                   _prevRirBadge({rir:2,type:'X'})].join('|');
+
+    /* ⛔ HORS DE L'ÉCHELLE, ON NE DIT RIEN — et surtout pas un chiffre crédible. Avant, en RPE,
+       un cran `null` sortait « 10 » : c'est-à-dire l'affirmation « série à l'échec » pour une
+       série que personne n'a notée — exactement la confusion que ft-v1154 a corrigée ailleurs. */
+    S.echelleReserve='rpe';
+    o.horsEchelleRpe = [_reserveBoutonTxt(null),_reserveBadgeTxt(null),
+                        _reserveBoutonTxt(undefined),_reserveBadgeTxt(undefined)].join('|');
+    S.echelleReserve='rir';
+    o.horsEchelleRir = [_reserveBoutonTxt(null),_reserveBadgeTxt(null)].join('|');
+
+    /* ── CONSTAT n°2 — `_rirTxt` n'existe plus, et l'écran passe par `_reserveEchecTxt` ── */
+    o.rirTxtPartie = (typeof _rirTxt==='undefined');
+    /* ⭐⭐ LE VRAI CHEMIN : une série taguée `X` fige la barre, et c'est CE rendu qu'on lit —
+       vérifier la fonction n'est pas vérifier l'appel (§58). */
+    S.wkt={date:today(),start:Date.now()-600000,exs:[{name:'Développé Couché',
+      sets:[{kg:80,reps:8,done:true,type:'X',rest:150}]}]};
+    persist();
+    _rirCible={ei:0,si:0};
+    if(typeof _renderRirRow==='function') _renderRirRow();
+    const zone=document.getElementById('rest-rir');
+    o.echecAffiche=((zone&&zone.querySelector('.rir-lbl'))||{}).textContent||'';
+    o.echecProprio=sur(()=>_reserveEchecTxt());
+
+    /* ── CONSTAT n°3 — un seul repli pour le repos par défaut ── */
+    const seance={date:'2026-09-12',duration:3600,exs:[
+      {name:'Développé Couché',sets:[{kg:80,reps:8,done:true},{kg:80,reps:8,done:true},{kg:80,reps:6,done:true}]},
+      {name:'Squat',sets:[{kg:100,reps:5,done:true},{kg:100,reps:5,done:true}]}]};
+    o.reposProprio = (typeof reposDefaut==='function');
+    /* ⭐ LE RÉGLAGE DE LA PERSONNE GAGNE TOUJOURS — c'est ce que le repli ne doit pas manger. */
+    S.defRest=180;
+    o.regle = o.reposProprio && [reposDefaut(), _defRestForType(''), _rythmeSeance().min].join('|');
+    /* ⛔ PUIS L'ÉTAT IMPOSSIBLE : plus de réglage du tout. Les trois sites doivent dire LA MÊME
+       chose — avant, ils disaient 90, 120 et 130 selon le fichier. */
+    delete S.defRest;
+    o.sansReglage = o.reposProprio && {
+      proprio: reposDefaut(),
+      log:     _defRestForType(''),
+      coach:   _rythmeSeance().min,
+      app:     _dureeSeanceMin(seance,5,0).min
+    };
+    S.defRest=130;
+    /* ⛔ ET LES RÈGLES PAR TYPE NE SONT PAS AVALÉES AU PASSAGE (échauffement, échec, dropset). */
+    o.parType = ['É','W','X','E','D'].map(t=>_defRestForType(t)).join('|');
+    return o;
+  });
+
+  console.log('\n-- CCCIV. Les 3 constats de l\'audit « onglet Séance » (ft-v1195) --');
+  t('B-CCCIV ① le propriétaire de la conversion RPE existe', R.owner===true);
+  t('B-CCCIV ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
+  t('B-CCCIV ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
+  t('B-CCCIV ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
+  t('B-CCCIV ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
+  t('B-CCCIV ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
+  t('B-CCCIV ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
+  t('B-CCCIV ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
+    R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir">·0r</span>|<span class="prev-rir">·4+r</span>|'
+    && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir">·@10</span>|<span class="prev-rir">·@≤6</span>|',
+    'RIR '+R.prevRir+' · RPE '+R.prevRpe);
+  t('B-CCCIV ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
+    R.horsEchelleRpe==='|||' && R.horsEchelleRir==='|', 'RPE ['+R.horsEchelleRpe+'] · RIR ['+R.horsEchelleRir+']');
+  t('B-CCCIV ② `_rirTxt` (morte en production) a été retirée', R.rirTxtPartie===true);
+  t('B-CCCIV ② ⭐⭐ et l\'écran affiche bien le libellé d\'échec de `_reserveEchecTxt`',
+    R.echecAffiche===R.echecProprio && /une répétition n'est pas passée/.test(R.echecAffiche),
+    'écran : "'+R.echecAffiche+'" · propriétaire : "'+R.echecProprio+'"');
+  t('B-CCCIV ③ le propriétaire du repos par défaut existe', R.reposProprio===true);
+  t('B-CCCIV ③ ⭐ le réglage de la personne gagne toujours (180 s partout)',
+    R.regle==='180|180|4.2', 'reçu : '+R.regle);
+  t('B-CCCIV ③ ⛔⛔ UN SEUL REPLI — sans réglage, les 3 fichiers disent la MÊME chose (avant : 90 · 120 · 130)',
+    R.sansReglage && R.sansReglage.log===R.sansReglage.proprio
+      && R.sansReglage.coach===Math.round(((R.sansReglage.proprio+70)/60)*10)/10
+      && Math.abs(R.sansReglage.app-(5*(30+R.sansReglage.proprio)/60))<0.01,
+    'reçu : '+JSON.stringify(R.sansReglage));
+  t('B-CCCIV ③ ... et ce repli est celui de l\'installation (130 s)',
+    R.sansReglage && R.sansReglage.proprio===130, 'reçu : '+(R.sansReglage||{}).proprio);
+  t('B-CCCIV ③ ⛔ les règles par TYPE ne sont pas avalées (échauffement 45 · échec 240 · dropset 20)',
+    R.parType==='45|45|240|240|20', 'reçu : '+R.parType);
+
+  /* ⛔⛔ ET LE TÉMOIN QUI EMPÊCHE LA RECHUTE — il lit la SOURCE, parce qu'une copie de la
+     conversion peut très bien donner le bon chiffre aujourd'hui et diverger dans six mois.
+     C'est tout l'objet du constat n°1 : le code était juste, le risque était la duplication. */
+  (()=>{
+    const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+    const proprio=/function _rpeDeRir\(/.test(lg);
+    /* ⚠️⚠️ DEUX RÉGLAGES DE L'INSTRUMENT, CHACUN PAYÉ SUR CE TÉMOIN-LÀ (12/09) :
+       ① la ligne du PROPRIÉTAIRE est retirée — elle contient forcément la conversion, c'est son
+          métier ; sans ça le témoin annonce 7 copies pour 6, et on cherche une septième qui
+          n'existe pas ;
+       ② les COMMENTAIRES sont retirés — la note R30 qui explique le retrait de `_rirTxt` CITE le
+          motif `10-n`, et le témoin la comptait comme une copie. *Un témoin qui ne distingue pas
+          le code de ce qui en PARLE finit par interdire d'écrire la documentation du correctif*
+          (déjà vu en ft-v1193, repayé ici).
+       👉 *L'instrument fait partie de la mesure* (`BUGS.md` §61 / §63).
+       le `-` ASCII seulement : les commentaires écrivent « RPE = 10 − RIR » avec un vrai moins */
+    const horsProprio=lg.replace(/\/\*[\s\S]*?\*\//g,'')          // blocs /* … */
+                        .replace(/(^|[^:])\/\/.*$/gm,'$1')        // // … (sans casser les URL)
+                        .split('\n').filter(l=>!/function _rpeDeRir\(/.test(l)).join('\n');
+    const copies=(horsProprio.match(/10\s*-\s*(n|RIR_MAX)\b/g)||[]);
+    const appels=(lg.match(/_rpeDeRir\s*\(/g)||[]).length-1;   // -1 : sa propre déclaration
+    t('B-CCCIV ① ⛔ plus AUCUNE copie de la conversion dans log.js', proprio && copies.length===0,
+      'trouvé : '+JSON.stringify(copies));
+    t('B-CCCIV ① ⛔ ... et le propriétaire est VRAIMENT appelé (sinon il redevient décoratif)',
+      appels>=2, appels+' appel(s)');
+  })();
+
+  /* ⛔ MÊME LOGIQUE POUR LE REPOS : un repli numérique recollé à `S.defRest` dans un fichier
+     servi, et les trois valeurs recommencent à diverger — en silence, puisque c'est dormant. */
+  (()=>{
+    const mauvais=[];
+    ['log.js','app.js','coach.js','screens.js','tracking.js','setup.js'].forEach(f=>{
+      const src=fs.readFileSync(path.join(ROOT,f),'utf8');
+      (src.match(/S\.defRest\s*(\|\|\s*\d+|[?:]\s*\d+)/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
+      (src.match(/\+S\.defRest\s*>\s*0\s*\)\s*\?/g)||[]).forEach(m=>mauvais.push(f+' : '+m));
+    });
+    t('B-CCCIV ③ ⛔ aucun repli numérique ne reste collé à `S.defRest` dans les fichiers servis',
+      mauvais.length===0, mauvais.join(' · '));
+  })();
+}
+
+
 /* ═══════════ CCXC — PHASE 0a + ÉTAPE 1a DU PLAN NUTRITION (11/09/2026) ═══════════
    Michel a validé `docs/PLAN-NUTRITION.pdf` : *« exécute la phase 0 puis l'étape 1a, avec les
    témoins et les critères écrits dans ce plan »*.
@@ -35763,6 +35929,1024 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
    la seule chose qui trahit une passe tronquée — il se COMPARE à la passe précédente, il ne
    se lit pas seul. (Même famille que le harnais coupé à `tail -4` en ft-v1187 :
    un outil de mesure tronqué ressemble à un code sans défaut.) */
+/* ⚠️⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE —
+   « Target page, context or browser has been closed », la passe s'arrête SANS TOTAL, et une
+   passe sans total ressemble trait pour trait à une passe verte (`BUGS.md` §61).
+   ⛔ C'est arrivé le 13/09 : l'avertissement était déjà écrit NEUF FOIS dans ce fichier, et je
+   l'ai quand même posé après. *Un avertissement répété neuf fois protège tout le monde sauf
+   celui qui écrit le dixième bloc.*
+   ═══ B-CCCIII. LE CONTRAT DE LECTURE D'UN PDF — COMPLETE / PARTIAL / UNKNOWN (13/09/2026, A1) ═══
+   Michel, après la mesure du matin sur ses vrais fichiers : *« aujourd'hui un import peut réussir
+   silencieusement alors qu'il est tronqué »*. `_pdfToText` rendait **682 lignes d'un fichier de
+   22 pages sans rien signaler** (plafond MAX_PAGES=15) — une lecture partielle était indiscernable
+   d'une lecture complète.
+
+   ⚠️⚠️ TÉMOINS PAR STUB DE `pdfjsLib`, ET C'EST UN CHOIX, PAS UN PIS-ALLER :
+   ① aucun binaire (1,34 Mo) ni PDF personnel n'entre dans le dépôt ;
+   ② le nombre de pages et le texte sont CONTRÔLÉS, donc les 3 états sont déterministes et
+      rejouables sur n'importe quelle machine — un vrai PDF de 22 pages ne le serait pas.
+   ⛔ CE QUI EST ÉPROUVÉ ICI EST NOTRE LOGIQUE DE CONTRAT, PAS pdf.js. La vraie bibliothèque a été
+   mesurée séparément le 13/09 (programme 87 lignes/384 ms, historique 682/413 ms, contrôle négatif
+   à 0 ligne). *Dire ce qu'un test ne couvre pas fait partie du test.* */
+{
+  console.log('\n-- CCCIII. Le contrat de lecture d\'un PDF (A1) --');
+
+  const R = await p.evaluate(async () => {
+    const out = {};
+    const vrai = window.pdfjsLib;          // ⛔ on RESTAURE à la fin : ne rien laisser derrière soi
+
+    /* Le stub : `_pdfOuvrir` appelle `_loadPDFJS()` (qui sort à sa 1re ligne si pdfjsLib existe)
+       puis `pdfjsLib.getDocument(...).promise`. On lui rend un document dont on choisit le nombre
+       de pages et le contenu. Les fragments sont donnés DANS LE DÉSORDRE exprès, pour que le
+       regroupement par Y et le tri par X restent éprouvés (non-régression). */
+    const poser = (nbPages, avecTexte) => {
+      window.pdfjsLib = {
+        GlobalWorkerOptions: {},
+        getDocument(){
+          return { promise: Promise.resolve({
+            numPages: nbPages,
+            getPage(i){
+              return Promise.resolve({ getTextContent(){
+                if(!avecTexte) return Promise.resolve({items:[]});
+                return Promise.resolve({items:[
+                  {str:'monde', transform:[0,0,0,0, 50, 700]},   // x=50, même ligne
+                  {str:'page'+i, transform:[0,0,0,0, 10, 680]},  // ligne du dessous
+                  {str:'bonjour',transform:[0,0,0,0, 10, 700]}   // x=10 : doit passer DEVANT « monde »
+                ]});
+              }});
+            }
+          })};
+        }
+      };
+    };
+    const lire = async () => {
+      const f = new File([new Uint8Array([37,80,68,70])], 'x.pdf', {type:'application/pdf'});
+      try { return await window._pdfToText(f); } catch(e){ return {erreur:String(e&&e.message||e)}; }
+    };
+
+    poser(3, true);   out.complet = await lire();
+    poser(22, true);  out.partiel = await lire();
+    poser(1, false);  out.inconnu = await lire();
+    poser(22, false); out.videEtTronque = await lire();     // les deux à la fois
+
+    out.constantes = { c: typeof LIRE_COMPLET!=='undefined' && LIRE_COMPLET,
+                       p: typeof LIRE_PARTIEL!=='undefined' && LIRE_PARTIEL,
+                       i: typeof LIRE_INCONNU!=='undefined' && LIRE_INCONNU };
+    if(vrai) window.pdfjsLib = vrai; else delete window.pdfjsLib;
+    return out;
+  });
+
+  /* ⛔ CONTRÔLE SAIN DU HARNAIS, AVANT TOUT LE RESTE : si le stub n'atteint pas la fonction, TOUS
+     les témoins qui suivent seraient verts pour la mauvaise raison (BUGS.md §61). */
+  t('B-CCCIII ⛔ le stub atteint bien la vraie fonction (sinon tout ce qui suit est faux)',
+    !!R.complet && !R.complet.erreur && typeof R.complet.etat==='string',
+    'reçu : '+JSON.stringify(R.complet).slice(0,120));
+
+  t('B-CCCIII ① COMPLETE sur un PDF entièrement lu',
+    R.complet.etat==='COMPLETE' && R.complet.pagesLues===3 && R.complet.pagesTotal===3,
+    'reçu : '+R.complet.etat+' '+R.complet.pagesLues+'/'+R.complet.pagesTotal);
+  t('B-CCCIII ① ⛔ `raison` est VIDE sur un succès (une raison sur un COMPLETE est un signal faux)',
+    R.complet.raison==='', 'reçu : '+JSON.stringify(R.complet.raison));
+
+  t('B-CCCIII ② ⭐ PARTIAL sur 22 pages plafonnées à 15 — LE DÉFAUT DU JOUR, RENDU OBSERVABLE',
+    R.partiel.etat==='PARTIAL' && R.partiel.pagesLues===15 && R.partiel.pagesTotal===22,
+    'reçu : '+R.partiel.etat+' '+R.partiel.pagesLues+'/'+R.partiel.pagesTotal);
+  t('B-CCCIII ② ⛔ la raison NOMME la cause (`plafond_pages`), ce n\'est pas un message d\'interface',
+    R.partiel.raison==='plafond_pages', 'reçu : '+JSON.stringify(R.partiel.raison));
+  t('B-CCCIII ② ⭐ et les lignes LUES sont quand même rendues : un partiel n\'est pas un échec',
+    Array.isArray(R.partiel.lignes) && R.partiel.lignes.length===30,
+    'reçu : '+(R.partiel.lignes||[]).length+' lignes');
+
+  t('B-CCCIII ③ UNKNOWN sur un PDF sans couche texte',
+    R.inconnu.etat==='UNKNOWN' && R.inconnu.lignes.length===0 && R.inconnu.raison==='aucune_couche_texte',
+    'reçu : '+R.inconnu.etat+' / '+R.inconnu.raison);
+
+  /* ⛔ L'ORDRE DES TESTS EST UN CHOIX DÉLIBÉRÉ, FIGÉ ICI (R30) : « rien lu » l'emporte sur
+     « tronqué ». Un 22 pages sans aucun texte doit rendre UNKNOWN — la seule chose utile à en
+     faire est de DESCENDRE D'UN CRAN vers l'OCR. PARTIAL annoncerait « lu en partie » avec zéro
+     ligne : la cascade s'arrêterait sur un résultat vide en croyant avoir réussi à moitié. */
+  t('B-CCCIII ④ ⛔ vide ET tronqué → UNKNOWN gagne (pour que la cascade descende, pas qu\'elle s\'arrête)',
+    R.videEtTronque.etat==='UNKNOWN' && R.videEtTronque.raison==='aucune_couche_texte',
+    'reçu : '+R.videEtTronque.etat+' / '+R.videEtTronque.raison);
+
+  t('B-CCCIII ⑤ pagesLues ≤ pagesTotal, et les deux > 0 dès que le fichier s\'ouvre',
+    [R.complet,R.partiel,R.inconnu,R.videEtTronque].every(x=>x.pagesLues>0 && x.pagesTotal>0 && x.pagesLues<=x.pagesTotal), '');
+
+  /* ⛔ NON-RÉGRESSION : le regroupement par Y et le tri par X ne doivent pas avoir bougé. Les
+     fragments sont fournis dans le désordre ; « bonjour » (x=10) doit passer devant « monde »
+     (x=50) sur la même ligne, et la ligne du haut (y=700) avant celle du bas (y=680). */
+  t('B-CCCIII ⑥ ⛔ l\'assemblage des lignes est intact (Y décroissant, X croissant)',
+    R.complet.lignes[0]==='bonjour monde' && R.complet.lignes[1]==='page1',
+    'reçu : '+JSON.stringify((R.complet.lignes||[]).slice(0,2)));
+
+  t('B-CCCIII ⑦ les 3 états sont les valeurs attendues',
+    R.constantes.c==='COMPLETE' && R.constantes.p==='PARTIAL' && R.constantes.i==='UNKNOWN',
+    'reçu : '+JSON.stringify(R.constantes));
+
+  /* ══ TÉMOINS DE SOURCE ══ */
+  const srcLog = fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  const srcCoach = fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  /* ⛔ On retire les commentaires AVANT de compter : un témoin qui ne distingue pas le CODE de ce
+     qui en PARLE finit par interdire d'écrire la documentation du correctif (BUGS.md §64). */
+  const sansCom = s => s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  const logC = sansCom(srcLog), coachC = sansCom(srcCoach);
+
+  /* ⭐⭐ LE TÉMOIN QUI PORTE TOUT LE CHANTIER. La forme retenue (un objet) a une faiblesse dite :
+     un appelant NON migré échoue FERMÉ mais avec un message trompeur (« PDF vide » sur un PDF
+     lisible). Ce n'est pas bruyant — c'est muet-mais-sûr. Le garde-fou n'est donc pas la forme,
+     c'est CE témoin : chaque appelant de `_pdfToText` doit lire `.etat`. Sans lui, une migration
+     incomplète serait VERTE. */
+  const appelants = coachC.split('\n').map((l,i)=>({l,i})).filter(x=>/_pdfToText\s*\(/.test(x.l));
+  t('B-CCCIII ⑧ ⭐ SOURCE — `_pdfToText` a toujours exactement UN appelant, et il est dans coach.js',
+    appelants.length===1 && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
+    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')))
+    && !/(_pdfToText\s*\()/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))),
+    'appelants dans coach.js : '+appelants.length);
+  t('B-CCCIII ⑧ ⭐⭐ SOURCE — l\'appelant LIT `.etat` (le seul garde-fou d\'une migration complète)',
+    /const\s+r\s*=\s*await\s+_pdfToText\(f\)/.test(coachC) && /r\.etat\s*===\s*LIRE_INCONNU/.test(coachC)
+    && /r\.etat\s*===\s*LIRE_PARTIEL/.test(coachC),
+    'l\'appelant ne consulte pas les trois états');
+  t('B-CCCIII ⑧ ⛔ SOURCE — il ne teste plus la LONGUEUR pour décider (l\'ancienne forme est partie)',
+    !/const\s+lines\s*=\s*await\s+_pdfToText/.test(coachC) && !/if\(!lines\.length\)/.test(coachC), '');
+
+  /* ⛔ Les trois valeurs ne s'écrivent qu'aux constantes : une chaîne 'PARTIAL' retapée ailleurs
+     est exactement la recopie que ce contrat existe pour éviter (R2). */
+  const litteraux = (logC+coachC).match(/'(COMPLETE|PARTIAL|UNKNOWN)'/g)||[];
+  t('B-CCCIII ⑨ ⛔ SOURCE — les 3 valeurs ne sont écrites QU\'aux constantes (aucune recopie)',
+    litteraux.length===3, 'trouvé '+litteraux.length+' littéraux : '+litteraux.join(' '));
+
+  /* ══ PÉRIMÈTRE — ce que Michel a explicitement exclu de A1 ══ */
+  t('B-CCCIII ⑩ ⛔ PÉRIMÈTRE — MAX_PAGES vaut TOUJOURS 15 (on rend la troncature observable, on ne la corrige pas)',
+    /const\s+MAX_PAGES=15,\s*lines=\[\]/.test(logC), '');
+  /* ⚠️ CE TÉMOIN A ÉTÉ FAUX AU 1ᵉʳ JET, ET LA CAUSE RESSERVIRA : il bornait la recherche à
+     « 1400 caractères après `_pdfToImages` » pour vérifier qu'aucun `etat:LIRE_` n'y apparaît.
+     Or le corps de `_pdfToImages` fait **836 caractères**, et `_pdfToText` — qui rend bel et
+     bien le contrat — commence juste après : le garde débordait sur la fonction VOISINE et
+     rougissait sur du code parfaitement sain. *Une borne en distance de caractères n'est pas
+     une borne de fonction* (BUGS.md §63, reposé). On découpe donc le CORPS réel, jusqu'à son
+     `return pages;`, et on cherche dedans. */
+  const corpsImages = (()=>{ const i=logC.indexOf('async function _pdfToImages(f){');
+    if(i<0) return null; const j=logC.indexOf('return pages;', i); return j<0?null:logC.slice(i,j); })();
+  t('B-CCCIII ⑪ ⛔ PÉRIMÈTRE — `_pdfToImages` n\'est PAS migrée (A2 attend le feu vert nutrition)',
+    corpsImages!==null && !/etat:\s*LIRE_/.test(corpsImages) && !/pagesTotal/.test(corpsImages),
+    corpsImages===null?'corps introuvable':'le contrat a débordé sur _pdfToImages');
+  t('B-CCCIII ⑪ ⛔ PÉRIMÈTRE — les 4 appelants de `_pdfToImages` lisent toujours `.length` (rien n\'a bougé chez eux)',
+    /const pages=await _pdfToImages\(f\);\s*\n?\s*if\(!pages\.length\)/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
+    && (logC.match(/const pages=await _pdfToImages\(f\);/g)||[]).length===2
+    && /const imgs=await _pdfToImages\(f\); pages=imgs\.map/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))), '');
+}
+
+/* ═══ B-CCCV. LE RYTHME DES QUESTIONS PROACTIVES — constats A et B de l'audit Accueil/Progrès ═══
+   (13/09/2026 · bloc préfixé **B-** par le protocole deux sessions, et il ne sera JAMAIS renommé.)
+
+   ⛔⛔ CE QUI EST PROTÉGÉ N'EST PAS UN CALCUL, C'EST UN COMPORTEMENT. La règle *« au plus une
+   question par semaine, pas avant 3 séances »* est ce qui empêche Milo de tourner à
+   l'INTERROGATOIRE (`docs/BUGS-DE-PHILOSOPHIE.md`). Elle était retapée **4 fois** pour le plafond
+   hebdo et **3 fois** pour le garde des séances. Le jour où l'une serait passée à 10 jours, les
+   autres auraient continué à 7 — et le symptôme, *« Milo me demande trop de trucs »*, n'apparaît
+   dans AUCUN test de calcul et sur AUCUN écran.
+
+   ⭐ LA PREUVE CHIFFRÉE EST AILLEURS : `tools/instantane_rythme_questions.js` compare la sortie
+   des 4 fonctions octet pour octet, avant/après (identique, sha `a3d38cefe4d4e20f`). Ici on fige
+   les GARANTIES. *Un instantané prouve qu'on n'a rien cassé aujourd'hui ; un témoin empêche de
+   le casser demain.*
+
+   ⚠️⚠️ ET UNE MUTATION RESTE VOLONTAIREMENT SANS TÉMOIN DE COMPORTEMENT, avec sa raison :
+   le seuil de `maybeProposeObservation` (4 séances) est **masqué** par celui de `_obsCandidates`
+   (4 aussi). Le muter seul ne change RIEN à l'écran — c'est la famille du constat C, *un chemin
+   qui n'est juste que grâce à une contrainte posée ailleurs*. Il n'est donc tenu que par un
+   témoin de SOURCE, et c'est dit plutôt que masqué. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const jMoins=n=>new Date(new Date(today()+'T12:00:00').getTime()-n*864e5).toISOString().slice(0,10);
+    const seances=n=>{const a=[];for(let i=0;i<n;i++)a.push({date:jMoins(i+1),ts:Date.now()-i*864e5,exs:[]});return a;};
+    const etat=(n,ageJours,extra)=>{
+      S.sessions=seances(n);
+      S.coachQuiz={answers:{},confirmedAt:{}};
+      S.registre=Object.assign({facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},
+        gapForce:null, lastObsAt: ageJours===null?'':jMoins(ageJours)}, extra||{});
+    };
+    const champ=f=>{try{const r=f();return r?r.field:null;}catch(e){return 'ERREUR';}};
+
+    /* ── LE PLAFOND HEBDO, AUX BORDS (6 ≠ 7) ── */
+    etat(10,6);  o.gap6=champ(_pendingGap);   o.enr6=champ(_pendingEnrich);
+    etat(10,7);  o.gap7=champ(_pendingGap);   o.enr7=champ(_pendingEnrich);
+    etat(10,0);  o.gap0=champ(_pendingGap);
+    /* ⛔ une date DANS LE FUTUR (téléphone remis à l'heure) ne doit PAS faire taire l'app :
+       c'est le rôle du `dl>=0`, et il se garde. */
+    S.sessions=seances(10);
+    S.coachQuiz={answers:{},confirmedAt:{}};
+    S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,
+                lastObsAt:new Date(Date.now()+3*864e5).toISOString().slice(0,10)};
+    o.gapFutur=champ(_pendingGap);
+
+    /* ── LE GARDE DES SÉANCES, AU BORD (2 ≠ 3) ── */
+    etat(2,null); o.gapS2=champ(_pendingGap); o.enrS2=champ(_pendingEnrich);
+    etat(3,null); o.gapS3=champ(_pendingGap); o.enrS3=champ(_pendingEnrich);
+    /* ⛔ le garde dit `(s.date||s.ts)` : une séance qui n'a NI l'une NI l'autre ne compte pas. */
+    S.sessions=[{date:jMoins(1),exs:[]},{ts:Date.now(),exs:[]},{exs:[]}];
+    S.coachQuiz={answers:{},confirmedAt:{}};
+    S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,lastObsAt:''};
+    o.gapDeuxFormes=champ(_pendingGap);          // 2 séances valides + 1 vide → doit se taire
+    /* ⚠️ CE CAS-CI EST NÉ DU CONTRÔLE NÉGATIF. Avec le cas du dessus SEUL, la mutation « on ne
+       compte plus que les séances qui ont une DATE » restait verte : 2 valides deviennent 1, et
+       les deux versions se taisent pour la même raison apparente. Il faut donc un cas où le `||`
+       DÉCIDE — 3 séances qui n'ont QUE l'horodatage. *Un témoin qui donne le bon résultat pour
+       la mauvaise raison n'est pas un témoin.* */
+    S.sessions=[{ts:Date.now(),exs:[]},{ts:Date.now()-864e5,exs:[]},{ts:Date.now()-2*864e5,exs:[]}];
+    S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,lastObsAt:''};
+    o.gapSansDate=champ(_pendingGap);            // 3 séances horodatées → doit parler
+
+    /* ── LE CONFIRMER (il a son propre chemin, et son report est de 30 jours) ── */
+    const confirmEtat=(n,age,skip)=>{
+      S.sessions=seances(n);
+      S.coachQuiz={answers:{place:'salle',time:'60',othersport:'aucun autre sport'},
+                   confirmedAt:{place:jMoins(400),time:jMoins(400),othersport:jMoins(400)}};
+      S.registre={facts:{},observations:[],updatedAt:'',gapForce:null,lastObsAt:jMoins(age),
+                  gapSkips:{}, confirmSkips: skip===null?{}:{place:jMoins(skip)}};
+    };
+    confirmEtat(2,30,null);  o.cfS2=champ(_pendingConfirm);
+    confirmEtat(3,30,null);  o.cfS3=champ(_pendingConfirm);
+    confirmEtat(10,6,null);  o.cf6=champ(_pendingConfirm);
+    confirmEtat(10,30,29);   o.cfSkip29=champ(_pendingConfirm);
+    confirmEtat(10,30,30);   o.cfSkip30=champ(_pendingConfirm);
+
+    /* ── LE REPORT « PLUS TARD » DU GAP : 7 jours, une règle VOISINE qu'on n'avale pas ──
+       ⚠️ les réponses restent VIDES exprès : sinon le champ est sauté parce qu'il est *déjà
+       rempli*, et le témoin ne mesurerait plus le report du tout. */
+    const gapSkipEtat=skip=>{
+      S.sessions=seances(10);
+      S.coachQuiz={answers:{},confirmedAt:{}};
+      S.registre={facts:{},observations:[],updatedAt:'',gapForce:null,lastObsAt:jMoins(30),
+                  gapSkips:{place:jMoins(skip)}, confirmSkips:{}};
+    };
+    gapSkipEtat(6); o.gapSkip6=champ(_pendingGap);
+    gapSkipEtat(7); o.gapSkip7=champ(_pendingGap);
+
+    /* ── LE CHEMIN PRIORITAIRE : `gapForce` PASSE OUTRE le plafond, exprès ──
+       C'est la suite directe d'une action de la personne (« Confirmer → Non »). Un correctif qui
+       poserait le plafond AVANT ce bypass le casserait, et rien d'autre ne le verrait. */
+    etat(10,0,{gapForce:'place'});  o.prioPlafond=champ(_pendingGap);
+    etat(0,0,{gapForce:'place'});   o.prioZeroSeance=champ(_pendingGap);
+
+    /* ── LE SEUIL PROPRE AUX OBSERVATIONS : 4, pas 3 ──
+       Séances EN SEMAINE uniquement, pour que le candidat `weekday_only` existe : sans ça le
+       seuil n'est jamais le facteur limitant, et le témoin serait vert quoi qu'on fasse. */
+    const semaine=n=>{const a=[];let j=1;
+      while(a.length<n){const d=new Date(new Date(today()+'T12:00:00').getTime()-j*864e5);
+        const jr=d.getDay();
+        if(jr!==0&&jr!==6)a.push({date:d.toISOString().slice(0,10),ts:d.getTime(),startHour:19,exs:[]});
+        j++;}
+      return a;};
+    [3,4].forEach(n=>{
+      S.sessions=semaine(n);
+      S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,lastObsAt:''};
+      try{ maybeProposeObservation(); }catch(e){}
+      o['obs'+n]=(S.registre.observations||[]).length>0?'POSEE':'rien';
+    });
+    return o;
+  });
+
+  console.log('\n-- B-CCCV. Le rythme des questions proactives (audit Accueil/Progrès) --');
+  t('B-CCCV ① le plafond hebdo tient : à 6 jours l\'app se tait',
+    R.gap6===null && R.enr6===null, 'gap='+R.gap6+' enrich='+R.enr6);
+  t('B-CCCV ① ... et à 7 jours elle reparle (le bord exact, pas « à peu près »)',
+    R.gap7==='place' && R.enr7==='othersport', 'gap='+R.gap7+' enrich='+R.enr7);
+  t('B-CCCV ① ... le jour même, silence', R.gap0===null, 'reçu : '+R.gap0);
+  t('B-CCCV ① ⛔ une date DANS LE FUTUR ne fait PAS taire l\'app (le garde `dl>=0` se garde)',
+    R.gapFutur==='place', 'reçu : '+R.gapFutur);
+  t('B-CCCV ② pas de question avant 3 séances', R.gapS2===null && R.enrS2===null,
+    'gap='+R.gapS2+' enrich='+R.enrS2);
+  t('B-CCCV ② ... et à 3 séances, oui', R.gapS3==='place' && R.enrS3==='othersport',
+    'gap='+R.gapS3+' enrich='+R.enrS3);
+  t('B-CCCV ② ⛔ une séance sans date NI horodatage ne compte pas', R.gapDeuxFormes===null,
+    'reçu : '+R.gapDeuxFormes);
+  t('B-CCCV ② ⛔ ... mais 3 séances qui n\'ont QUE l\'horodatage comptent bien (le `||` décide)',
+    R.gapSansDate==='place', 'reçu : '+R.gapSansDate);
+  t('B-CCCV ③ le Confirmer suit la MÊME règle de séances', R.cfS2===null && R.cfS3==='place',
+    '2 séances='+R.cfS2+' · 3 séances='+R.cfS3);
+  t('B-CCCV ③ ... et le MÊME plafond hebdo', R.cf6===null, 'reçu : '+R.cf6);
+  t('B-CCCV ③ ⛔ PÉRIMÈTRE — son report « Plus tard » reste à 30 jours, pas 7',
+    R.cfSkip29==='time' && R.cfSkip30==='place', 'J-29='+R.cfSkip29+' · J-30='+R.cfSkip30);
+  t('B-CCCV ④ ⛔ PÉRIMÈTRE — le report « Plus tard » du Gap reste à 7 jours',
+    R.gapSkip6==='freq' && R.gapSkip7==='place', 'J-6='+R.gapSkip6+' · J-7='+R.gapSkip7);
+  t('B-CCCV ⑤ ⛔ le chemin PRIORITAIRE passe outre le plafond hebdo (action de la personne)',
+    R.prioPlafond==='place', 'reçu : '+R.prioPlafond);
+  t('B-CCCV ⑤ ... et outre le garde des séances', R.prioZeroSeance==='place', 'reçu : '+R.prioZeroSeance);
+  t('B-CCCV ⑥ ⛔ PÉRIMÈTRE — les observations gardent LEUR seuil (rien à 3, posée à 4)',
+    R.obs3==='rien' && R.obs4==='POSEE', '3 séances='+R.obs3+' · 4 séances='+R.obs4);
+
+  /* ══ LES TÉMOINS DE SOURCE — ils tiennent ce que l'écran ne peut pas montrer ══
+     Une règle réécrite à la main dit exactement la même chose à l'exécution : les témoins de
+     comportement ci-dessus resteraient TOUS verts. C'est précisément ce qu'un témoin de source
+     achète, et c'est mesuré (mutation : la règle recopiée ne fait rougir que ceux-là). */
+  (()=>{
+    const brut=fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8');
+    /* ⚠️ On retire les COMMENTAIRES avant de compter : la note qui EXPLIQUE l'extraction cite
+       forcément la forme qu'elle remplace. *Un témoin qui ne distingue pas le code de ce qui en
+       PARLE finit par interdire d'écrire la documentation du correctif* (ft-v1193, ft-v1203). */
+    const src=brut.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const copiesPlafond=(src.match(/dl>=0\s*&&\s*dl<7\s*\)\s*return/g)||[]);
+    const copiesSeances=(src.match(/\(s\.date\|\|s\.ts\)\)\.length<3/g)||[]);
+    t('B-CCCV ⑦ ⛔ SOURCE — plus AUCUNE copie du plafond hebdo dans `tracking.js`',
+      copiesPlafond.length===0, 'trouvé : '+copiesPlafond.join(' · '));
+    t('B-CCCV ⑦ ⛔ SOURCE — plus AUCUNE copie du garde « 3 séances »',
+      copiesSeances.length===0, 'trouvé : '+copiesSeances.join(' · '));
+    /* ⛔ Et les propriétaires doivent être VRAIMENT appelés, sinon ils deviennent décoratifs et
+       le code repart en copies sans qu'aucun témoin ci-dessus ne bouge. */
+    const appelsPlafond=(src.match(/_plafondHebdoAtteint\s*\(/g)||[]).length-1;   // -1 : sa déclaration
+    const appelsSeances=(src.match(/_assezDeSeancesPourDemander\s*\(/g)||[]).length-1;
+    t('B-CCCV ⑦ ... et le plafond a bien ses 4 appelants', appelsPlafond===4, appelsPlafond+' appel(s)');
+    t('B-CCCV ⑦ ... et le garde des séances ses 3 appelants', appelsSeances===3, appelsSeances+' appel(s)');
+    /* ⛔⛔ LE TÉMOIN QUI TIENT LA MUTATION INVISIBLE. Le seuil de `maybeProposeObservation` est
+       4, et il est MASQUÉ par celui de `_obsCandidates` : le fondre avec le propriétaire (3) ne
+       changerait RIEN à l'écran. Mesuré — la mutation ne fait rougir que cette ligne-ci. */
+    t('B-CCCV ⑧ ⛔ SOURCE — `maybeProposeObservation` garde SON seuil de 4 (jamais fondu avec le propriétaire)',
+      /\(s\.date\|\|s\.ts\)\)\.length<4\)return;/.test(src)
+      && !/if\(!_assezDeSeancesPourDemander\(\)\)return;[^n]/.test(src), '');
+    t('B-CCCV ⑧ ⛔ SOURCE — `_obsCandidates` garde le sien aussi (c\'est LUI le vrai garde-fou)',
+      /if\(sess\.length<4\)return out;/.test(src), '');
+    /* ⛔ Constat B : plus aucun commentaire n'annonce un nombre de jours que le code contredit. */
+    t('B-CCCV ⑨ ⛔ constat B — aucun commentaire n\'annonce « 3 jours » dans tracking.js',
+      !/avant 3 jours|espacement 3 j/.test(brut), '');
+    /* ⚠️⚠️ CE TÉMOIN A ROUGI SUR DU CODE PARFAITEMENT SAIN, ET LA CAUSE RESSERVIRA. Il exigeait
+       « `dl>=0 && dl<7` n'apparaît qu'UNE fois » — il en trouvait **3**, et les deux autres sont
+       le report « Plus tard » du Gap et celui de l'Enrichir, qui s'écrivent EXACTEMENT pareil et
+       ne disent pas du tout la même chose (l'un fait taire TOUTE question une semaine, l'autre
+       met UN champ de côté). 👉 *Un motif qui ne distingue pas deux règles jumelles ne compte
+       pas des copies, il compte des ressemblances* (`BUGS.md` §63). On sépare donc par ce qu'elles
+       FONT : le plafond fait `return` (il coupe), le report fait `continue` (il passe au champ
+       suivant). ⭐ *Et c'est le contrôle sur le code SAIN qui l'a dit, pas une relecture.* */
+    const coupe=(src.match(/dl>=0\s*&&\s*dl<7[^;]*;?\s*\)?\s*return/g)||[]);
+    const proprio=(src.match(/return\s+dl>=0\s*&&\s*dl<7;/g)||[]);
+    const reports=(src.match(/if\(dl>=0&&dl<7\)continue;/g)||[]);
+    t('B-CCCV ⑨ ... et le seul `<7` qui COUPE une question est celui du propriétaire',
+      coupe.length===0 && proprio.length===1,
+      'coupures hors propriétaire : '+coupe.length+' · propriétaire : '+proprio.length);
+    t('B-CCCV ⑨ ⛔ PÉRIMÈTRE — les 2 reports « Plus tard » à 7 jours sont intacts (règle VOISINE, pas une copie)',
+      reports.length===2, 'trouvé '+reports.length+' report(s)');
+  })();
+}
+
+/* ═══ B-CCCVI. CONSTAT C — « cette série compte-t-elle pour un record ? » ═══════════════════
+   (13/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel, en donnant le feu vert : *« supprimer les copies et dépendances accidentelles autour
+   du calcul des records, SANS changer le comportement actuel mesuré »*, en **deux sous-étapes
+   séparées et réversibles**.
+
+   ⛔⛔ LE CONTRAT EST BINAIRE : aucun record ne bouge. La preuve chiffrée est dans
+   `tools/instantane_records.js` (les deux chemins conduits par leur VRAIE porte, `S.prs` relu
+   en entier). Ici on fige les garanties.
+
+   ⭐⭐ ET LA PROTECTION DU CAS FUTUR EST UNE **COMPOSITION**, pas un seul témoin — c'est dit
+   plutôt que masqué. Aujourd'hui aucun `'É'` ne peut atteindre la règle à l'import (le type est
+   écrasé deux lignes plus haut), donc **aucun témoin de comportement ne peut le montrer sur ce
+   chemin**. La garantie tient en deux faits vérifiés séparément :
+     ① la règle employée à l'import EST le propriétaire (témoin de SOURCE) ;
+     ② le propriétaire REFUSE un échauffement (témoin de comportement, sur lui-même).
+   *Un témoin qui prétendrait montrer les deux d'un coup mentirait sur ce qu'il mesure.* */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const prs=()=>Object.keys(S.prs||{}).sort()
+      .map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ')||'(aucun)';
+
+    /* ── C1 : l'ÉDITION d'une séance, par sa vraie porte ── */
+    const editer=(sets)=>{
+      const ts=1750000002000;
+      S.prs={};
+      S.sessions=[{id:ts, ts, date:'2026-09-01', volume:0,
+                   exs:[{name:'Développé Couché', sets}]}];
+      openSessDetail(ts); saveSessEdits();
+      return {prs:prs(), volume:S.sessions[0].volume};
+    };
+    o.c1Travail  = sur(()=>editer([{kg:100,reps:5,done:true,type:'',rm1:0}]));
+    o.c1Echauff  = sur(()=>editer([{kg:200,reps:3,done:true,type:'É',rm1:0}]));
+    o.c1W        = sur(()=>editer([{kg:180,reps:2,done:true,type:'W',rm1:0}]));
+    o.c1Drop     = sur(()=>editer([{kg:130,reps:6,done:true,type:'D',rm1:0}]));
+    o.c1PasFaite = sur(()=>editer([{kg:250,reps:1,done:false,type:'',rm1:0}]));
+    /* ⛔ Le cas qui compte : l'échauffement est PLUS LOURD que la série de travail. Si la règle
+       débordait, c'est lui qui poserait le faux record — et le chiffre le dirait. */
+    o.c1Melange  = sur(()=>editer([
+      {kg:200,reps:3,done:true,type:'É',rm1:0},
+      {kg:120,reps:8,done:true,type:'',rm1:0},
+      {kg:130,reps:6,done:true,type:'D',rm1:0}]));
+
+    /* ── C2 : l'IMPORT d'historique, par sa vraie porte ──
+       ⚠️ AFFECTATION NUE, SANS `window.` : `_histExtracted` est un `let` de premier niveau de
+       `log.js`, donc une liaison LEXICALE globale, pas une propriété de `window`. Écrire
+       `window._histExtracted=…` crée une SECONDE variable que `finalImportHist` ne lit jamais :
+       elle sort par « Aucune séance à importer » et le témoin est vert **en ne mesurant rien**.
+       *Vécu sur la sonde de cette version même.* */
+    const importer=(sets)=>{
+      S.prs={}; S.sessions=[]; S.customExercises=[];
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets}]}]};
+      _histConflicts=[];
+      finalImportHist();
+      return {prs:prs(), seances:(S.sessions||[]).length,
+              types:(((S.sessions[0]||{}).exs||[])[0]||{sets:[]}).sets.map(s=>'"'+s.type+'"').join('/')};
+    };
+    o.c2Travail = sur(()=>importer([{kg:100,reps:5,type:''}]));
+    o.c2Drop    = sur(()=>importer([{kg:130,reps:6,type:'D'}]));
+    /* ⛔⛔ L'ÉTAT D'AUJOURD'HUI, FIGÉ TEL QUEL : un échauffement importé POSE le record, parce
+       que son type est écrasé à '' avant d'atteindre la règle. C2 ne corrige PAS ça — il
+       supprime la dépendance accidentelle. *Figer l'état réel, même gênant, est ce qui permet
+       de voir le jour où il changera.* */
+    o.c2EchauffLourd = sur(()=>importer([
+      {kg:200,reps:3,type:'É'},
+      {kg:120,reps:8,type:''},
+      {kg:130,reps:6,type:'D'}]));
+
+    /* ⭐⭐ LE CAS FUTUR, CONDUIT POUR DE VRAI — et il n'a PAS besoin d'être simulé.
+       La boucle des records de `finalImportHist` ne relit pas seulement les séances qu'elle
+       vient de créer : elle refait `S.sessions.filter(s=>s.importedHistory)`, donc **toutes**
+       les séances déjà marquées importées. Une séance importée qui porte un `'É'` — ce que
+       produira l'import le jour où il lira une colonne de type — traverse donc la VRAIE
+       fonction, sans que l'écrasement de type puisse la protéger.
+       👉 *La protection n'est plus une composition de deux faits : elle se mesure.*
+       ⛔ Avant C2, ce cas posait un record d'échauffement de 250 kg — mesuré, pas déduit.
+       ⚠️ ET ON DIT EXACTEMENT CE QUI EST CONSTRUIT : le CHEMIN est réel (la boucle relit bien
+       toutes les séances importées), la DONNÉE est fabriquée à dessein. Aucune séance produite
+       par l'app d'aujourd'hui ne peut porter ce `'É'`, puisque l'import l'écrase — c'est
+       précisément la raison d'être de C2, et c'est pour ça que ce témoin est le seul endroit
+       où la garantie devient visible. */
+    o.c2FuturEchauffement = sur(()=>{
+      S.prs={}; S.customExercises=[];
+      S.sessions=[{ id:1, ts:1, date:'2026-07-01', importedHistory:true, volume:0, exs:[
+        {name:'Soulevé de Terre', sets:[
+          {kg:250,reps:3,done:true,type:'É',rm1:0},   // ⛔ échauffement LOURD, type PRÉSERVÉ
+          {kg:150,reps:8,done:true,type:'',rm1:0}     // la vraie série de travail
+        ]}
+      ]}];
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets:[{kg:100,reps:5,type:''}]}]}]};
+      _histConflicts=[];
+      finalImportHist();
+      return prs();
+    });
+
+    /* ── LE PROPRIÉTAIRE, POUR LUI-MÊME (la moitié ② de la composition) ── */
+    o.proprio = ['','É','W','D','N','X'].map(t=>
+      t+':'+sur(()=>String(_serieFaitFoiPourPR({done:true,kg:100,reps:5,type:t})))).join(' ');
+    o.proprioBords = [
+      'pasFaite:'+sur(()=>String(_serieFaitFoiPourPR({done:false,kg:100,reps:5,type:''}))),
+      'kg0:'     +sur(()=>String(_serieFaitFoiPourPR({done:true,kg:0,reps:5,type:''}))),
+      'reps0:'   +sur(()=>String(_serieFaitFoiPourPR({done:true,kg:100,reps:0,type:''}))),
+      'null:'    +sur(()=>String(_serieFaitFoiPourPR(null)))
+    ].join(' ');
+    return o;
+  });
+
+  console.log('\n-- B-CCCVI. Constat C : la règle d\'éligibilité aux records --');
+  t('B-CCCVI ① C1 — une série de travail éditée pose bien le record',
+    R.c1Travail && R.c1Travail.prs==='Développé Couché=100x5' && R.c1Travail.volume===500,
+    JSON.stringify(R.c1Travail));
+  t('B-CCCVI ① C1 — un ÉCHAUFFEMENT n\'en pose aucun, même à 200 kg',
+    R.c1Echauff && R.c1Echauff.prs==='(aucun)' && R.c1Echauff.volume===0, JSON.stringify(R.c1Echauff));
+  t('B-CCCVI ① C1 — une série W non plus',
+    R.c1W && R.c1W.prs==='(aucun)', JSON.stringify(R.c1W));
+  t('B-CCCVI ① C1 — un DROP SET, si (il compte, c\'est la règle)',
+    R.c1Drop && R.c1Drop.prs==='Développé Couché=130x6', JSON.stringify(R.c1Drop));
+  t('B-CCCVI ① C1 — une série NON FAITE non plus',
+    R.c1PasFaite && R.c1PasFaite.prs==='(aucun)', JSON.stringify(R.c1PasFaite));
+  t('B-CCCVI ① ⭐ C1 — échauffement 200 kg + travail 120 kg : le record vient du DROP SET, pas de l\'échauffement',
+    R.c1Melange && R.c1Melange.prs==='Développé Couché=130x6' && R.c1Melange.volume===1740,
+    JSON.stringify(R.c1Melange));
+
+  t('B-CCCVI ② C2 — une séance importée est bien créée et pose son record',
+    R.c2Travail && R.c2Travail.seances===1 && R.c2Travail.prs==='Squat à la Barre=100x5',
+    JSON.stringify(R.c2Travail));
+  t('B-CCCVI ② C2 — le drop set traverse l\'import en gardant son type',
+    R.c2Drop && R.c2Drop.types==='"D"' && R.c2Drop.prs==='Squat à la Barre=130x6',
+    JSON.stringify(R.c2Drop));
+  /* ⛔⛔ CE TÉMOIN FIGE UN ÉTAT QUI N'EST PAS SATISFAISANT, ET C'EST VOULU (R30). Aujourd'hui
+     l'import ÉCRASE le type, donc l'échauffement de 200 kg pose le record. C2 ne change pas ça ;
+     il supprime la dépendance accidentelle qui rendait ce chemin « juste par accident ».
+     *Le jour où l'import saura lire une colonne de type, ce témoin rougira — et il devra
+     rougir : c'est lui qui dira que la protection est enfin active.* */
+  t('B-CCCVI ② ⛔ C2 — ÉTAT ACTUEL FIGÉ : le type est écrasé à l\'import, donc l\'échauffement pose le record',
+    R.c2EchauffLourd && R.c2EchauffLourd.types==='""/""/"D"'
+      && R.c2EchauffLourd.prs==='Squat à la Barre=200x3', JSON.stringify(R.c2EchauffLourd));
+
+  /* ⭐⭐ LE TÉMOIN QUI JUSTIFIE TOUTE LA SOUS-ÉTAPE C2. Une séance importée portant un `'É'`
+     traverse la vraie boucle des records. AVANT C2 : le record est « 250x3 », l'échauffement.
+     APRÈS : il est « 150x8 », la série de travail. *C'est le seul témoin du bloc qui, s'il
+     rougit un jour, dira qu'un échauffement est redevenu un record.* */
+  t('B-CCCVI ② ⭐⭐ C2 — CAS FUTUR : une séance importée portant un « É » ne crée PLUS de record d\'échauffement',
+    R.c2FuturEchauffement==='Soulevé de Terre=150x8 | Squat à la Barre=100x5',
+    'reçu : '+R.c2FuturEchauffement);
+  t('B-CCCVI ③ ⭐ le PROPRIÉTAIRE refuse É et W, accepte le reste (moitié ② de la composition)',
+    R.proprio===':true É:false W:false D:true N:true X:true',
+    'reçu : '+R.proprio);
+  t('B-CCCVI ③ ... et il refuse les séries incomplètes',
+    R.proprioBords==='pasFaite:false kg0:false reps0:false null:false', 'reçu : '+R.proprioBords);
+
+  /* ══ TÉMOINS DE SOURCE — ils tiennent ce qu'aucun écran ne peut montrer ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const su=sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8'));
+    /* ⛔ Le propriétaire ne bouge PAS d'un caractère : c'est lui la référence de tout le bloc. */
+    t('B-CCCVI ④ ⛔ SOURCE — le propriétaire est intact',
+      /function _serieFaitFoiPourPR\(s\)\{\s*return !!\(s && s\.done && s\.kg && s\.reps && s\.type!=='É' && s\.type!=='W'\);/.test(lg), '');
+    /* ⛔ C1 : la recopie à la main a disparu de `saveSessEdits`. */
+    t('B-CCCVI ④ ⛔ SOURCE — C1 : plus AUCUNE recopie de la règle dans `saveSessEdits`',
+      !/if\(s\.done&&s\.kg&&s\.reps&&s\.type!=='É'&&s\.type!=='W'\)\{/.test(su)
+      && /_sessEdits\.exs\.forEach\(ex=>ex\.sets\.forEach\(s=>\{\s*if\(_serieFaitFoiPourPR\(s\)\)\{/.test(su), '');
+    /* ⛔⛔ C2 : LA MOITIÉ ① DE LA COMPOSITION. Aucun témoin de comportement ne peut la montrer
+       sur ce chemin — c'est exactement pourquoi elle est tenue par la source. */
+    t('B-CCCVI ⑤ ⛔⛔ SOURCE — C2 : l\'import emploie le PROPRIÉTAIRE, plus sa condition locale',
+      !/if\(!s\.done\|\|!s\.kg\|\|!s\.reps\)return;/.test(lg)
+      && /\(ex\.sets\|\|\[\]\)\.forEach\(s=>\{\s*if\(!_serieFaitFoiPourPR\(s\)\)return;/.test(lg), '');
+    /* ⛔ PÉRIMÈTRE — ce que Michel a explicitement laissé dehors. */
+    const appels=(lg.match(/_serieFaitFoiPourPR\s*\(/g)||[]).length-1;   // -1 : sa déclaration
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — `finishWorkout` garde ses 2 appels du propriétaire (rien n\'y change)',
+      appels===3, appels+' appel(s) dans log.js (2 finishWorkout + 1 import)');
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — l\'écrasement du type à l\'import n\'est PAS touché (C2 ne change pas le calcul)',
+      /const type=s\.type==='D'\?'D':'';/.test(lg), '');
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — le recalcul des records (setup.js) est intact, son repli compris',
+      /typeof _serieFaitFoiPourPR==='function' \? !_serieFaitFoiPourPR\(st\)/.test(su), '');
+    /* ⛔⛔ LE VOLUME N'EST PAS LES RECORDS, ET CE TÉMOIN EST NÉ DU CONTRÔLE NÉGATIF. La mutation
+       « le volume appelle le propriétaire des records » est restée VERTE : elle est
+       numériquement neutre (une charge ou un nombre de reps nul ajoute 0 au volume de toute
+       façon). Elle n'en est pas moins une **fusion par ressemblance** — « cette série compte-t-elle
+       dans le volume ? » et « fait-elle foi pour un record ? » sont deux questions, et rien ne
+       garantit qu'elles resteront d'accord. *Une dérive invisible à l'exécution ne se tient que
+       par la source.* */
+    t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — la règle du VOLUME reste distincte de celle des records',
+      /_sessEdits\.exs\.forEach\(ex=>ex\.sets\.forEach\(s=>\{if\(s\.done&&s\.type!=='É'&&s\.type!=='W'\)vol\+=/.test(su), '');
+    /* ⛔ NUTRITION — consigne absolue de Michel : rien de ce chantier ne l'approche. */
+    t('B-CCCVI ⑦ ⛔ NUTRITION — le propriétaire des records n\'est appelé nulle part dans `app.js`',
+      !/_serieFaitFoiPourPR/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8'))), '');
+  })();
+}
+
+/* ═══ B-CCCVII. ÉTAPE 1 — UN TYPE NON RECONNU NE PASSE PLUS EN SILENCE ═══════════════════════
+   (13/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel, après le dossier qui a corrigé la prémisse : *« un type inconnu ne doit plus devenir
+   silencieusement une série de travail normale »*, et ⛔ *« ne pas casser le filet de sécurité
+   côté client simplement parce que le serveur est censé normaliser avant »*.
+
+   ⭐⭐ CE QUI A ÉTÉ MESURÉ AVANT D'ÉCRIRE UNE LIGNE, et qui décide de tout :
+   ① les **3 copies** de la règle (`worker.js` · `Code.js` · `log.js`) rendent **exactement la
+      même chose** sur tout le domaine — '', D, W, É, X, ECH, N, inconnu, absent, null, 'd' ;
+   ② ⛔ **« conserver le type brut » serait PIRE** : `_serieFaitFoiPourPR` n'exclut que 'É' et
+      'W', donc un type inconnu gardé tel quel devient **ÉLIGIBLE AU RECORD** — y compris
+      `'ECH'`, qui *signifie* échauffement. *Un type préservé mais incompris est plus dangereux
+      qu'un type normalisé, parce qu'il a l'air d'avoir été préservé.*
+   👉 D'où le choix : **on ne change RIEN à ce qui est stocké** (aucun risque, aucune
+   régression — instantané identique, sha `345d3db35bebb9d2`), **on compte et on l'annonce**. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const prs=()=>Object.keys(S.prs||{}).sort()
+      .map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ')||'(aucun)';
+
+    /* ⚠️ AFFECTATION NUE : `_histExtracted` est un `let` de premier niveau de `log.js`, donc une
+       liaison LEXICALE globale et PAS une propriété de `window`. Avec `window.`, la fonction
+       sort par « Aucune séance à importer » et le témoin est vert **en ne mesurant rien**. */
+    const importer=(sets)=>{
+      S.prs={}; S.sessions=[]; S.customExercises=[];
+      const t=document.getElementById('toast'); if(t)t.textContent='';
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets}]}]};
+      _histConflicts=[];
+      finalImportHist();
+      const ex=((S.sessions[0]||{}).exs||[])[0]||{sets:[]};
+      return { stocke: ex.sets.map(s=>'"'+s.type+'"').join('/'),
+               record: prs(),
+               annonce: (document.getElementById('toast')||{}).textContent||'' };
+    };
+
+    /* ── LA MATRICE DES TYPES, par le VRAI chemin ── */
+    o.matrice={};
+    ['', 'D', 'W', 'É', 'X', 'ECH', 'zzz-inconnu'].forEach(t=>{
+      o.matrice[t||'(vide)']=sur(()=>importer([{kg:100,reps:5,type:t}]));
+    });
+    /* type ABSENT et type null : deux façons de ne rien dire, et elles ne doivent pas compter. */
+    o.absent = sur(()=>importer([{kg:100,reps:5}]));
+    o.nul    = sur(()=>importer([{kg:100,reps:5,type:null}]));
+
+    /* ── LE COMPTE : plusieurs séries, plusieurs types ── */
+    o.melange = sur(()=>importer([
+      {kg:100,reps:5,type:''},          // normal   → ne compte pas
+      {kg:110,reps:4,type:'D'},         // dropset  → ne compte pas
+      {kg:250,reps:3,type:'W'},         // inconnu  → compte
+      {kg:120,reps:6,type:'ECH'}        // inconnu  → compte
+    ]));
+    /* ⛔ Et le cas où TOUT est connu : l'annonce ne doit RIEN dire de plus. */
+    o.toutConnu = sur(()=>importer([
+      {kg:100,reps:5,type:''},{kg:110,reps:4,type:'D'}]));
+    return o;
+  });
+
+  console.log('\n-- B-CCCVII. Étape 1 : un type non reconnu ne passe plus en silence --');
+  const M=R.matrice||{};
+  /* ⛔ CE QUI EST STOCKÉ NE CHANGE PAS — c'est la garantie de non-régression. */
+  t('B-CCCVII ① le type normal reste normal', M['(vide)'] && M['(vide)'].stocke==='""',
+    JSON.stringify(M['(vide)']));
+  t('B-CCCVII ① le DROPSET reste un dropset', M['D'] && M['D'].stocke==='"D"', JSON.stringify(M['D']));
+  t('B-CCCVII ① ⛔ un type absent ne compte pas comme inconnu',
+    R.absent && R.absent.stocke==='""' && !/type non reconnu/.test(R.absent.annonce),
+    JSON.stringify(R.absent));
+  t('B-CCCVII ① ⛔ un type `null` non plus (deux façons de ne rien dire)',
+    R.nul && R.nul.stocke==='""' && !/type non reconnu/.test(R.nul.annonce), JSON.stringify(R.nul));
+
+  /* ⭐ LE CŒUR DE L'ÉTAPE : les 4 valeurs non prévues par le contrat sont ANNONCÉES. */
+  ['W','É','X','ECH','zzz-inconnu'].forEach(k=>{
+    t('B-CCCVII ② ⭐ le type '+JSON.stringify(k)+' est ANNONCÉ comme non reconnu',
+      M[k] && /1 série au type non reconnu, importée en série normale/.test(M[k].annonce),
+      JSON.stringify(M[k]));
+    t('B-CCCVII ② ... et il est bien normalisé en série normale (rien ne change côté données)',
+      M[k] && M[k].stocke==='""', JSON.stringify(M[k]));
+  });
+
+  t('B-CCCVII ③ le COMPTE est juste : 2 inconnus sur 4 séries',
+    R.melange && /2 séries au type non reconnu, importées en séries normales/.test(R.melange.annonce),
+    JSON.stringify(R.melange));
+  t('B-CCCVII ③ ⛔ et quand tout est connu, l\'annonce ne dit RIEN de plus',
+    R.toutConnu && !/type non reconnu/.test(R.toutConnu.annonce), JSON.stringify(R.toutConnu));
+  /* ⛔⛔ LE RECORD NE BOUGE PAS. L'étape 1 ne touche pas aux records : elle rend visible une
+     normalisation, elle ne la change pas. Un `'W'` de 250 kg pose TOUJOURS le record aujourd'hui
+     — c'est exactement ce que l'étape 2 corrigera, et le figer ici permet de le voir changer. */
+  t('B-CCCVII ④ ⛔ ÉTAT ACTUEL FIGÉ — un « W » de 250 kg pose encore le record (l\'étape 2 le corrigera)',
+    M['W'] && M['W'].record==='Squat à la Barre=100x5', JSON.stringify(M['W'] && M['W'].record));
+
+  /* ══ TÉMOINS DE SOURCE — les frontières backend/client, et le filet ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const wk=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    const cd=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+    const st=sansCom(fs.readFileSync(path.join(ROOT,'state.js'),'utf8'));
+    /* ⛔⛔ LE FILET CLIENT N'EST PAS RETIRÉ. Michel, mot pour mot : *« ne pas casser le filet de
+       sécurité côté client simplement parce que le serveur est censé normaliser avant »*.
+       Les 3 copies restent, et leur nombre est figé. */
+    t('B-CCCVII ⑤ ⛔ SOURCE — le filet CLIENT est toujours là',
+      lg.indexOf("const type=s.type==='D'?'D':''")>=0, '');
+    t('B-CCCVII ⑤ ⛔ SOURCE — le Worker (chemin VIVANT) garde la sienne',
+      (wk.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1, '');
+    t('B-CCCVII ⑤ ⛔ SOURCE — Apps Script (repli) garde la sienne : les deux ne divergent pas',
+      (cd.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1, '');
+    /* ⛔ Le compteur ne doit PAS se transformer en filtre : les séries entrent toutes. */
+    t('B-CCCVII ⑥ ⛔ le compteur COMPTE, il ne filtre pas (aucun `return` sur un type inconnu)',
+      /if\(_brut!==''&&_brut!=='D'\)_typesInconnus\+\+;/.test(lg)
+      && !/_typesInconnus\+\+;\s*return/.test(lg), '');
+    /* ⛔ PÉRIMÈTRE — la migration D→N ne peut pas rejouer, et on ne la corrige pas. */
+    t('B-CCCVII ⑦ ⛔ PÉRIMÈTRE — la migration D→N est toujours one-time (elle ne peut pas rejouer)',
+      /if\(!localStorage\.getItem\('ft4_stmig1'\)\)\{/.test(st)
+      && /else if\(s\.type==='D'\)s\.type='N';/.test(st), '');
+    t('B-CCCVII ⑦ ⛔ PÉRIMÈTRE — aucune migration corrective n\'a été ajoutée',
+      !/stmig2|remigD|repairDrop/i.test(st), '');
+    /* ⛔ NUTRITION — consigne absolue. */
+    t('B-CCCVII ⑧ ⛔ NUTRITION — `_typesInconnus` n\'existe nulle part dans `app.js`',
+      !/_typesInconnus/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  })();
+}
+
+/* ═══ B-CCCVIII. LE TROU AMONT — un type inconnu normalisé par le BACKEND ne disparaît plus ═══
+   (14/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel, après le dossier de l'étape 1 : *« le chemin vivant passe d'abord par `worker.js`, qui
+   normalise déjà… donc `_typesInconnus` côté `log.js` ne voit plus rien. L'invention silencieuse
+   peut encore avoir lieu EN AMONT du compteur client. »*
+
+   ⛔⛔ REPRODUIT AVANT DE TOUCHER AU CODE : en rejouant la normalisation **extraite de
+   `worker.js`** puis le compteur **extrait de `log.js`**, **5 valeurs inconnues sur 5** ('W',
+   'É', 'ECH', 'X', arbitraire) arrivaient au client en `''` et comptaient **0**.
+
+   ⭐⭐ LA PROTECTION EST EN DEUX COUCHES DISJOINTES, ET C'EST UNE PROPRIÉTÉ, PAS UNE PRÉCAUTION :
+   le backend rend `''` pour ce qu'il a compté, donc le filet client — qui ne regarde QUE ce
+   qu'il a reçu — voit `''` et ne compte rien. **Pour une même série, au plus un des deux
+   compteurs monte.** Le cas où le second monte est exactement celui où le premier n'a pas
+   tourné. *Les deux couches ne se recouvrent pas : elles se relaient.*
+
+   ⚠️ CE QUE CE BLOC NE COUVRE PAS, ET C'EST DIT : le **Worker déployé** n'est pas joignable
+   depuis ce conteneur (`CONNECT tunnel failed, 403`) et aucune clé API n'y existe. On mesure
+   donc le **CODE** du Worker et d'Apps Script (extrait de leurs fichiers), plus le chemin
+   client **conduit pour de vrai**. Le test réel restant est un import en salle après
+   déploiement. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const prs=()=>Object.keys(S.prs||{}).sort()
+      .map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ')||'(aucun)';
+    /* `nBackend` = ce que le backend dit avoir normalisé · `sets` = ce que le client REÇOIT. */
+    const importer=(sets, nBackend)=>{
+      S.prs={}; S.sessions=[]; S.customExercises=[];
+      const el=document.getElementById('toast'); if(el)el.textContent='';
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets}]}]};
+      if(nBackend!==undefined)_histExtracted.typesNormalises=nBackend;
+      _histConflicts=[];
+      finalImportHist();
+      const ex=((S.sessions[0]||{}).exs||[])[0]||{sets:[]};
+      const m=((document.getElementById('toast')||{}).textContent||'')
+                .match(/(\d+) séries? au type non reconnu/);
+      return { stocke: ex.sets.map(s=>'"'+s.type+'"').join('/'),
+               compte: m?+m[1]:0, record: prs(),
+               annonce: (document.getElementById('toast')||{}).textContent||'' };
+    };
+
+    /* ── ① LE CAS QUI MOTIVE TOUT : le backend a normalisé, le client reçoit du propre ── */
+    o.amont1 = sur(()=>importer([{kg:100,reps:5,type:''}], 1));
+    o.amont3 = sur(()=>importer([
+      {kg:100,reps:5,type:''},{kg:110,reps:4,type:''},{kg:120,reps:3,type:''}], 3));
+    /* ⛔ LA PREUVE DE NON-DOUBLE-COMPTAGE : le backend dit 1, le client reçoit le `''` qui en
+       résulte. Le total doit être 1, pas 2. */
+    o.pasDeDouble = sur(()=>importer([{kg:100,reps:5,type:''}], 1));
+
+    /* ── ② LE FILET CLIENT SEUL : un fournisseur contourne la normalisation ── */
+    o.filet={};
+    ['', 'D', 'W', 'É', 'ECH', 'X', 'zzz-inconnu'].forEach(t=>{
+      o.filet[t||'(vide)']=sur(()=>importer([{kg:100,reps:5,type:t}], 0));
+    });
+    o.filetAbsent = sur(()=>importer([{kg:100,reps:5}], 0));
+
+    /* ── ③ LES DEUX COUCHES ENSEMBLE : 2 normalisés en amont + 1 brut qui a fuité ── */
+    o.deuxCouches = sur(()=>importer([
+      {kg:100,reps:5,type:''},          // normalisé en amont (compté par le backend)
+      {kg:110,reps:4,type:''},          // idem
+      {kg:120,reps:3,type:'ECH'}        // a fuité brut → compté par le filet client
+    ], 2));
+
+    /* ── ④ RÉTROCOMPATIBILITÉ : un backend qui n'envoie pas le champ ── */
+    o.champAbsent = sur(()=>importer([{kg:100,reps:5,type:''}], undefined));
+    o.champNegatif = sur(()=>importer([{kg:100,reps:5,type:''}], -5));
+    return o;
+  });
+
+  console.log('\n-- B-CCCVIII. Le trou amont : un type normalisé par le backend ne disparaît plus --');
+  t('B-CCCVIII ① ⭐ le backend annonce 1 type normalisé → la personne le lit',
+    R.amont1 && R.amont1.compte===1
+      && /1 série au type non reconnu, importée en série normale/.test(R.amont1.annonce),
+    JSON.stringify(R.amont1));
+  t('B-CCCVIII ① ... et 3 en donnent 3',
+    R.amont3 && R.amont3.compte===3, JSON.stringify(R.amont3));
+  t('B-CCCVIII ① ⛔⛔ AUCUN DOUBLE COMPTAGE : le backend dit 1, le total dit 1 (pas 2)',
+    R.pasDeDouble && R.pasDeDouble.compte===1, JSON.stringify(R.pasDeDouble));
+  t('B-CCCVIII ① ⛔ et la donnée stockée ne bouge pas pour autant',
+    R.amont1 && R.amont1.stocke==='""' && R.amont1.record==='Squat à la Barre=100x5',
+    JSON.stringify(R.amont1));
+
+  const F=R.filet||{};
+  t('B-CCCVIII ② le filet client ne compte pas une série normale', F['(vide)'] && F['(vide)'].compte===0,
+    JSON.stringify(F['(vide)']));
+  t('B-CCCVIII ② ... ni un dropset', F['D'] && F['D'].compte===0 && F['D'].stocke==='"D"',
+    JSON.stringify(F['D']));
+  ['W','É','ECH','X','zzz-inconnu'].forEach(k=>{
+    t('B-CCCVIII ② ⭐ le filet client attrape '+JSON.stringify(k)+' s\'il arrive BRUT',
+      F[k] && F[k].compte===1 && F[k].stocke==='""', JSON.stringify(F[k]));
+  });
+  t('B-CCCVIII ② ⛔ un type ABSENT n\'est pas un type inconnu',
+    R.filetAbsent && R.filetAbsent.compte===0, JSON.stringify(R.filetAbsent));
+
+  t('B-CCCVIII ③ ⭐⭐ LES DEUX COUCHES SE RELAIENT : 2 normalisés en amont + 1 brut = 3',
+    R.deuxCouches && R.deuxCouches.compte===3, JSON.stringify(R.deuxCouches));
+
+  t('B-CCCVIII ④ ⛔ un backend qui n\'envoie pas le champ → comportement d\'avant (0)',
+    R.champAbsent && R.champAbsent.compte===0, JSON.stringify(R.champAbsent));
+  t('B-CCCVIII ④ ⛔ une valeur absurde ne devient pas un compte',
+    R.champNegatif && R.champNegatif.compte===0, JSON.stringify(R.champNegatif));
+
+  /* ══ LES DEUX BACKENDS — leur RÈGLE, extraite de leurs fichiers ══ */
+  (()=>{
+    const wk=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    const cd=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+    const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8')
+              .replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    /* ⛔ La règle est EXTRAITE, pas retapée : une règle recopiée dans le témoin mesurerait le
+       témoin (`BUGS.md` §36/§58). On la découpe et on l'exécute sur tout le domaine. */
+    const regle=(src, decl)=>{
+      const i=src.indexOf(decl);
+      if(i<0) return null;
+      const j=src.indexOf("if (brut !== '' && brut !== 'D') typesNormalises++;", i);
+      if(j<0) return null;
+      return new Function('s','let typesNormalises=0;'+src.slice(i,j+51)+'return typesNormalises;');
+    };
+    const fw=regle(wk, "const brut = (s && s.type != null) ? String(s.type) : '';");
+    const fc=regle(cd, "var brut = (s && s.type != null) ? String(s.type) : '';");
+    const dom=['','D','W','É','ECH','X','zzz-inconnu','d',null,undefined];
+    const rw=fw?dom.map(v=>fw({type:v})).join(','):'ABSENTE';
+    const rc=fc?dom.map(v=>fc({type:v})).join(','):'ABSENTE';
+    t('B-CCCVIII ⑤ ⭐ le Worker compte AVANT de normaliser (le seul endroit où le brut existe)',
+      /let typesNormalises = 0;[\s\S]{0,4000}if \(brut !== '' && brut !== 'D'\) typesNormalises\+\+;[\s\S]{0,200}s\.type = s\.type === 'D' \? 'D' : '';/.test(wk), '');
+    t('B-CCCVIII ⑤ ⛔ WORKER ET CODE.JS RENDENT EXACTEMENT LA MÊME CHOSE sur tout le domaine',
+      rw===rc && rw==='0,0,1,1,1,1,1,1,0,0', 'worker='+rw+' · code='+rc);
+    t('B-CCCVIII ⑤ ... et tous deux transmettent le nombre, rien d\'autre',
+      /data\.typesNormalises = typesNormalises;/.test(wk)
+      && /data\.typesNormalises = typesNormalises;/.test(cd), '');
+    /* ⛔ Le transport : un OBJET, et l'unique appelant est migré. */
+    t('B-CCCVIII ⑥ le lot voyage comme un OBJET (pas un tableau à propriétés attachées)',
+      /return \{sessions, typesNormalises:\(\+d\.data\.typesNormalises>0\)\?\+d\.data\.typesNormalises:0\};/.test(lg)
+      && /const lot=await _histAnalyzeBatch\(batches\[b\]\);/.test(lg), '');
+    t('B-CCCVIII ⑥ ... et le total est remis à ZÉRO à chaque analyse',
+      /let _histTypesNormalises=0;/.test(lg)
+      && /_histTypesNormalises\+=lot\.typesNormalises;/.test(lg), '');
+    /* ⛔⛔ LE FILET CLIENT RESTE — Michel : *« il sert toujours si un fournisseur contourne les
+       normalisations amont »*. Les 3 copies de la normalisation restent, une chacune. */
+    t('B-CCCVIII ⑦ ⛔ le FILET CLIENT est toujours là',
+      /const type=s\.type==='D'\?'D':'';/.test(lg), '');
+    t('B-CCCVIII ⑦ ⛔ les 3 normalisations sont intactes, une chacune',
+      (wk.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (cd.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (lg.match(/const type=s\.type==='D'\?'D':''/g)||[]).length===1, '');
+    /* ⛔ PÉRIMÈTRE — L'ÉTAPE 2 N'EST PAS COMMENCÉE. */
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — le prompt interdit TOUJOURS W et E des deux côtés',
+      wk.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".')
+      && cd.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".'), '');
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — aucun `setTypePerSet` pour l\'historique',
+      !/setTypePerSet/.test(wk), '');
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — `_typeAt` n\'a pas été branché sur l\'import d\'historique',
+      !/_typeAt/.test(lg.slice(lg.indexOf('function finalImportHist'))), '');
+    t('B-CCCVIII ⑧ ⛔ NUTRITION — `typesNormalises` n\'existe nulle part dans `app.js`',
+      !/typesNormalises/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  })();
+}
+
+/* ═══ B-CCCIX. LE DIAGNOSTIC D'IMPORT — prouver la PRÉSENCE du champ, pas sa valeur ═══════════
+   (14/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel choisit l'option B : *« dans l'écran Admin, afficher explicitement : Compteur
+   typesNormalises reçu : OUI / NON … Le but principal est de prouver la PRÉSENCE du champ, pas
+   seulement sa valeur »*, et ⛔ *« ne déduis pas la présence à partir de la valeur numérique »*.
+
+   ⭐⭐ POURQUOI CETTE INSTRUMENTATION EXISTE, EN UNE MESURE : sur un vrai document,
+   `typesNormalises` vaudra **0** (le prompt interdit au modèle d'émettre un type inconnu). Or le
+   client retombe **aussi sur 0** quand le champ est **absent**. *Les deux cas sont indiscernables
+   par la valeur* — donc un test en production ne prouverait rien. La présence se constate par
+   `hasOwnProperty`, jamais par un `>0`.
+
+   ⛔ INSTRUMENTATION SEULE : aucune donnée importée ne change (instantané identique, sha
+   `345d3db35bebb9d2`), aucune série n'est filtrée, aucun record ne bouge, l'étape 2 reste fermée.
+
+   ⚠️ CE QUI EST MAÎTRISÉ ICI, ET C'EST DIT : `fetch` est remplacé pour rendre des réponses
+   choisies — c'est la FRONTIÈRE RÉSEAU, pas la fonction. Tout ce qui est en deçà (`_histAnalyzeBatch`,
+   `analyzeHistPhotos`, la détection, le rendu) est la VRAIE chaîne, conduite pour de bon. Le
+   Worker déployé, lui, n'est pas joignable d'ici — cela reste à éprouver en salle. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1500);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=async f=>{ try{ return await f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const lu=()=>{
+      renderImportDiagAdmin();
+      const h=(document.getElementById('admin-import-diag')||{}).innerHTML||'';
+      const champ=(re)=>{const m=h.match(re);return m?m[1]:null;};
+      return { present: champ(/Compteur typesNormalises reçu<\/span><strong[^>]*>([^<]*)</),
+               valeur:  champ(/Valeur<\/span><strong[^>]*>([^<]*)</),
+               lots:    champ(/Lots avec le champ<\/span><strong[^>]*>([^<]*)</),
+               vide:    /Aucun import observé/.test(h) };
+    };
+    const SESS=[{date:'2026-08-15',exercises:[{name:'Squat à la Barre',
+                 sets:[{kg:100,reps:5,type:''},{kg:110,reps:4,type:'D'}]}]}];
+    /* ⭐ `reponses` est une LISTE : un élément par lot, donc on peut rendre le champ sur l'un et
+       pas sur l'autre — c'est le seul moyen d'atteindre le cas PARTIEL. */
+    const conduire=async(reponses, nPhotos)=>{
+      S.prs={}; S.sessions=[];
+      let i=0;
+      window.fetch=async()=>{ const r=reponses[Math.min(i++,reponses.length-1)];
+        return {ok:true, text:async()=>JSON.stringify(r)}; };
+      _histPhotos=[]; for(let k=0;k<(nPhotos||1);k++)_histPhotos.push({type:'image/jpeg',data:'x'});
+      await analyzeHistPhotos();
+      return lu();
+    };
+    const avecChamp=n=>({status:'ok',data:{sessions:JSON.parse(JSON.stringify(SESS)),typesNormalises:n}});
+    const sansChamp=()=>({status:'ok',data:{sessions:JSON.parse(JSON.stringify(SESS))}});
+
+    /* ── ① AVANT TOUT IMPORT ──
+       ⚠️ ENVELOPPÉ, ET C'EST LE CONTRÔLE NÉGATIF QUI L'A EXIGÉ : sans ça, une mutation qui
+       retire l'état « aucun import » fait LEVER le rendu (`_histDiag` est `null`), donc le bloc
+       entier plante et le harnais affiche « 0 rouge » — indiscernable d'un bloc vert (§61).
+       *Un témoin doit rougir, pas planter.* */
+    o.avant = await sur(()=>lu());
+
+    /* ── ② LES QUATRE CAS DEMANDÉS ── */
+    o.absent = await sur(()=>conduire([sansChamp()]));
+    o.zero   = await sur(()=>conduire([avecChamp(0)]));
+    o.un     = await sur(()=>conduire([avecChamp(1)]));
+    o.trois  = await sur(()=>conduire([avecChamp(3)]));
+
+    /* ── ③ LE CAS PARTIEL : 2 lots (4 photos, taille de lot 3), un seul porte le champ ──
+       ⛔ Un booléen le cacherait, et un lot répondu par un backend non déployé fausserait le
+       total sans qu'on le voie. */
+    o.partiel = await sur(()=>conduire([avecChamp(2), sansChamp()], 4));
+
+    /* ── ④ UNE ANCIENNE OBSERVATION NE DOIT PAS PASSER POUR LA NOUVELLE ──
+       On enchaîne un import RÉUSSI avec le champ, puis un import qui ÉCHOUE (réseau). Le
+       diagnostic doit repartir de zéro, pas afficher « OUI / 3 ». */
+    await sur(()=>conduire([avecChamp(3)]));
+    o.avantEchec = lu();
+    o.apresEchec = await sur(async()=>{
+      window.fetch=async()=>{ throw new Error('reseau coupe'); };
+      _histPhotos=[{type:'image/jpeg',data:'x'}];
+      await analyzeHistPhotos();
+      return lu();
+    });
+
+    /* ── ⑤ LES DONNÉES : elles ne doivent pas bouger d'un iota ── */
+    /* ⚠️ IL FAUT LES DEUX FONCTIONS, ET MON TÉMOIN L'AVAIT OUBLIÉ : `analyzeHistPhotos` ne fait
+       qu'EXTRAIRE (elle remplit `_histExtracted` et montre l'aperçu) ; c'est `finalImportHist`
+       qui écrit dans `S.sessions`. Sans elle, le témoin lisait 0 série et 0 record — et il
+       rougissait sur du code parfaitement sain. *Conduire la première moitié d'un chemin, c'est
+       mesurer la moitié qu'on n'a pas conduite.* */
+    o.donnees = await sur(async()=>{
+      const r=await conduire([avecChamp(2)]);
+      _histConflicts=[]; finalImportHist();
+      const ex=((S.sessions[0]||{}).exs||[])[0]||{sets:[]};
+      return { lu:r, series:ex.sets.length, types:ex.sets.map(s=>'"'+s.type+'"').join('/'),
+               record:Object.keys(S.prs||{}).sort().map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ') };
+    });
+    return o;
+  });
+
+  console.log('\n-- B-CCCIX. Le diagnostic d\'import (écran Admin) --');
+  t('B-CCCIX ① avant tout import, l\'écran le DIT au lieu de montrer un vieux chiffre',
+    R.avant && R.avant.vide===true, JSON.stringify(R.avant));
+  t('B-CCCIX ② champ ABSENT → présence NON, valeur « — »',
+    R.absent && R.absent.present==='NON' && R.absent.valeur==='—', JSON.stringify(R.absent));
+  t('B-CCCIX ② ⭐⭐ champ PRÉSENT À 0 → présence OUI (c\'est TOUT l\'objet de l\'option B)',
+    R.zero && R.zero.present==='OUI' && R.zero.valeur==='0', JSON.stringify(R.zero));
+  t('B-CCCIX ② champ présent à 1 → OUI, 1',
+    R.un && R.un.present==='OUI' && R.un.valeur==='1', JSON.stringify(R.un));
+  t('B-CCCIX ② champ présent à 3 → OUI, 3',
+    R.trois && R.trois.present==='OUI' && R.trois.valeur==='3', JSON.stringify(R.trois));
+  t('B-CCCIX ③ ⭐ 2 lots dont un seul porte le champ → PARTIEL, jamais « OUI »',
+    R.partiel && R.partiel.present==='PARTIEL' && R.partiel.lots==='1 / 2',
+    JSON.stringify(R.partiel));
+  t('B-CCCIX ④ ⭐ une ancienne observation ne passe PAS pour la nouvelle',
+    R.avantEchec && R.avantEchec.present==='OUI' && R.avantEchec.valeur==='3'
+      && R.apresEchec && R.apresEchec.vide===true,
+    'avant='+JSON.stringify(R.avantEchec)+' après='+JSON.stringify(R.apresEchec));
+  t('B-CCCIX ⑤ ⛔ aucune série n\'est filtrée, aucun type ne change',
+    R.donnees && R.donnees.series===2 && R.donnees.types==='""/"D"',
+    JSON.stringify(R.donnees));
+  /* ⚠️ MON ATTENDU ÉTAIT FAUX, PAS LE CODE : j'avais écrit « 100x5 » de tête. Mesuré,
+     `bz(110,4)=120` bat `bz(100,5)=112,5` — c'est donc le DROP SET qui pose le record, et c'est
+     exactement la règle (un `'D'` fait foi). *Un attendu écrit de mémoire teste la mémoire.* */
+  t('B-CCCIX ⑤ ⛔ le record est celui qu\'il aurait été sans l\'instrumentation (le drop set, 1RM le plus haut)',
+    R.donnees && R.donnees.record==='Squat à la Barre=110x4', JSON.stringify(R.donnees));
+
+  /* ══ TÉMOINS DE SOURCE ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const wk=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    const cd=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+    /* ⛔⛔ LA PRÉSENCE NE SE DÉDUIT JAMAIS DE LA VALEUR — c'est la consigne, et c'est le défaut
+       que cette sous-étape existe pour éviter. */
+    t('B-CCCIX ⑥ ⛔⛔ SOURCE — la présence est constatée par `hasOwnProperty`, jamais par un `>0`',
+      /Object\.prototype\.hasOwnProperty\.call\(d\.data,'typesNormalises'\)/.test(lg)
+      && !/_histDiag[\s\S]{0,120}typesNormalises>0\)\s*\{?\s*_histDiag\.lotsAvecChamp/.test(lg), '');
+    t('B-CCCIX ⑥ ⛔ SOURCE — le diagnostic est remis à zéro AVANT le premier appel réseau',
+      /_histDiag=\{lots:0, lotsAvecChamp:0, valeur:0[\s\S]{0,200}const allSessions=\[\];/.test(lg), '');
+    t('B-CCCIX ⑥ ⛔ SOURCE — il n\'est pas persisté (il décrit l\'import COURANT)',
+      /let _histDiag=null;/.test(lg) && !/ft4_[a-z]*diag|S\.histDiag/.test(lg), '');
+    t('B-CCCIX ⑥ ⛔ SOURCE — aucune donnée du document n\'entre dans le diagnostic',
+      !/_histDiag\.(nom|name|exercices|sessions|sets|date[^s])/.test(lg), '');
+    /* ⛔ PÉRIMÈTRE — l'instrumentation ne touche ni la logique ni `app.js`. */
+    t('B-CCCIX ⑦ ⛔ NUTRITION — l\'instrumentation n\'existe nulle part dans `app.js`',
+      !/_histDiag|admin-import-diag|renderImportDiagAdmin/.test(
+        fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+    t('B-CCCIX ⑦ ⛔ PÉRIMÈTRE — la normalisation backend est strictement identique',
+      (wk.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (cd.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (lg.match(/const type=s\.type==='D'\?'D':''/g)||[]).length===1, '');
+    t('B-CCCIX ⑦ ⛔ PÉRIMÈTRE — l\'étape 2 reste fermée (prompt inchangé des deux côtés)',
+      wk.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".')
+      && cd.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".'), '');
+    t('B-CCCIX ⑦ ⛔ PÉRIMÈTRE — le propriétaire des records est intact',
+      /function _serieFaitFoiPourPR\(s\)\{\s*return !!\(s && s\.done && s\.kg && s\.reps && s\.type!=='É' && s\.type!=='W'\);/.test(lg), '');
+    /* ⛔ L'écran affiche la présence SÉPARÉMENT de la valeur — deux lignes, pas une. */
+    t('B-CCCIX ⑧ ⛔ l\'écran Admin porte bien la carte et son conteneur',
+      /id="admin-import-diag"/.test(html) && /onclick="renderImportDiagAdmin\(\)"/.test(html), '');
+    t('B-CCCIX ⑧ ⛔ SOURCE — présence et valeur sont DEUX lignes distinctes',
+      /L\('Compteur typesNormalises reçu', etat, coul\)/.test(lg)
+      && /L\('Valeur', aucun\?'—':String\(_histDiag\.valeur\)\)/.test(lg), '');
+  })();
+}
 
 /* ══════════ BLOC CCCIII — 🛃 ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE (ft-v1205) ══════════
    Michel donne le feu vert pour la douane SEULE, et ⛔ en MODE OBSERVATION UNIQUEMENT :
@@ -37014,7 +38198,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
       openAddFood(); await new Promise(r=>setTimeout(r,150));
       openBarcodeScanner();                                  // ⚠️ la VRAIE porte, pas le décodeur
       /* ⭐⭐ ON PROVOQUE LA COURSE AU LIEU DE L'ATTENDRE : on martèle « Capturer » pendant toute
-         la lecture continue. Avant ft-v1209 cela produisait DEUX lookups ; le verrou doit
+         la lecture continue. Avant ft-v1210 cela produisait DEUX lookups ; le verrou doit
          maintenant n'en laisser passer qu'un. *Une course qu'on n'a pas provoquée n'est pas
          mesurée, elle est espérée.* */
       o.marteau=true;
@@ -37105,7 +38289,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
   t('CCCVIII ④ ⭐ … et la provenance enregistrée le distingue du code tapé ET de la lecture IA',
     CAM.src && CAM.src.saisie!=='code-tape' && CAM.src.saisie!=='photo-code-ia' && CAM.src.sourceId===EAN_NET,
     JSON.stringify(CAM.src));
-  /* ⭐⭐ LA COURSE EST FERMÉE EN ft-v1209 — et ces témoins figent la garantie, pas le défaut.
+  /* ⭐⭐ LA COURSE EST FERMÉE EN ft-v1210 — et ces témoins figent la garantie, pas le défaut.
      AVANT : le callback CONTINU de ZXing et le bouton « Capturer » pouvaient lire le même code à
      28 ms d'intervalle et tirer CHACUN son `_lookupBarcode` (mesuré le 14/09).
      ⚠️ La course était INTERMITTENTE — selon qui gagnait, 1 ou 2 lookups. Un témoin qui comptait
@@ -37144,7 +38328,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'résolution (sans ça : « caméra ouverte mais ne lit pas », le défaut de ft-v378)',
     /environment/.test(CAM.contraintes||'') && /1920/.test(CAM.contraintes||''),
     CAM.contraintes||'');
-  t('CCCVIII ⑩ ⭐⭐ LA PORTE EST ROUVERTE (ft-v1209) — et le scanner est le PREMIER bouton, '+
+  t('CCCVIII ⑩ ⭐⭐ LA PORTE EST ROUVERTE (ft-v1210) — et le scanner est le PREMIER bouton, '+
     'avant la saisie et avant l\'IA : *la porte d\'entrée par défaut ne doit jamais être celle qui '+
     'coûte* (R24). Réactivation contrôlée demandée par Michel, pas un retour en arrière silencieux',
     /onclick="scanBarcode\(\)"/.test(srcIdx)
@@ -37157,7 +38341,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     && !/getElementById\('af-bc-input'\)/.test(srcApp) && !/id="af-bc-input"/.test(srcIdx), '');
   t('CCCVIII ⑫ ⭐ … et leur retrait est ÉCRIT avec sa raison, pas silencieux (R30) — sinon le '+
     'suivant « répare » une décision',
-    /RETIRÉS EN ft-v1209/.test(srcApp) && /onBarcodeFile` RETIRÉE en ft-v1209/.test(srcApp)
+    /RETIRÉS EN ft-v1210/.test(srcApp) && /onBarcodeFile` RETIRÉE en ft-v1210/.test(srcApp)
     && /'photo-code'/.test(srcApp), '');
   t('CCCVIII ⑬ ⛔ ZXing est chargé DEPUIS LE DÉPÔT, jamais d\'un CDN — un décodage « local » qui '+
     'télécharge sa bibliothèque ailleurs n\'est plus local',
@@ -37170,7 +38354,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'le bouton retour coupent la caméra au lieu de la laisser tourner (ft-v1091/1092)',
     /'ov-bc-scan':'closeBarcodeScanner'/.test(srcScr)
     && /stopStreams/.test(corpsA('closeBarcodeScanner')), '');
-  /* == CCCIX - LES GARANTIES DE LA REACTIVATION CONTROLEE (ft-v1209) =====================
+  /* == CCCIX - LES GARANTIES DE LA REACTIVATION CONTROLEE (ft-v1210) =====================
      Michel, §12 : il veut que soient PROUVES le zero-IA du local, le lookup unique, la
      provenance explicite, le repli IA volontaire, et — §16 — que « produit non trouve » ne
      puisse plus se confondre avec « code non lu ». C'est l'erreur de juillet rendue
@@ -37807,6 +38991,7 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
     /function mergeExercises\(keep,remove\)/.test(srcSet) && /showConfirm\(/.test(srcSet)
     && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
 }
+
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

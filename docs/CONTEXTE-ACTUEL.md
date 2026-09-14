@@ -6,7 +6,7 @@
 
 ---
 
-- 📷 **ft-v1209 — LE SCANNER CAMÉRA LOCAL EST REVENU, EN RÉACTIVATION CONTRÔLÉE (14/09/2026).**
+- 📷 **ft-v1210 — LE SCANNER CAMÉRA LOCAL EST REVENU, EN RÉACTIVATION CONTRÔLÉE (14/09/2026).**
   ⛔⛔ **VERDICT : `PRÊT POUR TEST IPHONE`, et rien de plus fort** — *« ne déclare pas le scanner
   définitivement réactivé avant mon retour iPhone »* (un garde du PDF refuse de produire si le
   document monte d'un cran).
@@ -25,6 +25,53 @@
   ⚠️ **La fiabilité iPhone n'est PAS mesurée d'ici** (ni caméra ni Safari) : **protocole en 6
   produits et 5 gestes** dans `docs/SCANNER-CAMERA-LOCAL.md`. Décision finale après son retour :
   **A** réactiver · **B** avec fallback IA · **C** améliorer encore l'UX/autofocus · **D** ne pas.
+- 📷 **CHANTIER OUVERT — LE SCANNER CAMÉRA LOCAL, AUDITÉ MAIS PAS RÉACTIVÉ (14/09/2026).**
+  Michel : *« lire un code-barres sans appel IA, puis utiliser exactement le même lookup Open Food
+  Facts que le code tapé »* · ⛔ *« ne remets PAS immédiatement le bouton en production »*.
+  ⭐⭐ **La cause du retrait est mesurée dans git** : le scanner live a vécu **2 h 37** le 11/07, et
+  pendant **~1 h** de ces 2 h 37 la recherche produit **rejetait TOUS les produits** (ft-v377) —
+  *un code parfaitement décodé affichait « produit introuvable »*. Le retrait n'a tenté **aucune**
+  correction (6 lignes d'`index.html`). ⛔ **Mais ça ne le blanchit pas** : un vrai symptôme iPhone
+  persistait après le correctif ft-v378.
+  ⭐ **Décodeur mesuré : 17 cas sur 20 à 3/3.** Seul vrai ennemi : le **flou dès 2 px** —
+  *sur un téléphone, « flou » s'appelle « mise au point »*.
+  ⭐ **Réseau prouvé** : scanner → **0 appel IA**, quota inchangé, **même `_lookupBarcode`**,
+  même objet produit que le code tapé. Le banc conduit désormais une **vraie caméra** (bloc CCCVIII).
+  ⛔⛔ **4 défauts mesurés et NON corrigés** (feu vert séparé) : la **course** à deux lookups · le
+  bouton de repli **mort** · le décodage **local** d'une photo orphelin · la provenance implicite.
+  ⭐⭐ **VERDICT : RÉACTIVER AVEC FALLBACK IA** — après ces 4 correctifs **et** la validation iPhone.
+  ⚠️ **La fiabilité mobile n'est PAS mesurée d'ici** (ni caméra ni Safari dans ce conteneur) : un
+  **protocole iPhone** (5 produits, 5 gestes) attend Michel.
+  👉 Dossier : **`docs/SCANNER-CAMERA-LOCAL.md`** · PDF : `docs/SCANNER-CAMERA-LOCAL.pdf`.
+- ⛔⛔ **LA NUTRITION EST RÉSERVÉE À session-A — CONSIGNE DE MICHEL, 12/09/2026** : *« non, tu ne
+  touches surtout pas à la nutrition s'il te plaît »*. Le plan (phases 0/1a/1b/2/3, le hub, la
+  douane), `S.savedFoods`, l'écart 48,3 / 48, les défauts divergents : **tout cela appartient à
+  l'autre session**, y compris les questions listées comme « ouvertes » plus bas.
+  👉 **Ce que ça interdit concrètement** : ouvrir `app.js` côté nutrition, proposer un correctif,
+  ou même « juste mesurer » — *une mesure se termine toujours par l'envie de corriger*.
+  ⚠️ **Pourquoi c'est écrit ICI** : ce document liste les chantiers nutrition en attente, et sans
+  cette ligne le prochain à le lire les prendrait pour du travail disponible. **R30** — un refus
+  volontaire s'écrit avec sa raison, sinon il redevient un bug.
+
+- 🗺️🔌 **DEUX ÉTUDES EN LECTURE SEULE (12/09/2026) — rien n'est corrigé, tout est mesuré.**
+  · **`docs/CARTE-DONNEES-MILO.md`** — qui écrit / qui lit / Milo la voit-il vraiment / est-elle en
+  double. ⛔ **3 trous confirmés** : `dayStateLog` **jamais envoyé** (0 occurrence dans `coach.js`) ·
+  le **tour de taille réclamé DEUX FOIS par le prompt** et absent du contexte (**R8**, 6ᵉ fois) ·
+  `badges` déclaré transmis et ne l'est pas. ⚠️ **2 doublons risqués** : la **règle de rythme des
+  questions ×3** (une divergence rend Milo collant *sans qu'aucun chiffre soit faux*) et la règle
+  « compte pour un PR » (1 propriétaire, 2 copies). 📊 Contexte : **81 376 car., 25 sections** —
+  ⚠️ *« 13 sections » et « 31 091 pour ta personnalité » étaient **faux**, corrigés le 13/09 : mon
+  découpeur exigeait 70 % de capitales par ligne et **collait** les sections qu'il ne reconnaissait
+  pas à leur voisine.* Le vrai partage : **68 664 car. de consignes (84,4 %)** contre **12 712 de
+  données (15,6 %)**, et **91 % est en cache 1 h**.
+  ⭐ **Réponse à la question de fond** : *si Milo disparaît, l'app continue* — tout l'affichage est
+  local. Ce qu'il apporte d'irremplaçable : **relier ce qui n'est écrit dans aucun champ**.
+  · **`docs/AUTONOMIE-ET-CONNECTEURS.md`** — ⭐⭐ **l'app n'a pas un problème d'IA, elle a un problème
+  de BARREAUX SAUTÉS** : les 4 étages de l'échelle des sources (**R33**) sont **déjà embarqués**
+  (xlsx · `healthInbox` · **`_pdfToText`** · Tesseract · ZXing), et **3 ne servent qu'à un endroit
+  chacun**. ⛔ **`_pdfToText` (« 100 % local, 0 IA ») a UN appelant : le banc d'essai** — pendant que
+  les **4 imports** envoient des **images** au modèle. ⏭️ **Étape 0 avant tout** : mesurer combien des
+  vrais PDF de Michel ont une couche texte.
 
 - ⏳ **EN ATTENTE DE MICHEL — la passe de vérification du prochain import, vers le 06/10/2026.**
   Sa décision du 08/09 : *« je verrais ça dans 4 semaines quand je vais remettre un programme,
@@ -121,12 +168,13 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1209` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
+- **Version en ligne (live) :** `ft-v1210` — 📷 **LE SCANNER CAMÉRA LOCAL, EN RÉACTIVATION
   CONTRÔLÉE.** Le bouton « Scanner le code-barres avec la caméra » revient **en premier** dans
   l'écran d'ajout (gratuit et sans IA) ; la photo lue par l'IA reste en **secours volontaire**.
   ⛔ **Verdict : `PRÊT POUR TEST IPHONE`** — la fiabilité mobile n'est pas mesurable d'ici.
   👉 `docs/SCANNER-CAMERA-LOCAL.md`.
 
+- **Version précédente :** `ft-v1209` — 🔬 **LE TYPE DE SÉRIE NE DISPARAÎT PLUS EN SILENCE.** Six chantiers publiés dans le même bump (rythme des questions · C1/C2 les records · compteur client · compteur backend avant normalisation · diagnostic Admin). ⛔ **Rien ne change pour l'utilisateur** : instantané des records identique octet pour octet. ⚠️ **Le test qui compte n'est pas fait** — Michel doit faire un vrai import iPhone puis ouvrir Admin ; verdict tant qu'il ne l'a pas fait : *publiée mais test production en attente*.
 - **Version précédente :** `ft-v1208` — 📱 **LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE.**
   Michel a envoyé une capture montrant encore l'ancien comportement (198 kcal) **1 h 30 après** le
   déploiement de ft-v1207. ⭐⭐ **Verdict : B — la version servie était périmée, le code était
@@ -208,6 +256,56 @@
   mesure**, jamais recopiée ; **20 mutations sur un arbre COPIÉ**, toutes refusées.
 
 - **Version précédente :** `ft-v1204` — 🔀 **ÉTAPE 4 : LE HUB DE PRÉPARATION** (⛔ **pas la
+- ✅ **AUDIT D'ARCHITECTURE DE L'ONGLET SÉANCE — FAIT LE 12/09, ET SES 3 CONSTATS CORRIGÉS (ft-v1195).**
+  ⭐ **Verdict : l'architecture est saine.** 1603 fonctions pour **1602 noms distincts** (le seul
+  doublon est un helper local), **0 collision** sur 533 `const`/`let`, 7 portes d'entrée / 2 de sortie
+  cohérentes, et les deux questions centrales (« séance valide ? », « séance ouverte ? ») ont chacune
+  **un propriétaire unique**.
+  ⭐⭐ **Michel a levé lui-même son propre ordre** (*« on refera un état des lieux quand j'aurai fini
+  les bugs de la nutrition »*) après avoir lu les constats en clair : ***« vas-y corrige tout »***.
+  ✅ **Les trois sont corrigés** : ① `_rpeDeRir` redevient le seul propriétaire de la conversion
+  (elle était appelée **0 fois** pendant que `10−n` était retapée **6 fois**) · ② `_rirTxt`, morte
+  en prod et **périmée deux fois**, est retirée avec sa raison (**R30**) et son témoin remis sur le
+  vrai chemin (§58) · ③ `reposDefaut()` remplace les **trois** replis divergents (130/120/90).
+  ⛔ **Trois fausses pistes restent écartées AVEC leur raison** (`startHour`, le verrou d'écran, le
+  repli de `state.js`) — écrites pour que personne ne les « répare » dans six mois (**R30**).
+  👉 **Détail chiffré : `docs/SUIVI-AUDIT.md` · les témoins : bloc CCXCII du banc parcours.**
+
+- **Version précédente :** `ft-v1194` — 🧮 **un seul propriétaire pour le pour-100 g dérivé,
+
+- **Version précédente :** (jamais déployée sous ce numéro — devenue une **section de `ft-v1209`**) — 📐 **A1 : une lecture de PDF dit enfin
+  qu'elle est TRONQUÉE.** `_pdfToText` rend `{etat, lignes, pagesLues, pagesTotal, raison}` avec
+  **COMPLETE / PARTIAL / UNKNOWN**, décision de Michel : *« une lecture partielle n'est PAS une
+  exception technique et ne doit jamais être assimilée à un succès complet »*.
+  ⭐⭐ **Le défaut a été mesuré avec la VRAIE bibliothèque, sur ses vrais fichiers** : elle rendait
+  **682 lignes d'un document de 22 pages sans le moindre signal** (`MAX_PAGES=15`, **31 % jamais
+  lu** ; et `_pdfToImages`, le chemin qui part à l'IA, plafonne à **8** → **64 %**).
+  ⛔⛔ **Périmètre figé par 3 témoins** : `MAX_PAGES` **reste à 15** (*on rend la troncature
+  observable AVANT de la corriger*) · **`_pdfToImages` n'est PAS migrée** — c'est **A2**, et son
+  4ᵉ appelant est l'**import de repas** : *« je ne veux aucune casse temporaire »*, donc **A2 attend
+  le feu vert de session-A**.
+  ⭐ **Aucun chemin utilisateur touché** : `_pdfToText` n'a qu'**un** appelant, et c'est un outil admin.
+  👉 **Le plan complet : `docs/PLAN-CONTRAT-IMPORTS.md` · les mesures : `docs/CHANTIER-IMPORTS.md`.**
+  ⏭️ **B (le lecteur CSV d'historique) n'est PAS commencé** — Michel : *« arrête-toi avant B »*.
+
+- **Version précédente :** `ft-v1205` — 🔧 **les 3 constats de l'audit « onglet Séance »,
+  corrigés — et aucun n'était visible à l'écran.** Michel lève lui-même l'ordre du matin :
+  ***« vas-y corrige tout »***.
+  ⛔⛔ **Contrat : aucune valeur affichée ne doit bouger** — prouvé par `tools/instantane_seance_audit.js`
+  (bloc « vraie vie » identique **octet pour octet** ; bloc « état impossible » qui rend désormais **le
+  même sha** que lui : *le repli a cessé de changer quoi que ce soit*).
+  ⭐ ① `_rpeDeRir` était **appelée 0 fois** pendant que `10−n` était retapée dans **3 fonctions /
+  6 occurrences** (**R2**) · ② `_rirTxt` **morte et périmée deux fois**, retirée avec sa raison
+  (**R30**), son témoin remis sur le vrai chemin (**§58**) · ③ `reposDefaut()` remplace **trois**
+  replis (130 / 120 / 90) — dormant, mais **déjà mordu** en ft-v1080.
+  ⚠️⚠️ **Renumérotée TROIS FOIS — ft-v1195 → 1200 → 1204, et son bloc CCXCII → CCXCVI → CCCII** :
+  session-A a publié ft-v1195→1203 dans la journée. *La première publiée garde le numéro.*
+  ⚠️ **Et mon `sed` de renumérotation a frappé LEUR bloc en plus du mien** (deux blocs portaient
+  CCXCVI) — leurs 13 témoins leur sont rendus. *Un renommage global suppose que le numéro est
+  unique, ce qui est précisément faux au moment où l'on renumérote pour cause de collision.*
+  ⚠️ **À vérifier par Michel sur Safari/iPhone** — en principe **rien** n'a changé, et c'est
+  exactement ça qu'il y a à vérifier.
+- **Version précédente :** `ft-v1204` *(session-A)* — 🔀 **ÉTAPE 4 : LE HUB DE PRÉPARATION** (⛔ **pas la
   douane** — Michel la veut après, sur feu vert séparé). Détail complet : **`docs/HUB-NUTRITION.md`**.
   ⭐ **Cartographie faite avant toute ligne** : **12 fonctions** appellent `_afOublierAliment`, par
   RÔLE — **5** passaient déjà par `_offRemplirFormulaire`, **4** préparaient l'écran à la main,
@@ -253,6 +351,7 @@
   Tests : **7 mutations toutes mordantes** (la ① — *« je répare l'oubli »* — en fait **4**),
   contrôle sain 0 rouge avant ET après.
 
+- **Version précédente :** `ft-v1203` *(session-A)* — 🍽️ **3-v : la définition de portion reprise d'une source.**
 - **Version précédente :** `ft-v1203` — 🍽️ **3-v : la définition de portion reprise d'une source.**
   ⭐ **Test d'entrée passé — et pour la 1ʳᵉ fois depuis 4 sous-étapes, le plan dit VRAI sur la
   moitié qu'il décrit** : `quickFillFood` et `_afSuggPrendreLocale` portaient

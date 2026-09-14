@@ -88,7 +88,7 @@ tard.**
 
 ---
 
-## 2. Ce qui a été corrigé (ft-v1209)
+## 2. Ce qui a été corrigé (ft-v1210)
 
 ### ① La course : un seul propriétaire de l'état
 
@@ -349,7 +349,7 @@ Chemin réseau du code-barres : `docs/CHEMIN-RESEAU-CODEBARRES.pdf`.*
 > que la correction reste vérifiable, pas pour le croire.*
 >
 > ⭐ **Ce qu'elle garde de vrai** : toutes les mesures du décodeur, le cycle de vie de la caméra,
-> et les quatre défauts trouvés — dont trois sont corrigés en ft-v1209.
+> et les quatre défauts trouvés — dont trois sont corrigés en ft-v1210.
 
 ## 1. Pourquoi le scanner avait été retiré
 
