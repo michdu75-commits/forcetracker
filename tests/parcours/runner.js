@@ -37271,6 +37271,226 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   })();
 }
 
+/* ═══ B-CCCXI. LE RIR — UNE SÉRIE DE TRAVAIL, ET RIEN D'AUTRE ════════════════════════════════
+   (14/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel, après l'audit : ⛔ *« une correction ciblée et rapide pour la mise en production, PAS
+   une refonte de Séance/Milo »*. Trois choses seulement : le propriétaire de lecture, le libellé
+   du compte, et les gardes d'interprétation du prompt.
+
+   ⭐⭐ LE DÉFAUT CORRIGÉ EST REPRODUCTIBLE EN DEUX GESTES, et ce bloc les CONDUIT : on note un RIR
+   sur une série `N` par `setRir` (la vraie porte), puis on tape la pastille par `cycleType` (la
+   vraie porte). La série devient `É` en gardant `rir:2` — et ce 2 partait dans le contexte de
+   Milo **et** dans l'export.
+
+   ⛔ ET ON N'EFFACE PAS LA VALEUR STOCKÉE : `cycleType` reste intact, un témoin le fige. Effacer
+   serait une perte SILENCIEUSE pour qui bascule `N → É → N` en corrigeant une faute de frappe.
+   *La lecture suffit à fermer la fuite ; l'effacement coûterait une donnée sans prévenir.*
+
+   ⚠️ CE QUE CE BLOC NE COUVRE PAS, ET C'EST DIT : il éprouve la SÉMANTIQUE et le TRANSPORT, pas
+   ce que Milo en fait. Les gardes du prompt sont vérifiés **par leur présence** — leur obéissance
+   se mesure au banc d'essai, qui demande une clé API (R34). *Un test de prompt prouve la
+   PRÉSENCE, jamais l'OBÉISSANCE.* */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1500);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR: '+e.message; } };
+
+    /* ── ① LE PROPRIÉTAIRE, SUR TOUT LE DOMAINE ── */
+    o.dom = sur(()=>{
+      const r={};
+      [['N0',{type:'N',rir:0}], ['N2',{type:'N',rir:2}], ['Nvide',{type:'N'}],
+       ['Nnull',{type:'N',rir:null}], ['Nchaine',{type:'N',rir:''}],
+       ['E2',{type:'É',rir:2}], ['Evide',{type:'É'}], ['W2',{type:'W',rir:2}],
+       ['Emaj2',{type:'E',rir:2}],
+       ['X0',{type:'X',rir:0}], ['X2',{type:'X',rir:2}], ['Xvide',{type:'X'}],
+       ['hors99',{type:'N',rir:99}], ['horsNeg',{type:'N',rir:-1}],
+       ['importee',{type:'',rir:1}], ['dropset',{type:'D',rir:1}]
+      ].forEach(([k,s])=>{ r[k]=[_rirDeSet(s), _effortConnu(s), _serieDeTravail(s)]; });
+      return r;
+    });
+
+    /* ── ② LE CAS RÉEL : on CONDUIT les deux vraies portes ── */
+    o.bascule = sur(()=>{
+      S.wkt={date:'2026-09-14',exs:[{name:'Développé Couché',sets:[{kg:60,reps:10,done:true,type:'N'}]}]};
+      setRir(0,0,2);
+      const a={type:S.wkt.exs[0].sets[0].type, rir:S.wkt.exs[0].sets[0].rir, lu:_rirDeSet(S.wkt.exs[0].sets[0])};
+      cycleType(0,0);                                   // N -> É
+      const b={type:S.wkt.exs[0].sets[0].type, rir:S.wkt.exs[0].sets[0].rir, lu:_rirDeSet(S.wkt.exs[0].sets[0])};
+      cycleType(0,0);                                   // É -> X
+      const c={type:S.wkt.exs[0].sets[0].type, rir:S.wkt.exs[0].sets[0].rir, lu:_rirDeSet(S.wkt.exs[0].sets[0])};
+      cycleType(0,0);                                   // X -> N : la valeur doit REVENIR
+      const d={type:S.wkt.exs[0].sets[0].type, rir:S.wkt.exs[0].sets[0].rir, lu:_rirDeSet(S.wkt.exs[0].sets[0])};
+      return {N:a, E:b, X:c, retourN:d};
+    });
+
+    /* ── ③ CE QUE MILO REÇOIT, ET LE COMPTE ── */
+    const contexte=(sets)=>{
+      S.sessions=[{date:'2026-09-10',id:1,ts:1,volume:1000,exs:[{name:'Développé Couché',sets}]}];
+      S.wkt=null;
+      const ctx=buildCoachContext();
+      return {ligne:(ctx.match(/Développé Couché: [^\[\n]*/)||[''])[0],
+              compte:(ctx.match(/RIR — LE COMPTE EXACT[^→\n]*/)||[''])[0]};
+    };
+    o.milo = sur(()=>contexte([
+      {kg:60,reps:10,done:true,type:'É',rir:2},
+      {kg:100,reps:3,done:true,type:'N',rir:0},
+      {kg:90,reps:5,done:true,type:'N',rir:2},
+      {kg:90,reps:5,done:true,type:'N'},
+      {kg:90,reps:4,done:true,type:'X'}
+    ]));
+    o.toutesSansRir = sur(()=>contexte([
+      {kg:90,reps:5,done:true,type:'N'},{kg:90,reps:5,done:true,type:'N'},
+      {kg:90,reps:5,done:true,type:'N'}
+    ]));
+    o.toutesAvecRir = sur(()=>contexte([
+      {kg:90,reps:5,done:true,type:'N',rir:2},{kg:90,reps:5,done:true,type:'N',rir:1},
+      {kg:90,reps:5,done:true,type:'N',rir:0}
+    ]));
+    /* ⛔ QUE DES ÉCHECS : le compte ne doit pas se taire — un X est l'effort le MIEUX connu. */
+    o.queDesX = sur(()=>contexte([
+      {kg:90,reps:4,done:true,type:'X'},{kg:85,reps:4,done:true,type:'X'}
+    ]));
+    /* ⛔ COUVERTURE PARTIELLE — le cas chiffré de Michel : 0/1/vide/vide/2 sur 5 séries N. */
+    o.partielle = sur(()=>contexte([
+      {kg:90,reps:5,done:true,type:'N',rir:0},{kg:90,reps:5,done:true,type:'N',rir:1},
+      {kg:90,reps:5,done:true,type:'N'},{kg:90,reps:5,done:true,type:'N'},
+      {kg:90,reps:5,done:true,type:'N',rir:2}
+    ]));
+
+    /* ── ④ L'EXPORT — il n'est PAS modifié, il suit son propriétaire ── */
+    o.exportCsv = sur(()=>{
+      S.sessions=[{date:'2026-09-10',id:1,ts:1,volume:900,exs:[{name:'Squat à la Barre',sets:[
+        {kg:60,reps:10,done:true,type:'É',rir:2},
+        {kg:100,reps:5,done:true,type:'N',rir:0},
+        {kg:100,reps:5,done:true,type:'N'},
+        {kg:100,reps:4,done:true,type:'X',rir:1}
+      ]}]}];
+      return (_histoLignes()||[]).filter(r=>r&&r.exercise==='Squat à la Barre')
+        .map(r=>r.type+'|'+JSON.stringify(r.rir));
+    });
+    return o;
+  });
+
+  console.log('\n-- B-CCCXI. Le RIR : une série de travail, et rien d\'autre --');
+  const D=R.dom||{};
+  const eg=(k,a,b,c)=>D[k] && D[k][0]===a && D[k][1]===b && D[k][2]===c;
+
+  /* ①→③ LE DOMAINE */
+  t('B-CCCXI ① N + RIR 0 → 0 (une vraie valeur, pas un vide)',   eg('N0',0,true,true), JSON.stringify(D.N0));
+  t('B-CCCXI ② N + RIR 2 → 2',                                   eg('N2',2,true,true), JSON.stringify(D.N2));
+  t('B-CCCXI ③ ⛔ N sans RIR → null, JAMAIS 0',                  eg('Nvide',null,false,true), JSON.stringify(D.Nvide));
+  t('B-CCCXI ③ ⛔ ... ni un `null` explicite, ni une chaîne vide',
+    eg('Nnull',null,false,true) && eg('Nchaine',null,false,true), JSON.stringify([D.Nnull,D.Nchaine]));
+  t('B-CCCXI ④ ⭐⭐ É + RIR 2 → null (LE DÉFAUT CORRIGÉ)',        eg('E2',null,false,false), JSON.stringify(D.E2));
+  t('B-CCCXI ④ É sans RIR → null',                               eg('Evide',null,false,false), JSON.stringify(D.Evide));
+  t('B-CCCXI ⑤ ⭐ W + RIR 2 → null (l\'ancien échauffement, toujours atteignable par restauration)',
+    eg('W2',null,false,false), JSON.stringify(D.W2));
+  t('B-CCCXI ⑤bis ⭐ `E` sans accent → null (3 lectures contradictoires, mais non exploitable dans TOUTES)',
+    eg('Emaj2',null,false,false), JSON.stringify(D.Emaj2));
+  t('B-CCCXI ⑥ X + RIR 0 → null, et l\'effort reste CONNU',       eg('X0',null,true,false), JSON.stringify(D.X0));
+  t('B-CCCXI ⑦ X + RIR 2 → null',                                eg('X2',null,true,false), JSON.stringify(D.X2));
+  t('B-CCCXI ⑦bis X sans RIR → null, effort connu',              eg('Xvide',null,true,false), JSON.stringify(D.Xvide));
+  t('B-CCCXI ⑨ RIR hors échelle (99 · −1) → null',
+    eg('hors99',null,false,true) && eg('horsNeg',null,false,true), JSON.stringify([D.hors99,D.horsNeg]));
+  /* ⛔ ⑧ LE CARDIO N'EST PAS UNE SÉRIE — il ne peut pas atteindre le propriétaire. Ce qu'on
+     éprouve à la place, c'est que la série au type VIDE (celle de l'import) reste exploitable :
+     c'est elle que mon audit avait à tort appelée « cardio ». */
+  t('B-CCCXI ⑧ ⭐ une série importée (type vide) reste une série de travail — ce n\'est PAS du cardio',
+    eg('importee',1,true,true), JSON.stringify(D.importee));
+  t('B-CCCXI ⑧bis un dropset reste une série de travail',        eg('dropset',1,true,true), JSON.stringify(D.dropset));
+
+  /* ⑩⑪ LA BASCULE DE TYPE, CONDUITE PAR LES VRAIES PORTES */
+  const B=R.bascule||{};
+  t('B-CCCXI ⑩ ⭐⭐ N → É : le RIR reste STOCKÉ mais n\'est plus LU',
+    B.N && B.N.lu===2 && B.E && B.E.type==='É' && B.E.rir===2 && B.E.lu===null, JSON.stringify(B));
+  t('B-CCCXI ⑪ N → X : idem, la valeur survit et n\'est plus lue',
+    B.X && B.X.type==='X' && B.X.rir===2 && B.X.lu===null, JSON.stringify(B.X));
+  t('B-CCCXI ⑩bis ⛔ ET LE RETOUR EN `N` RESTITUE LA VALEUR (aucune perte silencieuse)',
+    B.retourN && B.retourN.type==='N' && B.retourN.rir===2 && B.retourN.lu===2, JSON.stringify(B.retourN));
+
+  /* ⑫ RIR ABSENT NE DEVIENT JAMAIS 0 — vérifié sur le contexte réel, pas seulement la fonction */
+  t('B-CCCXI ⑫ ⛔ une série sans RIR n\'apparaît PAS comme « RIR0 » dans le contexte',
+    R.milo && / S3 90×5 · /.test(R.milo.ligne) && !/S3 90×5 RIR/.test(R.milo.ligne),
+    R.milo&&R.milo.ligne);
+
+  /* ⑬⑭⑮ LA COUVERTURE */
+  t('B-CCCXI ⑬ ⭐⭐ couverture partielle : 3 sur 5 (60 %), jamais une moyenne fausse',
+    R.partielle && /3 séries de travail sur 5 \(60 %\)/.test(R.partielle.compte), R.partielle&&R.partielle.compte);
+  t('B-CCCXI ⑭ toutes sans RIR → « AUCUNE », et l\'ordre de ne rien déduire',
+    R.toutesSansRir && /AUCUNE des 3 séries/.test(R.toutesSansRir.compte)
+      && /Ne déduis RIEN de ce vide/.test(R.toutesSansRir.compte), R.toutesSansRir&&R.toutesSansRir.compte);
+  t('B-CCCXI ⑮ toutes avec RIR → 3 sur 3 (100 %)',
+    R.toutesAvecRir && /3 séries de travail sur 3 \(100 %\)/.test(R.toutesAvecRir.compte),
+    R.toutesAvecRir&&R.toutesAvecRir.compte);
+
+  /* ㉕ LE LIBELLÉ DIT EXACTEMENT CE QU'IL COMPTE — le défaut n°2 de l'audit */
+  t('B-CCCXI ㉕ ⭐⭐ le compte EXCLUT le X et le dit à part (avant : « 3 sur 4 » dont un X)',
+    R.milo && /2 séries de travail sur 3 \(67 %\)/.test(R.milo.compte)
+      && /1 série est allée à l'ÉCHEC/.test(R.milo.compte)
+      && /ce n'est PAS un RIR/.test(R.milo.compte), R.milo&&R.milo.compte);
+  t('B-CCCXI ㉕bis ⛔ que des X : le compte ne se TAIT pas (l\'effort y est le mieux connu)',
+    R.queDesX && /aucune série de travail notable/.test(R.queDesX.compte)
+      && /2 séries sont allées à l'ÉCHEC/.test(R.queDesX.compte), R.queDesX&&R.queDesX.compte);
+
+  /* ㉒㉔ LE CONTEXTE MILO N'EXPOSE PLUS LE RIR D'UN ÉCHAUFFEMENT */
+  t('B-CCCXI ㉒㉔ ⭐⭐ l\'échauffement à RIR stocké n\'expose plus rien à Milo',
+    R.milo && /É 60×10 · /.test(R.milo.ligne) && !/É 60×10 RIR/.test(R.milo.ligne), R.milo&&R.milo.ligne);
+  t('B-CCCXI ㉑ un X au milieu de séries N reste marqué « (X) » et sans RIR',
+    R.milo && /S4 90×4\(X\)/.test(R.milo.ligne) && !/\(X\) RIR/.test(R.milo.ligne), R.milo&&R.milo.ligne);
+
+  /* ㉓ L'EXPORT — non modifié, il suit son propriétaire */
+  t('B-CCCXI ㉓ ⭐⭐ l\'export n\'expose plus le RIR sur É ni sur X — et `setup.js` n\'a PAS bougé',
+    JSON.stringify(R.exportCsv)===JSON.stringify(['É|""','N|0','N|""','X|""']), JSON.stringify(R.exportCsv));
+
+  /* ══ TÉMOINS DE SOURCE ══ */
+  (()=>{
+    const sansCom=s=>s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    const lg=sansCom(fs.readFileSync(path.join(ROOT,'log.js'),'utf8'));
+    const co=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+    const coN=sansCom(co);
+    t('B-CCCXI ⑯ ⭐ un propriétaire « série de travail », et le RIR passe par LUI',
+      /function _serieDeTravail\(set\)\{/.test(lg)
+      && /function _rirDeSet\(set\)\{\s*if\(!set\) return null;\s*if\(!_serieDeTravail\(set\)\) return null;/.test(lg), '');
+    t('B-CCCXI ⑯ ⛔ SOURCE — aucune liste de types recopiée dans `_rirDeSet`',
+      !/function _rirDeSet\(set\)\{[\s\S]{0,300}?'É'/.test(lg), '');
+    /* ⛔ HORS PÉRIMÈTRE — on n'a pas profité du propriétaire pour refactorer les 18 autres sites. */
+    t('B-CCCXI ⑰ ⛔ PÉRIMÈTRE — `cycleType` n\'efface toujours PAS le `rir` (décision, pas oubli)',
+      /function cycleType\(ei,si\)\{[\s\S]{0,260}?\n\}/.test(lg)
+      && !/function cycleType\(ei,si\)\{[\s\S]{0,260}?rir/.test(lg), '');
+    t('B-CCCXI ⑰ ⛔ PÉRIMÈTRE — la migration W/E/D n\'est pas touchée',
+      /else if\(s\.type==='E'\)s\.type='X';/.test(sansCom(fs.readFileSync(path.join(ROOT,'state.js'),'utf8'))), '');
+    t('B-CCCXI ⑰ ⛔ PÉRIMÈTRE — `setup.js` n\'a pas été modifié pour l\'export',
+      /const r=\(typeof _rirDeSet==='function'\)\?_rirDeSet\(st\):null;/.test(
+        sansCom(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8'))), '');
+    t('B-CCCXI ⑰ ⛔ PÉRIMÈTRE — ft-v1211 intact : le diagnostic d\'import est là, inchangé',
+      /Object\.prototype\.hasOwnProperty\.call\(d\.data,'typesNormalises'\)/.test(lg)
+      && /function _empreinteDonnees\(\)/.test(lg), '');
+    /* ⛔ LE COMPTE MESURE CE QUE SON LIBELLÉ DIT */
+    t('B-CCCXI ⑱ ⭐ SOURCE — trois compteurs distincts, et le dénominateur passe par le propriétaire',
+      /let _rirNotes = 0, _rirTrav = 0, _rirEchec = 0;/.test(coN)
+      && /_serieDeTravail\(x\)[\s\S]{0,90}_rirTrav\+\+; if\(_r!==null\) _rirNotes\+\+;/.test(coN), '');
+    /* ══ LES 5 GARDES D'INTERPRÉTATION ══
+       ⚠️ Ils prouvent la PRÉSENCE, jamais l'OBÉISSANCE — celle-ci se mesure au banc d'essai. */
+    [['⑲ RIR 0 n\'est pas une prédiction d\'échec', "N'EST PAS UNE PRÉDICTION D'ÉCHEC"],
+     ['⑳ un RIR 0 peut être VOLONTAIRE',            "UN RIR 0 EST SOUVENT VOLONTAIRE"],
+     ['⑳bis le rôle de série est INCONNU',          "le rôle est INCONNU"],
+     ['㉑ un RIR 0 peut être suivi d\'une bonne série', "PEUT ÊTRE SUIVI D'UNE BONNE SÉRIE"],
+     ['㉒ le RIR est une ESTIMATION humaine',        "LE RIR EST UNE ESTIMATION HUMAINE"],
+     ['㉓ la fatigue demande PLUSIEURS signaux',     "AVANT DE PARLER DE FATIGUE, REGARDE PLUSIEURS SIGNAUX"],
+     ['㉓bis le contre-exemple chiffré 100→102',     "102×3 RIR0"]
+    ].forEach(([n,m])=>t('B-CCCXI '+n+' (présence dans le prompt)', co.includes(m), m));
+    /* ⛔ ET LES RÈGLES QUI EXISTAIENT DÉJÀ N'ONT PAS ÉTÉ PERDUES EN CHEMIN (R8). */
+    [["une série sans RIR n'est pas 0", "UNE SÉRIE SANS « RIR » N'EST PAS UN RIR DE 0"],
+     ["(X) n'est pas un RIR de 0",      "ET « (X) » N'EST PAS UN RIR DE 0, NE LES CONFONDS JAMAIS"],
+     ["ne rien déduire du vide",        "Ne déduis RIEN de ce vide"]
+    ].forEach(([n,m])=>t('B-CCCXI ㉔ ⛔ NON-RÉGRESSION — '+n, co.includes(m), m));
+  })();
+}
+
 /* ══════════ BLOC CCCIII — 🛃 ÉTAPE 5 : LA DOUANE DU JOURNAL ALIMENTAIRE (ft-v1205) ══════════
    Michel donne le feu vert pour la douane SEULE, et ⛔ en MODE OBSERVATION UNIQUEMENT :
    *« je ne veux pas encore de correction automatique ni de blocage utilisateur »* — `OK`, `WARN`

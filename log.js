@@ -1269,9 +1269,56 @@ function _prevRirBadge(p){
    ⚠️ ft-v1038 disait l'inverse (« l'échec EST un RIR de 0 ») et c'était écrit ici, dans le prompt
    de Milo et dans l'aide : les trois sont corrigés ensemble, sinon le suivant lit la version
    périmée et la « répare » (R23). */
+/* 🏋️ « CETTE SÉRIE EST-ELLE UNE VRAIE SÉRIE DE TRAVAIL ? » — un propriétaire, créé le 14/09/2026.
+   ⛔⛔ IL N'EN EXISTAIT AUCUN, ET C'EST MESURÉ : le test `type==='É'||type==='W'` est retapé
+   **18 fois dans 4 fichiers** (`log.js`, `coach.js`, `setup.js`, `state.js`). *Une règle écrite
+   dix-huit fois n'est pas une règle, c'est dix-huit occasions de diverger* (**R2**).
+   ⚠️ ⛔ ET ON NE REBRANCHE PAS LES 18 : hors périmètre de ce chantier. Ce propriétaire ne sert
+   pour l'instant qu'au RIR. *Créer le propriétaire coûte une fonction ; refactorer 18 sites au
+   milieu d'un correctif ciblé coûte un diff qu'on ne sait plus relire.* Les autres viendront
+   quand ils auront leur propre raison de bouger.
+
+   ⭐⭐ LE CAS `'E'` (SANS ACCENT) EST LE PLUS INTÉRESSANT, ET IL SE RÉSOUT SANS ÊTRE TRANCHÉ.
+   Mesuré : ce type a **trois lectures contradictoires** dans le code servi — migré en `X`
+   (`state.js`), ignoré **comme un échauffement** (`state.js`, `coach.js`), et reposé **comme un
+   `X`** (`log.js`, 240 s). 👉 *Or pour la question posée ici, l'ambiguïté ne change RIEN* :
+   échauffement **ou** échec, dans les deux cas ce n'est pas une série de travail analysable.
+   ⛔ On l'exclut donc **sans prétendre résoudre sa sémantique** — ce serait un autre chantier,
+   et le trancher ici serait décider à la place de Michel sur une donnée qu'on n'a pas mesurée.
+
+   ⚠️ ET `'W'`/`'E'` SONT TOUJOURS ATTEIGNABLES, ce n'est pas de la prudence décorative : la
+   migration `W→É, E→X, D→N` est **one-time** (drapeau `ft4_stmig1`). Une restauration cloud d'un
+   vieux compte réintroduit donc ces valeurs **après** que le drapeau soit posé. ⛔ On ne touche
+   pas à la migration (hors périmètre, décision ft-v1209) : on lit défensivement.
+
+   ⛔ LE CARDIO N'EST PAS LISTÉ ICI, ET C'EST VOLONTAIRE : il n'est **pas une série**. Il vit dans
+   `S.wkt.cardio` / `S.wkt.cardioAvant`, jamais dans `exs[].sets[]` — il ne peut donc pas
+   atteindre cette fonction. *Ajouter un garde contre un cas qui ne peut pas se produire ferait
+   croire au suivant qu'il le peut.* (Le `type:'CARDIO'` qu'on voit dans l'export CSV est un
+   LIBELLÉ fabriqué pour la ligne, pas un type stocké.) */
+function _serieDeTravail(set){
+  if(!set) return false;
+  const t=set.type;
+  return t!=='É' && t!=='W' && t!=='E' && t!=='X';
+}
+/* 💪 COMBIEN EN RÉSERVE ? — et depuis le 14/09/2026 la réponse est `null` dès que la série n'est
+   pas une vraie série de travail.
+   ⛔⛔ LE DÉFAUT CORRIGÉ EST REPRODUCTIBLE EN DEUX GESTES, il n'est pas théorique : on note un RIR
+   sur une série `N` (la barre de repos le demande), puis on tape la pastille de type — `cycleType`
+   change le type et **ne touche pas au `rir`**. La série devient `É` en gardant `rir:2`, et ce 2
+   partait dans le contexte de Milo (`É 60×10 RIR2`) **et** dans l'export CSV.
+   👉 *Le RIR d'un échauffement n'a aucun sens pour l'analyse* — et c'est ici que ça se règle,
+   parce qu'un seul endroit lit cette donnée pour tout le monde.
+   ⭐ CE QUI EST GRATUIT AU PASSAGE : l'export (`setup.js`) appelle déjà ce propriétaire, donc il
+   cesse d'exposer le RIR sur un `É` **sans qu'une ligne de `setup.js` ne bouge**. *C'est
+   exactement ce qu'achète un propriétaire.*
+   ⛔ ON N'EFFACE PAS LA VALEUR STOCKÉE, et c'est une décision : `cycleType` reste intact. Effacer
+   serait une perte SILENCIEUSE — quelqu'un qui bascule `N → É → N` pour corriger une erreur de
+   frappe retrouverait son RIR ; avec un effacement, il l'aurait perdu sans jamais l'apprendre
+   (**R29** : le coût de l'erreur n'est pas symétrique). La lecture suffit à fermer la fuite. */
 function _rirDeSet(set){
   if(!set) return null;
-  if(set.type==='X') return null;         // ⛔ PAS 0 : le tag `X` porte l'échec, `rir` la réserve
+  if(!_serieDeTravail(set)) return null;  // ⛔ PAS 0 : le tag `X` porte l'échec, `rir` la réserve
   const v=set.rir;
   if(v===null||v===undefined||v==='') return null;
   const n=Math.round(+v);
