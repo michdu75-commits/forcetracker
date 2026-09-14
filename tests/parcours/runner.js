@@ -36927,6 +36927,217 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'le décodage caméra est parti chercher quelque chose sur le réseau');
 }
 
+/* ══ BLOC CCCVIII — LE SCANNER CAMÉRA LOCAL, CONDUIT DEVANT UNE CAMÉRA (14/09/2026) ══════════
+   Michel ouvre un chantier séparé : *« lire un code-barres sans appel IA, puis utiliser
+   exactement le même lookup Open Food Facts que le code tapé »* — et ⛔ *« je ne veux PAS
+   réactiver aveuglément un ancien bouton jugé peu fiable »*.
+
+   ⭐⭐ CE BLOC LANCE UN SECOND NAVIGATEUR AVEC UNE CAMÉRA FACTICE qui FILME un vrai EAN-13.
+   Sans ça, on ne peut éprouver que le DÉCODEUR ; or la question porte sur la CHAÎNE
+   (caméra → ZXing → `_lookupBarcode` → Open Food Facts). C'est la leçon de ft-v1208 :
+   *un banc qui teste la PIÈCE ne répond pas à une question posée sur la MACHINE.*
+
+   ⛔⛔ ET CE BLOC FIGE LA RÉALITÉ MESURÉE, PAS LE CONTRAT ESPÉRÉ. Le scanner déclenche
+   aujourd'hui DEUX lookups pour un seul scan (course mesurée à 28 ms). Écrire un témoin
+   « un seul lookup » serait figer un contrat FAUX — la leçon de ft-v1207. Le témoin ⑤ dit
+   donc que le défaut EXISTE ; il rougira le jour où il sera corrigé, et c'est voulu : il
+   force à revenir ici plutôt qu'à corriger en silence. */
+{
+  const os=require('os');
+  /* EAN-13 : encodeur de référence, puis un Y4M que Chromium prend pour une caméra.
+     ⚠️ LA ZONE DE SILENCE SE COMPTE EN MODULES, PAS EN PIXELS — la norme en exige 9 à 11.
+     Une marge fixe en pixels fait échouer les codes vus de PRÈS, et ma première mesure du
+     14/09 a conclu « trop proche = illisible » alors que c'était MA fixture (§63). */
+  const _L=['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
+  const _G=['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
+  const _R=['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
+  const _P=['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
+  const modulesEAN=(e)=>{const d=[...e].map(Number);let s='101';const p=_P[d[0]];
+    for(let i=1;i<=6;i++)s+=(p[i-1]==='L'?_L:_G)[d[i]];s+='01010';
+    for(let i=7;i<=12;i++)s+=_R[d[i]];return s+'101';};
+  const cleEAN=(e12)=>{let s=0;for(let i=0;i<12;i++)s+=(+e12[i])*(i%2?3:1);return String((10-s%10)%10);};
+  function ecrireY4M(f,ean,flou){
+    const W=640,H=480,N=10,m=modulesEAN(ean);
+    const mod=Math.max(1,Math.floor(W/(m.length+24)));   // ≥ 12 modules de silence de chaque côté
+    const x0=Math.floor((W-m.length*mod)/2), haut=Math.floor(H*0.45), y0=Math.floor((H-haut)/2);
+    const blanche=Buffer.alloc(W,235), barres=Buffer.alloc(W,235);
+    for(let i=0;i<m.length;i++) if(m[i]==='1') barres.fill(16,x0+i*mod,x0+i*mod+mod);
+    if(flou){ const src=Buffer.from(barres);
+      for(let x=0;x<W;x++){ const a=Math.max(0,x-flou),b2=Math.min(W,x+flou+1);
+        let s=0; for(let k=a;k<b2;k++)s+=src[k]; barres[x]=Math.round(s/(b2-a)); } }
+    const Y=Buffer.concat(Array.from({length:H},(_,y)=>(y>=y0&&y<y0+haut)?barres:blanche));
+    const UV=Buffer.alloc((W/2)*(H/2),128);
+    const parts=[Buffer.from('YUV4MPEG2 W'+W+' H'+H+' F25:1 Ip A1:1 C420jpeg\n')];
+    for(let i=0;i<N;i++) parts.push(Buffer.from('FRAME\n'),Y,UV,UV);
+    fs.writeFileSync(f,Buffer.concat(parts));
+  }
+  const EAN_NET='3083681011791';                          // Cassegrain, code-barres réel
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ftcam-'));
+  const fNet=path.join(dir,'net.y4m'), fFlou=path.join(dir,'flou.y4m');
+  const cleOK = cleEAN(EAN_NET.slice(0,12))===EAN_NET[12];
+  ecrireY4M(fNet,EAN_NET,0); ecrireY4M(fFlou,EAN_NET,4);
+
+  async function devantLaCamera(fichier){
+    const b2=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+      args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',
+            '--use-file-for-fake-video-capture='+fichier]});
+    const c2=await b2.newContext({serviceWorkers:'block',viewport:{width:390,height:844},
+      timezoneId:'Europe/Paris',permissions:['camera']});
+    const p2=await c2.newPage(); const e2=[]; p2.on('pageerror',e=>e2.push(e.message));
+    await p2.addInitScript(seedScript({}));
+    await p2.goto('http://localhost:'+PORT+'/index.html');
+    await p2.waitForTimeout(2200);
+    const res=await p2.evaluate(async ()=>{
+     try{
+      const o={reseau:[],lookups:[]};
+      /* `fetch` intercepté et classé par DOMAINE : aucune requête ne part, on compte ce que
+         l'app DEMANDE. Open Food Facts répond une fiche témoin — le réseau réel n'est pas
+         joignable d'ici, et ce n'est pas lui qu'on mesure. */
+      window.fetch=function(u){
+        const url=String((u&&u.url)||u||''); let dom=''; try{dom=new URL(url,location.href).hostname;}catch(e){dom='?';}
+        o.reseau.push(dom);
+        if(/openfoodfacts/.test(dom)) return Promise.resolve(new Response(JSON.stringify({status:1,product:{
+          product_name:'Cassoulet témoin', brands:'Témoin', quantity:'840 g',
+          nutriments:{'energy-kcal_100g':120,proteins_100g:6,carbohydrates_100g:12,fat_100g:4}}}),
+          {status:200,headers:{'Content-Type':'application/json'}}));
+        return Promise.resolve(new Response('{}',{status:200}));
+      };
+      const vraiLookup=window._lookupBarcode;
+      window._lookupBarcode=function(ean,saisie){ o.lookups.push({ean,saisie:saisie===undefined?'(aucune)':saisie});
+        return vraiLookup.apply(this,arguments); };
+      let flux=null;
+      const gum=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia=function(c){ o.contraintes=JSON.stringify(c);
+        return gum(c).then(s=>{flux=s;return s;}); };
+
+      openAddFood(); await new Promise(r=>setTimeout(r,150));
+      openBarcodeScanner();                                  // ⚠️ la VRAIE porte, pas le décodeur
+      for(let i=0;i<40;i++){ await new Promise(r=>setTimeout(r,100));
+        const ov=document.getElementById('ov-bc-scan'); if(ov&&!ov.classList.contains('open')){o.luToutSeul=true;break;} }
+      const v=document.getElementById('bc-video');
+      o.video={w:v&&v.videoWidth,h:v&&v.videoHeight};
+      if(!o.luToutSeul){ await _bcCaptureFrame(); await new Promise(r=>setTimeout(r,600)); }
+      const ov=document.getElementById('ov-bc-scan');
+      o.ecranFerme=!!(ov&&!ov.classList.contains('open'));
+      o.statut=(document.getElementById('bc-scan-status')||{}).textContent||'';
+      await new Promise(r=>setTimeout(r,300));
+      o.fluxCoupe = flux ? flux.getTracks().every(t=>t.readyState==='ended') : 'aucun flux';
+      o.off=o.reseau.filter(d=>/openfoodfacts/.test(d)).length;
+      o.ia =o.reseau.filter(d=>/workers\.dev|script\.google\.com/.test(d)).length;
+      o.quotaIA=(S.foodAiUses||0);
+      o.src=(typeof _afSrc==='object'&&_afSrc)?{saisie:_afSrc.saisie,origine:_afSrc.origine,sourceId:_afSrc.sourceId}:null;
+      o.kcal=(document.getElementById('af-kcal')||{}).value||'';
+      o.ligne=((document.getElementById('af-bc-row')||{}).style||{}).display||'';
+      return o;
+     }catch(e){ return {FATAL:String(e&&e.message||e)}; }
+    });
+    res.erreursJS=e2;
+    await b2.close();
+    return res;
+  }
+
+  const CAM=await devantLaCamera(fNet);
+  const FLOU=await devantLaCamera(fFlou);
+  try{ fs.rmSync(dir,{recursive:true,force:true}); }catch(e){}
+
+  const srcApp=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const srcIdx=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  const srcScr=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+  const corpsA=(n)=>{const m=srcApp.match(new RegExp('(?:async )?function '+n+'\\([\\s\\S]*?\\n\\}'));
+    if(!m) throw new Error('corps introuvable : '+n); return m[0];};
+
+  console.log('\n═══ CCCVIII. LE SCANNER CAMÉRA LOCAL — conduit devant une caméra ═══');
+  t('CCCVIII ⓪ la sonde caméra a tourné (pas de FATAL, pas d\'erreur JS)',
+    !CAM.FATAL && !FLOU.FATAL && CAM.erreursJS.length===0,
+    (CAM.FATAL||'')+' '+(FLOU.FATAL||'')+' '+JSON.stringify(CAM.erreursJS));
+  t('CCCVIII ⓪bis le code-barres témoin porte une clé de contrôle VALIDE (sinon ZXing le refuse '+
+    'et le témoin suivant serait vert pour la mauvaise raison)', cleOK===true, '');
+  t('CCCVIII ① ⛔⛔ LE SCANNER CAMÉRA FAIT **ZÉRO** APPEL IA — ni Worker Cloudflare, ni Apps '+
+    'Script. Le décodage est entièrement local, et c\'est le fait qui décide du chantier',
+    CAM.ia===0 && CAM.quotaIA===0, JSON.stringify({ia:CAM.ia,quota:CAM.quotaIA,dom:CAM.reseau}));
+  t('CCCVIII ② ⭐ … et il LIT réellement le code depuis le flux vidéo : l\'écran se ferme, la '+
+    'fiche produit remplit le formulaire', CAM.ecranFerme===true && CAM.kcal==='120' && CAM.ligne==='block',
+    JSON.stringify({ferme:CAM.ecranFerme,kcal:CAM.kcal,ligne:CAM.ligne}));
+  t('CCCVIII ③ ⭐⭐ … et il passe par LE MÊME lookup produit que le code tapé : `_lookupBarcode` '+
+    'avec le bon numéro, puis Open Food Facts. Le scanner ne crée AUCUN chemin nutrition nouveau',
+    CAM.lookups.length>0 && CAM.lookups.every(l=>l.ean===EAN_NET) && CAM.off>=1,
+    JSON.stringify(CAM.lookups));
+  t('CCCVIII ④ ⭐ … et la provenance enregistrée le distingue du code tapé ET de la lecture IA',
+    CAM.src && CAM.src.saisie!=='code-tape' && CAM.src.saisie!=='photo-code-ia' && CAM.src.sourceId===EAN_NET,
+    JSON.stringify(CAM.src));
+  /* ⛔⛔ UNE COURSE MESURÉE, ET C'EST UN TÉMOIN DE SOURCE QUI LA FIGE — PAS UN COMPORTEMENT.
+     Mesuré le 14/09 devant la caméra factice : le callback CONTINU de ZXing et le bouton
+     « Capturer » peuvent lire le même code à 28 ms d'intervalle et tirer CHACUN son
+     `_lookupBarcode` → deux requêtes Open Food Facts pour un seul scan.
+     ⚠️⚠️ MAIS ELLE EST INTERMITTENTE : selon qui gagne, on observe 1 ou 2 lookups — la première
+     version de ce témoin comptait « exactement 2 » et rougissait au hasard.
+     👉 *Un témoin qui dépend du vainqueur d'une course ne mesure pas la course, il mesure la
+     charge de la machine.* La course, elle, est STRUCTURELLE et se lit dans la source :
+     `_bcCaptureFrame` ne pose `_bcScanning=false` qu'APRÈS son `await` de décodage (~500 ms),
+     pendant lesquelles le décodage continu reste armé.
+     ⛔ NON CORRIGÉ : défaut trouvé pendant un audit — la règle du projet (depuis ft-v1200) dit
+     de le mesurer, l'écrire, et attendre un feu vert séparé. Ce témoin tombera le jour de la
+     correction, et c'est voulu : il force à repasser ici au lieu de corriger en silence. */
+  /* ⚠️⚠️ MA PREMIÈRE VERSION DE CE TÉMOIN ÉTAIT AVEUGLE, et le contrôle négatif l'a dit :
+     elle cherchait « un `_bcScanning=false` APRÈS l'await ». Or il en existe un de toute façon
+     (celui du succès) — donc AJOUTER le désarmement avant l'await, c'est-à-dire CORRIGER la
+     course, laissait le témoin parfaitement vert. 👉 *Un motif qui cherche une présence ne peut
+     pas mesurer un ORDRE.* Il mesure désormais ce qui compte vraiment : qu'AUCUN désarmement
+     n'existe AVANT l'await. */
+  t('CCCVIII ⑤ ⛔⛔ DÉFAUT CONNU ET NON CORRIGÉ — LA COURSE EST DANS LA SOURCE : `_bcCaptureFrame` '+
+    'ne désarme le décodage continu qu\'APRÈS son await, donc les deux peuvent tirer chacun son '+
+    'lookup. *Intermittent à l\'exécution, déterministe dans le code.*',
+    (()=>{ const c=corpsA('_bcCaptureFrame');
+      const i=c.indexOf('await reader.decodeFromImageUrl');
+      return i>0 && !/_bcScanning\s*=\s*false/.test(c.slice(0,i))
+             && /_bcScanning\s*=\s*false/.test(c.slice(i)); })(),
+    'la course a changé de forme (corrigée ?) — remesurer et mettre à jour docs/SCANNER-CAMERA-LOCAL.md');
+  t('CCCVIII ⑤bis ⛔ … et les DEUX lecteurs appellent bien le même lookup commun, chacun de son '+
+    'côté : c\'est ce qui rend la course possible',
+    (corpsA('openBarcodeScanner').match(/_lookupBarcode\(/g)||[]).length===1
+    && (corpsA('_bcCaptureFrame').match(/_lookupBarcode\(/g)||[]).length===1, '');
+  t('CCCVIII ⑤ter ⭐ … et un scan réussi ne tire JAMAIS plus de deux lookups : la course en ajoute '+
+    'au plus un, elle ne boucle pas', CAM.lookups.length>=1 && CAM.lookups.length<=2 && CAM.off<=2,
+    JSON.stringify({lookups:CAM.lookups.length,off:CAM.off}));
+  t('CCCVIII ⑥ ⭐⭐ LA CAMÉRA EST COUPÉE APRÈS SUCCÈS : toutes les pistes vidéo sont `ended`. '+
+    '*Une fuite qui ne se voit que sur le téléphone de quelqu\'un* (ft-v1091)',
+    CAM.fluxCoupe===true, JSON.stringify(CAM.fluxCoupe));
+  t('CCCVIII ⑦ ⛔ SUR UN CODE ILLISIBLE (flou) : rien n\'est inventé — ZÉRO lookup, ZÉRO appel IA, '+
+    'et un message qui dit quoi faire. *Le repli n\'est PAS un appel IA automatique*',
+    FLOU.lookups.length===0 && FLOU.off===0 && FLOU.ia===0 && /recule|mise au point/i.test(FLOU.statut),
+    JSON.stringify({lk:FLOU.lookups.length,off:FLOU.off,ia:FLOU.ia,statut:FLOU.statut.slice(0,60)}));
+  t('CCCVIII ⑧ ⭐ … et la caméra reste OUVERTE pour réessayer (on ne ferme pas l\'écran sous les '+
+    'doigts de quelqu\'un qui vise encore)', FLOU.ecranFerme===false && FLOU.fluxCoupe===false,
+    JSON.stringify({ferme:FLOU.ecranFerme,coupe:FLOU.fluxCoupe}));
+  t('CCCVIII ⑨ ⭐ les contraintes caméra demandent bien l\'objectif ARRIÈRE et de la haute '+
+    'résolution (sans ça : « caméra ouverte mais ne lit pas », le défaut de ft-v378)',
+    /environment/.test(CAM.contraintes||'') && /1920/.test(CAM.contraintes||''),
+    CAM.contraintes||'');
+  t('CCCVIII ⑩ ⛔⛔ LA PORTE RESTE FERMÉE : aucun bouton d\'`index.html` n\'appelle le scanner. '+
+    'C\'est la décision de ft-v388, pas un oubli — elle ne se renverse pas sans Michel (R30)',
+    !/scanBarcode\s*\(\s*\)/.test(srcIdx) && !/openBarcodeScanner/.test(srcIdx),
+    'le scanner a retrouvé une porte : c\'est une décision produit, relire ft-v388 et ft-v871');
+  t('CCCVIII ⑪ ⚠️ … et son bouton de repli photo est MORT : `scanBarcodePhoto` cherche '+
+    '`af-bc-input`, retiré avec ft-v388. Mesuré, écrit, NON réparé — invisible tant que la porte '+
+    'est murée, mais c\'est un bug le jour où on la rouvre',
+    /af-bc-input/.test(corpsA('scanBarcodePhoto')) && !/id="af-bc-input"/.test(srcIdx), '');
+  t('CCCVIII ⑫ ⚠️ … et le décodage LOCAL d\'une photo (`onBarcodeFile`, provenance `photo-code`) '+
+    'est orphelin lui aussi : il est le seul chemin photo SANS IA, et rien ne l\'appelle',
+    /'photo-code'/.test(corpsA('onBarcodeFile')) && (srcApp.match(/onBarcodeFile\(/g)||[]).length===1
+    && !/onBarcodeFile/.test(srcIdx), '');
+  t('CCCVIII ⑬ ⛔ ZXing est chargé DEPUIS LE DÉPÔT, jamais d\'un CDN — un décodage « local » qui '+
+    'télécharge sa bibliothèque ailleurs n\'est plus local',
+    /'\.\/lib\/zxing\.min\.js'/.test(corpsA('_loadZXing')) && !/https?:/.test(corpsA('_loadZXing')), '');
+  t('CCCVIII ⑭ ⭐ le décodeur est bridé aux 4 formats de produits (EAN-13/8, UPC-A/E) avec '+
+    'TRY_HARDER — mesuré le 14/09 : sans ces réglages, un code vu en paysage n\'est plus lu du tout',
+    /TRY_HARDER/.test(corpsA('_bcHints')) && /EAN_13/.test(corpsA('_bcHints'))
+    && /UPC_A/.test(corpsA('_bcHints')), '');
+  t('CCCVIII ⑮ ⛔ l\'écran du scanner est déclaré dans la table de fermeture : glisser, Échap ou '+
+    'le bouton retour coupent la caméra au lieu de la laisser tourner (ft-v1091/1092)',
+    /'ov-bc-scan':'closeBarcodeScanner'/.test(srcScr)
+    && /stopStreams/.test(corpsA('closeBarcodeScanner')), '');
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==

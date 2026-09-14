@@ -6,6 +6,25 @@
 
 ---
 
+- 📷 **CHANTIER OUVERT — LE SCANNER CAMÉRA LOCAL, AUDITÉ MAIS PAS RÉACTIVÉ (14/09/2026).**
+  Michel : *« lire un code-barres sans appel IA, puis utiliser exactement le même lookup Open Food
+  Facts que le code tapé »* · ⛔ *« ne remets PAS immédiatement le bouton en production »*.
+  ⭐⭐ **La cause du retrait est mesurée dans git** : le scanner live a vécu **2 h 37** le 11/07, et
+  pendant **~1 h** de ces 2 h 37 la recherche produit **rejetait TOUS les produits** (ft-v377) —
+  *un code parfaitement décodé affichait « produit introuvable »*. Le retrait n'a tenté **aucune**
+  correction (6 lignes d'`index.html`). ⛔ **Mais ça ne le blanchit pas** : un vrai symptôme iPhone
+  persistait après le correctif ft-v378.
+  ⭐ **Décodeur mesuré : 17 cas sur 20 à 3/3.** Seul vrai ennemi : le **flou dès 2 px** —
+  *sur un téléphone, « flou » s'appelle « mise au point »*.
+  ⭐ **Réseau prouvé** : scanner → **0 appel IA**, quota inchangé, **même `_lookupBarcode`**,
+  même objet produit que le code tapé. Le banc conduit désormais une **vraie caméra** (bloc CCCVIII).
+  ⛔⛔ **4 défauts mesurés et NON corrigés** (feu vert séparé) : la **course** à deux lookups · le
+  bouton de repli **mort** · le décodage **local** d'une photo orphelin · la provenance implicite.
+  ⭐⭐ **VERDICT : RÉACTIVER AVEC FALLBACK IA** — après ces 4 correctifs **et** la validation iPhone.
+  ⚠️ **La fiabilité mobile n'est PAS mesurée d'ici** (ni caméra ni Safari dans ce conteneur) : un
+  **protocole iPhone** (5 produits, 5 gestes) attend Michel.
+  👉 Dossier : **`docs/SCANNER-CAMERA-LOCAL.md`** · PDF : `docs/SCANNER-CAMERA-LOCAL.pdf`.
+
 - ⏳ **EN ATTENTE DE MICHEL — la passe de vérification du prochain import, vers le 06/10/2026.**
   Sa décision du 08/09 : *« je verrais ça dans 4 semaines quand je vais remettre un programme,
   mets-le dans le journal et on fera l'essai à ce moment-là »*. ⛔ **Il ne réimporte rien d'ici

@@ -2936,3 +2936,45 @@ sessions de diagnostic sur un code parfaitement sain.
 vert serait exactement ce que **R30** interdit. Un témoin de hors-périmètre l'épingle en l'état.
 ⛔ **Ne devient pas un scénario de banc d'essai** : l'attendu n'est pas un comportement de Milo.
 Écrit ici pour ne pas disparaître avec la session (**R27**).
+
+---
+
+### 🟣 📷 LE SCANNER CAMÉRA LOCAL : quatre défauts mesurés, aucun corrigé (14/09/2026)
+
+> **État : à trancher par Michel.** Mesurés pendant l'audit du chantier « scanner caméra local »
+> (`docs/SCANNER-CAMERA-LOCAL.md`), figés par le bloc **CCCVIII** du parcours, **non corrigés** —
+> la règle du projet depuis ft-v1200 : *un défaut trouvé pendant un audit se mesure, s'écrit, et
+> attend un feu vert séparé.*
+
+**① ⭐⭐ Une COURSE : jusqu'à deux lookups Open Food Facts pour un seul scan.** Mesurée devant une
+caméra factice : le callback **continu** de ZXing et le bouton **« Capturer »** ont lu le même
+code à **28 ms d'intervalle** et tiré **chacun** son `_lookupBarcode`. Cause structurelle :
+`_bcCaptureFrame` ne pose `_bcScanning=false` qu'**après** son `await` de décodage (~500 ms),
+pendant lesquelles le décodage continu reste armé.
+
+⚠️ **Elle est INTERMITTENTE** — selon qui gagne, on observe 1 ou 2 lookups. ⭐ **Et sur un
+téléphone elle est PLUS probable, pas moins** : le décodage continu y est rapide, donc il a toutes
+les chances de tirer pendant les ~500 ms de la capture.
+
+**② Le bouton de repli photo est mort.** `scanBarcodePhoto()` cherche l'élément `af-bc-input`,
+**retiré avec ft-v388**. Le bouton *« 🖼️ Prendre une photo à la place »* de l'écran du scanner
+ferme l'overlay et **ne fait rien** — 0 appel mesuré. *Invisible aujourd'hui puisque le scanner
+lui-même est inatteignable ; c'est un bug le jour où on rouvre la porte.*
+
+**③ Le décodage LOCAL d'une photo est orphelin.** `onBarcodeFile` (provenance `photo-code`) est
+le **seul chemin photo sans IA**, et rien ne l'appelle. 👉 Aujourd'hui, photographier un
+code-barres passe **forcément** par l'IA — alors qu'un décodage local existe, déjà écrit, et qu'il
+**vérifie la clé de contrôle** là où l'IA ne la vérifie pas.
+
+**④ Le scanner ne dit pas sa provenance explicitement.** Les deux appels écrivent
+`_lookupBarcode(code)` sans argument ; la valeur par défaut `'scan'` rattrape. Le résultat est
+juste, la ligne d'appel ne le dit pas.
+
+**⚠️ Et une question de nommage, rendue à Michel**
+
+Il demande une provenance **`camera-code-local`**. Elle **existe déjà sous le nom `scan`**, et le
+contrat des quatre chemins est écrit dans `app.js` depuis le 23/08. Renommer coûterait ① des
+lignes de journal déjà enregistrées portant un nom disparu — **et l'historique est hors
+périmètre** — ② un **cinquième** nom pour une chose qui en a un.
+
+👉 **Recommandation : garder `scan`, et rendre l'appel explicite.** *Décision de Michel.*
