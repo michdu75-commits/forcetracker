@@ -244,6 +244,20 @@ if 'asin' not in DOC_PLAT or 'cylindr' not in DOC_PLAT:
     raise SystemExit('La simulation de COURBURE n est plus expliquee : « si tu simules la '
                      'courbure, explique comment » (Michel, §5).')
 
+# ═══ [!!] LES DEUX TEMOINS CORRIGES DOIVENT RESTER PLUS STRICTS QU AVANT ════════════════════
+# Ils avaient epingle un LITTERAL et rougissaient sur un code meilleur. En les corrigeant, le
+# risque est de les ASSOUPLIR au lieu de les resserrer — c est-a-dire de transformer un rouge
+# genant en vert qui ne peut plus rougir. Ce garde verifie les deux moities : la forme du
+# proprietaire est exigee, ET le retour du brut est refuse.
+_T1 = RUN.count("_lookupBarcode\\(\\s*f\\.code\\s*,\\s*'camera-code-local'\\s*\\)")
+if _T1 < 2:
+    raise SystemExit('Les temoins du scanner n exigent plus la forme du PROPRIETAIRE (f.code) : '
+                     'ils avaient ete corriges precisement pour ca (CCCVIII 5bis et CCCIX 2).')
+if "!/_lookupBarcode\\(\\s*code\\s*,\\s*'camera-code-local'/" not in RUN:
+    raise SystemExit('Le temoin n interdit plus le RETOUR DU CODE BRUT : corriger un temoin rouge '
+                     'en le rendant plus permissif fabrique un vert qui ne peut plus rougir. '
+                     'Il doit etre plus strict qu avant, pas plus lache.')
+
 N_GARDES = len(re.findall(r'raise SystemExit',
                           open(os.path.abspath(__file__), encoding='utf-8').read()))
 
@@ -525,6 +539,30 @@ H.append(P('Les desaccords viennent <b>tous</b> de l acceptation de l EAN-8, lu 
            '<b>Recommandation mesuree</b> : garder les quatre formats ; et <b>si un jour le mode '
            'scene tourne</b>, exiger qu un EAN-8 soit <b>confirme par un second moteur</b> '
            '&mdash; la fusion sait deja le faire.', 'p'))
+
+H.append(P('10bis. Deux temoins etaient ROUGES, et la lecon vaut plus que le correctif', 'h'))
+H.append(P('La passe complete a rendu <b>2 rouges</b>, et ce sont deux temoins que j avais ecrits '
+           'la veille : ils epinglaient le <b>litteral</b> <b>_lookupBarcode(code, ...)</b>. Or ce '
+           'chantier a change l argument en <b>f.code</b> &mdash; le code que le proprietaire '
+           '_bcFusionnerCandidats a <b>valide</b>. <b>Les temoins rougissaient donc sur un code '
+           'PLUS SUR que celui qu ils protegeaient.</b>', 'p'))
+H.append(P('<i>Un temoin qui fige un litteral fige une epoque, pas une regle.</i> Ils exigent '
+           'desormais la forme du proprietaire <b>ET refusent le retour du brut</b> : ils sont donc '
+           '<b>plus stricts qu avant, pas plus laches</b> &mdash; ce qui est le seul test honnete '
+           'quand on corrige un temoin rouge. Eprouves par 3 mutations, 3 mordent : le brut qui '
+           'contourne le proprietaire, la provenance devenue valeur par defaut, un lecteur qui '
+           'appelle le lookup en direct.', 'p'))
+H.append(P('<b>Et c est la raison d etre de la regle qui interdit de publier avant une passe '
+           'verte</b> : le travail etait deja pousse sur la branche avec ces deux rouges dedans. '
+           'Il n a jamais atteint master.', 'p'))
+H.append(P('<b>Au meme moment, une autre session a publie sa propre version</b>, et le numero a '
+           'donc ete pris. <i>C est git qui l a dit, pas le journal de coordination</i> &mdash; le '
+           'fetch montrait deux commits d avance. Fusion faite a la main sur trois fichiers ; le '
+           'seul point delicat etait un bloc de documentation present <b>en double</b> : il a ete '
+           'tranche <b>par son CONTENU</b> (l un disait encore &laquo; le bouton revient &raquo;, '
+           'l autre portait la correction &laquo; ce bouton a ete RETIRE &raquo;), <b>jamais par '
+           'son numero</b>. <i>Deux blocs de meme version peuvent dire des choses differentes.</i>',
+           'p'))
 
 H.append(P('11. Ce que je ne peux pas prouver d ici', 'h'))
 H.append(P('<b>Ce conteneur n a ni camera ni Safari.</b> Ne sont PAS mesures : le comportement de '
