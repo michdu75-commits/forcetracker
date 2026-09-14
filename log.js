@@ -7208,11 +7208,18 @@ async function _histAnalyzeBatch(imgs){
      de `sess.exercises` en aval ; les rustiner un par un, c'est en oublier un. Ce qui entre
      doit être de la bonne FORME, et ça se décide ici. */
   const brutes = Array.isArray(d.data.sessions) ? d.data.sessions : [];
-  return brutes.filter(x=>x&&typeof x==='object').map(x=>Object.assign({}, x, {
+  const sessions = brutes.filter(x=>x&&typeof x==='object').map(x=>Object.assign({}, x, {
     exercises: (Array.isArray(x.exercises)?x.exercises:[])
       .filter(e=>e&&typeof e==='object'&&e.name)
       .map(e=>Object.assign({}, e, {sets: Array.isArray(e.sets)?e.sets.filter(t=>t&&typeof t==='object'):[]}))
   }));
+  /* 🏷️ LE COMPTE DU BACKEND VOYAGE AVEC LE LOT. ⛔ Un OBJET, pas un tableau avec des propriétés
+     attachées : cette fonction n'a qu'UN appelant, donc la migration est complète et un appelant
+     oublié serait impossible à rater. *La compatibilité parfaite serait ici le défaut* — c'est la
+     leçon d'A1, appliquée d'avance.
+     ⚠️ Un backend qui n'envoie pas le champ (version antérieure au déploiement) donne 0 : le
+     comportement d'avant, à l'identique. */
+  return {sessions, typesNormalises:(+d.data.typesNormalises>0)?+d.data.typesNormalises:0};
 }
 // Limite premium : import de journal gratuit = 1 seul au total (illimité en premium).
 // ⚠️ Ne concerne QUE l'import de journal — l'import de PROGRAMME n'est pas limité.
@@ -7233,13 +7240,17 @@ async function analyzeHistPhotos(){
   const statusEl=document.getElementById('hist-s3-status');
   const batches=[];
   for(let i=0;i<_histPhotos.length;i+=_HIST_BATCH)batches.push(_histPhotos.slice(i,i+_HIST_BATCH));
-  const allSessions=[];let failed=0,lastErr='';
+  const allSessions=[];
+  let _histTypesNormalises=0;   // ⛔ remis à zéro à CHAQUE analyse : un reliquat compterait deux fois
+  let failed=0,lastErr='';
   for(let b=0;b<batches.length;b++){
     if(statusEl)statusEl.textContent=batches.length>1
       ?`Analyse du lot ${b+1} / ${batches.length} (${batches[b].length} page${batches[b].length>1?'s':''})…`
       :'Milo extrait les séances et leurs dates depuis tes pages';
     try{
-      const sess=await _histAnalyzeBatch(batches[b]);
+      const lot=await _histAnalyzeBatch(batches[b]);
+      const sess=lot.sessions;
+      _histTypesNormalises+=lot.typesNormalises;
       // Coupure de séance entre 2 lots (une séance à cheval sur 2 pages) :
       // même date en fin de lot précédent et début de lot suivant → fusion des exercices
       if(allSessions.length&&sess.length){
@@ -7269,7 +7280,7 @@ async function analyzeHistPhotos(){
     return;
   }
   if(failed)toast(failed+' lot'+(failed>1?'s':'')+' non lu'+(failed>1?'s':'')+' — vérifie l\'aperçu, tu pourras réimporter les pages manquantes','info');
-  _histExtracted={sessions:allSessions};
+  _histExtracted={sessions:allSessions, typesNormalises:_histTypesNormalises};
   _vmMatchHist();   // VM : rattache les exos aux références EXLIB (mêmes stats, pas de doublon) AVANT l'aperçu
   _renderHistPreview();
   histGoStep(4);
@@ -7431,8 +7442,19 @@ function finalImportHist(){
      graphes et le contexte de Milo.
      ⭐ ET ON LE DIT : un rejet silencieux est indiscernable d'un import réussi (**R29**). */
   let _seriesEcartees=0, _seancesDateKO=0, _seancesVides=0;
-  /* 🏷️ Le compteur des types non reconnus — voir la note à l'endroit où il s'incrémente. */
-  let _typesInconnus=0;
+  /* 🏷️ LE PROPRIÉTAIRE UNIQUE DU TOTAL, ET IL EST EN DEUX COUCHES DISJOINTES.
+     ① ce que le BACKEND a normalisé avant de nous l'envoyer (`typesNormalises`) — c'est le seul
+        endroit où le type brut existait encore, et sans lui 5 valeurs inconnues sur 5
+        disparaissaient sans trace sur le chemin vivant (mesuré) ;
+     ② ce que le FILET CLIENT attrape lui-même, plus bas, sur ce qu'il a REÇU.
+     ⛔⛔ AUCUN DOUBLE COMPTAGE, ET CE N'EST PAS UNE PRÉCAUTION MAIS UNE PROPRIÉTÉ : le backend
+     rend `''` pour ce qu'il a compté, donc le filet client, qui ne regarde QUE ce qu'il reçoit,
+     voit `''` et ne compte rien. Pour une même série, **au plus un** des deux compteurs monte.
+     Le cas où le second monte est exactement celui où le premier n'a pas tourné — un
+     fournisseur qui contourne la normalisation. *Les deux couches ne se recouvrent pas : elles
+     se relaient.*
+     ⚠️ Repli à 0 si le champ est absent (backend pas encore déployé) : comportement d'avant. */
+  let _typesInconnus=(_histExtracted&&+_histExtracted.typesNormalises>0)?+_histExtracted.typesNormalises:0;
   sessionsAsc.forEach((sess,si)=>{
     const origIdx=sessions.indexOf(sess);
     const conflict=_histConflicts.find(c=>c.idx===origIdx);

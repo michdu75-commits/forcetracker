@@ -577,6 +577,13 @@ async function importDoc(body, apiKey, kind, meta) {
   try { data = JSON.parse(cleaned); } catch (e) { return { status: 'error', error: 'JSON invalide : ' + e.message }; }
   if (kind === 'history') {
     if (!data.sessions || !Array.isArray(data.sessions)) data.sessions = [];
+    /* 🏷️ LE TYPE BRUT N'EXISTE PLUS APRES LA LIGNE DE NORMALISATION — c'est ICI, et nulle part
+       ailleurs, qu'on peut encore savoir ce que le modele a vraiment repondu. Le compteur
+       client de `log.js` ne voit que ce qu'on lui ENVOIE : mesure, 5 valeurs inconnues sur 5
+       ('W', 'E-accent', 'ECH', 'X', arbitraire) disparaissaient sans laisser la moindre trace.
+       ⛔ ON NE CHANGE RIEN AU COMPORTEMENT : la normalisation reste `D` ou `''`. On COMPTE.
+       ⛔ Et on ne transporte QU'UN NOMBRE — ni les objets, ni les valeurs brutes. */
+    let typesNormalises = 0;
     data.sessions.forEach(sess => {
       sess.estimatedDate = Boolean(sess.estimatedDate);
       sess.label = String(sess.label || '');
@@ -588,13 +595,18 @@ async function importDoc(body, apiKey, kind, meta) {
       (sess.exercises || []).forEach(ex => {
         ex.name = String(ex.name || '').trim();
         ex.note = String(ex.note || '');
-        (ex.sets || []).forEach(s => { s.kg = Math.round((parseFloat(s.kg) || 0) * 2) / 2; s.reps = parseInt(s.reps) || 0; s.type = s.type === 'D' ? 'D' : ''; s.note = String(s.note || ''); });
+        (ex.sets || []).forEach(s => {
+          const brut = (s && s.type != null) ? String(s.type) : '';
+          if (brut !== '' && brut !== 'D') typesNormalises++;
+          s.kg = Math.round((parseFloat(s.kg) || 0) * 2) / 2; s.reps = parseInt(s.reps) || 0; s.type = s.type === 'D' ? 'D' : ''; s.note = String(s.note || '');
+        });
         ex.sets = (ex.sets || []).filter(s => s.reps > 0);
       });
       sess.exercises = (sess.exercises || []).filter(ex => ex.name && ex.sets && ex.sets.length > 0);
     });
     data.sessions = data.sessions.filter(s => s.exercises && s.exercises.length > 0);
     if (!data.sessions.length) return { status: 'error', error: 'Aucune séance trouvée dans le document.' };
+    data.typesNormalises = typesNormalises;   // information AGREGEE, un nombre et rien d'autre
   }
   return { status: 'ok', data };
 }

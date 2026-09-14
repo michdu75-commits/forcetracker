@@ -2464,6 +2464,12 @@ function handleImportHistory_(body) {
 
     // Normaliser
     if (!data.sessions || !Array.isArray(data.sessions)) data.sessions = [];
+    /* 🏷️ MEME MESURE QUE LE WORKER, ET C'EST LE POINT : ce fichier est le REPLI. S'il
+       repondait un jour a la place du Worker sans ce compteur, le trou de tracabilite
+       reviendrait en silence — et personne ne le verrait, puisque le repli ne sert justement
+       que quand le chemin normal est tombe. Les deux doivent rendre le MEME nombre pour la
+       meme entree ; un temoin le verifie. */
+    var typesNormalises = 0;
     data.sessions.forEach(sess => {
       sess.estimatedDate = Boolean(sess.estimatedDate);
       sess.label = String(sess.label || '');
@@ -2479,6 +2485,8 @@ function handleImportHistory_(body) {
         ex.name = String(ex.name || '').trim();
         ex.note = String(ex.note || '');
         (ex.sets || []).forEach(s => {
+          var brut = (s && s.type != null) ? String(s.type) : '';
+          if (brut !== '' && brut !== 'D') typesNormalises++;
           s.kg   = Math.round((parseFloat(s.kg) || 0) * 2) / 2;
           s.reps = parseInt(s.reps) || 0;
           s.type = s.type === 'D' ? 'D' : '';
@@ -2490,6 +2498,7 @@ function handleImportHistory_(body) {
     });
     data.sessions = data.sessions.filter(s => s.exercises && s.exercises.length > 0);
     if (!data.sessions.length) return json_({status:'error', error:'Aucune séance trouvée dans le document.'});
+    data.typesNormalises = typesNormalises;   // information AGREGEE, un nombre et rien d'autre
 
     return json_({status:'ok', data});
   } catch(err) {

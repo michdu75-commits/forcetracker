@@ -36589,6 +36589,170 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   })();
 }
 
+/* ═══ B-CCCVIII. LE TROU AMONT — un type inconnu normalisé par le BACKEND ne disparaît plus ═══
+   (14/09/2026 · bloc préfixé **B-** par le protocole deux sessions, jamais renommé.)
+
+   Michel, après le dossier de l'étape 1 : *« le chemin vivant passe d'abord par `worker.js`, qui
+   normalise déjà… donc `_typesInconnus` côté `log.js` ne voit plus rien. L'invention silencieuse
+   peut encore avoir lieu EN AMONT du compteur client. »*
+
+   ⛔⛔ REPRODUIT AVANT DE TOUCHER AU CODE : en rejouant la normalisation **extraite de
+   `worker.js`** puis le compteur **extrait de `log.js`**, **5 valeurs inconnues sur 5** ('W',
+   'É', 'ECH', 'X', arbitraire) arrivaient au client en `''` et comptaient **0**.
+
+   ⭐⭐ LA PROTECTION EST EN DEUX COUCHES DISJOINTES, ET C'EST UNE PROPRIÉTÉ, PAS UNE PRÉCAUTION :
+   le backend rend `''` pour ce qu'il a compté, donc le filet client — qui ne regarde QUE ce
+   qu'il a reçu — voit `''` et ne compte rien. **Pour une même série, au plus un des deux
+   compteurs monte.** Le cas où le second monte est exactement celui où le premier n'a pas
+   tourné. *Les deux couches ne se recouvrent pas : elles se relaient.*
+
+   ⚠️ CE QUE CE BLOC NE COUVRE PAS, ET C'EST DIT : le **Worker déployé** n'est pas joignable
+   depuis ce conteneur (`CONNECT tunnel failed, 403`) et aucune clé API n'y existe. On mesure
+   donc le **CODE** du Worker et d'Apps Script (extrait de leurs fichiers), plus le chemin
+   client **conduit pour de vrai**. Le test réel restant est un import en salle après
+   déploiement. */
+{
+  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
+  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
+
+  const R = await p.evaluate(async()=>{
+    const o={};
+    const sur=f=>{ try{ return f(); }catch(e){ return 'ERREUR: '+e.message; } };
+    const prs=()=>Object.keys(S.prs||{}).sort()
+      .map(n=>n+'='+S.prs[n].kg+'x'+S.prs[n].reps).join(' | ')||'(aucun)';
+    /* `nBackend` = ce que le backend dit avoir normalisé · `sets` = ce que le client REÇOIT. */
+    const importer=(sets, nBackend)=>{
+      S.prs={}; S.sessions=[]; S.customExercises=[];
+      const el=document.getElementById('toast'); if(el)el.textContent='';
+      _histExtracted={sessions:[{date:'2026-08-15',
+        exercises:[{name:'Squat à la Barre', sets}]}]};
+      if(nBackend!==undefined)_histExtracted.typesNormalises=nBackend;
+      _histConflicts=[];
+      finalImportHist();
+      const ex=((S.sessions[0]||{}).exs||[])[0]||{sets:[]};
+      const m=((document.getElementById('toast')||{}).textContent||'')
+                .match(/(\d+) séries? au type non reconnu/);
+      return { stocke: ex.sets.map(s=>'"'+s.type+'"').join('/'),
+               compte: m?+m[1]:0, record: prs(),
+               annonce: (document.getElementById('toast')||{}).textContent||'' };
+    };
+
+    /* ── ① LE CAS QUI MOTIVE TOUT : le backend a normalisé, le client reçoit du propre ── */
+    o.amont1 = sur(()=>importer([{kg:100,reps:5,type:''}], 1));
+    o.amont3 = sur(()=>importer([
+      {kg:100,reps:5,type:''},{kg:110,reps:4,type:''},{kg:120,reps:3,type:''}], 3));
+    /* ⛔ LA PREUVE DE NON-DOUBLE-COMPTAGE : le backend dit 1, le client reçoit le `''` qui en
+       résulte. Le total doit être 1, pas 2. */
+    o.pasDeDouble = sur(()=>importer([{kg:100,reps:5,type:''}], 1));
+
+    /* ── ② LE FILET CLIENT SEUL : un fournisseur contourne la normalisation ── */
+    o.filet={};
+    ['', 'D', 'W', 'É', 'ECH', 'X', 'zzz-inconnu'].forEach(t=>{
+      o.filet[t||'(vide)']=sur(()=>importer([{kg:100,reps:5,type:t}], 0));
+    });
+    o.filetAbsent = sur(()=>importer([{kg:100,reps:5}], 0));
+
+    /* ── ③ LES DEUX COUCHES ENSEMBLE : 2 normalisés en amont + 1 brut qui a fuité ── */
+    o.deuxCouches = sur(()=>importer([
+      {kg:100,reps:5,type:''},          // normalisé en amont (compté par le backend)
+      {kg:110,reps:4,type:''},          // idem
+      {kg:120,reps:3,type:'ECH'}        // a fuité brut → compté par le filet client
+    ], 2));
+
+    /* ── ④ RÉTROCOMPATIBILITÉ : un backend qui n'envoie pas le champ ── */
+    o.champAbsent = sur(()=>importer([{kg:100,reps:5,type:''}], undefined));
+    o.champNegatif = sur(()=>importer([{kg:100,reps:5,type:''}], -5));
+    return o;
+  });
+
+  console.log('\n-- B-CCCVIII. Le trou amont : un type normalisé par le backend ne disparaît plus --');
+  t('B-CCCVIII ① ⭐ le backend annonce 1 type normalisé → la personne le lit',
+    R.amont1 && R.amont1.compte===1
+      && /1 série au type non reconnu, importée en série normale/.test(R.amont1.annonce),
+    JSON.stringify(R.amont1));
+  t('B-CCCVIII ① ... et 3 en donnent 3',
+    R.amont3 && R.amont3.compte===3, JSON.stringify(R.amont3));
+  t('B-CCCVIII ① ⛔⛔ AUCUN DOUBLE COMPTAGE : le backend dit 1, le total dit 1 (pas 2)',
+    R.pasDeDouble && R.pasDeDouble.compte===1, JSON.stringify(R.pasDeDouble));
+  t('B-CCCVIII ① ⛔ et la donnée stockée ne bouge pas pour autant',
+    R.amont1 && R.amont1.stocke==='""' && R.amont1.record==='Squat à la Barre=100x5',
+    JSON.stringify(R.amont1));
+
+  const F=R.filet||{};
+  t('B-CCCVIII ② le filet client ne compte pas une série normale', F['(vide)'] && F['(vide)'].compte===0,
+    JSON.stringify(F['(vide)']));
+  t('B-CCCVIII ② ... ni un dropset', F['D'] && F['D'].compte===0 && F['D'].stocke==='"D"',
+    JSON.stringify(F['D']));
+  ['W','É','ECH','X','zzz-inconnu'].forEach(k=>{
+    t('B-CCCVIII ② ⭐ le filet client attrape '+JSON.stringify(k)+' s\'il arrive BRUT',
+      F[k] && F[k].compte===1 && F[k].stocke==='""', JSON.stringify(F[k]));
+  });
+  t('B-CCCVIII ② ⛔ un type ABSENT n\'est pas un type inconnu',
+    R.filetAbsent && R.filetAbsent.compte===0, JSON.stringify(R.filetAbsent));
+
+  t('B-CCCVIII ③ ⭐⭐ LES DEUX COUCHES SE RELAIENT : 2 normalisés en amont + 1 brut = 3',
+    R.deuxCouches && R.deuxCouches.compte===3, JSON.stringify(R.deuxCouches));
+
+  t('B-CCCVIII ④ ⛔ un backend qui n\'envoie pas le champ → comportement d\'avant (0)',
+    R.champAbsent && R.champAbsent.compte===0, JSON.stringify(R.champAbsent));
+  t('B-CCCVIII ④ ⛔ une valeur absurde ne devient pas un compte',
+    R.champNegatif && R.champNegatif.compte===0, JSON.stringify(R.champNegatif));
+
+  /* ══ LES DEUX BACKENDS — leur RÈGLE, extraite de leurs fichiers ══ */
+  (()=>{
+    const wk=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    const cd=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+    const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8')
+              .replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+    /* ⛔ La règle est EXTRAITE, pas retapée : une règle recopiée dans le témoin mesurerait le
+       témoin (`BUGS.md` §36/§58). On la découpe et on l'exécute sur tout le domaine. */
+    const regle=(src, decl)=>{
+      const i=src.indexOf(decl);
+      if(i<0) return null;
+      const j=src.indexOf("if (brut !== '' && brut !== 'D') typesNormalises++;", i);
+      if(j<0) return null;
+      return new Function('s','let typesNormalises=0;'+src.slice(i,j+51)+'return typesNormalises;');
+    };
+    const fw=regle(wk, "const brut = (s && s.type != null) ? String(s.type) : '';");
+    const fc=regle(cd, "var brut = (s && s.type != null) ? String(s.type) : '';");
+    const dom=['','D','W','É','ECH','X','zzz-inconnu','d',null,undefined];
+    const rw=fw?dom.map(v=>fw({type:v})).join(','):'ABSENTE';
+    const rc=fc?dom.map(v=>fc({type:v})).join(','):'ABSENTE';
+    t('B-CCCVIII ⑤ ⭐ le Worker compte AVANT de normaliser (le seul endroit où le brut existe)',
+      /let typesNormalises = 0;[\s\S]{0,4000}if \(brut !== '' && brut !== 'D'\) typesNormalises\+\+;[\s\S]{0,200}s\.type = s\.type === 'D' \? 'D' : '';/.test(wk), '');
+    t('B-CCCVIII ⑤ ⛔ WORKER ET CODE.JS RENDENT EXACTEMENT LA MÊME CHOSE sur tout le domaine',
+      rw===rc && rw==='0,0,1,1,1,1,1,1,0,0', 'worker='+rw+' · code='+rc);
+    t('B-CCCVIII ⑤ ... et tous deux transmettent le nombre, rien d\'autre',
+      /data\.typesNormalises = typesNormalises;/.test(wk)
+      && /data\.typesNormalises = typesNormalises;/.test(cd), '');
+    /* ⛔ Le transport : un OBJET, et l'unique appelant est migré. */
+    t('B-CCCVIII ⑥ le lot voyage comme un OBJET (pas un tableau à propriétés attachées)',
+      /return \{sessions, typesNormalises:\(\+d\.data\.typesNormalises>0\)\?\+d\.data\.typesNormalises:0\};/.test(lg)
+      && /const lot=await _histAnalyzeBatch\(batches\[b\]\);/.test(lg), '');
+    t('B-CCCVIII ⑥ ... et le total est remis à ZÉRO à chaque analyse',
+      /let _histTypesNormalises=0;/.test(lg)
+      && /_histTypesNormalises\+=lot\.typesNormalises;/.test(lg), '');
+    /* ⛔⛔ LE FILET CLIENT RESTE — Michel : *« il sert toujours si un fournisseur contourne les
+       normalisations amont »*. Les 3 copies de la normalisation restent, une chacune. */
+    t('B-CCCVIII ⑦ ⛔ le FILET CLIENT est toujours là',
+      /const type=s\.type==='D'\?'D':'';/.test(lg), '');
+    t('B-CCCVIII ⑦ ⛔ les 3 normalisations sont intactes, une chacune',
+      (wk.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (cd.match(/s\.type = s\.type === 'D' \? 'D' : ''/g)||[]).length===1
+      && (lg.match(/const type=s\.type==='D'\?'D':''/g)||[]).length===1, '');
+    /* ⛔ PÉRIMÈTRE — L'ÉTAPE 2 N'EST PAS COMMENCÉE. */
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — le prompt interdit TOUJOURS W et E des deux côtés',
+      wk.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".')
+      && cd.includes('3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".'), '');
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — aucun `setTypePerSet` pour l\'historique',
+      !/setTypePerSet/.test(wk), '');
+    t('B-CCCVIII ⑧ ⛔ PÉRIMÈTRE — `_typeAt` n\'a pas été branché sur l\'import d\'historique',
+      !/_typeAt/.test(lg.slice(lg.indexOf('function finalImportHist'))), '');
+    t('B-CCCVIII ⑧ ⛔ NUTRITION — `typesNormalises` n\'existe nulle part dans `app.js`',
+      !/typesNormalises/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+  })();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
