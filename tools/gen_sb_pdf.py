@@ -105,9 +105,16 @@ g(ID_EXPR == 'Date.now()',
 
 # ── 6. LE DOSSIER TIENT-IL SES ENGAGEMENTS ? ───────────────────────────────────────────────
 g('AUDIT SEUL' in DOSSIER, 'le dossier n\'annonce plus qu\'il est un audit seul')
-g('VERIFIER DANS LE DASHBOARD SUPABASE' in DOSSIER.replace('É', 'E').replace('Â', 'A'),
-  'le dossier n\'ecrit plus « a verifier dans le dashboard » la ou le cout n\'est pas connu : '
-  'il inventerait un chiffre')
+# [!!] LE GARDE EST ANCRE DANS LA SECTION COUT, PAS DANS LE DOCUMENT ENTIER. Ma premiere version
+#      cherchait la phrase n'importe ou : or elle sert AUSSI de TITRE au §13, donc la retirer de
+#      la section cout la laissait verte. *Un garde qui accepte un titre a la place du contenu
+#      mesure la table des matieres.*
+_D = DOSSIER.replace('É', 'E').replace('Â', 'A').replace('è', 'e').replace('û', 'u')
+_m9 = re.search(r'^##\s*9\.\s*Cout.*?(?=^##\s)', _D, re.S | re.M)
+g(bool(_m9), 'la section « Cout » a disparu du dossier')
+g('VERIFIER DANS LE DASHBOARD SUPABASE' in _m9.group(0),
+  'la section COUT n\'ecrit plus « a verifier dans le dashboard » la ou le prix n\'est pas '
+  'connu : il inventerait un chiffre')
 # [!] Deux faits, deux gardes (lecon de la passe precedente) : la fenetre residuelle doit etre
 #     NOMMEE, et le SQL doit etre annonce comme NON execute.
 g('non eliminable' in DOSSIER or 'non éliminable' in DOSSIER,
