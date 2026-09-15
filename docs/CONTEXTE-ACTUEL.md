@@ -6,6 +6,23 @@
 
 ---
 
+- 🔐🔐 **AUDIT SÉCURITÉ / BACKEND (15/09/2026) — `docs/AUDIT-SECURITE-BACKEND.md`. AUDIT SEUL,
+  rien corrigé.** ⭐⭐ **Le défaut structurant est UNIQUE : il n'y a pas d'identité** — partout
+  (Apps Script, miroir Supabase, Worker), un **e-mail fourni par le client** est traité comme une
+  **identité authentifiée**. 🔴 **CRITIQUE** : on peut **écraser le compte d'autrui** (`saveProfile`,
+  `pushHealth`) si la victime n'a pas posé de code · **écraser sa ligne miroir** (`p_email` libre).
+  🟠 **ÉLEVÉ** : le verrou du Worker est un **en-tête `Origin`**, forgeable (~**6 à 40 €/jour**
+  estimés, borné par le plafond **600/jour**) · **aucune vérification Premium serveur** · **e-mails
+  réels dans le dépôt public** · **suppression de compte impossible à honorer** (sauvegardes Drive
+  **sans purge**, aucune route `deleteAccount`). 🟡 **V14 trouvée par un garde** : `AI_GLOBAL_MAX` a
+  **deux valeurs par défaut** — **600** appliqué, **1500** affiché à l'Admin (R2).
+  ⭐ **Points forts crédités** : lecture fermée, codes **hachés+salés**, anti-force-brute,
+  anti-injection Sheets, Ko-fi fail-closed, journal d'usage **sans e-mail**, **test permanent
+  anti-fuite de secrets**, **aucun secret réel dans le dépôt ni dans l'historique**.
+  ⛔⛔ **PREMIÈRE CORRECTION AVANT DE REPRENDRE L'IDEMPOTENCE : une identité serveur minimale
+  (jeton d'appareil exigé par le Worker)** — elle ferme **V1, V2, V3 et V4** d'un seul geste, et
+  l'idempotence se construit dessus. **Décision de Michel attendue.**
+
 - 🗄️ **AUDIT SUPABASE (15/09/2026) — `docs/IDEMPOTENCE-SUPABASE.md`.** ⭐ **Oui, Supabase est
   techniquement la meilleure des 4 options** (index `UNIQUE` = atomicité prouvable en une seule
   instruction). ⚠️ **Mais « Supabase existe déjà » est en partie trompeur** : ce qui existe est
