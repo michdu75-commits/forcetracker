@@ -6,6 +6,22 @@
 
 ---
 
+- ⏸️⏸️ **PHASE 1ter — IDEMPOTENCE DU DÉBRIEF : ARRÊTÉE À L'ÉTAPE 0, DÉCISION DE MICHEL ATTENDUE
+  (15/09/2026, sans nouvelle version).** Dossier : **`docs/IDEMPOTENCE-DEBRIEF.md`**.
+  ⛔ **Aucun stockage serveur n'est configuré** : `wrangler.toml` déclare **zéro binding**, le
+  Worker ne lit que **2 secrets**. ⭐⭐ **Mais le vrai blocage n'est pas technique** : pour tenir à
+  la fois « un seul appel IA » et « jamais de perte », le **résultat** doit survivre à la
+  disparition du client, donc être **stocké côté serveur** — or `coach.js` dit que *« le fil des
+  échanges vit UNIQUEMENT sur le téléphone… c'est un CHOIX de conception »*. 👉 **Le remède croise
+  une décision de confidentialité prise exprès ; elle appartient à Michel.**
+  ⭐ **Bonne nouvelle, l'identifiant demandé EXISTE déjà** : `sess.id = Date.now()`, unique à la
+  milliseconde, présent aussi sur les séances importées → `debriefId = 'debrief:' + sess.id`,
+  **aucun mécanisme nouveau** (R13). ⛔ **KV est à écarter** (pas de compare-and-set) — ce serait
+  la « déduplication approximative maquillée en idempotence » que Michel interdit.
+  ⚠️ **Non vérifiable d'ici** : les limites gratuites Cloudflare et le plan requis pour les
+  Durable Objects (docs bloquées par le proxy) — **à lire par Michel dans son tableau de bord**.
+  ⭐ **Les 3 questions à trancher sont en §8 du dossier.**
+
 - 🔒 **ft-v1215 — PHASE 1 DU CHANTIER DÉBRIEF : LES 2 ANOMALIES DE FIABILITÉ (15/09/2026).**
   ⭐⭐ **La cause du double débrief n'était pas un verrou manquant, c'était un ÉTAT manquant** :
   entre l'arrivée de la réponse et `_dbfFini`, rien ne disait que c'était **déjà payé**, donc le
