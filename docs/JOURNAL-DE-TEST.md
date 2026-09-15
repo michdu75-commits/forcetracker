@@ -3141,11 +3141,34 @@ fusion : valide · recherches=1
 Lookups produit : 2   ·   Appels IA : 0
 ```
 
-⚠️ **À NE PAS PERDRE : ce n'est pas encore reproduit.** Deux sondes synthétiques (scène sans
-code : 150 essais, **0 lecture** · vrai code sortant du cadre + flou + barres parasites :
-84 essais, 59 lectures, **59 justes, 0 faux**) ne fabriquent pas le défaut. Le banc de ft-v1212
-mesurait déjà **0 faux EAN sur 414** pour ZXing-js. 👉 *Le faux positif existe sur un vrai
-capteur et pas sur nos images — donc nos fixtures ne représentent pas la frame qui l'a produit.*
+⚠️ **CE N'EST PAS REPRODUIT — et j'ai d'abord conclu trop vite.** J'avais écrit « hypothèse
+*scène sans code* réfutée » sur la foi de mes seules images de synthèse. ⛔ **La capture de
+09:49 dit l'inverse** : au moment où l'écran affiche le faux code, la vidéo montre **du tissu
+flou en mouvement, aucun code-barres**. *Mes fixtures étaient trop faciles — c'est tout ce
+qu'elles prouvaient.*
+
+**Trois sondes, 612 essais, 0 faux EAN** : scène sans code (150) · vrai code sortant du cadre,
+flou, barres parasites (84 → 59 lectures, **59 justes**) · texture floue de bouge en 1080×1920
+(378). Et **l'image de la capture elle-même, donnée au vrai décodeur : rien lu**. Le banc de
+ft-v1212 mesurait déjà **0 faux EAN sur 414** pour ZXing-js.
+👉 *Le défaut existe sur un vrai capteur et pas sur nos images — nos fixtures ne représentent
+pas la frame qui l'a produit.*
+
+⛔⛔ **ET ON NE PEUT PAS DÉPARTAGER « frame floue du vrai code » DE « scène sans code »** : la
+capture d'écran montre la scène **à l'AFFICHAGE**, pas la frame décodée quelques centaines de
+ms plus tôt — et **la frame décodée n'est gardée nulle part**. Un indice penche vers « scène
+sans code » : entre le vrai et le faux, **1 chiffre commun sur 13** (le hasard en donne 1,3),
+donc ce n'est pas un code mal lu, c'est un décodage indépendant.
+
+⭐⭐ **LE FAIT LE PLUS INQUIÉTANT N'EST PAS LE FAUX CODE.** À 09:46 le code est **net et bien
+cadré** dans le rectangle rouge, et le **live ne le lit pas** (Lookups 0). À 09:49 il « lit »
+du tissu. Sur cette session la voie **live** fait **0 lecture juste et 1 fausse** — les deux
+lectures justes viennent des **captures**.
+
+✅ **ET L'AUTOFOCUS EST TRANCHÉ, LUI** : `getCapabilities()` répond bien sur Safari (le
+`Zoom 0.5→10` en vient) mais **`focusMode` n'y figure pas** → notre
+`advanced:[{focusMode:'continuous'}]` est **ignoré en silence**. « non observable » n'était pas
+un trou d'instrumentation : c'était **la réponse**.
 
 ⭐ **Trois constats d'instrumentation trouvés en traçant, indépendants du faux EAN** — détail
 dans l'analyse du 15/09 : le libellé de moteur du `live` est **faux par construction** ·
