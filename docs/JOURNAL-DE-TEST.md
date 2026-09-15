@@ -3126,3 +3126,28 @@ produit vient d'un scan, pas d'une saisie »* avant de commenter une ligne du jo
 👉 *C'est **R4** posée sur une donnée qui existe déjà — la famille de bugs la plus coûteuse du
 projet, et le signe est toujours le même : la donnée est là, elle n'atteint pas celui qui en a
 besoin.*
+
+---
+
+## 🔴 15/09/2026 — INCIDENT iPHONE RÉEL : un EAN-13 de clé VALIDE jamais présenté à la caméra
+
+**Observé par Michel** sur le banc scanner (ft-v1214), un seul code présenté (`3760155219036`) :
+
+```
+capture · zxing-wasm · 25 ms     → rien lu
+capture · zxing-wasm · 15 ms     → 3760155219036
+live    · zxing-wasm · 22205 ms  → 3122632363883   ⛔ jamais présenté
+fusion : valide · recherches=1
+Lookups produit : 2   ·   Appels IA : 0
+```
+
+⚠️ **À NE PAS PERDRE : ce n'est pas encore reproduit.** Deux sondes synthétiques (scène sans
+code : 150 essais, **0 lecture** · vrai code sortant du cadre + flou + barres parasites :
+84 essais, 59 lectures, **59 justes, 0 faux**) ne fabriquent pas le défaut. Le banc de ft-v1212
+mesurait déjà **0 faux EAN sur 414** pour ZXing-js. 👉 *Le faux positif existe sur un vrai
+capteur et pas sur nos images — donc nos fixtures ne représentent pas la frame qui l'a produit.*
+
+⭐ **Trois constats d'instrumentation trouvés en traçant, indépendants du faux EAN** — détail
+dans l'analyse du 15/09 : le libellé de moteur du `live` est **faux par construction** ·
+la colonne `ms` porte **deux grandeurs différentes** selon la voie · et `Lookups produit`
+compte des **codes acceptés**, pas des requêtes réseau.
