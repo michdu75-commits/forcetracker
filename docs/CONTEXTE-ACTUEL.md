@@ -6,6 +6,19 @@
 
 ---
 
+- 🗄️ **AUDIT SUPABASE (15/09/2026) — `docs/IDEMPOTENCE-SUPABASE.md`.** ⭐ **Oui, Supabase est
+  techniquement la meilleure des 4 options** (index `UNIQUE` = atomicité prouvable en une seule
+  instruction). ⚠️ **Mais « Supabase existe déjà » est en partie trompeur** : ce qui existe est
+  **navigateur → Supabase en écriture seule** ; le **Worker ne connaît PAS Supabase** (0 occurrence)
+  et il faudrait **une clé serveur**. ⭐⭐ **Deux constats qui changent le cadrage** : ① le miroir
+  envoie **déjà** `coachMemory`, `registre` et `adn` — une caractérisation de la personne écrite par
+  Milo vit **déjà en permanence** sur Supabase ; ② **ft-v772 documente qu'on peut appeler `ft_miroir`
+  avec l'e-mail d'un autre** — sans gravité tant qu'on ne peut rien **LIRE**, mais l'idempotence
+  exige de relire. 👉 **Recommandation : variante B (résultat chiffré côté client)**, seule à
+  **refermer** cette faiblesse au lieu de l'étendre. ⭐ Repli le moins engageant : **variante C**
+  (état seul, pas de texte stocké) — supprime le double appel, au prix du débrief perdu.
+  **Décision de Michel attendue.**
+
 - ⏸️⏸️ **PHASE 1ter — IDEMPOTENCE DU DÉBRIEF : ARRÊTÉE À L'ÉTAPE 0, DÉCISION DE MICHEL ATTENDUE
   (15/09/2026, sans nouvelle version).** Dossier : **`docs/IDEMPOTENCE-DEBRIEF.md`**.
   ⛔ **Aucun stockage serveur n'est configuré** : `wrangler.toml` déclare **zéro binding**, le
