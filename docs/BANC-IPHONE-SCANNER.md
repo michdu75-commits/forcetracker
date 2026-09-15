@@ -1,6 +1,6 @@
 # 📱 Le banc iPhone du scanner — protocole et garanties
 
-> **14/09/2026 · ft-v1213.** Éprouver sur un **vrai iPhone** l'architecture désignée par le banc
+> **14/09/2026 · ft-v1214.** Éprouver sur un **vrai iPhone** l'architecture désignée par le banc
 > synthétique, ⛔ **sans rouvrir le bouton scanner pour les utilisateurs**.
 >
 > # AUCUNE REACTIVATION UTILISATEUR AVANT RESULTATS IPHONE

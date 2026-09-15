@@ -6,6 +6,23 @@
 
 ---
 
+- 📱 **ft-v1214 — LE BANC IPHONE RÉEL DU SCANNER (14-15/09/2026).** Michel ferme le banc
+  synthétique : *« le banc a suffisamment tranché… la prochaine étape est le TEST IPHONE
+  RÉEL »*. ⛔⛔ **Et il répète l'interdit** : *« je ne veux toujours PAS réactiver le bouton
+  scanner pour les utilisateurs »* — le bouton reste **absent**, un témoin rougit **dans les
+  deux sens**. ⭐⭐ **LE CHOIX QUI DÉCIDE DE TOUT : ce n'est PAS un second chemin.** Seul le
+  **décodeur** devient un paramètre ; la machine à états, `_bcPrendreLaMain`, `_bcTraiterCode`,
+  `_bcFusionnerCandidats`, `_eanValide` et le lookup restent **exactement** ceux de la
+  production — *un mode test qui n'emprunte pas le chemin de production valide le mode test,
+  pas la production*. ⭐ **La porte est `Profil → Admin` et rien d'autre** (R13), et le garde
+  vit **dans la fonction**, pas sur le bouton. ⛔⛔ **Aucun repli moteur silencieux** : l'écran
+  écrit « moteur demandé » / « moteur réellement actif » / « cause ». ⭐⭐ **Et rien n'est
+  inventé sur l'autofocus** — `focusMode:'continuous'` était **demandé et jamais vérifié**
+  (`getCapabilities()` n'existait nulle part dans `app.js`) ; le diagnostic écrit désormais
+  **« non observable »** partout où Safari ne répond pas.
+  ⛔⛔ **VERDICT : `AUCUNE RÉACTIVATION UTILISATEUR AVANT RÉSULTATS IPHONE`.**
+  👉 protocole : `docs/BANC-IPHONE-SCANNER.md`.
+
 - 🎚️ **ft-v1213 — LE PETIT CHANTIER RIR (14/09/2026).** ⛔⛔ **Trois corrections à mon propre
   audit de la veille**, mesurées avant d'écrire une ligne : ① **le CARDIO n'est pas une série**
   (il n'atteint jamais `_rirDeSet` — mon audit l'avait mal étiqueté) ; ② **aucun propriétaire
