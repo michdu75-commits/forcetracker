@@ -6,6 +6,15 @@
 
 ---
 
+- 🎚️ **ft-v1213 — LE PETIT CHANTIER RIR (14/09/2026).** ⛔⛔ **Trois corrections à mon propre
+  audit de la veille**, mesurées avant d'écrire une ligne : ① **le CARDIO n'est pas une série**
+  (il n'atteint jamais `_rirDeSet` — mon audit l'avait mal étiqueté) ; ② **aucun propriétaire
+  « série de travail » n'existait**, le test est écrit **en dur 18 fois** dans 4 fichiers, et je
+  n'en rebranche **aucun** ; ③ ⭐ **le type `'E'` a trois lectures contradictoires** — mais
+  l'ambiguïté ne change rien ici, échauffement ou échec sont **tous deux** non exploitables, donc
+  il est exclu **sans être tranché**. ⚠️ **Les gardes du prompt prouvent la PRÉSENCE, jamais
+  l'OBÉISSANCE** (R34).
+
 - 🔬 **ft-v1211 — LE PROTOCOLE DE VALIDATION DE L'ÉTAPE 1b EST FERMÉ (14/09/2026).**
   Michel refuse de réimporter de vraies séances **et** refuse d'en importer une fausse pour la
   supprimer. ⭐⭐ **L'audit a rendu le chantier presque vide** : fermeture transitive sur **168
@@ -204,7 +213,7 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1213` — 📱 **LE BANC IPHONE RÉEL DU SCANNER.**
+- **Version en ligne (live) :** `ft-v1214` — 📱 **LE BANC IPHONE RÉEL DU SCANNER.**
   ⛔⛔ **Le bouton utilisateur reste ABSENT** — un témoin rougit dans les deux sens. L'accès
   passe par **Profil → Admin**, et le garde vit **dans la fonction**, pas sur le bouton.
   ⭐⭐ **Ce n'est PAS un second chemin** : seul le décodeur devient un paramètre, la fusion et
@@ -215,6 +224,14 @@
   capture seulement. ⭐ Le **numéro complet** est affiché, jamais « produit trouvé ».
   ⛔ Moteurs **hors préchargement** (précédent CIQUAL). **AUCUNE RÉACTIVATION UTILISATEUR AVANT
   RÉSULTATS IPHONE.** 👉 `docs/BANC-IPHONE-SCANNER.md`.
+
+- **Version précédente :** `ft-v1213` *(session-B)* — 🎚️ **LE RIR NE FUIT PLUS D'UN ÉCHAUFFEMENT.**
+  Un RIR noté sur une série `N` survivait au changement de type et partait dans le contexte de
+  Milo **et** dans l'export. ⭐ **L'export se corrige tout seul** : `setup.js` appelle déjà le
+  propriétaire, aucune de ses lignes ne bouge. ⛔ **On n'efface pas la valeur stockée** — un
+  aller-retour `N → É → N` la restitue ; effacer serait une perte silencieuse. Le compte cesse
+  aussi de mentir d'un cran (il disait « portent un RIR » en comptant les `X`). **5 gardes
+  d'interprétation** ajoutés au prompt. 👉 entrée `ft-v1213` de `CLAUDE.md`.
 
 - **Version précédente :** `ft-v1212` — 🏁 **BANC D'ESSAI DE 4 MOTEURS, ET LE BOUTON DU
   SCANNER EST RETIRÉ.** Michel : *« aucun bouton utilisateur tant que je n'ai pas tranché »* —
