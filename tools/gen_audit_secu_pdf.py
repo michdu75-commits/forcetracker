@@ -78,7 +78,10 @@ def corps(src, nom):
 # ── V1 : l'ecriture sans identite. On REVERIFIE la faille, on ne la recite pas ──────────────
 C_AUTH = corps(CODEJS, '_authCheck_')
 g(C_AUTH, '_authCheck_ est introuvable')
-g(re.search(r'stored\.length\s*<\s*20.*?opted:\s*false', C_AUTH, re.S) is not None,
+# [!!] LE FAIT DISCRIMINANT EST `ok:true`, PAS `opted:false`. Ma premiere version cherchait
+#      `opted:false`, qui SURVIT a la correction (`{ok:false, opted:false}`) : le garde etait
+#      donc aveugle a la seule chose qu'il devait voir. *On mesure la moitie qui change.*
+g(re.search(r'stored\.length\s*<\s*20\s*\)\s*return\s*\{\s*ok\s*:\s*true', C_AUTH) is not None,
   'V1 semble CORRIGEE : _authCheck_ ne rend plus un acces libre quand aucun code n\'est pose. '
   'Le dossier accuserait a tort - le relire avant de republier')
 g('fail-open' in C_AUTH or 'ok:true, opted:false' in C_AUTH.replace(' ', '').replace(
@@ -90,7 +93,8 @@ g(re.search(r'const _a = _authCheck_\(email, body\.authCode\);', CODEJS) is not 
 
 # ── La lecture, elle, est FERMEE : c'est le point fort, il doit rester vrai ─────────────────
 C_LECT = corps(CODEJS, '_lectureAutorisee_')
-g('needsCode' in C_LECT,
+# [!] Borne de mot : `needsCode2` contient `needsCode` (piege des sous-chaines, deja paye ici).
+g(re.search(r'\bneedsCode\s*:', C_LECT) is not None,
   'la lecture stricte a disparu : le dossier la presente comme le point fort qui tient')
 g(len(re.findall(r'_lectureAutorisee_\(', CODEJS)) >= 3,
   'la lecture stricte n\'est plus appliquee sur ses deux chemins')
@@ -142,18 +146,28 @@ g(not re.search(r"action\s*===?\s*'deleteAccount'", CODEJS),
   'une route deleteAccount existe desormais : le §H et V6 sont perimes')
 
 # ── V5 : des e-mails reels sont publies dans le depot public ────────────────────────────────
-NB_MAILS = len(set(re.findall(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}',
-                              lire('constants.js') + CODEJS)))
+# [!] On ne compte que les domaines REELS : `@example.invalid` n'est pas une donnee personnelle,
+#     et ma premiere version les comptait — le garde restait vert sur un depot assaini.
+_PLACEHOLDER = ('example.', '.test', '.invalid', '.local', 'forcetracker.test')
+NB_MAILS = len({m for m in re.findall(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}',
+                                      lire('constants.js') + CODEJS)
+                if not any(x in m.lower() for x in _PLACEHOLDER)})
 g(NB_MAILS > 0,
   'plus aucune adresse e-mail dans constants.js/Code.js : V5 est corrigee, le dossier est perime')
 
 # ── POINTS FORTS : ils doivent rester vrais, sinon le dossier ment par omission ─────────────
-g('_safeCell_' in CODEJS, 'la protection anti-injection de formule a disparu')
+# [!] On exige la DECLARATION : renommer la fonction laisse ses appels, donc le nom survit.
+g(re.search(r'function\s+_safeCell_\s*\(', CODEJS) is not None,
+  'la protection anti-injection de formule a disparu')
 g("_dailyCounterBlock_('authfail_" in CODEJS, 'l\'anti-force-brute du code perso a disparu')
 g('_sha256hex_' in CODEJS, 'le hachage des codes persos a disparu')
 g('service_role' in RUN and 'sk-ant-' in RUN,
   'le test permanent anti-fuite de secrets ne couvre plus service_role / sk-ant-')
-C_USAGE = corps(CODEJS, '_aiUsageAdd_')
+# [!!] La signature vit AVANT l'accolade, donc `corps()` ne la voit pas : un parametre `email`
+#      ajoute a la fonction passait sous le radar. On lit donc signature ET corps.
+_sig = re.search(r'function\s+_aiUsageAdd_\s*\(([^)]*)\)', CODEJS)
+g(bool(_sig), '_aiUsageAdd_ est introuvable')
+C_USAGE = _sig.group(1) + corps(CODEJS, '_aiUsageAdd_')
 g('email' not in C_USAGE,
   'le journal d\'usage IA enregistre desormais un e-mail : le §L le presente comme exempt')
 
