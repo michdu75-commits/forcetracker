@@ -71,7 +71,9 @@ g(SECRETS == ['ANTHROPIC_API_KEY', 'FT_COUNT_TOKEN'],
   % ', '.join(SECRETS))
 
 # ── 2. APPS SCRIPT : deja appele par le Worker, et LockService toujours inutilise ───────────
-g('APPS_SCRIPT_URL' in WORKER,
+# [!] On exige l'APPEL, pas la simple mention du nom : *un motif qui cherche une presence mesure
+#     la documentation*. L'option 1 ne vaut que parce que le Worker joint DEJA Apps Script.
+g(re.search(r'fetch\(\s*APPS_SCRIPT_URL', WORKER) is not None,
   'le Worker n\'appelle plus Apps Script : l\'option 1 repose sur le fait qu\'il le fait deja')
 g('LockService' not in CODEJS,
   'LockService est desormais employe dans Code.js : le §2 affirme qu\'il ne l\'est nulle part')
@@ -110,14 +112,16 @@ g('ARR' in DOSSIER and 'AVANT CODAGE' in DOSSIER,
   'le dossier n\'annonce plus l\'arret avant codage')
 for interdit in ('KV', 'atomique'):
     g(interdit in DOSSIER, 'le dossier ne parle plus de « %s »' % interdit)
-# [!] Le garde qui protege la NUANCE : KV ne doit jamais etre presente comme fiable.
-for m in re.finditer(r'KV', DOSSIER):
-    seg = DOSSIER[m.start():m.start() + 320]
-    if 'atomique' in seg or 'ecarter' in seg or 'refuser' in seg or 'compare-and-set' in seg:
-        break
-else:
-    g(False, 'le dossier ne dit plus nulle part que KV n\'est pas atomique : ce serait '
-             'exactement la « deduplication approximative maquillee en idempotence »')
+# [!!] DEUX FAITS, DEUX GARDES. Ma premiere version acceptait « atomique OU ecarter OU refuser OU
+#      compare-and-set » dans les 320 caracteres suivant « KV » : retirer la SEULE phrase qui dit
+#      pourquoi KV ne convient pas la laissait verte, parce que « a ecarter » suffisait a la
+#      satisfaire. *Un garde qui accepte plusieurs mots pour un seul fait ne mesure aucun des deux.*
+g('pas de compare-and-set' in DOSSIER,
+  'le dossier ne dit plus que KV n\'a PAS de compare-and-set : c\'est la seule raison technique '
+  'pour laquelle on le refuse, sans elle on maquille une deduplication approximative en '
+  'idempotence fiable')
+g(re.search(r'KV[^\n]{0,400}(a ecarter|à écarter|A REFUSER|a refuser)', DOSSIER, re.I) is not None,
+  'KV n\'est plus marque comme a ecarter dans le dossier')
 
 # ── 7. AUCUN FICHIER SERVI MODIFIE : le dossier l'affirme, on le VERIFIE ────────────────────
 import subprocess
