@@ -6,6 +6,31 @@
 
 ---
 
+- 🔒 **ft-v1215 — PHASE 1 DU CHANTIER DÉBRIEF : LES 2 ANOMALIES DE FIABILITÉ (15/09/2026).**
+  ⭐⭐ **La cause du double débrief n'était pas un verrou manquant, c'était un ÉTAT manquant** :
+  entre l'arrivée de la réponse et `_dbfFini`, rien ne disait que c'était **déjà payé**, donc le
+  rattrapage au démarrage en déduisait un appel jamais abouti. L'état **`recu`** est ajouté — et
+  ⛔ **il ne vaut que parce qu'il PORTE la réponse** : marquer « reçu » sans garder le texte
+  aurait remplacé un doublon par une **perte silencieuse** (**R29**). Le rattrapage **termine**
+  désormais le travail au lieu de le refaire : mesuré sur la fenêtre exacte, **0 appel et la
+  réponse reposée** dans le fil du Coach. ⭐⭐ **Et la séance cesse d'être devinée** : l'écran de
+  fin cible la séance **affichée** par son **identifiant**, l'instruction la **nomme** — *l'ID
+  choisit, la date décrit*. Les 4 identifiants coïncident sur 6 scénarios, **y compris deux
+  séances le même jour**. ⚠️⚠️ **Un défaut introduit en chemin et trouvé par le banc** : mon garde
+  refusait toute séance présente dans `_dbfFaits`, or `_dbfRendre` y inscrit les séances
+  **échouées** — le bouton « Réessayer » ne déclenchait plus rien, *le débrief était perdu en
+  silence*. **La file fait foi pour « à faire ».** ⚠️ **Et 3 témoins étaient aveugles** : ils
+  cherchaient une PRÉSENCE alors que le même mot vit ailleurs dans la fonction.
+  ⛔ **Aucun coût ajouté** : mêmes appels sur le chemin normal, **0 `summarizeCoach`** créé,
+  +51 octets. **Passe 4140/4140**, bloc B-CCCXII (20 témoins), **20 mutations toutes mordantes**.
+  ⚠️⚠️ **LIMITE DÉCLARÉE, NON CORRIGÉE** : le chemin **Coach** (`sendToCoach`) garde une fenêtre
+  analogue — **bornée** (rien n'est perdu, au pire un appel repayé). La fermer imposerait de
+  toucher le cœur de la conversation : **hors périmètre**, rendu à Michel.
+  ⏭️ **La suite, dans l'ordre validé** : ② audit prévu vs réalisé sur programme importé ·
+  ③ banc local / Haiku / Sonnet · ④ optimisation du contexte (le dossier du 15/09 a mesuré que
+  **96 % de ce qui est envoyé n'est pas la séance**, et que le **catalogue d'exercices** pèse
+  **11 447 car. dans le bloc le plus cher** — 24 % du coût). ⛔ **Rien de tout cela n'est commencé.**
+
 - 📱 **ft-v1214 — LE BANC IPHONE RÉEL DU SCANNER (14-15/09/2026).** Michel ferme le banc
   synthétique : *« le banc a suffisamment tranché… la prochaine étape est le TEST IPHONE
   RÉEL »*. ⛔⛔ **Et il répète l'interdit** : *« je ne veux toujours PAS réactiver le bouton
