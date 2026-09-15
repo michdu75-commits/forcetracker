@@ -39862,6 +39862,80 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
 }
 
 
+
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL NOMME SA SÉANCE ═══');
+{
+  const srcC=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  const srcL=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  /* ⛔ LES GARDES DE SOURCE LISENT LE CORPS SANS SES COMMENTAIRES : un garde qui ne distingue pas
+     le CODE de ce qui en PARLE mesure la documentation (famille ft-v1193/1205/1210/1212). */
+  const nu=x=>String(x||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
+  const corps=(n,src)=>{ const m=new RegExp('(?:async\\s+)?function\\s+'+n+'\\s*\\([^)]*\\)\\s*\\{').exec(src);
+    if(!m) return ''; let i=m.index+m[0].length-1,d=0,j=i;
+    for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
+    return ''; };
+
+  // ── A : l'état qui manquait
+  t('B-CCCXII ① ⭐⭐ l\'état « reçu » existe, avec sa propre clé de stockage',
+    /const _DBF_RECU\s*=\s*'ft4_debrief_recu'/.test(srcC), '');
+  t('B-CCCXII ② ⛔ il PORTE la réponse ET la consigne (sinon : perte silencieuse)',
+    /reply:String\(reply\)/.test(nu(corps('_dbfRecu',srcC))) && /instr:String\(instr\|\|''\)/.test(nu(corps('_dbfRecu',srcC))), '');
+  t('B-CCCXII ③ ⛔ le poser retire le « en vol » : ce n\'est plus en vol, c\'est payé',
+    /removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_dbfRecu',srcC))), '');
+  t('B-CCCXII ④ ⭐⭐ il est posé AVANT tout traitement de la réponse',
+    /_dbfRecu\(_pid, reply, instr\)[\s\S]{0,400}_stripCoachTech/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ⑤ ⭐⭐ le rattrapage TERMINE le travail au lieu de le refaire',
+    /_dbfLireRecu\(\)[\s\S]{0,700}_dbfPoserDansHistorique\(_r\.reply, _r\.instr\)/.test(nu(corps('_dbfRecuperer',srcC))), '');
+  /* ⚠️ CE TÉMOIN ÉTAIT AVEUGLE : il cherchait « un `return;` quelque part entre le `recu` et le
+     `en cours` » — or la fonction en contient un AUTRE plus bas (`if(!e||!e.id){…return;}`), donc
+     retirer celui de la branche le laissait vert. *Un motif qui cherche une présence ne mesure
+     pas une absence quand le même mot vit ailleurs.* Il est ancré sur la SORTIE de la branche. */
+  t('B-CCCXII ⑥ ⛔ et il sort AVANT de regarder « en cours » (sinon on remet en file et on repaie)',
+    /_dbfFini\(_r\.id\);\s*return;/.test(nu(corps('_dbfRecuperer',srcC))), '');
+  /* ⚠️ Même piège : `removeItem(_DBF_RECU)` existe DEUX fois (le cas normal et le `catch`).
+     N'en exiger qu'une laissait le retrait du cas normal parfaitement vert. On COMPTE. */
+  t('B-CCCXII ⑦ ⛔ la livraison efface le « reçu » (sinon il serait reposé au démarrage suivant)',
+    (nu(corps('_dbfFini',srcC)).match(/removeItem\(_DBF_RECU\)/g)||[]).length===2, '');
+  /* ⚠️ Et encore : `_DBF_PEREMPTION` apparaît DEUX fois dans cette fonction (la branche « reçu »
+     et la branche « en cours »). Chercher le mot laissait passer un second seuil écrit en dur
+     dans l'une des deux — exactement ce que R2 interdit. */
+  t('B-CCCXII ⑧ ⛔ MÊME PÉREMPTION que le reste (R2) : pas de second seuil',
+    (nu(corps('_dbfRecuperer',srcC)).match(/_DBF_PEREMPTION/g)||[]).length===2
+    && !/<\s*\d+\s*\*\s*3600\s*\*\s*1000/.test(nu(corps('_dbfRecuperer',srcC))), '');
+  t('B-CCCXII ⑨ ⛔ le rattrapage ne crée AUCUN appel de résumé (pas de summarizeCoach en plus)',
+    !/_saveCoachMemory/.test(nu(corps('_dbfPoserDansHistorique',srcC))), '');
+  t('B-CCCXII ⑩ ⭐ un seul propriétaire pose le débrief dans le fil (R2), appelé des DEUX côtés',
+    (nu(srcC)+nu(srcL)).match(/_dbfPoserDansHistorique\(/g||[]).length>=3, '');
+  t('B-CCCXII ⑪ ⛔ l\'échec propre reste récupérable : `_dbfRendre` remet bien en file',
+    /l\.unshift\(s\)/.test(nu(corps('_dbfRendre',srcC))), '');
+  t('B-CCCXII ⑫ ⭐⭐ une séance EN FILE reste reprenable même si `_dbfFaits` la contient',
+    /if\(i<0 && _dbfFaits\(\)\.indexOf\(s\)>=0\) return null;/.test(nu(corps('_dbfPrendreCible',srcC))), '');
+
+  // ── B : la séance est nommée, jamais devinée
+  t('B-CCCXII ⑬ ⭐⭐ l\'écran de fin cible la séance AFFICHÉE, par son identifiant',
+    /_dbfPrendreCible\(_sid\)/.test(nu(corps('_runSeDebrief',srcL)))
+    && /const _sid=String\(\(sess&&\(sess\.id\|\|sess\.ts\|\|sess\.date\)\)\|\|''\)/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ⑭ ⛔ les DEUX chemins nomment la séance et interdisent d\'en débriefer une autre',
+    (nu(srcL)+nu(srcC)).match(/LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI/g||[]).length===2
+    && (nu(srcL)+nu(srcC)).match(/Ne débriefe aucune autre séance/g||[]).length===2, '');
+  t('B-CCCXII ⑮ ⛔ « la plus récente » n\'est plus qu\'un REPLI, jamais la règle',
+    (nu(srcL)+nu(srcC)).match(/la plus récente dans mes dernières séances/g||[]).length===2
+    && /_des\?\(/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ⑯ ⭐⭐ l\'ID CHOISIT, la date DÉCRIT : la désignation part de la SÉANCE',
+    /function _dbfDesignation\(sess\)/.test(srcC)
+    && /_dateLisible\(sess\.date\)/.test(nu(corps('_dbfDesignation',srcC))), '');
+  t('B-CCCXII ⑰ ⛔ la séance est retrouvée par IDENTIFIANT, pas par date',
+    /String\(x\.id\|\|x\.ts\|\|x\.date\)===String\(id\)/.test(nu(corps('_dbfSeanceParId',srcC))), '');
+  t('B-CCCXII ⑱ ⛔ PÉRIMÈTRE — le catalogue, le Gardien et le cache ne sont pas touchés',
+    /EXERCICES DISPONIBLES DANS SON APPLICATION/.test(srcC)
+    && /return _gardienRules\(\) \+ `Tu es \$\{/.test(srcC), '');
+  t('B-CCCXII ⑲ ⛔ PÉRIMÈTRE — le seuil de mémoire reste à 4 et n\'a pas bougé',
+    (nu(srcC)+nu(srcL)).match(/coachHistory\.length\s*>=\s*4/g||[]).length===2, '');
+  t('B-CCCXII ⑳ ⛔ PÉRIMÈTRE — les règles RIR de ft-v1213 sont intactes',
+    /return t!=='É' && t!=='W' && t!=='E' && t!=='X';/.test(srcL), '');
+}
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});
