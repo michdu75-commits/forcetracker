@@ -145,6 +145,21 @@ module.exports = function(t, ROOT, fs, path){
       ['addFoodEntry','quickAddFood','rejouerRepas','saveEditFood']
         .every(w=>new RegExp("_douaneLigne\\([^,]+,'"+w+"'\\)").test(A12)), '');
   }
+
+  /* ⭐⭐ ⑬ LE PIÈGE QUI M'A EU, RENDU MESURABLE. Ce fichier prévient QUARANTE-HUIT FOIS en
+     commentaire que tout bloc conduisant un navigateur doit rester AVANT `b.close()` — « posé
+     après, il ne rate pas : il PLANTE ». J'ai quand même posé B-CCCXV après, et la passe est
+     morte sur `browser has been closed` au bout de 25 minutes.
+     👉 *Un avertissement écrit quarante-huit fois n'a arrêté personne ; un témoin, si.* */
+  {
+    const R=fs.readFileSync(path.join(ROOT,'tests/parcours/runner.js'),'utf8');
+    const iB=R.indexOf("/* \u2550\u2550 BLOC B-CCCXV \u2014");
+    const iC=R.indexOf('await b.close(); srv.close();');
+    t('B-CCCXIV \u2462 \u26d4 le bloc qui conduit un navigateur reste AVANT `b.close()`',
+      iB>0 && iC>0 && iB<iC,
+      iB<0 ? 'bloc B-CCCXV introuvable' : (iC<0 ? 'b.close() introuvable'
+            : 'le bloc est APRES la fermeture du navigateur : la passe PLANTERA'));
+  }
 };
 
 /* ⛔ APPELÉ DIRECTEMENT : on fabrique notre propre compteur, pour que le contrôle négatif

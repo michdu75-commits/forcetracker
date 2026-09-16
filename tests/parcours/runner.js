@@ -35762,7 +35762,12 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('CCCI ⑦ ⛔⛔ PÉRIMÈTRE DE SOURCE — le propriétaire de l\'écran d\'AJOUT n\'a pas absorbé les '+
     'jumelles `_ef*` : même grandeur, AUTRE écran, autre état de départ',
     corpsAf.length>0 && !/_efPortion/.test(corpsAf), 'corps='+corpsAf.slice(0,140));
-  const corpsOuvre=(codeSeul.match(/function openEditFood\(ts\)\{[\s\S]*?\n\}/)||[''])[0];
+  /* ⚠️ 16/09/2026 — CE MOTIF S'ANCRAIT SUR LE NOM DU PARAMÈTRE (`openEditFood(ts)`), et il
+     est devenu aveugle le jour où ce paramètre a été renommé en `id` (la poignée d'une ligne
+     du journal n'est plus son horodatage — bug T-01). Il ne rougissait pas sur un défaut : il
+     ne trouvait plus la fonction, donc `corpsOuvre` était VIDE et les deux témoins suivants
+     tombaient ensemble. 👉 *On épingle le PROPRIÉTAIRE, jamais la signature de son appel.* */
+  const corpsOuvre=(codeSeul.match(/function openEditFood\([^)]*\)\{[\s\S]*?\n\}/)||[''])[0];
   t('CCCI ⑧ ⛔⛔ PÉRIMÈTRE DE SOURCE — `openEditFood` n\'appelle PAS le propriétaire de l\'écran '+
     'd\'ajout : l\'y brancher écrirait dans les MAUVAISES variables et lui imposerait un garde '+
     'd\'unité que son état de départ contredit',
@@ -37875,13 +37880,19 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     o.remise = [ localStorage.getItem(CLE)===null, (S.foodLog||[]).length===nAvant ];
 
     /* ⑫ Le carnet ne CHANGE rien à la ligne enregistrée : on compare la ligne écrite avec et
-       sans carnet disponible. */
+       sans carnet disponible.
+       ⚠️ 16/09/2026 — `id` REJOINT `ts` ET `date` DANS LES CHAMPS ÉCARTÉS, et c'est la même
+       raison qu'eux : il varie PAR CONSTRUCTION d'une écriture à l'autre. Deux saisies du
+       même aliment SONT deux lignes différentes — c'est précisément ce que le chantier T-01
+       a rendu vrai, après qu'un `ts` partagé ait fait éditer et supprimer la mauvaise ligne.
+       ⛔ Ce n'est pas un assouplissement : le témoin mesure toujours que la DOUANE ne touche
+       à rien, et il exige toujours plus de 10 champs comparés. */
     vider();
     ecrire({name:'Cmp', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g', per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
-    const l1=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l1.ts; delete l1.date;
+    const l1=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l1.ts; delete l1.date; delete l1.id;
     vider();
     ecrire({name:'Cmp', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g', per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
-    const l2=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l2.ts; delete l2.date;
+    const l2=JSON.parse(JSON.stringify((S.foodLog||[])[0]||{})); delete l2.ts; delete l2.date; delete l2.id;
     o.ligne_stable = JSON.stringify(l1)===JSON.stringify(l2) && Object.keys(l1).length>10;
 
     return o;
@@ -39326,6 +39337,157 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
   await pgY.close();
 }
 
+/* ══ BLOC B-CCCXV — LE MÊME BUG, MAIS PAR CLICS RÉELS ═══════════════════════════════════
+   ⛔⛔ CE BLOC EXISTE PARCE QUE LE PRÉCÉDENT NE SUFFIT PAS. Les témoins de source prouvent
+   qu'on emploie la bonne clé ; ils ne prouvent PAS que la personne qui tape sur « OEUF »
+   modifie « OEUF ». Le bug d'origine se voyait à l'écran, pas dans le code.
+   ⭐ Tout ce qui suit est conduit par l'INTERFACE : l'historique est saisi par `addFoodEntry`
+   après une vraie navigation de jour, le rejeu est un CLIC sur le bouton du DOM, l'édition et
+   la suppression sont des CLICS sur les lignes du journal.
+   ⭐⭐ ET L'ATTENDU VIENT DE L'ÉCRAN, PAS DU TABLEAU : le journal trie par `ts` décroissant,
+   donc le rang dans `S.foodLog` n'est pas le rang affiché. Ma première version comparait au
+   tableau et annonçait « mauvaise ligne » sur un comportement juste. */
+{
+  const cx13=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg13=await cx13.newPage(); const err13=[]; pg13.on('pageerror',e=>err13.push(e.message));
+  await pg13.addInitScript(seedScript({}));
+  await pg13.goto('http://localhost:'+PORT+'/index.html'); await pg13.waitForTimeout(2400);
+
+  console.log('\n-- B-CCCXV. L\'identité d\'une ligne du journal alimentaire (clics réels) --');
+
+  const R13=await pg13.evaluate(async ()=>{
+    const o={}; const pause=ms=>new Promise(r=>setTimeout(r,ms));
+    const set=(id,v)=>{const el=document.getElementById(id); if(el){el.value=String(v);return true;} return false;};
+    /* ⛔ BORNÉ AU JOURNAL : `confirmRemoveFood` vit AUSSI sur le bouton « Supprimer » de la
+       modale d'édition, qui reste dans le DOM une fois refermée. Un sélecteur global attrape
+       donc la MAUVAISE croix — c'est arrivé pendant la mise au point de ce bloc. */
+    const J=()=>document.getElementById('food-journal');
+    const lignes=()=>[...J().querySelectorAll('[onclick^="openEditFood("]')].map(el=>({
+      el, nom:((el.firstElementChild||{}).firstElementChild||{}).textContent||''}));
+    const croix=()=>[...J().querySelectorAll('[onclick*="confirmRemoveFood("]')];
+    const photo=()=>JSON.parse(JSON.stringify((S.foodLog||[]).filter(e=>e.date===_journalJourActif())));
+    const metier=(a,b)=>{const net=x=>{const y=Object.assign({},x); delete y.id;
+      return JSON.stringify(Object.keys(y).sort().map(k=>[k,y[k]]));}; return net(a)===net(b);};
+    /* ⛔ un clic qui ne trouve pas sa cible ne doit pas faire PLANTER le banc : une passe
+       interrompue ressemble trait pour trait à une passe verte (BUGS.md §61). */
+    const clic=sel=>{ try{ const n=document.querySelector(sel); if(!n) return false; n.click(); return true; }
+                      catch(e){ return false; } };
+
+    goScreen('s-nutrition'); switchNuTab('journal'); await pause(150);
+    /* L'HISTORIQUE, saisi par les vraies portes, sur deux jours passés — c'est la condition
+       d'entrée de `_repasHabituels`, donc l'usage NORMAL de « repas d'habitude ». */
+    for(const recul of [4,2]){
+      journalAllerA(new Date(Date.now()-recul*864e5).toISOString().slice(0,10)); await pause(60);
+      for(const [nom,kcal] of [['PAIN',260.6],['OEUF',150.3],['JUS',90.9]]){
+        if(typeof openAddFood==='function') openAddFood(); await pause(35);
+        set('af-desc',nom); set('af-kcal',kcal); set('af-prot',10.4); set('af-carbs',20.7); set('af-fat',5.2);
+        try{ _afSetSrc(null); }catch(e){}
+        addFoodEntry(); await pause(35);
+      }
+    }
+    journalAllerA(new Date().toISOString().slice(0,10)); await pause(100);
+    if(typeof renderNutrition==='function') renderNutrition();
+    renderFoodJournal(); await pause(220);
+
+    /* ① LE REJEU PAR CLIC : autant d'identités que de lignes, malgré un `ts` partagé. */
+    const avant=S.foodLog.length;
+    o.boutonRejeu=clic('[onclick*="rejouerRepas"]'); await pause(330);
+    const neuves=S.foodLog.slice(avant);
+    o.nRejouees=neuves.length;
+    o.tsUniques=new Set(neuves.map(e=>e.ts)).size;
+    o.idUniques=new Set(neuves.map(e=>e.id)).size;
+
+    /* ② ÉDITION DE LA 2ᵉ LIGNE DE L'ÉCRAN */
+    renderFoodJournal(); await pause(220);
+    const L=lignes(); if(L.length<3){ o.err='moins de 3 lignes affichées'; return o; }
+    o.vise=L[1].nom;
+    const av=photo();
+    L[1].el.click(); await pause(220);
+    o.ouvre=(document.getElementById('ef-name')||{}).value;
+    set('ef-kcal',4242);
+    o.boutonEnr=clic('[onclick*="saveEditFood"]'); await pause(240);
+    const ap=photo();
+    const chg=av.filter(a=>{const x=ap.find(y=>y.id===a.id); return x && !metier(a,x);});
+    o.nChg=chg.length; o.nomChg=chg.map(x=>x.name)[0]||null;
+    o.autresIntactes=av.filter(a=>{const x=ap.find(y=>y.id===a.id); return x && metier(a,x);}).length;
+
+    /* ③ SUPPRESSION DE LA DERNIÈRE LIGNE DE L'ÉCRAN : annonce ET action */
+    renderFoodJournal(); await pause(220);
+    const L2=lignes(); const C2=croix();
+    if(!L2.length || C2.length!==L2.length){ o.err='croix et lignes désaccordées'; return o; }
+    o.vise2=L2[L2.length-1].nom;
+    const avSup=photo().length;
+    C2[C2.length-1].click(); await pause(200);
+    o.msg=((document.getElementById('confirm-msg')||{}).textContent||'').trim();
+    o.msgNomme=o.msg.indexOf(o.vise2)>=0;
+    o.boutonOk=clic('#confirm-ok'); await pause(240);
+    const fin=photo();
+    o.supprimees=avSup-fin.length;
+    o.viseParti=fin.map(x=>x.name).indexOf(o.vise2)<0;
+    o.restants=fin.map(x=>x.name).join(',');
+
+    /* ④ ANCIEN HISTORIQUE : trois lignes, un seul `ts`, AUCUNE identité — et un `id` en
+       DOUBLE sur trois autres. Les deux cas que la restauration peut réinjecter. */
+    const auj=today();
+    const vieux=[['PAIN',260.6],['OEUF',150.3],['JUS',90.9]].map(([n,k])=>
+      ({date:auj,meal:'dejeuner',name:n,ts:123,kcal:k,prot:10.4,carbs:20.7,fat:5.2,
+        v:1,saisie:'manuel',origine:'utilisateur'}));
+    S.foodLog=JSON.parse(JSON.stringify(vieux));
+    o.vieuxSansId=S.foodLog.every(e=>e.id===undefined);
+    journalAllerA(auj); renderFoodJournal(); await pause(240);
+    o.vieuxIdUniques=new Set(S.foodLog.map(e=>e.id)).size;
+    o.vieuxTsIntacts=S.foodLog.every(e=>e.ts===123);
+    o.vieuxMetierIntact=S.foodLog.every((e,i)=>metier(vieux[i],e));
+    const L4=lignes(); o.vise4=L4.length>1?L4[1].nom:null;
+    if(L4.length>1){
+      L4[1].el.click(); await pause(200);
+      o.ouvre4=(document.getElementById('ef-name')||{}).value;
+      set('ef-kcal',7777); clic('[onclick*="saveEditFood"]'); await pause(220);
+      o.nChg4=photo().filter(x=>x.kcal===7777).length;
+    }
+
+    /* ⑤ UN IDENTIFIANT EN DOUBLE EST RÉATTRIBUÉ (trouvé par mutation : rien ne le couvrait). */
+    const MEME='cccccccc-3333-4333-8333-cccccccccccc';
+    S.foodLog=[['A',10.5],['B',20.5],['C',30.5]].map(([n,k])=>
+      ({date:auj,meal:'dejeuner',name:n,ts:Date.now(),id:MEME,kcal:k,prot:1.5,carbs:2.5,fat:3.5,
+        v:1,saisie:'manuel',origine:'utilisateur'}));
+    o.douDepart=new Set(S.foodLog.map(e=>e.id)).size;
+    renderFoodJournal(); await pause(240);
+    o.douApres=new Set(S.foodLog.map(e=>e.id)).size;
+    const L5=lignes();
+    if(L5.length>1){
+      o.vise5=L5[1].nom;
+      L5[1].el.click(); await pause(200);
+      o.ouvre5=(document.getElementById('ef-name')||{}).value;
+    }
+    return o;
+  });
+
+  t('B-CCCXV ① le rejeu par CLIC écrit 3 lignes avec 3 identités distinctes',
+    R13.nRejouees===3 && R13.idUniques===3, 'ts uniques : '+R13.tsUniques+' (la collision d\'horodatage demeure, et c\'est voulu)');
+  t('B-CCCXV ② ⭐ clic sur la 2ᵉ ligne → le formulaire ouvre CETTE ligne',
+    !!R13.vise && R13.ouvre===R13.vise, 'visé « '+R13.vise+' », ouvert « '+R13.ouvre+' »');
+  t('B-CCCXV ③ ⭐ enregistrer ne change QUE cette ligne, les autres octet pour octet',
+    R13.nChg===1 && R13.nomChg===R13.vise && R13.autresIntactes===2,
+    R13.nChg+' changée(s), '+R13.autresIntactes+' intacte(s)');
+  t('B-CCCXV ④ ⭐⭐ la confirmation NOMME la ligne cliquée',
+    R13.msgNomme===true, 'cliqué « '+R13.vise2+' » → « '+R13.msg+' »');
+  t('B-CCCXV ⑤ ⭐⭐ et UNE SEULE ligne disparaît — c\'est bien elle',
+    R13.supprimees===1 && R13.viseParti===true, 'restent ['+R13.restants+']');
+  t('B-CCCXV ⑥ un ancien journal (ts=123 ×3, aucune identité) devient distinguable',
+    R13.vieuxSansId===true && R13.vieuxIdUniques===3);
+  t('B-CCCXV ⑦ ⭐ et rien d\'autre ne bouge : `ts` reste 123, données métier intactes',
+    R13.vieuxTsIntacts===true && R13.vieuxMetierIntact===true);
+  t('B-CCCXV ⑧ éditer une ligne de cet ancien journal frappe la bonne',
+    R13.vise4 && R13.ouvre4===R13.vise4 && R13.nChg4===1, 'visé « '+R13.vise4+' », ouvert « '+R13.ouvre4+' »');
+  t('B-CCCXV ⑨ ⭐ trois lignes au MÊME identifiant sont réattribuées puis éditables',
+    R13.douDepart===1 && R13.douApres===3 && R13.vise5 && R13.ouvre5===R13.vise5,
+    'visé « '+R13.vise5+' », ouvert « '+R13.ouvre5+' »');
+  t('B-CCCXV ⑩ aucune erreur JavaScript pendant tout le parcours',
+    err13.length===0 && !R13.err, (R13.err||'')+' '+err13.join(' | '));
+  await cx13.close();
+}
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -40036,156 +40198,6 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
    ⭐ UN SEUL propriétaire (R2) : le banc l'appelle, le contrôle négatif l'appelle aussi. */
 require('./identite_ligne.js')(t, ROOT, fs, path);
 
-/* ══ BLOC B-CCCXV — LE MÊME BUG, MAIS PAR CLICS RÉELS ═══════════════════════════════════
-   ⛔⛔ CE BLOC EXISTE PARCE QUE LE PRÉCÉDENT NE SUFFIT PAS. Les témoins de source prouvent
-   qu'on emploie la bonne clé ; ils ne prouvent PAS que la personne qui tape sur « OEUF »
-   modifie « OEUF ». Le bug d'origine se voyait à l'écran, pas dans le code.
-   ⭐ Tout ce qui suit est conduit par l'INTERFACE : l'historique est saisi par `addFoodEntry`
-   après une vraie navigation de jour, le rejeu est un CLIC sur le bouton du DOM, l'édition et
-   la suppression sont des CLICS sur les lignes du journal.
-   ⭐⭐ ET L'ATTENDU VIENT DE L'ÉCRAN, PAS DU TABLEAU : le journal trie par `ts` décroissant,
-   donc le rang dans `S.foodLog` n'est pas le rang affiché. Ma première version comparait au
-   tableau et annonçait « mauvaise ligne » sur un comportement juste. */
-{
-  const cx13=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg13=await cx13.newPage(); const err13=[]; pg13.on('pageerror',e=>err13.push(e.message));
-  await pg13.addInitScript(seedScript({}));
-  await pg13.goto('http://localhost:'+PORT+'/index.html'); await pg13.waitForTimeout(2400);
-
-  console.log('\n-- B-CCCXV. L\'identité d\'une ligne du journal alimentaire (clics réels) --');
-
-  const R13=await pg13.evaluate(async ()=>{
-    const o={}; const pause=ms=>new Promise(r=>setTimeout(r,ms));
-    const set=(id,v)=>{const el=document.getElementById(id); if(el){el.value=String(v);return true;} return false;};
-    /* ⛔ BORNÉ AU JOURNAL : `confirmRemoveFood` vit AUSSI sur le bouton « Supprimer » de la
-       modale d'édition, qui reste dans le DOM une fois refermée. Un sélecteur global attrape
-       donc la MAUVAISE croix — c'est arrivé pendant la mise au point de ce bloc. */
-    const J=()=>document.getElementById('food-journal');
-    const lignes=()=>[...J().querySelectorAll('[onclick^="openEditFood("]')].map(el=>({
-      el, nom:((el.firstElementChild||{}).firstElementChild||{}).textContent||''}));
-    const croix=()=>[...J().querySelectorAll('[onclick*="confirmRemoveFood("]')];
-    const photo=()=>JSON.parse(JSON.stringify((S.foodLog||[]).filter(e=>e.date===_journalJourActif())));
-    const metier=(a,b)=>{const net=x=>{const y=Object.assign({},x); delete y.id;
-      return JSON.stringify(Object.keys(y).sort().map(k=>[k,y[k]]));}; return net(a)===net(b);};
-    /* ⛔ un clic qui ne trouve pas sa cible ne doit pas faire PLANTER le banc : une passe
-       interrompue ressemble trait pour trait à une passe verte (BUGS.md §61). */
-    const clic=sel=>{ try{ const n=document.querySelector(sel); if(!n) return false; n.click(); return true; }
-                      catch(e){ return false; } };
-
-    goScreen('s-nutrition'); switchNuTab('journal'); await pause(150);
-    /* L'HISTORIQUE, saisi par les vraies portes, sur deux jours passés — c'est la condition
-       d'entrée de `_repasHabituels`, donc l'usage NORMAL de « repas d'habitude ». */
-    for(const recul of [4,2]){
-      journalAllerA(new Date(Date.now()-recul*864e5).toISOString().slice(0,10)); await pause(60);
-      for(const [nom,kcal] of [['PAIN',260.6],['OEUF',150.3],['JUS',90.9]]){
-        if(typeof openAddFood==='function') openAddFood(); await pause(35);
-        set('af-desc',nom); set('af-kcal',kcal); set('af-prot',10.4); set('af-carbs',20.7); set('af-fat',5.2);
-        try{ _afSetSrc(null); }catch(e){}
-        addFoodEntry(); await pause(35);
-      }
-    }
-    journalAllerA(new Date().toISOString().slice(0,10)); await pause(100);
-    if(typeof renderNutrition==='function') renderNutrition();
-    renderFoodJournal(); await pause(220);
-
-    /* ① LE REJEU PAR CLIC : autant d'identités que de lignes, malgré un `ts` partagé. */
-    const avant=S.foodLog.length;
-    o.boutonRejeu=clic('[onclick*="rejouerRepas"]'); await pause(330);
-    const neuves=S.foodLog.slice(avant);
-    o.nRejouees=neuves.length;
-    o.tsUniques=new Set(neuves.map(e=>e.ts)).size;
-    o.idUniques=new Set(neuves.map(e=>e.id)).size;
-
-    /* ② ÉDITION DE LA 2ᵉ LIGNE DE L'ÉCRAN */
-    renderFoodJournal(); await pause(220);
-    const L=lignes(); if(L.length<3){ o.err='moins de 3 lignes affichées'; return o; }
-    o.vise=L[1].nom;
-    const av=photo();
-    L[1].el.click(); await pause(220);
-    o.ouvre=(document.getElementById('ef-name')||{}).value;
-    set('ef-kcal',4242);
-    o.boutonEnr=clic('[onclick*="saveEditFood"]'); await pause(240);
-    const ap=photo();
-    const chg=av.filter(a=>{const x=ap.find(y=>y.id===a.id); return x && !metier(a,x);});
-    o.nChg=chg.length; o.nomChg=chg.map(x=>x.name)[0]||null;
-    o.autresIntactes=av.filter(a=>{const x=ap.find(y=>y.id===a.id); return x && metier(a,x);}).length;
-
-    /* ③ SUPPRESSION DE LA DERNIÈRE LIGNE DE L'ÉCRAN : annonce ET action */
-    renderFoodJournal(); await pause(220);
-    const L2=lignes(); const C2=croix();
-    if(!L2.length || C2.length!==L2.length){ o.err='croix et lignes désaccordées'; return o; }
-    o.vise2=L2[L2.length-1].nom;
-    const avSup=photo().length;
-    C2[C2.length-1].click(); await pause(200);
-    o.msg=((document.getElementById('confirm-msg')||{}).textContent||'').trim();
-    o.msgNomme=o.msg.indexOf(o.vise2)>=0;
-    o.boutonOk=clic('#confirm-ok'); await pause(240);
-    const fin=photo();
-    o.supprimees=avSup-fin.length;
-    o.viseParti=fin.map(x=>x.name).indexOf(o.vise2)<0;
-    o.restants=fin.map(x=>x.name).join(',');
-
-    /* ④ ANCIEN HISTORIQUE : trois lignes, un seul `ts`, AUCUNE identité — et un `id` en
-       DOUBLE sur trois autres. Les deux cas que la restauration peut réinjecter. */
-    const auj=today();
-    const vieux=[['PAIN',260.6],['OEUF',150.3],['JUS',90.9]].map(([n,k])=>
-      ({date:auj,meal:'dejeuner',name:n,ts:123,kcal:k,prot:10.4,carbs:20.7,fat:5.2,
-        v:1,saisie:'manuel',origine:'utilisateur'}));
-    S.foodLog=JSON.parse(JSON.stringify(vieux));
-    o.vieuxSansId=S.foodLog.every(e=>e.id===undefined);
-    journalAllerA(auj); renderFoodJournal(); await pause(240);
-    o.vieuxIdUniques=new Set(S.foodLog.map(e=>e.id)).size;
-    o.vieuxTsIntacts=S.foodLog.every(e=>e.ts===123);
-    o.vieuxMetierIntact=S.foodLog.every((e,i)=>metier(vieux[i],e));
-    const L4=lignes(); o.vise4=L4.length>1?L4[1].nom:null;
-    if(L4.length>1){
-      L4[1].el.click(); await pause(200);
-      o.ouvre4=(document.getElementById('ef-name')||{}).value;
-      set('ef-kcal',7777); clic('[onclick*="saveEditFood"]'); await pause(220);
-      o.nChg4=photo().filter(x=>x.kcal===7777).length;
-    }
-
-    /* ⑤ UN IDENTIFIANT EN DOUBLE EST RÉATTRIBUÉ (trouvé par mutation : rien ne le couvrait). */
-    const MEME='cccccccc-3333-4333-8333-cccccccccccc';
-    S.foodLog=[['A',10.5],['B',20.5],['C',30.5]].map(([n,k])=>
-      ({date:auj,meal:'dejeuner',name:n,ts:Date.now(),id:MEME,kcal:k,prot:1.5,carbs:2.5,fat:3.5,
-        v:1,saisie:'manuel',origine:'utilisateur'}));
-    o.douDepart=new Set(S.foodLog.map(e=>e.id)).size;
-    renderFoodJournal(); await pause(240);
-    o.douApres=new Set(S.foodLog.map(e=>e.id)).size;
-    const L5=lignes();
-    if(L5.length>1){
-      o.vise5=L5[1].nom;
-      L5[1].el.click(); await pause(200);
-      o.ouvre5=(document.getElementById('ef-name')||{}).value;
-    }
-    return o;
-  });
-
-  t('B-CCCXV ① le rejeu par CLIC écrit 3 lignes avec 3 identités distinctes',
-    R13.nRejouees===3 && R13.idUniques===3, 'ts uniques : '+R13.tsUniques+' (la collision d\'horodatage demeure, et c\'est voulu)');
-  t('B-CCCXV ② ⭐ clic sur la 2ᵉ ligne → le formulaire ouvre CETTE ligne',
-    !!R13.vise && R13.ouvre===R13.vise, 'visé « '+R13.vise+' », ouvert « '+R13.ouvre+' »');
-  t('B-CCCXV ③ ⭐ enregistrer ne change QUE cette ligne, les autres octet pour octet',
-    R13.nChg===1 && R13.nomChg===R13.vise && R13.autresIntactes===2,
-    R13.nChg+' changée(s), '+R13.autresIntactes+' intacte(s)');
-  t('B-CCCXV ④ ⭐⭐ la confirmation NOMME la ligne cliquée',
-    R13.msgNomme===true, 'cliqué « '+R13.vise2+' » → « '+R13.msg+' »');
-  t('B-CCCXV ⑤ ⭐⭐ et UNE SEULE ligne disparaît — c\'est bien elle',
-    R13.supprimees===1 && R13.viseParti===true, 'restent ['+R13.restants+']');
-  t('B-CCCXV ⑥ un ancien journal (ts=123 ×3, aucune identité) devient distinguable',
-    R13.vieuxSansId===true && R13.vieuxIdUniques===3);
-  t('B-CCCXV ⑦ ⭐ et rien d\'autre ne bouge : `ts` reste 123, données métier intactes',
-    R13.vieuxTsIntacts===true && R13.vieuxMetierIntact===true);
-  t('B-CCCXV ⑧ éditer une ligne de cet ancien journal frappe la bonne',
-    R13.vise4 && R13.ouvre4===R13.vise4 && R13.nChg4===1, 'visé « '+R13.vise4+' », ouvert « '+R13.ouvre4+' »');
-  t('B-CCCXV ⑨ ⭐ trois lignes au MÊME identifiant sont réattribuées puis éditables',
-    R13.douDepart===1 && R13.douApres===3 && R13.vise5 && R13.ouvre5===R13.vise5,
-    'visé « '+R13.vise5+' », ouvert « '+R13.ouvre5+' »');
-  t('B-CCCXV ⑩ aucune erreur JavaScript pendant tout le parcours',
-    err13.length===0 && !R13.err, (R13.err||'')+' '+err13.join(' | '));
-  await cx13.close();
-}
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
