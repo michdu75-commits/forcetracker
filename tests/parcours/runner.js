@@ -39953,17 +39953,23 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
     for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
     return ''; };
 
-  // ── ÉTAT DE DÉPART : les défauts que S1 doit fermer ────────────────────────────────────
-  t('B-CCCXIII ① ⛔ DÉFAUT DE DÉPART — un compte SANS code perso est écrivable par quiconque '
-    +'(quand S1 le corrige, ce témoin rougit : le RETOURNER, ne pas le supprimer)',
-    /stored\.length<20\)\s*return\s*\{ok:true,\s*opted:false\}/.test(nu(corps('_authCheck_',srcCo))), '');
-  t('B-CCCXIII ② ⛔ DÉFAUT DE DÉPART — le Worker n\'exige AUCUN credential : Origin est son seul verrou',
-    /_origin !== ALLOWED_ORIGIN/.test(nu(srcW))
-    && !/Authorization|x-ft-token|deviceToken/.test(nu(srcW)), '');
-  t('B-CCCXIII ③ ⛔ DÉFAUT DE DÉPART — ft_miroir reçoit un p_email LIBRE, fourni par le client',
+  /* ⭐⭐ TÉMOINS ① À ④ — RETOURNÉS LE 16/09/2026, PAS SUPPRIMÉS (R30).
+     Ils épinglaient les DÉFAUTS de départ ; S1 les a fermés, donc ils devaient rougir — c'était
+     leur rôle. On inverse leur assertion en gardant leur numéro et leur histoire : *un témoin
+     qui disparaît ne laisse aucune trace de la décision*. ⛔ Le seul qui n'est PAS retourné est
+     le ③ : Supabase reste ouverte jusqu'à S2, et le prétendre fermé serait un mensonge. */
+  t('B-CCCXIII ① ⭐⭐ RETOURNÉ — l\'écriture d\'un compte prend l\'identité du JETON, plus de l\'e-mail',
+    /_identitePourEcriture_\(body\)/.test(nu(srcCo))
+    && /function _identitePourEcriture_/.test(nu(srcCo))
+    && /j\.ok\)\s*\{[^}]*return\s*\{\s*ok:\s*true,\s*email:\s*j\.email/.test(nu(corps('_identitePourEcriture_',srcCo))), '');
+  t('B-CCCXIII ② ⭐⭐ RETOURNÉ — le Worker EXIGE un credential : Origin n\'est plus qu\'un contrôle secondaire',
+    /_identiteIA\(body\.token, env\)/.test(nu(srcW))
+    && /if \(!_moi\.ok\)/.test(nu(srcW)), '');
+  t('B-CCCXIII ③ ⛔ NON RETOURNÉ, ET C\'EST VOULU — ft_miroir garde son p_email libre : '
+    +'V2 RESTE OUVERTE JUSQU\'À S2',
     /p_email:\s*email/.test(nu(srcSb)), '');
-  t('B-CCCXIII ④ ⛔ DÉFAUT DE DÉPART — le quota IA est indexé sur l\'e-mail fourni, pas sur une identité',
-    /q\.byEmail\[e\]/.test(nu(corps('_aiQuotaBlock_',srcCo))), '');
+  t('B-CCCXIII ④ ⭐⭐ RETOURNÉ — le quota IA est décompté sur l\'identité DU JETON',
+    /_compterIA\(body\.action, _moi\.email, env\)/.test(nu(srcW)), '');
 
   // ── PROPRIÉTÉS À PRÉSERVER : S1 ne doit pas les casser en chemin ───────────────────────
   t('B-CCCXIII ⑤ ⭐ À PRÉSERVER — le serveur ne lit JAMAIS un « premium » fourni par le client',
@@ -39979,9 +39985,13 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
     /cur\.tries\s*>=\s*5/.test(nu(srcCo))
     && /cur\.exp\s*<\s*Date\.now\(\)/.test(nu(srcCo))
     && /now\s*-\s*cur\.sentAt\)\s*<\s*60000/.test(nu(srcCo)), '');
-  t('B-CCCXIII ⑨ ⚠️ FAIBLESSE DU BOOTSTRAP — le code de confirmation vient de Math.random() '
-    +'(à remplacer si ce chemin délivre un credential)',
-    /var code = '' \+ Math\.floor\(100000 \+ Math\.random\(\)/.test(nu(srcCo)), '');
+  /* ⭐⭐ RETOURNÉ LE 16/09/2026 — la condition posée par ce témoin s'est réalisée : ce chemin
+     délivre désormais un credential, donc `Math.random()` devait en sortir. Il vérifie
+     maintenant l'inverse, et il rougira si quelqu'un l'y remet. */
+  t('B-CCCXIII ⑨ ⭐⭐ RETOURNÉ — plus aucun Math.random() dans la chaîne d\'identité',
+    !/Math\.random\(\)/.test(nu(corps('handleSendConfirmCode_',srcCo)))
+    && /Utilities\.getUuid\(\)/.test(nu(corps('handleSendConfirmCode_',srcCo)))
+    && !/Math\.random/.test(nu(corps('_jetonNouveau_',srcCo))), '');
 
   // ── PÉRIMÈTRE : ce que S1 n'a pas le droit de toucher ──────────────────────────────────
   t('B-CCCXIII ⑩ ⛔ PÉRIMÈTRE — Nutrition intacte : la douane garde ses règles et ses écrivains',

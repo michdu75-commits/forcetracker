@@ -7148,7 +7148,7 @@ function finishOnboarding(){
   persist();
   if(S.email&&S.url&&!_obDataRestored){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,healthProfile:S.healthProfile,authCode:_authCode(),welcome:true};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,healthProfile:S.healthProfile,authCode:_authCode(),token:_ftToken(),welcome:true};
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
     // Confirmation d'email (soft) : on envoie un code en fond — l'inscription n'est JAMAIS bloquée
     if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
@@ -9956,8 +9956,36 @@ function _blowCandle(idx){
 // _premiumPending : initialisé sur window dans <head> de index.html — accessible depuis coach.js sans TDZ
 window._premiumPending=!!S.email;
 // Ping silencieux — fire-and-forget (no-cors peut bloquer sur iOS Safari PWA)
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   🪪 S1 — BOOTSTRAP SILENCIEUX *AVEC PREUVE* (16/09/2026)
+
+   ⛔⛔ CE N'EST PAS L'OPTION C. Michel a interdit « e-mail seul → jeton », et ce n'est pas ce
+   qui se passe ici : on ne demande un jeton QUE si l'appareil détient déjà une preuve réelle,
+   à savoir le **code perso** que la personne a posé. Sans code, aucun jeton n'est demandé —
+   il faudra passer par la vérification e-mail, qui est la seule autre preuve.
+
+   POURQUOI C'EST NÉCESSAIRE. Le Worker refuse désormais les appels IA sans jeton. Sans ce
+   rattrapage, quelqu'un qui a déjà protégé son compte verrait Milo se fermer alors qu'il
+   possède la preuve dans sa poche — on lui demanderait un geste pour rien.
+
+   ⚠️ NE BLOQUE JAMAIS LE DÉMARRAGE (règle d'or #4) : lancé sans `await`, toute erreur est
+   avalée, et l'application s'ouvre exactement comme avant. */
+async function _ftBootstrapJeton(){
+  try{
+    if(_ftToken()) return;                       // déjà un jeton sur cet appareil
+    if(!S.url||!S.email||!_authCode()) return;   // aucune preuve disponible : on ne demande rien
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'issueTokenByCode',email:S.email,authCode:_authCode(),
+                           appareil:(navigator.platform||'appareil').slice(0,24)})});
+    const d=await r.json();
+    if(d&&d.status==='ok'&&d.token) _setFtToken(d.token);
+  }catch(e){ /* silencieux : l'absence de jeton se verra à l'usage, pas au démarrage */ }
+}
+
 (async function autoConnect(){
   if(!S.url)return;
+  try{ _ftBootstrapJeton(); }catch(e){}
   // Ping non-bloquant : n'attend pas la réponse pour continuer
   fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})})
     .then(()=>{if(!S.connected){S.connected=true;persist();updatePill();}})

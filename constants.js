@@ -244,6 +244,56 @@ function _aiUrl(action){
   try{ if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL&&action&&AI_PROXY_ACTIONS.indexOf(action)>=0) return AI_PROXY_URL; }catch(e){}
   return (typeof S!=='undefined'&&S&&S.url)?S.url:DEFAULT_URL;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   🪪 S1 — LE JETON D'APPAREIL VOYAGE AVEC CHAQUE APPEL IA (16/09/2026)
+
+   POURQUOI UN SEUL PROPRIÉTAIRE, ET PAS 16 RETOUCHES. Les appels IA partent de **16 endroits**
+   répartis dans `coach.js`, `log.js`, `app.js` et `setup.js`, avec des formes de charge utile
+   toutes différentes (tantôt une variable `payload`, tantôt un objet écrit sur place). Les
+   retoucher un par un, c'est 16 occasions de casser une forme — et ⛔ **5 d'entre eux sont des
+   appels NUTRITION** (`foodLabel`, `readBarcode`, `estimateFood`, `generateMealPlan`,
+   `importMealPlan`), que Michel a explicitement mis hors de portée de ce chantier.
+
+   👉 On pose donc **un seul point d'injection** (R2). Conséquence directe et voulue :
+   **aucun fichier Nutrition n'est touché**, et la règle « Nutrition : 0 ligne » est tenue à la
+   lettre plutôt qu'à l'esprit.
+
+   ⛔ CE QU'IL NE FAIT PAS, ET C'EST DÉLIBÉRÉ : il n'agit QUE sur l'URL du Worker IA, il
+   n'ajoute QU'UN champ, il ne touche jamais une charge utile qui porte déjà un `token`, et il
+   ne modifie **rien** d'autre — ni méthode, ni en-têtes, ni corps. Toute erreur le laisse
+   passer inchangé : *un injecteur de jeton ne doit jamais casser une requête*.
+
+   ⚠️ LA LIMITE, DITE PLUTÔT QUE MASQUÉE : quelqu'un qui lit `app.js` ne verra pas le jeton
+   partir. C'est le prix de l'indirection, et c'est pour ça que ce bloc est ici, à côté de
+   `_aiUrl`, et pas caché ailleurs.
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+const FT_TOKEN_KEY='ft4_devtoken';
+function _ftToken(){ try{ return localStorage.getItem(FT_TOKEN_KEY)||''; }catch(e){ return ''; } }
+function _setFtToken(t){ try{ if(t) localStorage.setItem(FT_TOKEN_KEY,String(t)); else localStorage.removeItem(FT_TOKEN_KEY); }catch(e){} }
+
+(function _ftPoserInjecteurJeton(){
+  try{
+    if(typeof fetch!=='function'||typeof AI_PROXY_URL==='undefined'||!AI_PROXY_URL) return;
+    const _origine=fetch;
+    self.fetch=function(cible,opts){
+      try{
+        const url=(typeof cible==='string')?cible:(cible&&cible.url)||'';
+        if(url.indexOf(AI_PROXY_URL)===0 && opts && typeof opts.body==='string'){
+          const t=_ftToken();
+          if(t){
+            const o=JSON.parse(opts.body);
+            /* ⛔ on n'écrase JAMAIS un jeton déjà posé : un appelant qui sait ce qu'il fait
+               (un banc d'essai, un test d'isolement) doit pouvoir imposer le sien. */
+            if(o && typeof o==='object' && !o.token){ o.token=t; opts=Object.assign({},opts,{body:JSON.stringify(o)}); }
+          }
+        }
+      }catch(e){ /* charge utile non-JSON ou illisible : on laisse passer tel quel */ }
+      return _origine.apply(this,[cible,opts]);
+    };
+  }catch(e){ /* jamais bloquant (règle d'or #3) */ }
+})();
+
 const SET_TYPES=['N','É','X'];
 const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 

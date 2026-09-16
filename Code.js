@@ -70,6 +70,130 @@ function _checkIdeesTok_(given){
   if (!want || String(want).length < 12) return false;   // absente ou trop courte → fermé
   return String(given == null ? '' : given).trim() === String(want).trim();
 }
+// ════════════════════════════════════════════════════════════════════════════════════════
+// 🪪 S1 — REGISTRE DES JETONS D'APPAREIL (identité serveur minimale)
+//
+// POURQUOI. L'audit du 15/09 a mesuré que partout — ici, dans le miroir Supabase, dans le
+// Worker — un **e-mail fourni par le client** était traité comme une **identité authentifiée**.
+// Le projet l'avait déjà écrit lui-même : *« l'email est usurpable »*. Un jeton individuel
+// remplace cette supposition par une preuve.
+//
+// CE QUE C'EST, ET RIEN DE PLUS. Un jeton **opaque** de 256 bits, tiré au hasard par le
+// serveur, remis UNE fois au client, et dont le serveur ne garde que le **haché SHA-256**.
+// ⛔ Le jeton brut n'est JAMAIS persisté : une fuite du registre ne donne aucun jeton
+// utilisable. (Décision de Michel : opaque et non signé — la révocation immédiate prime.)
+//
+// ⛔ PAS DE bcrypt/PBKDF2 ICI, ET C'EST UN CHOIX RAISONNÉ : ces fonctions existent pour
+// RALENTIR une attaque par dictionnaire sur un secret choisi par un humain. Un jeton de
+// 256 bits tiré au hasard n'est pas devinable — SHA-256 suffit, et il a l'avantage d'être
+// une clé de recherche directe.
+//
+// ⚠️ LE COÛT DE STOCKAGE EST MESURÉ, PAS SUPPOSÉ. Une entrée pèse ~130 octets (clé 68 +
+// valeur ~60) dans un réservoir de **512 000 octets déjà monté à 102 % le 29/07/2026**.
+// Donc : ~1 000 jetons ≈ 130 Ko ≈ **25 % du réservoir**. C'est tenable aujourd'hui (une
+// poignée de testeurs) et ça ne l'est pas à l'échelle de milliers d'utilisateurs.
+// 👉 C'est le point de bascule vers S2 : la forme choisie ici — une ligne plate
+//    `hachage → {compte, date, état}` — se transpose telle quelle en table Supabase.
+//
+// ⭐ N JETONS PAR COMPTE dès le départ (décision de Michel) : téléphone, PC, futur Android,
+// futur iPhone. Rien ici ne suppose « un compte = un jeton ».
+var _JET_PREFIXE_ = 'tok_';
+
+/** Jeton de 256 bits, primitives standard uniquement.
+ *  ⛔ AUCUN `Math.random()` dans la chaîne d'identité (consigne explicite de Michel).
+ *  Apps Script n'expose pas `crypto.getRandomValues` ; `Utilities.getUuid()` est un UUID v4
+ *  de qualité cryptographique (~122 bits). On en combine TROIS (~366 bits) avant de hacher
+ *  en 256 bits : l'entropie d'entrée dépasse largement la sortie. */
+function _jetonNouveau_() {
+  return _sha256hex_(Utilities.getUuid() + '|' + Utilities.getUuid() + '|' + Utilities.getUuid());
+}
+
+/** Pose un jeton pour ce compte et rend le BRUT (la seule fois où il existe côté serveur). */
+function _jetonPoser_(email, libelle) {
+  var e = String(email || '').trim().toLowerCase();
+  if (!e) return '';
+  var brut = _jetonNouveau_();
+  PropertiesService.getScriptProperties().setProperty(_JET_PREFIXE_ + _sha256hex_(brut),
+    JSON.stringify({ e: e, c: new Date().toISOString().slice(0, 10), r: 0,
+                     d: String(libelle || '').slice(0, 24) }));
+  return brut;
+}
+
+/** L'identité RÉELLE derrière un jeton. ⛔ FAIL-CLOSED : tout ce qui n'est pas une
+ *  correspondance franche rend `{ok:false}` — absent, inconnu, illisible, révoqué. */
+function _jetonIdentite_(brut) {
+  try {
+    var b = String(brut || '').trim();
+    if (b.length !== 64) return { ok: false, raison: 'absent' };
+    var raw = PropertiesService.getScriptProperties().getProperty(_JET_PREFIXE_ + _sha256hex_(b));
+    if (!raw) return { ok: false, raison: 'inconnu' };
+    var o = JSON.parse(raw);
+    if (!o || !o.e) return { ok: false, raison: 'illisible' };
+    if (o.r) return { ok: false, raison: 'revoque' };
+    return { ok: true, email: String(o.e) };
+  } catch (err) { return { ok: false, raison: 'erreur' }; }
+}
+
+/** Révoque CE jeton. On marque au lieu de supprimer : un jeton révoqué doit pouvoir être
+ *  distingué d'un jeton inconnu, sinon on ne sait plus si un appareil a été retiré. */
+function _jetonRevoquer_(brut) {
+  try {
+    var cle = _JET_PREFIXE_ + _sha256hex_(String(brut || '').trim());
+    var sp = PropertiesService.getScriptProperties();
+    var raw = sp.getProperty(cle);
+    if (!raw) return false;
+    var o = JSON.parse(raw); o.r = 1; o.x = new Date().toISOString().slice(0, 10);
+    sp.setProperty(cle, JSON.stringify(o));
+    return true;
+  } catch (err) { return false; }
+}
+
+/** Tous les jetons d'un compte — la brique de « révoquer tous mes appareils » (S4).
+ *  ⚠️ Balayage O(n) sur le registre : acceptable pour une opération RARE, jamais sur le
+ *  chemin d'une requête. C'est précisément ce qu'une vraie table indexée réglera en S2. */
+function _jetonsDuCompte_(email) {
+  var e = String(email || '').trim().toLowerCase(), out = [];
+  try {
+    var all = PropertiesService.getScriptProperties().getProperties();
+    Object.keys(all).forEach(function (k) {
+      if (k.indexOf(_JET_PREFIXE_) !== 0) return;
+      try { var o = JSON.parse(all[k]); if (o && o.e === e) out.push({ cle: k, r: o.r ? 1 : 0 }); } catch (e2) {}
+    });
+  } catch (err) {}
+  return out;
+}
+
+/* ⭐ MESURE DE LA TRANSITION (option B, décision de Michel).
+   On ne peut pas fixer une date de bascule sans savoir combien de comptes restent dehors.
+   ⛔ AUCUNE DONNÉE PERSONNELLE : trois compteurs, pas une liste d'adresses. */
+function _migCompter_(avecJeton) {
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var j = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Paris', 'yyyyMMdd');
+    var m = {}; try { m = JSON.parse(sp.getProperty('mig_stats') || '{}'); } catch (e) {}
+    if (m.date !== j) m = { date: j, avec: 0, sans: 0 };
+    if (avecJeton) m.avec++; else m.sans++;
+    sp.setProperty('mig_stats', JSON.stringify(m));
+  } catch (err) { /* jamais bloquant */ }
+}
+
+/* ⭐⭐ LE POINT D'ENTRÉE DES ÉCRITURES SENSIBLES — et le cœur de S1.
+   Rend l'e-mail que le serveur DÉCIDE d'utiliser, jamais celui que le client demande.
+   ⛔ Si un jeton est présent et valide, c'est SON compte qui gagne : « jeton A + e-mail B »
+      agit sur A, jamais sur B. Le client ne choisit plus son identité.
+   ⚠️ Sans jeton, on est en TRANSITION (option B) : l'ancien chemin passe encore, il est
+      COMPTÉ, et il est destiné à disparaître. `_MIG_FERME_` bascule tout en fail-closed. */
+var _MIG_FERME_ = false;   // ⛔ passera à true à la date de bascule décidée par Michel
+function _identitePourEcriture_(body) {
+  var demande = String((body && body.email) || '').trim().toLowerCase();
+  var j = _jetonIdentite_(body && body.token);
+  if (j.ok) { _migCompter_(true); return { ok: true, email: j.email, mode: 'jeton' }; }
+  if (String((body && body.token) || '').length) return { ok: false, mode: 'jeton_refuse', raison: j.raison };
+  if (_MIG_FERME_) return { ok: false, mode: 'ferme', raison: 'jeton requis' };
+  _migCompter_(false);
+  return { ok: true, email: demande, mode: 'transition' };
+}
+
 // ─── Protection opt-in par code perso ─────────────────────────────────────────
 // INVARIANT ABSOLU : un compte SANS 'auth_{email}' se comporte EXACTEMENT comme
 // avant (aucun impact sur les utilisateurs actuels). Un compte AVEC un code activé
@@ -1269,6 +1393,10 @@ function doPost(e) {
   if (body.action === 'validateCode')      return handleValidateCode_(body);
   if (body.action === 'sendConfirmCode')   return handleSendConfirmCode_(body);
   if (body.action === 'verifyConfirmCode') return handleVerifyConfirmCode_(body);
+  if (body.action === 'issueTokenByCode')  return handleIssueTokenByCode_(body);
+  if (body.action === 'revokeToken')       return handleRevokeToken_(body);
+  if (body.action === 'authIdentity')      return handleAuthIdentity_(body);
+  if (body.action === 'migStats')          return handleMigStats_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'logSearchMiss')     return handleLogSearchMiss_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
@@ -1391,7 +1519,15 @@ function _logHistShrink_(email, recues, enBase) {
 
 function handleSaveProfile_(body) {
   try {
-    const email = (body.email || '').toLowerCase().trim();
+    /* ⭐⭐ S1 — L'IDENTITÉ VIENT DU JETON, PLUS DU PAYLOAD (16/09/2026).
+       Avant, `email` était pris tel quel : quiconque connaissait une adresse pouvait écraser
+       le compte correspondant s'il n'avait pas posé de code. Désormais, quand un jeton est
+       présent et valide, c'est SON compte qui est écrit — « jeton A + e-mail B » écrit A.
+       ⚠️ Sans jeton, on est en TRANSITION (option B) : l'ancien chemin passe, il est COMPTÉ,
+       et `_MIG_FERME_` le fermera à la date que Michel fixera. */
+    const _id = _identitePourEcriture_(body);
+    if (!_id.ok) return json_({status:'error', error:'token', mode:_id.mode, raison:_id.raison});
+    const email = _id.email;
     if (!email) return json_({status:'error', error:'Email requis'});
 
     const _a = _authCheck_(email, body.authCode);
@@ -1768,6 +1904,58 @@ function handleValidateCode_(body) {
 // ── Confirmation d'email (soft) : envoi d'un code à 6 chiffres par email ──
 // Ne bloque JAMAIS l'inscription : c'est un bonus de sécurité (vérifie que l'email
 // est réel/possédé -> évite qu'une faute de frappe fasse perdre la sauvegarde cloud).
+/* ⭐ SECONDE PREUVE DE BOOTSTRAP : le code perso. Michel l'a explicitement prévue —
+   « compte avec code : preuve correcte → token émis ». Ce n'est PAS une seconde porte de
+   RÉCUPÉRATION (il n'en veut qu'une, la vérification e-mail) : c'est la preuve que le compte
+   possède déjà, et elle évite d'imposer un aller-retour e-mail à qui s'est déjà protégé.
+   ⛔ FAIL-CLOSED : sans code posé sur le compte, aucun jeton — sinon ce serait « e-mail seul
+   → jeton », c'est-à-dire exactement l'option C interdite. */
+function handleIssueTokenByCode_(body) {
+  try {
+    var email = String((body.email || '')).trim().toLowerCase();
+    if (!email) return json_({status:'error', error:'email'});
+    var a = _authCheck_(email, body.authCode);
+    if (!a.opted) return json_({status:'error', error:'no_code'});   // aucune preuve disponible
+    if (!a.ok)    return json_({status:'error', error:'auth', blocked:a.blocked});
+    return json_({status:'ok', token:_jetonPoser_(email, String(body.appareil || ''))});
+  } catch (err) { return json_({status:'error', error:'issue'}); }
+}
+
+/* Révocation. ⛔ Il faut PRÉSENTER le jeton pour le révoquer : on ne révoque pas celui d'un
+   autre en connaissant son adresse — ce serait rouvrir la faille par la sortie. */
+function handleRevokeToken_(body) {
+  try {
+    var j = _jetonIdentite_(body.token);
+    if (!j.ok) return json_({status:'error', error:'token'});
+    return json_({status: _jetonRevoquer_(body.token) ? 'ok' : 'error'});
+  } catch (err) { return json_({status:'error', error:'revoke'}); }
+}
+
+/* ⭐⭐ CE QUE LE WORKER APPELLE — la seule chose qui l'autorise à dépenser de l'IA.
+   Il envoie un jeton, il reçoit une identité, un état Premium et un verdict de quota.
+   ⛔ Le quota est décompté sur l'e-mail DU JETON, jamais sur celui du payload : c'est ici
+   que « jeton A + e-mail B → quota A » devient vrai. */
+function handleAuthIdentity_(body) {
+  try {
+    var j = _jetonIdentite_(body.token);
+    if (!j.ok) return json_({status:'error', error:'token', raison:j.raison});
+    var q = _aiQuotaBlock_(j.email);
+    return json_({status:'ok', email:j.email, premium:getPremiumStatus_(j.email).premium,
+                  blocked:!!q.blocked, scope:q.scope || ''});
+  } catch (err) { return json_({status:'error', error:'auth'}); }
+}
+
+/* Mesure de la transition (option B) — trois compteurs, aucune adresse. Route ADMIN. */
+function handleMigStats_(body) {
+  if (!_checkIdeesTok_(body.token_admin)) return json_({status:'error', error:'token'});
+  var sp = PropertiesService.getScriptProperties();
+  var m = {}; try { m = JSON.parse(sp.getProperty('mig_stats') || '{}'); } catch (e) {}
+  var n = 0;
+  try { Object.keys(sp.getProperties()).forEach(function(k){ if (k.indexOf(_JET_PREFIXE_) === 0) n++; }); } catch (e2) {}
+  return json_({status:'ok', jour:m.date || '', avecJeton:m.avec || 0, sansJeton:m.sans || 0,
+                jetonsEnRegistre:n, ferme:_MIG_FERME_});
+}
+
 function handleSendConfirmCode_(body) {
   try {
     var email = (body.email || '').toString().trim().toLowerCase();
@@ -1781,7 +1969,16 @@ function handleSendConfirmCode_(body) {
     // Plafond GLOBAL d'envois/jour : empêche le bombardement d'emails en changeant d'adresse
     // (protège la réputation + le quota du compte Gmail). ~80/jour = large pour de vrais inscrits.
     if (_dailyCounterBlock_('confirm_send_quota', 80)) return json_({status:'ok', capped:true});
-    var code = '' + Math.floor(100000 + Math.random() * 900000);
+    /* ⛔⛔ PLUS DE `Math.random()` ICI (S1, 16/09/2026). Tant que ce code ne servait qu'à
+       confirmer une adresse, sa prévisibilité était bornée par les 5 essais et les 15 minutes.
+       ⭐ Il est devenu **la porte d'entrée d'un jeton d'identité** : il fait donc désormais
+       partie de la chaîne de sécurité, et Michel l'a tranché — *« pas de Math.random() dans la
+       chaîne d'identité »*. `Utilities.getUuid()` est un UUID v4 de qualité cryptographique ;
+       on en tire 32 bits, et le modulo 900000 laisse un biais de ~0,02 %, sans portée ici.
+       ⚠️ Les quatre bornes existantes sont CONSERVÉES telles quelles — elles restent ce qui
+       borne vraiment la force brute (5 essais · 15 min · 60 s · 80/jour). */
+    var _uu = Utilities.getUuid().replace(/-/g, '');
+    var code = '' + (100000 + (parseInt(_uu.slice(0, 8), 16) % 900000));
     map[email] = { code: code, exp: now + 15 * 60000, tries: 0, sentAt: now };
     sp.setProperty('pending_confirms', JSON.stringify(map));
     // GmailApp = scope gmail.send (déjà déclaré/autorisé) -> pas de nouvelle autorisation
@@ -1817,13 +2014,19 @@ function handleVerifyConfirmCode_(body) {
     if (cur.tries >= 5)       { delete map[email]; save(); return json_({status:'toomany'}); }
     if (cur.code !== code)    { cur.tries++;       save(); return json_({status:'invalid'}); }
     delete map[email]; save();
+    /* ⭐⭐ LA PREUVE EST CONSOMMÉE À CET INSTANT PRÉCIS, ET C'EST CE QUI REND LE BOOTSTRAP SÛR :
+       le code vient d'être supprimé de la table juste au-dessus, donc il ne peut pas être
+       rejoué pour obtenir un second jeton. ⛔ Et c'est le SEUL chemin sans code perso :
+       jamais « e-mail seul → jeton » (option C, interdite par Michel). */
+    var _jetonEmis = '';
+    try { _jetonEmis = _jetonPoser_(email, String(body.appareil || '')); } catch (eJ) {}
     // Marque le profil comme vérifié (voyage via loadProfile)
     try {
       var data = loadUserData_(email);
       if (data) { data.profile = data.profile || {}; data.profile.emailVerified = true; saveUserData_(email, data); }
       else { sp.setProperty('confirmed_' + email, new Date().toISOString().slice(0,10)); }
     } catch(e2) {}
-    return json_({status:'ok'});
+    return json_({status:'ok', token:_jetonEmis});
   } catch(err) {
     return json_({status:'error', error:'verify', detail: String(err)});
   }
@@ -1889,7 +2092,13 @@ var HEALTH_MAX_   = 60;     // ce n'est pas une archive, juste de quoi rattacher
 var HEALTH_JOURS_ = 45;     // au-delà, la séance est classée depuis longtemps
 function handlePushHealth_(body) {
   try {
-    var email = (body.email || '').toString().trim().toLowerCase();
+    /* ⭐⭐ S1 — même règle que `saveProfile` : le jeton décide, pas le payload. Les données
+       de santé (bilans sanguins, bilans corporels, cycle, TRT) sont ce qu'il y a de plus
+       sensible dans l'application — c'est le dernier endroit où un e-mail déclaré devait
+       encore faire autorité. */
+    var _id = _identitePourEcriture_(body);
+    if (!_id.ok) return json_({status:'error', error:'token', mode:_id.mode, raison:_id.raison});
+    var email = _id.email;
     if (!email) return json_({status:'error', error:'email required'});
     var a = _authCheck_(email, body.authCode);
     if (!a.ok) return json_({status:'error', error:'auth', blocked:a.blocked});
