@@ -339,12 +339,19 @@ g('EN ATTENTE DU RESULTAT' in TOUT,
 # « on n ECRIRA PAS "purge terminee" », c'est-a-dire exactement celle qui pose la regle.
 # *Un garde qui ne voit pas la negation refuse la phrase qui l'interdit* (lecon ft-v1210,
 # reposee). Le verdict n'est interdit que s'il est AFFIRME.
-_bas_tout = TOUT.lower()
-for m in re.finditer(r'purge terminee', _bas_tout):
-    avant = _bas_tout[max(0, m.start() - 80):m.start()]
-    g(re.search(r"\bne\b|\bpas\b|\bjamais\b|n ecrira|n ecrit", avant) is not None,
-      'le document AFFIRME « purge terminee » : c est exactement ce qu on s interdit tant '
-      'que B, C et D ne sont pas faites')
+# [!!][!!] ET LA FENETRE EST LE BLOC, PAS UN NOMBRE DE CARACTERES. Mesure du controle
+# negatif : avec une fenetre de 80 caracteres, la mutation « le document AFFIRME purge
+# terminee » laissait le garde VERT — la fenetre debordait sur le TITRE de la section
+# precedente, « Ce que cette etape ne dira PAS », dont le « ne … PAS » suffisait a la
+# satisfaire. *Une borne en distance de caracteres n'est pas une borne de phrase*
+# (BUGS.md §63, encore). On regarde donc chaque bloc de texte SEPAREMENT.
+for _bloc in TEXTES:
+    _b = _bloc.lower()
+    for m in re.finditer(r'purge terminee', _b):
+        avant = _b[:m.start()]
+        g(re.search(r"\bne\b|\bn\b|\bpas\b|\bjamais\b", avant) is not None,
+          'le document AFFIRME « purge terminee » : c est exactement ce qu on s interdit '
+          'tant que B, C et D ne sont pas faites')
 # aucune des quatre conclusions possibles ne doit apparaitre comme AFFIRMATION : chacune ne
 # vit que dans la grille, donc toujours precedee d'un « si ... contient ».
 for verdict in ('REMPLACEMENT COMPLET', 'UPSERT / REMPLACEMENT', 'HISTORIQUE CONFIRME'):
