@@ -6,6 +6,29 @@
 
 ---
 
+- 🔑 **ft-vNN — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (16/09/2026).** Correction du bug
+  **T-01**, mesuré le matin même par clics réels : `rejouerRepas` écrit ses lignes dans une
+  boucle **synchrone**, plusieurs `Date.now()` tombent dans la même milliseconde, donc
+  **plusieurs lignes partagent un `ts`** (**9 runs sur 9**, jusqu'à 5 lignes sur 5) — et `ts`
+  était la **seule poignée** de l'interface. Cliquer « OEUF » modifiait « PAIN » ; cliquer la
+  croix de « JUS » annonçait *« PAIN sera retiré »* et supprimait **les trois**.
+  ⭐⭐ **LA DÉCISION : on n'a PAS rendu `ts` unique, on a SÉPARÉ l'horodatage de l'identité.**
+  `ts` reste temporel — `_profilAlimentaire` en lit l'**heure** pour deviner les horaires de
+  repas, un `ts` gonflé serait un horodatage qui ment. L'identité est un champ à part, **`id`**,
+  qui est déjà la convention du projet (`S.sessions` porte `{id, ts}`) ; `sourceId` identifie le
+  **produit**, pas la ligne. ⛔ Fabriqué par `crypto.randomUUID` ou `crypto.getRandomValues`,
+  **jamais `Math.random`**, et **aucun repli sur l'horloge** — sans source aléatoire on échoue
+  **fermé**. ⭐⭐ **La compatibilité des anciennes lignes n'est PAS un drapeau « migration faite »** :
+  une restauration remplace `S.foodLog` **en entier** des mois plus tard (le piège de `ft4_stmig1`),
+  donc le mécanisme est **idempotent** et rejoué au chargement, à la fusion **et avant chaque rendu
+  du journal** — *l'identité est posée là où la ligne devient cliquable*. ⛔ Il n'écrit **que**
+  `l.id` : `ts` reste 123, aucune macro ne bouge, empreinte d'instantané **identique**
+  (`09d4c259481839b4`). ⭐ **La suppression retire UN élément par construction** (`findIndex` +
+  `splice`, plus de `filter`), et **l'annonce et l'action emploient la même clé**.
+  ⛔ Hors périmètre, figé par témoins : la **douane** (21 règles / 4 écrivains), la **signature de
+  fusion** multi-onglets (qui n'emploie **ni** `ts` **ni** `id`, exprès), `savedFoods`, Supabase.
+  👉 dossier : `DOSSIER-CORRECTION-T01-IDENTITE-LIGNE-FOODLOG` (PDF hors dépôt).
+
 - 📱 **ft-v1214 — LE BANC IPHONE RÉEL DU SCANNER (14-15/09/2026).** Michel ferme le banc
   synthétique : *« le banc a suffisamment tranché… la prochaine étape est le TEST IPHONE
   RÉEL »*. ⛔⛔ **Et il répète l'interdit** : *« je ne veux toujours PAS réactiver le bouton

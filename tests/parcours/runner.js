@@ -33,7 +33,25 @@ function seedScript(extra){
     ft4_act:'1.55',ft4_work:'bureau',ft4_goal:'muscle',ft4_rest:'120'};
   const all=Object.assign({},base,extra||{});
   return `(()=>{try{${Object.entries(all).map(([k,v])=>`localStorage.setItem(${JSON.stringify(k)},${JSON.stringify(v)});`).join('')}
-    window._demoMode=true;}catch(e){}})();`;
+    window._demoMode=true;
+    /* 16/09/2026, bug T-01 — LE CONVERTISSEUR DES TEMOINS.
+       La poignee d une ligne du journal alimentaire n est plus son horodatage mais son
+       identite (e.id) : ts etait partage par plusieurs lignes d un repas rejoue, et
+       l edition comme la suppression frappaient a cote.
+       CE CONVERTISSEUR VIT DANS LE BANC, PAS DANS LE PRODUIT, ET C EST LE POINT : la
+       tentation etait de faire accepter les DEUX cles a openEditFood pour ne pas toucher
+       aux 25 temoins qui l appellent par ts. C aurait rouvert la porte exacte qu on ferme,
+       puisqu une recherche par ts rend la PREMIERE ligne du groupe.
+       Il rend une valeur INTROUVABLE quand aucune ligne ne porte ce ts, pour que les
+       temoins qui eprouvent le cas ligne inexistante continuent d eprouver ca. */
+    window._tsVersId=function(ts){
+      try{
+        if(typeof _foodLogIdentifier==='function') _foodLogIdentifier(S.foodLog);
+        var l=(S.foodLog||[]).find(function(e){return e&&e.ts===ts;});
+        return (l&&l.id)?l.id:('aucune-ligne-'+ts);
+      }catch(e){ return 'aucune-ligne'; }
+    };
+    }catch(e){}})();`;
 }
 
 (async()=>{
@@ -10148,7 +10166,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⛔② LE TÉMOIN LE PLUS IMPORTANT : on peut MODIFIER un jour passé, pas seulement le voir. */
     const eHier=S.foodLog.find(e=>e.name==='Hier midi');
     o.editableHier=(typeof openEditFood==='function');
-    openEditFood(eHier.ts);
+    openEditFood(_tsVersId(eHier.ts));
     document.getElementById('ef-kcal').value=520;
     saveEditFood();
     o.hierModifie=(S.foodLog.find(e=>e.ts===eHier.ts)||{}).kcal===520;
@@ -10157,7 +10175,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     /* ⛔③ ET SUPPRIMER UNE ENTRÉE D'UN JOUR PASSÉ MARCHE AUSSI. */
     if(typeof removeFoodEntry==='function'){
       const av=S.foodLog.length;
-      removeFoodEntry(eHier.ts);
+      removeFoodEntry(_tsVersId(eHier.ts));
       o.suppressionHier=(S.foodLog.length===av-1);
     } else o.suppressionHier=true;
 
@@ -10232,7 +10250,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
 
     /* ⭐① UNE ENTRÉE AVEC `per100` : le champ grammes existe, pré-rempli avec la quantité
        enregistrée (150 g), pas recalculé depuis les macros. */
-    openEditFood(tsAvecPer100);
+    openEditFood(_tsVersId(tsAvecPer100));
     const gEl=document.getElementById('ef-grams');
     o.champPresent=!!gEl;
     o.grammesInit=gEl&&parseFloat(gEl.value)===150;
@@ -10251,7 +10269,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.qSauve=eApres.q===200 && eApres.u==='g';
 
     /* ⛔⛔ UNE ENTRÉE MANUELLE (per100 null) : PAS de champ grammes — modale inchangée. */
-    openEditFood(tsManuel);
+    openEditFood(_tsVersId(tsManuel));
     o.champAbsentManuel=!document.getElementById('ef-grams');
     document.getElementById('ef-kcal').value=90;
     saveEditFood();
@@ -10784,7 +10802,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     ];
 
     /* ⭐⭐ ① LA QUANTITE EST LUE DANS LE NOM (« 30g ») — aucun per100 necessaire. */
-    openEditFood(ts1);
+    openEditFood(_tsVersId(ts1));
     const prop=document.getElementById('ef-prop');
     o.champProp=!!prop;
     o.propInit=prop?prop.value:'';
@@ -10812,14 +10830,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     saveEditFood();
 
     /* ⛔ ④ SANS AUCUN ANCRAGE : pas de champ poids invente, mais des PORTIONS. */
-    openEditFood(ts2);
+    openEditFood(_tsVersId(ts2));
     o.pasDeChampPoids=!document.getElementById('ef-prop');
     o.aDesPortions=/_efApplyPortion/.test((document.getElementById('ov-edit-food')||{}).innerHTML||'');
     _efApplyPortion(2);
     o.portionX2=(document.getElementById('ef-kcal')||{}).value==='1330';
 
     /* ⛔⛔ ⑤ UNE LIGNE COHERENTE NE DECLENCHE AUCUNE ALERTE (R19 : pas de cri pour un arrondi). */
-    openEditFood(ts3);
+    openEditFood(_tsVersId(ts3));
     const c3=document.getElementById('ef-coherence');
     o.pasDAlerteSiCoherent=!c3||c3.style.display==='none';
     document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('open'));
@@ -12092,7 +12110,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     try{
       const ts=Date.now();
       S.foodLog=[{name:'Ratatouille Cassegrain',kcal:195,prot:3,carbs:17,fat:11,meal:'diner',ts:ts,date:today()}];
-      openEditFood(ts);
+      openEditFood(_tsVersId(ts));
       await new Promise(r=>setTimeout(r,200));
       const ef=document.getElementById('ov-edit-food'), cf=document.getElementById('ov-confirm');
       const btn=[...ef.querySelectorAll('button')].find(x=>/Supprimer/.test(x.textContent||''));
@@ -19139,7 +19157,7 @@ console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v
     const V=id=>(document.getElementById(id)||{}).value;
     const txt=()=>(document.getElementById('ef-qty-row')||{}).innerText||'';
     const lire=()=>({kcal:+V('ef-kcal'),prot:+V('ef-prot')});
-    openEditFood(ts); await w(250);
+    openEditFood(_tsVersId(ts)); await w(250);
     o.onglets=/En grammes/.test(txt())&&/En portions/.test(txt());
     o.culDeSac=/on ne peut pas inventer un poids/.test(txt());
     o.portions=['½','1½','2','3'].every(x=>txt().indexOf(x)>=0);
@@ -19158,7 +19176,7 @@ console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v
     saveEditFood(); await w(250);
     const e=(S.foodLog||[]).find(x=>x.ts===ts);
     o.enregistre={kcal:e.kcal,prot:e.prot,q:e.q,u:e.u};
-    openEditFood(ts); await w(250);
+    openEditFood(_tsVersId(ts)); await w(250);
     o.reouvert={champ:V('ef-prop'), culDeSac:/inventer un poids/.test(txt())};
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
@@ -19389,11 +19407,11 @@ console.log('\n-- CLXXII. Les 4 routes de quantité se comportent pareil (ft-v10
     o.B=sonde('af','af-prop',30);
     // C — pour-100 g dans MODIFIER
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-    openEditFood(ts); await w(250);
+    openEditFood(_tsVersId(ts)); await w(250);
     o.C=sonde('ef','ef-grams',30);
     // D — proportion dans MODIFIER
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-    openEditFood(ts+1); await w(250);
+    openEditFood(_tsVersId(ts+1)); await w(250);
     _efSetUnite('g'); await w(150); poser('ef-poids','30'); await w(220);
     o.D=sonde('ef','ef-prop',30);
     /* ⛔ Et le champ vidé ne doit PAS faire annoncer un total (ft-v966) : la nuance est que les
@@ -23768,7 +23786,7 @@ console.log('\n-- CCXII. Les macros ne pèsent jamais plus que la portion (ft-v1
     for(let i=0;i<n;i++){
       document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
       goScreen('nutrition'); await w(220);
-      openEditFood(770000+i); await w(320);
+      openEditFood(_tsVersId(770000+i)); await w(320);
       const el=document.getElementById('ef-coherence');
       const vu=!!(el && el.style.display!=='none' && (el.innerText||'').trim());
       /* ⚠️ LES VERDICTS SE CALCULENT ICI, SUR LE TEXTE COMPLET — mon 1ᵉʳ jet testait la chaîne
@@ -29194,7 +29212,7 @@ console.log('\n-- CCLVII. Le champ « poids de cette portion » répond à la fr
     const attrs={};
     // ── ÉCRAN D'ÉDITION ────────────────────────────────────────────────
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-    openEditFood((S.foodLog||[])[0].ts);
+    openEditFood(_tsVersId((S.foodLog||[])[0].ts));
     await new Promise(r=>setTimeout(r,300));
     _efSetUnite('g'); await new Promise(r=>setTimeout(r,200));
     const lireEf=()=>({champ:(document.getElementById('ef-poids')||{}).value,
@@ -29463,7 +29481,7 @@ console.log('\n-- CCLX. Le plafond physique des calories (ft-v1162) --');
     const ts=Date.now()-4242;
     S.foodLog=[{ts:ts, date:new Date().toLocaleDateString('sv'), meal:'petit-dej',
                 name:'Iso zero protein (ASL)', kcal:156, prot:26, carbs:1, fat:1, q:30, u:'g'}];
-    openEditFood(ts);
+    openEditFood(_tsVersId(ts));
     const boite=()=>{const e=document.getElementById('ef-coherence');
                      return (e && e.style.display!=='none' && e.innerHTML) ? e : null;};
     const b1=boite();
@@ -29507,7 +29525,7 @@ console.log('\n-- CCLX. Le plafond physique des calories (ft-v1162) --');
        comme avant. Sinon quelqu'un croira que j'ai « aussi » touché au seuil. */
     S.foodLog=[{ts:ts+1, date:new Date().toLocaleDateString('sv'), meal:'collation',
                 name:'Truc sans poids', kcal:156, prot:26, carbs:1, fat:1}];
-    openEditFood(ts+1);
+    openEditFood(_tsVersId(ts+1));
     o.plancherIntact = !boite();
 
     /* ⚡ LA BORNE, ET ELLE EST DÉRIVÉE : plafond 135 + 10 de tolérance d'arrondi = 145 muet. */
@@ -30899,7 +30917,7 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1175) --');
     o.nr80=mac('af');                                 // 80 g double
 
     /* ══ C. LA JUMELLE — « Modifier l'aliment » (R8) ══ */
-    fermer(); openEditFood(TS); await d(320);
+    fermer(); openEditFood(_tsVersId(TS)); await d(320);
     o.vuE = /En grammes/.test(blocE()) && /En portions/.test(blocE());
     _efApplyPortion(2); await d(150);
     o.eX2=mac('ef');
@@ -30915,7 +30933,7 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1175) --');
     S.foodLog.push({date:t,meal:'midi',name:'Riz cuit',kcal:130,prot:3,carbs:28,fat:0,
                     ts:TS+1000,saisie:'manuel',origine:'utilisateur',q:100,u:'g',
                     per100:{kcal:130,prot:3,carbs:28,fat:0}});
-    persist(); fermer(); openEditFood(TS+1000); await d(320);
+    persist(); fermer(); openEditFood(_tsVersId(TS+1000)); await d(320);
     o.efRefApres = _efRef ? Math.round(_efRef.base.kcal) : null;   // doit être null (branche per100)
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
@@ -31409,7 +31427,7 @@ console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
     semer({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,fat:15,
            ts:TS,saisie:'scan',origine:'off',sourceId:'3083680085496',q:380,u:'g',
            per100:{kcal:72,prot:1.1,carbs:6,fat:3.9}});
-    fermer(); openEditFood(TS); await d(330);
+    fermer(); openEditFood(_tsVersId(TS)); await d(330);
     {const g=document.getElementById('ef-grams');
      if(g){ g.value='110'; g.dispatchEvent(new Event('input',{bubbles:true})); }}
     await d(240);
@@ -32405,7 +32423,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
                 ts:777,v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null}];
     persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-    openEditFood(777); await d(400);
+    openEditFood(_tsVersId(777)); await d(400);
     o.edit={texte:(document.getElementById('ef-qty-row')||{textContent:''}).textContent.replace(/\s+/g,' '),
             val:(document.getElementById('ef-prop')||{}).value};
     set('ef-prop','3'); await d(250); saveEditFood(); await d(300);
@@ -32420,7 +32438,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
                 ts:888,v:1,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
     persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-    openEditFood(888); await d(400);
+    openEditFood(_tsVersId(888)); await d(400);
     o.editBoutons={aProp:!!document.getElementById('ef-prop'), aGrams:!!document.getElementById('ef-grams')};
     if(typeof _efApplyPortion==='function'){ _efApplyPortion(2); await d(280);
       o.editBoutons.ecran=['ef-kcal','ef-prot'].map(x=>+((document.getElementById(x)||{}).value||0));
@@ -32436,7 +32454,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
                 ts:889,v:1,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
     persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-    openEditFood(889); await d(400);
+    openEditFood(_tsVersId(889)); await d(400);
     saveEditFood(); await d(300);
     const e9=S.foodLog.find(x=>x.ts===889)||{};
     o.editSansGeste={q:e9.q, u:e9.u, kcal:e9.kcal};
@@ -33222,7 +33240,7 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       kcal:500,prot:40,carbs:0,fat:36,q:2,u:'portion',portionLabel:'steak',portionWeightG:125,
       per100:{kcal:200,prot:16,carbs:0,fat:14.4},v:1,saisie:'manuel',origine:'utilisateur'});
     const ouvrir=async(ts)=>{document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-      openEditFood(ts); await d(320);};
+      openEditFood(_tsVersId(ts)); await d(320);};
 
     /* ①a L'ÉCRAN D'ÉDITION RESTE EN PORTIONS — le pour-100 g ne décide plus de l'unité */
     S.foodLog=[STEAK(6100)]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
@@ -34321,7 +34339,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                       per100:{kcal:160,prot:12.8,carbs:0,fat:11.2},q:2,u:'portion',
                       portionLabel:'steak',portionWeightG:125});
     S.foodLog=[ligne()];
-    openEditFood(99);
+    openEditFood(_tsVersId(99));
     const nom=document.getElementById('ef-pnom'); if(nom){ nom.value='steak'; _efPortionNomSaisi(); }
     const pds=document.getElementById('ef-ppoids'); if(pds){ pds.value='150'; _efPortionPoidsSaisi(); }
     saveEditFood();
@@ -34332,7 +34350,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        pour-100 g qui en dépendait. Sans lui, l'aliment garderait une référence calculée sur une
        définition que la personne vient de retirer. */
     S.foodLog=[ligne()];
-    openEditFood(99);
+    openEditFood(_tsVersId(99));
     const pds2=document.getElementById('ef-ppoids'); if(pds2){ pds2.value=''; _efPortionPoidsSaisi(); }
     saveEditFood();
     e=(S.foodLog||[]).find(x=>x.ts===99);
@@ -35669,7 +35687,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:7777, name:'Cas EF'}, LIGNE)];
     persist();
     _efPortionLabel='ZZZ'; _efPortionPoids=-1;   // témoin : on doit voir une VRAIE écriture
-    openEditFood(7777);
+    openEditFood(_tsVersId(7777));
     o.edition=JSON.stringify({label:_efPortionLabel, poids:_efPortionPoids, unite:_efUnite});
 
     /* ── écran d'AJOUT, MÊME ligne ── */
@@ -39861,6 +39879,295 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
     && (srcSet.match(/mergeExercises\(/g)||[]).length<=4, '');
 }
 
+
+
+/* ══ BLOC B-CCCXII — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (bug T-01) ══════════
+   Michel, 16/09/2026, après la mesure `MESURE-T01-TS-REJOUER-REPAS` : `rejouerRepas` écrivait
+   ses lignes dans une boucle SYNCHRONE, plusieurs `Date.now()` tombaient dans la même
+   milliseconde, et `ts` — la SEULE poignée de l'interface — était partagé. Mesuré par clics
+   réels : cliquer « OEUF » modifiait « PAIN » ; cliquer la croix de « JUS » annonçait
+   « PAIN sera retiré » et supprimait les TROIS lignes.
+
+   ⭐⭐ CES TÉMOINS-CI PROTÈGENT DES **DÉCISIONS**, PAS DES VALEURS — et c'est pour ça qu'ils
+   lisent la SOURCE. Trois d'entre eux sont nés d'un contrôle négatif qui les a trouvés
+   manquants : une mutation qui retire l'identité d'un écrivain reste VERTE au comportement,
+   parce que le filet du rendu la rattrape. Le filet fait son travail ; mais la ligne part
+   alors au cloud sans identité (`rejouerRepas` synchronise AVANT de rendre), et surtout
+   *un contrat qu'aucun témoin ne tient finit par être oublié par le prochain écrivain*.
+
+   ⛔ Le comportement, lui, est éprouvé par clics réels dans le bloc B-CCCXIII, juste après. */
+{
+  const srcA=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  const srcS=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
+  const srcC=fs.readFileSync(path.join(ROOT,'screens.js'),'utf8');
+  /* le corps SANS ses commentaires — sinon on mesure la documentation (famille ft-v1193/1210) */
+  const nu12=(x)=>x.replace(/\/\*[\s\S]*?\*\//g,' ')
+    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
+  /* borné aux ACCOLADES, jamais à une distance en caractères (BUGS.md §63) */
+  const corps12=(src,n)=>{ const m=src.match(new RegExp('(?:async )?function '+n+'\\s*\\('));
+    if(!m) return ''; let i=src.indexOf('{',m.index+m[0].length-1),p=0,j=i;
+    while(j<src.length){ if(src[j]==='{')p++; else if(src[j]==='}'){p--; if(!p) return nu12(src.slice(i,j+1));} j++; }
+    return ''; };
+  const A12=nu12(srcA), S12=nu12(srcS), C12=nu12(srcC);
+
+  console.log('\n-- B-CCCXII. L\'identité d\'une ligne du journal alimentaire (source) --');
+
+  /* ① UN SEUL PROPRIÉTAIRE POUR FABRIQUER UNE IDENTITÉ (R2) */
+  t('B-CCCXII ① `_foodLineId` est le seul fabricant d\'identité, appelé par les 3 créateurs',
+    /function _foodLineId\(\)/.test(S12) &&
+    (S12.match(/function _foodLineId/g)||[]).length===1 &&
+    (A12.match(/_foodLineId\(\)/g)||[]).length===3,
+    'appels dans app.js : '+((A12.match(/_foodLineId\(\)/g)||[]).length)+' (attendu 3)');
+
+  /* ② LES TROIS ÉCRIVAINS CRÉATEURS POSENT L'IDENTITÉ À L'ÉCRITURE.
+     ⛔ Trouvé par contrôle négatif : retirer l'identité d'un écrivain ne fait PAS rougir le
+     comportement — le filet du rendu la repose. Ce témoin-ci tient le contrat. */
+  ['rejouerRepas','quickAddFood','addFoodEntry'].forEach(fn=>{
+    const b=corps12(srcA,fn);
+    t('B-CCCXII ② `'+fn+'` pose l\'identité DANS le littéral de la ligne',
+      /id:_foodLineId\(\)/.test(b) && /ts:Date\.now\(\)/.test(b), fn);
+  });
+
+  /* ③ ⛔ `saveEditFood` N'EN POSE PAS, ET C'EST VOLONTAIRE (R30).
+     Il modifie une ligne EN PLACE. Lui imposer le même geste lui ferait changer d'identité à
+     chaque correction — *une ligne qu'on corrige reste la même ligne.* */
+  t('B-CCCXII ③ ⛔ `saveEditFood` ne fabrique AUCUNE identité (il édite en place)',
+    corps12(srcA,'saveEditFood').length>0 && !/_foodLineId\(/.test(corps12(srcA,'saveEditFood')), '');
+
+  /* ④ `ts` RESTE UN HORODATAGE : personne ne le gonfle pour le rendre unique. C'est le choix
+     d'architecture du chantier — `_profilAlimentaire` en lit l'HEURE, un `ts` gonflé mentirait. */
+  t('B-CCCXII ④ ⛔ aucun écrivain ne fabrique un `ts` artificiellement unique',
+    !/ts:\s*Date\.now\(\)\s*\+/.test(A12) && !/\.ts\s*=\s*Date\.now\(\)\s*\+/.test(A12+S12), '');
+  t('B-CCCXII ④bis ⛔ la compatibilité ne RÉÉCRIT jamais un horodatage',
+    !/\.ts\s*=[^=]/.test(corps12(srcS,'_foodLogIdentifier')), '');
+
+  /* ⑤ LA COMPATIBILITÉ NE TOUCHE QU'À L'IDENTITÉ MANQUANTE (consigne « MIGRATION » de Michel) */
+  {
+    const b=corps12(srcS,'_foodLogIdentifier');
+    const ecrit=(b.match(/\bl\.[a-zA-Z0-9_]+\s*=[^=]/g)||[]).map(s=>s.replace(/\s*=.$/,'').trim());
+    t('B-CCCXII ⑤ ⭐ la compatibilité n\'écrit QUE `l.id` — aucune donnée métier ne bouge',
+      ecrit.length===1 && ecrit[0]==='l.id', 'écrit : '+(ecrit.join(', ')||'rien'));
+    /* ⛔ ELLE EXIGE L'UNICITÉ, PAS LA PRÉSENCE : un `id` en double est RÉATTRIBUÉ. Sans ça on
+       rejouerait le bug exact qu'on corrige, avec une autre clé. (Trouvé par mutation.) */
+    t('B-CCCXII ⑤bis ⭐ un identifiant en DOUBLE est réattribué (unicité, pas présence)',
+      /!vus\[cle\]/.test(b), '');
+  }
+
+  /* ⑥ CE N'EST PAS UN DRAPEAU « MIGRATION FAITE » : une restauration peut réinjecter de
+     vieilles lignes bien après. Le mécanisme est rejoué au chargement, à la fusion ET au rendu. */
+  t('B-CCCXII ⑥ ⛔ la compatibilité n\'est pas gardée par un drapeau one-time',
+    !/ft4_[a-z0-9_]*mig/.test(corps12(srcS,'_foodLogIdentifier')), '');
+  t('B-CCCXII ⑥bis la compatibilité est rejouée au chargement ET à la fusion',
+    (S12.match(/_foodLogIdentifier\(S\.foodLog\)/g)||[]).length>=2,
+    'appels dans state.js : '+((S12.match(/_foodLogIdentifier\(S\.foodLog\)/g)||[]).length));
+  t('B-CCCXII ⑥ter ⭐ et AVANT chaque rendu du journal — le filet qui couvre la RESTAURATION',
+    /_foodLogIdentifier\(S\.foodLog\)/.test(corps12(srcC,'renderFoodJournal')), '');
+
+  /* ⑦ AUCUN `Math.random()` (consigne explicite), ET AUCUN REPLI SUR L'HORLOGE. */
+  t('B-CCCXII ⑦ ⛔ l\'identité ne vient jamais de `Math.random`',
+    !/Math\.random/.test(corps12(srcS,'_foodLineId')) &&
+    /crypto\.randomUUID/.test(corps12(srcS,'_foodLineId')) &&
+    /crypto\.getRandomValues/.test(corps12(srcS,'_foodLineId')), '');
+  t('B-CCCXII ⑦bis ⛔ aucun repli sur l\'horloge : sans source aléatoire, on échoue FERMÉ',
+    !/Date\.now/.test(corps12(srcS,'_foodLineId')), '');
+
+  /* ⑧ L'ÉDITION ET LA SUPPRESSION N'EMPLOIENT PLUS `ts` COMME POIGNÉE. */
+  ['openEditFood','saveEditFood','confirmRemoveFood','removeFoodEntry','_efQtyRender','_efApplyGrams']
+    .forEach(fn=>{
+      const b=corps12(srcA,fn);
+      t('B-CCCXII ⑧ `'+fn+'` ne retrouve plus la ligne par `ts`',
+        b.length>0 && !/\.ts\s*===/.test(b) && !/\.ts\s*!==/.test(b), fn);
+    });
+
+  /* ⑨ ⭐⭐ L'ANNONCE ET L'ACTION EMPLOIENT LA MÊME CLÉ — le fait le plus grave de T-01. */
+  t('B-CCCXII ⑨ ⭐ `confirmRemoveFood` nomme la ligne par son identité',
+    /x\.id===id/.test(corps12(srcA,'confirmRemoveFood').replace(/\s+/g,'')), '');
+  t('B-CCCXII ⑨bis ⭐ `removeFoodEntry` retire UN élément par construction (index, pas filtre)',
+    /findIndex\(/.test(corps12(srcA,'removeFoodEntry')) &&
+    /splice\(i,1\)/.test(corps12(srcA,'removeFoodEntry').replace(/\s+/g,'')) &&
+    !/\.filter\(/.test(corps12(srcA,'removeFoodEntry')),
+    '⛔ un `filter` sur une clé qu\'on croit unique est exactement ce qui a effacé 3 lignes');
+
+  /* ⑩ LA POIGNÉE DU RENDU EST L'IDENTITÉ, FILTRÉE PAR LISTE BLANCHE. */
+  t('B-CCCXII ⑩ le journal passe l\'identité, plus l\'horodatage',
+    C12.indexOf("openEditFood('${_h}')")>=0 && C12.indexOf("confirmRemoveFood('${_h}')")>=0 &&
+    /_foodIdAttr\(e\.id\)/.test(C12), '');
+  t('B-CCCXII ⑩bis ⛔ le bouton Supprimer DE LA MODALE emploie la même poignée',
+    /_foodIdAttr\(id\)/.test(corps12(srcA,'openEditFood')),
+    'la modale d\'édition a sa propre porte de suppression — elle avait été oubliée une fois');
+  t('B-CCCXII ⑩ter l\'identité passe par une LISTE BLANCHE avant d\'entrer dans un attribut',
+    /function _foodIdAttr/.test(S12) && /\[\^0-9a-zA-Z-\]/.test(S12), '');
+
+  /* ⑪ ⛔ HORS PÉRIMÈTRE, FIGÉ : la fusion multi-onglets n'emploie PAS l'identité.
+     Deux onglets qui notent la même chose produisent deux `id` différents : une signature sur
+     l'identité les garderait tous les deux, donc créerait le doublon que la fusion évite. */
+  t('B-CCCXII ⑪ ⛔ la signature de fusion de `foodLog` n\'emploie pas l\'identité',
+    /S\.foodLog\s*=\s*_fusionListe\(S\.foodLog,[\s\S]{0,300}?e&&e\.kcal/.test(S12) &&
+    !/_fusionListe\(S\.foodLog,[\s\S]{0,300}?e&&e\.id/.test(S12), '');
+
+  /* ⑫ ⛔ HORS PÉRIMÈTRE, FIGÉ : la douane n'a pas bougé. */
+  {
+    const d=srcA.slice(srcA.indexOf('function _douaneLigne'), srcA.indexOf('function _douaneCompter'));
+    const R=d.match(/dit\('[a-z0-9_]+',\s*'(INVALID|WARN)'/g)||[];
+    t('B-CCCXII ⑫ ⛔ la douane garde ses 21 règles, dont 9 INVALID',
+      R.length===21 && R.filter(x=>x.indexOf('INVALID')>=0).length===9,
+      R.length+' règles / '+R.filter(x=>x.indexOf('INVALID')>=0).length+' INVALID');
+    t('B-CCCXII ⑫bis ⛔ les 4 écrivains sont toujours observés par la douane',
+      ['addFoodEntry','quickAddFood','rejouerRepas','saveEditFood']
+        .every(w=>new RegExp("_douaneLigne\\([^,]+,'"+w+"'\\)").test(A12)), '');
+  }
+}
+
+/* ══ BLOC B-CCCXIII — LE MÊME BUG, MAIS PAR CLICS RÉELS ═══════════════════════════════════
+   ⛔⛔ CE BLOC EXISTE PARCE QUE LE PRÉCÉDENT NE SUFFIT PAS. Les témoins de source prouvent
+   qu'on emploie la bonne clé ; ils ne prouvent PAS que la personne qui tape sur « OEUF »
+   modifie « OEUF ». Le bug d'origine se voyait à l'écran, pas dans le code.
+   ⭐ Tout ce qui suit est conduit par l'INTERFACE : l'historique est saisi par `addFoodEntry`
+   après une vraie navigation de jour, le rejeu est un CLIC sur le bouton du DOM, l'édition et
+   la suppression sont des CLICS sur les lignes du journal.
+   ⭐⭐ ET L'ATTENDU VIENT DE L'ÉCRAN, PAS DU TABLEAU : le journal trie par `ts` décroissant,
+   donc le rang dans `S.foodLog` n'est pas le rang affiché. Ma première version comparait au
+   tableau et annonçait « mauvaise ligne » sur un comportement juste. */
+{
+  const cx13=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg13=await cx13.newPage(); const err13=[]; pg13.on('pageerror',e=>err13.push(e.message));
+  await pg13.addInitScript(seedScript({}));
+  await pg13.goto('http://localhost:'+PORT+'/index.html'); await pg13.waitForTimeout(2400);
+
+  console.log('\n-- B-CCCXIII. L\'identité d\'une ligne du journal alimentaire (clics réels) --');
+
+  const R13=await pg13.evaluate(async ()=>{
+    const o={}; const pause=ms=>new Promise(r=>setTimeout(r,ms));
+    const set=(id,v)=>{const el=document.getElementById(id); if(el){el.value=String(v);return true;} return false;};
+    /* ⛔ BORNÉ AU JOURNAL : `confirmRemoveFood` vit AUSSI sur le bouton « Supprimer » de la
+       modale d'édition, qui reste dans le DOM une fois refermée. Un sélecteur global attrape
+       donc la MAUVAISE croix — c'est arrivé pendant la mise au point de ce bloc. */
+    const J=()=>document.getElementById('food-journal');
+    const lignes=()=>[...J().querySelectorAll('[onclick^="openEditFood("]')].map(el=>({
+      el, nom:((el.firstElementChild||{}).firstElementChild||{}).textContent||''}));
+    const croix=()=>[...J().querySelectorAll('[onclick*="confirmRemoveFood("]')];
+    const photo=()=>JSON.parse(JSON.stringify((S.foodLog||[]).filter(e=>e.date===_journalJourActif())));
+    const metier=(a,b)=>{const net=x=>{const y=Object.assign({},x); delete y.id;
+      return JSON.stringify(Object.keys(y).sort().map(k=>[k,y[k]]));}; return net(a)===net(b);};
+    /* ⛔ un clic qui ne trouve pas sa cible ne doit pas faire PLANTER le banc : une passe
+       interrompue ressemble trait pour trait à une passe verte (BUGS.md §61). */
+    const clic=sel=>{ try{ const n=document.querySelector(sel); if(!n) return false; n.click(); return true; }
+                      catch(e){ return false; } };
+
+    goScreen('s-nutrition'); switchNuTab('journal'); await pause(150);
+    /* L'HISTORIQUE, saisi par les vraies portes, sur deux jours passés — c'est la condition
+       d'entrée de `_repasHabituels`, donc l'usage NORMAL de « repas d'habitude ». */
+    for(const recul of [4,2]){
+      journalAllerA(new Date(Date.now()-recul*864e5).toISOString().slice(0,10)); await pause(60);
+      for(const [nom,kcal] of [['PAIN',260.6],['OEUF',150.3],['JUS',90.9]]){
+        if(typeof openAddFood==='function') openAddFood(); await pause(35);
+        set('af-desc',nom); set('af-kcal',kcal); set('af-prot',10.4); set('af-carbs',20.7); set('af-fat',5.2);
+        try{ _afSetSrc(null); }catch(e){}
+        addFoodEntry(); await pause(35);
+      }
+    }
+    journalAllerA(new Date().toISOString().slice(0,10)); await pause(100);
+    if(typeof renderNutrition==='function') renderNutrition();
+    renderFoodJournal(); await pause(220);
+
+    /* ① LE REJEU PAR CLIC : autant d'identités que de lignes, malgré un `ts` partagé. */
+    const avant=S.foodLog.length;
+    o.boutonRejeu=clic('[onclick*="rejouerRepas"]'); await pause(330);
+    const neuves=S.foodLog.slice(avant);
+    o.nRejouees=neuves.length;
+    o.tsUniques=new Set(neuves.map(e=>e.ts)).size;
+    o.idUniques=new Set(neuves.map(e=>e.id)).size;
+
+    /* ② ÉDITION DE LA 2ᵉ LIGNE DE L'ÉCRAN */
+    renderFoodJournal(); await pause(220);
+    const L=lignes(); if(L.length<3){ o.err='moins de 3 lignes affichées'; return o; }
+    o.vise=L[1].nom;
+    const av=photo();
+    L[1].el.click(); await pause(220);
+    o.ouvre=(document.getElementById('ef-name')||{}).value;
+    set('ef-kcal',4242);
+    o.boutonEnr=clic('[onclick*="saveEditFood"]'); await pause(240);
+    const ap=photo();
+    const chg=av.filter(a=>{const x=ap.find(y=>y.id===a.id); return x && !metier(a,x);});
+    o.nChg=chg.length; o.nomChg=chg.map(x=>x.name)[0]||null;
+    o.autresIntactes=av.filter(a=>{const x=ap.find(y=>y.id===a.id); return x && metier(a,x);}).length;
+
+    /* ③ SUPPRESSION DE LA DERNIÈRE LIGNE DE L'ÉCRAN : annonce ET action */
+    renderFoodJournal(); await pause(220);
+    const L2=lignes(); const C2=croix();
+    if(!L2.length || C2.length!==L2.length){ o.err='croix et lignes désaccordées'; return o; }
+    o.vise2=L2[L2.length-1].nom;
+    const avSup=photo().length;
+    C2[C2.length-1].click(); await pause(200);
+    o.msg=((document.getElementById('confirm-msg')||{}).textContent||'').trim();
+    o.msgNomme=o.msg.indexOf(o.vise2)>=0;
+    o.boutonOk=clic('#confirm-ok'); await pause(240);
+    const fin=photo();
+    o.supprimees=avSup-fin.length;
+    o.viseParti=fin.map(x=>x.name).indexOf(o.vise2)<0;
+    o.restants=fin.map(x=>x.name).join(',');
+
+    /* ④ ANCIEN HISTORIQUE : trois lignes, un seul `ts`, AUCUNE identité — et un `id` en
+       DOUBLE sur trois autres. Les deux cas que la restauration peut réinjecter. */
+    const auj=today();
+    const vieux=[['PAIN',260.6],['OEUF',150.3],['JUS',90.9]].map(([n,k])=>
+      ({date:auj,meal:'dejeuner',name:n,ts:123,kcal:k,prot:10.4,carbs:20.7,fat:5.2,
+        v:1,saisie:'manuel',origine:'utilisateur'}));
+    S.foodLog=JSON.parse(JSON.stringify(vieux));
+    o.vieuxSansId=S.foodLog.every(e=>e.id===undefined);
+    journalAllerA(auj); renderFoodJournal(); await pause(240);
+    o.vieuxIdUniques=new Set(S.foodLog.map(e=>e.id)).size;
+    o.vieuxTsIntacts=S.foodLog.every(e=>e.ts===123);
+    o.vieuxMetierIntact=S.foodLog.every((e,i)=>metier(vieux[i],e));
+    const L4=lignes(); o.vise4=L4.length>1?L4[1].nom:null;
+    if(L4.length>1){
+      L4[1].el.click(); await pause(200);
+      o.ouvre4=(document.getElementById('ef-name')||{}).value;
+      set('ef-kcal',7777); clic('[onclick*="saveEditFood"]'); await pause(220);
+      o.nChg4=photo().filter(x=>x.kcal===7777).length;
+    }
+
+    /* ⑤ UN IDENTIFIANT EN DOUBLE EST RÉATTRIBUÉ (trouvé par mutation : rien ne le couvrait). */
+    const MEME='cccccccc-3333-4333-8333-cccccccccccc';
+    S.foodLog=[['A',10.5],['B',20.5],['C',30.5]].map(([n,k])=>
+      ({date:auj,meal:'dejeuner',name:n,ts:Date.now(),id:MEME,kcal:k,prot:1.5,carbs:2.5,fat:3.5,
+        v:1,saisie:'manuel',origine:'utilisateur'}));
+    o.douDepart=new Set(S.foodLog.map(e=>e.id)).size;
+    renderFoodJournal(); await pause(240);
+    o.douApres=new Set(S.foodLog.map(e=>e.id)).size;
+    const L5=lignes();
+    if(L5.length>1){
+      o.vise5=L5[1].nom;
+      L5[1].el.click(); await pause(200);
+      o.ouvre5=(document.getElementById('ef-name')||{}).value;
+    }
+    return o;
+  });
+
+  t('B-CCCXIII ① le rejeu par CLIC écrit 3 lignes avec 3 identités distinctes',
+    R13.nRejouees===3 && R13.idUniques===3, 'ts uniques : '+R13.tsUniques+' (la collision d\'horodatage demeure, et c\'est voulu)');
+  t('B-CCCXIII ② ⭐ clic sur la 2ᵉ ligne → le formulaire ouvre CETTE ligne',
+    !!R13.vise && R13.ouvre===R13.vise, 'visé « '+R13.vise+' », ouvert « '+R13.ouvre+' »');
+  t('B-CCCXIII ③ ⭐ enregistrer ne change QUE cette ligne, les autres octet pour octet',
+    R13.nChg===1 && R13.nomChg===R13.vise && R13.autresIntactes===2,
+    R13.nChg+' changée(s), '+R13.autresIntactes+' intacte(s)');
+  t('B-CCCXIII ④ ⭐⭐ la confirmation NOMME la ligne cliquée',
+    R13.msgNomme===true, 'cliqué « '+R13.vise2+' » → « '+R13.msg+' »');
+  t('B-CCCXIII ⑤ ⭐⭐ et UNE SEULE ligne disparaît — c\'est bien elle',
+    R13.supprimees===1 && R13.viseParti===true, 'restent ['+R13.restants+']');
+  t('B-CCCXIII ⑥ un ancien journal (ts=123 ×3, aucune identité) devient distinguable',
+    R13.vieuxSansId===true && R13.vieuxIdUniques===3);
+  t('B-CCCXIII ⑦ ⭐ et rien d\'autre ne bouge : `ts` reste 123, données métier intactes',
+    R13.vieuxTsIntacts===true && R13.vieuxMetierIntact===true);
+  t('B-CCCXIII ⑧ éditer une ligne de cet ancien journal frappe la bonne',
+    R13.vise4 && R13.ouvre4===R13.vise4 && R13.nChg4===1, 'visé « '+R13.vise4+' », ouvert « '+R13.ouvre4+' »');
+  t('B-CCCXIII ⑨ ⭐ trois lignes au MÊME identifiant sont réattribuées puis éditables',
+    R13.douDepart===1 && R13.douApres===3 && R13.vise5 && R13.ouvre5===R13.vise5,
+    'visé « '+R13.vise5+' », ouvert « '+R13.ouvre5+' »');
+  t('B-CCCXIII ⑩ aucune erreur JavaScript pendant tout le parcours',
+    err13.length===0 && !R13.err, (R13.err||'')+' '+err13.join(' | '));
+  await cx13.close();
+}
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

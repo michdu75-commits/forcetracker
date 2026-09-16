@@ -3335,7 +3335,14 @@ function rejouerRepas(sig, meal){
     if(typeof _afSetSrc==='function')_afSetSrc(
       Object.assign({saisie:'liste',origine:'reprise'}, _srcRepriseQ(e, qOk)));
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
-    const _l=Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now()},vals,prov,
+    /* 🔑⛔⛔ `id` EST POSÉ ICI, DANS LE LITTÉRAL, ET SURTOUT PAS VIA `_provFood`. Cette
+       fonction-là est une LISTE BLANCHE : trois avertissements en majuscules y disent déjà qu'un
+       champ qu'elle ne recopie pas n'atteint jamais l'entrée enregistrée — c'est arrivé trois
+       fois. Une identité qui n'arrive pas est précisément le bug qu'on corrige, donc elle voyage
+       par le chemin le plus court. ⭐ ET C'EST CETTE BOUCLE QUI A CAUSÉ T-01 : `ts:Date.now()`
+       y est évalué à chaque tour, dans la même milliseconde. `ts` reste ce qu'il était — c'est
+       `id` qui distingue désormais les lignes. */
+    const _l=Object.assign({date:_journalJourActif(),meal:moment,name:e.name,ts:Date.now(),id:_foodLineId()},vals,prov,
       qOk?{}:{q:null,u:null});
     _douaneLigne(_l,'rejouerRepas');   /* 🛃 observation seule : ni correction, ni blocage */
     S.foodLog.push(_l);
@@ -4026,7 +4033,8 @@ function quickAddFood(i){
                              `it.per100||null`), donc l'objet final ne bouge pas d'un octet —
                              c'est l'instantane qui le prouve, pas ce commentaire. */
                           _srcProvenance(it)));
-  const _l=Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals));
+  /* 🔑 Même contrat d'identité que les deux autres écrivains créateurs (voir `rejouerRepas`). */
+  const _l=Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now(),id:_foodLineId()},_vals,_provFood(_vals));
   _douaneLigne(_l,'quickAddFood');   /* 🛃 observation seule : ni correction, ni blocage */
   S.foodLog.push(_l);
   _afSetSrc(null);
@@ -5232,7 +5240,11 @@ function addFoodEntry(){
     toast('Combien en as-tu mangé ? Touche une pastille ou tape ton poids.','error'); return;
   }
   if(!S.foodLog)S.foodLog=[];
-  const _e=Object.assign({date:_journalJourActif(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()},
+  /* 🔑 Même contrat d'identité que les deux autres écrivains créateurs (voir `rejouerRepas`).
+     ⛔ `saveEditFood` n'est PAS concerné : il modifie une ligne EN PLACE, il n'en crée pas.
+     Lui imposer le même geste lui ferait changer d'identité à chaque correction — une ligne
+     qu'on corrige reste la même ligne. *Le contrat suit le métier réel, pas la symétrie.* */
+  const _e=Object.assign({date:_journalJourActif(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now(),id:_foodLineId()},
     _provFood({kcal,prot,carbs,fat}));
   _douaneLigne(_e,'addFoodEntry');   /* 🛃 observation seule : ni correction, ni blocage */
   S.foodLog.push(_e);
@@ -5246,18 +5258,36 @@ function addFoodEntry(){
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   toast(_afToastAjout(),'success');
 }
-function removeFoodEntry(ts){
+/* 🔑⛔⛔ LA SUPPRESSION RETIRE **UNE** LIGNE, ET C'EST STRUCTUREL (16/09/2026, bug T-01).
+   Avant : `filter(e=>e.ts!==ts)` — avec un `ts` partagé par trois lignes rejouées, un clic sur
+   la croix d'UNE ligne en effaçait TROIS. Mesuré 3 fois sur 3 par clics réels.
+   ⭐ Le correctif n'est pas seulement « employer `id` au lieu de `ts` » : c'est aussi passer
+   d'un `filter` à un retrait par INDEX. `filter` retire tout ce qui correspond — s'il existait
+   un jour deux lignes de même identité, il en effacerait encore deux, en silence. Un
+   `findIndex` + `splice` ne PEUT pas en retirer deux. *La leçon du bug est là : ne pas rendre
+   la clé unique et garder l'outil qui suppose qu'elle ne l'est pas.* */
+function removeFoodEntry(id){
   if(!S.foodLog)return;
-  S.foodLog=S.foodLog.filter(e=>e.ts!==ts);
+  const i=S.foodLog.findIndex(e=>e&&e.id===id);
+  if(i<0)return;
+  S.foodLog.splice(i,1);
   persist();
   renderFoodJournal();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
 }
 // Demande confirmation avant de retirer un aliment du journal
-function confirmRemoveFood(ts){
-  const e=(S.foodLog||[]).find(x=>x.ts===ts);
+/* 🔑⭐⭐ L'ANNONCE ET L'ACTION EMPLOIENT LA MÊME CLÉ — c'est le fait le plus grave de T-01.
+   Avant, cette fonction nommait la ligne avec `find(x=>x.ts===ts)` pendant que `removeFoodEntry`
+   agissait avec `filter` : on cliquait la croix de « JUS », l'écran annonçait « PAIN sera
+   retiré », et les trois lignes partaient. Les deux moitiés lisent désormais `id`, donc
+   l'aliment nommé est exactement celui qui disparaît.
+   ⛔ Ne jamais réparer l'une sans l'autre : un écran de confirmation qui annonce autre chose que
+   ce qu'il fait est plus dangereux qu'une suppression sans confirmation — il fait valider en
+   confiance. */
+function confirmRemoveFood(id){
+  const e=(S.foodLog||[]).find(x=>x&&x.id===id);
   const nm=e?e.name:'cet aliment';
-  const doit=()=>{ const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open'); removeFoodEntry(ts); toast('Aliment supprimé','info'); };
+  const doit=()=>{ const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open'); removeFoodEntry(id); toast('Aliment supprimé','info'); };
   if(typeof showConfirm==='function') showConfirm('Supprimer l\'aliment ?','« '+nm+' » sera retiré de ton journal.',doit,'Supprimer');
   else doit();
 }
@@ -5293,7 +5323,10 @@ function journalNav(dir){
   d.setDate(d.getDate()+dir);
   journalAllerA(d.toISOString().slice(0,10));
 }
-let _editFoodTs=null, _editFoodMeal='dejeuner';
+/* 🔑 LA MODALE D'ÉDITION RETIENT L'IDENTITÉ DE LA LIGNE, PLUS SON HORODATAGE (bug T-01).
+   `_editFoodTs` a été renommé plutôt que réaffecté : un nom qui dit « ts » et qui contient un
+   identifiant est exactement le genre de mensonge qui a produit ce bug. */
+let _editFoodId=null, _editFoodMeal='dejeuner';
 /* ⚖️ MODIFIER LE POIDS D'UNE ENTRÉE (22/08/2026) — Michel, sur un « Oeuf cru » : « on ne peut
    pas modifier le poids ». VRAI : la modale ne montrait que les 4 macros brutes — pour ajuster
    une portion il fallait recalculer les 4 chiffres à la main.
@@ -5303,9 +5336,9 @@ let _editFoodTs=null, _editFoodMeal='dejeuner';
    ⛔ SEULEMENT SI `per100` EXISTE : une entrée tapée à la main (`per100:null`) n'a pas de « pour
    100 g » à partir duquel recalculer — la modale reste identique à avant pour elle (R29 : on ne
    invente pas un pour-100g qui n'existe pas). */
-function openEditFood(ts){
-  const e=(S.foodLog||[]).find(x=>x.ts===ts); if(!e)return;
-  _editFoodTs=ts; _editFoodMeal=e.meal||'dejeuner';
+function openEditFood(id){
+  const e=(S.foodLog||[]).find(x=>x&&x.id===id); if(!e)return;
+  _editFoodId=id; _editFoodMeal=e.meal||'dejeuner';
   let ov=document.getElementById('ov-edit-food');
   if(!ov){ov=document.createElement('div');ov.id='ov-edit-food';ov.className='overlay';ov.style.zIndex='500';ov.onclick=ev=>{if(ev.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
   const fld=(id,lbl,val)=>'<div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">'+lbl+'</div><input id="'+id+'" type="number" inputmode="numeric" value="'+(val||0)+'" oninput="_efCoherence()" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
@@ -5354,7 +5387,7 @@ function openEditFood(ts){
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+fld('ef-kcal','Calories (kcal)',e.kcal)+fld('ef-prot','Protéines (g)',e.prot)+fld('ef-carbs','Glucides (g)',e.carbs)+fld('ef-fat','Lipides (g)',e.fat)+'</div>'
     +'<div id="ef-coherence" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:14px;"></div>'
     +'<button class="btn btn-red" onclick="saveEditFood()" style="width:100%;padding:13px;font-size:15px;">✅ Enregistrer</button>'
-    +'<button class="btn btn-bg2" onclick="confirmRemoveFood('+ts+')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
+    +'<button class="btn btn-bg2" onclick="confirmRemoveFood(\''+_foodIdAttr(id)+'\')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
     +'<button class="btn btn-bg2" onclick="document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;">Annuler</button>'
     +'</div>';
   document.getElementById('ef-name').value=e.name||''; // évite tout souci d'échappement dans l'attribut
@@ -5468,7 +5501,7 @@ function _efPropSetBase(){
 }
 function _efQtyRender(srcChange){
   const el=document.getElementById('ef-qty-row'); if(!el) return;
-  const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){el.innerHTML='';return;}
+  const e=(S.foodLog||[]).find(x=>x&&x.id===_editFoodId); if(!e){el.innerHTML='';return;}
   /* ⛔⛔ `base` NE VIENT PAS DE L'ÉCRAN PAR DÉFAUT — c'est la leçon de ft-v1061 : relire des
      champs déjà rescalés ferait de la référence une valeur dérivée d'elle-même, et l'erreur se
      figerait. Trois cas, et l'ordre compte :
@@ -6514,7 +6547,7 @@ function _afCorrigerKcal(v){
 }
 // Même calcul que `_bcApplyGrams()` (R2) : pour-100g × grammes/100, appliqué aux 4 champs macro.
 function _efApplyGrams(){
-  const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e||!e.per100) return;
+  const e=(S.foodLog||[]).find(x=>x&&x.id===_editFoodId); if(!e||!e.per100) return;
   _qtyRescale('ef', e.per100, 100, (document.getElementById('ef-grams')||{}).value);
 }
 /* 🏷️⚖️ LE POUR-100 g STOCKÉ SUIVAIT-IL VRAIMENT L'ANCIENNE DÉFINITION ? (10/09/2026)
@@ -6538,7 +6571,7 @@ function _per100SuitLaPortion(av){
       && ok(av.per100.carbs,(+av.carbs||0)*f) && ok(av.per100.fat,(+av.fat||0)*f);
 }
 function saveEditFood(){
-  const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){toast('Entrée introuvable','error');return;}
+  const e=(S.foodLog||[]).find(x=>x&&x.id===_editFoodId); if(!e){toast('Entrée introuvable','error');return;}
   /* ⛔ L'ÉTAT D'AVANT SE CAPTURE ICI, avant que les lignes suivantes ne réécrivent `e` : sans ça
      on jugerait la provenance de l'ancien pour-100 g sur les NOUVELLES valeurs. */
   const _av={q:+e.q||0, pw:+e.portionWeightG||0, kcal:+e.kcal||0, prot:+e.prot||0,

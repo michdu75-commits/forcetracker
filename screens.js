@@ -3399,6 +3399,16 @@ function renderFoodJournal(){
   const hasProfile=S.bw&&S.age&&S.height;
   const target=hasProfile?calcMacros(S.nutritionPhase):null;
   const tot=(typeof _foodTotals==='function')?_foodTotals(td):{kcal:0,prot:0,carbs:0,fat:0};
+  /* 🔑⭐⭐ L'IDENTITÉ EST POSÉE LÀ OÙ LA LIGNE DEVIENT CLIQUABLE (16/09/2026, bug T-01).
+     `load()` et la fusion appellent déjà ce propriétaire, mais ils ne couvrent pas tout : une
+     RESTAURATION cloud remplace `S.foodLog` en entier (`setup.js`), après le chargement. Le
+     rendu est le dernier endroit par lequel TOUTE ligne éditable ou supprimable doit passer —
+     y compris celles qu'un chemin futur aurait écrites sans identité.
+     ⛔ C'est idempotent et ça ne touche qu'à l'identité manquante : rien d'autre ne bouge.
+     ⛔ Et ce n'est PAS une redondance décorative : sans lui, une ligne restaurée n'aurait
+     aucune poignée et deviendrait **ni éditable ni supprimable** — précisément le défaut que
+     Michel interdit nommément à l'étape 3. */
+  if(typeof _foodLogIdentifier==='function') _foodLogIdentifier(S.foodLog);
   const entries=(S.foodLog||[]).filter(e=>e.date===td).sort((a,b)=>b.ts-a.ts);
 
   let html='';
@@ -3627,13 +3637,20 @@ function renderFoodJournal(){
         +`</summary>`
         +`<div style="display:flex;flex-direction:column;gap:6px;padding:0 8px 9px;">`;
       g.items.forEach(e=>{
-        html+=`<div onclick="openEditFood(${e.ts})" style="background:var(--bg3);border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;">`
+        /* 🔑 LA POIGNÉE EST L'IDENTITÉ, PLUS L'HORODATAGE. Entre quotes parce que c'est une
+           chaîne, et filtrée par `_foodIdAttr` : l'identité est fabriquée par nous (hexadécimal
+           et tirets), mais une poignée non filtrée dans un attribut `onclick` est une porte
+           qu'on ne laisse pas ouverte « parce qu'aujourd'hui la valeur est sûre ».
+           ⛔ Et c'est une LISTE BLANCHE, pas un échappement : `_escFood` traite `&`, `<` et `>`
+           mais **pas l'apostrophe**, qui est justement ce qui refermerait l'attribut. */
+        const _h=_foodIdAttr(e.id);
+        html+=`<div onclick="openEditFood('${_h}')" style="background:var(--bg3);border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;">`
           +`<div style="flex:1;min-width:0;">`
             +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
             +`<div style="font-size:11px;color:var(--t3);">P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0} · ✎ modifier</div>`
           +`</div>`
           +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
-          +`<button onclick="event.stopPropagation();confirmRemoveFood(${e.ts})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
+          +`<button onclick="event.stopPropagation();confirmRemoveFood('${_h}')" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
         +`</div>`;
       });
       html+=`</div></details>`;

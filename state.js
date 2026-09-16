@@ -92,6 +92,81 @@ function _lsJson(k,fb){
   }catch(e){try{console.warn('[FT load] clé illisible, valeur par défaut :',k,e);}catch(_){}return fb;}
 }
 
+/* ═══ 🔑 L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE ═══════════════════════════════════
+   ⛔⛔ CE BLOC EXISTE PARCE QUE `ts` JOUAIT DEUX RÔLES À LA FOIS, ET QUE ÇA A ÉTÉ MESURÉ.
+   `rejouerRepas` écrit ses lignes dans une boucle SYNCHRONE : plusieurs `Date.now()` tombent
+   dans la même milliseconde, donc plusieurs lignes portent le MÊME `ts` — 9 exécutions sur 9,
+   jusqu'à 5 lignes sur 5. Or `ts` était la SEULE poignée de l'interface. Conséquences mesurées
+   par clics réels (dossier `MESURE-T01-TS-REJOUER-REPAS`) :
+     · cliquer « OEUF » ouvrait et modifiait « PAIN » (`find` rend la PREMIÈRE) ;
+     · cliquer la croix de « JUS » annonçait « PAIN sera retiré » et supprimait LES TROIS
+       (`confirmRemoveFood` employait `find`, `removeFoodEntry` employait `filter` —
+       celle qui ANNONCE et celle qui AGIT n'étaient pas d'accord).
+
+   ⭐⭐ LE CHOIX D'ARCHITECTURE : on ne « rend pas `ts` unique », on SÉPARE les deux notions.
+   `ts` reste un HORODATAGE — et il en est vraiment un : `_profilAlimentaire` en lit l'HEURE
+   (`new Date(e.ts).getHours()`) pour deviner les horaires de repas, et quatre tris s'appuient
+   dessus. Un `ts` gonflé d'un compteur serait un horodatage qui ment. L'identité est donc un
+   champ à part, `id`, qui ne prétend rien dire du temps.
+   ⛔ Le nom `id` n'est pas choisi au hasard : c'est DÉJÀ la convention du projet pour
+   l'identité d'un enregistrement (`S.sessions` porte `{id, ts}`, et ses lecteurs font
+   `s.ts||s.id`). `sourceId`, lui, identifie le PRODUIT, pas la ligne — les deux cohabitent
+   sans ambiguïté.
+
+   ⛔ PAS de `Math.random()` (consigne explicite) : `crypto.randomUUID` quand il existe, sinon
+   `crypto.getRandomValues`. Le repli n'est pas décoratif — `crypto.randomUUID` n'existe qu'à
+   partir de Safari 15.4 ET seulement en contexte sécurisé ; `getRandomValues` est disponible
+   partout et même en http. ⛔ Et s'il n'y a VRAIMENT aucune source aléatoire, on ne retombe
+   pas sur l'horloge : on refuse d'inventer une identité, et l'appelant s'en aperçoit. */
+function _foodLineId(){
+  try{
+    if(typeof crypto!=='undefined' && typeof crypto.randomUUID==='function') return crypto.randomUUID();
+    if(typeof crypto!=='undefined' && typeof crypto.getRandomValues==='function'){
+      const a=new Uint8Array(16); crypto.getRandomValues(a);
+      return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  return null;
+}
+
+/* 🔑 L'IDENTITÉ DANS UN ATTRIBUT HTML — LISTE BLANCHE, PAS ÉCHAPPEMENT.
+   La poignée voyage dans `onclick="openEditFood('…')"`. `_escFood` traite `&`, `<` et `>` mais
+   **pas l'apostrophe**, qui est justement ce qui refermerait l'attribut. Plutôt que d'ajouter un
+   échappement de plus, on FILTRE : l'identité est fabriquée par nous et n'est faite que de
+   caractères hexadécimaux et de tirets, donc tout le reste est retiré. ⭐ Un filtre ne peut pas
+   produire une apostrophe ; un échappement mal choisi, si. Et si une valeur inattendue arrivait,
+   la recherche échouerait simplement — on échoue FERMÉ, jamais en exécutant. */
+function _foodIdAttr(id){ return String(id==null?'':id).replace(/[^0-9a-zA-Z-]/g,'').slice(0,64); }
+
+/* ⭐⭐ LA COMPATIBILITÉ DES LIGNES HISTORIQUES — ET CE N'EST PAS UN DRAPEAU « MIGRATION FAITE ».
+   Une restauration cloud réinjecte le journal TEL QU'IL A ÉTÉ SAUVÉ (`setup.js` fait
+   `S.foodLog=d.foodLog`), donc des lignes sans `id`, et à `ts` déjà en double, peuvent revenir
+   à n'importe quel moment — bien après une migration ponctuelle. Un drapeau one-time laisserait
+   le défaut rentrer par la porte de service. *C'est exactement le piège de `ft4_stmig1` sur les
+   types de série, écrit dans le journal de ft-v1213.*
+   👉 Le mécanisme est donc IDEMPOTENT et REJOUABLE : on le passe à chaque chargement, à chaque
+   fusion et avant chaque rendu du journal. Il ne coûte rien quand tout est déjà en règle.
+   ⛔⛔ IL NE TOUCHE QU'À L'IDENTITÉ MANQUANTE. Aucune macro, aucune date, aucun repas, aucune
+   quantité, aucune portion, aucun `per100`, aucune provenance ne bouge — une ancienne ligne
+   gagne uniquement ce qui lui manquait. Rend le nombre de lignes enrichies (0 = rien à faire). */
+function _foodLogIdentifier(liste){
+  if(!Array.isArray(liste)) return 0;
+  let n=0;
+  /* ⛔ ON NE FAIT PAS CONFIANCE À `id` PARCE QU'IL EST « PRÉSENT » : un `id` recopié sur deux
+     lignes (une fusion malheureuse, un futur écrivain distrait) rejouerait le bug exact qu'on
+     corrige. On exige l'UNICITÉ, et on réattribue le doublon plutôt que de le laisser passer. */
+  const vus=Object.create(null);
+  for(let i=0;i<liste.length;i++){
+    const l=liste[i]; if(!l||typeof l!=='object') continue;
+    const cle=(typeof l.id==='string' && l.id.length>=8) ? l.id : null;
+    if(cle && !vus[cle]){ vus[cle]=1; continue; }
+    const neuf=_foodLineId();
+    if(!neuf) continue;              // aucune source aléatoire : on laisse la ligne telle quelle
+    l.id=neuf; vus[neuf]=1; n++;
+  }
+  return n;
+}
+
 function load(){
   try{
     S.bw=parseFloat(localStorage.getItem('ft4_bw')||'0')||0;
@@ -304,6 +379,13 @@ function load(){
     S.lastMonthSummary=localStorage.getItem('ft4_lms')||'';   // dernier mois ANNONCÉ (ft-v872)
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
     S.foodLog=JSON.parse(localStorage.getItem('ft4_foodlog')||'[]');
+    /* 🔑 Toute ligne relue du disque reçoit l'identité qui lui manque (voir `_foodLogIdentifier`).
+       ⛔ Pas de `persist()` ici : `load()` tourne avant que le reste de l'état soit monté, et
+       réécrire tout le stockage depuis le chargement serait un effet de bord bien plus gros que
+       le problème. Les identités neuves partent au premier enregistrement naturel — et si la
+       personne ne touche à rien, le prochain chargement en repose d'autres : c'est sans
+       conséquence, rien ne dépend d'un `id` stable d'une session à l'autre. */
+    _foodLogIdentifier(S.foodLog);
     S.savedFoods=JSON.parse(localStorage.getItem('ft4_savedfoods')||'[]');
     S.hiddenFoods=JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]');
     S.foodAiUses=parseInt(localStorage.getItem('ft4_foodai')||'0')||0;
@@ -549,8 +631,17 @@ function _fusionnerAvecLeDisque(){
        date en garderait une et jetterait l'autre — silencieusement. */
     S.mensLog    = _fusionListe(S.mensLog,    lire('ft4_mens',[]), e=>String(e&&e.d||'')+'|'+String(e&&e.k||''));
     S.sleepLog   = _fusionListe(S.sleepLog,   lire('ft4_sleep',[]), e=>String(e&&e.date||''));
+    /* ⛔ LA SIGNATURE DE FUSION N'EMPLOIE **PAS** `id`, ET C'EST VOLONTAIRE (16/09/2026).
+       Deux onglets qui notent la même chose produisent deux lignes avec des `id` DIFFÉRENTS :
+       une signature sur l'identité les garderait toutes les deux, donc créerait le doublon que
+       cette fusion existe pour éviter. La signature reste ce qu'elle a toujours été — ce qui
+       DÉCRIT la ligne, pas ce qui la nomme. *Ajouter une identité ne change donc rien ici, et
+       c'est la preuve que le champ est bien une identité locale et pas une clé métier.* */
     S.foodLog    = _fusionListe(S.foodLog,    lire('ft4_foodlog',[]),
                      e=>String(e&&e.date||'')+'|'+String(e&&e.name||'')+'|'+String(e&&e.meal||'')+'|'+String(e&&e.kcal||''));
+    /* 🔑 La fusion peut ramener des lignes de l'AUTRE onglet écrites avant cette version : elles
+       repassent donc par le même propriétaire, qui réattribue aussi un `id` en double. */
+    _foodLogIdentifier(S.foodLog);
     /* Les records sont un OBJET : pour un exercice connu des deux côtés, on garde le plus
        RÉCENT — sinon un onglet resté ouvert écraserait un record battu ailleurs par son
        ancienne valeur, ce qui est précisément la perte qu'on répare. */
