@@ -500,6 +500,24 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="screen active" id="s-home">
   <div id="home-tester" style="padding:14px 14px 0;"></div>
   <div id="home-hdr" style="padding:0;"></div>
+  <!-- 🔋 LA RÉCUP PASSE DEVANT LES SOLLICITATIONS (16/09/2026) — Michel : *« l'utilisateur doit
+       voir son ÉTAT avant qu'on lui demande de répondre à quelque chose »*.
+       ⭐⭐ LA RAISON EST EN PIXELS, pas en goût. Mesuré sur iPhone 390×844, compte réaliste :
+       `home-milo` (170 px) + `home-obs` (299 px) occupaient **469 des 780 px utiles** du premier
+       écran, et la carte de récup commençait à **y = 664** — donc **coupée**. *Le chiffre qui
+       répond à « est-ce que je peux m'entraîner aujourd'hui ? » n'était jamais visible sans
+       faire défiler, pendant que deux demandes, elles, l'étaient entièrement.*
+       ⛔ UNE SEULE LIGNE BOUGE, exprès. L'ordre relatif de TOUS les autres blocs est inchangé —
+       en particulier `home-souvenir` reste immédiatement SOUS `home-milo` (voir son propre
+       commentaire : *« un souvenir ne passe pas devant une relance »*), et `home-daystate`,
+       `log-sleep`, `home-stats`, `home-secondary` gardent leurs places respectives.
+       ⚠️ CE QUE ÇA NE RÈGLE PAS, ET C'EST DIT : `home-daystate` (« comment tu te sens
+       aujourd'hui ? ») est lui aussi une question, et il reste APRÈS les deux sollicitations.
+       Le déplacer était le geste suivant, pas celui-ci — *une chose à la fois, mesurée* (règle
+       d'or #7). Décision à Michel.
+       🔴 RÈGLE D'OR #9 : le bouton central « + » est dans la barre de navigation, en dehors de
+       `#s-home` — il ne peut pas bouger d'ici, et c'est MESURÉ avant/après, pas supposé. -->
+  <div id="home-hero" style="padding:10px 14px 0;"></div>
   <div id="home-milo" style="padding:10px 14px 0;"></div>
   <!-- 🕰️ ft-v1039 — brique 7 « Ton histoire sportive ». SOUS la carte proactive, pour ne
        JAMAIS la déplacer : un souvenir ne passe pas devant une relance ou un message de récup.
@@ -509,7 +527,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div id="home-obs" style="padding:10px 14px 0;"></div>
   <div id="home-daystate" style="padding:10px 14px 0;"></div>
   <div id="log-sleep" style="padding:10px 14px 0;"></div>
-  <div id="home-hero" style="padding:10px 14px 0;"></div>
+  <!-- ⬆️ `home-hero` (la carte de récup) est REMONTÉ juste sous l'en-tête le 16/09/2026 : il
+       était ici. Sa raison chiffrée est écrite à sa nouvelle place. ⛔ Ne pas le « remettre
+       à sa place » : c'est une décision, pas un déplacement accidentel (R30). -->
   <div id="home-stats" style="padding:10px 14px 0;"></div>
   <div id="home-secondary" style="padding:10px 14px 0;"></div>
   <div style="text-align:center;padding:8px 14px 2px;font-size:13px;color:var(--t3);line-height:1.8;border-top:1px solid var(--sep);margin-top:10px;">

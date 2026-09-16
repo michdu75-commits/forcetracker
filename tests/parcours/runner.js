@@ -26912,8 +26912,24 @@ console.log('\n═══ CCXXXVII. Le conseil 💡 passe sous le bouton ══�
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
     /* ⛔ On FORCE un conseil à exister : sans lui, « le bouton est avant le conseil » serait
-       vrai parce qu'il n'y a pas de conseil du tout — un vert qui ne peut pas rougir. */
+       vrai parce qu'il n'y a pas de conseil du tout — un vert qui ne peut pas rougir.
+       ⚠️⚠️ ET LA RECETTE A DÛ CHANGER LE 16/09/2026 (ft-v1219), la passe complète l'a attrapé.
+       Jusque-là il suffisait de vider le sommeil : la base neutre 70 produisait un score, donc
+       des facteurs, donc le conseil « 💤 Renseigne ton sommeil ». Depuis ft-v1219, l'Accueil
+       refuse d'AFFIRMER une récupération à un compte qui ne lui a jamais rien dit — aucune
+       nuit ET aucune séance enregistrée ⇒ pas de chiffre, donc pas de facteurs, donc **pas de
+       conseil**. Le bloc rougissait alors sur du code parfaitement sain.
+       ⭐ LA GARANTIE DU BLOC N'A PAS BOUGÉ D'UN POUCE — « le bouton vient AVANT le conseil » —
+       c'est seulement la façon de fabriquer un conseil qui change : on ajoute une séance
+       ENREGISTRÉE, ce qui décrit d'ailleurs un vrai cas (quelqu'un qui s'entraîne et ne note
+       jamais ses nuits). ⛔ Ne pas revenir en arrière : sans la séance, ce bloc mesure un écran
+       qui n'affiche plus ni score ni conseil.
+       ⚠️ `S.wkt` (séance EN COURS) ne suffit pas et c'est le piège : une séance ouverte n'est
+       pas une séance enregistrée — le score ne parle que de ce qui est FINI. */
     S.sleepLog=[]; S.healthDaily=[];
+    S.sessions=[{date:today(Date.now()-864e5), ts:Date.now()-20*36e5, vol:1500,
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'},
+                                          {kg:100,reps:5,done:true,type:'N'}]}]}];
     /* ⚠️⚠️ ET ON FORCE AUSSI UNE SÉANCE OUVERTE (ajouté le 05/09, ft-v1136). Depuis cette
        version, le bouton ne s'affiche QUE dans ce cas — sans séance en cours, ce bloc ne
        mesurait plus rien et rougissait sur du code parfaitement sain.
@@ -39488,6 +39504,13 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
   await cx13.close();
 }
 
+/* ══ BLOC B-CCCXVIII — LE MINI-CHANTIER ACCUEIL, MESURÉ À L'ÉCRAN ════════════════════════
+   ⛔ LES TÉMOINS VIVENT DANS `tests/parcours/accueil_mini.js`, PAS ICI — même raison que
+   `identite_ligne.js` : le contrôle négatif de ce chantier doit pouvoir les rejouer en
+   quelques secondes, pas relancer une passe de quarante minutes pour éprouver une mutation.
+   ⭐ UN SEUL propriétaire (R2) : le banc l'appelle, le contrôle négatif appelle le même. */
+await require('./accueil_mini.js').ecran(t, b, PORT);
+
 await b.close(); srv.close();
 
 /* == BLOC CXIV - LE BOUTON ROUGE DE `showConfirm` S'APPELAIT « SUPPRIMER » PARTOUT (ft-v1006) ==
@@ -40264,6 +40287,8 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
    de ce chantier serait passé de 35 minutes à NEUF HEURES.
    ⭐ UN SEUL propriétaire (R2) : le banc l'appelle, le contrôle négatif l'appelle aussi. */
 require('./identite_ligne.js')(t, ROOT, fs, path);
+
+require('./accueil_mini.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

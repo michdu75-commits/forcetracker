@@ -430,7 +430,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1218`** (prochaine : `ft-v1219`).
+> **Version actuelle : `ft-v1219`** (prochaine : `ft-v1220`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -469,6 +469,51 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1219 — 🏠 LE MINI-CHANTIER ACCUEIL · QUATRE CORRECTIONS D'INTERFACE, ZÉRO FONCTIONNALITÉ NOUVELLE** — Michel enchaîne sur l'audit du matin avec une borne nette : ⛔ ***« je ne veux PAS ajouter de nouvelle fonctionnalité »*** · ⛔ ***« ne déplace pas aveuglément tout l'écran, je veux un changement minimal »*** · et la phrase qui décide du point ② : ***« l'utilisateur doit voir son ÉTAT avant qu'on lui demande de répondre à quelque chose »***.
+
+**⛔⛔ ① « NaN kg » S'AFFICHAIT SUR 100 % DES COMPTES NEUFS — ET LE TIRET ÉTAIT PRÉVU, IL N'ATTEIGNAIT JAMAIS L'ÉCRAN.** `bwDisp` vaut déjà `'—'` quand rien n'est pesé (`load()` fait `parseFloat(…)||0`) ; c'est `fmt('—')` qui fabriquait le NaN — `Math.round('—'*10)/10`. ⛔ **`fmt()` N'EST PAS TOUCHÉE**, et c'est la consigne explicite de Michel : elle arrondit un **nombre**, elle fait correctement son métier, et elle a beaucoup d'autres appelants. *Un garde posé chez le propriétaire change le contrat de tous ses lecteurs* — c'est **l'appel** qui est gardé. ⭐ Au passage il attrape une valeur non numérique venue d'un import (`'84,5'`), qui rendait NaN elle aussi.
+
+| état du compte | avant | après |
+|---|---|---|
+| neuf, aucune pesée | ⛔ **NaN kg** | ✅ **— kg** |
+| poids du profil seul | 84 kg | 84 kg |
+| une pesée · plusieurs pesées | 79.4 kg | 79.4 kg |
+| après suppression de toutes les pesées | ⛔ **NaN kg** | ✅ **— kg** |
+| valeur importée « 84,5 » | ⛔ **NaN kg** | ✅ **— kg** |
+
+**⭐⭐ ② LA CARTE DE RÉCUP PASSE DEVANT LES SOLLICITATIONS — UNE SEULE LIGNE DÉPLACÉE, ET LA RAISON EST EN PIXELS.** Mesuré sur iPhone 390 × 844, compte réaliste : `home-milo` **170 px** + `home-obs` **182 px** occupaient le haut, et la carte de récup commençait à **y = 573** — donc **coupée**. *Le chiffre qui répond à « est-ce que je peux m'entraîner aujourd'hui ? » n'était jamais visible sans faire défiler, pendant que deux demandes, elles, l'étaient entièrement.*
+
+| bloc | top AVANT | top APRÈS |
+|---|---|---|
+| **`home-hero` (récup)** | ⛔ **573 — coupé** | ✅ **84 — entier** |
+| `home-milo` | 84 | 392 |
+| `home-obs` | 254 | 562 |
+| `home-stats` · `home-secondary` | 878 · 967 | 881 · 970 |
+
+⛔ **L'ordre relatif de TOUS les autres blocs est inchangé** — `home-souvenir` reste immédiatement sous `home-milo` (*« un souvenir ne passe pas devant une relance »*, sa propre décision), et les blocs du bas gardent leur suite. ⚠️ **CE QUE ÇA NE RÈGLE PAS, ET C'EST DIT** : `home-daystate` (« comment tu te sens aujourd'hui ? ») est lui aussi une question et reste **après** les sollicitations ; il devient coupé à son tour. Le déplacer était le geste **suivant**, pas celui-ci — décision rendue à Michel.
+
+**⛔⛔ ③ L'ACCUEIL N'AFFIRME PLUS « BONNE RÉCUPÉRATION » À QUELQU'UN QUI NE LUI A JAMAIS RIEN DIT.** Mesuré sur un compte neuf : score **67**, et ses **seuls facteurs** sont `Récup de base 70` et `Âge -3`. *Rien du corps de la personne n'y entre* — la base neutre est une convention de calcul, l'âge une constante de profil. L'écran annonçait pourtant « Bonne récupération — séance normale possible » (**Principe 18** : ne jamais faire semblant de savoir).
+
+⭐ **LE MOTEUR N'EST PAS TOUCHÉ, ET C'ÉTAIT LA CONSIGNE** : la base 70 est une décision écrite (*« le score reste fonctionnel pour tout le monde »*) que d'autres lecteurs emploient. On ne change pas le **calcul**, on change ce que l'Accueil ose **affirmer**. ⭐⭐ **Et le critère n'est pas inventé : c'est celui que l'app s'applique déjà ailleurs.** `recupHistorique` refuse de tracer un point avant la première nuit ou la première séance, pour cette raison mot pour mot (*« une invention présentée comme une mesure »*). ⚠️ **Avec une différence assumée** : on lit **`_nuitsRecentes`**, propriétaire unique de « que sait-on de cette nuit-là » (**R2**) — il voit **aussi** les nuits mesurées par la montre, que `recupHistorique` ignore encore. *Sans ça, quelqu'un dont la seule donnée est une nuit de sa montre (score 73, **mesuré**) aurait vu « — » : on aurait effacé une vraie mesure.* ⭐ Et le bandeau **« gêne du jour » survit au silence** : une douleur signalée est un **fait déclaré**, pas un score deviné.
+
+**👆 ④ LA ZONE TAPABLE DE « POURQUOI CE SCORE ? » : 124 × 17 → 144 × 43.** On n'agrandit pas le texte, on agrandit la **zone** — `padding` pour la surface, `margin` négative de la même quantité pour que l'écran **ne bouge pas d'un pixel**. ⛔ **La marge haute est bornée à −9 px, et ce n'est pas un chiffre rond** : c'est exactement le `margin-top:9px` de la rangée, donc l'espace **vide**. Aller plus haut ferait déborder la zone sur la ligne des facteurs — *un bouton invisible par-dessus un texte qui n'en est pas un* : on taperait « 🏋️ Séance récente −3 » et une fiche s'ouvrirait. **On prend la place libre, jamais celle d'un voisin.**
+
+**📌 ⑤ LA DETTE R2 DE « LA DERNIÈRE PESÉE » EST CONFIRMÉE — ET LAISSÉE OUVERTE EXPRÈS.** Michel : *« NE refactore pas automatiquement. D'abord, confirme la duplication »* · *« si ça peut être fait sans risque… sinon LAISSE OUVERT »*. **Confirmée** : `slice().sort(desc)[0]` est retapé **4 fois** (`screens.js` la tuile · `tracking.js` le pré-remplissage, le graphique, l'import), et un **cinquième** lecteur répond autrement (`S.weightLog[0].kg`, qui se fie au tri en place). ⛔ **Non centralisée, et la raison compte** : les 4 copies **n'ont pas le même contrat** — l'une rend l'entrée, l'autre le kilo, l'autre un repli sur `S.bw`, la dernière rien. *Un propriétaire qu'on crée sans éprouver ses lecteurs déplace le bug, il ne le corrige pas.* L'inventaire est **écrit dans le code**, à côté de ce qu'il concerne (**R27**), et un témoin fige qu'il y reste (**R30**).
+
+**📣 RÈGLE D'OR #11 — RIEN, ET LA RAISON EST PESÉE PLUTÔT QU'EXPÉDIÉE.** Deux choses bougent pourtant à l'écran : un « NaN » devient un tiret, et la carte de récup **remonte**. ⚖️ Or les points 2 à 5 sont dus **à une FEATURE** : ici il n'y en a aucune — aucun écran, aucun bouton, aucun réglage, aucune donnée nouvelle. ⛔ **Et surtout rien ne DISPARAÎT et rien n'est à FAIRE** : la carte devient **plus** visible, pas moins, et le tiret remplace un défaut que personne n'a jamais demandé à comprendre. *Annoncer « votre carte de récup est maintenant plus haut » serait du bruit* (**R24/R25** : le format incite, il n'encombre pas) — et un point rouge qui pointe une chose qu'on voit déjà mieux use le mécanisme pour les fois où il compte. ⚠️ **Dit franchement, parce que c'est un jugement et pas une évidence** : si Michel préfère un mot dans le Guide, c'est une ligne à ajouter — mais je ne la pose pas de moi-même sur une correction.
+
+**🔴 RÈGLE D'OR #9** : le bouton central est **mesuré**, pas regardé — `56 × 44` en `139,792`, **identique**. ⭐ Et le témoin le compare **à lui-même sur un autre onglet** plutôt qu'à une valeur en dur, *qui deviendrait fausse au premier changement de viewport du banc sans que le bouton ait bougé*.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **Nutrition, douane, `foodLog` : 0 ligne** (`app.js` n'est pas touché) · ⛔ le **moteur de récupération** est intact, base 70 comprise · ⛔ le **calendrier**, la tuile « Séances », le rappel des 90 min, le bouton « Reprendre la séance » : intacts, chacun figé par un témoin · ⛔ **aucune fonctionnalité ajoutée**, aucun écran nouveau, aucun réglage · ⛔ ni `state.js`, ni `coach.js`, ni `log.js`, ni `setup.js`, ni `Code.js`, ni `worker.js`. ⚠️ **Coût de rendu inchangé** : 6,1 → 6,7 ms à froid, 1,6 → 2,0 ms à chaud — *dans la dispersion des mesures, donc on ne revendique aucun gain ni aucune perte*.
+
+**⚠️⚠️ ET UN TÉMOIN ÉTAIT AVEUGLE — QUATRIÈME FOIS DE CE PROJET, MÊME FAMILLE.** Mon garde de périmètre cherchait `im>=90` pour prouver que le rappel « ta séance est encore ouverte » n'avait pas bougé. La mutation qui porte le seuil à **`im>=9000`** — c'est-à-dire qui **éteint** le rappel — le laissait **parfaitement vert**, puisque *« im>=90 » est contenu dans « im>=9000 »*. 👉 ***Un motif qui cherche une PRÉSENCE ne mesure pas une VALEUR.*** Fermé par la parenthèse. (Familles `presentsX` de ft-v1207, `needsCode2` de ft-v1216, `BLOC CCCX` de ft-v1212.) ⚠️ Et une de mes mutations avait une **ancre à 3 occurrences** : elle s'annonçait « invalide » au lieu de mentir, ce qui est le bon comportement — *une mutation qui ne s'applique pas ressemble trait pour trait à une mutation qui ne mord pas*.
+
+**⛔⛔ ET LA PASSE COMPLÈTE A ATTRAPÉ CE QU'AUCUN PETIT BANC NE POUVAIT VOIR — c'est l'argument du protocole, payé cash.** Le bloc **CCXXXVII** (ft-v1132, *« le conseil 💡 passe sous le bouton »*) fabriquait son conseil en **VIDANT le sommeil** : la base neutre 70 produisait alors un score, donc des facteurs, donc le conseil. Avec la correction ③, *aucune nuit ET aucune séance enregistrée* ne produit plus de chiffre — **le bloc rougissait sur du code parfaitement sain**, 4 rouges sur une passe de 4 237 témoins. ⭐ **Sa GARANTIE n'a pas bougé d'un pouce** (le bouton vient AVANT le conseil) : c'est la **recette** du conseil qui change — on ajoute une séance **ENREGISTRÉE**, ce qui décrit d'ailleurs un vrai cas, *quelqu'un qui s'entraîne et ne note jamais ses nuits*. ⚠️ **Et le piège est nommé sur place** : `S.wkt` (séance **en cours**) ne suffit pas — le score ne parle que de ce qui est **fini**. ⭐⭐ **Puis le bloc a été RE-ÉPROUVÉ par une 19ᵉ mutation** (le conseil remonte au-dessus du bouton) : **il mord toujours, 2 rouges**. 👉 ***Une fixture qu'on change doit être ré-éprouvée, sinon on transforme un témoin en vert qui ne peut plus rougir*** — c'est exactement la faute que ft-v994 avait payée, appliquée cette fois au test de quelqu'un d'autre.
+
+Tests : **blocs B-CCCXVIII (21 témoins à l'écran) et B-CCCXIX (16 témoins de source)**, posés dans **`tests/parcours/accueil_mini.js`** — même patron que `identite_ligne.js` la veille, pour que le contrôle négatif les rejoue en **secondes** au lieu de relancer une passe de quarante minutes. ⛔ **CONTRÔLE NÉGATIF : 18 mutations sur un arbre CLONÉ, 18 conformes** (+ une **19ᵉ**, ciblée sur le bloc dont j'ai changé la fixture), contrôle sain **37 OK / 0 rouge avant ET après** — dont ⭐ **une qui doit RESTER VERTE** : ajouter un simple **commentaire** citant `fmt`, `NaN`, `wScore=70` et `home-hero`. *C'est la seule façon de prouver qu'on mesure le CODE et non la documentation* — et les commentaires de cette passe citent abondamment tout ce que les témoins cherchent. ⭐ **Et 18 des 37 témoins rougissent sur l'arbre d'avant** : chacune des quatre corrections est couverte des deux côtés.
+
+Fichiers : `screens.js`, `index.html`, `tests/parcours/accueil_mini.js` (nouveau), `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `state.js`, ni `tracking.js`, ni `coach.js`, ni `log.js`, ni `setup.js`, ni `supabase.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1219. |
 
 **ft-v1218 — 🔑 L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE · ON NE REND PAS `ts` UNIQUE, ON SÉPARE LE TEMPS DE L'IDENTITÉ** — Michel part du dossier `MESURE-T01-TS-REJOUER-REPAS` mesuré le matin même, et pose la borne qui décide de tout : ⛔ ***« je ne veux PAS uniquement : mettre `Date.now()+i` et passer à autre chose »*** · ***« je veux d'abord vérifier l'architecture de l'identité d'une ligne du journal »*** · ***« `ts` joue actuellement DEUX rôles : horodatage ; identifiant de ligne. Ces deux notions ne devraient probablement pas être confondues. »***
 
@@ -725,42 +770,3 @@ Tests : **parcours TOTAL/TOTAL sur l'arbre FINAL** (bloc **CCCX**, 10 témoins).
 
 Fichiers : `index.html`, `app.js`, `tests/parcours/runner.js`, `tools/gen_banc_pdf.py` (nouveau), `tools/gen_scanner_pdf.py`, `docs/BANC-MOTEURS-CODEBARRES.md` (nouveau), `docs/banc-moteurs-mesures.json` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1212. |
 
-**ft-v1211 — 🔬 LE PROTOCOLE DE VALIDATION DE L'ÉTAPE 1b EST FERMÉ · ET CE QUI A ÉTÉ CONSTRUIT EST UN REFUS** — Michel refuse les deux seules façons de tester qui restaient : ***« je ne veux PAS réimporter des séances déjà présentes juste pour faire un test »*** · ***« je ne veux pas non plus importer une fausse séance puis la supprimer ensuite »***. Sa demande : ***« éprouver la chaîne production réelle de `typesNormalises` SANS écrire quoi que ce soit dans `S.sessions` »***.
-
-**⭐⭐ L'AUDIT A ÉTÉ FAIT AVANT TOUTE LIGNE, ET IL A RENDU LE CHANTIER PRESQUE VIDE.** Fermeture transitive sur **168 fonctions** atteintes depuis le chemin d'import — pas une lecture à l'œil, un découpage du **corps réel** de chaque fonction (comptage d'accolades, en ignorant chaînes et commentaires) :
-
-| fonction | ce qu'elle écrit |
-|---|---|
-| `openImportHist` · `addHistPhoto` · `addHistFile` · `histGoStep` | **rien** |
-| `analyzeHistPhotos` | **rien** |
-| `_histAnalyzeBatch` | **le seul appel réseau**, rien d'autre |
-| `_vmMatchHist` · `_renderHistPreview` · `closeImportHist` · `histRecommencer` | **rien** |
-| **`finalImportHist`** | `S.sessions` · `S.prs` · `S.histImports` · `persist()` · sync cloud · badges · signalement d'exercice |
-
-👉 ***L'aperçu (étape 4) est DÉJÀ un point d'arrêt non destructif***, et `closeImportHist` ne fait que retirer une classe CSS.
-
-**⛔⛔ DONC AUCUN MODE TEST N'A ÉTÉ CRÉÉ, ET C'EST LA DÉCISION DE LA VERSION.** Un bouton « Tester le transport » serait un **second chemin** — précisément ce que Michel interdit (*« pas de test qui contourne le Worker, pas d'autre route que l'import réel »*). *Un mode test qui n'emprunte pas le chemin de production ne valide pas le chemin de production : il valide le mode test.* Le chemin **réel** devient auto-témoin. ⭐ Bénéfice mesuré : les mutations *« un mode test devient persistant »* et *« un fallback transforme le test en vrai import »* deviennent **sans objet** — il n'y a rien à détourner.
-
-**⚠️⚠️ LE SEUL VRAI TROU, ET IL EST SÉRIEUX** : `_aiUrl` **RETOMBE sur Apps Script** si `AI_PROXY_URL` est vide. Donc *« le Worker a répondu »* n'était **pas prouvable** — il était **supposé**. Or c'est exactement la question que ce test doit fermer. La destination est désormais relevée **AVANT** le `fetch` (une tentative qui échoue doit dire où elle allait, sinon un Worker injoignable est indiscernable d'un Worker jamais appelé) et affichée : `OUI` / `NON (Apps Script)` / `MIXTE`.
-
-**⭐ `_empreinteDonnees()` — UN SEUL PROPRIÉTAIRE, APPELÉ DES DEUX CÔTÉS (R2).** C'est le point de conception : *la capture et la comparaison doivent employer exactement la même projection*. Si l'avant regardait les dates et l'après les volumes, la comparaison dirait « identique » sur deux états différents. ⭐ **Et c'est une empreinte, pas un compteur** : *un import qui remplacerait une séance au lieu d'en ajouter une laisserait le NOMBRE inchangé.* Un témoin le prouve — même nombre, empreinte différente.
-
-**📋 L'ÉCRAN ADMIN PORTE LES 7 LIGNES DEMANDÉES**, dont ⭐ **« Écriture dans `S.sessions` : NON » RECALCULÉE** à l'affichage, jamais un drapeau posé en partant : *un drapeau dit ce qu'on CROYAIT faire, une empreinte dit ce qui EST*.
-
-**⚠️⚠️ DEUX ERREURS D'INSTRUMENT, ET LA PREMIÈRE EST UNE RÉCIDIVE À 24 HEURES.** ① Mon témoin du repli faisait `Object.defineProperty(window,'AI_PROXY_URL',{value:''})` — **il était VERT EN NE MESURANT RIEN** : `AI_PROXY_URL` est un `const` de premier niveau, donc il vit dans l'environnement lexical global et **n'est pas une propriété de `window`**. J'ai créé une seconde variable que `_aiUrl` ne lit jamais, et le témoin se rabattait sur sa clause de sortie *« non rejouable »*. 👉 ***C'est le piège de `window._histExtracted`, que j'avais documenté moi-même la veille dans ft-v1209.*** Le banc sert désormais un `constants.js` à constante vide — le vrai `_aiUrl` retombe pour de bon. ⛔ **Et la clause de sortie est supprimée** : *un témoin qui a le droit de ne pas mesurer finit par ne pas mesurer.*
-
-**⭐⭐ ② ET LE TÉMOIN CORRIGÉ A ROUGI POUR UNE VRAIE RAISON, QUI COMPTE POUR LE PROTOCOLE** : `analyzeHistPhotos` commence par le **mur premium**. Sur un compte **gratuit** ayant déjà importé une fois, le document **n'atteint JAMAIS le Worker** — le diagnostic afficherait « aucun import observé » et on conclurait à tort à une panne de transport. *Deux causes opposées, deux correctifs opposés.*
-
-**⭐⭐ ET UNE MUTATION N'A MORDU SUR RIEN AU PREMIER JET — elle a révélé un vrai trou.** *« Le mode test fabrique `typesNormalises` »* : **0 rouge**. Cause mesurée — `d.data.typesNormalises` est lu **DEUX FOIS** dans `_histAnalyzeBatch`, pour **deux consommateurs** : le diagnostic Admin (`_histDiag.valeur`) et le **total transporté** (`_histExtracted.typesNormalises`), lequel produit le message *« N séries au type non reconnu »* **montré à la personne**. Fabriquer l'un laissait l'autre parfaitement sincère. 👉 ***Un champ lu deux fois est deux champs tant que rien ne vérifie qu'ils sont d'accord.*** Trois témoins le font désormais (comportement × 2 valeurs + source). ⛔ **Non refactorisé** : les deux expressions sont identiques aujourd'hui, il n'y a pas de défaut à corriger — seulement une divergence à rendre impossible en silence.
-
-**⚠️ ET UNE ÉCRITURE RESTE ATTEIGNABLE, DITE PLUTÔT QUE MASQUÉE** : depuis l'aperçu, taper « rattacher » puis chercher un exercice inexistant déclenche `_signalerRechercheVide`, qui écrit `S.reportedRechVide` et `ft4_rep_rech` (la liste anti-doublon des recherches vides, **R36**). ⛔ Ni séance, ni record, ni historique — et il faut un geste délibéré de plus. *Le chemin d'appel est nommé, pas deviné* : `_renderHistPreview → histRattacher → _impPickOuvre → openExPicker → filterEx → _signalerRechercheVide`.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran utilisateur ne change, aucune donnée ne bouge : la carte Admin livrée en ft-v1209 dit simplement plus de choses (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **l'ÉTAPE 2 n'est pas ouverte** — prompt `importHistory` inchangé des deux côtés, aucun `setTypePerSet` historique, `_typeAt` non branché, normalisation `D`/`''` intacte, records intacts, aucune migration · ⛔ **Nutrition, Milo, programmes, scanner : 0 ligne** — `app.js` et `index.html` ne sont **pas touchés**, la carte Admin existait déjà · ⛔ `_signalerRechercheVide` n'est pas modifiée (**R30** : c'est une décision de ft-v1169, pas un oubli).
-
-⚠️⚠️ **ET LE TEST QUI COMPTE N'EST TOUJOURS PAS FAIT** : le Worker déployé reste injoignable depuis le conteneur (`403`). Verdict tant que Michel n'a pas fait son import iPhone : ***ÉTAPE 1B PUBLIÉE MAIS TEST PRODUCTION NON DESTRUCTIF EN ATTENTE***.
-
-Tests : **bloc B-CCCX, 33 témoins**, verts sur l'arbre final. ⛔ **CONTRÔLE NÉGATIF : 14 mutations — les 10 nommées par Michel + 4 miennes — contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** (`BUGS.md` §60 par construction).
-
-Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `coach.js`, ni `tracking.js`, ni `setup.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1211. |

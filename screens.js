@@ -833,7 +833,37 @@ function _ringScale(v){
 }
 function _renderHomeHero(){
   const el=document.getElementById('home-hero');if(!el)return;
-  const detail=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():{score:calcRecoveryScore(),factors:[],tips:[]};
+  const _detail=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():{score:calcRecoveryScore(),factors:[],tips:[]};
+  /* ⛔⛔ « BONNE RÉCUPÉRATION » SUR UN COMPTE QUI NE NOUS A RIEN DIT — une affirmation, pas une
+     mesure. Mesuré sur un compte neuf : score **67**, et ses SEULS facteurs sont `Récup de base
+     70` et `Âge -3`. Rien du corps de la personne n'y entre : la base neutre est une convention
+     de calcul, l'âge une constante de profil. L'écran annonçait pourtant *« Bonne récupération —
+     séance normale possible »*. *Ne jamais faire semblant de savoir* (Principe 18, R29).
+
+     ⛔ LE MOTEUR N'EST PAS TOUCHÉ, ET C'EST VOULU : la base 70 est une décision écrite
+     (« le score reste fonctionnel pour tout le monde ») que d'autres lecteurs utilisent. On ne
+     change pas le CALCUL, on change ce que l'Accueil ose AFFIRMER — la correction est locale au
+     rendu, et `calcRecoveryDetail()` rend exactement la même chose qu'avant.
+
+     ⭐ LE CRITÈRE EST EXACTEMENT CELUI QUE L'APP S'APPLIQUE DÉJÀ AILLEURS : `recupHistorique`
+     refuse de tracer un point avant la première nuit ou la première séance, pour cette raison
+     mot pour mot (*« une invention présentée comme une mesure »*). On pose ici la même règle sur
+     AUJOURD'HUI. ⚠️ Une différence assumée : on lit `_nuitsRecentes`, propriétaire unique de
+     « que sait-on de cette nuit-là » (R2) — il voit AUSSI les nuits mesurées par la montre, que
+     `recupHistorique` ignore encore. Sans ça, quelqu'un dont la seule donnée est une nuit de sa
+     montre (score 73, mesuré) verrait « — » : on aurait effacé une vraie mesure.
+     ⚠️ LIMITE ÉCRITE PLUTÔT QUE TUE (R30) : quelqu'un qui a des séances mais n'a JAMAIS noté de
+     nuit garde son score, base neutre comprise. C'est le comportement d'avant, et ce n'est pas
+     le défaut corrigé ici — son conseil « 💤 Renseigne ton sommeil » est déjà affiché.
+     ⭐ Le bandeau « gêne du jour » est CONSERVÉ : une douleur signalée est un fait déclaré par la
+     personne, pas un score deviné — il n'a aucune raison de disparaître avec le chiffre. */
+  const _sansDonnee=((typeof _nuitsRecentes==='function')
+      ? _nuitsRecentes(today(),3).length===0
+      : !((S.sleepLog||[]).length))
+    && !((S.sessions||[]).length);
+  const detail=_sansDonnee
+    ? {score:null,factors:[],tips:[],dayPains:_detail.dayPains}
+    : _detail;
   const score=detail.score;
   const info=getRecoveryInfo(score);
   const ringColor=score!==null?info.color:'var(--t3)';
@@ -912,7 +942,17 @@ function _renderHomeHero(){
     }catch(e){}
     detailHtml='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px 7px;font-size:11px;color:var(--t3);align-items:center;">'+fx+'</div>'
       +'<div style="margin-top:9px;display:flex;align-items:center;gap:10px;">'
-      +'<button onclick="openRecoWhy()" style="background:none;border:none;padding:0;color:var(--blue);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent;">Pourquoi ce score ?<span style="font-size:12px;">›</span></button>'
+      /* 👆 ZONE TACTILE — mesurée à 124 × 17 px, c'est-à-dire la hauteur du TEXTE. Le doigt vise
+         une ligne de 17 px : on rate, on retape. Le repère d'accessibilité est ~44 px.
+         ⭐ ON N'AGRANDIT PAS LE TEXTE, on agrandit la ZONE : `padding` pour la surface tactile,
+         `margin` NÉGATIVE de la même quantité pour que l'écran ne bouge pas d'un pixel — le
+         libellé reste à sa place, à sa taille, à sa couleur.
+         ⛔ LA MARGE HAUTE EST BORNÉE À -9 px, PAS DAVANTAGE, et ce n'est pas un chiffre rond :
+         c'est EXACTEMENT le `margin-top:9px` de la rangée, donc l'espace vide au-dessus. Aller
+         plus haut ferait déborder la zone sur la ligne des facteurs — *un bouton invisible
+         par-dessus un texte qui n'en est pas un* : on taperait « 🏋️ Séance récente −2 » et une
+         fiche s'ouvrirait. On prend la place libre, jamais celle d'un voisin. */
+      +'<button onclick="openRecoWhy()" style="background:none;border:none;padding:13px 10px;margin:-9px -10px -9px;color:var(--blue);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent;">Pourquoi ce score ?<span style="font-size:12px;">›</span></button>'
       +sparkHtml+'</div>';
     /* ⛔ Le conseil garde EXACTEMENT sa mise en forme : on le déplace, on ne le redessine pas
        (R14 — un comportement copié d'un contexte à un autre peut devenir faux ; ici on ne
@@ -2047,8 +2087,36 @@ function renderHome(){try{
      👉 CE QU'IL FAUDRA POUR LES REMETTRE (et pas moins) : une destination qui MONTRE le chiffre
      tapé — accordéon volume ouvert d'office, et un endroit qui affiche le total des trois barres.
      Détail dans IDEES-FUTURES.md. */
+  /* 📌 DETTE R2 CONFIRMÉE, LAISSÉE OUVERTE EXPRÈS (16/09/2026) — écrite ici plutôt que corrigée
+     à la va-vite, parce qu'une dette qu'on ne sait plus retrouver n'est plus une dette, c'est un
+     piège. « Quelle est la DERNIÈRE pesée ? » est reposée **4 fois**, à l'identique :
+       · screens.js (ici)  → `latestW`, la tuile poids de l'Accueil
+       · tracking.js ~600  → `lastW`,   le pré-remplissage du champ de pesée
+       · tracking.js ~732  → `cur`,     qui prend `.kg` et retombe sur `S.bw||0`
+       · tracking.js ~908  → `last`,    sans garde de longueur
+     ⚠️ Et un CINQUIÈME lecteur répond autrement : `tracking.js ~976` fait `S.weightLog[0].kg`,
+     en se fiant au tri en place posé après chaque écriture. *Deux méthodes pour une question,
+     c'est exactement la forme que prend une divergence future* (R2).
+     ⛔ POURQUOI ON NE CENTRALISE PAS DANS CETTE PASSE, et c'est la consigne de Michel (*« si ça
+     peut être fait sans risque… sinon LAISSE OUVERT »*) : les 4 copies n'ont **pas le même
+     contrat** — l'une rend l'entrée, l'autre le kilo, l'autre un repli sur `S.bw`, la dernière
+     rien du tout. Les unifier demande de TRANCHER ce contrat, et les 3 autres vivent dans le
+     parcours de pesée / d'import / du graphique — que cette passe ne mesure pas.
+     👉 *Un propriétaire qu'on crée sans éprouver ses lecteurs déplace le bug, il ne le corrige
+     pas.* Le geste juste est une passe à part, avec son banc. */
   const latestW=S.weightLog&&S.weightLog.length?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
   const bwDisp=latestW?latestW.kg:(S.bw||'—');
+  /* ⚠️ « NaN kg » SUR TOUT COMPTE NEUF — et le tiret ÉTAIT prévu, il n'atteignait jamais l'écran.
+     `bwDisp` vaut déjà '—' quand rien n'est pesé (aucune ligne de `weightLog`, `S.bw` à 0 parce
+     que `load()` fait `parseFloat(...)||0`) ; c'est `fmt('—')` qui produisait le NaN —
+     `Math.round('—'*10)/10`. Mesuré : 100 % des comptes neufs affichaient « NaN kg ».
+     ⛔ ON NE TOUCHE PAS À `fmt()` (state.js) : elle a de nombreux autres appelants et elle fait
+     correctement son métier — arrondir un NOMBRE. C'est L'APPEL qui doit être gardé, pas la
+     fonction : *un garde posé chez le propriétaire change le contrat de tous ses lecteurs.*
+     ⭐ Le garde attrape aussi une valeur non numérique venue d'un import ('84,5'), qui rendait
+     NaN elle aussi. Un `kg` à 0 reste affiché « 0 kg » : ce n'est pas le défaut corrigé ici. */
+  const _bwN=(bwDisp===''||bwDisp==null)?NaN:Number(bwDisp);
+  const bwTxt=isFinite(_bwN)?fmt(_bwN):'—';
   const statsEl=document.getElementById('home-stats');
   // Restylage maquette : grille de cartes (icône + chiffre + label) — mêmes données, mêmes clics
   /* 📐 UNE SEULE RANGÉE (05/09/2026) — un testeur trouve l'Accueil trop chargé, décision de
@@ -2078,7 +2146,7 @@ function renderHome(){try{
   if(statsEl)statsEl.innerHTML='<div onclick="toggleCeMois()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 3px '+(_cmOpen?'9px':'0')+';"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="margin-left:auto;font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span>'+_chev+'</div>'
     +(!_cmOpen?'':'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;">'
     +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois','Séances')
-    +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps','Poids')
+    +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+bwTxt+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps','Poids')
     +'</div>');
   // Calendrier mensuel (remplace cycle de force / niveau / records sur l'Accueil — chantier feat/accueil-calendrier)
   _renderHomeCalendar();

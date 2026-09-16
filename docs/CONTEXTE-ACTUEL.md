@@ -364,7 +364,27 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1218` — 🔑 **L'IDENTITÉ D'UNE LIGNE DU JOURNAL
+- **Version en ligne (live) :** `ft-v1219` — 🏠 **LE MINI-CHANTIER ACCUEIL : quatre corrections
+  d'interface, zéro fonctionnalité nouvelle.** Suite de l'audit de l'onglet Accueil du même jour.
+  ① le **`NaN kg`** de la tuile poids (100 % des comptes neufs) — ⛔ corrigé **chez l'appelant**,
+  `fmt()` n'est pas touchée · ② la **carte de récup passe devant les deux sollicitations de Milo**
+  (une ligne déplacée dans `index.html` : elle commençait à **y = 573**, donc coupée ; elle
+  commence à **84** et tient entière) · ③ ⛔ l'Accueil **n'affirme plus « Bonne récupération »** à
+  un compte muet — au **rendu**, le moteur et sa base 70 sont intacts, et le critère est celui que
+  `recupHistorique` s'applique déjà · ④ la zone tapable **« Pourquoi ce score ? »** 124×17 →
+  **144×43**, `padding` compensé par une marge négative, l'écran ne bouge pas.
+  📌 ⑤ **la dette R2 de « la dernière pesée » est CONFIRMÉE et laissée OUVERTE** (4 copies + un
+  5ᵉ lecteur qui répond autrement ; leurs contrats diffèrent, 3 sur 4 vivent hors de l'Accueil) —
+  inventaire écrit dans le code, témoin qui l'y fige.
+  🔴 Bouton central **mesuré identique**. Coût de rendu inchangé.
+  ⚠️ **Décision rendue à Michel** : `home-daystate` est lui aussi une question et reste après les
+  sollicitations — il devient coupé à son tour. Le déplacer était le geste **suivant**.
+  ⛔ **Nutrition, douane, `foodLog`, moteur de récup, calendrier : 0 ligne.**
+  Tests : blocs **B-CCCXVIII** (21 témoins à l'écran) et **B-CCCXIX** (16 de source), dans
+  `tests/parcours/accueil_mini.js`. **18 mutations sur arbre cloné, 18 conformes** (dont une qui
+  doit **rester verte** : un commentaire citant `fmt`, `NaN` et `70`), sain **37/0 avant et après**.
+
+- **Version précédente :** `ft-v1218` — 🔑 **L'IDENTITÉ D'UNE LIGNE DU JOURNAL
   ALIMENTAIRE.** `rejouerRepas` donnait le **même `ts`** à plusieurs lignes (boucle synchrone,
   9 runs sur 9), et `ts` était la **seule poignée** de l'interface : cliquer « OEUF » modifiait
   « PAIN », et la croix de « JUS » annonçait *« PAIN sera retiré »* puis supprimait **les trois**.
