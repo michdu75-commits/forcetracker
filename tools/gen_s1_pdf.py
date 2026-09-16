@@ -84,7 +84,9 @@ g('q.byEmail[e]' in corps(CODEJS, '_aiQuotaBlock_'),
   'le quota n\'est plus indexe sur l\'e-mail : le dossier l\'affirme')
 
 # ── LE BOOTSTRAP : ses quatre bornes, relues et non retapees ────────────────────────────────
-for motif, quoi in ((r'cur\.tries\s*>=\s*5', '5 essais'),
+# [!] `(?!\d)` : sans lui, « >= 5000 » satisfait « >= 5 » — le piege des sous-chaines, applique
+#     a un NOMBRE cette fois. Une borne relevee de 5 a 5000 laissait le garde vert.
+for motif, quoi in ((r'cur\.tries\s*>=\s*5(?!\d)', '5 essais'),
                     (r'exp:\s*now\s*\+\s*15\s*\*\s*60000', 'expiration 15 min'),
                     (r'now\s*-\s*cur\.sentAt\)\s*<\s*60000', 'cooldown 60 s'),
                     (r"_dailyCounterBlock_\('confirm_send_quota',\s*80\)", 'plafond 80/jour')):
@@ -98,7 +100,8 @@ g(re.search(r"var code = '' \+ Math\.floor\(100000 \+ Math\.random\(\)", CODEJS)
 # ── PROPRIETES A PRESERVER ─────────────────────────────────────────────────────────────────
 g(not re.search(r'body\.premium|data\.premium|p\.premium', CODEJS),
   'le serveur lit desormais un premium fourni par le client : le dossier affirme le contraire')
-g('needsCode' in corps(CODEJS, '_lectureAutorisee_'), 'la lecture stricte a disparu')
+g(re.search(r'\bneedsCode\s*:', corps(CODEJS, '_lectureAutorisee_')) is not None,
+  'la lecture stricte a disparu')
 
 # ── LES TEMOINS EXISTENT VRAIMENT, ET ILS SONT AU NOMBRE ANNONCE ───────────────────────────
 N_TEMOINS = len(re.findall(r"t\('B-CCCXIII ", RUN))
@@ -153,7 +156,12 @@ g('V2 RESTE OUVERTE' in DOSSIER,
   'ce qu\'il n\'a pas mesure')
 for q in ('Question 1', 'Question 2', 'Question 3'):
     g(q in DOSSIER, 'la %s a disparu' % q)
-g(re.search(r'Question 1.*?\*\*OUI\*\*', DOSSIER, re.S) is not None,
+# [!!] LA SECTION EST BORNEE. `Question 1.*?OUI` avec re.S deborde sur la Question 2, qui repond
+#      OUI elle aussi : le garde lisait donc la reponse de la question SUIVANTE. *Une borne qui
+#      n'en est pas une mesure le voisin.*
+_q1 = re.search(r'###\s*Question 1\b.*?(?=###\s*Question 2\b)', DOSSIER, re.S)
+g(bool(_q1), 'la section Question 1 est introuvable ou n\'est plus suivie de la Question 2')
+g('**OUI**' in _q1.group(0),
   'la reponse a la question 1 n\'est plus OUI : S1 n\'etant pas implemente, elle doit l\'etre')
 g('Math.random' in DOSSIER, 'le dossier ne signale plus la faiblesse du bootstrap')
 
