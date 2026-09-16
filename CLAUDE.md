@@ -161,7 +161,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1206`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1216`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -430,7 +430,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1215`** (prochaine : `ft-v1216`).
+> **Version actuelle : `ft-v1216`** (prochaine : `ft-v1217`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -469,6 +469,40 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1216 — 🪪 L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL DÉCLARÉE · ET C'EST UN SEUL PROPRIÉTAIRE QUI SAUVE NUTRITION** — S1, la première correction nommée par l'audit sécurité du 15/09. Michel tranche les **4 décisions produit** qu'il s'était réservées et pose un interdit : ⛔⛔ ***« INTERDIT de faire : e-mail seul → émission automatique d'un credential fiable »*** · ⛔ ***« pas de `Math.random()` dans la chaîne d'identité »***.
+
+**⭐⭐ LE DÉFAUT FERMÉ TIENT EN UNE PHRASE.** Partout — `saveProfile`, `pushHealth`, le Worker IA — un **e-mail fourni par le client** valait **identité authentifiée**. Conséquence mesurée à l'audit : on pouvait **écraser le compte d'autrui** si la victime n'avait pas posé de code, et **faire payer ses appels IA à quelqu'un d'autre**. Un **registre de jetons** côté serveur remplace ça.
+
+| | avant | après |
+|---|---|---|
+| preuve d'identité | `email` dans la charge utile | **jeton opaque 256 bits** |
+| ce que le serveur stocke | — | ⭐ **SHA-256 du jeton, jamais le brut** |
+| `jeton A` + `email B` | décompté sur **B** | ⭐⭐ décompté sur **A** |
+| jeton présent mais invalide | — | ⛔ **REFUSÉ** (pas de repli sur l'e-mail) |
+| panne réseau du Worker | — | ⛔ **ferme** la porte |
+
+**⭐ LE JETON N'EST ÉMIS QUE CONTRE UNE PREUVE, et l'interdit de Michel est tenu.** Deux portes seulement : la **vérification e-mail** déjà déployée et **bornée** (5 essais · expiration · 60 s de cooldown · 80/jour, soit ~400 tentatives/jour contre 10⁶) — la preuve est **consommée à l'instant même** où le jeton est émis — ou un **code perso déjà posé**. ⛔ Un e-mail seul n'en obtient **jamais**. ⭐ **Et la récupération emprunte la MÊME porte que le bootstrap** (décision de Michel) : pas de second chemin, donc pas de second trou.
+
+**⛔ `Math.random()` SORT DE LA CHAÎNE D'IDENTITÉ.** L'audit l'avait signalé comme faiblesse *à corriger si ce chemin délivre un jeton* — il le délivre désormais. Le jeton vient de **trois `Utilities.getUuid()`**, et le code de confirmation d'un UUID lui aussi.
+
+**⭐⭐ LA DÉCISION D'ARCHITECTURE EST CÔTÉ CLIENT, ET C'EST ELLE QUI PROTÈGE LA PROMESSE FAITE À MICHEL.** Les appels au Worker partent de **16 endroits dans 4 fichiers**, dont **5 sont Nutrition** (`foodLabel` · `readBarcode` · `estimateFood` · `generateMealPlan` · `importMealPlan`). Les modifier un par un aurait ouvert `app.js` en plein chantier Nutrition **gelé**. Un **injecteur unique** posé dans `constants.js` ajoute le jeton aux appels du Worker : ⛔⛔ **Nutrition = 0 ligne**, et un témoin épingle que `token:_ftToken()` n'apparaît **au plus qu'une fois** dans `app.js` — *si le chantier avait débordé, il rougirait*. C'est **R2** appliqué au transport : une information, un propriétaire.
+
+**⏳ LA FENÊTRE DE TRANSITION EST UN CHOIX DE MICHEL (option B), PAS UN COMPROMIS TECHNIQUE.** Sans jeton, l'ancien chemin fonctionne encore ; un compteur **anonyme** (aucune adresse) mesure la bascule ; **`_MIG_FERME_ = false`** la fermera **à la date qu'il décidera**. 👉 *Personne n'est mis dehors* — et c'est **le seul interrupteur** à basculer pour clore S1.
+
+**⛔⛔ `V2 RESTE OUVERTE JUSQU'À S2`, ET ON NE MAQUILLE PAS.** `ft_miroir` reçoit toujours un `p_email` **libre** depuis le navigateur : le fermer impose de faire entrer le Worker dans ce chemin, c'est **S2**. ⭐ Le témoin ③ est **volontairement NON retourné** pour le dire — *un témoin qui affirme ce qu'on aurait aimé lire ne protège rien*.
+
+**⚠️⚠️ ET QUATRE DE MES GARDES ÉTAIENT FAUX — TROIS REFUSAIENT DU TRAVAIL JUSTE.** Le générateur du dossier a refusé de sortir **quatre fois sur du code parfaitement sain** : ① le garde `Math.random()` rougissait **à cause du commentaire qui DOCUMENTE son retrait** — R30 exige de l'écrire à sa place, donc le mot reste dans le fichier (*un garde qui ne distingue pas le CODE de ce qui en PARLE mesure la documentation*, famille ft-v1193/1203/1205/1210) · ② le garde « le jeton brut n'est pas stocké » attrapait le `brut` passé **à la fonction de hachage** (*un garde plus strict que la contrainte réelle refuse du travail juste*, ft-v1214) · ③ une borne en **caractères** ne pouvait pas franchir le `;` posé entre deux instructions (**§63**) · ④ ⭐⭐ **deux gardes AVEUGLES au piège de la SOUS-CHAÎNE** : renommer `_ftPoserInjecteurJeton` en `…JetonX` les laissait **parfaitement verts**, puisque l'ancien nom est contenu dans le nouveau — famille `presentsX`/`needsCode2`, **3ᵉ fois** dans ce projet, fermés sur leur forme déclarative.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : le jeton est posé et transporté sans que la personne ait un geste à faire. ⚖️ **Pas de pop-up `WHATS_NEW`** — rien à *faire*, aucun repère n'a bougé.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **S2** (fermer le miroir Supabase) · ⛔ **S3** (l'idempotence du débrief, qui se construit DESSUS) · ⛔ `deleteAccount` · ⛔ la vérification **Premium serveur** · ⛔ les e-mails réels dans le dépôt · ⛔ **aucun `accountId`** (migration disproportionnée — la table de jetons sert de point d'indirection) · ⛔ Nutrition, `foodLog`, douane, scanner, `savedFoods`, migration Supabase principale, paiement, natif. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran, et c'est précisément ce qu'il y a à vérifier. ⚠️ **Fenêtre de déploiement dite plutôt que masquée** : `worker.js` et `Code.js` se déploient **en parallèle**, donc Milo peut répondre 401 pendant ~1 min si le Worker part le premier — bref, auto-résolu, **aucune perte**.
+
+Tests : **parcours 4150/4150 sur l'arbre FINAL** (bloc **B-CCCXIII**, 10 témoins dont **5 RETOURNÉS** au lieu d'être supprimés — R30), **banc S1 35/35**. ⛔ **CONTRÔLE NÉGATIF : 20 mutations, 20 mordent par LEUR garde**, contrôle sain **0 rouge avant ET après**, sur un arbre **copié**.
+
+📄 **PDF POUR GPT** : `DOSSIER-S1-IDENTITE-SERVEUR-FINAL-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **60 gardes**. ⭐ Le miroir exact du générateur précédent : celui-là refusait de produire si S1 était **déjà** fait, celui-ci refuse si une pièce **manque**.
+
+Fichiers : `Code.js`, `worker.js`, `constants.js`, `app.js`, `setup.js`, `tests/parcours/runner.js`, `tools/gen_s1_final_pdf.py`, `sw.js`, `CLAUDE.md`, `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `index.html`, ni `log.js`, ni `coach.js`, ni `state.js`, ni `supabase.js`, ni `screens.js`, ni `tracking.js`.** sw.js ft-v1216. |
 
 **ft-v1215 — 🔒 CE N'ÉTAIT PAS UN VERROU MANQUANT, C'ÉTAIT UN ÉTAT · ET LA SÉANCE CESSE D'ÊTRE DEVINÉE** — phase 1 du chantier débrief, validée par Michel après le dossier de mesures : ⛔ ***« pour CETTE passe, tu ne fais QUE l'étape 1 »***.
 
@@ -923,46 +957,3 @@ Tests : **parcours 3817/3817 sur l'arbre FINAL** (bloc **CCCVI** porté à **20*
 📄 **PDF POUR GPT** : `docs/CAPTURE-IPHONE-TRANCHEE.pdf` régénéré (**56 gardes**) — il porte désormais la vraie fiche et la réponse au 48,3. ⚠️ **Et deux de ses nouveaux gardes se laissaient satisfaire par une SOUS-CHAÎNE** (`FICHE_SANS_KJ` est contenu dans `FICHE_SANS_KJx`) : *le piège de `presentsX` de la veille, reposé le lendemain*. Fermés sur la déclaration **et** l'usage.
 
 Fichiers : `tests/parcours/runner.js`, `tools/gen_1208_pdf.py`, `docs/CAPTURE-IPHONE-TRANCHEE.pdf`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
-**ft-v1208 — 📱 LA CAPTURE iPHONE TRANCHÉE PAR LA MESURE · LE CODE ÉTAIT JUSTE, LA VERSION SERVIE NE L'ÉTAIT PAS** — Michel envoie une capture de son iPhone (13/09, 20:02) : lentilles Raynal à 410 g, **198 kcal**, l'ancien encadré *« ne colle pas à ces macros »* et son bouton *« Mettre 381 kcal »* — soit exactement le comportement que ft-v1207 était censé avoir supprimé. ⛔ **Sa consigne décide de tout** : ***« ne corrige rien avant d'avoir tranché A / B / C »***, ***« ne considère pas la capture comme une preuve que ft-v1207 est cassée tant que tu n'as pas d'abord vérifié qu'elle est réellement exécutée »***.
-
-**⭐⭐ VERDICT : B — ET CHAQUE BRANCHE EST FERMÉE PAR UNE MESURE, PAS PAR UN RAISONNEMENT.**
-
-| branche | ce qui la ferme |
-|---|---|
-| **A** — pas déployée | ⛔ **tombe** : déploiement Pages `success` sur `7e8d3ea9` à **16:32:51 UTC**, soit **1 h 30 avant** la capture |
-| **C** — exécutée mais le résolveur n'atteint pas le code-barres | ⛔ **tombe** : trace runtime complète du chemin réel sur le code servi — **410 g → 382 kcal**, avertissement 🔬 présent, trace posée sur la ligne, **0 erreur JS** |
-| **B** — déployée mais version périmée servie | ✅ **retenue** |
-
-**⭐⭐ ET LA PREUVE QUE C'EST B EST DANS LA CAPTURE ELLE-MÊME — c'est le geste qui a tout décidé.** Mesuré sur les **8 origines** : sous ft-v1207, **toutes** font parler l'avertissement 🔬 ; seule la **RÉÉCRITURE** de la valeur diffère (externes → 382, utilisateur → 198). Or la capture ne montre **aucun** 🔬, mais l'**ancien** encadré. 👉 ***Donc ce code n'a pas été exécuté, quelle que soit la porte employée*** — la démonstration ne dépend plus de savoir par quelle porte l'aliment est entré.
-
-**⭐ ET LE PAYLOAD NE PEUT PAS SAUVER L'HYPOTHÈSE INVERSE** : balayage exhaustif des **54 pour-100 g** qui affichent exactement `198 / 25 / 41 / 13` à 410 g — **la loi mord sur les 54**. *Il n'existe aucune fiche compatible avec la capture que ft-v1207 aurait laissée passer.*
-
-**⭐⭐ LA CAUSE EST MESURÉE, PAS DÉDUITE.** `_majPeutSAppliquer` retient le rechargement tant que `_curScreen !== 'home'` :
-
-| écran | la mise à jour s'applique ? |
-|---|---|
-| **Accueil** | ✅ oui |
-| **Nutrition · Séance · Progrès · Profil · Coach** | ⛔ **non — retenue** |
-
-Michel était sur l'écran **Nutrition**. La version était **téléchargée et activée** (`skipWaiting`), le rechargement **retenu**, et ⚠️ **hors séance la personne n'est prévenue de RIEN** : le message *« Mise à jour disponible »* n'existe que pendant une séance. ⛔⛔ **CE GARDE N'A PAS ÉTÉ TOUCHÉ** — c'est la décision de **ft-v1184** (*ne pas arracher l'écran sous les doigts de quelqu'un*), pas un oubli, et la « réparer » sans feu vert serait exactement ce que **R30** interdit. *Mesurée, figée par un témoin de hors-périmètre, rendue à Michel dans `docs/JOURNAL-DE-TEST.md`.*
-
-**⛔⛔ CE QUI EST CORRIGÉ EST UN AUTRE DÉFAUT, ET C'EST LA TRACE QUI L'A TROUVÉ — contre le §3 de sa demande.** Il écrivait : *« le nouveau code est censé tracer le champ source utilisé »*. **Il ne le fait pas dans le seul cas qui l'intéresse** : en `DERIVE_ESTIMABLE`, `res.champ` est **écrasé** par `'P/G/L'` (et par le nom de l'autre champ en `ALTERNATIVE_FIABLE`). 👉 ***Le code calculait l'information, la transportait, puis la jetait exactement là où on la cherchait.*** `champSource` survit désormais à **toutes** les branches et part **avec la ligne** — la question *« d'où vient le 48,3 »* devient mesurable au prochain scan. ⭐ **Correctif générique** : aucun test sur le code-barres, aucun 93,2 en dur, aucun nom de produit dans la décision (un témoin l'épingle).
-
-**⭐⭐ LE BANC GAGNE CE QUI LUI MANQUAIT, ET C'EST LA LEÇON QUI SERVIRA LE PLUS.** Le bloc CCCV éprouve `_ref100` **isolément**, cas par cas — il ne conduit **jamais** la chaîne *code-barres → formulaire → 410 g → valeurs affichées*. Or c'est **exactement** cette chaîne que la capture montre. 👉 ***Un banc qui teste la PIÈCE ne répond pas à une question posée sur la MACHINE*** : il a fallu une sonde jetable pour trancher, là où un témoin permanent aurait répondu en une passe. Le bloc **CCCVI** la conduit désormais de bout en bout, avec le code-barres réel et les 410 g réels — **la capture est rejouée à chaque passe**.
-
-**⚠️⚠️ ET UN TÉMOIN ÉTAIT AVEUGLE — LE JUMEAU EXACT D'UN GARDE CORRIGÉ LA VEILLE.** Celui des 8 origines cherchait `origine:'X'` **n'importe où** dans le fichier ; or ces noms vivent **aussi** dans `_afSetSrc` (la provenance de la ligne). **Mesuré : débrancher l'origine `ciqual` de `_ref100` le laissait parfaitement vert.** 👉 ***J'avais corrigé ce garde dans le générateur du PDF la veille, et pas son jumeau dans le banc*** — **R8**, la porte jumelle, à l'intérieur du banc d'essai lui-même. Il lit désormais les **appels** de `_ref100`, et la liste est **FERMÉE** : il rougit sur une origine en moins **comme** sur une origine en trop.
-
-**⚠️ CE QUE JE NE PEUX TOUJOURS PAS FAIRE, DIT PLUTÔT QUE DEVINÉ** (§3) : Open Food Facts reste injoignable depuis ce conteneur — **403 sur les trois domaines essayés**. **L'origine exacte du 48,3 n'est donc toujours pas mesurable d'ici.** ⭐ Mais elle le devient **sur le téléphone** : `champSource` est maintenant enregistré avec la ligne au prochain scan.
-
-**⭐ INSTANTANÉ IDENTIQUE OCTET POUR OCTET** (sha `226a7e9c523cae3f`, le même depuis ft-v1205) : **aucune ligne déjà écrite ne change** — le correctif n'ajoute qu'un champ de traçabilité aux lignes déjà signalées.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune valeur affichée ne bouge : un champ de traçabilité cesse d'être écrasé, et le banc gagne un témoin bout en bout.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** (périmètre de Michel, §6) : ⛔ `S.savedFoods` · l'historique · les migrations · les `ml` · `saveEditFood` · les lignes à zéro · la provenance de `rejouerRepas` · **les 21 règles de la douane** · `estimateFoodAI` (chantier séparé). ⛔ **Et le garde de mise à jour reste tel quel** : la question *« faut-il prévenir hors séance ? »* est **écrite et rendue à Michel**, pas tranchée par moi. ⚠️ **Michel doit vérifier sur Safari/iPhone** — et le geste est nommé : **revenir sur l'Accueil 🏠**, l'app se recharge seule et affiche « Application mise à jour ».
-
-Tests : **parcours 3813/3813 sur l'arbre FINAL** (bloc **CCCVI**, 16 témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 10 MUTATIONS, TOUTES MORDENT SUR LEUR PROPRE TÉMOIN, contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** — ① ⭐⭐ **LA CAPTURE RÉINTRODUITE** (la valeur résolue n'est plus appliquée : 198 revient, l'ancien encadré aussi) → **4** · ② `champSource` écrasé comme `champ` → **2** · ③ la trace ne porte plus le champ source → **2** · ④ ⭐ **une origine débranchée de `_ref100`** → **1, exactement le témoin refermé** · ④bis ⭐ **une origine inventée en trop** → **1, le même** (la liste est fermée dans les deux sens) · ⑤ un cas particulier Raynal → **1** · ⑥ ⛔ **hors périmètre : le garde de mise à jour « réparé »** → **1, exactement lui** · ⑦ ⛔ hors périmètre : la douane perd une règle → **1** · ⑧ la loi devient trop stricte (le produit sain est réécrit) → **1** · ⑨ scanné ≠ tapé → **3**.
-
-📄 **PDF POUR GPT** : `docs/CAPTURE-IPHONE-TRANCHEE.pdf` (**21ᵉ** de la série), généré par `tools/gen_1208_pdf.py` — **53 gardes**, **13 mutations éprouvées sur un arbre COPIÉ**, toutes refusent, contrôle sain vert avant ET après. ⭐ Ses gardes les plus utiles protègent des **absences** : que le champ source ne soit jamais réécrit, que le garde de mise à jour n'ait pas été « réparé », qu'aucun cas particulier ne se soit glissé dans la décision, et que le témoin des 8 origines ne redevienne pas aveugle. ⚠️⚠️ **ET LE CONTRÔLE NÉGATIF A ENCORE TROUVÉ DEUX GARDES FAIBLES À MOI** — dont un qui n'était pas ce qu'il paraissait. ① *« la branche de dérivation écrase bien `champ` »* : mesuré, `res.champ = 'P/G/L'` existe **deux fois** (dérivation normale **et** énergie absente), donc n'en exiger qu'une laissait l'autre satisfaire le garde — 👉 **et c'est ma MUTATION qui était invalide, pas le garde** : elle n'en retirait qu'une. *Une mutation qui ne fait pas ce qu'elle annonce est indiscernable d'un garde aveugle* — je l'avais écrit en ft-v1205, je viens de le repayer. ② Le garde qui vérifie que le bloc conduit la vraie chaîne se satisfaisait du **second** scan (celui du produit sain) quand on retirait le premier : il **compte** désormais, et le bloc est **borné** au lieu d'être « tout ce qui suit ».
-
-Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1208. |
-

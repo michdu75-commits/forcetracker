@@ -6,6 +6,30 @@
 
 ---
 
+- 🪪🪪 **S1 — IDENTITÉ SERVEUR MINIMALE — LIVRÉ EN `ft-v1216` (16/09/2026).** ⭐⭐ **Le défaut n°1
+  de l'audit est fermé : l'identité cesse d'être une adresse e-mail déclarée.** Un **registre de
+  jetons** côté serveur — jeton **opaque 256 bits** tiré de **trois `Utilities.getUuid()`**, dont le
+  serveur ne stocke **que le SHA-256** (*même l'administrateur ne peut pas relire un jeton*).
+  ⭐ **Émis contre une PREUVE uniquement** : vérification e-mail bornée (5 essais · expiration ·
+  60 s · 80/jour) ou code perso déjà posé — ⛔ **un e-mail seul n'en obtient JAMAIS**.
+  ⭐⭐ `saveProfile`, `pushHealth` et le **Worker IA** prennent l'identité **dans le jeton** et
+  **ignorent l'e-mail du payload** : mesuré, *jeton A + e-mail B ⇒ décompté sur A*. ⭐ **Fail-closed
+  des deux côtés** : un jeton présent mais invalide est **refusé** (il ne retombe pas sur l'e-mail),
+  et une **panne réseau ferme** la porte. ⛔ **`Math.random()` est sorti de la chaîne d'identité**
+  (consigne explicite de Michel), y compris du code de confirmation.
+  ⏳ **FENÊTRE DE TRANSITION (option B, choisie par Michel)** : sans jeton, l'ancien chemin fonctionne
+  encore, un compteur **anonyme** mesure la bascule, et **`_MIG_FERME_ = false`** la fermera **à la
+  date que Michel décidera** — *personne n'est mis dehors*. 👉 **C'est le seul interrupteur à
+  basculer quand il voudra clore S1.**
+  ⭐ **Un SEUL propriétaire côté client** : un injecteur dans `constants.js` ajoute le jeton aux
+  appels du Worker — les **16 sites d'appel, dont les 5 de Nutrition, ne sont pas touchés**.
+  ⛔⛔ **`V2 RESTE OUVERTE JUSQU'À S2`** : `ft_miroir` reçoit toujours un `p_email` **libre** depuis
+  le navigateur ; le témoin ③ est **volontairement NON retourné** pour le dire.
+  ⏭️ **Reste ouvert** : **S2** (fermer le miroir Supabase) · **S3** (idempotence du débrief, qui se
+  construit DESSUS) · `deleteAccount` · vérification Premium serveur · e-mails réels dans le dépôt.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran.
+  Dossier : `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`.
+
 - 🔐🔐 **AUDIT SÉCURITÉ / BACKEND (15/09/2026) — `docs/AUDIT-SECURITE-BACKEND.md`. AUDIT SEUL,
   rien corrigé.** ⭐⭐ **Le défaut structurant est UNIQUE : il n'y a pas d'identité** — partout
   (Apps Script, miroir Supabase, Worker), un **e-mail fourni par le client** est traité comme une
@@ -301,7 +325,26 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1214` — 📱 **LE BANC IPHONE RÉEL DU SCANNER.**
+- **Version en ligne (live) :** `ft-v1216` — 🪪 **L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL
+  DÉCLARÉE (S1).** Registre de **jetons** serveur : jeton opaque **256 bits** (trois `getUuid()`,
+  ⛔ plus de `Math.random()` dans la chaîne d'identité), dont le serveur ne stocke **que le
+  SHA-256**. ⭐ **Émis contre une PREUVE seulement** (vérification e-mail bornée ou code perso) —
+  ⛔ un e-mail seul n'en obtient **jamais**. ⭐⭐ `saveProfile`, `pushHealth` et le **Worker IA**
+  prennent l'identité **dans le jeton** : *jeton A + e-mail B ⇒ décompté sur A*. ⭐ **Fail-closed**
+  des deux côtés (jeton invalide refusé, panne réseau fermée). ⏳ **Fenêtre de transition**
+  (option B) : `_MIG_FERME_ = false` — **le seul interrupteur** à basculer pour clore S1.
+  ⭐ **Un seul propriétaire côté client** (injecteur dans `constants.js`) ⇒ ⛔ **Nutrition 0 ligne**.
+  ⛔⛔ **`V2 RESTE OUVERTE JUSQU'À S2`** : `ft_miroir` garde son `p_email` libre, témoin ③
+  volontairement NON retourné. 👉 `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`.
+
+- **Version précédente :** `ft-v1215` — 🔒 **LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL NOMME SA
+  SÉANCE.** La cause n'était pas un verrou manquant mais un **état** manquant : rien ne disait que
+  la réponse était déjà payée. ⭐ L'état `recu` **porte la réponse** — marquer « reçu » sans garder
+  le texte aurait remplacé un doublon par une **perte silencieuse** (R29). Et `_dbfPrendre` prenait
+  la séance la **plus ancienne** quand l'instruction disait la plus **récente** : l'écran cible
+  désormais la séance affichée **par son identifiant**.
+
+- **Version précédente :** `ft-v1214` — 📱 **LE BANC IPHONE RÉEL DU SCANNER.**
   ⛔⛔ **Le bouton utilisateur reste ABSENT** — un témoin rougit dans les deux sens. L'accès
   passe par **Profil → Admin**, et le garde vit **dans la fonction**, pas sur le bouton.
   ⭐⭐ **Ce n'est PAS un second chemin** : seul le décodeur devient un paramètre, la fusion et
