@@ -39936,6 +39936,58 @@ console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL 
     /return t!=='É' && t!=='W' && t!=='E' && t!=='X';/.test(srcL), '');
 }
 
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTATION ═══');
+/* ⭐⭐ CE BLOC FIGE CE QUI EST VRAI AUJOURD'HUI, PAS CE QU'ON VOUDRAIT.
+   Michel : « aucune affirmation "corrigé" sans mesure ». Un chantier d'identité qui ne sait pas
+   prouver l'état de DÉPART ne pourra jamais prouver son arrivée — il dira « c'est mieux ».
+   ⛔ Certains témoins ci-dessous épinglent donc des DÉFAUTS : ils DOIVENT rougir le jour où S1
+   les corrige, et c'est exactement leur rôle. Chacun porte alors la conduite à tenir. */
+{
+  const srcCo=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const srcW =fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  const srcSb=fs.readFileSync(path.join(ROOT,'supabase.js'),'utf8');
+  const nu=x=>String(x||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
+  const corps=(n,src)=>{ const m=new RegExp('(?:async\\s+)?function\\s+'+n+'\\s*\\([^)]*\\)\\s*\\{').exec(src);
+    if(!m) return ''; let i=m.index+m[0].length-1,d=0,j=i;
+    for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
+    return ''; };
+
+  // ── ÉTAT DE DÉPART : les défauts que S1 doit fermer ────────────────────────────────────
+  t('B-CCCXIII ① ⛔ DÉFAUT DE DÉPART — un compte SANS code perso est écrivable par quiconque '
+    +'(quand S1 le corrige, ce témoin rougit : le RETOURNER, ne pas le supprimer)',
+    /stored\.length<20\)\s*return\s*\{ok:true,\s*opted:false\}/.test(nu(corps('_authCheck_',srcCo))), '');
+  t('B-CCCXIII ② ⛔ DÉFAUT DE DÉPART — le Worker n\'exige AUCUN credential : Origin est son seul verrou',
+    /_origin !== ALLOWED_ORIGIN/.test(nu(srcW))
+    && !/Authorization|x-ft-token|deviceToken/.test(nu(srcW)), '');
+  t('B-CCCXIII ③ ⛔ DÉFAUT DE DÉPART — ft_miroir reçoit un p_email LIBRE, fourni par le client',
+    /p_email:\s*email/.test(nu(srcSb)), '');
+  t('B-CCCXIII ④ ⛔ DÉFAUT DE DÉPART — le quota IA est indexé sur l\'e-mail fourni, pas sur une identité',
+    /q\.byEmail\[e\]/.test(nu(corps('_aiQuotaBlock_',srcCo))), '');
+
+  // ── PROPRIÉTÉS À PRÉSERVER : S1 ne doit pas les casser en chemin ───────────────────────
+  t('B-CCCXIII ⑤ ⭐ À PRÉSERVER — le serveur ne lit JAMAIS un « premium » fourni par le client',
+    !/body\.premium|data\.premium|p\.premium/.test(nu(srcCo)), '');
+  t('B-CCCXIII ⑥ ⭐ À PRÉSERVER — la lecture d\'un compte sans code reste REFUSÉE',
+    /needsCode\s*:\s*true/.test(nu(corps('_lectureAutorisee_',srcCo))), '');
+  t('B-CCCXIII ⑦ ⭐ À PRÉSERVER — le code perso reste haché et salé, jamais stocké en clair',
+    /_sha256hex_\(salt\+'\|'\+String\(code/.test(nu(corps('_authCheck_',srcCo))), '');
+
+  // ── LE BOOTSTRAP : la seule preuve disponible pour un compte sans code ─────────────────
+  t('B-CCCXIII ⑧ ⭐⭐ LA PREUVE DE BOOTSTRAP EXISTE — vérification e-mail bornée : '
+    +'5 essais, expiration, cooldown',
+    /cur\.tries\s*>=\s*5/.test(nu(srcCo))
+    && /cur\.exp\s*<\s*Date\.now\(\)/.test(nu(srcCo))
+    && /now\s*-\s*cur\.sentAt\)\s*<\s*60000/.test(nu(srcCo)), '');
+  t('B-CCCXIII ⑨ ⚠️ FAIBLESSE DU BOOTSTRAP — le code de confirmation vient de Math.random() '
+    +'(à remplacer si ce chemin délivre un credential)',
+    /var code = '' \+ Math\.floor\(100000 \+ Math\.random\(\)/.test(nu(srcCo)), '');
+
+  // ── PÉRIMÈTRE : ce que S1 n'a pas le droit de toucher ──────────────────────────────────
+  t('B-CCCXIII ⑩ ⛔ PÉRIMÈTRE — Nutrition intacte : la douane garde ses règles et ses écrivains',
+    /_douaneLigne/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+}
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});
