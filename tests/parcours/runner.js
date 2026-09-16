@@ -40051,6 +40051,18 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
     /authCode:_authCode\(\),token:_ftToken\(\),welcome:true/.test(nuC(srcApp)), '');
   t('B-CCCXIV ⑩ ⛔ PÉRIMÈTRE — Nutrition intacte',
     /function _douaneLigne\(/.test(srcApp), '');
+  /* ⭐⭐ ⑪ — LE TÉMOIN QUI ATTRAPE L'ALIAS, ET IL A FALLU UNE MUTATION POUR LE TROUVER.
+     Les témoins ① et ② regardent le corps métier et l'appel au miroir. Ni l'un ni l'autre
+     ne voit ceci, glissé APRÈS l'envoi Apps Script :
+         const _x = Object.assign({}, _corpsSync, { token:_ftToken() });  sbMirror(_x);
+     Le filet de `sbMirror` le rattrape, donc la SORTIE reste juste — et le banc de
+     comportement reste vert. 👉 *Un garde qui cherche un motif à un ENDROIT ne mesure pas
+     une absence PARTOUT.* L'invariant réel n'est pas « où », c'est « combien » : dans tout
+     `_cloudSync`, chaque lecteur de justificatif n'est appelé QU'UNE FOIS, et c'est le
+     transport Apps Script qui le consomme. Un alias, une copie, un détour : le compte monte
+     à 2 et le témoin rougit, quel que soit le déguisement. */
+  t('B-CCCXIV ⑪ ⭐⭐ chaque justificatif n\'est lu QU\'UNE FOIS dans _cloudSync (anti-alias)',
+    (CS.match(/_ftToken\(\)/g)||[]).length===1 && (CS.match(/_authCode\(\)/g)||[]).length===1, '');
 }
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
