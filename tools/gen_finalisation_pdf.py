@@ -225,13 +225,26 @@ def git(*a):
         return ''
 
 
-HEAD = git('rev-parse', 'HEAD')
-g(len(HEAD) == 40, 'impossible de lire le commit courant : ce dossier ne peut pas dire quelle '
-                   'version il decrit')
-PROPRE = git('status', '--porcelain')
-g(PROPRE == '',
-  'l arbre de travail porte des modifications non commitees : le dossier decrirait un arbre '
-  'que personne ne sert (BUGS.md §60)')
+# [!!] MON PREMIER GARDE EXIGEAIT « l arbre de travail est propre », ET IL A REFUSE DE
+#      PRODUIRE SUR UN TRAVAIL JUSTE : je venais de corriger ce generateur, qui n est pas un
+#      fichier servi. *Un garde plus strict que la contrainte reelle refuse du travail juste*
+#      (ft-v1214, ft-v1216 — deja paye deux fois). L invariant qui compte n est pas « HEAD est
+#      propre », c est « LES FICHIERS SERVIS sont EXACTEMENT ceux publies sur master » : c est
+#      la seule propriete qui rend ce dossier vrai pour quelqu un qui ouvre l application.
+SERVIS = ['index.html', 'style.css', 'sw.js', 'manifest.json',
+          'constants.js', 'state.js', 'app.js', 'screens.js', 'log.js',
+          'coach.js', 'setup.js', 'tracking.js', 'supabase.js',
+          os.path.join('tests', 'parcours', 'accueil_mini.js')]
+PUBLIE = git('rev-parse', 'origin/master')
+g(len(PUBLIE) == 40,
+  'impossible de lire le commit publie sur origin/master : ce dossier ne peut pas dire quelle '
+  'version est REELLEMENT servie')
+_ecart = [f for f in SERVIS
+          if git('diff', '--name-only', PUBLIE, '--', f) or git('diff', '--name-only', '--', f)]
+g(not _ecart,
+  'ces fichiers SERVIS different de ce qui est publie sur master : %s — le dossier decrirait '
+  'un arbre que personne ne sert (BUGS.md §60)' % ', '.join(_ecart))
+HEAD = PUBLIE
 
 
 # ══ LES JOURNAUX : LUS, JAMAIS RETAPES ════════════════════════════════════════════════
@@ -437,8 +450,12 @@ H.append(P('Bloc <b>B-CCCXX</b>, %d temoins (11 au rendu reel, 6 de source), dan
            'reagit dans ses deux etats, l ecrivain du conteneur cycle qui ecrit encore vraiment.', 'p'))
 
 H.append(P('6. Le controle negatif, et l etiquette fausse qu il a trouvee', 'h1'))
-H.append(P('<b>%d mutations sur un arbre CLONE, %d conformes</b>, controle sain <b>%d OK / 0 '
-           'rouge avant ET apres</b>.<br/><br/>'
+# [!!] LE `%` NE S APPLIQUE QU A LA DERNIERE CHAINE D UNE CONCATENATION : le poser a la fin
+#      d un bloc concatene a plante ce generateur. Meme famille que la borne en caracteres de
+#      BUGS.md §63 — on formate AVANT, on concatene ENSUITE.
+_chiffres = ('<b>%d mutations sur un arbre CLONE, %d conformes</b>, controle sain <b>%d OK / 0 '
+             'rouge avant ET apres</b>.' % (M_TOT, M_OK, B_OK))
+H.append(P(_chiffres + '<br/><br/>'
            '<b>Quatre doivent RESTER VERTES</b> : les identifiants retires cites dans un '
            'commentaire JS, un commentaire HTML, un commentaire CSS, ou un fichier de '
            'documentation. <b>Elles sont indispensables ici</b> - la raison du retrait (R30) '
@@ -449,8 +466,7 @@ H.append(P('<b>%d mutations sur un arbre CLONE, %d conformes</b>, controle sain 
            'Le temoin avait raison : <i>une ' + (C % 'const') + ' qui s execute est du CODE, pas '
            'de la documentation.</i> Rendre le temoin aveugle aux chaines pour la faire passer '
            'l aurait rendu aveugle a ' + (C % "getElementById('home-sync-dot')") + ', qui vit '
-           'exactement de la meme facon - dans une chaine.'
-           % (M_TOT, M_OK, B_OK), 'p'))
+           'exactement de la meme facon - dans une chaine.', 'p'))
 
 H.append(P('7. Ce que cette passe ne fait pas', 'h1'))
 H.append(tableau(
