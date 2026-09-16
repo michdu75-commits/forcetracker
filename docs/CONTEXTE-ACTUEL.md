@@ -117,7 +117,7 @@
   ③ banc local / Haiku / Sonnet · ④ optimisation du contexte (le dossier du 15/09 a mesuré que
   **96 % de ce qui est envoyé n'est pas la séance**, et que le **catalogue d'exercices** pèse
   **11 447 car. dans le bloc le plus cher** — 24 % du coût). ⛔ **Rien de tout cela n'est commencé.**
-- 🔑 **ft-vNN — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (16/09/2026).** Correction du bug
+- 🔑 **ft-v1218 — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (16/09/2026).** Correction du bug
   **T-01**, mesuré le matin même par clics réels : `rejouerRepas` écrit ses lignes dans une
   boucle **synchrone**, plusieurs `Date.now()` tombent dans la même milliseconde, donc
   **plusieurs lignes partagent un `ts`** (**9 runs sur 9**, jusqu'à 5 lignes sur 5) — et `ts`
@@ -364,7 +364,18 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1217` — 🗄️ **LES JUSTIFICATIFS NE FRANCHISSENT PLUS LA
+- **Version en ligne (live) :** `ft-v1218` — 🔑 **L'IDENTITÉ D'UNE LIGNE DU JOURNAL
+  ALIMENTAIRE.** `rejouerRepas` donnait le **même `ts`** à plusieurs lignes (boucle synchrone,
+  9 runs sur 9), et `ts` était la **seule poignée** de l'interface : cliquer « OEUF » modifiait
+  « PAIN », et la croix de « JUS » annonçait *« PAIN sera retiré »* puis supprimait **les trois**.
+  ⭐⭐ **On ne rend pas `ts` unique, on SÉPARE l'horodatage de l'identité** — `_profilAlimentaire`
+  lit l'**heure** du `ts`, un `ts` gonflé serait un horodatage qui ment. Champ **`id`**, déjà la
+  convention du projet (`S.sessions` porte `{id, ts}`). ⭐ La compatibilité des anciennes lignes
+  n'est **pas un drapeau one-time** : rejouée au chargement, à la fusion **et avant chaque rendu** —
+  *l'identité est posée là où la ligne devient cliquable*. Instantané **identique** (`09d4c259481839b4`).
+  Passe **4200 ✅ / 0 ❌**, **19 mutations toutes mordantes**.
+
+- **Version précédente :** `ft-v1217` — 🗄️ **LES JUSTIFICATIFS NE FRANCHISSENT PLUS LA
   PORTE SUPABASE (S2-A).** Le corps de sauvegarde portait le **jeton S1 brut** et le **code perso
   en clair** jusque dans le miroir, parce qu'il est construit **une fois pour deux destinations**
   (R2). Corrigé **sans casser R2** : corps métier sans justificatif, justificatifs ajoutés au
