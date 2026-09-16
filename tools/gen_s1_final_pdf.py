@@ -113,7 +113,10 @@ def corps(src, nom):
 for fn in ('_jetonNouveau_', '_jetonPoser_', '_jetonIdentite_', '_jetonRevoquer_',
            '_jetonsDuCompte_', '_identitePourEcriture_', '_migCompter_',
            'handleIssueTokenByCode_', 'handleRevokeToken_', 'handleAuthIdentity_'):
-    g(('function ' + fn) in CODEJS, 'la piece « %s » de S1 a disparu de Code.js' % fn)
+    # [!!] LE « ( » N'EST PAS DECORATIF : sans lui, renommer `_jetonPoser_` en `_jetonPoser_X`
+    # laisse le garde VERT, puisque la chaine cherchee est contenue dans la nouvelle.
+    # C'est le piege de `presentsX` / `needsCode2`, deja paye trois fois dans ce projet.
+    g(('function ' + fn + '(') in CODEJS, 'la piece « %s » de S1 a disparu de Code.js' % fn)
 
 # le jeton : 256 bits, primitives standard, JAMAIS Math.random
 C_NEUF = sans_com(corps(CODEJS, '_jetonNouveau_'))
@@ -195,10 +198,14 @@ g("return { ok: false, raison: 'reseau' }" in WORKER,
   'le Worker ne se ferme plus sur une panne reseau : il laisserait passer une depense')
 
 # ── CLIENT : un SEUL proprietaire, et Nutrition intacte ─────────────────────────────────────
-g('_ftPoserInjecteurJeton' in CONST, 'l\'injecteur de jeton a disparu de constants.js')
-g('FT_TOKEN_KEY' in CONST and '_ftToken' in CONST, 'les accesseurs du jeton ont disparu')
-g('_ftBootstrapJeton' in APP, 'le bootstrap client a disparu')
-g('issueTokenByCode' in APP, 'le bootstrap client n\'emprunte plus la route a preuve')
+# [!!] CHAQUE NOM EST FERME PAR SA FORME DECLARATIVE — un nom nu se laisse satisfaire par
+# n'importe quel nom qui le CONTIENT (`_ftTokenX`, `issueTokenByCodeX`). Piege deja paye.
+g('function _ftPoserInjecteurJeton(' in CONST, 'l\'injecteur de jeton a disparu de constants.js')
+g("FT_TOKEN_KEY='ft4_devtoken'" in CONST and 'function _ftToken(' in CONST,
+  'les accesseurs du jeton ont disparu')
+g('function _ftBootstrapJeton(' in APP, 'le bootstrap client a disparu')
+g("action:'issueTokenByCode'" in APP,
+  'le bootstrap client n\'emprunte plus la route a preuve')
 g('token:_ftToken()' in SETUP, 'l\'ecriture de setup.js ne porte plus le jeton')
 # [!!] LE GARDE QUI PROTEGE LA PROMESSE FAITE A MICHEL : Nutrition n'a pas ete touchee.
 for mot in ('_douaneLigne', 'foodLabel', 'readBarcode', 'estimateFood'):
