@@ -161,7 +161,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1216`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1217`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -430,7 +430,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1216`** (prochaine : `ft-v1217`).
+> **Version actuelle : `ft-v1217`** (prochaine : `ft-v1218`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -469,6 +469,38 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1217 — 🗄️ LES JUSTIFICATIFS NE FRANCHISSENT PLUS LA PORTE SUPABASE · ET LA FUITE LA PLUS ANCIENNE N'EST PAS CELLE QU'ON VIENT DE TROUVER** — S2-A, ouverte par Michel après le dossier d'audit : ⛔ ***« arrêter immédiatement toute NOUVELLE fuite de credential vers Supabase »*** · ⛔⛔ ***« je ne veux PAS deux snapshots métier séparés qui finiront par diverger »***.
+
+**⭐⭐ LA CAUSE N'EST PAS UN OUBLI, C'EST UNE DÉCISION JUSTE APPLIQUÉE À UN ENDROIT DE TROP.** Le corps de sauvegarde est **construit une fois et servi aux DEUX destinations** — c'est **R2**, et c'est juste : deux constructions séparées divergeraient. S1 y a ajouté `token` et `authCode` pour authentifier Apps Script. 👉 ***Le miroir Supabase les a reçus par la même occasion.*** Apps Script, lui, ne les écrit jamais (liste blanche de **58 champs**) ; Supabase recevait le **blob entier**.
+
+**⭐ LA CORRECTION NE CASSE PAS R2, ELLE LE PRÉCISE** : on ne duplique pas le corps métier, on en **retire** les justificatifs et on les ajoute au **seul transport qui en a besoin**. *Un justificatif de transport n'appartient pas aux données de la personne.*
+
+| | transport Apps Script | miroir Supabase |
+|---|---|---|
+| jeton S1 · code perso | présents (justificatifs) | ⭐⭐ **absents** |
+| persisté côté serveur | ⛔ **non** — 58 champs nommés | le blob est écrit tel quel |
+| données métier | identiques | ⭐⭐ **identiques, à l'octet près** |
+
+**⭐⭐ LA PREUVE EST UNE ÉGALITÉ STRICTE, PAS UNE INSPECTION** : le corps envoyé à Apps Script **privé des deux justificatifs** est égal caractère pour caractère au blob Supabase, et la seule différence entre les deux corps est exactement cette paire. Les **16 catégories métier** sont intactes, contenu compris.
+
+**⚠️⚠️ ET LES DATES, LUES DANS GIT, INVERSENT L'INTUITION.** Le jeton — la trouvaille spectaculaire — n'a fuité que depuis **S1**, soit **une seule version servie**. Le **code perso**, lui, part en clair **depuis le 04/08**, jour de naissance du miroir : il était **déjà** dans le corps commun quand on a branché Supabase dessus. 👉 ***La fuite la plus ancienne n'est pas celle qu'on vient de trouver — six semaines contre une journée.*** ⭐ Borne honnête : l'exposition ne concerne que les comptes ayant **posé** un code (il est optionnel).
+
+**⭐ TROIS VERROUS, ET ILS NE FONT PAS LE MÊME TRAVAIL** : la **cause** (`_cloudSync` ne porte plus rien) · le **filet** (`sbMirror`, porte UNIQUE, retire par **nom de clé** quel que soit l'appelant futur) · les **témoins de source** (bloc **B-CCCXIV**).
+
+**⛔⛔ ET C'EST LE CONTRÔLE NÉGATIF QUI A PROUVÉ QUE LES TROIS SONT NÉCESSAIRES.** Quatre mutations — remettre le code perso dans le corps métier, le faire passer par un **alias**, vider la liste du filet, ne jamais appeler le filet — laissaient le banc de comportement **parfaitement vert** : le filet rattrape, donc la sortie reste juste. 👉 ***Un banc qui n'observe que la SORTIE ne peut pas voir la CAUSE regresser quand un filet la rattrape.*** Le harnais conduit désormais le banc **et** les témoins.
+
+**⭐⭐ ET UNE MUTATION A SURVÉCU MÊME À ÇA.** Un `Object.assign` glissé **après** l'envoi Apps Script échappait à tout garde de **position**. L'invariant juste n'est pas « où », c'est **« combien »** : chaque justificatif est lu **exactement une fois** dans `_cloudSync`. *Un alias, une copie, un détour : le compte monte à 2 et le témoin rougit, quel que soit le déguisement.* ⚠️ Au passage, mon garde de transport figeait l'**ordre des clés** — il aurait rougi sur une permutation, donc sur du code juste.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune valeur affichée ne bouge, aucune donnée métier ne disparaît : deux champs cessent de voyager vers une destination qui n'en avait pas besoin.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **les lignes DÉJÀ écrites dans Supabase ne sont pas purgées** — le SQL de `ft_miroir` n'est **nulle part dans le dépôt** (aucune migration, créée à la main), donc *on ne sait pas s'il remplace la ligne ou empile un historique* ; si c'est un remplacement, la purge se fait seule à mesure que les gens sauvegardent. **Dashboard requis.** · ⛔⛔ **V2 (`p_email` libre) reste OUVERTE** — son témoin ⑧ est **volontairement NON retourné** : *on ne maquille pas une porte ouverte* (S2-B/S2-C) · ⛔ **aucune rotation de jeton décidée** : trois options chiffrées, le choix dépend des droits réels sur la table, et *décider maintenant serait deviner* · ⛔ Nutrition **0 ligne** (`app.js` et `index.html` non touchés), Worker et `Code.js` non touchés. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran.
+
+Tests : **parcours 4161/4161 sur l'arbre FINAL** (blocs **B-CCCXIV** 11 témoins et **B-CCCXIII** 10, tous verts), **banc S2-A 22/22**, **banc S1 35/35**. ⛔ **CONTRÔLE NÉGATIF : 16 mutations sur arbre copié, toutes conformes — dont une qui doit RESTER VERTE** (le mot `token` dans un simple commentaire : la seule façon de prouver qu'on mesure le CODE, pas la documentation).
+
+📄 **PDF POUR GPT** : `DOSSIER-S2A-CONFINEMENT-CREDENTIALS-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **37 gardes**, contrôle négatif **15/15**. ⚠️ **Gardé hors dépôt volontairement** : il décrit une exposition **non encore purgée**, et le dépôt est public.
+
+Fichiers : `setup.js`, `supabase.js`, `tests/parcours/runner.js`, `tools/gen_s2_audit_pdf.py` (nouveau), `tools/gen_s2a_pdf.py` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `worker.js`, ni `Code.js`, ni `coach.js`, ni `log.js`, ni `state.js`.** sw.js ft-v1217. |
 
 **ft-v1216 — 🪪 L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL DÉCLARÉE · ET C'EST UN SEUL PROPRIÉTAIRE QUI SAUVE NUTRITION** — S1, la première correction nommée par l'audit sécurité du 15/09. Michel tranche les **4 décisions produit** qu'il s'était réservées et pose un interdit : ⛔⛔ ***« INTERDIT de faire : e-mail seul → émission automatique d'un credential fiable »*** · ⛔ ***« pas de `Math.random()` dans la chaîne d'identité »***.
 
@@ -734,226 +766,3 @@ Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `tools/gen_scanne
 Tests : **bloc B-CCCX, 33 témoins**, verts sur l'arbre final. ⛔ **CONTRÔLE NÉGATIF : 14 mutations — les 10 nommées par Michel + 4 miennes — contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** (`BUGS.md` §60 par construction).
 
 Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `coach.js`, ni `tracking.js`, ni `setup.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1211. |
-
-**ft-v1209 — 🔬 LE TYPE DE SÉRIE NE DISPARAÎT PLUS EN SILENCE · ET UN CHEMIN QUI N'ÉTAIT JUSTE QUE PAR ACCIDENT** — six chantiers menés un par un, chacun mesuré avant d'être touché, tous publiés dans **le même bump** parce qu'aucun n'avait été déployé.
-
-**⭐⭐ LE FIL QUI LES RELIE : ON NE CORRIGE QUE CE QU'ON A MESURÉ, ET LA PRÉMISSE DU CHANTIER ÉTAIT FAUSSE.** Michel a ouvert le sujet sur *« l'import écrase le type, donc un échauffement peut devenir un record »*. ⛔ **Mesure : le type n'est pas PERDU, il n'est jamais ÉMIS** — le prompt `importHistory` interdit `W` et `E`, et la normalisation serveur l'applique. La ligne du client n'était pas la cause : c'était la **3ᵉ copie** d'un contrat serveur, donc un **filet**. *Avant de corriger une perte, vérifier que la chose perdue a seulement été émise.*
-
-**① LE RYTHME DES QUESTIONS DE MILO — une règle de COMPORTEMENT écrite 4 fois.** *« Au plus une question par semaine, pas avant 3 séances »* protège la personne de l'interrogatoire. Le plafond hebdo était retapé **4 fois** (pas 3, recompté le jour même), le garde des séances **3 fois**. ⛔ Une divergence n'aurait été visible **dans aucun test de calcul et sur aucun écran** — le symptôme aurait été *« Milo me demande trop de trucs »*. Deux propriétaires : `_plafondHebdoAtteint()` · `_assezDeSeancesPourDemander()`. ⛔ **Ce qui N'est PAS une copie reste dehors** : le seuil `<4` des observations (sa raison est écrite) et le report « Plus tard » à 30 j. **Constat B** : deux commentaires annonçaient « 3 jours » là où le code dit 7.
-
-**② C1 · C2 — LES RECORDS : une copie, et une dépendance accidentelle.** `_serieFaitFoiPourPR` était le propriétaire, mais `saveSessEdits` recopiait la règle à la main, et `finalImportHist` n'avait **aucun filtre de type** — il n'était juste que parce que l'import **écrase** le type deux lignes plus haut. ⛔ *Un chemin qui n'est juste que grâce à une contrainte posée ailleurs n'est pas sûr : il est en sursis* (`BUGS.md` §62). ⭐⭐ **LE CAS FUTUR EST CONDUIT, PAS ARGUMENTÉ** : la boucle des records relit **toutes** les séances déjà importées, donc une séance portant un `'É'` traverse la vraie fonction — **avant C2 elle posait un record d'échauffement de 250 kg, après c'est la série de travail 150×8**. ⚠️ Et « conserver le type brut » aurait été **pire**, c'est mesuré : le propriétaire n'exclut que `'É'` et `'W'`, donc un type inconnu gardé tel quel devient **éligible au record** — `'ECH'` compris, qui *signifie* échauffement. *Un type préservé mais incompris est plus dangereux qu'un type normalisé, parce qu'il a l'air d'avoir été préservé.*
-
-**③ L'INVENTION SILENCIEUSE S'ARRÊTE — en deux couches DISJOINTES.** Tout type autre que `'D'` devenait `''` sans compteur, sans message, sans trace. Le compteur client seul ne suffisait pas : **le chemin vivant passe d'abord par le Worker, qui normalise déjà** — mesuré, **5 valeurs inconnues sur 5** arrivaient au client en `''` et comptaient **0**. Le compteur est donc posé **là où le type brut existe encore**, dans `worker.js` **avant** la normalisation, et à l'identique dans `Code.js` (le repli — *s'il répondait un jour sans ce compteur, le trou reviendrait en silence*). ⭐ **Aucun double comptage, et c'est une PROPRIÉTÉ** : le backend rend `''` pour ce qu'il a compté, donc le filet client ne voit rien. *Les deux couches ne se recouvrent pas : elles se relaient.* R13 : l'annonce passe par le mécanisme `_ecarts` qui existait déjà.
-
-**④ ET LE DIAGNOSTIC ADMIN, PARCE QUE `0` NE PROUVE RIEN.** Sur un vrai document le compteur vaudra **0** (le modèle n'a pas le droit d'émettre un type inconnu) — or le client retombe **aussi sur 0** quand le champ est **absent**. *Les deux cas sont indiscernables par la valeur.* La présence est donc constatée par `hasOwnProperty`, ⛔ **jamais par un `>0`**, et affichée **séparément** : `Aucun import observé` / `NON` / `OUI` / **`PARTIEL`** (plusieurs lots, un seul porte le champ — un booléen le cacherait). Non persisté, remis à zéro **avant** le premier appel réseau, **aucune donnée du document** dedans. ⭐ Le diagnostic et son affichage vivent tous deux dans `log.js` : **`app.js` n'est pas approché**, donc la garantie Nutrition est triviale à prouver.
-
-**📣 RÈGLE D'OR #11 — RIEN pour l'utilisateur.** Aucun écran ne change, aucune donnée ne bouge : instantané des records **identique octet pour octet** (sha `345d3db35bebb9d2`) avant et après les six chantiers. La seule nouveauté visible est une carte **derrière l'Admin** (R19/R25).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **l'ÉTAPE 2 n'est pas commencée** — le prompt interdit toujours `W` et `E` des deux côtés, aucun `setTypePerSet` pour l'historique, `_typeAt` non branché · ⛔ **aucune migration** : la conversion `D→N` de `state.js` reste one-time, figée par témoin, et le nombre de séries historiques touchées **n'est pas mesurable** depuis un conteneur · ⛔ Nutrition, Milo, programmes : **0 ligne** · ⛔ `MAX_PAGES` reste à 15, `_pdfToImages` non migrée (c'est A2, il attend le feu vert nutrition).
-
-⚠️⚠️ **ET LE TEST QUI COMPTE N'EST PAS FAIT** : le Worker déployé n'est pas joignable depuis le conteneur (`CONNECT tunnel failed, 403`) et aucune clé API n'y existe. **Michel doit faire un vrai import sur iPhone puis ouvrir Admin.** Verdict tant qu'il ne l'a pas fait : *ÉTAPE 1B PUBLIÉE MAIS TEST PRODUCTION EN ATTENTE*.
-
-⚠️ **LES ERREURS D'INSTRUMENT DE LA SÉRIE, parce qu'elles resserviront** : une sonde **verte en ne mesurant rien** (`window._histExtracted` créait une 2ᵉ variable, un `let` de premier niveau n'étant pas une propriété de `window`) · un témoin qui ne conduisait que **la moitié du chemin** (`analyzeHistPhotos` extrait, `finalImportHist` écrit) · un attendu **écrit de mémoire** (`bz(110,4)=120` bat `bz(100,5)`) · une mutation qui faisait **planter** au lieu de rougir, affichant « 0 rouge » — *indiscernable d'un vert* (§61) · et **trois gardes de proximité** qui confondaient deux choses voisines. *L'instrument fait partie de la mesure.*
-
-Tests : **B-CCCIII 18 · B-CCCIV 19 · B-CCCV 24 · B-CCCVI 20 · B-CCCVII 24 · B-CCCVIII 26 · B-CCCIX 19**, tous verts sur l'arbre refusionné. ⛔ **CONTRÔLE NÉGATIF : 39 mutations rejouées APRÈS refusion, 39 mordent**, contrôle sain à 0 rouge avant ET après. Calculs 339/339, muscles 241/241, croisés 50/50, dates 9/9, données classées.
-
-Fichiers : `tracking.js`, `log.js`, `setup.js`, `app.js`, `worker.js`, `Code.js`, `index.html`, `state.js`, `coach.js`, `tests/parcours/runner.js`, `tools/instantane_rythme_questions.js`, `tools/instantane_records.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/*`. sw.js ft-v1209. |
-
----
-
-### 📐 A1 — UNE LECTURE DE PDF DIT ENFIN QU'ELLE EST TRONQUÉE — `COMPLETE` / `PARTIAL` / `UNKNOWN`** — Michel valide le plan et ses 4 décisions produit, puis ouvre **A1 SEUL** : ***« d'abord formaliser le contrat de résultat d'un import »*** · ***« une lecture partielle n'est PAS une exception technique et ne doit jamais être assimilée à un succès complet »***.
-
-**⭐⭐ LE DÉFAUT CORRIGÉ A ÉTÉ MESURÉ LE MATIN MÊME, AVEC LA VRAIE BIBLIOTHÈQUE, SUR SES VRAIS FICHIERS.** `_pdfToText` rendait **682 lignes d'un document de 22 pages — sans le moindre signal** (`MAX_PAGES=15`, **31 % du contenu jamais lu** ; et `_pdfToImages`, le chemin qui part à l'IA, plafonne à **8**, soit **64 %**). 👉 ***Une lecture partielle était indiscernable d'une lecture complète*** — pour une cascade de crans, c'est **un succès qui ment**, plus dangereux qu'un échec : le cran s'arrête sur un résultat incomplet et le suivant n'est jamais appelé.
-
-**⭐ POURQUOI A1 EST LE CHANTIER LE MOINS RISQUÉ DU PROJET, ET C'EST UNE MESURE QUI LE DIT** : `_pdfToText` n'a **qu'UN appelant**, `_vmCustomPdf` — et c'est un **outil admin** (Mode Test VM). **Aucun chemin utilisateur n'est touché.**
-
-**⛔⛔ ET LA FORME LA PLUS COMPATIBLE ÉTAIT LA MAUVAISE.** Les 5 appelants de la famille ne lisent que `.length` et l'itération : un **tableau avec propriétés attachées** aurait demandé **0 migration**… et un appelant qui ignore `.etat` se serait comporté **exactement comme avant**. 👉 ***La compatibilité parfaite est ici le défaut, pas la qualité.*** D'où un vrai objet `{etat, lignes, pagesLues, pagesTotal, raison}`. ⚠️ **Sa faiblesse est dite** : un appelant non migré échoue **fermé** (aucune donnée fausse n'entre) mais avec un message **trompeur** — *« PDF vide »* sur un PDF lisible. **Ce n'est pas bruyant, c'est muet-mais-sûr**, et le garde-fou n'est donc pas la forme : c'est le **témoin de SOURCE** qui exige que chaque appelant lise `.etat`. *Sans lui, une migration incomplète serait VERTE.*
-
-**⛔ `raison` EST UN CODE, JAMAIS UNE PHRASE** (`plafond_pages` · `aucune_couche_texte`) — décision de Michel : un texte affichable dans une fonction de lecture serait un **second propriétaire de ce que voit la personne** (**R2**). *L'affichage se décide chez l'appelant*, et il annonce désormais **« N pages lues sur M »**.
-
-**⭐ L'ORDRE DES TESTS EST UN CHOIX, FIGÉ PAR UN TÉMOIN (R30)** : *« rien lu »* l'emporte sur *« tronqué »*. Un 22 pages **sans aucun texte** rend `UNKNOWN`, pas `PARTIAL` — parce que la seule chose utile à en faire est de **descendre d'un cran** vers l'OCR. `PARTIAL` annoncerait *« lu en partie »* avec **zéro ligne** : la cascade s'arrêterait sur un résultat vide en croyant avoir réussi à moitié.
-
-**⛔⛔ LE PÉRIMÈTRE, FIGÉ PAR 3 TÉMOINS, PARCE QUE MICHEL L'A ÉCRIT NOIR SUR BLANC** : **`MAX_PAGES` reste à 15** (*« pas de correction silencieuse du plafond sans d'abord rendre la troncature observable »*) · **`_pdfToImages` n'est PAS migrée** — c'est **A2**, et son 4ᵉ appelant est `addMealImportFile` (**nutrition**) : *« je ne veux aucune casse temporaire de l'import repas »*, donc **A2 attend le feu vert de l'autre session** · ses 4 appelants sont intacts.
-
-**⚠️ TÉMOINS PAR STUB DE `pdfjsLib`, ET C'EST UN CHOIX** : aucun binaire (1,34 Mo) ni PDF personnel n'entre dans le dépôt, et le nombre de pages est **contrôlé** — donc les 3 états sont **déterministes et rejouables partout**, ce qu'un vrai PDF de 22 pages ne serait pas. ⛔ **Ce qui est éprouvé est NOTRE logique de contrat, pas pdf.js** ; la vraie bibliothèque a été mesurée séparément le matin même. *Dire ce qu'un test ne couvre pas fait partie du test.*
-
-**⚠️⚠️ ET UN DE MES TÉMOINS ÉTAIT FAUX SUR DU CODE SAIN — la cause resservira.** Le garde de périmètre *« `_pdfToImages` n'est pas migrée »* bornait sa recherche à **1 400 caractères après la déclaration**. Or ce corps fait **836 caractères**, et `_pdfToText` — qui rend bel et bien le contrat — commence juste après : **le garde débordait sur la fonction VOISINE et rougissait sur du code parfaitement juste**. 👉 ***Une borne en distance de caractères n'est pas une borne de fonction*** (`BUGS.md` §63, reposé). Il découpe désormais le **corps réel**. ⭐ *Et c'est le contrôle sur le code sain qui l'a dit, pas une relecture* — la règle de ft-v1198 appliquée.
-
-**⚠️⚠️ ET J'AI RENUMÉROTÉ LE TRAVAIL DE SESSION-A PAR ACCIDENT.** Deux blocs portaient **CCXCVI** dans mon arbre — le mien (l'audit Séance) et le leur (3-ii, `_qGrammes`), arrivé par la fusion. Mon `sed` global a renommé **les deux**. 👉 *Un renommage global suppose que le numéro est unique — c'est précisément faux au moment où l'on renumérote pour cause de collision.* Leurs **13 témoins** reprennent `CCXCVI`, mes **19** restent `CCCII`.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran utilisateur ne change : seul le Mode Test VM (admin) annonce désormais une lecture partielle (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **A2 n'est pas commencé** (feu vert nutrition attendu) · ⛔ **le lecteur CSV d'historique (B) n'est pas écrit** — Michel : *« arrête-toi avant B »* · ⛔ ni la cascade, ni pdf.js embarqué, ni `MAX_PAGES` · ⛔ nutrition, contexte de Milo et règles de progression intacts. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté utilisateur.
-
-Tests : **bloc CCCIII, 18 témoins, 18 ✅ · 0 ❌.** ⛔ **CONTRÔLE NÉGATIF : 12 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge AVANT ET APRÈS** — ① le contrat rend toujours `COMPLETE` → **2** · ② le plafond n'est plus compté → **3** · ③ `pagesTotal` recopié depuis `pagesLues` → **2** · ④ une raison posée sur un succès → **1** · ⑤ ⭐ l'ordre s'inverse (`PARTIAL` gagne sur `UNKNOWN`) → **1** · ⑥ la raison devient un message d'interface → **1** · ⑦ le tri par X perdu → **1** · ⑧ ⛔ `MAX_PAGES` relevé en douce → **4** · ⑨ ⛔ `_pdfToImages` migrée au passage → **1** · ⑩ l'appelant revient à la liste nue → **2** · ⑪ ⭐ **l'appelant IGNORE le `PARTIAL`** (le défaut du jour, revenu) → **1** · ⑫ un littéral `'PARTIAL'` recopié à la main → **2**.
-
-Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CHANTIER-IMPORTS.md`, `docs/PLAN-CONTRAT-IMPORTS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`. sw.js ft-v1206. |
-
-### 🔧 LES 3 CONSTATS DE L'AUDIT « ONGLET SÉANCE », CORRIGÉS — ET AUCUN N'ÉTAIT VISIBLE À L'ÉCRAN** — Michel lève lui-même l'ordre qu'il avait posé le matin (*« on refera un état des lieux quand j'aurai fini les bugs de la nutrition »*) : ***« vas-y corrige tout »***.
-
-**⛔⛔ LE CONTRAT EST DONC CELUI DES EXTRACTIONS NUTRITION, ET POUR LA MÊME RAISON** : les trois constats sont **des pièges pour plus tard, pas des bugs qu'on subit** — donc *aucune valeur affichée ne doit bouger*. Une passe verte ne prouve pas ça (elle prouve que ce que les témoins **regardent** n'a pas bougé) : d'où un **instantané** avant/après, `tools/instantane_seance_audit.js`, rejouable.
-
-**⭐ ① LA FONCTION ÉCRITE POUR EMPÊCHER UNE RECOPIE AVAIT ÉTÉ RECOPIÉE.** `_rpeDeRir` portait ce commentaire : *« la conversion n'a qu'un seul endroit… c'est justement pour ça qu'elle serait recopiée partout — **puis un jour l'une des copies dirait 9** »*. Mesuré : **appelée 0 fois**, et `10−n` retapée à la main dans **3 fonctions / 6 occurrences**. 👉 *L'avertissement était écrit juste au-dessus du code qui l'ignore* (**R2**). Un seul propriétaire désormais, et un **témoin de SOURCE** refuse toute nouvelle copie.
-
-**⛔⛔ UN GARDE AJOUTÉ AU PASSAGE, ET IL EST DE LA FAMILLE ft-v1154** : hors de l'échelle, un cran `null` sortait **« 10 »** en RPE — c'est-à-dire l'affirmation *« série à l'échec »* pour une série que **personne n'a notée**. C'est exactement la confusion que Michel a fait corriger partout ailleurs (*« X et RIR 0 ne doivent surtout pas être considérés comme la même donnée »*). Il rend `''`. ⚠️ **Inatteignable aujourd'hui** (les appelants bornent le cran) : rendu inoffensif **plutôt que confié à eux pour toujours** — *un blanc se voit, un chiffre crédible et faux ne se voit pas* (**R29**).
-
-**⭐ ② UNE FONCTION MORTE, ET UN TÉMOIN QUI RASSURAIT SUR ELLE.** `_rirTxt` n'était appelée par **aucun** fichier servi — seulement par un témoin du banc, qui croyait vérifier le libellé d'échec en RPE alors que l'écran passe par `_reserveEchecTxt` (**`BUGS.md` §58**). ⛔ **Et elle était PÉRIMÉE DEUX FOIS** : elle rendait *« échec »* pour un RIR 0 et *« RPE 10 (échec) »* — précisément ce que **ft-v1154** a corrigé. 👉 ***Une fonction morte ne se met pas à jour : elle attend qu'on la rebranche pour dire une chose fausse.*** Retirée **avec sa raison à sa place** (**R30**) ; le témoin remis sur le vrai chemin, celui qui **lit l'écran**.
-
-**⭐ ③ TROIS RÉPONSES À UNE SEULE QUESTION.** *« Combien de repos si la personne n'a rien réglé ? »* valait **130** (`state.js`), **120** (`app.js` ×2) et **90** (`log.js` ×3). ⚠️ **Dormant** — `load()` pose toujours `S.defRest` — **mais déjà mordu** : en **ft-v1080**, l'éditeur de programme annonçait *90 s* quand la séance appliquait *130*. Un propriétaire (`reposDefaut()`), **6 sites rebranchés**, et un témoin de source interdit tout repli numérique recollé à `S.defRest`.
-
-**⭐⭐ LE CORRECTIF DIT EN UNE SEULE MESURE** : dans l'instantané, le bloc **« vraie vie »** (le réglage posé) est **identique octet pour octet** avant/après — et le bloc **« état impossible »** (réglage absent) rend désormais **exactement le même sha** que lui (`f393110eb9c5c1d7`). *Le repli a cessé de changer quoi que ce soit.* ⛔ Les **4 seules cellules** qui bougent dans tout l'instantané sont le cran `null`, documenté ci-dessus.
-
-**⚠️⚠️ ET DEUX FOIS MON PROPRE TÉMOIN S'EST TROMPÉ DE CIBLE — LA MÊME FAMILLE QUE §61/§63.** ① il comptait **7 copies pour 6** : la ligne du **propriétaire** contient forcément la conversion, c'est son métier ; ② puis il comptait comme copie **le commentaire R30 qui CITE `10-n` pour expliquer le retrait** — *un témoin qui ne distingue pas le code de ce qui en PARLE finit par interdire d'écrire la documentation du correctif*. C'est le piège de **ft-v1193**, repayé à trois semaines d'écart. 👉 ***L'instrument fait partie de la mesure.***
-
-**⚠️⚠️ ET J'AI CASSÉ DEUX DE MES PROPRES RÈGLES D'OUTILLAGE DANS LA MÊME MINUTE — dit parce que ça resservira.** ① J'ai corrigé un **commentaire** de `state.js` — un fichier **servi** — *pendant* que la passe tournait : c'est **§60** mot pour mot. ⭐ Prouvé inerte (le fichier **débarrassé de ses commentaires** est identique au caractère près avant/après), **mais la passe a quand même été relancée à neuf** : *une règle qu'on contourne parce qu'on a la preuve que c'était sans danger cette fois-ci n'est plus une règle.* ② En voulant l'arrêter, `pgrep -f "…runner.js" | xargs kill` a **tué mon propre shell** — le motif est dans sa propre ligne de commande. C'est le piège de **ft-v1189 et ft-v1193**, payé une **troisième** fois ; le remède est de filtrer sur `/proc/<pid>/cmdline` au lieu du motif. ⛔⛔ **Et le résultat de cette passe avortée est le pire des trois** : elle s'est arrêtée à mi-parcours en affichant **0 rouge** — *exactement §61*, une passe interrompue ressemble trait pour trait à une passe verte.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, rien n'est à faire : trois pièges de maintenance sont désamorcés (**R19/R25**).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **la nutrition n'est PAS touchée** — consigne de Michel le même jour (*« tu ne touches surtout pas à la nutrition »*), c'est le chantier de l'autre session · ⛔ aucun autre orphelin de `log.js` n'est retiré (les 11 documentés restent, **R30**) · ⛔ ni le RIR lui-même, ni le RPE, ni le stockage, ni Milo. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne doit avoir changé, et c'est précisément ce qu'il y a à vérifier.
-
-Tests : **parcours 3583/3583 sur l'arbre FINAL** (+19, bloc **CCCII**), **calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées — aucun trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 11 MUTATIONS, TOUTES MORDENT, chacune sur son témoin** — ① le propriétaire rend un chiffre au lieu de `null` → **2** · ② une copie de la conversion réapparaît → **1** · ③ le propriétaire redevient décoratif → **1** · ④ le garde « pas un cran » retiré → **2** · ⑤ `_rirTxt` remise en place → **1** · ⑥ l'écran n'affiche plus le libellé du propriétaire → **1** · ⑦ le repos ignore le réglage de la personne → **1** · ⑧ un site garde son propre repli → **2** · ⑨ le repli n'est plus celui de l'installation → **1** · ⑩ les règles par TYPE avalées → **1** · ⭐ ⑪ **une copie qui ÉCHAPPE au motif** (`10 - +n`) → **1 rouge, exactement le second verrou** — *c'est elle qui prouve que le témoin « le propriétaire est vraiment appelé » n'est pas décoratif.*
-
-Fichiers : `log.js`, `state.js`, `app.js`, `coach.js`, `tests/parcours/runner.js`, `tools/instantane_seance_audit.js`, `sw.js`, `CLAUDE.md`, `BUGS.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1205. |
-**📷 LE SCANNER CAMÉRA LOCAL, RÉÉVALUÉ AVANT RÉACTIVATION — ET LA VRAIE CAUSE DU RETRAIT TIENT DANS UN APRÈS-MIDI · 14/09/2026, SANS NOUVELLE VERSION** — Michel ouvre un chantier séparé après le dossier réseau : ⛔ ***« lire un code-barres sans appel IA, puis utiliser exactement le même lookup Open Food Facts que le code tapé »*** · ***« je ne veux PAS réactiver aveuglément un ancien bouton jugé peu fiable. Je veux comprendre exactement pourquoi il avait été retiré et mesurer si ce problème existe encore »*** · ⛔⛔ ***« ne remets PAS immédiatement le bouton en production »***.
-
-**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ.** Seuls `tests/`, `tools/` et la doc changent. ⛔ **Aucun comportement touché, aucun bouton remis.** Dossier complet : **`docs/SCANNER-CAMERA-LOCAL.md`**.
-
-**⭐⭐ LA CHRONOLOGIE, LUE DANS GIT — ET C'EST ELLE QUI DÉCIDE DE TOUT.** Le scanner live est né et mort **le même après-midi** :
-
-| heure (11/07/2026) | version | ce qui s'est passé |
-|---|---|---|
-| **14:33** | **ft-v376** | le scanner caméra live est **créé** |
-| 15:29 | ft-v377 | ⛔⛔ **la recherche produit était CASSÉE** — *« v2 renvoie `success` pas 1 → **tout était rejeté introuvable** »* |
-| 15:40 | ft-v378 | correctif *« **caméra ouverte mais ne lit pas** »* (1080p, bouton « Capturer », mise au point continue) |
-| 16:57 | ft-v384 | saisie manuelle ajoutée — *« **repli quand le scan galère** »* |
-| **17:10** | — | **retrait** : *« **trop capricieux iPhone** »* |
-
-**⭐⭐ TROIS FAITS QU'AUCUN RÉSUMÉ NE DONNAIT** : ① le scanner live a vécu **2 h 37** · ② pendant **~1 h** de ces 2 h 37, **la recherche produit rejetait TOUS les produits** — donc *un code parfaitement décodé affichait « produit introuvable »*, ce qui ressemble trait pour trait à un scanner qui ne marche pas · ③ le retrait **n'a tenté aucune correction** : le commit touche **`index.html` seulement, 6 lignes**, et son message le dit — *« Fonctions scan conservées (inertes) »*. 👉 ***Le jugement a été porté en moins de trois heures, sur une fenêtre qui contenait une panne de lookup.***
-
-**⛔ MAIS ÇA NE BLANCHIT PAS LE SCANNER, ET JE NE LE PRÉTENDS PAS** : ft-v378 nomme un vrai symptôme iPhone, et **1 h 17 plus tard** ft-v384 parle encore d'un *« scan qui galère »*. **Un problème iPhone réel persistait après le correctif.**
-
-**⭐⭐ LE DÉCODEUR, LUI, EST MESURÉ — 17 CAS SUR 20 À 3/3.** Trois vrais codes-barres encodés en EAN-13 selon la norme, dégradés, décodés par le **ZXing réellement servi**. Passent : net · petit · éloigné · **vu de près** · incliné 5-20° · **incliné 90°** · flou 1 px · **faible lumière 25 %** · contraste écrasé · **reflet métal 75 %** · cumul réaliste. Échouent : **incliné 45°**, **flou dès 2 px**, reflet quasi opaque. ⭐⭐ **Le flou est le seul vrai ennemi, et brutalement : 1 px passe, 2 px ne passe plus.** 👉 ***Sur un téléphone, « flou » s'appelle « mise au point »*** — c'est exactement le symptôme de ft-v378, et **la cause la plus probable du retrait est donc l'autofocus**, mesurée et non devinée. ⭐ Et les réglages servent : un code en **paysage** est lu **3/3 avec** `_bcHints()` et **0/3 sans**.
-
-**⚠️ ET MA PREMIÈRE MESURE ÉTAIT FAUSSE — MA FIXTURE, PAS ZXing.** Elle concluait *« code vu de près : 0/3 »*. Je laissais une marge blanche de **20 pixels**, alors que la norme EAN-13 exige une zone de silence de **9 à 11 MODULES** : à 8 px par module, 20 px ne valent que **2,5 modules**. Corrigé → **3/3**. 👉 ***Un paramètre exprimé dans la mauvaise unité ne mesure pas le code, il mesure le test*** (`BUGS.md` §63). Un garde du PDF refuse désormais que la zone de silence repasse en pixels.
-
-**⭐⭐ LE BANC CONDUIT MAINTENANT UNE VRAIE CAMÉRA.** Le bloc **CCCVIII** lance un **second navigateur** avec une **caméra factice** (un Y4M fabriqué à la volée, qui *filme* un vrai EAN-13) et intercepte `fetch` par domaine. 👉 *Sans elle, on n'éprouve que le DÉCODEUR ; or la question porte sur la CHAÎNE* — c'est la leçon de ft-v1208 appliquée d'avance.
-
-**✅ LE RÉSULTAT RÉSEAU, MESURÉ** : scanner caméra → **0 appel IA**, **quota inchangé**, **même `_lookupBarcode`**, **même objet produit** que le code tapé. ⭐⭐ **Le scanner ne crée AUCUN chemin nutrition nouveau** : le résolveur, la douane et le journal ne voient aucune différence. Sur un code illisible : **0 lookup, 0 appel IA**, un message qui dit quoi faire, et la caméra **reste ouverte** pour réessayer — *le repli n'est PAS un appel IA automatique*.
-
-**⛔⛔ QUATRE DÉFAUTS TROUVÉS DANS LE CODE ORPHELIN — MESURÉS, ÉCRITS, NON CORRIGÉS** (règle du projet depuis ft-v1200) : ① ⭐⭐ **une COURSE** — le décodage continu et le bouton « Capturer » peuvent lire le même code à **28 ms d'intervalle** et tirer **chacun** son lookup ; cause structurelle : la capture ne désarme le continu qu'**après** son `await` (~500 ms) · ② le bouton de repli photo cherche `af-bc-input`, **retiré avec ft-v388** : il ne fait rien · ③ le décodage **LOCAL** d'une photo (`onBarcodeFile`, `photo-code`) est orphelin lui aussi — *c'est le seul chemin photo sans IA* · ④ le scanner ne dit pas sa provenance explicitement.
-
-**⚠️⚠️ ET LA COURSE A PRODUIT UN MAUVAIS TÉMOIN — LE MIEN, ATTRAPÉ PAR LE CONTRÔLE NÉGATIF.** Elle est **intermittente** : selon qui gagne, on observe **1 ou 2** lookups. Ma première version comptait *« exactement 2 »* et **est passée au rouge dès que la machine était moins chargée**. 👉 ***Un témoin qui dépend du vainqueur d'une course ne mesure pas la course, il mesure la charge de la machine.*** C'est un **témoin de SOURCE** qui la fige. ⛔ **Et ce témoin-là était aveugle à son tour** : il cherchait *« un désarmement APRÈS l'await »* — or il en existe un de toute façon, donc **corriger la course le laissait vert**. Il mesure désormais qu'**aucun désarmement n'existe AVANT**. *Un motif qui cherche une présence ne peut pas mesurer un ORDRE.*
-
-**⭐ DEUX CORRECTIFS SONT ARRIVÉS PENDANT QUE LE SCANNER ÉTAIT ORPHELIN** — ft-v1091 (l'écran dans la table de fermeture) et ft-v1092 (le bouton retour) : *le code orphelin d'aujourd'hui est meilleur que celui qui a été retiré en juillet.*
-
-**⚠️ LA PROVENANCE `camera-code-local` QUE MICHEL DEMANDE EXISTE DÉJÀ — SOUS LE NOM `scan`.** Renommer coûterait des lignes de journal portant un nom disparu (**l'historique est hors périmètre**) et un **cinquième** nom pour une chose qui en a un. **Recommandation : garder `scan`, rendre l'appel explicite. Décision de Michel.**
-
-**⭐ UX PROPOSÉE — LOCAL D'ABORD, IA EN SECOURS.** Un **seul** bouton de plus dans l'écran d'ajout, et le repli IA **dans l'écran du scanner, après un échec** — là où la personne est bloquée. ⛔ **Pas de basculement automatique** : ce serait un appel payant sans geste, et *un code flou restera flou* — on paierait un appel pour échouer deux fois.
-
-**⭐⭐ VERDICT : RÉACTIVER AVEC FALLBACK IA** — sous quatre conditions (la course, le bouton mort, le repli contextuel) **et après validation iPhone**. ⛔ Pas *« ne pas réactiver »* : la mesure ne soutient pas le jugement de juillet. ⛔ Pas *« réactiver »* tout court : le flou casse tout dès 2 px. ⚠️ **La cause Safari/iPhone n'est PAS mesurable d'ici** — ce conteneur n'a ni caméra ni Safari, et je ne présente pas la fiabilité mobile comme validée. Un **protocole iPhone** (5 produits, 5 gestes) attend Michel dans le dossier.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **aucune réactivation**, aucun bouton remis · ⛔ **aucun des 4 défauts corrigé** (feu vert séparé) · ⛔ périmètre de Michel intact : le résolveur énergie/macros, la **douane**, `savedFoods`, les quantités, les portions, l'historique, les migrations, **Milo**, l'estimation libre d'un repas.
-
-Tests : **parcours TOTAL/TOTAL sur l'arbre FINAL** (bloc **CCCVIII**, 19 témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 14 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** — **les 7 nommées par Michel** : ① le scanner appelle le Worker IA → **1** · ② il boucle sur le lookup → **2** · ③ il produit un numéro faux → **2** · ④ il court-circuite `_lookupBarcode` → **5** · ⑤ la provenance locale devient celle de l'IA → **1** · ⑥ ⭐ **repli IA automatique sans geste** → **1** · ⑦ la caméra reste allumée → **1** · **et 7 miennes** : ⑧ ⭐⭐ **le scanner retrouve une porte d'entrée** (R30) → **1** · ⑨ ZXing depuis un CDN → **9** · ⑩ les réglages du décodeur sautent → **1** · ⑪ ⭐ **la course est CORRIGÉE** → **1, exactement le témoin qui la fige** · ⑫ le scanner sort de la table de fermeture → **1** · ⑬ la caméra ne demande plus l'arrière → **1** · ⑭ hors périmètre : le repli mort est « réparé » → **1**. ⚠️ **Et 5 de mes mutations étaient invalides au premier jet** : deux remplaçaient le code par un commentaire **contenant le mot cherché** (`stopStreams`, `TRY_HARDER`), deux visaient **un seul des deux lecteurs** alors que la course décide lequel s'exécute, et une testait un arbre non rafraîchi. *Une mutation qui ne fait pas ce qu'elle annonce est indiscernable d'un garde aveugle* — le mode `ALL` du harnais l'interdit désormais.
-
-📄 **PDF POUR GPT** : `docs/SCANNER-CAMERA-LOCAL.pdf` (**23ᵉ** de la série), généré par `tools/gen_scanner_pdf.py` — **36 gardes**, **15 mutations éprouvées sur un arbre COPIÉ**, toutes refusent, contrôle sain vert avant ET après, arbre revérifié identique au dépôt. ⭐ Ses gardes les plus utiles protègent des **décisions** : que le scanner **n'ait pas retrouvé de porte**, que la **course n'ait pas été corrigée en silence** (le document la décrit comme ouverte), que le banc **conduise encore une vraie caméra**, et que la **zone de silence reste en MODULES**. ⚠️ **Et mon validateur de police refusait du travail juste** : il testait la plage **latin-1** et rejetait le tiret cadratin, que cp1252 code pourtant en `0x97`. *Un contrôle plus strict que la contrainte réelle refuse du travail juste* — il **encode** désormais au lieu de deviner.
-
-Fichiers : `tests/parcours/runner.js`, `docs/SCANNER-CAMERA-LOCAL.md` (nouveau), `tools/gen_scanner_pdf.py` (nouveau), `docs/SCANNER-CAMERA-LOCAL.pdf` (nouveau), `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
-
-**🔌 LE CHEMIN RÉSEAU DU CODE-BARRES, PROUVÉ — ET LA QUESTION ÉTAIT MAL POSÉE, PAS LA RÉPONSE · 14/09/2026, SANS NOUVELLE VERSION** — Michel : ⛔ ***« prouver exactement ce qui se passe quand un utilisateur scanne un code-barres, et vérifier que ce chemin n'appelle ni Milo, ni Anthropic, ni aucun autre service IA »*** · ***« je veux une preuve, pas une hypothèse »***.
-
-**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ.** Seuls `tests/` et les journaux changent. ⛔ **Et aucun comportement n'a été touché.**
-
-**⭐⭐ LA MESURE : `fetch` INTERCEPTÉ ET CLASSÉ PAR DOMAINE, sur le code-barres `3083681011791`.** Aucune requête ne part : on compte ce que l'app **DEMANDE**, pas ce que le réseau laisse passer.
-
-| porte | appels | domaines | appels IA |
-|---|---|---|---|
-| **code-barres TAPÉ** | **1** | `world.openfoodfacts.org` | **0** |
-| **photo du code-barres** | **2** | `dry-field-e931.forcetracker-app.workers.dev` + `world.openfoodfacts.org` | **1** |
-
-**⛔⛔ ET LA VRAIE RÉPONSE EST PLUS NUANCÉE QUE LA QUESTION — c'est le fait de la journée.** Michel demandait *« le scan appelle-t-il l'IA ? »* en supposant qu'un scan caméra existe. **Mesuré : il n'y en a pas.** Le scanner **ZXing** (décodage **100 % local**, bibliothèque servie depuis le dépôt, **zéro réseau**) est bien dans le code — `openBarcodeScanner`, `scanBarcode` — mais ⛔ **aucun bouton ne l'appelle**. 👉 ***Le seul « scan » atteignable depuis l'écran est la photo lue par l'IA***, et c'est écrit dans le libellé de son bouton : *« 📷 Ou photographier le code-barres (**IA lit les chiffres**) »*.
-
-**⛔ CE N'EST PAS UN DÉFAUT, ET JE NE L'AI PAS « RÉPARÉ » (R30).** Deux entrées d'archive le disent : **ft-v388** (11/07/2026) — *« Ancien bouton 📷 scanner caméra (**peu fiable**) **RETIRÉ**, remplacé par la saisie du numéro (rapide et fiable) »* — et **ft-v871**, qui avait déjà reposé la question à Michel **sans rien toucher**. *La décision existe et elle est écrite ; ce n'était pas à moi de la renverser.*
-
-**⚠️ UNE CONSÉQUENCE MESURÉE AU PASSAGE, NON CORRIGÉE** : `scanBarcodePhoto` cherche l'élément `af-bc-input`, **retiré avec ft-v388**. Donc le bouton *« 🖼️ Prendre une photo à la place »* du scanner caméra ferme l'overlay et **ne fait rien** — **0 appel mesuré**. ⭐ **Invisible aujourd'hui** puisque le scanner lui-même est inatteignable : *un bouton mort derrière une porte murée ne dérange personne, mais il redevient un bug le jour où on rouvre la porte.* Figé par un témoin, rendu à Michel.
-
-**⭐⭐ LES DEUX PORTES CONVERGENT, ET C'EST VÉRIFIÉ SUR L'OBJET ENTIER** : `_manualBarcode` et `onBarcodePhotoIA` appellent toutes deux **`_lookupBarcode`** → `_offFetchProduct` → `_ref100` → le résolveur. **Même objet final**, comparé en entier. ⭐ Et la **provenance** les distingue quand même : `code-tape` contre `photo-code-ia` — *le résultat est le même, la façon dont il est entré ne l'est pas, et la seconde n'a **pas** de clé de contrôle vérifiée* (**R33**).
-
-**📊 LE COÛT DE L'UNIQUE APPEL IA, MESURÉ DANS LE WORKER** : modèle **Claude Haiku 4.5**, **`max_tokens: 100`**, **une** image redimensionnée à **1 100 px / qualité 0,85**, prompt d'une quinzaine de lignes. Décompté sur les **25 essais gratuits** (`FOOD_AI_FREE_LIMIT`), illimité en Premium. ⚠️ **Je ne chiffre pas un prix** : les tarifs ne se devinent pas, ils se lisent sur la facture.
-
-**⛔ CE QUE COÛTERAIT SON RETRAIT — mesuré, pas proposé** (§6 de sa demande, *« je déciderai ensuite »*) : ① **le scan peut fonctionner sans IA** — ZXing est **déjà dans le dépôt** et décode en local ; ② mais il a été retiré **parce qu'il était jugé peu fiable** en juillet ; ③ et ⭐ **ZXing vérifie la clé de contrôle du code-barres, l'IA non** — d'où le garde `_eanValide` posé exprès après la lecture IA. 👉 ***Retirer l'appel IA ne coûte rien techniquement ; ça coûte le confort de photographier au lieu de taper treize chiffres.*** **Aucune décision prise.**
-
-**⛔⛔ ET ON NE FIGE PAS « le scan ne fait aucun appel IA » — ce serait figer un contrat FAUX.** Le témoin fige le contrat **réel** : la photo fait **exactement un** appel IA, **annoncé** dans le libellé et **décompté** du quota. *Un témoin qui affirme ce qu'on aurait aimé lire ne protège rien.*
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **aucun correctif** — rien n'a été trouvé de cassé dans le chemin mesuré · ⛔ le **scanner caméra orphelin** et son **bouton de repli mort** sont **figés en l'état**, pas réparés (**R30**, décision de Michel attendue) · ⛔ périmètre Nutrition intact : la douane, `savedFoods`, l'historique, les migrations, les `ml`, `saveEditFood`, `rejouerRepas`, l'estimation IA.
-
-Tests : **parcours 3834/3834 sur l'arbre FINAL** (bloc **CCCVII**, 15 témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 8 MUTATIONS SUR LE BANC, TOUTES MORDENT, contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** — ① **la photo passe par `estimateFoodAI`** → **5** · ② **le code TAPÉ appelle le Worker IA** → **3** · ③ ⭐⭐ **le LOOKUP COMMUN appelle le Worker IA** (un appel posé là toucherait les deux portes) → **5** · ④ **scan et saisie divergent** (la photo n'utilise plus le même lookup) → **4** · ⑤ la recherche produit change de destination → **4** · ⑥ ZXing part d'un CDN au lieu du dépôt → **1, exactement lui** · ⑦ l'appel IA n'est plus décompté du quota → **1, exactement lui** · ⑧ la provenance ne distingue plus l'IA d'un décodage vérifié → **1, exactement lui**. ⚠️ **Et ma mutation ⑦ était invalide au premier jet** : la ligne de décompte existe **trois fois** (étiquette · photo du code · estimation), je n'en changeais qu'une. Ré-ancrée sur le commentaire qui la précède, unique à cette porte — *une mutation qui ne fait pas ce qu'elle annonce est indiscernable d'un garde aveugle*, écrit en ft-v1205 et repayé ici.
-
-📄 **PDF POUR GPT** : `docs/CHEMIN-RESEAU-CODEBARRES.pdf` (**22ᵉ** de la série), généré par `tools/gen_reseau_pdf.py` — **78 gardes** qui recomptent chaque fait depuis le code servi, **13 mutations éprouvées sur un arbre COPIÉ**, toutes refusent, contrôle sain vert avant ET après, arbre revérifié identique au dépôt à la fin. ⭐ Ses gardes les plus utiles protègent une **ABSENCE** : que le scanner caméra n'ait pas retrouvé de porte d'entrée (*« relire ft-v388 et ft-v871 avant de republier ce document »*), qu'aucun appel IA ne se soit glissé dans le lookup commun, et que la recherche produit n'ait pas changé de destination. ⚠️⚠️ **ET LE CONTRÔLE NÉGATIF A TROUVÉ UN GARDE AVEUGLE À MOI, sur le fait le plus délicat du document.** Celui du quota était écrit `'FOOD_AI_FREE_LIMIT' not in C and 'foodAiUses' not in C` : ***un `and` entre deux ABSENCES est un `ou` entre deux PRÉSENCES*** — il suffisait qu'un des deux mots reste pour qu'il se taise. **Mesuré : retirer l'INCRÉMENT en laissant les deux contrôles de mur le laissait parfaitement vert.** 👉 ***Lire un plafond n'est pas le décompter*** — il cherche désormais l'**écriture** `S.foodAiUses = (S.foodAiUses||0)+1`, seule preuve du décompte, et la lecture du plafond **séparément** : deux faits, deux gardes. *Un garde qu'on n'éprouve pas est une affirmation, pas une garantie.*
-
-Fichiers : `tests/parcours/runner.js`, `tools/gen_reseau_pdf.py` (nouveau), `docs/CHEMIN-RESEAU-CODEBARRES.pdf` (nouveau), `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
-
-**📱 VALIDATION iPHONE RÉELLE DU CAS RAYNAL — VÉRIFIÉ, FIGÉ, RIEN CHANGÉ · 13/09/2026, SANS NOUVELLE VERSION** — Michel donne sa capture comme **témoin iPhone réel** du chemin complet et demande de le **vérifier et figer sans ouvrir de chantier** : ⛔ ***« Ne change rien au comportement si tout correspond au contrat actuel. »***
-
-**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ.** Seuls `tests/`, `tools/` et la doc changent. ⛔ **Et aucun comportement n'a été touché** : tout correspondait déjà.
-
-**✅ LES 7 POINTS, MESURÉS EN RUNTIME SUR LE CODE DÉPLOYÉ** — en conduisant les **vraies portes**, pas en appelant les fonctions à la main :
-
-| question | réponse mesurée |
-|---|---|
-| état | **`ALTERNATIVE_FIABLE`** — et non `DERIVE_ESTIMABLE` |
-| méthode / confiance | `autre_champ_source` · **`source`** |
-| champ retenu | **`energy-kj_100g`** — 415 / 4,184 = **99,187…** → **99,2** |
-| champ d'origine du brut | **`energy-kcal_100g`** (`champSource`) |
-| valeur brute | **48,3**, conservée avec la ligne |
-| 410 g | **407 kcal** · 25 · 41 · 13 |
-| scan = tapé | **oui** — écran, résolution et ligne identiques |
-
-**⭐⭐ ET LA QUESTION « RIEN N'EST RECALCULÉ INUTILEMENT » EST MESURÉE, PAS AFFIRMÉE.** L'estimation depuis les macros est appelée **une seule fois**, elle rend **93,2** — et c'est **99,2** qui est retenu. 👉 ***Elle sert de JUGE de crédibilité, jamais de source*** : c'est elle qui refuse un second champ absurde (un champ à 3 000 kJ deviendrait sinon notre valeur de confiance). ⛔ **On ne la supprime donc pas « pour économiser »** — trois produits et une addition ferment une vraie faille.
-
-**⛔⛔ ET UN DÉFAUT DE TÉMOIN A ÉTÉ TROUVÉ EN ÉCRIVANT CETTE VALIDATION.** Mon témoin « scan = tapé » passait `saisie:'manuel'` — **une valeur qui n'existe pas en production** : la vraie porte `_manualBarcode` enregistre **`'code-tape'`**. **Le témoin était vert par accident.** 👉 ***Vérifier la fonction n'est pas vérifier l'appel*** (`BUGS.md` §58). Il remplit désormais le champ et appelle la porte, comme la personne — et un témoin frère vérifie que la **provenance**, elle, distingue bien les deux (`scan` contre `code-tape`, contrat posé le 23/08 après un retour de Michel).
-
-**📄 LE CAS EST ÉCRIT : `docs/VALIDATION-IPHONE-RAYNAL.md`** — la transcription exacte de la capture, la conclusion factuelle en 8 points, la mesure de l'estimation-juge, et la liste des témoins qui figent chaque fait. ⚠️ **La capture est TRANSCRITE, pas embarquée** : c'est une photo de son écran et le dépôt est **public** ; ce qui doit être figé, ce sont les **valeurs**. *Une image ne peut pas rougir ; un témoin, si.*
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **aucun correctif** — tout était conforme · ⛔ périmètre nommé par Michel intact : la **douane**, `savedFoods`, l'historique, les migrations, les `ml`, `saveEditFood`, `rejouerRepas`, l'**estimation IA**, les autres règles Nutrition. ⚠️ **Et la donnée reste fausse chez Open Food Facts** : la corriger à la source profiterait à tous ceux qui scannent ce produit — geste que Michel peut faire, pas l'app.
-
-Tests : **parcours 3819/3819 sur l'arbre FINAL** (bloc **CCCVI** porté à **22** témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 4 MUTATIONS, TOUTES MORDENT, contrôle sain à 0 rouge avant ET après** — ① ⭐⭐ **la valeur d'Atwater est retenue au lieu du candidat de la source** → **7** · ② la porte tapée change d'étiquette de provenance → **1, exactement ③bis** · ③ les deux portes divergent → **1, exactement ③** · ④ la méthode ment (« dérivé » alors qu'on a pris la source) → **2**.
-
-📄 **PDF POUR GPT** : `docs/CAPTURE-IPHONE-TRANCHEE.pdf` régénéré (**60 gardes**, **5 mutations** de plus, toutes refusent) — dont quatre qui protègent le **document de validation** lui-même : il doit exister, et porter ses 8 faits. ⚠️ **Et j'ai cassé mon propre générateur en l'écrivant** : j'ai nommé une variable `_v`, qui **écrase le validateur de police** du même nom — un `'str' object is not callable` à 170 lignes de là. *Un nom court réutilisé coûte plus cher qu'un nom long.*
-
-Fichiers : `tests/parcours/runner.js`, `docs/VALIDATION-IPHONE-RAYNAL.md` (nouveau), `tools/gen_1208_pdf.py`, `docs/CAPTURE-IPHONE-TRANCHEE.pdf`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |
-
-**📱 2ᵉ CAPTURE : ÇA MARCHE — ET ELLE RÉPOND ENFIN À LA QUESTION DU 48,3 · 13/09/2026, SANS NOUVELLE VERSION** — Michel renvoie une capture à 23:23, une fois passé par l'Accueil : **407 kcal** pour 410 g, et l'avertissement 🔬 qui dit *« l'app utilise 99.2 kcal/100 g, l'autre valeur de la fiche (`energy-kj_100g`) »*.
-
-**⚠️ AUCUN FICHIER SERVI N'EST MODIFIÉ — `sw.js` N'EST DONC PAS BUMPÉ** : seuls `tests/`, `tools/` et les journaux changent. *Un bump gratuit fait re-télécharger l'app à tout le monde pour rien.*
-
-**⭐⭐ LA QUESTION OUVERTE DEPUIS ft-v1207 EST TRANCHÉE, ET PAS PAR MOI : PAR SON ÉCRAN.** La fiche Open Food Facts porte **DEUX** valeurs énergétiques qui se contredisent :
-
-| champ de la fiche | valeur | verdict |
-|---|---|---|
-| `energy-kcal_100g` | **48,3 kcal** | ⛔ **fausse** — ses protéines et lipides valent déjà 53,2 |
-| `energy-kj_100g` | **≈ 415 kJ = 99,2 kcal** | ✅ **cohérente** — à 6,4 % des macros |
-
-👉 ***C'est l'hypothèse A : le 48,3 est une erreur DANS LA BASE, pas une conversion ratée de l'app.*** ⭐ **Et le correctif de la veille a servi immédiatement** : la ligne enregistrée porte `champSource: 'energy-kcal_100g'` — sans lui, ce champ aurait été écrasé et la réponse serait repartie avec.
-
-**⭐⭐ ET L'APP A PRIS LE BON CHEMIN SANS QU'ON LUI DISE** : elle a préféré **une valeur de la source** (99,2) à une **estimation** depuis les macros (93,2). *L'ordre de priorité — une donnée avant un calcul — vérifié sur un vrai produit et non sur une fixture.* Reproduction **exacte** en runtime : même nom (« · 99.2 kcal/100g »), même 407 kcal, même message au caractère près.
-
-**⛔⛔ ET CETTE CAPTURE A MONTRÉ UN DÉFAUT DANS MON BANC, PAS DANS L'APP — c'est le fait du jour.** Ma fixture de ft-v1208 **inventait une fiche plus pauvre que la vraie** (sans le second champ), donc elle éprouvait la **dérivation** pendant que le vrai produit passe par l'**alternative**. J'avais écrit dans le journal *« la capture est rejouée à chaque passe »* — **c'était faux**. 👉 ***Un test qui n'emploie pas le schéma de la production ne teste rien, il rassure*** (`docs/SUIVI-AUDIT.md`, repayée sur une fixture que j'avais moi-même appauvrie). Les **deux** branches sont désormais éprouvées sur le même produit.
-
-**⛔⛔ ET LE CONTRÔLE NÉGATIF A TROUVÉ DEUX GARDES QUE RIEN N'ÉPROUVAIT** — ni CCCVI, ni CCCV : *« le second champ viole aussi la loi »* et *« le second champ est absurde »*. Les retirer laissait le banc **entièrement vert**, parce que le vrai produit a un second champ **valide** et **proche des macros**. ⭐⭐ **Et le premier a demandé un AUTRE ALIMENT** : sur les lentilles, un candidat sous le plancher (52,5) est **forcément** à plus de 30 % sous les macros (65,2) — *l'autre garde l'attrape toujours en premier, donc celui-ci y est inatteignable*. Il fallait un aliment où plancher et estimation coïncident : une **huile** (0 g de glucides, plancher 900 = macros 900). 👉 ***Deux gardes qui se recouvrent sur un produit ne se recouvrent pas sur tous*** — et c'est la seule façon de les éprouver séparément.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune ligne de code servi ne change.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ rien n'est corrigé dans l'app — **elle faisait déjà ce qu'il fallait** · ⛔ le garde de mise à jour reste intact (**R30**), la question « prévenir hors séance ? » est toujours rendue à Michel · ⛔ `savedFoods`, l'historique, les migrations, les `ml`, `saveEditFood`, `rejouerRepas`, les 21 règles de la douane et `estimateFoodAI` restent hors périmètre. ⚠️ **Une donnée fausse dans Open Food Facts reste fausse** : la corriger à la source est un geste que Michel peut faire sur le site, et qui profiterait à tout le monde.
-
-Tests : **parcours 3817/3817 sur l'arbre FINAL** (bloc **CCCVI** porté à **20** témoins). **Calculs 339/339**, muscles 241/241, croisés 50/50, dates 9/9, données classées 0 trou nouveau. ⛔ **CONTRÔLE NÉGATIF : 4 MUTATIONS CIBLÉES, TOUTES MORDENT, contrôle sain à 0 rouge avant ET après** — ① les valeurs de la source sont ignorées (on estime toujours) → **6** · ② la conversion du second champ est fausse → **6** · ③ un second champ qui **viole aussi la loi** est accepté → **1** (éprouvé sur l'huile) · ④ un second champ **absurde** est accepté → **1**.
-
-📄 **PDF POUR GPT** : `docs/CAPTURE-IPHONE-TRANCHEE.pdf` régénéré (**56 gardes**) — il porte désormais la vraie fiche et la réponse au 48,3. ⚠️ **Et deux de ses nouveaux gardes se laissaient satisfaire par une SOUS-CHAÎNE** (`FICHE_SANS_KJ` est contenu dans `FICHE_SANS_KJx`) : *le piège de `presentsX` de la veille, reposé le lendemain*. Fermés sur la déclaration **et** l'usage.
-
-Fichiers : `tests/parcours/runner.js`, `tools/gen_1208_pdf.py`, `docs/CAPTURE-IPHONE-TRANCHEE.pdf`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **`sw.js` inchangé : aucun fichier servi modifié.** |

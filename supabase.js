@@ -73,12 +73,32 @@ function _sbActif(){ return !!(SB_URL && SB_ANON); }
  * Envoie (ou met à jour) le compte dans Supabase. Ne renvoie rien, ne lève rien.
  * @param {object} payload — exactement ce qu'on envoie déjà à Apps Script.
  */
+/* 🪪🪪 LES JUSTIFICATIFS NE FRANCHISSENT JAMAIS CETTE PORTE (S2-A, 16/09/2026).
+   ⚠️ CE N'EST PAS LE CORRECTIF, C'EST LE FILET — et les deux sont nécessaires.
+   Le correctif est dans `_cloudSync` : le corps métier ne porte plus de justificatif, donc
+   il n'y a plus rien à retirer sur le chemin normal. Ce filet existe pour l'APPELANT FUTUR :
+   `sbMirror` est la porte UNIQUE vers Supabase, donc c'est ici que doit vivre la règle
+   « ce qui sort d'ici ne contient aucun justificatif » (R2 — une règle, un propriétaire).
+   ⭐ Il retire par NOM DE CLÉ, donc il attrape aussi un justificatif arrivé par un chemin
+   qu'on n'a pas prévu : *un garde qui dépend de la façon dont la valeur a été calculée ne
+   protège que les cas qu'on avait déjà en tête.*
+   ⛔ Et il ne touche à AUCUNE donnée métier : la liste est fermée et nommée. */
+const _SB_JUSTIFICATIFS = ['token','authCode','code','confirmCode','apikey','authorization'];
+
+function _sbSansJustificatifs(payload){
+  if(!payload || typeof payload!=='object') return payload;
+  const propre={};
+  for(const k in payload){ if(_SB_JUSTIFICATIFS.indexOf(k)===-1) propre[k]=payload[k]; }
+  return propre;
+}
+
 function sbMirror(payload){
   try{
     if(!_sbActif())return;
     if(typeof window!=='undefined' && window._demoMode)return;  // mode démo : aucune écriture
     const email=String((payload&&payload.email)||'').trim().toLowerCase();
     if(!email)return;
+    payload=_sbSansJustificatifs(payload);
 
     // ⚠️ ON N'ÉCRIT PAS DANS LA TABLE, ON APPELLE UNE FONCTION (05/08/2026).
     // L'écriture directe (`/rest/v1/ft_comptes` + `resolution=merge-duplicates`) était

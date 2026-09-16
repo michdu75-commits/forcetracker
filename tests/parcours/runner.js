@@ -39337,7 +39337,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
   await pgY.close();
 }
 
-/* ══ BLOC B-CCCXV — LE MÊME BUG, MAIS PAR CLICS RÉELS ═══════════════════════════════════
+/* ══ BLOC B-CCCXVII — LE MÊME BUG, MAIS PAR CLICS RÉELS ═══════════════════════════════════
    ⛔⛔ CE BLOC EXISTE PARCE QUE LE PRÉCÉDENT NE SUFFIT PAS. Les témoins de source prouvent
    qu'on emploie la bonne clé ; ils ne prouvent PAS que la personne qui tape sur « OEUF »
    modifie « OEUF ». Le bug d'origine se voyait à l'écran, pas dans le code.
@@ -39353,7 +39353,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
   await pg13.addInitScript(seedScript({}));
   await pg13.goto('http://localhost:'+PORT+'/index.html'); await pg13.waitForTimeout(2400);
 
-  console.log('\n-- B-CCCXV. L\'identité d\'une ligne du journal alimentaire (clics réels) --');
+  console.log('\n-- B-CCCXVII. L\'identité d\'une ligne du journal alimentaire (clics réels) --');
 
   const R13=await pg13.evaluate(async ()=>{
     const o={}; const pause=ms=>new Promise(r=>setTimeout(r,ms));
@@ -39463,27 +39463,27 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     return o;
   });
 
-  t('B-CCCXV ① le rejeu par CLIC écrit 3 lignes avec 3 identités distinctes',
+  t('B-CCCXVII ① le rejeu par CLIC écrit 3 lignes avec 3 identités distinctes',
     R13.nRejouees===3 && R13.idUniques===3, 'ts uniques : '+R13.tsUniques+' (la collision d\'horodatage demeure, et c\'est voulu)');
-  t('B-CCCXV ② ⭐ clic sur la 2ᵉ ligne → le formulaire ouvre CETTE ligne',
+  t('B-CCCXVII ② ⭐ clic sur la 2ᵉ ligne → le formulaire ouvre CETTE ligne',
     !!R13.vise && R13.ouvre===R13.vise, 'visé « '+R13.vise+' », ouvert « '+R13.ouvre+' »');
-  t('B-CCCXV ③ ⭐ enregistrer ne change QUE cette ligne, les autres octet pour octet',
+  t('B-CCCXVII ③ ⭐ enregistrer ne change QUE cette ligne, les autres octet pour octet',
     R13.nChg===1 && R13.nomChg===R13.vise && R13.autresIntactes===2,
     R13.nChg+' changée(s), '+R13.autresIntactes+' intacte(s)');
-  t('B-CCCXV ④ ⭐⭐ la confirmation NOMME la ligne cliquée',
+  t('B-CCCXVII ④ ⭐⭐ la confirmation NOMME la ligne cliquée',
     R13.msgNomme===true, 'cliqué « '+R13.vise2+' » → « '+R13.msg+' »');
-  t('B-CCCXV ⑤ ⭐⭐ et UNE SEULE ligne disparaît — c\'est bien elle',
+  t('B-CCCXVII ⑤ ⭐⭐ et UNE SEULE ligne disparaît — c\'est bien elle',
     R13.supprimees===1 && R13.viseParti===true, 'restent ['+R13.restants+']');
-  t('B-CCCXV ⑥ un ancien journal (ts=123 ×3, aucune identité) devient distinguable',
+  t('B-CCCXVII ⑥ un ancien journal (ts=123 ×3, aucune identité) devient distinguable',
     R13.vieuxSansId===true && R13.vieuxIdUniques===3);
-  t('B-CCCXV ⑦ ⭐ et rien d\'autre ne bouge : `ts` reste 123, données métier intactes',
+  t('B-CCCXVII ⑦ ⭐ et rien d\'autre ne bouge : `ts` reste 123, données métier intactes',
     R13.vieuxTsIntacts===true && R13.vieuxMetierIntact===true);
-  t('B-CCCXV ⑧ éditer une ligne de cet ancien journal frappe la bonne',
+  t('B-CCCXVII ⑧ éditer une ligne de cet ancien journal frappe la bonne',
     R13.vise4 && R13.ouvre4===R13.vise4 && R13.nChg4===1, 'visé « '+R13.vise4+' », ouvert « '+R13.ouvre4+' »');
-  t('B-CCCXV ⑨ ⭐ trois lignes au MÊME identifiant sont réattribuées puis éditables',
+  t('B-CCCXVII ⑨ ⭐ trois lignes au MÊME identifiant sont réattribuées puis éditables',
     R13.douDepart===1 && R13.douApres===3 && R13.vise5 && R13.ouvre5===R13.vise5,
     'visé « '+R13.vise5+' », ouvert « '+R13.ouvre5+' »');
-  t('B-CCCXV ⑩ aucune erreur JavaScript pendant tout le parcours',
+  t('B-CCCXVII ⑩ aucune erreur JavaScript pendant tout le parcours',
     err13.length===0 && !R13.err, (R13.err||'')+' '+err13.join(' | '));
   await cx13.close();
 }
@@ -40190,14 +40190,80 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
     /_douaneLigne/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
 }
 
-/* ══ BLOC B-CCCXIV — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (bug T-01) ══════════
+/* ═══ B-CCCXIV. S2-A — LE MIROIR SUPABASE NE PORTE PLUS DE JUSTIFICATIF ═══════════════════
+   ⭐⭐ LE TÉMOIN ① EST *RETOURNÉ*, PAS NOUVEAU (R30). Il a d'abord été écrit pour épingler
+   l'état mesuré le 16/09 : le corps envoyé à `ft_miroir` portait le jeton S1 **brut** et le
+   code perso **en clair**, parce que S1 avait ajouté ces deux champs au corps COMMUN et que
+   ce corps part aux DEUX destinations. Son assertion est inversée ici ; son numéro et son
+   histoire restent, sinon plus rien ne dit que la décision a été prise.
+   ⛔ Le témoin ⑧ n'est PAS retourné : `p_email` reste libre — V2 est encore ouverte, et la
+   prétendre fermée serait un mensonge (c'est S2-B/S2-C). */
+{
+  const srcSet=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+  const srcSb =fs.readFileSync(path.join(ROOT,'supabase.js'),'utf8');
+  const srcCo =fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const srcApp=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  /* ⚠️ DEUX NETTOYEURS, ET LE CHOIX DE L'UN OU L'AUTRE EST LE PIÈGE DU CHANTIER :
+     `nuS` retire les commentaires ET les chaînes → pour un fait qui vit dans le CODE.
+     `nuC` retire les commentaires SEULEMENT → pour un fait qui vit dans une CHAÎNE.
+     Mesuré pendant S2-A : un garde de secret écrit avec `nuS` est aveugle PAR CONSTRUCTION,
+     puisqu'un secret EST une chaîne. */
+  const nuC=x=>String(x||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
+  const corps2=(n,src)=>{ const m=new RegExp('(?:async\\s+)?function\\s+'+n+'\\s*\\([^)]*\\)\\s*\\{').exec(src);
+    if(!m) return ''; let i=m.index+m[0].length-1,d=0,j=i;
+    for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
+    return ''; };
+  const CS=nuC(corps2('_cloudSync',srcSet));
+  const MI=nuC(corps2('sbMirror',srcSb));
+
+  t('B-CCCXIV ① ⭐⭐ RETOURNÉ — le corps MÉTIER commun ne porte plus aucun justificatif',
+    !/token\s*:\s*_ftToken\(\)/.test(CS.split('fetch(')[0]) &&
+    !/authCode\s*:\s*_authCode\(\)/.test(CS.split('fetch(')[0]), '');
+  t('B-CCCXIV ② ⭐⭐ le miroir Supabase reçoit le corps métier SANS justificatif',
+    /sbMirror\(/.test(CS), '');
+  /* ⚠️ CE TÉMOIN CHERCHAIT D'ABORD `_SB_JUSTIFICATIFS` DANS LE CORPS DE `sbMirror` — et il
+     rougissait sur du code parfaitement sain : la LISTE vit au niveau du fichier, seul
+     l'APPEL vit dans la fonction. *Un garde doit chercher le fait là où il se trouve.* */
+  t('B-CCCXIV ③ ⭐⭐ FILET — sbMirror RETIRE lui-même tout justificatif de son envoi',
+    /payload\s*=\s*_sbSansJustificatifs\(payload\)/.test(MI), '');
+  t('B-CCCXIV ④ ⛔ la liste des justificatifs retirés NOMME token et authCode',
+    /_SB_JUSTIFICATIFS\s*=\s*\[[^\]]*'token'[^\]]*\]/.test(nuC(srcSb)) &&
+    /_SB_JUSTIFICATIFS\s*=\s*\[[^\]]*'authCode'[^\]]*\]/.test(nuC(srcSb)), '');
+  t('B-CCCXIV ⑤ ⭐ APPS SCRIPT garde son justificatif : le transport l\'ajoute',
+    /token\s*:\s*_ftToken\(\)/.test(CS) && /authCode\s*:\s*_authCode\(\)/.test(CS), '');
+  t('B-CCCXIV ⑥ ⛔ R2 — UN SEUL constructeur métier (aucun corps Supabase séparé)',
+    (srcSet.match(/action\s*:\s*'saveProfile'/g)||[]).length===1, '');
+  t('B-CCCXIV ⑦ ⛔ Apps Script ne persiste toujours PAS le justificatif',
+    !/profile\.token/.test(nuC(corps2('handleSaveProfile_',srcCo))) &&
+    !/profile\.authCode/.test(nuC(corps2('handleSaveProfile_',srcCo))), '');
+  /* ⛔⛔ CELUI-CI N'EST PAS RETOURNÉ, ET C'EST VOULU : V2 reste ouverte jusqu'à S2-B/S2-C. */
+  t('B-CCCXIV ⑧ ⛔ NON RETOURNÉ — `p_email` reste LIBRE : V2 n\'est pas fermée par S2-A',
+    /p_email\s*:\s*email/.test(MI), '');
+  t('B-CCCXIV ⑨ ⛔ PÉRIMÈTRE — l\'onboarding garde son justificatif (il ne va PAS au miroir)',
+    /authCode:_authCode\(\),token:_ftToken\(\),welcome:true/.test(nuC(srcApp)), '');
+  t('B-CCCXIV ⑩ ⛔ PÉRIMÈTRE — Nutrition intacte',
+    /function _douaneLigne\(/.test(srcApp), '');
+  /* ⭐⭐ ⑪ — LE TÉMOIN QUI ATTRAPE L'ALIAS, ET IL A FALLU UNE MUTATION POUR LE TROUVER.
+     Les témoins ① et ② regardent le corps métier et l'appel au miroir. Ni l'un ni l'autre
+     ne voit ceci, glissé APRÈS l'envoi Apps Script :
+         const _x = Object.assign({}, _corpsSync, { token:_ftToken() });  sbMirror(_x);
+     Le filet de `sbMirror` le rattrape, donc la SORTIE reste juste — et le banc de
+     comportement reste vert. 👉 *Un garde qui cherche un motif à un ENDROIT ne mesure pas
+     une absence PARTOUT.* L'invariant réel n'est pas « où », c'est « combien » : dans tout
+     `_cloudSync`, chaque lecteur de justificatif n'est appelé QU'UNE FOIS, et c'est le
+     transport Apps Script qui le consomme. Un alias, une copie, un détour : le compte monte
+     à 2 et le témoin rougit, quel que soit le déguisement. */
+  t('B-CCCXIV ⑪ ⭐⭐ chaque justificatif n\'est lu QU\'UNE FOIS dans _cloudSync (anti-alias)',
+    (CS.match(/_ftToken\(\)/g)||[]).length===1 && (CS.match(/_authCode\(\)/g)||[]).length===1, '');
+}
+
+/* ══ BLOC B-CCCXVI — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (bug T-01) ══════════
    ⛔ LES TÉMOINS VIVENT DANS `tests/parcours/identite_ligne.js`, PAS ICI, ET C'EST MESURÉ :
    ils ne lisent que du texte, donc les garder dans le banc obligeait à lancer une passe
    complète (> 20 min) pour éprouver vingt expressions régulières — le contrôle négatif
    de ce chantier serait passé de 35 minutes à NEUF HEURES.
    ⭐ UN SEUL propriétaire (R2) : le banc l'appelle, le contrôle négatif l'appelle aussi. */
 require('./identite_ligne.js')(t, ROOT, fs, path);
-
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

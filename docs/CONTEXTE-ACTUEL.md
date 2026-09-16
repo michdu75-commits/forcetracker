@@ -6,6 +6,23 @@
 
 ---
 
+- 🗄️🗄️ **S2-A — LES JUSTIFICATIFS NE FRANCHISSENT PLUS LA PORTE SUPABASE — `ft-v1217`
+  (16/09/2026).** ⭐⭐ Le corps de sauvegarde portait le **jeton S1 brut** et le **code perso en
+  clair** jusque dans le miroir, parce qu'il est construit **une fois pour deux destinations**
+  (R2). Corrigé **sans casser R2** : le corps métier n'en porte plus aucun, ils sont ajoutés au
+  **seul transport qui en a besoin**, et `sbMirror` — porte **unique** — les retire en plus par
+  **nom de clé**. Preuve : corps Apps Script **privé des deux** = blob Supabase **à l'octet près**,
+  16 catégories métier intactes.
+  ⚠️⚠️ **Et les dates inversent l'intuition** : le jeton n'a fuité qu'**une version** ; le **code
+  perso** part en clair **depuis le 04/08**, jour de naissance du miroir — **six semaines**. Borné
+  aux comptes ayant **posé** un code (optionnel).
+  ⛔⛔ **CE QUI RESTE OUVERT, ET QUI ATTEND MICHEL** : ① les **lignes déjà écrites** dans Supabase
+  ne sont **pas purgées** — le SQL de `ft_miroir` n'est **nulle part dans le dépôt**, donc on ne
+  sait pas s'il *remplace* la ligne (purge automatique à l'usage) ou *empile* un historique ;
+  ② **aucune rotation de jeton décidée** (3 options chiffrées, le choix dépend des droits réels) ;
+  ③ **V2 `p_email` libre reste OUVERTE**, témoin ⑧ volontairement **NON retourné**.
+  👉 **6 points à vérifier dans le dashboard Supabase** — voir le dossier. Puis `ETAT-REEL-SUPABASE-APRES-DASHBOARD`, et **seulement ensuite** le GO pour S2-B.
+
 - 🪪🪪 **S1 — IDENTITÉ SERVEUR MINIMALE — LIVRÉ EN `ft-v1216` (16/09/2026).** ⭐⭐ **Le défaut n°1
   de l'audit est fermé : l'identité cesse d'être une adresse e-mail déclarée.** Un **registre de
   jetons** côté serveur — jeton **opaque 256 bits** tiré de **trois `Utilities.getUuid()`**, dont le
@@ -347,7 +364,18 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1216` — 🪪 **L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL
+- **Version en ligne (live) :** `ft-v1217` — 🗄️ **LES JUSTIFICATIFS NE FRANCHISSENT PLUS LA
+  PORTE SUPABASE (S2-A).** Le corps de sauvegarde portait le **jeton S1 brut** et le **code perso
+  en clair** jusque dans le miroir, parce qu'il est construit **une fois pour deux destinations**
+  (R2). Corrigé **sans casser R2** : corps métier sans justificatif, justificatifs ajoutés au
+  **seul transport qui en a besoin**, plus un **filet** dans `sbMirror` (porte unique) qui retire
+  par **nom de clé**. ⭐ Preuve : corps Apps Script **privé des deux** = blob Supabase **à l'octet
+  près**. ⚠️⚠️ **Les dates inversent l'intuition** : le jeton n'a fuité qu'**une version**, le
+  **code perso six semaines** (depuis le 04/08, naissance du miroir). ⛔⛔ **Lignes déjà écrites
+  NON purgées** (dashboard requis) · **V2 `p_email` libre toujours OUVERTE**, témoin ⑧
+  volontairement **NON retourné**.
+
+- **Version précédente :** `ft-v1216` — 🪪 **L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL
   DÉCLARÉE (S1).** Registre de **jetons** serveur : jeton opaque **256 bits** (trois `getUuid()`,
   ⛔ plus de `Math.random()` dans la chaîne d'identité), dont le serveur ne stocke **que le
   SHA-256**. ⭐ **Émis contre une PREUVE seulement** (vérification e-mail bornée ou code perso) —
