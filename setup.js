@@ -903,10 +903,19 @@ function _cloudSync(){
   // ⚠️ Le corps du message est construit UNE SEULE FOIS et servi aux DEUX destinations
   // (Apps Script + miroir Supabase). Deux constructions séparées finiraient par diverger,
   // et on enverrait deux versions différentes du même compte (R2).
+  /* 🗄️🗄️ S2-A — LE CORPS CI-DESSOUS EST *MÉTIER SEULEMENT* : AUCUN JUSTIFICATIF DEDANS.
+     ⛔⛔ CE QUI S'EST PASSÉ, ET POURQUOI CE N'ÉTAIT PAS UN OUBLI. S1 (la veille) a ajouté ici
+     `authCode:_authCode()` et `token:_ftToken()` pour authentifier l'écriture Apps Script.
+     Or ce corps est construit UNE FOIS et servi aux DEUX destinations — c'est **R2**, et c'est
+     juste : deux constructions séparées finiraient par diverger. 👉 ***Le miroir Supabase a
+     donc reçu le jeton BRUT et le code perso EN CLAIR par la même occasion***, mesuré en
+     interceptant le vrai `fetch`. Apps Script, lui, ne les écrit jamais (il recopie 58 champs
+     nommés) ; Supabase reçoit le blob ENTIER.
+     ⭐ LA CORRECTION NE CASSE PAS R2, ELLE LE PRÉCISE : on ne duplique pas le corps métier,
+     on retire les justificatifs du corps COMMUN et on les ajoute au SEUL transport qui en a
+     besoin. *Un justificatif de transport n'appartient pas aux données de la personne.* */
   const _corpsSync={
-      /* 🪪 S1 — le jeton accompagne l'écriture : c'est LUI qui décide du compte écrit,
-         plus l'e-mail. Sans jeton, le serveur reste en transition (option B) et compte. */
-      action:'saveProfile',email:S.email,authCode:_authCode(),token:_ftToken(),
+      action:'saveProfile',email:S.email,
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       ...(_adnFilled()?{adn:S.adn}:{}),
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
@@ -981,9 +990,15 @@ function _cloudSync(){
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
   };
+  /* 🪪 LE JUSTIFICATIF NE VOYAGE QUE SUR LE TRANSPORT QUI EN A BESOIN.
+     Apps Script en a besoin : c'est le jeton qui décide du compte écrit (S1), et le code
+     perso qui autorise l'écriture d'un compte protégé. Il est donc ajouté ICI, au moment de
+     l'envoi, et jamais posé dans `_corpsSync` — qui part aussi ailleurs. */
   fetch(S.url,{method:'POST',mode:'no-cors',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(_corpsSync)
+    body:JSON.stringify(Object.assign({},_corpsSync,{
+      authCode:_authCode(), token:_ftToken()
+    }))
   }).catch(()=>{});
   // MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
   // vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,

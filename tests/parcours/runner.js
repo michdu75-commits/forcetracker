@@ -39998,6 +39998,58 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
     /_douaneLigne/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
 }
 
+/* ═══ B-CCCXIV. S2-A — LE MIROIR SUPABASE NE PORTE PLUS DE JUSTIFICATIF ═══════════════════
+   ⭐⭐ LE TÉMOIN ① EST *RETOURNÉ*, PAS NOUVEAU (R30). Il a d'abord été écrit pour épingler
+   l'état mesuré le 16/09 : le corps envoyé à `ft_miroir` portait le jeton S1 **brut** et le
+   code perso **en clair**, parce que S1 avait ajouté ces deux champs au corps COMMUN et que
+   ce corps part aux DEUX destinations. Son assertion est inversée ici ; son numéro et son
+   histoire restent, sinon plus rien ne dit que la décision a été prise.
+   ⛔ Le témoin ⑧ n'est PAS retourné : `p_email` reste libre — V2 est encore ouverte, et la
+   prétendre fermée serait un mensonge (c'est S2-B/S2-C). */
+{
+  const srcSet=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+  const srcSb =fs.readFileSync(path.join(ROOT,'supabase.js'),'utf8');
+  const srcCo =fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const srcApp=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+  /* ⚠️ DEUX NETTOYEURS, ET LE CHOIX DE L'UN OU L'AUTRE EST LE PIÈGE DU CHANTIER :
+     `nuS` retire les commentaires ET les chaînes → pour un fait qui vit dans le CODE.
+     `nuC` retire les commentaires SEULEMENT → pour un fait qui vit dans une CHAÎNE.
+     Mesuré pendant S2-A : un garde de secret écrit avec `nuS` est aveugle PAR CONSTRUCTION,
+     puisqu'un secret EST une chaîne. */
+  const nuC=x=>String(x||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
+  const corps2=(n,src)=>{ const m=new RegExp('(?:async\\s+)?function\\s+'+n+'\\s*\\([^)]*\\)\\s*\\{').exec(src);
+    if(!m) return ''; let i=m.index+m[0].length-1,d=0,j=i;
+    for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
+    return ''; };
+  const CS=nuC(corps2('_cloudSync',srcSet));
+  const MI=nuC(corps2('sbMirror',srcSb));
+
+  t('B-CCCXIV ① ⭐⭐ RETOURNÉ — le corps MÉTIER commun ne porte plus aucun justificatif',
+    !/token\s*:\s*_ftToken\(\)/.test(CS.split('fetch(')[0]) &&
+    !/authCode\s*:\s*_authCode\(\)/.test(CS.split('fetch(')[0]), '');
+  t('B-CCCXIV ② ⭐⭐ le miroir Supabase reçoit le corps métier SANS justificatif',
+    /sbMirror\(/.test(CS), '');
+  t('B-CCCXIV ③ ⭐⭐ FILET — sbMirror RETIRE lui-même tout justificatif de son envoi',
+    /_SB_JUSTIFICATIFS/.test(MI), '');
+  t('B-CCCXIV ④ ⛔ la liste des justificatifs retirés NOMME token et authCode',
+    /_SB_JUSTIFICATIFS\s*=\s*\[[^\]]*'token'[^\]]*\]/.test(nuC(srcSb)) &&
+    /_SB_JUSTIFICATIFS\s*=\s*\[[^\]]*'authCode'[^\]]*\]/.test(nuC(srcSb)), '');
+  t('B-CCCXIV ⑤ ⭐ APPS SCRIPT garde son justificatif : le transport l\'ajoute',
+    /token\s*:\s*_ftToken\(\)/.test(CS) && /authCode\s*:\s*_authCode\(\)/.test(CS), '');
+  t('B-CCCXIV ⑥ ⛔ R2 — UN SEUL constructeur métier (aucun corps Supabase séparé)',
+    (srcSet.match(/action\s*:\s*'saveProfile'/g)||[]).length===1, '');
+  t('B-CCCXIV ⑦ ⛔ Apps Script ne persiste toujours PAS le justificatif',
+    !/profile\.token/.test(nuC(corps2('handleSaveProfile_',srcCo))) &&
+    !/profile\.authCode/.test(nuC(corps2('handleSaveProfile_',srcCo))), '');
+  /* ⛔⛔ CELUI-CI N'EST PAS RETOURNÉ, ET C'EST VOULU : V2 reste ouverte jusqu'à S2-B/S2-C. */
+  t('B-CCCXIV ⑧ ⛔ NON RETOURNÉ — `p_email` reste LIBRE : V2 n\'est pas fermée par S2-A',
+    /p_email\s*:\s*email/.test(MI), '');
+  t('B-CCCXIV ⑨ ⛔ PÉRIMÈTRE — l\'onboarding garde son justificatif (il ne va PAS au miroir)',
+    /authCode:_authCode\(\),token:_ftToken\(\),welcome:true/.test(nuC(srcApp)), '');
+  t('B-CCCXIV ⑩ ⛔ PÉRIMÈTRE — Nutrition intacte',
+    /function _douaneLigne\(/.test(srcApp), '');
+}
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});
