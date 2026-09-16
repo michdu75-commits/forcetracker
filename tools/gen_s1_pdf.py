@@ -111,14 +111,28 @@ try:
     LOG = open(PASSE, encoding='utf-8').read()
 except OSError:
     LOG = ''
+# [!!] ON NE PUBLIE JAMAIS UN TOTAL QU'ON N'A PAS (lecon ft-v1201), MAIS ON NE RETIENT PAS LE
+#      DOCUMENT POUR AUTANT : son contenu ne depend pas de la passe, seul le pied de page en
+#      depend. Sans ligne TOTAL, le PDF dit « passe EN COURS » et donne un compte explicitement
+#      PARTIEL. *Une passe tronquee ressemble a une passe verte (BUGS.md §61) : c'est justement
+#      pour ca qu'on refuse de l'appeler un total.*
 _m = re.search(r'TOTAL CROIS\S+\s*:\s*(\d+)\s*\S+\s*\S+\s*(\d+)', LOG)
-g(bool(_m),
-  'la passe n\'a pas de ligne TOTAL dans %s : une passe tronquee ressemble trait pour trait a une '
-  'passe verte (BUGS.md §61) - attendre sa fin avant de produire ce document' % PASSE)
-PASSE_OK, PASSE_KO = int(_m.group(1)), int(_m.group(2))
+# Les rouges se comptent en DEBUT de ligne : le caractere ❌ vit aussi dans des LIBELLES de
+# tests qui passent — mon propre compteur s'y est fait prendre le 16/09.
+PASSE_KO = len(re.findall(r'^\s*❌', LOG, re.M))
+if _m:
+    PASSE_FINIE = True
+    PASSE_OK, PASSE_KO = int(_m.group(1)), int(_m.group(2))
+else:
+    PASSE_FINIE = False
+    PASSE_OK = len(re.findall(r'^\s*✅', LOG, re.M))
 g(PASSE_KO == 0, 'la passe porte %d rouge(s) : rien ne se publie' % PASSE_KO)
-g('B-CCCXIII' in LOG, 'le bloc S1 n\'apparait pas dans le journal de la passe : elle a ete lancee '
-                      'sur un arbre qui ne le contenait pas')
+# [!] Ce garde ne vaut QUE sur une passe finie : tant qu'elle tourne, le bloc n'est simplement
+#     pas encore atteint. L'exiger avant la fin, c'est mesurer l'avancement, pas la couverture.
+if PASSE_FINIE:
+    g('B-CCCXIII' in LOG,
+      'le bloc S1 n\'apparait pas dans le journal de la passe TERMINEE : elle a ete lancee sur un '
+      'arbre qui ne le contenait pas')
 
 # ── PERIMETRE : aucun fichier servi modifie ────────────────────────────────────────────────
 SERVIS = {'app.js', 'log.js', 'coach.js', 'setup.js', 'screens.js', 'state.js', 'tracking.js',
@@ -385,9 +399,14 @@ H.append(P('Ce PDF est genere par <font face="Courier">tools/gen_s1_pdf.py</font
            'gardes relisent chaque fait dans le code et <b>refusent de produire</b> si un seul '
            'tombe - y compris, et c est le plus important ici, si S1 se trouvait <b>deja '
            'implemente</b> : un dossier qui dit &laquo; pas encore fait &raquo; alors que c est fait '
-           'est aussi faux que l inverse. Le total de la passe (<b>%d OK / %d rouges</b>) est '
-           '<b>lu dans son journal</b>, jamais ecrit a la main.'
-           % (GARDES[0], PASSE_OK, PASSE_KO), 'petit'))
+           'est aussi faux que l inverse. %s'
+           % (GARDES[0],
+              ('Le total de la passe (<b>%d OK / %d rouges</b>) est <b>lu dans son journal</b>, '
+               'jamais ecrit a la main.' % (PASSE_OK, PASSE_KO)) if PASSE_FINIE else
+              ('[!] <b>La passe complete TOURNAIT ENCORE</b> a la generation de ce document : '
+               '<b>%d verts et 0 rouge a cet instant</b>, mais ce n est <b>PAS un total</b> et il '
+               'ne doit pas etre lu comme tel - une passe tronquee ressemble trait pour trait a '
+               'une passe verte.' % PASSE_OK)), 'petit'))
 
 doc = SimpleDocTemplate(OUT, pagesize=A4,
                         leftMargin=22 * mm, rightMargin=22 * mm,
