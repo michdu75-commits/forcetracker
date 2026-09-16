@@ -33,31 +33,43 @@ function seedScript(extra){
     ft4_act:'1.55',ft4_work:'bureau',ft4_goal:'muscle',ft4_rest:'120'};
   const all=Object.assign({},base,extra||{});
   return `(()=>{try{${Object.entries(all).map(([k,v])=>`localStorage.setItem(${JSON.stringify(k)},${JSON.stringify(v)});`).join('')}
-    window._demoMode=true;
-    /* 16/09/2026, bug T-01 — LE CONVERTISSEUR DES TEMOINS.
-       La poignee d une ligne du journal alimentaire n est plus son horodatage mais son
-       identite (e.id) : ts etait partage par plusieurs lignes d un repas rejoue, et
-       l edition comme la suppression frappaient a cote.
-       CE CONVERTISSEUR VIT DANS LE BANC, PAS DANS LE PRODUIT, ET C EST LE POINT : la
-       tentation etait de faire accepter les DEUX cles a openEditFood pour ne pas toucher
-       aux 25 temoins qui l appellent par ts. C aurait rouvert la porte exacte qu on ferme,
-       puisqu une recherche par ts rend la PREMIERE ligne du groupe.
-       Il rend une valeur INTROUVABLE quand aucune ligne ne porte ce ts, pour que les
-       temoins qui eprouvent le cas ligne inexistante continuent d eprouver ca. */
-    window._tsVersId=function(ts){
-      try{
-        if(typeof _foodLogIdentifier==='function') _foodLogIdentifier(S.foodLog);
-        var l=(S.foodLog||[]).find(function(e){return e&&e.ts===ts;});
-        return (l&&l.id)?l.id:('aucune-ligne-'+ts);
-      }catch(e){ return 'aucune-ligne'; }
-    };
-    }catch(e){}})();`;
+    window._demoMode=true;}catch(e){}})();`;
 }
+
+/* ⛔⛔ LE CONVERTISSEUR DES TÉMOINS — POSÉ SUR **TOUS** LES CONTEXTES, PAS SEULEMENT CEUX
+   QUI PASSENT PAR `seedScript`.
+   Depuis le 16/09/2026 (bug T-01), la poignée d'une ligne du journal alimentaire n'est plus
+   son horodatage mais son identité (`e.id`) : `ts` était partagé par plusieurs lignes d'un
+   repas rejoué, et l'édition comme la suppression frappaient à côté. Les 26 témoins qui
+   appelaient `openEditFood(ts)` en direct passent donc par ce convertisseur.
+   ⭐ IL VIT DANS LE BANC, PAS DANS LE PRODUIT, ET C'EST LE POINT : la tentation était de faire
+   accepter les DEUX clés à `openEditFood` pour ne rien toucher. Ç'aurait rouvert la porte
+   exacte qu'on ferme — une recherche par `ts` rend la PREMIÈRE ligne du groupe.
+   ⭐ Il rend une valeur INTROUVABLE quand aucune ligne ne porte ce `ts`, pour que les témoins
+   qui éprouvent « ligne inexistante » continuent d'éprouver ça.
+   ⚠️⚠️ ET C'EST UNE PASSE ROUGE QUI L'A PLACÉ ICI. Il vivait d'abord dans `seedScript`, ce qui
+   paraissait suffisant — sauf que plusieurs blocs écrivent leur PROPRE `addInitScript` et
+   n'appellent jamais `seedScript`. Le bloc CCXII est tombé sur `ReferenceError: _tsVersId is
+   not defined`, après 3 292 lignes de passe. 👉 *Un outil posé « à l'endroit habituel » n'est
+   pas posé partout.* On enveloppe donc `newContext` plus bas : aucun bloc, présent ou futur,
+   ne peut l'oublier. */
+const OUTIL_TS = `(()=>{try{
+  window._tsVersId=function(ts){
+    try{
+      if(typeof _foodLogIdentifier==='function') _foodLogIdentifier(S.foodLog);
+      var l=(S.foodLog||[]).find(function(e){return e&&e.ts===ts;});
+      return (l&&l.id)?l.id:('aucune-ligne-'+ts);
+    }catch(e){ return 'aucune-ligne'; }
+  };
+}catch(e){}})();`;
 
 (async()=>{
 await new Promise(r=>srv.listen(0,r));
 const PORT=srv.address().port;
 const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+/* ⛔ TOUT contexte reçoit l'outil, y compris ceux que les blocs créent eux-mêmes. */
+const _newContext=b.newContext.bind(b);
+b.newContext=async(o)=>{ const c=await _newContext(o); await c.addInitScript(OUTIL_TS); return c; };
 const c=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
 const p=await c.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
 await p.addInitScript(seedScript({}));
