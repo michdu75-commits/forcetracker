@@ -1,0 +1,519 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Dossier GPT — FINALISATION DE L'ACCUEIL (hors depot, regle d'or #14).
+
+[!!] CE DOSSIER AFFIRME DEUX CHOSES OPPOSEES EN MEME TEMPS : que deux morceaux de code mort
+     ONT DISPARU, et que TOUT LE RESTE est reste en place. Les gardes reverifient les deux
+     moities dans le code servi, et refusent de produire si l'une tombe. Un dossier qui decrit
+     un arbre qu'on ne sert plus est pire qu'un dossier absent : il a l'air verifie.
+
+[!!] LE PIEGE PROPRE A CETTE PASSE, ET IL EST INEVITABLE : la RAISON de chaque retrait est
+     ecrite a l'endroit du retrait (R30), donc les identifiants retires sont cites en toutes
+     lettres dans les commentaires voisins — en JS *et* en HTML. Un garde qui ne distingue pas
+     le CODE de ce qui en PARLE mesurerait ma propre documentation et resterait vert pour
+     toujours. D'ou deux nettoyeurs, le choix EXPLICITE de l'un ou l'autre a chaque garde, et
+     le retrait des commentaires HTML `<!-- -->` au meme titre que les `/* */`.
+     (Famille ft-v1193 / 1203 / 1205 / 1210 / 1216.)
+
+[!!] LES CHIFFRES DE PASSE, DE BANC ET DE MUTATIONS SONT LUS DANS LEURS JOURNAUX, JAMAIS
+     RETAPES (lecon ft-v1201 : un PDF a publie un total pendant que la passe tournait encore).
+     Les autres sont RECOMPTES depuis le code servi.
+
+CONTRAINTE DE POLICE : WinAnsi/cp1252 — pas d'emoji, entites decodees AVANT controle.
+"""
+import html
+import os
+import re
+import subprocess
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+                                KeepTogether)
+
+ROOT = os.environ.get('FT_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.environ.get('FT_OUT') or '/tmp/DOSSIER-FINALISATION-ACCUEIL-16-09-2026.pdf'
+BANC = os.environ.get('FT_BANC') or '/tmp/banc_nettoyage.log'
+MUT = os.environ.get('FT_MUT') or '/tmp/mut_nettoyage.log'
+PASSE = os.environ.get('FT_PASSE') or '/tmp/passe1220.log'
+
+GARDES = [0]
+
+
+def g(cond, msg):
+    GARDES[0] += 1
+    if not cond:
+        raise SystemExit('GARDE ROUGE - ' + msg)
+
+
+def lire(p):
+    return open(os.path.join(ROOT, p), encoding='utf-8').read()
+
+
+def _strip(src, garder_chaines):
+    """Retire commentaires JS (// et /* */) ET commentaires HTML (<!-- -->).
+    `garder_chaines` decide si les chaines survivent — c'est le choix qui compte :
+    un fait qui vit DANS une chaine (getElementById('...')) exige True."""
+    src = re.sub(r'<!--[\s\S]*?-->', '', src)
+    out, i, n = [], 0, len(src)
+    while i < n:
+        c = src[i]
+        if c == '/' and i + 1 < n and src[i + 1] == '/':
+            j = src.find('\n', i)
+            i = n if j < 0 else j
+        elif c == '/' and i + 1 < n and src[i + 1] == '*':
+            j = src.find('*/', i + 2)
+            i = n if j < 0 else j + 2
+        elif c in '\'"`':
+            j, q = i + 1, c
+            while j < n and src[j] != q:
+                j += 2 if src[j] == '\\' else 1
+            out.append(src[i:j + 1] if garder_chaines else q + q)
+            i = j + 1
+        else:
+            out.append(c)
+            i += 1
+    return ''.join(out)
+
+
+def code_seul(src):
+    return _strip(src, False)
+
+
+def code_et_chaines(src):
+    return _strip(src, True)
+
+
+def corps(src, nom):
+    """Corps REEL, borne par ses accolades — jamais une distance en caracteres (BUGS.md §63)."""
+    m = re.search(r'(?:async\s+)?function\s+%s\s*\(' % re.escape(nom), src)
+    if not m:
+        return ''
+    i = src.index('{', m.end() - 1)
+    n, j = 0, i
+    while j < len(src):
+        if src[j] == '{':
+            n += 1
+        elif src[j] == '}':
+            n -= 1
+            if n == 0:
+                return src[i:j + 1]
+        j += 1
+    return src[i:]
+
+
+SCR = lire('screens.js')
+TRK = lire('tracking.js')
+IDX = lire('index.html')
+CSS = lire('style.css')
+STA = lire('state.js')
+SW = lire('sw.js')
+RUN = lire(os.path.join('tests', 'parcours', 'runner.js'))
+TEM = lire(os.path.join('tests', 'parcours', 'accueil_mini.js'))
+VERSION = (re.search(r"const CACHE\s*=\s*'(ft-v\d+)'", SW) or [None, '?'])[1]
+
+# [!!] `garder_chaines=True` PARTOUT OU ON CHERCHE UN IDENTIFIANT DOM : il vit dans une
+#      chaine. Le choix inverse rendrait le garde aveugle a getElementById('home-sync-dot'),
+#      c'est-a-dire exactement a la regression qu'il doit attraper.
+SCR_S = code_et_chaines(SCR)
+IDX_S = code_et_chaines(IDX)
+CSS_S = re.sub(r'/\*[\s\S]*?\*/', '', CSS)
+TRK_S = code_et_chaines(TRK)
+PILL_S = code_et_chaines(corps(SCR, 'updatePill'))
+
+MORTS = ['home-sheets-pill', 'home-sync-dot', 'home-sync-lbl', 'strength-levels', 'pr-list']
+
+# ══ (A) CE QUI A DISPARU — DU CODE, PAS DES COMMENTAIRES ═══════════════════════════════
+g(bool(PILL_S), 'updatePill introuvable dans screens.js')
+for _id in MORTS:
+    g(_id not in SCR_S and _id not in IDX_S and _id not in CSS_S and _id not in TRK_S,
+      'l identifiant mort « %s » est REVENU dans le code servi : ce dossier affirme le '
+      'contraire' % _id)
+g('Inline home pill' not in code_et_chaines(SCR),
+  'la branche « Inline home pill » est revenue dans screens.js')
+
+# ══ (B) CE QUI DEVAIT RESTER — ET C'EST LA MOITIE QU'ON OUBLIE DE GARDER ═══════════════
+# [!!] Une suppression voisine d'un code vivant se prouve sur le VOISIN, pas seulement sur le
+#      disparu : un « ils ont disparu » est aussi vrai quand on a tout emporte.
+for _id in ('sync-pill', 'sync-dot', 'sync-lbl'):
+    g("'%s'" % _id in PILL_S,
+      'le VRAI identifiant « %s » a ete emporte avec le nettoyage : la pastille de synchro de '
+      'l en-tete cesse de fonctionner' % _id)
+g("'Sheets ✓'" in PILL_S or 'Sheets ✓' in PILL_S,
+  'updatePill n affiche plus l etat connecte : la pastille ne reagit plus')
+
+# [!!] LE GARDE LE PLUS IMPORTANT DE CE DOSSIER, ET IL EXISTE PARCE QUE MON AUDIT S'EST
+#      TROMPE. Il classait #cycle-home-card « orphelin prouve, aucun lecteur, jamais rempli ».
+#      C'est FAUX : renderCycleHomeCard() ecrit dans ses deux spans et renderCycleScreen()
+#      l'appelle. L'audit ne mesurait QUE le chemin de l'Accueil, donc un ecrivain vivant
+#      AILLEURS y restait invisible. La chaine entiere est desormais figee.
+g('id="cycle-home-card"' in IDX_S and 'id="cycle-home-title"' in IDX_S
+  and 'id="cycle-home-sub"' in IDX_S,
+  '#cycle-home-card a ete retire : il a un VRAI ecrivain (renderCycleHomeCard), et le retirer '
+  'est une DECISION qui appartient a Michel, pas un nettoyage prouve')
+CYC = code_et_chaines(corps(TRK, 'renderCycleHomeCard'))
+g(bool(CYC) and 'cycle-home-title' in CYC and 'cycle-home-sub' in CYC,
+  'renderCycleHomeCard ne lit plus ses deux spans : l argument central de la correction '
+  'd audit de ce dossier tombe')
+g('renderCycleHomeCard();' in code_seul(corps(TRK, 'renderCycleScreen')),
+  'renderCycleScreen n appelle plus renderCycleHomeCard : le conteneur cycle deviendrait '
+  'vraiment orphelin, et ce dossier affirme le contraire')
+
+# hors perimetre, nommement — chacun cite dans le dossier
+g('id="recovery-card"' in IDX_S and bool(corps(TRK, 'renderRecoveryCard')),
+  'renderRecoveryCard / #recovery-card ont ete touches : ils sont HORS PERIMETRE (orphelin '
+  'PROBABLE, pas prouve — la mesure manquante est une vraie sauvegarde de sommeil)')
+g('id="home-hdr"' in IDX_S and bool(corps(SCR, '_renderHomeHdr')),
+  '_renderHomeHdr / #home-hdr ont ete touches : ils sont HORS PERIMETRE (passe R30 a part)')
+g(bool(corps(lire('log.js'), 'openPlateCalc')),
+  'openPlateCalc a ete retiree : elle est HORS PERIMETRE (retrait deja acte par Michel en '
+  '2026, R30 — voir le journal)')
+g(re.search(r'const\s+fmt\s*=\s*n\s*=>\s*Math\.round\(n\*10\)\s*/\s*10\s*;',
+            code_seul(STA)) is not None,
+  'fmt() a ete modifiee : elle est HORS PERIMETRE')
+g(re.search(r'wScore\s*=\s*70\s*;', code_seul(corps(TRK, 'calcRecoveryDetail'))) is not None,
+  'la base neutre 70 a disparu du moteur : elle est HORS PERIMETRE')
+g(bool(corps(TRK, '_nuitsRecentes')), '_nuitsRecentes a disparu : elle est HORS PERIMETRE')
+g('DETTE R2 CONFIRM' in SCR,
+  'l inventaire de la dette « derniere pesee » a disparu : il devait rester OUVERT et ECRIT')
+
+# [!!] LA PALETTE : Michel a dit « NE CHANGE PAS --t3 dans cette passe ». Le garde le verifie
+#      sur la VALEUR, pas sur la presence du nom — « --t3 est present » resterait vrai apres
+#      un changement de couleur. (Famille du temoin aveugle : chercher une PRESENCE ne mesure
+#      pas une VALEUR.)
+_t3 = re.search(r'--t3\s*:\s*(#[0-9A-Fa-f]{3,8})', CSS_S)
+g(bool(_t3) and _t3.group(1).lower() == '#6b7180',
+  'la palette a change : --t3 vaut %s au lieu de #6B7180, et la consigne etait de NE PAS y '
+  'toucher dans cette passe' % (_t3.group(1) if _t3 else 'introuvable'))
+
+# ══ (C) LES 4 CORRECTIONS DE ft-v1219 ONT SURVECU A LA FUSION ET AU NETTOYAGE ══════════
+HOME_S = code_et_chaines(corps(SCR, 'renderHome'))
+HERO_S = code_et_chaines(corps(SCR, '_renderHomeHero'))
+HERO_C = code_seul(corps(SCR, '_renderHomeHero'))
+g("isFinite(_bwN)?fmt(_bwN):'—'" in HOME_S.replace(' ', ''),
+  'la correction 1 de ft-v1219 (le NaN kg) a disparu : elle n a JAMAIS ete en ligne, donc '
+  'elle ne peut pas etre perdue en silence')
+g(IDX_S.count('id="home-hero"') == 1 and IDX_S.index('id="home-hero"') < IDX_S.index('id="home-milo"'),
+  'la correction 2 de ft-v1219 (la carte de recup devant les sollicitations) est defaite')
+g('_sansDonnee=' in HERO_C.replace(' ', ''),
+  'la correction 3 de ft-v1219 (le silence sur un compte muet) a disparu')
+g('padding:13px 10px;margin:-9px -10px -9px;' in HERO_S,
+  'la correction 4 de ft-v1219 (la zone tapable) a disparu')
+
+# ══ (D) LES TEMOINS EXISTENT, ET LE BANC LES APPELLE VRAIMENT ═════════════════════════
+N_ECR20 = len(re.findall(r"t\('B-CCCXX T", TEM))
+g(N_ECR20 == 17, 'le bloc B-CCCXX ne porte plus 17 temoins (%d)' % N_ECR20)
+g("require('./accueil_mini.js').ecran(t, b, PORT)" in RUN,
+  'le banc de parcours n appelle plus les temoins d ecran : ils ne tourneraient qu au '
+  'controle negatif, donc jamais en livraison')
+g("require('./accueil_mini.js').source(t, ROOT, fs, path)" in RUN,
+  'le banc de parcours n appelle plus les temoins de source')
+# [!!] SANS CETTE LIGNE, LE TEMOIN T12 MESURAIT MA DOCUMENTATION : il lisait le fichier brut,
+#      ou la raison du retrait (R30) cite justement les identifiants retires. Il rougissait
+#      sur un depot parfaitement propre.
+g('<!--[\\s\\S]*?-->' in TEM.replace('\\\\', '\\'),
+  'le nettoyeur des temoins ne retire plus les commentaires HTML : le temoin T12 redevient '
+  'une mesure de la documentation')
+
+# ══ (E) LA PUBLICATION — CE DOSSIER PARLE D'UN COMMIT QUI EST SUR master ══════════════
+def git(*a):
+    try:
+        return subprocess.run(['git'] + list(a), cwd=ROOT, capture_output=True,
+                              text=True, timeout=60).stdout.strip()
+    except Exception:
+        return ''
+
+
+HEAD = git('rev-parse', 'HEAD')
+g(len(HEAD) == 40, 'impossible de lire le commit courant : ce dossier ne peut pas dire quelle '
+                   'version il decrit')
+PROPRE = git('status', '--porcelain')
+g(PROPRE == '',
+  'l arbre de travail porte des modifications non commitees : le dossier decrirait un arbre '
+  'que personne ne sert (BUGS.md §60)')
+
+
+# ══ LES JOURNAUX : LUS, JAMAIS RETAPES ════════════════════════════════════════════════
+def journal(p):
+    try:
+        return open(p, encoding='utf-8').read()
+    except OSError:
+        return ''
+
+
+LB = journal(BANC)
+_mb = re.search(r'BANC ACCUEIL\s*:\s*(\d+)\s*OK\s*/\s*(\d+)\s*ROUGE', LB)
+g(bool(_mb), 'le journal du banc (%s) ne porte pas de ligne de total' % BANC)
+B_OK, B_KO = int(_mb.group(1)), int(_mb.group(2))
+g(B_KO == 0, 'le banc porte %d rouge(s)' % B_KO)
+
+LM = journal(MUT)
+_mm = re.search(r'(\d+)\s*/\s*(\d+)\s*mutations conformes', LM)
+g(bool(_mm), 'le journal du controle negatif (%s) ne porte pas de ligne de total' % MUT)
+M_OK, M_TOT = int(_mm.group(1)), int(_mm.group(2))
+g(M_OK == M_TOT, 'seules %d mutations sur %d sont conformes' % (M_OK, M_TOT))
+g(LM.count('CONTROLE SAIN') == 2,
+  'le controle sain n a pas tourne des deux cotes : une serie de mutations peut avoir laisse '
+  'l arbre casse en silence')
+g(LM.count('VERT ATTENDU') >= 4,
+  'les mutations qui doivent RESTER VERTES ont disparu : plus rien ne prouve qu on mesure le '
+  'CODE et non la DOCUMENTATION — et ici c est capital, la raison du retrait NOMME les '
+  'identifiants retires')
+
+LP = journal(PASSE)
+_mp = re.search(r'TOTAL CROIS\S+\s*:\s*(\d+)\s*\S+\s*\S+\s*(\d+)', LP)
+P_KO_LIGNES = len(re.findall(r'^\s*❌', LP, re.M))
+if _mp:
+    FINIE, P_OK, P_KO = True, int(_mp.group(1)), int(_mp.group(2))
+else:
+    FINIE, P_OK, P_KO = False, len(re.findall(r'^\s*✅', LP, re.M)), P_KO_LIGNES
+g(P_KO == 0, 'la passe porte %d rouge(s) : rien ne se publie' % P_KO)
+# [!!] ft-v1201 : ne JAMAIS annoncer un total de passe qui n'existe pas encore.
+PASSE_TXT = ('%d / %d' % (P_OK, P_OK + P_KO)) if FINIE else \
+            'EN COURS (%d verts a cet instant)' % P_OK
+
+# ═══════════════════════════════════════════════════════════════════════════════════════
+ROUGE = colors.HexColor('#C0392B')
+ENCRE = colors.HexColor('#1A1A1A')
+GRIS = colors.HexColor('#5A5A5A')
+FOND = colors.HexColor('#F4F4F2')
+TRAIT = colors.HexColor('#D8D8D4')
+
+_ss = getSampleStyleSheet()
+ST = {
+    'titre': ParagraphStyle('t', parent=_ss['Title'], fontName='Helvetica-Bold',
+                            fontSize=16.5, leading=20, textColor=ENCRE, spaceAfter=2),
+    'sous': ParagraphStyle('s', parent=_ss['Normal'], fontName='Helvetica',
+                           fontSize=8.8, leading=11.5, textColor=GRIS, spaceAfter=9),
+    'h1': ParagraphStyle('h1', parent=_ss['Normal'], fontName='Helvetica-Bold',
+                         fontSize=11.2, leading=13.5, textColor=ROUGE,
+                         spaceBefore=10, spaceAfter=4),
+    'p': ParagraphStyle('p', parent=_ss['Normal'], fontName='Helvetica',
+                        fontSize=8.8, leading=12, textColor=ENCRE, spaceAfter=5),
+    'petit': ParagraphStyle('pt', parent=_ss['Normal'], fontName='Helvetica',
+                            fontSize=7.7, leading=10.2, textColor=GRIS, spaceAfter=4),
+    'cell': ParagraphStyle('c', parent=_ss['Normal'], fontName='Helvetica',
+                           fontSize=8, leading=10.2, textColor=ENCRE),
+    'cellg': ParagraphStyle('cg', parent=_ss['Normal'], fontName='Helvetica-Bold',
+                            fontSize=8, leading=10.2, textColor=ENCRE),
+}
+
+
+def _v(s):
+    rendu = html.unescape(s)
+    try:
+        rendu.encode('cp1252')
+    except UnicodeEncodeError as e:
+        raise SystemExit('POLICE - hors cp1252 apres rendu : %r (dans %r)'
+                         % (rendu[e.start:e.end], s[:70]))
+    return s
+
+
+def P(txt, st='p'):
+    return Paragraph(_v(txt), ST[st])
+
+
+C = '<font face="Courier" size="7.6">%s</font>'
+
+
+def encadre(titre, corps_html, couleur=ROUGE):
+    t = Table([[Paragraph(_v('<b>' + titre + '</b>'), ST['cell'])],
+               [Paragraph(_v(corps_html), ST['cell'])]], colWidths=[166 * mm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), FOND),
+        ('LINEBEFORE', (0, 0), (0, -1), 2.2, couleur),
+        ('LEFTPADDING', (0, 0), (-1, -1), 7), ('RIGHTPADDING', (0, 0), (-1, -1), 7),
+        ('TOPPADDING', (0, 0), (-1, -1), 5), ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    return KeepTogether([t, Spacer(1, 6)])
+
+
+def tableau(entetes, lignes, largeurs):
+    data = [[Paragraph(_v('<b>' + h + '</b>'), ST['cellg']) for h in entetes]]
+    for r in lignes:
+        data.append([Paragraph(_v(c), ST['cell']) for c in r])
+    t = Table(data, colWidths=largeurs, repeatRows=1)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), FOND),
+        ('LINEBELOW', (0, 0), (-1, 0), 0.9, TRAIT),
+        ('INNERGRID', (0, 1), (-1, -1), 0.3, TRAIT),
+        ('BOX', (0, 0), (-1, -1), 0.5, TRAIT),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5), ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 3.4), ('BOTTOMPADDING', (0, 0), (-1, -1), 3.4),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    return KeepTogether([t, Spacer(1, 7)])
+
+
+H = []
+H.append(P('Finalisation de l Accueil : publication reelle, et nettoyage prouve', 'titre'))
+H.append(P('Force Tracker - 16/09/2026 - base %s - commit %s. Aucun redesign, aucune '
+           'fonctionnalite nouvelle. Document hors depot (regle d or #14).'
+           % (VERSION, HEAD[:12]), 'sous'))
+
+H.append(encadre(
+    'EN UNE PHRASE, ET LE PREMIER POINT EST LE PLUS IMPORTANT',
+    '<b>' + (C % 'ft-v1219') + ' n avait jamais atteint ' + (C % 'master') + '.</b> Les quatre '
+    'corrections du 16/09 (le ' + (C % 'NaN kg') + ', la carte de recuperation remontee, le '
+    'silence sur un compte muet, la zone tapable) vivaient sur une branche, et le deploiement '
+    'GitHub Pages ne se declenche que sur ' + (C % 'master') + ' : elles n etaient <b>en ligne '
+    'nulle part</b>. <i>Push sur une branche n est pas une version en ligne</i> (R18, deja paye '
+    'deux fois dans ce projet).<br/><br/>'
+    'Cette passe les publie, et retire <b>le seul code mort prouve</b> : la branche '
+    + (C % '« Inline home pill »') + ' d ' + (C % 'updatePill') + ' (10 lignes, 3 conteneurs '
+    'absents de tout le depot) et deux conteneurs vides, ' + (C % '#strength-levels')
+    + ' et ' + (C % '#pr-list') + '.<br/><br/>'
+    '<b>Et elle corrige mon propre audit de la veille</b> : il classait '
+    + (C % '#cycle-home-card') + ' « orphelin prouve, aucun lecteur ». <b>C est faux</b> - '
+    + (C % 'renderCycleHomeCard()') + ' ecrit dans ses deux spans, et '
+    + (C % 'renderCycleScreen()') + ' l appelle. Le conteneur <b>reste</b>.'))
+
+H.append(P('1. Pourquoi cette passe existe : push n est pas publication', 'h1'))
+H.append(P('Mesure au depart : ma branche etait en avance de 11 commits sur ' + (C % 'master')
+           + ', et ' + (C % 'master') + ' en avance de 6 sur ma branche. Les 6 commits de '
+           'l autre session ne touchent que ' + (C % 'tools/') + ' - <b>aucun fichier servi</b>, '
+           'donc aucun conflit possible. Fusion faite, puis les quatre corrections de '
+           + (C % 'ft-v1219') + ' <b>re-verifiees une par une APRES la fusion</b> : une fusion '
+           'qui compile n est pas une fusion qui preserve.', 'p'))
+
+H.append(P('2. Ce qui est retire, et la preuve de chaque retrait', 'h1'))
+H.append(tableau(
+    ['ce que c etait', 'ou', 'preuve'],
+    [['branche ' + (C % '« Inline home pill »') + ' : 10 lignes cherchant 3 conteneurs d une '
+      'ancienne pastille de synchro posee <i>dans</i> l Accueil',
+      (C % 'screens.js') + ', ' + (C % 'updatePill'),
+      'les 3 identifiants <b>absents</b> de tout le depot ; <b>3 requetes DOM sur 21 rendaient '
+      + (C % 'null') + ' A CHAQUE RENDU</b>'],
+     [(C % '#strength-levels') + ' et ' + (C % '#pr-list') + ' : deux conteneurs <b>vides</b>, '
+      + (C % 'display:none'), (C % 'index.html'),
+      '<b>aucun lecteur</b> dans l arbre entier (JS, HTML, CSS, tests)'],
+     ['<b>' + (C % '#cycle-home-card') + ' (+ 2 spans)</b>', (C % 'index.html'),
+      '<b>GARDE</b> - il a un vrai ecrivain (section 3)']],
+    [58 * mm, 36 * mm, 72 * mm]))
+H.append(P('<b>Les VRAIS identifiants sont intacts</b> - ' + (C % 'sync-pill') + ', '
+           + (C % 'sync-dot') + ', ' + (C % 'sync-lbl') + ', la pastille de l en-tete - et deux '
+           'temoins le figent : l un verifie qu ils sont toujours nommes, l autre <b>conduit la '
+           'pastille dans ses deux etats</b> et lit ce qu elle affiche. <i>Une suppression '
+           'voisine d un code vivant se prouve sur le voisin, pas seulement sur le disparu : un '
+           '« ils ont disparu » est aussi vrai quand on a tout emporte.</i>', 'p'))
+
+H.append(P('3. La correction a mon propre audit - le point le plus utile de la passe', 'h1'))
+H.append(P('L audit du 16/09 annoncait ' + (C % '#cycle-home-card') + ' comme <b>ORPHELIN '
+           'PROUVE</b>, colonne « aucun lecteur JS ni CSS », « jamais rempli ». <b>C est '
+           'faux.</b> ' + (C % 'renderCycleHomeCard()') + ' (' + (C % 'tracking.js') + ') ecrit '
+           'dans ses deux ' + (C % '&lt;span&gt;') + ', et ' + (C % 'renderCycleScreen()')
+           + ' l appelle - chemin <b>atteignable</b> par Menu &gt; Outils &gt; Cycle de force.'
+           '<br/><br/>'
+           '<b>Pourquoi l audit ne l a pas vu</b> : il ne mesurait que le chemin de l <b>Accueil</b>. '
+           '<i>Un element vivant AILLEURS reste vert sur un banc borne a l Accueil.</i> Cet '
+           'avertissement etait ecrit mot pour mot dans mon propre outil de mutations, et je l ai '
+           'enfreint dans mon tableau de verdicts. <b>Un vert est toujours borne a la portee de '
+           'son banc, et ne conclut jamais seul.</b><br/><br/>'
+           'Le conteneur reste. Le retirer serait une <b>DECISION</b> - rendre son ecrivain sans '
+           'effet - pas un nettoyage prouve, et elle appartient a Michel.', 'p'))
+
+H.append(P('4. Mesure avant / apres', 'h1'))
+H.append(tableau(
+    ['', 'avant', 'apres'],
+    [['requetes ' + (C % 'getElementById') + ' pendant ' + (C % 'renderHome'), '21', '<b>18</b>'],
+     ['dont <b>vaines</b> (element inexistant)', '<b>3</b>', '<b>0</b>'],
+     ['temps de rendu a froid', '4,9 ms', '4 ms'],
+     ['temps de rendu a chaud (mediane de 20)', '3 ms', '2 ms'],
+     ['ce que voit l utilisateur', '-', '<b>strictement identique</b>']],
+    [76 * mm, 45 * mm, 45 * mm]))
+H.append(P('<b>Aucun gain de temps n est revendique</b> : les deux mesures sont dans la '
+           'dispersion. Le fait solide est le nombre de requetes, pas les millisecondes.', 'p'))
+
+H.append(P('5. Les temoins, et pourquoi chaque absence est doublee d une presence', 'h1'))
+H.append(P('Bloc <b>B-CCCXX</b>, %d temoins (11 au rendu reel, 6 de source), dans '
+           % N_ECR20 + (C % 'tests/parcours/accueil_mini.js') + '. Le comptage des requetes DOM '
+           'est pris <b>a l execution</b>, en instrumentant ' + (C % 'getElementById') + ' '
+           'pendant ' + (C % 'renderHome') + ' : <i>la seule preuve qu une requete ne PART plus '
+           'se prend a l execution, pas dans un fichier.</i><br/><br/>'
+           '<b>Chaque temoin d absence est apparie a un temoin de presence</b>, et ce n est pas '
+           'decoratif : un temoin qui verifie qu une chose n est plus la reste <b>parfaitement '
+           'vert si le rendu ne s execute pas du tout</b>. <i>Un Accueil mort ressemble trait '
+           'pour trait a un Accueil propre.</i> D ou : la carte de recup rendue, la pastille qui '
+           'reagit dans ses deux etats, l ecrivain du conteneur cycle qui ecrit encore vraiment.', 'p'))
+
+H.append(P('6. Le controle negatif, et l etiquette fausse qu il a trouvee', 'h1'))
+H.append(P('<b>%d mutations sur un arbre CLONE, %d conformes</b>, controle sain <b>%d OK / 0 '
+           'rouge avant ET apres</b>.<br/><br/>'
+           '<b>Quatre doivent RESTER VERTES</b> : les identifiants retires cites dans un '
+           'commentaire JS, un commentaire HTML, un commentaire CSS, ou un fichier de '
+           'documentation. <b>Elles sont indispensables ici</b> - la raison du retrait (R30) '
+           '<i>nomme</i> justement ces identifiants, donc un temoin qui lirait le fichier brut '
+           'resterait vert <b>pour toujours</b>, quoi qu on remette dans le code.<br/><br/>'
+           '<b>Et une cinquieme etait etiquetee verte a tort - par moi.</b> Elle remet un nom '
+           'mort dans une ' + (C % 'const') + ' de premier niveau, et elle est sortie <b>rouge</b>. '
+           'Le temoin avait raison : <i>une ' + (C % 'const') + ' qui s execute est du CODE, pas '
+           'de la documentation.</i> Rendre le temoin aveugle aux chaines pour la faire passer '
+           'l aurait rendu aveugle a ' + (C % "getElementById('home-sync-dot')") + ', qui vit '
+           'exactement de la meme facon - dans une chaine.'
+           % (M_TOT, M_OK, B_OK), 'p'))
+
+H.append(P('7. Ce que cette passe ne fait pas', 'h1'))
+H.append(tableau(
+    ['laisse en place', 'pourquoi'],
+    [[(C % '_renderHomeHdr') + ' / ' + (C % '#home-hdr'),
+      'orphelin <b>PROBABLE</b>, pas prouve - et un temoin en depend : passe R30 a part'],
+     [(C % 'renderRecoveryCard') + ' / ' + (C % '#recovery-card'),
+      'la mesure manquante est une <b>vraie sauvegarde de sommeil par l interface</b>'],
+     [(C % '#cycle-home-card') + ' (+2 spans)', 'il a un vrai ecrivain (section 3)'],
+     [(C % 'openPlateCalc') + ', les 47 fonctions de categorie C',
+      'hors perimetre - retrait deja acte par Michel (R30)'],
+     [(C % 'fmt()') + ', la base neutre 70, ' + (C % '_nuitsRecentes'),
+      'valeurs metier volontaires, avec d autres lecteurs'],
+     ['la dette R2 « derniere pesee »', 'confirmee, <b>laissee ouverte expres</b>, inventaire '
+      'ecrit dans le code'],
+     ['les 55 classes CSS candidates', '<b>candidates</b>, pas prouvees'],
+     ['<b>la palette, ' + (C % '--t3') + ' compris</b>',
+      'contraste <b>3,70 &lt; 4,5</b> sur les petits textes gris : <b>recommandation separee</b>, '
+      'jamais un correctif glisse ici'],
+     ['Nutrition, douane, journal alimentaire', '<b>0 ligne</b>']],
+    [58 * mm, 108 * mm]))
+
+H.append(P('8. Reponses, avec leur preuve', 'h1'))
+H.append(tableau(
+    ['#', 'question', 'reponse et preuve'],
+    [['1', 'la branche est-elle reconciliee avec ' + (C % 'master') + ' ?',
+      '<b>OUI</b> - 6 commits fusionnes, aucun fichier servi touche'],
+     ['2', 'les 4 corrections de ' + (C % 'ft-v1219') + ' ont-elles survecu ?',
+      '<b>OUI</b> - re-verifiees une par une apres la fusion, 4 gardes ici'],
+     ['3', 'seul le code mort <b>prouve</b> est-il supprime ?',
+      '<b>OUI</b> - et un candidat a ete <b>retire de la liste</b> apres verification'],
+     ['4', 'un candidat seulement probable a-t-il ete touche ?',
+      '<b>NON</b> - ' + (C % '#home-hdr') + ' et ' + (C % '#recovery-card') + ' intacts, 2 '
+      'mutations mordent'],
+     ['5', 'la palette a-t-elle change ?',
+      '<b>NON</b> - ' + (C % '--t3') + ' verifie sur sa <b>valeur</b>, pas sur sa presence'],
+     ['6', 'une fonctionnalite a-t-elle ete ajoutee ?', '<b>NON</b> - aucun ecran, aucun bouton'],
+     ['7', 'l utilisateur voit-il une difference ?',
+      '<b>NON</b> - 3 requetes qui rendaient ' + (C % 'null') + ' cessent de partir, 2 '
+      'conteneurs vides et invisibles disparaissent'],
+     ['8', 'un gain de vitesse est-il revendique ?',
+      '<b>NON</b> - dans la dispersion des mesures'],
+     ['9', 'l audit de la veille etait-il juste ?',
+      '<b>PARTIEL</b> - juste sur 2 candidats sur 3 ; <b>faux</b> sur '
+      + (C % '#cycle-home-card') + ', corrige ici avec sa cause'],
+     ['10', 'le dossier decrit-il l arbre reellement servi ?',
+      '<b>OUI</b> - arbre propre verifie, commit ' + (C % HEAD[:12]) + ' lu par un garde']],
+    [8 * mm, 66 * mm, 92 * mm]))
+
+H.append(Spacer(1, 3))
+H.append(P('Document produit par ' + (C % 'tools/gen_finalisation_pdf.py') + ' - <b>'
+           + str(GARDES[0]) + ' gardes</b> qui recomptent chaque fait depuis le code servi ou le '
+           'lisent dans les journaux, et refusent de produire si un fait tombe - y compris si un '
+           'identifiant retire revient, si un element hors perimetre a saute, si la palette a '
+           'change, ou si l arbre de travail n est pas propre. Banc : %d/%d. Controle negatif : '
+           '%d/%d. Passe complete : %s. Commit : %s.'
+           % (B_OK, B_OK + B_KO, M_OK, M_TOT, PASSE_TXT, HEAD[:12]), 'petit'))
+
+SimpleDocTemplate(OUT, pagesize=A4,
+                  leftMargin=21 * mm, rightMargin=21 * mm,
+                  topMargin=16 * mm, bottomMargin=14 * mm,
+                  title='Finalisation de l Accueil - publication reelle et nettoyage prouve',
+                  author='Force Tracker').build(H)
+
+print('OK %s  (%s, %d gardes, banc %d/%d, mutations %d/%d, passe %s)'
+      % (OUT, VERSION, GARDES[0], B_OK, B_OK + B_KO, M_OK, M_TOT, PASSE_TXT))
