@@ -176,9 +176,19 @@ _exige('_tsVersId' not in APP_NU + SCR_NU + ST_NU,
        'du groupe, donc il rouvrirait la porte exacte qu on ferme (§19).')
 
 # ═══ 13. LES DEUX BLOCS DE TEMOINS SONT LA ═══════════════════════════════
-for _bl in ('B-CCCXII', 'B-CCCXIII'):
+# ⛔ LES BLOCS ONT ETE RENUMEROTES A LA FUSION DU 16/09 : l autre session avait pris
+#    B-CCCXII et B-CCCXIII le meme jour. Je publie en dernier, donc je renumerote les MIENS.
+#    Le garde suit — sinon il mesurerait les blocs de l autre session en croyant mesurer
+#    les miens, ce qui est pire qu un garde absent.
+for _bl in ('B-CCCXIV', 'B-CCCXV'):
     _exige(_bl in RUN, 'le bloc %s a disparu du banc : le §19 du dossier le cite.' % _bl)
     _exige(_bl in TXT, 'le bloc %s a disparu du dossier.' % _bl)
+# ⛔ ET LES BLOCS DE L AUTRE SESSION DOIVENT ETRE RESTES ENTIERS : une fusion qui garde un
+#    seul cote est une fusion qui efface le travail de quelqu un.
+for _bl in ('B-CCCXII ', 'B-CCCXIII '):
+    _exige(_bl in RUN,
+           'le bloc %s de l AUTRE session a disparu du banc : la fusion du 16/09 devait '
+           'conserver les deux cotes.' % _bl.strip())
 
 # ═══ 14. L INSTANTANE EST DANS LE DEPOT ET REJOUABLE ═════════════════════
 _exige(os.path.exists(os.path.join(ROOT, 'tools/instantane_foodlog_identite.js')),
