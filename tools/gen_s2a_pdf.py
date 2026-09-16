@@ -146,8 +146,12 @@ g(C_SYNC.count('_authCode()') == 1,
   'le code perso est lu %d fois dans _cloudSync au lieu d une' % C_SYNC.count('_authCode()'))
 
 # le transport Apps Script, lui, le porte toujours
-g(re.search(r'authCode:_authCode\(\), token:_ftToken\(\)', C_SYNC) is not None,
-  'le transport Apps Script ne porte plus les justificatifs : l ecriture ne serait plus '
+# [!] LE TRANSPORT EST MESURE SUR SON CORPS, PAS SUR L'ORDRE DES CLES. Premiere version :
+# un motif qui figeait `authCode..., token...` dans cet ordre exact — il aurait rougi sur une
+# simple permutation, c'est-a-dire sur du code parfaitement juste.
+_transport = C_SYNC[C_SYNC.find('fetch('):]
+g('_authCode()' in _transport and '_ftToken()' in _transport,
+  'le transport Apps Script ne porte plus les deux justificatifs : l ecriture ne serait plus '
   'authentifiee (S1 casse)')
 
 # ── LE FILET DANS LA PORTE UNIQUE ──────────────────────────────────────────────────────
