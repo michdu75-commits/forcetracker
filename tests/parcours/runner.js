@@ -39881,7 +39881,142 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
 
 
 
-/* ══ BLOC B-CCCXII — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (bug T-01) ══════════
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL NOMME SA SÉANCE ═══');
+{
+  const srcC=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
+  const srcL=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  /* ⛔ LES GARDES DE SOURCE LISENT LE CORPS SANS SES COMMENTAIRES : un garde qui ne distingue pas
+     le CODE de ce qui en PARLE mesure la documentation (famille ft-v1193/1205/1210/1212). */
+  const nu=x=>String(x||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
+  const corps=(n,src)=>{ const m=new RegExp('(?:async\\s+)?function\\s+'+n+'\\s*\\([^)]*\\)\\s*\\{').exec(src);
+    if(!m) return ''; let i=m.index+m[0].length-1,d=0,j=i;
+    for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
+    return ''; };
+
+  // ── A : l'état qui manquait
+  t('B-CCCXII ① ⭐⭐ l\'état « reçu » existe, avec sa propre clé de stockage',
+    /const _DBF_RECU\s*=\s*'ft4_debrief_recu'/.test(srcC), '');
+  t('B-CCCXII ② ⛔ il PORTE la réponse ET la consigne (sinon : perte silencieuse)',
+    /reply:String\(reply\)/.test(nu(corps('_dbfRecu',srcC))) && /instr:String\(instr\|\|''\)/.test(nu(corps('_dbfRecu',srcC))), '');
+  t('B-CCCXII ③ ⛔ le poser retire le « en vol » : ce n\'est plus en vol, c\'est payé',
+    /removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_dbfRecu',srcC))), '');
+  t('B-CCCXII ④ ⭐⭐ il est posé AVANT tout traitement de la réponse',
+    /_dbfRecu\(_pid, reply, instr\)[\s\S]{0,400}_stripCoachTech/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ⑤ ⭐⭐ le rattrapage TERMINE le travail au lieu de le refaire',
+    /_dbfLireRecu\(\)[\s\S]{0,700}_dbfPoserDansHistorique\(_r\.reply, _r\.instr\)/.test(nu(corps('_dbfRecuperer',srcC))), '');
+  /* ⚠️ CE TÉMOIN ÉTAIT AVEUGLE : il cherchait « un `return;` quelque part entre le `recu` et le
+     `en cours` » — or la fonction en contient un AUTRE plus bas (`if(!e||!e.id){…return;}`), donc
+     retirer celui de la branche le laissait vert. *Un motif qui cherche une présence ne mesure
+     pas une absence quand le même mot vit ailleurs.* Il est ancré sur la SORTIE de la branche. */
+  t('B-CCCXII ⑥ ⛔ et il sort AVANT de regarder « en cours » (sinon on remet en file et on repaie)',
+    /_dbfFini\(_r\.id\);\s*return;/.test(nu(corps('_dbfRecuperer',srcC))), '');
+  /* ⚠️ Même piège : `removeItem(_DBF_RECU)` existe DEUX fois (le cas normal et le `catch`).
+     N'en exiger qu'une laissait le retrait du cas normal parfaitement vert. On COMPTE. */
+  t('B-CCCXII ⑦ ⛔ la livraison efface le « reçu » (sinon il serait reposé au démarrage suivant)',
+    (nu(corps('_dbfFini',srcC)).match(/removeItem\(_DBF_RECU\)/g)||[]).length===2, '');
+  /* ⚠️ Et encore : `_DBF_PEREMPTION` apparaît DEUX fois dans cette fonction (la branche « reçu »
+     et la branche « en cours »). Chercher le mot laissait passer un second seuil écrit en dur
+     dans l'une des deux — exactement ce que R2 interdit. */
+  t('B-CCCXII ⑧ ⛔ MÊME PÉREMPTION que le reste (R2) : pas de second seuil',
+    (nu(corps('_dbfRecuperer',srcC)).match(/_DBF_PEREMPTION/g)||[]).length===2
+    && !/<\s*\d+\s*\*\s*3600\s*\*\s*1000/.test(nu(corps('_dbfRecuperer',srcC))), '');
+  t('B-CCCXII ⑨ ⛔ le rattrapage ne crée AUCUN appel de résumé (pas de summarizeCoach en plus)',
+    !/_saveCoachMemory/.test(nu(corps('_dbfPoserDansHistorique',srcC))), '');
+  t('B-CCCXII ⑩ ⭐ un seul propriétaire pose le débrief dans le fil (R2), appelé des DEUX côtés',
+    (nu(srcC)+nu(srcL)).match(/_dbfPoserDansHistorique\(/g||[]).length>=3, '');
+  t('B-CCCXII ⑪ ⛔ l\'échec propre reste récupérable : `_dbfRendre` remet bien en file',
+    /l\.unshift\(s\)/.test(nu(corps('_dbfRendre',srcC))), '');
+  t('B-CCCXII ⑫ ⭐⭐ une séance EN FILE reste reprenable même si `_dbfFaits` la contient',
+    /if\(i<0 && _dbfFaits\(\)\.indexOf\(s\)>=0\) return null;/.test(nu(corps('_dbfPrendreCible',srcC))), '');
+
+  // ── B : la séance est nommée, jamais devinée
+  t('B-CCCXII ⑬ ⭐⭐ l\'écran de fin cible la séance AFFICHÉE, par son identifiant',
+    /_dbfPrendreCible\(_sid\)/.test(nu(corps('_runSeDebrief',srcL)))
+    && /const _sid=String\(\(sess&&\(sess\.id\|\|sess\.ts\|\|sess\.date\)\)\|\|''\)/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ⑭ ⛔ les DEUX chemins nomment la séance et interdisent d\'en débriefer une autre',
+    (nu(srcL)+nu(srcC)).match(/LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI/g||[]).length===2
+    && (nu(srcL)+nu(srcC)).match(/Ne débriefe aucune autre séance/g||[]).length===2, '');
+  t('B-CCCXII ⑮ ⛔ « la plus récente » n\'est plus qu\'un REPLI, jamais la règle',
+    (nu(srcL)+nu(srcC)).match(/la plus récente dans mes dernières séances/g||[]).length===2
+    && /_des\?\(/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ⑯ ⭐⭐ l\'ID CHOISIT, la date DÉCRIT : la désignation part de la SÉANCE',
+    /function _dbfDesignation\(sess\)/.test(srcC)
+    && /_dateLisible\(sess\.date\)/.test(nu(corps('_dbfDesignation',srcC))), '');
+  t('B-CCCXII ⑰ ⛔ la séance est retrouvée par IDENTIFIANT, pas par date',
+    /String\(x\.id\|\|x\.ts\|\|x\.date\)===String\(id\)/.test(nu(corps('_dbfSeanceParId',srcC))), '');
+  t('B-CCCXII ⑱ ⛔ PÉRIMÈTRE — le catalogue, le Gardien et le cache ne sont pas touchés',
+    /EXERCICES DISPONIBLES DANS SON APPLICATION/.test(srcC)
+    && /return _gardienRules\(\) \+ `Tu es \$\{/.test(srcC), '');
+  t('B-CCCXII ⑲ ⛔ PÉRIMÈTRE — le seuil de mémoire reste à 4 et n\'a pas bougé',
+    (nu(srcC)+nu(srcL)).match(/coachHistory\.length\s*>=\s*4/g||[]).length===2, '');
+  t('B-CCCXII ⑳ ⛔ PÉRIMÈTRE — les règles RIR de ft-v1213 sont intactes',
+    /return t!=='É' && t!=='W' && t!=='E' && t!=='X';/.test(srcL), '');
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTATION ═══');
+/* ⭐⭐ CE BLOC FIGE CE QUI EST VRAI AUJOURD'HUI, PAS CE QU'ON VOUDRAIT.
+   Michel : « aucune affirmation "corrigé" sans mesure ». Un chantier d'identité qui ne sait pas
+   prouver l'état de DÉPART ne pourra jamais prouver son arrivée — il dira « c'est mieux ».
+   ⛔ Certains témoins ci-dessous épinglent donc des DÉFAUTS : ils DOIVENT rougir le jour où S1
+   les corrige, et c'est exactement leur rôle. Chacun porte alors la conduite à tenir. */
+{
+  const srcCo=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const srcW =fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  const srcSb=fs.readFileSync(path.join(ROOT,'supabase.js'),'utf8');
+  const nu=x=>String(x||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
+  const corps=(n,src)=>{ const m=new RegExp('(?:async\\s+)?function\\s+'+n+'\\s*\\([^)]*\\)\\s*\\{').exec(src);
+    if(!m) return ''; let i=m.index+m[0].length-1,d=0,j=i;
+    for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
+    return ''; };
+
+  /* ⭐⭐ TÉMOINS ① À ④ — RETOURNÉS LE 16/09/2026, PAS SUPPRIMÉS (R30).
+     Ils épinglaient les DÉFAUTS de départ ; S1 les a fermés, donc ils devaient rougir — c'était
+     leur rôle. On inverse leur assertion en gardant leur numéro et leur histoire : *un témoin
+     qui disparaît ne laisse aucune trace de la décision*. ⛔ Le seul qui n'est PAS retourné est
+     le ③ : Supabase reste ouverte jusqu'à S2, et le prétendre fermé serait un mensonge. */
+  t('B-CCCXIII ① ⭐⭐ RETOURNÉ — l\'écriture d\'un compte prend l\'identité du JETON, plus de l\'e-mail',
+    /_identitePourEcriture_\(body\)/.test(nu(srcCo))
+    && /function _identitePourEcriture_/.test(nu(srcCo))
+    && /j\.ok\)\s*\{[^}]*return\s*\{\s*ok:\s*true,\s*email:\s*j\.email/.test(nu(corps('_identitePourEcriture_',srcCo))), '');
+  t('B-CCCXIII ② ⭐⭐ RETOURNÉ — le Worker EXIGE un credential : Origin n\'est plus qu\'un contrôle secondaire',
+    /_identiteIA\(body\.token, env\)/.test(nu(srcW))
+    && /if \(!_moi\.ok\)/.test(nu(srcW)), '');
+  t('B-CCCXIII ③ ⛔ NON RETOURNÉ, ET C\'EST VOULU — ft_miroir garde son p_email libre : '
+    +'V2 RESTE OUVERTE JUSQU\'À S2',
+    /p_email:\s*email/.test(nu(srcSb)), '');
+  t('B-CCCXIII ④ ⭐⭐ RETOURNÉ — le quota IA est décompté sur l\'identité DU JETON',
+    /_compterIA\(body\.action, _moi\.email, env\)/.test(nu(srcW)), '');
+
+  // ── PROPRIÉTÉS À PRÉSERVER : S1 ne doit pas les casser en chemin ───────────────────────
+  t('B-CCCXIII ⑤ ⭐ À PRÉSERVER — le serveur ne lit JAMAIS un « premium » fourni par le client',
+    !/body\.premium|data\.premium|p\.premium/.test(nu(srcCo)), '');
+  t('B-CCCXIII ⑥ ⭐ À PRÉSERVER — la lecture d\'un compte sans code reste REFUSÉE',
+    /needsCode\s*:\s*true/.test(nu(corps('_lectureAutorisee_',srcCo))), '');
+  t('B-CCCXIII ⑦ ⭐ À PRÉSERVER — le code perso reste haché et salé, jamais stocké en clair',
+    /_sha256hex_\(salt\+'\|'\+String\(code/.test(nu(corps('_authCheck_',srcCo))), '');
+
+  // ── LE BOOTSTRAP : la seule preuve disponible pour un compte sans code ─────────────────
+  t('B-CCCXIII ⑧ ⭐⭐ LA PREUVE DE BOOTSTRAP EXISTE — vérification e-mail bornée : '
+    +'5 essais, expiration, cooldown',
+    /cur\.tries\s*>=\s*5/.test(nu(srcCo))
+    && /cur\.exp\s*<\s*Date\.now\(\)/.test(nu(srcCo))
+    && /now\s*-\s*cur\.sentAt\)\s*<\s*60000/.test(nu(srcCo)), '');
+  /* ⭐⭐ RETOURNÉ LE 16/09/2026 — la condition posée par ce témoin s'est réalisée : ce chemin
+     délivre désormais un credential, donc `Math.random()` devait en sortir. Il vérifie
+     maintenant l'inverse, et il rougira si quelqu'un l'y remet. */
+  t('B-CCCXIII ⑨ ⭐⭐ RETOURNÉ — plus aucun Math.random() dans la chaîne d\'identité',
+    !/Math\.random\(\)/.test(nu(corps('handleSendConfirmCode_',srcCo)))
+    && /Utilities\.getUuid\(\)/.test(nu(corps('handleSendConfirmCode_',srcCo)))
+    && !/Math\.random/.test(nu(corps('_jetonNouveau_',srcCo))), '');
+
+  // ── PÉRIMÈTRE : ce que S1 n'a pas le droit de toucher ──────────────────────────────────
+  t('B-CCCXIII ⑩ ⛔ PÉRIMÈTRE — Nutrition intacte : la douane garde ses règles et ses écrivains',
+    /_douaneLigne/.test(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')), '');
+}
+
+/* ══ BLOC B-CCCXIV — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (bug T-01) ══════════
    Michel, 16/09/2026, après la mesure `MESURE-T01-TS-REJOUER-REPAS` : `rejouerRepas` écrivait
    ses lignes dans une boucle SYNCHRONE, plusieurs `Date.now()` tombaient dans la même
    milliseconde, et `ts` — la SEULE poignée de l'interface — était partagé. Mesuré par clics
@@ -39895,7 +40030,7 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
    alors au cloud sans identité (`rejouerRepas` synchronise AVANT de rendre), et surtout
    *un contrat qu'aucun témoin ne tient finit par être oublié par le prochain écrivain*.
 
-   ⛔ Le comportement, lui, est éprouvé par clics réels dans le bloc B-CCCXIII, juste après. */
+   ⛔ Le comportement, lui, est éprouvé par clics réels dans le bloc B-CCCXV, juste après. */
 {
   const srcA=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
   const srcS=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
@@ -39910,10 +40045,10 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
     return ''; };
   const A12=nu12(srcA), S12=nu12(srcS), C12=nu12(srcC);
 
-  console.log('\n-- B-CCCXII. L\'identité d\'une ligne du journal alimentaire (source) --');
+  console.log('\n-- B-CCCXIV. L\'identité d\'une ligne du journal alimentaire (source) --');
 
   /* ① UN SEUL PROPRIÉTAIRE POUR FABRIQUER UNE IDENTITÉ (R2) */
-  t('B-CCCXII ① `_foodLineId` est le seul fabricant d\'identité, appelé par les 3 créateurs',
+  t('B-CCCXIV ① `_foodLineId` est le seul fabricant d\'identité, appelé par les 3 créateurs',
     /function _foodLineId\(\)/.test(S12) &&
     (S12.match(/function _foodLineId/g)||[]).length===1 &&
     (A12.match(/_foodLineId\(\)/g)||[]).length===3,
@@ -39924,84 +40059,84 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
      comportement — le filet du rendu la repose. Ce témoin-ci tient le contrat. */
   ['rejouerRepas','quickAddFood','addFoodEntry'].forEach(fn=>{
     const b=corps12(srcA,fn);
-    t('B-CCCXII ② `'+fn+'` pose l\'identité DANS le littéral de la ligne',
+    t('B-CCCXIV ② `'+fn+'` pose l\'identité DANS le littéral de la ligne',
       /id:_foodLineId\(\)/.test(b) && /ts:Date\.now\(\)/.test(b), fn);
   });
 
   /* ③ ⛔ `saveEditFood` N'EN POSE PAS, ET C'EST VOLONTAIRE (R30).
      Il modifie une ligne EN PLACE. Lui imposer le même geste lui ferait changer d'identité à
      chaque correction — *une ligne qu'on corrige reste la même ligne.* */
-  t('B-CCCXII ③ ⛔ `saveEditFood` ne fabrique AUCUNE identité (il édite en place)',
+  t('B-CCCXIV ③ ⛔ `saveEditFood` ne fabrique AUCUNE identité (il édite en place)',
     corps12(srcA,'saveEditFood').length>0 && !/_foodLineId\(/.test(corps12(srcA,'saveEditFood')), '');
 
   /* ④ `ts` RESTE UN HORODATAGE : personne ne le gonfle pour le rendre unique. C'est le choix
      d'architecture du chantier — `_profilAlimentaire` en lit l'HEURE, un `ts` gonflé mentirait. */
-  t('B-CCCXII ④ ⛔ aucun écrivain ne fabrique un `ts` artificiellement unique',
+  t('B-CCCXIV ④ ⛔ aucun écrivain ne fabrique un `ts` artificiellement unique',
     !/ts:\s*Date\.now\(\)\s*\+/.test(A12) && !/\.ts\s*=\s*Date\.now\(\)\s*\+/.test(A12+S12), '');
-  t('B-CCCXII ④bis ⛔ la compatibilité ne RÉÉCRIT jamais un horodatage',
+  t('B-CCCXIV ④bis ⛔ la compatibilité ne RÉÉCRIT jamais un horodatage',
     !/\.ts\s*=[^=]/.test(corps12(srcS,'_foodLogIdentifier')), '');
 
   /* ⑤ LA COMPATIBILITÉ NE TOUCHE QU'À L'IDENTITÉ MANQUANTE (consigne « MIGRATION » de Michel) */
   {
     const b=corps12(srcS,'_foodLogIdentifier');
     const ecrit=(b.match(/\bl\.[a-zA-Z0-9_]+\s*=[^=]/g)||[]).map(s=>s.replace(/\s*=.$/,'').trim());
-    t('B-CCCXII ⑤ ⭐ la compatibilité n\'écrit QUE `l.id` — aucune donnée métier ne bouge',
+    t('B-CCCXIV ⑤ ⭐ la compatibilité n\'écrit QUE `l.id` — aucune donnée métier ne bouge',
       ecrit.length===1 && ecrit[0]==='l.id', 'écrit : '+(ecrit.join(', ')||'rien'));
     /* ⛔ ELLE EXIGE L'UNICITÉ, PAS LA PRÉSENCE : un `id` en double est RÉATTRIBUÉ. Sans ça on
        rejouerait le bug exact qu'on corrige, avec une autre clé. (Trouvé par mutation.) */
-    t('B-CCCXII ⑤bis ⭐ un identifiant en DOUBLE est réattribué (unicité, pas présence)',
+    t('B-CCCXIV ⑤bis ⭐ un identifiant en DOUBLE est réattribué (unicité, pas présence)',
       /!vus\[cle\]/.test(b), '');
   }
 
   /* ⑥ CE N'EST PAS UN DRAPEAU « MIGRATION FAITE » : une restauration peut réinjecter de
      vieilles lignes bien après. Le mécanisme est rejoué au chargement, à la fusion ET au rendu. */
-  t('B-CCCXII ⑥ ⛔ la compatibilité n\'est pas gardée par un drapeau one-time',
+  t('B-CCCXIV ⑥ ⛔ la compatibilité n\'est pas gardée par un drapeau one-time',
     !/ft4_[a-z0-9_]*mig/.test(corps12(srcS,'_foodLogIdentifier')), '');
-  t('B-CCCXII ⑥bis la compatibilité est rejouée au chargement ET à la fusion',
+  t('B-CCCXIV ⑥bis la compatibilité est rejouée au chargement ET à la fusion',
     (S12.match(/_foodLogIdentifier\(S\.foodLog\)/g)||[]).length>=2,
     'appels dans state.js : '+((S12.match(/_foodLogIdentifier\(S\.foodLog\)/g)||[]).length));
-  t('B-CCCXII ⑥ter ⭐ et AVANT chaque rendu du journal — le filet qui couvre la RESTAURATION',
+  t('B-CCCXIV ⑥ter ⭐ et AVANT chaque rendu du journal — le filet qui couvre la RESTAURATION',
     /_foodLogIdentifier\(S\.foodLog\)/.test(corps12(srcC,'renderFoodJournal')), '');
 
   /* ⑦ AUCUN `Math.random()` (consigne explicite), ET AUCUN REPLI SUR L'HORLOGE. */
-  t('B-CCCXII ⑦ ⛔ l\'identité ne vient jamais de `Math.random`',
+  t('B-CCCXIV ⑦ ⛔ l\'identité ne vient jamais de `Math.random`',
     !/Math\.random/.test(corps12(srcS,'_foodLineId')) &&
     /crypto\.randomUUID/.test(corps12(srcS,'_foodLineId')) &&
     /crypto\.getRandomValues/.test(corps12(srcS,'_foodLineId')), '');
-  t('B-CCCXII ⑦bis ⛔ aucun repli sur l\'horloge : sans source aléatoire, on échoue FERMÉ',
+  t('B-CCCXIV ⑦bis ⛔ aucun repli sur l\'horloge : sans source aléatoire, on échoue FERMÉ',
     !/Date\.now/.test(corps12(srcS,'_foodLineId')), '');
 
   /* ⑧ L'ÉDITION ET LA SUPPRESSION N'EMPLOIENT PLUS `ts` COMME POIGNÉE. */
   ['openEditFood','saveEditFood','confirmRemoveFood','removeFoodEntry','_efQtyRender','_efApplyGrams']
     .forEach(fn=>{
       const b=corps12(srcA,fn);
-      t('B-CCCXII ⑧ `'+fn+'` ne retrouve plus la ligne par `ts`',
+      t('B-CCCXIV ⑧ `'+fn+'` ne retrouve plus la ligne par `ts`',
         b.length>0 && !/\.ts\s*===/.test(b) && !/\.ts\s*!==/.test(b), fn);
     });
 
   /* ⑨ ⭐⭐ L'ANNONCE ET L'ACTION EMPLOIENT LA MÊME CLÉ — le fait le plus grave de T-01. */
-  t('B-CCCXII ⑨ ⭐ `confirmRemoveFood` nomme la ligne par son identité',
+  t('B-CCCXIV ⑨ ⭐ `confirmRemoveFood` nomme la ligne par son identité',
     /x\.id===id/.test(corps12(srcA,'confirmRemoveFood').replace(/\s+/g,'')), '');
-  t('B-CCCXII ⑨bis ⭐ `removeFoodEntry` retire UN élément par construction (index, pas filtre)',
+  t('B-CCCXIV ⑨bis ⭐ `removeFoodEntry` retire UN élément par construction (index, pas filtre)',
     /findIndex\(/.test(corps12(srcA,'removeFoodEntry')) &&
     /splice\(i,1\)/.test(corps12(srcA,'removeFoodEntry').replace(/\s+/g,'')) &&
     !/\.filter\(/.test(corps12(srcA,'removeFoodEntry')),
     '⛔ un `filter` sur une clé qu\'on croit unique est exactement ce qui a effacé 3 lignes');
 
   /* ⑩ LA POIGNÉE DU RENDU EST L'IDENTITÉ, FILTRÉE PAR LISTE BLANCHE. */
-  t('B-CCCXII ⑩ le journal passe l\'identité, plus l\'horodatage',
+  t('B-CCCXIV ⑩ le journal passe l\'identité, plus l\'horodatage',
     C12.indexOf("openEditFood('${_h}')")>=0 && C12.indexOf("confirmRemoveFood('${_h}')")>=0 &&
     /_foodIdAttr\(e\.id\)/.test(C12), '');
-  t('B-CCCXII ⑩bis ⛔ le bouton Supprimer DE LA MODALE emploie la même poignée',
+  t('B-CCCXIV ⑩bis ⛔ le bouton Supprimer DE LA MODALE emploie la même poignée',
     /_foodIdAttr\(id\)/.test(corps12(srcA,'openEditFood')),
     'la modale d\'édition a sa propre porte de suppression — elle avait été oubliée une fois');
-  t('B-CCCXII ⑩ter l\'identité passe par une LISTE BLANCHE avant d\'entrer dans un attribut',
+  t('B-CCCXIV ⑩ter l\'identité passe par une LISTE BLANCHE avant d\'entrer dans un attribut',
     /function _foodIdAttr/.test(S12) && /\[\^0-9a-zA-Z-\]/.test(S12), '');
 
   /* ⑪ ⛔ HORS PÉRIMÈTRE, FIGÉ : la fusion multi-onglets n'emploie PAS l'identité.
      Deux onglets qui notent la même chose produisent deux `id` différents : une signature sur
      l'identité les garderait tous les deux, donc créerait le doublon que la fusion évite. */
-  t('B-CCCXII ⑪ ⛔ la signature de fusion de `foodLog` n\'emploie pas l\'identité',
+  t('B-CCCXIV ⑪ ⛔ la signature de fusion de `foodLog` n\'emploie pas l\'identité',
     /S\.foodLog\s*=\s*_fusionListe\(S\.foodLog,[\s\S]{0,300}?e&&e\.kcal/.test(S12) &&
     !/_fusionListe\(S\.foodLog,[\s\S]{0,300}?e&&e\.id/.test(S12), '');
 
@@ -40009,16 +40144,16 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
   {
     const d=srcA.slice(srcA.indexOf('function _douaneLigne'), srcA.indexOf('function _douaneCompter'));
     const R=d.match(/dit\('[a-z0-9_]+',\s*'(INVALID|WARN)'/g)||[];
-    t('B-CCCXII ⑫ ⛔ la douane garde ses 21 règles, dont 9 INVALID',
+    t('B-CCCXIV ⑫ ⛔ la douane garde ses 21 règles, dont 9 INVALID',
       R.length===21 && R.filter(x=>x.indexOf('INVALID')>=0).length===9,
       R.length+' règles / '+R.filter(x=>x.indexOf('INVALID')>=0).length+' INVALID');
-    t('B-CCCXII ⑫bis ⛔ les 4 écrivains sont toujours observés par la douane',
+    t('B-CCCXIV ⑫bis ⛔ les 4 écrivains sont toujours observés par la douane',
       ['addFoodEntry','quickAddFood','rejouerRepas','saveEditFood']
         .every(w=>new RegExp("_douaneLigne\\([^,]+,'"+w+"'\\)").test(A12)), '');
   }
 }
 
-/* ══ BLOC B-CCCXIII — LE MÊME BUG, MAIS PAR CLICS RÉELS ═══════════════════════════════════
+/* ══ BLOC B-CCCXV — LE MÊME BUG, MAIS PAR CLICS RÉELS ═══════════════════════════════════
    ⛔⛔ CE BLOC EXISTE PARCE QUE LE PRÉCÉDENT NE SUFFIT PAS. Les témoins de source prouvent
    qu'on emploie la bonne clé ; ils ne prouvent PAS que la personne qui tape sur « OEUF »
    modifie « OEUF ». Le bug d'origine se voyait à l'écran, pas dans le code.
@@ -40034,7 +40169,7 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
   await pg13.addInitScript(seedScript({}));
   await pg13.goto('http://localhost:'+PORT+'/index.html'); await pg13.waitForTimeout(2400);
 
-  console.log('\n-- B-CCCXIII. L\'identité d\'une ligne du journal alimentaire (clics réels) --');
+  console.log('\n-- B-CCCXV. L\'identité d\'une ligne du journal alimentaire (clics réels) --');
 
   const R13=await pg13.evaluate(async ()=>{
     const o={}; const pause=ms=>new Promise(r=>setTimeout(r,ms));
@@ -40144,27 +40279,27 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
     return o;
   });
 
-  t('B-CCCXIII ① le rejeu par CLIC écrit 3 lignes avec 3 identités distinctes',
+  t('B-CCCXV ① le rejeu par CLIC écrit 3 lignes avec 3 identités distinctes',
     R13.nRejouees===3 && R13.idUniques===3, 'ts uniques : '+R13.tsUniques+' (la collision d\'horodatage demeure, et c\'est voulu)');
-  t('B-CCCXIII ② ⭐ clic sur la 2ᵉ ligne → le formulaire ouvre CETTE ligne',
+  t('B-CCCXV ② ⭐ clic sur la 2ᵉ ligne → le formulaire ouvre CETTE ligne',
     !!R13.vise && R13.ouvre===R13.vise, 'visé « '+R13.vise+' », ouvert « '+R13.ouvre+' »');
-  t('B-CCCXIII ③ ⭐ enregistrer ne change QUE cette ligne, les autres octet pour octet',
+  t('B-CCCXV ③ ⭐ enregistrer ne change QUE cette ligne, les autres octet pour octet',
     R13.nChg===1 && R13.nomChg===R13.vise && R13.autresIntactes===2,
     R13.nChg+' changée(s), '+R13.autresIntactes+' intacte(s)');
-  t('B-CCCXIII ④ ⭐⭐ la confirmation NOMME la ligne cliquée',
+  t('B-CCCXV ④ ⭐⭐ la confirmation NOMME la ligne cliquée',
     R13.msgNomme===true, 'cliqué « '+R13.vise2+' » → « '+R13.msg+' »');
-  t('B-CCCXIII ⑤ ⭐⭐ et UNE SEULE ligne disparaît — c\'est bien elle',
+  t('B-CCCXV ⑤ ⭐⭐ et UNE SEULE ligne disparaît — c\'est bien elle',
     R13.supprimees===1 && R13.viseParti===true, 'restent ['+R13.restants+']');
-  t('B-CCCXIII ⑥ un ancien journal (ts=123 ×3, aucune identité) devient distinguable',
+  t('B-CCCXV ⑥ un ancien journal (ts=123 ×3, aucune identité) devient distinguable',
     R13.vieuxSansId===true && R13.vieuxIdUniques===3);
-  t('B-CCCXIII ⑦ ⭐ et rien d\'autre ne bouge : `ts` reste 123, données métier intactes',
+  t('B-CCCXV ⑦ ⭐ et rien d\'autre ne bouge : `ts` reste 123, données métier intactes',
     R13.vieuxTsIntacts===true && R13.vieuxMetierIntact===true);
-  t('B-CCCXIII ⑧ éditer une ligne de cet ancien journal frappe la bonne',
+  t('B-CCCXV ⑧ éditer une ligne de cet ancien journal frappe la bonne',
     R13.vise4 && R13.ouvre4===R13.vise4 && R13.nChg4===1, 'visé « '+R13.vise4+' », ouvert « '+R13.ouvre4+' »');
-  t('B-CCCXIII ⑨ ⭐ trois lignes au MÊME identifiant sont réattribuées puis éditables',
+  t('B-CCCXV ⑨ ⭐ trois lignes au MÊME identifiant sont réattribuées puis éditables',
     R13.douDepart===1 && R13.douApres===3 && R13.vise5 && R13.ouvre5===R13.vise5,
     'visé « '+R13.vise5+' », ouvert « '+R13.ouvre5+' »');
-  t('B-CCCXIII ⑩ aucune erreur JavaScript pendant tout le parcours',
+  t('B-CCCXV ⑩ aucune erreur JavaScript pendant tout le parcours',
     err13.length===0 && !R13.err, (R13.err||'')+' '+err13.join(' | '));
   await cx13.close();
 }

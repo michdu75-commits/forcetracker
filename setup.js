@@ -904,7 +904,9 @@ function _cloudSync(){
   // (Apps Script + miroir Supabase). Deux constructions séparées finiraient par diverger,
   // et on enverrait deux versions différentes du même compte (R2).
   const _corpsSync={
-      action:'saveProfile',email:S.email,authCode:_authCode(),
+      /* 🪪 S1 — le jeton accompagne l'écriture : c'est LUI qui décide du compte écrit,
+         plus l'e-mail. Sans jeton, le serveur reste en transition (option B) et compte. */
+      action:'saveProfile',email:S.email,authCode:_authCode(),token:_ftToken(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       ...(_adnFilled()?{adn:S.adn}:{}),
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,

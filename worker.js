@@ -85,6 +85,36 @@ function _envoyerUsage(meta, model, usage) {
   const p = _rapporterUsage(meta, model, usage);
   if (meta.ctx && meta.ctx.waitUntil) meta.ctx.waitUntil(p); else p.catch(() => {});
 }
+/* ⭐⭐ S1 — L'IDENTITÉ AVANT LA DÉPENSE (16/09/2026).
+   Jusqu'ici, le seul verrou devant l'API payante était l'en-tête `Origin` — et un en-tête se
+   forge en une ligne de `curl`. L'audit l'a mesuré : la porte qui protège le portefeuille de
+   Michel n'en était pas une.
+   Désormais le Worker présente le JETON à Apps Script et reçoit en retour l'identité réelle,
+   l'état Premium et le verdict de quota. ⛔ L'`email` du payload n'est plus une autorité : il
+   n'est même pas transmis ici.
+
+   ⚠️⚠️ ET CET APPEL EST BLOQUANT, À L'INVERSE DU COMPTAGE. `_compterIA` vit sous
+   `ctx.waitUntil` précisément pour ne rien coûter en latence ; une vérification d'identité,
+   elle, ne peut pas être faite « après ». C'est le prix assumé du jeton OPAQUE (décision de
+   Michel : la révocation immédiate prime sur la latence). Un jeton signé s'éviterait cet
+   aller-retour — c'est la porte laissée ouverte pour S2.
+
+   ⛔ FAIL-CLOSED : réseau coupé, réponse illisible, Apps Script muet → REFUS. Ici, laisser
+   passer coûterait de l'argent réel ; c'est l'inverse du comptage, où bloquer serait pire. */
+async function _identiteIA(token, env) {
+  try {
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'authIdentity', token: String(token || '') }),
+      redirect: 'follow',
+    });
+    const d = await r.json();
+    if (!d || d.status !== 'ok' || !d.email) return { ok: false, raison: (d && d.raison) || 'refus' };
+    return { ok: true, email: d.email, premium: !!d.premium, blocked: !!d.blocked, scope: d.scope || '' };
+  } catch (e) { return { ok: false, raison: 'reseau' }; }
+}
+
 async function _compterIA(action, email, env){
   try{
     const r = await fetch(APPS_SCRIPT_URL, {
@@ -137,6 +167,26 @@ export default {
     // affichait une photo vieille de trois semaines. Un garde-fou branché sur un chemin
     // que plus personne n'emprunte ne protège rien — même famille que la sauvegarde de
     // nuit morte 36 jours. On compte donc ICI, sur le chemin réel.
+    /* ⭐⭐ S1 — LE JETON EST EXIGÉ AVANT TOUTE DÉPENSE D'IA.
+       `Origin` reste, mais comme contrôle SECONDAIRE : il ne prouve plus rien à lui seul.
+       ⚠️ Conséquence à connaître : un compte qui n'a pas encore obtenu son jeton ne peut plus
+       appeler Milo. C'est la contrepartie voulue — Michel a écrit noir sur blanc
+       *« Origin correct + aucun token → refus »* — et le client bootstrape tout seul dès qu'il
+       dispose d'une preuve (code perso), sans rien demander à la personne. */
+    let _moi = null;
+    if (_ACTIONS_IA.has(body.action)) {
+      _moi = await _identiteIA(body.token, env);
+      if (!_moi.ok) {
+        return json({ status: 'error', error: 'auth', raison: _moi.raison,
+          reply: 'Reconnecte ton appareil pour utiliser Milo 👍' }, 401);
+      }
+      if (_moi.blocked) {
+        return json({ status: 'error', error: 'quota', scope: _moi.scope,
+          reply: _moi.scope === 'global'
+            ? "L'assistant IA est très sollicité aujourd'hui 🙏 Réessaie un peu plus tard ou demain."
+            : "Tu as atteint ta limite d'IA pour aujourd'hui 👍 Reviens demain, l'entraînement continue !" }, 429);
+      }
+    }
     if (_ACTIONS_IA.has(body.action)) {
       // ⚠️ Le refus se lit AVANT l'appel, en mémoire de l'isolat : zéro latence ajoutée
       // (règle d'or #4 — l'app n'attend aucune requête). Approximatif par construction
@@ -149,14 +199,15 @@ export default {
             : "Tu as atteint ta limite d'IA pour aujourd'hui 👍 Reviens demain, l'entraînement continue !" }, 429);
       }
       // waitUntil : la réponse de Milo part tout de suite, le comptage se fait après.
-      if (ctx && ctx.waitUntil) ctx.waitUntil(_compterIA(body.action, body.email || '', env));
-      else _compterIA(body.action, body.email || '', env);
+      // ⛔ l'e-mail vient du JETON : « jeton A + e-mail B » décompte le quota de A.
+      if (ctx && ctx.waitUntil) ctx.waitUntil(_compterIA(body.action, _moi.email, env));
+      else _compterIA(body.action, _moi.email, env);
     }
 
     // 💰 `meta` : ce que l'instrumentation du coût réel doit savoir sur CET appel — voir le
     // bloc « INSTRUMENTATION DU COÛT RÉEL » plus haut. Construit UNE fois, transmis à chaque
     // handler (R2 — un seul point de vérité sur « quel appel est-ce ? »).
-    const meta = { action: body.action, email: body.email || '', env, ctx };
+    const meta = { action: body.action, email: (_moi && _moi.email) || '', env, ctx };
 
     try {
       // ── Actions IA gérées EN DIRECT (sans Google) ─────────────────────────

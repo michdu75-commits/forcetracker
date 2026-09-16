@@ -4677,7 +4677,14 @@ async function _runSeDebrief(sess,prCount){
   // ⚠️ ft-v979 : `_dbfPrendre()` ne DÉTRUIT plus le jeton, il le met « en cours » avec son
   // heure. Un rechargement de mise à jour pendant l'appel ne le fait donc plus disparaître —
   // il retourne dans la file au démarrage suivant (`_dbfRecuperer`).
-  const _pid=(typeof _dbfPrendre==='function')?_dbfPrendre():null;
+  /* ⭐⭐ ON PREND LA SÉANCE AFFICHÉE, PLUS « LA PLUS ANCIENNE DE LA FILE » (15/09/2026 — anomalie B).
+     `_dbfPrendre()` rendait le plus ancien jeton : avec deux séances en attente, cet écran-ci
+     affichait une séance et débriefait l'autre. On cible désormais par IDENTIFIANT — le même que
+     celui de la séance que `_showSessionEnd` vient de rendre. *Les quatre identifiants (affiché,
+     pris, injecté, cité) coïncident alors par CONSTRUCTION, plus par coïncidence.* */
+  const _sid=String((sess&&(sess.id||sess.ts||sess.date))||'');
+  const _pid=(typeof _dbfPrendreCible==='function')?_dbfPrendreCible(_sid)
+            :((typeof _dbfPrendre==='function')?_dbfPrendre():null);
   /* ⛔⛔ 04/09/2026 — « MILO A DÉJÀ DÉBRIEFÉ » ÉTAIT FAUX SUR UN CARDIO SEUL, et Michel l'a lu
      sur sa propre capture. Le message répond à « le jeton n'est pas là » et en déduit « quelqu'un
      l'a déjà pris ». Or il y a un SECOND cas : `finishWorkout` ne met en file que les séances
@@ -4690,7 +4697,13 @@ async function _runSeDebrief(sess,prCount){
   // Le Coach a déjà débriefé cette séance : on ne repaie pas un appel — mais on le DIT,
   // sinon l'écran de fin paraît vide de l'analyse alors qu'elle existe, dans le Coach.
   if(!_pid){ slot.innerHTML=avec('\ud83d\udcac Milo a déjà débriefé cette séance — retrouve-la dans l\'onglet Coach.',false); return; }
-  const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
+  /* ⭐⭐ LA SÉANCE EST NOMMÉE (anomalie B). Voir `_dbfDesignation` : l'identifiant CHOISIT la
+     séance, et c'est elle qui fournit sa date. La date ne sélectionne rien — elle décrit, au
+     format exact qu'emploie le contexte, seul repère que le modèle puisse retrouver. */
+  const _des=(typeof _dbfDesignation==='function')?_dbfDesignation(sess):'';
+  const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance. ⛔ LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI : '
+    +(_des?('**'+_des+'**'):'la plus récente dans mes dernières séances')
+    +'. Ne débriefe aucune autre séance, même si une autre est plus récente dans la liste. '
     +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
     +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UNE piste '
     +'pour la prochaine séance. ⚠️ Cette piste doit servir MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
@@ -4722,6 +4735,15 @@ async function _runSeDebrief(sess,prCount){
     const data=await resp.json();
     let reply=data.reply||'';
     if(!reply)throw new Error('vide');
+    /* ⭐⭐ ICI, ET PAS UNE LIGNE PLUS BAS — c'est le correctif de l'anomalie A (15/09/2026).
+       Tout ce qui suit (nettoyage, formatage, affichage, mémoire, historique) prend du temps et
+       peut être interrompu par un rechargement. Pendant cette fenêtre, le jeton était encore
+       « en cours » : au démarrage suivant, `_dbfRecuperer` en déduisait un appel jamais abouti
+       et REPAYAIT le débrief — 2 appels `coach` mesurés pour une seule séance.
+       ⛔ La réponse est donc PERSISTÉE avec la consigne au moment même où elle arrive : le
+       rattrapage n'a plus rien à refaire, il a juste à FINIR. *Marquer « reçu » sans garder le
+       texte aurait remplacé un doublon par une perte silencieuse* (R29). */
+    try{ if(typeof _dbfRecu==='function') _dbfRecu(_pid, reply, instr); }catch(e){}
     const clean=(typeof _stripCoachTech==='function')?_stripCoachTech(reply):reply;
     /* ⛔⛔ MILO S'AJOUTE, IL NE REMPLACE PLUS (ft-v1022). Cette ligne écrasait le socle chiffré :
        en ligne on recevait donc le JUGEMENT SANS LES FAITS, alors que hors ligne on avait les
@@ -4731,13 +4753,14 @@ async function _runSeDebrief(sess,prCount){
     // Étape 2 — mémoire DURABLE : enregistre {objectif, décision, tendances, ressenti} dans le Registre
     try{ if(typeof _recordDebriefMemory==='function') _recordDebriefMemory(reply, sess); }catch(e){}
     // Mémoire : pousse le débrief dans le fil du Coach (consigne cachée + réponse de Milo)
+    /* ⛔ UN SEUL PROPRIÉTAIRE POSE LE DÉBRIEF DANS LE FIL (R2) : ce chemin-ci et le rattrapage
+       au démarrage appellent la MÊME fonction. Sans ça, le rattrapage aurait sa propre version
+       de « comment on range un débrief », et l'une des deux finirait par diverger.
+       ⚠️ `_saveCoachMemory` RESTE ICI, et volontairement hors du propriétaire : c'est un SECOND
+       appel payant, et le rattrapage ne doit pas en créer (consigne explicite de Michel). */
     try{
-      coachHistory.push({role:'user',content:instr,_silent:true});
-      coachHistory.push({role:'assistant',content:reply});
-      if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
-      if(typeof _saveCoachHist==='function')_saveCoachHist();
+      if(typeof _dbfPoserDansHistorique==='function') _dbfPoserDansHistorique(reply, instr);
       if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
-      const nb=document.getElementById('coach-new-btn'); if(nb)nb.style.display='flex';
     }catch(e){}
     // Livré : le jeton « en cours » disparaît pour de bon (ft-v979).
     try{ if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}

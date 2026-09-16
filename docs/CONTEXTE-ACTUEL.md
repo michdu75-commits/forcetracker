@@ -6,6 +6,100 @@
 
 ---
 
+- 🪪🪪 **S1 — IDENTITÉ SERVEUR MINIMALE — LIVRÉ EN `ft-v1216` (16/09/2026).** ⭐⭐ **Le défaut n°1
+  de l'audit est fermé : l'identité cesse d'être une adresse e-mail déclarée.** Un **registre de
+  jetons** côté serveur — jeton **opaque 256 bits** tiré de **trois `Utilities.getUuid()`**, dont le
+  serveur ne stocke **que le SHA-256** (*même l'administrateur ne peut pas relire un jeton*).
+  ⭐ **Émis contre une PREUVE uniquement** : vérification e-mail bornée (5 essais · expiration ·
+  60 s · 80/jour) ou code perso déjà posé — ⛔ **un e-mail seul n'en obtient JAMAIS**.
+  ⭐⭐ `saveProfile`, `pushHealth` et le **Worker IA** prennent l'identité **dans le jeton** et
+  **ignorent l'e-mail du payload** : mesuré, *jeton A + e-mail B ⇒ décompté sur A*. ⭐ **Fail-closed
+  des deux côtés** : un jeton présent mais invalide est **refusé** (il ne retombe pas sur l'e-mail),
+  et une **panne réseau ferme** la porte. ⛔ **`Math.random()` est sorti de la chaîne d'identité**
+  (consigne explicite de Michel), y compris du code de confirmation.
+  ⏳ **FENÊTRE DE TRANSITION (option B, choisie par Michel)** : sans jeton, l'ancien chemin fonctionne
+  encore, un compteur **anonyme** mesure la bascule, et **`_MIG_FERME_ = false`** la fermera **à la
+  date que Michel décidera** — *personne n'est mis dehors*. 👉 **C'est le seul interrupteur à
+  basculer quand il voudra clore S1.**
+  ⭐ **Un SEUL propriétaire côté client** : un injecteur dans `constants.js` ajoute le jeton aux
+  appels du Worker — les **16 sites d'appel, dont les 5 de Nutrition, ne sont pas touchés**.
+  ⛔⛔ **`V2 RESTE OUVERTE JUSQU'À S2`** : `ft_miroir` reçoit toujours un `p_email` **libre** depuis
+  le navigateur ; le témoin ③ est **volontairement NON retourné** pour le dire.
+  ⏭️ **Reste ouvert** : **S2** (fermer le miroir Supabase) · **S3** (idempotence du débrief, qui se
+  construit DESSUS) · `deleteAccount` · vérification Premium serveur · e-mails réels dans le dépôt.
+  ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran.
+  Dossier : `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`.
+
+- 🔐🔐 **AUDIT SÉCURITÉ / BACKEND (15/09/2026) — `docs/AUDIT-SECURITE-BACKEND.md`. AUDIT SEUL,
+  rien corrigé.** ⭐⭐ **Le défaut structurant est UNIQUE : il n'y a pas d'identité** — partout
+  (Apps Script, miroir Supabase, Worker), un **e-mail fourni par le client** est traité comme une
+  **identité authentifiée**. 🔴 **CRITIQUE** : on peut **écraser le compte d'autrui** (`saveProfile`,
+  `pushHealth`) si la victime n'a pas posé de code · **écraser sa ligne miroir** (`p_email` libre).
+  🟠 **ÉLEVÉ** : le verrou du Worker est un **en-tête `Origin`**, forgeable (~**6 à 40 €/jour**
+  estimés, borné par le plafond **600/jour**) · **aucune vérification Premium serveur** · **e-mails
+  réels dans le dépôt public** · **suppression de compte impossible à honorer** (sauvegardes Drive
+  **sans purge**, aucune route `deleteAccount`). 🟡 **V14 trouvée par un garde** : `AI_GLOBAL_MAX` a
+  **deux valeurs par défaut** — **600** appliqué, **1500** affiché à l'Admin (R2).
+  ⭐ **Points forts crédités** : lecture fermée, codes **hachés+salés**, anti-force-brute,
+  anti-injection Sheets, Ko-fi fail-closed, journal d'usage **sans e-mail**, **test permanent
+  anti-fuite de secrets**, **aucun secret réel dans le dépôt ni dans l'historique**.
+  ⛔⛔ **PREMIÈRE CORRECTION AVANT DE REPRENDRE L'IDEMPOTENCE : une identité serveur minimale
+  (jeton d'appareil exigé par le Worker)** — elle ferme **V1, V2, V3 et V4** d'un seul geste, et
+  l'idempotence se construit dessus. **Décision de Michel attendue.**
+
+- 🗄️ **AUDIT SUPABASE (15/09/2026) — `docs/IDEMPOTENCE-SUPABASE.md`.** ⭐ **Oui, Supabase est
+  techniquement la meilleure des 4 options** (index `UNIQUE` = atomicité prouvable en une seule
+  instruction). ⚠️ **Mais « Supabase existe déjà » est en partie trompeur** : ce qui existe est
+  **navigateur → Supabase en écriture seule** ; le **Worker ne connaît PAS Supabase** (0 occurrence)
+  et il faudrait **une clé serveur**. ⭐⭐ **Deux constats qui changent le cadrage** : ① le miroir
+  envoie **déjà** `coachMemory`, `registre` et `adn` — une caractérisation de la personne écrite par
+  Milo vit **déjà en permanence** sur Supabase ; ② **ft-v772 documente qu'on peut appeler `ft_miroir`
+  avec l'e-mail d'un autre** — sans gravité tant qu'on ne peut rien **LIRE**, mais l'idempotence
+  exige de relire. 👉 **Recommandation : variante B (résultat chiffré côté client)**, seule à
+  **refermer** cette faiblesse au lieu de l'étendre. ⭐ Repli le moins engageant : **variante C**
+  (état seul, pas de texte stocké) — supprime le double appel, au prix du débrief perdu.
+  **Décision de Michel attendue.**
+
+- ⏸️⏸️ **PHASE 1ter — IDEMPOTENCE DU DÉBRIEF : ARRÊTÉE À L'ÉTAPE 0, DÉCISION DE MICHEL ATTENDUE
+  (15/09/2026, sans nouvelle version).** Dossier : **`docs/IDEMPOTENCE-DEBRIEF.md`**.
+  ⛔ **Aucun stockage serveur n'est configuré** : `wrangler.toml` déclare **zéro binding**, le
+  Worker ne lit que **2 secrets**. ⭐⭐ **Mais le vrai blocage n'est pas technique** : pour tenir à
+  la fois « un seul appel IA » et « jamais de perte », le **résultat** doit survivre à la
+  disparition du client, donc être **stocké côté serveur** — or `coach.js` dit que *« le fil des
+  échanges vit UNIQUEMENT sur le téléphone… c'est un CHOIX de conception »*. 👉 **Le remède croise
+  une décision de confidentialité prise exprès ; elle appartient à Michel.**
+  ⭐ **Bonne nouvelle, l'identifiant demandé EXISTE déjà** : `sess.id = Date.now()`, unique à la
+  milliseconde, présent aussi sur les séances importées → `debriefId = 'debrief:' + sess.id`,
+  **aucun mécanisme nouveau** (R13). ⛔ **KV est à écarter** (pas de compare-and-set) — ce serait
+  la « déduplication approximative maquillée en idempotence » que Michel interdit.
+  ⚠️ **Non vérifiable d'ici** : les limites gratuites Cloudflare et le plan requis pour les
+  Durable Objects (docs bloquées par le proxy) — **à lire par Michel dans son tableau de bord**.
+  ⭐ **Les 3 questions à trancher sont en §8 du dossier.**
+
+- 🔒 **ft-v1215 — PHASE 1 DU CHANTIER DÉBRIEF : LES 2 ANOMALIES DE FIABILITÉ (15/09/2026).**
+  ⭐⭐ **La cause du double débrief n'était pas un verrou manquant, c'était un ÉTAT manquant** :
+  entre l'arrivée de la réponse et `_dbfFini`, rien ne disait que c'était **déjà payé**, donc le
+  rattrapage au démarrage en déduisait un appel jamais abouti. L'état **`recu`** est ajouté — et
+  ⛔ **il ne vaut que parce qu'il PORTE la réponse** : marquer « reçu » sans garder le texte
+  aurait remplacé un doublon par une **perte silencieuse** (**R29**). Le rattrapage **termine**
+  désormais le travail au lieu de le refaire : mesuré sur la fenêtre exacte, **0 appel et la
+  réponse reposée** dans le fil du Coach. ⭐⭐ **Et la séance cesse d'être devinée** : l'écran de
+  fin cible la séance **affichée** par son **identifiant**, l'instruction la **nomme** — *l'ID
+  choisit, la date décrit*. Les 4 identifiants coïncident sur 6 scénarios, **y compris deux
+  séances le même jour**. ⚠️⚠️ **Un défaut introduit en chemin et trouvé par le banc** : mon garde
+  refusait toute séance présente dans `_dbfFaits`, or `_dbfRendre` y inscrit les séances
+  **échouées** — le bouton « Réessayer » ne déclenchait plus rien, *le débrief était perdu en
+  silence*. **La file fait foi pour « à faire ».** ⚠️ **Et 3 témoins étaient aveugles** : ils
+  cherchaient une PRÉSENCE alors que le même mot vit ailleurs dans la fonction.
+  ⛔ **Aucun coût ajouté** : mêmes appels sur le chemin normal, **0 `summarizeCoach`** créé,
+  +51 octets. **Passe 4140/4140**, bloc B-CCCXII (20 témoins), **20 mutations toutes mordantes**.
+  ⚠️⚠️ **LIMITE DÉCLARÉE, NON CORRIGÉE** : le chemin **Coach** (`sendToCoach`) garde une fenêtre
+  analogue — **bornée** (rien n'est perdu, au pire un appel repayé). La fermer imposerait de
+  toucher le cœur de la conversation : **hors périmètre**, rendu à Michel.
+  ⏭️ **La suite, dans l'ordre validé** : ② audit prévu vs réalisé sur programme importé ·
+  ③ banc local / Haiku / Sonnet · ④ optimisation du contexte (le dossier du 15/09 a mesuré que
+  **96 % de ce qui est envoyé n'est pas la séance**, et que le **catalogue d'exercices** pèse
+  **11 447 car. dans le bloc le plus cher** — 24 % du coût). ⛔ **Rien de tout cela n'est commencé.**
 - 🔑 **ft-vNN — L'IDENTITÉ D'UNE LIGNE DU JOURNAL ALIMENTAIRE (16/09/2026).** Correction du bug
   **T-01**, mesuré le matin même par clics réels : `rejouerRepas` écrit ses lignes dans une
   boucle **synchrone**, plusieurs `Date.now()` tombent dans la même milliseconde, donc
@@ -253,7 +347,26 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1214` — 📱 **LE BANC IPHONE RÉEL DU SCANNER.**
+- **Version en ligne (live) :** `ft-v1216` — 🪪 **L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL
+  DÉCLARÉE (S1).** Registre de **jetons** serveur : jeton opaque **256 bits** (trois `getUuid()`,
+  ⛔ plus de `Math.random()` dans la chaîne d'identité), dont le serveur ne stocke **que le
+  SHA-256**. ⭐ **Émis contre une PREUVE seulement** (vérification e-mail bornée ou code perso) —
+  ⛔ un e-mail seul n'en obtient **jamais**. ⭐⭐ `saveProfile`, `pushHealth` et le **Worker IA**
+  prennent l'identité **dans le jeton** : *jeton A + e-mail B ⇒ décompté sur A*. ⭐ **Fail-closed**
+  des deux côtés (jeton invalide refusé, panne réseau fermée). ⏳ **Fenêtre de transition**
+  (option B) : `_MIG_FERME_ = false` — **le seul interrupteur** à basculer pour clore S1.
+  ⭐ **Un seul propriétaire côté client** (injecteur dans `constants.js`) ⇒ ⛔ **Nutrition 0 ligne**.
+  ⛔⛔ **`V2 RESTE OUVERTE JUSQU'À S2`** : `ft_miroir` garde son `p_email` libre, témoin ③
+  volontairement NON retourné. 👉 `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`.
+
+- **Version précédente :** `ft-v1215` — 🔒 **LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL NOMME SA
+  SÉANCE.** La cause n'était pas un verrou manquant mais un **état** manquant : rien ne disait que
+  la réponse était déjà payée. ⭐ L'état `recu` **porte la réponse** — marquer « reçu » sans garder
+  le texte aurait remplacé un doublon par une **perte silencieuse** (R29). Et `_dbfPrendre` prenait
+  la séance la **plus ancienne** quand l'instruction disait la plus **récente** : l'écran cible
+  désormais la séance affichée **par son identifiant**.
+
+- **Version précédente :** `ft-v1214` — 📱 **LE BANC IPHONE RÉEL DU SCANNER.**
   ⛔⛔ **Le bouton utilisateur reste ABSENT** — un témoin rougit dans les deux sens. L'accès
   passe par **Profil → Admin**, et le garde vit **dans la fonction**, pas sur le bouton.
   ⭐⭐ **Ce n'est PAS un second chemin** : seul le décodeur devient un paramètre, la fusion et
