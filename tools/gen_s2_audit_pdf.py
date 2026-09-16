@@ -212,8 +212,12 @@ g(N_CHAMPS >= 40,
 # ── PERIMETRE : RIEN N A ETE TOUCHE ────────────────────────────────────────────────────
 g(VERSION == 'ft-v1216',
   'sw.js est en %s : ce document decrit un audit SANS bump, sur la base ft-v1216' % VERSION)
-for mot in ('_douaneLigne', 'foodLabel', 'readBarcode', 'estimateFood'):
-    g(mot in APP, 'la piece Nutrition « %s » a disparu d app.js' % mot)
+# [!] chaque marqueur est ferme par sa FORME REELLE : un nom nu se laisse satisfaire par
+#     n importe quel nom qui le CONTIENT (`_douaneLigneX`). Piege `presentsX`, 4e fois.
+g('function _douaneLigne(' in APP, 'la piece Nutrition « _douaneLigne » a disparu d app.js')
+for act in ('foodLabel', 'readBarcode', 'estimateFood'):
+    g(("action:'%s'" % act) in APP,
+      'la piece Nutrition « %s » a disparu d app.js' % act)
 # les temoins S1 tiennent toujours
 N_TEM = len(re.findall(r"t\('B-CCCXIII ", RUN))
 g(N_TEM == 10, 'le bloc B-CCCXIII ne porte plus 10 temoins (%d)' % N_TEM)
@@ -227,7 +231,14 @@ g('NON RETOURN' in RUN,
 SERVIS = {'supabase.js': SB, 'app.js': APP, 'constants.js': CONST, 'setup.js': SETUP,
           'sw.js': SW, 'index.html': lire('index.html')}
 for nom, src in SERVIS.items():
-    nu = sans_com(src)          # <- on lit le CODE, pas les commentaires qui en PARLENT
+    # [!!][!!] ICI SE JOUE TOUT L ETAGE 30, ET MA PREMIERE VERSION ETAIT AVEUGLE PAR
+    # CONSTRUCTION : j employais `sans_com`, qui retire AUSSI les chaines. Or un secret
+    # EST une chaine. Mesure du controle negatif : glisser `'service_role_key_xyz'` dans
+    # un fichier servi laissait les trois gardes PARFAITEMENT VERTS.
+    # 👉 Le garde cense empecher une fuite de secret ne pouvait pas voir un secret.
+    # On lit donc le code SANS ses commentaires mais AVEC ses chaines : la documentation
+    # qui NOMME `service_role` reste ignoree, la VALEUR est vue.
+    nu = sans_commentaires(src)
     g('sb_secret_' not in nu,
       'une cle SECRETE Supabase (sb_secret_) apparait dans le fichier servi %s' % nom)
     g(not re.search(r'["\'][^"\']*service_role[^"\']*["\']', nu),
