@@ -430,7 +430,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1219`** (prochaine : `ft-v1220`).
+> **Version actuelle : `ft-v1220`** (prochaine : `ft-v1221`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -469,6 +469,36 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1220 — 🚀 LA FINALISATION DE L'ACCUEIL · « PUSH SUR UNE BRANCHE ≠ VERSION EN LIGNE », ET UNE CORRECTION À MON PROPRE AUDIT** — Michel ouvre la passe sur le constat qui la motive, en majuscules : ⛔⛔ ***« PUSH SUR UNE BRANCHE ≠ VERSION EN LIGNE »***, puis borne le nettoyage : ⛔ ***« supprimer UNIQUEMENT le code mort prouvé »*** · ⛔ ***« ne pas toucher aux candidats seulement probables »*** · ⛔ ***« Aucun redesign. Aucune nouvelle fonctionnalité. »*** · et, pour finir : ***« Puis STOP. Pas de nouveau nettoyage opportuniste. »***
+
+**⛔⛔ LE POINT QUI COMPTE AVANT TOUT LE RESTE : `ft-v1219` N'AVAIT JAMAIS ATTEINT `master`.** Les quatre corrections du 16/09 — le `NaN kg`, la carte de récup remontée, le silence sur un compte muet, la zone tapable — vivaient sur une branche. **GitHub Pages ne se déclenche que sur `master`** : elles n'étaient donc **en ligne nulle part**. C'est **R18** mot pour mot (*vérifier le DÉPLOIEMENT, pas le push*), et le journal du projet le porte déjà **deux fois**. *Un travail fini qui n'est pas servi n'est pas un travail fini.* Réconciliation faite d'abord : les **6 commits** de l'autre session (étapes B→E) ne touchent que `tools/`, **aucun fichier servi**, donc aucun conflit possible — fusionnés, puis les 4 corrections re-vérifiées une par une **après** la fusion.
+
+**⛔⛔ ET LA CORRECTION À MON PROPRE AUDIT DE LA VEILLE, QUI EST LE POINT LE PLUS UTILE DE CETTE PASSE.** L'audit annonçait `#cycle-home-card` comme **ORPHELIN PROUVÉ** — *« aucun lecteur JS ni CSS, jamais rempli »*. **C'est faux.** `renderCycleHomeCard()` (tracking.js) écrit dans ses deux `<span>`, et `renderCycleScreen()` l'appelle — chemin **atteignable** par Menu > Outils > Cycle de force. 👉 ***L'audit ne l'avait pas vu parce qu'il ne mesurait QUE le chemin de l'Accueil : un élément vivant AILLEURS reste vert sur un banc borné à l'Accueil.*** ⚠️ **Et j'avais écrit cet avertissement mot pour mot dans mon propre outil de mutations**, avant de l'enfreindre dans mon tableau de verdicts. **Un vert est toujours borné à la portée de son banc, et ne conclut jamais seul.** Le conteneur **reste** : le retirer serait une **DÉCISION** (rendre son écrivain sans effet), pas un nettoyage prouvé — elle appartient à Michel.
+
+**🧹 CE QUI EST RETIRÉ, ET RIEN D'AUTRE :**
+
+| | ce que c'était | preuve |
+|---|---|---|
+| branche « Inline home pill » d'`updatePill` | **10 lignes** cherchant 3 conteneurs d'une ancienne pastille de synchro posée *dans* l'Accueil | les 3 ids **absents** de tout le dépôt ; **3 requêtes DOM sur 21 rendaient `null` À CHAQUE RENDU** |
+| `#strength-levels` · `#pr-list` | deux conteneurs **vides**, `display:none` | **aucun lecteur** dans tout l'arbre (JS · HTML · CSS · tests) |
+| ⛔ `#cycle-home-card` (+2 spans) | — | **GARDÉ** : il a un vrai écrivain (ci-dessus) |
+
+⭐ **Les VRAIS identifiants — `sync-pill`, `sync-dot`, `sync-lbl`, la pastille de l'en-tête — sont intacts**, et deux témoins le figent : l'un vérifie qu'ils sont toujours nommés, l'autre **conduit la pastille dans ses deux états** et lit ce qu'elle affiche. *Une suppression voisine d'un code vivant se prouve sur le voisin, pas seulement sur le disparu.*
+
+**📉 MESURE : 21 requêtes DOM → 18, dont 3 vaines → 0.** ⚠️ **Et le temps de rendu ne bouge pas de façon lisible** (4,9 → 4 ms à froid, 3 → 2 ms à chaud) : **on ne revendique aucun gain**, c'est dans la dispersion des mesures — consigne explicite de Michel.
+
+**⭐⭐ LES TÉMOINS D'ABSENCE SONT DOUBLÉS D'UN TÉMOIN DE PRÉSENCE, ET CE N'EST PAS DÉCORATIF.** Un témoin qui vérifie qu'une chose *n'est plus là* reste **parfaitement vert si le rendu ne s'exécute pas du tout** — *un Accueil mort ressemble trait pour trait à un Accueil propre*. Chaque absence est donc appariée à une présence vivante : la carte de récup rendue, la pastille qui réagit, l'écrivain du conteneur cycle qui écrit encore vraiment.
+
+**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UNE ÉTIQUETTE FAUSSE — LA MIENNE, ENCORE.** J'avais classé « vert attendu » une mutation qui remet un nom mort dans une **`const` de premier niveau**. Elle est sortie **rouge**, et le témoin avait raison : *une `const` qui s'exécute est du CODE, pas de la documentation*. ⛔ **Rendre le témoin aveugle aux chaînes pour la faire passer l'aurait rendu aveugle à `getElementById('home-sync-dot')`**, qui vit exactement de la même façon — dans une chaîne. La preuve « on mesure le code, pas le texte » est portée par les **quatre vraies** : les noms retirés cités dans un commentaire **JS**, **HTML**, **CSS**, ou dans un fichier de **documentation**. ⭐ **Elle était indispensable ici** : la raison du retrait (**R30**) *nomme* justement les identifiants retirés — un témoin qui lirait le fichier brut resterait vert **pour toujours**, quoi qu'on remette dans le code. Le nettoyeur de commentaires a d'ailleurs dû apprendre `<!-- -->` : sans ça mon témoin rougissait sur un dépôt **parfaitement propre**, en mesurant ma propre documentation.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : trois requêtes qui rendaient `null` cessent de partir, et deux conteneurs vides et invisibles disparaissent. ⚖️ *Ce qui change vraiment pour Michel — les quatre corrections de ft-v1219 — a déjà son entrée ; ici elles arrivent simplement **en ligne**.*
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément, chacun figé par un témoin : ⛔ `_renderHomeHdr` et `#home-hdr` (orphelin **probable**, et un témoin en dépend → **passe R30 à part**) · ⛔ `renderRecoveryCard` et `#recovery-card` (la mesure manquante est une **vraie sauvegarde de sommeil par l'interface**) · ⛔ `openPlateCalc` · ⛔ les 47 fonctions de catégorie C · ⛔ `fmt()` · ⛔ la base neutre **70** · ⛔ `_nuitsRecentes` · ⛔ la dette « dernière pesée » · ⛔ les 55 classes CSS candidates · ⛔⛔ **la palette, `--t3` comprise** — son contraste de **3,70 < 4,5** sur les petits textes gris est une **recommandation séparée**, pas un correctif glissé ici · ⛔ **Nutrition, douane, journal alimentaire : 0 ligne**.
+
+Tests : **bloc B-CCCXX** — 11 témoins au **rendu réel** (dont le comptage des requêtes DOM, mesuré en instrumentant `getElementById` pendant `renderHome`, *parce que la seule preuve qu'une requête ne PART plus se prend à l'exécution, pas dans un fichier*) et **6 témoins de source**, dans `tests/parcours/accueil_mini.js`. ⛔ **CONTRÔLE NÉGATIF : 19 mutations sur un arbre CLONÉ, 19 conformes**, contrôle sain **54 OK / 0 rouge avant ET après**.
+
+Fichiers : `screens.js`, `index.html`, `tests/parcours/accueil_mini.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `state.js`, ni `tracking.js`, ni `coach.js`, ni `log.js`, ni `setup.js`, ni `style.css`, ni `supabase.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1220. |
 
 **ft-v1219 — 🏠 LE MINI-CHANTIER ACCUEIL · QUATRE CORRECTIONS D'INTERFACE, ZÉRO FONCTIONNALITÉ NOUVELLE** — Michel enchaîne sur l'audit du matin avec une borne nette : ⛔ ***« je ne veux PAS ajouter de nouvelle fonctionnalité »*** · ⛔ ***« ne déplace pas aveuglément tout l'écran, je veux un changement minimal »*** · et la phrase qui décide du point ② : ***« l'utilisateur doit voir son ÉTAT avant qu'on lui demande de répondre à quelque chose »***.
 
@@ -717,56 +747,3 @@ Fichiers : `app.js`, `index.html`, `sw.js`, `lib/zxing-wasm.js` (nouveau), `lib/
 Tests : **bloc B-CCCXI, 43 témoins**. ⛔ **CONTRÔLE NÉGATIF : 14 mutations — les 8 nommées par Michel + 6 miennes — TOUTES MORDENT**, contrôle sain **43 OK / 0 rouge avant ET après**, sur un arbre **copié** : ① `É` repasse → **6** · ② `X` repasse → **7** · ③ RIR absent devient 0 → **7** · ④ la couverture réinclut les `X` → **2** · ⑤-⑧ chaque garde du prompt retiré → **1** chacun · ⑨ le libellé ment de nouveau → **1** · ⑩ ⭐ **`cycleType` EFFACE le rir** → **4** · ⑪ le propriétaire recopie une liste → **4** · ⑫ le `W` redevient exploitable → **1** · ⑬ une série importée devient non exploitable → **2** · ⑭ ⛔ une règle **existante** du prompt perdue au passage (**R8**) → **1**.
 
 Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `setup.js`, ni `state.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1213. |
-
-**ft-v1212 — 🏁 QUATRE MOTEURS DE DÉCODAGE AU BANC · ET LE BOUTON QUE J'AVAIS REMIS LA VEILLE EST RETIRÉ** — Michel repart du dossier `SCANNER-CAMERA-LOCAL-1.pdf` et change de stratégie : ⛔ ***« je ne veux PAS partir du principe que ZXing actuel est forcément la meilleure solution »*** — comparer **ZXing actuel · Html5-QRCode · zxing-wasm · Quagga2** sur des fixtures plus dures, avec un tableau comparatif. ⛔⛔ ***« NE RÉACTIVE PAS le scanner dans l'interface utilisateur… Aucun bouton utilisateur tant que je n'ai pas tranché. »*** Dossier : **`docs/BANC-MOTEURS-CODEBARRES.md`** · mesures : **`docs/banc-moteurs-mesures.json`**.
-
-**⛔⛔ LA PREMIÈRE CHOSE FAITE EST DE DÉFAIRE LA VEILLE.** ft-v1210 avait remis le bouton « 📷 Scanner le code-barres avec la caméra » en tête de l'écran d'ajout. **Il est retiré**, avec sa raison écrite sur place (**R30**). ⭐ **Et le moteur reste entier** : `openBarcodeScanner`, `scanBarcode`, la machine à états, les 31 témoins des blocs CCCVIII/CCCIX. *C'est la porte qui est fermée, pas le moteur* — deux témoins le figent **dans les deux sens** : ils rougissent si le bouton revient **et** si le moteur disparaît. ⚠️ **Le témoin ⑩ de CCCVIII disait exactement l'inverse la veille** ; il a été retourné plutôt que supprimé, parce qu'un témoin qui disparaît ne laisse aucune trace de la décision.
-
-**📊 LE TABLEAU, sur 23 cas × 6 codes réels × 3 passes = 414 mesures par moteur, MÊME image pour tous :**
-
-| | ZXing-js (servi) | Html5-QRCode | **zxing-wasm** | Quagga2 (cadré) | Quagga2 (scène) |
-|---|---|---|---|---|---|
-| réussite | 77,5 % | 68,8 % | **86,2 %** | **87,0 %** | 18,8 % |
-| cas durs | 75,5 % | 63,7 % | 81,4 % | **88,2 %** | 17,6 % |
-| temps moyen | 28,1 ms | 13,2 ms | **1,1 ms** | 17,0 ms | 49,1 ms |
-| p95 | 131,6 ms | 28,3 ms | **3,5 ms** | 28,3 ms | 69,0 ms |
-| **EAN valides mais FAUX** | 0 | 0 | 0 | 0 | ⛔ **12** |
-| octets (gzip) | 97 Ko | 106 Ko | 13 + **403** Ko | 42 Ko | 42 Ko |
-
-**⭐⭐ LA RÉPONSE À LA QUESTION DE MICHEL SUR HTML5-QRCODE EST *LUE DANS SON CODE*, pas supposée.** *« Si Html5-QRCode utilise essentiellement le même moteur ZXing, dis-le clairement »* — **oui** : `code-decoder.ts` importe `ZXingHtml5QrcodeDecoder`, qui importe **`../third_party/zxing-js.umd`**, un fork de la bibliothèque que nous servons déjà. ⛔⛔ **Et il la bride** : `zxing-html5-qrcode-decoder.ts` ligne 80 écrit **`TRY_HARDER, false`** en dur, sans aucun moyen de le rallumer depuis son API. Il échoue exactement là où TRY_HARDER sert — **faible lumière 0/18, faible contraste 0/18, cumul réaliste 0/18**. ⭐ **La preuve par le prétraitement** : un étirement des niveaux lui rend **+18** — *le prétraitement ne l'améliore pas, il compense un réglage qu'on lui a retiré*, et même compensé il reste **sous zxing-wasm brut**. **Ce qu'il apporte vraiment est sa couche caméra — que nous avons déjà, écrite et éprouvée en ft-v1210.**
-
-**⭐⭐ LE DANGER QUE LE BANC A TROUVÉ N'EST PAS UN TAUX, C'EST UN CODE FAUX QUI PASSE TOUT.** Quagga2 en mode « scène » rend des **EAN-8 de clé de contrôle PARFAITEMENT VALIDE, lus à l'INTÉRIEUR d'un EAN-13** (sa localisation trouve un sous-morceau et le lit comme un code entier) : `3083681011791 → 11151791`, `3021690201123 → 90171123`. 👉 ***Un code faux dont la clé est juste ne peut être attrapé par RIEN en aval*** — ni par le validateur, ni par la recherche produit, qui rendra « inconnu » ou **un autre produit**.
-
-**⭐ D'OÙ LE PROPRIÉTAIRE DU §7, CONSTRUIT ET ÉPROUVÉ MAINTENANT.** `MOTEUR(S) → candidat → `_eanValide` → déduplication → `_bcFusionnerCandidats` → **1 seule recherche**. Trois états : `aucun` (0) · `valide` (1) · ⛔ **`conflit`** — deux codes valides différents ⇒ **0 recherche**, les deux candidats **nommés**, on redemande une capture. *« Jamais prendre le premier et continuer. Aucune invention. »* ⭐ **La déduplication passe AVANT le conflit** : deux moteurs sur le même code ne se contredisent pas, ils se **confirment**. ⭐ **Aucun propriétaire n'a été créé** — `_eanValide` existait et reste le seul à connaître la clé (**R2**). ⚠️ **Le `conflit` est inatteignable en production aujourd'hui, et c'est assumé** : *le garde-fou s'écrit AVANT le second moteur, jamais après.*
-
-**⭐⭐ LE VRAI PLAFOND N'EST PAS LE MOTEUR, C'EST LA MISE AU POINT — et c'est la mesure la plus utile pour l'iPhone.** Seuil de lecture selon la netteté (largeur d'un module en pixels) :
-
-| | net (capture après mise au point) | direct légèrement flou | direct flou |
-|---|---|---|---|
-| famille ZXing | module ≥ **1** | module ≥ **3** | module ≥ **6** |
-| Quagga2 | module ≥ **1** | module ≥ **2** | module ≥ **3** |
-
-👉 ***Le flou coûte 3 à 6 fois la résolution.*** Une image nette se lit à **1 pixel par module** : la résolution n'est presque jamais le problème. **Une capture haute définition APRÈS la mise au point bat le décodage continu d'un flux flou**, et *monter la résolution sans régler la mise au point est la façon chère d'acheter ce que la mise au point donne gratuitement*. ⭐ **Et les 12 images que PERSONNE ne lit sont TOUTES des flous** (2 px et 3 px) : le plafond du banc n'est pas un plafond d'algorithme.
-
-**⛔ PRÉTRAITEMENTS (§11) : PRESQUE TOUS REJETÉS PAR LA MESURE.** Seul l'**agrandissement ×2** mérite sa place (**+5** pour zxing-wasm, 1,4 ms). La **netteté est une PERTE nette** pour les deux meilleurs (**−12** et **−26**) : elle accentue le bruit autant que les barres. ⛔⛔ **Et le recadrage central détruit TOUT** (−100 % sur les quatre moteurs) : il **mange la zone de silence**, sans laquelle aucun décodeur ne peut délimiter le code — *c'est le prétraitement qui semble le plus évident, et c'est le pire*.
-
-**⭐ CASCADES (§8/§14)** : zxing-wasm seul **86,2 %** · + Quagga2 cadré **91,3 %** · ⛔ **un 3ᵉ moteur : +0,0**. *« Le but n'est pas d'empiler les librairies »* — la mesure lui donne raison.
-
-**⚠️ FORMATS (§13) — RECOMMANDATION MESURÉE, ET ELLE NE SUIT PAS LE CHIFFRE BRUT.** Retirer l'EAN-8 ramène les désaccords de **12 à 0**… mais **les 12 viennent exclusivement du mode « scène »**, que je ne propose pas d'utiliser : **toute combinaison sans lui donne 0 désaccord, EAN-8 compris**. Et l'EAN-8 est un vrai format des petits emballages. 👉 **Garder les quatre** ; et **si un jour le mode scène tourne**, exiger qu'un EAN-8 soit **confirmé par un second moteur** — la fusion sait déjà le faire.
-
-**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN GARDE AVEUGLE À MOI, POUR LA TROISIÈME FOIS LA MÊME FAMILLE.** ① Mon garde du PDF cherchait `'BLOC CCCX' not in RUN` : or **« BLOC CCCX » est contenu dans « BLOC CCCXZ »**, donc renommer le bloc le laissait vert — *le piège de `presentsX` de ft-v1207, repayé*. ② Et un autre refusait de produire **à cause du COMMENTAIRE d'`index.html` qui explique le chantier** et nomme les quatre candidats : *un garde qui ne distingue pas le CODE de ce qui en PARLE mesure la documentation* (famille ft-v1193/1203/1205/1210). ③ ⭐⭐ **Enfin mon VÉRIFICATEUR de PDF annonçait « 0 caractère dessiné » sur un PDF parfaitement bon** — il ne gérait que Flate, pas l'ASCII85 que reportlab emploie. 👉 ***Un vérificateur cassé ressemble trait pour trait à un PDF muet*** : c'est exactement le piège que la règle d'or #14 demande d'éviter, retourné contre elle.
-
-**⚠️ ET MON PREMIER ADAPTATEUR MESURAIT MON ERREUR, PAS LE MOTEUR** : il appelait `decodeFromCanvas`, **qui n'existe pas** dans le build servi — **0 % en 0,1 ms**, un chiffre qui ressemble à un verdict. Corrigé vers `decodeFromImageUrl`, *exactement ce qu'appelle `_bcCaptureFrame`*. **Idem pour Quagga2** : mesuré avec `locate:true` seul, il faisait **0/6 sur un code NET** — je mesurais **mon cadrage**, pas le moteur ; les **deux** configurations sont donc mesurées, et leur écart est un résultat en soi.
-
-**📣 RÈGLE D'OR #11 — RIEN, ET C'EST LE SUJET.** Un bouton disparaît de l'écran d'ajout (il n'y avait vécu qu'un jour, sans annonce), aucune valeur ne bouge, aucune donnée ne change.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **aucune réactivation, aucun bouton** — décision de Michel attendue · ⛔ **aucun second moteur n'entre dans le dépôt** : les trois candidats vivent hors dépôt, et un garde du PDF refuse de produire si l'un d'eux apparaît dans `lib/` ou dans un fichier servi · ⛔ périmètre §16 intact : `_lookupBarcode`, `_offFetchProduct`, `_ref100`, le résolveur, la **douane**, le journal, `savedFoods`, les portions, les quantités, les migrations, **Milo**, l'import historique, l'**étape 1b**. ⚠️ **Non mesurable d'ici** : WebAssembly sur Safari/iOS, l'autofocus réel, l'arrière-plan, le thermique — d'où le **protocole iPhone en 6 produits et 6 gestes**.
-
-**⛔⛔ VERDICT : `C — ZXING + FALLBACK LOCAL SECONDAIRE`**, avec **zxing-wasm en moteur principal** (et non le ZXing d'aujourd'hui), **Quagga2 cadré** en second **uniquement sur la frame capturée**, puis le **bouton** de repli IA. **Coût dit franchement : +306 Ko** à l'ouverture du scanner, **rien au démarrage** (règle d'or #4 intacte). **AUCUNE RÉACTIVATION UTILISATEUR AVANT TEST IPHONE.**
-
-Tests : **parcours TOTAL/TOTAL sur l'arbre FINAL** (bloc **CCCX**, 10 témoins). ⛔ **CONTRÔLE NÉGATIF : 12 mutations sur le banc + 25 sur les gardes du PDF, toutes mordent**, contrôle sain à 0 rouge avant ET après, sur un arbre **copié**.
-
-📄 **PDF POUR GPT** : `DOSSIER-GPT-BANC-MOTEURS-CODEBARRES-14-09-2026.pdf` (**25ᵉ** de la série, **hors dépôt** — règle d'or #14), généré par `tools/gen_banc_pdf.py`, **37 gardes**. ⭐ Ses plus utiles protègent des **décisions** : que la porte soit restée fermée, que le **moteur** soit resté là, que le conflit ne soit pas avalé, que les bibliothèques candidates ne soient pas entrées dans le dépôt, et que le verdict ne monte pas d'un cran.
-
-Fichiers : `index.html`, `app.js`, `tests/parcours/runner.js`, `tools/gen_banc_pdf.py` (nouveau), `tools/gen_scanner_pdf.py`, `docs/BANC-MOTEURS-CODEBARRES.md` (nouveau), `docs/banc-moteurs-mesures.json` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1212. |
-

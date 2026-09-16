@@ -537,9 +537,19 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
   <!-- Éléments legacy cachés (ciblés par d'autres fonctions) -->
   <div style="display:none;" id="recovery-card"></div>
+  <!-- ⚠️ CE CONTENEUR A UN VRAI ÉCRIVAIN, et mon audit du 16/09 disait le contraire.
+       renderCycleHomeCard() (tracking.js) écrit dans ses deux spans, et renderCycleScreen()
+       l'appelle — chemin atteignable par Menu > Outils > Cycle de force. L'audit ne l'avait
+       pas vu parce qu'il ne mesurait QUE le chemin de l'Accueil : un élément vivant AILLEURS
+       reste vert sur un banc borné à l'Accueil. Il n'est donc PAS « orphelin prouvé », et il
+       reste ici. Le retirer serait une DÉCISION (rendre renderCycleHomeCard sans effet),
+       pas un nettoyage prouvé — elle appartient à Michel. -->
   <div style="display:none;" id="cycle-home-card"><span id="cycle-home-title"></span><span id="cycle-home-sub"></span></div>
-  <div style="display:none;" id="strength-levels"></div>
-  <div style="display:none;" id="pr-list"></div>
+  <!-- RETRAIT VOLONTAIRE ft-v1220 (R30) : #strength-levels et #pr-list étaient deux
+       conteneurs vides, display:none, SANS aucun lecteur dans tout le dépôt (JS, HTML, CSS,
+       tests) — vérifié par recherche sur l'arbre entier, pas seulement sur l'Accueil.
+       Ne pas les remettre : rien ne les remplissait. -->
+
   <div class="scroll-spacer" aria-hidden="true"></div>
 </div>
 

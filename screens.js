@@ -2469,17 +2469,13 @@ function updatePill(){
   const p=document.getElementById('sync-pill'),d=document.getElementById('sync-dot'),l=document.getElementById('sync-lbl');
   if(p){if(S.connected){p.className='sync-pill ok';if(d)d.style.background='var(--green)';if(l)l.textContent='Sheets ✓';}
   else{p.className='sync-pill';if(d)d.style.background='var(--t3)';if(l)l.textContent='Sheets';}}
-  // Inline home pill
-  const hp=document.getElementById('home-sheets-pill'),hd=document.getElementById('home-sync-dot'),hl=document.getElementById('home-sync-lbl');
-  if(S.connected){
-    if(hp){hp.style.background='rgba(52,211,153,.1)';hp.style.boxShadow='inset 0 0 0 1px rgba(52,211,153,.22)';}
-    if(hd){hd.style.background='#34d399';hd.style.boxShadow='0 0 8px #34d399';}
-    if(hl){hl.textContent='Sheets ✓';hl.style.color='#5be3b4';}
-  }else{
-    if(hp){hp.style.background='rgba(255,255,255,.06)';hp.style.boxShadow='inset 0 0 0 1px rgba(255,255,255,.08)';}
-    if(hd){hd.style.background='var(--t3)';hd.style.boxShadow='none';}
-    if(hl){hl.textContent='Sheets';hl.style.color='var(--t2)';}
-  }
+  // RETRAIT VOLONTAIRE, ft-v1220 (R30 : un retrait qui ne s ecrit pas redevient un bug).
+  // Une seconde branche « Inline home pill » cherchait ici trois elements d une ancienne
+  // pastille de synchro posee DANS l Accueil. Les trois conteneurs n existent nulle part
+  // dans index.html : mesure par instrumentation de renderHome(), 3 requetes DOM sur 21
+  // rendaient null A CHAQUE RENDU, depuis toujours. Les VRAIS identifiants, sync-pill /
+  // sync-dot / sync-lbl (la pastille de l en-tete), sont traites juste au-dessus et ne
+  // bougent pas. Ne pas « reparer » cette absence : la pastille d Accueil n existe plus.
 }
 
 // ─── NUTRITION SCREEN ────────────────────────────────────────

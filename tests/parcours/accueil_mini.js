@@ -145,6 +145,71 @@ module.exports.ecran = async function(t, b, PORT){
     J(R14.fabHome)+' vs '+J(R14.fabAilleurs));
   t('B-CCCXVIII ㉑ aucune erreur JavaScript pendant tout le bloc',
     err14.length===0 && !R14.err, (R14.err||'')+' '+err14.join(' | '));
+
+  /* ══════════════════════════════════════════════════════════════════════════════════════
+     B-CCCXX — LE NETTOYAGE PROUVÉ (ft-v1220). Ce bloc mesure ce qui a été RETIRÉ.
+     ⛔ Un témoin d'absence est plus fragile qu'un témoin de présence : il reste vert si le
+     rendu ne s'exécute pas du tout. Chaque témoin d'absence est donc doublé d'un témoin de
+     PRÉSENCE sur son voisin vivant (la pastille de l'en-tête, la carte de récup), pour
+     qu'un Accueil muet ne puisse pas se faire passer pour un Accueil propre.
+     ══════════════════════════════════════════════════════════════════════════════════════ */
+  console.log('\n-- B-CCCXX. Nettoyage prouvé de l\'Accueil (rendu réel) --');
+
+  const N20=await pg14.evaluate(async ()=>{
+    const o={}; const pause=ms=>new Promise(r=>setTimeout(r,ms));
+    /* ⭐ ON COMPTE LES REQUÊTES DOM PENDANT LE RENDU, on ne les relit pas dans la source :
+       c'est la seule façon de prouver que les trois requêtes vaines ont vraiment cessé de
+       PARTIR, et pas seulement d'avoir disparu d'un fichier. */
+    const vrai=document.getElementById.bind(document);
+    const vues=[]; let vaines=0;
+    document.getElementById=function(id){ vues.push(id); const e=vrai(id); if(!e)vaines++; return e; };
+    try{ renderHome(); }catch(e){ o.err=String(e&&e.message||e); }
+    document.getElementById=vrai;
+    o.req=vues.length; o.vaines=vaines;
+    o.vues=vues.filter(x=>/^(home-sheets-pill|home-sync-dot|home-sync-lbl)$/.test(x));
+    o.absents=['home-sheets-pill','home-sync-dot','home-sync-lbl',
+               'strength-levels','pr-list'].filter(id=>!!vrai(id));
+    /* témoins de PRÉSENCE, pour qu'un rendu mort ne passe pas pour un rendu propre */
+    o.heroVivant = !!(vrai('home-hero')&&vrai('home-hero').innerHTML.length>50);
+    o.recupCard  = !!vrai('recovery-card');
+    o.cycleCard  = !!(vrai('cycle-home-card')&&vrai('cycle-home-title')&&vrai('cycle-home-sub'));
+    /* ⭐ la VRAIE pastille (en-tête) doit continuer à réagir aux deux états */
+    const lire=()=>{const l=vrai('sync-lbl');return l?l.textContent.trim():'(absent)';};
+    S.connected=true;  updatePill(); o.pillOn =lire();
+    S.connected=false; updatePill(); o.pillOff=lire();
+    o.pillCls=(vrai('sync-pill')||{}).className||'(absent)';
+    /* ⭐ et l'écrivain du conteneur cycle doit toujours pouvoir écrire */
+    try{ renderCycleHomeCard(); o.cycleTxt=(vrai('cycle-home-title')||{}).textContent||''; }
+    catch(e){ o.cycleTxt='(plantage) '+e.message; }
+    await pause(30);
+    return o;
+  });
+
+  t('B-CCCXX T1 ⛔⛔ les 3 requêtes DOM VAINES de la pastille d\'Accueil ne partent plus',
+    N20.vues.length===0, 'encore demandées : '+J(N20.vues));
+  t('B-CCCXX T2 ⭐ le rendu de l\'Accueil ne fait plus AUCUNE requête vaine',
+    N20.vaines===0, N20.vaines+' requête(s) sans élément');
+  t('B-CCCXX T3 ⭐ et il en fait strictement MOINS qu\'avant (21 → 18)',
+    N20.req===18, 'requêtes = '+N20.req+' (attendu 18)');
+  t('B-CCCXX T4 ⛔ les 5 identifiants retirés n\'existent nulle part dans le document',
+    N20.absents.length===0, 'encore présents : '+J(N20.absents));
+  t('B-CCCXX T5 ⭐⭐ TÉMOIN DE PRÉSENCE — l\'Accueil rend toujours sa carte de récup '+
+    '(sans lui, un Accueil muet passerait pour un Accueil propre)',
+    N20.heroVivant===true, '');
+  t('B-CCCXX T6 ⛔ PÉRIMÈTRE — `#recovery-card` est TOUJOURS LÀ (orphelin probable, pas prouvé)',
+    N20.recupCard===true, '');
+  t('B-CCCXX T7 ⛔⛔ PÉRIMÈTRE — `#cycle-home-card` et ses 2 spans sont TOUJOURS LÀ : '+
+    'ils ont un vrai écrivain, `renderCycleHomeCard`',
+    N20.cycleCard===true, '');
+  t('B-CCCXX T8 ⭐ et cet écrivain écrit encore vraiment dedans',
+    /Cycle de Force|Semaine/.test(N20.cycleTxt||''), J(N20.cycleTxt));
+  t('B-CCCXX T9 ⭐⭐ la VRAIE pastille de synchro réagit toujours aux DEUX états',
+    N20.pillOn==='Sheets ✓' && N20.pillOff==='Sheets',
+    'connecté='+J(N20.pillOn)+' déconnecté='+J(N20.pillOff));
+  t('B-CCCXX T10 ⭐ et elle retire bien sa classe « ok » en déconnecté',
+    N20.pillCls==='sync-pill', J(N20.pillCls));
+  t('B-CCCXX T11 ⛔ aucune erreur JavaScript pendant le nettoyage',
+    !N20.err && err14.length===0, (N20.err||'')+' '+err14.join(' | '));
   await cx14.close();
 };
 
@@ -157,7 +222,12 @@ module.exports.source = function(t, ROOT, fs, path){
      commentaires de cette passe CITENT abondamment `fmt`, `NaN` et `70` pour expliquer les
      décisions. Un garde qui ne distingue pas le CODE de ce qui en PARLE mesure la
      documentation — c'est arrivé quatre fois dans ce projet (ft-v1193/1203/1205/1210). */
-  const nuC=x=>String(x||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
+  /* ⚠️ Les commentaires HTML `<!-- -->` comptent AUTANT que les `/* *\/` : la raison des
+     retraits de ft-v1220 est écrite dans `index.html`, et elle NOMME les identifiants
+     retirés. Sans cette ligne, le témoin T12 restait rouge sur un dépôt parfaitement
+     propre — il mesurait ma propre documentation. */
+  const nuC=x=>String(x||'').replace(/<!--[\s\S]*?-->/g,'')
+    .replace(/\/\*[\s\S]*?\*\//g,'').replace(/(^|[^:"'])\/\/[^\n]*/gm,'$1');
   const corps=(n,src)=>{ const m=new RegExp('(?:async\\s+)?function\\s+'+n+'\\s*\\([^)]*\\)\\s*\\{').exec(src);
     if(!m) return ''; let i=m.index+m[0].length-1,d=0,j=i;
     for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
@@ -227,5 +297,47 @@ module.exports.source = function(t, ROOT, fs, path){
      n'est pas une dette, c'est un piège. */
   t('B-CCCXIX ⑯ ⛔ R30 — la dette R2 de « la dernière pesée » est écrite à côté du code',
     /DETTE R2 CONFIRMÉE, LAISSÉE OUVERTE/.test(srcScr), '');
+
+  /* ══════════════════════════════════════════════════════════════════════════════════════
+     B-CCCXX — LE NETTOYAGE PROUVÉ, lu dans la source (ft-v1220).
+     ⛔⛔ TOUS CES TÉMOINS LISENT `nuC(...)`, c'est-à-dire la source SANS COMMENTAIRES — et
+     ce n'est pas une précaution de style : la raison du retrait est écrite à sa place (R30),
+     donc les identifiants retirés sont TOUS cités en toutes lettres dans les commentaires
+     voisins. Un témoin qui lirait le fichier brut resterait vert pour toujours, quoi qu'on
+     remette dans le code. Le contrôle négatif éprouve exactement ça.
+     ══════════════════════════════════════════════════════════════════════════════════════ */
+  const SCR=nuC(srcScr);
+  const PILL=nuC(corps('updatePill',srcScr));
+  const CSS=nuC(fs.readFileSync(path.join(ROOT,'style.css'),'utf8'));
+  const TRK=nuC(srcTrk);
+  const morts=['home-sheets-pill','home-sync-dot','home-sync-lbl','strength-levels','pr-list'];
+  const restants=morts.filter(id=>SCR.includes(id)||IDX.includes(id)||CSS.includes(id)||TRK.includes(id));
+
+  console.log('\n-- B-CCCXX. Nettoyage prouvé de l\'Accueil (source) --');
+
+  t('B-CCCXX T12 ⛔⛔ les 5 identifiants morts ont disparu du CODE de screens.js, index.html, '+
+    'style.css et tracking.js (commentaires exclus)',
+    restants.length===0, 'restants : '+JSON.stringify(restants));
+  t('B-CCCXX T13 ⭐ `updatePill` ne traite plus QUE la vraie pastille : une seule branche',
+    /getElementById\('sync-pill'\)/.test(PILL)
+    && !/home-sheets-pill|home-sync-dot|home-sync-lbl/.test(PILL), '');
+  t('B-CCCXX T14 ⛔ et les TROIS vrais identifiants sont intacts, aucun n\'a été emporté',
+    /'sync-pill'/.test(PILL) && /'sync-dot'/.test(PILL) && /'sync-lbl'/.test(PILL), '');
+  t('B-CCCXX T15 ⛔ R30 — le retrait est ÉCRIT à l\'endroit du retrait, avec sa raison',
+    /RETRAIT VOLONTAIRE, ft-v1220/.test(srcScr) && /RETRAIT VOLONTAIRE ft-v1220/.test(srcIdx), '');
+  /* ⚠️⚠️ CE TÉMOIN EXISTE PARCE QUE MON PROPRE AUDIT S'EST TROMPÉ. Il annonçait
+     « #cycle-home-card : aucun lecteur JS ni CSS, jamais rempli » — c'est FAUX :
+     renderCycleHomeCard() écrit dans ses deux spans, et renderCycleScreen() l'appelle. Le
+     banc de l'audit ne mesurait QUE l'Accueil, donc un écrivain vivant AILLEURS y restait
+     invisible. Un vert borné à une portée ne conclut jamais seul. */
+  t('B-CCCXX T16 ⛔⛔ PÉRIMÈTRE — la chaîne du conteneur « cycle » est entière : le conteneur, '+
+    'son écrivain, et l\'appelant de son écrivain',
+    /id="cycle-home-card"/.test(IDX)
+    && /function renderCycleHomeCard\s*\(/.test(TRK)
+    && /renderCycleHomeCard\(\);/.test(nuC(corps('renderCycleScreen',srcTrk))), '');
+  t('B-CCCXX T17 ⛔ PÉRIMÈTRE — `_renderHomeHdr` / `#home-hdr` et `renderRecoveryCard` / '+
+    '`#recovery-card` ne sont PAS touchés dans cette passe',
+    /function _renderHomeHdr\s*\(/.test(SCR) && /id="home-hdr"/.test(IDX)
+    && /function renderRecoveryCard\s*\(/.test(TRK) && /id="recovery-card"/.test(IDX), '');
 };
 

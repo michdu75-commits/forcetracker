@@ -364,7 +364,33 @@
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1219` — 🏠 **LE MINI-CHANTIER ACCUEIL : quatre corrections
+- **Version en ligne (live) :** `ft-v1220` — 🚀 **LA FINALISATION DE L'ACCUEIL : publication
+  réelle sur `master`, et nettoyage du SEUL code mort prouvé.**
+  ⛔⛔ **LE POINT QUI COMPTE D'ABORD : `ft-v1219` n'avait JAMAIS atteint `master`** — il vivait sur
+  une branche, et **Pages ne se déclenche que sur `master`**. *Push sur une branche ≠ version en
+  ligne* (**R18**, déjà payé deux fois dans ce projet). Les quatre corrections du 16/09 ne sont
+  **en ligne qu'à partir d'ici**.
+  🧹 **Retiré, et rien d'autre** : la branche « Inline home pill » d'`updatePill` (**10 lignes**,
+  3 conteneurs absents de tout le dépôt — **3 requêtes DOM sur 21 rendaient `null` à chaque
+  rendu**) · `#strength-levels` et `#pr-list` (vides, **aucun lecteur** dans l'arbre entier).
+  **21 → 18 requêtes DOM, 3 vaines → 0.** ⚠️ Le temps de rendu **ne bouge pas de façon lisible**
+  (4,9 → 4 ms à froid) : **aucun gain revendiqué**.
+  ⛔⛔ **ET UNE CORRECTION À MON PROPRE AUDIT DE LA VEILLE** : il classait `#cycle-home-card`
+  *orphelin prouvé, aucun lecteur* — **c'est faux**. `renderCycleHomeCard()` écrit dans ses deux
+  spans, et `renderCycleScreen()` l'appelle (Menu > Outils > Cycle de force). 👉 *L'audit ne
+  mesurait QUE le chemin de l'Accueil : un élément vivant AILLEURS y reste vert.* **Le conteneur
+  reste** — le retirer serait une **décision**, pas un nettoyage prouvé, et elle appartient à Michel.
+  ⛔ **Hors périmètre, figés par témoin** : `_renderHomeHdr` / `#home-hdr` (orphelin **probable** →
+  passe R30 à part) · `renderRecoveryCard` / `#recovery-card` · `openPlateCalc` · `fmt()` · la base
+  neutre 70 · `_nuitsRecentes` · la dette « dernière pesée » · les 55 classes CSS · **la palette,
+  `--t3` compris** (contraste **3,70 < 4,5** : recommandation séparée) · **Nutrition : 0 ligne**.
+  📣 **Règle d'or #11 : rien** — aucun écran ne change, aucune valeur ne bouge.
+  Tests : bloc **B-CCCXX** (11 témoins au rendu réel + 6 de source). **19 mutations sur arbre
+  cloné, 19 conformes**, sain **54/0 avant et après** — dont **4 qui doivent rester vertes** (les
+  noms retirés cités dans un commentaire JS, HTML, CSS, ou dans un fichier de documentation),
+  parce que la raison du retrait (**R30**) nomme justement ces identifiants.
+
+- **Version précédente :** `ft-v1219` — 🏠 **LE MINI-CHANTIER ACCUEIL : quatre corrections
   d'interface, zéro fonctionnalité nouvelle.** Suite de l'audit de l'onglet Accueil du même jour.
   ① le **`NaN kg`** de la tuile poids (100 % des comptes neufs) — ⛔ corrigé **chez l'appelant**,
   `fmt()` n'est pas touchée · ② la **carte de récup passe devant les deux sollicitations de Milo**
@@ -384,7 +410,7 @@
   `tests/parcours/accueil_mini.js`. **18 mutations sur arbre cloné, 18 conformes** (dont une qui
   doit **rester verte** : un commentaire citant `fmt`, `NaN` et `70`), sain **37/0 avant et après**.
 
-- **Version précédente :** `ft-v1218` — 🔑 **L'IDENTITÉ D'UNE LIGNE DU JOURNAL
+- **Avant cela :** `ft-v1218` — 🔑 **L'IDENTITÉ D'UNE LIGNE DU JOURNAL
   ALIMENTAIRE.** `rejouerRepas` donnait le **même `ts`** à plusieurs lignes (boucle synchrone,
   9 runs sur 9), et `ts` était la **seule poignée** de l'interface : cliquer « OEUF » modifiait
   « PAIN », et la croix de « JUS » annonçait *« PAIN sera retiré »* puis supprimait **les trois**.
