@@ -40029,8 +40029,11 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
     !/authCode\s*:\s*_authCode\(\)/.test(CS.split('fetch(')[0]), '');
   t('B-CCCXIV ② ⭐⭐ le miroir Supabase reçoit le corps métier SANS justificatif',
     /sbMirror\(/.test(CS), '');
+  /* ⚠️ CE TÉMOIN CHERCHAIT D'ABORD `_SB_JUSTIFICATIFS` DANS LE CORPS DE `sbMirror` — et il
+     rougissait sur du code parfaitement sain : la LISTE vit au niveau du fichier, seul
+     l'APPEL vit dans la fonction. *Un garde doit chercher le fait là où il se trouve.* */
   t('B-CCCXIV ③ ⭐⭐ FILET — sbMirror RETIRE lui-même tout justificatif de son envoi',
-    /_SB_JUSTIFICATIFS/.test(MI), '');
+    /payload\s*=\s*_sbSansJustificatifs\(payload\)/.test(MI), '');
   t('B-CCCXIV ④ ⛔ la liste des justificatifs retirés NOMME token et authCode',
     /_SB_JUSTIFICATIFS\s*=\s*\[[^\]]*'token'[^\]]*\]/.test(nuC(srcSb)) &&
     /_SB_JUSTIFICATIFS\s*=\s*\[[^\]]*'authCode'[^\]]*\]/.test(nuC(srcSb)), '');
