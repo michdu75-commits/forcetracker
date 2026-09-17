@@ -218,11 +218,18 @@ g('<!--[\\s\\S]*?-->' in TEM.replace('\\\\', '\\'),
 
 # ══ (E) LA PUBLICATION — CE DOSSIER PARLE D'UN COMMIT QUI EST SUR master ══════════════
 def git(*a):
-    try:
-        return subprocess.run(['git'] + list(a), cwd=ROOT, capture_output=True,
-                              text=True, timeout=60).stdout.strip()
-    except Exception:
-        return ''
+    """⛔ ECHOUE FERMÉ. La premiere version rendait '' sur exception ET sur code de retour
+    non nul — donc un `git diff` contre un sha INEXISTANT rendait '' , que l appelant lisait
+    « aucun ecart ». Mesure : le garde du sha servi restait VERT sur un sha bidon, c est-a-dire
+    exactement dans le cas qu il doit attraper. *Un garde qui interprete l ECHEC de sa mesure
+    comme « tout va bien » ne mesure rien* — famille BUGS.md §61 (une passe interrompue
+    ressemble trait pour trait a une passe verte), appliquee a git."""
+    r = subprocess.run(['git'] + list(a), cwd=ROOT, capture_output=True, text=True, timeout=60)
+    if r.returncode != 0:
+        raise SystemExit('GARDE ROUGE - la commande « git %s » a echoue (%s) : ce dossier ne '
+                         'peut rien affirmer sur une mesure qui n a pas abouti'
+                         % (' '.join(a), (r.stderr or '').strip().splitlines()[:1]))
+    return r.stdout.strip()
 
 
 # [!!] MON PREMIER GARDE EXIGEAIT « l arbre de travail est propre », ET IL A REFUSE DE
@@ -273,6 +280,35 @@ g(LM.count('VERT ATTENDU') >= 4,
   'les mutations qui doivent RESTER VERTES ont disparu : plus rien ne prouve qu on mesure le '
   'CODE et non la DOCUMENTATION — et ici c est capital, la raison du retrait NOMME les '
   'identifiants retires')
+
+# ══ LE DEPLOIEMENT : LU DANS SON JOURNAL, ECRIT DEPUIS L API — JAMAIS RETAPE ══════════
+# [!!] C'est la lecon ft-v1201 appliquee au deploiement : ce dossier a failli affirmer
+#      « en ligne » alors que Pages servait une version de la veille. Un push n'est pas un
+#      deploiement, et un deploiement LISTE n'est pas un deploiement REUSSI : il faut lire
+#      ses STATUTS. Les sept sains font waiting -> queued -> in_progress -> success ; celui
+#      qui bloquait tout etait reste a `waiting` tout seul.
+DEP = os.environ.get('FT_DEP') or '/tmp/deploiement.log'
+LD = journal(DEP)
+g(bool(LD), 'le journal de deploiement (%s) est absent : ce dossier ne peut pas dire si la '
+            'version est REELLEMENT en ligne' % DEP)
+_ms = re.search(r'DERNIER SUCCESS\s*:\s*([0-9a-f]{40})', LD)
+g(bool(_ms), 'le journal de deploiement ne porte pas de ligne DERNIER SUCCESS')
+SHA_SERVI = _ms.group(1)
+_bloques = re.search(r'BLOQUES\s*:\s*(\d+)', LD)
+g(bool(_bloques), 'le journal de deploiement ne porte pas le compte des runs bloques')
+N_BLOQ = int(_bloques.group(1))
+# ⭐ LE GARDE QUI COMPTE : le sha SERVI doit etre le commit de cette livraison, ou un
+#    descendant qui n'a touche AUCUN fichier servi. Sinon ce dossier dit « en ligne » a tort.
+g(git('cat-file', '-t', SHA_SERVI) == 'commit',
+  'le sha annonce comme SERVI (%s) n existe pas dans ce depot : le journal de deploiement '
+  'ne decrit pas cet arbre' % SHA_SERVI[:12])
+_ecart_servi = [f for f in SERVIS if git('diff', '--name-only', SHA_SERVI, PUBLIE, '--', f)]
+g(not _ecart_servi,
+  'le sha SERVI par Pages (%s) differe de master sur des fichiers servis : %s — ce dossier '
+  'affirmerait « en ligne » a tort' % (SHA_SERVI[:12], ', '.join(_ecart_servi)))
+_sain = len(re.findall(r'waiting -> queued -> in_progress -> success', LD))
+g(_sain >= 5, 'le journal ne montre pas assez de deploiements SAINS pour que la comparaison '
+              'avec l anomalie ait un sens (%d)' % _sain)
 
 LP = journal(PASSE)
 _mp = re.search(r'TOTAL CROIS\S+\s*:\s*(\d+)\s*\S+\s*\S+\s*(\d+)', LP)
@@ -468,7 +504,46 @@ H.append(P(_chiffres + '<br/><br/>'
            'l aurait rendu aveugle a ' + (C % "getElementById('home-sync-dot')") + ', qui vit '
            'exactement de la meme facon - dans une chaine.', 'p'))
 
-H.append(P('7. Ce que cette passe ne fait pas', 'h1'))
+H.append(P('7. En ligne, prouve - et treize heures de blocage dont la cause n etait pas celle '
+           'annoncee', 'h1'))
+H.append(P('<b>Ce qui a ete verifie</b> : le deploiement Pages actif porte le sha '
+           + (C % SHA_SERVI[:12]) + ' avec l etat <b>success</b>, ce sha est ' + (C % 'origin/master')
+           + ', et les %d fichiers servis y sont identiques au local <b>octet pour octet</b> '
+           '(lus via ' % len(SERVIS) + (C % 'raw.githubusercontent.com') + '). <i>Pas '
+           '« normalement » : le sha, son etat, et le contenu.</i>', 'p'))
+H.append(P('<b>Mais il a fallu treize heures.</b> Huit runs Pages consecutifs sont restes '
+           + (C % 'pending') + ' avec <b>zero job cree</b> : ni cette version, ni la precedente, '
+           'ni les livraisons de l autre session n etaient servies.', 'p'))
+H.append(tableau(
+    ['', 'ce qui a ete dit', 'ce qui etait vrai'],
+    [['la cause', 'quota Actions epuise (<b>mon hypothese</b>)',
+      '<b>NON</b> - dementi en une phrase par Michel'],
+     ['la vraie cause', '-',
+      '<b>UN SEUL run</b>, #1184, coince en ' + (C % 'waiting') + ' : il attendait une '
+      'approbation de l environnement ' + (C % 'github-pages')],
+     ['pourquoi ca bloquait TOUT', '-',
+      (C % 'concurrency: group: pages') + ' + ' + (C % 'cancel-in-progress: false') + ' - '
+      'une decision <b>volontaire et juste</b>, mais un run coince tient la file <b>pour '
+      'toujours</b>'],
+     ['dernier deploiement reussi', '17:33 (<b>mon chiffre, faux</b>)',
+      '<b>15:58</b> - celui de 17:33 n a jamais reussi non plus'],
+     ['le geste qui a debloque', '-', 'annuler le run #1184 : la file est repartie aussitot']],
+    [30 * mm, 60 * mm, 76 * mm]))
+H.append(P('<b>Ce qui a permis de le voir</b> : lire l etat des <b>DEPLOIEMENTS</b>, pas celui '
+           'des runs. Les sept precedents font ' + (C % 'waiting -&gt; queued -&gt; in_progress -&gt; success')
+           + ' ; celui de 17:33 etait reste a ' + (C % 'waiting') + ' <b>tout seul</b>. <i>Le run, '
+           'lui, disait « pending » comme les autres - c est la comparaison avec ses voisins SAINS '
+           'qui a isole l anomalie.</i><br/><br/>'
+           '<b>Les deux lecons, et elles se rappliquent</b> : <b>(1)</b> <i>un deploiement LISTE n est pas '
+           'un deploiement REUSSI</i> - il faut lire ses statuts, sinon on annonce un chiffre faux, '
+           'ce que j ai fait ; <b>(2)</b> <i>huit pannes identiques ne sont pas huit pannes</i> - c etait '
+           '<b>une</b> panne vue huit fois, et compter les symptomes eloignait de la cause.<br/><br/>'
+           '<b>Ce qu on ne sait toujours pas</b> : pourquoi #1184 a demande une approbation alors '
+           'que les sept precedents passaient seuls. <b>Verifie depuis</b> : les deux deploiements '
+           'suivants sont passes <b>sans rien demander</b>, donc il n y a pas de regle de protection '
+           'persistante - c etait un incident isole. <i>Dit plutot que suppose : c est une '
+           'observation sur deux cas, pas une preuve.</i>', 'p'))
+H.append(P('8. Ce que cette passe ne fait pas', 'h1'))
 H.append(tableau(
     ['laisse en place', 'pourquoi'],
     [[(C % '_renderHomeHdr') + ' / ' + (C % '#home-hdr'),
@@ -489,7 +564,7 @@ H.append(tableau(
      ['Nutrition, douane, journal alimentaire', '<b>0 ligne</b>']],
     [58 * mm, 108 * mm]))
 
-H.append(P('8. Reponses, avec leur preuve', 'h1'))
+H.append(P('9. Reponses, avec leur preuve', 'h1'))
 H.append(tableau(
     ['#', 'question', 'reponse et preuve'],
     [['1', 'la branche est-elle reconciliee avec ' + (C % 'master') + ' ?',
@@ -512,7 +587,10 @@ H.append(tableau(
      ['9', 'l audit de la veille etait-il juste ?',
       '<b>PARTIEL</b> - juste sur 2 candidats sur 3 ; <b>faux</b> sur '
       + (C % '#cycle-home-card') + ', corrige ici avec sa cause'],
-     ['10', 'le dossier decrit-il l arbre reellement servi ?',
+     ['10', '<b>est-ce REELLEMENT en ligne ?</b>',
+      '<b>OUI</b> - deploiement ' + (C % SHA_SERVI[:12]) + ' en etat <b>success</b>, fichiers '
+      'servis identiques octet pour octet'],
+     ['11', 'le dossier decrit-il l arbre reellement servi ?',
       '<b>OUI</b> - arbre propre verifie, commit ' + (C % HEAD[:12]) + ' lu par un garde']],
     [8 * mm, 66 * mm, 92 * mm]))
 
@@ -521,9 +599,10 @@ H.append(P('Document produit par ' + (C % 'tools/gen_finalisation_pdf.py') + ' -
            + str(GARDES[0]) + ' gardes</b> qui recomptent chaque fait depuis le code servi ou le '
            'lisent dans les journaux, et refusent de produire si un fait tombe - y compris si un '
            'identifiant retire revient, si un element hors perimetre a saute, si la palette a '
-           'change, ou si l arbre de travail n est pas propre. Banc : %d/%d. Controle negatif : '
-           '%d/%d. Passe complete : %s. Commit : %s.'
-           % (B_OK, B_OK + B_KO, M_OK, M_TOT, PASSE_TXT, HEAD[:12]), 'petit'))
+           'change, si le sha SERVI par Pages s ecarte de master sur un fichier servi, ou si le '
+           'journal de deploiement manque. Banc : %d/%d. Controle negatif : %d/%d. Passe '
+           'complete : %s. Commit : %s. Servi par Pages : %s (%d runs bloques avant deblocage).'
+           % (B_OK, B_OK + B_KO, M_OK, M_TOT, PASSE_TXT, HEAD[:12], SHA_SERVI[:12], N_BLOQ), 'petit'))
 
 SimpleDocTemplate(OUT, pagesize=A4,
                   leftMargin=21 * mm, rightMargin=21 * mm,
