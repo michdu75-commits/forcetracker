@@ -250,3 +250,55 @@ faire le travail de lecture qu'on venait de lui épargner (**R25** : la pop-up a
 **🕐 Heures en UTC**, ou le fuseau écrit à côté : deux conteneurs peuvent être réglés différemment — c'est la famille de bugs « fuseaux horaires » de `BUGS.md`, appliquée à nous-mêmes.
 
 **⚠️ Et une ligne suffit.** C'est la leçon de `docs/JOURNAL-DE-TEST.md` : *un fichier qu'on ne remplit pas cesse d'être rempli*. Les fichiers vivants de ce projet tiennent parce qu'ils sont **bon marché**. Pas de gabarit, pas de compte rendu — la date, l'heure, le sujet, les fichiers, la version.
+
+
+---
+
+**15. 🔒 UNE DÉCISION ACTÉE RESTE ACTÉE — un audit ne rouvre pas ce que Michel a tranché.**
+
+*Écrite par Michel le 17/09/2026, et écrite par lui **mot pour mot** : c'est une règle sur la
+façon dont je travaille, pas sur le code.*
+
+**La règle.** Toute décision **produit · UX · architecture · métier** explicitement validée par
+Michel **devient une contrainte du projet**. Elle a le même statut qu'une contrainte technique :
+on construit **avec**, on ne construit pas **contre**.
+
+⛔ **Un audit ultérieur ne doit pas la retransformer en question**, ni proposer spontanément d'y
+revenir. *Un audit mesure ce qui est ; il ne redemande pas ce qui a déjà été décidé.*
+
+**⚖️ LE SEUL MOTIF DE RÉOUVERTURE — et il est étroit.** Une décision actée ne se rouvre que sur
+une **preuve nouvelle ET mesurée** montrant qu'elle est :
+- **techniquement impossible**, ou
+- **dangereuse**, ou
+- **en contradiction avec une autre décision active**, ou
+- **génératrice d'un défaut réel** (observé, pas redouté).
+
+**⛔⛔ ET MÊME ALORS, ON NE CHANGE RIEN SEUL.** On expose **la preuve**, **l'impact**, et **on
+attend une nouvelle décision de Michel**. *Apporter une preuve donne le droit de poser la
+question, jamais celui de trancher à sa place.*
+
+**⛔ CE QUI NE SUFFIT JAMAIS À ROUVRIR** : une préférence technique · une « bonne pratique » ·
+une optimisation possible · une idée neuve · le fait qu'on ferait autrement aujourd'hui.
+*« On pourrait mieux faire » n'est pas une preuve, c'est un avis.*
+
+**💡 LES IDÉES NON DEMANDÉES SE CONSIGNENT À PART** (`IDEES-FUTURES.md`, `docs/JOURNAL-DE-TEST.md`
+selon le sujet) et **ne deviennent pas un chantier** sans accord explicite. Elles ne disparaissent
+pas — elles attendent.
+
+**⭐ LA PHRASE QUI TRANCHE TOUT, de Michel :**
+> *« Le code actuel et les mesures disent ce qui EST ; Michel décide ce qui DOIT ÊTRE. »*
+
+**⚠️ POURQUOI CETTE RÈGLE EXISTE, ET POURQUOI ELLE ARRIVE MAINTENANT.** Le projet a déjà deux
+règles voisines, et aucune ne couvrait ce cas :
+- **R30** protège un **retrait** volontaire : *avant de « réparer » un code orphelin, cherche la
+  décision.* Elle regarde le **code**.
+- **R23** protège une **fonctionnalité** livrée sans journal : *ne pas déclarer absent ce qui
+  existe.* Elle regarde la **documentation**.
+- **#15 protège la DÉCISION elle-même**, indépendamment du code et de la doc. C'est le maillon
+  qui manquait : on peut parfaitement retrouver la décision, la comprendre, et la remettre quand
+  même en question à chaque passe — *ce qui revient à la faire re-trancher sans cesse par
+  quelqu'un qui l'a déjà tranchée une fois.*
+
+**Le coût réel de son absence** : chaque audit qui rouvre une question réglée consomme du temps
+de Michel, dilue les vraies alertes, et fabrique de l'incertitude sur des sujets stables. *Une
+décision qu'on renégocie n'est plus une fondation, c'est un sujet.*
