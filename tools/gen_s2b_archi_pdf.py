@@ -475,13 +475,15 @@ H.append(encadre(
 H.append(encadre(
     'LA SEULE CONTRAINTE DURE, ET ELLE N EST PAS DANS LA COPIE : C EST LA SUITE',
     'Copier le registre une fois est facile. Le tenir a jour ne l est pas. Deux moments le '
-    'font diverger : une <b>emission</b> (un nouvel appareil obtient un jeton chez Apps '
-    'Script) et une <b>revocation</b>. Si la revocation n atteint pas Supabase, un jeton '
-    'retire par la personne continue d y ecrire - <i>c est-a-dire exactement la propriete '
-    'qu on pretend fermer, deplacee d un cran</i>. >> Regle a tenir : la revocation ecrit '
-    'dans Supabase de facon <b>bloquante</b> (c est une operation rare, elle peut se '
-    'permettre d attendre), l emission peut etre differee, et une reconciliation periodique '
-    'rattrape les deux. <b>C est le vrai cout de la strategie 2</b>, et il se paie une fois.'))
+    'font diverger, et <b>ils ne se valent pas du tout</b>. Une <b>emission</b> manquee est '
+    'benigne : le hachage est simplement absent, le pont resout, et l inscription se fait au '
+    'passage (section 5) - <i>l ecart se repare tout seul a la premiere utilisation</i>. Une '
+    '<b>revocation</b> manquee, elle, laisse un appareil retire continuer d ecrire : <i>c est '
+    'exactement la propriete qu on pretend fermer, deplacee d un cran</i>. >> Regle a tenir : '
+    'la revocation ecrit dans Supabase de facon <b>bloquante</b> - c est une operation rare, '
+    'elle peut se permettre d attendre - et une reconciliation periodique sert de filet. '
+    '<b>C est le seul point du chantier qui doit echouer FERME</b>, et c est le vrai cout de '
+    'la strategie 2.'))
 
 # ── 4 ────────────────────────────────────────────────────────────────────────────────
 H.append(P('4. Comparaison des options de privileges', 'h1'))
@@ -561,12 +563,33 @@ H.append(encadre(
     'indisponible exactement au moment ou il sert.</b> L en-tete de ' + (C % 'supabase.js') +
     ' pose deja la regle dans un sens - <i>« si Supabase tombe, il ne se passe strictement '
     'rien »</i> - et la symetrie inverse ne doit pas s installer par commodite.'))
-H.append(P('<b>Decision : les deux, dans cet ordre, et la transition est bornee par ecrit.</b> '
-           'La strategie 1 ferme V2 tout de suite, avec du code deja eprouve ; la strategie 2 '
-           'rend l independance. Michel a lui-meme prevu cette lecture en formulant sa '
-           'question Q12 : <i>« NON a terme, ou PARTIEL si un pont transitoire explicitement '
-           'documente subsiste »</i>. >> Tant que la strategie 2 n est pas posee, la reponse '
-           'a Q12 est <b>PARTIEL</b>, et ce document refuse d ecrire autre chose.', 'p'))
+H.append(encadre(
+    'DECISION - ET LES DEUX STRATEGIES CESSENT D ETRE DES ALTERNATIVES',
+    'Le brief les presente comme un choix. <b>La bonne lecture est que la premiere est le '
+    'MECANISME DE MIGRATION de la seconde.</b> Le Worker resout un jeton par le pont ; s il '
+    'ne trouve pas le hachage correspondant dans Supabase, <b>il l y inscrit</b> - la '
+    'reponse du pont fait autorite, c est donc une source sure. >> Consequence : <b>aucune '
+    'recopie de masse, aucun script de reprise, aucune fenetre ou les deux registres se '
+    'repondent differemment</b>. Le registre se remplit a l usage, appareil par appareil, et '
+    'chaque appareil deja inscrit est resolu par Supabase <b>seule</b> des la fois suivante. '
+    '<i>La dependance a Google ne se retire pas d un coup a une date : elle decroit toute '
+    'seule.</i> C est pour cette raison que la reponse a Q12 est <b>PARTIEL</b> - decroissant, '
+    'et mesurable par le nombre de lignes du registre.', VERT))
+H.append(P('Michel avait prevu cette lecture en formulant Q12 : <i>« NON a terme, ou PARTIEL '
+           'si un pont transitoire explicitement documente subsiste »</i>. Le pont subsiste, '
+           'il est documente ici, et <b>il ne sert plus a chaque sauvegarde mais a chaque '
+           'appareil NOUVEAU</b>. Il ne disparaitra que le jour ou l emission d un jeton '
+           'ecrira elle-meme dans les deux registres - <i>ce qui est un geste, pas un '
+           'chantier</i>.', 'p'))
+H.append(encadre(
+    'CE QUE CETTE LECTURE CORRIGE DANS MON PROPRE PLAN, ET IL FAUT LE DIRE',
+    'La premiere version de ce document faisait de la phase 2 un essai <b>par le pont</b> et '
+    'de la phase 3 une <b>recopie</b> du registre. Les deux ne tenaient pas ensemble : si la '
+    'fonction cherche un hachage dans une table encore vide, l essai de la phase 2 ne peut '
+    'pas aboutir, et le pont n y sert a rien. >> <b>C etait une incoherence d ordre, pas de '
+    'principe</b> - et elle se serait vue au premier essai reel, c est-a-dire au pire moment. '
+    'Le remplissage a l usage la supprime : il n y a plus de phase de recopie du tout.',
+    ORANGE))
 
 # ── 6 ────────────────────────────────────────────────────────────────────────────────
 H.append(PageBreak())
@@ -574,12 +597,17 @@ H.append(P('6. Decision d architecture', 'h1'))
 H.append(bloc_code(
     "navigateur  --(jeton S1 brut + instantane metier)-->  Worker\n"
     "                                                        |\n"
-    "                      phase 1 : pont -> Apps Script -----+  (identite reelle)\n"
-    "                      phase 2 : recherche du hachage dans Supabase\n"
-    "                                                        |\n"
-    "                                          fonction bornee, secret serveur\n"
-    "                                                        v\n"
-    "                                                    ft_comptes\n"
+    "                              sha256(jeton) connu de Supabase ?\n"
+    "                                   /                        \\\n"
+    "                                 oui                        non\n"
+    "                                  |                          |\n"
+    "                                  |            pont -> Apps Script (identite reelle)\n"
+    "                                  |                          |\n"
+    "                                  |            inscription du hachage au registre\n"
+    "                                   \\                        /\n"
+    "                                    fonction bornee, secret serveur\n"
+    "                                                v\n"
+    "                                            ft_comptes\n"
     "\n"
     "et, inchange et independant :\n"
     "navigateur  --(instantane + justificatifs)-->  Apps Script  -->  sauvegarde Google"))
@@ -755,16 +783,16 @@ H.append(encadre(
 
 # ── 13 ───────────────────────────────────────────────────────────────────────────────
 H.append(P('13. Transition sans grand soir', 'h1'))
-H.append(tableau(
-    ['phase', 'ce qui se passe', 'ce qui change pour la personne', 'preuve de sortie'],
-    [['<b>1</b>', 'table des jetons creee (vide) + fonction creee. Aucun appelant.',
+PHASES = [['<b>1</b>', 'table des jetons creee (vide) + fonction creee. Aucun appelant.',
       'rien', 'la table existe, personne ne l atteint'],
-     ['<b>2</b>', 'le Worker recoit sa route de sauvegarde et son secret. Le pont resout '
-      'l identite. Essais sur le compte de test uniquement.',
-      'rien', 'une ecriture aboutie pour le compte de test'],
-     ['<b>3</b>', 'le registre est recopie depuis Apps Script, puis tenu a jour a chaque '
-      'emission et a chaque revocation.',
-      'rien', 'le nombre de lignes egale le compteur du registre'],
+     ['<b>2</b>', 'le Worker recoit sa route de sauvegarde et son secret. Hachage inconnu -> '
+      'le pont resout, puis <b>inscrit</b> le hachage. Essais sur le compte de test '
+      'uniquement.',
+      'rien', 'une ecriture aboutie pour le compte de test, <b>et</b> une ligne de registre '
+      'creee par cet essai'],
+     ['<b>3</b>', '<b>rien a faire</b> : le registre se remplit a l usage. Seule la '
+      '<b>revocation</b> demande un geste - elle doit atteindre Supabase de facon bloquante.',
+      'rien', 'le nombre de lignes croit, et une revocation refuse des l instant suivant'],
      ['<b>4</b>', 'le client bascule : il appelle le Worker <b>s il a un jeton</b>, sinon il '
       'garde l ancien chemin. Compteur anonyme de la bascule.',
       'rien de visible', 'la part de la nouvelle voie, mesuree'],
@@ -772,13 +800,27 @@ H.append(tableau(
       'rien - les appareils sans jeton perdent le <b>miroir</b>, jamais leur sauvegarde',
       '<b>preuve reseau</b> : appel avec la cle publique -> refus'],
      ['<b>6</b>', 'droits directs inutiles retires, regles vestigiales supprimees.',
-      'rien', 'nouveau releve des droits']],
+      'rien', 'nouveau releve des droits']]
+# [!!] LA PHASE 3 SE CONTROLE SUR SA PROPRE LIGNE. Ma premiere version en faisait une RECOPIE
+#      de masse, incompatible avec l essai par le pont de la phase 2 (voir section 5). Si le
+#      mot revenait ici, l incoherence d ordre reviendrait avec lui.
+_p3 = [r for r in PHASES if r[0] == '<b>3</b>']
+g(len(_p3) == 1 and 'recopie' not in _p3[0][1] and 'a l usage' in _p3[0][1],
+  'la phase 3 redevient une recopie du registre : c est l incoherence d ordre corrigee en '
+  'section 5, et elle ne se verrait qu au premier essai reel')
+g('revocation' in _p3[0][1].lower(),
+  'la phase 3 ne nomme plus la revocation, qui est le seul geste qu elle demande vraiment')
+g(len(PHASES) == 6, 'la sequence ne compte plus six phases mais %d' % len(PHASES))
+H.append(tableau(
+    ['phase', 'ce qui se passe', 'ce qui change pour la personne', 'preuve de sortie'],
+    PHASES,
     [12 * mm, 62 * mm, 46 * mm, 46 * mm]))
-H.append(P('C est la sequence du brief, avec <b>une</b> precision ajoutee et justifiee : la '
-           'recopie du registre (phase 3) vient <b>avant</b> la bascule du client (phase 4) et '
-           'non apres, parce qu un client bascule dont le jeton n est pas encore dans le '
-           'registre serait refuse. <i>L ordre inverse fabriquerait exactement la panne qu on '
-           'veut eviter.</i>', 'p'))
+H.append(P('C est la sequence du brief, avec <b>une</b> difference et elle va dans le sens de '
+           'la prudence : <b>la phase 3 n est plus un travail, c est une observation.</b> Un '
+           'client bascule dont le jeton n est pas encore inscrit n est pas refuse - il passe '
+           'par le pont, et son inscription se fait au passage. <i>L ordre entre la phase 3 et '
+           'la phase 4 cesse donc d etre un risque, parce qu il n y a plus d ordre a tenir.</i>',
+           'p'))
 H.append(encadre(
     'CE QUI NE PEUT PAS MAL TOURNER, ET POURQUOI ON PEUT L AFFIRMER',
     'A aucune phase une donnee n est en jeu : le miroir est un <b>filet</b>, la source de '
@@ -796,8 +838,8 @@ H.append(tableau(
     ['si cela tourne mal apres...', 'retour arriere', 'perte'],
     [['phase 1 ou 2', 'supprimer la table et la fonction, ou ne rien faire : personne ne les '
       'appelle', 'aucune'],
-     ['phase 3', 'arreter la synchronisation. Le registre d Apps Script reste la reference',
-      'aucune'],
+     ['phase 3', 'rien a annuler : aucune donnee n a ete deplacee. Le registre d Apps Script '
+      'reste la reference', 'aucune'],
      ['phase 4', 'le client revient a l ancienne voie - <b>une seule ligne</b>, et '
       'l ancienne fonction est toujours en place', 'les instantanes non ecrits pendant '
       'l incident, rattrapes a la sauvegarde suivante'],
@@ -938,8 +980,9 @@ QQ = [
     ('Q11', 'une panne Supabase bloque-t-elle l application ?',
      NON, NON, '<b>deja vrai</b> : l envoi est lance et oublie, jamais attendu'),
     ('Q12', 'une panne Google bloque-t-elle Supabase ?',
-     NON, PART, 'aujourd hui les deux chemins sont independants ; <b>la phase 1 cree '
-     'volontairement cette dependance</b>, et la strategie 2 la retire'),
+     NON, PART, 'aujourd hui les deux chemins sont independants ; le pont en cree une '
+     '<b>volontairement</b>, mais elle ne joue plus que pour un appareil <b>encore inconnu</b> '
+     'du registre - <b>elle decroit a l usage</b>, et la strategie 2 la retire'),
     ('Q13', 'la sauvegarde Google fonctionne-t-elle toujours ?',
      OUI, OUI, 'aucun fichier de ce chemin n est touche par ce document'),
     ('Q14', 'V2 est-elle fermee de bout en bout ?',
@@ -1052,6 +1095,8 @@ for _mot, _pourquoi in (
         ('regle d or #3', 'le local passe avant les deux nuages'),
         ('relais attrape-tout', 'c est le piege propre a ce Worker'),
         ('reconciliation', 'c est ce qui empeche les deux registres de diverger'),
+        ('a l usage', 'le registre se remplit par le pont, sans recopie de masse'),
+        ('incoherence d ordre', 'le defaut de ma premiere version doit rester ecrit (R30)'),
         ('lecture seule', 'la premiere etape demandee a Michel n ecrit rien')):
     g(_mot in _bt, 'le document ne parle plus de « %s » : %s' % (_mot, _pourquoi))
 

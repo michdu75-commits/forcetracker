@@ -119,6 +119,20 @@ MUTATIONS = [
      "H.append(P('Une exploitation a ete mesuree.', 'p'))\n"
      "H.append(P('15. Risques', 'h1'))", 'ROUGE'),
 
+    ('@@DOC@@ la phase 3 redevient une recopie de masse', GEN,
+     "'<b>rien a faire</b> : le registre se remplit a l usage. Seule la '",
+     "'le registre est recopie depuis Apps Script. Seule la '", 'ROUGE'),
+    ('@@DOC@@ la phase 3 ne nomme plus la revocation', GEN,
+     "      '<b>revocation</b> demande un geste - elle doit atteindre Supabase de facon "
+     "bloquante.',",
+     "      'mise a jour demande un geste - elle doit atteindre Supabase.',", 'ROUGE'),
+    ('@@DOC@@ une phase disparait de la sequence', GEN,
+     "     ['<b>6</b>', 'droits directs inutiles retires, regles vestigiales supprimees.',\n"
+     "      'rien', 'nouveau releve des droits']]",
+     "     ]", 'ROUGE'),
+    ('@@DOC@@ le defaut de ma premiere version est efface', GEN,
+     'C etait une incoherence d ordre, pas de ', 'C etait une erreur, pas de ', 'ROUGE'),
+
     # ── CONTROLES NEGATIFS : doivent rester VERTS ────────────────────────────────────
     ('[negatif] service_role nomme dans un COMMENTAIRE de securite', 'setup.js',
      'function _cloudSync(){',
