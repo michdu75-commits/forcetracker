@@ -169,6 +169,24 @@ g('body: raw,' in WC, 'le relais attrape-tout a disparu')
 g("catch (e) { return { ok: false, raison: 'reseau' }; }" in corps_js(WC, 'async function _identiteIA('),
   'le pont des appels IA n est plus fail-closed')
 
+# ⛔⛔ LE DEPLOIEMENT DU WORKER EST AUTOMATIQUE — GARDE AJOUTEE APRES UNE ERREUR A MOI.
+#     La premiere version de ce document affirmait « ce Worker se deploie a la main ». C'etait
+#     FAUX : `.github/workflows/deploy-worker.yml` le redeploie a chaque push touchant
+#     `worker.js`, et le run #29 l'a fait a 13:38 UTC sur mon propre commit. >> On ne peut plus
+#     l'ecrire : la garde lit le workflow.
+WF = os.path.join(ROOT, '.github', 'workflows', 'deploy-worker.yml')
+g(os.path.exists(WF), 'le workflow de deploiement du Worker a disparu')
+_wf = open(WF, encoding='utf-8').read()
+DEPLOI_AUTO = "- 'worker.js'" in _wf and 'wrangler-action' in _wf
+g(DEPLOI_AUTO,
+  'le Worker ne se deploie plus automatiquement sur push : ce document decrit le contraire')
+g('wrangler.toml' in open(os.path.join(ROOT, 'wrangler.toml'), encoding='utf-8').read()
+  or True, '')
+_wt = open(os.path.join(ROOT, 'wrangler.toml'), encoding='utf-8').read()
+g('[vars]' not in _wt,
+  'wrangler.toml declare desormais des variables : une variable posee au tableau de bord et '
+  'absente d ici pourrait etre effacee au prochain deploiement, et ce document dit le contraire')
+
 # ── les migrations de la phase 1 sont toujours la ─────────────────────────────────────
 DMIG = os.path.join(ROOT, 'supabase', 'migrations')
 MIGS = sorted(f for f in os.listdir(DMIG) if f.endswith('.sql')) if os.path.isdir(DMIG) else []
@@ -322,8 +340,8 @@ H = []
 # @@DEBUT@@
 H.append(P('S2-B phase 3 - la sauvegarde passe par le Worker', 'titre'))
 H.append(P('Force Tracker - 17 septembre 2026 - base servie ' + VERSION + ' - hors depot '
-           '(regle d or #14) - <b>rien n est en ligne : ce Worker se deploie a la main, et '
-           'V2 est encore ouverte</b>', 'sous'))
+           '(regle d or #14) - <b>la route est DEPLOYEE mais dormante : personne ne l appelle, '
+           'et V2 est encore ouverte</b>', 'sous'))
 
 H.append(encadre(
     'CE QUI EST FAIT, ET CE QUI NE L EST PAS',
@@ -438,32 +456,44 @@ H.append(encadre(
     'fonction. Pas avant, et pas sur du code qui a l air bon.'))
 
 H.append(PageBreak())
-H.append(P('6. Les deux prochaines etapes, et elles sont pour Michel', 'h1'))
-H.append(P('Elles ne se font pas dans le tableau de bord Supabase mais chez <b>Cloudflare</b>, '
-           'et elles ne changent rien pour personne : le navigateur continue d utiliser '
-           'l ancienne voie tant qu il n a pas ete bascule.', 'p'))
-H.append(tableau(
-    ['', 'ou', 'quoi'],
-    [['<b>A</b>', 'Cloudflare, secrets du Worker',
-      'poser <b>deux</b> valeurs : l adresse du projet Supabase et la <b>cle secrete</b> '
-      'serveur. <b>Michel les saisit lui-meme</b> - je ne les vois jamais, je ne les demande '
-      'jamais, elles n entrent ni dans le depot, ni dans un PDF, ni dans le chat'],
-     ['<b>B</b>', 'Cloudflare, deploiement',
-      'deployer le Worker mis a jour. <b>Sans A, la route repond « cloud indisponible » et '
-      'ne fait rien</b> - elle echoue FERMEE, elle ne laisse rien passer']],
-    [8 * mm, 42 * mm, 116 * mm]))
+H.append(P('6. La seule etape qui reste - et une correction a ce que j avais ecrit', 'h1'))
 H.append(encadre(
-    'CE QUI ARRIVE SI ON DEPLOIE SANS POSER LES SECRETS',
-    '<b>Rien de grave, et c est par construction.</b> La route verifie que l adresse et la cle '
-    'existent <b>avant</b> tout appel ; si l une manque, elle rend « cloud indisponible » et '
-    'n emet aucune requete. Elle ne se rabat pas sur l ancienne voie, elle ne devine pas, elle '
-    'ne laisse pas passer. >> Et comme personne ne l appelle encore, <b>l application se '
-    'comporte exactement comme aujourd hui</b>.', VERT))
-H.append(P('<b>Retour arriere de cette phase</b> : redeployer le Worker precedent. Le fichier '
-           'd avant est dans l historique du depot, et <b>aucune donnee n est en jeu</b> - '
-           'cette route n a encore aucun appelant. Les migrations de la phase 1 restent en '
-           'place et ne genent rien : une table vide et trois fonctions que personne '
-           'n appelle.', 'p'))
+    'JE M ETAIS TROMPE : LE WORKER NE SE DEPLOIE PAS A LA MAIN',
+    'J ai ecrit - dans le message de livraison ET dans la premiere version de ce document - '
+    'que ce fichier devait etre colle a la main dans le tableau de bord. <b>C est faux depuis '
+    'juillet</b> : une action automatique le redeploie a chaque fois que le fichier change, et '
+    'elle l a fait <b>a 13h38</b> sur le commit de cette phase. La route est donc <b>en '
+    'ligne</b>. >> <i>Je suis alle le verifier au lieu de le supposer, et c est la seule raison '
+    'pour laquelle cette ligne existe.</i> Une garde lit desormais le fichier d automatisation '
+    'et refuse de laisser reecrire « deploiement a la main ».', ORANGE))
+H.append(encadre(
+    'CE QUE CA CHANGE : RIEN, ET ON PEUT LE DIRE PRECISEMENT',
+    'La route est deployee, mais <b>personne ne l appelle</b> : le navigateur envoie toujours '
+    'sa sauvegarde par l ancienne voie, et aucun code client ne connait la nouvelle. Et sans '
+    'cle secrete, elle rend « cloud indisponible » sans emettre la moindre requete - elle '
+    '<b>echoue fermee</b>. Les quatorze actions IA, elles, sont intactes, et le deploiement '
+    'automatique s est termine avec succes. <b>L application se comporte exactement comme ce '
+    'matin.</b>', VERT))
+H.append(P('<b>Il ne reste donc qu une chose a faire</b>, et elle est chez Cloudflare : poser '
+           'deux valeurs dans les <b>secrets</b> du Worker - l adresse du projet Supabase, et '
+           'la cle secrete serveur. <b>Michel les saisit lui-meme</b> : je ne les vois jamais, '
+           'je ne les demande jamais, elles n entrent ni dans le depot, ni dans un PDF, ni dans '
+           'le chat.', 'p'))
+H.append(encadre(
+    'ET LE PIEGE QUI VA AVEC, PARCE QUE LE DEPLOIEMENT EST AUTOMATIQUE',
+    'Cloudflare affiche un avertissement en orange des qu on ajoute une valeur au tableau de '
+    'bord alors que le projet se deploie depuis un fichier de configuration : <i>« mettez votre '
+    'configuration a jour pour garder les deploiements synchronises »</i>. <b>Il est fonde.</b> '
+    'Une valeur de type <b>texte</b> posee a la main peut etre effacee au prochain '
+    'deploiement automatique, parce que la configuration versionnee n en declare aucune. '
+    '>> <b>Les deux valeurs doivent donc etre de type SECRET</b>, comme la cle de l IA qui vit '
+    'la depuis juillet et a survecu a <b>29</b> deploiements. <i>La preuve qu un secret survit '
+    'n est pas une lecture de documentation : c est la cle qui est encore la.</i>'))
+H.append(P('<b>Retour arriere</b> : retirer les deux secrets suffit - la route redevient '
+           'inerte, exactement comme maintenant. Pour revenir au Worker d avant, il faut '
+           'annuler le commit et laisser l automatisation redeployer. <b>Aucune donnee n est '
+           'en jeu</b> : cette route n a aucun appelant, et les migrations de la phase 1 sont '
+           'une table vide et trois fonctions que personne n appelle.', 'p'))
 H.append(P('Document produit par ' + str(GARDES[0]) + ' gardes qui recomptent chaque fait '
            'depuis le code servi ' + VERSION + ', depuis le Worker et depuis les journaux des '
            'deux bancs - et qui refusent de produire si l un tombe, y compris celle qui '
@@ -496,6 +526,9 @@ INTERDITS = [
      'le document AFFIRME une preuve de bout en bout : le banc simule le reseau'),
     (r'plus aucun risque|desormais sans risque',
      'le document banalise : le nouveau chemin coexiste avec l ancien'),
+    (r'se deploie a la main|deploiement manuel|coller le fichier dans le tableau de bord',
+     'le document affirme un deploiement manuel : il est AUTOMATIQUE, mesure dans le fichier '
+     'd automatisation — c est l erreur que ce dossier corrige'),
 ]
 for _bloc in TEXTES:
     _b = _bloc.lower()
@@ -518,7 +551,10 @@ for _mot, _pourquoi in (
         ('echoue fermee', 'c est ce qui rend un deploiement sans secret inoffensif'),
         ('refus reseau reel', 'c est la seule preuve qui fermera V2'),
         ('presence n est pas l obeissance', 'c est pourquoi il y a deux bancs'),
-        ('retour arriere', 'il doit etre donne avec l etape manuelle')):
+        ('retour arriere', 'il doit etre donne avec l etape manuelle'),
+        ('deploiement automatique', 'c est la correction centrale de ce dossier'),
+        ('type secret', 'une variable texte peut etre effacee au prochain deploiement'),
+        ('29', 'c est le nombre de deploiements auxquels la cle de l IA a survecu')):
     g(_mot in _bt, 'le document ne parle plus de « %s » : %s' % (_mot, _pourquoi))
 
 g(str(BANC_OK) in TOUT and str(MUT_OK) + '/' + str(MUT_TOT) in TOUT,
