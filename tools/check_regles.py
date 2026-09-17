@@ -61,6 +61,29 @@ n_long  = sorted(int(n) for n in re.findall(r"(?m)^\*\*(\d+)\. ", long_))
 if n_court != n_long:
     erreurs.append(f"numéros différents — CLAUDE.md {n_court} · REGLES-OR.md {n_long}")
 
+# ⛔⛔ LE COMPTE ATTENDU EST ÉCRIT, PAS DÉDUIT (17/09/2026, ajout de la règle #16).
+#   Jusqu'ici le contrôle ne comparait que les DEUX fichiers entre eux : retirer la même règle
+#   des deux côtés le laissait parfaitement vert. *Deux fichiers d'accord peuvent être d'accord
+#   sur une perte.* Le nombre attendu est donc une CONSTANTE — elle se change à la main, en
+#   connaissance de cause, le jour où une règle entre (elle ne sort jamais toute seule).
+# ⚠️ Et il se lit dans les EN-TÊTES de règle, jamais dans le texte libre : citer « règle 16 »
+#   dans un commentaire ne fabrique pas une règle (famille « on mesure le CODE, pas ce qui en
+#   PARLE » — ft-v1193/1203/1205/1210/1216/1220).
+REGLES_ATTENDUES = 16
+if len(n_court) != REGLES_ATTENDUES:
+    erreurs.append(
+        f"compteur des règles d'or : {len(n_court)} déclarées, {REGLES_ATTENDUES} attendues — "
+        "une règle a disparu, ou la constante n'a pas suivi son ajout"
+    )
+
+# ⛔ NUMÉROTATION CONTINUE 1..N, SANS TROU NI DOUBLON. Un doublon (deux « 15 » au lieu d'un 15
+#   et d'un 16) passerait les deux contrôles ci-dessus si les deux fichiers portent la même
+#   faute — et la deuxième règle serait alors INTROUVABLE par son numéro.
+if n_court and n_court != list(range(1, len(n_court) + 1)):
+    erreurs.append(f"numérotation non continue (trou ou doublon) — CLAUDE.md {n_court}")
+if len(set(n_long)) != len(n_long):
+    erreurs.append(f"numéro en double dans REGLES-OR.md — {n_long}")
+
 sans_renvoi = [n for n in n_court if f"REGLES-OR.md#{n}`" not in entete]
 if sans_renvoi:
     erreurs.append(f"règles sans renvoi vers REGLES-OR.md : {sans_renvoi}")

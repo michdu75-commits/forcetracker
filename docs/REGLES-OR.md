@@ -302,3 +302,101 @@ règles voisines, et aucune ne couvrait ce cas :
 **Le coût réel de son absence** : chaque audit qui rouvre une question réglée consomme du temps
 de Michel, dilue les vraies alertes, et fabrique de l'incertitude sur des sujets stables. *Une
 décision qu'on renégocie n'est plus une fondation, c'est un sujet.*
+
+---
+
+**16. 🔍 AUCUNE IMPOSSIBILITÉ NI ACTION MANUELLE SANS PREUVE — une supposition ne devient jamais une contrainte.**
+
+Avant de dire à Michel :
+
+> *« je ne peux pas tester »* · *« tu dois le faire manuellement »* · *« il faut déployer à la
+> main »* · *« curl ne peut pas accéder »* · *« il faut forcément passer par l'app »* · *« je n'ai
+> pas accès à X »* · *« va cliquer dans Cloudflare / Supabase / GitHub »*
+
+il faut **d'abord vérifier ce qui est réellement possible sur l'état ACTUEL du projet**.
+
+**⚙️ LA CHAÎNE EST OBLIGATOIRE, ET SON ORDRE EST TOUT :**
+
+> **TESTÉE → OBSERVÉE → EXPLIQUÉE**
+
+et **jamais** :
+
+> ⛔ **SUPPOSÉE → TRANSFORMÉE EN DÉCISION.**
+
+---
+
+### ⚠️ POURQUOI CETTE RÈGLE EXISTE — deux erreurs réelles, le même jour
+
+**CAS 1 — LE DÉPLOIEMENT DU WORKER.** Claude a demandé à Michel de **déployer le Worker
+Cloudflare à la main**. ⛔ Or le dépôt possédait **déjà un workflow GitHub Actions de
+déploiement**. Le caractère « manuel » avait été **supposé au lieu d'être vérifié** — il suffisait
+d'ouvrir `.github/workflows/`. 👉 *Michel a reçu une instruction inutile et **contradictoire avec
+sa propre infrastructure**.*
+
+**CAS 2 — LE TEST EXTERNE DU WORKER.** Claude a affirmé qu'un test externe était **impossible**
+parce que le Worker vérifie l'en-tête `Origin`. ⛔ Or **un outil externe peut envoyer lui-même
+l'`Origin` attendu** : ***le filtre `Origin` n'est pas une preuve d'identité***, c'est une
+politique de navigateur. La bonne méthode était : ① tenter la requête · ② contrôler l'en-tête ·
+③ observer le résultat · ④ **conclure ensuite**. Pas l'inverse.
+
+⭐ **Ce que les deux cas ont en commun** : dans les deux, la vérification coûtait **moins d'une
+minute**, et l'affirmation fausse a coûté du temps de Michel. *Une impossibilité affirmée sans
+mesure n'est pas une prudence, c'est un raccourci.*
+
+---
+
+### ⛔ AVANT DE DEMANDER UNE MANIPULATION MANUELLE — les 8 vérifications
+
+1. le dépôt contient-il déjà un **workflow** correspondant ?
+2. **GitHub Actions** l'automatise-t-il ?
+3. **Cloudflare** l'automatise-t-il ?
+4. **Supabase** l'automatise-t-il ?
+5. un **script du projet** existe-t-il déjà (`tools/`) ?
+6. une action **précédente** l'a-t-elle déjà réalisée ?
+7. l'**état demandé est-il déjà atteint** ?
+8. une **API / CLI / outil existant** permet-il de le faire sans intervention humaine ?
+
+👉 **Une action manuelle ne peut être demandée que si son caractère manuel est PROUVÉ.**
+
+---
+
+### ⛔ AVANT D'AFFIRMER QU'UN TEST EST IMPOSSIBLE — les 9 vérifications
+
+① réseau joignable ou non · ② URL connue ou non · ③ **en-têtes contrôlables** ou non ·
+④ méthode HTTP contrôlable ou non · ⑤ corps de requête contrôlable ou non · ⑥ statut et réponse
+lisibles ou non · ⑦ jeton de test disponible ou non · ⑧ **navigateur automatisé** disponible ou
+non · ⑨ workflow ou environnement de test disponible ou non.
+
+⭐ **Pour chaque blocage réel, donner la CAUSE TECHNIQUE PRÉCISE.** Pas *« je ne peux pas »*, mais
+par exemple : *« la requête échoue avec HTTP 403 même avec l'`Origin` correct, et le réseau du
+conteneur bloque ce domaine »*. 👉 *Une cause nommée peut être contournée par quelqu'un d'autre ;
+un « je ne peux pas » ferme la porte pour tout le monde.*
+
+---
+
+### ⭐ TOUTE INSTRUCTION DONNÉE À MICHEL EST UNE SORTIE CRITIQUE
+
+Avant de lui dire *« exécute ce SQL »*, *« ajoute ce secret »*, *« déploie »*, *« clique ici »*,
+*« supprime ceci »*, *« teste seulement depuis l'app »*, vérifier que l'action est ① **nécessaire**
+· ② **pas déjà faite** · ③ **pas automatisée** · ④ ne contredit **aucune règle d'or** · ⑤ ne
+contredit **aucune décision actée** (**#15**) · ⑥ **compatible avec l'état réel** du projet ·
+⑦ **réversible** si elle est risquée.
+
+---
+
+### ⚖️ LE LIEN AVEC LA #15 — les deux se tiennent
+
+| | ce qu'elle protège |
+|---|---|
+| **#15** | *une DÉCISION actée reste actée* — on ne rouvre pas ce que Michel a tranché |
+| **#16** | *une CONTRAINTE TECHNIQUE doit être prouvée avant de devenir une décision* |
+
+> ⭐ **Michel décide ce qui DOIT ÊTRE · le code et les mesures disent ce qui EST · et Claude ne
+> transforme jamais une supposition sur ce qui EST en contrainte sur ce qui DOIT ÊTRE.**
+
+⚠️ **Sans la #16, la #15 se contourne sans le savoir** : il suffit d'affirmer qu'une décision est
+« techniquement impossible » pour la rouvrir — or c'est exactement le seul motif de réouverture
+que la #15 accepte. *Une impossibilité non mesurée est la porte dérobée de la règle précédente.*
+
+⭐ **Elle s'applique aux DEUX sessions** — Claude principal et Claude Nutrition — parce que les
+deux erreurs qui l'ont fondée viennent de chantiers différents.
