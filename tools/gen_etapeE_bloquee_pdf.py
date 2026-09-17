@@ -142,7 +142,7 @@ PROXY = 'CONNECT tunnel failed, response 403'
 #    est une garde qu'on a contournee.
 SQLS = [os.path.join(_dd, f) for _dd, _s, _f in os.walk(ROOT) for f in _f
         if f.endswith('.sql') and 'node_modules' not in _dd
-        and os.path.join('supabase', 'migrations') not in _dd]
+        and 'supabase' + os.sep not in _dd]
 g(not SQLS, 'des fichiers SQL egares sont apparus hors de supabase/migrations (%s)'
   % ', '.join(SQLS[:3]))
 

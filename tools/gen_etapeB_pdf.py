@@ -189,7 +189,7 @@ g('function _sbSansJustificatifs(' in SB,
 #    sont toujours pas versionnees (voir supabase/README.md).
 SQLS = [f for _dd, _s, _f in os.walk(ROOT) for f in _f
         if f.endswith('.sql') and 'node_modules' not in _dd
-        and os.path.join('supabase', 'migrations') not in _dd]
+        and 'supabase' + os.sep not in _dd]
 g(not SQLS,
   'des fichiers SQL sont apparus dans le depot (%s) : la dette « schema non versionne » '
   'decrite ici ne serait plus exacte' % ', '.join(SQLS[:3]))
