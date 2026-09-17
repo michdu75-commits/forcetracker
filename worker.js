@@ -160,6 +160,20 @@ export default {
     try { body = JSON.parse(raw); } catch (e) {}
     const apiKey = (env && env.ANTHROPIC_API_KEY) || '';
 
+    /* ☁️☁️ S2-B — LA SAUVEGARDE SUPABASE PASSE PAR ICI, ET PLUS PAR LE NAVIGATEUR.
+       ⛔⛔ TRAITÉE AVANT TOUT LE RESTE, ET C'EST UN GARDE-FOU, PAS UN CHOIX DE STYLE. Ce
+       Worker termine par un RELAIS ATTRAPE-TOUT qui réexpédie à Apps Script toute action
+       qu'il ne reconnaît pas. Une action de sauvegarde mal orthographiée, ou placée après ce
+       relais, enverrait donc l'instantané ENTIER chez Google, en silence et sans erreur.
+       👉 Elle est donc la PREMIÈRE, et un témoin fige sa position.
+       ⛔ Et elle ne passe volontairement NI par `_identiteIA` (elle a sa propre résolution,
+          qui sait se passer du pont) NI par `_compterIA` : *une sauvegarde n'est pas une
+          dépense d'IA, et la compter userait le quota de Milo pour rien.* */
+    if (body.action === 'cloudSave') {
+      const r = await cloudSave(body, env);
+      return json(r.corps, r.statut);
+    }
+
     // ── 📊 COMPTEUR D'APPELS IA ────────────────────────────────────────────
     // Le garde-fou de coût (600 appels/jour, 50/personne) vivait dans Apps Script.
     // Mesuré le 08/08/2026 : les 13 actions IA sur 13 passent par CE worker → il ne
@@ -240,6 +254,121 @@ export default {
     }
   },
 };
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   ☁️ S2-B — SAUVEGARDE SUPABASE : LE SERVEUR DÉCIDE DU COMPTE, PLUS LE NAVIGATEUR
+
+   CE QU'ON FERME. Jusqu'ici le navigateur appelait `ft_miroir(p_email, p_data)` avec la clé
+   publique : il CHOISISSAIT le compte en envoyant une adresse. Une adresse fournie par un
+   client n'est pas une identité, c'est une demande. Ici, le compte est RETROUVÉ à partir du
+   jeton S1, et l'adresse n'est plus un paramètre nulle part.
+
+   ⭐ LE REMPLISSAGE DU REGISTRE SE FAIT À L'USAGE, PAS PAR UNE RECOPIE DE MASSE. Le registre
+   S1 vit encore chez Apps Script. Plutôt que de le transvaser en bloc — ce qui obligerait à
+   une fenêtre où les deux versions se répondent différemment — on procède appareil par
+   appareil : haché connu → Supabase résout seule ; haché inconnu → le pont Apps Script
+   tranche UNE fois, on inscrit, et la fois suivante Supabase se débrouille.
+   👉 *La dépendance à Google ne se retire pas à une date : elle décroît toute seule.*
+
+   ⛔ LE JETON BRUT NE VA JAMAIS À SUPABASE — ni en paramètre, ni dans les données. Il est
+      haché dès réception ; seul le haché voyage. Il n'est pas non plus journalisé, ni renvoyé,
+      ni glissé dans un message d'erreur : les réponses ci-dessous ne portent que des mots.
+
+   ⭐⭐ UN JETON RÉVOQUÉ DANS SUPABASE NE PEUT PAS ÊTRE RESSUSCITÉ PAR LE PONT, et c'est une
+      propriété qu'il faut voir pour y croire : le refus initial ne dit pas POURQUOI (aucun
+      oracle), donc on tente le pont ; Apps Script peut très bien répondre « valide » si les
+      deux registres ont divergé ; mais l'inscription est en « ne rien faire si déjà là », donc
+      la ligne reste révoquée, et la seconde tentative échoue comme la première.
+      *On échoue FERMÉ, et l'état le plus restrictif des deux registres gagne.*
+   ⚠️ LA DIVERGENCE INVERSE RESTE OUVERTE, ET ON NE LA MASQUE PAS : un jeton révoqué chez
+      Apps Script mais pas dans Supabase continuerait d'écrire ici. C'est exactement pourquoi
+      la propagation de la révocation devra être BLOQUANTE — c'est le seul point de ce
+      chantier qui doit échouer fermé, et il n'est pas encore construit.
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+
+const _FORME_JETON = /^[0-9a-f]{64}$/;
+
+/** SHA-256 hexadécimal minuscule. Primitive standard du navigateur/Worker, aucune dépendance. */
+async function _hacher(s) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(s)));
+  return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Un appel de fonction Supabase, avec la clé SERVEUR — qui ne vit que dans les secrets
+ *  Cloudflare. ⛔ On ne rend JAMAIS le corps de la réponse d'erreur à l'appelant : il peut
+ *  porter le détail interne de la base, et le client n'en a aucun usage. Un code suffit. */
+async function _sbAppel(env, fonction, corps) {
+  const base = String((env && env.SUPABASE_URL) || '').replace(/\/+$/, '');
+  const cle = String((env && env.SUPABASE_SECRET) || '');
+  if (!base || !cle) return { ok: false, statut: 0, raison: 'config' };
+  try {
+    const r = await fetch(base + '/rest/v1/rpc/' + fonction, {
+      method: 'POST',
+      headers: { apikey: cle, Authorization: 'Bearer ' + cle,
+                 'Content-Type': 'application/json' },
+      body: JSON.stringify(corps),
+    });
+    /* ⛔⛔ UN 5xx N'EST PAS UN REFUS D'IDENTITÉ, ET LES CONFONDRE COÛTE DEUX FOIS.
+       Ma première version lisait « pas ok » comme « haché inconnu ». Conséquence mesurée par
+       le banc de comportement — les témoins de SOURCE ne pouvaient pas la voir : pendant une
+       panne de Supabase, chaque sauvegarde partait interroger Apps Script pour rien, puis
+       annonçait à la personne que son appareil était RÉVOQUÉ. *Dire « ton appareil est
+       révoqué » à quelqu'un dont le cloud est simplement tombé est pire qu'une erreur
+       technique : c'est une erreur qu'il va essayer de réparer lui-même.*
+       ⭐ La règle est indépendante de la façon dont la base traduit ses codes : 4xx = la
+       requête est rejetée, 5xx = le serveur a échoué. */
+    return { ok: r.ok, statut: r.status,
+             raison: r.ok ? '' : (r.status >= 500 ? 'panne' : 'refus') };
+  } catch (e) {
+    return { ok: false, statut: 0, raison: 'reseau' };
+  }
+}
+
+/* Les réponses. ⭐ Elles distinguent ce que le client doit pouvoir distinguer (brief §13) :
+   écrit / identité refusée / cloud indisponible. ⛔ Aucune ne porte de jeton, de haché, de
+   clé ni d'adresse. */
+async function cloudSave(body, env) {
+  const brut = String((body && body.token) || '');
+  if (!_FORME_JETON.test(brut)) {
+    return { statut: 401, corps: { status: 'error', error: 'auth', raison: 'forme' } };
+  }
+  const donnees = body && body.data;
+  if (!donnees || typeof donnees !== 'object' || Array.isArray(donnees)) {
+    return { statut: 400, corps: { status: 'error', error: 'charge' } };
+  }
+
+  const hache = await _hacher(brut);
+
+  // 1) le chemin normal : Supabase résout seule, sans Google.
+  let e = await _sbAppel(env, 'ft_enregistrer_instantane', { p_hachage: hache, p_data: donnees });
+  if (e.ok) return { statut: 200, corps: { status: 'ok', voie: 'directe' } };
+  if (e.raison !== 'refus') {
+    // panne ou configuration manquante : ce n'est PAS un refus d'identité, et le dire
+    // autrement ferait croire au client que son compte est en cause.
+    return { statut: 503, corps: { status: 'error', error: 'cloud', raison: e.raison } };
+  }
+
+  // 2) haché inconnu (ou révoqué — on ne sait pas, et c'est voulu) : le pont tranche.
+  const moi = await _identiteIA(brut, env);
+  if (!moi.ok) {
+    return { statut: 401, corps: { status: 'error', error: 'auth', raison: moi.raison } };
+  }
+
+  // 3) on inscrit, puis on retente UNE fois. Pas de boucle : si la seconde tentative échoue,
+  //    c'est que la ligne existe et qu'elle est révoquée — on reste fermé.
+  const i = await _sbAppel(env, 'ft_inscrire_jeton',
+    { p_hachage: hache, p_compte: moi.email, p_appareil: String((body && body.appareil) || '') });
+  if (!i.ok && i.raison !== 'refus') {
+    return { statut: 503, corps: { status: 'error', error: 'cloud', raison: i.raison } };
+  }
+
+  e = await _sbAppel(env, 'ft_enregistrer_instantane', { p_hachage: hache, p_data: donnees });
+  if (e.ok) return { statut: 200, corps: { status: 'ok', voie: 'pont' } };
+  if (e.raison === 'refus') {
+    return { statut: 401, corps: { status: 'error', error: 'auth', raison: 'revoque' } };
+  }
+  return { statut: 503, corps: { status: 'error', error: 'cloud', raison: e.raison } };
+}
 
 // ── Appel générique à Claude ───────────────────────────────────────────────
 // `meta` optionnel ({action, email, env, ctx}) — voir le bloc « INSTRUMENTATION » plus haut.

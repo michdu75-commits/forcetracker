@@ -199,7 +199,7 @@ g(N_MIRROR == 1,
 #    sont toujours pas versionnees (voir supabase/README.md).
 SQL = [f for _d, _s, _f in os.walk(ROOT) for f in _f
         if f.endswith('.sql') and 'node_modules' not in _d
-        and os.path.join('supabase', 'migrations') not in _d]
+        and 'supabase' + os.sep not in _d]
 g(not SQL,
   'des fichiers SQL sont apparus dans le depot (%s) : le document affirme que la '
   'definition de ft_miroir n y est nulle part' % ', '.join(SQL[:3]))

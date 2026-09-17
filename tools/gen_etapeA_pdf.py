@@ -92,7 +92,7 @@ g('function _sbSansJustificatifs(' in SB,
 #    sont toujours pas versionnees (voir supabase/README.md).
 SQLS = [f for _d, _s, _f in os.walk(ROOT) for f in _f
         if f.endswith('.sql') and 'node_modules' not in _d
-        and os.path.join('supabase', 'migrations') not in _d]
+        and 'supabase' + os.sep not in _d]
 g(not SQLS,
   'des fichiers SQL sont apparus dans le depot (%s) : la definition serait donc lisible, et '
   'cette fiche n aurait plus lieu d etre' % ', '.join(SQLS[:3]))

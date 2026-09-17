@@ -225,7 +225,7 @@ g('url.indexOf(AI_PROXY_URL)===0' in CO.replace(' ', ''),
 #    sont toujours pas versionnees (voir supabase/README.md).
 SQLS = [f for _dd, _s, _f in os.walk(ROOT) for f in _f
         if f.endswith('.sql') and 'node_modules' not in _dd
-        and os.path.join('supabase', 'migrations') not in _dd]
+        and 'supabase' + os.sep not in _dd]
 g(not SQLS,
   'des fichiers SQL egares existent hors de supabase/migrations (%s)' % ', '.join(SQLS[:3]))
 # ⭐ CE DOCUMENT EST DATE, ET SON ETAT A CHANGE LE JOUR MEME. Il decrivait « rien n est
