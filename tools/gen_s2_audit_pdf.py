@@ -192,8 +192,14 @@ g(N_MIRROR == 1,
   'document a change' % N_MIRROR)
 
 # ── LE SCHEMA N EST PAS DANS LE DEPOT ──────────────────────────────────────────────────
+# ⭐ GARDE RETOURNEE LE 17/09/2026 (R30), PAS EFFACEE. Elle disait « aucun fichier SQL dans
+#    le depot ». S2-B ouvre `supabase/migrations/` : le SQL versionne y est desormais LEGITIME.
+#    L'invariant reel s'est precise — *aucun SQL EGARE hors du dossier versionne*. ⚠️ Et la dette
+#    que ces dossiers decrivent reste VRAIE : `ft_comptes` et `ft_miroir`, creees a la main, ne
+#    sont toujours pas versionnees (voir supabase/README.md).
 SQL = [f for _d, _s, _f in os.walk(ROOT) for f in _f
-       if f.endswith('.sql') and 'node_modules' not in _d]
+        if f.endswith('.sql') and 'node_modules' not in _d
+        and os.path.join('supabase', 'migrations') not in _d]
 g(not SQL,
   'des fichiers SQL sont apparus dans le depot (%s) : le document affirme que la '
   'definition de ft_miroir n y est nulle part' % ', '.join(SQL[:3]))
