@@ -1519,18 +1519,31 @@ async function _bcDecoderImage(canvas){
 }
 // Le bouton « Scanner un code-barres » ouvre le scanner EN DIRECT (façon Yuka).
 // ⛔ AUCUN BOUTON UTILISATEUR NE L'APPELLE — voir le commentaire d'index.html (R30).
-function scanBarcode(){ _bcBanc=false; _bcMoteurDemande='zxing-js'; _bcDiag=null; openBarcodeScanner(); }
+/* ⭐⭐ LA PORTE UTILISATEUR DEMANDE `zxing-wasm`, ET C'EST LE POINT QUI DECIDE DU CHANTIER.
+   Le banc de ft-v1212 a mesure, meme image pour tous, 414 lectures par moteur :
+   ZXing-js **77,5 %** · zxing-wasm **86,2 %** et **25x plus rapide** · et zxing-wasm lit le
+   **portrait a 90°** que l'ancien ne lit pas du tout. Le verdict ecrit disait deja
+   *« le ZXing a garder n'est pas celui d'aujourd'hui »* — or cette ligne demandait encore
+   l'ancien. ⚠️ *Rouvrir la porte sans changer ce mot aurait servi le moins bon des quatre, et
+   personne ne l'aurait vu : ca marche, juste moins bien.*
+   ⛔ `_bcLiveActif=false` : voir le bloc du live dans `openBarcodeScanner`. */
+function scanBarcode(){ _bcBanc=false; _bcLiveActif=false; _bcMoteurDemande='zxing-wasm'; _bcDiag=null; openBarcodeScanner(); }
 
 /* ═══ L'UNIQUE PORTE DU BANC IPHONE — Profil → Admin, rien d'autre ═══
  * ⛔⛔ R13 : aucun mécanisme nouveau. `_isAdminUnlocked()` garde déjà 16 outils de
  * diagnostic, et l'onglet Admin s'ouvre par 5 taps sur le logo. *Construire un système de
  * drapeaux pour un test de deux semaines coûterait plus cher que le test.* */
 let _bcReplinCadre=true;
+/* ⛔ LA VOIE LIVE : eteinte par defaut, rallumee UNIQUEMENT par le banc Admin. Le banc est un
+   outil de MESURE — lui retirer le live l'empecherait de mesurer precisement ce qui a produit
+   le faux EAN. *On ne desarme pas l'instrument qui a trouve le defaut.* */
+let _bcLiveActif=false;
 function ouvrirBancScanner(moteur, avecQuagga){
   if(typeof _isAdminUnlocked==='function' && !_isAdminUnlocked()){
     toast('Réservé à l\'admin','error'); return;
   }
   _bcBanc=true;
+  _bcLiveActif=true;          /* ⭐ le banc mesure AUSSI le live : c'est son metier */
   _bcMoteurDemande=(_BC_MOTEURS.indexOf(moteur)>=0?moteur:'zxing-wasm');
   _bcReplinCadre=(avecQuagga!==false);
   _bcDiag=_bcDiagNeuf();
@@ -1722,7 +1735,19 @@ async function openBarcodeScanner(){
       if(result){
         const c=result.getText&&result.getText();
         if(_bcDiag) _bcDiagNote({voie:'live', moteur:_bcMoteurActif, code:c||'', ms:Date.now()-_bcT0});
-        _bcTraiterCode(c);
+        /* ⛔⛔ LE LIVE NE DECIDE PLUS DE RIEN HORS DU BANC — decision de Michel, 17/09.
+           Sur le SEUL essai iPhone reel (15/09), la voie live a fait **0 lecture juste et
+           1 code FAUX** : `3122632363883`, jamais presente, lu sur du tissu flou en mouvement.
+           Les deux lectures justes de la session venaient des CAPTURES.
+           👉 *Un code-barres faux est pire qu'une absence de lecture* : sa cle de controle est
+           valide, donc RIEN en aval ne peut le rattraper — ni `_eanValide`, ni la recherche
+           produit, qui rendra « inconnu » ou **un autre produit**.
+           ⭐ Le flux video reste ouvert (il sert a cadrer et a capturer) et le diagnostic
+           continue de NOTER ce que le live aurait lu : on eteint la DECISION, pas la mesure.
+           ⚠️ Dit plutot que masque : le decodage continu tourne donc encore et coute du CPU
+           pour rien hors banc. Le supprimer demande de remplacer `decodeFromConstraints` par
+           un `getUserMedia` direct — plus gros, et hors du perimetre de cette passe. */
+        if(_bcLiveActif) _bcTraiterCode(c);
       }
       // erreur "NotFound" entre les frames = normal, on ignore
     });
@@ -3268,6 +3293,109 @@ function _douaneRapport(){
    aucun outil d'ici ne peut le lire. *Une mesure qu'on ne peut pas consulter n'existe pas* —
    c'est la leçon du Google Sheet (ft-v715) et des 4 sondes de diagnostic (ft-v716).
    ⛔ Lecture seule : ce bouton n'écrit rien, ne corrige rien, ne bloque rien. */
+/* ═══ 🍽️ MESURE DES CANDIDATS « HABITUDE » — LECTURE SEULE (17/09/2026) ═══
+ * ⛔⛔ POURQUOI CET OUTIL EXISTE PLUTÔT QU'UN SEUIL ÉCRIT DIRECTEMENT DANS LE CODE : la règle
+ * actuelle est `s.n >= 2`, sans horizon ni dénominateur. Pour la remplacer, il faut savoir à
+ * quoi ressemblent les vraies données — et elles sont dans le localStorage de Michel, que le
+ * conteneur ne peut pas lire. *Un seuil inventé sur une intuition serait exactement la faute
+ * qu'on reproche à la règle actuelle.*
+ *
+ * ⛔ IL N'ÉCRIT RIEN, N'ENVOIE RIEN, ET NE MONTRE AUCUN SECRET. Il ne recopie pas le journal :
+ * il rend des AGRÉGATS par repas répété. Aucun jeton, aucun code perso, aucune adresse.
+ *
+ * ⭐ LA MESURE QUI MANQUE LE PLUS, ET C'EST ELLE QUI TRANCHERA : les JOURS DISTINCTS et les
+ * SEMAINES distinctes. Trois pizzas sur deux jours et huit shakers sur huit jours ont le même
+ * ordre de grandeur en compteur brut, et n'ont rien à voir comme comportement.
+ * ⭐ ET LE DÉNOMINATEUR : les jours réellement RENSEIGNÉS, pas les jours du calendrier — sinon
+ * quelqu'un qui note une semaine sur deux voit toutes ses habitudes diluées par son propre
+ * silence (§ 8 de la demande, test H8).
+ */
+function _mesureHabitudes(){
+  const par = {}, norm = n => String(n||'').toLowerCase().trim();
+  const joursNotes = {};
+  (S.foodLog||[]).forEach(e=>{
+    if(!e || !e.date || !e.name) return;
+    joursNotes[e.date] = 1;
+    const k = e.date + '|' + (e.meal||'');
+    (par[k] = par[k] || []).push(e);
+  });
+  /* la signature SANS le moment : c'est le repas, pas l'heure à laquelle il a été pris */
+  const sigs = {};
+  Object.keys(par).forEach(k=>{
+    const date = k.split('|')[0];
+    const sig = par[k].map(e=>norm(e.name)).sort().join(' + ');
+    const s = sigs[sig] = sigs[sig] || {sig:sig, n:0, jours:{}, semaines:{}, dates:[]};
+    s.n++; s.jours[date] = 1; s.dates.push(date);
+    /* semaine ISO approchée : le lundi de la semaine de cette date. Suffisant pour compter
+       des semaines DISTINCTES, et ça évite d'embarquer un calcul ISO complet pour ça. */
+    const d = new Date(date + 'T12:00:00');
+    const lundi = new Date(d); lundi.setDate(d.getDate() - ((d.getDay()+6)%7));
+    s.semaines[lundi.toISOString().slice(0,10)] = 1;
+  });
+  const auj = (typeof today==='function') ? today() : new Date().toISOString().slice(0,10);
+  const ilYA = n => new Date(new Date(auj+'T12:00:00').getTime() - n*864e5).toISOString().slice(0,10);
+  const b14 = ilYA(14), b28 = ilYA(28), b56 = ilYA(56);
+  const notesDans = b => Object.keys(joursNotes).filter(d=>d >= b).length;
+  const out = Object.values(sigs).map(s=>{
+    const jours = Object.keys(s.jours).sort();
+    return {
+      repas: s.sig,
+      total: s.n,
+      joursDistincts: jours.length,
+      semainesDistinctes: Object.keys(s.semaines).length,
+      premiere: jours[0] || '',
+      derniere: jours[jours.length-1] || '',
+      sur14: s.dates.filter(d=>d >= b14).length,
+      sur28: s.dates.filter(d=>d >= b28).length,
+      sur56: s.dates.filter(d=>d >= b56).length,
+    };
+  }).filter(x=>x.total >= 2)
+    .sort((a,b)=>(b.joursDistincts-a.joursDistincts) || (b.total-a.total));
+  return {
+    candidats: out,
+    joursRenseignes: { total: Object.keys(joursNotes).length,
+                       sur14: notesDans(b14), sur28: notesDans(b28), sur56: notesDans(b56) },
+    aujourdhui: auj,
+  };
+}
+
+function loadHabitudesAdmin(){
+  const el = document.getElementById('admin-habitudes'); if(!el) return;
+  const m = _mesureHabitudes();
+  if(!m.candidats.length){
+    el.innerHTML = '<div style="font-size:12.5px;color:var(--t2);">Aucun repas noté au moins deux fois : rien à mesurer pour l\'instant.</div>';
+    return;
+  }
+  const j = m.joursRenseignes;
+  const lgn = c => '<tr>'
+    + '<td style="padding:3px 5px;color:var(--t1);">' + (typeof _escNote==='function'?_escNote(c.repas):c.repas).slice(0,46) + '</td>'
+    + '<td style="padding:3px 5px;text-align:right;font-weight:700;">' + c.total + '</td>'
+    + '<td style="padding:3px 5px;text-align:right;font-weight:700;color:var(--green);">' + c.joursDistincts + '</td>'
+    + '<td style="padding:3px 5px;text-align:right;">' + c.semainesDistinctes + '</td>'
+    + '<td style="padding:3px 5px;text-align:right;">' + c.sur14 + '</td>'
+    + '<td style="padding:3px 5px;text-align:right;">' + c.sur28 + '</td>'
+    + '<td style="padding:3px 5px;text-align:right;">' + c.sur56 + '</td>'
+    + '<td style="padding:3px 5px;color:var(--t3);white-space:nowrap;">' + c.premiere + ' → ' + c.derniere + '</td>'
+    + '</tr>';
+  el.innerHTML =
+      '<div style="font-size:12px;color:var(--t2);margin-bottom:6px;line-height:1.5;">'
+    + 'Jours alimentaires <strong>renseignés</strong> : <strong>' + j.total + '</strong> en tout · '
+    + j.sur14 + ' sur 14 j · ' + j.sur28 + ' sur 28 j · ' + j.sur56 + ' sur 56 j.<br/>'
+    + '<span style="color:var(--t3);">C\'est le dénominateur : un aliment vu 8 fois sur ' + j.sur28
+    + ' jours notés n\'a pas le même sens que 8 fois sur 28.</span></div>'
+    + '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11.5px;">'
+    + '<tr style="color:var(--t3);text-align:left;">'
+    + '<th style="padding:3px 5px;">repas</th><th style="padding:3px 5px;text-align:right;">tot</th>'
+    + '<th style="padding:3px 5px;text-align:right;">jours</th><th style="padding:3px 5px;text-align:right;">sem.</th>'
+    + '<th style="padding:3px 5px;text-align:right;">14j</th><th style="padding:3px 5px;text-align:right;">28j</th>'
+    + '<th style="padding:3px 5px;text-align:right;">56j</th><th style="padding:3px 5px;">période</th></tr>'
+    + m.candidats.slice(0,25).map(lgn).join('')
+    + '</table></div>'
+    + '<div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5;">'
+    + 'Trié par <strong>jours distincts</strong> — pas par total, justement parce que c\'est le '
+    + 'total seul qui fait entrer un repas occasionnel aujourd\'hui.</div>';
+}
+
 function loadDouaneAdmin(){
   const el = document.getElementById('admin-douane'); if(!el) return;
   let txt = '';
@@ -3587,6 +3715,57 @@ const cle = n => (n||'').trim().toLowerCase();
    yaourt est bien plus fréquent dans un journal alimentaire que les yeux. Le « h » est
    GARDÉ pour la même raison inverse : « d'huile » est courant, « de homard » est rare. */
 const _deNom = n => /^[aeiouàâäéèêëîïôöùûüœæh]/i.test((n||'').trim()) ? ("d'" + n) : ('de ' + n);
+/* ═══ 🍽️ LA PORTION RÉELLEMENT OBSERVÉE — le propriétaire unique (17/09/2026) ═══
+ * ⛔⛔ CE QUE CETTE FONCTION EXISTE POUR RÉPARER : la quantité proposée par « ce qu'il te reste,
+ * en vrai » était `manque / densité`, bornée par UN PLAFOND UNIVERSEL EN GRAMMES (250 g, 150 g
+ * le soir). Michel, capture à l'appui : *« 250 g de banane »* et *« 250 g de pâtes sèches »*.
+ * 👉 Ce n'étaient pas deux calculs : c'était **deux fois le même plafond, atteint**. L'app avait
+ * calculé plus et s'était arrêtée à la borne.
+ * ⭐⭐ ET LE DÉFAUT DE CONCEPTION EST LÀ : un plafond unique en grammes traite tous les aliments
+ * comme si une portion pesait pareil. 250 g de banane ≈ 2 bananes ; 250 g de pâtes SÈCHES ≈ 2
+ * portions et demie une fois cuites. *Le même chiffre, deux réalités sans rapport.*
+ *
+ * ⭐ LA MÉDIANE, PAS LA MOYENNE (consigne explicite) : une grosse saisie isolée — le jour où l'on
+ * pèse le plat entier — déplacerait la moyenne pour toujours. La médiane l'ignore.
+ *
+ * ⛔ CE QU'ELLE NE FAIT JAMAIS : inventer. Une quantité ABSENTE n'est pas un zéro (`q` vaut
+ * `null` sur toutes les lignes créées par `quickAddFood` avant ft-v1176) ; elle est écartée, pas
+ * comptée pour 0. Et on ne mélange pas les unités : une ligne « 2 portions » et une ligne
+ * « 150 g » ne sont pas sur la même échelle, donc seules les lignes en grammes (ou ml) entrent
+ * dans la médiane. *Une médiane calculée sur deux échelles est un nombre qui ne veut rien dire.*
+ *
+ * ⚖️ LES TROIS SEUILS, DITS PLUTÔT QUE CACHÉS (Michel §10 : « définir explicitement ») :
+ *   ≥ 3 observations → portion PERSONNELLE : on peut dire « tes portions ».
+ *   1 ou 2           → on s'en sert quand même comme référence — c'est déjà mieux qu'une
+ *                      constante — mais `perso` reste faux : *on ne dit pas « tes habitudes »
+ *                      sur une seule valeur* (R29, et §11 : aucune fausse personnalisation).
+ *   0                → rien. L'appelant retombe sur le générique, et l'annonce comme générique.
+ */
+const _PORTION_MIN_OBS = 3;
+function _portionsNotees(nom){
+  const k = cle(nom);
+  const out = [];
+  (S.foodLog||[]).forEach(e=>{
+    if(!e || cle(e.name) !== k) return;
+    const q = +e.q;
+    /* ⛔ `e.q == null` → ABSENTE, pas nulle. `!(q>0)` attrape aussi NaN et les négatifs. */
+    if(e.q == null || !(q > 0)) return;
+    const u = String(e.u||'').toLowerCase();
+    if(u !== 'g' && u !== 'ml') return;      // une seule échelle à la fois
+    out.push(q);
+  });
+  return out;
+}
+function _portionObservee(nom){
+  const v = _portionsNotees(nom);
+  if(!v.length) return null;
+  v.sort((a,b)=>a-b);
+  const m = v.length % 2
+    ? v[(v.length-1)/2]
+    : (v[v.length/2 - 1] + v[v.length/2]) / 2;
+  return { grammes: m, n: v.length, perso: v.length >= _PORTION_MIN_OBS };
+}
+
 function _portionRaisonnable(al, macro, manque, soir){
   const parPortion = +al[macro] || 0;
   if(parPortion <= 0 || manque <= 0) return null;
@@ -3594,6 +3773,32 @@ function _portionRaisonnable(al, macro, manque, soir){
   const maxPor = soir ? _RESTE_SOIR_MAX_PORTIONS : _RESTE_MAX_PORTIONS;
   const p100 = al.per100 && +al.per100[macro];
   if(p100 > 0){
+    /* ⭐⭐ ON PART DE LA PORTION OBSERVÉE, PAS DU MANQUE (17/09/2026, décision de Michel).
+       AVANT : `g = manque / p100 * 100` puis `Math.min(g, 250)` — la quantité était celle qu'il
+       fallait pour annuler le déficit, et la seule limite était une constante commune à tous
+       les aliments. D'où « 250 g de banane + 250 g de pâtes sèches » : le plafond, deux fois.
+       APRÈS : la quantité est un MULTIPLE SIMPLE de ce que la personne note d'habitude —
+       1, 1½ ou 2 portions (1 le soir). *On ne cherche plus le nombre qui fait tomber le reste
+       à zéro ; on cherche la plus grande portion PLAUSIBLE qui s'en approche.*
+       ⛔ Et le multiple est BORNÉ AVANT d'être arrondi : sans ça, l'arrondi au pas de 5 g
+       pourrait faire repasser la borne. */
+    const obs = _portionObservee(al.name);
+    if(obs && obs.grammes > 0){
+      const ideal = manque / p100 * 100;                     // le manque reste calculé EXACTEMENT
+      const parts = [0.5, 1, 1.5, 2].filter(x => x <= (soir ? 1 : 2));
+      /* le plus grand multiple qui ne dépasse pas le besoin, sinon le plus petit proposé */
+      let mult = parts[0];
+      for(const x of parts){ if(obs.grammes * x <= ideal) mult = x; }
+      let g = Math.round(obs.grammes * mult / 5) * 5;
+      if(g < 10) return null;
+      return { texte: g + '\u00A0g ' + _deNom(al.name), apport: g * p100 / 100,
+               perso: !!obs.perso, source: 'observee', mult: mult, obsN: obs.n };
+    }
+    /* ⛔ AUCUNE OBSERVATION EXPLOITABLE → on retombe sur le calcul générique, ET ON LE DIT :
+       `perso:false`, `source:'generique'`. *Prétendre « selon tes habitudes » sans habitude
+       observée serait une fausse personnalisation* (§11). Le plafond en grammes survit ICI et
+       nulle part ailleurs : il n'est plus la logique principale, il est le garde-fou du cas
+       où l'on ne sait rien. */
     let g = manque / p100 * 100;
     g = Math.min(g, maxG);
     g = Math.round(g/5)*5;                                   // pas de fausse précision
@@ -3601,13 +3806,18 @@ function _portionRaisonnable(al, macro, manque, soir){
     /* ⛔ ESPACE INSÉCABLE entre le nombre et son unité (ft-v1031) : vu à la capture,
        « + 250 / g de Steak haché » — le 250 finissait une ligne et le « g » commençait la
        suivante. *Un nombre séparé de son unité se relit deux fois.* */
-    return { texte: g + '\u00A0g ' + _deNom(al.name), apport: g * p100 / 100 };
+    return { texte: g + '\u00A0g ' + _deNom(al.name), apport: g * p100 / 100,
+             perso: false, source: 'generique' };
   }
   let n = manque / parPortion;
   n = Math.min(n, maxPor);
   n = Math.round(n*2)/2;                                     // au demi près
   if(n < 0.5) return null;
-  return { texte: _portionLbl(n) + '\u00A0× ' + al.name, apport: n * parPortion };
+  /* ⚠️ Cette branche s'applique aux aliments SANS `per100` : on ne connaît que « une portion »,
+     pas son poids. Elle reste générique par construction — on ne peut pas observer une médiane
+     en grammes sur quelque chose qui n'a pas de grammes. */
+  return { texte: _portionLbl(n) + '\u00A0× ' + al.name, apport: n * parPortion,
+           perso: false, source: 'portion-sans-poids' };
 }
 
 /* ½ UNE PORTION ET DEMIE S'ÉCRIT « 1½ », PAS « 1.5 » (ft-v1098) — trouvé à la CAPTURE.

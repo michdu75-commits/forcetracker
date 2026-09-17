@@ -1093,6 +1093,22 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadDouaneAdmin()" style="padding:11px;font-size:14px;">📊 Voir le rapport</button>
       <div id="admin-douane" style="margin-top:4px;"></div>
     </div>
+    <!-- 🍽️ HABITUDES — LA MESURE AVANT LA RÈGLE (17/09/2026, demande de Michel).
+         ⛔⛔ CET OUTIL EXISTE PARCE QU'ON REFUSE D'INVENTER UN SEUIL. La règle actuelle de
+         « tes repas habituels » est `s.n >= 2`, sans horizon ni dénominateur — c'est pourquoi
+         une pizza notée 3 fois y entre. Pour la remplacer il faut savoir à quoi ressemblent
+         les VRAIES données, et elles vivent dans le localStorage de Michel : illisibles depuis
+         le conteneur. *Michel : « je préfère un arrêt propre avec une mesure réelle à un seuil
+         inventé. »*
+         ⛔ LECTURE SEULE, et rien ne sort du téléphone : aucune écriture, aucun envoi, aucun
+         secret (ni jeton, ni code perso, ni e-mail). Il affiche des AGRÉGATS par candidat —
+         pas le journal, qu'il n'y a aucune raison de recopier. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🍽️ Habitudes — mesure des candidats</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Pour chaque repas répété : combien de fois, sur combien de <strong>jours distincts</strong>, combien de <strong>semaines</strong>, et sur 14 / 28 / 56 jours — rapporté aux jours <strong>réellement renseignés</strong>. <strong>Lecture seule.</strong></div>
+      <button class="btn btn-bg2" onclick="loadHabitudesAdmin()" style="padding:11px;font-size:14px;">🍽️ Mesurer mes habitudes</button>
+      <div id="admin-habitudes" style="margin-top:4px;"></div>
+    </div>
     <!-- 📱 LE BANC IPHONE DU SCANNER — la SEULE porte vers les moteurs de décodage, et elle est
          derrière l'Admin (R13 : `_isAdminUnlocked()` garde déjà 16 outils, on n'invente pas un
          système de drapeaux pour un test de deux semaines).
@@ -2602,16 +2618,33 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
            « NE RÉACTIVE PAS le scanner dans l'interface utilisateur. Aucun bouton utilisateur
            tant que je n'ai pas tranché » (14/09/2026), le temps d'un banc d'essai qui compare
            plusieurs moteurs de décodage locaux (ZXing, Html5-QRCode, zxing-wasm, Quagga2).
-           ⚠️ Le code du scanner (openBarcodeScanner / scanBarcode / la machine à états
-           _bcPrendreLaMain) reste EN PLACE et testé : c'est la PORTE qui est fermée, pas le
-           moteur. Ne pas « réparer » cette absence — un témoin du banc la fige dans les deux
-           sens. La réactivation attend le verdict du banc PUIS un test iPhone réel. -->
-      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Tape les chiffres écrits sous le code :</div>
+
+           ⭐⭐ MICHEL A TRANCHÉ LE 17/09/2026, ET LA PORTE SE ROUVRE — MAIS À MOITIÉ SEULEMENT.
+           Le banc a désigné `zxing-wasm` (86,2 % contre 77,5 % à l'ancien, 25× plus rapide,
+           0 EAN faux sur 414 lectures). Mais le seul essai iPhone RÉEL a montré l'inverse selon
+           la voie : la CAPTURE a lu juste, le LIVE a fait 0 lecture juste et 1 code FAUX lu sur
+           du tissu flou.
+           👉 On sert donc la voie CAPTURE avec zxing-wasm, et le LIVE reste éteint hors du banc
+           Admin (`_bcLiveActif`). L'IA descend au rang de SECOURS — elle reste entière pour ses
+           deux autres métiers, l'étiquette nutritionnelle et le repas décrit, qui ne sont pas
+           le même usage. Le scan local réussi ne déclenche AUCUN appel IA, et c'est permanent.
+           ⚠️ Le vrai facteur limitant reste le FLOU, pas le moteur : Safari ne fournit pas
+           `focusMode`, donc l'autofocus continu n'est pas pilotable — mesuré, pas supposé. -->
+      <!-- ⭐ LE CHEMIN PRINCIPAL, EN PREMIER : local, déterministe, gratuit, sans hallucination
+           possible sur le numéro. Il vient AVANT la saisie manuelle et AVANT le secours IA —
+           l'ordre à l'écran dit la hiérarchie réelle. -->
+      <button class="btn" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;background:var(--red);color:#fff;font-weight:700;">📷 Scanner le code-barres</button>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Ou tape les chiffres écrits sous le code :</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
         <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
       </div>
-      <button class="btn btn-bg2" onclick="scanBarcodeIA()" style="width:100%;margin-bottom:12px;">📸 Ou photographier le code-barres (IA lit les chiffres)</button>
+      <!-- ⛔ SECOURS, ET LE LIBELLÉ LE DIT. Il ne disparaît pas : quand la lecture locale
+           échoue (flou, code abîmé, éclairage), l'IA reste la seule sortie. Mais elle n'est
+           plus le chemin par défaut pour lire 13 chiffres que le téléphone sait décoder seul.
+           ⚠️ Et ce que l'IA rend ici n'est PAS décodé : aucune clé de contrôle n'a été vérifiée
+           par un lecteur, d'où le contrôle appliqué en aval, le même qu'à une saisie clavier. -->
+      <button class="btn btn-bg2" onclick="scanBarcodeIA()" style="width:100%;margin-bottom:12px;font-size:13px;">🆘 Si la caméra n'y arrive pas : photo lue par l'IA</button>
       <input type="file" id="af-bc-photo-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodePhotoIA(this)">
     </div>
     <!-- Produit sans code / étiquette : photo IA -->

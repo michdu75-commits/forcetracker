@@ -409,7 +409,43 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1220` — 🚀 **LA FINALISATION DE L'ACCUEIL : publication
+- **Version en ligne (live) :** `ft-v1221` — 🍽️ **NUTRITION : le scanner redevient LOCAL, la
+  portion redevient la TIENNE, et les habitudes se MESURENT avant de se décider.**
+  **A — le scanner.** Le bouton servi était *« photographier le code-barres (IA lit les
+  chiffres) »* : un appel IA pour **13 chiffres que le téléphone décode seul**, et ⚠️ ce que le
+  modèle rend n'est **pas décodé** (aucune clé vérifiée). Le moteur local existait **entier** —
+  sa porte était fermée exprès. ⭐⭐ **Et `scanBarcode()` demandait encore `zxing-js`, le moteur
+  que le banc avait ÉCARTÉ** : rouvrir sans changer ce mot aurait servi le moins bon des quatre,
+  *ça marche, juste moins bien*. ⛔⛔ **Le LIVE reste éteint** — sur le seul essai iPhone réel :
+  **0 lecture juste, 1 code FAUX** lu sur du tissu flou. *Un code faux est pire qu'une absence de
+  lecture : sa clé est valide, rien en aval ne le rattrape.* On éteint la **décision**, pas la
+  mesure : le banc Admin, lui, rallume le live. **0 appel IA sur un scan réussi**, et les trois
+  autres usages (saisie manuelle · étiquette IA · repas décrit) sont **intacts**.
+  **B — les portions.** Le *« 250 g de banane »* n'était pas un calcul : c'était
+  `_RESTE_MAX_G = 250`, **le plafond atteint**, deux fois. ⛔ Et un plafond **en grammes** traite
+  tous les aliments pareil (250 g de banane ≈ 2 bananes ; 250 g de pâtes **sèches** ≈ 2 portions
+  et demie). La quantité part de la **médiane réellement notée**, en **multiples simples**
+  (1 · 1½ · 2 ; 1 le soir). **Médiane, pas moyenne** — mesuré : 140 contre 255 avec un outlier.
+  **3 seuils écrits** (3 obs. pour dire « tes portions » · 1-2 sans l'annoncer · 0 → générique
+  **déclaré**). ⭐ Et quand les portions plausibles ne couvrent pas la moitié du reste, **l'écran
+  le dit** — ⛔ jamais le soir (**P21**).
+  **C1 — les habitudes : LA MESURE, PAS LA RÈGLE.** `s.n >= 2` **n'est pas touché**, et c'est
+  volontaire. Un outil **Admin en lecture seule** rend par repas : total · **jours distincts** ·
+  semaines · 14/28/56 j · et le **dénominateur qui manquait**, les jours réellement renseignés.
+  👉 **EN ATTENTE DE MICHEL** : les agrégats réels, pour caler les seuils. *Un arrêt propre avec
+  une mesure vaut mieux qu'un seuil inventé.*
+  ⚠️⚠️ **ET LA MESURE A APPRIS UN FAIT QUE L'AUDIT N'AVAIT PAS VU** : la signature porte **tout
+  le repas**, donc deux pizzas au même dîner forment un repas **différent** — un aliment n'est
+  candidat que s'il est **seul** dans son repas.
+  ⛔ **Hors périmètre, figés par témoin** : Accueil · douane · `calcTDEE`/`calcMacros` et la
+  cible · Milo global · Séance · Progrès · palette. ⚠️ Le défaut **« compte neuf : 1 500 kcal,
+  0 g prot, 0 g lipides » reste OUVERT**.
+  ⚠️⚠️ **LE SCANNER N'EST PAS VALIDÉ TANT QUE MICHEL N'A PAS TESTÉ SUR IPHONE RÉEL** — *le banc
+  synthétique est précisément celui qui disait que tout allait bien.*
+  Tests : blocs **B-CCCXXI → B-CCCXXV**, 45 témoins. **29 mutations, 29 conformes**, sain 45/0
+  avant et après, dont **4 qui doivent rester vertes**.
+
+- **Version précédente :** `ft-v1220` — 🚀 **LA FINALISATION DE L'ACCUEIL : publication
   réelle sur `master`, et nettoyage du SEUL code mort prouvé.**
   ⛔⛔ **LE POINT QUI COMPTE D'ABORD : `ft-v1219` n'avait JAMAIS atteint `master`** — il vivait sur
   une branche, et **Pages ne se déclenche que sur `master`**. *Push sur une branche ≠ version en
@@ -435,7 +471,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   noms retirés cités dans un commentaire JS, HTML, CSS, ou dans un fichier de documentation),
   parce que la raison du retrait (**R30**) nomme justement ces identifiants.
 
-- **Version précédente :** `ft-v1219` — 🏠 **LE MINI-CHANTIER ACCUEIL : quatre corrections
+- **Avant cela :** `ft-v1219` — 🏠 **LE MINI-CHANTIER ACCUEIL : quatre corrections
   d'interface, zéro fonctionnalité nouvelle.** Suite de l'audit de l'onglet Accueil du même jour.
   ① le **`NaN kg`** de la tuile poids (100 % des comptes neufs) — ⛔ corrigé **chez l'appelant**,
   `fmt()` n'est pas touchée · ② la **carte de récup passe devant les deux sollicitations de Milo**

@@ -38953,12 +38953,15 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'résolution (sans ça : « caméra ouverte mais ne lit pas », le défaut de ft-v378)',
     /environment/.test(CAM.contraintes||'') && /1920/.test(CAM.contraintes||''),
     CAM.contraintes||'');
-  t('CCCVIII ⑩ ⛔⛔ LA PORTE EST REFERMÉE, ET C\'EST UNE DÉCISION ÉCRITE (R30) — Michel, 14/09 : '+
-    '« NE RÉACTIVE PAS le scanner dans l\'interface utilisateur. Aucun bouton utilisateur tant que '+
-    'je n\'ai pas tranché ». Le MOTEUR reste en place et testé, seule la PORTE est fermée : le '+
-    'témoin rougit dans les deux sens — si le bouton revient, ET si le moteur disparaît',
-    !/onclick="scanBarcode\(\)"/.test(srcIdx)
-    && /Aucun bouton utilisateur/.test(srcIdx)
+  /* ⚠️⚠️ CE TÉMOIN EST RETOURNÉ, PAS SUPPRIMÉ (R30) — il disait l'inverse jusqu'au 17/09/2026.
+     Il figeait la décision du 14/09 (« aucun bouton utilisateur tant que je n'ai pas tranché »).
+     Michel A TRANCHÉ le 17/09 : la porte se rouvre sur la voie CAPTURE avec `zxing-wasm`.
+     ⛔ Le supprimer n'aurait laissé aucune trace de la décision qu'il protégeait ; retourné, il
+     protège désormais la décision INVERSE, et il rougit toujours dans les deux sens. */
+  t('CCCVIII ⑩ ⛔⛔ LA PORTE EST ROUVERTE — MAIS SUR LA VOIE CAPTURE SEULEMENT (Michel, 17/09). '+
+    'Le bouton principal appelle le scanner LOCAL, et le moteur est toujours là : le témoin '+
+    'rougit dans les deux sens — si le bouton repart, ET si le moteur disparaît',
+    /onclick="scanBarcode\(\)"/.test(srcIdx)
     && /function scanBarcode\b/.test(srcApp)
     && /function openBarcodeScanner\b/.test(srcApp), '');
   t('CCCVIII ⑪ ⛔⛔ AUCUN BOUTON MORT : les trois orphelines de ft-v388 sont SUPPRIMÉES '+
@@ -39159,10 +39162,11 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     'ni provenance — « aucun moteur ne doit posséder sa propre logique Nutrition » (§16)',
     !/(_ref100|foodLog|_douaneLigne|savedFoods|_afSetSrc|_offFetchProduct|persist\()/.test(corpsFU), '');
 
-  t('CCCX ⑩ ⛔⛔ ET LA PORTE RESTE FERMÉE PENDANT CE CHANTIER : aucun bouton n\'appelle le '+
-    'scanner dans l\'écran d\'ajout (Michel, 14/09 : « aucun bouton utilisateur tant que je n\'ai '+
-    'pas tranché »), alors que le moteur, lui, est toujours là et toujours éprouvé',
-    !/onclick="scanBarcode\(\)"/.test(srcIdx2)
+  /* ⚠️ RETOURNÉ le 17/09/2026, même raison que CCCVIII ⑩ : ce témoin figeait la porte FERMÉE
+     pendant le banc d'essai. Le banc a rendu son verdict, Michel a tranché. */
+  t('CCCX ⑩ ⛔⛔ LA PORTE EST ROUVERTE APRÈS LE VERDICT DU BANC : le bouton de l\'écran d\'ajout '+
+    'appelle bien le scanner local, et le moteur reste en place et éprouvé',
+    /onclick="scanBarcode\(\)"/.test(srcIdx2)
     && /function scanBarcode\b/.test(srcApp2) && /function openBarcodeScanner\b/.test(srcApp2), '');
   await pgX.close();
 }
@@ -39510,6 +39514,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
    quelques secondes, pas relancer une passe de quarante minutes pour éprouver une mutation.
    ⭐ UN SEUL propriétaire (R2) : le banc l'appelle, le contrôle négatif appelle le même. */
 await require('./accueil_mini.js').ecran(t, b, PORT);
+  await require('./nutri_correctifs.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40289,6 +40294,7 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
 require('./identite_ligne.js')(t, ROOT, fs, path);
 
 require('./accueil_mini.js').source(t, ROOT, fs, path);
+  require('./nutri_correctifs.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

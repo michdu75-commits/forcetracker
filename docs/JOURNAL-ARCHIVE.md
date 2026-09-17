@@ -9352,3 +9352,37 @@ Fichiers : `app.js`, `index.html`, `tests/parcours/runner.js`, `tools/gen_scanne
 Tests : **bloc B-CCCX, 33 témoins**, verts sur l'arbre final. ⛔ **CONTRÔLE NÉGATIF : 14 mutations — les 10 nommées par Michel + 4 miennes — contrôle sain à 0 rouge avant ET après, sur un arbre COPIÉ** (`BUGS.md` §60 par construction).
 
 Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `coach.js`, ni `tracking.js`, ni `setup.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1211. |
+
+**ft-v1213 — 🎚️ LE RIR NE FUIT PLUS D'UN ÉCHAUFFEMENT · ET LE COMPTE CESSE DE MENTIR D'UN CRAN** — Michel passe du diagnostic au correctif, avec une borne : ***« une correction ciblée et rapide pour la mise en production, PAS une refonte de Séance/Milo »***.
+
+**⛔⛔ TROIS CORRECTIONS À MON PROPRE AUDIT, MESURÉES AVANT D'ÉCRIRE UNE LIGNE — et la première est la plus gênante.**
+
+**① LE CARDIO N'EST PAS UNE SÉRIE.** Il vit dans `S.wkt.cardio` / `cardioAvant`, jamais dans `exs[].sets[]` — il ne peut donc **jamais** atteindre `_rirDeSet`. Mon audit de la veille annonçait *« CARDIO (type vide) → 1 ⛔ »* : or `type:''` est une série **normale importée**, pas du cardio (le `type:'CARDIO'` de l'export est un **libellé** fabriqué pour la ligne CSV). 👉 ***Aucun garde cardio n'est donc ajouté*** — il ferait croire au suivant que le cas existe. *Un libellé faux sur une mesure juste est plus dangereux qu'une mesure fausse : personne ne revérifie une ligne qui a l'air d'avoir été testée.*
+
+**② AUCUN PROPRIÉTAIRE « SÉRIE DE TRAVAIL » N'EXISTAIT** — mesuré : le test `type==='É'||type==='W'` est retapé **18 fois dans 4 fichiers**. ⛔ **Et aucun des 18 n'est rebranché** : hors périmètre. *Créer le propriétaire coûte une fonction ; refactorer 18 sites au milieu d'un correctif ciblé coûte un diff qu'on ne sait plus relire.*
+
+**③ ⭐ LE TYPE `'E'` (SANS ACCENT) A TROIS LECTURES CONTRADICTOIRES**, et c'est le point de conception : migré en `X` (`state.js`), ignoré **comme un échauffement** (`state.js`, `coach.js`), et reposé **comme un `X`** (`log.js`, 240 s). 👉 ***L'ambiguïté ne change RIEN pour le RIR*** — échauffement **ou** échec, les deux sont non exploitables. Il est donc exclu **sans que sa sémantique soit tranchée** : la trancher ici serait décider à la place de Michel sur une donnée qu'on n'a pas mesurée. ⚠️ **Et `W`/`E` restent atteignables** : la migration est **one-time** (`ft4_stmig1`), donc une restauration cloud d'un vieux compte les réintroduit **après** la pose du drapeau. ⛔ La migration n'est pas touchée (ft-v1209).
+
+**⭐⭐ LE DÉFAUT CORRIGÉ EST REPRODUCTIBLE EN DEUX GESTES, ET LE BANC LES CONDUIT** : on note un RIR sur une série `N` (`setRir`), on tape la pastille de type (`cycleType`) — qui change le type **sans toucher au `rir`**. La série devient `É` en gardant `rir:2`.
+
+| | avant | après |
+|---|---|---|
+| `_rirDeSet({type:'É', rir:2})` | **2** | **null** |
+| ligne envoyée à Milo | `É 60×10 **RIR2**` | `É 60×10` |
+| export CSV | `É 60x10 rir=**2**` | `É 60x10 rir=""` |
+
+**⭐ L'EXPORT SE CORRIGE TOUT SEUL** : `setup.js` appelle déjà le propriétaire, **aucune de ses lignes ne bouge**. *C'est exactement ce qu'achète un propriétaire.*
+
+**⛔ ON N'EFFACE PAS LA VALEUR STOCKÉE, et c'est une décision.** `cycleType` reste intact. Un aller-retour `N → É → N` pour corriger une faute de frappe **restitue** le RIR — un témoin le prouve. *Effacer serait une perte SILENCIEUSE : la personne ne l'apprendrait jamais* (**R29**). La lecture suffit à fermer la fuite.
+
+**⭐⭐ LE COMPTE NE MENT PLUS D'UN CRAN.** Il mesurait `_effortConnu()` — « sait-on ce que la série a coûté ? », un `X` y compte — sous le libellé *« portent un RIR »*. Trois séries notées + un `X` annonçaient donc **« 4 sur 4 »**, et la quatrième n'a aucun RIR. *Un calcul A sous un texte B est un mensonge poli.* ⭐ **Trois compteurs distincts** désormais, et ⛔ **le dénominateur EXCLUT les `X`** : une série allée à l'échec n'a pas de RIR **par définition**, la compter en « non renseignée » reprocherait une donnée qui n'existe pas. L'échec est **nommé à part**, parce que c'est l'effort le **mieux** connu.
+
+**📣 CINQ GARDES D'INTERPRÉTATION AJOUTÉS AU PROMPT** (les règles existantes conservées, vérifié par 3 témoins de non-régression) : un RIR 0 **n'est pas une prédiction d'échec** · il est souvent **volontaire** · ⛔ **le rôle de série est INCONNU** — l'app ne le stocke pas, donc jamais *« la plus lourde = top set »* · un RIR 0 **peut être suivi d'une bonne série** · le RIR est une **estimation humaine** (0 puis 1 n'est pas une anomalie) · et la fatigue demande **plusieurs signaux**, avec le contre-exemple chiffré **100×3 RIR0 puis 102×3 RIR0** où la performance a **augmenté**.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **ft-v1211 intact** (le diagnostic d'import et `_empreinteDonnees` sont épinglés par témoin) · ⛔ ni `finalImportHist`, ni l'import historique, ni les migrations, ni les records · ⛔ **Nutrition, scanner : 0 ligne** — `app.js`, `index.html` et `setup.js` **ne sont pas touchés** · ⛔ **aucun rôle de série inventé**, aucun champ ajouté, aucune migration.
+
+⚠️⚠️ **CE QUI N'EST PAS PROUVÉ, ET C'EST DIT** : les gardes du prompt prouvent la **PRÉSENCE**, jamais l'**OBÉISSANCE** — celle-ci se mesure au banc d'essai, qui demande une clé API (**R34**). ⚠️ **Michel doit vérifier sur Safari/iPhone** : côté écran, **rien** ne change.
+
+Tests : **bloc B-CCCXI, 43 témoins**. ⛔ **CONTRÔLE NÉGATIF : 14 mutations — les 8 nommées par Michel + 6 miennes — TOUTES MORDENT**, contrôle sain **43 OK / 0 rouge avant ET après**, sur un arbre **copié** : ① `É` repasse → **6** · ② `X` repasse → **7** · ③ RIR absent devient 0 → **7** · ④ la couverture réinclut les `X` → **2** · ⑤-⑧ chaque garde du prompt retiré → **1** chacun · ⑨ le libellé ment de nouveau → **1** · ⑩ ⭐ **`cycleType` EFFACE le rir** → **4** · ⑪ le propriétaire recopie une liste → **4** · ⑫ le `W` redevient exploitable → **1** · ⑬ une série importée devient non exploitable → **2** · ⑭ ⛔ une règle **existante** du prompt perdue au passage (**R8**) → **1**.
+
+Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `setup.js`, ni `state.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1213. |

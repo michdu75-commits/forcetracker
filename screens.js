@@ -2864,6 +2864,24 @@ function _blocResteHTML(td, heure){
            dessous — détaché de ce qu'il qualifie. Il suit maintenant le texte. */
         +((i.couvert && i.couvert < i.manque-5)?' <span style="color:var(--t3);font-weight:400;white-space:nowrap;">(≈ '+i.couvert+'\u00A0g)</span>':'')
       +'</span></div>').join('')
+    /* ⛔⛔ QUAND LA CIBLE N'EST PAS RAISONNABLEMENT COUVRABLE, ON LE DIT (17/09/2026, §12).
+       ⭐ POURQUOI CETTE PHRASE APPARAÎT MAINTENANT, ET PAS AVANT : jusqu'ici la quantité était
+       `manque / densité` bornée à 250 g, donc elle GONFLAIT pour s'approcher du manque et
+       l'écart restait petit. Depuis que la portion part de la médiane réellement observée, une
+       cible très au-dessus de l'apport habituel produit un écart franc — *et c'est le
+       comportement voulu : la suggestion ne ment plus sur ce qu'elle peut faire.*
+       ⛔ Mais un écart franc affiché nu se lit comme un reproche. On nomme donc la raison, une
+       seule fois, en bas du bloc — jamais par ligne (R25 : l'écran annonce, il ne sermonne pas).
+       ⛔⛔ ET PAS LE SOIR : le bloc se tait déjà sur les manques tardifs (anti-TCA, P21) —
+       ajouter « tu n'y arriveras pas » à 21 h serait exactement le stress que la nutrition ne
+       doit jamais fabriquer. *La même phrase peut informer à 14 h et blesser à 21 h.*
+       ⚠️ Le seuil est LARGE (moins de la moitié couverte) : on ne commente pas un écart
+       ordinaire, seulement celui qui rend la suggestion visiblement insuffisante. */
+    +((!soir && idees.length && idees.every(i=>i.couvert < i.manque*0.5))
+       ? '<div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:8px;">'
+         +'Tes portions habituelles ne couvriraient pas tout ce qu\'il reste aujourd\'hui. '
+         +'Le calcul, lui, reste exact — c\'est la suggestion qui s\'arrête à ce qui est plausible.'
+         +'</div>' : '')
     /* ⛔ « à peu près » n'est pas de la modestie de façade : la portion enregistrée est une
        estimation, et le dire évite qu'on prenne ça pour une prescription au gramme. */
     /* ⛔⛔ LE SOIR, ON NIE LE RATTRAPAGE AU LIEU DE LE SUGGÉRER (anti-TCA, P21). Sans cette
