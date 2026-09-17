@@ -15,7 +15,7 @@
 
 CONTRAINTE DE POLICE : WinAnsi/cp1252 — pas d'emoji, entites decodees AVANT controle.
 """
-import html, os, re, subprocess
+import html, json, os, re, subprocess
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
@@ -26,8 +26,11 @@ from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table, Tab
 ROOT = os.environ.get('FT_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.environ.get('FT_OUT') or '/tmp/NUTRITION-CORRECTIFS-CODEBARRES-PORTIONS-HABITUDES-17-09-2026.pdf'
 BANC = os.environ.get('FT_BANC') or '/tmp/banc_nutri.log'
-MUT = os.environ.get('FT_MUT') or '/tmp/mut_nutri.log'
-PASSE = os.environ.get('FT_PASSE') or '/tmp/passe1221.log'
+MUT = os.environ.get('FT_MUT') or '/tmp/mut_nutri_final.log'
+# [!] LE JOURNAL DU CONTROLE NEGATIF REJOUE SUR L ARBRE PUBLIE, jamais celui d avant la
+#     reconciliation : *un ancien vert n est pas une preuve du nouvel arbre* (consigne §6).
+PREUVE = os.environ.get('FT_PREUVE') or '/tmp/preuve_1221.json'
+PASSE = os.environ.get('FT_PASSE') or '/tmp/passe1221.out'
 GARDES = [0]
 
 
@@ -473,6 +476,82 @@ H.append(tableau(['#', 'a faire', 'pourquoi'],
   ['3', 'Dire si vous voulez le <b>point rouge + aide + diapo</b> pour le nouveau bouton scanner',
    'regle d or #11 : c est une vraie feature utilisateur, et je ne pose pas ces reperes de moi-meme']],
  [8 * mm, 86 * mm, 72 * mm]))
+
+
+# ══ 7. LA PUBLICATION — LES 13 POINTS DU §14, CHACUN LU DANS LE FICHIER DE PREUVE ═══════
+# ⛔⛔ AUCUN DE CES CHIFFRES N EST TAPE ICI : ils viennent de `tools`-hors-depot
+#     `preuve_1221.py`, qui relit la passe, le controle negatif, git, l API GitHub et
+#     RETELECHARGE les fichiers servis au SHA publie. *Un dossier qui recopie ses propres
+#     chiffres ne prouve rien, il se cite lui-meme.*
+try:
+    PR = json.load(open(PREUVE, encoding='utf-8'))
+except Exception as _e:
+    raise SystemExit('GARDE ROUGE - fichier de preuve illisible (%s) : %s' % (PREUVE, _e))
+
+g(PR['passe_rouges'] == 0 and PR['rouges_reels'] == 0,
+  'la passe porte des rouges : rien ne se publie')
+g(PR['runner_exit'] == 0, 'le runner n a pas termine correctement')
+g(PR['passe_valide'] and PR['quatre_conditions'] == 4,
+  'les 4 conditions de validite ne sont pas toutes vertes')
+g(PR['mut_conformes'] == PR['mut_total'],
+  'le controle negatif rejoue sur l arbre publie n est pas complet')
+g(PR['passe_arbre'] == PR['commit'],
+  'LA PASSE N A PAS TESTE L ARBRE PUBLIE : %s teste, %s publie' % (PR['passe_arbre'][:12],
+                                                                   PR['commit'][:12]))
+g(PR['sha_master'] == PR['commit'],
+  'le SHA de master chez GitHub (%s) n est pas le commit local (%s)'
+  % (PR['sha_master'][:12], PR['commit'][:12]))
+g(PR['sha_pages'] == PR['sha_master'],
+  'PAGES NE SERT PAS LE MEME SHA QUE MASTER : %s contre %s'
+  % (PR['sha_pages'][:12], PR['sha_master'][:12]))
+g(PR['etat_pages'] == 'success',
+  'le deploiement Pages est en etat %r — un run LISTE n est pas un deploiement REUSSI'
+  % PR['etat_pages'])
+g(all(f['identique'] for f in PR['fichiers']),
+  'un fichier servi differe de mon arbre local : %s'
+  % [f['nom'] for f in PR['fichiers'] if not f['identique']])
+g(PR['servi_cache'] == PR['version'] == VERSION,
+  'la version servie (%s) ne correspond pas' % PR['servi_cache'])
+g(PR['servi_zxing_wasm'] == 1 and PR['servi_portion'] == 1 and PR['servi_habitudes'] == 1,
+  'un des trois correctifs n est PAS dans le fichier reellement publie')
+g(PR['servi_bouton'] == 1 and PR['servi_ancien_libelle'] == 0,
+  'le libelle servi ne correspond pas au comportement reel (§11)')
+g(PR['maj_auto'] and PR['maj_garde_ecran'],
+  'la chaine de mise a jour PWA lue dans app.js ne correspond plus a ce que le dossier decrit')
+g(bool(PR['limite_github_io']),
+  'la limite de lecture de github.io n est pas ecrite — une preuve qui tait sa borne se lit '
+  'comme une preuve complete')
+
+H.append(PageBreak())
+H.append(P('7. La publication - ce qui est PROUVE, et ou la preuve s arrete', 'h1'))
+H.append(tableau(['#', 'point', 'mesure'],
+ [['1', 'TOTAL final de la passe', '<b>%d</b> verts / <b>%d</b> rouges' % (PR['passe_verts'], PR['passe_rouges'])],
+  ['2', 'EXIT du runner', '<b>%d</b> - et les <b>4 conditions</b> de validite sont vertes' % PR['runner_exit']],
+  ['3', 'mutations, rejouees sur l arbre publie', '<b>%d / %d conformes</b> - controle sain %s OK / %s rouge avant, %s / %s apres'
+        % (PR['mut_conformes'], PR['mut_total'], PR['sain_avant'][0], PR['sain_avant'][1],
+           PR['sain_apres'][0], PR['sain_apres'][1])],
+  ['4', 'arbre apres reconciliation', (C % PR['passe_arbre'][:12]) + ' - <i>c est le meme que le commit publie, verifie</i>'],
+  ['5', 'commit final', (C % PR['commit'][:12]) + ' - ' + PR['fusion'][:60]],
+  ['6', 'version finale', '<b>%s</b>' % PR['version']],
+  ['7', 'SHA de <b>master</b> (relu chez GitHub)', C % PR['sha_master'][:12]],
+  ['8', 'SHA <b>reellement deploye</b> par Pages', (C % PR['sha_pages'][:12]) + ' - deploiement <b>%d</b>' % PR['deploiement_id']],
+  ['9', 'etat du deploiement', '<b>%s</b>, %s - <i>un run LISTE n est pas un deploiement REUSSI</i>'
+        % (PR['etat_pages'], (PR['pages_quand'] or '?'))],
+  ['10', 'fichiers <b>reellement servis</b>', '%d / %d identiques a l octet pres, <b>reteleharges</b> au SHA publie : %s'
+        % (sum(1 for f in PR['fichiers'] if f['identique']), len(PR['fichiers']),
+           ' · '.join('%s %s' % (f['nom'], f['sha256_distant']) for f in PR['fichiers']))],
+  ['11', 'version que l iPhone doit afficher', '<b>%s</b> - lue dans le ' % PR['iphone_doit_afficher'] + (C % 'sw.js') + ' distant, pas dans le mien'],
+  ['12', 'rafraichissement PWA', 'aucun geste technique : ' + (C % "updateViaCache:'none'") + ', <b>%d</b> relances de verification, puis '
+        % PR['maj_relances'] + (C % 'controllerchange') + '. <b>Le rechargement attend l ecran Accueil</b> (garde de ft-v1184).'],
+  ['13', 'scanner pret pour l essai reel', '<b>oui</b> - capture locale, ' + (C % 'zxing-wasm') + ', live eteint, IA en secours. '
+        '<i>Mais non valide tant que l iPhone n a pas tranche.</i>']],
+ [8 * mm, 46 * mm, 112 * mm]))
+
+H.append(P('<b>La borne de cette preuve, ecrite plutot que masquee (regle d or #16).</b> Je ne peux '
+           'pas lire moi-meme les octets servis par le site : ' + PR['limite_github_io'] +
+           ' La preuve s arrete donc au <b>deploiement Pages en etat success sur ce SHA</b> plus le '
+           '<b>contenu du depot a ce SHA</b>. Le dernier maillon - ce que l iPhone affiche - '
+           'appartient a Michel.', 'p'))
 
 H.append(Spacer(1, 3))
 H.append(P('Document produit par ' + (C % 'tools/gen_nutri_correctifs_pdf.py') + ' - <b>'
