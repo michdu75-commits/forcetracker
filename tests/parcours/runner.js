@@ -3045,7 +3045,15 @@ console.log('\n═══ P. Compteur IA — branché là où passent vraiment le
   const listes = {
     'constants.js AI_PROXY_ACTIONS' : proxy,
     'worker.js _ACTIONS_IA (compteur)' : comptees,
-    'worker.js routes (exécution)' : new Set([...w.matchAll(/body\.action === '([a-zA-Z]+)'/g)].map(m=>m[1])),
+    /* ⚠️ LES ROUTES NON-IA SONT NOMMÉES ICI, UNE PAR UNE — et c'est ce qui préserve le témoin
+       au lieu de l'affaiblir. Le Worker ne route plus QUE de l'IA depuis S2-B : `cloudSave`
+       écrit la sauvegarde Supabase, elle n'appelle aucun modèle et ne doit surtout PAS entrer
+       dans les listes de quota (elle userait le crédit de Milo pour une sauvegarde).
+       👉 Une route non-IA de plus DOIT être ajoutée ici à la main : l'exception reste donc
+       visible, et une vraie action IA oubliée continue de faire rougir. *Élargir le motif
+       aurait rendu le témoin aveugle au cas même qu'il existe pour attraper.* */
+    'worker.js routes (exécution)' : new Set([...w.matchAll(/body\.action === '([a-zA-Z]+)'/g)]
+      .map(m=>m[1]).filter(a=>!['cloudSave'].includes(a))),
     'Code.js AI_ACTIONS_ (compteur du jour)' : lst((cj.match(/AI_ACTIONS_\s*=\s*\[([^\]]*)\]/)||[,''])[1]),
   };
   const ecarts = [];
@@ -40289,6 +40297,8 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
 require('./identite_ligne.js')(t, ROOT, fs, path);
 
 require('./accueil_mini.js').source(t, ROOT, fs, path);
+
+require('./s2b_worker.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
