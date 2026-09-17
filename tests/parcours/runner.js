@@ -39197,12 +39197,28 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     return nu(srcA.slice(i)); };
   const AN=nu(srcA), IN=srcI.replace(/<!--[\s\S]*?-->/g,' ');
 
-  t('CCCXI ① ⛔⛔ LE BOUTON UTILISATEUR RESTE ABSENT — la garantie n°1 de Michel : « je ne veux '+
-    'toujours PAS réactiver le bouton scanner pour les utilisateurs ». Le témoin rougit dans les '+
-    'DEUX sens : si un bouton revient, ET si le moteur disparaît',
-    !/onclick="scanBarcode\(\)"/.test(IN)
+  /* ⚠️⚠️ TROISIÈME TÉMOIN RETOURNÉ LE 17/09/2026 — ET C'EST LUI QUI A ATTRAPÉ MON OUBLI.
+     Trois témoins figeaient la décision du 14/09 (« aucun bouton utilisateur tant que je n'ai
+     pas tranché ») ; j'en avais retourné DEUX. Celui-ci a rougi sur la passe complète, seul,
+     après un petit banc parfaitement vert. 👉 *Un petit banc ne voit que ce qu'on a pensé à lui
+     montrer ; c'est exactement l'argument du protocole.*
+     ⛔ Il est RETOURNÉ, pas supprimé (R30) : il protège maintenant la décision INVERSE — la
+     porte est ouverte sur la CAPTURE, et le LIVE reste éteint. Il rougit donc toujours dans les
+     deux sens, et il garde en plus la garantie qui n'a PAS bougé : `openBarcodeScanner` ne doit
+     jamais être appelée en direct depuis un bouton, seulement via `scanBarcode`. */
+  t('CCCXI ① ⛔⛔ LA PORTE EST OUVERTE SUR LA CAPTURE, ET SUR ELLE SEULE (Michel, 17/09). Le '+
+    'bouton appelle `scanBarcode`, jamais `openBarcodeScanner` en direct ; le moteur est là ; et '+
+    'le LIVE reste éteint pour l\'utilisateur — la voie qui a produit un faux EAN sur iPhone',
+    /onclick="scanBarcode\(\)"/.test(IN)
     && !/onclick="openBarcodeScanner\(/.test(IN)
-    && /function scanBarcode\b/.test(srcA) && /function openBarcodeScanner\b/.test(srcA), '');
+    && /function scanBarcode\b/.test(srcA) && /function openBarcodeScanner\b/.test(srcA)
+    /* ⛔⛔ BORNÉ AU CORPS DE `scanBarcode`, ET C'EST UNE CORRECTION À MOI. Mon premier prédicat
+       cherchait `_bcLiveActif=false` dans TOUT le fichier : la mutation qui rallume le live pour
+       l'utilisateur le laissait VERT, puisque la DÉCLARATION `let _bcLiveActif=false;` porte les
+       mêmes caractères ailleurs. *Chercher une présence ne prouve pas que c'est CELLE-LÀ qui est
+       là* — 7ᵉ fois de ce projet, même famille que `im>=90` et `_renderHomeHeroX`. */
+    && /_bcLiveActif=false/.test(
+         nu(srcA).replace(/\s/g,'').match(/functionscanBarcode\(\)\{[^}]*\}/) || ''), '');
 
   t('CCCXI ② ⭐⭐ LA SEULE PORTE DU BANC EST L\'ADMIN, et elle est GARDÉE DANS LA FONCTION — un '+
     'bouton qui appelle `ouvrirBancScanner` ne suffit pas : c\'est elle qui refuse. *Une porte '+
