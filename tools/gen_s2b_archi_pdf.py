@@ -218,14 +218,33 @@ g('url.indexOf(AI_PROXY_URL)===0' in CO.replace(' ', ''),
   'l injecteur n est plus borne a l URL du Worker')
 
 # ── 9. la dette SQL : rien de versionne aujourd'hui ───────────────────────────────────
+# ⭐ GARDE RETOURNEE LE 17/09/2026 (R30), PAS EFFACEE. Elle disait « aucun fichier SQL dans
+#    le depot ». S2-B ouvre `supabase/migrations/` : le SQL versionne y est desormais LEGITIME.
+#    L'invariant reel s'est precise — *aucun SQL EGARE hors du dossier versionne*. ⚠️ Et la dette
+#    que ces dossiers decrivent reste VRAIE : `ft_comptes` et `ft_miroir`, creees a la main, ne
+#    sont toujours pas versionnees (voir supabase/README.md).
 SQLS = [f for _dd, _s, _f in os.walk(ROOT) for f in _f
-        if f.endswith('.sql') and 'node_modules' not in _dd]
-DETTE_SQL = not SQLS
-g(DETTE_SQL,
-  'des fichiers SQL existent deja dans le depot (%s) : la section 9 du brief decrit une '
-  'dette qui n existerait plus' % ', '.join(SQLS[:3]))
-g(not os.path.isdir(os.path.join(ROOT, 'supabase')),
-  'le dossier supabase/ existe deja : ce document propose de le CREER')
+        if f.endswith('.sql') and 'node_modules' not in _dd
+        and os.path.join('supabase', 'migrations') not in _dd]
+g(not SQLS,
+  'des fichiers SQL egares existent hors de supabase/migrations (%s)' % ', '.join(SQLS[:3]))
+# ⭐ CE DOCUMENT EST DATE, ET SON ETAT A CHANGE LE JOUR MEME. Il decrivait « rien n est
+#    versionne » ; S2-B a depuis ouvert `supabase/migrations/`. On ne fige pas le texte : on
+#    MESURE, et la phrase s'adapte. ⛔ La dette de fond, elle, reste entiere : `ft_comptes` et
+#    `ft_miroir` ont ete creees a la main et ne sont toujours pas versionnees — les recrire
+#    de memoire fabriquerait une source de verite SUPPOSEE.
+VERSIONNE = os.path.isdir(os.path.join(ROOT, 'supabase', 'migrations'))
+MIGS = sorted(f for f in os.listdir(os.path.join(ROOT, 'supabase', 'migrations'))
+              if f.endswith('.sql')) if VERSIONNE else []
+_anciennes_versionnees = any(
+    'ft_comptes' in open(os.path.join(ROOT, 'supabase', 'migrations', f),
+                         encoding='utf-8').read().split('RETOUR ARRIERE')[0]
+    and 'create table' in open(os.path.join(ROOT, 'supabase', 'migrations', f),
+                               encoding='utf-8').read().lower().split('ft_comptes')[0][-120:]
+    for f in MIGS)
+g(not _anciennes_versionnees,
+  'une migration pretend (re)creer ft_comptes : ce serait presenter une reconstitution comme '
+  'la definition reelle, alors que la vraie a ete creee a la main et seulement MESUREE')
 
 # ── 10. ce que la mesure du 17/09 a etabli, et qu'on ne remesure pas ici ──────────────
 DROITS_ANON = [('SELECT', 'OUI'), ('INSERT', 'NON'), ('UPDATE', 'NON'), ('DELETE', 'OUI'),
@@ -929,15 +948,21 @@ H.append(P('Les etapes suivantes viendront <b>une par une</b>, chacune marquee L
            'ECRITURE, avec ce qu elle fait et ce qu il ne faut surtout pas envoyer. Aucune '
            'instruction d ecriture ne sera proposee tant que la section 4 n est pas tranchee.',
            'petit'))
-DETTE = ('<b>Dette du schema (brief section 9).</b> Rien du schema actuel n est dans le '
-           'depot : la mesure le confirme, aucun fichier d instructions de base de donnees '
-           'n y existe. S2-B ouvre ' + (C % 'supabase/migrations/') + ', et tout ce qu il '
-           'ajoute y sera pose <b>avant</b> d etre applique, pour que le texte applique et le '
-           'texte versionne soient le meme. <b>Consequence a assumer explicitement</b> : une '
-           'garde des dossiers precedents verifie qu aucun fichier de ce type n existe dans '
-           'le depot - <b>elle devra etre retournee, pas supprimee</b>, avec sa raison ecrite '
-         '(R30). <i>Une garde qu on efface parce qu elle gene est une garde qu on a '
-         'contournee.</i>')
+DETTE = ('<b>Dette du schema (brief section 9).</b> ' + (
+         ('S2-B a ouvert ' + (C % 'supabase/migrations/') + ' : <b>' + str(len(MIGS))
+          + '</b> migration(s) y sont versionnees, posees <b>avant</b> d etre appliquees, pour '
+          'que le texte applique et le texte versionne soient le meme. ')
+         if VERSIONNE else
+         ('Rien du schema actuel n est dans le depot. S2-B ouvre '
+          + (C % 'supabase/migrations/') + '. ')) +
+         '<b>La dette de fond reste entiere</b> : ' + (C % 'ft_comptes') + ' et '
+         + (C % 'ft_miroir') + ' ont ete creees a la main et ne sont <b>pas</b> versionnees. '
+         'Les recrire de memoire fabriquerait une source de verite <b>supposee</b> - le pire '
+         'des deux mondes, parce qu elle aurait l air fiable. <b>Consequence assumee</b> : la '
+         'garde des dossiers precedents, qui verifiait qu aucun fichier de ce type n existe '
+         'dans le depot, a ete <b>retournee, pas supprimee</b>, avec sa raison ecrite '
+         '(R30) - elle mesure desormais l absence de SQL <b>egare</b>. <i>Une garde qu on '
+         'efface parce qu elle gene est une garde qu on a contournee.</i>')
 # [!!] MEME FAUTE QUE POUR L OPTION B, TROUVEE PAR LA MEME MUTATION : « R30 » figure AUSSI
 #      dans le tableau des droits, donc une garde globale reste verte alors que c est ICI
 #      que la regle compte. On controle donc la PHRASE, pas le document.
@@ -989,7 +1014,10 @@ QQ = [
      NON, NON, '<b>et elle ne peut pas l etre par ce document</b> : Michel exige une preuve '
      'reseau reelle, que le conteneur ne peut pas produire'),
     ('Q15', 'le schema est-il versionne dans le depot ?',
-     NON, OUI, 'mesure : aucun fichier d instructions de base de donnees dans le depot'),
+     (PART if VERSIONNE else NON), OUI,
+     ('mesure : %d migration(s) versionnee(s) pour ce que S2-B ajoute, mais ft_comptes et '
+      'ft_miroir restent non versionnees' % len(MIGS)) if VERSIONNE
+     else 'mesure : aucun fichier d instructions de base de donnees dans le depot'),
 ]
 H.append(tableau(
     ['', 'question', 'aujourd hui', 'attendu', 'preuve'],
@@ -1068,7 +1096,8 @@ for _q, _auj, _att in (('Q1', OUI, NON), ('Q2', OUI, NON), ('Q3', NON, NON),
                        ('Q4', NON, NON), ('Q5', NON, OUI), ('Q6', OUI, NON),
                        ('Q7', OUI, OUI), ('Q8', OUI, OUI), ('Q9', OUI, NON),
                        ('Q10', OUI, NON), ('Q11', NON, NON), ('Q12', NON, PART),
-                       ('Q13', OUI, OUI), ('Q14', NON, NON), ('Q15', NON, OUI)):
+                       ('Q13', OUI, OUI), ('Q14', NON, NON),
+                       ('Q15', PART if VERSIONNE else NON, OUI)):
     _l = [r for r in QQ if r[0] == _q]
     g(len(_l) == 1, 'la question %s est absente ou en double' % _q)
     g(_l[0][2] == _auj, 'la question %s ne decrit plus l etat d aujourd hui comme %s'
@@ -1096,6 +1125,7 @@ for _mot, _pourquoi in (
         ('relais attrape-tout', 'c est le piege propre a ce Worker'),
         ('reconciliation', 'c est ce qui empeche les deux registres de diverger'),
         ('a l usage', 'le registre se remplit par le pont, sans recopie de masse'),
+        ('supposee', 'recreer ft_comptes de memoire fabriquerait une fausse source de verite'),
         ('incoherence d ordre', 'le defaut de ma premiere version doit rester ecrit (R30)'),
         ('lecture seule', 'la premiere etape demandee a Michel n ecrit rien')):
     g(_mot in _bt, 'le document ne parle plus de « %s » : %s' % (_mot, _pourquoi))
@@ -1118,5 +1148,5 @@ SimpleDocTemplate(OUT, pagesize=A4,
                   author='Force Tracker').build(H)
 
 print('OK %s  (%s, %d gardes, V2 ouverte : %s, portes client : %d, actions Worker : %d, '
-      'Worker/Supabase : %d, dette SQL : %s, 15 questions)'
-      % (OUT, VERSION, GARDES[0], V2_OUVERTE, NB_RPC, NB_ACTIONS, WK_SB, DETTE_SQL))
+      'Worker/Supabase : %d, migrations versionnees : %d, 15 questions)'
+      % (OUT, VERSION, GARDES[0], V2_OUVERTE, NB_RPC, NB_ACTIONS, WK_SB, len(MIGS)))

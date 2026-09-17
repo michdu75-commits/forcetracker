@@ -90,8 +90,8 @@ MUTATIONS = [
      "    ('Q5', 'l identite est-elle resolue cote serveur ?',\n     NON, OUI,",
      "    ('Q5', 'l identite est-elle resolue cote serveur ?',\n     OUI, OUI,", 'ROUGE'),
     ('@@DOC@@ une question disparait', GEN,
-     "    ('Q15', 'le schema est-il versionne dans le depot ?',\n     NON, OUI,",
-     "    ('QX', 'le schema est-il versionne dans le depot ?',\n     NON, OUI,", 'ROUGE'),
+     "    ('Q15', 'le schema est-il versionne dans le depot ?',",
+     "    ('QX', 'le schema est-il versionne dans le depot ?',", 'ROUGE'),
     # [!!] LA MUTATION DOIT PRODUIRE DU PYTHON VALIDE. Ma premiere version cassait une
     #      chaine : le generateur ne demarrait meme pas, et un plantage n'est PAS une garde
     #      qui mord. *Une passe interrompue ressemble trait pour trait a une passe rouge.*
@@ -108,7 +108,7 @@ MUTATIONS = [
     ('@@DOC@@ la panne a 102 % disparait de l argument d independance', GEN,
      'plein a 102 % le 29/07/2026', 'plein le 29/07/2026', 'ROUGE'),
     ('@@DOC@@ la garde SQL est dite supprimee au lieu de retournee', GEN,
-     "'(R30). <i>Une garde qu on efface", "'(sans regle). <i>Une garde qu on efface",
+     "'(R30) - elle mesure desormais", "'(sans regle) - elle mesure desormais",
      'ROUGE'),
     ('@@DOC@@ le document affirme que la fonction bornee reduit le rayon du secret', GEN,
      'H.append(P(\'5. Pont Apps Script contre registre Supabase\', \'h1\'))',

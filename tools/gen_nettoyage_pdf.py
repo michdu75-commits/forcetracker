@@ -151,9 +151,17 @@ _m = re.search(r'_SB_JUSTIFICATIFS\s*=\s*\[([^\]]+)\]', SB)
 g(_m and 'token' in _m.group(1) and 'authCode' in _m.group(1),
   'la liste des justificatifs ne porte plus les deux cles nettoyees ici')
 g(re.match(r'^ft-v\d+$', VERSION or ''), 'la version servie n a pas pu etre lue dans sw.js')
-SQLS = [f for _dd, _s, _f in os.walk(ROOT) for f in _f
-        if f.endswith('.sql') and 'node_modules' not in _dd]
-g(not SQLS, 'des fichiers SQL sont apparus dans le depot (%s)' % ', '.join(SQLS[:3]))
+# ⭐ GARDE RETOURNEE LE 17/09/2026 (R30), PAS EFFACEE. Elle disait « aucun fichier SQL dans
+#    le depot » — vrai tant que le schema Supabase etait cree a la main, et c'etait justement
+#    la dette que les dossiers d'audit nommaient. S2-B ouvre `supabase/migrations/` : le SQL
+#    versionne y est desormais LEGITIME. L'invariant reel n'a pas disparu, il s'est precise —
+#    *aucun SQL EGARE hors du dossier versionne*. Une garde qu'on efface parce qu'elle gene
+#    est une garde qu'on a contournee.
+SQLS = [os.path.join(_dd, f) for _dd, _s, _f in os.walk(ROOT) for f in _f
+        if f.endswith('.sql') and 'node_modules' not in _dd
+        and os.path.join('supabase', 'migrations') not in _dd]
+g(not SQLS, 'des fichiers SQL egares sont apparus hors de supabase/migrations (%s)'
+  % ', '.join(SQLS[:3]))
 
 # ═══════════════════════════════════════════════════════════════════════════════════════
 ROUGE = colors.HexColor('#C0392B')
