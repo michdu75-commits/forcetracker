@@ -8,37 +8,46 @@
 
 ---
 
-## ⛔⛔ BLOCAGE EN COURS — GITHUB PAGES NE DÉPLOIE PLUS DEPUIS 17:33 UTC (16/09/2026)
+## 🩺 RÉSOLU — GITHUB PAGES BLOQUÉ 13 H PAR **UN SEUL RUN**, ET LA CAUSE N'ÉTAIT PAS LE QUOTA
 
-> ⚠️ **À LIRE AVANT DE CONCLURE QU'UNE VERSION EST « EN LIGNE ».** Mesuré via l'API GitHub
-> pendant la publication de `ft-v1220`.
+> **16-17/09/2026.** Gardé ici plutôt que jeté : le symptôme est trompeur, et il reviendra.
 
-| | |
-|---|---|
-| dernier déploiement Pages **réussi** | `9bd2f4ca` — **17:33 UTC** (étape B de la session B) |
-| runs depuis | **#1185 → #1192 : huit runs, AUCUN n'a démarré** — `pending`, **0 job créé**, puis annulé par le suivant |
-| conséquence | **`ft-v1219`, `ft-v1220` et les étapes C/D/E ne sont servis nulle part** |
+**Le symptôme** : huit runs Pages consécutifs (**#1185 → #1192**) en `pending` avec **zéro job créé**,
+pendant 13 heures. Ni `ft-v1219`, ni `ft-v1220`, ni les étapes C/D/E de la session B n'étaient servis.
 
-**Ce que ce n'est PAS** : ni le workflow (`cancel-in-progress: false`, permissions correctes),
-ni la concurrence (avec `false`, GitHub annule les runs *en attente*, ce qui est le symptôme et
-non la cause), ni un fichier du dépôt. Les runs restent `pending` avec **zéro job** : la file
-d'exécution ne leur donne pas de runner.
+⚠️⚠️ **MA PREMIÈRE HYPOTHÈSE ÉTAIT FAUSSE, ET ELLE EST GARDÉE ICI EXPRÈS** : j'ai annoncé un
+**quota Actions épuisé**. Michel a répondu *« pas de soucis sur billing »* — hypothèse jetée en une
+phrase, et c'est ce qui a permis de trouver la vraie cause. *Une hypothèse annoncée comme une
+hypothèse se corrige ; annoncée comme un diagnostic, elle envoie chercher au mauvais endroit.*
 
-**Hypothèse la plus probable, NON vérifiée d'ici** : quota Actions épuisé, ou incident GitHub.
-⛔ L'API de facturation est fermée au conteneur (`Access to this GitHub Actions path is not
-permitted through this proxy`) — **donc c'est une hypothèse, pas un diagnostic**.
+**⭐⭐ LA VRAIE CAUSE, ET ELLE TIENT EN UNE LIGNE** : le run **#1184** était en statut **`waiting`**
+depuis 17:33 — il attendait une **approbation de l'environnement `github-pages`**. Or le workflow
+déclare `concurrency: group: pages` avec **`cancel-in-progress: false`** (*« ne pas annuler un
+déploiement déjà en cours »*, décision volontaire et justifiée). 👉 ***Un seul run coincé bloque donc
+TOUS les suivants, pour toujours.*** Les huit runs à zéro job en découlent **mécaniquement** : ce
+n'étaient pas huit pannes, c'était **une** panne vue huit fois.
 
-👉 **Le geste pour Michel** : github.com → avatar → **Billing → Actions minutes**.
+**⭐ CE QUI A PERMIS DE LE VOIR** : lire l'**état des DÉPLOIEMENTS**, pas celui des runs. Les sept
+déploiements précédents faisaient `waiting → queued → in_progress → success` ; celui de 17:33 était
+resté à **`waiting`** tout seul. *Le run disait « pending » comme les autres — c'est la comparaison
+avec ses voisins SAINS qui a isolé l'anomalie.*
 
-⛔⛔ **ET LA CONSIGNE QUI COMPTE POUR LA SESSION SUIVANTE : NE PAS RELANCER EN BOUCLE.** Chaque
-relance (`workflow_dispatch`) ou chaque push sur `master` **annule le run qui attend** et remet
-la file à zéro. *Une file qu'on réamorce sans arrêt n'avance jamais.* On relance **une fois**,
-puis on surveille.
+**⛔ Et une conséquence qui corrige un chiffre annoncé** : j'avais dit « dernier déploiement réussi =
+17:33 ». **Faux** — celui de 17:33 n'a jamais réussi non plus. Le dernier `success` réel était
+**15:58** (`7d1d73c3`). *Un déploiement listé n'est pas un déploiement réussi : il faut lire ses
+statuts.*
 
-⭐ **C'est R18 dans sa forme la plus pure** — *vérifier le DÉPLOIEMENT, pas le push* — et la
-**troisième fois** de ce projet après ft-v600 et ft-v619. La différence : cette fois le
-déploiement n'est pas « bloqué en silence », il est **mesuré** — mais il fallait aller le
-chercher dans l'API, personne n'est prévenu automatiquement.
+**Le geste qui a débloqué** : annuler le run #1184. La file est repartie immédiatement, et
+`9f82a8de` (ft-v1220) s'est déployé en quelques minutes.
+
+⚠️ **CE QU'ON NE SAIT TOUJOURS PAS, ET QUI PEUT REVENIR** : *pourquoi* #1184 a demandé une
+approbation alors que les sept précédents étaient passés seuls. S'il existe une **règle de protection**
+sur l'environnement `github-pages` (required reviewers / wait timer), elle re-bloquera. **À vérifier
+côté Michel** : Settings → Environments → `github-pages`.
+
+⭐ **C'est R18 pour la troisième fois** (après ft-v600 et ft-v619) — *vérifier le DÉPLOIEMENT, pas le
+push*. Avec une différence : cette fois il a été **mesuré**, pas découvert par hasard. Mais il a fallu
+aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
 
 ---
 
