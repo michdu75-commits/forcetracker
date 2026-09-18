@@ -63,7 +63,12 @@ g(re.search(r"\|\| excluded\.data\)\s*\n\s*- 'token' - 'authCode' - 'code' - 'co
 g("raise exception\n      'ft_comptes.data est de type % et non jsonb" in MIG3
   or "ft_comptes.data est de type % et non jsonb" in MIG3,
   'la precondition de type a disparu de la migration 0003')
-g('set data = excluded.data' not in MIG3,
+# ⚠️ ON MESURE LE CODE, PAS LA NOTE QUI EN PARLE. Le bloc « RETOUR ARRIERE » cite forcement
+#    l ancienne forme — R30 exige d ecrire la raison a cote du code. Un garde qui lirait le
+#    fichier brut rougirait donc sur une migration parfaitement juste. (3e fois ce jour-la
+#    que ce piege se referme : meme famille que le mot « revision » et que « identite ».)
+MIG3_NU = re.sub(r'(?m)--[^\n]*', '', MIG3)
+g('set data = excluded.data' not in MIG3_NU,
   'la migration 0003 contient encore un remplacement integral')
 g('set data = excluded.data, updated_at = now();' in MIG2,
   'la migration 0002 ne porte plus l ancienne semantique : le retour arriere serait faux')
@@ -227,7 +232,7 @@ H.append(encadre(
     'donc <i>absence = conservee</i>, donc <b>la fuite survivait indefiniment</b>. '
     '👉 <b>Le geste qui protege les champs metier protegeait aussi ceux qu on veut justement '
     'voir disparaitre.</b> Le retrait est donc reapplique <b>APRES</b> la fusion. '
-    '⭐ Effet de bord favorable, dit sans etre survendu : la premiere sauvegarde de chaque '
+    '&gt;&gt; Effet de bord favorable, dit sans etre survendu : la premiere sauvegarde de chaque '
     'compte <b>purge</b> desormais les justificatifs anciens, ce que S2-A avait laisse ouvert '
     'faute d acces au tableau de bord. Temoins <b>T9c</b> et <b>T9d</b>.'.replace('👉', '&gt;&gt;')))
 H.append(tableau(
