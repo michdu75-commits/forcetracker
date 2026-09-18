@@ -90,6 +90,7 @@ function source(t, ROOT, fs, path) {
   const SET = fs.readFileSync(path.join(ROOT, 'setup.js'), 'utf8');
   const APP = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
   const CO = fs.readFileSync(path.join(ROOT, 'constants.js'), 'utf8');
+  const APP0 = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   /* ⚠️ ON MESURE LE CODE, PAS LA DOCUMENTATION. Ces fichiers citent abondamment, dans leurs
      commentaires, tout ce que les témoins cherchent — la raison de chaque décision est
      justement écrite à côté du code (R30). Un témoin qui lirait le fichier brut resterait
@@ -161,8 +162,19 @@ function source(t, ROOT, fs, path) {
     const b503 = (E.match(/statut === 503[^\n]*\n?[^\n]*/) || [''])[0];
     t('B-CCCXXVI ⑭ ⭐⭐ une panne du cloud n\'est JAMAIS présentée comme une révocation',
       /statut === 503/.test(E) && /cloud indisponible/.test(b503) && !/révoqu/.test(b503), '');
+    /* ⚠️⚠️ CE TÉMOIN A ROUGI SUR DU CODE PARFAITEMENT SAIN EN ft-v1223 — DEUXIÈME FOIS QUE
+       CE FICHIER TOMBE DANS LE MÊME PIÈGE, et la leçon était déjà écrite juste à côté (voir
+       B-CCCXIV ③ de ft-v1217 : « la LISTE vit au niveau du fichier, seul l'APPEL vit dans la
+       fonction »). Le libellé de la révocation a quitté le corps de `_sbEtatDepuis` pour la
+       table `_SB_REFUS_REELS`, au niveau du fichier — donc le chercher dans la fonction ne
+       mesure plus rien. 👉 ***Un garde doit chercher le fait LÀ OÙ IL SE TROUVE***, et quand
+       un fait se déplace, c'est le garde qui suit, pas le code qui revient.
+       ⭐ La garantie, elle, n'a pas bougé d'un pouce : la table le dit, la fonction la
+       consulte, et le résultat est fermé. Les trois sont vérifiés séparément. */
     t('B-CCCXXVI ⑮ une révocation reste fail-closed et le dit',
-      /revoque/.test(E) && /révoqué/.test(E) && /ok:false/.test(E.replace(/\s/g, '')), '');
+      /revoque:\s*'appareil révoqué/.test(SBC)
+      && /_sbEstRefusReel\(r\)/.test(E)
+      && /ok:false,voie:'',info:_SB_REFUS_REELS\[r\]/.test(E.replace(/\s/g, '')), '');
     t('B-CCCXXVI ⑯ un succès n\'est reconnu que sur 200 ET `status:"ok"`',
       /statut === 200 && d && d\.status === 'ok'/.test(E), '');
   }
@@ -200,6 +212,55 @@ function source(t, ROOT, fs, path) {
   t('B-CCCXXVI ㉔ ⛔ anti-alias — chaque justificatif n\'est lu QU\'UNE FOIS dans `_cloudSync`',
     (CS.match(/_ftToken\(\)/g) || []).length === 1
     && (CS.match(/_authCode\(\)/g) || []).length === 1, '');
+
+  /* ════════════════════════════════════════════════════════════════════════════════════
+     BLOC B-CCCXXVIII — LES DEUX DÉFAUTS D'AFFICHAGE, CORRIGÉS (ft-v1223)
+
+     ⚠️ Ces deux défauts ne viennent pas d'une relecture : ils ont été VUS À L'ÉCRAN le
+     18/09, pendant une vraie panne d'Apps Script. La carte annonçait « identité refusée »
+     à quelqu'un dont le compte allait parfaitement bien, et la sonde affichait un ✅ vert
+     pendant que le serveur d'identité était en rade.
+     ════════════════════════════════════════════════════════════════════════════════════ */
+  console.log('\n═══ B-CCCXXVIII. Les deux défauts d\'affichage, corrigés (source) ═══');
+
+  {
+    const E = nuC(corps('_sbEtatDepuis', SB));
+    /* ⭐⭐ LISTE BLANCHE, PAS LISTE NOIRE : on énumère ce qui EST un refus, et tout le reste
+       est une panne. Une raison NOUVELLE est bien plus probablement une anomalie qu'un refus
+       légitime, et le coût de l'erreur n'est pas symétrique (R29). */
+    t('B-CCCXXVIII ① ⭐⭐ les vrais refus sont une LISTE BLANCHE nommée',
+      /_SB_REFUS_REELS\s*=\s*\{/.test(SBC)
+      && ['revoque', 'forme', 'absent', 'inconnu'].every(k => new RegExp(k + ':').test(SBC)), '');
+    t('B-CCCXXVIII ② ⭐⭐ RETOURNÉ — « identité refusée » a disparu du code',
+      !/identité refusée/.test(SBC), '');
+    t('B-CCCXXVIII ③ … et ce qui n\'est pas un refus est dit « serveur indisponible »',
+      /serveur indisponible/.test(E), '');
+    t('B-CCCXXVIII ④ la branche 401 passe par la liste blanche, jamais par une liste de pannes',
+      /_sbEstRefusReel\(r\)/.test(E) && !/'reseau'/.test(E) && !/'refus'/.test(E), '');
+    t('B-CCCXXVIII ⑤ ⛔ la révocation reste dite en clair (elle doit se comprendre)',
+      /revoque:\s*'appareil révoqué/.test(SBC), '');
+    t('B-CCCXXVIII ⑥ la branche 503 est intacte (elle était déjà juste)',
+      /cloud indisponible/.test(E), '');
+  }
+  {
+    /* ⭐ LA SONDE PORTAIT LE MÊME DÉFAUT : un ✅ sur une panne. Mesuré à l'écran à 14:00,
+       « raison : refus » affichait quand même un succès. */
+    t('B-CCCXXVIII ⑦ ⭐ la sonde ne crie victoire que sur un VRAI refus',
+      /_sbEstRefusReel\(d\.raison\)/.test(SONDE), '');
+    t('B-CCCXXVIII ⑧ … et annonce une panne du serveur d\'identité sinon',
+      /serveur d\\?'identité est indisponible/.test(SONDE), '');
+  }
+  {
+    /* ⭐ LE TEXTE DE LA CARTE : R23, la doc posée à côté du code qui s'était mise à mentir. */
+    t('B-CCCXXVIII ⑨ ⭐⭐ RETOURNÉ — la carte ne promet plus une écriture',
+      !/Le bouton écrit une ligne de test/.test(APP0), '');
+    t('B-CCCXXVIII ⑩ … elle dit ce que le bouton fait vraiment',
+      /teste la route sans rien écrire/.test(APP0), '');
+    /* ⛔ PÉRIMÈTRE : ma seule empreinte dans `index.html` est cette carte. Le témoin mesure
+       « où », pas « combien » — la leçon de B-CCCXXVI ㉒. */
+    t('B-CCCXXVIII ⑪ ⛔ PÉRIMÈTRE — Nutrition et le scanner sont intacts dans `index.html`',
+      /id="ov-add-food"/.test(APP0) && /admin-sb/.test(APP0), '');
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════════════════
@@ -366,6 +427,78 @@ async function reel(t, ROOT, fs, path) {
     const r = await ctx.sbTestVoie();
     t('B-CCCXXVII ㉔ la sonde distingue une panne d\'un problème d\'identité',
       r.ok === false && /cloud est indisponible/.test(r.texte) && !/identité/.test(r.texte.replace("d'identité", '')), r.texte);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════════════════
+     BLOC B-CCCXXIX — LE CAS QUI MANQUAIT À CE BANC (ft-v1223)
+
+     ⚠️⚠️ CE TROU A ÉTÉ TROUVÉ PAR UN VRAI TÉLÉPHONE, PAS PAR UNE RELECTURE. J'avais conduit
+     401/révoqué, 401/sans-jeton, 503 et la coupure réseau DU TÉLÉPHONE — mais jamais le
+     **401 dont la raison est une panne du PONT**. Le 18/09, Apps Script est devenu
+     injoignable et la carte a annoncé « identité refusée » à quelqu'un dont le compte allait
+     parfaitement bien. *Un cas qu'on n'écrit pas reste vert pour toujours.*
+     ════════════════════════════════════════════════════════════════════════════════════ */
+  console.log('\n═══ B-CCCXXIX. Le 401 dont la raison est une PANNE (comportement) ═══');
+
+  {
+    const etatPour = async (raison) => {
+      const { ctx } = monter(ROOT, fs, path, {
+        jeton: JETON_APPAREIL,
+        repondre: () => ({ statut: 401, json: { status: 'error', error: 'auth', raison } }),
+      });
+      ctx.sbEnvoyer(corpsMetier());
+      await pause(); await pause();
+      return ctx.sbEtat();
+    };
+
+    /* ⭐⭐ LES QUATRE RAISONS QUE LE PONT REND QUAND C'EST LUI QUI VA MAL — aucune ne doit
+       parler d'identité : `reseau` (Apps Script muet), `refus` (il a levé une exception APRÈS
+       avoir reconnu le jeton), `erreur` (son stockage a lâché), `illisible` (la ligne du
+       registre est abîmée). Les deux premières ont été OBSERVÉES à l'écran le 18/09. */
+    for (const r of ['reseau', 'refus', 'erreur', 'illisible']) {
+      const e = await etatPour(r);
+      t('B-CCCXXIX · « ' + r +' » est dit comme une PANNE, jamais comme un refus d\'identité',
+        e.ok === false && /serveur indisponible/.test(e.texte)
+        && !/identité refusée/.test(e.texte) && !/révoqu/.test(e.texte), e.texte);
+    }
+    /* ⭐⭐ LE TÉMOIN LE PLUS UTILE DU BLOC : une raison QU'ON N'A PAS PRÉVUE. C'est ce que la
+       liste blanche achète — *une raison nouvelle est bien plus probablement une anomalie
+       qu'un refus légitime*, et le coût de l'erreur n'est pas symétrique (R29). */
+    {
+      const e = await etatPour('mot_qui_nexiste_pas_encore');
+      t('B-CCCXXIX ⭐⭐ une raison INCONNUE est traitée comme une panne, pas comme un refus',
+        e.ok === false && /serveur indisponible/.test(e.texte)
+        && !/identité refusée/.test(e.texte), e.texte);
+    }
+    /* ⛔ NON-RÉGRESSION : les vrais refus doivent rester dits en clair, sinon on a juste
+       déplacé le mensonge dans l'autre sens. */
+    for (const [r, attendu] of [['revoque', /révoqué/], ['forme', /aucun jeton/],
+                                ['absent', /aucun jeton/], ['inconnu', /non reconnu/]]) {
+      const e = await etatPour(r);
+      t('B-CCCXXIX ⛔ « ' + r + ' » reste un VRAI refus, dit en clair',
+        e.ok === false && attendu.test(e.texte) && !/serveur indisponible/.test(e.texte),
+        e.texte);
+    }
+  }
+
+  // ⑪ LA SONDE PORTAIT LE MÊME DÉFAUT : un ✅ vert pendant que le serveur était en rade
+  {
+    const { ctx } = monter(ROOT, fs, path, {
+      jeton: JETON_APPAREIL,
+      repondre: () => ({ statut: 401, json: { status: 'error', error: 'auth', raison: 'refus' } }),
+    });
+    const r = await ctx.sbTestVoie();
+    t('B-CCCXXIX ⭐ la sonde ne crie plus victoire pendant une panne du pont',
+      r.ok === false && /indisponible/.test(r.texte) && !/^✅/.test(r.texte), r.texte);
+  }
+  {
+    const { ctx } = monter(ROOT, fs, path, {
+      jeton: JETON_APPAREIL,
+      repondre: () => ({ statut: 401, json: { status: 'error', error: 'auth', raison: 'inconnu' } }),
+    });
+    const r = await ctx.sbTestVoie();
+    t('B-CCCXXIX ⛔ … mais un VRAI refus reste bien un succès de la sonde',
+      r.ok === true && /REFUSE un jeton inconnu/.test(r.texte), r.texte);
   }
 
   // ⑩ une réponse illisible ne doit pas casser la sauvegarde

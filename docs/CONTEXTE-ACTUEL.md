@@ -409,7 +409,25 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1222` — 🔐 **S2-B PHASE 4 : LE CLIENT BASCULE VERS
+- **Version en ligne (live) :** `ft-v1223` — 🩹 **LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR,
+  CORRIGÉS — et ils avaient été vus À L'ÉCRAN, pas en relecture.**
+  ⚠️ Le 18/09, pendant une vraie panne d'Apps Script (*« Le serveur répond : INJOIGNABLE »*),
+  la carte Admin annonçait **« identité refusée »** à quelqu'un dont le compte allait
+  parfaitement bien, et la sonde affichait un **✅ vert** pendant que le serveur d'identité
+  était en rade.
+  ⭐⭐ **La correction est une LISTE BLANCHE, pas une liste de pannes** : on énumère ce qui
+  **est** un refus (`revoque` · `forme` · `absent` · `inconnu`) et **tout le reste** devient
+  « serveur indisponible ». *Une raison nouvelle est bien plus probablement une anomalie qu'un
+  refus légitime*, et le coût de l'erreur n'est pas symétrique (**R29**).
+  ⛔ `revoque` reste dit en clair — sinon la personne ne comprend pas pourquoi ses sauvegardes
+  ont cessé de partir.
+  ⛔ **Le texte de la carte** ne promet plus une écriture qui n'a plus lieu (**R23**).
+  ⚠️⚠️ **Le trou de mon banc est la vraie leçon** : j'avais conduit 401/révoqué, 401/sans-jeton,
+  503 et la coupure réseau **du téléphone** — jamais le **401 dont la raison est une panne du
+  PONT**. *Un cas qu'on n'écrit pas reste vert pour toujours.*
+  ⛔⛔ **V2 n'est toujours pas fermée**, et les deux voies réelles restent à mesurer.
+
+- **Version précédente :** `ft-v1222` — 🔐 **S2-B PHASE 4 : LE CLIENT BASCULE VERS
   `cloudSave` — l'identité du miroir ne vient plus d'une adresse choisie par le navigateur.**
   ⭐⭐ Ce qui change tient en une phrase : `p_email`, qu'un navigateur pouvait choisir librement,
   cède la place au **jeton S1 résolu côté serveur**. Une seule ligne bouge dans `_cloudSync` —

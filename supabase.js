@@ -118,6 +118,38 @@ const SB_VOIE = 'worker';   // 'worker' = jeton résolu côté serveur · 'direc
    s'arrêterait au premier contrôle et ne prouverait rien) et il n'existe dans aucun registre. */
 const SB_SONDE_JETON = '0000000000000000000000000000000000000000000000000000000000000000';
 
+/* ⛔⛔ LES SEULS VRAIS REFUS D'IDENTITÉ, NOMMÉS UN PAR UN — ET C'EST UNE LISTE BLANCHE,
+   PAS UNE LISTE DE PANNES (correction du 18/09/2026, ft-v1223).
+
+   ⚠️ CE DÉFAUT S'EST PRODUIT POUR DE VRAI, ET C'EST POUR ÇA QUE LA RÈGLE EST ÉCRITE ICI. Le
+   18/09 après-midi, Apps Script est devenu injoignable (« trop lent, plus de 20 s »). Le
+   Worker rend alors un 401 dont la raison est `reseau` — une PANNE. L'écran, lui, annonçait
+   **« identité refusée »** à quelqu'un dont le compte allait parfaitement bien. *Le chantier
+   entier repose sur « dire à quelqu'un que son appareil est révoqué alors que le cloud est
+   tombé est une erreur qu'il va essayer de réparer lui-même » — et c'est exactement ce que
+   faisait ce code, un cran plus bas que là où on l'avait corrigé.*
+
+   ⭐⭐ POURQUOI UNE LISTE BLANCHE PLUTÔT QU'UNE LISTE NOIRE DES PANNES. Le pont peut rendre
+   `reseau` (Apps Script muet), `refus` (le serveur a levé une exception APRÈS avoir reconnu
+   le jeton), `erreur` (son stockage a lâché), `illisible` (la ligne du registre est abîmée) —
+   et demain un mot qu'on n'a pas prévu. ***Une raison NOUVELLE est bien plus probablement une
+   anomalie qu'un refus légitime***, et le coût de l'erreur n'est pas symétrique (R29) : dire
+   « serveur indisponible » à quelqu'un dont le jeton est vraiment révoqué est bénin, il verra
+   que ça ne marche pas ; dire « identité refusée » pendant une panne l'envoie réparer une
+   chose qui n'est pas cassée. On énumère donc ce qui EST un refus ; tout le reste est une
+   panne.
+   ⛔ Et `revoque` reste dit en clair : quelqu'un dont l'appareil a vraiment été retiré doit
+   le savoir, sinon il ne comprend pas pourquoi ses sauvegardes ont cessé de partir. */
+const _SB_REFUS_REELS = {
+  revoque: 'appareil révoqué — écriture refusée',
+  forme:   'aucun jeton sur cet appareil',
+  absent:  'aucun jeton sur cet appareil',
+  inconnu: 'appareil non reconnu — il faut le reconnecter',
+};
+function _sbEstRefusReel(r){
+  return Object.prototype.hasOwnProperty.call(_SB_REFUS_REELS, String(r || ''));
+}
+
 /** Ce que l'app retient d'une réponse du Worker. ⛔ Aucun jeton, aucun haché, aucune clé :
  *  seulement un code HTTP, un mot de refus et la voie empruntée. */
 function _sbEtatDepuis(statut, d){
@@ -129,10 +161,10 @@ function _sbEtatDepuis(statut, d){
      qu'une erreur technique : c'est une erreur qu'il va essayer de réparer lui-même.* */
   if (statut === 503) return { ok:false, voie:'', info:'cloud indisponible (' + ((d && d.raison) || '?') + ')' };
   if (statut === 401) {
-    const r = (d && d.raison) || '?';
-    if (r === 'revoque') return { ok:false, voie:'', info:'appareil révoqué — écriture refusée' };
-    if (r === 'forme')   return { ok:false, voie:'', info:'aucun jeton sur cet appareil' };
-    return { ok:false, voie:'', info:'identité refusée (' + r + ')' };
+    const r = (d && d.raison) || '';
+    if (_sbEstRefusReel(r)) return { ok:false, voie:'', info:_SB_REFUS_REELS[r] };
+    // ⭐ tout le reste est une panne du serveur d'identité, et se dit comme telle.
+    return { ok:false, voie:'', info:'serveur indisponible (' + (r || '?') + ')' };
   }
   return { ok:false, voie:'', info:'HTTP ' + statut };
 }
@@ -197,9 +229,18 @@ async function sbTestVoie(){
     const r=await fetch(AI_PROXY_URL,{method:'POST',
       body:JSON.stringify({ action:'cloudSave', token:SB_SONDE_JETON, data:{sonde:true} })});
     let d=null; try{ d=await r.json(); }catch(e){}
-    if(r.status===401 && d && d.error==='auth')
+    /* ⛔⛔ LE MÊME DÉFAUT VIVAIT ICI, ET IL A ÉTÉ VU À L'ÉCRAN LE 18/09 À 14:00 : la sonde
+       affichait un ✅ triomphant sur « raison : refus », c'est-à-dire pendant qu'Apps Script
+       était en rade. *Un instrument qui annonce « tout va bien » pendant une panne est pire
+       qu'un instrument muet.* Le ✅ n'est mérité que si le refus est un VRAI refus — pour un
+       jeton factice, cela veut dire que le registre a été consulté et n'a rien trouvé. */
+    if(r.status===401 && d && d.error==='auth' && _sbEstRefusReel(d.raison))
       return {ok:true, texte:'✅ La route répond et REFUSE un jeton inconnu (HTTP 401, raison « '
                              +((d.raison)||'?')+' »). Aucune écriture.'};
+    if(r.status===401 && d && d.error==='auth')
+      return {ok:false, texte:'⚠️ La route répond, mais le serveur d\'identité est indisponible '
+                              +'(HTTP 401, raison « '+((d.raison)||'?')+' »). Ce n\'est PAS un '
+                              +'problème de compte — voir « Santé du système ». Aucune écriture.'};
     if(r.status===503)
       return {ok:false, texte:'⚠️ La route répond mais le cloud est indisponible (HTTP 503, « '
                               +((d&&d.raison)||'?')+' ») — ce n\'est pas un problème d\'identité.'};

@@ -12,6 +12,13 @@
      chose qui n'existe plus. C'est le miroir exact des gardes habituelles : d'ordinaire on
      verifie qu'une correction est bien la, ici on verifie qu'elle ne l'est PAS ENCORE.
 
+[!!] ⛔⛔ CE GENERATEUR NE PRODUIT PLUS RIEN DEPUIS ft-v1223, ET C'EST VOULU — NE PAS LE
+     « REPARER ». Ses gardes a l'envers refusent de publier un dossier qui decrit un defaut
+     DEJA CORRIGE. Les deux defauts d'affichage (une panne dite « identite refusee », et la
+     carte qui promettait une ecriture) ont ete corriges le 18/09/2026 sur feu vert de Michel.
+     Le PDF qu'il a produit est date et deja livre : son role est fini. Rendre ce fichier
+     capable de produire a nouveau reviendrait a remettre le defaut dans le code (R30).
+
 CONTRAINTE DE POLICE : WinAnsi/cp1252 — pas d'emoji ; entites decodees AVANT controle.
 """
 import html

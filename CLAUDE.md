@@ -166,7 +166,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1222`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1223`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -435,7 +435,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1222`** (prochaine : `ft-v1223`).
+> **Version actuelle : `ft-v1223`** (prochaine : `ft-v1224`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -474,6 +474,39 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1223 — 🩹 LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR · ET ILS ONT ÉTÉ VUS À L'ÉCRAN, PAS EN RELECTURE** — feu vert de Michel : ⭐ ***« corrige les deux défauts d'affichage »***.
+
+**⚠️⚠️ CE QUI LEUR DONNE LEUR POIDS : ILS SE SONT PRODUITS POUR DE VRAI, L'APRÈS-MIDI MÊME.** Apps Script est devenu injoignable (*« Le serveur répond : INJOIGNABLE, trop lent »*), et la carte Admin a annoncé **« identité refusée »** à quelqu'un dont le compte allait parfaitement bien. *Le chantier entier repose sur la phrase « dire à quelqu'un que son appareil est révoqué alors que le cloud est simplement tombé est une erreur qu'il va essayer de réparer lui-même » — et je l'avais commise un cran plus bas que là où je l'avais corrigée.*
+
+**⭐⭐ LA CORRECTION EST UNE LISTE BLANCHE, PAS UNE LISTE DE PANNES — et c'est tout le sujet.** La branche 401 ne traitait à part que `revoque` et `forme` ; `reseau`, `refus`, `erreur`, `illisible` tombaient dans un fourre-tout qui parlait d'identité. On énumère désormais ce qui **EST** un refus, et **tout le reste** est « serveur indisponible ».
+
+| raison rendue par le pont | avant | après |
+|---|---|---|
+| `reseau` · `refus` · `erreur` · `illisible` | ⛔ **« identité refusée »** | ✅ **« serveur indisponible »** |
+| une raison **jamais vue** | ⛔ « identité refusée » | ✅ **« serveur indisponible »** |
+| `revoque` | « appareil révoqué » | **inchangé** |
+| `forme` · `absent` · `inconnu` | partiel | **dits en clair, un par un** |
+
+👉 ***Une raison NOUVELLE est bien plus probablement une anomalie qu'un refus légitime***, et le coût de l'erreur n'est pas symétrique (**R29**) : dire « serveur indisponible » à un appareil vraiment révoqué est bénin — il verra que ça ne marche pas ; dire « identité refusée » pendant une panne envoie quelqu'un réparer ce qui n'est pas cassé. ⛔ Et `revoque` reste dit **en clair** : sans ça, la personne ne comprend pas pourquoi ses sauvegardes ont cessé de partir.
+
+**⭐ LA SONDE PORTAIT LE MÊME DÉFAUT, ET C'EST PIRE QU'UN SILENCE.** Elle affichait un **✅ triomphant** sur `raison : refus`, c'est-à-dire *pendant* la panne. *Un instrument qui annonce « tout va bien » pendant une panne est pire qu'un instrument muet.* Le ✅ n'est désormais mérité que sur un **vrai** refus.
+
+**⛔ DÉFAUT 2 — LE TEXTE DE LA CARTE (R23).** Il promettait encore *« le bouton écrit une ligne de test pour de vrai »* : vrai de l'**ancien** bouton, faux depuis la bascule où la sonde **n'écrit rien** — ce qui est précisément ce qui la rend sûre pendant une mesure. *J'avais changé le comportement sans changer le texte qui le décrit.*
+
+**⚠️⚠️ ET LE TROU DE MON BANC EST LA VRAIE LEÇON DE CETTE PASSE.** J'avais conduit 401/révoqué, 401/sans-jeton, 503, et la coupure réseau **du téléphone**. ⛔ **Jamais le 401 dont la raison est une panne du PONT.** 👉 ***Un cas qu'on n'écrit pas reste vert pour toujours*** — et celui-là a été trouvé par un vrai téléphone, pas par une relecture. Le bloc **B-CCCXXIX** le comble, **y compris avec une raison qu'on n'a pas prévue**.
+
+**⚠️ ET UN TÉMOIN A ROUGI SUR DU CODE PARFAITEMENT SAIN — DEUXIÈME FOIS, MÊME PIÈGE, MÊME FICHIER.** `B-CCCXXVI ⑮` cherchait le libellé de la révocation **dans la fonction**, or il a déménagé dans une table **au niveau du fichier**. La leçon était écrite **juste à côté**, dans `B-CCCXIV ③` de ft-v1217 : *« la LISTE vit au niveau du fichier, seul l'APPEL vit dans la fonction »*. 👉 ***Un garde doit chercher le fait LÀ OÙ IL SE TROUVE — et quand un fait déménage, c'est le garde qui suit, pas le code qui revient.***
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran utilisateur ne change : un texte d'**Admin** devient exact, et un message d'erreur d'**Admin** cesse de mentir.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **V2 n'est toujours pas fermée** · ⛔ les **deux voies réelles** (`pont` puis `directe`) restent à mesurer — elles attendent le retour d'Apps Script · ⛔ Nutrition, scanner, douane, `foodLog`, Accueil, Séance, Progrès, Milo : **0 ligne** · ⛔ ni `app.js`, ni `screens.js`, ni `state.js`, ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `constants.js`, ni `worker.js`, ni `Code.js`. Dans `index.html`, ma **seule** empreinte est la carte du miroir.
+
+**⛔ ET LES DEUX GÉNÉRATEURS DE PDF DES DOSSIERS PRÉCÉDENTS REFUSENT DÉSORMAIS DE PRODUIRE — C'EST VOULU.** Leurs **gardes à l'envers** interdisent de publier un dossier qui décrit un défaut **déjà corrigé** : *un dossier qui décrit un défaut réparé fait chercher quelque chose qui n'existe plus*. L'en-tête de chaque fichier le dit, pour que personne ne les « répare » (**R30**).
+
+Tests : **blocs B-CCCXXVIII (11 témoins de source) et B-CCCXXIX (11 témoins de comportement)**, dans `tests/parcours/s2b_bascule.js` — banc ciblé **71 OK / 0 rouge**. ⛔ **CONTRÔLE NÉGATIF : 28 mutations sur un arbre CLONÉ, 28 conformes**, dont **deux qui doivent RESTER VERTES**.
+
+Fichiers : `supabase.js`, `index.html` (**la seule carte du miroir**), `tests/parcours/s2b_bascule.js`, `tools/mut_s2b_bascule.py`, `tools/gen_s2b_essai_iphone_pdf.py` et `tools/gen_s2b_panne_appsscript_pdf.py` (en-tête « périmé »), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1223. |
 
 **ft-v1222 — 🔐 S2-B PHASE 4 · LE CLIENT BASCULE VERS `cloudSave` : L'IDENTITÉ DU MIROIR CESSE D'ÊTRE UNE ADRESSE QUE LE NAVIGATEUR CHOISIT** — feu vert de Michel après la mesure en réseau réel du point D. Ses bornes : ⛔ ***« ne jamais demander ni afficher le vrai jeton »*** · ⛔ ***« ne pas envoyer d'email comme sélecteur d'identité vers Supabase »*** · ⛔ ***« ne pas supprimer l'ancien chemin avant validation complète du nouveau »*** · ⛔⛔ ***« STOP avant fermeture V2 »***.
 
@@ -731,37 +764,3 @@ Tests : **parcours 4150/4150 sur l'arbre FINAL** (bloc **B-CCCXIII**, 10 témoin
 📄 **PDF POUR GPT** : `DOSSIER-S1-IDENTITE-SERVEUR-FINAL-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **60 gardes**. ⭐ Le miroir exact du générateur précédent : celui-là refusait de produire si S1 était **déjà** fait, celui-ci refuse si une pièce **manque**.
 
 Fichiers : `Code.js`, `worker.js`, `constants.js`, `app.js`, `setup.js`, `tests/parcours/runner.js`, `tools/gen_s1_final_pdf.py`, `sw.js`, `CLAUDE.md`, `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `index.html`, ni `log.js`, ni `coach.js`, ni `state.js`, ni `supabase.js`, ni `screens.js`, ni `tracking.js`.** sw.js ft-v1216. |
-
-**ft-v1215 — 🔒 CE N'ÉTAIT PAS UN VERROU MANQUANT, C'ÉTAIT UN ÉTAT · ET LA SÉANCE CESSE D'ÊTRE DEVINÉE** — phase 1 du chantier débrief, validée par Michel après le dossier de mesures : ⛔ ***« pour CETTE passe, tu ne fais QUE l'étape 1 »***.
-
-**⭐⭐ A — LE DOUBLE DÉBRIEF : LA CAUSE N'ÉTAIT PAS CELLE QU'ON CHERCHE D'HABITUDE.** Un rechargement PENDANT l'appel faisait débriefer la même séance **deux fois** (2 appels `coach` mesurés pour une séance). ⛔ Et le trou n'était pas un verrou : entre l'arrivée de la réponse et `_dbfFini`, **aucun état ne disait que c'était déjà payé** — `_dbfRecuperer` voyait un jeton « en cours », en déduisait un appel jamais abouti, et remettait la séance en file.
-
-**⛔⛔ L'ÉTAT `recu` NE VAUT QUE PARCE QU'IL PORTE LA RÉPONSE.** Marquer « reçu » sans garder le texte aurait remplacé un doublon par une **perte silencieuse** — la personne n'aurait jamais su que son débrief avait existé (**R29** : le coût de l'erreur n'est pas symétrique). La réponse **et la consigne** sont donc persistées à l'instant même où elles arrivent, **avant** tout nettoyage, affichage ou écriture d'historique — c'est-à-dire avant toute opération interruptible. ⭐ *Et ça rejoint la cible produit de Michel : « résultat persisté / réutilisable ».*
-
-**⭐ LE RATTRAPAGE TERMINE, IL NE REFAIT PLUS** : il pose la réponse gardée dans le fil du Coach, puis marque la séance livrée. ⛔ Et il sort **avant** de regarder le jeton « en vol » — l'ordre n'est pas cosmétique : lire « en vol » d'abord remettrait la séance en file et on repaierait exactement ce qu'on cherche à éviter.
-
-| scénario (conduit par les vraies portes) | appels `coach` |
-|---|---|
-| appel normal · rechargement après affichage · app fermée/rouverte | **1** |
-| rechargement AVANT le départ de l'appel | **0** |
-| rechargement PENDANT `en_vol` | **2** — ⭐ **juste** : rien n'était payé |
-| ⭐⭐ **rattrapage depuis la FENÊTRE EXACTE** | **0**, réponse **reposée** |
-| échec réseau → jeton `en_file`, puis « Réessayer » | récupérable, livré |
-
-**⭐⭐ B — LA SÉANCE EST NOMMÉE, PLUS DEVINÉE.** `_dbfPrendre` prenait la **plus ancienne** pendant que l'instruction disait « la plus **récente** » : avec deux séances en file, l'écran affichait l'une et Milo analysait l'autre. L'écran de fin cible désormais la séance **affichée**, par son identifiant (`_dbfPrendreCible`), et l'instruction la **nomme**. ⭐⭐ **L'ID CHOISIT, LA DATE DÉCRIT** — le contexte ne porte aucun identifiant interne, donc le donner au modèle ne l'aiderait pas ; la désignation est **dérivée** de la séance retrouvée par son id, au format exact du contexte. Mesuré sur 6 scénarios : les **4 identifiants** (affiché · pris · injecté · cité) coïncident, **y compris avec deux séances le même jour**.
-
-**⚠️⚠️ UN DÉFAUT QUE J'AI INTRODUIT, TROUVÉ PAR LE BANC ET NON PAR RELECTURE.** Mon garde refusait toute séance présente dans `_dbfFaits` — or `_dbfRendre` (échec propre) y inscrit les séances **échouées** tout en les remettant en file. Conséquence mesurée : après un vrai échec réseau, **le bouton « Réessayer » ne déclenchait plus aucun appel** — *le débrief était perdu en silence, exactement ce que cette correction doit empêcher*. 👉 **La file fait foi pour « à faire » ; `_dbfFaits` ne sert que hors file.**
-
-**⚠️ ET TROIS TÉMOINS ÉTAIENT AVEUGLES, MÊME FAMILLE** : ils cherchaient une **présence** (`return;`, `removeItem(_DBF_RECU)`, `_DBF_PEREMPTION`) alors que le même mot vit **ailleurs dans la fonction** — les retirer de leur branche les laissait verts. Resserrés par comptage. *Un motif qui cherche une présence ne mesure pas une absence locale.*
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : mêmes appels sur le chemin normal, socle local **478 car.** inchangé, « Continuer avec Milo » toujours **0 appel**, **+51 octets** de désignation. ⛔ **0 `summarizeCoach` créé par la correction.**
-
-**⏭️ CE QUE ÇA NE FAIT PAS** (périmètre nommé par Michel, chacun figé par un témoin) : ⛔ pas de `buildSessionDebriefContext` · ⛔ les blocs C+D ne sont pas retirés · ⛔ **le catalogue d'exercices ne bouge pas** · ⛔ **le Gardien ne bouge pas** · ⛔ **le cache ne bouge pas** · ⛔ Sonnet reste Sonnet · ⛔ la politique de mémoire ne bouge pas · ⛔ prévu vs réalisé, Nutrition, **règles RIR de ft-v1213** : intacts.
-
-⚠️⚠️ **UNE LIMITE DITE PLUTÔT QUE MASQUÉE** : le chemin **Coach** (`_maybeAutoDebrief` → `sendToCoach`) garde une fenêtre analogue. ⭐ Elle est **bornée** — la réponse y est déjà écrite dans le fil avant que la main revienne, donc **rien n'est perdu**, au pire un appel est repayé. La fermer imposerait de modifier `sendToCoach`, le cœur de la conversation : **au-delà du périmètre de cette passe**, donc signalé au lieu d'être appliqué.
-
-Tests : **parcours 4140/4140 sur l'arbre FINAL** (bloc **B-CCCXII**, 20 témoins). ⛔ **CONTRÔLE NÉGATIF : 20 mutations, 20 mordent**, chacune par son témoin, contrôle sain **20 OK / 0 rouge avant ET après**, sur un arbre **copié**.
-
-📄 **PDF POUR GPT** : `DOSSIER-GPT-DEBRIEF-PHASE1-15-09-2026.pdf` (**hors dépôt**, règle d'or #14), **36 gardes**. ⭐ Il a été écrit **pendant** que la passe tournait et **refusait donc de publier un total** — la leçon ft-v1201 tenue par un garde plutôt que par la mémoire.
-
-Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `setup.js`, ni `state.js`, ni `worker.js`, ni `Code.js`.** sw.js ft-v1215. |

@@ -65,9 +65,17 @@ def main():
     if len(t) < 200:
         print('  !! extraction vide ou quasi vide : outil suspect, AUCUN verdict rendu')
         return 1
-    manquants = [m for m in attendus if m not in t]
+    # [!!] COMPARAISON INSENSIBLE A LA CASSE, ET C'EST UNE CORRECTION D'OUTIL, PAS DE CONFORT.
+    #      Trois fois de suite, ce script m'a fait lire « mot manquant » sur un document
+    #      PARFAITEMENT COMPLET : le texte cherche etait en minuscules, le rendu en capitales
+    #      (un titre d'encadre, une phrase en gras). >> *Un verificateur qui accuse le travail
+    #      qu'il verifie finit par etre ignore, et le jour ou il a raison personne ne l'ecoute.*
+    #      La casse n'a jamais fait partie de ce qu'on veut prouver ici : on prouve qu'un FAIT
+    #      est dans le document.
+    tb = t.lower()
+    manquants = [m for m in attendus if m.lower() not in tb]
     for m in attendus:
-        print(('  OK   ' if m in t else '  !!   ') + m)
+        print(('  OK   ' if m.lower() in tb else '  !!   ') + m)
     if manquants:
         print('\n%d mot(s) manquant(s)' % len(manquants))
         return 1

@@ -15,6 +15,7 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BANC = 'tools/banc_s2b_bascule.js'
 SB, SET, APP, CO = 'supabase.js', 'setup.js', 'app.js', 'constants.js'
+HT = 'index.html'
 
 MUTATIONS = [
     # ── la bascule elle-meme ────────────────────────────────────────────────────────────
@@ -70,9 +71,12 @@ MUTATIONS = [
     ('une panne du cloud est annoncee comme une revocation', SB,
      "  if (statut === 503) return { ok:false, voie:'', info:'cloud indisponible (' + ((d && d.raison) || '?') + ')' };",
      "  if (statut === 503) return { ok:false, voie:'', info:'appareil révoqué' };", 'ROUGE'),
+    # [!!] ANCRE MISE A JOUR EN ft-v1223 : le libelle de la revocation a quitte la fonction
+    #      pour la table `_SB_REFUS_REELS`. La mutation garde exactement son SENS — un vrai
+    #      refus presente comme un succes — en visant le point ou le verdict se decide.
     ('une revocation reelle passe pour un succes', SB,
-     "    if (r === 'revoque') return { ok:false, voie:'', info:'appareil révoqué — écriture refusée' };",
-     "    if (r === 'revoque') return { ok:true, voie:'', info:'écrit' };", 'ROUGE'),
+     "    if (_sbEstRefusReel(r)) return { ok:false, voie:'', info:_SB_REFUS_REELS[r] };",
+     "    if (_sbEstRefusReel(r)) return { ok:true, voie:'', info:_SB_REFUS_REELS[r] };", 'ROUGE'),
     ('un succes est reconnu sur le seul code HTTP', SB,
      "  if (statut === 200 && d && d.status === 'ok')",
      '  if (statut === 200)', 'ROUGE'),
@@ -93,6 +97,29 @@ MUTATIONS = [
     ('V2 serait fermee : l ancienne porte n envoie plus d adresse', SB,
      'body: JSON.stringify({ p_email: email, p_data: payload })',
      'body: JSON.stringify({ p_data: payload })', 'ROUGE'),
+
+    # ── ft-v1223 : LES DEUX DEFAUTS D'AFFICHAGE, ET LE CAS QUI MANQUAIT AU BANC ─────────
+    ('une panne (« reseau ») redevient un refus d identite', SB,
+     "const _SB_REFUS_REELS = {\n  revoque:",
+     "const _SB_REFUS_REELS = {\n  reseau: 'identité refusée (reseau)',\n  revoque:", 'ROUGE'),
+    # [!!] Ma 1re ancre collait les deux lignes du fourre-tout SANS le commentaire pose
+    #      entre elles, et s'annoncait « absente » — ce qui est le bon comportement : *une
+    #      mutation qui ne s'applique pas ressemble trait pour trait a une mutation qui ne
+    #      mord pas*. On vise la seule ligne qui decide, et elle suffit a reproduire le defaut.
+    ('la branche 401 redevient un fourre-tout « identite refusee »', SB,
+     "    return { ok:false, voie:'', info:'serveur indisponible (' + (r || '?') + ')' };",
+     "    return { ok:false, voie:'', info:'identité refusée (' + (r || '?') + ')' };", 'ROUGE'),
+    ('la liste blanche accepte TOUT (plus aucun refus n est distingue)', SB,
+     "  return Object.prototype.hasOwnProperty.call(_SB_REFUS_REELS, String(r || ''));",
+     '  return true;', 'ROUGE'),
+    ('la revocation quitte la liste blanche (elle serait dite « panne »)', SB,
+     "  revoque: 'appareil révoqué — écriture refusée',\n", '', 'ROUGE'),
+    ('la sonde crie de nouveau victoire sur une panne', SB,
+     "    if(r.status===401 && d && d.error==='auth' && _sbEstRefusReel(d.raison))",
+     "    if(r.status===401 && d && d.error==='auth')", 'ROUGE'),
+    ('le texte de la carte reprend sa promesse d ecriture', HT,
+     "Le bouton <strong>teste la route sans rien écrire</strong>",
+     "Le bouton écrit une ligne de test <strong>pour de vrai</strong>", 'ROUGE'),
 
     # ── CONTROLES NEGATIFS : doivent rester VERTS ───────────────────────────────────────
     ('[negatif] un COMMENTAIRE de supabase.js cite sbMirror, p_email et le jeton', SB,

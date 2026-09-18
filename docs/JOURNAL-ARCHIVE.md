@@ -9415,3 +9415,38 @@ Tests : **parcours 4120/4120 sur l'arbre FINAL** (bloc **CCCXI**, 18 témoins). 
 📄 **PDF POUR GPT** : `DOSSIER-GPT-BANC-MOTEURS-CODEBARRES-14-09-2026.pdf` (**hors dépôt**, règle d'or #14), **45 gardes**. ⚠️ **Deux de ses gardes ont dû CHANGER, et c'est dit** : celui qui interdisait toute bibliothèque dans `lib/` devient plus **précis** (Html5-QRCode reste banni ; zxing-wasm et Quagga2 sont autorisés **mais jamais préchargés, jamais atteignables par un bouton utilisateur**). *Un garde qu'on assouplit sans dire pourquoi est un garde qu'on a contourné.*
 
 Fichiers : `app.js`, `index.html`, `sw.js`, `lib/zxing-wasm.js` (nouveau), `lib/zxing_reader.wasm` (nouveau), `lib/quagga.min.js` (nouveau), `tests/parcours/runner.js`, `tools/gen_banc_pdf.py`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1214. |
+
+
+**ft-v1215 — 🔒 CE N'ÉTAIT PAS UN VERROU MANQUANT, C'ÉTAIT UN ÉTAT · ET LA SÉANCE CESSE D'ÊTRE DEVINÉE** — phase 1 du chantier débrief, validée par Michel après le dossier de mesures : ⛔ ***« pour CETTE passe, tu ne fais QUE l'étape 1 »***.
+
+**⭐⭐ A — LE DOUBLE DÉBRIEF : LA CAUSE N'ÉTAIT PAS CELLE QU'ON CHERCHE D'HABITUDE.** Un rechargement PENDANT l'appel faisait débriefer la même séance **deux fois** (2 appels `coach` mesurés pour une séance). ⛔ Et le trou n'était pas un verrou : entre l'arrivée de la réponse et `_dbfFini`, **aucun état ne disait que c'était déjà payé** — `_dbfRecuperer` voyait un jeton « en cours », en déduisait un appel jamais abouti, et remettait la séance en file.
+
+**⛔⛔ L'ÉTAT `recu` NE VAUT QUE PARCE QU'IL PORTE LA RÉPONSE.** Marquer « reçu » sans garder le texte aurait remplacé un doublon par une **perte silencieuse** — la personne n'aurait jamais su que son débrief avait existé (**R29** : le coût de l'erreur n'est pas symétrique). La réponse **et la consigne** sont donc persistées à l'instant même où elles arrivent, **avant** tout nettoyage, affichage ou écriture d'historique — c'est-à-dire avant toute opération interruptible. ⭐ *Et ça rejoint la cible produit de Michel : « résultat persisté / réutilisable ».*
+
+**⭐ LE RATTRAPAGE TERMINE, IL NE REFAIT PLUS** : il pose la réponse gardée dans le fil du Coach, puis marque la séance livrée. ⛔ Et il sort **avant** de regarder le jeton « en vol » — l'ordre n'est pas cosmétique : lire « en vol » d'abord remettrait la séance en file et on repaierait exactement ce qu'on cherche à éviter.
+
+| scénario (conduit par les vraies portes) | appels `coach` |
+|---|---|
+| appel normal · rechargement après affichage · app fermée/rouverte | **1** |
+| rechargement AVANT le départ de l'appel | **0** |
+| rechargement PENDANT `en_vol` | **2** — ⭐ **juste** : rien n'était payé |
+| ⭐⭐ **rattrapage depuis la FENÊTRE EXACTE** | **0**, réponse **reposée** |
+| échec réseau → jeton `en_file`, puis « Réessayer » | récupérable, livré |
+
+**⭐⭐ B — LA SÉANCE EST NOMMÉE, PLUS DEVINÉE.** `_dbfPrendre` prenait la **plus ancienne** pendant que l'instruction disait « la plus **récente** » : avec deux séances en file, l'écran affichait l'une et Milo analysait l'autre. L'écran de fin cible désormais la séance **affichée**, par son identifiant (`_dbfPrendreCible`), et l'instruction la **nomme**. ⭐⭐ **L'ID CHOISIT, LA DATE DÉCRIT** — le contexte ne porte aucun identifiant interne, donc le donner au modèle ne l'aiderait pas ; la désignation est **dérivée** de la séance retrouvée par son id, au format exact du contexte. Mesuré sur 6 scénarios : les **4 identifiants** (affiché · pris · injecté · cité) coïncident, **y compris avec deux séances le même jour**.
+
+**⚠️⚠️ UN DÉFAUT QUE J'AI INTRODUIT, TROUVÉ PAR LE BANC ET NON PAR RELECTURE.** Mon garde refusait toute séance présente dans `_dbfFaits` — or `_dbfRendre` (échec propre) y inscrit les séances **échouées** tout en les remettant en file. Conséquence mesurée : après un vrai échec réseau, **le bouton « Réessayer » ne déclenchait plus aucun appel** — *le débrief était perdu en silence, exactement ce que cette correction doit empêcher*. 👉 **La file fait foi pour « à faire » ; `_dbfFaits` ne sert que hors file.**
+
+**⚠️ ET TROIS TÉMOINS ÉTAIENT AVEUGLES, MÊME FAMILLE** : ils cherchaient une **présence** (`return;`, `removeItem(_DBF_RECU)`, `_DBF_PEREMPTION`) alors que le même mot vit **ailleurs dans la fonction** — les retirer de leur branche les laissait verts. Resserrés par comptage. *Un motif qui cherche une présence ne mesure pas une absence locale.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : mêmes appels sur le chemin normal, socle local **478 car.** inchangé, « Continuer avec Milo » toujours **0 appel**, **+51 octets** de désignation. ⛔ **0 `summarizeCoach` créé par la correction.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** (périmètre nommé par Michel, chacun figé par un témoin) : ⛔ pas de `buildSessionDebriefContext` · ⛔ les blocs C+D ne sont pas retirés · ⛔ **le catalogue d'exercices ne bouge pas** · ⛔ **le Gardien ne bouge pas** · ⛔ **le cache ne bouge pas** · ⛔ Sonnet reste Sonnet · ⛔ la politique de mémoire ne bouge pas · ⛔ prévu vs réalisé, Nutrition, **règles RIR de ft-v1213** : intacts.
+
+⚠️⚠️ **UNE LIMITE DITE PLUTÔT QUE MASQUÉE** : le chemin **Coach** (`_maybeAutoDebrief` → `sendToCoach`) garde une fenêtre analogue. ⭐ Elle est **bornée** — la réponse y est déjà écrite dans le fil avant que la main revienne, donc **rien n'est perdu**, au pire un appel est repayé. La fermer imposerait de modifier `sendToCoach`, le cœur de la conversation : **au-delà du périmètre de cette passe**, donc signalé au lieu d'être appliqué.
+
+Tests : **parcours 4140/4140 sur l'arbre FINAL** (bloc **B-CCCXII**, 20 témoins). ⛔ **CONTRÔLE NÉGATIF : 20 mutations, 20 mordent**, chacune par son témoin, contrôle sain **20 OK / 0 rouge avant ET après**, sur un arbre **copié**.
+
+📄 **PDF POUR GPT** : `DOSSIER-GPT-DEBRIEF-PHASE1-15-09-2026.pdf` (**hors dépôt**, règle d'or #14), **36 gardes**. ⭐ Il a été écrit **pendant** que la passe tournait et **refusait donc de publier un total** — la leçon ft-v1201 tenue par un garde plutôt que par la mémoire.
+
+Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `setup.js`, ni `state.js`, ni `worker.js`, ni `Code.js`.** sw.js ft-v1215. |
