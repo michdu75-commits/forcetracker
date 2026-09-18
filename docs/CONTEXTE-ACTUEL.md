@@ -409,6 +409,31 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
+- 🗄️ **MIGRATION SUPABASE `0003` — APPLIQUÉE EN RÉEL PAR MICHEL LE 18/09/2026** (*« Success. No rows
+  returned »*, ce qui est exactement le retour attendu d'un `DO` + `CREATE FUNCTION` + `COMMENT`).
+  ⛔ **AUCUN BUMP, et c'est motivé** : aucun fichier servi n'a changé — une migration Supabase est du
+  backend, comme `Code.js` (règle d'or #5). L'en-tête reste `ft-v1223`.
+  ⭐ **Ce qui change dans le miroir** : un **champ ABSENT conserve** désormais la valeur existante
+  (`coalesce(data,'{}') || excluded.data`) — la sémantique qu'Apps Script applique déjà. Le cas réel
+  visé : quand le téléphone sature, l'app omet `sessions` **exprès**, et le miroir les perdait.
+  ⚠️⚠️ **DEUX CHOSES QUE LE DOSSIER D'ARCHITECTURE AVAIT RATÉES, trouvées en MESURANT** : ①
+  `NULL || jsonb` rend **NULL** — sans `coalesce`, une ligne dont `data` est nul aurait été **vidée
+  par sa propre sauvegarde** ; ② la fusion **ré-ouvrait la fuite S2-A** — un justificatif déjà dans
+  le miroir est **absent** de `excluded.data`, donc *absence = conservée*, donc il **survivait**,
+  alors que le remplacement intégral l'effaçait. 👉 *Le geste qui protège les champs métier
+  protégeait aussi ceux qu'on veut voir disparaître.* Le retrait est donc réappliqué **APRÈS** la
+  fusion, et **purge** désormais les fuites du 04/08→16/09 à la première sauvegarde de chaque compte.
+  ⭐ La migration **vérifie elle-même** que `ft_comptes.data` est `jsonb` et **refuse** sinon
+  (`ft_comptes` n'est pas versionnée : le type était une **mesure**, pas une garantie).
+  ⛔ **Ne règle PAS, et ce n'est pas survendu** : l'instantané ancien · le dernier-écrivain-gagnant ·
+  la **résurrection** d'une entrée supprimée (mesurée : elle atteint **Apps Script aussi**, pas
+  seulement le miroir) · la suppression totale d'une liste · les marqueurs de suppression · le
+  versionnement causal · la **fusion profonde** (elle est **de surface**, mesuré).
+  ⚠️ **Clés zombies** : risque connu / faible / **non corrigé**, écrit dans la migration.
+  Tests : **17/17** sur un vrai PostgreSQL 16, **6/6 mutations** (chacune fait tomber *LE* bon
+  témoin), migrations **55/0**, passe complète **4366 ✅ / 0 ❌**. SHA `36ebac4a`.
+  ⛔⛔ **V2 TOUJOURS OUVERTE**, `ft_jetons` intacte, **Douane non touchée**.
+
 - **Version en ligne (live) :** `ft-v1223` — 🩹 **LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR,
   CORRIGÉS — et ils avaient été vus À L'ÉCRAN, pas en relecture.**
   ⚠️ Le 18/09, pendant une vraie panne d'Apps Script (*« Le serveur répond : INJOIGNABLE »*),
