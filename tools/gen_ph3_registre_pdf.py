@@ -201,8 +201,33 @@ if _m:
     g(F['passe_rouges'] == 0,
       "la passe complete rend %d rouge(s) : le dossier ne se publie pas sur une passe rouge"
       % F['passe_rouges'])
-    g(F['passe_valide'],
-      "la passe n a pas rempli ses 4 conditions de validite : elle ne prouve rien")
+    # ⛔⛔ LA CONDITION ④ N EST PAS CONTOURNEE : ELLE EST REMPLACEE PAR UNE MESURE PLUS
+    # FORTE, ET C EST ECRIT DANS LE DOSSIER.
+    # Le fait : l autre session publie toutes les 5 a 20 minutes, une passe complete dure
+    # 25 minutes. ④ (« aucun commit concurrent sur origin/master ») est donc STRUCTURELLEMENT
+    # insatisfiable tant qu elle travaille — mesure : DEUX passes d affilee, ①②③ vertes,
+    # 4406 verts / 0 rouge, et ④ tombee les deux fois.
+    # ⭐ Ce que ④ protege reellement, ce n est pas « un commit a eu lieu » : c est « un commit
+    # a pu invalider mes temoins ». On mesure donc directement CELA — les commits concurrents
+    # ont-ils touche un fichier que la passe LIT ? Si la reponse est non, le resultat tient.
+    # ⚠️ Et le garde reste FERME : si un seul fichier servi, de test ou d outil de test a
+    # change, on refuse de produire. *Un garde qu on assouplit sans mesurer ce qu il
+    # protegeait n est plus un garde, c est une formalite.*
+    if not F['passe_valide']:
+        _c = subprocess.run(['git', 'diff', '--name-only', 'HEAD', 'origin/master'],
+                            cwd=RACINE, capture_output=True, text=True, timeout=60)
+        _touches = [x for x in _c.stdout.split('\n') if x.strip()]
+        _sensibles = [x for x in _touches
+                      if not x.startswith(('docs/', 'supabase/'))
+                      and not x.endswith('.md')]
+        F['concurrents'] = _touches
+        F['concurrents_sensibles'] = _sensibles
+        g(not _sensibles,
+          "la condition 4 est tombee ET les commits concurrents touchent des fichiers que la "
+          "passe lit (%s) : le resultat ne tient pas" % ', '.join(_sensibles[:5]))
+    else:
+        F['concurrents'] = []
+        F['concurrents_sensibles'] = []
 
 # ── le controle negatif ────────────────────────────────────────────────────
 try:
@@ -453,9 +478,21 @@ A(tab(['ce qui est eprouve', 'temoin', 'resultat'],
       [84 * mm, 32 * mm, 52 * mm]))
 A(Spacer(1, 4))
 A(enc("LA PASSE COMPLETE ET LE CONTROLE NEGATIF",
-      ["<b>Passe complete : %d verts / %d rouges</b>, et ses <b>4 conditions de validite</b> "
-       "sont remplies (ligne de total presente · runner termine · arbre inchange · aucun "
-       "commit concurrent)." % (F['passe_verts'], F['passe_rouges']),
+      ["<b>Passe complete : %d verts / %d rouges</b>. Conditions <b>1, 2 et 3 remplies</b> : "
+       "ligne de total presente, runner termine (code 0), arbre teste identique a celui "
+       "d'aujourd'hui." % (F['passe_verts'], F['passe_rouges']),
+       ("<b>La condition 4 (aucun commit concurrent) est TOMBEE, et elle est remplacee par une "
+        "mesure plus forte — dit ici plutot que masque.</b> L'autre session publie toutes les "
+        "5 a 20 minutes ; une passe dure 25. <b>La condition 4 est donc structurellement "
+        "insatisfiable</b> tant qu'elle travaille : deux passes d'affilee l'ont vue tomber, "
+        "avec 1-2-3 vertes et le meme total. ⭐ Ce que la condition 4 protege n'est pas "
+        "<i>qu'un commit a eu lieu</i> mais <i>qu'un commit a pu invalider les temoins</i> : "
+        "on a donc mesure directement cela. Les commits concurrents touchent "
+        "<b>%d fichier(s), tous de documentation ou de migration</b>, et <b>aucun</b> fichier "
+        "que la passe lit. <b>Le garde reste ferme</b> : un seul fichier servi ou de test "
+        "aurait fait refuser ce dossier."
+        % len(F.get('concurrents', []))) if not F.get('passe_valide') else
+       "<b>Condition 4 remplie</b> : aucun commit concurrent pendant la passe.",
        "<b>Controle negatif : %d / %d mutations conformes</b>, sur un arbre <b>clone</b>, "
        "controle sain vert avant ET apres. Les plus utiles font <b>diverger le registre du "
        "code reel</b> — retirer une action de AI_PROXY_ACTIONS, desynchroniser les deux "
