@@ -40348,6 +40348,7 @@ require('./s2b_worker.js').source(t, ROOT, fs, path);
    synchrone, ferait imprimer le total AVANT la fin des témoins — un total tronqué ressemble
    trait pour trait à un total vert (BUGS.md §61). Il vit dans `tools/banc_s2b_bascule.js`. */
 require('./s2b_bascule.js').source(t, ROOT, fs, path);
+require('./backup_fuseau.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

@@ -425,6 +425,10 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   ⚠️⚠️ **Le trou de mon banc est la vraie leçon** : j'avais conduit 401/révoqué, 401/sans-jeton,
   503 et la coupure réseau **du téléphone** — jamais le **401 dont la raison est une panne du
   PONT**. *Un cas qu'on n'écrit pas reste vert pour toujours.*
+  🕐 **Et une 3ᵉ correction, backend** : l'écran annonçait *« 2h et 14h **UTC** »* pour les
+  sauvegardes — **faux**, le projet est en `Europe/Paris` et `.atHour()` suit le fuseau du
+  projet (écart de **2 h**). Le libellé **dérive** désormais du vrai fuseau. *Un libellé faux
+  fait raisonner de travers ceux qui le lisent* — il m'avait fait placer la sauvegarde à 16 h.
   ⛔⛔ **V2 n'est toujours pas fermée**, et les deux voies réelles restent à mesurer.
 
 - **Version précédente :** `ft-v1222` — 🔐 **S2-B PHASE 4 : LE CLIENT BASCULE VERS
