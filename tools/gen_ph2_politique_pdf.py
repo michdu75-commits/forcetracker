@@ -446,6 +446,29 @@ def esc(t):
     return str(t).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
+def md(t):
+    """Echappe pour reportlab SANS manger le balisage que j ecris moi-meme.
+
+    ⛔⛔ DEFAUT REEL, TROUVE EN RELISANT LE PDF PRODUIT : `esc()` transformait mes `<b>` en
+        texte, et le dossier Phase 2 livre portait **66 balises en clair** dans ses tableaux.
+        *Un PDF qui affiche `< b >` ressemble de loin a un PDF reussi* — c est exactement la
+        famille « un PDF muet », et seule une relecture du rendu l attrape.
+    ⛔ On n autorise QUE les balises qu on ecrit : b, i, br, font. Tout autre `<` est echappe,
+        pour qu une donnee contenant un chevron ne casse pas la mise en page.
+    """
+    t = str(t).replace('&', '&amp;')
+    t = re.sub(r'&amp;(amp|lt|gt|nbsp|laquo|raquo|bull|#\d+);', r'&\1;', t)
+    jetons = []
+
+    def garde(m):
+        jetons.append(m.group(0))
+        return '\x00%d\x00' % (len(jetons) - 1)
+
+    t = re.sub(r'</?(?:b|i|br\s*/?|font[^<>]*)>', garde, t)
+    t = t.replace('<', '&lt;').replace('>', '&gt;')
+    return re.sub(r'\x00(\d+)\x00', lambda m: jetons[int(m.group(1))], t)
+
+
 def cel(t, style=CEL):
     return Paragraph(esc(t), style)
 
@@ -457,7 +480,7 @@ def rich(t, style=CEL):
 def encadre(titre, lignes, couleur=ROUGE, largeur=168 * mm):
     inner = [[Paragraph('<b>%s</b>' % esc(titre), ENC)]]
     for l in lignes:
-        inner.append([Paragraph(l, ENC)])
+        inner.append([Paragraph(md(l), ENC)])
     t = Table(inner, colWidths=[largeur])
     t.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), FOND),
@@ -473,7 +496,8 @@ def encadre(titre, lignes, couleur=ROUGE, largeur=168 * mm):
 def tableau(entetes, lignes, largeurs, teintes=None, police=CEL):
     data = [[Paragraph('<b>%s</b>' % esc(h), CELB) for h in entetes]]
     for l in lignes:
-        data.append([c if isinstance(c, Paragraph) else cel(c, police) for c in l])
+        data.append([c if isinstance(c, Paragraph) else Paragraph(md(c), police)
+                     for c in l])
     t = Table(data, colWidths=largeurs, repeatRows=1)
     st = [('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e8e8e8')),
           ('GRID', (0, 0), (-1, -1), 0.4, SEP),
@@ -1126,4 +1150,45 @@ doc.addPageTemplates([
     PageTemplate(id='paysage', frames=[paysage_frame], pagesize=landscape(A4), onPage=pied),
 ])
 doc.build(hist)
+
+# ⛔⛔ LE GARDE QUI MANQUAIT, ET IL EST NE D UN DEFAUT LIVRE : on RELIT le PDF qu on vient
+#    d ecrire. Un generateur qui ne regarde jamais sa propre sortie ne peut pas voir qu il
+#    a publie « < b > » en toutes lettres — c est arrive, 66 fois, dans un dossier deja remis.
+#    *Verifier apres generation n est pas une formalite : c est la seule etape qui voit le
+#    RESULTAT et non l INTENTION* (regle d or #14).
+def _relire(chemin):
+    import base64 as _b64, zlib as _z
+    brut = open(chemin, 'rb').read()
+    flux = []
+    for _m in re.finditer(rb'stream\r?\n', brut):
+        _d = brut.find(b'endstream', _m.end())
+        if _d < 0:
+            continue
+        _s = brut[_m.end():_d].strip()
+        for _essai in (lambda b: _z.decompress(_b64.a85decode(b, adobe=True)),
+                       lambda b: _z.decompress(b)):
+            try:
+                flux.append(_essai(_s))
+                break
+            except Exception:
+                continue
+    _t = b'\n'.join(flux).decode('latin-1')
+    _mots = re.findall(r'\((?:[^()\\]|\\.)*\)', _t)
+    return ' '.join(re.sub(r'\\(.)', r'\1',
+                           re.sub(r'\\([0-7]{3})', lambda m: chr(int(m.group(1), 8)), x[1:-1]))
+                    for x in _mots)
+
+
+_PAGE = _relire(SORTIE)
+_BALISES = sum(_PAGE.count(x) for x in ('< b >', '< /b >', '< i >', '< font ', '&lt;b&gt;'))
+if _BALISES:
+    os.remove(SORTIE)
+    sys.exit('REFUS — le PDF produit porte %d balise(s) en clair : le fichier est supprime, '
+             'un dossier illisible ne doit pas exister.' % _BALISES)
+if len(_PAGE) < 12000:
+    os.remove(SORTIE)
+    sys.exit('REFUS — le PDF produit ne contient que %d caracteres lisibles : il est muet.'
+             % len(_PAGE))
+print('   relu : %d caracteres, 0 balise en clair' % len(_PAGE))
+
 print('OK %s (%d gardes, %d octets)' % (SORTIE, NB_GARDES, os.path.getsize(SORTIE)))
