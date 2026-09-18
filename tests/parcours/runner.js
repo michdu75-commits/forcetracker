@@ -1178,10 +1178,19 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     // miroir Supabase. Un intercepteur qui garde « le dernier corps vu » mesurerait donc
     // le mauvais. On range par DESTINATION. (Le test avait rougi exactement là-dessus :
     // il était juste la veille, il est devenu faux le jour où une 2ᵉ destination est née.)
+    /* 🔀 MIS À JOUR EN S2-B PHASE 4 (18/09/2026) : le miroir ne vise plus Supabase en direct,
+       il passe par le Worker — donc un espion qui cherche « supabase » dans l'URL rangerait la
+       copie miroir dans « autre » et le témoin rougirait sur du code parfaitement sain.
+       ⭐ LA GARANTIE MESURÉE N'A PAS BOUGÉ D'UN POUCE (le miroir reçoit la sauvegarde, et il
+       hérite de la protection « historique tronqué ») : c'est la DESTINATION qui change de nom.
+       ⛔ On vise `AI_PROXY_URL` plutôt qu'un morceau d'URL écrit à la main : une adresse en dur
+       redeviendrait fausse au premier changement de Worker, sans que rien ne le dise. */
     const vraiFetch=window.fetch;
     let vus={};
     const espion=(u,opt)=>{ const url=String(u||'');
-      const ou = url.indexOf('exemple.invalid')>=0 ? 'apps' : (url.indexOf('supabase')>=0 ? 'sb' : 'autre');
+      const ou = url.indexOf('exemple.invalid')>=0 ? 'apps'
+               : ((typeof AI_PROXY_URL==='string' && AI_PROXY_URL && url.indexOf(AI_PROXY_URL)===0)
+                  ? 'sb' : (url.indexOf('supabase')>=0 ? 'sb' : 'autre'));
       if(opt&&opt.body)vus[ou]=opt.body;
       return Promise.resolve({ok:true,status:201,text:()=>Promise.resolve('')}); };
     window.fetch=espion;
@@ -1194,14 +1203,19 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     //    parce que le corps est construit UNE SEULE FOIS et servi aux deux (R2) —
     //    mais si un jour quelqu'un le reconstruit pour Supabase, ce témoin rougira.
     o.miroirAppele = !!vus.sb;
-    o.miroirSansSessions = vus.sb ? (JSON.parse(vus.sb).p_data.sessions===undefined) : null;
+    /* ⚠️ L'ENVELOPPE A CHANGÉ DE NOM AVEC LA VOIE : `p_data` pour l'ancienne porte Supabase,
+       `data` pour la route du Worker. On accepte les deux — le témoin doit survivre à un
+       retour arrière par `SB_VOIE`, sinon il rougirait sur le rollback qu'il est censé
+       protéger. */
+    const _corpsMiroir = (x)=>{ const o2=JSON.parse(x); return o2.data||o2.p_data||{}; };
+    o.miroirSansSessions = vus.sb ? (_corpsMiroir(vus.sb).sessions===undefined) : null;
     // ③ témoin : SANS le drapeau, les séances repartent normalement
     S.histTronque=false; localStorage.removeItem('ft4_hist_tronque');
     vus={}; window.fetch=espion;
     _cloudSync();
     window.fetch=vraiFetch;
     o.temoinSessionsEnvoyees = vus.apps ? (JSON.parse(vus.apps).sessions||[]).length : null;
-    o.temoinMiroirSessions   = vus.sb   ? (JSON.parse(vus.sb).p_data.sessions||[]).length : null;
+    o.temoinMiroirSessions   = vus.sb   ? (_corpsMiroir(vus.sb).sessions||[]).length : null;
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
@@ -9155,17 +9169,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.dansPayload = !!(corps && /"gardienStats"/.test(corps));
     if(corps){
       /* ⚠️ `_cloudSync` construit le corps UNE fois et le sert à DEUX destinations : Apps
-         Script (à plat) et le miroir Supabase (enveloppé dans `p_data`). Mon 1ᵉʳ témoin
+         Script (à plat) et le miroir (enveloppé : `p_data` sur l'ancienne voie, `data` sur
+         celle du Worker depuis S2-B phase 4 — les deux sont acceptées). Mon 1ᵉʳ témoin
          lisait la racine et tombait sur l'enveloppe — il rendait « absent » alors que le
          compteur partait bien. On déballe donc, et le témoin couvre les deux chemins. */
-      try{ const brut=JSON.parse(corps); const p=brut.p_data||brut; const g=p.gardienStats||{};
+      try{ const brut=JSON.parse(corps); const p=brut.data||brut.p_data||brut; const g=p.gardienStats||{};
         // ⛔ Que des NOMBRES et des dates : aucune valeur de plus de 12 caractères.
         const vals=Object.keys(g.codes||{}).map(k=>g.codes[k]);
         o.payloadSansTexte = vals.every(v=>typeof v==='number')
           && String(g.depuis||'').length<=10 && String(g.dernier||'').length<=10
           && typeof g.total==='number';
       }catch(e){ o.payloadSansTexte=false; o.errPayload=e.message; }
-      try{ const b2=JSON.parse(corps); o.gardienBrut=JSON.stringify((b2.p_data||b2).gardienStats); }catch(e){ o.gardienBrut='parse KO'; }
+      try{ const b2=JSON.parse(corps); o.gardienBrut=JSON.stringify((b2.data||b2.p_data||b2).gardienStats); }catch(e){ o.gardienBrut='parse KO'; }
     }
     /* ⑦ ⛔ Et Milo, lui, ne doit PAS le voir : lui donner son propre score l'inviterait à le
        commenter — exactement la sortie de rôle qu'on traque. */
@@ -20760,9 +20775,13 @@ console.log('\n-- CLXXXIV. Aucun script servi n\'est absent du cache (ft-v1079) 
   t('⭐ ③ `supabase.js` (le miroir de sauvegarde) est bien préchargé',
     preCode.indexOf("'./supabase.js'")>=0, '');
   /* ⛔ ④ ET LE MIROIR EST TOUJOURS BRANCHÉ — un fichier en cache qui n'est appelé par personne
-     ne sauvegarderait rien (R5). */
+     ne sauvegarderait rien (R5).
+     🔀 RETOURNÉ EN S2-B PHASE 4 (18/09/2026) : la porte s'appelle désormais `sbEnvoyer`.
+     ⛔ Le témoin n'accepte PAS les deux noms : accepter l'ancien laisserait passer un retour
+     silencieux à la voie `p_email`, c'est-à-dire la réouverture de V2 sans que rien ne le
+     dise. *Un témoin qui accepte l'avant ET l'après ne mesure plus la bascule.* */
   t('⛔ ④ … et `_cloudSync` l\'appelle toujours (un miroir jamais appelé ne sauvegarde rien)',
-    /sbMirror\s*===?\s*'function'|typeof sbMirror==='function'/.test(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')), '');
+    /typeof sbEnvoyer\s*===?\s*'function'/.test(fs.readFileSync(path.join(ROOT,'setup.js'),'utf8')), '');
 }
 
 /* == BLOC CLXXXV - VOIR LES DOUBLONS DU CLASSEUR, SANS RIEN SUPPRIMER (ft-v1081) ==
@@ -40271,8 +40290,11 @@ console.log('\n═══ B-CCCXIII. S1 — TÉMOINS DE L\'IDENTITÉ *AVANT* MUTA
   t('B-CCCXIV ① ⭐⭐ RETOURNÉ — le corps MÉTIER commun ne porte plus aucun justificatif',
     !/token\s*:\s*_ftToken\(\)/.test(CS.split('fetch(')[0]) &&
     !/authCode\s*:\s*_authCode\(\)/.test(CS.split('fetch(')[0]), '');
+  /* 🔀 RETOURNÉ EN S2-B PHASE 4 : la porte du miroir est `sbEnvoyer`. La GARANTIE de ce
+     témoin n'a pas bougé d'un pouce — le miroir reçoit le corps métier, et sans justificatif
+     — c'est la PORTE qui change de nom. */
   t('B-CCCXIV ② ⭐⭐ le miroir Supabase reçoit le corps métier SANS justificatif',
-    /sbMirror\(/.test(CS), '');
+    /sbEnvoyer\(_corpsSync\)/.test(CS) && !/sbMirror\(/.test(CS), '');
   /* ⚠️ CE TÉMOIN CHERCHAIT D'ABORD `_SB_JUSTIFICATIFS` DANS LE CORPS DE `sbMirror` — et il
      rougissait sur du code parfaitement sain : la LISTE vit au niveau du fichier, seul
      l'APPEL vit dans la fonction. *Un garde doit chercher le fait là où il se trouve.* */
@@ -40321,6 +40343,12 @@ require('./accueil_mini.js').source(t, ROOT, fs, path);
   require('./nutri_correctifs.js').source(t, ROOT, fs, path);
 
 require('./s2b_worker.js').source(t, ROOT, fs, path);
+/* ⚠️ SEUL LE BLOC DE SOURCE ENTRE ICI. Le bloc de COMPORTEMENT de la bascule
+   (`B-CCCXXVII`) est asynchrone : le greffer dans ce runner, qui imprime son total de façon
+   synchrone, ferait imprimer le total AVANT la fin des témoins — un total tronqué ressemble
+   trait pour trait à un total vert (BUGS.md §61). Il vit dans `tools/banc_s2b_bascule.js`. */
+require('./s2b_bascule.js').source(t, ROOT, fs, path);
+require('./backup_fuseau.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

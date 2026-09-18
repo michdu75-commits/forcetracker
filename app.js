@@ -9073,13 +9073,21 @@ async function loadSbAdmin(){
   const box=document.getElementById('admin-sb');
   if(!box)return;
   if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
-  if(typeof sbTest!=='function'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">supabase.js non chargé.</div>'; return; }
-  box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Écriture de test en cours…</div>';
-  const r=await sbTest();
+  /* 🔀 S2-B PHASE 4 (18/09/2026) — CETTE CARTE NE DÉCLENCHE PLUS L'ANCIENNE VOIE.
+     ⛔⛔ Elle appelait `sbTest()`, qui écrit une ligne de test via l'ANCIEN RPC `ft_miroir`
+     avec une adresse choisie par le navigateur. L'ouvrir pendant la mesure de la bascule
+     aurait donc emprunté le chemin qu'on cherche justement à prouver inutilisé — *un
+     instrument qui modifie l'état qu'il mesure ne mesure plus rien*.
+     ⭐ `sbTestVoie()` éprouve la NOUVELLE route et n'écrit RIEN : elle présente un jeton
+     factice et attend un refus. `sbTest` reste définie dans `supabase.js`, disponible pour
+     vérifier l'ancienne voie si Michel le demande — mais plus rien ne l'appelle tout seul. */
+  if(typeof sbTestVoie!=='function'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">supabase.js non chargé.</div>'; return; }
+  box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Test de la route (sans écriture)…</div>';
+  const r=await sbTestVoie();
   let etat=null; try{ etat=sbEtat(); }catch(e){}
   box.innerHTML='<div style="font-size:12.5px;line-height:1.6;color:'+(r.ok?'var(--t1)':'var(--red)')+';white-space:pre-wrap;">'
     +_escIdea(r.texte)+'</div>'
-    +(etat?'<div style="font-size:11.5px;color:var(--t2);margin-top:8px;line-height:1.5;">'+_escIdea(etat.texte)+'</div>':'');
+    +(etat?'<div style="font-size:11.5px;color:var(--t2);margin-top:8px;line-height:1.5;white-space:pre-wrap;">'+_escIdea(etat.texte)+'</div>':'');
 }
 // ── ADMIN : 🔁 DOUBLONS DANS LE CLASSEUR (31/08/2026) ────────────────────────────
 // ⚠️ POURQUOI. Avant ft-v1077, `handleLogSession_` écrivait UNE ligne par série : une

@@ -1246,10 +1246,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <!-- Le miroir Supabase (04/08). Une sauvegarde dont on ne vérifie jamais qu'elle écrit
          n'est pas une sauvegarde : c'est exactement ce qui s'est passé avec la sauvegarde
          nocturne, arrêtée pendant 36 jours sans que personne ne le voie. D'où un bouton qui
-         écrit POUR DE VRAI plutôt qu'un voyant vert décoratif. -->
+         TESTE POUR DE VRAI plutôt qu'un voyant vert décoratif.
+         ⚠️⚠️ TEXTE CORRIGÉ LE 18/09/2026 (ft-v1223), ET LA RAISON COMPTE. Il promettait encore
+         « le bouton écrit une ligne de test pour de vrai » — vrai de l'ANCIEN bouton, qui
+         écrivait via l'ancien RPC ; faux depuis la bascule S2-B phase 4, où la sonde présente
+         un jeton factice et n'écrit RIEN (c'est précisément ce qui la rend sûre pendant une
+         mesure). *J'avais changé le comportement sans changer le texte qui le décrit* — R23,
+         la documentation posée à côté du code qui se met à mentir.
+         ⛔ Ce qui n'a PAS changé : le bouton éprouve toujours la chaîne complète pour de vrai,
+         il ne rend pas un voyant décoratif. Seule l'écriture a disparu. -->
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🪞 Copie miroir Supabase</div>
-      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Une <strong>deuxième copie</strong> des comptes, à côté de Google. Google reste la source de vérité — Supabase ne fait que <strong>recevoir</strong>. <strong>Écriture seule</strong> : la clé publiée dans l'app ne peut pas <em>relire</em> les comptes. Le bouton écrit une ligne de test <strong>pour de vrai</strong> et dit ce qui cloche si ça rate.</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Une <strong>deuxième copie</strong> des comptes, à côté de Google. Google reste la source de vérité — Supabase ne fait que <strong>recevoir</strong>. <strong>Écriture seule</strong> : la clé publiée dans l'app ne peut pas <em>relire</em> les comptes. Le bouton <strong>teste la route sans rien écrire</strong> : il présente un jeton factice et attend un refus. En dessous, l'état de la <strong>dernière vraie</strong> sauvegarde, avec la voie empruntée.</div>
       <button class="btn btn-bg2" onclick="loadSbAdmin()" style="padding:11px;font-size:14px;">🪞 Tester la copie miroir</button>
       <div id="admin-sb" style="margin-top:4px;"></div>
     </div>

@@ -3986,16 +3986,40 @@ function voirResultatDeclencheur() {
    👉 Le nombre attendu n'est plus écrit nulle part : il vaut `BACKUP_HOURS_.length`. Changer les
    heures met tout à jour, y compris la phrase affichée dans l'app (elle est envoyée par
    `checkBackup`, elle n'est plus écrite en dur dans `app.js`). */
-const BACKUP_HOURS_ = [2, 14];   // heures UTC — encadrent la journée d'entraînement (voir plus bas)
+/* ⚠️⚠️ CES HEURES SONT CELLES DU FUSEAU DU PROJET, PAS DE L'UTC — corrigé le 18/09/2026.
+   Elles étaient annoncées « UTC » partout, et c'était FAUX : `ScriptApp.newTrigger().atHour()`
+   suit le fuseau déclaré dans `appsscript.json`, qui vaut **Europe/Paris**. En été l'écart est
+   de **2 heures**. C'est la famille « fuseaux horaires » de `BUGS.md`, appliquée cette fois à
+   un message d'écran.
+   ⭐⭐ ET CE N'EST PAS UNE COQUILLE SANS CONSÉQUENCE : le 18/09, Michel a proposé que les
+   échecs de sauvegarde miroir tombent « au moment de la sauvegarde ». En lisant « 14h UTC »
+   j'ai d'abord placé ce passage à 16h, donc très loin des faits — c'est le NOM du fichier
+   (`backup-2026-09-18-14-08.json`, formaté en `Europe/Paris`) qui m'a rattrapé.
+   👉 ***Un libellé faux ne se contente pas d'être faux : il fait raisonner de travers ceux
+   qui le lisent.*** */
+const BACKUP_HOURS_ = [2, 14];   // heures du FUSEAU DU PROJET — encadrent la journée d'entraînement
+
+/* ⭐ LE FUSEAU EST LU, JAMAIS ÉCRIT À LA MAIN (R2 — une information, un propriétaire).
+   Écrire « heure de Paris » en dur reproduirait exactement le défaut qu'on corrige, un cran
+   plus loin : le jour où `appsscript.json` change, la phrase redeviendrait fausse en silence.
+   ⛔ Et si le fuseau n'est pas lisible, on ne devine pas : on dit « heure du serveur ». */
+function _fuseauLisible_() {
+  try {
+    const tz = Session.getScriptTimeZone();
+    if (!tz) return 'heure du serveur';
+    return 'heure de ' + String(tz).split('/').pop().replace(/_/g, ' ');
+  } catch (e) { return 'heure du serveur'; }
+}
 
 /* 🗣️ La même chose en français, pour l'écran Admin. ⚠️ Elle vit ICI, à côté des heures :
    une phrase écrite dans le frontend redeviendrait fausse au prochain changement — elle l'a
    déjà été une fois, c'est tout l'objet de ce correctif. */
 function _backupSchedLabel_() {
   const h = BACKUP_HOURS_.map(function(x){ return x + 'h'; });
+  const fz = _fuseauLisible_();
   if (!h.length) return 'AUCUNE programmation';
-  if (h.length === 1) return 'Programmée chaque jour à ' + h[0] + ' UTC';
-  return h.length + '× par jour (' + h.join(' et ') + ' UTC)';
+  if (h.length === 1) return 'Programmée chaque jour à ' + h[0] + ' (' + fz + ')';
+  return h.length + '× par jour (' + h.join(' et ') + ', ' + fz + ')';
 }
 
 // ── Trigger backup QUOTIDIEN ─────────────────────────────────
@@ -4027,8 +4051,10 @@ function installDailyBackupTrigger_() {
       .atHour(h)
       .create();
   });
+  // ⚠️ Le journal disait « UTC » lui aussi — même source de confusion, même correction.
   Logger.log('[FT backup] ' + BACKUP_HOURS_.length + ' trigger(s) installé(s) — backupAllUserData_ à '
-             + BACKUP_HOURS_.map(function(h){ return h + 'h'; }).join(' et ') + ' UTC.');
+             + BACKUP_HOURS_.map(function(h){ return h + 'h'; }).join(' et ')
+             + ' (' + _fuseauLisible_() + ').');
 }
 
 // Fonction utilitaire publique — exécuter UNE SEULE FOIS depuis l'IDE pour autoriser

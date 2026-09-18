@@ -9386,3 +9386,67 @@ Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CON
 Tests : **bloc B-CCCXI, 43 témoins**. ⛔ **CONTRÔLE NÉGATIF : 14 mutations — les 8 nommées par Michel + 6 miennes — TOUTES MORDENT**, contrôle sain **43 OK / 0 rouge avant ET après**, sur un arbre **copié** : ① `É` repasse → **6** · ② `X` repasse → **7** · ③ RIR absent devient 0 → **7** · ④ la couverture réinclut les `X` → **2** · ⑤-⑧ chaque garde du prompt retiré → **1** chacun · ⑨ le libellé ment de nouveau → **1** · ⑩ ⭐ **`cycleType` EFFACE le rir** → **4** · ⑪ le propriétaire recopie une liste → **4** · ⑫ le `W` redevient exploitable → **1** · ⑬ une série importée devient non exploitable → **2** · ⑭ ⛔ une règle **existante** du prompt perdue au passage (**R8**) → **1**.
 
 Fichiers : `log.js`, `coach.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `setup.js`, ni `state.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1213. |
+
+
+**ft-v1214 — 📱 LE BANC IPHONE RÉEL · UN MOTEUR INTERCHANGEABLE, PAS UN SECOND CHEMIN** — Michel ferme le banc synthétique et ouvre le vrai téléphone : ***« le banc a suffisamment tranché… la prochaine étape est le TEST IPHONE RÉEL »***. Deux comportements maximum : ① **caméra → zxing-wasm → `_eanValide` → déduplication → `_bcFusionnerCandidats` → 1 lookup** · ② échec → **capture fixe → Quagga2 EN MODE CADRE** → même validation, même fusion. ⛔⛔ ***« Je ne veux toujours PAS réactiver le bouton scanner pour les utilisateurs. »***
+
+**⭐⭐ LE CHOIX QUI DÉCIDE DE TOUT, ET IL VIENT D'UNE LEÇON DE L'AUTRE SESSION : CE N'EST PAS UN SECOND CHEMIN.** Seul le **décodeur** devient un paramètre. La machine à états, `_bcPrendreLaMain`, `_bcTraiterCode`, `_bcFusionnerCandidats`, `_eanValide` et le lookup restent **exactement** ceux de la production. 👉 ***Un mode test qui n'emprunte pas le chemin de production valide le mode test, pas la production.*** Un témoin épingle que `_bcTraiterCode` passe toujours par la fusion, et la mutation qui la contourne mord.
+
+**⭐ LA PORTE : `Profil → Admin`, ET RIEN D'AUTRE (R13).** `_isAdminUnlocked()` garde déjà **16 outils** de diagnostic — ⛔ aucun drapeau, aucune route de test, aucun mécanisme nouveau. ⭐⭐ **Et le garde vit DANS la fonction, pas sur le bouton** : *une porte gardée par son bouton n'est pas gardée*. La mutation qui retire le garde de `ouvrirBancScanner` mord.
+
+**⛔⛔ AUCUN REPLI MOTEUR SILENCIEUX — la consigne §21, et c'est le piège le plus vicieux du chantier.** Si zxing-wasm ne charge pas sur Safari, l'écran écrit **« moteur demandé » / « moteur réellement actif » / « cause »**. *Croire qu'on teste WebAssembly alors que ZXing-js tourne est pire que ne pas tester du tout* — ça produirait un verdict faux sur la seule question que le conteneur ne pouvait pas trancher.
+
+**⭐⭐ ET RIEN N'EST INVENTÉ SUR L'AUTOFOCUS — le trou mesuré ce matin.** `focusMode:'continuous'` était **demandé et JAMAIS vérifié** : une contrainte `advanced` est **ignorée en silence** si elle n'est pas supportée, et ⛔ **ni `getCapabilities()` ni `getSettings()` n'existaient nulle part dans `app.js`**. `_bcCapacitesCamera` lit désormais vraiment le navigateur (`getSettings` · `getCapabilities` · `getSupportedConstraints`) et écrit littéralement **« non observable »** partout où Safari ne répond pas. ⛔ *Michel : « n'invente pas un état focus = OK »* — et la mutation qui écrit `o.focus='continuous'` mord.
+
+**⛔⛔ QUAGGA2 EST EN MODE CADRE, JAMAIS EN MODE SCÈNE.** En scène il rend des **EAN-8 de clé PARFAITEMENT VALIDE lus À L'INTÉRIEUR d'un EAN-13** (`3083681011791 → 11151791`, 12 occurrences mesurées) — *un code faux dont la clé est juste ne peut être attrapé par RIEN en aval*. Et il ne tourne **que sur la capture**, jamais en continu (16× le CPU pour un gain qui n'existe que sur les images ratées par le premier). Deux mutations, deux rouges.
+
+**⭐⭐ LE NUMÉRO COMPLET EST AFFICHÉ, jamais « produit trouvé »** : c'est **le** premier critère du test réel, et c'est précisément ce que le défaut ci-dessus rend indispensable.
+
+**⭐ CHARGEMENT — le précédent CIQUAL était déjà écrit dans `sw.js`.** Les moteurs (`zxing_reader.wasm` 931 Ko · `quagga.min.js` 152 Ko · la colle 36 Ko) sont **HORS du préchargement** : *« le préchargement tourne à CHAQUE mise à jour du cache »*, donc ce serait **~1,1 Mo re-téléchargé par tout le monde** pour des moteurs que personne n'atteint. Mis en cache **à la demande**, chargés **seulement à l'ouverture du banc** (règle d'or #4). La mutation qui les met dans la liste d'installation mord.
+
+**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ DEUX GARDES AVEUGLES À MOI — puis ma correction était fausse à son tour.** ① Le garde des prétraitements cherchait un `0.7` **dans** le `drawImage`, or ma mutation le posait sur la **ligne d'avant** : *un garde qui cherche la FORME d'un prétraitement en ratera toujours une*. Remplacé par l'invariant juste et plus fort — **le décodeur ne FABRIQUE aucun canvas**. ② Le garde du numéro vérifiait la **présence** de `l.code`, qui survit parfaitement à `l.code ? 'produit trouvé' : …` — *mentionner une variable n'est pas l'afficher*. ⚠️⚠️ **Et ma correction interdisait alors TOUT `l.code ?`… qui sert légitimement à choisir la couleur du texte** : elle rougissait sur du code sain. *Un garde plus strict que la contrainte réelle refuse du travail juste* — payé deux fois en cinq minutes.
+
+**📣 RÈGLE D'OR #11 — RIEN pour l'utilisateur.** Aucun écran ne change, aucun bouton n'apparaît : une carte de plus **derrière l'Admin** (R19/R25).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **aucune réactivation** — le bouton utilisateur reste absent, un témoin rougit **dans les deux sens** · ⛔ **aucun 3ᵉ moteur** (le banc a mesuré +0,0) · ⛔ **Html5-QRCode n'entre pas** (régression mesurée, et un garde du PDF le bannit) · ⛔ **aucun prétraitement** · ⛔ **aucun repli IA automatique** · ⛔ périmètre §23 intact : Nutrition, Milo, Séance, RIR, programmes, import Séance, import historique, **étape 1b**, migrations, records. ⚠️ **Ce que je ne peux toujours pas mesurer d'ici** : Safari/iOS, WebAssembly sur iPhone, l'autofocus réel, le thermique — **c'est exactement ce que le banc existe pour aller chercher**.
+
+Tests : **parcours 4120/4120 sur l'arbre FINAL** (bloc **CCCXI**, 18 témoins). ⛔ **CONTRÔLE NÉGATIF : 16 mutations, 16 mordent**, contrôle sain à 0 rouge avant ET après, sur un arbre **copié**.
+
+📄 **PDF POUR GPT** : `DOSSIER-GPT-BANC-MOTEURS-CODEBARRES-14-09-2026.pdf` (**hors dépôt**, règle d'or #14), **45 gardes**. ⚠️ **Deux de ses gardes ont dû CHANGER, et c'est dit** : celui qui interdisait toute bibliothèque dans `lib/` devient plus **précis** (Html5-QRCode reste banni ; zxing-wasm et Quagga2 sont autorisés **mais jamais préchargés, jamais atteignables par un bouton utilisateur**). *Un garde qu'on assouplit sans dire pourquoi est un garde qu'on a contourné.*
+
+Fichiers : `app.js`, `index.html`, `sw.js`, `lib/zxing-wasm.js` (nouveau), `lib/zxing_reader.wasm` (nouveau), `lib/quagga.min.js` (nouveau), `tests/parcours/runner.js`, `tools/gen_banc_pdf.py`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1214. |
+
+
+**ft-v1215 — 🔒 CE N'ÉTAIT PAS UN VERROU MANQUANT, C'ÉTAIT UN ÉTAT · ET LA SÉANCE CESSE D'ÊTRE DEVINÉE** — phase 1 du chantier débrief, validée par Michel après le dossier de mesures : ⛔ ***« pour CETTE passe, tu ne fais QUE l'étape 1 »***.
+
+**⭐⭐ A — LE DOUBLE DÉBRIEF : LA CAUSE N'ÉTAIT PAS CELLE QU'ON CHERCHE D'HABITUDE.** Un rechargement PENDANT l'appel faisait débriefer la même séance **deux fois** (2 appels `coach` mesurés pour une séance). ⛔ Et le trou n'était pas un verrou : entre l'arrivée de la réponse et `_dbfFini`, **aucun état ne disait que c'était déjà payé** — `_dbfRecuperer` voyait un jeton « en cours », en déduisait un appel jamais abouti, et remettait la séance en file.
+
+**⛔⛔ L'ÉTAT `recu` NE VAUT QUE PARCE QU'IL PORTE LA RÉPONSE.** Marquer « reçu » sans garder le texte aurait remplacé un doublon par une **perte silencieuse** — la personne n'aurait jamais su que son débrief avait existé (**R29** : le coût de l'erreur n'est pas symétrique). La réponse **et la consigne** sont donc persistées à l'instant même où elles arrivent, **avant** tout nettoyage, affichage ou écriture d'historique — c'est-à-dire avant toute opération interruptible. ⭐ *Et ça rejoint la cible produit de Michel : « résultat persisté / réutilisable ».*
+
+**⭐ LE RATTRAPAGE TERMINE, IL NE REFAIT PLUS** : il pose la réponse gardée dans le fil du Coach, puis marque la séance livrée. ⛔ Et il sort **avant** de regarder le jeton « en vol » — l'ordre n'est pas cosmétique : lire « en vol » d'abord remettrait la séance en file et on repaierait exactement ce qu'on cherche à éviter.
+
+| scénario (conduit par les vraies portes) | appels `coach` |
+|---|---|
+| appel normal · rechargement après affichage · app fermée/rouverte | **1** |
+| rechargement AVANT le départ de l'appel | **0** |
+| rechargement PENDANT `en_vol` | **2** — ⭐ **juste** : rien n'était payé |
+| ⭐⭐ **rattrapage depuis la FENÊTRE EXACTE** | **0**, réponse **reposée** |
+| échec réseau → jeton `en_file`, puis « Réessayer » | récupérable, livré |
+
+**⭐⭐ B — LA SÉANCE EST NOMMÉE, PLUS DEVINÉE.** `_dbfPrendre` prenait la **plus ancienne** pendant que l'instruction disait « la plus **récente** » : avec deux séances en file, l'écran affichait l'une et Milo analysait l'autre. L'écran de fin cible désormais la séance **affichée**, par son identifiant (`_dbfPrendreCible`), et l'instruction la **nomme**. ⭐⭐ **L'ID CHOISIT, LA DATE DÉCRIT** — le contexte ne porte aucun identifiant interne, donc le donner au modèle ne l'aiderait pas ; la désignation est **dérivée** de la séance retrouvée par son id, au format exact du contexte. Mesuré sur 6 scénarios : les **4 identifiants** (affiché · pris · injecté · cité) coïncident, **y compris avec deux séances le même jour**.
+
+**⚠️⚠️ UN DÉFAUT QUE J'AI INTRODUIT, TROUVÉ PAR LE BANC ET NON PAR RELECTURE.** Mon garde refusait toute séance présente dans `_dbfFaits` — or `_dbfRendre` (échec propre) y inscrit les séances **échouées** tout en les remettant en file. Conséquence mesurée : après un vrai échec réseau, **le bouton « Réessayer » ne déclenchait plus aucun appel** — *le débrief était perdu en silence, exactement ce que cette correction doit empêcher*. 👉 **La file fait foi pour « à faire » ; `_dbfFaits` ne sert que hors file.**
+
+**⚠️ ET TROIS TÉMOINS ÉTAIENT AVEUGLES, MÊME FAMILLE** : ils cherchaient une **présence** (`return;`, `removeItem(_DBF_RECU)`, `_DBF_PEREMPTION`) alors que le même mot vit **ailleurs dans la fonction** — les retirer de leur branche les laissait verts. Resserrés par comptage. *Un motif qui cherche une présence ne mesure pas une absence locale.*
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : mêmes appels sur le chemin normal, socle local **478 car.** inchangé, « Continuer avec Milo » toujours **0 appel**, **+51 octets** de désignation. ⛔ **0 `summarizeCoach` créé par la correction.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** (périmètre nommé par Michel, chacun figé par un témoin) : ⛔ pas de `buildSessionDebriefContext` · ⛔ les blocs C+D ne sont pas retirés · ⛔ **le catalogue d'exercices ne bouge pas** · ⛔ **le Gardien ne bouge pas** · ⛔ **le cache ne bouge pas** · ⛔ Sonnet reste Sonnet · ⛔ la politique de mémoire ne bouge pas · ⛔ prévu vs réalisé, Nutrition, **règles RIR de ft-v1213** : intacts.
+
+⚠️⚠️ **UNE LIMITE DITE PLUTÔT QUE MASQUÉE** : le chemin **Coach** (`_maybeAutoDebrief` → `sendToCoach`) garde une fenêtre analogue. ⭐ Elle est **bornée** — la réponse y est déjà écrite dans le fil avant que la main revienne, donc **rien n'est perdu**, au pire un appel est repayé. La fermer imposerait de modifier `sendToCoach`, le cœur de la conversation : **au-delà du périmètre de cette passe**, donc signalé au lieu d'être appliqué.
+
+Tests : **parcours 4140/4140 sur l'arbre FINAL** (bloc **B-CCCXII**, 20 témoins). ⛔ **CONTRÔLE NÉGATIF : 20 mutations, 20 mordent**, chacune par son témoin, contrôle sain **20 OK / 0 rouge avant ET après**, sur un arbre **copié**.
+
+📄 **PDF POUR GPT** : `DOSSIER-GPT-DEBRIEF-PHASE1-15-09-2026.pdf` (**hors dépôt**, règle d'or #14), **36 gardes**. ⭐ Il a été écrit **pendant** que la passe tournait et **refusait donc de publier un total** — la leçon ft-v1201 tenue par un garde plutôt que par la mémoire.
+
+Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `setup.js`, ni `state.js`, ni `worker.js`, ni `Code.js`.** sw.js ft-v1215. |
