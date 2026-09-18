@@ -390,9 +390,9 @@ H.append(encadre(
     colors.HexColor('#B26A00')))
 
 H.append(P('21. Decisions qui appartiennent a Michel', 'h1'))
-H.append(P('① <b>Fermer V2</b>, apres la mesure de couverture. ② <b>Vouloir ou non</b> que la '
+H.append(P('<b>1.</b> <b>Fermer V2</b>, apres la mesure de couverture. <b>2.</b> <b>Vouloir ou non</b> que la '
            'suppression se propage (aujourd hui un vidage total est refuse - c est un arbitrage, '
-           'pas un bug). ③ <b>Ouvrir ou non</b> le chantier « revision / tombstones », qui est le '
+           'pas un bug). <b>3.</b> <b>Ouvrir ou non</b> le chantier « revision / tombstones », qui est le '
            'seul moyen de regler la resurrection. <b>Rien de tout cela n a ete engage ici.</b>',
            'p'))
 H.append(P('<b>Ce que cette passe n a pas fait</b> : aucune fermeture V2, aucune revocation, '
