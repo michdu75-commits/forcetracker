@@ -1000,10 +1000,16 @@ function _cloudSync(){
       authCode:_authCode(), token:_ftToken()
     }))
   }).catch(()=>{});
-  // MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
-  // vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,
-  // et surtout : ça ne retarde ni ne bloque JAMAIS la sauvegarde principale (règle d'or #3).
-  try{ if(typeof sbMirror==='function')sbMirror(_corpsSync); }catch(e){}
+  /* MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
+     vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,
+     et surtout : ça ne retarde ni ne bloque JAMAIS la sauvegarde principale (règle d'or #3).
+     🔀 S2-B PHASE 4 (18/09/2026) — `sbEnvoyer` remplace `sbMirror` ICI, et nulle part ailleurs.
+     L'identité du compte écrit ne vient plus d'une adresse choisie par le navigateur mais du
+     jeton S1 résolu côté serveur. ⛔ `sbMirror` n'est PAS supprimée : elle reste disponible
+     pour le retour en arrière, qui tient en une ligne (`SB_VOIE` dans `supabase.js`).
+     ⛔ Le corps reste le MÊME que celui d'Apps Script (R2) : on ne construit pas un second
+     instantané métier, qui finirait par diverger. */
+  try{ if(typeof sbEnvoyer==='function')sbEnvoyer(_corpsSync); }catch(e){}
 }
 // Alias pour compatibilité
 function _cloudSyncSessions(){_cloudSync();}

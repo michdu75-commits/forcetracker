@@ -92,6 +92,126 @@ function _sbSansJustificatifs(payload){
   return propre;
 }
 
+/* ════════════════════════════════════════════════════════════════════════════════════
+   🔀 S2-B PHASE 4 — LA VOIE DE LA COPIE MIROIR (18/09/2026)
+
+   ⭐⭐ CE QUI CHANGE TIENT EN UNE PHRASE : l'identité du compte écrit ne vient plus d'une
+   ADRESSE ENVOYÉE PAR LE NAVIGATEUR (`p_email`, que n'importe qui pouvait choisir), mais du
+   JETON S1 RÉSOLU CÔTÉ SERVEUR. Le navigateur ne désigne plus personne : il présente un
+   justificatif, et c'est le serveur qui dit à qui il appartient.
+
+   ⛔ L'ANCIENNE PORTE N'EST PAS SUPPRIMÉE (consigne explicite de Michel : « ne pas supprimer
+   l'ancien chemin avant validation complète du nouveau »). `sbMirror` reste entière, avec son
+   filet et son `p_email` ; elle n'est simplement plus appelée par la sauvegarde. Le retour en
+   arrière tient en UNE ligne : passer `SB_VOIE` à `'direct'` (règle d'or #8).
+
+   ⛔⛔ ET IL N'Y A AUCUN REPLI AUTOMATIQUE VERS L'ANCIENNE VOIE — c'est la décision la plus
+   importante de cette bascule. Un appareil SANS jeton n'alimente plus le miroir. Basculer sur
+   `p_email` dans ce cas rouvrirait V2 exactement sur les comptes qu'on cherche à protéger, et
+   *une porte dérobée qui ne s'ouvre qu'en cas d'échec est une porte qui s'ouvre toujours au
+   pire moment*. Rien n'est perdu pour autant : Apps Script reste la SOURCE DE VÉRITÉ, le
+   miroir n'est qu'un filet, et l'état le dit en clair dans l'Admin.
+   ════════════════════════════════════════════════════════════════════════════════════ */
+const SB_VOIE = 'worker';   // 'worker' = jeton résolu côté serveur · 'direct' = ancienne voie
+
+/* Le jeton factice de la sonde : 64 zéros hexadécimaux. Il a la BONNE FORME (sinon le Worker
+   s'arrêterait au premier contrôle et ne prouverait rien) et il n'existe dans aucun registre. */
+const SB_SONDE_JETON = '0000000000000000000000000000000000000000000000000000000000000000';
+
+/** Ce que l'app retient d'une réponse du Worker. ⛔ Aucun jeton, aucun haché, aucune clé :
+ *  seulement un code HTTP, un mot de refus et la voie empruntée. */
+function _sbEtatDepuis(statut, d){
+  const voie = (d && d.voie) || '';
+  if (statut === 200 && d && d.status === 'ok') return { ok:true, voie:voie, info:'écrit' + (voie ? ' (voie : ' + voie + ')' : '') };
+  /* ⛔⛔ UNE PANNE DU CLOUD N'EST PAS UNE RÉVOCATION, ET LES CONFONDRE COÛTE CHER. Le Worker
+     répond 503 quand Supabase est tombé ou mal configuré, 401 quand l'identité est refusée.
+     *Dire « ton appareil est révoqué » à quelqu'un dont le cloud est simplement tombé est pire
+     qu'une erreur technique : c'est une erreur qu'il va essayer de réparer lui-même.* */
+  if (statut === 503) return { ok:false, voie:'', info:'cloud indisponible (' + ((d && d.raison) || '?') + ')' };
+  if (statut === 401) {
+    const r = (d && d.raison) || '?';
+    if (r === 'revoque') return { ok:false, voie:'', info:'appareil révoqué — écriture refusée' };
+    if (r === 'forme')   return { ok:false, voie:'', info:'aucun jeton sur cet appareil' };
+    return { ok:false, voie:'', info:'identité refusée (' + r + ')' };
+  }
+  return { ok:false, voie:'', info:'HTTP ' + statut };
+}
+
+function _sbNoter(e){
+  _sbDernier = { ok:!!e.ok, quand:new Date().toISOString(), info:e.info, voie:e.voie || '' };
+  try{ localStorage.setItem('ft4_sb_last', JSON.stringify(_sbDernier)); }catch(err){}
+}
+
+/**
+ * LA PORTE DE LA SAUVEGARDE MIROIR. Un seul appelant : `_cloudSync`.
+ * @param {object} payload — exactement le corps métier envoyé à Apps Script.
+ */
+function sbEnvoyer(payload){
+  if(SB_VOIE !== 'worker') return sbMirror(payload);
+  try{
+    if(typeof window!=='undefined' && window._demoMode)return;   // mode démo : aucune écriture
+    if(typeof AI_PROXY_URL!=='string' || !AI_PROXY_URL)return;
+    /* ⛔ LE FILET RESTE, SUR LA NOUVELLE PORTE AUSSI. Le corps métier ne porte plus de
+       justificatif depuis S2-A, mais la règle « ce qui sort d'ici n'en contient aucun »
+       appartient à la PORTE, pas à l'appelant (R2). */
+    const donnees=_sbSansJustificatifs(payload);
+    if(!donnees || typeof donnees!=='object')return;
+    /* 🪪 LE JETON N'EST PAS POSÉ ICI, ET C'EST VOULU : l'injecteur de `constants.js` est le
+       propriétaire unique de « comment un justificatif atteint le Worker » (R2), et il le pose
+       au niveau de l'ENVELOPPE — jamais dans `data`, qui est la donnée de la personne.
+       ⚠️ Aucun en-tête `Content-Type` : sans lui la requête reste « simple » et n'entraîne
+       pas de requête préliminaire CORS à chaque sauvegarde. Le Worker lit `request.text()`,
+       le type déclaré lui est indifférent — vérifié dans son code, pas supposé. */
+    fetch(AI_PROXY_URL,{method:'POST',
+      body:JSON.stringify({ action:'cloudSave', data:donnees })
+    }).then(function(r){
+      return r.json().catch(function(){ return null; }).then(function(d){
+        _sbNoter(_sbEtatDepuis(r.status, d));
+      });
+    }).catch(function(){
+      // Échec réseau : non journalisé comme erreur d'app (ft-v760). Apps Script a déjà reçu
+      // la donnée — rien n'est perdu, et on ne crie pas.
+      _sbNoter({ok:false, voie:'', info:'réseau'});
+    });
+  }catch(e){ /* jamais bloquant (règle d'or #3) */ }
+}
+
+/**
+ * SONDE DE LA NOUVELLE VOIE, pour la carte Admin — elle N'ÉCRIT RIEN.
+ *
+ * ⚠️⚠️ LA LIGNE LA PLUS DANGEREUSE DE CE FICHIER EST `token:SB_SONDE_JETON`, ET ELLE DOIT LE
+ * RESTER. Sans elle, l'injecteur de `constants.js` poserait le VRAI jeton de la personne :
+ * la sonde deviendrait une vraie sauvegarde, et elle écraserait son instantané par
+ * `{sonde:true}`. L'injecteur n'écrase jamais un jeton déjà posé — c'est cette garantie qui
+ * rend la sonde inoffensive, et deux témoins la figent des deux côtés.
+ *
+ * ⭐ ET C'EST UN VRAI TEST, PAS UN VOYANT : un 401 « inconnu » prouve que la route est
+ * atteinte, que l'origine est acceptée, que le Worker voit sa configuration, que Supabase a
+ * répondu et que le pont a tranché. *Un indicateur qui ne teste pas ce qu'il annonce finit
+ * toujours par mentir* — c'est la raison d'être de l'ancien `sbTest`, et elle vaut toujours.
+ */
+async function sbTestVoie(){
+  if(typeof AI_PROXY_URL!=='string' || !AI_PROXY_URL)
+    return {ok:false, texte:'Route indisponible (AI_PROXY_URL absent).'};
+  try{
+    const r=await fetch(AI_PROXY_URL,{method:'POST',
+      body:JSON.stringify({ action:'cloudSave', token:SB_SONDE_JETON, data:{sonde:true} })});
+    let d=null; try{ d=await r.json(); }catch(e){}
+    if(r.status===401 && d && d.error==='auth')
+      return {ok:true, texte:'✅ La route répond et REFUSE un jeton inconnu (HTTP 401, raison « '
+                             +((d.raison)||'?')+' »). Aucune écriture.'};
+    if(r.status===503)
+      return {ok:false, texte:'⚠️ La route répond mais le cloud est indisponible (HTTP 503, « '
+                              +((d&&d.raison)||'?')+' ») — ce n\'est pas un problème d\'identité.'};
+    if(r.status===200)
+      return {ok:false, texte:'❌ HTTP 200 sur un jeton factice : la route a ACCEPTÉ une identité '
+                              +'inconnue. À traiter immédiatement.'};
+    return {ok:false, texte:'❌ HTTP '+r.status+(r.status===403?' → origine refusée par le Worker.':'')};
+  }catch(e){
+    return {ok:false, texte:'❌ Aucune réponse (réseau, ou Worker injoignable).'};
+  }
+}
+
 function sbMirror(payload){
   try{
     if(!_sbActif())return;
@@ -165,14 +285,29 @@ async function sbTest(){
   }
 }
 
-/** État du miroir, pour la carte Admin. Aucune donnée personnelle. */
+/** État du miroir, pour la carte Admin.
+ *  ⛔ AUCUNE DONNÉE PERSONNELLE, ET AUCUN SECRET : la présence d'un jeton est rendue comme un
+ *  OUI/NON. *Un diagnostic qui affiche le justificatif qu'il diagnostique est une fuite.* */
 function sbEtat(){
-  if(!_sbActif())return {configure:false, texte:'Miroir Supabase non configuré (SB_URL / SB_ANON vides).'};
+  /* ⚠️ LA CONDITION D'ACTIVITÉ DÉPEND DE LA VOIE, et s'en tenir à l'ancienne dirait « non
+     configuré » sur un chemin qui marche : la voie Worker n'emploie NI `SB_URL` NI la clé
+     publique — c'est le Worker qui détient la clé serveur. */
+  const parWorker = (SB_VOIE==='worker');
+  const actif = parWorker ? (typeof AI_PROXY_URL==='string' && !!AI_PROXY_URL) : _sbActif();
+  const voieTxt = parWorker ? 'voie : jeton résolu côté serveur' : 'voie : ancienne (adresse du navigateur)';
+  const jeton = (typeof _ftToken==='function') ? !!_ftToken() : null;
+  const jetonTxt = !parWorker ? ''
+    : (jeton===null ? '' : (jeton ? ' · jeton présent sur cet appareil'
+        : ' · ⚠️ AUCUN jeton sur cet appareil : la copie miroir est en attente (Apps Script, lui, reçoit tout)'));
+  if(!actif)return {configure:false, texte:'Miroir non configuré ('+voieTxt+').'};
   let d=_sbDernier;
   if(!d){ try{ d=JSON.parse(localStorage.getItem('ft4_sb_last')||'null'); }catch(e){ d=null; } }
-  if(!d)return {configure:true, texte:'Configuré — aucune sauvegarde miroir encore tentée sur cet appareil.'};
+  if(!d)return {configure:true, texte:'Configuré — '+voieTxt+jetonTxt
+                                      +'\nAucune sauvegarde miroir encore tentée sur cet appareil.'};
   const q=new Date(d.quand);
-  return {configure:true, ok:!!d.ok,
-    texte:(d.ok?'✅ Dernière copie miroir : ':'⚠️ Dernière tentative en échec ('+d.info+') : ')
+  return {configure:true, ok:!!d.ok, voie:d.voie||'',
+    texte:voieTxt+jetonTxt+'\n'
+          +(d.ok?'✅ Dernière copie miroir — '+(d.info||'écrit')+' : '
+                :'⚠️ Dernière tentative en échec ('+d.info+') : ')
           +(isNaN(q)?d.quand:q.toLocaleString('fr-FR'))};
 }

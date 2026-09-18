@@ -409,7 +409,31 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1221` — 🍽️ **NUTRITION : le scanner redevient LOCAL, la
+- **Version en ligne (live) :** `ft-v1222` — 🔐 **S2-B PHASE 4 : LE CLIENT BASCULE VERS
+  `cloudSave` — l'identité du miroir ne vient plus d'une adresse choisie par le navigateur.**
+  ⭐⭐ Ce qui change tient en une phrase : `p_email`, qu'un navigateur pouvait choisir librement,
+  cède la place au **jeton S1 résolu côté serveur**. Une seule ligne bouge dans `_cloudSync` —
+  `sbEnvoyer` remplace `sbMirror`.
+  ⛔ **L'ancienne porte n'est PAS supprimée** (consigne de Michel) : `sbMirror` garde son filet et
+  son `p_email`, elle n'est simplement plus appelée ; le retour arrière tient en **une ligne**
+  (`SB_VOIE`).
+  ⛔⛔ **Et il n'y a AUCUN repli automatique** — c'est la décision centrale. Un appareil **sans
+  jeton** n'alimente plus le miroir. Basculer sur `p_email` dans ce cas rouvrirait V2 **exactement
+  sur les comptes qu'on protège**, et *une porte dérobée qui ne s'ouvre qu'en cas d'échec est une
+  porte qui s'ouvre toujours au pire moment*. Rien n'est perdu : Apps Script reste la **source de
+  vérité**, le miroir n'est qu'un filet — et l'état le **dit** au lieu de se taire.
+  ⚠️⚠️ **La ligne la plus dangereuse du chantier est dans la carte Admin.** Elle appelait
+  `sbTest()`, qui **écrit** via l'ANCIEN RPC : l'ouvrir pendant la mesure aurait emprunté le chemin
+  qu'on cherche à prouver inutilisé — *un instrument qui modifie l'état qu'il mesure ne mesure plus
+  rien*. `sbTestVoie()` éprouve la **nouvelle** route et **n'écrit rien** : elle **pose** un jeton
+  factice de 64 zéros. Sans ce jeton posé, l'injecteur mettrait le **vrai** et la sonde écraserait
+  l'instantané de la personne par `{sonde:true}`.
+  ⛔⛔ **V2 N'EST PAS FERMÉE** : `ft_miroir` n'est pas révoquée, et le témoin ⑳ reste
+  **volontairement non retourné** — *on ne maquille pas une porte ouverte*.
+  ⏳ **La preuve de bout en bout attend deux vraies sauvegardes de Michel** : `voie:pont` puis
+  `voie:directe`, lisibles dans **Profil → Admin → miroir**.
+
+- **Version précédente :** `ft-v1221` — 🍽️ **NUTRITION : le scanner redevient LOCAL, la
   portion redevient la TIENNE, et les habitudes se MESURENT avant de se décider.**
   **A — le scanner.** Le bouton servi était *« photographier le code-barres (IA lit les
   chiffres) »* : un appel IA pour **13 chiffres que le téléphone décode seul**, et ⚠️ ce que le
