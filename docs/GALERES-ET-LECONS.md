@@ -84,6 +84,7 @@
 | 🎞️ Guide de l'app incomplet | Slides ADN & autres = captures manquantes | **Michel fournit les captures** |
 | 💳 Offre débutant 15,99€ | Pas encore branchée (mur premium) | Tarif Ko-fi à créer + wiring |
 | 🧪 Tests iOS = manuels | Seul Michel valide Safari | Pas d'automatisation Safari |
+| 📷 **iOS redemande la caméra à chaque relance de la PWA** (constaté par Michel le 17/09/2026, essai iPhone réel de ft-v1221) | ⭐ **Le scanner local marche : lectures justes, AUCUN faux EAN.** Le seul comportement relevé : **tant que l'app reste ouverte, plus aucune demande** ; après une **fermeture complète** puis relance, iOS **redemande l'autorisation**. ⛔ **Ce n'est PAS notre code** — mesuré : `navigator.permissions` et `revoke()` ont **0 occurrence** dans tout `app.js`, et la seule chose faite à la fermeture est `track.stop()`, qui **libère la caméra sans toucher à l'autorisation**. ⚠️ **Ce que je ne peux PAS mesurer d'ici** : le comportement de WebKit lui-même (aucun iOS dans le conteneur) — donc *« c'est iOS »* reste une **déduction par élimination**, pas une mesure directe (**règle d'or #16**). | ⛔ **AUCUN CHANTIER — décision de Michel** : *« à noter comme comportement iPhone/PWA, sans ouvrir de chantier pour l'instant »*. Écrit ici pour que personne ne le « répare » en croyant trouver un bug (**R30**). Si ça devait bouger un jour, la piste serait une **Permissions-Policy** ou un `navigator.permissions.query` — ⚠️ **non vérifié sur iOS**, donc une piste, pas une solution. |
 
 ---
 
