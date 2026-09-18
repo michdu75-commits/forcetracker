@@ -166,7 +166,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1223`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v1224`** — voir le journal des versions) |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
@@ -435,7 +435,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1223`** (prochaine : `ft-v1224`).
+> **Version actuelle : `ft-v1224`** (prochaine : `ft-v1225`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -474,6 +474,30 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1224 — 🗂️ LA SOURCE DE VÉRITÉ CENTRALE DES 21 CAPACITÉS IA · ET LE DOUBLE COMPTAGE FERMÉ, TEST-FIRST** — phase 3, après que Michel a arbitré Q1→Q5 et acté **M1→M14**. Ses bornes : ⛔ ***« phase 3 ne doit pas encore poser tous les verrous »*** · ⛔ ***« la documentation humaine ne doit pas devenir une deuxième source de vérité »*** · ⛔ ***« ne compense pas le bug en doublant artificiellement les plafonds »***.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucun quota ne bouge, aucune route n'est fermée. Un fichier de données est servi, et **personne ne le lit encore**.
+
+**⭐⭐ LE DÉFAUT FERMÉ EST MESURÉ, PAS SUPPOSÉ.** La politique d'accès vivait à **QUATRE endroits qui ne se parlaient pas** : le texte de vente (`PREMIUM_PERKS`), les gardes du client, le quota du serveur, et la documentation écrite à la main. La phase 2 y avait prouvé **9 incohérences**, dont **trois capacités vendues Premium et gratuites dans le code**. 👉 ***Ce n'était pas une série d'oublis : c'est la conséquence mécanique d'une politique sans propriétaire*** (**R2**). `capacites-ia.js` devient ce propriétaire.
+
+**⭐⭐ DEUX CHAMPS, PAS UN — la leçon la plus chère de la phase 2.** `politique` dit ce qui **DOIT ÊTRE**, `etatCode` dit ce qui **EST**, et tant qu'ils diffèrent l'écart est **ÉCRIT** (12 le sont). 👉 ***Un registre qui affiche la politique souhaitée à la place de la politique appliquée ment plus efficacement qu'une documentation périmée, parce qu'il a l'air d'être du code.***
+
+**⭐ LA DOCUMENTATION EST GÉNÉRÉE, JAMAIS ÉCRITE.** `docs/IA-FREE-PREMIUM.md` sort de `tools/gen_doc_ia.js` ; son mode `--check` **RÉGÉNÈRE et compare caractère pour caractère**. ⛔ Et le contrôle est lui-même **éprouvé sur une documentation volontairement fausse** — *un contrôle qui ne peut pas rougir ne protège rien*. C'est **R27** appliqué ici : l'inventaire est généré depuis le code pour cette raison exacte.
+
+**⛔ `NON_DECIDEE` EST UNE VALEUR DE PLEIN DROIT.** Trois politiques restent ouvertes (`milo.debrief`, `nutrition.mealPlan.ai`, `nutrition.mealPlanImport.ai`) : les inscrire « FREE » reviendrait à **inventer une décision** que Michel n'a pas prise (**règle d'or 15**). ⭐ Six formes de quota, dont **`par_evenement`** que `milo.memory.backfill` exige et qu'aucun compteur actuel ne sait exprimer — sa valeur reste **`null`**, parce que la taille d'une période est **NON MESURÉE**.
+
+**🔧 UNE SEULE CORRECTION DE CODE, ET ELLE EST TEST-FIRST.** Un appel IA venu du Worker traversait **deux** routes Apps Script (`authIdentity` puis `aiCount`) qui appelaient toutes deux `_aiQuotaBlock_` — laquelle **n'est pas une lecture, elle ÉCRIT**. Chaque appel consommait **deux unités** : plafonds réels **25/jour/e-mail au lieu de 50**, **300 au lieu de 600**.
+
+⭐ La correction **sépare LIRE de CONSOMMER** : `_aiQuotaEtat_` n'écrit rien, `_aiQuotaBlock_` reste le **seul propriétaire de l'écriture**. ⭐⭐ **Un second défaut tombe avec** : un appel **REFUSÉ** consommait quand même — *un garde-fou qui se déclenche en consommant la ressource qu'il protège travaille contre lui-même*, et quelqu'un déjà bloqué creusait son propre plafond en réessayant. ⛔ **Les plafonds ne bougent pas d'un chiffre** : *doubler un plafond pour absorber un double comptage, c'est graver le bug dans la configuration et le rendre indétectable.*
+
+⭐ **Le témoin a été écrit AVANT le correctif** et mesuré **ROUGE à 7 défauts** sur le code d'avant. ⚠️ **Et il a fallu le corriger d'abord** : mon compteur d'appels attrapait aussi la **déclaration** de la fonction — *un compteur d'appels qui compte la définition mesure autre chose que ce qu'il annonce*, et serait resté rouge sur une correction parfaitement juste.
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ aucun garde Premium **serveur** · ⛔ aucune route Apps Script fermée · ⛔ aucun tombstone, aucun journal de profil, aucun backfill réel · ⛔ aucune synchro multi-appareils · ⛔ **ni V2, ni Douane** · ⛔ le **pot de 25 usages Nutrition n'est pas séparé dans le code** — seul le registre porte désormais trois politiques distinctes pour ses trois capacités, ce qui est le préalable et non la correction.
+
+Tests : **blocs B-CCCXXXI (22 témoins), B-CCCXXXII (6) et B-CCCXXXIII (12)**, dans `tests/parcours/registre_ia.js` et `tests/parcours/quota_double.js`.
+
+Fichiers : `capacites-ia.js` (nouveau), `docs/IA-FREE-PREMIUM.md` (généré), `tools/gen_doc_ia.js` (nouveau), `Code.js` (**uniquement autour du quota**), `index.html` (**une balise**), `sw.js`, `tests/parcours/registre_ia.js` et `quota_double.js` (nouveaux), `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `worker.js`, ni `supabase.js`.** sw.js ft-v1224. |
 
 **ft-v1223 — 🩹 LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR · ET ILS ONT ÉTÉ VUS À L'ÉCRAN, PAS EN RELECTURE** — feu vert de Michel : ⭐ ***« corrige les deux défauts d'affichage »***.
 
@@ -737,36 +761,3 @@ Tests : **parcours 4161/4161 sur l'arbre FINAL** (blocs **B-CCCXIV** 11 témoins
 
 Fichiers : `setup.js`, `supabase.js`, `tests/parcours/runner.js`, `tools/gen_s2_audit_pdf.py` (nouveau), `tools/gen_s2a_pdf.py` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `worker.js`, ni `Code.js`, ni `coach.js`, ni `log.js`, ni `state.js`.** sw.js ft-v1217. |
 
-**ft-v1216 — 🪪 L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL DÉCLARÉE · ET C'EST UN SEUL PROPRIÉTAIRE QUI SAUVE NUTRITION** — S1, la première correction nommée par l'audit sécurité du 15/09. Michel tranche les **4 décisions produit** qu'il s'était réservées et pose un interdit : ⛔⛔ ***« INTERDIT de faire : e-mail seul → émission automatique d'un credential fiable »*** · ⛔ ***« pas de `Math.random()` dans la chaîne d'identité »***.
-
-**⭐⭐ LE DÉFAUT FERMÉ TIENT EN UNE PHRASE.** Partout — `saveProfile`, `pushHealth`, le Worker IA — un **e-mail fourni par le client** valait **identité authentifiée**. Conséquence mesurée à l'audit : on pouvait **écraser le compte d'autrui** si la victime n'avait pas posé de code, et **faire payer ses appels IA à quelqu'un d'autre**. Un **registre de jetons** côté serveur remplace ça.
-
-| | avant | après |
-|---|---|---|
-| preuve d'identité | `email` dans la charge utile | **jeton opaque 256 bits** |
-| ce que le serveur stocke | — | ⭐ **SHA-256 du jeton, jamais le brut** |
-| `jeton A` + `email B` | décompté sur **B** | ⭐⭐ décompté sur **A** |
-| jeton présent mais invalide | — | ⛔ **REFUSÉ** (pas de repli sur l'e-mail) |
-| panne réseau du Worker | — | ⛔ **ferme** la porte |
-
-**⭐ LE JETON N'EST ÉMIS QUE CONTRE UNE PREUVE, et l'interdit de Michel est tenu.** Deux portes seulement : la **vérification e-mail** déjà déployée et **bornée** (5 essais · expiration · 60 s de cooldown · 80/jour, soit ~400 tentatives/jour contre 10⁶) — la preuve est **consommée à l'instant même** où le jeton est émis — ou un **code perso déjà posé**. ⛔ Un e-mail seul n'en obtient **jamais**. ⭐ **Et la récupération emprunte la MÊME porte que le bootstrap** (décision de Michel) : pas de second chemin, donc pas de second trou.
-
-**⛔ `Math.random()` SORT DE LA CHAÎNE D'IDENTITÉ.** L'audit l'avait signalé comme faiblesse *à corriger si ce chemin délivre un jeton* — il le délivre désormais. Le jeton vient de **trois `Utilities.getUuid()`**, et le code de confirmation d'un UUID lui aussi.
-
-**⭐⭐ LA DÉCISION D'ARCHITECTURE EST CÔTÉ CLIENT, ET C'EST ELLE QUI PROTÈGE LA PROMESSE FAITE À MICHEL.** Les appels au Worker partent de **16 endroits dans 4 fichiers**, dont **5 sont Nutrition** (`foodLabel` · `readBarcode` · `estimateFood` · `generateMealPlan` · `importMealPlan`). Les modifier un par un aurait ouvert `app.js` en plein chantier Nutrition **gelé**. Un **injecteur unique** posé dans `constants.js` ajoute le jeton aux appels du Worker : ⛔⛔ **Nutrition = 0 ligne**, et un témoin épingle que `token:_ftToken()` n'apparaît **au plus qu'une fois** dans `app.js` — *si le chantier avait débordé, il rougirait*. C'est **R2** appliqué au transport : une information, un propriétaire.
-
-**⏳ LA FENÊTRE DE TRANSITION EST UN CHOIX DE MICHEL (option B), PAS UN COMPROMIS TECHNIQUE.** Sans jeton, l'ancien chemin fonctionne encore ; un compteur **anonyme** (aucune adresse) mesure la bascule ; **`_MIG_FERME_ = false`** la fermera **à la date qu'il décidera**. 👉 *Personne n'est mis dehors* — et c'est **le seul interrupteur** à basculer pour clore S1.
-
-**⛔⛔ `V2 RESTE OUVERTE JUSQU'À S2`, ET ON NE MAQUILLE PAS.** `ft_miroir` reçoit toujours un `p_email` **libre** depuis le navigateur : le fermer impose de faire entrer le Worker dans ce chemin, c'est **S2**. ⭐ Le témoin ③ est **volontairement NON retourné** pour le dire — *un témoin qui affirme ce qu'on aurait aimé lire ne protège rien*.
-
-**⚠️⚠️ ET QUATRE DE MES GARDES ÉTAIENT FAUX — TROIS REFUSAIENT DU TRAVAIL JUSTE.** Le générateur du dossier a refusé de sortir **quatre fois sur du code parfaitement sain** : ① le garde `Math.random()` rougissait **à cause du commentaire qui DOCUMENTE son retrait** — R30 exige de l'écrire à sa place, donc le mot reste dans le fichier (*un garde qui ne distingue pas le CODE de ce qui en PARLE mesure la documentation*, famille ft-v1193/1203/1205/1210) · ② le garde « le jeton brut n'est pas stocké » attrapait le `brut` passé **à la fonction de hachage** (*un garde plus strict que la contrainte réelle refuse du travail juste*, ft-v1214) · ③ une borne en **caractères** ne pouvait pas franchir le `;` posé entre deux instructions (**§63**) · ④ ⭐⭐ **deux gardes AVEUGLES au piège de la SOUS-CHAÎNE** : renommer `_ftPoserInjecteurJeton` en `…JetonX` les laissait **parfaitement verts**, puisque l'ancien nom est contenu dans le nouveau — famille `presentsX`/`needsCode2`, **3ᵉ fois** dans ce projet, fermés sur leur forme déclarative.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : le jeton est posé et transporté sans que la personne ait un geste à faire. ⚖️ **Pas de pop-up `WHATS_NEW`** — rien à *faire*, aucun repère n'a bougé.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **S2** (fermer le miroir Supabase) · ⛔ **S3** (l'idempotence du débrief, qui se construit DESSUS) · ⛔ `deleteAccount` · ⛔ la vérification **Premium serveur** · ⛔ les e-mails réels dans le dépôt · ⛔ **aucun `accountId`** (migration disproportionnée — la table de jetons sert de point d'indirection) · ⛔ Nutrition, `foodLog`, douane, scanner, `savedFoods`, migration Supabase principale, paiement, natif. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran, et c'est précisément ce qu'il y a à vérifier. ⚠️ **Fenêtre de déploiement dite plutôt que masquée** : `worker.js` et `Code.js` se déploient **en parallèle**, donc Milo peut répondre 401 pendant ~1 min si le Worker part le premier — bref, auto-résolu, **aucune perte**.
-
-Tests : **parcours 4150/4150 sur l'arbre FINAL** (bloc **B-CCCXIII**, 10 témoins dont **5 RETOURNÉS** au lieu d'être supprimés — R30), **banc S1 35/35**. ⛔ **CONTRÔLE NÉGATIF : 20 mutations, 20 mordent par LEUR garde**, contrôle sain **0 rouge avant ET après**, sur un arbre **copié**.
-
-📄 **PDF POUR GPT** : `DOSSIER-S1-IDENTITE-SERVEUR-FINAL-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **60 gardes**. ⭐ Le miroir exact du générateur précédent : celui-là refusait de produire si S1 était **déjà** fait, celui-ci refuse si une pièce **manque**.
-
-Fichiers : `Code.js`, `worker.js`, `constants.js`, `app.js`, `setup.js`, `tests/parcours/runner.js`, `tools/gen_s1_final_pdf.py`, `sw.js`, `CLAUDE.md`, `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `index.html`, ni `log.js`, ni `coach.js`, ni `state.js`, ni `supabase.js`, ni `screens.js`, ni `tracking.js`.** sw.js ft-v1216. |

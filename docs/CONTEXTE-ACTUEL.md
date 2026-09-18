@@ -409,7 +409,27 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1223` — 🩹 **LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR,
+- **Version en ligne (live) :** `ft-v1224` — 🗂️ **LA SOURCE DE VÉRITÉ CENTRALE DES 21
+  CAPACITÉS IA, et le double comptage du quota fermé (test-first).**
+  ⭐⭐ **Le défaut fermé est mesuré** : la politique d'accès vivait à **quatre endroits qui ne
+  se parlaient pas** (le texte de vente, les gardes du client, le quota du serveur, la
+  documentation à la main), et la phase 2 y avait prouvé **9 incohérences** — dont trois
+  capacités *vendues Premium* et *gratuites dans le code*. *Ce n'était pas une série d'oublis :
+  c'est la conséquence mécanique d'une politique sans propriétaire* (**R2**).
+  ⭐ **`capacites-ia.js`** devient ce propriétaire, et **`docs/IA-FREE-PREMIUM.md` en est
+  GÉNÉRÉ** — un `--check` régénère et compare caractère pour caractère, lui-même éprouvé sur
+  une documentation volontairement fausse.
+  ⭐ **Deux champs, pas un** : `politique` (ce qui DOIT être) et `etatCode` (ce qui EST) ;
+  **12 écarts** sont écrits noir sur blanc plutôt que masqués.
+  🔧 **Double comptage** : `authIdentity` et `aiCount` appelaient tous deux une fonction qui
+  **ÉCRIT** → chaque appel IA consommait **2 unités** (25/jour/e-mail au lieu de 50). On sépare
+  **LIRE** (`_aiQuotaEtat_`) de **CONSOMMER** (`_aiQuotaBlock_`). ⭐ Au passage, un appel
+  **refusé** cesse de consommer — *un garde-fou qui se déclenche en consommant la ressource
+  qu'il protège travaille contre lui-même*. ⛔ **Les plafonds ne bougent pas** (600/50/150).
+  ⛔ **Pour l'utilisateur : RIEN ne change.** Aucun verrou posé, aucune route fermée, aucun
+  écran touché. Le registre **décrit** ; il n'applique pas encore.
+
+- **Version précédente :** `ft-v1223` — 🩹 **LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR,
   CORRIGÉS — et ils avaient été vus À L'ÉCRAN, pas en relecture.**
   ⚠️ Le 18/09, pendant une vraie panne d'Apps Script (*« Le serveur répond : INJOIGNABLE »*),
   la carte Admin annonçait **« identité refusée »** à quelqu'un dont le compte allait

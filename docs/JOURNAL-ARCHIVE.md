@@ -9450,3 +9450,37 @@ Tests : **parcours 4140/4140 sur l'arbre FINAL** (bloc **B-CCCXII**, 20 témoins
 📄 **PDF POUR GPT** : `DOSSIER-GPT-DEBRIEF-PHASE1-15-09-2026.pdf` (**hors dépôt**, règle d'or #14), **36 gardes**. ⭐ Il a été écrit **pendant** que la passe tournait et **refusait donc de publier un total** — la leçon ft-v1201 tenue par un garde plutôt que par la mémoire.
 
 Fichiers : `coach.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `setup.js`, ni `state.js`, ni `worker.js`, ni `Code.js`.** sw.js ft-v1215. |
+
+**ft-v1216 — 🪪 L'IDENTITÉ CESSE D'ÊTRE UNE ADRESSE E-MAIL DÉCLARÉE · ET C'EST UN SEUL PROPRIÉTAIRE QUI SAUVE NUTRITION** — S1, la première correction nommée par l'audit sécurité du 15/09. Michel tranche les **4 décisions produit** qu'il s'était réservées et pose un interdit : ⛔⛔ ***« INTERDIT de faire : e-mail seul → émission automatique d'un credential fiable »*** · ⛔ ***« pas de `Math.random()` dans la chaîne d'identité »***.
+
+**⭐⭐ LE DÉFAUT FERMÉ TIENT EN UNE PHRASE.** Partout — `saveProfile`, `pushHealth`, le Worker IA — un **e-mail fourni par le client** valait **identité authentifiée**. Conséquence mesurée à l'audit : on pouvait **écraser le compte d'autrui** si la victime n'avait pas posé de code, et **faire payer ses appels IA à quelqu'un d'autre**. Un **registre de jetons** côté serveur remplace ça.
+
+| | avant | après |
+|---|---|---|
+| preuve d'identité | `email` dans la charge utile | **jeton opaque 256 bits** |
+| ce que le serveur stocke | — | ⭐ **SHA-256 du jeton, jamais le brut** |
+| `jeton A` + `email B` | décompté sur **B** | ⭐⭐ décompté sur **A** |
+| jeton présent mais invalide | — | ⛔ **REFUSÉ** (pas de repli sur l'e-mail) |
+| panne réseau du Worker | — | ⛔ **ferme** la porte |
+
+**⭐ LE JETON N'EST ÉMIS QUE CONTRE UNE PREUVE, et l'interdit de Michel est tenu.** Deux portes seulement : la **vérification e-mail** déjà déployée et **bornée** (5 essais · expiration · 60 s de cooldown · 80/jour, soit ~400 tentatives/jour contre 10⁶) — la preuve est **consommée à l'instant même** où le jeton est émis — ou un **code perso déjà posé**. ⛔ Un e-mail seul n'en obtient **jamais**. ⭐ **Et la récupération emprunte la MÊME porte que le bootstrap** (décision de Michel) : pas de second chemin, donc pas de second trou.
+
+**⛔ `Math.random()` SORT DE LA CHAÎNE D'IDENTITÉ.** L'audit l'avait signalé comme faiblesse *à corriger si ce chemin délivre un jeton* — il le délivre désormais. Le jeton vient de **trois `Utilities.getUuid()`**, et le code de confirmation d'un UUID lui aussi.
+
+**⭐⭐ LA DÉCISION D'ARCHITECTURE EST CÔTÉ CLIENT, ET C'EST ELLE QUI PROTÈGE LA PROMESSE FAITE À MICHEL.** Les appels au Worker partent de **16 endroits dans 4 fichiers**, dont **5 sont Nutrition** (`foodLabel` · `readBarcode` · `estimateFood` · `generateMealPlan` · `importMealPlan`). Les modifier un par un aurait ouvert `app.js` en plein chantier Nutrition **gelé**. Un **injecteur unique** posé dans `constants.js` ajoute le jeton aux appels du Worker : ⛔⛔ **Nutrition = 0 ligne**, et un témoin épingle que `token:_ftToken()` n'apparaît **au plus qu'une fois** dans `app.js` — *si le chantier avait débordé, il rougirait*. C'est **R2** appliqué au transport : une information, un propriétaire.
+
+**⏳ LA FENÊTRE DE TRANSITION EST UN CHOIX DE MICHEL (option B), PAS UN COMPROMIS TECHNIQUE.** Sans jeton, l'ancien chemin fonctionne encore ; un compteur **anonyme** (aucune adresse) mesure la bascule ; **`_MIG_FERME_ = false`** la fermera **à la date qu'il décidera**. 👉 *Personne n'est mis dehors* — et c'est **le seul interrupteur** à basculer pour clore S1.
+
+**⛔⛔ `V2 RESTE OUVERTE JUSQU'À S2`, ET ON NE MAQUILLE PAS.** `ft_miroir` reçoit toujours un `p_email` **libre** depuis le navigateur : le fermer impose de faire entrer le Worker dans ce chemin, c'est **S2**. ⭐ Le témoin ③ est **volontairement NON retourné** pour le dire — *un témoin qui affirme ce qu'on aurait aimé lire ne protège rien*.
+
+**⚠️⚠️ ET QUATRE DE MES GARDES ÉTAIENT FAUX — TROIS REFUSAIENT DU TRAVAIL JUSTE.** Le générateur du dossier a refusé de sortir **quatre fois sur du code parfaitement sain** : ① le garde `Math.random()` rougissait **à cause du commentaire qui DOCUMENTE son retrait** — R30 exige de l'écrire à sa place, donc le mot reste dans le fichier (*un garde qui ne distingue pas le CODE de ce qui en PARLE mesure la documentation*, famille ft-v1193/1203/1205/1210) · ② le garde « le jeton brut n'est pas stocké » attrapait le `brut` passé **à la fonction de hachage** (*un garde plus strict que la contrainte réelle refuse du travail juste*, ft-v1214) · ③ une borne en **caractères** ne pouvait pas franchir le `;` posé entre deux instructions (**§63**) · ④ ⭐⭐ **deux gardes AVEUGLES au piège de la SOUS-CHAÎNE** : renommer `_ftPoserInjecteurJeton` en `…JetonX` les laissait **parfaitement verts**, puisque l'ancien nom est contenu dans le nouveau — famille `presentsX`/`needsCode2`, **3ᵉ fois** dans ce projet, fermés sur leur forme déclarative.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : le jeton est posé et transporté sans que la personne ait un geste à faire. ⚖️ **Pas de pop-up `WHATS_NEW`** — rien à *faire*, aucun repère n'a bougé.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **S2** (fermer le miroir Supabase) · ⛔ **S3** (l'idempotence du débrief, qui se construit DESSUS) · ⛔ `deleteAccount` · ⛔ la vérification **Premium serveur** · ⛔ les e-mails réels dans le dépôt · ⛔ **aucun `accountId`** (migration disproportionnée — la table de jetons sert de point d'indirection) · ⛔ Nutrition, `foodLog`, douane, scanner, `savedFoods`, migration Supabase principale, paiement, natif. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran, et c'est précisément ce qu'il y a à vérifier. ⚠️ **Fenêtre de déploiement dite plutôt que masquée** : `worker.js` et `Code.js` se déploient **en parallèle**, donc Milo peut répondre 401 pendant ~1 min si le Worker part le premier — bref, auto-résolu, **aucune perte**.
+
+Tests : **parcours 4150/4150 sur l'arbre FINAL** (bloc **B-CCCXIII**, 10 témoins dont **5 RETOURNÉS** au lieu d'être supprimés — R30), **banc S1 35/35**. ⛔ **CONTRÔLE NÉGATIF : 20 mutations, 20 mordent par LEUR garde**, contrôle sain **0 rouge avant ET après**, sur un arbre **copié**.
+
+📄 **PDF POUR GPT** : `DOSSIER-S1-IDENTITE-SERVEUR-FINAL-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **60 gardes**. ⭐ Le miroir exact du générateur précédent : celui-là refusait de produire si S1 était **déjà** fait, celui-ci refuse si une pièce **manque**.
+
+Fichiers : `Code.js`, `worker.js`, `constants.js`, `app.js`, `setup.js`, `tests/parcours/runner.js`, `tools/gen_s1_final_pdf.py`, `sw.js`, `CLAUDE.md`, `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `index.html`, ni `log.js`, ni `coach.js`, ni `state.js`, ni `supabase.js`, ni `screens.js`, ni `tracking.js`.** sw.js ft-v1216. |

@@ -40349,6 +40349,8 @@ require('./s2b_worker.js').source(t, ROOT, fs, path);
    trait pour trait à un total vert (BUGS.md §61). Il vit dans `tools/banc_s2b_bascule.js`. */
 require('./s2b_bascule.js').source(t, ROOT, fs, path);
 require('./backup_fuseau.js').source(t, ROOT, fs, path);
+require('./registre_ia.js').source(t, ROOT, fs, path);
+require('./quota_double.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

@@ -1131,7 +1131,28 @@ function ensurePremiumEmails_() {
 var AI_MAX_DEV_ = 150;
 var AI_EMAILS_DEV_ = ['michdu75@gmail.com'];
 
-function _aiQuotaBlock_(email) {
+/* ⭐⭐ LIRE L'ÉTAT N'EST PAS CONSOMMER UNE UNITÉ — la séparation qui ferme le double
+   comptage (18/09/2026, phase 3).
+
+   ⛔⛔ LE DÉFAUT QU'ELLE CORRIGE, MESURÉ PUIS REPRODUIT SUR LA SOURCE. Un appel IA venu du
+   Worker traverse DEUX routes d'Apps Script : `authIdentity` (qui demande « qui es-tu, et
+   es-tu bloqué ? ») puis `aiCount` (qui compte). Les deux appelaient `_aiQuotaBlock_` — et
+   cette fonction n'est PAS une lecture : elle incrémente et enregistre.
+   👉 **Chaque appel IA consommait deux unités.** Plafonds réels : 25/jour/e-mail au lieu de
+   50, 300/jour au lieu de 600, 75 au lieu de 150 pour le compte de développement.
+
+   ⭐ ET UN SECOND DÉFAUT, PLUS DISCRET, TOMBE AVEC : un appel **refusé** consommait quand
+   même, puisque l'identité incrémentait avant que le Worker ne décide de répondre 429.
+   *Un garde-fou qui se déclenche en consommant la ressource qu'il protège travaille contre
+   lui-même* — quelqu'un déjà bloqué creusait son propre plafond en réessayant.
+
+   ⛔ ON NE COMPENSE PAS EN DOUBLANT LES PLAFONDS (consigne de Michel) : 600 / 50 / 150 ne
+   bougent pas d'un chiffre. *Doubler un plafond pour absorber un double comptage, c'est
+   graver le bug dans la configuration et le rendre indétectable.*
+
+   ⚠️ Cette fonction NE DOIT JAMAIS ÉCRIRE. C'est tout son intérêt, et c'est ce que le témoin
+   B-CCCXXXIII ② fige : ni `q.global++`, ni affectation dans `byEmail`, ni `setProperty`. */
+function _aiQuotaEtat_(email) {
   try {
     var sp = PropertiesService.getScriptProperties();
     var GLOBAL_MAX = parseInt(sp.getProperty('AI_GLOBAL_MAX'), 10) || 600; // total / jour (baissé de 1500 : borne le coût en cas d'abus)
@@ -1149,9 +1170,29 @@ function _aiQuotaBlock_(email) {
     if (AI_EMAILS_DEV_.indexOf(e) >= 0 && AI_MAX_DEV_ > EMAIL_MAX) EMAIL_MAX = AI_MAX_DEV_;
     if (q.global >= GLOBAL_MAX) return { blocked: true, scope: 'global' };
     if (ec >= EMAIL_MAX)        return { blocked: true, scope: 'email' };
+    // ⭐ On rend l'état ET de quoi consommer, pour que l'appelant qui consomme n'ait pas à
+    // relire les Script Properties une seconde fois (R2 : une règle, un propriétaire).
+    return { blocked: false, _sp: sp, _q: q, _e: e };
+  } catch (err) {
+    // ⛔ REPLI OUVERT, décision inchangée : une erreur de configuration ne doit jamais couper
+    // Milo (règle d'or 3). La séparation ajoute une fonction, elle ne durcit rien.
+    return { blocked: false };
+  }
+}
+
+/* ⭐ LE SEUL CHEMIN QUI CONSOMME. Appelé par la route de comptage (`aiCount`) et par la porte
+   directe d'Apps Script (`doPost`) — jamais par l'identité. Un appel IA = une unité. */
+function _aiQuotaBlock_(email) {
+  try {
+    var etat = _aiQuotaEtat_(email);
+    if (etat.blocked) return { blocked: true, scope: etat.scope };
+    // ⛔ Si la lecture est tombée dans son repli, elle ne rend ni `_sp` ni `_q` : on ne peut
+    // alors PAS consommer, et on laisse passer — même repli ouvert qu'avant, au même endroit.
+    if (!etat._sp || !etat._q) return { blocked: false };
+    var q = etat._q;
     q.global++;
-    q.byEmail[e] = ec + 1;
-    sp.setProperty('ai_quota', JSON.stringify(q));
+    q.byEmail[etat._e] = (q.byEmail[etat._e] || 0) + 1;
+    etat._sp.setProperty('ai_quota', JSON.stringify(q));
     return { blocked: false };
   } catch (err) {
     return { blocked: false };
@@ -1934,12 +1975,20 @@ function handleRevokeToken_(body) {
 /* ⭐⭐ CE QUE LE WORKER APPELLE — la seule chose qui l'autorise à dépenser de l'IA.
    Il envoie un jeton, il reçoit une identité, un état Premium et un verdict de quota.
    ⛔ Le quota est décompté sur l'e-mail DU JETON, jamais sur celui du payload : c'est ici
-   que « jeton A + e-mail B → quota A » devient vrai. */
+   que « jeton A + e-mail B → quota A » devient vrai.
+
+   ⭐⭐ ET CETTE ROUTE LIT LE QUOTA, ELLE NE LE CONSOMME PLUS (18/09/2026). Elle appelait
+   `_aiQuotaBlock_`, qui ÉCRIT — si bien qu'un appel IA consommait DEUX unités : une ici, une
+   dans `aiCount`. Elle emploie désormais `_aiQuotaEtat_`, qui n'écrit rien.
+   👉 Elle répond toujours `blocked` et `scope` au Worker : on a supprimé une consommation
+   en trop, pas un refus. *Supprimer le double comptage en supprimant le verdict aurait
+   remplacé un plafond deux fois trop bas par un plafond inexistant.*
+   ⭐ Effet de bord voulu : un appel **refusé** (429) ne consomme plus rien. */
 function handleAuthIdentity_(body) {
   try {
     var j = _jetonIdentite_(body.token);
     if (!j.ok) return json_({status:'error', error:'token', raison:j.raison});
-    var q = _aiQuotaBlock_(j.email);
+    var q = _aiQuotaEtat_(j.email);
     return json_({status:'ok', email:j.email, premium:getPremiumStatus_(j.email).premium,
                   blocked:!!q.blocked, scope:q.scope || ''});
   } catch (err) { return json_({status:'error', error:'auth'}); }

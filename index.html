@@ -3761,6 +3761,13 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
 </div>
 
+<!-- ⛔ LE REGISTRE DES CAPACITÉS IA — chargé AVANT tout le reste, et lu par personne
+     aujourd'hui. Il décrit la politique d'accès ; il ne l'applique pas encore (décision
+     de Michel, phase 3). Le charger dès maintenant lui évite d'être un fichier mort, et
+     surtout évite qu'un appelant futur aille chercher la donnée ailleurs (R2).
+     ⚠️ AUCUN APPEL RÉSEAU : c'est un `<script>`, pas un `fetch` — l'ouverture reste
+     instantanée, même hors ligne (règle d'or 4). -->
+<script src="capacites-ia.js"></script>
 <script src="constants.js"></script>
 <script src="state.js"></script>
 <script src="supabase.js"></script>
