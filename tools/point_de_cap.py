@@ -26,12 +26,15 @@ import sys
 ROOT = os.environ.get('FT_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REGISTRE = os.path.join(ROOT, 'docs', 'DECISIONS.md')
 
-QUI_OK = {'Michel', 'Claude seul'}
-VISION_OK = {'renforce', 'neutre', 'tension'}
-ETAT_OK = {'appliquée', 'partielle', 'en attente'}
+# ⭐ VOCABULAIRE ELARGI LE 19/09 SUR UN APPORT DE GPT (decision D-009) : deux origines ne
+#   suffisaient pas -- une idee venue d'ailleurs doit rester tracable jusqu'a sa source -- et
+#   confondre « decide » et « applique » est la faute exacte que capacites-ia.js a payee.
+ORIGINE_OK = {'Michel', 'Claude', 'GPT', 'contrainte technique'}
+VISION_OK = {'cohérent', 'neutre', 'cap validé', 'écart à soumettre'}
+STATUT_OK = {'VALIDÉ', 'PROPOSÉ', 'À TRANCHER', 'REFUSÉ', 'REMPLACÉE'}
 RAPPEL_DECISIONS = 10          # au-dela, le controle rappelle qu'un point de cap serait utile
 
-COLONNES = ['id', 'date', 'sujet', 'qui', 'decision', 'alternative', 'vision', 'etat']
+COLONNES = ['id', 'date', 'sujet', 'origine', 'decision', 'alternative', 'vision', 'statut']
 
 
 def _nu(c):
@@ -60,7 +63,13 @@ def lire_registre(chemin=REGISTRE):
         d = dict(zip(COLONNES, cells))
         d['_ligne'] = n
         # l'etat peut porter une precision entre parentheses : « partielle (ecart ecrit...) »
-        d['etat'] = d['etat'].split('(')[0].strip()
+        # ⛔ « REMPLACÉE → D-0xx » : on garde le LIEN a part. Sans lui on ne sait pas ce qui est
+        #    encore actif, et la regle d'or #15 devient invérifiable (D-009).
+        d['remplacee_par'] = ''
+        m_r = re.match(r'(REMPLACÉE)\s*(?:→|->)\s*(D-\d{3})\s*$', d['statut'])
+        if m_r:
+            d['statut'], d['remplacee_par'] = m_r.group(1), m_r.group(2)
+        d['statut'] = d['statut'].split('(')[0].strip()
         lignes.append(d)
     return lignes, erreurs
 
@@ -75,13 +84,18 @@ def controler(ds, erreurs):
         if d['id'] in vus:
             pb.append('%s : identifiant en double' % ou)
         vus.add(d['id'])
-        if d['qui'] not in QUI_OK:
-            pb.append('%s : « qui » vaut « %s » au lieu de %s' % (ou, d['qui'], ' / '.join(sorted(QUI_OK))))
+        if d['origine'] not in ORIGINE_OK:
+            pb.append('%s : « origine » vaut « %s » au lieu de %s'
+                      % (ou, d['origine'], ' / '.join(sorted(ORIGINE_OK))))
         if d['vision'] not in VISION_OK:
             pb.append('%s : « vision » vaut « %s » — la question de la Vision doit etre '
                       'repondue a chaque ligne' % (ou, d['vision']))
-        if d['etat'] not in ETAT_OK:
-            pb.append('%s : « etat » vaut « %s »' % (ou, d['etat']))
+        if d['statut'] not in STATUT_OK:
+            pb.append('%s : « statut » vaut « %s » au lieu de %s'
+                      % (ou, d['statut'], ' / '.join(sorted(STATUT_OK))))
+        if d['statut'] == 'REMPLACÉE' and not d['remplacee_par']:
+            pb.append('%s : REMPLACÉE sans lien « → D-0xx » — on ne peut plus savoir ce qui est '
+                      'encore actif (regle d or #15)' % ou)
         if not d['alternative'] or d['alternative'] in {'-', '—'}:
             pb.append('%s : aucune alternative ecartee — une decision sans alternative n est '
                       'pas une decision' % ou)
@@ -89,11 +103,13 @@ def controler(ds, erreurs):
 
 
 def lecture(ds):
-    seuls = [d for d in ds if d['qui'] == 'Claude seul']
-    michel = [d for d in ds if d['qui'] == 'Michel']
-    tensions = [d for d in ds if d['vision'] == 'tension']
-    attente = [d for d in ds if d['etat'] == 'en attente']
-    partielles = [d for d in ds if d['etat'] == 'partielle']
+    seuls = [d for d in ds if d['origine'] == 'Claude']
+    michel = [d for d in ds if d['origine'] == 'Michel']
+    externes = [d for d in ds if d['origine'] not in {'Michel', 'Claude'}]
+    tensions = [d for d in ds if d['vision'] == 'écart à soumettre']
+    caps = [d for d in ds if d['vision'] == 'cap validé']
+    attente = [d for d in ds if d['statut'] == 'À TRANCHER']
+    partielles = [d for d in ds if d['statut'] == 'REMPLACÉE']
 
     out = []
     out.append('=' * 78)
@@ -103,12 +119,14 @@ def lecture(ds):
     out.append('  %d decisions au registre' % len(ds))
     out.append('     %2d tranchees par Michel' % len(michel))
     out.append('     %2d prises par Claude SEUL' % len(seuls))
+    out.append('     %2d venues d une source externe (GPT, contrainte technique)' % len(externes))
     out.append('')
-    out.append('  Face a la Vision : %d renforcent  ·  %d neutres  ·  %d EN TENSION'
-               % (sum(1 for d in ds if d['vision'] == 'renforce'),
-                  sum(1 for d in ds if d['vision'] == 'neutre'), len(tensions)))
-    out.append('  Etat : %d appliquees  ·  %d partielles  ·  %d en attente'
-               % (sum(1 for d in ds if d['etat'] == 'appliquée'), len(partielles), len(attente)))
+    out.append('  Face a la Vision : %d coherentes  ·  %d neutres  ·  %d CAP VALIDE  ·  %d ECART A SOUMETTRE'
+               % (sum(1 for d in ds if d['vision'] == 'cohérent'),
+                  sum(1 for d in ds if d['vision'] == 'neutre'), len(caps), len(tensions)))
+    out.append('  Statut : %d validees  ·  %d a trancher  ·  %d remplacees  ·  %d refusees'
+               % (sum(1 for d in ds if d['statut'] == 'VALIDÉ'), len(attente), len(partielles),
+                  sum(1 for d in ds if d['statut'] == 'REFUSÉ')))
     out.append('')
 
     def bloc(titre, items, pourquoi):
@@ -125,13 +143,16 @@ def lecture(ds):
 
     bloc('CE QUE CLAUDE A TRANCHE SEUL', seuls,
          'Le point le plus important : ce sont les choix que personne n a vus passer.')
-    bloc('EN TENSION AVEC LA VISION', tensions,
-         'A relire en priorite. Un registre ou tout « renforce » ne mesure plus rien.')
+    bloc('ECART DE CAP A SOUMETTRE A MICHEL', tensions,
+         'A relire en priorite. Un registre ou tout est « coherent » ne mesure plus rien.')
+    if caps:
+        bloc('CHANGEMENTS DE CAP VALIDES PAR MICHEL', caps,
+             'La direction a bouge, et c est assume. C est la memoire du cap.')
     bloc('EN ATTENTE DE DECISION', attente,
          'Ce qui a ete volontairement NON tranche, et qui attend Michel.')
     if partielles:
-        bloc('APPLIQUEES A MOITIE', partielles,
-             'La decision est prise, le code ne la porte pas encore entierement.')
+        bloc('DECISIONS REMPLACEES', partielles,
+             'Gardees avec leur raison (R30) : sinon elles reviennent dans six mois.')
 
     out.append('=' * 78)
     out.append('  Cette lecture ne juge rien : elle rend visible ce qui etait enterre.')
@@ -152,10 +173,10 @@ def main():
         return 1 if check else 1
 
     if check:
-        seuls = sum(1 for d in ds if d['qui'] == 'Claude seul')
+        seuls = sum(1 for d in ds if d['origine'] == 'Claude')
         print('OK registre des decisions : %d entrees, %d prises par Claude seul, '
-              '%d en tension' % (ds and len(ds) or 0, seuls,
-                                 sum(1 for d in ds if d['vision'] == 'tension')))
+              '%d ecart(s) a soumettre' % (len(ds), seuls,
+                                           sum(1 for d in ds if d['vision'] == 'écart à soumettre')))
         if seuls >= RAPPEL_DECISIONS:
             # ⛔ UN RAPPEL, PAS UNE BARRIERE : on ne refuse pas une livraison pour ca (R19).
             print('   -> %d decisions prises seul : un point de cap serait utile '
