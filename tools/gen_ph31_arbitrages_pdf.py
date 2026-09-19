@@ -195,9 +195,33 @@ g("L'application de M12" not in _ph3,
   "M12 figure encore parmi les decisions ouvertes du dossier de la phase 3")
 
 # ══ LA PASSE ═════════════════════════════════════════════════════════════════
+# ⭐⭐ MODE INTERMEDIAIRE (PH31_INTERIM=1) — il existe pour une raison precise, et il
+#    n affaiblit AUCUN garde sur le code. Michel veut le dossier avant la fin de la passe
+#    complete (25 min) et de la re-passe des mutations (35 min). La tentation serait
+#    d ecrire un total « probable ». ⛔ C est exactement la faute de ft-v1201, ou un PDF a
+#    publie un total pendant que la passe tournait encore.
+#    -> Le dossier DIT « en cours, non lu » au lieu d ecrire un nombre. Un dossier qui
+#       annonce ce qu il ignore reste vrai ; un dossier qui devine ne l est plus.
+#    Les 30 autres gardes (registre, code servi, documentation generee, M12, arbre propre)
+#    restent TOUS actifs : ce mode ne dispense que de ce qui n est pas encore mesure.
+INTERIM = os.environ.get('PH31_INTERIM') == '1'
+F['interim'] = INTERIM
 F['passe'] = None
 F['passeValide'] = False
-if PASSE and os.path.exists(PASSE):
+F['passeEnCours'] = False
+if INTERIM and PASSE and os.path.exists(PASSE):
+    _p = open(PASSE, encoding='utf-8').read()
+    _m = re.search(r'TOTAL CROISÉ\s*:\s*(\d+)\s*✅\s*·\s*(\d+)\s*❌', _p)
+    if _m:
+        F['passe'] = (int(_m.group(1)), int(_m.group(2)))
+        F['passeValide'] = 'PASSE VALIDE' in _p
+    else:
+        F['passeEnCours'] = True
+        F['passeLignes'] = len(_p.splitlines())
+elif INTERIM:
+    F['passeEnCours'] = True
+    F['passeLignes'] = 0
+elif PASSE and os.path.exists(PASSE):
     _p = open(PASSE, encoding='utf-8').read()
     _m = re.search(r'TOTAL CROISÉ\s*:\s*(\d+)\s*✅\s*·\s*(\d+)\s*❌', _p)
     g(_m is not None,
@@ -217,11 +241,22 @@ try:
     _mm = re.search(r'(\d+)/(\d+) conformes', _mt)
     if _mm:
         F['mut'] = (int(_mm.group(1)), int(_mm.group(2)))
-        g(F['mut'][0] == F['mut'][1],
-          "le controle negatif n est pas complet : %d/%d" % F['mut'])
+        # ⛔ EN MODE INTERMEDIAIRE, UN TROU TROUVE N EST PAS MASQUE : il est NOMME. Le
+        #    dossier doit pouvoir dire « le controle negatif a trouve un defaut dans mes
+        #    propres temoins » — c est meme le fait le plus utile de la passe.
+        F['mutTrou'] = [l.strip() for l in _mt.splitlines()
+                        if 'NON CONFORME' in l or (l.strip().startswith('M')
+                                                   and 'NON CONFORME' in _mt.split(l)[-1][:120])]
+        F['mutNonConf'] = re.findall(r'\n(M\d+[^\n]*)\n\s*-> \[attendu [A-Z]+, obtenu [A-Z]+\]'
+                                     r' NON CONFORME', _mt)
+        if not INTERIM:
+            g(F['mut'][0] == F['mut'][1],
+              "le controle negatif n est pas complet : %d/%d" % F['mut'])
     g('ANCRE INVALIDE' not in _mt,
       "une mutation ne s est pas appliquee : elle ressemble a une mutation qui ne mord pas")
-    g(_mt.count('== CONTROLE SAIN') == 2, "le controle sain n a pas ete fait des deux cotes")
+    if not INTERIM:
+        g(_mt.count('== CONTROLE SAIN') == 2,
+          "le controle sain n a pas ete fait des deux cotes")
 except OSError:
     g(False, "le journal des mutations est introuvable (%s)" % MUTLOG)
 
@@ -230,7 +265,20 @@ F['sha'] = subprocess.run(['git', 'rev-parse', 'HEAD'],  # noqa
                           capture_output=True, text=True, cwd=RACINE).stdout.strip()
 _sale = subprocess.run(['git', 'status', '--porcelain'],  # noqa
                        capture_output=True, text=True, cwd=RACINE).stdout.strip()
-g(not _sale, "l arbre n est pas propre : le SHA publie ne decrirait pas ce qui est mesure")
+F['sale'] = [l[3:] for l in _sale.splitlines()] if _sale else []
+if INTERIM:
+    # ⛔ ON NE MASQUE PAS UN ARBRE SALE, ON LE NOMME. En version intermediaire le dossier
+    #    peut etre produit avec des fichiers non commites — mais il DIT lesquels, et un
+    #    fichier SERVI dans cette liste fait toujours tomber le garde : le SHA ne decrirait
+    #    alors pas ce qui est mesure.
+    _servis = [x for x in F['sale']
+               if re.match(r'^(app|state|screens|log|coach|setup|tracking|constants|'
+                           r'supabase|worker|Code|sw|capacites-ia)\.js$|^index\.html$|'
+                           r'^tests/', x)]
+    g(not _servis,
+      "des fichiers SERVIS ou de TEST ne sont pas commites : %s" % _servis)
+else:
+    g(not _sale, "l arbre n est pas propre : le SHA publie ne decrirait pas ce qui est mesure")
 
 if _ECHECS:
     print('REFUS DE PRODUIRE — %d garde(s) tombe(s) :' % len(_ECHECS))
@@ -293,6 +341,14 @@ def tableau(lignes, largeurs, entete=True):
 A(Paragraph('FORCE TRACKER — PHASE 3.1', H1))
 A(Paragraph('ARBITRAGES IA ET SEPARATION DU POT NUTRITION — 19/09/2026', H1))
 A(Spacer(1, 5))
+if F['interim']:
+    A(para("<b>VERSION INTERMEDIAIRE.</b> Tout ce qui concerne le <b>code</b> et le "
+           "<b>registre</b> est mesure et definitif (30 gardes actifs). Ce qui est encore "
+           "<b>en cours</b> est dit comme tel, section 13-15 : la passe complete tourne, et "
+           "la re-passe des 35 mutations suivra. <b>Ce dossier ne publie aucun total qu il "
+           "n a pas lu</b> — c est la lecon de ft-v1201, ou un PDF a publie un total pendant "
+           "que la passe tournait encore. Un dossier definitif remplacera celui-ci."))
+    A(Spacer(1, 3))
 A(para("<b>Passe moyenne, ciblee.</b> Elle fait exactement quatre choses : acter les trois "
        "politiques restantes, corriger M12 dans le suivi, separer le pot Nutrition, tester. "
        "<b>Aucun verrou serveur n est pose</b>, aucune route Apps Script fermee, ni V2 ni "
@@ -500,9 +556,9 @@ for x in [
 # 13-15
 A(Paragraph('13-15. Tests cibles, mutations, passe complete', H2))
 _l = [['', 'resultat'],
-      ['banc cible (source + navigateur)', '<b>47 OK / 0 rouge</b>'],
+      ['banc cible (source + navigateur)', '<b>48 OK / 0 rouge</b>'],
       ['bloc B-CCCXXXIV (source)', '23 temoins'],
-      ['bloc B-CCCXXXV (conduit dans le navigateur)', '24 temoins']]
+      ['bloc B-CCCXXXV (conduit dans le navigateur)', '25 temoins']]
 if F['mut']:
     _l.append(['controle negatif (arbre clone)',
                '<b>%d/%d conformes</b>, dont 3 qui doivent RESTER VERTES' % F['mut']])
@@ -510,8 +566,31 @@ if F['passe']:
     _l.append(['passe complete', '<b>%d verts / %d rouges</b>%s'
                % (F['passe'][0], F['passe'][1],
                   ' — <b>PASSE VALIDE</b>' if F['passeValide'] else '')])
+elif F['passeEnCours']:
+    _l.append(['passe complete',
+               '<b>EN COURS</b> sur l arbre ci-dessous — total <b>non encore lu</b>'])
 A(tableau(_l, [90 * mm, 80 * mm]))
 A(Spacer(1, 3))
+# ⭐⭐ LE FAIT LE PLUS UTILE DE LA PASSE EST UN DEFAUT DANS MES PROPRES TEMOINS.
+#    Le taire aurait rendu le dossier plus joli et moins vrai.
+if F.get('mutNonConf'):
+    A(para("<b>Le controle negatif a trouve un trou dans mes propres temoins, et c est le "
+           "fait le plus utile de cette passe.</b> Une mutation a survecu : "
+           "<b>%s</b>." % F['mutNonConf'][0]))
+    A(para("<b>Cause</b> : le temoin lisait le stockage d un cas dont <b>la fixture avait "
+           "elle-meme pose la valeur</b>. Il relisait donc sa propre graine, et restait vert "
+           "sur un defaut qui fait reperdre ses essais consommes a <b>chaque rechargement</b> "
+           "— les trois pots repartiraient a 25. <b>Un temoin qui relit ce que sa propre "
+           "fixture a pose mesure la fixture, pas le produit.</b>"))
+    A(para("<b>Corrige</b> : la mesure se fait desormais sur un cas ou les cles n existaient "
+           "<b>pas</b> (ancien pot a 5, nouvelles cles absentes) — le seul moyen qu elles "
+           "portent 5 est que persist() les ait ecrites. Le cas deja migre reste, pour ce "
+           "qu il prouve vraiment : la persistance n ecrase pas un pot deja migre. "
+           "<b>Deux garanties, deux temoins.</b> Re-eprouve immediatement sur les quatre "
+           "mutations de la famille persistance (M22, M23, M26, M27) : <b>4/4 conformes</b>, "
+           "controle sain vert avant et apres. <b>La re-passe des 35 est en cours</b> — une "
+           "fixture qu on change se re-eprouve entierement, c est la regle payee en ft-v994."))
+    A(Spacer(1, 3))
 A(para("Les trois mutations qui doivent <b>rester vertes</b> ne touchent que des "
        "<b>commentaires</b>, en y citant precisement les mots que les temoins cherchent "
        "(S.foodAiUses =, regenCount:0, FOOD_LABEL_LIMIT = 25, NON_DECIDEE). C est la seule "
@@ -528,7 +607,10 @@ A(para("<b>Un temoin existant a ete RETOURNE, pas supprime</b> : B-CCCXXXI (18) 
 A(Paragraph('16-17. SHA final et version publiee', H2))
 A(tableau([['SHA', F['sha']],
            ['version servie (sw.js)', '<b>%s</b>' % F['version']],
-           ['arbre', 'propre au moment de la mesure']], [40 * mm, 130 * mm], entete=False))
+           ['arbre', 'propre au moment de la mesure' if not F['sale']
+            else ('non commite : ' + ', '.join(F['sale'])
+                  + ' — <b>aucun fichier servi ni de test</b>')]],
+          [40 * mm, 130 * mm], entete=False))
 
 A(Spacer(1, 7))
 A(Paragraph("Dossier produit par un script qui recompte ses %d faits depuis le code servi, "

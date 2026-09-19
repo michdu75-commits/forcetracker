@@ -38645,13 +38645,24 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
       openAddFood(); await d(320); };
 
     /* ═══ A. CODE-BARRES TAPÉ — la vraie porte, conduite par sa vraie fonction ═══ */
-    S.foodLog=[];S.savedFoods=[];S.foodAiUses=0;persist();
+    /* ⚠️ ft-v1225 — LE POT DU REPLI CODE-BARRES EST SÉPARÉ DEPUIS LA PHASE 3.1.
+       Cette sonde remettait à zéro `S.foodAiUses`, l'ancien pot COMMUN, et relisait le même
+       champ pour vérifier la consommation. Le champ a changé de nom (`foodBarcodeAiUses`) :
+       la GARANTIE du témoin n'a pas bougé d'un pouce — *un appel IA se décompte, la personne
+       ne paie pas un essai sans le savoir* — c'est le COMPTEUR qui a déménagé.
+       ⭐ On lit désormais par le PROPRIÉTAIRE (`_foodAiLeft`, R2) plutôt que par un nom de
+       champ écrit en dur : le témoin survivra au prochain renommage, qu'un nom à la main
+       rendrait faux en silence. */
+    S.foodLog=[];S.savedFoods=[];
+    S.foodAiUses=0;S.foodLabelAiUses=0;S.foodMealEstimateAiUses=0;S.foodBarcodeAiUses=0;
+    persist();
+    const potBC=()=>25-_foodAiLeft('nutrition.barcode.aiFallback');
     await ouvrir(); reset();
     const mi=document.getElementById('af-bc-manual'); if(mi) mi.value=EAN;
     _manualBarcode(); await d(700);
     o.tape = bilan();
     o.tape_res = { bc:JSON.parse(JSON.stringify(_bcNutr||null)), saisie:(_afSrc||{}).saisie,
-                   quotaIA:S.foodAiUses||0 };
+                   quotaIA:potBC() };
 
     /* ═══ B. PHOTO DU CODE-BARRES — le seul « scan » atteignable ═══ */
     await ouvrir(); reset();
@@ -38662,7 +38673,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     if(inp){ inp.files=dt.files; await onBarcodePhotoIA(inp); await d(800); }
     o.photo = bilan();
     o.photo_res = { bc:JSON.parse(JSON.stringify(_bcNutr||null)), saisie:(_afSrc||{}).saisie,
-                    quotaIA:S.foodAiUses||0 };
+                    quotaIA:potBC() };
 
     /* ═══ C. LES DEUX PORTES DONNENT-ELLES LE MÊME OBJET ? ═══ */
     o.meme_objet = JSON.stringify(o.tape_res.bc)===JSON.stringify(o.photo_res.bc);
@@ -38873,7 +38884,15 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
       o.fluxCoupe = flux ? flux.getTracks().every(t=>t.readyState==='ended') : 'aucun flux';
       o.off=o.reseau.filter(d=>/openfoodfacts/.test(d)).length;
       o.ia =o.reseau.filter(d=>/workers\.dev|script\.google\.com/.test(d)).length;
-      o.quotaIA=(S.foodAiUses||0);
+      /* ⚠️⚠️ ft-v1225 — CE COMPTEUR SERAIT DEVENU UN VERT QUI NE PEUT PLUS ROUGIR.
+         Il lisait `S.foodAiUses`, l'ancien pot commun, GELÉ depuis la phase 3.1 : plus rien
+         ne l'incrémente, donc il vaudrait 0 quoi qu'il arrive — y compris si le scanner
+         local se mettait à consommer de l'IA, ce que ce témoin existe précisément pour
+         interdire. On lit les TROIS pots par leur propriétaire : le scanner local ne doit
+         entamer aucun d'eux. */
+      o.quotaIA=(75-_foodAiLeft('nutrition.label.ai')
+                   -_foodAiLeft('nutrition.mealEstimate.ai')
+                   -_foodAiLeft('nutrition.barcode.aiFallback'));
       /* ⭐ LE VERROU, ÉPROUVÉ À LA MAIN APRÈS LE SCAN : on repose l'état et on vérifie que
          `_bcPrendreLaMain` refuse hors SCANNING et refuse un second passage. *Le comportement
          sous course dit QUE ça marche ; ceci dit POURQUOI.* */
@@ -39079,8 +39098,14 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
      celui-ci.* On épingle donc ici l'INCRÉMENT lui-même — lire le plafond ne le décompte pas. */
   t('CCCIX ⑦bis ⛔ … et l\'unique appel IA du repli reste DÉCOMPTÉ du quota gratuit : la personne '+
     'ne paie pas un essai sans le savoir',
-    /S\.foodAiUses\s*=\s*\(\s*S\.foodAiUses\s*\|\|\s*0\s*\)\s*\+\s*1/.test(corpsAnu('onBarcodePhotoIA'))
-    && /FOOD_AI_FREE_LIMIT/.test(corpsAnu('onBarcodePhotoIA')), '');
+    /* ⚠️ ft-v1225 — L'INCRÉMENT A DÉMÉNAGÉ CHEZ SON PROPRIÉTAIRE (`_foodAiConsomme`),
+       et le plafond aussi (`_foodAiEpuise`). La garantie de ce témoin n'a pas bougé : *le
+       repli IA se décompte, et il consulte un plafond*. ⛔ Et il est plus STRICT qu'avant :
+       il exige que les deux gestes NOMMENT la capacité du code-barres — un appel qui
+       nommerait l'étiquette retomberait sur le pot du voisin, ce que l'ancienne forme
+       n'aurait pas pu voir. */
+    /_foodAiConsomme\('nutrition\.barcode\.aiFallback'\)/.test(corpsAnu('onBarcodePhotoIA'))
+    && /_foodAiEpuise\('nutrition\.barcode\.aiFallback'\)/.test(corpsAnu('onBarcodePhotoIA')), '');
   t('CCCIX ⑧ ⭐ PERFORMANCE MESURÉE : la caméra est prête et le code est lu en un temps borné '+
     '(le banc est plus lent qu\'un téléphone, donc c\'est un PLAFOND, pas une prédiction)',
     typeof CAM.msLecture==='number' && CAM.msLecture>0 && CAM.msLecture<40000,
