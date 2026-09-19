@@ -409,6 +409,29 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
+- 🔀🔀 **ft-v1226 A ÉTÉ RÉCONCILIÉ ET PUBLIÉ LE 19/09 AU SOIR — IL NE L'ÉTAIT PAS QUAND LA LIGNE
+  CI-DESSOUS A ÉTÉ ÉCRITE.** ⛔⛔ **R18 pour la QUATRIÈME fois de ce projet**, et cette fois le piège
+  était dans ce fichier-ci : la ligne suivante annonçait déjà *« Version en ligne (live) »* alors que
+  les **5 commits** vivaient sur `claude/project-status-a0qakd`, que `master` servait **ft-v1225**
+  (run Pages #1246), et que **GitHub Pages ne déploie que `master`**.
+  👉 ***Une ligne d'état fausse ne se contente pas d'être fausse : elle fait raisonner de travers
+  celui qui la lit*** (**R23**) — et le titre de ft-v1220 dit déjà le fond mot pour mot,
+  *« push sur une branche ≠ version en ligne »*.
+  ⭐ **La réconciliation a été une AVANCE RAPIDE** : l'ancien `master` était **ancêtre** de la branche
+  et **aucun** de ses commits n'en était absent → **0 conflit, 0 arbitrage**. ⛔ Ni `ours` ni `theirs` :
+  *une avance rapide ne choisit rien, elle avance un pointeur.*
+  ⭐ **Fichiers servis touchés : `app.js` et `sw.js`, rien d'autre** — ni `Code.js`, ni `worker.js`.
+  ✅ **Preuves recomptées APRÈS fusion** : registre **21 capacités · 0 doublon · 0 politique
+  `NON_DECIDEE` portée · 7 formes de quota · 10/10 politiques conformes** · **M12** inscrite
+  `politique PREMIUM / etatCode FREE` avec son écart · **5 écarts** écrits · doc IA **régénérée et
+  identique caractère pour caractère** · les **3 pots** Nutrition séparés, **un seul écrivain**,
+  échec fermé · la correction du **repas actif** intacte (`openAddFood` ne contient **ni `getHours`
+  ni affectation de `_afMeal`**, mesuré **commentaires retirés**).
+  ⭐ **Passe complète 4478 ✅ / 0 ❌**, les 4 conditions vertes · **contrôle négatif 19/19**.
+  ⚖️ **Les deux observations de ft-v1226 restent NON TRANCHÉES** — vérifiées, pas touchées : le choix
+  survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
+  **rechargement** (`_afMeal` est une variable de module, absente du stockage).
+
 - **Version en ligne (live) :** `ft-v1226` — 🍽️ **NUTRITION UX : LE REPAS CHOISI À LA MAIN
   RESTE ACTIF, ET LA DONNÉE LE SUIT.**
   ⛔⛔ **Ce n'était pas une gêne d'affichage** : mesuré sur l'app servie, choix manuel
