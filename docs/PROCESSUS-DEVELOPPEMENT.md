@@ -177,7 +177,9 @@ Une brique n'est **PAS terminée** tant que TOUT ceci n'est pas fait :
 - [ ] **`CLAUDE.md` mis à jour** (fichier maître, prioritaire)
 - [ ] Roadmap mise à jour (si nécessaire)
 - [ ] Fichier de suivi dédié mis à jour (ex. `DOSSIER-ATHLETE-SUIVI.md`)
-- [ ] Journal des décisions mis à jour
+- [ ] **Journal des décisions mis à jour → `docs/DECISIONS.md`** ⚠️ *Cette case existait depuis le début et **pointait dans le vide** : aucun fichier ne portait ce nom avant le 19/09/2026. Elle a donc un destinataire, maintenant.*
+- [ ] **⚖️ Les choix pris SEUL sont nommés** — chaque décision que Claude a tranchée sans demander entre au registre avec **l'alternative écartée**. 👉 *Mesuré le 19/09 : le journal nommait les décisions qu'on RENDAIT à Michel (5 fois) et **zéro** de celles qu'on prenait. Une direction ne dérive pas par grandes décisions, elle dérive par petites décisions que personne n'a vues passer.*
+- [ ] **🌟 La question de la Vision est répondue, par écrit** — *« est-ce que cela renforce l'esprit Force Tracker ? »* (`docs/VISION-FORCE-TRACKER.md`). Trois réponses possibles : **renforce · neutre · tension**. ⚠️ **« tension » n'est pas une faute** — c'est un signal à relire, et *un registre où tout « renforce » ne mesure plus rien*. La réponse va dans la colonne `vision` du registre.
 - [ ] Documentation (aides `?`, Aide détaillée, Guide…) mise à jour si feature visible
 - [ ] Résumé des changements rédigé (message clair à Michel)
 - [ ] Point de sauvegarde / rollback fourni
