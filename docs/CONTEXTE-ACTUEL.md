@@ -409,7 +409,22 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1225` — ⚖️ **PHASE 3.1 : LES TROIS DERNIERS ARBITRAGES
+- **Version en ligne (live) :** `ft-v1226` — 🍽️ **NUTRITION UX : LE REPAS CHOISI À LA MAIN
+  RESTE ACTIF, ET LA DONNÉE LE SUIT.**
+  ⛔⛔ **Ce n'était pas une gêne d'affichage** : mesuré sur l'app servie, choix manuel
+  « Déjeuner », le 1ᵉʳ aliment tombait bien dans `dejeuner` et les **deux suivants** dans
+  `petitdej` (09 h), `collation` (16 h) ou `diner` (21 h). *Une journée rentrée après coup
+  s'éparpillait dans des repas que personne n'avait choisis.*
+  ⭐⭐ **La cause tient en une ligne** : `openAddFood` recalculait `_afMeal` depuis l'heure **à
+  chaque ouverture** — or on rouvre cet écran pour **chaque** aliment.
+  ⭐ **La correction est une ABSENCE, pas un drapeau** : `_afMeal` ne porte plus que le choix
+  explicite (`null` = rien de choisi), et `_afMealActif()` devient le propriétaire unique.
+  **Zéro booléen, zéro timer, zéro exception écran par écran.**
+  ⚖️ **La règle** : *l'heure décide du DÉFAUT, jamais de ce qui a été DÉCIDÉ.*
+  ⚖️ **Deux observations notées et NON corrigées** : le choix survit à un changement de **jour**
+  dans le journal (non tranché) · il ne survit pas à un **rechargement complet** (inchangé).
+
+- **Version précédente :** `ft-v1225` — ⚖️ **PHASE 3.1 : LES TROIS DERNIERS ARBITRAGES
   IA RENDUS, ET LE POT DE 25 SÉPARÉ EN TROIS.**
   ⭐ **Les décisions de Michel** : `milo.debrief` → **PREMIUM** (le débrief *chiffré* reste local
   et gratuit ; c'est le **jugement** de Milo qui devient Premium) · `nutrition.mealPlanImport.ai`
