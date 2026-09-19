@@ -263,6 +263,33 @@ except OSError:
 # ══ LE SHA ═══════════════════════════════════════════════════════════════════
 F['sha'] = subprocess.run(['git', 'rev-parse', 'HEAD'],  # noqa
                           capture_output=True, text=True, cwd=RACINE).stdout.strip()
+# ⭐⭐ LE SHA TESTÉ N'EST PAS FORCÉMENT LE SHA PUBLIÉ, ET LE DOSSIER DOIT LE DIRE.
+#    La passe décrit l'arbre qu'elle a LU. Si un commit est posé après elle, publier le SHA
+#    courant en le présentant comme « ce qui a été mesuré » serait faux — même quand le delta
+#    est inoffensif. On lit donc le SHA dans le journal de la passe, on le compare, et si les
+#    deux diffèrent on MESURE ce que le delta touche : un fichier servi ou un test fait
+#    tomber le garde, le reste est nommé.
+F['shaTeste'] = None
+F['deltaApresPasse'] = []
+if PASSE and os.path.exists(PASSE):
+    _v = PASSE.replace('.out', '.verdict')
+    _txt = open(PASSE, encoding='utf-8').read()
+    if os.path.exists(_v):
+        _txt += open(_v, encoding='utf-8').read()
+    _s = re.search(r'arbre (?:au départ|testé)[^0-9a-f]*([0-9a-f]{40})', _txt)
+    if _s:
+        F['shaTeste'] = _s.group(1)
+        if F['shaTeste'] != F['sha']:
+            _d = subprocess.run(  # noqa
+                ['git', 'diff', '--name-only', F['shaTeste'], 'HEAD'],
+                capture_output=True, text=True, cwd=RACINE).stdout.split()
+            F['deltaApresPasse'] = _d
+            _risque = [x for x in _d
+                       if re.match(r'^(app|state|screens|log|coach|setup|tracking|constants|'
+                                   r'supabase|worker|Code|sw|capacites-ia)\.js$|^index\.html$|'
+                                   r'^tests/', x)]
+            g(not _risque,
+              "des fichiers SERVIS ou de TEST ont change APRES la passe : %s" % _risque)
 _sale = subprocess.run(['git', 'status', '--porcelain'],  # noqa
                        capture_output=True, text=True, cwd=RACINE).stdout.strip()
 F['sale'] = [l[3:] for l in _sale.splitlines()] if _sale else []
@@ -605,12 +632,20 @@ A(para("<b>Un temoin existant a ete RETOURNE, pas supprime</b> : B-CCCXXXI (18) 
 
 # 16-17
 A(Paragraph('16-17. SHA final et version publiee', H2))
-A(tableau([['SHA', F['sha']],
-           ['version servie (sw.js)', '<b>%s</b>' % F['version']],
-           ['arbre', 'propre au moment de la mesure' if not F['sale']
-            else ('non commite : ' + ', '.join(F['sale'])
-                  + ' — <b>aucun fichier servi ni de test</b>')]],
-          [40 * mm, 130 * mm], entete=False))
+_sha = [['SHA publie', F['sha']]]
+if F['shaTeste'] and F['shaTeste'] != F['sha']:
+    _sha.append(['SHA <b>teste par la passe</b>', F['shaTeste']])
+    _sha.append(['delta entre les deux',
+                 ', '.join(F['deltaApresPasse'])
+                 + ' — <b>aucun fichier servi ni de test</b>, donc la passe reste valide '
+                   'pour ce qu elle mesure'])
+elif F['shaTeste']:
+    _sha.append(['SHA teste par la passe', '<b>le meme</b>'])
+_sha += [['version servie (sw.js)', '<b>%s</b>' % F['version']],
+         ['arbre', 'propre au moment de la mesure' if not F['sale']
+          else ('non commite : ' + ', '.join(F['sale'])
+                + ' — <b>aucun fichier servi ni de test</b>')]]
+A(tableau(_sha, [40 * mm, 130 * mm], entete=False))
 
 A(Spacer(1, 7))
 A(Paragraph("Dossier produit par un script qui recompte ses %d faits depuis le code servi, "
