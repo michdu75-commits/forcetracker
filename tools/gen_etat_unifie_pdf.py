@@ -486,10 +486,13 @@ F.append(tab([
     ['15. tests cibles', 'registre IA (21 capacites, politiques, quotas) - documentation IA '
      'regeneree et comparee caractere pour caractere - trois pots - repas actif - '
      'banc cible : ' + BANC],
-    ['15b. controle negatif', MUT],
+    ['15b. controle negatif', MUT + ' sur les temoins du repas actif, et 11/11 sur les gardes '
+     'de CE dossier (chacun rougit pour la BONNE raison, nommee ; les deux mutations qui ne '
+     'touchent qu un COMMENTAIRE restent vertes)'],
     ['16. passe complete', '%d temoins, %d rouge - justifiee parce que le merge etait '
      'reellement necessaire' % (P_OK, P_KO)],
-    ['17. SHA final', APRES[:8]],
+    ['17. SHA final', APRES[:8] + ' (etat unifie) ; le dossier et les journaux ajoutent '
+     'ensuite des commits SANS AUCUN fichier servi'],
     ['18. version finale', V_APRES + (' - deploiement Pages run %s' % RUN_DEPLOI if RUN_DEPLOI else '')],
     ['19. arbre propre', 'oui, avant et apres'],
 ], [34 * mm, 136 * mm]))
