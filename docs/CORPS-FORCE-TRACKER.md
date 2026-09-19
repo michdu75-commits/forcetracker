@@ -33,6 +33,39 @@ Si la réponse n'est pas évidente, c'est que la fonctionnalité **n'est pas ass
 
 ---
 
+## 🧭 MISE À JOUR DU 19/09/2026 — deux organes changent de NOM ou de RÉGIME, aucun ne se dédouble
+
+> Note d'architecture de Michel. ⛔ **Rien n'est construit** : la direction complète vit dans
+> **`docs/INDEPENDANCE-MOTEUR-MILO.md`**. Ce qui suit ne dit que ce qui change **dans ce corps-ci**.
+
+Michel nomme trois organes : **cerveau**, **cervelet**, **estomac**. ⭐⭐ **Deux d'entre eux
+existaient déjà ici sous un autre nom, et c'est le point à ne pas rater** — *on ne crée pas un
+second vocabulaire pour le même organe* (**R2**).
+
+| son nom (19/09) | le nom déjà écrit ici (20/07) | ce qui change vraiment |
+|---|---|---|
+| 🧠 **cerveau = Milo** | 🧠 **Cerveau** | **rien** — même organe, même rôle |
+| 🧠 **cervelet = Force Tracker / orchestration** | ⚡ **Système nerveux** | **rien sur le fond** : deux noms, un organe. ⭐ Il cesse d'être ⚪ *implicite* : c'est lui qui choisit capacités, droits, contexte, outils — et **éventuellement le moteur IA** |
+| 🫃 **estomac** | 🍽️ **Digestion** | ⭐⭐ **le RÉGIME s'élargit énormément** |
+
+**⭐⭐ L'élargissement de l'estomac est le seul vrai changement de ce tableau.** La digestion de
+juillet ne mangeait que des **programmes d'entraînement** (EXLIB + moteur VM). Celle de septembre
+doit digérer **l'historique sportif, la nutrition, la santé, des documents, des statistiques, et
+Internet** — avec toujours la même chaîne : *récupérer → nettoyer → filtrer → dédupliquer →
+structurer → réduire*.
+
+👉 ***Et la raison d'être de l'organe devient une phrase*** : ⛔ **le cerveau ne manipule pas les
+données brutes, et il ne « mange pas Internet brut ».** Il reçoit un **résultat**, jamais un
+entrepôt. *C'est le principe « garder le cerveau proportionné » de la section Risques ci-dessous,
+dit à l'entrée du tube digestif au lieu de la sortie.*
+
+⚠️ **Ce que ça ne change pas** : le tableau des organes ci-dessus reste valable tel quel, aucune
+ligne n'est retirée, et le **système nerveux garde son état ⚪** — il est nommé depuis juillet et
+partiellement explicité depuis le 19/08 (`docs/ARCHITECTURE-CERVEAU-CERVELET.md`), mais il n'est
+toujours pas une couche du code.
+
+---
+
 ## Pourquoi cette lentille
 
 - **Cohérence** : une idée n'entre que si elle **renforce un organe** (fin des gadgets orphelins).

@@ -409,6 +409,27 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
+- 🧭🧭 **CAP LONG TERME CONSIGNÉ LE 19/09/2026 — « CLAUDE N'EST PAS MILO ».** Note d'architecture
+  de Michel, **consignée et non mise en œuvre** : ⛔⛔ **aucune ligne de code, aucun chantier,
+  aucun comportement de Milo modifié.** Le document complet est **`docs/INDEPENDANCE-MOTEUR-MILO.md`**,
+  et il se lit en **trois colonnes** : **EXISTANT** (mesuré) · **DéCIDÉ** (contrainte) · **DIRECTION** (cap).
+  ⭐ **La cible** : *Milo = identité + mémoire + règles + capacités + contexte + droits + outils*,
+  le LLM étant un **composant interchangeable**.
+  ⭐⭐ **Ce n'est pas un virage** : l'architecture hybride du **20/07/2026** écrivait déjà
+  *« cœur métier **indépendant du modèle d'IA** »* — le principe passe du **cœur métier** à
+  **Milo lui-même**.
+  🫀 **Les trois organes sont RÉCONCILIÉS, pas dupliqués** (**R2**) : *cerveau* = le Cerveau ·
+  *cervelet* = le **Système nerveux** déjà nommé le 20/07 · *estomac* = la **Digestion**, dont le
+  **régime s'élargit** (historique, nutrition, santé, documents, statistiques, Internet).
+  ⛔ **Le cerveau ne manipule pas les données brutes et ne « mange pas Internet brut ».**
+  🛠️ **Borne non négociable des futurs outils** : *le modèle ne décide jamais seul de ses
+  permissions — le serveur/cervelet reste l'autorité.*
+  ⚠️ **Et l'interdit symétrique** : *on ne dégrade pas Milo pour obtenir artificiellement
+  l'indépendance* — toute bascule est progressive, mesurée au banc, réversible.
+  📏 **La seule mesure prise** : l'adresse du fournisseur vit dans **1** constante dans
+  `worker.js` et **13 fois en dur** dans `Code.js` — *la première marche n'est pas une interface
+  abstraite, c'est **R2** appliqué à l'adresse*. ⛔ **Chantier NON ouvert.** Devenu **R37**.
+
 - 🔀🔀 **ft-v1226 A ÉTÉ RÉCONCILIÉ ET PUBLIÉ LE 19/09 AU SOIR — IL NE L'ÉTAIT PAS QUAND LA LIGNE
   CI-DESSOUS A ÉTÉ ÉCRITE.** ⛔⛔ **R18 pour la QUATRIÈME fois de ce projet**, et cette fois le piège
   était dans ce fichier-ci : la ligne suivante annonçait déjà *« Version en ligne (live) »* alors que
