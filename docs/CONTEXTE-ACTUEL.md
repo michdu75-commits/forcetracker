@@ -409,7 +409,37 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
-- **Version en ligne (live) :** `ft-v1224` — 🗂️ **LA SOURCE DE VÉRITÉ CENTRALE DES 21
+- **Version en ligne (live) :** `ft-v1225` — ⚖️ **PHASE 3.1 : LES TROIS DERNIERS ARBITRAGES
+  IA RENDUS, ET LE POT DE 25 SÉPARÉ EN TROIS.**
+  ⭐ **Les décisions de Michel** : `milo.debrief` → **PREMIUM** (le débrief *chiffré* reste local
+  et gratuit ; c'est le **jugement** de Milo qui devient Premium) · `nutrition.mealPlanImport.ai`
+  → **PREMIUM** (la **saisie manuelle** d'un plan reste gratuite) · `nutrition.mealPlan.ai` →
+  **FREEMIUM par PÉRIMÈTRE** : le **jour** en gratuit, la **semaine** en Premium.
+  ⛔ **Aucune 22ᵉ capacité** : le jour et la semaine sont le **même besoin produit** vu à deux
+  profondeurs. Un seul champ nouveau, `perimetre`, porté par une seule capacité.
+  ⭐⭐ **Une 7ᵉ forme de quota, `non_decide`** : Michel a tranché le périmètre, **pas le
+  nombre** — écrire « illimité » aurait été *inventer une décision* (règle d'or 15).
+  🫙 **LE POT DE 25 EST SÉPARÉ EN TROIS** (`foodLabelAiUses` · `foodMealEstimateAiUses` ·
+  `foodBarcodeAiUses`), **un seul nombre** les gouverne toujours. *Un compteur commun n'est pas
+  une simplification, c'est une politique implicite* — celle qui dit que ces trois capacités
+  sont la même chose, ce que la phase 2 a mesuré comme faux.
+  ⚠️ **Migration CONSERVATRICE** : chaque pot hérite du **total** de l'ancien (10 consommés →
+  10 sur chaque), parce que la répartition historique **n'a jamais été enregistrée**.
+  ⛔⛔ **Ce n'est pas un drapeau « migration faite »** mais une **règle rejouée** au chargement
+  et après chaque restauration, idempotente — une sauvegarde d'avant cette version peut revenir
+  des mois plus tard (piège `ft4_stmig1`, ft-v1213).
+  ⚠️ **Le repli code-barres garde un pot de 25 alors que sa politique est « PREMIUM, 0 »**, et
+  c'est le seul état sûr : le verrou appartient à la phase serveur, et lui retirer son pot sans
+  ce verrou l'aurait rendu **illimité et gratuit**.
+  🔧 **Une porte de contournement fermée** : une génération complète du plan remettait
+  `regenCount` à 0 — *le plafond « 1 régénération/jour » se levait avec le bouton d'à côté*.
+  🩹 **Correction documentaire** : le dossier de la phase 3 présentait **M12** comme une question
+  ouverte alors qu'elle était **déjà actée**. *Un rapport qui rouvre une décision prise coûte une
+  décision au lieu d'en rappeler une.*
+  📣 **Pour l'utilisateur** : le seul changement visible va dans son sens — qui avait épuisé ses
+  25 essais sur les étiquettes retrouve ses estimations de repas.
+
+- **Version précédente :** `ft-v1224` — 🗂️ **LA SOURCE DE VÉRITÉ CENTRALE DES 21
   CAPACITÉS IA, et le double comptage du quota fermé (test-first).**
   ⭐⭐ **Le défaut fermé est mesuré** : la politique d'accès vivait à **quatre endroits qui ne
   se parlaient pas** (le texte de vente, les gardes du client, le quota du serveur, la

@@ -21,15 +21,15 @@
 | # | capacité | module | déclenchement | politique | état du code | quota | action serveur | 2ᵉ porte | serveur applique |
 |---:|---|---|---|---|---|---|---|---|---|
 | 1 | `milo.chat` | Milo | manuel | **FREEMIUM** | FREEMIUM | 10 · usage_total | `coach` | `coach` | non |
-| 2 | `milo.debrief` | Milo | **automatique** | **NON_DECIDEE** | FREE | illimité | `coach` | `coach` | non |
+| 2 | `milo.debrief` | Milo | **automatique** | **PREMIUM** | FREE | aucun (Premium) | `coach` | `coach` | non |
 | 3 | `milo.memory` | Milo | **automatique** | **PREMIUM** | FREE | aucun (Premium) | `summarizeCoach` | `summarizeCoach` | non |
 | 4 | `milo.sessionToJson` | Milo | **automatique** | **INTERNE** | INTERNE | illimité | `seanceJson` | **aucune** | non |
 | 5 | `nutrition.label.ai` | Nutrition | manuel | **FREEMIUM** | FREEMIUM | 25 · usage_total | `foodLabel` | `foodLabel` | non |
 | 6 | `nutrition.barcode.aiFallback` | Nutrition | manuel | **PREMIUM** | FREEMIUM | aucun (Premium) | `readBarcode` | `readBarcode` | non |
 | 7 | `nutrition.mealEstimate.ai` | Nutrition | manuel | **FREEMIUM** | FREEMIUM | 25 · usage_total | `estimateFood` | `estimateFood` | non |
-| 8 | `nutrition.mealPlan.ai` | Nutrition | manuel | **NON_DECIDEE** | FREE | illimité | `generateMealPlan` | `generateMealPlan` | non |
+| 8 | `nutrition.mealPlan.ai` | Nutrition | manuel | **FREEMIUM** (jour / semaine) | FREEMIUM | **non décidé** | `generateMealPlan` | `generateMealPlan` | non |
 | 9 | `nutrition.mealPlan.regen` | Nutrition | manuel | **FREEMIUM** | FREEMIUM | 1 · usage_par_jour | `generateMealPlan` | `generateMealPlan` | non |
-| 10 | `nutrition.mealPlanImport.ai` | Nutrition | manuel | **NON_DECIDEE** | FREE | illimité | `importMealPlan` | `importMealPlan` | non |
+| 10 | `nutrition.mealPlanImport.ai` | Nutrition | manuel | **PREMIUM** | FREE | aucun (Premium) | `importMealPlan` | `importMealPlan` | non |
 | 11 | `training.programImport.ai` | Séance | manuel | **FREEMIUM** | FREEMIUM | 2 · usage_total | `importProgram` | `importProgram` | non |
 | 12 | `training.historyImport.ai` | Séance | manuel | **FREEMIUM** | FREEMIUM | 1 · usage_total | `importHistory` | `importHistory` | non |
 | 13 | `training.programAnalysis.ai` | Séance | manuel | **PREMIUM** | PREMIUM | aucun (Premium) | `coach` | `coach` | non |
@@ -42,15 +42,20 @@
 | 20 | `admin.bench.pt001` | Admin | manuel | **ADMIN** | ADMIN | illimité | `coach` | `coach` | non |
 | 21 | `milo.memory.backfill` | Milo | **automatique** | **PREMIUM** | INEXISTANT | par_evenement · **non mesuré** | `summarizeCoach` | `summarizeCoach` | non |
 
-## ❓ Les politiques encore ouvertes (3)
+## ❓ Les politiques encore ouvertes (0)
 
-⛔ Elles ne sont **pas** notées « FREE » : les inscrire ainsi reviendrait à
-**inventer une décision** que Michel n'a pas prise (règle d'or 15). `NON_DECIDEE`
-est une valeur de plein droit.
+**Aucune.** Les trois derniers arbitrages (`milo.debrief`,
+`nutrition.mealPlan.ai`, `nutrition.mealPlanImport.ai`) ont été rendus par
+Michel le **19/09/2026**.
 
-- **`milo.debrief`** — le code applique `FREE`. vendu Premium par PREMIUM_PERKS, aucun garde dans le code ; un jeton par séance empêche de payer deux fois, mais une boucle de réessai peut émettre DEUX appels payants pour une seule fin de séance
-- **`nutrition.mealPlan.ai`** — le code applique `FREE`. la génération complète n'a AUCUN plafond, et le périmètre (jour/semaine) est choisi par le navigateur — le serveur ne le vérifie pas
-- **`nutrition.mealPlanImport.ai`** — le code applique `FREE`. vendu Premium par PREMIUM_PERKS ; ni l'ouvreur ni le porteur ne vérifient rien
+⚠️ **Zéro politique ouverte ne veut pas dire zéro travail** : une politique
+décidée n'est pas une politique *appliquée*. Les écarts ci-dessus disent ce
+que le code fait encore, et le verrou serveur reste à poser.
+
+⛔ La valeur `NON_DECIDEE` reste dans le registre alors que plus personne ne la
+porte : la retirer forcerait la prochaine capacité déclarée avant d'être
+tranchée à s'inscrire « FREE » par défaut — exactement la faute qu'elle existe
+pour empêcher (règle d'or 15).
 
 ## ⛔ Les écarts entre la politique et le code (12)
 
@@ -59,14 +64,14 @@ qu'un retrait volontaire s'écrit (**R30**) : *sans la raison à côté, le suiv
 « répare » une décision, ou croit à un oubli là où il y a un choix.*
 
 - **`milo.chat`** — politique **FREEMIUM**, code `FREEMIUM` : un chip `.coach-qr` présent dans le DOM fait passer TOUT message tapé en noQuota : la condition porte sur la présence d'un chip, pas sur le fait que le message y réponde
-- **`milo.debrief`** — politique **NON_DECIDEE**, code `FREE` : vendu Premium par PREMIUM_PERKS, aucun garde dans le code ; un jeton par séance empêche de payer deux fois, mais une boucle de réessai peut émettre DEUX appels payants pour une seule fin de séance
+- **`milo.debrief`** — politique **PREMIUM**, code `FREE` : AUCUN garde dans le code : le débrief part pour tout le monde. La décision du 19/09 n'est pas encore appliquée — le verrou appartient à la phase serveur. Défaut annexe inchangé : un jeton par séance empêche de payer deux fois, mais une boucle de réessai peut émettre DEUX appels pour une seule fin de séance.
 - **`milo.memory`** — politique **PREMIUM**, code `FREE` : le code ne porte AUCUN garde : _saveCoachMemory part dès 4 messages, pour tout le monde. La décision M12 n'est pas encore appliquée.
-- **`nutrition.label.ai`** — politique **FREEMIUM**, code `FREEMIUM` : le compteur S.foodAiUses est PARTAGÉ avec deux autres capacités : tant qu'il l'est, ces trois-là ne peuvent pas recevoir trois politiques distinctes
-- **`nutrition.barcode.aiFallback`** — politique **PREMIUM**, code `FREEMIUM` : le code le laisse dans le pot freemium de 25, partagé avec l'étiquette et le repas décrit. Séparer le pot est le préalable technique à cette décision.
-- **`nutrition.mealEstimate.ai`** — politique **FREEMIUM**, code `FREEMIUM` : même pot partagé que nutrition.label.ai et nutrition.barcode.aiFallback
-- **`nutrition.mealPlan.ai`** — politique **NON_DECIDEE**, code `FREE` : la génération complète n'a AUCUN plafond, et le périmètre (jour/semaine) est choisi par le navigateur — le serveur ne le vérifie pas
-- **`nutrition.mealPlan.regen`** — politique **FREEMIUM**, code `FREEMIUM` : le compteur vit DANS S.mealPlan, que la génération complète réécrit avec regenCount:0 — le plafond se lève donc en utilisant la capacité voisine, qui n'en a aucun
-- **`nutrition.mealPlanImport.ai`** — politique **NON_DECIDEE**, code `FREE` : vendu Premium par PREMIUM_PERKS ; ni l'ouvreur ni le porteur ne vérifient rien
+- **`nutrition.label.ai`** — politique **FREEMIUM**, code `FREEMIUM` : le pot est désormais PROPRE (S.foodLabelAiUses) : la politique est appliquée par le client, pas par le serveur — `serveurApplique` reste false
+- **`nutrition.barcode.aiFallback`** — politique **PREMIUM**, code `FREEMIUM` : ⚠️ LE CODE ACCORDE ENCORE 25 USAGES GRATUITS, sur un compteur qui lui est PROPRE (S.foodBarcodeAiUses) depuis le 19/09. La séparation est faite, le verrou Premium ne l'est pas : il appartient à la phase serveur. ⛔ Le compteur propre n'est pas une demi-mesure, c'est le SEUL état sûr — retirer le pot sans poser le verrou aurait rendu cette capacité ILLIMITÉE ET GRATUITE, soit l'exact contraire de la décision (mesuré : deux portes réelles, le bouton « 🆘 si la caméra n'y arrive pas » et le repli du scanner).
+- **`nutrition.mealEstimate.ai`** — politique **FREEMIUM**, code `FREEMIUM` : le pot est désormais PROPRE (S.foodMealEstimateAiUses) : la politique est appliquée par le client, pas par le serveur — `serveurApplique` reste false
+- **`nutrition.mealPlan.ai`** — politique **FREEMIUM**, code `FREEMIUM` : ⚠️ `etatCode` passe de FREE à FREEMIUM et ce n'est PAS un adoucissement : le client applique DÉJÀ la variation de périmètre (app.js, `scope: isPrem ? 'week' : 'day'`). Ce qui reste ouvert est ailleurs, et c'est écrit : ① le serveur ne vérifie pas le `scope` reçu, donc un navigateur modifié demande la semaine ; ② le NOMBRE de générations complètes n'a aucun plafond pour personne — et il reste NON DÉCIDÉ, pas « illimité ».
+- **`nutrition.mealPlan.regen`** — politique **FREEMIUM**, code `FREEMIUM` : le compteur vit toujours DANS S.mealPlan (il n'a pas de propriétaire à lui), et le serveur ne l'applique pas. ⭐ La porte de contournement, elle, est FERMÉE le 19/09 : une génération complète ne remet plus `regenCount` à 0 le jour même.
+- **`nutrition.mealPlanImport.ai`** — politique **PREMIUM**, code `FREE` : ni l'ouvreur ni le porteur ne vérifient quoi que ce soit : l'import IA d'un plan de diététicien reste gratuit dans le code. La décision du 19/09 attend le verrou de la phase serveur.
 - **`training.historyImport.ai`** — politique **FREEMIUM**, code `FREEMIUM` : l'incrément du compteur n'est PAS conditionné par !S.premium, contrairement aux deux compteurs d'import jumeaux
 - **`health.bloodTest.ai`** — politique **PREMIUM**, code `PREMIUM` : le Premium n'est annoncé nulle part : la personne le découvre au lancement
 - **`milo.memory.backfill`** — politique **PREMIUM**, code `INEXISTANT` : n'existe pas encore dans le code : la capacité est déclarée avant d'être construite, exprès — le registre doit pouvoir porter une politique décidée pour une chose non bâtie
@@ -104,9 +109,10 @@ Le registre ne suppose pas que tout quota s'exprime en « X appels par jour ».
 | `usage_total` | N essais gratuits **au total**, pas par période | `milo.chat`, `nutrition.label.ai`, `nutrition.mealEstimate.ai`, `training.programImport.ai`, `training.historyImport.ai`, `profile.bodyScanImport.ai` |
 | `usage_par_jour` | N par jour, remis à zéro chaque jour | `nutrition.mealPlan.regen` |
 | `usage_par_mois` | N par mois | `profile.bodySeries.ai` |
-| `illimite` | aucun compteur produit | `milo.debrief`, `milo.sessionToJson`, `nutrition.mealPlan.ai`, `nutrition.mealPlanImport.ai`, `admin.bench.milo`, `admin.bench.pt001` |
-| `zero` | Premium uniquement — aucun essai gratuit | `milo.memory`, `nutrition.barcode.aiFallback`, `training.programAnalysis.ai`, `profile.morphology.ai`, `profile.bodyStudy.ai`, `health.bloodTest.ai` |
+| `illimite` | aucun compteur produit | `milo.sessionToJson`, `admin.bench.milo`, `admin.bench.pt001` |
+| `zero` | Premium uniquement — aucun essai gratuit | `milo.debrief`, `milo.memory`, `nutrition.barcode.aiFallback`, `nutrition.mealPlanImport.ai`, `training.programAnalysis.ai`, `profile.morphology.ai`, `profile.bodyStudy.ai`, `health.bloodTest.ai` |
 | `par_evenement` | N appels liés à **un événement**, pas à une période | `milo.memory.backfill` |
+| `non_decide` | undefined | `nutrition.mealPlan.ai` |
 
 ## ⚡ Les capacités automatiques (4)
 
@@ -114,7 +120,7 @@ Elles ne sont déclenchées par **aucun bouton** : la personne ne les demande pa
 ne peut pas les refuser. *Un mur ne peut pas s'afficher devant une chose que
 personne n'a demandée* — c'est ce qui les rend particulières pour une politique.
 
-- **`milo.debrief`** — part aussi sur la navigation vers l'onglet Coach et sur un rattrapage 3 s après chaque chargement
+- **`milo.debrief`** — ⭐ LE SOCLE DÉTERMINISTE DE FIN DE SÉANCE RESTE DISPONIBLE SANS IA — c'est le débrief CHIFFRÉ, calculé en local (décision `SEANCE-DESSAI`). Ce qui devient Premium est le JUGEMENT de Milo par-dessus, pas les faits. Part aussi sur la navigation vers l'onglet Coach et sur un rattrapage 3 s après chaque chargement.
 - **`milo.memory`** — ⭐ M12 : la CONSERVATION des faits reste FREE ; c'est l'ENTRETIEN IA de la mémoire structurée qui devient Premium. Ne jamais confondre les deux.
 - **`milo.sessionToJson`** — le cervelet : il ne reçoit que du texte, ni profil ni e-mail. ⭐ SEULE capacité sans seconde porte Apps Script.
 - **`milo.memory.backfill`** — ⭐⭐ MÊME action serveur que milo.memory, capacité DIFFÉRENTE : l'une entretient une mémoire qui existe (déclenchement diffus), l'autre en construit une qui n'existe pas (rafale déclenchée par UN événement). ⚠️ quotaValeur est `null` et ce n'est pas un oubli : la taille d'une période est NON MESURÉE, et inventer un nombre serait inventer une décision (règle d'or 15).

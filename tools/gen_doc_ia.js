@@ -60,11 +60,19 @@ function tableauPrincipal(C) {
   C.forEach((c, i) => {
     const q = c.quotaType === 'illimite' ? 'illimité'
       : c.quotaType === 'zero' ? 'aucun (Premium)'
+      /* ⭐ `non_decide` se DIT, il ne se déguise pas en « illimité » : le code ne plafonne
+         rien, la politique n'est pas tranchée, et ce sont deux faits différents. */
+      : c.quotaType === 'non_decide' ? '**non décidé**'
       : c.quotaValeur == null ? c.quotaType + ' · **non mesuré**'
       : c.quotaValeur + ' · ' + c.quotaType;
+    /* ⭐ LE PÉRIMÈTRE APPARAÎT DANS LA COLONNE « politique », parce qu'il EST la politique :
+       sans lui, `nutrition.mealPlan.ai` s'afficherait « FREEMIUM » sans qu'on sache ce qui
+       distingue le gratuit du payant — et la décision du 19/09 serait invisible ici. */
+    const pol = c.politique + '**' + (c.perimetre
+      ? ' (' + c.perimetre.free + ' / ' + c.perimetre.premium + ')' : '');
     l.push('| ' + (i + 1) + ' | `' + c.id + '` | ' + c.module + ' | '
       + (c.declenchement === 'automatique' ? '**automatique**' : 'manuel') + ' | **'
-      + c.politique + '** | ' + c.etatCode + ' | ' + q + ' | `' + c.actionServeur + '` | '
+      + pol + ' | ' + c.etatCode + ' | ' + q + ' | `' + c.actionServeur + '` | '
       + (c.porteAppsScript ? '`' + c.porteAppsScript + '`' : '**aucune**') + ' | '
       + (c.serveurApplique ? '**oui**' : 'non') + ' |');
   });
@@ -139,6 +147,25 @@ function sectionAuto(C) {
 function sectionOuvertes(C) {
   const o = C.filter(c => c.politique === 'NON_DECIDEE');
   const l = ['', '## ❓ Les politiques encore ouvertes (' + o.length + ')', ''];
+  if (!o.length) {
+    /* ⛔⛔ « ZÉRO POLITIQUE OUVERTE » N'EST PAS « TOUT EST VERROUILLÉ », et la phrase doit le
+       dire. Les trois derniers arbitrages ont été rendus le 19/09 ; les VERROUS, eux,
+       appartiennent à la phase serveur, et les écarts ci-dessus les portent. *Un lecteur
+       qui prend « 0 ouverte » pour « 0 à faire » fermerait le chantier au milieu.* */
+    l.push('**Aucune.** Les trois derniers arbitrages (`milo.debrief`,');
+    l.push('`nutrition.mealPlan.ai`, `nutrition.mealPlanImport.ai`) ont été rendus par');
+    l.push('Michel le **19/09/2026**.');
+    l.push('');
+    l.push('⚠️ **Zéro politique ouverte ne veut pas dire zéro travail** : une politique');
+    l.push('décidée n\'est pas une politique *appliquée*. Les écarts ci-dessus disent ce');
+    l.push('que le code fait encore, et le verrou serveur reste à poser.');
+    l.push('');
+    l.push('⛔ La valeur `NON_DECIDEE` reste dans le registre alors que plus personne ne la');
+    l.push('porte : la retirer forcerait la prochaine capacité déclarée avant d\'être');
+    l.push('tranchée à s\'inscrire « FREE » par défaut — exactement la faute qu\'elle existe');
+    l.push('pour empêcher (règle d\'or 15).');
+    return l.join('\n');
+  }
   l.push('⛔ Elles ne sont **pas** notées « FREE » : les inscrire ainsi reviendrait à');
   l.push('**inventer une décision** que Michel n\'a pas prise (règle d\'or 15). `NON_DECIDEE`');
   l.push('est une valeur de plein droit.');

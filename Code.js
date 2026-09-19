@@ -1701,6 +1701,16 @@ function handleSaveProfile_(body) {
     if (body.foodLog       !== undefined) profile.foodLog       = _pa_(body.foodLog,       profile.foodLog);
     if (body.savedFoods    !== undefined) profile.savedFoods    = _pa_(body.savedFoods,    profile.savedFoods);
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
+    /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
+       ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas
+       n'atteint JAMAIS le profil enregistre (c'est le piège de `_provFood` cote client,
+       paye trois fois). Sans elles, les compteurs partiraient du telephone et seraient
+       jetes ici en silence — puis une restauration rendrait 25 essais neufs par capacite.
+       ⭐ MAXIMUM et jamais remplacement, comme le pot commun au-dessus : deux appareils qui
+       se synchronisent ne doivent pas pouvoir SE RENDRE des essais deja consommes. */
+    if (body.foodLabelAiUses        !== undefined) profile.foodLabelAiUses        = Math.max(parseInt(body.foodLabelAiUses)||0,        parseInt(profile.foodLabelAiUses)||0);
+    if (body.foodMealEstimateAiUses !== undefined) profile.foodMealEstimateAiUses = Math.max(parseInt(body.foodMealEstimateAiUses)||0, parseInt(profile.foodMealEstimateAiUses)||0);
+    if (body.foodBarcodeAiUses      !== undefined) profile.foodBarcodeAiUses      = Math.max(parseInt(body.foodBarcodeAiUses)||0,      parseInt(profile.foodBarcodeAiUses)||0);
 
     existing.profile = profile;
 

@@ -41,16 +41,30 @@
    en porte 2. 21 capacités pour 14 actions — le registre est indexé par capacité.
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* Les six formes de quota. ⚠️ `par_evenement` n'existe nulle part dans le code
+/* Les SEPT formes de quota. ⚠️ `par_evenement` n'existe nulle part dans le code
    aujourd'hui : c'est `milo.memory.backfill` qui l'exige (N périodes déclenchées par
    UN événement, pas N usages par jour). Il est déclaré ici parce que le registre doit
-   pouvoir l'exprimer avant qu'on sache le compter. */
-const QUOTA_TYPES = ['usage_total', 'usage_par_jour', 'usage_par_mois',
-                     'illimite', 'zero', 'par_evenement'];
+   pouvoir l'exprimer avant qu'on sache le compter.
 
-/* Les six politiques d'accès. ⭐ `NON_DECIDEE` est une valeur de plein droit, pas un
-   trou : la phase 2 a laissé trois arbitrages ouverts, et les inscrire comme « FREE »
-   reviendrait à inventer une décision que Michel n'a pas prise (règle d'or 15). */
+   ⭐⭐ `non_decide` EST ARRIVÉ EN PHASE 3.1, ET IL NE DOUBLE PAS `par_evenement`.
+   Les deux disent « je ne sais pas », mais pas la même chose :
+     · `par_evenement` + `quotaValeur:null` = la FORME est connue, la TAILLE n'est pas
+       mesurée (backfill : N périodes, mais on ignore ce que vaut N) ;
+     · `non_decide`                         = la FORME elle-même n'est pas tranchée.
+   Michel, 19/09, sur `nutrition.mealPlan.ai` : *« le nombre maximal de générations
+   gratuites complètes n'est PAS décidé ici. Ne pas inventer 1/jour, 3/jour, 5/mois ou
+   autre quota. »* ⛔ Écrire `illimite` aurait été **inventer une décision** (règle d'or
+   15) : le code ne plafonne rien aujourd'hui, mais la politique, elle, reste ouverte.
+   *Un registre qui n'a pas de mot pour « pas décidé » finit toujours par écrire une
+   décision à la place.* */
+const QUOTA_TYPES = ['usage_total', 'usage_par_jour', 'usage_par_mois',
+                     'illimite', 'zero', 'par_evenement', 'non_decide'];
+
+/* Les six politiques d'accès. ⭐ `NON_DECIDEE` reste une valeur de plein droit — même
+   si, depuis la phase 3.1, PLUS AUCUNE capacité ne la porte. ⛔ On ne retire pas la
+   valeur : elle devra resservir à la prochaine capacité déclarée avant d'être tranchée,
+   et la supprimer forcerait le suivant à choisir « FREE » par défaut, c'est-à-dire
+   exactement la faute qu'elle existe pour empêcher (règle d'or 15). */
 const POLITIQUES = ['FREE', 'FREEMIUM', 'PREMIUM', 'ADMIN', 'INTERNE', 'NON_DECIDEE'];
 
 const CAPACITES_IA = [
@@ -69,15 +83,20 @@ const CAPACITES_IA = [
   },
   {
     id: 'milo.debrief', module: 'Milo', declenchement: 'automatique', emploieIA: true,
-    politique: 'NON_DECIDEE', etatCode: 'FREE',
-    gratuits: null, quotaType: 'illimite', quotaValeur: null, quotaPeriode: null,
+    politique: 'PREMIUM', etatCode: 'FREE',
+    gratuits: 0, quotaType: 'zero', quotaValeur: 0, quotaPeriode: null,
     actionServeur: 'coach', porteAppsScript: 'coach', serveurApplique: false,
-    decisionSource: null, decisionDate: null,
-    ecart: "vendu Premium par PREMIUM_PERKS, aucun garde dans le code ; un jeton par " +
-           "séance empêche de payer deux fois, mais une boucle de réessai peut émettre " +
-           "DEUX appels payants pour une seule fin de séance",
-    notes: "part aussi sur la navigation vers l'onglet Coach et sur un rattrapage 3 s " +
-           "après chaque chargement",
+    decisionSource: 'Michel, phase 3.1 (arbitrage 1)', decisionDate: '2026-09-19',
+    ecart: "AUCUN garde dans le code : le débrief part pour tout le monde. La décision " +
+           "du 19/09 n'est pas encore appliquée — le verrou appartient à la phase " +
+           "serveur. Défaut annexe inchangé : un jeton par séance empêche de payer deux " +
+           "fois, mais une boucle de réessai peut émettre DEUX appels pour une seule fin " +
+           "de séance.",
+    notes: "⭐ LE SOCLE DÉTERMINISTE DE FIN DE SÉANCE RESTE DISPONIBLE SANS IA — c'est le " +
+           "débrief CHIFFRÉ, calculé en local (décision `SEANCE-DESSAI`). Ce qui devient " +
+           "Premium est le JUGEMENT de Milo par-dessus, pas les faits. " +
+           "Part aussi sur la navigation vers l'onglet Coach et sur un rattrapage 3 s " +
+           "après chaque chargement.",
   },
   {
     id: 'milo.memory', module: 'Milo', declenchement: 'automatique', emploieIA: true,
@@ -107,10 +126,11 @@ const CAPACITES_IA = [
     politique: 'FREEMIUM', etatCode: 'FREEMIUM',
     gratuits: 25, quotaType: 'usage_total', quotaValeur: 25, quotaPeriode: null,
     actionServeur: 'foodLabel', porteAppsScript: 'foodLabel', serveurApplique: false,
-    decisionSource: 'FOOD_AI_FREE_LIMIT', decisionDate: '2026-09-18',
-    ecart: "le compteur S.foodAiUses est PARTAGÉ avec deux autres capacités : tant qu'il " +
-           "l'est, ces trois-là ne peuvent pas recevoir trois politiques distinctes",
-    notes: "la saisie à la main reste gratuite et illimitée",
+    decisionSource: 'FOOD_AI_FREE_LIMIT · pot séparé en phase 3.1', decisionDate: '2026-09-19',
+    ecart: "le pot est désormais PROPRE (S.foodLabelAiUses) : la politique est appliquée " +
+           "par le client, pas par le serveur — `serveurApplique` reste false",
+    notes: "⭐ pot séparé le 19/09 : il ne partage plus son compteur avec le repas décrit " +
+           "ni avec le repli code-barres. La saisie à la main reste gratuite et illimitée.",
   },
   {
     id: 'nutrition.barcode.aiFallback', module: 'Nutrition', declenchement: 'manuel',
@@ -118,9 +138,15 @@ const CAPACITES_IA = [
     politique: 'PREMIUM', etatCode: 'FREEMIUM',
     gratuits: 0, quotaType: 'zero', quotaValeur: 0, quotaPeriode: null,
     actionServeur: 'readBarcode', porteAppsScript: 'readBarcode', serveurApplique: false,
-    decisionSource: 'Michel, phase 1 (acté)', decisionDate: '2026-09-18',
-    ecart: "le code le laisse dans le pot freemium de 25, partagé avec l'étiquette et le " +
-           "repas décrit. Séparer le pot est le préalable technique à cette décision.",
+    decisionSource: 'Michel, phase 1 · confirmé phase 3.1', decisionDate: '2026-09-19',
+    ecart: "⚠️ LE CODE ACCORDE ENCORE 25 USAGES GRATUITS, sur un compteur qui lui est " +
+           "PROPRE (S.foodBarcodeAiUses) depuis le 19/09. La séparation est faite, le " +
+           "verrou Premium ne l'est pas : il appartient à la phase serveur. ⛔ Le " +
+           "compteur propre n'est pas une demi-mesure, c'est le SEUL état sûr — retirer " +
+           "le pot sans poser le verrou aurait rendu cette capacité ILLIMITÉE ET " +
+           "GRATUITE, soit l'exact contraire de la décision (mesuré : deux portes " +
+           "réelles, le bouton « 🆘 si la caméra n'y arrive pas » et le repli du " +
+           "scanner).",
     notes: "⛔ le scanner LOCAL, zxing-wasm, la validation EAN, la saisie manuelle et la " +
            "recherche déterministe restent FREE : seul le repli IA est concerné",
   },
@@ -130,20 +156,36 @@ const CAPACITES_IA = [
     politique: 'FREEMIUM', etatCode: 'FREEMIUM',
     gratuits: 25, quotaType: 'usage_total', quotaValeur: 25, quotaPeriode: null,
     actionServeur: 'estimateFood', porteAppsScript: 'estimateFood', serveurApplique: false,
-    decisionSource: 'FOOD_AI_FREE_LIMIT', decisionDate: '2026-09-18',
-    ecart: "même pot partagé que nutrition.label.ai et nutrition.barcode.aiFallback",
-    notes: null,
+    decisionSource: 'FOOD_AI_FREE_LIMIT · pot séparé en phase 3.1', decisionDate: '2026-09-19',
+    ecart: "le pot est désormais PROPRE (S.foodMealEstimateAiUses) : la politique est " +
+           "appliquée par le client, pas par le serveur — `serveurApplique` reste false",
+    notes: "⭐ pot séparé le 19/09 : consommer une estimation de repas ne retire plus rien " +
+           "à la lecture d'étiquette, et réciproquement.",
   },
   {
     id: 'nutrition.mealPlan.ai', module: 'Nutrition', declenchement: 'manuel', emploieIA: true,
-    politique: 'NON_DECIDEE', etatCode: 'FREE',
-    gratuits: null, quotaType: 'illimite', quotaValeur: null, quotaPeriode: null,
+    politique: 'FREEMIUM', etatCode: 'FREEMIUM',
+    gratuits: null, quotaType: 'non_decide', quotaValeur: null, quotaPeriode: null,
+    /* ⭐⭐ LE PLUS PETIT CHAMP QUI DIT LA DÉCISION, ET LE SEUL DU REGISTRE (Michel, 19/09 :
+       *« ajouter le PLUS PETIT champ descriptif nécessaire »*). ⛔ Surtout PAS deux
+       capacités `mealPlan.day` et `mealPlan.week` : le jour et la semaine sont **le même
+       besoin produit** vu à deux profondeurs — les séparer aurait fait une 22ᵉ capacité
+       et cassé le compte acté. Aucune autre capacité ne porte ce champ, parce qu'aucune
+       autre ne varie par PÉRIMÈTRE : son absence se lit « pas de variation », ce qui est
+       le fait. */
+    perimetre: { free: 'jour', premium: 'semaine' },
     actionServeur: 'generateMealPlan', porteAppsScript: 'generateMealPlan',
     serveurApplique: false,
-    decisionSource: null, decisionDate: null,
-    ecart: "la génération complète n'a AUCUN plafond, et le périmètre (jour/semaine) est " +
-           "choisi par le navigateur — le serveur ne le vérifie pas",
-    notes: null,
+    decisionSource: 'Michel, phase 3.1 (arbitrage 3)', decisionDate: '2026-09-19',
+    ecart: "⚠️ `etatCode` passe de FREE à FREEMIUM et ce n'est PAS un adoucissement : le " +
+           "client applique DÉJÀ la variation de périmètre (app.js, `scope: isPrem ? " +
+           "'week' : 'day'`). Ce qui reste ouvert est ailleurs, et c'est écrit : ① le " +
+           "serveur ne vérifie pas le `scope` reçu, donc un navigateur modifié demande la " +
+           "semaine ; ② le NOMBRE de générations complètes n'a aucun plafond pour " +
+           "personne — et il reste NON DÉCIDÉ, pas « illimité ».",
+    notes: "⭐ le quota de nombre d'appels est NON DÉCIDÉ (quotaType `non_decide`) : " +
+           "Michel a tranché le périmètre, pas le nombre. Inventer 1/jour ou 5/mois " +
+           "serait inventer une décision (règle d'or 15).",
   },
   {
     id: 'nutrition.mealPlan.regen', module: 'Nutrition', declenchement: 'manuel',
@@ -152,22 +194,29 @@ const CAPACITES_IA = [
     gratuits: 1, quotaType: 'usage_par_jour', quotaValeur: 1, quotaPeriode: 'jour',
     actionServeur: 'generateMealPlan', porteAppsScript: 'generateMealPlan',
     serveurApplique: false,
-    decisionSource: 'écran Nutrition (« 1 régénération/jour en gratuit »)',
+    decisionSource: 'écran Nutrition (« 1 régénération/jour en gratuit ») · inchangé en 3.1',
     decisionDate: '2026-09-18',
-    ecart: "le compteur vit DANS S.mealPlan, que la génération complète réécrit avec " +
-           "regenCount:0 — le plafond se lève donc en utilisant la capacité voisine, qui " +
-           "n'en a aucun",
-    notes: null,
+    ecart: "le compteur vit toujours DANS S.mealPlan (il n'a pas de propriétaire à lui), " +
+           "et le serveur ne l'applique pas. ⭐ La porte de contournement, elle, est " +
+           "FERMÉE le 19/09 : une génération complète ne remet plus `regenCount` à 0 le " +
+           "jour même.",
+    notes: "⭐ correctif 19/09, local et sans dépendance au verrou serveur : une " +
+           "génération complète du plan REPORTE le compteur du jour au lieu de le " +
+           "réinitialiser. Sans ça, « 1 régénération/jour » se levait en appuyant sur le " +
+           "bouton voisin, qui n'a aucun plafond.",
   },
   {
     id: 'nutrition.mealPlanImport.ai', module: 'Nutrition', declenchement: 'manuel',
     emploieIA: true,
-    politique: 'NON_DECIDEE', etatCode: 'FREE',
-    gratuits: null, quotaType: 'illimite', quotaValeur: null, quotaPeriode: null,
+    politique: 'PREMIUM', etatCode: 'FREE',
+    gratuits: 0, quotaType: 'zero', quotaValeur: 0, quotaPeriode: null,
     actionServeur: 'importMealPlan', porteAppsScript: 'importMealPlan', serveurApplique: false,
-    decisionSource: null, decisionDate: null,
-    ecart: "vendu Premium par PREMIUM_PERKS ; ni l'ouvreur ni le porteur ne vérifient rien",
-    notes: null,
+    decisionSource: 'Michel, phase 3.1 (arbitrage 2)', decisionDate: '2026-09-19',
+    ecart: "ni l'ouvreur ni le porteur ne vérifient quoi que ce soit : l'import IA d'un " +
+           "plan de diététicien reste gratuit dans le code. La décision du 19/09 attend " +
+           "le verrou de la phase serveur.",
+    notes: "⭐ la SAISIE MANUELLE du plan reste indépendante et gratuite : ce qui devient " +
+           "Premium est la LECTURE IA d'une photo ou d'un PDF, pas le fait d'avoir un plan.",
   },
 
   // ── SÉANCE ─────────────────────────────────────────────────────────────────

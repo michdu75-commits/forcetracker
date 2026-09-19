@@ -1018,7 +1018,55 @@ const FOOD_AI_FREE_LIMIT=25; // ~ une semaine de notes IA en gratuit (illimité 
    collation, et une entrée au repas inconnu serait silencieusement devenue une collation.
    *Un index qui dépend de l'ordre d'un tableau devient faux le jour où on trie ce tableau* (R14). */
 function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS.find(m=>m.k==='dejeuner');}
-function _foodAiLeft(){return Math.max(0,FOOD_AI_FREE_LIMIT-(S.foodAiUses||0));}
+/* ═══ 🫙 TROIS POTS SÉPARÉS, UN SEUL NOMBRE (19/09/2026, phase 3.1) ═══════════════════════
+   Michel : *« OUI, séparer le pot `S.foodAiUses`. Les trois capacités sont désormais
+   indépendantes. »* — étiquette FREEMIUM 25 · repas décrit FREEMIUM 25 · repli code-barres
+   PREMIUM (quota gratuit 0).
+
+   ⭐⭐ POURQUOI UN SEUL COMPTEUR ÉTAIT UN DÉFAUT, ET PAS UN RACCOURCI. Tant que les trois
+   capacités partagent `S.foodAiUses`, elles **ne peuvent pas** recevoir trois politiques
+   distinctes : lire une étiquette retire un essai au repas décrit, qui n'a rien demandé.
+   *Un compteur commun n'est pas une simplification, c'est une politique implicite* — celle
+   qui dit « ces trois choses sont la même », ce que la phase 2 a mesuré comme faux.
+
+   ⛔ LE NOMBRE RESTE UNIQUE, ET C'EST LA CONSIGNE (§10) : *« ne crée surtout pas
+   FOOD_LABEL_LIMIT = 25 / FOOD_MEAL_LIMIT = 25 dans dix fichiers différents »*. Il y a donc
+   UN `FOOD_AI_FREE_LIMIT` et UNE table qui dit quel champ porte quel pot. Trois `25` écrits
+   séparément auraient divergé — la seule question aurait été quand (R2).
+
+   ⚠️ LE REPLI CODE-BARRES GARDE UN POT DE 25 ALORS QUE SA POLITIQUE EST « PREMIUM, 0 ».
+   Ce n'est pas une demi-mesure, c'est le seul état sûr aujourd'hui : le verrou Premium réel
+   appartient à la phase serveur (Michel : *« ne construis pas ici une fausse sécurité
+   uniquement client »*), et lui retirer son pot **sans** poser ce verrou l'aurait rendu
+   ILLIMITÉ ET GRATUIT — l'exact contraire de la décision. Il a donc son compteur propre :
+   la SÉPARATION est faite, l'écart est écrit dans le registre, le verrou viendra.
+
+   ⛔ UNE CAPACITÉ INCONNUE NE REÇOIT PAS DE POT PAR DÉFAUT : `_foodAiLeft` rend 0 et
+   `_foodAiEpuise` rend `true`. On échoue FERMÉ — un identifiant mal tapé doit se voir tout
+   de suite, pas ouvrir un robinet silencieux (R29). */
+const FOOD_AI_POTS={
+  'nutrition.label.ai':           'foodLabelAiUses',
+  'nutrition.mealEstimate.ai':    'foodMealEstimateAiUses',
+  'nutrition.barcode.aiFallback': 'foodBarcodeAiUses'
+};
+function _foodAiChamp(cap){
+  return Object.prototype.hasOwnProperty.call(FOOD_AI_POTS,cap)?FOOD_AI_POTS[cap]:null;
+}
+function _foodAiLeft(cap){
+  const ch=_foodAiChamp(cap); if(!ch)return 0;
+  return Math.max(0,FOOD_AI_FREE_LIMIT-(parseInt(S[ch],10)||0));
+}
+function _foodAiEpuise(cap){ return _foodAiLeft(cap)<=0; }
+/* ⭐ UN SEUL PROPRIÉTAIRE DE L'ÉCRITURE (R2, et la leçon du quota serveur de ft-v1224) :
+   lire l'état et consommer une unité sont deux gestes différents, et un seul écrit. */
+function _foodAiConsomme(cap){
+  const ch=_foodAiChamp(cap); if(!ch)return;
+  if(S.premium)return;                       // ⛔ le Premium ne consomme aucun pot gratuit
+  S[ch]=(parseInt(S[ch],10)||0)+1;
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  if(typeof _renderAfAiNote==='function')_renderAfAiNote();
+}
 function showFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.add('open');}
 function closeFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.remove('open');}
 
@@ -4010,7 +4058,11 @@ function openAddFood(){
 function _renderAfAiNote(){
   const el=document.getElementById('af-ai-note');if(!el)return;
   if(S.premium){el.innerHTML='<span style="color:var(--gold);">⭐ Estimations IA illimitées</span>';return;}
-  const left=_foodAiLeft();
+  /* ⚠️ CETTE NOTE PARLE D'UN SEUL POT, ET C'EST DEPUIS LE 19/09 SON MÉRITE. Elle est posée
+     juste sous « 🤖 Estimer les calories avec l'IA » (index.html) : elle décrit donc le pot
+     du REPAS DÉCRIT, pas la somme des trois. *Un seul nombre pour trois pots séparés serait
+     faux dans les trois cas* — et il l'aurait été en silence, puisqu'il resterait plausible. */
+  const left=_foodAiLeft('nutrition.mealEstimate.ai');
   el.innerHTML=left>0
     ?`🆓 ${left} estimation${left>1?'s':''} IA restante${left>1?'s':''} · ou saisis à la main (gratuit, illimité)`
     :`Estimations IA gratuites épuisées · ⭐ Premium pour l'illimité · la saisie à la main reste gratuite`;
@@ -4337,13 +4389,13 @@ function readFoodLabel(){
   if(!S.url){toast('Connexion requise','error');return;}
   if(!S.premium){
     if(window._premiumPending){toast('Vérification premium en cours…','info');return;}
-    if((S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+    if(_foodAiEpuise('nutrition.label.ai')){showFoodWall();return;}
   }
   const inp=document.getElementById('af-label-input'); if(inp){inp.value='';inp.click();}
 }
 async function onFoodLabelFile(input){
   const f=input.files&&input.files[0]; if(!f)return;
-  if(!S.premium&&(S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+  if(!S.premium&&_foodAiEpuise('nutrition.label.ai')){showFoodWall();return;}
   toast('Lecture de l\'étiquette…','info');
   try{
     const b64=await _resizeToB64(f, 1100, 0.85);
@@ -4378,7 +4430,7 @@ async function onFoodLabelFile(input){
     _afSetSrc({saisie:'photo-ia',origine:'etiquette',
       per100:_per100De(_bcNutr),
       attendu:_afLuFormulaire()});
-    if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();if(typeof _renderAfAiNote==='function')_renderAfAiNote();}
+    _foodAiConsomme('nutrition.label.ai');
     toast('Étiquette lue ✅ — ajuste la quantité','success');
   }catch(e){toast('Erreur : '+(e.message||e),'error');}
 }
@@ -4389,13 +4441,13 @@ function scanBarcodeIA(){
   if(!S.url){toast('Connexion requise','error');return;}
   if(!S.premium){
     if(window._premiumPending){toast('Vérification premium en cours…','info');return;}
-    if((S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+    if(_foodAiEpuise('nutrition.barcode.aiFallback')){showFoodWall();return;}
   }
   const inp=document.getElementById('af-bc-photo-input'); if(inp){inp.value='';inp.click();}
 }
 async function onBarcodePhotoIA(input){
   const f=input.files&&input.files[0]; if(!f)return;
-  if(!S.premium&&(S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+  if(!S.premium&&_foodAiEpuise('nutrition.barcode.aiFallback')){showFoodWall();return;}
   toast('Lecture du code-barres…','info');
   try{
     const b64=await _resizeToB64(f, 1100, 0.85);
@@ -4403,8 +4455,10 @@ async function onBarcodePhotoIA(input){
       body:JSON.stringify({action:'readBarcode',image:{data:b64,type:'image/jpeg'},email:S.email||''})});
     const d=await r.json();
     if(!d||d.status!=='ok'||!d.barcode){toast('Code-barres illisible — rapproche-toi, éclaire bien, ou tape les chiffres','error');return;}
-    // L'IA a lu le numéro → décompte 1 essai (comme l'étiquette), la recherche produit reste gratuite
-    if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();if(typeof _renderAfAiNote==='function')_renderAfAiNote();}
+    /* L'IA a lu le numéro → décompte 1 essai sur SON pot, la recherche produit reste gratuite.
+       ⛔ Depuis le 19/09 ce pot lui est PROPRE : lire un code-barres par l'IA ne retire plus
+       rien à la lecture d'étiquette ni au repas décrit. */
+    _foodAiConsomme('nutrition.barcode.aiFallback');
     const mi=document.getElementById('af-bc-manual');if(mi)mi.value=d.barcode;
     /* ⚠️ CE SONT DES CHIFFRES LUS PAR UN MODÈLE, PAS DÉCODÉS : aucune clé de contrôle n'a été
        vérifiée par le lecteur. On applique donc le même contrôle qu'à une saisie clavier —
@@ -4421,7 +4475,7 @@ async function estimateFoodAI(){
   // Limite gratuit : ~1 semaine de notes IA. La saisie manuelle reste illimitée.
   if(!S.premium){
     if(window._premiumPending){toast('Vérification premium en cours…','info');return;}
-    if((S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+    if(_foodAiEpuise('nutrition.mealEstimate.ai')){showFoodWall();return;}
   }
   const btn=document.getElementById('af-ai-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ Estimation…';}
@@ -4449,7 +4503,7 @@ async function estimateFoodAI(){
     //    phrase. On enregistre donc l'origine et rien d'autre — inventer un `per100` ici ferait
     //    passer une estimation pour une mesure (R29).
     _afSetSrc({saisie:'ia-texte',origine:'ia',attendu:_afLuFormulaire()});
-    if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
+    _foodAiConsomme('nutrition.mealEstimate.ai');
     _renderAfAiNote();
     toast('Estimé ✅ — ajuste si besoin','success');
   }catch(e){toast('Erreur réseau : '+e.message,'error');}
@@ -8639,7 +8693,20 @@ async function generateMealPlan(regenDay,regenMeal){
       if(!isPrem){if(S.mealPlan.regenDate!==td){S.mealPlan.regenDate=td;S.mealPlan.regenCount=0;}S.mealPlan.regenCount=(S.mealPlan.regenCount||0)+1;}
       toast('Repas régénéré ✅','success');
     }else{
-      S.mealPlan={days:data.plan.days||[],generatedAt:td,regenDate:null,regenCount:0};
+      /* ⛔⛔ UNE GÉNÉRATION COMPLÈTE NE REMET PLUS LE COMPTEUR DU JOUR À ZÉRO (19/09/2026).
+         Le plafond « 1 régénération/jour en gratuit » vit DANS `S.mealPlan` — que cette
+         ligne réécrivait en entier avec `regenCount:0`. 👉 *Le plafond se levait en appuyant
+         sur le bouton d'à côté*, qui n'a lui aucun plafond : une génération complète, et la
+         régénération redevenait disponible, autant de fois qu'on voulait.
+         ⭐ On REPORTE le compteur du jour au lieu de l'effacer. Un jour différent repart
+         bien à zéro — c'est le sens de « par jour », pas une exception.
+         ⚠️ Correctif LOCAL et CLIENT : il ne dépend d'aucun verrou serveur (consigne de
+         Michel). Le vrai verrou reste à poser côté serveur, et l'écart est écrit dans le
+         registre — ici on ferme seulement la porte qui rendait la règle décorative. */
+      const _rgD=(S.mealPlan&&S.mealPlan.regenDate)||null;
+      const _rgN=(_rgD===td)?(parseInt(S.mealPlan.regenCount,10)||0):0;
+      S.mealPlan={days:data.plan.days||[],generatedAt:td,
+                  regenDate:(_rgD===td?td:null),regenCount:_rgN};
       toast(isPrem?'Semaine générée ✅':'Repas du jour généré ✅','success');
     }
     persist();renderMealPlanIA();

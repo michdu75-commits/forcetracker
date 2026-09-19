@@ -2,6 +2,15 @@
 # -*- coding: utf-8 -*-
 """DOSSIER PHASE 3 — LE REGISTRE CENTRAL DES 21 CAPACITES IA (18/09/2026).
 
+⛔⛔ PERIME DEPUIS LE 19/09/2026 — CE GENERATEUR NE PRODUIT PLUS, ET C'EST VOULU.
+    La phase 3.1 a rendu les trois arbitrages que ce dossier presentait comme ouverts et a
+    separe le pot de 25. Les gardes ci-dessous exigent « 3 politiques ouvertes » et
+    « pot commun » : ils tombent donc, et le generateur refuse. Ne les « reparez » pas — le
+    dossier a jour est FORCE-TRACKER-PHASE-3-1-ARBITRAGES-IA-19-09-2026.
+    -> Un dossier qui decrit des decisions deja prises ne se contente pas d'etre perime : il
+       fait RE-ARBITRER ce qui est tranche (regle d'or 15). Il est plus sur qu'il refuse.
+    Le point precis corrige est note sur place, section 15 (l'erreur M12).
+
 ⛔⛔ LES GARDES RECOMPTENT CHAQUE CHIFFRE DEPUIS LE CODE SERVI ET REFUSENT DE PRODUIRE SI
     L UN D EUX TOMBE — et le generateur RELIT sa propre sortie (lecon du 18/09 : un dossier
     livre portait 66 balises en clair, parce que je verifiais les MOTS et jamais la LISIBILITE).
@@ -589,14 +598,22 @@ A(tab(['', 'etat'],
 
 # ── 15. DECISIONS ───────────────────────────────────────────────────────────
 A(Paragraph('15. Decisions encore necessaires de Michel', H2))
+# /!\ M12 A ETE RETIREE DE CETTE LISTE LE 19/09/2026 (phase 3.1), ET C'ETAIT UNE ERREUR A MOI.
+#     Le dossier livre le 18/09 presentait « milo.memory devient-elle Premium ? » comme une
+#     question ouverte. Elle ne l'etait pas : M12 avait deja ete ACTEE par Michel avant la
+#     phase 3 (conservation deterministe des faits = FREE pour tous ; entretien IA de la
+#     memoire structuree = PREMIUM), et le registre l'inscrivait correctement
+#     (politique PREMIUM / etatCode FREE) dans le meme fichier.
+#     -> Un rapport qui rouvre une decision deja prise ne se contente pas d'etre faux : il
+#        fait RE-ARBITRER, c'est-a-dire qu'il coute une decision au lieu d'en rappeler une
+#        (regle d'or 15 : une decision actee reste actee).
+#     Michel, 19/09 : « NE PAS rouvrir M12 ; retirer M12 de la liste des decisions ouvertes ;
+#     conserver l'ecart actuel tant que le verrou n'est pas encore applique. »
 for n, t in enumerate([
     "<b>Les trois politiques ouvertes</b> : %s. Le code leur applique FREE ; le registre "
     "attend une decision." % ', '.join('<b>' + x + '</b>' for x in F['ouvertes']),
     "<b>La separation du pot de 25</b> : elle touche app.js et l'experience de comptes "
     "gratuits existants. Le registre est pret ; le code attend le feu vert.",
-    "<b>L'application de M12</b> (milo.memory devient Premium) : aujourd'hui la construction "
-    "IA part pour tout le monde, <b>par une decision ecrite dans le code</b>. La fermer "
-    "contredit cette decision — c'est exactement le cas ou la regle 15 demande un arbitrage.",
     "<b>La taille d'une periode de backfill</b> : <b>NON MESUREE</b>, et elle le reste tant "
     "que la construction de memoire structuree ne peut pas etre essayee.",
 ], start=1):

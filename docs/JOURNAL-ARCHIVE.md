@@ -9484,3 +9484,36 @@ Tests : **parcours 4150/4150 sur l'arbre FINAL** (bloc **B-CCCXIII**, 10 témoin
 📄 **PDF POUR GPT** : `DOSSIER-S1-IDENTITE-SERVEUR-FINAL-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **60 gardes**. ⭐ Le miroir exact du générateur précédent : celui-là refusait de produire si S1 était **déjà** fait, celui-ci refuse si une pièce **manque**.
 
 Fichiers : `Code.js`, `worker.js`, `constants.js`, `app.js`, `setup.js`, `tests/parcours/runner.js`, `tools/gen_s1_final_pdf.py`, `sw.js`, `CLAUDE.md`, `docs/DOSSIER-S1-IDENTITE-SERVEUR-FINAL.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `index.html`, ni `log.js`, ni `coach.js`, ni `state.js`, ni `supabase.js`, ni `screens.js`, ni `tracking.js`.** sw.js ft-v1216. |
+
+
+**ft-v1217 — 🗄️ LES JUSTIFICATIFS NE FRANCHISSENT PLUS LA PORTE SUPABASE · ET LA FUITE LA PLUS ANCIENNE N'EST PAS CELLE QU'ON VIENT DE TROUVER** — S2-A, ouverte par Michel après le dossier d'audit : ⛔ ***« arrêter immédiatement toute NOUVELLE fuite de credential vers Supabase »*** · ⛔⛔ ***« je ne veux PAS deux snapshots métier séparés qui finiront par diverger »***.
+
+**⭐⭐ LA CAUSE N'EST PAS UN OUBLI, C'EST UNE DÉCISION JUSTE APPLIQUÉE À UN ENDROIT DE TROP.** Le corps de sauvegarde est **construit une fois et servi aux DEUX destinations** — c'est **R2**, et c'est juste : deux constructions séparées divergeraient. S1 y a ajouté `token` et `authCode` pour authentifier Apps Script. 👉 ***Le miroir Supabase les a reçus par la même occasion.*** Apps Script, lui, ne les écrit jamais (liste blanche de **58 champs**) ; Supabase recevait le **blob entier**.
+
+**⭐ LA CORRECTION NE CASSE PAS R2, ELLE LE PRÉCISE** : on ne duplique pas le corps métier, on en **retire** les justificatifs et on les ajoute au **seul transport qui en a besoin**. *Un justificatif de transport n'appartient pas aux données de la personne.*
+
+| | transport Apps Script | miroir Supabase |
+|---|---|---|
+| jeton S1 · code perso | présents (justificatifs) | ⭐⭐ **absents** |
+| persisté côté serveur | ⛔ **non** — 58 champs nommés | le blob est écrit tel quel |
+| données métier | identiques | ⭐⭐ **identiques, à l'octet près** |
+
+**⭐⭐ LA PREUVE EST UNE ÉGALITÉ STRICTE, PAS UNE INSPECTION** : le corps envoyé à Apps Script **privé des deux justificatifs** est égal caractère pour caractère au blob Supabase, et la seule différence entre les deux corps est exactement cette paire. Les **16 catégories métier** sont intactes, contenu compris.
+
+**⚠️⚠️ ET LES DATES, LUES DANS GIT, INVERSENT L'INTUITION.** Le jeton — la trouvaille spectaculaire — n'a fuité que depuis **S1**, soit **une seule version servie**. Le **code perso**, lui, part en clair **depuis le 04/08**, jour de naissance du miroir : il était **déjà** dans le corps commun quand on a branché Supabase dessus. 👉 ***La fuite la plus ancienne n'est pas celle qu'on vient de trouver — six semaines contre une journée.*** ⭐ Borne honnête : l'exposition ne concerne que les comptes ayant **posé** un code (il est optionnel).
+
+**⭐ TROIS VERROUS, ET ILS NE FONT PAS LE MÊME TRAVAIL** : la **cause** (`_cloudSync` ne porte plus rien) · le **filet** (`sbMirror`, porte UNIQUE, retire par **nom de clé** quel que soit l'appelant futur) · les **témoins de source** (bloc **B-CCCXIV**).
+
+**⛔⛔ ET C'EST LE CONTRÔLE NÉGATIF QUI A PROUVÉ QUE LES TROIS SONT NÉCESSAIRES.** Quatre mutations — remettre le code perso dans le corps métier, le faire passer par un **alias**, vider la liste du filet, ne jamais appeler le filet — laissaient le banc de comportement **parfaitement vert** : le filet rattrape, donc la sortie reste juste. 👉 ***Un banc qui n'observe que la SORTIE ne peut pas voir la CAUSE regresser quand un filet la rattrape.*** Le harnais conduit désormais le banc **et** les témoins.
+
+**⭐⭐ ET UNE MUTATION A SURVÉCU MÊME À ÇA.** Un `Object.assign` glissé **après** l'envoi Apps Script échappait à tout garde de **position**. L'invariant juste n'est pas « où », c'est **« combien »** : chaque justificatif est lu **exactement une fois** dans `_cloudSync`. *Un alias, une copie, un détour : le compte monte à 2 et le témoin rougit, quel que soit le déguisement.* ⚠️ Au passage, mon garde de transport figeait l'**ordre des clés** — il aurait rougi sur une permutation, donc sur du code juste.
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune valeur affichée ne bouge, aucune donnée métier ne disparaît : deux champs cessent de voyager vers une destination qui n'en avait pas besoin.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **les lignes DÉJÀ écrites dans Supabase ne sont pas purgées** — le SQL de `ft_miroir` n'est **nulle part dans le dépôt** (aucune migration, créée à la main), donc *on ne sait pas s'il remplace la ligne ou empile un historique* ; si c'est un remplacement, la purge se fait seule à mesure que les gens sauvegardent. **Dashboard requis.** · ⛔⛔ **V2 (`p_email` libre) reste OUVERTE** — son témoin ⑧ est **volontairement NON retourné** : *on ne maquille pas une porte ouverte* (S2-B/S2-C) · ⛔ **aucune rotation de jeton décidée** : trois options chiffrées, le choix dépend des droits réels sur la table, et *décider maintenant serait deviner* · ⛔ Nutrition **0 ligne** (`app.js` et `index.html` non touchés), Worker et `Code.js` non touchés. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran.
+
+Tests : **parcours 4161/4161 sur l'arbre FINAL** (blocs **B-CCCXIV** 11 témoins et **B-CCCXIII** 10, tous verts), **banc S2-A 22/22**, **banc S1 35/35**. ⛔ **CONTRÔLE NÉGATIF : 16 mutations sur arbre copié, toutes conformes — dont une qui doit RESTER VERTE** (le mot `token` dans un simple commentaire : la seule façon de prouver qu'on mesure le CODE, pas la documentation).
+
+📄 **PDF POUR GPT** : `DOSSIER-S2A-CONFINEMENT-CREDENTIALS-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **37 gardes**, contrôle négatif **15/15**. ⚠️ **Gardé hors dépôt volontairement** : il décrit une exposition **non encore purgée**, et le dépôt est public.
+
+Fichiers : `setup.js`, `supabase.js`, `tests/parcours/runner.js`, `tools/gen_s2_audit_pdf.py` (nouveau), `tools/gen_s2a_pdf.py` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `worker.js`, ni `Code.js`, ni `coach.js`, ni `log.js`, ni `state.js`.** sw.js ft-v1217. |

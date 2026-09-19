@@ -146,13 +146,23 @@ function source(t, ROOT, fs, path) {
 
   /* ⛔⛔ LE TÉMOIN LE PLUS IMPORTANT DE CE BLOC. Inscrire « FREE » à la place d'une décision
      non prise est exactement la faute que la règle d'or 15 interdit — et c'est une faute
-     INVISIBLE, puisque le registre aurait l'air complet. */
+     INVISIBLE, puisque le registre aurait l'air complet.
+
+     ⚠️ RETOURNÉ LE 19/09/2026 (phase 3.1), PAS SUPPRIMÉ — et la nuance est tout le sujet.
+     Michel a rendu les trois arbitrages : plus AUCUNE capacité ne porte `NON_DECIDEE`.
+     Le témoin d'origine figeait la LISTE des trois ouvertes ; il serait devenu rouge sur un
+     registre parfaitement à jour. Mais sa GARANTIE, elle, n'a pas bougé d'un pouce : *le
+     registre doit rester capable de dire « pas décidé »*. On mesure donc désormais que la
+     VALEUR reste déclarée, même inemployée — la retirer forcerait la prochaine capacité
+     déclarée avant d'être tranchée à s'inscrire « FREE » par défaut, c'est-à-dire la faute
+     exacte que ce témoin existe pour empêcher.
+     ⛔ Et la contrepartie est mesurée juste à côté (bloc B-CCCXXXIV) : les trois ex-ouvertes
+     portent ce que Michel a décidé, et aucune n'est devenue FREE en passant. */
   const ouvertes = C.filter(c => c.politique === 'NON_DECIDEE').map(c => c.id);
-  t('B-CCCXXXI ⑱ ⭐⭐ une politique NON DÉCIDÉE est représentable SANS inventer une décision',
-    ouvertes.length === 3
-      && ouvertes.indexOf('milo.debrief') >= 0
-      && ouvertes.indexOf('nutrition.mealPlan.ai') >= 0
-      && ouvertes.indexOf('nutrition.mealPlanImport.ai') >= 0, ouvertes.join(', '));
+  t('B-CCCXXXI ⑱ ⭐⭐ « pas décidé » reste EXPRIMABLE même quand plus personne ne le porte',
+    R.POLITIQUES.indexOf('NON_DECIDEE') >= 0 && ouvertes.length === 0,
+    'déclarée : ' + (R.POLITIQUES.indexOf('NON_DECIDEE') >= 0)
+      + ' · encore portée par : ' + (ouvertes.join(', ') || '(personne)'));
 
   /* ⭐ LA POLITIQUE ET L'ÉTAT DU CODE SONT DEUX CHAMPS, et l'écart est ÉCRIT. Un registre
      qui les confondrait afficherait la politique souhaitée comme si elle était appliquée. */

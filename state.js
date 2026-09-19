@@ -74,7 +74,20 @@ let S={
   exSwaps:{},
   mealPlan:null,
   foodLog:[],
+  /* 🫙 L'ANCIEN POT COMMUN — GELÉ DEPUIS LE 19/09/2026 (phase 3.1).
+     ⛔ Plus AUCUN code ne l'incrémente : les trois capacités IA de la Nutrition ont chacune
+     le sien (ci-dessous). Il est GARDÉ, pas supprimé, pour trois raisons écrites :
+       ① il sert de SOURCE à la migration, et une restauration cloud peut ramener un profil
+          d'avant cette version des mois plus tard (leçon `ft4_stmig1`, ft-v1213/1218) ;
+       ② un appareil resté sur l'ancienne version continue de l'écrire — le jeter ici
+          perdrait sa consommation au lieu de la reprendre ;
+       ③ supprimer une donnée persistée est un aller simple, et rien ne l'exige.
+     ⚠️ Lecture seule, donc : s'il se remet à MONTER, c'est qu'un écrivain a été oublié. */
   foodAiUses:0,
+  /* 🫙 LES TROIS POTS SÉPARÉS (19/09/2026) — un par capacité, cf. FOOD_AI_POTS (app.js). */
+  foodLabelAiUses:0,
+  foodMealEstimateAiUses:0,
+  foodBarcodeAiUses:0,
   healthProfile:null,
   a11y:false,
   colorblind:'',
@@ -165,6 +178,51 @@ function _foodLogIdentifier(liste){
     l.id=neuf; vus[neuf]=1; n++;
   }
   return n;
+}
+
+/* ═══ 🫙 LA MIGRATION DU POT COMMUN VERS LES TROIS POTS (19/09/2026, phase 3.1) ════════════
+   Michel : *« Je veux une migration déterministe et prudente. […] Ne tente pas de
+   reconstruire une répartition historique inexistante. »*
+
+   ⭐⭐ LA RÈGLE EST VOLONTAIREMENT CONSERVATRICE, et c'est son seul mérite : chaque pot neuf
+   hérite du TOTAL de l'ancien. Quelqu'un qui a consommé 10 essais du pot commun démarre donc
+   à 10 sur CHAQUE capacité — pas à 0. ⛔ On ne sait pas comment ces 10 se répartissaient
+   entre l'étiquette, le repas décrit et le code-barres : *l'information n'a jamais été
+   enregistrée, donc elle n'existe pas, donc on ne l'invente pas* (règle d'or 15 + R29).
+   👉 L'erreur qui reste est bornée et va dans le bon sens : on peut sur-compter, jamais
+   offrir 25 essais neufs à quelqu'un qui en avait déjà consommé 20.
+
+   ⛔⛔ CE N'EST PAS UN DRAPEAU « MIGRATION FAITE », ET C'EST LA DÉCISION CENTRALE. Une
+   restauration cloud remplace l'état APRÈS le chargement, et peut ramener un profil
+   d'AVANT cette version des mois plus tard — c'est mot pour mot le piège de `ft4_stmig1`
+   (ft-v1213) et celui de l'identité des lignes du journal (ft-v1218). La migration est donc
+   une RÈGLE rejouée à chaque chargement et après chaque restauration, et elle est
+   idempotente par construction : un pot déjà numérique n'est jamais retouché.
+
+   ⚠️ LE SIGNAL EST L'ABSENCE, PAS LA VALEUR. `_lsNombreOuNull` rend `null` quand la clé
+   n'existe pas — si elle rendait 0, un pot jamais écrit serait indiscernable d'un pot
+   légitimement à zéro, et la migration ne se déclencherait jamais. */
+function _lsNombreOuNull(cle){
+  try{
+    const v=localStorage.getItem(cle);
+    if(v===null||v===undefined||v==='')return null;   // ⛔ jamais écrit → on le DIT
+    const n=parseInt(v,10);
+    return (isFinite(n)&&n>=0)?n:null;                // illisible ou négatif → à re-dériver
+  }catch(e){ return null; }
+}
+const FOOD_AI_POTS_CHAMPS=['foodLabelAiUses','foodMealEstimateAiUses','foodBarcodeAiUses'];
+function _foodAiMigrer(){
+  const anc=Math.max(0,parseInt(S.foodAiUses,10)||0);
+  let n=0;
+  for(let i=0;i<FOOD_AI_POTS_CHAMPS.length;i++){
+    const ch=FOOD_AI_POTS_CHAMPS[i];
+    const v=parseInt(S[ch],10);
+    /* ⛔ Un pot valide n'est JAMAIS retouché : c'est ce qui rend la fonction idempotente et
+       ce qui empêche un ancien pot remonté par une restauration de le faire remonter. */
+    if(isFinite(v)&&v>=0){ S[ch]=v; continue; }
+    S[ch]=anc; n++;
+  }
+  return n;                      // nombre de pots dérivés — lu par les témoins
 }
 
 function load(){
@@ -389,6 +447,14 @@ function load(){
     S.savedFoods=JSON.parse(localStorage.getItem('ft4_savedfoods')||'[]');
     S.hiddenFoods=JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]');
     S.foodAiUses=parseInt(localStorage.getItem('ft4_foodai')||'0')||0;
+    /* 🫙 LES TROIS POTS SÉPARÉS + LEUR MIGRATION (19/09/2026, phase 3.1).
+       ⚠️ `null` VOLONTAIRE quand la clé n'existe pas : c'est le signal « ce pot n'a jamais
+       été écrit », et c'est lui que la migration lit. Mettre 0 ici effacerait l'information
+       et donnerait 25 essais neufs à quelqu'un qui en avait déjà consommé 20. */
+    S.foodLabelAiUses        = _lsNombreOuNull('ft4_foodai_label');
+    S.foodMealEstimateAiUses = _lsNombreOuNull('ft4_foodai_meal');
+    S.foodBarcodeAiUses      = _lsNombreOuNull('ft4_foodai_bc');
+    _foodAiMigrer();
     /* ⚠️ UN TABLEAU N'EST PAS UN PROFIL SANTÉ (17/08/2026, ceinture et bretelles).
        Tant que `ft4_health` a été partagée avec la boîte de la montre (ft-v880 → ft-v895), la clé
        a pu se retrouver avec un TABLEAU dedans. Sans ce garde-fou, `S.healthProfile` deviendrait ce
@@ -827,7 +893,13 @@ function persist(){
     localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[]));
     localStorage.setItem('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));
     localStorage.setItem('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
+    /* ⛔ L'ANCIEN POT EST TOUJOURS ÉCRIT, ET IL NE BOUGE PLUS : plus personne ne
+       l'incrémente, mais le réécrire garde la valeur intacte pour un appareil resté sur
+       l'ancienne version et pour la restauration. *On gèle une donnée, on ne l'efface pas.* */
     localStorage.setItem('ft4_foodai',String(S.foodAiUses||0));
+    localStorage.setItem('ft4_foodai_label',String(S.foodLabelAiUses||0));
+    localStorage.setItem('ft4_foodai_meal', String(S.foodMealEstimateAiUses||0));
+    localStorage.setItem('ft4_foodai_bc',   String(S.foodBarcodeAiUses||0));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
     localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
     localStorage.setItem('ft4_bodystudies',JSON.stringify(S.bodyStudies||[]));

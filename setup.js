@@ -985,7 +985,14 @@ function _cloudSync(){
       dietNotes:S.dietNotes||'',
       foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
       savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
+      /* 🫙 L'ANCIEN POT PART TOUJOURS — gelé, mais pas retiré du transport : un appareil
+         resté sur l'ancienne version le lit encore. Les trois pots séparés partent à côté
+         (19/09/2026, phase 3.1). ⛔ Sans eux, une restauration rendrait 25 essais neufs sur
+         chaque capacité : un compteur qui ne voyage pas est un compteur qui se remet à zéro. */
       foodAiUses:S.foodAiUses||0,
+      foodLabelAiUses:S.foodLabelAiUses||0,
+      foodMealEstimateAiUses:S.foodMealEstimateAiUses||0,
+      foodBarcodeAiUses:S.foodBarcodeAiUses||0,
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
@@ -3356,6 +3363,28 @@ function _applyRestoreData(raw){
   try{if(Array.isArray(d.foodLog)&&d.foodLog.length>=(S.foodLog||[]).length)S.foodLog=d.foodLog;}catch(e){console.warn('[FT restore] foodLog',e);}
   try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
   try{if(typeof d.foodAiUses==='number')S.foodAiUses=Math.max(S.foodAiUses||0,d.foodAiUses);}catch(e){}
+  /* 🫙 LES TROIS POTS SÉPARÉS (19/09/2026) — même geste que la ligne au-dessus : un MAXIMUM,
+     jamais un remplacement, pour qu'une restauration ne puisse pas RENDRE des essais déjà
+     consommés sur cet appareil.
+     ⭐⭐ ET LE REPLI EST LE CŒUR DU SUJET : quand le profil du cloud vient d'une version
+     d'AVANT, il ne porte QUE l'ancien pot commun — on dérive alors chaque pot de lui.
+     Sans ce repli, le cas réel « téléphone neuf + sauvegarde ancienne » donnerait 25 essais
+     neufs sur chaque capacité, c'est-à-dire exactement ce que la migration doit empêcher.
+     ⛔ Idempotent : `Math.max` appliqué deux fois rend la même chose. */
+  try{
+    const _anc=(typeof d.foodAiUses==='number')?Math.max(0,d.foodAiUses|0):null;
+    [['foodLabelAiUses','foodLabelAiUses'],
+     ['foodMealEstimateAiUses','foodMealEstimateAiUses'],
+     ['foodBarcodeAiUses','foodBarcodeAiUses']].forEach(function(p){
+      const recu=(typeof d[p[1]]==='number')?Math.max(0,d[p[1]]|0):_anc;
+      if(recu===null||recu===undefined)return;       // le cloud ne sait rien → on ne touche pas
+      S[p[0]]=Math.max(parseInt(S[p[0]],10)||0, recu);
+    });
+  }catch(e){console.warn('[FT restore] pots IA nutrition',e);}
+  /* ⛔ Rejouée APRÈS la fusion : si le profil restauré n'apportait aucun des quatre champs,
+     les pots peuvent être absents — la règle les redérive plutôt que de les laisser `null`
+     (un `null` deviendrait 0 au premier `persist`, donc 25 essais neufs en silence). */
+  try{if(typeof _foodAiMigrer==='function')_foodAiMigrer();}catch(e){}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}

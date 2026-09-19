@@ -39558,6 +39558,11 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
    ⭐ UN SEUL propriétaire (R2) : le banc l'appelle, le contrôle négatif appelle le même. */
 await require('./accueil_mini.js').ecran(t, b, PORT);
   await require('./nutri_correctifs.js').ecran(t, b, PORT);
+/* ⭐ Le bloc de COMPORTEMENT des pots Nutrition entre ICI, dans la section navigateur, et
+   non dans la section synchrone du bas : il est `await`é avant `b.close()`, donc le total
+   ne peut pas s'imprimer avant sa fin (BUGS.md §61 — un total tronqué ressemble trait pour
+   trait à un total vert). Son jumeau de SOURCE est branché plus bas. */
+  await require('./pots_nutrition.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40351,6 +40356,7 @@ require('./s2b_bascule.js').source(t, ROOT, fs, path);
 require('./backup_fuseau.js').source(t, ROOT, fs, path);
 require('./registre_ia.js').source(t, ROOT, fs, path);
 require('./quota_double.js').source(t, ROOT, fs, path);
+require('./pots_nutrition.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

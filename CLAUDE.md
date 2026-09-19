@@ -435,7 +435,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1224`** (prochaine : `ft-v1225`).
+> **Version actuelle : `ft-v1225`** (prochaine : `ft-v1226`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -474,6 +474,43 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1225 — ⚖️ PHASE 3.1 · LES TROIS DERNIERS ARBITRAGES IA RENDUS, ET LE POT DE 25 SÉPARÉ EN TROIS** — Michel enchaîne sur la phase 3 avec une borne de format : ⛔ ***« PASSE MOYENNE. Pas besoin d'UltraCode ni d'une passe de nuit. Cette passe doit rester ciblée. »*** · ⛔ ***« Ne pas encore : appliquer les verrous Premium serveur, fermer les routes Apps Script, toucher V2, toucher la Douane. »*** · et la phrase qui décide du pot : ⭐ ***« OUI, séparer le pot `S.foodAiUses`. »***
+
+**📣 RÈGLE D'OR #11 — UN SEUL CHANGEMENT VISIBLE, ET IL EST EN FAVEUR DE L'UTILISATEUR.** Le pot de 25 usages IA de la Nutrition était **COMMUN** aux trois capacités ; il devient **trois pots séparés**. Quelqu'un qui avait épuisé ses 25 en lisant des étiquettes retrouve donc ses estimations de repas. ⚖️ **Pop-up : non** — rien n'est à *faire*, rien ne disparaît, aucun repère ne bouge, et le changement ne peut que soulager. ⚠️ **Dit franchement parce que c'est un jugement** : si Michel veut une ligne dans le Guide, c'est une ligne à ajouter — je ne la pose pas de moi-même sur un élargissement qu'il a décidé.
+
+**⭐⭐ POURQUOI UN COMPTEUR COMMUN ÉTAIT UN DÉFAUT, ET PAS UN RACCOURCI.** Tant que les trois capacités partagent `S.foodAiUses`, elles **ne peuvent pas** recevoir trois politiques distinctes : lire une étiquette retire un essai au repas décrit, qui n'a rien demandé. 👉 ***Un compteur commun n'est pas une simplification, c'est une politique implicite*** — celle qui dit « ces trois choses sont la même », ce que la phase 2 a mesuré comme faux.
+
+| | avant | après |
+|---|---|---|
+| étiquette IA | ⛔ **pot commun de 25** | ✅ `foodLabelAiUses`, 25 à elle |
+| repas décrit IA | ⛔ **le même pot** | ✅ `foodMealEstimateAiUses`, 25 à lui |
+| repli code-barres IA | ⛔ **le même pot** | ✅ `foodBarcodeAiUses`, à lui seul |
+| le nombre `25` | 1 constante | **1 constante** (inchangé) |
+
+**⛔⛔ ET LE REPLI CODE-BARRES GARDE UN POT DE 25 ALORS QUE SA POLITIQUE EST « PREMIUM, 0 » — C'EST DÉLIBÉRÉ, ET C'EST LE SEUL ÉTAT SÛR.** Michel : *« si le verrou Premium réel appartient à la prochaine phase serveur, ne construis pas ici une fausse sécurité uniquement client »*. Or lui retirer son pot **sans** poser ce verrou l'aurait rendu **illimité et gratuit** — l'exact contraire de la décision. 👉 ***Mesuré avant de trancher : la capacité a deux portes réelles*** (le bouton « 🆘 si la caméra n'y arrive pas » et le repli du scanner). La **séparation** est faite, l'**écart** est écrit dans le registre, le **verrou** viendra.
+
+**⭐⭐ LA MIGRATION EST CONSERVATRICE, ET C'EST SON SEUL MÉRITE.** Chaque pot neuf hérite du **TOTAL** de l'ancien : quelqu'un qui a consommé 10 essais démarre à **10 sur chaque capacité**, pas à 0. ⛔ On ne sait pas comment ces 10 se répartissaient — *l'information n'a jamais été enregistrée, donc elle n'existe pas, donc on ne l'invente pas* (règle d'or 15). L'erreur qui reste est bornée et va dans le bon sens : on peut sur-compter, jamais offrir 25 essais neufs à quelqu'un qui en avait consommé 20.
+
+**⛔⛔ CE N'EST PAS UN DRAPEAU « MIGRATION FAITE », ET C'EST LA DÉCISION CENTRALE.** Une restauration cloud remplace l'état **APRÈS** le chargement, et peut ramener un profil d'**avant** cette version des mois plus tard — c'est mot pour mot le piège de `ft4_stmig1` (ft-v1213) et celui de l'identité des lignes du journal (ft-v1218). La migration est donc une **RÈGLE rejouée** au chargement **et** après chaque restauration, **idempotente par construction** : un pot déjà numérique n'est jamais retouché.
+
+**⚠️ ET LE SIGNAL EST L'ABSENCE, PAS LA VALEUR.** `_lsNombreOuNull` rend `null` quand la clé n'a jamais été écrite. *Si elle rendait 0, un pot jamais écrit serait indiscernable d'un pot légitimement à zéro* — la migration ne partirait **jamais**, et un compte à 20 essais consommés recevrait 25 essais neufs, en silence.
+
+**⭐ LES TROIS ARBITRAGES, RENDUS PAR MICHEL** : `milo.debrief` → **PREMIUM** (le débrief **chiffré** de fin de séance reste local et gratuit ; c'est le *jugement* de Milo qui devient Premium) · `nutrition.mealPlanImport.ai` → **PREMIUM** (la **saisie manuelle** d'un plan reste gratuite) · `nutrition.mealPlan.ai` → **FREEMIUM par PÉRIMÈTRE**, le **jour** en gratuit et la **semaine** en Premium.
+
+**⛔ UNE 22ᵉ CAPACITÉ AURAIT ÉTÉ LA FAUTE FACILE.** Le jour et la semaine sont **le même besoin produit** vu à deux profondeurs : les séparer en `mealPlan.day` / `mealPlan.week` aurait cassé le compte acté de 21. Un **seul** champ nouveau est ajouté, `perimetre`, porté par **une seule** capacité — son absence ailleurs se lit « pas de variation », ce qui est le fait.
+
+**⭐⭐ ET UNE SEPTIÈME FORME DE QUOTA EST NÉE, `non_decide`, PARCE QU'ÉCRIRE « ILLIMITÉ » AURAIT ÉTÉ INVENTER UNE DÉCISION.** Michel a tranché le **périmètre**, pas le **nombre** : *« Ne pas inventer 1/jour, 3/jour, 5/mois ou autre quota. »* ⚠️ Et elle ne double pas `par_evenement` : celle-là dit « la forme est connue, la taille n'est pas mesurée » (le backfill), celle-ci dit « la forme elle-même n'est pas tranchée ». 👉 ***Un registre qui n'a pas de mot pour « pas décidé » finit toujours par écrire une décision à la place.***
+
+**⭐ ZÉRO POLITIQUE OUVERTE, ET LA DOCUMENTATION LE DIT SANS MENTIR.** Les trois `NON_DECIDEE` disparaissent. ⛔ Mais la **valeur** reste déclarée alors que plus personne ne la porte : la retirer forcerait la prochaine capacité déclarée avant d'être tranchée à s'inscrire « FREE » par défaut — exactement la faute qu'elle existe pour empêcher. ⛔ Et le texte généré prévient : *« zéro politique ouverte ne veut pas dire zéro travail »* — **12 écarts** restent écrits.
+
+**🩹 CORRECTION DOCUMENTAIRE — M12 N'A JAMAIS ÉTÉ UNE QUESTION, ET C'EST MON ERREUR.** Le dossier de la phase 3 listait *« `milo.memory` devient-elle Premium ? »* parmi les décisions attendues. **Elle était déjà actée** — et le registre l'inscrivait correctement dans le même fichier (`politique: PREMIUM` / `etatCode: FREE`). 👉 ***Un rapport qui rouvre une décision déjà prise ne se contente pas d'être faux : il fait RE-ARBITRER, c'est-à-dire qu'il COÛTE une décision au lieu d'en rappeler une*** (règle d'or 15). Le générateur de ce dossier porte désormais l'explication sur place et **refuse de produire** (ses gardes exigent « 3 politiques ouvertes »), comme les deux générateurs périmés de S2-B.
+
+**🔧 UNE PORTE DE CONTOURNEMENT FERMÉE AU PASSAGE, LOCALE ET SANS DÉPENDANCE AU SERVEUR.** Le plafond « 1 régénération/jour en gratuit » vit **dans** `S.mealPlan` — que la génération complète réécrivait avec `regenCount:0`. 👉 ***Le plafond se levait en appuyant sur le bouton d'à côté***, qui n'a lui aucun plafond. Le compteur du jour est désormais **REPORTÉ** au lieu d'être effacé ; un jour différent repart bien à zéro, et le plafond lui-même ne bouge pas d'un chiffre.
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ aucun **verrou Premium serveur** · ⛔ aucune route Apps Script fermée · ⛔ **ni V2, ni `ft_jetons`, ni le miroir multi-appareils, ni la Douane** · ⛔ aucun quota de génération complète inventé · ⛔ aucune 22ᵉ capacité · ⛔ aucun tombstone, aucun backfill réel · ⛔ **ni `screens.js`, ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `constants.js`, ni `supabase.js`, ni `worker.js`, ni `index.html`.**
+
+Tests : **blocs B-CCCXXXIV (23 témoins de source) et B-CCCXXXV (24 témoins conduits dans le navigateur)**, dans `tests/parcours/pots_nutrition.js` — les **8 cas N1→N8** de Michel plus les **8 états de migration** (absent · 0 · 5 · 24 · 25 · 40 · « abc » · −3), l'idempotence éprouvée en rejouant la règle **trois fois**, et un pot déjà migré qui **ne bouge plus** même quand l'ancien pot remonte plus haut. ⭐ Le témoin **B-CCCXXXI ⑱ a été RETOURNÉ, pas supprimé** : il figeait la **liste** des trois politiques ouvertes et serait devenu rouge sur un registre parfaitement à jour ; sa **garantie** n'a pas bougé — *le registre doit rester capable de dire « pas décidé »*.
 
 **ft-v1224 — 🗂️ LA SOURCE DE VÉRITÉ CENTRALE DES 21 CAPACITÉS IA · ET LE DOUBLE COMPTAGE FERMÉ, TEST-FIRST** — phase 3, après que Michel a arbitré Q1→Q5 et acté **M1→M14**. Ses bornes : ⛔ ***« phase 3 ne doit pas encore poser tous les verrous »*** · ⛔ ***« la documentation humaine ne doit pas devenir une deuxième source de vérité »*** · ⛔ ***« ne compense pas le bug en doublant artificiellement les plafonds »***.
 
@@ -728,36 +765,3 @@ Fichiers : `screens.js`, `index.html`, `tests/parcours/accueil_mini.js` (nouveau
 Tests : **blocs B-CCCXIV (21 témoins de source) et B-CCCXV (10 témoins par CLICS RÉELS)**, plus une sonde de 42 témoins hors dépôt couvrant les 15 tests demandés. ⛔ **CONTRÔLE NÉGATIF : 19 mutations sur un arbre CLONÉ, toutes mordent**, contrôle sain à 0 rouge **avant ET après** — dont **les 5 nommées par Michel** : ① deux lignes au même identifiant → **25** · ② `openEditFood` reprend `ts` → **8** · ③ `removeFoodEntry` supprime par `ts` → **4** · ④ `confirmRemoveFood` nomme une autre ligne → **3** · ⑤ la compatibilité retirée.
 
 Fichiers : `app.js`, `screens.js`, `state.js`, `tests/parcours/runner.js`, `tools/instantane_foodlog_identite.js` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `setup.js`, ni `index.html`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1218. |
-
-**ft-v1217 — 🗄️ LES JUSTIFICATIFS NE FRANCHISSENT PLUS LA PORTE SUPABASE · ET LA FUITE LA PLUS ANCIENNE N'EST PAS CELLE QU'ON VIENT DE TROUVER** — S2-A, ouverte par Michel après le dossier d'audit : ⛔ ***« arrêter immédiatement toute NOUVELLE fuite de credential vers Supabase »*** · ⛔⛔ ***« je ne veux PAS deux snapshots métier séparés qui finiront par diverger »***.
-
-**⭐⭐ LA CAUSE N'EST PAS UN OUBLI, C'EST UNE DÉCISION JUSTE APPLIQUÉE À UN ENDROIT DE TROP.** Le corps de sauvegarde est **construit une fois et servi aux DEUX destinations** — c'est **R2**, et c'est juste : deux constructions séparées divergeraient. S1 y a ajouté `token` et `authCode` pour authentifier Apps Script. 👉 ***Le miroir Supabase les a reçus par la même occasion.*** Apps Script, lui, ne les écrit jamais (liste blanche de **58 champs**) ; Supabase recevait le **blob entier**.
-
-**⭐ LA CORRECTION NE CASSE PAS R2, ELLE LE PRÉCISE** : on ne duplique pas le corps métier, on en **retire** les justificatifs et on les ajoute au **seul transport qui en a besoin**. *Un justificatif de transport n'appartient pas aux données de la personne.*
-
-| | transport Apps Script | miroir Supabase |
-|---|---|---|
-| jeton S1 · code perso | présents (justificatifs) | ⭐⭐ **absents** |
-| persisté côté serveur | ⛔ **non** — 58 champs nommés | le blob est écrit tel quel |
-| données métier | identiques | ⭐⭐ **identiques, à l'octet près** |
-
-**⭐⭐ LA PREUVE EST UNE ÉGALITÉ STRICTE, PAS UNE INSPECTION** : le corps envoyé à Apps Script **privé des deux justificatifs** est égal caractère pour caractère au blob Supabase, et la seule différence entre les deux corps est exactement cette paire. Les **16 catégories métier** sont intactes, contenu compris.
-
-**⚠️⚠️ ET LES DATES, LUES DANS GIT, INVERSENT L'INTUITION.** Le jeton — la trouvaille spectaculaire — n'a fuité que depuis **S1**, soit **une seule version servie**. Le **code perso**, lui, part en clair **depuis le 04/08**, jour de naissance du miroir : il était **déjà** dans le corps commun quand on a branché Supabase dessus. 👉 ***La fuite la plus ancienne n'est pas celle qu'on vient de trouver — six semaines contre une journée.*** ⭐ Borne honnête : l'exposition ne concerne que les comptes ayant **posé** un code (il est optionnel).
-
-**⭐ TROIS VERROUS, ET ILS NE FONT PAS LE MÊME TRAVAIL** : la **cause** (`_cloudSync` ne porte plus rien) · le **filet** (`sbMirror`, porte UNIQUE, retire par **nom de clé** quel que soit l'appelant futur) · les **témoins de source** (bloc **B-CCCXIV**).
-
-**⛔⛔ ET C'EST LE CONTRÔLE NÉGATIF QUI A PROUVÉ QUE LES TROIS SONT NÉCESSAIRES.** Quatre mutations — remettre le code perso dans le corps métier, le faire passer par un **alias**, vider la liste du filet, ne jamais appeler le filet — laissaient le banc de comportement **parfaitement vert** : le filet rattrape, donc la sortie reste juste. 👉 ***Un banc qui n'observe que la SORTIE ne peut pas voir la CAUSE regresser quand un filet la rattrape.*** Le harnais conduit désormais le banc **et** les témoins.
-
-**⭐⭐ ET UNE MUTATION A SURVÉCU MÊME À ÇA.** Un `Object.assign` glissé **après** l'envoi Apps Script échappait à tout garde de **position**. L'invariant juste n'est pas « où », c'est **« combien »** : chaque justificatif est lu **exactement une fois** dans `_cloudSync`. *Un alias, une copie, un détour : le compte monte à 2 et le témoin rougit, quel que soit le déguisement.* ⚠️ Au passage, mon garde de transport figeait l'**ordre des clés** — il aurait rougi sur une permutation, donc sur du code juste.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucune valeur affichée ne bouge, aucune donnée métier ne disparaît : deux champs cessent de voyager vers une destination qui n'en avait pas besoin.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **les lignes DÉJÀ écrites dans Supabase ne sont pas purgées** — le SQL de `ft_miroir` n'est **nulle part dans le dépôt** (aucune migration, créée à la main), donc *on ne sait pas s'il remplace la ligne ou empile un historique* ; si c'est un remplacement, la purge se fait seule à mesure que les gens sauvegardent. **Dashboard requis.** · ⛔⛔ **V2 (`p_email` libre) reste OUVERTE** — son témoin ⑧ est **volontairement NON retourné** : *on ne maquille pas une porte ouverte* (S2-B/S2-C) · ⛔ **aucune rotation de jeton décidée** : trois options chiffrées, le choix dépend des droits réels sur la table, et *décider maintenant serait deviner* · ⛔ Nutrition **0 ligne** (`app.js` et `index.html` non touchés), Worker et `Code.js` non touchés. ⚠️ **Michel doit vérifier sur Safari/iPhone** — en principe **rien** ne change côté écran.
-
-Tests : **parcours 4161/4161 sur l'arbre FINAL** (blocs **B-CCCXIV** 11 témoins et **B-CCCXIII** 10, tous verts), **banc S2-A 22/22**, **banc S1 35/35**. ⛔ **CONTRÔLE NÉGATIF : 16 mutations sur arbre copié, toutes conformes — dont une qui doit RESTER VERTE** (le mot `token` dans un simple commentaire : la seule façon de prouver qu'on mesure le CODE, pas la documentation).
-
-📄 **PDF POUR GPT** : `DOSSIER-S2A-CONFINEMENT-CREDENTIALS-16-09-2026.pdf` (**hors dépôt**, règle d'or #14), **37 gardes**, contrôle négatif **15/15**. ⚠️ **Gardé hors dépôt volontairement** : il décrit une exposition **non encore purgée**, et le dépôt est public.
-
-Fichiers : `setup.js`, `supabase.js`, `tests/parcours/runner.js`, `tools/gen_s2_audit_pdf.py` (nouveau), `tools/gen_s2a_pdf.py` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `index.html`, ni `worker.js`, ni `Code.js`, ni `coach.js`, ni `log.js`, ni `state.js`.** sw.js ft-v1217. |
-
