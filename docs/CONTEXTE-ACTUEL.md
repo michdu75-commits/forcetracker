@@ -409,6 +409,31 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   une fiche plus pauvre que la vraie, donc elle éprouvait la mauvaise branche. Corrigée ; les deux
   branches sont couvertes, et 2 gardes que rien n'éprouvait le sont désormais.
 
+- ⏱️ **COMPTEUR `ft_miroir` — APPLIQUÉ EN RÉEL LE 19/09/2026, FENÊTRE OUVERTE À `10:00:43` (Paris).**
+  ⛔⛔ **À PARTIR DE CETTE DATE, AUCUN APPEL VOLONTAIRE À `ft_miroir` SANS LE NOTER** — un test,
+  une sonde ou un appel extérieur compterait comme un vrai usage legacy et fausserait la seule
+  mesure qui reste avant de décider de V2.
+  **Pourquoi il existe** : la mesure du 19/09 annonçait « 0 ancien client », mais sur ~22 h
+  pendant lesquelles **un seul compte sur 10 avait sauvegardé** — *une absence de preuve, pas
+  une preuve d'absence*. Le compteur remplace l'attente passive par une mesure.
+  ⭐ **La définition réelle de `ft_miroir` a été DEMANDÉE avant d'écrire une ligne** : elle n'est
+  pas versionnée, donc la réécrire de mémoire aurait pu changer sa logique métier en silence.
+  Relue au tableau de bord, comparée **caractère par caractère** à la reconstitution du banc :
+  **identiques**. *On ne réécrit pas de mémoire une fonction dont on n'a pas la source.*
+  **Ce qu'il stocke** : une table à **une seule ligne par construction** (`id boolean primary key
+  check (id)` — pas une convention, une contrainte que la base fait respecter), trois colonnes,
+  **aucune ligne par appel**. Incrément **atomique**. ⛔ **Aucune donnée personnelle** : la ligne
+  de comptage ne nomme ni `p_email` ni `p_data`. Table retirée à **tous** les rôles de l'API +
+  RLS, **aucune RPC publique de lecture**.
+  ⛔⛔ **Le point qui compte le plus** : l'incrément a son **propre gestionnaire d'erreur**. Sans
+  lui, un compteur cassé ferait échouer la fonction, donc **annulerait une sauvegarde legacy
+  encore autorisée**. *Un instrument d'observation qui peut détruire ce qu'il observe n'est pas
+  un instrument, c'est un risque.*
+  ⚠️ **La limite, à ne jamais oublier** : il prouve que la RPC a été **invoquée**, jamais qu'un
+  **vrai utilisateur legacy** l'a appelée.
+  Tests **20/20** sur un vrai PostgreSQL 16 (en appelant la VRAIE RPC), contrôle négatif
+  **11/11**. SHA `0a6399e3`. ⛔ **V2 non fermée, logique métier inchangée.**
+
 - 🗄️ **MIGRATION SUPABASE `0003` — APPLIQUÉE EN RÉEL PAR MICHEL LE 18/09/2026** (*« Success. No rows
   returned »*, ce qui est exactement le retour attendu d'un `DO` + `CREATE FUNCTION` + `COMMENT`).
   ⛔ **AUCUN BUMP, et c'est motivé** : aucun fichier servi n'a changé — une migration Supabase est du
