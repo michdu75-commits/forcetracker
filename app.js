@@ -1011,13 +1011,57 @@ const FOOD_MEALS = [
   {k:'collation2',ic:'🥜', lbl:'Collation 2'},
   {k:'diner',     ic:'🌙', lbl:'Dîner'}
 ];
-let _afMeal='dejeuner';
+/* ⭐ `null` = la personne n'a RIEN choisi. Le repas réellement employé se lit par
+   `_afMealActif()`, jamais par cette variable brute (R2). */
+let _afMeal=null;
 const FOOD_AI_FREE_LIMIT=25; // ~ une semaine de notes IA en gratuit (illimité en Premium)
 /* ⚠️ LE REPLI EST NOMMÉ, PAS POSITIONNEL (23/08/2026). Il valait `FOOD_MEALS[1]`, qui DÉSIGNAIT
    le déjeuner — jusqu'à ce que l'ordre passe en ordre de journée : l'index 1 est devenu la
    collation, et une entrée au repas inconnu serait silencieusement devenue une collation.
    *Un index qui dépend de l'ordre d'un tableau devient faux le jour où on trie ce tableau* (R14). */
 function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS.find(m=>m.k==='dejeuner');}
+/* ═══ 🍽️ LE REPAS ACTIF — LE CHOIX DE LA PERSONNE BAT LA SUGGESTION DE L'HORLOGE ═══════════
+   (19/09/2026, cas réel de Michel : *« je rentre ma journée en retard, je choisis Dîner, et
+   l'app revient toute seule sur Petit-déjeuner »*.)
+
+   ⛔⛔ CE N'ÉTAIT PAS UNE GÊNE D'AFFICHAGE, LA DONNÉE PARTAIT AILLEURS. Mesuré en conduisant
+   l'app, horloge gelée à 09 h : le 1ᵉʳ aliment tombe bien dans `dejeuner`, le 2ᵉ et le 3ᵉ
+   dans `petitdej`. Même forme à 16 h (`collation`) et à 21 h (`diner`). *Une personne qui
+   remplit sa journée après coup voyait ses aliments s'éparpiller dans des repas qu'elle
+   n'avait jamais choisis.*
+
+   ⭐⭐ LA CAUSE TIENT EN UNE LIGNE, ET ELLE EST DANS `openAddFood` : elle RECALCULAIT
+   `_afMeal` depuis l'heure **à chaque ouverture** de l'écran d'ajout. Or on rouvre cet écran
+   pour CHAQUE aliment. Le choix manuel ne survivait donc jamais au premier ajout.
+
+   ⭐ LE SIGNAL EST L'ABSENCE, PAS UN DRAPEAU. `_afMeal` ne porte plus que le choix EXPLICITE :
+   `null` veut dire « la personne n'a rien choisi », et c'est la seule information dont on a
+   besoin. ⛔ Pas de booléen « aChoisi », pas de timer, pas d'exception écran par écran —
+   c'est la consigne de Michel, et c'est aussi ce qui rend la règle lisible : *l'heure décide
+   du défaut, jamais de ce qui a été décidé.*
+
+   ⛔ UN SEUL PROPRIÉTAIRE (R2) : `_afMealActif()` est le seul endroit qui répond à « dans quel
+   repas écrit-on ? ». Ses quatre lecteurs — les puces, les deux écrivains du journal et le
+   message de confirmation — passent tous par lui. Sans ça, une porte continuerait de lire la
+   variable brute et écrirait `null` dans le journal, ce qui est exactement le genre de défaut
+   silencieux que ce fichier recense.
+
+   ⚠️ CE QUI N'EST PAS DÉCIDÉ ICI, ET QUI NE DOIT PAS L'ÊTRE PAR DÉFAUT : faut-il oublier le
+   choix quand on change de JOUR dans le journal ? Le besoin certain de Michel ne le dit pas,
+   donc on n'invente pas de remise à zéro (règle d'or 15). Le choix vit tant que l'app est
+   ouverte, et un rechargement complet repart sur la suggestion horaire — comportement actuel,
+   inchangé. */
+function _afMealDefautHoraire(){
+  const h=new Date().getHours();
+  return h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';
+}
+function _afMealActif(){
+  /* ⛔ On vérifie que le choix est une clé RÉELLE : un `_afMeal` bricolé de l'extérieur ne doit
+     pas pouvoir faire écrire un repas qui n'existe pas dans `FOOD_MEALS`. On échoue alors sur
+     la suggestion horaire, jamais sur une valeur inventée. */
+  if(_afMeal && FOOD_MEALS.some(m=>m.k===_afMeal)) return _afMeal;
+  return _afMealDefautHoraire();
+}
 /* ═══ 🫙 TROIS POTS SÉPARÉS, UN SEUL NOMBRE (19/09/2026, phase 3.1) ═══════════════════════
    Michel : *« OUI, séparer le pot `S.foodAiUses`. Les trois capacités sont désormais
    indépendantes. »* — étiquette FREEMIUM 25 · repas décrit FREEMIUM 25 · repli code-barres
@@ -4001,8 +4045,11 @@ function addFoodVia(mode){
   }catch(e){}
 }
 function openAddFood(){
-  const h=new Date().getHours();
-  _afMeal = h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';
+  /* ⛔⛔ CETTE FONCTION NE TOUCHE PLUS AU REPAS ACTIF (19/09/2026). Elle le recalculait
+     depuis l'heure a CHAQUE ouverture — or on rouvre cet ecran pour chaque aliment, donc un
+     choix manuel ne survivait jamais au premier ajout, et les aliments suivants partaient
+     dans un autre repas. Le defaut horaire vit maintenant dans `_afMealActif`, qui ne parle
+     que quand personne n'a choisi. */
   ['af-desc','af-kcal','af-prot','af-carbs','af-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   /* 🧹 ft-v1180 — R2 : ouvrir l'ecran est le PREMIER « on change d'aliment ». Cette fonction
      faisait la remise a zero A LA MAIN ; elle passe par le proprietaire unique, comme les dix
@@ -4296,7 +4343,7 @@ function quickAddFood(i){
                              c'est l'instantane qui le prouve, pas ce commentaire. */
                           _srcProvenance(it)));
   /* 🔑 Même contrat d'identité que les deux autres écrivains créateurs (voir `rejouerRepas`). */
-  const _l=Object.assign({date:_journalJourActif(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now(),id:_foodLineId()},_vals,_provFood(_vals));
+  const _l=Object.assign({date:_journalJourActif(),meal:_afMealActif(),name:(it.name||'').slice(0,80),ts:Date.now(),id:_foodLineId()},_vals,_provFood(_vals));
   _douaneLigne(_l,'quickAddFood');   /* 🛃 observation seule : ni correction, ni blocage */
   S.foodLog.push(_l);
   _afSetSrc(null);
@@ -4328,7 +4375,7 @@ function toggleFavFood(i){
 function _renderAfMealChips(){
   const el=document.getElementById('af-meal-chips');if(!el)return;
   el.innerHTML=FOOD_MEALS.map(m=>{
-    const sel=m.k===_afMeal;
+    const sel=m.k===_afMealActif();
     /* ⚠️ 64 px ET NON 70 (03/09/2026) — mesuré, pas ajusté à l'œil : sur un écran de 390 px il
        reste 358 px utiles, et 5 puces à 70 px plus leurs écarts en demandent 374. Elles se
        cassaient donc en 4 + 1, ce qui faisait une bande de 114 px au lieu de 56 — supportable
@@ -4359,7 +4406,7 @@ function setFoodMeal(k){_afMeal=k;_renderAfMealChips();}
    ⚠️ Et la distinction « aujourd'hui / jour consulté » est GARDÉE : elle protège d'un aliment
    noté sur le mauvais JOUR, ce que le nom du repas ne dit pas. */
 function _afToastAjout(){
-  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(_afMeal):null;
+  const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(_afMealActif()):null;
   const ou=(mi&&mi.lbl)?mi.lbl:'journal';
   return (_journalJourActif()===today()) ? ('Ajouté · '+ou+' 🍽️')
                                          : ('Ajouté · '+ou+', jour consulté 🍽️');
@@ -5508,7 +5555,7 @@ function addFoodEntry(){
      ⛔ `saveEditFood` n'est PAS concerné : il modifie une ligne EN PLACE, il n'en crée pas.
      Lui imposer le même geste lui ferait changer d'identité à chaque correction — une ligne
      qu'on corrige reste la même ligne. *Le contrat suit le métier réel, pas la symétrie.* */
-  const _e=Object.assign({date:_journalJourActif(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now(),id:_foodLineId()},
+  const _e=Object.assign({date:_journalJourActif(),meal:_afMealActif(),name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now(),id:_foodLineId()},
     _provFood({kcal,prot,carbs,fat}));
   _douaneLigne(_e,'addFoodEntry');   /* 🛃 observation seule : ni correction, ni blocage */
   S.foodLog.push(_e);

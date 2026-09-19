@@ -39588,6 +39588,7 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
    ne peut pas s'imprimer avant sa fin (BUGS.md §61 — un total tronqué ressemble trait pour
    trait à un total vert). Son jumeau de SOURCE est branché plus bas. */
   await require('./pots_nutrition.js').ecran(t, b, PORT);
+  await require('./repas_actif.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40382,6 +40383,7 @@ require('./backup_fuseau.js').source(t, ROOT, fs, path);
 require('./registre_ia.js').source(t, ROOT, fs, path);
 require('./quota_double.js').source(t, ROOT, fs, path);
 require('./pots_nutrition.js').source(t, ROOT, fs, path);
+require('./repas_actif.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
