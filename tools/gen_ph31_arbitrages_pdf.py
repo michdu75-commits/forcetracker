@@ -222,7 +222,13 @@ elif INTERIM:
     F['passeEnCours'] = True
     F['passeLignes'] = 0
 elif PASSE and os.path.exists(PASSE):
+    # ⚠️ LES 4 CONDITIONS VIVENT DANS LE FICHIER *VERDICT*, PAS DANS LE JOURNAL. Premier jet :
+    #    le dossier ne disait pas « PASSE VALIDE » alors qu'elle l'etait — il SOUS-declarait un
+    #    fait mesure. Moins grave qu'une affirmation fausse, mais faux quand meme.
     _p = open(PASSE, encoding='utf-8').read()
+    _vf = PASSE.replace('.out', '.verdict')
+    if os.path.exists(_vf):
+        _p += open(_vf, encoding='utf-8').read()
     _m = re.search(r'TOTAL CROISÉ\s*:\s*(\d+)\s*✅\s*·\s*(\d+)\s*❌', _p)
     g(_m is not None,
       "aucune ligne de TOTAL dans %s : la passe n a pas fini, et un dossier ne publie pas "
