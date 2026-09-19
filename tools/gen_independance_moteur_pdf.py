@@ -156,7 +156,17 @@ for _l in sans_bloc(_essai).splitlines():
 g(_n == 1, 'le compteur ne distingue plus le CODE du COMMENTAIRE (il rend %d au lieu de 1)' % _n)
 
 g(W_CONST == 1, 'worker.js ne tient plus l adresse dans UNE constante (%d)' % W_CONST)
-g(W_LIT == 0, 'worker.js ecrit a nouveau l adresse en dur (%d fois)' % W_LIT)
+# [!!] MON PREMIER ATTENDU ETAIT FAUX, ET LE GARDE M'A REPRIS : j'exigeais W_LIT == 0 pour
+#      worker.js. Or *la definition de la constante est elle-meme une occurrence de code* -
+#      l'adresse doit bien etre ecrite QUELQUE PART. L'invariant juste n'est pas « zero
+#      occurrence », c'est « une seule, ET c'est celle de la constante » : ce qui compte est
+#      qu'aucun APPELANT ne la reecrive (R2).
+W_HORS_CONST = sum(
+    1 for ligne in sans_bloc(lire('worker.js')).splitlines()
+    if URL_FOURNISSEUR in ligne and not re.search(r'const\s+ANTHROPIC_URL', ligne))
+g(W_LIT == 1 and W_HORS_CONST == 0,
+  'worker.js ecrit l adresse ailleurs que dans sa constante (%d occurrence(s) hors constante)'
+  % W_HORS_CONST)
 # ⭐⭐ GARDE A L'ENVERS : si Code.js est centralise, ce dossier est PERIME - il decrirait une
 #    dette deja payee, et ferait chercher un probleme qui n'existe plus (R30).
 g(C_LIT == 13,
@@ -314,7 +324,7 @@ F.append(tab([
     ['le modele est deja une variable choisie a l execution',
      'oui - worker.js : defaut, modele de Michel, surcharge de banc'],
     ['adresse du fournisseur dans worker.js',
-     '%d ecriture en dur, tenue par %d constante ANTHROPIC_URL - R2 RESPECTE' % (W_LIT, W_CONST)],
+     '%d seule occurrence, et c est la definition de la constante ANTHROPIC_URL ; %d appelant la reecrit - R2 RESPECTE' % (W_LIT, W_HORS_CONST)],
     ['adresse du fournisseur dans Code.js',
      '%d fois ecrite EN DUR - R2 VIOLE' % C_LIT],
     ['les 21 capacites IA et leur verrou serveur',
@@ -370,6 +380,6 @@ doc = SimpleDocTemplate(OUT, pagesize=A4, leftMargin=20 * mm, rightMargin=20 * m
 doc.build(F)
 print('PDF : %s' % OUT)
 print('gardes verts : %d' % GARDES[0])
-print('worker.js : %d en dur / %d constante   |   Code.js : %d en dur' % (W_LIT, W_CONST, C_LIT))
+print('worker.js : %d occurrence, %d hors constante   |   Code.js : %d en dur' % (W_LIT, W_HORS_CONST, C_LIT))
 print('capacites : %d, dont %d appliquees par le serveur' % (len(CAPS), N_SERVEUR))
 print('commit de la note : %s, %d fichiers, 0 servi 0 test' % (SHA_NOTE[:8], len(FICHIERS)))
