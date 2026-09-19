@@ -197,6 +197,37 @@ structurelle) · voisine de **R2** (un propriétaire par information), **R6** (u
 **R10** (permissions hiérarchisées et bornées — à appliquer aux futurs outils d'action, le modèle
 ne décidant jamais seul de ses permissions) et **R34** (se valider au banc).*
 
+### R38 — Un brief venu de l'EXTÉRIEUR s'audite AVANT d'être exécuté, et s'arrête net s'il est incompatible
+*« Il faut absolument que tu vérifies ce qui est demandé. Si tu penses que c'est incompatible avec
+mon appli, faut stopper direct et dire pourquoi »* (Michel, 19/09/2026). Le cadre est celui de
+`README-IA.md` : **Michel décide · ChatGPT vision/UX · Claude archi/dev** — donc beaucoup de briefs
+arrivent rédigés ailleurs, par quelqu'un qui **n'a pas le code sous les yeux**.
+**⛔ La séquence est fixe** : *lire le brief → **mesurer dans le dépôt** ce qu'il suppose → alors
+seulement exécuter*. Jamais l'inverse. Un brief n'est pas une commande, c'est une **hypothèse sur
+l'état du code**.
+**Les trois motifs d'arrêt, à dire AVANT d'écrire une ligne** : ① la demande est **techniquement
+incompatible** avec l'app (mesuré, pas supposé — **règle d'or #16**) · ② elle **contredit une décision
+déjà actée** (**règle d'or #15** : un audit ne retransforme jamais une décision en question) · ③ elle
+**repose sur une prémisse fausse** — le plus fréquent, et le plus silencieux.
+**⭐⭐ ON TRIE, ON NE JETTE PAS — et c'est ce qui empêche la règle de devenir un refus commode.** Un
+brief faux sur un point reste souvent juste sur les autres : **R33** a adopté les §8-9 de la note de
+GPT tout en différant son pipeline OCR, avec la mesure qui le justifiait ; **R32** est née d'une
+proposition extérieure dont la corrélation a été **vérifiée ici** avant d'être retenue. *Le travail
+n'est pas d'accepter ou de refuser un brief, c'est de le passer au code.*
+**⚠️ Et la borne symétrique** : « incompatible » n'est jamais une façon d'éviter le travail. La chaîne
+**TESTÉE → OBSERVÉE → EXPLIQUÉE** s'applique à l'arrêt lui-même — on s'arrête avec la **cause précise**
+et le chiffre, jamais avec « ça ne me paraît pas cohérent ».
+**Deux cas réels du 19/09, tous deux attrapés en mesurant d'abord** : un brief demandait la phase 3.1
+**déjà livrée** par l'autre session sur une branche non fusionnée (quatre lectures, zéro écriture — on
+aurait réécrit à l'identique un travail existant, sur les mêmes fichiers) · et un dossier de phase 3
+présentait **M12 comme une question ouverte** alors qu'elle était actée. *Un rapport qui rouvre une
+décision prise ne se contente pas d'être faux : il fait RE-ARBITRER, donc il COÛTE une décision au
+lieu d'en rappeler une.*
+*Origine : 19/09/2026, consigne de Michel. La pratique existait déjà partout (R4b, R32, R33, la
+section 5 entière) mais **aucune règle ne l'exigeait** — c'était une habitude, pas une garantie.
+· voisine de **R28** (une limite non vérifiée devient une règle silencieuse), **R23** (un document
+d'état faux fait raisonner de travers) et des **règles d'or #15 et #16**.*
+
 ---
 
 ## 2. Les décisions
