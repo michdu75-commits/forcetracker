@@ -441,7 +441,19 @@ module.exports.ecran = async function (t, b, PORT) {
       && mDeja.apres1.anc === 40 && stable(mDeja),
     JSON.stringify(mDeja.apres1) + ' → ' + JSON.stringify(mDeja.apres3));
 
-  t('B-CCCXXXV ㉒ ⛔ les trois pots sont bien ÉCRITS dans le stockage après `persist`',
+  /* ⚠️⚠️ CE TÉMOIN A ÉTÉ CORRIGÉ APRÈS AVOIR LAISSÉ PASSER UNE MUTATION (19/09/2026).
+     Premier jet : il lisait le stockage du cas `mDeja`… dont la fixture AVAIT ELLE-MÊME POSÉ
+     `ft4_foodai_label=3`. Il relisait donc ce que la graine avait écrit, et restait
+     parfaitement vert quand `persist()` cessait d'écrire les trois pots — c'est-à-dire sur
+     un défaut qui fait reperdre ses essais consommés à chaque rechargement.
+     👉 ***Un témoin qui relit ce que sa propre fixture a posé mesure la fixture, pas le
+     produit.*** On mesure désormais sur un cas où les clés n'existaient PAS : le seul moyen
+     qu'elles portent 5 est que `persist()` les ait écrites.
+     ⭐ Le cas `mDeja` reste, mais pour ce qu'il prouve vraiment : la persistance n'écrase pas
+     des pots déjà migrés. Deux garanties, deux témoins. */
+  t('B-CCCXXXV ㉒ ⭐⭐ `persist` ÉCRIT les trois pots là où la clé n\'existait pas',
+    m5.ls.l === '5' && m5.ls.m === '5' && m5.ls.b === '5', JSON.stringify(m5.ls));
+  t('B-CCCXXXV ㉒b ⛔ … et il n\'écrase pas un pot déjà migré au passage',
     mDeja.ls.l === '3' && mDeja.ls.m === '4' && mDeja.ls.b === '5', JSON.stringify(mDeja.ls));
 
   /* ⛔ L'ANCIEN POT EST GELÉ, PAS EFFACÉ : il reste lisible pour un appareil resté sur
