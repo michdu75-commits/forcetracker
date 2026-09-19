@@ -39,6 +39,18 @@ M = {
 }
 DISTRIB = [(1, 1)]          # (nb_appareils, nb_comptes)
 
+# ── LA 2e MESURE : la nature des 9 comptes non couverts (meme tableau de bord, 19/09) ──
+N = {
+    'ecrit_apres_la_bascule_sans_jeton': 0,     # ancien client encore actif : le risque reel
+    'pas_revenu_depuis_la_bascule': 6,
+    'dormant_plus_de_30_jours': 3,
+    'plus_ancienne': '2026-08-05',
+    'plus_recente': '2026-09-18',
+}
+# combien de comptes ont REELLEMENT sauvegarde depuis la bascule (le denominateur qui manque)
+ACTIFS_FENETRE = M['comptes_avec_jeton_actif'] + N['ecrit_apres_la_bascule_sans_jeton']
+ACTIFS_30J = N['pas_revenu_depuis_la_bascule'] + M['comptes_avec_jeton_actif']
+
 GARDES = [0]
 
 
@@ -70,6 +82,14 @@ g(len([1 for a, n in DISTRIB if a > 1 and n]) == M['comptes_multi_appareils'],
   'la distribution contredit le compteur multi-appareils')
 g(M['comptes_sans_jeton_actif'] > 0,
   'ce dossier decrit le cas B (couverture incomplete) : il ne doit pas etre produit a 0')
+g(N['ecrit_apres_la_bascule_sans_jeton'] + N['pas_revenu_depuis_la_bascule']
+  + N['dormant_plus_de_30_jours'] == M['comptes_sans_jeton_actif'],
+  'les trois familles ne totalisent pas les comptes sans jeton : la 2e mesure ne tient pas')
+# ⭐⭐ LA GARDE QUI PORTE LA CORRECTION DE LECTURE : un « 0 » ne vaut que par le nombre de
+#    comptes qui ONT EU L OCCASION d ecrire. Si presque personne n a sauvegarde, le 0 est
+#    quasi garanti et ne prouve rien. Le dossier DOIT donc porter ce denominateur.
+g(ACTIFS_FENETRE < M['comptes_total'] / 2,
+  'la fenetre est devenue representative : la mise en garde du dossier est perimee, a reecrire')
 
 # ══ LES FAITS DU DEPOT QUI DONNENT LEUR SENS AUX CHIFFRES ══════════════════════════════
 SB = lire('supabase.js')
@@ -229,7 +249,9 @@ H.append(encadre(
     'La regle etait posee d avance : <font face="Courier">comptes_sans_jeton_actif = 9</font>, '
     'donc <b>cas B</b>. <b>On ne ferme rien, et on ne prepare rien non plus.</b> '
     '<i>La regle n a pas ete interpretee pour arriver a cette conclusion : elle a ete '
-    'appliquee.</i>'))
+    'appliquee.</i> <b>La 2e mesure (section 6) ne change pas ce verdict</b> - elle explique '
+    'seulement POURQUOI la couverture est faible, et pourquoi il faut attendre plutot que '
+    'conclure.'))
 H.append(encadre(
     'CE QUE CES 9 COMPTES SONT VRAIMENT - ET POURQUOI ON NE PEUT PAS ENCORE LE DIRE',
     'Ils se repartissent en <b>trois familles que ces chiffres ne distinguent pas</b> : '
@@ -243,20 +265,49 @@ H.append(encadre(
     'repli</b> vers <font face="Courier">p_email</font>. Donc une ligne ecrite <b>apres</b> la '
     'bascule <b>sans</b> jeton ne peut venir que d un ancien client.'.replace('⭐', '&gt;&gt;')))
 
-H.append(P('6. Ce qui reste a faire - une seule requete, en lecture seule', 'h1'))
-H.append(P('Elle separe les trois familles <b>sans exposer une seule adresse</b>, en se servant '
-           'de la date de derniere ecriture et de l heure exacte de la bascule :', 'p'))
-H.append(bloc_code(SUITE))
-H.append(P('<b>La colonne qui compte est la premiere.</b> A <b>0</b>, aucun ancien client '
-           'n ecrit plus : les 9 sont des dormants ou des appareils qui n ont pas encore '
-           'resauvegarde, et <b>fermer V2 ne casse rien pour personne</b> - la couverture '
-           'restera « incomplete » sur le papier, mais le risque sera nul. <b>Au-dessus de '
-           '0</b>, chaque unite est un appareil qui perdrait son miroir en silence le jour de '
-           'la fermeture.', 'p'))
-H.append(P('<i>Borne honnete : le denominateur est le MIROIR, pas le produit. '
+H.append(P('6. La nature des 9 comptes - mesuree, et ce qu elle ne dit PAS', 'h1'))
+H.append(tableau(
+    ['famille', 'comptes', 'lecture'],
+    [['<b>a ecrit APRES la bascule, SANS jeton</b> (ancien client)',
+      '<font color="#1E7A46"><b>0</b></font>',
+      '<b>aucun ancien client n a ecrit depuis la bascule</b>'],
+     ['n est pas revenu depuis la bascule (actif sous 30 j)', '<b>6</b>',
+      's inscrira tout seul a sa prochaine sauvegarde'],
+     ['dormant depuis plus de 30 jours', '<b>3</b>', 'ne reviendra peut-etre jamais'],
+     ['ecriture la plus ancienne / la plus recente',
+      '<font face="Courier">' + N['plus_ancienne'] + '</font> / <font face="Courier">' + N['plus_recente'] + '</font>',
+      'la plus ancienne est le LENDEMAIN du branchement du miroir - coherent']],
+    [72 * mm, 20 * mm, 74 * mm]))
+
+H.append(encadre(
+    'CE « 0 » EST VRAI MAIS FAIBLE - ET JE CORRIGE ICI MA PROPRE FORMULATION DE LA VEILLE',
+    'J avais ecrit : <i>« a 0, fermer V2 ne casserait rien pour personne »</i>. '
+    '<b>La mesure montre que cette phrase allait trop loin</b>, et la raison est un '
+    'denominateur que je n avais pas pose : depuis la bascule, <b>un seul compte sur 10 a '
+    'sauvegarde</b> - la fenetre ne fait que <b>~22 heures</b>. '
+    '&gt;&gt; <b>Un « 0 ancien client » mesure sur une periode ou presque personne n a ecrit '
+    'est quasiment garanti, quelle que soit la realite.</b> '
+    '<i>Ce n est pas une preuve d absence : c est une absence de preuve.</i> '
+    'Le chiffre reste bon signe - il n y a simplement pas encore assez de passage pour qu il '
+    'pese.'))
+
+H.append(P('7. Ce qui reste a faire', 'h1'))
+H.append(P('<b>Attendre, puis rejouer la MEME requete.</b> Le repere utile est le '
+           '<b>' + str(ACTIFS_30J) + ' comptes actifs sur 30 jours</b> : tant qu une bonne '
+           'part d entre eux n est pas revenue sauvegarder, le premier compteur ne peut pas '
+           'trancher. Un a deux semaines donnent une fenetre ou la plupart auront eu leur '
+           'occasion. <b>Si le compteur est encore a 0 a ce moment-la, il voudra dire quelque '
+           'chose</b> - et la fermeture de V2 deviendra preparable.', 'p'))
+H.append(P('<b>Il existe une alternative plus rapide, et elle n a PAS ete faite</b> : poser un '
+           'compteur anonyme sur <font face="Courier">ft_miroir</font> elle-meme, pour compter '
+           'les appels de l ancienne porte au lieu de les deduire. Cela <b>mesurerait</b> au '
+           'lieu d attendre. <i>C est une modification, donc une decision de Michel et une '
+           'passe separee</i> - la consigne de celle-ci interdisait de toucher a '
+           '<font face="Courier">ft_miroir</font>.', 'p'))
+H.append(P('<i>Borne honnete, rappelee : le denominateur est le MIROIR, pas le produit. '
            '<font face="Courier">ft_comptes</font> ne porte que les comptes ayant sauvegarde '
-           'depuis le ' + MIROIR + ', jour ou le miroir a ete branche. Le nombre reel '
-           'd utilisateurs vit dans Apps Script, et il n est pas mesure ici.</i>', 'petit'))
+           'depuis le ' + MIROIR + '. Le nombre reel d utilisateurs vit dans Apps Script, et il '
+           'n est pas mesure ici.</i>', 'petit'))
 
 H.append(P('Ce que cette passe n a pas fait', 'h1'))
 H.append(P('<b>Aucune modification.</b> V2 non fermee, <font face="Courier">ft_miroir</font> '
@@ -273,7 +324,9 @@ for _mot, _pourquoi in (('incomplete', 'le verdict'),
                         ('non preparable', 'la consequence du cas B'),
                         ('aucun repli', 'le fait qui soutient le raisonnement'),
                         ('le denominateur est le miroir', 'la borne honnete'),
-                        ('trois familles', 'ce qui reste a distinguer')):
+                        ('trois familles', 'ce qui reste a distinguer'),
+                        ('absence de preuve', 'la correction de lecture du « 0 »'),
+                        ('attendre, puis rejouer', 'la suite reelle')):
     g(_mot in _bt, 'le document ne porte plus « %s » : %s' % (_mot, _pourquoi))
 g('@' not in (_bt + ' '.join(CODES)), 'une adresse figure dans le document')
 
@@ -281,5 +334,7 @@ SimpleDocTemplate(OUT, pagesize=A4, leftMargin=21 * mm, rightMargin=21 * mm,
                   topMargin=16 * mm, bottomMargin=14 * mm,
                   title='S2-B - couverture avant fermeture V2',
                   author='Force Tracker').build(H)
-print('OK %s  (%s, %d gardes, cas B : %d/%d comptes couverts)'
-      % (OUT, VERSION, GARDES[0], M['comptes_avec_jeton_actif'], M['comptes_total']))
+print('OK %s  (%s, %d gardes, cas B : %d/%d couverts ; anciens clients depuis la bascule : %d ;'
+      ' mais seulement %d compte(s) ont ecrit dans la fenetre)'
+      % (OUT, VERSION, GARDES[0], M['comptes_avec_jeton_actif'], M['comptes_total'],
+         N['ecrit_apres_la_bascule_sans_jeton'], ACTIFS_FENETRE))
