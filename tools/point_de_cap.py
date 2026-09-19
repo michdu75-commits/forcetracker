@@ -102,6 +102,41 @@ def controler(ds, erreurs):
     return pb
 
 
+# ⚠️⚠️ CE GARDE EST NE D'UNE DERIVE REELLE, TROUVEE EN RELISANT LE DOSSIER (19/09).
+#    J'ai renomme la colonne « Qui » en « origine » et la valeur « Claude seul » en « Claude »
+#    dans le TABLEAU -- mais le paragraphe qui EXPLIQUE le tableau, vingt lignes plus haut,
+#    continuait d'annoncer les anciens noms. Le registre se contredisait lui-meme, et aucun de
+#    mes gardes ne pouvait le voir : ils lisaient le VOCABULAIRE du lecteur et les LIGNES du
+#    tableau, jamais la PROSE qui les decrit.
+#    >> *Un garde qui verifie un endroit ne prouve rien sur l'endroit d'a cote.* C'est la meme
+#       famille que le mot « EXISTANT » absent du PDF alors qu'il etait bien dans la source.
+#
+# ⛔ IL EST VOLONTAIREMENT ETROIT : il verifie que la doc NOMME le vocabulaire reel et qu'elle
+#    ne nomme plus les etiquettes retirees. Il ne juge pas la prose -- on ne veut pas d'un garde
+#    qui rougisse parce qu'une phrase est mal tournee (R19).
+NOMS_RETIRES = ['colonne **Qui**', '`Claude seul`', '`renforce`', '`tension`', '`appliquée`']
+
+
+def controler_vocabulaire(chemin=REGISTRE):
+    """La documentation du registre dit-elle le MEME vocabulaire que son lecteur ?"""
+    txt = open(chemin, encoding='utf-8').read()
+    pb = []
+    for v in sorted(ORIGINE_OK | VISION_OK | STATUT_OK):
+        if ('`%s`' % v) not in txt:
+            pb.append('la valeur « %s » est acceptee par le lecteur mais n est documentee '
+                      'nulle part dans le registre' % v)
+    for mort in NOMS_RETIRES:
+        if mort in txt:
+            pb.append('le registre nomme encore « %s », une etiquette RETIREE — la prose et le '
+                      'tableau se contredisent' % mort)
+    # ⛔ ON NE COMPARE PAS L'ENTETE AUX CLES DU CODE, ET C'EST DELIBERE : le tableau affiche
+    #    des libelles humains (« décision », « alternative écartée ») la ou le code emploie des
+    #    cles sans accent ni espace. Ma premiere version les comparait et rougissait sur un
+    #    registre parfaitement juste. *Un garde qu'on doit tordre pour qu'il passe ne mesure
+    #    plus rien -- on le retire.* Le nombre de colonnes, lui, est deja impose a la lecture.
+    return pb
+
+
 def lecture(ds):
     seuls = [d for d in ds if d['origine'] == 'Claude']
     michel = [d for d in ds if d['origine'] == 'Michel']
@@ -163,7 +198,7 @@ def lecture(ds):
 
 def main():
     ds, erreurs = lire_registre()
-    pb = controler(ds, erreurs)
+    pb = controler(ds, erreurs) + controler_vocabulaire()
     check = '--check' in sys.argv
 
     if pb:

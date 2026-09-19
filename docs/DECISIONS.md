@@ -33,7 +33,7 @@ sa politique face à son état réel.
 
 | protection demandée | comment elle vit ici |
 |---|---|
-| ① **nommer les choix pris seul** | la colonne **Qui** — `Claude seul` saute aux yeux, et l'**alternative écartée** est écrite à côté |
+| ① **nommer les choix pris seul** | la colonne **`origine`** — `Claude` saute aux yeux, et l'**alternative écartée** est écrite à côté |
 | ② **le registre des décisions** | ce tableau, qui rend la **règle d'or #15** vérifiable par machine |
 | ③ **la question de la Vision** | la colonne **Vision**, obligatoire à chaque ligne — plus la ligne ajoutée à la clôture de `docs/PROCESSUS-DEVELOPPEMENT.md` |
 | ④ **le point de cap** | `python3 tools/point_de_cap.py` — une **lecture générée** du tableau, jamais un exercice à refaire à la main |
