@@ -42,6 +42,33 @@ def lire(n):
         return f.read()
 
 
+def sans_comm_html(src):
+    """Neutralise les commentaires <!-- --> d un fichier HTML.
+
+    /!\\ POURQUOI CETTE FONCTION EXISTE, ET C EST UN DEFAUT D INSTRUMENT MESURE LE 19/09.
+    `sans_comm` ci-dessous est un neutraliseur JAVASCRIPT : il traite ' " ` comme des
+    delimiteurs de chaine et // /* */ comme des commentaires. Applique a `index.html`, il
+    se desynchronise des la premiere apostrophe francaise d un commentaire HTML (« regle
+    d'or 4 ») et finit par BLANCHIR la balise qu on cherche. Mesure : le garde « le
+    registre n est plus servi par index.html » refusait de produire alors que la balise
+    est bien a index.html:3770.
+    -> Un garde qui rougit sur du code parfaitement sain mesure son propre neutraliseur,
+       pas le produit. Le neutraliseur doit parler la langue du fichier qu il lit.
+    """
+    out = list(src)
+    i, n = 0, len(src)
+    while i < n:
+        if src.startswith('<!--', i):
+            j = src.find('-->', i + 4)
+            j = n if j < 0 else j + 3
+            for k in range(i, j):
+                out[k] = ' '
+            i = j
+            continue
+        i += 1
+    return ''.join(out)
+
+
 def sans_comm(src):
     out = list(src)
     i, n = 0, len(src)
@@ -116,8 +143,12 @@ g(_bkf['actionServeur'] == [x for x in C if x['id'] == 'milo.memory'][0]['action
   "capacite » tombe")
 
 # ══ LE CODE SERVI ════════════════════════════════════════════════════════════
-NU = {f: sans_comm(lire(f)) for f in ('constants.js', 'worker.js', 'Code.js', 'index.html',
+NU = {f: sans_comm(lire(f)) for f in ('constants.js', 'worker.js', 'Code.js',
                                       'sw.js', 'capacites-ia.js')}
+# /!\ index.html n est PAS du JavaScript : il se neutralise avec la grammaire HTML
+# (voir sans_comm_html). L app ne porte aucun JS inline (CLAUDE.md), donc blanchir les
+# <!-- --> suffit, et c est le seul neutraliseur qui ne se desynchronise pas.
+NU['index.html'] = sans_comm_html(lire('index.html'))
 _proxy = re.findall(r"'(\w+)'", re.search(r'AI_PROXY_ACTIONS=\[(.*?)\]',
                                           NU['constants.js'], re.S).group(1))
 g(sorted(_proxy) == F['actions'],
