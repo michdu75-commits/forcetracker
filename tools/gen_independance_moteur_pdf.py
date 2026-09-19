@@ -245,6 +245,25 @@ F.append(Paragraph(
     'banc, reversible - sinon ce n est pas un progres, c est un troc silencieux entre la '
     'qualite et le principe.', P))
 
+F.append(Paragraph('LES TROIS COLONNES - ET ELLES NE SE CONFONDENT JAMAIS', H2))
+F.append(Paragraph(
+    'Consigne explicite de Michel. <b>Rien de ce dossier n est implemente</b> : seules les lignes '
+    'EXISTANT sont des mesures prises dans le code d aujourd hui.', P))
+F.append(tab([
+    ['colonne', 'ce qu elle veut dire', 'exemples de cette note'],
+    ['EXISTANT', 'mesure dans le code servi le 19/09/2026',
+     'le modele est deja une variable choisie a l execution - l adresse du fournisseur vit dans '
+     '1 constante (worker.js) et %d copies en dur (Code.js) - les %d capacites IA declarent '
+     'toutes que le serveur n applique rien - aucun Milo utilisateur n a acces a Internet'
+     % (C_LIT, len(CAPS))],
+    ['DECIDE', 'une contrainte du projet, pas un avis',
+     'Claude n est pas Milo - le modele ne decide jamais seul de ses permissions - meme Milo + '
+     'permissions differentes - interdit de degrader Milo pour obtenir l independance'],
+    ['DIRECTION', 'le cap, sans date et sans engagement de forme',
+     'moteur abstrait et interchangeable - Internet comme outil de l architecture - outils '
+     'd action - droits cote serveur plutot que dans un prompt'],
+], [24 * mm, 44 * mm, 102 * mm]))
+
 F.append(Paragraph('CE N EST PAS UNE IDEE NEUVE - ET LE DEPOT LE PROUVE', H2))
 F.append(Paragraph(
     'C est le point le plus utile de cette note : <i>une vision qu on croit neuve se re-debat ; '
@@ -372,6 +391,19 @@ F.append(Paragraph(
     'code servi et les documents dates, et refusent de produire si un seul tombe - y compris '
     'une garde A L ENVERS : si la dette des 13 adresses est payee, ce dossier devient perime et '
     'ne sort plus. Hors depot (regle d or 14). SHA %s.</font>' % (GARDES[0], SHA[:8]), P))
+
+# ⛔⛔ LE DERNIER GARDE MESURE LA PAGE, PAS MON INTENTION - et il est ne d'un vrai defaut :
+#    la premiere version de ce dossier ne faisait apparaitre « EXISTANT » NULLE PART sur la
+#    page, alors que la note demande explicitement de distinguer les trois colonnes. Les
+#    gardes d'en haut lisaient le fichier Markdown ; personne ne lisait le PDF.
+#    >> *Un garde qui verifie la SOURCE ne prouve rien sur ce qui est IMPRIME.*
+_TEXTE_PAGE = ' '.join(getattr(f, 'text', '') or '' for f in F) + ' ' + ' '.join(
+    getattr(c, 'text', '') or ''
+    for f in F if isinstance(f, Table) for r in f._cellvalues for c in r)
+for _mot in ('EXISTANT', 'DECIDE', 'DIRECTION'):
+    g(_mot in _TEXTE_PAGE, 'le mot %s n apparait nulle part sur la PAGE : la note exige les '
+                           'trois colonnes, et un dossier qui ne les montre pas ne les tient pas'
+                           % _mot)
 
 doc = SimpleDocTemplate(OUT, pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm,
                         topMargin=16 * mm, bottomMargin=14 * mm,
