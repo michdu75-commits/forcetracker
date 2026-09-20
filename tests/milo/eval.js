@@ -98,6 +98,28 @@ const REPEAT = Math.max(1, parseInt((ARGV.find(a=>a.startsWith('--repeat='))||''
 // Le run À BLANC, lui, reste local : il ne fait aucun appel, donc aucun verrou à franchir,
 // et il continue de marcher hors ligne.
 const APP_LIVE = 'https://michdu75-commits.github.io/forcetracker/index.html';
+
+/* ⭐⭐ L'IDENTITÉ S1 DU BANC (20/09/2026) — pourquoi elle existe, et ce qu'elle n'est pas.
+   Le Worker refuse tout appel IA sans jeton : « Origin correct + aucun token -> refus »
+   (ft-v1216). Un runner GitHub ouvre un navigateur NEUF, donc sans jeton : mesuré, il
+   recevait `HTTP 401` et la passe ne mesurait RIEN.
+   ⛔ AUCUN MODE « BENCHMARK » N'A ÉTÉ AJOUTÉ. Le banc se présente comme n'importe quel
+   client : il pose un vrai jeton S1, émis par la route existante `issueTokenByCode`,
+   étiqueté `banc-milo`, et RÉVOCABLE SEUL. Le Worker le vérifie exactement comme les
+   autres. *Le banc reçoit un badge ; aucune porte n'est ouverte dans le bâtiment.*
+   ⛔ IL N'EST JAMAIS AFFICHÉ NI ÉCRIT NULLE PART : ni dans le journal, ni dans le rapport,
+   ni dans la pièce jointe. On n'en montre que la PRÉSENCE et la longueur attendue. */
+const BANC_TOKEN = String(process.env.FT_BANC_TOKEN || '').trim();
+
+/* ⛔ R2 — LA CLÉ DE STOCKAGE A UN PROPRIÉTAIRE, ET CE N'EST PAS CE FICHIER. La recopier
+   ici la ferait diverger le jour où `constants.js` la renomme, en silence : le banc
+   poserait le jeton dans une clé que plus personne ne lit, et repartirait en 401 sans
+   qu'on comprenne pourquoi. On la LIT donc à la source. */
+const FT_TOKEN_KEY = (() => {
+  const m = /FT_TOKEN_KEY\s*=\s*'([^']+)'/.exec(fs.readFileSync(path.join(ROOT, 'constants.js'), 'utf8'));
+  if (!m) { console.error("⛔ FT_TOKEN_KEY introuvable dans constants.js — le banc ne saurait pas où poser son jeton."); process.exit(2); }
+  return m[1];
+})();
 const LOCAL = ARGV.includes('--local');
 const MOD_ARG = ((ARGV.find(a=>a.startsWith('--modele='))||'').split('=')[1]
           || (ARGV[ARGV.indexOf('--modele')+1] && !ARGV[ARGV.indexOf('--modele')+1].startsWith('--') ? ARGV[ARGV.indexOf('--modele')+1] : '')
@@ -105,6 +127,26 @@ const MOD_ARG = ((ARGV.find(a=>a.startsWith('--modele='))||'').split('=')[1]
 if (!MODELES[MOD_ARG]) { console.error('Modèle inconnu : ' + MOD_ARG + ' (attendu : ' + Object.keys(MODELES).join(' | ') + ')'); process.exit(2); }
 // --compare joue TOUJOURS la production en premier : c'est la référence, pas le challenger.
 const PASSES = COMPARE ? ['prod','haiku'] : [MOD_ARG];
+
+/* ⛔⛔ ON REFUSE AVANT DE DÉPENSER, PAS APRÈS. Sans jeton, chaque scénario part, échoue en
+   401 et revient vide : la passe coûte son temps, n'apprend rien, et produit un rapport
+   bien formé — exactement le piège corrigé le 20/09. Le run À BLANC, lui, n'a besoin
+   d'aucun jeton (il n'appelle personne) : le garde ne s'applique donc qu'à `--go`. */
+if (GO && !LOCAL && !BANC_TOKEN) {
+  console.error('\n⛔ AUCUNE IDENTITÉ POUR LE BANC — rien n\'a été appelé, rien n\'a été facturé.\n');
+  console.error("   Le Worker refuse les appels IA sans jeton S1 (« Origin correct + aucun token -> refus »).");
+  console.error('   En intégration continue : définir le secret GitHub  FT_BANC_TOKEN');
+  console.error('   Il se fabrique dans l\'app : Profil -> Admin -> « 🔑 Jeton du banc d\'essai ».');
+  console.error("   ⛔ Ne jamais copier ce jeton depuis un journal public : il n'y apparaît jamais.\n");
+  process.exit(2);
+}
+if (BANC_TOKEN && BANC_TOKEN.length !== 64) {
+  // ⚠️ On dit la FORME, jamais la valeur. Un secret tronqué au copier-coller est l'erreur
+  //    la plus banale, et sans ce mot elle ressemble à un refus d'identité.
+  console.error('\n⛔ FT_BANC_TOKEN fait ' + BANC_TOKEN.length + ' caractères, 64 attendus.');
+  console.error('   (La valeur n\'est jamais affichée.) Recopie-la en entier.\n');
+  process.exit(2);
+}
 
 let liste = SCENARIOS.slice();
 if (ONLY) { const ids = ONLY.split(',').map(s=>s.trim().toUpperCase()); liste = liste.filter(s=>ids.includes(s.id)); }
@@ -275,7 +317,7 @@ function verifier(sc, reply) {
 
   async function ouvrirPage() {
     const ctx = await nav.newContext({ serviceWorkers:'block', viewport:{width:390,height:844} });
-    await ctx.addInitScript(() => {
+    await ctx.addInitScript(({ tok, cle }) => {
       // Compte minimal « déjà connecté » : le laboratoire écrase de toute façon tout le profil.
       /* ⚠️ L'EMAIL N'EST PLUS VIDE (25/08/2026) — et sans lui le plafond coupe la passe.
          Le serveur compte par email (`Code.js` → `_aiQuotaBlock_`) et un email vide devient
@@ -289,7 +331,12 @@ function verifier(sc, reply) {
                   ft4_gender:'h', ft4_ok:'1', ft4_premium:'1',
                   ft4_email:'michdu75@gmail.com' };
       for (const k in b) localStorage.setItem(k, b[k]);
-    });
+      /* ⭐ LE JETON EST POSÉ LÀ OÙ LE VRAI CLIENT LE RANGE, et nulle part ailleurs : c'est
+         `_ftToken()` (constants.js) qui le relira, et l'injecteur de `fetch` qui l'ajoutera
+         à l'enveloppe. Le banc n'a donc AUCUN chemin réseau à lui — il emprunte celui de
+         tout le monde, ce qui est précisément ce qui rend la mesure honnête. */
+      if (tok) localStorage.setItem(cle, tok);
+    }, { tok: BANC_TOKEN, cle: FT_TOKEN_KEY });
     const page = await ctx.newPage();
     await page.goto((GO && !LOCAL) ? APP_LIVE : ('http://localhost:' + port + '/index.html'));
     await page.waitForTimeout(2300);

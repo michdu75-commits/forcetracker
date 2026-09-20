@@ -1133,6 +1133,23 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="renderImportDiagAdmin()" style="padding:11px;font-size:14px;">🔬 Voir le dernier import</button>
       <div id="admin-import-diag" style="margin-top:4px;"></div>
     </div>
+    <!-- 🔑 L'IDENTITÉ DU BANC D'ESSAI (20/09/2026). Née d'une mesure : le workflow GitHub du
+         banc recevait `HTTP 401` parce qu'un runner ouvre un navigateur NEUF, donc sans jeton
+         S1 — « Origin correct + aucun token -> refus » (ft-v1216), une protection voulue.
+         ⛔ AUCUNE PORTE SPÉCIALE N'A ÉTÉ OUVERTE : cet outil appelle la route EXISTANTE
+         `issueTokenByCode`, celle que le téléphone de tout le monde utilise déjà. Le jeton
+         produit est un jeton S1 ordinaire, simplement ÉTIQUETÉ `banc-milo` et révocable seul.
+         ⭐ Il existe pour que Michel n'ait pas à devenir administrateur sécurité : un bouton,
+         un copier-coller dans GitHub, fini. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔑 Jeton du banc d'essai</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Donne au <strong>banc d'essai de Milo</strong> (sur GitHub) le droit de parler à Milo, <strong>sans ouvrir aucune porte</strong> : c'est un jeton <strong>normal</strong>, juste <strong>étiqueté « banc-milo »</strong> et <strong>révocable tout seul</strong>. Il ne vit sur <strong>aucun téléphone</strong>. <strong>Il ne s'affiche qu'une fois</strong> — ensuite il n'existe nulle part, même pas ici.</div>
+      <button class="btn btn-bg2" onclick="creerJetonBanc()" style="padding:11px;font-size:14px;">🔑 Fabriquer le jeton du banc</button>
+      <div id="admin-banc-jeton" style="margin-top:4px;"></div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;border-top:1px solid var(--bd);padding-top:9px;">Pour <strong>retirer</strong> l'accès du banc : colle ici le jeton et révoque-le. Le prochain lancement échouera proprement, <strong>sans rien dépenser</strong>.</div>
+      <input id="banc-jeton-revoke" class="inp" placeholder="jeton à révoquer" autocomplete="off" style="font-size:13px;">
+      <button class="btn btn-bg2" onclick="revoquerJetonBanc()" style="padding:11px;font-size:14px;">🚫 Révoquer ce jeton</button>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">📥 Idées reçues des testeurs</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Lis toutes les idées <strong>directement dans l'app</strong>, sans ouvrir tes mails. Les <strong>photos</strong>, elles, restent dans <strong>forcetracker.app@gmail.com</strong> (le mail te prévient).</div>

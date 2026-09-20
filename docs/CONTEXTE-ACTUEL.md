@@ -491,7 +491,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1228` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
+- **Version en ligne (live) :** `ft-v1229` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
   `persist()` MANQUANT SUR LA SORTIE « PAS DE POIDS ».** Cas réel de Michel (Progrès → Corps &
   santé) : cou **40,7**, taille **92,4**, hanches vide — *« je les renseigne et je ne peux pas
   les enregistrer »*.
@@ -531,13 +531,42 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   Les deux options ont un piège mesuré, et un témoin fige l'état actuel pour qu'on ne tranche
   pas « en passant ».
   Tests : **B-CCCXXXVIII (17) + B-CCCXXXIX (23)**, banc ciblé **40 OK / 0 rouge**, **24/24
-  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète 4546 ✅ / 0 ❌**.
-  ⚠️⚠️ **La condition ④ est tombée TROIS FOIS** (session-B a publié pendant chacune de mes
-  passes ; la 1ʳᵉ portait une **collision de numéro** — nous avions tous deux posé `ft-v1227`).
-  Les deux premières ont été **refaites en entier**. ⛔ La troisième, le commit concurrent ne
-  touchait **qu'une ligne de couloir** : j'ai **prouvé par mesure** que l'arbre testé et l'arbre
-  publié sont identiques **octet pour octet** sur `*.js`, `*.html`, `*.json`, `tests/`, `data/`.
-  ⚖️ **Exception mesurée, pas nouvelle règle** : `passe_valide.sh` n'est pas touché.
+  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète PASSE_TOTAL** sur
+  l'**arbre fusionné** réellement publié.
+  ⛔⛔ **LE NUMÉRO EST `ft-v1229`, PAS `ft-v1228` — seconde collision, et c'est la règle d'or #5.**
+  Session-B a publié **son** `ft-v1228` pendant mes mesures, et il est **réellement servi**.
+  *Republier un contenu différent sous un numéro de cache déjà servi laisserait sans mise à jour
+  tous les service workers qui portent déjà `ft-v1228`* — le correctif n'arriverait jamais.
+  ⛔ **Vraie fusion, pas écrasement** : `master` n'était plus un ancêtre (**16 en avance / 5 en
+  retard**), les **5** commits de session-B sont conservés intégralement, les conflits résolus
+  **par union**, et la renumérotation **bornée à mon seul bloc**.
+  ⚠️ **L'arbre ayant réellement changé, l'ancienne passe `4546 ✅` est PÉRIMÉE** et n'est citée
+  nulle part comme preuve de celui-ci : tout a été relancé.
+  ⚠️ La condition ④ était déjà tombée **trois fois** pendant les mesures (2 passes refaites en
+  entier, la 1ʳᵉ portant une collision sur `ft-v1227`) — *le journal de partage évite le doublon
+  de TRAVAIL, pas la collision de NUMÉRO, qui ne se pose qu'au push.*
+- **Version précédente :** `ft-v1228` — 🔑 **UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI.**
+  *Le banc reçoit un badge ; aucune porte n'est ouverte dans le bâtiment.*
+  ⛔⛔ **Le défaut fermé est mesuré** : le workflow du banc recevait **HTTP 401** et ne
+  mesurait **rien** — un runner GitHub ouvre un navigateur **neuf**, donc sans jeton
+  (*« Origin correct + aucun token → refus »*, ft-v1216, **protection voulue**). Le banc
+  n'avait **jamais** pu appeler Milo depuis S1, et personne ne l'avait vu parce qu'aucune
+  passe réelle n'avait jamais tourné.
+  ⭐⭐ **Rien de neuf côté authentification** : `_jetonPoser_(email, **libelle**)`,
+  `_jetonIdentite_` fail-closed, `_jetonRevoquer_` qui **marque**, et la route
+  **`issueTokenByCode`** existaient déjà. L'outil **Profil → Admin → « 🔑 Jeton du banc
+  d'essai »** appelle la route **existante** avec l'étiquette `banc-milo`.
+  ⛔ **0 ligne dans `worker.js`, 0 ligne dans `Code.js`.** Aucun mode « benchmark ».
+  ⛔ **Affiché une seule fois, rangé nulle part** (le serveur ne garde qu'une empreinte).
+  ⭐ Le banc pose le jeton dans la **même clé** que le vrai client, **lue à la source**
+  (**R2**), et refuse `--go` **avant toute dépense** s'il manque ou est mal recopié — en
+  disant la **forme**, jamais la valeur.
+  ⚖️ **Le quota a décidé de l'architecture** : il est **par e-mail** (50/j, **150** dev) et
+  une passe fait **57 appels** — un e-mail neuf serait bloqué à 50. Le jeton est donc
+  **dédié et révocable seul** mais **résout vers le compte de Michel** ; un compte séparé
+  est un **chemin d'évolution écrit, non pris** (R19).
+  ⏳ **Secret GitHub `FT_BANC_TOKEN` à poser par Michel**, puis Actions → `LANCER`.
+
 - **Version précédente :** `ft-v1227` — 🧾 **LA PROVENANCE DE `S.coachMemory` —
   ET LA BORNE QUI COMPTE EST *PROVENANCE ≠ VALIDATION*.**
   Arbitrage de Michel (**option B**) : *« conserver `S.coachMemory`, mais lui ajouter une
