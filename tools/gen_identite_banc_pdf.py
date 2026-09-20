@@ -242,9 +242,9 @@ p("<b>Controle negatif : %d mutations sur arbre clone, %d conformes.</b> Trois f
   "etiquette, revocation). Dont <b>deux qui doivent RESTER VERTES</b> : des commentaires citant "
   "les mots cherches." % (N_MUT, N_MUT))
 cle("<b>ET DEUX DE MES PROPRES GARDES MESURAIENT UN MOT AU LIEU DU MECANISME.</b> "
-    "① j'interdisais le mot « benchmark » dans worker.js : il a rougi sur l'arbre <b>sain</b>, "
+    "<b>(1)</b> j'interdisais le mot « benchmark » dans worker.js : il a rougi sur l'arbre <b>sain</b>, "
     "car <i>MODELES_BENCHMARK</i> y existe depuis longtemps et ne parle <b>pas d'identite</b> "
-    "(liste blanche de modeles). ② mon garde « aucun jeton en dur » cherchait 64 caracteres "
+    "(liste blanche de modeles). <b>(2)</b> mon garde « aucun jeton en dur » cherchait 64 caracteres "
     "hexadecimaux : <i>'a'.repeat(64)</i> passait. <b>Un garde qui decrit a quoi RESSEMBLE un "
     "secret ne dit rien de sa PROVENANCE.</b> Les deux mesurent desormais la source.", ALERTE)
 p("Passe complete du depot : <b>4506 verts / 0 rouge</b>, valide aux 4 conditions.")
