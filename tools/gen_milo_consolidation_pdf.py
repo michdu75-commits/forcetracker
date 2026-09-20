@@ -212,9 +212,22 @@ g('coach-sante-rappel' in coach,
 dump = lire('tools/dump_prompt.js')
 g('EMPREINTES' in dump, "le dump ne pose plus l'empreinte de ses sources")
 chk = lire('tools/check_regles.py')
-g('prompt de référence' in chk, 'le controle de peremption du prompt a disparu')
+# [!!] DEUX GARDES TROP LACHES, TROUVES PAR LE CONTROLE NEGATIF - piege du sous-chainage
+#      (`BUGS.md`, famille n1). L'ancien cherchait « prompt de reference » dans
+#      check_regles : la phrase existe AUSSI dans le message d'echec, donc supprimer le
+#      controle laissait le garde VERT. Et « SOURCES : » restait vrai apres avoir renomme
+#      l'entete en « ANCIENNES SOURCES : ».
+#      *Un garde qui cherche une ETIQUETTE mesure le vocabulaire ; un garde qui cherche le
+#      MECANISME mesure la garantie.*
+g('_blob19' in chk and 'PÉRIMÉ' in chk,
+  'le controle de peremption du prompt a perdu son mecanisme (calcul d empreinte ou alerte)')
+g('sha1' in chk.lower(), "le controle n'emploie plus d'empreinte de contenu")
 fige = lire('docs/PROMPT-MILO-REEL.txt')
-g('SOURCES :' in fige, 'le prompt fige ne porte plus son empreinte')
+_emp = re.search(r'SOURCES\s*:\s*((?:[\w.\-]+ [0-9a-f]{12}(?: \u00b7 )?)+)', fige)
+g(_emp, "le prompt fige ne porte plus d'empreinte lisible (fichier + 12 hexa)")
+g(len(re.findall(r'[0-9a-f]{12}', _emp.group(1))) == 3,
+  'le prompt fige porte %d empreintes, on en annonce 3'
+  % len(re.findall(r'[0-9a-f]{12}', _emp.group(1))))
 m = re.search(r'TAILLE TOTALE : ([\d   ]+) car', fige)
 g(m, 'le prompt fige ne porte plus sa taille')
 FIGE = int(re.sub(r'\D', '', m.group(1)))
