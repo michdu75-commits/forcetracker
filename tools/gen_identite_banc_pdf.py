@@ -126,7 +126,13 @@ N_MUT = len(re.findall(r"^\s*\('(?:M\d\d|\[negatif\])", MUT, flags=re.M))
 g(N_MUT == 14, 'le controle negatif porte %d mutations, on en annonce 14' % N_MUT)
 
 # le quota, recompte
-Q_MAIL = (re.search(r"AI_EMAIL_MAX'[^)]*\)\s*\|\|\s*(\d+)", CJ) or [None, '?'])[1]
+# ⛔ ON VISE LA LIGNE QUI DECIDE, PAS N'IMPORTE LAQUELLE. `AI_EMAIL_MAX` apparait a DEUX
+#    endroits de Code.js avec des defauts DIFFERENTS (100 dans un affichage Admin, 50 dans
+#    la logique de quota). Un motif lache aurait publie 100 — un chiffre faux, et d'autant
+#    plus credible qu'il vient bien du fichier. On ancre donc sur `EMAIL_MAX =`, la variable
+#    que `_aiQuotaEtat_` compare reellement.
+Q_MAIL = (re.search(r"var EMAIL_MAX\s*=\s*parseInt\(sp\.getProperty\('AI_EMAIL_MAX'\), 10\)\s*\|\|\s*(\d+)",
+                    CJ) or [None, '?'])[1]
 Q_DEV = (re.search(r'var AI_MAX_DEV_\s*=\s*(\d+)', CJ) or [None, '?'])[1]
 N_SCEN = len(re.findall(r"^\s*\{\s*id:\s*'[^']*'", lire('tests/milo/eval-scenarios.js'), flags=re.M))
 g((Q_MAIL, Q_DEV, N_SCEN) == ('50', '150', 57),
