@@ -158,13 +158,21 @@ DEC = lire('docs/DECISIONS.md')
 g('| D-013 |' in DEC and 'TRANCHER' in DEC.split('| D-013 |')[1].split('\n')[0],
   "D-013 n est pas consignee comme « A TRANCHER » dans le registre")
 
-# ⛔ LE PERIMETRE : un seul fichier servi touche.
-_servis = subprocess.run(  # noqa
-    ['git', 'diff', '--name-only', 'origin/master...HEAD'],
-    capture_output=True, text=True, cwd=RACINE).stdout.split()
-F['servisTouches'] = sorted([x for x in _servis if re.match(
+# ⛔⛔ LE PERIMETRE : un seul fichier servi touche.
+#    ⚠️ IL SE MESURE SUR LES COMMITS DE LA LIVRAISON, JAMAIS SUR « origin/master...HEAD ».
+#    La premiere version comparait a master — vrai AVANT publication, et vide APRES, puisque
+#    master contient alors ce travail. *Un garde dont l ancrage disparait au moment ou l on
+#    publie est un garde qui ne protege rien le jour ou on en a besoin.* On mesure donc les
+#    DEUX commits qui portent le correctif, ce qui reste vrai pour toujours.
+COMMITS = os.environ.get('MEN_COMMITS', '4c6e6207 000db0ba').split()
+_servis = []
+for _c in COMMITS:
+    _servis += subprocess.run(  # noqa
+        ['git', 'diff', '--name-only', _c + '^', _c],
+        capture_output=True, text=True, cwd=RACINE).stdout.split()
+F['servisTouches'] = sorted({x for x in _servis if re.match(
     r'^(app|state|screens|log|coach|setup|tracking|constants|supabase|worker|Code|'
-    r'capacites-ia)\.js$|^index\.html$', x)])
+    r'capacites-ia)\.js$|^index\.html$', x)})   # un ENSEMBLE : deux commits, un seul fichier
 g(F['servisTouches'] == ['tracking.js'],
   "le perimetre a change : fichiers servis touches = %s" % F['servisTouches'])
 

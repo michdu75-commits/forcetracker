@@ -35,7 +35,10 @@ RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SORTIE = os.environ.get(
     'PUB_PDF',
     '/tmp/FORCE-TRACKER-CORPS-SANTE-PUBLICATION-FT-V1230-20-09-2026.pdf')
-PASSE = os.environ.get('PUB_PASSE', '/tmp/passe_pub.log')
+# ⛔ ON LIT LE VERDICT de tools/passe_valide.sh, PAS la sortie brute du runner : lui seul
+#    porte l arbre lu ET l etat des 4 conditions. Le total brut existe aussi sur une passe
+#    PERIMEE — et ce jour-la il y en a eu cinq.
+PASSE = os.environ.get('PUB_PASSE', '/tmp/verdict_passe.log')
 MUTLOG = os.environ.get('PUB_MUT', '')
 
 # ⛔ LES DEUX BOUTS DE LA FUSION, mesures et jamais ecrits a la main.
@@ -152,6 +155,14 @@ F['passeOk'] = int(_m.group(1)) if _m else 0
 F['passeKo'] = int(_m.group(2)) if _m else -1
 g(F['passeOk'] > 4000, "la passe ne rend que %d temoins verts" % F['passeOk'])
 g(F['passeKo'] == 0, "la passe rend %d rouge(s)" % F['passeKo'])
+
+# ⛔⛔ ET ON LIT LE VERDICT, PAS SEULEMENT LE TOTAL. Un total existe aussi sur une passe
+#    PERIMEE par la condition ④ — c'est arrive cinq fois ce jour-la. *Un nombre vert au bas
+#    d'une passe invalide ressemble trait pour trait a un nombre vert.*
+F['valide'] = ('PASSE VALIDE' in _p) and ('PASSE NON VALIDE' not in _p)
+g(F['valide'], "le journal ne dit pas PASSE VALIDE : les 4 conditions ne sont pas toutes vertes")
+F['conditions'] = len(re.findall(r'✅ [①②③④]', _p))
+g(F['conditions'] == 4, "%d condition(s) verte(s) sur 4" % F['conditions'])
 
 # ⛔⛔ ET LA PASSE DOIT AVOIR LU L ARBRE QU ON PUBLIE — ou n en differer QUE par du texte.
 #    *Une passe decrit l arbre qu elle a lu, pas celui qu on pousse* (condition ③). Le total
@@ -367,8 +378,9 @@ Ad(tab([['ce qui a ete relance sur l arbre fusionne', 'resultat'],
         ['banc cible des mensurations (tools/banc_mensurations.js)', '40 OK / 0 rouge'],
         ['controle negatif (mutations sur un arbre CLONE)',
          '%d conformes / %d non conformes' % (F['mutOk'], F['mutKo'])],
-        ['passe complete (les 4 conditions de tools/passe_valide.sh)',
-         '%d OK / %d rouge' % (F['passeOk'], F['passeKo'])],
+        ['passe complete (tools/passe_valide.sh)',
+         '<b>%d OK / %d rouge</b> - et le journal dit <b>PASSE VALIDE</b> : les <b>%d</b> conditions vertes, y compris la (4) <i>aucune publication concurrente</i>, pour la premiere fois de la journee'
+         % (F['passeOk'], F['passeKo'], F['conditions'])],
         ['arbre reellement lu par la passe',
          'commit %s - ancetre de celui qu on publie, et <b>aucun fichier execute</b> '
          'n a bouge depuis (%d fichier(s) de TEXTE seulement)'
