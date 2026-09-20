@@ -145,7 +145,19 @@ jobs:
             const p = (r.parPasse && r.parPasse.prod) || [];
             const joues = p.filter(x => x.etat !== 'blanc').length;
             if (joues < 1) { console.error('ECHEC : aucun scenario joue.'); process.exit(1); }
-            console.log('OK : ' + joues + ' scenario(s) joue(s), mode ' + r.mode + ', sha ' + r.sha + ', version ' + (r.version||'?'));
+            // ⛔⛔ « JOUE » NE VEUT PAS DIRE « A REPONDU ». Mesure du 20/09 : un essai a
+            //    1 scenario est revenu HTTP 401, donc zero comportement — et ce controle
+            //    disait OK. Un scenario sans reponse est compte comme joue.
+            const repondu = p.filter(x => x.etat === 'vert' || x.etat === 'rouge').length;
+            const muets = p.filter(x => x.etat === 'muet' || x.etat === 'erreur').length;
+            if (repondu < 1) {
+              console.error('ECHEC : ' + joues + ' scenario(s) joue(s) mais AUCUNE reponse ('
+                + muets + ' muet(s)/erreur(s)). La passe est bien formee et VIDE.');
+              console.error('Cause la plus frequente : le Worker refuse (401) — le navigateur');
+              console.error('du banc n a aucun jeton d identite (« Origin correct + aucun token -> refus »).');
+              process.exit(1);
+            }
+            console.log('OK : ' + repondu + ' reponse(s) sur ' + joues + ' joue(s), mode ' + r.mode + ', sha ' + r.sha + ', version ' + (r.version||'?'));
           "
 
       - name: Enregistrer la référence dans le dépôt

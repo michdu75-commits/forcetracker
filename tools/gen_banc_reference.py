@@ -59,6 +59,28 @@ g(R.get('sha'), "le rapport ne porte pas de SHA : « avant » et « apres » ne 
 PASSES = R.get('parPasse') or {}
 g(PASSES, 'le rapport ne porte aucune passe')
 
+# ⛔⛔ LE GARDE QUI MANQUAIT, ET IL A ETE PAYE POUR DE VRAI (20/09/2026).
+#     Un essai a 1 scenario est revenu « HTTP 401 — pas de reponse », donc ZERO comportement
+#     mesure. Le workflow a pourtant conclu SUCCESS, parce qu'il ne comptait que les
+#     scenarios « joues », et qu'un scenario SANS REPONSE compte comme joue.
+#     👉 ***Une passe ou Milo n'a jamais repondu produit un rapport parfaitement bien forme :
+#     mode « reel », un SHA, des scenarios « joues » — et pas une seule mesure dedans.***
+#     C'est `BUGS.md` §61 un cran plus loin : non seulement un run casse ressemble a un run
+#     vert, mais ici il ressemble a une REFERENCE. Publier ca donnerait un point de
+#     comparaison vide auquel on croirait pendant des mois.
+# ⭐ La seule question qui vaille n'est donc pas « combien de scenarios ont ete joues »,
+#    mais « combien ont recu une REPONSE » — c'est-a-dire vert ou rouge.
+_REPONDU = sum(1 for lst in PASSES.values()
+               for x in lst if x.get('etat') in ('vert', 'rouge'))
+_MUETS = sum(1 for lst in PASSES.values()
+             for x in lst if x.get('etat') in ('muet', 'erreur'))
+g(_REPONDU > 0,
+  "AUCUN scenario n'a recu de reponse (%d muet(s)/erreur(s)) : la passe est bien formee mais "
+  "VIDE. Une reference sans comportement mesure est pire qu'une absence de reference. "
+  "Cause la plus frequente : le Worker refuse (HTTP 401) parce que le navigateur du banc "
+  "n'a aucun jeton d'identite — « Origin correct + aucun token -> refus » (decision actee)."
+  % _MUETS)
+
 # ── 2. AUCUNE CONVERSATION N'EST PUBLIEE ───────────────────────────────────────────────
 BRUT = json.dumps(R, ensure_ascii=False)
 for cle in ('"reply"', '"reponse"', '"content"', '"message"', '"historique"'):
