@@ -531,8 +531,8 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   Les deux options ont un piège mesuré, et un témoin fige l'état actuel pour qu'on ne tranche
   pas « en passant ».
   Tests : **B-CCCXXXVIII (17) + B-CCCXXXIX (23)**, banc ciblé **40 OK / 0 rouge**, **24/24
-  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète PASSE_TOTAL** sur
-  l'**arbre fusionné** réellement publié.
+  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète 4546 ✅ / 0 ❌**
+  sur l'**arbre fusionné** `5fdd7541`, **les 4 conditions vertes**.
   ⛔⛔ **LE NUMÉRO EST `ft-v1230`, PAS `ft-v1228` — seconde collision, et c'est la règle d'or #5.**
   Session-B a publié **son** `ft-v1228` pendant mes mesures, et il est **réellement servi**.
   *Republier un contenu différent sous un numéro de cache déjà servi laisserait sans mise à jour
