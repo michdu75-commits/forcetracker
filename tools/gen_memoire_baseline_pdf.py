@@ -47,8 +47,18 @@ def g(cond, msg):
 
 
 def git(*a):
+    # ⛔⛔ STDOUT SEUL QUAND LA COMMANDE REUSSIT — et la raison a ete vue, pas imaginee.
+    #     Cette fonction rendait `stdout + stderr` melanges. Sur un arbre sans `.git`,
+    #     `git diff --name-only` ECHOUE et crache sa PAGE D'AIDE : celle-ci partait alors
+    #     telle quelle dans la liste des « fichiers touches », et le dossier publiait
+    #     DEUX PAGES de documentation de git en se declarant produit avec succes.
+    #     👉 *Une commande qui echoue ne rend pas rien : elle rend autre chose — et ce qui
+    #     ressemble le plus a une donnee, c'est un message d'erreur bien forme.*
+    #     En cas d'echec on rend la sortie d'erreur pour le diagnostic, jamais comme donnee.
     r = subprocess.run(['git'] + list(a), cwd=ROOT, capture_output=True, text=True)
-    return r.returncode, (r.stdout + r.stderr).strip()
+    if r.returncode != 0:
+        return r.returncode, r.stderr.strip()
+    return 0, r.stdout.strip()
 
 
 def lire(p):
@@ -95,7 +105,13 @@ rc, liste = git('log', '--format=%h|%s', '%s..HEAD' % SHA_AVANT)
 COMMITS = [l.split('|', 1) for l in liste.split('\n') if '|' in l]
 g(CN or len(COMMITS) >= 3, 'moins de 3 commits depuis %s' % SHA_AVANT)
 rc, noms = git('diff', '--name-only', '%s..HEAD' % SHA_AVANT)
+# ⛔ UNE LISTE DE FICHIERS EST UNE LISTE DE CHEMINS. Sans ce garde, la sortie d'une commande
+#    en echec (ou toute prose) se glisse dans le tableau du dossier sans que rien ne proteste.
+g(CN or rc == 0, 'git diff a echoue : sa sortie ne doit JAMAIS servir de donnee (%r)' % noms[:80])
 TOUCHES = sorted(n for n in noms.split('\n') if n.strip())
+g(all(re.fullmatch(r'[\w./@+-]+', n) for n in TOUCHES),
+  'la liste des fichiers touches contient autre chose que des chemins : %r'
+  % [n for n in TOUCHES if not re.fullmatch(r'[\w./@+-]+', n)][:3])
 SERVIS = {'index.html', 'app.js', 'state.js', 'screens.js', 'log.js', 'coach.js',
           'setup.js', 'tracking.js', 'constants.js', 'style.css', 'sw.js',
           'supabase.js', 'capacites-ia.js', 'manifest.json'}
