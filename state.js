@@ -229,7 +229,8 @@ function _foodAiMigrer(){
    🧾 LA PROVENANCE DE `coachMemory` — arbitrage de Michel du 20/09/2026, OPTION B
    ══════════════════════════════════════════════════════════════════════════════════════
    ⛔⛔ CE QU'ON NE FAIT PAS, ET C'EST LA DÉCISION CENTRALE : `S.coachMemory` RESTE UNE
-   CHAÎNE. Mesuré avant d'écrire une ligne — elle traverse **19 sites**, dont le contrat
+   CHAÎNE. Mesuré avant d'écrire une ligne — elle traverse **19 lignes de code** (32
+   occurrences), dont le contrat
    réseau du Worker (`const memory = body.coachMemory || ''`, concaténé dans le prompt) et
    le nettoyeur de chaîne d'Apps Script (`_ps_`). *En faire un objet aurait injecté
    « [object Object] » dans le prompt de Milo* — exactement le recul que l'arbitrage

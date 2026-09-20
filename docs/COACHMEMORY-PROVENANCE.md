@@ -11,7 +11,9 @@
 
 ## 1. ⛔⛔ LA DÉCISION DE CONCEPTION : `coachMemory` RESTE UNE CHAÎNE
 
-**Mesuré avant d'écrire une ligne** : `S.coachMemory` traverse **19 sites**, dont deux
+**Mesuré avant d'écrire une ligne** : `S.coachMemory` traverse **19 lignes de code**
+(⚠️ **32 occurrences** — *un `grep` ne rend pas le même nombre, et c'est la ligne qui
+compte ici*), dont deux
 contrats qui n'appartiennent pas au client :
 
 | contrat | ce qu'il attend |
@@ -108,7 +110,9 @@ mutation `M11`.
 
 Elle disait que `coachMemory` *« double le nombre d'appels IA »*. **C'est vrai pour les
 APPELS** — 2 au lieu de 1 dès le 4ᵉ échange. ⛔ **Mais c'est faux pour le coût** : le résumé
-pèse **15 % du prix d'un message**, pas 100 %. *Haiku est bon marché et le contexte de Milo est
+pèse **15 % du coût total d'un échange** (0,0033 / 0,0222 $) — soit **17 % du prix du
+message de Milo seul** —, pas 100 %. ⚠️ *Les deux dénominateurs donnent deux nombres
+justes : celui qu'on publie doit dire lequel il emploie.* *Haiku est bon marché et le contexte de Milo est
 énorme : c'est lui qui coûte.*
 
 ### ⭐⭐ EN REVANCHE, LE QUOTA COMPTE LES APPELS, PAS LE PRIX — et là, ça double vraiment

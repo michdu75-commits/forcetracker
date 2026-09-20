@@ -460,7 +460,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   jamais inventer une provenance que nous ne connaissons pas »* et ⛔⛔ *« ne donne surtout
   pas à `coachMemory` le statut `validated` simplement parce qu'elle existe »*.
   ⛔⛔ **La décision de conception est qu'elle RESTE UNE CHAÎNE** : mesuré avant d'écrire une
-  ligne, elle traverse **19 sites** dont **deux contrats qui n'appartiennent pas au client**
+  ligne, elle traverse **19 lignes de code** (**32 occurrences**) dont **deux contrats qui n'appartiennent pas au client**
   (`worker.js` la concatène dans le prompt de Milo, `Code.js` la passe au nettoyeur de
   *chaîne* d'Apps Script). *En faire un objet aurait injecté « [object Object] » dans le
   prompt* — le recul que l'arbitrage interdit. La provenance vit donc **à côté**, dans

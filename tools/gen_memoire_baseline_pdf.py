@@ -66,7 +66,21 @@ def sans_commentaires(s):
 
 # ══ 1. L'ETAT ══════════════════════════════════════════════════════════════════════════
 rc, head = git('rev-parse', '--short=8', 'HEAD')
-g(rc == 0 and len(head) == 8, 'HEAD illisible')
+# ⛔⛔ CE `CN` A ETE AJOUTE APRES COUP, ET LA RAISON VAUT D'ETRE ECRITE ICI.
+#     Sans lui, le controle negatif ne mesurait RIEN : un arbre clone n'a pas de `.git`, donc
+#     CHAQUE mutation « refusait » pour la meme raison — « HEAD illisible » — avant d'avoir
+#     lu la moindre ligne de code. 17 mutations sont sorties « conformes » sans qu'aucun garde
+#     de fait ait ete sollicite. Verifie en lancant le generateur sur un clone NON MUTE : il
+#     refusait a l'identique.
+#     👉 *Un controle negatif dont toutes les mutations echouent au meme endroit ne prouve pas
+#     que les gardes mordent : il prouve qu'on n'est jamais arrive jusqu'a eux.* Ce sont les
+#     trois mutations attendues VERTES qui l'ont revele — c'est exactement pour ca qu'elles
+#     existent (famille « un controle negatif peut mentir », docs/SUIVI-AUDIT.md).
+#     ⛔ La neutralisation est DECLAREE et bornee aux gardes de git : ceux-la se verifient en
+#     conditions reelles, et ils l'ont fait (refus sur arbre sale, puis sur divergence).
+g(CN or (rc == 0 and len(head) == 8), 'HEAD illisible')
+if CN and (rc != 0 or len(head) != 8):
+    head = '0' * 8
 rc, sale = git('status', '--porcelain')
 g(CN or sale == '', 'arbre sale : le dossier declare un arbre propre')
 rc, branche = git('rev-parse', '--abbrev-ref', 'HEAD')
@@ -139,8 +153,15 @@ g('S.coachMemoryMeta=null' in SE, 'la restauration ne jette plus la fiche quand 
 _meta = re.search(r"S\.coachMemoryMeta=\{ v:COACH_MEM_SCHEMA, statut:'generated',", ST)
 g(_meta, 'la forme de la fiche a change')
 CLES = ['v', 'statut', 'moteur', 'date', 'source']
+# ⛔⛔ ON CHERCHE LA CLE DANS LA FICHE, PAS DANS TOUT state.js. Le garde disait
+#     `re.search(r'\bsource\s*:', ST)` : or « source: » existe AILLEURS dans le fichier, donc
+#     retirer la cle de la fiche elle-meme le laissait VERT (mutation M06 du controle negatif).
+#     👉 *Un garde qui cherche un mot dans tout un fichier ne mesure pas la structure qu'il
+#     pretend proteger.* On decoupe donc l'objet litteral et on n'interroge que lui.
+_POSEUR = ST[ST.index('function _coachMemPoserProvenance'):]
+_POSEUR = _POSEUR[:_POSEUR.index('};') + 2]
 for c in CLES:
-    g(re.search(r'\b%s\s*:' % c, ST), 'la cle %r a disparu de la fiche' % c)
+    g(re.search(r'\b%s\s*:' % c, _POSEUR), 'la cle %r a disparu de la fiche' % c)
 
 # les temoins
 tests = lire('tests/parcours/coach_memoire.js')
@@ -148,8 +169,14 @@ N_SRC = len(re.findall(r"t\('B-CCCXL ", tests))
 N_ECR = len(re.findall(r"t\('B-CCCXLI ", tests))
 g(N_SRC == 15 and N_ECR == 13,
   'temoins : %d source / %d ecran, on annonce 15 / 13' % (N_SRC, N_ECR))
-g("require('./coach_memoire.js')" in lire('tests/parcours/runner.js'),
-  'le bloc n est pas branche dans le runner : il ne tournerait jamais')
+# ⛔ LES DEUX BRANCHEMENTS, PAS UN SEUL. Le bloc est cable a DEUX endroits (`.ecran` et
+#    `.source`) : un garde qui cherche le nom une fois reste vert quand l'un des deux
+#    disparait — donc quand la moitie des temoins cesse de tourner, en silence (mutation M08).
+_RUN = lire('tests/parcours/runner.js')
+g("require('./coach_memoire.js').ecran(" in _RUN,
+  'le bloc CONDUIT n est plus branche dans le runner : ses 13 temoins ne tourneraient plus')
+g("require('./coach_memoire.js').source(" in _RUN,
+  'le bloc de SOURCE n est plus branche dans le runner : ses 15 temoins ne tourneraient plus')
 
 inv = json.loads(lire('tests/donnees/donnees-milo.json'))
 g('coachMemoryMeta' in inv['exclu'], 'coachMemoryMeta n est plus classee face a Milo (R4a)')
@@ -180,8 +207,22 @@ g('workflow_dispatch' in wf, 'le workflow du banc a perdu son declencheur manuel
 g(not re.search(r'^\s*push:', wf, flags=re.M),
   'LE WORKFLOW PART SUR PUSH : il brulerait le plafond et la facture sans que personne '
   'ne l ait demande')
-g('schedule' not in wf, 'le workflow a un declencheur programme')
-g('LANCER' in wf, 'la confirmation a taper a disparu')
+# ⛔⛔ ON CHERCHE UNE CLE YAML, PAS UN MOT. Ce garde disait `'schedule' not in wf` — or le
+#     commentaire du workflow EXPLIQUE son absence (« Pas de `push`, pas de `schedule` »), donc
+#     il rougissait sur un arbre parfaitement sain. Il n'avait jamais ete atteint : les gardes
+#     de git echouaient avant lui.
+#     👉 *Un garde qui interdit un MOT punit la phrase qui explique la decision* — et R30 exige
+#     justement que cette phrase soit ecrite la. Meme famille que le garde « en construction »
+#     corrige plus tot, et que le piege du sous-chaine n°1 de BUGS.md. On mesure le
+#     DECLENCHEUR, comme le fait deja le garde de `push:` juste au-dessus.
+g(not re.search(r'^\s*schedule:', wf, flags=re.M),
+  'le workflow a un declencheur programme')
+# ⛔ ON MESURE LA COMPARAISON, PAS LE MOT. « LANCER » apparait TROIS fois dans le workflow,
+#    dont deux dans de la prose (la description du champ et le message d'erreur) : le garde
+#    `'LANCER' in wf` restait donc vert alors meme que le test qui REFUSE avait disparu
+#    (mutation M14). Meme famille que le garde `schedule` corrige plus haut.
+g(re.search(r'!=\s*"LANCER"\s*\]', wf),
+  'la confirmation a taper a disparu : le workflow ne REFUSE plus sans elle')
 g('gen_banc_reference.py' in wf, 'le workflow n enregistre plus la reference')
 g(os.path.exists(os.path.join(ROOT, 'tools', 'gen_banc_reference.py')),
   'le generateur de la reference est absent')
@@ -340,13 +381,17 @@ story.append(PageBreak())
 # ── COACHMEMORY ───────────────────────────────────────────────────────────────────────
 h2('3. S.coachMemory &mdash; provenance posee (option B)')
 cle("<b>LA DECISION DE CONCEPTION : coachMemory RESTE UNE CHAINE.</b> Mesure avant d'ecrire une "
-    "ligne &mdash; elle traverse <b>19 sites</b>, dont deux contrats qui n'appartiennent pas au "
+    "ligne &mdash; elle traverse <b>19 lignes de code</b> (32 occurrences), dont deux contrats qui n'appartiennent pas au "
     "client : <i>worker.js</i> la concatene dans le prompt de Milo, et <i>Code.js</i> la passe au "
     "nettoyeur de CHAINE. <b>En faire un objet aurait injecte &laquo; [object Object] &raquo; dans "
     "le prompt</b> &mdash; le recul exact que l'arbitrage interdit. La provenance vit donc "
-    "<b>A COTE</b>, dans un champ neuf. ⭐ Ce n'est pas une duplication (R2) : l'un porte le TEXTE, "
-    "l'autre D'OU IL VIENT.".replace('⭐', ''))
-tab([['cle', 'valeur', 'quand'],
+    "<b>A COTE</b>, dans un champ neuf : <b>S.coachMemoryMeta</b>. Ce n'est pas une duplication "
+    "(R2) : <i>S.coachMemory</i> porte le TEXTE, <i>S.coachMemoryMeta</i> porte D'OU IL VIENT.")
+# [!!] LE NOM DU CHAMP EST ECRIT ICI PARCE QUE LE GARDE DE RELECTURE L'EXIGE, ET IL AVAIT
+#      RAISON : la page decrivait « un champ neuf » sans jamais le nommer. Un dossier de
+#      passation qui ne donne pas le nom oblige son lecteur a le chercher dans le code —
+#      c'est-a-dire a refaire le travail que le dossier existe pour lui epargner.
+tab([['cle (dans <b>S.coachMemoryMeta</b>)', 'valeur', 'quand'],
      ['<b>v</b>', '1', 'version du schema'],
      ['<b>statut</b>', "<b>generated</b> | <b>legacy</b>",
       "produite par le format actuel | elle existait avant, <b>on ne sait pas</b>"],

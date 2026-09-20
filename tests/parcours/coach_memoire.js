@@ -6,7 +6,7 @@
    donne surtout pas à coachMemory le statut `validated` simplement parce qu'elle existe ».
 
    ⛔⛔ CE QUE CES TÉMOINS PROTÈGENT AVANT TOUT : que `S.coachMemory` RESTE UNE CHAÎNE.
-   Elle traverse 19 sites, dont le contrat réseau du Worker (`body.coachMemory`, concaténé
+   Elle traverse 19 lignes de code (32 occurrences), dont le contrat réseau du Worker (`body.coachMemory`, concaténé
    dans le prompt) et le nettoyeur de chaîne d'Apps Script. En faire un objet injecterait
    « [object Object] » dans le prompt de Milo — un recul, pas un progrès.
 

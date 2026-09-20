@@ -7,7 +7,7 @@
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
     Généré le 2026-09-20.
 
-🔖  SOURCES : coach.js cbd09c5be667 · constants.js 9c8ff25b631e · state.js 08a9fa7b2fd6
+🔖  SOURCES : coach.js cbd09c5be667 · constants.js 9c8ff25b631e · state.js f3179407b3b4
     Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
     génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
     si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
@@ -373,7 +373,7 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est dimanche 20 septembre, il est 13h05 — c'est après-midi. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). 
+- On est dimanche 20 septembre, il est 13h31 — c'est après-midi. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). 
 
 
 
