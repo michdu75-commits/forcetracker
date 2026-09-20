@@ -514,7 +514,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   ⛔ **Aucune migration** : un % saisi à la virgule avant aujourd'hui reste tel quel — *on ne
   peut pas savoir lequel l'a été, donc on n'invente pas*.
   Tests : **B-CCCXXXVIII (10) + B-CCCXXXIX (18)**, banc ciblé **28 OK / 0 rouge**, **17/17
-  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète 4506 ✅ / 0 ❌**.
+  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète 4534 ✅ / 0 ❌**.
 - **Version précédente :** `ft-v1227` — 🧾 **LA PROVENANCE DE `S.coachMemory` —
   ET LA BORNE QUI COMPTE EST *PROVENANCE ≠ VALIDATION*.**
   Arbitrage de Michel (**option B**) : *« conserver `S.coachMemory`, mais lui ajouter une
