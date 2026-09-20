@@ -219,9 +219,20 @@ chk = lire('tools/check_regles.py')
 #      l'entete en « ANCIENNES SOURCES : ».
 #      *Un garde qui cherche une ETIQUETTE mesure le vocabulaire ; un garde qui cherche le
 #      MECANISME mesure la garantie.*
-g('_blob19' in chk and 'PÉRIMÉ' in chk,
-  'le controle de peremption du prompt a perdu son mecanisme (calcul d empreinte ou alerte)')
-g('sha1' in chk.lower(), "le controle n'emploie plus d'empreinte de contenu")
+# [!!] ON LE FAIT TOURNER, ON NE LE LIT PAS. Chercher « _blob19 » dans le texte
+#      retombait dans le meme piege : `_blob19_retire` CONTIENT `_blob19`, donc renommer
+#      la fonction laissait le garde vert. *La seule mesure qui ne peut pas etre trompee
+#      par un renommage est l'EXECUTION.* On lance le controle et on lit son verdict.
+g('_blob19' in chk, 'le controle de peremption du prompt a disparu de check_regles')
+_r19 = subprocess.run(['python3', os.path.join(ROOT, 'tools', 'check_regles.py')],
+                      cwd=ROOT, capture_output=True, text=True, timeout=180)
+_s19 = _r19.stdout + _r19.stderr
+g('prompt de référence' in _s19,
+  "check_regles ne rend plus aucun verdict sur le prompt de reference - le controle "
+  "existe peut-etre dans le fichier, mais il ne TOURNE pas")
+g('à jour' in _s19.split('prompt de référence')[1][:40],
+  'check_regles ne dit pas que le prompt de reference est a jour : %r'
+  % _s19.split('prompt de référence')[1][:90])
 fige = lire('docs/PROMPT-MILO-REEL.txt')
 _emp = re.search(r'SOURCES\s*:\s*((?:[\w.\-]+ [0-9a-f]{12}(?: \u00b7 )?)+)', fige)
 g(_emp, "le prompt fige ne porte plus d'empreinte lisible (fichier + 12 hexa)")
