@@ -82,14 +82,29 @@ même dossier renvoie à « décision **3** », « décision **4** », « décis
 
 ---
 
-## 3. ⛔ CE QUI N'EST PAS RETROUVÉ — **INTROUVABLE, ARBITRAGE MICHEL REQUIS**
+## 3. ⛔ CE QUI N'EST PAS RETROUVÉ — **NON DÉCIDÉ (arbitrage de Michel, 20/09/2026)**
 
 **14 décisions annoncées · 9 retrouvées · 5 manquantes.** Elles ne sont ni dans git, ni dans les
 journaux, ni dans les générateurs, ni dans aucun document du dépôt.
 
-⛔ **Elles ne sont pas reconstituées ici**, et c'est volontaire (**règle d'or #15** : le code dit ce
-qui EST, Michel décide ce qui DOIT ÊTRE ; **R16** : une supposition ne devient jamais une
-contrainte).
+### ⚖️ L'ARBITRAGE EST RENDU — Michel, 20/09/2026
+
+> ***« Ne plus présenter M1-M11 comme une série fiable de décisions de Michel. »***
+> Les 5 éléments introuvables ne doivent **ni être reconstruits de mémoire · ni être déduits · ni
+> être attribués à Michel · ni devenir des contraintes produit par héritage documentaire.**
+> Ils restent **NON DÉCIDÉS**, et redeviendront une question **le jour où le cas se présentera**.
+
+⭐ **Et la borne sur la forme, qui compte autant** : *« Ne renumérote pas artificiellement
+l'ensemble pour refaire une belle série M1-M14. **La vérité historique vaut plus qu'une
+numérotation propre.** »* Les étiquettes **M12, M13, M14** restent légitimes **là où elles sont
+prouvées** (`capacites-ia.js`) ; partout ailleurs, une décision se désigne par **son énoncé**.
+
+⛔ **Elles ne sont donc pas reconstituées ici**, et ce n'est plus seulement de la prudence : c'est
+une **contrainte du projet** (**règle d'or #15**).
+
+⚠️ **Ce que « non décidé » veut dire exactement, pour éviter la lecture facile** : ce n'est pas
+*« ça n'a pas d'importance »*, c'est *« personne ne peut dire aujourd'hui ce qui a été tranché »*.
+Un chantier qui a besoin de l'une de ces cinq réponses **doit la demander**, pas la supposer.
 
 ---
 
