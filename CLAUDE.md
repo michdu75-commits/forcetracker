@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1230`** (prochaine : `ft-v1231`).
+> **Version actuelle : `ft-v1231`** (prochaine : `ft-v1232`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,39 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1231 — ⚖️ LA MASSE GRASSE **MESURÉE** ET L'**ESTIMATION** US NAVY CESSENT D'ÊTRE LE MÊME CHAMP** — Michel ouvre le sujet après avoir validé ft-v1230 sur son téléphone (*« cou / taille / hanches sauvegardés après fermeture complète »*). Son principe : ⭐ ***« ces deux valeurs sont différentes par nature et ne doivent pas se remplacer l'une l'autre »***. Ses bornes : ⛔⛔ ***« je ne veux pas simplement changer deux textes dans l'interface si les deux valeurs restent mélangées dans les données — vérifie le MODÈLE réel »*** · ⛔ ***« si l'architecture stocke déjà correctement les deux séparément, ne crée pas une structure inutile »*** · ⛔ ***« pas de migration destructive »***.
+
+**⛔⛔ ELLES ÉTAIENT RÉELLEMENT CONFONDUES — MESURÉ AVANT D'ÉCRIRE UNE LIGNE, PAS DÉDUIT DE L'ÉCRAN.** `S.weightLog[].bf` était un champ **unique et sans provenance**, qui recevait indifféremment ce que la personne tape et le calcul US Navy. Conduit dans l'app servie, horloge gelée :
+
+| étape | estimation affichée | ⭐ **ce que contient la donnée** |
+|---|---|---|
+| cou 40,7 · taille 92,4 puis ✓ | ~19,6 % | `bf: 19.6` — ⛔ **une estimation enregistrée comme une mesure** |
+| il saisit **18,3 %** relevés sur sa balance | ~19,6 % | `bf: 18.3` ✅ |
+| il corrige son tour de taille (90) | ~17,9 % | ⛔⛔ **la case de saisie passe à 17,9** |
+| il appuie sur ✓ | ~17,9 % | ⛔⛔ **`bf: 17.9` — 18,3 A DISPARU** |
+
+👉 ***La valeur de la balance était écrasée sans un mot, et rien dans les données ne permettait de la retrouver.***
+
+**⭐⭐ LA CAUSE TENAIT EN SIX MOTS, ET C'ÉTAIT UNE SEULE LIGNE.** `_recalcNavyBf` finissait par `if(navy!=null){…i.value=navy;}` : l'estimation **s'écrivait dans le champ de saisie** à chaque frappe dans une mensuration. 👉 ***Une estimation qui s'écrit dans le champ de saisie CESSE d'être une estimation au premier ✓*** — plus rien ne la distingue de ce que la personne a tapé. Elle garde désormais **son propre affichage**, à côté et non dedans.
+
+**⭐⭐ LA CORRECTION DE DONNÉE EST UNE CLÉ À CÔTÉ, JAMAIS UNE MIGRATION.** `bfSrc` vaut `mesure` ou `estime` — et **son absence est une troisième réponse**, qui se lit *« on ne sait pas »*. ⛔ Les lignes d'avant gardent ce trou : on ne le comble pas par une valeur plausible (**règle d'or #16** — *une fausse précision est pire qu'un trou déclaré*). ⭐ **Ce n'est pas une duplication (R2)** : `bf` porte **le nombre**, `bfSrc` porte **sa nature** — c'est mot pour mot le patron de `coachMemoryMeta` en ft-v1227. ⛔ Et **rien n'est reclassé, rien n'est supprimé, aucun point de courbe n'est perdu**.
+
+**⛔⛔ LA GARANTIE DU BRIEF TIENT EN UNE PHRASE : une ESTIMATION ne peut écrire que sur un emplacement VIDE ou qui portait déjà une estimation.** ⚠️ Une provenance **inconnue** est donc **intouchable** — *elle peut parfaitement être une valeur de balance d'avant aujourd'hui, et le coût de l'erreur n'est pas symétrique* (**R29**) : refuser d'écraser une vieille estimation ne coûte rien, écraser une mesure réelle détruit une donnée. ⭐ Une **mesure**, elle, écrit toujours : c'est un acte explicite de la personne.
+
+**⭐ LES QUATRE ÉCRIVAINS DÉCLARENT TOUS LEUR PROVENANCE** — la carte, l'édition d'une pesée, le **bilan corporel** et l'**import de bilans**. *Un seul oubli et la donnée redevient muette là où on croit l'avoir rendue lisible.* ⛔ Et rouvrir une pesée **ne PROMEUT pas** une estimation en mesure : on ne requalifie que si le % a **réellement changé**. ⚠️ **Même piège attrapé à la sonde côté carte** : une ligne de provenance inconnue est préremplie, donc un ✓ machinal la promouvait en « mesure » — *on aurait fabriqué la provenance avec le mécanisme construit pour ne pas l'inventer*.
+
+**⚖️ D-013 EST TRANCHÉE PAR MICHEL → `D-014`.** Le champ **n'est prérempli que par une MESURE du jour consulté** — jamais par l'estimation, jamais par la valeur d'un autre jour. Sa raison, et elle est juste : ***un champ prérempli plus un ✓ machinal suffisaient à fabriquer une mesure que personne n'avait prise***. ⭐ Le parcours US Navy n'est pas perdu pour autant : un ✓ sur champ vide enregistre bien l'estimation — **étiquetée comme telle**.
+
+**📣 RÈGLE D'OR #11 — L'ÉCRAN CHANGE, ET C'EST VOULU.** Le sous-titre de la carte dit désormais les **deux** sans les mélanger : *« Estimation d'après tes mensurations : ~19,6 % · Dernière mesure saisie : 18,3 % — 20/09 »*. ⚠️ **Et le mot employé dépend de ce qu'on SAIT** : « mesure saisie » n'est dit que d'une ligne dont la provenance est écrite ; une ligne ancienne se dit « valeur notée ». *Un libellé plus précis que la donnée est un libellé faux.* ⚖️ **Pop-up : non** — rien n'est à *faire*, aucun repère ne bouge, et le changement ne peut que clarifier. ⭐ **Mais le champ qui ne se prérempli plus EST un repère qui bouge** : si Michel veut une ligne dans le Guide, elle est à ajouter — je ne la pose pas de moi-même.
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ **la formule US Navy ne bouge pas d'une constante**, homme et femme, figée par deux témoins · ⛔ **aucune migration, aucun champ supprimé, aucun point de courbe perdu** · ⛔ **aucune structure nouvelle** : une clé facultative s'ajoute, et elle part au cloud d'elle-même (`weightLog` est sérialisé en entier) · ⛔ **un champ VIDE ne vaut toujours pas « efface »** · ⛔ scanner, aliments, `foodLog`, Accueil, Séance, Milo, backend, Worker, quotas IA : **0 ligne** · ⛔ ni `app.js`, ni `state.js`, ni `screens.js`, ni `coach.js`, ni `setup.js`, ni `log.js`, ni `constants.js`, ni `index.html`, ni `Code.js`, ni `worker.js`, ni `supabase.js`.
+
+**⚠️ ET UN TÉMOIN À MOI A ROUGI SUR DU CODE PARFAITEMENT SAIN — LE PIÈGE DE L'ESPACE, 9ᵉ FOIS.** Mon motif cherchait `'Dernière mesure saisie'` dans une source dont je venais de retirer **tous** les espaces — y compris ceux **à l'intérieur des libellés**. 👉 ***Quand on nettoie la source, on nettoie le motif du même geste, sinon le garde mesure sa propre mise en forme.*** Et l'invariant juste n'était pas la forme du ternaire : c'est que **le choix du mot dépende de la provenance**, et que les deux libellés existent.
+
+Tests : **blocs B-CCCXLII (23 témoins de source) et B-CCCXLIII (26 conduits dans le navigateur)**, dans `tests/parcours/masse_grasse_source.js` — les **six cas A→F** du brief, plus le chemin direct de la garantie (**champ effacé + ✓**), une ligne **sans provenance**, une estimation rafraîchie par une estimation, une mesure qui écrase une estimation (sens autorisé), **le rechargement complet lu sur le DISQUE**, et **deux jours** qui coexistent. ⛔ **CONTRÔLE NÉGATIF : MUT_TOTAL**, banc sain **49 OK / 0 rouge avant ET après**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire) et ⭐ **quatre DÉGUISÉES** — la même écriture par `setAttribute`, un garde qui rouvre l'inconnu, une revalidation qui conserve à tort, et une provenance annoncée d'office. ⭐ **Passe complète : PASSE_TOTAL**.
+
+Fichiers : `tracking.js`, `tests/parcours/masse_grasse_source.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_masse_grasse.js` et `tools/mut_masse_grasse.py` (nouveaux), `docs/DECISIONS.md` (**D-013 → D-014**, plus **D-015**), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Un seul fichier servi : `tracking.js`.** sw.js ft-v1231. |
 
 **ft-v1230 — 📏 LES MENSURATIONS S'ENREGISTRENT · LE `persist()` MANQUANT SUR LA SORTIE « PAS DE POIDS »** — cas réel rapporté par Michel, Progrès → Corps & santé, carte « Masse grasse du jour » : poids 85,9 · objectif 85 · cou **40,7** · taille **92,4** · hanches **vide** · % auto ~19,6 — *« il renseigne ses mensurations et il ne peut pas les enregistrer »*. Ses bornes : ⛔ ***« ne profite PAS de cette session pour refaire l'écran, changer l'algorithme de masse grasse, le design, la nutrition, les quotas IA, Milo, ni rouvrir une décision actée »*** · ⛔ ***« petit bug → correction ciblée, R19 »*** · ⭐ ***« reproduire AVANT de corriger »***.
 
@@ -734,42 +767,3 @@ Tests : **blocs B-CCCXXXIV (23 témoins de source) et B-CCCXXXV (24 témoins con
 Tests : **blocs B-CCCXXXI (22 témoins), B-CCCXXXII (6) et B-CCCXXXIII (12)**, dans `tests/parcours/registre_ia.js` et `tests/parcours/quota_double.js`.
 
 Fichiers : `capacites-ia.js` (nouveau), `docs/IA-FREE-PREMIUM.md` (généré), `tools/gen_doc_ia.js` (nouveau), `Code.js` (**uniquement autour du quota**), `index.html` (**une balise**), `sw.js`, `tests/parcours/registre_ia.js` et `quota_double.js` (nouveaux), `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `worker.js`, ni `supabase.js`.** sw.js ft-v1224. |
-
-**ft-v1223 — 🩹 LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR · ET ILS ONT ÉTÉ VUS À L'ÉCRAN, PAS EN RELECTURE** — feu vert de Michel : ⭐ ***« corrige les deux défauts d'affichage »***.
-
-**⚠️⚠️ CE QUI LEUR DONNE LEUR POIDS : ILS SE SONT PRODUITS POUR DE VRAI, L'APRÈS-MIDI MÊME.** Apps Script est devenu injoignable (*« Le serveur répond : INJOIGNABLE, trop lent »*), et la carte Admin a annoncé **« identité refusée »** à quelqu'un dont le compte allait parfaitement bien. *Le chantier entier repose sur la phrase « dire à quelqu'un que son appareil est révoqué alors que le cloud est simplement tombé est une erreur qu'il va essayer de réparer lui-même » — et je l'avais commise un cran plus bas que là où je l'avais corrigée.*
-
-**⭐⭐ LA CORRECTION EST UNE LISTE BLANCHE, PAS UNE LISTE DE PANNES — et c'est tout le sujet.** La branche 401 ne traitait à part que `revoque` et `forme` ; `reseau`, `refus`, `erreur`, `illisible` tombaient dans un fourre-tout qui parlait d'identité. On énumère désormais ce qui **EST** un refus, et **tout le reste** est « serveur indisponible ».
-
-| raison rendue par le pont | avant | après |
-|---|---|---|
-| `reseau` · `refus` · `erreur` · `illisible` | ⛔ **« identité refusée »** | ✅ **« serveur indisponible »** |
-| une raison **jamais vue** | ⛔ « identité refusée » | ✅ **« serveur indisponible »** |
-| `revoque` | « appareil révoqué » | **inchangé** |
-| `forme` · `absent` · `inconnu` | partiel | **dits en clair, un par un** |
-
-👉 ***Une raison NOUVELLE est bien plus probablement une anomalie qu'un refus légitime***, et le coût de l'erreur n'est pas symétrique (**R29**) : dire « serveur indisponible » à un appareil vraiment révoqué est bénin — il verra que ça ne marche pas ; dire « identité refusée » pendant une panne envoie quelqu'un réparer ce qui n'est pas cassé. ⛔ Et `revoque` reste dit **en clair** : sans ça, la personne ne comprend pas pourquoi ses sauvegardes ont cessé de partir.
-
-**⭐ LA SONDE PORTAIT LE MÊME DÉFAUT, ET C'EST PIRE QU'UN SILENCE.** Elle affichait un **✅ triomphant** sur `raison : refus`, c'est-à-dire *pendant* la panne. *Un instrument qui annonce « tout va bien » pendant une panne est pire qu'un instrument muet.* Le ✅ n'est désormais mérité que sur un **vrai** refus.
-
-**⛔ DÉFAUT 2 — LE TEXTE DE LA CARTE (R23).** Il promettait encore *« le bouton écrit une ligne de test pour de vrai »* : vrai de l'**ancien** bouton, faux depuis la bascule où la sonde **n'écrit rien** — ce qui est précisément ce qui la rend sûre pendant une mesure. *J'avais changé le comportement sans changer le texte qui le décrit.*
-
-**⚠️⚠️ ET LE TROU DE MON BANC EST LA VRAIE LEÇON DE CETTE PASSE.** J'avais conduit 401/révoqué, 401/sans-jeton, 503, et la coupure réseau **du téléphone**. ⛔ **Jamais le 401 dont la raison est une panne du PONT.** 👉 ***Un cas qu'on n'écrit pas reste vert pour toujours*** — et celui-là a été trouvé par un vrai téléphone, pas par une relecture. Le bloc **B-CCCXXIX** le comble, **y compris avec une raison qu'on n'a pas prévue**.
-
-**⚠️ ET UN TÉMOIN A ROUGI SUR DU CODE PARFAITEMENT SAIN — DEUXIÈME FOIS, MÊME PIÈGE, MÊME FICHIER.** `B-CCCXXVI ⑮` cherchait le libellé de la révocation **dans la fonction**, or il a déménagé dans une table **au niveau du fichier**. La leçon était écrite **juste à côté**, dans `B-CCCXIV ③` de ft-v1217 : *« la LISTE vit au niveau du fichier, seul l'APPEL vit dans la fonction »*. 👉 ***Un garde doit chercher le fait LÀ OÙ IL SE TROUVE — et quand un fait déménage, c'est le garde qui suit, pas le code qui revient.***
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran utilisateur ne change : un texte d'**Admin** devient exact, et un message d'erreur d'**Admin** cesse de mentir.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **V2 n'est toujours pas fermée** · ⛔ les **deux voies réelles** (`pont` puis `directe`) restent à mesurer — elles attendent le retour d'Apps Script · ⛔ Nutrition, scanner, douane, `foodLog`, Accueil, Séance, Progrès, Milo : **0 ligne** · ⛔ ni `app.js`, ni `screens.js`, ni `state.js`, ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `constants.js`, ni `worker.js`, ni `Code.js`. Dans `index.html`, ma **seule** empreinte est la carte du miroir.
-
-**⛔ ET LES DEUX GÉNÉRATEURS DE PDF DES DOSSIERS PRÉCÉDENTS REFUSENT DÉSORMAIS DE PRODUIRE — C'EST VOULU.** Leurs **gardes à l'envers** interdisent de publier un dossier qui décrit un défaut **déjà corrigé** : *un dossier qui décrit un défaut réparé fait chercher quelque chose qui n'existe plus*. L'en-tête de chaque fichier le dit, pour que personne ne les « répare » (**R30**).
-
-**🕐 ET UNE TROISIÈME CORRECTION, TROUVÉE EN VÉRIFIANT UNE HYPOTHÈSE DE MICHEL PLUTÔT QU'EN CHERCHANT UN BUG.** Il propose que les échecs tombent *« au moment de la sauvegarde »*. ⛔ **Les horaires ne collent pas** — la sauvegarde démarre à **14:08**, les échecs sont à 13:40-13:59 — mais en le vérifiant, un vrai défaut apparaît : l'écran annonce **« 2× par jour (2h et 14h UTC) »**, et **c'est faux**. `appsscript.json` déclare `Europe/Paris`, et `.atHour()` suit le fuseau du **projet** : écart réel de **2 heures** en été.
-
-👉 ***Un libellé faux ne se contente pas d'être faux : il fait raisonner de travers ceux qui le lisent.*** En lisant « 14h UTC », j'avais d'abord placé ce passage à **16 h** — donc très loin des faits. C'est le **nom du fichier** (`backup-2026-09-18-14-08.json`, formaté en `Europe/Paris`) qui m'a rattrapé. Famille « fuseaux horaires » de `BUGS.md`, appliquée cette fois à un **message d'écran** et non à un calcul.
-
-⭐ **Et le fuseau est LU, jamais écrit à la main** (`Session.getScriptTimeZone`, **R2**) : poser « Paris » en dur reproduirait exactement le défaut un cran plus loin, en silence, le jour où la configuration change. ⛔ Repli honnête si le fuseau est illisible (« heure du serveur »), et ⛔ **les heures elles-mêmes ne bougent pas** — *on corrige ce qui est DIT, pas ce qui est FAIT*. ⚠️ **Pas de bump pour cette partie** : `Code.js` est du backend, déployé par `deploy-appsscript.yml`.
-
-Tests : **blocs B-CCCXXVIII (11 témoins de source) et B-CCCXXIX (11 témoins de comportement)**, dans `tests/parcours/s2b_bascule.js` — banc ciblé **71 OK / 0 rouge**. ⛔ **CONTRÔLE NÉGATIF : 28 mutations sur un arbre CLONÉ, 28 conformes**, dont **deux qui doivent RESTER VERTES**. ⭐ Plus le **bloc B-CCCXXX** (7 témoins, `tests/parcours/backup_fuseau.js`) et son contrôle négatif **9/9**, dont **deux vertes attendues** — un commentaire qui cite « UTC » et « Paris », *parce que R30 exige que la raison soit écrite juste à côté du code*.
-
-Fichiers : `supabase.js`, `index.html` (**la seule carte du miroir**), `Code.js` (**uniquement autour de `BACKUP_HOURS_`**), `tests/parcours/backup_fuseau.js` (nouveau), `tools/mut_backup_fuseau.py` (nouveau), `tests/parcours/s2b_bascule.js`, `tools/mut_s2b_bascule.py`, `tools/gen_s2b_essai_iphone_pdf.py` et `tools/gen_s2b_panne_appsscript_pdf.py` (en-tête « périmé »), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1223. |

@@ -9712,3 +9712,42 @@ Fichiers : `app.js`, `index.html`, `screens.js` (bloc **Nutrition** uniquement, 
 Tests : **blocs B-CCCXXVI (24 témoins de source) et B-CCCXXVII (25 témoins de comportement)**, dans `tests/parcours/s2b_bascule.js`. ⭐ Le banc de comportement charge le **vrai `supabase.js`** ET le **vrai injecteur découpé dans `constants.js`** — *un banc qui rejouerait ma réécriture de l'injecteur validerait ma réécriture, pas la production*. ⛔ **CONTRÔLE NÉGATIF : 22 mutations sur un arbre CLONÉ, 22 conformes**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire). ⭐ **Passe complète : 4348 ✅ / 0 ❌** (`RC=0`, le runner a fini). ⚠️ **Un rouge ANTÉRIEUR est signalé et NON corrigé** : la suite `tests/dates` rend **8/9**, et elle rendait **déjà 8/9 avant** cette passe — vérifié en la rejouant sur l'arbre publié. Sa cause est une fixture datée en **temps universel** dans un bloc Nutrition, sans rapport avec la bascule : elle appartient à un autre chantier, donc elle se **dit** au lieu de se corriger au passage.
 
 Fichiers : `supabase.js`, `setup.js` (**une ligne**), `app.js` (**uniquement `loadSbAdmin`**), `tests/parcours/s2b_bascule.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_s2b_bascule.js` (nouveau), `tools/mut_s2b_bascule.py` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1222. |
+
+**ft-v1223 — 🩹 LES DEUX DÉFAUTS D'AFFICHAGE DU MIROIR · ET ILS ONT ÉTÉ VUS À L'ÉCRAN, PAS EN RELECTURE** — feu vert de Michel : ⭐ ***« corrige les deux défauts d'affichage »***.
+
+**⚠️⚠️ CE QUI LEUR DONNE LEUR POIDS : ILS SE SONT PRODUITS POUR DE VRAI, L'APRÈS-MIDI MÊME.** Apps Script est devenu injoignable (*« Le serveur répond : INJOIGNABLE, trop lent »*), et la carte Admin a annoncé **« identité refusée »** à quelqu'un dont le compte allait parfaitement bien. *Le chantier entier repose sur la phrase « dire à quelqu'un que son appareil est révoqué alors que le cloud est simplement tombé est une erreur qu'il va essayer de réparer lui-même » — et je l'avais commise un cran plus bas que là où je l'avais corrigée.*
+
+**⭐⭐ LA CORRECTION EST UNE LISTE BLANCHE, PAS UNE LISTE DE PANNES — et c'est tout le sujet.** La branche 401 ne traitait à part que `revoque` et `forme` ; `reseau`, `refus`, `erreur`, `illisible` tombaient dans un fourre-tout qui parlait d'identité. On énumère désormais ce qui **EST** un refus, et **tout le reste** est « serveur indisponible ».
+
+| raison rendue par le pont | avant | après |
+|---|---|---|
+| `reseau` · `refus` · `erreur` · `illisible` | ⛔ **« identité refusée »** | ✅ **« serveur indisponible »** |
+| une raison **jamais vue** | ⛔ « identité refusée » | ✅ **« serveur indisponible »** |
+| `revoque` | « appareil révoqué » | **inchangé** |
+| `forme` · `absent` · `inconnu` | partiel | **dits en clair, un par un** |
+
+👉 ***Une raison NOUVELLE est bien plus probablement une anomalie qu'un refus légitime***, et le coût de l'erreur n'est pas symétrique (**R29**) : dire « serveur indisponible » à un appareil vraiment révoqué est bénin — il verra que ça ne marche pas ; dire « identité refusée » pendant une panne envoie quelqu'un réparer ce qui n'est pas cassé. ⛔ Et `revoque` reste dit **en clair** : sans ça, la personne ne comprend pas pourquoi ses sauvegardes ont cessé de partir.
+
+**⭐ LA SONDE PORTAIT LE MÊME DÉFAUT, ET C'EST PIRE QU'UN SILENCE.** Elle affichait un **✅ triomphant** sur `raison : refus`, c'est-à-dire *pendant* la panne. *Un instrument qui annonce « tout va bien » pendant une panne est pire qu'un instrument muet.* Le ✅ n'est désormais mérité que sur un **vrai** refus.
+
+**⛔ DÉFAUT 2 — LE TEXTE DE LA CARTE (R23).** Il promettait encore *« le bouton écrit une ligne de test pour de vrai »* : vrai de l'**ancien** bouton, faux depuis la bascule où la sonde **n'écrit rien** — ce qui est précisément ce qui la rend sûre pendant une mesure. *J'avais changé le comportement sans changer le texte qui le décrit.*
+
+**⚠️⚠️ ET LE TROU DE MON BANC EST LA VRAIE LEÇON DE CETTE PASSE.** J'avais conduit 401/révoqué, 401/sans-jeton, 503, et la coupure réseau **du téléphone**. ⛔ **Jamais le 401 dont la raison est une panne du PONT.** 👉 ***Un cas qu'on n'écrit pas reste vert pour toujours*** — et celui-là a été trouvé par un vrai téléphone, pas par une relecture. Le bloc **B-CCCXXIX** le comble, **y compris avec une raison qu'on n'a pas prévue**.
+
+**⚠️ ET UN TÉMOIN A ROUGI SUR DU CODE PARFAITEMENT SAIN — DEUXIÈME FOIS, MÊME PIÈGE, MÊME FICHIER.** `B-CCCXXVI ⑮` cherchait le libellé de la révocation **dans la fonction**, or il a déménagé dans une table **au niveau du fichier**. La leçon était écrite **juste à côté**, dans `B-CCCXIV ③` de ft-v1217 : *« la LISTE vit au niveau du fichier, seul l'APPEL vit dans la fonction »*. 👉 ***Un garde doit chercher le fait LÀ OÙ IL SE TROUVE — et quand un fait déménage, c'est le garde qui suit, pas le code qui revient.***
+
+**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran utilisateur ne change : un texte d'**Admin** devient exact, et un message d'erreur d'**Admin** cesse de mentir.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔⛔ **V2 n'est toujours pas fermée** · ⛔ les **deux voies réelles** (`pont` puis `directe`) restent à mesurer — elles attendent le retour d'Apps Script · ⛔ Nutrition, scanner, douane, `foodLog`, Accueil, Séance, Progrès, Milo : **0 ligne** · ⛔ ni `app.js`, ni `screens.js`, ni `state.js`, ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `constants.js`, ni `worker.js`, ni `Code.js`. Dans `index.html`, ma **seule** empreinte est la carte du miroir.
+
+**⛔ ET LES DEUX GÉNÉRATEURS DE PDF DES DOSSIERS PRÉCÉDENTS REFUSENT DÉSORMAIS DE PRODUIRE — C'EST VOULU.** Leurs **gardes à l'envers** interdisent de publier un dossier qui décrit un défaut **déjà corrigé** : *un dossier qui décrit un défaut réparé fait chercher quelque chose qui n'existe plus*. L'en-tête de chaque fichier le dit, pour que personne ne les « répare » (**R30**).
+
+**🕐 ET UNE TROISIÈME CORRECTION, TROUVÉE EN VÉRIFIANT UNE HYPOTHÈSE DE MICHEL PLUTÔT QU'EN CHERCHANT UN BUG.** Il propose que les échecs tombent *« au moment de la sauvegarde »*. ⛔ **Les horaires ne collent pas** — la sauvegarde démarre à **14:08**, les échecs sont à 13:40-13:59 — mais en le vérifiant, un vrai défaut apparaît : l'écran annonce **« 2× par jour (2h et 14h UTC) »**, et **c'est faux**. `appsscript.json` déclare `Europe/Paris`, et `.atHour()` suit le fuseau du **projet** : écart réel de **2 heures** en été.
+
+👉 ***Un libellé faux ne se contente pas d'être faux : il fait raisonner de travers ceux qui le lisent.*** En lisant « 14h UTC », j'avais d'abord placé ce passage à **16 h** — donc très loin des faits. C'est le **nom du fichier** (`backup-2026-09-18-14-08.json`, formaté en `Europe/Paris`) qui m'a rattrapé. Famille « fuseaux horaires » de `BUGS.md`, appliquée cette fois à un **message d'écran** et non à un calcul.
+
+⭐ **Et le fuseau est LU, jamais écrit à la main** (`Session.getScriptTimeZone`, **R2**) : poser « Paris » en dur reproduirait exactement le défaut un cran plus loin, en silence, le jour où la configuration change. ⛔ Repli honnête si le fuseau est illisible (« heure du serveur »), et ⛔ **les heures elles-mêmes ne bougent pas** — *on corrige ce qui est DIT, pas ce qui est FAIT*. ⚠️ **Pas de bump pour cette partie** : `Code.js` est du backend, déployé par `deploy-appsscript.yml`.
+
+Tests : **blocs B-CCCXXVIII (11 témoins de source) et B-CCCXXIX (11 témoins de comportement)**, dans `tests/parcours/s2b_bascule.js` — banc ciblé **71 OK / 0 rouge**. ⛔ **CONTRÔLE NÉGATIF : 28 mutations sur un arbre CLONÉ, 28 conformes**, dont **deux qui doivent RESTER VERTES**. ⭐ Plus le **bloc B-CCCXXX** (7 témoins, `tests/parcours/backup_fuseau.js`) et son contrôle négatif **9/9**, dont **deux vertes attendues** — un commentaire qui cite « UTC » et « Paris », *parce que R30 exige que la raison soit écrite juste à côté du code*.
+
+Fichiers : `supabase.js`, `index.html` (**la seule carte du miroir**), `Code.js` (**uniquement autour de `BACKUP_HOURS_`**), `tests/parcours/backup_fuseau.js` (nouveau), `tools/mut_backup_fuseau.py` (nouveau), `tests/parcours/s2b_bascule.js`, `tools/mut_s2b_bascule.py`, `tools/gen_s2b_essai_iphone_pdf.py` et `tools/gen_s2b_panne_appsscript_pdf.py` (en-tête « périmé »), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1223. |

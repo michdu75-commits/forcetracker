@@ -491,7 +491,33 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1230` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
+- **Version en ligne (live) :** `ft-v1231` — ⚖️ **LA MASSE GRASSE MESURÉE ET L'ESTIMATION
+  US NAVY CESSENT D'ÊTRE LE MÊME CHAMP.** Michel : *« ces deux valeurs sont différentes par
+  nature et ne doivent pas se remplacer l'une l'autre »* · ⛔⛔ *« je ne veux pas simplement
+  changer deux textes dans l'interface si les deux valeurs restent mélangées dans les
+  données — vérifie le MODÈLE réel »*.
+  ⛔⛔ **Elles étaient réellement confondues, mesuré en conduisant l'app** : `weightLog[].bf`
+  était un champ **unique et sans provenance**. Balance **18,3 %** enregistrée → tour de
+  taille corrigé → ✓ → la ligne valait **17,9 %**. *La valeur de la balance disparaissait
+  sans un mot.*
+  ⭐⭐ **La cause tenait en six mots** : `_recalcNavyBf` écrivait l'estimation **dans la case
+  de saisie** (`i.value=navy`). *Une estimation qui s'écrit dans le champ de saisie cesse
+  d'être une estimation au premier ✓.*
+  ⭐ **La correction est une clé à côté, jamais une migration** : `bfSrc` vaut `mesure` ou
+  `estime`, et **son absence se lit « on ne sait pas »** — les lignes d'avant gardent ce trou
+  (règle d'or #16). Patron de `coachMemoryMeta`, ft-v1227.
+  ⛔⛔ **La garantie** : une estimation n'écrit que sur un emplacement **vide ou déjà estimé** ;
+  une provenance **inconnue** est **intouchable** (R29 — le coût de l'erreur n'est pas
+  symétrique). Une **mesure**, elle, écrit toujours.
+  ⚖️ **`D-013` est tranchée par Michel → `D-014`** : le champ n'est prérempli que par une
+  **mesure du jour consulté**. *Un champ prérempli + un ✓ machinal fabriquaient une mesure que
+  personne n'avait prise.*
+  📣 **L'écran dit les deux sans les mélanger** : *« Estimation d'après tes mensurations :
+  ~19,6 % · Dernière mesure saisie : 18,3 % — 20/09 »* — et « mesure saisie » n'est dit que si
+  la provenance est **écrite**.
+  Tests : **B-CCCXLII (23) + B-CCCXLIII (26)**, les 6 cas A→F du brief, banc ciblé **49 OK /
+  0 rouge**, contrôle négatif **MUT_TOTAL**, passe complète **PASSE_TOTAL**.
+- **Version précédente :** `ft-v1230` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
   `persist()` MANQUANT SUR LA SORTIE « PAS DE POIDS ».** Cas réel de Michel (Progrès → Corps &
   santé) : cou **40,7**, taille **92,4**, hanches vide — *« je les renseigne et je ne peux pas
   les enregistrer »*.

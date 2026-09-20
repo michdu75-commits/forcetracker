@@ -784,12 +784,22 @@ function _navyBfHtml(){
   const navy=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
   return navy==null?'<span style="font-size:12px;color:var(--t3);">— (renseigne cou + taille)</span>':('~'+navy+' %');
 }
-// Recalcule à chaque saisie de mesure ET remplit automatiquement la case « Masse grasse du jour »
+/* ═══ L'ESTIMATION SE MET À JOUR, ELLE NE REMPLIT PLUS LA CASE (ft-v1231) ═════════════════
+   ⛔⛔ CETTE LIGNE ÉTAIT LA CAUSE, ET ELLE TENAIT EN SIX MOTS : `if(navy!=null){…i.value=navy;}`.
+   Mesuré en conduisant l'app : quelqu'un saisit **18,3 %** relevés sur sa balance, appuie sur ✓
+   (`weightLog` = `bf:18.3`), puis corrige son tour de taille — la frappe rappelait cette
+   fonction, qui **écrasait 18,3 par le calcul**, et le ✓ suivant enregistrait l'estimation
+   par-dessus la mesure. ***La valeur de la balance disparaissait sans un mot.***
+   👉 ***Une estimation qui s'écrit dans le champ de saisie CESSE d'être une estimation au
+   premier ✓*** : plus rien ne la distingue de ce que la personne a tapé.
+   ⭐ L'estimation garde son propre affichage (`#bf-navy-val`), à côté et non dedans — c'est la
+   demande de Michel : *« les deux peuvent être différentes, c'est normal, ne cherche pas à les
+   faire correspondre »*. Le parcours « je tape mes centimètres puis ✓ » marche toujours :
+   `saveBodyFat` prend l'estimation quand la case est VIDE, et l'enregistre comme telle. */
 function _recalcNavyBf(){
   const neck=(document.getElementById('bf-neck')||{}).value,waist=(document.getElementById('bf-waist')||{}).value,hip=(document.getElementById('bf-hip')||{}).value;
   const navy=_bfNavy(neck,waist,hip,S.height,S.gender);
   const el=document.getElementById('bf-navy-val');if(el)el.innerHTML=navy==null?'<span style="font-size:12px;color:var(--t3);">—</span>':('~'+navy+' %');
-  if(navy!=null){const i=document.getElementById('bf-inp');if(i)i.value=navy;}
 }
 /* ═══ LA DERNIÈRE MASSE GRASSE RÉELLEMENT ENREGISTRÉE ════════════════════════════════════
    ⛔ Propriétaire UNIQUE de la question « quelle est sa dernière mesure ? » (R2) — il n'en
@@ -810,11 +820,34 @@ function _bfJourCourt(iso){
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
   return m?(m[3]+'/'+m[2]):String(iso||'');
 }
+/* ═══ 🏷️ LA PROVENANCE D'UNE MASSE GRASSE (ft-v1231) ═════════════════════════════════════
+   ⛔⛔ DEUX VALEURS SEULEMENT, ET AUCUNE NE PRÉTEND À CE QU'ON NE SAIT PAS :
+     · `mesure` — elle vient d'un APPAREIL ou d'une saisie : balance, pince, bilan corporel ;
+     · `estime` — elle vient du CALCUL US Navy sur les mensurations.
+   ⛔ Et **l'absence est une troisième réponse**, qui se lit « on ne sait pas » : toutes les
+   lignes d'avant aujourd'hui n'ont pas de provenance, et ***on ne l'invente pas*** (règle d'or
+   #16 — *une fausse précision est pire qu'un trou déclaré*). C'est exactement le patron de
+   `coachMemoryMeta` en ft-v1227 : la valeur d'un côté, d'où elle vient de l'autre.
+   ⭐ CE N'EST PAS UNE DUPLICATION (R2) : `bf` porte LE NOMBRE, `bfSrc` porte SA NATURE — deux
+   informations distinctes, deux propriétaires. ⛔ Et AUCUNE MIGRATION : on n'écrit rien sur les
+   lignes existantes, on ne les reclasse pas, on ne les supprime pas. */
+const BF_MESURE='mesure', BF_ESTIME='estime';
+/* ⛔⛔ LA RÈGLE QUI PROTÈGE LA BALANCE, EN UNE PHRASE : une ESTIMATION ne peut écrire que dans
+   un emplacement VIDE ou qui portait déjà une estimation. ⚠️ Une provenance INCONNUE est donc
+   traitée comme intouchable — *elle peut parfaitement être une valeur de balance d'avant
+   aujourd'hui, et le coût de l'erreur n'est pas symétrique* (R29) : refuser d'écraser une
+   estimation ancienne ne coûte rien, écraser une mesure réelle détruit une donnée. */
+function _bfRemplacableParEstime(e){ return !e || e.bf==null || e.bfSrc===BF_ESTIME; }
 function bfDerniere(avantJour){
-  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date
+  /* ⛔ ON CHERCHE LA DERNIÈRE VALEUR QUI N'EST PAS UNE ESTIMATION. L'estimation, elle, est déjà
+     affichée en direct juste à côté : la rappeler comme « dernière notée » ferait croire à une
+     deuxième mesure là où il n'y en a qu'une, recalculée. */
+  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date&&w.bfSrc!==BF_ESTIME
               &&(!avantJour||String(w.date)<String(avantJour)))
     .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  return l.length?{date:l[0].date,bf:l[0].bf}:null;
+  /* ⭐ ET ON REND LA PROVENANCE AVEC LA VALEUR, pour que l'écran puisse être exact : `mesure`
+     se dit « mesure saisie », une provenance absente se dit « valeur notée » — jamais l'inverse. */
+  return l.length?{date:l[0].date,bf:l[0].bf,src:l[0].bfSrc||null}:null;
 }
 function renderBodyFatCard(){
   const el=document.getElementById('bodyfat-card');if(!el)return;
@@ -823,8 +856,16 @@ function renderBodyFatCard(){
   const isF=S.gender==='F';
   const savedToday=(todayW&&todayW.bf!=null);
   const navyNow=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
-  // Case pré-remplie : valeur enregistrée du jour, sinon calcul US Navy (prêt à valider)
-  const prefill=savedToday?todayW.bf:(navyNow!=null?navyNow:'');
+  /* ⚖️ D-013 EST TRANCHÉE (Michel, 20/09/2026) — *« si une valeur manuelle existe pour le jour
+     consulté, le champ peut afficher cette valeur ; s'il n'existe aucune valeur manuelle pour ce
+     jour, ne préremplis pas le champ »*. La case ne porte donc QUE ce qui a été mesuré
+     aujourd'hui, jamais l'estimation et jamais la valeur d'un autre jour.
+     👉 ***C'est ce qui empêche de dater d'aujourd'hui une mesure qui n'a pas été faite
+     aujourd'hui*** : un champ prérempli + un ✓ machinal suffisaient à fabriquer une mesure que
+     personne n'a prise. ⛔ L'estimation ne disparaît pas pour autant — elle vit en clair, à sa
+     place, sous « Calcul auto ». */
+  const mesureDuJour=(savedToday&&todayW.bfSrc!==BF_ESTIME);
+  const prefill=mesureDuJour?todayW.bf:'';
   /* ⛔⛔ « JE N'AI PAS LA VALEUR PRÉCÉDENTE. J'AI SYSTÉMATIQUEMENT 20.7 » (Christophe, 20/09).
      Mesuré en conduisant l'app sur DEUX jours : le jour J il saisit 19,1, l'app l'enregistre et
      la réaffiche après rechargement ; le jour J+1 elle propose **21,8** — le calcul US Navy de
@@ -839,11 +880,23 @@ function renderBodyFatCard(){
      ⛔ ON NE CHANGE PAS CE QUI EST PRÉREMPLI : les deux options ont un piège mesuré (proposer la
      valeur d'hier la ferait dater d'aujourd'hui au premier ✓ ; partir vide perdrait le parcours
      US Navy). C'est une décision produit, elle appartient à Michel — `docs/DECISIONS.md`. */
-  const _prec=bfDerniere(savedToday?d:null);
-  const _rappel=_prec?(' · dernière notée : '+_prec.bf+' % le '+_bfJourCourt(_prec.date)):'';
-  const sub=savedToday?('✓ Enregistrée : '+todayW.bf+' %'+_rappel)
-    :(navyNow!=null?('Estimée ~'+navyNow+' % d\'après tes mesures'+_rappel)
-    :('Entre ton cou et ta taille ci-dessous'+_rappel));
+  /* ⭐⭐ LES DEUX LIGNES NE SE REMPLACENT PLUS, ELLES COEXISTENT — c'est la demande de Michel,
+     mot pour mot : *« Estimation d'après tes mensurations : ~19,6 % »* et, quand elle existe,
+     *« Dernière mesure saisie : 18,4 % — 20/09 »*. ⛔ *« Les deux peuvent être différentes :
+     c'est normal. Ne cherche pas à les faire correspondre. »*
+     ⚠️ ET LE MOT EMPLOYÉ DÉPEND DE CE QU'ON SAIT : « mesure saisie » n'est dit que d'une ligne
+     dont la provenance est écrite ; une ligne d'avant aujourd'hui se dit « valeur notée », parce
+     qu'on ignore comment elle a été obtenue. *Un libellé plus précis que la donnée est un
+     libellé faux* (règle d'or #16). */
+  const _prec=bfDerniere(mesureDuJour?d:null);
+  const _motPrec=(_prec&&_prec.src===BF_MESURE)?'Dernière mesure saisie':'Dernière valeur notée';
+  const _rappel=_prec?(' · '+_motPrec+' : '+_prec.bf+' % — '+_bfJourCourt(_prec.date)):'';
+  const _estim=navyNow!=null?('Estimation d\'après tes mensurations : ~'+navyNow+' %')
+                            :'Entre ton cou et ta taille ci-dessous';
+  /* ⛔ Quand la mesure du jour existe, elle passe DEVANT — c'est elle que la personne vient de
+     déclarer — mais l'estimation reste dite, jamais effacée. */
+  const sub=mesureDuJour?('✓ Mesure du jour : '+todayW.bf+' % · '+_estim+_rappel)
+    :(_estim+_rappel);
   el.innerHTML=
     '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">'
      +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">Masse grasse du jour</div>'
@@ -855,7 +908,7 @@ function renderBodyFatCard(){
     +'</div>'
     +'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">'
-        +'<span style="font-size:12px;color:var(--t3);">Calcul auto (méthode US Navy) — remplit la case ci-dessus</span>'
+        +'<span style="font-size:12px;color:var(--t3);">Estimation auto (méthode US Navy) — <b>ne remplace pas</b> ta mesure</span>'
         +'<span id="bf-navy-val" style="font-size:14px;font-weight:800;color:var(--blue);">'+_navyBfHtml()+'</span>'
       +'</div>'
       +'<div style="display:flex;gap:6px;">'
@@ -931,7 +984,14 @@ function _mensEnregistrerSaisie(){
 function saveBodyFat(){
   // Mensurations saisies (aussi utilisées pour le calcul US Navy de secours)
   const nk=numFR((document.getElementById('bf-neck')||{}).value),wa=numFR((document.getElementById('bf-waist')||{}).value),hp=numFR((document.getElementById('bf-hip')||{}).value);
-  let bf=numFR((document.getElementById('bf-inp')||{}).value);
+  /* ⭐⭐ ON RETIENT D'OÙ VIENT LE NOMBRE, ET ÇA SE DÉCIDE ICI — pas plus bas.
+     Ce que la personne a TAPÉ est une mesure ; ce que le calcul US Navy fournit en repli est une
+     estimation. ⛔ Avant, les deux arrivaient par la même variable et rien ne les distinguait :
+     `_recalcNavyBf` écrivait l'estimation DANS la case, donc au ✓ elle était indiscernable
+     d'une valeur de balance. *Deux natures dans un seul champ, c'est une seule nature.* */
+  const _brutBf=String(((document.getElementById('bf-inp')||{}).value)||'').trim();
+  let bf=numFR(_brutBf);
+  let bfSrc=(_brutBf&&bf)?BF_MESURE:null;
   /* ⛔⛔ LES CENTIMÈTRES SONT ENREGISTRÉS **AVANT** TOUT CONTRÔLE SUR LE % — c'est le correctif
      de la version, et il tient à l'ORDRE de ces lignes. Avant, le `return` qui refuse un %
      invalide arrivait AVANT `S.neck=nk` : taper **le cou seul** rendait « Entre un % ou tes
@@ -940,8 +1000,8 @@ function saveBodyFat(){
      (règle d'or #3, appliquée à autre chose qu'une séance). Le % redevient une CONSÉQUENCE,
      jamais une condition. */
   const _nMens=_mensEnregistrerSaisie();
-  // Rien tapé à la main → on prend directement le calcul US Navy des mesures
-  if(!bf){const navy=_bfNavy(nk||S.neck,wa||S.waist,hp||S.hip,S.height,S.gender);if(navy!=null)bf=navy;}
+  // Rien tapé à la main → on prend le calcul US Navy des mesures, ET ON LE DIT (bfSrc=estime)
+  if(!bf){const navy=_bfNavy(nk||S.neck,wa||S.waist,hp||S.hip,S.height,S.gender);if(navy!=null){bf=navy;bfSrc=BF_ESTIME;}}
   if(!bf||bf<2||bf>70){
     /* ⭐ ET LE MESSAGE DIT CE QUI A ÉTÉ GARDÉ. Un « erreur » sec après une saisie sauvegardée
        ferait croire que tout est perdu — la personne retaperait, ou abandonnerait. */
@@ -983,14 +1043,38 @@ function saveBodyFat(){
     }
     e={date:d,kg:kg};S.weightLog.unshift(e);
   }
+  /* ⛔⛔ LE CŒUR DU CHANTIER : UNE ESTIMATION N'ÉCRASE JAMAIS UNE MESURE.
+     Cas mesuré avant correction — 18,3 % relevés sur la balance, puis un tour de taille corrigé :
+     le ✓ suivant enregistrait **17,9 %**, l'estimation, par-dessus. *Silencieusement, et sans
+     qu'aucune trace ne permette de retrouver 18,3.*
+     ⭐ La mesure, elle, écrit toujours : c'est un acte explicite de la personne. */
+  if(bfSrc===BF_ESTIME&&!_bfRemplacableParEstime(e)){
+    persist();renderWeightTab();
+    /* ⭐ ET ON LE DIT PLUTÔT QUE DE SE TAIRE. Un ✓ qui ne change rien et n'explique rien fait
+       appuyer une deuxième fois, puis douter de l'app (R24 : informer sans bloquer). */
+    toast('Mesure du jour conservée ('+e.bf+' %) — l\'estimation ne la remplace pas','info');
+    return;
+  }
+  /* ⚠️ ET UNE VALEUR QU'ON REVALIDE SANS LA CHANGER NE CHANGE PAS DE NATURE — defaut attrape a
+     la sonde, pas en relecture : une ligne de provenance INCONNUE (d'avant aujourd'hui) est
+     preremplie dans la case, donc un ✓ machinal la promouvait en « mesure ». *On aurait fabrique
+     la provenance avec le mecanisme construit pour ne pas l'inventer* (regle d'or #16 — c'est mot
+     pour mot le piege de la fiche de `coachMemory` en ft-v1227). Appuyer sur ✓ sans rien modifier
+     n'apprend rien sur l'origine du nombre : on garde ce qu'on savait, fut-ce rien. */
+  const _memeValeur=(e.bf!=null&&Math.round(bf*10)/10===e.bf);
+  const _garderSrc=(_memeValeur&&bfSrc===BF_MESURE&&e.bfSrc!==BF_ESTIME);
   e.bf=Math.round(bf*10)/10;
+  if(!_garderSrc) e.bfSrc=bfSrc||BF_MESURE;
   /* ⛔ LA MÉMORISATION DES CENTIMÈTRES A DISPARU D'ICI, ET C'EST VOULU (R2) : elle est faite
      plus haut par `_mensEnregistrerSaisie` → `mensAjouter`, qui est désormais le SEUL endroit
      qui écrit une mensuration. *Deux endroits qui enregistrent la même mesure finiraient avec
      deux jeux de bornes* — c'était déjà le cas : `>20 && <80` ici, `MENS_DEFS` là-bas. */
   S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   persist();renderWeightTab();
-  toast('Masse grasse enregistrée ✅','success');
+  /* ⭐ LE MESSAGE NOMME LA NATURE DE CE QUI VIENT D'ÊTRE GARDÉ. *« Masse grasse enregistrée »*
+     était vrai des deux côtés, donc ne disait rien — et c'est précisément le mélange qu'on ferme. */
+  toast(e.bfSrc===BF_ESTIME?('Estimation enregistrée : '+e.bf+' % ✅')
+                           :('Mesure enregistrée : '+e.bf+' % ✅'),'success');
 }
 // ── Édition d'une pesée (tap sur un point du graphique) ──
 let _weighEditDate=null;
@@ -1041,7 +1125,13 @@ function saveWeighEdit(){
   if(newDate>today()){toast('Date dans le futur','error');return;}
   const bfv=numFR((document.getElementById('weigh-edit-bf')||{}).value);
   const entry={date:newDate,kg:kg};
-  if(bfv>=2&&bfv<=70)entry.bf=bfv;
+  /* 🏷️ LA PROVENANCE SURVIT À L'ÉDITION, ET ELLE NE SE PROMEUT PAS TOUTE SEULE (ft-v1231).
+     ⛔ `entry` est reconstruit de zéro : sans ces deux lignes, rouvrir une pesée pour corriger
+     le POIDS effacerait la provenance du %, et une estimation deviendrait « mesure » sans que
+     personne ne l'ait mesurée. On ne requalifie donc que si le % a **réellement changé**. */
+  const _anc=(S.weightLog||[]).find(x=>x.date===_weighEditDate);
+  if(bfv>=2&&bfv<=70){ entry.bf=bfv;
+    entry.bfSrc=(_anc&&_anc.bf===bfv&&_anc.bfSrc)?_anc.bfSrc:BF_MESURE; }
   // retire l'ancienne entrée + toute entrée sur la nouvelle date, puis ré-insère
   S.weightLog=(S.weightLog||[]).filter(x=>x.date!==_weighEditDate&&x.date!==newDate);
   S.weightLog.unshift(entry);
@@ -1294,8 +1384,9 @@ function _importScaleRows(rows){
     _scanCompleter(scan);        // ⭐ le MÊME filet que la saisie (R2) — c'était le manque
     if(bsIdx[d]!=null)S.bodyScans[bsIdx[d]]=scan; else {S.bodyScans.push(scan);bsIdx[d]=S.bodyScans.length-1;}
     if(r.weight!=null){
-      if(wIdx[d]!=null){ S.weightLog[wIdx[d]].kg=r.weight; if(r.bf!=null)S.weightLog[wIdx[d]].bf=r.bf; }
-      else { const wl={date:d,kg:r.weight}; if(r.bf!=null)wl.bf=r.bf; S.weightLog.push(wl); wIdx[d]=S.weightLog.length-1; }
+      // 🏷️ Un bilan corporel est une MESURE d'appareil, jamais une estimation US Navy (ft-v1231)
+      if(wIdx[d]!=null){ S.weightLog[wIdx[d]].kg=r.weight; if(r.bf!=null){S.weightLog[wIdx[d]].bf=r.bf;S.weightLog[wIdx[d]].bfSrc=BF_MESURE;} }
+      else { const wl={date:d,kg:r.weight}; if(r.bf!=null){wl.bf=r.bf;wl.bfSrc=BF_MESURE;} S.weightLog.push(wl); wIdx[d]=S.weightLog.length-1; }
     }
   });
   S.bodyScans.sort((a,b)=>b.date.localeCompare(a.date));
@@ -1895,7 +1986,8 @@ function saveBodyScan(){
   const wi=S.weightLog.findIndex(w=>w.date===date);
   const wentry=wi>=0?S.weightLog[wi]:{date};
   wentry.kg=weight;
-  if(obj.bf!=null)wentry.bf=obj.bf;
+  // 🏷️ Idem : la balance pro MESURE, elle n'estime pas (ft-v1231)
+  if(obj.bf!=null){wentry.bf=obj.bf;wentry.bfSrc=BF_MESURE;}
   if(wi<0)S.weightLog.unshift(wentry);
   S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   if(S.weightLog[0])S.bw=S.weightLog[0].kg;
