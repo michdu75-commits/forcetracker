@@ -100,6 +100,13 @@ g(CN or ecart.split() == ['0', '0'], 'HEAD et origin/master ont diverge (%r)' % 
 sw = lire('sw.js')
 VERSION = (re.search(r"CACHE\s*=\s*'(ft-v\d+)'", sw) or [None, ''])[1]
 g(VERSION.startswith('ft-v'), 'sw.js ne porte pas de version lisible')
+# ⛔ LA VERSION D'AVANT SE LIT DANS L'ARBRE D'AVANT, jamais dans celui d'aujourd'hui. Le
+#    tableau affichait « ft-v1227 · ft-v1227 » : il reutilisait la version courante pour les
+#    DEUX colonnes, donc il annoncait qu'aucun bump n'avait eu lieu alors qu'il y en a un.
+#    *Une colonne « avant » qui lit le present ne mesure rien — elle recopie.*
+_rc_av, _sw_av = git('show', '%s:sw.js' % SHA_AVANT)
+VERSION_AVANT = (re.search(r"CACHE\s*=\s*'(ft-v\d+)'", _sw_av) or [None, ''])[1] if _rc_av == 0 else ''
+g(CN or VERSION_AVANT.startswith('ft-v'), 'la version de depart est illisible dans %s' % SHA_AVANT)
 
 rc, liste = git('log', '--format=%h|%s', '%s..HEAD' % SHA_AVANT)
 COMMITS = [l.split('|', 1) for l in liste.split('\n') if '|' in l]
@@ -356,7 +363,8 @@ h2('1. Etat')
 tab([['', 'valeur'],
      ['branche', '<b>%s</b>' % branche],
      ['SHA initial &middot; final', '<b>%s</b> &middot; <b>%s</b>' % (SHA_AVANT, head)],
-     ['version servie avant &middot; apres', '<b>%s</b> &middot; <b>%s</b>' % (VERSION, VERSION)],
+     ['version servie avant &middot; apres',
+      '<b>%s</b> &middot; <b>%s</b>' % (VERSION_AVANT or '?', VERSION)],
      ['arbre', 'propre &middot; ecart avec origin/master : <b>0 / 0</b>'],
      ['commits de la session', '<b>%d</b>' % len(COMMITS)],
      ['fichiers <b>servis</b> modifies', '<b>%s</b>' % ', '.join(SERVIS_TOUCHES)]],
