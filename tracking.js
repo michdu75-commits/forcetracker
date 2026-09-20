@@ -791,6 +791,31 @@ function _recalcNavyBf(){
   const el=document.getElementById('bf-navy-val');if(el)el.innerHTML=navy==null?'<span style="font-size:12px;color:var(--t3);">—</span>':('~'+navy+' %');
   if(navy!=null){const i=document.getElementById('bf-inp');if(i)i.value=navy;}
 }
+/* ═══ LA DERNIÈRE MASSE GRASSE RÉELLEMENT ENREGISTRÉE ════════════════════════════════════
+   ⛔ Propriétaire UNIQUE de la question « quelle est sa dernière mesure ? » (R2) — il n'en
+   existait aucun, et c'est précisément ce qui manquait à l'écran.
+   ⛔ Rend `null`, jamais 0 : *« je ne sais pas » et « zéro pour cent » ne se lisent pas pareil*
+   (R29), exactement comme `mensDerniere` juste au-dessus.
+   ⚠️ On TRIE avant de prendre, on ne se fie pas à l'ordre du tableau : `S.weightLog` est trié
+   à l'écriture, mais une restauration, un import ou une fusion peuvent le rendre dans un autre
+   ordre — et un `[0]` qui suppose un tri est un bug qui n'apparaît que chez les autres. */
+/* ⚠️ « 2026-09-20 » → « 20/09 », PAR DÉCOUPAGE DE CHAÎNE ET NON PAR UN OBJET `Date`.
+   `new Date('2026-09-20')` est interprétée en UTC et peut afficher la VEILLE à l'ouest de
+   Greenwich — famille « fuseaux horaires » de `BUGS.md`. Ici on n'a aucun calcul à faire :
+   la date est déjà un jour calendaire, on la remet juste à l'endroit.
+   ⛔ Et on ne réutilise pas `_dateLisible` : elle existe, mais c'est une const LOCALE à une
+   fonction de `coach.js` — l'appeler d'ici lèverait `_dateLisible is not defined` et ferait
+   disparaître toute la carte. Vérifié avant d'écrire l'appel, pas après (leçon ft-v1114). */
+function _bfJourCourt(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
+  return m?(m[3]+'/'+m[2]):String(iso||'');
+}
+function bfDerniere(avantJour){
+  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date
+              &&(!avantJour||String(w.date)<String(avantJour)))
+    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  return l.length?{date:l[0].date,bf:l[0].bf}:null;
+}
 function renderBodyFatCard(){
   const el=document.getElementById('bodyfat-card');if(!el)return;
   const d=today();
@@ -800,9 +825,25 @@ function renderBodyFatCard(){
   const navyNow=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
   // Case pré-remplie : valeur enregistrée du jour, sinon calcul US Navy (prêt à valider)
   const prefill=savedToday?todayW.bf:(navyNow!=null?navyNow:'');
-  const sub=savedToday?('✓ Enregistrée : '+todayW.bf+' %')
-    :(navyNow!=null?('Estimée ~'+navyNow+' % — appuie sur ✓ pour enregistrer')
-    :'Entre ton cou et ta taille ci-dessous');
+  /* ⛔⛔ « JE N'AI PAS LA VALEUR PRÉCÉDENTE. J'AI SYSTÉMATIQUEMENT 20.7 » (Christophe, 20/09).
+     Mesuré en conduisant l'app sur DEUX jours : le jour J il saisit 19,1, l'app l'enregistre et
+     la réaffiche après rechargement ; le jour J+1 elle propose **21,8** — le calcul US Navy de
+     ses mensurations — pendant que sa dernière valeur enregistrée est 19,1.
+     ⚠️⚠️ ET 20,7 N'EST NI UNE CONSTANTE, NI UN DÉFAUT, NI UN DÉCALAGE D'INDEX : c'est une valeur
+     CALCULÉE, qui ne bouge pas tant que les mensurations ne bougent pas. *Elle ressemble à une
+     vieille valeur figée parce qu'elle en est la SOURCE, pas parce qu'on la relit.*
+     ⭐ Ce qui manquait n'est donc pas le bon chiffre : c'est que l'écran ne montrait **nulle
+     part** la dernière mesure réelle, ni d'où venait celui qu'il proposait. Les trois champs
+     voisins (cou, taille, hanches) affichent, eux, la dernière valeur connue — *quatre champs de
+     la même carte, deux règles différentes, et rien ne le disait.*
+     ⛔ ON NE CHANGE PAS CE QUI EST PRÉREMPLI : les deux options ont un piège mesuré (proposer la
+     valeur d'hier la ferait dater d'aujourd'hui au premier ✓ ; partir vide perdrait le parcours
+     US Navy). C'est une décision produit, elle appartient à Michel — `docs/DECISIONS.md`. */
+  const _prec=bfDerniere(savedToday?d:null);
+  const _rappel=_prec?(' · dernière notée : '+_prec.bf+' % le '+_bfJourCourt(_prec.date)):'';
+  const sub=savedToday?('✓ Enregistrée : '+todayW.bf+' %'+_rappel)
+    :(navyNow!=null?('Estimée ~'+navyNow+' % d\'après tes mesures'+_rappel)
+    :('Entre ton cou et ta taille ci-dessous'+_rappel));
   el.innerHTML=
     '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">'
      +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">Masse grasse du jour</div>'

@@ -106,10 +106,49 @@ MUT = [
      "    localStorage.setItem('ft4_mens',JSON.stringify([]));",
      'rouge', 'le journal des mensurations n atteint plus le disque'),
 
+    # ── LE RETOUR DE CHRISTOPHE : la derniere valeur notee ───────────────────────
+    ('M16', TR,
+     "  const _prec=bfDerniere(savedToday?d:null);",
+     "  const _prec=null;",
+     'rouge', 'l ecran cesse de montrer la derniere valeur notee'),
+
+    ('M17', TR,
+     "  const _rappel=_prec?(' · dernière notée : '+_prec.bf+' % le '+_bfJourCourt(_prec.date)):'';",
+     "  const _rappel=_prec?(' · dernière notée : '+_prec.bf+' %'):'';",
+     'rouge', 'le rappel perd sa DATE : on ne sait plus de quand date la valeur'),
+
+    ('M18', TR,
+     ":(navyNow!=null?('Estimée ~'+navyNow+' % d\\'après tes mesures'+_rappel)",
+     ":(navyNow!=null?('Estimée ~'+navyNow+' %'+_rappel)",
+     'rouge', 'le chiffre propose ne dit plus d ou il vient'),
+
+    # ⚠️ DEGUISEE : elle remet un tri implicite (l ordre du tableau) au lieu du tri par date.
+    #    Un temoin qui ne chercherait que le nom `bfDerniere` resterait VERT dessus.
+    ('M19', TR,
+     "  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date\n              &&(!avantJour||String(w.date)<String(avantJour)))\n    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));",
+     "  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date\n              &&(!avantJour||String(w.date)<String(avantJour)));",
+     'rouge', 'DEGUISEE : bfDerniere se fie a l ordre du tableau au lieu de trier'),
+
+    ('M20', TR,
+     "  return l.length?{date:l[0].date,bf:l[0].bf}:null;",
+     "  return l.length?{date:l[0].date,bf:l[0].bf}:{date:'',bf:0};",
+     'rouge', 'bfDerniere rend 0 au lieu de « je ne sais pas » (R29)'),
+
+    ('M21', TR,
+     "  const m=/^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(String(iso||''));\n  return m?(m[3]+'/'+m[2]):String(iso||'');",
+     "  const d=new Date(String(iso||''));\n  return isNaN(d)?String(iso||''):(d.getDate()+'/'+(d.getMonth()+1));",
+     'rouge', 'la date repasse par new Date (piege des fuseaux horaires)'),
+
+    # ⛔ LA DECISION NON TRANCHEE (D-013) : si quelqu un change le prefill « en passant ».
+    ('M22', TR,
+     "  const prefill=savedToday?todayW.bf:(navyNow!=null?navyNow:'');",
+     "  const prefill=savedToday?todayW.bf:((bfDerniere(null)||{}).bf||'');",
+     'rouge', 'le prefill change alors que D-013 n est pas tranchee'),
+
     # ── ⭐ LES DEUX QUI DOIVENT RESTER VERTES ─────────────────────────────────────
     ('V01', TR,
      "function _bfNavy(neck,waist,hip,ht,gender){",
-     "/* note : persist, numFR, S.bw, last?last.kg:, parseFloat, _kgUtil, 1.0324 */\n"
+     "/* note : persist, numFR, S.bw, last?last.kg:, parseFloat, _kgUtil, 1.0324,\n   bfDerniere, apres tes mesures, derniere notee, _bfJourCourt, sort, localeCompare */\n"
      "function _bfNavy(neck,waist,hip,ht,gender){",
      'vert', 'un COMMENTAIRE citant tous les mots cherchés ne doit rien changer'),
 

@@ -104,6 +104,40 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('B-CCCXXXVIII ⑩ ⛔ un champ VIDE ne vaut toujours pas « efface »',
     /if\s*\(\s*!\s*brut\s*\)\s*return\s*;/.test(corps('_mensEnregistrerSaisie').replace(/\s+/g, ' ')),
     '');
+
+  /* ══ LE RETOUR DE CHRISTOPHE — « ma masse grasse revient à 20,7 le lendemain » ══════════
+     ⛔⛔ 20,7 N'EST NI UNE CONSTANTE, NI UN DÉFAUT, NI UN DÉCALAGE D'INDEX : c'est le calcul
+     US Navy des mensurations stockées, qui ne bouge pas tant qu'elles ne bougent pas. Ce qui
+     manquait n'était donc pas le bon chiffre — c'est que l'écran ne montrait **nulle part** la
+     dernière mesure réelle, ni d'où venait celui qu'il proposait. */
+  const BFD = corps('bfDerniere');
+  t('B-CCCXXXVIII ⑪ ⭐ « la dernière masse grasse connue » a UN propriétaire (R2)',
+    BFD !== '', 'bfDerniere introuvable');
+  /* ⛔ ON TRIE AVANT DE PRENDRE. Un `[0]` qui se fie à l'ordre du tableau est un bug qui
+     n'apparaît que chez les autres — après une restauration, un import, une fusion. */
+  t('B-CCCXXXVIII ⑫ ⭐⭐ elle TRIE par date, elle ne se fie pas à l\'ordre du tableau',
+    /\.sort\(/.test(BFD) && /localeCompare/.test(BFD), '');
+  t('B-CCCXXXVIII ⑬ ⛔ elle rend `null`, jamais 0 (R29)',
+    /\?\s*\{\s*date\s*:[^}]*\}\s*:\s*null/.test(BFD.replace(/\s+/g, ' ')), '');
+  /* ⚠️ ON CHERCHE « après tes mesures » SANS L'APOSTROPHE, ET C'EST UN DÉFAUT D'INSTRUMENT
+     ATTRAPÉ AU BANC : dans la source, la chaîne s'écrit `d\'après` — l'apostrophe y est
+     ÉCHAPPÉE, puisqu'elle vit dans un littéral délimité par des apostrophes. Mon motif
+     cherchait `d'après` et rougissait donc sur du code parfaitement juste.
+     *Un motif qui inclut un caractère d'échappement mesure ma mise en forme, pas le fait.* */
+  t('B-CCCXXXVIII ⑭ ⭐ le sous-titre nomme la SOURCE du chiffre proposé',
+    /après tes mesures/.test(brut), '');
+  t('B-CCCXXXVIII ⑮ ⭐⭐ … et rappelle la dernière valeur NOTÉE, avec sa date',
+    /dernière notée/.test(brut) && /_bfJourCourt/.test(A), '');
+  /* ⛔ LA DATE SE FORMATE PAR DÉCOUPAGE DE CHAÎNE : `new Date('2026-09-20')` est lue en UTC et
+     affiche la veille à l'ouest de Greenwich (famille « fuseaux horaires » de BUGS.md). */
+  t('B-CCCXXXVIII ⑯ ⛔ la date est découpée, jamais passée à `new Date`',
+    corps('_bfJourCourt') !== '' && !/new Date/.test(corps('_bfJourCourt')), '');
+  /* ⛔⛔ ET LE CHIFFRE PRÉREMPLI N'A PAS BOUGÉ — c'est une décision rendue à Michel (D-013).
+     Ce témoin existe pour qu'on ne la prenne pas « en passant » à la prochaine version. */
+  t('B-CCCXXXVIII ⑰ ⛔⛔ le chiffre prérempli reste le calcul (décision D-013, non tranchée)',
+    /const prefill\s*=\s*savedToday\s*\?\s*todayW\.bf\s*:\s*\(\s*navyNow\s*!=\s*null\s*\?\s*navyNow\s*:\s*''\s*\)/
+      .test(A.replace(/\s+/g, ' ').replace(/const prefill = /, 'const prefill=')),
+    'le préremplissage a changé sans que D-013 soit tranchée');
 };
 
 module.exports.ecran = async function (t, b, PORT) {
@@ -290,7 +324,77 @@ module.exports.ecran = async function (t, b, PORT) {
           && J2.disque.indexOf('2026-09-20/taille=92.4') >= 0,
     JSON.stringify(J2));
 
-  t('B-CCCXXXIX ⑰ aucune erreur JS pendant toute la conduite',
+  /* ══ ⑱-㉒ LE RETOUR DE CHRISTOPHE — « ma masse grasse revient à 20,7 le lendemain » ═════
+     ⭐ On conduit DEUX JOURS avec la même carte : on avance l'horloge du contexte, ce qui est
+     la seule facon honnête de mesurer un comportement qui ne se voit qu'au changement de jour.
+     ⛔ Et on mesure ce que l'écran DIT, pas seulement ce qu'il stocke : la plainte porte sur
+     l'affichage (« je n'ai pas la valeur précédente »), pas sur une perte de donnée. */
+  const jour2 = async (isoJour, prep) => {
+    const cx2 = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 },
+                                     timezoneId: 'Europe/Paris' });
+    await cx2.addInitScript(`(()=>{const F=new Date(${JSON.stringify(isoJour)});const V=Date;
+      window.Date=class extends V{constructor(...a){if(a.length)super(...a);else super(F.getTime());}
+        static now(){return F.getTime();}};})();`);
+    await cx2.addInitScript(`(()=>{try{ if(localStorage.getItem('_d2')==='1')return;
+      localStorage.clear(); localStorage.setItem('_d2','1');
+      localStorage.setItem('ft4_bw','85.9');localStorage.setItem('ft4_age','48');
+      localStorage.setItem('ft4_ht','180');localStorage.setItem('ft4_gender','H');
+      ${prep} }catch(e){}})();`);
+    const pg2 = await cx2.newPage();
+    await pg2.goto('http://localhost:' + PORT + '/index.html');
+    await pg2.waitForTimeout(2200);
+    const o = await pg2.evaluate(async () => {
+      const pause = ms => new Promise(r => setTimeout(r, ms));
+      goScreen('progress', document.querySelector('[onclick*="progress"]')); await pause(320);
+      switchProgTab('poids', document.getElementById('ptab-poids')); await pause(450);
+      const txt = (document.getElementById('bodyfat-card') || {}).innerText || '';
+      return {
+        jour: today(),
+        bf: (document.getElementById('bf-inp') || {}).value,
+        sousTitre: (txt.split('\n')[1] || '').trim(),
+        navy: _bfNavy(S.neck, S.waist, S.hip, S.height, S.gender),
+        derniere: (typeof bfDerniere === 'function') ? bfDerniere(null) : '(absente)',
+      };
+    });
+    await cx2.close();
+    return o;
+  };
+
+  /* ⭐ Le decor est celui de Christophe : des mensurations qui NE BOUGENT PAS (donc un calcul
+     US Navy constant) et une valeur de BALANCE notee la veille. */
+  const MESURES = "localStorage.setItem('ft4_neck','40.7');localStorage.setItem('ft4_waist','95.5');";
+  const VEILLE = MESURES + "localStorage.setItem('ft4_wlog',JSON.stringify("
+    + "[{date:'2026-09-20',kg:85.9,bf:19.1},{date:'2026-09-19',kg:86.1}]));";
+
+  const C1 = await jour2('2026-09-20T10:00:00', VEILLE);
+  t('B-CCCXXXIX ⑱ le MÊME jour, la valeur enregistrée est bien celle qui s\'affiche',
+    C1.jour === '2026-09-20' && C1.bf === '19.1' && /Enregistr/.test(C1.sousTitre),
+    JSON.stringify(C1));
+
+  const C2 = await jour2('2026-09-21T10:00:00', VEILLE);
+  /* ⛔⛔ LE CŒUR DU RETOUR : le lendemain, l'app propose le CALCUL (constant), pas la derniere
+     valeur notee. C'est le comportement ACTUEL, volontairement conserve (D-013 non tranchee) —
+     ce temoin le FIGE pour qu'il ne change pas « en passant ». */
+  t('B-CCCXXXIX ⑲ ⛔ le LENDEMAIN, le chiffre proposé est bien le calcul, pas la valeur notée',
+    C2.jour === '2026-09-21' && parseFloat(C2.bf) === C2.navy && C2.bf !== '19.1',
+    JSON.stringify(C2));
+  /* ⭐⭐ ET C'EST ÇA QUI MANQUAIT : l'écran doit DIRE d'où vient ce chiffre ET montrer la
+     dernière valeur réelle avec sa date. « Je n'ai pas la valeur précédente », mot pour mot. */
+  t('B-CCCXXXIX ⑳ ⭐⭐ … et l\'écran NOMME sa source et rappelle la dernière valeur notée',
+    /d'après tes mesures/.test(C2.sousTitre) && /dernière notée\s*:\s*19\.1 %/.test(C2.sousTitre)
+      && /le 20\/09/.test(C2.sousTitre),
+    JSON.stringify(C2.sousTitre));
+  t('B-CCCXXXIX ㉑ ⭐ le propriétaire rend bien la dernière mesure RÉELLE, pas le calcul',
+    C2.derniere && C2.derniere.bf === 19.1 && C2.derniere.date === '2026-09-20',
+    JSON.stringify(C2.derniere));
+
+  /* ⛔ AUCUNE VALEUR NOTÉE : on ne doit rien inventer, et surtout pas un « dernière notée ». */
+  const C3 = await jour2('2026-09-21T10:00:00', MESURES
+    + "localStorage.setItem('ft4_wlog',JSON.stringify([{date:'2026-09-19',kg:86.1}]));");
+  t('B-CCCXXXIX ㉒ ⛔ sans aucune valeur notée, l\'écran n\'invente aucun rappel',
+    !/dernière notée/.test(C3.sousTitre) && C3.derniere === null, JSON.stringify(C3));
+
+  t('B-CCCXXXIX ㉓ aucune erreur JS pendant toute la conduite',
     errs.length === 0, errs.slice(0, 3).join(' | '));
 
   await cx.close();
