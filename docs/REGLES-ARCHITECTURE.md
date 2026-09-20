@@ -166,6 +166,70 @@ un propriétaire), **R13** (le mécanisme des « exercices manquants » existait
 
 ---
 
+### R37 — Milo n'est pas le moteur qui le fait tourner : tout choix d'architecture se juge là-dessus
+*« Claude n'est pas Milo. Claude est actuellement l'un des moteurs que Milo utilise »* (Michel,
+19/09/2026). **La règle est une QUESTION**, à poser à chaque architecture importante :
+
+> ***Est-ce que ce choix rend Milo plus indépendant et modulaire — ou est-ce qu'il l'enferme
+> davantage dans un fournisseur, un modèle ou un prompt particulier ?***
+
+⛔ **Éviter toute dépendance difficilement réversible.** À terme, **Milo = identité + mémoire +
+règles + capacités + contexte + droits + outils** ; le LLM est un **composant interchangeable** de
+cette liste, jamais son sujet. Changer de moteur ne doit faire perdre ni la mémoire, ni la
+personnalité, ni les connaissances de la personne, ni les règles, ni la continuité, ni les
+permissions.
+**⚠️ Et la borne qui empêche la bêtise inverse** : *il est interdit de dégrader Milo pour obtenir
+artificiellement l'indépendance.* Une bascule (vers du local, par exemple) doit être **progressive,
+mesurée, comparée sur de vrais bancs, et réversible** — sinon ce n'est pas un progrès, c'est un troc
+silencieux entre la qualité et le principe (**R34** : un changement de contexte se valide par un
+banc avant/après, jamais au feeling).
+**⭐⭐ Ce n'est pas une règle neuve, et c'est ce qui la rend solide** : l'architecture hybride du
+**20/07/2026** écrivait déjà *« cœur métier **indépendant du modèle d'IA** — durable même si les
+modèles changent »*. La règle **étend au CERVEAU ce qui était acquis pour le CŒUR MÉTIER**.
+**🔧 Ce qu'elle rend opérationnel tout de suite, sans ouvrir de chantier** : la première marche
+n'est pas une interface abstraite, c'est **R2 appliqué à l'adresse du fournisseur**. Mesuré le
+19/09/2026 : `worker.js` la tient dans **une** constante (`ANTHROPIC_URL`), `Code.js` l'écrit
+**13 fois en dur**. *Une même information écrite treize fois divergera — la seule question est
+quand.*
+*Origine : 19/09/2026, note d'architecture de Michel (**consignée, pas mise en œuvre** —
+`docs/INDEPENDANCE-MOTEUR-MILO.md`). Prolonge **R9** (le niveau de modèle est une variable
+structurelle) · voisine de **R2** (un propriétaire par information), **R6** (une seule voix),
+**R10** (permissions hiérarchisées et bornées — à appliquer aux futurs outils d'action, le modèle
+ne décidant jamais seul de ses permissions) et **R34** (se valider au banc).*
+
+### R38 — Un brief venu de l'EXTÉRIEUR s'audite AVANT d'être exécuté, et s'arrête net s'il est incompatible
+*« Il faut absolument que tu vérifies ce qui est demandé. Si tu penses que c'est incompatible avec
+mon appli, faut stopper direct et dire pourquoi »* (Michel, 19/09/2026). Le cadre est celui de
+`README-IA.md` : **Michel décide · ChatGPT vision/UX · Claude archi/dev** — donc beaucoup de briefs
+arrivent rédigés ailleurs, par quelqu'un qui **n'a pas le code sous les yeux**.
+**⛔ La séquence est fixe** : *lire le brief → **mesurer dans le dépôt** ce qu'il suppose → alors
+seulement exécuter*. Jamais l'inverse. Un brief n'est pas une commande, c'est une **hypothèse sur
+l'état du code**.
+**Les trois motifs d'arrêt, à dire AVANT d'écrire une ligne** : ① la demande est **techniquement
+incompatible** avec l'app (mesuré, pas supposé — **règle d'or #16**) · ② elle **contredit une décision
+déjà actée** (**règle d'or #15** : un audit ne retransforme jamais une décision en question) · ③ elle
+**repose sur une prémisse fausse** — le plus fréquent, et le plus silencieux.
+**⭐⭐ ON TRIE, ON NE JETTE PAS — et c'est ce qui empêche la règle de devenir un refus commode.** Un
+brief faux sur un point reste souvent juste sur les autres : **R33** a adopté les §8-9 de la note de
+GPT tout en différant son pipeline OCR, avec la mesure qui le justifiait ; **R32** est née d'une
+proposition extérieure dont la corrélation a été **vérifiée ici** avant d'être retenue. *Le travail
+n'est pas d'accepter ou de refuser un brief, c'est de le passer au code.*
+**⚠️ Et la borne symétrique** : « incompatible » n'est jamais une façon d'éviter le travail. La chaîne
+**TESTÉE → OBSERVÉE → EXPLIQUÉE** s'applique à l'arrêt lui-même — on s'arrête avec la **cause précise**
+et le chiffre, jamais avec « ça ne me paraît pas cohérent ».
+**Deux cas réels du 19/09, tous deux attrapés en mesurant d'abord** : un brief demandait la phase 3.1
+**déjà livrée** par l'autre session sur une branche non fusionnée (quatre lectures, zéro écriture — on
+aurait réécrit à l'identique un travail existant, sur les mêmes fichiers) · et un dossier de phase 3
+présentait **M12 comme une question ouverte** alors qu'elle était actée. *Un rapport qui rouvre une
+décision prise ne se contente pas d'être faux : il fait RE-ARBITRER, donc il COÛTE une décision au
+lieu d'en rappeler une.*
+*Origine : 19/09/2026, consigne de Michel. La pratique existait déjà partout (R4b, R32, R33, la
+section 5 entière) mais **aucune règle ne l'exigeait** — c'était une habitude, pas une garantie.
+· voisine de **R28** (une limite non vérifiée devient une règle silencieuse), **R23** (un document
+d'état faux fait raisonner de travers) et des **règles d'or #15 et #16**.*
+
+---
+
 ## 2. Les décisions
 
 ### R6 — Une seule mémoire, une seule VOIX — mais construite de façon ÉMERGENTE

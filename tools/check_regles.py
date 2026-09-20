@@ -957,3 +957,43 @@ except SystemExit:
 except Exception as _e17:
     print("⚠️ contrôle « entête de version » NON EXÉCUTÉ (%s: %s)" % (type(_e17).__name__, _e17))
     print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+#  CONTRÔLE — LE REGISTRE DES DÉCISIONS (19/09/2026)
+#  Demande de Michel : « il faut trouver une solution pour éviter que la direction de Force
+#  Tracker et Milo ne me convienne pas ».
+#
+#  ⛔⛔ CE QUI EST VÉRIFIÉ EST LA FORME, JAMAIS LE CONTENU. Un contrôle qui jugerait si une
+#  décision est BONNE serait un contrôle qui décide à la place de Michel — exactement ce que
+#  ce mécanisme existe pour empêcher. Il vérifie que chaque décision dit QUI a tranché, ce
+#  qu'elle a ÉCARTÉ, et où elle se situe face à la Vision. *Le jugement reste humain.*
+#
+#  ⚠️ ET IL NE BLOQUE PAS SUR LE NOMBRE : au-delà du seuil de rappel, il SIGNALE qu'un point
+#  de cap serait utile, et c'est tout. *Refuser une livraison pour un point de lecture serait
+#  de la gouvernance qui dessert le produit* (R19).
+# ══════════════════════════════════════════════════════════════════════════════════════════
+try:
+    import os as _os18, subprocess as _sp18
+    _r18 = _sp18.run([sys.executable, _os18.path.join(_os18.path.dirname(_os18.path.abspath(__file__)),
+                                                   "point_de_cap.py"), "--check"],
+                     capture_output=True, text=True)
+    _sortie18 = (_r18.stdout + _r18.stderr).strip()
+    if _r18.returncode != 0:
+        print("❌ docs/DECISIONS.md — le registre des décisions est malformé :")
+        for _l18 in _sortie18.splitlines():
+            if _l18.strip():
+                print("   " + _l18.strip())
+        print("   → une décision doit dire QUI a tranché, ce qu'elle a ÉCARTÉ, et sa réponse à")
+        print("     la question de la Vision (renforce · neutre · tension).")
+        sys.exit(1)
+    for _l18 in _sortie18.splitlines():
+        _l18 = _l18.strip()
+        if _l18.startswith("OK "):
+            print("✅ " + _l18[3:])
+        elif _l18.startswith("->"):
+            print("   " + _l18)
+except SystemExit:
+    raise
+except Exception as _e18:
+    print("⚠️ contrôle « registre des décisions » NON EXÉCUTÉ (%s: %s)" % (type(_e18).__name__, _e18))
+    print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")

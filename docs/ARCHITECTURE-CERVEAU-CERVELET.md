@@ -438,6 +438,36 @@ on ne devient jamais dépendant de lui.*
 
 ---
 
-*Lié à : `docs/MOTEUR-RAISONNEMENT-MILO.md` (le pipeline de raisonnement) · `docs/REGLES-ARCHITECTURE.md`
+---
+
+## 🧭 11. L'HORIZON DU CERVELET A ÉTÉ ÉLARGI LE 19/09/2026 — et ce fichier n'en couvre qu'une part
+
+> ⛔ **Rien n'est construit, et rien de ce document n'est invalidé.** La direction complète vit
+> dans **`docs/INDEPENDANCE-MOTEUR-MILO.md`** ; ce qui suit dit seulement **ce qui déborde d'ici**.
+
+Ce fichier décrit le cervelet comme **une seconde IA** qui exécute le mécanique. La note
+d'architecture de Michel du 19/09 lui donne un rôle **plus large**, qui ne le contredit pas mais le
+dépasse :
+
+| | ce fichier (19/08) | la note du 19/09 |
+|---|---|---|
+| ce qu'est le cervelet | **une 2ᵉ IA** de service | **l'orchestration entière** — capacités · droits · contexte · outils · **et éventuellement le choix du moteur** |
+| ce qu'il décide | quelle transformation exécuter | ⭐ **ce qui atteint le cerveau**, et s'il faut appeler une IA du tout |
+| la digestion des données | hors sujet ici | 🫃 un organe nommé, l'**estomac** (`docs/CORPS-FORCE-TRACKER.md`) |
+| le moteur | Claude, implicite | ⭐⭐ **interchangeable** — *« Claude n'est pas Milo »* (**R37**) |
+
+⭐ **Et §9.6 prend tout son sens rétrospectivement** : *« le cervelet finit par ne plus être une
+IA »* y était écrit comme une piste de long terme. Dans la note du 19/09, c'est le **cas normal** —
+*un maximum de logique déterministe quand elle suffit, une IA seulement quand elle apporte
+réellement quelque chose.*
+
+⚠️ **Ce que ça ne change pas ici** : la frontière chiffrée du §4, les trois contraintes du §5, le
+prérequis du §8 et le banc du §10.2 restent **exactement valables**. *Un horizon plus large ne
+périme pas une mesure.*
+
+---
+
+*Lié à : `docs/MOTEUR-RAISONNEMENT-MILO.md` (le pipeline de raisonnement) · `docs/INDEPENDANCE-MOTEUR-MILO.md`
+(l'indépendance du moteur, R37) · `docs/REGLES-ARCHITECTURE.md`
 (R6 une seule voix, R7 le prompt est le dernier levier, R9 le modèle est une variable structurelle) ·
 `docs/NUTRITION-MOTEUR.md` (§5.4) · `README-IA.md` (comment une IA extérieure lit ce dépôt).*
