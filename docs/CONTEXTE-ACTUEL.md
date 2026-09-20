@@ -6,6 +6,44 @@
 
 ---
 
+## ⚖️ ARBITRÉ LE 20/09/2026 — LE REPAS ACTIF EST CLOS, **LE CHANTIER NUTRITION NE L'EST PAS**
+
+> ⛔⛔ **Ne pas confondre les deux** : Michel a fermé **une question UX**, pas le module. Sa phrase :
+> *« Nous ne fermons PAS le chantier Nutrition. Nous fermons uniquement cette question UX
+> particulière. »*
+
+- **A — le choix manuel du repas au CHANGEMENT DE JOUR → CONSERVER** (`docs/DECISIONS.md`
+  **D-011**, qui **remplace D-007**). ⛔ **Aucune ligne de code** : le comportement voulu est celui
+  qui est **déjà servi**. ⭐ Le garde-fou UX existe déjà et n'est pas neuf — la confirmation affiche
+  « Ajouté · Déjeuner, **jour consulté** » dès qu'on n'est pas sur aujourd'hui.
+  ⛔ L'alternative *réinitialiser* est écartée **sur mesure, pas sur goût** : la suggestion horaire
+  est celle de **maintenant**, pas du jour consulté — remplir hier soir à 9 h proposerait
+  « Petit-déj ». *Elle rendrait la suggestion moins pertinente, pas plus.*
+- **B — le choix doit-il survivre à un RECHARGEMENT de la PWA → NON, on observe** (**D-012**).
+  ⛔ **Le motif n'est pas technique, il est méthodologique** : le point vient d'un **audit**, pas du
+  terrain — **R22** dit qu'un retour isolé s'observe avant d'être corrigé. ⭐ **Réouverture sur
+  PREUVE** (règle d'or #15) : une gêne réellement rencontrée. La solution serait alors `localStorage`
+  portant `{repas, jour}`, relu seulement si le jour est aujourd'hui (~6 lignes, rien dans `S`,
+  rien au cloud). ⛔ `sessionStorage` est écartée **faute de mesure** : son comportement en PWA
+  standalone iOS n'est pas mesurable depuis ce conteneur (règle d'or #16).
+
+**🔬 ET UN FAIT RE-MESURÉ LE MÊME JOUR, PAS CITÉ DE MÉMOIRE** — le défaut du **compte neuf** est
+toujours vivant sur l'arbre servi : `calcTDEE()` rend **0** et `calcMacros()` rend **1 500 kcal ·
+0 g P · 0 g L · 375 g G** ; avec le **poids seul** (ni taille ni âge) il rend **1 500 · 176 · 72 ·
+37**, un plan *parfaitement crédible* bâti sur un TDEE inconnu. **L'écran Nutrition cite 3 fois ce
+1 500** et affiche « **TDEE 0** », plus un garde-fou qui explique qu'il a remonté une cible… qu'il
+venait d'inventer. ⛔ **Non corrigé — chantier ouvert, hors du périmètre arbitré ici.**
+
+**⚠️⚠️ ET UNE LIGNE D'ÉTAT ÉTAIT FAUSSE (R23), corrigée ici plutôt que recopiée** :
+`docs/JOURNAL-DE-TEST.md` (26/08) dit que `foodLog` est **exclu** du contexte de Milo, avec la
+mention *« DÉCISION À CONFIRMER »*, jamais confirmée. **C'est périmé** : `foodLog` est classé
+`transmis` dans `tests/donnees/donnees-milo.json`, et `coach.js` en envoie les **totaux par jour
+sur 7 jours** (⛔ jamais la liste plate — c'est elle qui pesait 13 126 caractères), sous le marqueur
+de l'instant et avec la borne anti-TCA écrite sur place. 👉 **Les deux vrais trous restants sont
+`badges` et `dayStateLog`**, et ils sont nommés comme tels dans le fichier de classement.
+
+---
+
 ---
 
 ## 🩺 RÉSOLU — GITHUB PAGES BLOQUÉ 13 H PAR **UN SEUL RUN**, ET LA CAUSE N'ÉTAIT PAS LE QUOTA
