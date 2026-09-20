@@ -225,6 +225,62 @@ function _foodAiMigrer(){
   return n;                      // nombre de pots dérivés — lu par les témoins
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════════════
+   🧾 LA PROVENANCE DE `coachMemory` — arbitrage de Michel du 20/09/2026, OPTION B
+   ══════════════════════════════════════════════════════════════════════════════════════
+   ⛔⛔ CE QU'ON NE FAIT PAS, ET C'EST LA DÉCISION CENTRALE : `S.coachMemory` RESTE UNE
+   CHAÎNE. Mesuré avant d'écrire une ligne — elle traverse **19 lignes de code** (32
+   occurrences), dont le contrat
+   réseau du Worker (`const memory = body.coachMemory || ''`, concaténé dans le prompt) et
+   le nettoyeur de chaîne d'Apps Script (`_ps_`). *En faire un objet aurait injecté
+   « [object Object] » dans le prompt de Milo* — exactement le recul que l'arbitrage
+   interdit. La provenance vit donc **À CÔTÉ**, dans un champ neuf.
+
+   ⭐ CE N'EST PAS UNE DUPLICATION (R2) : `coachMemory` porte le TEXTE, `coachMemoryMeta`
+   porte D'OÙ IL VIENT. Deux informations différentes, deux propriétaires.
+
+   ⚠️⚠️ ET LE STATUT N'EST **PAS** UNE VALIDATION — consigne explicite de Michel :
+   *« ne donne surtout pas à coachMemory le statut `validated` simplement parce qu'elle
+   existe »*. Un résumé produit par une IA n'est pas une vérité que la personne a
+   confirmée : `registre.observations` a `validated` parce que quelqu'un a répondu OUI.
+   👉 ***provenance ≠ validation.*** D'où deux valeurs seulement, et aucune qui prétende
+   à l'accord de qui que ce soit :
+     · `generated` — produite par le format actuel, on sait par quoi et quand ;
+     · `legacy`    — elle existait avant le 20/09, **on ne sait pas**, et on l'écrit.
+
+   ⛔ ON N'INVENTE JAMAIS UNE PROVENANCE. Pour une mémoire ancienne, le moteur, la date et
+   la source valent `null` — pas une valeur plausible. *Une fausse précision est pire
+   qu'un trou déclaré* (règle d'or #16).
+   ══════════════════════════════════════════════════════════════════════════════════════ */
+const COACH_MEM_META_CLE = 'ft4_coach_mem_meta';
+const COACH_MEM_SCHEMA   = 1;   // change ⇒ prévoir la migration, comme `_GARDIEN_REGLE`
+
+/* Le propriétaire UNIQUE de « cette mémoire a-t-elle une provenance ? ».
+   ⚠️ IDEMPOTENTE PAR CONSTRUCTION, et rejouée au chargement **ET** après une restauration
+   cloud — c'est la leçon de `ft4_stmig1` (ft-v1213) et des pots de ft-v1225 : une
+   restauration remplace l'état APRÈS le chargement et peut ramener un profil d'avant des
+   mois plus tard. Un drapeau « migration faite » serait donc faux le jour où ça arrive.
+   ⛔ Une provenance DÉJÀ décrite n'est jamais retouchée : sans ça, une restauration
+   rétrograderait en `legacy` une mémoire dont on connaissait le moteur. */
+function _coachMemProvenance(){
+  try{
+    if(!S.coachMemory){ S.coachMemoryMeta=null; return 'vide'; }
+    const m=S.coachMemoryMeta;
+    if(m && typeof m==='object' && (m.statut==='generated'||m.statut==='legacy')) return 'inchangee';
+    S.coachMemoryMeta={ v:COACH_MEM_SCHEMA, statut:'legacy', moteur:null, date:null, source:null };
+    return 'legacy';
+  }catch(e){ return 'erreur'; }
+}
+
+/* Appelée quand un résumé NEUF arrive. ⚠️ `moteur` vient de la réponse du serveur, il
+   n'est pas deviné côté client : si le serveur ne le dit pas (Worker pas encore
+   redéployé), on écrit `null` plutôt qu'un nom plausible. */
+function _coachMemPoserProvenance(moteur){
+  S.coachMemoryMeta={ v:COACH_MEM_SCHEMA, statut:'generated',
+                      moteur:(typeof moteur==='string'&&moteur)?moteur:null,
+                      date:new Date().toISOString(), source:'summarizeCoach' };
+}
+
 function load(){
   try{
     S.bw=parseFloat(localStorage.getItem('ft4_bw')||'0')||0;
@@ -345,6 +401,9 @@ function load(){
     S.bodyScanImports=parseInt(localStorage.getItem('ft4_bsimports')||'0')||0;
     S.progImports=parseInt(localStorage.getItem('ft4_progimports')||'0')||0; // imports IA de programme (limite gratuite, décision 31/07)
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
+    try{ S.coachMemoryMeta=JSON.parse(localStorage.getItem(COACH_MEM_META_CLE)||'null'); }
+    catch(e){ S.coachMemoryMeta=null; }
+    _coachMemProvenance();      // règle idempotente — voir son propriétaire, plus bas
     /* 🛡️ Compteur du Gardien — DES NOMBRES, jamais une phrase (ft-v944/945). Écrit par
        `_gardienCompter` (coach.js), reflété ici pour partir avec la sauvegarde : c'est ce
        qui permet une mesure CONTINUE chez les vrais utilisateurs, et pas seulement chez le
@@ -881,6 +940,14 @@ function persist(){
     localStorage.setItem('ft4_bsimports',S.bodyScanImports||0);
     localStorage.setItem('ft4_progimports',S.progImports||0);
     localStorage.setItem('ft4_coach_mem',S.coachMemory||'');
+    /* 🧾 La provenance part avec le texte, JAMAIS séparément : deux clés écrites à deux
+       moments différents divergeraient (R2). Une mémoire vide n'a pas de provenance —
+       on retire la clé plutôt que d'écrire `null`, pour qu'un compte neuf soit
+       indiscernable d'un compte neuf. */
+    try{
+      if(S.coachMemoryMeta) localStorage.setItem(COACH_MEM_META_CLE,JSON.stringify(S.coachMemoryMeta));
+      else localStorage.removeItem(COACH_MEM_META_CLE);
+    }catch(e){}
     localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));
     localStorage.setItem('ft4_exswaps',JSON.stringify(S.exSwaps||{}));
     localStorage.setItem('ft4_premium',S.premium?'1':'0');

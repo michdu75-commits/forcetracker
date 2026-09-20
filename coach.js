@@ -8753,7 +8753,18 @@ async function _resumeCoachUn(){
         history:_coachHistPayload(16),existingMemory:S.coachMemory||''})
     });
     const data=await resp.json();
-    if(data.summary){S.coachMemory=data.summary;localStorage.setItem('ft4_coach_mem',data.summary);}
+    /* 🧾 LE TEXTE ET SA PROVENANCE SONT ÉCRITS DU MÊME GESTE (20/09/2026, option B).
+       ⚠️ `_model` est ce que le SERVEUR dit avoir servi — jamais ce que le client suppose.
+       Si le Worker n'a pas encore été redéployé, il ne le renvoie pas : on écrit alors
+       `moteur:null`, ce qui est la vérité, plutôt qu'un nom de modèle plausible.
+       ⛔ L'écriture directe dans `localStorage` reste (elle protège la mémoire d'une perte
+       si `persist()` n'arrive jamais), et `persist()` posera la provenance à côté. */
+    if(data.summary){
+      S.coachMemory=data.summary;
+      try{ localStorage.setItem('ft4_coach_mem',data.summary); }catch(e2){}
+      try{ if(typeof _coachMemPoserProvenance==='function') _coachMemPoserProvenance(data._model); }catch(e2){}
+      try{ if(typeof persist==='function') persist(); }catch(e2){}
+    }
   }catch(e){}
 }
 

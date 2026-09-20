@@ -1047,6 +1047,7 @@ function doGet(e) {
          où un écran ou un outil lit cette clé, il ne repartira pas silencieusement en « charge ». */
       nutritionPhase: (data.profile && data.profile.nutritionPhase) || 'charge',
       coachMemory:    (data.profile && data.profile.coachMemory) || '',
+      coachMemoryMeta:(data.profile && data.profile.coachMemoryMeta) || null,
       healthInbox:    data.healthInbox    || [],
       healthDaily:    data.healthDaily    || []
     });
@@ -1084,6 +1085,7 @@ function handleLoadProfilePost_(body) {
     exSwaps:        data.exSwaps        || {},
     nutritionPhase: (data.profile && data.profile.nutritionPhase) || 'charge',   // idem — un seul propriétaire (ft-v1092)
     coachMemory:    (data.profile && data.profile.coachMemory) || '',
+    coachMemoryMeta:(data.profile && data.profile.coachMemoryMeta) || null,
     healthInbox:    data.healthInbox    || [],
     healthDaily:    data.healthDaily    || []
   });
@@ -1607,6 +1609,10 @@ function handleSaveProfile_(body) {
     if (body.morphotype    !== undefined) profile.morphotype    = _ps_(body.morphotype,    profile.morphotype);
     if (body.colorblind    !== undefined) profile.colorblind    = _ps_(body.colorblind,    profile.colorblind);
     if (body.coachMemory   !== undefined) profile.coachMemory   = _ps_(body.coachMemory,   profile.coachMemory);
+  /* La provenance de coachMemory (20/09/2026). `_po_` et non `_ps_` : c'est un OBJET,
+     et un objet vide ne doit pas ecraser une provenance connue — meme regle que partout
+     ailleurs ici. Elle ne contient que des metadonnees : moteur, date, statut, source. */
+  if (body.coachMemoryMeta !== undefined) profile.coachMemoryMeta = _po_(body.coachMemoryMeta, profile.coachMemoryMeta);
     // 🛡️ Compteur du Gardien (ft-v945) — DES NOMBRES SEULEMENT : {depuis, dernier, total,
     // codes:{code:n}}. ~150 octets. Aucune phrase de Milo, aucun mot de la personne : ses
     // conversations restent sur son téléphone, c'est écrit dans l'app et ça le reste.
@@ -3513,7 +3519,10 @@ function handleSummarizeCoach_(body) {
       userData.updatedAt = new Date().toISOString();
       saveUserData_(email, userData);
     }
-    return json_({summary});
+    /* Le modele est renvoye au client, comme dans worker.js : une provenance se MESURE,
+       elle ne se devine pas cote client (regle d'or #16). Repli et chemin servi doivent
+       dire la meme chose, sinon la provenance depend de la route empruntee. */
+    return json_({summary, _model: 'claude-haiku-4-5-20251001'});
   } catch(err) {
     return json_({summary: '', error: err.message});
   }
