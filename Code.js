@@ -1085,7 +1085,7 @@ function handleLoadProfilePost_(body) {
     exSwaps:        data.exSwaps        || {},
     nutritionPhase: (data.profile && data.profile.nutritionPhase) || 'charge',   // idem — un seul propriétaire (ft-v1092)
     coachMemory:    (data.profile && data.profile.coachMemory) || '',
-      coachMemoryMeta:(data.profile && data.profile.coachMemoryMeta) || null,
+    coachMemoryMeta:(data.profile && data.profile.coachMemoryMeta) || null,
     healthInbox:    data.healthInbox    || [],
     healthDaily:    data.healthDaily    || []
   });

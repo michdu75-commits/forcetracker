@@ -7,24 +7,24 @@
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
     Généré le 2026-09-20.
 
-🔖  SOURCES : coach.js 0ea0e4522c00 · constants.js 9c8ff25b631e · state.js f726dec4bd95
+🔖  SOURCES : coach.js cbd09c5be667 · constants.js 9c8ff25b631e · state.js 08a9fa7b2fd6
     Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
     génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
     si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
     puisqu'il a l'air généré quoi qu'il arrive. ⛔ Ne pas les recopier à la main.
 
-TAILLE TOTALE : 75 511 caractères  (~18 878 tokens)
+TAILLE TOTALE : 75 424 caractères  (~18 856 tokens)
 
 Il est coupé en TROIS morceaux, et c'est là que se joue le prix :
 
-  1. BLOC COMMUN ......... 45 383 car. (60.1 %)
+  1. BLOC COMMUN ......... 45 383 car. (60.2 %)
      Identique pour TOUT LE MONDE. Mis en cache 1 h depuis le 08/08.
      C'est lui qu'on paie une fois pour tous — s'il est relu, il coûte 10 %.
 
-  2. BLOC PERSONNEL ...... 27 272 car. (36.1 %)
+  2. BLOC PERSONNEL ...... 27 272 car. (36.2 %)
      Tes données à toi. Mis en cache 5 min.
 
-  3. L'INSTANT ........... 2 856 car. (3.8 %)
+  3. L'INSTANT ........... 2 769 car. (3.7 %)
      Change à chaque message (heure, état du jour) : JAMAIS mis en cache,
      payé plein tarif à chaque fois.
 
@@ -360,7 +360,7 @@ Aucune séance
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  3/3 — L'INSTANT (2856 car., JAMAIS caché)
+█  3/3 — L'INSTANT (2769 car., JAMAIS caché)
 ██████████████████████████████████████████████████████████████████████████████
 
 ═══ SITUATION DE L'INSTANT ═══
@@ -373,7 +373,7 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est dimanche 20 septembre, il est 10h34 — c'est matin. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). Le matin : tu peux évoquer l'énergie du réveil, un petit-déjeuner adapté avant/après séance.
+- On est dimanche 20 septembre, il est 13h05 — c'est après-midi. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). 
 
 
 

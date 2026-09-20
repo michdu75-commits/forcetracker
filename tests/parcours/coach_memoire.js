@@ -159,6 +159,13 @@ module.exports.ecran = async function (t, b, PORT) {
     o.l9ok = poser('Une memoire dont la fiche est cassee.', { n: 'importe quoi' });
     o.l9 = { statut: (S.coachMemoryMeta || {}).statut, texte: S.coachMemory };
     localStorage.setItem(CLE, 'Une memoire.'); localStorage.setItem(META, '{ceci nest pas du json');
+    /* ⚠️⚠️ ON VIDE LA MÉMOIRE VIVE AVANT DE CHARGER — et c'est le contrôle négatif qui l'a
+       exigé. Sans ces deux lignes, `S.coachMemoryMeta` portait encore le `legacy` posé par
+       L9 juste au-dessus : le témoin lisait donc l'ÉTAT RÉSIDUEL et restait vert même quand
+       `load()` s'interrompait avant d'avoir rien produit (mutation `M19`).
+       👉 *Un témoin qui lit une variable que l'étape précédente a remplie mesure l'étape
+       précédente.* Une vraie page démarre à vide : la fixture doit faire pareil. */
+    S.coachMemory = ''; S.coachMemoryMeta = null;
     let l9bis = 'plante';
     try { load(); l9bis = (S.coachMemoryMeta || {}).statut; } catch (e) { l9bis = 'plante:' + e.message; }
     o.l9bis = { statut: l9bis, texte: S.coachMemory };

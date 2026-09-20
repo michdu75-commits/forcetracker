@@ -235,10 +235,29 @@ function verifier(sc, reply) {
     if (COMPARE) console.log('  Mode : COMPARAISON — ' + (_n*2) + ' appels (' + _n + ' par modèle).');
     else console.log('  Mode : RÉEL — ' + _n + ' appel(s) sur ' + MODELES[MOD_ARG].nom + '.');
     if (REPEAT > 1) console.log('  🔁 Chaque scénario est rejoué ' + REPEAT + ' fois — le verdict devient un TAUX.');
-    /* ⛔ PLAFOND ANTI-ABUS : 50 appels/jour/personne, 600 au total (worker.js). Au-delà, le
-       benchmark se ferait couper EN COURS et on paierait des appels pour un rapport tronqué. */
-    if (_n * (COMPARE?2:1) > 45) {
-      console.log('\n  ⛔ ' + (_n*(COMPARE?2:1)) + ' appels : au-dessus du plafond de 50/jour/personne.');
+    /* ⛔ PLAFOND ANTI-ABUS : au-delà, le benchmark se ferait couper EN COURS et on paierait
+       des appels pour un rapport tronqué.
+
+       ⚠️⚠️ CE GARDE ÉTAIT PÉRIMÉ, ET IL BLOQUAIT LE BANC (mesuré le 20/09/2026). Il refusait
+       au-delà de **45** appels, au nom d'un plafond de « 50/jour/personne ». Or ce banc tourne
+       sous `michdu75@gmail.com`, qui est dans `AI_EMAILS_DEV_` : son plafond réel est **150**
+       depuis le 25/08 — relevé précisément POUR ce banc, le commentaire de `Code.js` le dit.
+       👉 Avec **57 scénarios**, le garde refusait une passe que le serveur aurait acceptée :
+       ***il n'y a pas eu de passe réelle enregistrée depuis, et c'est en partie pour ça.***
+
+       ⛔ LE GARDE RESTE — on corrige le CHIFFRE, pas le principe : une passe tronquée reste le
+       pire résultat possible (on paie, et on ne peut rien conclure).
+
+       ⚠️ TROISIÈME ENDROIT QUI PORTE CE NOMBRE (R2, dette assumée et nommée) : `Code.js`
+       (`AI_MAX_DEV_`) fait foi, `coach.js` (`_EV_QUOTA_JOUR`) le répète, et voici le troisième.
+       Trois runtimes séparés ne peuvent pas partager une constante — ils doivent partager le
+       CHIFFRE, et chaque fichier renvoie aux deux autres. *C'est exactement en divergeant que
+       celui-ci est devenu faux.* */
+    const QUOTA_JOUR = 150;   // = AI_MAX_DEV_ (Code.js) = _EV_QUOTA_JOUR (coach.js)
+    const MARGE = 10;         // de quoi relancer quelques scénarios sans repartir à zéro
+    if (_n * (COMPARE?2:1) > QUOTA_JOUR - MARGE) {
+      console.log('\n  ⛔ ' + (_n*(COMPARE?2:1)) + ' appels : au-dessus du plafond de '
+                  + QUOTA_JOUR + '/jour/personne (marge de ' + MARGE + ' gardée).');
       console.log('     Le run serait coupé en cours de route. Réduis --repeat ou --only.\n');
       process.exit(2);
     }
@@ -419,8 +438,25 @@ function verifier(sc, reply) {
 
   // ── Rapports ──
   const ymd = new Date().toISOString().slice(0,10);
+  /* 🧾 LA RÉFÉRENCE DIT SUR QUOI ELLE A ÉTÉ MESURÉE (20/09/2026).
+     ⛔⛔ LE DÉFAUT QU'ON FERME : ce rapport ne portait ni SHA, ni version servie, ni nombre de
+     vérificateurs. Un résultat qui ne dit pas sur QUEL arbre il a été pris ne peut pas servir
+     de point de comparaison — or c'est sa seule raison d'être : *voici ce que Milo faisait
+     avant, voici ce qu'il fait après*. Sans le SHA, « avant » et « après » ne désignent rien.
+     ⛔ On n'ajoute AUCUNE donnée de conversation : ce fichier ne contient toujours que des
+     identifiants, des verdicts et des nombres — jamais une phrase de Milo ni de la personne. */
+  let _sha = '', _version = '';
+  try { _sha = require('child_process')
+          .execSync('git rev-parse --short=8 HEAD', { cwd: ROOT }).toString().trim(); } catch (e) {}
+  try { _version = (fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8')
+          .match(/CACHE\s*=\s*'(ft-v\d+)'/) || [])[1] || ''; } catch (e) {}
+  const _nbVerifs = SCENARIOS.reduce((n, s) => n + ((s.verifs || []).length), 0);
   const json = { date:ymd, mode: GO?(COMPARE?'comparaison':'reel'):'blanc',
-                 modeles: (GO?PASSES:['prod']).map(k=>MODELES[k].nom), nb:liste.length, parPasse };
+                 sha:_sha, version:_version, appTestee: (LOCAL?'locale':APP_LIVE),
+                 modeles: (GO?PASSES:['prod']).map(k=>MODELES[k].nom),
+                 modelesId: (GO?PASSES:['prod']).map(k=>MODELES[k].id||'defaut du Worker'),
+                 nb:liste.length, nbScenariosFichier: SCENARIOS.length, nbVerifs:_nbVerifs,
+                 repeat: REPEAT, jugeIA: false, parPasse };
   fs.writeFileSync(path.join(__dirname,'eval-report.json'), JSON.stringify(json,null,2));
 
   const ic = e => ({vert:'✅',rouge:'❌',muet:'⛔',erreur:'⛔',blanc:'·'}[e]||'?');

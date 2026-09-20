@@ -453,7 +453,34 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1226` — 🍽️ **NUTRITION UX : LE REPAS CHOISI À LA MAIN
+- **Version en ligne (live) :** `ft-v1227` — 🧾 **LA PROVENANCE DE `S.coachMemory` —
+  ET LA BORNE QUI COMPTE EST *PROVENANCE ≠ VALIDATION*.**
+  Arbitrage de Michel (**option B**) : *« conserver `S.coachMemory`, mais lui ajouter une
+  provenance et une structure minimale »*, avec deux bornes citées mot pour mot — ⛔ *« ne
+  jamais inventer une provenance que nous ne connaissons pas »* et ⛔⛔ *« ne donne surtout
+  pas à `coachMemory` le statut `validated` simplement parce qu'elle existe »*.
+  ⛔⛔ **La décision de conception est qu'elle RESTE UNE CHAÎNE** : mesuré avant d'écrire une
+  ligne, elle traverse **19 sites** dont **deux contrats qui n'appartiennent pas au client**
+  (`worker.js` la concatène dans le prompt de Milo, `Code.js` la passe au nettoyeur de
+  *chaîne* d'Apps Script). *En faire un objet aurait injecté « [object Object] » dans le
+  prompt* — le recul que l'arbitrage interdit. La provenance vit donc **à côté**, dans
+  `coachMemoryMeta` : `coachMemory` porte **le texte**, la fiche porte **d'où il vient**
+  (**R2**, pas une duplication).
+  ⭐ **Deux statuts seulement** — `generated` (on sait par quoi et quand) et `legacy` (elle
+  existait avant, ⛔ `moteur`/`date`/`source` = **`null`**, *on ne sait pas et on l'écrit*).
+  ⛔ **Aucun `validated`** : `registre.observations` le porte parce que **quelqu'un a répondu
+  OUI** ; un résumé d'IA n'a rien à voir.
+  ⭐ **Le moteur est MESURÉ, pas deviné** : `worker.js` renvoie `_model`, `Code.js` fait pareil
+  sur son repli — *sinon la provenance dépendrait de la route empruntée*.
+  ⛔ **La migration est une RÈGLE rejouée, jamais un drapeau** (chargement **et** après chaque
+  restauration cloud) — *une restauration peut ramener un profil d'avant des mois plus tard*
+  (`ft4_stmig1`, ft-v1213 · les trois pots, ft-v1225).
+  ⚠️ **Non touchés, mesurés, rendus à l'arbitrage de Michel** : la **fréquence** du résumé
+  (le quota compte les appels — ***≈ 26 messages par jour, pas 50***) et le **résumé de
+  résumé** (**17 itérations** sur une conversation de 20 messages, et *la dérive est
+  invisible*). Détail : `docs/COACHMEMORY-PROVENANCE.md`.
+
+- **Version précédente :** `ft-v1226` — 🍽️ **NUTRITION UX : LE REPAS CHOISI À LA MAIN
   RESTE ACTIF, ET LA DONNÉE LE SUIT.**
   ⛔⛔ **Ce n'était pas une gêne d'affichage** : mesuré sur l'app servie, choix manuel
   « Déjeuner », le 1ᵉʳ aliment tombait bien dans `dejeuner` et les **deux suivants** dans

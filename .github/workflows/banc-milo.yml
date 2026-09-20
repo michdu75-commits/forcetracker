@@ -1,0 +1,141 @@
+name: Banc d'essai de Milo (référence comportementale)
+
+# ══════════════════════════════════════════════════════════════════════════════════════
+# POURQUOI CE WORKFLOW EXISTE — mesuré le 20/09/2026.
+#
+# La seule référence réelle du comportement de Milo vivait dans le `localStorage` d'un
+# téléphone : le dépôt ne portait qu'un rapport « à blanc » (0 appel), donc le jour d'un
+# changement de contexte, de prompt ou de moteur, il n'y avait RIEN à comparer.
+#
+# ⛔⛔ ET LE CONTENEUR DE DÉVELOPPEMENT NE PEUT PAS LA PRODUIRE. Mesuré, cause précise :
+# le proxy de sortie répond « 403 à CONNECT (refus de politique) » pour
+# michdu75-commits.github.io, dry-field-e931.forcetracker-app.workers.dev ET
+# script.google.com. Le banc pilote l'app EN LIGNE, qui appelle le Worker, qui porte la
+# clé API — les trois maillons sont hors d'atteinte. Un runner GitHub, lui, a le réseau.
+#
+# ⚠️⚠️ IL NE SE DÉCLENCHE JAMAIS TOUT SEUL, ET C'EST LA DÉCISION CENTRALE.
+# Pas de `push`, pas de `schedule` : **uniquement `workflow_dispatch`**, avec une
+# confirmation à taper. Une passe = 57 appels IA RÉELS, facturés. Un workflow qui part
+# sur chaque push brûlerait le plafond quotidien et la facture sans que personne
+# ne l'ait demandé.
+#
+# ⚖️ CE QU'IL NE FAIT PAS : il ne juge pas, il n'introduit aucun juge IA, et il ne rend
+# pas le banc bloquant. Il MESURE et il ENREGISTRE. *Le banc reste le niveau 3 —
+# définition → comportements observables → tests — il ne devient pas la définition.*
+#
+# 🔒 DONNÉES : le rapport ne contient QUE des identifiants de scénario, des verdicts et
+# des nombres. Vérifié le 20/09 — aucune clé `reply`, `reponse` ni `content`. Les
+# scénarios emploient des profils synthétiques posés par leurs propres fixtures.
+# ══════════════════════════════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmer:
+        description: 'Tape LANCER pour confirmer — cette passe envoie de VRAIS appels IA, facturés.'
+        required: true
+        default: ''
+      scenarios:
+        description: 'Nombre de scénarios (vide = tous). Ex. 5 pour un essai bon marché.'
+        required: false
+        default: ''
+      enregistrer:
+        description: 'Committer la référence dans le dépôt ? (oui / non)'
+        required: false
+        default: 'oui'
+
+permissions:
+  contents: write
+
+concurrency:
+  # ⛔ Deux passes en parallèle brûleraient le plafond et se couperaient l'une l'autre.
+  group: banc-milo
+  cancel-in-progress: false
+
+jobs:
+  banc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Refuser si la confirmation n'est pas tapée
+        # ⭐ Une confirmation explicite, pas une case cochée par défaut : ce workflow
+        #    dépense de l'argent réel. On préfère refuser que deviner.
+        run: |
+          if [ "${{ github.event.inputs.confirmer }}" != "LANCER" ]; then
+            echo "::error::Confirmation absente. Relance en tapant LANCER dans le champ."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installer le navigateur sans tête
+        run: npx --yes playwright@1.47.0 install --with-deps chromium
+
+      - name: Lancer la passe RÉELLE
+        id: passe
+        env:
+          # eval.js charge playwright par un chemin absolu propre au conteneur de dev ;
+          # sur le runner il est résolu depuis node_modules.
+          PLAYWRIGHT_BROWSERS_PATH: '0'
+        run: |
+          set -o pipefail
+          ARGS="--go"
+          if [ -n "${{ github.event.inputs.scenarios }}" ]; then
+            ARGS="$ARGS --n ${{ github.event.inputs.scenarios }}"
+          fi
+          echo "::notice::node tests/milo/eval.js $ARGS"
+          node tests/milo/eval.js $ARGS 2>&1 | tee /tmp/banc.log
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Vérifier que la passe a VRAIMENT tourné
+        # ⛔⛔ UNE PASSE TRONQUÉE NE DOIT JAMAIS PASSER POUR UNE RÉFÉRENCE. C'est la leçon
+        #    de `BUGS.md` §61 (« un run planté ressemble à un run vert ») : on relit le
+        #    rapport produit et on exige qu'il annonce le mode RÉEL. Un rapport « blanc »
+        #    signifie que `--go` n'a pas pris — il ne vaut rien comme référence.
+        run: |
+          node -e "
+            const r = require('./tests/milo/eval-report.json');
+            if (r.mode === 'blanc') { console.error('ECHEC : le rapport est en mode blanc, aucun appel n a ete fait.'); process.exit(1); }
+            if (!r.sha) { console.error('ECHEC : le rapport ne porte pas de SHA — il ne peut pas servir de reference.'); process.exit(1); }
+            const p = (r.parPasse && r.parPasse.prod) || [];
+            const joues = p.filter(x => x.etat !== 'blanc').length;
+            if (joues < 1) { console.error('ECHEC : aucun scenario joue.'); process.exit(1); }
+            console.log('OK : ' + joues + ' scenario(s) joue(s), mode ' + r.mode + ', sha ' + r.sha + ', version ' + (r.version||'?'));
+          "
+
+      - name: Enregistrer la référence dans le dépôt
+        if: ${{ github.event.inputs.enregistrer != 'non' }}
+        run: |
+          python3 tools/gen_banc_reference.py
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tests/milo/eval-report.json tests/milo/eval-report.md docs/BANC-MILO-REFERENCE.md
+          if git diff --cached --quiet; then
+            echo "::notice::rien à enregistrer (référence identique)"
+          else
+            git commit -m "banc de Milo : reference comportementale reelle (passe du $(date -u +%F))
+
+          Passe REELLE lancee a la main depuis l'onglet Actions. Ce fichier est le point
+          de comparaison exige par R34 avant tout changement de contexte, de prompt ou
+          de moteur : voici ce que Milo faisait AVANT.
+
+          Aucune conversation enregistree : identifiants de scenario, verdicts et nombres.
+
+          Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+            git push
+          fi
+
+      - name: Garder le journal complet en pièce jointe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: banc-milo-journal
+          path: |
+            /tmp/banc.log
+            tests/milo/eval-report.json
+            tests/milo/eval-report.md
+          retention-days: 30

@@ -1,5 +1,5 @@
-# 🧪 Benchmark Milo (Tier 2) — 2026-09-02
-**Mode :** blanc · **Modèle(s) :** Sonnet 4.6 (production) · **Scénarios :** 55
+# 🧪 Benchmark Milo (Tier 2) — 2026-09-20
+**Mode :** blanc · **Modèle(s) :** Sonnet 4.6 (production) · **Scénarios :** 57
 > ⚠️ Un ROUGE est une preuve qu'une règle a été violée. Un VERT dit seulement
 > « aucune violation détectable » — jamais « Milo respecte ses règles ».
 | Scénario | Origine | Sonnet 4.6 (production) | Détail |
@@ -59,3 +59,5 @@
 | EV-052 — Il emploie les noms du CATALOGUE, pas des abréviations | 24/08/2026 | · |  |
 | EV-053 — Il ne LANCE pas une séance sans qu'on le lui demande | 23/08/2026 | · |  |
 | EV-054 — Il LIT le journal alimentaire au lieu de dire qu'il ne l'a pas | 26/08/2026 | · |  |
+| EV-057 — Il ne monte pas la charge sur les 3 séries d'un coup (la RAMPE de la personne) | 06/09/2026 | · |  |
+| EV-056 — Douleur du JOUR : la SÉANCE change, pas seulement le commentaire | 04/09/2026 | · |  |
