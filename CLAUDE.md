@@ -266,11 +266,21 @@ modales, des boutons secondaires ou des accès réservés) :
 | **Ce qui EXISTE (inventaire)** | `docs/INVENTAIRE.md` (généré) + `tools/inventaire.py` | **Répond à « est-ce que c'est déjà construit ? »** — écrans, menus, modales, actions du serveur, nouveautés annoncées, avec une colonne qui signale ce qui est **dans le code mais absent de la doc**. ⚙️ **Généré depuis le code**, jamais écrit à la main (un inventaire manuel redevient faux en 3 semaines). À régénérer à chaque livraison : `python3 tools/inventaire.py`. |
 | **Détail features + journal** | `docs/JOURNAL-ARCHIVE.md` | Le catalogue complet des fonctionnalités (ft-v128→441) + le journal des versions ft-v128→574 + la gouvernance antérieure. |
 
-**🛡️ Gardien de la Constitution (sortie, en construction)** — symétrique au Gardien de sécurité (entrée) :
-une couche de **conformité AVANT l'affichage** qui vérifie que la réponse de Milo respecte les principes
-(hypothèse présentée comme hypothèse, pas d'invention de fait/source, rôle tenu, rythme). **Étage 1** =
-déterministe local (généralise `_stripCoachTech` : blocs qui fuient, interrogatoire, jargon médical) ;
-**Étage 2** = validation IA (option future, coûteuse). Cadre : `docs/MOTEUR-RAISONNEMENT-MILO.md`.
+**🛡️ Gardien de la Constitution (sortie) — ⚠️ IL TOURNE EN PRODUCTION, cette case disait le contraire.**
+Corrigé le 20/09/2026 : elle annonçait « en construction » alors que **`_gardienSortie` tourne pour tout le
+monde depuis le 21/08** (`coach.js`, appelé par `renderCoachMsg` avant l'affichage). *Un document d'état qui
+sous-déclare ce qui existe fait re-construire ce qui est déjà là* (**R23**). **L'étage 1 est LIVRÉ**, l'étage 2
+(validation IA) reste une option future et coûteuse.
+⭐ **Ce qu'il fait exactement, et les bornes comptent** : il lève **5 drapeaux** déterministes — `bloc_technique`
+· `interrogatoire` · `diagnostic` · `promesse_vide` · `source_fabriquee`. ⛔ **Il ne réécrit JAMAIS une phrase**
+(il commence par `_stripCoachTech`, ce que la prod faisait déjà, puis il **signale**). ⚖️ **Deux exceptions à
+connaître** : sur `diagnostic` il **ajoute** chez tout le monde un rappel « Milo est un coach, pas un médecin » ;
+et le **badge** qui nomme la dérive est **réservé** (clone + admin) — *afficher « promesse de mémoire sans rien
+enregistrer » sous une réponse ferait douter n'importe qui de son coach, pour un défaut qui nous regarde*.
+📊 **Il COMPTE chez tout le monde** (`_gardienCompter`, `ft4_gardienStats`) : **que des nombres**, jamais une
+phrase (Constitution P3), avec le **dénominateur** (toute réponse est analysée) et une **version de règle** qui
+remet le total à zéro quand un motif est recalibré. ⚠️ **Seuls 4 des 5 drapeaux comptent** comme dérive —
+`bloc_technique` en est exclu. Cadre : `docs/MOTEUR-RAISONNEMENT-MILO.md`.
 
 ---
 
