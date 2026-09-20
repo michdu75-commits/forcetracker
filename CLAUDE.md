@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1228`** (prochaine : `ft-v1229`).
+> **Version actuelle : `ft-v1229`** (prochaine : `ft-v1230`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,31 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1229 — 🩹 « RÉSEAU INDISPONIBLE » NE DISAIT RIEN · ET C'EST LE MÊME DÉFAUT QUE J'AVAIS CORRIGÉ LE MATIN MÊME** — Michel : *« je ne peux pas créer le jeton, il me marque réseau indisponible »*.
+
+**⭐ MESURÉ AVANT DE TOUCHER QUOI QUE CE SOIT : la fonction est SAINE.** Conduite dans un navigateur avec un **faux serveur** — charge utile correcte (`issueTokenByCode` · `appareil:'banc-milo'`), rendu correct, **zéro erreur de page**. L'échec était donc réellement dans le réseau ou la réponse… *et mon message était incapable de dire lequel*.
+
+**⛔⛔ LE DÉFAUT ÉTAIT DANS MON `catch`, ET C'EST LA MÊME FAUTE QUE LE MATIN.** Un **seul** `try` entourait **trois** choses : l'**envoi**, la **lecture** de la réponse, et l'**analyse du JSON**. Les trois rendaient la même phrase. 👉 ***C'est mot pour mot le défaut corrigé quelques heures plus tôt dans `tests/_playwright.js`*** — où un `catch` écrasait « paquet non installé » par « chemin de conteneur absent ». **J'ai refait la faute dans la même journée, dans l'autre sens.** *Un `catch` qui avale le diagnostic fait chercher au mauvais endroit.*
+
+| l'étape qui échoue | avant | après |
+|---|---|---|
+| l'envoi ne part pas | ⛔ « Réseau indisponible » | ✅ **« L'envoi n'est pas parti (1/3) »** + le message du navigateur |
+| la réponse est illisible | ⛔ la même phrase | ✅ **« Réponse illisible (2/3) »** + le **code HTTP** |
+| le serveur répond, mais pas en JSON | ⛔ la même phrase | ✅ **« pas en JSON (3/3) »** + HTTP + **le début de la réponse** |
+| le compte n'a pas de code perso | déjà distinct | inchangé |
+
+**⭐ LE CAS LE PLUS INSTRUCTIF EST LE TROISIÈME** : une **page d'erreur Apps Script** ressemblait jusqu'ici à une panne de réseau. Sans l'extrait, on cherchait un problème de connexion là où le serveur avait parfaitement répondu — *autre chose que ce qu'on attendait, mais répondu*.
+
+**⛔ ET LE TEXTE DU SERVEUR EST ÉCHAPPÉ AVANT D'ÊTRE AFFICHÉ.** Une page d'erreur contient du **HTML** : l'insérer brut dans la page l'**exécuterait**. ⛔ Et rien de sensible ne sort — **jamais le jeton, jamais le code perso**.
+
+**📣 RÈGLE D'OR #11 — RIEN.** L'outil est dans **Profil → Admin**, réservé. Aucun écran public ne change.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **`worker.js` : 0 ligne** · ⛔ **`Code.js` : 0 ligne** · ⛔ aucune route, aucun quota, aucun garde-fou du banc touché · ⛔ ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `index.html` · ⛔ **la cause réelle chez Michel n'est PAS encore connue** — c'est justement pour ça que le message la dira.
+
+Tests : éprouvé sur les **quatre chemins** dans un navigateur réel — envoi qui échoue · réponse **non-JSON** · refus `no_code` · **succès**. Chacun rend un message **différent**, et l'échappement est vérifié (le HTML s'affiche au lieu de s'exécuter).
+
+Fichiers : `app.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1229. |
 
 **ft-v1228 — 🔑 UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI · *le banc reçoit un badge, aucune porte n'est ouverte dans le bâtiment*** — décision de Michel : ⭐ ***« créer une identité / un jeton S1 dédié au banc d'essai GitHub, révocable, stocké dans GitHub Secrets, sans créer de porte spéciale permettant de contourner la sécurité S1 des vrais utilisateurs »*** · ⛔⛔ ***« je ne veux PAS d'un mode benchmark qui bypass l'authentification normale du Worker »***.
 
@@ -726,40 +751,3 @@ Fichiers : `supabase.js`, `index.html` (**la seule carte du miroir**), `Code.js`
 Tests : **blocs B-CCCXXVI (24 témoins de source) et B-CCCXXVII (25 témoins de comportement)**, dans `tests/parcours/s2b_bascule.js`. ⭐ Le banc de comportement charge le **vrai `supabase.js`** ET le **vrai injecteur découpé dans `constants.js`** — *un banc qui rejouerait ma réécriture de l'injecteur validerait ma réécriture, pas la production*. ⛔ **CONTRÔLE NÉGATIF : 22 mutations sur un arbre CLONÉ, 22 conformes**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire). ⭐ **Passe complète : 4348 ✅ / 0 ❌** (`RC=0`, le runner a fini). ⚠️ **Un rouge ANTÉRIEUR est signalé et NON corrigé** : la suite `tests/dates` rend **8/9**, et elle rendait **déjà 8/9 avant** cette passe — vérifié en la rejouant sur l'arbre publié. Sa cause est une fixture datée en **temps universel** dans un bloc Nutrition, sans rapport avec la bascule : elle appartient à un autre chantier, donc elle se **dit** au lieu de se corriger au passage.
 
 Fichiers : `supabase.js`, `setup.js` (**une ligne**), `app.js` (**uniquement `loadSbAdmin`**), `tests/parcours/s2b_bascule.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_s2b_bascule.js` (nouveau), `tools/mut_s2b_bascule.py` (nouveau), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1222. |
-
-**ft-v1221 — 🍽️ NUTRITION · LE SCANNER REDEVIENT LOCAL, LA PORTION REDEVIENT LA TIENNE, ET LES HABITUDES SE MESURENT AVANT DE SE DÉCIDER** — les trois correctifs de l'audit du matin, validés par Michel. Sa borne : ⛔ ***« pas de grand redesign · pas de changement de cible calorique glissé dans le même chantier »*** · et, pour les habitudes : ⭐ ***« je préfère un arrêt propre avec une mesure réelle à un seuil inventé »***.
-
-**⭐⭐ A — LA PORTE DU SCANNER SE ROUVRE, ET LE MOT QUI DÉCIDE TIENT EN UN IDENTIFIANT.** Le bouton servi était *« photographier le code-barres (IA lit les chiffres) »* : on payait un appel IA pour lire **13 chiffres que le téléphone décode seul** — et ⚠️ ce que le modèle rend n'est **pas décodé**, aucune clé de contrôle n'a été vérifiée. Le moteur local existait **en entier** (23 fonctions, 4 bibliothèques, un banc de 4 moteurs) : sa porte était fermée exprès depuis le 14/09.
-
-👉 ***`scanBarcode()` demandait encore `zxing-js` — le moteur que le banc avait ÉCARTÉ*** (77,5 % contre 86,2 %, et 25× plus lent). **Rouvrir la porte sans changer ce mot aurait servi le moins bon des quatre**, et personne ne l'aurait vu : *ça marche, juste moins bien.*
-
-**⛔⛔ ET LE LIVE RESTE ÉTEINT, SUR LA FOI DU SEUL ESSAI IPHONE RÉEL.** La voie live y a fait **0 lecture juste et 1 code FAUX** — `3122632363883`, jamais présenté, lu sur **du tissu flou en mouvement**. Les deux lectures justes venaient des **captures**. *Un code faux est pire qu'une absence de lecture : sa clé de contrôle est valide, donc **rien** en aval ne peut le rattraper.* ⭐ Le flux vidéo reste ouvert (il sert à cadrer) et le diagnostic continue de **noter** ce que le live aurait lu : **on éteint la décision, pas la mesure**. ⭐⭐ Et le **banc Admin rallume le live** — *on ne désarme pas l'instrument qui a trouvé le défaut.*
-
-| | avant | après |
-|---|---|---|
-| chemin par défaut | ⛔ **photo → IA** | ✅ **capture → `zxing-wasm` → clé → 1 recherche** |
-| appels IA sur un scan réussi | 1 | **0** |
-| voie live | — | ⛔ **éteinte** (rallumée au banc Admin) |
-| saisie manuelle · étiquette IA · repas décrit | intacts | **intacts** — trois usages différents |
-
-**⭐⭐ B — LE « 250 g DE BANANE » N'ÉTAIT PAS UN CALCUL, C'ÉTAIT UN PLAFOND ATTEINT.** `_RESTE_MAX_G = 250` : *« 250 g de banane »* et *« 250 g de pâtes sèches »* étaient **deux fois la même borne**. L'app avait calculé plus et s'était arrêtée. ⛔ **Et le défaut de conception est là** : un plafond unique **en grammes** traite tous les aliments comme si une portion pesait pareil — 250 g de banane ≈ 2 bananes, 250 g de pâtes **sèches** ≈ 2 portions et demie. *Le même chiffre, deux réalités sans rapport.*
-
-La quantité part désormais de la **portion médiane réellement notée**, et la proposition est un **multiple simple** (1 · 1½ · 2 ; **1 le soir**). ⭐ **MÉDIANE et non moyenne** : mesuré, une grosse saisie isolée (600 g parmi trois 140 g) donnerait **255 g** en moyenne et **140** en médiane. ⚖️ **Trois seuils écrits plutôt que cachés** : **3 observations** pour oser dire « tes portions » · **1 ou 2** → on s'en sert **sans l'annoncer** · **0** → générique, **et on le dit**. ⛔ Une quantité **absente n'est pas un zéro**, et on ne mélange pas les unités.
-
-⭐ **Et quand les portions plausibles ne couvrent pas la moitié du reste, l'écran le DIT** — ⛔ **jamais le soir** (anti-TCA, **P21**) : *la même phrase peut informer à 14 h et blesser à 21 h*. Le **calcul du manque reste exact** : c'est la suggestion qui s'arrête à ce qui est plausible, et qui cesse de prétendre le contraire.
-
-**⛔⛔ C1 — LES HABITUDES : LA MESURE, PAS LA RÈGLE, ET C'EST VOLONTAIRE.** `s.n >= 2` **n'est pas touché**. Un outil Admin en **lecture seule** (aucune écriture, aucun envoi, aucun secret) rend par repas : total · **jours distincts** · semaines distinctes · fenêtres **14/28/56 j** · et le **dénominateur qui manquait** — les jours réellement **renseignés**. *Sans lui, quelqu'un qui note une semaine sur deux voit ses habitudes diluées par son propre silence.*
-
-**⚠️⚠️ ET LA MESURE M'A APPRIS UN FAIT QUE L'AUDIT N'AVAIT PAS VU.** La signature d'un repas porte **tous** les aliments du couple `(date, repas)`. 👉 ***Deux pizzas dans le MÊME dîner ne font pas « pizza notée 2 fois » : elles font un repas DIFFÉRENT.*** Un aliment n'est candidat que s'il est **seul** dans son repas. ⚠️ Mes **deux premières fixtures rougissaient sur un outil parfaitement juste** — *elles testaient ma compréhension de la signature, pas la mesure*. Et un attendu figeait **une valeur** (« 140 g ») au lieu de la **règle** : le code proposait 280 = 2 × 140, ce qui est exactement le comportement voulu. *Un témoin qui fige une valeur mesure mon arithmétique mentale.*
-
-**📣 RÈGLE D'OR #11** — un bouton **apparaît** (« 📷 Scanner le code-barres ») et un autre change de rang. ⚖️ **Pop-up : non** — rien n'est à *faire*, et le scanner fonctionnait déjà par la photo. ⭐ Mais **point rouge + aide de l'onglet + aide détaillée + diapo du Guide** sont dus, et je les pose à la demande de Michel plutôt que de moi-même : *c'est une vraie feature utilisateur, pas une correction.*
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, chacun figé par un témoin : ⛔ **l'Accueil est GELÉ** · ⛔ **la douane est GELÉE** (4 écrivains, aucune règle devenue bloquante) · ⛔ `calcTDEE`/`calcMacros` et **la cible** ne bougent pas — *la cible à 3 831 kcal explique pourquoi le plafond saturait, mais la corriger est un autre chantier* · ⛔ **Milo global**, Séance, Progrès, la palette · ⛔ **la règle des habitudes**, qui attend les chiffres réels. ⚠️ **Le défaut « compte neuf : 1 500 kcal, 0 g de protéines, 0 g de lipides » reste OUVERT** et hors de ce sous-chantier.
-
-⚠️⚠️ **ET LE SCANNER N'EST PAS VALIDÉ TANT QUE MICHEL N'A PAS TESTÉ SUR IPHONE RÉEL.** *Le banc synthétique est précisément celui qui disait que tout allait bien.*
-
-**✅ TESTÉ SUR IPHONE RÉEL LE 17/09 — LE SCANNER LOCAL EST VALIDÉ.** Michel : *« scanner local : OK · lecture des codes-barres : fonctionne bien · aucun faux EAN observé »*. ⭐ **C'est le critère qui comptait** : le défaut qui avait fait éteindre le live était un **code faux de clé valide**, que rien en aval ne peut rattraper — zéro sur les essais réels par capture. 📷 **Un seul comportement relevé, et ce n'est pas un bug** : tant que l'app reste ouverte, **aucune nouvelle demande caméra** ; après une fermeture complète et une relance de la PWA, **iOS redemande l'autorisation**. ⛔ **AUCUN CHANTIER — décision de Michel** (*« à noter comme comportement iPhone/PWA, sans ouvrir de chantier pour l'instant »*), noté dans `docs/GALERES-ET-LECONS.md` §3 pour que personne ne le « répare » (**R30**). ⚠️ **Et la cause est dite avec sa borne** (**règle d'or #16**) : ce n'est pas notre code — `navigator.permissions` et `revoke()` ont **0 occurrence** dans `app.js`, et la fermeture ne fait qu'un `track.stop()`, qui libère la caméra **sans toucher à l'autorisation** ; mais *« c'est iOS »* reste une **déduction par élimination**, aucun iOS n'étant mesurable depuis le conteneur.
-
-Tests : **blocs B-CCCXXI → B-CCCXXV, 45 témoins**, dans `tests/parcours/nutri_correctifs.js`. ⛔ **CONTRÔLE NÉGATIF : 29 mutations sur un arbre CLONÉ, 29 conformes**, contrôle sain **45 OK / 0 rouge avant ET après** — dont **quatre qui doivent RESTER VERTES** (les mots que les témoins cherchent, cités dans un commentaire JS, HTML, ou dans la doc), *parce que la raison de chaque décision est justement écrite à côté du code* (**R30**). ⭐ **Deux témoins ont été RETOURNÉS, pas supprimés** : ils figeaient la porte **fermée** — ils figent maintenant qu'elle est **ouverte sur la capture**.
-
-Fichiers : `app.js`, `index.html`, `screens.js` (bloc **Nutrition** uniquement, justifié avant modification), `tests/parcours/nutri_correctifs.js` (nouveau), `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `state.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `style.css`, ni `supabase.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1221. |

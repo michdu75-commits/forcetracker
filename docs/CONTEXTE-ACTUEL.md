@@ -453,7 +453,18 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1228` — 🔑 **UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI.**
+- **Version en ligne (live) :** `ft-v1229` — 🩹 **« RÉSEAU INDISPONIBLE » NE DISAIT RIEN.**
+  Michel ne pouvait pas fabriquer le jeton du banc. ⭐ **Mesuré d'abord** : la fonction est
+  **saine** (faux serveur, charge utile correcte, 0 erreur de page). ⛔⛔ Le défaut était dans
+  mon `catch` : **un seul sac** pour l'envoi, la lecture et l'analyse du JSON.
+  👉 ***Le même défaut que celui corrigé le matin dans `tests/_playwright.js`*** — un `catch`
+  qui avale le diagnostic fait chercher au mauvais endroit.
+  ✅ Trois étapes **nommées** (1/3 · 2/3 · 3/3), avec le **code HTTP** et le **début de la
+  réponse** quand ce n'est pas du JSON — *une page d'erreur Apps Script ressemblait à une
+  panne de réseau*. ⛔ Texte du serveur **échappé** ; jamais le jeton, jamais le code perso.
+  ⏳ **La cause réelle chez Michel reste inconnue** : c'est le nouveau message qui la dira.
+
+- **Version précédente :** `ft-v1228` — 🔑 **UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI.**
   *Le banc reçoit un badge ; aucune porte n'est ouverte dans le bâtiment.*
   ⛔⛔ **Le défaut fermé est mesuré** : le workflow du banc recevait **HTTP 401** et ne
   mesurait **rien** — un runner GitHub ouvre un navigateur **neuf**, donc sans jeton
