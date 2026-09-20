@@ -491,7 +491,32 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1226` — 🍽️ **NUTRITION UX : LE REPAS CHOISI À LA MAIN
+- **Version en ligne (live) :** `ft-v1227` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
+  `persist()` MANQUANT SUR LA SORTIE « PAS DE POIDS ».** Cas réel de Michel (Progrès → Corps &
+  santé) : cou **40,7**, taille **92,4**, hanches vide — *« je les renseigne et je ne peux pas
+  les enregistrer »*.
+  ⛔⛔ **REPRODUIT AVANT D'ÊTRE CORRIGÉ, et les CINQ cas nominaux passaient** — c'est ce qui a
+  obligé à chercher ce qui DIFFÈRE au lieu de corriger au jugé. **Trois états d'entrée, une
+  seule racine** : aucun poids connu · une pesée **sans kilo utilisable** (un bilan corporel qui
+  n'a écrit qu'un %) · une pesée à `kg:0`. Dans les trois, la mesure existait **en mémoire** et
+  le **disque restait vide** — la forme la pire : le rechargement suivant l'efface, en silence.
+  ⭐⭐ **La cause** : `saveBodyFat` écrivait les centimètres puis sortait par la branche du poids
+  **sans `persist()`**. ft-v1129 avait corrigé l'ORDRE pour le **premier** `return` (celui du %)
+  et laissé le **second** intact. 👉 ***Un correctif d'ordre se pose sur TOUS les chemins de
+  sortie, pas sur celui qui a servi à le trouver*** (**R15**).
+  ⛔ **Second défaut, mêmes trois lignes** : `last ? last.kg : S.bw` n'atteignait le repli sur le
+  poids du profil que s'il n'existait **aucune** pesée — *on disait « enregistre d'abord ton
+  poids » à quelqu'un dont l'écran affiche 85,9 kg juste au-dessus*.
+  ⭐ **Troisième, trouvé en MESURANT le séparateur décimal** : `parseFloat('40,7')` rend **40**,
+  donc une virgule calculait le % sur des centimètres tronqués — **20,1 au lieu de 19,9**, et
+  c'est ce chiffre faux qui était **enregistré**. La lecture passe par `numFR` chez le
+  propriétaire unique (**R2**) ; ⛔ **la formule ne bouge pas**, deux témoins l'épinglent.
+  ⛔ **Aucune migration** : un % saisi à la virgule avant aujourd'hui reste tel quel — *on ne
+  peut pas savoir lequel l'a été, donc on n'invente pas*.
+  Tests : **B-CCCXXXVIII (10) + B-CCCXXXIX (18)**, banc ciblé **28 OK / 0 rouge**, **17/17
+  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète 4506 ✅ / 0 ❌**.
+
+- **Version précédente :** `ft-v1226` — 🍽️ **NUTRITION UX : LE REPAS CHOISI À LA MAIN
   RESTE ACTIF, ET LA DONNÉE LE SUIT.**
   ⛔⛔ **Ce n'était pas une gêne d'affichage** : mesuré sur l'app servie, choix manuel
   « Déjeuner », le 1ᵉʳ aliment tombait bien dans `dejeuner` et les **deux suivants** dans
