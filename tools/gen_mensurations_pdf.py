@@ -133,6 +133,31 @@ g(re.search(r'if\s*\(\s*!\s*brut\s*\)\s*return\s*;', MES.replace('\n', ' ')) is 
 g(not re.search(r'S\.(neck|waist|hip)\s*=', SBF),
   "saveBodyFat reecrit une mensuration en direct : R2 rompu")
 
+# ══ LE RETOUR DE CHRISTOPHE — recompte, jamais cite ══════════════════════════
+BFD = bloc(TR, r'function\s+bfDerniere\s*\([^)]*\)\s*')
+g(BFD != '', "bfDerniere a disparu : plus de proprietaire pour « la derniere mesure »")
+g('.sort(' in BFD and 'localeCompare' in BFD,
+  "bfDerniere ne TRIE plus par date : elle se fie a l ordre du tableau")
+g(re.search(r'\?\s*\{\s*date\s*:[^}]*\}\s*:\s*null', BFD.replace('\n', ' ')) is not None,
+  "bfDerniere ne rend plus null : « je ne sais pas » et « zero » se confondent (R29)")
+JC = bloc(TR, r'function\s+_bfJourCourt\s*\([^)]*\)\s*')
+g(JC != '' and 'new Date' not in JC,
+  "la date repasse par new Date : piege des fuseaux horaires (BUGS.md)")
+BRUT = lire('tracking.js')
+g('apr\u00e8s tes mesures' in BRUT, "le sous-titre ne nomme plus la source du chiffre propose")
+g('derni\u00e8re not\u00e9e' in BRUT, "l ecran ne rappelle plus la derniere valeur notee")
+# ⛔⛔ LA DECISION NON TRANCHEE (D-013) : le prefill ne doit PAS avoir change.
+# ⚠️ ON NE RETIRE PAS LES ESPACES, ET C'EST LE PIEGE DE L ESPACE (9e fois dans ce depot) :
+#    « TR.replace(' ','') » les retirait de la SOURCE, mais le motif en contient un
+#    (« const prefill ») — il ne pouvait donc plus jamais correspondre. Le garde refusait de
+#    produire sur un code parfaitement juste. *Quand on nettoie la source, on nettoie le motif
+#    du meme geste, sinon le garde mesure sa propre mise en forme.* Ici, rien a nettoyer.
+g("const prefill=savedToday?todayW.bf:(navyNow!=null?navyNow:'')" in TR,
+  "le prefill a change alors que D-013 n est pas tranchee")
+DEC = lire('docs/DECISIONS.md')
+g('| D-013 |' in DEC and 'TRANCHER' in DEC.split('| D-013 |')[1].split('\n')[0],
+  "D-013 n est pas consignee comme « A TRANCHER » dans le registre")
+
 # ⛔ LE PERIMETRE : un seul fichier servi touche.
 _servis = subprocess.run(  # noqa
     ['git', 'diff', '--name-only', 'origin/master...HEAD'],
@@ -187,7 +212,7 @@ if _E:
         print('  - ' + x)
     sys.exit(1)
 
-NB = 20
+NB = 28
 
 # ══ MISE EN PAGE ═════════════════════════════════════════════════════════════
 SS = getSampleStyleSheet()
@@ -364,13 +389,13 @@ Ad(para("/!\\ <b>Ce que la correction NE fait PAS</b>, nommement : l ecran n est
 Ad(titre('5. Tests et controle negatif'))
 Ad(tab([
     ['quoi', 'resultat'],
-    ['bloc <b>B-CCCXXXVIII</b> - 10 temoins de <b>source</b>', 'verts'],
-    ['bloc <b>B-CCCXXXIX</b> - 18 temoins <b>conduits dans le navigateur</b>',
+    ['bloc <b>B-CCCXXXVIII</b> - <b>17</b> temoins de <b>source</b>', 'verts'],
+    ['bloc <b>B-CCCXXXIX</b> - <b>23</b> temoins <b>conduits dans le navigateur</b>',
      'verts (le cas exact de Michel, les 3 etats de poids, point vs virgule, un champ vide qui '
      'ne detruit rien, deux jours qui coexistent, <b>et le rechargement complet</b>)'],
-    ['banc cible <i>tools/banc_mensurations.js</i>', '<b>28 OK / 0 rouge</b>'],
-    ['<b>controle negatif</b> - 17 mutations sur un arbre <b>CLONE</b>',
-     '<b>17 conformes</b>, dont <b>2 qui doivent RESTER VERTES</b> (un commentaire citant les '
+    ['banc cible <i>tools/banc_mensurations.js</i>', '<b>40 OK / 0 rouge</b>'],
+    ['<b>controle negatif</b> - <b>24</b> mutations sur un arbre <b>CLONE</b>',
+     '<b>24 conformes</b>, dont <b>2 qui doivent RESTER VERTES</b> (un commentaire citant les '
      'mots cherches) ; controle sain vert <b>avant ET apres</b>'],
     ['<b>passe complete</b> (journal lu, jamais recopie a la main)',
      '<b>%d OK / %d rouge</b>, les 4 conditions vertes' % (F['passeOk'], F['passeKo'])],
@@ -391,6 +416,59 @@ Ad(para("<b>Et le controle negatif a trouve un trou dans mes temoins - c est exa
         "numerique</b> est <i>truthy</i> - la pesee du jour aurait ete creee avec "
         "<i>kg:'abc'</i>, un poids qui n en est pas un, et qui serait parti dans les courbes et "
         "au cloud. <b>Le trou est devenu un temoin.</b>"))
+
+# ── 5bis ─────────────────────────────────────────────────────────────────────
+Ad(titre('5bis. Le SECOND retour - Christophe : « ma masse grasse revient a 20,7 »'))
+Ad(para("<i>&laquo; Quand je saisis la masse grasse du jour, je n'ai pas la valeur precedente. "
+        "J'ai systematiquement 20.7. Apres avoir saisi ma valeur et ferme l'application, quand je "
+        "reviens elle semble bien presente. Mais le lendemain elle revient a 20.7. &raquo;</i> "
+        "Consigne de Michel : <b>ne pas supposer que la cause est identique - le verifier</b>."))
+Ad(tab([
+    ['', 'jour J', 'jour J+1'],
+    ['a l ouverture', 'Estimee ~21,8 % (le calcul)', '/!\\ <b>21,8 %</b>'],
+    ['il saisit sa valeur de balance', '<b>19,1</b> -&gt; OK Enregistree', '-'],
+    ['apres rechargement', 'OK <b>19,1 revient</b>', '-'],
+    ['<b>sa derniere valeur enregistree</b>', '19,1', '<b>19,1</b> - et elle n apparait '
+     '<b>nulle part</b>'],
+], [150, 166, 166]))
+Ad(Spacer(1, 3))
+Ad(para("<b>/!\\ LA PREMISSE DU BRIEF EST PARTIELLEMENT FAUSSE, et je le dis plutot que de coder "
+        "dessus</b> (<b>R38</b>). <b>20,7 n'est ni une constante en dur, ni une valeur par defaut, "
+        "ni un decalage d'index, ni un mauvais tri</b> : c'est le <b>calcul US Navy</b> des "
+        "mensurations stockees, qui ne bouge pas tant qu'elles ne bougent pas. <i>Elle ressemble "
+        "a une vieille valeur figee parce qu'elle en est la SOURCE, pas parce qu'on la relit.</i>"))
+Ad(para("<b>La cause a effet pressentie par Michel est reelle - pour LUI.</b> Ses mensurations du "
+        "matin n'etaient pas enregistrees (le defaut de la section 2), donc le calcul restait cale "
+        "sur les <b>anciennes</b> : 20,7 survivait a une nouvelle mesure. <b>/!\\ Mais ca "
+        "n'explique pas Christophe</b>, qui saisit une valeur de <b>balance</b> : chez lui les "
+        "mensurations ne changent pas, donc le calcul est simplement <b>constant</b>. "
+        "<i>Deux symptomes identiques, deux causes differentes - et seule la mesure le montre.</i>"))
+Ad(para("<b>Ce qui manquait n'etait donc pas le bon chiffre.</b> L'ecran ne montrait <b>nulle "
+        "part</b> la derniere mesure reelle, ni d'ou venait celui qu'il proposait. /!\\ Et "
+        "l'incoherence etait sous le nez : les trois champs voisins (cou, taille, hanches) "
+        "affichent, eux, la <b>derniere valeur connue</b> - <i>quatre champs de la meme carte, "
+        "deux regles differentes, et rien ne le disait.</i>"))
+Ad(para("<b>Correctif</b> : <i>bfDerniere()</i> devient le <b>proprietaire unique</b> de "
+        "&laquo; quelle est sa derniere mesure &raquo; (<b>R2</b>) - il <b>TRIE par date</b> au "
+        "lieu de se fier a l'ordre du tableau (<i>un [0] qui suppose un tri est un bug qui "
+        "n'apparait que chez les autres : apres une restauration, un import, une fusion</i>) et "
+        "rend <b>null, jamais 0</b> (<b>R29</b>). Le sous-titre dit desormais : <i>&laquo; Estimee "
+        "~21,8 % <b>d'apres tes mesures</b> &middot; <b>derniere notee : 19,1 % le 20/09</b> "
+        "&raquo;</i>. La date se formate <b>par decoupage de chaine</b>, jamais par "
+        "<i>new Date</i> (piege des fuseaux horaires)."))
+Ad(para("<b>/!\\ ET LE CHIFFRE PREREMPLI NE CHANGE PAS - c'est une decision rendue a Michel "
+        "(D-013, A TRANCHER).</b> Les deux options ont un piege <b>mesure</b> : (1) proposer la "
+        "valeur d'hier et laisser appuyer sur OK <b>daterait d'aujourd'hui une mesure d'hier</b> - "
+        "<i>exactement ce que le brief interdit dans sa propre liste &laquo; dans tous les cas "
+        "&raquo;</i> ; (2) partir vide <b>casserait le parcours US Navy</b>, ou l'on tape ses "
+        "centimetres et ou le % apparait pret a valider. <i>Trancher, c'est choisir qui de "
+        "l'utilisateur-balance ou de l'utilisateur-metre-ruban est le cas normal - et ca, le code "
+        "ne peut pas le dire.</i> Un temoin <b>fige le preremplissage actuel</b>, pour qu'on ne "
+        "prenne pas cette decision &laquo; en passant &raquo;."))
+Ad(para("<b>Un defaut mesure et NON corrige, dit plutot que masque</b> : une valeur manuelle "
+        "<b>est</b> remplacee par le calcul si l'on corrige ensuite une mensuration. Ce n'est pas "
+        "un ecrasement &laquo; par un defaut &raquo; - le champ change <b>visiblement</b> avant "
+        "qu'on valide, et c'est l'utilisateur qui a declenche le recalcul."))
 
 # ── 6 ────────────────────────────────────────────────────────────────────────
 Ad(titre('6. Publication'))
@@ -497,7 +575,7 @@ if len(_lis) < 5000:
     os.remove(SORTIE)
     sys.exit('REFUS : le PDF relu ne fait que %d caracteres lisibles' % len(_lis))
 for _mot in ('CINQ cas nominaux', 'persist', 'RESTER VERTES', 'master sert encore',
-             'Collision de numero'):
+             'Collision de numero', 'deux causes differentes', 'D-013'):
     if _mot not in _lis:
         os.remove(SORTIE)
         sys.exit('REFUS : « %s » n est pas imprime dans le PDF' % _mot)
