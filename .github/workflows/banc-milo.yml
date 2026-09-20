@@ -66,6 +66,26 @@ jobs:
             exit 1
           fi
 
+      - name: Refuser TOT si l'identite du banc manque
+        # ⛔⛔ AVANT LE CHECKOUT, ET SURTOUT AVANT TOUTE DEPENSE. Sans jeton S1, chaque
+        #    scenario part, se fait refuser en 401 et revient vide : la passe coute son
+        #    temps et n'apprend rien. Mesure du 20/09 : c'est exactement ce qui est arrive.
+        # ⛔ ON NE MONTRE JAMAIS LA VALEUR — ni en clair, ni tronquee, ni sa longueur exacte
+        #    si elle est correcte. On dit seulement PRESENT / ABSENT et QUOI configurer.
+        #    (GitHub masque deja les secrets dans les journaux ; on ne s'y fie pas seul.)
+        env:
+          FT_BANC_TOKEN: ${{ secrets.FT_BANC_TOKEN }}
+        run: |
+          if [ -z "$FT_BANC_TOKEN" ]; then
+            echo "::error::Le secret FT_BANC_TOKEN n'est pas defini. Le banc ne peut pas s'identifier aupres de Milo."
+            echo "::error::A faire UNE fois : dans l'app -> Profil -> Admin -> « Jeton du banc d'essai » -> Fabriquer -> Copier."
+            echo "::error::Puis GitHub -> Settings -> Secrets and variables -> Actions -> New repository secret."
+            echo "::error::Nom exact du secret : FT_BANC_TOKEN"
+            echo "::error::Ne copie JAMAIS ce jeton depuis un journal : il n'y apparait jamais."
+            exit 1
+          fi
+          echo "::notice::identite du banc : presente"
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
@@ -122,6 +142,13 @@ jobs:
 
       - name: Lancer la passe RÉELLE
         id: passe
+        # ⭐ LE JETON N'ARRIVE QU'ICI. Le controle gratuit juste au-dessus n'appelle personne :
+        #    lui donner l'identite ne prouverait rien et l'exposerait pour rien.
+        #    ⛔ `eval.js` ne l'affiche jamais : il en verifie la PRESENCE et la longueur, puis
+        #    le pose dans le `localStorage` du navigateur de test, la ou le vrai client le
+        #    range. Le banc emprunte donc le chemin de tout le monde.
+        env:
+          FT_BANC_TOKEN: ${{ secrets.FT_BANC_TOKEN }}
         run: |
           set -o pipefail
           ARGS="--go"

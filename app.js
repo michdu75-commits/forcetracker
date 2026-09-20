@@ -9742,6 +9742,90 @@ function _adminTokRefuse(d){
   if(d && d.error==='token'){ try{ localStorage.removeItem('ft4_admin_tok'); }catch(e){} return true; }
   return false;
 }
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   🔑 L'IDENTITÉ S1 DU BANC D'ESSAI (20/09/2026)
+   ═══════════════════════════════════════════════════════════════════════════════════════
+   ⛔⛔ CE QUE CET OUTIL N'EST PAS : une porte dérobée. Il appelle la route EXISTANTE
+   `issueTokenByCode` — exactement celle que `_ftBootstrapJeton` utilise déjà sur le
+   téléphone de chacun. Aucun « mode benchmark », aucune exception dans le Worker, aucune
+   route neuve. Le jeton produit est un jeton S1 ORDINAIRE : le Worker le vérifiera comme
+   les autres, et il se révoque comme les autres.
+   ⭐ La seule différence est son ÉTIQUETTE (`banc-milo`), qui le rend reconnaissable et
+   révocable **seul** — sans toucher aux appareils réels.
+
+   ⚠️ POURQUOI ON L'AFFICHE UNE SEULE FOIS. Le serveur ne garde qu'une empreinte
+   (`sha256`) : le jeton brut n'existe qu'à l'instant où il est rendu (`_jetonPoser_`).
+   ⛔ On ne le range donc NULLE PART côté client — ni dans `localStorage`, ni dans l'état,
+   ni dans un journal. *Un secret rangé « pour le retrouver plus tard » est un secret de
+   plus à protéger.* S'il est perdu, on en refait un et on révoque l'ancien.
+   ⚠️⚠️ ET IL NE DOIT JAMAIS ATTERRIR DANS UN JOURNAL PUBLIC : c'est pour cela qu'il se
+   copie d'ici, jamais depuis la sortie d'un workflow. */
+async function creerJetonBanc(){
+  const z=document.getElementById('admin-banc-jeton'); if(!z) return;
+  if(!S.url||!S.email){ z.innerHTML='<div style="color:var(--red);font-size:13px;">Il faut être connecté avec ton compte.</div>'; return; }
+  /* ⛔ FAIL-CLOSED, ET ON LE DIT AVANT D'APPELER : sans code perso sur le compte, le serveur
+     refusera (`no_code`). Le dire ici évite un aller-retour et un message obscur. */
+  if(typeof _authCode==='function' && !_authCode()){
+    z.innerHTML='<div style="color:var(--red);font-size:13px;">Ton compte n\'a pas encore de <strong>code perso</strong> — c\'est lui qui prouve que le compte est à toi. Pose-le d\'abord dans « protéger mon compte ».</div>'; return;
+  }
+  z.innerHTML='<div style="font-size:13px;color:var(--t2);">Fabrication…</div>';
+  try{
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'issueTokenByCode',email:S.email,authCode:_authCode(),
+                           appareil:'banc-milo'})});
+    const d=await r.json();
+    if(!d||d.status!=='ok'||!d.token){
+      const pq=(d&&d.error==='no_code')?'ton compte n\'a pas de code perso'
+              :(d&&d.error==='auth')?'le code perso n\'a pas été accepté':'refus du serveur';
+      z.innerHTML='<div style="color:var(--red);font-size:13px;">Impossible : '+pq+'.</div>'; return;
+    }
+    /* ⭐ AFFICHÉ, PAS ENREGISTRÉ. Et la marche à suivre est écrite ICI, à côté de la valeur,
+       parce que c'est le seul moment où les deux sont réunies. */
+    z.innerHTML='<div style="border:1px solid var(--bd);border-radius:10px;padding:10px;background:var(--bg2);">'
+      +'<div style="font-size:12.5px;color:var(--t2);line-height:1.5;margin-bottom:7px;">⚠️ <strong>Il ne réapparaîtra plus.</strong> Copie-le, colle-le dans GitHub, puis referme.</div>'
+      +'<div id="banc-jeton-val" style="font-family:monospace;font-size:11.5px;word-break:break-all;color:var(--t1);background:var(--bg);padding:8px;border-radius:7px;">'+d.token+'</div>'
+      +'<button class="btn btn-bg2" style="margin-top:8px;padding:9px;font-size:13px;" onclick="copierJetonBanc()">📋 Copier</button>'
+      +'<div style="font-size:12.5px;color:var(--t2);line-height:1.6;margin-top:9px;">'
+      +'<strong>Où le coller :</strong><br>1. GitHub → le dépôt → <strong>Settings</strong><br>'
+      +'2. <strong>Secrets and variables</strong> → <strong>Actions</strong><br>'
+      +'3. <strong>New repository secret</strong><br>'
+      +'4. Nom : <strong>FT_BANC_TOKEN</strong><br>5. Valeur : ce qui est au-dessus → <strong>Add secret</strong></div>'
+      +'</div>';
+  }catch(e){ z.innerHTML='<div style="color:var(--red);font-size:13px;">Réseau indisponible.</div>'; }
+}
+
+function copierJetonBanc(){
+  try{
+    const v=(document.getElementById('banc-jeton-val')||{}).textContent||'';
+    if(!v) return;
+    navigator.clipboard.writeText(v).then(()=>toast('Jeton copié','success'))
+      .catch(()=>toast('Copie impossible — sélectionne-le à la main','info'));
+  }catch(e){}
+}
+
+/* ⛔ LA RÉVOCATION EXIGE DE PRÉSENTER LE JETON — c'est la règle du serveur
+   (`handleRevokeToken_`), et elle est saine : on ne révoque pas celui d'un autre en
+   connaissant son adresse, ce serait rouvrir la faille par la sortie. */
+async function revoquerJetonBanc(){
+  const z=document.getElementById('admin-banc-jeton');
+  const i=document.getElementById('banc-jeton-revoke');
+  if(!z||!i) return;
+  const tok=String(i.value||'').trim();
+  if(tok.length!==64){ z.innerHTML='<div style="color:var(--red);font-size:13px;">Un jeton fait 64 caractères — celui-ci en fait '+tok.length+'.</div>'; return; }
+  z.innerHTML='<div style="font-size:13px;color:var(--t2);">Révocation…</div>';
+  try{
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'revokeToken',token:tok})});
+    const d=await r.json();
+    i.value='';
+    z.innerHTML=(d&&d.status==='ok')
+      ? '<div style="color:var(--grn,#4caf50);font-size:13px;">✅ Révoqué. Le prochain lancement du banc échouera proprement, sans rien dépenser.</div>'
+      : '<div style="color:var(--red);font-size:13px;">Refusé : jeton inconnu ou déjà révoqué.</div>';
+  }catch(e){ z.innerHTML='<div style="color:var(--red);font-size:13px;">Réseau indisponible.</div>'; }
+}
+
 async function loadTesterIdeasAdmin(){
   const box=document.getElementById('admin-ideas-list');
   if(!box)return;

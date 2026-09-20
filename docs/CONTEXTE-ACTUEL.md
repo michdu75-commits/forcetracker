@@ -453,7 +453,29 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1227` — 🧾 **LA PROVENANCE DE `S.coachMemory` —
+- **Version en ligne (live) :** `ft-v1228` — 🔑 **UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI.**
+  *Le banc reçoit un badge ; aucune porte n'est ouverte dans le bâtiment.*
+  ⛔⛔ **Le défaut fermé est mesuré** : le workflow du banc recevait **HTTP 401** et ne
+  mesurait **rien** — un runner GitHub ouvre un navigateur **neuf**, donc sans jeton
+  (*« Origin correct + aucun token → refus »*, ft-v1216, **protection voulue**). Le banc
+  n'avait **jamais** pu appeler Milo depuis S1, et personne ne l'avait vu parce qu'aucune
+  passe réelle n'avait jamais tourné.
+  ⭐⭐ **Rien de neuf côté authentification** : `_jetonPoser_(email, **libelle**)`,
+  `_jetonIdentite_` fail-closed, `_jetonRevoquer_` qui **marque**, et la route
+  **`issueTokenByCode`** existaient déjà. L'outil **Profil → Admin → « 🔑 Jeton du banc
+  d'essai »** appelle la route **existante** avec l'étiquette `banc-milo`.
+  ⛔ **0 ligne dans `worker.js`, 0 ligne dans `Code.js`.** Aucun mode « benchmark ».
+  ⛔ **Affiché une seule fois, rangé nulle part** (le serveur ne garde qu'une empreinte).
+  ⭐ Le banc pose le jeton dans la **même clé** que le vrai client, **lue à la source**
+  (**R2**), et refuse `--go` **avant toute dépense** s'il manque ou est mal recopié — en
+  disant la **forme**, jamais la valeur.
+  ⚖️ **Le quota a décidé de l'architecture** : il est **par e-mail** (50/j, **150** dev) et
+  une passe fait **57 appels** — un e-mail neuf serait bloqué à 50. Le jeton est donc
+  **dédié et révocable seul** mais **résout vers le compte de Michel** ; un compte séparé
+  est un **chemin d'évolution écrit, non pris** (R19).
+  ⏳ **Secret GitHub `FT_BANC_TOKEN` à poser par Michel**, puis Actions → `LANCER`.
+
+- **Version précédente :** `ft-v1227` — 🧾 **LA PROVENANCE DE `S.coachMemory` —
   ET LA BORNE QUI COMPTE EST *PROVENANCE ≠ VALIDATION*.**
   Arbitrage de Michel (**option B**) : *« conserver `S.coachMemory`, mais lui ajouter une
   provenance et une structure minimale »*, avec deux bornes citées mot pour mot — ⛔ *« ne

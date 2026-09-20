@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1227`** (prochaine : `ft-v1228`).
+> **Version actuelle : `ft-v1228`** (prochaine : `ft-v1229`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,39 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1228 — 🔑 UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI · *le banc reçoit un badge, aucune porte n'est ouverte dans le bâtiment*** — décision de Michel : ⭐ ***« créer une identité / un jeton S1 dédié au banc d'essai GitHub, révocable, stocké dans GitHub Secrets, sans créer de porte spéciale permettant de contourner la sécurité S1 des vrais utilisateurs »*** · ⛔⛔ ***« je ne veux PAS d'un mode benchmark qui bypass l'authentification normale du Worker »***.
+
+**⛔⛔ LE DÉFAUT FERMÉ EST MESURÉ.** Le workflow du banc recevait **HTTP 401** et ne mesurait **rien** : un runner GitHub ouvre un navigateur **neuf**, donc sans jeton — *« Origin correct + aucun token → refus »* (ft-v1216), **une protection voulue**. 👉 ***Le banc n'avait donc jamais pu appeler Milo depuis S1***, et personne ne l'avait vu parce qu'**aucune passe réelle n'avait jamais tourné** (le rapport était « blanc » depuis toujours).
+
+**⭐⭐ RIEN DE NEUF N'A ÉTÉ CONSTRUIT CÔTÉ AUTHENTIFICATION, ET C'EST LE POINT.** Mesuré avant d'écrire une ligne : S1 savait **déjà** tout faire.
+
+| ce qu'il fallait | ce qui existait déjà |
+|---|---|
+| une identité **étiquetée** | `_jetonPoser_(email, **libelle**)` — l'étiquette était prévue |
+| un refus sûr | `_jetonIdentite_` **fail-closed** (absent · inconnu · illisible · révoqué) |
+| une **révocation** | `_jetonRevoquer_` **marque** au lieu de supprimer — *un jeton révoqué doit rester distinguable d'un jeton inconnu* |
+| une **route** pour en créer un | **`issueTokenByCode`**, celle que le téléphone de chacun utilise déjà |
+
+⛔ **Aucune route neuve, aucun `if benchmark then allow`, aucune ligne touchée dans `worker.js`.** L'outil Admin appelle la route **existante** avec l'étiquette `banc-milo`. Le jeton produit est un jeton S1 **ordinaire** : le Worker le vérifie comme les autres, il se révoque comme les autres.
+
+**⛔ IL N'EST AFFICHÉ QU'UNE FOIS, ET RANGÉ NULLE PART.** Le serveur ne garde qu'une **empreinte** (`sha256`) : le jeton brut n'existe qu'à l'instant où il est rendu. On ne le stocke donc ni dans `localStorage`, ni dans l'état, ni dans un journal. *Un secret gardé « pour le retrouver plus tard » est un secret de plus à protéger.* Perdu → on en refait un et on révoque l'ancien.
+
+**⭐ LE BANC EMPRUNTE LE CHEMIN DU VRAI CLIENT**, ce qui est précisément ce qui rend la mesure honnête : le jeton est posé dans la **même clé** de `localStorage`, **lue à la source** dans `constants.js`. ⛔ **R2** — *la recopier la ferait diverger en silence le jour d'un renommage : le banc poserait son jeton dans une clé que plus personne ne lit, et repartirait en 401 sans qu'on comprenne pourquoi.*
+
+**⛔⛔ ON REFUSE AVANT DE DÉPENSER, PAS APRÈS.** Sans secret, le workflow échoue **avant le checkout** ; `eval.js` refuse `--go` sans jeton, et refuse aussi un jeton **mal recopié** — ⚠️ en disant la **forme** (« 3 caractères, 64 attendus »), **jamais la valeur**. *Un secret tronqué au copier-coller est l'erreur la plus banale, et sans ce mot elle ressemble à un refus d'identité.*
+
+**⚖️ ET LE QUOTA A DÉCIDÉ DE L'ARCHITECTURE — dit franchement parce que c'est un arbitrage.** Le quota est **par e-mail** : 50/jour, **150** pour un compte dev (`michdu75@gmail.com` seul). Or une passe fait **57 appels** : ***un e-mail neuf serait bloqué à 50***. Le jeton est donc **dédié et révocable seul**, mais il **résout vers le compte de Michel**. ⛔ Un compte séparé exigerait de le créer, lui poser un code perso et l'ajouter à `AI_EMAILS_DEV_` — **chemin d'évolution écrit, non pris ici** (R19, et §4 du brief : *Michel ne doit pas devenir administrateur sécurité*).
+
+**📣 RÈGLE D'OR #11 — RIEN POUR L'UTILISATEUR.** Un outil apparaît dans **Profil → Admin**, réservé (`_isAdminUnlocked()`, qui garde déjà 16 outils — R13). Aucun écran public ne change, aucun quota ne bouge, aucun comportement de Milo n'est touché. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ **`worker.js` : 0 ligne** · ⛔ **`Code.js` : 0 ligne** (tout existait) · ⛔ ni `coachMemory`, ni la fréquence du résumé, ni l'ADN, ni le prompt, ni le contexte, ni le cervelet, ni le multi-moteurs, ni la Nutrition, ni le QR, ni la voix · ⛔ ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `supabase.js` · ⛔ **la passe complète n'est PAS lancée** : le déclenchement manuel reste à Michel.
+
+**⚠️⚠️ ET DEUX DE MES PROPRES GARDES MESURAIENT UN MOT AU LIEU DU MÉCANISME — le piège n°1 de `BUGS.md`, deux fois dans le même outil.** ① J'interdisais le mot **« benchmark »** dans `worker.js` : il a rougi sur l'arbre **sain**, car `MODELES_BENCHMARK` y existe depuis longtemps et ne parle **pas d'identité** — c'est une liste blanche de **modèles**. *L'invariant juste n'est pas « le mot n'apparaît pas », c'est **« l'identité ne peut venir que de `_identiteIA` »*** — mesuré : une seule affectation de `_moi` dans tout le fichier. ② Mon garde « aucun jeton en dur » cherchait **64 caractères hexadécimaux** : `'a'.repeat(64)` passait tranquillement. *Un garde qui décrit à quoi **ressemble** un secret ne dit rien de sa **provenance*** — on exige désormais la **source** (`process.env`). ⭐ **Et c'est mon propre contrôle de départ qui a attrapé le premier** : il refuse de mesurer sur un arbre déjà rouge, *parce qu'un contrôle négatif dont le point de départ est faux ne prouve rien* (leçon payée le matin même).
+
+Tests : **contrôle négatif `tools/mut_identite_banc.py`, 14 mutations sur arbre CLONÉ, 14 conformes** — les trois familles qui comptent : **ouvrir une porte** (mode benchmark dans le Worker, refus désactivé, jeton en dur), **faire fuir le secret** (l'afficher dans le journal, recopier la clé), **retirer un garde-fou** (secret non vérifié, refus avant dépense supprimé, `LANCER`, « au moins une réponse », étiquette, révocation). ⭐ Dont **deux qui doivent RESTER VERTES** : des commentaires citant « benchmark », « banc » et le nom du secret — *la seule façon de prouver qu'on mesure le code et non la phrase qui l'explique* (**R30**).
+
+Fichiers : `index.html`, `app.js`, `tests/milo/eval.js`, `.github/workflows/banc-milo.yml`, `tools/mut_identite_banc.py` *(nouveau)*, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `worker.js`, ni `Code.js`, ni aucun autre fichier servi.** sw.js ft-v1228. |
 
 **ft-v1227 — 🧾 LA PROVENANCE DE `S.coachMemory` · ET LA BORNE QUI COMPTE EST *PROVENANCE ≠ VALIDATION*** — arbitrage de Michel, **option B** : ⭐ ***« conserver `S.coachMemory`, mais lui ajouter une provenance et une structure minimale »***. Ses deux bornes, citées mot pour mot : ⛔ ***« ne jamais inventer une provenance que nous ne connaissons pas »*** · ⛔⛔ ***« ne donne surtout pas à `coachMemory` le statut `validated` simplement parce qu'elle existe »***.
 
@@ -730,33 +763,3 @@ La quantité part désormais de la **portion médiane réellement notée**, et l
 Tests : **blocs B-CCCXXI → B-CCCXXV, 45 témoins**, dans `tests/parcours/nutri_correctifs.js`. ⛔ **CONTRÔLE NÉGATIF : 29 mutations sur un arbre CLONÉ, 29 conformes**, contrôle sain **45 OK / 0 rouge avant ET après** — dont **quatre qui doivent RESTER VERTES** (les mots que les témoins cherchent, cités dans un commentaire JS, HTML, ou dans la doc), *parce que la raison de chaque décision est justement écrite à côté du code* (**R30**). ⭐ **Deux témoins ont été RETOURNÉS, pas supprimés** : ils figeaient la porte **fermée** — ils figent maintenant qu'elle est **ouverte sur la capture**.
 
 Fichiers : `app.js`, `index.html`, `screens.js` (bloc **Nutrition** uniquement, justifié avant modification), `tests/parcours/nutri_correctifs.js` (nouveau), `tests/parcours/runner.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `state.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `style.css`, ni `supabase.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1221. |
-
-**ft-v1220 — 🚀 LA FINALISATION DE L'ACCUEIL · « PUSH SUR UNE BRANCHE ≠ VERSION EN LIGNE », ET UNE CORRECTION À MON PROPRE AUDIT** — Michel ouvre la passe sur le constat qui la motive, en majuscules : ⛔⛔ ***« PUSH SUR UNE BRANCHE ≠ VERSION EN LIGNE »***, puis borne le nettoyage : ⛔ ***« supprimer UNIQUEMENT le code mort prouvé »*** · ⛔ ***« ne pas toucher aux candidats seulement probables »*** · ⛔ ***« Aucun redesign. Aucune nouvelle fonctionnalité. »*** · et, pour finir : ***« Puis STOP. Pas de nouveau nettoyage opportuniste. »***
-
-**⛔⛔ LE POINT QUI COMPTE AVANT TOUT LE RESTE : `ft-v1219` N'AVAIT JAMAIS ATTEINT `master`.** Les quatre corrections du 16/09 — le `NaN kg`, la carte de récup remontée, le silence sur un compte muet, la zone tapable — vivaient sur une branche. **GitHub Pages ne se déclenche que sur `master`** : elles n'étaient donc **en ligne nulle part**. C'est **R18** mot pour mot (*vérifier le DÉPLOIEMENT, pas le push*), et le journal du projet le porte déjà **deux fois**. *Un travail fini qui n'est pas servi n'est pas un travail fini.* Réconciliation faite d'abord : les **6 commits** de l'autre session (étapes B→E) ne touchent que `tools/`, **aucun fichier servi**, donc aucun conflit possible — fusionnés, puis les 4 corrections re-vérifiées une par une **après** la fusion.
-
-**⛔⛔ ET LA CORRECTION À MON PROPRE AUDIT DE LA VEILLE, QUI EST LE POINT LE PLUS UTILE DE CETTE PASSE.** L'audit annonçait `#cycle-home-card` comme **ORPHELIN PROUVÉ** — *« aucun lecteur JS ni CSS, jamais rempli »*. **C'est faux.** `renderCycleHomeCard()` (tracking.js) écrit dans ses deux `<span>`, et `renderCycleScreen()` l'appelle — chemin **atteignable** par Menu > Outils > Cycle de force. 👉 ***L'audit ne l'avait pas vu parce qu'il ne mesurait QUE le chemin de l'Accueil : un élément vivant AILLEURS reste vert sur un banc borné à l'Accueil.*** ⚠️ **Et j'avais écrit cet avertissement mot pour mot dans mon propre outil de mutations**, avant de l'enfreindre dans mon tableau de verdicts. **Un vert est toujours borné à la portée de son banc, et ne conclut jamais seul.** Le conteneur **reste** : le retirer serait une **DÉCISION** (rendre son écrivain sans effet), pas un nettoyage prouvé — elle appartient à Michel.
-
-**🧹 CE QUI EST RETIRÉ, ET RIEN D'AUTRE :**
-
-| | ce que c'était | preuve |
-|---|---|---|
-| branche « Inline home pill » d'`updatePill` | **10 lignes** cherchant 3 conteneurs d'une ancienne pastille de synchro posée *dans* l'Accueil | les 3 ids **absents** de tout le dépôt ; **3 requêtes DOM sur 21 rendaient `null` À CHAQUE RENDU** |
-| `#strength-levels` · `#pr-list` | deux conteneurs **vides**, `display:none` | **aucun lecteur** dans tout l'arbre (JS · HTML · CSS · tests) |
-| ⛔ `#cycle-home-card` (+2 spans) | — | **GARDÉ** : il a un vrai écrivain (ci-dessus) |
-
-⭐ **Les VRAIS identifiants — `sync-pill`, `sync-dot`, `sync-lbl`, la pastille de l'en-tête — sont intacts**, et deux témoins le figent : l'un vérifie qu'ils sont toujours nommés, l'autre **conduit la pastille dans ses deux états** et lit ce qu'elle affiche. *Une suppression voisine d'un code vivant se prouve sur le voisin, pas seulement sur le disparu.*
-
-**📉 MESURE : 21 requêtes DOM → 18, dont 3 vaines → 0.** ⚠️ **Et le temps de rendu ne bouge pas de façon lisible** (4,9 → 4 ms à froid, 3 → 2 ms à chaud) : **on ne revendique aucun gain**, c'est dans la dispersion des mesures — consigne explicite de Michel.
-
-**⭐⭐ LES TÉMOINS D'ABSENCE SONT DOUBLÉS D'UN TÉMOIN DE PRÉSENCE, ET CE N'EST PAS DÉCORATIF.** Un témoin qui vérifie qu'une chose *n'est plus là* reste **parfaitement vert si le rendu ne s'exécute pas du tout** — *un Accueil mort ressemble trait pour trait à un Accueil propre*. Chaque absence est donc appariée à une présence vivante : la carte de récup rendue, la pastille qui réagit, l'écrivain du conteneur cycle qui écrit encore vraiment.
-
-**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UNE ÉTIQUETTE FAUSSE — LA MIENNE, ENCORE.** J'avais classé « vert attendu » une mutation qui remet un nom mort dans une **`const` de premier niveau**. Elle est sortie **rouge**, et le témoin avait raison : *une `const` qui s'exécute est du CODE, pas de la documentation*. ⛔ **Rendre le témoin aveugle aux chaînes pour la faire passer l'aurait rendu aveugle à `getElementById('home-sync-dot')`**, qui vit exactement de la même façon — dans une chaîne. La preuve « on mesure le code, pas le texte » est portée par les **quatre vraies** : les noms retirés cités dans un commentaire **JS**, **HTML**, **CSS**, ou dans un fichier de **documentation**. ⭐ **Elle était indispensable ici** : la raison du retrait (**R30**) *nomme* justement les identifiants retirés — un témoin qui lirait le fichier brut resterait vert **pour toujours**, quoi qu'on remette dans le code. Le nettoyeur de commentaires a d'ailleurs dû apprendre `<!-- -->` : sans ça mon témoin rougissait sur un dépôt **parfaitement propre**, en mesurant ma propre documentation.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucune valeur affichée ne bouge : trois requêtes qui rendaient `null` cessent de partir, et deux conteneurs vides et invisibles disparaissent. ⚖️ *Ce qui change vraiment pour Michel — les quatre corrections de ft-v1219 — a déjà son entrée ; ici elles arrivent simplement **en ligne**.*
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, nommément, chacun figé par un témoin : ⛔ `_renderHomeHdr` et `#home-hdr` (orphelin **probable**, et un témoin en dépend → **passe R30 à part**) · ⛔ `renderRecoveryCard` et `#recovery-card` (la mesure manquante est une **vraie sauvegarde de sommeil par l'interface**) · ⛔ `openPlateCalc` · ⛔ les 47 fonctions de catégorie C · ⛔ `fmt()` · ⛔ la base neutre **70** · ⛔ `_nuitsRecentes` · ⛔ la dette « dernière pesée » · ⛔ les 55 classes CSS candidates · ⛔⛔ **la palette, `--t3` comprise** — son contraste de **3,70 < 4,5** sur les petits textes gris est une **recommandation séparée**, pas un correctif glissé ici · ⛔ **Nutrition, douane, journal alimentaire : 0 ligne**.
-
-Tests : **bloc B-CCCXX** — 11 témoins au **rendu réel** (dont le comptage des requêtes DOM, mesuré en instrumentant `getElementById` pendant `renderHome`, *parce que la seule preuve qu'une requête ne PART plus se prend à l'exécution, pas dans un fichier*) et **6 témoins de source**, dans `tests/parcours/accueil_mini.js`. ⛔ **CONTRÔLE NÉGATIF : 19 mutations sur un arbre CLONÉ, 19 conformes**, contrôle sain **54 OK / 0 rouge avant ET après**.
-
-Fichiers : `screens.js`, `index.html`, `tests/parcours/accueil_mini.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `state.js`, ni `tracking.js`, ni `coach.js`, ni `log.js`, ni `setup.js`, ni `style.css`, ni `supabase.js`, ni `Code.js`, ni `worker.js`.** sw.js ft-v1220. |
