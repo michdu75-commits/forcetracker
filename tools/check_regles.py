@@ -997,3 +997,65 @@ except SystemExit:
 except Exception as _e18:
     print("⚠️ contrôle « registre des décisions » NON EXÉCUTÉ (%s: %s)" % (type(_e18).__name__, _e18))
     print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+#  CONTRÔLE — LE PROMPT FIGÉ EST-IL ENCORE À JOUR ? (20/09/2026)
+#
+#  ⛔⛔ LE DÉFAUT EST MESURÉ, PAS SUPPOSÉ. `docs/PROMPT-MILO-REEL.txt` est un document
+#  GÉNÉRÉ (R27 : ce qui décrit l'état se génère). Mesuré le 20/09 : il datait du 08/08, soit
+#  38 commits plus tôt, et annonçait 59 279 caractères là où le prompt réel en faisait
+#  75 510 — un écart de +27 % invisible, PARCE QU'IL A L'AIR GÉNÉRÉ.
+#  👉 *Un document généré qu'on ne régénère pas est un document écrit à la main.*
+#
+#  ⚠️ IL PRÉVIENT, IL NE BLOQUE PAS, et c'est délibéré (R19) : régénérer demande un
+#  navigateur sans tête, donc faire échouer une livraison pour un document de référence
+#  serait de la gouvernance qui dessert le produit. *Un garde-fou qui crie trop fort finit
+#  désactivé.*
+#
+#  ⭐ ON COMPARE UNE EMPREINTE DE CONTENU, PAS UNE DATE : un commit qui ne touche qu'un
+#  commentaire de coach.js périmerait une comparaison de dates pour rien.
+# ══════════════════════════════════════════════════════════════════════════════════════════
+try:
+    import hashlib as _h19, os as _os19, re as _re19
+    _rac19 = _os19.path.dirname(_os19.path.dirname(_os19.path.abspath(__file__)))
+    _fig19 = _os19.path.join(_rac19, "docs", "PROMPT-MILO-REEL.txt")
+    if not _os19.path.exists(_fig19):
+        print("⚠️ docs/PROMPT-MILO-REEL.txt est absent — le prompt de référence n'existe plus.")
+    else:
+        _txt19 = open(_fig19, encoding="utf-8").read(4000)
+        _m19 = _re19.search(r"SOURCES\s*:\s*(.+)", _txt19)
+        if not _m19:
+            print("⚠️ docs/PROMPT-MILO-REEL.txt ne porte AUCUNE empreinte de ses sources.")
+            print("   → il date d'avant le 20/09 : impossible de savoir s'il est à jour.")
+            print("     Régénérer : node tools/dump_prompt.js")
+        else:
+            _ecrites19 = {}
+            for _p19 in _m19.group(1).split("·"):
+                _b19 = _p19.split()
+                if len(_b19) == 2:
+                    _ecrites19[_b19[0]] = _b19[1]
+
+            def _blob19(chemin):
+                _d19 = open(chemin, "rb").read()
+                _o19 = _h19.sha1()
+                _o19.update(b"blob %d\0" % len(_d19))
+                _o19.update(_d19)
+                return _o19.hexdigest()[:12]
+
+            _bouge19 = [f for f, e in sorted(_ecrites19.items())
+                        if _os19.path.exists(_os19.path.join(_rac19, f))
+                        and _blob19(_os19.path.join(_rac19, f)) != e]
+            if _bouge19:
+                print("⚠️ docs/PROMPT-MILO-REEL.txt est PÉRIMÉ : %s %s changé depuis sa génération."
+                      % (" et ".join(_bouge19), "a" if len(_bouge19) == 1 else "ont"))
+                print("   → le prompt qu'il montre n'est plus celui que Milo reçoit.")
+                print("     Régénérer : node tools/dump_prompt.js  (ce n'est pas bloquant)")
+            else:
+                print("✅ prompt de référence : à jour (%d source%s inchangée%s)"
+                      % (len(_ecrites19), "s" if len(_ecrites19) > 1 else "",
+                         "s" if len(_ecrites19) > 1 else ""))
+except SystemExit:
+    raise
+except Exception as _e19:
+    print("⚠️ contrôle « prompt de référence » NON EXÉCUTÉ (%s: %s)" % (type(_e19).__name__, _e19))
+    print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")

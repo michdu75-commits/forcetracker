@@ -37,6 +37,25 @@ const r=await p.evaluate(()=>{
 const {ctx,mi,pi,total}=r;
 const commun=ctx.slice(0,pi), perso=ctx.slice(pi,mi), instant=ctx.slice(mi);
 const pct=n=>((n/total)*100).toFixed(1)+' %';
+
+/* ⛔⛔ L'EMPREINTE DES SOURCES — POSÉE LE 20/09/2026, APRÈS UNE MESURE GÊNANTE.
+   Ce fichier existe pour ne pas vieillir (R27 : ce qui décrit l'état se GÉNÈRE). Mesuré le
+   20/09 : il datait du 08/08, soit **38 commits** et cinq semaines plus tôt, et il annonçait
+   **59 279** caractères quand le prompt réel en faisait **75 510** — un écart de +27 % que
+   personne ne pouvait voir, puisque le fichier a l'air généré.
+   👉 ***Un document généré qu'on ne régénère pas est un document écrit à la main*** — R27
+   retournée contre elle-même.
+   ⭐ LE CORRECTIF EST UNE EMPREINTE, PAS UNE DATE : une date se compare mal (un commit de
+   commentaire dans coach.js la périmerait pour rien), l'empreinte du CONTENU dit exactement
+   « les sources ont changé depuis ». `tools/check_regles.py` la relit et PRÉVIENT — ⛔ il ne
+   bloque pas : refuser une livraison parce qu'un document est en retard serait de la
+   gouvernance qui dessert le produit (R19). */
+const EMPREINTES=['coach.js','constants.js','state.js'].map(f=>{
+  const b=fs.readFileSync(path.join(ROOT,f));
+  const h=require('crypto').createHash('sha1');
+  h.update('blob '+b.length+'\0'); h.update(b);          // même calcul que `git hash-object`
+  return f+' '+h.digest('hex').slice(0,12);
+});
 const ent=
 `╔══════════════════════════════════════════════════════════════════════════════╗
 ║  LE PROMPT DE MILO — le texte envoyé À CHAQUE MESSAGE                        ║
@@ -46,6 +65,12 @@ const ent=
 ⚙️  NE PAS ÉDITER À LA MAIN — régénérer par :  node tools/dump_prompt.js
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
     Généré le ${new Date().toISOString().slice(0,10)}.
+
+🔖  SOURCES : ${EMPREINTES.join(' · ')}
+    Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
+    génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
+    si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
+    puisqu'il a l'air généré quoi qu'il arrive. ⛔ Ne pas les recopier à la main.
 
 TAILLE TOTALE : ${total.toLocaleString('fr-FR')} caractères  (~${Math.round(total/4).toLocaleString('fr-FR')} tokens)
 
