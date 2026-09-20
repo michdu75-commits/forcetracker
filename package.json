@@ -1,0 +1,13 @@
+{
+  "name": "forcetracker-outillage",
+  "version": "0.0.0",
+  "private": true,
+  "description": "⚠️ CE FICHIER NE CONSTRUIT RIEN. Force Tracker est une PWA en JS vanilla, sans framework ni build step, et cela ne change pas. Il existe pour UNE raison : rendre VISIBLE la dépendance de l'OUTILLAGE DE TEST (Playwright), qui était invisible. Le 20/09/2026, le workflow du banc de Milo a échoué en 34 s parce que rien, dans le dépôt, ne disait que Playwright était nécessaire. Voir tests/_playwright.js.",
+  "scripts": {
+    "banc-milo:blanc": "node tests/milo/eval.js",
+    "banc-milo:reel": "node tests/milo/eval.js --go"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

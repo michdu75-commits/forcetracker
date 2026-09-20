@@ -70,17 +70,58 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # ⚠️ ALIGNÉ SUR LE CONTENEUR DE DÉVELOPPEMENT (v22), où les 57 scénarios ont été
+          #    éprouvés. Ce n'était PAS la cause de l'échec du 20/09 — celle-ci était une
+          #    dépendance non déclarée, et `MODULE_NOT_FOUND` tombe sur n'importe quelle
+          #    version de Node. On aligne parce qu'un banc jugé sur un autre moteur que
+          #    celui qui l'a validé est une divergence de la même famille, pas parce que
+          #    cela « répare » quoi que ce soit.
+          # ⛔ Et cela NE FAIT PAS TAIRE l'avertissement « Node.js 20 is deprecated » de
+          #    GitHub : celui-là parle du moteur interne des actions (checkout, setup-node,
+          #    upload-artifact), pas du nôtre. Il est sans rapport avec cet échec.
+          node-version: '22'
+
+      - name: Installer les dépendances (Playwright est DÉCLARÉ dans package.json)
+        # ⛔⛔ C'EST ICI QUE L'ÉCHEC DU 20/09 SE JOUAIT. L'ancienne ligne était
+        #    `npx --yes playwright@1.47.0 install --with-deps chromium` : elle télécharge
+        #    les NAVIGATEURS, mais n'installe PAS le paquet dans le dépôt. `require(...)`
+        #    n'avait donc rien à trouver. Et elle épinglait 1.47.0 alors que les scénarios
+        #    sont éprouvés sur 1.56.1 — deux versions différentes pour un même banc.
+        # ⭐ `npm ci` installe EXACTEMENT ce que dit package-lock.json : même version ici
+        #    et en développement, sans qu'on ait à le répéter à deux endroits (R2).
+        run: npm ci --no-audit --no-fund
 
       - name: Installer le navigateur sans tête
-        run: npx --yes playwright@1.47.0 install --with-deps chromium
+        # ⭐ Sans version en dur : c'est le Playwright qu'on vient d'installer qui télécharge
+        #    le navigateur qui lui correspond. Une version écrite ici redeviendrait fausse au
+        #    premier changement de package.json, en silence.
+        run: npx playwright install --with-deps chromium
+
+      - name: ⭐ CONTRÔLE GRATUIT — l'infrastructure marche-t-elle, SANS dépenser un appel ?
+        # ⛔⛔ CETTE ÉTAPE EXISTE POUR NE PLUS PAYER UN ÉCHEC D'ENVIRONNEMENT. Le 20/09, le
+        #    workflow est mort en 34 s sur un défaut qui n'avait RIEN à voir avec Milo — mais
+        #    rien ne distinguait ce cas d'un vrai problème de banc.
+        # ⭐ Le run À BLANC est gratuit PAR CONSTRUCTION : il ne passe aucun appel (c'est
+        #    `--go` qui les déclenche). Il prouve pourtant toute la chaîne — Node démarre,
+        #    eval.js charge, Playwright est résolu, le navigateur se lance, l'app est servie,
+        #    et le contexte réel est construit jusqu'à l'étape qui PRÉCÈDE les appels.
+        # 👉 *Si ça casse ici, ça n'a rien coûté ; si ça passe ici, ce qui casse ensuite est
+        #    un vrai sujet de banc.*
+        run: |
+          set -o pipefail
+          node tests/milo/eval.js --n 3 2>&1 | tee /tmp/blanc.log
+          node -e "
+            const r = require('./tests/milo/eval-report.json');
+            if (r.mode !== 'blanc') { console.error('ECHEC : le controle gratuit a fait des appels (mode ' + r.mode + ')'); process.exit(1); }
+            const pw = require('./tests/_playwright.js').chargerPlaywright();
+            if (pw.voie !== 'node_modules') { console.error('ECHEC : Playwright resolu par ' + pw.voie + ' — la dependance declaree n a pas servi'); process.exit(1); }
+            console.log('OK : Playwright resolu depuis ' + pw.chemin);
+          "
+          grep -q 'DEVIS MESURÉ' /tmp/blanc.log || { echo '::error::le contexte reel n a pas ete construit'; exit 1; }
+          echo '::notice::infrastructure verte, zero appel IA depense'
 
       - name: Lancer la passe RÉELLE
         id: passe
-        env:
-          # eval.js charge playwright par un chemin absolu propre au conteneur de dev ;
-          # sur le runner il est résolu depuis node_modules.
-          PLAYWRIGHT_BROWSERS_PATH: '0'
         run: |
           set -o pipefail
           ARGS="--go"
@@ -104,7 +145,19 @@ jobs:
             const p = (r.parPasse && r.parPasse.prod) || [];
             const joues = p.filter(x => x.etat !== 'blanc').length;
             if (joues < 1) { console.error('ECHEC : aucun scenario joue.'); process.exit(1); }
-            console.log('OK : ' + joues + ' scenario(s) joue(s), mode ' + r.mode + ', sha ' + r.sha + ', version ' + (r.version||'?'));
+            // ⛔⛔ « JOUE » NE VEUT PAS DIRE « A REPONDU ». Mesure du 20/09 : un essai a
+            //    1 scenario est revenu HTTP 401, donc zero comportement — et ce controle
+            //    disait OK. Un scenario sans reponse est compte comme joue.
+            const repondu = p.filter(x => x.etat === 'vert' || x.etat === 'rouge').length;
+            const muets = p.filter(x => x.etat === 'muet' || x.etat === 'erreur').length;
+            if (repondu < 1) {
+              console.error('ECHEC : ' + joues + ' scenario(s) joue(s) mais AUCUNE reponse ('
+                + muets + ' muet(s)/erreur(s)). La passe est bien formee et VIDE.');
+              console.error('Cause la plus frequente : le Worker refuse (401) — le navigateur');
+              console.error('du banc n a aucun jeton d identite (« Origin correct + aucun token -> refus »).');
+              process.exit(1);
+            }
+            console.log('OK : ' + repondu + ' reponse(s) sur ' + joues + ' joue(s), mode ' + r.mode + ', sha ' + r.sha + ', version ' + (r.version||'?'));
           "
 
       - name: Enregistrer la référence dans le dépôt

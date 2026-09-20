@@ -155,9 +155,17 @@ if (REJOUER) {
 }
 
 // ── Playwright ──
-let chromium;
-try { chromium = require('playwright').chromium; }
-catch (e) { chromium = require('/opt/node22/lib/node_modules/playwright/index.js').chromium; }
+/* ⛔ LA RÉSOLUTION VIT DANS UN SEUL FICHIER (R2) — voir `tests/_playwright.js` pour la
+   chaîne complète mesurée le 20/09. En résumé : l'ancien `try/catch` écrasait l'erreur
+   réelle (« paquet non installé ») par celle du repli (« chemin de conteneur absent »),
+   et c'est ce message-là que GitHub Actions a affiché. */
+const { chargerPlaywright } = require('../_playwright.js');
+const _pw = chargerPlaywright();
+const chromium = _pw.pw.chromium;
+/* ⚠️ CES CHEMINS SONT CEUX DU CONTENEUR DE DÉVELOPPEMENT, et c'est volontaire : quand
+   aucun n'existe (cas d'un runner GitHub), `execPath` vaut `undefined` et Playwright
+   emploie le navigateur qu'il a lui-même installé. On ne code donc PAS un second chemin
+   absolu « spécial CI » — on laisse la bibliothèque faire son métier. */
 const CHROME_PATHS = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'];
 const execPath = CHROME_PATHS.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
 
