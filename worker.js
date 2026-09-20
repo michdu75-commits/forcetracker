@@ -906,8 +906,15 @@ async function summarizeCoach(body, apiKey, meta) {
   }).join('\n');
   const prompt = (existing ? 'Mémoire existante : ' + existing + '\n\n' : '')
     + 'Résume cette conversation coach/athlète en 2-3 phrases max (garde : objectifs, conseils clés, décisions, problèmes identifiés). Français uniquement.\n\nConversation :\n' + histText + '\n\nRésumé :';
-  const summary = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: prompt }] }, meta);
-  return { summary: summary || '' };
+  /* 🧾 LE MODÈLE EST RENVOYÉ AU CLIENT (20/09/2026) — et c'est la seule façon honnête de
+     poser une provenance sur `coachMemory`. Le client ne PEUT PAS savoir quel modèle a
+     résumé sa conversation : s'il l'écrivait de lui-même, il inscrirait une supposition
+     dans une mémoire durable, et personne ne saurait plus la distinguer d'un fait
+     (règle d'or #16). ⭐ Même patron que `coach()`, qui renvoie déjà `_model`.
+     ⛔ Aucun effet sur le résumé lui-même : on ajoute une clé, on ne touche pas au texte. */
+  const MODELE_RESUME = 'claude-haiku-4-5-20251001';
+  const summary = await callClaude(apiKey, { model: MODELE_RESUME, max_tokens: 250, messages: [{ role: 'user', content: prompt }] }, meta);
+  return { summary: summary || '', _model: MODELE_RESUME };
 }
 
 // ── 🫀 CERVELET — convertir la séance ÉCRITE EN CLAIR par Milo en données ─────

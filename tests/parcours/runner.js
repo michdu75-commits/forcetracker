@@ -39589,6 +39589,7 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
    trait à un total vert). Son jumeau de SOURCE est branché plus bas. */
   await require('./pots_nutrition.js').ecran(t, b, PORT);
   await require('./repas_actif.js').ecran(t, b, PORT);
+  await require('./coach_memoire.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40384,6 +40385,7 @@ require('./registre_ia.js').source(t, ROOT, fs, path);
 require('./quota_double.js').source(t, ROOT, fs, path);
 require('./pots_nutrition.js').source(t, ROOT, fs, path);
 require('./repas_actif.js').source(t, ROOT, fs, path);
+require('./coach_memoire.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

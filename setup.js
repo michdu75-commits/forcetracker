@@ -929,6 +929,11 @@ function _cloudSync(){
       bodyScanImports:S.bodyScanImports||0,
       progImports:S.progImports||0,
       coachMemory:S.coachMemory||'',
+      /* 🧾 La provenance voyage AVEC le texte (20/09/2026). Sans elle, chaque restauration
+         rétrograderait en `legacy` une mémoire dont on connaissait le moteur et la date :
+         *on perdrait une information qu'on avait*, ce qui est pire que de ne l'avoir
+         jamais posée. ⛔ Elle ne contient que des métadonnées — aucun mot de la personne. */
+      coachMemoryMeta:S.coachMemoryMeta||null,
       // 🛡️ Compteur du Gardien : ~150 octets de NOMBRES. Aucune phrase de Milo, aucun mot de
       // la personne — ses conversations, elles, ne quittent toujours pas son téléphone.
       gardienStats:S.gardienStats||null,
@@ -3428,8 +3433,24 @@ function _applyRestoreData(raw){
   // Premium
   try{if(raw&&raw.premium!==undefined)S.premium=(raw.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());}catch(e){}
   try{if(raw&&raw.premiumExpiry!==undefined)S.premiumExpiry=raw.premiumExpiry||'';}catch(e){}
-  // coachMemory — top-level dans la réponse ET dans profile (double source)
-  try{const cm=raw.coachMemory||d.coachMemory||'';if(cm)S.coachMemory=cm;}catch(e){}
+  /* 🧾 coachMemory ET SA PROVENANCE — top-level dans la réponse ET dans profile.
+     ⛔⛔ LA PROVENANCE SUIT LE TEXTE, ELLE NE LUI SURVIT JAMAIS. Si la restauration
+     remplace le texte et que le nuage n'apporte PAS de provenance (profil sauvegardé
+     avant le 20/09), l'ancienne provenance locale décrirait un texte qui n'existe plus :
+     elle deviendrait une **fausse provenance**, c'est-à-dire exactement ce que ce champ
+     existe pour empêcher. On la jette d'abord ; la règle la reclassera en `legacy`.
+     ⚠️ ET L'ORDRE EST DÉLIBÉRÉ : texte → provenance du nuage → règle. Poser la règle
+     avant de lire le nuage écraserait une provenance parfaitement connue. */
+  try{
+    const cm=raw.coachMemory||d.coachMemory||'';
+    if(cm && cm!==S.coachMemory){ S.coachMemory=cm; S.coachMemoryMeta=null; }
+    const mm=raw.coachMemoryMeta||d.coachMemoryMeta||null;
+    if(mm&&typeof mm==='object'&&mm.statut) S.coachMemoryMeta=mm;
+  }catch(e){}
+  /* ⛔ Rejouée systématiquement, jamais derrière un drapeau « déjà migré » : une
+     restauration remplace l'état APRÈS le chargement et peut ramener un profil d'avant
+     des mois plus tard (leçon `ft4_stmig1`, ft-v1213, et des pots de ft-v1225). */
+  try{if(typeof _coachMemProvenance==='function')_coachMemProvenance();}catch(e){}
 
   // Sauvegarde locale + application des préférences UI
   try{persist();}catch(e){console.error('[FT restore] persist échoué !',e);}
