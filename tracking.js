@@ -757,8 +757,16 @@ function setTargetWeight(){
 }
 
 // ── Masse grasse : calcul US Navy + saisie + suivi dans le temps ──
+/* ⚠️ ON LIT LES NOMBRES AVEC `numFR`, PAS AVEC `parseFloat` — trouvé en MESURANT le séparateur
+   décimal plutôt qu'en le supposant. `_recalcNavyBf` passe ici la valeur BRUTE des champs :
+   `parseFloat('40,7')` rend **40**, donc taper une virgule (ce que fait un clavier français)
+   calculait le % sur des centimètres TRONQUÉS. Mesuré sur le cas réel : **20,1 % au lieu de
+   19,9 %** — et c'est ce chiffre faux qui partait dans `bf-inp`, donc celui qui était
+   ENREGISTRÉ. ⛔ Le calcul lui-même ne bouge pas d'une virgule : seule la LECTURE change.
+   ⭐ Et elle change ICI, chez le propriétaire unique du calcul (R2) : corriger le seul appelant
+   fautif aurait laissé le piège armé pour le suivant. */
 function _bfNavy(neck,waist,hip,ht,gender){
-  neck=parseFloat(neck);waist=parseFloat(waist);hip=parseFloat(hip);ht=parseFloat(ht);
+  neck=numFR(neck);waist=numFR(waist);hip=numFR(hip);ht=numFR(ht);
   if(!ht||!neck||!waist)return null;
   try{
     let bf;
@@ -905,9 +913,33 @@ function saveBodyFat(){
   const d=today();
   let e=S.weightLog.find(w=>w.date===d);
   if(!e){
-    const last=S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
-    const kg=last?last.kg:(S.bw||0);
-    if(!kg){toast('Enregistre d\'abord ton poids du jour','info');return;}
+    /* ⛔⛔ « last ? last.kg : S.bw » PERDAIT LE POIDS DU PROFIL, ET C'ÉTAIT LE DÉFAUT VISIBLE.
+       Le repli sur `S.bw` n'était atteint que s'il n'existait AUCUNE pesée. Or une pesée
+       existante peut parfaitement ne porter AUCUN kilo utilisable — un bilan corporel qui n'a
+       écrit qu'un %, une ligne importée, un `kg` à 0. Mesuré : `weightLog=[{date:…, bf:19.9}]`
+       avec `S.bw = 85,9` rendait *« Enregistre d'abord ton poids du jour »* — ***à quelqu'un
+       dont l'écran affiche 85,9 kg juste au-dessus***.
+       👉 On cherche donc le premier poids RÉELLEMENT utilisable, du plus récent au plus ancien,
+       et `S.bw` reste le dernier recours. ⛔ `numFR` et non `+` : une valeur importée peut être
+       la chaîne « 85,9 ». */
+    const _kgUtil=x=>{const v=numFR(x&&x.kg);return (isFinite(v)&&v>0)?v:0;};
+    let kg=0;
+    S.weightLog.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))
+      .some(w=>{kg=_kgUtil(w);return kg>0;});
+    if(!kg)kg=numFR(S.bw)||0;
+    if(!kg){
+      /* ⛔⛔ ET C'EST ICI QUE LES CENTIMÈTRES DISPARAISSAIENT — le correctif de ft-v1129 avait
+         traité le PREMIER `return` (celui du %) et laissé celui-ci intact. `persist()` n'était
+         jamais appelé : les mesures vivaient dans `S`, l'écran ne disait rien d'elles, et le
+         rechargement suivant les effaçait. *Exactement « impossible d'enregistrer mes
+         mensurations ».*
+         👉 ***Un correctif d'ORDRE doit être posé sur TOUS les chemins de sortie, pas sur
+         celui qui a servi à le trouver*** (R15 : tout chemin de fermeture pose son marqueur). */
+      if(_nMens>0){ persist(); renderWeightTab();
+        toast(_nMens+' mesure'+(_nMens>1?'s':'')+' enregistrée'+(_nMens>1?'s':'')+' ✅ — entre ton poids pour enregistrer aussi le %','success'); }
+      else toast('Enregistre d\'abord ton poids du jour','info');
+      return;
+    }
     e={date:d,kg:kg};S.weightLog.unshift(e);
   }
   e.bf=Math.round(bf*10)/10;
