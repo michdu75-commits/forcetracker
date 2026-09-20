@@ -491,7 +491,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1229` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
+- **Version en ligne (live) :** `ft-v1230` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
   `persist()` MANQUANT SUR LA SORTIE « PAS DE POIDS ».** Cas réel de Michel (Progrès → Corps &
   santé) : cou **40,7**, taille **92,4**, hanches vide — *« je les renseigne et je ne peux pas
   les enregistrer »*.
@@ -533,7 +533,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   Tests : **B-CCCXXXVIII (17) + B-CCCXXXIX (23)**, banc ciblé **40 OK / 0 rouge**, **24/24
   mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète PASSE_TOTAL** sur
   l'**arbre fusionné** réellement publié.
-  ⛔⛔ **LE NUMÉRO EST `ft-v1229`, PAS `ft-v1228` — seconde collision, et c'est la règle d'or #5.**
+  ⛔⛔ **LE NUMÉRO EST `ft-v1230`, PAS `ft-v1228` — seconde collision, et c'est la règle d'or #5.**
   Session-B a publié **son** `ft-v1228` pendant mes mesures, et il est **réellement servi**.
   *Republier un contenu différent sous un numéro de cache déjà servi laisserait sans mise à jour
   tous les service workers qui portent déjà `ft-v1228`* — le correctif n'arriverait jamais.
@@ -545,6 +545,17 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   ⚠️ La condition ④ était déjà tombée **trois fois** pendant les mesures (2 passes refaites en
   entier, la 1ʳᵉ portant une collision sur `ft-v1227`) — *le journal de partage évite le doublon
   de TRAVAIL, pas la collision de NUMÉRO, qui ne se pose qu'au push.*
+- **Version précédente :** `ft-v1229` — 🩹 **« RÉSEAU INDISPONIBLE » NE DISAIT RIEN.**
+  Michel ne pouvait pas fabriquer le jeton du banc. ⭐ **Mesuré d'abord** : la fonction est
+  **saine** (faux serveur, charge utile correcte, 0 erreur de page). ⛔⛔ Le défaut était dans
+  mon `catch` : **un seul sac** pour l'envoi, la lecture et l'analyse du JSON.
+  👉 ***Le même défaut que celui corrigé le matin dans `tests/_playwright.js`*** — un `catch`
+  qui avale le diagnostic fait chercher au mauvais endroit.
+  ✅ Trois étapes **nommées** (1/3 · 2/3 · 3/3), avec le **code HTTP** et le **début de la
+  réponse** quand ce n'est pas du JSON — *une page d'erreur Apps Script ressemblait à une
+  panne de réseau*. ⛔ Texte du serveur **échappé** ; jamais le jeton, jamais le code perso.
+  ⏳ **La cause réelle chez Michel reste inconnue** : c'est le nouveau message qui la dira.
+
 - **Version précédente :** `ft-v1228` — 🔑 **UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI.**
   *Le banc reçoit un badge ; aucune porte n'est ouverte dans le bâtiment.*
   ⛔⛔ **Le défaut fermé est mesuré** : le workflow du banc recevait **HTTP 401** et ne

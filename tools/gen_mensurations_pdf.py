@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""DOSSIER DE PASSATION — ft-v1229, LE CORRECTIF DES MENSURATIONS (20/09/2026).
+"""DOSSIER DE PASSATION — ft-v1230, LE CORRECTIF DES MENSURATIONS (20/09/2026).
 
 ⛔⛔ LES GARDES RECOMPTENT CHAQUE FAIT DEPUIS LE CODE SERVI ET REFUSENT DE PRODUIRE SI L UN
     D EUX TOMBE — y compris le total de la passe, qui se LIT dans son journal et jamais a la
@@ -100,7 +100,7 @@ F = {}
 
 # ══ LA VERSION SERVIE ════════════════════════════════════════════════════════
 F['version'] = re.search(r"const CACHE = '(ft-v\d+)'", lire('sw.js')).group(1)
-g(F['version'] == 'ft-v1229', "la version servie est %s" % F['version'])
+g(F['version'] == 'ft-v1230', "la version servie est %s" % F['version'])
 
 TR = sans_comm(lire('tracking.js'))
 SBF = bloc(TR, r'function\s+saveBodyFat\s*\(\s*\)\s*')
@@ -498,7 +498,7 @@ Ad(para("Pendant la passe, <b>session-B a publie</b> 5 commits touchant <i>coach
 Ad(para("<b>Consequence appliquee, pas contournee</b> : ma premiere passe (4506/0) est devenue "
         "<b>PERIMEE</b>. Arbre refusionne, temoins re-verifies (<b>28 OK / 0 rouge</b> sur "
         "l arbre fusionne), <b>passe relancee en entier</b>, et <b>c'est moi qui pose le numero "
-        "final</b> puisque je publie en dernier : <b>ft-v1229</b>."))
+        "final</b> puisque je publie en dernier : <b>ft-v1230</b>."))
 Ad(para("<b>/!\\ Et la renumerotation est BORNEE A MON BLOC, jamais globale</b> : un "
         "remplacement global de &laquo; ft-v1227 &raquo; aurait ecrase l entree de session-B, "
         "qui porte legitimement ce numero. <i>Un remplacement global suppose un identifiant "

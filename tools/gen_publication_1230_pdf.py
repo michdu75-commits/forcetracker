@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""DOSSIER DE PUBLICATION — ft-v1229 SUR master (20/09/2026).
+"""DOSSIER DE PUBLICATION — ft-v1230 SUR master (20/09/2026).
 
 ⛔⛔ CE DOSSIER NE RACONTE PAS LE CORRECTIF (c'est `gen_mensurations_pdf.py`) : il raconte
-    LA PUBLICATION — la divergence retrouvee, la SECONDE collision de numero, la fusion, et
+    LA PUBLICATION — la divergence retrouvee, les TROIS collisions de numero, la fusion, et
     la re-mesure sur l arbre reellement publie.
 
 ⛔⛔ LES GARDES RECOMPTENT CHAQUE FAIT DEPUIS GIT ET DEPUIS LE CODE SERVI, et refusent de
@@ -34,13 +34,13 @@ from reportlab.platypus import (BaseDocTemplate, Frame, PageTemplate, Paragraph,
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SORTIE = os.environ.get(
     'PUB_PDF',
-    '/tmp/FORCE-TRACKER-CORPS-SANTE-PUBLICATION-FT-V1229-20-09-2026.pdf')
+    '/tmp/FORCE-TRACKER-CORPS-SANTE-PUBLICATION-FT-V1230-20-09-2026.pdf')
 PASSE = os.environ.get('PUB_PASSE', '/tmp/passe_pub.log')
 MUTLOG = os.environ.get('PUB_MUT', '')
 
 # ⛔ LES DEUX BOUTS DE LA FUSION, mesures et jamais ecrits a la main.
-MOI = os.environ.get('PUB_MOI', '231ee32e')        # ma branche avant fusion
-EUX = os.environ.get('PUB_EUX', 'f62ade39')        # origin/master avant fusion
+MOI = os.environ.get('PUB_MOI', '7d096c2a')        # ma branche avant la DERNIERE fusion
+EUX = os.environ.get('PUB_EUX', '85c03bee')        # origin/master avant la DERNIERE fusion
 
 _E = []
 
@@ -64,20 +64,24 @@ F = {}
 
 # ══ 1. LE NUMERO SERVI, ET CELUI QUI L ETAIT DEJA ════════════════════════════
 F['version'] = re.search(r"const CACHE = '(ft-v\d+)'", lire('sw.js')).group(1)
-g(F['version'] == 'ft-v1229', "la version servie est %r, ce dossier annonce ft-v1229"
+g(F['version'] == 'ft-v1230', "la version servie est %r, ce dossier annonce ft-v1230"
   % F['version'])
 
 _rc, _swEux = git('show', '%s:sw.js' % EUX)
 _m = re.search(r"const CACHE = '(ft-v\d+)'", _swEux)
 F['versionEux'] = _m.group(1) if _m else ''
-g(F['versionEux'] == 'ft-v1228',
-  "master portait %r : la collision que ce dossier decrit n a pas eu lieu" % F['versionEux'])
+# ⛔ LE FAIT MESURE N EST PAS UN NUMERO, C EST LA COLLISION : les deux cotes portaient le MEME.
+#    Un garde ecrit sur un numero en dur aurait rougi au tour suivant, alors que le fait, lui,
+#    etait toujours vrai — on mesure donc l egalite, pas la valeur.
+g(F['versionEux'] != '', "le numero de cache de master est illisible")
 
 _rc, _swMoi = git('show', '%s:sw.js' % MOI)
 _m = re.search(r"const CACHE = '(ft-v\d+)'", _swMoi)
 F['versionMoi'] = _m.group(1) if _m else ''
-g(F['versionMoi'] == 'ft-v1228',
-  "mon arbre d avant portait %r : il n y avait donc pas de collision" % F['versionMoi'])
+g(F['versionMoi'] == F['versionEux'],
+  "pas de collision : mon arbre portait %r et master %r" % (F['versionMoi'], F['versionEux']))
+g(F['version'] != F['versionEux'],
+  "le numero publie (%r) est celui que master SERT deja : regle d or #5" % F['version'])
 
 # ⛔ ET LE NUMERO NE DOIT ETRE REUTILISE NULLE PART dans le fichier servi comme cle de cache.
 F['cles'] = len(re.findall(r"const CACHE = '", lire('sw.js')))
@@ -101,7 +105,7 @@ g(F['ancetreMoi'], "mes propres commits ne sont pas dans la fusion")
 # ⛔ ET AUCUN FICHIER DE SESSION-B N A BOUGE — c'est la preuve, pas l intention.
 FICHIERS_B = ['app.js', 'index.html', 'tests/milo/eval.js',
               '.github/workflows/banc-milo.yml', 'tools/mut_identite_banc.py',
-              'tools/gen_identite_banc_pdf.py']
+              'tools/gen_identite_banc_pdf.py', 'tools/gen_doc_ia.js']
 _rc, _o = git('diff', '--name-only', EUX, 'HEAD', '--', *FICHIERS_B)
 F['toucheB'] = [x for x in _o.split('\n') if x.strip()]
 g(not F['toucheB'],
@@ -118,10 +122,10 @@ g(not F['toucheMoi'],
 # ══ 3. LA RENUMEROTATION EST BORNEE — aucun remplacement global ══════════════
 # ⛔ Le fait mesurable : le numero de session-B SURVIT dans le depot (en historique), il n a
 #    pas ete efface par un sed global. S il avait disparu, on aurait ecrase sa trace.
-F['traceB'] = lire('sw.js').count('ft-v1228')
+F['traceB'] = lire('sw.js').count(F['versionEux'])
 g(F['traceB'] >= 1,
-  "le ft-v1228 de session-B a disparu de sw.js : la renumerotation n etait pas bornee")
-F['claudeB'] = lire('CLAUDE.md').count('**ft-v1228 ')
+  "le %s de session-B a disparu de sw.js : la renumerotation n etait pas bornee" % F['versionEux'])
+F['claudeB'] = lire('CLAUDE.md').count('**%s ' % F['versionEux'])
 g(F['claudeB'] >= 1, "l entree de journal de session-B a disparu de CLAUDE.md")
 
 # ⛔ AUCUN MARQUEUR DE CONFLIT NULLE PART.
@@ -274,6 +278,8 @@ Ad(para("Le correctif que Michel a valide est publie sur <b>master</b>. Le conte
         "exactement celui qu il a valide. <b>Seul le NUMERO a change</b> : "
         "<b>%s</b> et non ft-v1228, et la raison est mesuree - elle occupe la section 2."
         % F['version']))
+Ad(para("L autre session a publie <b>cinq fois</b> pendant mes mesures, dont <b>deux numeros "
+        "de cache</b> (ft-v1228 puis ft-v1229) : ce dossier dit aussi ce que cela coute."))
 
 # ── 1 ────────────────────────────────────────────────────────────────────────
 Ad(titre('1. Le fast-forward annonce la veille etait perime - comme Michel l avait prevu'))
@@ -291,20 +297,35 @@ Ad(tab([['', 'mon cote (session-A)', 'master (session-B)'],
        [32 * mm, 75 * mm, 75 * mm]))
 
 # ── 2 ────────────────────────────────────────────────────────────────────────
-Ad(titre('2. Pourquoi %s, et pas ft-v1228 - c est la regle d or #5' % F['version']))
+Ad(titre('2. Pourquoi %s, et pas ft-v1228 ni ft-v1229 - c est la regle d or #5'
+         % F['version']))
 Ad(para("<b>Les deux cotes avaient pose le meme numero</b>, chacun sans voir l autre : "
-        "<b>%s</b>. Et surtout, celui de session-B est <b>deja SERVI</b> - son deploiement "
-        "GitHub Pages est vert (execution n.1280, commit <font face='Courier'>%s</font>), "
-        "verifie par l API GitHub." % (F['versionEux'], EUX)))
+        "<b>%s</b>. Et surtout, celui de session-B est <b>deja SERVI</b> - ses deploiements "
+        "GitHub Pages sont verts (executions n.1280 puis n.1282, la derniere sur le commit "
+        "<font face='Courier'>%s</font>), verifie par l API GitHub."
+        % (F['versionEux'], EUX)))
 Ad(para("<b>Republier un contenu DIFFERENT sous un numero de cache DEJA SERVI est exactement "
         "ce que la regle d or #5 existe pour empecher.</b> Un telephone qui a ouvert l app "
-        "entre-temps porte deja la cle <font face='Courier'>ft-v1228</font> dans son service "
+        "entre-temps porte deja la cle <font face='Courier'>%s</font> dans son service "
         "worker. Si on reutilisait ce numero, <b>la cle ne changerait pas</b>, donc le service "
         "worker <b>ne se mettrait pas a jour</b> - et le correctif des mensurations "
-        "<b>n arriverait jamais</b> sur ce telephone, sans aucun message d erreur nulle part."))
-Ad(para("<i>Dit franchement parce que Michel attendait ft-v1228 : le numero a change, le "
-        "contenu non.</i> Le PDF du correctif porte lui aussi <b>%s</b>, pour qu aucun des "
-        "deux documents ne decrive une version qui n existe pas." % F['version']))
+        "<b>n arriverait jamais</b> sur ce telephone, sans aucun message d erreur nulle part."
+        % F['versionEux']))
+Ad(para("<i>Dit franchement parce que Michel attendait ft-v1228 : le numero a change deux "
+        "fois, le contenu non.</i> Le PDF du correctif porte lui aussi <b>%s</b>, pour qu "
+        "aucun des deux documents ne decrive une version qui n existe pas." % F['version']))
+Ad(para("<b>Et le cout se dit, parce qu il est structurel.</b> Une passe complete dure "
+        "<b>~25 minutes</b> ; l autre session a publie <b>cinq fois</b> dans la journee. La "
+        "condition (4) de <font face='Courier'>tools/passe_valide.sh</font> - <i>aucune "
+        "publication concurrente</i> - est donc tombee <b>cinq fois</b>, et cinq fois il a "
+        "fallu refusionner, renumeroter et relancer. <b>Tant que le rythme de publication de "
+        "l autre session est plus court que la duree d une passe, la regle &laquo; la session "
+        "qui publie en DERNIER relance &raquo; ne converge pas d elle-meme.</b> Ce n est "
+        "<b>pas</b> une raison de contourner la condition (4) : elle a raison a chaque fois, "
+        "l arbre change vraiment. C est un fait mesure rendu a Michel - il manque un signal "
+        "<i>&laquo; je publie, tenez 30 minutes &raquo;</i>, que "
+        "<font face='Courier'>docs/JOURNAL-DE-PARTAGE.md</font> n a pas (il dit qui TRAVAILLE "
+        "sur quoi, pas qui est en train de PUBLIER)."))
 
 # ── 3 ────────────────────────────────────────────────────────────────────────
 Ad(titre('3. Une vraie reconciliation - et elle est PROUVEE, pas affirmee'))
@@ -322,7 +343,7 @@ Ad(tab([['ce qui est verifie', 'mesure'],
          % len(F['toucheB'])],
         ['mon correctif modifie par la fusion', '%d fichier' % len(F['toucheMoi'])],
         ['marqueurs de conflit restants dans le depot', '%d' % F['marqueurs']],
-        ['le ft-v1228 de session-B survit dans sw.js (en historique)',
+        ['le %s de session-B survit dans sw.js (en historique)' % F['versionEux'],
          '%d fois' % F['traceB']],
         ['son entree de journal survit dans CLAUDE.md', '%d fois' % F['claudeB']]],
        [112 * mm, 70 * mm]))
@@ -374,8 +395,8 @@ for x in [
 Ad(titre('6. Ce qui reste a faire, sur le telephone de Michel (5 lignes)'))
 for i, x in enumerate([
     "Fermer completement Force Tracker (la retirer des applications ouvertes), puis la rouvrir.",
-    "Menu -> A propos : le numero doit afficher <b>%s</b>. S il affiche encore ft-v1228, "
-    "fermer et rouvrir une seconde fois." % F['version'],
+    "Menu -> A propos : le numero doit afficher <b>%s</b>. S il affiche encore un numero "
+    "plus ancien, fermer et rouvrir une seconde fois." % F['version'],
     "Progres -> Corps & sante -> carte &laquo; Masse grasse du jour &raquo; : taper cou "
     "<b>40,7</b> et taille <b>92,4</b> (avec la virgule), laisser hanches vide, puis valider.",
     "Fermer l application, la rouvrir : <b>les deux mesures doivent toujours etre la</b>.",

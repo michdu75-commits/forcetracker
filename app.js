@@ -9769,12 +9769,37 @@ async function creerJetonBanc(){
     z.innerHTML='<div style="color:var(--red);font-size:13px;">Ton compte n\'a pas encore de <strong>code perso</strong> — c\'est lui qui prouve que le compte est à toi. Pose-le d\'abord dans « protéger mon compte ».</div>'; return;
   }
   z.innerHTML='<div style="font-size:13px;color:var(--t2);">Fabrication…</div>';
+  /* ⛔⛔ CHAQUE ÉTAPE DIT LAQUELLE A ÉCHOUÉ — et ce n'est pas du confort.
+     1ʳᵉ version : un seul `try` autour de TOUT, et un seul message, « Réseau indisponible ».
+     Michel l'a eu, et il ne disait rien : l'envoi, la lecture de la réponse et l'analyse du
+     JSON tombaient dans le même sac. 👉 ***C'est exactement le défaut corrigé le matin même
+     dans `tests/_playwright.js`*** — un `catch` qui avale le diagnostic fait chercher au
+     mauvais endroit. On nomme donc l'étape, et on montre le début de ce que le serveur a
+     vraiment répondu quand ce n'est pas du JSON (une page d'erreur Apps Script, par exemple).
+     ⛔ Jamais le jeton, jamais le code perso. */
+  let r=null, brut='';
   try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+    r=await fetch(S.url,{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'issueTokenByCode',email:S.email,authCode:_authCode(),
                            appareil:'banc-milo'})});
-    const d=await r.json();
+  }catch(e){
+    z.innerHTML='<div style="color:var(--red);font-size:13px;">L\'envoi n\'est pas parti (étape 1/3).<br><span style="font-size:11.5px;">'+_echapJetonBanc(String(e&&e.message||e))+'</span><br><span style="font-size:11.5px;color:var(--t2);">Le serveur n\'a pas été joint du tout : réseau, ou appel bloqué par le navigateur.</span></div>';
+    return;
+  }
+  try{ brut=await r.text(); }
+  catch(e){
+    z.innerHTML='<div style="color:var(--red);font-size:13px;">Réponse illisible (étape 2/3) — HTTP '+r.status+'.</div>'; return;
+  }
+  let d=null;
+  try{ d=JSON.parse(brut); }
+  catch(e){
+    /* ⭐ LE CAS LE PLUS INSTRUCTIF : le serveur a répondu, mais pas en JSON. Sans cet extrait,
+       une page d'erreur Google ressemblait à une panne de réseau. */
+    z.innerHTML='<div style="color:var(--red);font-size:13px;">Le serveur a répondu, mais pas en JSON (étape 3/3) — HTTP '+r.status+'.<br><span style="font-size:11.5px;font-family:monospace;word-break:break-all;">'+_echapJetonBanc(brut.slice(0,160))+'</span></div>';
+    return;
+  }
+  try{
     if(!d||d.status!=='ok'||!d.token){
       const pq=(d&&d.error==='no_code')?'ton compte n\'a pas de code perso'
               :(d&&d.error==='auth')?'le code perso n\'a pas été accepté':'refus du serveur';
@@ -9792,7 +9817,13 @@ async function creerJetonBanc(){
       +'3. <strong>New repository secret</strong><br>'
       +'4. Nom : <strong>FT_BANC_TOKEN</strong><br>5. Valeur : ce qui est au-dessus → <strong>Add secret</strong></div>'
       +'</div>';
-  }catch(e){ z.innerHTML='<div style="color:var(--red);font-size:13px;">Réseau indisponible.</div>'; }
+  }catch(e){ z.innerHTML='<div style="color:var(--red);font-size:13px;">Affichage impossible : '+_echapJetonBanc(String(e&&e.message||e))+'</div>'; }
+}
+
+/* ⛔ Le texte du serveur est INSÉRÉ DANS LA PAGE : on l'échappe. Une page d'erreur contient
+   du HTML, et l'afficher brut l'exécuterait. */
+function _echapJetonBanc(t){
+  return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function copierJetonBanc(){
@@ -9823,7 +9854,7 @@ async function revoquerJetonBanc(){
     z.innerHTML=(d&&d.status==='ok')
       ? '<div style="color:var(--grn,#4caf50);font-size:13px;">✅ Révoqué. Le prochain lancement du banc échouera proprement, sans rien dépenser.</div>'
       : '<div style="color:var(--red);font-size:13px;">Refusé : jeton inconnu ou déjà révoqué.</div>';
-  }catch(e){ z.innerHTML='<div style="color:var(--red);font-size:13px;">Réseau indisponible.</div>'; }
+  }catch(e){ z.innerHTML='<div style="color:var(--red);font-size:13px;">La révocation n\'est pas partie : '+_echapJetonBanc(String(e&&e.message||e))+'</div>'; }
 }
 
 async function loadTesterIdeasAdmin(){
