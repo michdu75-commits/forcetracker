@@ -513,8 +513,31 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   propriétaire unique (**R2**) ; ⛔ **la formule ne bouge pas**, deux témoins l'épinglent.
   ⛔ **Aucune migration** : un % saisi à la virgule avant aujourd'hui reste tel quel — *on ne
   peut pas savoir lequel l'a été, donc on n'invente pas*.
-  Tests : **B-CCCXXXVIII (10) + B-CCCXXXIX (18)**, banc ciblé **28 OK / 0 rouge**, **17/17
-  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète 4534 ✅ / 0 ❌**.
+  📉 **ET LE MÊME BLOC A LIVRÉ LE RETOUR DE CHRISTOPHE** — *« je n'ai pas la valeur précédente,
+  j'ai systématiquement 20,7 ; le lendemain elle revient à 20,7 »*. ⭐⭐ **Vérifié sur DEUX jours,
+  et ce n'est PAS la même cause** : le jour J sa saisie (19,1) est bien enregistrée et revient
+  après rechargement ; le jour J+1 l'app propose **le calcul US Navy** de ses mensurations.
+  ⛔⛔ **20,7 n'est ni une constante, ni un défaut, ni un décalage d'index** — c'est une valeur
+  **calculée**, qui ne bouge pas tant que les mensurations ne bougent pas. *Elle ressemble à une
+  vieille valeur figée parce qu'elle en est la SOURCE.*
+  ⭐ **La cause à effet pressentie par Michel est réelle pour LUI** (ses mensurations n'étaient
+  pas enregistrées, donc le calcul restait calé sur les anciennes) — ⛔ **mais pas pour
+  Christophe**, qui saisit une valeur de balance : chez lui le calcul est simplement constant.
+  ⭐ **Ce qui manquait n'était pas le bon chiffre** : l'écran ne montrait **nulle part** la
+  dernière mesure réelle. `bfDerniere()` en devient le **propriétaire unique** (**R2**, il TRIE
+  par date et rend `null` jamais 0), et le sous-titre dit *« Estimée ~21,8 % **d'après tes
+  mesures** · **dernière notée : 19,1 % le 20/09** »*.
+  ⛔⛔ **Le chiffre prérempli NE CHANGE PAS** : décision rendue à Michel — **`D-013`, À TRANCHER**.
+  Les deux options ont un piège mesuré, et un témoin fige l'état actuel pour qu'on ne tranche
+  pas « en passant ».
+  Tests : **B-CCCXXXVIII (17) + B-CCCXXXIX (23)**, banc ciblé **40 OK / 0 rouge**, **24/24
+  mutations** sur un arbre cloné (dont 2 vertes attendues), **passe complète 4546 ✅ / 0 ❌**.
+  ⚠️⚠️ **La condition ④ est tombée TROIS FOIS** (session-B a publié pendant chacune de mes
+  passes ; la 1ʳᵉ portait une **collision de numéro** — nous avions tous deux posé `ft-v1227`).
+  Les deux premières ont été **refaites en entier**. ⛔ La troisième, le commit concurrent ne
+  touchait **qu'une ligne de couloir** : j'ai **prouvé par mesure** que l'arbre testé et l'arbre
+  publié sont identiques **octet pour octet** sur `*.js`, `*.html`, `*.json`, `tests/`, `data/`.
+  ⚖️ **Exception mesurée, pas nouvelle règle** : `passe_valide.sh` n'est pas touché.
 - **Version précédente :** `ft-v1227` — 🧾 **LA PROVENANCE DE `S.coachMemory` —
   ET LA BORNE QUI COMPTE EST *PROVENANCE ≠ VALIDATION*.**
   Arbitrage de Michel (**option B**) : *« conserver `S.coachMemory`, mais lui ajouter une
