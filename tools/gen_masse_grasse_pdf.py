@@ -147,7 +147,12 @@ g(F['d013'], "D-013 ne pointe pas vers D-014 (R30 : un remplacement s ecrit)")
 F['navyH'] = 'bf=495/(1.0324-0.19077*Math.log10(waist-neck)+0.15456*Math.log10(ht))-450' in NU
 F['navyF'] = 'bf=495/(1.29579-0.35004*Math.log10(waist+hip-neck)+0.22100*Math.log10(ht))-450' in NU
 g(F['navyH'] and F['navyF'], "la formule US Navy a bouge — hors perimetre")
-_rc, _o = git('diff', '--name-only', 'origin/master...HEAD')
+# ⛔⛔ LE PERIMETRE SE MESURE SUR LE COMMIT DE LA LIVRAISON, JAMAIS SUR « origin/master...HEAD ».
+#    Vrai AVANT la publication, VIDE apres — puisque master contient alors ce travail. *Un garde
+#    dont l ancrage disparait au moment meme ou l on publie ne protege rien le jour ou on en a
+#    besoin.* (Meme defaut attrape et corrige sur gen_mensurations_pdf.py.)
+COMMIT = os.environ.get('BF_COMMIT', 'b6f33d65')
+_rc, _o = git('diff', '--name-only', COMMIT + '^', COMMIT)
 _touches = [x for x in _o.split() if x.strip()]
 F['servis'] = sorted({x for x in _touches if re.match(
     r'^(app|state|screens|log|coach|setup|tracking|constants|supabase|worker|Code|'
