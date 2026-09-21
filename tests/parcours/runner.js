@@ -40388,6 +40388,7 @@ require('./pots_nutrition.js').source(t, ROOT, fs, path);
 require('./repas_actif.js').source(t, ROOT, fs, path);
 require('./mensurations.js').source(t, ROOT, fs, path);
 require('./coach_memoire.js').source(t, ROOT, fs, path);
+require('./motif_exercice.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
