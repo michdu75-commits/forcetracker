@@ -124,20 +124,36 @@ module.exports.source = function (t, ROOT, fs, path) {
      ÉCHAPPÉE, puisqu'elle vit dans un littéral délimité par des apostrophes. Mon motif
      cherchait `d'après` et rougissait donc sur du code parfaitement juste.
      *Un motif qui inclut un caractère d'échappement mesure ma mise en forme, pas le fait.* */
+  /* 🔄 RETOURNÉ EN ft-v1231, PAS SUPPRIMÉ. Le libellé exact a changé (« d'après tes mesures »
+     → « Estimation d'après tes mensurations »), mais LA GARANTIE N'A PAS BOUGÉ D'UN POUCE :
+     *le chiffre proposé doit dire d'où il vient.* On mesure donc le FAIT, plus la formulation —
+     c'était d'ailleurs le défaut de la version d'avant, qui figeait une phrase. */
   t('B-CCCXXXVIII ⑭ ⭐ le sous-titre nomme la SOURCE du chiffre proposé',
-    /après tes mesures/.test(brut), '');
+    /après tes mensurations|après tes mesures/.test(brut), '');
+  /* 🔄 RETOURNÉ AUSSI : « dernière notée » devient « Dernière mesure saisie » quand la
+     provenance est écrite, et « Dernière valeur notée » quand elle ne l'est pas (ft-v1231).
+     La garantie reste : l'écran rappelle la dernière valeur réelle AVEC SA DATE. */
   t('B-CCCXXXVIII ⑮ ⭐⭐ … et rappelle la dernière valeur NOTÉE, avec sa date',
-    /dernière notée/.test(brut) && /_bfJourCourt/.test(A), '');
+    /Dernière mesure saisie|Dernière valeur notée|dernière notée/.test(brut)
+      && /_bfJourCourt/.test(A), '');
   /* ⛔ LA DATE SE FORMATE PAR DÉCOUPAGE DE CHAÎNE : `new Date('2026-09-20')` est lue en UTC et
      affiche la veille à l'ouest de Greenwich (famille « fuseaux horaires » de BUGS.md). */
   t('B-CCCXXXVIII ⑯ ⛔ la date est découpée, jamais passée à `new Date`',
     corps('_bfJourCourt') !== '' && !/new Date/.test(corps('_bfJourCourt')), '');
-  /* ⛔⛔ ET LE CHIFFRE PRÉREMPLI N'A PAS BOUGÉ — c'est une décision rendue à Michel (D-013).
-     Ce témoin existe pour qu'on ne la prenne pas « en passant » à la prochaine version. */
-  t('B-CCCXXXVIII ⑰ ⛔⛔ le chiffre prérempli reste le calcul (décision D-013, non tranchée)',
-    /const prefill\s*=\s*savedToday\s*\?\s*todayW\.bf\s*:\s*\(\s*navyNow\s*!=\s*null\s*\?\s*navyNow\s*:\s*''\s*\)/
+  /* 🔄🔄 CE TÉMOIN A FAIT EXACTEMENT SON TRAVAIL, ET C'EST POURQUOI ON LE RETOURNE AU LIEU DE
+     LE SUPPRIMER (même geste que le ⑱ de ft-v1225).
+     Il figeait le préremplissage *« tant que D-013 n'est pas tranchée »* — pour qu'on ne prenne
+     pas cette décision produit **en passant**. Michel l'a tranchée le 20/09 (**D-014**) : le
+     champ n'est prérempli que par une **MESURE du jour consulté**, jamais par l'estimation.
+     ⛔ LA GARANTIE NE DISPARAÎT PAS, ELLE CHANGE DE CIBLE : le préremplissage reste une
+     décision de Michel, et ce témoin continue d'interdire qu'on la modifie sans lui.
+     ⚠️ Et il a rougi dans la passe complète alors que les deux bancs ciblés étaient verts —
+     *un sous-ensemble ne remplace pas la passe : celui-ci a attrapé 5 défauts que mon banc ne
+     pouvait pas voir, parce qu'il ne lance que mon propre bloc.* */
+  t('B-CCCXXXVIII ⑰ ⛔⛔ le chiffre prérempli suit D-014 : la MESURE du jour, sinon rien',
+    /const prefill\s*=\s*mesureDuJour\s*\?\s*todayW\.bf\s*:\s*''/
       .test(A.replace(/\s+/g, ' ').replace(/const prefill = /, 'const prefill=')),
-    'le préremplissage a changé sans que D-013 soit tranchée');
+    'le préremplissage a changé sans que Michel l\'ait tranché');
 };
 
 module.exports.ecran = async function (t, b, PORT) {
@@ -366,23 +382,37 @@ module.exports.ecran = async function (t, b, PORT) {
   const VEILLE = MESURES + "localStorage.setItem('ft4_wlog',JSON.stringify("
     + "[{date:'2026-09-20',kg:85.9,bf:19.1},{date:'2026-09-19',kg:86.1}]));";
 
+  /* 🔄 RETOURNÉ EN ft-v1231 : la ligne du décor n'a PAS de `bfSrc` (c'est une ligne d'avant ce
+     chantier, donc de provenance INCONNUE — exactement le cas de Christophe). Le champ est
+     toujours prérempli par elle, et le sous-titre la nomme désormais « Mesure du jour ». */
   const C1 = await jour2('2026-09-20T10:00:00', VEILLE);
   t('B-CCCXXXIX ⑱ le MÊME jour, la valeur enregistrée est bien celle qui s\'affiche',
-    C1.jour === '2026-09-20' && C1.bf === '19.1' && /Enregistr/.test(C1.sousTitre),
+    C1.jour === '2026-09-20' && C1.bf === '19.1'
+      && /Mesure du jour|Enregistr/.test(C1.sousTitre),
     JSON.stringify(C1));
 
   const C2 = await jour2('2026-09-21T10:00:00', VEILLE);
-  /* ⛔⛔ LE CŒUR DU RETOUR : le lendemain, l'app propose le CALCUL (constant), pas la derniere
-     valeur notee. C'est le comportement ACTUEL, volontairement conserve (D-013 non tranchee) —
-     ce temoin le FIGE pour qu'il ne change pas « en passant ». */
-  t('B-CCCXXXIX ⑲ ⛔ le LENDEMAIN, le chiffre proposé est bien le calcul, pas la valeur notée',
-    C2.jour === '2026-09-21' && parseFloat(C2.bf) === C2.navy && C2.bf !== '19.1',
+  /* 🔄🔄 RETOURNÉ, ET LA GARANTIE EST DEVENUE PLUS FORTE — pas plus faible.
+     Ce témoin figeait *« le lendemain, l'app propose le CALCUL, pas la valeur notée »*, un
+     comportement volontairement conservé tant que **D-013** n'était pas tranchée. Michel l'a
+     tranchée (**D-014**) : le lendemain, l'app **ne propose plus RIEN** — le champ est vide,
+     et l'estimation vit à part.
+     ⭐ Ce qui comptait vraiment est intact : ***on ne propose jamais la valeur d'un autre jour
+     dans un champ qui, validé, la daterait d'aujourd'hui.*** C'était la raison d'être du
+     témoin ; elle est désormais tenue de façon plus stricte. */
+  t('B-CCCXXXIX ⑲ ⛔ le LENDEMAIN, la valeur notée n\'est PAS reproposée (D-014 : champ vide)',
+    C2.jour === '2026-09-21' && C2.bf === '' && C2.bf !== '19.1',
     JSON.stringify(C2));
   /* ⭐⭐ ET C'EST ÇA QUI MANQUAIT : l'écran doit DIRE d'où vient ce chiffre ET montrer la
-     dernière valeur réelle avec sa date. « Je n'ai pas la valeur précédente », mot pour mot. */
+     dernière valeur réelle avec sa date. « Je n'ai pas la valeur précédente », mot pour mot.
+     🔄 Le libellé suit ft-v1231 : la provenance de cette ligne est INCONNUE, donc l'écran dit
+     « Dernière valeur notée » et surtout PAS « mesure saisie » — *un libellé plus précis que
+     la donnée est un libellé faux*. */
   t('B-CCCXXXIX ⑳ ⭐⭐ … et l\'écran NOMME sa source et rappelle la dernière valeur notée',
-    /d'après tes mesures/.test(C2.sousTitre) && /dernière notée\s*:\s*19\.1 %/.test(C2.sousTitre)
-      && /le 20\/09/.test(C2.sousTitre),
+    /après tes mensurations|d'après tes mesures/.test(C2.sousTitre)
+      && /(Dernière valeur notée|Dernière mesure saisie|dernière notée)\s*:\s*19\.1 %/
+        .test(C2.sousTitre)
+      && /20\/09/.test(C2.sousTitre),
     JSON.stringify(C2.sousTitre));
   t('B-CCCXXXIX ㉑ ⭐ le propriétaire rend bien la dernière mesure RÉELLE, pas le calcul',
     C2.derniere && C2.derniere.bf === 19.1 && C2.derniere.date === '2026-09-20',

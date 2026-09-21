@@ -107,31 +107,35 @@ MUT = [
      'rouge', 'le journal des mensurations n atteint plus le disque'),
 
     # ── LE RETOUR DE CHRISTOPHE : la derniere valeur notee ───────────────────────
+    # ⛔⛔ SIX ANCRES SONT MORTES EN ft-v1231 (M16→M20, M22) : le code qu elles visaient a bouge.
+    #    Elles sont REVISEES sur le code actuel, jamais retirees — *une mutation dont l ancre a
+    #    disparu ne mesure RIEN, et un controle negatif ou tout echoue au meme endroit ne prouve
+    #    pas que les gardes mordent : il prouve qu on n est jamais arrive jusqu a eux* (ft-v1227).
     ('M16', TR,
-     "  const _prec=bfDerniere(savedToday?d:null);",
+     "  const _prec=bfDerniere(mesureDuJour?d:null);",
      "  const _prec=null;",
      'rouge', 'l ecran cesse de montrer la derniere valeur notee'),
 
     ('M17', TR,
-     "  const _rappel=_prec?(' · dernière notée : '+_prec.bf+' % le '+_bfJourCourt(_prec.date)):'';",
-     "  const _rappel=_prec?(' · dernière notée : '+_prec.bf+' %'):'';",
+     "  const _rappel=_prec?(' · '+_motPrec+' : '+_prec.bf+' % — '+_bfJourCourt(_prec.date)):'';",
+     "  const _rappel=_prec?(' · '+_motPrec+' : '+_prec.bf+' %'):'';",
      'rouge', 'le rappel perd sa DATE : on ne sait plus de quand date la valeur'),
 
     ('M18', TR,
-     ":(navyNow!=null?('Estimée ~'+navyNow+' % d\\'après tes mesures'+_rappel)",
-     ":(navyNow!=null?('Estimée ~'+navyNow+' %'+_rappel)",
+     "  const _estim=navyNow!=null?('Estimation d\\'après tes mensurations : ~'+navyNow+' %')",
+     "  const _estim=navyNow!=null?('~'+navyNow+' %')",
      'rouge', 'le chiffre propose ne dit plus d ou il vient'),
 
     # ⚠️ DEGUISEE : elle remet un tri implicite (l ordre du tableau) au lieu du tri par date.
     #    Un temoin qui ne chercherait que le nom `bfDerniere` resterait VERT dessus.
     ('M19', TR,
-     "  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date\n              &&(!avantJour||String(w.date)<String(avantJour)))\n    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));",
-     "  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date\n              &&(!avantJour||String(w.date)<String(avantJour)));",
+     "  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date&&w.bfSrc!==BF_ESTIME\n              &&(!avantJour||String(w.date)<String(avantJour)))\n    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));",
+     "  const l=(S.weightLog||[]).filter(w=>w&&w.bf!=null&&w.date&&w.bfSrc!==BF_ESTIME\n              &&(!avantJour||String(w.date)<String(avantJour)));",
      'rouge', 'DEGUISEE : bfDerniere se fie a l ordre du tableau au lieu de trier'),
 
     ('M20', TR,
-     "  return l.length?{date:l[0].date,bf:l[0].bf}:null;",
-     "  return l.length?{date:l[0].date,bf:l[0].bf}:{date:'',bf:0};",
+     "  return l.length?{date:l[0].date,bf:l[0].bf,src:l[0].bfSrc||null}:null;",
+     "  return l.length?{date:l[0].date,bf:l[0].bf,src:l[0].bfSrc||null}:{date:'',bf:0};",
      'rouge', 'bfDerniere rend 0 au lieu de « je ne sais pas » (R29)'),
 
     ('M21', TR,
@@ -139,11 +143,13 @@ MUT = [
      "  const d=new Date(String(iso||''));\n  return isNaN(d)?String(iso||''):(d.getDate()+'/'+(d.getMonth()+1));",
      'rouge', 'la date repasse par new Date (piege des fuseaux horaires)'),
 
-    # ⛔ LA DECISION NON TRANCHEE (D-013) : si quelqu un change le prefill « en passant ».
+    # ⛔ LA DECISION DE MICHEL (D-014, qui remplace D-013) : le champ n est prerempli que par une
+    #    MESURE du jour consulte. La mutation repropose la valeur d un AUTRE jour — c est
+    #    exactement ce que la decision interdit, parce qu un ✓ la daterait d aujourd hui.
     ('M22', TR,
-     "  const prefill=savedToday?todayW.bf:(navyNow!=null?navyNow:'');",
-     "  const prefill=savedToday?todayW.bf:((bfDerniere(null)||{}).bf||'');",
-     'rouge', 'le prefill change alors que D-013 n est pas tranchee'),
+     "  const prefill=mesureDuJour?todayW.bf:'';",
+     "  const prefill=mesureDuJour?todayW.bf:((bfDerniere(null)||{}).bf||'');",
+     'rouge', 'le prefill repropose la valeur d un AUTRE jour (D-014 rouverte)'),
 
     # ── ⭐ LES DEUX QUI DOIVENT RESTER VERTES ─────────────────────────────────────
     ('V01', TR,
