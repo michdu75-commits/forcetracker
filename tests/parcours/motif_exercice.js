@@ -91,8 +91,20 @@ function source(t, ROOT, fs, path) {
     '4 séries × 5 reps', '4 séries de 5 répétitions', '4 séries de 5',      // le français réel
     '4 sets of 5', '4 sets x 5 reps',                                       // l'anglais
     '3 series de 12', '5 reps × 4 séries',                                  // sans accent, inversé
+    '4 séries, 8 reps', '4 séries : 8 reps',                                // les deux mots nommés
+    '4*5 reps', '4 de 5 reps',                                              // l'astérisque, « de »
     '| Développé couché | 4 | 8 |',                                         // tableau Markdown
   ];
+  /* ⛔⛔ CES QUATRE-LÀ SONT ARRIVÉES PAR LE CONTRÔLE NÉGATIF, ET C'EST TOUT SON INTÉRÊT.
+     Deux règles du contrat n'avaient AUCUN témoin : on pouvait les retirer entièrement sans
+     qu'un seul rouge apparaisse. Mesuré avant de les ajouter, pour ne pas écrire un témoin
+     au service d'une règle morte : chaque règle est la SEULE à couvrir au moins une écriture
+     — (1) « 4×5 », (2) « 4 séries de 5 », (3) « 4*5 reps », (4) « 5 reps × 4 séries »,
+     (5) « 4 séries, 8 reps ». Aucune n'est décorative.
+     ⚠️ LIMITE MESURÉE ET ÉCRITE PLUTÔT QUE MASQUÉE : « 8 reps de 4 séries » n'est reconnu
+     par aucune règle. C'est une tournure qu'on n'a pas vue chez Milo, et l'ajouter
+     obligerait à accepter « N de N » sans marqueur devant — c'est-à-dire à rendre le
+     contrat permissif pour un cas hypothétique. */
   const rates = DOIT_RECONNAITRE.filter(s => dit(s) !== true);
   t('B-CCCXLII ② ⭐⭐ les écritures valides d\'une même série sont toutes reconnues',
     rates.length === 0, 'non reconnues : ' + JSON.stringify(rates));
@@ -118,7 +130,12 @@ function source(t, ROOT, fs, path) {
     /* ⚠️ LE CAS QUI BORNE LA RÈGLE DU TABLEAU. Un tableau de pesées porte lui aussi un
        libellé et deux nombres — mais ses cellules ne sont pas des entiers NUS. C'est ce
        « nu » qui empêche la règle de transformer n'importe quel tableau en séance. */
-    '| Poids | 85 kg | 86 kg |', '| Semaine 1 | 2 min | 3 min |'];
+    '| Poids | 85 kg | 86 kg |', '| Semaine 1 | 2 min | 3 min |',
+    /* ⛔ LES DEUX BORNES DE LA RÈGLE DU TABLEAU, elles aussi arrivées par le contrôle
+       négatif : sans elles, on pouvait retirer l'exigence du NOM en première cellule, ou
+       n'exiger qu'UN seul entier nu, et le banc restait entièrement vert. */
+    '| 4 | 8 | 12 |',            // aucune première cellule qui soit un nom
+    '| Objectif | 85 | kg |'];   // un seul entier nu : ce n'est pas séries × reps
   const trop = DOIT_REFUSER.filter(s => dit(s) === true);
   t('B-CCCXLII ④ ⛔ il refuse ce qui n\'est pas une prescription (pas « deux nombres »)',
     trop.length === 0, 'acceptées à tort : ' + JSON.stringify(trop));
@@ -176,6 +193,31 @@ function source(t, ROOT, fs, path) {
   const nEx = U.lignes(SANS_SEANCE).filter(l => dit(l) === true).length;
   t('B-CCCXLIII ⑧ ⚠️ citer des chiffres passés ne fabrique pas une séance',
     nEx === 0, nEx + ' ligne(s) prises pour des exercices');
+
+  /* ⛔⛔ LE COMPTEUR D'EXERCICES N'AVAIT AUCUN TÉMOIN — trouvé par le contrôle négatif.
+     On pouvait lui retirer son découpage sur la ponctuation (une séance écrite d'un seul
+     bloc retombait alors à 1 exercice) ou lui faire compter TOUTES les lignes, et le banc
+     restait entièrement vert. Or c'est lui qui porte EV-034 (« pas plus de 8 exercices pour
+     45 min ») : un compteur faux y décide d'un rouge ou d'un vert à lui tout seul. */
+  const UNE_LIGNE = 'Séance : Développé couché 4×8 à 90 kg, Butterfly 3×12, Face pull 3×15.';
+  const MIXTE = ['Voilà ta séance, on reste prudent sur l\'épaule.', '',
+    'Échauffement : 8 min de rameur en intensité légère',
+    'Développé couché — 4 × 8 à 90 kg — repos 2 min',
+    'Tirage horizontal — 4 × 10 à 70 kg — repos 2 min',
+    'Face pull — 3 × 15 à 25 kg — repos 60 s', '',
+    'Ton record reste 105 kg pour 2 reps, on n\'y touche pas ce soir.'].join('\n');
+
+  const comptes = ['reconnu', 'prose', 'anglais', 'mixte', 'tableau'].map(f => U.compterEx(MONSTRE[f]));
+  t('B-CCCXLIII ⑩ ⭐⭐ le COMPTE d\'exercices ne dépend pas de la notation',
+    new Set(comptes).size === 1 && comptes[0] === CORPS.length,
+    'comptes = ' + comptes.join(' / ') + ' (attendu ' + CORPS.length + ' partout)');
+
+  t('B-CCCXLIII ⑪ ⛔ une séance écrite sur UNE SEULE ligne compte ses exercices, pas 1',
+    U.compterEx(UNE_LIGNE) === 3, U.compterEx(UNE_LIGNE) + ' au lieu de 3');
+
+  t('B-CCCXLIII ⑫ ⛔ le compteur ne compte pas les lignes qui ne prescrivent rien',
+    U.compterEx(MIXTE) === 3 && U.compterEx(SANS_SEANCE) === 0,
+    'mixte=' + U.compterEx(MIXTE) + ' (attendu 3) · sans séance=' + U.compterEx(SANS_SEANCE));
 
   /* ⭐ ET LA MESURE QUI JUSTIFIE TOUT LE BLOC : la réponse « monstre » doit rougir dans les
      quatre écritures. Si elle devenait verte partout, ces témoins seraient verts à vide —
