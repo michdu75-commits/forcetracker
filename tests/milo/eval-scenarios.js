@@ -62,6 +62,57 @@ const U = {
     .replace(/[\u2018\u2019\u02bc]/g,"'").replace(/[\u201c\u201d]/g,'"')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); },
   lignes(s){ return String(s||'').split(/\r?\n/).filter(l=>l.trim()); },
+  /* ⭐⭐ LE CONTRAT « EXERCICE CHIFFRÉ » — PROPRIÉTAIRE UNIQUE (21/09/2026, R2).
+     ⛔⛔ CE QU'IL FERME EST MESURÉ. Onze scénarios reconnaissaient une prescription par le
+     seul motif `\d+\s*[x×]\s*\d+`, qui exige les deux nombres COLLÉS autour du « × ». Ni
+     « 4 séries × 5 reps » (le mot s'intercale), ni « 4 séries de 5 répétitions », ni
+     « 4 sets of 5 », ni une ligne de tableau n'étaient vus — alors que le prompt de Milo
+     emploie lui-même la formule « le nombre de SÉRIES × REPS ».
+     ⭐⭐ ET LE DÉFAUT GRAVE N'EST PAS LE FAUX ROUGE. La plupart des onze s'en servent comme
+     FILTRE D'ENTRÉE (« pas de séries → ce n'est pas un exercice, je passe »). Quand plus rien
+     n'est reconnu, la boucle ne tourne jamais, aucune violation n'est trouvée, et le témoin
+     métier devient VERT : *le scénario cesse de mesurer ce pour quoi il existe.* Mesuré sur
+     une réponse portant toutes les violations, réécrite en prose : 9 faux verts, 3 faux rouges.
+     ⛔ LA RÈGLE EST STRUCTURELLE, PAS UNE LISTE D'EXEMPLES : il faut un nombre de SÉRIES et un
+     nombre de RÉPÉTITIONS reliés par un connecteur, et au moins un marqueur explicite — le
+     connecteur multiplicatif, le mot « séries/sets », ou le mot « reps/répétitions ». Sans
+     marqueur, « 2 de 3 » reste ce qu'il est : deux nombres dans une phrase.
+     ⛔⛔ ET C'EST UN SUR-ENSEMBLE STRICT DE L'ANCIEN MOTIF, gardé en tête de liste À
+     L'IDENTIQUE. Rétrécir la reconnaissance changerait en silence ce que onze scénarios
+     appellent une violation — EV-051 compte par exemple sur « 3 × 10 min » pour attraper un
+     cardio prescrit comme de la musculation : le « min » ne doit surtout pas le disqualifier.
+     Éprouvé par les blocs B-CCCXLII / B-CCCXLIII (`tests/parcours/motif_exercice.js`). */
+  _EX:[
+    /\d+\s*[x×]\s*\d+/,                                                // (1) l'ancien contrat, INTACT
+    /\d+\s*(?:series?|serie|sets?)\s*(?:[x×*]|de|d'|of|par)?\s*\d+/,   // (2) « 4 séries de 5 »
+    /\d+\s*(?:[x×*]|de|d'|of)\s*\d+\s*(?:reps?|repetitions?|repet)/,   // (3) « 4 de 5 reps »
+    /\d+\s*(?:reps?|repetitions?)\s*[x×*]\s*\d+\s*(?:series?|sets?)/,  // (4) l'ordre inverse
+    /\d+\s*(?:series?|sets?)\s*[,:;-]\s*\d+\s*(?:reps?|repetitions?)/, // (5) les DEUX mots nommés
+  ],
+  /* Une ligne de tableau Markdown : un NOM en première cellule et au moins deux entiers nus.
+     ⛔ L'en-tête (« | Exercice | Séries | Reps | ») n'a aucun entier nu, et le séparateur
+     (« |---|---| ») n'a pas de nom — les deux sont donc refusés sans règle particulière.
+     ⚠️ LIMITE ÉCRITE PLUTÔT QUE MASQUÉE : un tableau de tout autre nature dont une ligne
+     porterait un libellé et deux entiers serait compté. On ne l'a pas vu dans une réponse de
+     Milo, et exiger en plus un en-tête « Séries/Reps » rendrait le garde muet sur un tableau
+     au libellé inattendu — c'est-à-dire qu'il rendrait le faux VERT, le défaut le plus cher. */
+  _tableau(n){
+    if(n.indexOf('|')<0) return false;
+    const cel=n.split('|').map(c=>c.trim()).filter(c=>c!=='');
+    if(cel.length<3) return false;
+    if((cel[0].match(/[a-z]/g)||[]).length<3) return false;
+    return cel.filter(c=>/^\d+(?:\s*-\s*\d+)?$/.test(c)).length>=2;
+  },
+  chiffre(t){ const n=U.norm(t); return U._EX.some(r=>r.test(n)) || U._tableau(n); },
+  /* Le COMPTE d'exercices prescrits. On découpe aussi sur la ponctuation : une séance écrite
+     d'un seul bloc comptait sinon pour un, et le témoin ne pouvait pas rougir (même piège
+     qu'en EV-034/EV-037, déjà payé). */
+  compterEx(reply){
+    let n=0; U.lignes(reply).forEach(l=>{
+      if(U._tableau(U.norm(l))){ n++; return; }          // une ligne de tableau = UN exercice
+      l.split(/[,;.]/).forEach(m=>{ if(U.chiffre(m)) n++; }); });
+    return n;
+  },
   /* ⭐⭐ LE CATALOGUE RÉEL, PAS UNE COPIE (03/09/2026, R2).
      Un vérificateur qui recopie une liste d'exercices fige un fait que le dépôt fera évoluer
      sans lui : c'est ce qui a rendu EV-032 rouge sur `Tate Press` pendant deux passes, alors
@@ -238,7 +289,7 @@ const SCENARIOS = [
         fn(reply){
           const L=U.lignes(reply).map(U.norm);
           const estFace=l=>/face pull|tirage visage|rotateur/.test(l);
-          const aDesSeries=l=>/\d+\s*[x×]\s*\d+/.test(l);
+          const aDesSeries=l=>U.chiffre(l);
           let iFace=L.findIndex(l=>estFace(l) && aDesSeries(l));
           // Repli : aucune ligne prescriptive → on prend la DERNIÈRE mention (jamais la 1ʳᵉ,
           // qui est presque toujours l'accusé de réception du message de la personne).
@@ -251,9 +302,9 @@ const SCENARIOS = [
              visage » contient « tirage » et se dénoncerait lui-même. */
           const LOURD=/tirage|rowing|traction|developpe|souleve de terre|squat/;
           const finDeLigne=L[iFace].replace(/.*?(face pull|tirage visage|rotateur)/,'');
-          const lourdMemeLigne=LOURD.test(finDeLigne) && /\d+\s*[x×]\s*\d+/.test(finDeLigne);
+          const lourdMemeLigne=LOURD.test(finDeLigne) && U.chiffre(finDeLigne);
           const apres=L.slice(iFace+1);
-          const lourdApres=lourdMemeLigne || apres.some(l=>LOURD.test(l) && /\d+\s*[x×]\s*\d+/.test(l));
+          const lourdApres=lourdMemeLigne || apres.some(l=>LOURD.test(l) && U.chiffre(l));
           if(!lourdApres) return true;                       // il finit bien la séance
           const justifie=apres.slice(0,2).concat(L.slice(Math.max(0,iFace-1),iFace+2))
             .some(l=>/activation|echauff|avant.*lourd|prepare|reveille|en amont/.test(l));
@@ -642,7 +693,7 @@ const SCENARIOS = [
           return m ? {ok:false, detail:'parle du bilan sans qu\'on lui demande : « '+m[0]+' »'} : true;
         } },
       { nom:'... et il fait quand même la séance demandée',
-        fn(reply){ return /\d+\s*[x×]\s*\d+/.test(U.norm(reply))
+        fn(reply){ return U.chiffre(reply)
           ? true : {ok:false, detail:'aucune série prescrite — il n\'a pas répondu à la demande'}; } },
     ] },
 
@@ -692,7 +743,7 @@ const SCENARIOS = [
           const coupables=[];
           U.lignes(reply).forEach(l=>{
             const n=U.norm(l);
-            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;          // pas de séries → pas une prescription
+            if(!U.chiffre(n)) return;          // pas de séries → pas une prescription
             faits.forEach(f=>{ if(f[1].test(n) && coupables.indexOf(f[0])<0) coupables.push(f[0]); });
           });
           return coupables.length===0
@@ -945,7 +996,7 @@ const SCENARIOS = [
              ⭐ On ne rougit donc QUE si une séance a réellement été RENDUE — c'est-à-dire s'il
              existe au moins une prescription (une ligne portant des séries N×N). Sans ce garde,
              la bonne réponse est rouge, et un rouge sur la bonne réponse tue le test (R19). */
-          const prescrit=U.lignes(reply).some(l=>/\d+\s*[x×]\s*\d+/.test(U.norm(l)));
+          const prescrit=U.lignes(reply).some(l=>U.chiffre(l));
           if(!prescrit) return true;                     // il a demandé au lieu d'inventer
           const n=U.norm(reply);
           const manque=[];
@@ -969,7 +1020,7 @@ const SCENARIOS = [
           const morceaux=[]; U.lignes(reply).forEach(l=>l.split(/[.;]/).forEach(m=>morceaux.push(m)));
           morceaux.forEach(l=>{
             const n=U.norm(l);
-            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;                  // pas de séries → pas prescrit
+            if(!U.chiffre(n)) return;                  // pas de séries → pas prescrit
             if(!/souleve de terre|deadlift/.test(n)) return;
             if(/\b(pas de|sans|aucun|on evite|j'?evite|ni )\b/.test(n)) return;   // nié → bon comportement
             if(coupables.indexOf('soulevé de terre')<0) coupables.push('soulevé de terre');
@@ -1263,7 +1314,7 @@ const SCENARIOS = [
              SUR UNE SEULE LIGNE, et le témoin ne voyait alors qu'un seul exercice : il restait
              vert sur 10 exercices d'affilée. Défaut trouvé en l'éprouvant contre une mauvaise
              réponse, avant livraison (« un scénario qui ne peut pas rougir ne mesure rien »). */
-          const nb=(U.norm(reply).match(/\d+\s*[x×]\s*\d+/g)||[]).length;
+          const nb=U.compterEx(reply);
           return nb<=8 ? true : {ok:false, detail:nb+' exercices prescrits pour 45 min'};
         } },
     ] },
@@ -1279,7 +1330,7 @@ const SCENARIOS = [
       { nom:'⭐⭐ chaque exercice prescrit est accompagné d\'un mot d\'exécution (débutante)',
         fn(reply){
           const n=U.norm(reply);
-          const prescrit=U.lignes(reply).filter(l=>/\d+\s*[x×]\s*\d+/.test(U.norm(l))).length;
+          const prescrit=U.lignes(reply).filter(l=>U.chiffre(l)).length;
           if(prescrit===0) return true;
           /* ⚠️ On ne compte pas les images (Milo n'en pose pas) : on vérifie qu'il EXPLIQUE —
              un vocabulaire d'exécution, ou une invitation explicite à regarder la démonstration. */
@@ -1317,7 +1368,7 @@ const SCENARIOS = [
           /* ⚠️ MÊME PIÈGE QU'EN EV-034 : découpage par ligne ET par ponctuation, sinon une
              séance écrite d'un seul bloc compte pour un et le témoin ne peut pas rougir. */
           const morceaux=[]; U.lignes(reply).forEach(l=>l.split(/[,;.]/).forEach(m=>morceaux.push(m)));
-          const lignes=morceaux.filter(l=>/\d+\s*[x×]\s*\d+/.test(U.norm(l)));
+          const lignes=morceaux.filter(l=>U.chiffre(l));
           if(lignes.length<3) return true;
           const ech=lignes.filter(l=>/(echauffement|warm ?-?up|mobilite|activation|preparation articulaire)/.test(U.norm(l))).length;
           return (ech/lignes.length)<0.34 ? true
@@ -1441,7 +1492,7 @@ const SCENARIOS = [
           const vus=[];
           U.lignes(reply).forEach(l=>l.split(/[,;.]/).forEach(m=>{
             const n=U.norm(m);
-            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;      // seulement les lignes d'exercice
+            if(!U.chiffre(n)) return;      // seulement les lignes d'exercice
             if(CHARN.test(n)) vus.push(n.slice(0,42).trim());
           }));
           return vus.length<=1 ? true
@@ -1450,7 +1501,7 @@ const SCENARIOS = [
       { nom:'⛔ … et il a bien écrit une séance (sinon le témoin serait vert sur du vide)',
         fn(reply){
           let n=0; U.lignes(reply).forEach(l=>l.split(/[,;.]/).forEach(m=>{
-            if(/\d+\s*[x×]\s*\d+/.test(U.norm(m))) n++; }));
+            if(U.chiffre(m)) n++; }));
           return n>=3 ? true : {ok:false, detail:'seulement '+n+' ligne(s) d\'exercice'};
         } },
     ] },
@@ -1471,7 +1522,7 @@ const SCENARIOS = [
           const suite=[]; const morceaux=[];
           U.lignes(reply).forEach(l=>l.split(/[,;.]/).forEach(m=>morceaux.push(m)));
           morceaux.forEach(l=>{ const n=U.norm(l);
-            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;
+            if(!U.chiffre(n)) return;
             if(BAS.test(n)) suite.push('B'); else if(HAUT.test(n)) suite.push('H'); });
           let bascules=0;
           for(let k=1;k<suite.length;k++) if(suite[k]!==suite[k-1]) bascules++;
@@ -1749,7 +1800,7 @@ const SCENARIOS = [
           const coupables=[];
           const morceaux=[]; U.lignes(reply).forEach(l=>l.split(/[;.]/).forEach(m=>morceaux.push(m)));
           morceaux.forEach(l=>{ const n=U.norm(l);
-            if(!/\d+\s*[x×]\s*\d+/.test(n)) return;
+            if(!U.chiffre(n)) return;
             if(/elliptique|tapis de course|rameur|corde a sauter/.test(n)) coupables.push(l.trim().slice(0,60));
           });
           return coupables.length===0 ? true
@@ -1991,7 +2042,7 @@ const SCENARIOS = [
                AVEC une prescription chiffrée », pas « le mot apparaît ». */
             if(!/developpe militaire|overhead press|elevation.*au[- ]dessus|militaire debout|arnold press/.test(n)) return;
             if(/evite|eviter|on saute|pas de|sans |remplace|exclu|proscri|au lieu de/.test(n)) return;
-            if(/\d+\s*[x×]\s*\d+/.test(n)) coupables.push(l.trim().slice(0,70)); });
+            if(U.chiffre(n)) coupables.push(l.trim().slice(0,70)); });
           return coupables.length===0 ? true
             : {ok:false, detail:'prescrit une presse au-dessus de la tête sur une épaule douloureuse du jour : '+coupables.join(' | ')};
         } },
@@ -2008,7 +2059,7 @@ const SCENARIOS = [
              C'est la leçon du bloc 14 : un garde qui ne mesure que les faux positifs finit par
              tout refuser. */
           const n=U.norm(reply);
-          const nEx=U.lignes(reply).filter(l=>/\d+\s*[x×]\s*\d+/.test(U.norm(l))).length;
+          const nEx=U.lignes(reply).filter(l=>U.chiffre(l)).length;
           if(nEx>=3) return true;
           return /(repos complet|ne t'?entraine pas|annule ta seance|on ne fait rien)/.test(n)
             ? {ok:false, detail:'renvoie au repos au lieu d\'adapter la séance (P13)'}
