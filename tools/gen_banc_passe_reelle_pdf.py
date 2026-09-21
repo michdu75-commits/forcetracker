@@ -91,11 +91,18 @@ VERSION = (re.search(r"CACHE\s*=\s*'(ft-v\d+)'", lire('sw.js')) or [None, ''])[1
 g(VERSION == 'ft-v1230', 'la version servie est %r, le dossier annonce ft-v1230' % VERSION)
 
 # ══ 2. LE JOURNAL DE LA PASSE — on RECOMPTE, on ne recopie pas ═════════════════════════
-LOG = lire(JOURNAL)
+ENTETE = lire(JOURNAL)
 
 # le journal doit dire d'ou il vient : sans cela il n'est pas une preuve, juste un texte
 for ancre in (RUN, JOB, SHA_MESURE, 'workflow_dispatch', 'LANCER'):
-    g(ancre in LOG, 'le journal ne porte pas son ancrage %r' % ancre)
+    g(ancre in ENTETE, 'le journal ne porte pas son ancrage %r' % ancre)
+
+# ⛔ ON NE COMPTE QUE LES LIGNES DU RUNNER, JAMAIS L'EN-TETE QUE J'AI ECRITE.
+#    L'en-tete explique pourquoi le fichier existe et cite forcement du vocabulaire du
+#    runner (« sans reponse », des identifiants, des chiffres). *Un garde qui lit ma prose
+#    en meme temps que la mesure finit par mesurer ma prose* — c'est le piege n°1 de
+#    BUGS.md, et ce depot l'a paye huit fois. Les commentaires commencent par `#`.
+LOG = '\n'.join(l for l in ENTETE.split('\n') if not l.lstrip().startswith('#'))
 
 VERTS = re.findall(r'✅ (EV-\d{3}) ', LOG)
 ROUGES = re.findall(r'❌ (EV-\d{3}) ', LOG)
@@ -208,7 +215,11 @@ g(not re.search(r'\b(success|failure|always|cancelled)\s*\(', IF_TXT),
 # ══ 6. RIEN DE SERVI N'A CHANGE — la promesse du couloir ═══════════════════════════════
 rc, noms = git('diff', '--name-only', '%s..HEAD' % SHA_MESURE[:8])
 g(CN or rc == 0, 'git diff a echoue : sa sortie ne doit jamais servir de donnee')
-TOUCHES = sorted(n for n in noms.split('\n') if n.strip())
+# ⛔ EN CAS D'ECHEC, `git()` rend le TEXTE D'ERREUR. Le prendre pour une liste de fichiers
+#    est exactement la faute du 20/09, ou la page d'aide de `git diff` s'est retrouvee
+#    imprimee dans un dossier comme « liste des fichiers touches ». On rend une liste VIDE
+#    plutot qu'une liste fausse.
+TOUCHES = sorted(n for n in noms.split('\n') if n.strip()) if rc == 0 else []
 g(all(re.fullmatch(r'[\w./@+-]+', n) for n in TOUCHES),
   'la liste des fichiers n est pas une liste de chemins')
 SERVIS = {'app.js', 'state.js', 'screens.js', 'log.js', 'coach.js', 'setup.js', 'tracking.js',
