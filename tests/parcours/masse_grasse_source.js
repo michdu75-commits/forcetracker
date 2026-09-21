@@ -283,6 +283,25 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCXLIII ⑰ ⭐ … et la virgule du clavier français est lue (acquis ft-v1230)',
     o.bf === 17.2, 'lu ' + o.bf);
 
+  /* ⛔⛔ SECOND TROU TROUVÉ PAR LE CONTRÔLE NÉGATIF (`M09`), ET IL EST PLUS FIN QUE LE PREMIER.
+     La conservation de provenance ne doit PAS s'appliquer quand la valeur revalidée était une
+     ESTIMATION : taper un nombre — **même identique à l'estimation** — est une déclaration, donc
+     la ligne devient une mesure. Sans cette exception, quelqu'un dont la balance affiche
+     exactement ce que le calcul proposait verrait sa mesure rester « estimation », donc
+     **écrasable au recalcul suivant**.
+     👉 ***Une valeur égale n'est pas une valeur de même nature*** — et c'est précisément le cas
+     que la mutation déguisée exploitait pour rester verte. */
+  await scene("S.weightLog=[{date:today(),kg:85.9,bf:19.6,bfSrc:'estime'}];S.neck=40.7;S.waist=92.4;");
+  await carte();
+  await valider({ 'bf-inp': '19.6' }); await carte();
+  o = await lire();
+  t('B-CCCXLIII ⑰bis ⭐⭐ taper la MÊME valeur que l\'estimation la requalifie en mesure',
+    o.bf === 19.6 && o.src === 'mesure', JSON.stringify(o));
+
+  // on remet l'état attendu par les témoins suivants (rechargement + lendemain)
+  await scene("S.weightLog=[{date:today(),kg:85.9,bf:17.2,bfSrc:'mesure'}];S.neck=40.7;S.waist=90;");
+  await carte();
+
   // ═══ CAS F — rechargement complet : mêmes valeurs, mêmes dates, mêmes sources ═══
   await pg.reload(); await pg.waitForTimeout(2200); await carte();
   o = await lire();
