@@ -34319,8 +34319,14 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('CCXC ⛔⛔ plus AUCUN `_bcNutr={…}` écrit à la main dans app.js', aLaMain===0, aLaMain+' restants');
   t('CCXC ⛔⛔ plus AUCUNE des 4 traductions `per100:{kcal:_bcNutr.kcal100…}`',
     traductions===0, traductions+' restantes');
-  t('CCXC ⭐ les 8 portes passent par `_ref100` (8 appels + 1 déclaration)',
-    appels===9, appels+' occurrences');
+  /* ⭐ 8 → 9 PORTES EN ft-v1232, ET LE NOMBRE SE DÉPLACE AVEC SA RAISON (R30). La 9ᵉ est le
+     REPAS DÉCRIT À L'IA (`estimateFoodAI`), dernier écrivain resté hors du résolveur.
+     ⛔ Ce n'est pas un assouplissement : la garantie était et reste *aucune porte ne contourne
+     `_ref100`*. Une porte de plus la RENFORCE — et ce témoin a rougi pour le dire, ce qui est
+     exactement son travail. ⚠️ Il n'a PAS été mis à 10 « pour faire passer » : le banc ciblé
+     du chantier exige en plus qu'`estimateFoodAI` ne recopie aucune once de la loi. */
+  t('CCXC ⭐ les 9 portes passent par `_ref100` (9 appels + 1 déclaration)',
+    appels===10, appels+' occurrences');
 }
 
 /* ═══════════ CCXCI — ÉTAPE 2 DU PLAN NUTRITION : LE POUR-100 g DÉRIVÉ (12/09/2026) ═══════════
@@ -38245,10 +38251,16 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   {
     const _origVues = (codeA.match(/_ref100\((?:[^;])*?origine:'(\w+)'/g)||[])
       .map(x=>(x.match(/origine:'(\w+)'$/)||[])[1]).filter(Boolean).sort();
-    t('CCCV ㉒ ⭐ LES 8 ORIGINES SONT PASSÉES À `_ref100` — et aucune ne recopie une once de '+
+    /* ⭐ `ia` ENTRE DANS LA LISTE EN ft-v1232, ET LA FERMETURE RESTE ENTIÈRE. Ce témoin exige
+       « ni une de moins, ni une de plus » ; la 9ᵉ n'est pas une origine inventée, c'est le
+       repas décrit à l'IA, branché exprès sur le résolveur — le dernier écrivain qui lui
+       échappait. ⛔ Et elle n'est PAS protégée comme une saisie : `NRJ_ORIGINES_UTILISATEUR`
+       n'a pas bougé (témoin du bloc B-CCCXLVI), *un modèle qui propose un chiffre n'est pas
+       la personne qui l'a tapé*. */
+    t('CCCV ㉒ ⭐ LES 9 ORIGINES SONT PASSÉES À `_ref100` — et aucune ne recopie une once de '+
       'logique : elles passent un nom, rien d\'autre',
       JSON.stringify(_origVues)===JSON.stringify(
-        ['barcode','ciqual','etiquette','historique','manuel','marque','off','reprise']),
+        ['barcode','ciqual','etiquette','historique','ia','manuel','marque','off','reprise']),
       'origines réellement passées à `_ref100` : '+JSON.stringify(_origVues));
   }
   t('CCCV ㉓ ⛔⛔ LA LOI NE S\'ÉCRIT QU\'UNE FOIS : `_nrjPlancher` est le seul endroit qui compare '+
@@ -39592,6 +39604,8 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   await require('./mensurations.js').ecran(t, b, PORT);
   await require('./masse_grasse_source.js').ecran(t, b, PORT);
   await require('./coach_memoire.js').ecran(t, b, PORT);
+  await require('./plan_incomplet.js').ecran(t, b, PORT);
+  await require('./ia_ref100.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40390,6 +40404,8 @@ require('./repas_actif.js').source(t, ROOT, fs, path);
 require('./mensurations.js').source(t, ROOT, fs, path);
 require('./masse_grasse_source.js').source(t, ROOT, fs, path);
 require('./coach_memoire.js').source(t, ROOT, fs, path);
+require('./plan_incomplet.js').source(t, ROOT, fs, path);
+require('./ia_ref100.js').source(t, ROOT, fs, path);
 require('./motif_exercice.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

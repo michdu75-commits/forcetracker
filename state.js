@@ -1274,8 +1274,51 @@ function leanMassRecente(){
    ⚠️ ET C'EST LE PLUS PROTECTEUR DES DEUX (R29) : le plancher homme (1500) est plus haut que le
    plancher femme (1200), donc un sexe inconnu ne peut pas produire une cible trop basse. */
 function sexeAthlete(){ return S.gender==='F' ? 'F' : 'H'; }
+
+/* ═══ 🛡️ « A-T-ON DE QUOI CALCULER ? » — UN SEUL PROPRIÉTAIRE (21/09/2026) ═══════════════
+   ⛔⛔ CE QUI L'A DÉCLENCHÉ EST MESURÉ DANS L'APP SERVIE, PAS DÉDUIT D'UN ÉCRAN. Sur un
+   compte neuf : `bmrDetail` rend 0 → `calcTDEE` rend 0 → `autoKcal` rend **1 500** → l'onglet
+   Nutrition affiche « CIBLE 1 500 KCAL » et « TDEE 0 ». Avec le poids seul :
+   **1 500 kcal · 189 g P · 77 g L · 13 g G**, un plan parfaitement crédible bâti sur un
+   métabolisme que personne n'a calculé.
+   👉 ***Le 1 500 n'est PAS une valeur en dur : c'est `PLANCHER_KCAL.H`, le garde-fou de
+   ft-v918.*** Il a été écrit pour empêcher l'app de PRESCRIRE une cible qu'elle signalerait
+   elle-même comme dangereuse — c'est-à-dire comme **borne basse d'un vrai calcul**. Le défaut
+   est qu'en l'absence de calcul, la borne devient le **résultat**. ⛔ On n'y touche donc pas
+   d'un chiffre : on l'empêche seulement de s'appliquer à un calcul qui n'a pas eu lieu.
+
+   ⭐⭐ ET LA RÈGLE ÉTAIT ÉCRITE QUATRE FOIS DANS LE CODE SERVI — `bmrDetail` ici,
+   `hasProfile` dans `renderFoodJournal`, et deux gardes dans `app.js` (`_resteDuJour`,
+   `generateMealPlan`). *Une information a un propriétaire* (**R2**) : c'est exactement
+   pourquoi le journal alimentaire savait se taire pendant que l'onglet Nutrition affichait
+   une cible. Les quatre lisent désormais cette fonction.
+
+   ⚠️ ELLE EST STRICTE SUR LES NOMBRES, ET C'EST UN DÉFAUT MESURÉ QUI L'EXIGE : avec
+   `S.bw='abc'`, l'ancien test `!S.bw` passait (une chaîne non vide est *truthy*) et les trois
+   macros sortaient à **`NaN`**. *Un test d'existence ne dit rien de la calculabilité.*
+   ⛔ Et elle rend les champs MANQUANTS, pas un booléen : l'écran doit pouvoir dire lesquels
+   sans réécrire la règle une cinquième fois. */
+const PROFIL_CALORIQUE=[['bw','ton poids'],['height','ta taille'],['age','ton âge']];
+function _nbUtil(v){ const n=(typeof v==='string')?parseFloat(v.replace(',','.')):+v;
+                     return (isFinite(n)&&n>0)?n:null; }
+function profilCaloriqueManquants(){
+  return PROFIL_CALORIQUE.filter(c=>_nbUtil(S[c[0]])==null).map(c=>c[1]);
+}
+/* « ton poids, ta taille et ton âge » — la mise en phrase vit avec la liste, sinon chaque
+   écran réinvente la sienne et elles finissent par ne plus nommer les mêmes champs. */
+function _etManquants(l){
+  const a=(l||[]).slice();
+  if(!a.length) return '';
+  return a.length===1?a[0]:(a.slice(0,-1).join(', ')+' et '+a[a.length-1]);
+}
+/* ⛔ COMMENT S'ÉCRIT UN NOMBRE QU'ON N'A PAS : « — », et nulle part ailleurs. Sans un
+   propriétaire, chaque case choisit son signe (0, vide, « n/a »…) et l'écran finit par dire
+   trois choses différentes de la même absence. `index.html` porte déjà ce tiret comme valeur
+   par défaut de `nu-bmr` et `nu-tdee` — on ne fait que cesser de l'écraser (R13). */
+function _nbAff(v){ return (v==null||!isFinite(v))?'—':(+v).toLocaleString('fr-FR'); }
+
 function bmrDetail(){
-  if(!S.bw||!S.height||!S.age) return {kcal:0,methode:null,raison:'profil incomplet'};
+  if(profilCaloriqueManquants().length) return {kcal:0,methode:null,raison:'profil incomplet'};
   const base=10*S.bw+6.25*S.height-5*S.age;
   const mifflin=Math.round(sexeAthlete()==='H'?base+5:base-161);
   const fin=v=>S.smoker?Math.round(v*1.07):v;   // le +7 % fumeur est un effet du tabac sur le
@@ -1369,7 +1412,16 @@ function mensDerniere(k){
     .sort((a,b)=>String(b.d).localeCompare(String(a.d)));
   return l.length?l[0].v:null;
 }
-function calcTDEE(refTs){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));}
+/* ⛔⛔ `null`, JAMAIS UN NOMBRE, QUAND ON NE SAIT PAS — et la mesure dit pourquoi ça compte.
+   L'addition ci-dessous a **quatre** termes, et trois d'entre eux ne dépendent pas du
+   métabolisme de base. Mesuré sur un profil parfaitement vide avec un métier « physique » :
+   `0 × 1.55 + 450 + 0 + 0` = ***TDEE 450***. 👉 *C'est pire qu'un zéro : un zéro a l'air
+   cassé, 450 a l'air d'une dépense.* La maison écrit déjà `null` et jamais `0` partout où la
+   réponse est « je ne sais pas » (`mensDerniere`, `bfDerniere`) — **R29**. */
+function calcTDEE(refTs){
+  if(profilCaloriqueManquants().length) return null;
+  return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));
+}
 
 /* 🏋️ LE NIVEAU D'ACTIVITÉ CONTIENT DÉJÀ L'ENTRAÎNEMENT — et il ne se mettait JAMAIS à jour
    (21/08/2026). Michel : « bon la nutrition lol ? ».
@@ -1432,6 +1484,9 @@ function ecartNiveauKcal(ec){
     const gard=S.activityLevel; S.activityLevel=ec.suggere;
     const ap=autoKcal(S.nutritionPhase);
     S.activityLevel=gard;                          // ⛔ on REMET, toujours : on simule, on n'applique pas
+    /* ⛔ Sans cible calculable, l'écart n'existe pas — et `null - null` rendrait un 0 qui se
+       lirait « bascule sans effet » au lieu de « on ne peut pas le dire » (R29). */
+    if(av==null||ap==null) return 0;
     return ap-av;
   }catch(e){ try{ S.activityLevel=(ec&&ec.actuel)||S.activityLevel; }catch(e2){} return 0; }
 }
@@ -1648,9 +1703,14 @@ function rythmeVsPlage(kgParSemaine, goal){
   if(plagePositive) return pos==='au-dessus' ? 'plus rapide' : 'plus lent';
   return pos==='au-dessus' ? 'plus lent' : 'plus rapide';   // plage NÉGATIVE : le sens s'inverse
 }
-function autoKcal(phase){ return _plancherKcal(_autoKcalBrut(phase)); }
+/* ⛔ PAS DE TDEE, PAS DE CIBLE AUTO — et surtout pas le plancher à la place. *Le plancher est
+   une borne basse sur un calcul, pas un substitut de calcul* (voir `profilCaloriqueManquants`).
+   ⚠️ `_autoKcalBrut` rend `null` lui aussi : sans ça, l'encadré « le plancher a relevé ta
+   cible de X » annoncerait un relèvement par rapport à un calcul qui n'existe pas. */
+function autoKcal(phase){ const b=_autoKcalBrut(phase); return b==null?null:_plancherKcal(b); }
 function _autoKcalBrut(phase){
   const tdee=calcTDEE();
+  if(tdee==null) return null;
   const goal=S.goal||'muscle';
   const cp=getMensCyclePhase();
   const lutealBonus=cp&&cp.phase==='Lutéale'?150:0;
@@ -1684,6 +1744,10 @@ function _plancherKcal(k){
 // Le plancher a-t-il mordu ? (pour l'expliquer à l'écran — jamais un relèvement silencieux)
 function plancherKcalActif(phase){
   const brut=_autoKcalBrut(phase);
+  /* ⛔⛔ `null < 1500` VAUT `true` EN JAVASCRIPT (`null` se coerce en 0) — sans cette ligne,
+     l'encadré annonçait « ton calcul donnait NaN kcal » à quelqu'un dont le calcul n'a jamais
+     eu lieu. *Un plancher ne relève que ce qui a été calculé.* */
+  if(brut==null) return null;
   const p=PLANCHER_KCAL[sexeAthlete()];
   return brut<p?{brut:Math.round(brut),plancher:p}:null;
 }
@@ -2028,15 +2092,32 @@ function tendance14j(){
   }catch(e){ return {etat:'insuffisante', fenetre:TENDANCE_FENETRE, manque:['erreur de calcul'], faits:[]}; }
 }
 
+/* ⛔⛔ CE QU'ON NE SAIT PAS CALCULER VAUT `null`, JAMAIS UN NOMBRE PLAUSIBLE (21/09/2026).
+   ⭐ LES DEUX BESOINS SONT DISTINCTS, ET LA MESURE L'A IMPOSÉ :
+     · les **calories** viennent soit du profil (poids + taille + âge), soit d'un réglage
+       manuel — *un chiffre que la personne a tapé elle-même n'est pas fabriqué par l'app* ;
+     · les **macros**, elles, se calculent en g/kg : elles ont besoin du **poids**, point.
+   👉 D'où le cas mesuré qui interdit de traiter les deux ensemble : `manualKcal = 2 200` sur
+   un compte sans poids rendait **2 200 kcal · 0 g P · 0 g L · 550 g G**. *Les calories
+   étaient vraies et la répartition inventée* — et les glucides absorbaient tout le reste.
+   ⛔ `indisponible` dit « ce n'est pas un plan personnalisé », `manquants` dit ce qui empêche
+   de le calculer : l'écran n'a plus à redériver la règle (**R2**). */
 function calcMacros(phase){
   const auto=autoKcal(phase);
   // Réglage manuel (comme MyFitnessPal) : si l'utilisateur a fixé ses calories à la main,
   // on les utilise ; les protéines/lipides restent sains, les glucides s'ajustent.
   const manual=(typeof S.manualKcal==='number'&&S.manualKcal>0)?Math.round(S.manualKcal):0;
+  const manquants=profilCaloriqueManquants();
   const calories=manual||auto;
-  const m=cycleGlucides(macrosForKcal(calories), calories);
-  return{calories,prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,
-         isManual:!!manual, cycle:m.cycle||null};
+  /* Le poids est la seule entrée de `macrosForKcal` : sans lui (ou sans calories), on ne
+     produit rien plutôt qu'un zéro qui se lirait comme un objectif. */
+  const calculable=(calories!=null)&&(_nbUtil(S.bw)!=null);
+  const m=calculable?cycleGlucides(macrosForKcal(calories), calories)
+                    :{prot_g:null,fat_g:null,carbs_g:null,cycle:null};
+  return{calories:calories!=null?calories:null,
+         prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,
+         isManual:!!manual, cycle:m.cycle||null,
+         indisponible:manquants.length>0, manquants:manquants};
 }
 
 // ─── LES REPAS SUGGÉRÉS DOIVENT RESPECTER LE RÉGIME (02/08, retour Emma via Michel) ──────

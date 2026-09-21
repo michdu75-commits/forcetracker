@@ -1224,6 +1224,13 @@ let _bcPaquetG=0, _bcPaquetTxt='';
 const FOOD_LOG_V=1;
 let _afSrc=null;   // provenance de ce qui remplit ACTUELLEMENT le formulaire (null = saisie main)
 function _afSetSrc(o){ _afSrc=o||null; }
+/* 🔬 LE VERDICT DU RÉSOLVEUR QUAND IL N'Y A PAS DE POUR-100 g POUR LE PORTER (ft-v1232).
+   ⛔ CE N'EST PAS UNE 2ᵉ SOURCE DE VÉRITÉ (R2) : `_bcNutr.fiab` reste prioritaire et fait
+   autorité partout où il existe. Celui-ci n'existe QUE pour le seul chemin qui ne peut pas
+   avoir de `_bcNutr` — un repas décrit dont l'IA n'a supposé aucun poids. *Sans lui, le
+   verdict resterait à l'écran et n'atteindrait jamais la donnée* — le défaut R4 que ce
+   chantier ferme. Il se vide dans `_afOublierAliment`, comme tous les autres marqueurs. */
+let _afFiab=null;
 /* ⚖️ LE PIÈGE DU ×2,7 — UN PAQUET DE PÂTES SCANNÉ PUIS PESÉ CUIT (19/08/2026).
    Open Food Facts donne les valeurs « TELLES QUE VENDUES » : le paquet de pâtes annonce 350
    kcal/100 g, ce sont des pâtes SÈCHES. Quelqu'un qui scanne son paquet puis pèse 200 g de pâtes
@@ -1485,8 +1492,13 @@ function _provFood(vals){
      champ d'origine et le niveau de confiance — de quoi reconstruire la décision après coup.
      ⛔ Rien n'est ajouté quand la source est cohérente : une ligne normale ne grossit pas. */
   try{
-    if(typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab && _bcNutr.fiab.etat!=='COHERENT'){
-      const z=_bcNutr.fiab;
+    /* ⭐ UNE SEULE PRIORITÉ, ÉCRITE ICI ET NULLE PART AILLEURS (R2) : le verdict porté par le
+       pour-100 g fait autorité ; `_afFiab` n'est consulté QUE s'il n'y en a pas — c'est le
+       repas décrit sans poids, le seul chemin qui ne peut pas avoir de `_bcNutr` (ft-v1232). */
+    const _z=(typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab) ? _bcNutr.fiab
+            : ((typeof _afFiab==='object' && _afFiab) ? _afFiab : null);
+    if(_z && _z.etat!=='COHERENT'){
+      const z=_z;
       p.fiab={ etat:z.etat, methode:z.methode, raison:z.raison,
                brut:z.brut, retenu:z.kcal, champ:z.champ, champSource:z.champSource,
                confiance:z.confiance, origine:z.origine };
@@ -3707,9 +3719,12 @@ function _profilAlimentaire(){
    compare pas à un objectif qu'on n'a pas. */
 function _resteDuJour(date){
   const d = date || ((typeof today==='function')?today():'');
-  if(!(S.bw && S.age && S.height)) return null;
+  /* ⛔ 3ᵉ copie de « a-t-on de quoi calculer ? » ramenée à son propriétaire (R2, state.js).
+     ⛔⛔ Sans repli qui réécrive la règle : *un repli qui la duplique est la divergence même
+     qu'on ferme.* Si le propriétaire manquait, on refuse — on ne redevine pas. */
+  if(typeof profilCaloriqueManquants!=='function' || profilCaloriqueManquants().length) return null;
   const cible = (typeof calcMacros==='function') ? calcMacros(S.nutritionPhase) : null;
-  if(!cible || !cible.calories) return null;
+  if(!cible || cible.indisponible || !cible.calories) return null;
   const tot = (typeof _foodTotals==='function') ? _foodTotals(d) : {kcal:0,prot:0,carbs:0,fat:0};
   const r = k => Math.round(k);
   return {
@@ -4536,20 +4551,85 @@ async function estimateFoodAI(){
     document.getElementById('af-prot').value=d.prot||0;
     document.getElementById('af-carbs').value=d.carbs||0;
     document.getElementById('af-fat').value=d.fat||0;
-    _afCoherence();        // une estimation IA incohérente se voit tout de suite
+    /* 🔬⭐⭐ ft-v1232 — LE REPAS DÉCRIT PASSE ENFIN PAR `_ref100`, LE RÉSOLVEUR DE ft-v1207.
+       ⛔⛔ CE N'ÉTAIT PAS UN OUBLI : le commentaire d'origine justifiait l'exemption par
+       *« l'IA ne donne PAS de valeur au 100 g … inventer un `per100` ici ferait passer une
+       estimation pour une mesure »*. **La mesure a rendu cette raison caduque** : un `per100`
+       est DÉJÀ écrit sur la ligne (par `_per100Derive`, en aval) dans 4 cas sur 6 — il ne
+       manquait que le passage par le résolveur.
+       👉 ***Le vrai défaut mesuré est R4 : l'avertissement existait à l'ÉCRAN et n'atteignait
+       jamais la DONNÉE.*** Face à la même incohérence, un écrivain CIQUAL enregistre
+       `DERIVE_ESTIMABLE · brut 60 · retenu 215 · plancher_energetique` ; le repas décrit
+       enregistrait `fiab: null`, **6 fois sur 6**.
+       ⛔ ON NE DUPLIQUE RIEN : `_ref100` reste le propriétaire unique, `_resoudreNutrition`
+       n'est pas touché, et `origine:'ia'` n'est pas une origine utilisateur — un modèle qui
+       propose un chiffre n'est pas la personne qui l'a tapé. */
+    const _iaLa=x=>(x!==undefined&&x!==null&&x!==''&&isFinite(+x));
+    const _iaG=(d.g>0&&d.g<=5000)?+d.g:0;
+    /* ⛔⛔ L'ABSENCE SE TRANSPORTE, ELLE NE DEVIENT PAS UN ZÉRO — mesuré : une réponse sans
+       glucides écrivait `0` dans le champ (`d.carbs||0`), et *une macro absente devenue 0 par
+       défaut passe pour une vraie valeur* (R29, la distinction même que `presents` protège).
+       On repart donc de la réponse BRUTE, jamais des champs qu'on vient de remplir. */
+    const _iaV=x=>_iaLa(x)?(_iaG?_per100d1((+x)*100/_iaG):+x):undefined;
+    const _iaRef=_ref100(d.name||desc, _iaV(d.kcal), _iaV(d.prot), _iaV(d.carbs), _iaV(d.fat),
+                         {normaliser:false, origine:'ia', champ:'estimation-ia', maxNom:80});
     if(d.name)document.getElementById('af-desc').value=d.name;
     /* ⚖️ LE POIDS QUE L'IA A SUPPOSÉ (ft-v975) — Michel : « je ne peux pas mettre de poids ».
        ⛔ Jamais inventé : `g` absent laisse `_afIaGrammes` à 0, et le bloc se rabat sur des
        portions plutôt que d'afficher un poids que personne n'a donné (R29). */
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (estimation IA). */
   try{ _afOublierAliment(); }catch(e){}
+    /* ⛔⛔ LA RÉFÉRENCE SE POSE **APRÈS** L'OUBLI, ET L'ORDRE EST TOUT — `_afOublierAliment()`
+       remet `_bcNutr` et `_afFiab` à zéro : posée avant, la trace était effacée dans la
+       milliseconde. *Un marqueur posé avant le nettoyage ne survit pas au nettoyage* (R15). */
+    if(_iaG){
+      /* ⭐ UN POIDS SUPPOSÉ PAR L'IA DONNE UN VRAI POUR-100 g : la porte se comporte alors
+         exactement comme les 8 autres — `_bcNutr` est posé, l'écran explique par la branche
+         🔬 de `_coherenceKcal`, et la trace part avec la ligne. */
+      _bcNutr=_iaRef;
+      if(_iaRef.fiab&&(_iaRef.fiab.etat==='ALTERNATIVE_FIABLE'||_iaRef.fiab.etat==='DERIVE_ESTIMABLE'))
+        document.getElementById('af-kcal').value=Math.round(_iaRef.fiab.kcal*_iaG/100);
+    }else{
+      /* ⛔⛔ SANS POIDS, PAS DE POUR-100 g — et on n'en invente pas (la décision d'origine reste
+         juste sur ce point). La LOI, elle, est invariante d'échelle : `E ≥ 4P + 9L` vaut sur un
+         total de portion comme sur 100 g. On récolte donc le VERDICT et on le transporte…
+         ⛔ …sans rien réécrire : la branche 🔬 qui explique une substitution lit `_bcNutr`, qui
+         est absent ici. *Une correction qu'aucun écran n'explique est une correction
+         silencieuse*, et c'est interdit (ft-v1207). On CLASSE, on ne remplace pas — exactement
+         ce que le résolveur fait déjà pour `manuel`/`reprise`/`historique`. */
+      /* ⛔⛔ ET LE VERDICT NE DOIT PAS MENTIR SUR CE QUI A ÉTÉ RETENU. Mesuré sur ma propre
+         première version : la ligne gardait 120 kcal pendant que sa trace annonçait
+         `retenu: 430`. *Une trace qui dit « on a retenu 430 » à côté d'une donnée à 120 est
+         pire qu'une absence de trace* — elle rend la reconstruction fausse, et c'est
+         exactement ce que `brut`/`retenu` existent pour empêcher.
+         ⭐ On emploie donc le vocabulaire que le résolveur a DÉJÀ pour « classé, pas
+         réécrit » — celui qu'il applique aux origines utilisateur : `NON_RESOLU` +
+         `observation`, avec `retenu = brut`. */
+      const _zf=(_iaRef&&_iaRef.fiab)||null;
+      _afFiab=(_zf&&_zf.etat!=='COHERENT')
+        /* ⚠️ `confiance` décrit la valeur RETENUE — et celle qu'on retient est celle de la
+           source, pas une dérivée. Laisser `derivee` aurait décrit un calcul qu'on a
+           justement refusé de faire. */
+        ? Object.assign({}, _zf, {etat:'NON_RESOLU', methode:'observation',
+                                  kcal:_zf.brut, confiance:'source'})
+        : _zf;
+    }
+    _afCoherence();        // une estimation IA incohérente se voit tout de suite
     window._afIaGrammes=(d.g>0&&d.g<=5000)?d.g:0;
     window._afIaDesc=(document.getElementById('af-desc')||{}).value||'';
     _afMajAncre(true);   // estimation IA : la source change
-    // ⚠️ L'IA ne donne PAS de valeur au 100 g ni de quantité : elle rend un total estimé pour la
-    //    phrase. On enregistre donc l'origine et rien d'autre — inventer un `per100` ici ferait
-    //    passer une estimation pour une mesure (R29).
-    _afSetSrc({saisie:'ia-texte',origine:'ia',attendu:_afLuFormulaire()});
+    /* ⚠️ ON ENREGISTRE L'ORIGINE — et depuis ft-v1232, AUSSI LE VERDICT DU RÉSOLVEUR. La
+       phrase d'avant (« inventer un `per100` ici ferait passer une estimation pour une
+       mesure ») reste vraie et tient toujours quand l'IA ne donne pas de poids : c'est
+       exactement pourquoi `_bcNutr` n'est posé que dans l'autre branche. */
+    /* ⚠️⛔ LE POUR-100 g REPART PAR SON CANAL EXISTANT, ET C'EST UNE RÉGRESSION QUE J'AI
+       INTRODUITE PUIS MESURÉE : en posant `_bcNutr`, l'ancre passe au bloc « grammes » et la
+       branche `_afRef.u==='g'` de `_provFood` ne dérivait plus rien — la ligne perdait son
+       `per100`, qu'elle portait avant ce chantier. `_afSrc.per100` est le canal prévu pour ça
+       (R13), et la valeur transmise est celle RÉELLEMENT retenue par le résolveur. */
+    _afSetSrc(Object.assign({saisie:'ia-texte',origine:'ia'},
+      (_iaG&&_iaRef)?{per100:_per100De(_iaRef)}:{},
+      {attendu:_afLuFormulaire()}));
     _foodAiConsomme('nutrition.mealEstimate.ai');
     _renderAfAiNote();
     toast('Estimé ✅ — ajuste si besoin','success');
@@ -6621,6 +6701,10 @@ function _afPropCacher(){
 function _afOublierAliment(opts){
   /* ⛔ La moitié « pour-100 g » : le bloc et sa valeur ne décrivent plus rien. */
   _bcNutr=null;
+  /* ⛔ ET LE VERDICT MEURT AVEC L'ALIMENT (R15, ft-v1232) : sans cette ligne, l'incohérence
+     du repas décrit PRÉCÉDENT s'enregistrerait sur le suivant — le défaut exact de ft-v1180,
+     transposé à la trace de fiabilité. *Tout chemin de fermeture pose son marqueur.* */
+  try{ _afFiab=null; }catch(e){}
   const bc=document.getElementById('af-bc-row'); if(bc) bc.style.display='none';
   /* ⚖️⛔ ET LE GESTE MEURT AVEC L'ALIMENT (10/09/2026) — un clic fait sur le produit PRÉCÉDENT ne
      vaut pas choix sur celui-ci. Sans cette ligne, scanner A, cliquer sa pastille, puis scanner B
@@ -7191,8 +7275,10 @@ function updateProteinBar() {
   const targEl = document.getElementById('prot-target-disp');
   if (bar) { bar.style.width = pctBarre + '%'; bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)'; }
   if (pctEl) { pctEl.textContent = pct + '%'; pctEl.style.color = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)'; }
-  if (remEl) remEl.textContent = remaining + 'g';
-  if (targEl) targEl.textContent = target + 'g';
+  if (remEl) remEl.textContent = (target > 0) ? (remaining + 'g') : '—';
+  /* ⛔ Sans profil, la cible protéique n'existe pas : « 0g » se lirait comme un objectif de
+     zéro gramme, ce qui est un fait faux et pas seulement une case vide (R29). */
+  if (targEl) targEl.textContent = (target > 0) ? (target + 'g') : '—';
   /* ⭐ ON NOMME LA SOURCE (ft-v969) — Michel : *« sur cette image c'est la portion ou juste le
      nombre de protéine ? »*. **La question montrait le trou** : le champ ne dit pas QUI le
      remplit. Quand le Journal porte des protéines, le champ reste VIDE (placeholder « 0 »)
@@ -8706,7 +8792,11 @@ function saveDietNotes(v){ S.dietNotes=v; if(_dietNotesT)clearTimeout(_dietNotes
 
 async function generateMealPlan(regenDay,regenMeal){
   if(!S.url){toast('Connexion requise','error');return;}
-  if(!S.bw||!S.age||!S.height){toast('Complète ton profil d\'abord (âge, taille, poids)','error');return;}
+  /* ⛔ 4ᵉ copie de « a-t-on de quoi calculer ? » ramenée à son propriétaire (R2, state.js).
+     ⭐ Le message NOMME désormais ce qui manque vraiment, au lieu de réciter les trois champs :
+     on ne demande pas sa taille à quelqu'un qui l'a déjà donnée. */
+  {const _mq=profilCaloriqueManquants();
+   if(_mq.length){toast('Complète ton profil d\'abord — il manque '+_etManquants(_mq),'error');return;}}
   const isPrem=S.premium,td=today();
   const isRegen=!!(regenDay&&regenMeal);
   if(isRegen&&!isPrem){

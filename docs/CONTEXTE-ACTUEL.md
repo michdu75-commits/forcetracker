@@ -6,6 +6,38 @@
 
 ---
 
+## 🍽️ ft-v1232 (21/09/2026) — DEUX CORRECTIONS NUTRITION CIBLÉES, EN SÉQUENCE
+
+> **Feu vert de Michel après l'état des lieux du 21/09**, sur **ces deux sujets seulement**.
+> ⛔ Le reste du chantier Nutrition **reste gelé** (voir plus bas) : rien d'autre n'a été touché.
+
+- **Version en ligne (live) :** `ft-v1232` — 🍽️ **DEUX CORRECTIONS NUTRITION EN SÉQUENCE : le compte neuf cesse de fabriquer un plan, et le repas décrit entre chez `_ref100`.**
+
+- **① LE COMPTE NEUF NE FABRIQUE PLUS UN PLAN CRÉDIBLE — ce défaut est FERMÉ.** Il était
+  re-mesuré ouvert le 20/09 (`1 500 kcal · 0 g P · 0 g L · 375 g G`, « TDEE 0 ») et ne l'est
+  plus. ⭐⭐ **Le `1 500` n'était PAS une valeur en dur** : c'est `PLANCHER_KCAL.H`, le
+  garde-fou de ft-v918 — *le défaut n'était pas le plancher, c'est qu'en l'absence de calcul
+  la borne basse devenait le résultat*. Il n'a pas bougé d'un chiffre.
+  ⭐ **La règle « a-t-on de quoi calculer ? » était écrite QUATRE FOIS** dans le code servi ;
+  `profilCaloriqueManquants()` (`state.js`) en est désormais le propriétaire unique (**R2**).
+  ⚠️ **Trois faits trouvés en mesurant** : un `workType` sur un profil vide rendait **TDEE 450**
+  (pas 0) · `S.bw='abc'` produisait **`NaN`** dans les trois macros · et `manualKcal` sans poids
+  rendait **2 200 kcal · 0 g P · 0 g L · 550 g G**.
+- **② `estimateFoodAI` PASSE PAR `_ref100` — ce trou est FERMÉ.** Le dernier écrivain hors du
+  résolveur de ft-v1207 y entre. ⭐⭐ **Le vrai défaut était R4** : face à la même incohérence,
+  un écrivain CIQUAL enregistrait `DERIVE_ESTIMABLE · brut 60 → retenu 215`, le repas décrit
+  enregistrait **`fiab: null`, six fois sur six** — l'avertissement vivait à l'ÉCRAN et
+  n'atteignait jamais la DONNÉE. ⛔ **Sans poids supposé, on CLASSE sans réécrire** : la loi
+  est invariante d'échelle, mais *une correction qu'aucun écran n'explique est une correction
+  silencieuse*.
+- ⛔ **`_ref100`, `_resoudreNutrition`, les facteurs UE 1169/2011 et la douane : 0 ligne.**
+  `ia` n'est **pas** devenue une origine utilisateur.
+- ⚠️ **Collision de numéros de bloc, notée et non corrigée** : `B-CCCXLII`/`B-CCCXLIII`
+  existent **deux fois** (session-A masse grasse · session-B motif d'exercice, même jour).
+  ⛔ Le protocole interdit de renommer un bloc publié — on prend la suite (**R30**).
+
+---
+
 ## ⚖️ ARBITRÉ LE 20/09/2026 — LE REPAS ACTIF EST CLOS, **LE CHANTIER NUTRITION NE L'EST PAS**
 
 > ⛔⛔ **Ne pas confondre les deux** : Michel a fermé **une question UX**, pas le module. Sa phrase :
@@ -32,7 +64,9 @@ toujours vivant sur l'arbre servi : `calcTDEE()` rend **0** et `calcMacros()` re
 0 g P · 0 g L · 375 g G** ; avec le **poids seul** (ni taille ni âge) il rend **1 500 · 176 · 72 ·
 37**, un plan *parfaitement crédible* bâti sur un TDEE inconnu. **L'écran Nutrition cite 3 fois ce
 1 500** et affiche « **TDEE 0** », plus un garde-fou qui explique qu'il a remonté une cible… qu'il
-venait d'inventer. ⛔ **Non corrigé — chantier ouvert, hors du périmètre arbitré ici.**
+venait d'inventer. ✅ **CORRIGÉ EN `ft-v1232` (21/09) — l'encadré ci-dessus décrit l'état du 20/09
+et il est gardé tel quel, parce que c'est la mesure qui a déclenché le correctif.** Ne pas le lire
+comme un état actuel (**R23** : un document d'état faux fait raisonner de travers).
 
 **⚠️⚠️ ET UNE LIGNE D'ÉTAT ÉTAIT FAUSSE (R23), corrigée ici plutôt que recopiée** :
 `docs/JOURNAL-DE-TEST.md` (26/08) dit que `foodLog` est **exclu** du contexte de Milo, avec la
@@ -383,7 +417,8 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   📊 **Mesure avant / après sur la douane** : les lignes de ce type qui l'atteignaient en
   `energie_incoherente` passent de **7 à 2** — et les 2 restantes sont **exactement** les origines
   utilisateur, par conception.
-  ⛔ **Hors périmètre, mesuré mais non corrigé** : `estimateFoodAI` ne passe pas par `_ref100`
+  ⛔ **Hors périmètre, mesuré mais non corrigé** *(à la date de ft-v1207 ; `estimateFoodAI` a été
+  branché depuis, en **ft-v1232**)* : `estimateFoodAI` ne passe pas par `_ref100`
   (il écrit les champs de l'écran directement, sans pour-100 g) · `S.savedFoods` multi-onglets ·
   la traçabilité de `saveEditFood` · les lignes à zéro · `rejouerRepas` · les `ml` · l'écart
   **48,3 / 48** · l'historique · les migrations.
@@ -491,7 +526,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   survit à un changement de **jour** (`_journalJourSet` ne touche pas au repas) · il ne survit pas à un
   **rechargement** (`_afMeal` est une variable de module, absente du stockage).
 
-- **Version en ligne (live) :** `ft-v1231` — ⚖️ **LA MASSE GRASSE MESURÉE ET L'ESTIMATION
+- **Version précédente :** `ft-v1231` — ⚖️ **LA MASSE GRASSE MESURÉE ET L'ESTIMATION
   US NAVY CESSENT D'ÊTRE LE MÊME CHAMP.** Michel : *« ces deux valeurs sont différentes par
   nature et ne doivent pas se remplacer l'une l'autre »* · ⛔⛔ *« je ne veux pas simplement
   changer deux textes dans l'interface si les deux valeurs restent mélangées dans les

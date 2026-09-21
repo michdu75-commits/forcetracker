@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1231`** (prochaine : `ft-v1232`).
+> **Version actuelle : `ft-v1232`** (prochaine : `ft-v1233`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,64 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1232 — 🍽️ DEUX CORRECTIONS NUTRITION EN SÉQUENCE · LE COMPTE NEUF CESSE DE FABRIQUER UN PLAN, ET LE REPAS DÉCRIT ENTRE ENFIN CHEZ LE RÉSOLVEUR** — feu vert de Michel après l'état des lieux. Ses bornes : ⛔ ***« l'un après l'autre dans la même session, jamais en parallèle »*** · ⛔ ***« ne lance pas un audit général Nutrition, ne cherche pas d'autres bugs »*** · ⛔ ***« ne supprime pas aveuglément toutes les occurrences de 1500 »*** · ⛔ ***« ne duplique pas `_ref100`, ne réécris pas un deuxième résolveur — le propriétaire unique doit rester propriétaire »*** · ⭐ ***« une seule passe complète à la fin »***.
+
+### ① LE COMPTE NEUF NE PRÉSENTE PLUS UN PLAN QU'IL N'A PAS CALCULÉ
+
+**⛔⛔ MESURÉ DANS L'APP SERVIE AVANT D'ÉCRIRE UNE LIGNE, PAS DÉDUIT DE L'ÉCRAN.** Neuf états de profil conduits dans un navigateur réel :
+
+| profil | BMR | TDEE | cible | P / L / G |
+|---|---|---|---|---|
+| ⛔ **rien** | 0 | 0 | **1 500** | 0 / 0 / 375 |
+| ⛔ **poids seul** | 0 | 0 | **1 500** | 189 / 77 / 13 |
+| ⛔ **poids + taille** | 0 | 0 | **1 500** | 189 / 77 / 13 |
+| ✅ profil complet | 1 749 | 2 711 | 3 161 | 189 / 77 / 428 |
+
+L'onglet affichait *« CIBLE 1 500 KCAL »* et *« TDEE 0 »*. 👉 ***Un plan parfaitement crédible bâti sur un métabolisme que personne n'a calculé.***
+
+**⭐⭐ ET LE 1 500 N'EST PAS UNE VALEUR EN DUR — c'est `PLANCHER_KCAL.H`, le garde-fou de ft-v918**, écrit pour empêcher l'app de **prescrire** une cible qu'elle signalerait elle-même comme dangereuse. 👉 ***Le défaut n'est pas le plancher : c'est qu'en l'absence de calcul, la borne basse devenait le RÉSULTAT.*** Il ne bouge donc pas d'un chiffre, et **deux témoins l'épinglent** — c'était la consigne §1C, et elle était juste.
+
+**⭐ TROIS FAITS TROUVÉS EN MESURANT, ABSENTS DU BRIEF.** ① Un **métier renseigné** sur un profil vide rendait **TDEE 450** — l'addition a quatre termes et trois ne dépendent pas du BMR ; *c'est pire qu'un zéro, un zéro a l'air cassé, 450 a l'air d'une dépense*. ② `S.bw='abc'` **passait** le test `!S.bw` (une chaîne non vide est *truthy*) et produisait **`NaN`** dans les trois macros. ③ ⛔⛔ **La règle « a-t-on de quoi calculer ? » était écrite QUATRE FOIS** dans le code servi (`bmrDetail`, `hasProfile`, `_resteDuJour`, `generateMealPlan`) — **R2**, *et c'est exactement pourquoi le journal alimentaire savait se taire pendant que l'onglet Nutrition affichait 1 500*.
+
+**⭐ `profilCaloriqueManquants()` devient le propriétaire unique**, strict sur les **nombres** (c'est lui qui ferme le `NaN`), et il rend les **champs manquants** plutôt qu'un booléen — *l'écran doit pouvoir les nommer sans réécrire la règle une cinquième fois*. Toute la chaîne rend désormais **`null`, jamais un nombre plausible** (**R29** — la maison écrit déjà `null` et jamais `0` dans `mensDerniere` et `bfDerniere`).
+
+**⭐⭐ LES DEUX BESOINS SONT DISTINCTS, ET LA MESURE L'A IMPOSÉ** : les **calories** peuvent venir d'un réglage manuel — *un chiffre que la personne a tapé n'est pas fabriqué par l'app* — mais les **macros** se calculent en g/kg et exigent le **poids**. Le cas mesuré qui l'interdit de les traiter ensemble : `manualKcal = 2 200` sans poids rendait **2 200 kcal · 0 g P · 0 g L · 550 g G**. *Les calories étaient vraies et la répartition inventée.*
+
+**📣 RÈGLE D'OR #11 — UN SEUL CHANGEMENT VISIBLE, ET IL EST EN FAVEUR DE L'UTILISATEUR.** Les cases écrivent **« — »** (déjà leur valeur par défaut dans `index.html` — on cesse simplement de l'écraser, **R13**) et la première carte de l'onglet dit, **une seule fois** : *« Complète ton profil pour calculer tes besoins — il manque ton poids, ta taille et ton âge. »* ⛔ Le répéter sous les macros ferait du bruit là où une phrase suffit (**R25**). ⭐ Et la sortie reste ouverte : ce qui a été noté s'affiche quand même (**R24**). ⚖️ **Pop-up : non** — rien n'est à *faire*, et un faux chiffre disparaît.
+
+**⛔ UNE SEULE LIGNE DE `coach.js`, ET ELLE PROTÈGE MILO AU LIEU DE LE CHANGER** : `calcTDEE()` rendant désormais `null`, un `${tdee}` brut écrirait *« TDEE: null kcal »* dans son contexte. L'idiome `|| '—'` existe déjà **deux lignes plus bas** pour les macros ; on l'étend aux deux chiffres qui l'avaient perdu. *Avant ce jour, Milo recevait « TDEE: 0 kcal », ou pire un 450 bâti sur un métabolisme nul.*
+
+### ② LE REPAS DÉCRIT PASSE PAR `_ref100`
+
+**⛔⛔ LA PRÉMISSE A ÉTÉ VÉRIFIÉE AVANT D'ÊTRE EXÉCUTÉE (R38) — et le code disait LUI-MÊME pourquoi il était exempté** : *« l'IA ne donne PAS de valeur au 100 g … inventer un `per100` ici ferait passer une estimation pour une mesure »*. **La mesure a rendu cette raison caduque** : un `per100` était **déjà** écrit sur la ligne, en aval, dans **4 cas sur 6**.
+
+**⭐⭐ LE VRAI DÉFAUT EST R4 : L'AVERTISSEMENT VIVAIT À L'ÉCRAN ET N'ATTEIGNAIT JAMAIS LA DONNÉE.** Face à la **même** incohérence :
+
+| | verdict enregistré sur la ligne |
+|---|---|
+| écrivain CIQUAL | `DERIVE_ESTIMABLE · derive_macros · brut 60 → retenu 215` |
+| ⛔ **repas décrit** | **`fiab: null`, six fois sur six** |
+
+**⭐ AVEC UN POIDS SUPPOSÉ PAR L'IA**, la porte pose une vraie référence pour-100 g et se comporte **exactement** comme les 8 autres : `_bcNutr` posé, substitution appliquée, **écran qui explique** par la branche 🔬, trace qui part avec la ligne. Une estimation à 120 kcal pour 40 g de protéines et 30 g de lipides devient **430**, et l'écran dit pourquoi.
+
+**⛔⛔ SANS POIDS, ON CLASSE SANS RÉÉCRIRE.** La loi `E ≥ 4P + 9L` est **invariante d'échelle** — elle vaut sur un total de portion comme sur 100 g — donc le verdict est récolté. Mais la branche qui *explique* une substitution lit `_bcNutr`, absent ici : ***une correction qu'aucun écran n'explique est une correction silencieuse***, et c'est interdit depuis ft-v1207. ⛔ Et **la trace ne ment pas** : ma première version gardait la ligne à 120 kcal en annonçant `retenu: 430` — *une trace qui dit « on a retenu 430 » à côté d'une donnée à 120 est pire qu'une absence de trace*. On emploie le vocabulaire que le résolveur a **déjà** pour « classé, pas réécrit » : `NON_RESOLU` + `observation`, avec `retenu = brut`.
+
+**⛔ AUCUN SECOND RÉSOLVEUR** : `_ref100` reste propriétaire unique, `_resoudreNutrition` n'est pas touché, les facteurs UE 1169/2011 ne bougent pas, et **`ia` ne devient pas une origine utilisateur** — *un modèle qui propose un chiffre n'est pas la personne qui l'a tapé*.
+
+**⚠️ ET UNE RÉGRESSION QUE J'AI INTRODUITE PUIS MESURÉE** : en posant `_bcNutr`, l'ancre passait au bloc « grammes » et la ligne **perdait le `per100` qu'elle portait avant ce chantier**. Rendu par son canal existant, `_afSrc.per100` (**R13**), avec la valeur **réellement retenue**.
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ **`PLANCHER_KCAL` intact**, Mifflin-St Jeor et Katch-McArdle intactes, table des objectifs intacte (quatre témoins) · ⛔ **`_ref100` non modifié**, la douane **non touchée** (21 règles) · ⛔ scanner caméra, `portionWeightG`, `rejouerRepas`, les `ml`, les migrations, l'historique : **0 ligne** · ⛔ Accueil, Séance, Corps & santé, masse grasse, onboarding, Worker, backend, quotas IA : **0 ligne** · ⛔ ni `log.js`, ni `tracking.js`, ni `constants.js`, ni `setup.js`, ni `index.html`, ni `Code.js`, ni `worker.js`, ni `supabase.js`, ni `dashboard.js`.
+
+**⚠️⚠️ ET SIX DE MES PROPRES TÉMOINS ONT ROUGI SUR DU CODE PARFAITEMENT SAIN — quatre familles que ce dépôt connaît déjà.** ① ⛔ **Le piège de l'espace, 10ᵉ fois** : `/const\s+PLANCHER_KCAL/` cherché dans une source dont je venais de retirer **tous** les espaces — `\s+` ne peut pas matcher zéro espace, et le garde-fou était intact. ② **Le piège de la sous-chaîne** (`BUGS.md` n°1) : `_afFiab=` matche à l'intérieur de `_afFiab==='object'`, d'où 4 affectations comptées au lieu de 3. ③ Un motif `\.filter\([^)]*\)` qui s'arrêtait à la parenthèse de `_nbUtil(S[c[0]])` — *un motif qui suppose qu'une expression ne contient pas de parenthèse mesure sa propre naïveté*. ④ Un témoin qui **figeait un nombre** d'occurrences — *défaut d'instrument déjà payé en ft-v1226 : l'invariant juste n'est pas COMBIEN mais OÙ*. ⑤ `goScreen` **ne reconstruit pas** un écran déjà affiché, donc ma sonde lisait le rendu du cas précédent. ⑥ `toLocaleString('fr-FR')` sépare les milliers par **U+202F**, pas par une espace ordinaire.
+
+**⭐⭐ ET LE CONTRÔLE NÉGATIF A TROUVÉ DEUX TROUS DANS MES TÉMOINS — c'est exactement son métier.** ① La mutation qui rendait la détection de présence permissive restait **VERTE** : aucun de mes cas ne portait une macro à `null` ou `''` — ils portaient `undefined`, que les deux versions traitent pareil. *On pouvait retirer la distinction « absent / zéro légitime » sans un seul rouge.* Comblé par le **CAS H**. ② Deux mutations rendaient **PLANTAGE** au lieu de **rouge**, parce qu'un de mes témoins déréférençait une trace devenue `null` — *un témoin qui plante au lieu de rougir ne dit plus lequel a échoué, et peut masquer les suivants*.
+
+Tests : **blocs B-CCCXLIV (24 témoins de source) + B-CCCXLV (22 conduits)** dans `tests/parcours/plan_incomplet.js`, **B-CCCXLVI (17) + B-CCCXLVII (19)** dans `tests/parcours/ia_ref100.js` — les 7 cas A→G du compte neuf (dont le **rechargement complet**) et les 8 cas A→H du repas décrit, **serveur IA simulé mais chemin de production entier**. ⛔ **CONTRÔLE NÉGATIF : 25 mutations + 22 mutations sur arbres CLONÉS, 47 conformes**, bancs sains **46/0** et **36/0** avant ET après, dont **quatre qui doivent RESTER VERTES** (des commentaires citant tous les mots cherchés) et **six DÉGUISÉES** — un second résolveur écrit sur place, une trace qui ment, une estimation qui se déclare `manuel`, l'oubli passé **après** la pose, un pour-100 g pris pour un total, et la copie de la règle revenue sous une autre écriture. ⭐ **M02 et M01 remettent le code d'avant MOT POUR MOT** : sans leur rouge, rien de ce qui est écrit ici ne vaudrait.
+
+⚠️ **Collision de numéros de bloc, notée et NON corrigée** : `B-CCCXLII`/`B-CCCXLIII` existent **deux fois** dans le dépôt (mon bloc masse grasse et le bloc motif d'exercice de session-B, publiés le même jour). ⛔ Le protocole deux sessions interdit de renommer un bloc déjà publié — on prend la suite, et on l'écrit (**R30**).
+
+Fichiers : `state.js`, `screens.js`, `app.js`, `coach.js` *(une ligne)*, `tests/parcours/plan_incomplet.js` et `tests/parcours/ia_ref100.js` (nouveaux), `tests/parcours/runner.js`, `tools/banc_plan_incomplet.js`, `tools/banc_ia_ref100.js`, `tools/mut_plan_incomplet.py`, `tools/mut_ia_ref100.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1232. |
 
 **ft-v1231 — ⚖️ LA MASSE GRASSE **MESURÉE** ET L'**ESTIMATION** US NAVY CESSENT D'ÊTRE LE MÊME CHAMP** — Michel ouvre le sujet après avoir validé ft-v1230 sur son téléphone (*« cou / taille / hanches sauvegardés après fermeture complète »*). Son principe : ⭐ ***« ces deux valeurs sont différentes par nature et ne doivent pas se remplacer l'une l'autre »***. Ses bornes : ⛔⛔ ***« je ne veux pas simplement changer deux textes dans l'interface si les deux valeurs restent mélangées dans les données — vérifie le MODÈLE réel »*** · ⛔ ***« si l'architecture stocke déjà correctement les deux séparément, ne crée pas une structure inutile »*** · ⛔ ***« pas de migration destructive »***.
 
@@ -743,27 +801,3 @@ Fichiers : `app.js`, `tests/parcours/repas_actif.js` (nouveau), `tests/parcours/
 **⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ aucun **verrou Premium serveur** · ⛔ aucune route Apps Script fermée · ⛔ **ni V2, ni `ft_jetons`, ni le miroir multi-appareils, ni la Douane** · ⛔ aucun quota de génération complète inventé · ⛔ aucune 22ᵉ capacité · ⛔ aucun tombstone, aucun backfill réel · ⛔ **ni `screens.js`, ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `constants.js`, ni `supabase.js`, ni `worker.js`, ni `index.html`.**
 
 Tests : **blocs B-CCCXXXIV (23 témoins de source) et B-CCCXXXV (24 témoins conduits dans le navigateur)**, dans `tests/parcours/pots_nutrition.js` — les **8 cas N1→N8** de Michel plus les **8 états de migration** (absent · 0 · 5 · 24 · 25 · 40 · « abc » · −3), l'idempotence éprouvée en rejouant la règle **trois fois**, et un pot déjà migré qui **ne bouge plus** même quand l'ancien pot remonte plus haut. ⭐ Le témoin **B-CCCXXXI ⑱ a été RETOURNÉ, pas supprimé** : il figeait la **liste** des trois politiques ouvertes et serait devenu rouge sur un registre parfaitement à jour ; sa **garantie** n'a pas bougé — *le registre doit rester capable de dire « pas décidé »*.
-
-**ft-v1224 — 🗂️ LA SOURCE DE VÉRITÉ CENTRALE DES 21 CAPACITÉS IA · ET LE DOUBLE COMPTAGE FERMÉ, TEST-FIRST** — phase 3, après que Michel a arbitré Q1→Q5 et acté **M1→M14**. ⚠️⚠️ **CETTE PHRASE EST HISTORIQUE, ET SA NUMÉROTATION N'EST PAS FIABLE — vérifié le 20/09/2026.** *« M1→M14 » n'est énuméré nulle part* ; **9** décisions seulement sont prouvées (dans `tools/gen_memoire_archi_pdf.py`), **5 sont introuvables**, et **`M12` désigne la réponse à une question posée APRÈS les 14** — donc les deux numérotations sont incompatibles. ⛔ **Ne pas s'appuyer sur une étiquette `M<n>` ailleurs que dans `capacites-ia.js`** (M12/M13/M14, les seules prouvées). 👉 **La restitution, avec ses sources : `docs/DECISIONS-MEMOIRE-LONGUE.md`.** Ses bornes : ⛔ ***« phase 3 ne doit pas encore poser tous les verrous »*** · ⛔ ***« la documentation humaine ne doit pas devenir une deuxième source de vérité »*** · ⛔ ***« ne compense pas le bug en doublant artificiellement les plafonds »***.
-
-**📣 RÈGLE D'OR #11 — RIEN.** Aucun écran ne change, aucun bouton n'apparaît, aucun quota ne bouge, aucune route n'est fermée. Un fichier de données est servi, et **personne ne le lit encore**.
-
-**⭐⭐ LE DÉFAUT FERMÉ EST MESURÉ, PAS SUPPOSÉ.** La politique d'accès vivait à **QUATRE endroits qui ne se parlaient pas** : le texte de vente (`PREMIUM_PERKS`), les gardes du client, le quota du serveur, et la documentation écrite à la main. La phase 2 y avait prouvé **9 incohérences**, dont **trois capacités vendues Premium et gratuites dans le code**. 👉 ***Ce n'était pas une série d'oublis : c'est la conséquence mécanique d'une politique sans propriétaire*** (**R2**). `capacites-ia.js` devient ce propriétaire.
-
-**⭐⭐ DEUX CHAMPS, PAS UN — la leçon la plus chère de la phase 2.** `politique` dit ce qui **DOIT ÊTRE**, `etatCode` dit ce qui **EST**, et tant qu'ils diffèrent l'écart est **ÉCRIT** (12 le sont). 👉 ***Un registre qui affiche la politique souhaitée à la place de la politique appliquée ment plus efficacement qu'une documentation périmée, parce qu'il a l'air d'être du code.***
-
-**⭐ LA DOCUMENTATION EST GÉNÉRÉE, JAMAIS ÉCRITE.** `docs/IA-FREE-PREMIUM.md` sort de `tools/gen_doc_ia.js` ; son mode `--check` **RÉGÉNÈRE et compare caractère pour caractère**. ⛔ Et le contrôle est lui-même **éprouvé sur une documentation volontairement fausse** — *un contrôle qui ne peut pas rougir ne protège rien*. C'est **R27** appliqué ici : l'inventaire est généré depuis le code pour cette raison exacte.
-
-**⛔ `NON_DECIDEE` EST UNE VALEUR DE PLEIN DROIT.** Trois politiques restent ouvertes (`milo.debrief`, `nutrition.mealPlan.ai`, `nutrition.mealPlanImport.ai`) : les inscrire « FREE » reviendrait à **inventer une décision** que Michel n'a pas prise (**règle d'or 15**). ⭐ Six formes de quota, dont **`par_evenement`** que `milo.memory.backfill` exige et qu'aucun compteur actuel ne sait exprimer — sa valeur reste **`null`**, parce que la taille d'une période est **NON MESURÉE**.
-
-**🔧 UNE SEULE CORRECTION DE CODE, ET ELLE EST TEST-FIRST.** Un appel IA venu du Worker traversait **deux** routes Apps Script (`authIdentity` puis `aiCount`) qui appelaient toutes deux `_aiQuotaBlock_` — laquelle **n'est pas une lecture, elle ÉCRIT**. Chaque appel consommait **deux unités** : plafonds réels **25/jour/e-mail au lieu de 50**, **300 au lieu de 600**.
-
-⭐ La correction **sépare LIRE de CONSOMMER** : `_aiQuotaEtat_` n'écrit rien, `_aiQuotaBlock_` reste le **seul propriétaire de l'écriture**. ⭐⭐ **Un second défaut tombe avec** : un appel **REFUSÉ** consommait quand même — *un garde-fou qui se déclenche en consommant la ressource qu'il protège travaille contre lui-même*, et quelqu'un déjà bloqué creusait son propre plafond en réessayant. ⛔ **Les plafonds ne bougent pas d'un chiffre** : *doubler un plafond pour absorber un double comptage, c'est graver le bug dans la configuration et le rendre indétectable.*
-
-⭐ **Le témoin a été écrit AVANT le correctif** et mesuré **ROUGE à 7 défauts** sur le code d'avant. ⚠️ **Et il a fallu le corriger d'abord** : mon compteur d'appels attrapait aussi la **déclaration** de la fonction — *un compteur d'appels qui compte la définition mesure autre chose que ce qu'il annonce*, et serait resté rouge sur une correction parfaitement juste.
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ aucun garde Premium **serveur** · ⛔ aucune route Apps Script fermée · ⛔ aucun tombstone, aucun journal de profil, aucun backfill réel · ⛔ aucune synchro multi-appareils · ⛔ **ni V2, ni Douane** · ⛔ le **pot de 25 usages Nutrition n'est pas séparé dans le code** — seul le registre porte désormais trois politiques distinctes pour ses trois capacités, ce qui est le préalable et non la correction.
-
-Tests : **blocs B-CCCXXXI (22 témoins), B-CCCXXXII (6) et B-CCCXXXIII (12)**, dans `tests/parcours/registre_ia.js` et `tests/parcours/quota_double.js`.
-
-Fichiers : `capacites-ia.js` (nouveau), `docs/IA-FREE-PREMIUM.md` (généré), `tools/gen_doc_ia.js` (nouveau), `Code.js` (**uniquement autour du quota**), `index.html` (**une balise**), `sw.js`, `tests/parcours/registre_ia.js` et `quota_double.js` (nouveaux), `tests/parcours/runner.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `app.js`, ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `worker.js`, ni `supabase.js`.** sw.js ft-v1224. |

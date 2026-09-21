@@ -2508,9 +2508,14 @@ function toggleKeto(){ setFoodMode('keto'); }  // ancien nom : gardé, des racco
 function openKcalEdit(){
   const m=calcMacros(S.nutritionPhase);
   const inp=document.getElementById('kcal-edit-inp');
-  if(inp)inp.value=m.calories;
+  if(inp)inp.value=(m.calories!=null)?m.calories:'';
   const auto=document.getElementById('kcal-edit-auto');
-  if(auto)auto.textContent="Calcul auto de l'app : "+m.autoCalories.toLocaleString('fr-FR')+" kcal (d'après ton profil et ton objectif).";
+  /* ⛔ `m.autoCalories` vaut `null` quand le profil ne permet pas de calcul — et
+     `null.toLocaleString()` LÈVE UNE ERREUR, donc la modale ne s'ouvrait plus du tout.
+     On dit ce qu'on sait : l'app ne calcule pas, la personne peut quand même fixer sa cible. */
+  if(auto)auto.textContent=(m.autoCalories!=null)
+    ? ("Calcul auto de l'app : "+m.autoCalories.toLocaleString('fr-FR')+" kcal (d'après ton profil et ton objectif).")
+    : ("L'app ne peut pas encore calculer ta cible — il manque "+_etManquants(m.manquants)+". Tu peux fixer ton chiffre toi-même ci-dessous.");
   const reset=document.getElementById('kcal-edit-reset');
   if(reset)reset.style.display=m.isManual?'':'none';
   _kcalPreview();
@@ -2597,6 +2602,23 @@ function _renderAujourdhui(macros){
   }
   const auj=(typeof _foodTotals==='function')?_foodTotals(today()):{kcal:0,prot:0,carbs:0,fat:0};
   const noteAuj=(S.foodLog||[]).some(e=>e&&e.date===today());
+  /* ⛔ AUCUN CHIFFRE TANT QUE RIEN N'EST NOTÉ — mais pas une boîte vide non plus : un cadre sans
+     rien dedans se lit comme un chargement qui n'a pas abouti. Une phrase, zéro nombre. */
+  /* ⛔⛔ PAS DE PROFIL, PAS DE CIBLE — ET ON LE DIT ICI, dans la première carte de l'onglet
+     (21/09/2026). *L'app ne doit jamais présenter comme plan personnalisé un résultat calculé
+     avec des informations insuffisantes.* ⭐ Une phrase, zéro chiffre, et la SORTIE reste
+     ouverte : ce qui a été mangé s'affiche quand même (R24 — informer sans bloquer).
+     ⛔ Une seule place pour ce message, et c'est la plus visible : le répéter sous les macros
+     ferait du bruit là où une phrase suffit (**R25** — la pop-up annonce, l'aide explique). */
+  if(macros.indisponible||macros.calories==null){
+    el.innerHTML='<div style="font-size:12.5px;color:var(--t3);line-height:1.45;margin-top:8px;">'
+      +'Complète ton profil pour calculer tes besoins — il manque <b style="color:var(--t2);">'
+      +_etManquants(macros.manquants&&macros.manquants.length?macros.manquants:['ton poids'])+'</b>.'
+      +(noteAuj?('<br>Tu as noté <b style="color:var(--t2);">'+Math.round(auj.kcal).toLocaleString('fr-FR')
+                 +' kcal</b> aujourd\'hui — on les compte, on ne les compare à rien pour l\'instant.'):'')
+      +'</div>';
+    return;
+  }
   /* ⛔ AUCUN CHIFFRE TANT QUE RIEN N'EST NOTÉ — mais pas une boîte vide non plus : un cadre sans
      rien dedans se lit comme un chargement qui n'a pas abouti. Une phrase, zéro nombre. */
   if(!noteAuj){
@@ -3139,8 +3161,17 @@ function renderNutrition(){try{
 
   const bd=(typeof bmrDetail==='function')?bmrDetail():{kcal:calcBMR(),methode:null};
   const bmr=bd.kcal, tdee=calcTDEE();
-  const hydra=fmt((S.bw*0.035)+0.5);
-  document.getElementById('nu-bmr').textContent=bmr.toLocaleString('fr-FR');
+  /* ⛔ L'HYDRATATION SE CALCULE SUR LE POIDS, DONC ELLE A LE MÊME DÉFAUT — trouvé par mon
+     propre témoin, pas par le brief : avec `S.bw='abc'`, l'onglet affichait « NaN L/jour ».
+     *Le poids n'est pas seulement l'entrée des macros ; toute case qui le multiplie hérite du
+     même trou.* Pas de repli à 0 : on ne conseille pas « 0,5 L » à quelqu'un dont on ignore
+     le poids (R29). */
+  const _bwOk=(typeof _nbUtil==='function')?_nbUtil(S.bw):(+S.bw>0?+S.bw:null);
+  const hydra=(_bwOk!=null)?fmt((_bwOk*0.035)+0.5):'—';
+  /* ⛔ « — », JAMAIS « 0 » NI « null » : un zéro affiché dans une case de métabolisme se lit
+     comme une mesure, pas comme une absence. Le tiret est déjà la valeur par défaut de ces
+     deux cases dans `index.html` — on se contente de ne plus l'écraser (R13). */
+  document.getElementById('nu-bmr').textContent=_nbAff(bmr>0?bmr:null);
   // La provenance du chiffre, en 2 mots — tapable pour l'explication complète.
   // ⚠️ Sur « mifflin » on n'écrit RIEN quand aucune mesure n'existe : afficher « estimé »
   // à quelqu'un qui n'a jamais entendu parler de masse maigre l'inquiéterait sans lui
@@ -3152,7 +3183,7 @@ function renderNutrition(){try{
       : (bd.lm ? '⚖️ bilan non utilisé ▸' : '');
     srcEl.style.color = bd.methode==='katch' ? 'var(--green)' : 'var(--gold)';
   }
-  document.getElementById('nu-tdee').textContent=tdee.toLocaleString('fr-FR');
+  document.getElementById('nu-tdee').textContent=_nbAff(tdee);
   /* 🚶 ON DIT D'OÙ VIENT LE SURPLUS — sinon le TDEE change d'un jour à l'autre sans explication,
      et un chiffre qui bouge tout seul se lit comme un bug (la leçon du sommeil, ft-v1069).
      ⛔ La ligne ne s'affiche QUE s'il y a un surplus : afficher « +0 kcal » tous les jours serait
@@ -3220,12 +3251,12 @@ function renderNutrition(){try{
   try{ _renderAujourdhui(macros); }catch(e){ /* jamais bloquant */ }
   try{ const _ev=document.getElementById('nu-evolution'); if(_ev)_ev.innerHTML=_blocEvolutionHTML(); }catch(e){}
   try{ const _ap=document.getElementById('nu-appris'); if(_ap)_ap.innerHTML=_blocApprisHTML(); }catch(e){}
-  document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
+  document.getElementById('m-kcal').textContent=_nbAff(macros.calories);
   /* Le même chiffre au centre de l'anneau de répartition, dans l'accordéon « comment c'est
      calculé ». ⚠️ `id` DIFFÉRENT exprès : `m-kcal` a déménagé en tête de l'onglet, et réutiliser
      son `id` ici aurait fait écrire deux éléments par la même ligne — le second aurait gagné en
      silence, sans qu'aucune erreur ne le dise. */
-  {const _ck=document.getElementById('nu-calc-kcal'); if(_ck)_ck.textContent=macros.calories.toLocaleString('fr-FR');}
+  {const _ck=document.getElementById('nu-calc-kcal'); if(_ck)_ck.textContent=_nbAff(macros.calories);}
   /* 📋 LES SOUS-TITRES DES DEUX ACCORDÉONS — c'est la seule chose visible sans déplier, donc
      ils disent l'ÉTAT COURANT et évitent d'ouvrir juste pour vérifier (R24). */
   {
@@ -3254,7 +3285,10 @@ function renderNutrition(){try{
   else if(adj){
     if(macros.isManual){
       adj.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:12px;padding:9px 12px;">'
-        +'<span style="font-size:12.5px;color:var(--t2);flex:1;line-height:1.35;">🎯 <b style="color:var(--t1);">Objectif manuel</b> — '+macros.calories.toLocaleString('fr-FR')+' kcal <span style="color:var(--t3);white-space:nowrap;">(auto : '+macros.autoCalories.toLocaleString('fr-FR')+')</span></span>'
+        /* ⛔ « (auto : …) » ne s'affiche QUE s'il existe un calcul auto. Avec un objectif
+           manuel posé sur un profil incomplet, `autoCalories` vaut `null` et l'ancien
+           `.toLocaleString()` LEVAIT une erreur — le bloc entier disparaissait. */
+        +'<span style="font-size:12.5px;color:var(--t2);flex:1;line-height:1.35;">🎯 <b style="color:var(--t1);">Objectif manuel</b> — '+_nbAff(macros.calories)+' kcal'+(macros.autoCalories!=null?' <span style="color:var(--t3);white-space:nowrap;">(auto : '+_nbAff(macros.autoCalories)+')</span>':'')+'</span>'
         +'<button onclick="openKcalEdit()" class="btn" style="width:auto;flex:none;padding:7px 12px;font-size:12.5px;background:var(--bg3);color:var(--t1);border:1px solid var(--sep);">Modifier</button></div>';
     } else {
       /* 🛡️ SI LE PLANCHER A RELEVÉ LA CIBLE, ON LE DIT (18/08/2026) — voir `_plancherKcal`
@@ -3275,9 +3309,9 @@ function renderNutrition(){try{
         +'<button onclick="openKcalEdit()" class="btn" style="width:100%;padding:11px;font-size:13.5px;background:var(--bg2);color:var(--t2);border:1px solid var(--sep);font-weight:700;">✎ Ajuster mes calories à la main</button>';
     }
   }
-  document.getElementById('m-prot').textContent=macros.prot_g;
-  document.getElementById('m-carbs').textContent=macros.carbs_g;
-  document.getElementById('m-fat').textContent=macros.fat_g;
+  document.getElementById('m-prot').textContent=_nbAff(macros.prot_g);
+  document.getElementById('m-carbs').textContent=_nbAff(macros.carbs_g);
+  document.getElementById('m-fat').textContent=_nbAff(macros.fat_g);
   /* 🍚 ON DIT POURQUOI LES GLUCIDES NE SONT PAS LES MÊMES QU'HIER (21/08/2026).
      ⛔ Ce n'est pas décoratif : sans cette ligne, la répartition change d'un jour à l'autre
      SANS RAISON VISIBLE — et un chiffre qui bouge tout seul se lit comme un bug, ou pire, se
@@ -3478,7 +3512,15 @@ function renderFoodJournal(){
   const el=document.getElementById('food-journal');if(!el)return;
   const td=_journalJourActif();
   const estAuj=(td===today());
-  const hasProfile=S.bw&&S.age&&S.height;
+  /* ⛔ 2ᵉ des QUATRE copies de « a-t-on de quoi calculer ? » — elle lit le propriétaire
+     (`state.js`) au lieu de réécrire le test (R2). C'est précisément cette divergence qui
+     faisait que le journal savait se taire pendant que l'onglet Nutrition affichait 1 500. */
+  /* ⛔⛔ ET SURTOUT PAS DE REPLI QUI RÉÉCRIT LA RÈGLE : mon premier jet hedgeait en
+     `: !!(S.bw&&S.age&&S.height)`, c'est-à-dire qu'il remettait une 2ᵉ copie juste à côté du
+     propriétaire — *un repli qui duplique la règle est exactement la divergence qu'on ferme*.
+     `state.js` est chargé avant `screens.js` ; si la fonction manquait, l'onglet entier serait
+     déjà cassé (il appelle `calcMacros` trois lignes plus bas). */
+  const hasProfile=profilCaloriqueManquants().length===0;
   const target=hasProfile?calcMacros(S.nutritionPhase):null;
   const tot=(typeof _foodTotals==='function')?_foodTotals(td):{kcal:0,prot:0,carbs:0,fat:0};
   /* 🔑⭐⭐ L'IDENTITÉ EST POSÉE LÀ OÙ LA LIGNE DEVIENT CLIQUABLE (16/09/2026, bug T-01).

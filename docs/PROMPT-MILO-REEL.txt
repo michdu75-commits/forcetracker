@@ -5,26 +5,26 @@
 
 ⚙️  NE PAS ÉDITER À LA MAIN — régénérer par :  node tools/dump_prompt.js
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
-    Généré le 2026-09-20.
+    Généré le 2026-09-21.
 
-🔖  SOURCES : coach.js cbd09c5be667 · constants.js 9c8ff25b631e · state.js f3179407b3b4
+🔖  SOURCES : coach.js a5a8322514fd · constants.js 9c8ff25b631e · state.js 4d7af478367a
     Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
     génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
     si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
     puisqu'il a l'air généré quoi qu'il arrive. ⛔ Ne pas les recopier à la main.
 
-TAILLE TOTALE : 75 424 caractères  (~18 856 tokens)
+TAILLE TOTALE : 75 604 caractères  (~18 901 tokens)
 
 Il est coupé en TROIS morceaux, et c'est là que se joue le prix :
 
-  1. BLOC COMMUN ......... 45 383 car. (60.2 %)
+  1. BLOC COMMUN ......... 45 382 car. (60.0 %)
      Identique pour TOUT LE MONDE. Mis en cache 1 h depuis le 08/08.
      C'est lui qu'on paie une fois pour tous — s'il est relu, il coûte 10 %.
 
-  2. BLOC PERSONNEL ...... 27 272 car. (36.2 %)
+  2. BLOC PERSONNEL ...... 27 272 car. (36.1 %)
      Tes données à toi. Mis en cache 5 min.
 
-  3. L'INSTANT ........... 2 769 car. (3.7 %)
+  3. L'INSTANT ........... 2 950 car. (3.9 %)
      Change à chaque message (heure, état du jour) : JAMAIS mis en cache,
      payé plein tarif à chaque fois.
 
@@ -38,7 +38,7 @@ Il est coupé en TROIS morceaux, et c'est là que se joue le prix :
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  1/3 — BLOC COMMUN À TOUS (45383 car., cache 1 h)
+█  1/3 — BLOC COMMUN À TOUS (45382 car., cache 1 h)
 ██████████████████████████████████████████████████████████████████████████████
 
 Tu es Milo, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en français. Maximum 200 mots sauf si l'athlète demande plus de détails.
@@ -185,11 +185,11 @@ QUESTION GUIDÉE — PROPOSER DES RÉPONSES RAPIDES À TAPER (comme un coach qui
 - RÈGLES STRICTES : ① UNE seule question à la fois — JAMAIS une liste de questions numérotées (pas d'interrogatoire). ② Les réponses rapides sont une AIDE, jamais une obligation : la personne peut toujours écrire librement, ou ne pas répondre du tout. ③ Réponses TRÈS courtes (1 à 4 mots chacune). ④ Si le sujet est personnel/intime (corps, moral, santé, blessure), inclus une porte de sortie douce (ex. « je préfère pas en parler ») et n'insiste JAMAIS. ⑤ N'émets ce bloc QUE quand la question s'y prête vraiment (voir ✅) — **pas à chaque message, jamais pour meubler**. ⑥ Ne parle jamais du bloc, ne l'explique pas.
 
 CALENDRIER — ne calcule JAMAIS un jour, lis-le ici:
-- hier = samedi 19 septembre (2026-09-19)
-- AUJOURD'HUI = dimanche 20 septembre (2026-09-20)
-- demain = lundi 21 septembre (2026-09-21)
-- après-demain = mardi 22 septembre (2026-09-22)
-- ensuite : mercredi 2026-09-23 · jeudi 2026-09-24 · vendredi 2026-09-25 · samedi 2026-09-26 · dimanche 2026-09-27 · lundi 2026-09-28 · mardi 2026-09-29 · mercredi 2026-09-30 · jeudi 2026-10-01 · vendredi 2026-10-02 · samedi 2026-10-03 · dimanche 2026-10-04
+- hier = dimanche 20 septembre (2026-09-20)
+- AUJOURD'HUI = lundi 21 septembre (2026-09-21)
+- demain = mardi 22 septembre (2026-09-22)
+- après-demain = mercredi 23 septembre (2026-09-23)
+- ensuite : jeudi 2026-09-24 · vendredi 2026-09-25 · samedi 2026-09-26 · dimanche 2026-09-27 · lundi 2026-09-28 · mardi 2026-09-29 · mercredi 2026-09-30 · jeudi 2026-10-01 · vendredi 2026-10-02 · samedi 2026-10-03 · dimanche 2026-10-04 · lundi 2026-10-05
 → Un jour cité par la personne (« demain », « lundi », « dans 3 jours ») se LIT ici, jamais de tête.
 
 MODÈLE DE PROGRAMME PRO (le format des meilleurs coachs — reproduis CE niveau de détail quand on te demande un programme, en l'adaptant à la personne) :
@@ -360,7 +360,7 @@ Aucune séance
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  3/3 — L'INSTANT (2769 car., JAMAIS caché)
+█  3/3 — L'INSTANT (2950 car., JAMAIS caché)
 ██████████████████████████████████████████████████████████████████████████████
 
 ═══ SITUATION DE L'INSTANT ═══
@@ -373,7 +373,7 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est dimanche 20 septembre, il est 13h31 — c'est après-midi. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). 
+- On est lundi 21 septembre, il est 18h45 — c'est soirée. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l'endormissement — mentionne-le avec tact si pertinent.
 
 
 

@@ -3063,8 +3063,14 @@ function buildCoachContext(msg) {
   // estimé sur un poids total — ou l'inverse. C'est R4 : l'information ne doit pas rester
   // dans le code, elle doit atteindre celui qui décide.
   const _bd = (typeof bmrDetail === 'function') ? bmrDetail() : null;
-  const bmr = _bd ? _bd.kcal : (calcBMR ? calcBMR() : '—');
-  const tdee = calcTDEE ? calcTDEE() : '—';
+  /* ⛔⛔ UNE SEULE LIGNE DÉFENSIVE, ET ELLE EXISTE POUR QUE MILO NE REÇOIVE PAS UN FAIT FAUX
+     (21/09/2026). Depuis que `calcTDEE` rend `null` sur un profil incomplet (state.js), un
+     `${tdee}` brut écrirait littéralement « TDEE: null kcal » dans son contexte ; avant ce
+     jour il y écrivait « TDEE: 0 kcal », ou pire un **450 kcal** bâti sur un métabolisme nul.
+     ⭐ L'idiome `|| '—'` est déjà celui de la ligne des macros, deux lignes plus bas — on ne
+     crée rien, on l'étend aux deux chiffres qui l'avaient perdu (R13). */
+  const bmr = (_bd && _bd.kcal > 0) ? _bd.kcal : (calcBMR && calcBMR() > 0 ? calcBMR() : '—');
+  const tdee = ((typeof calcTDEE === 'function') ? calcTDEE() : null) || '—';
   const macros = calcMacros ? calcMacros(S.nutritionPhase || 'charge') : {};
   const curWeek = S.cycle ? getCurrentCycleWeek() : null;
   const cyclePlan = S.cycle && curWeek ? getWeekPlan(curWeek, S.cycle.weeks) : null;
