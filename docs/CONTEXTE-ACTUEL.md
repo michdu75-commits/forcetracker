@@ -516,7 +516,7 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
   ~19,6 % · Dernière mesure saisie : 18,3 % — 20/09 »* — et « mesure saisie » n'est dit que si
   la provenance est **écrite**.
   Tests : **B-CCCXLII (23) + B-CCCXLIII (26)**, les 6 cas A→F du brief, banc ciblé **49 OK /
-  0 rouge**, contrôle négatif **MUT_TOTAL**, passe complète **PASSE_TOTAL**.
+  0 rouge**, contrôle négatif **25/25 conformes**, passe complète **4615 ✅ / 0 ❌**, 4 conditions vertes.
 - **Version précédente :** `ft-v1230` — 📏 **LES MENSURATIONS S'ENREGISTRENT : LE
   `persist()` MANQUANT SUR LA SORTIE « PAS DE POIDS ».** Cas réel de Michel (Progrès → Corps &
   santé) : cou **40,7**, taille **92,4**, hanches vide — *« je les renseigne et je ne peux pas
