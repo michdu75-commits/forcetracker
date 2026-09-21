@@ -3909,3 +3909,44 @@ lieu de laisser `pkill` choisir.
 👉 ***La règle générale : un motif qui cherche un processus ne doit jamais pouvoir se trouver
 lui-même.*** Si le motif est écrit dans la commande qui le cherche, il faut l'ancrer, ou le
 chercher ailleurs que dans sa propre ligne de commande.
+
+---
+
+### 🔁 RECHUTE DU 21/09/2026 — LA RÈGLE ÉTAIT ÉCRITE ICI, ET ELLE N'A PAS SUFFI
+
+⛔⛔ **Troisième occurrence, et c'est ce qu'elle apprend qui compte.** La règle ci-dessus était
+déjà dans ce fichier — *celui qu'on relit avant de coder* — et le défaut a quand même été refait,
+**six fois dans la même journée**.
+
+**Le dégât, mesuré** : six sondes d'attente vivantes de **2 h 12 à 12 h 06**, aucune ne consommant
+de CPU, aucune ne rendant jamais sa notification. *Elles ne coûtaient rien en ressources et
+faussaient tout en lisibilité* : l'avancement réel était invisible, et un contrôle négatif terminé
+depuis **52 minutes** passait pour bloqué.
+
+⚠️⚠️ **ET LA « CORRECTION » ANNONCÉE N'EN ÉTAIT PAS UNE — c'est le point le plus utile.** J'avais
+changé le motif (`tests/parcours/runner.js` → `parcours/runner`) et annoncé que la sonde ne pouvait
+plus se trouver. **Faux** : elle est restée bloquée **2 h 12** avec le nouveau motif.
+👉 ***Renommer le motif ne corrige rien — tant qu'il vit dans son propre `argv`, il s'auto-trouve.***
+
+⭐ **ET LES SONDES SE MAINTIENNENT MUTUELLEMENT EN VIE**, ce qui n'était pas écrit : une sonde
+bloquée **porte le motif dans son `argv`**, donc la suivante la voit et se croit en pleine passe.
+Une seule sonde oubliée contamine toutes celles qui viennent après.
+
+**⛔ CE QUI PROTÈGE AUJOURD'HUI — et ce n'est pas un meilleur motif, c'est l'absence de motif :**
+`tools/attendre_fin.sh`, qui n'interroge **jamais** la liste des processus.
+- `attendre_fin.sh pid <PID>` — `kill -0`, qui ne lit aucune ligne de commande ;
+- `attendre_fin.sh texte <fichier> <mot>` — on attend l'**artefact** (la ligne de verdict), pas le
+  processus. *Le mot attendu peut vivre dans notre propre `argv` : personne ne regarde les `argv`.*
+- ⛔ **Les deux abandonnent au bout d'un délai** et rendent la main : *une sonde incapable
+  d'abandonner est exactement ce qui a produit les six fantômes.*
+
+⚠️ **Et le mode `pid` porte un piège PIRE que celui qu'il remplace, donc il est écrit dans le
+script** : si l'on passe le PID d'un **enveloppeur** (`setsid nohup … &` rend le PID du wrapper,
+pas celui du travail), la sonde annonce « terminé » **pendant que le travail tourne encore**.
+👉 ***Un faux VERT est pire qu'un blocage : le blocage se voit, le faux vert se croit.*** Mesuré en
+écrivant le script — ma propre épreuve est passée verte pour cette raison exacte, et c'est le mode
+`texte` qui est immunisé, parce qu'il attend un **résultat** et non un processus.
+
+**La leçon de gouvernance, et elle dépasse ce bug** : *une famille écrite dans `BUGS.md` empêche de
+la redécouvrir, pas de la refaire.* Ce qui l'empêche vraiment, c'est un outil qui rend le geste
+fautif impossible — **par construction, pas par discipline**.
