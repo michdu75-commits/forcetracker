@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1232`** (prochaine : `ft-v1233`).
+> **Version actuelle : `ft-v1233`** (prochaine : `ft-v1234`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,43 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1233 — 🧠 « CE QUE L'APP A APPRIS DE TON ALIMENTATION » NE PRÉSENTE PLUS COMME UNE HABITUDE CE QUI N'EN EST PAS** — cas réel de Michel, capture à l'appui : *« Petit-déj ~12h »* · *« Collation 2 · Pom'Potes »* prise 1 ou 2 fois · *« prune »* prise 2 fois, sur **33 jours notés étalés sur 76**. Ses bornes : ⛔ ***« ne pars pas du principe que… le mesurer »*** · ⛔ ***« ne fixe pas arbitrairement un seuil du type minimum 5 fois sans mesurer le comportement réel »*** · ⭐ ***« étudier le besoin avant de choisir la règle »***.
+
+**⛔⛔ REPRODUIT AVANT D'ÊTRE CORRIGÉ, ET LES QUATRE SYMPTÔMES SORTENT À L'IDENTIQUE** sur un journal conduit dans l'app servie. **Trois causes distinctes**, pas une :
+
+| ce qui s'affichait | pourquoi |
+|---|---|
+| ⛔ **Petit-déj ~12h** | l'heure était la médiane de `new Date(e.ts).getHours()` — or **`ts` vaut `Date.now()` À L'ENREGISTREMENT**, et `FOOD_MEALS` ne porte **aucune** heure |
+| ⛔ **prune** (2 jours) | `top(o,3)` prenait les 3 premiers par fréquence **sans aucun seuil** |
+| ⛔ **Pom'Potes** (1-2 jours) | même cause, dans les **deux** collations |
+| ✅ la population | **rien à corriger** |
+
+**⭐⭐ L'APP NE SAIT PAS QUAND ON A MANGÉ, ELLE SAIT QUAND ON A TAPÉ.** C'est structurel : le modèle n'a **nulle part** l'heure du repas. Quelqu'un qui rentre sa journée à midi — *ce que Michel fait, c'est écrit dans ft-v1226* — voit son petit-déjeuner daté de midi, et ***aucune médiane ne rattrape 33 saisies faites à midi***. 👉 *Présenter une heure de SAISIE comme une heure de REPAS est un fait faux sur la personne* (**R29**).
+
+**⭐⭐ ET ON NE FABRIQUE PAS DE TABLE D'HORAIRES POUR AUTANT.** `_afMealDefautHoraire()` **en est déjà une**, servie et décidée (`<11h` petit-déj · `<15h` déjeuner · `<18h` collation · sinon dîner). On lui demande simplement : *« à cette heure-là, de quel repas s'agirait-il ? »* Si sa réponse n'est pas le repas observé, **on n'affiche rien** plutôt qu'un chiffre faux. ⛔ **Échec fermé.** ⚠️ Son paramètre est **strictement additif** : appelée sans argument elle rend exactement ce qu'elle rendait, **le repas actif ne bouge pas d'un iota**, deux témoins le figent.
+
+**⭐⭐ UN « TOP 3 » NE DEMANDE JAMAIS SI LE 2ᵉ EST UNE HABITUDE — IL DEMANDE SEULEMENT S'IL EXISTE UN 2ᵉ.** C'est ça, le défaut : **une place à remplir**. Mesuré : `diner` → saumon ×55 puis **prune ×2** ; `collation2` → **pom'potes ×2**, seule candidate donc affichée quoi qu'il arrive.
+
+**⛔ AUCUN SEUIL INVENTÉ — c'est la consigne, et elle a été tenue.** Le nombre employé est **`_PA_MIN_JOURS`**, **déjà** déclaré dans le fichier et **déjà** appliqué **deux fois** : c'est le seuil sous lequel la carte dit elle-même *« pas encore de quoi dégager une habitude »*, et c'est déjà le minimum des horaires. *Une règle qui existe et qu'on étend coûte moins qu'une règle neuve* (**R19**). ⭐ **L'étude des seuils, faite AVANT de choisir** (10 aliments de fréquences variées) : ce couple sort **Kebab (1 j)**, **Prune (2 j)** et **Pom'Potes**, et ne perd **aucune** habitude réelle — y compris la pizza tous les 11 jours, qu'un seuil en **POURCENTAGE** aurait éliminée.
+
+**⭐ ON COMPTE EN JOURS, PLUS EN LIGNES** : deux Pom'Potes le même après-midi faisaient `n=2` et ressemblaient à deux occasions ; *c'est **une** journée*. ⭐ **Et le départage devient déterministe** : à égalité de jours le **nom** tranche — mesuré, **inverser `S.foodLog` suffisait à intervertir deux aliments**. *Un affichage qui dépend de l'ordre de stockage change sans que rien n'ait changé* (la famille du `[0]` qui suppose un tri).
+
+**⛔⛔ ET UNE SUSPICION DU BRIEF EST INFIRMÉE — je le dis plutôt que de coder dessus (R38).** Il n'y a **ni `slice()` sur les dernières lignes, ni fenêtre glissante, ni tri supposé, ni `[0]`** : la population **EST** le journal entier, et le *« 33 jours sur 76 »* affiché est **honnête**.
+
+**📣 RÈGLE D'OR #11 — L'ÉCRAN CHANGE, ET C'EST VOULU.** Des lignes disparaissent de la carte (une heure, deux aliments). ⭐ Et quand **aucun** repas ne passe la barre, la carte **le dit** au lieu de rendre un cadre muet — *un cadre qui ne contient que son bas de page se lit comme un chargement qui n'a pas abouti*. ⚖️ **Pop-up : non** — rien n'est à *faire*, et le changement retire un fait faux.
+
+**⚠️⚠️ ET LA CAPTURE DE MICHEL A CORRIGÉ MON PROPRE COMPTE RENDU.** Ma première reproduction était **synthétique** et donnait 2 jours notés à « Collation 2 » ; j'en avais conclu que le filtre décisif était celui de la **population du repas**. ⛔ **Sa capture dit le contraire** : ses **cinq** repas affichent une heure, donc Collation 2 a bien ≥ 3 lignes. ***Chez lui, c'est le filtre par ALIMENT qui sort Pom'Potes et la prune.*** Les deux filtres restent justifiés — mais j'avais attribué la victoire au mauvais. 👉 *Une capture réelle vaut mieux qu'une reconstitution.* ⚠️ Deux détails factuels au passage : la prune est en **Collation**, pas en Dîner comme disait le brief, et Pom'Potes apparaît dans **les deux** collations.
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ compte neuf, `_ref100`, scanner, douane, `portionWeightG`, **repas actif**, Corps & santé, masse grasse, Accueil, Séance, Milo, Worker, backend, quotas, onboarding : **0 ligne** · ⛔ ni `state.js`, ni `coach.js`, ni `log.js`, ni `tracking.js`, ni `constants.js`, ni `setup.js`, ni `index.html`, ni `Code.js`, ni `worker.js`.
+
+**⚠️ ET UN TÉMOIN DE ft-v1226 A ROUGI À LA PASSE COMPLÈTE — sur du code sain.** `B-CCCXXXVI ②` exigeait `function _afMealDefautHoraire()` **avec des parenthèses vides**, alors que sa garantie annoncée est *« il n'existe qu'UN propriétaire »*. ⛔ **Il n'a pas été affaibli** : il mesure désormais l'**unicité de la déclaration** au lieu du nombre d'arguments — ***un témoin qui fige une signature interdit d'étendre ce qu'il protège***. ⭐ Et l'acquis n'est pas perdu : `B-CCCXLVIII ⑯/⑰` vérifient que l'appel sans argument rend exactement ce qu'il rendait et que le repas actif ne passe jamais d'heure.
+
+**⚠️ DEUX DÉFAUTS D'INSTRUMENT À MOI, dans les mêmes familles que d'habitude** : ① un motif cherchait `Pas encore d'habitude` dans une source où **l'apostrophe est échappée** (`d\'habitude`) — *quand on lit la source brute, on lit AUSSI ses échappements* ; ② mon cas de test « aucune habitude » mettait 2 jours en tout, donc la carte partait sur sa branche « insuffisant » et **ne testait pas ce que je croyais** — re-construit avec 6 jours notés et aucun repas à 3.
+
+Tests : **blocs B-CCCXLVIII (20 témoins de source) et B-CCCXLIX (17 conduits dans le navigateur)**, dans `tests/parcours/habitudes_alim.js` — les **8 cas A→H** du brief, plus le **journal de Michel reconstruit d'après sa capture** (33 jours notés), où les **9 attendus sont tenus** : le « ~12h » disparaît, **~14h / ~16h / ~17h / ~19h restent**, aucun de ses vrais aliments n'est perdu. ⛔ **CONTRÔLE NÉGATIF : 21 mutations sur un arbre CLONÉ, 21 conformes, 0 ancre morte** — les **5 familles exigées au §9** sont chacune couverte (dernier aliment · `slice()` · ordre supposé · heure de saisie · fréquence mal comptée), dont **4 DÉGUISÉES** : le filtre du repas retiré en gardant celui de l'aliment, les lignes déguisées en jours, un 2ᵉ critère qui retombe sur l'ordre, et ⭐ **le barème horaire RECOPIÉ sur place** — *l'affichage reste juste, et la deuxième source de vérité est née*. ⭐ **Passe complète : 4734 ✅ / 0 ❌**, les 4 conditions vertes.
+
+Fichiers : `app.js`, `screens.js`, `tests/parcours/habitudes_alim.js` (nouveau), `tests/parcours/repas_actif.js` (témoin ② retourné), `tests/parcours/runner.js`, `tools/banc_habitudes_alim.js`, `tools/mut_habitudes_alim.py`, `tools/gen_habitudes_1233_pdf.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Deux fichiers servis : `app.js` et `screens.js`.** sw.js ft-v1233. |
 
 **ft-v1232 — 🍽️ DEUX CORRECTIONS NUTRITION EN SÉQUENCE · LE COMPTE NEUF CESSE DE FABRIQUER UN PLAN, ET LE REPAS DÉCRIT ENTRE ENFIN CHEZ LE RÉSOLVEUR** — feu vert de Michel après l'état des lieux. Ses bornes : ⛔ ***« l'un après l'autre dans la même session, jamais en parallèle »*** · ⛔ ***« ne lance pas un audit général Nutrition, ne cherche pas d'autres bugs »*** · ⛔ ***« ne supprime pas aveuglément toutes les occurrences de 1500 »*** · ⛔ ***« ne duplique pas `_ref100`, ne réécris pas un deuxième résolveur — le propriétaire unique doit rester propriétaire »*** · ⭐ ***« une seule passe complète à la fin »***.
 
@@ -764,40 +801,3 @@ Fichiers : `state.js`, `coach.js`, `setup.js`, `Code.js`, `worker.js`, `tests/pa
 Tests : **blocs B-CCCXXXVI (10 témoins de source) et B-CCCXXXVII (14 conduits dans le navigateur)**, dans `tests/parcours/repas_actif.js` — les **8 cas U1→U8** plus **la journée entière** de Michel : 4 repas, 9 aliments, chacun ajouté en **ROUVRANT** l'écran. ⭐ L'horloge du banc est **gelée à 09 h exprès** : c'est l'heure où le défaut horaire diffère du choix manuel — *un banc calé sur une heure où les deux coïncident serait resté vert sur le code d'avant*. ⛔ **CONTRÔLE NÉGATIF : 19 mutations sur un arbre CLONÉ, 19 conformes**, contrôle sain **24 OK / 0 rouge avant ET après**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire).
 
 Fichiers : `app.js`, `tests/parcours/repas_actif.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_repas_actif.js` et `tools/mut_repas_actif.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1226. |
-
-**ft-v1225 — ⚖️ PHASE 3.1 · LES TROIS DERNIERS ARBITRAGES IA RENDUS, ET LE POT DE 25 SÉPARÉ EN TROIS** — Michel enchaîne sur la phase 3 avec une borne de format : ⛔ ***« PASSE MOYENNE. Pas besoin d'UltraCode ni d'une passe de nuit. Cette passe doit rester ciblée. »*** · ⛔ ***« Ne pas encore : appliquer les verrous Premium serveur, fermer les routes Apps Script, toucher V2, toucher la Douane. »*** · et la phrase qui décide du pot : ⭐ ***« OUI, séparer le pot `S.foodAiUses`. »***
-
-**📣 RÈGLE D'OR #11 — UN SEUL CHANGEMENT VISIBLE, ET IL EST EN FAVEUR DE L'UTILISATEUR.** Le pot de 25 usages IA de la Nutrition était **COMMUN** aux trois capacités ; il devient **trois pots séparés**. Quelqu'un qui avait épuisé ses 25 en lisant des étiquettes retrouve donc ses estimations de repas. ⚖️ **Pop-up : non** — rien n'est à *faire*, rien ne disparaît, aucun repère ne bouge, et le changement ne peut que soulager. ⚠️ **Dit franchement parce que c'est un jugement** : si Michel veut une ligne dans le Guide, c'est une ligne à ajouter — je ne la pose pas de moi-même sur un élargissement qu'il a décidé.
-
-**⭐⭐ POURQUOI UN COMPTEUR COMMUN ÉTAIT UN DÉFAUT, ET PAS UN RACCOURCI.** Tant que les trois capacités partagent `S.foodAiUses`, elles **ne peuvent pas** recevoir trois politiques distinctes : lire une étiquette retire un essai au repas décrit, qui n'a rien demandé. 👉 ***Un compteur commun n'est pas une simplification, c'est une politique implicite*** — celle qui dit « ces trois choses sont la même », ce que la phase 2 a mesuré comme faux.
-
-| | avant | après |
-|---|---|---|
-| étiquette IA | ⛔ **pot commun de 25** | ✅ `foodLabelAiUses`, 25 à elle |
-| repas décrit IA | ⛔ **le même pot** | ✅ `foodMealEstimateAiUses`, 25 à lui |
-| repli code-barres IA | ⛔ **le même pot** | ✅ `foodBarcodeAiUses`, à lui seul |
-| le nombre `25` | 1 constante | **1 constante** (inchangé) |
-
-**⛔⛔ ET LE REPLI CODE-BARRES GARDE UN POT DE 25 ALORS QUE SA POLITIQUE EST « PREMIUM, 0 » — C'EST DÉLIBÉRÉ, ET C'EST LE SEUL ÉTAT SÛR.** Michel : *« si le verrou Premium réel appartient à la prochaine phase serveur, ne construis pas ici une fausse sécurité uniquement client »*. Or lui retirer son pot **sans** poser ce verrou l'aurait rendu **illimité et gratuit** — l'exact contraire de la décision. 👉 ***Mesuré avant de trancher : la capacité a deux portes réelles*** (le bouton « 🆘 si la caméra n'y arrive pas » et le repli du scanner). La **séparation** est faite, l'**écart** est écrit dans le registre, le **verrou** viendra.
-
-**⭐⭐ LA MIGRATION EST CONSERVATRICE, ET C'EST SON SEUL MÉRITE.** Chaque pot neuf hérite du **TOTAL** de l'ancien : quelqu'un qui a consommé 10 essais démarre à **10 sur chaque capacité**, pas à 0. ⛔ On ne sait pas comment ces 10 se répartissaient — *l'information n'a jamais été enregistrée, donc elle n'existe pas, donc on ne l'invente pas* (règle d'or 15). L'erreur qui reste est bornée et va dans le bon sens : on peut sur-compter, jamais offrir 25 essais neufs à quelqu'un qui en avait consommé 20.
-
-**⛔⛔ CE N'EST PAS UN DRAPEAU « MIGRATION FAITE », ET C'EST LA DÉCISION CENTRALE.** Une restauration cloud remplace l'état **APRÈS** le chargement, et peut ramener un profil d'**avant** cette version des mois plus tard — c'est mot pour mot le piège de `ft4_stmig1` (ft-v1213) et celui de l'identité des lignes du journal (ft-v1218). La migration est donc une **RÈGLE rejouée** au chargement **et** après chaque restauration, **idempotente par construction** : un pot déjà numérique n'est jamais retouché.
-
-**⚠️ ET LE SIGNAL EST L'ABSENCE, PAS LA VALEUR.** `_lsNombreOuNull` rend `null` quand la clé n'a jamais été écrite. *Si elle rendait 0, un pot jamais écrit serait indiscernable d'un pot légitimement à zéro* — la migration ne partirait **jamais**, et un compte à 20 essais consommés recevrait 25 essais neufs, en silence.
-
-**⭐ LES TROIS ARBITRAGES, RENDUS PAR MICHEL** : `milo.debrief` → **PREMIUM** (le débrief **chiffré** de fin de séance reste local et gratuit ; c'est le *jugement* de Milo qui devient Premium) · `nutrition.mealPlanImport.ai` → **PREMIUM** (la **saisie manuelle** d'un plan reste gratuite) · `nutrition.mealPlan.ai` → **FREEMIUM par PÉRIMÈTRE**, le **jour** en gratuit et la **semaine** en Premium.
-
-**⛔ UNE 22ᵉ CAPACITÉ AURAIT ÉTÉ LA FAUTE FACILE.** Le jour et la semaine sont **le même besoin produit** vu à deux profondeurs : les séparer en `mealPlan.day` / `mealPlan.week` aurait cassé le compte acté de 21. Un **seul** champ nouveau est ajouté, `perimetre`, porté par **une seule** capacité — son absence ailleurs se lit « pas de variation », ce qui est le fait.
-
-**⭐⭐ ET UNE SEPTIÈME FORME DE QUOTA EST NÉE, `non_decide`, PARCE QU'ÉCRIRE « ILLIMITÉ » AURAIT ÉTÉ INVENTER UNE DÉCISION.** Michel a tranché le **périmètre**, pas le **nombre** : *« Ne pas inventer 1/jour, 3/jour, 5/mois ou autre quota. »* ⚠️ Et elle ne double pas `par_evenement` : celle-là dit « la forme est connue, la taille n'est pas mesurée » (le backfill), celle-ci dit « la forme elle-même n'est pas tranchée ». 👉 ***Un registre qui n'a pas de mot pour « pas décidé » finit toujours par écrire une décision à la place.***
-
-**⭐ ZÉRO POLITIQUE OUVERTE, ET LA DOCUMENTATION LE DIT SANS MENTIR.** Les trois `NON_DECIDEE` disparaissent. ⛔ Mais la **valeur** reste déclarée alors que plus personne ne la porte : la retirer forcerait la prochaine capacité déclarée avant d'être tranchée à s'inscrire « FREE » par défaut — exactement la faute qu'elle existe pour empêcher. ⛔ Et le texte généré prévient : *« zéro politique ouverte ne veut pas dire zéro travail »* — **12 écarts** restent écrits.
-
-**🩹 CORRECTION DOCUMENTAIRE — M12 N'A JAMAIS ÉTÉ UNE QUESTION, ET C'EST MON ERREUR.** Le dossier de la phase 3 listait *« `milo.memory` devient-elle Premium ? »* parmi les décisions attendues. **Elle était déjà actée** — et le registre l'inscrivait correctement dans le même fichier (`politique: PREMIUM` / `etatCode: FREE`). 👉 ***Un rapport qui rouvre une décision déjà prise ne se contente pas d'être faux : il fait RE-ARBITRER, c'est-à-dire qu'il COÛTE une décision au lieu d'en rappeler une*** (règle d'or 15). Le générateur de ce dossier porte désormais l'explication sur place et **refuse de produire** (ses gardes exigent « 3 politiques ouvertes »), comme les deux générateurs périmés de S2-B.
-
-**🔧 UNE PORTE DE CONTOURNEMENT FERMÉE AU PASSAGE, LOCALE ET SANS DÉPENDANCE AU SERVEUR.** Le plafond « 1 régénération/jour en gratuit » vit **dans** `S.mealPlan` — que la génération complète réécrivait avec `regenCount:0`. 👉 ***Le plafond se levait en appuyant sur le bouton d'à côté***, qui n'a lui aucun plafond. Le compteur du jour est désormais **REPORTÉ** au lieu d'être effacé ; un jour différent repart bien à zéro, et le plafond lui-même ne bouge pas d'un chiffre.
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ aucun **verrou Premium serveur** · ⛔ aucune route Apps Script fermée · ⛔ **ni V2, ni `ft_jetons`, ni le miroir multi-appareils, ni la Douane** · ⛔ aucun quota de génération complète inventé · ⛔ aucune 22ᵉ capacité · ⛔ aucun tombstone, aucun backfill réel · ⛔ **ni `screens.js`, ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `constants.js`, ni `supabase.js`, ni `worker.js`, ni `index.html`.**
-
-Tests : **blocs B-CCCXXXIV (23 témoins de source) et B-CCCXXXV (24 témoins conduits dans le navigateur)**, dans `tests/parcours/pots_nutrition.js` — les **8 cas N1→N8** de Michel plus les **8 états de migration** (absent · 0 · 5 · 24 · 25 · 40 · « abc » · −3), l'idempotence éprouvée en rejouant la règle **trois fois**, et un pot déjà migré qui **ne bouge plus** même quand l'ancien pot remonte plus haut. ⭐ Le témoin **B-CCCXXXI ⑱ a été RETOURNÉ, pas supprimé** : il figeait la **liste** des trois politiques ouvertes et serait devenu rouge sur un registre parfaitement à jour ; sa **garantie** n'a pas bougé — *le registre doit rester capable de dire « pas décidé »*.

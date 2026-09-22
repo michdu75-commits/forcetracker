@@ -6,12 +6,25 @@
 
 ---
 
+## 🧠 ft-v1233 (22/09/2026) — LA CARTE « CE QUE L'APP A APPRIS » NE PRÉSENTE PLUS COMME UNE HABITUDE CE QUI N'EN EST PAS
+
+- **Version en ligne (live) :** `ft-v1233` — 🧠 **trois causes distinctes, mesurées avant correction, sur la capture réelle de Michel.**
+- ⭐⭐ **L'app ne sait pas quand on a mangé, elle sait quand on a tapé.** `pa.heures[m]` était la médiane de `new Date(e.ts).getHours()`, or **`ts` vaut `Date.now()` à l'ENREGISTREMENT** et `FOOD_MEALS` ne porte **aucune** heure. ⛔ On ne fabrique pas de table d'horaires pour autant : `_afMealDefautHoraire()` **en est déjà une**, on lui demande « à cette heure-là, de quel repas s'agirait-il ? » et on n'affiche **rien** si sa réponse diffère. ⭐ Son paramètre est **strictement additif** — le repas actif ne bouge pas.
+- ⭐⭐ **Un « top 3 » ne demande jamais si le 2ᵉ est une habitude : il demande seulement s'il existe un 2ᵉ.** `top(o,3)` n'avait **aucun seuil**. ⛔ **Aucun seuil inventé** : le nombre employé est **`_PA_MIN_JOURS`**, déjà déclaré et déjà appliqué deux fois. L'étude préalable (10 aliments) le montre : il sort Kebab (1 j), Prune (2 j) et Pom'Potes **sans perdre une habitude réelle** — un seuil en POURCENTAGE aurait éliminé la pizza.
+- ⭐ **On compte en JOURS, plus en lignes**, et le départage devient **déterministe** (inverser `S.foodLog` suffisait à intervertir deux aliments).
+- ⛔⛔ **UNE SUSPICION DU BRIEF EST INFIRMÉE** (R38) : ni `slice()`, ni fenêtre glissante, ni tri supposé, ni `[0]` — la population **EST** le journal entier, et le « 33 sur 76 » affiché est **honnête**.
+- ⚠️ **Et la capture de Michel a corrigé mon propre compte rendu** : ses **cinq** repas affichent une heure, donc « Collation 2 » a bien ≥ 3 lignes. **Chez lui, c'est le filtre par ALIMENT qui tranche**, pas celui du repas — j'avais attribué la victoire au mauvais. *Une capture réelle vaut mieux qu'une reconstitution.*
+- ⚠️ **Un témoin de ft-v1226 a rougi sur du code sain** (`B-CCCXXXVI ②`) : il figeait la **signature** `_afMealDefautHoraire()` au lieu de la propriété qu'il annonce. ⛔ Retourné, pas affaibli — il mesure désormais l'**unicité de la déclaration**.
+- Tests : **B-CCCXLVIII + B-CCCXLIX**, banc **37/0** · contrôle négatif **21/21, 0 ancre morte** (les 5 familles du §9, 4 déguisées) · **passe complète 4734 ✅ / 0 ❌**.
+
+---
+
 ## 🍽️ ft-v1232 (21/09/2026) — DEUX CORRECTIONS NUTRITION CIBLÉES, EN SÉQUENCE
 
 > **Feu vert de Michel après l'état des lieux du 21/09**, sur **ces deux sujets seulement**.
 > ⛔ Le reste du chantier Nutrition **reste gelé** (voir plus bas) : rien d'autre n'a été touché.
 
-- **Version en ligne (live) :** `ft-v1232` — 🍽️ **DEUX CORRECTIONS NUTRITION EN SÉQUENCE : le compte neuf cesse de fabriquer un plan, et le repas décrit entre chez `_ref100`.**
+- **Version précédente :** `ft-v1232` — 🍽️ **DEUX CORRECTIONS NUTRITION EN SÉQUENCE : le compte neuf cesse de fabriquer un plan, et le repas décrit entre chez `_ref100`.**
 
 - **① LE COMPTE NEUF NE FABRIQUE PLUS UN PLAN CRÉDIBLE — ce défaut est FERMÉ.** Il était
   re-mesuré ouvert le 20/09 (`1 500 kcal · 0 g P · 0 g L · 375 g G`, « TDEE 0 ») et ne l'est

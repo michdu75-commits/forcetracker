@@ -2965,7 +2965,13 @@ function _blocApprisHTML(){
        ⚠️ Et « répartis sur 50 » était un nombre NU : 50 quoi ? L'unité était dans ma tête.
        ⚠️ Le millier est séparé comme partout ailleurs — « 1920 » à côté de « 2 495 » se lit
        comme une coquille, pas comme une mesure. */
-    corps=lignes
+    /* ⛔ AUCUN REPAS NE PASSE LA BARRE ? ON LE DIT (22/09/2026). Depuis qu'une habitude doit
+       être soutenue par le journal, la liste peut être VIDE — et un cadre qui ne contient que
+       son bas de page se lit comme un chargement qui n'a pas abouti, pas comme une réponse.
+       ⛔ Le ton reste factuel, jamais une relance à noter davantage (P21). */
+    corps=(lignes || '<div class="txt-just" style="font-size:12.5px;color:var(--t3);line-height:1.5;">'
+        +'Pas encore d\'habitude qui se dégage : aucun repas n\'a été noté assez de jours pour '
+        +'qu\'un aliment revienne vraiment.</div>')
       +'<div class="txt-just" style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:8px;">'
       +'Observé sur <b>tout ton journal</b> : '+pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+' noté'+(pa.nbJours>1?'s':'')
       +(pa.etendue>pa.nbJours?', étalés sur '+pa.etendue+' jours':'')

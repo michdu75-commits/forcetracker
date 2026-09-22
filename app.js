@@ -1051,8 +1051,15 @@ function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS.find(m=
    donc on n'invente pas de remise à zéro (règle d'or 15). Le choix vit tant que l'app est
    ouverte, et un rechargement complet repart sur la suggestion horaire — comportement actuel,
    inchangé. */
-function _afMealDefautHoraire(){
-  const h=new Date().getHours();
+/* ⭐ « À CETTE HEURE-LÀ, DE QUEL REPAS S'AGIRAIT-IL ? » — UN SEUL PROPRIÉTAIRE (R2).
+   ⛔⛔ LE PARAMÈTRE EST STRICTEMENT ADDITIF (22/09/2026) : appelée SANS argument, elle rend
+   exactement ce qu'elle rendait — l'heure d'aujourd'hui, pour la suggestion du repas actif.
+   *Aucun comportement du repas actif ne change*, un témoin le fige.
+   👉 Il existe parce que la carte « ce que l'app a appris » doit poser la même question sur une
+   heure PASSÉE, et que **recopier cette table ailleurs serait la duplication que ce projet paie
+   le plus cher** (R2). Une information, un propriétaire — y compris quand c'est un barème. */
+function _afMealDefautHoraire(heure){
+  const h=(heure===undefined||heure===null||!isFinite(+heure))?new Date().getHours():+heure;
   return h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';
 }
 function _afMealActif(){
@@ -3653,27 +3660,109 @@ function _profilAlimentaire(){
 
   /* ② Ses aliments, par MOMENT de la journée. C'est là qu'est l'information utile : « du riz »
      ne dit pas grand-chose, « du riz au déjeuner » se transpose directement dans un plan. */
-  const parRepas = {}, global = {};
+  /* ⛔⛔ ON COMPTE EN **JOURS**, PLUS EN LIGNES (22/09/2026) — et ce n'est pas un détail de
+     présentation. Deux Pom'Potes le même après-midi faisaient `n=2` et ressemblaient à deux
+     occasions ; c'est **une** journée. *Une habitude se mesure en jours où l'on a fait la
+     chose, pas en fois où on l'a tapée* — et toute la carte parle déjà en « jours notés ». */
+  const parRepas = {}, global = {}, joursRepas = {};
   fl.forEach(e=>{
     const n = (e && e.name || '').trim(); if(!n) return;
-    const k = cleN(n), m = e.meal || 'autre';
+    const k = cleN(n), m = e.meal || 'autre', d = e.date || '';
+    (joursRepas[m] = joursRepas[m] || {})[d] = 1;
     (parRepas[m] = parRepas[m] || {});
-    parRepas[m][k] = parRepas[m][k] || {nom:n, n:0};
+    parRepas[m][k] = parRepas[m][k] || {nom:n, n:0, jours:{}};
     parRepas[m][k].n++;
+    if(d) parRepas[m][k].jours[d] = 1;
     global[k] = global[k] || {nom:n, n:0, kcal:+e.kcal||0, prot:+e.prot||0, carbs:+e.carbs||0, fat:+e.fat||0};
     global[k].n++;
   });
   const top = (o, max) => Object.keys(o).map(k=>o[k]).sort((a,b)=>b.n-a.n).slice(0, max||3);
-  const habitudes = {};
-  Object.keys(parRepas).forEach(m=>{ habitudes[m] = top(parRepas[m], 3); });
 
-  /* ③ Ses HORAIRES réels, par repas — la médiane, pas la moyenne : un seul dîner à 2 h du
-     matin ne doit pas déplacer l'heure habituelle de tous les autres. */
+  /* ═══ ⛔⛔ CE QUI EST PRÉSENTÉ COMME UNE HABITUDE DOIT ÊTRE SOUTENU PAR LE JOURNAL ═══════
+     (22/09/2026 — cas réel de Michel : *« Pom'Potes je l'ai prise 1 ou 2 fois »*, *« la prune
+     2 fois »*, et pourtant les deux s'affichaient comme ce que l'app a « appris ».)
+
+     ⛔⛔ REPRODUIT AVANT D'ÊTRE CORRIGÉ, sur un journal conduit dans l'app servie. La règle
+     d'avant était `top(o, 3)` : **les 3 premiers par fréquence, sans aucun seuil**. Mesuré :
+
+       diner       → saumon ×55 · **prune ×2**      ⛔ 2ᵉ d'un top-3, à côté d'un aliment 27× plus fréquent
+       collation2  → **pom'potes ×2**               ⛔ seule candidate, donc affichée quoi qu'il arrive
+
+     👉 ***Un « top 3 » ne demande jamais si le 2ᵉ et le 3ᵉ sont des habitudes — il demande
+     seulement s'il existe un 2ᵉ et un 3ᵉ.*** C'est ça, le défaut : une place à remplir.
+
+     ⭐⭐ ET LE FILTRE DÉCISIF N'EST PAS CELUI QU'ON CROIT — l'étude des seuils l'a dit, contre
+     mon hypothèse de départ. Ce qui sort Pom'Potes, ce n'est pas un minimum par aliment :
+     c'est que **« Collation 2 » n'a que 2 jours notés**. *On ne connaît pas les habitudes d'un
+     repas qu'on a vu deux fois — quel que soit ce qu'on y a mangé.*
+
+     ⛔ AUCUN SEUIL INVENTÉ (consigne §6). Le nombre employé est **`_PA_MIN_JOURS`**, déjà
+     déclaré dix lignes plus haut et déjà appliqué **deux fois** dans ce fichier : c'est le
+     seuil sous lequel la carte dit elle-même *« pas encore de quoi dégager une habitude »*, et
+     c'est déjà le minimum des HORAIRES (`hs.length >= 3`). On applique la même barre au même
+     endroit — *une règle qui existe déjà et qu'on étend coûte moins qu'une règle neuve* (R19).
+
+     ⭐ Mesuré sur 10 aliments de fréquences variées : ce couple sort **Kebab (1 j)**, **Prune
+     (2 j)** et **Pom'Potes (repas vu 2 j)**, et ne perd **aucune** habitude réelle — y compris
+     la pizza tous les 11 jours, qu'un seuil en POURCENTAGE aurait éliminée. */
+  const habitudes = {};
+  Object.keys(parRepas).forEach(m=>{
+    /* ① Le REPAS doit avoir été observé assez de jours pour qu'on prétende le connaître. */
+    if(Object.keys(joursRepas[m]||{}).length < _PA_MIN_JOURS) return;
+    const l = Object.keys(parRepas[m]).map(k=>{
+      const a = parRepas[m][k];
+      return {nom:a.nom, n:a.n, jours:Object.keys(a.jours).length};
+    })
+      /* ② …et l'ALIMENT doit revenir sur assez de jours DIFFÉRENTS. */
+      .filter(a=>a.jours >= _PA_MIN_JOURS)
+      /* ⛔ DÉPARTAGE DÉTERMINISTE : à égalité de jours, le NOM tranche. Sans lui, c'est
+         l'ordre du tableau qui décidait — mesuré, inverser `S.foodLog` suffisait à
+         intervertir « Flocons avoine » et « Banane ». *Un affichage qui dépend de l'ordre de
+         stockage change sans que rien n'ait changé* — après une restauration, un import, une
+         fusion (`BUGS.md`, la famille du `[0]` qui suppose un tri). */
+      .sort((a,b)=> (b.jours-a.jours) || (b.n-a.n) || a.nom.localeCompare(b.nom,'fr'))
+      .slice(0,3);
+    if(l.length) habitudes[m] = l;
+  });
+
+  /* ③ ⛔⛔ SES HORAIRES — ET L'APP NE SAIT PAS QUAND IL A MANGÉ, ELLE SAIT QUAND IL A TAPÉ.
+     C'est LA cause du *« Petit-déj ~12h »* de Michel, et elle est structurelle : `ts` vaut
+     `Date.now()` **à l'enregistrement de la ligne**, et `FOOD_MEALS` ne porte aucune heure —
+     le modèle n'a **nulle part** l'heure du repas. Quelqu'un qui rentre sa journée à midi (ce
+     que Michel fait, c'est écrit dans ft-v1226) voit donc son petit-déjeuner daté de midi.
+     👉 ***Présenter une heure de SAISIE comme une heure de REPAS est un fait faux sur la
+     personne*** (R29), et aucune moyenne ni médiane ne le rattrape : la médiane de 55 saisies
+     faites à midi vaut midi.
+
+     ⭐⭐ ON NE FABRIQUE PAS DE TABLE D'HORAIRES POUR AUTANT — `_afMealDefautHoraire()` en est
+     déjà une, servie et décidée (<11h petit-déj · <15h déjeuner · <18h collation · sinon
+     dîner). On lui demande simplement : *« à cette heure-là, de quel repas s'agirait-il ? »*
+     Si sa réponse n'est pas le repas observé, alors l'heure lue n'est pas une heure de repas —
+     et on **n'affiche rien** plutôt qu'un chiffre faux. Michel : médiane 12 h sur `petitdej`,
+     la règle répond `dejeuner`, donc l'heure disparaît. Quelqu'un qui note en direct à 7 h
+     garde la sienne. *Échec fermé : dans le doute, pas de chiffre.*
+
+     ⚠️ LA LIMITE EST DITE PLUTÔT QUE MASQUÉE : la règle existante n'a que **4 cases** pour
+     **5 repas** — elle ne produit jamais `collation2`. Les deux collations partagent donc sa
+     case `collation` ; `autre` n'en a aucune et n'affiche jamais d'heure. *On étend une règle
+     décidée, on n'en invente pas une deuxième* (R2). */
+  const _FAMILLE = {petitdej:'petitdej', dejeuner:'dejeuner',
+                    collation:'collation', collation2:'collation', diner:'diner'};
   const heures = {};
   Object.keys(parRepas).forEach(m=>{
     const hs = fl.filter(e=>e && (e.meal||'autre')===m && e.ts)
                  .map(e=>new Date(e.ts).getHours()).sort((a,b)=>a-b);
-    if(hs.length >= 3) heures[m] = hs[Math.floor(hs.length/2)];   // ⛔ 3 points minimum
+    if(hs.length < 3) return;                                   // ⛔ 3 points minimum
+    /* ⛔ ET LE MÊME REPAS DOIT AVOIR ASSEZ DE JOURS QUE SES ALIMENTS : sinon un repas noté
+       UN seul jour mais en 5 lignes affichait une heure sans aucun aliment à côté —
+       *deux règles différentes sur la même ligne de la carte, et rien ne le disait.* */
+    if(Object.keys(joursRepas[m]||{}).length < _PA_MIN_JOURS) return;
+    const h = hs[Math.floor(hs.length/2)];
+    const attendu = _FAMILLE[m];
+    if(!attendu) return;                                        // `autre` : aucune case
+    if(typeof _afMealDefautHoraire !== 'function') return;       // ⛔ échec fermé
+    if(_FAMILLE[_afMealDefautHoraire(h)] !== attendu) return;    // l'heure dit un autre repas
+    heures[m] = h;
   });
 
   /* ④ Ce qu'il mange VRAIMENT en moyenne, sur les jours notés — à comparer à sa cible.

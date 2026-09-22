@@ -49,9 +49,19 @@ module.exports.source = function (t, ROOT, fs, path) {
     OAF !== '' && !/_afMeal\s*=/.test(OAF) && !/getHours\(\)/.test(OAF),
     OAF === '' ? 'openAddFood introuvable' : 'elle y touche encore');
 
-  /* ⭐ UN SEUL PROPRIÉTAIRE (R2) : une seule fonction répond à « dans quel repas écrit-on ? ». */
+  /* ⭐ UN SEUL PROPRIÉTAIRE (R2) : une seule fonction répond à « dans quel repas écrit-on ? ».
+     ⚠️ CE TÉMOIN FIGEAIT LA SIGNATURE, PAS LA PROPRIÉTÉ QU'IL ANNONCE (retourné le 22/09/2026).
+     Il exigeait `function _afMealDefautHoraire()` — parenthèses VIDES — et il a rougi le jour
+     où cette fonction a reçu un paramètre **facultatif**, pour que la carte « ce que l'app a
+     appris » puisse lui poser la même question sur une heure PASSÉE au lieu de recopier son
+     barème (R2, ft-v1233). ⛔ Sa garantie n'a pas bougé d'un iota : *il n'existe qu'un seul
+     propriétaire*. On mesure donc l'UNICITÉ de la déclaration, pas le nombre d'arguments —
+     *un témoin qui fige une signature interdit d'étendre ce qu'il protège*.
+     ⭐ Et l'ancien acquis n'est pas perdu : `B-CCCXLVIII ⑯/⑰` vérifient, eux, que l'appel sans
+     argument rend exactement ce qu'il rendait et que le repas actif ne passe jamais d'heure. */
   t('B-CCCXXXVI ② ⭐ le repas employé a UN propriétaire, `_afMealActif`',
-    /function _afMealActif\(\)/.test(A) && /function _afMealDefautHoraire\(\)/.test(A), '');
+    (A.match(/function _afMealActif\s*\(/g) || []).length === 1
+      && (A.match(/function _afMealDefautHoraire\s*\(/g) || []).length === 1, '');
 
   /* ⛔ LE SIGNAL EST L'ABSENCE : `null` veut dire « personne n'a choisi ». S'il valait un repas
      par défaut, on ne pourrait plus distinguer un choix d'une suggestion — et la correction
