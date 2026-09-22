@@ -3950,3 +3950,53 @@ pas celui du travail), la sonde annonce « terminé » **pendant que le travail 
 **La leçon de gouvernance, et elle dépasse ce bug** : *une famille écrite dans `BUGS.md` empêche de
 la redécouvrir, pas de la refaire.* Ce qui l'empêche vraiment, c'est un outil qui rend le geste
 fautif impossible — **par construction, pas par discipline**.
+
+---
+
+### 🔁 4ᵉ OCCURRENCE — 21/09/2026 AU SOIR : L'OUTIL EXISTAIT, ET JE NE L'AI PAS EMPLOYÉ
+
+⛔⛔ **Le même soir, quelques heures après avoir écrit `tools/attendre_fin.sh`**, j'ai attendu un
+déploiement GitHub avec une boucle écrite **à la main**, hors de l'outil :
+
+```bash
+until [ "$(curl -s .../actions/runs/<id> | grep -o '"status":"[a-z_]*"' | head -1)" \
+        = '"status":"completed"' ]; do sleep 15; done
+```
+
+**⭐⭐ ET LA FORME DU DÉFAUT EST NOUVELLE : ce n'est PAS une sonde qui se trouve elle-même.**
+Les trois précédentes étaient des `pgrep -f` qui s'auto-correspondaient. Celle-ci est une
+**condition qui ne pouvait pas être satisfaite** :
+
+| | |
+|---|---|
+| ce que le motif cherchait | `"status":"completed"` — **sans espace** |
+| ⛔ ce que l'API GitHub renvoie | `  "status": "completed",` — **JSON indenté, AVEC une espace** |
+| **mesuré sur la vraie réponse** | `grep -c -o '"status":"[a-z_]*"'` → ⛔ **0 occurrence** |
+
+👉 ***La boucle n'attendait pas un événement lent : elle attendait un texte qui n'existait pas.***
+Et comme elle n'avait **aucun maximum**, elle tournait sans fin — jusqu'à ce que Michel demande
+*« pourquoi y a-t-il encore une tâche en cours ? »*. C'est le **piège de l'espace pour la 11ᵉ fois**
+dans ce dépôt (famille §1), cette fois appliqué non pas à un témoin mais à une **condition d'arrêt**.
+
+**⭐ LA LEÇON QUI S'AJOUTE À LA FAMILLE** : un guetteur a **trois** réponses possibles, pas deux —
+*terminé* · *pas encore* · ***je n'ai pas compris la réponse***. Un `grep` n'en connaît que deux :
+il range « je n'ai pas compris » dans « pas encore ». 👉 ***Un guetteur incapable de distinguer
+l'attente de l'incompréhension attendra éternellement une réponse qu'il ne comprend pas.***
+
+**⛔ CE QUI PROTÈGE AUJOURD'HUI — `tools/attendre_fin.sh gh-run <run_id>`** (consigne de Michel :
+*« rends ce cas impossible à refaire »*) :
+- **aucun `grep` sur du JSON** — la réponse est lue par un vrai analyseur (`python3 json`), donc
+  l'indentation, l'ordre des clés et les espaces n'ont plus aucun effet ;
+- **maximum obligatoire** (30 min par défaut) → `exit 2`, la main est rendue ;
+- **l'erreur a son propre code** : `exit 3` pour une réponse illisible, vide, HTTP non-200, sans
+  champ `status`, ou un identifiant qui n'en est pas un (coller l'URL au lieu du numéro) ;
+- **`exit 4`** quand le run est bien terminé mais que son verdict n'est **pas** `success` —
+  *sinon « fini » se lirait « réussi », ce qui est exactement le faux vert du mode `pid`.*
+
+Éprouvé sur les **8 chemins** avant d'être écrit ici : succès · échec · délai dépassé · HTTP 404 ·
+HTTP 500 · JSON illisible · JSON sans `status` · réponse vide — chacun sort avec un code distinct,
+et le **cas exact du bug** (JSON indenté) sort désormais vert.
+
+⛔ **Et la consigne qui accompagne l'outil** : *plus aucun `until curl … grep … sleep` bricolé à la
+main.* Les trois modes de `attendre_fin.sh` couvrent les trois attentes réelles du projet — un
+processus, un fichier, un déploiement.
