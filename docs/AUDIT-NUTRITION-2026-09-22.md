@@ -86,7 +86,21 @@ repos, mais **le jour où la personne s'entraîne**.
 
 ---
 
-## 3. ⭐⭐ MAIS UNE ANOMALIE SUGGÉRÉE PAR LE CAHIER N'EN EST PAS UNE
+> ## ⛔⛔ CORRECTION DU 22/09 AU SOIR — LA SECTION 3 CI-DESSOUS EST FAUSSE
+>
+> Le corpus massif (921 984 profils) a **réfuté** ce que j'écris plus bas. L'écart maximal de
+> fermeture calorique n'est pas de ±3 kcal : il atteint **+377 kcal** — une femme de 75 ans,
+> 150 cm, 110 kg en perte de poids voit **« cible 1 515 kcal »** et des macros qui totalisent
+> **1 892 kcal**. 191 profils sont concernés, écart moyen 108 kcal.
+>
+> **Deux erreurs successives, les deux à moi** : ① 14 cas ne suffisaient pas ; ② mon corpus ne
+> gardait ensuite que les **8 premiers** cas rencontrés, pas les **pires** — *un échantillon
+> d'exemples n'est pas un maximum*. ⭐ L'invariant reste vrai **hors écrêtage des glucides** :
+> c'est le `Math.max(0, …)` qui laisse le surplus dans la somme.
+>
+> **Le détail et la correction sont dans `docs/DOSSIER-DECISION-NUTRITION-2026-09-22.md`.**
+
+## 3. ⚠️ ~~MAIS UNE ANOMALIE SUGGÉRÉE PAR LE CAHIER N'EN EST PAS UNE~~ (RÉFUTÉ — voir l'encadré)
 
 Le **T09 — fermeture calorique** demande de vérifier que `4P + 4G + 9L` retombe sur la cible.
 **Mesuré sur 14 cas** (6 objectifs × charge, 4 × décharge, 4 × jour de séance) :
@@ -183,9 +197,9 @@ aux publications soit ouvert. *Une instruction donnée à Michel doit être néc
 | Les glucides sont un résidu calorique sans borne | ⭐ **ÉTABLIE** — lue dans le code et mesurée |
 | Les 4 cas du cahier sont reproduits par le moteur actuel | ⭐ **ÉTABLIE** — ±7 kcal, protéines exactes |
 | La prise de muscle produit **7,6 g/kg/j** de glucides à 85,8 kg | ⭐ **ÉTABLIE** — mesurée |
-| La fermeture calorique est saine (±3 kcal sur 14 cas) | ⭐ **ÉTABLIE** — et elle **infirme** une anomalie suggérée |
+| ~~La fermeture calorique est saine~~ | ⛔ **RÉFUTÉE le 22/09 au soir** — écart réel jusqu'à **+377 kcal** (voir l'encadré §3) |
 | Les lipides et le surplus sont dans les plages publiées | **PROBABLE** — sources secondaires, primaires non lues |
-| Les protéines sont exprimées dans une autre unité que leur source | **PROBABLE** — même réserve |
+| Les protéines sont exprimées dans une autre unité que leur source | **PROBABLE** — ⚠️ **nuancé le 22/09 au soir** : l'ISSN 2017 donne 2,3-3,1 g/kg de **poids de corps** en déficit, donc Force Tracker est dans la bonne unité — le défaut réel est le **dénominateur chez les sujets à forte masse grasse** |
 | 7,6 g/kg/j est « nutritionnellement indéfendable » | ⛔ **NON DÉMONTRÉE** — exige la Phase B complète |
 | Le TDEE de départ est surestimé (hypothèse du §1) | ⛔ **NON DÉMONTRÉE** — exige un TDEE observé, donc des données réelles |
 
