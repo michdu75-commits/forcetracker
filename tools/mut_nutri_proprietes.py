@@ -54,6 +54,24 @@ MUT = [
     ('M08', ST, "{muscle:0.9,perte:0.8,recomp:0.85,force:1.0,equilibre:0.85,endurance:0.75}",
      "{muscle:0.9,perte:0.8,recomp:0.85,force:1.2,equilibre:0.85,endurance:0.75}",
      'rouge', "le ratio de lipides de l objectif force a bouge (T01)"),
+    # ══ LES MUTATIONS DES DECOUVERTES DU SOIR (⑮ a ⑳) ═══════════════════════════════
+    # ⭐⭐ M09 EST LA 2e CORRECTION SIMULEE : la discipline atteint enfin la nutrition.
+    ('M09', ST, "  const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;",
+     "  const _dsc=(S.discipline==='powerlifting'||S.discipline==='haltero')?0.1:0;\n"
+     "  const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt+_dsc;",
+     'rouge', "CORRECTION SIMULEE : la discipline atteint enfin la nutrition"),
+    # ⭐⭐ M10 EST LA 3e : le deficit devient proportionnel au poids.
+    ('M10', ST, "  const goalDelta=goalDeltaKcal(goal);",
+     "  const goalDelta=(goal==='perte')?-Math.round((S.bw||80)*6):goalDeltaKcal(goal);",
+     'rouge', "CORRECTION SIMULEE : le deficit devient proportionnel au poids"),
+    ('M11', ST, "  const phaseAdj=phase==='charge'?100:-100;",
+     "  const phaseAdj=phase==='charge'?Math.round(tdee*0.04):-Math.round(tdee*0.04);",
+     'rouge', "le surplus/deficit de phase devient relatif au TDEE"),
+    ('M12', ST, "const BMR_LM_JOURS = 90;", "const BMR_LM_JOURS = 120;",
+     'rouge', "le seuil de fraicheur du bilan corporel a bouge"),
+    ('M13', ST, "  const manual=(typeof S.manualKcal==='number'&&S.manualKcal>0)?Math.round(S.manualKcal):0;",
+     "  const manual=(typeof S.manualKcal==='number'&&S.manualKcal>0)?Math.max(Math.round(S.manualKcal),800):0;",
+     'rouge', "un plancher est pose sur la cible MANUELLE (decision actee : interdit)"),
     # ⭐ CELLE QUI DOIT RESTER VERTE
     ('V01', ST, "function macrosForKcal(kcal){",
      "/* note : _GOAL_DELTA_KCAL, PLANCHER_KCAL, protRatio, fatRatio, leanMassRecente,\n"

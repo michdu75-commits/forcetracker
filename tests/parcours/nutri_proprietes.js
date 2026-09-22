@@ -137,6 +137,74 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCLII ⑬bis 🛡️ INVARIANT · hors écrêtage des glucides, la fermeture tient dans l\'arrondi',
     R.inv.fermHorsEcret === 0, 'écart max hors écrêtage = ' + R.inv.maxFHorsEcret + ' kcal');
 
-  t('B-CCCLII ⑭ ⛔ aucune erreur de page sur tout le parcours', errs.length === 0, errs.join(' | '));
+  // ══ ⑮→⑳ LES DÉCOUVERTES DU 22/09 AU SOIR — chacune figée ═════════════════════════════
+  const D = await pg.evaluate(() => {
+    const j = n => { const d = new Date(Date.now() - n * 864e5);
+      return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+    const poser = (p) => {
+      S.gender = p.g || 'H'; S.bw = p.bw; S.height = p.h || 175; S.age = p.a || 35;
+      S.activityLevel = p.act || 1.55; S.workType = 'bureau'; S.goal = p.goal;
+      S.nutritionPhase = p.phase || 'charge'; S.manualKcal = p.man || 0; S.foodMode = '';
+      S.keto = false; S.smoker = false; S.sessions = p.sessions || []; S.weightLog = [];
+      S.otherSports = ''; S.stepsLog = null; S.discipline = p.disc || 'muscu'; S.level = p.lvl || '';
+      S.bodyScans = p.lm ? [{ date: j(p.jours == null ? 10 : p.jours), leanMass: p.lm,
+                              weight: p.bwScan || p.bw, bodyFat: p.mg }] : [];
+      const m = calcMacros(S.nutritionPhase);
+      return { bmr: calcBMR(), tdee: calcTDEE(), kcal: m.calories, P: m.prot_g,
+               G: m.carbs_g, L: m.fat_g, meth: bmrDetail().methode };
+    };
+    const o = {};
+    // ⑮ la discipline et le niveau n'atteignent pas la nutrition
+    const ref = poser({ bw: 85, goal: 'muscle' });
+    let ecarts = 0;
+    ['muscu', 'bodybuilding', 'powerbuilding', 'powerlifting', 'haltero'].forEach(disc =>
+      ['debutant', 'intermediaire', 'confirme'].forEach(lvl => {
+        const r = poser({ bw: 85, goal: 'muscle', disc, lvl });
+        if (r.kcal !== ref.kcal || r.P !== ref.P || r.G !== ref.G || r.L !== ref.L) ecarts++;
+      }));
+    o.discEcarts = ecarts;
+    // ⑯ le nombre de séances n'atteint pas la cible
+    const mk = n => { const s = []; for (let k = 0; k < 4; k++) for (let i = 0; i < n; i++)
+      s.push({ date: j(k * 7 + i), exs: [{ name: 'Squat', sets: [{ kg: 140, reps: 5, done: true }] }], vol: 9000 }); return s; };
+    o.s0 = poser({ bw: 85, goal: 'muscle', sessions: [] }).kcal;
+    o.s6 = poser({ bw: 85, goal: 'muscle', sessions: mk(6) }).kcal;
+    // ⑰ le déficit est FIXE : la vitesse relative de perte s'effondre quand le poids monte
+    const p60 = poser({ bw: 60, goal: 'perte' }), p130 = poser({ bw: 130, goal: 'perte' });
+    o.def60 = p60.kcal - p60.tdee; o.def130 = p130.kcal - p130.tdee;
+    o.pct60 = (p60.kcal - p60.tdee) * 7 / 7700 / 60 * 100;
+    o.pct130 = (p130.kcal - p130.tdee) * 7 / 7700 / 130 * 100;
+    // ⑱ le surplus est FIXE : il dépasse +20 % chez les profils légers
+    const m55 = poser({ bw: 55, goal: 'muscle', act: 1.375 });
+    o.sur55Pct = (m55.kcal - m55.tdee) / m55.tdee * 100;
+    // ⑲ une cible manuelle basse est acceptée, et les macros la dépassent largement
+    const man = poser({ g: 'F', bw: 55, goal: 'perte', man: 600 });
+    o.man = { kcal: man.kcal, somme: man.P * 4 + man.G * 4 + man.L * 9, G: man.G };
+    // ⑳ discontinuité au seuil de fraîcheur du bilan corporel (90 jours)
+    o.j89 = poser({ bw: 90, goal: 'perte', lm: 65, mg: 28, jours: 89 });
+    o.j91 = poser({ bw: 90, goal: 'perte', lm: 65, mg: 28, jours: 91 });
+    return o;
+  });
+  t('B-CCCLII ⑮ ⛔ DÉFAUT FIGÉ · discipline et niveau n\'atteignent PAS la nutrition (15 combinaisons)',
+    D.discEcarts === 0, 'écarts mesurés = ' + D.discEcarts);
+  t('B-CCCLII ⑯ ⛔ DÉFAUT FIGÉ · 0 séance/sem et 6 séances/sem donnent la MÊME cible',
+    D.s0 === D.s6, D.s0 + ' kcal dans les deux cas');
+  /* ⛔ Le déficit est un nombre FIXE (−450 + phase), pas une proportion : la vitesse relative
+     de perte s'effondre quand le poids monte — l'inverse de ce que la littérature recommande. */
+  t('B-CCCLII ⑰ ⛔ DÉFAUT FIGÉ · déficit identique à 60 kg et à 130 kg, donc vitesse relative divisée par ~2',
+    D.def60 === D.def130 && (D.pct60 / D.pct130) > 1.8,
+    'déficit ' + D.def60 + ' kcal · ' + D.pct60.toFixed(2) + ' %/sem à 60 kg contre '
+    + D.pct130.toFixed(2) + ' %/sem à 130 kg');
+  t('B-CCCLII ⑱ ⛔ DÉFAUT FIGÉ · le surplus fixe dépasse +20 % du TDEE chez les profils légers',
+    D.sur55Pct > 20, 'surplus = ' + D.sur55Pct.toFixed(1) + ' % du TDEE (repère : +10-20 %)');
+  /* ⚖️ La cible manuelle échappe au plancher — c'est une DÉCISION ACTÉE (on n'interdit pas).
+     ⛔ Mais que les macros totalisent bien plus que la cible n'est décidé nulle part. */
+  t('B-CCCLII ⑲ ⛔ DÉFAUT FIGÉ · cible manuelle 600 kcal → macros qui totalisent bien plus',
+    D.man.kcal === 600 && D.man.somme > 800 && D.man.G === 0,
+    'cible ' + D.man.kcal + ' kcal · macros ' + D.man.somme + ' kcal · glucides ' + D.man.G + ' g');
+  t('B-CCCLII ⑳ ⛔ DÉFAUT FIGÉ · le bilan corporel qui passe 90 jours fait sauter la cible',
+    D.j89.meth !== D.j91.meth && Math.abs(D.j91.kcal - D.j89.kcal) > 50,
+    D.j89.meth + ' ' + D.j89.kcal + ' → ' + D.j91.meth + ' ' + D.j91.kcal + ' kcal');
+
+  t('B-CCCLII ㉑ ⛔ aucune erreur de page sur tout le parcours', errs.length === 0, errs.join(' | '));
   await cx.close();
 };
