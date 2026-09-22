@@ -331,3 +331,68 @@ au lieu de l'estimer. `tdeeObserve()` (candidate **V9**, `tools/moteur_v9.js`, *
 le calcule à partir du bilan énergétique — apport moyen et pente de poids — et la porte
 d'apprentissage exige **14 jours · 50 % de jours notés · 4 pesées**. ⛔ Rien n'est publié
 (arbitrages **D-019 → D-022** ouverts).
+
+### ⭐⭐ 22/09/2026, 23 h — SES DONNÉES RÉELLES SONT ARRIVÉES, ET ELLES TRANCHENT
+
+> Michel envoie son **export nutrition** (306 lignes, 22/08 → 22/09) et trois captures de la
+> courbe de poids. Sa consigne, mot pour mot : ⛔ *« contrôle la qualité du journal : on sait
+> qu'il existe encore quelques anciennes entrées historiques foireuses dans la base, donc ne
+> prends pas la moyenne calorique brute comme vérité sans vérifier les anomalies »* · ⛔ *« je
+> veux une conclusion avec niveau d'incertitude, pas un chiffre présenté comme exact »*.
+
+**① QUALITÉ DU JOURNAL — [A] mesuré, et meilleure que supposé.** **32 jours CONSÉCUTIFS, zéro
+trou.** Trois défauts seulement, trouvés par trois filtres distincts :
+
+| défaut | où | effet |
+|---|---|---|
+| **loi physique violée** — « 30g de protéines » à **1 117 kcal** pour 26 P / 1 G / 1 L (= 117 réelles) | 22/08, saisie `ia-texte` | **+1 000 kcal**, un « 1 » de trop |
+| **6 doublons exacts** de « Iso zero protein » (même jour, même repas, même valeur) | 11 · 12 · 14 · 15 · 16 · 18/09 | **+936 kcal** |
+| **portion absurde** — 100 g de **café moulu** (entrée CIQUAL de la poudre sèche) | 06/09 | **+341 kcal** |
+
+⭐ **Total retiré : 2 277 kcal sur 78 917, soit 2,9 %.** *Ses « entrées foireuses » existent bien,
+mais elles ne déplacent pas la moyenne.* ⚠️ **Le doublon d'« Iso zero protein » est un vrai
+défaut d'app, pas une faute de saisie** — 6 occurrences en 8 jours, toujours le même produit,
+toujours au même repas. **À instruire.**
+
+**② TDEE OBSERVÉ — [A].** Apport moyen corrigé **2 423 kcal/j** (27 jours complets).
+⚠️ **La pente d'un mois est écartée exprès** : +0,19 kg/sem sur **5 pesées** et 1,1 kg
+d'amplitude, c'est du bruit — l'app mesure elle-même **−0,06 kg/sem sur 16 pesées** à 3 mois.
+***Son poids est plat.***
+
+| pente retenue | TDEE observé | PAL |
+|---|---|---|
+| +0,19 kg/sem (5 pesées) | 2 197 | 1,24 |
+| poids stable | **2 423** | **1,36** |
+| −0,06 kg/sem (16 pesées) | 2 489 | 1,40 |
+
+**③ ⭐⭐ LE CUMUL EST BIEN LE COUPABLE — et la démonstration ne dépend PAS de la valeur absolue
+de son journal.** Un PAL de 1,24-1,40 est **impossible** pour 5-6 séances + métier physique :
+il sous-déclare, comme tout le monde. La bonne question devient ***de combien faut-il qu'il
+sous-déclare pour que chaque chiffre soit vrai ?***
+
+| si son vrai TDEE valait… | sous-déclaration nécessaire |
+|---|---|
+| 2 932 (PAL 1,65) | 17 % |
+| **3 065 (« Actif 5-6j » SANS le métier)** | **21 %** |
+| 3 376 (cran le plus haut de l'app) | 28 % |
+| ⛔ **3 515 (ce que l'app lui donne)** | ⛔ **31 %** |
+
+**[B]** la sous-déclaration typique d'un adulte motivé est de **10 à 30 %** (eau doublement
+marquée ; littérature reproduite, **aucune publication primaire ouvrable depuis le conteneur**).
+👉 ***3 515 exige le bord extrême de la fourchette. Retirer le +450 du métier ramène à 21 %,
+c'est-à-dire pile au milieu.*** **Le terme qui ne survit pas à la mesure, c'est le +450.**
+
+**④ LE CHIFFRE QUI PARLE SANS STATISTIQUE.** Objectif affiché **« Perte de gras + muscle »**,
+cible **3 372 kcal**. Il en mange **~2 423** et son poids **ne bouge pas depuis 3 mois**.
+👉 ***L'app lui demande de manger 949 kcal/j de PLUS qu'aujourd'hui — pour perdre du gras.***
+
+**⑤ CONCLUSION AVEC SON INCERTITUDE (c'était la consigne).** Son TDEE réel est **très
+probablement entre 2 800 et 3 100 kcal** ; l'app est **haute de 400 à 700 kcal/j**.
+**Confiance MOYENNE, pas haute** : ✅ solide côté journal (32 j, 97,1 % propre) et côté poids
+(16 pesées) · ⚠️ ⛔ **impossible de séparer « l'app surestime » de « il sous-déclare » sans eau
+doublement marquée** — on peut seulement dire que **3 515 exige l'hypothèse la plus extrême des
+deux** · ⛔ **son nombre réel de séances/semaine n'est PAS vérifié** (pas d'accès à son
+historique) ; à 3-4 séances tout descend encore de ~300 kcal.
+
+⚖️ **Son intuition était juste.** ⛔ Elle n'est pas prouvée au chiffre près — elle est **bornée**,
+et la borne haute du plausible passe **en dessous** de ce que l'app affiche.
