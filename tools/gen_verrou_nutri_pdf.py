@@ -331,6 +331,14 @@ def main():
             'echantillon elargi : un temoin qui tient a un profil devient muet un jour']],
           [52 * mm, 62 * mm, 66 * mm]))
 
+    A(Paragraph(w("CONTROLE NEGATIF DU MIROIR : 21 / 21 mutations conformes, 0 ancre morte. Deux "
+                  "d entre elles doivent RESTER VERTES (des commentaires citant Math.ceil, "
+                  "PROT_MIN_GKG, base + 5, equilibre: 0, perte: -450, H: 1500) - c est la seule "
+                  "facon de prouver qu on mesure le CODE et non la phrase qui l explique. Et M19 "
+                  "prouve un AVEUGLEMENT plutot qu un defaut : elle retire la comparaison des "
+                  "glucides, donc elle ne peut pas rougir seule ; jugee avec M13 (qui casse les "
+                  "glucides et leve 32 ecarts), la paire en leve 0."), P))
+
     A(Paragraph(w('7. LE SEUL DEFAUT DEMONTRABLE SANS AUCUNE SOURCE EXTERNE'), H2))
     A(Paragraph(w("La FERMETURE. Un ecran qui affiche << 1 614 kcal >> au-dessus de macros qui en font "
                   "2 064 se contredit lui-meme. Cela ne demande aucun arbitrage scientifique, aucune "
@@ -370,7 +378,7 @@ def main():
         refus('le PDF relu ne fait que %d caracteres lisibles : probablement muet' % len(lisible))
     manquants = [m for m in ['connect_rejected', 'EN ATTENTE DU GO DE MICHEL', 'MASSE MAIGRE',
                              'PRATICABILITE', 'ECHANGE, pas un gain net', 'MIROIR',
-                             'plancher s arrondit', '{:,}'.format(v['taille']).replace(',', ' ')]
+                             'plancher s arrondit', '21 / 21 mutations conformes', '{:,}'.format(v['taille']).replace(',', ' ')]
                  if m not in lisible]
     if manquants:
         os.remove(SORTIE)

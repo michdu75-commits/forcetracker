@@ -487,10 +487,41 @@ rien*. On abîme donc le miroir et on vérifie qu'il rougit.
 
 `tools/mut_verrou_nutri.py` — **21 mutations sur un arbre CLONÉ**, dont deux qui doivent
 **RESTER VERTES** (des commentaires citant les mots cherchés), et une qui prouve un
-**aveuglement** (retirer la comparaison des glucides doit rendre la mutation M13 invisible).
+**aveuglement** (retirer la comparaison des glucides rend la mutation M13 invisible).
 ⛔ **`state.js` n'est jamais muté, même dans le clone** : c'est le miroir qu'on met en doute.
 
-*(Résultat de l'exécution : voir la fin de ce document.)*
+**RÉSULTAT : 21 / 21 conformes · 0 ancre morte.**
+
+| mutation | écarts levés |
+|---|---|
+| M01 Mifflin homme +5 → +50 | 12 790 |
+| M02 Mifflin femme −161 → −160 | 12 550 |
+| M03 Katch 21,6 → 21,5 | 240 |
+| M04 fumeur +7 % → +8 % | 12 550 |
+| M05 métier physique 450 → 460 | 6 275 |
+| M06 autre sport, seuil 1,725 → 1,9 | 3 138 |
+| M07 perte −450 → −400 | 4 215 |
+| M08 ⭐ équilibre 0 → 350 (**le bug historique ft-v981**) | 4 284 |
+| M09 phase charge +100 → +150 | 12 888 |
+| M10 plancher homme 1 500 → 1 400 | 70 |
+| M11 protéines recomp 2,6 → 2,5 | 4 224 |
+| M12 lipides muscle 0,9 → 0,95 | 4 219 |
+| M13 glucides : le résidu perd son plancher à zéro | 32 |
+| M14 kéto 5 % → 6 % | 120 |
+| M15 kéto : le plancher protéique 0,8 g/kg disparaît | **16** |
+| M16 low-carb 45 % → 44 % | 120 |
+| M17 TDEE : le terme métier disparaît | 18 824 |
+| M18 le plancher calorique s'applique AVANT l'objectif | 131 |
+| M19 la validation ne compare plus les glucides | ⭐ **aveuglement CONFIRMÉ** (M19 + M13 → 0) |
+| M20 commentaire seulement (doit rester VERT) | **0** ✅ |
+| M21 commentaire seulement (doit rester VERT) | **0** ✅ |
+
+⭐ **M19 est la mutation la plus utile du lot** : elle ne peut pas rougir seule — elle retire une
+comparaison. On la juge donc sur sa **combinaison** avec M13, qui casse précisément les glucides :
+M13 seule lève 32 écarts, M13 + M19 en lève **0**. *L'aveuglement est prouvé, pas supposé.*
+⭐ **M20 et M21 sont les seules qui prouvent qu'on mesure le CODE** : elles réécrivent des
+commentaires citant `Math.ceil`, `PROT_MIN_GKG`, `0,8 g/kg`, `base + 5`, `equilibre: 0`,
+`perte: -450` et `H: 1500` — et la validation reste à 0.
 
 ---
 
@@ -609,6 +640,8 @@ explicitement. Le temps de calcul est ci-dessus ; le temps de **décision** appa
     **2 048 profils**) — même famille que V1/V2.
 23. **Le contre-audit a trouvé que mon plancher n'était pas un plancher** : `Math.round` laissait
     passer 325 cas pour 100 000 sous la borne. *Un plancher s'arrondit vers le haut.*
+    ⭐ **Contrôle négatif du miroir : 21 / 21 conformes, 0 ancre morte**, dont 2 mutations qui
+    doivent RESTER VERTES et 1 aveuglement prouvé (M13 seule lève 32 écarts, M13 + M19 en lève 0).
 24. **Le contre-audit a trouvé une faute de périmètre dans mon instrument** : 4 318 « violations »
     pour 100 000 étaient des régimes kéto conformes à leur propre définition. Et surtout, **en
     agrandissant mon échantillon j'ai fait passer une mutation de rouge à vert** (M15) : j'avais
