@@ -2933,8 +2933,6 @@ function _blocResteHTML(td, heure){
 function _blocApprisHTML(){
   const pa=(typeof _profilAlimentaire==='function')?_profilAlimentaire():null;
   if(!pa) return '';
-  const LBL={petitdej:'Petit-déj', collation:'Collation', dejeuner:'Déjeuner',
-             collation2:'Collation 2', diner:'Dîner', autre:'Autre'};
   const esc=t=>(typeof _escNote==='function')?_escNote(t):t;
   let corps;
   if(pa.etat==='insuffisant'){
@@ -2944,16 +2942,57 @@ function _blocApprisHTML(){
       +pa.nbJours+' jour'+(pa.nbJours>1?'s':'')+' noté'+(pa.nbJours>1?'s':'')+' — pas encore de quoi dégager une habitude. '
       +'À partir de 3 jours, l\'app commence à reconnaître ce que tu manges vraiment.</div>';
   } else {
-    const lignes=Object.keys(pa.habitudes).filter(m=>LBL[m]).map(m=>{
-      const noms=pa.habitudes[m].map(x=>esc(x.nom)).join(' · ');
-      const h=pa.heures[m];
-      /* ⛔ COLONNE FIXE, PAS `min-width` (ft-v1031) : un minimum laisse la colonne grandir
-         avec son texte, donc « Collation 2 ~17h » décalait sa ligne de 18 px par rapport à
-         « Dîner ~21h ». Mesuré : 5 départs différents pour 5 lignes lues en colonne. */
-      return '<div class="nu-lgn" style="margin-bottom:5px;font-size:12.5px;line-height:1.45;">'
-        +'<span style="color:var(--t3);font-weight:700;">'+LBL[m]+((h!==undefined)?' <span style="font-weight:400;">~'+h+'h</span>':'')+'</span>'
-        +'<span style="color:var(--t1);min-width:0;">'+noms+'</span></div>';
+    /* ═══ ⛔⛔ L'ORDRE DES REPAS ÉTAIT CELUI DU STOCKAGE (22/09/2026) ════════════════════════
+       Cas réel de Michel : la carte sortait **Dîner → Déjeuner → Petit-déj → Collation 2**.
+       ⭐ MESURÉ AVANT CORRECTION, et ce n'est ni un tri par fréquence, ni par heure, ni
+       alphabétique : on lisait `Object.keys(pa.habitudes)`, or cet objet naît de
+       `Object.keys(parRepas)` — dont les clés apparaissent dans l'ordre de **PREMIÈRE
+       APPARITION de chaque repas dans `S.foodLog`**. *Un affichage qui dépend de l'ordre de
+       stockage change sans que rien n'ait changé* — c'est la famille du `[0]` qui suppose un
+       tri, déjà fermée par ft-v1233 À L'INTÉRIEUR d'un repas et restée ouverte ENTRE eux.
+
+       ⭐⭐ L'ORDRE CANONIQUE NE S'ÉCRIT PAS ICI : `FOOD_MEALS` est **déjà** en ordre de journée
+       (petit-déj · collation · déjeuner · collation 2 · dîner) et c'est déjà lui qui range les
+       puces de l'écran d'ajout. On le lit, on ne le recopie pas (**R2**) — *une deuxième liste
+       d'ordre divergerait le jour où un repas est ajouté, et le désordre reviendrait par
+       l'autre bout*. Il porte lui-même l'avertissement : « un index qui dépend de l'ordre d'un
+       tableau devient faux le jour où on trie ce tableau ».
+       ⛔ Au passage, le `LBL={…}` local était une **2ᵉ source de vérité des libellés** : il
+       disparaît, `FOOD_MEALS[].lbl` est propriétaire.
+
+       ⛔⛔ ET UN REPAS SANS HABITUDE RESTE VISIBLE. Avant, il était simplement absent de
+       `habitudes`, donc sa ligne **disparaissait** — et la carte semblait n'avoir jamais
+       entendu parler du petit-déjeuner. *Une ligne absente et une ligne vide ne disent pas la
+       même chose : la première se lit « ce repas n'existe pas », la seconde « je ne sais pas
+       encore ».* C'est R29 appliqué à l'affichage : on dit ce qu'on ne sait pas.
+       ⚠️ LA FORMULE EST NEUTRE EXPRÈS. Une ligne peut être vide pour **deux** raisons — le
+       repas n'a pas assez de jours notés, ou il en a mais aucun aliment n'y revient assez.
+       L'écran ne sait pas laquelle, donc il n'en nomme aucune : *un libellé plus précis que la
+       donnée est un libellé faux*. Le ton reste factuel, jamais une relance à noter (P21). */
+    const MM=(typeof FOOD_MEALS!=='undefined' && Array.isArray(FOOD_MEALS))?FOOD_MEALS:[];
+    /* ⛔ COLONNE FIXE, PAS `min-width` (ft-v1031) : un minimum laisse la colonne grandir
+       avec son texte, donc « Collation 2 ~17h » décalait sa ligne de 18 px par rapport à
+       « Dîner ~21h ». Mesuré : 5 départs différents pour 5 lignes lues en colonne.
+       ⭐ Les lignes vides empruntent EXACTEMENT le même gabarit — sinon elles casseraient
+       l'alignement qu'on vient de payer. */
+    const lgn=(lbl,h,txt,vide)=>
+      '<div class="nu-lgn" style="margin-bottom:5px;font-size:12.5px;line-height:1.45;">'
+      +'<span style="color:var(--t3);font-weight:700;">'+lbl+((h!==undefined)?' <span style="font-weight:400;">~'+h+'h</span>':'')+'</span>'
+      +'<span style="color:var('+(vide?'--t3':'--t1')+');min-width:0;'+(vide?'opacity:.75;':'')+'">'+txt+'</span></div>';
+    let lignes=MM.map(m=>{
+      const hab=pa.habitudes[m.k];
+      /* ⛔ ÉCHEC FERMÉ : pas d'habitude → on le DIT, on n'invente ni heure, ni aliment, ni
+         fréquence. Et rien à migrer : la ligne se remplira d'elle-même au prochain rendu,
+         dès que le journal franchira le seuil existant. */
+      if(!hab || !hab.length) return lgn(m.lbl, undefined, 'Pas encore assez de données', true);
+      return lgn(m.lbl, pa.heures[m.k], hab.map(x=>esc(x.nom)).join(' · '), false);
     }).join('');
+    /* ⚠️ « Autre » N'EST PAS UN 6ᵉ REPAS et n'a donc JAMAIS de ligne vide : c'est le fourre-tout
+       des lignes sans `meal` (import, très vieille entrée). Il s'affiche seulement s'il porte
+       vraiment une habitude — exactement ce que faisait le `LBL` d'avant. *Le retirer en
+       silence aurait fait disparaître des données réelles* (R30). */
+    if(lignes && (pa.habitudes.autre||[]).length)
+      lignes+=lgn('Autre', pa.heures.autre, pa.habitudes.autre.map(x=>esc(x.nom)).join(' · '), false);
     /* ⭐⭐ « SUR TOUT TON JOURNAL » N'EST PAS UNE FORMULE DE POLITESSE (26/08/2026, ft-v1026) —
        c'est ce qui empêche deux chiffres justes de se contredire à l'écran. Vu sur une vraie
        capture de Michel : cette carte annonçait « en moyenne 1920 kcal » et, 40 px plus bas,
@@ -2968,7 +3007,10 @@ function _blocApprisHTML(){
     /* ⛔ AUCUN REPAS NE PASSE LA BARRE ? ON LE DIT (22/09/2026). Depuis qu'une habitude doit
        être soutenue par le journal, la liste peut être VIDE — et un cadre qui ne contient que
        son bas de page se lit comme un chargement qui n'a pas abouti, pas comme une réponse.
-       ⛔ Le ton reste factuel, jamais une relance à noter davantage (P21). */
+       ⛔ Le ton reste factuel, jamais une relance à noter davantage (P21).
+       ⭐ DEPUIS L'ORDRE FIXE, CE REPLI NE SERT PLUS QU'À L'ÉCHEC FERMÉ : les 5 lignes en état
+       vide disent déjà la même chose, mieux. Il ne reste atteignable que si `FOOD_MEALS` est
+       introuvable — *et dans ce cas une phrase vaut mieux qu'un cadre muet*. */
     corps=(lignes || '<div class="txt-just" style="font-size:12.5px;color:var(--t3);line-height:1.5;">'
         +'Pas encore d\'habitude qui se dégage : aucun repas n\'a été noté assez de jours pour '
         +'qu\'un aliment revienne vraiment.</div>')

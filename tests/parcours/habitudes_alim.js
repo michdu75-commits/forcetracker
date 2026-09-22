@@ -266,8 +266,19 @@ module.exports.ecran = async function (t, b, PORT) {
     const el = document.getElementById('nu-appris');
     return (el && el.innerText) || '';
   });
+  /* ⚠️⚠️ TÉMOIN RETOURNÉ LE 22/09/2026, ET IL N'EST PAS AFFAIBLI — il figeait une PHRASE
+     (« Pas encore d'habitude qui se dégage ») alors que sa garantie annoncée est *« la carte
+     le DIT au lieu de rester muette »*. Depuis l'ordre fixe, la carte tient cette garantie
+     MIEUX : elle affiche les 5 repas, chacun avec son état vide explicite, au lieu d'un
+     paragraphe unique. 👉 ***Un témoin qui fige une formulation interdit d'améliorer ce qu'il
+     protège*** — même famille que `B-CCCXXXVI ②`, qui figeait une signature. On mesure donc
+     les deux choses qui comptent : le cadre n'est pas muet, et il NOMME chaque repas.
+     ⛔ L'ancienne phrase reste éprouvée par ailleurs : `B-CCCXLVIII ⑳` la trouve toujours dans
+     la source, où elle sert désormais d'échec fermé si `FOOD_MEALS` est introuvable. */
   t('B-CCCXLIX ⑮ ⭐ aucun repas retenu → la carte le DIT au lieu de rester muette',
-    /Pas encore d'habitude qui se dégage/.test(vide), vide.slice(0, 160));
+    /Pas encore assez de données/.test(vide)
+    && ['Petit-déj', 'Collation', 'Déjeuner', 'Collation 2', 'Dîner'].every(l => vide.indexOf(l) >= 0),
+    vide.slice(0, 160));
 
   t('B-CCCXLIX ⑯ ⛔ aucune erreur de page sur tout le parcours', errs.length === 0, errs.join(' | '));
   await cx.close();

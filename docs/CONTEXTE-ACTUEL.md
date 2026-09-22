@@ -6,9 +6,24 @@
 
 ---
 
+## 🍽️ ft-v1234 (22/09/2026) — ORDRE FIXE DES REPAS ET ÉTAT VIDE EXPLICITE DANS « CE QUE L'APP A APPRIS »
+
+- **Version en ligne (live) :** `ft-v1234` — 🍽️ **les 5 repas, toujours dans l'ordre de la journée, et un repas sans données reste visible.**
+- ⭐⭐ **La cause n'était AUCUN des tris qu'on soupçonne** (ni fréquence, ni heure, ni alphabétique) : `_blocApprisHTML` lisait `Object.keys(pa.habitudes)`, et cet objet naît de `Object.keys(parRepas)` — donc **l'ordre de PREMIÈRE APPARITION de chaque repas dans `S.foodLog`**. ***L'écran affichait les repas dans l'ordre où ils avaient été tapés la première fois.*** Mesuré : inverser `S.foodLog` suffisait à retourner la carte.
+- ⭐⭐ **Rien n'est inventé** : `FOOD_MEALS` **était déjà** l'ordre canonique de journée et range déjà les puces de l'écran d'ajout. On le **lit** (**R2**), on ne le recopie pas — *une 2ᵉ liste d'ordre divergerait le jour où un repas est ajouté*. Le `LBL={}` local (2ᵉ source de vérité des libellés) disparaît.
+- ⛔ **Un repas sans habitude reste visible** : *une ligne absente et une ligne vide ne disent pas la même chose* (**R29**). L'état vide **n'invente ni heure, ni aliment, ni fréquence**, et sa formule est **neutre exprès** — une ligne peut être vide pour deux raisons, l'écran ne sait pas laquelle.
+- ⛔ **Aucune migration, aucun bouton** : la ligne se remplit d'elle-même dès que le journal franchit le seuil **existant**.
+- ⛔⛔ **La logique métier de ft-v1233 ne bouge pas d'une ligne** — `app.js` : **0 ligne**, et 7 témoins le figent.
+- ⚖️ **Décision actée non rouverte (règle d'or #15)** : sous **3 jours notés**, la branche décidée en ft-v1021 est inchangée. *Là il n'y a pas de liste, donc pas de désordre à corriger.* ⭐ Un journal **totalement vide** ne rend toujours **aucune carte** — inchangé, et **à trancher par Michel** s'il veut les 5 lignes là aussi.
+- ⚠️ **Un témoin de ft-v1233 a rougi sur du code sain** (`B-CCCXLIX ⑮`) : il figeait une **phrase** au lieu de sa garantie. ⛔ Retourné, pas affaibli.
+- ⚠️ **Le contrôle négatif a trouvé un trou dans mes témoins** : 3 mutations rendaient **PLANTAGE** au lieu de rouge (indice déréférencé sur une carte plus courte).
+- Tests : **B-CCCL + B-CCCLI**, banc **39/0** · contrôle négatif **21/21, 0 ancre morte** (les 6 familles du §6, **5 déguisées**) · **passe complète **4773 ✅ / 0 ❌**, les 4 conditions vertes**.
+
+---
+
 ## 🧠 ft-v1233 (22/09/2026) — LA CARTE « CE QUE L'APP A APPRIS » NE PRÉSENTE PLUS COMME UNE HABITUDE CE QUI N'EN EST PAS
 
-- **Version en ligne (live) :** `ft-v1233` — 🧠 **trois causes distinctes, mesurées avant correction, sur la capture réelle de Michel.**
+- **Version précédente :** `ft-v1233` — 🧠 **trois causes distinctes, mesurées avant correction, sur la capture réelle de Michel.**
 - ⭐⭐ **L'app ne sait pas quand on a mangé, elle sait quand on a tapé.** `pa.heures[m]` était la médiane de `new Date(e.ts).getHours()`, or **`ts` vaut `Date.now()` à l'ENREGISTREMENT** et `FOOD_MEALS` ne porte **aucune** heure. ⛔ On ne fabrique pas de table d'horaires pour autant : `_afMealDefautHoraire()` **en est déjà une**, on lui demande « à cette heure-là, de quel repas s'agirait-il ? » et on n'affiche **rien** si sa réponse diffère. ⭐ Son paramètre est **strictement additif** — le repas actif ne bouge pas.
 - ⭐⭐ **Un « top 3 » ne demande jamais si le 2ᵉ est une habitude : il demande seulement s'il existe un 2ᵉ.** `top(o,3)` n'avait **aucun seuil**. ⛔ **Aucun seuil inventé** : le nombre employé est **`_PA_MIN_JOURS`**, déjà déclaré et déjà appliqué deux fois. L'étude préalable (10 aliments) le montre : il sort Kebab (1 j), Prune (2 j) et Pom'Potes **sans perdre une habitude réelle** — un seuil en POURCENTAGE aurait éliminé la pizza.
 - ⭐ **On compte en JOURS, plus en lignes**, et le départage devient **déterministe** (inverser `S.foodLog` suffisait à intervertir deux aliments).

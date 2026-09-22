@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1233`** (prochaine : `ft-v1234`).
+> **Version actuelle : `ft-v1234`** (prochaine : `ft-v1235`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,41 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1234 — 🍽️ LA CARTE « CE QUE L'APP A APPRIS » AFFICHE TOUJOURS LES 5 REPAS DANS L'ORDRE DE LA JOURNÉE, ET UN REPAS SANS DONNÉES RESTE VISIBLE** — cas réel de Michel, au lendemain de ft-v1233 : *« les repas apparaissent dans le désordre selon les données disponibles »* — **Dîner → Déjeuner → Petit-déj → Collation 2**. Ses bornes : ⛔ ***« ne corrige pas au visuel sans comprendre »*** · ⛔ ***« ne modifie pas la logique métier des habitudes introduite en ft-v1233 »*** · ⛔ ***« évite de recopier cet ordre à plusieurs endroits ; si une structure canonique existe déjà, l'utiliser »***.
+
+**⛔⛔ LA CAUSE EST MESURÉE, ET CE N'EST AUCUN DES TRIS QU'ON SOUPÇONNE.** Ni par fréquence, ni par heure, ni alphabétique :
+
+| ce qu'on lisait | ce que c'était vraiment |
+|---|---|
+| `Object.keys(pa.habitudes)` dans `_blocApprisHTML` | les clés naissent de `Object.keys(parRepas)`… |
+| `parRepas` est rempli en parcourant `S.foodLog` | …donc dans l'ordre de **PREMIÈRE APPARITION** de chaque repas |
+
+👉 ***L'écran affichait les repas dans l'ordre où ils avaient été tapés la première fois.*** C'est la famille du `[0]` qui suppose un tri — *un affichage qui dépend de l'ordre de stockage change sans que rien n'ait changé* — **déjà fermée par ft-v1233 À L'INTÉRIEUR d'un repas** (le départage déterministe des aliments) **et restée ouverte ENTRE les repas**. ⭐ Le témoin qui le prouve est `B-CCCLI ⑨` : **inverser `S.foodLog` suffisait à retourner la carte**, sans qu'une seule donnée ait changé.
+
+**⛔⛔ SECOND DÉFAUT DU MÊME ENDROIT, ET C'EST L'AUTRE MOITIÉ DU BRIEF.** Un repas qui ne passe pas les seuils est simplement **absent** de `habitudes`, donc sa ligne **disparaissait**. 👉 ***Une ligne absente et une ligne vide ne disent pas la même chose : la première se lit « ce repas n'existe pas », la seconde « je ne sais pas encore ».*** C'est **R29** appliqué à l'affichage — on dit ce qu'on ne sait pas.
+
+**⭐⭐ RIEN N'EST INVENTÉ : L'ORDRE CANONIQUE EXISTAIT DÉJÀ.** `FOOD_MEALS` (`app.js`) est **déjà** en ordre de journée — `petitdej · collation · dejeuner · collation2 · diner` — et c'est **déjà lui** qui range les puces de l'écran d'ajout. On le **lit** (**R2**), on ne le recopie pas : *une deuxième liste d'ordre divergerait le jour où un repas est ajouté, et le désordre reviendrait par l'autre bout*. Il porte même son propre avertissement : *« un index qui dépend de l'ordre d'un tableau devient faux le jour où on trie ce tableau »*. ⛔ Au passage, le `LBL={petitdej:…}` local de `_blocApprisHTML` était une **2ᵉ source de vérité des libellés** : il disparaît.
+
+**⛔ L'ÉTAT VIDE N'INVENTE NI HEURE, NI ALIMENT, NI FRÉQUENCE — et sa formule est NEUTRE EXPRÈS.** Une ligne peut être vide pour **deux** raisons : le repas n'a pas assez de jours notés, **ou** il en a mais aucun aliment n'y revient assez. L'écran ne sait pas laquelle, donc il n'en nomme aucune — *un libellé plus précis que la donnée est un libellé faux*. ⭐ Et **aucune migration, aucun bouton** : la ligne se remplit d'elle-même au prochain rendu, dès que le journal franchit le seuil **existant** (témoin ⑫ : 2 jours → 3 jours, la ligne bascule seule).
+
+**⚠️ « AUTRE » N'EST PAS UN 6ᵉ REPAS**, et il n'a donc jamais de ligne vide : c'est le fourre-tout des lignes sans `meal` (import, très vieille entrée). Il ne s'affiche que s'il porte vraiment une habitude — **exactement ce que faisait le `LBL` d'avant**. *Le retirer en silence aurait fait disparaître des données réelles* (**R30**).
+
+**⛔⛔ LA LOGIQUE MÉTIER DE ft-v1233 NE BOUGE PAS D'UNE LIGNE**, et **7 témoins la lisent depuis `app.js`** : `_PA_MIN_JOURS` (toujours 3, non dupliqué), les **deux** filtres (repas **et** aliment), le comptage **en jours**, le départage par le nom, la règle des heures via `_afMealDefautHoraire`, l'unicité de cette fonction, et l'absence de toute fenêtre glissante. ⛔ **`app.js` : 0 ligne.**
+
+**⚖️ ET UNE DÉCISION ACTÉE N'EST PAS ROUVERTE (règle d'or #15), dite franchement.** Sous **3 jours notés**, la carte garde sa branche décidée en ft-v1021 — *« N jours notés, pas encore de quoi dégager une habitude »* — au lieu d'afficher 5 lignes vides. 👉 *Ce chantier corrige l'ORDRE d'une liste ; là, il n'y a pas de liste, donc pas de désordre à corriger.* ⭐ Le **cas A du brief** (« aucune donnée → les 5 repas en état vide ») est bien livré, dans sa forme atteignable : **journal noté mais aucun repas retenu**. Un journal totalement vide ne rend toujours **aucune carte** — inchangé. Si Michel veut les 5 lignes là aussi, c'est une ligne à décider, je ne la prends pas à sa place.
+
+**📣 RÈGLE D'OR #11 — L'ÉCRAN CHANGE, ET C'EST VOULU.** Des lignes **apparaissent** (les repas jusque-là muets) et l'ordre devient fixe. ⚖️ **Pop-up : non** — rien n'est à *faire*, et le changement ne peut que clarifier. ⭐ Mais **un repère bouge vraiment** : quelqu'un qui lisait sa carte y verra désormais 5 lignes au lieu de 2. Si Michel veut une ligne dans le Guide, elle est à ajouter — je ne la pose pas de moi-même.
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ `_PA_MIN_JOURS`, le comptage par jours, la sélection des aliments, la logique de fréquence, la règle des heures, `_afMealDefautHoraire()`, la population du journal, le « 33 jours / 76 », le tri historique : **0 ligne** · ⛔ `_ref100`, compte neuf, scanner, douane, `portionWeightG`, masse grasse, Corps & santé, Accueil, Séance, Milo, Worker, backend, onboarding : **0 ligne** · ⛔ ni `app.js`, ni `state.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `index.html`, ni `style.css`, ni `Code.js`, ni `worker.js`.
+
+**⚠️ ET UN TÉMOIN DE ft-v1233 A ROUGI — LE MIEN, SUR DU CODE SAIN.** `B-CCCXLIX ⑮` figeait la **phrase** *« Pas encore d'habitude qui se dégage »* alors que sa garantie annoncée est *« la carte le DIT au lieu de rester muette »*. ⛔ **Il n'est pas affaibli** : la carte tient cette garantie **mieux** qu'avant — 5 repas nommés, chacun avec son état — donc il mesure désormais **les deux choses qui comptent** (le cadre n'est pas muet, et il NOMME chaque repas). 👉 ***Un témoin qui fige une formulation interdit d'améliorer ce qu'il protège*** — même famille que `B-CCCXXXVI ②`, qui figeait une signature. ⭐ L'ancienne phrase reste éprouvée par `B-CCCXLVIII ⑳` : elle vit toujours dans la source, comme **échec fermé** si `FOOD_MEALS` devenait introuvable.
+
+**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN TROU DANS MES PROPRES TÉMOINS — c'est exactement son métier.** Trois mutations rendaient **PLANTAGE** au lieu de **rouge**, parce que mes témoins déréférençaient `r.lignes[2]` sur une carte qui n'a plus que deux lignes. 👉 ***Un témoin qui plante au lieu de rougir ne dit plus lequel a échoué, et peut masquer les suivants*** — défaut déjà payé en ft-v1232. L'indice reste le sujet du test (c'est l'ORDRE qu'on mesure), mais son absence devient **une réponse**, pas une exception.
+
+Tests : **blocs B-CCCL (19 témoins de source) et B-CCCLI (20 conduits dans le navigateur)**, dans `tests/parcours/ordre_repas.js` — les **7 cas A→G** du brief, dont le journal **inversé**, l'ordre d'insertion **mélangé**, le passage **2 jours → 3 jours** sans intervention, le cas de Michel (petit-déjeuner saisi à midi : aliment affiché, heure refusée) et le **rechargement complet**. ⛔ **CONTRÔLE NÉGATIF : 21 mutations sur un arbre CLONÉ, 21 conformes, 0 ancre morte**, banc sain **39/0 avant ET après** — les **6 familles exigées au §6** chacune couverte (ordre d'insertion · repas disparu · alphabétique · par heure · par fréquence · ordre recopié), dont **cinq DÉGUISÉES** : ⭐⭐ **l'ordre canonique RECOPIÉ sur place, dans le bon ordre** — *l'écran reste juste, et la deuxième source de vérité est née* —, `FOOD_MEALS` redéclaré dans l'écran, une ligne vide qui récupère une heure, une ligne vide remplie du dernier aliment connu, et un gabarit dupliqué qui perd l'alignement de ft-v1031. ⭐ **M01 remet le code d'avant mot pour mot** : sans son rouge, rien de ce qui est écrit ici ne vaudrait. ⭐ **Passe complète : 4773 ✅ / 0 ❌**, les **4 conditions vertes**.
+
+Fichiers : `screens.js`, `tests/parcours/ordre_repas.js` (nouveau), `tests/parcours/habitudes_alim.js` (témoin ⑮ retourné), `tests/parcours/runner.js`, `tools/banc_ordre_repas.js` et `tools/mut_ordre_repas.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Un seul fichier servi : `screens.js`.** sw.js ft-v1234. |
 
 **ft-v1233 — 🧠 « CE QUE L'APP A APPRIS DE TON ALIMENTATION » NE PRÉSENTE PLUS COMME UNE HABITUDE CE QUI N'EN EST PAS** — cas réel de Michel, capture à l'appui : *« Petit-déj ~12h »* · *« Collation 2 · Pom'Potes »* prise 1 ou 2 fois · *« prune »* prise 2 fois, sur **33 jours notés étalés sur 76**. Ses bornes : ⛔ ***« ne pars pas du principe que… le mesurer »*** · ⛔ ***« ne fixe pas arbitrairement un seuil du type minimum 5 fois sans mesurer le comportement réel »*** · ⭐ ***« étudier le besoin avant de choisir la règle »***.
 
@@ -770,34 +805,4 @@ Tests : **blocs B-CCCXL (15 témoins de source) et B-CCCXLI (13 conduits dans le
 
 Fichiers : `state.js`, `coach.js`, `setup.js`, `Code.js`, `worker.js`, `tests/parcours/coach_memoire.js` (nouveau), `tests/parcours/runner.js`, `tests/donnees/donnees-milo.json`, `tests/milo/eval.js`, `tools/banc_coach_memoire.js`, `tools/mut_coach_memoire.py`, `tools/gen_banc_reference.py`, `tools/gen_memoire_baseline_pdf.py` et `tools/mut_memoire_baseline.py` (nouveaux), `.github/workflows/banc-milo.yml` (nouveau), `docs/COACHMEMORY-PROVENANCE.md`, `docs/DECISIONS-MEMOIRE-LONGUE.md` et `docs/MILO-CARTOGRAPHIE-IDENTITE.md` (nouveaux), `tools/check_regles.py`, `tools/dump_prompt.js`, `docs/PROMPT-MILO-REEL.txt`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md` (en-tête de version), `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1227. |
 
-**ft-v1226 — 🍽️ NUTRITION UX · LE REPAS CHOISI À LA MAIN RESTE ACTIF, ET LA DONNÉE LE SUIT** — cas réel rapporté par Michel : *« je rentre ma journée en retard, je choisis Dîner, j'ajoute un aliment… et l'app revient toute seule sur Petit-déjeuner »*. Ses bornes : ⛔ ***« pas d'UltraCode, passe courte »*** · ⛔ ***« je veux corriger LA CAUSE, pas ajouter dix booléens, un timer, un hack setTimeout ou une exception écran par écran »*** · ⭐ ***« si un état existant peut porter le repas sélectionné, utiliser cet état »***.
 
-**⛔⛔ CE N'ÉTAIT PAS UNE GÊNE D'AFFICHAGE : LA DONNÉE PARTAIT AILLEURS.** Mesuré en conduisant l'app servie, horloge gelée, choix manuel = **Déjeuner** :
-
-| heure | 1ᵉʳ aliment | 2ᵉ | 3ᵉ |
-|---|---|---|---|
-| **09 h** | `dejeuner` ✅ | ⛔ **`petitdej`** | ⛔ **`petitdej`** |
-| 16 h | `dejeuner` ✅ | ⛔ `collation` | ⛔ `collation` |
-| 21 h | `dejeuner` ✅ | ⛔ `diner` | ⛔ `diner` |
-
-👉 ***Une journée rentrée après coup s'éparpillait dans des repas que personne n'avait choisis*** — et la ligne du matin est exactement le cas que Michel décrit.
-
-**⭐⭐ LA CAUSE TIENT EN UNE LIGNE, ET C'ÉTAIT LE SEUL RECALCUL DU DÉPÔT.** `openAddFood` recalculait `_afMeal` depuis `new Date().getHours()` **à chaque ouverture** de l'écran d'ajout. Or **on rouvre cet écran pour CHAQUE aliment** : le choix manuel ne survivait donc jamais au premier ajout. *Le geste qui casse tout est celui qu'on refait le plus souvent.*
-
-**⭐⭐ LA CORRECTION EST UNE ABSENCE, PAS UN DRAPEAU.** `_afMeal` ne porte plus que le **choix EXPLICITE** — `null` veut dire « personne n'a choisi », et c'est la seule information dont on a besoin. ⛔ **Zéro booléen, zéro timer, zéro exception écran par écran** : c'est la consigne, et c'est aussi ce qui rend la règle lisible — ***l'heure décide du DÉFAUT, jamais de ce qui a été DÉCIDÉ***. Priorité : **choix de la personne > suggestion horaire**.
-
-**⛔ UN SEUL PROPRIÉTAIRE (R2)** : `_afMealActif()` répond seul à « dans quel repas écrit-on ? », et ses **quatre lecteurs** y passent tous — les puces, les **DEUX écrivains** du journal, le message de confirmation. *Une seule porte restée sur la variable brute écrirait `null` dans le journal*, et ça ne se verrait qu'en relisant ses repas des jours plus tard. ⭐ **Échec fermé** : un repas absent de `FOOD_MEALS` retombe sur la suggestion horaire, jamais sur une valeur inventée.
-
-**📣 RÈGLE D'OR #11 — RIEN À ANNONCER, et c'est pesé.** Aucun écran n'apparaît, aucun bouton ne bouge, aucun réglage n'est ajouté : une gêne disparaît. ⚖️ **Pop-up : non** — rien n'est à *faire*, et le changement ne peut que soulager. *Annoncer « l'app ne change plus de repas toute seule » reviendrait à faire de la place dans le mécanisme d'annonce pour un défaut qu'on vient de réparer.*
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ **aucune remise à zéro inventée** — la question *« faut-il oublier le choix en changeant de JOUR dans le journal ? »* n'est **pas tranchée**, donc pas décidée à la place de Michel (**règle d'or 15**) · ⛔ la **persistance longue** n'est pas touchée : le choix vit tant que l'app est ouverte, un rechargement complet repart sur la suggestion horaire, **comportement actuel inchangé** · ⛔ les politiques FREE/PREMIUM, les 21 capacités, les compteurs IA et leur migration, TDEE/macros, les plans alimentaires, les quotas, Milo, le Worker, Apps Script, Supabase, V2, **la Douane**, le miroir : **0 ligne** · ⛔ ni `state.js`, ni `screens.js`, ni `index.html`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `Code.js`.
-
-**⚠️⚠️ ET TROIS DE MES PROPRES TÉMOINS ONT ROUGI SUR DU CODE PARFAITEMENT SAIN — trois défauts d'instrument que ce dépôt connaît déjà.** ① un témoin **figeait un NOMBRE** de lectures brutes (« au plus 4 ») : *un témoin qui fige une valeur mesure mon arithmétique mentale* — l'invariant juste n'est pas « combien » mais **« OÙ »**, toute lecture brute doit vivre chez le propriétaire · ② un **compteur d'écritures comptait la DÉCLARATION** (`let _afMeal=null`), donc il annonçait 2 au lieu de 1 — exactement le défaut de mon compteur d'appels de ft-v1224 · ③ ⛔ **le piège de l'espace, 8ᵉ fois — et dans le commit même où je le corrigeais ailleurs** : le motif cherchait `function setFoodMeal` **avec un espace** dans une source dont je venais de retirer tous les espaces. *Quand on nettoie la source, on nettoie le motif du même geste, sinon le garde mesure sa propre mise en forme.*
-
-**⭐ ET LA MUTATION QUI COMPTE EST LA DÉGUISÉE.** `M02` remet le recalcul **en passant par le propriétaire du défaut** (`_afMealDefautHoraire()`) au lieu d'écrire l'heure à la main : un témoin qui ne chercherait que `getHours()` serait resté **vert** dessus. Elle mord.
-
-⚖️ **DEUX OBSERVATIONS UX, NOTÉES ET NON CORRIGÉES** (consigne §11, *« une gêne observée une fois ne doit pas devenir une refonte »*) : ① le choix **survit à un changement de jour** dans le journal — mesuré, non tranché ; ② il **ne survit pas à un rechargement complet** de la PWA — comportement actuel, aucune preuve qu'il faille le changer.
-
-Tests : **blocs B-CCCXXXVI (10 témoins de source) et B-CCCXXXVII (14 conduits dans le navigateur)**, dans `tests/parcours/repas_actif.js` — les **8 cas U1→U8** plus **la journée entière** de Michel : 4 repas, 9 aliments, chacun ajouté en **ROUVRANT** l'écran. ⭐ L'horloge du banc est **gelée à 09 h exprès** : c'est l'heure où le défaut horaire diffère du choix manuel — *un banc calé sur une heure où les deux coïncident serait resté vert sur le code d'avant*. ⛔ **CONTRÔLE NÉGATIF : 19 mutations sur un arbre CLONÉ, 19 conformes**, contrôle sain **24 OK / 0 rouge avant ET après**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire).
-
-Fichiers : `app.js`, `tests/parcours/repas_actif.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_repas_actif.js` et `tools/mut_repas_actif.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1226. |

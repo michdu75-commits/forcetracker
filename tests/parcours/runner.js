@@ -39607,6 +39607,7 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   await require('./plan_incomplet.js').ecran(t, b, PORT);
   await require('./ia_ref100.js').ecran(t, b, PORT);
   await require('./habitudes_alim.js').ecran(t, b, PORT);
+  await require('./ordre_repas.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40408,6 +40409,7 @@ require('./coach_memoire.js').source(t, ROOT, fs, path);
 require('./plan_incomplet.js').source(t, ROOT, fs, path);
 require('./ia_ref100.js').source(t, ROOT, fs, path);
 require('./habitudes_alim.js').source(t, ROOT, fs, path);
+require('./ordre_repas.js').source(t, ROOT, fs, path);
 require('./motif_exercice.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

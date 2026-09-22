@@ -9814,3 +9814,36 @@ Fichiers : `capacites-ia.js` (nouveau), `docs/IA-FREE-PREMIUM.md` (généré), `
 **⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ aucun **verrou Premium serveur** · ⛔ aucune route Apps Script fermée · ⛔ **ni V2, ni `ft_jetons`, ni le miroir multi-appareils, ni la Douane** · ⛔ aucun quota de génération complète inventé · ⛔ aucune 22ᵉ capacité · ⛔ aucun tombstone, aucun backfill réel · ⛔ **ni `screens.js`, ni `log.js`, ni `coach.js`, ni `tracking.js`, ni `constants.js`, ni `supabase.js`, ni `worker.js`, ni `index.html`.**
 
 Tests : **blocs B-CCCXXXIV (23 témoins de source) et B-CCCXXXV (24 témoins conduits dans le navigateur)**, dans `tests/parcours/pots_nutrition.js` — les **8 cas N1→N8** de Michel plus les **8 états de migration** (absent · 0 · 5 · 24 · 25 · 40 · « abc » · −3), l'idempotence éprouvée en rejouant la règle **trois fois**, et un pot déjà migré qui **ne bouge plus** même quand l'ancien pot remonte plus haut. ⭐ Le témoin **B-CCCXXXI ⑱ a été RETOURNÉ, pas supprimé** : il figeait la **liste** des trois politiques ouvertes et serait devenu rouge sur un registre parfaitement à jour ; sa **garantie** n'a pas bougé — *le registre doit rester capable de dire « pas décidé »*.
+
+
+**ft-v1226 — 🍽️ NUTRITION UX · LE REPAS CHOISI À LA MAIN RESTE ACTIF, ET LA DONNÉE LE SUIT** — cas réel rapporté par Michel : *« je rentre ma journée en retard, je choisis Dîner, j'ajoute un aliment… et l'app revient toute seule sur Petit-déjeuner »*. Ses bornes : ⛔ ***« pas d'UltraCode, passe courte »*** · ⛔ ***« je veux corriger LA CAUSE, pas ajouter dix booléens, un timer, un hack setTimeout ou une exception écran par écran »*** · ⭐ ***« si un état existant peut porter le repas sélectionné, utiliser cet état »***.
+
+**⛔⛔ CE N'ÉTAIT PAS UNE GÊNE D'AFFICHAGE : LA DONNÉE PARTAIT AILLEURS.** Mesuré en conduisant l'app servie, horloge gelée, choix manuel = **Déjeuner** :
+
+| heure | 1ᵉʳ aliment | 2ᵉ | 3ᵉ |
+|---|---|---|---|
+| **09 h** | `dejeuner` ✅ | ⛔ **`petitdej`** | ⛔ **`petitdej`** |
+| 16 h | `dejeuner` ✅ | ⛔ `collation` | ⛔ `collation` |
+| 21 h | `dejeuner` ✅ | ⛔ `diner` | ⛔ `diner` |
+
+👉 ***Une journée rentrée après coup s'éparpillait dans des repas que personne n'avait choisis*** — et la ligne du matin est exactement le cas que Michel décrit.
+
+**⭐⭐ LA CAUSE TIENT EN UNE LIGNE, ET C'ÉTAIT LE SEUL RECALCUL DU DÉPÔT.** `openAddFood` recalculait `_afMeal` depuis `new Date().getHours()` **à chaque ouverture** de l'écran d'ajout. Or **on rouvre cet écran pour CHAQUE aliment** : le choix manuel ne survivait donc jamais au premier ajout. *Le geste qui casse tout est celui qu'on refait le plus souvent.*
+
+**⭐⭐ LA CORRECTION EST UNE ABSENCE, PAS UN DRAPEAU.** `_afMeal` ne porte plus que le **choix EXPLICITE** — `null` veut dire « personne n'a choisi », et c'est la seule information dont on a besoin. ⛔ **Zéro booléen, zéro timer, zéro exception écran par écran** : c'est la consigne, et c'est aussi ce qui rend la règle lisible — ***l'heure décide du DÉFAUT, jamais de ce qui a été DÉCIDÉ***. Priorité : **choix de la personne > suggestion horaire**.
+
+**⛔ UN SEUL PROPRIÉTAIRE (R2)** : `_afMealActif()` répond seul à « dans quel repas écrit-on ? », et ses **quatre lecteurs** y passent tous — les puces, les **DEUX écrivains** du journal, le message de confirmation. *Une seule porte restée sur la variable brute écrirait `null` dans le journal*, et ça ne se verrait qu'en relisant ses repas des jours plus tard. ⭐ **Échec fermé** : un repas absent de `FOOD_MEALS` retombe sur la suggestion horaire, jamais sur une valeur inventée.
+
+**📣 RÈGLE D'OR #11 — RIEN À ANNONCER, et c'est pesé.** Aucun écran n'apparaît, aucun bouton ne bouge, aucun réglage n'est ajouté : une gêne disparaît. ⚖️ **Pop-up : non** — rien n'est à *faire*, et le changement ne peut que soulager. *Annoncer « l'app ne change plus de repas toute seule » reviendrait à faire de la place dans le mécanisme d'annonce pour un défaut qu'on vient de réparer.*
+
+**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ **aucune remise à zéro inventée** — la question *« faut-il oublier le choix en changeant de JOUR dans le journal ? »* n'est **pas tranchée**, donc pas décidée à la place de Michel (**règle d'or 15**) · ⛔ la **persistance longue** n'est pas touchée : le choix vit tant que l'app est ouverte, un rechargement complet repart sur la suggestion horaire, **comportement actuel inchangé** · ⛔ les politiques FREE/PREMIUM, les 21 capacités, les compteurs IA et leur migration, TDEE/macros, les plans alimentaires, les quotas, Milo, le Worker, Apps Script, Supabase, V2, **la Douane**, le miroir : **0 ligne** · ⛔ ni `state.js`, ni `screens.js`, ni `index.html`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `Code.js`.
+
+**⚠️⚠️ ET TROIS DE MES PROPRES TÉMOINS ONT ROUGI SUR DU CODE PARFAITEMENT SAIN — trois défauts d'instrument que ce dépôt connaît déjà.** ① un témoin **figeait un NOMBRE** de lectures brutes (« au plus 4 ») : *un témoin qui fige une valeur mesure mon arithmétique mentale* — l'invariant juste n'est pas « combien » mais **« OÙ »**, toute lecture brute doit vivre chez le propriétaire · ② un **compteur d'écritures comptait la DÉCLARATION** (`let _afMeal=null`), donc il annonçait 2 au lieu de 1 — exactement le défaut de mon compteur d'appels de ft-v1224 · ③ ⛔ **le piège de l'espace, 8ᵉ fois — et dans le commit même où je le corrigeais ailleurs** : le motif cherchait `function setFoodMeal` **avec un espace** dans une source dont je venais de retirer tous les espaces. *Quand on nettoie la source, on nettoie le motif du même geste, sinon le garde mesure sa propre mise en forme.*
+
+**⭐ ET LA MUTATION QUI COMPTE EST LA DÉGUISÉE.** `M02` remet le recalcul **en passant par le propriétaire du défaut** (`_afMealDefautHoraire()`) au lieu d'écrire l'heure à la main : un témoin qui ne chercherait que `getHours()` serait resté **vert** dessus. Elle mord.
+
+⚖️ **DEUX OBSERVATIONS UX, NOTÉES ET NON CORRIGÉES** (consigne §11, *« une gêne observée une fois ne doit pas devenir une refonte »*) : ① le choix **survit à un changement de jour** dans le journal — mesuré, non tranché ; ② il **ne survit pas à un rechargement complet** de la PWA — comportement actuel, aucune preuve qu'il faille le changer.
+
+Tests : **blocs B-CCCXXXVI (10 témoins de source) et B-CCCXXXVII (14 conduits dans le navigateur)**, dans `tests/parcours/repas_actif.js` — les **8 cas U1→U8** plus **la journée entière** de Michel : 4 repas, 9 aliments, chacun ajouté en **ROUVRANT** l'écran. ⭐ L'horloge du banc est **gelée à 09 h exprès** : c'est l'heure où le défaut horaire diffère du choix manuel — *un banc calé sur une heure où les deux coïncident serait resté vert sur le code d'avant*. ⛔ **CONTRÔLE NÉGATIF : 19 mutations sur un arbre CLONÉ, 19 conformes**, contrôle sain **24 OK / 0 rouge avant ET après**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire).
+
+Fichiers : `app.js`, `tests/parcours/repas_actif.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_repas_actif.js` et `tools/mut_repas_actif.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1226. |
