@@ -6,6 +6,17 @@
 
 ---
 
+## 🍽️ 22/09/2026 — RETOUR RÉCURRENT DE MICHEL CONSIGNÉ : « L'APPLICATION DONNE TROP DE CALORIES »
+
+- ⛔⛔ **Retour répété sur plusieurs sessions, et écrit NULLE PART jusqu'à aujourd'hui.** Seul le nombre existait dans le dépôt (3 522 kcal) ; **son doute, jamais**. 👉 *On repartait donc de zéro à chaque session et on lui redemandait des chiffres* — l'inverse de ce que le produit promet au sportif (**R27** appliquée à nous-mêmes). ⚖️ **Palier R22 : RÉCURRENT.**
+- ⭐⭐ **Mesuré dans le code servi** (`calcTDEE`, `state.js`) : son **PAL effectif** (TDEE ÷ métabolisme de base) vaut **1,978**, alors que le cran le plus haut du sélecteur — **« Très actif » — vaut 1,900**. ***Il est 139 kcal au-dessus du plafond que l'application propose elle-même, sans avoir choisi le cran du haut.***
+- ⚠️ **Pourquoi** : les libellés du sélecteur ne parlent **que des séances** (« Actif (5-6j) ») et le « Type de travail » s'ajoute **à côté** — or la table standard dont viennent les 5 multiplicateurs définit son dernier cran comme *« exercice très intense **ET métier physique** »*. ⚠️ Fait **[B]** (source secondaire) : le conteneur ne peut ouvrir aucune publication primaire. C'est la cause `metier_et_activite_cumules`, **7 450 / 100 000** au corpus B.
+- ⛔ **Ça ne prouve PAS que 3 522 est faux** — seulement que l'app dépasse son propre maximum sans le dire. ⚖️ **Et le retour n'a pas à être prouvé pour être enregistré.**
+- ⏭️ **La réponse de fond existe et n'est pas servie** : `tdeeObserve()` (candidate **V9**) **mesure** le TDEE réel par bilan énergétique au lieu de l'estimer (porte : 14 j · 50 % de jours notés · 4 pesées). ⛔ Arbitrages **D-019 → D-022** ouverts, **aucune publication**.
+- Détail complet : `RETOURS-TESTEURS.md`.
+
+---
+
 ## 🍽️ ft-v1234 (22/09/2026) — ORDRE FIXE DES REPAS ET ÉTAT VIDE EXPLICITE DANS « CE QUE L'APP A APPRIS »
 
 - **Version en ligne (live) :** `ft-v1234` — 🍽️ **les 5 repas, toujours dans l'ordre de la journée, et un repas sans données reste visible.**

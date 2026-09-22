@@ -260,3 +260,74 @@ du contexte, le nombre de tracés de la figurine — et pas la seule chose qui d
 ---
 
 *(À compléter à chaque nouveau retour testeur marquant. Garder le lien dans `CLAUDE.md`.)*
+
+---
+
+## 🍽️ 22/09/2026 — MICHEL : « L'APPLICATION DONNE TROP DE CALORIES » (répété, jamais consigné)
+
+> ⛔⛔ **CE QUI REND CE RETOUR DIFFÉRENT DE TOUS LES AUTRES DE CE FICHIER : il a été dit
+> PLUSIEURS FOIS, sur plusieurs sessions, et il n'était écrit NULLE PART.** Michel, ce jour :
+> *« tu te rappelles quand je te disais je trouve mes calories bcp trop élevées et on a jamais
+> fouillé, je n'ai pas lâché l'affaire »*, puis : ***« je t'ai déjà dit que l'application donne
+> trop de calories »***.
+>
+> **Vérifié avant de l'écrire** : dans tout le dépôt, seul le NOMBRE apparaît (3 522 kcal,
+> `docs/AUDIT-NUTRITION-2026-09-22.md`). **Son doute, lui, n'apparaît pas une seule fois** —
+> ni ici, ni dans `BUGS.md`, ni dans `docs/JOURNAL-DE-TEST.md`, ni dans le journal des versions.
+> 👉 ***Donc à chaque session on repartait de zéro et on lui redemandait des chiffres*** —
+> c'est-à-dire exactement le contraire de ce que le produit promet au sportif (*« tu ne repars
+> jamais de zéro »*). **R27 appliquée à nous-mêmes**, et payée plusieurs fois.
+>
+> ⚖️ **Palier R22 : RÉCURRENT.** Ce n'est plus « on observe », ce n'est plus « on enquête ».
+
+### Le profil et le chiffre
+
+Homme · **85,8 kg · 179 cm · 41 ans** · activité **« Actif (5-6 j) »** (1,725) · métier
+**« Physique »** (+450) · non-fumeur. TDEE servi : **3 522 kcal**.
+
+### ⭐⭐ CE QUI EST MESURÉ DANS LE CODE SERVI (`calcTDEE`, `state.js`)
+
+Le **PAL effectif** — le TDEE divisé par le métabolisme de base — est le seul chiffre comparable
+d'un réglage à l'autre. Calculé sur son profil (BMR Mifflin 1 777) :
+
+| réglage | TDEE | PAL effectif |
+|---|---|---|
+| Modéré (3-4j) + bureau | 2 754 | 1,550 |
+| Actif (5-6j) + bureau | 3 065 | 1,725 |
+| Modéré (3-4j) + physique | 3 204 | 1,803 |
+| **Actif (5-6j) + physique ← le sien** | **3 515** | **1,978** |
+| Très actif + bureau | 3 376 | 1,900 |
+
+👉 ***Son réglage produit un PAL de 1,978, alors que le cran le plus haut du sélecteur,
+« Très actif », vaut 1,900.*** Il est **139 kcal au-dessus du plafond que l'application propose
+elle-même**, sans avoir jamais choisi le cran du haut.
+
+### ⚠️ POURQUOI LES DEUX RÉGLAGES SE CUMULENT ALORS QU'ILS SE RECOUVRENT
+
+Les cinq multiplicateurs (1,2 · 1,375 · 1,55 · 1,725 · 1,9) viennent d'une table standard où le
+dernier cran se définit *« exercice très intense **ET métier physique**, ou deux séances par
+jour »*. ⚠️ **Source secondaire, largement reproduite — le conteneur ne peut ouvrir aucune
+publication primaire** (`connect_rejected` sur les domaines scientifiques) : c'est un fait de
+type **[B]**, jamais **[A]**.
+
+Or les libellés du sélecteur ne parlent **que des séances** (« Actif (5-6j) ») et le « Type de
+travail » s'ajoute à côté. 👉 ***Les deux réglages ont l'air indépendants alors que la table
+d'origine les compte ensemble.*** C'est la cause `metier_et_activite_cumules`, mesurée à
+**7 450 profils sur 100 000** du corpus B lors du chantier V9.
+
+### ⛔ CE QUE ÇA NE PROUVE PAS, ET IL FAUT LE DIRE
+
+Ça ne prouve **pas** que 3 522 est faux : une manutention lourde produit vraiment un NEAT
+considérable, et des PAL voisins de 2,0 existent. Ça prouve **une** chose : ***l'application le
+place au-dessus de son propre maximum, et personne ne l'avait vu.***
+⚖️ **Et le retour de Michel n'a pas à être prouvé pour être enregistré.** C'est l'utilisateur
+n°1 du produit qui dit que le chiffre est trop haut, plusieurs fois, sur plusieurs mois. *Le
+code dit ce qui EST ; Michel dit ce qui doit être corrigé* (règle d'or #15).
+
+### ⏭️ CE QUI EXISTE DÉJÀ ET ATTEND SON FEU VERT
+
+La réponse de fond n'est pas de retoucher un multiplicateur : c'est de **mesurer son TDEE réel**
+au lieu de l'estimer. `tdeeObserve()` (candidate **V9**, `tools/moteur_v9.js`, **non servie**)
+le calcule à partir du bilan énergétique — apport moyen et pente de poids — et la porte
+d'apprentissage exige **14 jours · 50 % de jours notés · 4 pesées**. ⛔ Rien n'est publié
+(arbitrages **D-019 → D-022** ouverts).
