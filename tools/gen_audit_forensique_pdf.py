@@ -160,13 +160,41 @@ garde(len(MUETTES) == 4,
 garde(UNI[(7, 7, 7, 7)]['carte'] is None, '7 seances proposent desormais quelque chose')
 
 # ══ D. LE FAN-OUT — on RECOMPTE ═══════════════════════════════════════════════════════
-SEV = collections.Counter()
+SEV = collections.Counter()      # severite ANNONCEE par l auditeur
 RAY = collections.Counter()
+VERD = collections.Counter()
 for d in W:
     for f in d['defauts']:
         SEV[f['severite']] += 1
         RAY[f['rayon']] += 1
+        VERD[f.get('__verdict', 'SANS VERDICT')] += 1
 N_DEF = sum(SEV.values())
+CONFIRMES = [(d['__dim'], f) for d in W for f in d['defauts']
+             if f.get('__verdict') not in (None, 'SANS VERDICT', 'REFUTE')]
+REFUTES = [(d['__dim'], f) for d in W for f in d['defauts'] if f.get('__verdict') == 'REFUTE']
+SANS = [(d['__dim'], f) for d in W for f in d['defauts'] if f.get('__verdict') == 'SANS VERDICT']
+SEV_V = collections.Counter((f.get('__sev') or f['severite']) for _d, f in CONFIRMES)
+# [!!] L EFFET MESURE DE LA VERIFICATION : elle n a jamais aggrave, elle a retrograde.
+ORDRE = {'CRITIQUE': 4, 'MAJEUR': 3, 'MOYEN': 2, 'MINEUR': 1, 'DOCUMENTATION': 0}
+RETRO = [(f['severite'], f.get('__sev') or f['severite']) for _d, f in CONFIRMES]
+N_BAISSE = sum(1 for a, b in RETRO if ORDRE[b] < ORDRE[a])
+N_HAUSSE = sum(1 for a, b in RETRO if ORDRE[b] > ORDRE[a])
+CRIT_VERIF = [(a, b) for a, b in RETRO if a == 'CRITIQUE']
+garde(len(CONFIRMES) + len(REFUTES) + len(SANS) == N_DEF,
+      'les verdicts ne se recomposent pas : %d + %d + %d != %d'
+      % (len(CONFIRMES), len(REFUTES), len(SANS), N_DEF))
+garde(N_HAUSSE == 0, 'la verification a AGGRAVE %d defaut(s)' % N_HAUSSE)
+garde(len(SANS) > 0, 'tous les defauts ont un verdict : le dossier decrit l inverse')
+garde(len(CRIT_VERIF) > 0 and all(b != 'CRITIQUE' for a, b in CRIT_VERIF),
+      'aucun CRITIQUE verifie, ou l un a survecu : le dossier affirme le contraire')
+# [!!] LE PIEGE DE LECTURE, TROUVE PAR MICHEL EN INSPECTANT LE JSON LUI-MEME :
+#    une dimension a 0 verdict n est PAS une dimension propre, c est une dimension NON EXAMINEE.
+#    Un tableau qui affiche « 0 confirme, 0 refute » se lit exactement a l envers de la verite.
+DIM_VERIF = [d for d in W if any(f.get('__verdict') not in (None, 'SANS VERDICT') for f in d['defauts'])]
+DIM_MUETTES = [d for d in W if d not in DIM_VERIF]
+N_DEF_MUETS = sum(len(d['defauts']) for d in DIM_MUETTES)
+garde(len(DIM_MUETTES) > 0, 'toutes les dimensions ont ete verifiees : le dossier decrit l inverse')
+garde(len(DIM_VERIF) + len(DIM_MUETTES) == len(W), 'le partage des dimensions ne se recompose pas')
 N_FAITS = sum(len(d['faits']) for d in W)
 N_INC = sum(len(d['inconnues']) for d in W)
 CRIT = [(d['__dim'], f) for d in W for f in d['defauts'] if f['severite'] == 'CRITIQUE']
@@ -282,12 +310,16 @@ H.append(encadre('Resume executif',
   'l application servie. [*] <b>La chaine UI -&gt; stockage -&gt; rechargement -&gt; runtime -&gt; '
   'moteur est SAINE</b> : une saisie arrive intacte jusqu au calcul et survit au rechargement. '
   '[*] Le probleme n est pas la, il est dans <b>ce que l application fait quand la donnee MANQUE</b>, '
-  'et dans <b>la circulation des valeurs entre outils et documents</b>. [!!] <b>Repartition : '
-  '%d CRITIQUES, %d MAJEURS, %d MOYENS, %d MINEURS, %d de documentation</b> ; par rayon, '
-  '<b>%d systemiques</b>, %d multi-moteurs, %d locaux. [/!\\] <b>Aucune correction n a ete publiee, '
-  'aucun fichier servi n est modifie</b> (verifie par git sur %d fichiers), aucun bump de version.'
-  % (N_FAITS, N_DEF, N_INC, len(W), SEV['CRITIQUE'], SEV['MAJEUR'], SEV['MOYEN'], SEV['MINEUR'],
-     SEV['DOCUMENTATION'], RAY['SYSTEMIQUE'], RAY['MULTI-MOTEUR'], RAY['LOCAL'], len(SERVIS)), ROUGE))
+  'et dans <b>la circulation des valeurs entre outils et documents</b>. [!!] '
+  '<b>%d ont ete CONFIRMES par verification adversariale, %d refutes, et %d n ont AUCUN verdict</b> '
+  '- les verificateurs ont ete coupes par la limite de session. [!!] <b>Et la verification a '
+  'retrograde %d des %d severites qu elle a touchees, sans jamais en aggraver une seule</b> : les '
+  'DEUX defauts annonces CRITIQUES qu elle a examines sont <b>tombes a MOYEN</b>. <i>C est '
+  'exactement pourquoi les %d defauts sans verdict sont donnes ici comme des pistes ancrees et '
+  'jamais comme des faits.</i> [/!\\] <b>Aucune correction n a ete publiee, aucun fichier servi '
+  'n est modifie</b> (verifie par git sur %d fichiers), aucun bump de version.'
+  % (N_FAITS, N_DEF, N_INC, len(W), len(CONFIRMES), len(REFUTES), len(SANS),
+     N_BAISSE, len(CONFIRMES), len(SANS), len(SERVIS)), ROUGE))
 
 # ── 1. provenance
 H.append(P('1. Regle de provenance appliquee a ce dossier', 'h1'))
@@ -460,31 +492,66 @@ H.append(P('[!!] <b>Le champ <font face="Courier">level</font> ne change AUCUNE 
   'par la mesure).', 'p'))
 
 # ── 8. les critiques du fan-out
-H.append(P('8. Les %d defauts CRITIQUES releves par l audit statique' % len(CRIT), 'h1'))
-H.append(P('[/!\\] <b>Ces defauts sont ancres dans le code mais leur verification adversariale etait '
-  'encore EN COURS au moment de generer ce dossier.</b> Ils sont donnes avec leur ancre pour etre '
-  'ouverts, pas pour etre crus. <i>Un defaut non contre-verifie est une piste, pas un fait.</i>', 'p'))
+H.append(P('8. Les %d defauts CONFIRMES par verification adversariale' % len(CONFIRMES), 'h1'))
+H.append(encadre('Ce que la verification a fait aux severites - et pourquoi ca decide de tout',
+  'Sur les <b>%d defauts</b> releves, seuls <b>%d ont pu etre contre-verifies</b> : les '
+  'verificateurs suivants ont ete coupes par la limite de session. [*] Sur ces %d, la verification '
+  'a <b>retrograde %d severites et n en a aggrave AUCUNE</b>. [!!] <b>Les deux defauts annonces '
+  'CRITIQUES qu elle a examines sont tombes a MOYEN.</b> [*] <i>Donc les %d defauts restes sans '
+  'verdict ne sont pas &laquo; probablement vrais &raquo; : le seul echantillon contre-verifie dit '
+  'que la severite annoncee est surevaluee environ une fois sur trois.</i>'
+  % (N_DEF, len(CONFIRMES), len(CONFIRMES), N_BAISSE, len(SANS)), ORANGE))
+H.append(Spacer(1, 4))
 lig = []
-for dim, f in CRIT:
-    lig.append([dim, _n(f['titre'])[:150], '<font face="Courier">%s</font>' % _n(f['ancre'])[:70],
-                f['rayon']])
-H.append(tableau(['Dimension', 'Defaut', 'Ancre', 'Rayon'], lig,
-                 [28 * mm, 72 * mm, 44 * mm, 24 * mm]))
+for dim, f in sorted(CONFIRMES, key=lambda x: -ORDRE[x[1].get('__sev') or x[1]['severite']]):
+    lig.append(['<b>%s</b>' % (f.get('__sev') or f['severite']), f.get('__ray') or f['rayon'], dim,
+                _n(f['titre'])[:130], '<font face="Courier">%s</font>' % _n(f['ancre'])[:52]])
+H.append(tableau(['Severite verifiee', 'Rayon', 'Dimension', 'Defaut CONFIRME', 'Ancre'], lig,
+                 [22 * mm, 22 * mm, 26 * mm, 62 * mm, 36 * mm]))
+H.append(Spacer(1, 4))
+H.append(P('Les %d defauts REFUTES - ils ne sont pas supprimes, ils sont classes' % len(REFUTES), 'h2'))
+H.append(tableau(['Dimension', 'Defaut refute', 'Pourquoi il ne tient pas'],
+  [[dim, _n(f['titre'])[:95], _n(f.get('__pourquoi', ''))[:230]] for dim, f in REFUTES],
+  [26 * mm, 62 * mm, 80 * mm]))
+H.append(Spacer(1, 4))
+H.append(P('8b. Les %d pistes ancrees et NON verifiees - les plus lourdes' % len(SANS), 'h2'))
+H.append(P('[/!\\] Donnees avec leur ancre <b>pour etre ouvertes, pas pour etre crues</b>. '
+  '<i>Un defaut non contre-verifie est une piste, pas un fait.</i>', 'petit'))
+lig = []
+for dim, f in [x for x in SANS if x[1]['severite'] in ('CRITIQUE', 'MAJEUR')][:24]:
+    lig.append([f['severite'], dim, _n(f['titre'])[:118],
+                '<font face="Courier">%s</font>' % _n(f['ancre'])[:46]])
+H.append(tableau(['Severite ANNONCEE', 'Dimension', 'Piste', 'Ancre'], lig,
+                 [24 * mm, 26 * mm, 74 * mm, 44 * mm]))
 
 # ── 9. repartition
-H.append(P('9. Repartition des %d defauts' % N_DEF, 'h1'))
-H.append(tableau(['Dimension', 'Faits', 'CRIT', 'MAJ', 'MOY', 'MIN', 'DOC', 'Inconnues'],
+H.append(P('9. Repartition des %d defauts et etat de leur verification' % N_DEF, 'h1'))
+H.append(tableau(['Dimension', 'Faits', 'CRIT', 'MAJ', 'MOY', 'MIN', 'DOC', 'Verifies', 'Sans verdict'],
   [[d['__dim'], str(len(d['faits'])),
     str(sum(1 for f in d['defauts'] if f['severite'] == 'CRITIQUE')),
     str(sum(1 for f in d['defauts'] if f['severite'] == 'MAJEUR')),
     str(sum(1 for f in d['defauts'] if f['severite'] == 'MOYEN')),
     str(sum(1 for f in d['defauts'] if f['severite'] == 'MINEUR')),
     str(sum(1 for f in d['defauts'] if f['severite'] == 'DOCUMENTATION')),
-    str(len(d['inconnues']))] for d in W]
+    '<b>%d</b>' % sum(1 for f in d['defauts'] if f.get('__verdict') not in (None, 'SANS VERDICT')),
+    str(sum(1 for f in d['defauts'] if f.get('__verdict') == 'SANS VERDICT'))] for d in W]
   + [['<b>TOTAL</b>', '<b>%d</b>' % N_FAITS, '<b>%d</b>' % SEV['CRITIQUE'], '<b>%d</b>' % SEV['MAJEUR'],
       '<b>%d</b>' % SEV['MOYEN'], '<b>%d</b>' % SEV['MINEUR'], '<b>%d</b>' % SEV['DOCUMENTATION'],
-      '<b>%d</b>' % N_INC]],
-  [44 * mm, 18 * mm, 16 * mm, 16 * mm, 16 * mm, 16 * mm, 16 * mm, 24 * mm]))
+      '<b>%d</b>' % (len(CONFIRMES) + len(REFUTES)), '<b>%d</b>' % len(SANS)]],
+  [38 * mm, 15 * mm, 14 * mm, 14 * mm, 14 * mm, 14 * mm, 14 * mm, 20 * mm, 25 * mm]))
+H.append(Spacer(1, 3))
+H.append(P('[/!\\] Les colonnes CRIT a DOC portent la severite <b>ANNONCEE</b>. La severite '
+  '<b>VERIFIEE</b> n existe que pour les %d defauts de la section 8.' % len(CONFIRMES), 'petit'))
+H.append(Spacer(1, 4))
+H.append(encadre('[!!] Comment NE PAS lire ce tableau - le piege est dans la colonne de droite',
+  '<b>%d dimensions sur %d affichent zero verifie.</b> [*] Cela ne veut PAS dire qu elles sont '
+  'propres : cela veut dire qu <b>aucun de leurs %d defauts n a ete examine</b>. Les verificateurs '
+  'ont ete coupes avant de les atteindre. [*] <i>Un tableau qui affiche &laquo; 0 confirme, '
+  '0 refute &raquo; se lit exactement a l envers de la verite</i> - et c est Michel qui l a vu, en '
+  'inspectant le JSON au lieu de lire mon resume. [*] Les deux seules dimensions reellement '
+  'contre-verifiees sont <b>%s</b>.'
+  % (len(DIM_MUETTES), len(W), N_DEF_MUETS,
+     ' et '.join('<font face="Courier">%s</font>' % d['__dim'] for d in DIM_VERIF)), ROUGE))
 
 # ── 10. matrice donnees
 H.append(P('10. Matrice des donnees critiques (section 40)', 'h1'))
@@ -570,8 +637,10 @@ INC = [
  ['D ou vient le 3 522 du cahier du 22/09', 'Aucun cran du menu ne le produit avec les valeurs '
   'declarees. <b>Non reconstruit, expres.</b>'],
  ['La part exacte surestimation / sous-declaration', 'Indecidable sans eau doublement marquee.'],
- ['Les %d defauts non encore contre-verifies' % (N_DEF - 0),
-  'La phase adversariale tournait encore. <b>Ce sont des pistes ancrees, pas des faits etablis.</b>'],
+ ['La severite reelle des %d defauts sans verdict' % len(SANS),
+  '<b>Les verificateurs ont ete coupes par la limite de session</b> (146 agents en echec sur 182). '
+  'Sur l echantillon verifie, %d severites sur %d ont ete retrogradees : on ne peut donc pas '
+  'supposer que les autres tiennent telles quelles.' % (N_BAISSE, len(CONFIRMES))],
 ]
 H.append(tableau(['Point', 'Pourquoi il reste inconnu'], INC, [58 * mm, 110 * mm]))
 
@@ -616,8 +685,17 @@ H.append(tableau(['Ordre', 'Correction', 'Pourquoi cet ordre', 'Risque'],
 # ── 16. contre-audit
 H.append(P('16. Contre-audit de ce dossier (section 44)', 'h1'))
 H.append(tableau(['Ce que je me reproche', 'Ce que j en fais'],
- [['Les %d defauts du fan-out ne sont pas encore contre-verifies' % N_DEF,
-   '<b>Ils sont nommes comme des pistes</b>, avec leur ancre, et jamais comptes comme des faits etablis.'],
+ [['%d defauts sur %d n ont AUCUN verdict adversarial' % (len(SANS), N_DEF),
+   '<b>Nommes comme des pistes ancrees</b>, jamais comptes comme des faits - et le dossier publie '
+   'le taux de retrogradation mesure (%d sur %d) pour qu on sache de combien s en defier.'
+   % (N_BAISSE, len(CONFIRMES))],
+  ['J ai ecrit &laquo; %d dimensions rendues &raquo; sans dire que %d n avaient aucun verdict'
+   % (len(W), len(DIM_MUETTES)),
+   '<b>Corrige.</b> Michel l a trouve en inspectant le JSON : mon resume laissait croire a une '
+   'verification generale alors que <b>2 dimensions sur %d</b> seulement ont ete examinees.' % len(W)],
+  ['La premiere version de ce dossier annoncait %d defauts CRITIQUES' % SEV['CRITIQUE'],
+   '<b>Chiffre retire.</b> La verification a fait tomber les deux seuls CRITIQUES qu elle a '
+   'examines. Publier le total annonce aurait fait passer un tri non fait pour un resultat.'],
   ['Les valeurs 48 / 180 / 3-4 viennent de Michel, pas de son appli',
    'Elles sont etiquetees <b>[B]</b> partout, et le banc les porte dans un profil '
    '<font face="Courier">__SYNTHETIQUE__</font> avec sa raison ecrite.'],
@@ -682,10 +760,13 @@ if len(_lis) < 12000:
     os.remove(OUT); sys.exit('REFUS : le PDF relu ne fait que %d caracteres lisibles' % len(_lis))
 for _m in ('deux politiques opposees', 'il invente un poids', 'le label tombe',
            'Seul le poids entre', 'AUCUN FICHIER SERVI', 'reste INCONNU',
-           'copie de fixture', 'pistes', 'SYNTHETIQUE', 'age_ans'):
+           'copie de fixture', 'pistes ancrees', 'SYNTHETIQUE', 'age_ans',
+           'tombes a MOYEN', 'AUCUN verdict', 'Chiffre retire', 'a l envers de la verite'):
     if _m not in _lis:
         os.remove(OUT); sys.exit('REFUS : « %s » n est pas imprime dans le PDF' % _m)
 print('   relu : %d caracteres lisibles sur %d pages, 0 flux manque' % (len(_lis), _np))
 print('OK %s (%d gardes, %d octets)' % (OUT, NB, os.path.getsize(OUT)))
-print('   %d faits, %d defauts (%d critiques), %d inconnues, %d dimensions'
-      % (N_FAITS, N_DEF, SEV['CRITIQUE'], N_INC, len(W)))
+print('   %d faits, %d defauts : %d confirmes, %d refutes, %d sans verdict'
+      % (N_FAITS, N_DEF, len(CONFIRMES), len(REFUTES), len(SANS)))
+print('   verification : %d severites retrogradees, %d aggravees, %d dimensions, %d inconnues'
+      % (N_BAISSE, N_HAUSSE, len(W), N_INC))
