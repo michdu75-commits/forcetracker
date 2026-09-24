@@ -77,3 +77,20 @@ A résidu (actuel) · B plage affichée · C plafond · D excédent redistribué
 E adapté au profil sportif · F alerte au-delà d'un seuil · G cible glucidique choisie par la
 personne. Et, indépendamment : rendre **visible** la provenance de l'activité et du métier
 (aujourd'hui des défauts silencieux).
+
+## 7. Circuit de décision imposé par Michel (24/09/2026)
+
+Toute modification métier du TDEE, des protéines, des lipides, des glucides, du déficit/surplus
+ou de la personnalisation Nutrition suit ce circuit, **sans sauter d'étape même si une option
+paraît évidente** :
+1. la session de chantier mesure et rédige un **« DOSSIER POUR CLAUDE PRINCIPAL »** ;
+2. GPT contre-analyse (il ne modifie pas le dépôt) ;
+3. Claude principal **vérifie** les faits et les options — il ne choisit pas la politique ;
+4. **Michel arbitre** ;
+5. la session implémente LA direction choisie ;
+6. témoins + contrôle négatif + passe complète ;
+7. contre-vérification finale ;
+8. publication séparée.
+
+Une décision déjà validée ne redevient pas une question parce qu'un audit est lancé ; une preuve
+nouvelle qui la contredit se documente, on s'arrête, et Michel tranche.
