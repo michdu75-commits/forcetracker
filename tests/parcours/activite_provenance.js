@@ -26,9 +26,13 @@ module.exports.source = function (t, ROOT, fs, path) {
 
   const sel = (IH.match(/<select id="act-sel">([\s\S]*?)<\/select>/) || ['', ''])[1];
   const vals = (sel.match(/value="([^"]*)"/g) || []).map(v => v.slice(7, -1)).filter(Boolean);
-  const liste = (ST.match(/\[1\.2,1\.375,1\.55,1\.725,1\.9\]\.indexOf\(n\)/) || [''])[0];
+  /* Resserré (contre-vérification de nuit) : la liste est lue DANS le corps de `_activiteValide`, puis
+     comparée aux options de l'écran — et non à une chaîne écrite en dur des deux côtés. */
+  const corpsAV = (ST.match(/function_activiteValide\(v\)\{[\s\S]*?\n?\}/) || [''])[0];
+  const lue = (corpsAV.match(/\[([0-9.,]+)\]\.indexOf\(n\)/) || ['', ''])[1];
+  const liste = lue;
   t('B-CCCLXII ① la liste de `_activiteValide` = les options de l\'écran (R2)',
-    liste !== '' && vals.join(',') === '1.2,1.375,1.55,1.725,1.9', vals.join(','));
+    liste !== '' && liste === vals.join(',') && vals.length === 5, 'propriétaire [' + liste + '] · écran [' + vals.join(',') + ']');
   t('B-CCCLXII ② aucune option d\'activité n\'est `selected` d\'office, « À choisir » en tête',
     !/selected/.test(sel) && /<option value="">À choisir<\/option>/.test(sel), sel.replace(/\s+/g, ' ').slice(0, 120));
   t('B-CCCLXII ③ plus aucun repli `1.55` dans le chargement ni dans le bonus sport',
@@ -88,7 +92,7 @@ module.exports.ecran = async function (t, b, PORT) {
              ctx: (typeof buildCoachContext === 'function') ? String(buildCoachContext()) : '' };
   });
   t('B-CCCLXIII ① profil sans activité choisie : activité `null`, TDEE et macros `null` (plus de 1,55 silencieux)',
-    neuf.act === null && neuf.tdee === null && neuf.cal === null && neuf.P === null && neuf.G === null,
+    neuf.act === null && neuf.tdee === null && neuf.cal === null && neuf.P === null && neuf.L === null && neuf.G === null,
     JSON.stringify({ act: neuf.act, tdee: neuf.tdee, cal: neuf.cal, G: neuf.G }));
   t('B-CCCLXIII ② le BMR, lui, reste calculé (il n\'a pas besoin de l\'activité) : 1749',
     neuf.bmr === 1749, String(neuf.bmr));
@@ -98,7 +102,7 @@ module.exports.ecran = async function (t, b, PORT) {
     neuf.sel === '' && neuf.selTxt === 'À choisir', neuf.sel + ' / ' + neuf.selTxt);
   t('B-CCCLXIII ⑤ `persist()` n\'écrit pas d\'activité inventée sur le disque',
     neuf.stocke === null, String(neuf.stocke));
-  t('B-CCCLXIII ⑥ Milo lit « NON RENSEIGNÉ », jamais « null » ni 1.55 ; aucune carte « passer de Modéré à… »',
+  t('B-CCCLXIII ⑥ Milo lit « NON RENSEIGNÉ », jamais « null » ni 1.55 (la carte « passer de… » est éprouvée en ⑥c, avec historique)',
     /Niveau activité sportive: NON RENSEIGNÉ/.test(neuf.ctx) && !/Niveau activité sportive: (null|1\.55)/.test(neuf.ctx)
     && neuf.ecart === null, (neuf.ctx.match(/Niveau activité sportive:[^|]*/) || ['?'])[0]);
 
@@ -176,7 +180,7 @@ module.exports.ecran = async function (t, b, PORT) {
     invalides.every(v => R.stock[v].act === null && R.stock[v].tdee === null && R.stock[v].G === null),
     invalides.map(v => v + '→' + R.stock[v].act + '/' + R.stock[v].tdee).join(' '));
   t('B-CCCLXIII ⑩ âge 150 et taille 1e6 relus → absents (« il manque… »), plus de TDEE à 9,7 M kcal',
-    R.age150.age === 0 && R.age150.tdee === null && R.ht1e6.ht === 0 && R.ht1e6.tdee === null
+    R.age150.age === 0 && R.age150.tdee === null && R.age150.manq.indexOf('ton âge') >= 0 && R.ht1e6.ht === 0 && R.ht1e6.tdee === null
     && R.ht1e6.manq.indexOf('ta taille') >= 0, JSON.stringify([R.age150.tdee, R.ht1e6.ht, R.ht1e6.tdee]));
   t('B-CCCLXIII ⑪ calories manuelles relues : Infinity, 1e9, −500, 100 refusées (auto) ; 2200 gardée',
     ['Infinity', '1e9', '-500', '100'].every(v => R.mk[v].mk === 0 && R.mk[v].cal === 3011 && isFinite(R.mk[v].G))
@@ -283,7 +287,7 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCLXIV ① appel direct : 0, 2, ±Infinity, NaN, "1e999", "", "abc", 1.4, "1.55abc", "1.5 5", null, undefined, true, [1.55], {}, "0x1" → tous refusés',
     cles(E.direct).every(k => E.direct[k] === null),
     cles(E.direct).filter(k => E.direct[k] !== null).map(k => k + '→' + E.direct[k]).join(' ') || 'ok');
-  t('B-CCCLXIV ② relu du stockage : les mêmes (+ espace, "undefined") → activité null, AUCUN TDEE, aucun glucide',
+  t('B-CCCLXIV ② relu du stockage : 0, 2, ±Infinity, NaN, 1e999, vide, abc, 1.4, "1.55abc", espace, "undefined" → activité null, AUCUN TDEE, aucun glucide',
     cles(E.stock).every(k => E.stock[k].act === null && E.stock[k].tdee === null && E.stock[k].G === null),
     cles(E.stock).filter(k => E.stock[k].act !== null || E.stock[k].tdee !== null).map(k => JSON.stringify(k) + '→' + E.stock[k].act + '/' + E.stock[k].tdee).join(' ') || 'ok');
   t('B-CCCLXIV ③ reçu du cloud sur un choix 1,375 : tout est refusé, le choix reste, TDEE 2405 inchangé',
@@ -466,7 +470,9 @@ module.exports.ecran = async function (t, b, PORT) {
       console.error = ce;
       const v = id => { const e = document.getElementById(id); return e ? e.textContent.trim() : null; };
       return { erreurs: erreurs.filter(x => /renderNutrition|TypeError|LEVÉE/.test(x)),
-               kcal: v('m-kcal'), P: v('m-prot'), G: v('m-carbs'), L: v('m-fat'), sub: v('nu-acc-calc-sub') };
+               kcal: v('m-kcal'), P: v('m-prot'), G: v('m-carbs'), L: v('m-fat'), sub: v('nu-acc-calc-sub'),
+               plan: v('meal-plan'), ringP: v('ring-lg-p'), ringC: v('ring-lg-c'), pctP: v('m-prot-pct'),
+               arcP: (document.getElementById('ring-prot') || {}).getAttribute ? document.getElementById('ring-prot').style.strokeDasharray : null };
     });
   };
   const sansAct = await rendre({});
@@ -477,10 +483,21 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCLXVII ② sans activité, 2500 kcal à la main : aucune erreur, et les macros calculées S\'AFFICHENT (P 172 · L 86 · G 260 = (2500 − 4×172 − 9×86)/4)',
     manuel.erreurs.length === 0 && manuel.P === '172' && manuel.L === '86' && manuel.G === '260',
     JSON.stringify(manuel));
+  /* ⛔ Trouvé par la contre-vérification APRÈS le correctif du plantage : le plantage CACHAIT un
+     rendu de zéros — sans cible calculable, le plan statique affichait « 0 kcal · P: 0g · G: 0g ·
+     L: 0g » et les barres « · 0% ». D-016 : rien n'est présenté comme un plan sans calcul. */
+  t('B-CCCLXVII ①b sans cible calculable : AUCUN plan de repas à zéro — le plan garde « Remplis ton profil… », légendes « — », pas de « 0% »',
+    /Remplis ton profil/.test(sansAct.plan || '') && !/0 kcal|P: 0g/.test(sansAct.plan || '')
+    && sansAct.ringP === '—' && sansAct.ringC === '—' && sansAct.pctP === '' && !/0%/.test(sansAct.pctP || ''),
+    JSON.stringify({ plan: (sansAct.plan || '').slice(0, 80), ringP: sansAct.ringP, pctP: sansAct.pctP, arc: sansAct.arcP }));
+  t('B-CCCLXVII ②b avec 2500 kcal à la main (calculable) : le plan de repas S\'AFFICHE avec des chiffres',
+    !/Remplis ton profil/.test(manuel.plan || '') && /kcal/.test(manuel.plan || '') && /%/.test(manuel.ringP || ''),
+    JSON.stringify({ plan: (manuel.plan || '').slice(0, 80), ringP: manuel.ringP }));
   t('B-CCCLXVII ③ le sous-titre de l\'accordéon dit « TDEE — » au lieu de planter',
     /TDEE —/.test(manuel.sub || '') && /TDEE —/.test(sansAct.sub || ''), JSON.stringify([sansAct.sub, manuel.sub]));
   t('B-CCCLXVII ④ contrôle : activité 1,55 choisie → rendu complet, TDEE 2 711 dans le sous-titre, 172 · 86 · 387',
-    avecAct.erreurs.length === 0 && avecAct.P === '172' && avecAct.G === '387' && /TDEE 2\s?711/.test(avecAct.sub || ''),
+    avecAct.erreurs.length === 0 && avecAct.P === '172' && avecAct.L === '86' && avecAct.G === '387' && /TDEE 2\s?711/.test(avecAct.sub || '')
+    && /kcal/.test(avecAct.plan || '') && !/Remplis ton profil/.test(avecAct.plan || '') && /%/.test(avecAct.ringP || ''),
     JSON.stringify(avecAct));
   t('B-CCCLXIII ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();

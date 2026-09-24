@@ -69,6 +69,8 @@ MUT = [
     ('M26', SC, "      (currentDelta>=0?'+':'')+currentDelta+' kcal', 'TDEE '+_nbAff(tdee)]",
      "      (currentDelta>=0?'+':'')+currentDelta+' kcal', 'TDEE '+tdee.toLocaleString('fr-FR')]",
      'rouge', 'LE CODE D AVANT : renderNutrition plante sur un TDEE null (rattrapé en silence)'),
+    ('M27', SC, "  const _macrosCalculees=(macros.prot_g!=null&&macros.calories!=null);",
+     "  const _macrosCalculees=true;", 'rouge', 'le plan « 0 kcal » et les barres « 0% » reviennent sans répartition calculée'),
     ('M18', ST, "function _activiteValide(v){",
      "/* 1.55 selected _activiteValide ft4_act parseFloat(d.activityLevel) */\nfunction _activiteValide(v){", 'vert', 'un commentaire ne change rien'),
     ('M19', SE, "function _applyRestoreData(raw){",

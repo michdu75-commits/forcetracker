@@ -3426,9 +3426,27 @@ function renderNutrition(){try{
         +'</span>'+bornes+'</div>';
     }
   }
+  /* ⛔ D-016 (et D-020 pour l'activité) : SANS RÉPARTITION CALCULÉE, RIEN NE SE DESSINE COMME UNE.
+     Trouvé la nuit du 24→25/09 : tant que `'TDEE '+tdee.toLocaleString()` plantait, ce qui suit n'était
+     jamais atteint ; une fois le plantage corrigé, un profil sans activité choisie voyait des barres
+     « · 0% » et un plan de repas « 0 kcal · P: 0g ». *Un zéro se lit comme un objectif.* On laisse
+     donc les valeurs par défaut de la page (légendes « — », pourcentages vides, anneau vide). */
+  const _macrosCalculees=(macros.prot_g!=null&&macros.calories!=null);
   // Barres macros = part des calories (prot/glucides 4 kcal/g, lipides 9 kcal/g)
   (function(){
     const kP=(macros.prot_g||0)*4, kC=(macros.carbs_g||0)*4, kF=(macros.fat_g||0)*9;
+    if(!_macrosCalculees){
+      ['m-prot','m-carbs','m-fat'].forEach(id=>{
+        const bar=document.getElementById(id+'-bar'), lbl=document.getElementById(id+'-pct');
+        if(bar)bar.style.width='0%'; if(lbl)lbl.textContent='';
+      });
+      ['ring-prot','ring-carb','ring-fat'].forEach(id=>{ const el=document.getElementById(id);
+        if(el){ el.style.strokeDasharray='0 327'; el.style.strokeDashoffset='0'; } });
+      ['ring-lg-p','ring-lg-c','ring-lg-f'].forEach(id=>{ const el=document.getElementById(id); if(el)el.textContent='—'; });
+      const hb=document.getElementById('nu-hydra-bar');
+      if(hb)hb.style.width=Math.min(100,Math.round((parseFloat(hydra)||0)/3.5*100))+'%';
+      return;
+    }
     const tot=kP+kC+kF||1;
     const set=(barId,pctId,kcal)=>{
       const pct=Math.round(kcal/tot*100);
@@ -3477,6 +3495,17 @@ function renderNutrition(){try{
   }
 
   // Meal plan statique
+  /* ⛔ Même règle (D-016) : sans répartition calculée, pas de plan « 0 kcal ». On remet le texte
+     d'attente d'origine de la page, mémorisé au PREMIER rendu (avant toute écriture) — une seule
+     source pour ce texte, celle d'index.html (R2). */
+  const _mp=document.getElementById('meal-plan');
+  if(_mp&&_mp.dataset.vide===undefined)_mp.dataset.vide=_mp.innerHTML;
+  if(!_macrosCalculees){
+    if(_mp)_mp.innerHTML=_mp.dataset.vide;
+    try{if(typeof _renderDietCard==='function')_renderDietCard();}catch(e){}
+    renderMealPlanIA();
+    return;
+  }
   const meals=getMeals(macros,S.nutritionPhase);
   document.getElementById('meal-plan').innerHTML=meals.map(m=>{
     // Un aliment déclaré « à éviter » qu'on ne sait pas remplacer sans inventer : on le SIGNALE
