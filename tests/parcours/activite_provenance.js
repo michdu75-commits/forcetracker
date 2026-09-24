@@ -228,7 +228,10 @@ module.exports.ecran = async function (t, b, PORT) {
       ['"1e999"', '1e999'], ['""', ''], ['"abc"', 'abc'], ['1.4', 1.4], ['"1.55abc"', '1.55abc'],
       ['"1.5 5"', '1.5 5'], ['null', null], ['undefined', undefined], ['true', true], ['[1.55]', [1.55]],
       ['{}', {}], ['"0x1"', '0x1']];
-    DIRECT.forEach(([k, v]) => { out.direct[k] = _activiteValide(v); });
+    /* Un propriétaire ABSENT rend un rouge lisible, jamais un plantage (qui masquerait la suite). */
+    const AV = (typeof _activiteValide === 'function') ? _activiteValide : () => 'PROPRIÉTAIRE ABSENT';
+    const KV = (typeof _kcalManuelleValide === 'function') ? _kcalManuelleValide : () => 'PROPRIÉTAIRE ABSENT';
+    DIRECT.forEach(([k, v]) => { out.direct[k] = AV(v); });
     /* Relu du STOCKAGE (localStorage ne garde que des chaînes). */
     ['0', '2', '-Infinity', 'Infinity', 'NaN', '1e999', '', 'abc', '1.4', '1.55abc', ' ', 'undefined']
       .forEach(v => { out.stock[v] = charger({ ft4_act: v }); });
@@ -252,7 +255,7 @@ module.exports.ecran = async function (t, b, PORT) {
       charger({});
       try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: +v } }); } catch (e) {}
       const cl = S.activityLevel;
-      out.valides[v] = { st, cl, direct: _activiteValide(v) };
+      out.valides[v] = { st, cl, direct: AV(v) };
     });
     /* Tapé à l'ÉCRAN : une option forgée dans le sélecteur ne passe pas le propriétaire. */
     ['99', 'Infinity', '1e999', '1.4', '1.55abc'].forEach(v => {
@@ -273,7 +276,7 @@ module.exports.ecran = async function (t, b, PORT) {
       try { _applyRestoreData({ profile: { name: 'Sonde', manualKcal: v } }); } catch (e) {}
       out.mkCloud[k] = { mk: S.manualKcal, cal: calcMacros(S.nutritionPhase).calories };
     });
-    out.bornesMk = { m800: _kcalManuelleValide(800), m6000: _kcalManuelleValide(6000), s2200: _kcalManuelleValide('2200') };
+    out.bornesMk = { m800: KV(800), m6000: KV(6000), s2200: KV('2200') };
     return out;
   });
   const cles = o => Object.keys(o);
@@ -303,6 +306,97 @@ module.exports.ecran = async function (t, b, PORT) {
     cles(E.mkCloud).filter(k => E.mkCloud[k].mk !== 0).map(k => k + '→' + E.mkCloud[k].mk).join(' ') || 'ok');
   t('B-CCCLXIV ⑨ bornes des calories : 800 et 6000 inclus, "2200" accepté',
     E.bornesMk.m800 === 800 && E.bornesMk.m6000 === 6000 && E.bornesMk.s2200 === 2200, JSON.stringify(E.bornesMk));
+
+  /* ══ B-CCCLXV. B1-06 — LES REMISES À ZÉRO (nuit du 24→25/09) ══════════════════════════════
+     Tracé : il n'y a PAS de remise à zéro globale en production. Les chemins réels sont :
+       ① l'effacement des données du site par le navigateur, puis rechargement ;
+       ② `resetOnboardingTest()` (app.js) — réservé au clone (`window.__FT_CLONE__`) : il vide le
+          stockage et recharge ; en production il REFUSE ;
+       ③ une restauration cloud juste après la remise à zéro ;
+       ④ le mode démo des personas (`_vcApplyPersona`, coach.js) : il pose EN MÉMOIRE
+          `activityLevel = a.activityLevel||'modéré'` (une CHAÎNE), puis `load()` restaure.
+     Attendu partout : l'activité redevient réellement non renseignée, aucun 1,55 par défaut,
+     aucun TDEE ni macro fabriqués. */
+  console.log('\n-- B-CCCLXV. B1-06 : remises à zéro (navigateur · clone · restauration · personas) --');
+  const etat = () => pg.evaluate(async () => {
+    goScreen('setup', document.getElementById('nb-setup'));
+    await new Promise(r => setTimeout(r, 250));
+    const se = document.getElementById('act-sel'), m = calcMacros(S.nutritionPhase);
+    return { act: S.activityLevel, disque: localStorage.getItem('ft4_act'), tdee: calcTDEE(), G: m.carbs_g,
+             sel: se ? se.value : 'ABSENT', selTxt: se && se.selectedIndex >= 0 ? se.options[se.selectedIndex].text : '' };
+  });
+  const choisir = async (v) => { await pg.evaluate((v) => {
+    window._cloudSync = () => {}; window._cloudSyncDebounced = () => {}; window.toast = () => {};
+    S.activityLevel = +v; persist(); }, v); };
+  // ① effacement des données du site (le drapeau de décor est reposé SEUL : profil entièrement vide)
+  await choisir('1.725');
+  const av1 = await etat();
+  await pg.evaluate(() => { localStorage.clear(); localStorage.setItem('_decorAct', '1'); });
+  await pg.reload(); await pg.waitForTimeout(2200);
+  const ap1 = await etat();
+  t('B-CCCLXV ① avant : 1,725 choisi et écrit ; après effacement du site + rechargement : activité null, rien sur le disque, « À choisir », aucun TDEE',
+    av1.act === 1.725 && av1.disque === '1.725'
+    && ap1.act === null && ap1.disque === null && ap1.tdee === null && ap1.G === null && ap1.sel === '' && ap1.selTxt === 'À choisir',
+    JSON.stringify({ av1, ap1 }));
+  // ③ restauration cloud juste après la remise à zéro
+  const rs = await pg.evaluate(() => {
+    window._cloudSync = () => {}; window._cloudSyncDebounced = () => {}; window.toast = () => {};
+    const out = {};
+    try { _applyRestoreData({ profile: { name: 'Sonde', bw: 85.9, age: 48, height: 180 } }); } catch (e) {}
+    out.sans = { act: S.activityLevel, tdee: calcTDEE() };
+    try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: 'modéré' } }); } catch (e) {}
+    out.chaine = { act: S.activityLevel };
+    try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: 1.55 } }); } catch (e) {}
+    out.legacy = { act: S.activityLevel, tdee: calcTDEE() };
+    return out;
+  });
+  t('B-CCCLXV ② restauration SANS activité après remise à zéro : rien n\'est inventé (null, aucun TDEE)',
+    rs.sans.act === null && rs.sans.tdee === null, JSON.stringify(rs.sans));
+  t('B-CCCLXV ③ restauration d\'une chaîne « modéré » : refusée (reste null)',
+    rs.chaine.act === null, JSON.stringify(rs.chaine));
+  t('B-CCCLXV ④ ⚠️ D-021 : un cloud qui porte 1,55 le ramène (valeur valide, provenance inconnue) — figé, NON tranché',
+    rs.legacy.act === 1.55 && rs.legacy.tdee === 2711, JSON.stringify(rs.legacy));
+  // ② resetOnboardingTest : refus en production, remise à zéro réelle dans le clone
+  await choisir('1.725');
+  const prod = await pg.evaluate(() => {
+    window.__FT_CLONE__ = false; let appele = false; const sc = window.showConfirm;
+    window.showConfirm = () => { appele = true; };
+    try { resetOnboardingTest(); } catch (e) {}
+    window.showConfirm = sc;
+    return { appele, act: S.activityLevel, disque: localStorage.getItem('ft4_act') };
+  });
+  t('B-CCCLXV ⑤ en production, `resetOnboardingTest` refuse : le choix 1,725 reste intact',
+    prod.appele === false && prod.act === 1.725 && prod.disque === '1.725', JSON.stringify(prod));
+  await Promise.all([
+    pg.waitForNavigation({ timeout: 15000 }).catch(() => {}),
+    pg.evaluate(() => {
+      window.__FT_CLONE__ = true;
+      window.showConfirm = (a, b2, fn) => { setTimeout(fn, 0); };
+      resetOnboardingTest();
+    }).catch(() => {}),
+  ]);
+  await pg.waitForTimeout(2200);
+  /* Le vidage efface aussi le drapeau de décor : la fixture repose le profil de base (SANS
+     activité) — c'est l'équivalent d'une nouvelle inscription qui saisit poids/taille/âge. */
+  const ap2 = await etat();
+  t('B-CCCLXV ⑥ `resetOnboardingTest` (clone) : après vidage + rechargement, activité null, « À choisir », aucun TDEE',
+    ap2.act === null && ap2.disque === null && ap2.tdee === null && ap2.sel === '' && ap2.selTxt === 'À choisir',
+    JSON.stringify(ap2));
+  // ④ mode démo des personas : en mémoire seulement, puis `load()` restaure le vrai choix
+  await choisir('1.375');
+  const demo = await pg.evaluate(() => {
+    const k = Object.keys(VC_PERSONAS)[0];
+    _vcApplyPersona(VC_PERSONAS[k]);
+    const pendant = { act: S.activityLevel, valide: (typeof _activiteValide === 'function') ? _activiteValide(S.activityLevel) : 'PROPRIÉTAIRE ABSENT', tdee: calcTDEE(),
+                      disque: localStorage.getItem('ft4_act') };
+    load();
+    return { persona: k, pendant, apres: { act: S.activityLevel, tdee: calcTDEE() } };
+  });
+  t('B-CCCLXV ⑦ persona de démo : la chaîne « modéré » n\'est pas une activité (TDEE null, pas NaN), le disque garde 1,375',
+    demo.pendant.valide === null && demo.pendant.tdee === null && demo.pendant.disque === '1.375',
+    JSON.stringify(demo.pendant));
+  t('B-CCCLXV ⑧ … et `load()` restaure le vrai choix après la démo (1,375)',
+    demo.apres.act === 1.375 && Number.isFinite(demo.apres.tdee), JSON.stringify(demo.apres));
   t('B-CCCLXIII ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };
