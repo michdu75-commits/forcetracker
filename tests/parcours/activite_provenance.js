@@ -397,6 +397,49 @@ module.exports.ecran = async function (t, b, PORT) {
     JSON.stringify(demo.pendant));
   t('B-CCCLXV ⑧ … et `load()` restaure le vrai choix après la démo (1,375)',
     demo.apres.act === 1.375 && Number.isFinite(demo.apres.tdee), JSON.stringify(demo.apres));
+
+  /* ══ B-CCCLXVI. LA SAISIE DES CALORIES À LA MAIN, CONDUITE (nuit du 24→25/09) ══════════════
+     ⛔⛔ TROUVÉ PAR L'INVESTIGATION DE NUIT, PAS PAR UN TÉMOIN — et c'est pour ça que ce bloc existe :
+     en 20eac697, mon commentaire `// B2 : …` a AVALÉ la fin de la ligne de `saveKcalEdit`
+     (`persist();closeKcalEdit();renderNutrition();`). Le toast disait « Objectif réglé ✅ »,
+     rien n'était écrit sur le disque, la fenêtre restait ouverte. AUCUN témoin n'appelait
+     `saveKcalEdit` : on ne teste une porte qu'en la franchissant, pas en lisant la règle derrière. */
+  console.log('\n-- B-CCCLXVI. Calories à la main : la VRAIE saisie (fenêtre, bouton, disque, rechargement) --');
+  await pg.evaluate(() => { localStorage.clear(); localStorage.setItem('_decorAct', '1');
+    const D = { ft4_bw: '85.9', ft4_age: '48', ft4_ht: '180', ft4_gender: 'H', ft4_work: 'bureau', ft4_act: '1.55',
+                ft4_goal: 'force', ft4_nphase: 'charge', ft4_ob2: '1' };
+    Object.keys(D).forEach(k => localStorage.setItem(k, D[k])); });
+  await pg.reload(); await pg.waitForTimeout(2200);
+  const K = await pg.evaluate(async () => {
+    window._cloudSync = () => {}; window._cloudSyncDebounced = () => {};
+    const toasts = []; window.toast = (m, k) => toasts.push((k || '') + ':' + m);
+    goScreen('nutrition', document.querySelector('[onclick*="nutrition"]'));
+    await new Promise(r => setTimeout(r, 250));
+    const ov = () => { const o = document.getElementById('ov-kcal-edit'); return !!(o && o.classList.contains('open')); };
+    const saisir = (v) => { openKcalEdit(); const i = document.getElementById('kcal-edit-inp'); i.value = v;
+      i.dispatchEvent(new Event('input', { bubbles: true })); const avant = ov(); saveKcalEdit();
+      return { ouverteAvant: avant, ouverteApres: ov(), mk: S.manualKcal, disque: localStorage.getItem('ft4_manualkcal'),
+               cal: calcMacros(S.nutritionPhase).calories, toast: toasts[toasts.length - 1] || '' }; };
+    const out = {};
+    out.v2200 = saisir('2200');
+    out.v9000 = saisir('9000');
+    out.vabc = saisir('abc');
+    out.v1800 = saisir('1 800'.replace(' ', ''));
+    return out;
+  });
+  t('B-CCCLXVI ① saisir 2200 : écrit en mémoire ET sur le disque, fenêtre refermée, cible 2200',
+    K.v2200.ouverteAvant === true && K.v2200.ouverteApres === false && K.v2200.mk === 2200 && K.v2200.disque === '2200' && K.v2200.cal === 2200,
+    JSON.stringify(K.v2200));
+  t('B-CCCLXVI ② saisir 9000 : l\'écran RAMÈNE à 6000 et le DIT (toast), écrit sur le disque',
+    K.v9000.mk === 6000 && K.v9000.disque === '6000' && /6\s?000/.test(K.v9000.toast) && K.v9000.ouverteApres === false,
+    JSON.stringify(K.v9000));
+  t('B-CCCLXVI ③ saisir « abc » : refusé avec un message, rien ne change (6000 reste), fenêtre ouverte',
+    K.vabc.mk === 6000 && K.vabc.disque === '6000' && /valide/.test(K.vabc.toast) && K.vabc.ouverteApres === true,
+    JSON.stringify(K.vabc));
+  await pg.reload(); await pg.waitForTimeout(2200);
+  const K2 = await pg.evaluate(() => ({ mk: S.manualKcal, cal: calcMacros(S.nutritionPhase).calories }));
+  t('B-CCCLXVI ④ après rechargement : la dernière saisie (1800) est relue — la cible manuelle SURVIT',
+    K.v1800.disque === '1800' && K2.mk === 1800 && K2.cal === 1800, JSON.stringify({ saisie: K.v1800, relu: K2 }));
   t('B-CCCLXIII ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };

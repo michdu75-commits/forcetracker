@@ -2545,7 +2545,10 @@ function saveKcalEdit(){
   let v=inp?Math.round(numFR(inp.value)||0):0;
   if(!(v>0)){toast('Entre un nombre de calories valide','info');return;}
   v=Math.max(800,Math.min(6000,v));
-  S.manualKcal=_kcalManuelleValide(v);   // B2 : le même propriétaire que la relecturepersist();closeKcalEdit();renderNutrition();
+  /* B2 : le même propriétaire que la relecture. ⛔ Les appels restent sur LEUR ligne : en 20eac697,
+     ce commentaire écrit en fin de ligne avait avalé persist/closeKcalEdit/renderNutrition (B-CCCLXVI). */
+  S.manualKcal=_kcalManuelleValide(v);
+  persist();closeKcalEdit();renderNutrition();
   toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
 }
 function resetKcalAuto(){
