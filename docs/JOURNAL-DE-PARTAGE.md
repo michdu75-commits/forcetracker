@@ -431,7 +431,7 @@ de CODE.* Les deux sont nécessaires ; aucun ne remplace l'autre.
 ## ⚡ EN 20 SECONDES — ce que tu fais avant de commencer
 
 ```bash
-git fetch origin --all -q          # ⚠️ SANS ÇA, TU NE VOIS RIEN (voir §« La faille »)
+git fetch --all -q                 # ⚠️ SANS ÇA, TU NE VOIS RIEN (voir §« La faille »)
 ```
 
 1. **Tu LIS** le tableau **en haut de ce fichier**. Une tâche marquée 🟡 **en cours** ? → tu ne prends pas ce sujet.
