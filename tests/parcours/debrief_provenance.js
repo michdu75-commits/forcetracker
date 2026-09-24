@@ -187,6 +187,17 @@ module.exports.ecran = async function (t, b, PORT) {
         const z3 = (document.getElementById('rest-rir') || {}).innerHTML || '';
         o.horsGroupe = /setRir\(2,1,/.test(z3) && !/setRir\(0,/.test(z3);
         stopRest();
+        /* ⚠️ Trou attrapé par le contrôle négatif (M09 restait vert) : une série d'un AUTRE superset
+           validée pendant qu'une question attend ne doit pas hériter de celle-ci. */
+        S.wkt.exs.push({ name: 'Curl Poulie', group: 'ssU', groupType: 'super', sets: [{ kg: 20, reps: 12, done: false, type: 'N' }] },
+                       { name: 'Barre au Front', group: 'ssU', groupType: 'super', sets: [{ kg: 25, reps: 10, done: false, type: 'N' }] });
+        S.wkt.exs[0].sets.push({ kg: 35, reps: 12, done: false, type: 'N' });
+        toggleSet(0, 2); await __pause(100);           // Oiseau (ssT) : attend sa question, sans repos
+        toggleSet(3, 0); await __pause(100);           // Curl Poulie (ssU) : autre superset
+        toggleSet(4, 0); await __pause(150);           // Barre au Front (ssU) : repos du tour ssU
+        const z4 = (document.getElementById('rest-rir') || {}).innerHTML || '';
+        o.autreGroupe = /setRir\(3,0,/.test(z4) && /setRir\(4,0,/.test(z4) && !/setRir\(0,2,/.test(z4);
+        stopRest();
       } catch (e) { o.err = String(e && e.message || e); }
       return o;
     });
@@ -206,6 +217,8 @@ module.exports.ecran = async function (t, b, PORT) {
       sur(U, 'seulUneCible') === true, '');
     t('B-CCCLIX U7 une série hors du groupe ne récupère pas la question d\'une série de superset',
       sur(U, 'horsGroupe') === true, '');
+    t('B-CCCLIX U8 un AUTRE superset ne récupère pas la question en attente du premier',
+      sur(U, 'autreGroupe') === true, '');
     t('B-CCCLIX U∅ aucune erreur de page', errs.length === 0 && !sur(U, 'err'), errs.concat(sur(U, 'err') || []).slice(0, 2).join(' | '));
     await cx.close(); }
 };
