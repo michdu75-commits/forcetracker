@@ -813,6 +813,24 @@ function _serieValide(kg, reps){
    relit. ⚠️ Les bornes ne sont pas inventées : ce sont **exactement** celles que l'app affiche
    déjà à qui saisit à la main. */
 function _poidsValide(kg){ const k=+kg; return isFinite(k) && k>=20 && k<=300; }
+/* ⚖️ LA DERNIÈRE PESÉE — UN SEUL PROPRIÉTAIRE, patron de `mensDerniere` et `bfDerniere` (24/09/2026).
+   ⛔⛔ MESURÉ AVANT D'ÉCRIRE : trois écrivains (édition, suppression, bilan corporel) reposaient le
+   poids courant par `S.bw = S.weightLog[0].kg`, **sans regarder ce que porte cette ligne**. Or une
+   pesée peut ne porter qu'un % de gras, ou un `kg` à 0 venu d'un import : éditer une pesée écrivait
+   alors **« undefined »** sur le disque, et le rechargement suivant rendait un profil sans poids.
+   👉 On rend la pesée la plus RÉCENTE (tri par DATE — jamais l'ordre du tableau) dont le poids passe
+   `_poidsValide`, et **`null`, jamais 0**, quand il n'y en a aucune (R29 : « je ne sais pas » et
+   « zéro kilo » ne se lisent pas pareil).
+   ⛔ Une date impossible ou future n'est pas la « dernière » pesée : mesuré, un CSV au format
+   américain (`09/20/2026` → « 2026-20-09 ») passait EN TÊTE de tous les tris et fixait le poids
+   courant pour toujours. On emploie la règle qui existe déjà pour ça (`_dateImportValide`).
+   `avantJour` : la pesée précédente (strictement avant ce jour), pour l'écart affiché. */
+function poidsDernier(avantJour){
+  const l=(S.weightLog||[]).filter(w=>w&&w.date&&_poidsValide(numFR(w.kg))
+      &&_dateImportValide(w.date)&&(!avantJour||String(w.date)<String(avantJour)))
+    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  return l.length?{date:l[0].date,kg:numFR(l[0].kg)}:null;
+}
 /* Le pourcentage de masse grasse suit la même logique : au-delà, ce n'est plus une mesure,
    c'est une ligne mal lue (mesuré : 300 % passait sans un mot). */
 function _pctGrasValide(p){ const v=+p; return isFinite(v) && v>=3 && v<=70; }

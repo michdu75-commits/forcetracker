@@ -3059,7 +3059,11 @@ function renderSetup(){
   const nameEl=document.getElementById('name-inp');if(nameEl)nameEl.value=S.name||'';
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
-  const bwEl=document.getElementById('bw-inp');if(bwEl)bwEl.value=S.bw||'';
+  /* ⚖️ LE CHAMP POIDS SAIT S'IL A ÉTÉ TOUCHÉ (24/09/2026). Il est prérempli : un « Enregistrer »
+     pour corriger sa TAILLE renvoyait donc le poids affiché, qui pouvait être périmé. Seule une
+     saisie réelle de la personne (`input`) en fait une pesée — voir `saveProfile`. */
+  const bwEl=document.getElementById('bw-inp');
+  if(bwEl){ bwEl.value=S.bw||''; bwEl.dataset.touche=''; bwEl.oninput=function(){this.dataset.touche='1';}; }
   const actEl=document.getElementById('act-sel');if(actEl)actEl.value=S.activityLevel;
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
   const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
@@ -3145,14 +3149,30 @@ function saveProfile(){
     } }
   const age=parseInt(document.getElementById('age-inp').value);
   const ht=numFR(document.getElementById('ht-inp').value);
-  const bw=numFR(document.getElementById('bw-inp').value);
+  const bwEl=document.getElementById('bw-inp');
+  const bw=numFR(bwEl?bwEl.value:'');
+  const _bwTouche=!!(bwEl&&bwEl.dataset.touche==='1');
   const actEl=document.getElementById('act-sel');
   const restEl=document.getElementById('rest-sel');
   const act=actEl?numFR(actEl.value):S.activityLevel;
   const rest=restEl?parseInt(restEl.value):S.defRest;
   if(age){if(age>13&&age<100)S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
   if(ht){if(ht>100&&ht<230)S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
-  if(bw){if(bw>20&&bw<300)S.bw=bw;else{toast('Poids invalide (20–299 kg)','error');return;}}
+  /* ⚖️ LE POIDS DU PROFIL EST UNE PESÉE, PAR LA MÊME RÈGLE ET LE MÊME PROPRIÉTAIRE (24/09/2026).
+     ⛔⛔ MESURÉ : cette ligne écrivait `S.bw` et RIEN d'autre — Nutrition et Milo calculaient sur
+     84 kg pendant que l'Accueil et la courbe affichaient 86 (F011). Et elle avait SA règle :
+     `>20 && <300` refusait 20 et 300 kg, que la pesée du jour, l'édition et le bilan acceptent, et
+     son message annonçait « 20–299 » — une plage que personne d'autre n'appliquait (F005).
+     👉 Même règle (`_poidsValide`, dont la raison est écrite), même propriétaire que la carte
+     « Pesée du jour » : c'est ce que ft-v1136 a fait pour les mensurations de ce même formulaire.
+     ⛔ Et SEULEMENT si le champ a été touché : prérempli, il pouvait porter un poids périmé, et
+     « Enregistrer » pour une taille le remettait en place. Touché avec la MÊME valeur, c'est une
+     nouvelle mesure — on l'enregistre (Michel : même valeur ≠ rien à enregistrer). */
+  if(_bwTouche&&bw){
+    if(!_poidsValide(bw)){toast('Poids invalide (20–300 kg)','error');return;}
+    if(typeof _enregistrerPesee==='function')_enregistrerPesee(bw);else S.bw=bw;   // repli : rien de tapé ne se perd (règle d'or #3)
+    bwEl.dataset.touche='';
+  }
   if(act) S.activityLevel=act;
   // (poids de la barre : propriétaire unique = setBarWeight(), dans le calculateur de plaques)
   if(rest) S.defRest=rest;
@@ -3236,7 +3256,11 @@ function _applyRestoreData(raw){
 
   // Profil de base — chaque champ isolé pour qu'une erreur n'en bloque pas d'autres
   try{if(d.name)S.name=d.name;}catch(e){console.warn('[FT restore] name',e);}
-  try{if(d.bw)S.bw=parseFloat(d.bw)||S.bw;}catch(e){console.warn('[FT restore] bw',e);}
+  /* ⛔⛔ LE POIDS AUSSI, ET IL ÉTAIT LE SEUL À PASSER (F003, mesuré le 24/09/2026) : −10, 500,
+     3000, `1e4` et `Infinity` entraient dans le poids courant — l'âge et la taille, deux lignes plus
+     bas, étaient déjà bornés. Et `parseFloat("85,9")` rendait **85** : la virgule tronquait en
+     silence. `numFR` lit la virgule ; `_poidsValide` écarte l'impossible, qui n'écrase rien. */
+  try{const _b=numFR(d.bw); if(_poidsValide(_b))S.bw=_b;}catch(e){console.warn('[FT restore] bw',e);}
   /* ⛔ MÊMES BORNES QUE LA SAISIE MANUELLE (R2/R8, §35) : une valeur hors limites est
      ÉCARTÉE, elle n'écrase pas ce qu'on a déjà — un âge absurde rendait le TDEE négatif. */
   try{const _a=parseInt(d.age); if(_ageValide(_a))S.age=_a;}catch(e){console.warn('[FT restore] age',e);}

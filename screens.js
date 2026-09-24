@@ -2097,6 +2097,16 @@ function renderHome(){try{
      ⚠️ Et un CINQUIÈME lecteur répond autrement : `tracking.js ~976` fait `S.weightLog[0].kg`,
      en se fiant au tri en place posé après chaque écriture. *Deux méthodes pour une question,
      c'est exactement la forme que prend une divergence future* (R2).
+     ⭐ MISE À JOUR DU 24/09/2026 (chantier Poids, avec son banc `tools/banc_poids_chaine.js`) :
+     un PROPRIÉTAIRE existe, `poidsDernier()` (state.js) — la pesée la plus récente PAR DATE
+     dont le poids passe `_poidsValide`, `null` sinon. Il a remplacé le CINQUIÈME lecteur, qui
+     était un défaut mesuré (la ligne la plus récente peut ne porter qu'un % : l'édition écrivait
+     « undefined » dans le poids courant). Le lecteur ~908 avait déjà disparu (ft-v1230 : il est
+     devenu `_kgUtil` dans `saveBodyFat`, contrat « premier kilo utilisable, sinon `S.bw` »).
+     ⛔ RESTENT OUVERTS, EXPRÈS : cette tuile (`latestW`), l'objectif (`cur`, `renderWeightTarget`)
+     et `_kgUtil`. Leur contrat diffère (entrée / kilo / repli sur `S.bw`) ; les migrer changerait
+     ce qu'ils affichent sur des lignes anciennes (un kilo à 0, une date impossible) — une
+     décision d'affichage, pas une correction de donnée.
      ⛔ POURQUOI ON NE CENTRALISE PAS DANS CETTE PASSE, et c'est la consigne de Michel (*« si ça
      peut être fait sans risque… sinon LAISSE OUVERT »*) : les 4 copies n'ont **pas le même
      contrat** — l'une rend l'entrée, l'autre le kilo, l'autre un repli sur `S.bw`, la dernière

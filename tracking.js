@@ -573,15 +573,55 @@ function linearRegression(pts){
   const slope=(n*sxy-sx*sy)/(n*sx2-sx*sx)||0;
   return{slope,intercept:(sy-slope*sx)/n};
 }
-function saveWeightEntry(){
-  const inp=document.getElementById('wentry-inp');
-  const kg=numFR(inp?inp.value:0);
-  if(!kg||kg<20||kg>300){toast('Poids invalide (20–300 kg)','error');return;}
+/* ═══ ⚖️ LA CHAÎNE POIDS — UNE RÈGLE, UN ÉVÉNEMENT, UN POIDS COURANT (24/09/2026) ═════════════
+   Chantier de Michel : *« priorité absolue : intégrité et cohérence de la donnée avant UX »*.
+   ⛔⛔ MESURÉ EN CONDUISANT L'APP SERVIE, AVANT D'ÉCRIRE UNE LIGNE : le poids avait **deux copies**
+   (`S.bw` pour tous les calculs, `S.weightLog` pour l'historique) et **trois règles** — le Profil
+   refusait 20 et 300 kg, que la pesée et le bilan acceptent ; la restauration et l'import n'en
+   avaient aucune. Surtout, le Profil écrivait `S.bw` SANS pesée : Nutrition calculait sur 84 kg
+   pendant que l'Accueil et la courbe affichaient 86. *Deux chiffres visibles le même jour, et
+   rien pour dire lequel est le bon.*
+   ⭐ L'ARCHITECTURE N'EST PAS INVENTÉE, ELLE EST APPLIQUÉE À TOUTES LES PORTES : chaque écrivain
+   de pesée reposait déjà `S.bw` sur la pesée — il fallait que le Profil fasse pareil (c'est
+   mot pour mot ce que ft-v1136 a fait pour les mensurations : *« les deux portes écrivent au même
+   endroit ; seul le DÉCLENCHEUR diffère »*).
+   ⛔ Une pesée par jour, clé = la date : c'est le modèle existant, il n'est PAS changé ici. Plusieurs
+   pesées horodatées le même jour seraient une migration de la fusion (`_fusionListe` signe par la
+   date), du cloud et de la courbe — une décision rendue à Michel, pas un effet de bord. */
+/* Enregistrer UNE pesée datée d'aujourd'hui. ⛔ AUCUNE comparaison avec le poids précédent :
+   85,8 puis 85,8 est une deuxième mesure, pas « rien à enregistrer » (Michel). */
+function _enregistrerPesee(kg){
+  if(!_poidsValide(kg)) return false;
   if(!S.weightLog)S.weightLog=[];
   const d=today();const idx=S.weightLog.findIndex(w=>w.date===d);
   if(idx>=0)S.weightLog[idx].kg=kg;else S.weightLog.unshift({date:d,kg});
   S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
-  S.bw=kg;persist();
+  _bwPoser(kg);
+  return true;
+}
+/* Poser le poids courant — et le DIRE au formulaire Profil s'il est affiché. ⛔ Sauf si la personne
+   est en train d'y taper : on ne lui vole jamais une saisie en cours. Sans ce rafraîchissement, un
+   Profil ouvert pendant qu'un autre écrivain passe présentait l'ancien poids comme actuel, et
+   « Enregistrer » le remettait en place (mesuré : 78 kg pesés, 80 kg réécrits). */
+function _bwPoser(kg){
+  S.bw=kg;
+  try{ const el=document.getElementById('bw-inp');
+       if(el&&el.dataset.touche!=='1')el.value=kg; }catch(e){}
+}
+/* Après une écriture qui n'est PAS « la pesée de maintenant » (édition, suppression, bilan daté,
+   import) : le poids courant redevient la pesée la plus récente et valide. ⛔ S'il n'en reste
+   aucune, on ne touche à rien — `null` n'écrase jamais un poids (R29). */
+function _bwSurDernierePesee(){
+  const p=(typeof poidsDernier==='function')?poidsDernier():null;
+  if(p)_bwPoser(p.kg);
+  return p?p.kg:null;
+}
+function saveWeightEntry(){
+  const inp=document.getElementById('wentry-inp');
+  const kg=numFR(inp?inp.value:0);
+  if(!_poidsValide(kg)){toast('Poids invalide (20–300 kg)','error');return;}
+  _enregistrerPesee(kg);
+  persist();
   renderWeightTab();renderHome();
   toast('Poids enregistré !','success');
 }
@@ -1120,7 +1160,7 @@ function _weighTE(e){
 function saveWeighEdit(){
   const kg=numFR((document.getElementById('weigh-edit-kg')||{}).value);
   const newDate=(document.getElementById('weigh-edit-date')||{}).value;
-  if(!kg||kg<20||kg>300){toast('Poids invalide (20–300 kg)','error');return;}
+  if(!_poidsValide(kg)){toast('Poids invalide (20–300 kg)','error');return;}
   if(!newDate){toast('Date invalide','error');return;}
   if(newDate>today()){toast('Date dans le futur','error');return;}
   const bfv=numFR((document.getElementById('weigh-edit-bf')||{}).value);
@@ -1136,7 +1176,9 @@ function saveWeighEdit(){
   S.weightLog=(S.weightLog||[]).filter(x=>x.date!==_weighEditDate&&x.date!==newDate);
   S.weightLog.unshift(entry);
   S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
-  if(S.weightLog[0])S.bw=S.weightLog[0].kg;
+  /* ⛔ Plus `S.bw = S.weightLog[0].kg` : la ligne la plus récente peut ne porter qu'un % — mesuré,
+     « undefined » partait sur le disque. Le propriétaire choisit la dernière pesée VALIDE. */
+  _bwSurDernierePesee();
   persist();closeWeighEdit();renderWeightTab();renderHome();
   toast('Pesée mise à jour ✅','success');
 }
@@ -1144,7 +1186,10 @@ function deleteWeighEntry(){
   const dt=_weighEditDate;if(!dt)return;
   showConfirm('Supprimer cette pesée ?','Le '+new Date(dt+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+' — action définitive.',function(){
     S.weightLog=(S.weightLog||[]).filter(x=>x.date!==dt);
-    if(S.weightLog[0])S.bw=S.weightLog[0].kg;
+    /* ⛔ Mesuré : s'il ne restait qu'une ligne à 0 kg, le poids courant PASSAIT À 0. S'il ne reste
+       aucune pesée valide, on ne touche plus au poids courant (comportement déjà en place quand
+       il ne reste AUCUNE ligne). */
+    _bwSurDernierePesee();
     persist();closeWeighEdit();renderWeightTab();renderHome();
     toast('Pesée supprimée','info');
   });
@@ -1372,7 +1417,18 @@ function _scanCompleter(scan){
   return scan;
 }
 function _importScaleRows(rows){
-  const byDay={}; rows.forEach(r=>{ if(r.date)byDay[r.date]=r; }); // dernière du jour gagne
+  /* ⛔⛔ LA MÊME RÈGLE QUE LA SAISIE, ET LA MÊME QUE LE BILAN (24/09/2026). Mesuré : cet import
+     écrivait **500 kg, 0 kg et −10 kg** dans le journal, les bilans ET le poids courant, puis les
+     envoyait au cloud — d'où ils revenaient intacts à la restauration. Et une date lue à
+     l'américaine (`09/20/2026` → « 2026-20-09 ») passait EN TÊTE du journal pour toujours.
+     👉 Une ligne dont le poids n'est pas un poids possible, ou dont la date est impossible, n'est
+     pas une pesée : elle est ÉCARTÉE ENTIÈRE, comme `saveBodyScan` refuse tout le bilan sur un
+     poids aberrant — et comme l'import de séances écarte une date impossible (`log.js`).
+     ⛔ Aucune borne inventée : `_poidsValide` et `_dateImportValide` existaient déjà. */
+  let ecartes=0;
+  const byDay={}; (rows||[]).forEach(r=>{
+    if(!r||!_dateImportValide(r.date)||!_poidsValide(r.weight)){ ecartes++; return; }
+    byDay[r.date]=r; }); // dernière du jour gagne
   const days=Object.keys(byDay).sort();
   S.bodyScans=S.bodyScans||[]; S.weightLog=S.weightLog||[];
   const bsIdx={}; S.bodyScans.forEach((s,i)=>{bsIdx[s.date]=i;});
@@ -1391,10 +1447,13 @@ function _importScaleRows(rows){
   });
   S.bodyScans.sort((a,b)=>b.date.localeCompare(a.date));
   S.weightLog.sort((a,b)=>b.date.localeCompare(a.date));
-  const latest=days[days.length-1]; if(byDay[latest]&&byDay[latest].weight)S.bw=Math.round(byDay[latest].weight*10)/10;
+  /* ⛔ LE POIDS COURANT N'EST PLUS « LE DERNIER JOUR DU FICHIER » : mesuré, importer un historique
+     d'août faisait reculer à 91 kg un poids courant pesé 86 kg le 19/09. C'est la pesée la plus
+     récente de TOUT le journal, par le même propriétaire que l'édition. */
+  _bwSurDernierePesee();
   if(typeof persist==='function')persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  return {days:days.length};
+  return {days:days.length, ecartes};
 }
 // Charge SheetJS (lecteur Excel) hébergé en local — comme jsPDF, marche hors-ligne
 let _xlsxLoad=null;
@@ -1418,7 +1477,11 @@ function _scaleCsvImportFromText(text){
   if(!rows.length){ toast('Aucune pesée lue dans ce fichier','error'); return; }
   const dates=rows.map(r=>r.date).sort();
   const days=new Set(dates).size;
-  const doImport=()=>{ const r=_importScaleRows(rows); renderBodyScanCard(); if(typeof renderWeightTab==='function')renderWeightTab(); toast('✅ '+r.days+' pesées importées','success'); };
+  /* ⭐ ET L'ÉCRAN DIT CE QUI A ÉTÉ ÉCARTÉ (R24) : une ligne qui disparaît sans un mot ferait croire
+     que le fichier a été lu en entier. */
+  const doImport=()=>{ const r=_importScaleRows(rows); renderBodyScanCard(); if(typeof renderWeightTab==='function')renderWeightTab();
+    const ec=r.ecartes?(' — '+r.ecartes+' ligne'+(r.ecartes>1?'s':'')+' écartée'+(r.ecartes>1?'s':'')+' (poids hors 20–300 kg ou date impossible)'):'';
+    if(r.days)toast('✅ '+r.days+' pesées importées'+ec,'success'); else toast('Aucune pesée importée'+ec,'error'); };
   if(typeof showConfirm==='function')
     showConfirm('Importer '+days+' pesées ?', rows.length+' mesures lues ('+dates[0]+' → '+dates[dates.length-1]+'). On garde une pesée par jour, tout l\'historique. Les dates déjà présentes sont mises à jour, rien n\'est effacé.', doImport,'Importer');
   else doImport();
@@ -1990,7 +2053,7 @@ function saveBodyScan(){
   if(obj.bf!=null){wentry.bf=obj.bf;wentry.bfSrc=BF_MESURE;}
   if(wi<0)S.weightLog.unshift(wentry);
   S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
-  if(S.weightLog[0])S.bw=S.weightLog[0].kg;
+  _bwSurDernierePesee();        // ⛔ même propriétaire que l'édition et la suppression (24/09)
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeBodyScanForm();
