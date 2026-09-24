@@ -17488,3 +17488,16 @@ aller le chercher dans l'API — **personne n'est prévenu automatiquement**.
 | 📣 | 24/08 matin | **DEUX sessions en parallèle** | ⚠️ **LA COLLISION QUI A MOTIVÉ CE FICHIER** — ft-v991 et ft-v992 écrits **deux fois**, contenus équivalents, textes différents. Fusionnés à la main : la branche de l'autre a servi de base, seul ft-v993 y a été greffé. | `state.js`, `coach.js`, `tracking.js` | ft-v991 · ft-v992 |
 
 <!-- FIN LIGNES JOURNAL-DE-PARTAGE RETIREES 2026-09-24 -->
+
+
+---
+
+<!-- DEBUT LIGNE JOURNAL-DE-PARTAGE RETIREE 2026-09-24 (6e cloture) -->
+
+🗂️ **24/09/2026 — clôture du tri documentaire.** Le tableau des tâches de `docs/JOURNAL-DE-PARTAGE.md` garde les **5 dernières clôtures** ; la clôture du tri (`0d8a22b2`) en a fait une 6ᵉ. La plus ancienne est déplacée ici **mot pour mot** (**R23** — *tailler ≠ supprimer*).
+
+| État | Quand (UTC) | Qui | Sujet | Fichiers | Version |
+|---|---|---|---|---|---|
+| 🟢 | 22/09 15:2x → 16:0x UTC | session-A (project-status) | **⚖️ DOSSIER DE DÉCISION NUTRITION — PHASES 1 à 9, 0 LIGNE DE CODE MÉTIER** (Michel découple temps de TRAVAIL et temps d'OBSERVATION, et il a raison : mon « plusieurs semaines » était paresseux). ⭐ **1,47 million d'évaluations du moteur réel** — 921 984 profils en **67 secondes**. ⛔⛔ **LA CAUSE RACINE N'EST PAS LES 659 g** : les macros sont calculées sur le **poids TOTAL** et la **masse maigre n'atteint JAMAIS `macrosForKcal`** — mesuré : `Δ protéines = 0, Δ lipides = 0` sur **160 comparaisons** avec bilan frais. **R4 pur.** ⛔⛔ **3ᵉ anomalie trouvée, absente du cahier ET de mon audit** : la somme des macros **contredit la cible affichée** — femme 75 ans/150 cm/110 kg en perte : écran **1 515 kcal**, macros **1 892 kcal**, soit **+377**. ⚠️ **Et j'ai eu FAUX deux fois** : « ±3 kcal » sur 14 cas, puis « ±6 » — *mon corpus gardait les 8 PREMIERS cas, pas les PIRES*. 🥊 **Le contre-audit a réfuté ma propre proposition** : V1/V2 cassaient un invariant que V0 tenait (lipides < 0,5 g/kg : 0 → 1 920) → refaite en **V4/V5** (−91 % sur les protéines absurdes, 0 glucide à zéro). ⭐ **Bornes SOURCÉES, pas inventées** : 4-7 g/kg (Slater & Phillips, **sports de force**), IMC 30 (Weijs), 0,5 g/kg lipides. ⚠️ **Toutes NON VÉRIFIÉES à la source** : seul `api.github.com` passe le proxy. 📣 **Pour vous, session-B** : ⛔ **aucun fichier servi**, aucune version, aucune passe — et le bloc **B-CCCLII n'est PAS branché** dans le runner (il fige un état qui attend la décision de Michel). | `docs/DOSSIER-DECISION-NUTRITION-2026-09-22.md` *(nouveau)*, `tests/parcours/nutri_proprietes.js` *(nouveau, non branché)*, `tools/corpus_nutri.js`, `corpus_nutri_mg.js`, `simul_nutri_v2.js`, `banc_nutri_proprietes.js`, `mut_nutri_proprietes.py` *(nouveaux)*, `docs/AUDIT-NUTRITION-2026-09-22.md` *(corrigé)* | — *(audit, pas de version)* |
+
+<!-- FIN LIGNE JOURNAL-DE-PARTAGE RETIREE 2026-09-24 (6e cloture) -->

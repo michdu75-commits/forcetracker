@@ -21,7 +21,7 @@
 
 ## 🔬 Chantier actif
 
-- **Tri documentaire** de ce fichier et de `docs/JOURNAL-DE-PARTAGE.md` (24/09, session-A) — **en attente de la validation de Michel**, rien de publié.
+- **Tri documentaire** de ce fichier et de `docs/JOURNAL-DE-PARTAGE.md` (24/09, session-A) — **terminé**, validé par Michel, committé et poussé en `0d8a22b2`. Dépôt documentaire propre.
 - **Audit forensique** : **12 défauts confirmés (F001 → F012)**, **aucun corrigé**, **aucun ordre de correction décidé**. ⚠️ Le registre qui les numérote **n'est PAS dans le dépôt** (bloc-notes de session, hors dépôt car celui-ci est public) ; seuls trois dossiers y sont : `docs/SUPPRESSION-QUI-NE-REMONTE-PAS.pdf`, `docs/PROVENANCE-MASSE-GRASSE.pdf`, `docs/POIDS-RESTAURATION-SANS-BORNE.pdf`.
 
 ## 🍽️ Retour récurrent de Michel : « l'application donne trop de calories »
@@ -43,8 +43,8 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 
 ## ⏭️ Prochaine étape
 
-- Michel valide (ou non) ce tri. S'il le valide, le commit doit porter `LIGNES-PARTAGE-RETIREES:` dans son message — `tools/check_regles.py` (contrôle 11) l'exige pour tout élagage du journal de partage.
-- Ensuite : **l'ordre de correction des défauts F001 → F012 est à décider par Michel.**
+- Clôture documentaire faite : le **prochain chantier produit** reste à choisir et à lancer.
+- Pour l'audit : **l'ordre de correction des défauts F001 → F012 est à décider par Michel.**
 
 ## 🧭 Où lire quoi
 
