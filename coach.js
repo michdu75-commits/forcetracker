@@ -3056,6 +3056,24 @@ const _KETO_INTERDITS = 'riz, pâtes, pain, avoine, fruits sucrés, sucre';
 // @param {string|undefined} msg — le message que la personne vient d'écrire. Sert UNIQUEMENT
 //        à décider si les gros blocs liés à l'entraînement sont utiles (voir _ctxEntrainement).
 //        Non fourni = on envoie TOUT (appelants de diagnostic, laboratoire PT-001).
+/* 🔗 LE SUPERSET D'UNE SÉANCE TERMINÉE, DIT À MILO (24/09/2026) — retour de Michel : Machine
+   Oiseau + Marteau faits EN SUPERSET, débriefés comme deux exercices isolés (« le marteau finit à
+   40×8 RIR2, cohérent »). ⭐ MESURÉ : la séance EN COURS portait `[superset]`, mais une séance
+   TERMINÉE partait sans aucune relation — alors que `group`/`groupType` sont bien enregistrés avec
+   elle (`sess.exs` est `S.wkt.exs`). *L'information existait, elle n'atteignait pas Milo* (R4).
+   ⛔ ON NE DÉCRIT QUE CE QUI EST ENREGISTRÉ : un groupe de type superset (le type par défaut d'un
+   groupe, comme dans `toggleSet`), ses partenaires par leur nom, et le fait qu'ils s'enchaînent
+   sans repos. Aucune interprétation de fatigue n'est ajoutée ici — c'est à Milo de la tirer d'un
+   fait vrai, pas au code d'en inventer une (aucune règle de coaching nouvelle).
+   ⛔ Un dropset ou une pyramide (autres `groupType`) ne sont PAS des supersets : rien n'est dit. */
+function _supersetTxt(e, exs){
+  try{
+    if(!e || !e.group || (e.groupType||'super')!=='super') return '';
+    const avec = (exs||[]).filter(x => x && x!==e && x.group===e.group && (x.groupType||'super')==='super')
+                          .map(x => x.name).filter(Boolean);
+    return avec.length ? ` [superset avec ${avec.join(' + ')} — enchaînés sans repos]` : '';
+  }catch(err){ return ''; }
+}
 function buildCoachContext(msg) {
   // ⚠️ LE BMR ARRIVE AVEC SA PROVENANCE (11/08/2026). L'app peut employer deux formules,
   // et l'écart atteint 180 kcal/jour chez quelqu'un de musclé. Sans le savoir, Milo
@@ -3228,7 +3246,8 @@ function buildCoachContext(msg) {
         const trav0 = (doneSets||[]).filter(x => x && x.type!=='É' && x.type!=='W');
         if(ech0.length && trav0.length){
           const kg0 = trav0.reduce((m,x)=>Math.max(m, +x.kg||0), 0);
-          const d0 = _monteeDefauts(ech0, kg0);
+          const _p0 = (trav0.find(x=>+x.kg>0)||{}).kg;   // la série qui suit réellement le dernier palier
+          const d0 = _monteeDefauts(ech0, kg0, _p0);
           if(d0.length) return ` [⚠️ montée en charge insuffisante — ${d0.join(' ; ')} · ⛔ CES PALIERS VIENNENT DE TA PROPRE PRESCRIPTION : corrige-les pour la prochaine fois, ne les reproche PAS à la personne]`;
         }
         return '';
@@ -3241,7 +3260,9 @@ function buildCoachContext(msg) {
       if(!(kgT >= (typeof _MONTEE_SEUIL_KG!=='undefined' ? _MONTEE_SEUIL_KG : 40))) return '';
       let role='accessoire'; try{ role=_exRole(e.name); }catch(err){}
       if(role !== 'ancre') return '';                  // même règle que le générateur (R2)
-      const d = _monteeDefauts(ech, kgT);
+      /* ⛔ LA CHAÎNE SE FERME SUR LA 1ʳᵉ SÉRIE DE TRAVAIL RÉELLE, pas sur la plus lourde (24/09/2026) :
+         avec 80 · 80 · 85 · 90, écrire « saut entre 70 et 90 » inventait un passage jamais fait. */
+      const d = _monteeDefauts(ech, kgT, (travail.find(x=>+x.kg>0)||{}).kg);
       /* ⛔⛔ ET ON DIT QUE L'AUTEUR EST INCONNU (20/08/2026) — 3ᵉ fois le même incident, apres le
          15/08 (montee ecrite par l'app) et le 18/08 (montee prescrite par Milo).
          CE QUI S'EST PASSE AUJOURD'HUI : le bouton « Commencer cette seance » ne sortait pas
@@ -3298,7 +3319,8 @@ function buildCoachContext(msg) {
   const _nbTotalSess = (S.sessions||[]).length;
   const _depuisQuand = _sessVues.length ? _sessVues[_sessVues.length-1].date : '';
   const recentSessions = _sessVues.map(s => {
-    const exStr = (s.exs||s.exercises||[]).map(e => {
+    const _exsS = (s.exs||s.exercises||[]);
+    const exStr = _exsS.map(e => {
       const ds = (e.sets||[]).filter(x => x.done);
       /* 💬 LES ANNOTATIONS DE SÉRIE ATTEIGNENT ENFIN MILO (15/08/2026)
          Michel : *« il ne lit pas les notes qu'on peut faire ; sur la 4ᵉ série j'ai mis une
@@ -3355,7 +3377,7 @@ function buildCoachContext(msg) {
       // charge dérisoire pour un dos, alors que 28 kg d'une seule main est une vraie série.
       // Le marqueur est SUR la donnée, pas seulement dans la consigne (R4).
       const uni=(typeof estUnilateral==='function'&&estUnilateral(e.name))?` [${uniLabel(e.name)}, ${ds.length} série${ds.length>1?'s':''} DE CHAQUE CÔTÉ]`:'';
-      return `${e.name}: ${setsStr}${uni}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}${_verdictIntensite(e, ds)}`;
+      return `${e.name}${_supersetTxt(e, _exsS)}: ${setsStr}${uni}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}${_verdictIntensite(e, ds)}`;
     }).join(' · ');
     // Le CARDIO de la séance (mesuré le 02/08 : il n'était PAS transmis — Milo ignorait
     // 25 min de tapis notées après la muscu). Les deux moments sont nommés, parce qu'un

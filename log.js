@@ -1460,13 +1460,25 @@ function toggleSet(ei,si){
     //    partait à l'ouverture de l'écran — voir le commentaire de `startWorkout`.
     if(S.wkt&&!S.wkt.startTs){ S.wkt.startTs=Date.now(); S.wkt.startHour=new Date().getHours(); }
     if(S.wkt&&S.wkt.startTs) set.at=Math.round(_wktElapsedMs()/1000);
-  } else { delete set.at; _rirPending=null; }   // dévalidée → l'horodatage ET la question du RIR n'ont plus d'objet
+  } else { delete set.at;   // dévalidée → l'horodatage ET la question du RIR de CETTE série n'ont plus d'objet
+    _rirPending=Array.isArray(_rirPending)?_rirPending.filter(p=>!(p.ei===ei&&p.si===si)):null; }
   persist();
   if(set.done){
     /* 💪 ft-v1038 : la série qu'on vient de valider est la cible de la question du RIR. On la
        DÉPOSE (voir `_rirPending`) ; c'est `startRest` qui la prendra, quel que soit celui des
        cinq chemins qui s'exécute. ⛔ Et on l'efface plus bas si la série est dévalidée. */
-    _rirPending={ei,si};
+    /* 🔗 ET EN SUPERSET, LES SÉRIES ENCHAÎNÉES S'ACCUMULENT (24/09/2026) — retour de Michel : le RIR
+       n'était jamais proposé sur la Machine Oiseau, 1ᵉʳ exercice de son superset avec le Marteau.
+       ⭐ MESURÉ : le superset avance SANS repos après l'Oiseau (c'est sa définition, on n'y touche
+       pas), donc aucune barre de repos ne s'ouvre ; la série du Marteau remplaçait ensuite la
+       cible, et le repos du tour ne demandait que le Marteau. *La réserve de l'Oiseau n'avait
+       nulle part où être dite.* 👉 Les séries du MÊME superset attendent ensemble, et le repos du
+       tour pose la question pour chacune. ⛔ Hors superset (et pour un dropset ou une pyramide),
+       rien ne change : une seule série, la dernière validée. */
+    const _grpR=S.wkt.exs[ei].group, _enSS=!!(_grpR&&(S.wkt.exs[ei].groupType||'super')==='super');
+    _rirPending=(_enSS&&Array.isArray(_rirPending)
+      ? _rirPending.filter(p=>!(p.ei===ei&&p.si===si)&&S.wkt.exs[p.ei]&&S.wkt.exs[p.ei].group===_grpR)
+      : []).concat([{ei,si}]);
     const exName=S.wkt.exs[ei].name;
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
     const savedPref=(S.exRestPref||{})[exName];
@@ -2088,7 +2100,17 @@ function _monteeSuffisante(echauffements, kgTravail){
  *      C'est le motif R4 : l'app SAIT, mais l'info n'atteint jamais la donnée qu'on lui envoie.
  * @returns {string[]} — vide si la montée est bonne
  */
-function _monteeDefauts(echauffements, kgTravail){
+/* ⛔⛔ `kgPremiere` (24/09/2026) — LA SÉRIE QUI SUIT RÉELLEMENT LE DERNIER PALIER. Retour de Michel,
+   capture à l'appui : Larsen 80×4 · 80×4 · 85×3 · 90×3, et Milo écrit « le saut 70→90 est un peu
+   abrupt ». ⭐ MESURÉ : c'est l'APP qui le lui disait — `[saut de 22 % entre 70 et 90 kg]` — parce
+   que la chaîne des échauffements était fermée par la charge MAXIMALE (90) au lieu de la série
+   qui a VRAIMENT suivi le 70 (80). *Un saut entre deux charges qui ne se sont jamais suivies est
+   un fait fabriqué, et Milo le répète comme un fait.*
+   ⛔ LA RÈGLE NE CHANGE PAS : mêmes seuils (18 % ET 15 kg), mêmes pourcentages — toujours rapportés
+   à la charge de travail `T`. Seul le DERNIER MAILLON de la chaîne devient la charge réellement
+   soulevée ensuite. Sans `kgPremiere` (le générateur, qui raisonne sur une charge prévue),
+   rien ne bouge. */
+function _monteeDefauts(echauffements, kgTravail, kgPremiere){
   const T = +kgTravail || 0;
   const out = [];
   if(!(T > 0)) return out;
@@ -2098,7 +2120,8 @@ function _monteeDefauts(echauffements, kgTravail){
   if(paliers[0] > _MONTEE_DEPART_MAX*T){                     // on ne démarre pas assez bas
     out.push('démarrage à '+paliers[0]+' kg, soit '+pct(paliers[0])+' % de la charge (viser 40-50 %)');
   }
-  const suite = paliers.concat([T]);
+  const _P = +kgPremiere || 0;
+  const suite = paliers.concat([(_P > 0 && _P <= T) ? _P : T]);
   for(let i=1;i<suite.length;i++){
     const dKg = suite[i]-suite[i-1];
     // Un trou = plus de 18 % de la charge **ET** plus de 15 kg d'un coup.
@@ -4605,7 +4628,8 @@ function _debriefLocal(sess, prCount, opts){
       const kgMax=Math.max.apply(null,trav.map(x=>+x.kg));
       try{
         const ech=sets.filter(x=>x&&x.type==='É');
-        (( typeof _monteeDefauts==='function')?_monteeDefauts(ech,kgMax):[])
+        /* la 1ʳᵉ série de travail RÉELLEMENT faite ferme la chaîne (voir `_monteeDefauts`) */
+        (( typeof _monteeDefauts==='function')?_monteeDefauts(ech,kgMax,+trav[0].kg):[])
           .forEach(d=>points.push({ex:ex.name, txt:d, quoi:'échauffement'}));
       }catch(e){}
       try{
@@ -5129,7 +5153,10 @@ function startRest(sec){
   /* 💪 ft-v1038 : la cible déposée par `toggleSet` est consommée ICI — après le `stopRest()`
      ci-dessus, qui vient justement de vider `_rirCible`. Une seule fois : elle ne survit pas
      au repos suivant. */
-  _rirCible=_rirPending; _rirPending=null;
+  /* ⛔ LE CONTRAT D'ORIGINE EST GARDÉ : une seule série → l'objet `{ei,si}` comme avant ; une LISTE
+     seulement quand plusieurs séries d'un superset attendent leur question (24/09/2026). */
+  _rirCible=Array.isArray(_rirPending)?(_rirPending.length>1?_rirPending:(_rirPending[0]||null)):_rirPending;
+  _rirPending=null;
   updRest();_updPill();_renderRirRow();
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
@@ -5229,9 +5256,9 @@ let _restStep=15;
 let _restEx=null;
 
 /* 💪 LA QUESTION DU RIR, POSÉE DANS LA BARRE DE REPOS (ft-v1038)
-   ⛔ `_rirCible` dit DE QUELLE SÉRIE on parle. Sans lui, la barre poserait la question dans le
+   ⛔ `_rirCible` dit DE QUELLE(S) SÉRIE(S) on parle. Sans lui, la barre poserait la question dans le
    vide dès qu'un repos démarre pour une autre raison (bouton repos seul, enchaînement). */
-let _rirCible=null;                       // {ei, si} ou null — la série dont on parle MAINTENANT
+let _rirCible=null;                       // {ei, si}, null — ou une LISTE de {ei, si} quand un superset en attend plusieurs
 /* ⛔⛔ ET UNE CIBLE « EN ATTENTE », parce que l'ordre m'a piégé une première fois : `startRest`
    COMMENCE par `stopRest()`, qui remet la cible à null. Poser la cible avant l'appel ne servait
    donc à rien — la question ne s'affichait jamais (mesuré : 0 bouton).
@@ -5247,12 +5274,20 @@ let _rirPending=null;
 function _renderRirRow(){
   const z=document.getElementById('rest-rir');
   if(!z) return;
-  const c=_rirCible;
-  const set=(c&&S.wkt&&S.wkt.exs&&S.wkt.exs[c.ei]&&S.wkt.exs[c.ei].sets[c.si])||null;
-  if(!set){ z.innerHTML=''; return; }
   /* ⛔ ON NE DEMANDE PAS SUR UN ÉCHAUFFEMENT : une série de chauffe n'a pas de réserve à
      déclarer, et poser la question à chaque palier serait du bruit (R19). */
-  if(set.type==='É'||set.type==='W'){ z.innerHTML=''; return; }
+  const cibles=(Array.isArray(_rirCible)?_rirCible:(_rirCible?[_rirCible]:[])).filter(c=>{
+    const st=c&&S.wkt&&S.wkt.exs&&S.wkt.exs[c.ei]&&S.wkt.exs[c.ei].sets[c.si];
+    return st&&st.type!=='É'&&st.type!=='W';
+  });
+  if(!cibles.length){ z.innerHTML=''; return; }
+  /* ⭐ PLUSIEURS SÉRIES (superset) → chaque question dit DE QUEL EXERCICE elle parle, sinon on ne
+     saurait pas à qui appartient la réserve. ⛔ Une seule série → exactement l'affichage d'avant. */
+  const avecNom=cibles.length>1;
+  z.innerHTML=cibles.map(c=>_rirQuestionHtml(c,avecNom)).join('');
+}
+function _rirQuestionHtml(c,avecNom){
+  const set=S.wkt.exs[c.ei].sets[c.si];
   const cur=_rirDeSet(set);
   /* ⭐ L'ÉCHEC EST DÉJÀ RÉPONDU : si la série porte le tag `X`, la question n'a plus lieu d'être
      et on le DIT au lieu de redemander (R2).
@@ -5267,7 +5302,8 @@ function _renderRirRow(){
        dans les deux échelles — c'est ce qui fait qu'on ne stocke jamais deux choses (R2). */
     return `<button class="rir-b${on?' on':''}"${fige?' disabled':''} onclick="setRir(${c.ei},${c.si},${n})">${_reserveBoutonTxt(n)}</button>`;
   };
-  let html='<div class="rir-lbl">'+(fige?_reserveEchecTxt():_reserveQuestion())+'</div><div class="rir-row">';
+  const nom=avecNom?('<b class="rir-nom">'+String(S.wkt.exs[c.ei].name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</b> — '):'';
+  let html='<div class="rir-lbl">'+nom+(fige?_reserveEchecTxt():_reserveQuestion())+'</div><div class="rir-row">';
   /* ⛔ L'ORDRE S'INVERSE EN RPE, exprès : le barème se lit du plus léger au maximum (6 → 10),
      et quelqu'un qui a CHOISI le RPE le lit dans ce sens. En RIR on garde l'échec en tête. */
   if(_estRpe()){ for(let n=RIR_MAX;n>=0;n--) html+=btn(n); }
@@ -5275,7 +5311,7 @@ function _renderRirRow(){
   /* ⛔ ET ON PEUT RETIRER SA RÉPONSE : sans ça, un tap par erreur deviendrait une mesure
      définitive. `null` n'est pas 0, il faut pouvoir y revenir (R29). */
   if(cur!==null&&!fige) html+='<button class="rir-b rir-x" onclick="setRir('+c.ei+','+c.si+',null)" title="Retirer">✕</button>';
-  z.innerHTML=html+'</div>';
+  return html+'</div>';
 }
 function setRir(ei,si,n){
   const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];

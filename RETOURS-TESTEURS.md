@@ -396,3 +396,21 @@ historique) ; à 3-4 séances tout descend encore de ~300 kcal.
 
 ⚖️ **Son intuition était juste.** ⛔ Elle n'est pas prouvée au chiffre près — elle est **bornée**,
 et la borne haute du plausible passe **en dessous** de ce que l'app affiche.
+
+---
+
+## 🧠 24/09/2026 — MICHEL : LE DÉBRIEF DE MILO DIT DES CHOSES QUI NE SONT PAS DANS SA SÉANCE
+
+Retour réel, capture d'un débrief de fin de séance à l'appui. Quatre symptômes, traités
+**séparément** et revalidés en conduisant l'app (témoins `tests/parcours/debrief_provenance.js`,
+blocs B-CCCLVIII / B-CCCLIX) avant toute correction :
+
+| # | Ce que Michel a vu | Statut après audit |
+|---|---|---|
+| 1 | Larsen Press affichée **80×4 · 80×4 · 85×3 · 90×3 RIR1**, et Milo écrit « le saut **70→90** est un peu abrupt » | ✅ **CONFIRMÉ** — c'est l'APP qui l'écrivait à Milo : `[⚠️ montée en charge insuffisante — saut de 22 % entre 70 et 90 kg]`. La montée était jugée contre la charge **maximale** (90) au lieu de la **1ʳᵉ série de travail** (80) : un passage 70→90 qui n'a jamais eu lieu. Même défaut dans le débrief chiffré local. |
+| 2 | 12 min de cardio faites **en fin de séance**, qualifiées « ça sert l'échauffement » | ❌ **PRÉMISSE FAUSSE côté code** — la phase est conservée jusqu'à Milo (« après séance » dans la ligne ET dans la consigne). ❓ Cause restante **non démontrable** sans la séance réelle : cardio rangé dans le volet « Avant », ou modèle qui ignore l'étiquette. |
+| 3 | Machine Oiseau + Marteau faits **en superset**, débriefés comme deux exercices isolés | ✅ **CONFIRMÉ** — la séance EN COURS disait `[superset]`, une séance TERMINÉE arrivait à Milo sans aucune relation. Les RIR, eux, restaient bien sur leur exercice. |
+| 4 | Hypothèse : le RIR n'est pas proposé sur le **premier** exercice du superset | ✅ **CONFIRMÉ** — l'Oiseau enchaîne sans repos, et la question du RIR ne vit que dans la barre de repos, qui ne visait que la dernière série validée (le Marteau). |
+
+Suite et corrections : `docs/JOURNAL-DE-PARTAGE.md` (ligne du chantier « Milo — provenance
+structurelle du débrief »).

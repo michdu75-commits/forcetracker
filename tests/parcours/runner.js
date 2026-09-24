@@ -39611,6 +39611,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* ⚖️ La chaîne Poids (24/09/2026) — blocs B-CCCLVI/B-CCCLVII, dans leur fichier pour que le
      contrôle négatif (`tools/mut_poids_chaine.py`) les rejoue en secondes. */
   await require('./poids_chaine.js').ecran(t, b, PORT);
+  /* 🧠 Provenance du débrief de Milo (24/09/2026) — blocs B-CCCLVIII/B-CCCLIX, contrôle négatif
+     `tools/mut_debrief_provenance.py`. */
+  await require('./debrief_provenance.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40415,6 +40418,7 @@ require('./habitudes_alim.js').source(t, ROOT, fs, path);
 require('./ordre_repas.js').source(t, ROOT, fs, path);
 require('./motif_exercice.js').source(t, ROOT, fs, path);
 require('./poids_chaine.js').source(t, ROOT, fs, path);
+require('./debrief_provenance.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
