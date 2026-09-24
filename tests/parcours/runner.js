@@ -39614,6 +39614,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🧠 Provenance du débrief de Milo (24/09/2026) — blocs B-CCCLVIII/B-CCCLIX, contrôle négatif
      `tools/mut_debrief_provenance.py`. */
   await require('./debrief_provenance.js').ecran(t, b, PORT);
+  /* 🍽️ Le moteur Nutrition FIGÉ tel qu'il est (NUT-01 → NUT-09, 24/09/2026) — mesures, pas
+     jugements. Contrôle négatif : `tools/mut_nutri_moteur.py`. */
+  await require('./nutri_moteur.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40419,6 +40422,7 @@ require('./ordre_repas.js').source(t, ROOT, fs, path);
 require('./motif_exercice.js').source(t, ROOT, fs, path);
 require('./poids_chaine.js').source(t, ROOT, fs, path);
 require('./debrief_provenance.js').source(t, ROOT, fs, path);
+require('./nutri_moteur.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
