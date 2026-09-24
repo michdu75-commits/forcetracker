@@ -94,3 +94,40 @@ paraît évidente** :
 
 Une décision déjà validée ne redevient pas une question parce qu'un audit est lancé ; une preuve
 nouvelle qui la contredit se documente, on s'arrête, et Michel tranche.
+
+## 8. B1 / B2 corrigés (24/09 soir, décision de Michel — `D-020`)
+
+- **B1** : une activité jamais choisie n'est plus `1,55`. Absente → TDEE et macros `null`,
+  l'écran dit « il manque ton niveau d'activité », le Profil affiche « À choisir ». Le BMR
+  reste calculé. ⚠️ Un `1,55` **déjà stocké** est gardé (provenance inconnue) → `D-021`,
+  **à trancher**.
+- **B2** : activité et calories manuelles relues (stockage, cloud), âge et taille relus du
+  stockage passent par les mêmes bornes que la saisie. Plus de TDEE à −1 749 ni à 9,7 M kcal.
+- Aucun multiplicateur, bonus, ratio, résidu, cycle ni plancher modifié.
+
+## 9. Remesure après B1/B2 (règles inchangées, sans historique de séances)
+
+| Cas (activité **choisie** · métier · autre sport · objectif) | BMR | TDEE | Cible | P/L/G | G/kg | Σ macros − cible |
+|---|---|---|---|---|---|---|
+| Michel 48 a · 180 · 85,9 · activité **non choisie** | 1 749 | — | — | — | — | — |
+| Michel · Modéré · bureau · aucun · force | 1 749 | 2 711 | 3 011 | 172/86/387 | 4,5 | −1 |
+| idem · debout | 1 749 | 2 911 | 3 211 | 172/86/437 | 5,1 | −1 |
+| idem · physique | 1 749 | 3 161 | 3 461 | 172/86/500 | 5,8 | +1 |
+| idem · bureau · + vélo | 1 749 | 2 861 | 3 161 | 172/86/425 | 5,0 | +1 |
+| Michel · Actif · bureau | 1 749 | 3 017 | 3 317 | 172/86/464 | 5,4 | +1 |
+| Michel · Actif · physique | 1 749 | 3 467 | 3 767 | 172/86/576 | 6,7 | −1 |
+| Michel · Modéré · bureau · phase décharge | 1 749 | 2 711 | 2 811 | 172/86/337 | 3,9 | −1 |
+| Michel · Modéré · bureau · fumeur (×1,07) | 1 871 | 2 900 | 3 200 | 172/86/435 | 5,1 | +2 |
+| F 55 kg · 160 · 45 a · Sédentaire · perte | 1 164 | 1 397 | 1 200 (plancher) | 138/44/63 | 1,2 | 0 |
+| H 130 kg · 170 · 55 a · Sédentaire · perte | 2 093 | 2 512 | 2 162 | 325/104/**0** | 0 | **+74** |
+| H 70 kg · 178 · 25 a · Très actif · physique · endurance | 1 693 | 3 667 | 3 867 | 119/53/**729** | **10,4** | +2 |
+| H 100 kg · 190 · 25 a · Très actif · physique · muscle | 2 068 | 4 379 | 4 829 | 220/90/**785** | 7,9 | +1 |
+| F 45 kg · 150 · 70 a · Sédentaire · équilibre | 877 | 1 052 | 1 200 (plancher) | 90/38/125 | 2,8 | +2 |
+| Michel · Modéré · bureau · **1 200 à la main** | 1 749 | 2 711 | 1 200 | 172/86/**0** | 0 | **+262** |
+| Michel · ancien `ft4_act = 99` | 1 749 | — | — | — | — | — |
+
+**Ce qui subsiste après assainissement** : ① **B3** (macros > cible) dès que `4P + 9L`
+dépasse la cible ; ② les glucides très hauts (7 à 10 g/kg) restent possibles, mais seulement
+avec des entrées **choisies** (activité haute + métier physique) ; ③ le **métier** reste un
+défaut silencieux (`bureau`), non tranché ; ④ la **définition** du multiplicateur
+(« Modéré (3-4j) » contient-il le métier ?) reste à arbitrer.
