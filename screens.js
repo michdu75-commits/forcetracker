@@ -3325,7 +3325,9 @@ function renderNutrition(){try{
   {
     const _sc=document.getElementById('nu-acc-calc-sub');
     if(_sc)_sc.textContent=[(nuGoal&&nuGoal.textContent||'').replace(/^[^\s]+\s/,''),
-      (currentDelta>=0?'+':'')+currentDelta+' kcal', 'TDEE '+tdee.toLocaleString('fr-FR')]
+      /* ⛔ `tdee` vaut `null` sans activité choisie (B1) ou profil incomplet : `.toLocaleString` levait,
+         l'exception était rattrapée en silence et le reste de l'onglet n'était jamais dessiné (B-CCCLXVII). */
+      (currentDelta>=0?'+':'')+currentDelta+' kcal', 'TDEE '+_nbAff(tdee)]
       .filter(Boolean).join(' · ');
     const _sd=document.getElementById('nu-acc-diet-sub');
     if(_sd){

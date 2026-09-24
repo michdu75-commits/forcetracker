@@ -440,6 +440,48 @@ module.exports.ecran = async function (t, b, PORT) {
   const K2 = await pg.evaluate(() => ({ mk: S.manualKcal, cal: calcMacros(S.nutritionPhase).calories }));
   t('B-CCCLXVI ④ après rechargement : la dernière saisie (1800) est relue — la cible manuelle SURVIT',
     K.v1800.disque === '1800' && K2.mk === 1800 && K2.cal === 1800, JSON.stringify({ saisie: K.v1800, relu: K2 }));
+
+  /* ══ B-CCCLXVII. L'ONGLET NUTRITION SANS ACTIVITÉ CHOISIE SE DESSINE EN ENTIER (nuit du 24→25/09) ══
+     ⛔⛔ TROUVÉ PAR LA CONTRE-VÉRIFICATION (agent critique), PAS PAR UN TÉMOIN : `renderNutrition`
+     faisait `'TDEE '+tdee.toLocaleString(…)` avec `tdee = null` → exception RATTRAPÉE en silence
+     (`console.error`, jamais vue par un écouteur `pageerror`) → tout ce qui suit n'était pas dessiné
+     (macros, anneaux, cycle, hydratation, plan). Latent depuis ft-v1232 pour les profils incomplets ;
+     B1 l'étend à TOUT compte sans activité choisie. Avec une cible MANUELLE, les calories
+     s'affichaient mais protéines et glucides restaient « — » alors que `calcMacros` les calcule.
+     👉 On écoute donc `console.error` ICI, pas seulement `pageerror`. */
+  console.log('\n-- B-CCCLXVII. Nutrition sans activité choisie : l\'onglet se dessine en entier (console.error écouté) --');
+  const rendre = async (extra) => {
+    await pg.evaluate((extra) => { localStorage.clear(); localStorage.setItem('_decorAct', '1');
+      const D = Object.assign({ ft4_bw: '85.9', ft4_age: '48', ft4_ht: '180', ft4_gender: 'H', ft4_work: 'bureau',
+                  ft4_goal: 'force', ft4_nphase: 'charge', ft4_ob2: '1' }, extra);
+      Object.keys(D).forEach(k => localStorage.setItem(k, D[k])); }, extra);
+    await pg.reload(); await pg.waitForTimeout(2200);
+    return pg.evaluate(async () => {
+      window._cloudSync = () => {}; window._cloudSyncDebounced = () => {};
+      const erreurs = []; const ce = console.error;
+      console.error = (...a) => { erreurs.push(a.map(String).join(' ').slice(0, 160)); ce.apply(console, a); };
+      goScreen('nutrition', document.querySelector('[onclick*="nutrition"]'));
+      await new Promise(r => setTimeout(r, 300));
+      try { renderNutrition(); } catch (e) { erreurs.push('LEVÉE : ' + e.message); }
+      console.error = ce;
+      const v = id => { const e = document.getElementById(id); return e ? e.textContent.trim() : null; };
+      return { erreurs: erreurs.filter(x => /renderNutrition|TypeError|LEVÉE/.test(x)),
+               kcal: v('m-kcal'), P: v('m-prot'), G: v('m-carbs'), L: v('m-fat'), sub: v('nu-acc-calc-sub') };
+    });
+  };
+  const sansAct = await rendre({});
+  const manuel = await rendre({ ft4_manualkcal: '2500' });
+  const avecAct = await rendre({ ft4_act: '1.55' });
+  t('B-CCCLXVII ① sans activité, sans cible manuelle : AUCUNE erreur de rendu, macros « — »',
+    sansAct.erreurs.length === 0 && sansAct.P === '—' && sansAct.G === '—', JSON.stringify(sansAct));
+  t('B-CCCLXVII ② sans activité, 2500 kcal à la main : aucune erreur, et les macros calculées S\'AFFICHENT (P 172 · L 86 · G 260 = (2500 − 4×172 − 9×86)/4)',
+    manuel.erreurs.length === 0 && manuel.P === '172' && manuel.L === '86' && manuel.G === '260',
+    JSON.stringify(manuel));
+  t('B-CCCLXVII ③ le sous-titre de l\'accordéon dit « TDEE — » au lieu de planter',
+    /TDEE —/.test(manuel.sub || '') && /TDEE —/.test(sansAct.sub || ''), JSON.stringify([sansAct.sub, manuel.sub]));
+  t('B-CCCLXVII ④ contrôle : activité 1,55 choisie → rendu complet, TDEE 2 711 dans le sous-titre, 172 · 86 · 387',
+    avecAct.erreurs.length === 0 && avecAct.P === '172' && avecAct.G === '387' && /TDEE 2\s?711/.test(avecAct.sub || ''),
+    JSON.stringify(avecAct));
   t('B-CCCLXIII ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };
