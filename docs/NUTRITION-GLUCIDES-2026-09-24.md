@@ -57,6 +57,9 @@ glucides tombent à 0 et **les macros affichées dépassent la cible** (1 462 po
 
 ## 4. Défauts dormants (non atteignables par l'interface, notés — non corrigés)
 
+> ✅ **Corrigé depuis** : c'est **B2** (§8, décision de Michel du 24/09 soir), complété la nuit suivante (§10).
+
+
 Les bornes de l'interface (calories 800-6000, âge 14-99, taille 100-229, activité par liste)
 **ne sont pas réappliquées** au chargement ni à la restauration cloud : une valeur corrompue
 (`Infinity`, `1e9`, activité 99 ou −1) produit un TDEE absurde (jusqu'à **−1 749**) ou des
@@ -131,3 +134,71 @@ dépasse la cible ; ② les glucides très hauts (7 à 10 g/kg) restent possible
 avec des entrées **choisies** (activité haute + métier physique) ; ③ le **métier** reste un
 défaut silencieux (`bureau`), non tranché ; ④ la **définition** du multiplicateur
 (« Modéré (3-4j) » contient-il le métier ?) reste à arbitrer.
+
+## 10. Nuit du 24→25/09 — vérifications restantes de B1/B2, remesure, B3 factuel
+
+**Témoins ajoutés** (`tests/parcours/activite_provenance.js`, banc `tools/banc_activite_provenance.js`) :
+B-CCCLXIV (B2 par **origine** : appel direct · stockage · cloud · écran, sur `0`, `2`, `±Infinity`,
+`NaN`, `"1e999"`, vide, `abc`, `1.4`, `"1.55abc"`, tableaux…) · B-CCCLXV (**remises à zéro**) ·
+B-CCCLXVI (**saisie des calories à la main**, conduite). Sur le code d'avant B1 : **33 rouges / 44**,
+aucun plantage. Contrôle négatif `tools/mut_activite_provenance.py` : M4 = M20 · M21 · M22
+(Infinity réautorisé par chaque porte), M23 · M24 (lecture tolérante), M25 (régression ci-dessous).
+
+**Deux défauts de ma propre correction B2, trouvés et corrigés (périmètre B2)** :
+- **lecture tolérante** : `parseFloat` lisait un préfixe, donc `"1.55abc"` devenait 1,55 (stockage,
+  cloud, option forgée), `[1.55]` aussi, `"2200abc"` → 2200 kcal. Remplacé par `_nombreStrict`.
+- **⛔ régression de `20eac697`** : un commentaire de fin de ligne avait avalé
+  `persist();closeKcalEdit();renderNutrition();` dans `saveKcalEdit`. Régler ses calories affichait
+  « Objectif réglé ✅ » **sans rien écrire sur le disque**. Aucun témoin n'appelait `saveKcalEdit`
+  (B-CCCLXVI le fait désormais, 4 rouges avant correction). **Non publiée** : aucun utilisateur touché.
+
+**Remises à zéro (B1-06)** : il n'existe **aucune remise à zéro globale en production**. Chemins
+réels testés : effacement du site + rechargement · `resetOnboardingTest` (clone seulement ; refuse
+en production) · restauration cloud juste après · personas de démo (`_vcApplyPersona` pose la
+chaîne `'modéré'` en mémoire — TDEE **NaN avant B1**, `null` depuis — puis `load()` restaure).
+
+**D-021 — faits mesurés, rien de tranché** :
+- le serveur (`Code.js`, `_pn_`) **garde** l'ancienne valeur quand le client envoie `null` : un
+  compte synchronisé avant B1 garde `1.55` dans le cloud **pour toujours**, et toute restauration
+  le ramène ; un compte créé après B1 stocke `0`, que la restauration refuse ;
+- l'interface **ne peut pas** remettre un `1.55` stocké à « non renseigné » (« À choisir » n'écrit rien) ;
+- le miroir Supabase, lui, remplace par `null` → **les deux clouds divergent** pour ces comptes ;
+- aucune donnée ne distingue un 1,55 choisi d'un 1,55 par défaut (seul indice partiel :
+  `registre.ctxAct`, jamais produit pour quelqu'un à 3-4 séances/semaine) ;
+- ⚠️ **tant que B1 n'est pas publié**, la production continue d'écrire `1.55` pour tout le monde :
+  la population concernée **grossit jusqu'à la publication**. Le dépôt ne contient aucune donnée
+  utilisateur : **aucun comptage possible** d'ici.
+
+**Scénarios historiques** :
+- **~659 g** : vient du **cahier d'audit de Michel du 22/09** (TDEE 3 522, cible 3 972,
+  P 189 / G 659 / L 65) — le cahier n'est **pas** dans le dépôt, ses entrées exactes non plus.
+  SYNTH-B en est une **reconstruction** (TDEE 3 515, pas 3 522). Rejoué seulement comme
+  **SYNTHÉTIQUE — PAS MICHEL** : 629 g sans séances, 657 g (4 séances/sem, jambes), 648 g (5).
+- **~932 g : NON REJOUÉ — PARAMÈTRES HISTORIQUES INCOMPLETS.** Introuvable (dépôt, historique git,
+  PDF du dépôt). Le TDEE 4 858 se retrouve **exactement** avec H 110 kg · 190 · 25 a · 1,9 ·
+  physique · fumeur ; mais **aucune** combinaison objectif + phase ne mène à 5 587 (maximum
+  muscle + charge = +450 → 5 308) : l'écart de 279 kcal viendrait d'une entrée **inconnue**
+  (pas, cible manuelle… — non reconstruite). Remplacé par des scénarios neufs entièrement spécifiés (X1-X3).
+
+**Remesure, matrice, B3** : `tools/remesure_nutrition.js` (lecture seule, code servi, chemin
+`localStorage → load() → moteur`). Sortie complète : voir le checkpoint de fin de nuit.
+- **Matrice activité × métier** (H 35 a · 180 · 80 kg) : BMR 1 755 ; le métier ajoute
+  **0 / +200 / +325 / +450** à chaque niveau, sans interaction ; TDEE de **2 106 à 3 785**
+  (×1,80). Aucune conclusion de « double comptage » : pas de définition produit.
+- **B3 (macros > cible)**, grille de **34 560 profils** (H/F · 45→160 kg pas 5 · 160/175/190 cm ·
+  20/35/50/65 a · 5 activités · 6 objectifs · 2 phases · bureau) : **1 201 points (3,5 % de la
+  grille — pas une fréquence réelle)**. Seulement en **perte** (697) et **recomp** (496), plus
+  4 en force et 4 en équilibre (femmes ≥ 145 kg) ; jamais à activité ≥ 1,725 ; à partir de
+  **70 kg (femmes) / 85-90 kg (hommes)** ; écart de 3 à **765 kcal** (médiane 167) ; plancher D-017
+  mêlé à 34 cas. Cible **manuelle** : 314 / 864 points, dès 70 kg à 1 200 kcal.
+
+**Autres constats, NON corrigés (hors périmètre)** :
+- `dashboard.js` lit `m.kcal` / `m.prot` alors que `calcMacros` rend `calories` / `prot_g` : il
+  affiche le TDEE au lieu de la cible, jamais les protéines (antérieur à B1 ; `dashboard.js`
+  n'est pas chargé par `index.html`) ;
+- `calcTDEE` multiplie la valeur **brute** de `S.activityLevel` après l'avoir validée : une chaîne
+  `'1,55'` passerait la garde et donnerait `NaN` — **aucun écrivain actuel** ne la produit ;
+- `docs/DOSSIER-V9-APPRENTISSAGE.md` emploie `D-019`…`D-022` pour sa propre numérotation locale :
+  **collision de noms** avec le registre (D-020, D-021).
+- ×1,07 fumeur : présent, origine non traçable, aucun témoin dédié, couplé à `S.smoker` côté
+  récupération — **gelé**, chantier séparé.
