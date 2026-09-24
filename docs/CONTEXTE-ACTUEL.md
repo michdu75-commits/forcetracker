@@ -23,6 +23,8 @@
 
 - **Tri documentaire** de ce fichier et de `docs/JOURNAL-DE-PARTAGE.md` (24/09, session-A) — **terminé**, validé par Michel, committé et poussé en `0d8a22b2`. Dépôt documentaire propre.
 - **Chantier Poids** (24/09, session-A) — **livré sur la branche, NON publié** : `f9a8ec74` (données) + `66a6bd5e` (UX « Dernière mesure »). Corrigés : **F003, F004, F011**, et **F005 pour sa moitié « validation des entrées »** (sa 2ᵉ moitié, les `S.bw || 80` des calculs, reste ouverte) ; **F012 : prémisse réfutée** (mesuré). Décisions rendues à Michel : plusieurs pesées le même jour (le modèle en garde une) · le champ poids du **Profil** reste prérempli · lignes invalides déjà stockées (aucune migration) · `S.bw || 80` des calculs de séance / suppléments (gel Nutrition). ⛔ À la publication : bump `ft-v1235`, entrée de journal dans `CLAUDE.md`, règle d'or #11 (aide · point rouge · Guide).
+- **Chantier Milo — provenance du débrief** (24/09, session-A) — **livré sur la branche, NON publié** : `e3ae216e` + `307f0972`. Larsen « 70→90 » (fait fabriqué par l'app), superset aplati et RIR de l'Oiseau jamais proposé : **corrigés** ; cardio de fin → « échauffement » : phase conservée par le code, cause **non démontrable** sans la séance réelle. Trace : `RETOURS-TESTEURS.md` (24/09).
+- **Backlog Poids, à ne pas perdre** : ⚠️ la carte **Masse grasse** crée une pesée du jour avec un kilo **recopié** — la « Dernière mesure » peut porter la date de cette écriture au lieu d'une vraie pesée → **futur chantier ciblé**. Et : plusieurs pesées le même jour (migration) · champ poids du Profil prérempli (décision d'écran) · anciennes lignes invalides (aucune migration) · `S.bw || 80` (gel Nutrition) · publication du chantier Poids non faite.
 - **Audit forensique** : **12 défauts numérotés (F001 → F012)** — F003, F004, F011 et la moitié « entrées » de F005 corrigés sur la branche, F012 réfuté ; **les autres ne sont pas corrigés**, **aucun ordre de correction décidé**. ⚠️ Le registre qui les numérote **n'est PAS dans le dépôt** (bloc-notes de session, hors dépôt car celui-ci est public) ; seuls trois dossiers y sont : `docs/SUPPRESSION-QUI-NE-REMONTE-PAS.pdf`, `docs/PROVENANCE-MASSE-GRASSE.pdf`, `docs/POIDS-RESTAURATION-SANS-BORNE.pdf`.
 
 ## 🍽️ Retour récurrent de Michel : « l'application donne trop de calories »
@@ -44,7 +46,7 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 
 ## ⏭️ Prochaine étape
 
-- **Chantier Poids** : validation de Michel, puis décision de publication (voir « Chantier actif »).
+- **Chantiers Poids et Milo-débrief** : validation de Michel, puis décision de publication (voir « Chantier actif »).
 - Pour l'audit : **l'ordre de correction des défauts restants (F001, F002, F006 → F010, et la 2ᵉ moitié de F005) est à décider par Michel.**
 
 ## 🧭 Où lire quoi
