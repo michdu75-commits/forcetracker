@@ -298,6 +298,7 @@
     "Excellent":{en:"Excellent",es:"Excelente",el:"Εξαιρετικό",ru:"Отлично"},
     "Optimal":{en:"Optimal",es:"Óptimo",el:"Βέλτιστο",ru:"Оптимально"},
     "Épuisé":{en:"Exhausted",es:"Agotado",el:"Εξαντλημένος",ru:"Истощён"},
+    "À choisir":{en:"To choose",es:"Por elegir",el:"Προς επιλογή",ru:"Выбрать"},
     "Modéré (3-4j)":{en:"Moderate (3-4d)",es:"Moderado (3-4d)",el:"Μέτριο (3-4μ)",ru:"Умеренно (3-4д)"},
     "Actif (5-6j)":{en:"Active (5-6d)",es:"Activo (5-6d)",el:"Ενεργό (5-6μ)",ru:"Активно (5-6д)"},
     "Naissance JJ/MM":{en:"Birth DD/MM",es:"Nacimiento DD/MM",el:"Γέννηση ΗΗ/ΜΜ",ru:"Рождение ДД/ММ"},

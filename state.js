@@ -32,7 +32,7 @@ function reposDefaut(){
 }
 let S={
   bw:80,barW:20,defRest:REPOS_DEFAUT,
-  gender:'H',age:30,height:175,activityLevel:1.55,
+  gender:'H',age:30,height:175,activityLevel:null,   // ⛔ jamais 1.55 d'office (D-016 étendue, 24/09 — voir _activiteValide)
   workType:'bureau',smoker:false,halo:'on',haloColor:'59,130,246',haloDir:'top',
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
@@ -296,9 +296,19 @@ function load(){
     // '' | 16-8 | 18-6 | 20-4 (heures de jeûne / fenêtre où l'on mange).
     S.fasting=localStorage.getItem('ft4_fasting')||'';
     S.gender=localStorage.getItem('ft4_gender')||'H';
-    S.age=parseInt(localStorage.getItem('ft4_age')||'0')||0;
-    S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
-    S.activityLevel=parseFloat(localStorage.getItem('ft4_act')||'1.55')||1.55;
+    /* ⛔ B2 (24/09/2026) : ce qui est RELU passe par les MÊMES bornes que ce qui est SAISI —
+       mesuré, un `ft4_ht` à `1e6` donnait un TDEE de 9,7 millions de kcal. Hors bornes = absent,
+       donc « il manque ta taille », jamais un calcul sur une valeur impossible. */
+    {const _a=parseInt(localStorage.getItem('ft4_age')||'0'); S.age=_ageValide(_a)?_a:0;}
+    {const _h=parseFloat(localStorage.getItem('ft4_ht')||'0'); S.height=_tailleValide(_h)?_h:0;}
+    /* ⛔⛔ B1 (décision Michel, 24/09/2026 — D-016 étendue à l'activité) : une activité JAMAIS
+       CHOISIE n'est plus « Modéré (3-4j) ». Avant : `…||'1.55')||1.55` — l'absence de choix devenait
+       en silence un multiplicateur qui fabriquait TDEE, macros et anneau « personnalisés ».
+       Absent ou hors des 5 niveaux de l'écran → `null` → « il manque ton niveau d'activité ».
+       ⚠️ LIMITE, écrite plutôt que cachée : `persist()` écrivait `ft4_act` à CHAQUE sauvegarde,
+       donc un `1.55` déjà stocké ne dit pas s'il a été choisi. On le GARDE (on ne peut pas prouver
+       qu'il ne l'a pas été) — la décision pour ces comptes-là revient à Michel. */
+    S.activityLevel=_activiteValide(localStorage.getItem('ft4_act'));
     S.workType=localStorage.getItem('ft4_work')||'bureau';
     S.halo=localStorage.getItem('ft4_halo')||'on';
     if(S.halo==='blue')S.halo='on';                 // migration ancien nom
@@ -335,7 +345,7 @@ function load(){
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
     S.targetWeight=parseFloat(localStorage.getItem('ft4_target')||'0')||0;
-    S.manualKcal=parseFloat(localStorage.getItem('ft4_manualkcal')||'0')||0; // 0 = calories auto
+    S.manualKcal=_kcalManuelleValide(localStorage.getItem('ft4_manualkcal'))||0; // 0 = calories auto — B2 : `Infinity`, `1e9`, `-500` n'entrent plus
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
     S.goal2=localStorage.getItem('ft4_goal2')||'';
     try{S.priorities=JSON.parse(localStorage.getItem('ft4_priorities')||'[]');}catch(e){S.priorities=[];}
@@ -848,6 +858,22 @@ function _pctGrasValide(p){ const v=+p; return isFinite(v) && v>=3 && v<=70; }
    saisit à la main. Un seul propriétaire (R2), employé par les deux chemins. */
 function _ageValide(a){ const v=+a; return isFinite(v) && v>13 && v<100; }
 function _tailleValide(h){ const v=+h; return isFinite(v) && v>100 && v<230; }
+/* 🏃 LE NIVEAU D'ACTIVITÉ : un des CINQ niveaux de l'écran Profil (`#act-sel`), sinon `null`
+   (B1/B2, décision Michel du 24/09/2026). ⛔ Ce n'est PAS une plage : 1,4 n'a jamais été proposé
+   à personne, l'accepter serait valider une valeur que l'interface ne sait pas produire.
+   ⛔ Les multiplicateurs ne bougent pas d'un chiffre (non calibrés, arbitrage à venir) — un
+   témoin vérifie que cette liste et les options de l'écran disent la même chose (R2). */
+function _activiteValide(v){
+  const n=(typeof v==='string')?parseFloat(v.replace(',','.')):+v;
+  return (v!==null&&v!==''&&isFinite(n)&&[1.2,1.375,1.55,1.725,1.9].indexOf(n)>=0)?n:null;
+}
+/* 🍽️ LES CALORIES À LA MAIN : les bornes de `saveKcalEdit` (800-6000), un seul propriétaire.
+   L'écran RAMÈNE dans la plage ce qui est tapé (et le dit par un toast) ; ce qui est RELU
+   (stockage, cloud) et sort de la plage est REFUSÉ — personne n'est là pour voir la correction. */
+function _kcalManuelleValide(v){
+  const n=(typeof v==='string')?parseFloat(v.replace(',','.')):+v;
+  return (isFinite(n)&&n>=800&&n<=6000)?Math.round(n):null;
+}
 /* ⏳ Le repos par défaut : le sélecteur ne propose que des durées sensées, mais la restauration
    acceptait `999999` — soit un chrono de onze jours. 10 s à 15 min couvre du HIIT au force pure. */
 function _reposValide(r){ const v=+r; return isFinite(v) && v>=10 && v<=900; }
@@ -875,7 +901,9 @@ function persist(){
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_foodmode',S.foodMode||'');localStorage.setItem('ft4_fasting',S.fasting||'');localStorage.setItem('ft4_gender',S.gender);
     localStorage.setItem('ft4_age',S.age);localStorage.setItem('ft4_ht',S.height);
-    localStorage.setItem('ft4_act',S.activityLevel);
+    /* B1 : pas de choix → pas de clé (écrire `null` fabriquerait une valeur relue plus tard). */
+    if(_activiteValide(S.activityLevel)!=null) localStorage.setItem('ft4_act',S.activityLevel);
+    else localStorage.removeItem('ft4_act');
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
@@ -1317,10 +1345,17 @@ function sexeAthlete(){ return S.gender==='F' ? 'F' : 'H'; }
    ⛔ Et elle rend les champs MANQUANTS, pas un booléen : l'écran doit pouvoir dire lesquels
    sans réécrire la règle une cinquième fois. */
 const PROFIL_CALORIQUE=[['bw','ton poids'],['height','ta taille'],['age','ton âge']];
+/* ⛔ B1 (24/09/2026) : le TDEE exige en plus un niveau d'activité CHOISI. Le BMR, lui, n'en a
+   pas besoin — `bmrDetail` garde donc sa propre liste (celle ci-dessus), le reste lit celle-ci. */
+function profilBmrManquants(){
+  return PROFIL_CALORIQUE.filter(c=>_nbUtil(S[c[0]])==null).map(c=>c[1]);
+}
 function _nbUtil(v){ const n=(typeof v==='string')?parseFloat(v.replace(',','.')):+v;
                      return (isFinite(n)&&n>0)?n:null; }
 function profilCaloriqueManquants(){
-  return PROFIL_CALORIQUE.filter(c=>_nbUtil(S[c[0]])==null).map(c=>c[1]);
+  const m=profilBmrManquants();
+  if(_activiteValide(S.activityLevel)==null) m.push('ton niveau d\'activité');
+  return m;
 }
 /* « ton poids, ta taille et ton âge » — la mise en phrase vit avec la liste, sinon chaque
    écran réinvente la sienne et elles finissent par ne plus nommer les mêmes champs. */
@@ -1336,7 +1371,7 @@ function _etManquants(l){
 function _nbAff(v){ return (v==null||!isFinite(v))?'—':(+v).toLocaleString('fr-FR'); }
 
 function bmrDetail(){
-  if(profilCaloriqueManquants().length) return {kcal:0,methode:null,raison:'profil incomplet'};
+  if(profilBmrManquants().length) return {kcal:0,methode:null,raison:'profil incomplet'};
   const base=10*S.bw+6.25*S.height-5*S.age;
   const mifflin=Math.round(sexeAthlete()==='H'?base+5:base-161);
   const fin=v=>S.smoker?Math.round(v*1.07):v;   // le +7 % fumeur est un effet du tabac sur le
@@ -1368,7 +1403,11 @@ function calcWorkExtra(){return{bureau:0,debout:200,actif:325,physique:450}[S.wo
 function calcSportExtra(){
   const os=S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.othersport;
   if(!os||os==='aucun')return 0;
-  return (S.activityLevel||1.55)>=1.725?0:150;
+  /* B1 : sans activité choisie, pas de TDEE — donc rien à ajouter, et surtout pas « comme si
+     c'était 1,55 ». La règle des niveaux choisis est inchangée. */
+  const a=_activiteValide(S.activityLevel);
+  if(a==null) return 0;
+  return a>=1.725?0:150;
 }
 /* 🚶 LE 4ᵉ TERME : LE SURPLUS DE PAS (30/08/2026, ft-v1070).
    ⛔⛔ CE N'EST PAS « LES PAS DU JOUR », ET LA DISTINCTION EST TOUTE LA DÉCISION. Le
@@ -1478,7 +1517,10 @@ function ecartNiveauActivite(){
     const bucket=Object.keys(cnt).find(b=>cnt[b]>=3);
     const suggere=bucket?_ACT_PAR_FREQ[bucket]:null;
     if(!suggere)return null;
-    const actuel=+S.activityLevel||1.55;
+    /* B1 : sans niveau choisi, il n'y a pas d'« actuel » à comparer — on ne propose pas de
+       « passer de Modéré à… » quelqu'un qui n'a jamais été Modéré. */
+    const actuel=_activiteValide(S.activityLevel);
+    if(actuel==null)return null;
     /* ⛔ « Très actif » (1.9) ne se redescend PAS sur un simple comptage de séances : c'est un
        profil (double séance, métier physique, sport à côté) que le nombre de séances de
        musculation ne mesure pas. On ne devine pas ce qu'on ne sait pas (R29). */

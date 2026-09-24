@@ -7,24 +7,24 @@
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
     Généré le 2026-09-24.
 
-🔖  SOURCES : coach.js 6ba1fdd9104a · constants.js 9c8ff25b631e · state.js 2dc58df29b4c
+🔖  SOURCES : coach.js aa2c5779b284 · constants.js 9c8ff25b631e · state.js 0dc3bdcc3eed
     Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
     génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
     si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
     puisqu'il a l'air généré quoi qu'il arrive. ⛔ Ne pas les recopier à la main.
 
-TAILLE TOTALE : 75 420 caractères  (~18 855 tokens)
+TAILLE TOTALE : 75 636 caractères  (~18 909 tokens)
 
 Il est coupé en TROIS morceaux, et c'est là que se joue le prix :
 
-  1. BLOC COMMUN ......... 45 382 car. (60.2 %)
+  1. BLOC COMMUN ......... 45 382 car. (60.0 %)
      Identique pour TOUT LE MONDE. Mis en cache 1 h depuis le 08/08.
      C'est lui qu'on paie une fois pour tous — s'il est relu, il coûte 10 %.
 
-  2. BLOC PERSONNEL ...... 27 272 car. (36.2 %)
+  2. BLOC PERSONNEL ...... 27 304 car. (36.1 %)
      Tes données à toi. Mis en cache 5 min.
 
-  3. L'INSTANT ........... 2 766 car. (3.7 %)
+  3. L'INSTANT ........... 2 950 car. (3.9 %)
      Change à chaque message (heure, état du jour) : JAMAIS mis en cache,
      payé plein tarif à chaque fois.
 
@@ -218,14 +218,14 @@ SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvien
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  2/3 — BLOC PERSONNEL (27272 car., cache 5 min)
+█  2/3 — BLOC PERSONNEL (27304 car., cache 5 min)
 ██████████████████████████████████████████████████████████████████████████████
 
 PROFIL ATHLÈTE:
 - Prénom: Alex (utilise-le naturellement, sans le répéter à chaque phrase)
 - Sexe: Homme | Âge: 35 ans | Taille: 178cm | Poids: 80kg
-- BMR: 1743 kcal | TDEE: 2702 kcal → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor), aucune mesure de composition corporelle — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Corps & santé) rendrait le calcul nettement plus juste — une fois, sans insister.
-- Niveau activité sportive: 1.55 | Type travail: Bureau/Sédentaire (+0 kcal NEAT)
+- BMR: 1743 kcal | TDEE: — kcal → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor), aucune mesure de composition corporelle — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Corps & santé) rendrait le calcul nettement plus juste — une fois, sans insister.
+- Niveau activité sportive: NON RENSEIGNÉ (besoins caloriques non calculés) | Type travail: Bureau/Sédentaire (+0 kcal NEAT)
 
 - Tabac: Non-fumeur
 - Objectif principal: Prise de muscle
@@ -238,7 +238,7 @@ PROFIL ATHLÈTE:
 
 
 
-- Calories cible: 3152 kcal | Protéines: 176g | Glucides: 450g | Lipides: 72g
+- Calories cible: — kcal | Protéines: —g | Glucides: —g | Lipides: —g
 
 
 
@@ -360,7 +360,7 @@ Aucune séance
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  3/3 — L'INSTANT (2766 car., JAMAIS caché)
+█  3/3 — L'INSTANT (2950 car., JAMAIS caché)
 ██████████████████████████████████████████████████████████████████████████████
 
 ═══ SITUATION DE L'INSTANT ═══
@@ -373,7 +373,7 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est jeudi 24 septembre, il est 16h59 — c'est après-midi. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). 
+- On est jeudi 24 septembre, il est 20h11 — c'est soirée. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l'endormissement — mentionne-le avec tact si pertinent.
 
 
 

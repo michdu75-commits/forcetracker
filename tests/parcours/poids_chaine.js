@@ -130,7 +130,9 @@ module.exports.ecran = async function (t, b, PORT) {
   /* ⏰ HORLOGE GELÉE ET DÉPLAÇABLE : une pesée est DATÉE au jour. `window.__T` permet de passer
      au lendemain sans recharger (le cas « 85,8 à J1 puis 85,8 à J2 »). */
   const GEL = '2026-09-20T10:00:00';
-  const DECOR = { ft4_bw: '86', ft4_age: '48', ft4_ht: '180', ft4_gender: 'H', ft4_ob2: '1',
+  /* ⚠️ `ft4_act` EXPLICITE depuis B1 (24/09/2026) : ce décor comptait sans le dire sur le 1,55
+     d'office — sans activité choisie, le TDEE n'existe plus et D1 ne pourrait plus le voir bouger. */
+  const DECOR = { ft4_bw: '86', ft4_age: '48', ft4_ht: '180', ft4_gender: 'H', ft4_ob2: '1', ft4_act: '1.55',
                   ft4_wlog: JSON.stringify([{ date: '2026-09-19', kg: 86 }]) };
   const outiller = pg => pg.evaluate(() => {
     window.__toasts = [];

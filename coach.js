@@ -935,7 +935,7 @@ function _coachQuizContext(){
     // de ne PAS la recompter, sinon il conseillerait d'ajouter des calories une 2ᵉ fois.
     const _dejaCompte=(typeof calcSportExtra==='function'&&calcSportExtra()>0)
       ?'son surcoût énergétique est DÉJÀ compté dans ses besoins caloriques (+150 kcal/j) — ne le rajoute pas une deuxième fois'
-      :'côté calories il est déjà couvert par son niveau d\'activité déclaré';
+      :(_activiteValide(S.activityLevel)==null?'ses besoins caloriques ne sont pas calculés (niveau d\'activité non renseigné)':'côté calories il est déjà couvert par son niveau d\'activité déclaré');
     out.push('- Autre sport pratiqué → '+_lbl+' (prends-le en compte pour la récupération et la fatigue ; '+_dejaCompte+')');
   }
   if(!out.length)return '';
@@ -3606,7 +3606,7 @@ SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvien
 PROFIL ATHLÈTE:
 ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter à chaque phrase)\n' : '- Prénom: inconnu — ne dis PAS « Salut [prénom] » à vide, commence directement\n'}- Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal${_bd&&_bd.methode==='katch'?` → ⚖️ CALCULÉ SUR SA MASSE MAIGRE (${_bd.lm.lm} kg, ${_bd.lm.src} du ${_bd.lm.date}), formule Katch-McArdle — un MEILLEUR point de départ que la formule habituelle (poids/taille/âge), qui donnerait ${_bd.mifflin} kcal, soit ${_bd.kcal-_bd.mifflin>0?'+':''}${_bd.kcal-_bd.mifflin} kcal/jour d'écart. ⚠️ Mais cette masse maigre est une ESTIMATION, pas une mesure : ${_bd.lm.nature==='saisie'?"elle est calculée à partir d'un % de masse grasse qu'il/elle a SAISI lui/elle-même":_bd.lm.nature==='deduite'?"elle n'était pas lisible sur le rapport, elle a été retrouvée par SOUSTRACTION (poids − masse grasse)":"une balance mesure un poids et une impédance, puis ESTIME le reste avec la formule de son fabricant"}. Appuie-toi sur le CHIFFRE et sur la TENDANCE de plusieurs mesures ; ne présente jamais une variation de quelques centaines de grammes comme un gain ou une perte de tissu, et ne qualifie pas ce chiffre de « mesuré ».`:(_bd?` → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor)${_bd.raison?', '+_bd.raison:''} — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Corps & santé) rendrait le calcul nettement plus juste — une fois, sans insister.`:'')}
-- Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
+- Niveau activité sportive: ${_activiteValide(S.activityLevel)!=null?S.activityLevel:'NON RENSEIGNÉ (besoins caloriques non calculés)'} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 ${(()=>{
   /* 🚶 LE SURPLUS DE PAS — et c'est le 2ᵉ usage demandé par Michel : *« ça montre l'activité en
      l'absence de données rentrées dans l'application — on a marché 15 000 pas parce qu'on a fait

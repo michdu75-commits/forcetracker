@@ -3064,7 +3064,7 @@ function renderSetup(){
      saisie réelle de la personne (`input`) en fait une pesée — voir `saveProfile`. */
   const bwEl=document.getElementById('bw-inp');
   if(bwEl){ bwEl.value=S.bw||''; bwEl.dataset.touche=''; bwEl.oninput=function(){this.dataset.touche='1';}; }
-  const actEl=document.getElementById('act-sel');if(actEl)actEl.value=S.activityLevel;
+  const actEl=document.getElementById('act-sel');if(actEl)actEl.value=(_activiteValide(S.activityLevel)!=null)?String(S.activityLevel):'';   // B1 : rien de choisi → « À choisir », jamais « Modéré » d'office
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
   const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
   const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
@@ -3154,10 +3154,10 @@ function saveProfile(){
   const _bwTouche=!!(bwEl&&bwEl.dataset.touche==='1');
   const actEl=document.getElementById('act-sel');
   const restEl=document.getElementById('rest-sel');
-  const act=actEl?numFR(actEl.value):S.activityLevel;
+  const act=actEl?_activiteValide(actEl.value):null;   // B1 : « À choisir » ne s'enregistre pas
   const rest=restEl?parseInt(restEl.value):S.defRest;
-  if(age){if(age>13&&age<100)S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
-  if(ht){if(ht>100&&ht<230)S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
+  if(age){if(_ageValide(age))S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
+  if(ht){if(_tailleValide(ht))S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
   /* ⚖️ LE POIDS DU PROFIL EST UNE PESÉE, PAR LA MÊME RÈGLE ET LE MÊME PROPRIÉTAIRE (24/09/2026).
      ⛔⛔ MESURÉ : cette ligne écrivait `S.bw` et RIEN d'autre — Nutrition et Milo calculaient sur
      84 kg pendant que l'Accueil et la courbe affichaient 86 (F011). Et elle avait SA règle :
@@ -3173,7 +3173,7 @@ function saveProfile(){
     if(typeof _enregistrerPesee==='function')_enregistrerPesee(bw);else S.bw=bw;   // repli : rien de tapé ne se perd (règle d'or #3)
     bwEl.dataset.touche='';
   }
-  if(act) S.activityLevel=act;
+  if(act!=null) S.activityLevel=act;
   // (poids de la barre : propriétaire unique = setBarWeight(), dans le calculateur de plaques)
   if(rest) S.defRest=rest;
   const csEl=document.getElementById('cycle-start-inp');
@@ -3356,13 +3356,16 @@ function _applyRestoreData(raw){
   try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length||(d.registre.sessionLog||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
   try{if(d.adn&&typeof d.adn==='object'){S.adn=S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};['motivation','lifestyle','preferences','experience'].forEach(k=>{if(d.adn[k]&&!(S.adn[k]||'').trim())S.adn[k]=d.adn[k];});}}catch(e){console.warn('[FT restore] adn',e);}
   try{if(d.level)S.level=d.level;}catch(e){}
-  try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}
+  /* ⛔ B2 (24/09/2026) : mesuré, `-1` donnait un TDEE de −1 749 kcal et `99` de 173 151. La valeur du
+     cloud passe par la règle de l'écran (les 5 niveaux) ; hors de ça, on garde ce qu'on a. */
+  try{if(d.activityLevel!=null&&d.activityLevel!==''){const _act=_activiteValide(d.activityLevel); if(_act!=null)S.activityLevel=_act; else console.warn('[FT restore] activityLevel refusé',d.activityLevel);}}catch(e){console.warn('[FT restore] activityLevel',e);}
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
   try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
   try{if(d.targetWeight)S.targetWeight=parseFloat(d.targetWeight)||0;}catch(e){}
   try{if(d.strengthGoals&&typeof d.strengthGoals==='object')S.strengthGoals=d.strengthGoals;}catch(e){}
-  try{if(d.manualKcal)S.manualKcal=parseFloat(d.manualKcal)||0;}catch(e){}
+  /* ⛔ B2 : `Infinity` ou `1e9` donnaient des glucides infinis. Hors 800-6000 → refusé, on garde l'état local. */
+  try{if(d.manualKcal){const _k=_kcalManuelleValide(d.manualKcal); if(_k!=null)S.manualKcal=_k;}}catch(e){}
   try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
   try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
   try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}
