@@ -203,6 +203,106 @@ module.exports.ecran = async function (t, b, PORT) {
     R.d016.tdee === null && R.d016.cal === null && R.d016.manq.indexOf('ton poids') >= 0, JSON.stringify(R.d016));
   t('B-CCCLXIII ⑳ D-017 intact : femme 50 kg, perte, sédentaire → plancher 1 200 kcal',
     R.d017.cal === 1200, JSON.stringify(R.d017));
+
+  /* ══ B-CCCLXIV. B2 ÉTENDU (nuit du 24→25/09) — chaque valeur, par CHAQUE porte d'entrée ══
+     Les refus « par construction » (la liste des 5 niveaux) sont FIGÉS un par un : sans témoin,
+     une future « simplification » en plage (1 ≤ n ≤ 2) les laisserait passer sans un rouge.
+     ⭐ On distingue les ORIGINES : relu du stockage · reçu du cloud · tapé à l'écran · appel direct.
+     « absent » et « invalide » finissent tous deux non exploitables (pas de marqueur de provenance
+     cette nuit, décision de Michel) — mais chaque origine est vérifiée séparément. */
+  console.log('\n-- B-CCCLXIV. B2 étendu : valeurs limites, par origine (stockage · cloud · écran · appel direct) --');
+  const E = await pg.evaluate(() => {
+    window._cloudSync = () => {}; window._cloudSyncDebounced = () => {}; window.toast = () => {};
+    const BASE = { ft4_bw: '85.9', ft4_age: '48', ft4_ht: '180', ft4_gender: 'H', ft4_work: 'bureau',
+                   ft4_goal: 'force', ft4_nphase: 'charge', ft4_ob2: '1', _decorAct: '1' };
+    const charger = (o) => {
+      localStorage.clear(); const D = Object.assign({}, BASE, o || {});
+      Object.keys(D).forEach(k => { if (D[k] != null) localStorage.setItem(k, D[k]); });
+      load();
+      const m = calcMacros(S.nutritionPhase);
+      return { act: S.activityLevel, tdee: calcTDEE(), G: m.carbs_g, mk: S.manualKcal, cal: m.calories };
+    };
+    const out = { direct: {}, stock: {}, cloud: {}, cloudNeuf: {}, ecran: {}, valides: {}, mkStock: {}, mkCloud: {} };
+    /* Appel direct du propriétaire — y compris des types que seul du code peut produire. */
+    const DIRECT = [['0', 0], ['2', 2], ['-Infinity', -Infinity], ['Infinity', Infinity], ['NaN', NaN],
+      ['"1e999"', '1e999'], ['""', ''], ['"abc"', 'abc'], ['1.4', 1.4], ['"1.55abc"', '1.55abc'],
+      ['"1.5 5"', '1.5 5'], ['null', null], ['undefined', undefined], ['true', true], ['[1.55]', [1.55]],
+      ['{}', {}], ['"0x1"', '0x1']];
+    DIRECT.forEach(([k, v]) => { out.direct[k] = _activiteValide(v); });
+    /* Relu du STOCKAGE (localStorage ne garde que des chaînes). */
+    ['0', '2', '-Infinity', 'Infinity', 'NaN', '1e999', '', 'abc', '1.4', '1.55abc', ' ', 'undefined']
+      .forEach(v => { out.stock[v] = charger({ ft4_act: v }); });
+    /* Reçu du CLOUD, sur un état où 1,375 a été CHOISI : le choix doit rester. */
+    const CLOUD = [['0', 0], ['2', 2], ['-Infinity', -Infinity], ['Infinity', Infinity], ['NaN', NaN],
+      ['"1e999"', '1e999'], ['""', ''], ['"abc"', 'abc'], ['1.4', 1.4], ['"1.55abc"', '1.55abc'], ['null', null]];
+    CLOUD.forEach(([k, v]) => {
+      charger({ ft4_act: '1.375' });
+      try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: v } }); } catch (e) {}
+      out.cloud[k] = { act: S.activityLevel, tdee: calcTDEE() };
+    });
+    /* … et sur un appareil NEUF (aucune activité) : rien ne devient 1,55. */
+    CLOUD.forEach(([k, v]) => {
+      charger({});
+      try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: v } }); } catch (e) {}
+      out.cloudNeuf[k] = { act: S.activityLevel, tdee: calcTDEE() };
+    });
+    /* Les 5 niveaux VALIDES, par les trois portes : acceptés à l'identique. */
+    ['1.2', '1.375', '1.55', '1.725', '1.9'].forEach(v => {
+      const st = charger({ ft4_act: v }).act;
+      charger({});
+      try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: +v } }); } catch (e) {}
+      const cl = S.activityLevel;
+      out.valides[v] = { st, cl, direct: _activiteValide(v) };
+    });
+    /* Tapé à l'ÉCRAN : une option forgée dans le sélecteur ne passe pas le propriétaire. */
+    ['99', 'Infinity', '1e999', '1.4', '1.55abc'].forEach(v => {
+      charger({});
+      const se = document.getElementById('act-sel');
+      const o = document.createElement('option'); o.value = v; o.textContent = 'forgée'; se.appendChild(o);
+      se.value = v;
+      try { saveProfile(); } catch (e) {}
+      out.ecran[v] = { act: S.activityLevel, disque: localStorage.getItem('ft4_act'), tdee: calcTDEE() };
+      o.remove();
+    });
+    /* Calories manuelles : mêmes familles, stockage et cloud. */
+    ['Infinity', '-Infinity', 'NaN', '1e999', '0', '799', '6001', '2200abc', ''].forEach(v => {
+      out.mkStock[v] = charger({ ft4_act: '1.55', ft4_manualkcal: v });
+    });
+    [['Infinity', Infinity], ['NaN', NaN], ['"1e999"', '1e999'], ['799', 799], ['6001', 6001], ['"2200abc"', '2200abc']].forEach(([k, v]) => {
+      charger({ ft4_act: '1.55' });
+      try { _applyRestoreData({ profile: { name: 'Sonde', manualKcal: v } }); } catch (e) {}
+      out.mkCloud[k] = { mk: S.manualKcal, cal: calcMacros(S.nutritionPhase).calories };
+    });
+    out.bornesMk = { m800: _kcalManuelleValide(800), m6000: _kcalManuelleValide(6000), s2200: _kcalManuelleValide('2200') };
+    return out;
+  });
+  const cles = o => Object.keys(o);
+  t('B-CCCLXIV ① appel direct : 0, 2, ±Infinity, NaN, "1e999", "", "abc", 1.4, "1.55abc", "1.5 5", null, undefined, true, [1.55], {}, "0x1" → tous refusés',
+    cles(E.direct).every(k => E.direct[k] === null),
+    cles(E.direct).filter(k => E.direct[k] !== null).map(k => k + '→' + E.direct[k]).join(' ') || 'ok');
+  t('B-CCCLXIV ② relu du stockage : les mêmes (+ espace, "undefined") → activité null, AUCUN TDEE, aucun glucide',
+    cles(E.stock).every(k => E.stock[k].act === null && E.stock[k].tdee === null && E.stock[k].G === null),
+    cles(E.stock).filter(k => E.stock[k].act !== null || E.stock[k].tdee !== null).map(k => JSON.stringify(k) + '→' + E.stock[k].act + '/' + E.stock[k].tdee).join(' ') || 'ok');
+  t('B-CCCLXIV ③ reçu du cloud sur un choix 1,375 : tout est refusé, le choix reste, TDEE 2405 inchangé',
+    cles(E.cloud).every(k => E.cloud[k].act === 1.375 && E.cloud[k].tdee === 2405),
+    cles(E.cloud).filter(k => E.cloud[k].act !== 1.375).map(k => k + '→' + E.cloud[k].act).join(' ') || 'ok');
+  t('B-CCCLXIV ④ reçu du cloud sur un appareil NEUF : rien ne devient une activité (ni 1,55, ni autre)',
+    cles(E.cloudNeuf).every(k => E.cloudNeuf[k].act === null && E.cloudNeuf[k].tdee === null),
+    cles(E.cloudNeuf).filter(k => E.cloudNeuf[k].act !== null).map(k => k + '→' + E.cloudNeuf[k].act).join(' ') || 'ok');
+  t('B-CCCLXIV ⑤ les 5 niveaux valides passent À L\'IDENTIQUE par le stockage, le cloud et l\'appel direct',
+    cles(E.valides).length === 5 && cles(E.valides).every(v => E.valides[v].st === +v && E.valides[v].cl === +v && E.valides[v].direct === +v),
+    JSON.stringify(E.valides));
+  t('B-CCCLXIV ⑥ une option FORGÉE dans le sélecteur (99, Infinity, 1e999, 1.4, "1.55abc") n\'est pas enregistrée',
+    cles(E.ecran).every(v => E.ecran[v].act === null && E.ecran[v].disque === null && E.ecran[v].tdee === null),
+    JSON.stringify(E.ecran));
+  t('B-CCCLXIV ⑦ calories relues : ±Infinity, NaN, 1e999, 0, 799, 6001, "2200abc", vide → refusées (calcul auto 3011)',
+    cles(E.mkStock).every(v => E.mkStock[v].mk === 0 && E.mkStock[v].cal === 3011),
+    cles(E.mkStock).filter(v => E.mkStock[v].mk !== 0).map(v => v + '→' + E.mkStock[v].mk).join(' ') || 'ok');
+  t('B-CCCLXIV ⑧ calories reçues du cloud : Infinity, NaN, "1e999", 799, 6001, "2200abc" → refusées',
+    cles(E.mkCloud).every(k => E.mkCloud[k].mk === 0 && E.mkCloud[k].cal === 3011),
+    cles(E.mkCloud).filter(k => E.mkCloud[k].mk !== 0).map(k => k + '→' + E.mkCloud[k].mk).join(' ') || 'ok');
+  t('B-CCCLXIV ⑨ bornes des calories : 800 et 6000 inclus, "2200" accepté',
+    E.bornesMk.m800 === 800 && E.bornesMk.m6000 === 6000 && E.bornesMk.s2200 === 2200, JSON.stringify(E.bornesMk));
   t('B-CCCLXIII ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };

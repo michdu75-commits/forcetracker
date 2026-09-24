@@ -863,15 +863,25 @@ function _tailleValide(h){ const v=+h; return isFinite(v) && v>100 && v<230; }
    à personne, l'accepter serait valider une valeur que l'interface ne sait pas produire.
    ⛔ Les multiplicateurs ne bougent pas d'un chiffre (non calibrés, arbitrage à venir) — un
    témoin vérifie que cette liste et les options de l'écran disent la même chose (R2). */
+/* ⛔ LECTURE STRICTE (nuit du 24→25/09, trouvé par les témoins B2 étendus) : `parseFloat` lit un
+   PRÉFIXE — « 1.55abc » devenait en silence 1,55, et `+[1.55]` aussi. Exactement « une valeur
+   invalide transformée silencieusement en activité personnelle ». Ici : un nombre, ou une chaîne
+   qui n'est QU'UN nombre décimal (virgule acceptée, espaces autour tolérés) ; tout le reste → NaN. */
+function _nombreStrict(v){
+  if(typeof v==='number') return v;
+  if(typeof v!=='string') return NaN;
+  const t=v.trim().replace(',','.');
+  return /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(t)?Number(t):NaN;
+}
 function _activiteValide(v){
-  const n=(typeof v==='string')?parseFloat(v.replace(',','.')):+v;
-  return (v!==null&&v!==''&&isFinite(n)&&[1.2,1.375,1.55,1.725,1.9].indexOf(n)>=0)?n:null;
+  const n=_nombreStrict(v);
+  return (isFinite(n)&&[1.2,1.375,1.55,1.725,1.9].indexOf(n)>=0)?n:null;
 }
 /* 🍽️ LES CALORIES À LA MAIN : les bornes de `saveKcalEdit` (800-6000), un seul propriétaire.
    L'écran RAMÈNE dans la plage ce qui est tapé (et le dit par un toast) ; ce qui est RELU
    (stockage, cloud) et sort de la plage est REFUSÉ — personne n'est là pour voir la correction. */
 function _kcalManuelleValide(v){
-  const n=(typeof v==='string')?parseFloat(v.replace(',','.')):+v;
+  const n=_nombreStrict(v);
   return (isFinite(n)&&n>=800&&n<=6000)?Math.round(n):null;
 }
 /* ⏳ Le repos par défaut : le sélecteur ne propose que des durées sensées, mais la restauration
