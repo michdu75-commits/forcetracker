@@ -113,6 +113,17 @@ module.exports.source = function (t, ROOT, fs, path) {
      Plusieurs pesées horodatées le même jour sont une DÉCISION rendue à Michel. */
   t('B-CCCLV ⑫ le modèle reste « une pesée par jour » (clé = date) — pas de migration',
     /findIndex\(\s*w\s*=>\s*w\.date\s*===\s*d\s*\)/.test(EP) && /_enregistrerPesee\(/.test(_corps(TR, 'saveWeightEntry')), '');
+
+  console.log('\n═══ B-CCCLVII. L\'UX « Dernière mesure » — figée dans la source ═══');
+  const RW = _corps(TR, 'renderWeightTab');
+  t('B-CCCLVII ① le champ de nouvelle mesure est rendu VIDE (aucun préremplissage)',
+    RW !== '' && /id="wentry-inp"\s+value=""/.test(RW) && !/prefill/.test(RW) && !/placeholder="\$\{S\.bw/.test(RW),
+    RW === '' ? 'introuvable' : '');
+  t('B-CCCLVII ② la « Dernière mesure » est lue chez le propriétaire unique `poidsDernier` (R2)',
+    /poidsDernier\(/.test(RW), '');
+  const WE = _corps(TR, '_wentryEcart');
+  t('B-CCCLVII ③ l\'écart est une PRÉSENTATION : il n\'écrit ni l\'historique, ni le poids, ni le disque',
+    WE !== '' && !/S\.weightLog|persist\(|S\.bw\s*=/.test(WE), WE === '' ? 'introuvable' : '');
 };
 
 module.exports.ecran = async function (t, b, PORT) {
@@ -460,5 +471,79 @@ module.exports.ecran = async function (t, b, PORT) {
     t('B-CCCLVI G3 ⭐ un poids tapé dans le Profil est un point de la courbe, comme les autres (F011)',
       (sur(G, 'g3') || []).length === 5 && (sur(G, 'g3') || []).indexOf('2026-09-21') >= 0, JSON.stringify(sur(G, 'g3')));
     t('B-CCCLVI G∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
+    await cx.close(); }
+
+  /* ══ B-CCCLVII. L'UX « DERNIÈRE MESURE » — seulement après l'intégrité (24/09/2026) ══════
+     Direction de Michel : champ de nouvelle mesure VIDE, dernière mesure affichée à côté,
+     écart en présentation. ⛔ Ni pré-remplissage, ni deuxième historique, ni nouvelle courbe,
+     ni dédoublonnage de deux mesures identiques. */
+  console.log('\n-- B-CCCLVII. L\'UX « Dernière mesure » (conduit) --');
+  { const { cx, pg, errs } = await ouvrir(Object.assign({}, DECOR, { ft4_wlog: JSON.stringify([
+      { date: '2026-09-18', kg: 86.4 }, { date: '2026-09-19', kg: 86 }]) }));
+    const U = await pg.evaluate(async () => {
+      const o = {};
+      const lire = () => ({ champ: (document.getElementById('wentry-inp') || {}).value,
+        ph: (document.getElementById('wentry-inp') || {}).placeholder,
+        dern: ((document.getElementById('wentry-derniere') || {}).textContent || '').trim(),
+        ecart: ((document.getElementById('wentry-ecart') || {}).textContent || '').trim() });
+      try {
+        await __carte(); o.u1 = lire();
+        /* ✓ sur le champ vide : rien n'est créé */
+        const n0 = S.weightLog.length; window.__toasts = []; saveWeightEntry();
+        o.u2 = { n: S.weightLog.length === n0, toast: window.__toasts.join(' | '), jour: !!__jour(today()) };
+        /* écart pendant la saisie */
+        __taper('wentry-inp', '86,3'); o.plus = lire().ecart;
+        __taper('wentry-inp', '86'); o.zero = lire().ecart;
+        __taper('wentry-inp', '85,7'); o.moins = lire().ecart;
+        __taper('wentry-inp', '8'); o.partiel = lire().ecart;
+        /* après enregistrement */
+        __taper('wentry-inp', '85,7'); saveWeightEntry(); o.u4 = lire();
+        /* même valeur le lendemain : un NOUVEL événement, écart 0,0 */
+        window.__T += 864e5; await __carte(); __taper('wentry-inp', '85,7'); o.u5ecart = lire().ecart;
+        saveWeightEntry(); o.u5 = lire(); o.u5n = S.weightLog.length;
+        /* l'écart n'est écrit nulle part : chaque ligne ne porte que ses champs de mesure */
+        o.u6 = S.weightLog.every(w => Object.keys(w).every(k => ['date', 'kg', 'bf', 'bfSrc'].indexOf(k) >= 0));
+        /* une ligne sans poids utilisable n'est pas « la dernière mesure » */
+        /* ⚠️ À une date PLUS RÉCENTE que la vraie dernière pesée : au même jour, la pesée valide
+           masquerait le défaut et le témoin resterait vert sur un préremplissage naïf. */
+        S.weightLog.unshift({ date: '2026-09-22', kg: 0 }); S.weightLog.sort((a, b) => b.date.localeCompare(a.date));
+        window.__T += 864e5; await __carte(); o.u7 = lire().dern;
+      } catch (e) { o.err = String(e && e.message || e); }
+      return o;
+    });
+    const u = k => sur(U, k) || {};
+    t('B-CCCLVII U1 ⭐⭐ le champ de nouvelle mesure est VIDE, même avec des pesées enregistrées',
+      u('u1').champ === '' && !/\d/.test(u('u1').ph || ''), JSON.stringify(u('u1')) + (sur(U, 'err') ? ' ' + U.err : ''));
+    t('B-CCCLVII U2 ⭐ la dernière mesure est affichée à côté, avec sa date',
+      u('u1').dern === 'Dernière mesure : 86,0 kg — 19/09/2026', u('u1').dern);
+    t('B-CCCLVII U3 et l\'écart avec la précédente, en présentation',
+      u('u1').ecart === 'Écart : −0,4 kg', u('u1').ecart);
+    t('B-CCCLVII U4 ⭐ ✓ sur le champ vide ne FABRIQUE aucune pesée (il en fabriquait une depuis le préremplissage)',
+      u('u2').n === true && u('u2').jour === false && /info:Entre ton poids/.test(u('u2').toast || ''), JSON.stringify(u('u2')));
+    t('B-CCCLVII U5 l\'écart suit la saisie : +0,3 · 0,0 · −0,3',
+      sur(U, 'plus') === 'Écart : +0,3 kg' && sur(U, 'zero') === 'Écart : 0,0 kg' && sur(U, 'moins') === 'Écart : −0,3 kg',
+      [sur(U, 'plus'), sur(U, 'zero'), sur(U, 'moins')].join(' / '));
+    t('B-CCCLVII U6 une saisie partielle (« 8 ») n\'affiche pas un écart absurde',
+      sur(U, 'partiel') === 'Écart : −0,4 kg', sur(U, 'partiel'));
+    t('B-CCCLVII U7 ⭐ après enregistrement : champ vidé, dernière mesure et écart à jour',
+      u('u4').champ === '' && u('u4').dern === 'Dernière mesure : 85,7 kg — 20/09/2026' && u('u4').ecart === 'Écart : −0,3 kg',
+      JSON.stringify(u('u4')));
+    t('B-CCCLVII U8 ⭐⭐ la même valeur le lendemain est une NOUVELLE pesée — écart 0,0, pas « rien à enregistrer »',
+      sur(U, 'u5ecart') === 'Écart : 0,0 kg' && sur(U, 'u5n') === 4 && u('u5').dern === 'Dernière mesure : 85,7 kg — 21/09/2026'
+        && u('u5').ecart === 'Écart : 0,0 kg', sur(U, 'u5ecart') + ' n=' + sur(U, 'u5n') + ' ' + JSON.stringify(u('u5')));
+    t('B-CCCLVII U9 l\'écart n\'est écrit nulle part — aucune nouvelle donnée canonique',
+      sur(U, 'u6') === true, '');
+    t('B-CCCLVII U10 une ligne à 0 kg n\'est pas « la dernière mesure »',
+      sur(U, 'u7') === 'Dernière mesure : 85,7 kg — 21/09/2026', sur(U, 'u7'));
+    t('B-CCCLVII U∅ aucune erreur de page', errs.length === 0 && !sur(U, 'err'), errs.concat(sur(U, 'err') || []).slice(0, 2).join(' | '));
+    await cx.close(); }
+  { const { cx, pg, errs } = await ouvrir(Object.assign({}, DECOR, { ft4_wlog: '[]' }));
+    const V = await pg.evaluate(async () => { await __carte();
+      return { champ: document.getElementById('wentry-inp').value,
+               dern: (document.getElementById('wentry-derniere') || {}).textContent,
+               ecart: (document.getElementById('wentry-ecart') || {}).textContent }; });
+    t('B-CCCLVII U11 aucun historique : le champ est vide et l\'écran le DIT (pas de chiffre inventé)',
+      sur(V, 'champ') === '' && sur(V, 'dern') === 'Pas encore de pesée' && sur(V, 'ecart') === '', JSON.stringify(V));
+    t('B-CCCLVII U∅² aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
     await cx.close(); }
 };

@@ -616,8 +616,26 @@ function _bwSurDernierePesee(){
   if(p)_bwPoser(p.kg);
   return p?p.kg:null;
 }
+/* L'écart affiché — « Écart : +0,3 kg », « Écart : 0,0 kg », « Écart : −0,3 kg ». Une PRÉSENTATION,
+   jamais une donnée : rien de ce qui est calculé ici n'est écrit dans l'historique. */
+function _kgFR1(k){ return (Math.round(k*10)/10).toFixed(1).replace('.',','); }
+function _ecartPoidsTxt(d){
+  const r=Math.round(d*10)/10;
+  return 'Écart : '+(r>0?'+':(r<0?'−':''))+_kgFR1(Math.abs(r))+' kg';
+}
+/* Pendant la saisie : l'écart avec la dernière mesure. Tant que ce qui est tapé n'est pas un poids
+   possible, on garde l'écart de la dernière pesée enregistrée (celui du rendu). */
+function _wentryEcart(){
+  const el=document.getElementById('wentry-ecart'), inp=document.getElementById('wentry-inp');
+  if(!el||!inp) return;
+  const v=numFR(inp.value), pd=(typeof poidsDernier==='function')?poidsDernier():null;
+  el.textContent=(_poidsValide(v)&&pd)?_ecartPoidsTxt(v-pd.kg):(el.dataset.apres||'');
+}
 function saveWeightEntry(){
   const inp=document.getElementById('wentry-inp');
+  /* ⛔ Le champ est vide par construction : un ✓ sans rien taper ne crée RIEN (il fabriquait une
+     pesée depuis le préremplissage) — et on le dit, sans parler d'une valeur « invalide ». */
+  if(!inp||!String(inp.value).trim()){toast('Entre ton poids du jour','info');return;}
   const kg=numFR(inp?inp.value:0);
   if(!_poidsValide(kg)){toast('Poids invalide (20–300 kg)','error');return;}
   _enregistrerPesee(kg);
@@ -635,18 +653,28 @@ function renderWeightTab(){
   const chartEl=document.getElementById('weight-chart-box');
   const corrEl=document.getElementById('weight-correlations');
   if(!entryEl)return;
-  const d=today();
-  const todayW=S.weightLog&&S.weightLog.find(w=>w.date===d);
-  const lastW=S.weightLog&&S.weightLog.length?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
-  const prefill=todayW?todayW.kg:(lastW?lastW.kg:(S.bw||''));
+  /* ⚖️ LE CHAMP DE NOUVELLE MESURE EST VIDE — décision de Michel (24/09/2026), après un retour de
+     testeur. ⛔⛔ MESURÉ AVANT : le champ était prérempli (pesée du jour, sinon la dernière, sinon
+     `S.bw`) — donc un ✓ machinal, trois jours après la dernière pesée, **fabriquait une pesée datée
+     d'aujourd'hui avec le poids d'il y a trois jours**. C'est mot pour mot le piège que D-014 a
+     fermé pour la masse grasse. 👉 La dernière mesure est AFFICHÉE à côté, jamais proposée.
+     ⭐ Lue chez le propriétaire unique `poidsDernier()` (R2) : elle ignore une ligne à 0 kg ou à
+     date impossible — le préremplissage, lui, reprenait n'importe quelle première ligne.
+     ⛔ L'écart est une PRÉSENTATION : il se recalcule à chaque rendu, il ne s'enregistre nulle part. */
+  const pd=(typeof poidsDernier==='function')?poidsDernier():null;
+  const pp=pd?poidsDernier(pd.date):null;
+  const _dernTxt=pd?('Dernière mesure : '+_kgFR1(pd.kg)+' kg — '+new Date(pd.date+'T12:00:00').toLocaleDateString('fr-FR'))
+                   :'Pas encore de pesée';
+  const _ecartApres=(pd&&pp)?_ecartPoidsTxt(pd.kg-pp.kg):'';
   entryEl.innerHTML=`
   <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">
     <div>
       <div style="font-size:14px;font-weight:800;color:var(--t1);">Pesée du jour</div>
-      <div style="font-size:13px;color:var(--t3);margin-top:2px;">${todayW?'✓ Enregistré : '+todayW.kg+' kg':'Pas encore saisie aujourd\'hui'}</div>
+      <div id="wentry-derniere" style="font-size:13px;color:var(--t3);margin-top:2px;">${_dernTxt}</div>
+      <div id="wentry-ecart" data-apres="${_ecartApres}" style="font-size:12px;color:var(--t3);margin-top:1px;min-height:15px;">${_ecartApres}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-      <input type="text" id="wentry-inp" value="${prefill}" placeholder="${S.bw||80}" step="0.1" min="20" max="300" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveWeightEntry();}" style="width:76px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">
+      <input type="text" id="wentry-inp" value="" placeholder="kg" step="0.1" min="20" max="300" inputmode="decimal" enterkeyhint="done" oninput="_wentryEcart()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveWeightEntry();}" style="width:76px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">
       <button class="btn-xs btn-red" onclick="saveWeightEntry()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>
     </div>
   </div>`;

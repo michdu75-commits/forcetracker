@@ -2103,6 +2103,8 @@ function renderHome(){try{
      était un défaut mesuré (la ligne la plus récente peut ne porter qu'un % : l'édition écrivait
      « undefined » dans le poids courant). Le lecteur ~908 avait déjà disparu (ft-v1230 : il est
      devenu `_kgUtil` dans `saveBodyFat`, contrat « premier kilo utilisable, sinon `S.bw` »).
+     ⭐ ET LE PRÉ-REMPLISSAGE (`lastW`, ~600) A DISPARU le même jour : le champ de pesée est VIDE
+     (décision de Michel), et la « Dernière mesure » affichée à côté lit `poidsDernier()`.
      ⛔ RESTENT OUVERTS, EXPRÈS : cette tuile (`latestW`), l'objectif (`cur`, `renderWeightTarget`)
      et `_kgUtil`. Leur contrat diffère (entrée / kilo / repli sur `S.bw`) ; les migrer changerait
      ce qu'ils affichent sur des lignes anciennes (un kilo à 0, une date impossible) — une
