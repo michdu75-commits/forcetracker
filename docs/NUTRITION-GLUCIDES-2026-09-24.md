@@ -225,7 +225,11 @@ vérifie qu'il refuse sans lui.
   **plancher D-017** (1 200 / 1 500) qui fixe les poids minimums (70 kg F, 85-90 kg H).
 - ⭐ **Tous ces chiffres ont été recalculés indépendamment** (réimplémentation en Node pur, sans
   lire les résultats) : **356 vérifications, 0 écart** sur les scénarios et la matrice ; la grille
-  B3 est retrouvée à l'identique.
+  B3 est retrouvée à l'identique. Raccourci du banc contrôlé contre le vrai chemin `localStorage → load()` :
+  **638/638** points identiques (dont 74 points B3 et 570 points plancher, drapeau du plancher compris).
+- **Passe complète finale** sur `e51853e6` : **4 956 ✅ / 0 ❌**, 4 conditions vertes (25 min 33 s) —
+  +27 par rapport à la référence 4 929 = exactement les nouveaux témoins (9 + 8 + 4 + 6).
+  Contrôle négatif : **27/27** (25 mutations fonctionnelles rouges, 2 de commentaire vertes).
 
 **Autres constats, NON corrigés (hors périmètre)** :
 - `dashboard.js` lit `m.kcal||m.cal` / `m.prot||m.p` alors que `calcMacros` rend `calories` /
