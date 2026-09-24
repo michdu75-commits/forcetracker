@@ -135,13 +135,22 @@ const SC = [
         const c = { sexe: sx, poids: p, taille: h, age: a, act: ac, but: g, phase: ph, metier: 'bureau' };
         pts.push(Object.assign({ c }, mesureVite(c)));
       })))))));
-    /* Contrôle de fidélité : 50 points repris par le chemin complet. */
+    /* Contrôle de fidélité : des points repris par le chemin complet `localStorage → load()`.
+       ⚠️ Resserré après la contre-vérification de nuit : le 1ᵉʳ échantillon (50 points réguliers) ne
+       contenait AUCUN point B3 ni AUCUN point où le plancher agit — il ne validait pas le raccourci
+       là où le banc conclut. On prend donc 30 points réguliers + 40 points B3 + TOUS les points
+       plancher, et on compare aussi le drapeau du plancher. */
+    const echant = [];
+    for (let i = 0; i < 30; i++) echant.push(pts[Math.floor(i * pts.length / 30)]);
+    const pB3 = pts.filter(x => x.ecart > 2);
+    for (let i = 0; i < 40 && pB3.length; i++) echant.push(pB3[Math.floor(i * pB3.length / 40)]);
+    pts.filter(x => x.plancher).forEach(x => echant.push(x));
     let fideles = 0;
-    for (let i = 0; i < 50; i++) {
-      const q = pts[Math.floor(i * pts.length / 50)];
+    echant.forEach(q => {
       const r = mesurer(Object.assign({ id: 'F' }, q.c, { sport: 'aucun', fumeur: false }));
-      if (r.cible === q.cible && r.P === q.P && r.L === q.L && r.G === q.G) fideles++;
-    }
+      if (r.cible === q.cible && r.P === q.P && r.L === q.L && r.G === q.G && (!!r.plancher) === q.plancher) fideles++;
+    });
+    const nEchant = echant.length, nEchantB3 = echant.filter(x => x.ecart > 2).length, nEchantPl = echant.filter(x => x.plancher).length;
     const b3 = pts.filter(x => x.ecart > 2);          // > 2 kcal : au-delà de l'arrondi
     const par = (cle, f) => { const o = {}; pts.forEach(x => { const k = f(x); o[k] = o[k] || [0, 0]; o[k][0]++; if (x.ecart > 2) o[k][1]++; }); return o; };
     const bandes = x => { const p = x.c.poids; return p < 70 ? '45-65' : p < 90 ? '70-85' : p < 110 ? '90-105' : p < 130 ? '110-125' : '130-160'; };
@@ -167,7 +176,8 @@ const SC = [
     });
     return { scen, mat, b3: {
       grille: Object.assign({}, GRILLE, { poids: '45 → 160 kg, pas 5 (' + GRILLE.poids.length + ' valeurs)' }),
-      total: pts.length, touches: b3.length, fideles,
+      total: pts.length, touches: b3.length, fideles, nEchant, nEchantB3, nEchantPl,
+      presqueB3: pts.filter(x => x.G === 0 && x.ecart > 0 && x.ecart <= 2).length,
       parBut: par('but', x => x.c.but), parSexe: par('sexe', x => x.c.sexe), parPoids: par('poids', bandes),
       parAct: par('act', x => x.c.act), parPhase: par('phase', x => x.c.phase),
       plancher: { total: pts.filter(x => x.plancher).length, dontB3: b3.filter(x => x.plancher).length },
@@ -197,13 +207,15 @@ const SC = [
   const B = R.b3;
   console.log('\n════ 3. B3 EXPLORATOIRE — macros > cible (écart > 2 kcal, au-delà de l\'arrondi) ════');
   console.log('  grille : ' + JSON.stringify(B.grille));
-  console.log(`  fidélité : ${B.fideles}/50 points identiques au chemin complet localStorage → load()`);
+  console.log(`  fidélité : ${B.fideles}/${B.nEchant} points identiques au chemin complet localStorage → load() (dont ${B.nEchantB3} points B3 et ${B.nEchantPl} points plancher ; plancher comparé aussi)`);
+  console.log(`  définition : B3 = écart > 2 kcal ⇔ 4P + 9L ≥ cible + 3 (au-delà de l'arrondi, qui reste dans −1..+2 hors cycle). ${B.presqueB3} points ont G = 0 avec 4P + 9L = cible + 1 ou + 2 : exclus par ce seuil.`);
   console.log(`  cible AUTO : ${B.touches} / ${B.total} points (${(100 * B.touches / B.total).toFixed(1)} % DE LA GRILLE — pas une fréquence réelle)`);
   const pr = o => Object.keys(o).map(k => `${k} ${o[k][1]}/${o[k][0]}`).join(' · ');
   console.log('  par objectif : ' + pr(B.parBut));
   console.log('  par sexe : ' + pr(B.parSexe));
   console.log('  par poids : ' + pr(B.parPoids));
   console.log('  par activité : ' + pr(B.parAct));
+  console.log('  ⚠️ « 0 à activité ≥ 1,725 » vaut DANS CETTE GRILLE seulement : hors grille (très petite taille, âge très élevé), la contre-vérification en a trouvé.');
   console.log('  par phase : ' + pr(B.parPhase));
   console.log(`  plancher D-017 actif : ${B.plancher.total} points, dont ${B.plancher.dontB3} avec B3`);
   console.log('  écart (kcal) : ' + JSON.stringify(B.ecart));

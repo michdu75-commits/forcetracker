@@ -140,34 +140,58 @@ défaut silencieux (`bureau`), non tranché ; ④ la **définition** du multipli
 **Témoins ajoutés** (`tests/parcours/activite_provenance.js`, banc `tools/banc_activite_provenance.js`) :
 B-CCCLXIV (B2 par **origine** : appel direct · stockage · cloud · écran, sur `0`, `2`, `±Infinity`,
 `NaN`, `"1e999"`, vide, `abc`, `1.4`, `"1.55abc"`, tableaux…) · B-CCCLXV (**remises à zéro**) ·
-B-CCCLXVI (**saisie des calories à la main**, conduite). Sur le code d'avant B1 : **33 rouges / 44**,
-aucun plantage. Contrôle négatif `tools/mut_activite_provenance.py` : M4 = M20 · M21 · M22
-(Infinity réautorisé par chaque porte), M23 · M24 (lecture tolérante), M25 (régression ci-dessous).
+B-CCCLXVI (**saisie des calories à la main**, conduite) · B-CCCLXVII (**l'onglet Nutrition sans
+activité choisie**, `console.error` écouté). Mesuré le soir sur le jeu d'alors (B-CCCLXII → LXV) :
+**33 rouges / 44** sur le code d'avant B1, aucun plantage. Contrôle négatif
+`tools/mut_activite_provenance.py` : le « M4 » du brief = **M20** (le propriétaire de l'activité
+accepte Infinity) · **M21** (la restauration contourne la garde) · **M22** (les calories acceptent
+Infinity) — ⚠️ ce n'est pas « chaque porte » : stockage et écran passent par M20 ; M23 · M24
+(lecture tolérante), M25 · M26 · M27 (les trois défauts ci-dessous). Ne pas confondre avec **M04**
+du même fichier (le Profil affiche Modéré d'office).
 
-**Deux défauts de ma propre correction B2, trouvés et corrigés (périmètre B2)** :
+**Quatre défauts trouvés cette nuit dans le périmètre B1/B2 — tous corrigés, tous non publiés** :
 - **lecture tolérante** : `parseFloat` lisait un préfixe, donc `"1.55abc"` devenait 1,55 (stockage,
   cloud, option forgée), `[1.55]` aussi, `"2200abc"` → 2200 kcal. Remplacé par `_nombreStrict`.
 - **⛔ régression de `20eac697`** : un commentaire de fin de ligne avait avalé
   `persist();closeKcalEdit();renderNutrition();` dans `saveKcalEdit`. Régler ses calories affichait
   « Objectif réglé ✅ » **sans rien écrire sur le disque**. Aucun témoin n'appelait `saveKcalEdit`
   (B-CCCLXVI le fait désormais, 4 rouges avant correction). **Non publiée** : aucun utilisateur touché.
+- **plantage silencieux de l'onglet** (trouvé par la contre-vérification, pas par un témoin) :
+  `'TDEE '+tdee.toLocaleString()` avec `tdee = null` levait une exception **rattrapée en silence**
+  (`console.error`, invisible pour un écouteur `pageerror`) → macros, anneaux, cycle, barre
+  d'hydratation, plan de repas jamais dessinés. **Latent depuis ft-v1232** (profils incomplets),
+  **étendu par B1** à tout compte sans activité choisie ; avec une cible manuelle, P/L/G calculés
+  restaient « — ». Correctif : `'TDEE '+_nbAff(tdee)`.
+- **le plantage cachait un rendu de zéros** : une fois corrigé, un profil sans cible calculable
+  voyait un plan de repas « 0 kcal · P: 0g » et des barres « 0 % ». Contraire à **D-016** →
+  sans répartition calculée, l'onglet garde ses valeurs par défaut (texte d'attente d'`index.html`,
+  légendes « — »). Avec une cible manuelle, le plan s'affiche normalement.
 
-**Remises à zéro (B1-06)** : il n'existe **aucune remise à zéro globale en production**. Chemins
-réels testés : effacement du site + rechargement · `resetOnboardingTest` (clone seulement ; refuse
-en production) · restauration cloud juste après · personas de démo (`_vcApplyPersona` pose la
-chaîne `'modéré'` en mémoire — TDEE **NaN avant B1**, `null` depuis — puis `load()` restaure).
+**Remises à zéro (B1-06)** : il n'existe **aucune remise à zéro globale en production**. Testés :
+effacement du site + rechargement · restauration cloud juste après · personas de démo
+(`_vcApplyPersona` pose la chaîne `'modéré'` en mémoire — TDEE **NaN avant B1**, `null` depuis —
+puis `load()` restaure) · `resetOnboardingTest`, qui **n'est plus un chemin réel** : le clone a été
+retiré (ft-v976), rien ne pose `__FT_CLONE__` ; le témoin force le drapeau pour l'éprouver, et
+vérifie qu'il refuse sans lui.
 
 **D-021 — faits mesurés, rien de tranché** :
-- le serveur (`Code.js`, `_pn_`) **garde** l'ancienne valeur quand le client envoie `null` : un
-  compte synchronisé avant B1 garde `1.55` dans le cloud **pour toujours**, et toute restauration
-  le ramène ; un compte créé après B1 stocke `0`, que la restauration refuse ;
+- le serveur (`Code.js`, `_pn_`) **garde** l'ancienne valeur quand le client envoie `null` ou `0` :
+  un compte synchronisé avant B1 garde `1.55` dans le cloud **tant que la personne ne choisit pas
+  un autre niveau** (un vrai choix l'écrase) — **aucune synchronisation ne peut le remettre à « non
+  renseigné »** ; toute restauration le ramène ; un compte créé après B1 stocke `0`, que la
+  restauration refuse. ⚠️ Seule exception serveur : `handleAdminRestore_` (admin) écrit le profil
+  **tel quel**, sans `_pn_` ;
 - l'interface **ne peut pas** remettre un `1.55` stocké à « non renseigné » (« À choisir » n'écrit rien) ;
 - le miroir Supabase, lui, remplace par `null` → **les deux clouds divergent** pour ces comptes ;
-- aucune donnée ne distingue un 1,55 choisi d'un 1,55 par défaut (seul indice partiel :
-  `registre.ctxAct`, jamais produit pour quelqu'un à 3-4 séances/semaine) ;
+- aucune donnée ne distingue un 1,55 choisi d'un 1,55 par défaut. Indices **partiels** seulement :
+  `registre.ctxAct` (jamais produit pour quelqu'un **déjà** à 1,55) et `coachQuiz.answers.freq`
+  (la fréquence déclarée à l'inscription, qui peut corroborer ou contredire un 1,55) ;
+- ⭐ **comptage possible hors dépôt** : la feuille « Utilisateurs » (colonne 8 « activite »,
+  réécrite à chaque sauvegarde) donne la valeur par compte — sans la provenance ;
 - ⚠️ **tant que B1 n'est pas publié**, la production continue d'écrire `1.55` pour tout le monde :
-  la population concernée **grossit jusqu'à la publication**. Le dépôt ne contient aucune donnée
-  utilisateur : **aucun comptage possible** d'ici.
+  la population concernée **grossit jusqu'à la publication** ; et **après** la publication, un
+  onglet encore ouvert sur l'ancien code peut réécrire `1.55` à sa prochaine sauvegarde (inférence
+  de lecture, non exécutée). Le dépôt ne contient aucune donnée utilisateur : aucun comptage d'ici.
 
 **Scénarios historiques** :
 - **~659 g** : vient du **cahier d'audit de Michel du 22/09** (TDEE 3 522, cible 3 972,
@@ -185,20 +209,40 @@ chaîne `'modéré'` en mémoire — TDEE **NaN avant B1**, `null` depuis — pu
 - **Matrice activité × métier** (H 35 a · 180 · 80 kg) : BMR 1 755 ; le métier ajoute
   **0 / +200 / +325 / +450** à chaque niveau, sans interaction ; TDEE de **2 106 à 3 785**
   (×1,80). Aucune conclusion de « double comptage » : pas de définition produit.
-- **B3 (macros > cible)**, grille de **34 560 profils** (H/F · 45→160 kg pas 5 · 160/175/190 cm ·
+- **B3 (macros > cible)** — définition du banc : écart > 2 kcal ⇔ `4P + 9L ≥ cible + 3` (l'arrondi
+  seul reste dans −1..+2 hors cycle) ; 9 points à +1/+2 avec G = 0 sont exclus (1 210 au sens
+  littéral). Grille de **34 560 profils** (H/F · 45→160 kg pas 5 · 160/175/190 cm ·
   20/35/50/65 a · 5 activités · 6 objectifs · 2 phases · bureau) : **1 201 points (3,5 % de la
   grille — pas une fréquence réelle)**. Seulement en **perte** (697) et **recomp** (496), plus
-  4 en force et 4 en équilibre (femmes ≥ 145 kg) ; jamais à activité ≥ 1,725 ; à partir de
+  4 en force et 4 en équilibre (femmes ≥ 145 kg) ; **dans la grille**, jamais à activité ≥ 1,725
+  (hors grille — très petite taille, âge très élevé — la contre-vérification en trouve) ; à partir de
   **70 kg (femmes) / 85-90 kg (hommes)** ; écart de 3 à **765 kcal** (médiane 167) ; plancher D-017
   mêlé à 34 cas. Cible **manuelle** : 314 / 864 points, dès 70 kg à 1 200 kcal.
+  ⭐ **Le mécanisme, exact** : P et L sont proportionnels au poids, donc chaque objectif « bloque »
+  `K` kcal par kg (muscle 16,9 · force 17,0 · perte 17,2 · recomp 18,05 · équilibre 15,65 ·
+  endurance 13,55), tandis que la cible par kg tend vers `10 × activité` quand le poids monte.
+  B3 apparaît aux poids élevés dès que `K > 10 × activité` ; pour perte et recomp, c'est le
+  **plancher D-017** (1 200 / 1 500) qui fixe les poids minimums (70 kg F, 85-90 kg H).
+- ⭐ **Tous ces chiffres ont été recalculés indépendamment** (réimplémentation en Node pur, sans
+  lire les résultats) : **356 vérifications, 0 écart** sur les scénarios et la matrice ; la grille
+  B3 est retrouvée à l'identique.
 
 **Autres constats, NON corrigés (hors périmètre)** :
-- `dashboard.js` lit `m.kcal` / `m.prot` alors que `calcMacros` rend `calories` / `prot_g` : il
-  affiche le TDEE au lieu de la cible, jamais les protéines (antérieur à B1 ; `dashboard.js`
-  n'est pas chargé par `index.html`) ;
+- `dashboard.js` lit `m.kcal||m.cal` / `m.prot||m.p` alors que `calcMacros` rend `calories` /
+  `prot_g` : il affiche le TDEE au lieu de la cible, jamais les protéines, et son message vide ne
+  nomme pas l'activité (antérieur à B1). ⚠️ `dashboard.html` le charge et **est déployé** ;
+- sans calories calculables, la **cible de protéines** disparaît aussi (`updateProteinBar` → « — »),
+  alors qu'elle ne dépend que du poids — conséquence de D-016 telle qu'écrite en ft-v1232, **non
+  tranchée** ;
+- ⚠️ **R34** : B1 change ce que Milo reçoit (« NON RENSEIGNÉ » au lieu de `1.55`, et chez les
+  personas du banc « modéré / TDEE NaN » → « NON RENSEIGNÉ / — ») : une mesure du banc d'essai
+  faite avant `20eac697` **n'est pas comparable** telle quelle ;
+- des outils et tests hors production modélisent encore `p.act || 1.55`
+  (`tools/banc_nutri_objectifs.js`, `tools/contre_audit_nutri.js`, `tests/parcours/nutri_proprietes.js`) ;
 - `calcTDEE` multiplie la valeur **brute** de `S.activityLevel` après l'avoir validée : une chaîne
   `'1,55'` passerait la garde et donnerait `NaN` — **aucun écrivain actuel** ne la produit ;
 - `docs/DOSSIER-V9-APPRENTISSAGE.md` emploie `D-019`…`D-022` pour sa propre numérotation locale :
   **collision de noms** avec le registre (D-020, D-021).
-- ×1,07 fumeur : présent, origine non traçable, aucun témoin dédié, couplé à `S.smoker` côté
-  récupération — **gelé**, chantier séparé.
+- ×1,07 fumeur : présent, origine non traçable, couplé à `S.smoker` côté récupération — **gelé**,
+  chantier séparé. ⚠️ Correction : il **a** deux témoins dédiés (`tests/calculs/runner.js`, Mifflin
+  et Katch) — ma phrase « aucun témoin dédié » était fausse.
