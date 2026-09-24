@@ -57,7 +57,7 @@ MUT = [
      'rouge', 'le proprietaire declare toujours le profil complet'),
 
     ('M05', ST,
-     "  if(profilCaloriqueManquants().length) return {kcal:0,methode:null,raison:'profil incomplet'};",
+     "  if(profilBmrManquants().length) return {kcal:0,methode:null,raison:'profil incomplet'};",   # B1 (24/09) : bmrDetail lit la liste BMR
      "  if(!S.bw||!S.height||!S.age) return {kcal:0,methode:null,raison:'profil incomplet'};",
      'rouge', 'bmrDetail reecrit la regle au lieu de la lire (R2, la copie revient)'),
 

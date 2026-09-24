@@ -54,9 +54,14 @@ module.exports.source = function (t, ROOT, fs, path) {
      fermante de `_nbUtil(S[c[0]])`, donc il rougissait sur du code parfaitement sain.
      *Un motif qui suppose qu'une expression ne contient pas de parenthèse mesure sa propre
      naïveté.* On vérifie le MÉCANISME : on filtre la table, et on rend des libellés. */
+  /* ⚠️ DEPUIS B1 (24/09/2026) le filtre vit dans `profilBmrManquants` (le BMR n'a pas besoin de
+     l'activité), que le propriétaire APPELLE avant d'ajouter l'activité. Ce témoin figeait le TEXTE
+     du corps ; il suit maintenant la délégation — *un témoin qui fige une forme interdit
+     d'améliorer ce qu'il protège* (même famille que B-CCCXXXVI ②). La garantie est la même. */
+  const _pcm = corps(ST, 'profilCaloriqueManquants');
+  const _mq = (/profilBmrManquants\(\)/.test(_pcm) ? _pcm + corps(ST, 'profilBmrManquants') : _pcm).replace(/\s+/g, '');
   t('B-CCCXLIV ② ⭐ il rend les champs MANQUANTS, pas un booléen (l\'écran doit pouvoir les nommer)',
-    /PROFIL_CALORIQUE\.filter\(/.test(corps(ST, 'profilCaloriqueManquants').replace(/\s+/g, ''))
-      && /\.map\(c=>c\[1\]\)/.test(corps(ST, 'profilCaloriqueManquants').replace(/\s+/g, '')),
+    /PROFIL_CALORIQUE\.filter\(/.test(_mq) && /\.map\(c=>c\[1\]\)/.test(_mq),
     'il ne rend plus la liste');
   /* ⛔⛔ LE TÉMOIN QUI COMPTE : plus aucune COPIE de la règle dans les fichiers servis.
      Mesurer le nombre de copies est le seul invariant qui tienne — chercher la présence de
@@ -73,7 +78,7 @@ module.exports.source = function (t, ROOT, fs, path) {
 
   /* ── IL EST STRICT SUR LES NOMBRES (le NaN mesuré) ───────────────────────── */
   t('B-CCCXLIV ⑤ ⛔ la calculabilité se mesure sur un NOMBRE, pas sur l\'existence (`bw=\'abc\'` → NaN)',
-    /_nbUtil/.test(corps(ST, 'profilCaloriqueManquants')), 'le test d\'existence est revenu');
+    /_nbUtil/.test(_mq), 'le test d\'existence est revenu');
   t('B-CCCXLIV ⑥ ⭐ et `_nbUtil` exige un nombre fini strictement positif',
     /isFinite\(n\)\s*&&\s*n\s*>\s*0/.test(corps(ST, '_nbUtil').replace(/\s+/g, ' ')),
     'la borne a sauté');
