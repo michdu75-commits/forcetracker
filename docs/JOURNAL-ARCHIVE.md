@@ -9847,3 +9847,32 @@ Tests : **blocs B-CCCXXXIV (23 témoins de source) et B-CCCXXXV (24 témoins con
 Tests : **blocs B-CCCXXXVI (10 témoins de source) et B-CCCXXXVII (14 conduits dans le navigateur)**, dans `tests/parcours/repas_actif.js` — les **8 cas U1→U8** plus **la journée entière** de Michel : 4 repas, 9 aliments, chacun ajouté en **ROUVRANT** l'écran. ⭐ L'horloge du banc est **gelée à 09 h exprès** : c'est l'heure où le défaut horaire diffère du choix manuel — *un banc calé sur une heure où les deux coïncident serait resté vert sur le code d'avant*. ⛔ **CONTRÔLE NÉGATIF : 19 mutations sur un arbre CLONÉ, 19 conformes**, contrôle sain **24 OK / 0 rouge avant ET après**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire).
 
 Fichiers : `app.js`, `tests/parcours/repas_actif.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_repas_actif.js` et `tools/mut_repas_actif.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1226. |
+
+---
+
+🗂️ **NOTE DE DÉPLACEMENT — 24/09/2026 · une information périmée retirée de `docs/CONTEXTE-ACTUEL.md`**
+
+⛔ **Ce n'est pas une entrée de version** (pas d'en-tête `ft-vNNN`) : c'est une trace conservée
+au titre de **R23** — *tailler ≠ supprimer*. Le contenu ci-dessous n'existait **que** dans
+`docs/CONTEXTE-ACTUEL.md` ; il en a été retiré parce qu'il était **faux**, et il est donc
+recopié ici **verbatim** plutôt que jeté.
+
+**Texte retiré, mot pour mot :**
+
+> ⛔ Arbitrages **D-019 → D-022** ouverts, **aucune publication**.
+
+**Raison du déplacement — mesurée le 24/09/2026 dans `docs/DECISIONS.md` :**
+- le registre compte **19 entrées**, de `D-001` à **`D-019`** — ⛔ **`D-020`, `D-021` et `D-022`
+  n'existent pas** (0 occurrence dans tout le fichier) ;
+- **`D-019` est `VALIDÉ`**, elle n'est donc pas ouverte ;
+- **aucune décision du registre n'est ouverte** : 17 `VALIDÉ` + 2 `REMPLACÉE`.
+
+👉 ***La phrase présentait trois décisions inexistantes comme ouvertes, et une décision actée
+comme en attente.*** C'est exactement **R23 retourné** : un document d'état faux fait raisonner
+de travers celui qui le lit — et celui-ci est le premier que l'on ouvre avant une tâche.
+
+⚠️ **Ce qui reste vrai et a été conservé dans le fichier vivant** : `tdeeObserve()` (candidate
+**V9**) **n'est toujours pas servie** — vérifié le même jour, **0 occurrence** dans les fichiers
+servis, la fonction ne vit que dans `tools/`. ⛔ Aucune décision produit n'a été prise à cette
+occasion : la publication de V9 reste une décision **jamais prise**, et **D-019 n'est pas
+rouverte** (règle d'or #15).
