@@ -9876,3 +9876,39 @@ de travers celui qui le lit — et celui-ci est le premier que l'on ouvre avant 
 servis, la fonction ne vit que dans `tools/`. ⛔ Aucune décision produit n'a été prise à cette
 occasion : la publication de V9 reste une décision **jamais prise**, et **D-019 n'est pas
 rouverte** (règle d'or #15).
+
+---
+
+🗂️ **NOTE DE DÉPLACEMENT — 24/09/2026 · l'analyse TDEE/PAL retirée de `docs/CONTEXTE-ACTUEL.md`**
+
+⛔ **Ce n'est pas une entrée de version** (pas d'en-tête `ft-vNNN`) : trace conservée au titre de
+**R23** — *tailler ≠ supprimer*. Les trois lignes ci-dessous ont été retirées du fichier vivant
+parce que **leur prémisse utilisateur était fausse**, et sont recopiées ici **verbatim**.
+
+**Texte retiré, mot pour mot :**
+
+> - ⭐⭐ **Mesuré dans le code servi** (`calcTDEE`, `state.js`) : son **PAL effectif** (TDEE ÷ métabolisme de base) vaut **1,978**, alors que le cran le plus haut du sélecteur — **« Très actif » — vaut 1,900**. ***Il est 139 kcal au-dessus du plafond que l'application propose elle-même, sans avoir choisi le cran du haut.***
+> - ⚠️ **Pourquoi** : les libellés du sélecteur ne parlent **que des séances** (« Actif (5-6j) ») et le « Type de travail » s'ajoute **à côté** — or la table standard dont viennent les 5 multiplicateurs définit son dernier cran comme *« exercice très intense **ET métier physique** »*. ⚠️ Fait **[B]** (source secondaire) : le conteneur ne peut ouvrir aucune publication primaire. C'est la cause `metier_et_activite_cumules`, **7 450 / 100 000** au corpus B.
+> - ⛔ **Ça ne prouve PAS que 3 522 est faux** — seulement que l'app dépasse son propre maximum sans le dire. ⚖️ **Et le retour n'a pas à être prouvé pour être enregistré.**
+
+**Motif du déplacement — la prémisse utilisateur était contaminée.** Le profil ayant servi au
+calcul est écrit dans `RETOURS-TESTEURS.md` : *« Homme · 85,8 kg · 179 cm · 41 ans · activité
+« Actif (5-6 j) » (1,725) · métier « Physique » (+450) »*. ⛔ **Michel a démenti trois de ces
+quatre valeurs le 22/09/2026** — *« je n'ai PAS mis 5-6 jours dans l'application. J'ai mis 3 ou
+4 jours par semaine. Et au passage j'ai 48 ans et je mesure 1m80, pas 41 ans / 1m79 »*.
+
+👉 ***Toute la chaîne en dérive*** : le TDEE 3 522, le PAL effectif 1,978, l'écart de 139 kcal et
+la conclusion *« l'app dépasse son propre maximum »* reposent sur un **multiplicateur d'activité
+qui n'est pas le sien** (1,725 au lieu de 1,55). C'est **R4** appliqué à la documentation : la
+correction avait été faite **en conversation** le 22/09 et n'a jamais atteint le document.
+
+⚠️ **Ce qui n'est PAS conclu ici, et c'est délibéré** : aucun chiffre de remplacement n'est posé.
+Une mesure conduite en session avec les réglages déclarés a rendu **3 161 kcal**, mais elle n'est
+**pas reproductible en l'état** et ne devient donc **pas une nouvelle vérité** — elle est notée
+comme piste, pas comme fait. ⛔ **Aucune décision produit n'est prise.** ⚖️ Et le retour de Michel
+reste entier : *il n'a jamais eu besoin d'être prouvé pour être enregistré* (**R22**).
+
+⛔ **Dépendance signalée et NON traitée** : la ligne qui précède les trois retirées cite encore
+*« Seul le nombre existait dans le dépôt (3 522 kcal) »*. Elle reste **vraie** — elle constate que
+le nombre existait et que le doute de Michel n'était écrit nulle part — mais elle cite un chiffre
+désormais invalidé. **Périmètre non élargi : à trancher séparément.**
