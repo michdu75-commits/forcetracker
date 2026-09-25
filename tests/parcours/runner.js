@@ -39639,6 +39639,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      Contrôle négatif : `tools/mut_milo_pdf1.py` (banc : `tools/banc_milo_pdf1.js`). */
   await require('./milo_pdf1.js').reel(t, ROOT, fs, path);
   await require('./milo_pdf1.js').ecran(t, b, PORT);
+  /* 📄 MILO-PDF1B (25/09/2026) — raccord à ancre exacte, fail-closed, aucune séance depuis une réponse
+     non confirmée complète, marqueur avant le texte. Contrôle négatif : `tools/mut_milo_pdf1.py`. */
+  await require('./milo_pdf1b.js').reel(t, ROOT, fs, path);
+  await require('./milo_pdf1b.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40450,6 +40454,7 @@ require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
 require('./auth_ia.js').source(t, ROOT, fs, path);
 require('./milo_pdf1.js').source(t, ROOT, fs, path);
+require('./milo_pdf1b.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
