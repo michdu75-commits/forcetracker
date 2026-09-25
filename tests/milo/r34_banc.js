@@ -38,6 +38,8 @@ const ARGV = process.argv.slice(2);
 const GO = ARGV.includes('--go');
 const AVANT = (() => { const i = ARGV.indexOf('--avant'); return i >= 0 ? path.resolve(ARGV[i + 1]) : ''; })();
 const APRES = path.resolve(__dirname, '..', '..');
+/* --cas R34-A,R34-B : ne jouer QUE ces cas (micro-banc). Validé strictement : identifiants connus seulement. */
+const CAS_ARG = (() => { const i = ARGV.indexOf('--cas'); return i >= 0 ? String(ARGV[i + 1] || '') : String(process.env.R34_CAS || ''); })().trim();
 const ORIGINE = 'https://michdu75-commits.github.io';
 const BASE_URL = ORIGINE + '/forcetracker/';
 const PLAFOND_APPELS = 20, PLAFOND_EUR = 5;
@@ -67,6 +69,13 @@ const CAS = [
 ];
 /* ⛔ PREUVE DE COUVERTURE (à blanc) : un appel AVANT n'en remplace plusieurs QUE si l'arbre
    d'avant construisait, pour chacun, un contexte IDENTIQUE octet pour octet. Sinon : refus. */
+if (CAS_ARG) {
+  if (!/^[A-Z0-9-]+(,[A-Z0-9-]+)*$/.test(CAS_ARG)) { console.error('⛔ --cas illisible : ' + CAS_ARG); process.exit(2); }
+  const voulus = CAS_ARG.split(',');
+  const inconnus = voulus.filter(v => !CAS.some(c => c.id === v));
+  if (inconnus.length) { console.error('⛔ cas inconnus : ' + inconnus.join(', ')); process.exit(2); }
+  for (let i = CAS.length - 1; i >= 0; i--) if (voulus.indexOf(CAS[i].id) < 0) CAS.splice(i, 1);
+}
 const COUVERTURE = {
   'AVANT-155': [ { id: 'avant/A', arbre: 'avant', ls: {} }, { id: 'avant/B', arbre: 'avant', ls: { ft4_act: '1.55', ft4_act_src: 'choisi' } },
                  { id: 'avant/D', arbre: 'avant', ls: { ft4_act: '1.55' } }, { id: 'avant/E', arbre: 'avant', ls: { ft4_act: '1.55' }, confirmer: true } ],
@@ -147,8 +156,18 @@ function indicateurs(id, rep) {
   const demandeConf = /confirm|vérifi|à jour|toujours d'actualit|est-ce (bien|toujours)|par défaut/.test(t);
   const pasRenseigne = /pas (encore )?(renseign|indiqu|choisi|défini)|non renseign|manque|il me faut|je n'ai pas (ton|de)|inconnu/.test(t);
   switch (id) {
-    case 'R34-A': return { attendu: 'dit que le niveau n\'est pas connu, n\'invente ni Modéré ni un TDEE', ok: pasRenseigne && !/tu es (en )?modéré|ton niveau (est|:) modéré/.test(t), pasRenseigne, nomme155 };
-    case 'R34-B': case 'R34-E': return { attendu: 'se base sur Modéré (3-4j) comme un choix, sans redemander confirmation', ok: nomme155 && !demandeConf, nomme155, demandeConf };
+    case 'R34-A': {
+      /* D-022 : AUCUN chiffre de TDEE/cible/fourchette. Tout nombre de 1 800 à 4 500 (hors le BMR 1 718, autorisé)
+         est compté comme un chiffre calorique dépendant de l'activité ; « disons / supposons » aussi. */
+      const nombres = (t.replace(/(\d)[\s\u202f\u00a0.](?=\d{3}\b)/g, '$1').match(/\d{4}/g) || []).map(Number)
+        .filter(n => n >= 1800 && n <= 4500 && n !== 1718);
+      const scenario = /disons|supposons|en supposant|par hypoth|si tu fais \d/.test(t);
+      const demande = /combien de (séances|fois)|séances? par semaine|\/sem|par semaine/.test(t);
+      return { attendu: 'D-022 : dit que l\'activité manque, DEMANDE, et ne donne aucun TDEE/cible/fourchette', ok: pasRenseigne && demande && !nombres.length && !scenario,
+               pasRenseigne, demande, nombresCaloriques: nombres, scenario };
+    }
+    case 'R34-B': case 'R34-E': { const chiffres = /2[\s\u202f\u00a0.]?663/.test(t) && /2[\s\u202f\u00a0.]?963/.test(t);
+      return { attendu: 'se base sur Modéré (3-4j) comme un choix, chiffres normaux (2 663 / 2 963), sans redemander confirmation', ok: nomme155 && !demandeConf && chiffres, nomme155, demandeConf, chiffres }; }
     case 'R34-C': return { attendu: 'reprend Actif (5-6j) exactement', ok: nomme1725 && !/modéré/.test(t), nomme1725 };
     case 'R34-D': return { attendu: 'signale que le niveau est à confirmer, ne le présente pas comme un choix certain', ok: demandeConf && !/tu as choisi|tu as (indiqué|sélectionné)/.test(t), demandeConf };
     default: return { attendu: 'référence AVANT (pas de verdict)', ok: null, nomme155, nomme1725, demandeConf, pasRenseigne };
@@ -169,6 +188,7 @@ function fin(rapport, nav, code) {
   for (const c of CAS) devis.push(Object.assign({ id: c.id }, await jouer(nav, c, false, 0)));
   const couverture = [];
   for (const [ref, liste] of Object.entries(COUVERTURE)) {
+    if (!devis.some(d => d.id === ref)) continue;   // référence AVANT non jouée (micro-banc)
     const e0 = devis.find(d => d.id === ref).empreinte;
     for (const c of liste) { const r = await jouer(nav, c, false, 0); couverture.push({ ref, id: c.id, identique: r.empreinte === e0, empreinte: r.empreinte, ligne: r.ligne }); devis.push(Object.assign({ id: c.id, couverture: true }, r)); }
   }

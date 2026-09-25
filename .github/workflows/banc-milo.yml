@@ -219,6 +219,10 @@ jobs:
         # ⭐ Le devis se refait ICI, sur le runner, avant la passe réelle : contexte réel
         #    mesuré, preuve de couverture de l'arbre AVANT, Worker bloqué, pas de jeton.
         if: ${{ github.event.inputs.banc == 'r34' }}
+        env:
+          # ⭐ Pour r34, « scenarios » = la liste des cas (ex. R34-A,R34-B). Passée par l'environnement,
+          #    JAMAIS interpolée dans le shell ; le script la refuse si elle n'est pas une liste d'identifiants connus.
+          R34_CAS: ${{ github.event.inputs.scenarios }}
         run: |
           set -o pipefail
           node tests/milo/r34_banc.js --avant /tmp/avant 2>&1 | tee /tmp/r34-blanc.log
@@ -228,6 +232,7 @@ jobs:
         env:
           FT_BANC_TOKEN: ${{ secrets.FT_BANC_TOKEN }}
           R34_AVANT_SHA: f4f9317de8eea7af81f2dcb492c9a728f76f3c82
+          R34_CAS: ${{ github.event.inputs.scenarios }}
         run: |
           set -o pipefail
           node tests/milo/r34_banc.js --go --avant /tmp/avant 2>&1 | tee /tmp/r34.log
