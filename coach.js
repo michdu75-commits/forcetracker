@@ -3090,6 +3090,32 @@ function _supersetTxt(e, exs){
    ⛔ Périmètre : l'activité nécessaire au TDEE et à la cible, RIEN d'autre (pas une règle générale sur
    les données manquantes). ⛔ Pas de « | » dans ce texte : il fermerait la ligne du profil. */
 const _MILO_ACT_ABSENTE='⛔ tant que ce niveau manque, ne donne AUCUN chiffre calorique qui dépendrait de lui : ni dépense (TDEE), ni cible, ni fourchette, ni calcul « par hypothèse » (pas de « disons 3 séances »), ni ordre de grandeur, ni écart ou delta en kcal (pas de « l\'écart peut dépasser 500 kcal »), ni exemple chiffré, ni estimation indirecte (pas de multiplicateur ou de pourcentage appliqué au BMR, pas de kcal brûlées par séance, pas de grammes de glucides ou de macros déduits d\'une cible). Reste QUALITATIF : dis que ce niveau manque, que ses besoins en dépendent fortement, et demande-lui combien de séances il fait par semaine : le calcul viendra après sa réponse. Tu peux citer ce qui n\'en dépend pas (BMR, poids, taille, âge), en précisant que le BMR n\'est ni sa dépense quotidienne ni une cible. Exception explicite, ici seulement, à « propose d\'abord », aux FOURCHETTES et aux hypothèses par défaut sur la fréquence';
+/* 🧾 CONTRAT FT → MILO (25/09/2026) — « Force Tracker calcule, Milo explique ».
+   ⛔ Le type de travail ABSENT s'écrivait « Bureau » par défaut : une valeur par défaut était
+   présentée comme un fait, et un vrai « bureau » renseigné ne se distinguait plus d'un trou — au
+   banc réel du 25/09 Milo a redemandé le métier d'un profil qui l'avait renseigné.
+   ⚠️ On écrit « enregistré dans son profil », PAS « choisi par la personne » : l'ancienne app
+   écrivait « bureau » d'office sur le disque, donc une valeur ancienne ne prouve pas un choix. */
+const _TRAVAIL_LBL={bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'};
+/* La cible, telle que FORCE TRACKER l'a calculée (`cibleDecomposition`, state.js). Sans cible :
+   RIEN (aucune composante — objectif, phase, NEAT — n'est exposée seule, pour qu'aucun calcul ne
+   puisse être reconstruit). Avec cible : TOUTES les composantes, et la somme exacte (R8). */
+function _cibleDetailTxt(){
+  const d=(typeof cibleDecomposition==='function')?cibleDecomposition(S.nutritionPhase||'charge'):null;
+  if(!d) return '';
+  const n=v=>(v>0?'+':(v<0?'−':'+'))+Math.abs(Math.round(v));
+  if(d.manuelle) return '- 🧮 CIBLE FIXÉE À LA MAIN PAR LA PERSONNE : '+d.cible+' kcal (ce n\'est PAS un calcul de l\'app'
+    +(d.auto!=null?' ; le calcul automatique donnerait '+d.auto+' kcal':'')+'). Ne la décompose pas.\n';
+  const lbl=(typeof GOAL_LABELS!=='undefined'&&GOAL_LABELS[d.goal])||d.goal;
+  const act=String(d.act).replace('.',',');
+  return '- 🧮 CALCUL DE LA CIBLE PAR L\'APP (explique CE détail tel quel, ne le recalcule pas) : '
+    +'TDEE '+d.tdee+' = BMR '+d.bmr+' × '+act+' « '+(typeof ACT_LABELS!=='undefined'&&ACT_LABELS[d.act]||'niveau choisi')+' » ≈ '+d.base
+    +' '+n(d.travail)+' travail '+n(d.sport)+' autre sport '+n(d.pas)+' pas'
+    +' ; puis objectif « '+lbl+' » '+n(d.goalDelta)+' ; phase '+(d.phase==='charge'?'Charge':'Décharge')+' '+n(d.phaseAdj)
+    +(d.lutealBonus?' ; phase lutéale '+n(d.lutealBonus):'')
+    +' = '+d.brut+' kcal'+(d.plancher?' → relevée au plancher de sécurité : '+d.plancher+' kcal':'')
+    +' → CIBLE '+d.cible+' kcal.\n';
+}
 function buildCoachContext(msg) {
   // ⚠️ LE BMR ARRIVE AVEC SA PROVENANCE (11/08/2026). L'app peut employer deux formules,
   // et l'écart atteint 180 kcal/jour chez quelqu'un de musclé. Sans le savoir, Milo
@@ -3175,10 +3201,16 @@ function buildCoachContext(msg) {
     const gap = kg - rm;
     return `${ex}: objectif ${kg} kg (actuel ~${fmt(rm)} kg 1RM${gap > 0 ? `, encore ~${fmt(gap)} kg` : ' — DÉJÀ ATTEINT 🎉'})`;
   });
-  const objectivesText = [
+  const _objTxt = [
     _sgLines.length ? `Objectifs de FORCE (1RM visé par exercice): ${_sgLines.join(' | ')}` : '',
     (S.targetWeight > 0) ? `Poids objectif: ${S.targetWeight} kg (poids actuel: ${S.bw} kg)` : ''
-  ].filter(Boolean).join('\n') || 'Aucun objectif chiffré fixé pour l\'instant';
+  ].filter(Boolean).join('\n');
+  /* 🧾 CONTRAT FT → MILO (25/09/2026) : ces objectifs sont les RÉGLAGES ACTUELS de l'app (seule
+     source de vérité). La mémoire des conversations peut citer une ANCIENNE valeur : elle ne la
+     remplace pas. Leur date de réglage n'est pas enregistrée — on le dit plutôt que d'inventer. */
+  const objectivesText = _objTxt
+    ? _objTxt + '\n(Réglages ACTUELS de l\'app — la source de vérité ; date de réglage non enregistrée. Si la mémoire des conversations cite une autre valeur, c\'est un ANCIEN objectif : celui-ci prime.)'
+    : 'Aucun objectif chiffré fixé pour l\'instant';
 
   // Historique détaillé : le kg×reps de CHAQUE série (pas juste le nb de séries + volume total),
   // sinon Milo ne peut pas parler des charges réellement soulevées (retour Michel : « il prend
@@ -3622,7 +3654,7 @@ SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvien
 PROFIL ATHLÈTE:
 ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter à chaque phrase)\n' : '- Prénom: inconnu — ne dis PAS « Salut [prénom] » à vide, commence directement\n'}- Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal${_bd&&_bd.methode==='katch'?` → ⚖️ CALCULÉ SUR SA MASSE MAIGRE (${_bd.lm.lm} kg, ${_bd.lm.src} du ${_bd.lm.date}), formule Katch-McArdle — un MEILLEUR point de départ que la formule habituelle (poids/taille/âge), qui donnerait ${_bd.mifflin} kcal, soit ${_bd.kcal-_bd.mifflin>0?'+':''}${_bd.kcal-_bd.mifflin} kcal/jour d'écart. ⚠️ Mais cette masse maigre est une ESTIMATION, pas une mesure : ${_bd.lm.nature==='saisie'?"elle est calculée à partir d'un % de masse grasse qu'il/elle a SAISI lui/elle-même":_bd.lm.nature==='deduite'?"elle n'était pas lisible sur le rapport, elle a été retrouvée par SOUSTRACTION (poids − masse grasse)":"une balance mesure un poids et une impédance, puis ESTIME le reste avec la formule de son fabricant"}. Appuie-toi sur le CHIFFRE et sur la TENDANCE de plusieurs mesures ; ne présente jamais une variation de quelques centaines de grammes comme un gain ou une perte de tissu, et ne qualifie pas ce chiffre de « mesuré ».`:(_bd?` → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor)${_bd.raison?', '+_bd.raison:''} — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Corps & santé) rendrait le calcul nettement plus juste — une fois, sans insister.`:'')}
-- Niveau activité sportive: ${(()=>{ /* D-021 + R34 : on dit à Milo CE QU'ON SAIT, pas plus — la provenance fait partie du fait. */ const _e=(typeof etatActivite==='function')?etatActivite():'absent'; const _l=(typeof ACT_LABELS!=='undefined'&&ACT_LABELS[S.activityLevel])||''; if(_e==='absent') return 'NON RENSEIGNÉ (besoins caloriques non calculés) — '+_MILO_ACT_ABSENTE; if(_e==='choisi') return S.activityLevel+' — '+_l+', choisi par la personne'; if(_e==='a_confirmer') return S.activityLevel+' — '+_l+', À CONFIRMER : ancien réglage, peut-être la valeur par défaut de l\'app — ne le présente PAS comme un choix de la personne'; return S.activityLevel+' — '+_l+', réglage ancien (provenance non enregistrée)'; })()} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
+- Niveau activité sportive: ${(()=>{ /* D-021 + R34 : on dit à Milo CE QU'ON SAIT, pas plus — la provenance fait partie du fait. */ const _e=(typeof etatActivite==='function')?etatActivite():'absent'; const _l=(typeof ACT_LABELS!=='undefined'&&ACT_LABELS[S.activityLevel])||''; if(_e==='absent') return 'NON RENSEIGNÉ (besoins caloriques non calculés) — '+_MILO_ACT_ABSENTE; if(_e==='choisi') return S.activityLevel+' — '+_l+', choisi par la personne'; if(_e==='a_confirmer') return S.activityLevel+' — '+_l+', À CONFIRMER : ancien réglage, peut-être la valeur par défaut de l\'app — ne le présente PAS comme un choix de la personne'; return S.activityLevel+' — '+_l+', réglage ancien (provenance non enregistrée)'; })()} | Type travail: ${_TRAVAIL_LBL[S.workType]?_TRAVAIL_LBL[S.workType]+' (enregistré dans son profil — ne le redemande pas)':'NON RENSEIGNÉ'}
 ${(()=>{
   /* 🚶 LE SURPLUS DE PAS — et c'est le 2ᵉ usage demandé par Michel : *« ça montre l'activité en
      l'absence de données rentrées dans l'application — on a marché 15 000 pas parce qu'on a fait
@@ -3639,7 +3671,7 @@ ${(()=>{
     const seanceAuj=(S.sessions||[]).some(x=>x&&x.date===today());
     return `- 🚶 AUJOURD'HUI IL/ELLE A BEAUCOUP MARCHÉ : ${e.pas.toLocaleString('fr-FR')} pas, soit `
       + `${e.surplus.toLocaleString('fr-FR')} de plus que sa base habituelle (${e.base.toLocaleString('fr-FR')}/j sur ${e.n} jours). `
-      + `Ces ~${e.kcal} kcal sont DÉJÀ ajoutées à son TDEE ci-dessus — ne les recompte pas.`
+      + (tdee !== '—' ? `Ces ~${e.kcal} kcal sont DÉJÀ ajoutées à son TDEE ci-dessus — ne les recompte pas.` : `(Ses besoins caloriques ne sont pas calculés : n'en tire AUCUN chiffre de dépense.)`)
       + (seanceAuj ? ` Il/elle a AUSSI enregistré une séance aujourd'hui.`
                    : ` ⚠️ AUCUNE séance n'est enregistrée aujourd'hui : cette dépense vient d'autre chose (marche, randonnée, une journée debout). `
                      + `⛔ Tu ne sais PAS de quoi il s'agit — des pas ne disent pas ce qui a été fait. Ne l'affirme jamais ; tu peux le lui DEMANDER une fois si c'est utile, `
@@ -3668,7 +3700,7 @@ ${L.join('\n')}`
     + (nb<=30
       ? `\n  → Le dernier changement date de ${nb===0?"AUJOURD'HUI":nb===1?'HIER':'il y a '+nb+' jours'}. Il/elle vient de passer de « ${GOAL_LABELS[recent.de]||recent.de} » à « ${GOAL_LABELS[recent.vers]||recent.vers} » : TIENS-EN COMPTE de toi-même (charges, reps, repos, calories) sans attendre qu'il/elle te le rappelle, et sans le lui faire répéter.`
       : '');
-})()}${S.goal2&&GOAL_LABELS[S.goal2]?' | Priorité complémentaire (pour l\'ENTRAÎNEMENT, pas la nutrition): '+GOAL_LABELS[S.goal2]+' → équilibre tes conseils d\'entraînement entre les deux, mais la nutrition suit le principal':''} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
+})()}${S.goal2&&GOAL_LABELS[S.goal2]?' | Priorité complémentaire (pour l\'ENTRAÎNEMENT, pas la nutrition): '+GOAL_LABELS[S.goal2]+' → équilibre tes conseils d\'entraînement entre les deux, mais la nutrition suit le principal':''} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge' : 'Décharge'}
 ${(S.priorities&&S.priorities.length&&typeof _priorityLbl==='function')?`- 💪 MUSCLES PRIORITAIRES (là où il/elle veut progresser EN PRIORITÉ): ${S.priorities.map(_priorityLbl).join(', ')}. → Quand tu conseilles ou construis un programme, donne PLUS de fréquence, de volume et de variantes à ces muscles, tout en MAINTENANT le reste du corps. C'est comme un vrai coach qui programme autour des priorités de l'athlète. ⚠️ Ça ne change PAS l'objectif (qui reste le pilote) ni la nutrition — c'est juste l'emphase d'entraînement.`:''}
 - Discipline pratiquée: ${(S.discipline&&typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'non renseignée (ne présume pas — demande au besoin)'}${(S.discipline&&typeof DISC_CADRE!=='undefined'&&DISC_CADRE[S.discipline])?' — son cadre de travail CHIFFRÉ est plus bas (🎽), applique-le':''}
 ${S.level?`- Niveau: ${{debutant:'Débutant (encore récent en muscu — sois pédagogue, explique la technique, ne suppose pas les termes acquis, propose des charges prudentes)',intermediaire:'Intermédiaire (bases acquises — tu peux être plus technique et pousser la progression)',confirme:'Confirmé (expérimenté — parle-lui d\'égal à égal, techniques avancées bienvenues)'}[S.level]}`:''}
@@ -3704,7 +3736,7 @@ ${(()=>{
 })()}
 ${(()=>{const bmi=(S.bw&&S.height)?S.bw/((S.height/100)**2):0;return (bmi>=28||S.goal==='perte')?`- Attention au poids/articulations${bmi?` (IMC ~${Math.round(bmi)})`:''} : privilégie le cardio À FAIBLE IMPACT (vélo, marche rapide, elliptique, rameur — évite course/sauts qui tapent genoux et dos), une progression douce des charges, et un travail de gainage. Le cardio est important ici pour la santé cardiovasculaire et la perte de gras.`:''})()}
 - Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
-${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
+${_cibleDetailTxt()}${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
 ${S.keto?`- ⚠️ RÉGIME CÉTOGÈNE (KETO): très peu de glucides (~5%), beaucoup de lipides (~80%). Ne propose JAMAIS d'aliments riches en glucides (${_KETO_INTERDITS}) ni de compléments sucrés. Privilégie viandes/poissons gras, œufs, avocat, fromage, oléagineux, huiles, légumes verts pauvres en glucides.`:''}
 ${S.foodMode==='lowcarb'?`- ⚠️ LOW CARB: glucides réduits (~25% des calories) SANS viser la cétose. Garde des glucides autour de l'entraînement, où ils servent. Ne propose pas de gros plats de pâtes/riz.`:''}
 ${S.foodMode==='paleo'?`- ⚠️ PALÉO: ni céréales (blé, riz, avoine, maïs), ni légumineuses, ni laitages, ni produits transformés. Viandes, poissons, œufs, légumes, fruits, oléagineux, patate douce.`:''}
@@ -3923,24 +3955,41 @@ ${(()=>{
      ⚠️ ET C'EST BORNÉ, EXPRÈS. Un programme de 12 semaines × 5 jours × 8 exercices, envoyé en
      entier à chaque message, coûterait plus qu'il ne rapporte : 3 programmes, 6 jours, 10
      exercices, et on DIT qu'on a coupé plutôt que de laisser croire que c'est tout (R29). */
+  /* 🧾 CONTRAT FT → MILO (25/09/2026). ⛔ Trois défauts mesurés, corrigés ici :
+     ① un jour de programme porte son nom dans `label` (import, éditeur, `_normalizeForceProg`) ;
+        on lisait `name` → Milo recevait « Jour 1, Jour 2… » au lieu de « Push / Pull / Legs » ;
+     ② rien ne disait ce que l'app NE SAIT PAS (programme actif, version, phase, progression, RIR
+        cible) — Milo pouvait donc « analyser Bloc 1 V2 en profondeur » à partir d'un nom ;
+     ③ le lien prévu → réalisé n'existe que par le LIBELLÉ de la séance (`progLabel`) : on le dit,
+        et un nom sans programme enregistré est annoncé comme NOM SEUL (jamais « programme complet »). */
   const progs=(S.programmes||[]).filter(p=>p&&p.name);
-  if(!progs.length) return '';
+  const derniere=(S.sessions||[]).filter(x=>x&&x.progLabel).slice(-1)[0]||null;
+  const jourNom=(j,i)=>(j&&(j.label||j.name))||('Jour '+(i+1));
+  const connu=lbl=>progs.some(p=>p.name===lbl||(Array.isArray(p.days)&&p.days.some((j,i)=>jourNom(j,i)===lbl)));
+  const lien=derniere?('\n→ Dernière séance RÉALISÉE rattachée à un libellé : « '+derniere.progLabel+' » ('+derniere.date+')'
+    +(connu(derniere.progLabel)?' — ce libellé correspond à un programme ou à un jour enregistré ci-dessus (lien par le NOM seulement).'
+      :' — ⚠️ NOM SEUL : aucun programme enregistré ne porte ce nom, sa STRUCTURE est INCONNUE de l\'app. Ne prétends pas l\'analyser : dis ce qui manque.')):'';
+  if(!progs.length) return lien?('\nSES PROGRAMMES ENREGISTRÉS DANS L\'APP : AUCUN.'+lien+'\n'):'';
   const nSet=x=>{const t=(x.sets||[]).filter(z=>z&&z.type!=='É'&&z.type!=='W');
     if(!t.length) return '';
     const r=t[0]&&(t[0].maxi?'max':(+t[0].reps||0));
-    return ' '+t.length+'×'+r;};
-  const exList=(exs,max)=>(exs||[]).slice(0,max).map(e=>(e&&e.name?e.name+nSet(e):'')).filter(Boolean).join(' · ')
+    return ' '+t.length+'×'+r+((+t[0].kg>0)?' @'+t[0].kg+'kg':'');};
+  const exList=(exs,max)=>(exs||[]).slice(0,max).map(e=>(e&&e.name?e.name+nSet(e)+(e.group?' [superset '+e.group+']':''):'')).filter(Boolean).join(' · ')
     + (((exs||[]).length>max)?' · …+'+((exs||[]).length-max):'');
   const L=progs.slice(-3).map(p=>{
+    const tete='- « '+p.name+' »'+(p.weeks?' ('+p.weeks+' semaines'+(p.startDate?', début '+p.startDate:'')+')':(p.startDate?' (début '+p.startDate+')':''));
     if(Array.isArray(p.days)&&p.days.length){
-      const d=p.days.slice(0,6).map((j,i)=>'   · '+(j&&j.name?j.name:'Jour '+(i+1))+' : '+exList(j&&j.exs,10));
-      return '- « '+p.name+' »'+(p.weeks?' ('+p.weeks+' semaines)':'')+', '+p.days.length+' jours :\n'
+      const d=p.days.slice(0,6).map((j,i)=>'   · '+jourNom(j,i)+' : '+exList(j&&j.exs,10));
+      return tete+', '+p.days.length+' jours :\n'
         +d.join('\n')+(p.days.length>6?'\n   · …et '+(p.days.length-6)+' autres jours':'');
     }
-    return '- « '+p.name+' » : '+exList(p.exs,10);
+    return tete+' : '+exList(p.exs,10);
   });
   return '\nSES PROGRAMMES ENREGISTRÉS DANS L\'APP (ce qui est PLANIFIÉ) :\n'+L.join('\n')
     +(progs.length>3?'\n(+'+(progs.length-3)+' autre(s) programme(s) non détaillé(s))':'')
+    +'\n📌 CE QUE L\'APP SAIT de ces programmes : jours, exercices, séries × reps, charge prévue de la 1ʳᵉ série de travail, supersets. '
+    +'CE QU\'ELLE NE SAIT PAS : lequel est ACTIF aujourd\'hui, sa version, sa phase, la progression prévue semaine après semaine, les RIR cibles. Ne prétends jamais les connaître : si ta réponse en dépend, dis-le et demande.'
+    +lien
     +'\n→ Quand elle demande QUOI FAIRE aujourd\'hui, pars de là : propose le jour qui vient, en le NOMMANT, plutôt que d\'inventer une séance à côté de son planning.'
     +'\n⚠️ C\'est du PLANIFIÉ, pas du RÉALISÉ : ne dis JAMAIS qu\'elle a fait ces séances. Ce qu\'elle a réellement fait est dans le bloc « DERNIÈRES SÉANCES ».'
     +'\n⚠️ Ce n\'est pas un contrat : si elle veut autre chose aujourd\'hui, tu la suis sans discuter et tu dis simplement en quoi ça sort de son programme.\n';

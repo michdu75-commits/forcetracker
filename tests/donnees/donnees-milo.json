@@ -2,6 +2,7 @@
   "_lisez_moi": "Chaque donnée de l'app doit être classée : transmise à Milo, volontairement exclue (avec la raison), ou manquante (trou connu, à combler). Un champ non classé fait ÉCHOUER le test.",
   "transmis": [
     "activityLevel",
+    "activitySrc",
     "adn",
     "age",
     "beginnerJourney",

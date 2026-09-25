@@ -34,7 +34,7 @@ let S={
   bw:80,barW:20,defRest:REPOS_DEFAUT,
   gender:'H',age:30,height:175,activityLevel:null,   // ⛔ jamais 1.55 d'office (D-016 étendue, 24/09 — voir _activiteValide)
   activitySrc:null,   // D-021 : 'choisi' = choisi/confirmé par la personne ; null = inconnue — voir etatActivite()
-  workType:'bureau',smoker:false,halo:'on',haloColor:'59,130,246',haloDir:'top',
+  workType:null,smoker:false,halo:'on',haloColor:'59,130,246',haloDir:'top',
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
@@ -314,7 +314,11 @@ function load(){
        écrite : 'choisi' (choisi ou confirmé par la personne, APRÈS cette version). Son absence
        veut dire « on ne sait pas » — jamais « choisi ». Sans niveau valide, pas de provenance. */
     S.activitySrc=(S.activityLevel!=null&&localStorage.getItem('ft4_act_src')==='choisi')?'choisi':null;
-    S.workType=localStorage.getItem('ft4_work')||'bureau';
+    /* 🧾 CONTRAT FT → MILO (25/09/2026) : plus de « bureau » par défaut. Un défaut silencieux se
+       lisait comme un fait (Milo recevait « Bureau » pour un profil qui n'avait rien dit) et faisait
+       sauter la question « métier » du questionnaire (elle se croyait déjà répondue). ⚖️ Aucun
+       effet sur les calories : bureau et absent valent tous deux +0 kcal (`calcWorkExtra`). */
+    {const _w=localStorage.getItem('ft4_work'); S.workType=(_w&&_TRAVAIL_VALIDES.indexOf(_w)>=0)?_w:null;}
     S.halo=localStorage.getItem('ft4_halo')||'on';
     if(S.halo==='blue')S.halo='on';                 // migration ancien nom
     if(S.halo!=='none'&&S.halo!=='on')S.halo='on';
@@ -984,7 +988,7 @@ function persist(){
     if(S.sessions&&S.sessions.length>0){try{localStorage.setItem('ft4_had_data','1');}catch(e){}}
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
     if(S.creatDose)localStorage.setItem('ft4_creatdose',String(S.creatDose));else localStorage.removeItem('ft4_creatdose');
-    localStorage.setItem('ft4_work',S.workType);
+    if(S.workType&&_TRAVAIL_VALIDES.indexOf(S.workType)>=0) localStorage.setItem('ft4_work',S.workType); else localStorage.removeItem('ft4_work');
     localStorage.setItem('ft4_halo',S.halo);
     localStorage.setItem('ft4_haloColor',S.haloColor);
     localStorage.setItem('ft4_haloDir',S.haloDir);
@@ -1445,6 +1449,7 @@ function bmrDetail(){
 }
 
 function calcBMR(){ return bmrDetail().kcal; }
+const _TRAVAIL_VALIDES=['bureau','debout','actif','physique'];
 function calcWorkExtra(){return{bureau:0,debout:200,actif:325,physique:450}[S.workType]||0;}
 // AUTRE SPORT déclaré (profil vivant, « vélo/course/foot… ») → la dépense DESCEND dans le chiffre
 // (audit 30/07, R4 : l'aide promettait « change tes calories » alors que rien ne bougeait).
@@ -1824,7 +1829,7 @@ function rythmeVsPlage(kgParSemaine, goal){
    ⚠️ `_autoKcalBrut` rend `null` lui aussi : sans ça, l'encadré « le plancher a relevé ta
    cible de X » annoncerait un relèvement par rapport à un calcul qui n'existe pas. */
 function autoKcal(phase){ const b=_autoKcalBrut(phase); return b==null?null:_plancherKcal(b); }
-function _autoKcalBrut(phase){
+function _autoKcalBrut(phase,detail){
   const tdee=calcTDEE();
   if(tdee==null) return null;
   const goal=S.goal||'muscle';
@@ -1834,7 +1839,35 @@ function _autoKcalBrut(phase){
   // les protéines élevées (voir macrosForKcal) protègent le muscle → pas de « skinny fat ».
   const goalDelta=goalDeltaKcal(goal);
   const phaseAdj=phase==='charge'?100:-100;
+  /* 🧮 CONTRAT FT → MILO (25/09/2026) : `detail`, facultatif, reçoit les composantes EXACTES de ce
+     calcul — c'est `cibleDecomposition()` qui le lit. ⛔ Pas de 2ᵉ copie de la formule (R2) : Milo
+     recevait « Phase: Charge (+100 kcal) » sans le delta d'objectif et reconstruisait
+     « 2663 + 100 = 2963 » (R8). Les appelants sans 2ᵉ argument ne voient aucune différence. */
+  if(detail&&typeof detail==='object') Object.assign(detail,{tdee,goal,goalDelta,phase,phaseAdj,lutealBonus});
   return tdee+goalDelta+phaseAdj+lutealBonus;
+}
+/* 🧮 LA CIBLE CALORIQUE, DÉCOMPOSÉE PAR FORCE TRACKER (contrat FT → Milo, 25/09/2026).
+   « Force Tracker calcule, Milo explique » : quand la cible existe, Milo doit recevoir le calcul
+   RÉELLEMENT fait (TDEE, objectif, phase, bonus, plancher, cible manuelle), pas des morceaux.
+   Rend `null` quand il n'y a PAS de cible — et alors aucune composante n'est exposée (invariant :
+   on n'envoie jamais de quoi reconstruire une valeur indisponible).
+   ⛔ Rien n'est recalculé ici : tout vient de `_autoKcalBrut`, `_plancherKcal`, `calcMacros`,
+   `calcBMR`, `calcWorkExtra`, `calcSportExtra`, `calcPasExtra` — et la somme est VÉRIFIÉE contre
+   `calcMacros(phase).calories` : si elles divergent, on rend `null` plutôt qu'une fausse explication. */
+function cibleDecomposition(phase){
+  try{
+    const m=calcMacros(phase);
+    if(!m||m.calories==null) return null;
+    if(m.isManual) return {manuelle:true,cible:m.calories,auto:m.autoCalories!=null?m.autoCalories:null};
+    const d={}; const brut=_autoKcalBrut(phase,d);
+    if(brut==null||d.tdee==null) return null;
+    const cible=_plancherKcal(brut);
+    if(cible!==m.calories) return null;
+    const travail=calcWorkExtra(), sport=calcSportExtra(), pas=(typeof calcPasExtra==='function')?(calcPasExtra()||0):0;
+    return {manuelle:false,cible,brut:Math.round(brut),plancher:cible>Math.round(brut)?cible:null,
+            tdee:d.tdee,bmr:calcBMR(),act:S.activityLevel,base:d.tdee-travail-sport-pas,travail,sport,pas,
+            goal:d.goal,goalDelta:d.goalDelta,phase:d.phase,phaseAdj:d.phaseAdj,lutealBonus:d.lutealBonus};
+  }catch(e){ return null; }
 }
 /* 🛡️ L'APP NE PRESCRIT PLUS UNE CIBLE QU'ELLE QUALIFIERAIT D'ALERTE (18/08/2026)
    Trouvé par un contre-audit extérieur, **vérifié ici dans le code** : `autoKcal` était une

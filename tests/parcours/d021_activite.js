@@ -225,7 +225,9 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCLXXI A1 … exception NOMMÉE aux règles qui poussaient à chiffrer (propose d\'abord, fourchettes, fréquence)',
     /Exception explicite/.test(a1) && /propose d'abord/.test(a1) && /FOURCHETTES/.test(a1) && /fréquence/.test(a1), a1);
   t('B-CCCLXXI A1 … la consigne va jusqu\'au bout AVANT « | Type travail » (un « | » dans son texte la couperait)',
-    L.A.plein === '- ' + a1 + ' | Type travail: Bureau/Sédentaire (+0 kcal NEAT)' && /fréquence$/.test(a1), L.A.plein);
+    /* ⚠️ Fin de ligne mise à jour le 25/09 (contrat FT → Milo) : le « (+0 kcal NEAT) » — une
+       composante du TDEE — n'est plus exposé seul ; le travail est dit avec son statut. */
+    L.A.plein === '- ' + a1 + ' | Type travail: Bureau/Sédentaire (enregistré dans son profil — ne le redemande pas)' && /fréquence$/.test(a1), L.A.plein);
   t('B-CCCLXXI A2 1,55 CHOISI → aucune consigne « ne chiffre pas » (les chiffres calculés restent explicables)',
     !CONSIGNE.test(L.B.ligne) && /2711/.test(L.B.tdee), JSON.stringify(L.B));
   t('B-CCCLXXI A3 ancien 1,55 non confirmé → ambiguïté D-021 conservée, pas de consigne « ne chiffre pas »',
