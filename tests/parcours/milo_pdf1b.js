@@ -136,6 +136,14 @@ module.exports.reel = async function (t, ROOT, fs, path) {
   const aL = O.ANCRE_DE({ messages: (cL.ia[1] || {}).messages || [] });
   t('C∗ ancre bornée : 60 points de code, prise à la FIN', Array.from(aL).length === 60 && longue.endsWith(aL) && ok(cL, longue + '.'), JSON.stringify(aL));
 
+  const cCasse = await lance([O.REP('Les épa', 'max_tokens'), BRUT(a => env(a.toLowerCase() + 'ules sont prioritaires.'), 'end_turn')]);
+  t('C∗ l\'ancre se compare À L\'IDENTIQUE : une casse différente (« les épa ») → refusée, incomplète',
+    garde(cCasse, 'Les épa') && cCasse.d._raccord === 'ancre_absente', e(cCasse));
+  const pEmo = 'x'.repeat(10) + '💪' + 'y'.repeat(59);
+  const cEmo = await lance([O.REP(pEmo, 'max_tokens'), BRUT(a => env(a + ' fin.'), 'end_turn')]);
+  const aEmo = O.ANCRE_DE({ messages: (cEmo.ia[1] || {}).messages || [] });
+  t('C∗ l\'ancre ne coupe jamais un emoji : 60 POINTS DE CODE, aucune demi-paire UTF-16',
+    aEmo === '💪' + 'y'.repeat(59) && !/[\ud800-\udbff](?![\udc00-\udfff])|(^|[^\ud800-\udbff])[\udc00-\udfff]/.test(aEmo), JSON.stringify(aEmo.slice(0, 4)));
   const acceptes = [c1, c2, c3, c4, c5, c6, c7, cN, cE, cL, c11];
   const p1s = ['Les épa', 'Les épaules', 'Repos : 3 min.', p4, p5, 'On reprend et le', 'Fais 3 séries de', O.P1, 'Bon courage 💪🏽', longue, O.P1];
   t('C∗ INVARIANT : dans TOUT raccord accepté, la 1ʳᵉ partie est conservée caractère pour caractère',
