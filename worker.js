@@ -755,7 +755,7 @@ async function coach(body, apiKey, meta) {
   // _diag = diagnostic technique (ignoré par l'app normale, lu par PT-001 / le laboratoire).
   // On NE change PAS le message utilisateur : Milo dit toujours « Désolé, réessaie. » si vide.
   const _diag = _diagClaude(d);
-  let texte = d.text, stop = d.stopReason, continued = false, _diagSuite;
+  let texte = d.text, stop = d.stopReason, continued = false, _diagSuite, _raccord;
   /* 📄 MILO-PDF1 — UNE SEULE SUITE, ET SEULEMENT QUAND ON L'A DEMANDÉE.
      ⛔ Le chat de tous les jours ne l'envoie PAS : il reste à UN appel (une coupure y est signalée,
         pas rattrapée en silence avec un 2ᵉ appel payant). Seule une demande explicitement longue
@@ -765,15 +765,25 @@ async function coach(body, apiKey, meta) {
         ce qu'on a et on le DIT (`truncated: true`) — la 1ʳᵉ partie ne devient jamais « complète »
         parce que la suite a raté.
      ⭐ La suite est demandée comme une vraie réponse (le texte déjà écrit + une consigne de reprise),
-        pas par « préremplissage » : ce mode n'a pas pu être vérifié sur ce modèle, et un appel qui
-        échouerait à chaque fois laisserait toutes les analyses incomplètes. Le quota n'est compté
-        qu'UNE fois (par requête, en amont) ; le coût des deux appels est bien rapporté (`meta`). */
-  if (body.suite === true && texte && stop === 'max_tokens') {
+        pas par « préremplissage » : le préremplissage d'une réponse de l'assistant est REFUSÉ
+        (erreur 400) sur la famille Sonnet 4.6 (documentation Anthropic), donc chaque suite aurait
+        échoué. Le quota n'est compté qu'UNE fois (par requête, en amont) ; le coût des deux appels
+        est bien rapporté (`meta`).
+     📄 MILO-PDF1B (25/09/2026) — LE RACCORD SE PROUVE, IL NE SE DEVINE PLUS. La 1ʳᵉ version recollait
+        les deux morceaux par heuristique (« ce mot est probablement répété ») : la contre-vérification
+        a démontré « épaulessont », « et le » + « lendemain » → « et lendemain » (un MOT PERDU),
+        « dede », et une réponse redémarrée dupliquée — le tout marqué complet. Désormais la suite
+        doit commencer par une ANCRE exacte (les derniers caractères déjà écrits) dans une enveloppe
+        machine ; sans preuve exacte du raccord, on garde la 1ʳᵉ partie et elle reste INCOMPLÈTE. */
+  const ancre = (body.suite === true && texte && stop === 'max_tokens') ? _ancreSuite(texte) : '';
+  if (ancre) {
     const s = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system,
-      messages: messages.concat([{ role: 'assistant', content: texte }, { role: 'user', content: _consigneSuite(texte) }]) }, meta);
+      messages: messages.concat([{ role: 'assistant', content: texte }, { role: 'user', content: _consigneSuite(ancre) }]) }, meta);
     _diagSuite = _diagClaude(s);
-    if (s.text) { texte = _recollerSuite(texte, s.text); stop = s.stopReason; continued = true; }
-    // ⛔ Échec de la suite : `texte` et `stop` (= 'max_tokens') restent ceux de la 1ʳᵉ partie.
+    const r = _raccorderSuite(texte, ancre, s.text, s.stopReason);
+    _raccord = r.raison;
+    if (r.ok) { texte = r.texte; stop = r.stop; continued = true; }
+    // ⛔ Raccord non prouvé (ou suite en échec) : `texte` et `stop` (= 'max_tokens') restent ceux de la 1ʳᵉ partie.
   }
   // ⚠️ `_model` = le modèle qui a RÉELLEMENT servi, pas celui qu'on a demandé. Sans lui, le
   // benchmark pourrait annoncer « testé en Haiku » alors qu'un repli l'a mis sur Sonnet —
@@ -783,12 +793,14 @@ async function coach(body, apiKey, meta) {
      client lit : il ne voit aucune différence. Les nouveaux champs ne décrivent que des FAITS :
        · stopReason — la raison d'arrêt RÉELLE de la dernière partie (null si aucune) ;
        · truncated  — le modèle a signalé une coupure par la limite de longueur ;
-       · complete   — il s'est arrêté de lui-même (end_turn / stop_sequence) ET il y a un texte.
-     ⛔ Une raison inconnue ou absente n'est ni « coupée » ni « complète » : on ne prétend rien. */
+       · complete   — il s'est arrêté de lui-même ET il y a un texte.
+     📄 MILO-PDF1B — FAIL-CLOSED : SEUL `end_turn` rend une réponse complète. `stop_sequence` compris,
+     parce que l'app n'envoie aucune séquence d'arrêt : si elle apparaît, ce n'est pas une fin attendue.
+     Toute autre raison (null, refusal, pause_turn, tool_use, valeur future) → complete: false. */
   const out = { reply: texte || 'Désolé, réessaie.', _diag, _model: model,
     stopReason: stop || null, truncated: stop === 'max_tokens',
-    complete: !!texte && (stop === 'end_turn' || stop === 'stop_sequence'), continued };
-  if (_diagSuite !== undefined) out._diagSuite = _diagSuite;
+    complete: !!texte && stop === 'end_turn', continued };
+  if (_diagSuite !== undefined) { out._diagSuite = _diagSuite; out._raccord = _raccord; }
   return out;
 }
 // Diagnostic technique d'un appel (`_diag`) — sorti de `coach()` pour servir aussi à la suite.
@@ -799,35 +811,60 @@ function _diagClaude(d) {
         : (d.status && d.status >= 400 ? ('api_error ' + d.status + (d.apiErr ? ' ' + d.apiErr : ''))
           : (d.apiErr ? ('error ' + d.apiErr) : 'empty'))));
 }
-/* 📄 MILO-PDF1 — la consigne de reprise. Elle cite la FIN du texte déjà écrit pour que le modèle
-   reprenne au bon endroit, et interdit ce qui gâcherait la couture (répéter, recommencer, annoncer). */
-function _consigneSuite(texte) {
-  const fin = String(texte).slice(-160).replace(/\s+/g, ' ').trim();
-  return 'Ta réponse précédente a été coupée par la limite de longueur, en plein milieu. '
-    + 'Elle se termine exactement par : « ' + fin + ' ». '
-    + 'Écris UNIQUEMENT la suite, en reprenant exactement là où elle s\'arrête. '
-    + 'Ne répète rien de ce qui est déjà écrit, ne recommence pas depuis le début, '
-    + 'pas d\'introduction, pas de rappel, pas de phrase du type « voici la suite ».';
+/* 📄 MILO-PDF1B — L'ENVELOPPE DE LA SUITE. Format machine simple (pas du JSON) : le modèle écrit
+   <FT_SUITE>, puis RECOPIE l'ancre, puis continue, puis </FT_SUITE>. */
+const _SUITE_OUV = '<FT_SUITE>', _SUITE_FERM = '</FT_SUITE>';
+/* L'ancre = les derniers caractères RÉELLEMENT écrits (60 au plus, comptés en points de code pour
+   ne jamais couper un emoji), sans les blancs de fin ni de début. ⚠️ Elle ne commence jamais par un
+   blanc ni par un caractère de liaison : c'est ce qui rend le retrait des blancs d'enveloppe sûr. */
+function _ancreSuite(texte) {
+  const t = String(texte).replace(/\s+$/, '');
+  return Array.from(t).slice(-60).join('').replace(/^[\s‍︎️̀-ͯ]+/u, '');
 }
-/* 📄 MILO-PDF1 — la couture entre les deux parties. DÉTERMINISTE, et bornée à deux cas mesurables :
-   ① la suite recopie la fin de la 1ʳᵉ partie (≥ 12 caractères identiques) → on retire le doublon ;
-   ② la 1ʳᵉ partie finit au milieu d'un mot et la suite, COLLÉE, réécrit ce mot en entier → on
-      garde le mot entier (« Épau » + « Épaules » → « Épaules »).
-   ⚠️ Une suite qui commence par une espace ou un retour à la ligne commence un mot NOUVEAU : on ne
-      touche alors à rien (sinon « et le » + « lendemain » perdrait son « le »).
-   ⛔ Rien d'autre n'est réécrit : on ne « corrige » pas le texte du modèle. */
-function _recollerSuite(a, b) {
-  a = String(a); b = String(b);
-  const bt = b.replace(/^\s+/, '');
-  for (let k = Math.min(a.length, bt.length, 400); k >= 12; k--) {
-    if (a.endsWith(bt.slice(0, k))) return a + bt.slice(k);
+function _consigneSuite(ancre) {
+  return 'Ta réponse précédente a été coupée par la limite de longueur. Tu vas la continuer.\n\n'
+    + 'FORMAT OBLIGATOIRE — ta réponse doit être exactement :\n'
+    + _SUITE_OUV + 'ANCRE puis la suite' + _SUITE_FERM + '\n\n'
+    + '• Commence par ' + _SUITE_OUV + ', rien avant.\n'
+    + '• Juste après, recopie l\'ANCRE caractère pour caractère (ce sont les derniers caractères que tu as écrits).\n'
+    + '• Puis continue ta réponse exactement là où elle s\'était arrêtée : ne répète rien d\'autre, '
+    + 'ne recommence pas depuis le début, pas d\'introduction, pas de phrase du type « voici la suite ».\n'
+    + '• Termine par ' + _SUITE_FERM + ', rien après.\n\n'
+    + 'L\'ANCRE (entre les deux lignes de tirets, sans les tirets) :\n-----\n' + ancre + '\n-----';
+}
+/* 📄 MILO-PDF1B — LE RACCORD, PROUVÉ OU REFUSÉ. Aucune heuristique : on ne supprime, ne fusionne et
+   ne réécrit rien sans preuve exacte. Rend { ok, texte, stop, raison }.
+   Refus (ok: false → la 1ʳᵉ partie est gardée, INCOMPLÈTE) :
+     'echec'        la suite n'a rien rendu (réseau, API) ;
+     'structure'    enveloppe absente, texte avant/après, ou fermeture manquante sans coupure ;
+     'ancre_absente' l'ancre n'est nulle part ; 'ancre_fausse' elle n'est pas au début ;
+     'redemarrage'  la suite réécrit le début de la réponse (1ʳᵉ ligne, ≥ 12 caractères).
+   Acceptée : texte = 1ʳᵉ partie (sans ses blancs de fin) + ce que le modèle a écrit APRÈS l'ancre.
+   ⚠️ Les blancs de fin de la 1ʳᵉ partie sont remplacés par ceux que le modèle écrit après l'ancre :
+   c'est lui qui décide de l'espace entre « épaules » et « sont », pas une règle de devinette. */
+function _raccorderSuite(p1, ancre, brut, stop2) {
+  const non = (raison) => ({ ok: false, raison });
+  if (!brut) return non('echec');
+  const b = String(brut), i = b.indexOf(_SUITE_OUV);
+  if (i < 0 || b.slice(0, i).trim() !== '') return non('structure');
+  let corps = b.slice(i + _SUITE_OUV.length);
+  const j = corps.indexOf(_SUITE_FERM);
+  if (j >= 0) {
+    if (corps.slice(j + _SUITE_FERM.length).trim() !== '') return non('structure');
+    corps = corps.slice(0, j);
+  } else {
+    if (stop2 !== 'max_tokens') return non('structure');   // seule une coupure excuse une fermeture absente
+    for (let k = _SUITE_FERM.length - 1; k >= 1; k--) {      // fermeture coupée en cours d'écriture
+      if (corps.endsWith(_SUITE_FERM.slice(0, k))) { corps = corps.slice(0, -k); break; }
+    }
   }
-  if (/^\s/.test(b)) return a + b;                 // le modèle commence lui-même un mot nouveau
-  if (/\s$/.test(a)) return a + bt;
-  const mot = (a.match(/[\p{L}\p{N}]+$/u) || [''])[0];
-  if (mot && bt.startsWith(mot) && /^[\p{L}\p{N}]/u.test(bt.slice(mot.length))) return a.slice(0, -mot.length) + bt;
-  // Mot coupé en deux (« Épau » + « les ») : on colle. Sinon on sépare d'une espace.
-  return (/[\p{L}]$/u.test(a) && /^[\p{Ll}]/u.test(bt)) ? a + bt : a + ' ' + bt;
+  corps = corps.replace(/^\s+/, '');                         // sûr : l'ancre ne commence jamais par un blanc
+  if (!corps.startsWith(ancre)) return non(corps.indexOf(ancre) >= 0 ? 'ancre_fausse' : 'ancre_absente');
+  const suite = corps.slice(ancre.length);
+  const premiere = (String(p1).split('\n').map(l => l.trim()).find(l => l) || '');
+  if (premiere.length >= 12 && suite.indexOf(premiere) >= 0) return non('redemarrage');
+  return { ok: true, texte: String(p1).replace(/\s+$/, '') + suite, stop: stop2 || null,
+    raison: stop2 === 'end_turn' ? 'ok' : 'suite_non_terminee' };
 }
 
 // ── Import de document : programme / historique — recopié de handleImportProgram_/handleImportHistory_
