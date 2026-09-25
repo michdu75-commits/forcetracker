@@ -43,6 +43,10 @@ on:
         description: 'Committer la référence dans le dépôt ? (oui / non)'
         required: false
         default: 'oui'
+      banc:
+        description: 'Quel banc ? ev = le banc complet (défaut) · r34 = le petit banc R34 « niveau d activité » (7 appels prévus, 14 au plus, jamais enregistré).'
+        required: false
+        default: 'ev'
 
 permissions:
   contents: write
@@ -65,6 +69,15 @@ jobs:
             echo "::error::Confirmation absente. Relance en tapant LANCER dans le champ."
             exit 1
           fi
+
+      - name: R34 — refuser si on demande d'enregistrer
+        # ⛔ Le banc R34 (25/09/2026) est une MESURE ponctuelle avant publication : il ne
+        #    produit pas de référence et ne committe rien. Refusé AVANT toute dépense si
+        #    quelqu'un le lance avec « enregistrer » à autre chose que non.
+        if: ${{ github.event.inputs.banc == 'r34' && github.event.inputs.enregistrer != 'non' }}
+        run: |
+          echo "::error::Le banc r34 ne s'enregistre jamais. Relance avec enregistrer = non."
+          exit 1
 
       - name: Refuser TOT si l'identite du banc manque
         # ⛔⛔ AVANT LE CHECKOUT, ET SURTOUT AVANT TOUTE DEPENSE. Sans jeton S1, chaque
@@ -141,6 +154,7 @@ jobs:
           echo '::notice::infrastructure verte, zero appel IA depense'
 
       - name: Lancer la passe RÉELLE
+        if: ${{ github.event.inputs.banc != 'r34' }}
         id: passe
         # ⭐ LE JETON N'ARRIVE QU'ICI. Le controle gratuit juste au-dessus n'appelle personne :
         #    lui donner l'identite ne prouverait rien et l'exposerait pour rien.
@@ -160,6 +174,7 @@ jobs:
           echo "rc=$?" >> "$GITHUB_OUTPUT"
 
       - name: Vérifier que la passe a VRAIMENT tourné
+        if: ${{ github.event.inputs.banc != 'r34' }}
         # ⛔⛔ UNE PASSE TRONQUÉE NE DOIT JAMAIS PASSER POUR UNE RÉFÉRENCE. C'est la leçon
         #    de `BUGS.md` §61 (« un run planté ressemble à un run vert ») : on relit le
         #    rapport produit et on exige qu'il annonce le mode RÉEL. Un rapport « blanc »
@@ -186,6 +201,47 @@ jobs:
             }
             console.log('OK : ' + repondu + ' reponse(s) sur ' + joues + ' joue(s), mode ' + r.mode + ', sha ' + r.sha + ', version ' + (r.version||'?'));
           "
+
+      - name: R34 — arbre AVANT (le code d'avant B1/D-021, sur cette même branche)
+        # ⭐ f4f9317d = le dernier commit de la branche AVANT le chantier B1/B2/D-021 : il
+        #    porte TOUT le reste du code non publié, donc la seule différence mesurée est
+        #    celle du chantier. Extrait dans /tmp, le checkout n'est jamais déplacé.
+        if: ${{ github.event.inputs.banc == 'r34' }}
+        env:
+          R34_AVANT_SHA: f4f9317de8eea7af81f2dcb492c9a728f76f3c82
+        run: |
+          git fetch --no-tags --depth=1 origin "$R34_AVANT_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$R34_AVANT_SHA"
+          mkdir -p /tmp/avant && git archive FETCH_HEAD | tar -x -C /tmp/avant
+          test -f /tmp/avant/index.html && echo "::notice::arbre AVANT $R34_AVANT_SHA extrait"
+
+      - name: R34 — devis À BLANC (0 appel, gratuit)
+        # ⭐ Le devis se refait ICI, sur le runner, avant la passe réelle : contexte réel
+        #    mesuré, preuve de couverture de l'arbre AVANT, Worker bloqué, pas de jeton.
+        if: ${{ github.event.inputs.banc == 'r34' }}
+        run: |
+          set -o pipefail
+          node tests/milo/r34_banc.js --avant /tmp/avant 2>&1 | tee /tmp/r34-blanc.log
+
+      - name: R34 — passe RÉELLE (plafonds 20 appels et 5 €, vérifiés par le script)
+        if: ${{ github.event.inputs.banc == 'r34' }}
+        env:
+          FT_BANC_TOKEN: ${{ secrets.FT_BANC_TOKEN }}
+          R34_AVANT_SHA: f4f9317de8eea7af81f2dcb492c9a728f76f3c82
+        run: |
+          set -o pipefail
+          node tests/milo/r34_banc.js --go --avant /tmp/avant 2>&1 | tee /tmp/r34.log
+
+      - name: R34 — garder le journal et le rapport en pièce jointe
+        if: ${{ always() && github.event.inputs.banc == 'r34' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: banc-r34-journal
+          path: |
+            /tmp/r34-blanc.log
+            /tmp/r34.log
+            tests/milo/r34-report.json
+          retention-days: 30
 
       - name: Enregistrer la référence dans le dépôt
         if: ${{ github.event.inputs.enregistrer != 'non' }}
