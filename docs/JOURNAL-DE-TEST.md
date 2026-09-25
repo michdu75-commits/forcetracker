@@ -3203,3 +3203,10 @@ n'y est pas. Résultat mesuré : en B, D, E et **AVANT** (1,55), Milo écrit *«
 prise »* (somme juste, attribution fausse). **Présent avant ET après** le chantier D-021 : ce
 n'est pas une régression, c'est une donnée absente du contexte (famille **R8**). Rien corrigé.
 Vérifiable par du code : oui (l'explication donnée doit retomber sur la cible affichée).
+
+### 🟡 ACTIVITÉ ABSENTE : « PLUSIEURS CENTAINES DE CALORIES » EN MOTS — EST-CE UN ORDRE DE GRANDEUR ? (25/09/2026, contrat FT → Milo)
+Run 36131403113. Avec la consigne D-024, Milo ne donne plus aucun chiffre calorique dépendant de
+l'activité, mais écrit *« entre 2×/sem et 5×/sem, l'écart peut dépasser plusieurs centaines de
+calories par jour »*. Aucun nombre, donc conforme à la lettre (« ordre de grandeur **chiffré** ») ;
+c'est pourtant un ordre de grandeur. ❓ **À trancher par Michel** : le « qualitatif » autorisé
+inclut-il des quantités en mots ? Vérifiable par du code : oui (liste de formulations quantitatives).

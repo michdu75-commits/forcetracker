@@ -108,3 +108,15 @@ défaut venait des **données** (fragments, défauts silencieux), pas d'une cons
   confirmer une fois ?
 - **Objectifs sans date** : `S.strengthGoals` / `S.targetWeight` ne portent pas leur date de
   réglage ; la fraîcheur n'est pas mesurable. Évolution possible (horodater au réglage).
+
+## 7. Vérification réelle (25/09, run 36131403113, claude-sonnet-4-6, 3 appels, 0 retry)
+
+- **Activité absente** : ni TDEE, ni cible, ni fourchette ; BMR seul ; il demande les séances et
+  reconnaît le travail déjà connu (« tu m'as déjà dit bureau, donc c'est noté »). ⚠️ Limite : « l'écart
+  peut dépasser **plusieurs centaines** de calories » — un ordre de grandeur en MOTS, sans chiffre
+  (D-024 interdit l'ordre de grandeur chiffré). Consigné au journal de test, à trancher.
+- **Cible valide (R8)** : « 1 718 × 1,55 = 2 663 → +200 objectif force → +100 phase de charge
+  → 2 963 ». Plus de « 2663 + 100 = 2963 ».
+- **Programme structuré + performances** : jours Push/Pull et charges prévues ; réalisé séparé
+  (87,5 → 90 kg au couché, 140×5/4 au soulevé, militaire et tractions pas encore faits) ; il dit
+  ce qui manque (aucun RIR) et n'invente ni semaine en cours ni phase.
