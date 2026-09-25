@@ -3190,6 +3190,10 @@ l'activité manque, ou Milo doit-il se contenter de demander ? Vérifiable par d
 ✅ **Tranché par Michel le 25/09 → `D-022`** : Milo **demande**, il ne chiffre pas (ni TDEE, ni
 cible, ni fourchette, même « par hypothèse »). Consigne dans la ligne d'activité, témoins
 B-CCCLXXI, mutations M-R34A-1…5, micro-banc réel REAL-A / REAL-B.
+⚠️ **Puis fuite numérique au micro-banc réel (run 36118203950)** : plus de TDEE ni de cible, mais
+*« l'écart peut dépasser 500 kcal »*. Clarification de Michel → **`D-024`** (extension de D-022,
+qui reste valide) : **aucun** chiffre calorique dépendant de l'activité (ordre de grandeur, écart,
+exemple, estimation indirecte), BMR autorisé. Témoins B-CCCLXXII, mutations M-R34A-6…9.
 
 ### 🟡 « PHASE CHARGE (+100 KCAL) » : MILO EXPLIQUE LA CIBLE PAR UN CALCUL FAUX (25/09/2026, banc R34 réel)
 Même run. La cible vaut `TDEE + goalDelta (force) + 100 (phase charge)` (`_autoKcalBrut`,
