@@ -86,13 +86,23 @@ défaut venait des **données** (fragments, défauts silencieux), pas d'une cons
 
 ## 6. Ce qui reste ouvert (tickets)
 
-- **MILO-AUTH1** — « Reconnecte ton appareil pour utiliser Milo » : chat et analyse passent par la
-  **même** garde. `_identiteIA` (worker.js) rend `raison:'reseau'` si l'appel à Apps Script
-  (`authIdentity`) échoue ou rend un JSON illisible, et le Worker répond alors **le même 401**
-  qu'un jeton invalide. Une panne passagère d'Apps Script ressemble donc à un appareil
-  déconnecté. Correctif proposé (Worker, donc publié avec master) : un réessai de `_identiteIA`
-  sur `reseau`, et un 503 « Milo momentanément indisponible » distinct du 401. Non appliqué ici :
-  garde de sécurité, déploiement Worker.
+- **MILO-AUTH1** — ✅ **CORRIGÉ ET TESTÉ (déterministe + contrôle négatif), le 25/09 — PAS
+  encore vérifié en réel** (aucun incident réel reproduit ; le Worker se déploie avec master).
+  Cause : toute identité non prouvée rendait **le même 401** « Reconnecte ton appareil » —
+  `reseau` (Apps Script muet), page d'erreur HTML (JSON illisible), `erreur` (stockage), réponse
+  sans raison (`catch` de `handleAuthIdentity_`, traduit `refus`), `illisible`. Le chat relaie la
+  phrase du serveur : une panne passagère se lisait « appareil déconnecté ».
+  Correction (ft-v1223 appliqué un étage plus haut) : **liste blanche** des vrais refus
+  (`revoque` · `forme` · `absent` · `inconnu`, identique à `_SB_REFUS_REELS` de supabase.js) →
+  **401** « Reconnecte » ; **tout le reste → 503** `identite_indisponible` « Milo est
+  momentanément indisponible… réessaie dans un instant ». ⛔ **Fail-closed dans tous les cas :
+  aucun appel IA.** Pas de réessai (garde épinglée ; la distinction était prioritaire).
+  Client : l'analyse de programme relaie désormais la phrase du serveur comme le chat ; aucun
+  code client n'efface le jeton. Témoins `tests/parcours/auth_ia.js`, contrôle
+  `tools/mut_auth_ia.py`, banc `tools/banc_auth_ia.js`.
+  ⚠️ Reste : les autres écrans IA (nutrition, imports) affichent leur message générique, sans
+  jamais dire « reconnecte » ; la route `cloudSave` rend encore 401 sur une panne, mais le
+  client du miroir la classe déjà par la même liste blanche (ft-v1223).
 - **MILO-PDF1** — PDF « Analyse » coupé en pleine phrase : l'export (`exportCoachPdf`) recopie la
   réponse **en entier** ; la réponse elle-même est plafonnée à **1024 jetons** (worker.js, `coach`)
   et le Worker **ne lit jamais `stop_reason`** → une coupure est silencieuse. Correctif proposé :
