@@ -115,6 +115,16 @@ async function _identiteIA(token, env) {
   } catch (e) { return { ok: false, raison: 'reseau' }; }
 }
 
+/* 🩹 MILO-AUTH1 — LES SEULS VRAIS REFUS D'IDENTITÉ, NOMMÉS UN PAR UN (liste blanche).
+   ⛔ MÊME LISTE que `_SB_REFUS_REELS` (supabase.js, ft-v1223) : deux runtimes séparés ne peuvent
+   pas partager un module, ils partagent la LISTE — un témoin exige qu'elles restent identiques (R2).
+   `absent`/`forme` : aucun jeton · `inconnu` : jeton jamais vu · `revoque` : appareil retiré.
+   Reconnecter l'appareil est la seule réponse utile à ces quatre-là, et à eux seuls. */
+const _REFUS_IDENTITE_REELS = ['revoque', 'forme', 'absent', 'inconnu'];
+function _identiteEstRefusReel(r) {
+  return _REFUS_IDENTITE_REELS.indexOf(String(r || '')) >= 0;
+}
+
 async function _compterIA(action, email, env){
   try{
     const r = await fetch(APPS_SCRIPT_URL, {
@@ -191,6 +201,19 @@ export default {
     if (_ACTIONS_IA.has(body.action)) {
       _moi = await _identiteIA(body.token, env);
       if (!_moi.ok) {
+        /* 🩹 MILO-AUTH1 (25/09/2026) — UNE PANNE DU PONT N'EST PAS UN REFUS D'IDENTITÉ.
+           ⛔ Les DEUX restent fermés : aucun appel IA, dans aucun cas. Seuls le statut et la
+           phrase changent. Avant, `reseau` (Apps Script muet), `erreur` (son stockage a lâché),
+           `refus` (réponse sans raison, ex. le `catch` de `handleAuthIdentity_`) et `illisible`
+           rendaient tous « Reconnecte ton appareil » — et le chat, qui relaie la phrase du
+           serveur, l'affichait à quelqu'un dont l'appareil allait très bien.
+           ⭐ C'est ft-v1223 (miroir Supabase) appliqué un étage plus haut : LISTE BLANCHE des vrais
+           refus, tout le reste est une indisponibilité (R29 — une raison nouvelle est bien plus
+           probablement une anomalie qu'un refus légitime). */
+        if (!_identiteEstRefusReel(_moi.raison)) {
+          return json({ status: 'error', error: 'identite_indisponible', raison: _moi.raison,
+            reply: "Milo est momentanément indisponible : la vérification de ton appareil n'a pas pu se faire de notre côté. Réessaie dans un instant 🙏" }, 503);
+        }
         return json({ status: 'error', error: 'auth', raison: _moi.raison,
           reply: 'Reconnecte ton appareil pour utiliser Milo 👍' }, 401);
       }

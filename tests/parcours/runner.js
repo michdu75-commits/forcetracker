@@ -39628,6 +39628,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🧾 CONTRAT FT → MILO (25/09/2026) — « Force Tracker calcule, Milo explique » : CTX-01…08.
      Contrôle négatif : `tools/mut_contrat_milo.py`. */
   await require('./contrat_milo.js').ecran(t, b, PORT);
+  /* 🩹 MILO-AUTH1 (25/09/2026) — panne du pont d'identité ≠ refus. `.reel` conduit le VRAI
+     worker.js dans un bac à sable (réseau simulé) ; `.ecran` lit ce que la personne voit.
+     Contrôle négatif : `tools/mut_auth_ia.py` (banc : `tools/banc_auth_ia.js`). */
+  await require('./auth_ia.js').reel(t, ROOT, fs, path);
+  await require('./auth_ia.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40437,6 +40442,7 @@ require('./nutri_moteur.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
+require('./auth_ia.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

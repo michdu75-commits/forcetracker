@@ -9827,14 +9827,22 @@ async function analyzeProgIa(idx){
   const message='Analyse ce programme d\'entraînement en tant que coach expert. Réponds en 4 parties :\n\n🎯 VERDICT GLOBAL (1 phrase directe et honnête)\n✅ POINTS FORTS\n⚠️ POINTS À AMÉLIORER\n💡 RECOMMANDATIONS CONCRÈTES (actions à faire)\n\nSois direct, concret et personnalisé selon mon profil.\n\nProgramme : "'+prog.name+'"\n'+progText;
   try{
     const resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'coach',message,context:buildCoachContext(message),history:[]})});
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    /* 🩹 MILO-AUTH1 (25/09/2026) : on LIT la phrase du serveur, comme le chat (`_phraseServeur`).
+       Avant, tout échec disait « Vérifie ta connexion » — y compris un vrai refus d'identité (401)
+       et une panne de vérification côté serveur (503), où la connexion de la personne n'y est pour rien. */
+    if(!resp.ok){
+      let _m='';
+      try{ const _d=await resp.clone().json(); _m=(typeof _phraseServeur==='function')?_phraseServeur((_d&&(_d.reply||_d.error))||''):''; }catch(_){}
+      const _e=new Error(_m||('HTTP '+resp.status)); _e.duServeur=!!_m; throw _e;
+    }
     const data=await resp.json();
     const reply=data.reply||'Erreur lors de l\'analyse.';
     _lastProgAnalysisReply=reply;_lastProgAnalysisProg=prog;
     content.innerHTML='<div style="font-size:14px;line-height:1.7;color:var(--t1);">'+_coachFmtHtml(reply)+'</div>';
     if(footer)footer.style.display='block';
   }catch(e){
-    content.innerHTML='<div style="color:var(--red);padding:20px;text-align:center;">Erreur de connexion. Vérifie ta connexion et réessaie.</div>';
+    const _txt=(e&&e.duServeur)?String(e.message).replace(/</g,'&lt;'):'Erreur de connexion. Vérifie ta connexion et réessaie.';
+    content.innerHTML='<div style="color:var(--red);padding:20px;text-align:center;">'+_txt+'</div>';
   }
 }
 function continueInCoach(){
