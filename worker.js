@@ -421,9 +421,19 @@ async function callClaudeDiag(apiKey, payload, meta) {
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
     const apiErr = (data && data.error) ? [data.error.type, data.error.message].filter(Boolean).join(': ') : '';
     if (meta) _envoyerUsage(meta, (data && data.model) || payload.model, data && data.usage);
-    return { text, status: r.status, apiErr: String(apiErr) };
+    /* 📄 MILO-PDF1 (25/09/2026) — LE SIGNAL DE COUPURE N'EST PLUS JETÉ.
+       Avant, on ne gardait que le TEXTE : une réponse arrêtée par `max_tokens` au milieu d'une
+       phrase ressortait d'ici exactement comme une réponse finie. Un PDF réel titré par Milo
+       « Analyse complète » s'arrêtait ainsi en page 2 sur « Muscles prioritaires : Épaules + »,
+       sans que rien, nulle part, ne sache qu'il manquait la suite.
+       ⭐ On transporte la valeur RÉELLE rendue par le modèle, telle quelle, sans l'interpréter
+       ici (end_turn · max_tokens · stop_sequence · …) ; `null` si le modèle n'en a rendu aucune
+       (erreur, réponse illisible). ⛔ On ne la DEVINE jamais depuis la ponctuation ou la
+       longueur : un texte sans point final peut être parfaitement fini. */
+    const stopReason = (data && typeof data.stop_reason === 'string' && data.stop_reason) ? data.stop_reason : null;
+    return { text, status: r.status, apiErr: String(apiErr), stopReason };
   } catch (e) {
-    return { text: '', status: 0, apiErr: 'fetch: ' + ((e && e.message) || '?') };
+    return { text: '', status: 0, apiErr: 'fetch: ' + ((e && e.message) || '?'), stopReason: null };
   }
 }
 function firstJson(text) {
@@ -737,19 +747,87 @@ async function coach(body, apiKey, meta) {
   const _em = String(body.evalModel || '').trim();
   if (_em && MODELES_BENCHMARK.indexOf(_em) >= 0) model = _em;
 
+  /* 📄 MILO-PDF1 — LE BUDGET DE LA CONVERSATION NE BOUGE PAS (1024), ET C'EST VOULU.
+     Monter à 4096 « partout » aurait fait disparaître le symptôme sans rien réparer : une réponse
+     plus longue que 4096 serait coupée pareil, et toujours présentée comme finie. Le correctif est
+     de SAVOIR qu'elle est coupée (voir `stopReason` ci-dessous), pas de repousser la coupure. */
   const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages }, meta);
   // _diag = diagnostic technique (ignoré par l'app normale, lu par PT-001 / le laboratoire).
   // On NE change PAS le message utilisateur : Milo dit toujours « Désolé, réessaie. » si vide.
-  const _diag = d.text ? 'ok'
-    : (d.status === 429 ? 'rate_limit'
-      : (d.status === 529 ? 'overloaded'
-        : (d.status && d.status >= 400 ? ('api_error ' + d.status + (d.apiErr ? ' ' + d.apiErr : ''))
-          : (d.apiErr ? ('error ' + d.apiErr) : 'empty'))));
+  const _diag = _diagClaude(d);
+  let texte = d.text, stop = d.stopReason, continued = false, _diagSuite;
+  /* 📄 MILO-PDF1 — UNE SEULE SUITE, ET SEULEMENT QUAND ON L'A DEMANDÉE.
+     ⛔ Le chat de tous les jours ne l'envoie PAS : il reste à UN appel (une coupure y est signalée,
+        pas rattrapée en silence avec un 2ᵉ appel payant). Seule une demande explicitement longue
+        (l'analyse de programme) pose `suite: true`.
+     ⛔ Et seulement sur le signal RÉEL du modèle (`max_tokens`), jamais sur une supposition.
+     ⛔ AU PLUS UNE : pas de boucle. Si la suite est coupée à son tour, ou si elle échoue, on garde
+        ce qu'on a et on le DIT (`truncated: true`) — la 1ʳᵉ partie ne devient jamais « complète »
+        parce que la suite a raté.
+     ⭐ La suite est demandée comme une vraie réponse (le texte déjà écrit + une consigne de reprise),
+        pas par « préremplissage » : ce mode n'a pas pu être vérifié sur ce modèle, et un appel qui
+        échouerait à chaque fois laisserait toutes les analyses incomplètes. Le quota n'est compté
+        qu'UNE fois (par requête, en amont) ; le coût des deux appels est bien rapporté (`meta`). */
+  if (body.suite === true && texte && stop === 'max_tokens') {
+    const s = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system,
+      messages: messages.concat([{ role: 'assistant', content: texte }, { role: 'user', content: _consigneSuite(texte) }]) }, meta);
+    _diagSuite = _diagClaude(s);
+    if (s.text) { texte = _recollerSuite(texte, s.text); stop = s.stopReason; continued = true; }
+    // ⛔ Échec de la suite : `texte` et `stop` (= 'max_tokens') restent ceux de la 1ʳᵉ partie.
+  }
   // ⚠️ `_model` = le modèle qui a RÉELLEMENT servi, pas celui qu'on a demandé. Sans lui, le
   // benchmark pourrait annoncer « testé en Haiku » alors qu'un repli l'a mis sur Sonnet —
   // c'est exactement l'erreur des personas VC (« Haiku (défaut) » pendant des semaines de
   // Sonnet), et une évaluation qui se trompe de modèle fait corriger le mauvais cerveau (R9).
-  return { reply: d.text || 'Désolé, réessaie.', _diag, _model: model };
+  /* 📄 MILO-PDF1 — L'ÉTAT DE LA RÉPONSE VOYAGE AVEC ELLE. `reply` reste le seul champ qu'un ancien
+     client lit : il ne voit aucune différence. Les nouveaux champs ne décrivent que des FAITS :
+       · stopReason — la raison d'arrêt RÉELLE de la dernière partie (null si aucune) ;
+       · truncated  — le modèle a signalé une coupure par la limite de longueur ;
+       · complete   — il s'est arrêté de lui-même (end_turn / stop_sequence) ET il y a un texte.
+     ⛔ Une raison inconnue ou absente n'est ni « coupée » ni « complète » : on ne prétend rien. */
+  const out = { reply: texte || 'Désolé, réessaie.', _diag, _model: model,
+    stopReason: stop || null, truncated: stop === 'max_tokens',
+    complete: !!texte && (stop === 'end_turn' || stop === 'stop_sequence'), continued };
+  if (_diagSuite !== undefined) out._diagSuite = _diagSuite;
+  return out;
+}
+// Diagnostic technique d'un appel (`_diag`) — sorti de `coach()` pour servir aussi à la suite.
+function _diagClaude(d) {
+  return d.text ? 'ok'
+    : (d.status === 429 ? 'rate_limit'
+      : (d.status === 529 ? 'overloaded'
+        : (d.status && d.status >= 400 ? ('api_error ' + d.status + (d.apiErr ? ' ' + d.apiErr : ''))
+          : (d.apiErr ? ('error ' + d.apiErr) : 'empty'))));
+}
+/* 📄 MILO-PDF1 — la consigne de reprise. Elle cite la FIN du texte déjà écrit pour que le modèle
+   reprenne au bon endroit, et interdit ce qui gâcherait la couture (répéter, recommencer, annoncer). */
+function _consigneSuite(texte) {
+  const fin = String(texte).slice(-160).replace(/\s+/g, ' ').trim();
+  return 'Ta réponse précédente a été coupée par la limite de longueur, en plein milieu. '
+    + 'Elle se termine exactement par : « ' + fin + ' ». '
+    + 'Écris UNIQUEMENT la suite, en reprenant exactement là où elle s\'arrête. '
+    + 'Ne répète rien de ce qui est déjà écrit, ne recommence pas depuis le début, '
+    + 'pas d\'introduction, pas de rappel, pas de phrase du type « voici la suite ».';
+}
+/* 📄 MILO-PDF1 — la couture entre les deux parties. DÉTERMINISTE, et bornée à deux cas mesurables :
+   ① la suite recopie la fin de la 1ʳᵉ partie (≥ 12 caractères identiques) → on retire le doublon ;
+   ② la 1ʳᵉ partie finit au milieu d'un mot et la suite, COLLÉE, réécrit ce mot en entier → on
+      garde le mot entier (« Épau » + « Épaules » → « Épaules »).
+   ⚠️ Une suite qui commence par une espace ou un retour à la ligne commence un mot NOUVEAU : on ne
+      touche alors à rien (sinon « et le » + « lendemain » perdrait son « le »).
+   ⛔ Rien d'autre n'est réécrit : on ne « corrige » pas le texte du modèle. */
+function _recollerSuite(a, b) {
+  a = String(a); b = String(b);
+  const bt = b.replace(/^\s+/, '');
+  for (let k = Math.min(a.length, bt.length, 400); k >= 12; k--) {
+    if (a.endsWith(bt.slice(0, k))) return a + bt.slice(k);
+  }
+  if (/^\s/.test(b)) return a + b;                 // le modèle commence lui-même un mot nouveau
+  if (/\s$/.test(a)) return a + bt;
+  const mot = (a.match(/[\p{L}\p{N}]+$/u) || [''])[0];
+  if (mot && bt.startsWith(mot) && /^[\p{L}\p{N}]/u.test(bt.slice(mot.length))) return a.slice(0, -mot.length) + bt;
+  // Mot coupé en deux (« Épau » + « les ») : on colle. Sinon on sépare d'une espace.
+  return (/[\p{L}]$/u.test(a) && /^[\p{Ll}]/u.test(bt)) ? a + bt : a + ' ' + bt;
 }
 
 // ── Import de document : programme / historique — recopié de handleImportProgram_/handleImportHistory_
