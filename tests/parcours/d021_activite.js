@@ -169,7 +169,8 @@ module.exports.ecran = async function (t, b, PORT) {
   const L = await pg.evaluate(() => {
     const BASEP = { ft4_bw: '85.9', ft4_age: '48', ft4_ht: '180', ft4_gender: 'H', ft4_work: 'bureau', ft4_goal: 'force', ft4_nphase: 'charge', ft4_ob2: '1', _decorD21: '1' };
     const lire = (o) => { localStorage.clear(); const D = Object.assign({}, BASEP, o || {}); Object.keys(D).forEach(k => localStorage.setItem(k, D[k])); load();
-      const c = String(buildCoachContext()); return { ligne: ((c.match(/Niveau activité sportive: [^|]*/) || [''])[0]).trim(), tdee: ((c.match(/TDEE: [^ |\n]*/) || [''])[0]) }; };
+      const c = String(buildCoachContext()); return { ligne: ((c.match(/Niveau activité sportive: [^|]*/) || [''])[0]).trim(), tdee: ((c.match(/TDEE: [^ |\n]*/) || [''])[0]),
+        plein: (c.split('\n').find(l => l.indexOf('Niveau activité sportive:') >= 0) || '') }; };
     const out = {};
     out.A = lire({});
     out.B = lire({ ft4_act: '1.55', ft4_act_src: 'choisi' });
@@ -180,8 +181,10 @@ module.exports.ecran = async function (t, b, PORT) {
     out.H = lire({ ft4_act: '1.2' });
     return out;
   });
-  t('B-CCCLXX A activité absente → « NON RENSEIGNÉ (besoins caloriques non calculés) », TDEE « — »',
-    L.A.ligne === 'Niveau activité sportive: NON RENSEIGNÉ (besoins caloriques non calculés)' && /TDEE: —/.test(L.A.tdee), JSON.stringify(L.A));
+  /* ⚠️ Égalité stricte remplacée le 25/09 (D-022) : la ligne porte désormais la consigne « demander,
+     ne pas chiffrer ». Le préfixe reste EXACT ; la consigne est éprouvée en B-CCCLXXI. */
+  t('B-CCCLXX A activité absente → « NON RENSEIGNÉ (besoins caloriques non calculés) … », TDEE « — »',
+    L.A.ligne.startsWith('Niveau activité sportive: NON RENSEIGNÉ (besoins caloriques non calculés) — ') && /TDEE: —/.test(L.A.tdee), JSON.stringify(L.A));
   t('B-CCCLXX B 1,55 choisi → « 1.55 — Modéré (3-4j), choisi par la personne », TDEE 2711',
     L.B.ligne === 'Niveau activité sportive: 1.55 — Modéré (3-4j), choisi par la personne' && /2711/.test(L.B.tdee), JSON.stringify(L.B));
   t('B-CCCLXX C 1,725 choisi → la valeur EXACTE « 1.725 — Actif (5-6j), choisi par la personne »',
@@ -194,5 +197,29 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCLXX F ancien 1,2 sans provenance → « réglage ancien (provenance non enregistrée) », jamais « choisi »',
     L.H.ligne === 'Niveau activité sportive: 1.2 — Sédentaire, réglage ancien (provenance non enregistrée)', JSON.stringify(L.H));
   t('B-CCCLXX ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
+
+  /* ══ B-CCCLXXI. R34-A (D-022, Michel 25/09) — ACTIVITÉ ABSENTE : MILO DEMANDE, IL N'INVENTE PAS ══
+     Banc réel du 25/09 : avec le seul constat « NON RENSEIGNÉ », Milo chiffrait « disons 3 séances →
+     TDEE 2 300–2 500 ». Ces témoins lisent la ligne RÉELLEMENT construite (pas un commentaire). */
+  console.log('\n-- B-CCCLXXI. R34-A : la consigne « demander avant de chiffrer », et SEULEMENT sans activité --');
+  const CONSIGNE = /AUCUN chiffre de dépense \(TDEE\) ni de cible calorique/;
+  const a1 = L.A.ligne;
+  t('B-CCCLXXI A1 activité absente → consigne explicite : aucun TDEE ni cible chiffrés', CONSIGNE.test(a1), a1);
+  t('B-CCCLXXI A1 … ni fourchette, ni calcul « par hypothèse » (pas de « disons 3 séances »)',
+    /pas même une fourchette/.test(a1) && /par hypothèse/.test(a1) && /disons 3 séances/.test(a1), a1);
+  t('B-CCCLXXI A1 … et DEMANDER la donnée avant de calculer',
+    /demande-lui combien de séances/.test(a1) && /le calcul viendra après sa réponse/.test(a1), a1);
+  t('B-CCCLXXI A1 … exception NOMMÉE aux règles qui poussaient à chiffrer (propose d\'abord, fourchettes, fréquence)',
+    /Exception explicite/.test(a1) && /propose d'abord/.test(a1) && /FOURCHETTES/.test(a1) && /fréquence/.test(a1), a1);
+  t('B-CCCLXXI A1 … la consigne va jusqu\'au bout AVANT « | Type travail » (un « | » dans son texte la couperait)',
+    L.A.plein === '- ' + a1 + ' | Type travail: Bureau/Sédentaire (+0 kcal NEAT)' && /fréquence$/.test(a1), L.A.plein);
+  t('B-CCCLXXI A2 1,55 CHOISI → aucune consigne « ne chiffre pas » (les chiffres calculés restent explicables)',
+    !CONSIGNE.test(L.B.ligne) && /2711/.test(L.B.tdee), JSON.stringify(L.B));
+  t('B-CCCLXXI A3 ancien 1,55 non confirmé → ambiguïté D-021 conservée, pas de consigne « ne chiffre pas »',
+    /À CONFIRMER/.test(L.D.ligne) && !CONSIGNE.test(L.D.ligne), JSON.stringify(L.D));
+  t('B-CCCLXXI A4 ancien 1,55 CONFIRMÉ → identique à un vrai choix, sans consigne',
+    L.E.ligne === L.B.ligne && !CONSIGNE.test(L.E.ligne), JSON.stringify(L.E));
+  t('B-CCCLXXI A5 1,725 choisi et ancien 1,2 hérité → pas de consigne non plus',
+    !CONSIGNE.test(L.C.ligne) && !CONSIGNE.test(L.H.ligne), JSON.stringify([L.C.ligne, L.H.ligne]));
   await cx.close();
 };

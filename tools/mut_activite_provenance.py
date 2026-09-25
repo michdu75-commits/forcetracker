@@ -46,7 +46,7 @@ MUT = [
      "  return (S.activityLevel||1.55)>=1.725?0:150;", 'rouge', 'LE CODE D AVANT : bonus sport sur 1,55 supposé'),
     ('M14', ST, "  if(profilBmrManquants().length) return {kcal:0,methode:null,raison:'profil incomplet'};",
      "  if(profilCaloriqueManquants().length) return {kcal:0,methode:null,raison:'profil incomplet'};", 'rouge', 'le BMR se tait à cause de l activité'),
-    ('M15', CO, "if(_e==='absent') return 'NON RENSEIGNÉ (besoins caloriques non calculés)';",
+    ('M15', CO, "if(_e==='absent') return 'NON RENSEIGNÉ (besoins caloriques non calculés) — '+_MILO_ACT_ABSENTE;",
      "if(_e==='absent') return String(S.activityLevel);", 'rouge', 'Milo lit « null »'),
     ('M16', ST, "    const actuel=_activiteValide(S.activityLevel);\n    if(actuel==null)return null;",
      "    const actuel=+S.activityLevel||1.55;", 'rouge', 'carte « passer de Modéré à… » sans niveau choisi'),
