@@ -3187,6 +3187,9 @@ Nutrition et Milo se contredisent.
 ❓ **À trancher par Michel** : une fourchette hypothétique étiquetée est-elle acceptable quand
 l'activité manque, ou Milo doit-il se contenter de demander ? Vérifiable par du code : oui
 (aucun chiffre de TDEE ni de cible dans la réponse quand le contexte dit « — »).
+✅ **Tranché par Michel le 25/09 → `D-022`** : Milo **demande**, il ne chiffre pas (ni TDEE, ni
+cible, ni fourchette, même « par hypothèse »). Consigne dans la ligne d'activité, témoins
+B-CCCLXXI, mutations M-R34A-1…5, micro-banc réel REAL-A / REAL-B.
 
 ### 🟡 « PHASE CHARGE (+100 KCAL) » : MILO EXPLIQUE LA CIBLE PAR UN CALCUL FAUX (25/09/2026, banc R34 réel)
 Même run. La cible vaut `TDEE + goalDelta (force) + 100 (phase charge)` (`_autoKcalBrut`,
