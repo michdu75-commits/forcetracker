@@ -3083,9 +3083,13 @@ function _supersetTxt(e, exs){
    ⭐ La consigne vit DANS la ligne d'activité, et nulle part ailleurs : elle n'apparaît que chez qui n'a
    pas choisi, ne coûte rien au bloc commun (plafonné à 46 500) et nomme les règles dont elle est
    l'exception — une exception écrite loin de la donnée perd la hiérarchie (R11).
+   ⭐ D-024 (25/09, micro-banc réel run 36118203950) : la 1ʳᵉ version interdisait dépense, cible,
+   fourchette et hypothèse — Milo a alors écrit « l'écart peut dépasser 500 kcal ». Un ÉCART n'était
+   dans aucune de ces cases. D'où l'interdiction de TOUT chiffre calorique dépendant de l'activité
+   (ordre de grandeur, delta, exemple), et l'autorisation EXPLICITE de ce qui n'en dépend pas (BMR…).
    ⛔ Périmètre : l'activité nécessaire au TDEE et à la cible, RIEN d'autre (pas une règle générale sur
    les données manquantes). ⛔ Pas de « | » dans ce texte : il fermerait la ligne du profil. */
-const _MILO_ACT_ABSENTE='⛔ tant que ce niveau manque, ne donne AUCUN chiffre de dépense (TDEE) ni de cible calorique, pas même une fourchette ni un calcul « par hypothèse » (pas de « disons 3 séances ») ; le BMR n\'est pas une dépense. Dis que ce niveau manque, explique que ses besoins caloriques en dépendent, et demande-lui combien de séances il fait par semaine : le calcul viendra après sa réponse. Exception explicite, ici seulement, à « propose d\'abord », aux FOURCHETTES et aux hypothèses par défaut sur la fréquence';
+const _MILO_ACT_ABSENTE='⛔ tant que ce niveau manque, ne donne AUCUN chiffre calorique qui dépendrait de lui : ni dépense (TDEE), ni cible, ni fourchette, ni calcul « par hypothèse » (pas de « disons 3 séances »), ni ordre de grandeur, ni écart ou delta en kcal (pas de « l\'écart peut dépasser 500 kcal »), ni exemple chiffré, ni estimation indirecte (pas de multiplicateur ou de pourcentage appliqué au BMR, pas de kcal brûlées par séance, pas de grammes de glucides ou de macros déduits d\'une cible). Reste QUALITATIF : dis que ce niveau manque, que ses besoins en dépendent fortement, et demande-lui combien de séances il fait par semaine : le calcul viendra après sa réponse. Tu peux citer ce qui n\'en dépend pas (BMR, poids, taille, âge), en précisant que le BMR n\'est ni sa dépense quotidienne ni une cible. Exception explicite, ici seulement, à « propose d\'abord », aux FOURCHETTES et aux hypothèses par défaut sur la fréquence';
 function buildCoachContext(msg) {
   // ⚠️ LE BMR ARRIVE AVEC SA PROVENANCE (11/08/2026). L'app peut employer deux formules,
   // et l'écart atteint 180 kcal/jour chez quelqu'un de musclé. Sans le savoir, Milo

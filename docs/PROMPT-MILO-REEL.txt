@@ -7,24 +7,24 @@
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
     Généré le 2026-09-25.
 
-🔖  SOURCES : coach.js d677a8ff803a · constants.js 182e0d223715 · state.js 8571c34166c6
+🔖  SOURCES : coach.js fd421b6e0a5b · constants.js 182e0d223715 · state.js 8571c34166c6
     Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
     génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
     si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
     puisqu'il a l'air généré quoi qu'il arrive. ⛔ Ne pas les recopier à la main.
 
-TAILLE TOTALE : 76 042 caractères  (~19 011 tokens)
+TAILLE TOTALE : 76 453 caractères  (~19 113 tokens)
 
 Il est coupé en TROIS morceaux, et c'est là que se joue le prix :
 
-  1. BLOC COMMUN ......... 45 382 car. (59.7 %)
+  1. BLOC COMMUN ......... 45 382 car. (59.4 %)
      Identique pour TOUT LE MONDE. Mis en cache 1 h depuis le 08/08.
      C'est lui qu'on paie une fois pour tous — s'il est relu, il coûte 10 %.
 
-  2. BLOC PERSONNEL ...... 27 805 car. (36.6 %)
+  2. BLOC PERSONNEL ...... 28 216 car. (36.9 %)
      Tes données à toi. Mis en cache 5 min.
 
-  3. L'INSTANT ........... 2 855 car. (3.8 %)
+  3. L'INSTANT ........... 2 855 car. (3.7 %)
      Change à chaque message (heure, état du jour) : JAMAIS mis en cache,
      payé plein tarif à chaque fois.
 
@@ -218,14 +218,14 @@ SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvien
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  2/3 — BLOC PERSONNEL (27805 car., cache 5 min)
+█  2/3 — BLOC PERSONNEL (28216 car., cache 5 min)
 ██████████████████████████████████████████████████████████████████████████████
 
 PROFIL ATHLÈTE:
 - Prénom: Alex (utilise-le naturellement, sans le répéter à chaque phrase)
 - Sexe: Homme | Âge: 35 ans | Taille: 178cm | Poids: 80kg
 - BMR: 1743 kcal | TDEE: — kcal → ⚠️ ESTIMÉ sur poids/taille/âge (Mifflin-St Jeor), aucune mesure de composition corporelle — cette formule ignore la composition corporelle et SOUS-ESTIME les personnes musclées (souvent de 100 à 200 kcal). Traite ce chiffre comme un ordre de grandeur, pas comme une mesure. Si la question porte sur ses calories, tu peux lui dire qu'un bilan corporel (Progrès → Corps & santé) rendrait le calcul nettement plus juste — une fois, sans insister.
-- Niveau activité sportive: NON RENSEIGNÉ (besoins caloriques non calculés) — ⛔ tant que ce niveau manque, ne donne AUCUN chiffre de dépense (TDEE) ni de cible calorique, pas même une fourchette ni un calcul « par hypothèse » (pas de « disons 3 séances ») ; le BMR n'est pas une dépense. Dis que ce niveau manque, explique que ses besoins caloriques en dépendent, et demande-lui combien de séances il fait par semaine : le calcul viendra après sa réponse. Exception explicite, ici seulement, à « propose d'abord », aux FOURCHETTES et aux hypothèses par défaut sur la fréquence | Type travail: Bureau/Sédentaire (+0 kcal NEAT)
+- Niveau activité sportive: NON RENSEIGNÉ (besoins caloriques non calculés) — ⛔ tant que ce niveau manque, ne donne AUCUN chiffre calorique qui dépendrait de lui : ni dépense (TDEE), ni cible, ni fourchette, ni calcul « par hypothèse » (pas de « disons 3 séances »), ni ordre de grandeur, ni écart ou delta en kcal (pas de « l'écart peut dépasser 500 kcal »), ni exemple chiffré, ni estimation indirecte (pas de multiplicateur ou de pourcentage appliqué au BMR, pas de kcal brûlées par séance, pas de grammes de glucides ou de macros déduits d'une cible). Reste QUALITATIF : dis que ce niveau manque, que ses besoins en dépendent fortement, et demande-lui combien de séances il fait par semaine : le calcul viendra après sa réponse. Tu peux citer ce qui n'en dépend pas (BMR, poids, taille, âge), en précisant que le BMR n'est ni sa dépense quotidienne ni une cible. Exception explicite, ici seulement, à « propose d'abord », aux FOURCHETTES et aux hypothèses par défaut sur la fréquence | Type travail: Bureau/Sédentaire (+0 kcal NEAT)
 
 - Tabac: Non-fumeur
 - Objectif principal: Prise de muscle
@@ -373,7 +373,7 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est vendredi 25 septembre, il est 9h11 — c'est matin. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). Le matin : tu peux évoquer l'énergie du réveil, un petit-déjeuner adapté avant/après séance.
+- On est vendredi 25 septembre, il est 9h54 — c'est matin. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). Le matin : tu peux évoquer l'énergie du réveil, un petit-déjeuner adapté avant/après séance.
 
 
 

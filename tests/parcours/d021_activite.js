@@ -170,7 +170,8 @@ module.exports.ecran = async function (t, b, PORT) {
     const BASEP = { ft4_bw: '85.9', ft4_age: '48', ft4_ht: '180', ft4_gender: 'H', ft4_work: 'bureau', ft4_goal: 'force', ft4_nphase: 'charge', ft4_ob2: '1', _decorD21: '1' };
     const lire = (o) => { localStorage.clear(); const D = Object.assign({}, BASEP, o || {}); Object.keys(D).forEach(k => localStorage.setItem(k, D[k])); load();
       const c = String(buildCoachContext()); return { ligne: ((c.match(/Niveau activité sportive: [^|]*/) || [''])[0]).trim(), tdee: ((c.match(/TDEE: [^ |\n]*/) || [''])[0]),
-        plein: (c.split('\n').find(l => l.indexOf('Niveau activité sportive:') >= 0) || '') }; };
+        plein: (c.split('\n').find(l => l.indexOf('Niveau activité sportive:') >= 0) || ''),
+        bmr: ((c.match(/BMR: [^|\n]*/) || [''])[0]) }; };
     const out = {};
     out.A = lire({});
     out.B = lire({ ft4_act: '1.55', ft4_act_src: 'choisi' });
@@ -202,11 +203,23 @@ module.exports.ecran = async function (t, b, PORT) {
      Banc réel du 25/09 : avec le seul constat « NON RENSEIGNÉ », Milo chiffrait « disons 3 séances →
      TDEE 2 300–2 500 ». Ces témoins lisent la ligne RÉELLEMENT construite (pas un commentaire). */
   console.log('\n-- B-CCCLXXI. R34-A : la consigne « demander avant de chiffrer », et SEULEMENT sans activité --');
-  const CONSIGNE = /AUCUN chiffre de dépense \(TDEE\) ni de cible calorique/;
+  const CONSIGNE = /AUCUN chiffre calorique qui dépendrait de lui/;
   const a1 = L.A.ligne;
-  t('B-CCCLXXI A1 activité absente → consigne explicite : aucun TDEE ni cible chiffrés', CONSIGNE.test(a1), a1);
+  t('B-CCCLXXI A1 activité absente → consigne explicite : aucun TDEE ni cible chiffrés', CONSIGNE.test(a1) && /ni dépense \(TDEE\), ni cible/.test(a1), a1);
   t('B-CCCLXXI A1 … ni fourchette, ni calcul « par hypothèse » (pas de « disons 3 séances »)',
-    /pas même une fourchette/.test(a1) && /par hypothèse/.test(a1) && /disons 3 séances/.test(a1), a1);
+    /ni fourchette/.test(a1) && /par hypothèse/.test(a1) && /disons 3 séances/.test(a1), a1);
+  /* ══ D-024 (25/09) : le micro-banc réel a sorti « l'écart peut dépasser 500 kcal » — un chiffre qui
+     dépend de l'activité inconnue sans être un TDEE ni une cible. Ces témoins ferment cette fuite. */
+  t('B-CCCLXXII D-024 … ni ORDRE DE GRANDEUR, ni ÉCART/DELTA en kcal, ni exemple chiffré (le cas « 500 kcal » est nommé)',
+    /ni ordre de grandeur/.test(a1) && /ni écart ou delta en kcal/.test(a1) && /l'écart peut dépasser 500 kcal/.test(a1) && /ni exemple chiffré/.test(a1), a1);
+  t('B-CCCLXXII D-024 … ni ESTIMATION INDIRECTE : multiplicateur/pourcentage du BMR, kcal par séance, grammes de macros déduits',
+    /ni estimation indirecte/.test(a1) && /multiplicateur ou de pourcentage appliqué au BMR/.test(a1) && /kcal brûlées par séance/.test(a1) && /grammes de glucides ou de macros/.test(a1), a1);
+  t('B-CCCLXXII D-024 … Milo reste QUALITATIF',
+    /Reste QUALITATIF/.test(a1) && /ses besoins en dépendent fortement/.test(a1), a1);
+  t('B-CCCLXXII D-024 … mais le BMR et les données indépendantes de l\'activité restent AUTORISÉS, avec la précision « ni dépense ni cible »',
+    /Tu peux citer ce qui n'en dépend pas \(BMR, poids, taille, âge\)/.test(a1) && /le BMR n'est ni sa dépense quotidienne ni une cible/.test(a1), a1);
+  t('B-CCCLXXII D-024 … et le contexte continue de FOURNIR le BMR chiffré (la consigne ne vide pas les données)',
+    /BMR: \d{3,4} kcal/.test(L.A.bmr || ''), L.A.bmr);
   t('B-CCCLXXI A1 … et DEMANDER la donnée avant de calculer',
     /demande-lui combien de séances/.test(a1) && /le calcul viendra après sa réponse/.test(a1), a1);
   t('B-CCCLXXI A1 … exception NOMMÉE aux règles qui poussaient à chiffrer (propose d\'abord, fourchettes, fréquence)',

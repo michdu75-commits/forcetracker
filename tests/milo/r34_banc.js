@@ -162,9 +162,14 @@ function indicateurs(id, rep) {
       const nombres = (t.replace(/(\d)[\s\u202f\u00a0.](?=\d{3}\b)/g, '$1').match(/\d{4}/g) || []).map(Number)
         .filter(n => n >= 1800 && n <= 4500 && n !== 1718);
       const scenario = /disons|supposons|en supposant|par hypoth|si tu fais \d/.test(t);
+      /* D-024 : TOUTE quantité en kcal autre que le BMR (1 718), écarts et ordres de grandeur compris
+         (« l'écart peut dépasser 500 kcal »), et tout multiple/pourcentage du BMR. */
+      const kcal = (t.replace(/(\d)[\s\u202f\u00a0.](?=\d{3}\b)/g, '$1').match(/\d+\s*(?:kcal|calories)/g) || [])
+        .map(x => parseInt(x, 10)).filter(n => n !== 1718);
+      const multiple = /fois (ton|le|ta) (bmr|métabolisme)|\d+\s*%\s*(de plus|en plus|au-dessus|de ton bmr)/.test(t);
       const demande = /combien de (séances|fois)|séances? par semaine|\/sem|par semaine/.test(t);
-      return { attendu: 'D-022 : dit que l\'activité manque, DEMANDE, et ne donne aucun TDEE/cible/fourchette', ok: pasRenseigne && demande && !nombres.length && !scenario,
-               pasRenseigne, demande, nombresCaloriques: nombres, scenario };
+      return { attendu: 'D-022/D-024 : dit que l\'activité manque, DEMANDE, aucun TDEE/cible/fourchette/ordre de grandeur/écart en kcal (BMR permis)', ok: pasRenseigne && demande && !nombres.length && !scenario && !kcal.length && !multiple,
+               pasRenseigne, demande, nombresCaloriques: nombres, scenario, kcalHorsBMR: kcal, multipleBMR: multiple };
     }
     case 'R34-B': case 'R34-E': { const chiffres = /2[\s\u202f\u00a0.]?663/.test(t) && /2[\s\u202f\u00a0.]?963/.test(t);
       return { attendu: 'se base sur Modéré (3-4j) comme un choix, chiffres normaux (2 663 / 2 963), sans redemander confirmation', ok: nomme155 && !demandeConf && chiffres, nomme155, demandeConf, chiffres }; }
