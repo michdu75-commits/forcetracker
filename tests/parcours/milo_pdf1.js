@@ -40,7 +40,7 @@ module.exports.source = function (t, ROOT, fs, path) {
   const co = _corps(W, 'async function coach(');
   t('B-CCCLXXVIII ② `coach()` rend `reply` (ancien contrat) ET l\'état : stopReason · truncated · complete · continued',
     /reply: texte \|\| 'Désolé, réessaie\.'/.test(co) && /stopReason: stop \|\| null/.test(co)
-    && /truncated: stop === 'max_tokens'/.test(co) && /complete: !!texte && \(stop === 'end_turn' \|\| stop === 'stop_sequence'\)/.test(co)
+    && /truncated: stop === 'max_tokens'/.test(co) && /complete: !!texte && stop === 'end_turn',/.test(co)   // ↩️ retourné par MILO-PDF1B : seul end_turn (fail-closed)
     && /continued \}/.test(co), '');
 
   const mt = co.match(/max_tokens: *\d+/g) || [];
@@ -50,10 +50,10 @@ module.exports.source = function (t, ROOT, fs, path) {
   const nApp = (co.match(/callClaudeDiag\(/g) || []).length;
   t('B-CCCLXXVIII ④ la suite est UNIQUE et BORNÉE : 2 appels au plus, aucune boucle, demandée ET signalée `max_tokens`',
     nApp === 2 && !/\bwhile *\(|\bfor *\(/.test(co)
-    && /if \(body\.suite === true && texte && stop === 'max_tokens'\) \{/.test(co), 'appels=' + nApp);
+    && /const ancre = \(body\.suite === true && texte && stop === 'max_tokens'\) \? _ancreSuite\(texte\) : '';\s*if \(ancre\) \{/.test(co), 'appels=' + nApp);   // ↩️ MILO-PDF1B : la condition porte l'ancre
 
   t('B-CCCLXXVIII ⑤ la suite RATÉE ne rend pas la 1ʳᵉ partie « complète » (texte et raison ne changent que si la suite a un texte)',
-    /if \(s\.text\) \{ texte = _recollerSuite\(texte, s\.text\); stop = s\.stopReason; continued = true; \}/.test(co), '');
+    /if \(r\.ok\) \{ texte = r\.texte; stop = r\.stop; continued = true; \}/.test(co) && !/_recollerSuite/.test(co), '');   // ↩️ MILO-PDF1B : raccord prouvé, plus d'heuristique
 
   const ana = L.slice(L.indexOf('async function analyzeProgIa('), L.indexOf('function continueInCoach('));
   const chat = _corps(C, 'async function sendToCoach(');
@@ -63,7 +63,7 @@ module.exports.source = function (t, ROOT, fs, path) {
 
   t('B-CCCLXXVIII ⑦ un seul propriétaire de « la réponse est-elle finie ? » (R2), lu par le chat ET l\'analyse',
     (C.match(/function _miloEtatReponse\(/g) || []).length === 1 && !/function _miloEtatReponse\(/.test(L)
-    && /_miloEtatReponse\(data\) === 'coupee'/.test(chat) && /_miloEtatReponse\(data\)==='coupee'/.test(Ln)
+    && /_miloEtatReponse\(data\)/.test(chat) && /_miloEtatReponse\(data\)/.test(Ln)   // ↩️ MILO-PDF1B : l'appel, pas une comparaison figée
     && !/\.truncated\s*===\s*true/.test(L) && (C.match(/\.truncated\s*===\s*true/g) || []).length === 1, '');
 
   const lm = _corps(C, 'function _lightMsg(');
@@ -73,8 +73,8 @@ module.exports.source = function (t, ROOT, fs, path) {
 
   const pdf = _corps(C, 'async function exportCoachPdf(');
   t('B-CCCLXXVIII ⑨ le PDF lit l\'état de la bulle : bandeau AVANT le texte, repère à la fin, nom de fichier « -incomplet »',
-    /const _cp=_coupeeValide\(bubble\.dataset\.coupee\);/.test(pdf) && /génération interrompue',M,y\)/.test(pdf)
-    && pdf.indexOf('génération interrompue\',M,y)') < pdf.indexOf('_coachPdfText(raw)')
+    /const _cp=_coupeeValide\(bubble\.dataset\.coupee\);/.test(pdf) && /génération interrompue'\),M,y\)/.test(pdf)
+    && pdf.indexOf('génération interrompue\'),M,y)') < pdf.indexOf('_coachPdfText(raw)')   // ↩️ MILO-PDF1B : 2 libellés (coupée / non confirmée)
     && /\(_cp\?'-incomplet':''\)/.test(pdf), '');
 
   const fj = _corps(W, 'function firstJson(');
@@ -98,7 +98,7 @@ function monter(ROOT, fs, path, file) {
         ia.push(corps);
         const r = file.shift();
         if (!r) throw new Error('file vide : appel IA non prévu');
-        return r();
+        return r(corps);
       }
       if (u.indexOf('script.google.com') >= 0 && corps.action === 'authIdentity')
         return { ok: true, status: 200, async json() { return { status: 'ok', email: 'compte-a.test', premium: true, blocked: false }; }, async text() { return ''; } };
@@ -114,6 +114,10 @@ const REP = (text, stop) => () => ({ ok: true, status: 200,
   async text() { return ''; } });
 const ERR = (status) => () => ({ ok: false, status, async json() { return { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }; }, async text() { return ''; } });
 const COUPURE = () => { throw new Error('ECONNRESET'); };
+/* ↩️ MILO-PDF1B : une suite VALIDE respecte l'enveloppe et recopie l'ancre lue dans la consigne. */
+const ANCRE_DE = (corps) => { const m = (corps.messages || []), c = String((m[m.length - 1] || {}).content || '');
+  const i = c.lastIndexOf('-----\n', c.length - 7); return i < 0 ? '' : c.slice(i + 6, c.length - 6); };
+const SUITE = (reste, stop, ferme) => (corps) => REP('<FT_SUITE>' + ANCRE_DE(corps) + reste + (ferme === false ? '' : '</FT_SUITE>'), stop)();
 
 // La fin réelle du PDF du 25/09 : la coupure tombe là.
 const P1 = '🎯 VERDICT GLOBAL\nProgramme solide.\n\n✅ POINTS FORTS\n- Volume bien réparti\n\n💡 RECOMMANDATIONS\nMuscles prioritaires : Épaules +';
@@ -142,7 +146,7 @@ module.exports.reel = async function (t, ROOT, fs, path) {
     r02.d.truncated === true && r02.d.complete === false && r02.d.stopReason === 'max_tokens'
     && r02.ia.length === 1 && r02.d.reply === P1, etat(r02));
 
-  const r03 = await lance([REP(P1, 'max_tokens'), REP(P2, 'end_turn')], { suite: true });
+  const r03 = await lance([REP(P1, 'max_tokens'), SUITE(P2, 'end_turn')], { suite: true });
   const q2 = r03.ia[1] || {}, m2 = q2.messages || [];
   t('PDF-03 suite réussie → les deux parties RECOLLÉES, complete, 2 appels exactement',
     r03.d.reply === P1 + P2 && r03.d.complete === true && r03.d.truncated === false && r03.d.continued === true
@@ -150,22 +154,15 @@ module.exports.reel = async function (t, ROOT, fs, path) {
   t('PDF-03 … la suite REPREND la 1ʳᵉ partie (texte déjà écrit + consigne de reprise citant sa fin), même modèle, même budget',
     m2.length >= 3 && m2[m2.length - 2].role === 'assistant' && m2[m2.length - 2].content === P1
     && m2[m2.length - 1].role === 'user' && /coupée/.test(m2[m2.length - 1].content) && /Épaules \+/.test(m2[m2.length - 1].content)
-    && /Ne répète rien/.test(m2[m2.length - 1].content)
+    && /ne répète rien/.test(m2[m2.length - 1].content)
     && q2.model === r03.ia[0].model && q2.model === 'claude-sonnet-4-6' && q2.max_tokens === 1024 && r03.ia[0].max_tokens === 1024
     && JSON.stringify(q2.system) === JSON.stringify(r03.ia[0].system), JSON.stringify(m2.map(m => m.role)));
 
-  const rRep = await lance([REP(P1, 'max_tokens'), REP('Muscles prioritaires : Épaules + Dos, en priorité le haut du dos.', 'end_turn')], { suite: true });
-  t('PDF-03 … AUCUNE RÉPÉTITION quand la suite recopie la fin de la 1ʳᵉ partie (couture déterministe)',
-    (rRep.d.reply.match(/Muscles prioritaires/g) || []).length === 1 && /Épaules \+ Dos, en priorité le haut du dos\.$/.test(rRep.d.reply)
-    && rRep.d.complete === true, rRep.d.reply.slice(-90));
-  const rMot = await lance([REP('Priorité : Épau', 'max_tokens'), REP('Épaules et dos.', 'end_turn')], { suite: true });
-  const rMot2 = await lance([REP('Priorité : Épau', 'max_tokens'), REP('les et dos.', 'end_turn')], { suite: true });
-  const rMot3 = await lance([REP('On reprend et le', 'max_tokens'), REP(' lendemain repos.', 'end_turn')], { suite: true });
-  t('PDF-03 … un mot coupé se recolle sans doublon (« Épau » + « Épaules » / « les »), un mot nouveau n\'est pas mangé',
-    rMot.d.reply === 'Priorité : Épaules et dos.' && rMot2.d.reply === 'Priorité : Épaules et dos.'
-    && rMot3.d.reply === 'On reprend et le lendemain repos.', JSON.stringify([rMot.d.reply, rMot2.d.reply, rMot3.d.reply]));
+  /* ↩️ MILO-PDF1B : les deux témoins de la couture HEURISTIQUE (répétition retirée, mot recollé) sont
+     RETIRÉS d'ici — la contre-vérification a démontré qu'elle perdait et fusionnait des mots. Leurs cas
+     (et C1→C12) sont rejoués contre le raccord à ANCRE dans B-CCCLXXXII (tests/parcours/milo_pdf1b.js). */
 
-  const r04 = await lance([REP(P1, 'max_tokens'), REP(P2, 'max_tokens'), REP('troisième', 'end_turn')], { suite: true });
+  const r04 = await lance([REP(P1, 'max_tokens'), SUITE(P2, 'max_tokens', false), REP('troisième', 'end_turn')], { suite: true });
   t('PDF-04 suite coupée À SON TOUR → incomplète (truncated), JAMAIS complete, et 2 appels — pas de 3ᵉ',
     r04.d.truncated === true && r04.d.complete === false && r04.d.continued === true && r04.ia.length === 2
     && r04.d.reply === P1 + P2, etat(r04));
@@ -318,8 +315,11 @@ module.exports.ecran = async function (t, b, PORT) {
   mode = 'ancien';
   await pg.evaluate(async () => { coachBusy = false; await sendToCoach('Et pour la récup ?'); });
   const b7b = await derniere(); const p7 = await pdfDe();
-  t('E7 réponse finie OU serveur qui ne transmet pas encore le signal → aucun marqueur, PDF normal (on ne prétend rien)',
-    !b7.marque && !b7b.marque && b7b.coupee === '' && !/INCOMPLÈTE/.test(p7.texte) && !/incomplet/.test(p7.fichier), JSON.stringify([b7.coupee, b7b.coupee, p7.fichier]));
+  /* ↩️ MILO-PDF1B : un serveur qui ne transmet pas le signal n'est plus « on ne prétend rien » mais
+     FAIL-CLOSED — la réponse est marquée « non confirmée ». La réponse finie, elle, reste nue. */
+  t('E7 réponse finie → aucun marqueur ; serveur SANS le signal → marquée « non confirmée » (fail-closed), PDF marqué',
+    !b7.marque && b7.coupee === '' && b7b.marque && b7b.coupee === 'non_confirmee' && /RÉPONSE NON CONFIRMÉE/.test(p7.texte)
+    && /-incomplet\.pdf$/.test(p7.fichier), JSON.stringify([b7.coupee, b7b.coupee, p7.fichier]));
 
   // ── E8 · valeurs abîmées dans le stockage : liste blanche, aucun marqueur inventé ──
   const e8 = await pg.evaluate(() => { coachHistory = [{ role: 'assistant', content: 'Texte.', coupee: 'n_importe_quoi' }, { role: 'assistant', content: 'Autre.', coupee: true }];
@@ -331,3 +331,6 @@ module.exports.ecran = async function (t, b, PORT) {
   t('E∅ aucune erreur de page', !errs.length, errs.slice(0, 2).join(' | '));
   await cx.close();
 };
+
+// Outils du bac à sable Worker, réutilisés par MILO-PDF1B (tests/parcours/milo_pdf1b.js) — une seule copie (R2).
+module.exports._outils = { monter, REP, ERR, COUPURE, SUITE, ANCRE_DE, P1, P2 };
