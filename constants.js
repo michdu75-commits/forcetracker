@@ -582,6 +582,9 @@ const NEW_FEATURES=[
      n'est à faire, aucun repère n'a bougé, et **aucun chiffre existant ne change** : les 27
      produits d'avant sont conservés à l'identique. Une pop-up n'aurait rien à annoncer qu'on
      doive faire (R25). */
+  /* 🏃 RÈGLE D'OR #11, POINT 2 — D-020 + D-021 (24-25/09/2026) : un repère a changé (« Modéré » n'est
+     plus présélectionné) et, pour les anciens comptes, il y a quelque chose à FAIRE (confirmer). */
+  {id:'activite-choisie', screen:'nutrition', desc:'🏃 <b>Ton niveau d\'activité doit venir de toi.</b> Il fixe tes calories. Sans lui, l\'app n\'invente plus de plan ; et s\'il avait été réglé tout seul sur « Modéré », une carte te demande de le <b>confirmer ou le changer</b>.'},
   {id:'fastfood-v2', screen:'nutrition', desc:'🍔 <b>Le fast-food passe de 27 à 128 produits.</b> <b>Quick</b> entre avec sa table officielle complète (burgers, wraps, salades, accompagnements), et <b>Domino\'s</b> s\'étoffe. Tape le nom du produit : il sort avec son enseigne et le poids de sa portion. ⛔ Les valeurs d\'avant n\'ont pas bougé d\'un chiffre.'},
   /* 🔍 POINT ROUGE, PAS DE POP-UP (règle d'or #11) : des mots qui échouaient marchent, et
      *personne ne réessaie un mot qui a échoué une fois* — il y a donc à découvrir. ⛔ Mais c'est

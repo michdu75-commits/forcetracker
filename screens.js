@@ -255,6 +255,8 @@ const _HELP_DATA={
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
+      /* 🏃 RÈGLE D'OR #11, POINT 3 — D-020 + D-021 (24-25/09/2026). */
+      {i:'🏃',t:'<b>Ton niveau d\'activité doit venir de toi.</b> Sans lui (Profil → Activité), l\'app n\'invente pas de plan. S\'il date d\'avant (l\'app mettait « Modéré » toute seule), une carte en haut te demande de le <b>confirmer</b> ou de le <b>modifier</b> — une seule fois.'},
       /* ⚖️ ft-v1159 — CE QU'ON NE DEVINE PAS, ET MICHEL EN EST LA PREUVE : c'est l'AUTEUR de
          l'app qui s'est fait avoir. Le champ « poids de cette portion » travaille en DEUX temps
          — il CALE d'abord, il RECALCULE ensuite — et rien ne le disait. Son enregistrement
