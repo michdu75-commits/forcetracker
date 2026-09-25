@@ -3210,3 +3210,13 @@ l'activité, mais écrit *« entre 2×/sem et 5×/sem, l'écart peut dépasser p
 calories par jour »*. Aucun nombre, donc conforme à la lettre (« ordre de grandeur **chiffré** ») ;
 c'est pourtant un ordre de grandeur. ❓ **À trancher par Michel** : le « qualitatif » autorisé
 inclut-il des quantités en mots ? Vérifiable par du code : oui (liste de formulations quantitatives).
+
+### 🟡 LA SUITE D'UNE ANALYSE COUPÉE : MILO REPREND-IL VRAIMENT « AU MOT PRÈS » ? (25/09/2026, MILO-PDF1 — NON vérifié en réel)
+Quand l'analyse de programme est coupée par la limite de longueur, le Worker demande UNE suite
+(`suite:true`) : le texte déjà écrit + « écris UNIQUEMENT la suite, ne répète rien ». La couture est
+déterministe (répétition de la fin retirée, mot coupé recollé), mais ❓ **le comportement du modèle
+n'est pas mesuré** : il peut reformuler au lieu de reprendre, rouvrir par « Voici la suite », ou
+recommencer une section. ❓ Et **2 × 1024 jetons suffisent-ils** pour une analyse complète ?
+Vérifiable par du code une fois le Worker publié : `continued`, `complete`, `stopReason` dans la
+réponse ; répétition = un paragraphe présent deux fois ; ouverture parasite = motif « voici la
+suite ». ⛔ Le Worker de prod (20/09, `e77060c3`) ne transmet pas encore le signal.

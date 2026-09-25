@@ -28,7 +28,7 @@ garde** : jeton S1 injecté par `_ftPoserInjecteurJeton` (constants.js), vérifi
 |---|---|---|---|---|
 | Chat Coach | `sendToCoach` (coach.js) | `buildCoachContext(msg)` + historique (8) + `coachMemory` + e-mail | `coach` → claude-sonnet-4-6 (1024) | 3 tentatives réseau ; image possible |
 | Débrief de séance | log.js (`instr` du débrief) | `buildCoachContext(instr)` + historique + mémoire | `coach` → idem | consigne propre au débrief |
-| Analyse d'un programme | `analyzeProgIa` (log.js) | `buildCoachContext(message)` ; **la structure du programme est dans le MESSAGE** (`_formatProgForAnalysis`, séries × reps × kg de la 1ʳᵉ série) | `coach` → idem | **pas d'e-mail, pas de mémoire, historique vide, aucun réessai** ; réservé Premium |
+| Analyse d'un programme | `analyzeProgIa` (log.js) | `buildCoachContext(message)` ; **la structure du programme est dans le MESSAGE** (`_formatProgForAnalysis`, séries × reps × kg de la 1ʳᵉ série) | `coach` → idem | **pas d'e-mail, pas de mémoire, historique vide, aucun réessai** ; réservé Premium ; **seul à demander une suite bornée** (`suite:true`, MILO-PDF1) |
 | Laboratoire PT-001 / personas VC / banc R34 | `_pt001Ask`, `_vcAsk` (coach.js) | `buildCoachContext` | `coach` | outils admin / tests |
 | Résumé de conversation | `summarizeCoach` | la conversation seule | `summarizeCoach` → Haiku (250) | pas de contexte profil |
 | Traduction séance → JSON | `seanceJson` | le texte de Milo seul | `seanceJson` → Haiku | « cervelet » : ne sait rien de la personne |
@@ -103,10 +103,16 @@ défaut venait des **données** (fragments, défauts silencieux), pas d'une cons
   ⚠️ Reste : les autres écrans IA (nutrition, imports) affichent leur message générique, sans
   jamais dire « reconnecte » ; la route `cloudSave` rend encore 401 sur une panne, mais le
   client du miroir la classe déjà par la même liste blanche (ft-v1223).
-- **MILO-PDF1** — PDF « Analyse » coupé en pleine phrase : l'export (`exportCoachPdf`) recopie la
-  réponse **en entier** ; la réponse elle-même est plafonnée à **1024 jetons** (worker.js, `coach`)
-  et le Worker **ne lit jamais `stop_reason`** → une coupure est silencieuse. Correctif proposé :
-  exposer `stop_reason: max_tokens` et le dire à l'écran ; pas de hausse aveugle du plafond.
+- **MILO-PDF1** — ✅ **CORRIGÉ ET TESTÉ (déterministe + contrôle négatif), le 25/09 — PAS vérifié
+  en réel** (le Worker de prod date du 20/09, `e77060c3`, sans `stop_reason`). Cause : plafond
+  1024 jetons et `stop_reason` jeté par le Worker → une coupure ressortait comme une réponse finie.
+  ⚠️ « Analyse complète » était un titre écrit par **Milo** dans son texte, pas par l'app.
+  Correction : le Worker rend `stopReason` · `truncated` · `complete` · `continued` (en plus de
+  `reply`, inchangé) ; l'analyse de programme demande **une** suite bornée (`suite:true`), le chat
+  reste à **un** appel ; une réponse restée coupée est marquée dans la fenêtre, la bulle, le fil,
+  le PDF (« … INCOMPLÈTE — génération interrompue ») et le partage. Budget 1024 inchangé.
+  Détail : `docs/MILO-PDF1.md` · témoins `tests/parcours/milo_pdf1.js` · contrôle
+  `tools/mut_milo_pdf1.py` (26/26).
 - **Programme versionné** (principe validé par Michel) : l'app n'a ni programme actif, ni version,
   ni phase, ni RIR cible, ni lien structuré séance → version (seulement le libellé). À construire
   comme brique à part ; le contrat dit aujourd'hui honnêtement ce qui manque.
