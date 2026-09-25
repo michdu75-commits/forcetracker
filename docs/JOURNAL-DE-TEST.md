@@ -3220,3 +3220,10 @@ recommencer une section. ❓ Et **2 × 1024 jetons suffisent-ils** pour une anal
 Vérifiable par du code une fois le Worker publié : `continued`, `complete`, `stopReason` dans la
 réponse ; répétition = un paragraphe présent deux fois ; ouverture parasite = motif « voici la
 suite ». ⛔ Le Worker de prod (20/09, `e77060c3`) ne transmet pas encore le signal.
+↪️ **Mise à jour MILO-PDF1B (même jour)** : la « couture déterministe » citée ci-dessus perdait
+et fusionnait des mots (contre-vérification du principal) ; elle est remplacée par un raccord à
+**ancre exacte** — sans preuve, la réponse reste incomplète. ❓ Nouveau doute, toujours **non
+mesuré en réel** : **à quelle fréquence Sonnet recopie-t-il l'ancre à l'identique** dans
+l'enveloppe `<FT_SUITE>` ? Un taux bas laisserait la plupart des analyses longues « incomplètes »
+(honnêtes, mais incomplètes). Vérifiable par du code après publication : répartition de
+`_raccord` (`ok` · `ancre_absente` · `ancre_fausse` · `structure` · `redemarrage`).

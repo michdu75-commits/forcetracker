@@ -113,6 +113,13 @@ défaut venait des **données** (fragments, défauts silencieux), pas d'une cons
   le PDF (« … INCOMPLÈTE — génération interrompue ») et le partage. Budget 1024 inchangé.
   Détail : `docs/MILO-PDF1.md` · témoins `tests/parcours/milo_pdf1.js` · contrôle
   `tools/mut_milo_pdf1.py` (26/26).
+  ↪️ **MILO-PDF1B (25/09, soir) — la contre-vérification du principal a démontré trois défauts,
+  corrigés, NON publiés** : ① la couture heuristique perdait ou fusionnait des mots et dupliquait
+  une réponse redémarrée → remplacée par un **raccord à ancre exacte** (`<FT_SUITE>` + ancre
+  recopiée ; sans preuve, la 1ʳᵉ partie reste **incomplète**) ; ② **fail-closed** : seul `end_turn`
+  est complet, toute autre raison (ou un serveur sans le signal) est marquée « non confirmée » ;
+  ③ **décision Michel** : aucune séance depuis une réponse non confirmée complète, et le marqueur
+  est posé **avant** le texte de Milo. Détail : `docs/MILO-PDF1.md` (section MILO-PDF1B).
 - **Programme versionné** (principe validé par Michel) : l'app n'a ni programme actif, ni version,
   ni phase, ni RIR cible, ni lien structuré séance → version (seulement le libellé). À construire
   comme brique à part ; le contrat dit aujourd'hui honnêtement ce qui manque.
