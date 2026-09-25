@@ -216,7 +216,7 @@ def main():
         ok = (obtenu == attendu)
         conformes += ok
         rouges = [l.strip()[:48] for l in sortie.split('\n') if 'ROUGE' in l or 'PLANTAGE' in l]
-        comp = [l for l in rouges if 'B-CCCLXXVIII' not in l]   # rouges de COMPORTEMENT (Worker conduit / ecran)
+        comp = [l for l in rouges if 'B-CCCLXXVIII' not in l and 'B-CCCLXXXI ' not in l]   # rouges de COMPORTEMENT (Worker conduit / ecran) — les deux blocs de SOURCE exclus
         print('  %s  %-72s %-6s %2d rouge(s) dont %2d de comportement  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), len(comp), (rouges[0] if rouges else '')))
         shutil.rmtree(tmp, ignore_errors=True)
     print('\n%d/%d conformes' % (conformes, len(MUT)))

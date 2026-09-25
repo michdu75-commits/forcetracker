@@ -165,6 +165,11 @@ module.exports.ecran = async function (t, b, PORT) {
     refus:    { reply: SEANCE, _diag: 'ok', stopReason: 'refusal', truncated: false, complete: false, continued: false },
     suiteKO:  { reply: SEANCE, _diag: 'ok', stopReason: 'max_tokens', truncated: true, complete: false, continued: false, _raccord: 'ancre_fausse' },
     ancien:   { reply: SEANCE, _diag: 'ok' },
+    // une réponse coupée APRÈS un bloc caché complet : le fil rechargé saurait le relire (sans le cervelet)
+    coupeeBloc: { reply: SEANCE + '\n\n```json\n' + JSON.stringify({ seance: TRAD }) + '\n```\nEt pour la suite on', _diag: 'ok',
+      stopReason: 'max_tokens', truncated: true, complete: false, continued: false },
+    completeBloc: { reply: SEANCE + '\n\n```json\n' + JSON.stringify({ seance: TRAD }) + '\n```', _diag: 'ok',
+      stopReason: 'end_turn', truncated: false, complete: true, continued: false },
   };
   const essai = async (etat, recharger) => {
     const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris' });
@@ -200,6 +205,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const R = {};
   for (const k of ['coupee', 'complete', 'suiteOK', 'refus', 'suiteKO', 'ancien']) R[k] = await essai(k);
   R.rechCoupee = await essai('coupee', true); R.rechComplete = await essai('complete', true);
+  R.rechCoupeeBloc = await essai('coupeeBloc', true); R.rechCompleteBloc = await essai('completeBloc', true);
   const bloque = (x) => x.boutons.length === 0 && x.wkt.length === 0 && x.attente === 0 && x.cervelet === 0;
   t('S1 réponse COMPLÈTE → la séance se propose et démarre comme avant (témoin de sensibilité)',
     R.complete.boutons.some(s => /on démarre|Commencer/.test(s)) && R.complete.wkt.length === 4 && R.complete.marque === '', JSON.stringify(R.complete));
@@ -211,6 +217,11 @@ module.exports.ecran = async function (t, b, PORT) {
     JSON.stringify([R.suiteKO, R.refus, R.ancien].map(x => [x.marque, x.boutons, x.wkt.length])));
   t('S5 fil RECHARGÉ : la réponse coupée ne retrouve ni bouton ni question ; la complète, si (comme avant)',
     bloque(R.rechCoupee) && R.rechCoupee.hist === 'reponse' && R.rechComplete.boutons.some(s => /on démarre|Commencer/.test(s)), JSON.stringify([R.rechCoupee, R.rechComplete.boutons]));
+  /* Le fil rechargé relit d'abord le bloc caché (sans cervelet) : ce cas-là prouve que la garde du
+     rechargement AGIT, au lieu de rester verte parce que la lecture échoue d'elle-même. */
+  t('S5b fil RECHARGÉ, bloc caché complet sous une réponse COUPÉE → toujours refusé ; même bloc sous une réponse complète → séance (sensibilité)',
+    bloque(R.rechCoupeeBloc) && R.rechCompleteBloc.wkt.length === 4 && R.rechCompleteBloc.marque === '',
+    JSON.stringify([R.rechCoupeeBloc, R.rechCompleteBloc.wkt, R.rechCompleteBloc.boutons]));
   t('S6 le marqueur est le PREMIER élément de la bulle, avant le texte de Milo',
     /coach-coupee/.test(R.coupee.premier) && /Réponse incomplète/.test(R.coupee.premier)
     && /coach-coupee/.test(R.refus.premier) && /Réponse non confirmée/.test(R.refus.premier) && !/coach-coupee/.test(R.complete.premier),
