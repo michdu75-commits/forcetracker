@@ -293,3 +293,9 @@ profil (âge, taille, poids) » au lieu d'une dépense inventée — ne nomme pa
 `CLAUDE.md` · `Code.js` a changé → le déploiement Apps Script part avec le push sur `master`
 (`deploy-appsscript.yml`), à vérifier (`?test=1`) · la publication emporte aussi les chantiers
 **Poids** et **Milo-débrief** déjà sur la branche.
+
+**Tests finaux (25/09)** : témoins D-021/R34 28 (25 rouges sur le code d'avant) · contrôle négatif
+D-021/R34 **13/13**, contrôle de nuit **27/27** · passe complète sur `25e4e520` : **4 984 ✅ / 0 ❌**,
+4 conditions vertes (24 min) — +28 = exactement les nouveaux témoins. Une première passe sur `94454d3e`
+avait 3 rouges : le témoin de la carte « passer de Modéré à Actif » posait un 1,55 sans provenance,
+devenu « à confirmer » ; il pose désormais un niveau déclaré (provenance « choisi »), assertion inchangée.
