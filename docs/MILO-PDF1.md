@@ -138,3 +138,97 @@ viendra **après** publication : lancer une analyse de programme longue et lire 
 - **Passe complète** sur l'arbre `d83b0270` : **5083 ✅ / 0 ❌**, valide aux **4 conditions**
   (`tools/passe_valide.sh` : ligne de total · runner code 0 · arbre inchangé · aucune publication
   concurrente sur `origin/master`).
+
+---
+
+# 📄 MILO-PDF1B — correction après contre-vérification (25/09/2026, soir)
+
+> Ce qui précède est le constat **d'origine** de MILO-PDF1 et reste tel quel (historique
+> append-only). Trois de ses affirmations sont **remplacées** ci-dessous : la couture (§4),
+> « une raison inconnue n'est ni coupée ni complète » (§1, §4) et le bouton séance (§9).
+
+## B1. Ce que la contre-vérification a démontré
+
+- **La couture heuristique abîmait le texte**, puis marquait le résultat complet :
+  « Les épaules » + « sont » → `épaulessont` · « et le » + « lendemain » → `et lendemain`
+  (un **mot perdu**) · « de » + « de 10 reps » → `dede 10 reps` · Markdown `- **Épau **Épaules**`
+  · une réponse longue redémarrée depuis le début → **dupliquée**, marquée complète.
+  Mes témoins ne couvraient que les cas où la suite commençait par une espace.
+- **Une raison d'arrêt inconnue ou absente** (`refusal`, `null`…) rendait `complete: false`,
+  mais l'app l'affichait **exactement comme une réponse finie** (état « inconnu », sans marqueur).
+- **Le bouton séance restait actif sous une réponse coupée** : « Leg curl 3×12 » coupé en
+  « 3×1 » entrait dans la séance du jour.
+
+## B2. Le raccord à ancre (remplace la couture heuristique)
+
+- L'**ancre** = les 60 derniers points de code réellement écrits (sans blanc de fin, jamais un
+  blanc ni un caractère de liaison en tête, emoji jamais coupé).
+- La 2ᵉ requête reçoit le même contexte FT, le message d'origine, la 1ʳᵉ partie, et la consigne :
+  répondre **exactement** `<FT_SUITE>` + l'ancre recopiée + la suite + `</FT_SUITE>`, rien avant,
+  rien après. Format machine simple, pas du JSON.
+- **Validation, sans aucune approximation** (`_raccorderSuite`, worker.js) :
+  enveloppe présente, rien avant ni après · fermeture exigée sauf si la suite est elle-même
+  coupée (`max_tokens`, une fermeture tronquée `</FT_SU` est alors retirée) · l'ancre doit être
+  **au début, à l'identique** · la 1ʳᵉ ligne de la réponse (≥ 12 caractères) ne doit pas
+  réapparaître (**redémarrage**).
+- **Échec → la 1ʳᵉ partie est gardée, intacte, et reste INCOMPLÈTE** (`truncated: true`,
+  `complete: false`), avec la raison dans `_raccord` (`echec` · `structure` · `ancre_absente` ·
+  `ancre_fausse` · `redemarrage`).
+- **Succès → texte = 1ʳᵉ partie + ce que Milo a écrit APRÈS l'ancre.** Aucun caractère de la
+  1ʳᵉ partie n'est jamais retiré (sauf ses blancs de fin, remplacés par ceux que Milo écrit
+  après l'ancre — c'est lui qui décide de l'espace entre « épaules » et « sont »).
+- ⚠️ **Limite dite** : ce que Milo écrit après une ancre correctement recopiée est pris tel
+  quel. S'il écrit lui-même « lendemain » au lieu de « le lendemain », c'est son texte, pas une
+  couture — aucune règle déterministe ne peut le distinguer d'un mot coupé (« épa » + « ules »).
+- Toujours **au plus 2 appels**, jamais de boucle ; le chat n'envoie jamais `suite`.
+- Le préremplissage n'est pas utilisé : il est **refusé (400)** sur la famille Sonnet 4.6
+  (documentation Anthropic) — la phrase « pas pu être vérifié » du §4 est remplacée par ce fait.
+
+## B3. Fail-closed sur la raison d'arrêt
+
+| Raison rendue par le modèle | complete | truncated | ce que l'app affiche |
+|---|---|---|---|
+| `end_turn` | **oui** | non | rien (réponse normale) |
+| `max_tokens` | non | **oui** | « Réponse / Analyse incomplète — génération interrompue » |
+| `stop_sequence` (l'app n'en envoie aucune), `refusal`, `pause_turn`, `tool_use`, `null`, valeur future | non | non | « Réponse non confirmée — fin non confirmée » |
+| serveur qui ne transmet pas le signal (ancien Worker) | — | — | « Réponse non confirmée » |
+
+⚠️ **Conséquence de publication** : ce client **exige** le Worker corrigé. Publié sans lui,
+chaque réponse serait marquée « non confirmée » et aucune séance ne se lancerait depuis le chat —
+bruyant, jamais faux. Le Worker et l'app se publient ensemble depuis `master`, mais un
+déploiement Worker peut échouer en silence (R18) : **le vérifier au moment de publier**.
+
+## B4. Décisions de Michel appliquées
+
+- **« Une réponse incomplète ne peut pas être transformée en séance. »** Toute réponse non
+  confirmée complète ne passe par AUCUNE voie de séance : ni bloc caché, ni cervelet, ni filet,
+  ni question « on démarre ? » — ni à l'arrivée, ni au rechargement du fil. Le texte reste lisible.
+  ⚠️ Les messages **anciens** du fil (d'avant ce correctif) ne portent aucun marqueur : on ne
+  réécrit pas l'histoire, ils se comportent comme avant.
+- **Le statut se lit AVANT le texte de Milo** : le marqueur est le premier élément de la bulle.
+  Le texte de Milo reste intact ; le PDF gardait déjà le bandeau en tête.
+
+## B5. Non modifié
+
+Chat à 1 appel · JSON coupé toujours refusé, sans réparation · budget 1024 · modèle
+`claude-sonnet-4-6` · garde AUTH1 · Nutrition, contrat FT→Milo, D-024, programme, dashboard,
+cloudSave : 0 ligne. Aucune publication, aucun bump, aucun déploiement Worker, 0 appel réel.
+
+## B6. Tests MILO-PDF1B
+
+- `tests/parcours/milo_pdf1b.js` : **B-CCCLXXXI** (10 témoins de source), **B-CCCLXXXII** (vrai
+  `worker.js`, API simulée : C1 → C12, enveloppe, ancre exacte, casse, emoji, invariant « la 1ʳᵉ
+  partie n'est jamais amputée », fail-closed sur 7 raisons d'arrêt), **B-CCCLXXXIII** (navigateur :
+  séance refusée à l'arrivée ET au rechargement — y compris avec un bloc caché lisible —, marqueur
+  premier élément de la bulle, 1 appel par message).
+- Témoins de MILO-PDF1 **retournés** (annotés « ↩️ MILO-PDF1B » dans le fichier), jamais effacés en
+  silence : ②④⑤⑦⑨, PDF-03/04 (suite au format ancre), E7 (serveur sans signal → marqué). Les deux
+  témoins de la couture heuristique sont **retirés** avec leur raison écrite sur place.
+- Banc `tools/banc_milo_pdf1.js` (PDF1 + PDF1B) : **79 OK / 0 rouge** ; sur l'arbre d'avant
+  (`c26aa0c6`) les mêmes témoins rendent **38 rouges** — les défauts sont reproduits.
+- Contrôle négatif `tools/mut_milo_pdf1.py` : **47 mutations, 47 conformes, 0 ancre morte** (44
+  mordent — raccord, fail-closed, séance, marqueur — et 3 mutations de commentaire restent vertes).
+  R03 (casse ignorée) et R13 (ancre en unités UTF-16) n'étaient mordues que par la source : deux
+  témoins conduits ont été ajoutés, et elles mordent maintenant par le comportement.
+- Non-régression : AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 ·
+  Worker S2-B 49/0.

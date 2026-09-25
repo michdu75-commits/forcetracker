@@ -7,24 +7,24 @@
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
     Généré le 2026-09-25.
 
-🔖  SOURCES : coach.js 6c74b6a38883 · constants.js 182e0d223715 · state.js cd74765bf0ca
+🔖  SOURCES : coach.js 94af4ca54576 · constants.js 182e0d223715 · state.js cd74765bf0ca
     Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
     génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
     si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
     puisqu'il a l'air généré quoi qu'il arrive. ⛔ Ne pas les recopier à la main.
 
-TAILLE TOTALE : 76 336 caractères  (~19 084 tokens)
+TAILLE TOTALE : 76 520 caractères  (~19 130 tokens)
 
 Il est coupé en TROIS morceaux, et c'est là que se joue le prix :
 
-  1. BLOC COMMUN ......... 45 382 car. (59.5 %)
+  1. BLOC COMMUN ......... 45 382 car. (59.3 %)
      Identique pour TOUT LE MONDE. Mis en cache 1 h depuis le 08/08.
      C'est lui qu'on paie une fois pour tous — s'il est relu, il coûte 10 %.
 
-  2. BLOC PERSONNEL ...... 28 185 car. (36.9 %)
+  2. BLOC PERSONNEL ...... 28 185 car. (36.8 %)
      Tes données à toi. Mis en cache 5 min.
 
-  3. L'INSTANT ........... 2 769 car. (3.6 %)
+  3. L'INSTANT ........... 2 953 car. (3.9 %)
      Change à chaque message (heure, état du jour) : JAMAIS mis en cache,
      payé plein tarif à chaque fois.
 
@@ -360,7 +360,7 @@ Aucune séance
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  3/3 — L'INSTANT (2769 car., JAMAIS caché)
+█  3/3 — L'INSTANT (2953 car., JAMAIS caché)
 ██████████████████████████████████████████████████████████████████████████████
 
 ═══ SITUATION DE L'INSTANT ═══
@@ -373,7 +373,7 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est vendredi 25 septembre, il est 17h34 — c'est après-midi. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). 
+- On est vendredi 25 septembre, il est 20h49 — c'est soirée. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l'endormissement — mentionne-le avec tact si pertinent.
 
 
 
