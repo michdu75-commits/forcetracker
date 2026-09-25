@@ -39633,6 +39633,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      Contrôle négatif : `tools/mut_auth_ia.py` (banc : `tools/banc_auth_ia.js`). */
   await require('./auth_ia.js').reel(t, ROOT, fs, path);
   await require('./auth_ia.js').ecran(t, b, PORT);
+  /* 📄 MILO-PDF1 (25/09/2026) — une réponse coupée par la limite de longueur ne passe plus pour
+     complète : `stop_reason` transporté, suite bornée (analyse seulement), marqueur jusqu'au PDF.
+     `.reel` conduit le VRAI worker.js (API Anthropic simulée, 0 appel réel) ; `.ecran` ce qu'on voit.
+     Contrôle négatif : `tools/mut_milo_pdf1.py` (banc : `tools/banc_milo_pdf1.js`). */
+  await require('./milo_pdf1.js').reel(t, ROOT, fs, path);
+  await require('./milo_pdf1.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40443,6 +40449,7 @@ require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
 require('./auth_ia.js').source(t, ROOT, fs, path);
+require('./milo_pdf1.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

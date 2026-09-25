@@ -9780,6 +9780,7 @@ function shiftProgStart(idx,delta){
   persist();renderProgModal();
 }
 let _lastProgAnalysisProg=null,_lastProgAnalysisReply='';
+let _lastProgAnalysisCoupee='';   // MILO-PDF1 : 'analyse' si la dernière analyse est restée coupée
 function _formatProgForAnalysis(prog){
   if(prog.days&&prog.days.length){
     return prog.days.map(day=>{
@@ -9825,8 +9826,12 @@ async function analyzeProgIa(idx){
   ov.classList.add('open');
   const progText=_formatProgForAnalysis(prog);
   const message='Analyse ce programme d\'entraînement en tant que coach expert. Réponds en 4 parties :\n\n🎯 VERDICT GLOBAL (1 phrase directe et honnête)\n✅ POINTS FORTS\n⚠️ POINTS À AMÉLIORER\n💡 RECOMMANDATIONS CONCRÈTES (actions à faire)\n\nSois direct, concret et personnalisé selon mon profil.\n\nProgramme : "'+prog.name+'"\n'+progText;
+  _lastProgAnalysisCoupee='';
   try{
-    const resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'coach',message,context:buildCoachContext(message),history:[]})});
+    /* 📄 MILO-PDF1 — `suite:true` : l'analyse est une demande EXPLICITEMENT LONGUE. Si Milo est
+       coupé par la limite de longueur, le serveur lui demande UNE suite (jamais plus) et recolle
+       les deux parties. ⛔ Le chat de tous les jours ne l'envoie pas (un seul appel). */
+    const resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'coach',message,context:buildCoachContext(message),history:[],suite:true})});
     /* 🩹 MILO-AUTH1 (25/09/2026) : on LIT la phrase du serveur, comme le chat (`_phraseServeur`).
        Avant, tout échec disait « Vérifie ta connexion » — y compris un vrai refus d'identité (401)
        et une panne de vérification côté serveur (503), où la connexion de la personne n'y est pour rien. */
@@ -9837,8 +9842,14 @@ async function analyzeProgIa(idx){
     }
     const data=await resp.json();
     const reply=data.reply||'Erreur lors de l\'analyse.';
+    /* 📄 MILO-PDF1 — si l'analyse est RESTÉE coupée (suite coupée à son tour, ou suite en échec),
+       on le dit EN TÊTE, avant le texte : c'est ce qu'on lit en premier. Le marqueur suit
+       l'analyse dans le Coach (`continueInCoach`), donc jusque dans le PDF. */
+    _lastProgAnalysisCoupee=(data.reply&&typeof _miloEtatReponse==='function'&&_miloEtatReponse(data)==='coupee')?'analyse':'';
     _lastProgAnalysisReply=reply;_lastProgAnalysisProg=prog;
-    content.innerHTML='<div style="font-size:14px;line-height:1.7;color:var(--t1);">'+_coachFmtHtml(reply)+'</div>';
+    const _bandeau=_lastProgAnalysisCoupee
+      ?'<div class="coach-sante-rappel coach-coupee" style="margin:0 0 12px;">✂️ Analyse incomplète — génération interrompue : Milo a atteint sa limite de longueur, la suite manque. Relance l\'analyse pour réessayer.</div>':'';
+    content.innerHTML=_bandeau+'<div style="font-size:14px;line-height:1.7;color:var(--t1);">'+_coachFmtHtml(reply)+'</div>';
     if(footer)footer.style.display='block';
   }catch(e){
     const _txt=(e&&e.duServeur)?String(e.message).replace(/</g,'&lt;'):'Erreur de connexion. Vérifie ta connexion et réessaie.';
@@ -9848,15 +9859,16 @@ async function analyzeProgIa(idx){
 function continueInCoach(){
   document.getElementById('ov-prog-analysis').classList.remove('open');
   if(_lastProgAnalysisReply&&_lastProgAnalysisProg){
+    // 📄 MILO-PDF1 : une analyse coupée reste marquée coupée dans le fil — donc dans le PDF.
     coachHistory=[
       {role:'user',content:'Analyse mon programme "'+_lastProgAnalysisProg.name+'".'},
-      {role:'assistant',content:_lastProgAnalysisReply}
+      {role:'assistant',content:_lastProgAnalysisReply,...(_lastProgAnalysisCoupee?{coupee:_lastProgAnalysisCoupee}:{})}
     ];
     const msgs=document.getElementById('coach-msgs');
     if(msgs){
       msgs.innerHTML='';
       renderCoachMsg('user','Analyse mon programme "'+_lastProgAnalysisProg.name+'".');
-      renderCoachMsg('coach',_lastProgAnalysisReply);
+      renderCoachMsg('coach',_lastProgAnalysisReply,{coupee:_lastProgAnalysisCoupee});
     }
     const suggs=document.getElementById('coach-suggs');
     if(suggs)suggs.style.display='none';

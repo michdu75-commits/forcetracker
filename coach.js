@@ -1240,7 +1240,11 @@ function _lightMsg(m){
        ⛔ ET ON N'EN INVENTE PAS pour les anciens messages (R29) : `ts` absent reste absent.
        Un horodatage fabriqué serait pire que pas d'horodatage — il aurait l'air vrai. */
     ...(m.ts?{ts:m.ts}:{}),
-    ...(m._silent?{_silent:true}:{}) // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
+    ...(m._silent?{_silent:true}:{}), // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
+    /* 📄 MILO-PDF1 — une réponse coupée RESTE marquée coupée après un rechargement ou un rangement
+       dans « Mes discussions ». Sans cette ligne, le marqueur mourrait au premier enregistrement
+       (même piège que `ts`, ft-v1010) et la réponse se relirait comme finie. */
+    ...(m.role==='assistant' && typeof _coupeeValide==='function' && _coupeeValide(m.coupee)?{coupee:m.coupee}:{})
   };
 }
 function _saveCoachHist(){
@@ -1403,7 +1407,7 @@ function _renderCoachThread(){
     const t = (typeof m.content === 'string') ? m.content
             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
     if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
-    else if(t) renderCoachMsg('coach', t);
+    else if(t) renderCoachMsg('coach', t, {coupee: m.coupee});   // MILO-PDF1 : le marqueur revient avec la bulle
   });
   /* ⚡ LE BOUTON « COMMENCER CETTE SÉANCE » SURVIT À LA FERMETURE DE L'APP (14/08/2026)
      Michel, en allant à la salle : *« je lui ai demandé de me lancer la séance, je ferme
@@ -5155,7 +5159,7 @@ async function _miloRaterEnvoyer(){
     if(typeof toast==='function')toast('Envoyé à Michel 📩 Merci !','success');
   }catch(e){ if(typeof toast==='function')toast('Pas de réseau — c\'est noté quand même 👍','info'); }
 }
-function renderCoachMsg(role, text) {
+function renderCoachMsg(role, text, opts) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
   const div = document.createElement('div');
@@ -5200,6 +5204,18 @@ function renderCoachMsg(role, text) {
       .replace(/\n/g, '<br>');
     if (!div.querySelector('p') && !div.querySelector('ul')) {
       div.innerHTML = '<p>' + div.innerHTML + '</p>';
+    }
+    /* 📄 MILO-PDF1 — UNE RÉPONSE COUPÉE LE DIT, JUSTE SOUS LE TEXTE (et donc au-dessus du bouton
+       PDF). ⛔ Le texte de Milo n'est pas touché : on AJOUTE une ligne, comme le rappel santé.
+       Le marqueur reste sur la bulle (`dataset.coupee`) : c'est lui que lisent le PDF et le partage. */
+    const _coupee = _coupeeValide(opts && opts.coupee);
+    if (_coupee) {
+      div.dataset.coupee = _coupee;
+      const cp = document.createElement('div');
+      cp.className = 'coach-sante-rappel coach-coupee';
+      cp.textContent = '✂️ ' + _coupeeLibelle(_coupee) + ' — génération interrompue : Milo a atteint '
+        + 'sa limite de longueur, la suite manque. Écris « continue » pour qu\'il la termine.';
+      div.appendChild(cp);
     }
     // Bouton Partager/Exporter — sauf sur un message d'erreur
     if (!/^Erreur\s*:/.test(text)) {
@@ -5282,7 +5298,13 @@ async function shareCoachReply(btn){
   const bubble = btn.closest('.msg-coach');
   const raw = bubble ? bubble.dataset.raw : '';
   if(!raw) return;
-  const txt = '💬 Mon Coach IA — Force Tracker\n\n' + _coachPlain(raw) + '\n\n— via Force Tracker';
+  // 📄 MILO-PDF1 : un partage de réponse coupée le dit aussi — c'est un export comme le PDF.
+  const _cp = _coupeeValide(bubble && bubble.dataset.coupee);
+  const txt = '💬 Mon Coach IA — Force Tracker\n\n'
+    + (_cp ? '⚠️ ' + _coupeeLibelle(_cp).toUpperCase() + ' — génération interrompue (la suite manque)\n\n' : '')
+    + _coachPlain(raw)
+    + (_cp ? '\n\n[… la réponse s\'arrête ici — génération interrompue]' : '')
+    + '\n\n— via Force Tracker';
   // 1) Partage natif (feuille de partage iOS/Android)
   if(navigator.share){
     try{ await navigator.share({text:txt}); return; }
@@ -5324,15 +5346,35 @@ async function exportCoachPdf(btn){
     const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
     const coach=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
     const d=new Date();
+    /* 📄 MILO-PDF1 — UN PDF DE RÉPONSE COUPÉE NE PASSE JAMAIS POUR COMPLET.
+       ⚠️ Le titre « Analyse complète » du cas réel n'est écrit nulle part dans le code : c'est Milo
+       qui l'a mis dans SON texte (l'en-tête de l'app dit « Coach Milo »). On ne réécrit pas son
+       texte — on pose, AVANT lui, un bandeau qui dit l'état réel, et on marque l'endroit où il
+       s'arrête. Le nom du fichier le porte aussi : un fichier se partage sans son contenu. */
+    const _cp=_coupeeValide(bubble.dataset.coupee);
     let y=await _pdfEntete(doc,{sousTitre:'Coach '+coach,
+      titre:_cp?_coupeeLibelle(_cp).toUpperCase():undefined,
       droite:d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),M});
+    if(_cp){
+      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...PDF_COL.rouge);
+      doc.text(_coupeeLibelle(_cp).toUpperCase()+' — génération interrompue',M,y); y+=16;
+      doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...PDF_COL.gris);
+      doc.splitTextToSize('Milo a atteint sa limite de longueur : ce texte s\'arrête avant la fin, la suite n\'a pas été générée.',W-2*M)
+        .forEach(l=>{ doc.text(l,M,y); y+=13; });
+      y+=10;
+    }
     doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...PDF_COL.encre);
     const lines=doc.splitTextToSize(_coachPdfText(raw),W-2*M);
     const lh=16;
     lines.forEach(line=>{ if(y>H-64){doc.addPage();y=56;} doc.text(line,M,y); y+=lh; });
+    if(_cp){
+      if(y>H-64){doc.addPage();y=56;}
+      doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...PDF_COL.rouge);
+      doc.text('[... la réponse s\'arrête ici — génération interrompue]',M,y+6);
+    }
     // Pied de page (sur toutes les pages) : contact + disclaimer
     _pdfPied(doc,{M,mention:'Conseil indicatif — ne remplace pas l\'avis d\'un professionnel.'});
-    const fname='coach-'+coach.toLowerCase()+'-'+d.toISOString().slice(0,10)+'.pdf';
+    const fname='coach-'+coach.toLowerCase()+'-'+d.toISOString().slice(0,10)+(_cp?'-incomplet':'')+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
@@ -5450,6 +5492,29 @@ function _phraseServeur(txt){
   return t;
 }
 
+/* 📄 MILO-PDF1 (25/09/2026) — « CETTE RÉPONSE DE MILO EST-ELLE FINIE ? » — UN SEUL PROPRIÉTAIRE (R2).
+   Cas réel : un PDF titré par Milo « Analyse complète » s'arrêtait en page 2 sur « Muscles
+   prioritaires : Épaules + ». La réponse avait été coupée par la limite de longueur, le serveur
+   le savait (`stop_reason`), et il le JETAIT : rien, ni à l'écran ni dans le PDF, ne pouvait le dire.
+   ⭐ On lit le signal RÉEL renvoyé par le Worker, jamais une supposition sur le texte (un texte
+   sans point final peut être fini ; un texte bien ponctué peut être coupé).
+   Quatre états, et un seul d'entre eux déclenche un avertissement :
+     · 'coupee'      — le modèle a signalé `max_tokens` : la suite manque (on le DIT) ;
+     · 'complete'    — il s'est arrêté de lui-même ;
+     · 'interrompue' — panne technique (le texte est déjà « Désolé, réessaie. », rien à ajouter) ;
+     · 'inconnu'     — un serveur qui ne transmet pas encore le signal : on ne prétend RIEN. */
+function _miloEtatReponse(d){
+  if (!d || typeof d !== 'object') return 'inconnu';
+  if (d.truncated === true) return 'coupee';
+  if (d.complete === true) return 'complete';
+  if (d._diag && d._diag !== 'ok') return 'interrompue';
+  return 'inconnu';
+}
+/* Le marqueur gardé avec le message : 'analyse' (l'analyse de programme) ou 'reponse' (le chat).
+   ⛔ Liste blanche : une valeur inconnue (stockage abîmé, ancienne version) ne pose AUCUN marqueur. */
+function _coupeeValide(v){ return (v === 'analyse' || v === 'reponse') ? v : ''; }
+function _coupeeLibelle(genre){ return genre === 'analyse' ? 'Analyse incomplète' : 'Réponse incomplète'; }
+
 async function sendToCoach(customMsg, displayMsg, opts) {
   opts = opts || {};
   let _sentOk = false;
@@ -5544,6 +5609,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
 
   try {
     let reply = '';
+    let _coupee = '';   // MILO-PDF1 : 'reponse' si le serveur signale une coupure par la limite de longueur
     if (!S.url) {
       reply = '⚙️ Configure ton URL Google Apps Script dans Profil (Admin) pour activer le Coach IA.';
     } else {
@@ -5605,6 +5671,10 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       }
       const data = await resp.json();
       reply = data.reply || '🔑 Le Coach IA nécessite une clé API Anthropic. Crée un compte gratuit sur console.anthropic.com, génère une clé, et ajoute-la dans le script Google Apps Script ligne 2.';
+      /* 📄 MILO-PDF1 — ⛔ LE CHAT N'ENVOIE PAS `suite` : il reste à UN appel. Une réponse coupée y
+         est SIGNALÉE (marqueur sous la bulle, gardé dans le fil et dans le PDF), pas rattrapée par
+         un 2ᵉ appel payant à chaque fois. Seule l'analyse de programme demande la suite (log.js). */
+      if (data.reply && _miloEtatReponse(data) === 'coupee') _coupee = 'reponse';
     }
     hideTyping();
     // Programme de force : extraire le bloc JSON pour proposer un enregistrement
@@ -5645,7 +5715,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     /* 📋 LE RÉCAP FACTUEL PASSE DEVANT (20/08/2026) : écrit par le CODE, donc complet par
        construction. Milo commente par-dessus — il ne peut plus sauter un exercice. */
     if (opts.debriefSess) { try { const _rc=_recapSeance(opts.debriefSess); if(_rc) _disp = _rc + _disp; } catch(e){} }
-    renderCoachMsg('coach', _disp);
+    renderCoachMsg('coach', _disp, {coupee: _coupee});
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds);
     else if (_dsCervelet) {
@@ -5677,7 +5747,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
-    coachHistory.push({ role: 'assistant', content: reply, ts: Date.now() });
+    coachHistory.push({ role: 'assistant', content: reply, ts: Date.now(), ...(_coupee?{coupee:_coupee}:{}) });
     _trimCoachHistory();   // ⚠️ borne de sécurité (400), plus la coupe à 20 qui perdait le début
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
