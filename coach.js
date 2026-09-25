@@ -1465,6 +1465,10 @@ function _renderCoachThread(){
          👉 *« au plus 3 messages de Milo » était un PROXY de « récent »* — et le fil du chat
          **survit aux jours**, donc le proxy est faux dès qu'on rouvre l'app le lendemain. */
       if(!_seanceEncoreDuJour(m.ts))continue;
+      /* 📄 MILO-PDF1B — une réponse marquée non terminée ne redevient pas une séance au rechargement
+         (décision de Michel). On la COMPTE dans les 3 (`vus` est déjà passé) : elle est la
+         proposition la plus récente, et une séance plus ancienne ne doit pas remonter à sa place. */
+      if(typeof _coupeeValide==='function' && _coupeeValide(m.coupee)) break;
       const txt=(typeof m.content==='string')?m.content:'';
       if(!txt||typeof _extractDaySession!=='function')continue;
       const dsx=_extractDaySession(txt);
@@ -1486,7 +1490,8 @@ function _renderCoachThread(){
       let dernUser=null, dernAssist=null, tsU=0, tsA=0;
       for(let i=coachHistory.length-1;i>=0;i--){
         const m=coachHistory[i]; if(!m)continue;
-        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string'){dernAssist=m.content;tsA=m.ts;}
+        // 📄 MILO-PDF1B : si la dernière réponse est marquée non terminée, pas de question « on démarre ? »
+        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string'){dernAssist=(typeof _coupeeValide==='function'&&_coupeeValide(m.coupee))?null:m.content;tsA=m.ts;if(!dernAssist)break;}
         /* ⛔⛔ UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE (29/08/2026, ft-v1055).
            Michel, capture à l'appui : la question *« Cette séance te convient ? »* s'affichait
            sous un **débrief de fin de séance** — il venait de terminer, et on lui proposait d'en
@@ -5213,9 +5218,11 @@ function renderCoachMsg(role, text, opts) {
       div.dataset.coupee = _coupee;
       const cp = document.createElement('div');
       cp.className = 'coach-sante-rappel coach-coupee';
-      cp.textContent = '✂️ ' + _coupeeLibelle(_coupee) + ' — génération interrompue : Milo a atteint '
-        + 'sa limite de longueur, la suite manque. Écris « continue » pour qu\'il la termine.';
-      div.appendChild(cp);
+      cp.textContent = '✂️ ' + _coupeeLibelle(_coupee) + ' — ' + _coupeeCause(_coupee)
+        + (_coupee === 'non_confirmee' ? '' : ' Écris « continue » pour qu\'il la termine.');
+      /* 📄 MILO-PDF1B — décision de Michel : le statut se lit AVANT le texte de Milo. Si Milo a
+         titré « Analyse complète », on lit d'abord « Analyse incomplète ». Son texte reste intact. */
+      div.insertBefore(cp, div.firstChild);
     }
     // Bouton Partager/Exporter — sauf sur un message d'erreur
     if (!/^Erreur\s*:/.test(text)) {
@@ -5301,9 +5308,9 @@ async function shareCoachReply(btn){
   // 📄 MILO-PDF1 : un partage de réponse coupée le dit aussi — c'est un export comme le PDF.
   const _cp = _coupeeValide(bubble && bubble.dataset.coupee);
   const txt = '💬 Mon Coach IA — Force Tracker\n\n'
-    + (_cp ? '⚠️ ' + _coupeeLibelle(_cp).toUpperCase() + ' — génération interrompue (la suite manque)\n\n' : '')
+    + (_cp ? '⚠️ ' + _coupeeLibelle(_cp).toUpperCase() + ' — ' + _coupeeCause(_cp) + '\n\n' : '')
     + _coachPlain(raw)
-    + (_cp ? '\n\n[… la réponse s\'arrête ici — génération interrompue]' : '')
+    + (_cp ? '\n\n[… ' + (_cp === 'non_confirmee' ? 'fin non confirmée' : 'la réponse s\'arrête ici — génération interrompue') + ']' : '')
     + '\n\n— via Force Tracker';
   // 1) Partage natif (feuille de partage iOS/Android)
   if(navigator.share){
@@ -5357,9 +5364,9 @@ async function exportCoachPdf(btn){
       droite:d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),M});
     if(_cp){
       doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...PDF_COL.rouge);
-      doc.text(_coupeeLibelle(_cp).toUpperCase()+' — génération interrompue',M,y); y+=16;
+      doc.text(_coupeeLibelle(_cp).toUpperCase()+(_cp==='non_confirmee'?' — fin non confirmée':' — génération interrompue'),M,y); y+=16;
       doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...PDF_COL.gris);
-      doc.splitTextToSize('Milo a atteint sa limite de longueur : ce texte s\'arrête avant la fin, la suite n\'a pas été générée.',W-2*M)
+      doc.splitTextToSize(_cp==='non_confirmee'?'Milo n\'a pas signalé cette réponse comme terminée : elle peut être incomplète.':'Milo a atteint sa limite de longueur : ce texte s\'arrête avant la fin, la suite n\'a pas été générée.',W-2*M)
         .forEach(l=>{ doc.text(l,M,y); y+=13; });
       y+=10;
     }
@@ -5370,7 +5377,7 @@ async function exportCoachPdf(btn){
     if(_cp){
       if(y>H-64){doc.addPage();y=56;}
       doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...PDF_COL.rouge);
-      doc.text('[... la réponse s\'arrête ici — génération interrompue]',M,y+6);
+      doc.text(_cp==='non_confirmee'?'[... fin non confirmée]':'[... la réponse s\'arrête ici — génération interrompue]',M,y+6);
     }
     // Pied de page (sur toutes les pages) : contact + disclaimer
     _pdfPied(doc,{M,mention:'Conseil indicatif — ne remplace pas l\'avis d\'un professionnel.'});
@@ -5504,16 +5511,30 @@ function _phraseServeur(txt){
      · 'interrompue' — panne technique (le texte est déjà « Désolé, réessaie. », rien à ajouter) ;
      · 'inconnu'     — un serveur qui ne transmet pas encore le signal : on ne prétend RIEN. */
 function _miloEtatReponse(d){
-  if (!d || typeof d !== 'object') return 'inconnu';
+  /* 📄 MILO-PDF1B (25/09/2026) — FAIL-CLOSED. La 1ʳᵉ version rendait « inconnu » pour une raison
+     d'arrêt inconnue, absente ou une panne, et l'app l'affichait alors EXACTEMENT comme une réponse
+     finie (contre-vérification du principal). Désormais trois états seulement, et SEUL `complete`
+     est une réponse normale :
+       · 'complete'      — le serveur l'a confirmée terminée (seul `end_turn`, côté Worker) ;
+       · 'coupee'        — le modèle a signalé la limite de longueur (`max_tokens`) ;
+       · 'non_confirmee' — tout le reste : raison inconnue ou future, panne, ou serveur qui ne
+                           transmet pas le signal. Elle est MARQUÉE et ne devient jamais une séance.
+     ⚠️ Conséquence assumée : ce client exige le Worker qui transmet `complete`. Publié sans lui,
+     chaque réponse serait marquée « non confirmée » — bruyant, mais jamais faux. */
+  if (!d || typeof d !== 'object') return 'non_confirmee';
   if (d.truncated === true) return 'coupee';
   if (d.complete === true) return 'complete';
-  if (d._diag && d._diag !== 'ok') return 'interrompue';
-  return 'inconnu';
+  return 'non_confirmee';
 }
-/* Le marqueur gardé avec le message : 'analyse' (l'analyse de programme) ou 'reponse' (le chat).
-   ⛔ Liste blanche : une valeur inconnue (stockage abîmé, ancienne version) ne pose AUCUN marqueur. */
-function _coupeeValide(v){ return (v === 'analyse' || v === 'reponse') ? v : ''; }
-function _coupeeLibelle(genre){ return genre === 'analyse' ? 'Analyse incomplète' : 'Réponse incomplète'; }
+/* Le marqueur gardé avec le message : 'analyse' ou 'reponse' (coupées par la limite de longueur),
+   'non_confirmee' (fin non confirmée). ⛔ Liste blanche : une valeur inconnue (stockage abîmé,
+   autre version) ne pose AUCUN marqueur. */
+function _coupeeValide(v){ return (v === 'analyse' || v === 'reponse' || v === 'non_confirmee') ? v : ''; }
+function _coupeeLibelle(genre){ return genre === 'analyse' ? 'Analyse incomplète'
+  : (genre === 'non_confirmee' ? 'Réponse non confirmée' : 'Réponse incomplète'); }
+function _coupeeCause(genre){ return genre === 'non_confirmee'
+  ? 'fin non confirmée : Milo ne l\'a pas signalée comme terminée, elle peut être incomplète.'
+  : 'génération interrompue : Milo a atteint sa limite de longueur, la suite manque.'; }
 
 async function sendToCoach(customMsg, displayMsg, opts) {
   opts = opts || {};
@@ -5674,7 +5695,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       /* 📄 MILO-PDF1 — ⛔ LE CHAT N'ENVOIE PAS `suite` : il reste à UN appel. Une réponse coupée y
          est SIGNALÉE (marqueur sous la bulle, gardé dans le fil et dans le PDF), pas rattrapée par
          un 2ᵉ appel payant à chaque fois. Seule l'analyse de programme demande la suite (log.js). */
-      if (data.reply && _miloEtatReponse(data) === 'coupee') _coupee = 'reponse';
+      /* 📄 MILO-PDF1B — fail-closed : toute réponse du serveur que rien ne confirme terminée est
+         marquée (coupée par la longueur, ou fin non confirmée). */
+      { const _et = _miloEtatReponse(data); if (_et !== 'complete') _coupee = (_et === 'coupee') ? 'reponse' : 'non_confirmee'; }
     }
     hideTyping();
     // Programme de force : extraire le bloc JSON pour proposer un enregistrement
@@ -5689,7 +5712,12 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     // ① le bloc caché s'il est encore là (rétrocompatible, gratuit) → ② le cervelet traduit
     // le texte → ③ la lecture déterministe reste le filet si le cervelet échoue.
     let _dsFilet = null, _dsCervelet = false;
-    if (!_fp) {
+    /* 📄 MILO-PDF1B — DÉCISION DE MICHEL : « une réponse incomplète ne peut pas être transformée en
+       séance ». Démontré par le principal : « Leg curl 3×12 » coupé en « 3×1 » partait dans la séance
+       du jour. Une réponse non confirmée terminée (`_coupee`) ne passe donc par AUCUNE des voies qui
+       construisent une séance : ni le bloc caché, ni le cervelet, ni le filet, ni la question « on
+       démarre ? ». Le texte reste lisible ; seule la transformation en séance est refusée. */
+    if (!_fp && !_coupee) {
       const dsx = _extractDaySession(reply);
       if (dsx && dsx.sess) {
         if (dsx.fromText) _dsFilet = dsx.sess;                        // ③
@@ -5703,7 +5731,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     /* ⭐ ft-v1053 — LE DÉCLENCHEUR DE REPLI SE LIT SUR LA DEMANDE, PAS SUR LA RÉPONSE.
        ⛔ Exclu des appels internes (`silent`, débrief, programme de force) : ce ne sont pas des
        demandes de séance de la personne, et y poser la question serait un contresens. */
-    const _dsDemande = !_fp && !opts.silent && !opts.debriefSess
+    const _dsDemande = !_fp && !_coupee && !opts.silent && !opts.debriefSess
       && typeof _demandeUneSeance === 'function' && _demandeUneSeance(msg);
     // Mémoire durable : Milo peut proposer de retenir un trait durable (avec validation, Principe 3)
     const _mem = _extractMemory(reply);

@@ -9845,10 +9845,12 @@ async function analyzeProgIa(idx){
     /* 📄 MILO-PDF1 — si l'analyse est RESTÉE coupée (suite coupée à son tour, ou suite en échec),
        on le dit EN TÊTE, avant le texte : c'est ce qu'on lit en premier. Le marqueur suit
        l'analyse dans le Coach (`continueInCoach`), donc jusque dans le PDF. */
-    _lastProgAnalysisCoupee=(data.reply&&typeof _miloEtatReponse==='function'&&_miloEtatReponse(data)==='coupee')?'analyse':'';
+    /* 📄 MILO-PDF1B — fail-closed : seule une analyse CONFIRMÉE terminée passe sans marqueur. */
+    { const _et=(typeof _miloEtatReponse==='function')?_miloEtatReponse(data):'non_confirmee';
+      _lastProgAnalysisCoupee=(_et==='complete')?'':(_et==='coupee'?'analyse':'non_confirmee'); }
     _lastProgAnalysisReply=reply;_lastProgAnalysisProg=prog;
     const _bandeau=_lastProgAnalysisCoupee
-      ?'<div class="coach-sante-rappel coach-coupee" style="margin:0 0 12px;">✂️ Analyse incomplète — génération interrompue : Milo a atteint sa limite de longueur, la suite manque. Relance l\'analyse pour réessayer.</div>':'';
+      ?'<div class="coach-sante-rappel coach-coupee" style="margin:0 0 12px;">✂️ '+_coupeeLibelle(_lastProgAnalysisCoupee)+' — '+_coupeeCause(_lastProgAnalysisCoupee)+' Relance l\'analyse pour réessayer.</div>':'';
     content.innerHTML=_bandeau+'<div style="font-size:14px;line-height:1.7;color:var(--t1);">'+_coachFmtHtml(reply)+'</div>';
     if(footer)footer.style.display='block';
   }catch(e){
