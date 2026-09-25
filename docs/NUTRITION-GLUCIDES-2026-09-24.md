@@ -250,3 +250,46 @@ vérifie qu'il refuse sans lui.
 - ×1,07 fumeur : présent, origine non traçable, couplé à `S.smoker` côté récupération — **gelé**,
   chantier séparé. ⚠️ Correction : il **a** deux témoins dédiés (`tests/calculs/runner.js`, Mifflin
   et Katch) — ma phrase « aucun témoin dédié » était fausse.
+
+## 11. 25/09 — D-021 tranchée (Michel), R34, règle d'or #11, prépublication
+
+**D-021 — mise en œuvre** (`D-021` au registre, statut VALIDÉ) :
+- provenance `activitySrc` : `'choisi'` ou rien (stockage `ft4_act_src`, cloud via la liste blanche
+  de `Code.js`, restauration) ; aucun autre marqueur réutilisé ;
+- un seul propriétaire de l'état, `etatActivite()` : `absent` · `choisi` · `a_confirmer` (1,55 sans
+  provenance) · `herite` (autre niveau sans provenance). ⚠️ Pour 1,2 · 1,375 · 1,725 · 1,9 : dans
+  l'historique disponible (depuis le 18/09) **aucun** chemin automatique ne les produisait ; avant, pas
+  d'historique → **pas de provenance inventée**, utilisés comme avant ;
+- un seul écrivain d'un choix, `choisirActivite()` ; **Confirmer** garde la valeur exacte et pose la
+  provenance ; **Modifier** emmène au sélecteur du Profil sans rien confirmer ; fermer sans répondre ne
+  vaut pas consentement ; « Enregistrer » le Profil sans **toucher** au sélecteur ne confirme rien ;
+- cloud : la provenance **ne survit jamais à sa valeur** (valeur changée par une restauration →
+  provenance du cloud ou rien). ⚠️ Limite connue, non traitée (pas de nouvelle politique de conflits) :
+  un appareil resté sur l'ancien code peut encore envoyer une valeur sans provenance ; le serveur garde
+  alors l'ancienne provenance (`_ps_`) à côté de la nouvelle valeur.
+
+**R34 — ce que Milo reçoit** (`tools/r34_contexte.js`, 0 appel Milo, avant B1 vs maintenant, 345 lignes) :
+- absente → `NON RENSEIGNÉ (besoins caloriques non calculés)`, TDEE et cible « — » (3 lignes changent) ;
+- 1,55 choisi → `1.55 — Modéré (3-4j), choisi par la personne` ;
+- 1,725 choisi → `1.725 — Actif (5-6j), choisi par la personne` ;
+- ancien 1,55 → `1.55 — Modéré (3-4j), À CONFIRMER : ancien réglage, peut-être la valeur par défaut de
+  l'app — ne le présente PAS comme un choix de la personne` ;
+- après Confirmer → identique au 1,55 choisi.
+Aucune autre ligne du contexte ne change. ⚠️ R34 exige un **banc d'essai réel avant/après** pour un
+changement de contexte : il n'a **pas** tourné (0 appel Milo autorisé).
+
+**Règle d'or #11** : points 2 à 5 faits (point rouge `activite-choisie`, aide « ? », aide détaillée,
+diapo Nutrition du Guide). **Point 1 (pop-up) NON activé** — la condition « la personne doit faire
+quelque chose » est remplie pour les anciens comptes, mais la carte le demande déjà dans l'onglet.
+Texte prêt si Michel la veut (≈ 200 caractères) : *« 🏃 Ton niveau d'activité fixe tes calories : il
+doit venir de toi. Si l'app l'avait réglé toute seule, une carte dans Nutrition te demande de le
+confirmer ou de le changer — une seule fois. »*
+
+**Tableau de bord (`dashboard.html`)** : pas de nouvelle régression. Ancien 1,55 et 1,55 choisi :
+identique à avant (le défaut connu reste, NUT-DASH1). Activité absente (profils neufs) : « Complète ton
+profil (âge, taille, poids) » au lieu d'une dépense inventée — ne nomme pas l'activité → ajouté à NUT-DASH1.
+
+**Prépublication — ce que la publication devra faire** : bump `ft-v1235` · entrée de journal dans
+`CLAUDE.md` · `Code.js` a changé → le déploiement Apps Script part avec le push sur `master`
+(`deploy-appsscript.yml`), à vérifier (`?test=1`) · la publication emporte aussi les chantiers
+**Poids** et **Milo-débrief** déjà sur la branche.
