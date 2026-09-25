@@ -1658,6 +1658,9 @@ function handleSaveProfile_(body) {
     if (body.age           !== undefined) profile.age           = _pn_(body.age,           profile.age);
     if (body.height        !== undefined) profile.height        = _pn_(body.height,        profile.height);
     if (body.activityLevel !== undefined) profile.activityLevel = _pn_(body.activityLevel, profile.activityLevel);
+    /* D-021 (25/09/2026) : provenance du niveau d'activité — 'choisi' ou rien. `_ps_` : un '' ne l'efface pas.
+       ⛔ Sans cette ligne, la liste blanche la jetterait EN SILENCE et une restauration la perdrait. */
+    if (body.activitySrc   !== undefined) profile.activitySrc   = _ps_(body.activitySrc === 'choisi' ? 'choisi' : '', profile.activitySrc);
     if (body.barW          !== undefined) profile.barW          = _pn_(body.barW,          profile.barW);
     if (body.defRest       !== undefined) profile.defRest       = _pn_(body.defRest,       profile.defRest);
     if (body.mensCycleDur  !== undefined) profile.mensCycleDur  = _pn_(body.mensCycleDur,  profile.mensCycleDur);

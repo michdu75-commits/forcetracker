@@ -24,7 +24,8 @@ module.exports.source = function (t, ROOT, fs, path) {
   const IH = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   console.log('\n═══ B-CCCLXII. B1/B2 — activité et relectures bornées, dans la source ═══');
 
-  const sel = (IH.match(/<select id="act-sel">([\s\S]*?)<\/select>/) || ['', ''])[1];
+  /* D-021 : le sélecteur porte désormais `onchange` (garde « touché ») — on lit ses OPTIONS, pas sa forme. */
+  const sel = (IH.match(/<select id="act-sel"[^>]*>([\s\S]*?)<\/select>/) || ['', ''])[1];
   const vals = (sel.match(/value="([^"]*)"/g) || []).map(v => v.slice(7, -1)).filter(Boolean);
   /* Resserré (contre-vérification de nuit) : la liste est lue DANS le corps de `_activiteValide`, puis
      comparée aux options de l'écran — et non à une chaîne écrite en dur des deux côtés. */
@@ -73,7 +74,9 @@ module.exports.ecran = async function (t, b, PORT) {
     await new Promise(r => setTimeout(r, 300));
     const se = document.getElementById('act-sel');
     persist();
-    /* Trouvé par le contrôle négatif : « Enregistrer » avec « À choisir » ne doit rien écrire. */
+    /* Trouvé par le contrôle négatif : « Enregistrer » avec « À choisir » ne doit rien écrire.
+       D-021 : on CHOISIT « À choisir » (sélecteur touché) — sinon la garde « touché » rendrait le test aveugle. */
+    se.value = ''; se.dispatchEvent(new Event('change', { bubbles: true }));
     saveProfile();
     const apresSave = { act: S.activityLevel, disque: localStorage.getItem('ft4_act') };
     /* Trouvé par le contrôle négatif : sans historique, la carte « passer de… » se tait de toute
@@ -83,7 +86,9 @@ module.exports.ecran = async function (t, b, PORT) {
       ses.push({ date: x.toISOString().slice(0, 10), exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, done: true }] }] }); }
     const sesAvant = S.sessions; S.sessions = ses;
     const ecartHisto = ecartNiveauActivite();
-    S.activityLevel = 1.55; const ecartTemoin = ecartNiveauActivite(); S.activityLevel = null;
+    /* D-021 : un 1,55 SANS provenance est désormais « à confirmer » (sa carte à lui). Le contrôle pose
+       donc un 1,55 CHOISI — c'est lui qui doit faire parler la carte « passer de… ». */
+    S.activityLevel = 1.55; S.activitySrc = 'choisi'; const ecartTemoin = ecartNiveauActivite(); S.activityLevel = null; S.activitySrc = null;
     S.sessions = sesAvant;
     return { apresSave, ecartHisto, ecartTemoin: !!ecartTemoin, act: S.activityLevel, tdee: calcTDEE(), bmr: bmrDetail().kcal, cal: m.calories,
              P: m.prot_g, L: m.fat_g, G: m.carbs_g, manq: m.manquants, ecran: /il manque[^.]*niveau d.activité/.test(txt),
@@ -151,7 +156,7 @@ module.exports.ecran = async function (t, b, PORT) {
     out.mk = {};
     ['Infinity', '1e9', '-500', '100', '2200'].forEach(v => { out.mk[v] = charger({ ft4_act: '1.55', ft4_manualkcal: v }); });
     out.partiel = charger({ ft4_age: null, ft4_ht: null });
-    out.legacy = charger({ ft4_act: '1.55' });
+    out.legacy = Object.assign(charger({ ft4_act: '1.55' }), { etat: (typeof etatActivite === 'function') ? etatActivite() : 'PROPRIÉTAIRE ABSENT' });
     /* Restauration cloud, sur un état où 1,375 a été CHOISI. */
     const restaurer = (prof) => {
       charger({ ft4_act: '1.375' });
@@ -189,8 +194,9 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCLXIII ⑫ profil partiel (poids seul) : il manque la taille, l\'âge ET l\'activité',
     JSON.stringify(R.partiel.manq) === JSON.stringify(['ta taille', 'ton âge', "ton niveau d'activité"]),
     JSON.stringify(R.partiel.manq));
-  t('B-CCCLXIII ⑬ ⚠️ LIMITE ÉCRITE : un 1,55 déjà stocké est gardé (provenance inconnue) → TDEE 2711',
-    R.legacy.act === 1.55 && R.legacy.tdee === 2711, JSON.stringify(R.legacy));
+  /* D-021 TRANCHÉE par Michel (25/09) : ni gardé comme un choix, ni effacé → « à confirmer ». */
+  t('B-CCCLXIII ⑬ D-021 : un 1,55 déjà stocké sans provenance est gardé mais « à confirmer » (jamais « choisi ») → TDEE 2711',
+    R.legacy.act === 1.55 && R.legacy.tdee === 2711 && R.legacy.etat === 'a_confirmer', JSON.stringify(R.legacy));
   t('B-CCCLXIII ⑭ restauration valide : 1,9 et « 1.2 » acceptés',
     R.rs['1.9'].act === 1.9 && R.rs['1.2'].act === 1.2, JSON.stringify([R.rs['1.9'], R.rs['1.2']]));
   const refus = ['-1', '99', '1.4', 'Infinity', '1e9', 'abc'];
@@ -266,7 +272,7 @@ module.exports.ecran = async function (t, b, PORT) {
       charger({});
       const se = document.getElementById('act-sel');
       const o = document.createElement('option'); o.value = v; o.textContent = 'forgée'; se.appendChild(o);
-      se.value = v;
+      se.value = v; se.dispatchEvent(new Event('change', { bubbles: true }));   // D-021 : TOUCHÉ, pour éprouver la validation elle-même
       try { saveProfile(); } catch (e) {}
       out.ecran[v] = { act: S.activityLevel, disque: localStorage.getItem('ft4_act'), tdee: calcTDEE() };
       o.remove();
@@ -351,15 +357,16 @@ module.exports.ecran = async function (t, b, PORT) {
     try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: 'modéré' } }); } catch (e) {}
     out.chaine = { act: S.activityLevel };
     try { _applyRestoreData({ profile: { name: 'Sonde', activityLevel: 1.55 } }); } catch (e) {}
-    out.legacy = { act: S.activityLevel, tdee: calcTDEE() };
+    out.legacy = { act: S.activityLevel, tdee: calcTDEE(), etat: (typeof etatActivite === 'function') ? etatActivite() : 'PROPRIÉTAIRE ABSENT' };
     return out;
   });
   t('B-CCCLXV ② restauration SANS activité après remise à zéro : rien n\'est inventé (null, aucun TDEE)',
     rs.sans.act === null && rs.sans.tdee === null, JSON.stringify(rs.sans));
   t('B-CCCLXV ③ restauration d\'une chaîne « modéré » : refusée (reste null)',
     rs.chaine.act === null, JSON.stringify(rs.chaine));
-  t('B-CCCLXV ④ ⚠️ D-021 : un cloud qui porte 1,55 le ramène (valeur valide, provenance inconnue) — figé, NON tranché',
-    rs.legacy.act === 1.55 && rs.legacy.tdee === 2711, JSON.stringify(rs.legacy));
+  /* D-021 TRANCHÉE par Michel (25/09) : un cloud 1,55 sans provenance revient « à confirmer ». */
+  t('B-CCCLXV ④ D-021 : un cloud qui porte 1,55 sans provenance le ramène « à confirmer », jamais « choisi »',
+    rs.legacy.act === 1.55 && rs.legacy.tdee === 2711 && rs.legacy.etat === 'a_confirmer', JSON.stringify(rs.legacy));
   // ② resetOnboardingTest : refus en production, remise à zéro réelle dans le clone
   await choisir('1.725');
   const prod = await pg.evaluate(() => {

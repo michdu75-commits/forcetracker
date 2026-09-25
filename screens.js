@@ -3179,7 +3179,7 @@ function _stampNiveauActivite(suggere,result){
 }
 function appliquerNiveauActivite(suggere){
   try{
-    S.activityLevel=+suggere;
+    choisirActivite(+suggere);   // D-021 : un clic de la personne = un choix (valeur ET provenance)
     const sel=document.getElementById('act-sel'); if(sel)sel.value=String(suggere);
     _stampNiveauActivite(+suggere,'updated');
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
@@ -3194,6 +3194,29 @@ function garderNiveauActivite(suggere){
     const el=document.getElementById('nu-act-drift'); if(el)el.innerHTML='';
     if(typeof toast==='function')toast("Ok, je garde ton réglage 👍",'info');
   }catch(e){console.warn('[FT act] keep',e);}
+}
+/* 🧾 D-021 — LA CONFIRMATION UNIQUE D'UN ANCIEN 1,55 (décision de Michel, 25/09/2026).
+   Une carte, pas une pop-up : elle vit là où les chiffres qu'elle conditionne s'affichent, et elle
+   disparaît dès que la personne a répondu (etatActivite() ≠ 'a_confirmer'). Fermer l'app sans
+   répondre ne vaut PAS consentement : la carte revient. */
+function _renderActConfirm(){
+  const el=document.getElementById('nu-act-confirm'); if(!el) return;
+  if(typeof etatActivite!=='function'||etatActivite()!=='a_confirmer'){ el.innerHTML=''; return; }
+  const lbl=(typeof ACT_LABELS!=='undefined'&&ACT_LABELS[S.activityLevel])||String(S.activityLevel);
+  el.innerHTML='<div style="background:var(--bg2);border-radius:16px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(255,193,7,.35);">'
+    +'<div style="font-size:13.5px;color:var(--t1);line-height:1.45;">🏃 Niveau d\'activité enregistré : <b>'+_escNote(lbl)+'</b></div>'
+    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:4px;">C\'était peut-être le réglage par défaut de l\'app. Tes calories en dépendent : confirme-le ou change-le.</div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px;">'
+    +'<button class="btn btn-red" id="act-confirm-ok" style="flex:1;padding:10px;font-size:13.5px;" onclick="confirmerActivite()">Confirmer</button>'
+    +'<button class="btn" id="act-confirm-mod" style="flex:1;padding:10px;font-size:13.5px;background:var(--bg3,var(--bg2));color:var(--t1);border:1px solid var(--sep);" onclick="modifierActivite()">Modifier</button>'
+    +'</div></div>';
+}
+/* « Modifier » : on emmène vers le VRAI choix (Profil → Activité). Rien n'est confirmé ici. */
+function modifierActivite(){
+  try{
+    goScreen('setup', document.getElementById('nb-setup'));
+    setTimeout(()=>{ const s=document.getElementById('act-sel'); if(s){ s.scrollIntoView({block:'center'}); s.focus(); } },250);
+  }catch(e){}
 }
 function renderNutrition(){try{
   renderSupplements();
@@ -3311,6 +3334,7 @@ function renderNutrition(){try{
   try{ _renderOuTuEnEs(macros); }catch(e){ /* jamais bloquant : la carte est un ajout, pas un pré-requis */ }
   /* 🍽️ ft-v1025 — la carte du jour, et la carte « ce que l'app a appris » remontée du Journal.
      ⛔ Chacune dans son `try` : une carte qui plante ne doit pas emporter tout l'onglet. */
+  try{ _renderActConfirm(); }catch(e){ /* jamais bloquant */ }
   try{ _renderAujourdhui(macros); }catch(e){ /* jamais bloquant */ }
   try{ const _ev=document.getElementById('nu-evolution'); if(_ev)_ev.innerHTML=_blocEvolutionHTML(); }catch(e){}
   try{ const _ap=document.getElementById('nu-appris'); if(_ap)_ap.innerHTML=_blocApprisHTML(); }catch(e){}

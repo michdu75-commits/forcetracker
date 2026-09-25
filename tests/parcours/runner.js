@@ -39620,6 +39620,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
+  /* 🧾 D-021 (décision Michel, 25/09) : anciens 1,55 à confirmer + R34 (ce que Milo reçoit).
+     Contrôle négatif : `tools/mut_d021_activite.py`. */
+  await require('./d021_activite.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40427,6 +40430,7 @@ require('./poids_chaine.js').source(t, ROOT, fs, path);
 require('./debrief_provenance.js').source(t, ROOT, fs, path);
 require('./nutri_moteur.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
+require('./d021_activite.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

@@ -33,6 +33,7 @@ function reposDefaut(){
 let S={
   bw:80,barW:20,defRest:REPOS_DEFAUT,
   gender:'H',age:30,height:175,activityLevel:null,   // ⛔ jamais 1.55 d'office (D-016 étendue, 24/09 — voir _activiteValide)
+  activitySrc:null,   // D-021 : 'choisi' = choisi/confirmé par la personne ; null = inconnue — voir etatActivite()
   workType:'bureau',smoker:false,halo:'on',haloColor:'59,130,246',haloDir:'top',
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
@@ -309,6 +310,10 @@ function load(){
        donc un `1.55` déjà stocké ne dit pas s'il a été choisi. On le GARDE (on ne peut pas prouver
        qu'il ne l'a pas été) — la décision pour ces comptes-là revient à Michel. */
     S.activityLevel=_activiteValide(localStorage.getItem('ft4_act'));
+    /* 🧾 D-021 (décision de Michel, 25/09) : la PROVENANCE du niveau d'activité. Une seule valeur
+       écrite : 'choisi' (choisi ou confirmé par la personne, APRÈS cette version). Son absence
+       veut dire « on ne sait pas » — jamais « choisi ». Sans niveau valide, pas de provenance. */
+    S.activitySrc=(S.activityLevel!=null&&localStorage.getItem('ft4_act_src')==='choisi')?'choisi':null;
     S.workType=localStorage.getItem('ft4_work')||'bureau';
     S.halo=localStorage.getItem('ft4_halo')||'on';
     if(S.halo==='blue')S.halo='on';                 // migration ancien nom
@@ -877,6 +882,42 @@ function _activiteValide(v){
   const n=_nombreStrict(v);
   return (isFinite(n)&&[1.2,1.375,1.55,1.725,1.9].indexOf(n)>=0)?n:null;
 }
+/* 🧾 D-021 — L'ÉTAT DU NIVEAU D'ACTIVITÉ, UN SEUL PROPRIÉTAIRE (décision de Michel, 25/09/2026).
+   ⛔ Le problème : avant B1, l'app écrivait `1.55` (« Modéré (3-4j) ») d'office, à chaque sauvegarde,
+   et l'envoyait au cloud — un 1,55 ANCIEN ne dit donc pas si la personne l'a choisi. Michel : ni le
+   tenir pour un choix, ni l'effacer → DEMANDER UNE FOIS.
+     · 'absent'      — aucun niveau valide (B1 : « il manque ton niveau d'activité ») ;
+     · 'choisi'      — choisi ou confirmé par la personne (`activitySrc === 'choisi'`) ;
+     · 'a_confirmer' — un 1,55 sans provenance : l'ancien défaut possible → UNE confirmation ;
+     · 'herite'      — un AUTRE niveau sans provenance. Mesuré dans l'historique disponible
+       (depuis le 18/09) : aucun chemin automatique ne produisait 1,2 · 1,375 · 1,725 · 1,9 — seuls le
+       sélecteur, la carte « passer à… » (un clic) et une restauration d'une telle valeur. ⚠️ Avant le
+       18/09, l'historique git n'existe pas : on ne l'écrit PAS « choisi » (pas de provenance
+       inventée), on l'utilise comme avant.
+   ⛔ 'a_confirmer' reste CALCULABLE (les chiffres ne disparaissent pas du jour au lendemain) mais il
+   est DIT à l'écran et à Milo : jamais présenté comme un choix de la personne. */
+function etatActivite(){
+  const a=_activiteValide(S.activityLevel);
+  if(a==null) return 'absent';
+  if(S.activitySrc==='choisi') return 'choisi';
+  return a===1.55?'a_confirmer':'herite';
+}
+/* Le SEUL écrivain d'un niveau choisi par la personne : valeur ET provenance ensemble. */
+function choisirActivite(v){
+  const a=_activiteValide(v);
+  if(a==null) return false;
+  S.activityLevel=a; S.activitySrc='choisi';
+  return true;
+}
+/* « Confirmer » : garde la valeur EXACTE, pose la provenance. Rien à confirmer sans niveau. */
+function confirmerActivite(){
+  const a=_activiteValide(S.activityLevel);
+  if(a==null) return false;
+  S.activitySrc='choisi';
+  persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  if(typeof renderNutrition==='function')renderNutrition();
+  return true;
+}
 /* 🍽️ LES CALORIES À LA MAIN : les bornes de `saveKcalEdit` (800-6000), un seul propriétaire.
    L'écran RAMÈNE dans la plage ce qui est tapé (et le dit par un toast) ; ce qui est RELU
    (stockage, cloud) et sort de la plage est REFUSÉ — personne n'est là pour voir la correction. */
@@ -914,6 +955,9 @@ function persist(){
     /* B1 : pas de choix → pas de clé (écrire `null` fabriquerait une valeur relue plus tard). */
     if(_activiteValide(S.activityLevel)!=null) localStorage.setItem('ft4_act',S.activityLevel);
     else localStorage.removeItem('ft4_act');
+    /* D-021 : la provenance n'existe qu'avec un niveau valide — elle ne survit jamais à sa valeur. */
+    if(_activiteValide(S.activityLevel)!=null&&S.activitySrc==='choisi') localStorage.setItem('ft4_act_src','choisi');
+    else localStorage.removeItem('ft4_act_src');
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
@@ -1511,7 +1555,7 @@ function calcTDEE(refTs){
    personne est typiquement « l'erreur qui la touche » (**R29**) : on montre les chiffres, elle
    tranche. Même règle que `manualKcal`, qu'on ne relève jamais en douce. */
 const _ACT_PAR_FREQ={'1':1.375,'3':1.55,'4':1.55,'5':1.725};
-const ACT_LABELS={1.375:'Léger (1-2j)',1.55:'Modéré (3-4j)',1.725:'Actif (5-6j)',1.9:'Très actif'};
+const ACT_LABELS={1.2:'Sédentaire',1.375:'Léger (1-2j)',1.55:'Modéré (3-4j)',1.725:'Actif (5-6j)',1.9:'Très actif'};   // 1.2 ajouté (D-021 : Milo et la carte nomment le niveau)
 function ecartNiveauActivite(){
   try{
     // R2/R13 : on RÉUTILISE le comptage du détecteur de fréquence (tracking.js) au lieu d'en
@@ -1531,6 +1575,8 @@ function ecartNiveauActivite(){
        « passer de Modéré à… » quelqu'un qui n'a jamais été Modéré. */
     const actuel=_activiteValide(S.activityLevel);
     if(actuel==null)return null;
+    /* D-021 : un 1,55 à confirmer a SA carte (confirmer / modifier) — pas deux cartes en concurrence. */
+    if(etatActivite()==='a_confirmer')return null;
     /* ⛔ « Très actif » (1.9) ne se redescend PAS sur un simple comptage de séances : c'est un
        profil (double séance, métier physique, sport à côté) que le nombre de séances de
        musculation ne mesure pas. On ne devine pas ce qu'on ne sait pas (R29). */

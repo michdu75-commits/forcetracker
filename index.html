@@ -782,6 +782,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
        zéro JS, chevron et clavier gratuits, et ça tient même si un script tombe (R13). -->
   <div id="nu-macros" style="display:flex;flex-direction:column;gap:12px;">
 
+    <!-- D-021 : un ancien niveau d'activité à confirmer (rempli par _renderActConfirm, vide sinon) -->
+    <div id="nu-act-confirm"></div>
     <!-- ① AUJOURD'HUI — la seule carte qui doit se lire sans faire défiler -->
     <div id="nu-today" style="background:var(--bg2);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
@@ -1435,7 +1437,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="fg"><label>Date d'anniversaire</label><input type="text" id="bday-inp" placeholder="JJ/MM (ex: 14/07)" inputmode="numeric" maxlength="5" style="text-align:center;letter-spacing:2px;" oninput="fmtBday(this)"></div>
       <div class="two-col">
         <div class="fg"><label>Activité</label>
-          <select id="act-sel">
+          <select id="act-sel" onchange="this.dataset.touche='1'">
             <option value="">À choisir</option>
             <option value="1.2">Sédentaire</option>
             <option value="1.375">Léger (1-2j)</option>
@@ -1443,6 +1445,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
             <option value="1.725">Actif (5-6j)</option>
             <option value="1.9">Très actif</option>
           </select>
+          <div id="act-src-hint" style="display:none;font-size:11.5px;color:var(--gold);margin-top:5px;line-height:1.35;">À confirmer — ancien réglage, peut-être celui par défaut de l'app. Choisis ton niveau puis enregistre.</div>
         </div>
         <div class="fg"><label>Repos défaut</label>
           <select id="rest-sel">

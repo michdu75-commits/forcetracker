@@ -918,7 +918,7 @@ function _cloudSync(){
       action:'saveProfile',email:S.email,
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       ...(_adnFilled()?{adn:S.adn}:{}),
-      activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
+      activityLevel:S.activityLevel,activitySrc:S.activitySrc||'',workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,strengthGoals:S.strengthGoals||{},manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       foodMode:S.foodMode||'',fasting:S.fasting||'',   // mode alimentaire + jeûne (02/08)
@@ -3064,7 +3064,9 @@ function renderSetup(){
      saisie réelle de la personne (`input`) en fait une pesée — voir `saveProfile`. */
   const bwEl=document.getElementById('bw-inp');
   if(bwEl){ bwEl.value=S.bw||''; bwEl.dataset.touche=''; bwEl.oninput=function(){this.dataset.touche='1';}; }
-  const actEl=document.getElementById('act-sel');if(actEl)actEl.value=(_activiteValide(S.activityLevel)!=null)?String(S.activityLevel):'';   // B1 : rien de choisi → « À choisir », jamais « Modéré » d'office
+  const actEl=document.getElementById('act-sel');if(actEl){actEl.value=(_activiteValide(S.activityLevel)!=null)?String(S.activityLevel):''; actEl.dataset.touche='';}   // B1 : rien de choisi → « À choisir », jamais « Modéré » d'office
+  /* D-021 : un 1,55 à confirmer le DIT sous le sélecteur — prérempli n'est pas choisi. */
+  {const h=document.getElementById('act-src-hint'); if(h){ const _e=(typeof etatActivite==='function')?etatActivite():''; h.style.display=_e==='a_confirmer'?'':'none'; }}
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
   const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
   const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
@@ -3154,7 +3156,10 @@ function saveProfile(){
   const _bwTouche=!!(bwEl&&bwEl.dataset.touche==='1');
   const actEl=document.getElementById('act-sel');
   const restEl=document.getElementById('rest-sel');
-  const act=actEl?_activiteValide(actEl.value):null;   // B1 : « À choisir » ne s'enregistre pas
+  /* B1 : « À choisir » ne s'enregistre pas. ⛔ D-021 : SEULEMENT si le sélecteur a été TOUCHÉ — prérempli
+     avec un ancien 1,55, « Enregistrer » pour corriger son poids aurait transformé l'ambiguïté en choix
+     (exactement le piège du champ poids prérempli, F011). */
+  const act=(actEl&&actEl.dataset.touche==='1')?_activiteValide(actEl.value):null;
   const rest=restEl?parseInt(restEl.value):S.defRest;
   if(age){if(_ageValide(age))S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
   if(ht){if(_tailleValide(ht))S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
@@ -3173,7 +3178,7 @@ function saveProfile(){
     if(typeof _enregistrerPesee==='function')_enregistrerPesee(bw);else S.bw=bw;   // repli : rien de tapé ne se perd (règle d'or #3)
     bwEl.dataset.touche='';
   }
-  if(act!=null) S.activityLevel=act;
+  if(act!=null){ choisirActivite(act); actEl.dataset.touche=''; }   // D-021 : valeur ET provenance, un seul écrivain
   // (poids de la barre : propriétaire unique = setBarWeight(), dans le calculateur de plaques)
   if(rest) S.defRest=rest;
   const csEl=document.getElementById('cycle-start-inp');
@@ -3358,7 +3363,15 @@ function _applyRestoreData(raw){
   try{if(d.level)S.level=d.level;}catch(e){}
   /* ⛔ B2 (24/09/2026) : mesuré, `-1` donnait un TDEE de −1 749 kcal et `99` de 173 151. La valeur du
      cloud passe par la règle de l'écran (les 5 niveaux) ; hors de ça, on garde ce qu'on a. */
-  try{if(d.activityLevel!=null&&d.activityLevel!==''){const _act=_activiteValide(d.activityLevel); if(_act!=null)S.activityLevel=_act; else console.warn('[FT restore] activityLevel refusé',d.activityLevel);}}catch(e){console.warn('[FT restore] activityLevel',e);}
+  try{if(d.activityLevel!=null&&d.activityLevel!==''){const _act=_activiteValide(d.activityLevel); if(_act!=null){
+    /* ⛔ D-021 : LA PROVENANCE NE SURVIT JAMAIS À SA VALEUR (leçon de coachMemoryMeta, ft-v1227).
+       Valeur CHANGÉE → la provenance vient du cloud ou n'existe pas ; valeur IDENTIQUE → on garde la
+       provenance locale, et un 'choisi' du cloud la complète. Un ancien 1,55 sans provenance ne
+       devient donc jamais « confirmé » par une restauration. */
+    const _srcCloud=(d.activitySrc==='choisi')?'choisi':null;
+    if(_act!==S.activityLevel){ S.activityLevel=_act; S.activitySrc=_srcCloud; }
+    else if(_srcCloud) S.activitySrc='choisi';
+  } else console.warn('[FT restore] activityLevel refusé',d.activityLevel);}}catch(e){console.warn('[FT restore] activityLevel',e);}
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
   try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
