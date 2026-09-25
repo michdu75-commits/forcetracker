@@ -9383,7 +9383,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
         out.push({date:_j(w*7+i), exs:[], vol:0, calories:400});
       return out;
     };
-    S.sessions=faireSessions(5); S.activityLevel=1.55; S.manualKcal=0;
+    /* D-021 (25/09) : un 1,55 SANS provenance est « à confirmer » et a SA carte ; ce témoin parle d'un
+       niveau DÉCLARÉ par la personne → provenance « choisi » (ici et plus bas). */
+    S.sessions=faireSessions(5); S.activityLevel=1.55; S.activitySrc='choisi'; S.manualKcal=0;
     try{ delete S.registre.ctxAct; }catch(e){}
 
     /* ⛔① LE DOUBLE COMPTE : la tuile ne doit plus additionner dépense + séance. */
@@ -9430,7 +9432,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
 
     /* ⛔⑦ LE TÉMOIN LE PLUS IMPORTANT : ÇA NE S'APPLIQUE JAMAIS TOUT SEUL. Trois rendus
        d'affilée ne doivent pas déplacer d'un iota la cible calorique de la personne. */
-    S.sessions=faireSessions(5); S.activityLevel=1.55;
+    S.sessions=faireSessions(5); S.activityLevel=1.55; S.activitySrc='choisi';
     try{ delete S.registre.ctxAct; }catch(e){}
     const _cibleAvant=calcMacros(S.nutritionPhase).calories;
     renderNutrition(); renderNutrition(); renderNutrition();
@@ -9445,7 +9447,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.selSuivi = (document.getElementById('act-sel')||{}).value==='1.725';
 
     /* ⛔⑨ « GARDER » NE REVIENT PAS À LA CHARGE (R19/R24). */
-    S.activityLevel=1.55; try{ delete S.registre.ctxAct; }catch(e){}
+    S.activityLevel=1.55; S.activitySrc='choisi'; try{ delete S.registre.ctxAct; }catch(e){}
     garderNiveauActivite(1.725);
     o.gardeRespecte = ecartNiveauActivite()===null;
     // ... mais un AUTRE niveau, lui, reste proposable : on refuse une réponse, pas la mesure.
@@ -9453,7 +9455,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.autreNiveauProposable = !!ecartNiveauActivite();
 
     /* ⚠️⑩ CIBLE RÉGLÉE À LA MAIN : on ne promet pas un changement qui n'aura pas lieu. */
-    S.sessions=faireSessions(5); S.activityLevel=1.55; S.manualKcal=2000;
+    S.sessions=faireSessions(5); S.activityLevel=1.55; S.activitySrc='choisi'; S.manualKcal=2000;
     try{ delete S.registre.ctxAct; }catch(e){}
     renderNutrition();
     const _h=(document.getElementById('nu-act-drift')||{}).innerHTML||'';
