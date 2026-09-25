@@ -42,7 +42,9 @@ const APRES = path.resolve(__dirname, '..', '..');
 const CAS_ARG = (() => { const i = ARGV.indexOf('--cas'); return i >= 0 ? String(ARGV[i + 1] || '') : String(process.env.R34_CAS || ''); })().trim();
 const ORIGINE = 'https://michdu75-commits.github.io';
 const BASE_URL = ORIGINE + '/forcetracker/';
-const PLAFOND_APPELS = 20, PLAFOND_EUR = 5;
+/* Plafond d'appels réglable par R34_PLAFOND_APPELS (jamais au-dessus de 20) : un micro-banc de
+   Michel peut exiger « 4 au total, retries compris » — le retry n'a alors lieu que dans ce budget. */
+const PLAFOND_APPELS = Math.max(1, Math.min(20, parseInt(process.env.R34_PLAFOND_APPELS || '20', 10) || 20)), PLAFOND_EUR = 5;
 /* Tarif vérifié (grille Anthropic du 24/06/2026) : claude-sonnet-4-6 = 3 $/M entrée, 15 $/M sortie.
    PRUDENT : toute l'entrée comptée au prix d'une ÉCRITURE de cache 1 h (2× → 6 $/M), la sortie au
    plafond du Worker (max_tokens 1024), 3 caractères par token, et 1 $ compté comme 1 €. */
@@ -64,6 +66,17 @@ const CAS = [
   { id: 'R34-E', arbre: 'apres', titre: 'ancien 1,55 puis Confirmer', ls: { ft4_act: '1.55' }, confirmer: true },
   /* AVANT (arbre d'avant B1) : les cas A, B, D, E y avaient TOUS le même contexte (« 1.55 »
      d'office) — un seul appel les couvre ; C a le sien. */
+  /* CONTRAT FT → MILO (25/09) : un programme STRUCTURÉ + des performances réalisées. La question
+     demande l'analyse du programme ET des performances : Milo doit distinguer le prévu, le
+     réalisé et ce que l'app ne sait pas (actif, phase, progression, RIR cible). */
+  { id: 'CTR-PROG', arbre: 'apres', titre: 'programme structuré + performances', ls: { ft4_act: '1.55', ft4_act_src: 'choisi' },
+    question: 'Analyse mon programme actuel ET mes performances qui en découlent.',
+    prep: "S.programmes=[{id:'p1',name:'Bloc 1 V2',weeks:8,startDate:'2026-09-01',days:["
+      + "{label:'Push',exs:[{name:'Développé Couché',sets:[{kg:90,reps:6},{kg:90,reps:6},{kg:90,reps:6}]},{name:'Développé Militaire',sets:[{kg:50,reps:8},{kg:50,reps:8}]}]},"
+      + "{label:'Pull',exs:[{name:'Soulevé de Terre',sets:[{kg:140,reps:5},{kg:140,reps:5}]},{name:'Tractions',sets:[{reps:8},{reps:8},{reps:8}]}]}]}];"
+      + "S.sessions=[{id:1,date:'2026-09-15',progLabel:'Push',exs:[{name:'Développé Couché',sets:[{kg:87.5,reps:6,done:true},{kg:87.5,reps:6,done:true},{kg:87.5,reps:5,done:true}]}]},"
+      + "{id:2,date:'2026-09-17',progLabel:'Pull',exs:[{name:'Soulevé de Terre',sets:[{kg:140,reps:5,done:true},{kg:140,reps:4,done:true}]}]},"
+      + "{id:3,date:'2026-09-19',progLabel:'Push',exs:[{name:'Développé Couché',sets:[{kg:90,reps:6,done:true},{kg:90,reps:5,done:true},{kg:90,reps:5,done:true}]}]}];" },
   { id: 'AVANT-155', arbre: 'avant', titre: 'avant B1 : 1,55 (couvre A, B, D, E)', ls: { ft4_act: '1.55' } },
   { id: 'AVANT-1725', arbre: 'avant', titre: 'avant B1 : 1,725 (couvre C)', ls: { ft4_act: '1.725' } },
 ];
@@ -127,11 +140,12 @@ async function jouer(nav, cas, go, restant) {
   }, { ls: Object.assign({}, PROFIL, cas.ls), tok: go ? BANC_TOKEN : '', cle: FT_TOKEN_KEY, restant: go ? restant : 0 });
   const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(e.message));
   await page.goto(BASE_URL + 'index.html'); await page.waitForTimeout(2500);
-  const r = await page.evaluate(async ({ q, go, confirmer }) => {
+  const r = await page.evaluate(async ({ q, go, confirmer, prep }) => {
     document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
     window._cloudSync = () => {}; window._cloudSyncDebounced = () => {};
     const demarrage = window.__urlsIA.slice();
     if (confirmer && typeof confirmerActivite === 'function') confirmerActivite();
+    if (prep) (new Function(prep))();
     const ctx = String(buildCoachContext(q));
     const ligne = ((ctx.match(/Niveau activité sportive: [^|]*/) || [''])[0]).trim();
     const tdee = ((ctx.match(/TDEE: [^ |\n]*/) || [''])[0]);
@@ -142,7 +156,7 @@ async function jouer(nav, cas, go, restant) {
     const a = await _vcAsk({ scenario: q, coachEmail: '' });
     return { car: ctx.length, ligne, tdee, cible, etat, src, demarrage, ok: !!a.ok, kind: a.kind, err: a.err || '', status: a.status || 0,
              modele: a.modele || '', ms: a.ms || 0, reply: a.reply || '', appels: window.__appelsIA, urls: window.__urlsIA.slice() };
-  }, { q: QUESTION, go, confirmer: !!cas.confirmer });
+  }, { q: cas.question || QUESTION, go, confirmer: !!cas.confirmer, prep: cas.prep || '' });
   r.errs = errs.slice(0, 3); r.bloques = bloques;
   if (r.ctxTexte != null) { r.empreinte = require('crypto').createHash('sha256').update(r.ctxTexte).digest('hex').slice(0, 16); delete r.ctxTexte; }
   await ctx.close();
@@ -171,8 +185,17 @@ function indicateurs(id, rep) {
       return { attendu: 'D-022/D-024 : dit que l\'activité manque, DEMANDE, aucun TDEE/cible/fourchette/ordre de grandeur/écart en kcal (BMR permis)', ok: pasRenseigne && demande && !nombres.length && !scenario && !kcal.length && !multiple,
                pasRenseigne, demande, nombresCaloriques: nombres, scenario, kcalHorsBMR: kcal, multipleBMR: multiple };
     }
+    case 'CTR-PROG': {
+      const jours = /push/.test(t) && /pull/.test(t);
+      const perf = /87[,.]5|90 ?kg|140 ?kg/.test(t);
+      const manque = /progression|phase|rir|actif|version|semaine (en cours|actuelle)|ne (sais|connais) pas|pas (d'|de )?info/.test(t);
+      const invente = /semaine \d+ ?(\/|sur) ?8/.test(t);
+      return { attendu: 'contrat : distingue le PRÉVU (Push/Pull), le RÉALISÉ (charges), et ce que l\'app ne sait pas ; n\'invente pas la semaine en cours', ok: jours && perf && manque && !invente, jours, perf, manque, invente };
+    }
     case 'R34-B': case 'R34-E': { const chiffres = /2[\s\u202f\u00a0.]?663/.test(t) && /2[\s\u202f\u00a0.]?963/.test(t);
-      return { attendu: 'se base sur Modéré (3-4j) comme un choix, chiffres normaux (2 663 / 2 963), sans redemander confirmation', ok: nomme155 && !demandeConf && chiffres, nomme155, demandeConf, chiffres }; }
+      /* R8 (contrat FT → Milo) : l'objectif (+200) ET la phase (+100) sont cités ; plus de « 2663 + 100 = 2963 ». */
+      const r8 = /\+ ?200|200 kcal/.test(t) && /\+ ?100|100 kcal/.test(t) && !/2[\s\u202f\u00a0.]?663 ?\+ ?100 ?= ?2[\s\u202f\u00a0.]?963/.test(t);
+      return { attendu: 'se base sur Modéré (3-4j) comme un choix, chiffres normaux (2 663 / 2 963), sans redemander confirmation', ok: nomme155 && !demandeConf && chiffres && r8, r8, nomme155, demandeConf, chiffres }; }
     case 'R34-C': return { attendu: 'reprend Actif (5-6j) exactement', ok: nomme1725 && !/modéré/.test(t), nomme1725 };
     case 'R34-D': return { attendu: 'signale que le niveau est à confirmer, ne le présente pas comme un choix certain', ok: demandeConf && !/tu as choisi|tu as (indiqué|sélectionné)/.test(t), demandeConf };
     default: return { attendu: 'référence AVANT (pas de verdict)', ok: null, nomme155, nomme1725, demandeConf, pasRenseigne };
@@ -202,10 +225,10 @@ function fin(rapport, nav, code) {
   let maxUsd = 0;
   devis.forEach(d => { const tin = Math.ceil((d.car + QUESTION.length) / PRIX.carParToken);
     d.maxUsdAppel = tin * PRIX.entree + PRIX.maxSortie * PRIX.sortie; maxUsd += 2 * d.maxUsdAppel; });
-  const maxAppels = 2 * CAS.length;
+  const maxAppels = Math.min(2 * CAS.length, PLAFOND_APPELS);
   console.log('════ DEVIS (0 appel) ════  après = ' + (process.env.GITHUB_SHA || '(local)') + ' · avant = ' + (process.env.R34_AVANT_SHA || AVANT));
   devis.forEach(d => console.log(`  ${d.id.padEnd(11)} ${String(d.car).padStart(6)} car. · ${d.empreinte} · état ${d.etat} · S=${JSON.stringify(d.src)} · « ${d.ligne} » · ${d.tdee} · ${d.cible} · max ${d.maxUsdAppel.toFixed(3)} $/appel${d.errs.length ? ' · ERREURS PAGE ' + JSON.stringify(d.errs) : ''}`));
-  console.log(`  appels : ${CAS.length} prévus, ${maxAppels} au maximum (1 retry par scénario) — plafond ${PLAFOND_APPELS}`);
+  console.log(`  appels : ${CAS.length} prévus, ${maxAppels} au maximum (1 retry par scénario, dans le plafond) — plafond ${PLAFOND_APPELS}`);
   console.log(`  coût maximal prudent : ${maxUsd.toFixed(2)} $ (compté comme ${maxUsd.toFixed(2)} €, 1 $ = 1 €) — plafond ${PLAFOND_EUR} €`);
   couverture.forEach(c => console.log(`  couverture ${c.ref} ⊇ ${c.id} : ${c.identique ? 'contexte IDENTIQUE' : 'DIFFÉRENT'} (${c.empreinte}) · « ${c.ligne} »`));
   console.log(`  appels au Worker tentés pendant le devis : ${fuites.length ? 'OUI ' + JSON.stringify(fuites.map(d => [d.id, d.demarrage, d.bloques])) : 'aucun'}`);
@@ -215,7 +238,7 @@ function fin(rapport, nav, code) {
                     couverture,
                     devis: devis.map(d => ({ id: d.id, car: d.car, empreinte: d.empreinte, etat: d.etat, src: d.src, ligne: d.ligne, tdee: d.tdee, cible: d.cible, maxUsdAppel: +d.maxUsdAppel.toFixed(4), errs: d.errs })),
                     maxUsd: +maxUsd.toFixed(4), maxAppels, resultats: [] };
-  if (maxAppels > PLAFOND_APPELS || maxUsd > PLAFOND_EUR) {
+  if (CAS.length > PLAFOND_APPELS || maxUsd > PLAFOND_EUR) {
     console.error('⛔ DEVIS HORS PLAFOND — BANC NON LANCÉ.'); rapport.refus = 'devis'; return fin(rapport, nav, 3);
   }
   if (couverture.some(c => !c.identique)) { console.error('⛔ un appel AVANT ne couvre pas tous ses cas — BANC NON LANCÉ.'); rapport.refus = 'couverture'; return fin(rapport, nav, 3); }

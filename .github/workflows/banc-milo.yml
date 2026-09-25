@@ -233,6 +233,8 @@ jobs:
           FT_BANC_TOKEN: ${{ secrets.FT_BANC_TOKEN }}
           R34_AVANT_SHA: f4f9317de8eea7af81f2dcb492c9a728f76f3c82
           R34_CAS: ${{ github.event.inputs.scenarios }}
+          # ⛔ Micro-banc (cas choisis) : 4 appels AU TOTAL, retries compris. Banc complet : 20.
+          R34_PLAFOND_APPELS: ${{ github.event.inputs.scenarios != '' && '4' || '20' }}
         run: |
           set -o pipefail
           node tests/milo/r34_banc.js --go --avant /tmp/avant 2>&1 | tee /tmp/r34.log
