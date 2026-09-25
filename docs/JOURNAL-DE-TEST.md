@@ -3174,3 +3174,25 @@ un trou d'instrumentation : c'était **la réponse**.
 dans l'analyse du 15/09 : le libellé de moteur du `live` est **faux par construction** ·
 la colonne `ms` porte **deux grandeurs différentes** selon la voie · et `Lookups produit`
 compte des **codes acceptés**, pas des requêtes réseau.
+
+### 🟡 ACTIVITÉ ABSENTE : MILO CALCULE QUAND MÊME UNE FOURCHETTE DE TDEE (25/09/2026, banc R34 réel)
+Banc R34, run GitHub n° 36111949918 (commit `dee93c56`), **un seul tirage** — profil synthétique,
+activité **non renseignée** (contexte : `NON RENSEIGNÉ (besoins caloriques non calculés)`, TDEE « — »).
+✅ Milo **dit** que le niveau n'est pas renseigné et **demande** le nombre de séances.
+⚠️ Mais il ajoute *« avec une activité sportive modérée (disons 3 séances/sem), ton TDEE tourne
+autour de 2 300–2 500 kcal/jour → cible 2 400–2 600 »*. Hypothèse **affichée comme telle**, donc
+pas « présentée comme un fait » — mais **son « modérée » ne colle pas au Modéré de l'app**
+(1,55 × 1 718 = **2 663**, cible **2 963**) : si la personne choisit ensuite Modéré, l'onglet
+Nutrition et Milo se contredisent.
+❓ **À trancher par Michel** : une fourchette hypothétique étiquetée est-elle acceptable quand
+l'activité manque, ou Milo doit-il se contenter de demander ? Vérifiable par du code : oui
+(aucun chiffre de TDEE ni de cible dans la réponse quand le contexte dit « — »).
+
+### 🟡 « PHASE CHARGE (+100 KCAL) » : MILO EXPLIQUE LA CIBLE PAR UN CALCUL FAUX (25/09/2026, banc R34 réel)
+Même run. La cible vaut `TDEE + goalDelta (force) + 100 (phase charge)` (`_autoKcalBrut`,
+state.js), mais le contexte ne donne que **`Phase: Charge (+100 kcal)`** — le delta de l'objectif
+n'y est pas. Résultat mesuré : en B, D, E et **AVANT** (1,55), Milo écrit *« TDEE 2 663 … +100 kcal
+→ 2 963 »* (**2 663 + 100 ≠ 2 963**) ; en C et AVANT (1,725) il écrit *« +300 pour ta phase de
+prise »* (somme juste, attribution fausse). **Présent avant ET après** le chantier D-021 : ce
+n'est pas une régression, c'est une donnée absente du contexte (famille **R8**). Rien corrigé.
+Vérifiable par du code : oui (l'explication donnée doit retomber sur la cible affichée).
