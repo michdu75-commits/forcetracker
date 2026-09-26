@@ -39643,6 +39643,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      non confirmée complète, marqueur avant le texte. Contrôle négatif : `tools/mut_milo_pdf1.py`. */
   await require('./milo_pdf1b.js').reel(t, ROOT, fs, path);
   await require('./milo_pdf1b.js').ecran(t, b, PORT);
+  /* 📄 PUBLICATION MILO-PDF1 (26/09/2026) — ce qu'une réponse incomplète a le droit de produire :
+     D-027 (programme : bouton seulement sur un JSON complet, jamais réparé) et D-028 (prochaine
+     séance : pas d'écriture de S.nextPlanned). Contrôle négatif : `tools/mut_milo_pdf1.py`. */
+  await require('./milo_suites.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40455,6 +40459,7 @@ require('./contrat_milo.js').source(t, ROOT, fs, path);
 require('./auth_ia.js').source(t, ROOT, fs, path);
 require('./milo_pdf1.js').source(t, ROOT, fs, path);
 require('./milo_pdf1b.js').source(t, ROOT, fs, path);
+require('./milo_suites.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

@@ -23,6 +23,7 @@ Usage : python3 tools/mut_milo_pdf1.py
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -163,7 +164,42 @@ MUT = [
      "dernAssist=(typeof _coupeeValide==='function'&&_coupeeValide(m.coupee))?null:m.content;tsA=m.ts;if(!dernAssist)break;}",
      "dernAssist=m.content;tsA=m.ts;}", 'GARDE'),
 
+    # ══ 6. PUBLICATION : D-027 (programme) · D-028 (prochaine seance) ════════════════════
+    ('D01  [D-028] l annonce est de nouveau ecrite sous une reponse incomplete (le defaut mesure)', CO,
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);",
+     "    const _plan = _extractPlannedSession(reply);", 'GARDE'),
+    ('D02  [D-028] seule la coupure de longueur bloque (refus / ancien serveur ecrivent)', CO,
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);",
+     "    const _plan = _coupee === 'reponse' ? null : _extractPlannedSession(reply);", 'GARDE'),
+    ('D03  [D-028] deguisee : garde intacte, 2e lecture qui ecrit quand meme', CO,
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);",
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);\n"
+     "    if (_coupee) { const _p2 = _extractPlannedSession(reply); if (_p2) { S.nextPlanned = _p2; persist(); } }", 'GARDE'),
+    ('D04  [D-028] une reponse incomplete EFFACE l annonce deja enregistree', CO,
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);",
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);\n    if (_coupee) { S.nextPlanned = null; persist(); }", 'GARDE'),
+    ('D05  [D-027] JSON coupe REPARE par pile au parse', CO,
+     "    const prog=JSON.parse(jsonStr.trim());",
+     "    let _js=jsonStr.trim(),prog;try{prog=JSON.parse(_js);}catch(e0){const st=[];for(const ch of _js){if(ch==='{'||ch==='[')st.push(ch);else if(ch==='}'||ch===']')st.pop();}"
+     "prog=JSON.parse(_js+st.reverse().map(c=>c==='{'?'}':']').join(''));}", 'GARDE'),
+    ('D06  [D-027] deguisee : parse strict intact, JSON repare AVANT', CO,
+     "    if(!jsonStr)return null;\n    const prog=JSON.parse(jsonStr.trim());",
+     "    if(!jsonStr)return null;\n    try{JSON.parse(jsonStr.trim());}catch(e0){const st=[];for(const ch of jsonStr){if(ch==='{'||ch==='[')st.push(ch);else if(ch==='}'||ch===']')st.pop();}"
+     "jsonStr=jsonStr+st.reverse().map(c=>c==='{'?'}':']').join('');}\n    const prog=JSON.parse(jsonStr.trim());", 'GARDE'),
+    ('D07  [D-027] schema vide accepte (garde du bouton retiree)', CO,
+     "  if((!norm.days||!norm.days.length)&&(!norm.exs||!norm.exs.length))return;\n", "", 'GARDE'),
+    ('D08  [D-027] programme enregistre AVANT le clic', CO,
+     "  const idx=_pendingForceProgs.push(norm)-1;",
+     "  const idx=_pendingForceProgs.push(norm)-1;\n  S.programmes=(S.programmes||[]).concat([norm]);persist();", 'GARDE'),
+    ('D09  [D-027] sens inverse : bouton retire sous toute reponse incomplete (decision non respectee)', CO,
+     "      const ext = _extractForceProgram(reply);",
+     "      const ext = _coupee ? null : _extractForceProgram(reply);", 'GARDE'),
+
     # ══ CONTROLES NEGATIFS — DOIVENT RESTER VERTS ══════════════════════════════════════
+    ('[negatif] commentaire D-028 : S.nextPlanned = _plan, _extractPlannedSession(reply), JSON.parse(, repeat(', CO,
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);",
+     "    // jamais S.nextPlanned = _plan sous _coupee ; _extractPlannedSession(reply) lu une fois ; ni repeat( ni jsonrepair ni JSON.parse(\n"
+     "    const _plan = _coupee ? null : _extractPlannedSession(reply);", 'OK'),
     ('[negatif] commentaire Worker : stop_reason, max_tokens: 4096, while (, for (, stop_sequence, toLowerCase', WK,
      COND,
      "  /* rappel : jamais while (stop === 'max_tokens') ni for (;;) ; body.suite === true seulement ;\n"
@@ -179,7 +215,7 @@ MUT = [
 
 
 def banc(arbre):
-    r = subprocess.run(['node', BANC], cwd=arbre, capture_output=True, text=True, timeout=300,
+    r = subprocess.run(['node', BANC], cwd=arbre, capture_output=True, text=True, timeout=900,
                        env=dict(os.environ, TZ='Europe/Paris'))
     return r.returncode == 0, (r.stdout + r.stderr)
 
@@ -200,8 +236,12 @@ def main():
         print('\n'.join('     ' + l for l in sortie.strip().split('\n')[-6:]))
         return 1
     print('  arbre sain : banc entierement vert (point de depart valide)\n')
+    # Filtre facultatif : `python3 tools/mut_milo_pdf1.py D [negatif]` ne joue que les mutations dont le nom
+    # commence par un des prefixes (le point de depart sain est TOUJOURS mesure). Sans argument : toutes.
+    pref = tuple(sys.argv[1:])
+    liste = [m for m in MUT if not pref or m[0].startswith(pref) or any(p in m[0] for p in pref if p.startswith('['))]
     conformes = 0
-    for nom, fic, avant, apres, attendu in MUT:
+    for nom, fic, avant, apres, attendu in liste:
         tmp, arbre = cloner()
         cible = os.path.join(arbre, fic)
         src = open(cible, encoding='utf-8').read()
@@ -216,11 +256,11 @@ def main():
         ok = (obtenu == attendu)
         conformes += ok
         rouges = [l.strip()[:48] for l in sortie.split('\n') if 'ROUGE' in l or 'PLANTAGE' in l]
-        comp = [l for l in rouges if 'B-CCCLXXVIII' not in l and 'B-CCCLXXXI ' not in l]   # rouges de COMPORTEMENT (Worker conduit / ecran) — les deux blocs de SOURCE exclus
+        comp = [l for l in rouges if 'B-CCCLXXVIII' not in l and 'B-CCCLXXXI ' not in l and 'B-CCCLXXXIV' not in l]   # rouges de COMPORTEMENT (Worker conduit / ecran) — les trois blocs de SOURCE exclus
         print('  %s  %-72s %-6s %2d rouge(s) dont %2d de comportement  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), len(comp), (rouges[0] if rouges else '')))
         shutil.rmtree(tmp, ignore_errors=True)
-    print('\n%d/%d conformes' % (conformes, len(MUT)))
-    return 0 if conformes == len(MUT) else 1
+    print('\n%d/%d conformes' % (conformes, len(liste)))
+    return 0 if conformes == len(liste) else 1
 
 
 if __name__ == '__main__':
