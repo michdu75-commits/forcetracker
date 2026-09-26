@@ -368,6 +368,43 @@ function verifier(sc, reply) {
     return { page, ctx };
   }
 
+  /* 💬 SONDE DU VRAI CHEMIN DU CHAT (publication MILO-PDF1, 26/09/2026) — branche seulement.
+     Les scénarios passent par `_vcAsk` (le laboratoire) : ils ne disent RIEN de `sendToCoach`, qui est
+     ce que la personne utilise. Ici : UN message, par le vrai chemin, sur l'app EN LIGNE, pour lire
+     V1 (réponse complète, aucun marqueur), V2 (UN seul envoi à Milo) et V4 (le bouton séance sur une
+     réponse complète). ⛔ GEL des écritures pendant toute la manœuvre (`_demoMode` : persist,
+     synchro cloud, Supabase et Sheets ne font rien) — le navigateur du runner est jetable, et le vrai
+     profil n'est jamais touché. Rien du texte de Milo n'est gardé : sa longueur, ses boutons, son état. */
+  async function sondeChat() {
+    const { page, ctx } = await ouvrirPage();
+    const errs = []; page.on('pageerror', x => errs.push(String(x && x.message || x).slice(0, 120)));
+    const r = await page.evaluate(async () => {
+      const debut = (window.__ftSonde || []).length;
+      if (typeof sendToCoach !== 'function') return { erreur: 'sendToCoach absente' };
+      window._demoMode = true;
+      try {
+        S.premium = true; window._premiumPending = false;
+        await sendToCoach('Donne-moi directement une séance haut du corps pour ce soir : 4 exercices, avec séries, répétitions, charges indicatives et repos. Pas de question, je suis à la salle.');
+        await new Promise(z => setTimeout(z, 8000));   // le cervelet pose le bouton APRÈS l'affichage
+        const bs = document.querySelectorAll('.msg-coach'); const x = bs[bs.length - 1];
+        const prem = x && x.firstElementChild;
+        const boutons = x ? [...x.querySelectorAll('button')].map(e => e.textContent.trim()).filter(s => !/PDF|Partager|côté/.test(s)) : [];
+        const go = x && [...x.querySelectorAll('button')].find(e => /Commencer|on démarre|Oui, on d/.test(e.textContent));
+        let wkt = null;
+        if (go) { go.click(); await new Promise(z => setTimeout(z, 2500)); wkt = (S.wkt && S.wkt.exs || []).length; }
+        const appels = (window.__ftSonde || []).slice(debut);
+        return { nbCoach: appels.filter(a => a.action === 'coach').length, appels,
+                 marqueur: !!(prem && prem.classList && prem.classList.contains('coach-coupee')),
+                 dataCoupee: x ? (x.dataset.coupee || '') : '(aucune bulle)', longueur: x ? x.textContent.length : 0,
+                 boutons, seanceChargee: wkt };
+      } catch (e) { return { erreur: (e && e.message) || String(e) }; }
+      finally { window._demoMode = false; }
+    }).catch(e => ({ erreur: (e && e.message) || String(e) }));
+    r.erreursPage = errs;
+    await ctx.close();
+    return r;
+  }
+
   const parPasse = {};   // { prod: [...], haiku: [...] }
   let totalCar = 0;
 
@@ -468,6 +505,9 @@ function verifier(sc, reply) {
       console.log('');
     }
   }
+
+  // 💬 Le vrai chemin du chat, UNE fois, seulement pour une passe réelle sur l'app en ligne.
+  if (GO && !LOCAL) console.log('  💬 SONDE CHAT — ' + JSON.stringify(await sondeChat()) + '\n');
 
   await nav.close(); srv.close();
 
