@@ -3227,3 +3227,16 @@ mesuré en réel** : **à quelle fréquence Sonnet recopie-t-il l'ancre à l'ide
 l'enveloppe `<FT_SUITE>` ? Un taux bas laisserait la plupart des analyses longues « incomplètes »
 (honnêtes, mais incomplètes). Vérifiable par du code après publication : répartition de
 `_raccord` (`ok` · `ancre_absente` · `ancre_fausse` · `structure` · `redemarrage`).
+
+### 🟡 LA TRADUCTION DE SÉANCE (CERVELET) RÉPOND-ELLE DANS SES 12 S EN PRODUCTION ? (26/09/2026, vérification réelle ft-v1235)
+Deux vérifications réelles du vrai chemin du chat, après publication (runs 36231606494 et 36231841452) :
+dans **les deux**, l'appel `seanceJson` n'a **jamais rendu de réponse** dans sa fenêtre. La 2ᵉ fois, la
+séance a été construite par la **lecture locale de secours** : carte « 2 exercices », séance chargée —
+pour une demande qui en voulait 4 (le texte de Milo n'est pas conservé par la sonde, donc ❓ **on ne
+sait pas s'il en avait écrit 4**). Le même essai a vu un appel de chat dépasser **30 s** (abandonné
+puis relancé avec succès par le banc). ⚠️ Ce chemin n'a **pas** changé avec ft-v1235 (`_cerveletSeance`,
+`seanceJson`, `callClaude` identiques) : c'est un doute sur l'existant, pas une régression.
+❓ Le délai de 12 s du cervelet est justifié dans le code par « une réponse Haiku normale (1-2 s) » —
+est-ce encore vrai ? ❓ Quelle part des séances vient du cervelet, et quelle part du filet ?
+Vérifiable par du code : statut et durée de `seanceJson` dans la sonde de la branche, répétés sur
+quelques essais ; et, dans l'app, compter les séances posées par le cervelet vs par le filet.

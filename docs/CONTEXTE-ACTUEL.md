@@ -21,7 +21,7 @@
 
 ## 🔬 Chantier actif
 
-- **Publication MILO-PDF1 → `ft-v1235`** (26/09, session-A) — Worker d'abord (déployé depuis la branche, **1 appel réel** : `complete: true`, `end_turn`), puis intégration sur master et app. Deux décisions de Michel prises juste avant : **D-027** (bouton programme : déjà conforme, figé) et **D-028** (l'annonce de prochaine séance n'est plus enregistrée depuis une réponse non confirmée). Détail : `docs/MILO-PDF1.md` §C.
+- **Publication MILO-PDF1 → `ft-v1235`** (26/09, session-A) — ✅ **publiée et vérifiée en réel** (V1/V2/V4 ; V3 à observer). Worker d'abord (déployé depuis la branche, **1 appel réel** : `complete: true`, `end_turn`), puis intégration sur master et app. Deux décisions de Michel prises juste avant : **D-027** (bouton programme : déjà conforme, figé) et **D-028** (l'annonce de prochaine séance n'est plus enregistrée depuis une réponse non confirmée). Détail : `docs/MILO-PDF1.md` §C.
 
 - **Tri documentaire** de ce fichier et de `docs/JOURNAL-DE-PARTAGE.md` (24/09, session-A) — **terminé**, validé par Michel, committé et poussé en `0d8a22b2`. Dépôt documentaire propre.
 - **Chantier Poids** (24/09, session-A) — **publié en `ft-v1235`** : `f9a8ec74` (données) + `66a6bd5e` (UX « Dernière mesure »). Corrigés : **F003, F004, F011**, et **F005 pour sa moitié « validation des entrées »** (sa 2ᵉ moitié, les `S.bw || 80` des calculs, reste ouverte) ; **F012 : prémisse réfutée** (mesuré). Décisions rendues à Michel : plusieurs pesées le même jour (le modèle en garde une) · le champ poids du **Profil** reste prérempli · lignes invalides déjà stockées (aucune migration) · `S.bw || 80` des calculs de séance / suppléments (gel Nutrition). ⛔ À la publication : bump `ft-v1235`, entrée de journal dans `CLAUDE.md`, règle d'or #11 (aide · point rouge · Guide).
@@ -51,6 +51,7 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 ## ⏭️ Prochaine étape
 
 - **Après `ft-v1235`** : observer en réel le chemin de troncature de l'analyse de programme (aucune troncature naturelle n'a encore été vue — on ne la provoque pas).
+- **Doute consigné le 26/09** : la traduction de séance (cervelet) n'a répondu dans sa fenêtre de 12 s dans aucune des deux vérifications réelles — la séance vient alors de la lecture locale de secours. Chemin **inchangé** par ft-v1235 ; `docs/JOURNAL-DE-TEST.md`.
 - Pour l'audit : **l'ordre de correction des défauts restants (F001, F002, F006 → F010, et la 2ᵉ moitié de F005) est à décider par Michel.**
 
 ## 🧭 Où lire quoi
