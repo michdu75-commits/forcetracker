@@ -337,6 +337,30 @@ function verifier(sc, reply) {
          tout le monde, ce qui est précisément ce qui rend la mesure honnête. */
       if (tok) localStorage.setItem(cle, tok);
     }, { tok: BANC_TOKEN, cle: FT_TOKEN_KEY });
+    /* 🔎 SONDE DE PUBLICATION (MILO-PDF1, 26/09/2026) — PASSIVE, elle ne change rien à la mesure.
+       Elle NOTE chaque appel au Worker IA (l'action) et, pour sa réponse, les CLÉS de l'enveloppe et
+       les champs d'état (`complete`, `truncated`, `stopReason`, `continued`, `_diag`, `_model`). Elle
+       répond aux deux questions qu'aucun outil ne savait poser depuis une passe réelle : « le Worker
+       en ligne transmet-il l'état de la réponse ? » et « combien d'appels pour un message ? ».
+       ⛔ Rien d'autre n'est gardé : ni le texte de la réponse (déjà dans le rapport), ni l'enveloppe
+       envoyée — donc JAMAIS le jeton, qui y est injecté par l'app. */
+    await ctx.addInitScript(() => {
+      window.__ftSonde = [];
+      const f0 = window.fetch;
+      window.fetch = function (u, o) {
+        const url = String((u && u.url) || u || '');
+        const p = f0.apply(this, arguments);
+        if (!/workers\.dev/.test(url)) return p;
+        let act = ''; try { act = JSON.parse((o && o.body) || '{}').action || ''; } catch (e) {}
+        const rec = { action: act || '?' }; window.__ftSonde.push(rec);
+        return p.then(r => {
+          rec.status = r.status;
+          try { r.clone().json().then(d => { if (d && typeof d === 'object') { rec.cles = Object.keys(d).sort();
+            ['complete', 'truncated', 'stopReason', 'continued', '_diag', '_model', '_raccord'].forEach(k => { if (k in d) rec[k] = d[k]; }); } }).catch(() => {}); } catch (e) {}
+          return r;
+        });
+      };
+    });
     const page = await ctx.newPage();
     await page.goto((GO && !LOCAL) ? APP_LIVE : ('http://localhost:' + port + '/index.html'));
     await page.waitForTimeout(2300);
@@ -359,9 +383,25 @@ function verifier(sc, reply) {
       let r = null;
       for (let k = 0; k < (GO ? REPEAT : 1); k++) {
         const { page, ctx } = await ouvrirPage();
+        const debutSonde = GO ? await page.evaluate(() => (window.__ftSonde || []).length).catch(() => 0) : 0;
         r = await jouerDansLaPage(page, {
           apply: sc.apply, scenario: sc.scenario, coachEmail: sc.coachEmail, history: sc.history
         }, GO, M.id);
+        if (GO && r && !r.erreur) {
+          // 🔎 SONDE : les appels de CE scénario, la version SERVIE (lue sur le site, pas dans le dépôt),
+          //    et l'état que le client en ligne en déduit (s'il sait le faire).
+          r.sonde = await page.evaluate(async (debut) => {
+            await new Promise(z => setTimeout(z, 400));
+            const appels = (window.__ftSonde || []).slice(debut);
+            let versionServie = '';
+            try { const t = await (await fetch('sw.js', { cache: 'no-store' })).text();
+                  versionServie = (t.match(/CACHE\s*=\s*'(ft-v\d+)'/) || [])[1] || ''; } catch (e) {}
+            const coach = appels.filter(a => a.action === 'coach');
+            const der = coach[coach.length - 1] || null;
+            const etatClient = (der && typeof _miloEtatReponse === 'function') ? _miloEtatReponse(der) : '(client sans _miloEtatReponse)';
+            return { versionServie, appels, nbCoach: coach.length, etatClient };
+          }, debutSonde).catch(e => ({ erreur: (e && e.message) || String(e) }));
+        }
         await ctx.close();
         if (GO && r && r.ok) passes.push(verifier(sc, r.reply));
         if (GO && REPEAT > 1) await new Promise(z => setTimeout(z, 400)); // on ne mitraille pas
@@ -381,6 +421,7 @@ function verifier(sc, reply) {
         continue;
       }
 
+      if (r.sonde) console.log('  🔎 SONDE ' + sc.id + ' — ' + JSON.stringify(r.sonde));
       if (!r.ok) {
         console.log('  ⛔ ' + sc.id + ' — pas de réponse (' + r.kind + ') : ' + r.err);
         resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'muet', detail:r.err });
@@ -411,7 +452,7 @@ function verifier(sc, reply) {
       totalCar += (r.carContexte||0) * (passes.length||1);
       resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat: nbRouges?'rouge':'vert',
                        ms:r.ms, modele:servi, bonModele, verdicts:montre, reply:r.reply,
-                       passes:passes.length, nbRouges });
+                       passes:passes.length, nbRouges, sonde:r.sonde || null });
     }
 
     parPasse[passe] = resultats;
