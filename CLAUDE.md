@@ -508,7 +508,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ aucun dashboard, onboarding, Android, Premium, programme versionné, B3, cloudSave · ⛔ le chat reste à **1 appel** par message, budget 1024, modèle `claude-sonnet-4-6` · ⛔ aucun nettoyage opportuniste · ⛔ la sonde du banc (`tests/milo/eval.js`, lecture passive de l'enveloppe) reste sur la branche.
 
-Tests : **B-CCCLXXXIV (4 de source) et B-CCCLXXXV (14 conduits)** dans `tests/parcours/milo_suites.js` pour D-027/D-028 ; banc ciblé PDF1+PDF1B+D-027/028 **__BANC__** ; contrôle négatif **__MUT__** ; non-régression __NONREG__ ; **passe complète __PASSE__**, les 4 conditions vertes.
+Tests : **B-CCCLXXXIV (4 de source) et B-CCCLXXXV (14 conduits)** dans `tests/parcours/milo_suites.js` pour D-027/D-028 ; banc ciblé PDF1+PDF1B+D-027/028 ****97 OK / 0 rouge**** ; contrôle négatif ****13/13 conformes** sur les mutations neuves (D01 → D09 mordent toutes, chacune par au moins un témoin CONDUIT, dont trois déguisées ; 4 commentaires restent verts)** ; non-régression AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 · Worker S2-B 49/0 · activité/provenance 54/0 · poids 78/0 · noyau Milo 12/12 · données toutes classées ; **passe complète 5143 ✅ / 0 ❌**, les 4 conditions vertes.
 
 Fichiers : `coach.js`, `tests/parcours/milo_suites.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_milo_pdf1.js`, `tools/mut_milo_pdf1.py`, `docs/DECISIONS.md` (D-027, D-028), `docs/MILO-PDF1.md` (§C), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md` — plus les 77 commits de la branche listés ci-dessus. sw.js ft-v1235. |
 

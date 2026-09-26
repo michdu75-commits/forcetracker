@@ -290,3 +290,5 @@ séance (D-025).
   (14 conduits dans le navigateur : P1 → P6 programme, N1 → N7 prochaine séance, 1 appel par
   message, 0 erreur de page).
 - Banc `tools/banc_milo_pdf1.js` : **97 OK / 0 rouge**.
+- Contrôle négatif `tools/mut_milo_pdf1.py D '[negatif]'` : **13/13 conformes** (D01 → D09 mordent, 4 commentaires restent verts).
+- Sur le candidat master `a8f2e9ab` : AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 · Worker S2-B 49/0 · activité/provenance 54/0 · poids 78/0 · noyau Milo 12/12 · données toutes classées · **passe complète 5143 ✅ / 0 ❌, les 4 conditions vertes**.
