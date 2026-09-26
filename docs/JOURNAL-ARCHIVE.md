@@ -17597,3 +17597,28 @@ Fichiers : `state.js`, `coach.js`, `setup.js`, `Code.js`, `worker.js`, `tests/pa
 Tests : **contrôle négatif `tools/mut_identite_banc.py`, 14 mutations sur arbre CLONÉ, 14 conformes** — les trois familles qui comptent : **ouvrir une porte** (mode benchmark dans le Worker, refus désactivé, jeton en dur), **faire fuir le secret** (l'afficher dans le journal, recopier la clé), **retirer un garde-fou** (secret non vérifié, refus avant dépense supprimé, `LANCER`, « au moins une réponse », étiquette, révocation). ⭐ Dont **deux qui doivent RESTER VERTES** : des commentaires citant « benchmark », « banc » et le nom du secret — *la seule façon de prouver qu'on mesure le code et non la phrase qui l'explique* (**R30**).
 
 Fichiers : `index.html`, `app.js`, `tests/milo/eval.js`, `.github/workflows/banc-milo.yml`, `tools/mut_identite_banc.py` *(nouveau)*, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `worker.js`, ni `Code.js`, ni aucun autre fichier servi.** sw.js ft-v1228. |
+
+**ft-v1229 — 🩹 « RÉSEAU INDISPONIBLE » NE DISAIT RIEN · ET C'EST LE MÊME DÉFAUT QUE J'AVAIS CORRIGÉ LE MATIN MÊME** — Michel : *« je ne peux pas créer le jeton, il me marque réseau indisponible »*.
+
+**⭐ MESURÉ AVANT DE TOUCHER QUOI QUE CE SOIT : la fonction est SAINE.** Conduite dans un navigateur avec un **faux serveur** — charge utile correcte (`issueTokenByCode` · `appareil:'banc-milo'`), rendu correct, **zéro erreur de page**. L'échec était donc réellement dans le réseau ou la réponse… *et mon message était incapable de dire lequel*.
+
+**⛔⛔ LE DÉFAUT ÉTAIT DANS MON `catch`, ET C'EST LA MÊME FAUTE QUE LE MATIN.** Un **seul** `try` entourait **trois** choses : l'**envoi**, la **lecture** de la réponse, et l'**analyse du JSON**. Les trois rendaient la même phrase. 👉 ***C'est mot pour mot le défaut corrigé quelques heures plus tôt dans `tests/_playwright.js`*** — où un `catch` écrasait « paquet non installé » par « chemin de conteneur absent ». **J'ai refait la faute dans la même journée, dans l'autre sens.** *Un `catch` qui avale le diagnostic fait chercher au mauvais endroit.*
+
+| l'étape qui échoue | avant | après |
+|---|---|---|
+| l'envoi ne part pas | ⛔ « Réseau indisponible » | ✅ **« L'envoi n'est pas parti (1/3) »** + le message du navigateur |
+| la réponse est illisible | ⛔ la même phrase | ✅ **« Réponse illisible (2/3) »** + le **code HTTP** |
+| le serveur répond, mais pas en JSON | ⛔ la même phrase | ✅ **« pas en JSON (3/3) »** + HTTP + **le début de la réponse** |
+| le compte n'a pas de code perso | déjà distinct | inchangé |
+
+**⭐ LE CAS LE PLUS INSTRUCTIF EST LE TROISIÈME** : une **page d'erreur Apps Script** ressemblait jusqu'ici à une panne de réseau. Sans l'extrait, on cherchait un problème de connexion là où le serveur avait parfaitement répondu — *autre chose que ce qu'on attendait, mais répondu*.
+
+**⛔ ET LE TEXTE DU SERVEUR EST ÉCHAPPÉ AVANT D'ÊTRE AFFICHÉ.** Une page d'erreur contient du **HTML** : l'insérer brut dans la page l'**exécuterait**. ⛔ Et rien de sensible ne sort — **jamais le jeton, jamais le code perso**.
+
+**📣 RÈGLE D'OR #11 — RIEN.** L'outil est dans **Profil → Admin**, réservé. Aucun écran public ne change.
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **`worker.js` : 0 ligne** · ⛔ **`Code.js` : 0 ligne** · ⛔ aucune route, aucun quota, aucun garde-fou du banc touché · ⛔ ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `index.html` · ⛔ **la cause réelle chez Michel n'est PAS encore connue** — c'est justement pour ça que le message la dira.
+
+Tests : éprouvé sur les **quatre chemins** dans un navigateur réel — envoi qui échoue · réponse **non-JSON** · refus `no_code` · **succès**. Chacun rend un message **différent**, et l'échappement est vérifié (le HTML s'affiche au lieu de s'exécuter).
+
+Fichiers : `app.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1229. |

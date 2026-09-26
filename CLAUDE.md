@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1236`** (prochaine : `ft-v1237`).
+> **Version actuelle : `ft-v1237`** (prochaine : `ft-v1238`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,20 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1237 — 🔬 MILO-SEANCE-03 / C2 · UNE CARTE MÉMOIRE « JE RETIENS » NE MASQUE PLUS LA CARTE SÉANCE** — suite de MILO-SEANCE-01, correctif **C2 seul** (commit `222a119c`), validé par Michel sur checkpoint avant commit puis sur l'arbre commité.
+
+**AVANT.** Quand Milo proposait une séance **et** de retenir quelque chose sur la personne (« 🧠 Je retiens : … ? »), la carte « Cette séance te convient ? / ⚡ Oui, on démarre » **n'apparaissait pas**. Mesuré : la garde d'unicité de `_appendStartSessionBtn` cherchait `.coach-prog-save`, classe que portent **aussi** la carte mémoire et la carte « Enregistrer ce programme » — elle concluait « déjà un bouton dessous », rendait `true`, et ni la traduction ni le repli ne posaient de carte (0 carte séance, la carte mémoire seule). `_appendSeanceQuestion` avait la même garde large. ⭐ **Second défaut, trouvé en mesurant** : sans bulle cible la garde ne jouait pas du tout — **deux appels posaient deux cartes séance**.
+
+**APRÈS.** Les **deux** vraies cartes séance (la carte « Oui, on démarre (N exercices) » et la question « on démarre ? ») portent une marque dédiée, `coach-seance-carte`, et les deux gardes ne regardent qu'elle ; la garde de `_appendStartSessionBtn` s'applique après le choix de la bulle, donc aussi sans cible. 👉 Une carte mémoire ou programme **ne bloque plus** la première carte séance ; une **deuxième vraie** carte séance **reste bloquée** ; appels répétés → 1 carte. **4 lignes fonctionnelles, 2 fonctions** ; carte mémoire, carte programme et mémoire métier **inchangées**.
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : la carte séance apparaît là où elle aurait dû apparaître. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **C3 reste OUVERT** (la séance traduite n'est pas gardée au rechargement : avec un format que le repli ne lit pas, 4 exercices à l'arrivée, une simple question après rechargement — **reproduit après C2**) · ⛔ **D-025 reste ouvert étroitement** · ⛔ délai de 12 s inchangé · ⛔ C1, `_seanceDepuisTexte`, `_extractDaySession`, `_renderCoachThread`, `loadCoachConv`, `_cerveletSeance` inchangés · ⛔ ni Worker, ni Apps Script · ⛔ **0 appel réel à Milo**. ⚠️ C2 **n'explique pas** l'événement réel du 26/09 : Symptôme réel 4→2 ; cause de l'événement réel non déterminée. Un mécanisme capable de produire ce résultat a été reproduit localement dans la lecture de secours.
+
+Tests : **B-CCCLXXXIX (5 de source) + B-CCCXC (17 conduits)** dans `tests/parcours/seance_c2.js`, **22 OK / 0**, branchés dans la passe — mémoire seule (aucune carte fantôme), séance seule, mémoire puis séance et l'inverse, deuxième carte bloquée, appels répétés, cartes non-séance multiples, question déjà posée, et 6 parcours `sendToCoach` (Worker simulé : traduction réussie, en panne, séance illisible puis tap, message ordinaire, réponse coupée) ; les cartes sont comptées **par leur texte**, jamais par la nouvelle marque. Banc d'unicité **12 / 0** (U1–U7, U10, U8-témoin, **U8 désormais vert**, U9, U∅). ⛔ **Contrôle négatif `tools/mut_seance_c2.py` : 12/12** (M01 = le code d'avant mot pour mot, 3 déguisées, 1 commentaire qui doit rester vert). Passe complète sur `222a119c` : **5194 ✅ / 0 ❌**.
+
+Fichiers : `coach.js` (`_appendStartSessionBtn`, `_appendSeanceQuestion`), `tests/parcours/seance_c2.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_seance_c2.js` et `tools/mut_seance_c2.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/MILO-SEANCE-01.md` (note d'état), `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1237. |
 
 **ft-v1236 — 🔬 MILO-SEANCE-02 / C1 · LA LECTURE DE SECOURS DE LA SÉANCE LIT ENFIN LE FORMAT QUE LE PROMPT DEMANDE À MILO** — suite du diagnostic MILO-SEANCE-01, correctif **C1 seul**, validé par Michel sur checkpoint avant commit, resynchronisé avec master : **C1 est le seul changement fonctionnel de cette version**.
 
@@ -763,27 +777,3 @@ Tests : **blocs B-CCCXXXVIII (17 témoins de source) et B-CCCXXXIX (23 conduits 
 ⚠️ **Historique des collisions, parce qu'il dit quelque chose du protocole** : la condition ④ est tombée **trois fois** pendant les mesures initiales (2 passes refaites en entier, la 1ʳᵉ portant déjà une collision sur `ft-v1227`), puis **une quatrième fois à la publication**. 👉 ***Le journal de partage évite le doublon de TRAVAIL ; il n'évite pas la collision de NUMÉRO, parce qu'un numéro ne se pose qu'au push*** — et c'est git, pas le fichier, qui a tenu le verrou à chaque fois. ⚠️⚠️ **ET IL FAUT DIRE LE COÛT RÉEL, PARCE QU'IL EST STRUCTUREL** : une passe complète dure **~25 minutes**, or session-B a publié **cinq fois** pendant cette journée — donc **cinq fois** la condition ④ est tombée, et **cinq fois** il a fallu refusionner, renuméroter et relancer. 👉 ***Tant que le rythme de publication de l'autre session est plus court que la durée d'une passe, la règle « la session qui publie en DERNIER relance » ne converge pas d'elle-même.*** ⛔ **Ce n'est PAS une raison de contourner la condition ④** — elle a raison à chaque fois, l'arbre change vraiment. C'est un fait mesuré rendu à Michel : si les deux sessions doivent continuer en parallèle, il manque un signal « je publie, tenez 30 minutes », et `docs/JOURNAL-DE-PARTAGE.md` n'en a pas (il dit qui TRAVAILLE sur quoi, pas qui est en train de PUBLIER).
 
 Fichiers : `tracking.js`, `tests/parcours/mensurations.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_mensurations.js`, `tools/mut_mensurations.py` et `tools/gen_mensurations_pdf.py` (nouveaux), `docs/DECISIONS.md` (**D-013**), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Un seul fichier servi : `tracking.js`.** sw.js ft-v1230. |
-**ft-v1229 — 🩹 « RÉSEAU INDISPONIBLE » NE DISAIT RIEN · ET C'EST LE MÊME DÉFAUT QUE J'AVAIS CORRIGÉ LE MATIN MÊME** — Michel : *« je ne peux pas créer le jeton, il me marque réseau indisponible »*.
-
-**⭐ MESURÉ AVANT DE TOUCHER QUOI QUE CE SOIT : la fonction est SAINE.** Conduite dans un navigateur avec un **faux serveur** — charge utile correcte (`issueTokenByCode` · `appareil:'banc-milo'`), rendu correct, **zéro erreur de page**. L'échec était donc réellement dans le réseau ou la réponse… *et mon message était incapable de dire lequel*.
-
-**⛔⛔ LE DÉFAUT ÉTAIT DANS MON `catch`, ET C'EST LA MÊME FAUTE QUE LE MATIN.** Un **seul** `try` entourait **trois** choses : l'**envoi**, la **lecture** de la réponse, et l'**analyse du JSON**. Les trois rendaient la même phrase. 👉 ***C'est mot pour mot le défaut corrigé quelques heures plus tôt dans `tests/_playwright.js`*** — où un `catch` écrasait « paquet non installé » par « chemin de conteneur absent ». **J'ai refait la faute dans la même journée, dans l'autre sens.** *Un `catch` qui avale le diagnostic fait chercher au mauvais endroit.*
-
-| l'étape qui échoue | avant | après |
-|---|---|---|
-| l'envoi ne part pas | ⛔ « Réseau indisponible » | ✅ **« L'envoi n'est pas parti (1/3) »** + le message du navigateur |
-| la réponse est illisible | ⛔ la même phrase | ✅ **« Réponse illisible (2/3) »** + le **code HTTP** |
-| le serveur répond, mais pas en JSON | ⛔ la même phrase | ✅ **« pas en JSON (3/3) »** + HTTP + **le début de la réponse** |
-| le compte n'a pas de code perso | déjà distinct | inchangé |
-
-**⭐ LE CAS LE PLUS INSTRUCTIF EST LE TROISIÈME** : une **page d'erreur Apps Script** ressemblait jusqu'ici à une panne de réseau. Sans l'extrait, on cherchait un problème de connexion là où le serveur avait parfaitement répondu — *autre chose que ce qu'on attendait, mais répondu*.
-
-**⛔ ET LE TEXTE DU SERVEUR EST ÉCHAPPÉ AVANT D'ÊTRE AFFICHÉ.** Une page d'erreur contient du **HTML** : l'insérer brut dans la page l'**exécuterait**. ⛔ Et rien de sensible ne sort — **jamais le jeton, jamais le code perso**.
-
-**📣 RÈGLE D'OR #11 — RIEN.** L'outil est dans **Profil → Admin**, réservé. Aucun écran public ne change.
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **`worker.js` : 0 ligne** · ⛔ **`Code.js` : 0 ligne** · ⛔ aucune route, aucun quota, aucun garde-fou du banc touché · ⛔ ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `index.html` · ⛔ **la cause réelle chez Michel n'est PAS encore connue** — c'est justement pour ça que le message la dira.
-
-Tests : éprouvé sur les **quatre chemins** dans un navigateur réel — envoi qui échoue · réponse **non-JSON** · refus `no_code` · **succès**. Chacun rend un message **différent**, et l'échappement est vérifié (le HTML s'affiche au lieu de s'exécuter).
-
-Fichiers : `app.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1229. |
