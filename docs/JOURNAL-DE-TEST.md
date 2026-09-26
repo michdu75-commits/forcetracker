@@ -3229,6 +3229,11 @@ l'enveloppe `<FT_SUITE>` ? Un taux bas laisserait la plupart des analyses longue
 `_raccord` (`ok` · `ancre_absente` · `ancre_fausse` · `structure` · `redemarrage`).
 
 ### 🟡 LA TRADUCTION DE SÉANCE (CERVELET) RÉPOND-ELLE DANS SES 12 S EN PRODUCTION ? (26/09/2026, vérification réelle ft-v1235)
+↪️ **Rectification datée (26/09/2026, synchronisation documentaire)** : ce n'est **pas** « 2 traductions sur 2 en
+échec ». **Un seul échec est établi sur les deux essais** : essai 1 — une traduction lancée au tap, lue 2,5 s plus
+tard, donc **compatible avec une réponse dans la fenêtre** ; essai 2 — un échec, **délai ou réseau non distingué**.
+Le texte ci-dessous est conservé tel qu'il a été écrit.
+
 Deux vérifications réelles du vrai chemin du chat, après publication (runs 36231606494 et 36231841452) :
 dans **les deux**, l'appel `seanceJson` n'a **jamais rendu de réponse** dans sa fenêtre. La 2ᵉ fois, la
 séance a été construite par la **lecture locale de secours** : carte « 2 exercices », séance chargée —

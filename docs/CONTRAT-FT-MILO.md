@@ -103,6 +103,9 @@ défaut venait des **données** (fragments, défauts silencieux), pas d'une cons
   ⚠️ Reste : les autres écrans IA (nutrition, imports) affichent leur message générique, sans
   jamais dire « reconnecte » ; la route `cloudSave` rend encore 401 sur une panne, mais le
   client du miroir la classe déjà par la même liste blanche (ft-v1223).
+  ↪️ **État au 26/09/2026** : **publié en `ft-v1235`**, Worker redéployé. **Chemin authentifié vérifié en réel**
+  (tous les appels réels du banc, jeton S1, acceptés). **Refus sans jeton : protégé par les témoins**
+  (`tools/banc_auth_ia.js` 25/0), **non rejoué en production**.
 - **MILO-PDF1** — ✅ **CORRIGÉ ET TESTÉ (déterministe + contrôle négatif), le 25/09 — PAS vérifié
   en réel** (le Worker de prod date du 20/09, `e77060c3`, sans `stop_reason`). Cause : plafond
   1024 jetons et `stop_reason` jeté par le Worker → une coupure ressortait comme une réponse finie.
@@ -120,6 +123,10 @@ défaut venait des **données** (fragments, défauts silencieux), pas d'une cons
   est complet, toute autre raison (ou un serveur sans le signal) est marquée « non confirmée » ;
   ③ **décision Michel** : aucune séance depuis une réponse non confirmée complète, et le marqueur
   est posé **avant** le texte de Milo. Détail : `docs/MILO-PDF1.md` (section MILO-PDF1B).
+  ↪️ **État au 26/09/2026** : MILO-PDF1 et MILO-PDF1B **publiés en `ft-v1235`**, **Worker redéployé** (avant
+  l'app), **vérification réelle faite** : V1, V2, V4 vérifiés ; V3 (suite réelle) non observée, à surveiller.
+  ⚠️ Défaut actif connu : « Mes discussions » peut perdre le marqueur « coupée » (réouverture ÉTROITE de
+  D-025, non corrigée). Détail : `docs/MILO-PDF1.md` (en-tête et §C).
 - **Programme versionné** (principe validé par Michel) : l'app n'a ni programme actif, ni version,
   ni phase, ni RIR cible, ni lien structuré séance → version (seulement le libellé). À construire
   comme brique à part ; le contrat dit aujourd'hui honnêtement ce qui manque.

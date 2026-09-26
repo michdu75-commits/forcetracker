@@ -3,6 +3,17 @@
 > **Chantier du 25/09/2026**, branche `claude/project-status-a0qakd`, base `8c3d43e7`.
 > **État : CORRIGÉ ET TESTÉ (déterministe + contrôle négatif) — PAS vérifié en réel.**
 > Le Worker de production n'a pas été redéployé (publication interdite par le brief) : voir §8.
+>
+> ↪️ **ÉTAT ACTUEL (26/09/2026) — les deux lignes ci-dessus sont l'état du 25/09, conservé tel quel.**
+> **Publié en `ft-v1235`** · **Worker redéployé** (avant l'app) · **vérification réelle faite** :
+> V1 (réponse normale `complete: true`, `end_turn`, aucun marqueur), V2 (un seul envoi à Milo) et
+> V4 (séance chargée) **vérifiés** ; **V3** (suite réelle d'une analyse coupée) **non observée, à surveiller**.
+> Les §1 → §9 décrivent MILO-PDF1 **avant** sa correction MILO-PDF1B (section suivante) ; la publication est en §C.
+> ⚠️ **Défaut ACTIF connu — réouverture ÉTROITE de D-025, pas de tout MILO-PDF1** : « Mes discussions » peut perdre
+> le marqueur « coupée » et permettre à une réponse incomplète de redevenir candidate à une séance. Démontré par
+> MILO-SEANCE-01, **non corrigé**.
+> ↪️ **Rectification du §C5** : la vérification n'établit **pas** deux échecs de traduction de séance. Essai 1 : une
+> traduction lancée au tap, lue 2,5 s plus tard ; essai 2 : **un** échec établi, délai ou réseau non distingué.
 
 ## 1. L'invariant
 
@@ -273,7 +284,7 @@ Aucune ligne de code modifiée ; le comportement est **figé** par des témoins.
 ## C3. D-028 — l'annonce de la prochaine séance : c'était une ÉCRITURE → bloquée
 
 Mesuré : sous une réponse coupée ou non confirmée, un bloc caché `prevu` **complet** écrivait
-`S.nextPlanned` en mémoire, sur le disque (`ft4_nextplanned`) et vers le cloud — déjà le cas en
+`S.nextPlanned` en mémoire, sur le disque (`ft4_nextplanned`) ~~et vers le cloud~~ *(↪️ rectifié le 26/09 : une synchronisation était ensuite déclenchée, mais `nextPlanned` ne figure dans aucun paquet cloud vérifié — `setup.js`, `Code.js`, `supabase.js`)* — déjà le cas en
 production (ft-v1234), donc **pas une régression**, mais une **mutation** (cas B du brief).
 Rapporté à Michel **avant** de publier l'app ; sa décision : **bloquer d'abord**, même règle que la
 séance (D-025).
@@ -304,8 +315,8 @@ séance (D-025).
 - **V3** — aucune troncature naturelle observée : le chemin réel de la suite (ancre, `_raccord`)
   **reste à observer**. Elle n'a pas été provoquée (consigne).
 - **V4** — carte « ⚡ Oui, on démarre (2 exercices) » sur une réponse complète, clic → **séance
-  chargée**. ⚠️ Observé au passage : la traduction de séance n'a répondu dans sa fenêtre dans aucun
-  des deux essais ; la séance est venue de la lecture locale de secours (chemin inchangé par cette
+  chargée**. ⚠️ Observé au passage : ~~la traduction de séance n'a répondu dans sa fenêtre dans aucun
+  des deux essais~~ *(↪️ rectifié le 26/09 : un seul échec établi, à l'essai 2 — voir l'en-tête)* ; la séance est venue de la lecture locale de secours (chemin inchangé par cette
   publication — doute consigné dans `docs/JOURNAL-DE-TEST.md`).
 - ⚠️ La 1ʳᵉ sonde lisait 2,5 s après le tap, pendant que la séance se préparait encore : son « 0 »
   ne mesurait que l'impatience de la sonde. Corrigée (attente bornée) avant le 2ᵉ essai.

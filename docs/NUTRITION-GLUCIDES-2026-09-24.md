@@ -1,6 +1,9 @@
 # 🍽️ Nutrition — le moteur tel qu'il est, et d'où viennent les ~659 g de glucides (24/09/2026)
 
 > **Statut : EN ATTENTE DE DÉCISION DE MICHEL.** Rien n'a été modifié dans le moteur.
+> ↪️ **État actuel (26/09/2026)** — la ligne ci-dessus est le statut du 24/09, conservé tel quel : **D-020 et D-021
+> tranchées par Michel** ; **B1/B2 publiés en `ft-v1235`** (avec D-016 et R34-A). **B3 et la politique glucidique
+> restent en attente de décision.** Le corps de ce document reste le constat daté du 24/09 et ses compléments datés.
 > Ce document dit ce qui **EST** (mesuré dans l'app servie, `ft-v1234`) ; Michel décide ce qui
 > **DOIT ÊTRE** (règle d'or #15). Témoins : `tests/parcours/nutri_moteur.js` (B-CCCLX, B-CCCLXI),
 > contrôle négatif : `tools/mut_nutri_moteur.py` (15/15 conformes).
