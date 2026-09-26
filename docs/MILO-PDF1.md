@@ -232,3 +232,61 @@ cloudSave : 0 ligne. Aucune publication, aucun bump, aucun déploiement Worker, 
   témoins conduits ont été ajoutés, et elles mordent maintenant par le comportement.
 - Non-régression : AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 ·
   Worker S2-B 49/0.
+
+---
+
+# 🚀 PUBLICATION MILO-PDF1 — Worker d'abord, app ensuite (26/09/2026)
+
+> Ce qui précède (MILO-PDF1 puis MILO-PDF1B) reste tel quel. Cette section ajoute ce qui a été
+> mesuré et décidé **au moment de publier**.
+
+## C1. Le Worker d'abord, vérifié avant toute intégration
+
+- Déployé **depuis la branche** par `workflow_dispatch` (`deploy-worker.yml`, run 36228928712, vert),
+  `worker.js` **identique** à `11cabbc8`. Wrangler : 60,43 KiB (l'ancien : 56,28 KiB), nouvelle
+  version Cloudflare.
+- **Preuve qu'il est actif — 1 appel réel, et un seul** (banc Milo, run 36229012611, scénario
+  EV-001, sonde passive restée sur la branche) : enveloppe reçue avec `complete`, `truncated`,
+  `stopReason`, `continued` · `complete: true` · `stopReason: end_turn` · `continued: false` ·
+  `_model: claude-sonnet-4-6` · **1 seul appel `coach`**. L'app en ligne (ft-v1234) l'ignore, comme
+  prévu : l'ancien client ne lit que `reply`.
+- ⚠️ Le refus sans jeton (AUTH1) n'a pas été rejoué en production : il est éprouvé par le banc
+  AUTH1 local, sur le même `worker.js`, et l'appel réel est bien passé par l'identité S1.
+
+## C2. D-027 — le bouton « Enregistrer ce programme » : déjà conforme, rien changé
+
+Décision de Michel : le bouton **peut** rester sous une réponse globalement incomplète **uniquement
+si** le bloc JSON est complet, accepté par le parseur, de schéma valide, et qu'aucun JSON partiel
+n'est réparé ni enregistré. **Mesuré dans l'app servie avant publication** : c'était déjà exactement
+le comportement.
+
+| cas | bouton | enregistré avant le clic |
+|---|---|---|
+| réponse complète + JSON complet | oui | non |
+| réponse **coupée après** un JSON complet | **oui**, sous le marqueur | non |
+| fin **non confirmée** (`refusal`) + JSON complet | **oui**, sous le marqueur | non |
+| JSON coupé **dans** son bloc (même réparable par `]}`) | **non** | non |
+| JSON complet mais **aucune journée** | **non** | non |
+
+Aucune ligne de code modifiée ; le comportement est **figé** par des témoins.
+
+## C3. D-028 — l'annonce de la prochaine séance : c'était une ÉCRITURE → bloquée
+
+Mesuré : sous une réponse coupée ou non confirmée, un bloc caché `prevu` **complet** écrivait
+`S.nextPlanned` en mémoire, sur le disque (`ft4_nextplanned`) et vers le cloud — déjà le cas en
+production (ft-v1234), donc **pas une régression**, mais une **mutation** (cas B du brief).
+Rapporté à Michel **avant** de publier l'app ; sa décision : **bloquer d'abord**, même règle que la
+séance (D-025).
+
+- `coach.js` : `const _plan = _coupee ? null : _extractPlannedSession(reply);` — **une ligne**.
+- Une annonce **déjà** enregistrée n'est ni remplacée ni effacée par une réponse incomplète.
+- Le bloc reste retiré de l'affichage ; une annonce coupée dans son bloc n'était déjà pas lue.
+- ⚠️ Les autres blocs cachés (mémoire proposée, réponses rapides) n'ont pas été touchés : la
+  mémoire exige déjà l'accord de la personne (Principe 3), les réponses rapides n'écrivent rien.
+
+## C4. Tests
+
+- `tests/parcours/milo_suites.js` : **B-CCCLXXXIV** (4 témoins de source) et **B-CCCLXXXV**
+  (14 conduits dans le navigateur : P1 → P6 programme, N1 → N7 prochaine séance, 1 appel par
+  message, 0 erreur de page).
+- Banc `tools/banc_milo_pdf1.js` : **97 OK / 0 rouge**.
