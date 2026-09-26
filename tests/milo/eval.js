@@ -337,93 +337,11 @@ function verifier(sc, reply) {
          tout le monde, ce qui est précisément ce qui rend la mesure honnête. */
       if (tok) localStorage.setItem(cle, tok);
     }, { tok: BANC_TOKEN, cle: FT_TOKEN_KEY });
-    /* 🔎 SONDE DE PUBLICATION (MILO-PDF1, 26/09/2026) — PASSIVE, elle ne change rien à la mesure.
-       Elle NOTE chaque appel au Worker IA (l'action) et, pour sa réponse, les CLÉS de l'enveloppe et
-       les champs d'état (`complete`, `truncated`, `stopReason`, `continued`, `_diag`, `_model`). Elle
-       répond aux deux questions qu'aucun outil ne savait poser depuis une passe réelle : « le Worker
-       en ligne transmet-il l'état de la réponse ? » et « combien d'appels pour un message ? ».
-       ⛔ Rien d'autre n'est gardé : ni le texte de la réponse (déjà dans le rapport), ni l'enveloppe
-       envoyée — donc JAMAIS le jeton, qui y est injecté par l'app. */
-    await ctx.addInitScript(() => {
-      window.__ftSonde = [];
-      const f0 = window.fetch;
-      window.fetch = function (u, o) {
-        const url = String((u && u.url) || u || '');
-        const p = f0.apply(this, arguments);
-        if (!/workers\.dev/.test(url)) return p;
-        let act = ''; try { act = JSON.parse((o && o.body) || '{}').action || ''; } catch (e) {}
-        const rec = { action: act || '?' }; window.__ftSonde.push(rec);
-        return p.then(r => {
-          rec.status = r.status;
-          try { r.clone().json().then(d => { if (d && typeof d === 'object') { rec.cles = Object.keys(d).sort();
-            ['complete', 'truncated', 'stopReason', 'continued', '_diag', '_model', '_raccord'].forEach(k => { if (k in d) rec[k] = d[k]; }); } }).catch(() => {}); } catch (e) {}
-          return r;
-        });
-      };
-    });
     const page = await ctx.newPage();
     await page.goto((GO && !LOCAL) ? APP_LIVE : ('http://localhost:' + port + '/index.html'));
     await page.waitForTimeout(2300);
     await page.evaluate(() => { document.querySelectorAll('.overlay').forEach(x => x.classList.remove('open')); });
     return { page, ctx };
-  }
-
-  /* 💬 SONDE DU VRAI CHEMIN DU CHAT (publication MILO-PDF1, 26/09/2026) — branche seulement.
-     Les scénarios passent par `_vcAsk` (le laboratoire) : ils ne disent RIEN de `sendToCoach`, qui est
-     ce que la personne utilise. Ici : UN message, par le vrai chemin, sur l'app EN LIGNE, pour lire
-     V1 (réponse complète, aucun marqueur), V2 (UN seul envoi à Milo) et V4 (le bouton séance sur une
-     réponse complète). ⛔ GEL des écritures pendant toute la manœuvre (`_demoMode` : persist,
-     synchro cloud, Supabase et Sheets ne font rien) — le navigateur du runner est jetable, et le vrai
-     profil n'est jamais touché. Rien du texte de Milo n'est gardé : sa longueur, ses boutons, son état. */
-  async function sondeChat() {
-    const { page, ctx } = await ouvrirPage();
-    const errs = []; page.on('pageerror', x => errs.push(String(x && x.message || x).slice(0, 120)));
-    const r = await page.evaluate(async () => {
-      const debut = (window.__ftSonde || []).length;
-      if (typeof sendToCoach !== 'function') return { erreur: 'sendToCoach absente' };
-      window._demoMode = true;
-      // ⏱️ On ATTEND ce qu'on mesure, on ne le devine pas : 1ʳᵉ sonde (run 36231606494) a lu 2,5 s après
-      //    le tap, pendant que la séance se préparait encore — un « 0 » qui ne mesurait que l'impatience.
-      const attendre = async (f, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) {
-        try { const v = f(); if (v) return v; } catch (e) {} await new Promise(z => setTimeout(z, 250)); } return null; };
-      const boutonOui = (x, avecCompte) => [...x.querySelectorAll('.coach-prog-save button')]
-        .find(e => /Oui/.test(e.textContent) && (!avecCompte || /\(\d+ exercices?\)/.test(e.textContent)));
-      try {
-        S.premium = true; window._premiumPending = false;
-        const MSG = 'Donne-moi directement une séance haut du corps pour ce soir : 4 exercices, avec séries, répétitions, charges indicatives et repos. Pas de question, je suis à la salle.';
-        await sendToCoach(MSG);
-        const bs = document.querySelectorAll('.msg-coach'); const x = bs[bs.length - 1];
-        const prem = x && x.firstElementChild;
-        // Diagnostics BOOLÉENS (jamais le texte) : quelle voie la réponse a prise à l'arrivée.
-        const der = (coachHistory[coachHistory.length - 1] || {}).content || '';
-        const voie = { demande: typeof _demandeUneSeance === 'function' ? !!_demandeUneSeance(MSG) : null,
-                       ressemble: typeof _ressembleASeance === 'function' ? !!_ressembleASeance(der) : null };
-        await attendre(() => x && boutonOui(x, false), 15000);     // carte : tout de suite, ou après le cervelet (≤ 12 s)
-        const boutons = x ? [...x.querySelectorAll('button')].map(e => e.textContent.trim()).filter(s => !/PDF|Partager|côté/.test(s)) : [];
-        const etapes = []; let wkt = null;
-        let oui = x && boutonOui(x, false);
-        if (oui) {
-          const aCompte = /\(\d+ exercices?\)/.test(oui.textContent);
-          etapes.push(aCompte ? 'carte séance' : 'question (construite au tap)');
-          if (!aCompte) {
-            oui.click();
-            oui = await attendre(() => boutonOui(x, true), 20000);   // la carte NORMALE remplace la question
-            const echec = x.querySelector('.milo-ask-fail');
-            etapes.push(oui ? 'carte séance après tap' : (echec ? 'échec de lecture annoncé' : 'rien après 20 s'));
-          }
-          if (oui) { oui.click(); wkt = (await attendre(() => (S.wkt && S.wkt.exs && S.wkt.exs.length) || 0, 10000)) || 0; }
-        }
-        const appels = (window.__ftSonde || []).slice(debut);
-        return { nbCoach: appels.filter(a => a.action === 'coach').length, appels, voie, etapes,
-                 marqueur: !!(prem && prem.classList && prem.classList.contains('coach-coupee')),
-                 dataCoupee: x ? (x.dataset.coupee || '') : '(aucune bulle)', longueur: x ? x.textContent.length : 0,
-                 boutons, seanceChargee: wkt };
-      } catch (e) { return { erreur: (e && e.message) || String(e) }; }
-      finally { window._demoMode = false; }
-    }).catch(e => ({ erreur: (e && e.message) || String(e) }));
-    r.erreursPage = errs;
-    await ctx.close();
-    return r;
   }
 
   const parPasse = {};   // { prod: [...], haiku: [...] }
@@ -441,25 +359,9 @@ function verifier(sc, reply) {
       let r = null;
       for (let k = 0; k < (GO ? REPEAT : 1); k++) {
         const { page, ctx } = await ouvrirPage();
-        const debutSonde = GO ? await page.evaluate(() => (window.__ftSonde || []).length).catch(() => 0) : 0;
         r = await jouerDansLaPage(page, {
           apply: sc.apply, scenario: sc.scenario, coachEmail: sc.coachEmail, history: sc.history
         }, GO, M.id);
-        if (GO && r && !r.erreur) {
-          // 🔎 SONDE : les appels de CE scénario, la version SERVIE (lue sur le site, pas dans le dépôt),
-          //    et l'état que le client en ligne en déduit (s'il sait le faire).
-          r.sonde = await page.evaluate(async (debut) => {
-            await new Promise(z => setTimeout(z, 400));
-            const appels = (window.__ftSonde || []).slice(debut);
-            let versionServie = '';
-            try { const t = await (await fetch('sw.js', { cache: 'no-store' })).text();
-                  versionServie = (t.match(/CACHE\s*=\s*'(ft-v\d+)'/) || [])[1] || ''; } catch (e) {}
-            const coach = appels.filter(a => a.action === 'coach');
-            const der = coach[coach.length - 1] || null;
-            const etatClient = (der && typeof _miloEtatReponse === 'function') ? _miloEtatReponse(der) : '(client sans _miloEtatReponse)';
-            return { versionServie, appels, nbCoach: coach.length, etatClient };
-          }, debutSonde).catch(e => ({ erreur: (e && e.message) || String(e) }));
-        }
         await ctx.close();
         if (GO && r && r.ok) passes.push(verifier(sc, r.reply));
         if (GO && REPEAT > 1) await new Promise(z => setTimeout(z, 400)); // on ne mitraille pas
@@ -479,7 +381,6 @@ function verifier(sc, reply) {
         continue;
       }
 
-      if (r.sonde) console.log('  🔎 SONDE ' + sc.id + ' — ' + JSON.stringify(r.sonde));
       if (!r.ok) {
         console.log('  ⛔ ' + sc.id + ' — pas de réponse (' + r.kind + ') : ' + r.err);
         resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat:'muet', detail:r.err });
@@ -510,7 +411,7 @@ function verifier(sc, reply) {
       totalCar += (r.carContexte||0) * (passes.length||1);
       resultats.push({ id:sc.id, titre:sc.titre, origin:sc.origin, etat: nbRouges?'rouge':'vert',
                        ms:r.ms, modele:servi, bonModele, verdicts:montre, reply:r.reply,
-                       passes:passes.length, nbRouges, sonde:r.sonde || null });
+                       passes:passes.length, nbRouges });
     }
 
     parPasse[passe] = resultats;
@@ -526,9 +427,6 @@ function verifier(sc, reply) {
       console.log('');
     }
   }
-
-  // 💬 Le vrai chemin du chat, UNE fois, seulement pour une passe réelle sur l'app en ligne.
-  if (GO && !LOCAL) console.log('  💬 SONDE CHAT — ' + JSON.stringify(await sondeChat()) + '\n');
 
   await nav.close(); srv.close();
 
