@@ -10,8 +10,8 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1234` — 🍽️ les 5 repas toujours dans l'ordre de la journée, et un repas sans données reste visible (« Ce que l'app a appris »).
-- Prochaine : `ft-v1235`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
+- **Version en ligne (live) :** `ft-v1235` — 🚀 publication de la branche `project-status` : une réponse de Milo coupée ou non confirmée porte un marqueur et ne produit plus rien d'automatique (MILO-PDF1/1B, D-025 → D-028), plus AUTH1, contrat FT→Milo, Nutrition B1/B2/D-016/D-020/D-021, R34-A (D-022/D-024), chaîne poids et provenance du débrief. Worker déployé et vérifié **avant** l'app.
+- Prochaine : `ft-v1236`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
 
 ## 🧊 Contraintes en vigueur — décisions actées (règle d'or #15)
 
@@ -21,9 +21,11 @@
 
 ## 🔬 Chantier actif
 
+- **Publication MILO-PDF1 → `ft-v1235`** (26/09, session-A) — Worker d'abord (déployé depuis la branche, **1 appel réel** : `complete: true`, `end_turn`), puis intégration sur master et app. Deux décisions de Michel prises juste avant : **D-027** (bouton programme : déjà conforme, figé) et **D-028** (l'annonce de prochaine séance n'est plus enregistrée depuis une réponse non confirmée). Détail : `docs/MILO-PDF1.md` §C.
+
 - **Tri documentaire** de ce fichier et de `docs/JOURNAL-DE-PARTAGE.md` (24/09, session-A) — **terminé**, validé par Michel, committé et poussé en `0d8a22b2`. Dépôt documentaire propre.
-- **Chantier Poids** (24/09, session-A) — **livré sur la branche, NON publié** : `f9a8ec74` (données) + `66a6bd5e` (UX « Dernière mesure »). Corrigés : **F003, F004, F011**, et **F005 pour sa moitié « validation des entrées »** (sa 2ᵉ moitié, les `S.bw || 80` des calculs, reste ouverte) ; **F012 : prémisse réfutée** (mesuré). Décisions rendues à Michel : plusieurs pesées le même jour (le modèle en garde une) · le champ poids du **Profil** reste prérempli · lignes invalides déjà stockées (aucune migration) · `S.bw || 80` des calculs de séance / suppléments (gel Nutrition). ⛔ À la publication : bump `ft-v1235`, entrée de journal dans `CLAUDE.md`, règle d'or #11 (aide · point rouge · Guide).
-- **Chantier Milo — provenance du débrief** (24/09, session-A) — **livré sur la branche, NON publié** : `e3ae216e` + `307f0972`. Larsen « 70→90 » (fait fabriqué par l'app), superset aplati et RIR de l'Oiseau jamais proposé : **corrigés** ; cardio de fin → « échauffement » : phase conservée par le code, cause **non démontrable** sans la séance réelle. Trace : `RETOURS-TESTEURS.md` (24/09).
+- **Chantier Poids** (24/09, session-A) — **publié en `ft-v1235`** : `f9a8ec74` (données) + `66a6bd5e` (UX « Dernière mesure »). Corrigés : **F003, F004, F011**, et **F005 pour sa moitié « validation des entrées »** (sa 2ᵉ moitié, les `S.bw || 80` des calculs, reste ouverte) ; **F012 : prémisse réfutée** (mesuré). Décisions rendues à Michel : plusieurs pesées le même jour (le modèle en garde une) · le champ poids du **Profil** reste prérempli · lignes invalides déjà stockées (aucune migration) · `S.bw || 80` des calculs de séance / suppléments (gel Nutrition). ⛔ À la publication : bump `ft-v1235`, entrée de journal dans `CLAUDE.md`, règle d'or #11 (aide · point rouge · Guide).
+- **Chantier Milo — provenance du débrief** (24/09, session-A) — **publié en `ft-v1235`** : `e3ae216e` + `307f0972`. Larsen « 70→90 » (fait fabriqué par l'app), superset aplati et RIR de l'Oiseau jamais proposé : **corrigés** ; cardio de fin → « échauffement » : phase conservée par le code, cause **non démontrable** sans la séance réelle. Trace : `RETOURS-TESTEURS.md` (24/09).
 - **Backlog Poids, à ne pas perdre** : ⚠️ la carte **Masse grasse** crée une pesée du jour avec un kilo **recopié** — la « Dernière mesure » peut porter la date de cette écriture au lieu d'une vraie pesée → **futur chantier ciblé**. Et : plusieurs pesées le même jour (migration) · champ poids du Profil prérempli (décision d'écran) · anciennes lignes invalides (aucune migration) · `S.bw || 80` (gel Nutrition) · publication du chantier Poids non faite.
 - **Chantier Nutrition — glucides / TDEE** (24/09, session-A) — **en attente de décision de Michel**, moteur **non modifié**. Mesuré : les glucides sont le **résidu** `(cible − 4P − 9L)/4` sans plafond ; les ~659 g viennent d'un profil **reconstruit** (activité 1,725 + métier physique), pas des entrées déclarées (387 g). Témoins NUT-01→09 figés. Détail et options A→G : `docs/NUTRITION-GLUCIDES-2026-09-24.md`. ✅ **B1/B2 corrigés sur la branche (non publiés)** : activité jamais choisie ≠ 1,55 (`D-020`), relectures bornées ; `D-021` **tranchée par Michel le 25/09** (anciens `1,55` : une confirmation unique, implémentée et testée, §11) ; B3 et politique glucidique **non touchés**. Nuit 24→25/09 : remises à zéro testées, B2 étendu, 4 défauts du périmètre B1/B2 corrigés (lecture tolérante ; régression de `saveKcalEdit` ; plantage silencieux de l'onglet Nutrition sur un TDEE absent ; plan « 0 kcal » qu'il cachait), remesure + matrice activité × métier + B3 factuel → `docs/NUTRITION-GLUCIDES-2026-09-24.md` §10.
 - **Backlog futur, consigné le 24/09 (ne PAS traiter sans chantier dédié)** : ① **cardio — chronologie ≠ intention** : le cas de Michel était un cardio rangé dans le volet « Avant », que Milo a appelé échauffement de façon cohérente ; mais « Avant » ≠ échauffement et « Après » ≠ finisher (10 min de vélo doux ≠ 45 min de zone 2). Direction : séparer chronologie (avant/après), intention (échauffement · séance cardio · finisher · récupération · autre) et profil sportif (aide à proposer, jamais à imposer). ② **calories de séance** : le moteur de musculation est **GELÉ** (long à stabiliser) — futur chantier « audit calories séance V2, lecture seule d'abord » ; et un bloc cardio pourrait un jour avoir des calories modifiables avec provenance `auto` / `manuel`.
@@ -37,7 +39,7 @@
 
 ## ⚖️ Décisions ouvertes
 
-- **Aucune dans `docs/DECISIONS.md`** : 19 entrées (D-001 → D-019), toutes `VALIDÉ` ou `REMPLACÉE` (vérifié le 24/09). **D-019 est actée.**
+- **Aucune dans `docs/DECISIONS.md`** : 28 entrées (D-001 → D-028), toutes `VALIDÉ` ou `REMPLACÉE` (vérifié le 26/09).
 - **Ouvert, vérifié hors registre** : les essais cachés derrière `window.__FT_CLONE__` (12 occurrences dans `app.js` et `coach.js`) — chaque essai reste à décider (`CLAUDE.md`).
 - **Trous connus du classement des données (R4a)** : `badges` et `dayStateLog`, déclarés transmis à Milo sans l'être (`tests/donnees/donnees-milo.json`).
 
@@ -48,7 +50,7 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 
 ## ⏭️ Prochaine étape
 
-- **Chantiers Poids et Milo-débrief** : validation de Michel, puis décision de publication (voir « Chantier actif »).
+- **Après `ft-v1235`** : observer en réel le chemin de troncature de l'analyse de programme (aucune troncature naturelle n'a encore été vue — on ne la provoque pas).
 - Pour l'audit : **l'ordre de correction des défauts restants (F001, F002, F006 → F010, et la 2ᵉ moitié de F005) est à décider par Michel.**
 
 ## 🧭 Où lire quoi
