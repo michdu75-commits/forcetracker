@@ -3240,3 +3240,11 @@ puis relancé avec succès par le banc). ⚠️ Ce chemin n'a **pas** changé av
 est-ce encore vrai ? ❓ Quelle part des séances vient du cervelet, et quelle part du filet ?
 Vérifiable par du code : statut et durée de `seanceJson` dans la sonde de la branche, répétés sur
 quelques essais ; et, dans l'app, compter les séances posées par le cervelet vs par le filet.
+↪️ **Correction et diagnostic (MILO-SEANCE-01, 26/09/2026, même jour)** : la phrase « dans **les deux**,
+l'appel `seanceJson` n'a jamais rendu de réponse dans sa fenêtre » est **fausse pour le 1ᵉʳ essai** —
+une seule traduction y a été lancée, **au tap**, et la sonde l'a lue 2,5 s plus tard : un dépassement
+de 12 s y est impossible. Fait établi : **un** échec (essai 2, délai ou réseau). Diagnostic
+déterministe (`docs/MILO-SEANCE-01.md`) : la perte 4 → 2 se reproduit **dans le repli**
+(`_seanceDepuisTexte`), qui ne sait pas lire le format que le prompt impose à Milo (« Nom — 4×6 à 80 kg,
+repos 2 min — consigne ») ; traduction, normalisation et injection ne perdent rien. ❓ Reste ouvert :
+ce que Milo a réellement écrit dans l'essai 2, et la latence réelle de la traduction.

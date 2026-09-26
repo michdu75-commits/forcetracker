@@ -51,7 +51,7 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 ## ⏭️ Prochaine étape
 
 - **Après `ft-v1235`** : observer en réel le chemin de troncature de l'analyse de programme (aucune troncature naturelle n'a encore été vue — on ne la provoque pas).
-- **Doute consigné le 26/09** : la traduction de séance (cervelet) n'a répondu dans sa fenêtre de 12 s dans aucune des deux vérifications réelles — la séance vient alors de la lecture locale de secours. Chemin **inchangé** par ft-v1235 ; `docs/JOURNAL-DE-TEST.md`.
+- **MILO-SEANCE-01 (26/09, diagnostic, rien corrigé)** : la perte 4 → 2 vient du **repli** (`_seanceDepuisTexte`), qui ne lit pas le format que le prompt impose à Milo ; deux défauts d'intégrité trouvés en vérifiant (une proposition de mémoire masque la carte séance · la séance traduite redevient celle du repli au rechargement) ; « Mes discussions » perd le marqueur `coupee` (D-025). Correctifs **proposés, non codés** : `docs/MILO-SEANCE-01.md` §9. **Décision de Michel attendue.**
 - Pour l'audit : **l'ordre de correction des défauts restants (F001, F002, F006 → F010, et la 2ᵉ moitié de F005) est à décider par Michel.**
 
 ## 🧭 Où lire quoi

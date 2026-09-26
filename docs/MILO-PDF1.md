@@ -310,3 +310,8 @@ séance (D-025).
 - ⚠️ La 1ʳᵉ sonde lisait 2,5 s après le tap, pendant que la séance se préparait encore : son « 0 »
   ne mesurait que l'impatience de la sonde. Corrigée (attente bornée) avant le 2ᵉ essai.
 - Coût réel après publication : **5 requêtes Milo** (2 × scénario EV-001, dont une abandonnée par le banc à 30 s puis relancée ; 2 × chat) + **2 traductions de séance** ; avant publication : **1** requête (la preuve du Worker, §C1).
+
+- ↪️ **Correction (26/09, MILO-SEANCE-01)** : « la traduction de séance n'a répondu dans sa fenêtre
+  dans aucun des deux essais » est **faux pour le 1ᵉʳ** — une seule traduction, lancée au tap, lue
+  2,5 s plus tard (un dépassement de 12 s y est impossible). Fait établi : **un** échec sur deux
+  essais. Diagnostic complet : `docs/MILO-SEANCE-01.md`.
