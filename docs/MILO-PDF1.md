@@ -292,3 +292,21 @@ séance (D-025).
 - Banc `tools/banc_milo_pdf1.js` : **97 OK / 0 rouge**.
 - Contrôle négatif `tools/mut_milo_pdf1.py D '[negatif]'` : **13/13 conformes** (D01 → D09 mordent, 4 commentaires restent verts).
 - Sur le candidat master `a8f2e9ab` : AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 · Worker S2-B 49/0 · activité/provenance 54/0 · poids 78/0 · noyau Milo 12/12 · données toutes classées · **passe complète 5143 ✅ / 0 ❌, les 4 conditions vertes**.
+
+## C5. Vérification réelle après publication (26/09/2026)
+
+- **Version servie : `ft-v1235`** (lue sur le site par la sonde). Pages, Worker et Apps Script
+  (`?test=1` → `online`, seuls `Code.js` et `appsscript.json` poussés, déploiement @190) : verts.
+- **V1** — réponse normale : `complete: true`, `stopReason: end_turn`, **aucun marqueur**, état
+  client `complete` (runs 36231606494 et 36231841452).
+- **V2** — vrai chemin du chat (`sendToCoach`, écritures gelées) : **1 seul envoi à Milo** par
+  message ; le seul autre appel est la traduction de séance, comme avant.
+- **V3** — aucune troncature naturelle observée : le chemin réel de la suite (ancre, `_raccord`)
+  **reste à observer**. Elle n'a pas été provoquée (consigne).
+- **V4** — carte « ⚡ Oui, on démarre (2 exercices) » sur une réponse complète, clic → **séance
+  chargée**. ⚠️ Observé au passage : la traduction de séance n'a répondu dans sa fenêtre dans aucun
+  des deux essais ; la séance est venue de la lecture locale de secours (chemin inchangé par cette
+  publication — doute consigné dans `docs/JOURNAL-DE-TEST.md`).
+- ⚠️ La 1ʳᵉ sonde lisait 2,5 s après le tap, pendant que la séance se préparait encore : son « 0 »
+  ne mesurait que l'impatience de la sonde. Corrigée (attente bornée) avant le 2ᵉ essai.
+- Coût réel après publication : **5 requêtes Milo** (2 × scénario EV-001, dont une abandonnée par le banc à 30 s puis relancée ; 2 × chat) + **2 traductions de séance** ; avant publication : **1** requête (la preuve du Worker, §C1).
