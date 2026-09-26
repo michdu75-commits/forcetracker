@@ -382,18 +382,39 @@ function verifier(sc, reply) {
       const debut = (window.__ftSonde || []).length;
       if (typeof sendToCoach !== 'function') return { erreur: 'sendToCoach absente' };
       window._demoMode = true;
+      // ⏱️ On ATTEND ce qu'on mesure, on ne le devine pas : 1ʳᵉ sonde (run 36231606494) a lu 2,5 s après
+      //    le tap, pendant que la séance se préparait encore — un « 0 » qui ne mesurait que l'impatience.
+      const attendre = async (f, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) {
+        try { const v = f(); if (v) return v; } catch (e) {} await new Promise(z => setTimeout(z, 250)); } return null; };
+      const boutonOui = (x, avecCompte) => [...x.querySelectorAll('.coach-prog-save button')]
+        .find(e => /Oui/.test(e.textContent) && (!avecCompte || /\(\d+ exercices?\)/.test(e.textContent)));
       try {
         S.premium = true; window._premiumPending = false;
-        await sendToCoach('Donne-moi directement une séance haut du corps pour ce soir : 4 exercices, avec séries, répétitions, charges indicatives et repos. Pas de question, je suis à la salle.');
-        await new Promise(z => setTimeout(z, 8000));   // le cervelet pose le bouton APRÈS l'affichage
+        const MSG = 'Donne-moi directement une séance haut du corps pour ce soir : 4 exercices, avec séries, répétitions, charges indicatives et repos. Pas de question, je suis à la salle.';
+        await sendToCoach(MSG);
         const bs = document.querySelectorAll('.msg-coach'); const x = bs[bs.length - 1];
         const prem = x && x.firstElementChild;
+        // Diagnostics BOOLÉENS (jamais le texte) : quelle voie la réponse a prise à l'arrivée.
+        const der = (coachHistory[coachHistory.length - 1] || {}).content || '';
+        const voie = { demande: typeof _demandeUneSeance === 'function' ? !!_demandeUneSeance(MSG) : null,
+                       ressemble: typeof _ressembleASeance === 'function' ? !!_ressembleASeance(der) : null };
+        await attendre(() => x && boutonOui(x, false), 15000);     // carte : tout de suite, ou après le cervelet (≤ 12 s)
         const boutons = x ? [...x.querySelectorAll('button')].map(e => e.textContent.trim()).filter(s => !/PDF|Partager|côté/.test(s)) : [];
-        const go = x && [...x.querySelectorAll('button')].find(e => /Commencer|on démarre|Oui, on d/.test(e.textContent));
-        let wkt = null;
-        if (go) { go.click(); await new Promise(z => setTimeout(z, 2500)); wkt = (S.wkt && S.wkt.exs || []).length; }
+        const etapes = []; let wkt = null;
+        let oui = x && boutonOui(x, false);
+        if (oui) {
+          const aCompte = /\(\d+ exercices?\)/.test(oui.textContent);
+          etapes.push(aCompte ? 'carte séance' : 'question (construite au tap)');
+          if (!aCompte) {
+            oui.click();
+            oui = await attendre(() => boutonOui(x, true), 20000);   // la carte NORMALE remplace la question
+            const echec = x.querySelector('.milo-ask-fail');
+            etapes.push(oui ? 'carte séance après tap' : (echec ? 'échec de lecture annoncé' : 'rien après 20 s'));
+          }
+          if (oui) { oui.click(); wkt = (await attendre(() => (S.wkt && S.wkt.exs && S.wkt.exs.length) || 0, 10000)) || 0; }
+        }
         const appels = (window.__ftSonde || []).slice(debut);
-        return { nbCoach: appels.filter(a => a.action === 'coach').length, appels,
+        return { nbCoach: appels.filter(a => a.action === 'coach').length, appels, voie, etapes,
                  marqueur: !!(prem && prem.classList && prem.classList.contains('coach-coupee')),
                  dataCoupee: x ? (x.dataset.coupee || '') : '(aucune bulle)', longueur: x ? x.textContent.length : 0,
                  boutons, seanceChargee: wkt };
