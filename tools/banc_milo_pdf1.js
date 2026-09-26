@@ -28,10 +28,12 @@ const t = (nom, cond, det) => {
   const mod = require(path.join(ROOT, 'tests', 'parcours', 'milo_pdf1.js'));
   // MILO-PDF1B : le bloc de correction se joue dans le MÊME banc (le contrôle négatif les éprouve ensemble).
   const modB = require(path.join(ROOT, 'tests', 'parcours', 'milo_pdf1b.js'));
-  mod.source(t, ROOT, fs, path); modB.source(t, ROOT, fs, path);
+  // PUBLICATION MILO-PDF1 : D-027 (programme) et D-028 (prochaine séance), même banc, même contrôle négatif.
+  const modS = require(path.join(ROOT, 'tests', 'parcours', 'milo_suites.js'));
+  mod.source(t, ROOT, fs, path); modB.source(t, ROOT, fs, path); modS.source(t, ROOT, fs, path);
   await mod.reel(t, ROOT, fs, path); await modB.reel(t, ROOT, fs, path);
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
-  await mod.ecran(t, b, PORT); await modB.ecran(t, b, PORT);
+  await mod.ecran(t, b, PORT); await modB.ecran(t, b, PORT); await modS.ecran(t, b, PORT);
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
   process.exit(ko ? 1 : 0);

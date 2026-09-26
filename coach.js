@@ -5738,7 +5738,11 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     // Question guidée : Milo peut proposer des réponses rapides à taper (facultatif, une question à la fois)
     const _qr = _extractQuickReplies(reply);
     // Prochaine séance annoncée (ft-v601) : l'Accueil arrête de relancer « ça fait X jours » et devient cohérent
-    const _plan = _extractPlannedSession(reply);
+    /* 📄 D-028 (Michel, 26/09/2026) — MÊME RÈGLE QUE LA SÉANCE (D-025) : une réponse non confirmée
+       terminée n'ENREGISTRE pas l'annonce. Mesuré avant publication : un bloc « prevu » complet sous une
+       réponse coupée (ou fin non confirmée) écrivait S.nextPlanned en mémoire, sur le disque et vers le
+       cloud. Le bloc reste retiré de l'affichage ; seule l'écriture est refusée. */
+    const _plan = _coupee ? null : _extractPlannedSession(reply);
     if (_plan) { try { S.nextPlanned = _plan; persist(); if (typeof _cloudSyncDebounced==='function') _cloudSyncDebounced(); } catch(e){} }
     /* 📋 LE RÉCAP FACTUEL PASSE DEVANT (20/08/2026) : écrit par le CODE, donc complet par
        construction. Milo commente par-dessus — il ne peut plus sauter un exercice. */
