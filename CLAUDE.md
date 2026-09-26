@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1235`** (prochaine : `ft-v1236`).
+> **Version actuelle : `ft-v1236`** (prochaine : `ft-v1237`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,31 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1236 — 🔬 MILO-SEANCE-02 / C1 · LA LECTURE DE SECOURS DE LA SÉANCE LIT ENFIN LE FORMAT QUE LE PROMPT DEMANDE À MILO** — suite du diagnostic MILO-SEANCE-01, correctif **C1 seul**, validé par Michel sur checkpoint avant commit, resynchronisé avec master : **C1 est le seul changement fonctionnel de cette version**.
+
+**⛔⛔ CE QUE ÇA N'EST PAS : LA CAUSE DÉMONTRÉE DU 4 → 2 VÉCU.** ***Symptôme réel 4→2 ; cause de l'événement réel non déterminée. Un mécanisme capable de produire ce résultat a été reproduit localement dans la lecture de secours.*** C1 ferme ce mécanisme-là, rien de plus.
+
+**⭐ LE DÉFAUT, MESURÉ AVANT D'ÉCRIRE UNE LIGNE.** Le prompt impose à Milo *« UN EXERCICE PAR LIGNE, avec ses séries × reps, la charge en kg, le REPOS et ta consigne technique »* — soit « 3. Développé militaire — 3×8 à 40 kg, repos 2 min — gainage fort ». Or `_seanceDepuisTexte`, le repli quand la traduction ne répond pas, était ancrée en fin de ligne juste après la charge : « à » refusé, repos et consigne refusés, et toute ligne de plus de 90 caractères jetée.
+
+| écriture de Milo | avant | après |
+|---|---|---|
+| **format du prompt** | **0/4** | **4/4** |
+| format court « Nom : 4×6 @ 80 kg » | 4/4 | 4/4 |
+| format bloc (nom / séries / consigne) | 4/4 | 4/4 |
+| **mélange court + prompt** | **2/4** | **4/4** |
+
+**⚖️ LE CORRECTIF EST BORNÉ, PAS ÉLARGI.** « à » est accepté devant la charge, et une **suite** après la charge (repos, consigne, parenthèse) seulement à trois conditions : ① un séparateur **explicite** (`—`, `:`, `-`) entre le nom et les séries · ② la suite ne porte **pas d'autres séries** (« puis 3×10 ») — *on ne lit pas à moitié* · ③ aucune charge n'y est écrite **sans avoir été lue** — *mieux vaut pas de ligne qu'une série à 0 kg*. La borne de 90 caractères passe à 200 pour ces seules lignes. ⛔ **Inchangés** : la règle des noms (exact ou tel quel, jamais « à peu près »), les bornes (1 à 12 séries, 1 à 100 reps), le minimum de 2 exercices, les séries seules.
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun bouton, aucun réglage : la carte « Commencer cette séance » apparaît là où elle aurait dû apparaître. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS, ET CE QUI RESTE OUVERT** : ⛔ **C2** (une proposition de mémoire masque la carte séance — U8 toujours rouge) · ⛔ **C3** (la séance traduite n'est pas gardée au rechargement ; **U9 passe au vert par effet de bord**, parce que le repli lit désormais ces formats — vérifié : avec des points médians, 4 à l'arrivée, une simple question après rechargement) · ⛔ **D-025** reste ouvert **étroitement** (« Mes discussions » peut perdre le marqueur « coupée ») · ⛔ **délai de 12 s inchangé** · ⛔ le prompt de Milo n'est pas touché · ⚠️ limites connues, non traitées : « La dernière fois : 3×8 à 60 kg, tu étais à l'aise » est lue comme un exercice (sa forme courte l'était déjà) ; tableau, points médians, « au ressenti », « 12/10/8/8 » et repos sans séparateur restent illisibles pour le repli. · ⛔ **Aucun appel réel à Milo**.
+
+**📝 RECTIFICATION** : la ligne MILO-SEANCE-01 de `docs/JOURNAL-DE-PARTAGE.md` disait « 4 → 2 = le repli » — plus fort que les faits ; rayée et corrigée (↪️ daté).
+
+Tests : **B-CCCLXXXVII (7 de source) + B-CCCLXXXVIII (22 conduits)** dans `tests/parcours/seance_c1.js`, **29 OK / 0**, branchés dans la passe — format du prompt, puces, court, bloc, mélange, variations (x/×, @/à, espaces, parenthèse, « - », 12,5 kg), ligne > 90 caractères ; **9 cas pièges → aucune séance**, et 2 vrais exercices noyés dans tous les pièges → **exactement 2** ; de bout en bout (Worker simulé) **1 carte**, 4 exercices chargés. ⛔ **Contrôle négatif `tools/mut_seance_c1.py` : 13/13 conformes** (M01 = le code d'avant mot pour mot, 5 déguisées, 1 commentaire qui doit rester vert). Banc d'unicité : 11 OK / 1 rouge (U8 = C2, attendu). **CHECK PONY NON EXÉCUTÉ — PROCÉDURE NON IDENTIFIÉE.**
+
+Fichiers : `coach.js` (`_seanceDepuisTexte` seule), `tests/parcours/seance_c1.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_seance_c1.js` et `tools/mut_seance_c1.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/MILO-SEANCE-01.md` (note d'état), `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md` — plus, portés sur master avec la branche : `docs/MILO-SEANCE-01.md`, `tools/diag_seance01.js`, `tests/parcours/seance_unicite.js` et son banc (diagnostic du 26/09, **non branchés** dans la passe). sw.js ft-v1236. |
 
 **ft-v1235 — 🚀 PUBLICATION DE LA BRANCHE `project-status` · UNE RÉPONSE DE MILO COUPÉE OU NON CONFIRMÉE LE DIT, ET NE PRODUIT PLUS RIEN D'AUTOMATIQUE** — publication décidée par Michel après la contre-vérification finale (*« MILO-PDF1B CONFIRMÉ — PRÊT POUR PUBLICATION »*), dans l'ordre qu'il a imposé : ⛔ ***« Worker d'abord → app ensuite → vérification réelle »***.
 
@@ -760,36 +785,3 @@ Fichiers : `tracking.js`, `tests/parcours/mensurations.js` (nouveau), `tests/par
 Tests : éprouvé sur les **quatre chemins** dans un navigateur réel — envoi qui échoue · réponse **non-JSON** · refus `no_code` · **succès**. Chacun rend un message **différent**, et l'échappement est vérifié (le HTML s'affiche au lieu de s'exécuter).
 
 Fichiers : `app.js`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1229. |
-
-**ft-v1228 — 🔑 UNE IDENTITÉ S1 DÉDIÉE AU BANC D'ESSAI · *le banc reçoit un badge, aucune porte n'est ouverte dans le bâtiment*** — décision de Michel : ⭐ ***« créer une identité / un jeton S1 dédié au banc d'essai GitHub, révocable, stocké dans GitHub Secrets, sans créer de porte spéciale permettant de contourner la sécurité S1 des vrais utilisateurs »*** · ⛔⛔ ***« je ne veux PAS d'un mode benchmark qui bypass l'authentification normale du Worker »***.
-
-**⛔⛔ LE DÉFAUT FERMÉ EST MESURÉ.** Le workflow du banc recevait **HTTP 401** et ne mesurait **rien** : un runner GitHub ouvre un navigateur **neuf**, donc sans jeton — *« Origin correct + aucun token → refus »* (ft-v1216), **une protection voulue**. 👉 ***Le banc n'avait donc jamais pu appeler Milo depuis S1***, et personne ne l'avait vu parce qu'**aucune passe réelle n'avait jamais tourné** (le rapport était « blanc » depuis toujours).
-
-**⭐⭐ RIEN DE NEUF N'A ÉTÉ CONSTRUIT CÔTÉ AUTHENTIFICATION, ET C'EST LE POINT.** Mesuré avant d'écrire une ligne : S1 savait **déjà** tout faire.
-
-| ce qu'il fallait | ce qui existait déjà |
-|---|---|
-| une identité **étiquetée** | `_jetonPoser_(email, **libelle**)` — l'étiquette était prévue |
-| un refus sûr | `_jetonIdentite_` **fail-closed** (absent · inconnu · illisible · révoqué) |
-| une **révocation** | `_jetonRevoquer_` **marque** au lieu de supprimer — *un jeton révoqué doit rester distinguable d'un jeton inconnu* |
-| une **route** pour en créer un | **`issueTokenByCode`**, celle que le téléphone de chacun utilise déjà |
-
-⛔ **Aucune route neuve, aucun `if benchmark then allow`, aucune ligne touchée dans `worker.js`.** L'outil Admin appelle la route **existante** avec l'étiquette `banc-milo`. Le jeton produit est un jeton S1 **ordinaire** : le Worker le vérifie comme les autres, il se révoque comme les autres.
-
-**⛔ IL N'EST AFFICHÉ QU'UNE FOIS, ET RANGÉ NULLE PART.** Le serveur ne garde qu'une **empreinte** (`sha256`) : le jeton brut n'existe qu'à l'instant où il est rendu. On ne le stocke donc ni dans `localStorage`, ni dans l'état, ni dans un journal. *Un secret gardé « pour le retrouver plus tard » est un secret de plus à protéger.* Perdu → on en refait un et on révoque l'ancien.
-
-**⭐ LE BANC EMPRUNTE LE CHEMIN DU VRAI CLIENT**, ce qui est précisément ce qui rend la mesure honnête : le jeton est posé dans la **même clé** de `localStorage`, **lue à la source** dans `constants.js`. ⛔ **R2** — *la recopier la ferait diverger en silence le jour d'un renommage : le banc poserait son jeton dans une clé que plus personne ne lit, et repartirait en 401 sans qu'on comprenne pourquoi.*
-
-**⛔⛔ ON REFUSE AVANT DE DÉPENSER, PAS APRÈS.** Sans secret, le workflow échoue **avant le checkout** ; `eval.js` refuse `--go` sans jeton, et refuse aussi un jeton **mal recopié** — ⚠️ en disant la **forme** (« 3 caractères, 64 attendus »), **jamais la valeur**. *Un secret tronqué au copier-coller est l'erreur la plus banale, et sans ce mot elle ressemble à un refus d'identité.*
-
-**⚖️ ET LE QUOTA A DÉCIDÉ DE L'ARCHITECTURE — dit franchement parce que c'est un arbitrage.** Le quota est **par e-mail** : 50/jour, **150** pour un compte dev (`michdu75@gmail.com` seul). Or une passe fait **57 appels** : ***un e-mail neuf serait bloqué à 50***. Le jeton est donc **dédié et révocable seul**, mais il **résout vers le compte de Michel**. ⛔ Un compte séparé exigerait de le créer, lui poser un code perso et l'ajouter à `AI_EMAILS_DEV_` — **chemin d'évolution écrit, non pris ici** (R19, et §4 du brief : *Michel ne doit pas devenir administrateur sécurité*).
-
-**📣 RÈGLE D'OR #11 — RIEN POUR L'UTILISATEUR.** Un outil apparaît dans **Profil → Admin**, réservé (`_isAdminUnlocked()`, qui garde déjà 16 outils — R13). Aucun écran public ne change, aucun quota ne bouge, aucun comportement de Milo n'est touché. ⚖️ **Pop-up : non.**
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ **`worker.js` : 0 ligne** · ⛔ **`Code.js` : 0 ligne** (tout existait) · ⛔ ni `coachMemory`, ni la fréquence du résumé, ni l'ADN, ni le prompt, ni le contexte, ni le cervelet, ni le multi-moteurs, ni la Nutrition, ni le QR, ni la voix · ⛔ ni `state.js`, ni `screens.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `supabase.js` · ⛔ **la passe complète n'est PAS lancée** : le déclenchement manuel reste à Michel.
-
-**⚠️⚠️ ET DEUX DE MES PROPRES GARDES MESURAIENT UN MOT AU LIEU DU MÉCANISME — le piège n°1 de `BUGS.md`, deux fois dans le même outil.** ① J'interdisais le mot **« benchmark »** dans `worker.js` : il a rougi sur l'arbre **sain**, car `MODELES_BENCHMARK` y existe depuis longtemps et ne parle **pas d'identité** — c'est une liste blanche de **modèles**. *L'invariant juste n'est pas « le mot n'apparaît pas », c'est **« l'identité ne peut venir que de `_identiteIA` »*** — mesuré : une seule affectation de `_moi` dans tout le fichier. ② Mon garde « aucun jeton en dur » cherchait **64 caractères hexadécimaux** : `'a'.repeat(64)` passait tranquillement. *Un garde qui décrit à quoi **ressemble** un secret ne dit rien de sa **provenance*** — on exige désormais la **source** (`process.env`). ⭐ **Et c'est mon propre contrôle de départ qui a attrapé le premier** : il refuse de mesurer sur un arbre déjà rouge, *parce qu'un contrôle négatif dont le point de départ est faux ne prouve rien* (leçon payée le matin même).
-
-Tests : **contrôle négatif `tools/mut_identite_banc.py`, 14 mutations sur arbre CLONÉ, 14 conformes** — les trois familles qui comptent : **ouvrir une porte** (mode benchmark dans le Worker, refus désactivé, jeton en dur), **faire fuir le secret** (l'afficher dans le journal, recopier la clé), **retirer un garde-fou** (secret non vérifié, refus avant dépense supprimé, `LANCER`, « au moins une réponse », étiquette, révocation). ⭐ Dont **deux qui doivent RESTER VERTES** : des commentaires citant « benchmark », « banc » et le nom du secret — *la seule façon de prouver qu'on mesure le code et non la phrase qui l'explique* (**R30**).
-
-Fichiers : `index.html`, `app.js`, `tests/milo/eval.js`, `.github/workflows/banc-milo.yml`, `tools/mut_identite_banc.py` *(nouveau)*, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Ni `worker.js`, ni `Code.js`, ni aucun autre fichier servi.** sw.js ft-v1228. |

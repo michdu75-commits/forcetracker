@@ -1,5 +1,7 @@
 # 🔬 MILO-SEANCE-01 — Où une séance perd-elle des exercices ? (26/09/2026)
 
+> ↪️ **ÉTAT AU 26/09 AU SOIR (ajouté, rien n'est réécrit plus bas).** **C1 est corrigé** (MILO-SEANCE-02, commit `05a77df2`, version `ft-v1236`) : la lecture de secours lit le format du prompt (0/4 → 4/4, mélange 2/4 → 4/4). **C2 et C3 restent ouverts**, **D-025 reste ouvert étroitement**, le **délai de 12 s est inchangé**. ⚠️ Les tableaux du §3 décrivent une **reproduction locale** : symptôme réel 4→2 ; **cause de l'événement réel non déterminée** — un mécanisme capable de produire ce résultat a été reproduit localement dans la lecture de secours. U9 (§6) passe au vert après C1 **par effet de bord** seulement : C3 n'est pas corrigé.
+
 > **Diagnostic seulement.** Aucune correction n'est codée : Michel voit d'abord le diagnostic
 > (consigne §10). MILO-PDF1 est fermé et n'est pas rouvert — un défaut qui le touche est
 > **signalé** (§7), pas corrigé.

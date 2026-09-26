@@ -10,8 +10,8 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1235` — 🚀 publication de la branche `project-status` : une réponse de Milo coupée ou non confirmée porte un marqueur et ne produit plus rien d'automatique (MILO-PDF1/1B, D-025 → D-028), plus AUTH1, contrat FT→Milo, Nutrition B1/B2/D-016/D-020/D-021, R34-A (D-022/D-024), chaîne poids et provenance du débrief. Worker déployé et vérifié **avant** l'app.
-- Prochaine : `ft-v1236`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
+- **Version en ligne (live) :** `ft-v1236` — 🔬 MILO-SEANCE-02 / C1 seul : la lecture de secours de la séance lit le format que le prompt demande à Milo (format du prompt 0/4 → 4/4, mélange 2/4 → 4/4). Symptôme réel 4→2 : cause de l'événement réel **non déterminée**. Précédente : `ft-v1235` (publication de la branche `project-status`, MILO-PDF1/1B, D-025 → D-028).
+- Prochaine : `ft-v1237`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
 
 ## 🧊 Contraintes en vigueur — décisions actées (règle d'or #15)
 
@@ -40,7 +40,7 @@
 ## ⚖️ Décisions ouvertes
 
 - **Aucune dans `docs/DECISIONS.md`** : 28 entrées (D-001 → D-028), toutes `VALIDÉ` ou `REMPLACÉE` (vérifié le 26/09).
-- **Hors registre — DÉCISION MICHEL EN ATTENTE** : règle d'or #11, **points 2 à 5** pour le marqueur « réponse incomplète / non confirmée » (point rouge, aide `?`, aide détaillée, Guide) — rien n'a été posé ; correctifs MILO-SEANCE-01 (C1 → C3) ; correction de la faille D-025 / « Mes discussions ».
+- **Hors registre — DÉCISION MICHEL EN ATTENTE** : règle d'or #11, **points 2 à 5** pour le marqueur « réponse incomplète / non confirmée » (point rouge, aide `?`, aide détaillée, Guide) — rien n'a été posé ; correctifs MILO-SEANCE-01 **C2 et C3** (C1 publié en `ft-v1236`) ; correction de la faille D-025 / « Mes discussions ».
 - **Ouvert, vérifié hors registre** : les essais cachés derrière `window.__FT_CLONE__` (12 occurrences dans `app.js` et `coach.js`) — chaque essai reste à décider (`CLAUDE.md`).
 - **Trous connus du classement des données (R4a)** : `badges` et `dayStateLog`, déclarés transmis à Milo sans l'être (`tests/donnees/donnees-milo.json`).
 
@@ -52,9 +52,9 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 ## ⏭️ Prochaine étape
 
 - **Après `ft-v1235`** : observer en réel le chemin de troncature de l'analyse de programme (aucune troncature naturelle n'a encore été vue — on ne la provoque pas).
-- **MILO-SEANCE-01 (26/09, diagnostic, rien corrigé)** : **SYMPTÔME RÉEL — CAUSE DE L'ÉVÉNEMENT RÉEL NON DÉTERMINÉE.** Un mécanisme capable de produire le 4 → 2 est reproduit localement dans la lecture de secours (`_seanceDepuisTexte`). Rectification : **un seul échec de traduction établi** sur les deux essais de la vérification (essai 1 : traduction lancée au tap, lue 2,5 s plus tard ; essai 2 : délai ou réseau non distingué). Deux défauts démontrés en local, non corrigés : une proposition de mémoire masque la carte séance · la séance traduite redevient celle du repli au rechargement. Correctifs **proposés, non codés** : `docs/MILO-SEANCE-01.md` §9 (branche de diagnostic). **Décision de Michel attendue.**
+- **MILO-SEANCE-01 → MILO-SEANCE-02 (26/09)** : **SYMPTÔME RÉEL — CAUSE DE L'ÉVÉNEMENT RÉEL NON DÉTERMINÉE.** Un mécanisme capable de produire le 4 → 2 est reproduit localement dans la lecture de secours (`_seanceDepuisTexte`). Un seul échec de traduction établi sur les deux essais de la vérification (essai 1 : traduction lancée au tap, lue 2,5 s plus tard ; essai 2 : délai ou réseau non distingué). ✅ **C1 corrigé en `ft-v1236`** : la lecture de secours lit le format que le prompt demande (0/4 → 4/4, mélange 2/4 → 4/4). ⏳ **Restent ouverts, non corrigés** : **C2** (une proposition de mémoire masque la carte séance) · **C3** (la séance traduite redevient celle du repli au rechargement — U9 vert seulement par effet de bord de C1). **Délai de 12 s inchangé.** Dossier : `docs/MILO-SEANCE-01.md` §9. **Décision de Michel attendue** pour C2/C3.
 - ⚠️ **Défaut ACTIF — réouverture ÉTROITE de D-025** : « Mes discussions » peut perdre le marqueur « coupée » et permettre à une réponse incomplète de redevenir candidate à une séance. Démontré par MILO-SEANCE-01, **non corrigé**. Ne rouvre **pas** le reste de MILO-PDF1.
-- **Cartes séance multiples** : **1 seule carte dans 8 situations testées**, contrôle négatif **3/3** ; le témoin (`tests/parcours/seance_unicite.js`) est sur la branche de diagnostic, **pas encore dans la passe principale sur master**. Ce n'est pas une preuve d'impossibilité.
+- **Cartes séance multiples** : **1 seule carte dans 8 situations testées**, contrôle négatif **3/3** ; le témoin (`tests/parcours/seance_unicite.js`) est dans le dépôt mais **pas branché dans la passe principale** (U8 = C2 y est rouge exprès) ; les 3 parcours de carte de C1 (`tests/parcours/seance_c1.js`), eux, y sont. Ce n'est pas une preuve d'impossibilité.
 - Pour l'audit : **l'ordre de correction des défauts restants (F001, F002, F006 → F010, et la 2ᵉ moitié de F005) est à décider par Michel.**
 
 ## 🧭 Où lire quoi
