@@ -7,24 +7,24 @@
     (un document d'état écrit à la main redevient faux en trois semaines — R27)
     Généré le 2026-09-26.
 
-🔖  SOURCES : coach.js 0cd3a60008a5 · constants.js 182e0d223715 · state.js cd74765bf0ca
+🔖  SOURCES : coach.js 7499f419ff02 · constants.js 182e0d223715 · state.js cd74765bf0ca
     Ces empreintes sont celles des fichiers qui FABRIQUENT le prompt, au moment de la
     génération. « python3 tools/check_regles.py » les compare à l'état du dépôt et PRÉVIENT
     si elles ont bougé — c'est la seule façon de voir qu'un document généré est périmé,
     puisqu'il a l'air généré quoi qu'il arrive. ⛔ Ne pas les recopier à la main.
 
-TAILLE TOTALE : 76 421 caractères  (~19 105 tokens)
+TAILLE TOTALE : 76 335 caractères  (~19 084 tokens)
 
 Il est coupé en TROIS morceaux, et c'est là que se joue le prix :
 
-  1. BLOC COMMUN ......... 45 383 car. (59.4 %)
+  1. BLOC COMMUN ......... 45 383 car. (59.5 %)
      Identique pour TOUT LE MONDE. Mis en cache 1 h depuis le 08/08.
      C'est lui qu'on paie une fois pour tous — s'il est relu, il coûte 10 %.
 
   2. BLOC PERSONNEL ...... 28 185 car. (36.9 %)
      Tes données à toi. Mis en cache 5 min.
 
-  3. L'INSTANT ........... 2 853 car. (3.7 %)
+  3. L'INSTANT ........... 2 767 car. (3.6 %)
      Change à chaque message (heure, état du jour) : JAMAIS mis en cache,
      payé plein tarif à chaque fois.
 
@@ -360,7 +360,7 @@ Aucune séance
 
 
 ██████████████████████████████████████████████████████████████████████████████
-█  3/3 — L'INSTANT (2853 car., JAMAIS caché)
+█  3/3 — L'INSTANT (2767 car., JAMAIS caché)
 ██████████████████████████████████████████████████████████████████████████████
 
 ═══ SITUATION DE L'INSTANT ═══
@@ -373,7 +373,7 @@ ils ne partent que quand ils servent, sans jamais toucher à la partie mise en c
 
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est samedi 26 septembre, il est 8h27 — c'est matin. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). Le matin : tu peux évoquer l'énergie du réveil, un petit-déjeuner adapté avant/après séance.
+- On est samedi 26 septembre, il est 16h20 — c'est après-midi. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). 
 
 
 

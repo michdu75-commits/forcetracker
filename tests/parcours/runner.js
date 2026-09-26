@@ -39647,6 +39647,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      D-027 (programme : bouton seulement sur un JSON complet, jamais réparé) et D-028 (prochaine
      séance : pas d'écriture de S.nextPlanned). Contrôle négatif : `tools/mut_milo_pdf1.py`. */
   await require('./milo_suites.js').ecran(t, b, PORT);
+  /* 🔬 MILO-SEANCE-02 / C1 (26/09/2026) — la lecture de secours lit le format que le prompt demande,
+     sans lire une phrase ordinaire comme un exercice. Contrôle négatif : `tools/mut_seance_c1.py`. */
+  await require('./seance_c1.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40460,6 +40463,7 @@ require('./auth_ia.js').source(t, ROOT, fs, path);
 require('./milo_pdf1.js').source(t, ROOT, fs, path);
 require('./milo_pdf1b.js').source(t, ROOT, fs, path);
 require('./milo_suites.js').source(t, ROOT, fs, path);
+require('./seance_c1.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

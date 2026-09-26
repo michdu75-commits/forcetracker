@@ -1763,8 +1763,21 @@ function _montee(sess){
 function _seanceDepuisTexte(reply){
   try{
     if(!reply||typeof _matchExercise!=='function')return null;
-    // « 4×8 », « 4x8 », « 3 séries de 10 » — avec un poids éventuel « @ 80 kg », « 80kg ».
-    const RE=/^\s*(?:[-•*–]|\d+[.)])?\s*(.{3,60}?)\s*[:—–-]?\s*(\d{1,2})\s*(?:[x×*]|\s+s[ée]ries?\s+de\s+)\s*(\d{1,3})\s*(?:reps?)?\s*(?:@?\s*(\d{1,3}(?:[.,]\d)?)\s*kg)?\s*$/i;
+    // « 4×8 », « 4x8 », « 3 séries de 10 » — avec un poids éventuel « @ 80 kg », « à 80 kg », « 80kg ».
+    /* 🔬 MILO-SEANCE-02 / C1 (26/09/2026) — LE FORMAT QUE LE PROMPT DEMANDE N'ÉTAIT PAS LU.
+       Le prompt impose à Milo « UN EXERCICE PAR LIGNE, avec ses séries × reps, la charge en kg, le
+       REPOS et ta consigne technique », soit « 3. Développé militaire — 3×8 à 40 kg, repos 2 min —
+       gainage fort ». Mesuré (MILO-SEANCE-01) : 0 ligne lue sur 4 — `RE` était ancrée en fin de
+       ligne juste après la charge (« à » refusé, repos et consigne refusés) et toute ligne de plus
+       de 90 caractères était jetée. Une réponse mêlant les deux écritures donnait 2 sur 4.
+       ⚠️ Mécanisme reproduit en local ; ce n'est PAS la cause démontrée de l'événement réel.
+       👉 On accepte « à » devant la charge, et une SUITE (repos, consigne, parenthèse) après la
+       charge — à trois conditions, pour ne pas lire n'importe quelle phrase comme une séance :
+         · le nom est séparé des séries par un séparateur EXPLICITE (« — », « : », « - ») ;
+         · la suite ne porte pas d'autres séries (« puis 3×10 ») — on ne lit pas à moitié ;
+         · si une charge est écrite dans la suite sans avoir été lue, la ligne est refusée —
+           mieux vaut pas de ligne qu'une série à 0 kg. */
+    const RE=/^\s*(?:[-•*–]|\d+[.)])?\s*(.{3,60}?)\s*([:—–-])?\s*(\d{1,2})\s*(?:[x×*]|\s+s[ée]ries?\s+de\s+)\s*(\d{1,3})\s*(?:reps?)?\s*(?:(?:@|à)?\s*(\d{1,3}(?:[.,]\d)?)\s*kg)?(?:\s*(?:[,;(—–]|-\s)(.*))?\s*$/i;
     const exs=[];
     /* ⚠️ LE NOM PEUT ÊTRE SUR LA LIGNE PRÉCÉDENTE (20/08/2026, retour de Michel « j'ai pas le
        bouton »). Milo écrit un BLOC, pas une ligne :
@@ -1866,13 +1879,22 @@ function _seanceDepuisTexte(reply){
       /* ⛔ Une ligne déjà lue comme série numérotée ne doit pas être relue par les 2 autres
          motifs : elle produirait un 2ᵉ exercice avec des valeurs fausses (95 séries de 3). */
       if(_snumLigne(l).length) return;
-      const t=l.replace(/\*\*/g,'').trim(); if(!t||t.length>90)return;
+      // C1 : la borne de 90 caractères ne vaut plus que pour les lignes SANS suite (voir `RE`) ;
+      // une ligne au format du prompt, consigne comprise, dépasse souvent 90.
+      const t=l.replace(/\*\*/g,'').trim(); if(!t||t.length>200)return;
       let brut, nb, reps, kg;
       const m=t.match(RE);
       if(m){
+        const suite=m[6];
+        if(suite!==undefined){
+          if(!m[2] && !/[:—–-]\s*$/.test(m[1])) return;            // pas de séparateur explicite
+          if(SERIES.test(suite)) return;                           // d'autres séries dans la suite
+          if(!m[5] && /\d\s*kg\b/i.test(suite)) return;            // une charge écrite mais pas lue
+        }else if(t.length>90) return;
         brut=m[1].replace(/[:–—-]+$/,'').trim();
-        nb=+m[2]; reps=+m[3]; kg=m[4]?parseFloat(String(m[4]).replace(',','.')):0;
+        nb=+m[3]; reps=+m[4]; kg=m[5]?parseFloat(String(m[5]).replace(',','.')):0;
       }else{
+        if(t.length>90)return;                    // borne d'avant, inchangée pour les séries seules
         const m2=t.match(RE_SEULE); if(!m2)return;
         brut=nomAvant(idx);                       // les séries seules → le nom est au-dessus
         nb=+m2[1]; reps=+m2[2]; kg=m2[3]?parseFloat(String(m2[3]).replace(',','.')):0;
