@@ -2433,12 +2433,20 @@ function _appendStartSessionBtn(sess, cible){
   const msgs=document.getElementById('coach-msgs');if(!msgs)return;
   let last=cible||null;
   if(last&&!msgs.contains(last))last=null;          // bulle disparue (fil vidé) → on renonce
-  if(last&&last.querySelector('.coach-prog-save'))return true;   // déjà un bouton dessous
   if(!last){
     const bubbles=msgs.querySelectorAll('.msg-coach');
     last=bubbles[bubbles.length-1];
   }
   if(!last)return false;
+  /* 🔬 MILO-SEANCE-03 / C2 (26/09/2026) — LA GARDE NE REGARDE QUE LES CARTES SÉANCE.
+     Elle cherchait `.coach-prog-save`, la classe que portent AUSSI la carte « 🧠 Je retiens » et
+     la carte « Enregistrer ce programme » : une proposition de mémoire sous la réponse passait
+     pour « déjà un bouton dessous », la fonction rendait `true`, et ni la traduction ni le repli
+     ne posaient de carte (mesuré : 0 carte séance, la carte mémoire seule).
+     👉 Une marque propre, `coach-seance-carte`, posée sur les DEUX cartes séance (celle-ci et la
+     question « on démarre ? »). Et la garde vaut aussi sans `cible` : deux appels donnaient deux
+     cartes. Une vraie carte séance bloque toujours la deuxième, une carte mémoire ne bloque plus. */
+  if(last.querySelector('.coach-seance-carte'))return true;   // déjà une carte séance dessous
   const n=norm.exs.length;
   // ⚠️ Le libellé dit ce qui va VRAIMENT se passer (ft-v750) : tant qu'une séance est en cours,
   // le bouton ne « commence » rien — il ouvre la question « ajouter ou remplacer ? ». Avant, il
@@ -2451,7 +2459,7 @@ function _appendStartSessionBtn(sess, cible){
      cours, le bouton ne « démarre » rien, il ouvre « ajouter ou remplacer ? ». */
   const lbl=enCours?'⚡ Oui, utiliser cette séance':'⚡ Oui, on démarre';
   const wrap=document.createElement('div');
-  wrap.className='coach-prog-save';
+  wrap.className='coach-prog-save coach-seance-carte';   // C2 : la marque que lit la garde d'unicité
   /* ⚠️ L'AVERTISSEMENT D'INTENSITÉ S'AFFICHE ICI, DANS LE CHAT (28/08/2026, ft-v1052)
      ⛔⛔ POURQUOI C'ÉTAIT UN TROU, ET IL EST MESURÉ : `_intensiteDefauts` existe depuis ft-v980
      et sait très bien dire *« repos de 90 s à 88 % du 1RM : trop court pour du lourd »*. Mais il
@@ -2593,12 +2601,12 @@ function _appendSeanceQuestion(reply, cible){
     if(last&&!msgs.contains(last))last=null;                       // bulle disparue (fil vidé)
     if(!last){ const b=msgs.querySelectorAll('.msg-coach'); last=b[b.length-1]; }
     if(!last)return false;
-    if(last.querySelector('.coach-prog-save'))return false;        // déjà une carte dessous
+    if(last.querySelector('.coach-seance-carte'))return false;     // déjà une carte séance dessous (C2)
     const idx=_pendingSeanceTextes.push(String(reply||''))-1;
     const enCours=(typeof S!=='undefined')&&S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
     const lbl=enCours?'⚡ Oui, utiliser cette séance':'⚡ Oui, on démarre';
     const wrap=document.createElement('div');
-    wrap.className='coach-prog-save';
+    wrap.className='coach-prog-save coach-seance-carte';
     wrap.innerHTML=_carteSeanceHtml(lbl,'_construireSeanceAuTap('+idx+',this)');
     last.appendChild(wrap);
     _coachAuBas();
