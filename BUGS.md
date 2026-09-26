@@ -4000,3 +4000,47 @@ et le **cas exact du bug** (JSON indenté) sort désormais vert.
 ⛔ **Et la consigne qui accompagne l'outil** : *plus aucun `until curl … grep … sleep` bricolé à la
 main.* Les trois modes de `attendre_fin.sh` couvrent les trois attentes réelles du projet — un
 processus, un fichier, un déploiement.
+
+---
+
+## §66 — ⛔⛔ UNE RÉPONSE IA DONT LA FIN N'EST PAS CONFIRMÉE TRAITÉE COMME COMPLÈTE *(25-26/09/2026, MILO-PDF1 / MILO-PDF1B, publié en ft-v1235)*
+
+**La leçon, en une phrase :** *une réponse IA dont la fin n'est pas confirmée ne doit jamais être
+traitée comme complète* — ni affichée comme finie, ni exportée comme finie, ni transformée en
+donnée (séance, annonce, programme).
+
+**À quoi on la reconnaît** : une réponse du modèle est **consommée** (affichée, mise dans un PDF,
+lue pour construire quelque chose) alors que rien, côté serveur, ne dit qu'elle s'est **terminée**.
+Le signal existe (`stop_reason`) ; s'il n'atteint pas le client, tout ce qui suit le **devine**.
+
+**Les défauts réellement démontrés (MILO-PDF1, puis la contre-vérification MILO-PDF1B)** :
+- `stop_reason: max_tokens` **jeté** par le Worker → une réponse tronquée ressortait comme une
+  réponse finie (une analyse de programme coupée, que Milo avait lui-même titrée « Analyse complète »).
+- La **première couture** de la suite (heuristique) pouvait **perdre ou fusionner des mots**
+  (« épaulessont », « et le » + « lendemain » → « et lendemain »), dupliquer une réponse redémarrée — et
+  marquer le résultat complet.
+- Une raison d'arrêt **inconnue ou absente** (`refusal`, `null`…) s'affichait exactement comme une
+  réponse finie.
+- **Avant D-025 / MILO-PDF1B**, une séance pouvait être construite depuis une réponse coupée
+  (« Leg curl 3×12 » coupé en « 3×1 »).
+- Mesuré à la publication (D-028) : une réponse non confirmée pouvait aussi **écrire l'annonce de
+  prochaine séance** (`nextPlanned`, en local — pas dans un paquet cloud).
+
+**Ce qui protège aujourd'hui (ft-v1235)** :
+- le Worker transporte `stopReason`, `truncated`, `complete`, `continued` ; **fail-closed** : seul
+  `end_turn` est complet ;
+- la suite (analyse de programme seulement, **une** fois) se raccorde par **ancre exacte** ; sans
+  preuve, la réponse reste incomplète ;
+- un marqueur **avant** le texte (chat, fil, PDF, partage) ;
+- aucune séance (D-025) ni annonce (D-028) depuis une réponse non confirmée ; le bouton programme
+  n'accepte qu'un JSON complet, jamais réparé (D-027) ;
+- témoins B-CCCLXXVIII → B-CCCLXXXV, contrôles négatifs 47/47 et 13/13, passe complète 5143/0.
+
+**Ce qui n'est PAS fermé, dit plutôt que masqué** :
+- ⚠️ **défaut actif** : « Mes discussions » peut perdre le marqueur « coupée » et rendre une réponse
+  incomplète à nouveau candidate à une séance — réouverture **étroite** de D-025, non corrigée ;
+- la suite réelle d'une analyse coupée n'a pas encore été observée en production.
+
+⛔ **Ne pas ranger ici** le symptôme séance « 4 exercices demandés, 2 chargés » (MILO-SEANCE-01) :
+c'est un **symptôme réel dont la cause n'est pas déterminée** — un mécanisme capable de le produire
+est reproduit en local, l'événement réel ne l'est pas.

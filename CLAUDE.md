@@ -104,7 +104,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **Auteur** : Michel — michdu75@gmail.com
 - **🎂 Date de naissance** : **17 juin 2026** (première maquette Claude Design). Le suivi Git n'a démarré qu'au 30 juin 2026 — la période « Claude Design / Claude.ai » d'avant n'est pas dans le dépôt. Conçu de bout en bout avec Claude (Design → réflexion → code).
 
-## Backend Apps Script (v3.5 @62 — actif)
+## Backend Apps Script (v3.5 — actif · ~~@62~~ déploiement **@190** au 26/09/2026, ft-v1235 ; le numéro courant se lit dans le journal de `deploy-appsscript.yml`)
 
 - **Compte Google** : forcetracker.app@gmail.com
 - **URL déployée** : `https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec`
@@ -171,7 +171,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
 | `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release. ⚠️ **Le numéro courant se lit dans `sw.js` et dans l'en-tête du journal, jamais ici** : cette case en portait une **copie**, restée à `ft-v1224` alors que l'app servait `ft-v1226`. *Deux endroits qui portent le même nombre finissent par diverger — la seule question est quand* (**R2**). |
 | `.github/workflows/deploy-pages.yml` | **Déploiement Pages via GitHub Actions** (depuis ft-v619) — remplace le « Deploy from a branch » qui se bloquait par intermittence. Se déclenche à chaque push sur `master` + relançable à la main (`workflow_dispatch`). |
-| `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
+| `Code.js` | Backend Google Apps Script v3.5 ~~@57~~ (déploiement @190 au 26/09/2026) (sync cloud, coach IA en repli, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
 | `female-body.png` | Silhouette féminine — présent mais non utilisé (voir Notes techniques) |
@@ -218,7 +218,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `s-progress` | 📈 Progrès | Graphique 1RM par exercice, suivi du poids de corps, corrélations |
 | `s-nutrition` | 🍽️ Nutrition | Macros TDEE adaptatif, plan de repas, suppléments (créatine, whey), calories brûlées |
 | `s-setup` | 👤 Profil | Profil athlète (âge/taille/poids/sexe/objectif/activité), composition corporelle |
-| `s-coach` | 🤖 Coach IA | Chat Claude Haiku via Apps Script, contexte profil injecté |
+| `s-coach` | 🤖 Coach IA | Chat Milo ~~Claude Haiku via Apps Script~~ via le **Worker Cloudflare** (`claude-sonnet-4-6` par défaut, état au 26/09/2026), contexte profil injecté |
 | `s-cycle` | — | Cycle de force (config + vue active), accès depuis s-home |
 
 **Navigation** : Accueil · Progrès · **Séance** (centre, FAB rouge 54px) · Nutrition · Coach · Setup  
@@ -502,13 +502,15 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 **⛔⛔ ET DEUX QUESTIONS POSÉES AVANT DE PUBLIER, TRANCHÉES PAR MICHEL.**
 - **D-027 — le bouton « Enregistrer ce programme »** peut rester sous une réponse incomplète **uniquement** si le bloc JSON est complet, lisible, de schéma valide, et jamais réparé ni enregistré avant le clic. **Mesuré : c'était déjà exactement le comportement** → 0 ligne, comportement figé par des témoins.
-- **D-028 — l'annonce de la prochaine séance n'était PAS informative** : sous une réponse coupée ou non confirmée, un bloc caché `prevu` complet écrivait `S.nextPlanned` (mémoire, disque, cloud) — déjà le cas en production, donc pas une régression, mais une **écriture**. Rapporté à Michel avant publication ; sa décision : ***« bloquer d'abord »***, même règle que la séance (D-025). **Une ligne** dans `coach.js` ; une annonce déjà enregistrée n'est ni remplacée ni effacée.
+- **D-028 — l'annonce de la prochaine séance n'était PAS informative** : sous une réponse coupée ou non confirmée, un bloc caché `prevu` complet écrivait `S.nextPlanned` (mémoire, disque ; ~~cloud~~ *↪️ rectifié le 26/09 : une synchronisation était ensuite déclenchée, mais `nextPlanned` ne figure dans aucun paquet cloud vérifié*) — déjà le cas en production, donc pas une régression, mais une **écriture**. Rapporté à Michel avant publication ; sa décision : ***« bloquer d'abord »***, même règle que la séance (D-025). **Une ligne** dans `coach.js` ; une annonce déjà enregistrée n'est ni remplacée ni effacée.
 
 **📣 RÈGLE D'OR #11 — LE CHANGEMENT VISIBLE, DOCUMENTÉ ICI.** Une réponse de Milo **coupée** porte désormais, en tête de bulle, *« Réponse incomplète — génération interrompue »* (analyse : *« Analyse incomplète »*) ; une réponse dont la **fin n'est pas confirmée** porte *« Réponse non confirmée »*. Le texte de Milo reste intact et lisible ; ce qui change, c'est qu'**une telle réponse ne lance plus de séance et n'enregistre plus d'annonce**. ⚖️ **Pop-up : non** — rien n'est à *faire*, le marqueur s'explique là où il apparaît. ⚠️ Les messages **anciens** du fil ne portent aucun marqueur : on ne réécrit pas l'histoire.
 
 **⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ aucun dashboard, onboarding, Android, Premium, programme versionné, B3, cloudSave · ⛔ le chat reste à **1 appel** par message, budget 1024, modèle `claude-sonnet-4-6` · ⛔ aucun nettoyage opportuniste · ⛔ la sonde du banc (`tests/milo/eval.js`, lecture passive de l'enveloppe) reste sur la branche.
 
-Tests : **B-CCCLXXXIV (4 de source) et B-CCCLXXXV (14 conduits)** dans `tests/parcours/milo_suites.js` pour D-027/D-028 ; banc ciblé PDF1+PDF1B+D-027/028 ****97 OK / 0 rouge**** ; contrôle négatif ****13/13 conformes** sur les mutations neuves (D01 → D09 mordent toutes, chacune par au moins un témoin CONDUIT, dont trois déguisées ; 4 commentaires restent verts)** ; non-régression AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 · Worker S2-B 49/0 · activité/provenance 54/0 · poids 78/0 · noyau Milo 12/12 · données toutes classées ; **passe complète 5143 ✅ / 0 ❌**, les 4 conditions vertes.
+**↪️ APRÈS PUBLICATION (ajouté le 26/09, même jour).** ⭐ **Vérification réelle faite** sur la version servie `ft-v1235` : V1 (réponse normale `complete: true`, `end_turn`, aucun marqueur), V2 (un seul envoi à Milo par message) et V4 (séance chargée) **vérifiés** ; **V3** (suite réelle d'une analyse coupée) **non observée, à surveiller**. 🔬 **Symptôme séance (MILO-SEANCE-01) : SYMPTÔME RÉEL — CAUSE DE L'ÉVÉNEMENT RÉEL NON DÉTERMINÉE.** 4 exercices demandés, 2 chargés ; **un seul échec de traduction établi** sur les deux essais (pas deux). Un mécanisme capable de produire le 4 → 2 est reproduit localement dans la lecture de secours. ⚠️ **Défaut ACTIF — réouverture ÉTROITE de D-025** : « Mes discussions » peut perdre le marqueur « coupée » et rendre une réponse incomplète à nouveau candidate à une séance (démontré, **non corrigé** ; le reste de MILO-PDF1 n'est **pas** rouvert). Cartes séance multiples : **1 seule carte dans 8 situations testées**, contrôle négatif 3/3, témoin sur la branche de diagnostic, pas encore dans la passe de master. 📣 **Règle d'or #11, points 2 à 5 pour le marqueur** (point rouge, aide `?`, aide détaillée, Guide) : **DÉCISION MICHEL EN ATTENTE** — rien n'a été posé.
+
+Tests : **B-CCCLXXXIV (4 de source) et B-CCCLXXXV (14 conduits)** dans `tests/parcours/milo_suites.js` pour D-027/D-028 ; banc ciblé PDF1+PDF1B+D-027/028 **97 OK / 0 rouge** ; contrôle négatif **13/13 conformes** sur les mutations neuves (D01 → D09 mordent toutes, chacune par au moins un témoin CONDUIT, dont trois déguisées ; 4 commentaires restent verts) ; non-régression AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 · Worker S2-B 49/0 · activité/provenance 54/0 · poids 78/0 · noyau Milo 12/12 · données toutes classées ; **passe complète 5143 ✅ / 0 ❌**, les 4 conditions vertes.
 
 Fichiers : `coach.js`, `tests/parcours/milo_suites.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_milo_pdf1.js`, `tools/mut_milo_pdf1.py`, `docs/DECISIONS.md` (D-027, D-028), `docs/MILO-PDF1.md` (§C), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md` — plus les 77 commits de la branche listés ci-dessus. sw.js ft-v1235. |
 
