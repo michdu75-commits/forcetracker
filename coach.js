@@ -1201,6 +1201,33 @@ function _loadCoachHist(){
   // Frontière entre « la conversation d'avant » et « celle de maintenant » (ft-v829).
   _histAuChargement = coachHistory.length;
 }
+/* 🧵 LOT 1 / F07b (27/09/2026) — ON N'ÉCRIT JAMAIS LE FIL DEPUIS UN ÉTAT QU'ON N'A PAS LU.
+   Le fil n'est chargé en mémoire qu'à l'ouverture du Coach, ou quand Apps Script répond
+   (`autoConnect`). Mesuré par l'écran sur master 2f5ccdb5 : Apps Script injoignable, Coach
+   jamais ouvert, fin de séance → `coachHistory` vaut [] → le débrief y est ajouté puis
+   ENREGISTRÉ, et les 30 messages du téléphone sont remplacés par les 2 du débrief. Même
+   chose au démarrage, quand le rattrapage pose un débrief déjà reçu.
+   Trois états, et le troisième ne se lit JAMAIS comme le deuxième :
+     A · fil chargé (`_coachHistLoaded`)                      → on écrit ;
+     B · rien d'enregistré, ou un tableau lisible             → on charge, puis on écrit ;
+     C · pas encore chargé                                    → on charge D'ABORD, puis on écrit.
+   ⛔ Aucun réseau ici : le fil vit sur le téléphone ; le lire ne dépend ni d'Apps Script ni
+   du Worker (règle d'or #3).
+   ⛔ Contenu enregistré ILLISIBLE, ou lecture refusée : l'état reste INCONNU, on rend `false`
+   et on n'écrit rien — écrire remplacerait un fil qu'on n'a pas su lire.
+   ⚠️ Et on le vérifie MÊME quand le fil passe pour chargé : l'ouverture du Coach charge un
+   contenu illisible comme un fil VIDE (`_loadCoachHist`) et lève quand même le drapeau. Le
+   drapeau dit « on a essayé », pas « on a lu ».
+   ⚠️ Volontairement PAS dans `_saveCoachHist` : le faire refuser laisserait perdre le débrief
+   qu'on veut justement ajouter. La garde est AVANT la mutation, pas à l'enregistrement. */
+function _coachHistHydrater(){
+  try{
+    const raw=localStorage.getItem('ft4_coach_hist');
+    if(raw!=null && !Array.isArray(JSON.parse(raw))) return false;
+  }catch(e){ return false; }
+  if(!_coachHistLoaded){ _loadCoachHist(); _coachHistLoaded=true; }
+  return true;
+}
 // ─── COMBIEN DE CONVERSATION ON GARDE (ft-v656) ─────────────────────────────
 // ⚠️ AVANT : le fil était coupé à 20 messages EN DIRECT — dès le 21ᵉ, le plus ancien était
 // JETÉ. Les bulles restaient à l'écran (elles sont dans la page), donc rien ne se voyait ;
@@ -6092,9 +6119,16 @@ function _dbfLireRecu(){
 function _dbfPoserDansHistorique(reply, instr){
   if(!reply) return false;
   try{
+    /* 🧵 LOT 1 / F07b : le fil est lu sur le téléphone AVANT d'y ajouter quoi que ce soit.
+       Illisible → rien n'est écrit, et l'appelant garde le « reçu » (voir `_dbfRecuperer`). */
+    if(!_coachHistHydrater()) return false;
     if(instr) coachHistory.push({role:'user',content:String(instr),_silent:true});
     coachHistory.push({role:'assistant',content:String(reply)});
-    if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
+    /* 🧵 LOT 1 / F07a : ici vivait `slice(-20)`, la coupe que ft-v656 avait retirée du chat
+       comme « perte SILENCIEUSE » — elle avait survécu dans ce chemin. Mesuré : fil de 30
+       messages + débrief → 20, les 12 plus anciens perdus. Le débrief suit désormais la même
+       règle que le chat : la borne de sécurité (400), puis le budget de place à l'écriture. */
+    _trimCoachHistory();
     if(typeof _saveCoachHist==='function')_saveCoachHist();
     const nb=(typeof document!=='undefined')?document.getElementById('coach-new-btn'):null;
     if(nb)nb.style.display='flex';
@@ -6174,7 +6208,10 @@ function _dbfRecuperer(){
     /* ⚠️ MÊME PÉREMPTION QUE LE RESTE (R2) : un débrief vieux de plusieurs jours commencerait par
        « je viens de terminer ma séance » — un mensonge sur le QUAND. Au-delà, on le laisse
        tomber, mais on le marque LIVRÉ pour ne pas le repayer non plus. */
-    if(_age>=0 && _age<_DBF_PEREMPTION) _dbfPoserDansHistorique(_r.reply, _r.instr);
+    /* 🧵 LOT 1 / F07b : fil illisible → rien n'est écrit. Le « reçu » RESTE (il sera posé à un
+       prochain démarrage, dans la même péremption) et la séance est marquée livrée : aucun
+       second appel. Le jeter ici perdrait un débrief déjà payé. */
+    if(_age>=0 && _age<_DBF_PEREMPTION && !_dbfPoserDansHistorique(_r.reply, _r.instr)){ _dbfMarquerFait(_r.id); return; }
     _dbfFini(_r.id);                       // efface le « reçu » ET le « en cours » du même id
     return;                                // ⛔ surtout pas de remise en file derrière
   }

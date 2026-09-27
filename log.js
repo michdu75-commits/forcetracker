@@ -4782,12 +4782,17 @@ async function _runSeDebrief(sess,prCount){
        de « comment on range un débrief », et l'une des deux finirait par diverger.
        ⚠️ `_saveCoachMemory` RESTE ICI, et volontairement hors du propriétaire : c'est un SECOND
        appel payant, et le rattrapage ne doit pas en créer (consigne explicite de Michel). */
+    let _pose=true;
     try{
-      if(typeof _dbfPoserDansHistorique==='function') _dbfPoserDansHistorique(reply, instr);
+      if(typeof _dbfPoserDansHistorique==='function') _pose=_dbfPoserDansHistorique(reply, instr);
       if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
     }catch(e){}
     // Livré : le jeton « en cours » disparaît pour de bon (ft-v979).
-    try{ if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}
+    /* 🧵 LOT 1 / F07b : fil du Coach illisible → le débrief n'y a PAS été écrit. On garde son
+       « reçu » (le rattrapage au démarrage le posera) et on marque la séance livrée, pour ne
+       pas la repayer. `_dbfFini` aurait effacé ce reçu : débrief payé, puis perdu. */
+    try{ if(_pose===false && typeof _dbfMarquerFait==='function') _dbfMarquerFait(_pid);
+         else if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}
   }catch(e){
     // Échec réseau → résumé local, et on REND le jeton pour que le Coach réessaie à son ouverture
     // On REND le jeton (le Coach réessaiera à son ouverture) ET ON LE DIT. Le `catch`
