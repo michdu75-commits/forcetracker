@@ -39659,6 +39659,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🧵 LOT 1 (session-B, 27/09/2026) — F07a + F07b : le débrief de fin de séance ne coupe plus le fil
      du Coach à 20 et ne remplace plus un fil enregistré mais pas chargé. Contrôle négatif : `tools/mut_fil_lot1.py`. */
   await require('./fil_coach_lot1.js').ecran(t, b, PORT);
+  /* 🧱 LOT 2 (session-B, 27/09/2026) — F01 + F02 : une seule définition du « travail existant »
+     (`_etatTravailWkt`) ; un cardio ou un échauffement noté n'est plus effacé sans question par une
+     séance Milo ou un programme chargé. Contrôle négatif : `tools/mut_travail_lot2.py`. */
+  await require('./travail_existant.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40476,6 +40480,7 @@ require('./seance_c1.js').source(t, ROOT, fs, path);
 require('./seance_c2.js').source(t, ROOT, fs, path);
 require('./seance_c3.js').source(t, ROOT, fs, path);
 require('./fil_coach_lot1.js').source(t, ROOT, fs, path);
+require('./travail_existant.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

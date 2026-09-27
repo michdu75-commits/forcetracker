@@ -95,6 +95,26 @@ function _cardioNoteMin(){
   if(!S.wkt)return 0;
   return (+S.wkt.cardioAvant?.duration||0)+(+S.wkt.cardio?.duration||0);
 }
+/* 🧱 LOT 2 / F01 + F02 (27/09/2026) — « Y A-T-IL DÉJÀ DU TRAVAIL QU'UN REMPLACEMENT FERAIT PERDRE ? »
+   UNE seule réponse, lue par les deux portes qui remplacent la séance en cours : la carte de
+   Milo (`_startSessionFromMilo`) et le programme (`loadProg`/`loadProgDay`, via `_travailAPerdre`).
+   Mesuré par l'écran sur master e1dcb91c : 20 min de cardio ou 10 min d'échauffement notés, puis
+   « Oui, on démarre » ou « ▶ Charger » → effacés sans une question, en mémoire ET sur le disque.
+   La porte de Milo regardait les EXERCICES, celle du programme les SÉRIES FAITES — aucune le cardio.
+     'RIEN'        · ni exercice, ni cardio noté ;
+     'PREPARATION' · des exercices, aucune série faite, aucun cardio noté ;
+     'TRAVAIL'     · au moins une série faite, OU des minutes de cardio / d'échauffement notées.
+   ⛔ Le cardio compte par ses MINUTES (`_cardioNoteMin`, déjà le propriétaire), jamais par la
+   seule présence de l'objet : le bloc cardio crée `{duration:0}` dès qu'on touche un bouton de
+   type ou d'intensité — ce n'est pas un travail, et le compter ferait poser une question pour rien.
+   ⚖️ Ce que chaque porte fait d'un état reste SA décision : Milo questionne dès PREPARATION (il
+   propose d'ajouter), le programme remplace une PREPARATION sans rien demander (ft-v1099, voulu). */
+function _etatTravailWkt(){
+  if(typeof S==='undefined'||!S.wkt) return 'RIEN';
+  const exs=Array.isArray(S.wkt.exs)?S.wkt.exs:[];
+  if(_cardioNoteMin()>0 || exs.some(e=>e&&(e.sets||[]).some(s=>s&&s.done))) return 'TRAVAIL';
+  return exs.length?'PREPARATION':'RIEN';
+}
 function _fmtElapsed(){
   if(!S.wkt||!S.wkt.startTs){
     const c=_cardioNoteMin();
@@ -8087,7 +8107,11 @@ function _startSessionFromMilo(idx,btn){
   };
   const newExs=(data.exs||[]).map(buildEx);
   if(!newExs.length){toast('Aucun exercice à ajouter','error');return;}
-  const active=S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
+  /* 🧱 LOT 2 / F01 : « y a-t-il une séance à ne pas écraser ? » se lit chez `_etatTravailWkt` (R2).
+     Avant, seuls les EXERCICES comptaient : un cardio ou un échauffement noté seul partait avec le
+     mode « start », qui reconstruit `S.wkt` à neuf. Des exercices sans série (PREPARATION)
+     continuent de poser la question, comme depuis ft-v750. */
+  const active=_etatTravailWkt()!=='RIEN';
   // ─── SÉANCE DÉJÀ EN COURS → ON DEMANDE (ft-v750, retour de Michel EN PLEINE SÉANCE) ───
   // Avant : on AJOUTAIT toujours, sans rien demander. L'intention était bonne (règle d'or #3,
   // ne jamais écraser une séance en cours) mais elle rendait un cas impossible : quand on
@@ -8110,8 +8134,14 @@ function _askMiloSeanceMode(nNew){
   let faites=0; exs.forEach(e=>(e.sets||[]).forEach(st=>{if(st.done)faites++;}));
   const et=document.getElementById('milo-seance-etat');
   const av=document.getElementById('milo-seance-avert');
-  if(et)et.innerHTML='Ta séance en cours a <b>'+exs.length+' exercice'+(exs.length>1?'s':'')+'</b>'
+  // 🧱 LOT 2 / F01 : un cardio noté fait partie de ce qui est en jeu — on le montre. Il n'est
+  // retiré ni par « Ajouter » ni par « Remplacer » (ces deux modes ne touchent qu'aux exercices).
+  const _min=(typeof _cardioNoteMin==='function')?_cardioNoteMin():0;
+  const _cardioTxt=_min>0?'<b>'+_min+' min de cardio / échauffement</b>':'';
+  if(et)et.innerHTML='Ta séance en cours a '
+    +(exs.length?'<b>'+exs.length+' exercice'+(exs.length>1?'s':'')+'</b>':'')
     +(faites?' et <b>'+faites+' série'+(faites>1?'s':'')+' déjà validée'+(faites>1?'s':'')+'</b>':'')
+    +(_cardioTxt?(exs.length?' et ':'')+_cardioTxt:'')
     +'.<br>Milo t\'en propose <b>'+nNew+'</b>.';
   // ⚠️ ON AVERTIT TOUJOURS, MÊME SANS SÉRIE VALIDÉE. L'ancien texte ne s'affichait que si
   // `faites > 0` — or « Remplacer » RETIRE les exercices dans tous les cas. Quelqu'un qui a
@@ -8122,8 +8152,9 @@ function _askMiloSeanceMode(nNew){
   // ne plus être lue du tout.
   if(av){
     const s=faites>1?'s':'', e=exs.length>1?'s':'';
-    av.textContent='⚠️ « Remplacer » retire tes '+exs.length+' exercice'+e+' en cours'
-      +(faites?(' et efface tes '+faites+' série'+s+' déjà validée'+s):'')+'.';
+    av.textContent=(exs.length?('⚠️ « Remplacer » retire tes '+exs.length+' exercice'+e+' en cours'
+      +(faites?(' et efface tes '+faites+' série'+s+' déjà validée'+s):'')+'.'):'')
+      +(_min>0?((exs.length?' ':'')+'Ton cardio noté est gardé dans les deux cas.'):'');
   }
   // Ce que Michel cherchait vraiment le 08/08 : changer UN exercice, pas toute la séance. L'app
   // sait déjà le faire sans rien perdre (⋯ → « Remplacer l'exercice », qui garde les séries) —
@@ -9086,14 +9117,24 @@ function saveAsProg(){
    question. *Un garde-fou qui parle tout le temps finit par ne plus être lu.*
    ⭐ Un seul propriétaire de « y a-t-il du travail à perdre ? » (R2) : `loadProg` et
    `loadProgDay` sont deux portes du même geste, elles ne doivent pas diverger. */
+/* 🧱 LOT 2 / F02 : la question « y a-t-il du travail ? » n'est plus posée ici, elle est lue chez
+   `_etatTravailWkt` (R2). Avant, on ne comptait que les séries faites : un cardio ou un
+   échauffement noté seul était remplacé par le programme sans un mot. */
 function _travailAPerdre(){
-  return (S.wkt&&S.wkt.exs||[]).reduce((n,e)=>n+((e&&e.sets||[]).filter(s=>s&&s.done).length),0);
+  return _etatTravailWkt()==='TRAVAIL';
 }
 function _confirmerRemplacementSeance(quoi, suite){
-  const n=_travailAPerdre();
-  if(!n) return suite();
+  if(!_travailAPerdre()) return suite();
+  // Ce qui part vraiment : les séries faites ET les minutes de cardio notées (LOT 2 — sinon un
+  // cardio seul aurait annoncé « 0 série déjà faite »).
+  const n=(S.wkt&&S.wkt.exs||[]).reduce((k,e)=>k+((e&&e.sets||[]).filter(s=>s&&s.done).length),0);
+  const min=_cardioNoteMin();
+  const perdu=[];
+  if(n) perdu.push(n+' série'+(n>1?'s':'')+' déjà faite'+(n>1?'s':''));
+  if(min>0) perdu.push(min+' min de cardio / échauffement');
+  const pl=perdu.length>1 || (n>1) || (!n && min>1);   // séries et minutes : accord au féminin
   showConfirm('Remplacer la séance en cours ?',
-    n+' série'+(n>1?'s':'')+' déjà faite'+(n>1?'s':'')+' ser'+(n>1?'ont':'a')+' perdue'+(n>1?'s':'')
+    perdu.join(' et ')+' ser'+(pl?'ont':'a')+' perdue'+(pl?'s':'')
     +' — '+quoi+' remplace ce qui est à l\'écran. ⚠️ Rien n\'est enregistré dans ton historique : '
     +'pour garder ce travail, termine la séance d\'abord.',
     suite, 'Remplacer');
