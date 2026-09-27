@@ -100,7 +100,14 @@ module.exports.ecran = async function (t, b, PORT) {
   const u7 = await parcours(MIXTE, 'ok', { discussions: true });
   t('U7 rangée puis rouverte depuis « Mes discussions » → UNE carte', un(u7.discussions), js(u7));
   const u10 = await parcours(COURT, 'ok', { precedente: true, recharger: 1 });
-  t('U10 deux séances dans le même fil → UNE seule carte, sur la plus récente', un(u10.arrivee) && un(u10.recharge), js(u10));
+  /* ⚠️ RE-VISÉ LE 27/09/2026 (MILO-SEANCE-RETRAVAIL, décision de Michel), PAS DÉSARMÉ.
+     Ancien invariant : « deux séances dans le même fil → UNE seule carte, sur la plus récente ».
+     Nouvel invariant : UNE seule version active PAR CHAÎNE DE RETRAVAIL ; deux séances INDÉPENDANTES
+     (ici « Une séance jambes ? » puis « Donne-moi une séance haut du corps ») restent toutes deux
+     disponibles, chacune sous SON message — et jamais deux cartes pour la même séance. */
+  const parSeance = x => x && x.seance === 2 && x.questions === 2 && new Set(x.oui).size === 2;
+  t('U10 deux séances INDÉPENDANTES dans le même fil → une carte chacune (arrivée : la nouvelle ; rechargée : les deux)',
+    un(u10.arrivee) && parSeance(u10.recharge), js(u10.recharge));
   const u8t = await parcours(COURT, 'ok');
   t('U8-témoin même réponse SANS mémoire → UNE carte séance (contrôle)', un(u8t.arrivee), js(u8t));
   const u8 = await parcours(COURT + MEMOIRE, 'ok', { attente: 5000 });

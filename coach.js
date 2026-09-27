@@ -1415,6 +1415,7 @@ function _renderCoachThread(){
     else if(t) renderCoachMsg('coach', t, {coupee: m.coupee});   // MILO-PDF1 : le marqueur revient avec la bulle
     if(m.role !== 'user' && t) _bulleDe.set(m, _derniereBulleCoach());   // RETRAVAIL : la bulle de CE message
   });
+  _bulleDe.forEach((b,mm)=>_bulleDuMessage.set(mm,b));   // RETRAVAIL : connue aussi hors relecture (chaîne de versions)
   /* ⚡ LE BOUTON « COMMENCER CETTE SÉANCE » SURVIT À LA FERMETURE DE L'APP (14/08/2026)
      Michel, en allant à la salle : *« je lui ai demandé de me lancer la séance, je ferme
      l'application, et Commencer la séance a disparu »*.
@@ -1440,6 +1441,8 @@ function _renderCoachThread(){
      séance et elle ne doit pas revenir. */
   try{
     let vus=0, pose=false;
+    const _remplacees=new Set();   // RETRAVAIL : versions précédentes d'une chaîne déjà proposée plus bas
+    const _remplacer=mm=>{ _versionsPrecedentes(coachHistory, mm).forEach(v=>_remplacees.add(v)); };
     for(let i=coachHistory.length-1;i>=0 && vus<3;i--){
       const m=coachHistory[i];
       if(!m||m.role!=='assistant')continue;
@@ -1487,20 +1490,21 @@ function _renderCoachThread(){
          Mesuré avant : la séance retrouvée ici était posée sous la DERNIÈRE bulle — après un
          retravail, la carte « 5 exercices » de A apparaissait sous le texte de B (4 exercices), et
          un tap lançait A. On vise la bulle de ce message ; s'il n'en a pas, on ne pose rien ailleurs. */
+      if(_remplacees.has(m))continue;   // une version plus récente de la même chaîne est proposée : historique seulement
       const bulle=_bulleDe.get(m);
       if(!bulle)continue;
       if(m.seance&&typeof _appendStartSessionBtn==='function'){
         let relue=false;
         try{ relue=!!_appendStartSessionBtn(m.seance, bulle); }catch(e){ relue=false; }
-        if(relue){ pose=true; break; }
+        if(relue){ pose=true; _remplacer(m); continue; }
       }
       const txt=(typeof m.content==='string')?m.content:'';
       if(!txt||typeof _extractDaySession!=='function')continue;
       const dsx=_extractDaySession(txt);
       if(dsx&&dsx.sess&&typeof _appendStartSessionBtn==='function'){
         _appendStartSessionBtn(dsx.sess, bulle);
-        pose=true;
-        break;                 // la PLUS RÉCENTE des séances trouvées, jamais deux boutons
+        pose=true; _remplacer(m);
+        continue;              // RETRAVAIL : une carte par séance — la version la plus récente de chaque chaîne
       }
       /* 🔬 RETRAVAIL (option C de Michel) — UNE PROPOSITION PLUS RÉCENTE ARRÊTE LA REMONTÉE.
          Ce message a l'allure d'une séance, répond à une demande ou à un retravail, et rien ne l'a
@@ -1512,7 +1516,7 @@ function _renderCoachThread(){
         const u=iU>=0?coachHistory[iU]:null, uTxt=(u&&typeof u.content==='string')?u.content:'';
         const demande=(typeof _demandeUneSeance==='function'&&_demandeUneSeance(uTxt))
           || (typeof _suitUnePropositionDeSeance==='function'&&_suitUnePropositionDeSeance(coachHistory, iU));
-        if(demande&&(!u||_seanceEncoreDuJour(u.ts))){ _appendSeanceQuestion(txt, bulle, m); pose=true; break; }
+        if(demande&&(!u||_seanceEncoreDuJour(u.ts))){ _appendSeanceQuestion(txt, bulle, m); pose=true; _remplacer(m); continue; }
       }
     }
     /* ⭐⭐ ft-v1053 — LA QUESTION SURVIT AUSSI AU RECHARGEMENT, et il fallait le faire ici.
@@ -2562,23 +2566,57 @@ function _appendStartSessionBtn(sess, cible, msg){
   }catch(e){ /* jamais bloquant : un avertissement ne doit pas empêcher de lancer la séance */ }
   wrap.innerHTML=_av+_carteSeanceHtml(lbl+' ('+n+(n>1?' exercices':' exercice')+')','_startSessionFromMilo('+idx+',this)');
   last.appendChild(wrap);
-  _desactiverAutresCartesSeance(last);  // RETRAVAIL : une seule séance active, la dernière posée
+  if(msg) _desactiverVersionsPrecedentes(msg);  // RETRAVAIL : une seule version active par chaîne
   if(msg) _attacherSeance(msg, norm);   // C3 : la séance que CETTE carte propose, rien d'autre
   _coachAuBas();
   return true;                    // posé — l'appelant peut cesser de chercher un repli
 }
 
-/* 🔬 MILO-SEANCE-RETRAVAIL (27/09/2026) — UNE SEULE SÉANCE ACTIVE : LA DERNIÈRE PROPOSÉE.
-   Mesuré avant : A → B → C → D laissait QUATRE cartes démarrables, anciennes versions comprises —
-   alors qu'au rechargement il n'en reste qu'une, la plus récente. Décision de Michel (option C) :
-   l'historique reste visible, une seule version est démarrable. On retire donc les cartes séance
-   (carte « Oui, on démarre » ou question « on démarre ? ») posées sous les AUTRES bulles : le texte
-   des réponses reste, rien n'est effacé du fil ni de `message.seance` (persisté ≠ actif).
-   ⛔ Les cartes mémoire et programme ne sont pas des cartes séance : elles ne bougent pas (C2). */
-function _desactiverAutresCartesSeance(garder){
+/* 🔬 MILO-SEANCE-RETRAVAIL (27/09/2026) — UNE SEULE VERSION ACTIVE PAR CHAÎNE DE RETRAVAIL.
+   Mesuré avant : A → B → C → D laissait QUATRE cartes démarrables, anciennes versions comprises.
+   Décision de Michel (option C, précisée ensuite) : dans une MÊME chaîne de retravail, seule la
+   dernière version est démarrable ; une séance INDÉPENDANTE du même fil (pecs, puis « fais-moi une
+   séance jambes ») reste disponible. On retire donc les cartes séance posées sous les VERSIONS
+   PRÉCÉDENTES de ce message — pas celles des autres séances. Le texte des réponses reste, rien n'est
+   effacé du fil ni de `message.seance` (persisté ≠ actif). Cartes mémoire et programme : intactes (C2).
+   La chaîne se lit dans l'historique, sans champ nouveau : un message de l'utilisateur la prolonge
+   s'il répond à une séance proposée ET n'est pas une nouvelle demande de séance — les motifs du
+   bouton « Non, retravaille » la prolongent toujours (« Pas les bons exercices » contient « propose
+   la séance », mais c'est un retravail). ⚠️ Limite dite : un retravail tapé EN CLAIR comme une
+   nouvelle demande (« refais-moi une séance… ») ouvre une nouvelle chaîne — l'ancienne carte reste
+   alors disponible ; rien n'est perdu. */
+var _bulleDuMessage=new WeakMap();   // message → sa bulle (posée à l'arrivée et à chaque relecture)
+function _estRetravailDeChaine(hist, iUser){
   try{
-    const msgs=document.getElementById('coach-msgs'); if(!msgs)return;
-    msgs.querySelectorAll('.coach-seance-carte').forEach(c=>{ if(!garder||!garder.contains(c)) c.remove(); });
+    const u=hist[iUser], t=(u&&typeof u.content==='string')?u.content:'';
+    if(!_suitUnePropositionDeSeance(hist, iUser))return false;
+    const motif=_RAISONS_RETRAVAIL.some(r=>r[1]&&r[1]===t);
+    return motif || !(typeof _demandeUneSeance==='function'&&_demandeUneSeance(t));
+  }catch(e){ return false; }
+}
+function _versionsPrecedentes(hist, msg){
+  try{
+    if(!Array.isArray(hist)||!msg)return [];
+    let i=hist.indexOf(msg);
+    if(i<0){ const d=hist[hist.length-1]; if(!d||d.role!=='user')return []; i=hist.length; }   // à l'arrivée : pas encore poussé
+    const out=[];
+    let iu=-1; for(let k=i-1;k>=0;k--){ if(hist[k]&&hist[k].role==='user'){ iu=k; break; } }
+    while(iu>0 && _estRetravailDeChaine(hist, iu)){
+      let k=iu-1; while(k>=0&&!(hist[k]&&hist[k].role==='assistant'))k--;
+      if(k<0)break;
+      out.push(hist[k]);
+      let j=k-1; while(j>=0&&!(hist[j]&&hist[j].role==='user'))j--;
+      iu=j;
+    }
+    return out;
+  }catch(e){ return []; }
+}
+function _desactiverVersionsPrecedentes(msg){
+  try{
+    if(!msg)return;
+    _versionsPrecedentes(coachHistory, msg).forEach(v=>{
+      const b=_bulleDuMessage.get(v); if(b) b.querySelectorAll('.coach-seance-carte').forEach(c=>c.remove());
+    });
   }catch(e){}
 }
 
@@ -2635,15 +2673,16 @@ function _carteSeanceHtml(labelBtn, onclickOui){
    ⭐ R13 : même mécanique que `_appendQuickReplies` — et **même arbitrage de quota** : répondre
    à une question que l'app a posée ne consomme pas une question gratuite (`noQuota`), ce n'est
    pas la personne qui interroge. */
+var _RAISONS_RETRAVAIL=[
+  ['Trop lourd',            'Cette séance est trop lourde pour moi aujourd\'hui, allège les charges et propose-la à nouveau.'],
+  ['Trop long',             'Cette séance est trop longue, raccourcis-la et propose-la à nouveau.'],
+  ['Pas les bons exercices','Ce ne sont pas les exercices que je veux, change-les et propose la séance à nouveau.'],
+  ['Autre chose…',          null]
+];
 function _seanceNonRetravaille(btn){
   try{
     const wrap=btn&&btn.parentNode; if(!wrap)return;
-    const RAISONS=[
-      ['Trop lourd',            'Cette séance est trop lourde pour moi aujourd\'hui, allège les charges et propose-la à nouveau.'],
-      ['Trop long',             'Cette séance est trop longue, raccourcis-la et propose-la à nouveau.'],
-      ['Pas les bons exercices','Ce ne sont pas les exercices que je veux, change-les et propose la séance à nouveau.'],
-      ['Autre chose…',          null]
-    ];
+    const RAISONS=_RAISONS_RETRAVAIL;   // une seule liste : la chaîne de retravail la relit aussi (R2)
     const row=document.createElement('div');
     row.className='milo-ask-why';
     const lbl=document.createElement('div');
@@ -2714,7 +2753,7 @@ function _appendSeanceQuestion(reply, cible, msg){
     wrap.className='coach-prog-save coach-seance-carte';
     wrap.innerHTML=_carteSeanceHtml(lbl,'_construireSeanceAuTap('+idx+',this)');
     last.appendChild(wrap);
-    _desactiverAutresCartesSeance(last);   // RETRAVAIL : on travaille sur CETTE réponse, plus sur une ancienne
+    if(msg) _desactiverVersionsPrecedentes(msg);   // RETRAVAIL : on travaille sur CETTE version, plus sur la précédente
     _coachAuBas();
     return true;
   }catch(e){ return false; }
@@ -5898,7 +5937,8 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     renderCoachMsg('coach', _disp, {coupee: _coupee});
     // RETRAVAIL + PDF1B : la réponse coupée ne devient jamais démarrable, et l'ancienne version ne
     // reste pas active sous elle (au rechargement, une réponse coupée arrête déjà toute remontée).
-    if (_coupee && _retravail && typeof _desactiverAutresCartesSeance === 'function') _desactiverAutresCartesSeance(null);
+    try { _bulleDuMessage.set(_msgA, _derniereBulleCoach()); } catch(e) {}   // RETRAVAIL : la bulle de CE message
+    if (_coupee && typeof _desactiverVersionsPrecedentes === 'function') _desactiverVersionsPrecedentes(_msgA);
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds, null, _msgA);
     else if (_dsCervelet) {

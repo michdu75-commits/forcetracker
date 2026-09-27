@@ -18,7 +18,7 @@ RECOPIE = ",...(m.seance?{seance:m.seance}:{})}));"
 LECTURE = ("      if(m.seance&&typeof _appendStartSessionBtn==='function'){\n"
            "        let relue=false;\n"
            "        try{ relue=!!_appendStartSessionBtn(m.seance, bulle); }catch(e){ relue=false; }\n"
-           "        if(relue){ pose=true; break; }\n"
+           "        if(relue){ pose=true; _remplacer(m); continue; }\n"
            "      }\n")
 COUPEE = "      if(typeof _coupeeValide==='function' && _coupeeValide(m.coupee)) break;\n"
 PAYLOAD = "    .map(m => ({ role: m.role, content: m.content }));"
@@ -79,7 +79,7 @@ def cloner():
 
 
 def main():
-    filtre = sys.argv[1] if len(sys.argv) > 1 else ''
+    filtres = [x for x in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if x]   # plusieurs prefixes : M02,M03,...
     avant = subprocess.run(['git', 'show', AVANT_C3 + ':' + CO], cwd=SRC, capture_output=True, text=True).stdout
     tmp0, a0 = cloner()
     rouges = banc(a0)
@@ -89,7 +89,7 @@ def main():
     print('  arbre sain : 0 rouge (point de depart valide)\n')
     conformes = total = 0
     for nom, remplacements, attendu in MUT:
-        if filtre and not nom.startswith(filtre):
+        if filtres and not any(nom.startswith(f) for f in filtres):
             continue
         total += 1
         tmp, arbre = cloner()

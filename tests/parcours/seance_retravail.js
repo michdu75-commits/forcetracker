@@ -34,7 +34,7 @@ module.exports.source = function (t, ROOT, fs, path) {
   console.log('\n═══ B-CCCXCIII. MILO-SEANCE-RETRAVAIL — une seule séance active, sous son message (source) ═══');
   const src = fs.readFileSync(path.join(ROOT, 'coach.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   const corps = nom => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
-  const fil = corps('_renderCoachThread'), ctx = corps('_suitUnePropositionDeSeance'), des = corps('_desactiverAutresCartesSeance');
+  const fil = corps('_renderCoachThread'), ctx = corps('_suitUnePropositionDeSeance'), des = corps('_desactiverVersionsPrecedentes');   // re-visé le 27/09 : la désactivation vise la CHAÎNE, plus tout le fil
   t('① les fonctions sont trouvées (sinon les témoins suivants ne mesurent rien)', fil && ctx && des, [fil, ctx, des].map(x => x.length).join('/'));
   t('② le contexte de retravail se déduit de l\'historique : il écarte la réponse à une consigne interne (`_silent`)', /_silent/.test(ctx), '');
   const iCoupee = fil.indexOf('_coupeeValide(m.coupee)'), iSeance = fil.indexOf('m.seance');
@@ -196,6 +196,21 @@ module.exports.ecran = async function (t, b, PORT) {
   const XD = await ouvrir([{ tag: 'Z' }], { ft4_coach_hist: dbf, ft4_coach_lastts: String(Date.now() - 3000) }); tous.push(XD);
   const rd = await lire(XD);
   t('R11 un récap de débrief (réponse à une consigne interne) n\'est pas une séance proposée : pas de question sous la réponse suivante', js(rd) === '[]', js(rd));
+  // ── T3-T5 · UNE seule version active PAR CHAÎNE, pas par fil (réserve de Michel sur le checkpoint) ──
+  // T1 = R2 et T2 = R4 ci-dessus (même chaîne : seule la dernière version est active).
+  const JAMBES = 'Fais-moi une séance jambes pour demain';
+  const X3i = await ouvrir([{ tag: 'A', n: 5, trad: 'ok' }, { tag: 'D', n: 3, trad: 'ok' }]); tous.push(X3i);
+  await envoyer(X3i, DEM); await envoyer(X3i, JAMBES); const t3 = await lire(X3i);
+  t('T3 ⭐ deux séances INDÉPENDANTES (pecs puis jambes) : A et D restent toutes les deux actives', js(t3) === js(['A:5', 'D:3']), js(t3));
+  const X4i = await ouvrir([{ tag: 'A', n: 5, trad: 'ok' }, { tag: 'B', n: 4, trad: 'ok' }, { tag: 'D', n: 3, trad: 'ok' }]); tous.push(X4i);
+  await envoyer(X4i, DEM); await retravailler(X4i, 'Autre chose…', 'Avec 4 exercices stp'); await envoyer(X4i, JAMBES);
+  const t4 = await lire(X4i);
+  t('T4 ⭐ A retravaillée en B, puis séance indépendante D : A inactive, B et D actives', js(t4) === js(['B:4', 'D:3']), js(t4));
+  const c4i = X4i.n('coach'), s4i = X4i.n('seanceJson');
+  const t5 = await recharger(X4i);
+  t('T5 ⭐ même chose après rechargement : B et D actives, A inactive, 0 appel', js(t5) === js(['B:4', 'D:3']) && X4i.n('coach') === c4i && X4i.n('seanceJson') === s4i,
+    js(t5) + ' coach ' + c4i + '→' + X4i.n('coach') + ' trad ' + s4i + '→' + X4i.n('seanceJson'));
+
   t('R∅ aucune erreur de page', tous.every(x => !x.errs.length), tous.map(x => x.errs.join('|')).join(' ').slice(0, 300));
   for (const X of tous) { try { await X.cx.close(); } catch (e) {} }
 };
