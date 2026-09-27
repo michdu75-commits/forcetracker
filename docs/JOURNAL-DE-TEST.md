@@ -3254,7 +3254,8 @@ déterministe (`docs/MILO-SEANCE-01.md`) : la perte 4 → 2 se reproduit **dans 
 repos 2 min — consigne ») ; traduction, normalisation et injection ne perdent rien. ❓ Reste ouvert :
 ce que Milo a réellement écrit dans l'essai 2, et la latence réelle de la traduction.
 
-**27/09/2026 — ❓ RETRAVAIL D'UNE SÉANCE : la nouvelle version n'obtient pas sa carte (cas réel de Michel, ft-v1238).**
+### 🟡 RETRAVAIL D'UNE SÉANCE : LA NOUVELLE VERSION N'OBTIENT PAS SA CARTE (27/09/2026, cas réel de Michel, ft-v1238)
+
 Séance 5 exercices → carte « (5 exercices) » → « Non, retravaille » → « Autre chose… » → *« Avec 4 exercices stp »*
 puis *« Que 4 exercices »* → Milo écrit une séance de 4 → **aucune carte**, l'ancienne « 5 » reste seule.
 Mécanisme reproduit localement (MILO-SEANCE-RETRAVAIL, diagnostic, rien corrigé) : ce résultat sort **seulement**
