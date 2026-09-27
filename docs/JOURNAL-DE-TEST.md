@@ -3264,3 +3264,9 @@ ne la rattrape, parce qu'un message de retravail (*« Avec 4 exercices stp »*, 
 comme une demande de séance. ❓ **Ce que Milo a réellement écrit** dans ce retravail (format lisible par le repli ou
 non) et **si la traduction a répondu** : non connus — le texte est sur le téléphone de Michel, aucune trace réseau.
 Vérifiable par du code une fois le texte réel en main : `_ressembleASeance` et `_seanceDepuisTexte` sur ce texte.
+↪️ **Preuve réelle (27/09/2026, téléphone de Michel, ft-v1238)** : après le retravail 5 → 4, la réponse B (4 exercices)
+est bien conservée et réaffichée après fermeture et réouverture — mais c'est l'**ancienne carte A « Oui, on démarre
+(5 exercices) »** qui s'affiche sous B. Le défaut de rechargement reproduit localement (témoin R3 : `["B:5"]` sur
+ft-v1238) est donc **confirmé en production**. Ce n'est pas une perte du texte B : c'est l'ancienne séance restaurée
+sous la nouvelle réponse. ⚠️ La cause du défaut d'arrivée (« B n'obtient aucune carte ») reste **non démontrée** sur
+l'essai réel.
