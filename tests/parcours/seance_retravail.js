@@ -119,8 +119,21 @@ module.exports.ecran = async function (t, b, PORT) {
   // ── R3 · rechargement SANS avoir tapé : on ne remonte pas vers A ──
   const X3 = await ouvrir([{ tag: 'A', n: 5, trad: 'ok' }, { tag: 'B', n: 4, ill: 1, trad: 'panne' }]); tous.push(X3);
   await envoyer(X3, DEM); await retravailler(X3, 'Autre chose…', 'Que 4 exercices');
+  const tr3avant = X3.n('seanceJson');
   const r3 = await recharger(X3);
   t('R3 ⭐ rechargé avant tout tap : la question sous B — la carte de A n\'est PAS posée sous le texte de B', js(r3) === js(['B:?']), js(r3));
+  const tr3 = X3.n('seanceJson');
+  t('R3 le rechargement lui-même ne lance aucune traduction', tr3 === tr3avant, 'trad ' + tr3avant + '→' + tr3);
+  // la traduction de B répond maintenant (on remplace la route du Worker, rien d'autre ne change)
+  await X3.cx.unroute(/workers\.dev/);
+  await X3.cx.route(/workers\.dev/, async r => { let c = {}; try { c = r.request().postDataJSON() || {}; } catch (e) {}
+    X3.req.push(c.action || '?');
+    if (c.action === 'seanceJson') return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(trad(4)) });
+    return r.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"ok"}' }); });
+  await taperQuestion(X3); const r3t = await lire(X3);
+  const r3r = await recharger(X3);
+  t('R3 tap sur la question du rechargement : 1 traduction, carte « 4 » sous B ; rechargée : la même, 0 traduction de plus',
+    js(r3t) === js(['B:4']) && js(r3r) === js(['B:4']) && X3.n('seanceJson') === tr3 + 1, js(r3t) + ' → ' + js(r3r) + ' trad ' + tr3 + '→' + X3.n('seanceJson'));
 
   // ── R2 · retravail lisible : B remplace A ──
   const X2 = await ouvrir([{ tag: 'A', n: 5, trad: 'ok' }, { tag: 'B', n: 4, trad: 'ok' }]); tous.push(X2);
@@ -176,6 +189,13 @@ module.exports.ecran = async function (t, b, PORT) {
   const rc = await lire(XC);
   t('R10 un mot de Milo après la séance (ft-v1051) : la carte de A reste, posée sous A — plus sous le dernier message', js(rc) === js(['A:5']), js(rc));
 
+  const dbf = JSON.stringify([{ role: 'user', content: '[DÉBRIEF AUTO] Je viens de terminer ma séance…', _silent: true, ts: Date.now() - 6000 },
+    { role: 'assistant', content: texte('R', 5), ts: Date.now() - 5000 },
+    { role: 'user', content: 'Avec 4 exercices stp', ts: Date.now() - 4000 },
+    { role: 'assistant', content: texte('Q', 4, true), ts: Date.now() - 3000 }]);
+  const XD = await ouvrir([{ tag: 'Z' }], { ft4_coach_hist: dbf, ft4_coach_lastts: String(Date.now() - 3000) }); tous.push(XD);
+  const rd = await lire(XD);
+  t('R11 un récap de débrief (réponse à une consigne interne) n\'est pas une séance proposée : pas de question sous la réponse suivante', js(rd) === '[]', js(rd));
   t('R∅ aucune erreur de page', tous.every(x => !x.errs.length), tous.map(x => x.errs.join('|')).join(' ').slice(0, 300));
   for (const X of tous) { try { await X.cx.close(); } catch (e) {} }
 };

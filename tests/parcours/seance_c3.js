@@ -178,6 +178,21 @@ module.exports.ecran = async function (t, b, PORT) {
   t('C3-M ancien message (sans `seance`) : question, tap → 1 traduction → carte 4 exercices', question(mQ.cartes) && quatre(mAv.cartes) && mTr === 1, js(mQ.cartes) + ' ' + js(mAv.cartes) + ' trad=' + mTr);
   t('C3-M ⭐ rechargé : la séance lue au tap est désormais gardée — carte directe, identique, sans nouvelle traduction',
     quatre(mAp.cartes) && identique(mAv.seance, mAp.seance) && M.nTrad() === mTr, js(mAp.cartes) + ' trad ' + mTr + '→' + M.nTrad());
+  /* ── C3-N · réponse SANS allure de séance à une demande : la question du rechargement, tap, rechargement ──
+     Ajouté avec MILO-SEANCE-RETRAVAIL (27/09) : depuis ce lot, C3-M (réponse qui a l'allure d'une séance)
+     passe par la question posée DANS la boucle de relecture. La branche d'origine — la dernière réponse
+     n'a pas l'allure d'une séance mais répond à une demande — n'était plus couverte ici (mutation M13). */
+  const PROSE = 'On part sur Développé couché, Rowing barre, Développé militaire et Extension triceps — mêmes charges que la dernière fois.';
+  const N = await ouvrir({ texte: PROSE, stock: { ft4_coach_hist: JSON.stringify([{ role: 'user', content: DEM, ts: Date.now() - 5000 }, { role: 'assistant', content: PROSE, ts: Date.now() - 4000 }]), ft4_coach_lastts: String(Date.now() - 4000) } }); tous.push(N);
+  const nQ = await lire(N.pg);
+  await N.pg.evaluate(async () => { const q = [...document.querySelectorAll('#coach-msgs .coach-prog-save button')].find(e => /Oui, on démarre$/.test(e.textContent.trim()));
+    if (q) q.click(); const t0 = Date.now(); while (Date.now() - t0 < 5000 && !/\(\d/.test([...document.querySelectorAll('#coach-msgs .coach-prog-save button')].map(e => e.textContent).join(' '))) await new Promise(z => setTimeout(z, 150)); });
+  const nAv = await lire(N.pg), nTr = N.nTrad();
+  const nAp = await recharger(N);
+  t('C3-N réponse sans allure de séance à une demande : question, tap → 1 traduction → carte 4 exercices', question(nQ.cartes) && quatre(nAv.cartes) && nTr === 1, js(nQ.cartes) + ' ' + js(nAv.cartes) + ' trad=' + nTr);
+  t('C3-N ⭐ rechargé : la séance lue au tap est gardée avec CE message — carte directe, sans nouvelle traduction',
+    quatre(nAp.cartes) && identique(nAv.seance, nAp.seance) && N.nTrad() === nTr, js(nAp.cartes) + ' trad ' + nTr + '→' + N.nTrad());
+  try { await N.cx.close(); } catch (e) {}
 
   // ── C3-F · ce qui part chez Milo ────────────────────────────────────────────────────────
   await B.pg.evaluate(async () => { await sendToCoach('Merci, et pour les étirements ?'); await new Promise(z => setTimeout(z, 300)); });

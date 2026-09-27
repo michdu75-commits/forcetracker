@@ -17,7 +17,7 @@ LIGHT = "    ...(m.role==='assistant' && m.seance && typeof m.seance==='object'?
 RECOPIE = ",...(m.seance?{seance:m.seance}:{})}));"
 LECTURE = ("      if(m.seance&&typeof _appendStartSessionBtn==='function'){\n"
            "        let relue=false;\n"
-           "        try{ relue=!!_appendStartSessionBtn(m.seance); }catch(e){ relue=false; }\n"
+           "        try{ relue=!!_appendStartSessionBtn(m.seance, bulle); }catch(e){ relue=false; }\n"
            "        if(relue){ pose=true; break; }\n"
            "      }\n")
 COUPEE = "      if(typeof _coupeeValide==='function' && _coupeeValide(m.coupee)) break;\n"
@@ -26,7 +26,7 @@ GARDE_COUPEE = "    if(typeof _coupeeValide==='function'&&_coupeeValide(msg.coup
 COPIE = "    msg.seance=JSON.parse(JSON.stringify(norm));"
 THEN = "_appendStartSessionBtn(_montee(s), _bulle, _msgA)"
 TAP = "    _pendingSeanceMsgs[idx]=msg||null;\n"
-QUESTION_RELOAD = "_appendSeanceQuestion(dernAssist, null, dernMsg);"
+QUESTION_RELOAD = "_appendSeanceQuestion(dernAssist, bq, dernMsg);"
 
 MUT = [
     ('M00 code d\'AVANT C3 remis mot pour mot (coach.js de 150df13d)', 'AVANT', 'GARDE'),
@@ -51,11 +51,11 @@ MUT = [
     ('M11 [deguisee] rattache au DERNIER message assistant du fil, pas au message designe',
      [(COPIE, "    { const c=(coachHistory||[]).filter(x=>x&&x.role==='assistant').pop(); if(c) msg=c; }\n" + COPIE)], 'GARDE'),
     ('M12 la seance lue au tap n\'est plus rattachee (question a l\'arrivee)', [(TAP, "    _pendingSeanceMsgs[idx]=null;\n")], 'GARDE'),
-    ('M13 la question du rechargement ne transmet plus son message', [(QUESTION_RELOAD, "_appendSeanceQuestion(dernAssist, null, null);")], 'GARDE'),
+    ('M13 la question du rechargement ne transmet plus son message', [(QUESTION_RELOAD, "_appendSeanceQuestion(dernAssist, bq, null);")], 'GARDE'),
     ('M14 la traduction tardive n\'est plus rattachee (seulement les voies immediates)',
      [(THEN, "_appendStartSessionBtn(_montee(s), _bulle)")], 'GARDE'),
     ('M15 [deguisee] la relecture reapplique `_montee` : sans effet sur une seance deja montee, mais TRANSFORME une seance gardee qui ne l\'est pas',
-     [("        try{ relue=!!_appendStartSessionBtn(m.seance); }", "        try{ relue=!!_appendStartSessionBtn(_montee(m.seance)); }")], 'GARDE'),
+     [("        try{ relue=!!_appendStartSessionBtn(m.seance, bulle); }", "        try{ relue=!!_appendStartSessionBtn(_montee(m.seance), bulle); }")], 'GARDE'),
     ('[negatif] commentaire citant tous les mots cherches',
      [(LECTURE, "      // m.seance _attacherSeance _coupeeValide(msg.coupee) seance:m.seance role: m.role, content: m.content\n" + LECTURE)], 'OK'),
 ]
