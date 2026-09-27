@@ -4,6 +4,8 @@
 
 > ↪️ **ÉTAT AU 26/09, FIN DE SOIRÉE (ajouté).** **C2 est corrigé** (MILO-SEANCE-03, commit `222a119c`, version `ft-v1237`) : une carte mémoire ne masque plus la carte séance ; U8 (§6) est vert. **C3 reste ouvert** (reproduit après C2), **D-025 reste ouvert étroitement**, délai de 12 s inchangé.
 
+> ↪️ **ÉTAT AU 27/09 (ajouté).** **C3 est corrigé** (MILO-SEANCE-C3, commit `330a040d`, version `ft-v1238`, option A + option (i) de Michel) : la séance proposée est gardée avec son message (champ facultatif `seance`) et revient identique au rechargement ; U9 (§6) tient désormais par la séance gardée, plus par le repli. **D-025 reste ouvert étroitement**, délai de 12 s inchangé. **K3** (carte posée sous une autre discussion rouverte pendant la traduction) : observé, antérieur à C3, **non corrigé**.
+
 > **Diagnostic seulement.** Aucune correction n'est codée : Michel voit d'abord le diagnostic
 > (consigne §10). MILO-PDF1 est fermé et n'est pas rouvert — un défaut qui le touche est
 > **signalé** (§7), pas corrigé.

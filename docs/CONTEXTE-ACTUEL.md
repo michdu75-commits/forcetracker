@@ -10,8 +10,8 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1237` — 🔬 MILO-SEANCE-03 / C2 seul : une carte mémoire « Je retiens » ne masque plus la carte séance (marque dédiée `coach-seance-carte`) ; une deuxième vraie carte séance reste bloquée. **Vérification téléphone en attente** (Menu → À propos). Précédente : `ft-v1236` (C1, publiée et vérifiée en réel sur téléphone).
-- Prochaine : `ft-v1238`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
+- **Version en ligne (live) :** `ft-v1238` — 🔬 MILO-SEANCE-C3 seul : la séance proposée par Milo est gardée avec son message (champ facultatif `seance`) et survit au rechargement, sans nouvelle traduction. **Vérification téléphone en attente** (Menu → À propos). Précédente : `ft-v1237` (C2, publiée et vérifiée en réel sur téléphone par Michel).
+- Prochaine : `ft-v1239`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
 
 ## 🧊 Contraintes en vigueur — décisions actées (règle d'or #15)
 
@@ -40,7 +40,7 @@
 ## ⚖️ Décisions ouvertes
 
 - **Aucune dans `docs/DECISIONS.md`** : 28 entrées (D-001 → D-028), toutes `VALIDÉ` ou `REMPLACÉE` (vérifié le 26/09).
-- **Hors registre — DÉCISION MICHEL EN ATTENTE** : règle d'or #11, **points 2 à 5** pour le marqueur « réponse incomplète / non confirmée » (point rouge, aide `?`, aide détaillée, Guide) — rien n'a été posé ; correctif MILO-SEANCE-01 **C3** (C1 publié en `ft-v1236`, C2 en `ft-v1237`) ; correction de la faille D-025 / « Mes discussions ».
+- **Hors registre — DÉCISION MICHEL EN ATTENTE** : règle d'or #11, **points 2 à 5** pour le marqueur « réponse incomplète / non confirmée » (point rouge, aide `?`, aide détaillée, Guide) — rien n'a été posé ; correction de la faille D-025 / « Mes discussions » ; **K3** — une carte séance dont la traduction revient après la réouverture d'une autre discussion s'affiche sous la dernière bulle de celle-ci (mesuré identique avant C3, aucune donnée rattachée, disparaît au rechargement ; non corrigé). MILO-SEANCE-01 : C1 publié en `ft-v1236`, C2 en `ft-v1237`, C3 en `ft-v1238`.
 - **Ouvert, vérifié hors registre** : les essais cachés derrière `window.__FT_CLONE__` (12 occurrences dans `app.js` et `coach.js`) — chaque essai reste à décider (`CLAUDE.md`).
 - **Trous connus du classement des données (R4a)** : `badges` et `dayStateLog`, déclarés transmis à Milo sans l'être (`tests/donnees/donnees-milo.json`).
 
@@ -52,9 +52,9 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 ## ⏭️ Prochaine étape
 
 - **Après `ft-v1235`** : observer en réel le chemin de troncature de l'analyse de programme (aucune troncature naturelle n'a encore été vue — on ne la provoque pas).
-- **MILO-SEANCE-01 → MILO-SEANCE-02 (26/09)** : **SYMPTÔME RÉEL — CAUSE DE L'ÉVÉNEMENT RÉEL NON DÉTERMINÉE.** Un mécanisme capable de produire le 4 → 2 est reproduit localement dans la lecture de secours (`_seanceDepuisTexte`). Un seul échec de traduction établi sur les deux essais de la vérification (essai 1 : traduction lancée au tap, lue 2,5 s plus tard ; essai 2 : délai ou réseau non distingué). ✅ **C1 clos : corrigé, publié en `ft-v1236` et vérifié en réel sur téléphone** : la lecture de secours lit le format que le prompt demande (0/4 → 4/4, mélange 2/4 → 4/4). ✅ **C2 corrigé et testé, livré en `ft-v1237`** (vérification téléphone en attente) : une carte mémoire ne masque plus la carte séance, une deuxième vraie carte reste bloquée. ⏳ **Reste ouvert, non corrigé** : **C3** (la séance traduite redevient celle du repli au rechargement — U9 vert seulement par effet de bord de C1). **Délai de 12 s inchangé.** Dossier : `docs/MILO-SEANCE-01.md` §9. **Décision de Michel attendue** pour C3.
+- **MILO-SEANCE-01 → MILO-SEANCE-02 (26/09)** : **SYMPTÔME RÉEL — CAUSE DE L'ÉVÉNEMENT RÉEL NON DÉTERMINÉE.** Un mécanisme capable de produire le 4 → 2 est reproduit localement dans la lecture de secours (`_seanceDepuisTexte`). Un seul échec de traduction établi sur les deux essais de la vérification (essai 1 : traduction lancée au tap, lue 2,5 s plus tard ; essai 2 : délai ou réseau non distingué). ✅ **C1 clos : corrigé, publié en `ft-v1236` et vérifié en réel sur téléphone** : la lecture de secours lit le format que le prompt demande (0/4 → 4/4, mélange 2/4 → 4/4). ✅ **C2 clos : livré en `ft-v1237` et vérifié en réel sur téléphone** : une carte mémoire ne masque plus la carte séance, une deuxième vraie carte reste bloquée. ✅ **C3 corrigé et testé, livré en `ft-v1238`** (option A + option (i) de Michel ; vérification téléphone en attente) : la séance proposée est gardée avec son message (`seance`) et revient identique au rechargement — repos, consignes, supersets — sans nouvelle traduction ; U9 tient désormais par la séance gardée. **Délai de 12 s inchangé.** Dossier : `docs/MILO-SEANCE-01.md` §9.
 - ⚠️ **Défaut ACTIF — réouverture ÉTROITE de D-025** : « Mes discussions » peut perdre le marqueur « coupée » et permettre à une réponse incomplète de redevenir candidate à une séance. Démontré par MILO-SEANCE-01, **non corrigé**. Ne rouvre **pas** le reste de MILO-PDF1.
-- **Cartes séance multiples** : **1 seule carte dans 8 situations testées**, contrôle négatif **3/3** ; le témoin (`tests/parcours/seance_unicite.js`) est dans le dépôt mais **pas branché dans la passe principale** ; depuis C2 il est **entièrement vert (12/12, U8 compris)** ; les témoins de C2 (`tests/parcours/seance_c2.js`) sont dans la passe ; les 3 parcours de carte de C1 (`tests/parcours/seance_c1.js`), eux, y sont. Ce n'est pas une preuve d'impossibilité.
+- **Cartes séance multiples** : **1 seule carte dans 8 situations testées**, contrôle négatif **3/3** ; le témoin (`tests/parcours/seance_unicite.js`) est dans le dépôt mais **pas branché dans la passe principale** ; depuis C2 il est **entièrement vert (12/12, U8 compris)** ; les témoins de C2 (`tests/parcours/seance_c2.js`) et de C3 (`tests/parcours/seance_c3.js`) sont dans la passe ; les 3 parcours de carte de C1 (`tests/parcours/seance_c1.js`), eux, y sont. Ce n'est pas une preuve d'impossibilité.
 - Pour l'audit : **l'ordre de correction des défauts restants (F001, F002, F006 → F010, et la 2ᵉ moitié de F005) est à décider par Michel.**
 
 ## 🧭 Où lire quoi
