@@ -3253,3 +3253,13 @@ déterministe (`docs/MILO-SEANCE-01.md`) : la perte 4 → 2 se reproduit **dans 
 (`_seanceDepuisTexte`), qui ne sait pas lire le format que le prompt impose à Milo (« Nom — 4×6 à 80 kg,
 repos 2 min — consigne ») ; traduction, normalisation et injection ne perdent rien. ❓ Reste ouvert :
 ce que Milo a réellement écrit dans l'essai 2, et la latence réelle de la traduction.
+
+**27/09/2026 — ❓ RETRAVAIL D'UNE SÉANCE : la nouvelle version n'obtient pas sa carte (cas réel de Michel, ft-v1238).**
+Séance 5 exercices → carte « (5 exercices) » → « Non, retravaille » → « Autre chose… » → *« Avec 4 exercices stp »*
+puis *« Que 4 exercices »* → Milo écrit une séance de 4 → **aucune carte**, l'ancienne « 5 » reste seule.
+Mécanisme reproduit localement (MILO-SEANCE-RETRAVAIL, diagnostic, rien corrigé) : ce résultat sort **seulement**
+si la réponse n'est lue ni par la traduction ni par la lecture de secours — et alors aucune question « on démarre ? »
+ne la rattrape, parce qu'un message de retravail (*« Avec 4 exercices stp »*, *« Trop long »*…) n'est pas reconnu
+comme une demande de séance. ❓ **Ce que Milo a réellement écrit** dans ce retravail (format lisible par le repli ou
+non) et **si la traduction a répondu** : non connus — le texte est sur le téléphone de Michel, aucune trace réseau.
+Vérifiable par du code une fois le texte réel en main : `_ressembleASeance` et `_seanceDepuisTexte` sur ce texte.
