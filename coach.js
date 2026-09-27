@@ -1244,7 +1244,11 @@ function _lightMsg(m){
     /* 📄 MILO-PDF1 — une réponse coupée RESTE marquée coupée après un rechargement ou un rangement
        dans « Mes discussions ». Sans cette ligne, le marqueur mourrait au premier enregistrement
        (même piège que `ts`, ft-v1010) et la réponse se relirait comme finie. */
-    ...(m.role==='assistant' && typeof _coupeeValide==='function' && _coupeeValide(m.coupee)?{coupee:m.coupee}:{})
+    ...(m.role==='assistant' && typeof _coupeeValide==='function' && _coupeeValide(m.coupee)?{coupee:m.coupee}:{}),
+    /* 🔬 MILO-SEANCE-C3 — la séance que la carte a réellement proposée passe aussi par ici (même
+       piège que `ts` et `coupee`) : sinon elle meurt à l'enregistrement et le rechargement la
+       reconstruit depuis le TEXTE, qui perd repos et consignes — ou ne lit rien du tout. */
+    ...(m.role==='assistant' && m.seance && typeof m.seance==='object'?{seance:m.seance}:{})
   };
 }
 function _saveCoachHist(){
@@ -1469,6 +1473,19 @@ function _renderCoachThread(){
          (décision de Michel). On la COMPTE dans les 3 (`vus` est déjà passé) : elle est la
          proposition la plus récente, et une séance plus ancienne ne doit pas remonter à sa place. */
       if(typeof _coupeeValide==='function' && _coupeeValide(m.coupee)) break;
+      /* 🔬 MILO-SEANCE-C3 (27/09/2026) — LA SÉANCE DÉJÀ PROPOSÉE SE RELIT, ELLE NE SE RECONSTRUIT PLUS.
+         Mesuré avant : la séance traduite ne vivait qu'en mémoire (`_pendingMiloSessions`) ; au
+         rechargement on la refaisait depuis le texte — 4 exercices « quand même » mais repos 120 s → 0
+         et consignes perdues, ou plus rien du tout si le texte était illisible (une question, puis
+         une 2ᵉ traduction au tap). Le message garde désormais la séance que sa carte a proposée
+         (`_attacherSeance`). ⛔ Elle passe APRÈS toutes les gardes ci-dessus (réponse interne, jour,
+         réponse coupée), et par la même normalisation qu'à l'arrivée. Invalide → on retombe sur le
+         texte, comme un ancien message qui n'en a pas. */
+      if(m.seance&&typeof _appendStartSessionBtn==='function'){
+        let relue=false;
+        try{ relue=!!_appendStartSessionBtn(m.seance); }catch(e){ relue=false; }
+        if(relue){ pose=true; break; }
+      }
       const txt=(typeof m.content==='string')?m.content:'';
       if(!txt||typeof _extractDaySession!=='function')continue;
       const dsx=_extractDaySession(txt);
@@ -1487,11 +1504,11 @@ function _renderCoachThread(){
        DERNIER message de la personne, et elle doit dater d'AUJOURD'HUI (ft-v1054) — une demande
        à laquelle la conversation a tourné la page, ou qui date d'hier, ne doit pas ressurgir. */
     if(!pose&&typeof _demandeUneSeance==='function'&&typeof _appendSeanceQuestion==='function'){
-      let dernUser=null, dernAssist=null, tsU=0, tsA=0;
+      let dernUser=null, dernAssist=null, dernMsg=null, tsU=0, tsA=0;
       for(let i=coachHistory.length-1;i>=0;i--){
         const m=coachHistory[i]; if(!m)continue;
         // 📄 MILO-PDF1B : si la dernière réponse est marquée non terminée, pas de question « on démarre ? »
-        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string'){dernAssist=(typeof _coupeeValide==='function'&&_coupeeValide(m.coupee))?null:m.content;tsA=m.ts;if(!dernAssist)break;}
+        if(!dernAssist&&m.role==='assistant'&&typeof m.content==='string'){dernMsg=m;dernAssist=(typeof _coupeeValide==='function'&&_coupeeValide(m.coupee))?null:m.content;tsA=m.ts;if(!dernAssist)break;}
         /* ⛔⛔ UNE CONSIGNE INTERNE N'EST PAS UNE DEMANDE DE LA PERSONNE (29/08/2026, ft-v1055).
            Michel, capture à l'appui : la question *« Cette séance te convient ? »* s'affichait
            sous un **débrief de fin de séance** — il venait de terminer, et on lui proposait d'en
@@ -1508,7 +1525,7 @@ function _renderCoachThread(){
         if(m.role==='user'){ dernUser=m._silent?null:((typeof m.content==='string')?m.content:''); tsU=m.ts; break; }
       }
       if(dernAssist&&dernUser&&_seanceEncoreDuJour(tsU)&&_seanceEncoreDuJour(tsA)&&_demandeUneSeance(dernUser))
-        _appendSeanceQuestion(dernAssist);
+        _appendSeanceQuestion(dernAssist, null, dernMsg);   // C3 : au tap, la séance lue rejoint CE message
     }
   }catch(e){}
   _coachAuBas();
@@ -1613,7 +1630,7 @@ function loadCoachConv(id){
   /* ⛔ CETTE RECOPIE PERDAIT L'HORODATAGE (ft-v1010) : rouvrir une vieille conversation la
      réenregistrait sans dates, et les effaçait donc DÉFINITIVEMENT. Le `_silent` était
      déjà perdu ici de la même façon — les deux sont rétablis. */
-  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content,...(m.ts?{ts:m.ts}:{}),...(m._silent?{_silent:true}:{})}));
+  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content,...(m.ts?{ts:m.ts}:{}),...(m._silent?{_silent:true}:{}),...(m.seance?{seance:m.seance}:{})}));   // MILO-SEANCE-C3 : la séance suit (`coupee` = D-025, hors de ce lot)
   _saveCoachHist();
   closeCoachConvs();
   _showCoachChat();
@@ -2425,7 +2442,10 @@ function _derniereBulleCoach(){
    tentative sur le cervelet et ne retombait jamais sur le filet.
    *Un chemin qui echoue sans le dire empeche tout repli*, et c'est exactement ce motif qui fait
    disparaitre le bouton sans qu'aucune erreur ne le signale. */
-function _appendStartSessionBtn(sess, cible){
+// `msg` (facultatif, MILO-SEANCE-C3) = le message assistant qui porte cette séance : quand la carte
+// est RÉELLEMENT posée, la séance proposée lui est rattachée (`_attacherSeance`) pour survivre au
+// rechargement. Sans `msg` — le rechargement lui-même, les appels de test — rien n'est écrit.
+function _appendStartSessionBtn(sess, cible, msg){
   if(!sess||typeof _normalizeMiloSession!=='function')return false;
   const norm=_normalizeMiloSession(sess);
   if(!norm||!norm.exs||!norm.exs.length)return false;
@@ -2497,8 +2517,31 @@ function _appendStartSessionBtn(sess, cible){
   }catch(e){ /* jamais bloquant : un avertissement ne doit pas empêcher de lancer la séance */ }
   wrap.innerHTML=_av+_carteSeanceHtml(lbl+' ('+n+(n>1?' exercices':' exercice')+')','_startSessionFromMilo('+idx+',this)');
   last.appendChild(wrap);
+  if(msg) _attacherSeance(msg, norm);   // C3 : la séance que CETTE carte propose, rien d'autre
   _coachAuBas();
   return true;                    // posé — l'appelant peut cesser de chercher un repli
+}
+
+/* 🔬 MILO-SEANCE-C3 (27/09/2026) — RATTACHER LA SÉANCE PROPOSÉE À SON MESSAGE.
+   ⭐ CE QUI EST GARDÉ : `norm`, la sortie de `_normalizeMiloSession` — l'objet EXACT que la carte
+   démarre (`_pendingMiloSessions[idx]` → `_startSessionFromMilo`). Il est pris APRÈS la montée en
+   charge (appliquée par l'appelant, jamais ici) : le relire ne la rejoue donc pas, et le relire
+   passe par la même normalisation, qui ne le change pas (mesuré : `_normalizeMiloSession` et
+   `_montee` sont idempotents sur les séances du banc). Même séance avant et après rechargement.
+   ⭐ LE MESSAGE EST DÉSIGNÉ PAR SA RÉFÉRENCE, jamais retrouvé par son texte : la traduction revient
+   APRÈS l'enregistrement du message, et d'ici là une autre réponse a pu arriver.
+   ⛔ Une réponse coupée ou non confirmée ne reçoit jamais de séance (PDF1B).
+   ⛔ Si le message n'est plus dans le fil (discussion rangée ou changée entre-temps), on n'écrit
+   RIEN sur disque : il ne reste qu'un objet orphelin, et le message rangé garde son comportement
+   d'avant (relecture du texte). Aucune séance ne peut atterrir sur le message d'une autre
+   discussion : ce ne sont jamais les mêmes objets. */
+function _attacherSeance(msg, norm){
+  try{
+    if(!msg||msg.role!=='assistant'||!norm||!Array.isArray(norm.exs)||!norm.exs.length)return;
+    if(typeof _coupeeValide==='function'&&_coupeeValide(msg.coupee))return;
+    msg.seance=JSON.parse(JSON.stringify(norm));   // une copie : ce que la carte proposait À CET INSTANT
+    if(Array.isArray(coachHistory)&&coachHistory.indexOf(msg)>=0)_saveCoachHist();
+  }catch(e){}
 }
 
 /* ⭐⭐ « CETTE SÉANCE TE CONVIENT ? » — LA QUESTION REMPLACE LE BOUTON, ELLE NE S'Y AJOUTE PAS
@@ -2593,8 +2636,9 @@ function _seanceNonRetravaille(btn){
    donc quelqu'un qui ne touche pas au bouton ne dépense aucun appel (règle d'or #3 : le réseau
    ne bloque ni ne décide jamais). */
 var _pendingSeanceTextes=[];   // textes de Milo en attente d'une lecture AU TAP (voir ci-dessus)
+var _pendingSeanceMsgs=[];     // C3 : le message qui porte chacun de ces textes (même indice), pour y rattacher la séance lue au tap
 
-function _appendSeanceQuestion(reply, cible){
+function _appendSeanceQuestion(reply, cible, msg){
   try{
     const msgs=document.getElementById('coach-msgs'); if(!msgs)return false;
     let last=cible||null;
@@ -2603,6 +2647,7 @@ function _appendSeanceQuestion(reply, cible){
     if(!last)return false;
     if(last.querySelector('.coach-seance-carte'))return false;     // déjà une carte séance dessous (C2)
     const idx=_pendingSeanceTextes.push(String(reply||''))-1;
+    _pendingSeanceMsgs[idx]=msg||null;
     const enCours=(typeof S!=='undefined')&&S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
     const lbl=enCours?'⚡ Oui, utiliser cette séance':'⚡ Oui, on démarre';
     const wrap=document.createElement('div');
@@ -2642,7 +2687,7 @@ async function _construireSeanceAuTap(idx, btn){
          — mêmes avertissements d'intensité, même bouton, même « Non ». */
       const carte=btn?btn.parentNode:null;
       if(carte&&carte.parentNode)carte.parentNode.removeChild(carte);
-      if(_appendStartSessionBtn(sess, bulle))return;
+      if(_appendStartSessionBtn(sess, bulle, _pendingSeanceMsgs[idx]))return;
       // posée nulle part → on remet la carte d'origine plutôt que de laisser un vide
       if(carte&&bulle){ bulle.appendChild(carte); }
     }
@@ -5777,9 +5822,13 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     /* 📋 LE RÉCAP FACTUEL PASSE DEVANT (20/08/2026) : écrit par le CODE, donc complet par
        construction. Milo commente par-dessus — il ne peut plus sauter un exercice. */
     if (opts.debriefSess) { try { const _rc=_recapSeance(opts.debriefSess); if(_rc) _disp = _rc + _disp; } catch(e){} }
+    /* 🔬 MILO-SEANCE-C3 — le message est CRÉÉ ici (il est poussé dans le fil plus bas, inchangé) pour
+       que chaque voie qui pose une carte séance puisse lui rattacher la séance proposée, y compris la
+       traduction qui revient APRÈS l'enregistrement. Désigné par sa référence, jamais par son texte. */
+    const _msgA = { role: 'assistant', content: reply, ts: Date.now(), ...(_coupee?{coupee:_coupee}:{}) };
     renderCoachMsg('coach', _disp, {coupee: _coupee});
     if (_fp) _appendSaveProgBtn(_fp);
-    if (_ds) _appendStartSessionBtn(_ds);
+    if (_ds) _appendStartSessionBtn(_ds, null, _msgA);
     else if (_dsCervelet) {
       // ⚠️ VOLONTAIREMENT PAS ATTENDU (aucun `await`) : la réponse de Milo est déjà à
       // l'écran, le bouton arrive une seconde après. Une traduction lente — ou en panne —
@@ -5794,22 +5843,22 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       /* ⭐ ft-v1053 — LE DERNIER REPLI : si le cervelet ET le filet échouent tous les deux, on
          ne laisse plus la bulle nue. La question s'affiche quand même dès lors que la personne
          a DEMANDÉ une séance, et « Oui » la construira au tap. */
-      const _repli = () => { if (_dsDemande) _appendSeanceQuestion(reply, _bulle); };
+      const _repli = () => { if (_dsDemande) _appendSeanceQuestion(reply, _bulle, _msgA); };
       _cerveletSeance(reply)
-        .then(s => { if (!_appendStartSessionBtn(_montee(s), _bulle) && !_appendStartSessionBtn(_filet, _bulle)) _repli(); })
-        .catch(() => { if (!_appendStartSessionBtn(_filet, _bulle)) _repli(); });
+        .then(s => { if (!_appendStartSessionBtn(_montee(s), _bulle, _msgA) && !_appendStartSessionBtn(_filet, _bulle, _msgA)) _repli(); })
+        .catch(() => { if (!_appendStartSessionBtn(_filet, _bulle, _msgA)) _repli(); });
     }
-    else if (_dsFilet) _appendStartSessionBtn(_dsFilet);
+    else if (_dsFilet) _appendStartSessionBtn(_dsFilet, null, _msgA);
     /* ⭐⭐ ft-v1053 — ON A DEMANDÉ UNE SÉANCE, ON A DONC LA QUESTION. Aucune des trois voies n'a
        reconnu de séance dans le texte : avant, la bulle restait nue et il n'y avait plus rien à
        faire (c'est la panne que Michel a vécue trois fois en huit jours). Le déclencheur n'est
        plus ce que Milo a écrit, mais ce que la personne a demandé. */
-    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach());
+    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach(), _msgA);
     if (_mem) _appendMemoryBtns(_mem);
     if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
-    coachHistory.push({ role: 'assistant', content: reply, ts: Date.now(), ...(_coupee?{coupee:_coupee}:{}) });
+    coachHistory.push(_msgA);
     _trimCoachHistory();   // ⚠️ borne de sécurité (400), plus la coupe à 20 qui perdait le début
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)

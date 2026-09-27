@@ -39653,6 +39653,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🔬 MILO-SEANCE-03 / C2 (26/09/2026) — une carte mémoire ne masque plus la carte séance ; une vraie
      carte séance bloque toujours la deuxième. Contrôle négatif : `tools/mut_seance_c2.py`. */
   await require('./seance_c2.js').ecran(t, b, PORT);
+  /* 🔬 MILO-SEANCE-C3 (27/09/2026) — la séance traduite est gardée avec son message : elle survit au
+     rechargement et à « Mes discussions », sans retraduction. Contrôle négatif : `tools/mut_seance_c3.py`. */
+  await require('./seance_c3.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40468,6 +40471,7 @@ require('./milo_pdf1b.js').source(t, ROOT, fs, path);
 require('./milo_suites.js').source(t, ROOT, fs, path);
 require('./seance_c1.js').source(t, ROOT, fs, path);
 require('./seance_c2.js').source(t, ROOT, fs, path);
+require('./seance_c3.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
