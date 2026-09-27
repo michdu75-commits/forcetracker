@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1238`** (prochaine : `ft-v1239`).
+> **Version actuelle : `ft-v1239`** (prochaine : `ft-v1240`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,22 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1239 — 🧵 FIABILISATION LOT 1 · LE DÉBRIEF DE FIN DE SÉANCE NE COUPE PLUS LE FIL DU COACH ET NE L'ÉCRASE PLUS (F07a + F07b)** — premier lot de la fiabilisation issue de l'audit forensique n°2 (session-B), commit fonctionnel `3145081b`, testé, contre-vérifié indépendamment, publication décidée par Michel.
+
+**AVANT (mesuré par l'écran sur master `2f5ccdb5`).** **F07a** : discussion de 30 messages chargée, fin de séance + débrief en ligne → **20 messages**, les 12 plus anciens perdus — une coupe `slice(-20)` avait survécu dans `_dbfPoserDansHistorique`, alors que ft-v656 l'avait retirée du chat comme « perte SILENCIEUSE ». **F07b** : discussion de 30 messages enregistrée mais **pas chargée en mémoire** (Apps Script injoignable, Coach jamais ouvert) → **2 messages**, les 30 remplacés par le débrief. Même chose au démarrage quand le rattrapage pose un débrief déjà reçu, et sur un contenu enregistré illisible.
+
+**APRÈS.** `_coachHistHydrater` (nouvelle) relit la discussion sur le téléphone **avant** toute mutation, sans aucun réseau ; un contenu illisible ou une lecture refusée laisse l'état **inconnu** → rien n'est écrit, même si le drapeau dit « chargé ». `_dbfPoserDansHistorique` l'appelle d'abord ; la coupe à 20 est remplacée par la règle du chat (borne 400 existante, puis budget de place). Si le débrief n'a pas pu être posé, `_runSeDebrief` et `_dbfRecuperer` **gardent son « reçu »** (séance marquée livrée, aucun second appel) au lieu de l'effacer. ⛔ La garde n'est **pas** dans `_saveCoachHist` (elle aurait perdu le débrief).
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : la discussion avec Milo reste entière après une séance. ⚖️ **Pop-up : non.**
+
+**⚠️ CONSÉQUENCE CONNUE, ACCEPTÉE À LA PUBLICATION** : quand la discussion n'était pas chargée, un débrief déclenche désormais **un** `summarizeCoach` — exactement comme quand elle l'est. Master n'en faisait pas parce qu'il venait de détruire la discussion. Un seul par débrief, aucune boucle (vérifié).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** (classé, non corrigé) : `continueInCoach` remplace la discussion sans la charger ni la ranger · une discussion illisible ouverte dans le Coach est prise pour vide et le premier message l'écrase · le « reçu » d'un débrief gardé n'a qu'un emplacement (le débrief suivant le remplace) · la borne 400 / 150 000 reste un chantier ouvert · Milo reçoit toujours un historique vide avec le débrief quand la discussion n'est pas chargée (F03). Le banc `tests/discussions/runner.js` (hors passe complète) garde ses 2 rouges de taille de prompt, identiques sur master. ⛔ Ni Worker, ni Apps Script, ni la branche retravail `84950756`. **0 appel réel.**
+
+Tests : **B-CCCXCIII (9 de source) + B-CCCXCIV (29 conduits : fil chargé, non chargé serveur injoignable ou disponible, départ réellement hors ligne, fil neuf, déjà chargé, illisible, rattrapage, 400)** dans `tests/parcours/fil_coach_lot1.js`, **38 OK / 0** (sur le code d'avant : 19 rouges). ⛔ **Contrôle négatif `tools/mut_fil_lot1.py` : 15/15 conformes** (M00 = le code d'avant mot pour mot ; M01 coupe à 20 réintroduite ; M02 garde court-circuitée ; 5 déguisées ; 1 commentaire qui doit rester vert). Passe complète sur `3145081b` : **5267 ✅ / 0 ❌**, 4 conditions vertes.
+
+Fichiers : `coach.js` (`_coachHistHydrater` nouvelle, `_dbfPoserDansHistorique`, `_dbfRecuperer`), `log.js` (`_runSeDebrief`), `tests/parcours/fil_coach_lot1.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_fil_lot1.js` et `tools/mut_fil_lot1.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1239. |
 
 **ft-v1238 — 🔬 MILO-SEANCE-C3 · LA SÉANCE PROPOSÉE PAR MILO SURVIT AU RECHARGEMENT** — suite de MILO-SEANCE-01, correctif **C3 seul** (commit `330a040d`), **option A + option (i) validées par Michel** sur diagnostic en lecture seule, puis sur checkpoint.
 
@@ -699,35 +715,3 @@ Tests : **blocs B-CCCXLIV (24 témoins de source) + B-CCCXLV (22 conduits)** dan
 
 Fichiers : `state.js`, `screens.js`, `app.js`, `coach.js` *(une ligne)*, `tests/parcours/plan_incomplet.js` et `tests/parcours/ia_ref100.js` (nouveaux), `tests/parcours/runner.js`, `tools/banc_plan_incomplet.js`, `tools/banc_ia_ref100.js`, `tools/mut_plan_incomplet.py`, `tools/mut_ia_ref100.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1232. |
 
-**ft-v1231 — ⚖️ LA MASSE GRASSE **MESURÉE** ET L'**ESTIMATION** US NAVY CESSENT D'ÊTRE LE MÊME CHAMP** — Michel ouvre le sujet après avoir validé ft-v1230 sur son téléphone (*« cou / taille / hanches sauvegardés après fermeture complète »*). Son principe : ⭐ ***« ces deux valeurs sont différentes par nature et ne doivent pas se remplacer l'une l'autre »***. Ses bornes : ⛔⛔ ***« je ne veux pas simplement changer deux textes dans l'interface si les deux valeurs restent mélangées dans les données — vérifie le MODÈLE réel »*** · ⛔ ***« si l'architecture stocke déjà correctement les deux séparément, ne crée pas une structure inutile »*** · ⛔ ***« pas de migration destructive »***.
-
-**⛔⛔ ELLES ÉTAIENT RÉELLEMENT CONFONDUES — MESURÉ AVANT D'ÉCRIRE UNE LIGNE, PAS DÉDUIT DE L'ÉCRAN.** `S.weightLog[].bf` était un champ **unique et sans provenance**, qui recevait indifféremment ce que la personne tape et le calcul US Navy. Conduit dans l'app servie, horloge gelée :
-
-| étape | estimation affichée | ⭐ **ce que contient la donnée** |
-|---|---|---|
-| cou 40,7 · taille 92,4 puis ✓ | ~19,6 % | `bf: 19.6` — ⛔ **une estimation enregistrée comme une mesure** |
-| il saisit **18,3 %** relevés sur sa balance | ~19,6 % | `bf: 18.3` ✅ |
-| il corrige son tour de taille (90) | ~17,9 % | ⛔⛔ **la case de saisie passe à 17,9** |
-| il appuie sur ✓ | ~17,9 % | ⛔⛔ **`bf: 17.9` — 18,3 A DISPARU** |
-
-👉 ***La valeur de la balance était écrasée sans un mot, et rien dans les données ne permettait de la retrouver.***
-
-**⭐⭐ LA CAUSE TENAIT EN SIX MOTS, ET C'ÉTAIT UNE SEULE LIGNE.** `_recalcNavyBf` finissait par `if(navy!=null){…i.value=navy;}` : l'estimation **s'écrivait dans le champ de saisie** à chaque frappe dans une mensuration. 👉 ***Une estimation qui s'écrit dans le champ de saisie CESSE d'être une estimation au premier ✓*** — plus rien ne la distingue de ce que la personne a tapé. Elle garde désormais **son propre affichage**, à côté et non dedans.
-
-**⭐⭐ LA CORRECTION DE DONNÉE EST UNE CLÉ À CÔTÉ, JAMAIS UNE MIGRATION.** `bfSrc` vaut `mesure` ou `estime` — et **son absence est une troisième réponse**, qui se lit *« on ne sait pas »*. ⛔ Les lignes d'avant gardent ce trou : on ne le comble pas par une valeur plausible (**règle d'or #16** — *une fausse précision est pire qu'un trou déclaré*). ⭐ **Ce n'est pas une duplication (R2)** : `bf` porte **le nombre**, `bfSrc` porte **sa nature** — c'est mot pour mot le patron de `coachMemoryMeta` en ft-v1227. ⛔ Et **rien n'est reclassé, rien n'est supprimé, aucun point de courbe n'est perdu**.
-
-**⛔⛔ LA GARANTIE DU BRIEF TIENT EN UNE PHRASE : une ESTIMATION ne peut écrire que sur un emplacement VIDE ou qui portait déjà une estimation.** ⚠️ Une provenance **inconnue** est donc **intouchable** — *elle peut parfaitement être une valeur de balance d'avant aujourd'hui, et le coût de l'erreur n'est pas symétrique* (**R29**) : refuser d'écraser une vieille estimation ne coûte rien, écraser une mesure réelle détruit une donnée. ⭐ Une **mesure**, elle, écrit toujours : c'est un acte explicite de la personne.
-
-**⭐ LES QUATRE ÉCRIVAINS DÉCLARENT TOUS LEUR PROVENANCE** — la carte, l'édition d'une pesée, le **bilan corporel** et l'**import de bilans**. *Un seul oubli et la donnée redevient muette là où on croit l'avoir rendue lisible.* ⛔ Et rouvrir une pesée **ne PROMEUT pas** une estimation en mesure : on ne requalifie que si le % a **réellement changé**. ⚠️ **Même piège attrapé à la sonde côté carte** : une ligne de provenance inconnue est préremplie, donc un ✓ machinal la promouvait en « mesure » — *on aurait fabriqué la provenance avec le mécanisme construit pour ne pas l'inventer*.
-
-**⚖️ D-013 EST TRANCHÉE PAR MICHEL → `D-014`.** Le champ **n'est prérempli que par une MESURE du jour consulté** — jamais par l'estimation, jamais par la valeur d'un autre jour. Sa raison, et elle est juste : ***un champ prérempli plus un ✓ machinal suffisaient à fabriquer une mesure que personne n'avait prise***. ⭐ Le parcours US Navy n'est pas perdu pour autant : un ✓ sur champ vide enregistre bien l'estimation — **étiquetée comme telle**.
-
-**📣 RÈGLE D'OR #11 — L'ÉCRAN CHANGE, ET C'EST VOULU.** Le sous-titre de la carte dit désormais les **deux** sans les mélanger : *« Estimation d'après tes mensurations : ~19,6 % · Dernière mesure saisie : 18,3 % — 20/09 »*. ⚠️ **Et le mot employé dépend de ce qu'on SAIT** : « mesure saisie » n'est dit que d'une ligne dont la provenance est écrite ; une ligne ancienne se dit « valeur notée ». *Un libellé plus précis que la donnée est un libellé faux.* ⚖️ **Pop-up : non** — rien n'est à *faire*, aucun repère ne bouge, et le changement ne peut que clarifier. ⭐ **Mais le champ qui ne se prérempli plus EST un repère qui bouge** : si Michel veut une ligne dans le Guide, elle est à ajouter — je ne la pose pas de moi-même.
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ **la formule US Navy ne bouge pas d'une constante**, homme et femme, figée par deux témoins · ⛔ **aucune migration, aucun champ supprimé, aucun point de courbe perdu** · ⛔ **aucune structure nouvelle** : une clé facultative s'ajoute, et elle part au cloud d'elle-même (`weightLog` est sérialisé en entier) · ⛔ **un champ VIDE ne vaut toujours pas « efface »** · ⛔ scanner, aliments, `foodLog`, Accueil, Séance, Milo, backend, Worker, quotas IA : **0 ligne** · ⛔ ni `app.js`, ni `state.js`, ni `screens.js`, ni `coach.js`, ni `setup.js`, ni `log.js`, ni `constants.js`, ni `index.html`, ni `Code.js`, ni `worker.js`, ni `supabase.js`.
-
-**⚠️ ET UN TÉMOIN À MOI A ROUGI SUR DU CODE PARFAITEMENT SAIN — LE PIÈGE DE L'ESPACE, 9ᵉ FOIS.** Mon motif cherchait `'Dernière mesure saisie'` dans une source dont je venais de retirer **tous** les espaces — y compris ceux **à l'intérieur des libellés**. 👉 ***Quand on nettoie la source, on nettoie le motif du même geste, sinon le garde mesure sa propre mise en forme.*** Et l'invariant juste n'était pas la forme du ternaire : c'est que **le choix du mot dépende de la provenance**, et que les deux libellés existent.
-
-Tests : **blocs B-CCCXLII (23 témoins de source) et B-CCCXLIII (26 conduits dans le navigateur)**, dans `tests/parcours/masse_grasse_source.js` — les **six cas A→F** du brief, plus le chemin direct de la garantie (**champ effacé + ✓**), une ligne **sans provenance**, une estimation rafraîchie par une estimation, une mesure qui écrase une estimation (sens autorisé), **le rechargement complet lu sur le DISQUE**, et **deux jours** qui coexistent. ⛔ **CONTRÔLE NÉGATIF : 25 mutations sur un arbre COPIÉ, 25 conformes**, banc sain **49 OK / 0 rouge avant ET après**, dont **deux qui doivent RESTER VERTES** (les mots cherchés cités dans un commentaire) et ⭐ **quatre DÉGUISÉES** — la même écriture par `setAttribute`, un garde qui rouvre l'inconnu, une revalidation qui conserve à tort, et une provenance annoncée d'office. ⭐ **Passe complète : 4615 ✅ / 0 ❌**, les **4 conditions vertes**, sur l'arbre fusionné `9203082d`.
-
-Fichiers : `tracking.js`, `tests/parcours/masse_grasse_source.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_masse_grasse.js` et `tools/mut_masse_grasse.py` (nouveaux), `docs/DECISIONS.md` (**D-013 → D-014**, plus **D-015**), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Un seul fichier servi : `tracking.js`.** sw.js ft-v1231. |
