@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1241`** (prochaine : `ft-v1242`).
+> **Version actuelle : `ft-v1242`** (prochaine : `ft-v1243`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,22 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1242 — 🧩 LOT 6 / ML-A · LE DROPSET SURVIT AU PROGRAMME** — premier micro-lot issu de l'audit Lot 6 (contrat séance / programme, lecture seule), commit fonctionnel `3c4031a9`, contre-vérifié, publication décidée par Michel.
+
+**ML-A : `ex.dropset` ne se perd plus lors du passage séance → programme → séance.**
+
+**AVANT (mesuré par une sonde locale sur master `dcc2ff43`).** Un exercice portant un dropset (bouton « 📉 Drop » de l'écran Séance, `applyDropset`) le perdait dans « 💾 Sauvegarder comme programme » (`saveAsProg`), et les deux chargeurs (`_loadProgVraiment`, `_loadProgDayVraiment`) ne le recopiaient pas non plus. Rechargé, l'écran n'affichait plus le dropset et les paliers redevenaient des séries normales, avec un repos entre chacun.
+
+**APRÈS.** Un seul propriétaire de la recopie, `_recopierDropset` (log.js), appelé aux trois endroits : champ présent → copie profonde entière (sous-champs inconnus compris, aucun alias entre programme et séance) ; champ absent → rien n'est créé. Aucun autre champ ne change (la liste exacte des champs est figée par témoin). Un exercice peut garder à la fois son superset et son dropset.
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : un dropset reste là où on l'avait mis. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ le type de série `D`, les `groupType` drop/pyramide (sans écrivain), les supersets, les notes de série, `_normalizeForceProg`, `_normalizeMiloSession`, `exs`/`exercises`, le cardio : **inchangés** · ⛔ les trois représentations du dropset ne sont **pas** unifiées · ⛔ `ex.dropset` n'est **pas** le futur contrat : les contraintes de Michel (méthodes et groupements série par série, Milo qui modifie une séance par opérations ciblées sur des identifiants stables, réalisé protégé par défaut) sont **consignées, non construites** — **D-029** et `IDEES-FUTURES.md` · ⛔ le bug superset vécu en salle n'a **pas** de cause démontrée et n'est pas traité ici · un programme sauvegardé AVANT cette version a déjà perdu son dropset (rien à récupérer). ⛔ Ni Worker, ni Apps Script. **0 appel réel.**
+
+Tests : **B-CDII (6 de source) + B-CDIII (28 conduits : dropset posé par la vraie modale, sauvegarde et chargement par l'écran, vrai rechargement, palier validé sans repos, programmes anciens sans dropset, liste exacte des champs, superset + dropset)** dans `tests/parcours/dropset_programme.js`, **34 OK / 0**. ⛔ **Contrôle négatif `tools/mut_ml_a.py` : 13/13 conformes** (M00 = le code d'avant ; M1→M3 un site oublié ; M4 valeur par défaut ; M5 dropset inventé ; M6 copie tronquée ; 5 déguisées : alias, pyramide oubliée, copie générique ×2, copie superficielle ; 1 commentaire qui doit rester vert). Passe complète sur `3c4031a9` : **5436 ✅ / 0 ❌**, 4 conditions vertes.
+
+Fichiers : `log.js` (`_recopierDropset` nouvelle, `saveAsProg`, `_loadProgVraiment`, `_loadProgDayVraiment`), `tests/parcours/dropset_programme.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_ml_a.js` et `tools/mut_ml_a.py` (nouveaux), `docs/DECISIONS.md` (D-029), `IDEES-FUTURES.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1242. |
 
 **ft-v1241 — 🗂️ FIABILISATION LOT 3 · L'HISTORIQUE EST RANGÉ PAR DATE ET LA RESTAURATION CLOUD NE FAIT PLUS DISPARAÎTRE DE SÉANCE (F03 + F03b + CL, puis 3B et 3C)** — troisième lot de la fiabilisation issue de l'audit forensique n°2 (session-B), commits fonctionnels `6c88da70` (Lot 3), `1f5c6740` (3B), `694ecfc7` (3C), deux contre-vérifications, publication décidée par Michel.
 
@@ -612,38 +628,3 @@ Fichiers : `coach.js` (`_seanceDepuisTexte` seule), `tests/parcours/seance_c1.js
 Tests : **B-CCCLXXXIV (4 de source) et B-CCCLXXXV (14 conduits)** dans `tests/parcours/milo_suites.js` pour D-027/D-028 ; banc ciblé PDF1+PDF1B+D-027/028 **97 OK / 0 rouge** ; contrôle négatif **13/13 conformes** sur les mutations neuves (D01 → D09 mordent toutes, chacune par au moins un témoin CONDUIT, dont trois déguisées ; 4 commentaires restent verts) ; non-régression AUTH1 25/0 · contrat FT→Milo 23/0 · D-021/D-022/D-024 42/0 · débrief 24/0 · Worker S2-B 49/0 · activité/provenance 54/0 · poids 78/0 · noyau Milo 12/12 · données toutes classées ; **passe complète 5143 ✅ / 0 ❌**, les 4 conditions vertes.
 
 Fichiers : `coach.js`, `tests/parcours/milo_suites.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_milo_pdf1.js`, `tools/mut_milo_pdf1.py`, `docs/DECISIONS.md` (D-027, D-028), `docs/MILO-PDF1.md` (§C), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md` — plus les 77 commits de la branche listés ci-dessus. sw.js ft-v1235. |
-
-**ft-v1234 — 🍽️ LA CARTE « CE QUE L'APP A APPRIS » AFFICHE TOUJOURS LES 5 REPAS DANS L'ORDRE DE LA JOURNÉE, ET UN REPAS SANS DONNÉES RESTE VISIBLE** — cas réel de Michel, au lendemain de ft-v1233 : *« les repas apparaissent dans le désordre selon les données disponibles »* — **Dîner → Déjeuner → Petit-déj → Collation 2**. Ses bornes : ⛔ ***« ne corrige pas au visuel sans comprendre »*** · ⛔ ***« ne modifie pas la logique métier des habitudes introduite en ft-v1233 »*** · ⛔ ***« évite de recopier cet ordre à plusieurs endroits ; si une structure canonique existe déjà, l'utiliser »***.
-
-**⛔⛔ LA CAUSE EST MESURÉE, ET CE N'EST AUCUN DES TRIS QU'ON SOUPÇONNE.** Ni par fréquence, ni par heure, ni alphabétique :
-
-| ce qu'on lisait | ce que c'était vraiment |
-|---|---|
-| `Object.keys(pa.habitudes)` dans `_blocApprisHTML` | les clés naissent de `Object.keys(parRepas)`… |
-| `parRepas` est rempli en parcourant `S.foodLog` | …donc dans l'ordre de **PREMIÈRE APPARITION** de chaque repas |
-
-👉 ***L'écran affichait les repas dans l'ordre où ils avaient été tapés la première fois.*** C'est la famille du `[0]` qui suppose un tri — *un affichage qui dépend de l'ordre de stockage change sans que rien n'ait changé* — **déjà fermée par ft-v1233 À L'INTÉRIEUR d'un repas** (le départage déterministe des aliments) **et restée ouverte ENTRE les repas**. ⭐ Le témoin qui le prouve est `B-CCCLI ⑨` : **inverser `S.foodLog` suffisait à retourner la carte**, sans qu'une seule donnée ait changé.
-
-**⛔⛔ SECOND DÉFAUT DU MÊME ENDROIT, ET C'EST L'AUTRE MOITIÉ DU BRIEF.** Un repas qui ne passe pas les seuils est simplement **absent** de `habitudes`, donc sa ligne **disparaissait**. 👉 ***Une ligne absente et une ligne vide ne disent pas la même chose : la première se lit « ce repas n'existe pas », la seconde « je ne sais pas encore ».*** C'est **R29** appliqué à l'affichage — on dit ce qu'on ne sait pas.
-
-**⭐⭐ RIEN N'EST INVENTÉ : L'ORDRE CANONIQUE EXISTAIT DÉJÀ.** `FOOD_MEALS` (`app.js`) est **déjà** en ordre de journée — `petitdej · collation · dejeuner · collation2 · diner` — et c'est **déjà lui** qui range les puces de l'écran d'ajout. On le **lit** (**R2**), on ne le recopie pas : *une deuxième liste d'ordre divergerait le jour où un repas est ajouté, et le désordre reviendrait par l'autre bout*. Il porte même son propre avertissement : *« un index qui dépend de l'ordre d'un tableau devient faux le jour où on trie ce tableau »*. ⛔ Au passage, le `LBL={petitdej:…}` local de `_blocApprisHTML` était une **2ᵉ source de vérité des libellés** : il disparaît.
-
-**⛔ L'ÉTAT VIDE N'INVENTE NI HEURE, NI ALIMENT, NI FRÉQUENCE — et sa formule est NEUTRE EXPRÈS.** Une ligne peut être vide pour **deux** raisons : le repas n'a pas assez de jours notés, **ou** il en a mais aucun aliment n'y revient assez. L'écran ne sait pas laquelle, donc il n'en nomme aucune — *un libellé plus précis que la donnée est un libellé faux*. ⭐ Et **aucune migration, aucun bouton** : la ligne se remplit d'elle-même au prochain rendu, dès que le journal franchit le seuil **existant** (témoin ⑫ : 2 jours → 3 jours, la ligne bascule seule).
-
-**⚠️ « AUTRE » N'EST PAS UN 6ᵉ REPAS**, et il n'a donc jamais de ligne vide : c'est le fourre-tout des lignes sans `meal` (import, très vieille entrée). Il ne s'affiche que s'il porte vraiment une habitude — **exactement ce que faisait le `LBL` d'avant**. *Le retirer en silence aurait fait disparaître des données réelles* (**R30**).
-
-**⛔⛔ LA LOGIQUE MÉTIER DE ft-v1233 NE BOUGE PAS D'UNE LIGNE**, et **7 témoins la lisent depuis `app.js`** : `_PA_MIN_JOURS` (toujours 3, non dupliqué), les **deux** filtres (repas **et** aliment), le comptage **en jours**, le départage par le nom, la règle des heures via `_afMealDefautHoraire`, l'unicité de cette fonction, et l'absence de toute fenêtre glissante. ⛔ **`app.js` : 0 ligne.**
-
-**⚖️ ET UNE DÉCISION ACTÉE N'EST PAS ROUVERTE (règle d'or #15), dite franchement.** Sous **3 jours notés**, la carte garde sa branche décidée en ft-v1021 — *« N jours notés, pas encore de quoi dégager une habitude »* — au lieu d'afficher 5 lignes vides. 👉 *Ce chantier corrige l'ORDRE d'une liste ; là, il n'y a pas de liste, donc pas de désordre à corriger.* ⭐ Le **cas A du brief** (« aucune donnée → les 5 repas en état vide ») est bien livré, dans sa forme atteignable : **journal noté mais aucun repas retenu**. Un journal totalement vide ne rend toujours **aucune carte** — inchangé. Si Michel veut les 5 lignes là aussi, c'est une ligne à décider, je ne la prends pas à sa place.
-
-**📣 RÈGLE D'OR #11 — L'ÉCRAN CHANGE, ET C'EST VOULU.** Des lignes **apparaissent** (les repas jusque-là muets) et l'ordre devient fixe. ⚖️ **Pop-up : non** — rien n'est à *faire*, et le changement ne peut que clarifier. ⭐ Mais **un repère bouge vraiment** : quelqu'un qui lisait sa carte y verra désormais 5 lignes au lieu de 2. Si Michel veut une ligne dans le Guide, elle est à ajouter — je ne la pose pas de moi-même.
-
-**⏭️ CE QUE ÇA NE FAIT PAS**, nommément : ⛔ `_PA_MIN_JOURS`, le comptage par jours, la sélection des aliments, la logique de fréquence, la règle des heures, `_afMealDefautHoraire()`, la population du journal, le « 33 jours / 76 », le tri historique : **0 ligne** · ⛔ `_ref100`, compte neuf, scanner, douane, `portionWeightG`, masse grasse, Corps & santé, Accueil, Séance, Milo, Worker, backend, onboarding : **0 ligne** · ⛔ ni `app.js`, ni `state.js`, ni `log.js`, ni `coach.js`, ni `setup.js`, ni `tracking.js`, ni `constants.js`, ni `index.html`, ni `style.css`, ni `Code.js`, ni `worker.js`.
-
-**⚠️ ET UN TÉMOIN DE ft-v1233 A ROUGI — LE MIEN, SUR DU CODE SAIN.** `B-CCCXLIX ⑮` figeait la **phrase** *« Pas encore d'habitude qui se dégage »* alors que sa garantie annoncée est *« la carte le DIT au lieu de rester muette »*. ⛔ **Il n'est pas affaibli** : la carte tient cette garantie **mieux** qu'avant — 5 repas nommés, chacun avec son état — donc il mesure désormais **les deux choses qui comptent** (le cadre n'est pas muet, et il NOMME chaque repas). 👉 ***Un témoin qui fige une formulation interdit d'améliorer ce qu'il protège*** — même famille que `B-CCCXXXVI ②`, qui figeait une signature. ⭐ L'ancienne phrase reste éprouvée par `B-CCCXLVIII ⑳` : elle vit toujours dans la source, comme **échec fermé** si `FOOD_MEALS` devenait introuvable.
-
-**⚠️⚠️ ET LE CONTRÔLE NÉGATIF A TROUVÉ UN TROU DANS MES PROPRES TÉMOINS — c'est exactement son métier.** Trois mutations rendaient **PLANTAGE** au lieu de **rouge**, parce que mes témoins déréférençaient `r.lignes[2]` sur une carte qui n'a plus que deux lignes. 👉 ***Un témoin qui plante au lieu de rougir ne dit plus lequel a échoué, et peut masquer les suivants*** — défaut déjà payé en ft-v1232. L'indice reste le sujet du test (c'est l'ORDRE qu'on mesure), mais son absence devient **une réponse**, pas une exception.
-
-Tests : **blocs B-CCCL (19 témoins de source) et B-CCCLI (20 conduits dans le navigateur)**, dans `tests/parcours/ordre_repas.js` — les **7 cas A→G** du brief, dont le journal **inversé**, l'ordre d'insertion **mélangé**, le passage **2 jours → 3 jours** sans intervention, le cas de Michel (petit-déjeuner saisi à midi : aliment affiché, heure refusée) et le **rechargement complet**. ⛔ **CONTRÔLE NÉGATIF : 21 mutations sur un arbre CLONÉ, 21 conformes, 0 ancre morte**, banc sain **39/0 avant ET après** — les **6 familles exigées au §6** chacune couverte (ordre d'insertion · repas disparu · alphabétique · par heure · par fréquence · ordre recopié), dont **cinq DÉGUISÉES** : ⭐⭐ **l'ordre canonique RECOPIÉ sur place, dans le bon ordre** — *l'écran reste juste, et la deuxième source de vérité est née* —, `FOOD_MEALS` redéclaré dans l'écran, une ligne vide qui récupère une heure, une ligne vide remplie du dernier aliment connu, et un gabarit dupliqué qui perd l'alignement de ft-v1031. ⭐ **M01 remet le code d'avant mot pour mot** : sans son rouge, rien de ce qui est écrit ici ne vaudrait. ⭐ **Passe complète : 4773 ✅ / 0 ❌**, les **4 conditions vertes**.
-
-Fichiers : `screens.js`, `tests/parcours/ordre_repas.js` (nouveau), `tests/parcours/habitudes_alim.js` (témoin ⑮ retourné), `tests/parcours/runner.js`, `tools/banc_ordre_repas.js` et `tools/mut_ordre_repas.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. ⛔ **Un seul fichier servi : `screens.js`.** sw.js ft-v1234. |
