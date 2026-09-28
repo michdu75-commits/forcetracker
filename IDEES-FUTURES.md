@@ -4,6 +4,33 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🧩 MÉTHODES ET GROUPEMENTS SÉRIE PAR SÉRIE · MILO QUI MODIFIE UNE SÉANCE PAR OPÉRATIONS CIBLÉES (contraintes de Michel, 28/09/2026)
+
+⛔ **RIEN DE CECI N'EST CONSTRUIT.** Ce sont des **contraintes de direction** posées par Michel avant
+le micro-lot ML-A (Lot 6), pour qu'aucun correctif ne fige un modèle qui les rendrait impossibles.
+Registre : **D-029** (`docs/DECISIONS.md`). Audit d'origine : Lot 6 (contrat séance / programme).
+
+- **Granularité** : une méthode (dégressive, progressive…) ou un groupement (superset…) pourra viser
+  **tout un exercice**, **plusieurs séries choisies** ou **une seule série** — et mêler dans un même
+  exercice des séries normales et des séries spéciales (S1-S2 normales, S3-S4 en superset, S4 seule en
+  dégressive ; S4 à la fois en superset et en méthode si le moteur le permet).
+- **Aujourd'hui (mesuré)** : le dropset vit sur l'exercice entier (`ex.dropset`), le superset aussi
+  (`group`/`groupType`), et `applyDropset` retire le superset. ⛔ `ex.dropset` n'est **pas** le futur
+  contrat : ML-A l'empêche seulement de se perdre séance → programme → séance.
+- **Milo** : il devra pouvoir modifier une séance **en cours**, même non créée par lui, par
+  **opérations ciblées** sur des **identifiants stables** (jamais une position ni un nom approché),
+  sans reconstruire la séance. Force Tracker reste propriétaire. **RÉALISÉ** protégé par défaut ·
+  **EN COURS** modification contrôlée · **PRÉVU** modifiable. Aucun élément non ciblé ne bouge, aucune
+  donnée saisie n'est écrasée implicitement.
+- **Principe de conservation** : une transformation préserve ce qu'elle ne comprend pas plutôt que de
+  reconstruire un sous-ensemble de champs (c'est exactement la famille de pertes trouvée par l'audit
+  Lot 6 : `saveAsProg` et les chargeurs recopient une liste fermée de champs).
+- ⚠️ **Prérequis mesurés à l'audit Lot 6** : trois représentations du dropset coexistent (type de série
+  `D`, `ex.dropset`, `groupType` drop/pyramide sans écrivain) ; aucune série n'a d'identifiant stable
+  aujourd'hui. *Les unifier est un chantier à part, qui attend une décision.*
+
+---
+
 ## 🗣️ LA TABLE DE SYNONYMES PARLE ANGLAIS — 81 cibles sans jumeau français (mesuré 08/09/2026, ft-v1170)
 
 **Le cas qui l'a révélé.** Michel importe son programme : *« Tirage vertical »* ressort en
