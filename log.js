@@ -4373,6 +4373,7 @@ async function finishWorkout(){
   const vol=_workVol({exs:S.wkt.exs,uniConv:1});
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),uniConv:1,synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
+  if(S.wkt.runId) sess.runId=S.wkt.runId;   // LOT 3C : la séance enregistrée garde l'identité de la séance en cours (voir `_assurerRunIdSeance`)
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{

@@ -5,7 +5,7 @@
 [!!] SUR UN ARBRE CLONE, JAMAIS SUR LE DEPOT (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
 M00 remet state.js, log.js, coach.js, setup.js et app.js tels qu'ils etaient AVANT le lot 3 (master b5069757, ft-v1240), mot pour mot.
-B01..B07 = LOT 3B (_recoverDraft) : B01 = dependance a S.sessions[0] reintroduite · B02 = correspondance volontairement vague.
+C1..C7 = LOT 3C (runId) : C1 = regenere au rechargement · C2 = non recopie · C3 = horloge acceptee · C4 = ancien brouillon jete · C5 = meme contenu.\n(Les mutations B01..B06 du Lot 3B visaient _seanceDuBrouillon, retiree au Lot 3C : elles n'ont plus d'objet.)
 M01 = `.slice(-1)[0]` reintroduit · M02 = `unshift` sans tri · M03 = « la liste la plus longue gagne »
 M04 = deduplication heuristique date + nombre d'exercices + premier exercice · M05 = plus de tri apres la fusion.
 Usage : python3 tools/mut_lot3.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges, pas seulement le premier)
@@ -29,11 +29,12 @@ ANNULE = "    { const _i=S.sessions.indexOf(sess); if(_i>=0) S.sessions.splice(_
 DATES = "function _cmpSeances(a,b){\n  const da=String(a&&a.date||''), db=String(b&&b.date||'');\n"
 GARDE_CONFLITS = "      _r.conflits.forEach(c=>{ const e=_empreinteSeance(c); if(!_vus.has(e)){ _vus.add(e); _anc.push(c); } });\n"
 CHARGE = "    S.sessions=_trierSeances(_lsJson('ft4_sessions',[]));"
-REC = "    if(_seanceDuBrouillon(draft)){localStorage.removeItem('ft4_wkt_draft');return;}\n"
-LIEN_FIND = "  return L.find(s=>{\n"
-LIEN_BORNE = "    return ecart>=0 && ecart<1000+_BROUILLON_MARGE_MS;\n"
-LIEN_FIGEE = "    if(figee) return +s.ts>=figee && Math.floor(Math.max(0,figee-t0-pause)/1000)===s.duration;\n"
-LIEN_PAUSE = "  const pause=+(draft.pausedTotal||0)||0, figee=+(draft.pausedAt||0)||0;\n"
+REC = "    if(_brouillonDejaEnregistre(draft)){localStorage.removeItem('ft4_wkt_draft');return;}\n"
+LIEN = "  return ((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).some(s=>s&&s.runId===r);\n"
+LIEN_SANS = "  if(!r) return false;\n"
+PERSIST_RUN = "  _assurerRunIdSeance();   // LOT 3C : AVANT toute écriture de `ft4_wkt` et du brouillon\n"
+COPIE_RUN = "  if(S.wkt.runId) sess.runId=S.wkt.runId;"
+CHARGE_WKT = "    S.wkt=_lsJson('ft4_wkt',null);"
 HEUR = ("if(out.some(s=>s.date===c.date&&(s.exs||[]).length===(c.exs||[]).length"
         "&&((s.exs||[])[0]||{}).name===((c.exs||[])[0]||{}).name)) return; ")
 
@@ -59,21 +60,19 @@ MUT = [
      [(ST, DATES, "function _cmpSeances(a,b){\n  const da=String(a&&a.date||today()), db=String(b&&b.date||today());\n")], 'GARDE'),
     ('M12 [deguisee] la variante du cloud n\'est plus gardee (conflit oublie)', [(SE, GARDE_CONFLITS, '')], 'GARDE'),
     ('M13 le chargement ne range plus l\'historique', [(ST, CHARGE, "    S.sessions=_lsJson('ft4_sessions',[]);")], 'GARDE'),
-    ('B01 [LOT 3B] dependance a S.sessions[0] reintroduite (lien fort, mais sur la premiere seulement)',
-     [(AP, LIEN_FIND, "  return [L[0]].find(s=>{\n")], 'GARDE'),
-    ('B01b [LOT 3B] ancienne regle remise : S.sessions[0], meme date, assez d\'exercices',
-     [(AP, REC, "    const lastSess=S.sessions&&S.sessions[0];if(lastSess&&lastSess.date===(draft.date||today())&&lastSess.exs&&lastSess.exs.length>=draft.exs.length){localStorage.removeItem('ft4_wkt_draft');return;}\n")], 'GARDE'),
-    ('B02 [LOT 3B] correspondance vague sur toute la liste : meme date + au moins autant d\'exercices',
-     [(AP, REC, "    if((S.sessions||[]).some(s=>s&&s.date===draft.date&&(s.exs||[]).length>=draft.exs.length)){localStorage.removeItem('ft4_wkt_draft');return;}\n")], 'GARDE'),
-    ('B03 [LOT 3B][deguisee] correspondance par CONTENU identique (date + exercices + series)',
-     [(AP, REC, "    if((S.sessions||[]).some(s=>s&&s.date===draft.date&&JSON.stringify((s.exs||[]).map(e=>[e.name,(e.sets||[]).map(x=>[x.kg,x.reps,!!x.done])]))===JSON.stringify(draft.exs.map(e=>[e.name,(e.sets||[]).map(x=>[x.kg,x.reps,!!x.done])])))){localStorage.removeItem('ft4_wkt_draft');return;}\n")], 'GARDE'),
-    ('B04 [LOT 3B][deguisee] borne basse retiree : une seance finie AVANT le debut du brouillon peut etre « lui »',
-     [(AP, LIEN_BORNE, "    return ecart<1000+_BROUILLON_MARGE_MS;\n")], 'GARDE'),
-    ('B05 [LOT 3B][deguisee] la pause en cours est ignoree (horloge jamais figee)', [(AP, LIEN_FIGEE, '')], 'GARDE'),
-    ('B06 [LOT 3B][deguisee] le temps de pause cumule est ignore',
-     [(AP, LIEN_PAUSE, "  const pause=0, figee=+(draft.pausedAt||0)||0;\n")], 'GARDE'),
-    ('[negatif 3B] commentaire citant S.sessions[0] et les champs du contenu dans _recoverDraft',
-     [(AP, REC, "    // const lastSess=S.sessions&&S.sessions[0]; lastSess.exs.length progLabel .sets .name\n" + REC)], 'OK'),
+    ('C1 [LOT 3C] runId regenere au rechargement', [(ST, CHARGE_WKT, CHARGE_WKT + "if(S.wkt)delete S.wkt.runId;")], 'GARDE'),
+    ('C2 [LOT 3C] runId non recopie dans la seance terminee', [(LO, COPIE_RUN, "  /* runId non recopie */")], 'GARDE'),
+    ('C3 [LOT 3C] runId different accepte sur simple correspondance d\'horloge',
+     [(AP, LIEN, "  return ((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).some(s=>s&&(s.runId===r||(+draft.startTs>0&&typeof s.duration==='number'&&(+s.ts-draft.startTs-(+draft.pausedTotal||0)-s.duration*1000)>=0&&(+s.ts-draft.startTs-(+draft.pausedTotal||0)-s.duration*1000)<6000)));\n")], 'GARDE'),
+    ('C4 [LOT 3C] ancien brouillon sans runId traite comme deja enregistre', [(AP, LIEN_SANS, "  if(!r) return true;\n")], 'GARDE'),
+    ('C5 [LOT 3C][deguisee] meme contenu (date + exercices + series) vaut identite',
+     [(AP, LIEN, "  return ((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).some(s=>s&&(s.runId===r||(s.date===draft.date&&JSON.stringify((s.exs||[]).map(e=>[e.name,(e.sets||[]).map(x=>[x.kg,x.reps])]))===JSON.stringify((draft.exs||[]).map(e=>[e.name,(e.sets||[]).map(x=>[x.kg,x.reps])])))));\n")], 'GARDE'),
+    ('C6 [LOT 3C][deguisee] persist pose runId APRES ft4_wkt (identite instable au rechargement)',
+     [(ST, PERSIST_RUN, ''), (ST, "    if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){\n      localStorage.setItem('ft4_wkt_draft'", "    if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){\n      _assurerRunIdSeance();\n      localStorage.setItem('ft4_wkt_draft'")], 'GARDE'),
+    ('C7 [LOT 3C][deguisee] runId pose des la creation de l\'objet vide (toute visite de l\'ecran Seance)',
+     [(ST, "    if(!ouverte) return;\n", "")], 'GARDE'),
+    ('[negatif 3C] commentaire citant l\'horloge et le contenu dans _recoverDraft',
+     [(AP, REC, "    // startTs duration pausedAt S.sessions[0] .exs .date _seanceDuBrouillon\n" + REC)], 'OK'),
     ('[negatif] commentaire citant tous les motifs cherches',
      [(LO, ANNULE, ANNULE + "    // S.sessions.shift(); S.sessions[0].synced=true; S.sessions.sort( sessions.length>S.sessions.length .slice(-1)[0]\n")], 'OK'),
 ]

@@ -26,6 +26,7 @@ const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); 
   await T.ecran(t, b, srv.address().port);
   T.source3b(t, ROOT, fs, path);            // LOT 3B : _recoverDraft relié par l'horloge
   await T.ecran3b(t, b, srv.address().port);
+  await T.ecran3c(t, b, srv.address().port);   // LOT 3C : identité runId brouillon → séance
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
   process.exit(ko ? 1 : 0);

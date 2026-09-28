@@ -9149,34 +9149,21 @@ window.closeReconnect=function(){try{document.getElementById('ov-reconnect')?.cl
 // ─── INIT ────────────────────────────────────────────────────
 load();
 // ─ Récupération brouillon après crash de finishWorkout ────────
-/* 🗂️ LOT 3B (28/09/2026) — CE BROUILLON EST-IL UNE SÉANCE DÉJÀ ENREGISTRÉE ? On le reconnaît par
-   son HORLOGE, jamais par sa position ni par son contenu.
-   ⛔ Avant : `S.sessions[0]` (même date, au moins autant d'exercices). Deux défauts mesurés par
-   l'écran : depuis le Lot 3, `S.sessions[0]` est la séance la plus RÉCENTE par date — une séance
-   datée d'hier, terminée alors qu'une séance d'aujourd'hui existe, n'était plus reconnue et son
-   brouillon revenait comme séance en cours (doublon) ; et, déjà sur master, une AUTRE séance du
-   même jour avec assez d'exercices faisait jeter le brouillon d'une séance jamais enregistrée (perte).
-   ⭐ Le lien : le brouillon est `S.wkt` tel qu'écrit par `persist()` — il porte `startTs` (1ʳᵉ
-   série validée), `pausedTotal` et `pausedAt`. `finishWorkout` calcule `duration` avec EXACTEMENT
-   cette horloge (`_wktElapsedMs`) et pose `ts` à l'instant de la fin. Une séance enregistrée est
-   celle de ce brouillon si elle a été finie APRÈS son début et si sa durée se recalcule depuis ces
-   champs à la seconde près. Aucune autre séance ne le peut : une seule séance tourne à la fois, et
-   une séance finie avant le début du brouillon échoue sur `ts`.
-   ⚠️ Sans `startTs` (aucune série validée), pas de lien : le brouillon est récupéré — un doublon
-   possible vaut mieux qu'une séance perdue. */
-const _BROUILLON_MARGE_MS=5000;   // délai entre le calcul de `duration` et celui de `ts` dans finishWorkout
-function _seanceDuBrouillon(draft){
-  const t0=+(draft&&draft.startTs)||0;
-  if(!(t0>0)) return null;
-  const pause=+(draft.pausedTotal||0)||0, figee=+(draft.pausedAt||0)||0;
-  const L=(typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[];
-  return L.find(s=>{
-    if(!s||s.importedHistory||typeof s.duration!=='number'||!(+s.ts>0)) return false;
-    if(draft.date&&s.date!==draft.date) return false;
-    if(figee) return +s.ts>=figee && Math.floor(Math.max(0,figee-t0-pause)/1000)===s.duration;
-    const ecart=(+s.ts-t0-pause)-s.duration*1000;
-    return ecart>=0 && ecart<1000+_BROUILLON_MARGE_MS;
-  })||null;
+/* 🗂️ LOT 3C (28/09/2026) — CE BROUILLON EST-IL UNE SÉANCE DÉJÀ ENREGISTRÉE ? Par son IDENTITÉ,
+   jamais par un indice.
+   ⛔ Historique, pour ne pas le refaire : master regardait `S.sessions[0]` (même date, assez
+   d'exercices) — perte d'un brouillon jamais enregistré dès qu'une autre séance du jour avait
+   assez d'exercices, doublon depuis le nouvel ordre du Lot 3. Le Lot 3B reliait le brouillon par
+   son horloge (`startTs`/`duration`) — réfuté : une séance d'un autre appareil apportée par
+   « Restaurer » pouvait la satisfaire et faire jeter un brouillon réel.
+   ⭐ Règle : un brouillon est « déjà enregistré » SI ET SEULEMENT SI une séance porte exactement
+   son `runId` (`_assurerRunIdSeance`, state.js ; recopié par `finishWorkout`). Sinon — `runId`
+   inconnu, ou brouillon ancien sans `runId` — on RÉCUPÈRE : un doublon possible vaut mieux
+   qu'un entraînement perdu. Aucune date, durée, heure ni contenu n'entre dans la décision. */
+function _brouillonDejaEnregistre(draft){
+  const r=draft&&draft.runId;
+  if(!r) return false;
+  return ((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).some(s=>s&&s.runId===r);
 }
 (function _recoverDraft(){
   try{
@@ -9185,8 +9172,8 @@ function _seanceDuBrouillon(draft){
     const draft=JSON.parse(draftStr);
     if(!draft||!draft.exs||!draft.exs.length)return;
     // Si S.wkt est null mais que le brouillon existe → finishWorkout a crashé
-    // Déjà enregistrée ? Reconnue par son horloge, où qu'elle soit dans la liste (LOT 3B).
-    if(_seanceDuBrouillon(draft)){localStorage.removeItem('ft4_wkt_draft');return;}
+    // Déjà enregistrée ? Seulement si une séance porte SON identité (`runId`) — LOT 3C.
+    if(_brouillonDejaEnregistre(draft)){localStorage.removeItem('ft4_wkt_draft');return;}
     // Restaurer S.wkt depuis le brouillon si pas déjà actif
     if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
       S.wkt=draft;

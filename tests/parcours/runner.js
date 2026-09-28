@@ -39667,9 +39667,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (`_cmpSeances`, state.js) ; la restauration cloud fait une UNION par identité forte `id`, sans
      aucune signature approximative. Contrôle négatif : `tools/mut_lot3.py`. */
   await require('./historique_cloud.js').ecran(t, b, PORT);
-  /* 🗂️ LOT 3B (session-B, 28/09/2026) — `_recoverDraft` reconnaît une séance déjà enregistrée par son
-     HORLOGE (`startTs`/`pausedTotal`/`pausedAt` ↔ `ts`/`duration`), plus par `S.sessions[0]`. */
+  /* 🗂️ LOT 3B (session-B, 28/09/2026) — `_recoverDraft` ne lit plus `S.sessions[0]` ; le lien par l'horloge du
+     3B a été remplacé par l'identité `runId` au Lot 3C (parcours du brouillon, toujours valides). */
   await require('./historique_cloud.js').ecran3b(t, b, PORT);
+  /* 🗂️ LOT 3C (session-B, 28/09/2026) — identité EXPLICITE `runId` : un brouillon n'est « déjà enregistré »
+     que si une séance porte exactement son `runId` ; sinon il est récupéré. Contrôle négatif : `tools/mut_lot3.py`. */
+  await require('./historique_cloud.js').ecran3c(t, b, PORT);
 
 await b.close(); srv.close();
 

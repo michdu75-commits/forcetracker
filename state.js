@@ -1023,11 +1023,36 @@ function _dateImportValide(d){
   if(s.slice(0,4)<'1990') return false;
   return t <= Date.now()+864e5;          // tolérance d'un jour : fuseaux
 }
+/* 🗂️ LOT 3C (28/09/2026) — L'IDENTITÉ D'UNE SÉANCE EN COURS : `S.wkt.runId`.
+   Le brouillon de secours (`ft4_wkt_draft`) doit pouvoir dire, au démarrage, « je suis déjà une
+   séance enregistrée » SANS rien deviner. Le Lot 3B le reconnaissait à son horloge (`startTs`,
+   durée) : la mini contre-vérification a construit, par le vrai bouton « Restaurer », une séance
+   d'un autre appareil qui satisfaisait ce critère — un brouillon jamais enregistré était jeté.
+   ⭐ `runId` est une identité, pas un indice : posé UNE fois sur la séance en cours, gardé tel quel
+   au rechargement (il vit dans `ft4_wkt`), à la pause et à la reprise, recopié par `finishWorkout`
+   dans la séance enregistrée. Une séance n'a le même `runId` qu'un brouillon que si elle EST ce
+   brouillon terminé. Il ne remplace pas `id` (l'identité d'une séance d'historique) : il relie
+   une séance en cours à la séance qu'elle devient.
+   ⚠️ POSÉ ICI, dans `persist()`, et AVANT l'écriture de `ft4_wkt` : c'est le seul passage de
+   toutes les écritures du brouillon, et le poser après `ft4_wkt` le ferait changer au
+   rechargement. Seulement pour une séance OUVERTE (`_seanceOuverte`) : l'objet vide que l'écran
+   Séance crée tout seul n'est pas une séance. Générateur : `_foodLineId()` (crypto, jamais
+   l'horloge) — s'il n'y a aucune source aléatoire, pas de `runId`, et le brouillon sera récupéré
+   au lieu d'être deviné. */
+function _assurerRunIdSeance(){
+  try{
+    if(typeof S==='undefined'||!S.wkt||S.wkt.runId) return;
+    const ouverte=(typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt.exs&&S.wkt.exs.length);
+    if(!ouverte) return;
+    const r=_foodLineId(); if(r) S.wkt.runId=r;
+  }catch(e){}
+}
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
   if(window._demoMode)return;
   // ⛔ un autre onglet a écrit depuis notre dernière sauvegarde → on ajoute, on n'écrase pas
   if(_ftAutreOnglet){ _ftAutreOnglet=false; _fusionnerAvecLeDisque(); }
+  _assurerRunIdSeance();   // LOT 3C : AVANT toute écriture de `ft4_wkt` et du brouillon
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_foodmode',S.foodMode||'');localStorage.setItem('ft4_fasting',S.fasting||'');localStorage.setItem('ft4_gender',S.gender);

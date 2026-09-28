@@ -334,20 +334,31 @@ module.exports.ecran = async function (t, b, PORT) {
    identique sur master, classé hors lot) ; les brouillons sans `startTs` (aucune série validée).
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 module.exports.source3b = function (t, ROOT, fs, path) {
-  console.log('\n═══ B-CCCXCIX (session-B). LOT 3B — le brouillon est relié à sa séance par l\'horloge, pas par la position (source) ═══');
+  /* ↪️ LOT 3C (28/09) : ce bloc vérifiait le lien par l'HORLOGE (Lot 3B), réfuté par la mini
+     contre-vérification. Il vérifie désormais le lien par IDENTITÉ (`runId`) — même nom de bloc,
+     même sujet : « comment le brouillon est relié à sa séance ». */
+  console.log('\n═══ B-CCCXCIX (session-B). LOT 3B/3C — le brouillon est relié à sa séance par son identité `runId`, jamais par un indice (source) ═══');
   const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
-  const ap = nu('app.js');
+  const ap = nu('app.js'), st = nu('state.js'), lo = nu('log.js');
   const i = ap.indexOf('(function _recoverDraft('), rec = i >= 0 ? ap.slice(i, ap.indexOf('})();', i)) : '';
-  const j = ap.indexOf('function _seanceDuBrouillon('), lien = j >= 0 ? ap.slice(j, ap.indexOf('\n}', j)) : '';
-  t('① `_recoverDraft` et `_seanceDuBrouillon` sont trouvées', !!rec && !!lien, rec.length + '/' + lien.length);
+  const j = ap.indexOf('function _brouillonDejaEnregistre('), lien = j >= 0 ? ap.slice(j, ap.indexOf('\n}', j)) : '';
+  const k = st.indexOf('function _assurerRunIdSeance('), cree = k >= 0 ? st.slice(k, st.indexOf('\n}', k)) : '';
+  const p0 = st.indexOf('function persist('), pe = p0 >= 0 ? st.slice(p0, st.indexOf("localStorage.setItem('ft4_wkt',", p0)) : '';
+  const f0 = lo.indexOf('async function finishWorkout('), fin = f0 >= 0 ? lo.slice(f0, lo.indexOf('S.sessions.unshift(sess)', f0)) : '';
+  t('① `_recoverDraft`, `_brouillonDejaEnregistre`, `_assurerRunIdSeance`, `persist`, `finishWorkout` sont trouvées', !!(rec && lien && cree && pe && fin), [rec, lien, cree, pe, fin].map(x => x.length).join('/'));
   t('② `_recoverDraft` ne lit plus AUCUNE position de la liste (`[0]`, `slice`, `at(`)', !!rec && !/sessions\s*(&&\s*S\.sessions)?\s*\[|\.slice\(|\.at\(/.test(rec), rec.slice(0, 200));
-  t('③ `_recoverDraft` passe par `_seanceDuBrouillon`', /_seanceDuBrouillon\(draft\)/.test(rec), '');
-  t('④ le lien lit l\'horloge du brouillon (`startTs`, `pausedTotal`, `pausedAt`) et celle de la séance (`ts`, `duration`)',
-    /startTs/.test(lien) && /pausedTotal/.test(lien) && /pausedAt/.test(lien) && /\.ts\b/.test(lien) && /\.duration\b/.test(lien), '');
-  t('⑤ ⛔ aucune signature approximative : ni nombre d\'exercices, ni premier exercice, ni séries, ni libellé',
-    !!lien && !/\.exs\b|\.exercises\b|\.sets\b|progLabel|\.name\b|\.volume\b/.test(lien), lien.slice(0, 200));
-  t('⑥ `_seanceDuBrouillon` n\'est déclarée qu\'une fois, dans app.js', (ap.match(/function _seanceDuBrouillon\(/g) || []).length === 1
-    && !['state.js', 'log.js', 'coach.js', 'setup.js', 'tracking.js', 'screens.js'].some(f => /function _seanceDuBrouillon\(/.test(nu(f))), '');
+  t('③ `_recoverDraft` décide par `_brouillonDejaEnregistre`, et seulement par elle', /_brouillonDejaEnregistre\(draft\)/.test(rec) && !/_seanceDuBrouillon|startTs|duration|pausedAt/.test(rec), '');
+  t('④ le lien est l\'égalité STRICTE des `runId`, sans runId → jamais « enregistré »', /s\.runId===r/.test(lien) && /if\(!r\) return false/.test(lien), lien);
+  t('⑤ ⛔ aucun indice dans le lien : ni horloge (`startTs`, `duration`, `ts`, pauses), ni date, ni contenu',
+    !!lien && !/startTs|duration|pausedAt|pausedTotal|\.ts\b|\.date\b|\.exs\b|\.exercises\b|\.sets\b|progLabel|\.name\b/.test(lien), lien);
+  t('⑥ le critère temporel du Lot 3B a disparu du code servi (`_seanceDuBrouillon`, `_BROUILLON_MARGE_MS`)',
+    !['app.js', 'state.js', 'log.js', 'coach.js', 'setup.js'].some(f => /_seanceDuBrouillon|_BROUILLON_MARGE_MS/.test(nu(f))), '');
+  t('⑦ `runId` naît de `_foodLineId()` (crypto), une seule fois (`S.wkt.runId` absent), et seulement pour une séance ouverte',
+    /_foodLineId\(\)/.test(cree) && /S\.wkt\.runId\) return/.test(cree) && /_seanceOuverte/.test(cree) && !/Date\.now|Math\.random/.test(cree), cree);
+  t('⑧ `persist` pose l\'identité AVANT d\'écrire `ft4_wkt` (sinon elle changerait au rechargement)', /_assurerRunIdSeance\(\)/.test(pe), '');
+  t('⑨ `finishWorkout` recopie `runId` dans la séance enregistrée, sans en inventer un', /if\(S\.wkt\.runId\) sess\.runId=S\.wkt\.runId/.test(fin) && !/_foodLineId|_assurerRunIdSeance/.test(fin), '');
+  t('⑩ chaque fonction n\'est déclarée qu\'une fois', (ap.match(/function _brouillonDejaEnregistre\(/g) || []).length === 1 && (st.match(/function _assurerRunIdSeance\(/g) || []).length === 1
+    && !/function _brouillonDejaEnregistre\(/.test(st + lo) && !/function _assurerRunIdSeance\(/.test(ap + lo), '');
 };
 
 module.exports.ecran3b = async function (t, b, PORT) {
@@ -464,6 +475,178 @@ module.exports.ecran3b = async function (t, b, PORT) {
       const e1 = await lire(X);
       t('[T5] une séance enregistrée au contenu IDENTIQUE (même date, même libellé, mêmes séries) mais finie avant le début du brouillon n\'est pas « lui » : brouillon récupéré',
         e1.active === 'Squat:1' && e1.sessions.length === 1, js(e1));
+      await fermer(X); }
+    const errs = tous.flatMap(X => X.errs);
+    t('[négatif] aucune erreur JavaScript pendant ces parcours', !errs.length, js(errs.slice(0, 3)));
+  } finally { for (const X of tous) await fermer(X); }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   🗂️ LOT 3C — IDENTITÉ EXPLICITE BROUILLON → SÉANCE TERMINÉE (`runId`) · session-B · 28/09/2026
+   La mini contre-vérification du 3B a construit, par le vrai bouton « Restaurer », une séance d'un
+   autre appareil qui satisfaisait le critère d'horloge : un brouillon jamais enregistré était jeté.
+   Désormais : `S.wkt.runId` (posé une fois par `persist`, recopié par `finishWorkout`) ; un brouillon
+   n'est « déjà enregistré » que si une séance porte EXACTEMENT son `runId`, sinon il est récupéré.
+   CONDUIT : validation d'une série (`.chk`), pause/reprise (`#wkt-pause-btn`), sélecteur de date,
+   « Terminer », « Restaurer mon compte » (Profil, serveur simulé), vrais rechargements.
+   OBSERVE : `S.wkt.runId`, `ft4_wkt`, `ft4_wkt_draft`, `runId` des séances enregistrées, séance active.
+   Arrêt brutal SIMULÉ comme au 3B (effacement du brouillon sans effet pendant la fin de séance) ;
+   perte de `ft4_wkt` SIMULÉE en l'écrivant à `null`.
+   NE COUVRE PAS : l'arrêt brutal avant l'écriture de `ft4_wkt` vide (séance finie encore active,
+   préexistant, hors lot) ; un navigateur sans aucune source aléatoire (pas de `runId` → brouillon
+   récupéré, par construction).
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+module.exports.ecran3c = async function (t, b, PORT) {
+  console.log('\n═══ B-CDI (session-B). LOT 3C — `runId` : même identité du début à la fin, et rien d\'autre ne vaut identité (écran conduit) ═══');
+  const js = x => JSON.stringify(x).slice(0, 260);
+  const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
+  const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test', ft4_email: 't@t.t',
+    ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_lms: moisPrec, ft4_ok: '1' };
+  const tous = [];
+  const ouvrir = async (seed) => {
+    const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris' });
+    const X = { cx, errs: [], cloud: [] };
+    await cx.route(/supabase\.co/, r => r.abort());
+    await cx.route(/script\.google\.com/, r => { let c = {}; try { c = r.request().postDataJSON() || {}; } catch (e) {} const u = r.request().url();
+      const rep = o => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
+      if (/test=1/.test(u)) return rep({ status: 'online' });
+      if (c.action === 'loadProfile') return rep({ status: 'ok', premium: false, profile: { name: 'Test', bw: 80, age: 40, gender: 'H', goal: 'force' }, sessions: JSON.parse(JSON.stringify(X.cloud)), prs: {} });
+      return rep({ status: 'error', error: 'simulé' }); });
+    await cx.route(/workers\.dev/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reply: 'Ok.', stopReason: 'end_turn', truncated: false, complete: true, continued: false }) }));
+    const pg = await cx.newPage(); X.pg = pg; pg.on('pageerror', x => X.errs.push(x.message));
+    const init = Object.assign({}, BASE);
+    Object.keys(seed || {}).forEach(k => { init[k] = typeof seed[k] === 'string' ? seed[k] : JSON.stringify(seed[k]); });
+    await pg.addInitScript(`(()=>{try{
+      const _r=Storage.prototype.removeItem; Storage.prototype.removeItem=function(k){ if(k==='ft4_wkt_draft'&&window.__perdre) return; return _r.call(this,k); };
+      if(sessionStorage.getItem('_l3c'))return; sessionStorage.setItem('_l3c','1'); localStorage.clear();
+      const D=${JSON.stringify(init)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k]));}catch(e){}})();`);
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
+    tous.push(X); return X;
+  };
+  const GARDER = /ov-session-end|ov-confirm|ov-restore-account/;
+  const clic = async (pg, sel) => {
+    for (let k = 0; k < 6; k++) {
+      await pg.evaluate(g => document.querySelectorAll('.overlay.open').forEach(o => { if (!new RegExp(g).test(o.id)) o.classList.remove('open'); }), GARDER.source);
+      const h = (await pg.evaluateHandle(s => [...document.querySelectorAll(s)].find(e => e.offsetParent !== null) || null, sel)).asElement();
+      if (!h) { await pg.waitForTimeout(250); continue; }
+      try { await h.evaluate(x => x.scrollIntoView({ block: 'center' })); await h.click({ timeout: 3000 }); return true; } catch (e) { await pg.waitForTimeout(200); }
+    }
+    return false;
+  };
+  const lire = X => X.pg.evaluate(() => { let w = null, d = null; try { w = JSON.parse(localStorage.getItem('ft4_wkt')); } catch (e) {} try { d = JSON.parse(localStorage.getItem('ft4_wkt_draft')); } catch (e) {}
+    const actif = o => !!(o && o.exs && o.exs.length);
+    return { runMem: S.wkt && S.wkt.runId || null, runDisque: w && w.runId || null, runBrouillon: d && d.runId || null, active: actif(S.wkt), brouillon: actif(d),
+      sessions: (S.sessions || []).map(s => ({ date: s.date, label: s.progLabel || '', runId: s.runId || null })), startTs: d && d.startTs || (S.wkt && S.wkt.startTs) || null,
+      exsBrouillon: d && d.exs || null }; });
+  const valider = async (X, ei) => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); const ok = await clic(X.pg, 'button.chk[onclick="toggleSet(' + (ei || 0) + ',0)"]');
+    await X.pg.waitForTimeout(300); await X.pg.evaluate(() => { try { stopRest(); } catch (e) {} }); return ok; };
+  const terminerAvecArret = async (X, date) => {
+    await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300);
+    if (date) await X.pg.evaluate(d => { const i = document.getElementById('s-date'); i.value = d; i.dispatchEvent(new Event('change', { bubbles: true })); }, date);
+    await X.pg.evaluate(() => { window.__perdre = true; });
+    const ok = await clic(X.pg, 'button[onclick="finishWorkout()"]'); await X.pg.waitForTimeout(2200);
+    await X.pg.evaluate(() => { try { closeSessionEnd(); } catch (e) {} }); return ok;
+  };
+  const redemarrer = async X => { await X.pg.reload(); await X.pg.waitForTimeout(1500); return lire(X); };
+  const restaurer = async X => { await X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); openProfil(); }); await X.pg.waitForTimeout(400);
+    const a = await clic(X.pg, '#btn-restore-cloud'); await X.pg.waitForTimeout(300); await X.pg.fill('#restore-email-inp', 't@t.t'); const c = await clic(X.pg, '#restore-account-btn');
+    await X.pg.waitForFunction(() => !document.querySelector('#ov-restore-account.open'), null, { timeout: 8000 }).catch(() => {}); await X.pg.waitForTimeout(700); return a && c; };
+  const perdreWkt = X => X.pg.evaluate(() => localStorage.setItem('ft4_wkt', 'null'));
+  const fermer = async X => { try { await X.cx.close(); } catch (e) {} };
+  const J = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }); };
+  const D0 = J(0), D1 = J(1);
+  const EX = (n) => ({ name: n, sets: [{ kg: 100, reps: 5, type: 'N', done: false, rm1: 0 }] });
+  const W = () => ({ date: D0, progLabel: 'Push A', exs: [EX('Squat')] });
+  const ETR = (o) => Object.assign({ date: D0, progLabel: 'Autre appareil', exs: [{ name: 'Tractions', sets: [{ kg: 0, reps: 8, type: 'N', done: true, rm1: 0 }] }], volume: 0, synced: true, startHour: 9 }, o);
+  const UUID = /^[0-9a-f-]{32,36}$/;
+  try {
+    // ── T1 parcours normal + T10 ─────────────────────────────────────────────────────────────
+    { const V = await ouvrir({});
+      await clic(V.pg, '#nb-log'); await V.pg.waitForTimeout(400); await V.pg.evaluate(() => persist()); const v0 = await lire(V);
+      t('[T1] l\'objet VIDE que l\'écran Séance crée tout seul n\'est pas une séance : aucune identité', !v0.runMem && !v0.runDisque && !v0.runBrouillon, js(v0));
+      await fermer(V); }
+    { const X = await ouvrir({ ft4_wkt: W() });
+      const e0 = await lire(X);
+      await valider(X); const e1 = await lire(X);
+      t('[T1] une séance ouverte (un exercice) a UNE identité (crypto), la même en mémoire, dans `ft4_wkt` et dans le brouillon ; valider une série ne la change pas',
+        UUID.test(e0.runMem || '') && e1.runMem === e0.runMem && e1.runDisque === e1.runMem && e1.runBrouillon === e1.runMem, js([e0.runMem, e1.runMem, e1.runDisque, e1.runBrouillon]));
+      const e2 = await redemarrer(X);
+      t('[T1] après un vrai rechargement : MÊME `runId` (mémoire, disque, brouillon)', e2.runMem === e1.runMem && e2.runDisque === e1.runMem && e2.runBrouillon === e1.runMem, js([e1.runMem, e2.runMem]));
+      await X.pg.evaluate(() => { S.wkt.exs.push({ name: 'Développé Couché', sets: [{ kg: 80, reps: 6, type: 'N', done: false, rm1: 0 }] }); persist(); });
+      await valider(X, 1); const e3 = await lire(X);
+      t('[T1] ajouter un exercice et valider une série ne change pas l\'identité', e3.runMem === e1.runMem && e3.runBrouillon === e1.runMem, js([e1.runMem, e3.runMem]));
+      await terminerAvecArret(X, null); const e4 = await lire(X);
+      t('[T1] « Terminer » : la séance enregistrée porte le `runId` de la séance en cours ; brouillon resté (arrêt brutal simulé)',
+        e4.sessions.length === 1 && e4.sessions[0].runId === e1.runMem && e4.runBrouillon === e1.runMem && !e4.active, js(e4.sessions) + ' · brouillon ' + e4.runBrouillon);
+      const e5 = await redemarrer(X);
+      t('[T1] au redémarrage : reconnue par son `runId`, aucune séance active recréée, brouillon effacé', !e5.active && !e5.brouillon && e5.sessions.length === 1, js(e5));
+      const e6 = await redemarrer(X);
+      t('[T10] un rechargement de plus : état stable', JSON.stringify(e6) === JSON.stringify(e5) && !e6.active, js(e6));
+      await fermer(X); }
+    // ── T2 rétroactive : B récente déjà là, A datée d'hier ─────────────────────────────────────────
+    { const B = ETR({ id: 1700000000001, ts: Date.now() - 5400000, duration: 1800, progLabel: 'Pull B', runId: 'run-de-b' });
+      const X = await ouvrir({ ft4_sessions: [B], ft4_wkt: W() });
+      await valider(X); const r = (await lire(X)).runMem; await terminerAvecArret(X, D1); const e0 = await lire(X); const e1 = await redemarrer(X);
+      const A = e1.sessions.find(s => s.label === 'Push A');
+      t('[T2] séance d\'hier terminée après une séance d\'aujourd\'hui : reconnue par son `runId` (≠ celui de B), indépendamment de l\'ordre',
+        !!A && A.date === D1 && A.runId === r && r !== 'run-de-b' && e1.sessions[0].label === 'Pull B' && !e1.active && !e1.brouillon && e0.runBrouillon === r, js(e1.sessions));
+      await fermer(X); }
+    // ── T3 pause / reprise ────────────────────────────────────────────────────────────────────
+    { const X = await ouvrir({ ft4_wkt: W() });
+      await valider(X); const r = (await lire(X)).runMem;
+      await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(800); const p1 = await lire(X);
+      const p2 = await redemarrer(X);
+      await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(800); const p3 = await lire(X);
+      t('[T3] pause, rechargement pendant la pause, reprise : `runId` inchangé à chaque étape', [p1.runMem, p2.runMem, p3.runMem, p1.runBrouillon, p3.runBrouillon].every(x => x === r) && UUID.test(r || ''), js([r, p1.runMem, p2.runMem, p3.runMem]));
+      await terminerAvecArret(X, null); const e1 = await redemarrer(X);
+      t('[T3] terminée après pause/reprise : reconnue par son `runId`, aucune séance active', !e1.active && !e1.brouillon && e1.sessions.length === 1 && e1.sessions[0].runId === r, js(e1));
+      await fermer(X); }
+    // Brouillon réel d'une séance EN COURS jamais terminée, puis séances étrangères apportées par « Restaurer ».
+    const etrangeres = async (nom, fab, attendu) => {
+      const X = await ouvrir({ ft4_wkt: W() });
+      await valider(X); const e0 = await lire(X);
+      X.cloud = fab(e0);
+      const ok = await restaurer(X); const e1 = await lire(X);
+      await perdreWkt(X); const e2 = await redemarrer(X); const e3 = await redemarrer(X);
+      t(nom, ok && e1.sessions.length === X.cloud.length && (attendu === 'recupere'
+          ? (e2.active && e2.runMem === e0.runMem && e2.brouillon && JSON.stringify(e3) === JSON.stringify(e2))
+          : (!e2.active && !e2.brouillon && JSON.stringify(e3) === JSON.stringify(e2))),
+        'runId ' + e0.runMem + ' · cloud ' + js(X.cloud.map(s => s.runId)) + ' · après ' + js({ active: e2.active, runMem: e2.runMem, brouillon: e2.brouillon }));
+      await fermer(X); };
+    const d = 1200;
+    // ── T4 séance étrangère qui satisfait EXACTEMENT l'ancien critère d'horloge (le faux match du 3B) ─────
+    await etrangeres('[T4] « Restaurer » apporte une séance d\'un autre appareil (autre `runId`) qui satisfait l\'ancien critère d\'horloge → le brouillon est RÉCUPÉRÉ',
+      e => [ETR({ id: 1700000000101, ts: e.startTs + 2000 + d * 1000, duration: d, runId: 'run-autre-appareil' })], 'recupere');
+    // ── T5 identique sportivement : même contenu, même date, même libellé, horloge compatible, autre runId ─
+    await etrangeres('[T5] séance restaurée IDENTIQUE sportivement (mêmes exercices, séries, date, libellé, horloge) mais autre `runId` → brouillon récupéré',
+      e => [Object.assign(ETR({ id: 1700000000102, ts: e.startTs + 1000 + d * 1000, duration: d, runId: 'run-jumeau' }), { progLabel: 'Push A', exs: JSON.parse(JSON.stringify(e.exsBrouillon)) })], 'recupere');
+    // ── T6 deux candidats d'horloge compatibles, aucun avec le runId du brouillon ─────────────────────
+    await etrangeres('[T6] deux candidats d\'horloge compatibles, aucun ne porte le `runId` du brouillon → brouillon récupéré',
+      e => [ETR({ id: 1700000000103, ts: e.startTs + 1000 + d * 1000, duration: d, runId: 'run-x' }), ETR({ id: 1700000000104, ts: e.startTs + 3000 + d * 1000, duration: d, runId: 'run-y', progLabel: 'Autre 2' })], 'recupere');
+    // ── T7 le même runId est réellement présent (cette séance a été terminée ailleurs, puis restaurée) ──
+    await etrangeres('[T7] une séance restaurée porte EXACTEMENT le `runId` du brouillon (même instance, terminée) → brouillon NON récupéré',
+      e => [ETR({ id: 1700000000105, ts: Date.now(), duration: 60, runId: e.runMem, progLabel: 'Push A' })], 'enregistre');
+    // ── T8 ancien brouillon SANS runId, et une séance qui satisfait à la fois l'horloge ET le contenu ──
+    { const st0 = Date.now() - 30 * 60000;
+      const draft = { date: D0, progLabel: 'Push A', exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, type: 'N', done: true, rm1: 0, at: 0 }] }], startTs: st0, pausedTotal: 0, pausedAt: null, startHour: 9 };
+      const S1 = Object.assign(ETR({ id: 1700000000106, ts: st0 + 1000 + d * 1000, duration: d }), { progLabel: 'Push A', exs: JSON.parse(JSON.stringify(draft.exs)) });
+      const X = await ouvrir({ ft4_sessions: [S1], ft4_wkt: 'null', ft4_wkt_draft: draft });
+      const e1 = await lire(X);
+      await X.pg.evaluate(() => persist()); const e2 = await lire(X);
+      t('[T8] ancien brouillon SANS `runId` (mise à jour de l\'app en pleine séance) : récupéré, même face à une séance qui satisfait horloge et contenu',
+        e1.active && e1.sessions.length === 1, js(e1));
+      t('[T8] … et il reçoit alors SON identité à la sauvegarde suivante (il redevient une séance moderne)', UUID.test(e2.runMem || '') && e2.runBrouillon === e2.runMem && e2.runDisque === e2.runMem, js([e2.runMem, e2.runBrouillon]));
+      await fermer(X); }
+    // ── T9 anciennes séances sans runId ─────────────────────────────────────────────────────────
+    { const old = [ETR({ id: 1600000000001, ts: 1600000000001, date: J(10), duration: 1800 }), ETR({ id: 1600000000002, ts: 1600000000002, date: J(20), duration: 1800 })];
+      const X = await ouvrir({ ft4_sessions: old, ft4_wkt: W() });
+      const e0 = await lire(X); await valider(X); const r = (await lire(X)).runMem;
+      await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); await clic(X.pg, 'button[onclick="finishWorkout()"]'); await X.pg.waitForTimeout(2200);
+      await X.pg.evaluate(() => { try { closeSessionEnd(); } catch (e) {} });
+      const e1 = await redemarrer(X);
+      t('[T9] anciennes séances sans `runId` : chargées sans erreur, jamais enrichies d\'un `runId` inventé ; la nouvelle séance porte le sien',
+        e0.sessions.length === 2 && e0.sessions.every(s => s.runId === null) && e1.sessions.length === 3 && e1.sessions.filter(s => s.runId === null).length === 2
+        && e1.sessions.filter(s => s.runId === r).length === 1 && !e1.active, js(e1.sessions));
       await fermer(X); }
     const errs = tous.flatMap(X => X.errs);
     t('[négatif] aucune erreur JavaScript pendant ces parcours', !errs.length, js(errs.slice(0, 3)));
