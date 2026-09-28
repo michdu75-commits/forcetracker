@@ -8766,6 +8766,7 @@ function _loadProgDayVraiment(progIdx,dayIdx){
       };
     })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
+    _recopierDropset(e,obj);                                              // LOT 6 / ML-A
     return obj;
   })};
   /* 🏃 ft-v1168 — LE CARDIO PART DANS SON BLOC, Y COMPRIS POUR UN PROGRAMME IMPORTÉ AVANT.
@@ -9085,6 +9086,23 @@ function renderProgModal(){
     if(inp&&!inp.value)inp.value='';
   }
 }
+/* 🧩 LOT 6 / ML-A — LE DROPSET TRAVERSE LE PROGRAMME (28/09/2026).
+   ⛔ DÉFAUT MESURÉ (audit Lot 6, sonde locale) : un exercice portant `ex.dropset` (posé par
+   `applyDropset`) le perdait à la sauvegarde en programme ; les deux chargeurs ne le recopiaient
+   pas non plus. Rechargé, le dropset n'était plus affiché et les paliers redevenaient des séries
+   normales, avec un repos entre chacun. Même famille que la note (ft-v… « elle manquait ICI
+   seulement ») : une copie champ par champ supprime tout ce qu'elle ne nomme pas (R4).
+   ⭐ UN SEUL PROPRIÉTAIRE pour les trois sites (`saveAsProg`, `_loadProgVraiment`,
+   `_loadProgDayVraiment`) — sinon la même omission revient sur l'un des trois (R2).
+   ⛔ Champ présent → recopié EN ENTIER (copie profonde : aucun alias entre programme et séance,
+   aucun sous-champ trié). Champ absent → rien n'est créé. `ex.dropset` n'est PAS le futur modèle
+   des méthodes (série par série à terme) : c'est seulement la représentation actuelle, qu'on
+   empêche de perdre. Le type de série `D` et les `groupType` drop/pyramide ne sont pas touchés. */
+function _recopierDropset(src,dst){
+  if(!src||!dst||src.dropset===undefined)return dst;
+  dst.dropset=JSON.parse(JSON.stringify(src.dropset));
+  return dst;
+}
 function saveAsProg(){
   const name=(document.getElementById('prog-name-inp').value||'').trim();
   if(!name){toast('Donne un nom au programme','error');return;}
@@ -9098,6 +9116,7 @@ function saveAsProg(){
       const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))};
       if(ex.note)o.note=String(ex.note).slice(0,300);
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
+      _recopierDropset(ex,o);                                           // LOT 6 / ML-A
       return o;
     })
   };
@@ -9174,6 +9193,7 @@ function _loadProgVraiment(idx){
         };
       })};
       if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
+      _recopierDropset(e,obj);                                              // LOT 6 / ML-A
       return obj;
     })
   };

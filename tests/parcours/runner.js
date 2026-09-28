@@ -39673,6 +39673,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🗂️ LOT 3C (session-B, 28/09/2026) — identité EXPLICITE `runId` : un brouillon n'est « déjà enregistré »
      que si une séance porte exactement son `runId` ; sinon il est récupéré. Contrôle négatif : `tools/mut_lot3.py`. */
   await require('./historique_cloud.js').ecran3c(t, b, PORT);
+  /* 🧩 LOT 6 / ML-A (session-B, 28/09/2026) — `ex.dropset` ne se perd plus séance → programme → séance :
+     un seul propriétaire de la recopie (`_recopierDropset`, log.js) appelé par `saveAsProg` et les deux
+     chargeurs ; présent → copie profonde entière, absent → rien. Contrôle négatif : `tools/mut_ml_a.py`. */
+  await require('./dropset_programme.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40493,6 +40497,7 @@ require('./fil_coach_lot1.js').source(t, ROOT, fs, path);
 require('./travail_existant.js').source(t, ROOT, fs, path);
 require('./historique_cloud.js').source(t, ROOT, fs, path);
 require('./historique_cloud.js').source3b(t, ROOT, fs, path);
+require('./dropset_programme.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
