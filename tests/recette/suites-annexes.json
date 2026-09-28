@@ -1,0 +1,20 @@
+{
+  "_lisez_moi": "Suites exécutées par `python3 tools/recette_annexe.py` (le bloc annexe de la recette, D-030). Aucune n'est dans la passe complète ; la passe ne les remplace pas, elles ne remplacent pas la passe. `fin` = la ligne de total attendue : si elle manque, la suite est classée ERREUR D'INFRASTRUCTURE (une suite interrompue ressemble à une suite verte).",
+  "suites": [
+    {"id": "calculs",          "commande": ["node", "tests/calculs/runner.js"],          "fin": "TOTAL LINÉAIRE : \\d+ ✅ · \\d+ ❌", "couvre": "formules fondatrices : 1RM, TDEE, macros, récup, badges, cycle"},
+    {"id": "muscles",          "commande": ["node", "tests/muscles/runner.js"],          "fin": "^[✅❌] \\d+/\\d+$", "couvre": "muscles travaillés sur tout le catalogue"},
+    {"id": "croises",          "commande": ["node", "tests/croises/runner.js"],          "fin": "^[✅❌] \\d+/\\d+$", "couvre": "croisements catalogue × règles de classement"},
+    {"id": "dates",            "commande": ["node", "tests/dates/runner.js"],            "fin": "^[✅❌] \\d+/\\d+$", "couvre": "jour du téléphone, jamais de Greenwich — app ET fixtures de test"},
+    {"id": "calendrier",       "commande": ["node", "tests/calendrier/runner.js"],       "fin": "Total \\d+ · ✅ \\d+ · ❌ \\d+", "couvre": "calendrier de l'Accueil"},
+    {"id": "calendrier-milo",  "commande": ["node", "tests/calendrier-milo/runner.js"],  "fin": "^[✅❌] \\d+/\\d+$", "couvre": "jours donnés à Milo, marqueur de cache du contexte et du Worker"},
+    {"id": "anneau",           "commande": ["node", "tests/anneau/runner.js"],           "fin": "^[✅❌] \\d+/\\d+$", "couvre": "anneau de récup, check-in, prénom"},
+    {"id": "questionnaire",    "commande": ["node", "tests/questionnaire/runner.js"],    "fin": "^[✅❌] \\d+/\\d+$", "couvre": "questionnaire coach, reprise sans reposer les questions"},
+    {"id": "discussions",      "commande": ["node", "tests/discussions/runner.js"],      "fin": "^[✅❌] \\d+/\\d+$", "couvre": "fil de discussion, rangement, taille du prompt"},
+    {"id": "donnees",          "commande": ["node", "tests/donnees/runner.js"],          "fin": "^(✅ Toutes les données sont classées\\.|❌ ÉCHEC)$", "couvre": "toute donnée chargée est classée face à Milo (R4a)"},
+    {"id": "milo-noyau",       "commande": ["node", "tests/milo/runner.js"],             "fin": "Total \\d+ · ✅ \\d+ · ❌ \\d+", "couvre": "noyau de Milo (1er niveau) : présence des règles critiques"},
+    {"id": "seance-unicite",   "commande": ["node", "tools/banc_seance_unicite.js"],     "fin": "──── \\d+ OK / \\d+ rouge ────", "couvre": "une réponse de Milo = une séance = une carte (MILO-SEANCE-01)"},
+    {"id": "nutri-proprietes", "commande": ["node", "tools/banc_nutri_proprietes.js"],   "fin": "──── \\d+ OK / \\d+ rouge ────", "couvre": "invariants et photographies du moteur nutritionnel (gel du 13/09)"},
+    {"id": "s2b-worker",       "commande": ["node", "tools/banc_s2b_worker.js"],         "fin": "\\d+ OK / \\d+ rouge", "couvre": "route de sauvegarde du Worker exécutée (réseau simulé)"},
+    {"id": "pwa-offline",      "commande": ["node", "tests/recette/pwa_offline.js"],     "fin": "──── \\d+ OK / \\d+ rouge ────", "couvre": "vrai service worker : installation, coupure réseau, rechargement"}
+  ]
+}

@@ -32517,8 +32517,8 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     o.editSansGeste={q:e9.q, u:e9.u, kcal:e9.kcal};
 
     /* ⑩ LE REJEU D'UN REPAS ne tue plus la portion */
-    const hier=new Date(Date.now()-86400000).toISOString().slice(0,10);
-    const av=new Date(Date.now()-2*86400000).toISOString().slice(0,10);
+    const hier=(()=>{const x=new Date();x.setDate(x.getDate()-1);return today(x.getTime());})();   // RECETTE-01 : le jour de la PAGE, pas celui de Greenwich
+    const av=(()=>{const x=new Date();x.setDate(x.getDate()-2);return today(x.getTime());})();
     S.foodLog=[{date:hier,meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,ts:1001,
                 v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null},
                {date:av,meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,ts:1002,
@@ -36247,7 +36247,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     S.sessions=seances(10);
     S.coachQuiz={answers:{},confirmedAt:{}};
     S.registre={facts:{},observations:[],updatedAt:'',gapSkips:{},confirmSkips:{},gapForce:null,
-                lastObsAt:new Date(Date.now()+3*864e5).toISOString().slice(0,10)};
+                lastObsAt:(()=>{const x=new Date();x.setDate(x.getDate()+3);return today(x.getTime());})()};   // RECETTE-01 : jour de la page
     o.gapFutur=champ(_pendingGap);
 
     /* ── LE GARDE DES SÉANCES, AU BORD (2 ≠ 3) ── */
@@ -39479,7 +39479,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     /* L'HISTORIQUE, saisi par les vraies portes, sur deux jours passés — c'est la condition
        d'entrée de `_repasHabituels`, donc l'usage NORMAL de « repas d'habitude ». */
     for(const recul of [4,2]){
-      journalAllerA(new Date(Date.now()-recul*864e5).toISOString().slice(0,10)); await pause(60);
+      journalAllerA((()=>{const x=new Date();x.setDate(x.getDate()-recul);return today(x.getTime());})()); await pause(60);   // RECETTE-01 : jour de la page
       for(const [nom,kcal] of [['PAIN',260.6],['OEUF',150.3],['JUS',90.9]]){
         if(typeof openAddFood==='function') openAddFood(); await pause(35);
         set('af-desc',nom); set('af-kcal',kcal); set('af-prot',10.4); set('af-carbs',20.7); set('af-fat',5.2);
@@ -39487,7 +39487,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
         addFoodEntry(); await pause(35);
       }
     }
-    journalAllerA(new Date().toISOString().slice(0,10)); await pause(100);
+    journalAllerA(today()); await pause(100);   // RECETTE-01 : était le jour UTC → faux rouges entre 00 h et 02 h
     if(typeof renderNutrition==='function') renderNutrition();
     renderFoodJournal(); await pause(220);
 

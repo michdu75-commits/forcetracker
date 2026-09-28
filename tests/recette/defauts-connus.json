@@ -1,0 +1,21 @@
+{
+  "_lisez_moi": "Rouges ACCEPTÉS par la commande `python3 tools/recette_annexe.py`. Chaque entrée nomme la suite, le libellé EXACT du témoin, son statut, la raison et la référence. Un libellé qui change n'est plus reconnu : il redevient un ÉCHEC (on ne masque rien par approximation). Statuts : « DÉFAUT CONNU » = défaut réel, écrit, dont la correction attend une décision ; « TÉMOIN PÉRIMÉ » = témoin qui ne mesure plus la bonne chose, en attente de réparation. Un rouge absent de cette liste fait échouer la commande.",
+  "defauts": [
+    {
+      "suite": "discussions",
+      "temoin": "le coût reste borné : « maison » sous 57 000 et « salle » sous 62 000 caractères",
+      "statut": "DÉFAUT CONNU",
+      "raison": "Taille du prompt de Milo au-dessus du budget fixé par ce témoin. Rouge identique sur master, déjà constaté et écrit lors du Lot 1 ; la borne 400 / 150 000 reste un chantier ouvert. La valeur mesurée est réaffichée à chaque exécution.",
+      "reference": "CLAUDE.md ft-v1239 (« Le banc tests/discussions/runner.js (hors passe complète) garde ses 2 rouges de taille de prompt, identiques sur master »)",
+      "depuis": "ft-v1239"
+    },
+    {
+      "suite": "discussions",
+      "temoin": "⭐⭐ la partie MISE EN CACHE (au-dessus du marqueur) reste sous 44 000 caractères",
+      "statut": "DÉFAUT CONNU",
+      "raison": "Même cause que le précédent : la partie mise en cache du prompt dépasse le budget de ce témoin. Même référence.",
+      "reference": "CLAUDE.md ft-v1239",
+      "depuis": "ft-v1239"
+    }
+  ]
+}

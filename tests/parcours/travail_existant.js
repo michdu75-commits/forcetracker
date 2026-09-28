@@ -28,7 +28,8 @@ const DEM = 'Donne-moi une séance jambes pour ce soir';
 const C = (min) => ({ type: 'elliptique', intensity: 'modere', duration: min });
 const EX0 = () => ({ name: 'Rowing Barre (Tirage Horizontal)', sets: [{ kg: 60, reps: 8, type: 'N', done: false, rm1: 0 }, { kg: 60, reps: 8, type: 'N', done: false, rm1: 0 }] });
 const EX1 = () => ({ name: 'Rowing Barre (Tirage Horizontal)', sets: [{ kg: 60, reps: 8, type: 'N', done: true, rm1: 0 }, { kg: 60, reps: 8, type: 'N', done: false, rm1: 0 }] });
-const W = (o) => Object.assign({ date: new Date().toISOString().slice(0, 10), exs: [] }, o);
+const { jourParis } = require('../_jour.js');   // RECETTE-01 : le jour de Paris, comme la page
+const W = (o) => Object.assign({ date: jourParis(), exs: [] }, o);
 // Les 8 états de la matrice (+ la ligne fantôme : un objet cardio à 0 min n'est pas un travail).
 const ETATS = [
   ['1 rien', null, 'RIEN'],

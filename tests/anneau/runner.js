@@ -261,14 +261,19 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
 }
 // ── ft-v650 : les 3 tuiles du check-in (sommeil · énergie · moral) ──────────
 {
-  const iso=new Date().toISOString().slice(0,10);
+  const iso=require('../_jour.js').jourLocal();   // RECETTE-01 : contexte sans fuseau → jour du processus, comme la page
   // a) rempli
   const q=await page({ft4_sleep:JSON.stringify([{date:iso,hours:6,quality:3}])},null,64);
   const r=await q.p.evaluate(()=>{
     const st=_dayState(); st.energy=1; st.mood=3; _renderDayStateCard();
     const el=document.getElementById('home-daystate');
-    const lbl=[...el.querySelectorAll('div')].map(d=>d.textContent.trim())
-      .map(x=>x.toUpperCase())
+    /* RECETTE-01 (28/09/2026) — TÉMOIN PÉRIMÉ, RÉALIGNÉ SUR UNE DÉCISION DE MICHEL (05/09) :
+       « les mots sommeil, énergie et moral on peut les supprimer ». Le mot a quitté l'ÉCRAN pour
+       l'`aria-label` (et le `title`) de chaque tuile — l'information n'est pas perdue, elle a
+       changé de canal (`_ckTuile`, screens.js). ⛔ Le témoin garde la même exigence (3 tuiles,
+       ces 3 légendes, dans cet ordre) : il la lit simplement là où elle vit désormais. */
+    const tuiles=[...el.querySelectorAll('.ck-tuile')];
+    const lbl=tuiles.map(x=>(x.getAttribute('aria-label')||'').split(' : ')[0].toUpperCase())
       .filter(x=>x==='SOMMEIL'||x==='ÉNERGIE'||x==='MORAL');
     const jauges=[...el.querySelectorAll('div')].filter(d=>d.children.length===4&&[...d.children].every(c=>c.tagName==='I'));
     return {nbTuiles:lbl.length, libelles:lbl, nbJauges:jauges.length,
@@ -276,7 +281,7 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
             allumes:jauges.map(j=>[...j.children].filter(c=>c.classList.contains('on')).length),
             texte:(el.innerText||'').replace(/\n/g,' | '), sale:/NaN|undefined/.test(el.innerText||'')};
   });
-  t('3 tuiles affichées', r.nbTuiles===3, JSON.stringify(r).slice(0,150));
+  t('3 tuiles affichées (Sommeil · Énergie · Moral, dans leur aria-label)', r.nbTuiles===3 && r.libelles.join(',')==='SOMMEIL,ÉNERGIE,MORAL', JSON.stringify(r).slice(0,150));
   t('4 traits par tuile (pas 5 : les échelles ont 4 niveaux)',
     r.traitsParJauge.length===3 && r.traitsParJauge.every(n=>n===4), JSON.stringify(r.traitsParJauge));
   t('les traits allumés suivent le niveau (qualité 3 · énergie 1 · moral 3)',

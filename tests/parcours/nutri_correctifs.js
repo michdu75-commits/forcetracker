@@ -168,8 +168,8 @@ module.exports.ecran = async function(t, b, PORT){
 
   const R = await pg.evaluate(async () => {
     const o = {};
-    const J = new Date().toISOString().slice(0,10);
-    const jm = n => new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+    const J = today();   // RECETTE-01 : jour de la page, pas de Greenwich
+    const jm = n => { const x = new Date(); x.setDate(x.getDate() - n); return today(x.getTime()); };
     const ligne = (d,nom,q,kcal,c,meal) => ({id:'x'+Math.random(),date:d,meal:meal||'midi',ts:Date.now(),
       name:nom,kcal:kcal,prot:0,carbs:c,fat:0,q:q,u:'g',per100:{kcal:kcal/q*100,prot:0,carbs:c/q*100,fat:0}});
 

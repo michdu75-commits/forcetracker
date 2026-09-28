@@ -19,7 +19,7 @@ module.exports.ecran = async function(t, b, PORT){
 
   const R14=await pg14.evaluate(async ()=>{
     const o={}; const pause=ms=>new Promise(r=>setTimeout(r,ms));
-    const jm=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+    const jm=n=>{const x=new Date();x.setDate(x.getDate()-n);return today(x.getTime());};   // RECETTE-01 : jour de la page
     /* ⛔ chaque geste rend un résultat : une étape interrompue ne doit pas ressembler à une
        étape verte (BUGS.md §61). */
     const rendre=()=>{ try{ renderHome(); return true; }catch(e){ o.err=String(e&&e.message||e); return false; } };

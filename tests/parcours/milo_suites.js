@@ -59,8 +59,9 @@ module.exports.ecran = async function (t, b, PORT) {
     schemaVide:  env(TXT + '```json\n' + JSON.stringify({ name: 'X', days: [] }) + '\n```\nsuite coup', 'max_tokens'),
     refus:       env(TXT + '```json\n' + J + '\n```', 'refusal'),
   };
-  const d3 = new Date(Date.now() + 3 * 864e5).toISOString().slice(0, 10);
-  const d5 = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+  const { jourParis } = require('../_jour.js');   // RECETTE-01 : jours de Paris, décalage calendaire
+  const d3 = jourParis(3);
+  const d5 = jourParis(5);
   const PREVU = '```json\n' + JSON.stringify({ prevu: { date: d3, label: 'Haut du corps' } }) + '\n```';
   const DIT = 'Noté, on se retrouve pour le haut du corps.\n\n';
   const N = {

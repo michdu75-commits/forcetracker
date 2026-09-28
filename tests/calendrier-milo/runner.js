@@ -152,8 +152,23 @@ console.log('\n─── MILO NE CALCULE PLUS LES JOURS ────────
   t('… et n\'apparaissent PLUS avant (rien de variable dans le bloc caché)',
     !/il est \d+h\d+/.test(a.ctx.slice(0,ia))&&!/Score récupération/.test(a.ctx.slice(0,ia)));
   const w=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  /* RECETTE-01 (28/09/2026) — TÉMOIN PÉRIMÉ, RÉALIGNÉ SANS L'AFFAIBLIR. Il cherchait
+     `cache_control: {type:'ephemeral'}` écrit EN TOUTES LETTRES ; depuis le 09-10/08 le Worker
+     passe par des constantes (`_TTL_COMMUN` = 1 h, `_TTL_PERSO` = 5 min), et le témoin rougissait
+     sur un Worker sain. ⛔ La garantie reste la même, lue là où elle vit : ① le Worker découpe sur
+     CE marqueur exact (`CACHE_MARKER`) ; ② chaque `cache_control` posé vaut bien `type:'ephemeral'`
+     (les constantes sont RÉSOLUES, pas supposées) ; ③ le bloc qui commence au marqueur (l'instant)
+     n'est JAMAIS mis en cache. */
+  const _mm=w.match(/const CACHE_MARKER\s*=\s*(?:"([^"]+)"|'([^']+)'|`([^`]+)`)/)||[];
+  const _cm=_mm[1]||_mm[2]||_mm[3];
+  const _consts={}; (w.match(/const (_TTL_\w+)\s*=\s*\{[^}]*\}/g)||[]).forEach(d=>{const m=d.match(/const (_TTL_\w+)\s*=\s*(\{[^}]*\})/); _consts[m[1]]=m[2];});
+  const _valeurs=(w.match(/cache_control:\s*(\{[^}]*\}|_TTL_\w+)/g)||[]).map(x=>x.replace(/cache_control:\s*/,'')).map(v=>_consts[v]||v);
+  const _apresMarqueur=(w.match(/text:\s*String\(ctx\)\.slice\(_mi\)[^\n]*/g)||[]);
   t('le Worker découpe sur ce marqueur EXACT et pose cache_control ephemeral',
-    w.indexOf(M)>=0&&/cache_control:\s*\{\s*type:\s*'ephemeral'\s*\}/.test(w));
+    _cm===M && /String\(ctx\)\.indexOf\(CACHE_MARKER\)/.test(w)
+    && _valeurs.length>=2 && _valeurs.every(v=>/type:\s*'ephemeral'/.test(v))
+    && _apresMarqueur.length>=1 && _apresMarqueur.every(l=>!/cache_control/.test(l)),
+    JSON.stringify({marqueur:_cm===M,valeurs:_valeurs,apres:_apresMarqueur.length}).slice(0,200));
 }
 
 console.log('──────────────────────────────────────────────────────────');

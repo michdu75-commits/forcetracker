@@ -58,7 +58,8 @@ module.exports.ecran = async function (t, b, PORT) {
   const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
   const D = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test', ft4_email: 't@t.t',
     ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_lms: moisPrec };
-  const WKT = () => ({ date: new Date().toISOString().slice(0, 10), startHour: 10, exs: [{ name: 'Développé Couché', sets: [{ kg: 80, reps: 6, type: 'N', done: true, rm1: 0 }] }] });
+  const { jourParis } = require('../_jour.js');   // RECETTE-01 : le jour de Paris, comme la page
+  const WKT = () => ({ date: jourParis(), startHour: 10, exs: [{ name: 'Développé Couché', sets: [{ kg: 80, reps: 6, type: 'N', done: true, rm1: 0 }] }] });
   const PROFIL_OK = a => a === 'loadProfile' ? { status: 'ok', premium: false, profile: { name: 'Test', bw: 80, age: 40, gender: 'H', goal: 'force' }, sessions: [], prs: {} } : { status: 'ok' };
   const ouvrir = async (o) => {
     o = o || {};
