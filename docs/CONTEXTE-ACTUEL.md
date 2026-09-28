@@ -10,8 +10,8 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1239` — 🧵 FIABILISATION LOT 1 (F07a + F07b) : le débrief de fin de séance ne coupe plus la discussion avec Milo à 20 messages et ne remplace plus une discussion enregistrée mais pas chargée (garde `_coachHistHydrater`). **Vérification téléphone en attente** (Menu → À propos). Précédente : `ft-v1238` (C3 ; vérification téléphone en attente).
-- Prochaine : `ft-v1240`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
+- **Version en ligne (live) :** `ft-v1240` — 🧱 FIABILISATION LOT 2 (F01 + F02) : un cardio ou un échauffement noté n'est plus effacé sans question par une séance de Milo ni par un programme chargé (`_etatTravailWkt`, source commune). **Vérification téléphone en attente** (Menu → À propos). Précédente : `ft-v1239` (Lot 1, fil du Coach ; vérification téléphone en attente).
+- Prochaine : `ft-v1241`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici.
 
 ## 🧊 Contraintes en vigueur — décisions actées (règle d'or #15)
 
@@ -21,7 +21,7 @@
 
 ## 🔬 Chantier actif
 
-- **Fiabilisation après l'audit forensique n°2** (27/09, session-B) — ✅ **Lot 1 (F07a + F07b, intégrité du fil du Coach) publié en `ft-v1239`** (commit `3145081b`, contre-vérifié). Classés, non corrigés : `continueInCoach` qui remplace la discussion sans la charger · discussion illisible ouverte comme vide · « reçu » de débrief à un seul emplacement · borne 400 / 150 000. **Lots 2 à 6 et 8 décisions produit : en attente de Michel.**
+- **Fiabilisation après l'audit forensique n°2** (27-28/09, session-B) — ✅ **Lot 1 (F07a + F07b, intégrité du fil du Coach) publié en `ft-v1239`** (commit `3145081b`) · ✅ **Lot 2 (F01 + F02, travail existant) publié en `ft-v1240`** (commit `afa23ac7`, contre-vérifié ; `_etatTravailWkt` = source commune Milo / programme ; objet cardio à 0 min = RIEN ; exercice sans série : Milo questionne, programme remplace directement). Classés, non corrigés : `startWorkout` / `_seanceOuverte` (définition voisine, cohérente aujourd'hui, non reliée) · libellé « Oui, on démarre » avec cardio seul · `continueInCoach` · discussion illisible ouverte comme vide · « reçu » de débrief à un seul emplacement · borne 400 / 150 000 · F03 / F03b · restauration cloud · retravail / identité des cartes. **Lots suivants et 8 décisions produit : en attente de Michel.**
 
 - **Publication MILO-PDF1 → `ft-v1235`** (26/09, session-A) — ✅ **publiée et vérifiée en réel** (V1/V2/V4 ; V3 à observer). Worker d'abord (déployé depuis la branche, **1 appel réel** : `complete: true`, `end_turn`), puis intégration sur master et app. Deux décisions de Michel prises juste avant, **publiées en `ft-v1235`** : **D-027** (bouton programme : déjà conforme, figé) et **D-028** (l'annonce de prochaine séance n'est plus enregistrée depuis une réponse non confirmée ; une annonce déjà enregistrée n'est ni remplacée ni effacée). Détail : `docs/MILO-PDF1.md` §C.
 
