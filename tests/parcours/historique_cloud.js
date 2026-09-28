@@ -309,3 +309,163 @@ module.exports.ecran = async function (t, b, PORT) {
     // 0 appel réel PAR CONSTRUCTION : chaque contexte route Worker, Apps Script et Supabase vers une réponse simulée ou un abandon.
   } finally { for (const X of tous) await fermer(X); }
 };
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   🗂️ LOT 3B — `_recoverDraft` NE DÉPEND PLUS DE L'ORDRE DES SÉANCES · session-B · 28/09/2026
+
+   Trouvé par la contre-vérification du Lot 3 : au démarrage, `_recoverDraft` (app.js) jugeait
+   « ce brouillon est déjà enregistré » en regardant `S.sessions[0]` seul (même date, assez
+   d'exercices). Depuis le Lot 3, `S.sessions[0]` est la séance la plus RÉCENTE par date, plus
+   celle qu'on vient de terminer : une séance datée d'hier, terminée alors qu'une séance
+   d'aujourd'hui existe, n'était plus reconnue — son brouillon résiduel revenait comme séance en
+   cours (doublon si on la termine).
+   Correctif : le brouillon et la séance enregistrée partagent la MÊME HORLOGE — le brouillon garde
+   `startTs` / `pausedTotal` / `pausedAt`, la séance garde `duration` (calculée par `_wktElapsedMs`
+   sur ces champs) et `ts` (l'instant de la fin). `_seanceDuBrouillon` cherche dans TOUTE la liste
+   une séance finie APRÈS le début du brouillon et dont la durée se recalcule exactement depuis
+   ces champs. Aucune signature date / exercices / séries.
+   CONDUIT : la validation d'une série (`.chk`, qui pose `startTs`), le sélecteur de date, la
+   pause, « Terminer », un vrai rechargement. L'arrêt brutal est SIMULÉ en rendant sans effet
+   l'effacement du brouillon (`removeItem('ft4_wkt_draft')`) pendant la fin de séance : c'est
+   exactement l'état disque décrit par la contre-vérification (`ft4_wkt` vide, brouillon présent).
+   OBSERVE : `S.wkt`, `ft4_wkt`, `ft4_wkt_draft`, `S.sessions`, au démarrage suivant.
+   NE COUVRE PAS : l'arrêt brutal AVANT l'écriture de `ft4_wkt` vide (la séance finie est alors
+   encore dans `ft4_wkt`, donc active au démarrage, indépendamment du brouillon — préexistant,
+   identique sur master, classé hors lot) ; les brouillons sans `startTs` (aucune série validée).
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+module.exports.source3b = function (t, ROOT, fs, path) {
+  console.log('\n═══ B-CCCXCIX (session-B). LOT 3B — le brouillon est relié à sa séance par l\'horloge, pas par la position (source) ═══');
+  const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const ap = nu('app.js');
+  const i = ap.indexOf('(function _recoverDraft('), rec = i >= 0 ? ap.slice(i, ap.indexOf('})();', i)) : '';
+  const j = ap.indexOf('function _seanceDuBrouillon('), lien = j >= 0 ? ap.slice(j, ap.indexOf('\n}', j)) : '';
+  t('① `_recoverDraft` et `_seanceDuBrouillon` sont trouvées', !!rec && !!lien, rec.length + '/' + lien.length);
+  t('② `_recoverDraft` ne lit plus AUCUNE position de la liste (`[0]`, `slice`, `at(`)', !!rec && !/sessions\s*(&&\s*S\.sessions)?\s*\[|\.slice\(|\.at\(/.test(rec), rec.slice(0, 200));
+  t('③ `_recoverDraft` passe par `_seanceDuBrouillon`', /_seanceDuBrouillon\(draft\)/.test(rec), '');
+  t('④ le lien lit l\'horloge du brouillon (`startTs`, `pausedTotal`, `pausedAt`) et celle de la séance (`ts`, `duration`)',
+    /startTs/.test(lien) && /pausedTotal/.test(lien) && /pausedAt/.test(lien) && /\.ts\b/.test(lien) && /\.duration\b/.test(lien), '');
+  t('⑤ ⛔ aucune signature approximative : ni nombre d\'exercices, ni premier exercice, ni séries, ni libellé',
+    !!lien && !/\.exs\b|\.exercises\b|\.sets\b|progLabel|\.name\b|\.volume\b/.test(lien), lien.slice(0, 200));
+  t('⑥ `_seanceDuBrouillon` n\'est déclarée qu\'une fois, dans app.js', (ap.match(/function _seanceDuBrouillon\(/g) || []).length === 1
+    && !['state.js', 'log.js', 'coach.js', 'setup.js', 'tracking.js', 'screens.js'].some(f => /function _seanceDuBrouillon\(/.test(nu(f))), '');
+};
+
+module.exports.ecran3b = async function (t, b, PORT) {
+  console.log('\n═══ B-CD (session-B). LOT 3B — brouillon résiduel après « Terminer » : reconnu, ou récupéré, jamais les deux (écran conduit) ═══');
+  const js = x => JSON.stringify(x).slice(0, 240);
+  const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
+  const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test', ft4_email: 't@t.t',
+    ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_lms: moisPrec, ft4_ok: '1' };
+  const tous = [];
+  const ouvrir = async (seed) => {
+    const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris' });
+    await cx.route(/supabase\.co/, r => r.abort());
+    await cx.route(/script\.google\.com/, r => { const u = r.request().url();
+      return /test=1/.test(u) ? r.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"online"}' }) : r.abort('failed'); });
+    await cx.route(/workers\.dev/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reply: 'Ok.', stopReason: 'end_turn', truncated: false, complete: true, continued: false }) }));
+    const pg = await cx.newPage(); const X = { cx, pg, errs: [] }; pg.on('pageerror', x => X.errs.push(x.message));
+    const init = Object.assign({}, BASE);
+    Object.keys(seed || {}).forEach(k => { init[k] = typeof seed[k] === 'string' ? seed[k] : JSON.stringify(seed[k]); });
+    /* L'ARRÊT BRUTAL : tant que `window.__perdre` est vrai, effacer le brouillon n'a aucun effet. Le
+       drapeau vit dans la page : un rechargement le remet à faux, comme un vrai redémarrage. */
+    await pg.addInitScript(`(()=>{try{
+      const _r=Storage.prototype.removeItem; Storage.prototype.removeItem=function(k){ if(k==='ft4_wkt_draft'&&window.__perdre) return; return _r.call(this,k); };
+      if(sessionStorage.getItem('_l3b'))return; sessionStorage.setItem('_l3b','1'); localStorage.clear();
+      const D=${JSON.stringify(init)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k]));}catch(e){}})();`);
+    await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
+    tous.push(X); return X;
+  };
+  const clic = async (pg, sel, txt) => {
+    for (let k = 0; k < 6; k++) {
+      await pg.evaluate(() => document.querySelectorAll('.overlay.open').forEach(o => { if (!/ov-session-end|ov-confirm/.test(o.id)) o.classList.remove('open'); }));
+      const h = (await pg.evaluateHandle(([s, x]) => [...document.querySelectorAll(s)].find(e => e.offsetParent !== null && (!x || e.textContent.includes(x))) || null, [sel, txt])).asElement();
+      if (!h) { await pg.waitForTimeout(250); continue; }
+      try { await h.evaluate(x => x.scrollIntoView({ block: 'center' })); await h.click({ timeout: 3000 }); return true; } catch (e) { await pg.waitForTimeout(200); }
+    }
+    return false;
+  };
+  const lire = X => X.pg.evaluate(() => { let w = null, d = null, s = null; try { w = JSON.parse(localStorage.getItem('ft4_wkt')); } catch (e) {}
+    try { d = JSON.parse(localStorage.getItem('ft4_wkt_draft')); } catch (e) {} try { s = JSON.parse(localStorage.getItem('ft4_sessions')); } catch (e) {}
+    /* une séance « vide » (aucun exercice) n'est pas une séance active : l'écran Séance en recrée une tout seul */
+    const r = o => o && o.exs && o.exs.length ? o.exs.map(e => e.name + ':' + (e.sets || []).filter(x => x.done).length).join(',') : null;
+    return { active: r(S.wkt), disqueWkt: r(w), brouillon: d ? r(d) : null, brouillonStartTs: !!(d && d.startTs), brouillonEnPause: !!(d && d.pausedAt), brouillonPauseCumulee: +(d && d.pausedTotal || 0),
+      sessions: (S.sessions || []).map(x => x.date + '·' + (x.progLabel || '') + '·' + r(x)), disqueSessions: (s || []).length }; });
+  const valider = async X => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); const ok = await clic(X.pg, 'button.chk[onclick="toggleSet(0,0)"]'); await X.pg.waitForTimeout(300);
+    await X.pg.evaluate(() => { try { if (typeof stopRest === 'function') stopRest(); } catch (e) {} }); return ok; };
+  const terminerAvecArret = async (X, date, pause) => {
+    await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300);
+    if (date) await X.pg.evaluate(d => { const i = document.getElementById('s-date'); i.value = d; i.dispatchEvent(new Event('change', { bubbles: true })); }, date);
+    /* ⏱️ Une pause PLUS LONGUE que la marge du lien (5 s) : sinon une horloge qui ignorerait la pause
+       tomberait quand même dans la marge, et le témoin ne pourrait pas rougir. */
+    if (pause) { await X.pg.waitForTimeout(1200); await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(7500);
+      if (pause === 'reprise') { await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(1200); } }
+    await X.pg.evaluate(() => { window.__perdre = true; });
+    const ok = await clic(X.pg, 'button[onclick="finishWorkout()"]'); await X.pg.waitForTimeout(2200);
+    await X.pg.evaluate(() => { try { if (typeof closeSessionEnd === 'function') closeSessionEnd(); } catch (e) {} });
+    return ok;
+  };
+  const redemarrer = async X => { await X.pg.reload(); await X.pg.waitForTimeout(1500); return lire(X); };
+  const fermer = async X => { try { await X.cx.close(); } catch (e) {} };
+  const J = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }); };
+  const D0 = J(0), D1 = J(1);
+  const EX = (n, done) => ({ name: n, sets: [{ kg: 100, reps: 5, type: 'N', done: !!done, rm1: 0 }] });
+  const FAITE = (date, label, exs, ageMin) => { const ts = Date.now() - ageMin * 60000; return { id: ts, ts, date, progLabel: label, exs, volume: 500, uniConv: 1, synced: true, startHour: 9, duration: 1800 }; };
+  try {
+    // ── T1 : séance d'aujourd'hui déjà là, séance d'HIER terminée ensuite, brouillon résiduel ─────────
+    { const X = await ouvrir({ ft4_sessions: [FAITE(D0, 'Pull B', [EX('Rowing Barre (Tirage Horizontal)', 1)], 90)], ft4_wkt: { date: D0, progLabel: 'Push A', exs: [EX('Squat')] } });
+      const v = await valider(X); const f = await terminerAvecArret(X, D1); const e0 = await lire(X);
+      t('[T1 · état de départ] séance d\'hier terminée, puis arrêt brutal : `ft4_wkt` vide, brouillon (avec son horloge) resté sur le disque',
+        v && f && e0.disqueWkt === null && e0.brouillon === 'Squat:1' && e0.brouillonStartTs && !e0.brouillonEnPause && e0.sessions.length === 2, js(e0));
+      const e1 = await redemarrer(X);
+      t('[T1] au redémarrage, la séance d\'hier est reconnue comme DÉJÀ enregistrée : aucune séance active recréée, brouillon effacé',
+        e1.active === null && e1.disqueWkt === null && e1.brouillon === null && e1.sessions.length === 2, js(e1));
+      const e2 = await redemarrer(X);
+      t('[T6 · T1] un rechargement de plus : état stable (aucune séance active, 2 séances, pas de brouillon)', JSON.stringify(e2) === JSON.stringify(e1) && e2.active === null && e2.brouillon === null, js(e2));
+      await fermer(X); }
+    // ── T1 en pause : la séance est terminée pendant une pause (l'horloge se fige sur `pausedAt`) ────────
+    { const X = await ouvrir({ ft4_sessions: [FAITE(D0, 'Pull B', [EX('Rowing Barre (Tirage Horizontal)', 1)], 90)], ft4_wkt: { date: D0, progLabel: 'Push A', exs: [EX('Squat')] } });
+      await valider(X); await terminerAvecArret(X, D1, true); const e0 = await lire(X); const e1 = await redemarrer(X);
+      t('[T1 · pause] séance terminée en pause, datée d\'hier : reconnue au redémarrage, aucune séance active',
+        e0.brouillon === 'Squat:1' && e0.brouillonEnPause && e1.active === null && e1.brouillon === null && e1.sessions.length === 2, js(e0) + ' → ' + js(e1));
+      await fermer(X); }
+    // ── T1 pause puis reprise : 7,5 s de pause cumulée (`pausedTotal`) avant « Terminer » ────────────────
+    { const X = await ouvrir({ ft4_sessions: [FAITE(D0, 'Pull B', [EX('Rowing Barre (Tirage Horizontal)', 1)], 90)], ft4_wkt: { date: D0, progLabel: 'Push A', exs: [EX('Squat')] } });
+      await valider(X); await terminerAvecArret(X, D1, 'reprise'); const e0 = await lire(X); const e1 = await redemarrer(X);
+      t('[T1 · pause puis reprise] le temps de pause cumulé est déduit comme dans la durée enregistrée : séance reconnue, aucune séance active',
+        e0.brouillon === 'Squat:1' && !e0.brouillonEnPause && e0.brouillonPauseCumulee >= 7000 && e1.active === null && e1.brouillon === null && e1.sessions.length === 2, js(e0) + ' → ' + js(e1));
+      await fermer(X); }
+    // ── T2 : séance d'aujourd'hui, aucune autre séance (le cas historique) ────────────────────────────
+    { const X = await ouvrir({ ft4_wkt: { date: D0, progLabel: 'Push A', exs: [EX('Squat')] } });
+      await valider(X); await terminerAvecArret(X, null); const e0 = await lire(X); const e1 = await redemarrer(X);
+      t('[T2] séance d\'aujourd\'hui seule, brouillon résiduel : reconnue, aucune séance active (comportement historique inchangé)',
+        e0.brouillon === 'Squat:1' && e1.active === null && e1.brouillon === null && e1.sessions.length === 1, js(e0) + ' → ' + js(e1));
+      await fermer(X); }
+    // ── T3 : brouillon d'une séance JAMAIS terminée, `ft4_wkt` perdu → il doit revenir ──────────────────
+    { const X = await ouvrir({ ft4_wkt: { date: D0, progLabel: 'Push A', exs: [EX('Squat')] } });
+      await valider(X); await X.pg.evaluate(() => localStorage.setItem('ft4_wkt', 'null'));
+      const e1 = await redemarrer(X);
+      t('[T3] séance en cours jamais terminée, `ft4_wkt` perdu : le brouillon est récupéré comme séance active',
+        e1.active === 'Squat:1' && e1.disqueWkt === 'Squat:1' && e1.sessions.length === 0, js(e1));
+      const e2 = await redemarrer(X);
+      t('[T6 · T3] un rechargement de plus : la séance récupérée reste active, rien n\'est ajouté à l\'historique', e2.active === 'Squat:1' && e2.sessions.length === 0, js(e2));
+      await fermer(X); }
+    // ── T4 : une AUTRE séance a déjà été faite aujourd'hui (plus d'exercices) : le brouillon n'est pas « elle » ──
+    { const X = await ouvrir({ ft4_sessions: [FAITE(D0, 'Matin', [EX('Squat', 1), EX('Développé Couché', 1), EX('Soulevé de Terre', 1)], 240)],
+        ft4_wkt: { date: D0, progLabel: 'Soir', exs: [EX('Squat')] } });
+      await valider(X); await X.pg.evaluate(() => localStorage.setItem('ft4_wkt', 'null'));
+      const e1 = await redemarrer(X);
+      t('[T4] deux séances le même jour : celle du matin (3 exercices) ne fait PAS passer le brouillon du soir pour enregistré — il est récupéré',
+        e1.active === 'Squat:1' && e1.sessions.length === 1, js(e1));
+      await fermer(X); }
+    // ── T5 : une séance enregistrée IDENTIQUE en contenu, mais une autre séance ─────────────────────────
+    { const exs = [EX('Squat', 1)]; exs[0].sets[0].at = 0;
+      const w = { date: D0, progLabel: 'Push A', exs: JSON.parse(JSON.stringify(exs)), startTs: Date.now() - 20 * 60000, pausedTotal: 0, pausedAt: null, startHour: 9 };
+      const X = await ouvrir({ ft4_sessions: [FAITE(D0, 'Push A', JSON.parse(JSON.stringify(exs)), 120)], ft4_wkt: 'null', ft4_wkt_draft: w });
+      const e1 = await lire(X);
+      t('[T5] une séance enregistrée au contenu IDENTIQUE (même date, même libellé, mêmes séries) mais finie avant le début du brouillon n\'est pas « lui » : brouillon récupéré',
+        e1.active === 'Squat:1' && e1.sessions.length === 1, js(e1));
+      await fermer(X); }
+    const errs = tous.flatMap(X => X.errs);
+    t('[négatif] aucune erreur JavaScript pendant ces parcours', !errs.length, js(errs.slice(0, 3)));
+  } finally { for (const X of tous) await fermer(X); }
+};

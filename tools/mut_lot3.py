@@ -4,7 +4,8 @@
 
 [!!] SUR UN ARBRE CLONE, JAMAIS SUR LE DEPOT (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
-M00 remet state.js, log.js, coach.js et setup.js tels qu'ils etaient AVANT le lot 3 (master b5069757, ft-v1240), mot pour mot.
+M00 remet state.js, log.js, coach.js, setup.js et app.js tels qu'ils etaient AVANT le lot 3 (master b5069757, ft-v1240), mot pour mot.
+B01..B07 = LOT 3B (_recoverDraft) : B01 = dependance a S.sessions[0] reintroduite · B02 = correspondance volontairement vague.
 M01 = `.slice(-1)[0]` reintroduit · M02 = `unshift` sans tri · M03 = « la liste la plus longue gagne »
 M04 = deduplication heuristique date + nombre d'exercices + premier exercice · M05 = plus de tri apres la fusion.
 Usage : python3 tools/mut_lot3.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges, pas seulement le premier)
@@ -13,8 +14,8 @@ import os, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = 'b5069757'
-ST, LO, CO, SE = 'state.js', 'log.js', 'coach.js', 'setup.js'
-FICHIERS = (ST, LO, CO, SE)
+ST, LO, CO, SE, AP = 'state.js', 'log.js', 'coach.js', 'setup.js', 'app.js'
+FICHIERS = (ST, LO, CO, SE, AP)
 
 DERNIERE = "  const derniere=_derniereSeance(x=>x&&x.progLabel);\n"
 TRI_FIN = "  _trierSeances(S.sessions);\n  let _savedOk=false;\n"
@@ -28,11 +29,16 @@ ANNULE = "    { const _i=S.sessions.indexOf(sess); if(_i>=0) S.sessions.splice(_
 DATES = "function _cmpSeances(a,b){\n  const da=String(a&&a.date||''), db=String(b&&b.date||'');\n"
 GARDE_CONFLITS = "      _r.conflits.forEach(c=>{ const e=_empreinteSeance(c); if(!_vus.has(e)){ _vus.add(e); _anc.push(c); } });\n"
 CHARGE = "    S.sessions=_trierSeances(_lsJson('ft4_sessions',[]));"
+REC = "    if(_seanceDuBrouillon(draft)){localStorage.removeItem('ft4_wkt_draft');return;}\n"
+LIEN_FIND = "  return L.find(s=>{\n"
+LIEN_BORNE = "    return ecart>=0 && ecart<1000+_BROUILLON_MARGE_MS;\n"
+LIEN_FIGEE = "    if(figee) return +s.ts>=figee && Math.floor(Math.max(0,figee-t0-pause)/1000)===s.duration;\n"
+LIEN_PAUSE = "  const pause=+(draft.pausedTotal||0)||0, figee=+(draft.pausedAt||0)||0;\n"
 HEUR = ("if(out.some(s=>s.date===c.date&&(s.exs||[]).length===(c.exs||[]).length"
         "&&((s.exs||[])[0]||{}).name===((c.exs||[])[0]||{}).name)) return; ")
 
 MUT = [
-    ("M00 code d'AVANT le lot 3 remis mot pour mot (state/log/coach/setup de b5069757)", 'AVANT', 'GARDE'),
+    ("M00 code d'AVANT le lot 3 remis mot pour mot (state/log/coach/setup/app de b5069757)", 'AVANT', 'GARDE'),
     ('M01 `.slice(-1)[0]` reintroduit pour la derniere seance a libelle (F03 rouvert)',
      [(CO, DERNIERE, "  const derniere=(S.sessions||[]).filter(x=>x&&x.progLabel).slice(-1)[0]||null;\n")], 'GARDE'),
     ('M02 `unshift` sans tri a la fin de seance (F03b rouvert)', [(LO, TRI_FIN, "  let _savedOk=false;\n")], 'GARDE'),
@@ -53,6 +59,21 @@ MUT = [
      [(ST, DATES, "function _cmpSeances(a,b){\n  const da=String(a&&a.date||today()), db=String(b&&b.date||today());\n")], 'GARDE'),
     ('M12 [deguisee] la variante du cloud n\'est plus gardee (conflit oublie)', [(SE, GARDE_CONFLITS, '')], 'GARDE'),
     ('M13 le chargement ne range plus l\'historique', [(ST, CHARGE, "    S.sessions=_lsJson('ft4_sessions',[]);")], 'GARDE'),
+    ('B01 [LOT 3B] dependance a S.sessions[0] reintroduite (lien fort, mais sur la premiere seulement)',
+     [(AP, LIEN_FIND, "  return [L[0]].find(s=>{\n")], 'GARDE'),
+    ('B01b [LOT 3B] ancienne regle remise : S.sessions[0], meme date, assez d\'exercices',
+     [(AP, REC, "    const lastSess=S.sessions&&S.sessions[0];if(lastSess&&lastSess.date===(draft.date||today())&&lastSess.exs&&lastSess.exs.length>=draft.exs.length){localStorage.removeItem('ft4_wkt_draft');return;}\n")], 'GARDE'),
+    ('B02 [LOT 3B] correspondance vague sur toute la liste : meme date + au moins autant d\'exercices',
+     [(AP, REC, "    if((S.sessions||[]).some(s=>s&&s.date===draft.date&&(s.exs||[]).length>=draft.exs.length)){localStorage.removeItem('ft4_wkt_draft');return;}\n")], 'GARDE'),
+    ('B03 [LOT 3B][deguisee] correspondance par CONTENU identique (date + exercices + series)',
+     [(AP, REC, "    if((S.sessions||[]).some(s=>s&&s.date===draft.date&&JSON.stringify((s.exs||[]).map(e=>[e.name,(e.sets||[]).map(x=>[x.kg,x.reps,!!x.done])]))===JSON.stringify(draft.exs.map(e=>[e.name,(e.sets||[]).map(x=>[x.kg,x.reps,!!x.done])])))){localStorage.removeItem('ft4_wkt_draft');return;}\n")], 'GARDE'),
+    ('B04 [LOT 3B][deguisee] borne basse retiree : une seance finie AVANT le debut du brouillon peut etre « lui »',
+     [(AP, LIEN_BORNE, "    return ecart<1000+_BROUILLON_MARGE_MS;\n")], 'GARDE'),
+    ('B05 [LOT 3B][deguisee] la pause en cours est ignoree (horloge jamais figee)', [(AP, LIEN_FIGEE, '')], 'GARDE'),
+    ('B06 [LOT 3B][deguisee] le temps de pause cumule est ignore',
+     [(AP, LIEN_PAUSE, "  const pause=0, figee=+(draft.pausedAt||0)||0;\n")], 'GARDE'),
+    ('[negatif 3B] commentaire citant S.sessions[0] et les champs du contenu dans _recoverDraft',
+     [(AP, REC, "    // const lastSess=S.sessions&&S.sessions[0]; lastSess.exs.length progLabel .sets .name\n" + REC)], 'OK'),
     ('[negatif] commentaire citant tous les motifs cherches',
      [(LO, ANNULE, ANNULE + "    // S.sessions.shift(); S.sessions[0].synced=true; S.sessions.sort( sessions.length>S.sessions.length .slice(-1)[0]\n")], 'OK'),
 ]

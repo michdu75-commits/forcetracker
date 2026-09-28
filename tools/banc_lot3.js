@@ -24,6 +24,8 @@ const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); 
   const T = require(path.join(ROOT, 'tests', 'parcours', 'historique_cloud.js'));
   T.source(t, ROOT, fs, path);
   await T.ecran(t, b, srv.address().port);
+  T.source3b(t, ROOT, fs, path);            // LOT 3B : _recoverDraft relié par l'horloge
+  await T.ecran3b(t, b, srv.address().port);
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
   process.exit(ko ? 1 : 0);

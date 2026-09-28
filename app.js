@@ -9149,6 +9149,35 @@ window.closeReconnect=function(){try{document.getElementById('ov-reconnect')?.cl
 // ─── INIT ────────────────────────────────────────────────────
 load();
 // ─ Récupération brouillon après crash de finishWorkout ────────
+/* 🗂️ LOT 3B (28/09/2026) — CE BROUILLON EST-IL UNE SÉANCE DÉJÀ ENREGISTRÉE ? On le reconnaît par
+   son HORLOGE, jamais par sa position ni par son contenu.
+   ⛔ Avant : `S.sessions[0]` (même date, au moins autant d'exercices). Deux défauts mesurés par
+   l'écran : depuis le Lot 3, `S.sessions[0]` est la séance la plus RÉCENTE par date — une séance
+   datée d'hier, terminée alors qu'une séance d'aujourd'hui existe, n'était plus reconnue et son
+   brouillon revenait comme séance en cours (doublon) ; et, déjà sur master, une AUTRE séance du
+   même jour avec assez d'exercices faisait jeter le brouillon d'une séance jamais enregistrée (perte).
+   ⭐ Le lien : le brouillon est `S.wkt` tel qu'écrit par `persist()` — il porte `startTs` (1ʳᵉ
+   série validée), `pausedTotal` et `pausedAt`. `finishWorkout` calcule `duration` avec EXACTEMENT
+   cette horloge (`_wktElapsedMs`) et pose `ts` à l'instant de la fin. Une séance enregistrée est
+   celle de ce brouillon si elle a été finie APRÈS son début et si sa durée se recalcule depuis ces
+   champs à la seconde près. Aucune autre séance ne le peut : une seule séance tourne à la fois, et
+   une séance finie avant le début du brouillon échoue sur `ts`.
+   ⚠️ Sans `startTs` (aucune série validée), pas de lien : le brouillon est récupéré — un doublon
+   possible vaut mieux qu'une séance perdue. */
+const _BROUILLON_MARGE_MS=5000;   // délai entre le calcul de `duration` et celui de `ts` dans finishWorkout
+function _seanceDuBrouillon(draft){
+  const t0=+(draft&&draft.startTs)||0;
+  if(!(t0>0)) return null;
+  const pause=+(draft.pausedTotal||0)||0, figee=+(draft.pausedAt||0)||0;
+  const L=(typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[];
+  return L.find(s=>{
+    if(!s||s.importedHistory||typeof s.duration!=='number'||!(+s.ts>0)) return false;
+    if(draft.date&&s.date!==draft.date) return false;
+    if(figee) return +s.ts>=figee && Math.floor(Math.max(0,figee-t0-pause)/1000)===s.duration;
+    const ecart=(+s.ts-t0-pause)-s.duration*1000;
+    return ecart>=0 && ecart<1000+_BROUILLON_MARGE_MS;
+  })||null;
+}
 (function _recoverDraft(){
   try{
     const draftStr=localStorage.getItem('ft4_wkt_draft');
@@ -9156,11 +9185,8 @@ load();
     const draft=JSON.parse(draftStr);
     if(!draft||!draft.exs||!draft.exs.length)return;
     // Si S.wkt est null mais que le brouillon existe → finishWorkout a crashé
-    // Vérifier que la séance n'est pas déjà enregistrée (même date + volume proche)
-    const lastSess=S.sessions&&S.sessions[0];
-    const draftDate=draft.date||today();
-    const alreadySaved=lastSess&&lastSess.date===draftDate&&lastSess.exs&&lastSess.exs.length>=draft.exs.length;
-    if(alreadySaved){localStorage.removeItem('ft4_wkt_draft');return;}
+    // Déjà enregistrée ? Reconnue par son horloge, où qu'elle soit dans la liste (LOT 3B).
+    if(_seanceDuBrouillon(draft)){localStorage.removeItem('ft4_wkt_draft');return;}
     // Restaurer S.wkt depuis le brouillon si pas déjà actif
     if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
       S.wkt=draft;

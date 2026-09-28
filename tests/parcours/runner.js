@@ -39667,6 +39667,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (`_cmpSeances`, state.js) ; la restauration cloud fait une UNION par identité forte `id`, sans
      aucune signature approximative. Contrôle négatif : `tools/mut_lot3.py`. */
   await require('./historique_cloud.js').ecran(t, b, PORT);
+  /* 🗂️ LOT 3B (session-B, 28/09/2026) — `_recoverDraft` reconnaît une séance déjà enregistrée par son
+     HORLOGE (`startTs`/`pausedTotal`/`pausedAt` ↔ `ts`/`duration`), plus par `S.sessions[0]`. */
+  await require('./historique_cloud.js').ecran3b(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40486,6 +40489,7 @@ require('./seance_c3.js').source(t, ROOT, fs, path);
 require('./fil_coach_lot1.js').source(t, ROOT, fs, path);
 require('./travail_existant.js').source(t, ROOT, fs, path);
 require('./historique_cloud.js').source(t, ROOT, fs, path);
+require('./historique_cloud.js').source3b(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
