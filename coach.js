@@ -3474,7 +3474,7 @@ function buildCoachContext(msg) {
      définition**, la compter dans « non renseignées » reprocherait à la personne une donnée qui
      n'existe pas. C'est `_serieDeTravail()` qui décide, pas une liste recopiée ici. */
   let _rirNotes = 0, _rirTrav = 0, _rirEchec = 0;
-  const _sessVues = S.sessions.slice(0, _NB_DETAIL);
+  const _sessVues = _seancesRecentes(_NB_DETAIL);   // LOT 3 : les 5 plus récentes PAR DATE, pas les 5 premières du tableau
   const _nbTotalSess = (S.sessions||[]).length;
   const _depuisQuand = _sessVues.length ? _sessVues[_sessVues.length-1].date : '';
   const recentSessions = _sessVues.map(s => {
@@ -4074,7 +4074,10 @@ ${(()=>{
      ③ le lien prévu → réalisé n'existe que par le LIBELLÉ de la séance (`progLabel`) : on le dit,
         et un nom sans programme enregistré est annoncé comme NOM SEUL (jamais « programme complet »). */
   const progs=(S.programmes||[]).filter(p=>p&&p.name);
-  const derniere=(S.sessions||[]).filter(x=>x&&x.progLabel).slice(-1)[0]||null;
+  /* 🗂️ LOT 3 / F03 — `slice(-1)` d'une liste rangée du plus récent au plus ancien rendait la PLUS
+     ANCIENNE séance à libellé (mesuré par l'écran : « Push A » d'il y a 3 jours au lieu de « Pull B »
+     d'hier). « La dernière » a un seul propriétaire : `_derniereSeance` (state.js), par DATE. */
+  const derniere=_derniereSeance(x=>x&&x.progLabel);
   const jourNom=(j,i)=>(j&&(j.label||j.name))||('Jour '+(i+1));
   const connu=lbl=>progs.some(p=>p.name===lbl||(Array.isArray(p.days)&&p.days.some((j,i)=>jourNom(j,i)===lbl)));
   const lien=derniere?('\n→ Dernière séance RÉALISÉE rattachée à un libellé : « '+derniere.progLabel+' » ('+derniere.date+')'

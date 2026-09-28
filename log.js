@@ -4402,6 +4402,10 @@ async function finishWorkout(){
 
   // ── SAUVEGARDE LOCALE : séances d'abord, wkt effacé après confirmation ──
   S.sessions.unshift(sess);
+  /* 🗂️ LOT 3 / F03b — une séance datée d'hier par le sélecteur de date passait en TÊTE du tableau :
+     tous les lecteurs de « la dernière » la prenaient pour la plus récente. On range par le
+     propriétaire unique de l'ordre (`_trierSeances`, state.js) avant d'écrire. */
+  _trierSeances(S.sessions);
   let _savedOk=false;
   try{
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
@@ -4417,7 +4421,8 @@ async function finishWorkout(){
   }
   if(!_savedOk){
     // Annuler les mutations en mémoire et proposer le retry
-    S.sessions.shift();
+    // LOT 3 : la séance n'est plus forcément en tête une fois rangée — on retire CELLE-LÀ, par référence.
+    { const _i=S.sessions.indexOf(sess); if(_i>=0) S.sessions.splice(_i,1); }
     S.prs=_oldPrs;
     _finishing=false;
     _showSaveError();
@@ -4460,7 +4465,7 @@ async function finishWorkout(){
        ⛔ Mesuré avant/après par le vrai chemin (seul `fetch` remplacé), pas relu. */
     const res=await syncSheets(sess);
     if(res&&res.ok){
-      if(S.sessions.length)S.sessions[0].synced=true;
+      sess.synced=true;   // LOT 3 : la séance envoyée, pas « la première du tableau » (rangée par date, ce peut être une autre)
       /* ⛔ ft-v1092 — la jumelle de `_retrySheetQueue` (R8) : c'est le chemin le PLUS fréquent
          de l'app, et c'est celui où un drapeau non écrit coûte le plus cher. */
       if(_ecrireSessionsLocal())toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');
@@ -7792,11 +7797,9 @@ function finalImportHist(){
   }
 
   // Trier S.sessions par date DESC (plus récente en tête, comme finishWorkout)
-  S.sessions.sort((a,b)=>{
-    const ta=a.ts||new Date(a.date||'').getTime()||0;
-    const tb=b.ts||new Date(b.date||'').getTime()||0;
-    return tb-ta;
-  });
+  // LOT 3 : le comparateur local (`ts` d'abord) rangeait une séance rétroactive à la date de sa
+  // SAISIE ; l'ordre a désormais un seul propriétaire (`_cmpSeances`, state.js).
+  _trierSeances(S.sessions);
 
   // Recalculer les PRs depuis toutes les séances importées (chrono ASC, jamais écraser + élevé)
   if(!S.prs)S.prs={};

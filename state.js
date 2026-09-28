@@ -337,7 +337,7 @@ function load(){
     S.morphotype=localStorage.getItem('ft4_morphot')||'';
     // 🛡️ Audit 27/07 : chaque GROSSE clé est lue dans son propre try (_lsJson) → une clé corrompue
     // ne court-circuite plus le chargement de tout le reste (l'app semblait « vidée » sans raison).
-    S.sessions=_lsJson('ft4_sessions',[]);
+    S.sessions=_trierSeances(_lsJson('ft4_sessions',[]));   // LOT 3 : un historique écrit dans le désordre (F03b) est remis dans l'ordre des dates
     S.prs=_lsJson('ft4_prs',{});
     S.wkt=_lsJson('ft4_wkt',null);
     S.nextPlanned=_lsJson('ft4_nextplanned',null); // séance annoncée à Milo (ft-v601) : {date:'YYYY-MM-DD',label}
@@ -717,6 +717,83 @@ try{
   });
 }catch(e){}
 
+/* 🗂️ LOT 3 / F03 + F03b (28/09/2026) — L'ORDRE TEMPOREL DES SÉANCES A UN SEUL PROPRIÉTAIRE.
+   Mesuré par l'écran sur master b5069757 : la « dernière séance rattachée à un libellé » envoyée
+   à Milo prenait `slice(-1)` d'une liste rangée du plus récent au plus ancien — donc la PLUS
+   ANCIENNE (F03) ; et une séance datée d'hier par le sélecteur de date passait en TÊTE du
+   tableau par `unshift` (F03b) : l'historique affiché, la liste envoyée à Milo et tous les
+   lecteurs de `S.sessions[0]` la prenaient pour la dernière. Trois comparateurs vivaient à
+   trois endroits (import : `ts` d'abord ; fusion d'onglets : date seule ; aucun à la fin de séance).
+   ⭐ LE COMPARATEUR, décroissant (la plus récente d'abord) :
+     1. la DATE MÉTIER réalisée (`date`, 'AAAA-MM-JJ'), jamais modifiée ; une date absente passe
+        après toutes les datées — elle n'est JAMAIS remplacée par « aujourd'hui » ;
+     2. le même jour, `ts` : c'est l'ORDRE D'ENREGISTREMENT (`Date.now()` à la fin de séance),
+        pas l'heure réelle de l'effort — on le dit, on ne le présente pas comme une chronologie ;
+        une séance sans `ts` passe après celles qui en ont, ce jour-là ;
+     3. sinon l'ordre existant est gardé (le tri est stable) : on n'invente pas de chronologie.
+   « La dernière séance » = la première de cet ordre. `S.sessions` est rangée dans cet ordre au
+   chargement, à la fin d'une séance, à l'import et après une restauration. */
+function _cmpSeances(a,b){
+  const da=String(a&&a.date||''), db=String(b&&b.date||'');
+  if(da!==db) return da<db?1:-1;
+  return (+(b&&b.ts)||0)-(+(a&&a.ts)||0);
+}
+function _trierSeances(l){ if(Array.isArray(l)) l.sort(_cmpSeances); return l; }
+/* Les N plus récentes (copie, jamais le tableau lui-même), éventuellement filtrées. */
+function _seancesRecentes(n, filtre){
+  const l=((typeof S!=='undefined'&&Array.isArray(S.sessions))?S.sessions:[]).filter(x=>x&&(!filtre||filtre(x)));
+  l.sort(_cmpSeances);
+  return (n==null)?l:l.slice(0,n);
+}
+function _derniereSeance(filtre){ return _seancesRecentes(1, filtre)[0]||null; }
+
+/* ☁️ LOT 3 / CL (28/09/2026) — LA RESTAURATION FAIT UNE UNION, ELLE NE CHOISIT PLUS UNE LISTE.
+   Mesuré par l'écran « Restaurer » sur master b5069757 (serveur simulé) : la liste du cloud
+   remplaçait la liste locale dès qu'elle était plus LONGUE — une séance jamais synchronisée
+   disparaissait (R2), une correction locale était écrasée (R1, R4 : note, superset) ; et quand
+   le cloud était plus court, ses séances à lui n'étaient jamais ajoutées (R3).
+   ⛔ AUCUNE SIGNATURE APPROXIMATIVE (date, nombre d'exercices, premier exercice, nom…) ne peut
+   faire disparaître une séance : deux vraies séances peuvent avoir tout cela en commun.
+   ⭐ L'IDENTITÉ FORTE est `id` : posé une fois à la création (`Date.now()` en fin de séance,
+   `now+i` à l'import), recopié tel quel à la correction et au cloud, jamais réécrit. `ts` n'en
+   est PAS une : à l'import il vaut « minuit de la date + rang », deux imports du même jour peuvent
+   donc le partager.
+     · même `id`, même contenu → une seule ;
+     · même `id`, contenu différent → la version du TÉLÉPHONE reste active, la version du cloud
+       est GARDÉE à part (`ft4_sessions_conflits`) — aucun champ ne dit laquelle est la plus récente,
+       donc on ne choisit pas en jetant l'autre ;
+     · sans `id` (très anciennes séances) : seule une copie STRICTEMENT identique est reconnue, une
+       fois pour une fois (multi-ensemble) — sinon les deux restent. *Un doublon temporaire vaut
+       mieux qu'une perte silencieuse.*
+   `synced` est ignoré dans la comparaison : c'est un drapeau de transport, pas le contenu. */
+function _empreinteSeance(s){
+  const tri=v=>Array.isArray(v)?v.map(tri):(v&&typeof v==='object')
+    ?Object.keys(v).filter(k=>k!=='synced').sort().reduce((o,k)=>{o[k]=tri(v[k]);return o;},{}):v;
+  try{ return JSON.stringify(tri(s)); }catch(e){ return String(Math.random()); }
+}
+function _fusionnerSeancesRestauration(local, cloud){
+  const out=(Array.isArray(local)?local:[]).filter(x=>x&&typeof x==='object');
+  const conflits=[]; let ajoutees=0;
+  const parId=new Map(), libres=new Map();
+  out.forEach(s=>{
+    if(s.id!=null){ if(!parId.has(String(s.id))) parId.set(String(s.id),s); }
+    else { const e=_empreinteSeance(s); libres.set(e,(libres.get(e)||0)+1); }
+  });
+  (Array.isArray(cloud)?cloud:[]).forEach(c=>{
+    if(!c||typeof c!=='object') return;
+    if(c.id!=null){
+      const l=parId.get(String(c.id));
+      if(!l){ out.push(c); parId.set(String(c.id),c); ajoutees++; return; }
+      if(_empreinteSeance(l)!==_empreinteSeance(c)) conflits.push(c);
+      return;
+    }
+    const e=_empreinteSeance(c), n=libres.get(e)||0;
+    if(n>0){ libres.set(e,n-1); return; }
+    out.push(c); ajoutees++;
+  });
+  return {liste:_trierSeances(out), ajoutees, conflits};
+}
+
 /* Union de deux listes d'entrées, par une SIGNATURE stable. En cas d'égalité, la mémoire de
    cet onglet gagne : on n'invente rien, on ne fait qu'ajouter ce qu'on ne connaissait pas. */
 function _fusionListe(memoire, disque, cle){
@@ -767,8 +844,7 @@ function _fusionnerAvecLeDisque(){
        lui, se déclenche en corrigeant un poids. */
     const sigSess = s => String((s&&(s.ts||s.id))
       || ((s&&s.date||'')+'|'+((s&&s.exs||[]).length)+'|'+(((s&&s.exs||[])[0]||{}).name||'')));
-    S.sessions   = _fusionListe(S.sessions,   lire('ft4_sessions',[]), sigSess)
-                     .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,1500);
+    S.sessions   = _trierSeances(_fusionListe(S.sessions,   lire('ft4_sessions',[]), sigSess)).slice(0,1500);   // LOT 3 : le même ordre partout
     S.weightLog  = _fusionListe(S.weightLog,  lire('ft4_wlog',[]),  e=>String(e&&e.date||''));
     /* ⛔ SIGNATURE `date+clé`, PAS `date` : deux onglets qui notent le tour de cou ET le tour
        de taille le même jour produisent DEUX entrées légitimes. Une signature sur la seule

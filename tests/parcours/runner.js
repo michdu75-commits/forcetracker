@@ -39663,6 +39663,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (`_etatTravailWkt`) ; un cardio ou un échauffement noté n'est plus effacé sans question par une
      séance Milo ou un programme chargé. Contrôle négatif : `tools/mut_travail_lot2.py`. */
   await require('./travail_existant.js').ecran(t, b, PORT);
+  /* 🗂️ LOT 3 (session-B, 28/09/2026) — F03 + F03b + CL : l'ordre des séances a un seul propriétaire
+     (`_cmpSeances`, state.js) ; la restauration cloud fait une UNION par identité forte `id`, sans
+     aucune signature approximative. Contrôle négatif : `tools/mut_lot3.py`. */
+  await require('./historique_cloud.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40481,6 +40485,7 @@ require('./seance_c2.js').source(t, ROOT, fs, path);
 require('./seance_c3.js').source(t, ROOT, fs, path);
 require('./fil_coach_lot1.js').source(t, ROOT, fs, path);
 require('./travail_existant.js').source(t, ROOT, fs, path);
+require('./historique_cloud.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

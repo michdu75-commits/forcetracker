@@ -3452,8 +3452,28 @@ function _applyRestoreData(raw){
   try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(d.exPhotos),...(S.exPhotos||{})};}catch(e){console.warn('[FT restore] exPhotos',e);}
   // PRs — prend le plus complet
   try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
-  // Sessions — prend le plus complet
-  try{if(sessions&&sessions.length&&(!S.sessions||S.sessions.length===0)){S.sessions=sessions;console.log('[FT restore] sessions:',sessions.length);}else if(sessions&&sessions.length>0&&S.sessions&&sessions.length>S.sessions.length){S.sessions=sessions;console.log('[FT restore] sessions cloud plus complet:',sessions.length);}}catch(e){console.warn('[FT restore] sessions',e);}
+  /* ☁️ Sessions — LOT 3 / CL (28/09/2026) : UNION, plus « la liste la plus longue gagne ».
+     Mesuré par l'écran « Restaurer » : un cloud plus long remplaçait le téléphone (une séance
+     jamais synchronisée disparaissait, une note ou un superset corrigés sur place étaient écrasés),
+     un cloud plus court n'apportait rien. La règle d'union a un seul propriétaire :
+     `_fusionnerSeancesRestauration` (state.js) — identité forte `id`, aucune signature approximative.
+     ⛔ Une même séance (même `id`) en deux versions : celle du TÉLÉPHONE reste active, celle du
+     cloud est GARDÉE à part dans `ft4_sessions_conflits` (rien ne dit laquelle est la plus
+     récente) — et on le dit. */
+  try{
+    const _r=_fusionnerSeancesRestauration(S.sessions, sessions);
+    S.sessions=_r.liste;
+    if(_r.conflits.length){
+      let _anc=[]; try{ _anc=JSON.parse(localStorage.getItem('ft4_sessions_conflits')||'[]'); }catch(e){ _anc=[]; }
+      if(!Array.isArray(_anc)) _anc=[];
+      const _vus=new Set(_anc.map(_empreinteSeance));
+      _r.conflits.forEach(c=>{ const e=_empreinteSeance(c); if(!_vus.has(e)){ _vus.add(e); _anc.push(c); } });
+      try{ localStorage.setItem('ft4_sessions_conflits',JSON.stringify(_anc)); }catch(e){ console.warn('[FT restore] conflits non enregistrés',e); }
+      const _n=_r.conflits.length;
+      setTimeout(()=>{ try{ toast(_n+' séance'+(_n>1?'s existent':' existe')+' en deux versions : celle du téléphone est gardée, celle du cloud est mise de côté.','info'); }catch(e){} },3000);
+    }
+    console.log('[FT restore] sessions : '+S.sessions.length+' ('+_r.ajoutees+' ajoutée(s) depuis le cloud, '+_r.conflits.length+' en deux versions)');
+  }catch(e){console.warn('[FT restore] sessions',e);}
   // ⚠️ Le drapeau « historique tronqué » se LÈVE dès qu'une restauration a rendu l'historique
   // complet : sans ça, l'app cesserait pour toujours d'envoyer ses séances au cloud (02/08).
   try{ if(S.histTronque && (S.sessions||[]).length > 50){
