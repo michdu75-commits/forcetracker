@@ -62,8 +62,8 @@ module.exports.source = function (t, ROOT, fs, path) {
     ['_rebuildProgGroups', '_normalizeProgGroups', 'applyDropset', 'createSupersetFrom'].every(f => corps(lo, f) && !/_dissoudreGroupeOrphelin/.test(corps(lo, f))), '');
 };
 
-module.exports.ecran = async function (t, b, PORT) {
-  console.log('\n═══ B-CDV (session-B). LOT 6 / ML-B — un groupe ne reste jamais actif à moins de deux membres (écran) ═══');
+// Outils communs aux blocs écran B-CDV et B-CDVII (mêmes frontières simulées, mêmes clics conduits).
+function outils(b, PORT) {
   const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
   const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test', ft4_email: 't@t.t',
     ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_lms: moisPrec, ft4_ok: '1', ft4_stmig1: '1' };
@@ -83,7 +83,7 @@ module.exports.ecran = async function (t, b, PORT) {
     await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
     return X;
   };
-  const GARDER = /mod-prog|ov-ex-menu|ov-confirm|ov-day-sel/;
+  const GARDER = /mod-prog|mod-ex|ov-ex-menu|ov-confirm|ov-day-sel/;
   const fermerAutres = pg => pg.evaluate(g => document.querySelectorAll('.overlay.open').forEach(o => { if (!new RegExp(g).test(o.id)) o.classList.remove('open'); }), GARDER.source);
   const clic = async (pg, sel, txt) => {
     for (let k = 0; k < 8; k++) {
@@ -124,6 +124,13 @@ module.exports.ecran = async function (t, b, PORT) {
   // Seules les clés de groupe des noms listés peuvent avoir disparu ; tout le reste est STRICTEMENT identique.
   const seulGroupeRetire = (av, ap, noms) => av.length === ap.length && av.every((e, k) =>
     noms.includes(e.name) ? egal(ap[k], sansGroupe(e)) : egal(ap[k], e));
+
+  return { ouvrir, clic, fermerAutres, allerSeance, recharger, etat, idx, libelles, retirer, supprimer, seulGroupeRetire, js };
+}
+
+module.exports.ecran = async function (t, b, PORT) {
+  console.log('\n═══ B-CDV (session-B). LOT 6 / ML-B — un groupe ne reste jamais actif à moins de deux membres (écran) ═══');
+  const { ouvrir, clic, fermerAutres, allerSeance, recharger, etat, idx, libelles, retirer, supprimer, seulGroupeRetire, js } = outils(b, PORT);
 
   const S0 = (n, extra) => Object.assign({ kg: 40 + n, reps: 10, type: 'N', done: false, rm1: 0 }, extra || {});
   const DS = { paliers: 3, pct: 20, direction: 'down', _futur: { v: 2 } };
@@ -273,5 +280,193 @@ module.exports.ecran = async function (t, b, PORT) {
     t('T5 exercice non groupé : l\'écran n\'offre pas « ↩ Retirer », et l\'appel direct ne change RIEN (séance strictement identique)',
       !bouton && egal(ap.wkt, av.wkt) && egal(ap.disque, av.disque), 'bouton=' + bouton);
     await X.cx.close();
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   🧩 LOT 6 / ML-B — EXTENSION : ANNULER LA CRÉATION D'UN GROUPE NE LAISSE RIEN (29/09/2026)
+   Mesuré avant : le tap sur « ⚡ Super » (`createSupersetFrom`) écrivait `group`/`groupType` sur
+   l'exercice et les ENREGISTRAIT avant d'ouvrir le sélecteur. « Fermer », le retour arrière ou
+   l'app quittée pendant le choix laissaient un groupe à 1 membre (« ⚡ Circuit (1) »), relu au
+   rechargement : `closeExPicker` ne connaît pas le mode `addToGroup`.
+   Correctif : rien n'est écrit au tap ; l'exercice attend dans `_superSource`, et le groupe naît
+   dans `_doAddToGroup`, quand le 2ᵉ membre est réellement choisi.
+   CONDUIT : « ⚡ Super », le sélecteur `#mod-ex`, son bouton « Fermer », le retour arrière
+   (`history.back()` → le vrai `popstate` de l'app), la recherche et le choix d'un exercice,
+   « ⚡ Grouper » + sélection + « Lier », le menu « ⋯ » → « Superset avec l'exercice du dessus »,
+   « + Exo », un VRAI rechargement (y compris pendant le choix).
+   ⚠️ C2·dropset APPELLE `createSupersetFrom` : l'écran n'offre pas « ⚡ Super » sur un exercice à
+   dropset — c'est vérifié d'abord.
+   NE COUVRE PAS : « + Exo » sur un groupe existant (mesuré : il n'ajoute PAS au groupe, défaut
+   distinct, hors ML-B — le témoin C3b ne fige pas ce comportement), les anciens orphelins déjà
+   enregistrés (aucune migration), l'éditeur de programme.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+module.exports.sourceCreation = function (t, ROOT, fs, path) {
+  console.log('\n═══ B-CDVI (session-B). LOT 6 / ML-B — une création de groupe n\'est validée qu\'à deux membres liés (source) ═══');
+  const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const lo = nu('log.js');
+  const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
+  const csf = corps(lo, 'createSupersetFrom'), dag = corps(lo, '_doAddToGroup');
+  t('① les fonctions sont trouvées', csf && dag, csf.length + '/' + dag.length);
+  t('② le tap sur « ⚡ Super » n\'écrit RIEN : ni `group`, ni `groupType`, ni enregistrement',
+    !/\.group\s*=|\.groupType\s*=|persist\(/.test(csf), csf.slice(0, 220));
+  t('③ le groupe naît dans `_doAddToGroup`, qui lie la source ET le nouveau membre', /src\.group=gid;src\.groupType='super';/.test(dag), dag.slice(0, 260));
+  t('④ aucune seconde règle d\'invariant : `_dissoudreGroupeOrphelin` reste appelée par les 2 chemins de retrait seulement',
+    !/_dissoudreGroupeOrphelin/.test(csf + dag), '');
+};
+
+module.exports.creation = async function (t, b, PORT) {
+  console.log('\n═══ B-CDVII (session-B). LOT 6 / ML-B — « ⚡ Super » abandonné ne laisse aucun groupe (écran) ═══');
+  const { ouvrir, clic, allerSeance, recharger, etat, idx, libelles, js } = outils(b, PORT);
+  const canonE = e => JSON.stringify(Object.keys(e).sort().reduce((o, k) => (o[k] = e[k], o), {}));
+  const S0 = (n, extra) => Object.assign({ kg: 50 + n, reps: 8, type: 'N', done: false, rm1: 0 }, extra || {});
+  const DS = { paliers: 3, pct: 20, direction: 'down', _futur: { v: 3 } };
+  const WKT = () => ({ date: '2026-09-29', startHour: 10, exs: [
+    { name: 'Squat', note: 'profond', _futur: { cle: 'à garder' },
+      sets: [S0(0, { done: true, rm1: 58, rir: 2, at: 40, rest: 180 }), S0(1, { rest: 150, _serieFuture: 'x' }), S0(2, { maxi: true, type: 'X', reps: 0 })] },
+    { name: 'Curl biceps', group: 'ssG', groupType: 'super', sets: [S0(3)] },
+    { name: 'Crunch', group: 'ssG', groupType: 'super', sets: [S0(4)] },
+    { name: 'Rowing barre', sets: [S0(5, { rest: 90 })] },
+    { name: 'Presse à cuisses', dropset: DS, note: 'dropset', sets: [S0(6), S0(7), S0(8)] },
+    { name: 'Élévations latérales', sets: [S0(9)] } ] });
+  const orph = exs => { const n = {}; exs.forEach(e => { if (e.group) n[e.group] = (n[e.group] || 0) + 1; }); return Object.keys(n).filter(k => n[k] < 2); };
+  const superSur = async (X, nom) => { await allerSeance(X); const i = await idx(X, nom); return i >= 0 && await clic(X.pg, 'button[onclick="createSupersetFrom(' + i + ')"]'); };
+  const pickerOuvert = X => X.pg.evaluate(() => document.getElementById('mod-ex').classList.contains('open') && _exPickerMode === 'addToGroup');
+  const choisir = async (X, q, txt) => { await X.pg.fill('#ex-search', q); await X.pg.waitForTimeout(250); return clic(X.pg, '#ex-list .ex-pick', txt); };
+
+  // ── C1 · C2 · C5 : « ⚡ Super » puis « Fermer » ─────────────────────────────────────────────────
+  {
+    const X = await ouvrir({ ft4_wkt: WKT() });
+    await allerSeance(X);
+    const av = await etat(X);
+    const s = await superSur(X, 'Squat');
+    const pendant = await etat(X);
+    t('C0 « ⚡ Super » ouvre le sélecteur du partenaire (témoin de départ)', s && await pickerOuvert(X), 's=' + s);
+    t('C1a PENDANT le choix, rien n\'est écrit : ni en mémoire ni sur le disque',
+      !aCle(pendant.wkt.exs[0], 'group') && !aCle(pendant.wkt.exs[0], 'groupType') && !aCle(pendant.disque.exs[0], 'group') && !aCle(pendant.disque.exs[0], 'groupType'), js(pendant.disque.exs[0]));
+    const f = await clic(X.pg, '#mod-ex .modal-btns button', 'Fermer');
+    await X.pg.evaluate(() => renderExBlocks());
+    const ap = await etat(X);
+    t('C1 « Fermer » : l\'exercice n\'a ni `group` ni `groupType`, aucun groupe à 1 membre (mémoire ET disque)',
+      f && !aCle(ap.wkt.exs[0], 'group') && !aCle(ap.wkt.exs[0], 'groupType') && orph(ap.wkt.exs).length === 0 && orph(ap.disque.exs).length === 0, js(ap.wkt.exs[0]));
+    t('C1b l\'écran n\'affiche pas « Circuit (1) » : seul le groupe existant reste affiché', egal(await libelles(X), ['⚡ Super Set']), js(await libelles(X)));
+    t('C2 exercice riche : STRICTEMENT identique (séries, charges, reps, repos, note, maxi, faite, rir, horodatage, champs inconnus)',
+      egal(ap.wkt.exs[0], av.wkt.exs[0]) && egal(ap.disque.exs[0], av.disque.exs[0]), js(ap.wkt.exs[0]));
+    t('C5 l\'autre groupe et tous les autres exercices sont strictement inchangés, dans le même ordre', egal(ap.wkt, av.wkt) && egal(ap.disque, av.disque), '');
+    // après l'abandon, un ajout ORDINAIRE reste un exercice seul
+    const add = await clic(X.pg, 'button[onclick="openExPicker()"]') || await X.pg.evaluate(() => { openExPicker(); return true; });
+    const ch = await choisir(X, 'Tirage', 'Tirage');
+    await X.pg.evaluate(() => closeExPicker());
+    const e2 = await etat(X);
+    const nouveau = e2.wkt.exs[e2.wkt.exs.length - 1];
+    t('C1c après l\'abandon, un ajout ordinaire reste un exercice SEUL, et l\'exercice abandonné aussi',
+      add && ch && e2.wkt.exs.length === av.wkt.exs.length + 1 && !aCle(nouveau, 'group') && !aCle(e2.wkt.exs[0], 'group') && orph(e2.wkt.exs).length === 0, js(nouveau));
+    t('C1d aucune erreur de page, aucun appel Milo', X.errs.length === 0 && X.milo === 0, X.errs.join(' | ').slice(0, 200));
+    await X.cx.close();
+  }
+
+  // ── C1·retour · C6 : retour arrière, puis rechargement ; et app quittée PENDANT le choix ─────────
+  {
+    const X = await ouvrir({ ft4_wkt: WKT() });
+    await allerSeance(X);
+    const av = await etat(X);
+    const s = await superSur(X, 'Rowing barre');
+    await X.pg.evaluate(() => history.back()); await X.pg.waitForTimeout(400);
+    const ferme = await X.pg.evaluate(() => !document.getElementById('mod-ex').classList.contains('open'));
+    const ap = await etat(X);
+    t('C1·retour le retour arrière ferme le sélecteur et ne laisse aucun groupe (Rowing barre intact)',
+      s && ferme && egal(ap.wkt, av.wkt) && egal(ap.disque, av.disque), 'ferme=' + ferme + ' ' + js(ap.wkt.exs[3]));
+    await recharger(X);
+    const r = await etat(X);
+    t('C6a abandon PUIS rechargement : aucun groupe à 1 membre ne réapparaît, la séance est identique', egal(r.wkt.exs, av.wkt.exs) && orph(r.disque.exs).length === 0, '');
+    const s2 = await superSur(X, 'Élévations latérales');
+    await recharger(X);
+    const r2 = await etat(X);
+    t('C6b app quittée PENDANT le choix (rechargement) : rien n\'a été enregistré, aucun groupe à 1 membre',
+      s2 && orph(r2.wkt.exs).length === 0 && orph(r2.disque.exs).length === 0 && egal(r2.disque.exs, av.disque.exs), js(r2.disque.exs.map(e => [e.name, e.group || '-'])));
+    await allerSeance(X);
+    t('C6c … et l\'écran rechargé n\'affiche aucun « Circuit (1) »', egal(await libelles(X), ['⚡ Super Set']), js(await libelles(X)));
+    await X.cx.close();
+  }
+
+  // ── C3 : création normale d'un superset de 2 (et après un abandon, et après « + Exo ») ─────────
+  {
+    const X = await ouvrir({ ft4_wkt: WKT() });
+    await allerSeance(X);
+    const av = await etat(X);
+    // un abandon d'abord : il ne doit pas polluer la création suivante
+    await superSur(X, 'Squat'); await clic(X.pg, '#mod-ex .modal-btns button', 'Fermer');
+    const s = await superSur(X, 'Rowing barre');
+    const ch = await choisir(X, 'Tirage', 'Tirage');
+    await X.pg.waitForTimeout(300);
+    const ap = await etat(X);
+    const ri = ap.wkt.exs.findIndex(e => e.name === 'Rowing barre'), row = ap.wkt.exs[ri], part = ap.wkt.exs[ri + 1];
+    t('C3 « ⚡ Super » + choix : un superset de 2, même identifiant, type `super`, le partenaire juste après la source',
+      s && ch && row && part && row.group && row.group === part.group && row.groupType === 'super' && part.groupType === 'super'
+      && ap.wkt.exs.filter(e => e.group === row.group).length === 2 && !/^ssG$/.test(row.group), js([row, part]));
+    t('C3b la source n\'a perdu que… rien : seules les clés de groupe ont été AJOUTÉES',
+      row && egal(Object.assign({}, av.wkt.exs[3], { group: row.group, groupType: 'super' }), row), js(row));
+    t('C3c l\'exercice abandonné avant (Squat) n\'est pas entré dans le groupe, l\'autre groupe est inchangé',
+      !aCle(ap.wkt.exs[0], 'group') && egal(ap.wkt.exs.filter(e => e.group === 'ssG'), av.wkt.exs.filter(e => e.group === 'ssG')), '');
+    t('C3d l\'écran affiche deux « Super Set », aucun « Circuit (1) »', egal((await libelles(X)).sort(), ['⚡ Super Set', '⚡ Super Set']), js(await libelles(X)));
+    await recharger(X);
+    const r = await etat(X);
+    t('C3e après rechargement, le nouveau superset est toujours là à 2 membres', r.wkt.exs.filter(e => row && e.group === row.group).length === 2 && orph(r.disque.exs).length === 0, '');
+    // « + Exo » sur le groupe existant (défaut distinct : il n'ajoute pas au groupe) puis « ⚡ Super » : la paire se crée toujours correctement
+    await allerSeance(X);
+    const avE = await etat(X);
+    await clic(X.pg, 'button[onclick="addToGroup(\'ssG\')"]');
+    await choisir(X, 'Crunch', 'Crunch'); await X.pg.evaluate(() => closeExPicker());
+    const mid = await etat(X);
+    const s3 = await superSur(X, 'Élévations latérales');
+    const ch3 = await choisir(X, 'Face pull', 'Face');
+    await X.pg.waitForTimeout(300);
+    const fin = await etat(X);
+    const ei = fin.wkt.exs.findIndex(e => e.name === 'Élévations latérales'), el = fin.wkt.exs[ei];
+    t('C3f après « + Exo », « ⚡ Super » crée une NOUVELLE paire : le groupe `ssG` n\'est pas touché par cette création',
+      s3 && ch3 && el && el.group && el.group !== 'ssG' && fin.wkt.exs[ei + 1].group === el.group && fin.wkt.exs.filter(e => e.group === el.group).length === 2
+      && egal(fin.wkt.exs.filter(e => e.group === 'ssG'), mid.wkt.exs.filter(e => e.group === 'ssG')) && avE, js(fin.wkt.exs.map(e => [e.name, e.group || '-'])));
+    t('C3g aucune erreur de page, aucun appel Milo', X.errs.length === 0 && X.milo === 0, X.errs.join(' | ').slice(0, 200));
+    await X.cx.close();
+  }
+
+  // ── C2·dropset : l'écran n'offre pas « ⚡ Super » ; l'appel direct puis l'abandon ne touchent à rien ─
+  {
+    const X = await ouvrir({ ft4_wkt: WKT() });
+    await allerSeance(X);
+    const pi = await idx(X, 'Presse à cuisses');
+    await X.pg.evaluate(k => { _expandedEx = k; renderExBlocks(); }, pi);
+    const bouton = await X.pg.evaluate(k => [...document.querySelectorAll('button[onclick="createSupersetFrom(' + k + ')"]')].some(e => e.offsetParent !== null), pi);
+    const av = await etat(X);
+    await X.pg.evaluate(k => createSupersetFrom(k), pi); await X.pg.waitForTimeout(200);
+    await clic(X.pg, '#mod-ex .modal-btns button', 'Fermer');
+    const ap = await etat(X);
+    t('C2·dropset pas de « ⚡ Super » à l\'écran sur un exercice à dropset ; appel direct puis abandon : dropset et séance STRICTEMENT identiques',
+      !bouton && egal(ap.wkt, av.wkt) && egal(ap.disque, av.disque) && egal(ap.wkt.exs[pi].dropset, DS), 'bouton=' + bouton + ' ' + js(ap.wkt.exs[pi]));
+    await X.cx.close();
+  }
+
+  // ── C4 : création d'un tri-set par « ⚡ Grouper » et par « Superset avec l'exercice du dessus » ───
+  {
+    const X = await ouvrir({ ft4_wkt: WKT() });
+    await allerSeance(X);
+    const g = await clic(X.pg, 'button[onclick="toggleGroupMode()"]');
+    const sel = [];
+    for (const nom of ['Squat', 'Rowing barre', 'Élévations latérales']) { const i = await idx(X, nom); sel.push(await clic(X.pg, '#ex-block-' + i)); }
+    const lier = await clic(X.pg, 'button[onclick="createSuperset()"]');
+    const ap = await etat(X);
+    const gid = ap.wkt.exs[0].group;
+    t('C4a « ⚡ Grouper » + 3 exercices + « Lier » : un tri-set, même identifiant, libellé « Tri-set »',
+      g && sel.every(Boolean) && lier && gid && ap.wkt.exs.filter(e => e.group === gid).length === 3 && (await libelles(X)).includes('⚡ Tri-set'), js(ap.wkt.exs.map(e => [e.name, e.group || '-'])));
+    // « Superset avec l'exercice du dessus » sous le groupe existant ssG → il le rejoint (tri-set)
+    const X2 = await ouvrir({ ft4_wkt: { date: '2026-09-29', exs: [WKT().exs[1], WKT().exs[2], WKT().exs[3]] } });
+    await allerSeance(X2);
+    const m = await clic(X2.pg, 'button[onclick^="openExMenu(2,"]');
+    const lp = await clic(X2.pg, '#ov-ex-menu button', 'Superset avec');
+    const e2 = await etat(X2);
+    t('C4b « Superset avec l\'exercice du dessus » sous un superset de 2 : tri-set `ssG`, rien d\'autre ne change',
+      m && lp && e2.wkt.exs.every(e => e.group === 'ssG' && e.groupType === 'super') && (await libelles(X2)).includes('⚡ Tri-set'), js(e2.wkt.exs.map(e => [e.name, e.group || '-'])));
+    t('C4c aucune erreur de page', X.errs.length === 0 && X2.errs.length === 0, X.errs.concat(X2.errs).join(' | ').slice(0, 200));
+    await X.cx.close(); await X2.cx.close();
   }
 };

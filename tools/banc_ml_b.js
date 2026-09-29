@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* BANC — LOT 6 / ML-B (session-B) : un groupement ne reste jamais actif à moins de deux membres (B-CDIV + B-CDV).
+/* BANC — LOT 6 / ML-B (session-B) : un groupement ne reste jamais actif à moins de deux membres (B-CDIV + B-CDV) · extension : annuler la création d'un groupe ne laisse rien (B-CDVI + B-CDVII).
    Destiné à la passe complète (tests/parcours/runner.js) après validation du checkpoint.
    Sert aussi au contrôle négatif : `python3 tools/mut_ml_b.py`.
    Usage : node tools/banc_ml_b.js   (depuis la racine du dépôt ou d'un clone) */
@@ -23,7 +23,9 @@ const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); 
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
   const T = require(path.join(ROOT, 'tests', 'parcours', 'groupes_orphelins.js'));
   T.source(t, ROOT, fs, path);
+  T.sourceCreation(t, ROOT, fs, path);
   await T.ecran(t, b, srv.address().port);
+  await T.creation(t, b, srv.address().port);
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
   process.exit(ko ? 1 : 0);

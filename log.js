@@ -417,11 +417,18 @@ function dissolveGroup(gid){
   persist();renderExBlocks();toast('Groupe dissous','info');
 }
 function _roundToGym(kg){return Math.round(kg/2.5)*2.5;}
+/* 🧩 LOT 6 / ML-B (extension, 29/09/2026) — UNE CRÉATION N'EST VALIDÉE QU'À DEUX MEMBRES LIÉS.
+   Mesuré avant : le tap sur « ⚡ Super » écrivait `group`/`groupType` sur l'exercice ET les
+   ENREGISTRAIT (persist) avant même d'ouvrir le sélecteur. Abandonner le choix du 2ᵉ exercice
+   (« Fermer », retour, glisser, ou app quittée) laissait donc un groupe à 1 membre, affiché
+   « ⚡ Circuit (1) » et relu au rechargement : `closeExPicker` ne connaît pas ce mode.
+   👉 On ne pose plus rien ici : l'exercice attend son partenaire dans `_superSource`, et le groupe
+   naît dans `_doAddToGroup`, au moment où le 2ᵉ membre existe. Tout abandon ne laisse rien. */
 function createSupersetFrom(ei){
-  const gid='ss'+Date.now();
-  S.wkt.exs[ei].group=gid;S.wkt.exs[ei].groupType='super';
-  _expandedEx=ei;persist();
-  _addToGroupGid=gid;
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei];if(!ex)return;
+  _superSource=ex;
+  _expandedEx=ei;
+  _addToGroupGid=null;
   openExPicker('addToGroup');
   toast('Choisis le 2ᵉ exercice de la supersérie','info');
 }
@@ -522,6 +529,7 @@ function _exDragEnd(){
   if(over!==null&&over!==dragEi)_dropSuperset(dragEi,over);
 }
 let _addToGroupGid=null;
+let _superSource=null;   // ML-B : l'exercice qui attend son partenaire après « ⚡ Super » (rien n'est écrit avant)
 // ─── DROPSET / PYRAMIDE ─────────────────────────────────────────────────────
 let _dropCfgEi=null,_dropCfgPaliers=3,_dropCfgPct=20,_dropCfgDir='down';
 function openDropsetConfig(ei,dir){
@@ -663,7 +671,10 @@ function addToGroup(gid){
   persist();renderExBlocks();
 }
 function _doAddToGroup(name){
-  const gid=_addToGroupGid;_addToGroupGid=null;
+  let gid=_addToGroupGid;_addToGroupGid=null;
+  const src=_superSource;_superSource=null;
+  // ML-B : création depuis « ⚡ Super » — le groupe ne naît qu'ici, quand le 2ᵉ membre est choisi.
+  if(!gid&&src&&S.wkt&&S.wkt.exs.indexOf(src)>=0&&!src.group){gid='ss'+Date.now();src.group=gid;src.groupType='super';}
   const members=_ssMembers(gid);if(!members.length)return;
   const last=members[members.length-1];
   const newEx={name,sets:[{kg:0,reps:5,done:false,type:'N'}],group:gid,groupType:'super'};

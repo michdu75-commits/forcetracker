@@ -9,18 +9,23 @@ rougit. Un rouge des seuls temoins de SOURCE (①..⑥) ne suffit pas : la mutat
 M00 remet log.js tel qu'il etait AVANT ML-B (master 2f10ae40, ft-v1242), mot pour mot.
 M1..M8 = la liste demandee par Michel · D1..D4 = deguisees · D5 = equivalente (doit RESTER verte)
 · [negatif] = commentaire citant les motifs (doit RESTER vert).
+EXTENSION (annulation de creation, B-CDVI / B-CDVII) : X00 remet log.js tel qu'il etait AVANT l'extension
+(877ca25d) · X1..X6 = la liste demandee par Michel · X7, X8 = deguisees · X9 = equivalente · [negatif-X].
 Usage : python3 tools/mut_ml_b.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges, pas seulement le premier)
 """
 import os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = '2f10ae40'
+AVANT_X = '877ca25d'
 LO = 'log.js'
 FICHIERS = (LO,)
 
 H_FILTRE = "  const reste=exs.filter(e=>e&&e.group===gid);\n"
 H_COND = "  if(reste.length<2)reste.forEach(e=>{delete e.group;delete e.groupType;});\n"
 RFG = "  delete S.wkt.exs[ei].group;delete S.wkt.exs[ei].groupType;\n  _dissoudreGroupeOrphelin(S.wkt.exs,gid);\n"
+CSF = "  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei];if(!ex)return;\n  _superSource=ex;\n  _expandedEx=ei;\n  _addToGroupGid=null;\n"
+DAG = "  if(!gid&&src&&S.wkt&&S.wkt.exs.indexOf(src)>=0&&!src.group){gid='ss'+Date.now();src.group=gid;src.groupType='super';}\n"
 RME = "    S.wkt.exs.splice(ei,1);\n    _dissoudreGroupeOrphelin(S.wkt.exs,gid);   // ML-B : le survivant perd aussi `groupType`\n"
 
 MUT = [
@@ -51,6 +56,26 @@ MUT = [
      [(LO, H_COND, "  if(reste.length<2)reste.forEach(e=>{e.group=null;e.groupType=null;});\n")], 'GARDE'),
     ('D5 [equivalente] « <=1 » au lieu de « <2 » : meme comportement, doit RESTER vert',
      [(LO, H_COND, H_COND.replace('reste.length<2', 'reste.length<=1'))], 'OK'),
+    ("X00 code d'AVANT l'extension remis mot pour mot (log.js de 877ca25d)", 'AVANT_X', 'GARDE'),
+    ('X1 retour du groupe orphelin : « Super » ecrit et enregistre le groupe avant le choix',
+     [(LO, CSF, "  const gid='ss'+Date.now();\n  S.wkt.exs[ei].group=gid;S.wkt.exs[ei].groupType='super';\n  _expandedEx=ei;persist();\n  _addToGroupGid=gid;\n")], 'GARDE'),
+    ('X2 un groupType provisoire reste seul apres l\'abandon',
+     [(LO, CSF, CSF + "  ex.groupType='super';persist();\n")], 'GARDE'),
+    ('X3 suppression accidentelle du dropset au tap sur « Super »',
+     [(LO, CSF, CSF.replace('_superSource=ex;', 'delete ex.dropset;_superSource=ex;'))], 'GARDE'),
+    ('X4 perte de series au tap sur « Super »',
+     [(LO, CSF, CSF.replace('_superSource=ex;', 'ex.sets=ex.sets.filter(s=>!s.done);_superSource=ex;'))], 'GARDE'),
+    ('X5 la creation rejoint un AUTRE groupe existant',
+     [(LO, DAG, DAG.replace("gid='ss'+Date.now();", "gid=(S.wkt.exs.find(e=>e.group)||{}).group||('ss'+Date.now());"))], 'GARDE'),
+    ('X6 creation normale d\'un groupe de 2 cassee (la source n\'est jamais liee)', [(LO, DAG, '')], 'GARDE'),
+    ('X7 [deguisee] « Super » ne vide pas un identifiant de groupe reste en attente',
+     [(LO, CSF, CSF.replace('  _addToGroupGid=null;\n', ''))], 'GARDE'),
+    ('X8 [deguisee] la source est liee sans son groupType',
+     [(LO, DAG, DAG.replace("src.groupType='super';", ''))], 'GARDE'),
+    ('X9 [equivalente] includes() au lieu de indexOf()>=0 : doit RESTER vert',
+     [(LO, DAG, DAG.replace('S.wkt.exs.indexOf(src)>=0', 'S.wkt.exs.includes(src)'))], 'OK'),
+    ('[negatif-X] commentaire citant les motifs cherches dans createSupersetFrom',
+     [(LO, CSF, CSF + "  // ex.group=gid ; ex.groupType='super' ; persist() — c'etait le defaut\n")], 'OK'),
     ('[negatif] commentaire citant les motifs cherches (left.length<1, delete e.dropset)',
      [(LO, H_COND, H_COND + "  // left.length<1 · delete e.dropset · JSON.parse(JSON.stringify( · Object.assign(\n")], 'OK'),
 ]
@@ -67,8 +92,8 @@ def banc(arbre):
 
 
 def conduits(rouges):
-    # les temoins CONDUITS du bloc ecran B-CDV ont un libelle qui commence par « T »
-    return [x for x in rouges if re.match(r'❌ ROUGE T', x)]
+    # les temoins CONDUITS (blocs ecran B-CDV et B-CDVII) ont un libelle qui commence par « T » ou « C »
+    return [x for x in rouges if re.match(r'❌ ROUGE [TC]', x)]
 
 
 def cloner():
@@ -80,7 +105,7 @@ def cloner():
 
 def main():
     filtres = [f for f in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if f]
-    avant = {f: subprocess.run(['git', 'show', AVANT + ':' + f], cwd=SRC, capture_output=True, text=True).stdout for f in FICHIERS}
+    avants = {c: {f: subprocess.run(['git', 'show', c + ':' + f], cwd=SRC, capture_output=True, text=True).stdout for f in FICHIERS} for c in (AVANT, AVANT_X)}
     tmp0, a0 = cloner()
     rouges = banc(a0)
     shutil.rmtree(tmp0, ignore_errors=True)
@@ -93,7 +118,8 @@ def main():
             continue
         total += 1
         tmp, arbre = cloner()
-        if remplacements == 'AVANT':
+        if remplacements in ('AVANT', 'AVANT_X'):
+            avant = avants[AVANT if remplacements == 'AVANT' else AVANT_X]
             cur = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
             if any(not avant[f] for f in FICHIERS) or all(avant[f] == cur[f] for f in FICHIERS):
                 print('  INVALIDE  %s (code d\'avant introuvable ou identique)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue

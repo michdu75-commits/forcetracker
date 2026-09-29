@@ -39681,6 +39681,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      membres : `removeFromGroup` et `rmEx` passent par `_dissoudreGroupeOrphelin` (log.js), qui ne retire que
      `group`/`groupType`. Contrôle négatif : `tools/mut_ml_b.py`. */
   await require('./groupes_orphelins.js').ecran(t, b, PORT);
+  /* 🧩 ML-B extension (29/09/2026) — « ⚡ Super » abandonné ne laisse aucun groupe : le groupe ne naît que dans
+     `_doAddToGroup`, quand le 2ᵉ membre existe. */
+  await require('./groupes_orphelins.js').creation(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40503,6 +40506,7 @@ require('./historique_cloud.js').source(t, ROOT, fs, path);
 require('./historique_cloud.js').source3b(t, ROOT, fs, path);
 require('./dropset_programme.js').source(t, ROOT, fs, path);
 require('./groupes_orphelins.js').source(t, ROOT, fs, path);
+require('./groupes_orphelins.js').sourceCreation(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
