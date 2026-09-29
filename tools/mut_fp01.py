@@ -8,7 +8,7 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
 vrai champ, vrai bouton, vrai rechargement) ou valeur servie par l'app dans la page (A*..D*). Un rouge
 des seuls temoins de SOURCE (①..④) ne suffit pas : la mutation est alors NON conforme.
 M00 = coach.js tel qu'il etait AVANT le lot (master 7a71649e, ft-v1243), mot pour mot.
-M1..M8 = la liste demandee par Michel · D1, D2 = deguisees · D3 = equivalente (doit RESTER verte)
+M1..M8 = la liste demandee par Michel (M3a : une 1re M3 qui ne rendait PAS P1 faux — gardee, mesuree) · D1, D2 = deguisees · D3 = equivalente (doit RESTER verte)
 · [negatif] = commentaire citant les motifs (doit RESTER vert).
 Usage : python3 tools/mut_fp01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -23,6 +23,8 @@ GARDE = ("    if(/\\bbouton|\\bb(?:u|eu)g\\b|\\baffich|\\bapparu|\\bapparai|\\b(
 VERBE = "if(/\\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\\b"
 REGLE2 = "    // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)\n"
 AMBIGU = "    if(/\\bpourquoi\\b(?!\\s+pas\\b)|\\bne\\s+compte\\s+pas\\b|\\bdebrief/i.test(p)) return false;\n"
+REGLE2_LIGNE = "    if(/\\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+s[ée]ance\\b/i.test(t)) return true;\n"
+R1_FIN = "(s[ée]ance|entra[îi]nement|programme|prog)\\b/i.test(t)) return true;"
 QUESTION = "    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach(), _msgA);\n"
 R1_COMMENT = "    // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme\n"
 
@@ -30,7 +32,9 @@ MUT = [
     ("M00 code d'AVANT le lot remis mot pour mot (coach.js de 7a71649e)", 'AVANT', 'GARDE'),
     ('M1 retour a la logique permissive : le garde « bouton / affiche / negation » n\'existe plus', [(CO, GARDE, '')], 'GARDE'),
     ('M2 le garde est la mais desactive (condition jamais vraie)', [(CO, GARDE, GARDE.replace('if(/', 'if(false&&/'))], 'GARDE'),
-    ('M3 correctif trop large : « fais » retire des verbes de demande (« Fais-moi une seance » devient faux)',
+    ('M3 correctif trop large : regle ② supprimee et seance « qualifiee » exigee (« Fais-moi une seance » devient faux)',
+     [(CO, REGLE2_LIGNE, ''), (CO, R1_FIN, R1_FIN.replace('\\b/i.test(t))', '\\s+\\S/i.test(t))'))], 'GARDE'),
+    ('M3a « fais » retire des verbes (sans effet sur « Fais-moi une seance », rattrapee par la regle ② : mesure le 29/09)',
      [(CO, VERBE, VERBE.replace('fai[st]|', ''))], 'GARDE'),
     ('M4 correctif trop large : le garde passe AVANT la regle a verbe et prend une duree pour une discussion',
      [(CO, GARDE, ''), (CO, R1_COMMENT, GARDE.replace('\\bpas\\s+besoin\\b', '\\bpas\\s+besoin\\b|\\bde\\s+\\d+') + R1_COMMENT)], 'GARDE'),
