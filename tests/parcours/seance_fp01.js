@@ -213,7 +213,9 @@ module.exports.sourceMixte = function (t, ROOT, fs, path) {
   const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
   const d = corps(co, '_demandeUneSeance');
   const lignes = d.split('\n');
-  const lStruct = lignes.find(l => /peux\[- \]tu/.test(l)) || '';
+  // repère la ligne par ce qu'elle DIT (modal + « séance » + return true), pas par sa graphie exacte :
+  // une écriture équivalente (« peux[ -]tu ») ne doit pas faire perdre la ligne (mesuré le 29/09, X9)
+  const lStruct = lignes.find(l => /return true/.test(l) && /peux/.test(l) && /pourrais/.test(l) && /seance/.test(l)) || '';
   const lVerbe = lignes.find(l => /\(fai\[st\]\|donne/.test(l)) || '';
   t('① la règle de STRUCTURE existe : modal (tu peux · peux-tu · pourrais-tu · tu pourrais) + « me » + infinitif',
     /tu\\s\+\(\?:peux\|pourrais\)/.test(lStruct) && /\(\?:me\\s\+\|m\[/.test(lStruct) && /faire\|preparer/.test(lStruct), lStruct.trim().slice(0, 200));

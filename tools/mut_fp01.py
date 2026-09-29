@@ -4,9 +4,11 @@
 
 [!!] SUR UN ARBRE CLONE, JAMAIS SUR LE DEPOT (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
-[!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE rougit : ecran conduit (E*, F* :
-vrai champ, vrai bouton, vrai rechargement) ou valeur servie par l'app dans la page (A*..D*). Un rouge
+[!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE rougit : ecran conduit (E*, F*, H* :
+vrai champ, vrai bouton, vrai rechargement) ou valeur servie par l'app dans la page (A*..D*, G*). Un rouge
 des seuls temoins de SOURCE (①..④) ne suffit pas : la mutation est alors NON conforme.
+(29/09 : la 1re passe du cas mixte a rendu 14/23 parce que ce filtre s'arretait a F et ignorait
+les temoins G/H ajoutes le meme jour — un classement faux, pas une mutation qui passe.)
 M00 = coach.js tel qu'il etait AVANT le lot (master 7a71649e, ft-v1243), mot pour mot.
 M1..M8 = la liste demandee par Michel (M3a : une 1re M3 qui ne rendait PAS P1 faux — gardee, mesuree) · D1, D2 = deguisees · D3 = equivalente (doit RESTER verte)
 · X1..X5 = cas mixte demandes par Michel · X6..X8 = deguisees · X9 = equivalente (doit RESTER verte)
@@ -79,8 +81,8 @@ def banc(arbre):
 
 
 def executes(rouges):
-    # temoins EXECUTES : ecran conduit (E, F) ou valeur servie dans la page (A, B, C, D)
-    return [x for x in rouges if re.match(r'❌ ROUGE [A-F]\d', x)]
+    # temoins EXECUTES : ecran conduit (E, F, H) ou valeur servie dans la page (A, B, C, D, G)
+    return [x for x in rouges if re.match(r'❌ ROUGE [A-H]\d', x)]
 
 
 def cloner():
@@ -127,7 +129,7 @@ def main():
         ex = executes(rouges)
         obtenu = 'GARDE' if ex else ('SOURCE' if rouges else 'OK')
         ok = obtenu == attendu; conformes += ok
-        cond = [x for x in ex if re.match(r'❌ ROUGE [EF]\d', x)]
+        cond = [x for x in ex if re.match(r'❌ ROUGE [EFH]\d', x)]
         montre = (cond or ex or rouges or [''])[0]
         print('  %s  %-100s %-6s %2d rouge(s), %2d execute(s) dont %2d ecran  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), len(ex), len(cond), montre))
         if os.environ.get('MUT_DETAIL'):
