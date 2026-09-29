@@ -576,11 +576,25 @@ function removeDropset(ei){
   ex.sets=[{kg:ex.sets[0]?.kg||0,reps:ex.sets[0]?.reps||8,done:false,type:'N'}];
   delete ex.dropset;persist();renderExBlocks();toast('Dropset supprimé','info');
 }
+/* 🧩 LOT 6 / ML-B — UN GROUPEMENT N'EXISTE QU'À PARTIR DE DEUX MEMBRES (29/09/2026).
+   Mesuré avant correction : « ↩ Retirer » sur un superset de 2 laissait le survivant seul dans
+   son groupe (le test était `left.length<1`, jamais vrai quand on filtre des membres restants) →
+   l'écran affichait « ⚡ Circuit (1) », valider une série annonçait « ⚡ Tour suivant » et
+   sautait le passage à l'exercice suivant, et l'orphelin survivait au rechargement. `rmEx`
+   dissolvait bien, mais laissait `groupType` sur le survivant.
+   👉 Un seul propriétaire de la règle pour la séance : à 0 ou 1 membre, le groupe `gid` est
+   dissous. ⛔ On retire la RELATION (group, groupType) et rien d'autre : l'objet n'est jamais
+   reconstruit, séries, charges, repos, note, dropset et champs inconnus restent tels quels.
+   Ciblé sur `gid` : les autres groupes ne sont pas touchés. */
+function _dissoudreGroupeOrphelin(exs,gid){
+  if(!exs||!gid)return;
+  const reste=exs.filter(e=>e&&e.group===gid);
+  if(reste.length<2)reste.forEach(e=>{delete e.group;delete e.groupType;});
+}
 function removeFromGroup(ei){
   const gid=S.wkt.exs[ei]?.group;if(!gid)return;
   delete S.wkt.exs[ei].group;delete S.wkt.exs[ei].groupType;
-  const left=S.wkt.exs.filter(e=>e.group===gid);
-  if(left.length<1)left.forEach(e=>{delete e.group;delete e.groupType;});
+  _dissoudreGroupeOrphelin(S.wkt.exs,gid);
   persist();renderExBlocks();toast('Retiré du groupe','info');
 }
 function moveInGroup(ei,dir){
@@ -3140,8 +3154,8 @@ function rmEx(ei){
   const name=S.wkt.exs[ei]&&S.wkt.exs[ei].name||'cet exercice';
   showConfirm('Supprimer l\'exercice ?',`"${name}" et toutes ses séries seront supprimés de la séance.`,()=>{
     const gid=S.wkt.exs[ei]&&S.wkt.exs[ei].group;
-    if(gid){const rem=S.wkt.exs.filter((e,i)=>i!==ei&&e.group===gid);if(rem.length<=1)rem.forEach(e=>delete e.group);}
     S.wkt.exs.splice(ei,1);
+    _dissoudreGroupeOrphelin(S.wkt.exs,gid);   // ML-B : le survivant perd aussi `groupType`
     if(ei<_expandedEx)_expandedEx--;
     else if(_expandedEx>=S.wkt.exs.length)_expandedEx=Math.max(0,S.wkt.exs.length-1);
     persist();renderExBlocks();

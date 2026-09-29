@@ -39677,6 +39677,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      un seul propriétaire de la recopie (`_recopierDropset`, log.js) appelé par `saveAsProg` et les deux
      chargeurs ; présent → copie profonde entière, absent → rien. Contrôle négatif : `tools/mut_ml_a.py`. */
   await require('./dropset_programme.js').ecran(t, b, PORT);
+  /* 🧩 LOT 6 / ML-B (session-B, 29/09/2026) — un groupement d'exercices ne reste plus actif avec moins de deux
+     membres : `removeFromGroup` et `rmEx` passent par `_dissoudreGroupeOrphelin` (log.js), qui ne retire que
+     `group`/`groupType`. Contrôle négatif : `tools/mut_ml_b.py`. */
+  await require('./groupes_orphelins.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40498,6 +40502,7 @@ require('./travail_existant.js').source(t, ROOT, fs, path);
 require('./historique_cloud.js').source(t, ROOT, fs, path);
 require('./historique_cloud.js').source3b(t, ROOT, fs, path);
 require('./dropset_programme.js').source(t, ROOT, fs, path);
+require('./groupes_orphelins.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
