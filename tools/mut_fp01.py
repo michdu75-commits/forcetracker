@@ -12,6 +12,8 @@ les temoins G/H ajoutes le meme jour — un classement faux, pas une mutation qu
 M00 = coach.js tel qu'il etait AVANT le lot (master 7a71649e, ft-v1243), mot pour mot.
 M1..M8 = la liste demandee par Michel (M3a : une 1re M3 qui ne rendait PAS P1 faux — gardee, mesuree) · D1, D2 = deguisees · D3 = equivalente (doit RESTER verte)
 · X1..X5 = cas mixte demandes par Michel · X6..X8 = deguisees · X9 = equivalente (doit RESTER verte)
+· X10..X12 = la seance doit etre le COMPLEMENT du verbe (X10 = ma 1re ecriture, fenetre libre de 40
+  caracteres : de nouveaux faux positifs, mesures le 29/09 ; X12 deguisee) · X13 = equivalente
 · [negatif] = commentaire citant les motifs (doit RESTER vert).
 Usage : python3 tools/mut_fp01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -30,6 +32,7 @@ REGLE2_LIGNE = "    if(/\\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+
 R1_FIN = "(s[ée]ance|entra[îi]nement|programme|prog)\\b/i.test(t)) return true;"
 STRUCT = [l for l in open(os.path.join(SRC, 'coach.js'), encoding='utf-8').read().split('\n') if 'peux[- ]tu' in l and 'return true' in l][0] + '\n'
 AMBIGU_LIGNE = "    if(/\\bpourquoi\\b(?!\\s+pas\\b)|\\bne\\s+compte\\s+pas\\b|\\bdebrief/i.test(p)) return false;\n"
+DETS_SEANCE = "\\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+){1,2}seance\\b"
 QUESTION = "    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach(), _msgA);\n"
 R1_COMMENT = "    // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme\n"
 
@@ -66,6 +69,14 @@ MUT = [
     ('X8 [deguisee] la structure remontee AVANT le niveau « pourquoi » (« Pourquoi tu peux me faire une seance… » devient une demande)',
      [(CO, STRUCT, ''), (CO, AMBIGU_LIGNE, STRUCT + AMBIGU_LIGNE)], 'GARDE'),
     ('X9 [equivalente] « peux[ -]tu » au lieu de « peux[- ]tu » : doit RESTER vert', [(CO, STRUCT, STRUCT.replace('peux[- ]tu', 'peux[ -]tu'))], 'OK'),
+    ('X10 la 1re ecriture : 40 caracteres libres entre le verbe et « seance » (« Tu peux me faire un resume de ma derniere seance ? » devient une demande)',
+     [(CO, STRUCT, STRUCT.replace(DETS_SEANCE, '\\b[^.?!\\n]{0,40}\\bseance\\b'))], 'GARDE'),
+    ('X11 « ta » ajoute aux determinants (« Tu peux me faire ta seance ? », non detectee avant FP-01, devient une demande)',
+     [(CO, STRUCT, STRUCT.replace('(?:(?:une|ma|la|', '(?:(?:une|ma|ta|la|'))], 'GARDE'),
+    ('X12 [deguisee] une fenetre libre AVANT les determinants (« …un resume de la seance ? le bouton bug » redevient une demande)',
+     [(CO, STRUCT, STRUCT.replace('\\s+(?:(?:une|', '\\b[^.?!\\n]{0,40}?\\s(?:(?:une|'))], 'GARDE'),
+    ('X13 [equivalente] determinants dans un autre ordre (« ma|une » au lieu de « une|ma ») : doit RESTER vert',
+     [(CO, STRUCT, STRUCT.replace('(?:(?:une|ma|la|', '(?:(?:ma|une|la|'))], 'OK'),
     ('[negatif] commentaire citant les motifs cherches', [(CO, GARDE, GARDE + "    // bouton · bug · affiché · apparaît · je ne demande pas · pas besoin — c'était le faux positif\n")], 'OK'),
 ]
 

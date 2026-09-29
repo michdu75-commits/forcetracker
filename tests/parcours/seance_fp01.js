@@ -13,6 +13,13 @@
    question (`_dsDemande` → `_appendSeanceQuestion`), et la relecture du fil la repose au rechargement.
    ⛔ CAUSE DE LA PREMIÈRE CARTE TERRAIN (13:38-13:39) : NON DÉMONTRÉE — son message déclencheur n'est
    pas sur les captures. Ce banc ne prétend corriger que le mécanisme démontré.
+   CAS MIXTE (B-CDX · B-CDXI, correction finale du 29/09) : « Tu peux me faire une séance ? le bouton
+   bug » était une demande avant FP-01 et n'en était plus une après (démontré à la contre-vérification).
+   Règle ①bis : modal adressé à Milo + « me » + infinitif + « une / ma / la … séance », sans texte
+   libre entre les deux (une 1ʳᵉ écriture à 40 caractères libres rendait « Tu peux me faire un résumé
+   de ma dernière séance ? » demande — G10, H5, X10). ⚠️ Non couvert, mesuré : avec « bouton / bug »
+   dans le même message, « Je veux une séance », « Tu me prépares une séance », « Refais-moi une
+   séance » restent perdues, comme sur FP-01 (hors de la liste demandée — décision de Michel).
 
    Ce que les témoins CONDUISENT : l'onglet Coach, le vrai champ `#coach-inp` et le vrai bouton
    `#coach-send-btn` (donc `sendToCoach`), un VRAI rechargement avec un fil déposé (relecture du fil).
@@ -205,6 +212,14 @@ const MIX_N = {
   NF: 'Le bouton pour faire une séance bug',
   NP: 'Le bouton pour préparer une séance ne marche plus',
   NJ: 'Je parle juste du bouton pour faire une séance' };
+// mesuré le 29/09 : avec une fenêtre de 40 caractères libres entre le verbe et « séance », ces
+// phrases devenaient des demandes — ni avant FP-01, ni après. Les deux premières sont tapées (H5).
+const COMPLEMENT = [
+  'Tu peux me faire un résumé de ma dernière séance ?', 'Tu peux me donner ton avis sur cette séance ?',
+  'Tu peux me donner le détail de cette séance ?', 'Tu peux m’écrire le récap de cette séance ?',
+  'Pourrais-tu me faire un bilan de cette séance ?', 'Tu peux me faire un plan de séance ?',
+  'Tu peux me faire un résumé de la séance ? le bouton bug' ];
+const COMME_AVANT = [ 'Tu peux me faire ta séance ?', 'Tu peux me faire ta séance ? le bouton bug' ];
 
 module.exports.sourceMixte = function (t, ROOT, fs, path) {
   console.log('\n═══ B-CDX (session-B). MILO-SEANCE-FP-01 — une demande adressée à Milo survit à une plainte dans le même message (source) ═══');
@@ -225,6 +240,9 @@ module.exports.sourceMixte = function (t, ROOT, fs, path) {
     lStruct && iVerbe >= 0 && iAmbigu > iVerbe && iStruct > iAmbigu && iGarde > iStruct, [iVerbe, iAmbigu, iStruct, iGarde].join(' < '));
   t('④ ⛔ « faire » et « préparer » ne sont PAS ajoutés à la liste GÉNÉRALE des verbes (règle ①)',
     lVerbe && !/faire|pr\[ée\]parer|preparer/.test(lVerbe), lVerbe.trim().slice(0, 160));
+  const DETS = ['une', 'ma', 'la', 'nouvelle', 'prochaine', 'autre', 'petite', 'bonne'];
+  t('⑤ ⛔ la séance est le COMPLÉMENT du verbe : aucune fenêtre de texte libre ([^…], .*, .{n}) entre l\'infinitif et « séance », seulement les déterminants de la règle ②',
+    lStruct && !/\[\^|\.\*|\.\{|\\S\*|\\w\*/.test(lStruct) && DETS.every(x => new RegExp('[(:|]' + x + '[|)]').test(lStruct)), lStruct.trim().slice(0, 200));
 };
 
 module.exports.ecranMixte = async function (t, b, PORT) {
@@ -232,7 +250,7 @@ module.exports.ecranMixte = async function (t, b, PORT) {
   const js = x => JSON.stringify(x).slice(0, 260);
   const { ouvrir, cartes, taper } = outils(b, PORT);
   const A = await ouvrir();
-  const v = await A.pg.evaluate(({ MIX_P, MIX_N, P, N }) => {
+  const v = await A.pg.evaluate(({ MIX_P, MIX_N, P, N, COMPLEMENT, COMME_AVANT }) => {
     const j = s => _demandeUneSeance(s);
     const map = o => Object.fromEntries(Object.entries(o).map(([k, s]) => [k, j(s)]));
     return { P: map(MIX_P), N: map(MIX_N), simples: map(P), plaintes: map(N),
@@ -247,8 +265,11 @@ module.exports.ecranMixte = async function (t, b, PORT) {
       pourquoi: [ ['Pourquoi tu peux me faire une séance et pas un programme ?', j('Pourquoi tu peux me faire une séance et pas un programme ?')],
                   ['pourquoi pourrais-tu me préparer une séance ? le bouton bug', j('pourquoi pourrais-tu me préparer une séance ? le bouton bug')],
                   ['pourquoi tu ne me fais pas une séance jambes ?', j('pourquoi tu ne me fais pas une séance jambes ?')] ],
-      limites: [ ['le bouton lance une séance', j('le bouton lance une séance')], ['Quelle séance je fais aujourd’hui ?', j('Quelle séance je fais aujourd’hui ?')] ] };
-  }, { MIX_P, MIX_N, P, N });
+      limites: [ ['le bouton lance une séance', j('le bouton lance une séance')], ['Quelle séance je fais aujourd’hui ?', j('Quelle séance je fais aujourd’hui ?')] ],
+      // la séance n'est PAS le complément du verbe : on demande un résumé, un avis, un détail… d'une séance
+      complement: COMPLEMENT.map(s => [s, j(s)]),
+      commeAvant: COMME_AVANT.map(s => [s, j(s)]) };
+  }, { MIX_P, MIX_N, P, N, COMPLEMENT, COMME_AVANT });
   t('G1 ⭐ « Tu peux me faire une séance ? le bouton bug » est une demande', v.P.PM1 === true, js(v.P));
   t('G2 ⭐ « Tu peux me préparer une séance ? le bouton bug » est une demande', v.P.PM2 === true, js(v.P));
   t('G3 « Peux-tu me faire une séance même si le bouton bug ? » · « Pourrais-tu me préparer une séance ? » sont des demandes',
@@ -265,6 +286,10 @@ module.exports.ecranMixte = async function (t, b, PORT) {
     v.pourquoi[0][1] === false && v.pourquoi[1][1] === false && v.pourquoi[2][1] === true, js(v.pourquoi));
   t('G8 ⚠️ limites inchangées (hors lot) : « le bouton lance une séance » reste détectée, « Quelle séance je fais aujourd\'hui ? » reste non détectée',
     v.limites[0][1] === true && v.limites[1][1] === false, js(v.limites));
+  t('G10 ⛔ la séance doit être le COMPLÉMENT du verbe : « Tu peux me faire un résumé de ma dernière séance ? », « …ton avis sur cette séance ? », « …un plan de séance ? », « …un résumé de la séance ? le bouton bug »… ne sont PAS des demandes',
+    v.complement.every(x => x[1] === false), js(v.complement.filter(x => x[1])));
+  t('G11 ⚠️ rien de plus qu\'avant FP-01 : « Tu peux me faire ta séance ? » (non détectée avant FP-01) reste non détectée, avec ou sans « le bouton bug »',
+    v.commeAvant.every(x => x[1] === false), js(v.commeAvant));
   await A.cx.close();
   // ── CONDUIT : tapé dans le vrai champ, envoyé par le vrai bouton ─────────────────────────────
   const H1 = await ouvrir({ reponse: REPONSE_NEUTRE });
@@ -282,6 +307,13 @@ module.exports.ecranMixte = async function (t, b, PORT) {
   const n3 = H3.req.filter(a => a === 'coach').length;
   t('H3 ⭐ « Le bouton pour faire une séance bug » · « …préparer… ne marche plus » · « Je parle juste du bouton… » tapés puis envoyés : AUCUNE carte',
     ['NF', 'NP', 'NJ'].every(k => h3[k] && h3[k].n === 0) && n3 === 3, js(h3) + ' coach=' + n3);
-  t('H4 aucune erreur de page', H1.errs.length + H2.errs.length + H3.errs.length === 0, [H1, H2, H3].map(x => x.errs.join('|')).join(' ').slice(0, 160));
   await H3.cx.close();
+  const H5 = await ouvrir({ reponse: REPONSE_NEUTRE });
+  const h5 = {};
+  for (const k of [0, 1]) { await taper(H5, COMPLEMENT[k]); h5[k] = await cartes(H5.pg); }
+  const n5 = H5.req.filter(a => a === 'coach').length;
+  t('H5 ⭐ « Tu peux me faire un résumé de ma dernière séance ? » · « Tu peux me donner ton avis sur cette séance ? » tapés puis envoyés : AUCUNE carte',
+    [0, 1].every(k => h5[k] && h5[k].n === 0) && n5 === 2, js(h5) + ' coach=' + n5);
+  t('H4 aucune erreur de page', H1.errs.length + H2.errs.length + H3.errs.length + H5.errs.length === 0, [H1, H2, H3, H5].map(x => x.errs.join('|')).join(' ').slice(0, 160));
+  await H5.cx.close();
 };

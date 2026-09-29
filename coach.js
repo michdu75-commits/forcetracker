@@ -2145,8 +2145,14 @@ function _demandeUneSeance(txt){
        reste une question, comme avant FP-01 — mesuré : placée avant, 100 phrases sur 1 120 en
        « pourquoi » devenaient des demandes) et AVANT le garde « bouton / bug / affiché ».
        ⛔ « faire » et « préparer » ne rejoignent PAS la liste générale de la règle ① : *« Le bouton
-       pour faire une séance bug »* resterait sinon une demande. Testé sur `p` (sans accents). */
-    if(/\b(?:tu\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\s+(?:me\s+|m['’]\s*)(?:faire|preparer|proposer|donner|creer|construire|monter|ecrire|lancer|balancer|envoyer|generer)\b[^.?!\n]{0,40}\bseance\b/i.test(p)) return true;
+       pour faire une séance bug »* resterait sinon une demande. Testé sur `p` (sans accents).
+       ⛔⛔ LA SÉANCE EST LE COMPLÉMENT DU VERBE, RIEN ENTRE LES DEUX : exactement les déterminants de
+       la règle ② (« une », « ma », « la »… jusqu'à deux : « une petite séance »). Mesuré : une 1ʳᵉ
+       écriture tolérait 40 caractères libres, et *« Tu peux me faire un résumé de ma dernière
+       séance ? »* devenait une demande — ni avant FP-01, ni après. Ainsi bornée, la règle ne détecte
+       RIEN que la version d'avant FP-01 ne détectait déjà, et ne change le résultat de FP-01 QUE
+       dans un message qui porte aussi « bouton / bug / affiché » (mesuré sur 70 800 phrases). */
+    if(/\b(?:tu\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\s+(?:me\s+|m['’]\s*)(?:faire|preparer|proposer|donner|creer|construire|monter|ecrire|lancer|balancer|envoyer|generer)\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+){1,2}seance\b/i.test(p)) return true;
     /* 🔬 MILO-SEANCE-FP-01 (29/09/2026) — ON PARLE DE LA CARTE, DU BOUTON OU DU BUG : CE N'EST PAS UNE DEMANDE.
        Michel, captures à l'appui : *« Ya le bouton démarrer une séance qui est arrivé »* reposait la
        carte sous la réponse de Milo qui disait justement « c'est un bug d'affichage » — et chaque
