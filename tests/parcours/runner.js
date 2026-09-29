@@ -39684,6 +39684,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🧩 ML-B extension (29/09/2026) — « ⚡ Super » abandonné ne laisse aucun groupe : le groupe ne naît que dans
      `_doAddToGroup`, quand le 2ᵉ membre existe. */
   await require('./groupes_orphelins.js').creation(t, b, PORT);
+  /* 🔬 MILO-SEANCE-FP-01 (session-B, 29/09/2026) — parler d'une séance (la carte, le bouton, un bug, une négation)
+     n'est plus une demande de séance : `_demandeUneSeance` neutralise ses règles sans verbe sur ces marqueurs.
+     Contrôle négatif : `tools/mut_fp01.py`. */
+  await require('./seance_fp01.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40507,6 +40511,7 @@ require('./historique_cloud.js').source3b(t, ROOT, fs, path);
 require('./dropset_programme.js').source(t, ROOT, fs, path);
 require('./groupes_orphelins.js').source(t, ROOT, fs, path);
 require('./groupes_orphelins.js').sourceCreation(t, ROOT, fs, path);
+require('./seance_fp01.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

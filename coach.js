@@ -2136,6 +2136,15 @@ function _demandeUneSeance(txt){
     if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
     // ⛔ niveau AMBIGU : après la règle ①, il ne tue que ce qui suit (les règles sans verbe)
     if(/\bpourquoi\b(?!\s+pas\b)|\bne\s+compte\s+pas\b|\bdebrief/i.test(p)) return false;
+    /* 🔬 MILO-SEANCE-FP-01 (29/09/2026) — ON PARLE DE LA CARTE, DU BOUTON OU DU BUG : CE N'EST PAS UNE DEMANDE.
+       Michel, captures à l'appui : *« Ya le bouton démarrer une séance qui est arrivé »* reposait la
+       carte sous la réponse de Milo qui disait justement « c'est un bug d'affichage » — et chaque
+       plainte en ajoutait une de plus. Mesuré : cinq plaintes sur cinq passaient par la règle ②
+       ci-dessous (« une séance », sans verbe de demande). ⛔ Même étage que « pourquoi » : ces
+       marqueurs ne tuent QUE les règles sans verbe — *« prépare-moi une séance, le bouton peut
+       attendre »* reste une demande (règle ①). Et on ne touche pas à la règle ② elle-même : *« une
+       séance jambes stp »* ou *« ma séance du jour ? »* sont de vraies demandes. */
+    if(/\bbouton|\bb(?:u|eu)g\b|\baffich|\bapparu|\bapparai|\b(?:demande|veux|voulais|voudrais)\s+pas\b|\bpas\s+besoin\b/i.test(p)) return false;
     // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
     if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
     if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;
