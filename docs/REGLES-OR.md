@@ -136,7 +136,27 @@ qui est précisément faux au moment où l'on renumérote pour cause de collisio
 |---|---|---|
 | pendant le travail | le **harnais du bloc en cours** + les **mutations** | quelques secondes |
 | avant de proposer | les **5 petits bancs** + `check_regles.py` | ~2 min |
-| ⛔ **avant de publier** | **la passe complète, ENTIÈRE, sur l'arbre refusionné** | ~25 min |
+| ⛔ **avant de publier** | **la passe complète, ENTIÈRE, sur l'arbre refusionné** — c'est-à-dire sur le **dernier arbre portant un changement fonctionnel ou du harnais** (clarification du 29/09 ci-dessous) | ~25 min |
+
+⭐ **CLARIFICATION DE MICHEL (29/09/2026, décision D-031) — « sur quel arbre » la passe doit-elle avoir tourné ?**
+Le texte ci-dessus disait « sur l'arbre refusionné », alors qu'en pratique (ft-v1239 → ft-v1242) la passe tournait
+sur le commit du correctif, puis la publication ajoutait `sw.js` et la documentation sans la relancer. Michel
+tranche, mot pour mot :
+> *« Avant publication, une passe complète doit avoir été exécutée sur le dernier arbre contenant des changements
+> fonctionnels ou des changements du harnais susceptibles d'affecter son résultat.*
+> *Si, après cette passe, les seuls changements ajoutés sont : documentation ; journalisation ; numéro de version ;
+> numéro/clé de cache dans sw.js sans changement de comportement ; la passe complète n'a pas à être relancée.*
+> *En revanche, si après la passe sont modifiés : code métier ; logique applicative ; logique du service worker ;
+> persistance ; harnais/tests d'une manière pouvant modifier la validité de la passe ; alors la passe complète
+> doit être rejouée sur ce nouvel arbre avant publication. »*
+
+⛔ **L'objectif historique ne bouge pas : on ne publie JAMAIS du code fonctionnel qui n'a pas subi la passe
+complète finale.** Ce n'est **pas** une permission de sauter la passe : la liste des ajouts tolérés est
+**fermée** (documentation, journaux, numéro de version, numéro de cache de `sw.js`), et **dans le doute, on
+relance**. ⚠️ Un ajout après la passe se **vérifie**, il ne se suppose pas : `git diff <commit de la passe>..HEAD`
+ne doit montrer que ces catégories (le sélecteur `tools/recette_selecteur.py --diff <commit>` classe `sw.js`
+en « version » seulement si SEULE la ligne `const CACHE` a changé). Une autre session qui publie du code
+entre-temps rend la passe périmée (⑥ et ⑨ ci-dessous inchangés).
 
 ⛔ **Et un sous-ensemble rapide ne remplace PAS la passe complète — c'est mesuré, pas supposé** : les
 5 petits bancs ont **zéro occurrence** de tout ce qui a été corrigé le 13/09 (`_pdfToText`,

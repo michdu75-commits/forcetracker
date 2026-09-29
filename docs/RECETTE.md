@@ -30,6 +30,10 @@ contrôle négatif est `python3 tools/mut_recette01.py`.
 
 ⛔ **La passe complète avant chaque publication est une décision actée** (protocole deux sessions du
 13/09/2026, règle d'or #13, `docs/PROTOCOLE-DEUX-SESSIONS.md` §2) : le sélecteur ne la remplace pas.
+⭐ **Clarifiée le 29/09 (D-031)** : elle doit avoir tourné sur le **dernier arbre portant un changement
+fonctionnel ou du harnais**. Ajoutés après elle, documentation, journaux, numéro de version et numéro de
+cache de `sw.js` ne la périment pas ; tout le reste (code, logique, service worker, persistance, harnais
+pouvant changer son résultat) impose de la rejouer. Dans le doute, on relance.
 
 ## 3. Le bloc annexe — comment lire son résultat
 
@@ -86,6 +90,16 @@ recette clone + production** sans un risque réellement différent.
 - **Fixtures de dates** : la suite `dates` couvre les formes `new Date().toISOString()…` et
   `new Date(Date.now()±…)…` dans **tous** les fichiers de test ; la forme en plusieurs instructions
   (`x=new Date(); x.setDate(…); x.toISOString()…`) lui échappe encore (elle est sûre quand elle part de midi).
+
+## 6 bis. Dettes consignées pour RECETTE-02 (⛔ chantier NON ouvert)
+
+- **Dette A — 12 formes UTC « en plusieurs instructions » restent dans les tests** (`x=new Date();
+  x.setDate(…); x.toISOString()…`, dont `tests/anneau/runner.js` ligne 18). Non critiques aujourd'hui : elles
+  datent des fixtures **décalées de plusieurs jours**, où un jour d'écart la nuit ne change pas ce que les
+  témoins vérifient. La suite `dates` ne les voit pas encore.
+- **Dette B — le sélecteur ignore en silence une entrée inconnue.** Le comportement est **conservateur**
+  (aucune dépendance inventée, T0 seulement), mais il doit afficher explicitement « entrée inconnue : ni
+  fonction du code servi, ni zone du registre ».
 
 ## 7. Tenir le registre à jour
 
