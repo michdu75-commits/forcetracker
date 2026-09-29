@@ -83,9 +83,14 @@ recette clone + production** sans un risque réellement différent.
 
 - **Worker** : rien ne vérifie qu'il répond après son déploiement, et le workflow ne se modifie pas
   (décision du 27/08). Le contrôle est un appel réel, avec l'accord de Michel.
-- **Supersets** : le **retrait** d'un exercice d'un groupe a son témoin (ML-B, `banc:ml_b`) ; la **création**,
-  l'ajout, le réordonnancement et l'**éditeur de programme** n'en ont toujours pas, et le sélecteur le dit. Mesuré
-  le 29/09 : « ⚡ Super » puis abandon du choix du 2ᵉ exercice laisse encore un groupe à 1 membre (création, hors ML-B).
+- **Supersets** : le **retrait** d'un exercice d'un groupe et l'**abandon** de « ⚡ Super » ont leurs témoins (ML-B,
+  `banc:ml_b`) ; l'ajout à un groupe existant, le réordonnancement et l'**éditeur de programme** n'en ont pas, et le
+  sélecteur le dit. Mesuré le 29/09, non corrigé : « + Exo » sur un groupe existant n'ajoute pas au groupe.
+- **Témoin sensible au temps (29/09)** : dans la passe complète sur `fe5b04e1`, les deux témoins « G » du Lot 1
+  (`tests/parcours/fil_coach_lot1.js`, débrief sur fil illisible) ont rougi une fois — la file du débrief contenait encore
+  l'identifiant au moment de la lecture — puis sont passés au vert à la relance, sans rien modifier ; seuls, 3/3 verts.
+  Ce bloc tourne AVANT ceux de ML-B. Cause non démontrée (lecture trop tôt sous charge, probable) : à fiabiliser dans
+  un chantier à part. ⛔ La règle ne change pas : une passe avec un rouge n'est pas valide, on la relance.
 - **Obéissance de Milo** : le local prouve la présence d'une règle, jamais qu'elle est suivie ; seul le banc
   réel (payant, sur accord) le mesure.
 - **Fixtures de dates** : la suite `dates` couvre les formes `new Date().toISOString()…` et
