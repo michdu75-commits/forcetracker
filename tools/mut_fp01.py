@@ -9,6 +9,7 @@ vrai champ, vrai bouton, vrai rechargement) ou valeur servie par l'app dans la p
 des seuls temoins de SOURCE (①..④) ne suffit pas : la mutation est alors NON conforme.
 M00 = coach.js tel qu'il etait AVANT le lot (master 7a71649e, ft-v1243), mot pour mot.
 M1..M8 = la liste demandee par Michel (M3a : une 1re M3 qui ne rendait PAS P1 faux — gardee, mesuree) · D1, D2 = deguisees · D3 = equivalente (doit RESTER verte)
+· X1..X5 = cas mixte demandes par Michel · X6..X8 = deguisees · X9 = equivalente (doit RESTER verte)
 · [negatif] = commentaire citant les motifs (doit RESTER vert).
 Usage : python3 tools/mut_fp01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -25,6 +26,8 @@ REGLE2 = "    // ② une séance nommée comme celle qu'on va faire (« une séa
 AMBIGU = "    if(/\\bpourquoi\\b(?!\\s+pas\\b)|\\bne\\s+compte\\s+pas\\b|\\bdebrief/i.test(p)) return false;\n"
 REGLE2_LIGNE = "    if(/\\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+s[ée]ance\\b/i.test(t)) return true;\n"
 R1_FIN = "(s[ée]ance|entra[îi]nement|programme|prog)\\b/i.test(t)) return true;"
+STRUCT = [l for l in open(os.path.join(SRC, 'coach.js'), encoding='utf-8').read().split('\n') if 'peux[- ]tu' in l and 'return true' in l][0] + '\n'
+AMBIGU_LIGNE = "    if(/\\bpourquoi\\b(?!\\s+pas\\b)|\\bne\\s+compte\\s+pas\\b|\\bdebrief/i.test(p)) return false;\n"
 QUESTION = "    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach(), _msgA);\n"
 R1_COMMENT = "    // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme\n"
 
@@ -48,6 +51,19 @@ MUT = [
     ('D2 [deguisee] le garde arrive trop tard (apres la regle « une seance »)',
      [(CO, GARDE, ''), (CO, "    if(/\\bs[ée]ance\\s+(du\\s+jour", GARDE + "    if(/\\bs[ée]ance\\s+(du\\s+jour")], 'GARDE'),
     ('D3 [equivalente] « boutons? » au lieu de « bouton » : doit RESTER vert', [(CO, GARDE, GARDE.replace('\\bbouton|', '\\bboutons?|'))], 'OK'),
+    ('X1 perte du cas « tu peux me FAIRE » (faire retire de la structure)', [(CO, STRUCT, STRUCT.replace('(?:faire|', '(?:'))], 'GARDE'),
+    ('X2 perte du cas « tu peux me PREPARER » (preparer retire de la structure)', [(CO, STRUCT, STRUCT.replace('|preparer|', '|'))], 'GARDE'),
+    ('X3 ajout trop large de « faire » dans la liste GENERALE des verbes (regle ①)', [(CO, VERBE, VERBE.replace('fai[st]|', 'fai[st]|faire|'))], 'GARDE'),
+    ('X4 ajout trop large de « preparer » dans la liste GENERALE des verbes (regle ①)', [(CO, VERBE, VERBE.replace('pr[ée]pare|', 'pr[ée]pare|pr[ée]parer|'))], 'GARDE'),
+    ('X5 retour du faux positif « bouton pour faire une seance » (structure sans modal ni « me »)',
+     [(CO, STRUCT, STRUCT.replace("(?:tu\\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\\s+(?:me\\s+|m['’]\\s*)", ''))], 'GARDE'),
+    ('X6 [deguisee] la structure arrive APRES le garde (trop tard pour le cas mixte)',
+     [(CO, STRUCT, ''), (CO, GARDE, GARDE + STRUCT)], 'GARDE'),
+    ('X7 [deguisee] la structure testee sur le texte AVEC accents (« preparer » ne mord plus sur « préparer »)',
+     [(CO, STRUCT, STRUCT.replace('.test(p))', '.test(t))'))], 'GARDE'),
+    ('X8 [deguisee] la structure remontee AVANT le niveau « pourquoi » (« Pourquoi tu peux me faire une seance… » devient une demande)',
+     [(CO, STRUCT, ''), (CO, AMBIGU_LIGNE, STRUCT + AMBIGU_LIGNE)], 'GARDE'),
+    ('X9 [equivalente] « peux[ -]tu » au lieu de « peux[- ]tu » : doit RESTER vert', [(CO, STRUCT, STRUCT.replace('peux[- ]tu', 'peux[ -]tu'))], 'OK'),
     ('[negatif] commentaire citant les motifs cherches', [(CO, GARDE, GARDE + "    // bouton · bug · affiché · apparaît · je ne demande pas · pas besoin — c'était le faux positif\n")], 'OK'),
 ]
 

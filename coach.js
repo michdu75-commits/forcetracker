@@ -2136,6 +2136,17 @@ function _demandeUneSeance(txt){
     if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
     // ⛔ niveau AMBIGU : après la règle ①, il ne tue que ce qui suit (les règles sans verbe)
     if(/\bpourquoi\b(?!\s+pas\b)|\bne\s+compte\s+pas\b|\bdebrief/i.test(p)) return false;
+    /* ①bis 🔬 MILO-SEANCE-FP-01, cas mixte (29/09/2026) — UNE DEMANDE ADRESSÉE À MILO, À L'INFINITIF.
+       Démontré à la contre-vérification : *« Tu peux me faire une séance ? le bouton bug »* était une
+       demande avant FP-01 et n'en était plus une après — la règle ① ne connaît que l'impératif
+       (« fais », « prépare »…), ces tournures vivaient de la règle ②, que le garde ci-dessous
+       neutralise. ⭐ On reconnaît donc la STRUCTURE (modal adressé à Milo + « me » + infinitif d'un
+       verbe de demande déjà reconnu), rangée APRÈS le niveau AMBIGU (« pourquoi tu peux me faire… »
+       reste une question, comme avant FP-01 — mesuré : placée avant, 100 phrases sur 1 120 en
+       « pourquoi » devenaient des demandes) et AVANT le garde « bouton / bug / affiché ».
+       ⛔ « faire » et « préparer » ne rejoignent PAS la liste générale de la règle ① : *« Le bouton
+       pour faire une séance bug »* resterait sinon une demande. Testé sur `p` (sans accents). */
+    if(/\b(?:tu\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\s+(?:me\s+|m['’]\s*)(?:faire|preparer|proposer|donner|creer|construire|monter|ecrire|lancer|balancer|envoyer|generer)\b[^.?!\n]{0,40}\bseance\b/i.test(p)) return true;
     /* 🔬 MILO-SEANCE-FP-01 (29/09/2026) — ON PARLE DE LA CARTE, DU BOUTON OU DU BUG : CE N'EST PAS UNE DEMANDE.
        Michel, captures à l'appui : *« Ya le bouton démarrer une séance qui est arrivé »* reposait la
        carte sous la réponse de Milo qui disait justement « c'est un bug d'affichage » — et chaque

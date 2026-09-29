@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* BANC — MILO-SEANCE-FP-01 (session-B) : parler d une séance n est pas en demander une (B-CDVIII + B-CDIX).
+/* BANC — MILO-SEANCE-FP-01 (session-B) : parler d une séance n est pas en demander une (B-CDVIII + B-CDIX) · cas mixte (B-CDX + B-CDXI).
    Destiné à la passe complète (tests/parcours/runner.js) après validation du checkpoint.
    Sert aussi au contrôle négatif : `python3 tools/mut_fp01.py`.
    Usage : node tools/banc_fp01.js   (depuis la racine du dépôt ou d'un clone) */
@@ -23,7 +23,9 @@ const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); 
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
   const T = require(path.join(ROOT, 'tests', 'parcours', 'seance_fp01.js'));
   T.source(t, ROOT, fs, path);
+  T.sourceMixte(t, ROOT, fs, path);
   await T.ecran(t, b, srv.address().port);
+  await T.ecranMixte(t, b, srv.address().port);
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
   process.exit(ko ? 1 : 0);

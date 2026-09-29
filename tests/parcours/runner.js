@@ -39688,6 +39688,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      n'est plus une demande de séance : `_demandeUneSeance` neutralise ses règles sans verbe sur ces marqueurs.
      Contrôle négatif : `tools/mut_fp01.py`. */
   await require('./seance_fp01.js').ecran(t, b, PORT);
+  /* 🔬 MILO-SEANCE-FP-01, cas mixte (29/09/2026) — « Tu peux me faire une séance ? le bouton bug » reste une demande :
+     règle de STRUCTURE (modal + « me » + infinitif), après le niveau « pourquoi », avant le garde « bouton / bug ». */
+  await require('./seance_fp01.js').ecranMixte(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40512,6 +40515,7 @@ require('./dropset_programme.js').source(t, ROOT, fs, path);
 require('./groupes_orphelins.js').source(t, ROOT, fs, path);
 require('./groupes_orphelins.js').sourceCreation(t, ROOT, fs, path);
 require('./seance_fp01.js').source(t, ROOT, fs, path);
+require('./seance_fp01.js').sourceMixte(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

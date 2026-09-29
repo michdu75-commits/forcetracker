@@ -62,9 +62,8 @@ module.exports.source = function (t, ROOT, fs, path) {
     (co.match(/_demandeUneSeance\(/g) || []).length === 3, (co.match(/_demandeUneSeance\(/g) || []).length);
 };
 
-module.exports.ecran = async function (t, b, PORT) {
-  console.log('\n═══ B-CDIX (session-B). MILO-SEANCE-FP-01 — la carte séance ne répond plus à une plainte (écran conduit) ═══');
-  const js = x => JSON.stringify(x).slice(0, 260);
+// Outils communs aux blocs écran B-CDIX et B-CDXI : mêmes frontières simulées, vrai champ, vrai bouton.
+function outils(b, PORT) {
   const ouvrir = async (opts) => {
     opts = opts || {};
     const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris' });
@@ -97,6 +96,13 @@ module.exports.ecran = async function (t, b, PORT) {
     await X.pg.waitForFunction(() => !window.coachBusy && [...document.querySelectorAll('#coach-msgs .msg-coach')].length > 0, null, { timeout: 8000 }).catch(() => {});
     await X.pg.waitForTimeout(900);
   };
+  return { ouvrir, cartes, taper };
+}
+
+module.exports.ecran = async function (t, b, PORT) {
+  console.log('\n═══ B-CDIX (session-B). MILO-SEANCE-FP-01 — la carte séance ne répond plus à une plainte (écran conduit) ═══');
+  const js = x => JSON.stringify(x).slice(0, 260);
+  const { ouvrir, cartes, taper } = outils(b, PORT);
 
   // ── A · B · C · D : la valeur servie par l'app (aucun réseau) ─────────────────────────────────
   const A = await ouvrir();
@@ -173,4 +179,107 @@ module.exports.ecran = async function (t, b, PORT) {
   t('F3 fil déposé avec une VRAIE demande (P3), app rechargée : la question est reposée (1 carte)', r2.n === 1, js(r2));
   t('F4 aucune erreur de page', F.errs.length + F2.errs.length + R.errs.length + R2.errs.length === 0, [F, F2, R, R2].map(x => x.errs.join('|')).join(' ').slice(0, 160));
   await R2.cx.close();
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   🔬 MILO-SEANCE-FP-01 — CORRECTION DU CAS MIXTE (29/09/2026, avant publication)
+   Démontré à la contre-vérification : le garde de FP-01 rendait FAUSSE une vraie demande mêlée à une
+   plainte — « Tu peux me faire une séance ? le bouton bug » (VRAI avant FP-01, FAUX après). Mesuré sur
+   toute la famille : « tu peux / peux-tu / pourrais-tu / tu pourrais + me + faire, préparer, proposer,
+   donner, créer, construire, monter, écrire, lancer, envoyer, générer … une séance » + bouton / bug /
+   affiché. Aucune de ces tournures n'atteignait la règle à verbe (elle ne connaît que l'impératif :
+   « fais », « prépare »…), elles vivaient de la règle ② — que le garde neutralise.
+   Correctif : une règle de STRUCTURE (demande adressée à Milo : modal + « me » + infinitif), rangée à
+   l'étage des règles à verbe, donc AVANT le garde. ⛔ « faire » et « préparer » ne sont PAS ajoutés à
+   la liste générale : « Le bouton pour faire une séance bug » doit rester une plainte.
+   CONDUIT : le vrai champ et le vrai bouton du Coach (Worker simulé, 0 appel réel).
+   NE COUVRE PAS : « le bouton lance une séance » (reste détectée, limite connue), « Quelle séance je
+   fais aujourd'hui ? » (trou préexistant), la 1ʳᵉ carte de 13:38.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+const MIX_P = {
+  PM1: 'Tu peux me faire une séance ? le bouton bug',
+  PM2: 'Tu peux me préparer une séance ? le bouton bug',
+  PM3: 'Peux-tu me faire une séance même si le bouton bug ?',
+  PM4: 'Pourrais-tu me préparer une séance ?' };
+const MIX_N = {
+  NF: 'Le bouton pour faire une séance bug',
+  NP: 'Le bouton pour préparer une séance ne marche plus',
+  NJ: 'Je parle juste du bouton pour faire une séance' };
+
+module.exports.sourceMixte = function (t, ROOT, fs, path) {
+  console.log('\n═══ B-CDX (session-B). MILO-SEANCE-FP-01 — une demande adressée à Milo survit à une plainte dans le même message (source) ═══');
+  const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const co = nu('coach.js');
+  const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
+  const d = corps(co, '_demandeUneSeance');
+  const lignes = d.split('\n');
+  const lStruct = lignes.find(l => /peux\[- \]tu/.test(l)) || '';
+  const lVerbe = lignes.find(l => /\(fai\[st\]\|donne/.test(l)) || '';
+  t('① la règle de STRUCTURE existe : modal (tu peux · peux-tu · pourrais-tu · tu pourrais) + « me » + infinitif',
+    /tu\\s\+\(\?:peux\|pourrais\)/.test(lStruct) && /\(\?:me\\s\+\|m\[/.test(lStruct) && /faire\|preparer/.test(lStruct), lStruct.trim().slice(0, 200));
+  t('② elle est testée sur la copie SANS ACCENTS (`p`) : « préparer », « écrire », « générer » doivent mordre', /\.test\(p\)\)\s*return true/.test(lStruct), '');
+  const iStruct = d.indexOf(lStruct), iVerbe = d.indexOf(lVerbe), iGarde = d.search(/\\bbouton/), iAmbigu = d.search(/\\bpourquoi\\b\(\?!/);
+  t('③ rangée APRÈS la règle ① et le niveau AMBIGU (« pourquoi » garde sa priorité d\'avant FP-01), AVANT le garde « bouton / bug / affiché »',
+    lStruct && iVerbe >= 0 && iAmbigu > iVerbe && iStruct > iAmbigu && iGarde > iStruct, [iVerbe, iAmbigu, iStruct, iGarde].join(' < '));
+  t('④ ⛔ « faire » et « préparer » ne sont PAS ajoutés à la liste GÉNÉRALE des verbes (règle ①)',
+    lVerbe && !/faire|pr\[ée\]parer|preparer/.test(lVerbe), lVerbe.trim().slice(0, 160));
+};
+
+module.exports.ecranMixte = async function (t, b, PORT) {
+  console.log('\n═══ B-CDXI (session-B). MILO-SEANCE-FP-01 — cas mixte : la demande garde sa carte, la plainte n\'en a pas (écran conduit) ═══');
+  const js = x => JSON.stringify(x).slice(0, 260);
+  const { ouvrir, cartes, taper } = outils(b, PORT);
+  const A = await ouvrir();
+  const v = await A.pg.evaluate(({ MIX_P, MIX_N, P, N }) => {
+    const j = s => _demandeUneSeance(s);
+    const map = o => Object.fromEntries(Object.entries(o).map(([k, s]) => [k, j(s)]));
+    return { P: map(MIX_P), N: map(MIX_N), simples: map(P), plaintes: map(N),
+      famille: [ 'Tu peux me proposer une séance ? le bouton bug', 'Tu peux me donner une séance ? le bouton bug',
+                 'Tu peux me créer une séance ? le bouton bug', 'Tu peux me construire une séance ? le bouton bug',
+                 'Tu peux me monter une séance ? le bouton bug', 'Tu peux m’écrire une séance ? le bouton bug',
+                 'Tu peux me lancer une séance ? le bouton bug', 'Tu peux m’envoyer une séance ? le bouton bug',
+                 'Tu peux me générer une séance ? le bouton bug', 'Tu pourrais me faire une séance ? ça affiche un bug',
+                 'peux tu me faire une seance le bouton bug', 'TU PEUX ME PRÉPARER UNE SÉANCE ? LE BOUTON BUG' ].map(s => [s, j(s)]),
+      plaintesMix: [ 'Tu peux me dire pourquoi le bouton démarrer une séance est apparu ?', 'le bouton pour faire une séance, tu peux le retirer ?',
+                     'Tu peux regarder le bug de la carte une séance ?' ].map(s => [s, j(s)]),
+      pourquoi: [ ['Pourquoi tu peux me faire une séance et pas un programme ?', j('Pourquoi tu peux me faire une séance et pas un programme ?')],
+                  ['pourquoi pourrais-tu me préparer une séance ? le bouton bug', j('pourquoi pourrais-tu me préparer une séance ? le bouton bug')],
+                  ['pourquoi tu ne me fais pas une séance jambes ?', j('pourquoi tu ne me fais pas une séance jambes ?')] ],
+      limites: [ ['le bouton lance une séance', j('le bouton lance une séance')], ['Quelle séance je fais aujourd’hui ?', j('Quelle séance je fais aujourd’hui ?')] ] };
+  }, { MIX_P, MIX_N, P, N });
+  t('G1 ⭐ « Tu peux me faire une séance ? le bouton bug » est une demande', v.P.PM1 === true, js(v.P));
+  t('G2 ⭐ « Tu peux me préparer une séance ? le bouton bug » est une demande', v.P.PM2 === true, js(v.P));
+  t('G3 « Peux-tu me faire une séance même si le bouton bug ? » · « Pourrais-tu me préparer une séance ? » sont des demandes',
+    v.P.PM3 === true && v.P.PM4 === true, js(v.P));
+  t('G4 la même tournure avec les autres verbes déjà reconnus (proposer, donner, créer, construire, monter, écrire, lancer, envoyer, générer), « tu pourrais », sans tiret, en majuscules : toutes des demandes',
+    v.famille.every(x => x[1] === true), js(v.famille.filter(x => !x[1])));
+  t('G5 ⛔ « Le bouton pour faire une séance bug » · « …pour préparer une séance ne marche plus » · « Je parle juste du bouton pour faire une séance » : PAS des demandes',
+    v.N.NF === false && v.N.NP === false && v.N.NJ === false, js(v.N));
+  t('G6 ⛔ « tu peux » sans demande de séance (« tu peux me dire pourquoi le bouton… », « …tu peux le retirer ? », « tu peux regarder le bug… ») : PAS des demandes',
+    v.plaintesMix.every(x => x[1] === false), js(v.plaintesMix.filter(x => x[1])));
+  t('G7 non-régression : « Fais-moi une séance » · « Prépare-moi une séance de 45 minutes » · « Fais-moi ma séance du jour » restent des demandes, les 5 plaintes simples restent rejetées',
+    v.simples.P1 === true && v.simples.P2 === true && v.simples.P5 === true && Object.values(v.plaintes).every(x => x === false), js({ s: v.simples, p: v.plaintes }));
+  t('G9 « pourquoi » garde sa priorité d\'avant FP-01 : « Pourquoi tu peux me faire une séance… » et « pourquoi pourrais-tu me préparer… » restent des QUESTIONS ; « pourquoi tu ne me fais pas une séance jambes ? » reste une demande',
+    v.pourquoi[0][1] === false && v.pourquoi[1][1] === false && v.pourquoi[2][1] === true, js(v.pourquoi));
+  t('G8 ⚠️ limites inchangées (hors lot) : « le bouton lance une séance » reste détectée, « Quelle séance je fais aujourd\'hui ? » reste non détectée',
+    v.limites[0][1] === true && v.limites[1][1] === false, js(v.limites));
+  await A.cx.close();
+  // ── CONDUIT : tapé dans le vrai champ, envoyé par le vrai bouton ─────────────────────────────
+  const H1 = await ouvrir({ reponse: REPONSE_NEUTRE });
+  await taper(H1, MIX_P.PM1); const h1 = await cartes(H1.pg);
+  t('H1 ⭐ « Tu peux me faire une séance ? le bouton bug » tapé puis envoyé : la carte « Cette séance te convient ? · Oui, on démarre · Non, retravaille » s\'affiche (1)',
+    h1.n === 1 && h1.oui === 1 && h1.non === 1, js(h1));
+  await H1.cx.close();
+  const H2 = await ouvrir({ reponse: REPONSE_NEUTRE });
+  await taper(H2, MIX_P.PM2); const h2 = await cartes(H2.pg);
+  t('H2 ⭐ « Tu peux me préparer une séance ? le bouton bug » tapé puis envoyé : 1 carte', h2.n === 1 && h2.oui === 1, js(h2));
+  await H2.cx.close();
+  const H3 = await ouvrir({ reponse: REPONSE_BUG });
+  const h3 = {};
+  for (const k of ['NF', 'NP', 'NJ']) { await taper(H3, MIX_N[k]); h3[k] = await cartes(H3.pg); }
+  const n3 = H3.req.filter(a => a === 'coach').length;
+  t('H3 ⭐ « Le bouton pour faire une séance bug » · « …préparer… ne marche plus » · « Je parle juste du bouton… » tapés puis envoyés : AUCUNE carte',
+    ['NF', 'NP', 'NJ'].every(k => h3[k] && h3[k].n === 0) && n3 === 3, js(h3) + ' coach=' + n3);
+  t('H4 aucune erreur de page', H1.errs.length + H2.errs.length + H3.errs.length === 0, [H1, H2, H3].map(x => x.errs.join('|')).join(' ').slice(0, 160));
+  await H3.cx.close();
 };
