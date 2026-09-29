@@ -3253,3 +3253,16 @@ déterministe (`docs/MILO-SEANCE-01.md`) : la perte 4 → 2 se reproduit **dans 
 (`_seanceDepuisTexte`), qui ne sait pas lire le format que le prompt impose à Milo (« Nom — 4×6 à 80 kg,
 repos 2 min — consigne ») ; traduction, normalisation et injection ne perdent rien. ❓ Reste ouvert :
 ce que Milo a réellement écrit dans l'essai 2, et la latence réelle de la traduction.
+
+### 🟡 LA CARTE « CETTE SÉANCE TE CONVIENT ? » RÉAPPARAÎT SOUS UNE PLAINTE CONTRE CETTE CARTE (29/09/2026, terrain Michel — MILO-SEANCE-FP-01)
+Captures de Michel (13:38 → 13:47, `ft-v1242`) : la carte séance (« ⚡ Oui, on démarre » / « ✏️ Non, retravaille ») s'affiche
+sous des réponses de Milo qui ne proposent **aucune** séance, y compris sous celle où Milo dit *« c'est un bug d'affichage »*.
+**CAUSE DÉMONTRÉE (des réapparitions)** : faux positif de `_demandeUneSeance` (coach.js) sur certaines mentions
+conversationnelles de « séance » — mesuré sur les phrases exactes : *« Ya le bouton démarrer une séance qui est arrivé »* → vrai,
+*« Non ya le bouton démarrer une séance »* → vrai, *« Pourquoi tu me sors une séance lol »* → faux (exclusion « pourquoi »).
+**CAUSE DE LA PREMIÈRE CARTE (13:38-13:39) : NON DÉMONTRÉE** — son message déclencheur n'est pas sur les captures.
+La marche de 95 min enregistrée en « Autre » est **écartée** comme cause des réapparitions.
+❓ Observé au passage, **non traité** : interrogé, Milo a désigné « le cardio du jour » comme cause probable (une cause qu'il ne
+peut pas voir, présentée comme plausible — voisine de PB-001) ; et il a parlé de l'évolution de « ses instructions » avec Michel,
+qu'il ne peut pas connaître. Vérifiable par du code : le premier point (Milo ne voit pas les cartes de l'app) ; le second relève
+du **juge humain**.
