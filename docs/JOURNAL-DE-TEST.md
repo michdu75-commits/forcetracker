@@ -3266,3 +3266,4 @@ La marche de 95 min enregistrée en « Autre » est **écartée** comme cause de
 peut pas voir, présentée comme plausible — voisine de PB-001) ; et il a parlé de l'évolution de « ses instructions » avec Michel,
 qu'il ne peut pas connaître. Vérifiable par du code : le premier point (Milo ne voit pas les cartes de l'app) ; le second relève
 du **juge humain**.
+↪️ **Suite (29/09, MILO-SEANCE-FP-01, testé, non publié)** : le mécanisme démontré est corrigé — une mention conversationnelle de séance (bouton, bug, affiché, négation) n'est plus automatiquement interprétée comme une demande ; les vraies demandes restent détectées. **Cause de la première carte terrain : non démontrée si son message déclencheur n'est pas retrouvé.**
