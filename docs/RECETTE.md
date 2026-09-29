@@ -83,8 +83,9 @@ recette clone + production** sans un risque réellement différent.
 
 - **Worker** : rien ne vérifie qu'il répond après son déploiement, et le workflow ne se modifie pas
   (décision du 27/08). Le contrôle est un appel réel, avec l'accord de Michel.
-- **Supersets** (séance et éditeur de programme) : aucun témoin dédié ; le sélecteur le dit. Le lot qui y
-  touche écrit son témoin.
+- **Supersets** : le **retrait** d'un exercice d'un groupe a son témoin (ML-B, `banc:ml_b`) ; la **création**,
+  l'ajout, le réordonnancement et l'**éditeur de programme** n'en ont toujours pas, et le sélecteur le dit. Mesuré
+  le 29/09 : « ⚡ Super » puis abandon du choix du 2ᵉ exercice laisse encore un groupe à 1 membre (création, hors ML-B).
 - **Obéissance de Milo** : le local prouve la présence d'une règle, jamais qu'elle est suivie ; seul le banc
   réel (payant, sur accord) le mesure.
 - **Fixtures de dates** : la suite `dates` couvre les formes `new Date().toISOString()…` et
