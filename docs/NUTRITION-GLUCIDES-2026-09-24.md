@@ -306,6 +306,9 @@ devenu « à confirmer » ; il pose désormais un niveau déclaré (provenance �
 
 ## 12. 30/09 — B3 : la contradiction n'est plus SILENCIEUSE (lot Nutrition 1, D-034) — NON PUBLIÉ
 
+> ✅ **Clôture technique (30/09, 20:45 UTC)** : checkpoint fonctionnel `f69de2ea` ; passe complète **5 624 ✅ / 0 ❌**, 4 conditions vertes
+> (+59 = les nouveaux témoins B-CDXV → B-CDXIX) ; contrôle négatif 29/29 ; contre-vérifications indépendantes vertes. Non publié.
+
 **Demande de Michel** : *« une cible nutritionnelle et les macros proposées ne doivent pas se contredire
 silencieusement »* ; sinon l'écart est **explicite et expliqué**. Session-B, couloir Nutrition confié par
 Michel ; feu vert **limité à B3**. Branche `claude/nutrition-lot1-b3`.
