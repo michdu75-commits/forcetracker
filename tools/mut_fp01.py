@@ -12,9 +12,9 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
 Les mutations cassent le PRINCIPE, pas un mot :
   M00 / B2 / B3 = des versions entieres remises (master ; les deux premieres strategies de la branche)
   B1 = « bouton / bug / affiche present = rejet » (la strategie abandonnee)
-  P1..P3 = veto trop large (fenetre de 4 mots, garde « rien que de la meta » retire, veto avant la regle ①)
+  P1..P3 = veto trop large (fenetre de 4 mots, condition « TOUT le message est meta » retiree, veto avant la regle ①)
   P4..P7 = une meta-discussion acceptee (« bouton pour faire », refus, affichage, apparition)
-  P8 = la fenetre libre de 40 caracteres rouverte · P9 = une demande historique perdue (desir non protege)
+  P8 = la fenetre libre de 40 caracteres rouverte · P9 = une demande historique perdue (le vocabulaire meta avale « une », « stp »)
   P10 = [deguisee] la regle ② relit le texte brut · P11..P13 = le CORPUS rendu aveugle
   DG1, DG2 = deguisees · EQ1..EQ3 = equivalentes (doivent RESTER vertes) · [negatif] = commentaire
 Usage : python3 tools/mut_fp01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
@@ -34,44 +34,42 @@ def ligne(pred, quoi):
     if len(l) != 1:
         raise SystemExit('ancre %s : %d ligne(s)' % (quoi, len(l)))
     return l[0] + '\n'
-APPEL = ligne(lambda x: x.strip() == 'const u=_sansMetaSeance(t,p);', 'appel')
-ALIGN = ligne(lambda x: x.strip() == 'if(p.length!==t.length) return t;', 'alignement')
+VETO = ligne(lambda x: x.strip() == 'if(_seulementMeta(p)) return false;', 'ligne de veto')
 V1 = ligne(lambda x: 'new RegExp(' in x and 'bouton|carte' in x, 'V1')
 V2 = ligne(lambda x: 'new RegExp(' in x and 'demande|veux' in x, 'V2')
 V3 = ligne(lambda x: 'new RegExp(' in x and 'affiche(?:e' in x, 'V3')
 V4 = ligne(lambda x: 'new RegExp(' in x and 'apparu' in x, 'V4')
-SIGNAL = ligne(lambda x: 'return t;' in x and 'voudrais' in x and '.test(q)' in x, 'signal')
+TOUT = ligne(lambda x: '.every(m=>META.has(m))' in x, 'tout le message')
+META0 = ligne(lambda x: "const META=new Set((" in x, 'vocabulaire')
 VERBE = ligne(lambda x: '(fai[st]|donne|' in x, 'regle 1')
 R2 = ligne(lambda x: '(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+s[ée]ance' in x and 'return true' in x, 'regle 2')
-EXEC = '  for(const re of VETO){ let m; while((m=re.exec(p))){'
 SLOT = "(?:[a-z]+(?:er|ir|re|e|t)\\\\s+)?"
 BOUTON_REJET = "    if(/\\bbouton|\\bb(?:u|eu)g\\b|\\baffich/i.test(p)) return false;\n"
 
 MUT = [
     ("M00 master remis mot pour mot (coach.js de 7a71649e) : les meta-discussions redeviennent des demandes", 'REV:' + AVANT, 'GARDE'),
-    ('B1 strategie abandonnee : « bouton / bug / affiche » present = rejet du message entier', [(CO, APPEL, BOUTON_REJET + APPEL)], 'GARDE'),
+    ('B1 strategie abandonnee : « bouton / bug / affiche » present = rejet du message entier', [(CO, VETO, BOUTON_REJET + VETO)], 'GARDE'),
     ('B2 la 1re strategie FP-01 remise (coach.js de 5158c582 : garde large)', 'REV:5158c582', 'GARDE'),
     ('B3 la 2e strategie FP-01 remise (coach.js de b45b2e2a : garde large + structures qui sauvent)', 'REV:b45b2e2a', 'GARDE'),
     ('P1 veto trop large : jusqu\'a 4 mots quelconques entre « bouton » et « seance »', [(CO, V1, V1.replace(SLOT, "(?:\\\\S+\\\\s+){0,4}"))], 'GARDE'),
-    ('P2 veto trop large : le garde « rien que de la meta » est retire (un verbe de demande restant n\'arrete plus le veto)', [(CO, SIGNAL, '')], 'GARDE'),
-    ('P3 veto trop large : applique AVANT la regle ① (« le bouton lance une seance », hors lot, est corrige)',
-     [(CO, APPEL, ''), (CO, VERBE, APPEL + VERBE.replace('.test(t)) return true;', '.test(u)) return true;'))], 'GARDE'),
+    ('P2 veto trop large : la condition « TOUT le message est de la meta » est retiree', [(CO, TOUT, '  return true;\n')], 'GARDE'),
+    ('P3 veto trop large : applique AVANT la regle ① (« le bouton lance une seance », hors lot, est corrige)', [(CO, VETO, ''), (CO, VERBE, VETO + VERBE)], 'GARDE'),
     ('P4 meta acceptee : « bouton pour faire une seance » (« pour » ote de V1)', [(CO, V1, V1.replace('(?:pour|de|du|', '(?:de|du|'))], 'GARDE'),
     ('P5 meta acceptee : le refus (V2) retire', [(CO, V2, '')], 'GARDE'),
     ('P6 meta acceptee : le constat d\'affichage (V3) retire', [(CO, V3, '')], 'GARDE'),
     ('P7 meta acceptee : l\'apparition (V4) retiree', [(CO, V4, '')], 'GARDE'),
     ('P8 la fenetre libre de 40 caracteres rouverte (entre « bouton » et « seance »)', [(CO, V1, V1.replace(SLOT, "[^.?!\\\\n]{0,40}"))], 'GARDE'),
-    ('P9 demande historique perdue : les verbes de desir ne protegent plus (« …, j\'en voudrais une » perdue)', [(CO, SIGNAL, SIGNAL.replace('|veux|voudrais|aimerais', ''))], 'GARDE'),
-    ('P10 [deguisee] la regle ② relit le texte brut `t` (le veto n\'a plus d\'effet sur elle)', [(CO, R2, R2.replace('.test(u))', '.test(t))'))], 'GARDE'),
+    ('P9 demande historique perdue : le vocabulaire « meta » accepte « une » et « stp » (« …, une autre stp » perdue)', [(CO, META0, META0.replace("('le la ", "('une stp le la "))], 'GARDE'),
+    ('P10 [deguisee] la ligne de veto arrive APRES la regle ② (trop tard)', [(CO, VETO, ''), (CO, R2, R2 + VETO)], 'GARDE'),
     ('P11 CORPUS AVEUGLE : toute perte classee « veto justifie » (A), jamais « regression » (B)', [(OUTIL, "(c.lab === 'M' ? r.A : r.B)", 'r.A')], 'GARDE'),
     ('P12 CORPUS AVEUGLE : la branche comparee a elle-meme au lieu de master', [(OUTIL, 'const r = differentiel(fMaster, fFinal);', 'const r = differentiel(fFinal, fFinal);')], 'GARDE'),
     ('P13 CORPUS AVEUGLE : la reference n\'est plus master mais l\'arbre lui-meme', [(OUTIL, 'const fMaster = fnOf(srcOf(REF));', "const fMaster = fnOf(srcOf('WT'));")], 'GARDE'),
-    ('DG1 [deguisee] structures cherchees sur le texte AVEC accents (« DÉMARRER UNE SÉANCE » ne mord plus)', [(CO, EXEC, EXEC.replace('re.exec(p)', 're.exec(t)'))], 'GARDE'),
-    ('DG2 [deguisee] garde d\'alignement inverse (plus aucun veto sur un texte normal)', [(CO, ALIGN, ALIGN.replace('!==', '==='))], 'GARDE'),
+    ('DG1 [deguisee] structures cherchees sur le texte AVEC accents (« DÉMARRER UNE SÉANCE » ne mord plus)', [(CO, VETO, VETO.replace('_seulementMeta(p)', '_seulementMeta(t)'))], 'GARDE'),
+    ('DG2 [deguisee] « au moins un mot de meta » au lieu de « tous »', [(CO, TOUT, TOUT.replace('.every(', '.some('))], 'GARDE'),
     ('EQ1 [equivalente] V2 avant V1 dans la liste : doit RESTER vert', [(CO, V1 + V2, V2 + V1)], 'OK'),
-    ('EQ2 [equivalente] « # » au lieu de « § » pour neutraliser : doit RESTER vert', [(CO, "'§'.repeat(", "'#'.repeat(")], 'OK'),
+    ('EQ2 [equivalente] deux espaces au lieu d\'un pour retirer une structure : doit RESTER vert', [(CO, "vu=true; return ' '; })", "vu=true; return '  '; })")], 'OK'),
     ('EQ3 [equivalente] determinants dans un autre ordre (« la|une|ma ») : doit RESTER vert', [(CO, "const D='(?:une|la|ma|", "const D='(?:la|une|ma|")], 'OK'),
-    ('[negatif] commentaire citant les motifs cherches', [(CO, APPEL, APPEL + "    // bouton · bug · affiché · je ne demande pas · le bouton pour faire une séance\n")], 'OK'),
+    ('[negatif] commentaire citant les motifs cherches', [(CO, VETO, VETO + "    // bouton · bug · affiché · je ne demande pas · le bouton pour faire une séance\n")], 'OK'),
 ]
 
 

@@ -97,7 +97,11 @@ for (const [x, fam] of meta) add(x, 'M', fam);
 const metaEchantillon = meta.filter((m, i) => i % 7 === 0).map(m => m[0].replace(/[.!…]+$/, ''));
 const PRON = [', tu peux m’en faire une ?', ', fais-m’en une', ', prépare-m’en une autre', ', j’en voudrais une', ', tu m’en prépares une ?', '. Tu peux m’en refaire une ?', ', du coup donne-m’en une'];
 const demEch = ['Fais-moi une séance', 'Je voudrais une séance jambes', 'J’aimerais une séance', 'Il me faut une séance', 'Une séance jambes stp', 'Tu me prépares une séance ?', 'Nouvelle séance stp'];
+// ellipses : la demande ne répète ni « séance » ni un verbe (trou trouvé le 30/09 en écrivant la contre-analyse)
+const ELL = [', une autre stp', ', encore une stp', ', la même stp', '. Une autre ?', ', une nouvelle stp', ', une autre plus courte stp', ', go une autre',
+  ', t’en as une autre ?', ', une jambes stp', ', vas-y une autre', ', relance-la', ', recommence-la', ', tu peux la relancer ?', ', mets-la moi stp', ', une autre alors'];
 for (const m of metaEchantillon) {
+  for (const e of ELL) add(m + e, 'D', 'méta + demande elliptique');
   for (const p of PRON) add(m + p, 'D', 'méta + demande par pronom');
   for (const d of demEch) { add(m + ', ' + min(d), 'D', 'méta + demande'); add(d + ', ' + min(m), 'D', 'demande + méta'); add(m + '. ' + d, 'D', 'méta. demande'); }
 }
@@ -133,6 +137,10 @@ const MAIN = [
   ['D', 'Ma séance du jour stp, l’affichage déconne'],
   ['D', 'Encore un bug… bon, une séance haut du corps stp'],
   ['D', 'J’aimerais une nouvelle séance, la carte d’hier bug'],
+  ['D', 'Le bouton démarrer une séance bug, une autre stp'],
+  ['D', 'Ya le bouton démarrer une séance qui est arrivé, la même stp'],
+  ['D', 'Le bouton pour faire une séance ne marche plus, relance-la'],
+  ['D', 'le bouton démarrer une séance a buggé, t’en as une autre ?'],
   ['M', 'Ya le bouton démarrer une séance qui est arrivé'],
   ['M', 'Non ya le bouton démarrer une séance'],
   ['M', 'Le bouton pour faire une séance bug'],

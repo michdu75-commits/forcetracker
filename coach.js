@@ -2136,69 +2136,68 @@ function _demandeUneSeance(txt){
     if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
     // ⛔ niveau AMBIGU : après la règle ①, il ne tue que ce qui suit (les règles sans verbe)
     if(/\bpourquoi\b(?!\s+pas\b)|\bne\s+compte\s+pas\b|\bdebrief/i.test(p)) return false;
-    /* 🔬 MILO-SEANCE-FP-01 (29-30/09/2026) — MASTER EST PRÉSERVÉ PAR DÉFAUT ; UN VETO ÉTROIT, PAS UN FILTRE.
-       Les règles ci-dessous sont celles d'avant FP-01, MOT POUR MOT : seul le texte qu'elles lisent
-       change, et seulement quand le message n'est QUE méta-discussion (le bouton « démarrer une
-       séance », la carte, l'affichage, un refus explicite). Voir `_sansMetaSeance`, juste en dessous.
-       ⛔ Aucune structure de demande n'est listée ici : une demande que master reconnaissait reste
-       reconnue parce qu'on ne touche PAS à master, pas parce qu'on l'aurait énumérée. Mesuré sur
-       47 511 phrases (`tools/corpus_fp01.js`) : MASTER VRAI → FINAL FAUX n'arrive QUE sur des
-       méta-discussions ; aucune nouvelle détection. La règle ① est avant ce point : un faux positif
-       qu'elle produit déjà (« le bouton lance une séance ») n'est pas corrigé ici (hors lot). */
-    const u=_sansMetaSeance(t,p);
+    /* 🔬 MILO-SEANCE-FP-01 (29-30/09/2026) — MASTER EST PRÉSERVÉ PAR DÉFAUT : LA SEULE LIGNE AJOUTÉE.
+       Toutes les autres règles sont celles d'avant FP-01, MOT POUR MOT. Un message n'est retiré que s'il
+       n'est QUE méta-discussion (le bouton « démarrer une séance », un refus, un constat d'affichage) :
+       voir `_seulementMeta`, juste en dessous. Mesuré sur le corpus différentiel (`tools/corpus_fp01.js`) :
+       MASTER VRAI → FINAL FAUX n'arrive que sur des méta-discussions ; aucune nouvelle détection.
+       Rangée APRÈS la règle ① : un faux positif qu'elle produit déjà (« le bouton lance une séance »)
+       n'est pas corrigé ici (hors lot). */
+    if(_seulementMeta(p)) return false;
     // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
-    if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(u)) return true;
-    if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(u)) return true;
+    if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
+    if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;
     // ③ les formulations sans le mot « séance », que Michel emploie vraiment
-    if(/\b(je|on)\s+fais?\s+quoi\b/i.test(u)) return true;
-    if(/\bqu'est[- ]ce\s+que\s+(je|on)\s+(fais|fait)\b/i.test(u)) return true;
-    if(/\bon\s+s'entra[îi]ne\s+(quoi|comment)\b/i.test(u)) return true;
+    if(/\b(je|on)\s+fais?\s+quoi\b/i.test(t)) return true;
+    if(/\bqu'est[- ]ce\s+que\s+(je|on)\s+(fais|fait)\b/i.test(t)) return true;
+    if(/\bon\s+s'entra[îi]ne\s+(quoi|comment)\b/i.test(t)) return true;
     return false;
   }catch(e){ return false; }
 }
-/* 🔬 MILO-SEANCE-FP-01 — LE VETO ÉTROIT : on neutralise les STRUCTURES de méta-discussion, jamais un mot.
-   Ce qui a été démontré (terrain du 29/09, captures de Michel) : la carte séance s'affichait sous
-   *« Ya le bouton démarrer une séance qui est arrivé »* — la séance y est le NOM du bouton, pas l'objet
-   d'une demande. La 1ʳᵉ réponse (un garde « bouton / bug / affiché » qui rejetait tout le message) a
-   perdu de vraies demandes (« Je voudrais une séance, le bouton bug ») et a obligé à les ré-énumérer
-   une par une : 22 944 phrases de demande perdues sur le corpus différentiel. Décision de Michel
-   (30/09) : master préservé par défaut, veto seulement sur des structures démontrées.
-   ⭐ LES QUATRE STRUCTURES (testées sur `p`, sans accents ; « séance » y est toujours un complément) :
-     V1 la séance est le NOM ou le RÔLE d'un élément de l'écran : « bouton / carte » + (pour, de, du)
-        + au plus UN verbe (« démarrer », « faire », « refait ») + « une / la / ma … séance ».
-        ⛔ jamais « bug », « ok » au milieu : « la carte bug une séance stp » reste une demande ;
-     V2 un REFUS explicite d'une séance non qualifiée : « je ne demande pas une séance », « je veux pas
-        une séance maintenant », « pas besoin de la séance, … », « je t'ai pas demandé une séance ».
-        ⛔ « je veux pas une séance trop longue » n'est PAS un refus (qualifiée) : master décide ;
-     V3 un CONSTAT d'affichage : « tu m'as (encore) affiché une séance », « ça affiche une séance ».
-        ⛔ « tu m'affiches une séance ? » reste possible comme demande (même forme que « tu me prépares ») ;
-     V4 une séance SUJET d'un verbe d'apparition : « une séance apparaît / est apparue / s'affiche ».
-   ⭐ CE QUI EN FAIT UN VETO ET PAS UN FILTRE :
-     ① on neutralise la STRUCTURE (remplacée par « § », même longueur), pas le message : une vraie
-        demande ailleurs dans le message est toujours lue par les règles de master ;
-     ② et on ne neutralise RIEN s'il reste un verbe de demande ou de désir non nié (les verbes de la
-        règle ① et leurs formes, « veux », « voudrais », « aimerais ») : *« Le bouton pour faire une
-        séance bug, tu peux m'en préparer une ? »* reste une demande, comme sur master.
-        👉 Un veto ne s'applique qu'à un message QUI N'EST QUE méta-discussion ;
-     ③ si `p` et `t` n'ont pas la même longueur (texte décomposé), pas de veto : master, tel quel.
-   ⚠️ Cas AMBIGUS laissés à master, exprès (ce ne sont pas des structures démontrées) : « Quand je
-   veux une séance le bouton bug », « Je refais une séance et le bouton bug » restent des demandes. */
-function _sansMetaSeance(t,p){
-  if(p.length!==t.length) return t;
+/* 🔬 MILO-SEANCE-FP-01 — LE VETO ÉTROIT : « ce message n'est-il QUE de la méta-discussion ? »
+   Démontré (terrain du 29/09, captures de Michel) : la carte séance s'affichait sous *« Ya le bouton
+   démarrer une séance qui est arrivé »* — la séance y est le NOM du bouton, pas l'objet d'une demande.
+   Deux premières réponses ont perdu de vraies demandes : un garde « bouton / bug / affiché » qui rejetait
+   le message entier, puis des structures de demande qui venaient le « sauver » une par une — une liste
+   sans fin (22 944 demandes perdues sur le corpus différentiel). Décision de Michel (30/09) : master
+   préservé par défaut, veto seulement sur des structures de méta-discussion démontrées.
+   ⭐ DEUX CONDITIONS, TOUTES LES DEUX NÉCESSAIRES (sur `p`, sans accents) :
+   ① une STRUCTURE où « séance » n'est pas demandée mais nommée, refusée, constatée :
+      · le bouton / la carte + (pour, de, du) + au plus UN verbe + « une / la / ma … séance »
+        (« le bouton démarrer une séance », « le bouton pour faire une séance ») — ⛔ jamais « bug » ni
+        « ok » au milieu : le mot du milieu a une terminaison de verbe ;
+      · un refus : « je ne demande pas / je veux pas / pas besoin de / je t'ai pas demandé … une séance » ;
+      · un constat d'affichage : « tu m'as (encore) affiché / ça affiche … une séance » (⛔ pas « tu
+        m'affiches une séance ? », même forme que « tu me prépares une séance ? ») ;
+      · une séance SUJET d'un verbe d'apparition : « une séance apparaît / est apparue / s'affiche ».
+   ② et TOUT LE RESTE du message est du vocabulaire de plainte ou de méta (`META` ci-dessous) : un seul
+      mot inconnu — « stp », « une », « jambes », un verbe de demande — et le veto s'abstient : master
+      décide. *« Le bouton démarrer une séance bug, une autre stp »* reste une demande.
+   ⭐ LE SENS DE L'ERREUR EST CHOISI : si `META` est incomplet, une plainte formulée autrement garde le
+   comportement de master (un faux positif non corrigé) ; une demande n'est JAMAIS perdue pour ça.
+   ⛔ `META` ne doit contenir AUCUN mot qui sert à demander (verbe de demande ou de désir, « une », « ma »,
+   « stp », « séance ») — un témoin de source le vérifie.
+   ⚠️ Cas AMBIGUS laissés à master, exprès (aucune structure) : « Quand je veux une séance le bouton bug ». */
+function _seulementMeta(p){
   const D='(?:une|la|ma|nouvelle|prochaine|autre|petite|bonne)';   // les déterminants de la règle ②
-  const VETO=[
+  const STRUCTURES=[
     new RegExp("\\b(?:bouton|carte)s?\\s+(?:(?:pour|de|du|d['’])\\s*)?(?:(?:me|m['’])\\s*)?[\"«“]?\\s*(?:[a-z]+(?:er|ir|re|e|t)\\s+)?(?:"+D+"\\s+){1,2}seance\\b","gi"),
-    new RegExp("\\b(?:(?:demande|veux|voulais|voudrais|veut)\\s+(?:pas|plus|jamais)|pas\\s+besoin|(?:n|t|m)['’]\\s*ai\\s+(?:pas|jamais|rien)\\s+demande)\\s+(?:(?:de|d['’])\\s*)?(?:"+D+"\\s+){0,2}seance\\b(?=\\s*(?:$|[,.;:!?…)]|(?:maintenant|aujourd|ce\\s+soir|ce\\s+matin|merci|lol|mdr|je\\b|j['’]|c['’]|tu\\b|mais\\b|juste\\b|alors\\b)))","gi"),
+    new RegExp("\\b(?:(?:demande|veux|voulais|voudrais|veut)\\s+(?:pas|plus|jamais)|pas\\s+besoin|(?:n|t|m)['’]\\s*ai\\s+(?:pas|jamais|rien)\\s+demande)\\s+(?:(?:de|d['’])\\s*)?(?:"+D+"\\s+){0,2}seance\\b","gi"),
     new RegExp("\\b(?:(?:as|a|avez|ont)\\s+(?:encore\\s+|deja\\s+|toujours\\s+)?|(?:ca|cela|il|elle|l['’]\\s*app\\w*)\\s+(?:m['’]\\s*|me\\s+|nous\\s+)?(?:encore\\s+|toujours\\s+)?)(?:re)?affiche(?:e|es|nt)?\\s+(?:encore\\s+)?(?:"+D+"\\s+){1,2}seance\\b","gi"),
     new RegExp("\\b(?:"+D+"\\s+){1,2}seance\\s+(?:qui\\s+)?(?:(?:est|s['’]est)\\s+)?(?:re)?(?:apparu\\w*|apparai\\w*|s['’]\\s*affiche\\w*|affichee?s?)","gi")
   ];
-  let u=t, vu=false;
-  for(const re of VETO){ let m; while((m=re.exec(p))){ vu=true; u=u.slice(0,m.index)+'§'.repeat(m[0].length)+u.slice(m.index+m[0].length); } }
-  if(!vu) return t;
-  // ② un verbe de demande ou de désir non nié reste hors des structures : ce n'est pas QUE de la méta
-  const q=u.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  if(/(?<!\b(?:ne|n['’])\s*)\b(?:fai(?:s|re|tes)|refai(?:s|re|tes)|donne[rsz]?|propose[rsz]?|prepare[rsz]?|cree[rsz]?|construi(?:s|re)|monte[rsz]?|ecri(?:s|re)|lance[rsz]?|balance[rsz]?|envoie[sz]?|envoyer|genere[rsz]?|veux|voudrais|aimerais)\b(?!\s+(?:pas|plus|jamais)\b)/i.test(q)) return t;
-  return u;
+  let reste=p, vu=false;
+  for(const re of STRUCTURES) reste=reste.replace(re,()=>{ vu=true; return ' '; });
+  if(!vu) return false;
+  const META=new Set(('le la les l un de du d des a au aux y ya il elle ils ca cela c est sont et ou mais qui que qu on '
+    +'je j tu t me m te ne n pas plus se s en sur sous dans avec sans pour par ce cet cette ces ton ta tes mon son '
+    +'as ai avait avez ont parle parles parlais parlait parlions parlez regarde regarder enleve enlever retire retirer '
+    +'clique cliquer appuie appuyer vois voir peux peut marche marchent fonctionne bug bugs beug bugue bugge buggue '
+    +'affiche affichee affiches affichent affichage apparu apparue apparus apparait apparaissent revenu revenue revient '
+    +'disparu disparue arrive arrivee casse cassee passe encore toujours juste rien tout toute tous seul seule alors '
+    +'maintenant deja chaque fois raison question autre chose reponse reponses message messages ecran app appli '
+    +'bouton boutons carte cartes lol mdr ptdr non oui ok bon bref hein merci voila').split(' '));
+  return (reste.toLowerCase().match(/[a-z]+/g)||[]).every(m=>META.has(m));
 }
 
 // Détecteur DÉTERMINISTE, gratuit : « ce message ressemble-t-il à une séance ? ».

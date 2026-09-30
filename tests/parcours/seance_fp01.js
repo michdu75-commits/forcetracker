@@ -22,9 +22,10 @@
    séance », « Refais-moi une séance », « Tu peux me refaire une séance » + remarque sur le bouton) — des
    RÉGRESSIONS FP-01, jamais des décisions de Michel. Corrigées d'abord une par une… ce qui en laissait d'autres.
    ⭐⭐ ARCHITECTURE FINALE (30/09, décision de Michel — B-CDVIII, B-CDX et B-CDXII RÉÉCRITS, B-CDXIV ajouté) :
-   MASTER PRÉSERVÉ PAR DÉFAUT. Les règles de master sont gardées MOT POUR MOT ; FP-01 ne fait que neutraliser
-   quatre STRUCTURES de méta-discussion (le bouton / la carte « … séance », un refus explicite, un constat
-   d'affichage, une séance qui « apparaît »), et seulement dans un message qui n'est QUE méta-discussion.
+   MASTER PRÉSERVÉ PAR DÉFAUT. Les 8 règles de master sont gardées MOT POUR MOT ; FP-01 n'ajoute qu'UNE ligne,
+   `if(_seulementMeta(p)) return false;`, vraie seulement si le message contient une STRUCTURE de méta-discussion
+   (le bouton / la carte « … séance », un refus explicite, un constat d'affichage, une séance qui « apparaît »)
+   ET que tout le reste n'est que du vocabulaire de plainte : un seul mot inconnu, et master décide.
    Plus aucune structure de demande n'est listée. Preuve : `tools/corpus_fp01.js`, différentiel master →
    branche, B = 0 (témoins K du banc). Les attendus qui encodaient l'ancienne stratégie ont été changés, et
    c'est dit à chaque fois : « …un résumé de la séance ? le bouton bug » (G12) et les cas ambigus (I9)
@@ -68,14 +69,13 @@ module.exports.source = function (t, ROOT, fs, path) {
   const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
   const d = corps(co, '_demandeUneSeance');
   t('① `_demandeUneSeance` est trouvée (sinon les témoins suivants ne mesurent rien)', d.length > 200, d.length);
-  // ⚙️ ARCHITECTURE DU 30/09 (décision de Michel) : master préservé, un veto étroit neutralise des structures.
-  const iVerbe = d.search(/\(fai\[st\]\|donne/), iAmbigu = d.search(/\\bpourquoi\\b\(\?!/), iVeto = d.indexOf('_sansMetaSeance(t,p)');
-  const apres = iVeto < 0 ? '' : d.slice(iVeto);
-  t('② le veto (`_sansMetaSeance`) est appelé APRÈS la règle à verbe et le niveau « pourquoi », et TOUTES les règles sans verbe qui suivent lisent le texte neutralisé `u` (aucune ne relit `t`)',
-    iVerbe > 0 && iAmbigu > iVerbe && iVeto > iAmbigu && (apres.match(/\.test\(u\)\) return true/g) || []).length === 5 && !/\.test\(t\)/.test(apres), [iVerbe, iAmbigu, iVeto].join(' < '));
-  const v = corps(co, '_sansMetaSeance');
-  t('③ les structures sont cherchées sur la copie SANS ACCENTS (`p`) et neutralisées dans `t` à la même place ; si les deux n\'ont pas la même longueur, pas de veto (master tel quel)',
-    /re\.exec\(p\)/.test(v) && /if\(p\.length!==t\.length\) return t;/.test(v), v.slice(0, 80));
+  // ⚙️ ARCHITECTURE DU 30/09 (décision de Michel) : master mot pour mot, UNE ligne de veto ajoutée.
+  const iVerbe = d.search(/\(fai\[st\]\|donne/), iAmbigu = d.search(/\\bpourquoi\\b\(\?!/), iVeto = d.indexOf('if(_seulementMeta(p)) return false;'), iR2 = d.search(/\(une\|ma\|la\|nouvelle/);
+  t('② la ligne de veto `if(_seulementMeta(p)) return false;` est APRÈS la règle à verbe et le niveau « pourquoi », AVANT les règles sans verbe (même étage que « pourquoi »)',
+    iVerbe > 0 && iAmbigu > iVerbe && iVeto > iAmbigu && iR2 > iVeto, [iVerbe, iAmbigu, iVeto, iR2].join(' < '));
+  const v = corps(co, '_seulementMeta');
+  t('③ les structures sont cherchées sur la copie SANS ACCENTS (`p`), et c\'est `p` qu\'on lui passe',
+    /function _seulementMeta\(p\)/.test(v) && /reste=p/.test(v) && /_seulementMeta\(p\)/.test(d), v.slice(0, 60));
   t('④ ⛔ un seul endroit décide : toujours 2 appelants (envoi du message · relecture du fil), aucun nouveau',
     (co.match(/_demandeUneSeance\(/g) || []).length === 3, (co.match(/_demandeUneSeance\(/g) || []).length);
 };
@@ -237,7 +237,7 @@ const COMME_AVANT = [ 'Tu peux me faire ta séance ?', 'Tu peux me faire ta séa
 
 // Les 8 règles de `_demandeUneSeance` telles qu'elles sont sur master (7a71649e, ft-v1243), MOT POUR MOT :
 // recopiées une fois de `git show 7a71649e:coach.js` le 30/09/2026. Le témoin ① ci-dessous exige qu'elles
-// soient toutes encore là — les cinq règles sans verbe lisent seulement `u` au lieu de `t`.
+// soient toutes encore là, identiques (depuis la version finale du 30/09, master n'est plus modifié du tout).
 const REGLES_MASTER = [
   "if(/\\bai\\s+fait\\b|\\bje\\s+viens\\s+de\\b|\\betait\\b|\\ba\\s+ete\\b|\\bfini[es]?\\b/i.test(p)) return false;",
   "if(/\\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\\b[^.?!\\n]{0,40}\\b(s[ée]ance|entra[îi]nement|programme|prog)\\b/i.test(t)) return true;",
@@ -254,17 +254,17 @@ module.exports.sourceMixte = function (t, ROOT, fs, path) {
   const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   const co = nu('coach.js');
   const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
-  const d = corps(co, '_demandeUneSeance'), v = corps(co, '_sansMetaSeance');
-  const attendues = REGLES_MASTER.map(r => /return true;$/.test(r) && /\.test\(t\)\) return true;$/.test(r) && !/fai\[st\]/.test(r) ? r.replace('.test(t)) return true;', '.test(u)) return true;') : r);
-  const manquantes = attendues.filter(r => !d.includes(r));
-  t('① les 8 règles de master sont là MOT POUR MOT (les cinq sans verbe lisent `u`) : on n\'a rien réécrit de master',
+  const d = corps(co, '_demandeUneSeance'), v = corps(co, '_seulementMeta');
+  const manquantes = REGLES_MASTER.filter(r => !d.includes(r));
+  t('① les 8 règles de master sont là MOT POUR MOT (et lisent toujours `t` / `p` comme sur master) : on n\'a rien réécrit de master',
     d.length > 200 && manquantes.length === 0, manquantes.map(r => r.slice(0, 60)).join(' | '));
   t('② ⛔ aucune règle de « sauvetage » : les seuls `return true` sont les 6 de master', (d.match(/return true/g) || []).length === 6, (d.match(/return true/g) || []).length);
   const faux = d.split('\n').filter(l => /return false/.test(l));
-  t('③ ⛔ aucun mot ne suffit à rejeter : les seuls `return false` sont les 5 de master (vide · passé · « pourquoi » · fin · erreur), aucun ne cite bouton / bug / affiché',
-    faux.length === 5 && !faux.some(l => /bouton|bug|affich|appar/.test(l)), faux.map(l => l.trim().slice(0, 50)).join(' | '));
-  t('④ ⛔ le veto ne peut rien AJOUTER : `_sansMetaSeance` ne rend que `t` ou une copie de même longueur (structures remplacées caractère pour caractère), jamais un booléen',
-    v.length > 100 && !/return (true|false)/.test(v) && (v.match(/return (t|u);/g) || []).length >= 3 && /repeat\(m\[0\]\.length\)/.test(v), (v.match(/return [^;]+;/g) || []).join(' '));
+  t('③ ⛔ une seule ligne ajoutée à master, et aucun mot ne suffit à rejeter : 6 `return false` = les 5 de master + `if(_seulementMeta(p)) return false;` ; aucun ne cite bouton / bug / affiché',
+    faux.length === 6 && faux.filter(l => l.trim() === 'if(_seulementMeta(p)) return false;').length === 1 && !faux.some(l => /bouton|bug|affich|appar/.test(l)), faux.map(l => l.trim().slice(0, 50)).join(' | '));
+  const appels = (co.match(/_seulementMeta\(/g) || []).length;
+  t('④ ⛔ le veto ne peut rien AJOUTER : `_seulementMeta` rend un booléen et n\'est appelée qu\'à un seul endroit, dans un `return false`',
+    appels === 2 && /return \(reste[^;]*\.every\(/.test(v) && /if\(!vu\) return false;/.test(v), appels);
   const lignesVeto = v.split('\n').filter(l => /new RegExp\(/.test(l));
   t('⑤ ⛔ aucune fenêtre libre dans les structures ([^…], .*, .{n}) ; entre « bouton » et « séance », au plus UN mot, et ce mot a une terminaison de verbe',
     lignesVeto.length === 4 && !lignesVeto.some(l => /\[\^|\.\*|\.\{/.test(l)) && /\[a-z\]\+\(\?:er\|ir\|re\|e\|t\)/.test(lignesVeto.find(l => /bouton/.test(l)) || ''), lignesVeto.length);
@@ -371,16 +371,20 @@ module.exports.sourceExt = function (t, ROOT, fs, path) {
   const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   const co = nu('coach.js');
   const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); return src.slice(i, j < 0 ? undefined : j); };
-  const v = corps(co, '_sansMetaSeance');
-  const lSignal = v.split('\n').find(l => /return t;/.test(l) && /veux/.test(l) && /voudrais/.test(l)) || '';
-  t('⑥ s\'il reste, hors des structures, un verbe de demande (ceux de la règle ①, à toutes leurs formes) ou de désir (« veux », « voudrais », « aimerais »), le veto ne s\'applique pas : master décide',
-    /\.test\(q\)\) return t;/.test(lSignal) && /prepare/.test(lSignal) && /refai/.test(lSignal) && /aimerais/.test(lSignal), lSignal.trim().slice(0, 120));
-  t('⑦ ce verbe ne compte pas s\'il est nié (« je ne veux pas… », « je veux pas… ») : sinon un refus annulerait son propre veto',
-    /\(\?<!\\b\(\?:ne\|n/.test(lSignal) && /\(\?!\\s\+\(\?:pas\|plus\|jamais\)/.test(lSignal), lSignal.slice(0, 60));
+  const v = corps(co, '_seulementMeta');
+  const mMeta = /new Set\(\(([\s\S]*?)\)\.split\(' '\)\)/.exec(v);
+  const mots = mMeta ? mMeta[1].replace(/['+\s]+/g, ' ').trim().split(' ') : [];
+  t('⑥ le veto exige que TOUT le reste du message soit du vocabulaire de plainte / méta (`every`) : un seul mot inconnu (« stp », « une », « jambes », un verbe) et master décide',
+    mots.length > 50 && /\.every\(m=>META\.has\(m\)\)/.test(v), mots.length);
+  const INTERDITS = ['une', 'ma', 'mes', 'stp', 'svp', 'please', 'seance', 'fais', 'faire', 'refais', 'refaire', 'prepare', 'prepares', 'preparer', 'propose', 'donne',
+    'veux', 'voudrais', 'aimerais', 'faut', 'besoin', 'moi', 'relance', 'relancer', 'lance', 'lancer', 'demarre', 'demarrer', 'jambes', 'meme', 'nouvelle', 'petite', 'go'];
+  const fautifs = INTERDITS.filter(x => mots.includes(x));
+  t('⑦ ⛔ ce vocabulaire ne contient AUCUN mot qui sert à demander (verbes de demande ou de désir, « une », « ma », « stp », « séance », « moi »…) : sinon une demande pourrait passer pour de la méta',
+    mots.length > 50 && fautifs.length === 0, fautifs.join(' '));
   const V = v.split('\n').filter(l => /new RegExp\(/.test(l));
   const V2 = V.find(l => /demande\|veux/.test(l)) || '', V3 = V.find(l => /affiche\(\?:e/.test(l)) || '';   // repérées par ce qu'elles disent, pas par leur rang
-  t('⑧ le REFUS (V2) ne vise qu\'une séance non qualifiée : « je veux pas une séance trop longue » n\'en est pas un (condition sur ce qui suit « séance »)',
-    /seance\\\\b\(\?=/.test(V2), V2.trim().slice(0, 100));
+  t('⑧ le REFUS (V2) porte sur une séance COMPLÉMENT du refus (« je ne demande pas une séance ») : « séance » vient juste après le refus, rien entre les deux',
+    /\(\?:\(\?:demande\|veux/.test(V2) && /seance\\\\b/.test(V2) && !/\[\^|\.\*/.test(V2), V2.trim().slice(0, 100));
   t('⑨ le CONSTAT d\'affichage (V3) ne prend pas « tu m\'affiches une séance ? » (même forme que « tu me prépares », une demande possible) : « tu » n\'est pas un sujet de V3',
     /\(\?:ca\|cela\|il\|elle/.test(V3) && !/\|tu\|/.test(V3), V3.trim().slice(0, 100));
   let outil = ''; try { outil = fs.readFileSync(path.join(ROOT, 'tools', 'corpus_fp01.js'), 'utf8'); } catch (e) {}
@@ -446,7 +450,8 @@ const ARCHI_N = [
 // une demande ET une structure méta dans le même message : la structure est neutralisée, la demande reste lue
 const ARCHI_MIXTE = [
   'Le bouton démarrer une séance bug. Une séance jambes stp', 'Je voudrais une séance, le bouton démarrer une séance bug',
-  'Le bouton pour faire une séance bug, tu peux m’en préparer une ?', 'Le bouton bug, je voudrais une séance', 'la carte bug une séance stp' ];
+  'Le bouton pour faire une séance bug, tu peux m’en préparer une ?', 'Le bouton bug, je voudrais une séance', 'la carte bug une séance stp',
+  'Le bouton démarrer une séance bug, une autre stp', 'Ya le bouton démarrer une séance qui est arrivé, la même stp', 'Le bouton pour faire une séance ne marche plus, relance-la' ];
 
 module.exports.ecranArchi = async function (t, b, PORT) {
   console.log('\n═══ B-CDXIV (session-B). MILO-SEANCE-FP-01 — master préservé par défaut, veto étroit : demandes gardées, méta rejetée (écran conduit) ═══');
@@ -461,7 +466,7 @@ module.exports.ecranArchi = async function (t, b, PORT) {
     v.P.every(x => x[1] === true), js(v.P.filter(x => !x[1])));
   t('L2 ⛔ les 7 méta-discussions de la demande ne sont PAS des demandes (le bouton « démarrer une séance », « le bouton pour faire / préparer / refaire… », « je parle du bouton… », « je ne demande pas… »)',
     v.N.every(x => x[1] === false), js(v.N.filter(x => x[1])));
-  t('L3 ⭐ une demande et une structure méta dans le même message : la demande l\'emporte (structure neutralisée, pas le message ; demande par pronom « tu peux m’en préparer une ? » ; « bug » n\'est jamais pris pour le libellé d\'un bouton)',
+  t('L3 ⭐ une demande et une structure méta dans le même message : la demande l\'emporte (structure neutralisée, pas le message ; demande par pronom « tu peux m’en préparer une ? » ou par ellipse « une autre stp », « la même stp », « relance-la » ; « bug » n\'est jamais pris pour le libellé d\'un bouton)',
     v.X.every(x => x[1] === true), js(v.X.filter(x => !x[1])));
   await A.cx.close();
   const o1 = {}, errs = [];
