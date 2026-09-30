@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1243`** (prochaine : `ft-v1244`).
+> **Version actuelle : `ft-v1244`** (prochaine : `ft-v1245`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,22 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1244 — 🔬 MILO-SEANCE-FP-01 · PARLER DU BOUTON « DÉMARRER UNE SÉANCE » N'AFFICHE PLUS LA CARTE SÉANCE** — lot MILO-SEANCE-FP-01 (29-30/09, session-B), commit métier `04d5080e`, passe sur `d80e4176`, contre-vérifié indépendamment, publication décidée par Michel.
+
+**AVANT (terrain Michel, 29/09, captures).** La carte « Cette séance te convient ? · ⚡ Oui, on démarre · ✏️ Non, retravaille » s'affichait sous des réponses de Milo sans séance, y compris sous des plaintes contre elle : *« Ya le bouton démarrer une séance qui est arrivé »* était lue comme une demande (règle ② de `_demandeUneSeance` : « une séance », sans verbe), et la carte revenait au rechargement.
+
+**APRÈS.** FP-01 conserve par défaut les demandes de séance déjà reconnues historiquement et applique uniquement des veto bornés aux méta-discussions / plaintes explicitement identifiées (**D-032**). `_demandeUneSeance` = master mot pour mot + `if(_seulementMeta(p)) return false;` : un message n'est retiré que s'il contient une STRUCTURE où « séance » est nommée, refusée ou constatée (le bouton / la carte « … séance », « je ne demande pas une séance », « tu m'as affiché une séance », « une séance apparaît ») ET que tout le reste n'est que du vocabulaire de plainte. Le correctif privilégie la conservation du comportement historique de master ; les messages entièrement interprétés comme méta-discussion sur l'interface peuvent être rejetés, y compris 6 cas ambigus centrés sur le bouton (« Où est le bouton démarrer une séance ? »…), **volontairement rejetés** (décision de Michel).
+
+**Le chemin, dit tel quel** : deux premières stratégies (un garde large « bouton / bug », puis des structures de demande qui venaient « sauver » le message) perdaient de vraies demandes — démontré par la contre-vérification (*« Je voudrais une séance, le bouton bug »*) ; corpus différentiel master → branche : 33 013 pertes pour la 2ᵉ. Architecture finale décidée par Michel ; une version intermédiaire (liste de verbes protecteurs) perdait encore 56 demandes elliptiques (*« …, une autre stp »*), trouvé avant les tests longs.
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : la carte n'apparaît plus sous une plainte. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ cause de la première carte terrain (13:38) **non démontrée** · « le bouton lance une séance » toujours détectée (règle ①, préexistant) · « Quelle séance je fais aujourd'hui ? » non détectée (préexistant) · faux positifs de master conservés quand un mot sort du vocabulaire de plainte (« …ma séance du jour… ») · futur bouton explicite « Préparer une séance » et chantier SÉANCE : hors lot · ⚠️ un commentaire de `coach.js` au-dessus de `_seulementMeta` dit encore « une demande n'est JAMAIS perdue pour ça » (trop absolu, non modifié : fichier servi, signalé) · pas un moteur d'intention définitif. ⛔ Ni Worker, ni Apps Script. **0 appel réel.**
+
+Tests : blocs **B-CDVIII → B-CDXIV** dans `tests/parcours/seance_fp01.js`, banc **71/0** (dont K1-K2 : corpus différentiel exécuté — 57 655 phrases, MASTER VRAI → FINAL FAUX = 3 571, tous des veto méta, **B = 0**, 0 nouvelle détection — et son auto-test). ⛔ **Contrôle négatif `tools/mut_fp01.py` : 23/23** (dont 3 mutations qui aveuglent le corpus). C2 22/0 · C3 35/0 · annexe 14 PASS + 1 défaut connu (identique à master). Passe complète sur `d80e4176` : **5565 ✅ / 0 ❌**, 4 conditions vertes ; après elle, docs et numéro de version seulement (D-031).
+
+Fichiers : `coach.js` (`_demandeUneSeance` : 1 ligne ; `_seulementMeta` nouvelle), `tests/parcours/seance_fp01.js` (nouveau), `tests/parcours/runner.js`, `tests/recette/registre.json`, `tools/banc_fp01.js`, `tools/mut_fp01.py` et `tools/corpus_fp01.js` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `docs/DECISIONS.md` (D-032), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1244. |
 
 **ft-v1243 — 🧩 LOT 6 / ML-B · PLUS DE GROUPE À UN SEUL MEMBRE (« CIRCUIT (1) »)** — deuxième micro-lot issu de l'audit Lot 6, commits fonctionnels `7836eafa` (retrait) et `fe5b04e1` (annulation de création), contre-vérifié, publication décidée par Michel.
 
@@ -591,30 +607,3 @@ Fichiers : `coach.js` (`_lightMsg`, `_renderCoachThread`, `loadCoachConv`, `_app
 Tests : **B-CCCLXXXIX (5 de source) + B-CCCXC (17 conduits)** dans `tests/parcours/seance_c2.js`, **22 OK / 0**, branchés dans la passe — mémoire seule (aucune carte fantôme), séance seule, mémoire puis séance et l'inverse, deuxième carte bloquée, appels répétés, cartes non-séance multiples, question déjà posée, et 6 parcours `sendToCoach` (Worker simulé : traduction réussie, en panne, séance illisible puis tap, message ordinaire, réponse coupée) ; les cartes sont comptées **par leur texte**, jamais par la nouvelle marque. Banc d'unicité **12 / 0** (U1–U7, U10, U8-témoin, **U8 désormais vert**, U9, U∅). ⛔ **Contrôle négatif `tools/mut_seance_c2.py` : 12/12** (M01 = le code d'avant mot pour mot, 3 déguisées, 1 commentaire qui doit rester vert). Passe complète sur `222a119c` : **5194 ✅ / 0 ❌**.
 
 Fichiers : `coach.js` (`_appendStartSessionBtn`, `_appendSeanceQuestion`), `tests/parcours/seance_c2.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_seance_c2.js` et `tools/mut_seance_c2.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/MILO-SEANCE-01.md` (note d'état), `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1237. |
-
-**ft-v1236 — 🔬 MILO-SEANCE-02 / C1 · LA LECTURE DE SECOURS DE LA SÉANCE LIT ENFIN LE FORMAT QUE LE PROMPT DEMANDE À MILO** — suite du diagnostic MILO-SEANCE-01, correctif **C1 seul**, validé par Michel sur checkpoint avant commit, resynchronisé avec master : **C1 est le seul changement fonctionnel de cette version**.
-
-**⛔⛔ CE QUE ÇA N'EST PAS : LA CAUSE DÉMONTRÉE DU 4 → 2 VÉCU.** ***Symptôme réel 4→2 ; cause de l'événement réel non déterminée. Un mécanisme capable de produire ce résultat a été reproduit localement dans la lecture de secours.*** C1 ferme ce mécanisme-là, rien de plus.
-
-**⭐ LE DÉFAUT, MESURÉ AVANT D'ÉCRIRE UNE LIGNE.** Le prompt impose à Milo *« UN EXERCICE PAR LIGNE, avec ses séries × reps, la charge en kg, le REPOS et ta consigne technique »* — soit « 3. Développé militaire — 3×8 à 40 kg, repos 2 min — gainage fort ». Or `_seanceDepuisTexte`, le repli quand la traduction ne répond pas, était ancrée en fin de ligne juste après la charge : « à » refusé, repos et consigne refusés, et toute ligne de plus de 90 caractères jetée.
-
-| écriture de Milo | avant | après |
-|---|---|---|
-| **format du prompt** | **0/4** | **4/4** |
-| format court « Nom : 4×6 @ 80 kg » | 4/4 | 4/4 |
-| format bloc (nom / séries / consigne) | 4/4 | 4/4 |
-| **mélange court + prompt** | **2/4** | **4/4** |
-
-**⚖️ LE CORRECTIF EST BORNÉ, PAS ÉLARGI.** « à » est accepté devant la charge, et une **suite** après la charge (repos, consigne, parenthèse) seulement à trois conditions : ① un séparateur **explicite** (`—`, `:`, `-`) entre le nom et les séries · ② la suite ne porte **pas d'autres séries** (« puis 3×10 ») — *on ne lit pas à moitié* · ③ aucune charge n'y est écrite **sans avoir été lue** — *mieux vaut pas de ligne qu'une série à 0 kg*. La borne de 90 caractères passe à 200 pour ces seules lignes. ⛔ **Inchangés** : la règle des noms (exact ou tel quel, jamais « à peu près »), les bornes (1 à 12 séries, 1 à 100 reps), le minimum de 2 exercices, les séries seules.
-
-**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun bouton, aucun réglage : la carte « Commencer cette séance » apparaît là où elle aurait dû apparaître. ⚖️ **Pop-up : non.**
-
-**⏭️ CE QUE ÇA NE FAIT PAS, ET CE QUI RESTE OUVERT** : ⛔ **C2** (une proposition de mémoire masque la carte séance — U8 toujours rouge) · ⛔ **C3** (la séance traduite n'est pas gardée au rechargement ; **U9 passe au vert par effet de bord**, parce que le repli lit désormais ces formats — vérifié : avec des points médians, 4 à l'arrivée, une simple question après rechargement) · ⛔ **D-025** reste ouvert **étroitement** (« Mes discussions » peut perdre le marqueur « coupée ») · ⛔ **délai de 12 s inchangé** · ⛔ le prompt de Milo n'est pas touché · ⚠️ limites connues, non traitées : « La dernière fois : 3×8 à 60 kg, tu étais à l'aise » est lue comme un exercice (sa forme courte l'était déjà) ; tableau, points médians, « au ressenti », « 12/10/8/8 » et repos sans séparateur restent illisibles pour le repli. · ⛔ **Aucun appel réel à Milo**.
-
-**📝 RECTIFICATION** : la ligne MILO-SEANCE-01 de `docs/JOURNAL-DE-PARTAGE.md` disait « 4 → 2 = le repli » — plus fort que les faits ; rayée et corrigée (↪️ daté).
-
-Tests : **B-CCCLXXXVII (7 de source) + B-CCCLXXXVIII (22 conduits)** dans `tests/parcours/seance_c1.js`, **29 OK / 0**, branchés dans la passe — format du prompt, puces, court, bloc, mélange, variations (x/×, @/à, espaces, parenthèse, « - », 12,5 kg), ligne > 90 caractères ; **9 cas pièges → aucune séance**, et 2 vrais exercices noyés dans tous les pièges → **exactement 2** ; de bout en bout (Worker simulé) **1 carte**, 4 exercices chargés. ⛔ **Contrôle négatif `tools/mut_seance_c1.py` : 13/13 conformes** (M01 = le code d'avant mot pour mot, 5 déguisées, 1 commentaire qui doit rester vert). Banc d'unicité : 11 OK / 1 rouge (U8 = C2, attendu).
-
-Fichiers : `coach.js` (`_seanceDepuisTexte` seule), `tests/parcours/seance_c1.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_seance_c1.js` et `tools/mut_seance_c1.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/MILO-SEANCE-01.md` (note d'état), `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md` — plus, portés sur master avec la branche : `docs/MILO-SEANCE-01.md`, `tools/diag_seance01.js`, `tests/parcours/seance_unicite.js` et son banc (diagnostic du 26/09, **non branchés** dans la passe). ⛔ **`tests/milo/eval.js` reste identique à master** : la sonde du banc (qui enverrait un message de chat réel en plus à chaque passe réelle) est **conservée hors de master**, sur la branche `conservation/sonde-banc-milo-2026-09-26` (décision de Michel, option A). sw.js ft-v1236. |
-
-**↪️ APRÈS PUBLICATION (ajouté le 26/09, même jour).** ✅ **Publié et vérifié en réel** : master avancé en avance rapide `a825cab4` → `eb1b2c4a` ; déploiement Pages n°1315 réussi (`pages_build_version` = `eb1b2c4a`) ; **Michel a lu `ft-v1236` sur son téléphone** (Menu → À propos). Worker et Apps Script **non redéployés**, **0 appel réel à Milo**. **C1 est clos** (correction, tests, publication, vérification réelle). ⏳ **Restent ouverts** : C2, C3, D-025 (étroitement) ; délai de 12 s inchangé. Symptôme réel 4→2 ; cause de l'événement réel non déterminée. Un mécanisme capable de produire ce résultat a été reproduit localement dans la lecture de secours.
