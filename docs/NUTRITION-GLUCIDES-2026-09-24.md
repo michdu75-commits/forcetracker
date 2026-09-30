@@ -319,10 +319,13 @@ cétogènes sans l'avoir choisi. *L'objectif du lot est de corriger le silence, 
 - les règles macros de master restent **mot pour mot** : `macrosForKcal` et `cycleGlucides` inchangés,
   glucides écrêtés à 0 comme avant ;
 - un seul propriétaire de l'écart, `_cibleIncompatible` (state.js) : une macro écrêtée à 0 (glucides ;
-  lipides en kéto) **et** une somme qui dépasse la cible de plus de **6 kcal** — l'arrondi maximal que le
-  cycle produit déjà sans écrêtage (mesuré : −6 à +6). Calculé sur le jour **et** sur l'autre bout du cycle ;
+  lipides en kéto) **et** une somme qui dépasse la cible de plus de **6 kcal** — l'arrondi maximal mesuré en
+  mode standard, cycle compris (−6 à +6). ↪️ *Corrigé après contre-vérification : ce n'est pas une borne de tout
+  arrondi — en low carb, trois pourcentages arrondis donnent jusqu'à +7 kcal (1 050 kcal → 1 057) sans rien
+  d'écrêté ; c'est pourquoi le seuil ne vaut QU'AVEC un écrêtage.* Calculé sur le jour **et** sur l'autre bout
+  du cycle ; la macro écrêtée est **nommée** (glucides d'ordinaire, lipides en kéto) ;
 - l'écran le dit sous les macros ; l'aperçu du réglage manuel le dit dès la frappe ; enregistrer une cible
-  incompatible ne dit plus « ✅ » ; Milo reçoit la même information et la consigne de ne jamais présenter
+  incompatible — **aujourd'hui ou sur l'autre jour du cycle** — ne dit plus « ✅ » ; Milo reçoit la même information et la consigne de ne jamais présenter
   ces macros comme respectant la cible ; un vrai 0 g s'écrit 0 (et plus « — »).
 
 | Cas | Chiffres (identiques à master) | Déclaré |

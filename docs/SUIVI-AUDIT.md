@@ -360,3 +360,15 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Quand le traiter** : seulement lorsqu'un chantier touche déjà les **totaux**, les **imports** ou le **contexte
   Nutrition de Milo** — alors écran et Milo doivent passer par **la même** valeur numérique normalisée, sans créer
   de troisième source de vérité.
+
+### 🟤 DETTE NUTRITION / UI (30/09/2026) — le tableau de bord lit des champs qui n'existent pas
+> Trouvée par la contre-vérification du lot Nutrition 1 (B3). ⛔ **Préexistante, NON corrigée dans ce lot** (décision de Michel).
+- **Constat** : `dashboard.js` (tuile « Nutrition ») lit `m.kcal || m.cal` et `m.prot || m.p`, alors que `calcMacros`
+  rend `calories` et `prot_g`. Les deux lectures valent donc toujours `undefined` : la tuile retombe sur `calcTDEE()`
+  et affiche la **dépense (TDEE)** sous le libellé **« Objectif du jour »**, et n'affiche jamais les protéines.
+- **Déjà vu** : c'est le constat **NUT-DASH1** de `docs/NUTRITION-GLUCIDES-2026-09-24.md` (§10 et §11) —
+  `dashboard.html` le charge et **est déployé**.
+- **Portée** : affichage seulement (aucune donnée écrite) ; la cible et les macros de l'onglet Nutrition ne sont pas
+  concernées ; l'incompatibilité B3 n'y est pas affichée non plus.
+- **Quand le traiter** : dans un lot séparé Nutrition / UI, avec son propre témoin (la tuile doit lire la cible
+  retenue, pas le TDEE).

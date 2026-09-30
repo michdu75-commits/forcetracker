@@ -3290,8 +3290,8 @@ function _incompatibleTxt(m){
   const i=m&&m.incompatible; if(!i) return '';
   const J={repos:'un jour de repos',seance:'un jour de séance'};
   return '- ⚠️ CIBLE INCOMPATIBLE AVEC LES RÈGLES MACROS ACTUELLES : '
-    +(i.ecart>0?'protéines + lipides = '+i.macros+' kcal pour une cible de '+m.calories+' kcal (+'+i.ecart+'), glucides écrêtés à 0':'aujourd\'hui la cible tient')
-    +(i.autre?' ; '+J[i.autre.jour]+' : '+i.autre.macros+' kcal (+'+i.autre.ecart+')':'')
+    +(i.ecart>0?(i.ecrete==='lipides'?'protéines + glucides kéto':'protéines + lipides')+' = '+i.macros+' kcal pour une cible de '+m.calories+' kcal (+'+i.ecart+'), '+(i.ecrete||'glucides')+' écrêtés à 0':'aujourd\'hui la cible tient')
+    +(i.autre?' ; '+J[i.autre.jour]+' : '+i.autre.macros+' kcal (+'+i.autre.ecart+', '+(i.autre.ecrete||'glucides')+' écrêtés à 0)':'')
     +'. '+(i.ecart>0?'Ces macros':'Les macros de ce jour-là')+' NE respectent PAS la cible : ne les présente jamais comme la respectant. L\'app ne modifie ni la cible ni les macros.\n';
 }
 function buildCoachContext(msg) {

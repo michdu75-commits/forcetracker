@@ -2546,7 +2546,7 @@ function _kcalPreview(){
   const nt=document.getElementById('kcal-pv-note');
   if(nt){
     const inc=(v>=800&&v<=6000&&typeof _cibleIncompatible==='function')?_cibleIncompatible(mm.prot_g,mm.fat_g,mm.carbs_g,v):null;
-    nt.innerHTML=inc?_incompatibleHTML({calories:v,incompatible:{ecart:inc.ecart,macros:inc.macros,autre:null}}):'';
+    nt.innerHTML=inc?_incompatibleHTML({calories:v,incompatible:{ecart:inc.ecart,macros:inc.macros,ecrete:inc.ecrete,autre:null}}):'';
   }
 }
 /* ⚖️ B3 (30/09/2026, décision de Michel) — QUAND LA CIBLE EST INCOMPATIBLE AVEC LES RÈGLES MACROS
@@ -2558,8 +2558,12 @@ function _incompatibleHTML(m){
   const n=v=>Math.round(v).toLocaleString('fr-FR');
   const jour={repos:'un jour de repos',seance:'un jour de séance'};
   let txt='⚠️ <b>Ta cible de '+n(m.calories)+' kcal est incompatible avec les règles de répartition actuelles.</b> ';
-  if(i.ecart>0) txt+='Tes protéines et lipides (calculés sur ton poids et ton objectif) font déjà <b>'+n(i.macros)
-    +' kcal</b>, soit <b>'+n(i.ecart)+' kcal de plus</b> que la cible — les glucides tombent à 0. ';
+  /* Ce qui a été écrêté se NOMME : les glucides d'ordinaire, les lipides en kéto (où ce sont les protéines
+     et les 5 % de glucides qui dépassent déjà). Dire « glucides » pour un kéto serait faux. */
+  if(i.ecart>0) txt+=(i.ecrete==='lipides'
+      ?'Tes protéines et tes glucides kéto (calculés sur ton poids et ton régime) font déjà <b>'
+      :'Tes protéines et lipides (calculés sur ton poids et ton objectif) font déjà <b>')+n(i.macros)
+    +' kcal</b>, soit <b>'+n(i.ecart)+' kcal de plus</b> que la cible — les '+(i.ecrete||'glucides')+' tombent à 0. ';
   if(i.autre) txt+=(i.ecart>0?'Et ':'Aujourd\'hui ça tient, mais ')+jour[i.autre.jour]+', tes macros font <b>'+n(i.autre.macros)
     +' kcal</b> (<b>+'+n(i.autre.ecart)+'</b>). ';
   txt+=(i.ecart>0?'Ces macros':'Ce jour-là, les macros')+' ne respectent donc PAS la cible ; l\'app ne modifie ni l\'une ni les autres.';
@@ -2577,7 +2581,11 @@ function saveKcalEdit(){
   persist();closeKcalEdit();renderNutrition();
   /* ⚖️ B3 : un ✅ dirait « validé » — pas quand les macros imposent davantage que ce chiffre. */
   const _inc=(calcMacros(S.nutritionPhase)||{}).incompatible;
-  if(_inc&&_inc.ecart>0) toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal — incompatible avec tes macros (+'+_inc.ecart.toLocaleString('fr-FR')+' kcal), détail dans Nutrition','info');
+  /* ⛔ Le verdict porte sur TOUT le cycle : compatible aujourd'hui mais pas un jour de repos (ou de séance)
+     reste une cible incompatible — une coche verte dirait le contraire de la carte Nutrition. */
+  if(_inc) toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal — incompatible avec tes macros (+'
+    +(_inc.ecart>0?_inc.ecart:_inc.autre.ecart).toLocaleString('fr-FR')+' kcal'
+    +(_inc.ecart>0?'':(_inc.autre.jour==='repos'?' un jour de repos':' un jour de séance'))+'), détail dans Nutrition','info');
   else toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
 }
 function resetKcalAuto(){

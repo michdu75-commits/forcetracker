@@ -52,7 +52,8 @@ module.exports.source = function (t, ROOT, fs, path) {
     cyc.length > 0 && !/ajoutMax|m\.ajuste|incompatible/.test(cyc), 'cycleGlucides modifié');
   t('B-CDXV ③ un seul propriétaire de l\'écart : écrêtage à 0 ET dépassement au-delà de l\'arrondi (6 kcal)',
     ST.includes('const_ARRONDI_MACROS_KCAL=6;')
-    && inc.includes('return((carbs_g===0||fat_g===0)&&ecart>_ARRONDI_MACROS_KCAL)?{ecart,macros:Math.round(somme)}:null;'),
+    && inc.includes("constecrete=(carbs_g===0&&fat_g===0)?'glucidesetlipides':(carbs_g===0?'glucides':(fat_g===0?'lipides':null));")
+    && inc.includes('return(ecrete&&ecart>_ARRONDI_MACROS_KCAL)?{ecart,macros:Math.round(somme),ecrete}:null;'),
     'critère absent ou modifié');
   t('B-CDXV ④ `calcMacros` le calcule sur le jour ET sur l\'autre bout du cycle, et la cible reste `manual||auto`',
     ST.includes('constinc=calculable?_cibleIncompatible(m.prot_g,m.fat_g,m.carbs_g,calories):null;')
@@ -68,7 +69,7 @@ module.exports.source = function (t, ROOT, fs, path) {
     && CO.includes('Protéines:${_gMac(macros.prot_g)}g|Glucides:${_gMac(macros.carbs_g)}g|Lipides:${_gMac(macros.fat_g)}g')
     && CO.includes('${_incompatibleTxt(macros)}${_cibleDetailTxt()}'), 'ligne des macros de Milo modifiée');
   t('B-CDXV ⑦ enregistrer une cible incompatible ne dit plus « ✅ » (ne pas laisser croire qu\'elle est validée)',
-    /if\(_inc&&_inc\.ecart>0\)toast\([^;]*incompatible/.test(corps(SC, 'saveKcalEdit')), 'toast inchangé');
+    /if\(_inc\)toast\([^;]*incompatible/.test(corps(SC, 'saveKcalEdit')) && !/_inc\.ecart>0\)toast/.test(corps(SC, 'saveKcalEdit')), 'toast inchangé');
 };
 
 /* Pose un profil sur le disque et recharge par le VRAI chemin `localStorage → load()`. */
@@ -235,7 +236,14 @@ module.exports.ecranVue = async function (t, b, PORT) {
   t('B-CDXVII D1 à l\'écran : 1 932 kcal · 325 / 104 / 0 g (master) et la phrase dit l\'incompatibilité : 2 236 kcal, +304',
     d1.kcal === '1 932' && d1.P === '325' && d1.L === '104' && d1.G === '0'
     && /incompatible avec les règles de répartition actuelles/.test(d1.inc) && /2 236 kcal/.test(d1.inc) && /304 kcal de plus/.test(d1.inc)
-    && /ne respectent donc PAS la cible/.test(d1.inc), JSON.stringify(d1));
+    && /ne respectent donc PAS la cible/.test(d1.inc) && /les glucides tombent à 0/.test(d1.inc) && !/lipides tombent/.test(d1.inc), JSON.stringify(d1));
+  const ke = await voir(PROFILS.KETO);
+  t('B-CDXVII B · kéto 250 kg à 800 kcal (lipides écrêtés) : la phrase nomme les LIPIDES, pas les glucides ; chiffres de master 200 / 0 / 10',
+    ke.P === '200' && ke.L === '0' && ke.G === '10' && /les lipides tombent à 0/.test(ke.inc) && !/glucides tombent/.test(ke.inc)
+    && /glucides kéto/.test(ke.inc) && /840 kcal/.test(ke.inc), JSON.stringify(ke));
+  const lc = await voir(Object.assign({}, PROFILS.DECL, { ft4_manualkcal: '1050', ft4_foodmode: 'lowcarb' }));
+  t('B-CDXVII D · low carb 1 050 kcal : 66 / 79 / 53 g (master, +7 kcal de pur arrondi, rien d\'écrêté) → AUCUNE phrase',
+    lc.P === '79' && lc.G === '66' && lc.L === '53' && lc.inc === '', JSON.stringify(lc));
   const d1r = await voir(PROFILS.D1, [0, 3]);
   t('B-CDXVII D1 un jour de séance : l\'écart du jour ET celui d\'un jour de repos (2 326 kcal, +394) sont dits',
     /2 002 kcal/.test(d1r.inc) && /un jour de repos/.test(d1r.inc) && /2 326 kcal/.test(d1r.inc) && /\+394/.test(d1r.inc), JSON.stringify(d1r));
@@ -282,6 +290,22 @@ module.exports.ecranVue = async function (t, b, PORT) {
   });
   t('B-CDXVII rechargé : 1 200 kcal sur le disque, 172 / 86 / 0 g, et l\'incompatibilité toujours dite à l\'écran',
     apres.man === '1200' && apres.kcal === '1 200' && apres.P === '172' && apres.L === '86' && apres.G === '0' && /1 462 kcal/.test(apres.inc || ''), JSON.stringify(apres));
+  /* ⭐ A (témoin demandé par la contre-vérification) : compatible AUJOURD'HUI, incompatible UN JOUR DE REPOS.
+     La carte le dit — le message d'enregistrement ne doit pas dire le contraire par une coche verte. */
+  await voir(PROFILS.CYC, [0, 1, 2, 3, 4, 5]);
+  const cyc = await pg.evaluate(async () => {
+    const toasts = []; const _t = window.toast; window.toast = (m, k) => { toasts.push(m); try { _t && _t(m, k); } catch (e) {} };
+    [...document.querySelectorAll('#nu-adjust button')].find(x => /Ajuster mes calories/.test(x.textContent)).click();
+    await new Promise(r => setTimeout(r, 200));
+    const inp = document.getElementById('kcal-edit-inp'); inp.value = '1500'; inp.dispatchEvent(new Event('input', { bubbles: true }));
+    [...document.getElementById('ov-kcal-edit').querySelectorAll('button')].find(x => /Enregistrer mes calories/.test(x.textContent)).click();
+    await new Promise(r => setTimeout(r, 300));
+    const v = id => { const e = document.getElementById(id); return e ? e.textContent.replace(/[\u202f\u00a0]/g, ' ').trim() : null; };
+    return { toasts, P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), inc: v('nu-incompatible') };
+  });
+  t('B-CDXVII A · 1 500 kcal compatibles aujourd\'hui mais pas un jour de repos (+65) : AUCUNE coche verte, le message dit « +65 kcal un jour de repos »',
+    cyc.toasts.some(x => /incompatible avec tes macros \(\+65 kcal un jour de repos\)/.test(x)) && !cyc.toasts.some(x => /✅/.test(x))
+    && cyc.P === '200' && cyc.L === '61' && cyc.G === '39' && /un jour de repos/.test(cyc.inc || ''), JSON.stringify(cyc));
   t('B-CDXVII aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };
@@ -302,7 +326,7 @@ module.exports.ecranMilo = async function (t, b, PORT) {
     && un(C.D1, /CIBLE INCOMPATIBLE AVEC LES RÈGLES MACROS ACTUELLES.*2236 kcal pour une cible de 1932 kcal \(\+304\).*NE respectent PAS la cible.*jamais comme la respectant/) === 1
     && un(C.D1, /CIBLE 1932 kcal/) === 1, JSON.stringify(C.D1));
   t('B-CDXVIII D1 un jour de séance : Milo reçoit aussi l\'écart d\'un jour de repos (2326, +394)',
-    un(C.D1s, /CIBLE INCOMPATIBLE.*\(\+70\).*un jour de repos : 2326 kcal \(\+394\)/) === 1, JSON.stringify(C.D1s));
+    un(C.D1s, /CIBLE INCOMPATIBLE.*\(\+70\).*un jour de repos : 2326 kcal \(\+394, glucides écrêtés à 0\)/) === 1, JSON.stringify(C.D1s));
   t('B-CDXVIII 800 kcal à la main : Milo sait que 800 kcal n\'est pas tenable avec ces macros (1720, +920)',
     un(C.GAP, /^- Calories cible: 800 kcal \| Protéines: 250g \| Glucides: 0g \| Lipides: 80g$/) === 1
     && un(C.GAP, /CIBLE INCOMPATIBLE.*1720 kcal pour une cible de 800 kcal \(\+920\)/) === 1, JSON.stringify(C.GAP));
@@ -311,7 +335,11 @@ module.exports.ecranMilo = async function (t, b, PORT) {
   t('B-CDXVIII profil sans poids : les macros inconnues restent « — » (D-016), rien de déclaré',
     un(C.B1, /Protéines: —g \| Glucides: —g \| Lipides: —g/) === 1 && un(C.B1, /INCOMPATIBLE/) === 0, JSON.stringify(C.B1));
   t('B-CDXVIII kéto 250 kg à 800 kcal : « Lipides: 0g » et l\'écart de 40 kcal est dit',
-    un(C.KETO, /Lipides: 0g$/) === 1 && un(C.KETO, /CIBLE INCOMPATIBLE.*840 kcal pour une cible de 800 kcal \(\+40\)/) === 1, JSON.stringify(C.KETO));
+    un(C.KETO, /Lipides: 0g$/) === 1 && un(C.KETO, /CIBLE INCOMPATIBLE.*protéines \+ glucides kéto = 840 kcal pour une cible de 800 kcal \(\+40\), lipides écrêtés à 0/) === 1
+    && un(C.KETO, /glucides écrêtés/) === 0, JSON.stringify(C.KETO));
+  /* ⭐ C (témoin demandé par la contre-vérification) : en standard, c'est toujours des GLUCIDES qu'on parle. */
+  t('B-CDXVIII C · standard (D1) : Milo lit « glucides écrêtés à 0 », jamais « lipides écrêtés »',
+    un(C.D1, /glucides écrêtés à 0/) === 1 && un(C.D1, /lipides écrêtés/) === 0, JSON.stringify(C.D1));
   t('B-CDXVIII aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };

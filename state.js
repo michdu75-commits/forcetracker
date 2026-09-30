@@ -2371,8 +2371,8 @@ function calcMacros(phase){
   return{calories:calories!=null?calories:null,
          prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,
          isManual:!!manual, cycle:m.cycle||null,
-         incompatible:(inc||au)?{ecart:inc?inc.ecart:0,macros:inc?inc.macros:null,
-                                 autre:au?{jour:m.cycle.autre.jour,ecart:au.ecart,macros:au.macros}:null}:null,
+         incompatible:(inc||au)?{ecart:inc?inc.ecart:0,macros:inc?inc.macros:null,ecrete:inc?inc.ecrete:null,
+                                 autre:au?{jour:m.cycle.autre.jour,ecart:au.ecart,macros:au.macros,ecrete:au.ecrete}:null}:null,
          indisponible:manquants.length>0, manquants:manquants};
 }
 /* ⚖️ B3 — LA CIBLE EST-ELLE INCOMPATIBLE AVEC LES RÈGLES MACROS ACTUELLES ? (30/09/2026, lot Nutrition 1)
@@ -2383,16 +2383,21 @@ function calcMacros(phase){
    ⭐ DÉCISION DE MICHEL (30/09, après contre-vérification) : on ne CHANGE PAS les règles macros (pas de
    nouveau plancher, pas de réduction automatique) — on DIT l'écart, à l'écran et à Milo.
    ⛔ Deux conditions : une macro a été ÉCRÊTÉE à 0 (glucides ; lipides en kéto) ET la somme dépasse la
-   cible de plus que l'arrondi. L'arrondi retenu est 6 kcal — le maximum que produit déjà le cycle
-   séance/repos sans écrêtage (mesuré : −6 à +6 sur 233 280 profils), soit moins de 1,5 g de glucides.
-   Hors écrêtage, aucun profil n'est signalé ; sous 6 kcal, c'est de l'arrondi, pas une contradiction.
-   Rend `null` si compatible, sinon `{ecart, macros}` — un seul propriétaire, lu par l'écran, l'aperçu
-   du réglage manuel et Milo (R2). */
+   cible de plus que 6 kcal. 6 kcal = l'arrondi maximal mesuré en mode standard, cycle séance/repos
+   compris (−6 à +6 sur 233 280 profils), soit moins de 1,5 g de glucides.
+   ⚠️ CE N'EST PAS UNE BORNE DE TOUT ARRONDI (corrigé le 30/09 après contre-vérification) : en LOW CARB,
+   trois pourcentages arrondis séparément donnent jusqu'à +7 kcal (mesuré : 1 050 kcal → 66/79/53 g =
+   1 057) sans que rien ne soit écrêté. C'est précisément pourquoi le seuil ne s'applique QU'AVEC un
+   écrêtage : sans lui, l'écart n'est que de l'arrondi, et rien n'est signalé.
+   Rend `null` si compatible, sinon `{ecart, macros, ecrete}` — `ecrete` nomme la macro RÉELLEMENT
+   écrêtée (les glucides d'ordinaire ; les lipides en kéto), pour que les messages ne disent pas l'une
+   pour l'autre. Un seul propriétaire, lu par l'écran, le réglage manuel et Milo (R2). */
 const _ARRONDI_MACROS_KCAL=6;
 function _cibleIncompatible(prot_g,fat_g,carbs_g,kcal){
   if(prot_g==null||fat_g==null||carbs_g==null||!(kcal>0)) return null;
   const somme=prot_g*4+fat_g*9+carbs_g*4, ecart=Math.round(somme-kcal);
-  return ((carbs_g===0||fat_g===0)&&ecart>_ARRONDI_MACROS_KCAL)?{ecart,macros:Math.round(somme)}:null;
+  const ecrete=(carbs_g===0&&fat_g===0)?'glucides et lipides':(carbs_g===0?'glucides':(fat_g===0?'lipides':null));
+  return (ecrete&&ecart>_ARRONDI_MACROS_KCAL)?{ecart,macros:Math.round(somme),ecrete}:null;
 }
 
 // ─── LES REPAS SUGGÉRÉS DOIVENT RESPECTER LE RÉGIME (02/08, retour Emma via Michel) ──────
