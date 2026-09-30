@@ -2541,32 +2541,68 @@ function _kcalPreview(){
   const mm=(typeof macrosForKcal==='function')?macrosForKcal(v):{prot_g:0,carbs_g:0,fat_g:0};
   const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val+' g';};
   set('kcal-pv-prot',mm.prot_g);set('kcal-pv-carb',mm.carbs_g);set('kcal-pv-fat',mm.fat_g);
-  /* ⚖️ B3 : dès la frappe, si ce chiffre est incompatible avec les macros qu'il donne, on le dit —
-     un chiffre accepté en silence se lirait « validé ». Seulement pour une valeur enregistrable. */
+  /* ⚖️ B3 : à chaque frappe, si ce chiffre est incompatible avec les macros qu'il donnera, on le dit —
+     un chiffre accepté en silence se lirait « validé ». Seulement pour une valeur enregistrable.
+     ⛔⛔ MÊME SOURCE QUE LA CARTE, cycle séance/repos compris (corrigé le 30/09 après contre-vérification) :
+     la note lisait les macros SANS le cycle — elle restait vide alors qu'un jour de repos était
+     incompatible, ou annonçait +304 quand la carte disait +70. On SIMULE donc la cible tapée et on lit
+     `calcMacros`, exactement ce que la carte lira après « Enregistrer ». Même geste que `ecartNiveauKcal`
+     (state.js) : on simule, on n'applique pas, et on REMET toujours (`finally`). Aucun calcul refait. */
   const nt=document.getElementById('kcal-pv-note');
   if(nt){
-    const inc=(v>=800&&v<=6000&&typeof _cibleIncompatible==='function')?_cibleIncompatible(mm.prot_g,mm.fat_g,mm.carbs_g,v):null;
-    nt.innerHTML=inc?_incompatibleHTML({calories:v,incompatible:{ecart:inc.ecart,macros:inc.macros,ecrete:inc.ecrete,autre:null}}):'';
+    let sim=null;
+    if(v>=800&&v<=6000){
+      const gard=S.manualKcal;
+      try{ S.manualKcal=v; sim=calcMacros(S.nutritionPhase); }catch(e){ sim=null; }
+      finally{ S.manualKcal=gard; }
+    }
+    nt.innerHTML=sim?_incompatibleHTML(sim):'';
   }
+}
+/* ⚖️ B3 — LES JOURS OÙ LA CIBLE EST INCOMPATIBLE, lus dans `calcMacros(...)` (incompatible + cycle), pour
+   la carte, la note du réglage manuel et le toast : un seul endroit décide « quel jour, quel écart » (R2).
+   `jour` vaut null quand il n'y a pas de cycle : tous les jours sont alors pareils. */
+function _joursIncompatibles(m){
+  const i=m&&m.incompatible; if(!i) return [];
+  const l=[];
+  if(i.ecart>0) l.push({jour:(m.cycle&&m.cycle.jour)||null,aujourdhui:true,ecart:i.ecart,macros:i.macros,ecrete:i.ecrete});
+  if(i.autre) l.push({jour:i.autre.jour,aujourdhui:false,ecart:i.autre.ecart,macros:i.autre.macros,ecrete:i.autre.ecrete});
+  return l;
+}
+/* Le toast tient sur UNE ligne (`white-space:nowrap`, style.css) : mesuré à 390 px, « Objectif réglé sur …
+   — incompatible avec tes macros (+…), détail dans Nutrition » débordait des deux côtés. Court et complet,
+   le détail reste dans la carte et l'aperçu. Pire cas mesuré (4 chiffres) : 343 px sur 390. */
+function _toastIncompatible(L){
+  const n=v=>Math.round(v).toLocaleString('fr-FR');
+  if(L.length>1){ const e=L.map(d=>d.ecart).sort((a,b)=>a-b); return 'Cible incompatible : +'+n(e[0])+' à +'+n(e[e.length-1])+' kcal.'; }
+  const d=L[0];
+  return 'Cible incompatible : +'+n(d.ecart)+' kcal'+(d.jour==='repos'?' au repos':(d.jour==='seance'?' en séance':''))+'.';
 }
 /* ⚖️ B3 (30/09/2026, décision de Michel) — QUAND LA CIBLE EST INCOMPATIBLE AVEC LES RÈGLES MACROS
    ACTUELLES, L'ÉCRAN LE DIT. Rien n'est recalculé ici : tout vient de `calcMacros(...).incompatible`
    (state.js `_cibleIncompatible`) — R2. Vide dans tous les autres cas : on n'explique rien qui n'arrive
    pas. Ton factuel, pas de reproche (Constitution P21). */
 function _incompatibleHTML(m){
-  const i=m&&m.incompatible; if(!i||m.calories==null) return '';
+  const L=_joursIncompatibles(m); if(!L.length||m.calories==null) return '';
   const n=v=>Math.round(v).toLocaleString('fr-FR');
-  const jour={repos:'un jour de repos',seance:'un jour de séance'};
+  const J={repos:'Un jour de repos',seance:'Un jour de séance'};
   let txt='⚠️ <b>Ta cible de '+n(m.calories)+' kcal est incompatible avec les règles de répartition actuelles.</b> ';
-  /* Ce qui a été écrêté se NOMME : les glucides d'ordinaire, les lipides en kéto (où ce sont les protéines
-     et les 5 % de glucides qui dépassent déjà). Dire « glucides » pour un kéto serait faux. */
-  if(i.ecart>0) txt+=(i.ecrete==='lipides'
-      ?'Tes protéines et tes glucides kéto (calculés sur ton poids et ton régime) font déjà <b>'
-      :'Tes protéines et lipides (calculés sur ton poids et ton objectif) font déjà <b>')+n(i.macros)
-    +' kcal</b>, soit <b>'+n(i.ecart)+' kcal de plus</b> que la cible — les '+(i.ecrete||'glucides')+' tombent à 0. ';
-  if(i.autre) txt+=(i.ecart>0?'Et ':'Aujourd\'hui ça tient, mais ')+jour[i.autre.jour]+', tes macros font <b>'+n(i.autre.macros)
-    +' kcal</b> (<b>+'+n(i.autre.ecart)+'</b>). ';
-  txt+=(i.ecart>0?'Ces macros':'Ce jour-là, les macros')+' ne respectent donc PAS la cible ; l\'app ne modifie ni l\'une ni les autres.';
+  if(L[0].jour==null){
+    /* Sans cycle, tous les jours sont pareils. Ce qui a été écrêté se NOMME : les glucides d'ordinaire,
+       les lipides en kéto (où ce sont les protéines et les 5 % de glucides qui dépassent déjà). */
+    const d=L[0];
+    txt+=(d.ecrete==='lipides'
+        ?'Tes protéines et tes glucides kéto (calculés sur ton poids et ton régime) font déjà <b>'
+        :'Tes protéines et lipides (calculés sur ton poids et ton objectif) font déjà <b>')+n(d.macros)
+      +' kcal</b>, soit <b>'+n(d.ecart)+' kcal de plus</b> que la cible — les '+(d.ecrete||'glucides')+' tombent à 0. '
+      +'Ces macros ne respectent donc PAS la cible ; l\'app ne modifie ni l\'une ni les autres.';
+  } else {
+    /* Avec le cycle séance/repos : chaque jour concerné est NOMMÉ, avec son écart exact. */
+    L.forEach(d=>{ txt+=J[d.jour]+(d.aujourdhui?' (aujourd\'hui)':'')+' : tes macros font <b>'+n(d.macros)
+      +' kcal</b>, soit <b>'+n(d.ecart)+' kcal de plus</b> — les '+(d.ecrete||'glucides')+' tombent à 0. '; });
+    txt+=(L.length===1?'L\'autre jour tient. Ce jour-là, les macros':'Ces jours-là, les macros')
+      +' ne respectent donc PAS la cible ; l\'app ne modifie ni l\'une ni les autres.';
+  }
   return '<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:9px 11px;margin-top:10px;">'
     +'<span style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+txt+'</span></div>';
 }
@@ -2579,13 +2615,11 @@ function saveKcalEdit(){
      ce commentaire écrit en fin de ligne avait avalé persist/closeKcalEdit/renderNutrition (B-CCCLXVI). */
   S.manualKcal=_kcalManuelleValide(v);
   persist();closeKcalEdit();renderNutrition();
-  /* ⚖️ B3 : un ✅ dirait « validé » — pas quand les macros imposent davantage que ce chiffre. */
-  const _inc=(calcMacros(S.nutritionPhase)||{}).incompatible;
-  /* ⛔ Le verdict porte sur TOUT le cycle : compatible aujourd'hui mais pas un jour de repos (ou de séance)
+  /* ⚖️ B3 : un ✅ dirait « validé » — pas quand les macros imposent davantage que ce chiffre.
+     ⛔ Le verdict porte sur TOUT le cycle : compatible aujourd'hui mais pas un jour de repos (ou de séance)
      reste une cible incompatible — une coche verte dirait le contraire de la carte Nutrition. */
-  if(_inc) toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal — incompatible avec tes macros (+'
-    +(_inc.ecart>0?_inc.ecart:_inc.autre.ecart).toLocaleString('fr-FR')+' kcal'
-    +(_inc.ecart>0?'':(_inc.autre.jour==='repos'?' un jour de repos':' un jour de séance'))+'), détail dans Nutrition','info');
+  const _jours=_joursIncompatibles(calcMacros(S.nutritionPhase));
+  if(_jours.length) toast(_toastIncompatible(_jours),'info');
   else toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
 }
 function resetKcalAuto(){
@@ -3485,7 +3519,12 @@ function renderNutrition(){try{
         +(seance?'🍚 <b style="color:var(--t1);">Jour de séance</b> — '
                  :'😴 <b style="color:var(--t1);">Jour de repos</b> — ')
         +'<b>'+signe+' g</b> de glucides, compensés par les lipides. '
-        +'<span style="color:var(--t3);">Tes calories du jour ne changent pas, et sur la semaine le total est le même : les glucides vont là où tu t\'entraînes.</span>'
+        /* ⚖️ B3 (30/09) : cette phrase était FAUSSE quand une macro est écrêtée — le jour concerné dépasse la
+           cible, la semaine n'est plus neutre — et contredisait l'avertissement juste au-dessus. Elle dépend
+           donc de la même source (`macros.incompatible`) : on ne l'affirme que lorsqu'elle est vraie. */
+        +(macros.incompatible
+          ?'<span style="color:var(--t3);">Avec cette cible, le cycle ne peut pas conserver exactement le même total calorique sur la semaine.</span>'
+          :'<span style="color:var(--t3);">Tes calories du jour ne changent pas, et sur la semaine le total est le même : les glucides vont là où tu t\'entraînes.</span>')
         +'</span>'+bornes+'</div>';
     }
   }

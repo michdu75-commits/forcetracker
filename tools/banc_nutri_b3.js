@@ -28,10 +28,11 @@ const t = (nom, cond, det) => {
   mod.source(t, ROOT, fs, path);
   nm.source(t, ROOT, fs, path);
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
-  const quoi = (process.env.BANC_B3 || 'moteur,vue,milo,nut').split(',');
+  const quoi = (process.env.BANC_B3 || 'moteur,vue,milo,ux,nut').split(',');
   if (quoi.includes('moteur')) await mod.ecran(t, b, PORT);
   if (quoi.includes('vue')) await mod.ecranVue(t, b, PORT);
   if (quoi.includes('milo')) await mod.ecranMilo(t, b, PORT);
+  if (quoi.includes('ux')) await mod.ecranUX(t, b, PORT);
   if (quoi.includes('nut')) await nm.ecran(t, b, PORT);
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');

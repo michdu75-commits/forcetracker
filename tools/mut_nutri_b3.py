@@ -6,12 +6,12 @@
      le comportement reel de l'application : « DANS LA COPIE MUTEE, … ».
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
 [!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE rougit : moteur conduit (B-CDXVI),
-     ecran conduit (B-CDXVII), contexte de Milo construit (B-CDXVIII) ou moteur NUT (B-CCCLXI). Un rouge
+     ecran conduit (B-CDXVII, B-CDXIX), contexte de Milo construit (B-CDXVIII) ou moteur NUT (B-CCCLXI). Un rouge
      des seuls temoins de SOURCE (B-CDXV, B-CCCLX) ne suffit pas : la mutation est alors NON conforme.
 Les mutations cassent le PRINCIPE, pas un mot :
   M00 = le code d'avant (master 105d4e20) remis mot pour mot, sur les 4 fichiers
   S1 = la strategie D-033 REFUSEE par Michel (reduire lipides puis proteines) · S2 = monter la cible
-  M01..M15 = chaque morceau retire un par un · DG1, DG2 = deguisees · EQ1 = equivalente (temoins executes verts)
+  M01..M15 et U1..U6 = chaque morceau retire un par un · DG1..DG3 = deguisees · EQ1 = equivalente (temoins executes verts)
   [negatif] = commentaire
 Usage : python3 tools/mut_nutri_b3.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -29,11 +29,15 @@ JOUR = "  const inc=calculable?_cibleIncompatible(m.prot_g,m.fat_g,m.carbs_g,cal
 RESIDU = "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  return{prot_g,fat_g,carbs_g};\n}"
 CALORIES = "  const calories=manual||auto;\n"
 ECRAN = "if(_inc)_inc.innerHTML=_incompatibleHTML(macros);}"
-NOTE = "nt.innerHTML=inc?_incompatibleHTML({calories:v,incompatible:{ecart:inc.ecart,macros:inc.macros,ecrete:inc.ecrete,autre:null}}):'';"
-TOAST = "  if(_inc) toast("
+NOTE = "    nt.innerHTML=sim?_incompatibleHTML(sim):'';"
+SIMUL = "      try{ S.manualKcal=v; sim=calcMacros(S.nutritionPhase); }catch(e){ sim=null; }\n      finally{ S.manualKcal=gard; }\n"
+PHRASE = "        +(macros.incompatible\n          ?"
+TOASTF = "  return 'Cible incompatible : +'+n(d.ecart)+' kcal'+(d.jour==='repos'?' au repos':(d.jour==='seance'?' en séance':''))+'.';"
+TOAST2 = "  if(L.length>1){ const e=L.map(d=>d.ecart).sort((a,b)=>a-b); return 'Cible incompatible : +'+n(e[0])+' à +'+n(e[e.length-1])+' kcal.'; }"
+TOAST = "  if(_jours.length) toast(_toastIncompatible(_jours),'info');"
 GMAC = "function _gMac(v){ return v==null?'—':v; }"
 MILO = "  const i=m&&m.incompatible; if(!i) return '';\n  const J="
-AUTRE_ECRAN = "  if(i.autre) txt+="
+AUTRE_ECRAN = "  if(i.autre) l.push("
 
 MUT = [
     ('M00 le code d\'avant remis mot pour mot (master %s, 4 fichiers)' % AVANT, 'REV:' + AVANT, 'GARDE'),
@@ -53,14 +57,25 @@ MUT = [
     ('M05 seuil d\'arrondi a 0 (le bruit d\'arrondi devient une « incompatibilite »)', [(ST, SEUIL, "const _ARRONDI_MACROS_KCAL=0;\n")], 'GARDE'),
     ('M06 seuil a 50 kcal (des ecarts reels passent sous silence)', [(ST, SEUIL, "const _ARRONDI_MACROS_KCAL=50;\n")], 'GARDE'),
     ('M07 keto oublie : seuls les glucides ecretes comptent', [(ST, "(fat_g===0?'lipides':null)", "(null)")], 'GARDE'),
-    ('M14 la coche verte ne regarde que le jour courant (l\'autre bout du cycle ignore)', [(SC, TOAST, "  if(_inc&&_inc.ecart>0) toast(")], 'GARDE'),
+    ('M14 la coche verte ne regarde que le jour courant (l\'autre bout du cycle ignore)',
+     [(SC, "const _jours=_joursIncompatibles(calcMacros(S.nutritionPhase));", "const _jours=_joursIncompatibles(calcMacros(S.nutritionPhase)).filter(d=>d.aujourdhui);")], 'GARDE'),
     ('M15 le texte keto redit « glucides » quand ce sont les lipides qui sont ecretes',
-     [(SC, "+' kcal de plus</b> que la cible — les '+(i.ecrete||'glucides')+' tombent a 0. ';".replace('a 0','à 0'), "+' kcal de plus</b> que la cible — les glucides tombent à 0. ';"),
+     [(SC, "+' kcal de plus</b> que la cible — les '+(d.ecrete||'glucides')+' tombent à 0. '", "+' kcal de plus</b> que la cible — les glucides tombent à 0. '"),
       (CO, "'+(i.ecrete||'glucides')+' écrêtés à 0':'aujourd", "glucides écrêtés à 0':'aujourd")], 'GARDE'),
+    ('U1 la note du reglage manuel relit les macros SANS le cycle (le defaut du contre-check)',
+     [(SC, SIMUL, "      try{ const b=macrosForKcal(v), i=_cibleIncompatible(b.prot_g,b.fat_g,b.carbs_g,v); sim={calories:v,cycle:null,incompatible:i?{ecart:i.ecart,macros:i.macros,ecrete:i.ecrete,autre:null}:null}; }catch(e){ sim=null; }\n      finally{ S.manualKcal=gard; }\n")], 'GARDE'),
+    ('U2 la simulation de l\'apercu n\'est plus remise (la cible tapee reste en memoire sans « Enregistrer »)',
+     [(SC, SIMUL, "      try{ S.manualKcal=v; sim=calcMacros(S.nutritionPhase); }catch(e){ sim=null; }\n")], 'GARDE'),
+    ('U3 la phrase « total de la semaine identique » affirmee meme quand le cycle ne l\'est pas', [(SC, PHRASE, "        +(false\n          ?")], 'GARDE'),
+    ('U4 la phrase « le cycle ne peut pas conserver… » affichee meme quand le cycle est neutre', [(SC, PHRASE, "        +(true\n          ?")], 'GARDE'),
+    ('U5 le toast redevient le long message (deborde a 390 px)',
+     [(SC, TOASTF, "  return 'Objectif réglé — incompatible avec tes macros (+'+n(d.ecart)+' kcal'+(d.jour==='repos'?' un jour de repos':(d.jour==='seance'?' un jour de séance':''))+'), détail dans Nutrition';")], 'GARDE'),
+    ('U6 le toast des deux jours ne garde que le plus grand ecart', [(SC, TOAST2, "  if(L.length>1){ const e=L.map(d=>d.ecart).sort((a,b)=>a-b); return 'Cible incompatible : +'+n(e[e.length-1])+' kcal.'; }")], 'GARDE'),
+    ('DG3 [deguisee] le toast inverse repos et seance', [(SC, TOASTF, TOASTF.replace("' au repos':(d.jour==='seance'?' en séance'", "' en séance':(d.jour==='seance'?' au repos'"))], 'GARDE'),
     ('M08 l\'ecran ne dit plus rien sous les macros', [(SC, ECRAN, "if(_inc)_inc.innerHTML='';}")], 'GARDE'),
     ('M09 l\'apercu du reglage manuel ne dit plus rien', [(SC, NOTE, "nt.innerHTML='';")], 'GARDE'),
     ('M10 enregistrer une cible incompatible redit « ✅ »', [(SC, TOAST, "  if(false) toast(")], 'GARDE'),
-    ('M11 l\'ecran tait l\'ecart du jour de repos', [(SC, AUTRE_ECRAN, "  if(false) txt+=")], 'GARDE'),
+    ('M11 l\'ecran tait l\'ecart de l\'autre jour du cycle', [(SC, AUTRE_ECRAN, "  if(false) l.push(")], 'GARDE'),
     ('M12 Milo : un vrai 0 g redevient « — »', [(CO, GMAC, "function _gMac(v){ return v||'—'; }")], 'GARDE'),
     ('M13 Milo ne recoit plus l\'incompatibilite', [(CO, MILO, "  const i=null; if(!i) return '';\n  const J=")], 'GARDE'),
     ('DG1 [deguisee] l\'ecart calcule sur la cible AUTOMATIQUE au lieu de la cible retenue (manuelle)',
@@ -81,7 +96,7 @@ def banc(arbre):
 
 
 def executes(rouges):
-    return [x for x in rouges if re.match(r'❌ ROUGE B-(CDXVI|CDXVII|CDXVIII|CCCLXI) ', x) or x.startswith('PLANTAGE')]
+    return [x for x in rouges if re.match(r'❌ ROUGE B-(CDXVI|CDXVII|CDXVIII|CDXIX|CCCLXI) ', x) or x.startswith('PLANTAGE')]
 
 
 def cloner():

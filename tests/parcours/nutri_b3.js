@@ -61,7 +61,9 @@ module.exports.source = function (t, ROOT, fs, path) {
     && ST.includes('constcalories=manual||auto;')
     && ST.includes('functionautoKcal(phase){constb=_autoKcalBrut(phase);returnb==null?null:_plancherKcal(b);}'), 'appel ou cible modifiés');
   t('B-CDXV ⑤ écran, aperçu du réglage manuel et Milo LISENT l\'écart, aucun ne le recalcule (R2)',
-    SC.includes("_inc.innerHTML=_incompatibleHTML(macros);") && SC.includes('_cibleIncompatible(mm.prot_g,mm.fat_g,mm.carbs_g,v)')
+    SC.includes("_inc.innerHTML=_incompatibleHTML(macros);")
+    && SC.includes('try{S.manualKcal=v;sim=calcMacros(S.nutritionPhase);}catch(e){sim=null;}finally{S.manualKcal=gard;}')
+    && SC.includes("nt.innerHTML=sim?_incompatibleHTML(sim):'';")
     && !/\*9/.test(corps(SC, '_incompatibleHTML')) && !/\*9/.test(corps(CO, '_incompatibleTxt'))
     && /<div id="nu-incompatible"><\/div>/.test(IH) && /<div id="kcal-pv-note"><\/div>/.test(IH), 'lecture absente ou calcul refait');
   t('B-CDXV ⑥ Milo : un vrai 0 g s\'écrit 0 (`_gMac`), la ligne d\'écart suit celle des macros',
@@ -69,7 +71,7 @@ module.exports.source = function (t, ROOT, fs, path) {
     && CO.includes('Protéines:${_gMac(macros.prot_g)}g|Glucides:${_gMac(macros.carbs_g)}g|Lipides:${_gMac(macros.fat_g)}g')
     && CO.includes('${_incompatibleTxt(macros)}${_cibleDetailTxt()}'), 'ligne des macros de Milo modifiée');
   t('B-CDXV ⑦ enregistrer une cible incompatible ne dit plus « ✅ » (ne pas laisser croire qu\'elle est validée)',
-    /if\(_inc\)toast\([^;]*incompatible/.test(corps(SC, 'saveKcalEdit')) && !/_inc\.ecart>0\)toast/.test(corps(SC, 'saveKcalEdit')), 'toast inchangé');
+    corps(SC, 'saveKcalEdit').includes("const_jours=_joursIncompatibles(calcMacros(S.nutritionPhase));if(_jours.length)toast(_toastIncompatible(_jours),'info');"), 'toast inchangé');
 };
 
 /* Pose un profil sur le disque et recharge par le VRAI chemin `localStorage → load()`. */
@@ -245,8 +247,9 @@ module.exports.ecranVue = async function (t, b, PORT) {
   t('B-CDXVII D · low carb 1 050 kcal : 66 / 79 / 53 g (master, +7 kcal de pur arrondi, rien d\'écrêté) → AUCUNE phrase',
     lc.P === '79' && lc.G === '66' && lc.L === '53' && lc.inc === '', JSON.stringify(lc));
   const d1r = await voir(PROFILS.D1, [0, 3]);
-  t('B-CDXVII D1 un jour de séance : l\'écart du jour ET celui d\'un jour de repos (2 326 kcal, +394) sont dits',
-    /2 002 kcal/.test(d1r.inc) && /un jour de repos/.test(d1r.inc) && /2 326 kcal/.test(d1r.inc) && /\+394/.test(d1r.inc), JSON.stringify(d1r));
+  t('B-CDXVII D1 un jour de séance : chaque jour est NOMMÉ avec son écart (séance, aujourd\'hui : 2 002, +70 ; repos : 2 326, +394)',
+    /Un jour de séance \(aujourd'hui\) : tes macros font 2 002 kcal, soit 70 kcal de plus/.test(d1r.inc)
+    && /Un jour de repos : tes macros font 2 326 kcal, soit 394 kcal de plus/.test(d1r.inc) && /Ces jours-là/.test(d1r.inc), JSON.stringify(d1r));
   const a1 = await voir(PROFILS.A1);
   t('B-CDXVII A1 à l\'écran : 3 209 · 187 / 77 / 442 g, AUCUNE phrase ajoutée',
     a1.kcal === '3 209' && a1.P === '187' && a1.L === '77' && a1.G === '442' && a1.inc === '', JSON.stringify(a1));
@@ -279,8 +282,8 @@ module.exports.ecranVue = async function (t, b, PORT) {
     && /1 462 kcal/.test(mod.a1200.note || '') && /262 kcal de plus/.test(mod.a1200.note || ''), JSON.stringify(mod.a1200));
   t('B-CDXVII aperçu à 2 500 kcal : aucune note ; à 500 kcal (refusé à l\'enregistrement) : aucune note non plus',
     mod.a2500 && mod.a2500.note === '' && mod.a500 && mod.a500.note === '', JSON.stringify([mod.a2500, mod.a500]));
-  t('B-CDXVII enregistrer 1 200 kcal incompatibles : pas de « ✅ », le message dit « incompatible avec tes macros (+262 kcal) »',
-    (mod.toasts || []).some(x => /incompatible avec tes macros \(\+262 kcal\)/.test(x)) && !(mod.toasts || []).some(x => /✅/.test(x)), JSON.stringify(mod.toasts));
+  t('B-CDXVII enregistrer 1 200 kcal incompatibles : pas de « ✅ », le message dit « Cible incompatible : +262 kcal. »',
+    (mod.toasts || []).includes('Cible incompatible : +262 kcal.') && !(mod.toasts || []).some(x => /✅/.test(x)), JSON.stringify(mod.toasts));
   await pg.reload(); await pg.waitForTimeout(2000);
   const apres = await pg.evaluate(async () => {
     goScreen('nutrition', document.querySelector('[onclick*="nutrition"]'));
@@ -303,9 +306,10 @@ module.exports.ecranVue = async function (t, b, PORT) {
     const v = id => { const e = document.getElementById(id); return e ? e.textContent.replace(/[\u202f\u00a0]/g, ' ').trim() : null; };
     return { toasts, P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), inc: v('nu-incompatible') };
   });
-  t('B-CDXVII A · 1 500 kcal compatibles aujourd\'hui mais pas un jour de repos (+65) : AUCUNE coche verte, le message dit « +65 kcal un jour de repos »',
-    cyc.toasts.some(x => /incompatible avec tes macros \(\+65 kcal un jour de repos\)/.test(x)) && !cyc.toasts.some(x => /✅/.test(x))
-    && cyc.P === '200' && cyc.L === '61' && cyc.G === '39' && /un jour de repos/.test(cyc.inc || ''), JSON.stringify(cyc));
+  t('B-CDXVII A · 1 500 kcal compatibles aujourd\'hui mais pas un jour de repos (+65) : AUCUNE coche verte, le message dit « +65 kcal au repos »',
+    cyc.toasts.includes('Cible incompatible : +65 kcal au repos.') && !cyc.toasts.some(x => /✅/.test(x))
+    && cyc.P === '200' && cyc.L === '61' && cyc.G === '39' && /Un jour de repos : tes macros font 1 565 kcal, soit 65 kcal de plus/.test(cyc.inc || '')
+    && /L'autre jour tient/.test(cyc.inc || ''), JSON.stringify(cyc));
   t('B-CDXVII aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };
@@ -341,5 +345,100 @@ module.exports.ecranMilo = async function (t, b, PORT) {
   t('B-CDXVIII C · standard (D1) : Milo lit « glucides écrêtés à 0 », jamais « lipides écrêtés »',
     un(C.D1, /glucides écrêtés à 0/) === 1 && un(C.D1, /lipides écrêtés/) === 0, JSON.stringify(C.D1));
   t('B-CDXVIII aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
+  await cx.close();
+};
+
+/* ══ B-CDXIX. B3 — corrections UX après contre-vérification (30/09) : la note du réglage manuel lit la MÊME
+   source que la carte (cycle compris), la phrase de la semaine n'affirme plus un total identique quand il
+   ne l'est pas, le toast tient sur un écran de 390 px. Aucun chiffre ni aucune cible ne changent. ══ */
+module.exports.ecranUX = async function (t, b, PORT) {
+  const { cx, pg, errs } = await _page(b, PORT);
+  console.log('\n-- B-CDXIX. B3 — note du réglage manuel = carte, phrase de la semaine, toast mobile (390 px) --');
+  const P80 = { ft4_bw: '80', ft4_age: '40', ft4_ht: '175', ft4_gender: 'H', ft4_act: '1.55', ft4_goal: 'perte', ft4_nphase: 'charge' };
+  const ouvrir = async (D, ses) => {
+    await pg.evaluate(({ D, ses, poserSrc }) => { eval(poserSrc)(D, ses); }, { D, ses: ses || null, poserSrc: _poser });
+    await pg.reload(); await pg.waitForTimeout(2000);
+  };
+  /* Tape une cible dans la VRAIE fenêtre, lit la note ; puis Annuler ou Enregistrer ; lit carte, toast, rectangle du toast. */
+  const regler = (x, enregistrer) => pg.evaluate(async ({ x, enregistrer }) => {
+    goScreen('nutrition', document.querySelector('[onclick*="nutrition"]'));
+    await new Promise(r => setTimeout(r, 300));
+    const v = id => { const e = document.getElementById(id); return e ? e.textContent.replace(/[  ]/g, ' ').trim() : null; };
+    const toasts = []; const _t = window.toast; window.toast = (m, k) => { toasts.push(m.replace(/[  ]/g, ' ')); try { _t && _t(m, k); } catch (e) {} };
+    const avant = { S: S.manualKcal, disque: localStorage.getItem('ft4_manualkcal') };
+    const btn = [...document.querySelectorAll('#nu-adjust button')].find(b => /Ajuster mes calories|Modifier/.test(b.textContent));
+    if (!btn) return { err: 'bouton introuvable' };
+    btn.click(); await new Promise(r => setTimeout(r, 200));
+    const ov = document.getElementById('ov-kcal-edit'), inp = document.getElementById('kcal-edit-inp');
+    inp.value = String(x); inp.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(r => setTimeout(r, 60));
+    const note = v('kcal-pv-note'), pendant = S.manualKcal;
+    [...ov.querySelectorAll('button')].find(b => (enregistrer ? /Enregistrer mes calories/ : /Annuler/).test(b.textContent)).click();
+    await new Promise(r => setTimeout(r, 350));
+    const tr = document.getElementById('toast').getBoundingClientRect();
+    window.toast = _t;
+    return { note, pendant, avant, apres: { S: S.manualKcal, disque: localStorage.getItem('ft4_manualkcal') }, carte: v('nu-incompatible'),
+             cycle: v('nu-cycle'), toasts, toast: { left: tr.left, right: tr.right, vw: innerWidth, sw: document.getElementById('toast').scrollWidth, cw: document.getElementById('toast').clientWidth },
+             P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), kcal: v('m-kcal') };
+  }, { x, enregistrer });
+  const dans = (r) => r && r.toast.left >= 0 && r.toast.right <= r.toast.vw && r.toast.sw <= r.toast.cw + 1;
+  const det = o => JSON.stringify(o);
+
+  // A — 80 kg · perte · 5 séances, AUJOURD'HUI = REPOS · 1 400 kcal : la base tient (glucides 6 g), le jour de repos non
+  await ouvrir(P80, [1, 2, 3, 4, 5]);
+  const a0 = await regler(1400, false);
+  t('B-CDXIX A · aperçu à 1 400 kcal, repos aujourd\'hui : la note (vide avant la correction) NOMME le jour de repos et son écart exact (+129)',
+    /Un jour de repos \(aujourd'hui\) : tes macros font 1 529 kcal, soit 129 kcal de plus — les glucides tombent à 0/.test(a0.note || '')
+    && /L'autre jour tient/.test(a0.note || ''), det(a0));
+  t('B-CDXIX A · taper sans enregistrer ne change RIEN : la cible reste celle d\'avant, en mémoire et sur le disque (la simulation est remise)',
+    a0.apres.S === a0.avant.S && a0.apres.disque === a0.avant.disque && a0.pendant === a0.avant.S, det([a0.avant, a0.pendant, a0.apres]));
+  const a1 = await regler(1400, true);
+  t('B-CDXIX A · enregistré : la carte dit EXACTEMENT ce que disait la note, le toast « Cible incompatible : +129 kcal au repos. »',
+    a1.carte === a0.note && a1.toasts.includes('Cible incompatible : +129 kcal au repos.') && !a1.toasts.some(x => /✅/.test(x))
+    && a1.P === '200' && a1.L === '81' && a1.G === '0', det({ note: a0.note, carte: a1.carte, toasts: a1.toasts, P: a1.P, L: a1.L, G: a1.G }));
+  t('B-CDXIX E · toast mobile : message court et COMPLET, entièrement dans l\'écran de 390 px', dans(a1), det(a1.toast));
+
+  // B — D1 avec cycle (séance aujourd'hui) : la note, la carte et le toast portent les MÊMES chiffres (+70 / +394)
+  await ouvrir(PROFILS.D1, [0, 3]);
+  const b0 = await regler(1932, false);
+  t('B-CDXIX B · D1, séance aujourd\'hui, 1 932 kcal : la note dit +70 (séance, aujourd\'hui) et +394 (repos) — plus jamais +304 (sans le cycle)',
+    /Un jour de séance \(aujourd'hui\) : tes macros font 2 002 kcal, soit 70 kcal de plus/.test(b0.note || '')
+    && /Un jour de repos : tes macros font 2 326 kcal, soit 394 kcal de plus/.test(b0.note || '') && !/304/.test(b0.note || ''), det(b0.note));
+  const b1 = await regler(1932, true);
+  t('B-CDXIX B · enregistré : carte identique à la note, toast « Cible incompatible : +70 à +394 kcal. », chiffres de master (325 / 78 / 0)',
+    b1.carte === b0.note && b1.toasts.includes('Cible incompatible : +70 à +394 kcal.') && b1.P === '325' && b1.L === '78' && b1.G === '0',
+    det({ note: b0.note, carte: b1.carte, toasts: b1.toasts }));
+  t('B-CDXIX E · toast des deux jours : entièrement dans l\'écran de 390 px', dans(b1), det(b1.toast));
+
+  // C — cycle neutre (A1, 4 séances) : la phrase « total de la semaine identique » est conservée
+  await ouvrir(PROFILS.A1, [0, 2, 4, 6]);
+  const c0 = await regler(3209, true);
+  t('B-CDXIX C · cycle neutre : « sur la semaine le total est le même » CONSERVÉ, aucune phrase d\'incompatibilité',
+    /sur la semaine le total est le même/.test(c0.cycle || '') && !/ne peut pas conserver/.test(c0.cycle || '') && c0.carte === '', det(c0.cycle));
+  // F — profil normal : chiffres de master et coche verte
+  t('B-CDXIX F · profil normal : chiffres de master (187 / 65 / 470 un jour de séance), note vide, « Objectif réglé sur 3 209 kcal ✅ »',
+    c0.P === '187' && c0.L === '65' && c0.G === '470' && c0.toasts.includes('Objectif réglé sur 3 209 kcal ✅') && dans(c0), det(c0));
+  const f0 = await regler(2500, false);
+  t('B-CDXIX F · aperçu d\'une cible compatible (2 500) : aucune note', f0.note === '', det(f0.note));
+
+  // D — cycle NON neutre (80 kg · 1 500 · 6 séances, séance aujourd'hui, repos +65) : la phrase fausse a disparu
+  await ouvrir({ ft4_bw: '80', ft4_age: '20', ft4_ht: '150', ft4_gender: 'H', ft4_act: '1.2', ft4_goal: 'perte', ft4_nphase: 'decharge' }, [0, 1, 2, 3, 4, 5]);
+  const d0 = await regler(1500, true);
+  t('B-CDXIX D · cycle non neutre : « le total est le même » ABSENT, remplacé par « le cycle ne peut pas conserver exactement le même total »',
+    !/le total est le même/.test(d0.cycle || '') && /Avec cette cible, le cycle ne peut pas conserver exactement le même total calorique sur la semaine/.test(d0.cycle || '')
+    && /Jour de séance/.test(d0.cycle || ''), det(d0.cycle));
+
+  // E — pire cas : écarts à 4 chiffres, un jour et deux jours
+  const e0 = await pg.evaluate(async () => {
+    const out = [];
+    for (const L of [[{ ecart: 1780, jour: 'seance' }], [{ ecart: 1780, jour: 'repos' }], [{ ecart: 1780, jour: 'seance' }, { ecart: 2100, jour: 'repos' }], [{ ecart: 2100, jour: null }]]) {
+      const m = _toastIncompatible(L); toast(m, 'info'); await new Promise(r => setTimeout(r, 250));
+      const e = document.getElementById('toast'), r = e.getBoundingClientRect();
+      out.push({ m: m.replace(/[  ]/g, ' '), ok: r.left >= 0 && r.right <= innerWidth && e.scrollWidth <= e.clientWidth + 1, w: Math.round(r.width) });
+    }
+    return out;
+  });
+  t('B-CDXIX E · pire cas (4 chiffres, un jour ou deux jours) : chaque toast est complet et tient dans 390 px',
+    e0.every(x => x.ok) && e0[0].m === 'Cible incompatible : +1 780 kcal en séance.' && e0[2].m === 'Cible incompatible : +1 780 à +2 100 kcal.', det(e0));
+  t('B-CDXIX aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };

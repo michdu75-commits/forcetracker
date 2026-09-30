@@ -324,9 +324,22 @@ cétogènes sans l'avoir choisi. *L'objectif du lot est de corriger le silence, 
   arrondi — en low carb, trois pourcentages arrondis donnent jusqu'à +7 kcal (1 050 kcal → 1 057) sans rien
   d'écrêté ; c'est pourquoi le seuil ne vaut QU'AVEC un écrêtage.* Calculé sur le jour **et** sur l'autre bout
   du cycle ; la macro écrêtée est **nommée** (glucides d'ordinaire, lipides en kéto) ;
-- l'écran le dit sous les macros ; l'aperçu du réglage manuel le dit dès la frappe ; enregistrer une cible
-  incompatible — **aujourd'hui ou sur l'autre jour du cycle** — ne dit plus « ✅ » ; Milo reçoit la même information et la consigne de ne jamais présenter
-  ces macros comme respectant la cible ; un vrai 0 g s'écrit 0 (et plus « — »).
+- l'écran le dit sous les macros ; avec le cycle séance/repos, chaque jour concerné est **nommé** avec son écart
+  exact (« Un jour de repos (aujourd'hui) : … +129 kcal ») ;
+- la **note de l'aperçu** du réglage manuel se met à jour à chaque frappe (valeurs 800 à 6 000) et lit **la même
+  source que la carte** : la cible tapée est **simulée** et `calcMacros` est lu, cycle compris, puis la cible
+  d'avant est **remise** (taper sans enregistrer ne change rien). ↪️ *Corrigé après contre-vérification : la 1ʳᵉ
+  version relisait les macros SANS le cycle — la note restait vide quand seul un jour de repos était incompatible
+  (80 kg, perte, 1 400 kcal : +129), ou annonçait +304 quand la carte disait +70 / +394 (D1).* Les grammes affichés
+  dans l'aperçu restent ceux de master (sans cycle), comme avant ;
+- enregistrer une cible incompatible — **aujourd'hui ou sur l'autre jour du cycle** — ne dit plus « ✅ », mais un
+  toast **court** qui tient sur un écran de 390 px (mesuré, pire cas à 4 chiffres : 343 px) : « Cible
+  incompatible : +129 kcal au repos. », « … +70 à +394 kcal. » quand les deux jours le sont ;
+- la phrase du cycle « tes calories du jour ne changent pas, et sur la semaine le total est le même » n'est
+  plus affirmée quand elle est fausse (une macro écrêtée) : elle devient « Avec cette cible, le cycle ne peut pas
+  conserver exactement le même total calorique sur la semaine. » ; cycle neutre : phrase inchangée ;
+- Milo reçoit la même information et la consigne de ne jamais présenter ces macros comme respectant la cible ;
+  un vrai 0 g s'écrit 0 (et plus « — »).
 
 | Cas | Chiffres (identiques à master) | Déclaré |
 |---|---|---|

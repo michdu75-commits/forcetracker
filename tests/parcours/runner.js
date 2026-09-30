@@ -39625,6 +39625,7 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   await require('./nutri_b3.js').ecran(t, b, PORT);
   await require('./nutri_b3.js').ecranVue(t, b, PORT);
   await require('./nutri_b3.js').ecranMilo(t, b, PORT);
+  await require('./nutri_b3.js').ecranUX(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);

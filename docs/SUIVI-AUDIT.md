@@ -372,3 +372,11 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   concernées ; l'incompatibilité B3 n'y est pas affichée non plus.
 - **Quand le traiter** : dans un lot séparé Nutrition / UI, avec son propre témoin (la tuile doit lire la cible
   retenue, pas le TDEE).
+
+### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
+- **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,
+  `#ov-kcal-edit`) est faux en kéto, où les glucides sont fixés à 5 % et ce sont les lipides qui s'ajustent.
+  Préexistant ; à reprendre dans un lot Nutrition / UI.
+- **Branche « glucides et lipides » de `_cibleIncompatible`** (state.js) : le cas où glucides ET lipides sont
+  écrêtés ensemble n'est atteint par aucun chemin actuel (le kéto garde 5 % de glucides, le standard garde des
+  lipides). Inoffensive ; gardée telle quelle pour ne pas élargir le lot.
