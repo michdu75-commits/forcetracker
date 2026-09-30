@@ -3280,6 +3280,23 @@ function _cibleDetailTxt(){
     +' = '+d.brut+' kcal'+(d.plancher?' → relevée au plancher de sécurité : '+d.plancher+' kcal':'')
     +' → CIBLE '+d.cible+' kcal.\n';
 }
+/* ⚖️ B3 (30/09/2026) — UN VRAI 0 G S'ÉCRIT 0, PAS « — ». L'ancien `|| '—'` confondait « 0 g » et
+   « on ne sait pas » : quand les protéines et lipides remplissaient la cible, Milo lisait des glucides
+   INCONNUS au lieu de 0. `null` (profil incomplet, D-016) reste « — ». */
+function _gMac(v){ return v==null?'—':v; }
+/* ⚖️ B3 — ce que l'app a fait des macros quand elles ne tenaient pas dans la cible, lu dans
+   `calcMacros(...).ajuste` (state.js), jamais recalculé ici (R2). Vide dans tous les autres cas. */
+function _macrosAjusteTxt(m){
+  const a=m&&m.ajuste; if(!a) return '';
+  if(a.depasse>0) return '- ⚠️ CES MACROS DÉPASSENT LA CIBLE DE '+a.depasse+' kcal : la cible est plus basse que les minimums que l\'app garde ('
+    +((S.foodMode==='keto'||S.keto)?'protéines 0,8 g/kg et glucides du kéto':'protéines 0,8 g/kg, lipides 0,6 g/kg')
+    +'). La cible n\'est PAS modifiée : ne présente pas ces macros comme tenant dans la cible.\n';
+  const b=[];
+  if(a.fat_de!==m.fat_g) b.push('lipides '+a.fat_de+' → '+m.fat_g+' g');
+  if(a.prot_de!==m.prot_g) b.push('protéines '+a.prot_de+' → '+m.prot_g+' g');
+  return b.length?'- ⚖️ Protéines et lipides habituels plus hauts que la cible : l\'app les a réduits pour que le total tombe juste ('
+    +b.join(', ')+'), d\'où les glucides à '+m.carbs_g+' g.\n':'';
+}
 function buildCoachContext(msg) {
   // ⚠️ LE BMR ARRIVE AVEC SA PROVENANCE (11/08/2026). L'app peut employer deux formules,
   // et l'écart atteint 180 kcal/jour chez quelqu'un de musclé. Sans le savoir, Milo
@@ -3899,8 +3916,8 @@ ${(()=>{
   return tete+`. Objectif: tenir 3 semaines en montant les charges. Encourage, félicite la régularité.`;
 })()}
 ${(()=>{const bmi=(S.bw&&S.height)?S.bw/((S.height/100)**2):0;return (bmi>=28||S.goal==='perte')?`- Attention au poids/articulations${bmi?` (IMC ~${Math.round(bmi)})`:''} : privilégie le cardio À FAIBLE IMPACT (vélo, marche rapide, elliptique, rameur — évite course/sauts qui tapent genoux et dos), une progression douce des charges, et un travail de gainage. Le cardio est important ici pour la santé cardiovasculaire et la perte de gras.`:''})()}
-- Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
-${_cibleDetailTxt()}${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
+- Calories cible: ${macros.calories || '—'} kcal | Protéines: ${_gMac(macros.prot_g)}g | Glucides: ${_gMac(macros.carbs_g)}g | Lipides: ${_gMac(macros.fat_g)}g
+${_macrosAjusteTxt(macros)}${_cibleDetailTxt()}${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
 ${S.keto?`- ⚠️ RÉGIME CÉTOGÈNE (KETO): très peu de glucides (~5%), beaucoup de lipides (~80%). Ne propose JAMAIS d'aliments riches en glucides (${_KETO_INTERDITS}) ni de compléments sucrés. Privilégie viandes/poissons gras, œufs, avocat, fromage, oléagineux, huiles, légumes verts pauvres en glucides.`:''}
 ${S.foodMode==='lowcarb'?`- ⚠️ LOW CARB: glucides réduits (~25% des calories) SANS viser la cétose. Garde des glucides autour de l'entraînement, où ils servent. Ne propose pas de gros plats de pâtes/riz.`:''}
 ${S.foodMode==='paleo'?`- ⚠️ PALÉO: ni céréales (blé, riz, avoine, maïs), ni légumineuses, ni laitages, ni produits transformés. Viandes, poissons, œufs, légumes, fruits, oléagineux, patate douce.`:''}

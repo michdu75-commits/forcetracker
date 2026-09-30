@@ -1761,6 +1761,9 @@ function getMensCyclePhase(ts){
 
 // Protéines + lipides calés sur le profil (g/kg selon l'objectif) ; les glucides
 // complètent le total calorique. Sert au calcul auto ET à l'aperçu du réglage manuel.
+/* 🛡️ Le seuil bas du Gardien sur les protéines (coach.js, GARDE-FOUS SANTÉ : « < 0,8 g/kg »).
+   Un seul propriétaire dans le moteur : le kéto le lisait en dur, le cas B3 le lit aussi (R2). */
+const _PROT_MIN_GKG=0.8;
 function macrosForKcal(kcal){
   const goal=S.goal||'muscle';
   // Régime cétogène (keto, retour Emma) : répartition par POURCENTAGES de calories au lieu du g/kg
@@ -1774,10 +1777,15 @@ function macrosForKcal(kcal){
        la répartition qui déclenche sa propre alerte.* On remonte au plancher, et les LIPIDES
        absorbent la différence : ce sont eux la variable d'ajustement d'un régime cétogène, pas
        les glucides (5 % est la contrainte qui définit le régime, on n'y touche pas). */
-    const protMini=Math.round((S.bw||0)*0.8);
+    const protMini=Math.round((S.bw||0)*_PROT_MIN_GKG);
     const prot_g =Math.max(0,Math.round(kcal*0.15/4),protMini);
     const reste  =kcal-prot_g*4-carbs_g*4;
     const fat_g  =Math.max(0,Math.round(reste/9));
+    /* ⚖️ B3 (30/09/2026) — même quand les lipides sont à 0, le plancher de protéines et les 5 % de
+       glucides peuvent dépasser une cible tapée à la main très basse (mesuré : 250 kg à 800 kcal →
+       840 kcal de macros). On ne touche à aucun chiffre du régime : l'écart est DIT, pas caché. */
+    const depasse=Math.round(-reste);
+    if(depasse>0) return{prot_g,fat_g,carbs_g,ajuste:{prot_de:prot_g,fat_de:fat_g,depasse}};
     return{prot_g,fat_g,carbs_g};
   }
   // LOW CARB : glucides réduits SANS viser la cétose — 25 % glucides / 30 % protéines / 45 % lipides.
@@ -1799,7 +1807,41 @@ function macrosForKcal(kcal){
   const prot_g=Math.round((S.bw||0)*protRatio);
   const fat_g=Math.round((S.bw||0)*fatRatio);
   const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));
+  if(prot_g*4+fat_g*9>kcal) return _macrosDansLaCible(kcal,prot_g,fat_g);   // B3, ci-dessous
   return{prot_g,fat_g,carbs_g};
+}
+/* ⚖️ B3 — QUAND LES PROTÉINES ET LES LIPIDES DÉPASSENT DÉJÀ LA CIBLE (30/09/2026, lot Nutrition 1).
+   ⛔⛔ LE DÉFAUT, MESURÉ : P et L sont proportionnels au poids TOTAL, la cible ne l'est pas (l'écart
+   d'objectif est fixe, la manuelle est un chiffre tapé). Les glucides, le RESTE, tombaient à 0 et les
+   macros affichées dépassaient la cible sans rien dire : 130 kg en perte et décharge → cible 1 932,
+   macros 2 236 kcal ; 85 kg à 1 200 kcal tapés → 1 445. *L'anneau disait une chose, les grammes une
+   autre.* Et le contrat de `macrosForKcal` est écrit juste au-dessus : les macros sont une RÉPARTITION
+   de la cible, pas une deuxième cible.
+   ⭐ CE QUI EST PRÉSERVÉ : la CIBLE, toujours — c'est elle que l'anneau, le « reste à manger », le
+   bilan de la semaine et Milo (`cibleDecomposition`) lisent, et une cible manuelle ne se relève jamais
+   en douce (R29). Ce qui cède, dans cet ordre — celui que le moteur applique déjà ailleurs :
+     ① les glucides (déjà à 0 ici) ;
+     ② les LIPIDES, jusqu'à 0,6 g/kg — le plancher du cycle séance/repos (`_CYCLE_FAT_MIN`), le même
+        chiffre, lu au même endroit ; ce sont eux la variable d'ajustement du cycle et du kéto ;
+     ③ les PROTÉINES en dernier, jusqu'à 0,8 g/kg (`_PROT_MIN_GKG`) — elles protègent le muscle en
+        déficit, et 0,8 est le seuil sous lequel le Gardien alerte : l'app ne prescrit pas ce qu'elle
+        signalerait elle-même.
+   Arrondis vers le bas : le reste (0 à 8 kcal) retourne aux glucides, donc 4P + 9L + 4G reste dans
+   l'arrondi habituel (−1 à +2 kcal).
+   ⚠️ QUAND MÊME CES MINIMUMS DÉPASSENT (mesuré : seulement avec une cible tapée à la main, sous
+   ~8,6 kcal par kg), on ne descend pas plus bas et on ne touche pas au chiffre de la personne :
+   `ajuste.depasse` dit de combien les macros dépassent — l'écran et Milo le DISENT.
+   ⛔ Aucun plancher de glucides n'est inventé : ils restent à 0 dans ces cas, comme avant — la
+   politique glucidique attend la décision de Michel (docs/NUTRITION-GLUCIDES-2026-09-24.md).
+   ⛔ Aucun profil dont P et L tiennent dans la cible ne change d'un gramme : on n'entre ici que
+   lorsque 4P + 9L > cible. */
+function _macrosDansLaCible(kcal,prot_de,fat_de){
+  const bw=S.bw||0;
+  const lMin=Math.round(bw*_CYCLE_FAT_MIN), pMin=Math.round(bw*_PROT_MIN_GKG);
+  const fat_g=Math.max(lMin,Math.min(fat_de,Math.floor((kcal-prot_de*4)/9)));
+  const prot_g=(prot_de*4+fat_g*9>kcal)?Math.max(pMin,Math.min(prot_de,Math.floor((kcal-fat_g*9)/4))):prot_de;
+  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));
+  return{prot_g,fat_g,carbs_g,ajuste:{prot_de,fat_de,depasse:Math.max(0,prot_g*4+fat_g*9-kcal)}};
 }
 // Objectif calorique auto (TDEE + objectif + phase + cycle). Isolé pour l'aperçu « auto ».
 // ⚠️ `autoKcal` = la cible RETENUE (plancher compris). `_autoKcalBrut` = le calcul nu, qui
@@ -2044,6 +2086,9 @@ function cycleGlucides(m, kcal){
   try{
     if(!m) return m;
     if(S.foodMode==='keto'||S.keto||S.foodMode==='lowcarb') return m;   // le % EST le régime
+    /* ⚖️ B3 : une répartition déjà comprimée pour tenir dans la cible n'a plus de glucides à
+       déplacer — un jour de repos devrait en retirer, il n'y en a pas (`_macrosDansLaCible`). */
+    if(m.ajuste) return m;
     if(typeof _weeklyCounts!=='function') return m;
     const wk=_weeklyCounts(4);
     /* ⛔⛔ ON DIVISE PAR LES SEMAINES VÉCUES, PAS PAR 4 EN DUR (ft-v1098).
@@ -2075,6 +2120,16 @@ function cycleGlucides(m, kcal){
     const retraitMax=Math.max(0, m.fat_g-plancher);
     const retrait=(x)=>x*rJour*(7-f)/7;
     if(rJour>0 && retrait(D)>retraitMax) D=retraitMax/(rJour*(7-f)/7);
+    /* ⛔ B3 (30/09/2026) — LE MIROIR DU PLANCHER LIPIDIQUE : LES GLUCIDES NE DESCENDENT PAS SOUS 0.
+       Un jour de REPOS, le cycle ajoute des lipides et retire autant de calories de glucides. Quand
+       il y en avait moins que ça, le `Math.max(0,…)` plus bas bornait les glucides à 0 SANS retirer
+       l'excédent de lipides : le jour de repos dépassait la cible — mesuré, +394 kcal pour 130 kg en
+       perte, +65 kcal dès 80 kg à 1 500 — pendant que l'écran affirmait « tes calories du jour ne
+       changent pas ». On rabote l'amplitude DES DEUX CÔTÉS, comme pour le plancher lipidique :
+       la neutralité de la semaine tient. Aucun profil qui avait la place ne change. */
+    const ajoutMax=Math.max(0,(kcal-m.prot_g*4-m.fat_g*9)/9);
+    const ajout=(x)=>x*rMoy*f/7;
+    if(rMoy>0 && ajout(D)>ajoutMax) D=ajoutMax/(rMoy*f/7);
     if(!(D>0)) return m;
     const dFat = js.seance ? -(D*rJour*(7-f)/7) : +(D*rMoy*f/7);
     const fatExact=m.fat_g+dFat;
@@ -2362,11 +2417,15 @@ function calcMacros(phase){
   /* Le poids est la seule entrée de `macrosForKcal` : sans lui (ou sans calories), on ne
      produit rien plutôt qu'un zéro qui se lirait comme un objectif. */
   const calculable=(calories!=null)&&(_nbUtil(S.bw)!=null);
-  const m=calculable?cycleGlucides(macrosForKcal(calories), calories)
+  const base=calculable?macrosForKcal(calories):null;
+  const m=calculable?cycleGlucides(base, calories)
                     :{prot_g:null,fat_g:null,carbs_g:null,cycle:null};
+  /* ⚖️ B3 : `ajuste` (null sinon) = les macros ont été resserrées pour tenir dans la cible
+     (`prot_de`/`fat_de` = avant), et `depasse` > 0 = même les minimums ne tiennent pas. L'écran et
+     Milo le lisent ICI, jamais en refaisant le calcul (R2). */
   return{calories:calories!=null?calories:null,
          prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,
-         isManual:!!manual, cycle:m.cycle||null,
+         isManual:!!manual, cycle:m.cycle||null, ajuste:(base&&base.ajuste)||null,
          indisponible:manquants.length>0, manquants:manquants};
 }
 

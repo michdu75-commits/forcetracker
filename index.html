@@ -962,6 +962,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
             <div class="macro-row2-top"><span class="macro-row2-lbl">Lipides</span><span class="macro-row2-val"><b id="m-fat">—</b> g/jour<span class="pct" id="m-fat-pct"></span></span></div>
             <div class="macro-row2-track"><div class="macro-row2-fill" id="m-fat-bar" style="background:var(--gold);"></div></div>
           </div>
+          <!-- ⚖️ B3 : pourquoi les protéines/lipides ont été baissés, ou de combien les macros dépassent
+               la cible. Vide dans tous les autres cas. -->
+          <div id="nu-ajuste"></div>
           <!-- 🍚 Pourquoi les glucides ne sont pas les mêmes qu'hier. Vide s'il n'y a pas de
                cycling (kéto, low carb, 0 ou 7 séances/semaine) — on n'explique rien qui n'arrive pas. -->
           <div id="nu-cycle"></div>
@@ -1962,7 +1965,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 <div class="overlay" id="ov-kcal-edit" style="z-index:500;">
   <div class="modal" style="max-width:400px;">
     <div style="font-size:19px;font-weight:800;color:var(--t1);margin-bottom:4px;">🎯 Ajuster mes objectifs</div>
-    <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:14px;">Corrige tes calories à la main. Les protéines et lipides restent calés sur ton profil ; les glucides s'ajustent tout seuls pour garder un équilibre sain.</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:14px;">Corrige tes calories à la main. Les protéines et lipides restent calés sur ton profil ; les glucides s'ajustent tout seuls. Si ton chiffre est trop bas pour eux, les lipides baissent d'abord, puis les protéines — jamais sous un minimum.</div>
     <label style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Calories par jour</label>
     <div style="display:flex;align-items:center;gap:8px;margin:6px 0 4px;">
       <input id="kcal-edit-inp" type="number" inputmode="numeric" min="800" max="6000" oninput="_kcalPreview()" style="flex:1;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:12px;color:var(--t1);font-family:var(--font-cond);font-size:22px;font-weight:700;text-align:center;box-sizing:border-box;">
@@ -1974,6 +1977,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div><div id="kcal-pv-carb" style="font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--orange);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Glucides</div></div>
       <div><div id="kcal-pv-fat" style="font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--gold);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Lipides</div></div>
     </div>
+    <div id="kcal-pv-note"></div>
     <button class="btn btn-red" onclick="saveKcalEdit()" style="width:100%;margin-top:16px;padding:13px;font-size:15px;">Enregistrer mes calories</button>
     <button class="btn btn-bg2" id="kcal-edit-reset" onclick="resetKcalAuto()" style="width:100%;margin-top:8px;">Revenir en automatique</button>
     <button class="btn" onclick="closeKcalEdit()" style="width:100%;margin-top:8px;background:transparent;color:var(--t3);">Annuler</button>

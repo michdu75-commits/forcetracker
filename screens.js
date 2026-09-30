@@ -2541,6 +2541,36 @@ function _kcalPreview(){
   const mm=(typeof macrosForKcal==='function')?macrosForKcal(v):{prot_g:0,carbs_g:0,fat_g:0};
   const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val+' g';};
   set('kcal-pv-prot',mm.prot_g);set('kcal-pv-carb',mm.carbs_g);set('kcal-pv-fat',mm.fat_g);
+  /* ⚖️ B3 : dit, AU MOMENT où la personne tape son chiffre, que ses macros ont dû être resserrées
+     ou qu'elles dépassent. Seulement pour un chiffre qui sera réellement enregistré (800-6000). */
+  const nt=document.getElementById('kcal-pv-note');
+  if(nt) nt.innerHTML=(v>=800&&v<=6000)?_ajusteMacrosHTML(mm,v):'';
+}
+/* ⚖️ B3 (30/09/2026) — LA PHRASE QUI DIT CE QUE L'APP A FAIT DES MACROS QUAND ELLES NE TENAIENT PAS.
+   Lit `ajuste` (state.js `_macrosDansLaCible`, ou le kéto) : ⛔ aucun calcul refait ici (R2).
+   Vide pour tout profil dont les macros tiennent — on n'explique rien qui n'arrive pas.
+   Ton neutre, pas de rouge (Constitution P21) : c'est une information, pas un reproche. */
+function _ajusteMacrosHTML(m,kcal){
+  const a=m&&m.ajuste; if(!a||kcal==null) return '';
+  const n=v=>Math.round(v).toLocaleString('fr-FR');
+  let txt;
+  if(a.depasse>0){
+    const keto=(S.foodMode==='keto'||S.keto);
+    txt='⚠️ À <b>'+n(kcal)+' kcal</b>, '+(keto
+        ?'le minimum de protéines que l\'app garde (0,8 g/kg) et les glucides du kéto'
+        :'même les minimums que l\'app garde — protéines 0,8 g/kg et lipides 0,6 g/kg —')
+      +' font déjà <b>'+n(kcal+a.depasse)+' kcal</b> : tes macros dépassent ta cible de <b>'+n(a.depasse)+' kcal</b>. '
+      +'L\'app ne descend pas plus bas, et ne touche pas à ton chiffre.';
+  } else {
+    const bouts=[];
+    if(a.fat_de!==m.fat_g) bouts.push('tes lipides ('+n(a.fat_de)+' → '+n(m.fat_g)+' g)');
+    if(a.prot_de!==m.prot_g) bouts.push('tes protéines ('+n(a.prot_de)+' → '+n(m.prot_g)+' g)');
+    if(!bouts.length) return '';
+    txt='⚖️ Tes protéines et lipides habituels ne tenaient pas dans <b>'+n(kcal)+' kcal</b> : l\'app a baissé '
+      +bouts.join(' puis ')+' pour que le total tombe juste.';
+  }
+  return '<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:9px 11px;margin-top:10px;">'
+    +'<span style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+txt+'</span></div>';
 }
 function saveKcalEdit(){
   const inp=document.getElementById('kcal-edit-inp');
@@ -3403,6 +3433,9 @@ function renderNutrition(){try{
   document.getElementById('m-prot').textContent=_nbAff(macros.prot_g);
   document.getElementById('m-carbs').textContent=_nbAff(macros.carbs_g);
   document.getElementById('m-fat').textContent=_nbAff(macros.fat_g);
+  /* ⚖️ B3 : sous les grammes, la raison pour laquelle ils ne sont pas « poids × objectif », ou
+     l'écart avec la cible quand même les minimums ne tiennent pas (cible tapée à la main). */
+  {const _aj=document.getElementById('nu-ajuste'); if(_aj)_aj.innerHTML=_ajusteMacrosHTML(macros,macros.calories);}
   /* 🍚 ON DIT POURQUOI LES GLUCIDES NE SONT PAS LES MÊMES QU'HIER (21/08/2026).
      ⛔ Ce n'est pas décoratif : sans cette ligne, la répartition change d'un jour à l'autre
      SANS RAISON VISIBLE — et un chiffre qui bouge tout seul se lit comme un bug, ou pire, se

@@ -101,7 +101,7 @@ module.exports.ecran = async function (t, b, PORT) {
       if (ses) S.sessions = ses;
       const d = bmrDetail(), m = calcMacros(S.nutritionPhase);
       return { bmr: d && d.kcal, tdee: calcTDEE(), auto: autoKcal(S.nutritionPhase), cal: m.calories,
-               P: m.prot_g, L: m.fat_g, G: m.carbs_g, cycle: m.cycle ? m.cycle.jour : null };
+               P: m.prot_g, L: m.fat_g, G: m.carbs_g, cycle: m.cycle ? m.cycle.jour : null, aj: m.ajuste || null };
     };
     const out = {};
     out.decl = cas(DECL);
@@ -170,11 +170,19 @@ module.exports.ecran = async function (t, b, PORT) {
     (R.wheySansPoids || '').slice(0, 60) + ' | ' + (R.wheyDecl || '').slice(0, 60));
   // NUT-07 — calories trop basses pour P + L
   const fini = o => ['cal', 'P', 'L', 'G'].every(k => Number.isFinite(o[k]));
-  t('B-CCCLXI NUT-07 manuel 1200 : glucides à 0 (jamais négatifs), tout fini, macros = 1462 kcal > 1200',
-    R.man1200.G === 0 && fini(R.man1200) && R.man1200.cal === 1200 && kMac(R.man1200) === 1462,
-    det(R.man1200));
-  t('B-CCCLXI NUT-07b 130 kg en perte, sédentaire : cible 2162, G 0, macros 2236 kcal > cible',
-    R.lourdPerte.auto === 2162 && R.lourdPerte.G === 0 && kMac(R.lourdPerte) === 2236 && fini(R.lourdPerte),
+  /* ⚖️ NUT-07 / NUT-07b RÉÉCRITS LE 30/09/2026 — ils ont rougi comme l'en-tête le demandait.
+     Ils figeaient le DÉFAUT B3 mesuré le 24/09 (macros 1 462 kcal pour une cible de 1 200 ; 2 236 pour
+     2 162). Demande de Michel (lot Nutrition 1, 30/09) : « une cible nutritionnelle et les macros
+     proposées ne doivent pas se contredire silencieusement ». Stratégie (proposée par Claude, soumise
+     à contre-vérification, `_macrosDansLaCible`) : la cible ne bouge pas ; les lipides baissent
+     d'abord (plancher 0,6 g/kg), puis les protéines (0,8 g/kg). Valeurs MESURÉES dans l'app servie. */
+  t('B-CCCLXI NUT-07 manuel 1200 : cible gardée, lipides 86 → 56 g, protéines 172 intactes, 4P + 9L + 4G = 1200 (±2)',
+    R.man1200.cal === 1200 && R.man1200.P === 172 && R.man1200.L === 56 && fini(R.man1200)
+    && Math.abs(kMac(R.man1200) - 1200) <= 2 && !!R.man1200.aj && R.man1200.aj.fat_de === 86 && R.man1200.aj.depasse === 0,
+    det(R.man1200) + ' kMac=' + kMac(R.man1200));
+  t('B-CCCLXI NUT-07b 130 kg en perte, sédentaire : cible 2162 gardée, lipides 104 → 95 g, macros = cible (±2)',
+    R.lourdPerte.auto === 2162 && R.lourdPerte.cal === 2162 && R.lourdPerte.P === 325 && R.lourdPerte.L === 95
+    && Math.abs(kMac(R.lourdPerte) - 2162) <= 2 && fini(R.lourdPerte) && !!R.lourdPerte.aj && R.lourdPerte.aj.depasse === 0,
     det(R.lourdPerte) + ' kMac=' + kMac(R.lourdPerte));
   // NUT-08 — très hautes calories
   t('B-CCCLXI NUT-08 manuel 6000 : G 1135 (13,2 g/kg) — aucun plafond, tout fini',
