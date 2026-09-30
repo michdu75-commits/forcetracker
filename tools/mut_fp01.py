@@ -14,6 +14,9 @@ M1..M8 = la liste demandee par Michel (M3a : une 1re M3 qui ne rendait PAS P1 fa
 · X1..X5 = cas mixte demandes par Michel · X6..X8 = deguisees · X9 = equivalente (doit RESTER verte)
 · X10..X12 = la seance doit etre le COMPLEMENT du verbe (X10 = ma 1re ecriture, fenetre libre de 40
   caracteres : de nouveaux faux positifs, mesures le 29/09 ; X12 deguisee) · X13 = equivalente
+· E00 = coach.js de 251e3044 · Y1..Y8 = extension finale du 30/09 (R1-R4, bouton pour refaire, resume,
+  plaintes « quand / si », recit « je refais ») · Y9, Y10 = deguisees · Y11, Y12 = equivalentes
+  (« DANS LA COPIE MUTEE » : chaque ligne decrit la copie temporaire, jamais le comportement reel.)
 · [negatif] = commentaire citant les motifs (doit RESTER vert).
 Usage : python3 tools/mut_fp01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -21,6 +24,7 @@ import os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = '7a71649e'
+AVANT_EXT = '251e3044'   # le correctif du cas mixte, AVANT l'extension finale du 30/09
 CO = 'coach.js'
 FICHIERS = (CO,)
 
@@ -33,6 +37,7 @@ R1_FIN = "(s[ée]ance|entra[îi]nement|programme|prog)\\b/i.test(t)) return true
 STRUCT = [l for l in open(os.path.join(SRC, 'coach.js'), encoding='utf-8').read().split('\n') if 'peux[- ]tu' in l and 'return true' in l][0] + '\n'
 AMBIGU_LIGNE = "    if(/\\bpourquoi\\b(?!\\s+pas\\b)|\\bne\\s+compte\\s+pas\\b|\\bdebrief/i.test(p)) return false;\n"
 DETS_SEANCE = "\\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+){1,2}seance\\b"
+EXT = [l for l in open(os.path.join(SRC, 'coach.js'), encoding='utf-8').read().split('\n') if 'je\\s+veux' in l and 'return true' in l][0] + '\n'
 QUESTION = "    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach(), _msgA);\n"
 R1_COMMENT = "    // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme\n"
 
@@ -77,6 +82,19 @@ MUT = [
      [(CO, STRUCT, STRUCT.replace('\\s+(?:(?:une|', '\\b[^.?!\\n]{0,40}?\\s(?:(?:une|'))], 'GARDE'),
     ('X13 [equivalente] determinants dans un autre ordre (« ma|une » au lieu de « une|ma ») : doit RESTER vert',
      [(CO, STRUCT, STRUCT.replace('(?:(?:une|ma|la|', '(?:(?:ma|une|la|'))], 'OK'),
+    ('E00 coach.js de 251e3044 (AVANT l\'extension finale) : R1-R4 perdues', 'AVANT_EXT', 'GARDE'),
+    ('Y1 R1 casse : « je veux » retire de la regle ①ter', [(CO, EXT, EXT.replace('je\\s+veux|', ''))], 'GARDE'),
+    ('Y2 R2 casse : « tu me prepares » retire (prepares ote de la liste conjuguee)', [(CO, EXT, EXT.replace('(?:prepares|', '(?:'))], 'GARDE'),
+    ('Y3 R3 casse : « refais-moi » retire de la regle ①ter', [(CO, EXT, EXT.replace('|refais[- ]moi)', ')'))], 'GARDE'),
+    ('Y4 R4 casse : « refaire » retire de la structure (modal + me)', [(CO, STRUCT, STRUCT.replace('(?:faire|refaire|', '(?:faire|'))], 'GARDE'),
+    ('Y5 garde « bouton pour refaire une seance » cassee : « refaire » ajoute a la liste GENERALE (regle ①)', [(CO, VERBE, VERBE.replace('fai[st]|', 'fai[st]|refaire|'))], 'GARDE'),
+    ('Y6 garde « resume de ma derniere seance » cassee dans ①ter : fenetre libre de 40 caracteres apres le verbe', [(CO, EXT, EXT.replace(DETS_SEANCE, '\\b[^.?!\\n]{0,40}\\bseance\\b'))], 'GARDE'),
+    ('Y7 garde « quand / lorsque / si / fois que » retire (les plaintes redeviennent des demandes)', [(CO, EXT, EXT.replace('(?<!\\b(?:quand|lorsque|si|fois\\s+que)\\b[^.?!,;\\n]*)', ''))], 'GARDE'),
+    ('Y8 « refais » accepte sans « -moi » (« Je refais une seance et le bouton bug », un recit, devient une demande)', [(CO, EXT, EXT.replace('|refais[- ]moi)', '|refais(?:[- ]moi)?)'))], 'GARDE'),
+    ('Y9 [deguisee] ①ter testee sur le texte AVEC accents (« prepares » ne mord plus sur « prépares »)', [(CO, EXT, EXT.replace('.test(p))', '.test(t))'))], 'GARDE'),
+    ('Y10 [deguisee] ①ter rangee APRES le garde (trop tard pour le cas mixte)', [(CO, EXT, ''), (CO, GARDE, GARDE + EXT)], 'GARDE'),
+    ('Y11 [equivalente] conjugues dans un autre ordre (« refais|prepares ») : doit RESTER vert', [(CO, EXT, EXT.replace('(?:prepares|refais|', '(?:refais|prepares|'))], 'OK'),
+    ('Y12 [equivalente] garde dans un autre ordre (« lorsque|quand ») : doit RESTER vert', [(CO, EXT, EXT.replace('(?:quand|lorsque|', '(?:lorsque|quand|'))], 'OK'),
     ('[negatif] commentaire citant les motifs cherches', [(CO, GARDE, GARDE + "    // bouton · bug · affiché · apparaît · je ne demande pas · pas besoin — c'était le faux positif\n")], 'OK'),
 ]
 
@@ -92,8 +110,8 @@ def banc(arbre):
 
 
 def executes(rouges):
-    # temoins EXECUTES : ecran conduit (E, F, H) ou valeur servie dans la page (A, B, C, D, G)
-    return [x for x in rouges if re.match(r'❌ ROUGE [A-H]\d', x)]
+    # temoins EXECUTES : ecran conduit (E, F, H, J) ou valeur servie dans la page (A, B, C, D, G, I)
+    return [x for x in rouges if re.match(r'❌ ROUGE [A-J]\d', x)]
 
 
 def cloner():
@@ -118,7 +136,12 @@ def main():
             continue
         total += 1
         tmp, arbre = cloner()
-        if remplacements == 'AVANT':
+        if remplacements == 'AVANT_EXT':
+            av = subprocess.run(['git', 'show', AVANT_EXT + ':' + CO], cwd=SRC, capture_output=True, text=True).stdout
+            if not av or av == open(os.path.join(arbre, CO), encoding='utf-8').read():
+                print('  INVALIDE  %s' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
+            open(os.path.join(arbre, CO), 'w', encoding='utf-8').write(av)
+        elif remplacements == 'AVANT':
             cur = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
             if any(not avant[f] for f in FICHIERS) or all(avant[f] == cur[f] for f in FICHIERS):
                 print('  INVALIDE  %s (code d\'avant introuvable ou identique)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
@@ -140,7 +163,7 @@ def main():
         ex = executes(rouges)
         obtenu = 'GARDE' if ex else ('SOURCE' if rouges else 'OK')
         ok = obtenu == attendu; conformes += ok
-        cond = [x for x in ex if re.match(r'❌ ROUGE [EFH]\d', x)]
+        cond = [x for x in ex if re.match(r'❌ ROUGE [EFHJ]\d', x)]
         montre = (cond or ex or rouges or [''])[0]
         print('  %s  %-100s %-6s %2d rouge(s), %2d execute(s) dont %2d ecran  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), len(ex), len(cond), montre))
         if os.environ.get('MUT_DETAIL'):

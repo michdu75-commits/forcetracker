@@ -8,7 +8,10 @@
      · AVANT FP-01 (7a71649e) — la règle ne doit RIEN détecter de plus qu'avant FP-01 ;
      · FP-01 (5158c582)       — elle ne doit changer le résultat QUE dans un message qui porte aussi
                                 un marqueur de discussion (bouton · bug · affiché · apparu · négation).
-   Code de sortie 1 si l'une des deux propriétés tombe. ⛔ Ni navigateur, ni réseau : la fonction est
+   + (extension finale, 30/09) des familles au sens FIXÉ, indépendantes de l'écriture de la règle : les
+   plaintes « quand / lorsque / chaque fois que … » restent fausses, les demandes explicites suivies d'une
+   remarque sur le bouton restent vraies, R1-R4 sont retrouvées, « résumé de ma dernière séance » reste faux.
+   Code de sortie 1 si l'une des propriétés tombe. ⛔ Ni navigateur, ni réseau : la fonction est
    extraite du fichier et évaluée seule (elle ne dépend de rien d'autre).
    ⚠️ Ce que ça ne dit PAS : si une phrase réelle, hors de ce corpus, se comporte bien — le corpus est
    combinatoire, pas un échantillon de vrais messages. Les témoins d'écran sont dans
@@ -52,6 +55,10 @@ for (const a of pre) for (const m of mod) for (const v of inf) for (const o of o
 }
 for (const v of inf) for (const o of obj) for (const s of [' bug', ' ne marche plus', ' est affiché', '']) corpus.push('Le bouton pour ' + v + ' ' + o + s);
 for (const v of ['Fais-moi', 'Prépare-moi', 'Donne-moi', 'Propose-moi', 'Lance', 'Envoie-moi']) for (const o of obj) for (const s of suf) corpus.push(v + ' ' + o + s);
+// extension finale (30/09) : les autres demandes explicites, et les mêmes mots dans une PLAINTE
+const sujets = ['je veux', 'tu me prépares', 'refais-moi', 'refais', 'je refais', 'tu peux me refaire', 'tu me proposes', 'je veux que tu me prépares'];
+const avant2 = ['', 'Stp ', 'Est-ce que ', 'Pourquoi ', 'Quand ', 'Lorsque ', 'Chaque fois que ', 'Si '];
+for (const a of avant2) for (const v of sujets) for (const o of obj) for (const s of suf) { const x = a + v + ' ' + o + s; corpus.push(x[0].toUpperCase() + x.slice(1)); }
 
 let plusQuAvant = [], changeSansMarqueur = [], perduDepuisFp01 = [], retrouves = 0, rejetees = 0;
 for (const x of corpus) {
@@ -68,6 +75,23 @@ console.log('  changées depuis FP-01 SANS marqueur de discussion  ' + changeSan
 console.log('  demandes de FP-01 perdues maintenant ............. ' + perduDepuisFp01.length + '   (attendu 0)', perduDepuisFp01.slice(0, 3));
 console.log('  demandes retrouvées depuis FP-01 (cas mixte) ..... ' + retrouves);
 console.log('  détectées avant FP-01, rejetées maintenant ....... ' + rejetees + '   (toutes avec un marqueur : c\'est FP-01)');
-const ok = !plusQuAvant.length && !changeSansMarqueur.length && !perduDepuisFp01.length;
+// propriétés qui ne dépendent PAS de l'écriture de la règle : des familles de phrases dont le sens est fixé
+const DETS_OBJ = ['une séance', 'ma séance', 'la séance', 'une petite séance', 'une séance jambes'];
+const MARQ = [' ? le bouton bug', ', mais le bouton bug', ', ça affiche un bug', ' le bouton est apparu'];
+const plaintesSub = [], demandesMixtesPerdues = [];
+// ⚠️ « Quand tu peux me faire une séance… » n'y est PAS : sens ambigu, et détectée depuis 251e3044 (règle validée)
+for (const a of ['Quand ', 'Lorsque ', 'Chaque fois que ', 'Si ']) for (const v of ['je veux', 'tu me prépares', 'je refais', 'je veux que tu me prépares'])
+  for (const o of DETS_OBJ) for (const m of MARQ) { const x = a + v + ' ' + o + m; if (fx(x)) plaintesSub.push(x); }
+for (const o of DETS_OBJ) for (const m of MARQ) { const x = 'Je refais ' + o + m; if (fx(x)) plaintesSub.push(x); }  // un récit
+for (const v of ['Je veux', 'Tu me prépares', 'Refais-moi', 'Tu peux me refaire', 'Tu peux me faire', 'Tu peux me préparer', 'Peux-tu me faire', 'Pourrais-tu me préparer'])
+  for (const o of DETS_OBJ) for (const m of MARQ) { const x = v + ' ' + o + m; if (!fx(x)) demandesMixtesPerdues.push(x); }
+const OBLIG_V = ['Je veux une séance, mais le bouton bug', 'Tu me prépares une séance ? le bouton bug', 'Refais-moi une séance, le bouton bug', 'Tu peux me refaire une séance ? le bouton bug'];
+const OBLIG_F = ['Tu peux me faire un résumé de ma dernière séance ?', 'Le bouton pour refaire une séance bug', 'Le bouton pour faire une séance bug', 'Le bouton pour préparer une séance ne marche plus'];
+const r14 = OBLIG_V.filter(x => !fx(x)), fauxObl = OBLIG_F.filter(x => fx(x));
+console.log('  plaintes et récits (« quand / si … », « je refais… ») devenus demandes ' + plaintesSub.length + '   (attendu 0)', plaintesSub.slice(0, 3));
+console.log('  demandes explicites + remarque sur le bouton, perdues ............. ' + demandesMixtesPerdues.length + '   (attendu 0)', demandesMixtesPerdues.slice(0, 3));
+console.log('  R1-R4 non retrouvées ............................................... ' + r14.length + '   (attendu 0)', r14);
+console.log('  « résumé de ma dernière séance » / « bouton pour refaire… » détectées ' + fauxObl.length + '   (attendu 0)', fauxObl);
+const ok = !plusQuAvant.length && !changeSansMarqueur.length && !perduDepuisFp01.length && !plaintesSub.length && !demandesMixtesPerdues.length && !r14.length && !fauxObl.length;
 console.log(ok ? '──── PROPRIÉTÉS TENUES ────' : '──── ❌ PROPRIÉTÉ TOMBÉE ────');
 process.exit(ok ? 0 : 1);

@@ -17,9 +17,15 @@
    bug » était une demande avant FP-01 et n'en était plus une après (démontré à la contre-vérification).
    Règle ①bis : modal adressé à Milo + « me » + infinitif + « une / ma / la … séance », sans texte
    libre entre les deux (une 1ʳᵉ écriture à 40 caractères libres rendait « Tu peux me faire un résumé
-   de ma dernière séance ? » demande — G10, H5, X10). ⚠️ Non couvert, mesuré : avec « bouton / bug »
-   dans le même message, « Je veux une séance », « Tu me prépares une séance », « Refais-moi une
-   séance » restent perdues, comme sur FP-01 (hors de la liste demandée — décision de Michel).
+   de ma dernière séance ? » demande — G10, H5, X10).
+   EXTENSION FINALE (B-CDXII · B-CDXIII, 30/09) : quatre RÉGRESSIONS FP-01 démontrées à la
+   contre-vérification — « Je veux une séance », « Tu me prépares une séance », « Refais-moi une
+   séance », « Tu peux me refaire une séance », suivies d'une remarque sur le bouton — sont corrigées
+   (règle ①ter + « refaire » dans ①bis). ⛔ Ce n'étaient ni des décisions de Michel ni une dette
+   acceptée (une 1ʳᵉ version de ce commentaire le disait à tort). ⚠️ Régressions FP-01 RESTANTES,
+   mesurées, hors de la liste de ce lot : « Je veux démarrer / faire une séance », « Je voudrais /
+   J'aimerais une séance », « Il me faut une séance », « Une séance jambes stp », « Nouvelle séance
+   stp », « Si possible refais-moi une séance » sans virgule — suivies de « le bouton bug ».
 
    Ce que les témoins CONDUISENT : l'onglet Coach, le vrai champ `#coach-inp` et le vrai bouton
    `#coach-send-btn` (donc `sendToCoach`), un VRAI rechargement avec un fil déposé (relecture du fil).
@@ -316,4 +322,88 @@ module.exports.ecranMixte = async function (t, b, PORT) {
     [0, 1].every(k => h5[k] && h5[k].n === 0) && n5 === 2, js(h5) + ' coach=' + n5);
   t('H4 aucune erreur de page', H1.errs.length + H2.errs.length + H3.errs.length + H5.errs.length === 0, [H1, H2, H3, H5].map(x => x.errs.join('|')).join(' ').slice(0, 160));
   await H5.cx.close();
+};
+
+// ── EXTENSION FINALE (30/09) : les autres demandes explicites, R1-R4 de la contre-vérification ──
+const EXT_P = {
+  R1: 'Je veux une séance, mais le bouton bug',
+  R2: 'Tu me prépares une séance ? le bouton bug',
+  R3: 'Refais-moi une séance, le bouton bug',
+  R4: 'Tu peux me refaire une séance ? le bouton bug' };
+// plaintes et récits qui portent les MÊMES mots : aucune n'est une demande (mesuré le 30/09)
+const EXT_N = {
+  N3: 'Le bouton pour refaire une séance bug',
+  QV: 'Quand je veux une séance le bouton bug',
+  CF: 'Chaque fois que tu me prépares une séance le bouton bug',
+  QP: 'Quand je veux que tu me prépares une séance, le bouton bug',
+  SI: 'Si je veux que tu me prépares une séance, ça affiche un bug',
+  JR: 'Je refais une séance et le bouton bug',
+  RT: 'Le bouton refait une séance tout seul',
+  VP: 'Je veux pas une séance, le bouton bug' };
+
+module.exports.sourceExt = function (t, ROOT, fs, path) {
+  console.log('\n═══ B-CDXII (session-B). MILO-SEANCE-FP-01 — extension finale : « je veux / tu me prépares / refais-moi / tu peux me refaire » (source) ═══');
+  const nu = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const co = nu('coach.js');
+  const i = co.indexOf('function _demandeUneSeance('); const j = co.indexOf('\nfunction ', i + 10);
+  const d = i < 0 ? '' : co.slice(i, j < 0 ? undefined : j);
+  const lignes = d.split('\n');
+  const lExt = lignes.find(l => /return true/.test(l) && /je\\s\+veux/.test(l)) || '';
+  const lStruct = lignes.find(l => /return true/.test(l) && /peux/.test(l) && /pourrais/.test(l) && /seance/.test(l)) || '';
+  const lVerbe = lignes.find(l => /\(fai\[st\]\|donne/.test(l)) || '';
+  const apres = lExt.slice(lExt.search(/je\\s\+veux/));
+  t('⑥ la règle ①ter existe : « je veux », « tu me » + verbe conjugué (« prepares »), « refais-moi », suivis d\'une séance',
+    /je\\s\+veux/.test(lExt) && /tu\\s\+me\\s\+\(\?:[^)]*prepares/.test(lExt) && /refais\[- \]moi/.test(lExt), lExt.trim().slice(0, 220));
+  t('⑦ ⛔ la séance y est le COMPLÉMENT immédiat : aucune fenêtre libre après le verbe, seulement les déterminants de la règle ② ; testée sur `p`',
+    lExt && !/\[\^|\.\*|\.\{/.test(apres) && ['une', 'ma', 'la', 'nouvelle', 'prochaine', 'autre', 'petite', 'bonne'].every(x => new RegExp('[(:|]' + x + '[|)]').test(apres))
+      && /\.test\(p\)\)\s*return true/.test(lExt), apres.slice(0, 200));
+  t('⑧ ⛔ garde « quand / lorsque / si / fois que » dans la même proposition ; « refais » seul (récit) n\'y est pas',
+    (m => !!m && ['quand', 'lorsque', 'si', 'fois'].every(x => new RegExp('[(:|]' + x + '[|)\\\\]').test(m[0])))(lExt.match(/\(\?<![^)]*\)[^)]*\)/))
+      && !/\|refais\(\?:/.test(lExt) && !/\|refais\\s/.test(lExt), lExt.slice(0, 90));
+  const iExt = d.indexOf(lExt), iAmbigu = d.search(/\\bpourquoi\\b\(\?!/), iGarde = d.search(/\\bbouton/);
+  t('⑨ rangée APRÈS le niveau « pourquoi » et AVANT le garde « bouton / bug / affiché »',
+    lExt && iAmbigu >= 0 && iExt > iAmbigu && iGarde > iExt, [iAmbigu, iExt, iGarde].join(' < '));
+  t('⑩ « refaire » est dans la STRUCTURE (modal + me) mais PAS dans la liste générale des verbes de la règle ①',
+    /\|refaire\||\(\?:refaire\|/.test(lStruct) && lVerbe && !/refai/.test(lVerbe), lVerbe.trim().slice(0, 120));
+};
+
+module.exports.ecranExt = async function (t, b, PORT) {
+  console.log('\n═══ B-CDXIII (session-B). MILO-SEANCE-FP-01 — extension finale : les demandes explicites gardent leur carte, les plaintes n\'en ont pas (écran conduit) ═══');
+  const js = x => JSON.stringify(x).slice(0, 260);
+  const { ouvrir, cartes, taper } = outils(b, PORT);
+  const A = await ouvrir();
+  const v = await A.pg.evaluate(({ EXT_P, EXT_N, MIX_P, MIX_N, P, COMPLEMENT, N }) => {
+    const map = o => Object.fromEntries(Object.entries(o).map(([k, s]) => [k, _demandeUneSeance(s)]));
+    return { P: map(EXT_P), N: map(EXT_N), mix: map(MIX_P), mixN: map(MIX_N), simples: map(P), plaintes: map(N),
+      resume: _demandeUneSeance(COMPLEMENT[0]) };
+  }, { EXT_P, EXT_N, MIX_P, MIX_N, P, COMPLEMENT, N });
+  t('I1 ⭐ R1 « Je veux une séance, mais le bouton bug » est une demande', v.P.R1 === true, js(v.P));
+  t('I2 ⭐ R2 « Tu me prépares une séance ? le bouton bug » est une demande', v.P.R2 === true, js(v.P));
+  t('I3 ⭐ R3 « Refais-moi une séance, le bouton bug » est une demande', v.P.R3 === true, js(v.P));
+  t('I4 ⭐ R4 « Tu peux me refaire une séance ? le bouton bug » est une demande', v.P.R4 === true, js(v.P));
+  t('I5 positifs historiques préservés : « Fais-moi une séance », « Prépare-moi une séance de 45 minutes », « Fais-moi ma séance du jour », « Tu peux me faire / préparer une séance ? le bouton bug »',
+    v.simples.P1 && v.simples.P2 && v.simples.P5 && v.mix.PM1 && v.mix.PM2, js({ s: v.simples, m: v.mix }));
+  t('I6 ⛔ « Le bouton pour refaire une séance bug » n\'est PAS une demande', v.N.N3 === false, js(v.N));
+  t('I7 ⛔ les mêmes mots dans une PLAINTE ou un RÉCIT (« Quand je veux une séance… », « Chaque fois que tu me prépares… », « Si je veux que tu me prépares… », « Je refais une séance et… », « Le bouton refait… », « Je veux pas… ») : PAS des demandes',
+    ['QV', 'CF', 'QP', 'SI', 'JR', 'RT', 'VP'].every(k => v.N[k] === false), js(v.N));
+  t('I8 non-régression des négatifs : « bouton pour faire / préparer », « Je parle juste du bouton… », N1-N5, « résumé de ma dernière séance » : PAS des demandes',
+    Object.values(v.mixN).every(x => x === false) && Object.values(v.plaintes).every(x => x === false) && v.resume === false, js({ m: v.mixN, p: v.plaintes, r: v.resume }));
+  await A.cx.close();
+  // une conversation neuve par phrase : un compte cumulé laisserait passer une phrase sans carte
+  const j1 = {}, errs1 = [];
+  for (const k of ['R1', 'R3']) {
+    const J1 = await ouvrir({ reponse: REPONSE_NEUTRE });
+    await taper(J1, EXT_P[k]); j1[k] = await cartes(J1.pg); errs1.push(...J1.errs);
+    await J1.cx.close();
+  }
+  t('J1 ⭐ R1, puis R3 (chacun dans sa conversation), tapés et envoyés (vrai champ, vrai bouton) : la carte « Cette séance te convient ? · Oui, on démarre · Non, retravaille » s\'affiche (1)',
+    ['R1', 'R3'].every(k => j1[k] && j1[k].n === 1 && j1[k].oui === 1 && j1[k].non === 1), js(j1));
+  const J2 = await ouvrir({ reponse: REPONSE_BUG });
+  const j2 = {};
+  for (const k of ['N3', 'QV']) { await taper(J2, EXT_N[k]); j2[k] = await cartes(J2.pg); }
+  const n2 = J2.req.filter(a => a === 'coach').length;
+  t('J2 ⭐ « Le bouton pour refaire une séance bug » puis « Quand je veux une séance le bouton bug » tapés et envoyés : AUCUNE carte',
+    ['N3', 'QV'].every(k => j2[k] && j2[k].n === 0) && n2 === 2, js(j2) + ' coach=' + n2);
+  t('J3 aucune erreur de page', errs1.length + J2.errs.length === 0, [errs1.join('|'), J2.errs.join('|')].join(' ').slice(0, 160));
+  await J2.cx.close();
 };

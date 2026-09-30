@@ -2152,7 +2152,20 @@ function _demandeUneSeance(txt){
        séance ? »* devenait une demande — ni avant FP-01, ni après. Ainsi bornée, la règle ne détecte
        RIEN que la version d'avant FP-01 ne détectait déjà, et ne change le résultat de FP-01 QUE
        dans un message qui porte aussi « bouton / bug / affiché » (mesuré sur 70 800 phrases). */
-    if(/\b(?:tu\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\s+(?:me\s+|m['’]\s*)(?:faire|preparer|proposer|donner|creer|construire|monter|ecrire|lancer|balancer|envoyer|generer)\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+){1,2}seance\b/i.test(p)) return true;
+    if(/\b(?:tu\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\s+(?:me\s+|m['’]\s*)(?:faire|refaire|preparer|proposer|donner|creer|construire|monter|ecrire|lancer|balancer|envoyer|generer)\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+){1,2}seance\b/i.test(p)) return true;
+    /* ①ter 🔬 MILO-SEANCE-FP-01, extension finale (30/09/2026) — LES AUTRES DEMANDES EXPLICITES.
+       Démontré à la contre-vérification : quatre demandes reconnues sur master étaient perdues depuis
+       FP-01 dès que le message parlait aussi du bouton — *« Je veux une séance, mais le bouton bug »*,
+       *« Tu me prépares une séance ? … »*, *« Refais-moi une séance, … »*, *« Tu peux me refaire une
+       séance ? … »* (la dernière : « refaire » ajouté à la structure ci-dessus, pas à la liste générale).
+       Même borne : la séance est le complément IMMÉDIAT (déterminants de la règle ②), donc rien de
+       détecté que master ne détectait déjà. ⛔ « quand / lorsque / si / fois que » plus tôt dans la
+       même proposition (jusqu'à la ponctuation) : c'est une plainte (*« Quand je veux que tu me
+       prépares une séance, le bouton bug »*), pas une demande — mesuré, sans ce garde elle le
+       devenait. Prix mesuré : *« Si possible refais-moi une séance, … »* SANS virgule reste perdue.
+       ⛔ « refais-moi » à l'impératif seulement : *« Je refais une séance et le bouton bug »* est un
+       récit (mesuré : avec « refais » seul, il devenait une demande). */
+    if(/(?<!\b(?:quand|lorsque|si|fois\s+que)\b[^.?!,;\n]*)\b(?:je\s+veux|tu\s+me\s+(?:prepares|refais|proposes|donnes|crees|construis|montes|ecris|lances|balances|envoies|generes)|refais[- ]moi)\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+){1,2}seance\b/i.test(p)) return true;
     /* 🔬 MILO-SEANCE-FP-01 (29/09/2026) — ON PARLE DE LA CARTE, DU BOUTON OU DU BUG : CE N'EST PAS UNE DEMANDE.
        Michel, captures à l'appui : *« Ya le bouton démarrer une séance qui est arrivé »* reposait la
        carte sous la réponse de Milo qui disait justement « c'est un bug d'affichage » — et chaque
