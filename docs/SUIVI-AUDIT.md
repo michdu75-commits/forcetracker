@@ -332,3 +332,30 @@ créera un record**, en silence.
 **Rien pour l'instant** — c'est une mesure, pas un correctif, et Michel n'a pas demandé de toucher
 à ces écrans. Les trois constats sont **promouvables** (leur attendu est vérifiable par du code) et
 sont déposés dans `docs/JOURNAL-DE-TEST.md`.
+
+## 🍽️ CONTRE-CHECK NUTRITION (30/09/2026) — deux alertes CONSIGNÉES, NON TRAITÉES
+
+> Audit en lecture seule d'`origin/master` `3146fb9e` (`ft-v1244`) par une autre session (« Claude Nutrition »).
+> **Consignées sur décision de Michel, documentation seule** : aucun code, **la Nutrition reste gelée**
+> (décision du 13/09), **aucun lot ouvert**. Ce sont des défauts **préexistants**, pas introduits par FP-01.
+> ⛔ L'**alerte 1** (macros affichées au-dessus de la cible calorique) n'est **pas** recopiée ici : elle est déjà
+> documentée dans `docs/NUTRITION-GLUCIDES-2026-09-24.md`, **cas B3** (R2 : un propriétaire par information).
+
+### 🟠 ALERTE 3 — risque de PERTE DE DONNÉES : `_applyRestoreData` et `S.foodLog` (priorité la plus haute des deux)
+- **Constat rapporté** : à la restauration (`_applyRestoreData`, `setup.js`), le journal alimentaire du cloud
+  **remplace intégralement** celui du téléphone dès que son nombre de lignes est **≥** au local — **sans fusion par
+  identifiant** (contrairement aux séances, fusionnées par `id` depuis `ft-v1241`).
+- **Scénario destructif** : même nombre de lignes mais **contenus différents** → des lignes locales peuvent
+  **disparaître**.
+- **Pourquoi plus haut que l'alerte 2** : impact **destructif** possible (règle d'or #3, zéro perte).
+- **Quand le traiter** : dans un **lot persistance / cloud dédié** — ou plus tôt seulement si un futur chantier
+  touche déjà cette zone (alors : STOP et signaler avant toute modification).
+
+### 🔵 ALERTE 2 — dette de robustesse : double source de vérité potentielle sur les totaux Nutrition
+- **Constat rapporté** : l'écran calcule ses totaux par `_foodTotals` ; le contexte envoyé à Milo fait son
+  **propre regroupement** (`coach.js`). Avec une valeur `kcal` stockée **sous forme de texte** (`'120'`), les deux
+  peuvent diverger (écran « 012050 » par concaténation, Milo 170).
+- **Portée** : les écrivains actuels produisent des **nombres** → surtout **données anciennes, import, cloud**.
+- **Quand le traiter** : seulement lorsqu'un chantier touche déjà les **totaux**, les **imports** ou le **contexte
+  Nutrition de Milo** — alors écran et Milo doivent passer par **la même** valeur numérique normalisée, sans créer
+  de troisième source de vérité.
