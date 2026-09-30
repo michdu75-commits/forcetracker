@@ -39694,6 +39694,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🔬 MILO-SEANCE-FP-01, extension finale (30/09/2026) — R1-R4 : « je veux / tu me prépares / refais-moi / tu peux me
      refaire une séance » + remarque sur le bouton restent des demandes ; plaintes « quand / si … » et récits, non. */
   await require('./seance_fp01.js').ecranExt(t, b, PORT);
+  /* 🔬 MILO-SEANCE-FP-01, architecture du 30/09/2026 (décision de Michel) — master préservé par défaut, veto étroit :
+     les demandes historiques gardent leur carte, les méta-discussions n'en ont pas. */
+  await require('./seance_fp01.js').ecranArchi(t, b, PORT);
 
 await b.close(); srv.close();
 

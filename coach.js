@@ -2136,54 +2136,69 @@ function _demandeUneSeance(txt){
     if(/\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\b[^.?!\n]{0,40}\b(s[ée]ance|entra[îi]nement|programme|prog)\b/i.test(t)) return true;
     // ⛔ niveau AMBIGU : après la règle ①, il ne tue que ce qui suit (les règles sans verbe)
     if(/\bpourquoi\b(?!\s+pas\b)|\bne\s+compte\s+pas\b|\bdebrief/i.test(p)) return false;
-    /* ①bis 🔬 MILO-SEANCE-FP-01, cas mixte (29/09/2026) — UNE DEMANDE ADRESSÉE À MILO, À L'INFINITIF.
-       Démontré à la contre-vérification : *« Tu peux me faire une séance ? le bouton bug »* était une
-       demande avant FP-01 et n'en était plus une après — la règle ① ne connaît que l'impératif
-       (« fais », « prépare »…), ces tournures vivaient de la règle ②, que le garde ci-dessous
-       neutralise. ⭐ On reconnaît donc la STRUCTURE (modal adressé à Milo + « me » + infinitif d'un
-       verbe de demande déjà reconnu), rangée APRÈS le niveau AMBIGU (« pourquoi tu peux me faire… »
-       reste une question, comme avant FP-01 — mesuré : placée avant, 100 phrases sur 1 120 en
-       « pourquoi » devenaient des demandes) et AVANT le garde « bouton / bug / affiché ».
-       ⛔ « faire » et « préparer » ne rejoignent PAS la liste générale de la règle ① : *« Le bouton
-       pour faire une séance bug »* resterait sinon une demande. Testé sur `p` (sans accents).
-       ⛔⛔ LA SÉANCE EST LE COMPLÉMENT DU VERBE, RIEN ENTRE LES DEUX : exactement les déterminants de
-       la règle ② (« une », « ma », « la »… jusqu'à deux : « une petite séance »). Mesuré : une 1ʳᵉ
-       écriture tolérait 40 caractères libres, et *« Tu peux me faire un résumé de ma dernière
-       séance ? »* devenait une demande — ni avant FP-01, ni après. Ainsi bornée, la règle ne détecte
-       RIEN que la version d'avant FP-01 ne détectait déjà, et ne change le résultat de FP-01 QUE
-       dans un message qui porte aussi « bouton / bug / affiché » (mesuré sur 70 800 phrases). */
-    if(/\b(?:tu\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\s+(?:me\s+|m['’]\s*)(?:faire|refaire|preparer|proposer|donner|creer|construire|monter|ecrire|lancer|balancer|envoyer|generer)\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+){1,2}seance\b/i.test(p)) return true;
-    /* ①ter 🔬 MILO-SEANCE-FP-01, extension finale (30/09/2026) — LES AUTRES DEMANDES EXPLICITES.
-       Démontré à la contre-vérification : quatre demandes reconnues sur master étaient perdues depuis
-       FP-01 dès que le message parlait aussi du bouton — *« Je veux une séance, mais le bouton bug »*,
-       *« Tu me prépares une séance ? … »*, *« Refais-moi une séance, … »*, *« Tu peux me refaire une
-       séance ? … »* (la dernière : « refaire » ajouté à la structure ci-dessus, pas à la liste générale).
-       Même borne : la séance est le complément IMMÉDIAT (déterminants de la règle ②), donc rien de
-       détecté que master ne détectait déjà. ⛔ « quand / lorsque / si / fois que » plus tôt dans la
-       même proposition (jusqu'à la ponctuation) : c'est une plainte (*« Quand je veux que tu me
-       prépares une séance, le bouton bug »*), pas une demande — mesuré, sans ce garde elle le
-       devenait. Prix mesuré : *« Si possible refais-moi une séance, … »* SANS virgule reste perdue.
-       ⛔ « refais-moi » à l'impératif seulement : *« Je refais une séance et le bouton bug »* est un
-       récit (mesuré : avec « refais » seul, il devenait une demande). */
-    if(/(?<!\b(?:quand|lorsque|si|fois\s+que)\b[^.?!,;\n]*)\b(?:je\s+veux|tu\s+me\s+(?:prepares|refais|proposes|donnes|crees|construis|montes|ecris|lances|balances|envoies|generes)|refais[- ]moi)\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+){1,2}seance\b/i.test(p)) return true;
-    /* 🔬 MILO-SEANCE-FP-01 (29/09/2026) — ON PARLE DE LA CARTE, DU BOUTON OU DU BUG : CE N'EST PAS UNE DEMANDE.
-       Michel, captures à l'appui : *« Ya le bouton démarrer une séance qui est arrivé »* reposait la
-       carte sous la réponse de Milo qui disait justement « c'est un bug d'affichage » — et chaque
-       plainte en ajoutait une de plus. Mesuré : cinq plaintes sur cinq passaient par la règle ②
-       ci-dessous (« une séance », sans verbe de demande). ⛔ Même étage que « pourquoi » : ces
-       marqueurs ne tuent QUE les règles sans verbe — *« prépare-moi une séance, le bouton peut
-       attendre »* reste une demande (règle ①). Et on ne touche pas à la règle ② elle-même : *« une
-       séance jambes stp »* ou *« ma séance du jour ? »* sont de vraies demandes. */
-    if(/\bbouton|\bb(?:u|eu)g\b|\baffich|\bapparu|\bapparai|\b(?:demande|veux|voulais|voudrais)\s+pas\b|\bpas\s+besoin\b/i.test(p)) return false;
+    /* 🔬 MILO-SEANCE-FP-01 (29-30/09/2026) — MASTER EST PRÉSERVÉ PAR DÉFAUT ; UN VETO ÉTROIT, PAS UN FILTRE.
+       Les règles ci-dessous sont celles d'avant FP-01, MOT POUR MOT : seul le texte qu'elles lisent
+       change, et seulement quand le message n'est QUE méta-discussion (le bouton « démarrer une
+       séance », la carte, l'affichage, un refus explicite). Voir `_sansMetaSeance`, juste en dessous.
+       ⛔ Aucune structure de demande n'est listée ici : une demande que master reconnaissait reste
+       reconnue parce qu'on ne touche PAS à master, pas parce qu'on l'aurait énumérée. Mesuré sur
+       47 511 phrases (`tools/corpus_fp01.js`) : MASTER VRAI → FINAL FAUX n'arrive QUE sur des
+       méta-discussions ; aucune nouvelle détection. La règle ① est avant ce point : un faux positif
+       qu'elle produit déjà (« le bouton lance une séance ») n'est pas corrigé ici (hors lot). */
+    const u=_sansMetaSeance(t,p);
     // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)
-    if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(t)) return true;
-    if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(t)) return true;
+    if(/\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\s+s[ée]ance\b/i.test(u)) return true;
+    if(/\bs[ée]ance\s+(du\s+jour|d'aujourd|de\s+ce\s+soir|de\s+ce\s+matin|pour\s+)/i.test(u)) return true;
     // ③ les formulations sans le mot « séance », que Michel emploie vraiment
-    if(/\b(je|on)\s+fais?\s+quoi\b/i.test(t)) return true;
-    if(/\bqu'est[- ]ce\s+que\s+(je|on)\s+(fais|fait)\b/i.test(t)) return true;
-    if(/\bon\s+s'entra[îi]ne\s+(quoi|comment)\b/i.test(t)) return true;
+    if(/\b(je|on)\s+fais?\s+quoi\b/i.test(u)) return true;
+    if(/\bqu'est[- ]ce\s+que\s+(je|on)\s+(fais|fait)\b/i.test(u)) return true;
+    if(/\bon\s+s'entra[îi]ne\s+(quoi|comment)\b/i.test(u)) return true;
     return false;
   }catch(e){ return false; }
+}
+/* 🔬 MILO-SEANCE-FP-01 — LE VETO ÉTROIT : on neutralise les STRUCTURES de méta-discussion, jamais un mot.
+   Ce qui a été démontré (terrain du 29/09, captures de Michel) : la carte séance s'affichait sous
+   *« Ya le bouton démarrer une séance qui est arrivé »* — la séance y est le NOM du bouton, pas l'objet
+   d'une demande. La 1ʳᵉ réponse (un garde « bouton / bug / affiché » qui rejetait tout le message) a
+   perdu de vraies demandes (« Je voudrais une séance, le bouton bug ») et a obligé à les ré-énumérer
+   une par une : 22 944 phrases de demande perdues sur le corpus différentiel. Décision de Michel
+   (30/09) : master préservé par défaut, veto seulement sur des structures démontrées.
+   ⭐ LES QUATRE STRUCTURES (testées sur `p`, sans accents ; « séance » y est toujours un complément) :
+     V1 la séance est le NOM ou le RÔLE d'un élément de l'écran : « bouton / carte » + (pour, de, du)
+        + au plus UN verbe (« démarrer », « faire », « refait ») + « une / la / ma … séance ».
+        ⛔ jamais « bug », « ok » au milieu : « la carte bug une séance stp » reste une demande ;
+     V2 un REFUS explicite d'une séance non qualifiée : « je ne demande pas une séance », « je veux pas
+        une séance maintenant », « pas besoin de la séance, … », « je t'ai pas demandé une séance ».
+        ⛔ « je veux pas une séance trop longue » n'est PAS un refus (qualifiée) : master décide ;
+     V3 un CONSTAT d'affichage : « tu m'as (encore) affiché une séance », « ça affiche une séance ».
+        ⛔ « tu m'affiches une séance ? » reste possible comme demande (même forme que « tu me prépares ») ;
+     V4 une séance SUJET d'un verbe d'apparition : « une séance apparaît / est apparue / s'affiche ».
+   ⭐ CE QUI EN FAIT UN VETO ET PAS UN FILTRE :
+     ① on neutralise la STRUCTURE (remplacée par « § », même longueur), pas le message : une vraie
+        demande ailleurs dans le message est toujours lue par les règles de master ;
+     ② et on ne neutralise RIEN s'il reste un verbe de demande ou de désir non nié (les verbes de la
+        règle ① et leurs formes, « veux », « voudrais », « aimerais ») : *« Le bouton pour faire une
+        séance bug, tu peux m'en préparer une ? »* reste une demande, comme sur master.
+        👉 Un veto ne s'applique qu'à un message QUI N'EST QUE méta-discussion ;
+     ③ si `p` et `t` n'ont pas la même longueur (texte décomposé), pas de veto : master, tel quel.
+   ⚠️ Cas AMBIGUS laissés à master, exprès (ce ne sont pas des structures démontrées) : « Quand je
+   veux une séance le bouton bug », « Je refais une séance et le bouton bug » restent des demandes. */
+function _sansMetaSeance(t,p){
+  if(p.length!==t.length) return t;
+  const D='(?:une|la|ma|nouvelle|prochaine|autre|petite|bonne)';   // les déterminants de la règle ②
+  const VETO=[
+    new RegExp("\\b(?:bouton|carte)s?\\s+(?:(?:pour|de|du|d['’])\\s*)?(?:(?:me|m['’])\\s*)?[\"«“]?\\s*(?:[a-z]+(?:er|ir|re|e|t)\\s+)?(?:"+D+"\\s+){1,2}seance\\b","gi"),
+    new RegExp("\\b(?:(?:demande|veux|voulais|voudrais|veut)\\s+(?:pas|plus|jamais)|pas\\s+besoin|(?:n|t|m)['’]\\s*ai\\s+(?:pas|jamais|rien)\\s+demande)\\s+(?:(?:de|d['’])\\s*)?(?:"+D+"\\s+){0,2}seance\\b(?=\\s*(?:$|[,.;:!?…)]|(?:maintenant|aujourd|ce\\s+soir|ce\\s+matin|merci|lol|mdr|je\\b|j['’]|c['’]|tu\\b|mais\\b|juste\\b|alors\\b)))","gi"),
+    new RegExp("\\b(?:(?:as|a|avez|ont)\\s+(?:encore\\s+|deja\\s+|toujours\\s+)?|(?:ca|cela|il|elle|l['’]\\s*app\\w*)\\s+(?:m['’]\\s*|me\\s+|nous\\s+)?(?:encore\\s+|toujours\\s+)?)(?:re)?affiche(?:e|es|nt)?\\s+(?:encore\\s+)?(?:"+D+"\\s+){1,2}seance\\b","gi"),
+    new RegExp("\\b(?:"+D+"\\s+){1,2}seance\\s+(?:qui\\s+)?(?:(?:est|s['’]est)\\s+)?(?:re)?(?:apparu\\w*|apparai\\w*|s['’]\\s*affiche\\w*|affichee?s?)","gi")
+  ];
+  let u=t, vu=false;
+  for(const re of VETO){ let m; while((m=re.exec(p))){ vu=true; u=u.slice(0,m.index)+'§'.repeat(m[0].length)+u.slice(m.index+m[0].length); } }
+  if(!vu) return t;
+  // ② un verbe de demande ou de désir non nié reste hors des structures : ce n'est pas QUE de la méta
+  const q=u.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(/(?<!\b(?:ne|n['’])\s*)\b(?:fai(?:s|re|tes)|refai(?:s|re|tes)|donne[rsz]?|propose[rsz]?|prepare[rsz]?|cree[rsz]?|construi(?:s|re)|monte[rsz]?|ecri(?:s|re)|lance[rsz]?|balance[rsz]?|envoie[sz]?|envoyer|genere[rsz]?|veux|voudrais|aimerais)\b(?!\s+(?:pas|plus|jamais)\b)/i.test(q)) return t;
+  return u;
 }
 
 // Détecteur DÉTERMINISTE, gratuit : « ce message ressemble-t-il à une séance ? ».

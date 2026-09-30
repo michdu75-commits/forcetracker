@@ -1,107 +1,84 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""CONTROLE NEGATIF — MILO-SEANCE-FP-01 (session-B) : les temoins B-CDVIII / B-CDIX savent-ils ROUGIR ?
+"""CONTROLE NEGATIF — MILO-SEANCE-FP-01 (session-B) : les temoins savent-ils ROUGIR ?
+Reecrit le 30/09/2026 pour l'architecture decidee par Michel : MASTER PRESERVE PAR DEFAUT, VETO ETROIT.
 
-[!!] SUR UN ARBRE CLONE, JAMAIS SUR LE DEPOT (BUGS.md §60).
+[!!] SUR UN ARBRE CLONE, JAMAIS SUR LE DEPOT (BUGS.md §60). Chaque ligne decrit la COPIE MUTEE, jamais
+     le comportement reel de l'application : « DANS LA COPIE MUTEE, … ».
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
-[!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE rougit : ecran conduit (E*, F*, H* :
-vrai champ, vrai bouton, vrai rechargement) ou valeur servie par l'app dans la page (A*..D*, G*). Un rouge
-des seuls temoins de SOURCE (①..④) ne suffit pas : la mutation est alors NON conforme.
-(29/09 : la 1re passe du cas mixte a rendu 14/23 parce que ce filtre s'arretait a F et ignorait
-les temoins G/H ajoutes le meme jour — un classement faux, pas une mutation qui passe.)
-M00 = coach.js tel qu'il etait AVANT le lot (master 7a71649e, ft-v1243), mot pour mot.
-M1..M8 = la liste demandee par Michel (M3a : une 1re M3 qui ne rendait PAS P1 faux — gardee, mesuree) · D1, D2 = deguisees · D3 = equivalente (doit RESTER verte)
-· X1..X5 = cas mixte demandes par Michel · X6..X8 = deguisees · X9 = equivalente (doit RESTER verte)
-· X10..X12 = la seance doit etre le COMPLEMENT du verbe (X10 = ma 1re ecriture, fenetre libre de 40
-  caracteres : de nouveaux faux positifs, mesures le 29/09 ; X12 deguisee) · X13 = equivalente
-· E00 = coach.js de 251e3044 · Y1..Y8 = extension finale du 30/09 (R1-R4, bouton pour refaire, resume,
-  plaintes « quand / si », recit « je refais ») · Y9, Y10 = deguisees · Y11, Y12 = equivalentes
-  (« DANS LA COPIE MUTEE » : chaque ligne decrit la copie temporaire, jamais le comportement reel.)
-· [negatif] = commentaire citant les motifs (doit RESTER vert).
+[!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE rougit : valeur servie dans la page
+     (A..D, G, I, L), ecran conduit (E, F, H, J, O) ou corpus differentiel execute (K). Un rouge des seuls
+     temoins de SOURCE (①..⑩) ne suffit pas : la mutation est alors NON conforme.
+Les mutations cassent le PRINCIPE, pas un mot :
+  M00 / B2 / B3 = des versions entieres remises (master ; les deux premieres strategies de la branche)
+  B1 = « bouton / bug / affiche present = rejet » (la strategie abandonnee)
+  P1..P3 = veto trop large (fenetre de 4 mots, garde « rien que de la meta » retire, veto avant la regle ①)
+  P4..P7 = une meta-discussion acceptee (« bouton pour faire », refus, affichage, apparition)
+  P8 = la fenetre libre de 40 caracteres rouverte · P9 = une demande historique perdue (desir non protege)
+  P10 = [deguisee] la regle ② relit le texte brut · P11..P13 = le CORPUS rendu aveugle
+  DG1, DG2 = deguisees · EQ1..EQ3 = equivalentes (doivent RESTER vertes) · [negatif] = commentaire
 Usage : python3 tools/mut_fp01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
 import os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = '7a71649e'
-AVANT_EXT = '251e3044'   # le correctif du cas mixte, AVANT l'extension finale du 30/09
 CO = 'coach.js'
-FICHIERS = (CO,)
+OUTIL = os.path.join('tools', 'corpus_fp01.js')
+FICHIERS = (CO, OUTIL)
 
-GARDE = ("    if(/\\bbouton|\\bb(?:u|eu)g\\b|\\baffich|\\bapparu|\\bapparai|\\b(?:demande|veux|voulais|voudrais)\\s+pas\\b|\\bpas\\s+besoin\\b/i.test(p)) return false;\n")
-VERBE = "if(/\\b(fai[st]|donne|propose|pr[ée]pare|cr[ée]e|construis|monte|[ée]cris|lance|balance|envoie|g[ée]n[èe]re)\\b"
-REGLE2 = "    // ② une séance nommée comme celle qu'on va faire (« une séance », « ma séance du jour »…)\n"
-AMBIGU = "    if(/\\bpourquoi\\b(?!\\s+pas\\b)|\\bne\\s+compte\\s+pas\\b|\\bdebrief/i.test(p)) return false;\n"
-REGLE2_LIGNE = "    if(/\\b(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+s[ée]ance\\b/i.test(t)) return true;\n"
-R1_FIN = "(s[ée]ance|entra[îi]nement|programme|prog)\\b/i.test(t)) return true;"
-STRUCT = [l for l in open(os.path.join(SRC, 'coach.js'), encoding='utf-8').read().split('\n') if 'peux[- ]tu' in l and 'return true' in l][0] + '\n'
-AMBIGU_LIGNE = "    if(/\\bpourquoi\\b(?!\\s+pas\\b)|\\bne\\s+compte\\s+pas\\b|\\bdebrief/i.test(p)) return false;\n"
-DETS_SEANCE = "\\s+(?:(?:une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+){1,2}seance\\b"
-EXT = [l for l in open(os.path.join(SRC, 'coach.js'), encoding='utf-8').read().split('\n') if 'je\\s+veux' in l and 'return true' in l][0] + '\n'
-QUESTION = "    else if (_dsDemande) _appendSeanceQuestion(reply, _derniereBulleCoach(), _msgA);\n"
-R1_COMMENT = "    // ① un verbe de demande suivi, dans la même phrase, du mot séance / entraînement / programme\n"
+co = open(os.path.join(SRC, CO), encoding='utf-8').read()
+lignes = co.split('\n')
+def ligne(pred, quoi):
+    l = [x for x in lignes if pred(x)]
+    if len(l) != 1:
+        raise SystemExit('ancre %s : %d ligne(s)' % (quoi, len(l)))
+    return l[0] + '\n'
+APPEL = ligne(lambda x: x.strip() == 'const u=_sansMetaSeance(t,p);', 'appel')
+ALIGN = ligne(lambda x: x.strip() == 'if(p.length!==t.length) return t;', 'alignement')
+V1 = ligne(lambda x: 'new RegExp(' in x and 'bouton|carte' in x, 'V1')
+V2 = ligne(lambda x: 'new RegExp(' in x and 'demande|veux' in x, 'V2')
+V3 = ligne(lambda x: 'new RegExp(' in x and 'affiche(?:e' in x, 'V3')
+V4 = ligne(lambda x: 'new RegExp(' in x and 'apparu' in x, 'V4')
+SIGNAL = ligne(lambda x: 'return t;' in x and 'voudrais' in x and '.test(q)' in x, 'signal')
+VERBE = ligne(lambda x: '(fai[st]|donne|' in x, 'regle 1')
+R2 = ligne(lambda x: '(une|ma|la|nouvelle|prochaine|autre|petite|bonne)\\s+s[ée]ance' in x and 'return true' in x, 'regle 2')
+EXEC = '  for(const re of VETO){ let m; while((m=re.exec(p))){'
+SLOT = "(?:[a-z]+(?:er|ir|re|e|t)\\\\s+)?"
+BOUTON_REJET = "    if(/\\bbouton|\\bb(?:u|eu)g\\b|\\baffich/i.test(p)) return false;\n"
 
 MUT = [
-    ("M00 code d'AVANT le lot remis mot pour mot (coach.js de 7a71649e)", 'AVANT', 'GARDE'),
-    ('M1 retour a la logique permissive : le garde « bouton / affiche / negation » n\'existe plus', [(CO, GARDE, '')], 'GARDE'),
-    ('M2 le garde est la mais desactive (condition jamais vraie)', [(CO, GARDE, GARDE.replace('if(/', 'if(false&&/'))], 'GARDE'),
-    ('M3 correctif trop large : regle ② supprimee et seance « qualifiee » exigee (« Fais-moi une seance » devient faux)',
-     [(CO, REGLE2_LIGNE, ''), (CO, R1_FIN, R1_FIN.replace('\\b/i.test(t))', '\\s+\\S/i.test(t))'))], 'GARDE'),
-    ('M3a « fais » retire des verbes (sans effet sur « Fais-moi une seance », rattrapee par la regle ② : mesure le 29/09)',
-     [(CO, VERBE, VERBE.replace('fai[st]|', ''))], 'GARDE'),
-    ('M4 correctif trop large : le garde passe AVANT la regle a verbe et prend une duree pour une discussion',
-     [(CO, GARDE, ''), (CO, R1_COMMENT, GARDE.replace('\\bpas\\s+besoin\\b', '\\bpas\\s+besoin\\b|\\bde\\s+\\d+') + R1_COMMENT)], 'GARDE'),
-    ('M5 le booleen est juste mais la carte s\'affiche quand meme (repli sur le mot « seance »)',
-     [(CO, QUESTION, QUESTION.replace('else if (_dsDemande)', 'else if (_dsDemande || /s[ée]ance/i.test(msg))'))], 'GARDE'),
-    ('M6 une plainte contenant « bouton » repasse en positif', [(CO, GARDE, GARDE.replace('\\bbouton|', ''))], 'GARDE'),
-    ('M7 « je ne demande pas une seance » repasse en positif (negation retiree du garde)',
-     [(CO, GARDE, GARDE.replace('\\b(?:demande|veux|voulais|voudrais)\\s+pas\\b|', ''))], 'GARDE'),
-    ('M8 une ancienne exclusion utile est cassee (« pourquoi »)', [(CO, AMBIGU, AMBIGU.replace('\\bpourquoi\\b(?!\\s+pas\\b)|', ''))], 'GARDE'),
-    ('D1 [deguisee] le garde teste le texte AVEC accents (« apparaît » ne mord plus)', [(CO, GARDE, GARDE.replace('.test(p))', '.test(t))'))], 'GARDE'),
-    ('D2 [deguisee] le garde arrive trop tard (apres la regle « une seance »)',
-     [(CO, GARDE, ''), (CO, "    if(/\\bs[ée]ance\\s+(du\\s+jour", GARDE + "    if(/\\bs[ée]ance\\s+(du\\s+jour")], 'GARDE'),
-    ('D3 [equivalente] « boutons? » au lieu de « bouton » : doit RESTER vert', [(CO, GARDE, GARDE.replace('\\bbouton|', '\\bboutons?|'))], 'OK'),
-    ('X1 perte du cas « tu peux me FAIRE » (faire retire de la structure)', [(CO, STRUCT, STRUCT.replace('(?:faire|', '(?:'))], 'GARDE'),
-    ('X2 perte du cas « tu peux me PREPARER » (preparer retire de la structure)', [(CO, STRUCT, STRUCT.replace('|preparer|', '|'))], 'GARDE'),
-    ('X3 ajout trop large de « faire » dans la liste GENERALE des verbes (regle ①)', [(CO, VERBE, VERBE.replace('fai[st]|', 'fai[st]|faire|'))], 'GARDE'),
-    ('X4 ajout trop large de « preparer » dans la liste GENERALE des verbes (regle ①)', [(CO, VERBE, VERBE.replace('pr[ée]pare|', 'pr[ée]pare|pr[ée]parer|'))], 'GARDE'),
-    ('X5 retour du faux positif « bouton pour faire une seance » (structure sans modal ni « me »)',
-     [(CO, STRUCT, STRUCT.replace("(?:tu\\s+(?:peux|pourrais)|peux[- ]tu|pourrais[- ]tu)\\s+(?:me\\s+|m['’]\\s*)", ''))], 'GARDE'),
-    ('X6 [deguisee] la structure arrive APRES le garde (trop tard pour le cas mixte)',
-     [(CO, STRUCT, ''), (CO, GARDE, GARDE + STRUCT)], 'GARDE'),
-    ('X7 [deguisee] la structure testee sur le texte AVEC accents (« preparer » ne mord plus sur « préparer »)',
-     [(CO, STRUCT, STRUCT.replace('.test(p))', '.test(t))'))], 'GARDE'),
-    ('X8 [deguisee] la structure remontee AVANT le niveau « pourquoi » (« Pourquoi tu peux me faire une seance… » devient une demande)',
-     [(CO, STRUCT, ''), (CO, AMBIGU_LIGNE, STRUCT + AMBIGU_LIGNE)], 'GARDE'),
-    ('X9 [equivalente] « peux[ -]tu » au lieu de « peux[- ]tu » : doit RESTER vert', [(CO, STRUCT, STRUCT.replace('peux[- ]tu', 'peux[ -]tu'))], 'OK'),
-    ('X10 la 1re ecriture : 40 caracteres libres entre le verbe et « seance » (« Tu peux me faire un resume de ma derniere seance ? » devient une demande)',
-     [(CO, STRUCT, STRUCT.replace(DETS_SEANCE, '\\b[^.?!\\n]{0,40}\\bseance\\b'))], 'GARDE'),
-    ('X11 « ta » ajoute aux determinants (« Tu peux me faire ta seance ? », non detectee avant FP-01, devient une demande)',
-     [(CO, STRUCT, STRUCT.replace('(?:(?:une|ma|la|', '(?:(?:une|ma|ta|la|'))], 'GARDE'),
-    ('X12 [deguisee] une fenetre libre AVANT les determinants (« …un resume de la seance ? le bouton bug » redevient une demande)',
-     [(CO, STRUCT, STRUCT.replace('\\s+(?:(?:une|', '\\b[^.?!\\n]{0,40}?\\s(?:(?:une|'))], 'GARDE'),
-    ('X13 [equivalente] determinants dans un autre ordre (« ma|une » au lieu de « une|ma ») : doit RESTER vert',
-     [(CO, STRUCT, STRUCT.replace('(?:(?:une|ma|la|', '(?:(?:ma|une|la|'))], 'OK'),
-    ('E00 coach.js de 251e3044 (AVANT l\'extension finale) : R1-R4 perdues', 'AVANT_EXT', 'GARDE'),
-    ('Y1 R1 casse : « je veux » retire de la regle ①ter', [(CO, EXT, EXT.replace('je\\s+veux|', ''))], 'GARDE'),
-    ('Y2 R2 casse : « tu me prepares » retire (prepares ote de la liste conjuguee)', [(CO, EXT, EXT.replace('(?:prepares|', '(?:'))], 'GARDE'),
-    ('Y3 R3 casse : « refais-moi » retire de la regle ①ter', [(CO, EXT, EXT.replace('|refais[- ]moi)', ')'))], 'GARDE'),
-    ('Y4 R4 casse : « refaire » retire de la structure (modal + me)', [(CO, STRUCT, STRUCT.replace('(?:faire|refaire|', '(?:faire|'))], 'GARDE'),
-    ('Y5 garde « bouton pour refaire une seance » cassee : « refaire » ajoute a la liste GENERALE (regle ①)', [(CO, VERBE, VERBE.replace('fai[st]|', 'fai[st]|refaire|'))], 'GARDE'),
-    ('Y6 garde « resume de ma derniere seance » cassee dans ①ter : fenetre libre de 40 caracteres apres le verbe', [(CO, EXT, EXT.replace(DETS_SEANCE, '\\b[^.?!\\n]{0,40}\\bseance\\b'))], 'GARDE'),
-    ('Y7 garde « quand / lorsque / si / fois que » retire (les plaintes redeviennent des demandes)', [(CO, EXT, EXT.replace('(?<!\\b(?:quand|lorsque|si|fois\\s+que)\\b[^.?!,;\\n]*)', ''))], 'GARDE'),
-    ('Y8 « refais » accepte sans « -moi » (« Je refais une seance et le bouton bug », un recit, devient une demande)', [(CO, EXT, EXT.replace('|refais[- ]moi)', '|refais(?:[- ]moi)?)'))], 'GARDE'),
-    ('Y9 [deguisee] ①ter testee sur le texte AVEC accents (« prepares » ne mord plus sur « prépares »)', [(CO, EXT, EXT.replace('.test(p))', '.test(t))'))], 'GARDE'),
-    ('Y10 [deguisee] ①ter rangee APRES le garde (trop tard pour le cas mixte)', [(CO, EXT, ''), (CO, GARDE, GARDE + EXT)], 'GARDE'),
-    ('Y11 [equivalente] conjugues dans un autre ordre (« refais|prepares ») : doit RESTER vert', [(CO, EXT, EXT.replace('(?:prepares|refais|', '(?:refais|prepares|'))], 'OK'),
-    ('Y12 [equivalente] garde dans un autre ordre (« lorsque|quand ») : doit RESTER vert', [(CO, EXT, EXT.replace('(?:quand|lorsque|', '(?:lorsque|quand|'))], 'OK'),
-    ('[negatif] commentaire citant les motifs cherches', [(CO, GARDE, GARDE + "    // bouton · bug · affiché · apparaît · je ne demande pas · pas besoin — c'était le faux positif\n")], 'OK'),
+    ("M00 master remis mot pour mot (coach.js de 7a71649e) : les meta-discussions redeviennent des demandes", 'REV:' + AVANT, 'GARDE'),
+    ('B1 strategie abandonnee : « bouton / bug / affiche » present = rejet du message entier', [(CO, APPEL, BOUTON_REJET + APPEL)], 'GARDE'),
+    ('B2 la 1re strategie FP-01 remise (coach.js de 5158c582 : garde large)', 'REV:5158c582', 'GARDE'),
+    ('B3 la 2e strategie FP-01 remise (coach.js de b45b2e2a : garde large + structures qui sauvent)', 'REV:b45b2e2a', 'GARDE'),
+    ('P1 veto trop large : jusqu\'a 4 mots quelconques entre « bouton » et « seance »', [(CO, V1, V1.replace(SLOT, "(?:\\\\S+\\\\s+){0,4}"))], 'GARDE'),
+    ('P2 veto trop large : le garde « rien que de la meta » est retire (un verbe de demande restant n\'arrete plus le veto)', [(CO, SIGNAL, '')], 'GARDE'),
+    ('P3 veto trop large : applique AVANT la regle ① (« le bouton lance une seance », hors lot, est corrige)',
+     [(CO, APPEL, ''), (CO, VERBE, APPEL + VERBE.replace('.test(t)) return true;', '.test(u)) return true;'))], 'GARDE'),
+    ('P4 meta acceptee : « bouton pour faire une seance » (« pour » ote de V1)', [(CO, V1, V1.replace('(?:pour|de|du|', '(?:de|du|'))], 'GARDE'),
+    ('P5 meta acceptee : le refus (V2) retire', [(CO, V2, '')], 'GARDE'),
+    ('P6 meta acceptee : le constat d\'affichage (V3) retire', [(CO, V3, '')], 'GARDE'),
+    ('P7 meta acceptee : l\'apparition (V4) retiree', [(CO, V4, '')], 'GARDE'),
+    ('P8 la fenetre libre de 40 caracteres rouverte (entre « bouton » et « seance »)', [(CO, V1, V1.replace(SLOT, "[^.?!\\\\n]{0,40}"))], 'GARDE'),
+    ('P9 demande historique perdue : les verbes de desir ne protegent plus (« …, j\'en voudrais une » perdue)', [(CO, SIGNAL, SIGNAL.replace('|veux|voudrais|aimerais', ''))], 'GARDE'),
+    ('P10 [deguisee] la regle ② relit le texte brut `t` (le veto n\'a plus d\'effet sur elle)', [(CO, R2, R2.replace('.test(u))', '.test(t))'))], 'GARDE'),
+    ('P11 CORPUS AVEUGLE : toute perte classee « veto justifie » (A), jamais « regression » (B)', [(OUTIL, "(c.lab === 'M' ? r.A : r.B)", 'r.A')], 'GARDE'),
+    ('P12 CORPUS AVEUGLE : la branche comparee a elle-meme au lieu de master', [(OUTIL, 'const r = differentiel(fMaster, fFinal);', 'const r = differentiel(fFinal, fFinal);')], 'GARDE'),
+    ('P13 CORPUS AVEUGLE : la reference n\'est plus master mais l\'arbre lui-meme', [(OUTIL, 'const fMaster = fnOf(srcOf(REF));', "const fMaster = fnOf(srcOf('WT'));")], 'GARDE'),
+    ('DG1 [deguisee] structures cherchees sur le texte AVEC accents (« DÉMARRER UNE SÉANCE » ne mord plus)', [(CO, EXEC, EXEC.replace('re.exec(p)', 're.exec(t)'))], 'GARDE'),
+    ('DG2 [deguisee] garde d\'alignement inverse (plus aucun veto sur un texte normal)', [(CO, ALIGN, ALIGN.replace('!==', '==='))], 'GARDE'),
+    ('EQ1 [equivalente] V2 avant V1 dans la liste : doit RESTER vert', [(CO, V1 + V2, V2 + V1)], 'OK'),
+    ('EQ2 [equivalente] « # » au lieu de « § » pour neutraliser : doit RESTER vert', [(CO, "'§'.repeat(", "'#'.repeat(")], 'OK'),
+    ('EQ3 [equivalente] determinants dans un autre ordre (« la|une|ma ») : doit RESTER vert', [(CO, "const D='(?:une|la|ma|", "const D='(?:la|une|ma|")], 'OK'),
+    ('[negatif] commentaire citant les motifs cherches', [(CO, APPEL, APPEL + "    // bouton · bug · affiché · je ne demande pas · le bouton pour faire une séance\n")], 'OK'),
 ]
 
 
 def banc(arbre):
-    r = subprocess.run(['node', 'tools/banc_fp01.js'], cwd=arbre, capture_output=True, text=True, timeout=1800,
-                       env=dict(os.environ, TZ='Europe/Paris'))
+    # le corpus (temoins K) lit l'historique git : le clone n'a pas de .git, on lui prete celui du depot
+    env = dict(os.environ, TZ='Europe/Paris', GIT_DIR=os.path.join(SRC, '.git'))
+    r = subprocess.run(['node', 'tools/banc_fp01.js'], cwd=arbre, capture_output=True, text=True, timeout=1800, env=env)
     out = r.stdout + r.stderr
     rouges = [l.strip()[:120] for l in out.split('\n') if 'ROUGE' in l or 'PLANTAGE' in l]
     if r.returncode not in (0, 1) and not rouges:
@@ -110,8 +87,8 @@ def banc(arbre):
 
 
 def executes(rouges):
-    # temoins EXECUTES : ecran conduit (E, F, H, J) ou valeur servie dans la page (A, B, C, D, G, I)
-    return [x for x in rouges if re.match(r'❌ ROUGE [A-J]\d', x)]
+    # temoins EXECUTES : toute etiquette « lettre + chiffre » (les temoins de source sont ①..⑩)
+    return [x for x in rouges if re.match(r'❌ ROUGE [A-Z]\d', x)]
 
 
 def cloner():
@@ -123,7 +100,6 @@ def cloner():
 
 def main():
     filtres = [f for f in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if f]
-    avant = {f: subprocess.run(['git', 'show', AVANT + ':' + f], cwd=SRC, capture_output=True, text=True).stdout for f in FICHIERS}
     tmp0, a0 = cloner()
     rouges = banc(a0)
     shutil.rmtree(tmp0, ignore_errors=True)
@@ -136,17 +112,12 @@ def main():
             continue
         total += 1
         tmp, arbre = cloner()
-        if remplacements == 'AVANT_EXT':
-            av = subprocess.run(['git', 'show', AVANT_EXT + ':' + CO], cwd=SRC, capture_output=True, text=True).stdout
+        if isinstance(remplacements, str) and remplacements.startswith('REV:'):
+            rev = remplacements[4:]
+            av = subprocess.run(['git', 'show', rev + ':' + CO], cwd=SRC, capture_output=True, text=True).stdout
             if not av or av == open(os.path.join(arbre, CO), encoding='utf-8').read():
-                print('  INVALIDE  %s' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
+                print('  INVALIDE  %s (code de %s introuvable ou identique)' % (nom, rev)); shutil.rmtree(tmp, ignore_errors=True); continue
             open(os.path.join(arbre, CO), 'w', encoding='utf-8').write(av)
-        elif remplacements == 'AVANT':
-            cur = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
-            if any(not avant[f] for f in FICHIERS) or all(avant[f] == cur[f] for f in FICHIERS):
-                print('  INVALIDE  %s (code d\'avant introuvable ou identique)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
-            for f in FICHIERS:
-                open(os.path.join(arbre, f), 'w', encoding='utf-8').write(avant[f])
         else:
             srcs = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
             invalide = []
@@ -163,9 +134,9 @@ def main():
         ex = executes(rouges)
         obtenu = 'GARDE' if ex else ('SOURCE' if rouges else 'OK')
         ok = obtenu == attendu; conformes += ok
-        cond = [x for x in ex if re.match(r'❌ ROUGE [EFHJ]\d', x)]
+        cond = [x for x in ex if re.match(r'❌ ROUGE [EFHJOK]\d', x)]
         montre = (cond or ex or rouges or [''])[0]
-        print('  %s  %-100s %-6s %2d rouge(s), %2d execute(s) dont %2d ecran  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), len(ex), len(cond), montre))
+        print('  %s  DANS LA COPIE MUTEE — %-96s %-6s %2d rouge(s), %2d execute(s) dont %2d ecran/corpus  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), len(ex), len(cond), montre))
         if os.environ.get('MUT_DETAIL'):
             for r in rouges:
                 if r != montre:
@@ -176,4 +147,4 @@ def main():
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    sys.exit(main())
