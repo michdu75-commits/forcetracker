@@ -34,17 +34,12 @@ MUT = [
      'rouge', 'PROTÉINES : ratio force modifié'),
     ('M07', ST, "fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:1.0,",
      "fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:0.9,", 'rouge', 'LIPIDES : ratio force modifié'),
-    # ⚖️ 30/09/2026 (lot Nutrition 1, B3) : l'ancre suit la ligne ajoutée après le résidu ; elle reste unique
-    # (la même formule existe dans `_macrosDansLaCible`, d'où le contexte).
-    ('M08', ST, "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  if(prot_g*4+fat_g*9>kcal) return _macrosDansLaCible",
-     "  const carbs_g=Math.min(Math.round((S.bw||0)*6),Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4)));\n  if(prot_g*4+fat_g*9>kcal) return _macrosDansLaCible",
+    ('M08', ST, "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  return{prot_g,fat_g,carbs_g};\n}",
+     "  const carbs_g=Math.min(Math.round((S.bw||0)*6),Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4)));\n  return{prot_g,fat_g,carbs_g};\n}",
      'rouge', 'DÉGUISÉE : un PLAFOND de glucides posé sans décision (6 g/kg)'),
-    # ⚖️ M09 DEVIENT ÉQUIVALENTE le 30/09/2026 (B3) : sur ce chemin le résidu n'est plus jamais négatif —
-    # dès que 4P + 9L dépasse la cible, on part dans `_macrosDansLaCible`. Le risque « glucides négatifs »
-    # a déménagé là-bas, et c'est `tools/mut_nutri_b3.py` (M15) qui le garde.
-    ('M09', ST, "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  if(prot_g*4+fat_g*9>kcal) return _macrosDansLaCible",
-     "  const carbs_g=Math.round((kcal-prot_g*4-fat_g*9)/4);\n  if(prot_g*4+fat_g*9>kcal) return _macrosDansLaCible",
-     'vert', 'ÉQUIVALENTE depuis B3 : résidu sans borne, mais jamais négatif sur ce chemin'),
+    ('M09', ST, "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  return{prot_g,fat_g,carbs_g};\n}",
+     "  const carbs_g=Math.round((kcal-prot_g*4-fat_g*9)/4);\n  return{prot_g,fat_g,carbs_g};\n}",
+     'rouge', 'RÉSIDU sans borne : glucides négatifs possibles'),
     ('M10', ST, "  const calculable=(calories!=null)&&(_nbUtil(S.bw)!=null);",
      "  const calculable=(calories!=null);", 'rouge', 'REPLI : macros calculées sans poids'),
     ('M11', AP, "  const dose = Math.round((S.bw || 80) * 0.4);",

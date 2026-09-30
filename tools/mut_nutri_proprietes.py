@@ -30,11 +30,8 @@ MUT = [
     ('M03', ST, "{muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}",
      "{muscle:2.2,perte:2.5,recomp:2.6,force:1.8,equilibre:2.0,endurance:1.7}",
      'rouge', "le ratio de proteines de l objectif force a bouge (T01)"),
-    # 30/09/2026 (B3) : la formule existe maintenant deux fois ; sur le chemin habituel le reste n'est plus jamais
-    # negatif (4P + 9L > cible part dans `_macrosDansLaCible`). Le risque vit dans le cas d'ECART declare,
-    # d'ou l'ancre, et les cibles manuelles basses ajoutees a l'invariant « aucune macro negative ».
-    ('M04', ST, "const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  return{prot_g,fat_g,carbs_g,ajuste:",
-     "const carbs_g=Math.round((kcal-prot_g*4-fat_g*9)/4);\n  return{prot_g,fat_g,carbs_g,ajuste:",
+    ('M04', ST, "const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));",
+     "const carbs_g=Math.round((kcal-prot_g*4-fat_g*9)/4);",
      'rouge', "l ecretage saute : les glucides deviennent NEGATIFS"),
     # ⭐⭐ LA CORRECTION PROPOSEE, SIMULEE : le temoin du defaut doit la voir arriver.
     ('M05', ST, "  const prot_g=Math.round((S.bw||0)*protRatio);\n"

@@ -2541,34 +2541,28 @@ function _kcalPreview(){
   const mm=(typeof macrosForKcal==='function')?macrosForKcal(v):{prot_g:0,carbs_g:0,fat_g:0};
   const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val+' g';};
   set('kcal-pv-prot',mm.prot_g);set('kcal-pv-carb',mm.carbs_g);set('kcal-pv-fat',mm.fat_g);
-  /* ⚖️ B3 : dit, AU MOMENT où la personne tape son chiffre, que ses macros ont dû être resserrées
-     ou qu'elles dépassent. Seulement pour un chiffre qui sera réellement enregistré (800-6000). */
+  /* ⚖️ B3 : dès la frappe, si ce chiffre est incompatible avec les macros qu'il donne, on le dit —
+     un chiffre accepté en silence se lirait « validé ». Seulement pour une valeur enregistrable. */
   const nt=document.getElementById('kcal-pv-note');
-  if(nt) nt.innerHTML=(v>=800&&v<=6000)?_ajusteMacrosHTML(mm,v):'';
-}
-/* ⚖️ B3 (30/09/2026) — LA PHRASE QUI DIT CE QUE L'APP A FAIT DES MACROS QUAND ELLES NE TENAIENT PAS.
-   Lit `ajuste` (state.js `_macrosDansLaCible`, ou le kéto) : ⛔ aucun calcul refait ici (R2).
-   Vide pour tout profil dont les macros tiennent — on n'explique rien qui n'arrive pas.
-   Ton neutre, pas de rouge (Constitution P21) : c'est une information, pas un reproche. */
-function _ajusteMacrosHTML(m,kcal){
-  const a=m&&m.ajuste; if(!a||kcal==null) return '';
-  const n=v=>Math.round(v).toLocaleString('fr-FR');
-  let txt;
-  if(a.depasse>0){
-    const keto=(S.foodMode==='keto'||S.keto);
-    txt='⚠️ À <b>'+n(kcal)+' kcal</b>, '+(keto
-        ?'le minimum de protéines que l\'app garde (0,8 g/kg) et les glucides du kéto'
-        :'même les minimums que l\'app garde — protéines 0,8 g/kg et lipides 0,6 g/kg —')
-      +' font déjà <b>'+n(kcal+a.depasse)+' kcal</b> : tes macros dépassent ta cible de <b>'+n(a.depasse)+' kcal</b>. '
-      +'L\'app ne descend pas plus bas, et ne touche pas à ton chiffre.';
-  } else {
-    const bouts=[];
-    if(a.fat_de!==m.fat_g) bouts.push('tes lipides ('+n(a.fat_de)+' → '+n(m.fat_g)+' g)');
-    if(a.prot_de!==m.prot_g) bouts.push('tes protéines ('+n(a.prot_de)+' → '+n(m.prot_g)+' g)');
-    if(!bouts.length) return '';
-    txt='⚖️ Tes protéines et lipides habituels ne tenaient pas dans <b>'+n(kcal)+' kcal</b> : l\'app a baissé '
-      +bouts.join(' puis ')+' pour que le total tombe juste.';
+  if(nt){
+    const inc=(v>=800&&v<=6000&&typeof _cibleIncompatible==='function')?_cibleIncompatible(mm.prot_g,mm.fat_g,mm.carbs_g,v):null;
+    nt.innerHTML=inc?_incompatibleHTML({calories:v,incompatible:{ecart:inc.ecart,macros:inc.macros,autre:null}}):'';
   }
+}
+/* ⚖️ B3 (30/09/2026, décision de Michel) — QUAND LA CIBLE EST INCOMPATIBLE AVEC LES RÈGLES MACROS
+   ACTUELLES, L'ÉCRAN LE DIT. Rien n'est recalculé ici : tout vient de `calcMacros(...).incompatible`
+   (state.js `_cibleIncompatible`) — R2. Vide dans tous les autres cas : on n'explique rien qui n'arrive
+   pas. Ton factuel, pas de reproche (Constitution P21). */
+function _incompatibleHTML(m){
+  const i=m&&m.incompatible; if(!i||m.calories==null) return '';
+  const n=v=>Math.round(v).toLocaleString('fr-FR');
+  const jour={repos:'un jour de repos',seance:'un jour de séance'};
+  let txt='⚠️ <b>Ta cible de '+n(m.calories)+' kcal est incompatible avec les règles de répartition actuelles.</b> ';
+  if(i.ecart>0) txt+='Tes protéines et lipides (calculés sur ton poids et ton objectif) font déjà <b>'+n(i.macros)
+    +' kcal</b>, soit <b>'+n(i.ecart)+' kcal de plus</b> que la cible — les glucides tombent à 0. ';
+  if(i.autre) txt+=(i.ecart>0?'Et ':'Aujourd\'hui ça tient, mais ')+jour[i.autre.jour]+', tes macros font <b>'+n(i.autre.macros)
+    +' kcal</b> (<b>+'+n(i.autre.ecart)+'</b>). ';
+  txt+=(i.ecart>0?'Ces macros':'Ce jour-là, les macros')+' ne respectent donc PAS la cible ; l\'app ne modifie ni l\'une ni les autres.';
   return '<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:9px 11px;margin-top:10px;">'
     +'<span style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+txt+'</span></div>';
 }
@@ -2581,7 +2575,10 @@ function saveKcalEdit(){
      ce commentaire écrit en fin de ligne avait avalé persist/closeKcalEdit/renderNutrition (B-CCCLXVI). */
   S.manualKcal=_kcalManuelleValide(v);
   persist();closeKcalEdit();renderNutrition();
-  toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
+  /* ⚖️ B3 : un ✅ dirait « validé » — pas quand les macros imposent davantage que ce chiffre. */
+  const _inc=(calcMacros(S.nutritionPhase)||{}).incompatible;
+  if(_inc&&_inc.ecart>0) toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal — incompatible avec tes macros (+'+_inc.ecart.toLocaleString('fr-FR')+' kcal), détail dans Nutrition','info');
+  else toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
 }
 function resetKcalAuto(){
   S.manualKcal=0;persist();closeKcalEdit();renderNutrition();
@@ -3433,9 +3430,8 @@ function renderNutrition(){try{
   document.getElementById('m-prot').textContent=_nbAff(macros.prot_g);
   document.getElementById('m-carbs').textContent=_nbAff(macros.carbs_g);
   document.getElementById('m-fat').textContent=_nbAff(macros.fat_g);
-  /* ⚖️ B3 : sous les grammes, la raison pour laquelle ils ne sont pas « poids × objectif », ou
-     l'écart avec la cible quand même les minimums ne tiennent pas (cible tapée à la main). */
-  {const _aj=document.getElementById('nu-ajuste'); if(_aj)_aj.innerHTML=_ajusteMacrosHTML(macros,macros.calories);}
+  /* ⚖️ B3 : sous les grammes, l'écart avec la cible quand elle est incompatible avec eux. */
+  {const _inc=document.getElementById('nu-incompatible'); if(_inc)_inc.innerHTML=_incompatibleHTML(macros);}
   /* 🍚 ON DIT POURQUOI LES GLUCIDES NE SONT PAS LES MÊMES QU'HIER (21/08/2026).
      ⛔ Ce n'est pas décoratif : sans cette ligne, la répartition change d'un jour à l'autre
      SANS RAISON VISIBLE — et un chiffre qui bouge tout seul se lit comme un bug, ou pire, se

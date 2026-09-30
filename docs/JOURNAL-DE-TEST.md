@@ -3272,13 +3272,11 @@ du **juge humain**.
 ↪️ **Suite (30/09, architecture finale, testé, non publié, D-032)** : « master préservé par défaut » — un message n'est plus retiré que s'il n'est QUE méta-discussion (une structure où « séance » est nommée, refusée ou constatée, et rien d'autre que de la plainte). Toutes les formes perdues ci-dessus sont récupérées, et les demandes elliptiques aussi (*« Le bouton démarrer une séance bug, une autre stp »* — perdues par une version intermédiaire, trouvé avant les tests longs). ❓ **Laissé à master, noté** : *« Quand je veux une séance le bouton bug »*, *« Je refais une séance et le bouton bug »* (récit ou plainte ? aucune structure méta) ; *« Le bouton démarrer ma séance du jour bug »* reste détectée (« jour » hors du vocabulaire de plainte : faux positif de master non corrigé). Vérifiable par du code : `tools/corpus_fp01.js`.
 ↪️ **Suite (30/09, contre-vérification indépendante, aucun bloqueur)** : 6 formulations hors corpus, vraies sur master, sont rejetées par FP-01 — « Je peux voir le bouton démarrer une séance ? », « Où est le bouton démarrer une séance ? », « Oui, le bouton démarrer une séance », « Ok le bouton démarrer une séance maintenant », « Je peux cliquer sur le bouton démarrer une séance ? », « Le bouton démarrer une séance, alors ? ». **Décision de Michel : CAS AMBIGUS VOLONTAIREMENT REJETÉS** — ils parlent du bouton / de l'interface, pas une demande nette de séance ; ni bug restant, ni régression non justifiée, ni dette bloquante. ⛔ Ne pas relancer une chasse aux formulations sur ce point. Le correctif privilégie la conservation du comportement historique de master. Les messages entièrement interprétés comme méta-discussion sur l'interface peuvent être rejetés, y compris certains cas ambigus centrés sur le bouton.
 
-### 🟡 B3 : MILO EXPLIQUE-T-IL DES MACROS RESSERRÉES SANS LES CONTREDIRE ? (30/09/2026, lot Nutrition 1 — NON vérifié en réel)
-Depuis le lot Nutrition 1 (branche, non publiée), un profil lourd en perte (130 kg, décharge) reçoit 307 g de protéines,
-78 g de lipides et **~1 g de glucides**, pour tenir exactement dans sa cible ; Milo reçoit une ligne qui dit ce que l'app a
-réduit. ❓ **Doute 1** : Milo va-t-il conseiller « des glucides autour de l'entraînement » (ce qui dépasse la cible), ou
-recalculer lui-même « 2,5 g/kg » de protéines (325 g) et contredire l'app ? Vérifiable par du code : ✅ en partie — un chiffre
-de protéines ou de glucides cité qui diffère du contexte (candidat banc **R34**, jamais lancé : 0 appel autorisé).
-❓ **Doute 2** : une cible tapée à la main sous les minimums fait recevoir à Milo « CES MACROS DÉPASSENT LA CIBLE DE N kcal ».
-La présente-t-il comme tenable, ou moralise-t-il (Constitution P21) ? Le premier est vérifiable par du code ; le ton relève
-du **juge humain**. État : **à trier**.
-
+### 🟡 B3 : MILO RESPECTE-T-IL « CES MACROS NE RESPECTENT PAS LA CIBLE » ? (30/09/2026, lot Nutrition 1 — NON vérifié en réel)
+Depuis le lot Nutrition 1 (D-034, branche non publiée), quand 4P + 9L dépasse la cible (130 kg en perte ; ou 800 kcal
+tapées à la main), Milo reçoit « ⚠️ CIBLE INCOMPATIBLE AVEC LES RÈGLES MACROS ACTUELLES … (+N) … ne les présente jamais
+comme la respectant ». ❓ **Doute 1** : dira-t-il quand même « tes 325 g de protéines tiennent dans tes 1 932 kcal » ?
+Vérifiable par du code : ✅ (une phrase qui présente la cible comme atteinte avec ces macros — candidat banc **R34**,
+jamais lancé : 0 appel autorisé). ❓ **Doute 2** : proposera-t-il de lui-même une autre répartition (baisser les
+protéines, remonter la cible) — ce que Michel a explicitement renvoyé à un lot séparé ? Et sur 800 kcal tapées à la main,
+moralise-t-il (Constitution P21) ? Le premier est vérifiable par du code, le ton relève du **juge humain**. État : **à trier**.

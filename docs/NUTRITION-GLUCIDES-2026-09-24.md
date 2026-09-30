@@ -4,7 +4,7 @@
 > ↪️ **État actuel (26/09/2026)** — la ligne ci-dessus est le statut du 24/09, conservé tel quel : **D-020 et D-021
 > tranchées par Michel** ; **B1/B2 publiés en `ft-v1235`** (avec D-016 et R34-A). **B3 et la politique glucidique
 > restent en attente de décision.** Le corps de ce document reste le constat daté du 24/09 et ses compléments datés.
-> ↪️ **30/09/2026 — B3 corrigé sur branche** (lot Nutrition 1, `claude/nutrition-lot1-b3`, **non publié**) : voir **§12**. La **politique glucidique** reste en attente de décision.
+> ↪️ **30/09/2026 — B3 : l'écart est désormais DÉCLARÉ, les règles macros inchangées** (D-034, `claude/nutrition-lot1-b3`, **non publié**) : voir **§12**. La **politique glucidique** reste en attente de décision.
 > Ce document dit ce qui **EST** (mesuré dans l'app servie, `ft-v1234`) ; Michel décide ce qui
 > **DOIT ÊTRE** (règle d'or #15). Témoins : `tests/parcours/nutri_moteur.js` (B-CCCLX, B-CCCLXI),
 > contrôle négatif : `tools/mut_nutri_moteur.py` (15/15 conformes).
@@ -304,71 +304,45 @@ D-021/R34 **13/13**, contrôle de nuit **27/27** · passe complète sur `25e4e52
 avait 3 rouges : le témoin de la carte « passer de Modéré à Actif » posait un 1,55 sans provenance,
 devenu « à confirmer » ; il pose désormais un niveau déclaré (provenance « choisi »), assertion inchangée.
 
-## 12. 30/09 — B3 corrigé (lot Nutrition 1, demande de Michel) — NON PUBLIÉ
+## 12. 30/09 — B3 : la contradiction n'est plus SILENCIEUSE (lot Nutrition 1, D-034) — NON PUBLIÉ
 
 **Demande de Michel** : *« une cible nutritionnelle et les macros proposées ne doivent pas se contredire
-silencieusement »* ; idéalement `4P + 9L + 4G ≈ cible`, sinon un écart **explicite et expliqué**.
-Session-B, dans le couloir Nutrition à sa demande ; feu vert **limité à B3** (le gel du 13/09 vaut pour
-tout le reste). Branche `claude/nutrition-lot1-b3`, checkpoint `5bf24b82`, témoins `d370077a`.
+silencieusement »* ; sinon l'écart est **explicite et expliqué**. Session-B, couloir Nutrition confié par
+Michel ; feu vert **limité à B3**. Branche `claude/nutrition-lot1-b3`.
 
-**Pourquoi P et L dépassaient** (mesuré, §10) : ils sont proportionnels au poids **total**, la cible ne
-l'est pas — l'écart d'objectif est fixe (−450 en perte, −100 en décharge), une cible manuelle est un chiffre
-tapé. Le cycle séance/repos le faisait aussi : un jour de repos ajoute des lipides et retire des glucides ;
-quand il n'y en avait pas assez, le `Math.max(0,…)` bornait les glucides sans retirer les lipides
-(80 kg · 1 500 kcal · 6 séances : jour de repos à +65 kcal ; 130 kg décharge : 2 326 pour 1 932).
+**1ʳᵉ version refusée (D-033)** : réduire les lipides puis les protéines jusqu'à 0,6 / 0,8 g/kg. Michel,
+après contre-vérification : c'était une **nouvelle politique Nutrition** — 0,6 g/kg avait été inventé
+localement pour le cycle, 0,8 g/kg n'était validé que pour le kéto, et des profils devenaient quasi
+cétogènes sans l'avoir choisi. *L'objectif du lot est de corriger le silence, pas la répartition.*
 
-**Ce qui est préservé — lu dans le code, pas choisi** : la **cible** (anneau, « reste à manger », bilan de la
-semaine, `cibleDecomposition` pour Milo ; une cible manuelle ne se relève jamais en douce, R29) ; le contrat
-écrit de `macrosForKcal` (*les glucides complètent le total calorique*) ; celui du cycle (*les calories du
-jour ne bougent pas, la semaine est neutre*) ; le plancher D-017 ; les ratios, le TDEE, les écarts d'objectif.
+**Ce qui est fait (D-034, décision de Michel)** :
+- les règles macros de master restent **mot pour mot** : `macrosForKcal` et `cycleGlucides` inchangés,
+  glucides écrêtés à 0 comme avant ;
+- un seul propriétaire de l'écart, `_cibleIncompatible` (state.js) : une macro écrêtée à 0 (glucides ;
+  lipides en kéto) **et** une somme qui dépasse la cible de plus de **6 kcal** — l'arrondi maximal que le
+  cycle produit déjà sans écrêtage (mesuré : −6 à +6). Calculé sur le jour **et** sur l'autre bout du cycle ;
+- l'écran le dit sous les macros ; l'aperçu du réglage manuel le dit dès la frappe ; enregistrer une cible
+  incompatible ne dit plus « ✅ » ; Milo reçoit la même information et la consigne de ne jamais présenter
+  ces macros comme respectant la cible ; un vrai 0 g s'écrit 0 (et plus « — »).
 
-**Ce qui cède, dans cet ordre** (`_macrosDansLaCible`, state.js) — c'est l'ordre que le moteur applique
-déjà ailleurs : ① les glucides (déjà à 0) ; ② les **lipides**, jusqu'à **0,6 g/kg** (`_CYCLE_FAT_MIN`, le
-plancher du cycle) ; ③ les **protéines**, jusqu'à **0,8 g/kg** (`_PROT_MIN_GKG`, le seuil du Gardien, déjà
-plancher du kéto). Arrondis vers le bas : le reste retourne aux glucides, donc l'écart reste dans l'arrondi
-habituel (−1 à +2 kcal ; ±6 avec le cycle). Si même ces minimums dépassent — **seulement avec une cible
-manuelle** (mesuré : la cible automatique la plus basse par kg de la grille vaut 10,4 kcal/kg, les minimums
-8,6) — on ne descend pas plus bas : `ajuste.depasse` dit l'écart, l'écran et Milo le **disent**. Kéto : aucun
-chiffre changé, l'écart est seulement déclaré. Le cycle ne cycle plus une répartition comprimée et son
-amplitude est bornée pour que les glucides d'un jour de repos ne passent pas sous 0 (même mécanisme que le
-plancher lipidique : les deux côtés, la semaine reste neutre).
-
-**Stratégies écartées** (consignées dans **D-033**, statut **PROPOSÉ** — la priorité est un choix de Claude,
-Michel tranche) : monter la cible à 4P + 9L (annule le déficit : décharge 1 932 → 2 236 ; interdit pour une
-cible manuelle) · dire l'écart sans corriger (un plan que l'app sait impossible) · réduire P et L dans la
-même proportion (les protéines baisseraient autant que les lipides) · baser P et L sur un poids ajusté
-(nouvelle politique protéines, hors lot).
-
-| Cas | Avant (master `105d4e20`) | Après |
+| Cas | Chiffres (identiques à master) | Déclaré |
 |---|---|---|
-| A1 H 85 · 180 · 40 a · Modéré · muscle | 3 209 → 187/77/442 | **identique** |
-| D1 H 130 · 170 · 60 a · sédentaire · perte · charge | 2 132 → 325/104/0 = **2 236** | 325/**92**/1 = 2 132 |
-| D1 · décharge | 1 932 → 325/104/0 = **2 236** | **307/78**/1 = 1 934 |
-| D1 · décharge · jour de repos (cycle) | 1 932 → 325/114/0 = **2 326** | 307/78/1 = 1 934 (pas de cycle) |
-| D2 F 45 · 150 · perte (plancher 1 200) | 113/36/106 = 1 200 | **identique** |
-| 85,9 kg · force · **1 200 à la main** | 172/86/0 = **1 462** | 172/**56**/2 = 1 200 |
-| 100 kg · perte · **800 à la main** | 250/80/0 = **1 720** | 80/60/0 = 860 → **écart de 60 kcal déclaré** |
-| 250 kg · kéto · 800 à la main | 200/0/10 = 840 | identique, **écart de 40 kcal déclaré** |
-| B1 profil incomplet · B2 cible manuelle sans poids | cible/macros nulles · 2 000 gardées, macros nulles | **identique** (D-016) |
+| A1 H 85 · 180 · 40 a · Modéré · muscle | 3 209 → 187/77/442 | rien |
+| D1 H 130 · 170 · 60 a · sédentaire · perte · charge | 2 132 → 325/104/0 | **2 236 kcal, +104** |
+| D1 · décharge | 1 932 → 325/104/0 | **+304** |
+| D1 · décharge · jour de séance (cycle) | 325/78/0 = 2 002 | **+70**, et un jour de repos **2 326, +394** |
+| 80 kg · 1 500 · 6 séances, jour de séance | 200/61/39 (tient) | un jour de repos **1 565, +65** |
+| D2 F 45 · 150 · perte (plancher 1 200) | 113/36/106 | rien |
+| 85,9 kg · force · **1 200 à la main** | 172/86/0 | **1 462 kcal, +262** |
+| 100 kg · perte · **800 à la main** | 250/80/0 | **1 720 kcal, +920** |
+| 250 kg · kéto · 800 à la main | 200/0/10 | **+40** |
+| B1 profil incomplet · B2 manuel sans poids | nuls · 2 000 gardées, macros nulles | rien (D-016) |
 
-**Mesures contre master** (grille : H/F · 40 → 300 kg · 3 tailles · 4 âges · 5 activités · 6 objectifs ·
-2 phases · 4 rythmes de séances · lutéale) : **233 280** profils automatiques → dépassements hors arrondi
-**47 805 → 0**, 48 067 profils changés, **tous** B3 ou bornage du cycle ; **26 244** cibles manuelles → les
-1 296 (standard) + 84 (kéto) écarts restants sont **tous déclarés à l'unité** ; low carb jamais touché ;
-**cible identique partout**. Contexte de Milo (0 appel) : **identique au caractère près** pour A1, le profil
-déclaré de Michel, D2 et un profil sans activité ; seuls les profils B3 changent (ligne des macros + une ligne).
+**Mesures contre master** : 233 280 profils automatiques + 26 244 cibles manuelles → **0 chiffre modifié** ;
+les 47 723 + 3 698 dépassements de plus de 6 kcal sont **tous déclarés**, à la valeur exacte ; **aucune**
+déclaration hors dépassement. Contexte de Milo : identique au caractère près pour les profils compatibles.
 
-**Écran** : une phrase sous les macros, seulement quand l'app a ajusté ou qu'un écart reste ; l'aperçu du
-réglage manuel dit la même chose ; le texte de la fenêtre manuelle ne promet plus « les protéines et lipides
-restent calés » sans réserve. **Milo** : un vrai 0 g s'écrit 0 (et plus « — », qui se lisait « inconnu »).
-
-**Tests** : `tests/parcours/nutri_b3.js` (B-CDXV → B-CDXVIII, banc `tools/banc_nutri_b3.js` 74/0 avec les
-blocs NUT) · NUT-07/07b et `nutri_proprietes` ⑨ ⑬ ⑲ — qui **figeaient** le défaut — retournés avec la raison ·
-contrôles négatifs `tools/mut_nutri_b3.py` **25/25**, `mut_nutri_moteur` **15/15** (M09 devenue équivalente,
-documentée), `mut_nutri_proprietes` **14/14**. **Passe complète : après la contre-vérification seulement.**
-
-**Limites, dites** : les glucides restent à 0-2 g dans ces cas (aucune politique glucidique décidée) · les
-protéines peuvent passer sous « poids × objectif » (D1 décharge : 2,36 g/kg au lieu de 2,5) · **R34** : le
-banc réel de Milo n'a pas tourné (0 appel autorisé) · la règle d'or #11 (annonce) est à trancher à la
-publication · alertes 2 (`_foodTotals` / Milo) et 3 (restauration `foodLog`) **non touchées**.
-
+**Hors lot (lot Nutrition séparé)** : poids ajusté, masse maigre comme base protéines, plancher lipides,
+politique glucidique, optimisation obésité/surpoids. **Limites** : les écarts de 3 à 6 kcal (≈ 1 % des
+dépassements) restent de l'arrondi, non signalés · **R34** : le banc réel de Milo n'a pas tourné (0 appel) ·
+règle d'or #11 à trancher à la publication.

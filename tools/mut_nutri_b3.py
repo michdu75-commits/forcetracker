@@ -10,8 +10,8 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
      des seuls temoins de SOURCE (B-CDXV, B-CCCLX) ne suffit pas : la mutation est alors NON conforme.
 Les mutations cassent le PRINCIPE, pas un mot :
   M00 = le code d'avant (master 105d4e20) remis mot pour mot, sur les 4 fichiers
-  S2 / S3 / S5 = les strategies ECARTEES (monter la cible · dire sans corriger · reduire en proportion)
-  M01..M15 = chaque morceau retire un par un · DG1..DG3 = deguisees · EQ1, EQ2 = equivalentes (vertes)
+  S1 = la strategie D-033 REFUSEE par Michel (reduire lipides puis proteines) · S2 = monter la cible
+  M01..M13 = chaque morceau retire un par un · DG1, DG2 = deguisees · M04, EQ1 = equivalentes (temoins executes verts)
   [negatif] = commentaire
 Usage : python3 tools/mut_nutri_b3.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -22,64 +22,49 @@ AVANT = '105d4e20'
 ST, SC, CO, IH = 'state.js', 'screens.js', 'coach.js', 'index.html'
 FICHIERS = (ST, SC, CO, IH)
 
-DLC_FAT = "  const fat_g=Math.max(lMin,Math.min(fat_de,Math.floor((kcal-prot_de*4)/9)));\n"
-DLC_PROT = "  const prot_g=(prot_de*4+fat_g*9>kcal)?Math.max(pMin,Math.min(prot_de,Math.floor((kcal-fat_g*9)/4))):prot_de;\n"
-DLC_MIN = "  const lMin=Math.round(bw*_CYCLE_FAT_MIN), pMin=Math.round(bw*_PROT_MIN_GKG);\n"
-DLC_RET = "  return{prot_g,fat_g,carbs_g,ajuste:{prot_de,fat_de,depasse:Math.max(0,prot_g*4+fat_g*9-kcal)}};\n"
-APPEL = "  if(prot_g*4+fat_g*9>kcal) return _macrosDansLaCible(kcal,prot_g,fat_g);   // B3, ci-dessous\n"
-CYC_AJ = "    if(m.ajuste) return m;\n"
-CYC_BORNE = "    if(rMoy>0 && ajout(D)>ajoutMax) D=ajoutMax/(rMoy*f/7);\n"
-EXPOSE = "ajuste:(base&&base.ajuste)||null,"
+CRIT = "  return ((carbs_g===0||fat_g===0)&&ecart>_ARRONDI_MACROS_KCAL)?{ecart,macros:Math.round(somme)}:null;\n"
+SEUIL = "const _ARRONDI_MACROS_KCAL=6;\n"
+AUTRE = "  const au=calculable&&m.cycle&&m.cycle.autre?_cibleIncompatible(m.prot_g,m.cycle.autre.fat_g,m.cycle.autre.carbs_g,calories):null;\n"
+JOUR = "  const inc=calculable?_cibleIncompatible(m.prot_g,m.fat_g,m.carbs_g,calories):null;\n"
+RESIDU = "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  return{prot_g,fat_g,carbs_g};\n}"
 CALORIES = "  const calories=manual||auto;\n"
-KETO = "    if(depasse>0) return{prot_g,fat_g,carbs_g,ajuste:{prot_de:prot_g,fat_de:fat_g,depasse}};\n"
-NOTE = "  if(nt) nt.innerHTML=(v>=800&&v<=6000)?_ajusteMacrosHTML(mm,v):'';\n"
-ECRAN = "if(_aj)_aj.innerHTML=_ajusteMacrosHTML(macros,macros.calories);}"
+ECRAN = "if(_inc)_inc.innerHTML=_incompatibleHTML(macros);}"
+NOTE = "nt.innerHTML=inc?_incompatibleHTML({calories:v,incompatible:{ecart:inc.ecart,macros:inc.macros,autre:null}}):'';"
+TOAST = "  if(_inc&&_inc.ecart>0) toast("
 GMAC = "function _gMac(v){ return v==null?'—':v; }"
-MILO = "  const a=m&&m.ajuste; if(!a) return '';\n"
+MILO = "  const i=m&&m.incompatible; if(!i) return '';\n  const J="
+AUTRE_ECRAN = "  if(i.autre) txt+="
 
 MUT = [
     ('M00 le code d\'avant remis mot pour mot (master %s, 4 fichiers)' % AVANT, 'REV:' + AVANT, 'GARDE'),
-    ('S2 strategie ecartee « monter la cible » : la cible devient 4P + 9L quand P et L la depassent',
+    ('S1 strategie REFUSEE par Michel (D-033) : lipides puis proteines reduits jusqu\'a 0,6 / 0,8 g/kg',
+     [(ST, RESIDU, "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n"
+       "  if(prot_g*4+fat_g*9>kcal){ const bw=S.bw||0, lMin=Math.round(bw*0.6), pMin=Math.round(bw*0.8);\n"
+       "    const L=Math.max(lMin,Math.floor((kcal-prot_g*4)/9)); const P=(prot_g*4+L*9>kcal)?Math.max(pMin,Math.floor((kcal-L*9)/4)):prot_g;\n"
+       "    return{prot_g:P,fat_g:L,carbs_g:Math.max(0,Math.round((kcal-P*4-L*9)/4))}; }\n  return{prot_g,fat_g,carbs_g};\n}")], 'GARDE'),
+    ('S2 strategie ecartee « monter la cible » a 4P + 9L',
      [(ST, CALORIES, "  const calories=manual||(auto!=null&&_nbUtil(S.bw)!=null?Math.max(auto,macrosForKcal(1e6).prot_g*4+macrosForKcal(1e6).fat_g*9):auto);\n")], 'GARDE'),
-    ('S3 strategie ecartee « dire sans corriger » : P et L gardes, l\'ecart seulement declare',
-     [(ST, DLC_FAT, "  const fat_g=fat_de;\n"), (ST, DLC_PROT, "  const prot_g=prot_de;\n")], 'GARDE'),
-    ('S5 strategie ecartee « reduire P et L dans la meme proportion »',
-     [(ST, DLC_FAT, "  const _k=kcal/(prot_de*4+fat_de*9);\n  const fat_g=Math.floor(fat_de*_k);\n"),
-      (ST, DLC_PROT, "  const prot_g=Math.floor(prot_de*_k);\n")], 'GARDE'),
-    ('M01 la branche B3 retiree : P et L « poids x objectif » meme quand ils depassent la cible', [(ST, APPEL, '')], 'GARDE'),
-    ('M02 le plancher des lipides retire (0 g/kg)', [(ST, DLC_MIN, DLC_MIN.replace('Math.round(bw*_CYCLE_FAT_MIN)', '0'))], 'GARDE'),
-    ('M03 les proteines cedent AVANT les lipides',
-     [(ST, DLC_FAT + DLC_PROT,
-       "  const prot_g=Math.max(pMin,Math.min(prot_de,Math.floor((kcal-fat_de*9)/4)));\n"
-       "  const fat_g=(prot_g*4+fat_de*9>kcal)?Math.max(lMin,Math.min(fat_de,Math.floor((kcal-prot_g*4)/9))):fat_de;\n")], 'GARDE'),
-    ('M04 le plancher des proteines (0,8 g/kg, Gardien) retire', [(ST, DLC_MIN, DLC_MIN.replace('Math.round(bw*_PROT_MIN_GKG)', '0'))], 'GARDE'),
-    ('M05 l\'ecart restant n\'est jamais declare (depasse toujours 0)', [(ST, DLC_RET, DLC_RET.replace('depasse:Math.max(0,prot_g*4+fat_g*9-kcal)', 'depasse:0'))], 'GARDE'),
-    ('M06 le cycle n\'est plus borne : un jour de repos repasse sous 0 g de glucides', [(ST, CYC_BORNE, '')], 'GARDE'),
-    ('M07 le cycle cycle une repartition deja comprimee', [(ST, CYC_AJ, '')], 'GARDE'),
-    ('M08 calcMacros n\'expose plus `ajuste`', [(ST, EXPOSE, 'ajuste:null,')], 'GARDE'),
-    ('M09 Milo : un vrai 0 g redevient « — »', [(CO, GMAC, "function _gMac(v){ return v||'—'; }")], 'GARDE'),
-    ('M10 Milo ne recoit plus la note d\'ajustement / d\'ecart', [(CO, MILO, "  const a=null; if(!a) return '';\n")], 'GARDE'),
-    ('M11 l\'ecran ne dit plus rien sous les macros', [(SC, ECRAN, "if(_aj)_aj.innerHTML='';}")], 'GARDE'),
-    ('M12 l\'apercu du reglage manuel ne dit plus rien', [(SC, NOTE, "  if(nt) nt.innerHTML='';\n")], 'GARDE'),
-    ('M13 keto : l\'ecart n\'est plus declare', [(ST, KETO, '')], 'GARDE'),
-    ('M14 arrondi des lipides vers le HAUT (le total repasse au-dessus de la cible)',
-     [(ST, DLC_FAT, DLC_FAT.replace('Math.floor((kcal-prot_de*4)/9)', 'Math.ceil((kcal-prot_de*4)/9)'))], 'GARDE'),
-    ('M15 les glucides deviennent negatifs quand meme les minimums depassent la cible',
-     [(ST, "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  return{prot_g,fat_g,carbs_g,ajuste:",
-       "  const carbs_g=Math.round((kcal-prot_g*4-fat_g*9)/4);\n  return{prot_g,fat_g,carbs_g,ajuste:")], 'GARDE'),
-    ('DG1 [deguisee] plancher des lipides a 0,5 g/kg ecrit en dur', [(ST, DLC_MIN, DLC_MIN.replace('_CYCLE_FAT_MIN', '0.5'))], 'GARDE'),
-    ('DG2 [deguisee] proteines arrondies au plus proche au lieu de vers le bas',
-     [(ST, DLC_PROT, DLC_PROT.replace('Math.floor((kcal-fat_g*9)/4)', 'Math.round((kcal-fat_g*9)/4)'))], 'GARDE'),
-    ('DG3 [deguisee] la borne du cycle calculee avec la seance du jour (rJour) au lieu de la moyenne (rMoy)',
-     [(ST, CYC_BORNE, CYC_BORNE.replace('rMoy>0 && ajout(D)>ajoutMax) D=ajoutMax/(rMoy*f/7)', 'rJour>0 && D*rJour*f/7>ajoutMax) D=ajoutMax/(rJour*f/7)'))], 'GARDE'),
-    ('EQ1 [equivalente] lMin et pMin declares dans l\'autre ordre : doit RESTER vert',
-     [(ST, DLC_MIN, "  const pMin=Math.round(bw*_PROT_MIN_GKG), lMin=Math.round(bw*_CYCLE_FAT_MIN);\n")], 'OK'),
-    ('EQ2 [equivalente] les Math.min redondants retires : doit RESTER vert',
-     [(ST, DLC_FAT, "  const fat_g=Math.max(lMin,Math.floor((kcal-prot_de*4)/9));\n"),
-      (ST, DLC_PROT, "  const prot_g=(prot_de*4+fat_g*9>kcal)?Math.max(pMin,Math.floor((kcal-fat_g*9)/4)):prot_de;\n")], 'OK'),
-    ('[negatif] commentaire citant les planchers et la cible', [(ST, DLC_MIN, DLC_MIN + "  // 0,6 g/kg · 0,8 g/kg · la cible ne bouge pas · depasse\n")], 'OK'),
+    ('M01 l\'ecart n\'est plus jamais declare', [(ST, CRIT, "  return null;\n")], 'GARDE'),
+    ('M02 l\'ecart de l\'autre bout du cycle (jour de repos) n\'est plus calcule', [(ST, AUTRE, "  const au=null;\n")], 'GARDE'),
+    ('M03 l\'ecart du jour n\'est plus calcule', [(ST, JOUR, "  const inc=null;\n")], 'GARDE'),
+    # M04 est EQUIVALENTE, mesuree : sans ecretage aucun profil ne depasse 6 kcal (-6 a +6 sur 233 280 profils) ;
+    # la condition reste ecrite pour dire le mecanisme. Attendu SOURCE : les temoins EXECUTES restent verts.
+    ('M04 [equivalente mesuree] declare sans condition d\'ecretage', [(ST, CRIT, CRIT.replace('(carbs_g===0||fat_g===0)&&', ''))], 'SOURCE'),
+    ('M05 seuil d\'arrondi a 0 (le bruit d\'arrondi devient une « incompatibilite »)', [(ST, SEUIL, "const _ARRONDI_MACROS_KCAL=0;\n")], 'GARDE'),
+    ('M06 seuil a 50 kcal (des ecarts reels passent sous silence)', [(ST, SEUIL, "const _ARRONDI_MACROS_KCAL=50;\n")], 'GARDE'),
+    ('M07 keto oublie : seuls les glucides ecretes comptent', [(ST, CRIT, CRIT.replace('(carbs_g===0||fat_g===0)', '(carbs_g===0)'))], 'GARDE'),
+    ('M08 l\'ecran ne dit plus rien sous les macros', [(SC, ECRAN, "if(_inc)_inc.innerHTML='';}")], 'GARDE'),
+    ('M09 l\'apercu du reglage manuel ne dit plus rien', [(SC, NOTE, "nt.innerHTML='';")], 'GARDE'),
+    ('M10 enregistrer une cible incompatible redit « ✅ »', [(SC, TOAST, "  if(false) toast(")], 'GARDE'),
+    ('M11 l\'ecran tait l\'ecart du jour de repos', [(SC, AUTRE_ECRAN, "  if(false) txt+=")], 'GARDE'),
+    ('M12 Milo : un vrai 0 g redevient « — »', [(CO, GMAC, "function _gMac(v){ return v||'—'; }")], 'GARDE'),
+    ('M13 Milo ne recoit plus l\'incompatibilite', [(CO, MILO, "  const i=null; if(!i) return '';\n  const J=")], 'GARDE'),
+    ('DG1 [deguisee] l\'ecart calcule sur la cible AUTOMATIQUE au lieu de la cible retenue (manuelle)',
+     [(ST, JOUR, JOUR.replace('m.carbs_g,calories)', 'm.carbs_g,auto!=null?auto:calories)'))], 'GARDE'),
+    ('DG2 [deguisee] l\'ecart arrondi a la dizaine', [(ST, "ecart=Math.round(somme-kcal);", "ecart=Math.round((somme-kcal)/10)*10;")], 'GARDE'),
+    ('EQ1 [equivalente] le seuil ecrit >= 7 au lieu de > 6 : temoins executes VERTS, seule la source le voit', [(ST, CRIT, CRIT.replace('ecart>_ARRONDI_MACROS_KCAL', 'ecart>=_ARRONDI_MACROS_KCAL+1'))], 'SOURCE'),
+    ('[negatif] commentaire citant ecretage, seuil et incompatibilite', [(ST, SEUIL, SEUIL + "// ecretage · 6 kcal · incompatible · 0,6 g/kg · 0,8 g/kg\n")], 'OK'),
 ]
-
 
 def banc(arbre):
     env = dict(os.environ, TZ='Europe/Paris')
