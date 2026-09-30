@@ -31,7 +31,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const poser = (p) => {
       S.gender = p.g || 'H'; S.bw = p.bw; S.height = p.h; S.age = p.a;
       S.activityLevel = p.act; S.workType = p.work || 'bureau'; S.goal = p.goal;
-      S.nutritionPhase = p.phase || 'charge'; S.manualKcal = 0; S.foodMode = ''; S.keto = false;
+      S.nutritionPhase = p.phase || 'charge'; S.manualKcal = p.man || 0; S.foodMode = ''; S.keto = false;
       S.smoker = false; S.sessions = []; S.weightLog = []; S.otherSports = ''; S.stepsLog = null;
       S.bodyScans = p.lm ? [{ date: (function(){ const d = new Date(Date.now() - 10 * 864e5);
         return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); })(),
@@ -72,6 +72,15 @@ module.exports.ecran = async function (t, b, PORT) {
             if (f > 12) fermeture++; if (f > maxF) maxF = f;
             if (r.G > 0) { if (f > 12) fermHorsEcret++; if (f > maxFHorsEcret) maxFHorsEcret = f; }
           }
+    /* ↪️ 30/09/2026 (B3) : le seul endroit où des glucides pourraient devenir négatifs est désormais
+       une cible MANUELLE sous les minimums (0,8 g/kg de protéines, 0,6 g/kg de lipides). Ces cas
+       entrent dans « aucune macro négative » et « aucun NaN », PAS dans la fermeture : leur écart
+       est déclaré (`ajuste.depasse`), c'est le contrat. */
+    for (const bw of [100, 130, 180]) for (const man of [800, 1000]) for (const goal of ['perte', 'recomp', 'muscle']) {
+      const r = poser({ g: 'H', bw, h: 175, a: 40, act: 1.55, goal, man }); n++;
+      if (r.P < 0 || r.G < 0 || r.L < 0) neg++;
+      if (![r.P, r.G, r.L, r.kcal].every(x => typeof x === 'number' && isFinite(x))) nan++;
+    }
     o.inv = { n, neg, nan, sousPlancher, fermeture, maxF, fermHorsEcret, maxFHorsEcret };
     return o;
   });
@@ -102,8 +111,15 @@ module.exports.ecran = async function (t, b, PORT) {
     JSON.stringify(R.maigre));
   t('B-CCCLII ⑧ ⭐ … alors qu\'il change bien le BMR (donc l\'info EXISTE et n\'atteint pas les macros)',
     R.maigre.bmrChange === true, JSON.stringify(R.maigre));
-  t('B-CCCLII ⑨ ⛔ DÉFAUT FIGÉ · un homme 110 kg / 150 cm en perte reçoit 0 g de glucides',
-    R.zero.G === 0 && R.zero.P > 250, JSON.stringify(R.zero));
+  /* ↪️ ⑨, ⑬ ET ⑲ SE SONT RETOURNÉS LE 30/09/2026 — exactement comme l'en-tête le prévoyait (R30).
+     Ils figeaient le DÉFAUT B3 (macros au-dessus de la cible, glucides écrêtés à 0). Demande de
+     Michel, lot Nutrition 1 : « une cible nutritionnelle et les macros proposées ne doivent pas se
+     contredire silencieusement ». Stratégie proposée par Claude (D-033, PROPOSÉ, `_macrosDansLaCible`) :
+     la cible ne bouge pas ; les lipides cèdent d'abord (0,6 g/kg), puis les protéines (0,8 g/kg).
+     Les anciennes assertions sont gardées en toutes lettres dans les messages, pour la trace. */
+  t('B-CCCLII ⑨ ↪️ B3 CORRIGÉ · 110 kg / 150 cm en perte (était : 0 g de glucides, macros > cible) → total = cible, planchers tenus',
+    R.zero.G >= 0 && Math.abs(R.zero.P * 4 + R.zero.G * 4 + R.zero.L * 9 - R.zero.kcal) <= 2
+    && R.zero.P >= Math.round(110 * 0.8) && R.zero.L >= Math.round(110 * 0.6), JSON.stringify(R.zero));
 
   // ══ ④ INVARIANTS — ceux-là ne se retournent jamais ═══════════════════════════════════
   t('B-CCCLII ⑩ 🛡️ INVARIANT · aucune macro négative (' + R.inv.n + ' profils)',
@@ -127,8 +143,8 @@ module.exports.ecran = async function (t, b, PORT) {
        les glucides sont écrêtés à 0 et **tout le surplus reste dans la somme**.
      ⛔ Le témoin fige donc le DÉFAUT tel qu'il est aujourd'hui (191 profils sur 131 712, écart
      moyen 108 kcal) : il rougira le jour où Michel validera la correction. */
-  t('B-CCCLII ⑬ ⛔⛔ DÉFAUT FIGÉ · la somme des macros peut dépasser la cible de plusieurs centaines de kcal',
-    R.inv.fermeture > 0 && R.inv.maxF > 100,
+  t('B-CCCLII ⑬ ↪️ B3 CORRIGÉ · INVARIANT · la somme des macros ne dépasse plus la cible (était : jusqu\'à +377 kcal)',
+    R.inv.fermeture === 0 && R.inv.maxF <= 8,
     'dépassements = ' + R.inv.fermeture + ' · écart max mesuré = ' + R.inv.maxF + ' kcal');
   /* ⭐ ET L'INVARIANT QUI RESTE VRAI, SÉPARÉ DU DÉFAUT : hors écrêtage, la fermeture tient dans
      la tolérance d'arrondi. P et L sont arrondis avant que G ne soit calculé — l'écart maximal
@@ -198,8 +214,8 @@ module.exports.ecran = async function (t, b, PORT) {
     D.sur55Pct > 20, 'surplus = ' + D.sur55Pct.toFixed(1) + ' % du TDEE (repère : +10-20 %)');
   /* ⚖️ La cible manuelle échappe au plancher — c'est une DÉCISION ACTÉE (on n'interdit pas).
      ⛔ Mais que les macros totalisent bien plus que la cible n'est décidé nulle part. */
-  t('B-CCCLII ⑲ ⛔ DÉFAUT FIGÉ · cible manuelle 600 kcal → macros qui totalisent bien plus',
-    D.man.kcal === 600 && D.man.somme > 800 && D.man.G === 0,
+  t('B-CCCLII ⑲ ↪️ B3 CORRIGÉ · cible manuelle 600 kcal gardée, macros ≈ 600 (était : bien plus, glucides à 0)',
+    D.man.kcal === 600 && Math.abs(D.man.somme - 600) <= 2,
     'cible ' + D.man.kcal + ' kcal · macros ' + D.man.somme + ' kcal · glucides ' + D.man.G + ' g');
   t('B-CCCLII ⑳ ⛔ DÉFAUT FIGÉ · le bilan corporel qui passe 90 jours fait sauter la cible',
     D.j89.meth !== D.j91.meth && Math.abs(D.j91.kcal - D.j89.kcal) > 50,
