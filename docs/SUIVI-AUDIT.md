@@ -340,6 +340,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 > (décision du 13/09), **aucun lot ouvert**. Ce sont des défauts **préexistants**, pas introduits par FP-01.
 > ⛔ L'**alerte 1** (macros affichées au-dessus de la cible calorique) n'est **pas** recopiée ici : elle est déjà
 > documentée dans `docs/NUTRITION-GLUCIDES-2026-09-24.md`, **cas B3** (R2 : un propriétaire par information).
+> ↪️ **30/09/2026 : alerte 1 traitée par le lot Nutrition 1** (branche `claude/nutrition-lot1-b3`, **non publiée**, contre-vérification en cours) — détail au §12 du même document. Alertes 2 et 3 : **non touchées**.
 
 ### 🟠 ALERTE 3 — risque de PERTE DE DONNÉES : `_applyRestoreData` et `S.foodLog` (priorité la plus haute des deux)
 - **Constat rapporté** : à la restauration (`_applyRestoreData`, `setup.js`), le journal alimentaire du cloud
