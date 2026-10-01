@@ -362,7 +362,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   de troisième source de vérité.
 
 ### 🟤 DETTE NUTRITION / UI (30/09/2026) — le tableau de bord lit des champs qui n'existent pas
-> 🔧 **01/10/2026 — CORRIGÉE SUR BRANCHE, NON PUBLIÉE** (lot Nutrition 2, `claude/nutrition-lot2-dash1`, checkpoint `0e54eef2`) : la tuile lit `calories` et `prot_g`, le repli `calcTDEE()` est retiré ; sans cible, aucun chiffre. Témoins B-CDXX/B-CDXXI (12/0), contrôle négatif `tools/mut_nutri_dash1.py` 12/12. Passe complète : pas encore.
+> 🔧 **01/10/2026 — CORRIGÉE SUR BRANCHE, NON PUBLIÉE** (lot Nutrition 2, `claude/nutrition-lot2-dash1`, checkpoint `0e54eef2`) : la tuile lit `calories` et `prot_g`, le repli `calcTDEE()` est retiré ; sans cible, aucun chiffre. Témoins B-CDXX/B-CDXXI (12/0), contrôle négatif `tools/mut_nutri_dash1.py` 12/12. Passe complète sur `0e54eef2` : 5 636 ✅ / 0 ❌, 4 conditions vertes. Sous-titre « Protéines N g » et cible manuelle sans poids : acceptés par Michel. Reste à publier.
 > Trouvée par la contre-vérification du lot Nutrition 1 (B3). ⛔ **Préexistante, NON corrigée dans ce lot** (décision de Michel).
 - **Constat** : `dashboard.js` (tuile « Nutrition ») lit `m.kcal || m.cal` et `m.prot || m.p`, alors que `calcMacros`
   rend `calories` et `prot_g`. Les deux lectures valent donc toujours `undefined` : la tuile retombe sur `calcTDEE()`
