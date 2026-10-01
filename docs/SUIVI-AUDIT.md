@@ -374,6 +374,25 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Quand le traiter** : dans un lot séparé Nutrition / UI, avec son propre témoin (la tuile doit lire la cible
   retenue, pas le TDEE).
 
+### 🟤 RETOUR TERRAIN DE MICHEL (01/10/2026, en vacances) — la recherche d'aliments propose le mauvais aliment en premier
+> *« Ya un vrai souci, j'ai eu le cas avec les spaghettis bolo et aussi carbonara… la c'est hyper compliqué de faire sa nutrition. »*
+> ⛔ **Consigné, NON corrigé** : Nutrition gelée hors lots validés (13/09). Aucun lot ouvert — décision de Michel attendue.
+- **Mesuré dans la recherche réelle** (`_ciqualChercher`, master `21eddae3`), premier résultat proposé :
+  - « café » → **Café, moulu** (la poudre, 341 kcal/100 g). La boisson (« Café… prêt à boire », 6 kcal/100 g) n'est **pas
+    dans les 5 premiers** ; il faut taper « expresso ». Capture de Michel : 25 g → 85 kcal pour un café.
+  - « spaghetti bolognaise » / « spaghettis bolo » → **raviolis farcis au bœuf CRUS** (265 kcal/100 g) en 1ᵉʳ ; le plat
+    (« Pâtes à la bolognaise », 116 kcal/100 g) n'arrive qu'en 3ᵉ. « pates bolognaise » le met bien en 1ᵉʳ.
+  - « carbonara » → **Sauce carbonara** en 1ᵉʳ (160 kcal, 12,8 g de lipides /100 g), le plat en 2ᵉ (161 kcal, 8,7 g).
+  - « bœuf bourguignon » → le plat en 1ᵉʳ (correct) ; Michel a choisi « Bœuf, à bourguignon, cuit » = la **viande seule**
+    (34 g de protéines/100 g) — juste si la viande est pesée seule, très surestimé pour le plat en sauce.
+- **Ce n'est PAS une erreur de chiffres** : les valeurs sont celles de CIQUAL 2025 à l'unité. Le défaut est le **choix
+  proposé** (famille « le premier match gagnant » de `BUGS.md`) et un vocabulaire de table (« moulu », « à bourguignon »,
+  « préemballé ») qui ne dit pas « boisson », « plat » ou « ingrédient ».
+- **Le fond du retour, plus large que la recherche** : en vacances / au restaurant, il faut connaître des **grammes**
+  d'un plat qu'on n'a pas pesé, et CIQUAL n'a que des plats **industriels** (« préemballé ») — un plat de restaurant peut
+  être bien plus riche. Rejoint l'item déjà séparé « **simplification UX Nutrition** ».
+- **Quand le traiter** : dans un lot Nutrition dédié, sur décision de Michel ; pas en passant dans un autre lot.
+
 ### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
 - **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,
   `#ov-kcal-edit`) est faux en kéto, où les glucides sont fixés à 5 % et ce sont les lipides qui s'ajustent.
