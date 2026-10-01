@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1246`** (prochaine : `ft-v1247`).
+> **Version actuelle : `ft-v1247`** (prochaine : `ft-v1248`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,20 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1247 — ☁️🍽️ NUTRITION LOT 3 · NUT-FOODLOG-RESTORE-01 : UNE RESTAURATION NE SUPPRIME PLUS UNE LIGNE DU JOURNAL ALIMENTAIRE** — lot Nutrition 3 (01/10, session-B, à la demande de Michel après un audit en lecture seule), commit fonctionnel `b266078a` (checkpoint `dc2ca3a8` puis correctif C7′), passe complète verte, publication décidée par Michel. Dégel du 13/09 **limité à ce lot**.
+
+**AVANT (reproduit sur master `1ca144ad`).** `_applyRestoreData` (setup.js) remplaçait `S.foodLog` par le journal du cloud dès que celui-ci avait **autant ou plus** de lignes — la longueur seule décidait. Une ligne locale jamais synchronisée disparaissait, en mémoire et sur le disque : par « Restaurer » (`doRestoreAccount`) comme par la restauration automatique au démarrage (`autoConnect`, appareil sans séance ni PR ni programme).
+
+**APRÈS.** Fusion conservatrice par identifiant, un seul propriétaire `_fusionnerFoodLogRestauration` (state.js), puis `_foodLogIdentifier` : toutes les lignes du téléphone restent ; les lignes du cloud d'`id` inconnu s'ajoutent ; à `id` égal, la version du téléphone reste (un seul exemplaire du cloud est « sa » version : le strictement identique s'il existe, sinon le premier) ; un autre exemplaire du même `id` au contenu distinct est **préservé** avec un `id` neuf, une seule fois (décision de Michel, C7′) ; copies strictement identiques fondues ; anciennes lignes sans `id` reconnues seulement par copie strictement identique, une fois pour une fois (multi-ensemble), aucun rapprochement approximatif. Restauration répétée **idempotente** (2 → 2 → 2), vrai bouton et chemin automatique validés, persistance après rechargement.
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : une ligne qui disparaissait en silence reste. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⚠️ **limite acceptée** — une ancienne ligne identifiée indépendamment sur deux appareils (deux `id` différents) puis sauvegardée peut revenir en double : *préserver plutôt que supprimer* · ⛔ hors lot, non corrigés : `bodyScans` et `bloodTests` (même règle de longueur), `savedFoods`, `_pa_` serveur (dernier appareil gagnant), texte de l'écran « Restaurer » (« aucune donnée écrite vers le serveur » alors que `saveProfile`/`cloudSave` partent), synchronisation générale multi-appareils, calculs Nutrition. ⛔ Ni Worker, ni Apps Script. **0 appel réel.**
+
+Tests : blocs **B-CDXXII (4 de source) + B-CDXXIII (21 conduits : C1 → C8, vrai bouton, démarrage automatique, rechargement, séances) + B-CDXXIV (10 : collisions d'id C7A → C7I, vrai bouton avec rechargement)** dans `tests/parcours/foodlog_restore.js`, banc `tools/banc_foodlog_restore.js` **35/0**. ⛔ **Contrôle négatif `tools/mut_foodlog_restore.py` : 16/16** (M00 = le code d'avant ; règle par longueur ; cloud gagnant ; lignes cloud ignorées ; identifiants ignorés ; rapprochement flou ; sans multi-ensemble ; sans identité canonique ; doublons non fondus ; MC7 = comportement du checkpoint `dc2ca3a8` ; idempotence ; exemplaire absorbé ; 2 déguisées ; 1 équivalente ; 1 commentaire). Non-régressions : lot 3 séances 87/0, chaos 56/0, annexe 14 PASS + 1 défaut connu. Passe complète sur `b266078a` : **5671 ✅ / 0 ❌**, 4 conditions vertes ; après elle, docs et numéro de version seulement (D-031).
+
+Fichiers : `state.js` (`_empreinteFood`, `_fusionnerFoodLogRestauration`), `setup.js` (`_applyRestoreData`, ligne `foodLog`), `tests/parcours/foodlog_restore.js` (nouveau), `tests/parcours/runner.js`, `tests/recette/registre.json`, `tools/banc_foodlog_restore.js` et `tools/mut_foodlog_restore.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1247. |
 
 **ft-v1246 — 🍽️ NUTRITION LOT 2 · NUT-DASH1 : LE TABLEAU DE BORD AFFICHE LA CIBLE DU JOUR, PLUS LA DÉPENSE** — lot Nutrition 2 (01/10, session-B, à la demande de Michel), checkpoint fonctionnel `0e54eef2`, passe complète verte, publication décidée par Michel. Dégel du 13/09 **limité à NUT-DASH1**.
 
@@ -591,19 +605,3 @@ Fichiers : `state.js` (ordre, union, `_assurerRunIdSeance`), `log.js` (`finishWo
 Tests : **B-CCCXCV (7 de source) + B-CCCXCVI (41 conduits : 9 états × 2 voies, Annuler / Remplacer, rechargement sur cardio / échauffement / cardio + exercice saisis par l'écran)** dans `tests/parcours/travail_existant.js`, **48 OK / 0** (sur le code d'avant : 30 rouges). ⛔ **Contrôle négatif `tools/mut_travail_lot2.py` : 11/11 conformes** (M00 = le code d'avant ; M01 cardio ignoré ; M02 échauffement ignoré ; M03 exercice sans série compté comme travail ; 4 déguisées ; 1 commentaire qui doit rester vert). Passe complète sur `afa23ac7` : **5315 ✅ / 0 ❌**, 4 conditions vertes.
 
 Fichiers : `log.js` (`_etatTravailWkt` nouvelle, `_startSessionFromMilo`, `_askMiloSeanceMode`, `_travailAPerdre`, `_confirmerRemplacementSeance`), `tests/parcours/travail_existant.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_travail_lot2.js` et `tools/mut_travail_lot2.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1240. |
-
-**ft-v1239 — 🧵 FIABILISATION LOT 1 · LE DÉBRIEF DE FIN DE SÉANCE NE COUPE PLUS LE FIL DU COACH ET NE L'ÉCRASE PLUS (F07a + F07b)** — premier lot de la fiabilisation issue de l'audit forensique n°2 (session-B), commit fonctionnel `3145081b`, testé, contre-vérifié indépendamment, publication décidée par Michel.
-
-**AVANT (mesuré par l'écran sur master `2f5ccdb5`).** **F07a** : discussion de 30 messages chargée, fin de séance + débrief en ligne → **20 messages**, les 12 plus anciens perdus — une coupe `slice(-20)` avait survécu dans `_dbfPoserDansHistorique`, alors que ft-v656 l'avait retirée du chat comme « perte SILENCIEUSE ». **F07b** : discussion de 30 messages enregistrée mais **pas chargée en mémoire** (Apps Script injoignable, Coach jamais ouvert) → **2 messages**, les 30 remplacés par le débrief. Même chose au démarrage quand le rattrapage pose un débrief déjà reçu, et sur un contenu enregistré illisible.
-
-**APRÈS.** `_coachHistHydrater` (nouvelle) relit la discussion sur le téléphone **avant** toute mutation, sans aucun réseau ; un contenu illisible ou une lecture refusée laisse l'état **inconnu** → rien n'est écrit, même si le drapeau dit « chargé ». `_dbfPoserDansHistorique` l'appelle d'abord ; la coupe à 20 est remplacée par la règle du chat (borne 400 existante, puis budget de place). Si le débrief n'a pas pu être posé, `_runSeDebrief` et `_dbfRecuperer` **gardent son « reçu »** (séance marquée livrée, aucun second appel) au lieu de l'effacer. ⛔ La garde n'est **pas** dans `_saveCoachHist` (elle aurait perdu le débrief).
-
-**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : la discussion avec Milo reste entière après une séance. ⚖️ **Pop-up : non.**
-
-**⚠️ CONSÉQUENCE CONNUE, ACCEPTÉE À LA PUBLICATION** : quand la discussion n'était pas chargée, un débrief déclenche désormais **un** `summarizeCoach` — exactement comme quand elle l'est. Master n'en faisait pas parce qu'il venait de détruire la discussion. Un seul par débrief, aucune boucle (vérifié).
-
-**⏭️ CE QUE ÇA NE FAIT PAS** (classé, non corrigé) : `continueInCoach` remplace la discussion sans la charger ni la ranger · une discussion illisible ouverte dans le Coach est prise pour vide et le premier message l'écrase · le « reçu » d'un débrief gardé n'a qu'un emplacement (le débrief suivant le remplace) · la borne 400 / 150 000 reste un chantier ouvert · Milo reçoit toujours un historique vide avec le débrief quand la discussion n'est pas chargée (F03). Le banc `tests/discussions/runner.js` (hors passe complète) garde ses 2 rouges de taille de prompt, identiques sur master. ⛔ Ni Worker, ni Apps Script, ni la branche retravail `84950756`. **0 appel réel.**
-
-Tests : **B-CCCXCIII (9 de source) + B-CCCXCIV (29 conduits : fil chargé, non chargé serveur injoignable ou disponible, départ réellement hors ligne, fil neuf, déjà chargé, illisible, rattrapage, 400)** dans `tests/parcours/fil_coach_lot1.js`, **38 OK / 0** (sur le code d'avant : 19 rouges). ⛔ **Contrôle négatif `tools/mut_fil_lot1.py` : 15/15 conformes** (M00 = le code d'avant mot pour mot ; M01 coupe à 20 réintroduite ; M02 garde court-circuitée ; 5 déguisées ; 1 commentaire qui doit rester vert). Passe complète sur `3145081b` : **5267 ✅ / 0 ❌**, 4 conditions vertes.
-
-Fichiers : `coach.js` (`_coachHistHydrater` nouvelle, `_dbfPoserDansHistorique`, `_dbfRecuperer`), `log.js` (`_runSeDebrief`), `tests/parcours/fil_coach_lot1.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_fil_lot1.js` et `tools/mut_fil_lot1.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1239. |
