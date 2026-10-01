@@ -6,7 +6,7 @@
      le comportement reel de l'application : « DANS LA COPIE MUTEE, … ».
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
 [!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE rougit (B-CDXXIII : restauration conduite
-     dans l'app). Un rouge des seuls temoins de SOURCE (B-CDXXII) ne suffit pas.
+     dans l'app, et B-CDXXIV : collision d'id C7prime). Un rouge des seuls temoins de SOURCE (B-CDXXII) ne suffit pas.
   M00 = le code d'avant (master 1ca144ad) remis mot pour mot · M01..M08 = les defauts demandes par Michel et
   chaque garde retiree une par une · DG1..DG2 = deguisees · EQ1 = equivalente (tout reste vert) · [negatif] = commentaire
 Usage : python3 tools/mut_foodlog_restore.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
@@ -19,27 +19,32 @@ ST, SE = 'state.js', 'setup.js'
 FICHIERS = (ST, SE)
 
 APPEL = "S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);"
-MEMEID = "      if(ids.has(c.id)) return;"
-AJOUT = "      vus.push(e); cloudParId.set(c.id,vus); out.push(c); ajoutees++; return;"
+ABS = "      if(absorbe.has(k)){ vus.push(e); cloudParId.set(c.id,vus); return; }"
+AJOUT = "      out.push(c); ajoutees++; return;\n    }"
+IDEM = "        if(n>0){ libres.set(e,n-1); return; }                                  // déjà préservé sur le téléphone"
+CHOIX = "    if(premier>=0) absorbe.add(identique>=0?identique:premier);"
 IDV = "  const idValide=l=>(typeof l.id==='string' && l.id.length>=8);"
 MULTI = "    const e=_empreinteFood(c), n=libres.get(e)||0;\n    if(n>0){ libres.set(e,n-1); return; }"
 EMP = "Object.keys(v).filter(k=>k!=='id')"
-DEDUP = "      if(vus.indexOf(e)>=0) return;"
+DEDUP = "      if(vus.indexOf(e)>=0 || parIdLocal.get(c.id)===e) return;"
 RET = "  return {liste:out, ajoutees};"
 
 MUT = [
     ('M00 le code d\'avant remis mot pour mot (master %s, state.js + setup.js)' % AVANT, 'REV:' + AVANT, 'GARDE'),
     ('M01 l\'ancienne regle par longueur retablie', [(SE, APPEL, "if(d.foodLog.length>=(S.foodLog||[]).length)S.foodLog=d.foodLog;")], 'GARDE'),
-    ('M02 le cloud gagne a id egal', [(ST, MEMEID, "      if(ids.has(c.id)){ const i=out.findIndex(l=>l&&l.id===c.id); if(i>=0) out[i]=c; return; }")], 'GARDE'),
-    ('M03 les lignes cloud absentes du telephone sont ignorees', [(ST, AJOUT, "      return;")], 'GARDE'),
+    ('M02 le cloud gagne a id egal', [(ST, ABS, "      if(absorbe.has(k)){ vus.push(e); cloudParId.set(c.id,vus); const i=out.findIndex(l=>l&&l.id===c.id); if(i>=0) out[i]=c; return; }")], 'GARDE'),
+    ('MC7 [C7prime] tout exemplaire cloud d\'un id present sur le telephone est absorbe (comportement du checkpoint dc2ca3a8)', [(ST, ABS, "      if(parIdLocal.has(c.id)){ vus.push(e); cloudParId.set(c.id,vus); return; }")], 'GARDE'),
+    ('MC7b [C7prime] la collision deja preservee n\'est plus reconnue (B recree a chaque restauration)', [(ST, IDEM, "        if(false){ return; }")], 'GARDE'),
+    ('MC7c [C7prime] le PREMIER exemplaire est absorbe meme quand une copie identique existe plus loin', [(ST, CHOIX, "    if(premier>=0) absorbe.add(premier);")], 'GARDE'),
+    ('M03 les lignes cloud absentes du telephone sont ignorees', [(ST, AJOUT, "      return;\n    }")], 'GARDE'),
     ('M04 les identifiants sont ignores (tout par contenu)', [(ST, IDV, "  const idValide=l=>false;")], 'GARDE'),
     ('M05 rapprochement flou des anciennes lignes (nom, date, repas)', [(ST, EMP, "Object.keys(v).filter(k=>k==='name'||k==='date'||k==='meal')")], 'GARDE'),
     ('M06 pas de multi-ensemble (une copie locale avale toutes les copies cloud)', [(ST, MULTI, "    const e=_empreinteFood(c), n=libres.get(e)||0;\n    if(n>0){ return; }")], 'GARDE'),
     ('M07 plus d\'identite canonique apres la fusion', [(SE, APPEL, "S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;")], 'GARDE'),
-    ('M08 les copies identiques du meme id dans le cloud ne sont plus fondues', [(ST, DEDUP, "")], 'GARDE'),
+    ('M08 les copies identiques du meme id dans le cloud ne sont plus fondues', [(ST, DEDUP, "      if(parIdLocal.get(c.id)===e) return;")], 'GARDE'),
     ('DG1 [deguisee] l\'union est rendue a l\'envers (ordre du telephone perdu)', [(ST, RET, "  return {liste:out.slice().reverse(), ajoutees};")], 'GARDE'),
     ('DG2 [deguisee] l\'empreinte des anciennes lignes inclut l\'id pose par le telephone', [(ST, EMP, "Object.keys(v).filter(k=>true)")], 'GARDE'),
-    ('EQ1 [equivalente] le compteur `ajoutees` n\'est plus tenu', [(ST, AJOUT, "      vus.push(e); cloudParId.set(c.id,vus); out.push(c); return;")], 'OK'),
+    ('EQ1 [equivalente] le compteur `ajoutees` n\'est plus tenu', [(ST, AJOUT, "      out.push(c); return;\n    }")], 'OK'),
     ('[negatif] commentaire citant la regle par longueur', [(ST, RET, RET + "  // d.foodLog.length>=(S.foodLog||[]).length")], 'OK'),
 ]
 
@@ -55,7 +60,7 @@ def banc(arbre):
 
 
 def executes(rouges):
-    return [x for x in rouges if re.match(r'❌ ROUGE B-CDXXIII ', x) or x.startswith('PLANTAGE')]
+    return [x for x in rouges if re.match(r'❌ ROUGE B-CDXX(III|IV) ', x) or x.startswith('PLANTAGE')]
 
 
 def cloner():

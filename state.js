@@ -189,8 +189,9 @@ function _foodLogIdentifier(liste){
    ⭐ Même principe que les séances (`_fusionnerSeancesRestauration`, lot 3), décision de Michel :
      · toutes les lignes du TÉLÉPHONE restent, dans leur ordre ;
      · une ligne du cloud dont l'`id` (le même critère que `_foodLogIdentifier` : chaîne de 8
-       caractères ou plus) est déjà sur le téléphone n'apporte rien — la version du TÉLÉPHONE
-       reste (choix conservateur de ce lot : aucune donnée locale n'est écrasée) ;
+       caractères ou plus) est déjà sur le téléphone : la version du TÉLÉPHONE reste (aucune donnée
+       locale n'est écrasée) — mais seulement pour UN exemplaire ; un 2ᵉ exemplaire distinct du même
+       `id` est une collision, préservée (C7′, voir plus bas) ;
      · une ligne du cloud d'`id` inconnu est AJOUTÉE ; deux copies STRICTEMENT identiques du même
        `id` dans le cloud n'en font qu'une, deux contenus différents restent tous les deux
        (`_foodLogIdentifier` redonne alors un `id` neuf au second) ;
@@ -208,20 +209,37 @@ function _empreinteFood(l){
 function _fusionnerFoodLogRestauration(local, cloud){
   const out=Array.isArray(local)?local.slice():[];
   const idValide=l=>(typeof l.id==='string' && l.id.length>=8);
-  const ids=new Set(), libres=new Map(), cloudParId=new Map();
+  const parIdLocal=new Map(), libres=new Map(), cloudParId=new Map();
   out.forEach(l=>{
     if(!l||typeof l!=='object') return;
-    if(idValide(l)) ids.add(l.id);
+    if(idValide(l) && !parIdLocal.has(l.id)) parIdLocal.set(l.id,_empreinteFood(l));
     const e=_empreinteFood(l); libres.set(e,(libres.get(e)||0)+1);
   });
+  const nuage=(Array.isArray(cloud)?cloud:[]).filter(c=>c&&typeof c==='object');
+  /* C7′ (01/10/2026, décision de Michel) — UNE COLLISION D'ID NE FAIT PLUS PERDRE UNE LIGNE.
+     Pour un `id` présent sur le téléphone, UN SEUL exemplaire du cloud est « sa » version (absorbée,
+     le téléphone gagne) : celui qui lui est strictement identique s'il existe, sinon le premier. Les
+     AUTRES exemplaires du même `id` au contenu distinct sont des collisions : préservées (id neuf
+     posé par `_foodLogIdentifier`), sauf si le téléphone porte déjà ce contenu exact — c'est la
+     collision préservée à une restauration précédente, et la reprendre la doublerait (idempotence). */
+  const absorbe=new Set();
+  parIdLocal.forEach((eLoc,id)=>{
+    let premier=-1, identique=-1;
+    nuage.forEach((c,k)=>{ if(c.id!==id) return; if(premier<0) premier=k; if(identique<0 && _empreinteFood(c)===eLoc) identique=k; });
+    if(premier>=0) absorbe.add(identique>=0?identique:premier);
+  });
   let ajoutees=0;
-  (Array.isArray(cloud)?cloud:[]).forEach(c=>{
-    if(!c||typeof c!=='object') return;
+  nuage.forEach((c,k)=>{
     if(idValide(c)){
-      if(ids.has(c.id)) return;                                   // le téléphone a cette ligne : il garde la sienne
-      const vus=cloudParId.get(c.id)||[], e=_empreinteFood(c);
-      if(vus.indexOf(e)>=0) return;                                // copie strictement identique du même id
-      vus.push(e); cloudParId.set(c.id,vus); out.push(c); ajoutees++; return;
+      const e=_empreinteFood(c), vus=cloudParId.get(c.id)||[];
+      if(absorbe.has(k)){ vus.push(e); cloudParId.set(c.id,vus); return; }      // la version de la ligne du téléphone : il garde la sienne
+      if(vus.indexOf(e)>=0 || parIdLocal.get(c.id)===e) return;                 // copie strictement identique
+      vus.push(e); cloudParId.set(c.id,vus);
+      if(vus.length>1 || parIdLocal.has(c.id)){                                // un exemplaire SUPPLÉMENTAIRE de cet id
+        const n=libres.get(e)||0;
+        if(n>0){ libres.set(e,n-1); return; }                                  // déjà préservé sur le téléphone
+      }
+      out.push(c); ajoutees++; return;
     }
     const e=_empreinteFood(c), n=libres.get(e)||0;
     if(n>0){ libres.set(e,n-1); return; }                          // la même ancienne ligne, déjà sur le téléphone

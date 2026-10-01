@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════════════════
    ☁️🍽️ NUTRITION LOT 3 — NUT-FOODLOG-RESTORE-01 : LA RESTAURATION NE SUPPRIME PLUS UNE LIGNE DU
-   JOURNAL ALIMENTAIRE (01/10/2026, session-B, à la demande de Michel) — blocs B-CDXXII → B-CDXXIII.
+   JOURNAL ALIMENTAIRE (01/10/2026, session-B, à la demande de Michel) — blocs B-CDXXII → B-CDXXIV (C7′ : collision d'id, 01/10).
 
    LE DÉFAUT (audit en lecture seule du 01/10, master `1ca144ad`) : `_applyRestoreData` remplaçait
    `S.foodLog` par le journal du cloud dès que celui-ci avait AUTANT ou PLUS de lignes. Une ligne
@@ -124,6 +124,42 @@ module.exports.ecran = async function (t, b, PORT) {
   const r8d = await cas([Object.assign({}, YA, { id: 'ffffffff-6' }), Object.assign({}, YA, { id: 'gggggggg-7' })], [YA, YA, YA]);
   t('B-CDXXIII C8 multi-ensemble : 2 yaourts identiques sur le téléphone, 3 dans le cloud → 3, pas 2 ni 5',
     ok(r8d, 'Yaourt ancien | Yaourt ancien | Yaourt ancien'), det(r8d));
+
+  /* ── B-CDXXIV. C7′ — COLLISION D'ID DANS LE CLOUD (01/10/2026, décision de Michel : « B doit être
+     préservé »). Un seul exemplaire du cloud est la version de la ligne du téléphone ; un autre
+     exemplaire au contenu distinct est préservé avec un id neuf, UNE fois (idempotence). */
+  console.log('\n-- B-CDXXIV. C7′ — collision d\'id dans le cloud : rien perdu, rien recréé (moteur conduit + vrai bouton) --');
+  const AX = L('xxxxxxxx-1', 21, 'Col A', 200), BX = L('xxxxxxxx-1', 22, 'Col B', 300), CX = L('xxxxxxxx-1', 23, 'Col C', 400);
+  const encore = async (cl) => { await pg.evaluate(({ cl, raw }) => { raw.profile.foodLog = cl; _applyRestoreData(raw); }, { cl, raw: profil([]) }); return etat(pg); };
+  const sig = r => r.m.map(x => x.n + ':' + x.k + ':' + x.id).join(' | ');
+  const X_ = 'xxxxxxxx-1';
+  let q = await cas([AX], [AX]);
+  t('B-CDXXIV C7A cas normal (A id X des deux côtés) : 1 ligne, version du téléphone, id X inchangé',
+    ok(q, 'Col A') && q.m[0].id === X_ && q.m[0].k === 200, det(q));
+  const q1 = await cas([AX], [AX, BX]);
+  t('B-CDXXIV C7B ⭐ collision : téléphone A (X) + cloud A (X) et B (X, distinct) → A + B, A garde X, B reçoit un id neuf',
+    ok(q1, 'Col A | Col B') && q1.m[0].id === X_ && q1.m[1].id !== X_ && q1.m[1].k === 300, det(q1));
+  const q2 = await encore([AX, BX]), q3 = await encore([AX, BX]);
+  t('B-CDXXIV C7C idempotence : le même cloud restauré 3 fois → 2 → 2 → 2, ids et contenus identiques',
+    ok(q2, 'Col A | Col B') && ok(q3, 'Col A | Col B') && sig(q1) === sig(q2) && sig(q2) === sig(q3), sig(q1) + ' || ' + sig(q2) + ' || ' + sig(q3));
+  await pg.reload(); await pg.waitForTimeout(1800);
+  const q4 = await etat(pg), q5 = await encore([AX, BX]);
+  t('B-CDXXIV C7D après un vrai rechargement puis une nouvelle restauration : toujours 2 lignes, mémoire = disque, ids stables',
+    ok(q4, 'Col A | Col B') && ok(q5, 'Col A | Col B') && sig(q4) === sig(q1) && sig(q5) === sig(q1), sig(q4) + ' || ' + sig(q5));
+  const e1 = await cas([AX], [AX, BX, CX]), e2 = await encore([AX, BX, CX]), e3 = await encore([AX, BX, CX]);
+  t('B-CDXXIV C7E trois exemplaires distincts du même id → A + B + C, ids distincts, stables sur 3 restaurations',
+    ok(e1, 'Col A | Col B | Col C') && sig(e1) === sig(e2) && sig(e2) === sig(e3) && e1.m[0].id === X_, sig(e1) + ' || ' + sig(e3));
+  q = await cas([AX], [AX, Object.assign({}, AX)]);
+  t('B-CDXXIV C7F copies strictement identiques (A, A) : 1 ligne, pas de faux doublon', ok(q, 'Col A') && q.m[0].id === X_, det(q));
+  const g1 = await cas([AX], [AX, BX, Object.assign({}, BX)]), g2 = await encore([AX, BX, Object.assign({}, BX)]);
+  t('B-CDXXIV C7G deux copies identiques de B (même id X) : B une seule fois → 2 lignes, stable à la 2ᵉ restauration',
+    ok(g1, 'Col A | Col B') && sig(g1) === sig(g2), sig(g1) + ' || ' + sig(g2));
+  q = await cas([AX], [BX, AX]);
+  t('B-CDXXIV C7H ordre inversé dans le cloud (B avant A) : la copie identique est la version absorbée, B reste → A + B',
+    ok(q, 'Col A | Col B') && q.m[0].id === X_ && q.m[0].k === 200, det(q));
+  q = await cas([Object.assign({}, AX, { kcal: 250 })], [AX]);
+  t('B-CDXXIV C7I un seul exemplaire cloud, contenu différent (A corrigée sur le téléphone) : PAS de doublon, le téléphone gagne',
+    ok(q, 'Col A') && q.m[0].k === 250, det(q));
   await cx.close();
 
   /* 2. Chemin MANUEL réel : Profil → Restaurer (`doRestoreAccount`), puis vrai rechargement. */
@@ -143,6 +179,28 @@ module.exports.ecran = async function (t, b, PORT) {
     t('B-CDXXIII MANUEL … et la même union APRÈS un vrai rechargement de la page',
       ok(apres, 'Riz | Poulet | LOCALE RECENTE | CLOUD RECENTE'), det(apres));
     t('B-CDXXIII MANUEL aucune erreur de page', e2.length === 0, e2.slice(0, 2).join(' | '));
+    await cx.close();
+  }
+
+  /* 2 bis. C7′ par le VRAI bouton « Restaurer », rechargement entre chaque restauration (B-CDXXIV). */
+  {
+    const AX = L('xxxxxxxx-1', 21, 'Col A', 200), BX = L('xxxxxxxx-1', 22, 'Col B', 300);
+    cloud = profil([AX, BX]);
+    const { cx, pg, errs: e4 } = await nouvelle(seed([AX]));
+    const tours = [];
+    for (let i = 0; i < 3; i++) {
+      await pg.evaluate(() => { document.getElementById('restore-email-inp').value = 'test@example.invalid';
+        document.getElementById('restore-account-btn').click(); });
+      await pg.waitForTimeout(2200);
+      const m = await etat(pg); await pg.reload(); await pg.waitForTimeout(1600);
+      tours.push({ m, apres: await etat(pg) });
+    }
+    const s0 = tours[0].m.m.map(x => x.n + ':' + x.id).join(' | ');
+    t('B-CDXXIV C7′ VRAI BOUTON : 3 restaurations du même cloud avec rechargement → 2 / 2 / 2, ids stables, mémoire = disque',
+      tours.every(x => ok(x.m, 'Col A | Col B') && ok(x.apres, 'Col A | Col B')
+        && x.m.m.map(y => y.n + ':' + y.id).join(' | ') === s0 && x.apres.m.map(y => y.n + ':' + y.id).join(' | ') === s0)
+      && tours[0].m.m[0].id === 'xxxxxxxx-1' && tours[0].m.m[1].id !== 'xxxxxxxx-1' && e4.length === 0,
+      tours.map(x => det(x.m) + ' → ' + det(x.apres)).join(' || ') + (e4.length ? ' · erreurs ' + e4[0] : ''));
     await cx.close();
   }
 
