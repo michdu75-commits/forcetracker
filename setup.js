@@ -3405,7 +3405,10 @@ function _applyRestoreData(raw){
   try{if(d.diet&&!S.diet)S.diet=d.diet;}catch(e){}
   try{if(Array.isArray(d.dietRestrictions)&&d.dietRestrictions.length&&!(S.dietRestrictions||[]).length)S.dietRestrictions=d.dietRestrictions;}catch(e){}
   try{if(d.dietNotes&&!(S.dietNotes||'').trim())S.dietNotes=d.dietNotes;}catch(e){}
-  try{if(Array.isArray(d.foodLog)&&d.foodLog.length>=(S.foodLog||[]).length)S.foodLog=d.foodLog;}catch(e){console.warn('[FT restore] foodLog',e);}
+  /* 🍽️ NUT-FOODLOG-RESTORE-01 (01/10/2026) — UNION par identifiant, plus de « la liste la plus longue
+     gagne » : celle-ci effaçait une ligne locale jamais synchronisée dès que le cloud avait autant de
+     lignes (`_fusionnerFoodLogRestauration`, state.js). Puis l'identité canonique (`_foodLogIdentifier`). */
+  try{if(Array.isArray(d.foodLog)){S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);}}catch(e){console.warn('[FT restore] foodLog',e);}
   try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
   try{if(typeof d.foodAiUses==='number')S.foodAiUses=Math.max(S.foodAiUses||0,d.foodAiUses);}catch(e){}
   /* 🫙 LES TROIS POTS SÉPARÉS (19/09/2026) — même geste que la ligne au-dessus : un MAXIMUM,

@@ -181,6 +181,55 @@ function _foodLogIdentifier(liste){
   return n;
 }
 
+/* ☁️🍽️ NUT-FOODLOG-RESTORE-01 (01/10/2026, lot Nutrition 3) — LA RESTAURATION FAIT UNE UNION DU
+   JOURNAL, ELLE NE CHOISIT PLUS UNE LISTE PAR SA LONGUEUR.
+   ⛔ Mesuré sur master `1ca144ad` : `_applyRestoreData` remplaçait le journal du téléphone par celui
+   du cloud dès qu'il avait AUTANT ou PLUS de lignes — une ligne locale jamais synchronisée
+   disparaissait (mémoire ET disque), par « Restaurer » comme au démarrage automatique.
+   ⭐ Même principe que les séances (`_fusionnerSeancesRestauration`, lot 3), décision de Michel :
+     · toutes les lignes du TÉLÉPHONE restent, dans leur ordre ;
+     · une ligne du cloud dont l'`id` (le même critère que `_foodLogIdentifier` : chaîne de 8
+       caractères ou plus) est déjà sur le téléphone n'apporte rien — la version du TÉLÉPHONE
+       reste (choix conservateur de ce lot : aucune donnée locale n'est écrasée) ;
+     · une ligne du cloud d'`id` inconnu est AJOUTÉE ; deux copies STRICTEMENT identiques du même
+       `id` dans le cloud n'en font qu'une, deux contenus différents restent tous les deux
+       (`_foodLogIdentifier` redonne alors un `id` neuf au second) ;
+     · ligne du cloud SANS `id` (ancienne sauvegarde) : elle n'est reconnue que par une copie
+       STRICTEMENT identique sur le téléphone — tous les champs enregistrés sauf `id`, puisque le
+       téléphone a pu lui en poser un au chargement — et une fois pour une fois (multi-ensemble) :
+       trois yaourts identiques d'un côté et deux de l'autre en laissent trois. Sinon elle est
+       ajoutée. *Un doublon vaut mieux qu'une perte silencieuse.*
+   ⛔ Aucune ressemblance approximative (nom, date, calories…) ne fait disparaître une ligne. */
+function _empreinteFood(l){
+  const tri=v=>Array.isArray(v)?v.map(tri):(v&&typeof v==='object')
+    ?Object.keys(v).filter(k=>k!=='id').sort().reduce((o,k)=>{o[k]=tri(v[k]);return o;},{}):v;
+  try{ return JSON.stringify(tri(l)); }catch(e){ return String(Math.random()); }
+}
+function _fusionnerFoodLogRestauration(local, cloud){
+  const out=Array.isArray(local)?local.slice():[];
+  const idValide=l=>(typeof l.id==='string' && l.id.length>=8);
+  const ids=new Set(), libres=new Map(), cloudParId=new Map();
+  out.forEach(l=>{
+    if(!l||typeof l!=='object') return;
+    if(idValide(l)) ids.add(l.id);
+    const e=_empreinteFood(l); libres.set(e,(libres.get(e)||0)+1);
+  });
+  let ajoutees=0;
+  (Array.isArray(cloud)?cloud:[]).forEach(c=>{
+    if(!c||typeof c!=='object') return;
+    if(idValide(c)){
+      if(ids.has(c.id)) return;                                   // le téléphone a cette ligne : il garde la sienne
+      const vus=cloudParId.get(c.id)||[], e=_empreinteFood(c);
+      if(vus.indexOf(e)>=0) return;                                // copie strictement identique du même id
+      vus.push(e); cloudParId.set(c.id,vus); out.push(c); ajoutees++; return;
+    }
+    const e=_empreinteFood(c), n=libres.get(e)||0;
+    if(n>0){ libres.set(e,n-1); return; }                          // la même ancienne ligne, déjà sur le téléphone
+    out.push(c); ajoutees++;
+  });
+  return {liste:out, ajoutees};
+}
+
 /* ═══ 🫙 LA MIGRATION DU POT COMMUN VERS LES TROIS POTS (19/09/2026, phase 3.1) ════════════
    Michel : *« Je veux une migration déterministe et prudente. […] Ne tente pas de
    reconstruire une répartition historique inexistante. »*
