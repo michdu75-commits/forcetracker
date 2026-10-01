@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1245`** (prochaine : `ft-v1246`).
+> **Version actuelle : `ft-v1246`** (prochaine : `ft-v1247`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,20 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1246 — 🍽️ NUTRITION LOT 2 · NUT-DASH1 : LE TABLEAU DE BORD AFFICHE LA CIBLE DU JOUR, PLUS LA DÉPENSE** — lot Nutrition 2 (01/10, session-B, à la demande de Michel), checkpoint fonctionnel `0e54eef2`, passe complète verte, publication décidée par Michel. Dégel du 13/09 **limité à NUT-DASH1**.
+
+**AVANT (mesuré sur master `21eddae3`).** La tuile « Nutrition » du tableau de bord ordinateur (`dashboard.html`) lisait `m.kcal || m.cal` et `m.prot || m.p`, clés que `calcMacros` n'a jamais rendues (`calories`, `prot_g`). Les deux valaient `undefined`, et le repli sur `calcTDEE()` affichait la **dépense** sous « Objectif du jour » : 130 kg en perte et décharge → 2 482 au lieu de 1 932 ; 85 kg muscle → 2 759 au lieu de 3 209 ; une cible manuelle de 2 000 ignorée. Les protéines ne s'affichaient jamais.
+
+**APRÈS.** `dashboard.js` lit `calories` et `prot_g` ; le repli sur la dépense est retiré — sans cible, la tuile garde son message « Complète ton profil », aucun chiffre. Même chiffre que « Cible » de l'onglet Nutrition (même profil, même jour, séance ou repos). **Décisions de Michel** : le sous-titre « Protéines N g » quand elles sont connues ; une cible manuelle sans poids s'affiche (sans protéines, « Objectif du jour »). Aucun calcul Nutrition modifié. Le sélecteur de recette ne voyait pas `dashboard.js` : il devient une zone qui déclenche le banc.
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Correction d'affichage sur la version ordinateur, aucun geste demandé, aucun repère déplacé. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ l'incompatibilité B3 n'est pas affichée sur la tuile · `S_.nutritionPhase||'charge'` conservé (équivalent : `load()` pose `charge` par défaut) · hors lot, consignés dans `docs/SUIVI-AUDIT.md` : divergence totaux écran/Milo, restauration `foodLog`, **retour terrain de Michel (01/10) : la recherche d'aliments propose le mauvais aliment en premier** (« café » → poudre, « spaghetti bolognaise » → raviolis crus, « carbonara » → sauce). ⛔ Ni Worker, ni Apps Script. **0 appel réel.**
+
+Tests : blocs **B-CDXX (3 de source) + B-CDXXI (9 conduits : tableau de bord et onglet Nutrition rendus, même profil — normal, D1, séance, repos, cibles manuelles, profils incomplets, `calcMacros` en panne)** dans `tests/parcours/nutri_dash1.js`, banc `tools/banc_nutri_dash1.js` **12/0** (sur master : 7 rouges exécutés). ⛔ **Contrôle négatif `tools/mut_nutri_dash1.py` : 12/12** (M00 = le code d'avant ; repli TDEE, ancienne clé `m.kcal`, mauvaise clé protéines ; 3 déguisées ; 1 équivalente ; 1 commentaire). Passe complète sur `0e54eef2` : **5636 ✅ / 0 ❌**, 4 conditions vertes ; discussions : défaut connu identique à master à la même minute (35/37). Après elle, docs et numéro de version seulement (D-031).
+
+Fichiers : `dashboard.js` (tuile Nutrition de `renderDashboard`), `tests/parcours/nutri_dash1.js` (nouveau), `tests/parcours/runner.js`, `tests/recette/registre.json`, `tools/recette_selecteur.py` (zone `dashboard.js`), `tools/banc_nutri_dash1.js` et `tools/mut_nutri_dash1.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1246. |
 
 **ft-v1245 — 🍽️ NUTRITION LOT 1 · B3 : LA CIBLE CALORIQUE ET LES MACROS NE SE CONTREDISENT PLUS EN SILENCE** — lot Nutrition 1 (30/09, session-B dans le couloir Nutrition à la demande de Michel), checkpoint fonctionnel `f69de2ea`, deux contre-vérifications indépendantes vertes, publication décidée par Michel. Dégel du 13/09 **limité à B3**.
 
@@ -593,17 +607,3 @@ Fichiers : `log.js` (`_etatTravailWkt` nouvelle, `_startSessionFromMilo`, `_askM
 Tests : **B-CCCXCIII (9 de source) + B-CCCXCIV (29 conduits : fil chargé, non chargé serveur injoignable ou disponible, départ réellement hors ligne, fil neuf, déjà chargé, illisible, rattrapage, 400)** dans `tests/parcours/fil_coach_lot1.js`, **38 OK / 0** (sur le code d'avant : 19 rouges). ⛔ **Contrôle négatif `tools/mut_fil_lot1.py` : 15/15 conformes** (M00 = le code d'avant mot pour mot ; M01 coupe à 20 réintroduite ; M02 garde court-circuitée ; 5 déguisées ; 1 commentaire qui doit rester vert). Passe complète sur `3145081b` : **5267 ✅ / 0 ❌**, 4 conditions vertes.
 
 Fichiers : `coach.js` (`_coachHistHydrater` nouvelle, `_dbfPoserDansHistorique`, `_dbfRecuperer`), `log.js` (`_runSeDebrief`), `tests/parcours/fil_coach_lot1.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_fil_lot1.js` et `tools/mut_fil_lot1.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1239. |
-
-**ft-v1238 — 🔬 MILO-SEANCE-C3 · LA SÉANCE PROPOSÉE PAR MILO SURVIT AU RECHARGEMENT** — suite de MILO-SEANCE-01, correctif **C3 seul** (commit `330a040d`), **option A + option (i) validées par Michel** sur diagnostic en lecture seule, puis sur checkpoint.
-
-**AVANT.** La séance que la traduction produit ne vivait qu'en mémoire (`_pendingMiloSessions`) ; le message enregistré ne portait que son texte. Au rechargement, l'app la **reconstruisait depuis le texte** : mesuré, texte lisible → 4 exercices « quand même » mais **repos 120 s → 0 s et consignes perdues** ; texte illisible (points médians) → **plus de séance**, une simple question, et **une 2ᵉ traduction** au tap.
-
-**APRÈS.** Un champ **facultatif** `seance` sur le message assistant porte la séance que sa carte a **réellement** proposée — une copie de la sortie de `_normalizeMiloSession`, prise **après** la montée en charge (aucun nouveau format). Il est rattaché par **référence** au message (jamais par son texte), y compris quand la traduction revient après l'enregistrement, et au tap. Au rechargement, il est relu **après** toutes les gardes existantes (réponse interne, jour, réponse coupée) et **avant** le texte ; absent ou invalide → le repli d'avant. Il survit à « Mes discussions ». ⛔ Il ne part **pas** chez Milo (`_coachHistPayload` inchangé) ni au cloud (`setup.js` non touché) ; il apparaît dans l'export JSON « avec mes discussions », pas dans l'export texte. Option A retenue par Michel contre B (un stockage parallèle, 2ᵉ source de vérité) et C (un bloc caché dans le texte, qui serait reparti chez Milo).
-
-**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : la carte séance reste après la fermeture de l'app, avec la même séance. ⚖️ **Pop-up : non.**
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ **D-025 reste OUVERT** (« Mes discussions » perd toujours `coupee` ; seul `seance` a été ajouté à la recopie) · ⛔ **K3, hors lot et non corrigé** : si une autre discussion est rouverte pendant la traduction, la carte séance s'affiche sous la dernière bulle de cette discussion — mesuré **identique avant C3**, aucune donnée rattachée, la carte disparaît au rechargement ; **décision de Michel à prendre** · ⛔ délai de 12 s, C1, C2, Worker, Apps Script, prompt : inchangés · ⛔ **0 appel réel à Milo** · aucune migration. ⚠️ C3 **n'explique pas** l'événement réel du 26/09 : Symptôme réel 4→2 ; cause de l'événement réel non déterminée. Un mécanisme capable de produire ce résultat a été reproduit localement dans la lecture de secours.
-
-Tests : **B-CCCXCI (4 de source) + B-CCCXCII (31 conduits, vrai rechargement de page)** dans `tests/parcours/seance_c3.js`, **35 OK / 0** (sur le code d'avant : **16 rouges**), branchés dans la passe — C3-A → C3-J demandés par Michel, plus la séance lue au tap (C3-L, C3-M) et trois courses (traduction tardive, discussion rangée, autre discussion rouverte). ⛔ **Contrôle négatif `tools/mut_seance_c3.py` : 18/18 conformes** (M00 = le code d'avant mot pour mot, 4 déguisées, 1 commentaire qui doit rester vert). ⚠️ Correction honnête : M15 (réappliquer `_montee` à la relecture) était d'abord annoncée « doit rester vert » ; le témoin C3-H prouve qu'elle **transforme** une séance gardée qui n'est pas déjà « montée » — l'attendu a été corrigé. Non-régression : C1 29/0 · C2 22/0 · unicité 12/0 · PDF1/PDF1B/D-027/D-028 97/0.
-
-Fichiers : `coach.js` (`_lightMsg`, `_renderCoachThread`, `loadCoachConv`, `_appendStartSessionBtn`, `_attacherSeance` nouvelle, `_appendSeanceQuestion`, `_construireSeanceAuTap`, `sendToCoach`), `tests/parcours/seance_c3.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_seance_c3.js` et `tools/mut_seance_c3.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/MILO-SEANCE-01.md` (note d'état), `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1238. |
