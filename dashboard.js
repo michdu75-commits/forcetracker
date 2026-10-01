@@ -394,10 +394,17 @@ function renderDashboard(){
     : `<div class="vide">Rien d'annoncé pour aujourd'hui.</div>`}));
 
   // ── NUTRITION ─────────────────────────────────────────────────────────────
+  /* 🍽️ NUT-DASH1 (01/10/2026, lot Nutrition 2) — LA TUILE LIT LA CIBLE, PAS LA DÉPENSE.
+     Elle lisait `m.kcal || m.cal` et `m.prot || m.p`, clés que `calcMacros` n'a jamais rendues
+     (elle rend `calories` et `prot_g`) : les deux valaient `undefined`, et le repli sur `calcTDEE()`
+     affichait la DÉPENSE sous « Objectif du jour » — mesuré : 2 482 au lieu de 1 932 (130 kg, perte,
+     décharge), 2 759 au lieu de 3 209 (85 kg, muscle), une cible manuelle de 2 000 ignorée.
+     ⛔ PLUS DE REPLI SUR LE TDEE : la dépense n'est pas un objectif. Sans cible, la tuile le dit
+     (R29) ; c'est exactement le cas où `calcTDEE()` vaut lui aussi `null`. Mêmes clés, même chiffre
+     que « Cible » de l'onglet Nutrition (R2) — aucun calcul ici. */
   let kcal=null,prot=null;
   try{ const m=(typeof calcMacros==='function')?calcMacros(S_.nutritionPhase||'charge'):null;
-       if(m){kcal=m.kcal||m.cal||null; prot=m.prot||m.p||null;} }catch(e){}
-  if(kcal==null){ try{ kcal=(typeof calcTDEE==='function')?calcTDEE():null; }catch(e){} }
+       if(m){kcal=m.calories!=null?m.calories:null; prot=m.prot_g!=null?m.prot_g:null;} }catch(e){}
   T.push(_dTuile({titre:'Nutrition', ic:'🍏', corps: kcal
     ? `<div class="kpi-v">${Math.round(kcal)}<small>kcal</small></div>
        <div class="kpi-s">${prot?('Protéines '+Math.round(prot)+' g'):'Objectif du jour'}</div>`

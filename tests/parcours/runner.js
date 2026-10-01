@@ -39626,6 +39626,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   await require('./nutri_b3.js').ecranVue(t, b, PORT);
   await require('./nutri_b3.js').ecranMilo(t, b, PORT);
   await require('./nutri_b3.js').ecranUX(t, b, PORT);
+  /* 🍽️ Nutrition lot 2 — NUT-DASH1 (01/10/2026) : la tuile Nutrition du tableau de bord affiche la
+     cible de l'onglet, pas la dépense. Bloc B-CDXXI, contrôle négatif `tools/mut_nutri_dash1.py`. */
+  await require('./nutri_dash1.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40511,6 +40514,7 @@ require('./poids_chaine.js').source(t, ROOT, fs, path);
 require('./debrief_provenance.js').source(t, ROOT, fs, path);
 require('./nutri_moteur.js').source(t, ROOT, fs, path);
 require('./nutri_b3.js').source(t, ROOT, fs, path);
+require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

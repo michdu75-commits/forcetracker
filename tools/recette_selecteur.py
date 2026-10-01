@@ -28,7 +28,10 @@ SERVIS = ['app.js', 'log.js', 'coach.js', 'setup.js', 'state.js', 'screens.js', 
 SEUIL_CARREFOUR = 20
 MOTIFS = {'motif:audio': r'AudioContext|new Audio\(|\.play\(\)', 'motif:camera': r'getUserMedia'}
 ZONES_FICHIER = {'worker.js': 'fichier:worker.js', 'Code.js': 'fichier:Code.js', 'appsscript.json': 'fichier:appsscript.json',
-                 'index.html': 'fichier:index.html', 'style.css': 'fichier:style.css'}
+                 'index.html': 'fichier:index.html', 'style.css': 'fichier:style.css',
+                 # le tableau de bord ordinateur est servi (dashboard.html) mais hors de SERVIS : sans
+                 # cette zone, un diff qui ne touche que lui ne déclenchait AUCUN test (NUT-DASH1, 01/10/2026)
+                 'dashboard.js': 'fichier:dashboard.js'}
 # déclarations de premier niveau : `function f(`, `async function f(`, `const f =`, et les fonctions
 # nommées auto-exécutées au démarrage `(function _recoverDraft(){…})()` / `(async function autoConnect(`
 DECL = re.compile(r'^\(?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=')
