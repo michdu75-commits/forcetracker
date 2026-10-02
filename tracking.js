@@ -840,8 +840,12 @@ function _bfNavy(neck,waist,hip,ht,gender){
     let bf;
     if(gender==='F'){ if(!hip||waist+hip<=neck)return null; bf=495/(1.29579-0.35004*Math.log10(waist+hip-neck)+0.22100*Math.log10(ht))-450; }
     else{ if(waist<=neck)return null; bf=495/(1.0324-0.19077*Math.log10(waist-neck)+0.15456*Math.log10(ht))-450; }
-    if(!isFinite(bf)||bf<=2||bf>70)return null;
-    return Math.round(bf*10)/10;
+    /* Borne basse jugée sur la valeur RENDUE (arrondie au dixième), comme la saisie : 2,0 % est dans la
+       plage 2–70 inclus (NUT-PROFIL-ATYPIQUE-02B). Avant : `bf<=2` sur le brut rejetait un résultat
+       qui s'affiche 2,0. Borne haute inchangée. */
+    const r=Math.round(bf*10)/10;
+    if(!isFinite(bf)||r<2||bf>70)return null;
+    return r;
   }catch(e){return null;}
 }
 function _bfMeasInput(id,label,val){

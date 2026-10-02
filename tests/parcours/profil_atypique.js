@@ -28,6 +28,8 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('③ la saisie garde sa borne 2–70 (inchangée)', /bf<2\|\|bf>70/.test(tr), '');
   t('④ `_tailleValide` : 100 inclus, 230 exclu', /v>=100\s*&&\s*v<230/.test(tv), tv);
   t('⑤ le message dit la même plage que la règle (100–229 cm)', /Taille invalide \(100–229 cm\)/.test(se), '');
+  const nvy = corps(tr, '_bfNavy');
+  t('⑦ `_bfNavy` : borne basse 2 INCLUSE sur la valeur rendue, borne haute 70 inchangée', /r<2\|\|bf>70/.test(nvy) && !/bf<=2/.test(nvy), (nvy.match(/if\(!isFinite\(bf\)[^\n]*/) || [''])[0]);
   t('⑥ une seule `_tailleValide` (R2)', (st.match(/function _tailleValide\(/g) || []).length === 1 && !/function _tailleValide\(/.test(se), '');
 };
 
@@ -85,6 +87,20 @@ module.exports.ecran = async function (t, b, PORT) {
   t('T6 · saveProfile 100 → enregistré, aucun toast d\'erreur', s100.h === 100 && !s100.toasts.some(m => /invalide/i.test(m)), js(s100));
   t('T6 · saveProfile 99 et 230 → refusés, message « 100–229 cm » (cohérent avec la règle)',
     s99.h === 180 && s230.h === 180 && s99.toasts.some(m => m.includes('100–229')) && s230.toasts.some(m => m.includes('100–229')), js([s99, s230]));
+  /* 02B — `_bfNavy` CALCULE le % depuis des mensurations (cou · taille · hauteur, homme) : on le conduit
+     par son vrai contrat, avec des mensurations au millimètre. ⚠️ Aucune mensuration réaliste ne donne
+     EXACTEMENT 2,000 brut (le calcul est continu) : le défaut réel est qu'un résultat qui s'ARRONDIT à
+     2,0 (brut 1,95–2,0) était rejeté alors que la saisie accepte 2. Cas trouvés par balayage. */
+  const NV = { BFN1: ['65', '35', 170, 1.9], BFN2: ['65.2', '35', 171, 2], BFN3: ['65.2', '35', 170, 2.1],
+    BFN4: ['203.9', '35', 170, 69.9], BFN5: ['204.3', '35', 170, 70], BFN6: ['204.6', '35', 170, 70.1] };
+  const nv = await pg.evaluate(NV => { const o = {}; for (const k in NV) { const [w, n, h] = NV[k]; o[k] = _bfNavy(n, w, '', h, 'H'); } return o; }, NV);
+  t('BFN1 · brut ≈ 1,91 (→ 1,9 %) → rejeté', nv.BFN1 === null, js(nv));
+  t('BFN2 · brut ≈ 1,976 (→ 2,0 %) → VALIDE, rend 2 (c\'était rejeté)', nv.BFN2 === 2, js(nv));
+  t('BFN3 · → 2,1 % → valide', nv.BFN3 === 2.1, js(nv));
+  t('BFN4 · → 69,9 % → valide', nv.BFN4 === 69.9, js(nv));
+  t('BFN5 · brut ≈ 69,97 (→ 70,0 %) → valide', nv.BFN5 === 70, js(nv));
+  t('BFN6 · brut ≈ 70,05 (→ 70,1 %) → rejeté', nv.BFN6 === null, js(nv));
+  t('BFN · la virgule française donne le même résultat (65,2 → 2)', await pg.evaluate(() => _bfNavy('35', '65,2', '', 171, 'H')) === 2, '');
   t('aucune erreur de page', errs.length === 0, errs.join(' | '));
   await cx.close();
 };
