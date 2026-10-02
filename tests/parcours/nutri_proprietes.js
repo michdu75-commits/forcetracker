@@ -77,8 +77,10 @@ module.exports.ecran = async function (t, b, PORT) {
   });
 
   // ══ ① T01 — LA PHOTOGRAPHIE DU 22/09/2026 ════════════════════════════════════════════
-  const T01 = { force: [3815, 172, 588, 86], recomp: [3365, 223, 454, 73],
-                muscle: [3965, 189, 629, 77], equilibre: [3615, 172, 568, 73] };
+  /* 📷 RETOURNÉE le 02/10/2026 (NUT-LIPIDES-25-01, décision de Michel) : lipides = 25 % de la cible.
+     Cible et protéines inchangées ; photographie du 22/09 : force 588/86 · recomp 454/73 · muscle 629/77 · équilibre 568/73 (G/L). */
+  const T01 = { force: [3815, 172, 543, 106], recomp: [3365, 223, 409, 93],
+                muscle: [3965, 189, 555, 110], equilibre: [3615, 172, 507, 100] };
   Object.keys(T01).forEach((g, i) => {
     const r = R.t01[g], a = T01[g];
     t('B-CCCLII ' + '①②③④'[i] + ' 📷 T01 · ' + g + ' figé (' + a.join(' / ') + ')',
@@ -97,13 +99,17 @@ module.exports.ecran = async function (t, b, PORT) {
   /* ⛔⛔ CE TÉMOIN FIGE UN DÉFAUT, PAS UNE QUALITÉ. Il est VERT aujourd'hui parce que le
      défaut existe : un bilan corporel frais change le BMR et ne change PAS les macros (R4).
      Le jour où Michel valide la correction, il rougira — c'est le signal attendu. */
-  t('B-CCCLII ⑦ ⛔ DÉFAUT FIGÉ · un bilan corporel frais ne change NI protéines NI lipides',
-    R.maigre.sansP === R.maigre.avecP && R.maigre.sansL === R.maigre.avecL,
+  /* RETOURNÉ À MOITIÉ le 02/10 (NUT-LIPIDES-25-01) : les lipides suivent désormais la cible, donc le bilan ;
+     les PROTÉINES, elles, ne bougent toujours pas — c'est le défaut qui reste, toujours figé. */
+  t('B-CCCLII ⑦ ⛔ DÉFAUT FIGÉ · un bilan corporel frais ne change PAS les protéines (les lipides, 25 % de la cible, le suivent depuis NUT-LIPIDES-25-01)',
+    R.maigre.sansP === R.maigre.avecP && R.maigre.sansL !== R.maigre.avecL,
     JSON.stringify(R.maigre));
   t('B-CCCLII ⑧ ⭐ … alors qu\'il change bien le BMR (donc l\'info EXISTE et n\'atteint pas les macros)',
     R.maigre.bmrChange === true, JSON.stringify(R.maigre));
-  t('B-CCCLII ⑨ ⛔ DÉFAUT FIGÉ · un homme 110 kg / 150 cm en perte reçoit 0 g de glucides',
-    R.zero.G === 0 && R.zero.P > 250, JSON.stringify(R.zero));
+  /* RETOURNÉ le 02/10 (NUT-LIPIDES-25-01) : ce profil recevait 0 g de glucides (lipides 88 g = 0,8 g/kg) ;
+     à 25 % de la cible il reçoit 78 g. Le cas « 0 g » reste possible plus lourd — D-034 le DIT. */
+  t('B-CCCLII ⑨ ✅ DÉFAUT RETOURNÉ (NUT-LIPIDES-25-01) · l\'homme 110 kg / 150 cm en perte reçoit 78 g de glucides (avant : 0)',
+    R.zero.G === 78 && R.zero.P === 275 && R.zero.L === 52 && R.zero.kcal === 1881, JSON.stringify(R.zero));
 
   // ══ ④ INVARIANTS — ceux-là ne se retournent jamais ═══════════════════════════════════
   t('B-CCCLII ⑩ 🛡️ INVARIANT · aucune macro négative (' + R.inv.n + ' profils)',
@@ -127,8 +133,11 @@ module.exports.ecran = async function (t, b, PORT) {
        les glucides sont écrêtés à 0 et **tout le surplus reste dans la somme**.
      ⛔ Le témoin fige donc le DÉFAUT tel qu'il est aujourd'hui (191 profils sur 131 712, écart
      moyen 108 kcal) : il rougira le jour où Michel validera la correction. */
-  t('B-CCCLII ⑬ ⛔⛔ DÉFAUT FIGÉ · la somme des macros peut dépasser la cible de plusieurs centaines de kcal',
-    R.inv.fermeture > 0 && R.inv.maxF > 100,
+  /* RETOURNÉ le 02/10 (NUT-LIPIDES-25-01) sur CETTE grille (45 → 130 kg) : plus aucun dépassement au-delà de
+     l'arrondi. ⚠️ Le dépassement reste possible plus lourd ou à cible manuelle basse : D-034 le dit
+     (`tests/parcours/nutri_lipides25.js`, T4 et T5) — ce témoin ne prétend pas le contraire. */
+  t('B-CCCLII ⑬ ✅ DÉFAUT RETOURNÉ sur cette grille (NUT-LIPIDES-25-01) · plus aucun dépassement de la cible au-delà de l\'arrondi',
+    R.inv.fermeture === 0 && R.inv.maxF <= 6,
     'dépassements = ' + R.inv.fermeture + ' · écart max mesuré = ' + R.inv.maxF + ' kcal');
   /* ⭐ ET L'INVARIANT QUI RESTE VRAI, SÉPARÉ DU DÉFAUT : hors écrêtage, la fermeture tient dans
      la tolérance d'arrondi. P et L sont arrondis avant que G ne soit calculé — l'écart maximal
@@ -198,8 +207,9 @@ module.exports.ecran = async function (t, b, PORT) {
     D.sur55Pct > 20, 'surplus = ' + D.sur55Pct.toFixed(1) + ' % du TDEE (repère : +10-20 %)');
   /* ⚖️ La cible manuelle échappe au plancher — c'est une DÉCISION ACTÉE (on n'interdit pas).
      ⛔ Mais que les macros totalisent bien plus que la cible n'est décidé nulle part. */
-  t('B-CCCLII ⑲ ⛔ DÉFAUT FIGÉ · cible manuelle 600 kcal → macros qui totalisent bien plus',
-    D.man.kcal === 600 && D.man.somme > 800 && D.man.G === 0,
+  /* Toujours un défaut (dit par D-034), plus petit depuis NUT-LIPIDES-25-01 : 705 kcal au lieu de plus de 800. */
+  t('B-CCCLII ⑲ ⛔ DÉFAUT FIGÉ · cible manuelle 600 kcal → macros qui totalisent plus (705 kcal, glucides 0)',
+    D.man.kcal === 600 && D.man.somme === 705 && D.man.G === 0,
     'cible ' + D.man.kcal + ' kcal · macros ' + D.man.somme + ' kcal · glucides ' + D.man.G + ' g');
   t('B-CCCLII ⑳ ⛔ DÉFAUT FIGÉ · le bilan corporel qui passe 90 jours fait sauter la cible',
     D.j89.meth !== D.j91.meth && Math.abs(D.j91.kcal - D.j89.kcal) > 50,

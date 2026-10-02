@@ -358,7 +358,7 @@ const _HELP_DATA={
       {i:'📷',t:'Code-barres : tape les chiffres écrits sous le code (gratuit) OU appuie sur « 📷 Photographier le code-barres » et prends-le en photo — l\'IA lit le numéro pour toi (utile si les chiffres sont petits/abîmés). La lecture photo utilise 1 essai IA ; ensuite la recherche du produit et le score santé restent gratuits.'},
       {i:'🥗',t:'Score santé : au code-barres d\'un produit, tu vois son Nutri-Score (A à E) et son niveau de transformation (brut ou ultra-transformé). Gratuit pour tout le monde, sans crédit IA. Pratique pour repérer d\'un coup d\'œil ce qui est sain.'},
       {i:'📥',t:'Tu as un plan de ta diététicienne ? Bouton « Importer un plan » (Plan de repas IA) : prends-le en photo ou importe le PDF, l\'IA range les repas.'},
-      {i:'🎯',t:'Calories trop hautes ou trop basses pour toi ? Sous l\'anneau, bouton « ✎ Ajuster mes calories » : tape ton chiffre à la main. Les protéines et lipides restent calés sur ton profil, les glucides s\'ajustent → équilibre garanti. « Revenir en automatique » à tout moment.'},
+      {i:'🎯',t:'Calories trop hautes ou trop basses pour toi ? Sous l\'anneau, bouton « ✎ Ajuster mes calories » : tape ton chiffre à la main. Les protéines restent calées sur ton profil, les lipides font 25 % de tes calories, les glucides complètent → équilibre garanti. « Revenir en automatique » à tout moment.'},
       {i:'💪',t:'Objectif « Perte de gras + muscle » (Profil → Objectif) = recomposition : léger déficit + protéines élevées → perdre du gras sans perdre de muscle (muscles toniques, pas « skinny fat »).'},
       /* 📤 AIDE DE L'ONGLET (règle d'or #11) : le bouton EXISTE, l'aide dit ce qu'on peut en
          faire et surtout ce que le fichier CONTIENT — la provenance est ce qui distingue un
@@ -2593,7 +2593,7 @@ function _incompatibleHTML(m){
     const d=L[0];
     txt+=(d.ecrete==='lipides'
         ?'Tes protéines et tes glucides kéto (calculés sur ton poids et ton régime) font déjà <b>'
-        :'Tes protéines et lipides (calculés sur ton poids et ton objectif) font déjà <b>')+n(d.macros)
+        :'Tes protéines (calculées sur ton poids et ton objectif) et tes lipides (25 % de ta cible) font déjà <b>')+n(d.macros)
       +' kcal</b>, soit <b>'+n(d.ecart)+' kcal de plus</b> que la cible — les '+(d.ecrete||'glucides')+' tombent à 0. '
       +'Ces macros ne respectent donc PAS la cible ; l\'app ne modifie ni l\'une ni les autres.';
   } else {

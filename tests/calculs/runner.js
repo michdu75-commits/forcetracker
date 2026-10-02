@@ -127,7 +127,8 @@ console.log('\n═══ 2. calcBMR / calcTDEE / macros (Mifflin-St Jeor) ══
   t('phase sèche : −200 vs charge', r.auto-r.autoSeche===200, 'reçu '+(r.auto-r.autoSeche));
   t('objectif perte : TDEE −450 (déficit)', r.autoPerte-r.tdee===-350, 'reçu '+(r.autoPerte-r.tdee));
   t('protéines muscle = 2.2 g/kg (176 g pour 80 kg)', r.m.prot_g===176, 'reçu '+r.m.prot_g);
-  t('lipides muscle = 0.9 g/kg (72 g)', r.m.fat_g===72, 'reçu '+r.m.fat_g);
+  /* NUT-LIPIDES-25-01 (02/10/2026) : lipides des modes standards = 25 % de la cible (avant : 0,9 g/kg → 72 g). */
+  t('lipides muscle = 25 % de la cible (NUT-LIPIDES-25-01)', r.m.fat_g===Math.round(r.m.calories*0.25/9), 'reçu '+r.m.fat_g+' pour '+r.m.calories+' kcal');
   t('glucides = le reste des calories (cohérence interne ±10 kcal)',
     approx(r.m.prot_g*4+r.m.fat_g*9+r.m.carbs_g*4, r.m.calories, 10),
     (r.m.prot_g*4+r.m.fat_g*9+r.m.carbs_g*4)+' vs '+r.m.calories);
@@ -1813,7 +1814,9 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     /* ... et sur un gabarit où il MORD vraiment (peu de calories, poids élevé). */
     S.bw=110; S.manualKcal=1800;
     const mord=calcMacros('normal');
-    o.plancherMord=(mord.fat_g>=Math.round(110*0.6)-1);
+    /* NUT-LIPIDES-25-01 (02/10) : ici les lipides de la règle (25 % de 1 800 = 50 g) sont DÉJÀ sous le plancher
+       du cycle (66 g) — le cycle ne s'active donc pas et ne retire rien ; avant, il descendait 99 g → 66 g. */
+    o.plancherMord=(!mord.cycle && mord.fat_g===Math.round(1800*0.25/9));
     o.fatMord=mord.fat_g; o.fatSeuil=Math.round(110*0.6);
     S.bw=80; S.manualKcal=0; S.sessions=[];
     return o;
@@ -1844,7 +1847,7 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     C.septPasDeCycle===true, '');
   t('⛔ le plancher lipidique tient à 1 séance/sem (le retrait le plus gros)',
     C.plancherOK===true, 'lipides='+C.fatMin+' g');
-  t('⛔⛔ ... et il tient AUSSI là où il mord (110 kg à 1 800 kcal)',
+  t('⛔⛔ ... et là où il mordait (110 kg à 1 800 kcal) : depuis NUT-LIPIDES-25-01 le cycle ne s\'active plus, rien n\'est retiré (50 g = 25 %)',
     C.plancherMord===true, 'lipides='+C.fatMord+' g · plancher='+C.fatSeuil+' g');
   await cx.close();
 }

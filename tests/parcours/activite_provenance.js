@@ -487,8 +487,8 @@ module.exports.ecran = async function (t, b, PORT) {
   const avecAct = await rendre({ ft4_act: '1.55' });
   t('B-CCCLXVII ① sans activité, sans cible manuelle : AUCUNE erreur de rendu, macros « — »',
     sansAct.erreurs.length === 0 && sansAct.P === '—' && sansAct.G === '—', JSON.stringify(sansAct));
-  t('B-CCCLXVII ② sans activité, 2500 kcal à la main : aucune erreur, et les macros calculées S\'AFFICHENT (P 172 · L 86 · G 260 = (2500 − 4×172 − 9×86)/4)',
-    manuel.erreurs.length === 0 && manuel.P === '172' && manuel.L === '86' && manuel.G === '260',
+  t('B-CCCLXVII ② sans activité, 2500 kcal à la main : aucune erreur, et les macros calculées S\'AFFICHENT (P 172 · L 69 = 25 % · G 298 = (2500 − 4×172 − 9×69)/4)',
+    manuel.erreurs.length === 0 && manuel.P === '172' && manuel.L === '69' && manuel.G === '298',
     JSON.stringify(manuel));
   /* ⛔ Trouvé par la contre-vérification APRÈS le correctif du plantage : le plantage CACHAIT un
      rendu de zéros — sans cible calculable, le plan statique affichait « 0 kcal · P: 0g · G: 0g ·
@@ -502,8 +502,8 @@ module.exports.ecran = async function (t, b, PORT) {
     JSON.stringify({ plan: (manuel.plan || '').slice(0, 80), ringP: manuel.ringP }));
   t('B-CCCLXVII ③ le sous-titre de l\'accordéon dit « TDEE — » au lieu de planter',
     /TDEE —/.test(manuel.sub || '') && /TDEE —/.test(sansAct.sub || ''), JSON.stringify([sansAct.sub, manuel.sub]));
-  t('B-CCCLXVII ④ contrôle : activité 1,55 choisie → rendu complet, TDEE 2 711 dans le sous-titre, 172 · 86 · 387',
-    avecAct.erreurs.length === 0 && avecAct.P === '172' && avecAct.L === '86' && avecAct.G === '387' && /TDEE 2\s?711/.test(avecAct.sub || '')
+  t('B-CCCLXVII ④ contrôle : activité 1,55 choisie → rendu complet, TDEE 2 711 dans le sous-titre, 172 · 84 · 392 (lipides 25 %)',
+    avecAct.erreurs.length === 0 && avecAct.P === '172' && avecAct.L === '84' && avecAct.G === '392' && /TDEE 2\s?711/.test(avecAct.sub || '')
     && /kcal/.test(avecAct.plan || '') && !/Remplis ton profil/.test(avecAct.plan || '') && /%/.test(avecAct.ringP || ''),
     JSON.stringify(avecAct));
   t('B-CCCLXIII ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));

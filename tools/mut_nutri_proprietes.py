@@ -34,12 +34,11 @@ MUT = [
      "const carbs_g=Math.round((kcal-prot_g*4-fat_g*9)/4);",
      'rouge', "l ecretage saute : les glucides deviennent NEGATIFS"),
     # ⭐⭐ LA CORRECTION PROPOSEE, SIMULEE : le temoin du defaut doit la voir arriver.
-    ('M05', ST, "  const prot_g=Math.round((S.bw||0)*protRatio);\n"
-                "  const fat_g=Math.round((S.bw||0)*fatRatio);",
+    # NUT-LIPIDES-25-01 (02/10/2026) : les lipides ne sont plus en g/kg (25 % de la cible) — seule la ligne des proteines est mutee.
+    ('M05', ST, "  const prot_g=Math.round((S.bw||0)*protRatio);\n",
      "  const _lm=(typeof leanMassRecente==='function')?leanMassRecente():null;\n"
      "  const _ref=(_lm&&_lm.lm)?(_lm.lm/0.85):(S.bw||0);\n"
-     "  const prot_g=Math.round(_ref*protRatio);\n"
-     "  const fat_g=Math.round((S.bw||0)*fatRatio);",
+     "  const prot_g=Math.round(_ref*protRatio);\n",
      'rouge', "CORRECTION SIMULEE : les macros lisent enfin la masse maigre"),
     ('M06', ST, "function _plancherKcal(k){\n"
                 "  const p=PLANCHER_KCAL[sexeAthlete()];\n"
@@ -51,9 +50,9 @@ MUT = [
     ('M07', ST, "const phaseAdj=phase==='charge'?100:-100;",
      "const phaseAdj=phase==='charge'?150:-150;",
      'rouge', "la modulation charge/decharge a bouge (T01)"),
-    ('M08', ST, "{muscle:0.9,perte:0.8,recomp:0.85,force:1.0,equilibre:0.85,endurance:0.75}",
-     "{muscle:0.9,perte:0.8,recomp:0.85,force:1.2,equilibre:0.85,endurance:0.75}",
-     'rouge', "le ratio de lipides de l objectif force a bouge (T01)"),
+    ('M08', ST, "const _LIPIDES_PART_STANDARD=0.25;",
+     "const _LIPIDES_PART_STANDARD=0.30;",
+     'rouge', "la part des lipides (25 % de la cible, NUT-LIPIDES-25-01) a bouge (T01)"),
     # ══ LES MUTATIONS DES DECOUVERTES DU SOIR (⑮ a ⑳) ═══════════════════════════════
     # ⭐⭐ M09 EST LA 2e CORRECTION SIMULEE : la discipline atteint enfin la nutrition.
     ('M09', ST, "  const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;",

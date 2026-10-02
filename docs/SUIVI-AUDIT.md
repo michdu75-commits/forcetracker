@@ -401,3 +401,21 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Branche « glucides et lipides » de `_cibleIncompatible`** (state.js) : le cas où glucides ET lipides sont
   écrêtés ensemble n'est atteint par aucun chemin actuel (le kéto garde 5 % de glucides, le standard garde des
   lipides). Inoffensive ; gardée telle quelle pour ne pas élargir le lot.
+
+### 🥑 NUT-LIPIDES-25-01 — lipides des modes standards à 25 % de la cible (02/10/2026, session-B — CHECKPOINT, NON PUBLIÉ)
+- **Décision de Michel (D-035)** après la simulation NUT-LIPIDES-SIM-01 : `lipides = cible × 25 % / 9` au lieu de
+  `poids total × ratio de l'objectif`. Protéines, cible, BMR, TDEE, kéto, low carb inchangés ; D-034 dit l'écart restant.
+  ⚠️ 25 % = **convention produit documentée, pas une vérité scientifique**.
+- **Mesuré (59 904 profils, master ↔ branche, `tools/diff_nutri_lipides25.js`)** : BMR / TDEE / cible / protéines / kéto /
+  low carb : **0 changement** ; lipides standards 24,7 → 25,4 % de la cible (avant : 4,3 % → 270 %) ; glucides à 0 :
+  6 794 → 3 489 ; écart D-034 : 7 637 → 3 474 ; aucun profil nouvellement à 0 ou incompatible.
+- 🟠 **À TRANCHER PAR MICHEL (non décidé dans ce lot)** : le plancher du cycle séance/repos (`_CYCLE_FAT_MIN` =
+  0,6 g/kg de poids TOTAL, inchangé) **éteint le cycle pour 6 248 profils** (18 432 → 12 184 ; tous lourds ou à cible
+  basse : 70 kg → 460, 300 kg → 1 636). Conséquence mécanique : en mode standard, un cycle actif exige une cible ≥ 21,6 ×
+  poids, un écart D-034 une cible < ~5,3 × protéines (≤ 14 × poids) — les **écarts « jour de cycle » de B3 deviennent
+  inatteignables** (3 126 → 0) et **10 témoins B3** qui les conduisaient sont rouges, gardés tels quels (R30 : ni supprimés,
+  ni « réparés » sans décision). Le code (jours nommés, toast « au repos », phrase « le cycle ne peut pas conserver… »)
+  reste en place.
+- Textes corrigés parce qu'ils décrivaient l'ancienne règle (R4, R23) : aide « ? » Nutrition, intro du réglage manuel,
+  aide détaillée « Nutrition — où est quoi », description de l'objectif Force (« lipides élevés »), avertissement D-034
+  (« protéines et lipides calculés sur ton poids »).

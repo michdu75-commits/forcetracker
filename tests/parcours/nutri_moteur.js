@@ -40,9 +40,13 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('B-CCCLX ② protéines en g/kg du poids TOTAL, table par objectif inchangée',
     ST.includes("protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)")
     && ST.includes('constprot_g=Math.round((S.bw||0)*protRatio);'), 'table protéines modifiée');
-  t('B-CCCLX ③ lipides en g/kg du poids TOTAL, table par objectif inchangée',
-    ST.includes('fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9')
-    && ST.includes('constfat_g=Math.round((S.bw||0)*fatRatio);'), 'table lipides modifiée');
+  /* 🥑 NUT-LIPIDES-25-01 (02/10/2026, décision de Michel) : les lipides des modes standards ne sont plus
+     « poids total × table par objectif » mais 25 % de la cible. Ce témoin figeait l'ancienne table ; il fige
+     maintenant la nouvelle règle, et refuse le retour de l'ancienne. */
+  t('B-CCCLX ③ lipides des modes standards = 25 % de la cible (NUT-LIPIDES-25-01), plus de table g/kg',
+    ST.includes('const_LIPIDES_PART_STANDARD=0.25;')
+    && ST.includes('constfat_g=Math.round(kcal*_LIPIDES_PART_STANDARD/9);')
+    && !/fatRatio/.test(ST), 'règle des lipides modifiée');
   t('B-CCCLX ④ écart calorique par objectif inchangé',
     ST.includes('_GOAL_DELTA_KCAL={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}'),
     'table des objectifs modifiée');
@@ -115,6 +119,7 @@ module.exports.ecran = async function (t, b, PORT) {
     out.sansPoids = cas(DECL, { ft4_bw: '0' });
     out.manSansPoids = cas(DECL, { ft4_bw: '0', ft4_manualkcal: '2200' });
     out.man1200 = cas(DECL, { ft4_manualkcal: '1200' });
+    out.man800 = cas(DECL, { ft4_manualkcal: '800' });
     out.lourdPerte = cas(DECL, { ft4_bw: '130', ft4_age: '55', ft4_ht: '170', ft4_act: '1.2', ft4_goal: 'perte' });
     out.man6000 = cas(DECL, { ft4_manualkcal: '6000' });
     out.max = cas(DECL, { ft4_act: '1.9', ft4_work: 'physique', ft4_goal: 'muscle' });
@@ -133,31 +138,35 @@ module.exports.ecran = async function (t, b, PORT) {
   const kMac = o => o.P * 4 + o.L * 9 + o.G * 4;
 
   // NUT-01 — profil déclaré
-  t('B-CCCLXI NUT-01 profil déclaré : BMR 1749 · TDEE 2711 · cible 3011 · P 172 · L 86 · G 387 (4,5 g/kg)',
-    eq(R.decl, { bmr: 1749, tdee: 2711, auto: 3011, cal: 3011, P: 172, L: 86, G: 387 }), det(R.decl));
+  /* ⚠️ Depuis NUT-LIPIDES-25-01, L et G ont changé (L 86 → 84, G 387 → 392) ; BMR, TDEE, cible et P sont
+     exigés à l'identique — c'est ce qui prouve que seul le calcul des lipides a bougé. */
+  t('B-CCCLXI NUT-01 profil déclaré : BMR 1749 · TDEE 2711 · cible 3011 · P 172 · L 84 · G 392',
+    eq(R.decl, { bmr: 1749, tdee: 2711, auto: 3011, cal: 3011, P: 172, L: 84, G: 392 }), det(R.decl));
   // NUT-02 — ancien profil reconstruit
-  t('B-CCCLXI NUT-02 SYNTH-B (profil RECONSTRUIT, pas Michel) : TDEE 3515 · cible 3965 · G 629 sans historique',
-    eq(R.synthB, { tdee: 3515, auto: 3965, P: 189, L: 77, G: 629 }), det(R.synthB));
+  t('B-CCCLXI NUT-02 SYNTH-B (profil RECONSTRUIT, pas Michel) : TDEE 3515 · cible 3965 · L 110 · G 555 sans historique',
+    eq(R.synthB, { tdee: 3515, auto: 3965, P: 189, L: 110, G: 555 }), det(R.synthB));
   // NUT-03 — la condition des ~659 g
-  t('B-CCCLXI NUT-03 ~659 g reproduit : SYNTH-B + 4 séances/sem + jour de jambes → G 657 (7,7 g/kg)',
-    eq(R.synthB4, { tdee: 3515, auto: 3965, P: 189, L: 65, G: 657, cycle: 'seance' }), det(R.synthB4));
+  t('B-CCCLXI NUT-03 SYNTH-B + 4 séances/sem + jour de jambes : le cycle joue toujours → L 92 · G 595 (séance)',
+    eq(R.synthB4, { tdee: 3515, auto: 3965, P: 189, L: 92, G: 595, cycle: 'seance' }), det(R.synthB4));
   t('B-CCCLXI NUT-03b le RÉSIDU : sans cycle, 4P + 9L + 4G = cible (±2 kcal d\'arrondi), sur tous les profils',
     [R.decl, R.synthB, ...R.act, ...R.bw, ...R.work].every(o => Math.abs(kMac(o) - o.cal) <= 2),
     [R.decl, R.synthB].map(o => kMac(o) + '/' + o.cal).join(' '));
-  // NUT-04 — activité : strictement croissant, P et L inchangés
+  // NUT-04 — activité : TDEE, lipides et glucides croissent, P constant (les lipides suivent la cible depuis NUT-LIPIDES-25-01)
   const act = R.act;
-  t('B-CCCLXI NUT-04 activité 1,2 → 1,9 : TDEE et glucides strictement croissants, P et L constants',
-    act.every((o, i) => !i || (o.tdee > act[i - 1].tdee && o.G > act[i - 1].G))
-    && act.every(o => o.P === 172 && o.L === 86), act.map(o => o.tdee + '/' + o.G).join(' '));
-  t('B-CCCLXI NUT-04b valeurs figées : G = 234 · 311 · 387 · 464 · 540 (1 kcal de TDEE = 0,25 g)',
-    act.map(o => o.G).join(',') === '234,311,387,464,540', act.map(o => o.G).join(','));
-  t('B-CCCLXI NUT-04c métier : bureau 387 · debout 437 · actif 469 · physique 500 g',
-    R.work.map(o => o.G).join(',') === '387,437,469,500', R.work.map(o => o.G).join(','));
-  // NUT-05 — poids : TDEE monte, glucides DESCENDENT (constaté, pas jugé)
+  t('B-CCCLXI NUT-04 activité 1,2 → 1,9 : TDEE, lipides et glucides strictement croissants, P constant',
+    act.every((o, i) => !i || (o.tdee > act[i - 1].tdee && o.G > act[i - 1].G && o.L > act[i - 1].L))
+    && act.every(o => o.P === 172), act.map(o => o.tdee + '/' + o.L + '/' + o.G).join(' '));
+  t('B-CCCLXI NUT-04b valeurs figées : L = 67 · 75 · 84 · 92 · 101 · G = 277 · 336 · 392 · 450 · 507',
+    act.map(o => o.L).join(',') === '67,75,84,92,101' && act.map(o => o.G).join(',') === '277,336,392,450,507',
+    act.map(o => o.L + '/' + o.G).join(','));
+  t('B-CCCLXI NUT-04c métier : bureau 392 · debout 431 · actif 453 · physique 477 g',
+    R.work.map(o => o.G).join(',') === '392,431,453,477', R.work.map(o => o.G).join(','));
+  // NUT-05 — poids : TDEE et P montent ; depuis NUT-LIPIDES-25-01 les lipides suivent la cible, donc les
+  // glucides CROISSENT avec le poids (ils décroissaient de 398 à 368 quand L = poids × 1,0) — constaté, pas jugé
   const bw = R.bw;
-  t('B-CCCLXI NUT-05 poids 60 → 140 kg : TDEE croît, P et L croissent, glucides DÉCROISSENT (398 → 368)',
-    bw.every((o, i) => !i || (o.tdee > bw[i - 1].tdee && o.P > bw[i - 1].P && o.G < bw[i - 1].G))
-    && bw[0].G === 398 && bw[5].G === 368, bw.map(o => o.tdee + '/' + o.G).join(' '));
+  t('B-CCCLXI NUT-05 poids 60 → 140 kg : TDEE, P, L et glucides croissent (L 73 → 107, G 368 → 442)',
+    bw.every((o, i) => !i || (o.tdee > bw[i - 1].tdee && o.P > bw[i - 1].P && o.L > bw[i - 1].L && o.G > bw[i - 1].G))
+    && bw[0].L === 73 && bw[5].L === 107 && bw[0].G === 368 && bw[5].G === 442, bw.map(o => o.tdee + '/' + o.L + '/' + o.G).join(' '));
   // NUT-06 — absence de poids
   t('B-CCCLXI NUT-06 sans poids : aucun calcul (TDEE, cible, P, L, G tous null)',
     eq(R.sansPoids, { tdee: null, auto: null, cal: null, P: null, L: null, G: null }), det(R.sansPoids));
@@ -170,24 +179,30 @@ module.exports.ecran = async function (t, b, PORT) {
     (R.wheySansPoids || '').slice(0, 60) + ' | ' + (R.wheyDecl || '').slice(0, 60));
   // NUT-07 — calories trop basses pour P + L
   const fini = o => ['cal', 'P', 'L', 'G'].every(k => Number.isFinite(o[k]));
-  t('B-CCCLXI NUT-07 manuel 1200 : glucides à 0 (jamais négatifs), tout fini, macros = 1462 kcal > 1200',
-    R.man1200.G === 0 && fini(R.man1200) && R.man1200.cal === 1200 && kMac(R.man1200) === 1462,
-    det(R.man1200));
-  t('B-CCCLXI NUT-07b 130 kg en perte, sédentaire : cible 2162, G 0, macros 2236 kcal > cible',
-    R.lourdPerte.auto === 2162 && R.lourdPerte.G === 0 && kMac(R.lourdPerte) === 2236 && fini(R.lourdPerte),
-    det(R.lourdPerte) + ' kMac=' + kMac(R.lourdPerte));
+  /* Depuis NUT-LIPIDES-25-01, 1200 kcal à la main ne mettent plus les glucides à 0 (L 33 g au lieu de 86) :
+     le cas « glucides jamais négatifs » se vérifie à 800 kcal (le minimum accepté), où les protéines seules
+     dépassent la cible. */
+  t('B-CCCLXI NUT-07 manuel 1200 : L 33 · G 54 (les lipides suivent la cible), macros 1201 kcal ≈ 1200',
+    R.man1200.cal === 1200 && R.man1200.P === 172 && R.man1200.L === 33 && R.man1200.G === 54 && fini(R.man1200)
+    && kMac(R.man1200) === 1201, det(R.man1200));
+  t('B-CCCLXI NUT-07c manuel 800 : glucides à 0 (jamais négatifs), tout fini, macros 886 kcal > 800',
+    R.man800.cal === 800 && R.man800.G === 0 && R.man800.L === 22 && fini(R.man800) && kMac(R.man800) === 886,
+    det(R.man800) + ' kMac=' + kMac(R.man800));
+  t('B-CCCLXI NUT-07b 130 kg en perte, sédentaire : cible 2162, P 325, L 60, G 81 (plus d\'écrêtage), macros 2164',
+    R.lourdPerte.auto === 2162 && R.lourdPerte.P === 325 && R.lourdPerte.L === 60 && R.lourdPerte.G === 81
+    && kMac(R.lourdPerte) === 2164 && fini(R.lourdPerte), det(R.lourdPerte) + ' kMac=' + kMac(R.lourdPerte));
   // NUT-08 — très hautes calories
-  t('B-CCCLXI NUT-08 manuel 6000 : G 1135 (13,2 g/kg) — aucun plafond, tout fini',
-    R.man6000.G === 1135 && fini(R.man6000), det(R.man6000));
-  t('B-CCCLXI NUT-08b auto maximal (1,9 + physique + muscle) : cible 4223 · G 694 (8,1 g/kg)',
-    R.max.auto === 4223 && R.max.G === 694, det(R.max));
+  t('B-CCCLXI NUT-08 manuel 6000 : L 167 · G 952 — aucun plafond, tout fini',
+    R.man6000.L === 167 && R.man6000.G === 952 && fini(R.man6000), det(R.man6000));
+  t('B-CCCLXI NUT-08b auto maximal (1,9 + physique + muscle) : cible 4223 · L 117 · G 604',
+    R.max.auto === 4223 && R.max.L === 117 && R.max.G === 604, det(R.max));
   // NUT-09 — changement d'objectif
   const g = R.goal, gl = o => [o.auto, o.P, o.L, o.G].join('/');
-  t('B-CCCLXI NUT-09 objectifs : muscle 3161/189/77/428 · force 3011/172/86/387 · perte 2361/215/69/220',
-    gl(g.muscle) === '3161/189/77/428' && gl(g.force) === '3011/172/86/387' && gl(g.perte) === '2361/215/69/220',
+  t('B-CCCLXI NUT-09 objectifs : muscle 3161/189/88/403 · force 3011/172/84/392 · perte 2361/215/66/227',
+    gl(g.muscle) === '3161/189/88/403' && gl(g.force) === '3011/172/84/392' && gl(g.perte) === '2361/215/66/227',
     ['muscle', 'force', 'perte'].map(k => k + ' ' + gl(g[k])).join(' | '));
-  t('B-CCCLXI NUT-09b objectifs : recomp 2561/223/73/253 · équilibre 2811/172/73/367 · endurance 2911/146/64/438',
-    gl(g.recomp) === '2561/223/73/253' && gl(g.equilibre) === '2811/172/73/367' && gl(g.endurance) === '2911/146/64/438',
+  t('B-CCCLXI NUT-09b objectifs : recomp 2561/223/71/258 · équilibre 2811/172/78/355 · endurance 2911/146/81/400',
+    gl(g.recomp) === '2561/223/71/258' && gl(g.equilibre) === '2811/172/78/355' && gl(g.endurance) === '2911/146/81/400',
     ['recomp', 'equilibre', 'endurance'].map(k => k + ' ' + gl(g[k])).join(' | '));
 
   /* NUT-01 à l'ÉCRAN, après un VRAI rechargement : ce que la personne lit. */
@@ -204,8 +219,8 @@ module.exports.ecran = async function (t, b, PORT) {
     const v = id => { const e = document.getElementById(id); return e ? e.textContent.trim() : null; };
     return { P: v('m-prot'), L: v('m-fat'), G: v('m-carbs') };
   });
-  t('B-CCCLXI NUT-01b à l\'écran après rechargement : 172 · 86 · 387',
-    aff.P === '172' && aff.L === '86' && aff.G === '387', JSON.stringify(aff));
+  t('B-CCCLXI NUT-01b à l\'écran après rechargement : 172 · 84 · 392',
+    aff.P === '172' && aff.L === '84' && aff.G === '392', JSON.stringify(aff));
   t('B-CCCLXI ∅ aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };

@@ -32,8 +32,9 @@ MUT = [
     ('M06', ST, "{muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)",
      "{muscle:2.2,perte:2.5,recomp:2.6,force:2.2,equilibre:2.0,endurance:1.7}[goal]||2.2)",
      'rouge', 'PROTÉINES : ratio force modifié'),
-    ('M07', ST, "fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:1.0,",
-     "fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:0.9,", 'rouge', 'LIPIDES : ratio force modifié'),
+    # NUT-LIPIDES-25-01 (02/10/2026) : la table g/kg des lipides n'existe plus — la mutation porte sur la part (25 %).
+    ('M07', ST, "const _LIPIDES_PART_STANDARD=0.25;",
+     "const _LIPIDES_PART_STANDARD=0.26;", 'rouge', 'LIPIDES : part de la cible modifiée (25 % -> 26 %)'),
     ('M08', ST, "  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));\n  return{prot_g,fat_g,carbs_g};\n}",
      "  const carbs_g=Math.min(Math.round((S.bw||0)*6),Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4)));\n  return{prot_g,fat_g,carbs_g};\n}",
      'rouge', 'DÉGUISÉE : un PLAFOND de glucides posé sans décision (6 g/kg)'),

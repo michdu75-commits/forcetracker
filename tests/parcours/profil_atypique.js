@@ -64,8 +64,10 @@ module.exports.ecran = async function (t, b, PORT) {
     rOld.methode === 'mifflin' && /trop ancien/.test(rOld.raison) && rOld.raison !== AUCUNE, js(rOld));
   t('BF7 · 70 % puis poids 85 → 95 kg → pas de Katch, raison « poids a changé » (jamais « aucune mesure »)',
     rPds.methode === 'mifflin' && /poids a changé/.test(rPds.raison) && rPds.raison !== AUCUNE, js(rPds));
-  t('BF · protéines et lipides IDENTIQUES quelle que soit la méthode (seuls les glucides suivent la cible)',
-    [r70, r701, rOld].every(r => r.P === r699.P && r.L === r699.L), [r699, r70, r701, rOld].map(r => r.P + '/' + r.L).join(' · '));
+  /* NUT-LIPIDES-25-01 (02/10) : les lipides sont 25 % de la cible — ils suivent la méthode via la cible ; les protéines non. */
+  t('BF · protéines IDENTIQUES quelle que soit la méthode ; lipides = 25 % de la cible (suivent la cible depuis NUT-LIPIDES-25-01)',
+    [r70, r701, rOld].every(r => r.P === r699.P) && [r699, r70, r701, rOld].every(r => r.L === Math.round(r.cal * 0.25 / 9)),
+    [r699, r70, r701, rOld].map(r => r.cal + ':' + r.P + '/' + r.L).join(' · '));
   // L'écran Nutrition dit la vraie raison (BF6), pas « aucune mesure ».
   await pg.evaluate(() => { S.bw = 85; const d = new Date(Date.now() - 120 * 864e5); S.weightLog = [{ date: d.toISOString().slice(0, 10), kg: 85, bf: 70 }]; S.bodyScans = []; });
   const raisonEcran = await pg.evaluate(() => { try { if (typeof openBmrHelp === 'function') openBmrHelp(); } catch (e) {} return document.body.innerHTML.match(/Raison : [^<.]*/g) || []; });

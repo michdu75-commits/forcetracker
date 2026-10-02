@@ -154,7 +154,9 @@ module.exports.ecran = async function (t, b, PORT) {
             const r = lire(ph), pl = plain();
             if (r.cal !== autoKcal(ph)) g.cibleBouge++;
             /* les règles de master : P et L = poids × objectif, le reste en glucides (borné à 0) */
-            if (!r.cyc && !(r.P === pl.prot_g && r.L === pl.fat_g && r.G === Math.max(0, Math.round((r.cal - pl.prot_g * 4 - pl.fat_g * 9) / 4)))) g.regles++;
+            /* NUT-LIPIDES-25-01 : les lipides des modes standards sont 25 % de la cible (plus un g/kg) */
+            const Le = Math.round(r.cal * 0.25 / 9);
+            if (!r.cyc && !(r.P === pl.prot_g && r.L === Le && r.G === Math.max(0, Math.round((r.cal - pl.prot_g * 4 - Le * 9) / 4)))) g.regles++;
             if (r.cyc && r.P !== pl.prot_g) g.regles++;
             verifier(r, g);
           })))))))));
@@ -174,32 +176,33 @@ module.exports.ecran = async function (t, b, PORT) {
   const det = o => JSON.stringify(o);
   const q = (o, P, L, G, cal) => o && o.P === P && o.L === L && o.G === G && (cal == null || o.cal === cal);
   const inc = (o, e, mac) => o && o.inc && o.inc.ecart === e && (mac == null || o.inc.macros === mac);
-  t('B-CDXVI A1 H 85 kg · 180 · 40 a · Modéré : muscle 3209 → 187/77/442, rien de déclaré',
-    q(R.A1, 187, 77, 442, 3209) && !R.A1.inc, det(R.A1));
-  t('B-CDXVI A1 perte (2409 → 213/68/236 ; décharge 2209 → 213/68/186), maintien (2859 → 170/72/383) : master, rien de déclaré',
-    q(R.A1perte, 213, 68, 236, 2409) && q(R.A1dech, 213, 68, 186, 2209) && q(R.A1maint, 170, 72, 383, 2859)
+  /* NUT-LIPIDES-25-01 (02/10) : lipides des modes standards = 25 % de la cible — valeurs re-mesurées. */
+  t('B-CDXVI A1 H 85 kg · 180 · 40 a · Modéré : muscle 3209 → 187/89/415 (lipides 25 %), rien de déclaré',
+    q(R.A1, 187, 89, 415, 3209) && !R.A1.inc, det(R.A1));
+  t('B-CDXVI A1 perte (2409 → 213/67/239 ; décharge 2209 → 213/61/202), maintien (2859 → 170/79/367) : rien de déclaré',
+    q(R.A1perte, 213, 67, 239, 2409) && q(R.A1dech, 213, 61, 202, 2209) && q(R.A1maint, 170, 79, 367, 2859)
     && !R.A1perte.inc && !R.A1dech.inc && !R.A1maint.inc, [R.A1perte, R.A1dech, R.A1maint].map(det).join(' | '));
-  t('B-CDXVI A1 cycle 4 séances/sem : séance 187/65/470, repos 187/94/405 — master, rien de déclaré',
-    q(R.A1seance, 187, 65, 470) && q(R.A1repos, 187, 94, 405) && !R.A1seance.inc && !R.A1repos.inc, det(R.A1seance) + ' | ' + det(R.A1repos));
-  t('B-CDXVI D1 charge ⭐ chiffres de master (325/104/0 pour 2132) ET écart DÉCLARÉ : 2236 kcal, +104',
-    q(R.D1charge, 325, 104, 0, 2132) && inc(R.D1charge, 104, 2236) && !R.D1charge.inc.autre, det(R.D1charge));
-  t('B-CDXVI D1 décharge ⭐ 325/104/0 pour 1932 (master) ET écart DÉCLARÉ : 2236 kcal, +304',
-    q(R.D1, 325, 104, 0, 1932) && inc(R.D1, 304, 2236), det(R.D1));
+  t('B-CDXVI A1 cycle 4 séances/sem : séance 187/75/447, repos 187/108/372 — rien de déclaré',
+    q(R.A1seance, 187, 75, 447) && q(R.A1repos, 187, 108, 372) && !R.A1seance.inc && !R.A1repos.inc, det(R.A1seance) + ' | ' + det(R.A1repos));
+  t('B-CDXVI D1 charge : 325/59/75 pour 2132 — plus d\'écart depuis NUT-LIPIDES-25-01 (avant : 325/104/0, +104 déclaré)',
+    q(R.D1charge, 325, 59, 75, 2132) && !R.D1charge.inc, det(R.D1charge));
+  t('B-CDXVI D1 décharge : 325/54/37 pour 1932 — plus d\'écart depuis NUT-LIPIDES-25-01 (avant : 325/104/0, +304 déclaré)',
+    q(R.D1, 325, 54, 37, 1932) && !R.D1.inc, det(R.D1));
   t('B-CDXVI D1 décharge + cycle : jour de séance +70 (2002) ET jour de repos +394 (2326), les deux déclarés',
     q(R.D1seance, 325, 78, 0, 1932) && inc(R.D1seance, 70, 2002) && R.D1seance.inc.autre && R.D1seance.inc.autre.jour === 'repos'
     && R.D1seance.inc.autre.ecart === 394 && inc(R.D1repos, 394, 2326) && R.D1repos.inc.autre && R.D1repos.inc.autre.ecart === 70,
     det(R.D1seance) + ' | ' + det(R.D1repos));
-  t('B-CDXVI D1 recomp 338/111/0 (+219 déclaré) ; D1 muscle 286/117/134 : rien de déclaré',
-    q(R.D1recomp, 338, 111, 0, 2132) && inc(R.D1recomp, 219, 2351) && q(R.D1muscle, 286, 117, 134, 2732) && !R.D1muscle.inc,
+  t('B-CDXVI D1 recomp 338/59/62 (avant 338/111/0, +219) ; D1 muscle 286/76/226 : rien de déclaré',
+    q(R.D1recomp, 338, 59, 62, 2132) && !R.D1recomp.inc && q(R.D1muscle, 286, 76, 226, 2732) && !R.D1muscle.inc,
     det(R.D1recomp) + ' | ' + det(R.D1muscle));
   t('B-CDXVI D1 la décomposition de la cible pour Milo est inchangée (1932 = calcul de l\'app)',
     R.D1.dec && R.D1.dec.cible === 1932 && !R.D1.dec.manuelle, det(R.D1.dec));
-  t('B-CDXVI D2 F 45 kg perte : plancher 1200 → 113/36/106, rien de déclaré (70 a et 30 a)',
-    q(R.D2, 113, 36, 106, 1200) && q(R.D2charge, 113, 36, 106, 1200) && !R.D2.inc && !R.D2charge.inc, det(R.D2) + ' | ' + det(R.D2charge));
-  t('B-CDXVI manuel 800 à 100 kg ⭐ 800 gardés, 250/80/0 (master), écart DÉCLARÉ : 1720 kcal, +920',
-    q(R.GAP, 250, 80, 0, 800) && inc(R.GAP, 920, 1720), det(R.GAP));
-  t('B-CDXVI manuel 1200 (85,9 kg, force) : 172/86/0 (master), +262 déclaré ; manuel 2500 : 172/86/260, rien',
-    q(R.DECL1200, 172, 86, 0, 1200) && inc(R.DECL1200, 262, 1462) && q(R.DECL2500, 172, 86, 260, 2500) && !R.DECL2500.inc,
+  t('B-CDXVI D2 F 45 kg perte : plancher 1200 → 113/33/113, rien de déclaré (70 a et 30 a)',
+    q(R.D2, 113, 33, 113, 1200) && q(R.D2charge, 113, 33, 113, 1200) && !R.D2.inc && !R.D2charge.inc, det(R.D2) + ' | ' + det(R.D2charge));
+  t('B-CDXVI manuel 800 à 100 kg ⭐ 800 gardés, 250/22/0, écart DÉCLARÉ : 1198 kcal, +398 (les protéines seules font 1000 kcal)',
+    q(R.GAP, 250, 22, 0, 800) && inc(R.GAP, 398, 1198), det(R.GAP));
+  t('B-CDXVI manuel 1200 (85,9 kg, force) : 172/33/54, rien (avant 172/86/0, +262) ; manuel 2500 : 172/69/298, rien',
+    q(R.DECL1200, 172, 33, 54, 1200) && !R.DECL1200.inc && q(R.DECL2500, 172, 69, 298, 2500) && !R.DECL2500.inc,
     det(R.DECL1200) + ' | ' + det(R.DECL2500));
   t('B-CDXVI kéto 250 kg à 800 kcal : 200/0/10 (master), +40 déclaré ; kéto et low carb sur D1 : master, rien',
     q(R.KETO, 200, 0, 10, 800) && inc(R.KETO, 40, 840) && q(R.KETOD1, 104, 158, 24, 1932) && !R.KETOD1.inc
@@ -214,7 +217,7 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CDXVI grille (' + G.n + ' profils automatiques) ⭐ règles de master intactes, cible jamais modifiée',
     G.n > 15000 && G.regles === 0 && G.cibleBouge === 0, det(G));
   t('B-CDXVI grille : écart déclaré SI ET SEULEMENT SI une macro est écrêtée et que la somme dépasse de plus de 6 kcal — valeur exacte, jour et autre bout',
-    G.presence === 0 && G.valeur === 0 && G.macros === 0 && G.declares > 1000, det(G));
+    G.presence === 0 && G.valeur === 0 && G.macros === 0 && G.declares > 200, det(G));
   t('B-CDXVI cibles manuelles (' + M.n + ', standard / kéto / low carb) : cible gardée, écart déclaré si et seulement si réel, à l\'unité',
     M.n > 500 && M.cibleBouge === 0 && M.presence === 0 && M.valeur === 0 && M.macros === 0 && M.declares > 50, det(M));
   t('B-CDXVI aucune erreur de page pendant le moteur', errs.length === 0, errs.slice(0, 2).join(' | '));
@@ -235,10 +238,10 @@ module.exports.ecranVue = async function (t, b, PORT) {
     });
   };
   const d1 = await voir(PROFILS.D1);
-  t('B-CDXVII D1 à l\'écran : 1 932 kcal · 325 / 104 / 0 g (master) et la phrase dit l\'incompatibilité : 2 236 kcal, +304',
-    d1.kcal === '1 932' && d1.P === '325' && d1.L === '104' && d1.G === '0'
-    && /incompatible avec les règles de répartition actuelles/.test(d1.inc) && /2 236 kcal/.test(d1.inc) && /304 kcal de plus/.test(d1.inc)
-    && /ne respectent donc PAS la cible/.test(d1.inc) && /les glucides tombent à 0/.test(d1.inc) && !/lipides tombent/.test(d1.inc), JSON.stringify(d1));
+  /* NUT-LIPIDES-25-01 (02/10) : D1 tient sa cible (325 / 54 / 37) ; le cas « glucides écrêtés » à l'écran
+     est porté par 800 kcal à la main (GAP, plus bas) et par `tests/parcours/nutri_lipides25.js` (T4). */
+  t('B-CDXVII D1 à l\'écran : 1 932 kcal · 325 / 54 / 37 g, plus de phrase d\'incompatibilité depuis NUT-LIPIDES-25-01',
+    d1.kcal === '1 932' && d1.P === '325' && d1.L === '54' && d1.G === '37' && d1.inc === '', JSON.stringify(d1));
   const ke = await voir(PROFILS.KETO);
   t('B-CDXVII B · kéto 250 kg à 800 kcal (lipides écrêtés) : la phrase nomme les LIPIDES, pas les glucides ; chiffres de master 200 / 0 / 10',
     ke.P === '200' && ke.L === '0' && ke.G === '10' && /les lipides tombent à 0/.test(ke.inc) && !/glucides tombent/.test(ke.inc)
@@ -251,15 +254,16 @@ module.exports.ecranVue = async function (t, b, PORT) {
     /Un jour de séance \(aujourd'hui\) : tes macros font 2 002 kcal, soit 70 kcal de plus/.test(d1r.inc)
     && /Un jour de repos : tes macros font 2 326 kcal, soit 394 kcal de plus/.test(d1r.inc) && /Ces jours-là/.test(d1r.inc), JSON.stringify(d1r));
   const a1 = await voir(PROFILS.A1);
-  t('B-CDXVII A1 à l\'écran : 3 209 · 187 / 77 / 442 g, AUCUNE phrase ajoutée',
-    a1.kcal === '3 209' && a1.P === '187' && a1.L === '77' && a1.G === '442' && a1.inc === '', JSON.stringify(a1));
+  t('B-CDXVII A1 à l\'écran : 3 209 · 187 / 89 / 415 g, AUCUNE phrase ajoutée',
+    a1.kcal === '3 209' && a1.P === '187' && a1.L === '89' && a1.G === '415' && a1.inc === '', JSON.stringify(a1));
   const gap = await voir(PROFILS.GAP);
-  t('B-CDXVII 800 kcal à la main, 100 kg : 250 / 80 / 0 g et « 800 kcal » n\'est PAS présenté comme tenable (1 720 kcal, +920)',
-    gap.kcal === '800' && gap.P === '250' && gap.L === '80' && gap.G === '0' && /Ta cible de 800 kcal est incompatible/.test(gap.inc)
-    && /1 720 kcal/.test(gap.inc) && /920 kcal de plus/.test(gap.inc), JSON.stringify(gap));
+  t('B-CDXVII 800 kcal à la main, 100 kg : 250 / 22 / 0 g et « 800 kcal » n\'est PAS présenté comme tenable (1 198 kcal, +398) — glucides',
+    gap.kcal === '800' && gap.P === '250' && gap.L === '22' && gap.G === '0' && /Ta cible de 800 kcal est incompatible/.test(gap.inc)
+    && /1 198 kcal/.test(gap.inc) && /398 kcal de plus/.test(gap.inc) && /les glucides tombent à 0/.test(gap.inc)
+    && /ne respectent donc PAS la cible/.test(gap.inc) && !/lipides tombent/.test(gap.inc), JSON.stringify(gap));
   const d2 = await voir(PROFILS.D2);
-  t('B-CDXVII D2 à l\'écran : 1 200 · 113 / 36 / 106 g, aucune phrase',
-    d2.kcal === '1 200' && d2.P === '113' && d2.L === '36' && d2.G === '106' && d2.inc === '', JSON.stringify(d2));
+  t('B-CDXVII D2 à l\'écran : 1 200 · 113 / 33 / 113 g, aucune phrase',
+    d2.kcal === '1 200' && d2.P === '113' && d2.L === '33' && d2.G === '113' && d2.inc === '', JSON.stringify(d2));
   await voir(PROFILS.DECL);
   const mod = await pg.evaluate(async () => {
     const toasts = []; const _t = window.toast; window.toast = (m, k) => { toasts.push(m); try { _t && _t(m, k); } catch (e) {} };
@@ -271,19 +275,21 @@ module.exports.ecranVue = async function (t, b, PORT) {
     const taper = async (x) => { inp.value = String(x); inp.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(r => setTimeout(r, 60));
       return { P: v('kcal-pv-prot'), G: v('kcal-pv-carb'), L: v('kcal-pv-fat'), note: v('kcal-pv-note') }; };
     const o = { ouvert: ov.classList.contains('open') };
-    o.a1200 = await taper(1200); o.a2500 = await taper(2500); o.a500 = await taper(500); await taper(1200);
+    o.a900 = await taper(900); o.a2500 = await taper(2500); o.a500 = await taper(500); await taper(900);
     [...ov.querySelectorAll('button')].find(x => /Enregistrer mes calories/.test(x.textContent)).click();
     await new Promise(r => setTimeout(r, 300));
     o.toasts = toasts;
     return o;
   });
-  t('B-CDXVII aperçu à 1 200 kcal (85,9 kg, force) : 172 / 0 / 86 g (master) et la note dit l\'incompatibilité (1 462 kcal, +262)',
-    mod.ouvert && mod.a1200 && mod.a1200.P === '172 g' && mod.a1200.G === '0 g' && mod.a1200.L === '86 g'
-    && /1 462 kcal/.test(mod.a1200.note || '') && /262 kcal de plus/.test(mod.a1200.note || ''), JSON.stringify(mod.a1200));
+  /* NUT-LIPIDES-25-01 (02/10) : 1 200 kcal tiennent désormais (172 / 54 / 33) ; la cible incompatible tapée
+     à la main devient 900 kcal (172 / 0 / 25 → 913 kcal, +13). */
+  t('B-CDXVII aperçu à 900 kcal (85,9 kg, force) : 172 / 0 / 25 g et la note dit l\'incompatibilité (913 kcal, +13)',
+    mod.ouvert && mod.a900 && mod.a900.P === '172 g' && mod.a900.G === '0 g' && mod.a900.L === '25 g'
+    && /913 kcal/.test(mod.a900.note || '') && /13 kcal de plus/.test(mod.a900.note || ''), JSON.stringify(mod.a900));
   t('B-CDXVII aperçu à 2 500 kcal : aucune note ; à 500 kcal (refusé à l\'enregistrement) : aucune note non plus',
     mod.a2500 && mod.a2500.note === '' && mod.a500 && mod.a500.note === '', JSON.stringify([mod.a2500, mod.a500]));
-  t('B-CDXVII enregistrer 1 200 kcal incompatibles : pas de « ✅ », le message dit « Cible incompatible : +262 kcal. »',
-    (mod.toasts || []).includes('Cible incompatible : +262 kcal.') && !(mod.toasts || []).some(x => /✅/.test(x)), JSON.stringify(mod.toasts));
+  t('B-CDXVII enregistrer 900 kcal incompatibles : pas de « ✅ », le message dit « Cible incompatible : +13 kcal. »',
+    (mod.toasts || []).includes('Cible incompatible : +13 kcal.') && !(mod.toasts || []).some(x => /✅/.test(x)), JSON.stringify(mod.toasts));
   await pg.reload(); await pg.waitForTimeout(2000);
   const apres = await pg.evaluate(async () => {
     goScreen('nutrition', document.querySelector('[onclick*="nutrition"]'));
@@ -291,8 +297,8 @@ module.exports.ecranVue = async function (t, b, PORT) {
     const v = id => { const e = document.getElementById(id); return e ? e.textContent.replace(/[  ]/g, ' ').trim() : null; };
     return { man: localStorage.getItem('ft4_manualkcal'), kcal: v('m-kcal'), P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), inc: v('nu-incompatible') };
   });
-  t('B-CDXVII rechargé : 1 200 kcal sur le disque, 172 / 86 / 0 g, et l\'incompatibilité toujours dite à l\'écran',
-    apres.man === '1200' && apres.kcal === '1 200' && apres.P === '172' && apres.L === '86' && apres.G === '0' && /1 462 kcal/.test(apres.inc || ''), JSON.stringify(apres));
+  t('B-CDXVII rechargé : 900 kcal sur le disque, 172 / 25 / 0 g, et l\'incompatibilité toujours dite à l\'écran',
+    apres.man === '900' && apres.kcal === '900' && apres.P === '172' && apres.L === '25' && apres.G === '0' && /913 kcal/.test(apres.inc || ''), JSON.stringify(apres));
   /* ⭐ A (témoin demandé par la contre-vérification) : compatible AUJOURD'HUI, incompatible UN JOUR DE REPOS.
      La carte le dit — le message d'enregistrement ne doit pas dire le contraire par une coche verte. */
   await voir(PROFILS.CYC, [0, 1, 2, 3, 4, 5]);
@@ -325,25 +331,25 @@ module.exports.ecranMilo = async function (t, b, PORT) {
     return o;
   }, { P: PROFILS, poserSrc: _poser });
   const un = (l, re) => (l || []).filter(x => re.test(x)).length;
-  t('B-CDXVIII D1 : « Glucides: 0g » (et plus « —g ») et UNE ligne dit que ces macros NE respectent PAS la cible (2236, +304)',
-    un(C.D1, /^- Calories cible: 1932 kcal \| Protéines: 325g \| Glucides: 0g \| Lipides: 104g$/) === 1
-    && un(C.D1, /CIBLE INCOMPATIBLE AVEC LES RÈGLES MACROS ACTUELLES.*2236 kcal pour une cible de 1932 kcal \(\+304\).*NE respectent PAS la cible.*jamais comme la respectant/) === 1
-    && un(C.D1, /CIBLE 1932 kcal/) === 1, JSON.stringify(C.D1));
+  /* NUT-LIPIDES-25-01 (02/10) : D1 tient sa cible ; « Glucides: 0g » + la ligne d'écart sont portés par 800 kcal à la main (GAP). */
+  t('B-CDXVIII D1 : 1932 kcal · 325 / 37 / 54 g et AUCUNE ligne d\'écart depuis NUT-LIPIDES-25-01 (décomposition de la cible inchangée)',
+    un(C.D1, /^- Calories cible: 1932 kcal \| Protéines: 325g \| Glucides: 37g \| Lipides: 54g$/) === 1
+    && un(C.D1, /INCOMPATIBLE/) === 0 && un(C.D1, /CIBLE 1932 kcal/) === 1, JSON.stringify(C.D1));
   t('B-CDXVIII D1 un jour de séance : Milo reçoit aussi l\'écart d\'un jour de repos (2326, +394)',
     un(C.D1s, /CIBLE INCOMPATIBLE.*\(\+70\).*un jour de repos : 2326 kcal \(\+394, glucides écrêtés à 0\)/) === 1, JSON.stringify(C.D1s));
-  t('B-CDXVIII 800 kcal à la main : Milo sait que 800 kcal n\'est pas tenable avec ces macros (1720, +920)',
-    un(C.GAP, /^- Calories cible: 800 kcal \| Protéines: 250g \| Glucides: 0g \| Lipides: 80g$/) === 1
-    && un(C.GAP, /CIBLE INCOMPATIBLE.*1720 kcal pour une cible de 800 kcal \(\+920\)/) === 1, JSON.stringify(C.GAP));
-  t('B-CDXVIII A1 : la ligne des macros est celle de master, sans aucune ligne ajoutée',
-    un(C.A1, /^- Calories cible: 3209 kcal \| Protéines: 187g \| Glucides: 442g \| Lipides: 77g$/) === 1 && un(C.A1, /INCOMPATIBLE/) === 0, JSON.stringify(C.A1));
+  t('B-CDXVIII 800 kcal à la main : « Glucides: 0g » (et plus « —g ») et UNE ligne dit que ces macros NE respectent PAS la cible (1198, +398)',
+    un(C.GAP, /^- Calories cible: 800 kcal \| Protéines: 250g \| Glucides: 0g \| Lipides: 22g$/) === 1
+    && un(C.GAP, /CIBLE INCOMPATIBLE AVEC LES RÈGLES MACROS ACTUELLES.*1198 kcal pour une cible de 800 kcal \(\+398\).*NE respectent PAS la cible.*jamais comme la respectant/) === 1, JSON.stringify(C.GAP));
+  t('B-CDXVIII A1 : la ligne des macros (187 / 415 / 89), sans aucune ligne ajoutée',
+    un(C.A1, /^- Calories cible: 3209 kcal \| Protéines: 187g \| Glucides: 415g \| Lipides: 89g$/) === 1 && un(C.A1, /INCOMPATIBLE/) === 0, JSON.stringify(C.A1));
   t('B-CDXVIII profil sans poids : les macros inconnues restent « — » (D-016), rien de déclaré',
     un(C.B1, /Protéines: —g \| Glucides: —g \| Lipides: —g/) === 1 && un(C.B1, /INCOMPATIBLE/) === 0, JSON.stringify(C.B1));
   t('B-CDXVIII kéto 250 kg à 800 kcal : « Lipides: 0g » et l\'écart de 40 kcal est dit',
     un(C.KETO, /Lipides: 0g$/) === 1 && un(C.KETO, /CIBLE INCOMPATIBLE.*protéines \+ glucides kéto = 840 kcal pour une cible de 800 kcal \(\+40\), lipides écrêtés à 0/) === 1
     && un(C.KETO, /glucides écrêtés/) === 0, JSON.stringify(C.KETO));
   /* ⭐ C (témoin demandé par la contre-vérification) : en standard, c'est toujours des GLUCIDES qu'on parle. */
-  t('B-CDXVIII C · standard (D1) : Milo lit « glucides écrêtés à 0 », jamais « lipides écrêtés »',
-    un(C.D1, /glucides écrêtés à 0/) === 1 && un(C.D1, /lipides écrêtés/) === 0, JSON.stringify(C.D1));
+  t('B-CDXVIII C · standard (800 kcal à la main) : Milo lit « glucides écrêtés à 0 », jamais « lipides écrêtés »',
+    un(C.GAP, /glucides écrêtés à 0/) === 1 && un(C.GAP, /lipides écrêtés/) === 0, JSON.stringify(C.GAP));
   t('B-CDXVIII aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));
   await cx.close();
 };
@@ -415,8 +421,8 @@ module.exports.ecranUX = async function (t, b, PORT) {
   t('B-CDXIX C · cycle neutre : « sur la semaine le total est le même » CONSERVÉ, aucune phrase d\'incompatibilité',
     /sur la semaine le total est le même/.test(c0.cycle || '') && !/ne peut pas conserver/.test(c0.cycle || '') && c0.carte === '', det(c0.cycle));
   // F — profil normal : chiffres de master et coche verte
-  t('B-CDXIX F · profil normal : chiffres de master (187 / 65 / 470 un jour de séance), note vide, « Objectif réglé sur 3 209 kcal ✅ »',
-    c0.P === '187' && c0.L === '65' && c0.G === '470' && c0.toasts.includes('Objectif réglé sur 3 209 kcal ✅') && dans(c0), det(c0));
+  t('B-CDXIX F · profil normal : 187 / 75 / 447 un jour de séance (lipides 25 %, cycle actif), note vide, « Objectif réglé sur 3 209 kcal ✅ »',
+    c0.P === '187' && c0.L === '75' && c0.G === '447' && c0.toasts.includes('Objectif réglé sur 3 209 kcal ✅') && dans(c0), det(c0));
   const f0 = await regler(2500, false);
   t('B-CDXIX F · aperçu d\'une cible compatible (2 500) : aucune note', f0.note === '', det(f0.note));
 

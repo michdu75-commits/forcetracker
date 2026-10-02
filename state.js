@@ -1826,8 +1826,10 @@ function getMensCyclePhase(ts){
     training:'Fatigue accrue est normale. Privilégie volume modéré, exercices familiers et bonne récupération entre les séances.'};
 }
 
-// Protéines + lipides calés sur le profil (g/kg selon l'objectif) ; les glucides
-// complètent le total calorique. Sert au calcul auto ET à l'aperçu du réglage manuel.
+// Protéines calées sur le profil (g/kg selon l'objectif), lipides = 25 % de la cible en modes
+// standards (NUT-LIPIDES-25-01) ; les glucides complètent le total calorique. Sert au calcul auto
+// ET à l'aperçu du réglage manuel.
+const _LIPIDES_PART_STANDARD=0.25;   // part de la cible en lipides, modes standards (NUT-LIPIDES-25-01)
 function macrosForKcal(kcal){
   const goal=S.goal||'muscle';
   // Régime cétogène (keto, retour Emma) : répartition par POURCENTAGES de calories au lieu du g/kg
@@ -1862,9 +1864,17 @@ function macrosForKcal(kcal){
   const cp=getMensCyclePhase();
   const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
   const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
-  const fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
   const prot_g=Math.round((S.bw||0)*protRatio);
-  const fat_g=Math.round((S.bw||0)*fatRatio);
+  /* 🥑 NUT-LIPIDES-25-01 (02/10/2026, décision de Michel) — LES LIPIDES DES MODES STANDARDS SONT
+     25 % DE LA CIBLE, PLUS UN g/kg DE POIDS TOTAL. Avant : `poids total × ratio de l'objectif`
+     (0,9 / 0,8 / 0,85 / 1,0 / 0,85 / 0,75) — mesuré sur une grille de 14 400 profils, les lipides
+     allaient de 4 % à 86 % des calories et montaient avec le poids total (75 kg → 68 g, 150 kg →
+     135 g pour la MÊME cible). ⭐ C'est une CONVENTION PRODUIT documentée, pas une vérité
+     scientifique universelle : les repères lipidiques retrouvés sont surtout exprimés en part de
+     l'énergie. ⛔ Les protéines ne bougent pas (poids total × ratio, inchangé) ; les glucides
+     restent le reste, jamais sous 0 ; kéto et low carb gardent leur propre règle (plus haut) ;
+     et si protéines + lipides dépassent la cible, c'est D-034 qui le DIT — rien n'est ajusté. */
+  const fat_g=Math.round(kcal*_LIPIDES_PART_STANDARD/9);
   const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));
   return{prot_g,fat_g,carbs_g};
 }

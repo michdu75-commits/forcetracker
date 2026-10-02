@@ -3280,3 +3280,12 @@ Vérifiable par du code : ✅ (une phrase qui présente la cible comme atteinte 
 jamais lancé : 0 appel autorisé). ❓ **Doute 2** : proposera-t-il de lui-même une autre répartition (baisser les
 protéines, remonter la cible) — ce que Michel a explicitement renvoyé à un lot séparé ? Et sur 800 kcal tapées à la main,
 moralise-t-il (Constitution P21) ? Le premier est vérifiable par du code, le ton relève du **juge humain**. État : **à trier**.
+
+### 🟡 NUT-LIPIDES-25-01 : MILO SAIT-IL COMMENT SES LIPIDES SONT CALCULÉS ? (02/10/2026 — NON vérifié en réel)
+Depuis NUT-LIPIDES-25-01 (branche non publiée), les lipides des modes standards valent 25 % de la cible, plus un g/kg
+de poids. Milo reçoit les chiffres (« Lipides: 87g ») mais **aucune phrase ne lui dit la règle**. ❓ **Doute** : si la
+personne demande « pourquoi mes lipides ont augmenté ? » ou « comment tu calcules mes lipides ? », Milo inventera-t-il
+une règle en g/kg (l'ancienne, ou une autre) au lieu de dire « 25 % de ta cible » ? Vérifiable par du code : ✅ (une
+réponse qui cite un g/kg de lipides) — candidat banc **R34**, 0 appel autorisé. ⚠️ Corollaire : 130 kg en perte et
+décharge passe de 0 g à 37 g de glucides — Milo, qui lisait « CIBLE INCOMPATIBLE » pour ce profil, ne la lit plus.
+État : **à trier**.

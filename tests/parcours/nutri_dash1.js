@@ -107,14 +107,16 @@ module.exports.ecran = async function (t, b, PORT) {
 
   const C = [await nutri(PROFILS.D1, [0, 3]), await dash(PROFILS.D1, [0, 3])];
   const C2 = [await nutri(PROFILS.A1, [0, 2, 4, 6]), await dash(PROFILS.A1, [0, 2, 4, 6])];
-  t('B-CDXXI C jour de SÉANCE (cycle actif) : tuile = Cible de l\'onglet ce jour-là (D1 1932, A1 3209)',
-    C[0].jour === 'seance' && meme(...C) && nb(C[1].kcal) === '1932' && C2[0].jour === 'seance' && meme(...C2) && nb(C2[1].kcal) === '3209',
+  /* NUT-LIPIDES-25-01 (02/10) : D1 n'a plus de cycle séance/repos (lipides 54 g < plancher du cycle 0,6 g/kg
+     = 78 g) — la tuile doit toujours égaler l'onglet ; c'est A1 qui porte désormais le « cycle actif ». */
+  t('B-CDXXI C jour de SÉANCE : tuile = Cible de l\'onglet ce jour-là (D1 1932 sans cycle depuis NUT-LIPIDES-25-01, A1 3209 cycle actif)',
+    C[0].jour === null && meme(...C) && nb(C[1].kcal) === '1932' && C2[0].jour === 'seance' && meme(...C2) && nb(C2[1].kcal) === '3209',
     det(...C) + ' || ' + det(...C2));
 
   const D = [await nutri(PROFILS.D1, [1, 4]), await dash(PROFILS.D1, [1, 4])];
   const D2 = [await nutri(PROFILS.A1, [1, 2, 4, 6]), await dash(PROFILS.A1, [1, 2, 4, 6])];
-  t('B-CDXXI D jour de REPOS (cycle actif) : tuile = Cible de l\'onglet ce jour-là (D1 1932, A1 3209)',
-    D[0].jour === 'repos' && meme(...D) && nb(D[1].kcal) === '1932' && D2[0].jour === 'repos' && meme(...D2) && nb(D2[1].kcal) === '3209',
+  t('B-CDXXI D jour de REPOS : tuile = Cible de l\'onglet ce jour-là (D1 1932 sans cycle depuis NUT-LIPIDES-25-01, A1 3209 cycle actif)',
+    D[0].jour === null && meme(...D) && nb(D[1].kcal) === '1932' && D2[0].jour === 'repos' && meme(...D2) && nb(D2[1].kcal) === '3209',
     det(...D) + ' || ' + det(...D2));
 
   const E = [await nutri(PROFILS.MAN), await dash(PROFILS.MAN)];

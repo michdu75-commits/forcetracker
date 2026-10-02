@@ -233,8 +233,8 @@ module.exports.ecran = async function (t, b, PORT) {
   // ═══ CAS D — PROFIL COMPLET : rien ne doit avoir bougé ═════════════════════
   await poser('S.bw=85.9;S.height=180;S.age=48;');
   o = await calc(); e = await ecran();
-  t('B-CCCXLV ⑩ ⭐⭐ CAS D · le vrai calcul est INTACT (2711 / 3161 / 189 / 77 / 428)',
-    o.tdee === 2711 && o.kcal === 3161 && o.p === 189 && o.l === 77 && o.g === 428,
+  t('B-CCCXLV ⑩ ⭐⭐ CAS D · le vrai calcul est INTACT (2711 / 3161 / 189 / 88 / 403 — lipides à 25 % de la cible depuis NUT-LIPIDES-25-01)',
+    o.tdee === 2711 && o.kcal === 3161 && o.p === 189 && o.l === 88 && o.g === 403,
     JSON.stringify(o));
   t('B-CCCXLV ⑪ ⭐ CAS D · et l\'écran n\'affiche plus le message',
     !e.msg && e.tdee === '2 711' && e.prot === '189', JSON.stringify([e.msg, e.tdee, e.prot]));
