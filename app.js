@@ -5112,7 +5112,8 @@ function _ciqualChercher(q, max){
   const cible=(typeof _aliasCible==='function')?_aliasCible(q):null;
   if(cible){
     const lim=max||6, tout=[cible];
-    for(const a of _ciqualChercherSansAlias(q, lim)){
+    /* 🎯 FS-03 : l'alias a choisi le 1ᵉʳ résultat — la préférence par défaut ne le rechoisit pas (R2). */
+    for(const a of _ciqualChercherSansAlias(q, lim, false)){
       if(tout.length>=lim) break;
       if(a[0]!==cible[0]) tout.push(a);
     }
@@ -5122,7 +5123,7 @@ function _ciqualChercher(q, max){
 }
 /* ⭐ Le corps d'origine, inchangé — extrait pour que l'alias puisse l'appeler par-dessous sans
    dupliquer une ligne de la recherche (R2). */
-function _ciqualChercherSansAlias(q, max){
+function _ciqualChercherSansAlias(q, max, promouvoir){
   if(!_ciqual) return [];
   /* 🍔 ft-v1113 — LA REQUÊTE EST TRADUITE AVANT D'ÊTRE JOUÉE, la recherche elle-même ne change
      pas d'une ligne. Plusieurs requêtes possibles (« mcdo » ouvre la famille), unies dans
@@ -5133,7 +5134,7 @@ function _ciqualChercherSansAlias(q, max){
        requêtes l'une après l'autre, « mcdo » rendait **six sandwichs** et coupait les frites et
        les nuggets à la limite d'affichage. Or qui tape « mcdo » compose un MENU. Un tour à la
        fois : un sandwich, des frites, des nuggets, puis on recommence. */
-    const listes=reqs.map(r=>_ciqualChercherUne(r, max||6));
+    const listes=reqs.map(r=>_ciqualChercherUne(r, max||6, promouvoir));
     const vus=new Set(), tout=[], lim=max||6;
     for(let i=0; tout.length<lim && listes.some(l=>i<l.length); i++){
       for(const l of listes){
@@ -5144,7 +5145,7 @@ function _ciqualChercherSansAlias(q, max){
     }
     return tout;
   }
-  return _ciqualChercherUne(q, max);
+  return _ciqualChercherUne(q, max, promouvoir);
 }
 /* ═══ 🔎 FOOD SEMANTICS V1 — FS-01 : LE RÉSOLVEUR DÉTERMINISTE (02/10/2026, demande de Michel) ═══
    ⛔⛔ LE DÉFAUT, MESURÉ SUR MASTER f31dc234 : le classement CIQUAL tenait en trois clés —
@@ -5168,7 +5169,7 @@ function _ciqualChercherSansAlias(q, max){
    des QUALIFICATIFS de CIQUAL — ce qui suit la 1ʳᵉ virgule (« Pomme, sèche », « Thé, feuille », « Café,
    poudre soluble »). ⚠️ Jamais dans le 1ᵉʳ segment : « Pâtes sèches, standard, cuites » sont des pâtes
    CUITES, et « Purée de pommes » est une compote, pas un état. *Une forme se lit là où la table la range.*
-   ⛔ Pas d'IA, pas de dictionnaire de synonymes, pas de préférences par historique : FS-03 → FS-07.
+   ⛔ Pas d'IA, pas de dictionnaire de synonymes, pas de préférences par historique : FS-04 → FS-07.
    ⚖️ D-036 (Michel) : l'ordre physique du fichier CIQUAL n'est JAMAIS un départage sémantique. */
 /* ═══ 🧩 FS-02 — LA TAXONOMIE DES FORMES (02/10/2026, demande de Michel) ═══════════════════════════
    UNE table (`_FS_FORMES`), UNE fonction (`_fsFormesDuTexte`), lues par la requête ET par les candidats :
@@ -5176,8 +5177,8 @@ function _ciqualChercherSansAlias(q, max){
    Trois notions SÉPARÉES, à ne jamais mélanger :
      ① les formes NOMMÉES dans la requête          → `_fsIntention(q).formes`
      ② les formes que PORTE un candidat            → `_fsFormesDuTexte(nom)`
-     ③ la PRÉFÉRENCE par défaut (requête générique) → `_FS_TRANSFORMEES` (celle de FS-01, inchangée :
-        l'élargir est le travail de FS-03, sur décision).
+     ③ la PRÉFÉRENCE par défaut (requête générique) → `_fsPreference` (FS-03, plus bas) — elle LIT la
+        taxonomie, elle n'y écrit rien : `_FS_FORMES` reste purement DESCRIPTIVE.
    ⭐ Mesuré sur la vraie base (3 341 aliments proposables) avant d'écrire une ligne — les occurrences et
    les pièges sont dans `docs/FOOD-SEMANTICS.md` §9. Ce qui en est sorti, et qui gouverne la table :
    · on reconnaît des MOTS ENTIERS (découpés sur l'espace et la barre : « sauté/poêlé »), jamais une
@@ -5191,7 +5192,7 @@ function _ciqualChercherSansAlias(q, max){
    · ⛔ volontairement NON reconnus (ambigus, mesurés) : « poêlée » (le plus souvent un PLAT : « Poêlée de
      légumes, surgelée, crue »), « rôti » (un MORCEAU : « Porc, rôti cru »), « plat » (« Haricot plat »),
      « déshydratée reconstituée » (une soupe prête : ni sèche, ni boisson), « précuit » (pas cuit). */
-const _FS_VERSION=2;
+const _FS_VERSION=3;
 const _FS_FORMES={
   /* forme : `suites` = mots (ou suites de mots) qui la portent, NORMALISÉS · `tete` = seulement en tête
      du NOM (après un petit mot) · `avec` = un mot qui doit AUSSI être dans le texte · `cherche` = ce
@@ -5219,10 +5220,6 @@ const _FS_FORMES={
   conserve: {suites:[['appertise'],['appertisee'],['appertises'],['appertisees'],['conserve'],['conserves'],['semi-conserve']]}
 };
 const _FS_ORDRE=Object.keys(_FS_FORMES);
-/* ③ La préférence par défaut de FS-01, mot pour mot : pour une requête GÉNÉRIQUE, un aliment qui porte
-   l'une de ces formes en tête d'un qualificatif descend. ⛔ FS-02 ne l'élargit PAS (cru/cuit, sauce, plat
-   préparé, surgelé… : c'est FS-03). */
-const _FS_TRANSFORMEES=['poudre','feuille','seche','puree','partie'];
 /* Le singulier d'un mot de recherche, par la MÊME règle que `_afMotDansNom` (R2). */
 function _fsSing(m){ const f=m.slice(-1); return (m.length>=4&&(f==='s'||f==='x'))?m.slice(0,-1):m; }
 /* ⭐ LA fonction canonique. `opt.qualificatifs` : seulement après la 1ʳᵉ virgule · `opt.debut` : la forme
@@ -5271,17 +5268,74 @@ function _fsTete(nom, sing){
   const m=_afMots(String(nom||'').split(',')[0].replace(/\(aliment moyen\)/i,''));
   return (sing?m.map(_fsSing):m).join(' ');
 }
+/* ═══ 🎯 FS-03 — LES PRÉFÉRENCES PAR DÉFAUT (02/10/2026, demande de Michel) ═══════════════════════════════
+   La question : *« quand la personne ne précise pas la forme, laquelle proposer en premier ? »*
+   ⛔⛔ « Une préférence générique n'est JAMAIS une correction d'une requête explicite. » Une forme nommée
+        n'est jamais évitée, et un profil ne s'applique qu'à une requête SANS forme.
+   ⛔⛔ « Il n'existe pas de règle universelle cuit > cru. » Dans un journal alimentaire, on pèse cru OU cuit :
+        une préférence de cuisson n'existe que là où elle est PROUVÉE sur la vraie base, aliment par aliment.
+   Elle a deux étages, et c'est tout :
+   ① ÉVITER, pour toute requête générique : un aliment qui porte une forme TRANSFORMÉE qu'on n'a pas nommée
+     (poudre, feuille, sec/séché, purée, partie — la règle de FS-01 — et une SAUCE) descend. Une forme se lit
+     en tête d'un segment ; un aliment SANS forme reconnue n'est jamais pénalisé (1 298 sur 3 341).
+   ② PRÉFÉRER, pour quelques requêtes nommées — EXACTEMENT celles-là (« riz », pas « riz au lait » ; « pâtes »,
+     pas « pâtes bolognaise ») — une forme précise, quand la base offre un choix PROPRE. Chaque profil dit
+     pourquoi. ⚠️ La préférence choisit le PREMIER résultat, rien d'autre : elle remonte en tête le meilleur
+     candidat qui porte la forme préférée et laisse le reste de la liste tel quel. Mesuré : appliquée à toute
+     la liste, elle repoussait TOUT le cru sous le cuit, contre la décision de Michel du 03/09 (« les deux, le
+     cuit en premier », ft-v1115 — le cru reste JUSTE DESSOUS). Et quand la table d'alias a déjà choisi le
+     premier résultat, la préférence ne joue pas : deux mécanismes ne choisissent pas la même chose (R2). ⛔ Volontairement SANS profil : viandes, poissons, œufs (cru ou cuit selon ce qu'on pèse),
+     courgette et légumes en général (aucune préférence prouvée), soupes (CIQUAL ne sépare pas une soupe
+     en poudre d'une soupe prête : « déshydratée reconstituée » EST prête). */
+const _FS_EVITE_GENERIQUE=['poudre','feuille','seche','puree','partie','sauce'];
+const _FS_PREFS_GENERIQUES=[
+  {requetes:['riz'], prefere:['cuit'],
+   raison:'riz : la base sépare proprement cru et cuit (Riz blanc, cru / Riz blanc, cuit) — on mange du riz cuit ; « riz cru » et « riz sec » restent explicites'},
+  {requetes:['pates'].concat(_AF_FORMES_PATES), prefere:['cuit'],                  // R2 : la liste des formes de pâtes
+   raison:'pâtes : « Pâtes sèches, standard, crues » / « …, cuites » — même produit, deux états ; « pâte » (singulier) reste le pâté'},
+  {requetes:['haricot vert'], prefere:['cuit'],
+   raison:'haricots verts : « Haricot vert, cru » / « Haricot vert, cuit » — le légume se mange cuit ; cru, surgelé, purée restent explicites'},
+  {requetes:['curry'], ambigu:true,
+   raison:'curry : poudre, sauce ou plat — aucune préférence défendable ; le comportement de FS-01 est conservé (« Curry, poudre »)'}
+];
+/* Le profil d'une requête : seulement si elle est GÉNÉRIQUE et égale à l'une des requêtes du profil (au
+   pluriel près, mot par mot : « haricots verts »). Jamais par préfixe. */
+function _fsProfil(it){
+  if(!it.generique) return null;
+  const q=it.mots.join(' ');
+  for(const p of _FS_PREFS_GENERIQUES)
+    for(const r of p.requetes){
+      const pluriel=r.split(' ').map(m=>/s$/.test(m)?m:m+'s').join(' ');
+      if(q===r || q===pluriel) return p;
+    }
+  return null;
+}
+/* ⭐ LA couche canonique, en deux fonctions qui ne lisent QUE la taxonomie :
+   ① `_fsPreference(it, nom)` : 1 = neutre · 2 = évité (une clé de tri) ;
+   ② `_fsPromouvoir(it, out)` : remonte en tête le meilleur candidat qui porte la forme préférée. */
+function _fsPreference(it, nom){
+  const p=_fsProfil(it);
+  if(p && p.ambigu) return 1;
+  const evite=_FS_EVITE_GENERIQUE.filter(f=>it.formes.indexOf(f)<0);    // ⛔ une forme NOMMÉE n'est jamais évitée
+  return _fsFormesDuTexte(nom, {debut:true}).some(f=>evite.indexOf(f)>=0) ? 2 : 1;
+}
+/* `out` est TRIÉ ({k, a}). On ne promeut qu'un candidat aussi bon que le premier sur ce qui compte avant
+   la forme (il commence par le mot tapé) et qui n'est ni évité ni privé d'une forme nommée. */
+function _fsPromouvoir(it, out){
+  const p=_fsProfil(it);
+  if(!p || !p.prefere || !out.length) return out;
+  const i=out.findIndex(x=>x.k[0]===out[0].k[0] && x.k[1]===1
+                         && _fsFormesDuTexte(x.a[1]).some(f=>p.prefere.indexOf(f)>=0));
+  if(i>0) out.unshift(out.splice(i,1)[0]);
+  return out;
+}
 /* ② LA CLÉ DE TRI — plus petite = plus haut. Chaque position se dit en une phrase. */
 function _fsCle(a, it, r){
   const n=_afNorm(a[1]);
-  /* forme NON DEMANDÉE, en deux crans (FS-02) : 2 = il manque une forme NOMMÉE par la personne (lue partout
-     dans le nom : « Lait en poudre ») — l'explicite gagne toujours ; 1 = il porte, en tête d'un qualificatif,
-     une forme transformée qu'elle n'a PAS nommée (la préférence par défaut de FS-01) ; 0 = rien à redire.
-     Pour une requête générique, le cran 2 n'existe pas : c'est exactement la règle de FS-01. */
+  /* FORME : 3 = il manque une forme NOMMÉE par la personne (lue partout dans le nom : « Lait en poudre ») —
+     l'explicite passe AVANT toute préférence ; sinon la préférence par défaut (FS-03) : 2 évité · 1 neutre. */
   const manque = it.formes.some(f=>_fsFormesDuTexte(a[1]).indexOf(f)<0);
-  const nonDemandee = _fsFormesDuTexte(a[1], {qualificatifs:true, debut:true})
-                        .some(f=>_FS_TRANSFORMEES.indexOf(f)>=0 && it.formes.indexOf(f)<0);
-  const forme = manque ? 2 : (nonDemandee ? 1 : 0);
+  const forme = manque ? 3 : _fsPreference(it, a[1]);
   /* nom de tête EXACT : ce qu'on a tapé est le nom même de l'aliment (« Fromage (aliment moyen) »,
      « Omelette au fromage, faite maison » pour « omelette fromage »). */
   const teteExacte = (_fsTete(a[1], false)===it.mots.join(' '))?0:1;
@@ -5301,7 +5355,7 @@ function _fsComparer(x, y){
   for(let i=0;i<x.length;i++){ if(x[i]<y[i]) return -1; if(x[i]>y[i]) return 1; }
   return 0;
 }
-function _ciqualChercherUne(q, max){
+function _ciqualChercherUne(q, max, promouvoir){
   if(!_ciqual) return [];
   const it=_fsIntention(q);                   // 🔎 FS-01 : l'intention, puis les mots à chercher
   const mots=it.mots;                         // R2 : découpage par `_afMots` (ft-v1119)
@@ -5325,6 +5379,7 @@ function _ciqualChercherUne(q, max){
        dépendait de l'ordre d'arrivée des candidats ; trier 3 484 lignes au plus coûte ~1 ms. */
   }
   out.sort((x,y)=>_fsComparer(x.k, y.k));
+  if(promouvoir!==false) _fsPromouvoir(it, out);   // 🎯 FS-03 : le 1ᵉʳ résultat d'une requête générique
   return out.slice(0, max||6).map(x=>x.a);
 }
 /* ⭐ R2 : un aliment CIQUAL remplit le formulaire par le MÊME chemin que le code-barres et la

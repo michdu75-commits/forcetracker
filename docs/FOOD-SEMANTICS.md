@@ -2,8 +2,12 @@
 
 > **Créé le 02/10/2026 (FS-01, session-B, demande de Michel)**, après son retour terrain du 01/10
 > (`docs/SUIVI-AUDIT.md`, « la recherche d'aliments propose le mauvais aliment en premier »).
-> Ce fichier porte **ce que FS-01 et FS-02 ont fait** et **le contrat des lots suivants** (FS-03 → FS-07).
-> ⛔ **Rien de FS-03 à FS-07 n'est construit.** FS-01 et FS-02 sont des checkpoints sur branche, **non publiés**.
+> Ce fichier porte **ce que FS-01, FS-02 et FS-03 ont fait** et **le contrat des lots suivants** (FS-04 → FS-07).
+> ⛔ **Rien de FS-04 à FS-07 n'est construit.** FS-01 → FS-03 sont des checkpoints sur branche, **non publiés**.
+> **FS-01** → classement déterministe · **FS-02** → taxonomie des formes · **FS-03** → préférences génériques
+> conservatrices.
+> ⛔⛔ **« Une préférence générique n'est jamais une correction d'une requête explicite. »**
+> ⛔⛔ **« Il n'existe pas de règle universelle cuit > cru. »**
 > ⚖️ **D-036 (Michel, 02/10)** : l'ordre physique des entrées du fichier CIQUAL n'est **pas** une règle métier et ne
 > sert **jamais** de départage sémantique.
 
@@ -44,9 +48,9 @@ doigt (« Riz blanc, **cuit** »). **Mesuré dans un navigateur, alias retardés
 
 | Pièce | Rôle |
 |---|---|
-| `_FS_VERSION` (= **2** depuis FS-02) | la version du moteur, rendue dans l'intention |
+| `_FS_VERSION` (= **3** depuis FS-03) | la version du moteur, rendue dans l'intention |
 | `_FS_FORMES` · `_FS_ORDRE` | **la taxonomie** (FS-02, §9) : 12 formes, une seule table |
-| `_FS_TRANSFORMEES` | la préférence par défaut de FS-01 : `poudre`, `feuille`, `seche`, `puree`, `partie` |
+| `_FS_EVITE_GENERIQUE` · `_FS_PREFS_GENERIQUES` · `_fsProfil` · `_fsPreference` · `_fsPromouvoir` | **la couche de préférences** (FS-03, §10) — elle remplace `_FS_TRANSFORMEES` (FS-01/02) |
 | `_fsFormesDuTexte(texte, opt)` | **la fonction canonique** (FS-02) : les formes d'un texte, pour la requête comme pour l'aliment. `opt.qualificatifs` : après la 1ʳᵉ virgule · `opt.debut` : en tête de segment, éventuellement après un petit mot (« Oeuf, **en** poudre ») |
 | `_fsIntention(q)` | → `{version, mots, formes, generique}` : générique = aucune forme nommée ; les formes viennent de `_fsFormesDuTexte(q)` |
 | `_fsCle(a, it, r)` | la clé de tri, **plus petite = plus haut** |
@@ -55,10 +59,9 @@ doigt (« Riz blanc, **cuit** »). **Mesuré dans un navigateur, alias retardés
 **La clé, position par position** (chacune se dit en une phrase) :
 
 1. **commence par** ce qu'on a tapé (master) ;
-2. **forme non demandée**, en deux crans depuis FS-02 — **2** : il manque une forme **nommée** par la personne (lue
-   partout dans le nom : « Lait en poudre ») ; **1** : il porte, en tête d'un qualificatif, une forme transformée
-   (`_FS_TRANSFORMEES`) qu'elle n'a **pas** nommée ; **0** sinon. Pour une requête générique le cran 2 n'existe pas :
-   c'est la règle de FS-01, au résultat près (différentiel §9) ;
+2. **forme** — **3** : il manque une forme **nommée** par la personne (lue partout dans le nom : « Lait en poudre ») ;
+   sinon la préférence par défaut `_fsPreference` (FS-03, §10) : **2** évité · **1** neutre. L'explicite passe donc
+   toujours AVANT la préférence ;
 3. **approximation** — la forme tapée bat la forme dépluralisée (« pates » → des pâtes, jamais « Pâté ») (master).
    Après la forme, mesuré : sinon « Haricots verts, purée » (pluriel exact) passait devant « Haricot vert » ;
 4. **mot entier** — « gaufre » est un mot de « Gaufre bruxelloise », pas de « Gaufrette » ;
@@ -126,22 +129,23 @@ ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichie
 - **courgette** : la table d'alias vise la purée, même défaut que pomme / haricots verts (signalé dans
   `tools/alias.py`, laissé à FS-03).
 
-## 7. Le contrat des lots suivants (⛔ FS-03 → FS-07 non construits)
+## 7. Le contrat des lots suivants (⛔ FS-04 → FS-07 non construits)
 
-| Lot | Contenu | Ce que FS-01/FS-02 lui laissent |
+| Lot | Contenu | Ce que FS-01 → FS-03 lui laissent |
 |---|---|---|
 | **FS-01** ✅ | pipeline canonique, résolveur déterministe, explicite prioritaire, alias avant le 1ᵉʳ affichage | — |
 | **FS-02** ✅ | taxonomie des formes (§9) | — |
-| **FS-03** | préférences par défaut plus larges : poulet, riz, curry, légumes, soupes, courgette, frais vs surgelé… — **sur décision** | `_FS_TRANSFORMEES` (élargir la préférence) · `_fsFormesDuTexte` (les 12 formes sont déjà lues) · la table d'alias pour un mot précis · les ambiguïtés figées par B-CDXXXII (§9) |
-| **FS-04** | affichage explicite de la forme dans l'interface | `_fsFormesDuTexte(nom)` rend les formes d'un aliment |
-| **FS-05** | corpus de ~100–150 requêtes courantes | les bancs `food_semantics` / `food_formes` et les deux différentiels |
-| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `tools/mut_food_formes.py` |
+| **FS-03** ✅ | préférences génériques conservatrices (§10) | — |
+| **FS-04** | affichage explicite de la forme dans l'interface | `_fsFormesDuTexte(nom)` rend les formes d'un aliment ; les ambiguïtés assumées (curry, viandes, riz sec) sont les premières candidates à une forme VISIBLE plutôt qu'à une préférence |
+| **FS-05** | corpus de ~100–150 requêtes courantes | les bancs `food_semantics` / `food_formes` / `food_prefs` et les différentiels (avec ET sans alias) |
+| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `tools/mut_food_formes.py` · `tools/mut_food_prefs.py` |
 | **FS-07** | passe complète + publication | — |
 
 **Les invariants à garder dans tous les lots** : même entrée = même ordre (les témoins de déterminisme mélangent la
 base 4 fois) · **jamais l'ordre du fichier** (D-036) · une forme nommée gagne toujours · un seul rendu quand CIQUAL et
 les alias sont là · une seule table de formes · un choix pour **un mot précis** va dans la table d'alias (R2, le
-générateur est le seul propriétaire), une règle **générale** va dans la clé.
+générateur est le seul propriétaire), une règle **générale** va dans la clé · une préférence ne touche JAMAIS une
+requête explicite et ne choisit que le PREMIER résultat (le cru reste juste sous le cuit, ft-v1115).
 
 ## 8. Les preuves
 
@@ -159,7 +163,7 @@ générateur est le seul propriétaire), une règle **générale** va dans la cl
 
 **Trois notions séparées, jamais mélangées** : ① les formes **nommées** dans la requête (`_fsIntention(q).formes`) ·
 ② les formes que **porte** un candidat (`_fsFormesDuTexte(nom)`) · ③ la **préférence** par défaut d'une requête
-générique (`_FS_TRANSFORMEES`, celle de FS-01, **inchangée** — l'élargir est FS-03). ① et ② passent par **la même
+générique (`_FS_TRANSFORMEES`, celle de FS-01, **inchangée** en FS-02 — ↪️ FS-03 l'a déplacée dans sa propre couche, §10). ① et ② passent par **la même
 fonction et la même table** : l'ancienne `_fsFormesDuNom` et son dictionnaire FS-01 ont disparu.
 
 **Comment un mot devient une forme** : mots **entiers** (découpés sur l'espace et la barre : « sauté/poêlé ») ·
@@ -198,7 +202,7 @@ plusieurs formes possibles (« Haricot vert, surgelé, cuit » → `cuit` + `sur
   coque », « brouillé ») — « dur » sert aussi à « blé dur ». Et une virgule **dans une parenthèse** coupe un segment
   comme les autres (« Salade César (salade verte, fromage, croûtons, sauce) »).
 
-**Les ambiguïtés, figées telles quelles (ce sont des décisions de FS-03, pas de FS-02)** :
+**Les ambiguïtés, figées telles quelles (ce sont des décisions de FS-03, pas de FS-02)** — ↪️ FS-03 (§10) : riz sec, curry et poulet restent **volontairement sans préférence** ; courgette est **tranchée** (alias retiré) :
 1. **« riz sec »** → la requête nomme `seche` ; « Riz blanc, cru » porte `cru`. CIQUAL range le riz sec sous « cru » ;
    **aucune équivalence sec = cru n'est inventée** — le 1ᵉʳ résultat reste « Vermicelles de riz sèches, crues ».
 2. **« curry »** → « Curry, poudre » = `poudre` · « Sauce au curry » = `sauce` + `prepare` · « Poulet au curry et au
@@ -215,3 +219,62 @@ requêtes explicites (1ᵉʳ mot d'un nom + un mot de forme réellement présent
 nommée : « bar cuit » → « Bar commun ou loup, rôti/cuit au four » (au lieu d'une barre chocolatée) ; « bette
 feuille » → « Bette ou blette, côte et feuille, … » (au lieu de la bette « sans feuille »). **0** requête devenue
 sans résultat.
+
+## 10. FS-03 — les préférences génériques conservatrices (02/10/2026, checkpoint non publié)
+
+**La question** : *quand la personne ne précise pas la forme, laquelle proposer en premier ?* **Une seule couche**
+(`app.js`) qui LIT la taxonomie et n'y écrit rien — `_FS_FORMES` reste purement descriptive :
+
+| Pièce | Rôle |
+|---|---|
+| `_FS_EVITE_GENERIQUE` | pour TOUTE requête générique, un aliment qui porte, en tête d'un segment, une forme transformée NON nommée descend : `poudre`, `feuille`, `seche`, `puree`, `partie` (la règle de FS-01) **+ `sauce`** |
+| `_FS_PREFS_GENERIQUES` | 4 profils, chacun avec sa raison : **riz** → cuit · **pâtes** et leurs formes (`_AF_FORMES_PATES` : spaghetti, penne, macaroni…) → cuit · **haricot vert** → cuit · **curry** → **ambigu** (aucune préférence) |
+| `_fsProfil(it)` | le profil d'une requête **générique**, à l'**identique** (au pluriel près) — jamais par préfixe : « riz au lait », « pâtes bolognaise » n'héritent de rien |
+| `_fsPreference(it, nom)` | 1 neutre · 2 évité — une forme **nommée** n'est jamais évitée |
+| `_fsPromouvoir(it, out)` | remonte en tête le meilleur candidat qui porte la forme préférée — **le premier résultat seulement** |
+
+**Deux choix, mesurés avant d'être faits** :
+1. **La préférence choisit le PREMIER résultat, pas l'ordre entier.** Appliquée à toute la liste, elle repoussait
+   tout le cru sous le cuit (« riz » : cinq riz cuits avant le premier cru) — contre la **décision de Michel du
+   03/09** (*« les deux, le cuit en premier »*, ft-v1115), figée par deux témoins du runner : **le cru reste juste
+   dessous**.
+2. **Elle ne rejoue pas un choix déjà fait par la table d'alias** (R2) : quand « riz » a sa cible (« Riz blanc,
+   cuit »), la préférence ne s'applique pas à la suite de la liste. Elle sert donc là où l'alias ne répond pas :
+   **hors ligne** (alias indisponibles), et les mots **sans alias** (macaroni, fusilli, farfalle, linguine…).
+
+**Ce qui est volontairement SANS préférence (ambiguïtés assumées)** :
+- **curry** : poudre, sauce ou plat — profil `ambigu`, comportement de FS-01 conservé (« Curry, poudre ») ;
+- **viandes, poissons, œufs** : on pèse cru OU cuit — aucune préférence de cuisson ; les premiers résultats restent
+  ceux de FS-02 (crus, par la table d'alias historique) ;
+- **sec ≠ cru** quand CIQUAL ne permet pas l'équivalence : « riz sec » respecte la forme nommée, sans proposer le riz cru ;
+- **légumes en général, courgette, soupes** : aucune préférence cru/cuit prouvée ; CIQUAL ne sépare pas une soupe en
+  poudre d'une soupe prête (« déshydratée reconstituée » EST prête) ;
+- ⚠️ **limite** : hors ligne, « raisin » rend encore « Raisin sec » — le mot est dans le nom même (comme « Biscuit sec »,
+  « Saucisson sec »), et l'éviter casserait ces produits-là. En ligne, la table d'alias répond (ci-dessous).
+
+**Les alias, classés (633)** : **487 lexicaux** (synonyme, orthographe, nom courant) · **146 « de préférence »** (ils
+choisissent une forme parmi plusieurs : 67 → cru, 51 → cuit, 18 → pâtes cuites, …). ⛔ **On n'a pas nettoyé la table** :
+seuls les trois défauts prouvés sont migrés, dans `tools/alias.py` avec leur raison :
+- `courgette(s)` → « Courgette, purée » : **RETIRÉ** (nouvelle liste `RETRAITS`) — pas d'aliment moyen ; le moteur
+  évite la purée sans imposer cru ou cuit ;
+- `poire(s)` → « Poire belle Hélène » (un dessert glacé) → **« Poire, chair, crue (aliment moyen) »** ;
+- `raisin(s)` → « Raisin sec » → **« Raisin cru (aliment moyen) »** (« raisins secs » reste explicite).
+
+**Avant / après (1ᵉʳ résultat)** :
+
+| Requête | FS-02 (en ligne · hors ligne) | FS-03 (en ligne · hors ligne) |
+|---|---|---|
+| riz | Riz blanc, cuit · **Riz, mélange…, cru** | Riz blanc, cuit · **Riz thaï, cuit** |
+| pâtes / spaghetti | Pâtes sèches, cuites · **Pâtes sèches, crues** | Pâtes sèches, cuites · **Pâtes sèches, cuites** |
+| macaroni, fusilli, penne… (sans alias) | **Pâtes sèches, crues** | **Pâtes sèches, cuites** |
+| haricots verts | Haricot vert, cuit · **Haricot vert, cru** | Haricot vert, cuit · **Haricot vert, cuit** |
+| courgette | **Courgette, purée** · Courgette, crue | Courgette, chair et peau, crue (les deux) |
+| poire | **Poire belle Hélène** · Poire, crue | **Poire, chair, crue (aliment moyen)** · Poire, crue |
+| raisin | **Raisin sec** · Raisin sec | **Raisin cru (aliment moyen)** · Raisin sec |
+| carbonara | Pâtes à la carbonara · **Sauce carbonara** | Pâtes à la carbonara (les deux) |
+| café · thé · pomme · curry · poulet · fromage · lait · soupe | inchangés | inchangés |
+
+**Différentiel FS-02 → FS-03** (mêmes requêtes rejouées des deux côtés) — **en ligne** : 6 premiers résultats changés
+sur 2 519 génériques (les 6 alias migrés), **0** sur 974 explicites, 0 vide ; **hors ligne** : 20 sur 2 520 génériques
+(17 pâtes et formes de pâtes → cuites, 2 haricots verts → cuit, riz → cuit, et carbonara → le plat), **0** explicite,
+0 vide.

@@ -83,12 +83,15 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('B-CDXXXI ① UNE table `_FS_FORMES` et UNE fonction `_fsFormesDuTexte` ; l\'ancienne `_fsFormesDuNom` (FS-01) a disparu',
     (AP.match(/const_FS_FORMES=/g) || []).length === 1 && (AP.match(/function_fsFormesDuTexte\(/g) || []).length === 1
     && !/_fsFormesDuNom/.test(AP), 'deux dictionnaires ou ancienne fonction');
+  /* ↪️ FS-03 (02/10) : la préférence par défaut a quitté la clé pour sa propre couche (`_fsPreference`,
+     `_fsPromouvoir`) — elle LIT toujours la taxonomie par `_fsFormesDuTexte`, et la table reste DESCRIPTIVE. */
   t('B-CDXXXI ② la requête ET les candidats passent par `_fsFormesDuTexte` (aucune autre lecture de forme)',
     corps('_fsIntention').includes('constformes=_fsFormesDuTexte(q);')
-    && (corps('_fsCle').match(/_fsFormesDuTexte\(a\[1\]/g) || []).length === 2
+    && corps('_fsCle').includes('_fsFormesDuTexte(a[1])') && corps('_fsPreference').includes('_fsFormesDuTexte(nom,')
     && !/\.nom\.test\(/.test(AP), 'lecture de forme hors de la fonction canonique');
-  t('B-CDXXXI ③ la préférence par défaut reste celle de FS-01 (5 formes transformées) — FS-02 ne l\'élargit pas',
-    AP.includes("const_FS_TRANSFORMEES=['poudre','feuille','seche','puree','partie'];"), 'préférence par défaut modifiée');
+  t('B-CDXXXI ③ la taxonomie reste DESCRIPTIVE : aucune préférence dans `_FS_FORMES` ni dans `_fsFormesDuTexte` (elles vivent dans la couche FS-03)',
+    !/prefere|evite|_FS_PREFS|_fsProfil/.test(AP.slice(AP.indexOf('const_FS_FORMES='), AP.indexOf('const_FS_ORDRE=')))
+    && !/_FS_EVITE|_FS_PREFS|_fsProfil|_fsPreference/.test(corps('_fsFormesDuTexte')), 'préférence mêlée à la taxonomie');
 };
 
 module.exports.ecran = async function (t, b, PORT) {
@@ -114,6 +117,7 @@ module.exports.ecran = async function (t, b, PORT) {
     o.amb = { rizBlancCru: _fsFormesDuTexte('Riz blanc, cru'), curryPoudre: _fsFormesDuTexte('Curry, poudre'),
               sauceCurry: _fsFormesDuTexte('Sauce au curry, chaude, préemballée'),
               pouletCurry: _fsFormesDuTexte('Poulet au curry et au lait de coco, préemballé'),
+              courgettePuree: _fsFormesDuTexte('Courgette, purée'),
               aliasCourgette: (() => { const c = _alias.a['courgette']; const a = _ciqual.a.find(x => x[0] === c); return a ? [a[1], _fsFormesDuTexte(a[1])] : null; })() };
     /* ⭐ DÉTERMINISME : formes de TOUTE la base, 3 fois, puis sur la base mélangée et inversée ; la table
        n'est jamais modifiée par un appel ; les 1ᵉʳˢ résultats explicites ne dépendent pas de l'ordre. */
@@ -134,8 +138,8 @@ module.exports.ecran = async function (t, b, PORT) {
   const det = o => JSON.stringify(o);
   t('B-CDXXXII ⛔ CONTRÔLE — tous les libellés des témoins existent VRAIMENT dans la base (aucun texte inventé)',
     R.absents.length === 0, R.absents.join(' · '));
-  t('B-CDXXXII la taxonomie : 12 formes, dans cet ordre, moteur version 2',
-    det(R.ordre) === det(['cru', 'cuit', 'seche', 'poudre', 'feuille', 'boisson', 'puree', 'sauce', 'prepare', 'partie', 'surgele', 'conserve']) && R.version === 2,
+  t('B-CDXXXII la taxonomie : 12 formes, dans cet ordre, moteur version 2 ou plus (la version exacte est figée par le banc FS-03)',
+    det(R.ordre) === det(['cru', 'cuit', 'seche', 'poudre', 'feuille', 'boisson', 'puree', 'sauce', 'prepare', 'partie', 'surgele', 'conserve']) && R.version >= 2,
     det(R.ordre) + ' v' + R.version);
   for (const f of [...new Set(CORPUS.map(c => c[0]))]) {
     const L = R.corpus.filter(c => c[0] === f);
@@ -150,7 +154,7 @@ module.exports.ecran = async function (t, b, PORT) {
     t('B-CDXXXII EXPLICITE « ' + q + ' » nomme ' + det(EXPLICITES[q]) + ' et le 1ᵉʳ résultat les porte',
       det(R.expl[q].formes) === det(EXPLICITES[q]) && R.expl[q].top && EXPLICITES[q].every(f => R.expl[q].topFormes.includes(f)),
       det(R.expl[q]));
-  /* ⛔ LES AMBIGUÏTÉS, FIGÉES TELLES QUELLES — chacune est une décision de FS-03, pas de FS-02. */
+  /* ⛔ LES AMBIGUÏTÉS, FIGÉES TELLES QUELLES — riz sec, curry et poulet restent sans préférence en FS-03 (voulu) ; courgette est tranchée. */
   t('B-CDXXXII AMBIGUÏTÉ « riz sec » : la requête nomme `seche`, « Riz blanc, cru » porte `cru` — AUCUNE équivalence inventée ; le 1ᵉʳ résultat n\'est pas cuit',
     det(R.it.rizSec.formes) === '["seche"]' && det(R.amb.rizBlancCru) === '["cru"]' && !/cuit/i.test(R.top['riz sec'][0] || 'cuit'),
     det({ it: R.it.rizSec.formes, riz: R.amb.rizBlancCru, top: R.top['riz sec'][0] }));
@@ -159,9 +163,11 @@ module.exports.ecran = async function (t, b, PORT) {
     && R.it.curry.generique === true && R.top.curry[0] === 'Curry, poudre', det({ a: R.amb, top: R.top.curry }));
   t('B-CDXXXII AMBIGUÏTÉ « poulet » : requête GÉNÉRIQUE, jamais transformée en « poulet cuit » — 1ᵉʳ résultat inchangé depuis FS-01 (cru)',
     R.it.poulet.generique === true && R.top.poulet[0] === 'Poulet, filet sans peau cru', det(R.top.poulet));
-  t('B-CDXXXII AMBIGUÏTÉ « courgette » : la table d\'alias vise « Courgette, purée », CLASSÉE `puree`, laissée telle quelle (FS-03)',
-    R.amb.aliasCourgette && R.amb.aliasCourgette[0] === 'Courgette, purée' && det(R.amb.aliasCourgette[1]) === '["puree"]'
-    && R.top.courgette[0] === 'Courgette, purée', det({ a: R.amb.aliasCourgette, top: R.top.courgette }));
+  /* ↪️ FS-03 (02/10) a TRANCHÉ ce que FS-02 avait figé : l'alias `courgette` → purée est RETIRÉ (tools/alias.py,
+     RETRAITS) ; la purée reste classée `puree` et trouvable, elle n'est plus imposée. */
+  t('B-CDXXXII AMBIGUÏTÉ « courgette » (tranchée par FS-03) : plus d\'alias ; « Courgette, purée » reste classée `puree`, et n\'est plus en tête',
+    R.amb.aliasCourgette === null && det(R.amb.courgettePuree) === '["puree"]'
+    && /^Courgette/.test(R.top.courgette[0] || '') && R.top.courgette[0] !== 'Courgette, purée', det({ a: R.amb.aliasCourgette, top: R.top.courgette }));
   t('B-CDXXXII DÉTERMINISME : formes de toute la base identiques 3 fois, sur 3 bases mélangées et l\'inverse ; requêtes explicites idem ; la table jamais modifiée',
     R.det.repete && R.det.perm.length === 4 && R.det.perm.every(x => x === true) && R.det.tableIntacte, det(R.det));
   t('B-CDXXXII aucune erreur de page', errs.length === 0, errs.slice(0, 2).join(' | '));

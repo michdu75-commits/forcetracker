@@ -21,7 +21,7 @@ AP, AJ = 'app.js', 'data/alias.json'
 FICHIERS = (AP, AJ)
 
 # ancres mises a jour par FS-02 (meme intention, code de la taxonomie) — les mutations FS-01 restent les memes
-GEN = "  const forme = manque ? 2 : (nonDemandee ? 1 : 0);\n"
+GEN = "  return _fsFormesDuTexte(nom, {debut:true}).some(f=>evite.indexOf(f)>=0) ? 2 : 1;\n"   # FS-03 : l'evitement vit dans _fsPreference
 EXP = "  const manque = it.formes.some(f=>_fsFormesDuTexte(a[1]).indexOf(f)<0);\n"
 INT = "  const formes=_fsFormesDuTexte(q);\n"
 CLE = "  return [r[0], forme, r[1], entier, teteExacte, teteSing, n.length, n, a[0]];\n"
@@ -39,11 +39,11 @@ PUSH = "    out.push({k:_fsCle(a, it, r), a:a});\n"
 
 MUT = [
     ('M00 le code d\'avant remis mot pour mot (master %s : app.js + data/alias.json)' % AVANT, 'REV:' + AVANT, 'GARDE'),
-    ('M1 preference « boisson » desactivee (la forme transformee n\'est plus penalisee)', [(AP, GEN, GEN.replace("(nonDemandee ? 1 : 0)", "0"))], 'GARDE'),
+    ('M1 preference « boisson » desactivee (la forme transformee n\'est plus penalisee)', [(AP, GEN, GEN.replace("? 2 : 1;", "? 1 : 1;"))], 'GARDE'),
     ('M2 l\'etat explicite est ignore (la forme nommee n\'est ni reconnue ni cherchee)', [(AP, INT, "  const formes=[];\n")], 'GARDE'),
     ('M3 les alias rendus APRES le 1er affichage (deux rendus, comme avant)', [(AP, UNIQ, DEUX)], 'GARDE'),
     ('M4 la longueur du nom redevient le critere dominant', [(AP, CLE, "  return [r[0], n.length, forme, r[1], entier, teteExacte, teteSing, n, a[0]];\n")], 'GARDE'),
-    ('M5 preference frais / seche inversee (la forme transformee passe devant)', [(AP, GEN, GEN.replace("(nonDemandee ? 1 : 0)", "(nonDemandee ? 0 : 1)"))], 'GARDE'),
+    ('M5 preference frais / seche inversee (la forme transformee passe devant)', [(AP, GEN, GEN.replace("? 2 : 1;", "? 1 : 2;"))], 'GARDE'),
     ('M6 le tri depend de l\'ordre des candidats (plus de departage par nom puis code)', [(AP, CLE, "  return [r[0], forme, r[1], entier, teteExacte, teteSing, n.length];\n")], 'GARDE'),
     ('M7 retour de la coupure a 400 candidats (les 400 PREMIERS du fichier)', [(AP, PUSH, PUSH + "    if(out.length>400) break;\n")], 'GARDE'),
     ('M8 les alias faux remis (pomme -> Pomme, seche ; haricots verts -> puree)',

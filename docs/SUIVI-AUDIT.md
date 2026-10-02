@@ -445,3 +445,14 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   (D-037) et de la taxonomie (D-038) restent des choix de Claude, **PROPOSÉS**.
 - 🟤 **Laissé à FS-03 (décisions de préférence), figé par témoins** : riz sec (aucune équivalence sec = cru) · curry ·
   poulet · courgette. 🟤 **Limite connue** : cuisson dite par un mot propre au plat (« Oeuf dur », « poché ») non reconnue.
+
+### 🎯 FS-03 — Food Semantics V1 : préférences génériques conservatrices (02/10/2026, session-B — 🟡 CHECKPOINT, NON PUBLIÉ)
+- **Fait** : une couche de préférences séparée de la taxonomie (`_FS_EVITE_GENERIQUE`, `_FS_PREFS_GENERIQUES`,
+  `_fsPreference`, `_fsPromouvoir`) ; riz, pâtes (et leurs formes), haricot vert → cuit en PREMIER résultat, le cru juste
+  dessous ; sauce évitée en générique ; 3 alias défectueux migrés (courgette, poire, raisin). Détail : `docs/FOOD-SEMANTICS.md` §10.
+- **Différentiel FS-02 → FS-03** : en ligne 6/2 519 génériques (les alias migrés), hors ligne 20/2 520 ; 0 explicite ; 0 vide.
+- ⛔ **Volontairement sans préférence** : curry, viandes/poissons/œufs (cru ou cuit selon ce qu'on pèse), sec ≠ cru,
+  légumes en général, soupes. 🟤 **Limite** : hors ligne, « raisin » → « Raisin sec » (le mot est dans le nom).
+- 🟤 **Restant, non migré exprès** : 143 alias « de préférence » (choisissent cru ou cuit pour un mot) — conservés ; les
+  migrer serait un chantier à part, sur décision.
+- D-039 (Claude, PROPOSÉ). D-037 / D-038 restent PROPOSÉS : des choix techniques de Claude, pas des décisions de Michel.

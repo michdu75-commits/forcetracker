@@ -25309,8 +25309,12 @@ console.log('\n-- CCXXIII. Les mots qu\'on emploie atteignent un aliment précis
        à un nom composé plus court (« Riz blanc, cru ») — la même règle qui fait rendre « Fromage »
        et non « Fromage de tête ». Ce qui est protégé reste protégé : jamais bloquant, et un riz CRU
        (la cible « cuit » est celle de la table, pas du tri). */
+    /* 🎯 FS-03 (02/10/2026) — ET LA FORME A CHANGÉ À SON TOUR, VOLONTAIREMENT (R30) : la préférence « riz → cuit »
+       est maintenant dans le MOTEUR (`_FS_PREFS_GENERIQUES`), pas seulement dans la table d'alias — donc hors
+       ligne aussi, « riz » rend un riz CUIT (« Riz thaï, cuit »), comme la décision de Michel du 03/09. Ce qui
+       est protégé reste protégé : jamais bloquant, et du riz. */
     t('⛔ sans la table (hors ligne), la recherche redevient celle d\'avant — jamais bloquante',
-      /^Riz\b/.test(String(R.sansTable)) && /\bcru\b/.test(String(R.sansTable)), String(R.sansTable));
+      /^Riz\b/.test(String(R.sansTable)) && /\bcuit\b/.test(String(R.sansTable)), String(R.sansTable));
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
 }
@@ -39658,6 +39662,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🧩 FS-02 Food Semantics V1 (02/10/2026) : une seule taxonomie des formes (requête ET candidats),
      ambiguïtés figées. Bloc B-CDXXXII, contrôle négatif `tools/mut_food_formes.py`. */
   await require('./food_formes.js').ecran(t, b, PORT);
+  /* 🎯 FS-03 Food Semantics V1 (02/10/2026) : préférences par défaut des requêtes génériques (une couche,
+     séparée de la taxonomie). Bloc B-CDXXXIV, contrôle négatif `tools/mut_food_prefs.py`. */
+  await require('./food_prefs.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40549,6 +40556,7 @@ require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
 require('./food_semantics.js').source(t, ROOT, fs, path);
 require('./food_formes.js').source(t, ROOT, fs, path);
+require('./food_prefs.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
