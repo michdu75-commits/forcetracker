@@ -11,7 +11,8 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
 Les mutations cassent le PRINCIPE, pas un mot :
   M00 = le code d'avant (master 105d4e20) remis mot pour mot, sur les 4 fichiers
   S1 = la strategie D-033 REFUSEE par Michel (reduire lipides puis proteines) · S2 = monter la cible
-  M01..M15 et U1..U6 = chaque morceau retire un par un · DG1..DG3 = deguisees · EQ1 = equivalente (temoins executes verts)
+  M01..M15 et U1..U6 = chaque morceau retire un par un · C1..C2 = contrat du cycle sous le plancher (NUT-LIPIDES-25-01)
+  · DG1..DG3 = deguisees · EQ1 = equivalente (temoins executes verts)
   [negatif] = commentaire
 Usage : python3 tools/mut_nutri_b3.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -81,6 +82,11 @@ MUT = [
     ('DG1 [deguisee] l\'ecart calcule sur la cible AUTOMATIQUE au lieu de la cible retenue (manuelle)',
      [(ST, JOUR, JOUR.replace('m.carbs_g,calories)', 'm.carbs_g,auto!=null?auto:calories)'))], 'GARDE'),
     ('DG2 [deguisee] l\'ecart arrondi a la dizaine', [(ST, "ecart=Math.round(somme-kcal);", "ecart=Math.round((somme-kcal)/10)*10;")], 'GARDE'),
+    # 🥑 NUT-LIPIDES-25-01 (02/10/2026) : le CONTRAT DU CYCLE sous le plancher (temoins RÉELS de B-CDXVI/XVII/XIX)
+    ('C1 le plancher du cycle (0,6 g/kg) ignore : le cycle joue meme sous le plancher',
+     [(ST, "    const retraitMax=Math.max(0, m.fat_g-plancher);\n", "    const retraitMax=m.fat_g;\n")], 'GARDE'),
+    ('C2 cycle refuse mais macros retouchees en silence (1 g de glucides retire)',
+     [(ST, "    if(!(D>0)) return m;\n", "    if(!(D>0)) return {prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:Math.max(0,m.carbs_g-1)};\n")], 'GARDE'),
     ('EQ1 [equivalente] le seuil ecrit >= 7 au lieu de > 6 : temoins executes VERTS, seule la source le voit', [(ST, CRIT, CRIT.replace('ecart>_ARRONDI_MACROS_KCAL', 'ecart>=_ARRONDI_MACROS_KCAL+1'))], 'SOURCE'),
     ('[negatif] commentaire citant ecretage, seuil et incompatibilite', [(ST, SEUIL, SEUIL + "// ecretage · 6 kcal · incompatible · 0,6 g/kg · 0,8 g/kg\n")], 'OK'),
 ]

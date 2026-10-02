@@ -89,6 +89,35 @@ const _poser = `(D, ses) => {
   load();
 }`;
 
+/* 🥑 NUT-LIPIDES-25-01 (02/10/2026, décision de Michel) — LE CYCLE ET D-034 NE COEXISTENT PLUS.
+   Lipides = 25 % de la cible : un cycle séance/repos actif exige lipides > 0,6 g/kg (plancher `_CYCLE_FAT_MIN`,
+   inchangé), donc cible > 21,6 × poids ; un écart D-034 exige 4P > 0,75 × cible, donc cible < 5,33 × P ≤ 14,9 × poids
+   (P ≤ 2,8 g/kg, phase lutéale comprise). Les deux plages sont DISJOINTES, et le jour de repos d'un cycle actif garde
+   des glucides (≥ 0,058 × cible avant transfert, transfert ≤ 0,028 × cible). Mesuré : 0 sur la grille dense ci-dessous.
+   ⭐ CHAQUE ANCIEN TÉMOIN « JOUR DE CYCLE » EST DEVENU DEUX TÉMOINS :
+     RÉEL — le contrat validé, sur un vrai profil : le cycle est refusé par le plancher (rien n'est modifié, rien
+            de faux n'est affiché) ou actif (plancher respecté, total tenu) ;
+     SYNTHÉTIQUE — la même assertion qu'avant, avec la sortie du moteur de cycle FORCÉE (`_forcer`) : le code
+            d'affichage « jour par jour » est CONSERVÉ (preuve d'inutilité = la seule règle des 25 % ; il redeviendrait
+            atteignable si le plancher du cycle changeait) et reste ainsi couvert. ⛔ Un témoin synthétique ne prouve
+            PAS qu'un profil réel l'atteint — il prouve que le code conservé dit encore juste. */
+const _forcer = `(SPEC) => {
+  if (!window.__cgOrig) window.__cgOrig = cycleGlucides;
+  window.cycleGlucides = function (m, kcal) {
+    const s = SPEC[kcal]; if (!s || !m || m.prot_g == null) return window.__cgOrig(m, kcal);
+    return { prot_g: m.prot_g, fat_g: s.L, carbs_g: s.G,
+             cycle: { jour: s.jour, freq: 3, dFat: s.L - m.fat_g, dCarbs: s.G - m.carbs_g, region: s.jour === 'seance' ? 1 : null,
+                      autre: { jour: s.jour === 'seance' ? 'repos' : 'seance', fat_g: s.aL, carbs_g: s.aG, estime: s.jour !== 'seance' } } };
+  };
+}`;
+/* Les sorties forcées rejouent EXACTEMENT celles de master avant NUT-LIPIDES-25-01 (lipides en g/kg). */
+const SPEC = {
+  D1S: { 1932: { jour: 'seance', L: 78, G: 0, aL: 114, aG: 0 } },      // D1 séance : +70 (2 002) · repos +394 (2 326)
+  D1R: { 1932: { jour: 'repos', L: 114, G: 0, aL: 78, aG: 0 } },
+  CYCS: { 1500: { jour: 'seance', L: 61, G: 39, aL: 85, aG: 0 } },     // 80 kg · 1 500 : aujourd'hui tient, repos +65 (1 565)
+  P80R: { 1400: { jour: 'repos', L: 81, G: 0, aL: 50, aG: 37 } },      // 80 kg · 1 400 : repos aujourd'hui +129 (1 529)
+};
+
 async function _page(b, PORT) {
   const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris' });
   const pg = await cx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
@@ -103,8 +132,8 @@ async function _page(b, PORT) {
 module.exports.ecran = async function (t, b, PORT) {
   const { cx, pg, errs } = await _page(b, PORT);
   console.log('\n-- B-CDXVI. B3 — le moteur conduit : chiffres de master, écart déclaré (cas mesurés + grille) --');
-  const R = await pg.evaluate(({ P, poserSrc }) => {
-    const poser = eval(poserSrc);
+  const R = await pg.evaluate(({ P, poserSrc, forcerSrc, SPEC }) => {
+    const poser = eval(poserSrc), forcer = eval(forcerSrc);
     const lire = (ph) => { const m = calcMacros(ph == null ? S.nutritionPhase : ph);
       const ok = m.prot_g != null && m.calories != null;
       return { cal: m.calories, P: m.prot_g, L: m.fat_g, G: m.carbs_g, k: ok ? m.prot_g * 4 + m.fat_g * 9 + m.carbs_g * 4 : null,
@@ -124,8 +153,48 @@ module.exports.ecran = async function (t, b, PORT) {
     cas('DECL2500', Object.assign({}, P.DECL, { ft4_manualkcal: '2500' }));
     cas('KETO', P.KETO); cas('KETOD1', Object.assign({}, P.D1, { ft4_foodmode: 'keto' }));
     cas('LOWD1', Object.assign({}, P.D1, { ft4_foodmode: 'lowcarb' }));
-    cas('CYCseance', P.CYC, [0, 1, 2, 3, 4, 5]);
+    cas('CYCseance', P.CYC, [0, 1, 2, 3, 4, 5]); cas('CYCsans', P.CYC);
     cas('B1', P.B1); cas('B2', P.B2);
+    /* SYNTHÉTIQUE : moteur de cycle forcé (sorties de master), puis remis */
+    forcer(SPEC.D1S); cas('sD1seance', P.D1, [0, 3]); forcer(SPEC.D1R); cas('sD1repos', P.D1, [1, 4]);
+    forcer(SPEC.CYCS); cas('sCYCseance', P.CYC, [0, 1, 2, 3, 4, 5]);
+    window.cycleGlucides = window.__cgOrig;
+    o.stubRemis = (cycleGlucides === window.__cgOrig);
+    /* ── GRILLE DENSE DU NOUVEAU CONTRAT : cibles 800 → 6 000, poids 20 → 300, 6 objectifs, H / F / F lutéale,
+       1 · 3 · 5 séances par semaine, aujourd'hui séance OU repos. Cible à la main pour couvrir toutes les cibles. ── */
+    {
+      const semD = (jours) => { const T = new Date('2026-09-20T12:00:00'), s = [];
+        for (let d = 0; d < 28; d++) { const x = new Date(T - d * 864e5); if (jours.includes(x.getDay()))
+          s.push({ date: x.toISOString().slice(0, 10), exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, done: true }] }] }); } return s; };
+      const SES = [[0], [1], [0, 2, 4], [1, 3, 5], [0, 1, 2, 3, 5], [1, 2, 3, 4, 5]].map(semD);   // dimanche 20/09 = séance / repos
+      const c = { n: 0, actif: 0, refuse: 0, coexist: 0, plancher: 0, total: 0, protBouge: 0, refuseModifie: 0, d034Faux: 0, d034: 0 };
+      for (let K = 800; K <= 6000; K += 200) for (let bw = 20; bw <= 300; bw += 20)
+        for (const goal of ['muscle', 'force', 'perte', 'recomp', 'equilibre', 'endurance'])
+          for (const sx of ['H', 'F', 'FL']) for (const ses of SES) {
+            S.gender = sx === 'H' ? 'H' : 'F'; S.bw = bw; S.height = 175; S.age = 40; S.activityLevel = 1.55; S.activitySrc = 'choisi';
+            S.goal = goal; S.nutritionPhase = 'charge'; S.workType = 'bureau'; S.smoker = false; S.manualKcal = K; S.coachQuiz = null;
+            S.bodyScans = []; S.weightLog = []; S.foodMode = ''; S.keto = false; S.wkt = null; S.sessions = ses;
+            S.mensCycleStart = sx === 'FL' ? '2026-09-01' : ''; S.contraception = '';
+            const m = calcMacros('charge'), base = macrosForKcal(K); c.n++;
+            if (m.prot_g !== base.prot_g) c.protBouge++;
+            const somme = (L, G) => m.prot_g * 4 + L * 9 + G * 4;
+            if (m.cycle) {
+              c.actif++;
+              const au = m.cycle.autre, fSeance = m.cycle.jour === 'seance' ? m.fat_g : au.fat_g;
+              if (fSeance < bw * 0.6 - 0.5) c.plancher++;                                   // le garde-fou 0,6 g/kg tient
+              if (Math.abs(somme(m.fat_g, m.carbs_g) - K) > 6 || Math.abs(somme(au.fat_g, au.carbs_g) - K) > 6) c.total++;
+              if (m.incompatible) c.coexist++;                                                // cycle actif ET écart : impossible
+            } else {
+              c.refuse++;
+              if (m.fat_g !== base.fat_g || m.carbs_g !== base.carbs_g) c.refuseModifie++;   // refusé = rien n'est touché
+              const e = somme(m.fat_g, m.carbs_g) - K, att = ((m.carbs_g === 0 || m.fat_g === 0) && e > 6) ? e : null;
+              if ((m.incompatible ? m.incompatible.ecart : null) !== att) c.d034Faux++;
+              if (m.incompatible) c.d034++;
+            }
+          }
+      S.manualKcal = 0; S.sessions = []; S.mensCycleStart = '';
+      o.dense = c;
+    }
     /* ── Grille : affectation directe de S (mêmes champs que load()) ── */
     poser(P.A1);
     const plain = () => { const x = macrosForKcal(1e6); return x; };
@@ -171,7 +240,7 @@ module.exports.ecran = async function (t, b, PORT) {
       })))));
     o.man = man;
     return o;
-  }, { P: PROFILS, poserSrc: _poser });
+  }, { P: PROFILS, poserSrc: _poser, forcerSrc: _forcer, SPEC });
 
   const det = o => JSON.stringify(o);
   const q = (o, P, L, G, cal) => o && o.P === P && o.L === L && o.G === G && (cal == null || o.cal === cal);
@@ -188,10 +257,13 @@ module.exports.ecran = async function (t, b, PORT) {
     q(R.D1charge, 325, 59, 75, 2132) && !R.D1charge.inc, det(R.D1charge));
   t('B-CDXVI D1 décharge : 325/54/37 pour 1932 — plus d\'écart depuis NUT-LIPIDES-25-01 (avant : 325/104/0, +304 déclaré)',
     q(R.D1, 325, 54, 37, 1932) && !R.D1.inc, det(R.D1));
-  t('B-CDXVI D1 décharge + cycle : jour de séance +70 (2002) ET jour de repos +394 (2326), les deux déclarés',
-    q(R.D1seance, 325, 78, 0, 1932) && inc(R.D1seance, 70, 2002) && R.D1seance.inc.autre && R.D1seance.inc.autre.jour === 'repos'
-    && R.D1seance.inc.autre.ecart === 394 && inc(R.D1repos, 394, 2326) && R.D1repos.inc.autre && R.D1repos.inc.autre.ecart === 70,
-    det(R.D1seance) + ' | ' + det(R.D1repos));
+  t('B-CDXVI RÉEL · D1 + séances : le cycle est REFUSÉ par le plancher (54 g < 0,6 × 130 = 78 g), jour de séance ET de repos = 325/54/37, rien de modifié, rien de déclaré',
+    q(R.D1seance, 325, 54, 37, 1932) && q(R.D1repos, 325, 54, 37, 1932) && !R.D1seance.cyc && !R.D1repos.cyc
+    && !R.D1seance.inc && !R.D1repos.inc, det(R.D1seance) + ' | ' + det(R.D1repos));
+  t('B-CDXVI SYNTHÉTIQUE · D1, cycle FORCÉ (sorties de master) : jour de séance +70 (2002) ET jour de repos +394 (2326), les deux déclarés — code conservé',
+    q(R.sD1seance, 325, 78, 0, 1932) && inc(R.sD1seance, 70, 2002) && R.sD1seance.inc.autre && R.sD1seance.inc.autre.jour === 'repos'
+    && R.sD1seance.inc.autre.ecart === 394 && inc(R.sD1repos, 394, 2326) && R.sD1repos.inc.autre && R.sD1repos.inc.autre.ecart === 70
+    && R.stubRemis, det(R.sD1seance) + ' | ' + det(R.sD1repos));
   t('B-CDXVI D1 recomp 338/59/62 (avant 338/111/0, +219) ; D1 muscle 286/76/226 : rien de déclaré',
     q(R.D1recomp, 338, 59, 62, 2132) && !R.D1recomp.inc && q(R.D1muscle, 286, 76, 226, 2732) && !R.D1muscle.inc,
     det(R.D1recomp) + ' | ' + det(R.D1muscle));
@@ -207,9 +279,18 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CDXVI kéto 250 kg à 800 kcal : 200/0/10 (master), +40 déclaré ; kéto et low carb sur D1 : master, rien',
     q(R.KETO, 200, 0, 10, 800) && inc(R.KETO, 40, 840) && q(R.KETOD1, 104, 158, 24, 1932) && !R.KETOD1.inc
     && q(R.LOWD1, 145, 97, 121, 1932) && !R.LOWD1.inc, [R.KETO, R.KETOD1, R.LOWD1].map(det).join(' | '));
-  t('B-CDXVI cycle 80 kg · 1500 kcal · 6 séances : aujourd\'hui tient (200/61/39, rien), le jour de repos +65 est DÉCLARÉ',
-    q(R.CYCseance, 200, 61, 39, 1500) && R.CYCseance.inc && R.CYCseance.inc.ecart === 0 && R.CYCseance.inc.autre
-    && R.CYCseance.inc.autre.jour === 'repos' && R.CYCseance.inc.autre.ecart === 65 && R.CYCseance.inc.autre.macros === 1565, det(R.CYCseance));
+  t('B-CDXVI RÉEL · 80 kg · 1500 kcal · 6 séances : cycle REFUSÉ par le plancher (42 g < 48 g), 200/42/81 = sans séance, rien de déclaré',
+    q(R.CYCseance, 200, 42, 81, 1500) && q(R.CYCsans, 200, 42, 81, 1500) && !R.CYCseance.cyc && !R.CYCseance.inc, det(R.CYCseance));
+  t('B-CDXVI SYNTHÉTIQUE · 80 kg · 1500 kcal, cycle FORCÉ : aujourd\'hui tient (200/61/39), le jour de repos +65 (1565) est DÉCLARÉ — code conservé',
+    q(R.sCYCseance, 200, 61, 39, 1500) && R.sCYCseance.inc && R.sCYCseance.inc.ecart === 0 && R.sCYCseance.inc.autre
+    && R.sCYCseance.inc.autre.jour === 'repos' && R.sCYCseance.inc.autre.ecart === 65 && R.sCYCseance.inc.autre.macros === 1565, det(R.sCYCseance));
+  const DN = R.dense;
+  t('B-CDXVI RÉEL · grille dense (' + DN.n + ' profils, cibles 800 → 6000, 20 → 300 kg) ⭐ cycle actif ET écart D-034 : JAMAIS (inatteignable depuis NUT-LIPIDES-25-01)',
+    DN.n > 40000 && DN.actif > 5000 && DN.refuse > 5000 && DN.coexist === 0, det(DN));
+  t('B-CDXVI RÉEL · grille dense : cycle ACTIF → plancher 0,6 g/kg respecté le jour de séance, total des deux jours = cible (±6), protéines intactes',
+    DN.plancher === 0 && DN.total === 0 && DN.protBouge === 0, det(DN));
+  t('B-CDXVI RÉEL · grille dense : cycle REFUSÉ → macros = macrosForKcal(cible) au gramme, D-034 exact (écrêtage + > 6 kcal), présent quand il le faut',
+    DN.refuseModifie === 0 && DN.d034Faux === 0 && DN.d034 > 1000, det(DN));
   t('B-CDXVI B1 sans poids : tout nul, rien de déclaré ; B2 2000 kcal à la main sans poids : 2000 gardés, macros nulles, rien',
     R.B1.cal == null && R.B1.P == null && !R.B1.inc && R.B2.cal === 2000 && R.B2.P == null && R.B2.G == null && !R.B2.inc,
     det(R.B1) + ' | ' + det(R.B2));
@@ -227,14 +308,16 @@ module.exports.ecran = async function (t, b, PORT) {
 module.exports.ecranVue = async function (t, b, PORT) {
   const { cx, pg, errs } = await _page(b, PORT);
   console.log('\n-- B-CDXVII. B3 — ce que la personne LIT (onglet Nutrition + réglage manuel, vrais rechargements) --');
-  const voir = async (D, ses) => {
+  /* `spec` (facultatif) : sortie du moteur de cycle FORCÉE après le rechargement — témoins SYNTHÉTIQUES seulement. */
+  const voir = async (D, ses, spec) => {
     await pg.evaluate(({ D, ses, poserSrc }) => { eval(poserSrc)(D, ses); }, { D, ses: ses || null, poserSrc: _poser });
     await pg.reload(); await pg.waitForTimeout(2000);
+    if (spec) await pg.evaluate(({ forcerSrc, spec }) => { eval(forcerSrc)(spec); }, { forcerSrc: _forcer, spec });
     return pg.evaluate(async () => {
       goScreen('nutrition', document.querySelector('[onclick*="nutrition"]'));
       await new Promise(r => setTimeout(r, 300));
-      const v = id => { const e = document.getElementById(id); return e ? e.textContent.replace(/[  ]/g, ' ').trim() : null; };
-      return { kcal: v('m-kcal'), P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), inc: v('nu-incompatible') };
+      const v = id => { const e = document.getElementById(id); return e ? e.textContent.replace(/[\u202f\u00a0]/g, ' ').trim() : null; };
+      return { kcal: v('m-kcal'), P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), inc: v('nu-incompatible'), cycle: v('nu-cycle') || '' };
     });
   };
   const d1 = await voir(PROFILS.D1);
@@ -250,9 +333,13 @@ module.exports.ecranVue = async function (t, b, PORT) {
   t('B-CDXVII D · low carb 1 050 kcal : 66 / 79 / 53 g (master, +7 kcal de pur arrondi, rien d\'écrêté) → AUCUNE phrase',
     lc.P === '79' && lc.G === '66' && lc.L === '53' && lc.inc === '', JSON.stringify(lc));
   const d1r = await voir(PROFILS.D1, [0, 3]);
-  t('B-CDXVII D1 un jour de séance : chaque jour est NOMMÉ avec son écart (séance, aujourd\'hui : 2 002, +70 ; repos : 2 326, +394)',
-    /Un jour de séance \(aujourd'hui\) : tes macros font 2 002 kcal, soit 70 kcal de plus/.test(d1r.inc)
-    && /Un jour de repos : tes macros font 2 326 kcal, soit 394 kcal de plus/.test(d1r.inc) && /Ces jours-là/.test(d1r.inc), JSON.stringify(d1r));
+  t('B-CDXVII RÉEL · D1 un jour de séance : cycle refusé par le plancher → 1 932 · 325 / 54 / 37, AUCUNE carte de cycle, aucune phrase, aucun « jour de séance / repos »',
+    d1r.kcal === '1 932' && d1r.P === '325' && d1r.L === '54' && d1r.G === '37' && d1r.inc === '' && d1r.cycle === ''
+    && !/Jour de séance|Jour de repos|jour de repos|au repos/.test(d1r.inc + d1r.cycle), JSON.stringify(d1r));
+  const d1s = await voir(PROFILS.D1, [0, 3], SPEC.D1S);
+  t('B-CDXVII SYNTHÉTIQUE · D1, cycle FORCÉ : chaque jour est NOMMÉ avec son écart (séance, aujourd\'hui : 2 002, +70 ; repos : 2 326, +394) — code conservé',
+    /Un jour de séance \(aujourd'hui\) : tes macros font 2 002 kcal, soit 70 kcal de plus/.test(d1s.inc)
+    && /Un jour de repos : tes macros font 2 326 kcal, soit 394 kcal de plus/.test(d1s.inc) && /Ces jours-là/.test(d1s.inc), JSON.stringify(d1s));
   const a1 = await voir(PROFILS.A1);
   t('B-CDXVII A1 à l\'écran : 3 209 · 187 / 89 / 415 g, AUCUNE phrase ajoutée',
     a1.kcal === '3 209' && a1.P === '187' && a1.L === '89' && a1.G === '415' && a1.inc === '', JSON.stringify(a1));
@@ -301,8 +388,7 @@ module.exports.ecranVue = async function (t, b, PORT) {
     apres.man === '900' && apres.kcal === '900' && apres.P === '172' && apres.L === '25' && apres.G === '0' && /913 kcal/.test(apres.inc || ''), JSON.stringify(apres));
   /* ⭐ A (témoin demandé par la contre-vérification) : compatible AUJOURD'HUI, incompatible UN JOUR DE REPOS.
      La carte le dit — le message d'enregistrement ne doit pas dire le contraire par une coche verte. */
-  await voir(PROFILS.CYC, [0, 1, 2, 3, 4, 5]);
-  const cyc = await pg.evaluate(async () => {
+  const enregistrer1500 = () => pg.evaluate(async () => {
     const toasts = []; const _t = window.toast; window.toast = (m, k) => { toasts.push(m); try { _t && _t(m, k); } catch (e) {} };
     [...document.querySelectorAll('#nu-adjust button')].find(x => /Ajuster mes calories/.test(x.textContent)).click();
     await new Promise(r => setTimeout(r, 200));
@@ -310,9 +396,16 @@ module.exports.ecranVue = async function (t, b, PORT) {
     [...document.getElementById('ov-kcal-edit').querySelectorAll('button')].find(x => /Enregistrer mes calories/.test(x.textContent)).click();
     await new Promise(r => setTimeout(r, 300));
     const v = id => { const e = document.getElementById(id); return e ? e.textContent.replace(/[\u202f\u00a0]/g, ' ').trim() : null; };
-    return { toasts, P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), inc: v('nu-incompatible') };
+    return { toasts, P: v('m-prot'), L: v('m-fat'), G: v('m-carbs'), inc: v('nu-incompatible'), cycle: v('nu-cycle') || '' };
   });
-  t('B-CDXVII A · 1 500 kcal compatibles aujourd\'hui mais pas un jour de repos (+65) : AUCUNE coche verte, le message dit « +65 kcal au repos »',
+  await voir(PROFILS.CYC, [0, 1, 2, 3, 4, 5]);
+  const cycR = await enregistrer1500();
+  t('B-CDXVII RÉEL · 80 kg, 6 séances, 1 500 kcal à la main : cycle refusé par le plancher → 200 / 42 / 81, coche verte LÉGITIME, aucun « au repos », aucune carte de cycle',
+    cycR.toasts.some(x => /^Objectif réglé sur 1.500 kcal ✅$/.test(x)) && !cycR.toasts.some(x => /incompatible|repos|séance/.test(x))
+    && cycR.P === '200' && cycR.L === '42' && cycR.G === '81' && cycR.inc === '' && cycR.cycle === '', JSON.stringify(cycR));
+  await voir(PROFILS.CYC, [0, 1, 2, 3, 4, 5], SPEC.CYCS);
+  const cyc = await enregistrer1500();
+  t('B-CDXVII SYNTHÉTIQUE · A · cycle FORCÉ, 1 500 kcal compatibles aujourd\'hui mais pas un jour de repos (+65) : AUCUNE coche verte, « +65 kcal au repos » — code conservé',
     cyc.toasts.includes('Cible incompatible : +65 kcal au repos.') && !cyc.toasts.some(x => /✅/.test(x))
     && cyc.P === '200' && cyc.L === '61' && cyc.G === '39' && /Un jour de repos : tes macros font 1 565 kcal, soit 65 kcal de plus/.test(cyc.inc || '')
     && /L'autre jour tient/.test(cyc.inc || ''), JSON.stringify(cyc));
@@ -323,20 +416,24 @@ module.exports.ecranVue = async function (t, b, PORT) {
 module.exports.ecranMilo = async function (t, b, PORT) {
   const { cx, pg, errs } = await _page(b, PORT);
   console.log('\n-- B-CDXVIII. B3 — ce que Milo reçoit (contexte construit, 0 appel) --');
-  const C = await pg.evaluate(({ P, poserSrc }) => {
-    const poser = eval(poserSrc); const o = {};
+  const C = await pg.evaluate(({ P, poserSrc, forcerSrc, SPEC }) => {
+    const poser = eval(poserSrc), forcer = eval(forcerSrc); const o = {};
     const ctx = (nom, D, ses) => { poser(D, ses); const c = buildCoachContext('test');
       o[nom] = c.split('\n').filter(l => /Calories cible|INCOMPATIBLE|CALCUL DE LA CIBLE/.test(l)); };
     ctx('D1', P.D1); ctx('D1s', P.D1, [0, 3]); ctx('GAP', P.GAP); ctx('A1', P.A1); ctx('B1', P.B1); ctx('KETO', P.KETO);
+    forcer(SPEC.D1S); ctx('sD1s', P.D1, [0, 3]); window.cycleGlucides = window.__cgOrig;   // SYNTHÉTIQUE, puis remis
     return o;
-  }, { P: PROFILS, poserSrc: _poser });
+  }, { P: PROFILS, poserSrc: _poser, forcerSrc: _forcer, SPEC });
   const un = (l, re) => (l || []).filter(x => re.test(x)).length;
   /* NUT-LIPIDES-25-01 (02/10) : D1 tient sa cible ; « Glucides: 0g » + la ligne d'écart sont portés par 800 kcal à la main (GAP). */
   t('B-CDXVIII D1 : 1932 kcal · 325 / 37 / 54 g et AUCUNE ligne d\'écart depuis NUT-LIPIDES-25-01 (décomposition de la cible inchangée)',
     un(C.D1, /^- Calories cible: 1932 kcal \| Protéines: 325g \| Glucides: 37g \| Lipides: 54g$/) === 1
     && un(C.D1, /INCOMPATIBLE/) === 0 && un(C.D1, /CIBLE 1932 kcal/) === 1, JSON.stringify(C.D1));
-  t('B-CDXVIII D1 un jour de séance : Milo reçoit aussi l\'écart d\'un jour de repos (2326, +394)',
-    un(C.D1s, /CIBLE INCOMPATIBLE.*\(\+70\).*un jour de repos : 2326 kcal \(\+394, glucides écrêtés à 0\)/) === 1, JSON.stringify(C.D1s));
+  t('B-CDXVIII RÉEL · D1 un jour de séance : cycle refusé → Milo reçoit 1932 · 325 / 37 / 54, AUCUNE ligne d\'écart, aucun « jour de repos »',
+    un(C.D1s, /^- Calories cible: 1932 kcal \| Protéines: 325g \| Glucides: 37g \| Lipides: 54g$/) === 1
+    && un(C.D1s, /INCOMPATIBLE|jour de repos|jour de séance/) === 0, JSON.stringify(C.D1s));
+  t('B-CDXVIII SYNTHÉTIQUE · D1, cycle FORCÉ : Milo reçoit aussi l\'écart d\'un jour de repos (2326, +394) — code conservé',
+    un(C.sD1s, /CIBLE INCOMPATIBLE.*\(\+70\).*un jour de repos : 2326 kcal \(\+394, glucides écrêtés à 0\)/) === 1, JSON.stringify(C.sD1s));
   t('B-CDXVIII 800 kcal à la main : « Glucides: 0g » (et plus « —g ») et UNE ligne dit que ces macros NE respectent PAS la cible (1198, +398)',
     un(C.GAP, /^- Calories cible: 800 kcal \| Protéines: 250g \| Glucides: 0g \| Lipides: 22g$/) === 1
     && un(C.GAP, /CIBLE INCOMPATIBLE AVEC LES RÈGLES MACROS ACTUELLES.*1198 kcal pour une cible de 800 kcal \(\+398\).*NE respectent PAS la cible.*jamais comme la respectant/) === 1, JSON.stringify(C.GAP));
@@ -361,9 +458,10 @@ module.exports.ecranUX = async function (t, b, PORT) {
   const { cx, pg, errs } = await _page(b, PORT);
   console.log('\n-- B-CDXIX. B3 — note du réglage manuel = carte, phrase de la semaine, toast mobile (390 px) --');
   const P80 = { ft4_bw: '80', ft4_age: '40', ft4_ht: '175', ft4_gender: 'H', ft4_act: '1.55', ft4_goal: 'perte', ft4_nphase: 'charge' };
-  const ouvrir = async (D, ses) => {
+  const ouvrir = async (D, ses, spec) => {
     await pg.evaluate(({ D, ses, poserSrc }) => { eval(poserSrc)(D, ses); }, { D, ses: ses || null, poserSrc: _poser });
     await pg.reload(); await pg.waitForTimeout(2000);
+    if (spec) await pg.evaluate(({ forcerSrc, spec }) => { eval(forcerSrc)(spec); }, { forcerSrc: _forcer, spec });   // SYNTHÉTIQUE
   };
   /* Tape une cible dans la VRAIE fenêtre, lit la note ; puis Annuler ou Enregistrer ; lit carte, toast, rectangle du toast. */
   const regler = (x, enregistrer) => pg.evaluate(async ({ x, enregistrer }) => {
@@ -389,28 +487,54 @@ module.exports.ecranUX = async function (t, b, PORT) {
   const dans = (r) => r && r.toast.left >= 0 && r.toast.right <= r.toast.vw && r.toast.sw <= r.toast.cw + 1;
   const det = o => JSON.stringify(o);
 
-  // A — 80 kg · perte · 5 séances, AUJOURD'HUI = REPOS · 1 400 kcal : la base tient (glucides 6 g), le jour de repos non
+  /* 🥑 NUT-LIPIDES-25-01 : A, B et D sont chacun RÉEL (le contrat validé : cycle refusé par le plancher, rien de
+     faux) puis SYNTHÉTIQUE (sortie du cycle forcée = celle de master : le code d'affichage conservé dit encore juste). */
+  // A RÉEL — 80 kg · perte · 5 séances, repos aujourd'hui · 1 400 kcal : lipides 39 g < plancher 48 g → pas de cycle,
+  //          200 / 39 / 62, compatible ; à 900 kcal (200 / 25 / 0 → 1 025, +125) l'écart est dit SANS jour
   await ouvrir(P80, [1, 2, 3, 4, 5]);
   const a0 = await regler(1400, false);
-  t('B-CDXIX A · aperçu à 1 400 kcal, repos aujourd\'hui : la note (vide avant la correction) NOMME le jour de repos et son écart exact (+129)',
-    /Un jour de repos \(aujourd'hui\) : tes macros font 1 529 kcal, soit 129 kcal de plus — les glucides tombent à 0/.test(a0.note || '')
-    && /L'autre jour tient/.test(a0.note || ''), det(a0));
+  /* (la carte de cycle visible à ce moment est celle de la cible AUTOMATIQUE en vigueur, 2 283 kcal, où le cycle joue
+     légitimement : l'aperçu n'est pas enregistré — seule la note de l'aperçu parle de 1 400) */
+  t('B-CDXIX A RÉEL · aperçu à 1 400 kcal, repos aujourd\'hui : cycle refusé par le plancher, la note est VIDE (rien d\'incompatible, aucun « jour de repos »)',
+    a0.note === '' && a0.carte === '', det(a0));
   t('B-CDXIX A · taper sans enregistrer ne change RIEN : la cible reste celle d\'avant, en mémoire et sur le disque (la simulation est remise)',
     a0.apres.S === a0.avant.S && a0.apres.disque === a0.avant.disque && a0.pendant === a0.avant.S, det([a0.avant, a0.pendant, a0.apres]));
+  const ar = await regler(1400, true);
+  t('B-CDXIX A RÉEL · enregistré 1 400 : 200 / 39 / 62, coche verte LÉGITIME, aucune carte d\'écart, aucune carte de cycle',
+    ar.P === '200' && ar.L === '39' && ar.G === '62' && ar.carte === '' && ar.cycle === ''
+    && ar.toasts.includes('Objectif réglé sur 1 400 kcal ✅'), det(ar));
+  const a9n = await regler(900, false), a9 = await regler(900, true);
+  t('B-CDXIX A RÉEL · 900 kcal (glucides écrêtés, +125) : la carte dit EXACTEMENT ce que disait la note, toast « Cible incompatible : +125 kcal. » (sans jour)',
+    /incompatible/.test(a9n.note || '') && /1 025 kcal/.test(a9n.note || '') && /125 kcal de plus/.test(a9n.note || '')
+    && a9.carte === a9n.note && a9.toasts.includes('Cible incompatible : +125 kcal.') && !a9.toasts.some(x => /✅|repos|séance/.test(x))
+    && a9.P === '200' && a9.L === '25' && a9.G === '0', det({ note: a9n.note, carte: a9.carte, toasts: a9.toasts }));
+  t('B-CDXIX E · toast mobile (écart sans jour) : message court et COMPLET, entièrement dans l\'écran de 390 px', dans(a9), det(a9.toast));
+  // A SYNTHÉTIQUE — même profil, cycle FORCÉ à 1 400 (repos aujourd'hui 200 / 81 / 0 → 1 529, +129 ; séance 50 / 37 tient)
+  await ouvrir(P80, [1, 2, 3, 4, 5], SPEC.P80R);
+  const a0s = await regler(1400, false);
+  t('B-CDXIX A SYNTHÉTIQUE · cycle FORCÉ, aperçu à 1 400 kcal : la note NOMME le jour de repos et son écart exact (+129) — code conservé',
+    /Un jour de repos \(aujourd'hui\) : tes macros font 1 529 kcal, soit 129 kcal de plus — les glucides tombent à 0/.test(a0s.note || '')
+    && /L'autre jour tient/.test(a0s.note || ''), det(a0s));
   const a1 = await regler(1400, true);
-  t('B-CDXIX A · enregistré : la carte dit EXACTEMENT ce que disait la note, le toast « Cible incompatible : +129 kcal au repos. »',
-    a1.carte === a0.note && a1.toasts.includes('Cible incompatible : +129 kcal au repos.') && !a1.toasts.some(x => /✅/.test(x))
-    && a1.P === '200' && a1.L === '81' && a1.G === '0', det({ note: a0.note, carte: a1.carte, toasts: a1.toasts, P: a1.P, L: a1.L, G: a1.G }));
+  t('B-CDXIX A SYNTHÉTIQUE · enregistré : la carte dit EXACTEMENT ce que disait la note, le toast « Cible incompatible : +129 kcal au repos. » — code conservé',
+    a1.carte === a0s.note && a1.toasts.includes('Cible incompatible : +129 kcal au repos.') && !a1.toasts.some(x => /✅/.test(x))
+    && a1.P === '200' && a1.L === '81' && a1.G === '0', det({ note: a0s.note, carte: a1.carte, toasts: a1.toasts, P: a1.P, L: a1.L, G: a1.G }));
   t('B-CDXIX E · toast mobile : message court et COMPLET, entièrement dans l\'écran de 390 px', dans(a1), det(a1.toast));
 
-  // B — D1 avec cycle (séance aujourd'hui) : la note, la carte et le toast portent les MÊMES chiffres (+70 / +394)
+  // B RÉEL — D1, séance aujourd'hui, 1 932 kcal : cycle refusé (54 g < 78 g) → note vide, 325 / 54 / 37, coche verte légitime
   await ouvrir(PROFILS.D1, [0, 3]);
+  const b0r = await regler(1932, false), b1r = await regler(1932, true);
+  t('B-CDXIX B RÉEL · D1, séance aujourd\'hui, 1 932 kcal : cycle refusé par le plancher → note vide, 325 / 54 / 37, aucune carte, coche verte légitime',
+    b0r.note === '' && b1r.carte === '' && b1r.cycle === '' && b1r.P === '325' && b1r.L === '54' && b1r.G === '37'
+    && b1r.toasts.includes('Objectif réglé sur 1 932 kcal ✅') && !b1r.toasts.some(x => /incompatible|repos|séance/.test(x)), det({ b0r, b1r }));
+  // B SYNTHÉTIQUE — D1 avec cycle FORCÉ (sorties de master) : la note, la carte et le toast portent les MÊMES chiffres (+70 / +394)
+  await ouvrir(PROFILS.D1, [0, 3], SPEC.D1S);
   const b0 = await regler(1932, false);
-  t('B-CDXIX B · D1, séance aujourd\'hui, 1 932 kcal : la note dit +70 (séance, aujourd\'hui) et +394 (repos) — plus jamais +304 (sans le cycle)',
+  t('B-CDXIX B SYNTHÉTIQUE · D1, cycle FORCÉ, 1 932 kcal : la note dit +70 (séance, aujourd\'hui) et +394 (repos) — plus jamais +304 (sans le cycle) — code conservé',
     /Un jour de séance \(aujourd'hui\) : tes macros font 2 002 kcal, soit 70 kcal de plus/.test(b0.note || '')
     && /Un jour de repos : tes macros font 2 326 kcal, soit 394 kcal de plus/.test(b0.note || '') && !/304/.test(b0.note || ''), det(b0.note));
   const b1 = await regler(1932, true);
-  t('B-CDXIX B · enregistré : carte identique à la note, toast « Cible incompatible : +70 à +394 kcal. », chiffres de master (325 / 78 / 0)',
+  t('B-CDXIX B SYNTHÉTIQUE · enregistré : carte identique à la note, toast « Cible incompatible : +70 à +394 kcal. », chiffres forcés (325 / 78 / 0) — code conservé',
     b1.carte === b0.note && b1.toasts.includes('Cible incompatible : +70 à +394 kcal.') && b1.P === '325' && b1.L === '78' && b1.G === '0',
     det({ note: b0.note, carte: b1.carte, toasts: b1.toasts }));
   t('B-CDXIX E · toast des deux jours : entièrement dans l\'écran de 390 px', dans(b1), det(b1.toast));
@@ -426,10 +550,25 @@ module.exports.ecranUX = async function (t, b, PORT) {
   const f0 = await regler(2500, false);
   t('B-CDXIX F · aperçu d\'une cible compatible (2 500) : aucune note', f0.note === '', det(f0.note));
 
-  // D — cycle NON neutre (80 kg · 1 500 · 6 séances, séance aujourd'hui, repos +65) : la phrase fausse a disparu
-  await ouvrir({ ft4_bw: '80', ft4_age: '20', ft4_ht: '150', ft4_gender: 'H', ft4_act: '1.2', ft4_goal: 'perte', ft4_nphase: 'decharge' }, [0, 1, 2, 3, 4, 5]);
+  // D RÉEL — 80 kg (20 a, 150 cm, décharge), 6 séances, séance aujourd'hui. À 1 500 kcal : 42 g < plancher 48 g → AUCUNE
+  //          carte de cycle (ni « total identique », ni « ne peut pas conserver »). À 1 800 kcal : 50 g > 48 g → le cycle
+  //          joue, la phrase « total identique » est dite ET VRAIE (les deux jours font la cible à ±6 kcal).
+  const P80D = { ft4_bw: '80', ft4_age: '20', ft4_ht: '150', ft4_gender: 'H', ft4_act: '1.2', ft4_goal: 'perte', ft4_nphase: 'decharge' };
+  await ouvrir(P80D, [0, 1, 2, 3, 4, 5]);
+  const dr = await regler(1500, true);
+  t('B-CDXIX D RÉEL · cycle refusé par le plancher (1 500 kcal) : aucune carte de cycle, aucune phrase sur la semaine, aucune carte d\'écart',
+    dr.cycle === '' && dr.carte === '' && dr.P === '200' && dr.L === '42' && dr.G === '81', det(dr));
+  const da = await regler(1800, true);
+  const daM = await pg.evaluate(() => { const m = calcMacros(S.nutritionPhase), au = m.cycle && m.cycle.autre;
+    return m.cycle ? { P: m.prot_g, L: m.fat_g, G: m.carbs_g, aL: au.fat_g, aG: au.carbs_g, K: m.calories, plancher: S.bw * 0.6 } : null; });
+  const tient = daM && Math.abs(daM.P * 4 + daM.L * 9 + daM.G * 4 - daM.K) <= 6 && Math.abs(daM.P * 4 + daM.aL * 9 + daM.aG * 4 - daM.K) <= 6;
+  t('B-CDXIX D RÉEL · cycle actif au ras du plancher (1 800 kcal) : « sur la semaine le total est le même » dit ET VRAI, plancher 0,6 g/kg respecté le jour de séance',
+    !!daM && tient && daM.L >= daM.plancher - 0.5 && /sur la semaine le total est le même/.test(da.cycle || '') && !/ne peut pas conserver/.test(da.cycle || '')
+    && da.carte === '', det({ cycle: da.cycle, daM }));
+  // D SYNTHÉTIQUE — cycle FORCÉ non neutre (séance aujourd'hui tient, repos +65) : la phrase fausse a disparu
+  await ouvrir(P80D, [0, 1, 2, 3, 4, 5], SPEC.CYCS);
   const d0 = await regler(1500, true);
-  t('B-CDXIX D · cycle non neutre : « le total est le même » ABSENT, remplacé par « le cycle ne peut pas conserver exactement le même total »',
+  t('B-CDXIX D SYNTHÉTIQUE · cycle FORCÉ non neutre : « le total est le même » ABSENT, remplacé par « le cycle ne peut pas conserver exactement le même total » — code conservé',
     !/le total est le même/.test(d0.cycle || '') && /Avec cette cible, le cycle ne peut pas conserver exactement le même total calorique sur la semaine/.test(d0.cycle || '')
     && /Jour de séance/.test(d0.cycle || ''), det(d0.cycle));
 
