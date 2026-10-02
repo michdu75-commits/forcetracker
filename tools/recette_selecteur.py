@@ -31,7 +31,10 @@ ZONES_FICHIER = {'worker.js': 'fichier:worker.js', 'Code.js': 'fichier:Code.js',
                  'index.html': 'fichier:index.html', 'style.css': 'fichier:style.css',
                  # le tableau de bord ordinateur est servi (dashboard.html) mais hors de SERVIS : sans
                  # cette zone, un diff qui ne touche que lui ne déclenchait AUCUN test (NUT-DASH1, 01/10/2026)
-                 'dashboard.js': 'fichier:dashboard.js'}
+                 'dashboard.js': 'fichier:dashboard.js',
+                 # la table d'alias décide du 1ᵉʳ résultat d'une recherche d'aliment : un diff qui ne
+                 # touche qu'elle doit déclencher le banc de recherche (FS-01, 02/10/2026)
+                 'data/alias.json': 'fichier:data/alias.json'}
 # déclarations de premier niveau : `function f(`, `async function f(`, `const f =`, et les fonctions
 # nommées auto-exécutées au démarrage `(function _recoverDraft(){…})()` / `(async function autoConnect(`
 DECL = re.compile(r'^\(?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=')

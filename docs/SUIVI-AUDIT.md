@@ -393,6 +393,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   d'un plat qu'on n'a pas pesé, et CIQUAL n'a que des plats **industriels** (« préemballé ») — un plat de restaurant peut
   être bien plus riche. Rejoint l'item déjà séparé « **simplification UX Nutrition** ».
 - **Quand le traiter** : dans un lot Nutrition dédié, sur décision de Michel ; pas en passant dans un autre lot.
+- ↪️ **02/10/2026 — chantier ouvert par Michel : FOOD SEMANTICS V1** (`docs/FOOD-SEMANTICS.md`). **FS-01** (checkpoint, non publié) : « café » → la boisson ; « spaghetti bolognaise » et « carbonara » rendaient déjà le plat sur master `f31dc234` (la table d'alias de ft-v1115 les avait réglés). Le fond « plats de restaurant / grammes d'un plat non pesé » reste **hors FS-01** (coefficient restaurant, portions : hors périmètre).
 
 ### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
 - **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,
@@ -422,3 +423,14 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - Textes corrigés parce qu'ils décrivaient l'ancienne règle (R4, R23) : aide « ? » Nutrition, intro du réglage manuel,
   aide détaillée « Nutrition — où est quoi », description de l'objectif Force (« lipides élevés »), avertissement D-034
   (« protéines et lipides calculés sur ton poids »).
+
+### 🔎 FS-01 — Food Semantics V1 : contrat déterministe + résolveur de base (02/10/2026, session-B — 🟡 CHECKPOINT, NON PUBLIÉ)
+- **Fait** : un seul classement CIQUAL (`_ciqualChercherUne` → `_fsIntention` / `_fsCle`), **ordre total** (nom puis code,
+  plus d'ordre de fichier ni de coupure à 400), **forme nommée prioritaire**, **un seul rendu** quand CIQUAL et la table
+  d'alias sont chargés ; alias `pomme`, `haricots verts`, `eau` corrigés dans le générateur. Détail : `docs/FOOD-SEMANTICS.md`.
+- **Différentiel** (2 519 requêtes) : 138 premiers résultats changent, en grande majorité vers la forme courante.
+- 🟤 **Laissé à FS-02 / FS-03, mesuré** : `curry` reste la poudre (données non séparables proprement) · `riz sec` →
+  vermicelles de riz (sec ↔ cru = taxonomie) · alias `courgette` → purée · `pois`, `legume`, `haricot(s)`, soupes
+  (égalités désormais tranchées par l'alphabet au lieu de l'ordre du fichier).
+- **Deux témoins du runner adaptés (R30)**, tous deux dépendants de l'ordre du fichier : `oeuf` sans table « Oeuf dur » →
+  « Oeuf cru » ; `riz` sans table « Riz blanc, cru » → « Riz, mélange de variétés…, cru » (intention conservée).

@@ -10376,7 +10376,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.poisPasPoireau=/^Pois/.test(top('pois'));                 // pas « Poireau »
     o.patePate=/^Pâté/.test(top('pate'));                    // « pate » veut toujours dire pâté
     /* ⛔ ... et le reste ne bouge pas. */
-    o.stable=top('oeuf')==='Oeuf dur' && /^Riz/.test(top('riz')) && /^Poulet/.test(top('poulet'))
+    /* 🔎 FS-01 (02/10/2026) — « Oeuf dur » est devenu « Oeuf cru », et c'est voulu (R30) : les deux
+       noms ont la MÊME longueur, et « dur » ne gagnait que par l'ORDRE DU FICHIER — ce que FS-01
+       retire (même requête = même ordre, quel que soit l'ordre d'arrivée). « Oeuf cru » est aussi la
+       cible de la table d'alias pour « oeuf » (22000, décision cru/cuit ft-v1115). */
+    o.stable=top('oeuf')==='Oeuf cru' && /^Riz/.test(top('riz')) && /^Poulet/.test(top('poulet'))
              && /^Ananas/.test(top('ananas')) && /^Pois chiche/.test(top('pois chiche'));
 
     /* ⭐⭐ LES FORMES DE PATES — 0 resultat avant, et « spaghetti » rendait la COURGE. */
@@ -25300,8 +25304,13 @@ console.log('\n-- CCXXIII. Les mots qu\'on emploie atteignent un aliment précis
     t('⛔⛔ la correspondance porte sur la REQUÊTE ENTIÈRE (« riz au lait » n\'est pas détourné)',
       /riz au lait/i.test(String(R.pasDeMotIsole)), String(R.pasDeMotIsole));
     /* ⛔ Règle d'or #4 : un échec de chargement rend le comportement d'AVANT, pas une erreur. */
+    /* 🔎 FS-01 (02/10/2026) — LE NOM EXACT A CHANGÉ, PAS L'INTENTION (R30). Sans table, c'est le
+       résolveur qui répond, et il préfère le nom de tête EXACT (« Riz, mélange de variétés…, cru »)
+       à un nom composé plus court (« Riz blanc, cru ») — la même règle qui fait rendre « Fromage »
+       et non « Fromage de tête ». Ce qui est protégé reste protégé : jamais bloquant, et un riz CRU
+       (la cible « cuit » est celle de la table, pas du tri). */
     t('⛔ sans la table (hors ligne), la recherche redevient celle d\'avant — jamais bloquante',
-      /^Riz blanc, cru/.test(String(R.sansTable)), String(R.sansTable));
+      /^Riz\b/.test(String(R.sansTable)) && /\bcru\b/.test(String(R.sansTable)), String(R.sansTable));
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
 }
@@ -39641,6 +39650,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      `tools/mut_nutri_lipides25.py`. */
   await require('./nutri_lipides25.js').ecran(t, b, PORT);
   await require('./nutri_lipides25.js').ecranVue(t, b, PORT);
+  /* 🔎 FS-01 Food Semantics V1 (02/10/2026) : résolveur déterministe de la recherche d'aliments (une
+     forme nommée gagne toujours) et un seul premier affichage quand CIQUAL ET les alias sont là.
+     Blocs B-CDXXIX / B-CDXXX, contrôle négatif `tools/mut_food_semantics.py`. */
+  await require('./food_semantics.js').ecran(t, b, PORT);
+  await require('./food_semantics.js').ecranVue(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40530,6 +40544,7 @@ require('./profil_atypique.js').source(t, ROOT, fs, path);
 require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
+require('./food_semantics.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

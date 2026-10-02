@@ -53,6 +53,19 @@ CORRECTIONS = {
     # pour un mot générique — on ne choisit pas une variété à la place de la personne (R29).
     'tomate':  (20385, 'GPT visait « Tomate, séchée » (kcal non déterminées, jamais proposable)'),
     'tomates': (20385, 'idem'),
+    # 🔎 FS-01 (02/10/2026, Food Semantics V1) — la table envoyait le mot GÉNÉRIQUE vers une forme
+    #    TRANSFORMÉE, et l'alias passant devant tout, c'était le 1ᵉʳ résultat proposé. Mesuré sur
+    #    master f31dc234 : « pomme » → « Pomme, sèche » (247 kcal/100 g au lieu de ~51) et
+    #    « haricots verts » → « Haricots verts, purée ». Une pomme n'est pas une pomme séchée.
+    #    ⭐ Même convention que `tomate` : l'aliment moyen quand CIQUAL en a un (pomme) ; sinon la
+    #    forme CUITE, celle de la décision de Michel sur le cru/cuit (« les deux, le cuit en
+    #    premier », ft-v1115). L'ancienne cible reste trouvable juste dessous : « pomme séchée »,
+    #    « haricots verts purée ». ⏭️ « courgette » vise aussi une purée : même défaut, hors des
+    #    témoins de FS-01, consigné pour FS-03 (on ne corrige pas en silence au-delà du lot).
+    'pomme':          (13396, 'GPT visait « Pomme, sèche » — une pomme n\'est pas une pomme séchée (247 kcal/100 g au lieu de 51)'),
+    'pommes':         (13396, 'idem'),
+    'haricot vert':   (20030, 'GPT visait « Haricots verts, purée » — le légume, cuit en premier (décision cru/cuit, ft-v1115)'),
+    'haricots verts': (20030, 'idem'),
 }
 
 # ⛔ AJOUTS QUI NE VIENNENT PAS DU CLASSEUR — nommés, avec leur raison, jamais silencieux.
@@ -85,6 +98,9 @@ AJOUTS = {
     #    confond pas avec la précédente, elles ne portent pas les mêmes valeurs.
     'coca zero sans cafeine': (18068, 'CIQUAL distingue la version sans caféine — on ne fusionne pas'),
     'coca sans cafeine':      (18067, 'le cola sucré sans caféine, qui existe aussi'),
+    # 🔎 FS-01 — « eau » tenait à la COUPURE À 400 (l'ordre du fichier écartait « Eau de coco »). La
+    #    coupure retirée, le nom le plus court passait devant. On garde le résultat de master.
+    'eau':            (18066, 'FS-01 : garde « Eau du robinet » (résultat de master) — sans la coupure à 400, « Eau de coco » passait devant'),
 
     # ═══ 🥤 ft-v1117 — LE PIÈGE DU COCA N'ÉTAIT PAS CELUI DU COCA : IL Y EN A 9 ═══════════════
     #  Michel : *« et les autres boissons ? »*. **Mesuré** : CIQUAL porte **9 paires**
