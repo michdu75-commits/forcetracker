@@ -12,7 +12,8 @@ MUTS = [
    "raison:'ton poids a changé de plus de 5 % depuis ce bilan'", "raison:'aucune mesure de composition corporelle'"),
   ('M05 borne haute ouverte (bf<=100)', 'state.js', 'bf>0&&bf<=70&&isFinite(bw)', 'bf>0&&bf<=100&&isFinite(bw)'),
   ('M06 taille 230 acceptée', 'state.js', 'v>=100 && v<230', 'v>=100 && v<=230'),
-  ('M07 _bfNavy : retour à bf<=2 (le code de 384aa6f6)', 'tracking.js', 'if(!isFinite(bf)||r<2||bf>70)return null;', 'if(!isFinite(bf)||bf<=2||bf>70)return null;'),
+  ('M07 _bfNavy : retour à bf<=2 (le code de 384aa6f6)', 'tracking.js', 'if(!isFinite(bf)||r<2||r>70)return null;', 'if(!isFinite(bf)||bf<=2||r>70)return null;'),
+  ('M08 _bfNavy : retour à bf>70 sur le brut (le code de 1b834203)', 'tracking.js', 'if(!isFinite(bf)||r<2||r>70)return null;', 'if(!isFinite(bf)||r<2||bf>70)return null;'),
 ]
 def banc(d):
   r = subprocess.run(['node', os.path.join(d, 'tools', 'banc_profil_atypique.js')], cwd=d, capture_output=True, text=True, timeout=300)
