@@ -1009,7 +1009,7 @@ function _pctGrasValide(p){ const v=+p; return isFinite(v) && v>=3 && v<=70; }
    ⛔ Les bornes ne sont pas inventées : ce sont EXACTEMENT celles que l'app affiche déjà à qui
    saisit à la main. Un seul propriétaire (R2), employé par les deux chemins. */
 function _ageValide(a){ const v=+a; return isFinite(v) && v>13 && v<100; }
-function _tailleValide(h){ const v=+h; return isFinite(v) && v>100 && v<230; }
+function _tailleValide(h){ const v=+h; return isFinite(v) && v>=100 && v<230; }
 /* 🏃 LE NIVEAU D'ACTIVITÉ : un des CINQ niveaux de l'écran Profil (`#act-sel`), sinon `null`
    (B1/B2, décision Michel du 24/09/2026). ⛔ Ce n'est PAS une plage : 1,4 n'a jamais été proposé
    à personne, l'accepter serait valider une valeur que l'interface ne sait pas produire.
@@ -1511,7 +1511,7 @@ function leanMassRecente(){
        ⚠️ On garde `bw` en REPLI : une sauvegarde cloud ancienne peut en porter, et perdre une
        mesure en corrigeant un bug serait un mauvais échange. */
     const bf=Number(w.bf), bw=Number(w.kg!=null?w.kg:w.bw);
-    if(!(isFinite(bf)&&bf>0&&bf<70&&isFinite(bw)&&bw>0))return;
+    if(!(isFinite(bf)&&bf>0&&bf<=70&&isFinite(bw)&&bw>0))return;
     /* 🏷️ `nature:'saisie'` — sur ce chemin le % de gras a été TAPÉ AU CLAVIER par la personne.
        C'est le maillon le plus faible des trois, et c'est justement celui qui ressemblait le
        plus à une mesure d'appareil dans le prompt (« MASSE MAIGRE MESURÉE … pesée du … »). */

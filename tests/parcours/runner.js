@@ -39623,6 +39623,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (moteur, écran Nutrition + réglage manuel, contexte de Milo). Blocs B-CDXVI → B-CDXVIII,
      contrôle négatif `tools/mut_nutri_b3.py`. */
   await require('./nutri_b3.js').ecran(t, b, PORT);
+  /* 🧍 NUT-PROFIL-ATYPIQUE-02 (02/10/2026) — frontière BF 70 % + taille 100 cm. Blocs B-NPA02-A/B,
+     contrôle négatif `tools/mut_profil_atypique.py`. */
+  await require('./profil_atypique.js').ecran(t, b, PORT);
   await require('./nutri_b3.js').ecranVue(t, b, PORT);
   await require('./nutri_b3.js').ecranMilo(t, b, PORT);
   await require('./nutri_b3.js').ecranUX(t, b, PORT);
@@ -40518,6 +40521,7 @@ require('./poids_chaine.js').source(t, ROOT, fs, path);
 require('./debrief_provenance.js').source(t, ROOT, fs, path);
 require('./nutri_moteur.js').source(t, ROOT, fs, path);
 require('./nutri_b3.js').source(t, ROOT, fs, path);
+require('./profil_atypique.js').source(t, ROOT, fs, path);
 require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
