@@ -39655,6 +39655,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      Blocs B-CDXXIX / B-CDXXX, contrôle négatif `tools/mut_food_semantics.py`. */
   await require('./food_semantics.js').ecran(t, b, PORT);
   await require('./food_semantics.js').ecranVue(t, b, PORT);
+  /* 🧩 FS-02 Food Semantics V1 (02/10/2026) : une seule taxonomie des formes (requête ET candidats),
+     ambiguïtés figées. Bloc B-CDXXXII, contrôle négatif `tools/mut_food_formes.py`. */
+  await require('./food_formes.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40545,6 +40548,7 @@ require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
 require('./food_semantics.js').source(t, ROOT, fs, path);
+require('./food_formes.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

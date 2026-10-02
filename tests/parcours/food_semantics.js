@@ -156,7 +156,7 @@ module.exports.ecran = async function (t, b, PORT) {
     && det(R.it['café moulu'].formes) === '["poudre"]' && R.it['café moulu'].generique === false
     && det(R.it['pomme séchée'].formes) === '["seche"]' && R.it['pomme séchée'].mots.join(' ') === 'pomme sec'
     && det(R.it['thé feuilles'].formes) === '["feuille"]' && det(R.it['haricots verts purée'].formes) === '["puree"]'
-    && R.it['café'].version === 1, det(R.it));
+    && typeof R.it['café'].version === 'number' && R.it['café'].version >= 1, det(R.it));   // la version elle-même est figée par B-CDXXXII (FS-02)
   for (const q of Object.keys(CONTROLES))
     t('B-CDXXIX non-régression « ' + q + ' » → ' + CONTROLES[q], premier(q) === CONTROLES[q], det(R.top[q]));
   t('B-CDXXIX DÉTERMINISME (' + R.det.n + ' requêtes) : même résultat 3 fois de suite, et sur la base mélangée (3 permutations + inverse)',

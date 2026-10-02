@@ -5164,55 +5164,106 @@ function _ciqualChercherSansAlias(q, max){
         une forme non demandée descend d'abord (« haricots verts » → « Haricot vert », pas « Haricots
         verts, purée », dont le pluriel est pourtant exact) ;
      ③ même requête + même base + mêmes alias + même version = même résultat, même ordre.
-   ⛔ LES FORMES (FS-01 n'en connaît que CINQ : les quatre des témoins + la partie blanc/jaune d'œuf) se lisent dans les QUALIFICATIFS
-   de CIQUAL — ce qui suit la 1ʳᵉ virgule (« Pomme, sèche », « Thé, feuille », « Café, poudre
-   soluble »). ⚠️ Jamais dans le 1ᵉʳ segment : « Pâtes sèches, standard, cuites » sont des pâtes CUITES,
-   et « Purée de pommes » est une compote, pas un état. *Une forme se lit là où la table la range.*
-   ⛔ Pas d'IA, pas de dictionnaire de synonymes, pas de préférences par historique : FS-02 → FS-07. */
-const _FS_VERSION=1;
+   ⛔ LES FORMES (la taxonomie de FS-02 ci-dessous) : pour la PRÉFÉRENCE par défaut, elles se lisent en tête
+   des QUALIFICATIFS de CIQUAL — ce qui suit la 1ʳᵉ virgule (« Pomme, sèche », « Thé, feuille », « Café,
+   poudre soluble »). ⚠️ Jamais dans le 1ᵉʳ segment : « Pâtes sèches, standard, cuites » sont des pâtes
+   CUITES, et « Purée de pommes » est une compote, pas un état. *Une forme se lit là où la table la range.*
+   ⛔ Pas d'IA, pas de dictionnaire de synonymes, pas de préférences par historique : FS-03 → FS-07.
+   ⚖️ D-036 (Michel) : l'ordre physique du fichier CIQUAL n'est JAMAIS un départage sémantique. */
+/* ═══ 🧩 FS-02 — LA TAXONOMIE DES FORMES (02/10/2026, demande de Michel) ═══════════════════════════
+   UNE table (`_FS_FORMES`), UNE fonction (`_fsFormesDuTexte`), lues par la requête ET par les candidats :
+   *une forme ne se reconnaît pas d'une façon côté requête et d'une autre côté aliment* (R2).
+   Trois notions SÉPARÉES, à ne jamais mélanger :
+     ① les formes NOMMÉES dans la requête          → `_fsIntention(q).formes`
+     ② les formes que PORTE un candidat            → `_fsFormesDuTexte(nom)`
+     ③ la PRÉFÉRENCE par défaut (requête générique) → `_FS_TRANSFORMEES` (celle de FS-01, inchangée :
+        l'élargir est le travail de FS-03, sur décision).
+   ⭐ Mesuré sur la vraie base (3 341 aliments proposables) avant d'écrire une ligne — les occurrences et
+   les pièges sont dans `docs/FOOD-SEMANTICS.md` §9. Ce qui en est sorti, et qui gouverne la table :
+   · on reconnaît des MOTS ENTIERS (découpés sur l'espace et la barre : « sauté/poêlé »), jamais une
+     sous-chaîne — « grille-pain » n'est pas « grillé », « Gaufrette » n'est pas une gaufre ;
+   · « sans X » n'est pas X : « Bette, côte (sans feuille) » ne porte pas de feuille ;
+   · ⚠️ SEC et SÉCHÉ ne font qu'UNE forme (`seche`) : sans les accents ils sont indiscernables, et CIQUAL
+     écrit « sèche » pour le fruit séché (« Pomme, sèche ») comme pour le légume sec (« Lentille, sèche »).
+     La séparer serait inventer une distinction que la table ne porte pas ;
+   · ⛔ aucune équivalence entre formes (« riz sec » ≠ « Riz blanc, cru ») : FS-02 dit ce que le libellé
+     PORTE, il ne traduit pas ;
+   · ⛔ volontairement NON reconnus (ambigus, mesurés) : « poêlée » (le plus souvent un PLAT : « Poêlée de
+     légumes, surgelée, crue »), « rôti » (un MORCEAU : « Porc, rôti cru »), « plat » (« Haricot plat »),
+     « déshydratée reconstituée » (une soupe prête : ni sèche, ni boisson), « précuit » (pas cuit). */
+const _FS_VERSION=2;
 const _FS_FORMES={
-  /* forme : `q` = mots qui la NOMMENT dans la requête (normalisés) · `nom` = début d'un qualificatif
-     CIQUAL qui la PORTE · `cherche` = ce qu'on cherche dans le nom quand la personne la nomme. */
-  poudre: {q:['poudre','poudres','soluble','solubles','moulu','moulue','moulus','moulues'], nom:/^(poudre|moulu|soluble)/, cherche:null},
-  feuille:{q:['feuille','feuilles'],                                                  nom:/^feuille/,              cherche:null},
-  seche:  {q:['sec','secs','seche','seches','sechee','sechees'],                      nom:/^(sec|seche|sechee)s?\b/, cherche:'sec'},
-  puree:  {q:['puree','purees'],                                                       nom:/^puree/,                cherche:null},
-  /* une PARTIE de l'aliment, selon la convention CIQUAL « Oeuf, blanc (blanc d'oeuf) ». Mesuré : sans
-     elle, « oeuf » rendait « Oeuf, blanc » devant « Oeuf dur ». Motif étroit exprès : « Poivron, vert,
-     jaune ou rouge » n'est pas une partie. */
-  partie: {q:['blanc','blancs','jaune','jaunes'],                                     nom:/^(blanc|jaune) \1 d/,   cherche:null}
+  /* forme : `suites` = mots (ou suites de mots) qui la portent, NORMALISÉS · `tete` = seulement en tête
+     du NOM (après un petit mot) · `avec` = un mot qui doit AUSSI être dans le texte · `cherche` = ce
+     qu'on cherche dans le nom quand la personne la nomme. L'ordre des clés est l'ordre de sortie. */
+  cru:      {suites:[['cru'],['crue'],['crus'],['crues']]},
+  cuit:     {suites:[['cuit'],['cuite'],['cuits'],['cuites'],['bouilli'],['bouillie'],['bouillis'],['bouillies'],
+                     ['braise'],['braisee'],['braises'],['braisees'],['frit'],['frite'],['frits'],
+                     ['grille'],['grillee'],['grilles'],['grillees'],['saute'],['sautee'],['sautes'],['sautees'],
+                     ['poele'],['poeles'],['vapeur']]},
+  seche:    {suites:[['sec'],['secs'],['seche'],['seches'],['sechee'],['sechees']], cherche:'sec'},
+  poudre:   {suites:[['poudre'],['poudres'],['moulu'],['moulue'],['moulus'],['moulues'],['soluble'],['solubles']]},
+  feuille:  {suites:[['feuille'],['feuilles']]},
+  boisson:  {suites:[['boisson'],['boissons'],['pret','a','boire'],['prete','a','boire'],['prets','a','boire'],
+                     ['infuse'],['infusee'],['infusion']]},
+  puree:    {suites:[['puree'],['purees']]},
+  /* une SAUCE est l'aliment lui-même : le mot OUVRE le nom (« Sauce au curry »). Mesuré : en tête d'un
+     qualificatif, c'est un plat en sauce (« Ravioli au boeuf, sauce tomate », « Maquereau, …, en sauce »). */
+  sauce:    {suites:[['sauce'],['sauces']], tete:true},
+  prepare:  {suites:[['preemballe'],['preemballee'],['preemballes'],['preemballees'],['cuisine'],['cuisinee'],
+                     ['cuisines'],['cuisinees'],['fait','maison'],['faite','maison'],['restauration','rapide']]},
+  /* une PARTIE de l'aliment, selon la convention CIQUAL « Oeuf, blanc (blanc d'oeuf) » — le mot « blanc »
+     seul ne suffit pas (« Riz blanc », « Fromage blanc ») : il faut l'œuf dans le même texte. */
+  partie:   {suites:[['blanc'],['blancs'],['jaune'],['jaunes']], avec:['oeuf','oeufs','doeuf','doeufs']},
+  surgele:  {suites:[['surgele'],['surgelee'],['surgeles'],['surgelees']]},
+  conserve: {suites:[['appertise'],['appertisee'],['appertises'],['appertisees'],['conserve'],['conserves'],['semi-conserve']]}
 };
+const _FS_ORDRE=Object.keys(_FS_FORMES);
+/* ③ La préférence par défaut de FS-01, mot pour mot : pour une requête GÉNÉRIQUE, un aliment qui porte
+   l'une de ces formes en tête d'un qualificatif descend. ⛔ FS-02 ne l'élargit PAS (cru/cuit, sauce, plat
+   préparé, surgelé… : c'est FS-03). */
+const _FS_TRANSFORMEES=['poudre','feuille','seche','puree','partie'];
 /* Le singulier d'un mot de recherche, par la MÊME règle que `_afMotDansNom` (R2). */
 function _fsSing(m){ const f=m.slice(-1); return (m.length>=4&&(f==='s'||f==='x'))?m.slice(0,-1):m; }
-/* ① L'INTENTION : quelles formes la personne a-t-elle NOMMÉES ? Aucune → requête générique. */
-function _fsIntention(q){
-  const mots=_afMots(q), formes=[];
-  const recherche=mots.map(m=>{
-    for(const f in _FS_FORMES){
-      if(_FS_FORMES[f].q.indexOf(m)>=0){
-        if(formes.indexOf(f)<0) formes.push(f);
-        return _FS_FORMES[f].cherche||m;          // « séchée » doit trouver « Pomme, sèche »
+/* ⭐ LA fonction canonique. `opt.qualificatifs` : seulement après la 1ʳᵉ virgule · `opt.debut` : la forme
+   doit ouvrir son segment (éventuellement après un petit mot : « Oeuf, EN poudre »). Rend les formes
+   dans l'ordre de la table — un tableau stable, sans doublon, qui ne dépend que du texte. */
+function _fsFormesDuTexte(texte, opt){
+  opt=opt||{};
+  const segs=String(texte||'').split(',').map(s=>_afNorm(s).split(/[\s\/]+/).filter(Boolean));
+  const tous=[].concat.apply([], segs);
+  const trouve={};
+  segs.slice(opt.qualificatifs?1:0).forEach(t=>{
+    for(const f of _FS_ORDRE){
+      const F=_FS_FORMES[f];
+      if(trouve[f] || (F.avec && !tous.some(x=>F.avec.indexOf(x)>=0))) continue;
+      for(const suite of F.suites){
+        for(let i=0;i+suite.length<=t.length && !trouve[f];i++){
+          if(!suite.every((m,k)=>t[i+k]===m)) continue;
+          if(i>0 && t[i-1]==='sans') continue;                                   // « sans feuille »
+          if((opt.debut||F.tete) && !t.slice(0,i).every(x=>_AF_OUTILS.has(x))) continue;  // R2 : les petits mots de `_afMots`
+          if(F.tete && t!==segs[0]) continue;                                       // `tete` : le 1ᵉʳ segment seulement
+          trouve[f]=true;
+        }
+        if(trouve[f]) break;
       }
+    }
+  });
+  return _FS_ORDRE.filter(f=>trouve[f]);
+}
+/* ① L'INTENTION : quelles formes la personne a-t-elle NOMMÉES ? Aucune → requête générique. Les formes
+   se lisent par la MÊME fonction que celles des aliments ; seul `cherche` réécrit un mot (« séchée » doit
+   trouver « Pomme, sèche »). */
+function _fsIntention(q){
+  const formes=_fsFormesDuTexte(q);
+  const recherche=_afMots(q).map(m=>{
+    for(const f of _FS_ORDRE){
+      const F=_FS_FORMES[f];
+      if(F.cherche && F.suites.some(s=>s.length===1 && s[0]===m)) return F.cherche;
     }
     return m;
   });
   return {version:_FS_VERSION, mots:recherche, formes:formes, generique:formes.length===0};
-}
-/* Les formes que PORTE un aliment CIQUAL, lues dans ses qualificatifs (après la 1ʳᵉ virgule).
-   `partout` : pour une forme NOMMÉE par la personne, on la reconnaît aussi dans le 1ᵉʳ segment —
-   « lait poudre » doit trouver « Lait en poudre, entier » (mesuré : sans ça, « Lait 2e âge » passait
-   devant). La préférence PAR DÉFAUT, elle, ne lit que les qualificatifs (« Pâtes sèches, …, cuites »). */
-function _fsFormesDuNom(nom, partout){
-  const out=[], segs=String(nom||'').split(',');
-  segs.slice(partout?0:1).forEach(seg=>{
-    _afNorm(seg).split(' ').forEach((w,i,ws)=>{
-      const s=ws.slice(i).join(' ');
-      /* « Oeuf, en poudre » : la forme peut suivre un petit mot (en, de, à…) en tête du qualificatif. */
-      const tete = i===0 || ws.slice(0,i).every(x=>_AF_OUTILS.has(x));   // R2 : les petits mots de `_afMots`
-      for(const f in _FS_FORMES) if(_FS_FORMES[f].nom.test(s) && out.indexOf(f)<0 && (partout||tete)) out.push(f);
-    });
-  });
-  return out;
 }
 /* Le nom de tête : 1ᵉʳ segment, sans « (aliment moyen) ». « Fromage (aliment moyen) » → « fromage » ;
    « Crêpe, nature, préemballée » → « crepe ». `sing` : au singulier (« crêpes » → « Crêpe, nature »). */
@@ -5223,10 +5274,14 @@ function _fsTete(nom, sing){
 /* ② LA CLÉ DE TRI — plus petite = plus haut. Chaque position se dit en une phrase. */
 function _fsCle(a, it, r){
   const n=_afNorm(a[1]);
-  /* forme NON DEMANDÉE : explicite → l'aliment qui ne porte pas la forme nommée descend ;
-     générique → l'aliment qui porte une forme transformée (poudre, feuille, séché, purée) descend. */
-  const forme = it.generique ? (_fsFormesDuNom(a[1], false).length?1:0)
-                             : (it.formes.every(f=>_fsFormesDuNom(a[1], true).indexOf(f)>=0)?0:1);
+  /* forme NON DEMANDÉE, en deux crans (FS-02) : 2 = il manque une forme NOMMÉE par la personne (lue partout
+     dans le nom : « Lait en poudre ») — l'explicite gagne toujours ; 1 = il porte, en tête d'un qualificatif,
+     une forme transformée qu'elle n'a PAS nommée (la préférence par défaut de FS-01) ; 0 = rien à redire.
+     Pour une requête générique, le cran 2 n'existe pas : c'est exactement la règle de FS-01. */
+  const manque = it.formes.some(f=>_fsFormesDuTexte(a[1]).indexOf(f)<0);
+  const nonDemandee = _fsFormesDuTexte(a[1], {qualificatifs:true, debut:true})
+                        .some(f=>_FS_TRANSFORMEES.indexOf(f)>=0 && it.formes.indexOf(f)<0);
+  const forme = manque ? 2 : (nonDemandee ? 1 : 0);
   /* nom de tête EXACT : ce qu'on a tapé est le nom même de l'aliment (« Fromage (aliment moyen) »,
      « Omelette au fromage, faite maison » pour « omelette fromage »). */
   const teteExacte = (_fsTete(a[1], false)===it.mots.join(' '))?0:1;

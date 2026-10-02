@@ -434,3 +434,14 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   (égalités désormais tranchées par l'alphabet au lieu de l'ordre du fichier).
 - **Deux témoins du runner adaptés (R30)**, tous deux dépendants de l'ordre du fichier : `oeuf` sans table « Oeuf dur » →
   « Oeuf cru » ; `riz` sans table « Riz blanc, cru » → « Riz, mélange de variétés…, cru » (intention conservée).
+
+### 🧩 FS-02 — Food Semantics V1 : taxonomie déterministe des formes (02/10/2026, session-B — 🟡 CHECKPOINT, NON PUBLIÉ)
+- **Fait** : une seule table (`_FS_FORMES`, 12 formes) et une seule fonction (`_fsFormesDuTexte`) pour la requête ET les
+  candidats ; le dictionnaire FS-01 et `_fsFormesDuNom` ont disparu ; la préférence par défaut reste celle de FS-01.
+  Détail, comptes mesurés et pièges : `docs/FOOD-SEMANTICS.md` §9.
+- **Différentiel FS-01 → FS-02** : 0 changement sur 2 519 requêtes génériques, 2 sur 974 explicites (les deux vers la
+  forme nommée), 0 requête vide.
+- ⚖️ **D-036 VALIDÉE par Michel** : l'ordre physique du fichier CIQUAL n'est jamais un départage. Les détails de la clé
+  (D-037) et de la taxonomie (D-038) restent des choix de Claude, **PROPOSÉS**.
+- 🟤 **Laissé à FS-03 (décisions de préférence), figé par témoins** : riz sec (aucune équivalence sec = cru) · curry ·
+  poulet · courgette. 🟤 **Limite connue** : cuisson dite par un mot propre au plat (« Oeuf dur », « poché ») non reconnue.

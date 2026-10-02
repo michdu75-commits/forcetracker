@@ -20,12 +20,13 @@ AVANT = 'ad172a87'
 AP, AJ = 'app.js', 'data/alias.json'
 FICHIERS = (AP, AJ)
 
-GEN = "  const forme = it.generique ? (_fsFormesDuNom(a[1], false).length?1:0)\n"
-EXP = "                             : (it.formes.every(f=>_fsFormesDuNom(a[1], true).indexOf(f)>=0)?0:1);\n"
-INT = "        if(formes.indexOf(f)<0) formes.push(f);\n        return _FS_FORMES[f].cherche||m;          // « séchée » doit trouver « Pomme, sèche »\n"
+# ancres mises a jour par FS-02 (meme intention, code de la taxonomie) — les mutations FS-01 restent les memes
+GEN = "  const forme = manque ? 2 : (nonDemandee ? 1 : 0);\n"
+EXP = "  const manque = it.formes.some(f=>_fsFormesDuTexte(a[1]).indexOf(f)<0);\n"
+INT = "  const formes=_fsFormesDuTexte(q);\n"
 CLE = "  return [r[0], forme, r[1], entier, teteExacte, teteSing, n.length, n, a[0]];\n"
-TETE = "      const tete = i===0 || ws.slice(0,i).every(x=>_AF_OUTILS.has(x));"
-PARTIE = "  partie: {q:['blanc','blancs','jaune','jaunes'],"
+TETE = "          if((opt.debut||F.tete) && !t.slice(0,i).every(x=>_AF_OUTILS.has(x))) continue;"
+PARTIE = "  partie:   {suites:"
 CIQ_DEB = "  const teteSing = (_fsTete(a[1], true)===it.mots.map(_fsSing).join(' '))?0:1;\n"
 UNIQ = "    Promise.all([_ciqualCharger(), _aliasCharger()]).then(()=>{\n"
 DEUX = ("    _ciqualCharger().then(()=>{\n"
@@ -38,20 +39,20 @@ PUSH = "    out.push({k:_fsCle(a, it, r), a:a});\n"
 
 MUT = [
     ('M00 le code d\'avant remis mot pour mot (master %s : app.js + data/alias.json)' % AVANT, 'REV:' + AVANT, 'GARDE'),
-    ('M1 preference « boisson » desactivee (la forme transformee n\'est plus penalisee)', [(AP, GEN, GEN.replace("(_fsFormesDuNom(a[1], false).length?1:0)", "0"))], 'GARDE'),
-    ('M2 l\'etat explicite est ignore (la forme nommee n\'est ni reconnue ni cherchee)', [(AP, INT, "        return m;\n")], 'GARDE'),
+    ('M1 preference « boisson » desactivee (la forme transformee n\'est plus penalisee)', [(AP, GEN, GEN.replace("(nonDemandee ? 1 : 0)", "0"))], 'GARDE'),
+    ('M2 l\'etat explicite est ignore (la forme nommee n\'est ni reconnue ni cherchee)', [(AP, INT, "  const formes=[];\n")], 'GARDE'),
     ('M3 les alias rendus APRES le 1er affichage (deux rendus, comme avant)', [(AP, UNIQ, DEUX)], 'GARDE'),
     ('M4 la longueur du nom redevient le critere dominant', [(AP, CLE, "  return [r[0], n.length, forme, r[1], entier, teteExacte, teteSing, n, a[0]];\n")], 'GARDE'),
-    ('M5 preference frais / seche inversee (la forme transformee passe devant)', [(AP, GEN, GEN.replace("length?1:0)", "length?0:1)"))], 'GARDE'),
+    ('M5 preference frais / seche inversee (la forme transformee passe devant)', [(AP, GEN, GEN.replace("(nonDemandee ? 1 : 0)", "(nonDemandee ? 0 : 1)"))], 'GARDE'),
     ('M6 le tri depend de l\'ordre des candidats (plus de departage par nom puis code)', [(AP, CLE, "  return [r[0], forme, r[1], entier, teteExacte, teteSing, n.length];\n")], 'GARDE'),
     ('M7 retour de la coupure a 400 candidats (les 400 PREMIERS du fichier)', [(AP, PUSH, PUSH + "    if(out.length>400) break;\n")], 'GARDE'),
     ('M8 les alias faux remis (pomme -> Pomme, seche ; haricots verts -> puree)',
      [(AJ, '"pomme":13396', '"pomme":13111'), (AJ, '"haricots verts":20030', '"haricots verts":20257')], 'GARDE'),
     ('M9 l\'alias « eau » retire (le nom le plus court, « Eau de coco », repasse devant)', [(AJ, '"eau":18066,', '')], 'GARDE'),
-    ('M10 plus de forme « partie » (« Oeuf, blanc » repasse devant un oeuf entier)', [(AP, PARTIE, "  _partieRetiree: {q:[\'zzz\'],")], 'GARDE'),
-    ('M11 la forme n\'est plus lue apres un petit mot (« Oeuf, en poudre » n\'est plus une poudre)', [(AP, TETE, "      const tete = i===0;")], 'GARDE'),
+    ('M10 plus de forme « partie » (« Oeuf, blanc » repasse devant un oeuf entier)', [(AP, PARTIE, "  _partieRetiree:{suites:")], 'GARDE'),
+    ('M11 la forme n\'est plus lue apres un petit mot (« Oeuf, en poudre » n\'est plus une poudre)', [(AP, TETE, "          if((opt.debut||F.tete) && i>0) continue;")], 'GARDE'),
     ('DG1 [deguisee] l\'approximation repasse APRES le nom de tete (« pates » -> « Pate »)', [(AP, CLE, "  return [r[0], forme, entier, teteExacte, teteSing, r[1], n.length, n, a[0]];\n")], 'GARDE'),
-    ('DG2 [deguisee] l\'explicite ne regarde que les qualificatifs (« lait poudre »)', [(AP, EXP, EXP.replace("_fsFormesDuNom(a[1], true)", "_fsFormesDuNom(a[1], false)"))], 'GARDE'),
+    ('DG2 [deguisee] l\'explicite ne regarde que les qualificatifs (« lait poudre »)', [(AP, EXP, EXP.replace("_fsFormesDuTexte(a[1])", "_fsFormesDuTexte(a[1], {qualificatifs:true})"))], 'GARDE'),
     ('DG3 [deguisee] plus de mot entier (« gaufre » retrouve « Gaufrette »)', [(AP, CLE, "  return [r[0], forme, r[1], teteExacte, teteSing, n.length, n, a[0]];\n")], 'GARDE'),
     ('DG4 [deguisee] l\'« aliment moyen » remis dans la cle (« coca » -> « Cola, sans precision »)',
      [(AP, CIQ_DEB, CIQ_DEB + "  const moyen = /\\(aliment moyen\\)/i.test(a[1])?0:1;\n"),
