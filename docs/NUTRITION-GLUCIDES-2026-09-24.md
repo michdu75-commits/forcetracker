@@ -20,9 +20,9 @@
 | TDEE | `calcTDEE` | `BMR × activité + métier + sport(150) + pas` | `null` si profil incomplet ✅ |
 | Cible | `autoKcal` | `TDEE + objectif + phase(±100) + lutéale(150)`, plancher H 1500 / F 1200 | manuel prioritaire (`isManual`) ✅ |
 | Protéines | `macrosForKcal` | `poids TOTAL × {muscle 2,2 · perte 2,5 · recomp 2,6 · force 2,0 · équilibre 2,0 · endurance 1,7}` | — |
-| Lipides | `macrosForKcal` | `poids TOTAL × {0,9 · 0,8 · 0,85 · 1,0 · 0,85 · 0,75}` | — |
+| Lipides | `macrosForKcal` | ~~`poids TOTAL × {0,9 · 0,8 · 0,85 · 1,0 · 0,85 · 0,75}`~~ → **25 % de la cible** depuis ft-v1249 (NUT-LIPIDES-25-01, D-035) | — |
 | **Glucides** | `macrosForKcal` | **`(cible − 4P − 9L) / 4`, borné à 0, SANS plafond** | — |
-| Cycle | `cycleGlucides` | lipides déplacés séance ↔ repos (30 %, plancher 0,6 g/kg), neutre sur la semaine | — |
+| Cycle | `cycleGlucides` | lipides déplacés séance ↔ repos (30 %, plancher 0,6 g/kg), neutre sur la semaine — depuis ft-v1249, inactif quand le plancher empêche le transfert | — |
 
 👉 **Les glucides sont un RÉSIDU.** Ni l'objectif sportif, ni le type de pratique, ni les
 préférences alimentaires ne les fixent : chaque kcal de TDEE en plus = **+0,25 g** de glucides.

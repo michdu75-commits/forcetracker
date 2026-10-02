@@ -10,8 +10,8 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1248` — 🧍 NUT-PROFIL-ATYPIQUE-02 : BF 70 % de nouveau utilisé par Katch (avec la vraie raison si le bilan est écarté), taille 100 cm acceptée, `_bfNavy` cohérent avec l'arrondi (2,0 et 70,0 % acceptés). Protéines et lipides inchangés. Worker et Apps Script inchangés.
-- Prochaine : `ft-v1249`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
+- **Version en ligne (live) :** `ft-v1249` — 🥑 NUT-LIPIDES-25-01 : en modes standards, lipides = 25 % de la cible calorique ; protéines, cible, BMR/TDEE, kéto et low carb inchangés ; cycle séance/repos conservé avec son plancher 0,6 g/kg (il peut rester inactif). Worker et Apps Script inchangés.
+- Prochaine : `ft-v1250`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
 
 ## 🧊 Contraintes en vigueur — décisions actées (règle d'or #15)
 
@@ -21,7 +21,7 @@
 
 ## 🔬 Chantier actif
 
-- **🥑 NUT-LIPIDES-25-01 — lipides des modes standards = 25 % de la cible** (02/10, session-B ; ⏸️ **checkpoint, NON publié, décision de Michel attendue**). Décision **D-035**. Protéines, cible, BMR, TDEE, kéto, low carb : 0 changement sur 59 904 profils. ⚠️ À trancher : le plancher du cycle séance/repos (0,6 g/kg) éteint le cycle pour 6 248 profils et rend inatteignables les écarts « jour de cycle » de B3 (10 témoins rouges, gardés). Détail : `docs/SUIVI-AUDIT.md`.
+- **🥑 NUT-LIPIDES-25-01 — lipides des modes standards = 25 % de la cible** (02/10, session-B ; ✅ **publié en `ft-v1249`, FERMÉ**). Décision **D-035** (Michel). Protéines, cible, BMR, TDEE, kéto, low carb : 0 changement sur 59 904 profils. Cycle séance/repos conservé avec son plancher 0,6 g/kg : inactif quand ce plancher empêche le transfert (6 248 profils, comportement accepté par Michel) ; code d'affichage « jour par jour » conservé, inatteignable (dette documentée). Commit fonctionnel `bcf5926a`, passe 5 762 / 0, 146 mutations conformes, 0 appel réel.
 - **🧍 NUT-PROFIL-ATYPIQUE-02 — bornes de profil cohérentes (BF 70 %, taille 100 cm, `_bfNavy` 2,0/70,0 %)** (02/10, session-A ; ✅ **publié en `ft-v1248`, FERMÉ**). Commit fonctionnel `0a5f86a7`, passe 5 708 / 0, contrôle négatif 8/8, 0 appel réel. Reste séparé : une valeur > 70 importée/ancienne dit encore « aucune mesure ».
 - **☁️🍽️ NUTRITION LOT 3 — NUT-FOODLOG-RESTORE-01 : une restauration cloud ne supprime plus une ligne du journal alimentaire** (01/10, session-B ; ✅ **publié en `ft-v1247`, FERMÉ**). `_applyRestoreData` remplaçait le journal par celui du cloud dès qu'il avait autant ou plus de lignes ; désormais union par identifiant (`_fusionnerFoodLogRestauration`), version du téléphone à id égal, collisions d'id du cloud préservées une fois (C7′), anciennes lignes sans id par copie strictement identique, idempotent. Commit fonctionnel `b266078a`, passe 5 671 / 0 ; contrôle négatif 16/16 ; 0 appel réel. Limite acceptée : une ancienne ligne identifiée différemment sur deux appareils peut revenir en double. Hors lot : `bodyScans`, `bloodTests`, `savedFoods`, `_pa_`, texte de l'écran Restaurer.
 - **🍽️ NUTRITION LOT 2 — NUT-DASH1 : la tuile « Nutrition » du tableau de bord ordinateur affiche la cible du jour, plus la dépense** (01/10, session-B ; ✅ **publié en `ft-v1246`, CLOS**). Elle lisait `m.kcal`/`m.prot`, clés que `calcMacros` ne rend pas, et retombait sur `calcTDEE()` (D1 : 2 482 au lieu de 1 932). Clés canoniques `calories`/`prot_g`, plus de repli sur la dépense. Checkpoint `0e54eef2`, passe complète 5 636 / 0 ; contrôle négatif 12/12 ; 0 chiffre Nutrition calculé modifié ; 0 appel réel.

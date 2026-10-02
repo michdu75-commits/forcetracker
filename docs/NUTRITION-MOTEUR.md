@@ -74,16 +74,23 @@ soulevé. C'est le manque le plus important, et c'est celui qui différencie le 
 
 ### 2.2 Les macros
 
-**Par défaut** (g par kg de poids de corps) :
+**Par défaut — modes standards** (depuis **ft-v1249**, NUT-LIPIDES-25-01, décision D-035) : protéines en g par kg de
+poids TOTAL selon l'objectif (+ 0,2 g/kg en phase lutéale), **lipides = 25 % de la cible calorique** (`cible × 0,25 / 9`,
+arrondi), glucides = le reste, jamais sous 0. ⚠️ 25 % est une convention produit documentée, pas une vérité scientifique.
+*(Avant ft-v1249 : lipides en g/kg de poids total — 0,9 · 1,0 · 0,85 · 0,75 · 0,8 · 0,85.)*
 
-| Objectif | Protéines | Lipides | Glucides |
+| Objectif | Protéines (g/kg) | Lipides | Glucides |
 |---|---|---|---|
-| muscle | 2,2 | 0,9 | le reste |
-| force | 2,0 | 1,0 | le reste |
-| équilibre | 2,0 | 0,85 | le reste |
-| endurance | 1,7 | 0,75 | le reste |
-| perte | 2,5 | 0,8 | le reste |
-| **recomp** | **2,6** | 0,85 | le reste |
+| muscle | 2,2 | 25 % de la cible | le reste |
+| force | 2,0 | 25 % de la cible | le reste |
+| équilibre | 2,0 | 25 % de la cible | le reste |
+| endurance | 1,7 | 25 % de la cible | le reste |
+| perte | 2,5 | 25 % de la cible | le reste |
+| **recomp** | **2,6** | 25 % de la cible | le reste |
+
+**Cycle séance/repos** : conservé avec son plancher actuel de **0,6 g/kg** de poids total (`_CYCLE_FAT_MIN`) ; **le cycle peut
+rester inactif si ce plancher empêche le transfert** (profils lourds ou à cible basse) — les macros sont alors celles du jour
+standard, rien n'est compensé. Kéto et low carb : règles propres inchangées, jamais de cycle.
 
 **Modes alimentaires** — deux se substituent au calcul, deux non :
 
