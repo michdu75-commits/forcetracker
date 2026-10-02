@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1247`** (prochaine : `ft-v1248`).
+> **Version actuelle : `ft-v1248`** (prochaine : `ft-v1249`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,20 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1248 — 🧍 NUT-PROFIL-ATYPIQUE-02 · LES BORNES DE PROFIL DISENT CE QU'ELLES ANNONCENT (BF 70 %, TAILLE 100 CM, NAVY 2,0 / 70,0 %)** — micro-lot Nutrition (02/10, session-A, briefs de Michel 02 → 02B → 02C), commit fonctionnel `0a5f86a7`, passe complète verte, publication décidée par Michel.
+
+**AVANT (reproduit sur master `187a1bbc`).** ① Un % de gras de **70** est accepté par la saisie (2–70) mais `leanMassRecente` (state.js) filtrait `bf<70` : la mesure n'atteignait jamais le BMR, qui passait sur Mifflin (1 780 kcal au lieu de ~921 à 69,9 %) avec la raison **fausse** « aucune mesure de composition corporelle » — y compris quand le bilan était seulement trop ancien ou d'avant une variation de poids. ② `_tailleValide` testait `v>100` alors que le message dit « 100–229 cm » : 100 cm refusé. ③ `_bfNavy` (tracking.js) jugeait ses bornes sur le **brut** puis arrondissait : un calcul affiché 2,0 % (brut 1,95–2) ou 70,0 % (brut 70–70,05) était rejeté.
+
+**APRÈS.** `bf<=70` · `v>=100` · `_bfNavy` juge `r<2||r>70` sur la valeur rendue. Formule Navy, arrondi, Mifflin, Katch inchangés.
+
+**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : trois bornes cessent de contredire leur propre message. ⚖️ **Pop-up : non.**
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : une valeur > 70 venue d'un import ou d'une vieille donnée dit encore « aucune mesure » (hors plage produit, dette séparée, non touchée) · ⛔ protéines, lipides, poids de référence/ajusté, Food Semantics, foodLog, sync, Worker, Apps Script, Milo : **0 ligne**.
+
+Tests : blocs **B-NPA02-A (7 de source) + B-NPA02-B (30 conduits : BF1→BF7, T1→T6, BFN1→BFN6, BFU1→BFU6, écran Nutrition « Raison », `saveProfile`)** dans `tests/parcours/profil_atypique.js`, banc `tools/banc_profil_atypique.js` **37/0** (9 rouges sur master). ⛔ **Contrôle négatif `tools/mut_profil_atypique.py` : 8/8.** Grille 2 688 profils : seuls les BF = 70 changent, protéines/lipides identiques. Différentiel `_bfNavy` sur 11 022 480 mensurations : 02B → 1 710 « rejet → 2,0 », 02C → 7 896 « rejet → 70,0 », aucune autre différence. Passe complète sur `0a5f86a7` : **5708 ✅ / 0 ❌**, 4 conditions vertes ; non relancée après (docs, version et cache seulement — D-031). 0 appel Milo réel.
+
+Fichiers : `state.js` (`leanMassRecente`, `_tailleValide`), `tracking.js` (`_bfNavy`), `tests/parcours/profil_atypique.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_profil_atypique.js` et `tools/mut_profil_atypique.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1248. |
 
 **ft-v1247 — ☁️🍽️ NUTRITION LOT 3 · NUT-FOODLOG-RESTORE-01 : UNE RESTAURATION NE SUPPRIME PLUS UNE LIGNE DU JOURNAL ALIMENTAIRE** — lot Nutrition 3 (01/10, session-B, à la demande de Michel après un audit en lecture seule), commit fonctionnel `b266078a` (checkpoint `dc2ca3a8` puis correctif C7′), passe complète verte, publication décidée par Michel. Dégel du 13/09 **limité à ce lot**.
 
@@ -591,17 +605,3 @@ Fichiers : `log.js` (`_recopierDropset` nouvelle, `saveAsProg`, `_loadProgVraime
 Tests : **B-CCCXCVII (11) + B-CCCXCVIII (37)** Lot 3, **B-CCCXCIX (10, réécrit en 3C) + B-CD (11) + B-CDI (18)** brouillon, dans `tests/parcours/historique_cloud.js` — **banc Lot 3 87/0**. ⛔ **Contrôle négatif `tools/mut_lot3.py`** : Lot 3 15/15 (M01 `slice(-1)` · M02 `unshift` sans tri · M03 « la plus longue gagne » · M04 déduplication heuristique · M05 plus de tri après fusion · 8 déguisées · commentaire) et 3C 9/9 (C1 runId régénéré · C2 non recopié · C3 horloge acceptée · C4 ancien brouillon jeté · C5 même contenu · C6/C7). Vérification finale : `runId` présent et identique en mémoire, dans `ft4_wkt` et dans le brouillon dès la toute première sauvegarde, stable au rechargement immédiat. Passe complète sur `694ecfc7` : **5402 ✅ / 0 ❌**, 4 conditions vertes.
 
 Fichiers : `state.js` (ordre, union, `_assurerRunIdSeance`), `log.js` (`finishWorkout`, import), `coach.js` (2 lecteurs du contexte), `setup.js` (`_applyRestoreData`), `app.js` (`_recoverDraft`, `_brouillonDejaEnregistre`), `tests/parcours/historique_cloud.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_lot3.js` et `tools/mut_lot3.py` (nouveaux), `docs/PROMPT-MILO-REEL.txt` (empreinte), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1241. |
-
-**ft-v1240 — 🧱 FIABILISATION LOT 2 · UN CARDIO OU UN ÉCHAUFFEMENT NOTÉ N'EST PLUS EFFACÉ SANS QUESTION (F01 + F02)** — deuxième lot de la fiabilisation issue de l'audit forensique n°2 (session-B), commit fonctionnel `afa23ac7`, testé, contre-vérifié indépendamment, publication décidée par Michel.
-
-**AVANT (mesuré par l'écran sur master `e1dcb91c`).** 20 min de cardio ou 10 min d'échauffement notés dans le bloc Cardio, puis **F01** « Oui, on démarre » sur une carte de Milo, ou **F02** « ▶ Charger » un programme → **effacés sans une question**, en mémoire et sur le disque. La porte de Milo ne regardait que les **exercices** ; `_travailAPerdre` ne comptait que les **séries faites**.
-
-**APRÈS.** `_etatTravailWkt` (nouvelle, `log.js`) est la **source commune** des deux portes : **RIEN** (ni exercice, ni cardio noté) · **PREPARATION** (des exercices, aucune série faite, aucun cardio) · **TRAVAIL** (au moins une série faite, **ou** des minutes de cardio / échauffement). Structure réelle : `S.wkt.cardioAvant` = échauffement, `S.wkt.cardio` = cardio de fin, `duration` en minutes ; le cardio compte par ses **minutes** (`_cardioNoteMin`, déjà le propriétaire) — un objet à 0 min (type touché, « 0 » saisi, durée effacée) reste **RIEN**. Milo questionne dès que l'état n'est pas RIEN et dit que le cardio est gardé (« Ajouter » / « Remplacer » ne touchent qu'aux exercices) ; le programme confirme sur TRAVAIL, en nommant les minutes de cardio, et **remplace toujours une PREPARATION sans confirmation** (règle ft-v1099 conservée).
-
-**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran nouveau : une question apparaît là où une perte silencieuse avait lieu. ⚖️ **Pop-up : non.**
-
-**⏭️ CE QUE ÇA NE FAIT PAS** (classé, non corrigé) : `startWorkout` garde sa propre définition (`_seanceOuverte`) — **cohérente aujourd'hui** (« pas ouverte » implique RIEN) mais **non reliée** à `_etatTravailWkt` : dette connue · la carte Milo dit encore « Oui, on démarre » quand seul du cardio est noté (cosmétique, la question arrive au tap) · libellés des cartes Milo, `lancerTypeSeance` (ne remplace jamais la séance), fin de séance, historique, débrief, fil Coach, programmes, cloud, Nutrition : **inchangés**. ⛔ Ni Worker, ni Apps Script. **0 appel réel.**
-
-Tests : **B-CCCXCV (7 de source) + B-CCCXCVI (41 conduits : 9 états × 2 voies, Annuler / Remplacer, rechargement sur cardio / échauffement / cardio + exercice saisis par l'écran)** dans `tests/parcours/travail_existant.js`, **48 OK / 0** (sur le code d'avant : 30 rouges). ⛔ **Contrôle négatif `tools/mut_travail_lot2.py` : 11/11 conformes** (M00 = le code d'avant ; M01 cardio ignoré ; M02 échauffement ignoré ; M03 exercice sans série compté comme travail ; 4 déguisées ; 1 commentaire qui doit rester vert). Passe complète sur `afa23ac7` : **5315 ✅ / 0 ❌**, 4 conditions vertes.
-
-Fichiers : `log.js` (`_etatTravailWkt` nouvelle, `_startSessionFromMilo`, `_askMiloSeanceMode`, `_travailAPerdre`, `_confirmerRemplacementSeance`), `tests/parcours/travail_existant.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_travail_lot2.js` et `tools/mut_travail_lot2.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1240. |
