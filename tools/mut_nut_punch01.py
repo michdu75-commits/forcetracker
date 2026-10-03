@@ -8,6 +8,7 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord (pour la partie du ba
 [!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE (conduit dans la page) rougit.
      Un rouge des seuls temoins de SOURCE (« B-NP01-x source ») ne suffit pas.
   MA* = contrat Seance -> Nutrition (B-NP01-A) · MB* = cycle / cache / annonce / ecran vide (B-NP01-B)
+  · MC* = role des repas d'entrainement (B-NP01-C)
   · EQ* = equivalentes (temoins EXECUTES verts ; seul le temoin de source, qui fige le texte, rougit) · [negatif] = commentaire seul (doit rester vert)
 Usage : python3 tools/mut_nut_punch01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -68,6 +69,24 @@ MUT = [
      [(ST, "      if(!s||!s.date||parJour[s.date]) return;\n", "      if(!s||!s.date) return;\n")], 'GARDE', 'cycle'),
     ('EQB1 [equivalente] la cle porte le NOMBRE de series validees (plus fine, meme resultat)',
      [(SC, "+'#'+(((e&&e.sets)||[]).some(x=>x&&x.done)?1:0)).join('~');", "+'#'+(((e&&e.sets)||[]).filter(x=>x&&x.done).length?1:0)).join('~');")], 'SOURCE', 'cycle'),
+    # ── B-NP01-C : role des repas d'entrainement (low carb, jeune) ──
+    ('MC1 le role « autour de la seance » n\'est plus reconnu (retour C1)',
+     [(ST, ",['autour',/autour de la séance/i]];", "];")], 'GARDE', 'repas'),
+    ('MC2 le renommage du jeune efface le role (retour C2)',
+     [(ST, "      ? [r[0], '⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''), r[2], r[3], true] : r));",
+           "      ? [r[0], '⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''), r[2], null, true] : r));")], 'GARDE', 'repas'),
+    ('MC3 le filtre des jours de repos repasse APRES le jeune',
+     [(ST, "  if(!_js.seance) plan2=_retirerRepas(plan2, r=>!!r[3]);\n  if(S.fasting){",
+           "  if(S.fasting){"),
+      (ST, "  if(_js.seance){\n    /* ⭐ ON NOMME L'HEURE", "  if(!_js.seance) plan2=_retirerRepas(plan2, r=>!!r[3]&&!r[4]);\n  if(_js.seance){\n    /* ⭐ ON NOMME L'HEURE")], 'GARDE', 'repas'),
+    ('MC4 l\'annotation relit l\'INTITULE au lieu du role',
+     [(ST, "      if(role==='pre'  && (h||renomme))", "      if(/pré-entraînement/i.test(nom) && (h||renomme))")], 'GARDE', 'repas'),
+    ('MC5 _retirerRepas perd les cases du repas (le role disparait a la redistribution)',
+     [(ST, "  return restants.map(r=>{ const c=r.slice(); c[0]=r[0]+bonus; return c; });", "  return restants.map(([p,nom,d])=>[p+bonus,nom,d]);")], 'GARDE', 'repas'),
+    ('MC6 [deguisee] une heure inventee pour une seance annoncee (« de 18 h » par defaut)',
+     [(ST, "    const h=_js.heure!=null?_js.heure+' h':null;", "    const h=(_js.heure!=null?_js.heure:18)+' h';")], 'GARDE', 'repas'),
+    ('MC7 [deguisee] les calories d\'un repas retire sont perdues au lieu d\'etre redistribuees',
+     [(ST, "  if(!_js.seance) plan2=_retirerRepas(plan2, r=>!!r[3]);", "  if(!_js.seance) plan2=plan2.filter(r=>!r[3]);")], 'GARDE', 'repas'),
     ('[negatif] commentaire citant la duree et le volume dans calcTDEE',
      [(ST, TDEE, "  // (duree, volume, methode : jamais dans la depense)\n" + TDEE)], 'OK', 'contrat'),
 ]

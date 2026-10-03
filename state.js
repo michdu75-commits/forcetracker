@@ -2875,9 +2875,22 @@ function _retirerRepas(plan, estAretirer){
   const perdu=plan.filter(estAretirer).reduce((a,[p])=>a+p,0);
   if(!(perdu>0)) return restants;
   const bonus=perdu/restants.length;
-  return restants.map(([p,nom,d])=>[p+bonus,nom,d]);
+  /* ⚠️ On garde TOUTES les cases du repas (rôle d'entraînement compris, NUT-PUNCH-01) : seul le
+     pourcentage change. */
+  return restants.map(r=>{ const c=r.slice(); c[0]=r[0]+bonus; return c; });
 }
-const _REPAS_SEANCE=/pré-entraînement|post-entraînement/i;
+/* 🏷️ LE RÔLE D'UN REPAS D'ENTRAÎNEMENT SE LIT UNE FOIS, SUR SON INTITULÉ D'ORIGINE, ET VOYAGE AVEC
+   LUI (NUT-PUNCH-01, 03/10/2026). ⛔ Un intitulé d'AFFICHAGE qui change ne doit jamais effacer ce
+   qu'EST le repas. Mesuré sur master : sous jeûne, le 1ᵉʳ repas restant des plans force / endurance
+   est le « ⚡ Pré-entraînement » — renommé « ⏳ Rupture du jeûne », il perdait son identité : un jour
+   de séance, plus AUCUN repas pré-entraînement ; un jour de repos, son contenu (« Charge glycogène
+   maximale ») restait affiché. Et le low carb nomme son repas d'entraînement « ⚡ Autour de la
+   séance », que l'ancien motif ne reconnaissait pas : il s'affichait les jours de repos. */
+const _ROLES_REPAS=[['pre',/pré-entraînement/i],['post',/post-entraînement/i],['autour',/autour de la séance/i]];
+function _roleRepas(nom){
+  for(const [role,re] of _ROLES_REPAS) if(re.test(nom||'')) return role;
+  return null;
+}
 /* @param jourForce — n'existe QUE pour les tests : il leur permet de parcourir TOUTES les
    variantes. Sans lui, un test de régime ne vérifierait que la variante du jour où il
    tourne, et une variante dangereuse ne sortirait que certains jours. */
@@ -2980,14 +2993,8 @@ function getMeals(macros,phase,jourForce){
   // de la journée ne changent pas — elles se concentrent dans la fenêtre où l'on mange. Le
   // petit-déjeuner disparaît donc, et ses calories sont redistribuées sur les repas restants
   // (sinon on afficherait une journée incomplète, ce qui pousserait à sous-manger).
-  let plan2=plan;
-  if(S.fasting){
-    const FEN={'16-8':'12 h → 20 h','18-6':'13 h → 19 h','20-4':'15 h → 19 h'}[S.fasting]||'';
-    const avant=plan2;
-    plan2=_retirerRepas(plan2, ([,nom])=>/petit-déjeuner/i.test(nom));
-    if(plan2!==avant) plan2=plan2.map(([p,nom,d],i)=>
-      [p, (i===0?'⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''):nom), d]);
-  }
+  /* Chaque repas porte son RÔLE (4ᵉ case), lu sur l'intitulé d'ORIGINE, avant tout renommage. */
+  let plan2=plan.map(([p,nom,d])=>[p,nom,d,_roleRepas(nom)]);
   /* 🏋️ LES REPAS D'ENTRAÎNEMENT N'EXISTENT QUE LES JOURS D'ENTRAÎNEMENT (21/08/2026).
      ⛔ ET LES CALORIES DU JOUR NE CHANGENT PAS D'UN KCAL : elles sont redistribuées, jamais
      retirées. *On corrige un intitulé qui ment, on ne modifie pas ce que quelqu'un mange* —
@@ -3001,18 +3008,35 @@ function getMeals(macros,phase,jourForce){
      déplacer des repas dans la liste touche tous les plans, tous les régimes et le jeûne à la
      fois. Le retrait est écrit ici pour ne pas être relu comme un oubli (R30). */
   const _js=jourSeance();
-  if(!_js.seance){
-    plan2=_retirerRepas(plan2, ([,nom])=>_REPAS_SEANCE.test(nom));
-  }else if(_js.heure!=null){
+  /* ⛔ LE FILTRE PASSE PAR LE RÔLE, PAS PAR L'INTITULÉ, ET AVANT LE JEÛNE (NUT-PUNCH-01) : un repas
+     d'entraînement renommé reste un repas d'entraînement. Un jour de repos il disparaît donc AVANT
+     que le jeûne ne choisisse son « premier repas » — sinon le contenu d'un pré-entraînement
+     s'affichait un jour de repos sous l'intitulé « Rupture du jeûne ». ⚠️ La redistribution
+     égale ne dépend pas de l'ordre des retraits : les calories de chaque repas restant sont les
+     mêmes dans les deux sens (seul l'intitulé « Rupture du jeûne » change de repas). */
+  if(!_js.seance) plan2=_retirerRepas(plan2, r=>!!r[3]);
+  if(S.fasting){
+    const FEN={'16-8':'12 h → 20 h','18-6':'13 h → 19 h','20-4':'15 h → 19 h'}[S.fasting]||'';
+    const avant=plan2;
+    plan2=_retirerRepas(plan2, ([,nom])=>/petit-déjeuner/i.test(nom));
+    /* 5ᵉ case : « renommé » — l'intitulé ne dit plus le rôle, l'annotation devra le dire. */
+    if(plan2!==avant) plan2=plan2.map((r,i)=>(i===0
+      ? [r[0], '⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''), r[2], r[3], true] : r));
+  }
+  if(_js.seance){
     /* ⭐ ON NOMME L'HEURE RÉELLE, ON N'EN INVENTE PAS UNE. Écrire « vers 17 h » pour un
        pré-entraînement supposerait de connaître la durée de la séance — on ne l'a pas au
        moment du plan, et pour une séance seulement ANNONCÉE on n'a même pas l'heure. Dire
-       « avant ta séance de 18 h » est vrai dans tous les cas où on l'affiche. */
-    const h=_js.heure+' h';
-    plan2=plan2.map(([p,nom,d])=>{
-      if(/pré-entraînement/i.test(nom))  return [p, nom+' — avant ta séance de '+h, d];
-      if(/post-entraînement/i.test(nom)) return [p, nom+' — après ta séance de '+h, d];
-      return [p,nom,d];
+       « avant ta séance de 18 h » est vrai dans tous les cas où on l'affiche.
+       ⭐ L'annotation suit le RÔLE (NUT-PUNCH-01) : « ⏳ Rupture du jeûne (12 h) — avant ta séance
+       de 18 h » rend son identité au pré-entraînement renommé. Sans heure connue, un repas RENOMMÉ
+       garde « — avant ta séance » (seule trace de son rôle) ; les autres ne changent pas. */
+    const h=_js.heure!=null?_js.heure+' h':null;
+    plan2=plan2.map(r=>{
+      const [p,nom,d,role,renomme]=r;
+      if(role==='pre'  && (h||renomme)) return [p, nom+' — avant ta séance'+(h?' de '+h:''), d, role];
+      if(role==='post' && (h||renomme)) return [p, nom+' — après ta séance'+(h?' de '+h:''), d, role];
+      return r;
     });
   }
   return plan2.map(([pct,name,descBrut])=>{

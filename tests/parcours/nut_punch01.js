@@ -439,3 +439,81 @@ module.exports.cycle = async function (t, b, PORT) {
     card.js === 'faite' && card.reg === 1 && card.G === 452 && card.L === 73, det(card));
   await C.cx.close();
 };
+
+/* ══════════════════════════════════════════════════════════════════════════════════════
+   ── B-NP01-C — LE RÔLE D'UN REPAS D'ENTRAÎNEMENT SURVIT À SON INTITULÉ ──
+   Mesuré sur master ad172a87 AVANT correctif :
+   · C1 low carb, jour de repos : « ⚡ Autour de la séance » (317 kcal) s'affichait ;
+   · C2 jeûne 16/8 + force ou endurance, séance à 18 h : plus AUCUN repas pré-entraînement (le
+     « ⚡ Pré-entraînement » était renommé « ⏳ Rupture du jeûne (12 h) » et perdait son rôle) ; et un
+     jour de repos, son contenu (« Charge glycogène maximale ») restait affiché sous ce nom.
+   ⛔ Principe (Michel) : un changement d'intitulé d'AFFICHAGE ne fait jamais perdre la sémantique
+   interne du repas. ⛔ Ni macros, ni total du jour, ni ordre des repas, ni G11 (quel repas dans la
+   fenêtre de jeûne selon l'heure de séance) ne changent ici.
+   ══════════════════════════════════════════════════════════════════════════════════════ */
+module.exports.sourceRepas = function (t, ROOT, fs, path) {
+  console.log('\n═══ B-NP01-C. NUT-PUNCH-01 — rôle des repas d\'entraînement (source) ═══');
+  const ST = _sansCommentaires(fs.readFileSync(path.join(ROOT, 'state.js'), 'utf8')).replace(/\s+/g, '');
+  const gm = _corps(ST, 'getMeals');
+  t('B-NP01-C source ① le rôle se lit sur l\'intitulé D\'ORIGINE (pré / post / autour de la séance), avant tout renommage',
+    gm.indexOf('letplan2=plan.map(([p,nom,d])=>[p,nom,d,_roleRepas(nom)]);') >= 0
+    && /\['autour',\/autourdelaséance\/i\]/.test(ST), 'rôle absent');
+  t('B-NP01-C source ② le filtre des jours de repos passe par le RÔLE et AVANT le jeûne',
+    gm.indexOf('if(!_js.seance)plan2=_retirerRepas(plan2,r=>!!r[3]);') >= 0
+    && gm.indexOf('if(!_js.seance)plan2=_retirerRepas(plan2,r=>!!r[3]);') < gm.indexOf('if(S.fasting){'), 'ordre ou critère');
+};
+
+module.exports.repas = async function (t, b, PORT) {
+  console.log('\n-- B-NP01-C. NUT-PUNCH-01 — repas low carb et jeûne (conduit, écran Nutrition, rechargement) --');
+  const X = await _ouvrir(b, PORT, '2026-10-03T20:00:00+02:00');
+  const plan = (opt, s) => X.pg.evaluate(([opt, s]) => {
+    __np.base(opt); __np.historique([1, 3, 5], 'haut');
+    if (s === 'annonce') S.nextPlanned = { date: today(), label: 'Jambes' }; else if (s != null) __np.ajouter(__np.seance(today(), s, 'jambes'));
+    persist();
+    const m = calcMacros('charge'), r = getMeals(m, 'charge', 0);
+    return { cible: m.calories, tot: r.reduce((a, x) => a + x.kcal, 0), noms: r.map(x => x.name), kcal: r.map(x => x.kcal) };
+  }, [opt, s]);
+  const det = _det, tient = p => Math.abs(p.tot - p.cible) <= p.noms.length;
+  const lcR = await plan({ foodMode: 'lowcarb' }, null), lcS = await plan({ foodMode: 'lowcarb' }, 18);
+  t('B-NP01-C C1 ⭐⭐ low carb, jour de REPOS : plus de « ⚡ Autour de la séance » (master : 317 kcal affichées), ses calories redistribuées, total intact',
+    !lcR.noms.some(n => /Autour de la séance/.test(n)) && det(lcR.kcal) === '[872,396,1030,872]' && tient(lcR), det(lcR));
+  t('B-NP01-C C1 ⛔ low carb, jour de SÉANCE : le repas « Autour de la séance » reste, plan identique à master',
+    det(lcS.noms) === det(['🌅 Petit-déjeuner', '🥜 Collation', '🍽️ Déjeuner', '⚡ Autour de la séance', '🌙 Dîner']) && det(lcS.kcal) === '[793,317,951,317,793]', det(lcS));
+  const jfS = await plan({ goal: 'force', fasting: '16-8' }, 18), jeS = await plan({ goal: 'endurance', fasting: '16-8' }, 18);
+  t('B-NP01-C C2 ⭐⭐ jeûne 16/8 + force, séance 18 h : le 1ᵉʳ repas redevient un pré-entraînement (« … — avant ta séance de 18 h »), mêmes calories que master',
+    jfS.noms[0] === '⏳ Rupture du jeûne (12 h) — avant ta séance de 18 h' && jfS.noms[2] === '💪 Post-entraînement — après ta séance de 18 h'
+    && det(jfS.kcal) === '[604,906,906,604]' && tient(jfS), det(jfS));
+  t('B-NP01-C C2 ⭐ jeûne 16/8 + endurance, séance 18 h : idem (master : plus aucun pré-entraînement)',
+    jeS.noms[0] === '⏳ Rupture du jeûne (12 h) — avant ta séance de 18 h' && det(jeS.kcal) === '[621,913,767,621]' && tient(jeS), det(jeS));
+  const jfA = await plan({ goal: 'force', fasting: '16-8' }, 'annonce');
+  t('B-NP01-C C2 séance ANNONCÉE (heure inconnue) : « — avant ta séance », aucune heure inventée',
+    jfA.noms[0] === '⏳ Rupture du jeûne (12 h) — avant ta séance' && jfA.noms[2] === '💪 Post-entraînement' && !/\d+ h$/.test(jfA.noms[0].split('— ')[1]), det(jfA.noms));
+  const jfR = await plan({ goal: 'force', fasting: '16-8' }, null), jeR = await plan({ goal: 'endurance', fasting: '16-8' }, null);
+  t('B-NP01-C C2 ⛔ jeûne + force / endurance, jour de REPOS : aucun repas d\'entraînement, même renommé ; la rupture du jeûne est le 1ᵉʳ repas RESTANT ; total intact',
+    det(jfR.noms) === det(['⏳ Rupture du jeûne (12 h)', '🌙 Dîner']) && det(jfR.kcal) === '[1661,1359]' && tient(jfR)
+    && det(jeR.noms) === det(['⏳ Rupture du jeûne (12 h)', '🌙 Dîner']) && tient(jeR), det([jfR, jeR]));
+  /* ⛔ Ce qui ne doit PAS bouger (valeurs de master). */
+  const muR = await plan({}, null), muS = await plan({}, 18), muJ = await plan({ fasting: '18-6' }, 18), muJR = await plan({ fasting: '16-8' }, null);
+  t('B-NP01-C ⛔ plan « muscle » standard : repos et séance IDENTIQUES à master',
+    det(muR.kcal) === '[911,594,1070,594]' && det(muS.noms) === det(['🌅 Petit-déjeuner', '🍎 Collation matin', '🍽️ Déjeuner', '⚡ Pré-entraînement — avant ta séance de 18 h', '💪 Post-entraînement — après ta séance de 18 h', '🌙 Dîner'])
+    && det(muS.kcal) === '[634,317,793,476,634,317]', det([muR, muS]));
+  t('B-NP01-C ⛔ plan « muscle » + jeûne : IDENTIQUE à master (la rupture du jeûne y est une collation, pas un repas d\'entraînement)',
+    det(muJ.noms) === det(['⏳ Rupture du jeûne (13 h)', '🍽️ Déjeuner', '⚡ Pré-entraînement — avant ta séance de 18 h', '💪 Post-entraînement — après ta séance de 18 h', '🌙 Dîner'])
+    && det(muJ.kcal) === '[444,919,602,761,444]' && det(muJR.kcal) === '[898,1374,898]', det([muJ, muJR]));
+  const ke = await plan({ foodMode: 'keto' }, 18), pe = await plan({ goal: 'perte' }, 18), fo = await plan({ goal: 'force' }, 18);
+  t('B-NP01-C ⛔ kéto, perte et force SANS jeûne : identiques à master',
+    det(ke.kcal) === '[793,317,951,317,793]' && det(pe.kcal) === '[593,237,711,237,593]'
+    && det(fo.noms) === det(['🌅 Petit-déjeuner', '⚡ Pré-entraînement — avant ta séance de 18 h', '🍽️ Déjeuner', '💪 Post-entraînement — après ta séance de 18 h', '🌙 Dîner']) && det(fo.kcal) === '[604,453,755,755,453]', det([ke, pe, fo]));
+  /* L'écran : le plan RENDU dans l'onglet Nutrition, puis un vrai rechargement. */
+  await plan({ goal: 'force', fasting: '16-8' }, 18);
+  const ecran = () => X.pg.evaluate(async () => { goScreen('nutrition', document.querySelector('[onclick*="nutrition"]')); renderNutrition();
+    await new Promise(r => setTimeout(r, 200));
+    return [...document.querySelectorAll('#meal-plan .meal-name')].map(e => e.textContent.trim()); });
+  const e1 = await ecran();
+  await X.recharger();
+  const e2 = await ecran();
+  t('B-NP01-C ⭐ à l\'écran (onglet Nutrition) et après un vrai rechargement : « ⏳ Rupture du jeûne (12 h) — avant ta séance de 18 h » en tête',
+    e1[0] === '⏳ Rupture du jeûne (12 h) — avant ta séance de 18 h' && det(e1) === det(e2) && e1.length === 4, det([e1, e2]));
+  t('B-NP01-C aucune erreur de page', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+  await X.cx.close();
+};
