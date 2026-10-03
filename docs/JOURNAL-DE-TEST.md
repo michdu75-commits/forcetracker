@@ -3289,3 +3289,13 @@ une règle en g/kg (l'ancienne, ou une autre) au lieu de dire « 25 % de ta cibl
 réponse qui cite un g/kg de lipides) — candidat banc **R34**, 0 appel autorisé. ⚠️ Corollaire : 130 kg en perte et
 décharge passe de 0 g à 37 g de glucides — Milo, qui lisait « CIBLE INCOMPATIBLE » pour ce profil, ne la lit plus.
 État : **à trier**.
+
+### 🟡 NUT-PUNCH-01 : MILO DIT-IL « JOUR DE SÉANCE » QUAND IL N'Y EN A PAS — OU L'INVERSE ? (03/10/2026 — NON vérifié en réel)
+Depuis NUT-PUNCH-01 (branche non publiée), la ligne des macros du jour envoyée à Milo change dans 3 cas, calories
+identiques : un jour **annoncé** (le « jour de séance typique » au lieu du facteur 1), 4 jours × 2 séances (le cycle
+n'est plus coupé), et l'onglet Séance **seulement affiché** (avant : lu comme une séance en cours, macros côté séance ;
+maintenant : jour de repos jusqu'au 1ᵉʳ exercice, cardio noté ou série validée). ❓ **Doute** : avant, quelqu'un qui
+avait juste regardé l'écran Séance recevait-il de Milo « tes glucides de séance » ou « bonne séance » un jour de
+repos ? Et maintenant, quelqu'un qui a appuyé sur « Démarrer » sans encore rien ajouter recevra-t-il un discours de
+jour de repos ? Vérifiable par du code : ✅ (une réponse qui qualifie le jour à l'inverse de `jourSeance`) — candidat
+banc **R34**, 0 appel autorisé. État : **à trier**.

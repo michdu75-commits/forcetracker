@@ -422,3 +422,25 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - Textes corrigés parce qu'ils décrivaient l'ancienne règle (R4, R23) : aide « ? » Nutrition, intro du réglage manuel,
   aide détaillée « Nutrition — où est quoi », description de l'objectif Force (« lipides élevés »), avertissement D-034
   (« protéines et lipides calculés sur ton poids »).
+
+### 🍽️ NUT-PUNCH-01 — coup de poing Nutrition (03/10/2026, session-B — branche `claude/nut-punch-01`, NON publiée)
+- **Feu vert de Michel limité à ce lot** : corrections factuelles prouvées + UX validée (« Tes repas habituels »,
+  « Il te reste aujourd'hui »). Détail, avant/après mesurés et témoins : `docs/NUT-PUNCH-01.md`.
+- ✅ **Corrigés sur la branche (BUG FACTUEL, chacun rouge sur master `ad172a87`, vert sur la branche)** : écran Séance
+  vide compté comme une séance (A2) · cycle séance/repos qui comptait des séances au lieu de jours (B1) · région de la
+  séance en cours figée par le cache (B2) · jour annoncé à facteur 1 (B3) · « Autour de la séance » les jours de repos
+  en low carb (C1) · rôle pré-entraînement perdu par le renommage du jeûne (C2) · échauffement `É` dans la tendance de
+  force et le garde-fou de volume (D1) · phase lutéale qui basculait à midi (D2) · « Séance demain » datée d'aujourd'hui
+  en UTC+13/+14 (D3) · libellé « Cette semaine » d'une tuile à 7 jours glissants (D4) · bouton de repas habituel cassé
+  par un guillemet dans un nom (E′) · aide « ? » qui nommait encore l'ancien bloc « ce qu'il te reste, en vrai » (F′).
+- 🟤 **DETTES CONNUES, écrites pour ne pas être « réparées » par erreur** : la région d'un jour à deux séances = la
+  dernière séance · deux séances le même jour = deux événements pour le compteur de séances (tuile, Milo) · un cardio
+  seul = un jour de séance de région inconnue (facteur 1) · une annonce est honorée par n'importe quelle séance · code
+  `E` (sans accent) au sens non tranché, toujours exclu de la tendance · deux variantes par substitution (« shaker +
+  banane » / « shaker + pomme ») restent deux familles si « shaker » seul n'est pas une habitude · seuls les noms CIQUAL
+  sont raccourcis · deux annonces passées (`NEW_FEATURES`) citent l'ancien titre — de l'histoire, non réécrite ·
+  deux générateurs de PDF d'audits passés (`tools/gen_nutri_audit_pdf.py`,
+  `tools/gen_nutri_correctifs_pdf.py`) lisent encore le seuil des habitudes dans `_repasHabituels` · le message de régularité de l'Accueil (« N séances cette semaine », `screens.js`) compte des JOURS distincts depuis lundi sous le mot « séances » (hors lot).
+- ⛔ **HORS LOT, inchangés** : pas / Apple Santé / montres (G2/G9 non choisis) · Katch / Navy / priorité des sources
+  de % de gras (G3/G4) · calories depuis la durée, le volume, le RIR ou la méthode · G11 (repas dans la fenêtre de
+  jeûne) · aliments et recettes perso · Milo (0 appel, prompt inchangé).

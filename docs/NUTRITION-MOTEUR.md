@@ -491,6 +491,56 @@ sur la santé de quelqu'un.
 
 **C'est ce qui manque le plus, et l'app a déjà toutes les données.**
 
+### 📌 5.0 Le contrat Séance → Nutrition, MESURÉ (NUT-PUNCH-01, 03/10/2026 — branche `claude/nut-punch-01`, non publiée)
+
+> ⚠️ Le pseudo-code du 5.1 est celui du **18/08** (une intention). Ce qui tourne est décrit ici, et
+> chaque ligne est tenue par un témoin conduit (blocs `B-NP01-A` → `B-NP01-F`).
+
+- **Jour de séance** (`jourSeance`, state.js) : séance **faite** aujourd'hui > séance **en cours** >
+  séance **annoncée** pour aujourd'hui > repos. « En cours » = la définition unique `_seanceOuverte`
+  (log.js) : un exercice, un cardio noté ou une série validée. ⛔ **Afficher l'onglet Séance ne fait
+  pas un jour de séance** (avant NUT-PUNCH-01, l'objet vide créé par `renderLog` suffisait).
+- **Ce qui entre dans la dépense du jour : l'activité déclarée, le métier, le sport, les pas — et
+  RIEN d'autre.** ⛔ La durée, le volume, la méthode (superset…), la discipline et le niveau de la
+  séance n'y entrent **pas** : 5 contrôles négatifs le prouvent (`MA1` → `MA5`).
+- **Cycle séance / repos** (`cycleGlucides`) : la fréquence compte des **JOURS** d'entraînement
+  (`_weeklyCounts(4, true)`) — deux séances le même jour font un jour. ⛔ C'est le **seul**
+  consommateur qui compte des jours : la tuile « 7 derniers jours », la proposition de niveau
+  d'activité et la carte de fréquence de Milo comptent toujours des **séances**. Le facteur de région
+  moyen r̄ est une moyenne **par jour**.
+- **Région du jour** : séance faite → sa région (la DERNIÈRE séance du jour : une observation
+  écrite, pas une règle) ; séance en cours → sa région dès qu'une série est validée, r̄ avant (la
+  clé du cache de `_calSessMix` porte l'état « série validée » de chaque exercice) ; séance
+  **annoncée** → le « jour de séance typique » r̄. ⛔ **Rien n'est deviné du libellé de l'annonce.**
+  Une séance faite de région inconnue (cardio seul) garde le facteur 1.
+- **Repas d'entraînement** (`getMeals`) : chaque repas garde son **rôle** (`pre` · `post` ·
+  `autour`), lu sur l'intitulé **d'origine** du plan. Un jour de repos, tout repas qui a un rôle est
+  retiré et ses calories sont redistribuées (total identique). Un jour de séance, le rôle survit au
+  renommage du jeûne : « ⏳ Rupture du jeûne (12 h) — avant ta séance de 18 h ». ⚠️ Principe : *un
+  changement d'intitulé à l'affichage ne doit jamais faire perdre le sens interne d'un repas.*
+  ⛔ **G11** (quel repas tombe dans la fenêtre de jeûne selon l'heure de séance) : non décidé.
+- **« Il te reste aujourd'hui »** : ≈ kcal, puis protéines · glucides · lipides (« atteint » au lieu
+  d'un négatif). Rien un jour passé, rien si rien n'est noté, rien si la cible est atteinte. Les
+  équivalences en aliments ne s'affichent **que sur demande** (« Voir des idées pour compléter »).
+  Gardés : « kcal mangées » reste le gros chiffre (ft-v1102) ; après 20 h, silence sans idée légère
+  et jamais de total kcal (ft-v1029).
+- **« Tes repas habituels »** : une carte par **famille** de repas très proches, ses variantes
+  derrière ; libellé court seulement pour un nom CIQUAL et s'il reste sans ambiguïté. Règle de
+  famille (convention, écrite et témoignée) : les aliments de l'une sont tous dans l'autre ET cette
+  base apporte au moins **la moitié des protéines** du plus grand repas.
+- ⛔⛔ **L'HISTORIQUE ALIMENTAIRE N'EST JAMAIS RÉÉCRIT** : le regroupement est une **vue** calculée
+  à l'affichage — aucun nom, aucune ligne, aucune quantité du journal n'est modifié (témoin
+  « octet pour octet » après rejeu et vrai rechargement).
+
+**🧭 DIRECTION FUTURE (validée par Michel, NON construite) — deux natures d'effort à ne jamais
+confondre.** **A. Séance sportive structurée** (musculation, elliptique, rameur, cardio structuré,
+marche **déclarée comme séance**, récupération active structurée) · **B. Activité de vie /
+quotidienne** (balade de 3 h, grosse journée de marche en vacances, déplacement, activité
+exceptionnelle) : **pas automatiquement une séance**. ⭐ **La distinction est SÉMANTIQUE, pas une
+question de durée** : 3 h de marche en vacances restent une activité de vie ; 30 min de marche
+déclarées comme séance sont une séance. À reprendre pour un futur `TrainingDaySummary` /
+`ActivityDaySummary` et les intégrations santé natives. ⛔ Rien de cela n'est codé.
+
 ### 5.1 Jour de séance ou jour de repos
 
 ```js
