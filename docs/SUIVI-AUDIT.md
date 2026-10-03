@@ -456,3 +456,14 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - 🟤 **Restant, non migré exprès** : 143 alias « de préférence » (choisissent cru ou cuit pour un mot) — conservés ; les
   migrer serait un chantier à part, sur décision.
 - D-039 (Claude, PROPOSÉ). D-037 / D-038 restent PROPOSÉS : des choix techniques de Claude, pas des décisions de Michel.
+
+### 🏷️ FS-04 — Food Semantics V1 : la forme affichée dans les résultats (03/10/2026, session-B — 🟡 CHECKPOINT, NON PUBLIÉ)
+- **Fait** : chaque résultat CIQUAL porte un petit libellé texte de sa forme (`Cuit`, `Boisson`, `Sec / séché`…) sur sa
+  ligne de détail ; rien sans forme reconnue ; 2 libellés au plus. Projection de FS-02, aucun effet sur le classement.
+  Détail : `docs/FOOD-SEMANTICS.md` §11.
+- **Différentiel FS-03 → FS-04** : 0 changement (6 premiers résultats entiers + valeurs, 3 492 requêtes, en ligne et
+  hors ligne).
+- 🟤 **Reste à faire à la publication (FS-07)** : RENDU-IOS-01 (T4 manuel) — voir le badge sur un iPhone ; le
+  conteneur n'a que Chromium. 🟤 **Limites** : `Cru · Cuit` sur 1 poêlée « grillée … crue » ; hors ligne « raisin » →
+  `Sec / séché` (limite FS-03, visible exprès).
+- D-040 (Claude, PROPOSÉ).

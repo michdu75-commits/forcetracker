@@ -39665,6 +39665,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🎯 FS-03 Food Semantics V1 (02/10/2026) : préférences par défaut des requêtes génériques (une couche,
      séparée de la taxonomie). Bloc B-CDXXXIV, contrôle négatif `tools/mut_food_prefs.py`. */
   await require('./food_prefs.js').ecran(t, b, PORT);
+  /* 🏷️ FS-04 Food Semantics V1 (03/10/2026) : la forme de l'aliment affichée dans les résultats (projection de
+     la taxonomie FS-02, aucun effet sur le classement). Blocs B-CDXXXVI / B-CDXXXVII, contrôle négatif
+     `tools/mut_food_affichage.py`. */
+  await require('./food_affichage.js').ecran(t, b, PORT);
+  await require('./food_affichage.js').ecranVue(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40557,6 +40562,7 @@ require('./nutri_lipides25.js').source(t, ROOT, fs, path);
 require('./food_semantics.js').source(t, ROOT, fs, path);
 require('./food_formes.js').source(t, ROOT, fs, path);
 require('./food_prefs.js').source(t, ROOT, fs, path);
+require('./food_affichage.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

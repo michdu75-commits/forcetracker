@@ -5329,6 +5329,34 @@ function _fsPromouvoir(it, out){
   if(i>0) out.unshift(out.splice(i,1)[0]);
   return out;
 }
+/* ═══ 🏷️ FS-04 — AFFICHER LA FORME DANS LES RÉSULTATS (03/10/2026, demande de Michel) ═══════════════════════
+   Un lot d'AFFICHAGE : une PROJECTION de la taxonomie FS-02 (`_fsFormesDuTexte`), jamais une 2ᵉ taxonomie,
+   et rien ne touche au classement, aux alias ni aux valeurs. Le nom d'un aliment est tronqué à l'écran
+   (« Pâtes sèches, standard, cui… ») : la forme le dit en un mot, sur la ligne de détail, qui ne l'est pas.
+   ⭐ Deux règles, tirées de l'inventaire des 253 aliments à plusieurs formes (§11 de la doc) :
+   · « sec / séché » à côté de « cru » ou « cuit » dit le TYPE de produit, pas son état (« Pâtes sèches,
+     standard, cuites » sont cuites ; « Légume sec, cuit » aussi — 18 aliments) : l'état l'emporte ;
+   · « préparé » (préemballé, cuisiné, fait maison : 571 aliments) n'ajoute rien à côté d'une autre forme
+     (« Sauce tartare, préemballée » est d'abord une SAUCE) : il ne s'affiche que seul.
+   Puis 2 libellés au plus, dans un ordre FIXE : ce que l'aliment EST (boisson, sauce, poudre…) avant son
+   état (cru, cuit) avant son conditionnement (surgelé, conserve). ⛔ Aucune forme reconnue → rien
+   d'affiché : 1 298 aliments n'en portent pas, et ils sont parfaitement valides — pas de « standard »,
+   « brut » ou « inconnu ». ⛔ La forme est du TEXTE, jamais une couleur seule. */
+const _FS_LIBELLES={cru:'Cru', cuit:'Cuit', seche:'Sec / séché', poudre:'Poudre / moulu', feuille:'Feuilles',
+  boisson:'Boisson', puree:'Purée', sauce:'Sauce', prepare:'Préparé', partie:'Blanc ou jaune d\u2019œuf',
+  surgele:'Surgelé', conserve:'Conserve'};
+const _FS_AFFICHAGE_ORDRE=['boisson','sauce','poudre','puree','feuille','partie','cru','cuit','seche','surgele','conserve','prepare'];
+function _fsFormesAffichees(nom){
+  let f=_fsFormesDuTexte(nom);
+  if(f.indexOf('cru')>=0 || f.indexOf('cuit')>=0) f=f.filter(x=>x!=='seche');
+  if(f.length>1) f=f.filter(x=>x!=='prepare');
+  return _FS_AFFICHAGE_ORDRE.filter(x=>f.indexOf(x)>=0).slice(0,2).map(x=>_FS_LIBELLES[x]);
+}
+/* Le badge : un texte court, sur la ligne de détail (jamais dans le nom, qui est tronqué). */
+function _fsBadgeForme(nom){
+  const l=_fsFormesAffichees(nom);
+  return l.length ? '<span class="af-forme">'+l.join(' · ')+'</span>' : '';
+}
 /* ② LA CLÉ DE TRI — plus petite = plus haut. Chaque position se dit en une phrase. */
 function _fsCle(a, it, r){
   const n=_afNorm(a[1]);
@@ -5625,8 +5653,10 @@ function _afSuggRendu(){
      GÉNÉRIQUE est presque toujours ce qu'on cherche — les bananes de marque viennent après. */
   if(_afSuggCiq.length){
     h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">ALIMENTS (CIQUAL · ANSES)</div>';
+    /* 🏷️ FS-04 : la forme reconnue, en tête de la ligne de détail — l'ordre et les valeurs ne bougent pas. */
     _afSuggCiq.forEach((a,i)=>{ h+=ligne('🥗', a[1],
-      (a[3]||0)+' kcal/100 g · P '+(a[4]==null?'?':a[4])+' · G '+(a[5]==null?'?':a[5])+' · L '+(a[6]==null?'?':a[6]),
+      _fsBadgeForme(a[1])
+      +(a[3]||0)+' kcal/100 g · P '+(a[4]==null?'?':a[4])+' · G '+(a[5]==null?'?':a[5])+' · L '+(a[6]==null?'?':a[6]),
       '_afSuggPrendreCiqual('+i+')'); });
   }
   if(_afSuggOff.length){

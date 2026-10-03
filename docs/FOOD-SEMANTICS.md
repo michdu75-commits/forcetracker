@@ -2,10 +2,10 @@
 
 > **Créé le 02/10/2026 (FS-01, session-B, demande de Michel)**, après son retour terrain du 01/10
 > (`docs/SUIVI-AUDIT.md`, « la recherche d'aliments propose le mauvais aliment en premier »).
-> Ce fichier porte **ce que FS-01, FS-02 et FS-03 ont fait** et **le contrat des lots suivants** (FS-04 → FS-07).
-> ⛔ **Rien de FS-04 à FS-07 n'est construit.** FS-01 → FS-03 sont des checkpoints sur branche, **non publiés**.
+> Ce fichier porte **ce que FS-01 → FS-04 ont fait** et **le contrat des lots suivants** (FS-05 → FS-07).
+> ⛔ **Rien de FS-05 à FS-07 n'est construit.** FS-01 → FS-04 sont des checkpoints sur branche, **non publiés**.
 > **FS-01** → classement déterministe · **FS-02** → taxonomie des formes · **FS-03** → préférences génériques
-> conservatrices.
+> conservatrices · **FS-04** → la forme affichée dans les résultats (une projection, sans effet sur le classement).
 > ⛔⛔ **« Une préférence générique n'est jamais une correction d'une requête explicite. »**
 > ⛔⛔ **« Il n'existe pas de règle universelle cuit > cru. »**
 > ⚖️ **D-036 (Michel, 02/10)** : l'ordre physique des entrées du fichier CIQUAL n'est **pas** une règle métier et ne
@@ -129,17 +129,17 @@ ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichie
 - **courgette** : la table d'alias vise la purée, même défaut que pomme / haricots verts (signalé dans
   `tools/alias.py`, laissé à FS-03).
 
-## 7. Le contrat des lots suivants (⛔ FS-04 → FS-07 non construits)
+## 7. Le contrat des lots suivants (⛔ FS-05 → FS-07 non construits)
 
 | Lot | Contenu | Ce que FS-01 → FS-03 lui laissent |
 |---|---|---|
 | **FS-01** ✅ | pipeline canonique, résolveur déterministe, explicite prioritaire, alias avant le 1ᵉʳ affichage | — |
 | **FS-02** ✅ | taxonomie des formes (§9) | — |
 | **FS-03** ✅ | préférences génériques conservatrices (§10) | — |
-| **FS-04** | affichage explicite de la forme dans l'interface | `_fsFormesDuTexte(nom)` rend les formes d'un aliment ; les ambiguïtés assumées (curry, viandes, riz sec) sont les premières candidates à une forme VISIBLE plutôt qu'à une préférence |
-| **FS-05** | corpus de ~100–150 requêtes courantes | les bancs `food_semantics` / `food_formes` / `food_prefs` et les différentiels (avec ET sans alias) |
-| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `tools/mut_food_formes.py` · `tools/mut_food_prefs.py` |
-| **FS-07** | passe complète + publication | — |
+| **FS-04** ✅ | affichage de la forme dans les résultats (§11) | — |
+| **FS-05** | corpus de ~100–150 requêtes courantes | les bancs `food_semantics` / `food_formes` / `food_prefs` / `food_affichage` et les différentiels (avec ET sans alias, résultats entiers et valeurs) |
+| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` |
+| **FS-07** | passe complète + publication | ⚠️ **le contrôle sur iPhone du badge de forme (RENDU-IOS-01, T4 manuel)** : le conteneur n'a que Chromium (WebKit absent, vérifié le 03/10) |
 
 **Les invariants à garder dans tous les lots** : même entrée = même ordre (les témoins de déterminisme mélangent la
 base 4 fois) · **jamais l'ordre du fichier** (D-036) · une forme nommée gagne toujours · un seul rendu quand CIQUAL et
@@ -278,3 +278,64 @@ seuls les trois défauts prouvés sont migrés, dans `tools/alias.py` avec leur 
 sur 2 519 génériques (les 6 alias migrés), **0** sur 974 explicites, 0 vide ; **hors ligne** : 20 sur 2 520 génériques
 (17 pâtes et formes de pâtes → cuites, 2 haricots verts → cuit, riz → cuit, et carbonara → le plat), **0** explicite,
 0 vide.
+
+## 11. FS-04 — la forme affichée dans les résultats (03/10/2026, checkpoint non publié)
+
+**Un lot d'affichage, rien d'autre.** La forme affichée est une **projection** de la taxonomie FS-02
+(`_fsFormesDuTexte`) : aucune 2ᵉ taxonomie, aucune modification du classement (FS-01 → FS-03), des alias, de la
+recherche ni des valeurs. Le classement ne lit rien de l'affichage (vérifié par témoin de source).
+
+**Le rendu** : chaque résultat CIQUAL de la recherche d'aliments porte, en tête de sa **ligne de détail** (celle des
+kcal, jamais tronquée), un petit libellé texte — `Cuit` · `155 kcal/100 g · P 3,3 · …`. Le nom, lui, est tronqué
+sur une ligne ; la forme ne l'est jamais. Style `.af-forme` (`style.css`) : petit, couleur de texte secondaire,
+bordure fine — **du texte, jamais une couleur seule**. Pas de popup, pas de texte explicatif.
+⚠️ Périmètre : la liste **CIQUAL** seulement (la source de Food Semantics) — « déjà noté par toi », fast-food et Open
+Food Facts sont inchangés.
+
+**Le mapping (12 formes FS-02 → libellés)** :
+
+| Forme | Libellé | Forme | Libellé |
+|---|---|---|---|
+| `cru` | Cru | `puree` | Purée |
+| `cuit` | Cuit | `sauce` | Sauce |
+| `seche` | Sec / séché | `prepare` | Préparé |
+| `poudre` | Poudre / moulu | `partie` | Blanc ou jaune d'œuf |
+| `feuille` | Feuilles | `surgele` | Surgelé |
+| `boisson` | Boisson | `conserve` | Conserve |
+
+Libellés au masculin : la forme est un ÉTAT, pas un accord (« Pomme, chair et peau, crue » → `Cru`). `Sec / séché`
+dit honnêtement que CIQUAL ne distingue pas les deux (§9).
+
+**Aucune forme reconnue → rien.** 1 298 aliments sur 3 341 ; aucun libellé « standard », « brut » ou « inconnu » —
+*l'absence de forme n'est pas un défaut*.
+
+**Plusieurs formes (253 aliments) — inventaire réel, puis deux règles et un plafond** :
+
+| Combinaison (nb) | Exemple | Affiché |
+|---|---|---|
+| sauce + préparé (64) | Sauce tartare, préemballée | Sauce |
+| cuit + préparé (43) | Paupiette de veau, préemballée, rôtie/cuite au four | Cuit |
+| cru + surgelé (33) | Haricot vert, surgelé, cru | Cru · Surgelé |
+| cru + préparé (17) | Boulettes au porc et au boeuf, préemballées, crues | Cru |
+| boisson + préparé (14) | Boisson à l'amande, …, préemballée | Boisson |
+| cuit + surgelé (14) | Haricot vert, surgelé, cuit | Cuit · Surgelé |
+| cuit + sec (10) | Pâtes sèches, standard, cuites | Cuit |
+| purée + préparé (9) | Aligot (purée de pomme de terre…), préemballé | Purée |
+| cru + sec (8) | Pâtes sèches, standard, crues | Cru |
+| 3 formes ou plus (8) | Meloukhia, feuilles de corète séchées, en poudre | Poudre / moulu · Feuilles |
+
+① « **sec** » à côté de cru / cuit dit le TYPE de produit, pas l'état — retiré (18 aliments) ; ② « **préparé** » à côté
+d'une autre forme n'ajoute rien — retiré (il reste seul sur les plats préparés : « Crêpe, nature, préemballée ») ;
+③ **2 libellés au plus**, dans un ordre fixe : ce que l'aliment EST (boisson, sauce, poudre, purée, feuilles, partie)
+avant son état (cru, cuit, sec) avant son conditionnement (surgelé, conserve), « préparé » en dernier.
+⚠️ Limite : « Poêlée de légumes … grillée …, surgelée, crue » affiche `Cru · Cuit` (« grillée » est dans le nom du
+plat) — 1 aliment, laissé tel quel plutôt qu'une règle de plus.
+
+**En ligne / hors ligne** : le libellé ne dépend que du NOM de l'aliment, donc un même aliment s'affiche pareil dans
+les deux cas. ⚠️ **La limite connue de FS-03 reste VISIBLE, honnêtement** : hors ligne, « raisin » rend « Raisin sec »,
+affiché `Sec / séché` ; le classement n'est pas corrigé ici (hors périmètre).
+
+**Preuves** : banc `node tools/banc_food_affichage.js` (B-CDXXXV source · B-CDXXXVI projection sur la vraie base ·
+B-CDXXXVII vraie frappe, en ligne et hors ligne, 390 et 430 px, noms longs) ; contrôle négatif
+`python3 tools/mut_food_affichage.py` ; **différentiel FS-03 → FS-04 : 0 changement** sur 2 518 requêtes génériques et
+974 explicites, en ligne et hors ligne, sur les **6 premiers résultats entiers et leurs valeurs** (kcal, P, G, L).
