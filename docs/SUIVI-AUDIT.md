@@ -479,3 +479,8 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - 🟤 **Couverture restante pour FS-06** (§12.1) : laitiers, multi-formes, explicites, hors ligne peu couverts ; fautes de
   frappe, marques, repas en une phrase, quantités absents.
 - D-041 (Claude, PROPOSÉ).
+- 🟤 **Complément (03/10) : le corpus ne couvre que CIQUAL.** Sources réellement branchées (code courant) : journal
+  personnel · fast-food `marques.json` (123 produits, affiché AU-DESSUS de CIQUAL) · CIQUAL + alias (plats étrangers
+  inclus, non couverts) · Open Food Facts (réseau, 0 cas, injoignable ici). ⇒ **micro-lot FS-05B, corpus multi-source,
+  avant FS-06** (`docs/FOOD-SEMANTICS.md` §12.2). Mesuré, non corrigé : « poulet » → 4 KFC Tenders avant le poulet
+  CIQUAL ; « oeuf » → « Qarré bœuf » ; tacos, naan, ramen, whey, barre protéinée → rien en local.

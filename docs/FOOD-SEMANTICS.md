@@ -138,6 +138,7 @@ ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichie
 | **FS-03** ✅ | préférences génériques conservatrices (§10) | — |
 | **FS-04** ✅ | affichage de la forme dans les résultats (§11) | — |
 | **FS-05** ✅ | corpus de référence des recherches (§12) | — |
+| **FS-05B** | corpus **multi-source** (fast-food, plats étrangers, Open Food Facts figé, ordre des sections) — §12.2 | le banc `food_reference` (même format de cas) |
 | **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` · `mut_food_reference.py` ; **la couverture restante du corpus (§12.1)** |
 | **FS-07** | passe complète + publication | ⚠️ **le contrôle sur iPhone du badge de forme (RENDU-IOS-01, T4 manuel)** : le conteneur n'a que Chromium (WebKit absent, vérifié le 03/10) |
 
@@ -423,3 +424,50 @@ quantités dans la requête (« 200 g de riz ») · les requêtes très courtes 
 crue » dont le 2ᵉ résultat est une pomme de terre crue · « lait d'amande » hors ligne → une boisson chocolatée ·
 whey / barre protéinée → aucun résultat CIQUAL · quinoa, boulgour, brocoli, épinards, carotte, aubergine hors ligne
 → la forme crue en tête (cohérent avec « pas de cuit > cru universel », mais à confirmer par Michel).
+
+### 12.2 COMPLÉMENT (03/10) — les sources réellement recherchables : le corpus FS-05 ne couvre QUE CIQUAL
+
+**Relevé dans le code courant (`app.js`, `index.html`), pas dans les anciens documents.** L'écran « Ajouter un aliment »
+interroge, à chaque frappe de 2 lettres et plus (`_afSuggInput`), **quatre sources**, rendues dans cet ordre par
+`_afSuggRendu` :
+
+| # | Source (section affichée) | Données | Hors ligne ? | Dans le corpus FS-05 ? |
+|---|---|---|---|---|
+| ① | **Son propre journal** (« DÉJÀ NOTÉ PAR TOI ») — `_afSuggLocales`, `S.foodLog` | personnelles | oui | ⛔ non — exclu exprès (aucun historique, consigne FS-05) |
+| ② | **Fast-food** (« FAST-FOOD (SOURCES OFFICIELLES) ») — `_marquesChercher`, `data/marques.json` + `MARQUE_ALIAS` | **123 produits, 5 enseignes** : Quick 95 · Burger King 10 · KFC 10 · McDonald's 6 · Domino's 2 ; 4 lignes au plus, **affichées AU-DESSUS de CIQUAL** | oui (fichier local) | ⛔ **0 cas** |
+| ③ | **CIQUAL + table d'alias** (« ALIMENTS (CIQUAL · ANSES) ») — `_ciqualChercher`, `data/ciqual.json`, `data/alias.json` | 3 484 entrées (3 341 exploitables), dont les **plats étrangers** (sushi, nem, couscous, kebab, burrito, tajine, falafel, houmous, paëlla…) — il n'existe **aucune** source « plats du monde » séparée | oui (fichiers locaux ; si la table d'alias n'a pas pu se charger, la recherche sort sans elle — c'est le mode « hors ligne » du corpus) | ✅ **145 cas** — mais **aucun plat étranger** sauf « curry » |
+| ④ | **Open Food Facts** (« PRODUITS DE MARQUE ») — `_offRechercher`, `world.openfoodfacts.org/cgi/search.pl`, après une pause de frappe, 3 lettres et plus | produits de marque (seule source pour whey, barres, skyr de marque…) | ⛔ non (réseau) | ⛔ **0 cas** — et **injoignable depuis le conteneur** (mesuré : `CONNECT tunnel failed, response 403`) : il faudra des **réponses figées** |
+
+**Hors de la recherche texte (même écran, non concernés par un corpus de requêtes, listés pour ne pas les oublier)** :
+le **code-barres** (`scanBarcode` en capture + saisie des chiffres `_manualBarcode` → `_offFetchProduct`, réseau ;
+⚠️ le bouton caméra EST présent dans le code — décision de Michel du 17/09, écrite dans `index.html` ; la phrase de
+`CLAUDE.md` « le scanner caméra n'a pas de bouton » est **périmée**) · le **secours IA** du code-barres
+(`scanBarcodeIA`) · la **lecture d'étiquette** (`readFoodLabel`, action `foodLabel`) et l'**estimation IA**
+(`estimateFoodAI`, action `estimateFood`) — appels IA, hors FS (0 IA) · « **Mes aliments** » (`S.savedFoods`), une
+liste de favoris repliée dès qu'on tape, pas une source de recherche · **Compl'Alim** (`data/complalim.json`), une
+recherche **séparée** dans l'écran Suppléments, identification seulement, **aucune valeur nutritionnelle**.
+
+**Ce que la mesure a montré (03/10, vraie page, lecture seule — rien n'est corrigé)** :
+- ⚠️ **Le fast-food passe devant CIQUAL même pour une requête générique** : « poulet » → 4 lignes KFC Tenders
+  au-dessus du poulet CIQUAL ; « salade » → 4 salades Quick ; « fromage » et « pates » → des pizzas Domino's (« pâte
+  fine ») ; « burger », « frites », « wrap », « coca » → fast-food en tête. Le commentaire du code assume l'ordre
+  (« le nom tapé est déjà une marque ») ET plafonne à 4 lignes pour « poulet » : **à trancher par Michel**, pas ici.
+- ⚠️ **Faux rapprochements fast-food** : « oeuf » → « Quick · Qarré bœuf » (« bœuf » contient « oeuf ») ; « nem »
+  → « Quick · Cup Kiri » et « Grande Frites ».
+- **Aucun résultat local** (CIQUAL ET fast-food vides — seul Open Food Facts, en ligne, peut répondre) : tacos · naan
+  · ramen · pad thaï · poke · bibimbap · whey · barre protéinée ; « skyr » hors ligne.
+- Hors ligne, « kebab » → « Pizza kebab, préemballée » (en ligne : le sandwich grec, par l'alias).
+
+**⇒ Micro-lot séparé proposé : FS-05B — corpus multi-source, AVANT FS-06** (même règle que FS-05 : mesurer et figer,
+ne rien corriger, 0 IA) :
+1. **Fast-food** : les noms de marque (big mac, whopper, tenders kfc, frites mcdo…) ET les génériques qui le
+   déclenchent (poulet, salade, fromage, pâtes, burger, frites, coca, oeuf, nem), avec l'**ordre des sections**
+   (fast-food ↔ CIQUAL) comme propriété contrôlée ; les faux rapprochements ci-dessus en KNOWN_LIMITATION.
+2. **Plats étrangers** (via CIQUAL + alias) : sushi, nem, couscous, kebab, burrito, tajine, falafel, houmous, paëlla,
+   curry de poulet, en ligne et hors ligne ; les absents (tacos, naan, ramen, pad thaï, poke, bibimbap) en limite.
+3. **Open Food Facts** : réponses **figées** (fichiers de réponse rejoués dans le navigateur de test, le réseau
+   réel étant bloqué ici) pour contrôler la fusion — section après CIQUAL, filtre « nom + kcal », 6 au plus, échec
+   réseau non bloquant ; les requêtes « seulement OFF » (whey, barre protéinée, skyr de marque).
+4. **Inter-sources** : le rendu unique quand plusieurs sources répondent, le cas « tout vide » (`_signalerRechercheVide`).
+5. Hors FS-05B, à garder en tête : le journal personnel (exclu par principe tant qu'aucune décision ne l'inclut), le
+   code-barres et les chemins IA (pas des requêtes texte).
