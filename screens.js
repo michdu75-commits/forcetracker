@@ -2233,7 +2233,12 @@ function _calSessMix(s){
   // ⚠️ la clé doit tenir compte de TOUS les exercices : deux séances du même jour avec
   // le même nombre d'exos et le même premier exo partageraient sinon la même couleur
   // (trouvé par CAL-003 : « Squat + DC + Rowing » héritait de la couleur de « Squat + Presse + Leg Curl »).
-  const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');
+  // ⛔ ET L'ÉTAT « AU MOINS UNE SÉRIE VALIDÉE » DE CHAQUE EXERCICE (NUT-PUNCH-01, 03/10/2026) :
+  // `_mscScores` ignore un exercice sans série faite. Mesuré sur master : la séance ouverte, lue
+  // AVANT la 1ʳᵉ série validée, était mise en cache « région inconnue » — et la clé ne changeant
+  // pas, ni la série validée, ni la fin de séance ne corrigeaient la région du cycle des macros ni la
+  // couleur du calendrier avant un rechargement. Même prédicat que `_mscScores`, rien de plus.
+  const key=s.date+'|'+(s.exs||[]).map(e=>((e&&e.name)||'')+'#'+(((e&&e.sets)||[]).some(x=>x&&x.done)?1:0)).join('~');
   if(key in _calColorCache)return _calColorCache[key];
   let mix=null;
   try{

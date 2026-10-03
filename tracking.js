@@ -2615,15 +2615,22 @@ function skipGap(field){
 const _FREQ_RANGE={'1':[1,2],'3':[3,3],'4':[4,4],'5':[5,99]};       // déclaré → nb de séances/sem
 function _freqBucketOf(n){return n<=2?'1':n===3?'3':n===4?'4':'5';}
 function _freqBucketLabel(b){return{'1':'1 à 2 fois','3':'3 fois','4':'4 fois','5':'5 fois ou plus'}[b]||b;}
-function _weeklyCounts(nWeeks){
+/* `parJour` (NUT-PUNCH-01, 03/10/2026) : compte les JOURS de séance au lieu des séances. ⛔ Lu par le
+   SEUL cycle séance / repos des macros (`cycleGlucides`), qui échange entre JOURS. Sans lui — tous les
+   autres appels — rien ne change : c'est la fréquence (tuile, niveau d'activité, carte de Milo). */
+function _weeklyCounts(nWeeks,parJour){
   const counts=new Array(nWeeks).fill(0);
+  const vus=parJour?{}:null;
   const now=new Date(today()+'T12:00:00');
   (S.sessions||[]).forEach(s=>{
     const ds=s&&(s.date||(s.ts?dayOfTs(s.ts):null)); // jour LOCAL du ts (une séance de 00 h 30 est d'aujourd'hui)
     if(!ds)return;
     const d=new Date(ds+'T12:00:00'); if(isNaN(d))return;
     const wk=Math.floor((now-d)/864e5/7);
-    if(wk>=0&&wk<nWeeks)counts[wk]++;
+    if(wk>=0&&wk<nWeeks){
+      if(vus){ if(vus[ds])return; vus[ds]=1; }
+      counts[wk]++;
+    }
   });
   return counts; // [semaine 0 = 7 derniers jours, 1, 2, 3]
 }

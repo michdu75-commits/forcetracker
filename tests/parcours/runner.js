@@ -39645,6 +39645,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      négatifs durée / volume / méthode / discipline / niveau, 5 observations nommées jamais rouges).
      Bloc B-NP01-A, contrôle négatif `tools/mut_nut_punch01.py`. */
   await require('./nut_punch01.js').contrat(t, b, PORT);
+  /* Bloc B-NP01-B : cycle compté en JOURS (lui seul), cache de région avec l'état des séries,
+     région du jour annoncé = jour de séance typique, écran Séance vide ≠ séance en cours. */
+  await require('./nut_punch01.js').cycle(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40535,6 +40538,7 @@ require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
 require('./nut_punch01.js').sourceContrat(t, ROOT, fs, path);
+require('./nut_punch01.js').sourceCycle(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

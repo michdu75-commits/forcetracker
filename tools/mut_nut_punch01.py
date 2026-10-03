@@ -7,7 +7,8 @@
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord (pour la partie du banc concernee).
 [!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE (conduit dans la page) rougit.
      Un rouge des seuls temoins de SOURCE (« B-NP01-x source ») ne suffit pas.
-  MA* = contrat Seance -> Nutrition (B-NP01-A) · [negatif] = commentaire seul (doit rester vert)
+  MA* = contrat Seance -> Nutrition (B-NP01-A) · MB* = cycle / cache / annonce / ecran vide (B-NP01-B)
+  · EQ* = equivalentes (temoins EXECUTES verts ; seul le temoin de source, qui fige le texte, rougit) · [negatif] = commentaire seul (doit rester vert)
 Usage : python3 tools/mut_nut_punch01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
 import os, re, shutil, subprocess, sys, tempfile
@@ -43,6 +44,30 @@ MUT = [
      [(ST, ENCOURS, "")], 'GARDE', 'contrat'),
     ('MA9 une annonce n\'est jamais honoree par la seance faite',
      [(ST, HONORE, "")], 'GARDE', 'contrat'),
+    # ── B-NP01-B : cycle en jours, cache de region, jour annonce, ecran Seance vide ──
+    ('MB1 le cycle recompte des SEANCES (retour de f = 8 / f = 6)',
+     [(ST, "    const wk=_weeklyCounts(4,true);\n", "    const wk=_weeklyCounts(4);\n")], 'GARDE', 'cycle'),
+    ('MB2 la region moyenne redevient une moyenne PAR SEANCE',
+     [(ST, "    const facteurs=Object.keys(parJour).map(k=>_facteurRegion(parJour[k]));\n",
+       "    const facteurs=(S.sessions||[]).filter(s=>{if(!s||!s.date)return false;const d=Math.round((new Date(t+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);return d>=0&&d<28;}).map(_facteurRegion);\n")], 'GARDE', 'cycle'),
+    ('MB3 la cle du cache de region ignore l\'etat des series',
+     [(SC, "+'#'+(((e&&e.sets)||[]).some(x=>x&&x.done)?1:0)).join('~');", ").join('~');")], 'GARDE', 'cycle'),
+    ('MB4 « en cours » relit S.wkt brut (ecran Seance vide = seance)',
+     [(ST, "    if(S.wkt && S.wkt.date===t && ouverte) return", "    if(S.wkt && S.wkt.date===t) return")], 'GARDE', 'cycle'),
+    ('MB5 le jour annonce reprend le facteur 1',
+     [(ST, "    let rJour=rMoy;\n    if(js.seance){", "    let rJour=js.seance?1:rMoy;\n    if(js.seance&&faiteJ){")], 'GARDE', 'cycle'),
+    ('MB6 la tuile « 7 derniers jours » compte des jours',
+     [(SC, "_weeklyCounts(1)[0]:null;", "_weeklyCounts(1,true)[0]:null;")], 'GARDE', 'cycle'),
+    ('MB7 la proposition de niveau d\'activite compte des jours',
+     [(ST, "    const wk=_weeklyCounts(4);\n", "    const wk=_weeklyCounts(4,true);\n")], 'GARDE', 'cycle'),
+    ('MB8 la carte de frequence de Milo compte des jours',
+     [(TR, "    const wk=_weeklyCounts(4);\n", "    const wk=_weeklyCounts(4,true);\n")], 'GARDE', 'cycle'),
+    ('MB9 [deguisee] le jour annonce devine la region depuis son libelle',
+     [(ST, "    let rJour=rMoy;\n", "    let rJour=(js.source==='annoncee'&&/jambe/i.test((S.nextPlanned||{}).label||''))?_CYCLE_REGION.bas:rMoy;\n")], 'GARDE', 'cycle'),
+    ('MB10 [deguisee] un jour compte une fois mais la region du jour = la PREMIERE seance du jour',
+     [(ST, "      if(!s||!s.date||parJour[s.date]) return;\n", "      if(!s||!s.date) return;\n")], 'GARDE', 'cycle'),
+    ('EQB1 [equivalente] la cle porte le NOMBRE de series validees (plus fine, meme resultat)',
+     [(SC, "+'#'+(((e&&e.sets)||[]).some(x=>x&&x.done)?1:0)).join('~');", "+'#'+(((e&&e.sets)||[]).filter(x=>x&&x.done).length?1:0)).join('~');")], 'SOURCE', 'cycle'),
     ('[negatif] commentaire citant la duree et le volume dans calcTDEE',
      [(ST, TDEE, "  // (duree, volume, methode : jamais dans la depense)\n" + TDEE)], 'OK', 'contrat'),
 ]

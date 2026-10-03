@@ -2122,7 +2122,15 @@ function cycleGlucides(m, kcal){
     if(!m) return m;
     if(S.foodMode==='keto'||S.keto||S.foodMode==='lowcarb') return m;   // le % EST le régime
     if(typeof _weeklyCounts!=='function') return m;
-    const wk=_weeklyCounts(4);
+    /* ⛔⛔ LE CYCLE COMPTE DES JOURS, PAS DES SÉANCES (NUT-PUNCH-01, 03/10/2026) — et LUI SEUL.
+       Il échange des lipides contre des glucides entre JOURS : un jour de séance prend, un jour de
+       repos rend. Mesuré sur master : 4 jours × 2 séances lisaient `f = 8`, hors de ]0 ; 7[ — le
+       cycle était COUPÉ alors qu'il reste 3 jours de repos ; 3 jours × 2 séances lisaient `f = 6`,
+       et chaque jour de repos rendait 6/7 de l'amplitude au lieu de 3/7 : la semaine n'était plus
+       neutre. ⛔ `_weeklyCounts(n)` sans 2ᵉ argument reste la seule définition de la FRÉQUENCE
+       (tuile « 7 derniers jours », proposition de niveau d'activité, carte de fréquence de Milo) :
+       elle ne change pas. Le mode « jours » est une option de lecture, même casier, même date. */
+    const wk=_weeklyCounts(4,true);
     /* ⛔⛔ ON DIVISE PAR LES SEMAINES VÉCUES, PAS PAR 4 EN DUR (ft-v1098).
        Le détail et la mesure sont dans `_semainesVecues` (tracking.js) — un seul propriétaire
        de la question « depuis combien de temps cette personne est-elle là ? » (R2). */
@@ -2136,16 +2144,35 @@ function cycleGlucides(m, kcal){
     /* r̄ = facteur de région MOYEN de SES séances récentes. C'est lui qui rend la neutralité
        exacte : les jours de repos rendent la moyenne de ce que les jours de séance ont pris. */
     const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-    const recentes=(S.sessions||[]).filter(s=>{
-      if(!s||!s.date) return false;
+    /* ⭐ UN JOUR COMPTE UNE FOIS, avec la séance que `rJour` lirait ce jour-là : la PREMIÈRE de
+       `S.sessions` pour cette date (la plus récente du jour, ordre de `_trierSeances`). Avec une
+       séance par jour, c'est exactement l'ancien calcul ; avec deux, c'est ce qui garde la semaine
+       neutre maintenant que `f` compte des jours (NUT-PUNCH-01). */
+    const parJour={};
+    (S.sessions||[]).forEach(s=>{
+      if(!s||!s.date||parJour[s.date]) return;
       const d=Math.round((new Date(t+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);
-      return d>=0&&d<28;
+      if(d>=0&&d<28) parJour[s.date]=s;
     });
-    const facteurs=recentes.map(_facteurRegion);
+    const facteurs=Object.keys(parJour).map(k=>_facteurRegion(parJour[k]));
     const rMoy=facteurs.length?facteurs.reduce((a,b)=>a+b,0)/facteurs.length:1;
-    const rJour=js.seance
-      ? _facteurRegion((S.sessions||[]).find(s=>s&&s.date===t)||S.wkt||null)
-      : rMoy;
+    /* ⛔ LA RÉGION DU JOUR (NUT-PUNCH-01) : la séance FAITE → sinon la séance EN COURS si sa région
+       est connue → sinon r̄, « un jour de séance typique ». Une séance ANNONCÉE n'a pas de région, et
+       une séance ouverte sans série validée non plus (`_mscScores` ignore un exercice sans série
+       faite) : elles prenaient le facteur 1 — un jour de séance qui n'était ni le leur ni la moyenne,
+       pendant que le jour de repos annonçait pour ce même jour « un jour de séance typique » = r̄.
+       ⛔ On ne devine JAMAIS une région à partir d'un libellé d'annonce (« Jambes ») : R29.
+       ⚠️ Une séance FAITE dont la région est inconnue (exercice perso, cardio seul) garde le
+       facteur 1 : elle a eu lieu, on ne la remplace pas par une moyenne. */
+    const faiteJ=(S.sessions||[]).find(s=>s&&s.date===t);
+    let rJour=rMoy;
+    if(js.seance){
+      if(faiteJ) rJour=_facteurRegion(faiteJ);
+      else if(js.source==='encours'){
+        let reg=null; try{ reg=(typeof _calSessRegion==='function')?_calSessRegion(S.wkt):null; }catch(e){ reg=null; }
+        rJour=(reg&&_CYCLE_REGION[reg])||rMoy;
+      }
+    }
     // Amplitude, rabotée si le plancher lipidique mord un jour de séance (les deux côtés).
     let D=m.fat_g*_CYCLE_AMPLI;
     const plancher=(S.bw||0)*_CYCLE_FAT_MIN;
@@ -2822,7 +2849,16 @@ function jourSeance(){
     const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
     const faite=(S.sessions||[]).find(s=>s&&s.date===t);
     if(faite) return {seance:true, heure:_heureSeance(faite), source:'faite'};
-    if(S.wkt && S.wkt.date===t) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};
+    /* ⛔⛔ « EN COURS » SE LIT DANS LA DÉFINITION UNIQUE `_seanceOuverte` (log.js), JAMAIS DANS « S.wkt
+       EXISTE » (NUT-PUNCH-01, 03/10/2026). `renderLog()` crée un objet VIDE daté du jour dès qu'on
+       AFFICHE l'écran Séance. Mesuré sur master : regarder l'onglet Séance un jour de repos faisait
+       afficher « ⚡ Pré-entraînement » et « 💪 Post-entraînement », et passait les macros du côté
+       « séance » du cycle — puis, à la première sauvegarde, l'objet vide partait sur le disque et la
+       journée ENTIÈRE restait un « jour de séance », rechargement compris. La définition existait
+       (« ouverte ne veut pas dire S.wkt existe… une seule définition que tout le monde lit », R2) :
+       ce lecteur-ci ne la lisait pas. Repli identique à celui de `startWorkout`. */
+    const ouverte=(typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
+    if(S.wkt && S.wkt.date===t && ouverte) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};
     const pl=(typeof plannedSession==='function')?plannedSession():null;
     if(pl && pl.date===t) return {seance:true, heure:null, source:'annoncee'};
     return {seance:false, heure:null, source:'repos'};

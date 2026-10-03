@@ -1669,8 +1669,13 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     o.sansHeure=noms(getMeals(calcMacros('normal'),'normal'));
     o.pasDHeureInventee=/pré-entraînement/i.test(o.sansHeure)&&!/séance de/.test(o.sansHeure);
 
-    /* ⑤ SÉANCE EN COURS et SÉANCE ANNONCÉE comptent aussi comme un jour de séance. */
-    S.sessions=[]; S.wkt={date:today(),startHour:7,exs:[]};
+    /* ⑤ SÉANCE EN COURS et SÉANCE ANNONCÉE comptent aussi comme un jour de séance.
+       ⚠️ NUT-PUNCH-01 (03/10/2026) : la fixture était un objet VIDE `{date, startHour:7, exs:[]}` —
+       exactement ce que `renderLog()` crée en AFFICHANT l'écran Séance, et que la définition unique
+       `_seanceOuverte` (log.js) dit ne PAS être une séance. Elle encodait donc le défaut corrigé
+       (afficher l'écran Séance un jour de repos en faisait un jour de séance). L'intention du témoin
+       ne change pas : une VRAIE séance en cours (un exercice) compte, sans attendre sa fin. */
+    S.sessions=[]; S.wkt={date:today(),startHour:7,exs:[{name:'Squat Barre',sets:[{kg:100,reps:5,done:false,type:'N'}]}]};
     o.enCours=/pré-entraînement/i.test(noms(getMeals(calcMacros('normal'),'normal')));
     o.enCoursHeure=/séance de 7 h/.test(noms(getMeals(calcMacros('normal'),'normal')));
     S.wkt=null; S.nextPlanned={date:today(),label:'Haut du corps'};

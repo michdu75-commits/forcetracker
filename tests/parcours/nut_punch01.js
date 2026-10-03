@@ -291,3 +291,151 @@ module.exports.contrat = async function (t, b, PORT) {
   t('B-NP01-A observations : aucune erreur de page, aucun appel réseau pendant les calculs', O.errs.length === 0 && O.externes.length === reseauO, O.errs.concat(O.externes.slice(reseauO)).slice(0, 2).join(' | '));
   await O.cx.close();
 };
+
+/* ══════════════════════════════════════════════════════════════════════════════════════
+   ── B-NP01-B — CYCLE EN JOURS · CACHE DE RÉGION · RÉGION DU JOUR ANNONCÉ · ÉCRAN SÉANCE VIDE ──
+   Mesuré sur master ad172a87 AVANT correctif (valeurs dans les témoins) :
+   · B1 : 4 jours × 2 séances → `f = 8`, cycle COUPÉ ; 3 jours × 2 → `f = 6`, semaine NON neutre
+     (−182 g de glucides, +77 g de lipides sur 7 jours) ;
+   · B2 : la région de la séance ouverte, lue avant la 1ʳᵉ série, restait « inconnue » en cache :
+     ni la série validée ni la fin de séance ne corrigeaient le cycle ni la couleur du calendrier ;
+   · B3 : jour annoncé → facteur 1 (452 g) au lieu du « jour de séance typique » que le jour de
+     repos annonçait pour ce même jour (456 g) ;
+   · A2 : afficher l'écran Séance un jour de repos en faisait un jour de séance (repas pré/post,
+     cycle côté séance) — et après une sauvegarde, rechargement compris.
+   ══════════════════════════════════════════════════════════════════════════════════════ */
+module.exports.sourceCycle = function (t, ROOT, fs, path) {
+  console.log('\n═══ B-NP01-B. NUT-PUNCH-01 — cycle en jours, cache de région, jour annoncé (source) ═══');
+  const lire = f => _sansCommentaires(fs.readFileSync(path.join(ROOT, f), 'utf8')).replace(/\s+/g, '');
+  const ST = lire('state.js'), TR = lire('tracking.js'), SC = lire('screens.js');
+  const cyc = _corps(ST, 'cycleGlucides');
+  const appels = (src, re) => (src.match(re) || []).length;
+  t('B-NP01-B source ① SEUL le cycle lit les jours : `_weeklyCounts(4,true)` une fois, dans `cycleGlucides`, nulle part ailleurs',
+    cyc.includes('constwk=_weeklyCounts(4,true);') && appels(ST + TR + SC + lire('app.js') + lire('coach.js'), /_weeklyCounts\(\d+,true\)/g) === 1, 'lecture en jours ailleurs');
+  t('B-NP01-B source ② la tuile, la proposition de niveau et la carte de Milo lisent toujours les SÉANCES (un seul argument)',
+    SC.includes('_weeklyCounts(1)[0]') && _corps(TR, '_pendingFreqContext').includes('constwk=_weeklyCounts(4);')
+    && _corps(ST, 'ecartNiveauActivite').includes('constwk=_weeklyCounts(4);'), 'un consommateur de fréquence a basculé');
+  t('B-NP01-B source ③ la clé du cache de région porte l\'état « série validée » de chaque exercice (même prédicat que `_mscScores`)',
+    SC.includes("constkey=s.date+'|'+(s.exs||[]).map(e=>((e&&e.name)||'')+'#'+(((e&&e.sets)||[]).some(x=>x&&x.done)?1:0)).join('~');"), 'clé sans état');
+  t('B-NP01-B source ④ « en cours » se lit dans `_seanceOuverte`, jamais dans « S.wkt existe »',
+    _corps(ST, 'jourSeance').includes('if(S.wkt&&S.wkt.date===t&&ouverte)return{seance:true,heure:_heureSeance(S.wkt),source:\'encours\'};'), 'jourSeance lit S.wkt brut');
+};
+
+/* Historique mixte : lundi et vendredi jambes, mercredi haut du corps, 4 semaines avant aujourd'hui. */
+const _MIX = `__np.base({}); for(let dec=-1;dec>=-27;dec--){ const ds=__np.jour(dec), wd=new Date(ds+'T12:00:00').getDay();
+  if(wd===1||wd===5) __np.ajouter(__np.seance(ds,18,'jambes')); if(wd===3) __np.ajouter(__np.seance(ds,18,'haut')); }`;
+
+module.exports.cycle = async function (t, b, PORT) {
+  console.log('\n-- B-NP01-B. NUT-PUNCH-01 — cycle en jours, cache de région, jour annoncé, écran Séance vide (conduit) --');
+  /* ── B1 : une SEMAINE entière, jour par jour, motif fixe par jour de la semaine (aujourd'hui compris). ── */
+  const semaine = async (motif, kinds, quiz) => {
+    const o = await _ouvrir(b, PORT, '2026-10-05T21:00:00+02:00');
+    let sG = 0, sL = 0; const jours = [];
+    for (let k = 0; k < 7; k++) {
+      const tt = new Date('2026-10-05T21:00:00+02:00'); tt.setDate(tt.getDate() + k); await o.heure(tt.toISOString());
+      jours.push(await o.pg.evaluate(([motif, kinds, quiz]) => {
+        __np.base({ quiz: quiz || {} });
+        for (let dec = 0; dec >= -27; dec--) { const ds = __np.jour(dec); const wd = new Date(ds + 'T12:00:00').getDay();
+          for (let i = 0; i < (motif[wd] || 0); i++) __np.ajouter(__np.seance(ds, i ? 18 : 10, kinds[i % kinds.length])); }
+        const n = __np.nutri(); renderNutrition();
+        const e = ecartNiveauActivite(), fc = _pendingFreqContext();
+        return { js: n.js, f: n.cycle && n.cycle.freq, G: n.G, L: n.L, dG: n.cycle ? n.cycle.dCarbs : 0, dL: n.cycle ? n.cycle.dFat : 0,
+          autre: n.cycle && n.cycle.autre, tuile: document.getElementById('nu-week-sess').textContent, wk: _weeklyCounts(4),
+          ecart: e ? [e.actuel, e.suggere, e.moy] : null, fc: fc ? [fc.dir, fc.declared, fc.observed] : null };
+      }, [motif, kinds, quiz]));
+      sG += jours[k].dG || 0; sL += jours[k].dL || 0;
+    }
+    await o.cx.close();
+    return { sG, sL, j0: jours[0], j1: jours[1], errs: o.errs };
+  };
+  const det = _det;
+  const s41 = await semaine({ 1: 1, 3: 1, 5: 1, 6: 1 }, ['jambes']);
+  t('B-NP01-B B1 ⭐ TÉMOIN DE CONTRÔLE 4 jours × 1 séance : IDENTIQUE à master (f 4 · séance 450 / 74 · repos 376 / 107 · semaine −5 / +1)',
+    s41.j0.f === 4 && s41.j0.G === 450 && s41.j0.L === 74 && s41.j1.G === 376 && s41.j1.L === 107 && s41.sG === -5 && s41.sL === 1, det([s41.j0, s41.j1, s41.sG, s41.sL]));
+  const s42 = await semaine({ 1: 2, 3: 2, 5: 2, 6: 2 }, ['haut', 'jambes'], { freq: '4' });
+  t('B-NP01-B B1 ⭐⭐ 4 jours × 2 séances : le cycle n\'est plus COUPÉ (master : f = 8, aucun cycle) — f = 4, mêmes valeurs que 4 × 1 jambes',
+    s42.j0.f === 4 && s42.j0.G === 450 && s42.j0.L === 74 && s42.j1.G === 376 && s42.j1.L === 107 && s42.sG === -5 && s42.sL === 1, det([s42.j0, s42.j1, s42.sG]));
+  t('B-NP01-B B1 ⛔ … et ce qui lit des SÉANCES ne bouge pas : tuile « 8 séances », compteur [8,8,8,8], proposition 1,55 → 1,725 (moy. 8), carte de Milo « up »',
+    s42.j0.tuile === '8 séances' && det(s42.j0.wk) === '[8,8,8,8]' && det(s42.j0.ecart) === '[1.55,1.725,8]' && det(s42.j0.fc) === '["up","4","5"]', det([s42.j0.tuile, s42.j0.wk, s42.j0.ecart, s42.j0.fc]));
+  const s32 = await semaine({ 1: 2, 3: 2, 5: 2 }, ['haut', 'jambes']);
+  t('B-NP01-B B1 ⛔⛔ 3 jours × 2 séances : la SEMAINE est neutre (master : −182 g de glucides / +77 g de lipides) — f = 3, ±1 g par jour d\'arrondi',
+    s32.j0.f === 3 && Math.abs(s32.sG) <= 7 && Math.abs(s32.sL) <= 7, det({ f: s32.j0.f, sG: s32.sG, sL: s32.sL }));
+  t('B-NP01-B B1 ⭐ 3 × 2 : chaque jour de séance prend la région de SA dernière séance (jambes), comme 3 × 1 jambes (461 / 69 · repos 387 / 102)',
+    s32.j0.G === 461 && s32.j0.L === 69 && s32.j1.G === 387 && s32.j1.L === 102, det([s32.j0, s32.j1]));
+  t('B-NP01-B B1 ⛔ 3 × 2 : la tuile dit toujours « 6 séances », le compteur [6,6,6,6], la proposition 1,55 → 1,725 (moy. 6)',
+    s32.j0.tuile === '6 séances' && det(s32.j0.wk) === '[6,6,6,6]' && det(s32.j0.ecart) === '[1.55,1.725,6]', det([s32.j0.tuile, s32.j0.wk, s32.j0.ecart]));
+  t('B-NP01-B B1 aucune erreur de page', !s41.errs.length && !s42.errs.length && !s32.errs.length, s41.errs.concat(s42.errs, s32.errs).slice(0, 2).join(' | '));
+
+  /* ── A2 : un jour de repos, on AFFICHE l'écran Séance sans rien démarrer. ── */
+  const A = await _ouvrir(b, PORT, '2026-10-03T09:00:00+02:00');
+  await A.pg.evaluate(new Function(_MIX + 'persist();'));
+  const lireA = () => A.pg.evaluate(() => { const n = __np.nutri(); return { js: n.js, cyc: n.cycle && n.cycle.jour, G: n.G, L: n.L,
+    repas: getMeals(calcMacros('charge'), 'charge').map(m => m.name).join(' | ') }; });
+  const a0 = await lireA();
+  await A.pg.evaluate(() => goScreen('log', document.getElementById('nb-log'))); await A.pg.waitForTimeout(300);
+  const a1 = await lireA();
+  await A.pg.evaluate(() => persist()); await A.recharger();
+  const a2 = await lireA();
+  const sansSeance = x => x.js === 'repos' && x.cyc === 'repos' && x.G === 390 && x.L === 100 && !/entraînement/.test(x.repas);
+  t('B-NP01-B A2 ⭐⭐ jour de repos, écran Séance AFFICHÉ sans rien démarrer : toujours un jour de REPOS (master : « en cours », 452 / 73, repas pré/post)',
+    sansSeance(a0) && sansSeance(a1), det([a0, a1]));
+  t('B-NP01-B A2 ⛔⛔ … et après une sauvegarde puis un vrai rechargement (master : toute la journée restait un jour de séance)',
+    sansSeance(a2), det(a2));
+  await A.pg.evaluate(() => { startWorkout(); });
+  const a3 = await lireA();
+  await A.pg.evaluate(() => { S.wkt.cardioAvant = { type: 'elliptique', intensity: 'modere', duration: 10 }; });
+  const a4 = await lireA();
+  await A.pg.evaluate(() => { delete S.wkt.cardioAvant; S.wkt.exs.push({ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, done: false, type: 'N' }] }); });
+  const a5 = await lireA();
+  t('B-NP01-B A2 ⭐ la définition unique, appliquée telle quelle : « Démarrer » sans rien → pas encore une séance ; un cardio noté OU un exercice → « en cours »',
+    a3.js === 'repos' && a4.js === 'encours' && a5.js === 'encours' && /Pré-entraînement/.test(a5.repas), det([a3.js, a4.js, a5.js]));
+  t('B-NP01-B A2 aucune erreur de page', A.errs.length === 0, A.errs.slice(0, 2).join(' | '));
+  await A.cx.close();
+
+  /* ── B3 + B2 : samedi, historique mixte (r̄ = 1,1). ── */
+  const X = await _ouvrir(b, PORT, '2026-10-03T17:50:00+02:00');
+  await X.pg.evaluate(new Function(_MIX + 'persist();'));
+  const lireX = () => X.pg.evaluate(() => { const n = __np.nutri(); return { js: n.js, reg: n.cycle && n.cycle.region, G: n.G, L: n.L, autre: n.cycle && n.cycle.autre }; });
+  const repos = await lireX();
+  await X.pg.evaluate(() => { S.nextPlanned = { date: today(), label: 'Jambes' }; });
+  const annJ = await lireX();
+  await X.pg.evaluate(() => { S.nextPlanned = { date: today(), label: 'Haut du corps' }; });
+  const annH = await lireX();
+  t('B-NP01-B B3 ⭐⭐ jour ANNONCÉ : exactement le « jour de séance typique » que le jour de repos annonçait (456 / 71, région r̄ = 1,1 — master : facteur 1, 452 / 73)',
+    repos.js === 'repos' && repos.autre && repos.autre.carbs_g === 456 && repos.autre.fat_g === 71
+    && annJ.js === 'annoncee' && annJ.reg === 1.1 && annJ.G === repos.autre.carbs_g && annJ.L === repos.autre.fat_g, det([repos.autre, annJ]));
+  t('B-NP01-B B3 ⛔ on ne devine RIEN du libellé : « Jambes » et « Haut du corps » donnent la même chose',
+    annH.reg === annJ.reg && annH.G === annJ.G && annH.L === annJ.L, det([annJ, annH]));
+  await X.pg.evaluate(() => { startWorkout();
+    S.wkt.exs.push({ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, done: false, type: 'N' }, { kg: 100, reps: 5, done: false, type: 'N' }] });
+    S.wkt.exs.push({ name: 'Press Jambes 45°', sets: [{ kg: 160, reps: 10, done: false, type: 'N' }] }); persist(); renderLog(); });
+  const ouv = await lireX();
+  await X.heure('2026-10-03T18:05:00+02:00');
+  await X.pg.evaluate(() => toggleSet(0, 0));
+  const s1 = await lireX();
+  await X.pg.evaluate(() => toggleSet(0, 0));
+  const s0 = await lireX();
+  t('B-NP01-B B3 séance ouverte, AUCUNE série validée : région inconnue → le jour de séance typique (r̄ 1,1 · 456 / 71), comme l\'annonce',
+    ouv.js === 'encours' && ouv.reg === 1.1 && ouv.G === 456 && ouv.L === 71, det(ouv));
+  t('B-NP01-B B2 ⭐⭐ 1ʳᵉ série de jambes validée, MÊME PAGE : la région passe à « bas » (1,25 · 461 / 69) — master : restait 1 en cache',
+    s1.reg === 1.25 && s1.G === 461 && s1.L === 69, det(s1));
+  t('B-NP01-B B2 ⭐ série dévalidée, même page : retour à « inconnue » → r̄ (456 / 71) — l\'état compte dans les deux sens',
+    s0.reg === 1.1 && s0.G === 456 && s0.L === 71, det(s0));
+  await X.pg.evaluate(() => { toggleSet(0, 0); toggleSet(0, 1); toggleSet(1, 0); });
+  await X.heure('2026-10-03T19:00:00+02:00');
+  const fin = await X.pg.evaluate(async () => { await finishWorkout(); _renderHomeCalendar();
+    const h = (document.getElementById('home-secondary') || {}).innerHTML || ''; const n = __np.nutri();
+    return { region: _calSessRegion(S.sessions[0]), couleur: _calSessColor(S.sessions[0]), barres: (h.match(/height:3px;border-radius:2px;background:var\(--purp\)/g) || []).length,
+      js: n.js, reg: n.cycle && n.cycle.region, G: n.G, L: n.L }; });
+  t('B-NP01-B B2 ⭐⭐ fin de séance, SANS recharger : région « bas », couleur du calendrier violette (4ᵉ barre de jambes du mois) — master : inconnue, rouge par défaut, 3 barres',
+    fin.region === 'bas' && fin.couleur === 'var(--purp)' && fin.barres === 4 && fin.js === 'faite' && fin.reg === 1.25 && fin.G === 461 && fin.L === 69, det(fin));
+  t('B-NP01-B B2/B3 aucune erreur de page', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+  await X.cx.close();
+
+  /* ⛔ NON-RÉGRESSION : une séance FAITE dont la région est inconnue (cardio seul) garde le facteur 1. */
+  const C = await _ouvrir(b, PORT, '2026-10-03T19:00:00+02:00');
+  const card = await C.pg.evaluate(new Function(_MIX + `__np.ajouter(__np.seance(today(),18,'cardio')); const n=__np.nutri(); return {js:n.js, reg:n.cycle&&n.cycle.region, G:n.G, L:n.L};`));
+  t('B-NP01-B B3 ⛔ une séance FAITE de région inconnue (cardio seul) garde le facteur 1 (452 / 73), comme master : elle a eu lieu, on ne la remplace pas par une moyenne',
+    card.js === 'faite' && card.reg === 1 && card.G === 452 && card.L === 73, det(card));
+  await C.cx.close();
+};
