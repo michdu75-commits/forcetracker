@@ -3289,3 +3289,48 @@ une règle en g/kg (l'ancienne, ou une autre) au lieu de dire « 25 % de ta cibl
 réponse qui cite un g/kg de lipides) — candidat banc **R34**, 0 appel autorisé. ⚠️ Corollaire : 130 kg en perte et
 décharge passe de 0 g à 37 g de glucides — Milo, qui lisait « CIBLE INCOMPATIBLE » pour ce profil, ne la lit plus.
 État : **à trier**.
+
+### 🟡 SESSION-MILO-E2E-01 — LE PARCOURS RÉEL DU 03/10 : SÉANCE / REMPLACEMENT / DÉBRIEF (03/10/2026 — audit forensique, DIAGNOSTIC SEULEMENT)
+Retour terrain de Michel du 03/10 (Drive, JOURNAL DE SUIVI), audité en local sur master `ad172a87` (`ft-v1249`) par
+SESSION-MILO-E2E-01. **0 appel IA réel** (Milo simulé). **Aucune correction n'existe.** Synthèse compacte :
+`docs/SESSION-MILO-E2E-01.md` ; rapport complet sur Drive. ⚠️ *Consigné ici le 03/10 au soir par DOC-SYNC-03OCT, et
+non pendant l'audit (qui interdisait tout commit) : écart à la règle #12, dit tel quel.* Chaque ligne porte son niveau
+de preuve — **ne jamais en faire monter un d'un cran sans nouvelle preuve.**
+- **Remplacement d'exercice — CAUSE RACINE DÉMONTRÉE, P0.** `_replaceExInWorkout` (log.js) change essentiellement le
+  **nom** et garde les séries et plusieurs autres champs (`_milo`, note, groupe). Reproduit : Presse 200/240/240/240 →
+  Rowing Hammer → **mêmes séries** → Shoulder Press → **mêmes séries** (« précédent » et repos suivent le nouveau nom).
+  Validé sans corriger : 240×10 enregistré, record 240 kg ⇒ séance, volume, PR, historique, Progrès et contexte de Milo
+  contaminés. Vérifiable par du code : ✅. ⚠️ Le comportement « garder les séries » vient de ft-v296 (correction d'un
+  mauvais choix) et est **figé par un témoin** : décision de Michel requise avant correction. État : **prête**.
+- **Première occurrence = record — CAUSE DÉMONTRÉE.** `finishWorkout` compte un record dès qu'il n'existe aucune
+  référence (`!old`). **Décision de Michel validée (D-045)** : « Première référence enregistrée » ; record seulement s'il
+  existe une référence antérieure comparable. Vérifiable par du code : ✅. État : **prête**.
+- **Débrief — échec Worker pris pour un débrief — CAUSE DÉMONTRÉE, P1.** Le Worker peut transformer un échec amont en
+  **HTTP 200** `{complete:false, reply:"Désolé, réessaie."}` ; `_runSeDebrief` ne lit que `reply`. Reproduit : débrief
+  considéré terminé · retry détruit (jeton consommé) · message rangé dans le fil · `summarizeCoach` déclenché.
+  Vérifiable par du code : ✅. État : **prête**.
+- **Débrief — affichage — CAUSE DÉMONTRÉE (localement), P1.** Le débrief réussi est enregistré dans `coachHistory` sans
+  être rendu dans l'écran Coach quand le fil était déjà affiché ; il réapparaît après rechargement **dans la
+  reproduction locale** (non vérifié sur le téléphone de Michel). **Aucun lien canonique `sessionId ↔ texte du
+  débrief`** n'existe (décision D-043). Vérifiable par du code : ✅. État : **prête**.
+- **Montée en charge — MÉCANISME CAPABLE, cas exact terrain NON DÉMONTRÉ.** `_monteeDefauts` applique des seuils fixes
+  sans expérience, RIR, %1RM ni type de séance ; le prompt impose un langage de risque très affirmatif. ⛔ Ne pas en
+  faire la cause démontrée du 65 → 80 terrain (séries réelles inconnues). ❓ Ce que Milo *dit* relève en partie du **juge
+  humain** (ton) ; l'alignement prompt ↔ calcul est vérifiable par du code. État : **à trier** (décision de Michel sur la
+  contextualisation, aucun seuil à inventer).
+- **Carte séance prématurée — REPRODUIT, comportement CONÇU.** « aujourd'hui j'ai envie de faire une petite séance de
+  sport, histoire de me remettre dedans » est reconnue comme une demande ; ft-v1053 affiche la carte même si Milo n'a
+  produit **aucune séance structurée** (par exemple une question). **Pas une régression FP-01** (FP-01 n'écarte que les
+  méta-discussions sur le bouton) — et FP-01 n'a jamais prétendu fermer ce cas. État : **à trier** (décision de Michel).
+- **Ancien J1 proposé — MÉCANISME CAPABLE, cause terrain NON DÉMONTRÉE.** Les 3 derniers programmes partent sans statut
+  actif / terminé. ⛔ Pas la cause certaine du J1 terrain. État : **à trier**.
+- **Intention → prescription — OBSERVÉ DANS LE CODE.** « Petite séance / reprise » reste du texte libre : aucune
+  contrainte structurée sur le volume, la durée, le RIR, le nombre de séries. État : **à trier** (direction future,
+  aucun seuil décidé).
+- **`summarizeCoach` — CAUSE DU DELTA D'APPELS DÉMONTRÉE ; utilité NON MESURÉE.** Il part après chaque réponse réussie
+  de Milo dès que le fil compte ≥ 4 messages, et après chaque débrief réussi. État : **à trier** (mesurer avant de
+  toucher).
+- **Nouvelle discussion — SYMPTÔME TERRAIN réel, CAUSE NON DÉMONTRÉE** (non reproduite sur le parcours). ⛔ Ne rien
+  inventer. État : **à trier**.
+- **Panneau maintenance — chantier SÉPARÉ.** Un HTTP 404 bien **reçu** s'affiche « INJOIGNABLE » ; Milo passe par un
+  autre chemin (le Worker). État : **à trier**.

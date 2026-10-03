@@ -19,6 +19,18 @@
 - **Le repas actif est clos, le chantier Nutrition ne l'est pas** (arbitrage du 20/09) : **D-011** (le choix manuel survit au changement de jour) et **D-012** (au rechargement : on observe).
 - **On ne touche pas au workflow de déploiement** (Michel, 27/08). ⚠️ Cette décision n'est écrite **que** dans `docs/JOURNAL-DE-PARTAGE.md` (ligne ⛔).
 
+## 🧭 État au 03/10/2026 soir (DOC-SYNC-03OCT) — trois niveaux à ne pas confondre
+
+- **PRODUCTION / MASTER** : `origin/master` `ad172a87` = **`ft-v1249`** (vérifié le 03/10 à 22:27 UTC). Rien de ce qui suit n'y est actif.
+- **🌿 BRANCHE NON PUBLIÉE — NUT-PUNCH-01** (coup de poing Nutrition, session-B) : **TERMINÉ SUR BRANCHE, NON PUBLIÉ, aucune version, PRÊT POUR CONTRE-VÉRIFICATION**. Branche `claude/nut-punch-01`, HEAD `50546011` (documentaire ; passe complète 5 873 ✅ / 0 ❌ sur l'arbre `b9c11776`, 4 conditions vertes ; 60 mutations conformes ; 0 appel réel). Son détail vit **sur la branche** (`docs/NUT-PUNCH-01.md`, sa ligne ici, `SUIVI-AUDIT`, `JOURNAL-DE-TEST`, `NUTRITION-MOTEUR` §5.0) : il n'est **pas** recopié sur master pour ne pas créer de doublon — ⚠️ **à la fusion, garder la ligne détaillée de la branche et retirer celle-ci.** Prochaine étape : contre-vérification indépendante, puis décision de publication de Michel.
+- **🔬 DIAGNOSTIC — SESSION-MILO-E2E-01** (audit forensique du parcours réel du 03/10) : **DIAGNOSTIC TERMINÉ, AUCUNE CORRECTION**, 0 appel IA réel. Synthèse : `docs/SESSION-MILO-E2E-01.md`.
+  - **P0** — remplacement d'exercice **hybride** (le nom change, les séries restent ; validé sans corriger, il contamine séance, PR, historique, Progrès et Milo).
+  - **P1** — faux débrief : un HTTP 200 `complete:false` « Désolé, réessaie. » est accepté comme débrief (retry détruit) · débrief enregistré mais **invisible** sans recharger et **non lié** à sa séance.
+  - **P2** — première occurrence = PR · montée en charge rigide (seuils fixes + prompt affirmatif) · carte « Cette séance te convient ? » avant toute séance complète (**conçu**, ft-v1053, pas une régression FP-01) · programme ancien envoyé sans statut actif / terminé · intention « petite séance » non structurée.
+  - **NON DÉMONTRÉS** — cause de l'échec réel du débrief à 20:01 · cause de la nouvelle discussion · cause exacte de l'ancien J1 · cas exact de la montée en charge terrain.
+  - **Décisions de Michel validées, NON implémentées** : débrief lié à la séance + action « Voir le débrief Milo » (**D-043**) · export avec / sans débriefs (**D-044**) · première référence ≠ record (**D-045**).
+  - **Aucun lot de correction ouvert** ; panneau maintenance = chantier séparé.
+
 ## 🔬 Chantier actif
 
 - **🥑 NUT-LIPIDES-25-01 — lipides des modes standards = 25 % de la cible** (02/10, session-B ; ✅ **publié en `ft-v1249`, FERMÉ**). Décision **D-035** (Michel). Protéines, cible, BMR, TDEE, kéto, low carb : 0 changement sur 59 904 profils. Cycle séance/repos conservé avec son plancher 0,6 g/kg : inactif quand ce plancher empêche le transfert (6 248 profils, comportement accepté par Michel) ; code d'affichage « jour par jour » conservé, inatteignable (dette documentée). Commit fonctionnel `bcf5926a`, passe 5 762 / 0, 146 mutations conformes, 0 appel réel.
@@ -49,7 +61,7 @@
 
 ## ⚖️ Décisions ouvertes
 
-- **Aucune dans `docs/DECISIONS.md`** : 28 entrées (D-001 → D-028), toutes `VALIDÉ` ou `REMPLACÉE` (vérifié le 26/09).
+- **Aucune ouverte dans `docs/DECISIONS.md`** : 38 entrées (D-001 → D-035, puis D-043 → D-045 — D-036 → D-042 sont pris par les branches Food Semantics **non publiées**) : 35 `VALIDÉ`, 2 `REMPLACÉE`, 1 `REFUSÉ` (vérifié le 03/10). ⚠️ D-043 → D-045 sont **validées mais non implémentées**.
 - **Hors registre — DÉCISION MICHEL EN ATTENTE** : règle d'or #11, **points 2 à 5** pour le marqueur « réponse incomplète / non confirmée » (point rouge, aide `?`, aide détaillée, Guide) — rien n'a été posé ; correction de la faille D-025 / « Mes discussions » ; **K3** — une carte séance dont la traduction revient après la réouverture d'une autre discussion s'affiche sous la dernière bulle de celle-ci (mesuré identique avant C3, aucune donnée rattachée, disparaît au rechargement ; non corrigé). MILO-SEANCE-01 : C1 publié en `ft-v1236`, C2 en `ft-v1237`, C3 en `ft-v1238`.
 - **Ouvert, vérifié hors registre** : les essais cachés derrière `window.__FT_CLONE__` (12 occurrences dans `app.js` et `coach.js`) — chaque essai reste à décider (`CLAUDE.md`).
 - **Trous connus du classement des données (R4a)** : `badges` et `dayStateLog`, déclarés transmis à Milo sans l'être (`tests/donnees/donnees-milo.json`).
@@ -73,3 +85,4 @@ Retirés de ce fichier le 24/09 sans qu'on puisse établir leur état actuel. Te
 - **Décisions** : `docs/DECISIONS.md` — **Qui travaille sur quoi** : `docs/JOURNAL-DE-PARTAGE.md`.
 - **Historique complet** : `docs/JOURNAL-ARCHIVE.md` — **Bugs par famille** : `BUGS.md`.
 - **Retours des testeurs** : `RETOURS-TESTEURS.md`.
+- **Dernier audit (03/10)** : `docs/SESSION-MILO-E2E-01.md` (synthèse) — rapport complet sur Drive.

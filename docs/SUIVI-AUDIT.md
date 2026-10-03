@@ -422,3 +422,29 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - Textes corrigés parce qu'ils décrivaient l'ancienne règle (R4, R23) : aide « ? » Nutrition, intro du réglage manuel,
   aide détaillée « Nutrition — où est quoi », description de l'objectif Force (« lipides élevés »), avertissement D-034
   (« protéines et lipides calculés sur ton poids »).
+
+## 🔬 SESSION-MILO-E2E-01 — audit forensique du parcours réel du 03/10/2026 (✅ AUDIT TERMINÉ — AUCUNE CORRECTION)
+
+> **Date** : 03/10/2026 · **Base** : master `ad172a87` (`ft-v1249`), inchangée · **Diagnostic seulement** :
+> **0 appel IA réel** (Milo simulé par interception réseau), **0 modification fonctionnelle**, 0 commit pendant l'audit.
+> Synthèse : `docs/SESSION-MILO-E2E-01.md` · rapport complet : Drive (« FORCE TRACKER — SESSION-MILO-E2E-01 — AUDIT
+> FORENSIQUE PARCOURS RÉEL 03-10-2026 ») + PDF · doutes de test : `docs/JOURNAL-DE-TEST.md`.
+> ⛔ **Aucun correctif n'existe.** État : **PRÊT POUR CORRECTIONS APRÈS DÉCISIONS MICHEL.**
+
+- **11 scénarios** exécutés : **9 reproduits entièrement**, **2 partiellement** (montée en charge 65 → 80 : règle du
+  code seulement ; nouvelle discussion : aucune création reproduite).
+- ✅ **Causes DÉMONTRÉES** : remplacement d'exercice = renommage seul, séries gardées (**P0**, contamine séance, volume,
+  PR, historique, Progrès et contexte de Milo si validé sans corriger) · un seul objet prévu / réalisé · HTTP 200
+  `complete:false` « Désolé, réessaie. » accepté comme débrief (**P1**) · débrief enregistré mais non redessiné, sans
+  lien `sessionId` (**P1**) · première occurrence = record · `summarizeCoach` après chaque réponse (fil ≥ 4) et chaque
+  débrief.
+- 🟠 **MÉCANISMES CAPABLES** : montée en charge à seuils fixes + prompt affirmatif · programmes envoyés sans statut actif /
+  terminé · aucun délai maximum sur l'appel du débrief · fil local seulement et borné.
+- ❓ **NON DÉMONTRÉS** : cause de l'échec réel du débrief à 20:01 · cause de la nouvelle discussion · cause exacte de
+  l'ancien J1 · cas exact de la montée en charge terrain.
+- ⚖️ **Comportement CONÇU, pas une régression** : carte « Cette séance te convient ? » avant toute séance structurée
+  (ft-v1053) ; FP-01 n'a jamais couvert ce cas.
+- ⚖️ **Décisions de Michel validées, non implémentées** : **D-043** (« Voir le débrief Milo », `sessionId ↔ débrief`) ·
+  **D-044** (export sans / avec débriefs) · **D-045** (première référence ≠ record).
+- 📦 **Lots proposés (aucun ouvert)** : DÉBRIEF-PERSISTANCE · REMPLACEMENT (décision Michel) · VÉRITÉ MÉTIER DANS LE
+  PAYLOAD MILO · CONVERSATION / CTA · COÛT (mesure d'abord) · panneau maintenance (**chantier séparé**).
