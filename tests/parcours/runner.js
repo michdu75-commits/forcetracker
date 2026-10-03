@@ -10186,10 +10186,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        appris » DÉCRIT ses habitudes (ft-v1021). Ni l'un ni l'autre n'est une entrée du jour.
        ⛔ On les retire donc avant de chercher — la promesse du témoin porte sur la LISTE DES
        ENTRÉES, là où un mélange de jours serait un vrai défaut. */
-    const _sansIdees = h => h
-      .replace(/Ce qu'il te reste, en vrai[\s\S]*?<\/div>\s*<\/div>/,'')
+    /* ⚠️ NUT-PUNCH-01 (03/10) : le bloc s'appelle « Il te reste aujourd'hui » et ses idées sont dans
+       un déroulant — on le retire par sa CLASSE (`.nu-reste`), plus par son ancien titre : un motif
+       sur un titre disparu ne retirerait plus rien, et les idées d'hier feraient rougir à tort. */
+    const _sansIdees = h => { const d=document.createElement('div'); d.innerHTML=h;
+        d.querySelectorAll('.nu-reste').forEach(x=>x.remove()); return d.innerHTML; };
+    const _sansIdees0 = h => h
       .replace(/Ce que l'app a appris de ton alimentation[\s\S]*?sans aucun appel à l'IA[\s\S]*?<\/div>\s*<\/div>/,'');
-    o.aujCorrect=_sansIdees(o.aujHtml).indexOf('Hier midi')<0;   // ne montre QUE les entrées du jour actif
+    o.aujCorrect=_sansIdees0(_sansIdees(o.aujHtml)).indexOf('Hier midi')<0;   // ne montre QUE les entrées du jour actif
     // La flèche « jour suivant » est désactivée sur aujourd'hui (pas de futur à montrer).
     o.flecheSuivDesactivee=/journalNav\(1\)"[^>]*disabled|disabled[^>]*onclick="journalNav\(1\)"/.test(o.aujHtml)
       || /<button disabled[^>]*>›/.test(o.aujHtml);
@@ -14059,19 +14063,24 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
     // ── à l'écran, par le vrai rendu
     goScreen('s-nutrition'); renderFoodJournal();
     const lire=()=>document.getElementById('food-journal').innerText;
-    o.ecran = /Ce qu'il te reste, en vrai/.test(lire());
+    /* ⚠️ NUT-PUNCH-01 (03/10, décision de Michel) : le bloc s'appelle « Il te reste aujourd'hui » et
+       les idées passent DERRIÈRE « Voir des idées pour compléter ». Le témoin ouvre ce déroulant
+       comme la personne le ferait, puis lit ce qu'elle voit — même promesse qu'avant. */
+    o.ecran = /Il te reste aujourd'hui/.test(lire());
+    o.fermeAuDepart = /Une idée, pas une consigne/.test(lire())===false;
+    document.querySelectorAll('#food-journal details.nu-reste-idees').forEach(d=>{d.open=true;});
     o.mention = /Une idée, pas une consigne/.test(lire());
     // ⛔ ① jour PASSÉ → rien
     _journalJour=new Date(Date.now()-864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'}); renderFoodJournal();
-    o.jourPasse = /Ce qu'il te reste/.test(lire());
+    o.jourPasse = /Il te reste aujourd'hui/.test(lire());
     // ⛔ ② cible DÉPASSÉE → rien, aucun reproche
     _journalJour=null;
     S.foodLog.push({date:t,meal:'soir',name:'Gros repas',kcal:4000,prot:300,carbs:400,fat:150,ts:Date.now()});
     renderFoodJournal();
-    o.depasse = /Ce qu'il te reste/.test(lire());
+    o.depasse = /Il te reste aujourd'hui/.test(lire());
     // ⛔ ③ AUCUN aliment à soi → rien d'inventé
     S.foodLog=[]; S.savedFoods=[]; renderFoodJournal();
-    o.sansAliments = /Ce qu'il te reste/.test(lire());
+    o.sansAliments = /Il te reste aujourd'hui/.test(lire());
     // ⛔ ④ pas de profil → pas de cible, donc pas de reste
     S.bw=0; o.sansProfil = _resteDuJour(t)===null;
     return o;
@@ -14089,7 +14098,7 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
       F.queLesSiens===true, JSON.stringify(F.textes));
     t('⛔⛔ ANTI-TCA ① rien sur un jour PASSÉ (P21)', F.jourPasse===false, '');
     t('⛔⛔ ANTI-TCA ② rien quand la cible est DÉPASSÉE — aucun reproche', F.depasse===false, '');
-    t('⛔ ANTI-TCA ③ le texte dit « une idée, pas une consigne »', F.mention===true, '');
+    t('⛔ ANTI-TCA ③ le texte dit « une idée, pas une consigne » (au dépliage — fermé au départ, NUT-PUNCH-01)', F.mention===true && F.fermeAuDepart===true, '');
     t('⛔ sans aliments à soi, on n\'invente rien', F.sansAliments===false, '');
     t('⛔ sans profil, aucune cible donc aucun reste (on ne compare pas à un objectif absent)',
       F.sansProfil===true, '');
@@ -14607,7 +14616,7 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
     o.ongletJournal=document.getElementById('nu-journal').style.display!=='none'
                  && document.getElementById('nu-macros').style.display==='none';
     /* ⛔ « ce qu'il te reste » doit AUSSI etre la dans le Journal : c'est le meme code. */
-    o.resteDansJournal=/Ce qu'il te reste/i.test(document.getElementById('food-journal').textContent||'');
+    o.resteDansJournal=/Il te reste aujourd'hui/i.test(document.getElementById('food-journal').textContent||'');   // titre depuis NUT-PUNCH-01
     /* ⛔ ET « ce que l'app a appris » ne doit PLUS y etre (deplace, pas duplique). */
     o.apprisDansJournal=/a appris de ton alimentation/i.test(document.getElementById('food-journal').textContent||'');
     switchNuTab('suppl',document.getElementById('ntab-suppl'));
@@ -14702,7 +14711,7 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
        « Ce qu'il te reste, en vrai » et rendait 2 — les DEUX etaient des COMMENTAIRES : dans le
        code, l'apostrophe est echappee (`Ce qu\\'il`), donc le motif ne touchait jamais le vrai
        rendu. *Un temoin qui compte les commentaires mesure la documentation, pas le code.* */
-    const _pat=/te reste, en vrai<\/div>/g;
+    const _pat=/Il te reste aujourd\\'hui<\/div>/g;   // titre depuis NUT-PUNCH-01 (03/10) — même balise fermante
     t('⛔ un seul constructeur pour « ce qu\'il te reste » dans screens.js',
       (sc.match(_pat)||[]).length===1, 'occurrences = '+(sc.match(_pat)||[]).length);
     t('⛔ un seul constructeur pour « ce que l\'app a appris » dans screens.js',
@@ -15479,6 +15488,9 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
     o.apprisColonne=lignes.length?Math.round(lignes[0].children[0].getBoundingClientRect().width):0;
 
     /* ── ② « ce qu'il te reste, en vrai » ────────────────────────────────── */
+    /* ⚠️ NUT-PUNCH-01 (03/10) : les idées sont repliées par défaut — un élément non dessiné mesure 0
+       et le témoin deviendrait vert en ne mesurant rien. On ouvre le déroulant, comme la personne. */
+    document.querySelectorAll('#nu-today details.nu-reste-idees').forEach(d=>{d.open=true;});
     const r=[...document.querySelectorAll('#nu-today .nu-reste-lgn')];
     o.nbReste=r.length;
     o.resteX=[...new Set(r.map(d=>Math.round(d.children[1].getBoundingClientRect().left)))];
@@ -39653,6 +39665,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* Bloc B-NP01-D : reliquats — É hors tendance de force et de son garde-fou, phase du cycle à
      minuit local, « Séance demain » en jour local (UTC+13/+14), tuile « 7 derniers jours ». */
   await require('./nut_punch01.js').reliquats(t, b, PORT);
+  /* Blocs B-NP01-E / B-NP01-F : « Tes repas habituels » par famille (vue, jamais une réécriture du
+     journal) et « Il te reste aujourd'hui » (les chiffres d'abord, les idées sur demande). */
+  await require('./nut_punch01.js').habituels(t, b, PORT);
+  await require('./nut_punch01.js').reste(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40546,6 +40562,8 @@ require('./nut_punch01.js').sourceContrat(t, ROOT, fs, path);
 require('./nut_punch01.js').sourceCycle(t, ROOT, fs, path);
 require('./nut_punch01.js').sourceRepas(t, ROOT, fs, path);
 require('./nut_punch01.js').sourceReliquats(t, ROOT, fs, path);
+require('./nut_punch01.js').sourceHabituels(t, ROOT, fs, path);
+require('./nut_punch01.js').sourceReste(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

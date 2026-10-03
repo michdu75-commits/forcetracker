@@ -3074,8 +3074,11 @@ function _bcMontrerTotal(g){
    habitude. Proposer dès la première ferait de l'écran une liste de tout ce qu'on a mangé (R24).
    ⚠️ Michel a lui-même posé la limite de cette lecture : *« ça c'est moi qui le fais, les autres
    peut-être pas »*. D'où le repli silencieux — quelqu'un qui mange différemment chaque jour ne
-   voit **rien du tout**, pas une section vide. */
-function _repasHabituels(){
+   voit **rien du tout**, pas une section vide.
+   ⭐ NUT-PUNCH-01 (03/10/2026) : cette fonction rend TOUTES les habitudes, classées, sans
+   troncature — `_repasHabituels()` (plus bas) en tire les familles et le haut de liste. ⛔ Rien
+   n'est écrit : c'est une LECTURE du journal, l'historique n'est jamais réécrit ni renommé. */
+function _repasHabituelsTous(){
   const par={}, norm=n=>String(n||'').toLowerCase().trim();
   (S.foodLog||[]).forEach(e=>{
     if(!e||!e.date||!e.name)return;
@@ -3132,8 +3135,86 @@ function _repasHabituels(){
     delete g._m;
   });
   return Object.values(parRepas)
-    .sort((a,b)=>(b.n-a.n)||b.dernier.localeCompare(a.dernier))
-    .slice(0,3);
+    .sort((a,b)=>(b.n-a.n)||b.dernier.localeCompare(a.dernier));
+}
+/* ═══ 🧩 LES FAMILLES DE REPAS HABITUELS — DÉCISION VALIDÉE DE MICHEL (03/10/2026, NUT-PUNCH-01) ═══
+   *« Le haut de liste privilégie la diversité »* : 40 shakers, 10 shaker + banane et 6 shaker +
+   banane + cannelle donnaient TROIS cartes de shaker et chassaient les autres repas de l'écran.
+   ⭐ UNE carte principale par famille très proche, les variantes derrière elle (rien n'est perdu,
+   rien n'est fusionné dans le journal : c'est une VUE, l'historique reste tel quel).
+   ⛔ LA RÈGLE DE FAMILLE, DÉTERMINISTE ET VOLONTAIREMENT ÉTROITE (pas d'IA, pas de réseau) :
+     deux habitudes sont de la même famille si les aliments de l'une sont TOUS dans l'autre
+     (même nom, casse ignorée) ET que cette base commune apporte au moins LA MOITIÉ DES
+     PROTÉINES du plus grand repas — la source de protéines est ce qui fait l'identité d'un repas
+     de sportif (repli : la moitié des calories si le repas n'a aucune protéine, puis la moitié
+     des aliments si rien n'est chiffré). « Shaker » ⊂ « shaker + banane » (97 %) : même famille.
+     « Banane » ⊂ « shaker + banane » (3 %) : non. « Riz » ⊂ « poulet + riz » (14 %) : non.
+     « Huile d'olive » ⊂ « salade + huile » (0 %) : non — ⚠️ c'est le cas qui a fait écarter la
+     part en CALORIES (mon 1ᵉʳ jet, 60 % des kcal) : l'huile y pèse 82 % des calories, et « huile
+     seule » devenait une variante de la salade. Un ingrédient mineur partagé ne fait pas une
+     famille ; deux repas qui ne s'incluent pas restent séparés (pas de rapprochement « flou »).
+     ⚠️ « La moitié » est une CONVENTION écrite ici, pas une vérité : elle se lit dans les témoins
+     B-NP01-E (HAB1 → HAB4 et leurs bornes).
+   ⛔ Les familles se forment dans l'ordre du classement (fréquence, puis récence) : la carte
+   principale est donc toujours la plus fréquente de sa famille, et une habitude rejoint la
+   PREMIÈRE famille dont un membre est sa variante. */
+const _HAB_BASE_MIN = 0.5;
+function _habVariantes(a, b){
+  const nom = e => String(e&&e.name||'').toLowerCase().trim();
+  const na = new Set((a.items||[]).map(nom).filter(Boolean)), nb = new Set((b.items||[]).map(nom).filter(Boolean));
+  if(!na.size || !nb.size) return false;
+  const [petit, grand, gr] = na.size<=nb.size ? [na, nb, b] : [nb, na, a];
+  for(const n of petit) if(!grand.has(n)) return false;
+  if(petit.size===grand.size) return true;                 // mêmes aliments, quantités différentes
+  const part = champ => {
+    const v = e => +(e&&e[champ])||0, its = gr.items||[];
+    const tot = its.reduce((s,e)=>s+v(e),0);
+    return tot>0 ? its.filter(e=>petit.has(nom(e))).reduce((s,e)=>s+v(e),0)/tot : null;
+  };
+  const p = part('prot'), k = (p===null) ? part('kcal') : null;
+  const r = (p!==null) ? p : (k!==null) ? k : petit.size/grand.size;
+  return r >= _HAB_BASE_MIN;
+}
+function _repasHabituelsFamilles(){
+  const familles=[];
+  _repasHabituelsTous().forEach(h=>{
+    const f=familles.find(F=>F.some(m=>_habVariantes(m,h)));
+    if(f) f.push(h); else familles.push([h]);
+  });
+  return familles;
+}
+/* Le HAUT de liste : 3 familles différentes, chacune avec sa carte principale et ses variantes.
+   ⭐ Une seule famille ? Une seule carte — on n'invente pas de faux repas pour remplir. */
+function _repasHabituels(){
+  return _repasHabituelsFamilles().slice(0,3)
+    .map(F=>Object.assign({}, F[0], {variantes:F.slice(1)}));
+}
+/* 🏷️ UN LIBELLÉ COURT QUAND IL EST SÛR (NUT-PUNCH-01) — « Banane » plutôt que « Banane, chair sans
+   peau, crue », sans toucher au nom ENREGISTRÉ et sans catalogue de noms inventé.
+   ⛔ SEULEMENT pour un nom CIQUAL (déjà choisi au moins une fois depuis CIQUAL dans le journal —
+   la provenance, pas la forme du texte ; une copie rejouée perd son `sourceId`, l'original le
+   garde) : le libellé CIQUAL est « aliment, précisions », on garde ce qui précède la 1ʳᵉ virgule.
+   ⛔ Et JAMAIS s'il devient ambigu : deux noms complets différents qui donneraient le même
+   libellé court gardent tous les deux leur nom complet. Le nom complet reste affiché au tap. */
+function _habLibelles(habitudes){
+  const ciqual={};
+  (S.foodLog||[]).forEach(e=>{ if(e&&e.name&&(e.origine==='ciqual'||String(e.sourceId||'').indexOf('ciqual:')===0)) ciqual[e.name]=1; });
+  const court = n => (ciqual[n] && n.indexOf(',')>0) ? n.slice(0, n.indexOf(',')).trim() : n;
+  const noms = {};
+  (habitudes||[]).forEach(h=>(h.items||[]).forEach(e=>{ if(e&&e.name) noms[e.name]=1; }));
+  const parCourt = {};
+  Object.keys(noms).forEach(n=>{ const c=court(n).toLowerCase(); (parCourt[c]=parCourt[c]||{})[n]=1; });
+  return n => { const c=court(n); return Object.keys(parCourt[c.toLowerCase()]||{}).length>1 ? n : c; };
+}
+/* Le libellé d'une carte : la source de protéines d'abord (« Shaker + banane », « Steak + riz »),
+   à égalité l'ordre noté. ⚠️ Pas les calories : « Huile d'olive + salade » mettrait l'assaisonnement
+   devant le plat. Un ORDRE d'affichage, rien de plus : le journal garde le sien. */
+function _habOrdre(items){
+  return (items||[]).map((e,i)=>[e,i]).sort((x,y)=>((+y[0].prot||0)-(+x[0].prot||0))||(x[1]-y[1])).map(x=>x[0]);
+}
+function _habTitre(h, lib){
+  return _habOrdre(h.items)
+    .map(e=>(lib?lib(e.name):e.name)).join(' + ');
 }
 /* 🛃⭐ ft-v1205 — ÉTAPE 5, LA DOUANE DU JOURNAL ALIMENTAIRE : UN SEUL POINT D'OBSERVATION,
    POSÉ JUSTE AVANT L'ÉCRITURE FINALE DANS `S.foodLog`.
@@ -3550,7 +3631,9 @@ function _douaneRemiseAZero(){
    ⭐ R13 : `meal` est un argument OPTIONNEL, comme `refTs` en ft-v1017. Sans lui, le
    comportement d'origine est intact — donc aucun appelant existant ne change de sens. */
 function rejouerRepas(sig, meal){
-  const r=_repasHabituels().find(x=>x.sig===sig);
+  /* ⛔ Cherché dans TOUTES les habitudes (NUT-PUNCH-01) : une variante rangée derrière sa carte
+     principale doit se rejouer comme avant. */
+  const r=_repasHabituelsTous().find(x=>x.sig===sig);
   if(!r){toast('Repas introuvable','error');return;}
   /* ⛔ UN MOMENT INCONNU NE PASSE PAS : on retombe sur celui qu'on a observé plutôt que
      d'écrire n'importe quoi dans le journal (R29). `FOOD_MEALS` est le seul propriétaire
@@ -8244,7 +8327,7 @@ const APP_GUIDE_SLIDES=[
      celle de la Nutrition montrerait l'ANCIEN ordre. *Une diapo qui montre un écran qui n'existe
      plus est pire qu'une diapo sans image* — on décrit, on ne ment pas.
      ⏭️ À remplacer par `guide/nutrition.jpg` quand la capture sera refaite. */
-  {icon:'🍽️', t:'Ta nutrition, de haut en bas', cap:'L\'onglet <b>Macros</b> va du <b>jour</b> vers le <b>durable</b>. En haut, ta journée : ce que tu as mangé, <b>trois anneaux</b> (protéines · glucides · lipides) et <b>« ce qu\'il te reste, en vrai »</b> — traduit en <b>tes</b> aliments, pas en grammes abstraits. Dessous, le bouton pour <b>noter</b>, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition, charge/décharge) et « Mes réglages alimentaires » (mode, jeûne, régime, allergies). Un appui les ouvre — leur titre te dit déjà l\'essentiel. 🏃 <b>Ton niveau d\'activité doit venir de toi</b> : sans lui, pas de plan inventé ; s\'il date d\'avant, une carte te demande de le <b>confirmer ou le changer</b>.'},
+  {icon:'🍽️', t:'Ta nutrition, de haut en bas', cap:'L\'onglet <b>Macros</b> va du <b>jour</b> vers le <b>durable</b>. En haut, ta journée : ce que tu as mangé, <b>trois anneaux</b> (protéines · glucides · lipides) et <b>« il te reste aujourd\'hui »</b> — ≈ kcal et protéines · glucides · lipides, et sur un appui des idées tirées de <b>tes</b> aliments. Dans le <b>Journal</b>, <b>tes repas habituels</b> : une carte par repas, ses variantes rangées derrière. Dessous, le bouton pour <b>noter</b>, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition, charge/décharge) et « Mes réglages alimentaires » (mode, jeûne, régime, allergies). Un appui les ouvre — leur titre te dit déjà l\'essentiel. 🏃 <b>Ton niveau d\'activité doit venir de toi</b> : sans lui, pas de plan inventé ; s\'il date d\'avant, une carte te demande de le <b>confirmer ou le changer</b>.'},
   {img:'guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Tape <b>Programme</b> : tout part de là. <b>📷 Importer</b> (photo ou PDF — l\'IA le lit et <b>garde tes jours</b> : Push, Pull, Legs…), <b>🏗️ Générer</b> avec Milo, <b>+ Créer</b> le tien, ou <b>💾 sauvegarder</b> la séance en cours. ⚠️ Plusieurs jours ? <b>Passe par l\'import</b> : un programme créé à la main est forcément une séance unique. \u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i> \ud83c\udfc3 **Le cardio d\'un programme va dans le bloc Cardio**, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes. Le bouton <b>✏️</b> modifie un programme enregistré : reps, <b>temps de repos</b> série par série, et un <b>💬 commentaire</b> par exercice (consigne, réglage machine…). Débutant ? Un parcours guidé t\'attend.'},
   {img:'guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
   {img:'guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},

@@ -9,6 +9,7 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord (pour la partie du ba
      Un rouge des seuls temoins de SOURCE (« B-NP01-x source ») ne suffit pas.
   MA* = contrat Seance -> Nutrition (B-NP01-A) · MB* = cycle / cache / annonce / ecran vide (B-NP01-B)
   · MC* = role des repas d'entrainement (B-NP01-C) · MD* = reliquats (B-NP01-D)
+  · ME* = repas habituels par famille (B-NP01-E) · MF* = « Il te reste aujourd'hui » (B-NP01-F)
   · EQ* = equivalentes (temoins EXECUTES verts ; seul le temoin de source, qui fige le texte, rougit) · [negatif] = commentaire seul (doit rester vert)
 Usage : python3 tools/mut_nut_punch01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -103,6 +104,53 @@ MUT = [
      [(ST, "x.done!==false && x.type!=='É' && x.type!=='W' && +x.kg>0", "x.done!==false && x.type!=='É' && x.type!=='W' && x.type!=='X' && +x.kg>0")], 'GARDE', 'reliquats'),
     ('MD7 [deguisee] « demain » calcule en ajoutant 24 h a l\'instant present (decale a l\'heure d\'ete)',
      [(SC, "    S.nextPlanned={date:today(d.getTime()),label:''};", "    S.nextPlanned={date:new Date(Date.now()+864e5).toISOString().slice(0,10),label:''};")], 'GARDE', 'reliquats'),
+    # ── B-NP01-E : repas habituels par famille ──
+    ('ME1 plus de familles : chaque habitude est sa propre carte (retour des 3 shakers)',
+     [(AP, "    const f=familles.find(F=>F.some(m=>_habVariantes(m,h)));", "    const f=null;")], 'GARDE', 'habituels'),
+    ('ME2 le rejeu ne cherche que dans le haut de liste (une variante ne se rejoue plus)',
+     [(AP, "  const r=_repasHabituelsTous().find(x=>x.sig===sig);", "  const r=_repasHabituels().find(x=>x.sig===sig);")], 'GARDE', 'habituels'),
+    ('ME3 la part des CALORIES au lieu des proteines (l\'huile rejoint la salade)',
+     [(AP, "  const p = part('prot'), k = (p===null) ? part('kcal') : null;", "  const p = part('kcal'), k = null;")], 'GARDE', 'habituels'),
+    ('ME4 un aliment PARTAGE suffit (plus d\'inclusion)',
+     [(AP, "  for(const n of petit) if(!grand.has(n)) return false;", "  if(![...petit].some(n=>grand.has(n))) return false;")], 'GARDE', 'habituels'),
+    ('ME5 libelle court pour TOUT nom a virgule (provenance CIQUAL ignoree)',
+     [(AP, "  const court = n => (ciqual[n] && n.indexOf(',')>0)", "  const court = n => (n.indexOf(',')>0)")], 'GARDE', 'habituels'),
+    ('ME6 libelle court meme quand il devient ambigu',
+     [(AP, "  return n => { const c=court(n); return Object.keys(parCourt[c.toLowerCase()]||{}).length>1 ? n : c; };", "  return n => court(n);")], 'GARDE', 'habituels'),
+    ('ME7 [deguisee] le libelle court RENOMME les aliments enregistres (historique reecrit)',
+     [(AP, "  const court = n => (ciqual[n] && n.indexOf(',')>0) ? n.slice(0, n.indexOf(',')).trim() : n;",
+           "  const court = n => (ciqual[n] && n.indexOf(',')>0) ? n.slice(0, n.indexOf(',')).trim() : n;\n  (S.foodLog||[]).forEach(e=>{ if(e&&ciqual[e.name]&&e.name.indexOf(',')>0) e.name=court(e.name); });")], 'GARDE', 'habituels'),
+    ('ME8 [deguisee] les familles se forment sur le top 3 des habitudes (au lieu de toutes)',
+     [(AP, "  _repasHabituelsTous().forEach(h=>{", "  _repasHabituelsTous().slice(0,3).forEach(h=>{")], 'GARDE', 'habituels'),
+    ('ME9 « note X fois » revient sur la carte',
+     [(SC, "${mi.lbl||''} · ${k} kcal · ${p} g de protéines</span></span>`", "${mi.lbl||''} · ${k} kcal · ${p} g de protéines · noté ${r.n} fois</span></span>`")], 'GARDE', 'habituels'),
+    ('ME10 les variantes s\'affichent comme des cartes principales',
+     [(SC, "        if(v.length){\n          html+=`<details class=\"jr-sec hab-variantes\"", "        if(v.length){ v.forEach((x,j)=>{ html+=carte(x,'hab-x-'+idx+'-'+j,false); }); }\n        if(v.length){\n          html+=`<details class=\"jr-sec hab-variantes\"")], 'GARDE', 'habituels'),
+    # ── B-NP01-F : « Il te reste aujourd'hui » ──
+    ('MF1 les idees s\'ouvrent d\'office (equivalences affichees)',
+     [(SC, "<details class=\"jr-sec nu-reste-idees\" style=\"margin-top:8px;\">", "<details open class=\"jr-sec nu-reste-idees\" style=\"margin-top:8px;\">")], 'GARDE', 'reste'),
+    ('MF2 le bloc parle quand rien n\'est note',
+     [(SC, "  if(!reste || reste.rien || !(reste.kcal>0)) return '';", "  if(!reste || !(reste.kcal>0)) return '';")], 'GARDE', 'reste'),
+    ('MF3 le bloc parle quand la cible est atteinte ou depassee',
+     [(SC, "  if(!reste || reste.rien || !(reste.kcal>0)) return '';", "  if(!reste || reste.rien) return '';")], 'GARDE', 'reste'),
+    ('MF4 une macro depassee s\'affiche en negatif',
+     [(SC, "+(v>0?v+'\u00A0g':'<span style=\"color:var(--t3);\">atteint</span>')", "+(v+'\u00A0g')")], 'GARDE', 'reste'),
+    ('MF5 le Journal repete les kcal de son en-tete',
+     [(SC, "  const sansKcal=!!(opts&&opts.sansKcal);", "  const sansKcal=false;")], 'GARDE', 'reste'),
+    ('MF6 plus de silence du soir (ft-v1029)',
+     [(SC, "  if(soir && !idees.length) return '';", "")], 'GARDE', 'reste'),
+    ('MF7 le bloc parle sur un jour passe',
+     [(SC, "function _blocResteHTML(td, heure, opts){\n  if(td!==today()) return '';", "function _blocResteHTML(td, heure, opts){")], 'GARDE', 'reste'),
+    ('MF8 [deguisee] les kcal restantes recalculees sur la DEPENSE au lieu de la cible',
+     [(SC, "+reste.kcal.toLocaleString('fr-FR')+'</span>'", "+Math.round((calcTDEE()||0)-reste.tot.kcal).toLocaleString('fr-FR')+'</span>'")], 'GARDE', 'reste'),
+    ('MF9 [deguisee] le bloc passe AVANT les anneaux (plus le gros chiffre de la carte)',
+     [(SC, "      +'<span style=\"font-size:12.5px;color:var(--t3);font-weight:700;\">kcal mangées</span>'",
+           "      +'<span style=\"font-size:12.5px;color:var(--t3);font-weight:700;\">kcal mangées</span>'+_blocResteHTML(today())"),
+      (SC, "    +(typeof _blocResteHTML==='function'?_blocResteHTML(today()):'');", "    +'';")], 'GARDE', 'reste'),
+    ('MF10 le soir, toutes les macros sont nommees (le manque s\'affiche « pour information »)',
+     [(SC, "  const garde=soir?new Set(idees.map(i=>i.macro)):null;", "  const garde=null;")], 'GARDE', 'reste'),
+    ('MF11 le soir, le total kcal reste affiche',
+     [(SC, "  const sansKcal=!!(opts&&opts.sansKcal)||soir;", "  const sansKcal=!!(opts&&opts.sansKcal);")], 'GARDE', 'reste'),
     ('[negatif] commentaire citant la duree et le volume dans calcTDEE',
      [(ST, TDEE, "  // (duree, volume, methode : jamais dans la depense)\n" + TDEE)], 'OK', 'contrat'),
 ]

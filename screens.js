@@ -341,13 +341,13 @@ const _HELP_DATA={
       /* 🍽️ ORDRE DE L'ONGLET MACROS (ft-v1025) — en PREMIER dans l'aide, parce que c'est la
          première question qu'on se pose en arrivant : « où est passé mon TDEE ? ». R25 : la
          pop-up ANNONCE (une fois), l'aide EXPLIQUE (à chaque fois qu'on la rouvre). */
-      {i:'🍽️',t:'<b>L\'onglet Macros se lit de haut en bas, du jour vers le durable.</b> En haut, <b>ta journée</b> : ce que tu as mangé en gros, ta cible en petit, trois anneaux (protéines · glucides · lipides) et « ce qu\'il te reste, en vrai » — traduit en <b>tes</b> aliments, pas en grammes abstraits. Puis le bouton pour noter, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition en %, charge/décharge, ajuster à la main) et « Mes réglages alimentaires » (mode cétogène/low carb/paléo/méditerranéen, jeûne, régime, restrictions, allergies). ⚠️ <b>Rien n\'a été retiré</b> : ces réglages se touchent deux ou trois fois par an, ils ne sont plus au milieu de ce que tu regardes tous les jours. Le titre de chaque ligne repliée te dit déjà l\'essentiel (ton objectif et ton TDEE, ton régime en cours) — tu n\'as à l\'ouvrir que pour changer quelque chose.'},
+      {i:'🍽️',t:'<b>L\'onglet Macros se lit de haut en bas, du jour vers le durable.</b> En haut, <b>ta journée</b> : ce que tu as mangé en gros, ta cible en petit, trois anneaux (protéines · glucides · lipides) et « il te reste aujourd\'hui » — ≈ les calories et les protéines · glucides · lipides qu\'il te reste, puis, sur un appui (« Voir des idées pour compléter »), des idées tirées de <b>tes</b> aliments. Rien ne s\'affiche tant que tu n\'as rien noté, ni quand ta cible est atteinte. Puis le bouton pour noter, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition en %, charge/décharge, ajuster à la main) et « Mes réglages alimentaires » (mode cétogène/low carb/paléo/méditerranéen, jeûne, régime, restrictions, allergies). ⚠️ <b>Rien n\'a été retiré</b> : ces réglages se touchent deux ou trois fois par an, ils ne sont plus au milieu de ce que tu regardes tous les jours. Le titre de chaque ligne repliée te dit déjà l\'essentiel (ton objectif et ton TDEE, ton régime en cours) — tu n\'as à l\'ouvrir que pour changer quelque chose.'},
       {i:'🍱',t:'Le <b>plan de repas</b> est replié par défaut, et c\'est volontaire : c\'est une liste écrite à l\'avance, <b>la même pour tout le monde</b>, qui ne connaît ni ce que tu manges ni ce que tu détestes. Il te donne un ordre de grandeur, pas un menu à suivre. Le jour où il saura se baser sur tes vrais aliments, il se dépliera tout seul. En attendant, « ce qu\'il te reste, en vrai » (en haut) est bien plus proche de toi : il ne propose que des aliments que <b>tu as déjà notés</b>.'},
       /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1029) : le bloc CHANGE de comportement a 20 h, et un
          changement qu'on n'explique pas se lit comme un bug — on croit que l'app s'est trompee, ou
          qu'elle a « oublie » une macro. La phrase du bloc le dit sur le moment ; celle-ci le dit
          quand on vient chercher pourquoi (R25 : le bloc annonce, l'aide explique). */
-      {i:'🌙',t:'<b>Le soir, « ce qu\'il te reste » devient plus léger — c\'est voulu.</b> À partir de <b>20 h</b>, l\'app ne propose plus de combinaisons (« 250 g de riz + 160 g de flocons ») mais <b>une seule idée, en petite quantité</b> : à cette heure-là, une assiette d\'un demi-kilo n\'est pas un conseil. ⚠️ Et si une macro est <b>trop loin du compte</b> pour qu\'une idée légère y change quelque chose, la ligne <b>disparaît</b> au lieu d\'afficher le manque : ce qui manque le soir ne se rattrape pas le soir, et te le mettre sous les yeux ne t\'aiderait pas. Tes chiffres, eux, ne bougent pas — ils restent dans les anneaux juste au-dessus.'},
+      {i:'🌙',t:'<b>Le soir, « il te reste aujourd\'hui » devient plus léger — c\'est voulu.</b> À partir de <b>20 h</b>, le bloc ne nomme plus le total en kcal ni les macros qu\'une petite quantité ne peut plus compléter, et ses idées ne proposent plus de combinaisons (« 250 g de riz + 160 g de flocons ») mais <b>une seule idée, en petite quantité</b> : à cette heure-là, une assiette d\'un demi-kilo n\'est pas un conseil. ⚠️ Et si une macro est <b>trop loin du compte</b> pour qu\'une idée légère y change quelque chose, la ligne <b>disparaît</b> au lieu d\'afficher le manque : ce qui manque le soir ne se rattrape pas le soir, et te le mettre sous les yeux ne t\'aiderait pas. Tes chiffres, eux, ne bougent pas — ils restent dans les anneaux juste au-dessus.'},
       {i:'⚠️',t:'Les macros s\'affichent correctement uniquement si le Profil est complet (âge, poids, taille, activité, objectif).'},
       {i:'🔥',t:'<b>D\'où vient ton BMR</b> (métabolisme de base, ce que ton corps brûle au repos) : si tu as renseigné un <b>bilan corporel</b> ou ton <b>% de masse grasse</b>, l\'app le calcule sur ta <b>masse maigre</b> (formule de Katch-McArdle) au lieu de ton seul poids — chez quelqu\'un de musclé ça change souvent de <b>100 à 200 kcal par jour</b>, parce que le muscle consomme au repos et le gras beaucoup moins. Sinon, elle utilise la formule générique (Mifflin-St Jeor). <b>La ligne sous le chiffre dit toujours laquelle</b> : tape-la, le calcul est posé avec tes nombres. ⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est pas utilisé : on ne sait pas si les kilos sont du muscle ou du gras. Le métabolisme affiché par ta balance, lui, est enregistré mais pas utilisé dans le calcul — chaque marque a sa formule secrète, invérifiable.'},
       {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes cycles.'},
@@ -355,6 +355,8 @@ const _HELP_DATA={
       {i:'🔥',t:'Les calories brûlées au cardio (bloc cardio dans ta séance) s\'ajoutent à ton TDEE estimé du jour.'},
       {i:'🍽️',t:'Le plan de repas détaillé (5 repas) est généré depuis tes macros — adapté à ta phase et ton objectif.'},
       {i:'📓',t:'Onglet Journal : note ce que tu manges dans la journée et compare aux objectifs. 3 façons d\'ajouter un aliment : saisie à la main (gratuit, illimité), 🤖 estimation IA (décris ton repas, l\'IA remplit les calories — 25 gratuites, illimité en Premium), ou par code-barres (produit reconnu via une base mondiale, ajuste la quantité en grammes).'},
+      /* 🔁 NUT-PUNCH-01 (03/10/2026) — les familles de repas habituels (décision validée de Michel). */
+      {i:'🔁',t:'<b>Tes repas habituels</b> (Journal) : ce que tu as noté ensemble au moins deux fois. ⭐ <b>Une carte par repas</b> : ses variantes très proches (le même shaker avec ou sans banane) sont rangées derrière, dans « N variantes de ce repas » — rien n\'est perdu, ton journal n\'est pas modifié. Le titre est court quand c\'est sûr (« Banane » pour « Banane, chair sans peau, crue ») ; un appui montre les noms complets, combien de fois tu l\'as noté, et te demande à quel moment l\'ajouter.'},
       {i:'📷',t:'Code-barres : tape les chiffres écrits sous le code (gratuit) OU appuie sur « 📷 Photographier le code-barres » et prends-le en photo — l\'IA lit le numéro pour toi (utile si les chiffres sont petits/abîmés). La lecture photo utilise 1 essai IA ; ensuite la recherche du produit et le score santé restent gratuits.'},
       {i:'🥗',t:'Score santé : au code-barres d\'un produit, tu vois son Nutri-Score (A à E) et son niveau de transformation (brut ou ultra-transformé). Gratuit pour tout le monde, sans crédit IA. Pratique pour repérer d\'un coup d\'œil ce qui est sain.'},
       {i:'📥',t:'Tu as un plan de ta diététicienne ? Bouton « Importer un plan » (Plan de repas IA) : prends-le en photo ou importe le PDF, l\'IA range les repas.'},
@@ -2777,9 +2779,10 @@ function _renderAujourdhui(macros){
       +'<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--red2),var(--red));border-radius:3px;"></div></div>'
     /* ⛔⛔ « X KCAL RESTANTES » N'EST PLUS L'INFORMATION DOMINANTE (décision Michel, ft-v1102).
        La formulation crée une **dette psychologique** : *« il me reste 800 kcal → je dois manger
-       800 kcal »*. Le calcul, lui, ne change pas d'une virgule — il continue d'alimenter
-       « ce qu'il te reste, en vrai » juste dessous, qui le traduit en **aliments réels**, donc
-       en quelque chose d'actionnable. *On déplace le nombre là où il sert, on ne le supprime pas.*
+       800 kcal »*. Le calcul, lui, ne change pas d'une virgule — il alimente le bloc « Il te
+       reste aujourd'hui » juste dessous, AU SECOND PLAN, sous les anneaux : depuis la décision du
+       03/10/2026 (NUT-PUNCH-01) il y dit d'abord ≈ kcal et P · G · L, et ses aliments réels
+       viennent sur un appui. *On déplace le nombre là où il sert, on ne le supprime pas.*
        ⛔ Ce qui prend sa place est le TYPE DE JOUR, pas la cible : la cible est déjà en
        en-tête, et l'écrire ici la mettrait **deux fois dans la même carte** (R2) — je l'ai
        recréée deux fois avant de le voir. ⛔ Sans cyclage : **rien**. *Un espace vide n'est pas
@@ -2814,7 +2817,7 @@ function _renderAujourdhui(macros){
        return '<div style="font-size:11px;color:var(--t3);margin-top:8px;text-align:center;">'
          +'Tes deux cibles du jour dans « comment c’est calculé ».</div>';
      })()
-    /* 🍽️ « Ce qu'il te reste, en vrai » : le MÊME bloc que dans le Journal, un seul code (R2). */
+    /* 🍽️ « Il te reste aujourd'hui » : le MÊME bloc que dans le Journal, un seul code (R2). */
     +(typeof _blocResteHTML==='function'?_blocResteHTML(today()):'');
 }
 
@@ -2951,18 +2954,58 @@ function _evolutionVersMilo(){
    divergé — on aurait corrigé un garde-fou anti-TCA d'un côté seulement.
    ⛔ AUJOURD'HUI SEULEMENT (anti-TCA, P21) : sur un jour passé, « il te manquait 40 g » est un
    reproche sur une journée qu'on ne peut plus changer. */
-function _blocResteHTML(td, heure){
+/* ═══ « IL TE RESTE AUJOURD'HUI » — DÉCISION VALIDÉE DE MICHEL (03/10/2026, NUT-PUNCH-01) ═══
+   Le bloc répond D'ABORD à « combien me reste-t-il ? » : ≈ kcal, puis protéines · glucides ·
+   lipides, des nombres SOURCE (`_resteDuJour`, inchangé). Les équivalences en aliments passent
+   DERRIÈRE un appui (« Voir des idées pour compléter ») : affichées d'office, elles donnaient des
+   lignes comme « 500 g de steak + huile » — une portion énorme posée sous les yeux.
+   ⛔ CE QUI NE BOUGE PAS (décisions déjà actées) : le gros chiffre de la carte reste « kcal
+   mangées » (ft-v1102) — ce bloc est SOUS les anneaux, au second plan ; AUJOURD'HUI SEULEMENT ;
+   RIEN quand rien n'est noté ; RIEN quand la cible est atteinte ou dépassée (aucun « il te
+   reste 0 », aucun négatif, aucun reproche) ; une macro atteinte dit « atteint », jamais un
+   chiffre négatif ; et APRÈS 20 H le bloc garde la règle du soir (ft-v1029) : il ne s'affiche que
+   s'il reste une idée LÉGÈRE utile, et ne nomme que les macros qu'elle peut compléter, sans
+   total kcal — *un manque qu'on ne peut plus combler ce soir est un reproche, pas une
+   information*.
+   ⭐ `opts.sansKcal` : le Journal porte déjà « X kcal restantes » dans l'en-tête de la MÊME
+   carte ; le répéter deux fois dans une carte est le défaut que ft-v1102 a nommé (R2). */
+function _blocResteHTML(td, heure, opts){
   if(td!==today()) return '';
   const reste=(typeof _resteDuJour==='function')?_resteDuJour(td):null;
+  if(!reste || reste.rien || !(reste.kcal>0)) return '';
   const idees=(typeof _ideesPourLeReste==='function')?_ideesPourLeReste(reste,heure):[];
-  if(!idees.length) return '';
-  /* ⛔ LE SOIR SE LIT SUR LES IDÉES, il ne se recalcule PAS ici (R2, ft-v1029) : deux lectures
-     de l'horloge pourraient se contredire à la minute de bascule, et le pied de bloc dirait
-     « il est tard » sous une combinaison de 500 g. Un seul propriétaire, `_estLeSoir`. */
-  const soir=!!(idees[0]&&idees[0].soir);
+  /* ⛔ LE SOIR SE LIT SUR LE PROPRIÉTAIRE UNIQUE `_estLeSoir` (R2, ft-v1029), avec la MÊME heure
+     que les idées : deux lectures de l'horloge pourraient se contredire à la minute de bascule. */
+  const soir=(typeof _estLeSoir==='function')?_estLeSoir(heure):false;
+  if(soir && !idees.length) return '';
+  /* 🌙 LE SOIR (ft-v1029, gardé tel quel) : on ne montre QUE les macros qu'une idée légère peut
+     encore compléter, et pas de total en kcal — une macro trop loin du compte disparaît au lieu
+     d'afficher le manque. Le jour, tout est affiché (décision du 03/10). */
+  const garde=soir?new Set(idees.map(i=>i.macro)):null;
   const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
-  return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);">'
-    +'<div style="font-size:11.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Ce qu\'il te reste, en vrai</div>'
+  const g=(cle,v,lettre,nom,coul)=>(garde&&!garde.has(cle))?'':'<span title="'+nom+'" style="white-space:nowrap;"><b style="color:'+coul+';">'+lettre+'</b> '
+    +(v>0?v+' g':'<span style="color:var(--t3);">atteint</span>')+'</span>';
+  const sansKcal=!!(opts&&opts.sansKcal)||soir;
+  return '<div class="nu-reste" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);">'
+    +'<div style="font-size:11.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Il te reste aujourd\'hui</div>'
+    +'<div class="nu-reste-chiffres" style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-size:13px;color:var(--t1);">'
+      +(sansKcal?'':'<span style="white-space:nowrap;"><span style="font-family:var(--font-cond);font-size:20px;font-weight:700;">≈ '+reste.kcal.toLocaleString('fr-FR')+'</span>'
+                    +'<span style="font-size:12px;color:var(--t3);font-weight:700;"> kcal</span></span>')
+      +'<span style="display:flex;flex-wrap:wrap;gap:4px 10px;">'
+        +g('prot',reste.prot,'P','Protéines',cols.prot)+g('carbs',reste.carbs,'G','Glucides',cols.carbs)+g('fat',reste.fat,'L','Lipides',cols.fat)
+      +'</span>'
+    +'</div>'
+    +(idees.length?_blocIdeesHTML(idees, soir):'')
+    +'</div>';
+}
+/* Les idées pour compléter — DERRIÈRE un appui (décision du 03/10). Le contenu est celui d'avant,
+   mot pour mot : mêmes lignes, mêmes colonnes, mêmes garde-fous et mêmes pieds de bloc. */
+function _blocIdeesHTML(idees, soir){
+  const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
+  return '<details class="jr-sec nu-reste-idees" style="margin-top:8px;">'
+    +'<summary style="list-style:none;cursor:pointer;padding:6px 0;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--t2);user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">'
+      +'<span style="flex:1;min-width:0;">Voir des idées pour compléter</span></summary>'
+    +'<div style="padding-top:6px;">'
     /* ⛔⛔ DEUX COLONNES FIXES, PLUS TROIS BOÎTES QUI SE POUSSENT (ft-v1031). En flex, la
        largeur de « 429 g » et celle de « 86 g » ne sont pas les mêmes, donc TOUT ce qui suit
        se décalait : mesuré, l'idée démarrait à 125, 147 et 152 px sur trois lignes voisines —
@@ -3009,7 +3052,7 @@ function _blocResteHTML(td, heure){
       +(soir?'Il est tard — <b>une idée légère, pas un rattrapage</b>. Ce qui manque ce soir ne se rattrape pas ce soir. '
             :'')
       +'À peu près — calculé sur <b>tes</b> aliments, pas sur une table générique. Une idée, pas une consigne.</div>'
-    +'</div>';
+    +'</div></details>';
 }
 
 /* 🧠 CE QUE L'APP A APPRIS DE TON ALIMENTATION (26/08/2026, ft-v1021) — 100 % local.
@@ -3826,10 +3869,11 @@ function renderFoodJournal(){
       +_macroLine('Protéines',tot.prot,target.prot_g,'var(--green)')
       +_macroLine('Glucides',tot.carbs,target.carbs_g,'var(--orange)')
       +_macroLine('Lipides',tot.fat,target.fat_g,'var(--gold)')
-      /* 🍽️ « Ce qu'il te reste, en vrai » — le rendu vit dans `_blocResteHTML` (screens.js),
-         partagé avec la carte du jour de l'onglet Macros. UN SEUL propriétaire (R2, ft-v1025) :
-         deux copies auraient divergé, et l'une porte trois garde-fous anti-TCA. */
-      +_blocResteHTML(td)
+      /* 🍽️ « Il te reste aujourd'hui » (ex-« Ce qu'il te reste, en vrai », NUT-PUNCH-01) — le rendu
+         vit dans `_blocResteHTML` (screens.js), partagé avec la carte du jour de l'onglet Macros.
+         UN SEUL propriétaire (R2, ft-v1025) : deux copies auraient divergé, et l'une porte trois
+         garde-fous anti-TCA. */
+      +_blocResteHTML(td, undefined, {sansKcal:true})   /* l'en-tête de CETTE carte dit déjà les kcal restantes */
       +`</div>`;
   }else{
     html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
@@ -3870,34 +3914,62 @@ function renderFoodJournal(){
   try{
     const habitudes=(typeof _repasHabituels==='function')?_repasHabituels():[];
     if(habitudes.length){
-      html+=`<div style="margin-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;">Tes repas habituels</div>`
-        +`<div style="display:flex;flex-direction:column;gap:6px;">`;
-      habitudes.forEach((r,idx)=>{
+      /* 🧩 NUT-PUNCH-01 (03/10/2026, décision validée de Michel) : UNE carte par famille de repas
+         très proches, ses variantes rangées derrière (« N variantes de ce repas »), le libellé
+         COURT quand il est sûr (`_habLibelles`), « noté X fois » passé dans le détail. ⛔ C'est une
+         VUE : le journal n'est ni réécrit, ni renommé, ni fusionné. */
+      const tous=habitudes.reduce((a,h)=>a.concat([h],h.variantes||[]),[]);
+      const lib=(typeof _habLibelles==='function')?_habLibelles(tous):null;
+      const titre=h=>(typeof _habTitre==='function')?_habTitre(h,lib):h.items.map(e=>e.name).join(' + ');
+      const esc=s=>(typeof _escNote==='function')?_escNote(s):s;
+      const att=s=>(typeof _escAttrJs==='function')?_escAttrJs(s):String(s).replace(/'/g,"\\'");
+      const MM=(typeof FOOD_MEALS!=='undefined')?FOOD_MEALS:[];
+      const carte=(r,id,variante)=>{
         const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(r.meal):{ic:'🍽️',lbl:''};
         const k=r.items.reduce((a,e)=>a+(e.kcal||0),0);
         const p=r.items.reduce((a,e)=>a+(e.prot||0),0);
-        const noms=r.items.map(e=>e.name).join(' + ');
-        html+=`<button onclick="_habChoisirMoment('hab-m-${idx}')" class="btn btn-bg2" style="display:flex;align-items:center;gap:10px;text-align:left;padding:11px 12px;width:100%;">`
-          +`<span style="font-size:18px;flex:none;">${mi.ic}</span>`
-          +`<span style="flex:1;min-width:0;"><span style="display:block;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote?_escNote(noms):noms}</span>`
-          +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${k} kcal · ${p} g de protéines · noté ${r.n} fois</span></span>`
+        return `<button onclick="_habChoisirMoment('${id}')" class="btn btn-bg2 hab-carte" style="display:flex;align-items:center;gap:10px;text-align:left;padding:${variante?'9px 12px':'11px 12px'};width:100%;">`
+          +`<span style="font-size:${variante?'15px':'18px'};flex:none;">${mi.ic}</span>`
+          +`<span style="flex:1;min-width:0;"><span class="hab-titre" style="display:block;font-size:${variante?'12.5px':'13.5px'};font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(titre(r))}</span>`
+          +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${k} kcal · ${p} g de protéines</span></span>`
           +`<span style="flex:none;color:var(--red);font-size:19px;font-weight:800;">+</span></button>`;
-        /* ⏰ LA RANGÉE DES MOMENTS (ft-v1052) — repliée, dépliée par un tap sur la carte.
-           ⭐ `FOOD_MEALS` est le seul propriétaire de la liste (R2) : on ne la recopie pas ici.
-           ⭐ LE MOMENT OBSERVÉ EST MARQUÉ « d'habitude » — c'est une SUGGESTION visible, pas une
-              présélection qui s'appliquerait toute seule. *On propose, on n'impose pas.* */
-        const MM=(typeof FOOD_MEALS!=='undefined')?FOOD_MEALS:[];
-        html+=`<div class="hab-moments" id="hab-m-${idx}" style="display:none;margin-top:-2px;padding:9px 10px 10px;background:var(--bg2);border-radius:0 0 12px 12px;">`
+      };
+      /* ⏰ LA RANGÉE DES MOMENTS (ft-v1052) — repliée, dépliée par un tap sur la carte.
+         ⭐ `FOOD_MEALS` est le seul propriétaire de la liste (R2) : on ne la recopie pas ici.
+         ⭐ LE MOMENT OBSERVÉ EST MARQUÉ « d'habitude » — c'est une SUGGESTION visible, pas une
+            présélection qui s'appliquerait toute seule. *On propose, on n'impose pas.*
+         ⭐ NUT-PUNCH-01 : le DÉTAIL (noms complets enregistrés, calories, « noté X fois ») vit ici,
+            au tap — l'information n'est pas retirée, elle passe au second plan. */
+      const moments=(r,id)=>{
+        const detail=((typeof _habOrdre==='function')?_habOrdre(r.items):r.items)
+          .map(e=>esc(e.name)+' <span style="white-space:nowrap;">('+Math.round(+e.kcal||0)+' kcal)</span>').join(' · ');
+        return `<div class="hab-moments" id="${id}" style="display:none;margin-top:-2px;padding:9px 10px 10px;background:var(--bg2);border-radius:0 0 12px 12px;">`
+          +`<div class="hab-detail" style="font-size:11px;color:var(--t3);margin-bottom:7px;line-height:1.45;overflow-wrap:anywhere;">${detail} — noté ${r.n} fois</div>`
           +`<div style="font-size:11px;color:var(--t3);margin-bottom:7px;">À quel moment de la journée ?</div>`
           +`<div style="display:flex;flex-wrap:wrap;gap:6px;">`
           + MM.map(m=>{
               const hab=(m.k===r.meal);
-              return `<button onclick="rejouerRepas('${String(r.sig).replace(/'/g,"\\'")}','${m.k}')" `
+              return `<button onclick="rejouerRepas('${att(r.sig)}','${m.k}')" `
                 +`style="flex:1 1 30%;min-width:96px;padding:8px 6px;border-radius:9px;border:1px solid ${hab?'var(--red)':'var(--sep)'};`
                 +`background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">`
                 +`${m.ic} ${m.lbl}${hab?'<span style="display:block;font-size:9.5px;font-weight:600;color:var(--t3);margin-top:2px;">d\'habitude</span>':''}</button>`;
             }).join('')
           +`</div></div>`;
+      };
+      html+=`<div style="margin-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;">Tes repas habituels</div>`
+        +`<div style="display:flex;flex-direction:column;gap:6px;">`;
+      habitudes.forEach((r,idx)=>{
+        html+=carte(r,'hab-m-'+idx,false)+moments(r,'hab-m-'+idx);
+        const v=r.variantes||[];
+        /* Les variantes : un déroulant natif (le motif `jr-sec` du Journal, R13), replié. */
+        if(v.length){
+          html+=`<details class="jr-sec hab-variantes" style="margin-top:-2px;">`
+            +`<summary style="list-style:none;cursor:pointer;padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--t2);user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">`
+              +`<span style="flex:1;min-width:0;">${v.length} variante${v.length>1?'s':''} de ce repas</span></summary>`
+            +`<div style="display:flex;flex-direction:column;gap:6px;padding:4px 0 2px 14px;">`
+            + v.map((x,j)=>carte(x,'hab-m-'+idx+'-'+j,true)+moments(x,'hab-m-'+idx+'-'+j)).join('')
+            +`</div></details>`;
+        }
       });
       html+=`</div></div>`;
     }

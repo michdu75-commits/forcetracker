@@ -2,7 +2,7 @@
 /* BANC CIBLÉ — NUT-PUNCH-01 (coup de poing Nutrition, 03/10/2026), blocs B-NP01-A → B-NP01-F.
    Il existe pour que le contrôle négatif (`tools/mut_nut_punch01.py`) rejoue ses mutations en
    secondes au lieu d'une passe complète. Usage : node tools/banc_nut_punch01.js [partie …]
-   (racine ou clone ; sans argument = toutes les parties). Parties : contrat, cycle, repas, reliquats. */
+   (racine ou clone ; sans argument = toutes les parties). Parties : contrat, cycle, repas, reliquats, habituels, reste. */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.dirname(__dirname);
@@ -32,6 +32,8 @@ const veut = p => !PARTIES.length || PARTIES.includes(p);
   if (veut('cycle')) { mod.sourceCycle(t, ROOT, fs, path); await mod.cycle(t, b, PORT); }
   if (veut('repas')) { mod.sourceRepas(t, ROOT, fs, path); await mod.repas(t, b, PORT); }
   if (veut('reliquats')) { mod.sourceReliquats(t, ROOT, fs, path); await mod.reliquats(t, b, PORT); }
+  if (veut('habituels')) { mod.sourceHabituels(t, ROOT, fs, path); await mod.habituels(t, b, PORT); }
+  if (veut('reste')) { mod.sourceReste(t, ROOT, fs, path); await mod.reste(t, b, PORT); }
   await b.close(); srv.close();
   console.log('\n──── ' + ok + ' OK / ' + ko + ' rouge ────');
   process.exit(ko ? 1 : 0);

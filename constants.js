@@ -514,6 +514,10 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🍽️ NUT-PUNCH-01 (03/10/2026) — règle d'or #11, point 2. Sans `spot` : le point se pose sur l'onglet
+     Nutrition, qui porte les deux changements (Macros et Journal). ⚠️ La pop-up WHATS_NEW se décide
+     à la publication (elle exige un numéro de version, interdit pendant le travail — protocole du 13/09). */
+  {id:'nutri-reste-habitudes', screen:'nutrition', desc:'Nouveau dans <b>Nutrition</b> : sous tes anneaux, <b>« il te reste aujourd\'hui »</b> dit d\'abord ≈ tes calories et tes protéines · glucides · lipides — les idées d\'aliments viennent sur un appui (« Voir des idées pour compléter »). Et dans le <b>Journal</b>, <b>tes repas habituels</b> : une carte par repas, ses variantes très proches rangées derrière.'},
   /* 📷 POINT ROUGE sur SÉANCE (ft-v1155) : c'est de là qu'on ouvre « Mes Programmes », donc
      là que la pastille doit ramener. ⛔ Sans `spot` : `_featSpots` fait `if(!el)return;`, donc
      un ancrage qui n'existe pas est une annonce qui n'a jamais lieu, en silence (ft-v1153).
