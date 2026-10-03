@@ -1391,7 +1391,10 @@ function _dismissSouvenir(cle){
 function _planTomorrow(){
   try{
     const d=new Date(today()+'T12:00:00'); d.setDate(d.getDate()+1);
-    S.nextPlanned={date:d.toISOString().slice(0,10),label:''};
+    /* ⛔ DATE LOCALE, JAMAIS `toISOString` (NUT-PUNCH-01, 03/10/2026) : midi local en UTC+13 / +14
+       tombe la VEILLE en UTC — « demain » devenait AUJOURD'HUI (Samoa, Tonga, Nouvelle-Zélande
+       l'été, Kiribati), et la journée en cours passait en jour de séance annoncée. */
+    S.nextPlanned={date:today(d.getTime()),label:''};
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     if(typeof _renderMiloCard==='function')_renderMiloCard();
     if(typeof toast==='function')toast('Noté 💪 Séance prévue demain — je te laisse tranquille d\'ici là.','success');
@@ -3372,9 +3375,10 @@ function renderNutrition(){try{
      contredisent sur le même écran, sans rien pour dire lequel commande la cible : c'est la
      famille de bugs « deux sources qui se contredisent » (BUGS.md), et elle est plus vicieuse
      que l'absence, parce que la personne VOIT les deux.
-     👉 La tuile dit désormais ce qu'on sait vraiment : combien de séances cette semaine, et si
-     ça colle au niveau déclaré. La séance du jour reste affichée à côté — c'est une MESURE
-     juste, elle n'a simplement rien à faire dans une addition. */
+     👉 La tuile dit désormais ce qu'on sait vraiment : combien de séances sur les 7 DERNIERS
+     JOURS (glissants, `_weeklyCounts(1)[0]` — le libellé « Cette semaine » le promettait à tort
+     un lundi, NUT-PUNCH-01), et si ça colle au niveau déclaré. La séance du jour reste affichée
+     à côté — c'est une MESURE juste, elle n'a simplement rien à faire dans une addition. */
   const _wkEl=document.getElementById('nu-week-sess');
   if(_wkEl){
     const _wk=(typeof _weeklyCounts==='function')?_weeklyCounts(1)[0]:null;

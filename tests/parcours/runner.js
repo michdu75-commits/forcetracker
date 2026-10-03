@@ -39650,6 +39650,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   await require('./nut_punch01.js').cycle(t, b, PORT);
   /* Bloc B-NP01-C : le rôle d'un repas d'entraînement survit à son intitulé (low carb, jeûne). */
   await require('./nut_punch01.js').repas(t, b, PORT);
+  /* Bloc B-NP01-D : reliquats — É hors tendance de force et de son garde-fou, phase du cycle à
+     minuit local, « Séance demain » en jour local (UTC+13/+14), tuile « 7 derniers jours ». */
+  await require('./nut_punch01.js').reliquats(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40542,6 +40545,7 @@ require('./nutri_lipides25.js').source(t, ROOT, fs, path);
 require('./nut_punch01.js').sourceContrat(t, ROOT, fs, path);
 require('./nut_punch01.js').sourceCycle(t, ROOT, fs, path);
 require('./nut_punch01.js').sourceRepas(t, ROOT, fs, path);
+require('./nut_punch01.js').sourceReliquats(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

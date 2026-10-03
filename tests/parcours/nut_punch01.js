@@ -517,3 +517,83 @@ module.exports.repas = async function (t, b, PORT) {
   t('B-NP01-C aucune erreur de page', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
   await X.cx.close();
 };
+
+/* ══════════════════════════════════════════════════════════════════════════════════════
+   ── B-NP01-D — RELIQUATS FACTUELS ──
+   Mesuré sur master ad172a87 AVANT correctif :
+   · D1 la tendance de force excluait les codes ANCIENS (`W`, `E`) mais pas l'échauffement actuel
+     `É` : un palier 40 → 60 kg × 8 comptait +50 % ; le garde-fou de volume comptait les paliers ;
+   · D2 la phase du cycle menstruel basculait à MIDI (écart mesuré depuis 12 h du jour de début) ;
+   · D3 « Séance demain » datée en UTC : en UTC+13 / +14, « demain » devenait AUJOURD'HUI ;
+   · D4 la tuile Nutrition disait « Cette semaine » pour 7 jours GLISSANTS.
+   ══════════════════════════════════════════════════════════════════════════════════════ */
+module.exports.sourceReliquats = function (t, ROOT, fs, path) {
+  console.log('\n═══ B-NP01-D. NUT-PUNCH-01 — reliquats (source) ═══');
+  const lire = f => _sansCommentaires(fs.readFileSync(path.join(ROOT, f), 'utf8')).replace(/\s+/g, '');
+  const ST = lire('state.js'), SC = lire('screens.js');
+  t('B-NP01-D source ① « demain » se date en jour LOCAL (`today(ts)`), jamais par `toISOString`',
+    _corps(SC, '_planTomorrow').includes('S.nextPlanned={date:today(d.getTime()),label:\'\'};') && !/toISOString/.test(_corps(SC, '_planTomorrow')), 'date UTC');
+  t('B-NP01-D source ② la phase du cycle compare deux DATES locales',
+    _corps(ST, 'getMensCyclePhase').includes("const_jourLocal=today(ts==null?undefined:ts);"), 'instant brut');
+};
+
+module.exports.reliquats = async function (t, b, PORT) {
+  console.log('\n-- B-NP01-D. NUT-PUNCH-01 — reliquats (conduit) --');
+  const det = _det;
+  /* ── D1 : deux moitiés de 7 jours, un squat de travail ET un échauffement dans chacune. ── */
+  const X = await _ouvrir(b, PORT, '2026-10-03T20:00:00+02:00');
+  const D1 = await X.pg.evaluate(async () => {
+    __np.base({});
+    const s = (dec, kgT, kgE) => { const x = __np.seance(__np.jour(dec), 18, 'vide');
+      x.exs = [{ name: 'Squat à la Barre', sets: [{ kg: kgE, reps: 8, done: true, type: 'É' }, { kg: kgT, reps: 5, done: true, type: 'N' }, { kg: kgT, reps: 5, done: true, type: 'X' }] }];
+      x.exercises = x.exs; return __np.ajouter(x); };
+    s(-2, 100, 60); s(-9, 97.5, 40);
+    const f = _forceSurFenetre(14), v = _volumeParMoitie(14);
+    goScreen('nutrition', document.querySelector('[onclick*="nutrition"]')); renderNutrition();
+    await new Promise(r => setTimeout(r, 200));
+    const T = tendance14j();
+    return { pct: f && f.pct, paires: f && f.paires, vol: v, force: T && T.force ? { pct: T.force.pct, decharge: T.force.decharge } : null };
+  });
+  t('B-NP01-D D1 ⭐⭐ la tendance de force ignore l\'échauffement `É` : une seule paire (squat × 5), +2,6 % (master : 2 paires, +26,3 % — le palier 40 → 60 kg comptait +50 %)',
+    D1.pct === 2.6 && D1.paires === 1 && D1.force && D1.force.pct === 2.6, det(D1));
+  t('B-NP01-D D1 ⭐ le garde-fou de volume compte les seules séries de travail (1 000 / 975 kg ; master : 1 480 / 1 295 avec les paliers) — la série `X` reste du travail',
+    D1.vol && D1.vol.recent === 1000 && D1.vol.avant === 975, det(D1.vol));
+  /* ── D4 : la tuile. ── */
+  const D4 = await X.pg.evaluate(() => { const e = document.getElementById('nu-week-sess'); const l = e && e.parentElement.querySelector('.nu-stat-lbl');
+    return { lbl: l ? l.textContent.trim() : null, val: e ? e.textContent : null }; });
+  t('B-NP01-D D4 ⭐ la tuile dit « 7 derniers jours » (ce qu\'elle compte : 7 jours glissants) — master : « Cette semaine »',
+    D4.lbl === '7 derniers jours' && /séance/.test(D4.val), det(D4));
+  t('B-NP01-D D1/D4 aucune erreur de page', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
+  await X.cx.close();
+
+  /* ── D2 : début de cycle le 17/09 (28 j, ovulation J14) → J17 = phase lutéale à partir du 03/10. ── */
+  const F = await _ouvrir(b, PORT, '2026-10-02T23:30:00+02:00');
+  const lireF = () => F.pg.evaluate(() => { __np.base({ gender: 'F', bw: 60 }); S.mensCycleStart = '2026-09-17'; S.mensCycleDur = 28; S.contraception = '';
+    const p = getMensCyclePhase(); return { phase: p && p.phase, jour: p && p.day, cible: calcMacros('charge').calories }; });
+  const veille = await lireF();
+  await F.heure('2026-10-03T00:30:00+02:00'); const nuit = await lireF();
+  await F.heure('2026-10-03T09:00:00+02:00'); const matin = await lireF();
+  await F.heure('2026-10-03T13:00:00+02:00'); const aprem = await lireF();
+  t('B-NP01-D D2 ⭐⭐ la phase change à MINUIT : le 02/10 à 23 h 30 → Ovulation (J16) ; le 03/10 à 0 h 30, 9 h et 13 h → Lutéale (J17), MÊME cible toute la journée (master : ovulation jusqu\'à midi, +150 kcal à 13 h)',
+    veille.phase === 'Ovulation' && veille.jour === 16 && [nuit, matin, aprem].every(x => x.phase === 'Lutéale' && x.jour === 17)
+    && nuit.cible === matin.cible && matin.cible === aprem.cible && aprem.cible === veille.cible + 150, det([veille, nuit, matin, aprem]));
+  t('B-NP01-D D2 aucune erreur de page', F.errs.length === 0, F.errs.slice(0, 2).join(' | '));
+  await F.cx.close();
+
+  /* ── D3 : « Séance demain » en UTC+14 (Kiribati), +13 (Tonga) et à Paris. ── */
+  const demain = async (tz, quand) => {
+    const Z = await _ouvrir(b, PORT, quand, { tz });
+    const r = await Z.pg.evaluate(() => { __np.base({}); __np.historique([1, 3, 5], 'haut'); _planTomorrow();
+      const d = new Date(today() + 'T12:00:00'); d.setDate(d.getDate() + 1);
+      const attendu = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      return { aujourdhui: today(), annonce: S.nextPlanned && S.nextPlanned.date, attendu, js: jourSeance().source, disque: JSON.parse(localStorage.getItem('ft4_nextplanned') || 'null') }; });
+    const errs = Z.errs.slice(); await Z.cx.close(); return Object.assign(r, { errs });
+  };
+  const k14 = await demain('Pacific/Kiritimati', '2026-10-03T09:00:00+14:00');
+  const k13 = await demain('Pacific/Tongatapu', '2026-10-03T21:00:00+13:00');
+  const par = await demain('Europe/Paris', '2026-10-03T21:00:00+02:00');
+  const bon = x => x.annonce === x.attendu && x.annonce > x.aujourdhui && x.js === 'repos' && x.disque && x.disque.date === x.attendu && !x.errs.length;
+  t('B-NP01-D D3 ⭐⭐ « Séance demain » en UTC+14 et UTC+13 : l\'annonce est datée de DEMAIN, aujourd\'hui reste un jour de repos (master : datée d\'aujourd\'hui)',
+    bon(k14) && bon(k13), det([k14, k13]));
+  t('B-NP01-D D3 ⛔ à Paris : inchangé (demain)', bon(par), det(par));
+};

@@ -8,7 +8,7 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord (pour la partie du ba
 [!!] Une mutation n'est « gardee » que si au moins un temoin EXECUTE (conduit dans la page) rougit.
      Un rouge des seuls temoins de SOURCE (« B-NP01-x source ») ne suffit pas.
   MA* = contrat Seance -> Nutrition (B-NP01-A) · MB* = cycle / cache / annonce / ecran vide (B-NP01-B)
-  · MC* = role des repas d'entrainement (B-NP01-C)
+  · MC* = role des repas d'entrainement (B-NP01-C) · MD* = reliquats (B-NP01-D)
   · EQ* = equivalentes (temoins EXECUTES verts ; seul le temoin de source, qui fige le texte, rougit) · [negatif] = commentaire seul (doit rester vert)
 Usage : python3 tools/mut_nut_punch01.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -87,6 +87,22 @@ MUT = [
      [(ST, "    const h=_js.heure!=null?_js.heure+' h':null;", "    const h=(_js.heure!=null?_js.heure:18)+' h';")], 'GARDE', 'repas'),
     ('MC7 [deguisee] les calories d\'un repas retire sont perdues au lieu d\'etre redistribuees',
      [(ST, "  if(!_js.seance) plan2=_retirerRepas(plan2, r=>!!r[3]);", "  if(!_js.seance) plan2=plan2.filter(r=>!r[3]);")], 'GARDE', 'repas'),
+    # ── B-NP01-D : reliquats ──
+    ('MD1 la tendance de force reprend l\'echauffement É',
+     [(ST, "          if(x.type==='É' || x.type==='W' || x.type==='E') return;", "          if(x.type==='W' || x.type==='E') return;")], 'GARDE', 'reliquats'),
+    ('MD2 le garde-fou de volume reprend les paliers d\'echauffement',
+     [(ST, "x.done!==false && x.type!=='É' && x.type!=='W' && +x.kg>0", "x.done!==false && +x.kg>0")], 'GARDE', 'reliquats'),
+    ('MD3 la phase du cycle recompte depuis l\'INSTANT (bascule a midi)',
+     [(ST, "  const elapsed=Math.round((new Date(_jourLocal+'T12:00:00')-new Date(S.mensCycleStart+'T12:00:00'))/864e5);",
+           "  const elapsed=Math.floor(((ts==null?new Date():new Date(ts))-new Date(S.mensCycleStart+'T12:00:00'))/864e5);")], 'GARDE', 'reliquats'),
+    ('MD4 « demain » redevient une date UTC',
+     [(SC, "    S.nextPlanned={date:today(d.getTime()),label:''};", "    S.nextPlanned={date:d.toISOString().slice(0,10),label:''};")], 'GARDE', 'reliquats'),
+    ('MD5 la tuile redit « Cette semaine »',
+     [(IX, "</svg>7 derniers jours</span>", "</svg>Cette semaine</span>")], 'GARDE', 'reliquats'),
+    ('MD6 [deguisee] la serie a l\'ECHEC X sortie du volume (ce n\'est pas un echauffement)',
+     [(ST, "x.done!==false && x.type!=='É' && x.type!=='W' && +x.kg>0", "x.done!==false && x.type!=='É' && x.type!=='W' && x.type!=='X' && +x.kg>0")], 'GARDE', 'reliquats'),
+    ('MD7 [deguisee] « demain » calcule en ajoutant 24 h a l\'instant present (decale a l\'heure d\'ete)',
+     [(SC, "    S.nextPlanned={date:today(d.getTime()),label:''};", "    S.nextPlanned={date:new Date(Date.now()+864e5).toISOString().slice(0,10),label:''};")], 'GARDE', 'reliquats'),
     ('[negatif] commentaire citant la duree et le volume dans calcTDEE',
      [(ST, TDEE, "  // (duree, volume, methode : jamais dans la depense)\n" + TDEE)], 'OK', 'contrat'),
 ]

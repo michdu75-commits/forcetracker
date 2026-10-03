@@ -1805,7 +1805,12 @@ function getMensCyclePhase(ts){
       training:'Les fluctuations hormonales liées au cycle naturel sont atténuées. Entraîne-toi selon ta forme du jour.'};
   }
   if(!S.mensCycleStart)return null;
-  const elapsed=Math.floor(((ts==null?new Date():new Date(ts))-new Date(S.mensCycleStart+'T12:00:00'))/864e5);
+  /* ⛔ LE JOUR DU CYCLE CHANGE À MINUIT LOCAL, PAS À MIDI (NUT-PUNCH-01, 03/10/2026). L'écart se
+     mesurait de l'INSTANT présent à MIDI du jour de début : chaque matin rendait la veille, la
+     phase (et ses +150 kcal lutéaux) basculait à 12 h. On compare désormais deux DATES LOCALES,
+     midi à midi — le motif de `plannedSession` et de `_weeklyCounts`. */
+  const _jourLocal=today(ts==null?undefined:ts);
+  const elapsed=Math.round((new Date(_jourLocal+'T12:00:00')-new Date(S.mensCycleStart+'T12:00:00'))/864e5);
   if(elapsed<0)return null;
   const dur=S.mensCycleDur||28;
   const day=(elapsed%dur)+1;
@@ -2260,8 +2265,13 @@ function _forceSurFenetre(jours){
           if(!x || x.done===false) return;
           const kg=+x.kg, r=+x.reps;
           if(!(kg>0 && r>0)) return;
-          /* ⛔ les séries d'échauffement ne mesurent pas une progression de force */
-          if(x.type==='W' || x.type==='E') return;
+          /* ⛔ les séries d'échauffement ne mesurent pas une progression de force.
+             ⚠️ NUT-PUNCH-01 (03/10/2026) : le garde ne nommait que les codes ANCIENS (`W`, `E`) —
+             or la migration `ft4_stmig1` a changé `W` en `É`, le code ACTUEL de l'échauffement.
+             Mesuré sur master : chaque palier `É` formait sa propre paire « exercice | reps » et
+             entrait dans la moyenne (un échauffement monté de 40 à 60 kg comptait +50 %).
+             `E` reste exclu comme avant, sans trancher sa sémantique (cf. `_serieDeTravail`). */
+          if(x.type==='É' || x.type==='W' || x.type==='E') return;
           const cle = nom+'|'+r;
           if(!moitie[m][cle] || kg>moitie[m][cle]) moitie[m][cle]=kg;
         });
@@ -2292,8 +2302,10 @@ function _volumeParMoitie(jours){
       const k = Math.round((new Date(t+'T12:00:00') - new Date(d+'T12:00:00'))/864e5);
       if(!(k>=0 && k<j)) return;
       const m = k < j/2 ? 0 : 1;
+      /* ⛔ Hors échauffement (`É`, `W`), comme la règle unique du volume `_workVol` (log.js) —
+         NUT-PUNCH-01 : le garde-fou comptait les paliers d'échauffement dans le volume. */
       (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{
-        if(x && x.done!==false && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps);
+        if(x && x.done!==false && x.type!=='É' && x.type!=='W' && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps);
       }));
     });
     return {recent:Math.round(v[0]), avant:Math.round(v[1])};
