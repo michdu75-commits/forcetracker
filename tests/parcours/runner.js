@@ -39670,6 +39670,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      `tools/mut_food_affichage.py`. */
   await require('./food_affichage.js').ecran(t, b, PORT);
   await require('./food_affichage.js').ecranVue(t, b, PORT);
+  /* 📚 FS-05 Food Semantics V1 (03/10/2026) : le corpus de référence des recherches alimentaires (145 cas MUST /
+     SHOULD / KNOWN_LIMITATION, en ligne et hors ligne) — il MESURE et FIGE, il ne corrige rien. Blocs B-CDXXXIX /
+     B-CDXL, contrôle négatif `tools/mut_food_reference.py`. */
+  await require('./food_reference.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40563,6 +40567,7 @@ require('./food_semantics.js').source(t, ROOT, fs, path);
 require('./food_formes.js').source(t, ROOT, fs, path);
 require('./food_prefs.js').source(t, ROOT, fs, path);
 require('./food_affichage.js').source(t, ROOT, fs, path);
+require('./food_reference.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

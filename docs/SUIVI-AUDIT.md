@@ -467,3 +467,15 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   conteneur n'a que Chromium. 🟤 **Limites** : `Cru · Cuit` sur 1 poêlée « grillée … crue » ; hors ligne « raisin » →
   `Sec / séché` (limite FS-03, visible exprès).
 - D-040 (Claude, PROPOSÉ).
+
+### 📚 FS-05 — Food Semantics V1 : le corpus de référence des recherches alimentaires (03/10/2026, session-B — 🟡 CHECKPOINT, NON PUBLIÉ)
+- **Fait** : 145 recherches plausibles figées (81 MUST · 47 SHOULD · 17 KNOWN_LIMITATION ; 116 en ligne, 29 hors ligne),
+  conduites sur la vraie base. **Mesure seulement : 0 ligne de production modifiée.** Détail : `docs/FOOD-SEMANTICS.md` §12.
+- **Contrôle négatif** `tools/mut_food_reference.py` : 20/20 — le moteur de master remis (M00) fait rougir **97 contrats**.
+- 🟤 **17 limites connues, mesurées, NON corrigées** (hors ligne : riz complet, semoule, pomme de terre crus en tête ;
+  lentilles, tomate → conserve ; eau → eau de coco ; thon en boite → rien ; oeufs → dessert ; spaghetti bolognaise →
+  raviolis crus · en ligne : riz sec, fruits rouges, jus d'orange, bolognaise, pomme cuite, camembert « Cru », crème
+  fraîche → rien ; raisin hors ligne → Raisin sec). Candidats pour un lot futur, **sur décision de Michel**.
+- 🟤 **Couverture restante pour FS-06** (§12.1) : laitiers, multi-formes, explicites, hors ligne peu couverts ; fautes de
+  frappe, marques, repas en une phrase, quantités absents.
+- D-041 (Claude, PROPOSÉ).

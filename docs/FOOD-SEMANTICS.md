@@ -2,8 +2,8 @@
 
 > **Créé le 02/10/2026 (FS-01, session-B, demande de Michel)**, après son retour terrain du 01/10
 > (`docs/SUIVI-AUDIT.md`, « la recherche d'aliments propose le mauvais aliment en premier »).
-> Ce fichier porte **ce que FS-01 → FS-04 ont fait** et **le contrat des lots suivants** (FS-05 → FS-07).
-> ⛔ **Rien de FS-05 à FS-07 n'est construit.** FS-01 → FS-04 sont des checkpoints sur branche, **non publiés**.
+> Ce fichier porte **ce que FS-01 → FS-05 ont fait** et **le contrat des lots suivants** (FS-06 → FS-07).
+> ⛔ **Rien de FS-06 à FS-07 n'est construit.** FS-01 → FS-05 sont des checkpoints sur branche, **non publiés**.
 > **FS-01** → classement déterministe · **FS-02** → taxonomie des formes · **FS-03** → préférences génériques
 > conservatrices · **FS-04** → la forme affichée dans les résultats (une projection, sans effet sur le classement).
 > ⛔⛔ **« Une préférence générique n'est jamais une correction d'une requête explicite. »**
@@ -129,7 +129,7 @@ ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichie
 - **courgette** : la table d'alias vise la purée, même défaut que pomme / haricots verts (signalé dans
   `tools/alias.py`, laissé à FS-03).
 
-## 7. Le contrat des lots suivants (⛔ FS-05 → FS-07 non construits)
+## 7. Le contrat des lots suivants (⛔ FS-06 → FS-07 non construits)
 
 | Lot | Contenu | Ce que FS-01 → FS-03 lui laissent |
 |---|---|---|
@@ -137,8 +137,8 @@ ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichie
 | **FS-02** ✅ | taxonomie des formes (§9) | — |
 | **FS-03** ✅ | préférences génériques conservatrices (§10) | — |
 | **FS-04** ✅ | affichage de la forme dans les résultats (§11) | — |
-| **FS-05** | corpus de ~100–150 requêtes courantes | les bancs `food_semantics` / `food_formes` / `food_prefs` / `food_affichage` et les différentiels (avec ET sans alias, résultats entiers et valeurs) |
-| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` |
+| **FS-05** ✅ | corpus de référence des recherches (§12) | — |
+| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` · `mut_food_reference.py` ; **la couverture restante du corpus (§12.1)** |
 | **FS-07** | passe complète + publication | ⚠️ **le contrôle sur iPhone du badge de forme (RENDU-IOS-01, T4 manuel)** : le conteneur n'a que Chromium (WebKit absent, vérifié le 03/10) |
 
 **Les invariants à garder dans tous les lots** : même entrée = même ordre (les témoins de déterminisme mélangent la
@@ -339,3 +339,87 @@ affiché `Sec / séché` ; le classement n'est pas corrigé ici (hors périmètr
 B-CDXXXVII vraie frappe, en ligne et hors ligne, 390 et 430 px, noms longs) ; contrôle négatif
 `python3 tools/mut_food_affichage.py` ; **différentiel FS-03 → FS-04 : 0 changement** sur 2 518 requêtes génériques et
 974 explicites, en ligne et hors ligne, sur les **6 premiers résultats entiers et leurs valeurs** (kcal, P, G, L).
+
+## 12. FS-05 — le corpus de référence des recherches alimentaires (03/10/2026, checkpoint non publié)
+
+**Un lot de MESURE, rien d'autre.** FS-05 n'améliore pas le moteur : il **fige** le comportement déjà validé par
+FS-01 → FS-04, sur des recherches plausibles, pour qu'aucun lot futur ne le dégrade sans qu'un témoin rougisse.
+**0 ligne de production modifiée** (`app.js`, `style.css`, `data/alias.json`, `tools/alias.py` : inchangés).
+
+**Le corpus** : `tests/parcours/food_reference_corpus.js` — **145 cas** `FR-001` → `FR-145`, de la DONNÉE pure. Chaque
+cas porte : la requête, la catégorie, le type (générique · explicite · ambigu · technique · sans forme · multi-formes),
+le mode (**en ligne** = avec la table d'alias · **hors ligne** = table indisponible, `_alias = null`), le niveau, ce
+qu'on attend du 1ᵉʳ résultat (un nom exact SEULEMENT là où une décision porte dessus — poire ≠ Poire belle Hélène,
+œuf → « Oeuf cru » ; sinon le bon TYPE d'aliment par une expression), le libellé de forme FS-04 attendu, d'éventuelles
+contraintes sur les rangs 2-3 (« le cru juste sous le cuit », ft-v1115 ; « jamais la purée dans les 6 premiers »), la
+provenance (FS-01 · FS-02 · FS-03 · FS-04 · alias · historique · retour terrain · observé FS-05) et une raison courte.
+
+**Les trois niveaux** :
+
+| Niveau | Nb | Sens | Au banc |
+|---|---|---|---|
+| **MUST** | 81 | une décision de Michel ou un contrat FS-01 → FS-04 | rouge s'il casse |
+| **SHOULD** | 47 | le comportement actuel, jugé bon, sans décision écrite | rouge s'il casse (à re-trancher, pas à « réparer ») |
+| **KNOWN_LIMITATION** | 17 | un défaut MESURÉ, non corrigé | **jamais rouge** : « toujours observée » ou « LEVÉE — à reclasser » |
+
+⛔ **Une limite connue ne devient pas une règle** : la liste des 17 limites est nommée dans le banc, et un cas MUST /
+SHOULD qui porterait le même contrôle qu'une limite fait rougir (contrôle négatif M14). ⭐ Une limite **levée** par un
+lot futur n'est pas une régression : c'est une bonne nouvelle à décider (la reclasser), jamais un rouge.
+
+**Répartition** : catégories féculents 33 · fruits 18 · légumes 22 · boissons 20 · viandes/poissons/œufs 19 · laitiers
+7 · plats/sauces 18 · sans forme 3 · multi-formes 5 — types générique 71 · technique 16 (pluriels, ligatures,
+majuscules) · sans forme 16 · explicite 28 · multi-formes 8 · ambigu 6 (≈ 71 % sans forme nommée / 29 % avec) —
+**116 en ligne, 29 hors ligne**. Libellés de forme contrôlés : Cuit 25 · Cru 24 · aucun libellé 16 · Boisson 9 ·
+Poudre / moulu 7 · Sec / séché 5 · Purée 4 · Feuilles 3 · Préparé 3 · Sauce 3 · Conserve 2 · Surgelé 2 · Blanc ou
+jaune d'œuf 1 — **les 12 libellés du mapping FS-04, aucun autre** (témoin de source).
+
+**Les 11 cas historiques** (pomme, haricots verts, café, thé, courgette, poire, raisin, riz, pâtes, carbonara, curry) :
+chacun a un contrat MUST / SHOULD en ligne ET un cas hors ligne (témoin). ⚠️ « raisin » hors ligne → « Raisin sec »
+est une **KNOWN_LIMITATION**, séparée du cas attendu en ligne (Raisin, cru), jamais corrigée ici.
+
+**Déterminisme** : le corpus entier (145 cas, en ligne et hors ligne) rend le même verdict, le même top 3 et le même
+libellé, rejoué 2 fois de plus, puis sur 3 bases CIQUAL mélangées et sur la base inversée (D-036). Page vierge :
+aucun historique, aucun profil personnel.
+
+**Les 17 limites connues (mesurées, NON corrigées — candidats pour un lot futur, sur décision de Michel)** :
+
+| Cas | Mode | Observé |
+|---|---|---|
+| riz sec | en ligne | vermicelles de riz (CIQUAL range le riz sec sous « cru », §9) |
+| riz complet · semoule · pomme de terre | hors ligne | la forme crue en tête (le profil riz est EXACT, pas de profil semoule / pomme de terre) |
+| lentilles · tomate | hors ligne | une conserve / un plat préparé devant le produit simple |
+| raisin | hors ligne | « Raisin sec » (« sec » est dans le nom même) — affiché honnêtement `Sec / séché` |
+| eau | hors ligne | « Eau de coco » (le nom le plus court gagne) |
+| thon en boite | hors ligne | aucun résultat (« boite » n'est pas dans CIQUAL) |
+| oeufs | hors ligne | « Oeufs au lait » (un dessert) |
+| spaghetti bolognaise | hors ligne | raviolis farcis crus — **le défaut du retour terrain du 01/10 revient sans la table** |
+| fruits rouges | en ligne | une tarte (aucun « fruits rouges » nu dans CIQUAL) |
+| jus d orange | en ligne | un jus multifruit devant « Jus d'orange, frais » |
+| bolognaise | en ligne | une pizza devant le plat de pâtes |
+| pomme cuite | en ligne | une pomme de terre (la pomme cuite existe) |
+| camembert | en ligne | affiché `Cru` (« au lait cru » lu comme une forme) |
+| crème fraîche | en ligne | aucun résultat CIQUAL |
+
+**Preuves** : banc `node tools/banc_food_reference.js` (B-CDXXXVIII structure du corpus · B-CDXXXIX le corpus conduit
+sur la vraie base, en ligne et hors ligne · B-CDXL déterminisme) — **135 OK / 0 rouge**, 17 limites « toujours
+observées » ; contrôle négatif `python3 tools/mut_food_reference.py`.
+
+### 12.1 COUVERTURE DU CORPUS — ce qui reste pour FS-06 (⛔ FS-05 ne comble rien)
+
+**Bien couvert** : les féculents (33 cas : riz, pâtes, semoule, pomme de terre, légumineuses, pain), les 11 cas
+historiques en ligne et hors ligne, les boissons chaudes (café, thé : boisson vs poudre / feuilles), les formes
+nommées (cru / cuit / purée / sauce / sec / poudre), le « pas de cuit > cru » des viandes, les ligatures et pluriels.
+
+**Faiblement couvert** : les laitiers (7 cas), les aliments sans forme (16 cas, 3 en catégorie propre), les
+multi-formes (8 cas sur 253 aliments concernés), les requêtes explicites (28), le hors ligne (29 cas sur 145), les
+conserves et surgelés (2 libellés chacun), « Blanc ou jaune d'œuf » (1 cas).
+
+**Types de requêtes absents** : les fautes de frappe (« spagetti », « yahourt ») · les marques et noms commerciaux
+(« nutella », « skyr ») — hors CIQUAL par nature · les repas composés en une phrase (« riz poulet brocolis ») · les
+quantités dans la requête (« 200 g de riz ») · les requêtes très courtes (2 lettres) · les régionalismes.
+
+**Ambiguïtés repérées pendant la mesure (non tranchées)** : « riz sec » (pas d'équivalence sec = cru, D-037 proposé) ·
+« camembert » (« lait cru » n'est pas une forme de l'aliment) · « amandes » affichées `Cuit` (grillées) · « pomme
+crue » dont le 2ᵉ résultat est une pomme de terre crue · « lait d'amande » hors ligne → une boisson chocolatée ·
+whey / barre protéinée → aucun résultat CIQUAL · quinoa, boulgour, brocoli, épinards, carotte, aubergine hors ligne
+→ la forme crue en tête (cohérent avec « pas de cuit > cru universel », mais à confirmer par Michel).
