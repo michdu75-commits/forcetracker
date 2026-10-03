@@ -39641,6 +39641,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      `tools/mut_nutri_lipides25.py`. */
   await require('./nutri_lipides25.js').ecran(t, b, PORT);
   await require('./nutri_lipides25.js').ecranVue(t, b, PORT);
+  /* 🍽️ NUT-PUNCH-01 (03/10/2026) : contrat Séance → Nutrition (vraie séance, rechargement, contrôles
+     négatifs durée / volume / méthode / discipline / niveau, 5 observations nommées jamais rouges).
+     Bloc B-NP01-A, contrôle négatif `tools/mut_nut_punch01.py`. */
+  await require('./nut_punch01.js').contrat(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40530,6 +40534,7 @@ require('./profil_atypique.js').source(t, ROOT, fs, path);
 require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
+require('./nut_punch01.js').sourceContrat(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
