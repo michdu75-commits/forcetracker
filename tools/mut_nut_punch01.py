@@ -151,6 +151,10 @@ MUT = [
      [(SC, "  const garde=soir?new Set(idees.map(i=>i.macro)):null;", "  const garde=null;")], 'GARDE', 'reste'),
     ('MF11 le soir, le total kcal reste affiche',
      [(SC, "  const sansKcal=!!(opts&&opts.sansKcal)||soir;", "  const sansKcal=!!(opts&&opts.sansKcal);")], 'GARDE', 'reste'),
+    ('MU1 la ligne des variantes redevient trop petite pour un pouce (29 px)',
+     [(SC, "padding:10px 12px;min-height:40px;box-sizing:border-box;display:flex;align-items:center;gap:8px;font-size:12px;", "padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:12px;")], 'GARDE', 'habituels'),
+    ('MU2 « Voir des idees » redevient trop petit pour un pouce (29 px)',
+     [(SC, "padding:10px 0;min-height:40px;box-sizing:border-box;display:flex;", "padding:6px 0;display:flex;")], 'GARDE', 'reste'),
     ('[negatif] commentaire citant la duree et le volume dans calcTDEE',
      [(ST, TDEE, "  // (duree, volume, methode : jamais dans la depense)\n" + TDEE)], 'OK', 'contrat'),
 ]

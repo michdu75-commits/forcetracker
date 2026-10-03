@@ -3003,7 +3003,7 @@ function _blocResteHTML(td, heure, opts){
 function _blocIdeesHTML(idees, soir){
   const cols={prot:'var(--green)',carbs:'var(--orange)',fat:'var(--gold)'};
   return '<details class="jr-sec nu-reste-idees" style="margin-top:8px;">'
-    +'<summary style="list-style:none;cursor:pointer;padding:6px 0;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--t2);user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">'
+    +'<summary style="list-style:none;cursor:pointer;padding:10px 0;min-height:40px;box-sizing:border-box;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--t2);user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">'
       +'<span style="flex:1;min-width:0;">Voir des idées pour compléter</span></summary>'
     +'<div style="padding-top:6px;">'
     /* ⛔⛔ DEUX COLONNES FIXES, PLUS TROIS BOÎTES QUI SE POUSSENT (ft-v1031). En flex, la
@@ -3964,7 +3964,7 @@ function renderFoodJournal(){
         /* Les variantes : un déroulant natif (le motif `jr-sec` du Journal, R13), replié. */
         if(v.length){
           html+=`<details class="jr-sec hab-variantes" style="margin-top:-2px;">`
-            +`<summary style="list-style:none;cursor:pointer;padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--t2);user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">`
+            +`<summary style="list-style:none;cursor:pointer;padding:10px 12px;min-height:40px;box-sizing:border-box;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--t2);user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">`
               +`<span style="flex:1;min-width:0;">${v.length} variante${v.length>1?'s':''} de ce repas</span></summary>`
             +`<div style="display:flex;flex-direction:column;gap:6px;padding:4px 0 2px 14px;">`
             + v.map((x,j)=>carte(x,'hab-m-'+idx+'-'+j,true)+moments(x,'hab-m-'+idx+'-'+j)).join('')

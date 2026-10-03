@@ -740,6 +740,8 @@ module.exports.habituels = async function (t, b, PORT) {
   const inconnu = await X.pg.evaluate(() => { const n = S.foodLog.length; rejouerRepas('n-existe-pas', 'midi'); return S.foodLog.length === n; });
   t('B-NP01-E ⛔ une signature inconnue n\'écrit rien', inconnu === true, String(inconnu));
   /* Déterminisme + 390 px : noms très longs, aucun débordement horizontal, titre tronqué proprement. */
+  const hV = await X.pg.evaluate(() => { __np.base({}); __npJ([[__npR(20), 'collation2', [__npA.W]], [[21, 22, 23], 'petitdej', [__npA.W, __npA.B]]]); __npHab();
+    const sv = document.querySelector('#food-journal details.hab-variantes > summary'); return sv ? Math.round(sv.getBoundingClientRect().height) : 0; });
   const L390 = await X.pg.evaluate(async () => {
     __np.base({});
     const long = 'Préparation culinaire à base de viande hachée de bœuf, sauce tomate, oignons et épices, surgelée, réchauffée';
@@ -751,6 +753,7 @@ module.exports.habituels = async function (t, b, PORT) {
   });
   t('B-NP01-E 390 px ⭐ nom très long : titre tronqué par « … », carte dans l\'écran, aucun débordement horizontal ; deux calculs successifs identiques',
     L390.stable && !L390.deborde && L390.coupe && L390.carteDansEcran && L390.n === 2, det(L390));
+  t('B-NP01-E 390 px ⭐ la ligne « N variantes de ce repas » est une vraie zone tactile (≥ 40 px de haut)', hV >= 40, 'hauteur ' + hV + ' px');
   t('B-NP01-E aucune erreur de page', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
   await X.cx.close();
 };
@@ -792,7 +795,8 @@ module.exports.reste = async function (t, b, PORT) {
     const o = { r: r ? { kcal: r.kcal, P: r.prot, G: r.carbs, L: r.fat, rien: r.rien } : null, bloc: !!bloc,
       texte: bloc ? bloc.innerText.replace(/\s+/g, ' ').trim() : '', carte: card.innerText.replace(/\s+/g, ' ').trim(),
       chiffres: bloc ? [...bloc.querySelectorAll('.nu-reste-chiffres [title]')].map(x => x.title) : [],
-      ideesFermees: det0 ? det0.open === false : null, ideesVisibles: det0 ? /Une idée, pas une consigne/.test(bloc.innerText) : null };
+      ideesFermees: det0 ? det0.open === false : null, ideesVisibles: det0 ? /Une idée, pas une consigne/.test(bloc.innerText) : null,
+      hResume: det0 ? Math.round(det0.querySelector('summary').getBoundingClientRect().height) : null };
     if (det0) { det0.querySelector('summary').click(); await new Promise(r => setTimeout(r, 60)); o.apresOuverture = bloc.innerText.replace(/\s+/g, ' ').trim(); }
     /* Le Journal : même code, sans répéter les kcal de l'en-tête. */
     switchNuTab('journal', document.getElementById('ntab-journal')); renderFoodJournal(); await new Promise(r => setTimeout(r, 80));
@@ -812,6 +816,7 @@ module.exports.reste = async function (t, b, PORT) {
     && det(p.chiffres) === det(['Protéines', 'Glucides', 'Lipides']), det(p));
   t('B-NP01-F ⭐⭐ les équivalences ne s\'affichent PAS d\'office : « Voir des idées pour compléter » est fermé, rien de « 250 g de … » à l\'écran',
     p.ideesFermees === true && p.ideesVisibles === false && /Voir des idées pour compléter/.test(p.texte) && !/\d+\s*g de [A-ZÉ]/.test(p.texte), det(p.texte));
+  t('B-NP01-F ⭐ « Voir des idées pour compléter » est une vraie zone tactile (≥ 40 px de haut)', p.hResume >= 40, 'hauteur ' + p.hResume + ' px');
   t('B-NP01-F ⭐ un appui ouvre les idées (et leur mention « Une idée, pas une consigne »)',
     /Une idée, pas une consigne/.test(p.apresOuverture || '') && /[+]|g de/.test(p.apresOuverture || ''), (p.apresOuverture || '').slice(0, 200));
   const cb = p.carte.toLowerCase();   /* innerText rend les titres en majuscules (text-transform) */
