@@ -14015,6 +14015,11 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
+  /* ⚠️ NUT-PUNCH-01 (03/10/2026) : l'horloge de la PAGE est figée à 14 h. Le calcul l'était déjà
+     (`_ideesPourLeReste(r, 14)`), pas le RENDU, qui lit l'heure réelle (`_estLeSoir`) : après 20 h,
+     l'écran passe en mode « soir ». Même raison que plus bas — *un témoin dont le verdict dépend
+     de l'heure à laquelle on le lance mesure la montre, pas le code.* */
+  await pg.clock.setFixedTime(new Date('2026-10-03T14:00:00+02:00'));
   await pg.addInitScript(seedScript({}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2200);
@@ -14061,26 +14066,32 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
     o.pasDeShakePourGlucides = ligneG.indexOf('Shake')<0;
     o.frequentDAbord = ligneG.indexOf('Riz basmati')>=0;      // mangé 3 fois, passe devant le pain
     // ── à l'écran, par le vrai rendu
-    goScreen('s-nutrition'); renderFoodJournal();
+    /* ⚠️ NUT-PUNCH-01 (03/10/2026) : le Journal est VRAIMENT affiché (onglet Nutrition → Journal).
+       `goScreen('s-nutrition')` n'ouvrait aucun écran : un élément non affiché rend TOUT son texte à
+       `innerText`, y compris celui d'un déroulant fermé — « fermé au départ » ne pouvait pas être
+       mesuré. Affiché, `innerText` rend ce que la personne voit (titre en MAJUSCULES par le CSS :
+       d'où les comparaisons insensibles à la casse ci-dessous). */
+    goScreen('nutrition', document.querySelector('[onclick*="nutrition"]'));
+    switchNuTab('journal', document.getElementById('ntab-journal')); renderFoodJournal();
     const lire=()=>document.getElementById('food-journal').innerText;
     /* ⚠️ NUT-PUNCH-01 (03/10, décision de Michel) : le bloc s'appelle « Il te reste aujourd'hui » et
        les idées passent DERRIÈRE « Voir des idées pour compléter ». Le témoin ouvre ce déroulant
        comme la personne le ferait, puis lit ce qu'elle voit — même promesse qu'avant. */
-    o.ecran = /Il te reste aujourd'hui/.test(lire());
+    o.ecran = /Il te reste aujourd'hui/i.test(lire());
     o.fermeAuDepart = /Une idée, pas une consigne/.test(lire())===false;
     document.querySelectorAll('#food-journal details.nu-reste-idees').forEach(d=>{d.open=true;});
     o.mention = /Une idée, pas une consigne/.test(lire());
     // ⛔ ① jour PASSÉ → rien
     _journalJour=new Date(Date.now()-864e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'}); renderFoodJournal();
-    o.jourPasse = /Il te reste aujourd'hui/.test(lire());
+    o.jourPasse = /Il te reste aujourd'hui/i.test(lire());
     // ⛔ ② cible DÉPASSÉE → rien, aucun reproche
     _journalJour=null;
     S.foodLog.push({date:t,meal:'soir',name:'Gros repas',kcal:4000,prot:300,carbs:400,fat:150,ts:Date.now()});
     renderFoodJournal();
-    o.depasse = /Il te reste aujourd'hui/.test(lire());
+    o.depasse = /Il te reste aujourd'hui/i.test(lire());
     // ⛔ ③ AUCUN aliment à soi → rien d'inventé
     S.foodLog=[]; S.savedFoods=[]; renderFoodJournal();
-    o.sansAliments = /Il te reste aujourd'hui/.test(lire());
+    o.sansAliments = /Il te reste aujourd'hui/i.test(lire());
     // ⛔ ④ pas de profil → pas de cible, donc pas de reste
     S.bw=0; o.sansProfil = _resteDuJour(t)===null;
     return o;

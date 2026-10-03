@@ -127,7 +127,10 @@ module.exports.source = function(t, ROOT, fs, path){
   /* ⛔⛔ C1 NE CHANGE AUCUNE RÈGLE. Michel : « je préfère un arrêt propre avec une mesure réelle
      à un seuil inventé. » Ces témoins figent donc DEUX choses opposées : que l'outil de mesure
      existe, ET que la règle n'a PAS bougé. */
-  const RH = _nuC(_corps('_repasHabituels', app));
+  /* ⚠️ NUT-PUNCH-01 (03/10/2026) : le calcul des habitudes a DÉMÉNAGÉ, inchangé, dans
+     `_repasHabituelsTous` (l'ancien corps, sans troncature) ; `_repasHabituels` n'en tire plus que
+     les familles. La règle n'a pas bougé — le témoin suit l'endroit où elle vit (R30). */
+  const RH = _nuC(_corps('_repasHabituelsTous', app));
   t('B-CCCXXIII H0 ⛔⛔ PÉRIMÈTRE — la règle des habitudes n\'est PAS encore changée : le seuil '+
     'est toujours `s.n >= 2`, et il attend les données réelles de Michel',
     /s\.n>=2/.test(sp(RH)), '');
