@@ -894,6 +894,19 @@ module.exports.reste = async function (t, b, PORT) {
     persist(); journalNav(-1); await new Promise(r => setTimeout(r, 80));
     const fj = document.getElementById('food-journal'); const o = !!fj.querySelector('.nu-reste'); journalAllerA(today()); return o; });
   t('B-NP01-F ⛔ un jour PASSÉ n\'a jamais de bloc (anti-TCA)', passe === false, String(passe));
+  /* ⑦ L'aide « ? » de l'onglet Nutrition (règle d'or #11, point 3) nomme le bloc tel qu'il s'affiche :
+     « il te reste aujourd'hui ». Elle disait encore « ce qu'il te reste, en vrai » à un endroit (l'entrée
+     du plan de repas) — R23 : une aide qui nomme un bloc disparu fait chercher ce qui n'existe plus.
+     ⚠️ Les ANNONCES passées (`NEW_FEATURES` déjà publiées, constants.js) sont de l'histoire : pas relues. */
+  const aide = await X.pg.evaluate(async () => {
+    goScreen('nutrition', document.querySelector('[onclick*="nutrition"]')); await new Promise(r => setTimeout(r, 60));
+    showHelp(); await new Promise(r => setTimeout(r, 60));
+    const ov = document.getElementById('ov-help'), tx = (document.getElementById('help-content') || {}).textContent || '';
+    const o = { ouverte: !!(ov && ov.classList.contains('open')), nouveau: (tx.match(/il te reste aujourd'hui/gi) || []).length, ancien: /il te reste, en vrai/i.test(tx) };
+    closeHelp(); return o;
+  });
+  t('B-NP01-F ⭐ l\'aide « ? » de l\'onglet Nutrition, OUVERTE : « il te reste aujourd\'hui » partout, plus jamais « ce qu\'il te reste, en vrai »',
+    aide.ouverte && aide.nouveau >= 3 && aide.ancien === false, det(aide));
   t('B-NP01-F aucune erreur de page', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
   await X.cx.close();
 };
