@@ -139,6 +139,7 @@ ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichie
 | **FS-04** ✅ | affichage de la forme dans les résultats (§11) | — |
 | **FS-05** ✅ | corpus de référence des recherches (§12) | — |
 | **FS-05B** | corpus **multi-source** (fast-food, plats étrangers, Open Food Facts figé, ordre des sections) — §12.2 | le banc `food_reference` (même format de cas) |
+| *lot séparé, non nommé* | **correction de l'ordre inter-sources selon D-042** (générique avant fast-food / marque, sauf intention explicite) — §12.3 | ⛔ **non ouvert** : son lancement et sa place dans la séquence sont à décider par Michel |
 | **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` · `mut_food_reference.py` ; **la couverture restante du corpus (§12.1)** |
 | **FS-07** | passe complète + publication | ⚠️ **le contrôle sur iPhone du badge de forme (RENDU-IOS-01, T4 manuel)** : le conteneur n'a que Chromium (WebKit absent, vérifié le 03/10) |
 
@@ -451,7 +452,8 @@ recherche **séparée** dans l'écran Suppléments, identification seulement, **
 - ⚠️ **Le fast-food passe devant CIQUAL même pour une requête générique** : « poulet » → 4 lignes KFC Tenders
   au-dessus du poulet CIQUAL ; « salade » → 4 salades Quick ; « fromage » et « pates » → des pizzas Domino's (« pâte
   fine ») ; « burger », « frites », « wrap », « coca » → fast-food en tête. Le commentaire du code assume l'ordre
-  (« le nom tapé est déjà une marque ») ET plafonne à 4 lignes pour « poulet » : **à trancher par Michel**, pas ici.
+  (« le nom tapé est déjà une marque ») ET plafonne à 4 lignes pour « poulet ». ↪️ **Tranché par Michel le 03/10 :
+  D-042** (§12.3) — ce paragraphe décrit l'état ACTUEL du code, pas la cible.
 - ⚠️ **Faux rapprochements fast-food** : « oeuf » → « Quick · Qarré bœuf » (« bœuf » contient « oeuf ») ; « nem »
   → « Quick · Cup Kiri » et « Grande Frites ».
 - **Aucun résultat local** (CIQUAL ET fast-food vides — seul Open Food Facts, en ligne, peut répondre) : tacos · naan
@@ -462,7 +464,9 @@ recherche **séparée** dans l'écran Suppléments, identification seulement, **
 ne rien corriger, 0 IA) :
 1. **Fast-food** : les noms de marque (big mac, whopper, tenders kfc, frites mcdo…) ET les génériques qui le
    déclenchent (poulet, salade, fromage, pâtes, burger, frites, coca, oeuf, nem), avec l'**ordre des sections**
-   (fast-food ↔ CIQUAL) comme propriété contrôlée ; les faux rapprochements ci-dessus en KNOWN_LIMITATION.
+   (fast-food ↔ CIQUAL) comme propriété contrôlée — ⚠️ l'ordre actuel sur une requête GÉNÉRIQUE s'y enregistre en
+   KNOWN_LIMITATION (écart à **D-042**, §12.3), jamais en MUST / SHOULD ; les faux rapprochements ci-dessus en
+   KNOWN_LIMITATION.
 2. **Plats étrangers** (via CIQUAL + alias) : sushi, nem, couscous, kebab, burrito, tajine, falafel, houmous, paëlla,
    curry de poulet, en ligne et hors ligne ; les absents (tacos, naan, ramen, pad thaï, poke, bibimbap) en limite.
 3. **Open Food Facts** : réponses **figées** (fichiers de réponse rejoués dans le navigateur de test, le réseau
@@ -471,3 +475,50 @@ ne rien corriger, 0 IA) :
 4. **Inter-sources** : le rendu unique quand plusieurs sources répondent, le cas « tout vide » (`_signalerRechercheVide`).
 5. Hors FS-05B, à garder en tête : le journal personnel (exclu par principe tant qu'aucune décision ne l'inclut), le
    code-barres et les chemins IA (pas des requêtes texte).
+
+### 12.3 DÉCISION D-042 (Michel, 03/10/2026) — requête générique : l'aliment générique AVANT le fast-food et les marques
+
+> ⚠️ **Trois choses distinctes, à ne jamais confondre** : ce que fait le code AUJOURD'HUI (①), ce que Michel a
+> DÉCIDÉ (②), ce qui reste À FAIRE dans un lot séparé (③). Cette section ne change aucune ligne de code.
+
+**① COMPORTEMENT ACTUEL OBSERVÉ** (branche au `7c79b613`, vraie page, lecture seule, 03/10) — `_afSuggRendu` (`app.js`)
+rend les sections dans cet ordre : « Déjà noté par toi » → **fast-food** → **CIQUAL** → Open Food Facts. La section
+fast-food (4 lignes au plus, `_marquesChercher(q,4)`) passe donc **au-dessus de CIQUAL dès qu'elle a un résultat,
+quelle que soit la requête** — choix d'implémentation de ft-v1114 (04/09), pensé pour « big mac » ; la demande de
+Michel portait alors sur le fait de *trouver* « big mac » ou « pizza 4 fromages », pas sur l'ordre. **Même ordre sur
+master `ft-v1249`** (vérifié dans le code) : l'écart existe en production.
+
+| Requête | Fast-food, affiché AU-DESSUS | 1ᵉʳ résultat CIQUAL, en dessous |
+|---|---|---|
+| poulet | 4 lignes KFC (2 Tenders · 5 Tenders · 3 Hot Wings · 8 Hot Wings) | Poulet, filet sans peau cru |
+| salade | 4 salades Quick « Qréative été » | Salade verte, crue, sans assaisonnement |
+| fromage | Domino's 4 Fromages · Quick dosette fromage blanc ciboulette | Fromage (aliment moyen) |
+| pâtes | 2 pizzas Domino's (« pâte fine ») | Pâtes sèches, standard, cuites, sans sel ajouté |
+| poulet KFC | 4 lignes KFC | aucun |
+| tenders KFC | 4 lignes KFC | aucun |
+
+Open Food Facts (« produits de marque ») est déjà rendu APRÈS CIQUAL (lu dans le code ; non mesuré ici, le service
+étant injoignable depuis le conteneur).
+
+**② DÉCISION PRODUIT VALIDÉE PAR MICHEL (03/10/2026)** — le COMPORTEMENT CIBLE :
+> Pour une requête alimentaire **GÉNÉRIQUE** (« poulet », « salade », « fromage », « pâtes » ou équivalent), un
+> **aliment générique de référence doit apparaître AVANT** les produits fast-food ou de marque. Les produits fast-food
+> / de marque **peuvent passer devant uniquement lorsque la requête exprime explicitement cette intention**.
+
+Ses exemples : « poulet » → l'aliment générique avant KFC · « salade » → la salade générique avant Quick ·
+« fromage » → le fromage générique avant Domino's / Quick · « poulet KFC » et « tenders KFC » → KFC peut passer devant.
+⚠️ **Ce n'est PAS le comportement actuel.** Écart mesuré aujourd'hui : poulet, salade, fromage, pâtes (①). Les deux
+exemples explicites sont **déjà conformes** (KFC en tête, CIQUAL ne rend rien).
+
+**③ CORRECTION FUTURE — DANS UN LOT SÉPARÉ** (non ouvert, non nommé, non planifié) :
+- **Rien n'est corrigé** ici, ni par FS-05 / FS-05B. La correction se fera dans un lot dédié, lancé par Michel, avec
+  ses propres témoins, contrôle négatif et passe complète avant toute publication.
+- **D'ici là, aucun banc ne fige l'ordre actuel comme une règle** : sur une requête générique, « fast-food avant le
+  générique » s'enregistre en **KNOWN_LIMITATION (écart à D-042)**, jamais en MUST / SHOULD — sinon le banc
+  cimenterait l'inverse de la décision. Les deux exemples explicites peuvent être figés tels quels.
+- **Non couverts par les exemples de la décision — à faire préciser par Michel AVANT d'écrire la correction** (rien
+  n'est tranché ici) : un nom de produit propre à une enseigne tapé SANS l'enseigne (« big mac », « whopper ») ; une
+  requête sans aliment générique en local (« tenders », « tacos ») ; la section « Déjà noté par toi » (journal
+  personnel), hors du périmètre de la décision.
+- **Non visés par la décision** : le plafond de 4 lignes fast-food, les faux rapprochements de §12.2 (« oeuf » →
+  « Qarré bœuf »… — défauts séparés), l'ordre CIQUAL → Open Food Facts.

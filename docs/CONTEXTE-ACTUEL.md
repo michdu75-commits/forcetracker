@@ -17,6 +17,7 @@
 
 - **Chantier Nutrition gelé en phase d'observation réelle** (Michel, 13/09) : toute modification de son comportement exige un **nouveau feu vert explicite**. Détail : `CLAUDE.md`, `docs/DOUANE-NUTRITION.md`. ↪️ Feu vert donné par Michel le 24/09 pour le seul chantier « TDEE / glucides / provenance » : B1/B2 et D-016/D-020/D-021 sont **publiés en `ft-v1235`** ; le gel vaut toujours pour tout le reste. ↪️ **30/09 : nouveau feu vert, limité au cas B3** (lot Nutrition 1, ci-dessous) ; douane, `savedFoods`, historique, alertes 2 et 3 restent gelés.
 - **Le repas actif est clos, le chantier Nutrition ne l'est pas** (arbitrage du 20/09) : **D-011** (le choix manuel survit au changement de jour) et **D-012** (au rechargement : on observe).
+- **Recherche d'aliments — l'aliment générique AVANT le fast-food et les marques** (Michel, 03/10, **D-042**) : pour une requête générique (« poulet », « salade »…), l'aliment de référence passe devant ; le fast-food / les marques seulement sur intention explicite (« poulet KFC »). ⚠️ **Cible, PAS encore implémentée** : aujourd'hui « poulet » → 4 lignes KFC au-dessus du poulet CIQUAL (master compris). Correction dans un **lot séparé, non ouvert** ; d'ici là cet ordre est un écart, jamais un témoin MUST / SHOULD. Détail : `docs/FOOD-SEMANTICS.md` §12.3.
 - **On ne touche pas au workflow de déploiement** (Michel, 27/08). ⚠️ Cette décision n'est écrite **que** dans `docs/JOURNAL-DE-PARTAGE.md` (ligne ⛔).
 
 ## 🔬 Chantier actif
