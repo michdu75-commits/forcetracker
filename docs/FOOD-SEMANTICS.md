@@ -2,8 +2,8 @@
 
 > **Créé le 02/10/2026 (FS-01, session-B, demande de Michel)**, après son retour terrain du 01/10
 > (`docs/SUIVI-AUDIT.md`, « la recherche d'aliments propose le mauvais aliment en premier »).
-> Ce fichier porte **ce que FS-01 → FS-05 ont fait** et **le contrat des lots suivants** (FS-06 → FS-07).
-> ⛔ **Rien de FS-06 à FS-07 n'est construit.** FS-01 → FS-05 sont des checkpoints sur branche, **non publiés**.
+> Ce fichier porte **ce que FS-01 → FS-05B ont fait** et **le contrat des lots suivants** (FS-06 → FS-07).
+> ⛔ **Rien de FS-06 à FS-07 n'est construit.** FS-01 → FS-05B sont des checkpoints sur branche, **non publiés**.
 > **FS-01** → classement déterministe · **FS-02** → taxonomie des formes · **FS-03** → préférences génériques
 > conservatrices · **FS-04** → la forme affichée dans les résultats (une projection, sans effet sur le classement).
 > ⛔⛔ **« Une préférence générique n'est jamais une correction d'une requête explicite. »**
@@ -138,9 +138,9 @@ ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichie
 | **FS-03** ✅ | préférences génériques conservatrices (§10) | — |
 | **FS-04** ✅ | affichage de la forme dans les résultats (§11) | — |
 | **FS-05** ✅ | corpus de référence des recherches (§12) | — |
-| **FS-05B** | corpus **multi-source** (fast-food, plats étrangers, Open Food Facts figé, ordre des sections) — §12.2 | le banc `food_reference` (même format de cas) |
+| **FS-05B** ✅ | corpus **multi-source** (fast-food, plats étrangers, Open Food Facts figé, ordre des sections) — §13 | — |
 | *lot séparé, non nommé* | **correction de l'ordre inter-sources selon D-042** (générique avant fast-food / marque, sauf intention explicite) — §12.3 | ⛔ **non ouvert** : son lancement et sa place dans la séquence sont à décider par Michel |
-| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` · `mut_food_reference.py` ; **la couverture restante du corpus (§12.1)** |
+| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` · `mut_food_reference.py` · `mut_food_multisource.py` ; **la couverture restante (§12.1) et les constats de FS-05B (§13)** |
 | **FS-07** | passe complète + publication | ⚠️ **le contrôle sur iPhone du badge de forme (RENDU-IOS-01, T4 manuel)** : le conteneur n'a que Chromium (WebKit absent, vérifié le 03/10) |
 
 **Les invariants à garder dans tous les lots** : même entrée = même ordre (les témoins de déterminisme mélangent la
@@ -460,7 +460,7 @@ recherche **séparée** dans l'écran Suppléments, identification seulement, **
   · ramen · pad thaï · poke · bibimbap · whey · barre protéinée ; « skyr » hors ligne.
 - Hors ligne, « kebab » → « Pizza kebab, préemballée » (en ligne : le sandwich grec, par l'alias).
 
-**⇒ Micro-lot séparé proposé : FS-05B — corpus multi-source, AVANT FS-06** (même règle que FS-05 : mesurer et figer,
+**⇒ Micro-lot séparé proposé : FS-05B — corpus multi-source, AVANT FS-06** — ✅ **fait, §13** (même règle que FS-05 : mesurer et figer,
 ne rien corriger, 0 IA) :
 1. **Fast-food** : les noms de marque (big mac, whopper, tenders kfc, frites mcdo…) ET les génériques qui le
    déclenchent (poulet, salade, fromage, pâtes, burger, frites, coca, oeuf, nem), avec l'**ordre des sections**
@@ -522,3 +522,104 @@ exemples explicites sont **déjà conformes** (KFC en tête, CIQUAL ne rend rien
   personnel), hors du périmètre de la décision.
 - **Non visés par la décision** : le plafond de 4 lignes fast-food, les faux rapprochements de §12.2 (« oeuf » →
   « Qarré bœuf »… — défauts séparés), l'ordre CIQUAL → Open Food Facts.
+
+## 13. FS-05B — le corpus MULTI-SOURCE de la recherche d'aliments (03/10/2026, checkpoint non publié)
+
+**Un lot de MESURE, rien d'autre.** FS-05 ne couvrait que CIQUAL + alias (§12.2). FS-05B fige le comportement de
+**toute** la recherche « Ajouter un aliment », telle qu'une personne la vit, pour qu'aucun lot futur ne la dégrade sans
+qu'un témoin rougisse. **0 ligne de production modifiée** (`app.js`, `style.css`, `data/*`, `tools/alias.py`, Worker,
+Apps Script : diff vide contre FS-05). **D-042 n'est PAS corrigée** : son écart est mesuré et figé en limite connue.
+
+**Les sources réellement branchées** (relevées dans le code courant, §12.2) :
+
+| Source | Où dans le code | Hors ligne | Dans FS-05B |
+|---|---|---|---|
+| CIQUAL + table d'alias | `_ciqualChercher` (`data/ciqual.json`, `data/alias.json`) | oui (sans alias si la table n'a pas pu se charger) | ✅ conduite à chaque cas (section rendue = `_ciqualChercher(q,6)`) |
+| Fast-food | `_marquesChercher` (`data/marques.json`, 123 produits, 5 enseignes ; `MARQUE_ALIAS`) | oui | ✅ 99 cas où il répond |
+| Open Food Facts | `_offRechercher` (`cgi/search.pl`, après 450 ms de pause, dès 3 lettres) | non | ✅ par **réponses FIGÉES** (`tests/parcours/food_multisource_off.js`) — ⛔ **jamais le réseau réel** |
+| Journal personnel (« Déjà noté par toi ») | `_afSuggLocales` (`S.foodLog`) | oui | ⛔ hors périmètre (stockage vidé ; sa place est mesurée à part, Q5) |
+
+**Le corpus** : `tests/parcours/food_multisource_corpus.js` — **198 cas** `MS-001` → `MS-198`, de la DONNÉE, une ligne par
+cas. ⭐ **Il est conduit par la VRAIE FRAPPE** : le champ `#af-desc` de l'écran « Ajouter un aliment » est rempli puis
+notifié (`input`), donc `_afSuggInput` tourne exactement comme sous le doigt, et le banc lit le HTML **réellement rendu**
+(sections, lignes, en-têtes, mentions). Quatre configurations de sources (`ctx`) : `en` (tout disponible, Open Food
+Facts figé) · `hors` (alias non chargés, Open Food Facts injoignable) · `sans-marques` (fichier fast-food en 404) ·
+`sans-ciqual` (fichier CIQUAL en 404).
+
+| Niveau | Nb | Sens | Au banc |
+|---|---|---|---|
+| **MUST** | 9 | une décision de Michel (D-042 : le générique de référence existe ; CIQUAL **avant** Open Food Facts) | rouge |
+| **SHOULD** | 99 | le comportement actuel jugé bon, sans décision écrite | rouge (à re-trancher, pas à « réparer ») |
+| **KNOWN_LIMITATION** | 72 | un défaut mesuré | jamais rouge (« toujours observée » / « LEVÉE — à reclasser ») |
+| **OBSERVATION** | 18 | un fait mesuré qui pose une question NON tranchée | jamais rouge (« toujours vraie » / « CHANGÉE — à relire ») |
+
+⛔ **Les 72 limites et les 18 observations sont nommées par identifiant dans le banc** : en promouvoir une en contrat
+(ou l'inverse) fait rougir (contrôles négatifs M18 → M20). ⛔ **Les 36 écarts à D-042 sont nommés** (« requête|configuration »)
+et ne peuvent être que KNOWN_LIMITATION. ⛔ **Les cas des 4 questions ouvertes restent des OBSERVATION.**
+
+**Répartition** — catégories : enseignes 14 · produits fast-food 31 · génériques qui déclenchent le fast-food 40 · faux
+rapprochements 5 · génériques sans fast-food 21 · plats du monde présents 35 · plats du monde absents 9 · Open Food Facts
+8 · inter-sources 8 · pannes 4 + vide 1 · signal « recherche vide » 6 · source absente 9 · frappe partielle 4 · données 3 —
+sources qui répondent : fast-food + CIQUAL 66 · CIQUAL seul 59 · fast-food seul 30 · Open Food Facts seul 8 · CIQUAL + OFF 7
+· les trois 3 · aucune 25 — configurations : en ligne 176 · hors ligne 16 · sans fast-food 3 · sans CIQUAL 3 — **23 cas**
+servent une réponse Open Food Facts figée (15 réponses : produits, kJ seuls, 9 produits proches, 0 kcal, nom long, erreur
+500, panne réseau, JSON invalide, réponse sans produits, réponse lente).
+
+**Propriétés vérifiées sur TOUT le corpus** (une ligne de banc chacune) : la section CIQUAL affichée = `_ciqualChercher`,
+même ordre (MUST) · la section fast-food = `_marquesChercher` (4 au plus) · chaque ligne fast-food nomme son enseigne ·
+la mention « table Ciqual 2025 — ANSES » apparaît **si et seulement si** CIQUAL est affiché (Licence Ouverte, MUST) · un
+produit fast-food douteux garde son ⚠️ et sa raison (décision de Michel du 03/09, MUST) · des kcal calculées le disent ·
+chaque source forme UN bloc sous son en-tête · plafonds 4 / 6 / 6 · 193 requêtes Open Food Facts : frappe nettoyée,
+6 produits, tri par popularité, champs utiles · aucune requête hors du cas, aucune erreur de page dans les 4
+configurations. **Inter-sources** : déterminisme (corpus rejoué dans des contextes neufs, cas dans l'ordre INVERSE → même
+rendu, MUST) · la course (réponse Open Food Facts de « whey » arrivée après la frappe de « skyr » : jamais affichée) · la
+frappe lettre à lettre ne part au réseau qu'après la pause · le clavier et le champ notifié rendent la même liste · un
+résultat Open Food Facts de la requête précédente ne reste jamais à l'écran.
+
+**Ce que la mesure a trouvé — classé, documenté, NON corrigé** :
+- **D-042, l'écart mesuré** : sur 701 mots courants (clés d'alias + requêtes FS-05), **40** font sortir du fast-food
+  au-dessus de CIQUAL ; 36 sont figés comme écarts nommés (29 en ligne, 7 hors ligne — le fast-food est local). Les
+  exemples explicites de D-042 (« poulet KFC », « tenders KFC ») sont **déjà conformes**.
+- **Faux rapprochements** (la recherche fast-food compare des SOUS-CHAÎNES, catégorie comprise) : « nem » ⊂
+  « accompag**nem**ent » (Cup Kiri, frites, carottes sortent comme des nems) · « oeuf » ⊂ « b**oeuf** » · « pâté » = « pâte »
+  sans accents (pizzas « pâte fine ») · en frappe partielle, « ri » ⊂ « c**ri**spy », « po » / « pou » → les Tenders KFC.
+- ⚠️ **Le signal « recherche vide » (ft-v1168, R36) part pour des recherches qui ONT des résultats** : « poulet »
+  (10 lignes), « riz » (6), « kfc » (10), « whey » (4 produits OFF) sont envoyés au serveur comme recherches vides. Cause
+  lue dans le code : le 1ᵉʳ rendu de `_afSuggInput`, synchrone, a lieu AVANT que CIQUAL réponde — il est vide, appelle
+  `_signalerRechercheVide`, et rien n'annule ce signal quand les résultats arrivent. **Mesuré aussi sur master
+  (`ft-v1249`) : en production depuis ft-v1168.** Conséquence : la liste des « mots que la base n'a pas » est polluée par
+  des mots qu'elle a.
+- **Open Food Facts** (réponses figées) : un produit à **0 kcal** est écarté (0 lu comme « pas d'énergie » : l'eau minérale
+  disparaît) · deux produits identiques s'affichent **deux fois** · un nom long est coupé à 60 caractères APRÈS l'ajout de
+  la marque, qui **disparaît**.
+- **Couverture** : 4 enseignes sont citées dans les sources de `marques.json` sans AUCUN produit (Subway, Starbucks,
+  Five Guys, O'Tacos) · produits McDonald's absents (Royal Cheese, McFlurry) · plats absents de toute source locale
+  (naan, ramen, pad thaï, poke, bibimbap, gyoza, bo bun, sashimi, tacos) · hors ligne, « samosa », « hummus »,
+  « chow mein » ne vivent que par l'alias (rien) et « kebab » rend une pizza.
+- **Alias d'enseigne redondants** (sans effet sur le comportement) : « mcdo » et « dominos » sont déjà des SOUS-CHAÎNES de
+  « mcdonalds » / « dominos » une fois le nom normalisé — retirer ces alias ne change rien (contrôle négatif EQ3), et le
+  commentaire de `MARQUE_ALIAS` (« « mcdo » n'apparaît nulle part dans les données ») est inexact. « bk », « macdo »,
+  « bigmac » sont, eux, de vrais alias (M16).
+- **Données fast-food à vérifier** (hors périmètre de la recherche, remonté) : **5 groupes de produits Quick portent des
+  valeurs nutritionnelles STRICTEMENT IDENTIQUES** sous des noms différents (ex. « Dosette salade fromage blanc
+  ciboulette » = « Grande Rustiques » = « Grande Frites supplément Sauce Poivre Intense » : 254,9 kcal/100 g, 226 g ;
+  « Petite Frite » = « Grande Frites supplément Sauce Ranch ») — la trace d'un décalage nom ↔ ligne, la famille déjà vue
+  en ft-v1114 · « Double Cheeseburger Bacon » : 2 808 kcal pour 996 g, sans ⚠️.
+
+**Questions produit OUVERTES** (mesurées, non tranchées — à Michel) :
+- **Q1** un nom de produit propre à une enseigne, tapé SANS elle (« big mac », « mcchicken ») : aujourd'hui le fast-food
+  passe devant le hamburger générique — intention explicite ou requête générique ?
+- **Q2** « whopper » sans « Burger King » : même situation.
+- **Q3** « tenders » (et « hot wings », « bucket », « chicken ») : aucun aliment générique en local, seul KFC / Quick répond.
+- **Q4** « tacos » : rien en local (O'Tacos n'a aucun produit) ; en ligne, seul Open Food Facts répond.
+- **Q5** (hors corpus, mesuré à part) « Déjà noté par toi » s'affiche **au-dessus de tout**, fast-food compris : la
+  relation avec D-042 n'est pas tranchée.
+- **Q6** (mesuré à chaque passe, jamais rouge) à score égal, l'ordre des lignes fast-food suit l'ordre **physique** de
+  `marques.json` (relu à l'envers : 8 requêtes sur 10 changent d'ordre) — D-036 l'interdit pour CIQUAL ; vaut-elle pour le
+  fast-food ?
+- Hors liste, non tranché : « coca cola » (marque de soda, pas une enseigne) · « couscous » (la graine en ligne, le plat
+  hors ligne) · « tikka masala » / « tandoori » (la sauce, faute de plat).
+
+**Preuves** : banc `node tools/banc_food_multisource.js` (B-CDXLI structure · B-CDXLII corpus par la vraie frappe ·
+B-CDXLIII inter-sources) ; contrôle négatif `python3 tools/mut_food_multisource.py` ; scénario de recette
+`NUTRI-RECHERCHE-FS05B`.
