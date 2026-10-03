@@ -739,6 +739,26 @@ module.exports.habituels = async function (t, b, PORT) {
   /* Rejeu d'une signature inconnue : rien n'est écrit. */
   const inconnu = await X.pg.evaluate(() => { const n = S.foodLog.length; rejouerRepas('n-existe-pas', 'midi'); return S.foodLog.length === n; });
   t('B-NP01-E ⛔ une signature inconnue n\'écrit rien', inconnu === true, String(inconnu));
+  /* E′ — BUG FACTUEL trouvé en chemin (03/10) : un repas habituel dont un nom contient un guillemet
+     « " » coupait l'attribut onclick du bouton de moment (master : `String(sig).replace(/'/g,…)`
+     n'échappait que l'apostrophe) → erreur au clic, RIEN d'ajouté. Corrigé par l'utilitaire
+     existant `_escAttrJs` (log.js), déjà employé partout ailleurs pour la même chose. */
+  const EQ = await X.pg.evaluate(async () => {
+    __np.base({});
+    __npJ([[__npR(4), 'collation', [['Yaourt "nature" maison', 120, 8, 10, 4], ["Muesli d'avoine \\ miel", 200, 5, 35, 4]]]]);
+    __npHab();
+    const fj = document.getElementById('food-journal');
+    const carte = fj.querySelector('button.hab-carte'); if (!carte) return { err: 'pas de carte' };
+    carte.click(); await new Promise(r => setTimeout(r, 100));
+    const btn = [...document.querySelectorAll('#hab-m-0 button')].find(b => /Déjeuner/.test(b.textContent));
+    if (!btn) return { err: 'pas de bouton Déjeuner' };
+    const n0 = S.foodLog.length; let err = null;
+    try { btn.click(); } catch (e) { err = String(e).slice(0, 120); }
+    await new Promise(r => setTimeout(r, 200));
+    return { ajout: S.foodLog.slice(n0).map(e => [e.name, e.meal]), err };
+  });
+  t('B-NP01-E E′ ⭐ un nom avec un guillemet « " » et une barre « \\ » se rejoue par VRAI clic, noms intacts (master : erreur au clic, rien d\'ajouté)',
+    !EQ.err && det(EQ.ajout) === det([['Yaourt "nature" maison', 'dejeuner'], ["Muesli d'avoine \\ miel", 'dejeuner']]), det(EQ));
   /* Déterminisme + 390 px : noms très longs, aucun débordement horizontal, titre tronqué proprement. */
   const hV = await X.pg.evaluate(() => { __np.base({}); __npJ([[__npR(20), 'collation2', [__npA.W]], [[21, 22, 23], 'petitdej', [__npA.W, __npA.B]]]); __npHab();
     const sv = document.querySelector('#food-journal details.hab-variantes > summary'); return sv ? Math.round(sv.getBoundingClientRect().height) : 0; });

@@ -22,7 +22,7 @@ FICHIERS = (ST, LO, SC, AP, TR, IX)
 TDEE = "  return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra()+calcPasExtra(refTs));\n"
 _DU_JOUR = "(S.sessions||[]).filter(s=>s&&s.date===today())"
 START = "  if(!ouverte) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};\n"
-ENCOURS = "    if(S.wkt && S.wkt.date===t) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};\n"
+ENCOURS = "    if(S.wkt && S.wkt.date===t && ouverte) return {seance:true, heure:_heureSeance(S.wkt), source:'encours'};\n"
 HONORE = "    if(lastDate&&lastDate>=np.date)return null;   // annonce honorée : la séance a été faite\n"
 FIN_PR = "  const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});\n"
 
@@ -126,6 +126,9 @@ MUT = [
      [(SC, "${mi.lbl||''} · ${k} kcal · ${p} g de protéines</span></span>`", "${mi.lbl||''} · ${k} kcal · ${p} g de protéines · noté ${r.n} fois</span></span>`")], 'GARDE', 'habituels'),
     ('ME10 les variantes s\'affichent comme des cartes principales',
      [(SC, "        if(v.length){\n          html+=`<details class=\"jr-sec hab-variantes\"", "        if(v.length){ v.forEach((x,j)=>{ html+=carte(x,'hab-x-'+idx+'-'+j,false); }); }\n        if(v.length){\n          html+=`<details class=\"jr-sec hab-variantes\"")], 'GARDE', 'habituels'),
+    ('ME11 le bouton de rejeu n\'echappe plus que l\'apostrophe (retour du guillemet qui casse le clic)',
+     [(SC, "      const att=s=>(typeof _escAttrJs==='function')?_escAttrJs(s):String(s).replace(/'/g,\"\\\\'\");",
+           "      const att=s=>String(s).replace(/'/g,\"\\\\'\");")], 'GARDE', 'habituels'),
     # ── B-NP01-F : « Il te reste aujourd'hui » ──
     ('MF1 les idees s\'ouvrent d\'office (equivalences affichees)',
      [(SC, "<details class=\"jr-sec nu-reste-idees\" style=\"margin-top:8px;\">", "<details open class=\"jr-sec nu-reste-idees\" style=\"margin-top:8px;\">")], 'GARDE', 'reste'),
@@ -136,7 +139,7 @@ MUT = [
     ('MF4 une macro depassee s\'affiche en negatif',
      [(SC, "+(v>0?v+'\u00A0g':'<span style=\"color:var(--t3);\">atteint</span>')", "+(v+'\u00A0g')")], 'GARDE', 'reste'),
     ('MF5 le Journal repete les kcal de son en-tete',
-     [(SC, "  const sansKcal=!!(opts&&opts.sansKcal);", "  const sansKcal=false;")], 'GARDE', 'reste'),
+     [(SC, "  const sansKcal=!!(opts&&opts.sansKcal)||soir;", "  const sansKcal=soir;")], 'GARDE', 'reste'),
     ('MF6 plus de silence du soir (ft-v1029)',
      [(SC, "  if(soir && !idees.length) return '';", "")], 'GARDE', 'reste'),
     ('MF7 le bloc parle sur un jour passe',
