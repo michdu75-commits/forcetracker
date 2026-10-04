@@ -1,6 +1,94 @@
 # Force Tracker — Idées & projets futurs
 
-Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'est en cours.
+Fichier de notes : fonctionnalités et directions à explorer. Rien ici n'est en cours.
+
+> ✏️ *(DOC-SYNC du 04/10/2026)* **Les bugs ne vivent plus ici** : leurs familles sont dans `BUGS.md`, ce qui reste à
+> traiter dans `docs/SUIVI-AUDIT.md`. La section « 🐞 Bugs à corriger » plus bas est un reliquat de juin,
+> annoté, pas une liste active. *(Ancien en-tête, gardé pour la trace : « bugs à corriger,
+> fonctionnalités à explorer ».)* Statuts employés dans les entrées du 04/10 : **DÉCISION VALIDÉE
+> (registre `docs/DECISIONS.md`)** · **DIRECTION** (exprimée, non tranchée formellement) · **PISTE** ·
+> **NON CONSTRUIT** · **BRANCHE / NON PUBLIÉ**.
+
+---
+
+## 📚 PROGRAMME STRUCTURÉ ET VERSIONNÉ — décision de Michel du 25/09/2026 *(consignée le 04/10)*
+
+**DÉCISION VALIDÉE — `D-048` · NON CONSTRUITE.** Tout programme intégré devient une **donnée
+structurée** de Force Tracker, **versionnée** : chaque bloc, phase et modification significative reste
+historisé, sans écrasement silencieux ; une séance réalisée reste rattachée à la **version active au
+moment où elle a été faite** ; Milo compare le **prévu au réalisé** à partir de cette source au lieu de
+reconstruire le programme depuis les dernières séances.
+- **Aujourd'hui (mesuré)** : pas de programme « actif » ni de phases ; le lien prévu → réalisé passe
+  par le libellé (`progLabel`) ; les **3 derniers programmes** partent dans le contexte de Milo **sans
+  statut** actif / terminé (`docs/SESSION-MILO-E2E-01.md`, H′ — mécanisme capable, ⛔ **pas la cause
+  démontrée** de l'« ancien J1 » vécu le 03/10).
+- **Lié à** l'entrée D-029 juste dessous (prévu / prescrit / réalisé, identifiants stables) : la
+  version d'un programme ne vaut rien si les séries réalisées n'ont pas d'identité propre.
+
+---
+
+## 🍽️ NUTRITION UX — COLLATIONS CONFIGURABLES · ALIMENTS ET RECETTES PERSO *(décisions de Michel des 02 et 03/10/2026, consignées le 04/10)*
+
+**DÉCISIONS VALIDÉES — `D-050` et `D-051` · NON CONSTRUITES** (le chantier Nutrition est gelé hors
+lots ouverts par Michel).
+- **Collations (D-050)** : pas de 5 prises imposées. Les repas principaux restent la base ; les
+  collations sont **facultatives**, ajoutables, supprimables, **renommables** (« Collation » comme nom
+  par défaut — « Collation 1 / 2 » ne suffit pas comme solution finale). Une future répartition des
+  macros par repas ne travaillera que sur les **créneaux actifs réels**, sans présenter un nombre de
+  repas comme physiologiquement supérieur. Renommer ou supprimer un créneau ne réécrit ni ne réaffecte
+  l'historique.
+- **Aliments et recettes personnalisés (D-051)** : un aliment simple ou une recette / boisson composée
+  (exemple vécu : un latte maison) devient un **modèle éditable** — portion par défaut, composants,
+  macros calculées quand c'est possible ou saisies avec **provenance**. Favori / fréquent = **raccourci**
+  vers le modèle, jamais une seconde vérité ; ajout en 1 clic, ×N ; utilisable dans n'importe quel
+  repas ou collation. ⛔ **Modifier ou supprimer le modèle ne réécrit JAMAIS une prise passée** : chaque
+  prise garde ce qui a réellement été consommé.
+- **Tests minimum à prévoir** (repris de la décision) : 0, 1, 2 collations et plus · ajout,
+  suppression, renommage · rechargement, restauration · modèle modifié après des prises passées.
+
+---
+
+## 📈 NUTRITION ADAPTATIVE SUR 4 À 6 SEMAINES — DIRECTION *(30/09 et 03/10/2026)*
+
+**DIRECTION, non tranchée formellement · NON CONSTRUITE.** Première estimation, puis **bilan de
+tendance à 4-6 semaines** avant de proposer un ajustement : Force Tracker **propose et explique**, la
+personne **valide** — ⛔ jamais d'ajustement silencieux. Une couche séparée de l'écran Macros.
+⚠️ Ne pas confondre avec les « 4 à 6 semaines » déjà écrites ailleurs dans ce fichier pour les photos du
+corps. `tdeeObserve()` (V9) n'est **pas** servie ; aucune décision n'a été prise sur son retour.
+
+---
+
+## 📄 IMPORT DE DOCUMENTS — PLUSIEURS PHOTOS, PDF SANS TRONCATURE SILENCIEUSE, DOCUMENT CONSERVÉ *(30/09 et 03/10/2026)*
+
+**PISTE · NON CONSTRUITE.** Trois besoins remontés par Michel :
+- **un bilan en plusieurs photos** : ⚠️ la prémisse « l'app n'accepte qu'une photo par import » est
+  **fausse en partie** (mesuré dans `index.html`) — la sélection multiple existe pour les imports de
+  **programme**, d'**historique** et de **repas** (`imp-gal-inp`, `hist-gal-inp`, `mimp-gal-inp`) ; elle
+  **manque** pour le **bilan sanguin** (`blood-file-input`) et le **bilan corporel** (`bs-photo-input`) ;
+- **un PDF lu en entier ou dit partiel** : `_pdfToImages` s'arrête à 8 pages **sans le dire** (BUGS.md
+  §66, variante « document ») ; le contrat COMPLETE / PARTIAL / UNKNOWN n'existe que sur `_pdfToText`
+  (`docs/CHANTIER-IMPORTS.md`) ;
+- **le document importé conservé** : un PDF non gardé oblige à le réimporter, donc à repayer une
+  lecture (P3, 03/10 ; ⚠️ chemin **non audité**).
+
+---
+
+## 🏋️ MONTÉE EN CHARGE CONTEXTUALISÉE — DIRECTION *(03/10/2026)*
+
+**DIRECTION exprimée par Michel (parmi ses priorités du 03/10) · méthode NON décidée · NON CONSTRUITE.**
+Aujourd'hui (mesuré, E2E-01 F) : `_monteeDefauts` applique des **seuils fixes** (départ > 62 % ; saut
+> 18 % **et** > 15 kg ; > 2 reps au-delà de 85 %) sans expérience, RIR, %1RM ni type de séance, et le
+prompt impose un langage de risque très affirmatif (« c'est là qu'on se blesse ») ; il décrit aussi un
+« dernier palier 5-10 % sous la charge » que **le code ne calcule pas**. ⛔ **Aucun seuil à inventer**
+sans décision de Michel ; le cas vécu 65 → 80 n'est **pas démontré**.
+
+---
+
+## 🎯 INTENTION → PRESCRIPTION (« petite séance », « reprise ») — PISTE *(03/10/2026)*
+
+**PISTE, non décidée · NON CONSTRUITE.** Une intention dite à Milo (« une petite séance », « je
+reprends ») n'est aujourd'hui traduite en **aucun** paramètre structuré de la séance (durée, volume,
+intensité) : elle reste du texte (E2E-01). Aucun seuil n'est décidé.
 
 ---
 
@@ -28,6 +116,13 @@ Registre : **D-029** (`docs/DECISIONS.md`). Audit d'origine : Lot 6 (contrat sé
 - ⚠️ **Prérequis mesurés à l'audit Lot 6** : trois représentations du dropset coexistent (type de série
   `D`, `ex.dropset`, `groupType` drop/pyramide sans écrivain) ; aucune série n'a d'identifiant stable
   aujourd'hui. *Les unifier est un chantier à part, qui attend une décision.*
+- 🔄 *(DOC-SYNC du 04/10/2026)* **La conséquence est démontrée** (audit `docs/SESSION-MILO-E2E-01.md`, cause B) : prévu,
+  prescrit et réalisé vivent dans **un seul objet** (`S.wkt.exs[].sets[]`) — la saisie écrase la
+  prescription, une valeur préremplie non retouchée devient le réalisé. C'est la racine du P0 du 03/10
+  (remplacement hybride, `BUGS.md` §13 ; « Remplacer » corrigé en ft-v1250, D-046 — **la racine, elle,
+  reste**). Une architecture qui sépare ProgramSpec → séance prévue → séries prévues, et séance réalisée
+  → séries réalisées → débrief, a été esquissée par la cartographie du Drive (03/10) : **DIRECTION
+  ENVISAGÉE, non décidée.** Voir aussi l'entrée « programme versionné » (D-048) plus haut.
 
 ---
 
@@ -219,6 +314,9 @@ fiche existe). ⛔ **Les deux lignes cardio, non** : le catalogue n'a ni tapis, 
 rameur en tant qu'*exercices* — c'est du **cardio**, et un jour de programme ne sait pas encore
 porter un bloc cardio (trou nommé en ft-v1156, toujours ouvert). *Il n'existe donc aucune façon de
 les faire disparaître.*
+✏️ *(DOC-SYNC du 04/10/2026)* **Ce statut est devenu faux** : depuis **ft-v1168** (07/09), un jour de programme range son
+cardio dans son bloc (`_cardioVersWkt(day)`, appelé par `_loadProgDayVraiment` et `_loadProgVraiment`).
+Le reste de l'entrée (aucune suppression d'un exercice perso) n'a pas été revérifié.
 
 ### ⚠️ Ce qui n'est PAS tranché — et pourquoi ça ne se code pas en cinq minutes
 - **Que fait-on de l'historique ?** Un exercice perso peut porter des séances et un record. Le
@@ -281,6 +379,11 @@ source au lieu d'être maintenu à la main — sinon il se périmera exactement 
 ---
 
 ## ⛔⛔ UN JOUR DE PROGRAMME NE PASSE PAR AUCUN GARDE-FOU DE LA SÉANCE — mesuré le 06/09/2026
+
+> ✏️ *(DOC-SYNC du 04/10/2026)* **Le titre n'est plus vrai.** Les deux chargeurs appellent désormais
+> `_avertissementsSeance(S.wkt.exs,'start')` (**ft-v1153**) et rangent le cardio dans son bloc
+> (`_cardioVersWkt`, **ft-v1168**) — lu dans `log.js` sur master `9b8e4813`. ⚠️ Les lignes du tableau
+> ci-dessous n'ont **pas** été revérifiées une par une : l'entrée reste pour la trace (R30).
 
 **Michel**, juste après ft-v1152 : *« malheureusement je vais intégrer un programme »*, puis
 *« et justement »*, puis *« je n'ai jamais testé cet angle »*. **Il a mis le doigt sur un trou réel.**
@@ -2178,6 +2281,24 @@ Vont clairement **EN HAUT** (elles améliorent le raisonnement de Milo, = là o�
 
 *Priorité : évolution LONG TERME, ne ralentit pas le développement actuel. À rapprocher de la Phase B (nutrition entrelacée) — le cardio pèse sur la dépense énergétique, donc les deux sujets se croiseront naturellement.*
 
+### 🔄 Ce qui s'est précisé depuis *(DOC-SYNC du 04/10/2026)*
+- **Direction validée par Michel, NON construite** (NUT-PUNCH-01 §5, branche **non publiée** ; Drive,
+  04/10) : une séance peut être **musculation seule, cardio seul ou mixte** (le cardio seul existe
+  déjà comme séance, avec type, intensité et durée — ce qui manque est le reste ci-dessous). ⭐ **C'est l'intention ou le
+  type qui tranche, jamais la durée seule** : balade, marche touristique, trajet = **activité de vie**
+  (compte dans la dépense, **pas** de débrief automatique, même longue) ; footing, vélo d'entraînement,
+  rameur, marche sportive structurée, préparation marathon = **séance**, même courte.
+- **Données d'une séance cardio autonome** : type et durée au minimum, puis distance, allure,
+  intensité, FC, notes — **tous facultatifs** ; plusieurs activités possibles dans la journée.
+- **Milo** n'a pas à commenter le cardio dans chaque débrief de musculation (accepté par Michel).
+- **Chronologie ≠ intention** (backlog du 24/09, `docs/CONTEXTE-ACTUEL.md`) : « Avant » n'est pas
+  forcément un échauffement, « Après » pas forcément un finisher.
+- **Preuve terrain du 04/10 (P3)** : un résumé affiche « 1 h 00 dont 42 min de cardio » et le détail ne
+  montre aucun bloc cardio identifiable — **cause non démontrée**, vue non identifiée (la séance était
+  mixte).
+- ⚠️ **La conclusion « aucune refonte nécessaire » du 27/07 est à revalider** à la lumière de ces
+  besoins (séance cardio de premier rang, activité ≠ séance).
+
 ---
 
 ## 🎓 VISION LONG TERME — « Mode Coach » / multi-rôles (Michel, 20/07/2026) — À GARDER, PAS PRIORITAIRE
@@ -2232,6 +2353,15 @@ GPT a proposé **2 possibilités** pour le Mode Coach. Constat : elles sont **id
 ---
 
 # 🗺️ FEUILLE DE ROUTE (ordre des priorités)
+
+> ✏️ *(DOC-SYNC du 04/10/2026)* **Cette feuille de route date de juin-juillet et elle est dépassée.** Phase 1 ① (pile de
+> navigation) livrée en **ft-v39** (23/06) ; ② (découper `index.html`) **faite**. **La feuille de route
+> en vigueur est celle validée par Michel le 25/09/2026 (`D-049`)** : ① stabiliser bugs et
+> incohérences → ② gros sujets UX → ③ **Android** en priorité → ④ une vraie architecture **Premium**
+> pensée avec Android. Avec elle : le tableau de bord PC hors du chemin critique tant qu'il n'est pas
+> raccordé aux vraies sources ; un parcours d'arrivée raccourci (guide non obligatoire) ; l'installation
+> proposée **après** que la personne a vu la vraie app, et retrouvable ; **iOS reste en PWA**.
+> Le texte ci-dessous est gardé pour la trace (R30).
 
 **Phase 1 — Stabiliser la fondation (AVANT tout le reste)**
 1. ⭐ Refonte de la logique d'affichage des écrans (règle 3 bugs d'un coup).
@@ -2636,6 +2766,15 @@ tout seul) + brique **5** (propose/valide) + l'**onboarding**. → Gros chantier
 étoile polaire, pas une petite brique. À reprendre quand la fondation Milo est
 stable.
 
+### 🔄 Les règles posées le 30/09/2026 *(DOC-SYNC du 04/10/2026)*
+**DIRECTION produit (Drive, 30/09) · NON CONSTRUITE** — elle vaut aussi pour « L'inscription
+minimale » plus haut :
+- **réutiliser l'existant** : le pourcentage « Profil rempli » et sa liste de champs manquants, et côté
+  Coach « Milo te connaît » ;
+- **une question = un champ**, posée à un moment contextuel, **persistée** tout de suite, **jamais
+  reposée**, fréquence limitée, toujours avec « plus tard » ;
+- **« aucun sport » est une réponse complète** ; les **pas** restent un bonus, jamais obligatoires en PWA.
+
 ---
 
 ## 📸🔒 Sauvegarde des PHOTOS sur le Drive de Force Tracker (cryptées par le code perso) — chantier discuté 2026-07-13
@@ -2682,7 +2821,9 @@ stable.
 
 2. 📤 **Boîte à idées — photos qui remontent dans l'appli (fini WhatsApp)** — aujourd'hui (`sendTesterIdea`/`shareTesterPhotos`, app.js) : le **texte** part de façon fiable (email `forcetracker.app@gmail.com` + backend `testerIdea`), mais les **photos ne peuvent pas être attachées à l'email** (limite navigateur : `mailto:` ne porte pas de fichier) → l'appli propose seulement le **menu « Partager »** du téléphone, où **WhatsApp apparaît** (avec Mail/Messages). Michel veut que les photos **arrivent collées à l'idée**. **Fix visé** : uploader les photos (redimensionnées, comme le Coach / l'étude du corps) vers le **backend** avec l'idée — probablement stockées dans **Drive** (les Script Properties sont trop petites, ~9 Ko/valeur). `handleTesterIdea_` (Code.js) à enrichir pour recevoir les images → dossier Drive dédié → Michel/Claude les lisent. Nécessite modif `Code.js` + déploiement.
 
-3. 📷 **Scanner de code-barres EN DIRECT (fini la photo floue)** — aujourd'hui (`scanBarcode`/`onBarcodeFile`, app.js) : on prend **une seule photo figée** (`<input type=file capture>`) puis on la décode avec **ZXing** (`decodeFromImageUrl`). Problème signalé par Michel (2026-07-11, capture « Code-barres illisible ») : une photo de code-barres est très souvent **légèrement floue / trop petite** → échec. **Vérifié en test** (barcode généré) : image nette = OK ; image floue/réduite = **FAIL même avec `TRY_HARDER` + `POSSIBLE_FORMATS` EAN/UPC** → aucun réglage ne rattrape une photo floue (info perdue). **Fix visé** : **scanner vidéo en continu** — `navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})` + `ZXing.BrowserMultiFormatReader.decodeFromVideoDevice(...)` (frames en boucle, autofocus, lit dès que net, comme Yuka). ⚠️ **getUserMedia sur iOS Safari** = HTTPS OK (GitHub Pages), mais **comportement à tester sur vrai iPhone** (surtout en PWA installée / standalone). Prévoir : overlay `<video>` + viseur, permission caméra, `stream.getTracks().forEach(t=>t.stop())` à la fermeture, **fallback sur la photo actuelle** si getUserMedia indispo. ZXing expose bien `DecodeHintType`/`BarcodeFormat` (vérifié). Frontend only (pas de backend). Le reste marche déjà : saisie manuelle + 🤖 estimation IA.
+3. ✅ *(livré — *(DOC-SYNC du 04/10/2026)* : moteur « SCANNER CODE-BARRES EN DIRECT » dans `app.js` ; ⛔ **sans bouton
+   utilisateur, par décision de Michel du 14/09**, le temps du banc des moteurs — ne pas « réparer » cette absence)*
+   📷 **Scanner de code-barres EN DIRECT (fini la photo floue)** — aujourd'hui (`scanBarcode`/`onBarcodeFile`, app.js) : on prend **une seule photo figée** (`<input type=file capture>`) puis on la décode avec **ZXing** (`decodeFromImageUrl`). Problème signalé par Michel (2026-07-11, capture « Code-barres illisible ») : une photo de code-barres est très souvent **légèrement floue / trop petite** → échec. **Vérifié en test** (barcode généré) : image nette = OK ; image floue/réduite = **FAIL même avec `TRY_HARDER` + `POSSIBLE_FORMATS` EAN/UPC** → aucun réglage ne rattrape une photo floue (info perdue). **Fix visé** : **scanner vidéo en continu** — `navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})` + `ZXing.BrowserMultiFormatReader.decodeFromVideoDevice(...)` (frames en boucle, autofocus, lit dès que net, comme Yuka). ⚠️ **getUserMedia sur iOS Safari** = HTTPS OK (GitHub Pages), mais **comportement à tester sur vrai iPhone** (surtout en PWA installée / standalone). Prévoir : overlay `<video>` + viseur, permission caméra, `stream.getTracks().forEach(t=>t.stop())` à la fermeture, **fallback sur la photo actuelle** si getUserMedia indispo. ZXing expose bien `DecodeHintType`/`BarcodeFormat` (vérifié). Frontend only (pas de backend). Le reste marche déjà : saisie manuelle + 🤖 estimation IA.
 
 ---
 
@@ -2772,6 +2913,11 @@ Michel veut réaméliorer le logo (`logo.png` / `force-tracker-logo-final.png` /
 
 ## ⭐ PRIORITÉ — Refonte de la logique d'affichage des écrans
 
+> ✅ *(DOC-SYNC du 04/10/2026)* **Livrée en ft-v39 (23/06/2026)** : `_closeAllPanels` (screens.js), `navBack` (screens.js),
+> `_screenHistory` (setup.js) — présents sur master `9b8e4813`. La porte « retour » du navigateur a été
+> refermée en ft-v1093. ⏭️ Seul symptôme récent dans ce domaine : un **écran Premium sans retour**
+> (30/09), **non reproduit**, cause non démontrée. Le texte ci-dessous est gardé pour la trace.
+
 Plusieurs bugs viennent du même endroit : la façon dont l'app **ouvre, empile et ferme** les écrans/panneaux.
 Le régler en premier corrige d'un coup plusieurs bugs ci-dessous (menu qui ne se ferme pas, Profil en arrière-plan, retour sans effet).
 
@@ -2787,6 +2933,10 @@ Le régler en premier corrige d'un coup plusieurs bugs ci-dessous (menu qui ne s
 
 ## 🐞 Bugs à corriger
 
+> ✏️ *(DOC-SYNC du 04/10/2026)* **Reliquat de juin, pas une liste active** : les bugs se suivent dans `BUGS.md` et
+> `docs/SUIVI-AUDIT.md`. Les trois lignes « *(réglé par la refonte ci-dessus)* » sont **livrées** avec
+> ft-v39. Les autres lignes n'ont **pas** été retriées contre le code : à trier un jour, pas à recopier.
+
 - **Mise à jour auto du Service Worker (cache PWA)** : normalement réglé, mais à **revérifier** — l'app gardée en cache ne se met parfois pas à jour seule (signet/app installée montre l'ancienne version). Vérifier détection de nouvelle version + bandeau « Rafraîchir » ou reload auto, et cache bien bumpé (`ft-vN`) à chaque release. Important pour les utilisateurs (sinon bloqués sur vieille version).
 - **Drawer Menu ne se ferme pas après sélection** : on ouvre le Menu, on choisit une entrée des Outils
   (Anatomie, Protéines, Compléments, Calculateur 1RM…) → le menu reste ouvert par-dessus la page. À fermer automatiquement. *(réglé par la refonte ci-dessus)*
@@ -2800,6 +2950,10 @@ Le régler en premier corrige d'un coup plusieurs bugs ci-dessous (menu qui ne s
 - **Bouton d'aide mal placé** : le petit bouton d'aide (?) est mal positionné **partout** (pas qu'à un endroit) → définir une **place cohérente et atteignable** pour l'aide sur tous les écrans, plutôt qu'un coin haut-droite difficile au pouce.
   **Décision :** le « ? » est une **aide contextuelle** (chaque écran a sa propre aide) → on le **garde** (utile), on le **repositionne** juste à un endroit cohérent + atteignable au pouce sur tous les écrans. (≠ « Aide détaillée » du menu, qui reste en place.)
 - **Mettre à jour le contenu de l'aide** : après toutes les refontes (affichage, superséries, menu…), les textes d'aide contextuelle + « Aide détaillée » doivent être **réécrits pour coller à la version actuelle** des écrans (sinon l'aide décrit une ancienne UI).
+  🔄 *(DOC-SYNC du 04/10/2026)* **Quand** : après les chantiers Nutrition et SÉANCE, avant la finition. **Les 4 surfaces** à
+  tenir ensemble : `_HELP_DATA` (le « ? » de chaque onglet), `_DRAWER_CONTENT.help` (l'aide détaillée),
+  `APP_GUIDE_SLIDES` (le Guide) et le guide d'installation. **La règle** : *la pop-up ANNONCE, l'aide
+  EXPLIQUE* (règle d'or #11, R25).
 - **Profil — « ? » d'aide + petit logo (menu caché) en haut à droite** : ces deux accès sont dans la zone la plus dure à atteindre au pouce (haut-droite) → repositionner pour l'usage à une main.
 - **Écran s'éteint en séance** : l'écran s'éteint alors que l'app est ouverte → activer **Wake Lock** (garder l'écran allumé pendant la séance).
 - ✅ **L'écran pivote — FAIT** : verrouillé en portrait via `manifest.json` (`"orientation":"portrait-primary"`, app installée) + `screen.orientation.lock('portrait')` (app.js).
@@ -2838,6 +2992,17 @@ Pour chaque exercice :
 - ✅ **Export COMPLET — FAIT le 17/08/2026 (ft-v891).** ⚠️ **Cette fiche disait la mauvaise chose, et ça a coûté cher.** Elle notait « améliorer le bouton → fichier Excel/CSV propre **(séances, charges, PRs)** » — c'est-à-dire le **format**, et une liste qui reprend **exactement les trois choses que l'export contenait déjà**. Le vrai problème — l'export n'emportait que **6 blocs sur 38** — n'était écrit nulle part. L'idée a donc survécu comme « le rendre plus joli » au lieu de « le rendre entier », rangée en confort à côté d'un template Excel premium. *Le quoi a été gardé, le pourquoi a été perdu* (`docs/ORIGINE-DES-REGLES.md`) — et personne ne pouvait le retrouver en relisant la fiche, moi compris : j'ai lu les exports de Michel pendant des jours sans me demander s'ils étaient complets, et j'en ai tiré une conclusion fausse sur ses bilans corporels.
 - **Template Excel premium** (plus tard, vraie idée future) : offrir le beau fichier de suivi (graphes, mésocycles, calculateur 1RM) en bonus **premium** — vrai argument de vente. ⚠️ **Ne pas re-mélanger les deux sujets** : le format est du confort, la complétude était un correctif. C'est leur confusion qui a enterré le second pendant des mois.
 - ⏭️ **Reste à faire : le bouton d'IMPORT.** L'export est complet, mais il n'existe aucun chemin pour le relire — c'est un aller simple. À construire avec les garde-fous d'usage (montrer ce que contient le fichier AVANT d'écrire, ne jamais écraser en silence, règle d'or #3).
+- 🔄 *(DOC-SYNC du 04/10/2026)* **La cible esquissée par la cartographie du Drive (03/10) — DIRECTION FUTURE, non décidée** :
+  le local reste la référence ; instantanés versionnés ; export + **vrai** import ; sauvegardes
+  tournantes ; contrôle d'intégrité ; **aperçu avant restauration** ; synchronisation distincte de la
+  sauvegarde. Le **test catastrophe** à jouer un jour : sauvegarder → effacer → réinstaller → restaurer →
+  comparer. Constat : la restauration s'applique aujourd'hui **sans aperçu complet** (la fusion par
+  identifiant existe pour les séances depuis ft-v1241 et pour le journal alimentaire depuis ft-v1247 ;
+  les bilans sont encore remplacés par longueur — `BUGS.md` 🧱). *« Candidat avant le chantier SÉANCE »*
+  est un avis de la cartographie, **pas** une décision.
+- ⚠️ **Depuis ft-v1250, les débriefs de Milo vivent sur le téléphone seulement** (`ft4_debriefs`,
+  D-047) : **ni sauvegardés, ni restaurés**, ni synchronisés. Ils partent dans l'export PDF « avec
+  débriefs Milo » (D-044), pas dans une sauvegarde relisible.
 
 ## 📈 Historique poids au tap (écran séance) — à faire
 
@@ -3135,6 +3300,14 @@ L'app devient complète → penser à la **solidité de la fondation** avant d'e
 - Réduire les appels réseau inutiles.
 
 **Ordre logique :** d'abord stabiliser (bugs + découpe index.html), PUIS base de données + hébergement quand le nombre d'utilisateurs le justifie.
+
+**🔄 Le « ménage habité » (Michel, 04/10/2026) — DIRECTION, pas une décision inscrite** *(DOC-SYNC du 04/10/2026)* : Michel
+refuse une réécriture générale ou un « vidage de la maison ». On nettoie **par zones cohérentes** en
+gardant l'application habitable : contrôle ciblé de la pièce → bancs voisins pour les pièces adjacentes
+→ passe complète (D-031) et banc Fantôme pour la maison entière. Principe qui l'accompagne : *une
+donnée importante = un propriétaire canonique* (R1/R2). Le 28/09, la même idée : **cartographier
+d'abord, puis réorganiser par domaines**. ⚠️ Un lot « ARCHITECTURE-01 » est une **proposition** de la
+cartographie, pas une décision.
 
 ## 🌈 Version daltonien (accessibilité) — à prévoir
 
@@ -3610,6 +3783,13 @@ La maquette ne traitait que le sombre. Le code n'emploie **que des variables** (
 donc le mode clair suit mécaniquement — mais *« ça suit »* n'est pas *« c'est lisible »*, et
 personne ne l'a regardé.
 
+### 🔄 Le retour terrain du 30/09/2026 *(DOC-SYNC du 04/10/2026)*
+L'onglet Nutrition, pourtant déjà allégé, est **encore perçu comme compliqué**. Lu sur les captures :
+le **Journal** est plutôt cohérent ; **Suppléments** surtout trop textuel ; **Macros** cumule suivi du
+jour, analyse, plan, calculs et réglages. ⛔ **Ne pas supprimer à l'aveugle** : distinguer une
+surcharge réelle d'un problème de hiérarchie ou de compréhension. Besoin connexe signalé par l'audit
+croisé du 04/10 (source Drive non relue ici) : estimer en grammes un **plat de restaurant** non pesé.
+
 
 ---
 
@@ -3639,6 +3819,12 @@ proposition et le **fond** d'un constat.
 
 👉 **Ma recommandation : la piste 1.** Elle ne change aucun chiffre, aucune borne, aucun
 garde-fou — seulement la façon dont la ligne se présente quand elle ne peut pas tenir sa promesse.
+
+🔄 *(DOC-SYNC du 04/10/2026)* **Tranché par Michel le 03/10** : « Il te reste aujourd'hui » affiche **le reste en kcal, puis
+P · G · L** ; les idées d'aliments viennent **sur un appui**, plus d'office ; les repas habituels se
+montrent **une carte par famille**, variantes derrière, titres courts, « noté X fois » en second plan.
+⚠️ **Implémenté sur la branche `claude/nut-punch-01`, NON PUBLIÉ** au 04/10 : à marquer livré le jour
+de sa publication, pas avant.
 
 
 ---
