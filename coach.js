@@ -6221,12 +6221,18 @@ function _dbfReponseValide(data){
    source de « quel est le débrief de CETTE séance ». Deux usages, deux propriétaires (R2) — et la
    consultation ne relit JAMAIS une conversation.
    ⚠️ LIMITES DITES : local seulement, comme le fil (ni cloud, ni restauration, ni changement de
-   téléphone) ; borné aux 200 débriefs les plus récents. Les débriefs d'avant ce correctif, rangés
+   téléphone) — ratifié par Michel le 04/10. Les débriefs d'avant ce correctif, rangés
    dans des fils SANS identifiant de séance, ne sont PAS rattachés après coup : une association
    devinée serait une fausse association (pas de bouton plutôt qu'un bouton qui ment).
+   ⛔⛔ AUCUN PLAFOND (décision de Michel, 04/10) : *tant que la séance existe, son débrief ne
+   disparaît pas à cause d'un plafond arbitraire*. Il y en avait un (200, le plus ancien sortait
+   en silence) : retiré. Le magasin compte au plus UNE entrée par séance, et une entrée ne part
+   qu'avec sa séance (`_dbfOublier`). Mesuré le 04/10 : le stockage local de Chromium tient
+   5,24 M caractères ; un débrief en fait ~1 500 (≤ ~4 000 au pire). Si le téléphone est plein,
+   l'écriture échoue et RIEN n'est effacé pour faire de la place — on ne sacrifie pas un débrief
+   ancien pour un neuf.
    ⛔ Les champs inconnus d'une entrée et du magasin sont conservés tels quels à l'écriture. */
 const _DBF_TEXTES = 'ft4_debriefs';           // {v:1, seances:{[id]:{texte, ts, src}}}
-const _DBF_TEXTES_MAX = 200;
 function _dbfCle(sess){ return sess ? String(sess.id||sess.ts||sess.date||'') : ''; }
 function _dbfMagasin(){
   try{
@@ -6250,11 +6256,23 @@ function _dbfEnregistrer(id, reply, src){
   const av=m.seances[String(id)];
   m.seances[String(id)]=Object.assign({}, (av&&typeof av==='object')?av:{},
                                       {texte:String(texte).trim(), ts:Date.now(), src:src||''});
-  const ids=Object.keys(m.seances);
-  if(ids.length>_DBF_TEXTES_MAX){
-    ids.sort((a,b)=>(+(m.seances[a]&&m.seances[a].ts)||0)-(+(m.seances[b]&&m.seances[b].ts)||0))
-       .slice(0, ids.length-_DBF_TEXTES_MAX).forEach(k=>{ delete m.seances[k]; });
-  }
+  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }
+}
+/* 🗑️ UNE SÉANCE SUPPRIMÉE EMPORTE SON DÉBRIEF, ET LUI SEUL (décision de Michel, 04/10).
+   ⛔ Le SEUL endroit qui efface une entrée du magasin. Par l'identifiant canonique de la séance
+   (`_dbfCle`) — jamais par date (deux séances le même jour), jamais « le dernier ».
+   ⭐ Le jeton encore EN FILE pour cette séance part aussi : sinon, à la prochaine ouverture du
+   Coach, un débrief serait payé pour une séance qui n'existe plus (Milo, ne la retrouvant pas,
+   débrieferait « la plus récente »), puis rangé sous l'identifiant disparu — l'orphelin
+   reviendrait par la file. Le fil du Coach, lui, n'est pas touché (comportement existant). */
+function _dbfOublier(id){
+  if(id==null || id==='') return false;
+  const k=String(id);
+  const l=_dbfLire(), i=l.indexOf(k);
+  if(i>=0){ l.splice(i,1); _dbfEcrire(l); }
+  const m=_dbfMagasin();
+  if(!Object.prototype.hasOwnProperty.call(m.seances, k)) return false;   // aucun débrief : rien à écrire
+  delete m.seances[k];
   try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }
 }
 /* ⛔ UN SEUL PROPRIÉTAIRE POUR POSER LE DÉBRIEF DANS LE FIL DU COACH (R2). Les deux chemins
@@ -8674,7 +8692,7 @@ const _DRAWER_CONTENT = {
         {ic:'🗂️',t:'Pourquoi le menu a été rangé en 4 rayons',d:'Avant le <b>05/09/2026</b>, le menu avait deux sections : <b>Outils</b> et <b>Compte</b>. ⛔ « Outils » contenait en réalité <b>quatre choses différentes</b> : de l\'encyclopédie (anatomie, protéines, compléments, guide de la muscu), de vrais outils (calculateur 1RM, cycle de force), <b>l\'application elle-même</b> (son guide, les nouveautés) et… <b>toi</b> (ce que Milo sait de toi, tes bilans mensuels). Et « Compte » contenait <i>Aide détaillée</i>, <i>À propos</i> et <i>Confidentialité</i>, qui ne sont pas un compte.<br><br>⭐ <b>Le vrai coût n\'était pas l\'esthétique, il se mesurait en pixels</b> : le menu descendait jusqu\'à <b>1909 px</b> pour un écran de <b>852</b>, et « Ce que Milo sait de toi » — ce que l\'app a de plus personnel — se trouvait à <b>y=1090</b>, c\'est-à-dire <b>hors écran</b>. Il fallait faire défiler pour atteindre la chose qui te concerne le plus, pendant que <b>363 pixels de réglages de couleur</b> occupaient le haut.<br><br>👉 <b>La règle de rangement, pour que ça tienne dans le temps :</b> <b>Ton suivi</b> = ce qui parle de toi · <b>Tes outils</b> = ce qui sert à s\'entraîner · <b>Apprendre</b> = du contenu qui ne change pas avec toi · <b>L\'application</b> = l\'app elle-même. Une nouvelle entrée sait donc où aller.<br><br>⚠️ <b>Le menu n\'est pas plus court</b> — il a même gagné <b>40 px</b>, à cause des deux titres de section en plus. Ce n\'était pas le but : le but était que ce qui compte tienne sur le <b>premier écran</b>, sans défiler. C\'est le cas.<br><br>💡 <b>Apparence se replie</b> (tape son titre) : le bloc passe de 306 px à une ligne, ton choix est gardé même après avoir fermé l\'app, et <b>rien n\'est supprimé</b> — tout est là quand tu le rouvres.'},
         {ic:'📊',t:'Pourquoi « Ce mois » n\'a plus que deux tuiles',d:'Le bloc <b>« CE MOIS »</b>, en haut de l\'Accueil, portait <b>quatre</b> chiffres : volume, force, séances, poids. Il n\'en porte plus que deux depuis le <b>05/09/2026</b>.<br><br>⛔ <b>La raison n\'est pas la place, c\'est la destination.</b> On a tapé les quatre tuiles pour voir où elles mènent : <b>Séances</b> ouvre bien ton historique, <b>Poids</b> ouvre bien tes pesées — mais <b>Volume</b> et <b>Force</b> ouvraient simplement l\'onglet Progrès <b>en haut</b>, sur un écran où <b>ni ton tonnage du mois ni le total de tes trois barres n\'est affiché</b>. Le bloc qui contient le volume y est même <b>replié</b>.<br><br>⭐ <b>Un chiffre sur lequel on tape doit mener là où il est.</b> Sinon le tap n\'est pas un raccourci, c\'est une fausse piste — et on finit par ne plus rien taper du tout.<br><br>👉 <b>Où est passé ton tonnage :</b> il n\'a pas bougé, il est <b>juste en dessous, dans le calendrier</b>. À gauche de chaque ligne, le n° de semaine porte le total (« S36 · 19,3 t ») ; tape une case et tu as le tonnage du jour. C\'est plus précis que le total du mois, et c\'est au même endroit qu\'avant.<br><br>⚠️ <b>Ce qui est vraiment perdu :</b> le <b>total squat + développé couché + soulevé de terre</b>. Il n\'existait <b>que sur cette tuile</b> — aucun autre écran ne l\'affiche. Il n\'est pas « caché quelque part » : il n\'est plus calculé. Il reviendra le jour où il aura une page à lui, pas avant.'},
         /* 🛡️ SESSION-INTEGRITY-01 — règle d'or #11, point 4 : le POURQUOI (R25). */
-        {ic:'💬',t:'Le débrief de Milo appartient à sa séance',d:'Avant le <b>04/10/2026</b>, le débrief de fin de séance n\'existait que comme <b>message dans ta discussion avec Milo</b> : introuvable depuis l\'historique, perdu si tu supprimais la discussion. Désormais il est <b>rangé avec SA séance</b> : <b>Progrès → l\'historique → « 💬 Voir le débrief Milo »</b>, lisible sans réseau et sans appel. ⛔ Quand Milo n\'a pas pu répondre, l\'app ne fait plus passer son message d\'erreur pour un débrief : elle te le dit, et le bouton <b>Réessayer</b> reste là (ou Milo le refera à l\'ouverture du Coach). ⭐ Et une <b>première fois</b> sur un exercice est une « <b>première référence</b> » — un record, c\'est battre une référence qui existait déjà.'},
+        {ic:'💬',t:'Le débrief de Milo appartient à sa séance',d:'Avant le <b>04/10/2026</b>, le débrief de fin de séance n\'existait que comme <b>message dans ta discussion avec Milo</b> : introuvable depuis l\'historique, perdu si tu supprimais la discussion. Désormais il est <b>rangé avec SA séance</b> : <b>Progrès → l\'historique → « 💬 Voir le débrief Milo »</b>, lisible sans réseau et sans appel. 📱 Il est gardé <b>sur ce téléphone</b> (pas dans la sauvegarde en ligne), aussi longtemps que la séance existe ; <b>supprimer une séance supprime son débrief</b> (le message reste dans ta discussion avec Milo). ⛔ Quand Milo n\'a pas pu répondre, l\'app ne fait plus passer son message d\'erreur pour un débrief : elle te le dit, et le bouton <b>Réessayer</b> reste là (ou Milo le refera à l\'ouverture du Coach). ⭐ Et une <b>première fois</b> sur un exercice est une « <b>première référence</b> » — un record, c\'est battre une référence qui existait déjà.'},
         {ic:'😴',t:'Sommeil & historique (Accueil)',d:'Nouveau : ton sommeil se note directement sur l\'Accueil, juste sous ton score de récup (avant il était dans Séance et personne ne le trouvait). Choisis la qualité (Mauvais → Excellent) et le nombre d\'heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Déplie « 📊 Historique du sommeil » (la flèche) pour voir un mini-graphique sur 7 ou 30 jours (barres colorées selon la qualité, ligne repère à 8h, moyenne) et la liste nuit par nuit : tape une barre ou une ligne pour ajouter/corriger cette nuit — les jours vides affichent « ＋ à renseigner ». Un bon sommeil fait remonter ton score de récupération, que le Coach Milo utilise aussi.'},
         {ic:'💚',t:'Deux styles pour ta carte récup',d:'<b>Menu → Apparence → Carte récup</b> : tu choisis comment ton score s\'affiche sur l\'Accueil. <b>⭕ Anneau</b> (par défaut) : le chiffre au centre d\'un cercle complet dont la couleur suit ton score, du rouge au vert. <b>💚 Moniteur</b> : ton score en gros à gauche, et à droite une jauge ouverte en bas — le fond rouge est ce qu\'il te reste à récupérer, le curseur vert ce que tu as récupéré, avec un point lumineux au bout. Au centre, un vrai tracé cardiaque défile en continu. <b>Ce sont les mêmes données</b>, seule la mise en forme change : tu peux basculer autant que tu veux, rien n\'est perdu. Le tracé bouge en permanence : si ça te gêne, <b>« 🩺 Figer le tracé du cœur »</b> juste en dessous l\'arrête — il reste affiché en entier, simplement immobile. Dans les deux styles, taper la carte rejoue l\'animation. Et si tu as activé « Réduire les animations » sur ton téléphone, tout se fige.'},
         {ic:'🕰️',t:'Ton histoire sportive',d:'L\'app garde chaque check-in que tu remplis (énergie, moral, douleurs) — pas pour faire des statistiques, mais pour <b>relier ce qui t\'arrive aujourd\'hui à ce que tu as déjà vécu</b>. Premier cas branché : quand tu notes une douleur que tu avais <b>déjà notée il y a plus de deux semaines</b>, une carte apparaît sur l\'Accueil et te dit <b>quand</b> c\'était et sur <b>combien de jours</b> elle était revenue. ⚠️ <b>Elle décrit, elle ne prédit jamais</b> : « elle apparaissait sur 4 jours » est un fait tiré de tes notes, pas un pronostic — et ce n\'est pas un avis médical. ⛔ Elle reste <b>silencieuse</b> si la douleur est récente (tu t\'en souviens), si c\'est la première fois, ou s\'il n\'y a rien à relier : une carte qui parlerait tous les jours ne serait plus un souvenir.'},

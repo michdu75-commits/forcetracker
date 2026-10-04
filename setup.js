@@ -489,6 +489,22 @@ async function exportPoidsCsv(){
   await _csvFichier(POIDS_COLONNES, L, 'poids', 'pesées');
 }
 
+/* 📄 CE QUE LA POLICE DU PDF SAIT ÉCRIRE (SESSION-INTEGRITY-01, finition du 04/10 — décision de Michel).
+   Mesuré dans jsPDF 2.5.2 (celui de l'app) : la police standard encode tout Windows-1252 — les accents,
+   mais aussi œ Œ € ’ ‘ “ ” „ • – — … ™ (27 caractères sur 27). Le premier filtre des débriefs les
+   retirait sur une fausse prémisse (« jsPDF ne dessine que le latin ») : « cœur » sortait « cur ».
+   ⛔ Un seul caractère HORS de ce jeu fait passer TOUTE la ligne en charabia 16 bits (mesuré : un emoji
+   dans un nom de programme cassait le titre du débrief). Donc on TRADUIT ce qui porte du sens — « → »
+   vaut « -> », « −5 kg » doit rester négatif, « 1ʳᵉ » n'est pas « 1 » — et on retire le reste (emoji,
+   pictogrammes). Sert aux débriefs seulement : le PDF « sans » reste celui d'avant (témoin F4). */
+const _PDF_TRADUIT = {'→':'->','←':'<-','≥':'>=','≤':'<=','≠':'!=','\u2212':'-','\u2010':'-','\u2011':'-','ʳ':'r','ᵉ':'e'};   // − ‐ ‑ : trois tirets qui ne sont pas « - »
+const _PDF_A_TRADUIRE = new RegExp('['+Object.keys(_PDF_TRADUIT).join('')+']','g');
+function _pdfTexte(t){
+  return String(t==null?'':t)
+    .replace(/[\u2000-\u200A\u202F\u205F]/g,'\u00A0')          // espaces fines / étroites → insécable
+    .replace(_PDF_A_TRADUIRE, c=>_PDF_TRADUIT[c])
+    .replace(/[^\x00-\xFF\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/g,'');
+}
 async function exportHistoPdf(){
   const L=_histoLignes();
   if(!L.length){ toast('Aucune séance à exporter','info'); return; }
@@ -556,19 +572,19 @@ async function exportHistoPdf(){
       });
       y=doc.lastAutoTable.finalY;                   // ⭐ `finalY` EXISTE, lui — vérifié
       /* 🛡️ D-044 — « avec » : le débrief de CHAQUE séance de ce jour, sous son tableau, nommé par la
-         séance (deux séances le même jour ne se confondent pas). jsPDF ne dessine que le latin : on
-         retire ce qu'il ne sait pas écrire plutôt que d'imprimer des carrés. */
+         séance (deux séances le même jour ne se confondent pas). Texte ET titre passent par `_pdfTexte` :
+         tout ce que la police sait écrire reste écrit, le reste est traduit ou retiré. */
       if(_histoAvecDebriefs){
         const ids=[]; rows.forEach(r=>{ if(r.seance_id&&ids.indexOf(r.seance_id)<0) ids.push(r.seance_id); });
         ids.forEach(id=>{
           const dd=(typeof _dbfTexteDe==='function')?_dbfTexteDe(id):null; if(!dd) return;
           const ss=(S.sessions||[]).find(x=>x&&_dbfCle(x)===id)||{};
           const quand=ss.ts?new Date(+ss.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
-          const propre=String(dd.texte).replace(/\*\*/g,'').replace(/[^\x00-\xFF\u2019\u2013\u2014\u2026]/g,'').replace(/[ \t]+\n/g,'\n');
+          const propre=_pdfTexte(String(dd.texte).replace(/\*\*/g,'')).replace(/[ \t]+\n/g,'\n');
           const lignes=doc.splitTextToSize(propre, 515);
           if(y>700){ doc.addPage(); y=M; }
           doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
-          doc.text('Débrief Milo'+(ss.progLabel?' — '+ss.progLabel:'')+(quand?' (séance terminée à '+quand+')':''),M,y+16); y+=20;
+          doc.text(_pdfTexte('Débrief Milo'+(ss.progLabel?' — '+ss.progLabel:'')+(quand?' (séance terminée à '+quand+')':'')),M,y+16); y+=20;
           doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
           lignes.forEach(l=>{ if(y>790){ doc.addPage(); y=M; } doc.text(l,M,y+10); y+=11; });
           y+=4;
@@ -1578,7 +1594,11 @@ function deleteSessOrConfirm(){
     return;
   }
   if(_sdDelTimer)clearTimeout(_sdDelTimer);
+  /* 🗑️ SESSION-INTEGRITY-01 (décision de Michel, 04/10) : la séance emporte SON débrief Milo — par son
+     identifiant canonique (`_dbfCle`, coach.js), jamais par date : pas de débrief orphelin. */
+  const _parties=S.sessions.filter(s=>(s.ts||s.id)===_sessId);
   S.sessions=S.sessions.filter(s=>(s.ts||s.id)!==_sessId);
+  if(typeof _dbfOublier==='function') _parties.forEach(s=>_dbfOublier(_dbfCle(s)));
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
   toast('Séance supprimée','info');
 }

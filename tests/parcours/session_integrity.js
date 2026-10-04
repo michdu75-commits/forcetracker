@@ -55,7 +55,41 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('S10 N-G2 : le record de référence est figé AVANT la mise à jour de `S.prs`',
     fw.indexOf('sess.refAvant=') > 0 && fw.indexOf('sess.refAvant=') < fw.indexOf('S.prs[ex.name]='), '');
   t('S11 l\'export lit le magasin canonique, jamais une conversation', /_dbfTexteDe\(/.test(corps(se, '_histoLignes')) && !/coachHistory|coachConversations/.test(corps(se, '_histoLignes')), '');
+  /* ═════════ FINITION (04/10, après contre-vérification) — B-SI01-K (rétention) · B-SI01-Z (suppression) ═════════
+     Un témoin d'écran à 260 débriefs ne voit pas un plafond caché à 1 000 : celui-ci regarde le PROPRIÉTAIRE de
+     l'écriture. L'invariant (décision de Michel) : tant que la séance existe, son débrief ne disparaît pas à cause
+     d'un plafond — donc celui qui ÉCRIT n'efface jamais, et un seul propriétaire efface : la suppression d'une séance. */
+  t('K0 ⛔ l\'écriture d\'un débrief n\'efface JAMAIS rien (aucun plafond, aucune éviction, à aucun seuil)',
+    enr && !/delete\s|\.splice\(|\.slice\(|\.sort\(/.test(enr), enr.slice(0, 160));
+  const oub = corps(co, '_dbfOublier'), del = corps(se, 'deleteSessOrConfirm');
+  t('Z0 UN seul propriétaire de l\'effacement (`_dbfOublier`, déclaré une fois), appelé par la suppression d\'une séance',
+    oub && (tout.match(/function _dbfOublier\(/g) || []).length === 1 && /_dbfOublier\(/.test(del)
+    && (tout.match(/delete\s+[\w.]*seances\[/g) || []).length === 1 && /delete\s+[\w.]*seances\[/.test(oub), del.slice(0, 200));
 };
+
+/* 📄 LIRE UN PDF COMME UN LECTEUR LE MONTRERA (finition, 04/10). jsPDF n'est pas compressé ici : on relève les
+   chaînes réellement dessinées (`(…) Tj`), on défait les échappements PDF, puis on décode le jeu de la police
+   standard (WinAnsi = Windows-1252) — exactement ce qu'un lecteur affiche. ⚠️ Une chaîne que jsPDF a dû passer
+   en « 16 bits » (un seul caractère hors de ce jeu suffit) garde ses octets nuls : c'est la ligne en charabia. */
+const CP1252 = { 0x80: '€', 0x82: '‚', 0x83: 'ƒ', 0x84: '„', 0x85: '…', 0x86: '†', 0x87: '‡', 0x88: 'ˆ', 0x89: '‰', 0x8A: 'Š', 0x8B: '‹', 0x8C: 'Œ',
+  0x8E: 'Ž', 0x91: '‘', 0x92: '’', 0x93: '“', 0x94: '”', 0x95: '•', 0x96: '–', 0x97: '—', 0x98: '˜', 0x99: '™', 0x9A: 'š', 0x9B: '›', 0x9C: 'œ', 0x9E: 'ž', 0x9F: 'Ÿ' };
+const lirePdf = bin => { const out = []; const re = /\(((?:\\[\s\S]|[^\\)])*)\)\s*Tj/g; let m;
+  while ((m = re.exec(bin))) out.push(m[1].replace(/\\([0-7]{1,3}|[\s\S])/g, (a, c) => /^[0-7]+$/.test(c) ? String.fromCharCode(parseInt(c, 8)) : ({ n: '\n', r: '\r', t: '\t', b: '\b', f: '\f' }[c] || c))
+    .replace(/[\x80-\x9f]/g, ch => CP1252[ch.charCodeAt(0)] || ch));
+  return out; };
+/* Le jeu de données de l'export : DATES FIXES (la référence historique ne dépend pas du jour où l'on teste). */
+const MS = (j, h) => Date.UTC(2026, 8, j, h, 0);   // septembre 2026
+const SEANCES_PDF = () => [
+  { id: MS(8, 16), ts: MS(8, 16), date: '2026-09-08', volume: 1360, progLabel: 'Haut', exs: [{ name: 'Shoulder Press', sets: [{ kg: 60, reps: 8, type: 'N', done: true }, { kg: 70, reps: 8, type: 'N', done: true }] }] },
+  { id: MS(8, 7), ts: MS(8, 7), date: '2026-09-08', volume: 800, exs: [{ name: 'Développé Couché', sets: [{ kg: 80, reps: 5, type: 'N', done: true }, { kg: 80, reps: 5, type: 'N', done: true }] }] },
+  { id: MS(1, 8), ts: MS(1, 8), date: '2026-09-01', volume: 1500, progLabel: 'Jambes → force 💪', exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, type: 'N', done: true }, { kg: 100, reps: 5, type: 'É', done: true }, { kg: 100, reps: 5, type: 'N', done: true }] }] },
+  { id: MS(1, 6), ts: MS(1, 6), date: '2026-08-25', volume: 300, exs: [{ name: 'Curl Biceps Haltères', sets: [{ kg: 15, reps: 10, type: 'N', done: true }] }] }];
+/* ⭐ RÉFÉRENCE HISTORIQUE de l'export « sans débriefs » : produite par le code de MASTER c3c830ab (ft-v1249, avant
+   SESSION-INTEGRITY-01), servi tel quel, même jeu de données, même lecture — `node tools/ref_pdf_sans_si01.js <arbre>`.
+   La date d'export est la seule partie variable ; elle est neutralisée des deux côtés. */
+const REF_PDF_SANS = ["Historique d'entraînement","3 séances · 8 séries · exporté le <date>","Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).","Mardi 8 septembre 2026","Exercice","Série","Type","kg","Reps","RIR","Volume","Shoulder Press","1","N","60","8","480","Shoulder Press","2","N","70","8","560","Développé Couché","1","N","80","5","400","Développé Couché","2","N","80","5","400","Mardi 1 septembre 2026","Exercice","Série","Type","kg","Reps","RIR","Volume","Squat","1","N","100","5","500","Squat","2","É","100","5","500","Squat","3","N","100","5","500","Mardi 25 août 2026","Exercice","Série","Type","kg","Reps","RIR","Volume","Curl Biceps Haltères","1","N","15","10","150"];
+const normPdf = L => L.map(s => s.replace(/exporté le \d{2}\/\d{2}\/\d{4}/, 'exporté le <date>'));
+module.exports.PDF = { lirePdf, SEANCES_PDF, normPdf };
 
 module.exports.ecran = async function (t, b, PORT) {
   console.log('\n═══ B-SI01-R/D/H/E/P/G/T (session-B). SESSION-INTEGRITY-01 — écran conduit, Milo simulé ═══');
@@ -446,6 +480,154 @@ module.exports.ecran = async function (t, b, PORT) {
       && !L.fil.some(c => /Désolé/.test(c)), js({ mag: L.mag && Object.keys(L.mag.seances), id: ses[0] && ses[0].id }));
     t('T3 ⛔ aucun record fantôme à 240 kg, aucun summarizeCoach sur l\'échec', !Object.values(L.prs).some(p => +p.kg >= 200) && X.st.summarize === 1, js(L.prs));
     t('T-err aucune erreur de page, 0 appel réel', X.errs.length === 0 && X.st.reels === 0, X.errs.join(' | '));
+    await X.cx.close();
+  }
+
+  /* ═════════ FINITION (04/10/2026, après contre-vérification) — décisions de Michel ═════════
+     ① plus de plafond de 200 débriefs · ② supprimer une séance supprime SON débrief · ③ l'export PDF garde les
+     caractères que jsPDF sait écrire. Débriefs locaux seulement (ratifié) : rien ici ne touche le cloud. */
+
+  /* ═════════ B-SI01-K — RÉTENTION : tant que la séance existe, son débrief reste ═════════
+     260 séances existantes, 260 débriefs écrits par le propriétaire unique (`_dbfEnregistrer`, celui des trois chemins),
+     avec une horloge À REBOURS (le plus récent porte le plus petit `ts`) : aucune survie ne peut dépendre de
+     `Date.now`. ~1 400 caractères par débrief : la taille d'un vrai débrief, pas un jouet. */
+  {
+    const N = 260, t0 = Date.UTC(2025, 11, 1, 9, 0);
+    const ids = Array.from({ length: N }, (_, i) => String(t0 + i * 86400000));
+    const sess = ids.map(id => ({ id: +id, ts: +id, date: new Date(+id).toISOString().slice(0, 10), volume: 500,
+      exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5, type: 'N', done: true }] }] }));
+    const mag0 = { v: 1, autre: 'garde', seances: { [ids[0]]: { texte: 'ANCIEN', ts: 1, src: 'fin', extra: 'garde' } } };
+    const X = await ouvrir({ sessions: sess, prs: {}, fil: null, stock: { ft4_debriefs: JSON.stringify(mag0) } });
+    const r = await X.pg.evaluate(ids => {
+      const vrai = Date.now; let h = 2e12; Date.now = () => (h -= 1000);
+      const res = ids.map((id, i) => _dbfEnregistrer(id, 'TXT-K' + i + ' ' + 'x'.repeat(1400), 'fin'));
+      Date.now = vrai;
+      const m = JSON.parse(localStorage.getItem('ft4_debriefs'));
+      return { ok: res.filter(Boolean).length, n: Object.keys(m.seances).length,
+        tous: ids.every((id, i) => m.seances[id] && m.seances[id].texte.indexOf('TXT-K' + i + ' ') === 0),
+        autre: m.autre, extra: (m.seances[ids[0]] || {}).extra, taille: localStorage.getItem('ft4_debriefs').length };
+    }, ids);
+    t('K1 ⛔⛔ 260 séances, 260 débriefs : les 260 restent (aucun plafond ; le plus ancien comme le plus récent)',
+      r.ok === N && r.n === N && r.tous, js({ ok: r.ok, n: r.n, tous: r.tous }));
+    t('K1b … aucune survie ne dépend de `Date.now` (horloge à rebours) · champs inconnus du magasin et de l\'entrée conservés',
+      r.tous && r.autre === 'garde' && r.extra === 'garde', js({ autre: r.autre, extra: r.extra }));
+    const r2 = await X.pg.evaluate(id => { _dbfEnregistrer(id, 'TXT-K5 réécrit', 'coach'); const m = JSON.parse(localStorage.getItem('ft4_debriefs'));
+      return { n: Object.keys(m.seances).length, e: m.seances[id], k6: (m.seances[String(+id + 86400000)] || {}).texte || '' }; }, ids[5]);
+    t('K2 ⛔ réécrire le débrief d\'une MÊME séance met à jour CETTE entrée : pas de doublon, la voisine ne bouge pas',
+      r2.n === N && r2.e && r2.e.texte === 'TXT-K5 réécrit' && r2.e.src === 'coach' && r2.k6.indexOf('TXT-K6 ') === 0, js({ n: r2.n, e: r2.e, k6: r2.k6.slice(0, 12) }));
+    await X.pg.reload(); await X.pg.waitForTimeout(3000);
+    const r3 = await X.pg.evaluate(ids => { const m = JSON.parse(localStorage.getItem('ft4_debriefs'));
+      return { n: Object.keys(m.seances).length, prem: !!_dbfTexteDe(ids[0]), der: !!_dbfTexteDe(ids[ids.length - 1]) }; }, ids);
+    await clic(X.pg, '#nb-progress'); await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(400);
+    const vus = await X.pg.evaluate(() => ({ cartes: document.querySelectorAll('#sess-list .sess-card').length, btns: document.querySelectorAll('#sess-list .sess-dbf-btn').length }));
+    t('K3 ⛔ après rechargement : les 260 associations tiennent, et chaque séance affichée garde son « Voir le débrief Milo »',
+      r3.n === N && r3.prem && r3.der && vus.cartes > 0 && vus.btns === vus.cartes, js({ r3, vus }));
+    t('K-err aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
+    await X.cx.close();
+  }
+
+  /* ═════════ B-SI01-Z — SUPPRIMER UNE SÉANCE EMPORTE SON DÉBRIEF, ET LUI SEUL ═════════
+     Conduit : Progrès → la carte de la séance → « 🗑️ Supprimer » deux fois (la vraie confirmation). Deux séances le
+     MÊME jour (A le matin, B le soir), une troisième (C) la semaine d'avant, une quatrième (D) sans débrief.
+     L'association est l'identifiant de la séance : jamais la date, jamais « le dernier ». */
+  const A = String(MS(8, 7)), B = String(MS(8, 16)), C = String(MS(1, 8)), D = String(MS(1, 6));
+  const MAGZ = () => ({ v: 1, seances: { [A]: { texte: 'TXT-A matin', ts: 1, src: 'fin' }, [B]: { texte: 'TXT-B soir', ts: 2, src: 'fin' }, [C]: { texte: 'TXT-C jambes', ts: 3, src: 'coach' } } });
+  const versHistorique = async X => { await clic(X.pg, '#nb-progress');
+    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(350); };
+  const supprimer = async (X, id) => {
+    await versHistorique(X);
+    const a = await clic(X.pg, '#sess-list .sess-card[onclick="openSessDetail(' + id + ')"] .sess-title', 'ov-sess-detail');
+    const b1 = await clic(X.pg, '#sd-del-btn', 'ov-sess-detail');                  // 1er appui : « ⚠️ Confirmer ? »
+    const b2 = await clic(X.pg, '#sd-del-btn', 'ov-sess-detail');                  // 2e appui : la séance part
+    await X.pg.waitForTimeout(300);
+    return a && b1 && b2;
+  };
+  const etatZ = pg => pg.evaluate(() => ({ mag: localStorage.getItem('ft4_debriefs'), ids: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').map(s => String(s.id)),
+    fil: localStorage.getItem('ft4_coach_hist'), file: localStorage.getItem('ft4_pending_debrief'),
+    btns: [...document.querySelectorAll('#sess-list .sess-dbf-btn')].map(x => (x.getAttribute('onclick').match(/\d{10,}/) || [''])[0]) }));
+  const seances = m => Object.keys(((JSON.parse(m || '{}') || {}).seances) || {}).sort().join(',');
+  {
+    const X = await ouvrir({ sessions: SEANCES_PDF(), prs: {}, stock: { ft4_debriefs: JSON.stringify(MAGZ()) } });
+    const av = await etatZ(X.pg);
+    const ok = await supprimer(X, A);
+    const ap = await etatZ(X.pg); const m = (JSON.parse(ap.mag || '{}') || {}).seances || {};
+    t('Z1 ⛔⛔ séance A (matin) supprimée → SON débrief part avec elle, et lui seul',
+      ok && ap.ids.indexOf(A) < 0 && !m[A] && seances(ap.mag) === [B, C].sort().join(), js({ ok, ids: ap.ids, cles: Object.keys(m) }));
+    t('Z1b ⛔ deux séances le MÊME jour ne se croisent pas : le débrief du soir (B) est intact, mot pour mot',
+      !!m[B] && m[B].texte === 'TXT-B soir' && !!m[C] && m[C].texte === 'TXT-C jambes', js(m));
+    t('Z1c le fil du Coach n\'est pas touché par la suppression (comportement existant)', !!av.fil && av.fil === ap.fil, '');
+    const ok2 = await supprimer(X, D);
+    const ap2 = await etatZ(X.pg);
+    t('Z2 ⛔ séance SANS débrief supprimée → le magasin ne bouge pas d\'un octet', ok2 && ap2.ids.indexOf(D) < 0 && ap2.mag === ap.mag, js({ ok2, ids: ap2.ids }));
+    await X.pg.reload(); await X.pg.waitForTimeout(3000);
+    await versHistorique(X);
+    const ap3 = await etatZ(X.pg);
+    t('Z3 ⛔ après rechargement : A reste sans débrief, B et C gardent le leur — et leur bouton',
+      seances(ap3.mag) === [B, C].sort().join() && ap3.btns.slice().sort().join() === [B, C].sort().join() && ap3.ids.slice().sort().join() === [B, C].sort().join(),
+      js({ btns: ap3.btns, ids: ap3.ids }));
+    t('Z-err aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
+    await X.cx.close();
+  }
+  {
+    // L'autre sens : la séance du SOIR est supprimée — celle du matin garde son débrief.
+    const X = await ouvrir({ sessions: SEANCES_PDF(), prs: {}, stock: { ft4_debriefs: JSON.stringify(MAGZ()) } });
+    const ok = await supprimer(X, B);
+    const ap = await etatZ(X.pg); const m = (JSON.parse(ap.mag || '{}') || {}).seances || {};
+    t('Z4 ⛔⛔ séance B (soir) supprimée → seul SON débrief part ; A (même jour) et C intacts',
+      ok && ap.ids.indexOf(B) < 0 && seances(ap.mag) === [A, C].sort().join() && m[A].texte === 'TXT-A matin', js({ ok, cles: Object.keys(m) }));
+    await X.cx.close();
+  }
+  {
+    // Le débrief À VENIR : une séance terminée hors ligne attend le sien (jeton en file) ; on la supprime avant.
+    const X = await ouvrir({ sessions: SEANCES_PDF(), prs: {}, reponses: [OK('ORPHELIN débrief d\'une séance supprimée.')],
+      stock: { ft4_debriefs: JSON.stringify({ v: 1, seances: { [C]: { texte: 'TXT-C jambes', ts: 3, src: 'coach' } } }), ft4_pending_debrief: JSON.stringify([A]) } });
+    const ok = await supprimer(X, A);
+    const ap = await etatZ(X.pg);
+    await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(2500);
+    const fin = await etatZ(X.pg);
+    t('Z5 ⛔⛔ séance supprimée AVANT son débrief : son jeton quitte la file — au Coach, aucun appel payé, aucun débrief orphelin',
+      ok && JSON.parse(ap.file || '[]').indexOf(A) < 0 && X.st.coach.length === 0 && seances(fin.mag) === C && !/ORPHELIN/.test(fin.fil || ''),
+      js({ ok, file: ap.file, coach: X.st.coach.length, cles: seances(fin.mag) }));
+    await X.cx.close();
+  }
+
+  /* ═════════ B-SI01-F — EXPORT PDF : ce que jsPDF SAIT écrire reste écrit ═════════
+     Mesuré dans jsPDF 2.5.2 (celui de l'app, police standard) : tout Windows-1252 s'encode — œ, €, ’, “ ”, •, ™…
+     (27 caractères sur 27). Un seul caractère HORS de ce jeu (→, emoji, espace fine) fait passer TOUTE la ligne en
+     charabia 16 bits. Donc : rien d'écrivable n'est retiré ; le reste est traduit quand il porte du sens (→ « -> »,
+     1ʳᵉ « 1re », − « - », ≥ « >= »…), sinon retiré (emoji). Comparé au code de master pour l'export « sans ». */
+  {
+    const TA = '**Bravo** : le cœur, la Manœuvre — 5 €, l’épaule. « Joué » “top” ‘ok’ – fin… • ™ ÉÀÇ ×½°';
+    const TB = '65 kg → 70 kg, 1ʳᵉ fois, 2ᵉ série ≥ 3, ≤ 5, −5 kg, a ≠ b ← c, séance\u202F: top 💪 fin';
+    const TC = ('Longue analyse → la charge monte bien, garde le tempo et la profondeur. ').repeat(6) + 'Fin.';
+    const X = await ouvrir({ sessions: SEANCES_PDF(), prs: {}, stock: { ft4_debriefs: JSON.stringify({ v: 1,
+      seances: { [A]: { texte: TA, ts: 1, src: 'fin' }, [B]: { texte: TB, ts: 2, src: 'fin' }, [C]: { texte: TC, ts: 3, src: 'coach' } } }) } });
+    await X.pg.evaluate(() => { window.__fichiers = []; window._donnerFichier = async (c, n) => {
+      const buf = await c.arrayBuffer(); window.__fichiers.push({ nom: n, bin: Array.from(new Uint8Array(buf)).map(x => String.fromCharCode(x)).join('') }); return 'ok'; }; });
+    const pdf = async avec => {
+      await X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); openHistoExport(); });
+      if (avec) await clic(X.pg, '#histo-exp-avec', 'ov-histo-export');
+      await clic(X.pg, '#ov-histo-export button[onclick="exportHistoPdf()"]', 'ov-histo-export'); await X.pg.waitForTimeout(1500);
+      const f = await X.pg.evaluate(() => window.__fichiers.pop()); return f && /\.pdf$/.test(f.nom) ? lirePdf(f.bin) : [];
+    };
+    const sans = await pdf(false), avec = await pdf(true);
+    const nz = s => s.replace(/ {2,}/g, ' ').trim();                       // les espaces laissés par un emoji retiré
+    const bloc = re => { const i = avec.findIndex(s => re.test(nz(s))); if (i < 0) return null; const out = [];
+      for (let k = i + 1; k < avec.length && !/^Débrief Milo|^Exercice$|^(Lundi|Mardi|Mercredi|Jeudi|Vendredi|Samedi|Dimanche) /.test(avec[k]); k++) out.push(avec[k]);
+      return out; };
+    const bA = bloc(/^Débrief Milo \(séance terminée à \d\d:\d\d\)$/), bB = bloc(/^Débrief Milo — Haut \(séance terminée à \d\d:\d\d\)$/),
+      bC = bloc(/^Débrief Milo — Jambes -> force \(séance terminée à \d\d:\d\d\)$/);
+    t('F1 ⛔⛔ « cœur », « Manœuvre », €, ’, « », “ ”, ‘ ’, –, —, …, •, ™, accents : écrits tels quels (rien d\'écrivable n\'est retiré)',
+      !!bA && bA.length === 1 && bA[0] === 'Bravo : le cœur, la Manœuvre — 5 €, l’épaule. « Joué » “top” ‘ok’ – fin… • ™ ÉÀÇ ×½°', js(bA));
+    t('F2 ⛔ hors du jeu de la police : traduit quand ça porte du sens (→ ->, 1ʳᵉ 1re, 2ᵉ 2e, ≥ >=, ≤ <=, − -, ≠ !=, ← <-, espace fine insécable), l\'emoji retiré',
+      !!bB && bB.length === 1 && nz(bB[0]) === '65 kg -> 70 kg, 1re fois, 2e série >= 3, <= 5, -5 kg, a != b <- c, séance\u00A0: top fin', js(bB));
+    t('F2b ⛔⛔ aucune ligne du PDF « avec » n\'est passée en charabia 16 bits (titres de débrief compris)',
+      avec.length > 0 && !avec.some(s => /\x00/.test(s)), js(avec.filter(s => /\x00/.test(s)).map(s => s.replace(/\x00/g, '').slice(0, 60))));
+    t('F3 ⛔ un nom de programme avec emoji et flèche ne casse pas le titre du débrief ; un long débrief se lit en entier, dans l\'ordre',
+      !!bC && bC.length > 1 && nz(bC.join(' ')) === nz(TC.replace(/→/g, '->')), js({ n: bC && bC.length, debut: bC && bC[0] }));
+    t('F4 ⛔⛔ export SANS débriefs : EXACTEMENT le PDF de master c3c830ab (même texte, même ordre ; seule la date d\'export est neutralisée)',
+      JSON.stringify(normPdf(sans)) === JSON.stringify(REF_PDF_SANS), js(normPdf(sans).filter((s, i) => s !== REF_PDF_SANS[i]).slice(0, 4)));
+    t('F-err aucune erreur de page, 0 appel réel', X.errs.length === 0 && X.st.reels === 0, X.errs.join(' | '));
     await X.cx.close();
   }
 };

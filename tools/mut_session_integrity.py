@@ -6,6 +6,7 @@
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord.
 M00 remet les fichiers servis tels qu'ils etaient AVANT le chantier (master c3c830ab, ft-v1249), mot pour mot.
 M1..M11 = les mutations demandees par Michel · M12..M18 = N-G2, rendu, rattrapage, deguisees.
+M-FIN1..M-FIN6 = finition du 04/10 (retention, suppression, fidelite PDF ; M-FIN5 negatif, M-FIN6 equivalente).
 Usage : python3 tools/mut_session_integrity.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
 import os, shutil, subprocess, sys, tempfile
@@ -37,8 +38,8 @@ MUT = [
      [(LO, "_dbfEnregistrer(_pid, reply, 'fin');", "_dbfEnregistrer(_dbfCle((S.sessions||[]).slice().reverse().find(x=>x.date===sess.date)||sess), reply, 'fin');")], 'GARDE'),
     ('M8 le bouton disparait apres rechargement (magasin tenu en memoire seulement)',
      [(CO, "    const v=JSON.parse(localStorage.getItem(_DBF_TEXTES)||'null');", "    const v=JSON.parse(window.__dbfMem||'null');"),
-      (CO, "  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }",
-           "  try{ window.__dbfMem=JSON.stringify(m); return true; }catch(e){ return false; }")], 'GARDE'),
+      (CO, "src:src||''});\n  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }",
+           "src:src||''});\n  try{ window.__dbfMem=JSON.stringify(m); return true; }catch(e){ return false; }")], 'GARDE'),   # ancre : l'ecriture de _dbfEnregistrer (finition : _dbfOublier ecrit aussi)
     ('M9 les debriefs sont inclus malgre l\'export « sans » (CSV et PDF)',
      [(SE, "      if(avecDebriefs){\n", "      if(true){\n"), (SE, "      if(_histoAvecDebriefs){\n", "      if(true){\n")], 'GARDE'),
     ('M10 les debriefs sont retires malgre l\'export « avec »',
@@ -62,6 +63,36 @@ MUT = [
      [(LO, "  const o={name,sets};\n", "  const o={name,sets};\n  if(ancien&&ancien._milo){o._milo=true;o.note=ancien.note||'';}\n")], 'GARDE'),
     ('M18 [deguisee] le chemin du Coach accepte complete:false',
      [(CO, "      if (opts.debriefSess && !_dbfReponseValide(data)) {", "      if (false) {")], 'GARDE'),
+    ('M-FIN1 plafond artificiel faible : 2 debriefs, le plus ancien sort',
+     [(CO, "                                      {texte:String(texte).trim(), ts:Date.now(), src:src||''});\n  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }\n}\n", "                                      {texte:String(texte).trim(), ts:Date.now(), src:src||''});\n  { const _ids=Object.keys(m.seances); if(_ids.length>2){ _ids.sort((a,b)=>(+(m.seances[a].ts)||0)-(+(m.seances[b].ts)||0)).slice(0,_ids.length-2).forEach(k=>{ delete m.seances[k]; }); } }\n  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }\n}\n")], 'GARDE'),
+    ("M-FIN1b [deguisee] l'ancien plafond de 200 remis",
+     [(CO, "                                      {texte:String(texte).trim(), ts:Date.now(), src:src||''});\n  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }\n}\n", "                                      {texte:String(texte).trim(), ts:Date.now(), src:src||''});\n  { const _ids=Object.keys(m.seances); if(_ids.length>200){ _ids.sort((a,b)=>(+(m.seances[a].ts)||0)-(+(m.seances[b].ts)||0)).slice(0,_ids.length-200).forEach(k=>{ delete m.seances[k]; }); } }\n  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }\n}\n")], 'GARDE'),
+    ('M-FIN1c [deguisee] plafond cache a 1000 (invisible a 260 debriefs)',
+     [(CO, "                                      {texte:String(texte).trim(), ts:Date.now(), src:src||''});\n  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }\n}\n", "                                      {texte:String(texte).trim(), ts:Date.now(), src:src||''});\n  { const _ids=Object.keys(m.seances); if(_ids.length>1000){ _ids.sort((a,b)=>(+(m.seances[a].ts)||0)-(+(m.seances[b].ts)||0)).slice(0,_ids.length-1000).forEach(k=>{ delete m.seances[k]; }); } }\n  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }\n}\n")], 'GARDE'),
+    ("M-FIN2 suppression inversee : efface le debrief d'une AUTRE seance (la plus recente restante)",
+     [(SE, "  if(typeof _dbfOublier==='function') _parties.forEach(s=>_dbfOublier(_dbfCle(s)));\n", "  if(typeof _dbfOublier==='function') S.sessions.slice(0,1).forEach(s=>_dbfOublier(_dbfCle(s)));\n")], 'GARDE'),
+    ('M-FIN2b [deguisee] suppression par DATE (toutes les seances du meme jour)',
+     [(SE, "  if(typeof _dbfOublier==='function') _parties.forEach(s=>_dbfOublier(_dbfCle(s)));\n", "  if(typeof _dbfOublier==='function') S.sessions.concat(_parties).filter(x=>_parties.some(p=>p.date===x.date)).forEach(s=>_dbfOublier(_dbfCle(s)));\n")], 'GARDE'),
+    ("M-FIN2c [deguisee] _dbfOublier efface l'entree ecrite en dernier, pas celle demandee",
+     [(CO, '  delete m.seances[k];\n', '  delete m.seances[Object.keys(m.seances).sort((a,b)=>(+m.seances[b].ts||0)-(+m.seances[a].ts||0))[0]];\n')], 'GARDE'),
+    ("M-FIN3 la suppression d'une seance ne supprime plus son debrief (orphelin)",
+     [(SE, "  if(typeof _dbfOublier==='function') _parties.forEach(s=>_dbfOublier(_dbfCle(s)));\n", '')], 'GARDE'),
+    ('M-FIN3b [deguisee] le debrief part mais le jeton reste en file (orphelin recree au Coach)',
+     [(CO, '  const l=_dbfLire(), i=l.indexOf(k);\n  if(i>=0){ l.splice(i,1); _dbfEcrire(l); }\n', '  const l=_dbfLire(), i=l.indexOf(k);\n')], 'GARDE'),
+    ("M-FIN4 l'ancien filtre PDF remis (coeur -> cur)",
+     [(SE, "function _pdfTexte(t){\n  return String(t==null?'':t)\n", "function _pdfTexte(t){\n  return String(t==null?'':t).replace(/[^\\x00-\\xFF’–—…]/g,'');\n  return String(t==null?'':t)\n")], 'GARDE'),
+    ('M-FIN4b [deguisee] plus de traduction (-> retire au lieu de traduit)',
+     [(SE, '    .replace(_PDF_A_TRADUIRE, c=>_PDF_TRADUIT[c])\n', '')], 'GARDE'),
+    ('M-FIN4c [deguisee] aucun filtre (texte brut a jsPDF)',
+     [(SE, "function _pdfTexte(t){\n  return String(t==null?'':t)\n", "function _pdfTexte(t){\n  return String(t==null?'':t);\n  return String(t==null?'':t)\n")], 'GARDE'),
+    ('M-FIN4d [deguisee] titre du debrief non filtre',
+     [(SE, "doc.text(_pdfTexte('Débrief Milo'+(ss.progLabel?' — '+ss.progLabel:'')+(quand?' (séance terminée à '+quand+')':'')),M,y+16);", "doc.text('Débrief Milo'+(ss.progLabel?' — '+ss.progLabel:'')+(quand?' (séance terminée à '+quand+')':''),M,y+16);")], 'GARDE'),
+    ("M-FIN4e [deguisee] l'export SANS change (mention des debriefs toujours ecrite)",
+     [(SE, "      +(_histoAvecDebriefs?' Débriefs Milo inclus, sous leur séance.':''),M,y); y+=6;", "      +' Débriefs Milo inclus, sous leur séance.',M,y); y+=6;")], 'GARDE'),
+    ('M-FIN5 [negatif] commentaires citant les motifs (plafond, delete, ancien filtre)',
+     [(CO, '  if(!String(texte).trim()) return false;\n', '  if(!String(texte).trim()) return false;\n  // delete m.seances[k] .slice( .sort( _DBF_TEXTES_MAX=200 : cite, jamais execute\n'), (SE, "function _pdfTexte(t){\n  return String(t==null?'':t)\n", "function _pdfTexte(t){\n  // ancien filtre [^\\x00-\\xFF’–—…] : cite, jamais execute\n  return String(t==null?'':t)\n")], 'OK'),
+    ('M-FIN6 [equivalente] hasOwnProperty -> in (meme sens sur un objet de donnees)',
+     [(CO, '  if(!Object.prototype.hasOwnProperty.call(m.seances, k)) return false;', '  if(!(k in m.seances)) return false;')], 'OK'),
     ('[negatif] commentaire citant les motifs cherches',
      [(LO, "function _typeStructure(t){", "// _exerciceRemplacant _dbfReponseValide _dbfEnregistrer refAvant premiere complete:false\nfunction _typeStructure(t){")], 'OK'),
 ]
