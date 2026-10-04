@@ -492,3 +492,29 @@ lignes 🟡 qui ont DÉJÀ leur clôture 🟢 »*. **C'est le contrôle qui rend
 
 *Et la règle de fond, inchangée depuis le 06/09 : **le premier publié garde le numéro**, on ne
 renumérote jamais le bloc de l'autre, et le vrai verrou reste git — un push non-fast-forward échoue.*
+
+---
+
+## 🔤 LE FILTRE ÉCRIT SUR UNE CAPACITÉ **SUPPOSÉE** D'UNE BIBLIOTHÈQUE (04/10/2026, SESSION-INTEGRITY-01)
+
+**Ce qui s'est passé.** Pour exporter les débriefs de Milo en PDF, j'ai posé un filtre qui retirait tout
+ce qui n'était pas du « latin de base », sur une prémisse jamais vérifiée : *« jsPDF ne dessine que le
+latin »*. Le filtre faisait exactement ce qu'on lui demandait — et il abîmait le texte : *« cœur »* →
+*« cur »*, *« −5 kg »* → *« 5 kg »* (le signe d'une baisse perdu), *« 1ʳᵉ »* → *« 1 »*. Trouvé sur la
+branche, par la finition, **avant** publication.
+**Mesuré ensuite** : la police standard de jsPDF 2.5.2 encode tout Windows-1252 (27 caractères
+spécifiques sur 27) — le filtre jetait des caractères que la bibliothèque savait écrire. Et l'inverse
+était vrai aussi : **un seul** caractère hors de ce jeu casse **toute** la ligne. La vraie contrainte
+n'était donc ni « latin seulement », ni « tout passe » — elle ne se devinait pas, elle se mesurait.
+
+### ⭐ La leçon
+***On ne supprime ni ne transforme une donnée de la personne sur une capacité SUPPOSÉE d'une
+bibliothèque.*** L'ordre est fixe : **① mesurer** ce que la bibliothèque fait vraiment (sur la version
+embarquée, pas celle de la doc en ligne) → **② écrire un témoin** qui rougit si un caractère qu'on doit
+garder disparaît → **③ l'éprouver par mutation** (le filtre d'avant doit le faire rougir) → **④ alors
+seulement filtrer** — en traduisant ce qui porte du sens, en retirant le reste.
+⚠️ *Un filtre trop large ne plante jamais : il rend un texte propre et faux.* C'est **R28** (une limite
+non vérifiée devient une règle silencieuse) appliquée à une bibliothèque au lieu d'un écran — et le cas
+« canvas » du 27/07 à l'envers : là on se croyait limité et on se privait, ici on se croyait limité et on
+**abîmait**.
+*Détail chiffré et table de traduction : `docs/CONTRAINTES-PDF.md` §3, « Mesuré le 04/10/2026 ».*

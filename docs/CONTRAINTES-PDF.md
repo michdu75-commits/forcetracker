@@ -101,6 +101,39 @@ Force Tracker n'embarque que du **.woff2**. Il faudrait ajouter un fichier TTF a
    `didDrawPage`. Styles réglables par cellule : `fillColor`, `textColor`, `fontStyle`, `halign`,
    `valign`, `cellWidth`, `minCellHeight`, `lineWidth`, `lineColor`, `cellPadding`.
 
+### 📏 Mesuré le 04/10/2026 — ce que la police standard encode VRAIMENT *(SESSION-INTEGRITY-01, publié en ft-v1250)*
+
+⚠️ **Le point 2 ci-dessus disait « les accents passent » — c'est vrai, mais trop étroit, et un filtre a
+été écrit sur la version étroite.** Mesuré dans **jsPDF 2.5.2**, celui que l'app embarque :
+- la police standard (helvetica) déclare **`/Encoding /WinAnsiEncoding`** et encode tout le jeu
+  **Windows-1252** : en plus du latin et des accents, les **27 caractères propres à Windows-1252**
+  — `œ Œ € ’ ‘ “ ” „ • – — … ™` et les autres — sortent tous correctement (**27 sur 27, sur ce jeu
+  mesuré** ; rien n'est affirmé au-delà) ;
+- ⛔⛔ **UN SEUL caractère HORS de ce jeu fait passer TOUTE la ligne en charabia 16 bits** — pas
+  seulement le caractère : constaté avec un emoji dans un nom de programme, qui cassait tout le titre
+  d'un débrief. Même effet attendu pour `→`, une espace fine, etc. ;
+- le premier filtre des débriefs (branche SESSION-INTEGRITY-01, corrigé **avant** publication) partait
+  de la prémisse fausse « jsPDF ne dessine que le latin » : *« cœur »* sortait *« cur »*, *« −5 kg »*
+  sortait *« 5 kg »* (signe perdu), *« 1ʳᵉ »* sortait *« 1 »*.
+
+**Ce que fait aujourd'hui `_pdfTexte` (setup.js), appliqué au texte et au titre des débriefs exportés** :
+
+| Entrée | Sortie | Pourquoi |
+|---|---|---|
+| tout Windows-1252 (latin, accents, `œ € ’ “ ” • – — … ™`…) | **gardé tel quel** | encodé par la police (mesuré) |
+| `→` `←` `≥` `≤` `≠` | `->` `<-` `>=` `<=` `!=` | ils portent du sens |
+| `−` (moins), `‐` `‑` (tirets) | `-` | « −5 kg » doit rester négatif |
+| `ʳ` `ᵉ` (exposants) | `r` `e` | « 1ʳᵉ » n'est pas « 1 » |
+| espaces fines et étroites | espace insécable | sinon la ligne entière casse |
+| **tout le reste** — emoji, pictogrammes, **`≈`**, **`✓`**… | **retiré, sans traduction** | hors du jeu ; ⚠️ `≈` et `✓` ne sont **pas** traduits aujourd'hui |
+
+⚠️ **Le PDF « sans débriefs Milo » n'utilise pas ce filtre** : il reste octet pour octet celui d'avant
+(référence `tools/ref_pdf_sans_si01.js`, témoin F4). Les **autres PDF** de l'app (programme, chat, étude
+du corps) n'ont pas été remesurés avec cette grille.
+⭐ **Le principe, à appliquer à toute nouvelle sortie PDF** : *mesurer ce que la bibliothèque encode
+AVANT d'écrire un filtre* ; traduire ce qui porte du sens ; retirer seulement le reste ; et figer la liste
+par un témoin qui rougit si un caractère gardé disparaît (`docs/GALERES-ET-LECONS.md`, leçon du 04/10).
+
 ---
 
 ## 4. ⛔ CE QUI N'EST PAS POSSIBLE — la liste courte
@@ -109,6 +142,7 @@ Force Tracker n'embarque que du **.woff2**. Il faudrait ajouter un fichier TTF a
 |---|---|---|
 | Styler une partie du texte d'une cellule de tableau (jsPDF) | ⛔ | autoTable = un style par cellule. Contournable à la main, plus fragile. |
 | Emoji dans un PDF jsPDF | ⛔ | Aucun glyphe dans les polices d'origine. |
+| Un caractère hors Windows-1252 au milieu d'une ligne (jsPDF) | ⛔ | Il casse **toute la ligne** (charabia 16 bits), pas seulement lui — mesuré le 04/10. Le filtrer ou le traduire **avant** d'écrire (voir §3, « Mesuré le 04/10/2026 »). |
 | SVG dans un PDF jsPDF | ⛔ | Module `svg2pdf` non embarqué. → convertir en PNG. |
 | Utiliser Manrope dans jsPDF **sans rien ajouter au dépôt** | ⛔ | jsPDF veut du TTF, l'app n'a que du .woff2. |
 | Garantir qu'un **fond de couleur** s'imprime (feuille A) | ⛔ | Case « graphiques d'arrière-plan », décochée par défaut. |
@@ -179,6 +213,7 @@ Ce sont souvent les plus décisives.
 | PDF du chat de Milo | `coach.js` |
 | PDF de l'étude du corps | `setup.js` |
 | PDF du rapport PT-001 | `coach.js` |
+| Export de l'historique (avec / sans débriefs Milo) + filtre `_pdfTexte` | `setup.js` → `exportHistoPdf()` |
 | Bibliothèques (hors ligne) | `lib/jspdf.umd.min.js`, `lib/jspdf.plugin.autotable.min.js` |
 | Polices de l'app | `fonts/manrope-variable.woff2` (+ Space Grotesk, Pacifico) |
 
