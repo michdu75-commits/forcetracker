@@ -31,3 +31,15 @@
   modifié.
 - Le témoin CLXXVIII ⑤ (`tests/parcours/runner.js`, ft-v1073) figeait « le vrai remplacement GARDE les
   séries » (ft-v296). Il devient faux par décision de Michel (04/10) : à faire évoluer avec sa raison.
+
+## Preuves au fil de l'eau
+
+- **04/10 ~09:40 UTC — banc `tools/banc_session_integrity.js` : 71 OK / 0 rouge** sur la branche (blocs B-SI01-S/R/D/H/E/P/G/T).
+  Le même banc sur le code de **master** rougit dès la source et sur R1-R4 : séries 200/240 héritées, `_milo`,
+  consigne et repos gardés — **le défaut du 03/10 est reproduit par le témoin, puis fermé**.
+- Un témoin à moi était faux (R6b) : j'attendais `60,80,90` pour un ajout d'exercice, `addExercise` (inchangé)
+  rend `0,60,80` (É + 2 séries). Attente corrigée, pas le code.
+- Prompt de Milo régénéré (`node tools/dump_prompt.js`) : **seules la date et l'heure de génération changent** —
+  le profil de démo n'a pas de première référence. Contenu du prompt inchangé.
+- Commits : `d5fa2a8c` (bloc A) · `70b12f3f` (blocs B-F + N-G2 + règle d'or #11 points 2-5) · `f0a52c76` (banc,
+  contrôle négatif, registre de recette).

@@ -3334,3 +3334,11 @@ de preuve — **ne jamais en faire monter un d'un cran sans nouvelle preuve.**
   inventer. État : **à trier**.
 - **Panneau maintenance — chantier SÉPARÉ.** Un HTTP 404 bien **reçu** s'affiche « INJOIGNABLE » ; Milo passe par un
   autre chemin (le Worker). État : **à trier**.
+
+### 🟡 SESSION-INTEGRITY-01 : MILO LIT-IL « 1ʳᵉ RÉFÉRENCE, PAS UN RECORD » COMME IL FAUT ? (04/10/2026 — NON vérifié en réel)
+Depuis SESSION-INTEGRITY-01 (branche `claude/session-integrity-01`, **non publiée**), la ligne des records envoyée à
+Milo marque une première fois `[1ʳᵉ référence, pas un record]` et l'exclut du « Dernier RECORD en date » ; et la
+remarque d'intensité d'une séance terminée se calcule contre le record d'AVANT elle (N-G2). ❓ **Doute** : Milo
+féliciterait-il encore « ton record » sur une première fois (le débrief automatique lui demande de « signaler un
+éventuel record ») ? Vérifiable par du code : ✅ (une réponse qui emploie « record » pour un exercice marqué
+1ʳᵉ référence) — candidat banc **R34**, 0 appel autorisé. État : **à trier**.
