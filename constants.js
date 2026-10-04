@@ -532,6 +532,11 @@ const NEW_FEATURES=[
   {id:'prog-cardio', screen:'log', desc:'Nouveau : le <b>cardio d\'un programme</b> part maintenant dans le <b>bloc Cardio</b> au lieu de tra\u00eener dans la liste des exercices \u2014 y compris pour les programmes que tu as <b>d\u00e9j\u00e0</b> import\u00e9s, au moment de les charger.'},
   {id:'imp-nouveaux', screen:'log', desc:'Nouveau : \u00e0 l\'import d\'un programme ou d\'un historique, les exercices que l\'app ne conna\u00eet pas sont <b>marqu\u00e9s en orange</b> AVANT l\'import, avec un bouton \u00ab \ud83d\udd17 Rattacher \u00bb pour les relier \u00e0 ton catalogue (et retrouver photo, figurine et historique).'},
   {id:'prog-import-porte', screen:'log', desc:'Nouveau : « 📷 Importer un programme » est maintenant DANS « Mes Programmes ». Photo ou PDF, l\'IA le lit et garde tes jours (Push, Pull, Legs…) — c\'est la seule façon d\'obtenir un programme à plusieurs jours depuis un document.'},
+  /* 🛡️ SESSION-INTEGRITY-01 (04/10/2026) — règle d'or #11, point 2. Sur PROGRÈS : c'est là que vit le nouveau
+     bouton « Voir le débrief Milo » et le choix d'export. Sans `spot` (comme les autres entrées de l'écran).
+     ⚠️ La pop-up WHATS_NEW se décide à la publication (elle exige un numéro de version, interdit pendant le
+     travail — protocole du 13/09). */
+  {id:'debrief-seance', screen:'progress', desc:'Nouveau : chaque séance débriefée par Milo a son bouton <b>« 💬 Voir le débrief Milo »</b> dans ton historique — et l\'export peut inclure (ou pas) ces débriefs. Une <b>première fois</b> sur un exercice s\'appelle maintenant « <b>Première référence enregistrée</b> », plus « record ».'},
   /* 🛡️ POINT ROUGE sur SÉANCE (ft-v1153) : c'est là que les avertissements APPARAISSENT, donc
      là que la pastille doit ramener. ⛔ Le poser sur l'Accueil enverrait chercher sur un écran où
      il n'y a rien à voir — le défaut corrigé en ft-v1099.

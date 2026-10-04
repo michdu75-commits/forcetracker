@@ -8174,6 +8174,9 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → L'application) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 🛡️ SESSION-INTEGRITY-01 — DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : une capture montrerait
+     un débrief qui n'est pas celui du lecteur. Elle dit ce que la pop-up ne dit pas : OÙ le retrouver. */
+  {icon:'💬', t:'Chaque séance garde son débrief', cap:'Quand Milo débriefe ta séance, ce débrief est <b>rangé avec elle</b>. Retrouve-le quand tu veux : <b>Progrès → historique → « 💬 Voir le débrief Milo »</b> — sans réseau, sans appel. À l\'export, c\'est toi qui choisis : <b>avec</b> ou <b>sans</b> les débriefs.'},
   /* 🏃 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** : une capture
      figerait DEUX libellés qui changent selon l'état de la séance — le bouton du bas dit
      « Terminer la séance » ou « Enregistrer le cardio » selon qu'une série a été validée ou
@@ -8748,7 +8751,7 @@ function _bilanMois(ym){
   const jours=new Set(sess.map(s=>s.date)).size;
   // Records battus DANS le mois (la date du PR fait foi)
   const prs=Object.entries(S.prs||{})
-    .filter(([,v])=>v&&v.date&&String(v.date).slice(0,7)===ym)
+    .filter(([,v])=>v&&v.date&&!v.premiere&&String(v.date).slice(0,7)===ym)   // D-045 : une 1ʳᵉ fois n'est pas un record battu
     .map(([nom,v])=>({nom, kg:v.kg, reps:v.reps}));
   const badges=Object.entries(S.badges||{})
     .filter(([,v])=>v&&v.unlockedAt&&String(v.unlockedAt).slice(0,7)===ym)

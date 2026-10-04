@@ -2382,14 +2382,29 @@ function _recordPourNom(nom){
  * @param {object[]} sets  séries telles qu'appliquées ({kg, reps, type, rest})
  * @returns {string[]} — vide si tout va bien, VIDE AUSSI si on ne sait pas (R29)
  */
-function _intensiteDefauts(nom, sets){
+/* 🛡️ SESSION-INTEGRITY-01 / N-G2 (constat MILO-GHOST-01, 04/10/2026) — UNE SÉANCE NE SE JUGE PAS
+   CONTRE LE RECORD QU'ELLE VIENT DE CRÉER. `finishWorkout` met `S.prs` à jour AVANT l'écran de fin
+   et avant le débrief : `_intensiteDefauts` lisait donc le record produit par la séance elle-même.
+   Mesuré : une 1ʳᵉ fois à 3×10 à 40 kg crée un 1RM de 53,3 kg, et ses propres séries passaient
+   « tenables sur UNE série max » — un reproche fabriqué par l'app (et transmis à Milo).
+   👉 À la fin de séance, le record de référence de chaque exercice est FIGÉ tel qu'il était AVANT
+   la séance (`sess.refAvant`, même propriétaire `_recordPourNom`) ; c'est lui que lisent l'écran de
+   fin et le contexte de Milo pour CETTE séance. 0 = aucune référence avant → on se tait (R29).
+   ⛔ Une séance enregistrée avant ce correctif n'a pas de `refAvant` : comportement d'avant
+   (record actuel). Les séances PROPOSÉES gardent le record actuel — c'est la bonne référence. */
+function _refAvantDe(sess, nom){
+  const r=sess&&sess.refAvant;
+  if(!r||typeof r!=='object'||!Object.prototype.hasOwnProperty.call(r,nom)) return undefined;
+  const v=+r[nom]; return v>0?v:0;
+}
+function _intensiteDefauts(nom, sets, refRm1){
   const out=[];
   try{
     /* ⛔ LE LOOKUP PASSE PAR LE PROPRIÉTAIRE UNIQUE (ft-v1160) : `S.prs[nom]` brut éteignait ce
        contrôle dès que Milo écrivait un nom voisin — et le silence est indiscernable d'un « tout
        va bien ». Le voisin `_repereDefauts` le savait depuis des semaines, pas celui-ci. */
-    const r=(typeof _recordPourNom==='function')?_recordPourNom(nom):null;
-    const rm1=r?r.rm1:0;
+    const r=(typeof refRm1==='number')?null:((typeof _recordPourNom==='function')?_recordPourNom(nom):null);
+    const rm1=(typeof refRm1==='number')?refRm1:(r?r.rm1:0);
     if(!(rm1>0)) return out;                       // aucun record : on se tait (R29)
     // Séries de TRAVAIL seulement — un échauffement lourd est déjà l'affaire de `_monteeDefauts`.
     const trav=(sets||[]).filter(s=>s&&s.type!=='É'&&(+s.kg>0)&&(+s.reps>0));
@@ -4446,22 +4461,40 @@ async function finishWorkout(){
   if(S.wkt.runId) sess.runId=S.wkt.runId;   // LOT 3C : la séance enregistrée garde l'identité de la séance en cours (voir `_assurerRunIdSeance`)
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
+  // N-G2 : le record de référence de chaque exercice, FIGÉ avant que la séance ne le mette à jour.
+  { const _ref={}; sess.exs.forEach(ex=>{ if(!ex||!ex.name||_ref.hasOwnProperty(ex.name)) return;
+      const r=(typeof _recordPourNom==='function')?_recordPourNom(ex.name):null; _ref[ex.name]=r?Math.round(r.rm1*10)/10:0; });
+    sess.refAvant=_ref; }
+  /* 🛡️ SESSION-INTEGRITY-01 / D-045 (Michel) — UNE PREMIÈRE FOIS N'EST PAS UN RECORD.
+     Terrain du 03/10 : Rowing Yates 40×10 RIR 4, fait pour la PREMIÈRE fois, annoncé « record
+     personnel ». La cause était ici : `!old || rm>old.rm1` comptait l'absence de référence comme un
+     record battu. 👉 Un record exige une référence ANTÉRIEURE comparable (même exercice, déjà dans
+     `S.prs` avant cette séance) ET une performance strictement supérieure.
+     ⭐ `S.prs` garde son rôle (la meilleure performance par exercice) : la 1ʳᵉ fois y crée la
+     RÉFÉRENCE, marquée `premiere:true` — c'est ce marqueur que lisent l'écran de fin, le contexte de
+     Milo et le bilan du mois pour ne pas l'annoncer comme un record. Il tombe tout seul dès que la
+     référence est battue (l'objet est remplacé). ⛔ Les anciennes entrées, sans marqueur, restent
+     des records : on ne devine pas après coup lesquelles étaient des premières fois. */
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
     if(!_serieFaitFoiPourPR(s))return;
     const rm=bz(s.kg,s.reps),cur=S.prs[ex.name];
-    if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
+    if(!cur||rm>cur.rm1)S.prs[ex.name]=_oldPrs[ex.name]
+      ?{kg:s.kg,reps:s.reps,rm1:rm,date:sess.date}
+      :{kg:s.kg,reps:s.reps,rm1:rm,date:sess.date,premiere:true};
   }));
-  let _bestPr=null;const _prExs=new Set();
+  let _bestPr=null;const _prExs=new Set(),_refExs=new Set();
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
     if(!_serieFaitFoiPourPR(s))return;
     const rm=bz(s.kg,s.reps),old=_oldPrs[ex.name];
-    if(!old||rm>old.rm1){
+    if(!old){_refExs.add(ex.name);return;}          // première référence enregistrée — pas un record
+    if(rm>old.rm1){
       _prExs.add(ex.name);
-      const gain=rm-(old?old.rm1:0);
-      if(!_bestPr||gain>(_bestPr.newRm-(_bestPr.oldRm||0)))_bestPr={ex:ex.name,newRm:rm,oldRm:old?old.rm1:0};
+      const gain=rm-old.rm1;
+      if(!_bestPr||gain>(_bestPr.newRm-(_bestPr.oldRm||0)))_bestPr={ex:ex.name,newRm:rm,oldRm:old.rm1};
     }
   }));
   const _prCount=_prExs.size;
+  const _premieresRefs=[..._refExs];   // pour l'écran de fin — jamais écrit sur la séance enregistrée
   stopRest();
   // Deux moments possibles (02/08) : `cardio` = APRÈS (champ historique), `cardioAvant` = échauffement.
   if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
@@ -4548,17 +4581,17 @@ async function finishWorkout(){
   // ÉCRAN DE FIN DE SÉANCE (le « moment signature ») — remplace les pop-ups éparses
   // (carte muscles + félicitations record + check-in) par UN écran cohérent :
   // exos + chiffres + débrief de Milo + « comment tu t'es senti ».
-  _showSessionEnd(sess,_bestPr,_prCount);
+  _showSessionEnd(sess,_bestPr,_prCount,_premieresRefs);
   _finishing=false;
 }
 
 // ─── ÉCRAN DE FIN DE SÉANCE (Étape 1) ─────────────────────────────
 const _SE_ENERGY=['😴','😐','🙂','⚡'];
-function _showSessionEnd(sess,bestPr,prCount){
+function _showSessionEnd(sess,bestPr,prCount,premieresRefs){
   const ov=document.getElementById('ov-session-end');if(!ov){goScreen('home',document.getElementById('nb-home'));return;}
   const sub=document.getElementById('se-sub');
   if(sub)sub.textContent=(sess.progLabel?sess.progLabel+' · ':'')+new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-  _renderSeStats(sess,prCount||0);
+  _renderSeStats(sess,prCount||0,premieresRefs||[]);
   _renderSeExs(sess);
   _renderSeMood();
   ov.classList.add('open');
@@ -4566,7 +4599,7 @@ function _showSessionEnd(sess,bestPr,prCount){
      chiffré — qui ne dépend d'aucun réseau — puis l'attente de l'avis de Milo en dessous. */
   _runSeDebrief(sess,prCount||0);
 }
-function _renderSeStats(sess,prCount){
+function _renderSeStats(sess,prCount,premieresRefs){
   const el=document.getElementById('se-stats');if(!el)return;
   let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
   /* ⏱️➕ LA TUILE « DURÉE » COMPTE LE CARDIO (18/08/2026) — une seule source, `_dureeTotaleMin`
@@ -4580,6 +4613,10 @@ function _renderSeStats(sess,prCount){
   }
   const tiles=[];
   if(prCount>0)tiles.push('<div class="se-stat pr" style="grid-column:1/3;"><div class="se-stat-v">🏆 '+prCount+' record'+(prCount>1?'s':'')+' battu'+(prCount>1?'s':'')+' !</div><div class="se-stat-l">nouveau max</div></div>');
+  /* 🛡️ D-045 — une première fois se DIT, avec son vrai nom : « Première référence enregistrée ». */
+  const _refs=(premieresRefs||[]).filter(Boolean);
+  if(_refs.length){const _e=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    tiles.push('<div class="se-stat se-ref" style="grid-column:1/3;"><div class="se-stat-v" style="font-size:15px;">📌 Première référence enregistrée</div><div class="se-stat-l">'+_refs.map(_e).join(' · ')+'</div></div>');}
   tiles.push('<div class="se-stat"><div class="se-stat-v">'+(sess.volume||0)+' kg</div><div class="se-stat-l">Volume</div></div>');
   tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries</div></div>');
   if(dur)tiles.push('<div class="se-stat"><div class="se-stat-v">'+dur+' min</div><div class="se-stat-l">'+durSub+'</div></div>');
@@ -4729,7 +4766,7 @@ function _debriefLocal(sess, prCount, opts){
           .forEach(d=>points.push({ex:ex.name, txt:d, quoi:'échauffement'}));
       }catch(e){}
       try{
-        (( typeof _intensiteDefauts==='function')?_intensiteDefauts(ex.name,sets):[])
+        (( typeof _intensiteDefauts==='function')?_intensiteDefauts(ex.name,sets,_refAvantDe(sess,ex.name)):[])   // N-G2
           .forEach(d=>points.push({ex:ex.name, txt:(typeof d==='string'?d:(d&&d.txt)||''), quoi:'charge'}));
       }catch(e){}
     });
@@ -4855,6 +4892,11 @@ async function _runSeDebrief(sess,prCount){
     const data=await resp.json();
     let reply=data.reply||'';
     if(!reply)throw new Error('vide');
+    /* 🛡️ SESSION-INTEGRITY-01 — HTTP 200 ≠ débrief. Le Worker renvoie `complete:false` avec « Désolé,
+       réessaie. » quand le modèle a échoué en amont : c'est un ÉCHEC (voir `_dbfReponseValide`). On
+       part dans le `catch` AVANT tout « reçu » : jeton rendu, « Réessayer » affiché, rien d'écrit ni
+       de résumé. */
+    if(typeof _dbfReponseValide==='function' && !_dbfReponseValide(data))throw new Error('non confirmé');
     /* ⭐⭐ ICI, ET PAS UNE LIGNE PLUS BAS — c'est le correctif de l'anomalie A (15/09/2026).
        Tout ce qui suit (nettoyage, formatage, affichage, mémoire, historique) prend du temps et
        peut être interrompu par un rechargement. Pendant cette fenêtre, le jeton était encore
@@ -4864,6 +4906,8 @@ async function _runSeDebrief(sess,prCount){
        rattrapage n'a plus rien à refaire, il a juste à FINIR. *Marquer « reçu » sans garder le
        texte aurait remplacé un doublon par une perte silencieuse* (R29). */
     try{ if(typeof _dbfRecu==='function') _dbfRecu(_pid, reply, instr); }catch(e){}
+    // D-043 : le débrief est rangé avec SA séance au même instant que le « reçu » (même fenêtre de risque).
+    try{ if(typeof _dbfEnregistrer==='function') _dbfEnregistrer(_pid, reply, 'fin'); }catch(e){}
     const clean=(typeof _stripCoachTech==='function')?_stripCoachTech(reply):reply;
     /* ⛔⛔ MILO S'AJOUTE, IL NE REMPLACE PLUS (ft-v1022). Cette ligne écrasait le socle chiffré :
        en ligne on recevait donc le JUGEMENT SANS LES FAITS, alors que hors ligne on avait les

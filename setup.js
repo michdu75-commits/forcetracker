@@ -258,6 +258,13 @@ function _renderVolumeSemaine(){
    corps, pas d'âge, pas de sexe, pas d'e-mail. Ce fichier part par mail ou dans un tableur
    partagé ; il ne doit contenir que de l'entraînement. */
 const HISTO_COLONNES = ['date','seance','exercise','set_num','type','kg','reps','rir','volume'];
+/* 🛡️ SESSION-INTEGRITY-01 / D-044 (Michel) — LES DÉBRIEFS MILO SONT UN CHOIX, JAMAIS IMPOSÉS.
+   « Sans » : le fichier est EXACTEMENT celui d'avant (mêmes colonnes, mêmes lignes) — aucun texte de
+   débrief. « Avec » : deux colonnes de plus — `seance_id` sur chaque ligne (deux séances le même jour
+   ne se confondent plus) et `debrief_milo`, porté par UNE ligne `type = DEBRIEF` par séance débriefée,
+   juste après ses séries. Le format « une ligne par chose » reste celui du cardio (R13). */
+const HISTO_COLONNES_DEBRIEF = HISTO_COLONNES.concat(['seance_id','debrief_milo']);
+let _histoAvecDebriefs = false;   // le choix de la fenêtre d'export — remis à « sans » à chaque ouverture
 /* ⛔⛔ L'ORDRE APPARTIENT À CE PRODUCTEUR, ET IL VA DU PLUS RÉCENT AU PLUS ANCIEN (31/08/2026).
    Michel : *« la dernière séance n'apparaît pas dans mon export »*. Elle Y ÉTAIT — **tout en bas**,
    parce que le CSV triait du plus ANCIEN au plus récent, quand l'écran Historique **et** le PDF
@@ -267,12 +274,14 @@ const HISTO_COLONNES = ['date','seance','exercise','set_num','type','kg','reps',
    chacun de son côté — deux tris finissent par ne plus donner le même fichier.
    ⛔ Et le tri ne porte que sur les SÉANCES : à l'intérieur d'une séance, les séries restent
    1, 2, 3 — c'est l'ordre dans lequel elles ont été faites, il ne s'inverse pas. */
-function _histoLignes(){
+function _histoLignes(avecDebriefs){
   const out=[];
   try{
     (S.sessions||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).forEach(s=>{
       if(!s||!s.date) return;
       const nom=s.name||s.label||'';
+      const sid=(typeof _dbfCle==='function')?_dbfCle(s):String(s.id||s.ts||s.date);
+      const _n0=out.length;
       /* 🏃 LE CARDIO ENTRE DANS L'EXPORT (04/09/2026). Michel, en regardant son fichier :
          *« il faut que le cardio soit sur l'export de l'historique »*.
          ⛔⛔ IL N'Y ÉTAIT PAS DU TOUT, et pas par oubli de filtrage : ce producteur ne parcourt
@@ -313,6 +322,12 @@ function _histoLignes(){
                     rir:(r===null?'':r), volume:Math.round(kg*reps)});
         });
       });
+      for(let k=_n0;k<out.length;k++) out[k].seance_id=sid;     // lu seulement par l'export « avec »
+      if(avecDebriefs){
+        const d=(typeof _dbfTexteDe==='function')?_dbfTexteDe(sid):null;
+        if(d) out.push({date:s.date, seance:nom, exercise:'Débrief Milo', set_num:'', type:'DEBRIEF',
+                        kg:'', reps:'', rir:'', volume:'', seance_id:sid, debrief_milo:d.texte});
+      }
     });
   }catch(e){ /* jamais bloquant */ }
   return out;
@@ -388,8 +403,10 @@ function _toastFichier(etat, n, unite){
   toast('Export impossible','error');
 }
 async function exportHistoCsv(){
-  const L=_histoLignes();
+  const avec=_histoAvecDebriefs;
+  const L=_histoLignes(avec);
   if(!L.length){ toast('Aucune séance à exporter','info'); return; }
+  const COLS=avec?HISTO_COLONNES_DEBRIEF:HISTO_COLONNES;
   /* ⛔ ÉCHAPPEMENT CSV RÉEL : un nom d'exercice peut contenir une virgule (« Rowing Barre (Tirage
      Horizontal) », un exercice perso « Curl, prise marteau »). Sans guillemets, la ligne se
      décale d'une colonne dans le tableur — et rien ne le signale. */
@@ -398,13 +415,13 @@ async function exportHistoCsv(){
   /* ⚠️ SÉPARATEUR « ; » ET BOM UTF-8, exprès : Excel en français ouvre le « , » comme du texte
      dans une seule colonne, et sans BOM il rend « Développé » en « DÃ©veloppÃ© ». Ce sont les
      deux défauts qui font dire « ton export est cassé » alors que le fichier est correct. */
-  const csv='﻿'+HISTO_COLONNES.join(';')+'\n'
-    +L.map(r=>HISTO_COLONNES.map(c=>q(r[c])).join(';')).join('\n');
+  const csv='﻿'+COLS.join(';')+'\n'
+    +L.map(r=>COLS.map(c=>q(r[c])).join(';')).join('\n');
   /* ⛔ Type PROPRE : le BOM ci-dessus porte déjà l'UTF-8 pour Excel, et un `;charset=…` ici
      empêchait `canShare` de reconnaître le fichier sur iPhone (voir `_donnerFichier`). */
   closeHistoExport();                     // on referme AVANT : la feuille de partage iOS prend la main
   const etat=await _donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv');
-  _toastFichier(etat, L.length, 'séries');
+  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, 'séries');
 }
 /* 📤 EXPORTS DATÉS — NUTRITION ET POIDS (02/09/2026) — demande de Michel : « il faudra créer
    un export daté de la nutrition et aussi côté poids ».
@@ -488,7 +505,8 @@ async function exportHistoPdf(){
        (mail, coach, kiné) et il doit se lire seul, sans l'app à côté. */
     const seances=[...new Set(L.map(r=>r.date))].length;
     doc.text(seances+' séances · '+L.length+' séries · exporté le '+new Date().toLocaleDateString('fr-FR'),M,y); y+=12;
-    doc.text('Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).',M,y); y+=6;
+    doc.text('Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).'
+      +(_histoAvecDebriefs?' Débriefs Milo inclus, sous leur séance.':''),M,y); y+=6;
     doc.setTextColor(0);
     /* ⭐ R13 : `autotable` est déjà chargé avec jsPDF pour les autres PDF de l'app. Une séance
        par tableau, pour qu'on retrouve ses séances plutôt qu'un mur de lignes. */
@@ -537,6 +555,25 @@ async function exportHistoPdf(){
         theme:'plain'
       });
       y=doc.lastAutoTable.finalY;                   // ⭐ `finalY` EXISTE, lui — vérifié
+      /* 🛡️ D-044 — « avec » : le débrief de CHAQUE séance de ce jour, sous son tableau, nommé par la
+         séance (deux séances le même jour ne se confondent pas). jsPDF ne dessine que le latin : on
+         retire ce qu'il ne sait pas écrire plutôt que d'imprimer des carrés. */
+      if(_histoAvecDebriefs){
+        const ids=[]; rows.forEach(r=>{ if(r.seance_id&&ids.indexOf(r.seance_id)<0) ids.push(r.seance_id); });
+        ids.forEach(id=>{
+          const dd=(typeof _dbfTexteDe==='function')?_dbfTexteDe(id):null; if(!dd) return;
+          const ss=(S.sessions||[]).find(x=>x&&_dbfCle(x)===id)||{};
+          const quand=ss.ts?new Date(+ss.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+          const propre=String(dd.texte).replace(/\*\*/g,'').replace(/[^\x00-\xFF\u2019\u2013\u2014\u2026]/g,'').replace(/[ \t]+\n/g,'\n');
+          const lignes=doc.splitTextToSize(propre, 515);
+          if(y>700){ doc.addPage(); y=M; }
+          doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+          doc.text('Débrief Milo'+(ss.progLabel?' — '+ss.progLabel:'')+(quand?' (séance terminée à '+quand+')':''),M,y+16); y+=20;
+          doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+          lignes.forEach(l=>{ if(y>790){ doc.addPage(); y=M; } doc.text(l,M,y+10); y+=11; });
+          y+=4;
+        });
+      }
     });
     const nom='forcetracker-historique_'+today()+'.pdf';
     /* ⛔⛔ LE PDF PASSE PAR LE MÊME PROPRIÉTAIRE QUE LE CSV (R2, 30/08/2026). Il recopiait ici la
@@ -555,10 +592,24 @@ function openHistoExport(){
   if(!n){ toast('Aucune séance à exporter','info'); return; }
   const el=document.getElementById('histo-exp-n');
   if(el) el.textContent=n;
+  /* D-044 : le choix n'apparaît que s'il y a au moins un débrief à inclure (proposer d'inclure zéro
+     chose est du bruit, R24) — et il repart TOUJOURS sur « sans » : on n'impose rien. */
+  _histoAvecDebriefs=false;
+  const nb=(S.sessions||[]).filter(x=>typeof _dbfTexteDe==='function'&&_dbfTexteDe(_dbfCle(x))).length;
+  const ch=document.getElementById('histo-exp-dbf');
+  if(ch) ch.style.display=nb?'':'none';
+  const nn=document.getElementById('histo-exp-dbf-n'); if(nn) nn.textContent=nb;
+  _majChoixDebriefs();
   const ov=document.getElementById('ov-histo-export'); if(ov) ov.classList.add('open');
 }
 function closeHistoExport(){
   const ov=document.getElementById('ov-histo-export'); if(ov) ov.classList.remove('open');
+}
+function choisirDebriefsExport(avec){ _histoAvecDebriefs=!!avec; _majChoixDebriefs(); }
+function _majChoixDebriefs(){
+  const a=document.getElementById('histo-exp-sans'), b=document.getElementById('histo-exp-avec');
+  if(a){ a.classList.toggle('on', !_histoAvecDebriefs); a.setAttribute('aria-pressed', String(!_histoAvecDebriefs)); }
+  if(b){ b.classList.toggle('on', _histoAvecDebriefs); b.setAttribute('aria-pressed', String(_histoAvecDebriefs)); }
 }
 
 /* ⭐⭐ L'ÉTAT DES DEUX ACCORDÉONS EST RETENU (30/08/2026, ft-v1066).
@@ -1671,9 +1722,36 @@ function renderSessions(){
     const _canExpand=_exsArr.length>4||_exsStr.length>70;
     const _exsHtml='<div class="sess-exs2" id="sess-exs-'+i+'">'+(_escNote(_exsStr)||'—')+'</div>'
       +(_canExpand?'<button class="sess-exs-more" id="sess-exs-'+i+'-b" onclick="toggleSessExs('+i+',event)">voir tout ›</button>':'');
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    /* 🛡️ SESSION-INTEGRITY-01 / D-043 (Michel) — « Voir le débrief Milo » : une PETITE action, seulement
+       sur une séance qui a VRAIMENT un débrief rangé à son nom. Le texte ne s'affiche pas sous chaque
+       carte (décision de Michel) ; il s'ouvre au tap, sans appel à l'IA. */
+    const _dbfId=(typeof _dbfCle==='function')?_dbfCle(s):'';
+    const _dbfBtn=(_dbfId&&typeof _dbfTexteDe==='function'&&_dbfTexteDe(_dbfId))
+      ?'<button class="sess-dbf-btn" onclick="voirDebriefMilo('+_argAttr(_dbfId)+',event)">💬 Voir le débrief Milo</button>':'';
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
   }).join('');
 }
+/* 💬 LA LECTURE D'UN DÉBRIEF — LOCALE, SANS APPEL, SANS TOUCHER À LA SÉANCE (D-043).
+   ⛔ Elle ne relit aucune conversation et n'ouvre pas le Coach : elle lit le magasin canonique
+   (`_dbfTexteDe`, coach.js), donc elle marche hors ligne. Ni la séance ni le fil ne sont modifiés. */
+function voirDebriefMilo(id, ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  const e=(typeof _dbfTexteDe==='function')?_dbfTexteDe(id):null;
+  if(!e){toast('Aucun débrief Milo rangé pour cette séance','info');return;}
+  const s=(S.sessions||[]).find(x=>x&&typeof _dbfCle==='function'&&_dbfCle(x)===String(id))||null;
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const sub=document.getElementById('dbf-milo-sub');
+  if(sub){
+    const nEx=s?(s.exs||s.exercises||[]).length:0;
+    sub.textContent=s?[(s.progLabel||''),fmtD(s.date),nEx?nEx+' exercice'+(nEx>1?'s':''):'',
+                       s.volume?Math.round(s.volume)+' kg':''].filter(Boolean).join(' · ')
+                     :'Séance introuvable dans l\'historique';
+  }
+  const body=document.getElementById('dbf-milo-body');
+  if(body)body.innerHTML=(typeof _coachFmtHtml==='function')?_coachFmtHtml(esc(e.texte)):'<p>'+esc(e.texte)+'</p>';
+  const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.add('open');
+}
+function fermerDebriefMilo(){const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.remove('open');}
 // Déplie/replie la liste d'exos d'une carte d'historique sans ouvrir le détail (retour GPT, ft-v570)
 function toggleSessExs(i,ev){
   ev&&ev.stopPropagation();

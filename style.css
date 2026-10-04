@@ -639,6 +639,14 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .sess-exs2{font-size:12px;color:var(--t3);line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .sess-exs2.expanded{-webkit-line-clamp:99;}
 .sess-exs-more{background:none;border:none;padding:3px 0 0;margin:0;color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);-webkit-tap-highlight-color:transparent;}
+/* 🛡️ SESSION-INTEGRITY-01 / D-043 — « Voir le débrief Milo » : une PETITE action, zone tactile ≥ 40 px. */
+.sess-dbf-btn{display:inline-flex;align-items:center;min-height:40px;margin-top:6px;padding:6px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--font);-webkit-tap-highlight-color:transparent;}
+.dbf-milo-body{font-size:14px;line-height:1.55;color:var(--t1);max-height:58vh;overflow-y:auto;}
+.dbf-milo-body p{margin:0 0 8px;}
+/* D-044 — choix « sans / avec les débriefs » à l'export de l'historique. */
+.exp-dbf-choix{display:flex;gap:6px;}
+.exp-dbf-opt{flex:1;min-height:40px;padding:8px 6px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.exp-dbf-opt.on{background:var(--red);border-color:var(--red);color:#fff;}
 #sess-filter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
 #sess-filter:empty{display:none;}
 .sessf-chip{padding:6px 11px;border-radius:14px;border:1px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;white-space:nowrap;}

@@ -3355,7 +3355,9 @@ function buildCoachContext(msg) {
   })();
 
   const prsText = Object.entries(S.prs).length > 0
-    ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
+    /* 🛡️ D-045 — une entrée `premiere` est la 1ʳᵉ fois sur cet exercice : une RÉFÉRENCE, pas un
+       record battu. Milo la reçoit nommée comme telle, pour ne pas la féliciter comme un record. */
+    ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)${d && d.premiere ? ' [1ʳᵉ référence, pas un record]' : ''}`).join(', ')
     : 'Aucun PR enregistré';
 
   // ⚠️ Le DERNIER record en date, nommé (ft-v660). Michel a demandé « tu me refais un lourd
@@ -3363,7 +3365,7 @@ function buildCoachContext(msg) {
   // pouvait pas juger : les records n'avaient AUCUNE date dans son contexte. Une seule ligne
   // ciblée plutôt qu'une date sur chacun (le nombre de records peut être grand).
   const _dernierPR = (()=>{
-    const av=Object.entries(S.prs||{}).filter(([,d])=>d&&d.date);
+    const av=Object.entries(S.prs||{}).filter(([,d])=>d&&d.date&&!d.premiere);   // D-045 : une 1ʳᵉ fois n'est pas un record
     if(!av.length) return '';
     const [ex,d]=av.sort((a,b)=>String(b[1].date).localeCompare(String(a[1].date)))[0];
     return `\nDernier RECORD en date: ${ex} ${d.kg}kg×${d.reps} — ${_dateLisible(d.date)}`;
@@ -3435,10 +3437,11 @@ function buildCoachContext(msg) {
      la charge venait de Milo, **Michel l'a explicitement maintenue** (« ne corrige pas, je
      vais faire mon max ») après que Milo eut proposé de la baisser. *Personne n'a tort ici* —
      et c'est précisément ce qu'il faut dire, plutôt que de laisser Milo choisir un coupable. */
-  const _verdictIntensite = (e, doneSets) => {
+  const _verdictIntensite = (e, doneSets, sess) => {
     try{
       if(typeof _intensiteDefauts !== 'function') return '';
-      const d = _intensiteDefauts(e && e.name, doneSets);
+      // N-G2 : la séance est jugée contre le record d'AVANT elle, pas contre celui qu'elle a créé.
+      const d = _intensiteDefauts(e && e.name, doneSets, (typeof _refAvantDe==='function') ? _refAvantDe(sess, e && e.name) : undefined);
       if(!d.length) return '';
       return ` [⚡ intensité — ${d.join(' ; ')} · ⛔ CE CALCUL VIENT DE L'APP, pas d'un avis : le 1RM est celui de ses records.`
         + (e && e._milo
@@ -3603,7 +3606,7 @@ function buildCoachContext(msg) {
       // charge dérisoire pour un dos, alors que 28 kg d'une seule main est une vraie série.
       // Le marqueur est SUR la donnée, pas seulement dans la consigne (R4).
       const uni=(typeof estUnilateral==='function'&&estUnilateral(e.name))?` [${uniLabel(e.name)}, ${ds.length} série${ds.length>1?'s':''} DE CHAQUE CÔTÉ]`:'';
-      return `${e.name}${_supersetTxt(e, _exsS)}: ${setsStr}${uni}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}${_verdictIntensite(e, ds)}`;
+      return `${e.name}${_supersetTxt(e, _exsS)}: ${setsStr}${uni}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}${_verdictIntensite(e, ds, s)}`;
     }).join(' · ');
     // Le CARDIO de la séance (mesuré le 02/08 : il n'était PAS transmis — Milo ignorait
     // 25 min de tapis notées après la muscu). Les deux moments sont nommés, parce qu'un
@@ -5797,7 +5800,8 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     ? [{ type: 'image', source: { type: 'base64', media_type: imgType, data: imgData } },
        { type: 'text', text: msg || 'Analyse cette photo.' }]
     : msg;
-  coachHistory.push({ role: 'user', content: userHistContent, ts: Date.now(), ...(opts.silent?{_silent:true}:{}) });
+  const _msgU = { role: 'user', content: userHistContent, ts: Date.now(), ...(opts.silent?{_silent:true}:{}) };
+  coachHistory.push(_msgU);
   showTyping();
 
   try {
@@ -5870,6 +5874,11 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       /* 📄 MILO-PDF1B — fail-closed : toute réponse du serveur que rien ne confirme terminée est
          marquée (coupée par la longueur, ou fin non confirmée). */
       { const _et = _miloEtatReponse(data); if (_et !== 'complete') _coupee = (_et === 'coupee') ? 'reponse' : 'non_confirmee'; }
+      /* 🛡️ SESSION-INTEGRITY-01 — un DÉBRIEF non confirmé est un ÉCHEC, pas une réponse marquée : rien
+         n'est affiché, rien n'entre dans le fil, rien n'est résumé, et l'appelant rend le jeton. */
+      if (opts.debriefSess && !_dbfReponseValide(data)) {
+        const _e = new Error('débrief non confirmé'); _e.debriefNonConfirme = true; throw _e;
+      }
     }
     hideTyping();
     // Programme de force : extraire le bloc JSON pour proposer un enregistrement
@@ -5956,6 +5965,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
     coachHistory.push(_msgA);
+    if (opts.debriefSess) { try { _dbfEnregistrer(opts.debriefSess, reply, 'coach'); } catch(e){} }   // D-043 : le débrief appartient à SA séance
     _trimCoachHistory();   // ⚠️ borne de sécurité (400), plus la coupe à 20 qui perdait le début
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
@@ -5981,6 +5991,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     hideTyping();
     _forceProgReq = false;
     console.error('[Coach] fetch error:', e.message, e);
+    /* 🛡️ SESSION-INTEGRITY-01 — un débrief raté ne laisse pas sa consigne cachée dans le fil : sans
+       ça, chaque nouvel essai en empilait une de plus (le prochain essai repose la sienne). */
+    if (opts.debriefSess) { const _i = coachHistory.lastIndexOf(_msgU); if (_i >= 0) coachHistory.splice(_i, 1); }
     // Débrief auto (silencieux) : pas de bulle d'erreur parasite — on échoue en silence (réarmé par l'appelant)
     /* ⛔ Un message VENU DU SERVEUR se suffit à lui-même : on n'y colle pas « vérifie ta
        connexion », qui est faux et fait chercher au mauvais endroit. */
@@ -6179,6 +6192,71 @@ function _dbfLireRecu(){
   try{ const v=JSON.parse(localStorage.getItem(_DBF_RECU)||'null');
        return (v&&v.id&&v.reply)?v:null; }catch(e){ return null; }
 }
+
+/* 🛡️ SESSION-INTEGRITY-01 (04/10/2026) — UN DÉBRIEF N'EST UN DÉBRIEF QUE SI LE SERVEUR L'A CONFIRMÉ.
+   Reproduit (SESSION-MILO-E2E-01) : un échec en amont du modèle revient du Worker en **HTTP 200**,
+   `{reply:'Désolé, réessaie.', complete:false}`. Le client ne lisait que `reply` : ce texte s'affichait
+   COMME un débrief, entrait dans le fil, marquait la séance débriefée (jeton détruit, plus de
+   « Réessayer ») et payait un `summarizeCoach`. *Un HTTP 200 dit que le transport a marché, pas que le
+   débrief existe.*
+   👉 UN SEUL CRITÈRE, ET IL EXISTE DÉJÀ : `_miloEtatReponse` (MILO-PDF1B, fail-closed) — seule une
+   réponse confirmée `complete` est un succès. Tout le reste (`complete:false`, coupée, signal absent)
+   est un ÉCHEC : jeton rendu, rien d'écrit, rien de résumé, nouvel essai possible.
+   ⛔ Les trois chemins qui livrent un débrief (écran de fin, Coach, rattrapage) passent par ici (R2). */
+const _DBF_REPLI = 'Désolé, réessaie.';       // le texte de repli du Worker (worker.js) — jamais un débrief
+function _dbfReponseValide(data){
+  if(!data || typeof data!=='object') return false;
+  const r=String(data.reply||'').trim();
+  if(!r || r===_DBF_REPLI) return false;
+  return (typeof _miloEtatReponse==='function') ? _miloEtatReponse(data)==='complete' : data.complete===true;
+}
+
+/* 🛡️ SESSION-INTEGRITY-01 / D-043 (Michel) — LE DÉBRIEF APPARTIENT À SA SÉANCE.
+   Avant, un débrief réussi n'existait que comme MESSAGE du fil Coach courant : aucun lien vers la
+   séance, introuvable depuis Progrès, perdu si on supprimait la discussion. Terrain du 03/10 :
+   « débrief introuvable » dans le Coach comme dans Progrès.
+   👉 Un magasin LOCAL, indexé par l'identifiant de la séance — la MÊME clé que le jeton de la file
+   (`id || ts || date`), donc la séance débriefée et la séance enregistrée coïncident par construction.
+   ⛔ Le fil du Coach garde son message (la conversation continue avec Milo) ; ce magasin-ci est la
+   source de « quel est le débrief de CETTE séance ». Deux usages, deux propriétaires (R2) — et la
+   consultation ne relit JAMAIS une conversation.
+   ⚠️ LIMITES DITES : local seulement, comme le fil (ni cloud, ni restauration, ni changement de
+   téléphone) ; borné aux 200 débriefs les plus récents. Les débriefs d'avant ce correctif, rangés
+   dans des fils SANS identifiant de séance, ne sont PAS rattachés après coup : une association
+   devinée serait une fausse association (pas de bouton plutôt qu'un bouton qui ment).
+   ⛔ Les champs inconnus d'une entrée et du magasin sont conservés tels quels à l'écriture. */
+const _DBF_TEXTES = 'ft4_debriefs';           // {v:1, seances:{[id]:{texte, ts, src}}}
+const _DBF_TEXTES_MAX = 200;
+function _dbfCle(sess){ return sess ? String(sess.id||sess.ts||sess.date||'') : ''; }
+function _dbfMagasin(){
+  try{
+    const v=JSON.parse(localStorage.getItem(_DBF_TEXTES)||'null');
+    if(v && typeof v==='object' && v.seances && typeof v.seances==='object') return v;
+  }catch(e){}
+  return {v:1, seances:{}};
+}
+function _dbfTexteDe(id){
+  if(id==null || id==='') return null;
+  const e=_dbfMagasin().seances[String(id)];
+  return (e && typeof e.texte==='string' && e.texte.trim()) ? e : null;
+}
+function _dbfEnregistrer(id, reply, src){
+  if(id==null || id==='' || !reply) return false;
+  const brut=String(reply);
+  if(brut.trim()===_DBF_REPLI) return false;               // jamais le repli, quel que soit le chemin
+  const texte=(typeof _stripCoachTech==='function') ? _stripCoachTech(brut) : brut;
+  if(!String(texte).trim()) return false;
+  const m=_dbfMagasin();
+  const av=m.seances[String(id)];
+  m.seances[String(id)]=Object.assign({}, (av&&typeof av==='object')?av:{},
+                                      {texte:String(texte).trim(), ts:Date.now(), src:src||''});
+  const ids=Object.keys(m.seances);
+  if(ids.length>_DBF_TEXTES_MAX){
+    ids.sort((a,b)=>(+(m.seances[a]&&m.seances[a].ts)||0)-(+(m.seances[b]&&m.seances[b].ts)||0))
+       .slice(0, ids.length-_DBF_TEXTES_MAX).forEach(k=>{ delete m.seances[k]; });
+  }
+  try{ localStorage.setItem(_DBF_TEXTES, JSON.stringify(m)); return true; }catch(e){ return false; }
+}
 /* ⛔ UN SEUL PROPRIÉTAIRE POUR POSER LE DÉBRIEF DANS LE FIL DU COACH (R2). Les deux chemins
    l'appellent : celui qui vient de recevoir la réponse, et le rattrapage au démarrage. Sans ça,
    le rattrapage aurait sa propre version de « comment on range un débrief » — et l'une des deux
@@ -6202,6 +6280,17 @@ function _dbfPoserDansHistorique(reply, instr){
     if(typeof _saveCoachHist==='function')_saveCoachHist();
     const nb=(typeof document!=='undefined')?document.getElementById('coach-new-btn'):null;
     if(nb)nb.style.display='flex';
+    /* 🛡️ SESSION-INTEGRITY-01 — LE DÉBRIEF SE VOIT TOUT DE SUITE, pas seulement après un rechargement.
+       Reproduit : si le fil du Coach était DÉJÀ affiché (on avait parlé à Milo plus tôt dans la
+       journée), le débrief entrait dans `coachHistory` sans aucune bulle — l'ouverture du Coach ne
+       redessine le fil que s'il est vide. Il réapparaissait au rechargement : enregistré, invisible.
+       👉 Fil déjà rendu → on le redessine depuis `coachHistory`, par la MÊME fonction que le
+       rechargement (`_renderCoachThread`) : même rendu, aucun doublon, aucune bulle bricolée à part.
+       Fil jamais rendu → rien à faire, il sera construit en entier à l'ouverture du Coach. */
+    try{
+      const _m=(typeof document!=='undefined')?document.getElementById('coach-msgs'):null;
+      if(_m && _m.children.length && typeof _renderCoachThread==='function') _renderCoachThread();
+    }catch(e){}
     return true;
   }catch(e){ return false; }
 }
@@ -6273,7 +6362,12 @@ function _dbfRecuperer(){
      coexistaient (écriture interrompue entre les deux), lire « en cours » d'abord remettrait la
      séance en file et on repaierait exactement ce qu'on cherche à éviter. */
   const _r=_dbfLireRecu();
+  /* 🛡️ SESSION-INTEGRITY-01 — un « reçu » écrit par une version d'AVANT ce correctif peut porter le
+     texte de repli « Désolé, réessaie. » (c'était le défaut). Ce n'est pas un débrief : la séance
+     retourne dans la file, rien n'est posé. */
+  if(_r && String(_r.reply).trim()===_DBF_REPLI){ _dbfRendre(_r.id); return; }
   if(_r){
+    _dbfEnregistrer(_r.id, _r.reply, 'rattrapage');   // la séance retrouve SON débrief (idempotent)
     const _age=Date.now()-(Number(_r.ts)||0);
     /* ⚠️ MÊME PÉREMPTION QUE LE RESTE (R2) : un débrief vieux de plusieurs jours commencerait par
        « je viens de terminer ma séance » — un mensonge sur le QUAND. Au-delà, on le laisse
@@ -8579,6 +8673,8 @@ const _DRAWER_CONTENT = {
            prochaine entrée — sans elle, le rangement se défera au premier ajout. */
         {ic:'🗂️',t:'Pourquoi le menu a été rangé en 4 rayons',d:'Avant le <b>05/09/2026</b>, le menu avait deux sections : <b>Outils</b> et <b>Compte</b>. ⛔ « Outils » contenait en réalité <b>quatre choses différentes</b> : de l\'encyclopédie (anatomie, protéines, compléments, guide de la muscu), de vrais outils (calculateur 1RM, cycle de force), <b>l\'application elle-même</b> (son guide, les nouveautés) et… <b>toi</b> (ce que Milo sait de toi, tes bilans mensuels). Et « Compte » contenait <i>Aide détaillée</i>, <i>À propos</i> et <i>Confidentialité</i>, qui ne sont pas un compte.<br><br>⭐ <b>Le vrai coût n\'était pas l\'esthétique, il se mesurait en pixels</b> : le menu descendait jusqu\'à <b>1909 px</b> pour un écran de <b>852</b>, et « Ce que Milo sait de toi » — ce que l\'app a de plus personnel — se trouvait à <b>y=1090</b>, c\'est-à-dire <b>hors écran</b>. Il fallait faire défiler pour atteindre la chose qui te concerne le plus, pendant que <b>363 pixels de réglages de couleur</b> occupaient le haut.<br><br>👉 <b>La règle de rangement, pour que ça tienne dans le temps :</b> <b>Ton suivi</b> = ce qui parle de toi · <b>Tes outils</b> = ce qui sert à s\'entraîner · <b>Apprendre</b> = du contenu qui ne change pas avec toi · <b>L\'application</b> = l\'app elle-même. Une nouvelle entrée sait donc où aller.<br><br>⚠️ <b>Le menu n\'est pas plus court</b> — il a même gagné <b>40 px</b>, à cause des deux titres de section en plus. Ce n\'était pas le but : le but était que ce qui compte tienne sur le <b>premier écran</b>, sans défiler. C\'est le cas.<br><br>💡 <b>Apparence se replie</b> (tape son titre) : le bloc passe de 306 px à une ligne, ton choix est gardé même après avoir fermé l\'app, et <b>rien n\'est supprimé</b> — tout est là quand tu le rouvres.'},
         {ic:'📊',t:'Pourquoi « Ce mois » n\'a plus que deux tuiles',d:'Le bloc <b>« CE MOIS »</b>, en haut de l\'Accueil, portait <b>quatre</b> chiffres : volume, force, séances, poids. Il n\'en porte plus que deux depuis le <b>05/09/2026</b>.<br><br>⛔ <b>La raison n\'est pas la place, c\'est la destination.</b> On a tapé les quatre tuiles pour voir où elles mènent : <b>Séances</b> ouvre bien ton historique, <b>Poids</b> ouvre bien tes pesées — mais <b>Volume</b> et <b>Force</b> ouvraient simplement l\'onglet Progrès <b>en haut</b>, sur un écran où <b>ni ton tonnage du mois ni le total de tes trois barres n\'est affiché</b>. Le bloc qui contient le volume y est même <b>replié</b>.<br><br>⭐ <b>Un chiffre sur lequel on tape doit mener là où il est.</b> Sinon le tap n\'est pas un raccourci, c\'est une fausse piste — et on finit par ne plus rien taper du tout.<br><br>👉 <b>Où est passé ton tonnage :</b> il n\'a pas bougé, il est <b>juste en dessous, dans le calendrier</b>. À gauche de chaque ligne, le n° de semaine porte le total (« S36 · 19,3 t ») ; tape une case et tu as le tonnage du jour. C\'est plus précis que le total du mois, et c\'est au même endroit qu\'avant.<br><br>⚠️ <b>Ce qui est vraiment perdu :</b> le <b>total squat + développé couché + soulevé de terre</b>. Il n\'existait <b>que sur cette tuile</b> — aucun autre écran ne l\'affiche. Il n\'est pas « caché quelque part » : il n\'est plus calculé. Il reviendra le jour où il aura une page à lui, pas avant.'},
+        /* 🛡️ SESSION-INTEGRITY-01 — règle d'or #11, point 4 : le POURQUOI (R25). */
+        {ic:'💬',t:'Le débrief de Milo appartient à sa séance',d:'Avant le <b>04/10/2026</b>, le débrief de fin de séance n\'existait que comme <b>message dans ta discussion avec Milo</b> : introuvable depuis l\'historique, perdu si tu supprimais la discussion. Désormais il est <b>rangé avec SA séance</b> : <b>Progrès → l\'historique → « 💬 Voir le débrief Milo »</b>, lisible sans réseau et sans appel. ⛔ Quand Milo n\'a pas pu répondre, l\'app ne fait plus passer son message d\'erreur pour un débrief : elle te le dit, et le bouton <b>Réessayer</b> reste là (ou Milo le refera à l\'ouverture du Coach). ⭐ Et une <b>première fois</b> sur un exercice est une « <b>première référence</b> » — un record, c\'est battre une référence qui existait déjà.'},
         {ic:'😴',t:'Sommeil & historique (Accueil)',d:'Nouveau : ton sommeil se note directement sur l\'Accueil, juste sous ton score de récup (avant il était dans Séance et personne ne le trouvait). Choisis la qualité (Mauvais → Excellent) et le nombre d\'heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Déplie « 📊 Historique du sommeil » (la flèche) pour voir un mini-graphique sur 7 ou 30 jours (barres colorées selon la qualité, ligne repère à 8h, moyenne) et la liste nuit par nuit : tape une barre ou une ligne pour ajouter/corriger cette nuit — les jours vides affichent « ＋ à renseigner ». Un bon sommeil fait remonter ton score de récupération, que le Coach Milo utilise aussi.'},
         {ic:'💚',t:'Deux styles pour ta carte récup',d:'<b>Menu → Apparence → Carte récup</b> : tu choisis comment ton score s\'affiche sur l\'Accueil. <b>⭕ Anneau</b> (par défaut) : le chiffre au centre d\'un cercle complet dont la couleur suit ton score, du rouge au vert. <b>💚 Moniteur</b> : ton score en gros à gauche, et à droite une jauge ouverte en bas — le fond rouge est ce qu\'il te reste à récupérer, le curseur vert ce que tu as récupéré, avec un point lumineux au bout. Au centre, un vrai tracé cardiaque défile en continu. <b>Ce sont les mêmes données</b>, seule la mise en forme change : tu peux basculer autant que tu veux, rien n\'est perdu. Le tracé bouge en permanence : si ça te gêne, <b>« 🩺 Figer le tracé du cœur »</b> juste en dessous l\'arrête — il reste affiché en entier, simplement immobile. Dans les deux styles, taper la carte rejoue l\'animation. Et si tu as activé « Réduire les animations » sur ton téléphone, tout se fige.'},
         {ic:'🕰️',t:'Ton histoire sportive',d:'L\'app garde chaque check-in que tu remplis (énergie, moral, douleurs) — pas pour faire des statistiques, mais pour <b>relier ce qui t\'arrive aujourd\'hui à ce que tu as déjà vécu</b>. Premier cas branché : quand tu notes une douleur que tu avais <b>déjà notée il y a plus de deux semaines</b>, une carte apparaît sur l\'Accueil et te dit <b>quand</b> c\'était et sur <b>combien de jours</b> elle était revenue. ⚠️ <b>Elle décrit, elle ne prédit jamais</b> : « elle apparaissait sur 4 jours » est un fait tiré de tes notes, pas un pronostic — et ce n\'est pas un avis médical. ⛔ Elle reste <b>silencieuse</b> si la douleur est récente (tu t\'en souviens), si c\'est la première fois, ou s\'il n\'y a rien à relier : une carte qui parlerait tous les jours ne serait plus un souvenir.'},
