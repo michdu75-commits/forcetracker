@@ -461,4 +461,11 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Limites dites** : débriefs rangés **localement** (comme le fil Coach : pas de cloud, pas de restauration) ; les débriefs d'avant
   le correctif ne sont **pas** rattachés après coup (pas de fausse association) ; anciennes entrées de records sans marqueur
   `premiere` restent des records ; les séances enregistrées avant le correctif n'ont pas de référence figée (`refAvant`).
+- **Finition (04/10, après contre-vérification)** : plafond de 200 débriefs **retiré** (D-047) · séance supprimée → son débrief
+  part, et lui seul (+ son jeton en file) · export PDF « avec » fidèle aux caractères écrivables (D-044) · remplacement
+  sémantique ratifié (D-046). Banc 92/0, contrôle négatif 37/37, passe 5 854 ✅ / 0 ❌ sur `7b13cc9e`.
+- **Consignés, sans code (contre-vérification)** : superset non contigu · badge « Premier PR » · import historique / édition
+  d'ancienne séance (dont : un import « remplacer » retire une séance sans son débrief) · RIR décalé · bloc technique
+  sans backticks non nettoyé. **Observés pendant la finition** : coupure des longs débriefs du PDF un peu courte
+  (cosmétique) · « N séances » du PDF compte les jours (préexistant) · téléphone plein : débrief non rangé sans message.
 - ⛔ Production `ft-v1249` : **ces défauts y sont toujours présents** jusqu'à la publication.

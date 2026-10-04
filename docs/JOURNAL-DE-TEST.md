@@ -3346,3 +3346,15 @@ remarque d'intensité d'une séance terminée se calcule contre le record d'AVAN
 féliciterait-il encore « ton record » sur une première fois (le débrief automatique lui demande de « signaler un
 éventuel record ») ? Vérifiable par du code : ✅ (une réponse qui emploie « record » pour un exercice marqué
 1ʳᵉ référence) — candidat banc **R34**, 0 appel autorisé. État : **à trier**.
+
+### 🟡 EXPORT PDF « AVEC DÉBRIEFS » : « -> », « >= », « 1re » SE LISENT-ILS BIEN ? (04/10/2026 — finition SESSION-INTEGRITY-01)
+La police du PDF ne sait pas écrire « → », « ≥ », « − » ni « 1ʳᵉ » : ils sortent « -> », « >= », « - », « 1re » (avant, ils
+disparaissaient : « −5 kg » devenait « 5 kg »). ❓ **Doute** : pour quelqu'un qui n'est pas développeur, « -> » et « >= »
+se lisent-ils naturellement dans un document qu'on donne à son coach ou à son kiné ? Pas vérifiable par du code (c'est du
+goût). État : **juge humain**.
+
+### 🟡 TÉLÉPHONE PLEIN : LE DÉBRIEF N'EST PAS RANGÉ, ET RIEN NE LE DIT (04/10/2026 — finition SESSION-INTEGRITY-01)
+Sans plafond (D-047), un stockage local saturé fait échouer l'écriture du nouveau débrief : rien n'est effacé, le texte reste
+dans le fil du Coach, mais la séance n'a pas son bouton « Voir le débrief Milo » — et aucun message ne le dit. Mesuré : 5,24 M
+caractères par site dans Chromium, ~1 500 par débrief ; Safari non mesuré. ❓ **Doute** : à partir de quand ça arrive chez un
+vrai utilisateur, et faut-il le dire ? Vérifiable par du code : ✅ (remplir le stockage, terminer une séance). État : **à trier**.

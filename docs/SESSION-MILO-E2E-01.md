@@ -175,10 +175,10 @@ STATUT : PRÊT POUR CORRECTIONS APRÈS DÉCISIONS MICHEL
 
 | Constat de l'audit | État après SESSION-INTEGRITY-01 |
 |---|---|
-| A / A-bis remplacement hybride (P0) | **corrigé sur la branche** — Michel a tranché le 04/10 : « Remplacer » change d'EXERCICE ; séries faites gardées à l'exercice réel |
+| A / A-bis remplacement hybride (P0) | **corrigé sur la branche** — Michel a tranché le 04/10 : « Remplacer » change d'EXERCICE ; séries faites gardées à l'exercice réel (**D-046**, ratifiée après contre-vérification) |
 | B un seul objet prévu / réalisé | **inchangé** (dette structurelle, hors lot) |
 | C-bis faux débrief `complete:false` (P1) | **corrigé sur la branche** (3 chemins) |
-| D débrief invisible / sans lien (P1) | **corrigé sur la branche** (rendu immédiat, `ft4_debriefs`, « Voir le débrief Milo », export avec / sans) |
+| D débrief invisible / sans lien (P1) | **corrigé sur la branche** (rendu immédiat, `ft4_debriefs`, « Voir le débrief Milo », export avec / sans) ; finition : aucun plafond, supprimé avec sa séance (**D-047**), PDF fidèle |
 | E première occurrence = record | **corrigé sur la branche** (D-045) |
 | F montée en charge · H carte · H′ ancien J1 · 14 intention · I summarizeCoach · G discussion · K maintenance | **non traités** |
 | N-G2 (MILO-GHOST-01) séance jugée contre son propre record | **corrigé sur la branche** |
