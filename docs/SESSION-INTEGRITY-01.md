@@ -43,3 +43,15 @@
   le profil de démo n'a pas de première référence. Contenu du prompt inchangé.
 - Commits : `d5fa2a8c` (bloc A) · `70b12f3f` (blocs B-F + N-G2 + règle d'or #11 points 2-5) · `f0a52c76` (banc,
   contrôle négatif, registre de recette).
+- **Bancs voisins, tous verts** (04/10 ~10:20 UTC) : fil Coach lot 1 **38/0** · provenance du débrief **24/0** · ML-B **60/0** ·
+  séance C3 **35/0** · séance C2 **22/0** · travail existant (lot 2) **48/0** · lot 3 **87/0** · ML-A **34/0** · unicité de la carte
+  séance **12/0**.
+- **Avant la passe, un témoin ANCIEN aurait rougi à tort** : le bloc X du runner simulait le Worker au format d'avant MILO-PDF1
+  (`{reply}` sans `complete`). Le nouveau critère le refuse — à raison : le Worker de production envoie `complete` depuis le
+  25/09. Simulation mise au format réel (`e46728db`), raison écrite dans le témoin.
+- **Contrôle négatif `tools/mut_session_integrity.py` : 22/22 conformes**, dans la COPIE mutée. M00 (code d'avant) · M1→M11 (les
+  mutations demandées) · M12/M12b (N-G2) · M13 (rendu immédiat) · M14 (consigne cachée) · M15 (ancien reçu de repli) · M16, M17,
+  M18, M7b (déguisées) · 1 négative (commentaire) restée verte.
+  ⚠️ **1er tour : 21/22 — M12b avait SURVÉCU**, et c'était mon témoin : `Rowing Yates[^·]*⚡ intensité` s'arrête au premier « · »,
+  or les séries sont séparées par « · » dans le contexte de Milo — il ne pouvait jamais trouver la remarque. Réparé (`d0a041e5`),
+  vert sur l'arbre sain (et il exige maintenant que la ligne du Rowing Yates soit présente), M12 et M12b relancées : 2/2.
