@@ -39723,6 +39723,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🔬 MILO-SEANCE-FP-01, architecture du 30/09/2026 (décision de Michel) — master préservé par défaut, veto étroit :
      les demandes historiques gardent leur carte, les méta-discussions n'en ont pas. */
   await require('./seance_fp01.js').ecranArchi(t, b, PORT);
+  /* 🛡️ SESSION-INTEGRITY-01 (session-B, 04/10/2026) — remplacement, débrief, persistance, historique, export,
+     première référence, N-G2. Blocs B-SI01-*. Banc : tools/banc_session_integrity.js. */
+  await require('./session_integrity.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40554,6 +40557,7 @@ require('./groupes_orphelins.js').sourceCreation(t, ROOT, fs, path);
 require('./seance_fp01.js').source(t, ROOT, fs, path);
 require('./seance_fp01.js').sourceMixte(t, ROOT, fs, path);
 require('./seance_fp01.js').sourceExt(t, ROOT, fs, path);
+require('./session_integrity.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
