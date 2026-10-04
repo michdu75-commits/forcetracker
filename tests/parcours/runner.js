@@ -1604,8 +1604,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const d=document.createElement('div'); d.id='se-debrief'; document.body.appendChild(d);
       }
       let appels=0;
+      /* 🛡️ SESSION-INTEGRITY-01 (04/10/2026) — la réponse simulée porte le format RÉEL du Worker (`complete`,
+         en production depuis MILO-PDF1) : un débrief valide est une réponse CONFIRMÉE terminée. Au format
+         d'avant, le « débrief » était refusé, le jeton RENDU, et ce témoin rougissait pour une simulation. */
       window.fetch=()=>{ appels++; return new Promise(r=>setTimeout(()=>r({
-        ok:true, json:()=>Promise.resolve({reply:'Débrief de test.'})
+        ok:true, json:()=>Promise.resolve({reply:'Débrief de test.',_diag:'ok',stopReason:'end_turn',truncated:false,complete:true})
       }),400)); };
       const p1=_runSeDebrief({exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}],
                               volume:500,id:'SEANCE-TEST'},0);
@@ -14252,7 +14255,8 @@ console.log('\n-- CXXVII. Le débrief chiffré est calculé en LOCAL, toujours (
     window.fetch=function(u,o){
       if(o&&typeof o.body==='string'&&o.body.indexOf('"coach"')>=0){
         return reseauOk
-          ? Promise.resolve(new Response(JSON.stringify({reply:"AVIS-DE-MILO"}),{status:200}))
+          /* SESSION-INTEGRITY-01 : format RÉEL du Worker (`complete`) — voir le témoin du double débrief. */
+          ? Promise.resolve(new Response(JSON.stringify({reply:"AVIS-DE-MILO",_diag:'ok',stopReason:'end_turn',truncated:false,complete:true}),{status:200}))
           : Promise.reject(new Error('Failed to fetch'));
       }
       return vraiFetch.apply(this,arguments);

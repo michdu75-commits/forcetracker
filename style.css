@@ -641,7 +641,7 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .sess-exs-more{background:none;border:none;padding:3px 0 0;margin:0;color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);-webkit-tap-highlight-color:transparent;}
 /* 🛡️ SESSION-INTEGRITY-01 / D-043 — « Voir le débrief Milo » : une PETITE action, zone tactile ≥ 40 px. */
 .sess-dbf-btn{display:inline-flex;align-items:center;min-height:40px;margin-top:6px;padding:6px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--font);-webkit-tap-highlight-color:transparent;}
-.dbf-milo-body{font-size:14px;line-height:1.55;color:var(--t1);max-height:58vh;overflow-y:auto;}
+.dbf-milo-body{font-size:14px;line-height:1.55;color:var(--t1);max-height:58dvh;overflow-y:auto;}   /* dvh : règle CCLXXVI (la barre d'adresse mobile change la hauteur visible) */
 .dbf-milo-body p{margin:0 0 8px;}
 /* D-044 — choix « sans / avec les débriefs » à l'export de l'historique. */
 .exp-dbf-choix{display:flex;gap:6px;}
