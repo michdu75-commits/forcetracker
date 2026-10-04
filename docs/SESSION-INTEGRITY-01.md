@@ -55,3 +55,36 @@
   ⚠️ **1er tour : 21/22 — M12b avait SURVÉCU**, et c'était mon témoin : `Rowing Yates[^·]*⚡ intensité` s'arrête au premier « · »,
   or les séries sont séparées par « · » dans le contexte de Milo — il ne pouvait jamais trouver la remarque. Réparé (`d0a041e5`),
   vert sur l'arbre sain (et il exige maintenant que la ligne du Rowing Yates soit présente), M12 et M12b relancées : 2/2.
+
+## Clôture (10:27 UTC)
+
+- **Bloc annexe** : 14 PASS + 1 DÉFAUT CONNU (« discussions », taille du contexte de Milo 71 626 / 76 545 / 68 778 caractères) —
+  **identique à master à la même minute**, mesuré sur une copie de `origin/master`.
+- **Passe complète n°1** sur `77a023f9` : **5 830 ✅ · 3 ❌ — NON VALIDE**. Les 3 rouges, classés :
+  ① « DÉBRIEF : une fois fait, le jeton est consommé » et ② CXXVI « EN LIGNE : Milo s'AJOUTE » = **témoins périmés** — leurs
+  simulations du Worker étaient au format d'avant MILO-PDF1 (`{reply}` sans `complete`) ; épreuve faite : sur master, ancienne et
+  nouvelle simulation donnent le même vert, sur la branche seule l'ancienne rougit (par son format) ;
+  ③ CCLXXVI « plus aucune limite d'interface en `vh` » = **vraie régression de règle, introduite par mon CSS** (`58vh` → `58dvh`).
+  Corrigés en `5b4d0c70`. Deux autres simulations au vieux format (blocs ~32641, ~32780) restaient vertes : non touchées (un témoin
+  ne se modifie pas pour du vert).
+- **Passe complète n°2 (D-031)** sur `5b4d0c70` : **5 833 ✅ / 0 ❌**, 4 conditions de `tools/passe_valide.sh` vertes. Après elle :
+  documentation seulement (D-031).
+- **Décision de Michel prise dans le brief du 04/10, à inscrire au registre s'il le souhaite** : « un remplacement est un
+  REMPLACEMENT SÉMANTIQUE d'exercice, pas un renommage » (remplace l'esprit de ft-v296 pour le menu « Remplacer »). Le brief
+  limitait `docs/DECISIONS.md` aux changements de statut : **non inscrite**, proposée dans le rapport.
+- **Choix de Claude à soumettre** (impact produit, réversible) : débriefs rangés **localement** seulement (T4) ; séries faites
+  gardées à l'exercice réel **sans demander** (T2) — la correction de nom reste possible dans Progrès.
+- ⛔ Aucune publication, aucune version, `sw.js` inchangé (`ft-v1249`), 0 appel réel, Drive non touché.
+
+```
+CHECKPOINT SESSION-INTEGRITY-01 — 04/10/2026
+BASE : master c3c830ab (ft-v1249, DOC-SYNC intégré en avance rapide) · branche claude/session-integrity-01
+CORRIGÉ (branche, NON publié) : remplacement hybride (P0) · faux débrief complete:false (P1) ·
+  débrief invisible / sans lien (P1) · première référence ≠ record (D-045) · N-G2
+AJOUTÉ : ft4_debriefs (local) · « Voir le débrief Milo » · export avec / sans · tuile « Première référence »
+TESTS : banc B-SI01 71/0 · 9 bancs voisins verts · annexe 14 PASS + 1 défaut connu = master ·
+  contrôle négatif 22/22 · passe 5 833 ✅ / 0 ❌ sur 5b4d0c70
+NON TRAITÉ : discussion du 03/10 · ancien J1 · montée en charge · CTA « petite séance » · summarizeCoach ·
+  maintenance · N-G1 (dette MILO / TRANSPORT / PAYLOAD)
+STATUT : PRÊT POUR CONTRE-VÉRIFICATION — pas de publication sans décision de Michel
+```

@@ -170,3 +170,18 @@ RISQUES : P0 remplacement · P1 faux débrief, débrief invisible/non lié · P2
 DÉCISIONS VALIDÉES : Voir le débrief Milo · export avec/sans · Première référence ≠ record
 STATUT : PRÊT POUR CORRECTIONS APRÈS DÉCISIONS MICHEL
 ```
+
+## 14. Suite — SESSION-INTEGRITY-01 (04/10/2026, branche `claude/session-integrity-01`, NON publiée)
+
+| Constat de l'audit | État après SESSION-INTEGRITY-01 |
+|---|---|
+| A / A-bis remplacement hybride (P0) | **corrigé sur la branche** — Michel a tranché le 04/10 : « Remplacer » change d'EXERCICE ; séries faites gardées à l'exercice réel |
+| B un seul objet prévu / réalisé | **inchangé** (dette structurelle, hors lot) |
+| C-bis faux débrief `complete:false` (P1) | **corrigé sur la branche** (3 chemins) |
+| D débrief invisible / sans lien (P1) | **corrigé sur la branche** (rendu immédiat, `ft4_debriefs`, « Voir le débrief Milo », export avec / sans) |
+| E première occurrence = record | **corrigé sur la branche** (D-045) |
+| F montée en charge · H carte · H′ ancien J1 · 14 intention · I summarizeCoach · G discussion · K maintenance | **non traités** |
+| N-G2 (MILO-GHOST-01) séance jugée contre son propre record | **corrigé sur la branche** |
+| N-G1 (MILO-GHOST-01) message courant envoyé deux fois | **non traité** — dette MILO / TRANSPORT / PAYLOAD |
+
+Détail, preuves et limites : `docs/SESSION-INTEGRITY-01.md`. ⛔ Rien de cela n'est en production avant publication.

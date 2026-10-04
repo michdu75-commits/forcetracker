@@ -448,3 +448,17 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   **D-044** (export sans / avec débriefs) · **D-045** (première référence ≠ record).
 - 📦 **Lots proposés (aucun ouvert)** : DÉBRIEF-PERSISTANCE · REMPLACEMENT (décision Michel) · VÉRITÉ MÉTIER DANS LE
   PAYLOAD MILO · CONVERSATION / CTA · COÛT (mesure d'abord) · panneau maintenance (**chantier séparé**).
+
+### 🛡️ SESSION-INTEGRITY-01 — corrections du cycle séance / débrief (04/10/2026, session-B — branche `claude/session-integrity-01`, NON publiée)
+- **Corrigés sur la branche** (chacun rouge sur master `c3c830ab`, vert sur la branche — banc B-SI01 71/0, contrôle négatif 22/22,
+  passe complète 5 833 ✅ / 0 ❌ sur `5b4d0c70`) : remplacement hybride (**P0**) · faux débrief `complete:false` (**P1**) · débrief
+  non redessiné et sans lien `sessionId` (**P1**) · première occurrence = record (**D-045**) · séance jugée contre son propre
+  record (**N-G2**, constat MILO-GHOST-01). Décisions **D-043 / D-044 / D-045** implémentées sur la branche.
+- **Non traités, toujours ouverts** : nouvelle discussion du 03/10 (cause non démontrée) · ancien J1 / programme actif · montée en
+  charge (seuils, ton du prompt) · carte « Cette séance te convient ? » avant une séance structurée · utilité de summarizeCoach ·
+  panneau maintenance · **N-G1** (MILO-GHOST-01 : le message courant semble partir deux fois vers le modèle — dette
+  MILO / TRANSPORT / PAYLOAD, impact non démontré).
+- **Limites dites** : débriefs rangés **localement** (comme le fil Coach : pas de cloud, pas de restauration) ; les débriefs d'avant
+  le correctif ne sont **pas** rattachés après coup (pas de fausse association) ; anciennes entrées de records sans marqueur
+  `premiere` restent des records ; les séances enregistrées avant le correctif n'ont pas de référence figée (`refAvant`).
+- ⛔ Production `ft-v1249` : **ces défauts y sont toujours présents** jusqu'à la publication.

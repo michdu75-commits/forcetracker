@@ -3302,17 +3302,21 @@ de preuve — **ne jamais en faire monter un d'un cran sans nouvelle preuve.**
   Validé sans corriger : 240×10 enregistré, record 240 kg ⇒ séance, volume, PR, historique, Progrès et contexte de Milo
   contaminés. Vérifiable par du code : ✅. ⚠️ Le comportement « garder les séries » vient de ft-v296 (correction d'un
   mauvais choix) et est **figé par un témoin** : décision de Michel requise avant correction. État : **prête**.
+  ↪️ **Suite (04/10, SESSION-INTEGRITY-01, branche, NON publié)** : corrigé et figé par le banc B-SI01 (`tests/parcours/session_integrity.js`).
 - **Première occurrence = record — CAUSE DÉMONTRÉE.** `finishWorkout` compte un record dès qu'il n'existe aucune
   référence (`!old`). **Décision de Michel validée (D-045)** : « Première référence enregistrée » ; record seulement s'il
   existe une référence antérieure comparable. Vérifiable par du code : ✅. État : **prête**.
+  ↪️ **Suite (04/10, SESSION-INTEGRITY-01, branche, NON publié)** : corrigé et figé par le banc B-SI01 (`tests/parcours/session_integrity.js`).
 - **Débrief — échec Worker pris pour un débrief — CAUSE DÉMONTRÉE, P1.** Le Worker peut transformer un échec amont en
   **HTTP 200** `{complete:false, reply:"Désolé, réessaie."}` ; `_runSeDebrief` ne lit que `reply`. Reproduit : débrief
   considéré terminé · retry détruit (jeton consommé) · message rangé dans le fil · `summarizeCoach` déclenché.
   Vérifiable par du code : ✅. État : **prête**.
+  ↪️ **Suite (04/10, SESSION-INTEGRITY-01, branche, NON publié)** : corrigé et figé par le banc B-SI01 (`tests/parcours/session_integrity.js`).
 - **Débrief — affichage — CAUSE DÉMONTRÉE (localement), P1.** Le débrief réussi est enregistré dans `coachHistory` sans
   être rendu dans l'écran Coach quand le fil était déjà affiché ; il réapparaît après rechargement **dans la
   reproduction locale** (non vérifié sur le téléphone de Michel). **Aucun lien canonique `sessionId ↔ texte du
   débrief`** n'existe (décision D-043). Vérifiable par du code : ✅. État : **prête**.
+  ↪️ **Suite (04/10, SESSION-INTEGRITY-01, branche, NON publié)** : corrigé et figé par le banc B-SI01 (`tests/parcours/session_integrity.js`).
 - **Montée en charge — MÉCANISME CAPABLE, cas exact terrain NON DÉMONTRÉ.** `_monteeDefauts` applique des seuils fixes
   sans expérience, RIR, %1RM ni type de séance ; le prompt impose un langage de risque très affirmatif. ⛔ Ne pas en
   faire la cause démontrée du 65 → 80 terrain (séries réelles inconnues). ❓ Ce que Milo *dit* relève en partie du **juge
