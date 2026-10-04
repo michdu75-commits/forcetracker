@@ -43,8 +43,9 @@ lots ouverts par Michel).
   vers le modèle, jamais une seconde vérité ; ajout en 1 clic, ×N ; utilisable dans n'importe quel
   repas ou collation. ⛔ **Modifier ou supprimer le modèle ne réécrit JAMAIS une prise passée** : chaque
   prise garde ce qui a réellement été consommé.
-- **Tests minimum à prévoir** (repris de la décision) : 0, 1, 2 collations et plus · ajout,
-  suppression, renommage · rechargement, restauration · modèle modifié après des prises passées.
+- **Tests minimum à prévoir** — ⚠️ *proposés par l'audit croisé du 04/10, ce n'est PAS une décision de
+  Michel* : 0, 1, 2 collations et plus · ajout, suppression, renommage · rechargement, restauration ·
+  modèle modifié après des prises passées.
 
 ---
 
@@ -2821,8 +2822,8 @@ minimale » plus haut :
 
 2. 📤 **Boîte à idées — photos qui remontent dans l'appli (fini WhatsApp)** — aujourd'hui (`sendTesterIdea`/`shareTesterPhotos`, app.js) : le **texte** part de façon fiable (email `forcetracker.app@gmail.com` + backend `testerIdea`), mais les **photos ne peuvent pas être attachées à l'email** (limite navigateur : `mailto:` ne porte pas de fichier) → l'appli propose seulement le **menu « Partager »** du téléphone, où **WhatsApp apparaît** (avec Mail/Messages). Michel veut que les photos **arrivent collées à l'idée**. **Fix visé** : uploader les photos (redimensionnées, comme le Coach / l'étude du corps) vers le **backend** avec l'idée — probablement stockées dans **Drive** (les Script Properties sont trop petites, ~9 Ko/valeur). `handleTesterIdea_` (Code.js) à enrichir pour recevoir les images → dossier Drive dédié → Michel/Claude les lisent. Nécessite modif `Code.js` + déploiement.
 
-3. ✅ *(livré — *(DOC-SYNC du 04/10/2026)* : moteur « SCANNER CODE-BARRES EN DIRECT » dans `app.js` ; ⛔ **sans bouton
-   utilisateur, par décision de Michel du 14/09**, le temps du banc des moteurs — ne pas « réparer » cette absence)*
+3. ✅ **Livré** *(DOC-SYNC du 04/10/2026)* : moteur « SCANNER CODE-BARRES EN DIRECT » dans `app.js` ; ⛔ **sans bouton
+   utilisateur, par décision de Michel du 14/09**, le temps du banc des moteurs — ne pas « réparer » cette absence.
    📷 **Scanner de code-barres EN DIRECT (fini la photo floue)** — aujourd'hui (`scanBarcode`/`onBarcodeFile`, app.js) : on prend **une seule photo figée** (`<input type=file capture>`) puis on la décode avec **ZXing** (`decodeFromImageUrl`). Problème signalé par Michel (2026-07-11, capture « Code-barres illisible ») : une photo de code-barres est très souvent **légèrement floue / trop petite** → échec. **Vérifié en test** (barcode généré) : image nette = OK ; image floue/réduite = **FAIL même avec `TRY_HARDER` + `POSSIBLE_FORMATS` EAN/UPC** → aucun réglage ne rattrape une photo floue (info perdue). **Fix visé** : **scanner vidéo en continu** — `navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})` + `ZXing.BrowserMultiFormatReader.decodeFromVideoDevice(...)` (frames en boucle, autofocus, lit dès que net, comme Yuka). ⚠️ **getUserMedia sur iOS Safari** = HTTPS OK (GitHub Pages), mais **comportement à tester sur vrai iPhone** (surtout en PWA installée / standalone). Prévoir : overlay `<video>` + viseur, permission caméra, `stream.getTracks().forEach(t=>t.stop())` à la fermeture, **fallback sur la photo actuelle** si getUserMedia indispo. ZXing expose bien `DecodeHintType`/`BarcodeFormat` (vérifié). Frontend only (pas de backend). Le reste marche déjà : saisie manuelle + 🤖 estimation IA.
 
 ---
