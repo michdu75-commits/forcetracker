@@ -156,3 +156,10 @@ TESTS : banc 92/0 · mutations 37/37 · passe 5 854 ✅ / 0 ❌ sur 7b13cc9e
 0 appel Milo réel · 0 publication · aucune version (sw.js ft-v1249)
 STATUT : PRÊT POUR DÉCISION DE PUBLICATION
 ```
+
+## Publication (04/10/2026) — `ft-v1250`
+
+- Contre-vérification indépendante (session Nutrition) du delta `aa0ff6dd → c220109b` : **« B — validé avec réserves non
+  bloquantes »**, publication recommandée ; les 8 réserves sont consignées dans `docs/SUIVI-AUDIT.md` (backlog).
+- Publié par avance rapide de master `c3c830ab` ; après la passe D-031 (5 854 / 0 sur `7b13cc9e`) : version, clé de cache
+  `sw.js` et documentation seulement. Worker et Apps Script non touchés. Règle #17 et Ghost : absents.

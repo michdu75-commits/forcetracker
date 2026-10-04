@@ -171,7 +171,7 @@ DÉCISIONS VALIDÉES : Voir le débrief Milo · export avec/sans · Première r�
 STATUT : PRÊT POUR CORRECTIONS APRÈS DÉCISIONS MICHEL
 ```
 
-## 14. Suite — SESSION-INTEGRITY-01 (04/10/2026, branche `claude/session-integrity-01`, NON publiée)
+## 14. Suite — SESSION-INTEGRITY-01 (04/10/2026, ✅ publiée en `ft-v1250`)
 
 | Constat de l'audit | État après SESSION-INTEGRITY-01 |
 |---|---|
@@ -184,4 +184,4 @@ STATUT : PRÊT POUR CORRECTIONS APRÈS DÉCISIONS MICHEL
 | N-G2 (MILO-GHOST-01) séance jugée contre son propre record | **corrigé sur la branche** |
 | N-G1 (MILO-GHOST-01) message courant envoyé deux fois | **non traité** — dette MILO / TRANSPORT / PAYLOAD |
 
-Détail, preuves et limites : `docs/SESSION-INTEGRITY-01.md`. ⛔ Rien de cela n'est en production avant publication.
+Détail, preuves et limites : `docs/SESSION-INTEGRITY-01.md`. ✅ En production depuis `ft-v1250` (04/10/2026).

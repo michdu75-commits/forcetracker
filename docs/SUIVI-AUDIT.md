@@ -449,7 +449,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - 📦 **Lots proposés (aucun ouvert)** : DÉBRIEF-PERSISTANCE · REMPLACEMENT (décision Michel) · VÉRITÉ MÉTIER DANS LE
   PAYLOAD MILO · CONVERSATION / CTA · COÛT (mesure d'abord) · panneau maintenance (**chantier séparé**).
 
-### 🛡️ SESSION-INTEGRITY-01 — corrections du cycle séance / débrief (04/10/2026, session-B — branche `claude/session-integrity-01`, NON publiée)
+### 🛡️ SESSION-INTEGRITY-01 — corrections du cycle séance / débrief (04/10/2026, session-B — ✅ PUBLIÉ en `ft-v1250`)
 - **Corrigés sur la branche** (chacun rouge sur master `c3c830ab`, vert sur la branche — banc B-SI01 71/0, contrôle négatif 22/22,
   passe complète 5 833 ✅ / 0 ❌ sur `5b4d0c70`) : remplacement hybride (**P0**) · faux débrief `complete:false` (**P1**) · débrief
   non redessiné et sans lien `sessionId` (**P1**) · première occurrence = record (**D-045**) · séance jugée contre son propre
@@ -468,4 +468,12 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   d'ancienne séance (dont : un import « remplacer » retire une séance sans son débrief) · RIR décalé · bloc technique
   sans backticks non nettoyé. **Observés pendant la finition** : coupure des longs débriefs du PDF un peu courte
   (cosmétique) · « N séances » du PDF compte les jours (préexistant) · téléphone plein : débrief non rangé sans message.
-- ⛔ Production `ft-v1249` : **ces défauts y sont toujours présents** jusqu'à la publication.
+- ✅ **Publié en `ft-v1250` (04/10)** après contre-vérification indépendante : **« B — validé avec réserves non bloquantes »** (passe
+  indépendante 5 854 / 0, 21 nouveaux témoins confirmés, mutations de finition 15/15, 1 200 / 1 200 débriefs conservés, stockage
+  plein : l'écriture échoue sans effacer, suppression par identifiant prouvée, aucun appel orphelin, PDF corrigé et « sans » = master).
+- **Réserves de la contre-vérification — BACKLOG, non bloquantes** (ce sont des limites connues, pas des bugs de production) :
+  ① aucun témoin PERMANENT ne protège « stockage plein → ne jamais effacer les anciens débriefs » (vérifié à la main par la
+  contre-vérification seulement) · ② K0 et Z0 restent en partie structurels (ils lisent le code source) · ③ PDF : « ≈ » et « ✓ »
+  sont retirés sans traduction · ④ quota Safari / iOS non mesuré · ⑤ une séance supprimée PENDANT l'appel de son débrief peut
+  encore recréer un orphelin · ⑥ un import « remplacer » peut laisser un débrief orphelin · ⑦ débriefs locaux seulement (D-047,
+  limite assumée) · ⑧ téléphone plein : aucun message à l'utilisateur.

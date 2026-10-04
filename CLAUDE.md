@@ -448,7 +448,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v1249`** (prochaine : `ft-v1250`).
+> **Version actuelle : `ft-v1250`** (prochaine : `ft-v1251`).
 > 📷 **LE SCANNER CAMÉRA N'A PAS DE BOUTON, ET C'EST UNE DÉCISION (Michel, 14/09)** : *« aucun
 > bouton utilisateur tant que je n'ai pas tranché »*, le temps du banc d'essai des moteurs.
 > **Le moteur reste en place et reste éprouvé** — ⛔ ne pas « réparer » cette absence : deux
@@ -487,6 +487,20 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v1250 — 🛡️ SESSION-INTEGRITY-01 · LE CYCLE SÉANCE → REMPLACEMENT → FIN → DÉBRIEF → HISTORIQUE → EXPORT TIENT DE BOUT EN BOUT** — chantier issu de l'audit SESSION-MILO-E2E-01 (parcours réel de Michel, 03/10), 04/10 session-B ; commits fonctionnels `d5fa2a8c` → `471b3ac0`, passe complète verte, contre-vérification indépendante (« B — validé avec réserves non bloquantes »), publication décidée par Michel.
+
+**AVANT (reproduit le 03/10).** « Remplacer » renommait : la Presse devenait un « Rowing » à 240 kg, une série déjà faite changeait d'exercice. Un échec du Worker (HTTP 200 `complete:false`, « Désolé, réessaie. ») passait pour un débrief : jeton détruit, plus de « Réessayer », summarizeCoach payé. Un débrief réussi n'apparaissait pas sans recharger et n'était rattaché à aucune séance. Une première fois sur un exercice était annoncée comme record, et la séance était jugée contre le record qu'elle venait de créer (N-G2).
+
+**APRÈS.** Remplacement **sémantique** (**D-046**) : le remplaçant part de SON historique, les séries faites restent à l'exercice réel, rien n'est hérité (charges, repos, consigne, `_milo`). Un seul critère de succès (`_dbfReponseValide`, fail-closed) sur les 3 chemins : un échec rend le jeton, ne range rien, ne résume rien. Le débrief est rangé à SA séance (`ft4_debriefs`, **local**, **sans plafond**, supprimé avec sa séance — **D-047**), visible tout de suite au Coach, lisible dans Progrès (« 💬 Voir le débrief Milo », **D-043**), exportable avec / sans (**D-044** ; PDF fidèle : œ, €, guillemets ; « sans » identique à master). Première fois = « 📌 Première référence enregistrée » (**D-045**) ; la séance est jugée contre le record d'AVANT elle (`refAvant`).
+
+**📣 RÈGLE D'OR #11** — points 2 à 5 livrés avec le code : point rouge `debrief-seance` (Progrès), aide « ? » Progrès et Séance, aide détaillée (le débrief reste sur ce téléphone et part avec sa séance), diapo du Guide. ⚖️ **Pop-up : non** — aucun geste demandé ; l'ajouter aurait modifié du code après la passe (D-031).
+
+**⏭️ CE QUE ÇA NE FAIT PAS** : débriefs **locaux seulement** (ni cloud, ni restauration, ni multi-appareil) · anciens débriefs non rattachés après coup · anciens records sans marqueur restent des records · hors lot : discussion du 03/10, ancien J1, montée en charge, CTA « petite séance », summarizeCoach, N-G1, superset non contigu, badge « Premier PR », import historique / édition d'ancienne séance, RIR décalé · les 8 réserves non bloquantes de la contre-vérification sont consignées dans `docs/SUIVI-AUDIT.md` · ⛔ ni Worker, ni Apps Script. **0 appel réel.**
+
+Tests : banc `tools/banc_session_integrity.js` **92/0** (blocs B-SI01-S/R/D/H/E/P/G/T + K/Z/F) ; contrôle négatif `tools/mut_session_integrity.py` **37/37** ; 9 bancs voisins verts ; annexe 14 PASS + 1 défaut connu identique à master ; passe complète sur `7b13cc9e` : **5 854 ✅ / 0 ❌**, 4 conditions vertes ; contre-vérification indépendante : passe 5 854 / 0, 1 200 / 1 200 débriefs conservés, stockage plein sans effacement. Après la passe : version, cache et documentation seulement (D-031).
+
+Fichiers : `log.js`, `coach.js`, `setup.js`, `screens.js`, `app.js`, `constants.js`, `index.html`, `style.css`, `tests/parcours/session_integrity.js` (nouveau), `tests/parcours/runner.js`, `tests/recette/registre.json`, `tools/banc_session_integrity.js`, `tools/mut_session_integrity.py` et `tools/ref_pdf_sans_si01.js` (nouveaux), `docs/DECISIONS.md` (D-046, D-047), `docs/SESSION-INTEGRITY-01.md` (nouveau), `docs/SESSION-MILO-E2E-01.md`, `docs/PROMPT-MILO-REEL.txt`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1250. |
 
 **ft-v1249 — 🥑 NUT-LIPIDES-25-01 · LES LIPIDES DES MODES STANDARDS VALENT 25 % DE LA CIBLE CALORIQUE** — correctif produit Nutrition (02/10, session-B, décision de Michel après une simulation déterministe), commit fonctionnel `bcf5926a`, passe complète verte, publication décidée par Michel. Dégel du 13/09 **limité à ce lot**. Décision **D-035**.
 
@@ -589,19 +603,3 @@ Fichiers : `coach.js` (`_demandeUneSeance` : 1 ligne ; `_seulementMeta` nouvelle
 Tests : **B-CDIV (6) + B-CDV (27 conduits) + B-CDVI (4) + B-CDVII (23 conduits)** dans `tests/parcours/groupes_orphelins.js`, **60 OK / 0** (Retirer, Supprimer via le menu et la vraie confirmation, Super puis Fermer / retour arrière / rechargement pendant le choix, création normale, Grouper, « avec l'exercice du dessus », rechargement, programme). ⛔ **Contrôle négatif `tools/mut_ml_b.py` : 26/26 conformes** (M00 et X00 = le code d'avant ; M1-M8 et X1-X6 demandés par Michel ; 6 déguisées ; 2 équivalentes et 2 commentaires qui doivent rester verts), chaque mutation gardée par un témoin CONDUIT. Passe complète sur `fe5b04e1` : 1ʳᵉ 5494/2 (témoin G du Lot 1 sensible au temps, bloc exécuté avant ML-B, consigné dans `docs/RECETTE.md`), relance sur le même arbre **5496 ✅ / 0 ❌**, 4 conditions vertes. Recette : 10 contrôles applicables, 10 automatiques, 0 téléphone.
 
 Fichiers : `log.js` (`_dissoudreGroupeOrphelin` nouvelle, `removeFromGroup`, `rmEx`, `createSupersetFrom`, `_doAddToGroup`, `_superSource`), `tests/parcours/groupes_orphelins.js` (nouveau), `tests/parcours/runner.js`, `tests/recette/registre.json`, `tools/banc_ml_b.js` et `tools/mut_ml_b.py` (nouveaux), `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/RECETTE.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1243. |
-
-**ft-v1242 — 🧩 LOT 6 / ML-A · LE DROPSET SURVIT AU PROGRAMME** — premier micro-lot issu de l'audit Lot 6 (contrat séance / programme, lecture seule), commit fonctionnel `3c4031a9`, contre-vérifié, publication décidée par Michel.
-
-**ML-A : `ex.dropset` ne se perd plus lors du passage séance → programme → séance.**
-
-**AVANT (mesuré par une sonde locale sur master `dcc2ff43`).** Un exercice portant un dropset (bouton « 📉 Drop » de l'écran Séance, `applyDropset`) le perdait dans « 💾 Sauvegarder comme programme » (`saveAsProg`), et les deux chargeurs (`_loadProgVraiment`, `_loadProgDayVraiment`) ne le recopiaient pas non plus. Rechargé, l'écran n'affichait plus le dropset et les paliers redevenaient des séries normales, avec un repos entre chacun.
-
-**APRÈS.** Un seul propriétaire de la recopie, `_recopierDropset` (log.js), appelé aux trois endroits : champ présent → copie profonde entière (sous-champs inconnus compris, aucun alias entre programme et séance) ; champ absent → rien n'est créé. Aucun autre champ ne change (la liste exacte des champs est figée par témoin). Un exercice peut garder à la fois son superset et son dropset.
-
-**📣 RÈGLE D'OR #11 — RIEN, et c'est pesé.** Aucun écran, aucun réglage : un dropset reste là où on l'avait mis. ⚖️ **Pop-up : non.**
-
-**⏭️ CE QUE ÇA NE FAIT PAS** : ⛔ le type de série `D`, les `groupType` drop/pyramide (sans écrivain), les supersets, les notes de série, `_normalizeForceProg`, `_normalizeMiloSession`, `exs`/`exercises`, le cardio : **inchangés** · ⛔ les trois représentations du dropset ne sont **pas** unifiées · ⛔ `ex.dropset` n'est **pas** le futur contrat : les contraintes de Michel (méthodes et groupements série par série, Milo qui modifie une séance par opérations ciblées sur des identifiants stables, réalisé protégé par défaut) sont **consignées, non construites** — **D-029** et `IDEES-FUTURES.md` · ⛔ le bug superset vécu en salle n'a **pas** de cause démontrée et n'est pas traité ici · un programme sauvegardé AVANT cette version a déjà perdu son dropset (rien à récupérer). ⛔ Ni Worker, ni Apps Script. **0 appel réel.**
-
-Tests : **B-CDII (6 de source) + B-CDIII (28 conduits : dropset posé par la vraie modale, sauvegarde et chargement par l'écran, vrai rechargement, palier validé sans repos, programmes anciens sans dropset, liste exacte des champs, superset + dropset)** dans `tests/parcours/dropset_programme.js`, **34 OK / 0**. ⛔ **Contrôle négatif `tools/mut_ml_a.py` : 13/13 conformes** (M00 = le code d'avant ; M1→M3 un site oublié ; M4 valeur par défaut ; M5 dropset inventé ; M6 copie tronquée ; 5 déguisées : alias, pyramide oubliée, copie générique ×2, copie superficielle ; 1 commentaire qui doit rester vert). Passe complète sur `3c4031a9` : **5436 ✅ / 0 ❌**, 4 conditions vertes.
-
-Fichiers : `log.js` (`_recopierDropset` nouvelle, `saveAsProg`, `_loadProgVraiment`, `_loadProgDayVraiment`), `tests/parcours/dropset_programme.js` (nouveau), `tests/parcours/runner.js`, `tools/banc_ml_a.js` et `tools/mut_ml_a.py` (nouveaux), `docs/DECISIONS.md` (D-029), `IDEES-FUTURES.md`, `sw.js`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`. sw.js ft-v1242. |
