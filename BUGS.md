@@ -18,6 +18,11 @@
 > des bugs de code) · `docs/REGLES-ARCHITECTURE.md` (les règles nées de ces bugs).
 >
 > **À compléter à chaque nouveau bug**, dans le même mouvement que le journal (règle d'or #12).
+>
+> 🧾 **Niveaux de preuve employés dans les ajouts à partir du 04/10/2026** — **P0** : lu dans le
+> code · **P1** : mécanisme capable de produire le symptôme (montré, pas l'événement) · **P2** :
+> reproduction synthétique (banc, rejeu) · **P3** : constaté sur le terrain (téléphone de Michel).
+> *Un P2 n'est pas un P3, et un mécanisme capable n'est pas une cause.*
 
 ---
 
@@ -42,6 +47,31 @@
 | 13 | **Le NOM comme clé primaire** | *racine de 6 défauts* | identifiant stable (ft-v735, **étape 1/3**) |
 | 14 | **Mesurer au lieu de supprimer** | 1 (toute la journée du 02/08) | la question des 3 réponses, voir §14 |
 | 15 | **La règle juste, définie trop étroit** | 3 (la même journée) | définitions **nommées** (`_seanceOuverte`…) + témoins sur le cas LIMITE |
+
+### 🗂️ Index des familles suivantes *(ajouté le 04/10/2026, sans renumérotation)*
+
+Le tableau ci-dessus s'arrête à 15 ; le fichier compte bien plus de familles. **On ne renumérote pas** : des
+renvois « §26 », « §45 »… existent dans d'autres documents et casseraient. Les numéros se lisent donc
+**tels qu'ils sont écrits dans les titres**, anomalies comprises (16 et 17 n'existent pas ; deux « 21 » ;
+24 avant 23 ; « §58 » et « 58 » ; plusieurs familles sans numéro, repérées par leur emoji).
+⚠️ **Les compteurs d'occurrences du tableau ci-dessus datent de sa création** et ne sont pas tenus à jour :
+c'est la section elle-même qui fait foi.
+
+| Repère | Familles (dans l'ordre du fichier) |
+|---|---|
+| 5bis · 5ter · 6bis | sauvegarde écrasée par une version tronquée · filtre sans pertinence · indicateur sur deux points |
+| 12bis · 12ter · 12quater | l'audit qui ne cherche que ce qu'il sait chercher · la fausse panne de l'outil · la cause déduite d'un seul nombre |
+| 🧪 · 🔐 · 🌀 | vérificateur éprouvé sur ses propres exemples · donnée sans anti-fuite dans le contexte · clone périmé qui fait croire à une perte |
+| 🧭 | les 12 réflexes (synthèse, pas une famille) |
+| 🩹 · 🧱 · 🔁 · 🫥 | export qui perd son contenu · correctif posé d'un seul côté · contrôle circulaire · donnée écrite au mauvais endroit |
+| 18 → 22 | spécification qui nomme le mauvais composant · précédence d'opérateur · règle CSS trop large · défaut dormant réveillé (**1ᵉʳ « 21 »**) · mesure qui ne se reproduit pas (**2ᵉ « 21 »**) · « jamais chargé » ≠ « jamais utilisé » |
+| 24 puis 23 | fixture sans profondeur (**24, placée avant 23**) · champ qui « refuse » une saisie en la mutilant |
+| 25 → 30 | fusion qui efface le bloc de l'autre · état qui survit à son geste · deux couches de guillemets · le client abandonne, le serveur continue · garde-fou calibré sur un ratio · correctif qui retire une protection |
+| 31 → 39 | témoin visé sur une forme · aller-retour cassé au milieu · deux onglets, un état · ce qu'un modèle hallucine · chemin automatique moins protégé · sonde au nom de champ inventé · moyenne sur une fenêtre non vécue · taux par échantillons · valeur cohérente et impossible |
+| 40 → 50 | vérificateur sur une tournure de langue · nombres verts, écran faux · cas sans l'attribut habituel lu comme « rien » · deux portes, une équipée · coupe d'affichage · définition qui essaime · correctif dans le prompt · plancher qui éteint le pourcentage · porte de secours absente · action silencieuse · règle générale lue sans la spécifique |
+| 51 → 57 | trois chemins, une ligne sans origine · frappe lettre par lettre · deux comparaisons pour une question · le commentaire dit vrai, pas le code · total séparé de sa quantité · bloc resté visible · le DOM comme mémoire |
+| §58 et 58 | **deux sections portent 58** : « une porte sans témoin » (§58) · « un témoin qui pose l'état final à la main » (58) |
+| §59 → §66 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée |
 
 ---
 
@@ -191,6 +221,19 @@ seulement donné le fait ? »** — avant de toucher au prompt.
 `tests/donnees/` : **chaque** donnée chargée par `load()` doit être classée — transmise, exclue
 avec la raison écrite, ou trou connu. Une donnée non classée **bloque la livraison**.
 
+### 🔄 Les cas du 26/09 au 04/10/2026 *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+
+| Ce qui existait | Où ça n'arrivait pas | Version |
+|---|---|---|
+| La **séance traduite** par l'app (repos, consignes) | ne vivait qu'en mémoire (`_pendingMiloSessions`) ; au rechargement, reconstruite depuis le **texte** : repos 120 s → 0 s, consignes perdues | ft-v1238 (C3) |
+| Le **débrief** réussi d'une séance | écrit dans le fil **sans bulle à l'écran** (le Coach ne redessinait que si le fil était vide), rattaché à **aucune** séance, absent de Progrès et de l'export | ft-v1250 (D-043, D-044, D-047) |
+
+⭐ **Ce que le débrief ajoute** : la donnée était produite **et payée**, puis restituée nulle part où
+on la cherche — *produite n'est pas consommée*. 🛡️ ft-v1250 : rangée à **sa** séance (`ft4_debriefs`,
+par identifiant de séance), visible tout de suite, lisible dans Progrès, exportable avec ou sans.
+⚠️ La réapparition après rechargement a été démontrée **en local** (P2), pas sur le téléphone de
+Michel ; et les débriefs restent **sur le téléphone** (ni cloud, ni restauration — D-047).
+
 ---
 
 ## 3. 🕛 Le temps, les fuseaux, et les bornes de journée
@@ -275,6 +318,13 @@ Un **drapeau** qui empêche l'envoi tant que le local est incomplet · un garde-
 refuse tout **rétrécissement brutal** (pas seulement le vide) · et une ligne **« Historiques
 protégés »** dans la carte Santé, parce qu'*une alerte qui ne remonte nulle part ne sert à personne*.
 
+### 🔄 2ᵉ cas : la discussion écrasée par le débrief (F07b, ft-v1239) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+Une discussion **enregistrée mais pas chargée en mémoire** (Coach jamais ouvert, serveur injoignable)
+était remplacée par le seul débrief : 30 messages → 2. Même mécanisme que le 02/08 : on écrit une
+version **partielle** par-dessus une version complète qu'on n'a pas lue. 🛡️ ft-v1239 :
+`_coachHistHydrater` relit le téléphone **avant** toute écriture ; illisible ou refusé → état inconnu,
+**rien n'est écrit**.
+
 ---
 
 ## 5ter. 🔎 Le filtre sans pertinence *(02/08/2026)*
@@ -304,6 +354,16 @@ déclenche que sur une **intention de famille** (le libellé), jamais sur un mot
 > ⚠️ **La leçon de méthode** : les tests de ft-v728 vérifiaient le **nombre** de résultats et
 > l'absence de faux positif — **jamais leur ORDRE**. *Un test qui compte ne dit rien de ce que
 > l'utilisateur voit en premier.*
+
+### 🔄 2ᵉ cas : la recherche d'ALIMENTS (01/10/2026) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+Retour terrain de Michel, mesuré sur le code de production (`docs/SUIVI-AUDIT.md`, 01/10) : « café »
+propose d'abord le café **moulu** (poudre) ; « spaghetti bolognaise » des raviolis crus ; « carbonara »
+la sauce. Même défaut que les exercices du 02/08 : le tri départage par « commence par », proximité,
+longueur, puis **l'ordre physique du fichier CIQUAL**, sans notion de ce que la personne cherche
+vraiment. Voisin de §1 (le premier match gagnant).
+⛔ **En production au 04/10/2026, rien n'est changé.** Un chantier existe (Food Semantics, FS-01 →
+FS-05B, D-036 → D-042) sur des branches **NON PUBLIÉES** : sa protection n'entre ici qu'à sa
+publication.
 
 ---
 
@@ -435,6 +495,11 @@ qu'un bug** : la personne fait confiance à l'écrit.
   dans le 🔢 calculateur de plaques »* — **retiré deux versions plus tôt**.
 
 > ⚠️ **La règle qui en découle** : quand on retire quelque chose, **retirer aussi ce qui en parle**.
+
+- **01/10/2026 — l'écran « Restaurer »** *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)* : il annonce *« aucune donnée ne sera écrite vers le
+  serveur »*, alors que la restauration déclenche ensuite `saveProfile` / `cloudSave` (observé par
+  l'audit Nutrition du 01/10, `docs/SUIVI-AUDIT.md` ; **non rejoué** ici). Le texte est toujours
+  présent dans `index.html` au 04/10. ⛔ **NON CORRIGÉ.**
 
 ---
 
@@ -805,6 +870,45 @@ faisait doublon et devait être tenue à jour à deux endroits (**R2**).
 l'historique, les records et les programmes par identifiant. **Tant que ③ n'est pas fait, le nom
 reste la clé** — la dette est entamée, pas remboursée.
 
+### 🔄 Cas du 03/10/2026 — « Remplacer » était un RENOMMAGE *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+
+**Le cas** (P3 le 03/10 ; cause démontrée P0 + P2 par l'audit `docs/SESSION-MILO-E2E-01.md`, A et
+A-bis) : en pleine séance, la Presse à cuisses remplacée par Rowing Hammer Strength puis par
+Shoulder Press gardait ses séries — **2×200 puis 10×240 ×3** sous le nouveau nom. `_replaceExInWorkout`
+ne changeait que le **nom** ; le « précédent » (`getPrev` cherche **par nom**) et le repos suivaient
+le nouveau nom, les séries restaient. 👉 Un objet **hybride**. Validé sans corriger, il fabriquait un
+record de 240 kg (1RM 320) et contaminait séance, volume, records, Progrès et contexte de Milo — et un
+faux record ne sera jamais battu (§34).
+⚠️ **L'origine était juste dans son contexte** : ft-v296 voulait corriger une **étiquette** (« je me
+suis trompé de nom »). Un seul geste servait deux intentions — corriger un nom, changer d'exercice —
+et c'est le nom qui tranchait (**R14**). **Même conséquence que §26, autre porte** : là un état
+résiduel, ici le geste voulu.
+
+🛡️ **Ce qui protège depuis ft-v1250 (D-046)** : « Remplacer » = remplacement **sémantique**. Le
+remplaçant part de **son** historique ; les séries déjà faites restent à l'exercice réellement
+exécuté ; rien n'est hérité (charges, repos, consigne, `_milo`). Témoins B-SI01-R, contrôle négatif
+`tools/mut_session_integrity.py`.
+**Preuve terrain (P3), partielle et dite telle quelle** : le 04/10, après ft-v1250, sur le téléphone
+de Michel, remplacement **avant toute série réalisée** — Presse à cuisses 45° → Développé Couché
+Larsen (4×80 / 4×80 / 3×85), puis → Rowing Barre (7×60 / 5×40 / 5×80) : **aucune série de la Presse
+reprise**. ⛔ **Le remplacement APRÈS des séries déjà réalisées n'a PAS été vérifié sur le terrain** :
+il est couvert par les témoins (P0/P2) seulement.
+
+### 🔄 La deuxième racine, démontrée le même jour : prévu, prescrit et réalisé dans UN SEUL objet
+Le nom n'est pas la seule clé qui mélange les rôles. La prescription (préremplie par un programme ou
+par Milo) et la saisie vivent dans **les mêmes** `S.wkt.exs[].sets[]` : la saisie **écrase** la
+prescription, et une valeur préremplie jamais retouchée **devient** le réalisé. Ni les exercices ni
+les séries d'une séance n'ont d'identifiant. C'est ce qui a rendu le cas ci-dessus possible (cause B
+de l'audit E2E-01, démontrée). ⛔ **Non corrigé** : c'est une dette d'architecture, pas un correctif
+ponctuel — la direction est décrite dans `IDEES-FUTURES.md` (entrée D-029, programme versionné).
+⏭️ **L'étape 1/3 ci-dessus reste exacte au 04/10** : le nom est toujours la clé de l'historique.
+
+### 🔄 Même famille, autre objet : l'identité d'un brouillon de séance (ft-v1241, lot 3C)
+`_recoverDraft` décidait qu'un brouillon était « déjà enregistré » en regardant `S.sessions[0]` (une
+**position**) ; la première correction (3B) a pris l'**horloge** — réfutée par la contre-vérification,
+« Restaurer » apportant un faux candidat. Ce qui tient : une identité **explicite**, `S.wkt.runId`,
+posée une fois et recopiée par `finishWorkout`. *Une position ou une heure n'est pas une identité.*
+
 ---
 
 ## 14. 🏗️ Mesurer un problème qu'on aurait pu SUPPRIMER
@@ -1127,6 +1231,18 @@ trouvé qu'en jouant un vrai repos dans un navigateur et en lisant le chrono sec
 il était **invisible à la relecture**, et je l'avais moi-même annoncé à Michel comme fonctionnel
 la veille (**R23**). *Un comportement différé ne se vérifie pas en lisant : il se joue.*
 
+### 🔄 La restauration cloud, corrigée collection par collection *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+« Restaurer » choisissait entre téléphone et cloud **par la longueur** des listes : le plus long
+remplaçait l'autre, une ligne locale jamais synchronisée disparaissait. La fusion **par identifiant** a
+été posée **un côté à la fois** :
+- **séances** — ft-v1241 (union par `id`, conflits mis de côté et dits) ;
+- **journal alimentaire** — ft-v1247 (fusion conservatrice ; limite acceptée : une ancienne ligne
+  identifiée sur deux appareils peut revenir en double — *préserver plutôt que supprimer*) ;
+- ⛔ **bilans corporels (`bodyScans`) et bilans sanguins (`bloodTests`)** : encore **par longueur**
+  (P0, setup.js, master `9b8e4813`) — mécanisme capable, **aucune perte réelle mesurée** ;
+  `savedFoods` et `_pa_` serveur hors lot. *Une règle corrigée dans deux collections et pas dans les
+  autres est exactement ce paragraphe.* Voisin de §33 (le dernier qui écrit efface l'autre).
+
 
 ---
 
@@ -1159,6 +1275,14 @@ comportements sont épinglés par des témoins qui injectent l'erreur au lieu de
 
 **Le réflexe à garder** : devant un contrôle vert, se demander *« qu'est-ce qui le ferait
 rougir ? »*. Si la réponse ne vient pas en une phrase, il ne mesure probablement rien.
+
+### 🔄 La version PRODUIT : la séance jugée contre le record qu'elle vient de créer (N-G2) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+Démontré sur master par un banc hors dépôt (Ghost), stable 6 fois sur 6, puis confirmé par la
+contre-vérification de SESSION-INTEGRITY-01 : `_intensiteDefauts` lisait `S.prs` **après** que
+`finishWorkout` l'avait mis à jour — une séance de record était comparée **à elle-même**. *Le contrôle
+circulaire n'est pas réservé aux tests : un calcul du produit peut se mesurer contre sa propre sortie.*
+🛡️ ft-v1250 : la séance porte le record d'**avant** elle (`sess.refAvant`) et c'est lui qui sert de
+référence.
 
 
 ---
@@ -1380,6 +1504,14 @@ Quand une règle CSS met en forme **un** élément d'un composant, l'ancrer sur 
 (`>div>b`) et non sur sa **balise** (`b`). Une balise de mise en forme — `b`, `i`, `small`, `span`
 — réapparaît toujours dans le contenu ; le jour où ça arrive, c'est le contenu qui prend la forme
 du titre.
+
+### 🔄 La même famille côté JS : une garde d'unicité sur une classe PARTAGÉE (C2, ft-v1237) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+La garde de `_appendStartSessionBtn` cherchait `.coach-prog-save` pour savoir si une carte séance
+existait déjà — classe portée **aussi** par la carte mémoire « 🧠 Je retiens » et la carte programme.
+Une carte mémoire suffisait donc à **masquer** la carte séance. Et sans bulle cible, la garde ne jouait
+pas du tout : deux appels → **deux** cartes. 🛡️ ft-v1237 : une marque dédiée, `coach-seance-carte`, et
+les gardes ne regardent qu'elle. *Un sélecteur d'unicité doit nommer CE qu'il compte, pas ce qui lui
+ressemble* — c'est ce paragraphe appliqué à un `querySelector` au lieu d'une règle CSS.
 
 ---
 
@@ -1726,6 +1858,28 @@ deux cas*** : c'est pire qu'une perte franche, parce que ça ne se reproduit pas
 👉 **Le réflexe s'élargit** : devant un formulaire en plusieurs étapes, se demander non seulement
 *« quel état survit ? »* mais ***« ce qui a déjà été répondu est-il écrit ? »***.
 
+### 🔄 5ᵉ cas : le groupe posé AVANT la fin du geste (ML-B, ft-v1243) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+« ⚡ Super » écrivait **et enregistrait** `group`/`groupType` sur l'exercice **avant** le choix du
+partenaire : fermé, retour arrière ou app quittée pendant le choix → « ⚡ Circuit (1) », qui revenait
+au rechargement. Même mécanisme que ce paragraphe, appliqué à une **donnée enregistrée** et non à un
+mode : *ce qui n'est vrai qu'à la fin du geste ne s'écrit qu'à la fin du geste*. Le même lot a fermé
+la variante par le retrait (« ↩ Retirer » laissait un survivant seul dans son groupe).
+🛡️ ft-v1243 : `_dissoudreGroupeOrphelin` + le groupe ne naît qu'au choix du 2ᵉ membre (témoins
+B-CDIV → B-CDVII, contrôle négatif 26/26). ⛔ **Les orphelins enregistrés avant ft-v1243 ne sont pas
+migrés** (décision à prendre séparément).
+
+### ⛔ Ce que la protection de ce paragraphe a CASSÉ — voir §30
+Imposer `openExPicker(mode)` (défaut `'workout'`) a désarmé **« + Exo » sur un superset existant** :
+`addToGroup` pose `_exPickerMode='addToGroup'` puis appelle `openExPicker()` **sans argument**, et le
+mode est écrasé. Détail et état au §30.
+
+### ✏️ Correction d'une phrase de « Ce qui protège » (R30)
+La non-régression « **le vrai remplacement garde les séries** » (bloc CLXXVIII) décrivait l'intention
+de ft-v296 : corriger une étiquette. **Elle est devenue fausse par décision de Michel (D-046,
+ft-v1250)** : le remplacement change d'exercice, les séries faites restent à l'exercice d'origine
+(§13). Le témoin CLXXVIII a évolué avec sa raison écrite ; ce qu'il garde de l'esprit d'origine : le
+remplacement **marche** et **ne perd rien**.
+
 ---
 
 ## 27. 🔤 DEUX COUCHES DE GUILLEMETS, UN SEUL ÉCHAPPEMENT **(31/08/2026, ft-v1074)**
@@ -1818,6 +1972,20 @@ constatée** — le local-first garantit que rien n'est perdu, le message doit l
 ⚠️ Corollaire : si l'opération n'est pas **idempotente**, un délai dépassé fabrique des doublons
 en silence. Ici c'est un classeur de log, le coût est du bruit ; ailleurs, ce serait pire.
 
+### 🔄 Le débrief payé deux fois — une récidive, et une porte toujours ouverte *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+Le corollaire ci-dessus disait *« ailleurs, ce serait pire »*. C'est arrivé sur le **débrief** :
+- **ft-v1215** concluait « le débrief ne se paie plus deux fois » ; **la mesure du 15/09**
+  (`docs/COUT-DOUBLE-DEBRIEF.md`, vrai serveur HTTP) l'a réfutée : un rechargement pendant `en_vol`
+  laisse la 1ʳᵉ requête **arriver complète** avant l'abandon — deux appels pour un même débrief ;
+- **04/10 (E5)** : nouvelle porte, **sans rechargement** — le rattrapage au démarrage passe pendant
+  qu'un débrief est en vol. Reproduit en rejeu synthétique déterministe (P2, banc Ghost hors dépôt,
+  6 fois sur 6 sur master) ; le banc le voit disparaître quand on mute `_dbfFini`. **Aucune occurrence
+  terrain (pas de P3)** ; fréquence réelle inconnue.
+⛔ **NON CORRIGÉ au 04/10/2026 (ft-v1250).** ⚠️ La remise en file existe pour qu'**aucun débrief ne soit
+perdu** (ft-v979) : la fermer sans précaution échangerait un doublon contre une perte. La décision
+(accepter · fermer côté téléphone · idempotence serveur) **appartient à Michel** et attend depuis le
+15/09 (`docs/IDEMPOTENCE-DEBRIEF.md`).
+
 ---
 
 ## 29. 🚧 LE GARDE-FOU CALIBRÉ SUR UN RATIO REFUSE LE CAS QU'IL VISE **(31/08/2026, ft-v1083)**
@@ -1906,6 +2074,20 @@ lister **tous** les sites qu'il touche et vérifier que **chacun** reçoit le re
 oublié n'est pas resté « comme avant » — il est devenu **plus fragile qu'avant**.
 ⚠️ Et se méfier des correctifs qui annoncent un **nombre** dans leur titre (« 22 champs ») : le
 nombre dit ce qui a été traité, jamais ce qui a été **manqué**.
+
+### 🔄 Le cas le plus proche de ce paragraphe : « + Exo » sur un superset existant *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+**Constat** (P0 relu sur master `9b8e4813` ; signalé « mesuré, non corrigé » par ML-B le 29/09) :
+`addToGroup` (log.js, 24/06) pose `_exPickerMode='addToGroup'` puis appelle `openExPicker()` **sans
+argument** ; depuis ft-v1073, `openExPicker(mode)` fait `_exPickerMode = mode || 'workout'`. Le mode
+posé une ligne plus haut est écrasé : l'exercice s'ajoute à la séance, **pas au groupe**.
+👉 C'est exactement ce paragraphe : la protection de §26 a changé un comportement **généralisé** sans
+convertir **chaque** site qui comptait sur l'ancien.
+⚠️ **Pourquoi le témoin de §26 n'a pas rougi** (P0, lu dans `tests/parcours/runner.js`, bloc CLXXVIII) :
+il vérifie que les modes restent atteignables en appelant `openExPicker('addToGroup')` **directement**,
+jamais `addToGroup()`. Il prouve que la porte existe, pas que le chemin réel y mène — c'est §58 (un
+témoin qui pose l'état à la main ne voit pas le chemin qui y mène).
+⛔ **NON CORRIGÉ au 04/10/2026 (ft-v1250).** Date d'introduction déduite de l'historique git, pas
+rejouée.
 
 ---
 
@@ -2253,6 +2435,14 @@ elle rend `undefined`, qui devient `0`, qui ressemble à une donnée perdue.
 d'essai un **cas valide en PREMIER** : si lui aussi rend zéro, c'est la sonde qui est cassée,
 pas l'app (leçon de ft-v1095, où quatorze réponses hostiles rendaient le même résultat).
 
+### 🔄 La variante PRODUIT : la tuile qui lisait des clés inexistantes (NUT-DASH1, ft-v1246) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+Ce paragraphe parle d'une **sonde** ; le même défaut a vécu dans l'app. La tuile Nutrition du tableau
+de bord lisait `m.kcal || m.cal` et `m.prot || m.p` — des clés que `calcMacros` n'a jamais rendues
+(`calories`, `prot_g`). Tout valait `undefined`, et le **repli** `calcTDEE()` affichait la **dépense**
+sous « Objectif du jour » : un chiffre plausible, donc invisible (130 kg en perte → 2 482 au lieu de
+1 932). *Un repli plausible est pire qu'une erreur : il ne se voit pas.* 🛡️ ft-v1246 : les vraies clés,
+repli retiré (sans cible, pas de chiffre).
+
 ---
 
 ## 37. 📅 LA MOYENNE DIVISÉE PAR UNE FENÊTRE QUE LA PERSONNE N'A PAS VÉCUE **(02/09/2026, ft-v1098)**
@@ -2501,6 +2691,21 @@ correctif est dans l'INTERFACE, pas dans le prompt.
 « langue naturelle », et de **§36** (une sonde qui invente un nom de champ mesure toujours zéro) :
 dans les deux cas le détecteur ne mesure pas ce que son titre annonce.*
 
+### 🔄 Deux cas PRODUIT dans la même chaîne (la séance proposée par Milo) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+- **ft-v1236 (C1)** — la lecture de secours `_seanceDepuisTexte` (utilisée quand la traduction ne
+  répond pas) était ancrée en fin de ligne juste après la charge ; le prompt, lui, demande à Milo
+  *« séries × reps, la charge, le REPOS et ta consigne »* sur la même ligne. Résultat mesuré : **0 ligne
+  sur 4** lue dans le format que **notre propre prompt** impose. Deux propriétaires du même format qui
+  se contredisent (§7). ⛔ **Le symptôme réel « 4 exercices demandés, 2 chargés » n'a pas de cause
+  démontrée** : C1 ferme un mécanisme capable de le produire (P1/P2), rien de plus.
+- **ft-v1244 (FP-01)** — `_demandeUneSeance` prenait une **plainte** contre le bouton (*« le bouton
+  démarrer une séance est arrivé »*) pour une **demande** de séance. Deux premières corrections ont
+  perdu de vraies demandes — trouvé par la contre-vérification et un corpus différentiel de 57 655
+  phrases. Ce qui a tenu (D-032) : garder le comportement de master par défaut, et un **veto borné**
+  aux méta-discussions identifiées. ⚠️ Un commentaire de `coach.js` dit encore *« une demande n'est
+  JAMAIS perdue »* — trop absolu (§54). ⛔ **La première carte terrain (13:38) n'a pas de cause
+  démontrée.**
+
 ---
 
 ## 41. 📐 TOUS LES NOMBRES SONT VERTS, ET L'ÉCRAN EST FAUX **(03/09/2026, ft-v1109)**
@@ -2637,6 +2842,15 @@ aucun décalage de ±2 h ne change le jour. **C'est l'autre façon correcte de f
 ⏭️ **Ce qui n'est PAS fait** : `tests/dates` ne scanne toujours pas les runners. *Le détecteur
 existe, sa liste de fichiers s'arrête à l'app* — noté, pas élargi dans la foulée.
 
+### 🔄 Le travail compté par ses SÉRIES : le cardio et l'échauffement effacés (F01/F02, ft-v1240) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+« Oui, on démarre » sur une carte de Milo (F01) ou « ▶ Charger » un programme (F02) effaçaient **sans
+question** 20 min de cardio ou 10 min d'échauffement notés : la porte de Milo ne regardait que les
+exercices, `_travailAPerdre` ne comptait que les séries faites. *Le cardio n'a pas de séries — il était
+lu comme « rien ».* 🛡️ ft-v1240 : `_etatTravailWkt` (RIEN · PRÉPARATION · TRAVAIL), source commune des
+deux portes, où le cardio compte par ses **minutes**.
+⛔ **Ne pas ranger ici** l'écart « cardio 42 min au résumé, absent du détail » (P3, 04/10) : la séance
+était mixte, la vue n'est pas identifiée, **cause non démontrée**.
+
 
 ---
 
@@ -2692,6 +2906,13 @@ teste rien, il rassure.*
 - ⭐ **Le réflexe, en une ligne** : *avant de poser un comportement sur un chemin, chercher
   combien de chemins mènent là* — et si la réponse est « deux », le poser là où ils se croisent,
   jamais sur l'un des deux.
+
+### 🔄 Le normaliseur qui jette le champ : le dropset (ML-A, ft-v1242) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+« 💾 Sauvegarder comme programme » (`saveAsProg`) et les deux chargeurs recopiaient une **liste fermée**
+de champs : `ex.dropset` n'en faisait pas partie. Rechargé, le dropset disparaissait et ses paliers
+redevenaient des séries normales. Trois portes, aucune équipée. 🛡️ ft-v1242 : un propriétaire unique de
+la recopie (`_recopierDropset`) appelé aux trois endroits, et la liste exacte des champs figée par
+témoin.
 
 
 ---
@@ -2789,6 +3010,32 @@ gagné, parce que c'est celui-là qu'un humain lit.
   continuait de mentir.*
 - ⭐ **Le réflexe** : quand une définition change, `grep` la **formule**, pas le nom de la
   variable — ici « RIR 0 » sortait dans quatre fichiers dont aucun n'appelle `_rirDeSet`.
+
+### 🔄 « Record » quand il n'existe aucune référence *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+`finishWorkout` testait `if(!old||rm>old.rm1)` : **la première fois** qu'un exercice est fait, l'absence
+de référence valait record (P3 le 03/10 : Rowing Yates 40×10 annoncé « record personnel » ; cause P0).
+La définition essaimait : `S.prs`, la tuile, le contexte de Milo, le badge. C'est la leçon déjà notée au
+`docs/JOURNAL-DE-TEST.md` le 27/08 (*« pas de record ne veut pas dire jamais fait »*), jamais promue ici.
+🛡️ ft-v1250 (D-045) : « 📌 Première référence enregistrée », plus record. ⛔ **Le badge « Premier PR »
+se déclenche encore à la première séance** — un des endroits où la définition vit toujours, consigné
+en réserve dans `docs/SUIVI-AUDIT.md`.
+
+### 🔄 « N séances » qui compte en réalité des JOURS
+Constaté dans le code de master (P0, `9b8e4813`) : le message d'Accueil « N séances cette semaine »
+compte des **dates distinctes** (`new Set(sess.map(s=>s.date))`) — deux séances le même jour en font
+une ; l'en-tête « N séances » de l'export PDF compte aussi des dates distinctes (observé pendant
+SESSION-INTEGRITY-01). Même mot, définition différente selon l'endroit. ⛔ **NON CORRIGÉ en
+production.** Une variante (la tuile « Cette semaine » portait sur 7 jours glissants) est corrigée sur
+la branche NUT-PUNCH-01, **NON PUBLIÉE**. ⚖️ Compter des séances ou des jours d'entraînement est une
+**décision produit**, pas encore prise.
+
+### 🔄 L'ORDRE des séances sans propriétaire (ft-v1241, F03 / F03b)
+Milo recevait la **plus ancienne** séance comme « dernière » (`slice(-1)` d'une liste rangée à
+l'envers), et une séance datée d'hier par le sélecteur passait en tête (`unshift`) — puis tous les
+lecteurs de `S.sessions[0]` la prenaient pour la dernière. « La dernière séance » était définie par
+une **position**, à chaque lecteur. 🛡️ ft-v1241 : l'ordre a **un** propriétaire (`_cmpSeances`,
+`_trierSeances`, `_seancesRecentes`, `_derniereSeance`, state.js), appliqué partout où des séances
+entrent.
 
 ---
 
@@ -3537,6 +3784,11 @@ l'écran d'édition.
 *Voisine de **§58** (une porte sans témoin ressemble à de la décoration) : celle-là dit qu'un
 mécanisme sans témoin passe pour mort, celle-ci qu'un mécanisme **à moitié posé** passe pour vivant.*
 
+### 🔄 Une coupe retirée du chat, survivante dans le débrief (F07a, ft-v1239) *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+ft-v656 avait retiré la coupe `slice(-20)` du chat comme « perte SILENCIEUSE ». Elle avait **survécu**
+dans `_dbfPoserDansHistorique` : une discussion de 30 messages tombait à 20 après un débrief. 🛡️
+ft-v1239 : la règle du chat (borne 400 puis budget de place) aux deux endroits.
+
 ---
 
 ## §60 — ⛔⛔ MUTER UN FICHIER **SERVI** PENDANT QU'UNE PASSE TOURNE FAUSSE LA PASSE **EN SILENCE** *(10/09/2026, ft-v1190)*
@@ -4044,3 +4296,26 @@ Le signal existe (`stop_reason`) ; s'il n'atteint pas le client, tout ce qui sui
 ⛔ **Ne pas ranger ici** le symptôme séance « 4 exercices demandés, 2 chargés » (MILO-SEANCE-01) :
 c'est un **symptôme réel dont la cause n'est pas déterminée** — un mécanisme capable de le produire
 est reproduit en local, l'événement réel ne l'est pas.
+
+### 🔄 Une porte non équipée : le débrief de fin de séance *(mise à jour DOC-SYNC du 04/10/2026 — ft-v1236 → ft-v1250)*
+La protection de ft-v1235 couvrait le chat, le fil, le PDF, le partage, la séance, l'annonce et le
+programme — **pas le débrief**. Le Worker transforme un échec en amont (surcharge, quota, réponse vide)
+en **HTTP 200 `{reply:'Désolé, réessaie.', complete:false}`** ; `_runSeDebrief` ne lisait que `reply`
+→ affiché et rangé comme un débrief, jeton de reprise détruit (plus de « Réessayer »), `summarizeCoach`
+payé (P0 + P2, audit E2E-01 C-bis). *Un échec qui arrive avec le code d'un succès et un texte de repli
+ressemble à un succès pour tout lecteur qui ne lit pas le drapeau.* Voisin de 🧱 (une protection posée
+d'un seul côté) et de §59 (la jumelle).
+🛡️ **ft-v1250** : un seul critère de succès, `_dbfReponseValide` (fail-closed), sur les **3** chemins
+(fin de séance, « Réessayer », rattrapage) : un échec rend le jeton, ne range rien, ne résume rien.
+⛔ **La cause de l'échec réel du 03/10 à 20:01 n'est PAS démontrée** — seul le traitement de l'échec
+l'est.
+
+### 🔄 La variante « document » : un PDF importé lu à moitié sans le dire
+`_pdfToImages` (log.js) plafonne à **`MAX_PAGES=8`** et rend les pages lues **sans aucun état** de
+complétude. Mesuré le 13/09 sur de vrais fichiers (`docs/CHANTIER-IMPORTS.md`) : 22 pages, 8 lues,
+**64 % jamais lus**. Le contrat COMPLETE / PARTIAL / UNKNOWN (décision de Michel du 13/09) et son
+avertissement n'existent que sur `_pdfToText` — l'autre porte. Appelants en production (P0) : import
+de repas, de programme, d'historique, et bilan sanguin. *Une lecture partielle n'est pas un succès* : c'est
+la leçon de ce paragraphe, appliquée à une lecture au lieu d'une génération.
+⛔ **NON CORRIGÉ au 04/10/2026 (ft-v1250).** Le besoin produit est noté dans `IDEES-FUTURES.md`
+(import de documents).
