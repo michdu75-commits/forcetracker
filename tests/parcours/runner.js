@@ -20171,12 +20171,16 @@ console.log('\n-- CLXXVIII. Le sélecteur renommait au lieu d\'ajouter (ft-v1073
     o.aAjoute=(o.apres.length===3 && o.apres[2]==='Rowing Hammer Strength');
     o.aRenomme=(o.apres.indexOf('Tirage Poulie Haute (Lat Pulldown)')<0);
 
-    /* ⭐ NON-REGRESSION : le VRAI remplacement doit marcher, et garder les series */
+    /* ⭐ NON-REGRESSION : le VRAI remplacement doit marcher.
+       🛡️ SESSION-INTEGRITY-01 (04/10/2026, décision de Michel) : ce témoin figeait « il GARDE les
+       séries » (ft-v296, corriger une étiquette). Le remplacement change désormais d'EXERCICE : la
+       série FAITE du Tirage (65×8 ✓) reste au Tirage, le Rowing Hammer arrive juste derrière, sans
+       rien hériter. Ce qu'on garde de l'esprit d'origine : le remplacement MARCHE, il ne perd rien. */
     monter();
     openExPickerForReplace(0);
     addExercise('Rowing Hammer Strength');
-    o.remplacement={noms:noms(), series:((S.wkt.exs[0]||{}).sets||[]).length,
-                    kg:((S.wkt.exs[0]||{}).sets||[{}])[0].kg};
+    o.remplacement={noms:noms(), tirage:((S.wkt.exs[0]||{}).sets||[]).map(z=>z.kg+(z.done?'v':'')).join(','),
+                    rowing:((S.wkt.exs[1]||{}).sets||[]).map(z=>z.kg+(z.done?'v':'')).join(',')};
 
     /* ⛔ R15 : la regle elle-meme, pas seulement le cas du jour */
     o.declare=(typeof _OVERLAY_CLOSERS!=='undefined') && _OVERLAY_CLOSERS['mod-ex']==='closeExPicker';
@@ -20213,9 +20217,9 @@ console.log('\n-- CLXXVIII. Le sélecteur renommait au lieu d\'ajouter (ft-v1073
     t('⛔ ④ R15 : `mod-ex` est déclaré dans les fermetures propres',
       X.declare===true, 'déclaré = '+X.declare);
     /* ⭐ ON NE CASSE PAS CE QUI MARCHAIT. */
-    t('⭐ ⑤ NON-RÉGRESSION : le vrai remplacement marche et GARDE les séries',
-      X.remplacement.noms[0]==='Rowing Hammer Strength' && X.remplacement.noms.length===2
-      && X.remplacement.series===1 && X.remplacement.kg===65, JSON.stringify(X.remplacement));
+    t('⭐ ⑤ NON-RÉGRESSION : le vrai remplacement marche — la série FAITE reste au Tirage, le Rowing arrive derrière sans rien hériter (SESSION-INTEGRITY-01)',
+      JSON.stringify(X.remplacement.noms)===JSON.stringify(['Tirage Poulie Haute (Lat Pulldown)','Rowing Hammer Strength','Rowing Poitrine Appuyée (Chest Supported)'])
+      && X.remplacement.tirage==='65v' && X.remplacement.rowing!=='' && !/65|v/.test(X.remplacement.rowing), JSON.stringify(X.remplacement));
     t('⭐ ⑥ NON-RÉGRESSION : les 5 modes spéciaux restent atteignables, le défaut est « workout »',
       X.modes.replace==='replace' && X.modes.prog==='prog' && X.modes.addGroup==='addToGroup'
       && X.modes.addSess==='addSess' && X.modes.replSess==='replaceSess' && X.modes.defaut==='workout',

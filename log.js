@@ -3340,25 +3340,70 @@ function _majTitreExPicker(){
     ? 'Choisir un exercice · '+_exAjoutes+' ajouté'+(_exAjoutes>1?'s':'')
     : 'Choisir un exercice';
 }
-// Remplacer un exercice mal choisi (ex. Développé Décliné → Développé Couché) SANS perdre les séries.
+// Remplacer un exercice de la séance en cours par un AUTRE exercice (menu ⋯ → Remplacer).
 function openExPickerForReplace(ei){
   closeExMenu();
   _replaceEi=ei;
   openExPicker('replace');
   toast('Choisis le bon exercice','info');
 }
+/* 🛡️ SESSION-INTEGRITY-01 (04/10/2026) — UN REMPLACEMENT EST UN REMPLACEMENT, PLUS UN RENOMMAGE.
+   Terrain de Michel, 03/10 : Presse 200×2 É · 240×10 ×3 → « Remplacer » par Rowing Hammer Strength
+   → l'historique affiché était bien celui du Rowing, mais les séries courantes restaient
+   200 / 240 / 240 / 240 ; même chose au 2ᵉ remplacement vers le Shoulder Press. Reproduit à
+   l'identique (SESSION-MILO-E2E-01) : la fonction ne changeait QUE le nom. Validé sans corriger, la
+   séance enregistrait « Shoulder Press 240×10 », un record à 240 kg et 7 200 kg de volume — séance,
+   records, Progrès et contexte de Milo contaminés.
+   ⭐ D'où venait ce comportement : ft-v296, « je me suis trompé de nom » (Développé Décliné noté au
+   lieu du Couché) — corriger une ÉTIQUETTE. Michel a tranché le 04/10 : le menu « Remplacer » change
+   d'EXERCICE. ⛔ Ce qui n'est pas perdu : corriger le nom d'une séance déjà enregistrée reste
+   possible, explicitement, dans le détail de la séance (Progrès → 🔄, `replaceSessEx`).
+   👉 LES DEUX INVARIANTS :
+     ① le nouvel exercice ne reçoit RIEN de propre à l'ancien — ni charges, ni répétitions, ni repos
+        prescrits, ni consigne, ni méthode, ni marqueur d'auteur `_milo`. Il est reconstruit depuis
+        SES sources (sa dernière séance, comme un ajout normal) ;
+     ② UNE SÉRIE VALIDÉE N'EST JAMAIS RÉÉTIQUETÉE : faite sur l'exercice A, elle reste à A. Seul le
+        travail RESTANT passe à B, inséré juste après A.
+   ⭐ Ce qui RESTE, parce que c'est vrai de la PLACE et pas de l'exercice : la position dans la séance,
+   l'appartenance à un groupe (superset / circuit), et la STRUCTURE des séries — leur nombre et le
+   rôle échauffement / travail. */
+function _typeStructure(t){ return (t==='É'||t==='W')?t:'N'; }   // rôle seulement : une méthode (D, X…) appartient à l'ancien
+function _exerciceRemplacant(name, modeleSets, ancien){
+  const prev=(typeof getPrev==='function')?(getPrev(name)||[]):[];
+  const mod=((modeleSets&&modeleSets.length)?modeleSets:[{type:'N'},{type:'N'},{type:'N'}])
+    .map(s=>({type:_typeStructure(s&&s.type)}));
+  const pa=_prevAligne(prev,mod);   // par RÔLE, exactement comme `addExercise` (R13)
+  const sets=mod.map((m,i)=>{const pp=pa[i];return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:m.type,done:false,rm1:0};});
+  const o={name,sets};
+  if(ancien&&ancien.group){o.group=ancien.group;o.groupType=ancien.groupType||'super';}
+  return o;
+}
 function _replaceExInWorkout(name){
   const ei=_replaceEi;_replaceEi=null;
   if(ei===null||!S.wkt||!S.wkt.exs[ei])return;
-  const old=S.wkt.exs[ei].name;
+  const ex=S.wkt.exs[ei], old=ex.name;
   if(name===old){renderExBlocks();return;}
-  // On garde toutes les séries (kg/reps/type/note), on change juste le nom.
-  S.wkt.exs[ei].name=name;
-  // rm1 des séries validées recalculé sous le nouveau nom (inchangé numériquement, mais cohérent)
-  S.wkt.exs[ei].sets.forEach(s=>{if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);});
-  _expandedEx=ei;
+  const faites=(ex.sets||[]).filter(s=>s&&s.done);
+  const restantes=(ex.sets||[]).filter(s=>s&&!s.done);
+  const nouveau=_exerciceRemplacant(name, restantes.length?restantes:ex.sets, ex);
+  if(!faites.length){
+    S.wkt.exs[ei]=nouveau;                 // rien n'a été fait : B prend la place entière de A
+    _expandedEx=ei;
+  }else{
+    /* ② Du travail a été fait sur A : il RESTE à A. A sort de son groupe (B y prend sa place, juste
+       derrière lui) et ne garde que ses séries réellement faites. */
+    ex.sets=faites;
+    if(ex.group){delete ex.group;delete ex.groupType;}
+    S.wkt.exs.splice(ei+1,0,nouveau);
+    // Les repères tenus par INDEX qui pointent après A suivent le décalage.
+    const dec=c=>{ if(c&&typeof c.ei==='number'&&c.ei>ei)c.ei++; };
+    if(Array.isArray(_rirCible))_rirCible.forEach(dec); else dec(_rirCible);
+    _expandedEx=ei+1;
+  }
   persist();renderExBlocks();
-  toast('Exercice remplacé par '+name,'success');
+  toast(faites.length
+    ? 'Séries faites gardées sur '+old+' — '+name+' ajouté pour la suite'
+    : 'Exercice remplacé par '+name,'success');
   _demanderPourquoiSwap(old, name);
 }
 
