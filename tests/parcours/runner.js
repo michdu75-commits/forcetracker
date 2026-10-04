@@ -4152,8 +4152,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
         return r.fulfill({status:200,contentType:'application/json',body:'{}'});
       n++;
       if(n<=nAbort) return r.abort();
+      /* 🛡️ SESSION-INTEGRITY-01 (04/10/2026) — la réponse simulée porte le format RÉEL du Worker
+         (`complete`, `stopReason`, en production depuis MILO-PDF1, 25/09). Elle n'envoyait que `reply` :
+         un débrief valide est désormais une réponse CONFIRMÉE terminée (`_dbfReponseValide`), et une
+         simulation qui n'emploie pas le schéma de la production ne teste rien (SUIVI-AUDIT, leçon 1). */
       r.fulfill({status:200,contentType:'application/json',
-                 body:JSON.stringify({reply:'Belle séance : 100 kg × 5, propre. Vise 102,5 kg.'})});
+                 body:JSON.stringify({reply:'Belle séance : 100 kg × 5, propre. Vise 102,5 kg.',_diag:'ok',stopReason:'end_turn',truncated:false,complete:true})});
     });
     await pg.addInitScript(seedScript());
     await pg.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
