@@ -391,7 +391,9 @@ module.exports.ecran = async function (t, b, PORT) {
       /Rowing Yates: 40kg×10 \([^)]*\) \[1ʳᵉ référence, pas un record\]/.test(ctx) && !/Dernier RECORD en date: Rowing Yates/.test(ctx), (ctx.match(/Dernier RECORD[^\n]*/) || [''])[0]);
     const dbf = await X.pg.evaluate(() => (document.getElementById('se-debrief') || {}).textContent || '');
     t('G1 ⛔⛔ N-G2 : la séance n\'est pas jugée contre le record qu\'elle vient de créer (aucune remarque d\'intensité sur une 1ʳᵉ fois)',
-      !/tenable|1RM estimé/.test(dbf) && !/Rowing Yates[^·]*⚡ intensité/.test(ctx), dbf.slice(0, 200));
+      // ⚠️ Le motif vise la REMARQUE elle-même (« 3×10 à 40 kg »), pas « Rowing Yates … ⚡ » : les séries sont
+      // séparées par « · » dans le contexte, un `[^·]*` ne la trouvait jamais (témoin aveugle trouvé par M12b).
+      !/tenable|1RM estimé/.test(dbf) && /Rowing Yates: S1 40×10/.test(ctx) && !/⚡ intensité — [^\]]*3×10 à 40 kg/.test(ctx), dbf.slice(0, 200));
     const s0 = L.sessions.find(s => (s.exs || []).some(e => e.name === 'Rowing Yates')) || {};
     t('G1b … la référence d\'avant la séance est figée sur la séance (`refAvant` = 0 : aucune référence)', s0.refAvant && s0.refAvant['Rowing Yates'] === 0, js(s0.refAvant));
     await X.cx.close();
