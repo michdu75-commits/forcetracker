@@ -21,7 +21,7 @@
 
 ## 🧭 État au 03/10/2026 soir (DOC-SYNC-03OCT) — trois niveaux à ne pas confondre
 
-- **PRODUCTION / MASTER** : `origin/master` `ad172a87` = **`ft-v1249`** (vérifié le 03/10 à 22:27 UTC). Rien de ce qui suit n'y est actif.
+- **PRODUCTION / MASTER** : `origin/master` `935388d5` = **`ft-v1250`** (publié le 04/10 à 19:38 UTC, Pages run n°1339 SUCCESS) — SESSION-INTEGRITY-01 y est actif ; les branches non publiées ci-dessous ne le sont pas.
 - **🌿 BRANCHE NON PUBLIÉE — NUT-PUNCH-01** (coup de poing Nutrition, session-B) : **TERMINÉ SUR BRANCHE, NON PUBLIÉ, aucune version, PRÊT POUR CONTRE-VÉRIFICATION**. Branche `claude/nut-punch-01`, HEAD `50546011` (documentaire ; passe complète 5 873 ✅ / 0 ❌ sur l'arbre `b9c11776`, 4 conditions vertes ; 60 mutations conformes ; 0 appel réel). Son détail vit **sur la branche** (`docs/NUT-PUNCH-01.md`, sa ligne ici, `SUIVI-AUDIT`, `JOURNAL-DE-TEST`, `NUTRITION-MOTEUR` §5.0) : il n'est **pas** recopié sur master pour ne pas créer de doublon — ⚠️ **à la fusion, garder la ligne détaillée de la branche et retirer celle-ci.** Prochaine étape : contre-vérification indépendante, puis décision de publication de Michel.
 - **🔬 DIAGNOSTIC — SESSION-MILO-E2E-01** (audit forensique du parcours réel du 03/10) : **DIAGNOSTIC TERMINÉ, AUCUNE CORRECTION**, 0 appel IA réel. Synthèse : `docs/SESSION-MILO-E2E-01.md`.
   - **P0** — remplacement d'exercice **hybride** (le nom change, les séries restent ; validé sans corriger, il contamine séance, PR, historique, Progrès et Milo).
