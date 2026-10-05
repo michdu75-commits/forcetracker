@@ -536,6 +536,9 @@ const NEW_FEATURES=[
      bouton « Voir le débrief Milo » et le choix d'export. Sans `spot` (comme les autres entrées de l'écran).
      ⚠️ La pop-up WHATS_NEW se décide à la publication (elle exige un numéro de version, interdit pendant le
      travail — protocole du 13/09). */
+  /* 🎯 DEBRIEF-ON-DEMAND-01 (05/10/2026) — règle d'or #11, point 2. Sur SÉANCE : c'est à la fin d'une séance que le
+     geste a changé (le débrief ne part plus seul). */
+  {id:'debrief-demande', screen:'log', desc:'Nouveau : à la fin d\'une séance, tes <b>chiffres</b> s\'affichent tout de suite, et Milo n\'analyse plus ta séance tout seul — c\'est toi qui le demandes : <b>« ✨ Analyser cette séance avec Milo »</b>. Tu peux aussi le faire plus tard, depuis <b>Progrès → historique</b>.'},
   {id:'debrief-seance', screen:'progress', desc:'Nouveau : chaque séance débriefée par Milo a son bouton <b>« 💬 Voir le débrief Milo »</b> dans ton historique — et l\'export peut inclure (ou pas) ces débriefs. Une <b>première fois</b> sur un exercice s\'appelle maintenant « <b>Première référence enregistrée</b> », plus « record ».'},
   /* 🛡️ POINT ROUGE sur SÉANCE (ft-v1153) : c'est là que les avertissements APPARAISSENT, donc
      là que la pastille doit ramener. ⛔ Le poser sur l'Accueil enverrait chercher sur un écran où

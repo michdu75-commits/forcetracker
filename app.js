@@ -8176,7 +8176,7 @@ function exitDemoMode(){
 const APP_GUIDE_SLIDES=[
   /* 🛡️ SESSION-INTEGRITY-01 — DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : une capture montrerait
      un débrief qui n'est pas celui du lecteur. Elle dit ce que la pop-up ne dit pas : OÙ le retrouver. */
-  {icon:'💬', t:'Chaque séance garde son débrief', cap:'Quand Milo débriefe ta séance, ce débrief est <b>rangé avec elle</b>. Retrouve-le quand tu veux : <b>Progrès → historique → « 💬 Voir le débrief Milo »</b> — sans réseau, sans appel. À l\'export, c\'est toi qui choisis : <b>avec</b> ou <b>sans</b> les débriefs.'},
+  {icon:'💬', t:'Chaque séance garde son débrief', cap:'À la fin d\'une séance, tes chiffres s\'affichent tout de suite ; l\'avis de Milo se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b> (rien ne part sans ce geste). Son débrief est alors <b>rangé avec la séance</b>. Retrouve-le quand tu veux : <b>Progrès → historique → « 💬 Voir le débrief Milo »</b> — sans réseau, sans appel. À l\'export, c\'est toi qui choisis : <b>avec</b> ou <b>sans</b> les débriefs.'},
   /* 🏃 DIAPO DU GUIDE (règle d'or #11, point 5), et **SANS IMAGE exprès** : une capture
      figerait DEUX libellés qui changent selon l'état de la séance — le bouton du bas dit
      « Terminer la séance » ou « Enregistrer le cardio » selon qu'une série a été validée ou
