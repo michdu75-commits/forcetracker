@@ -490,3 +490,22 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   ci-dessus (suppression pendant l'appel → débrief orphelin au magasin, mesuré par E5-11 : 1 seul appel, mais l'orphelin reste) ·
   **N-G1** hors lot (dette voisine : le message courant part deux fois dans la charge utile — mécanisme Worker / payload
   différent, effet sur le modèle non mesuré).
+
+### 🎯 DEBRIEF-ON-DEMAND-01 — LE DÉBRIEF MILO SE DEMANDE (05/10/2026, session-B — ⚠️ BRANCHE `claude/debrief-on-demand-01`, NON PUBLIÉ)
+- **Décision de Michel (D-052)** : la fin de séance montre le résumé local ; l'avis de Milo part sur « ✨ Analyser cette séance
+  avec Milo » (fin de séance ou Progrès). **0 appel IA sans clic** ; un geste = au plus une génération par séance.
+- **Retirés (R30, raison écrite dans `coach.js`)** : file `ft4_pending_debrief`, « reçu » `ft4_debrief_recu`, livraisons
+  `ft4_debrief_faits`, rattrapage au démarrage, `_maybeAutoDebrief`, branche `debriefSess` de `sendToCoach`, `_recapSeance`,
+  `_retrySeDebrief`, et 2 essais réseau cachés du moteur. Les clés des anciennes versions sont oubliées au démarrage ; un
+  « reçu » valide (déjà payé) est rangé dans le magasin, pas perdu.
+- **E5 est absorbé** : son banc (`banc_e5.js`, `mut_e5.py`, `e5_idempotence.js`) est retiré, ses invariants encore vivants
+  (identifiant de séance, double clic, A ne libère pas B, `complete:false`, suppression) sont repris par OD-05/09/10/12/13/14.
+- **Ce qui reste ouvert, dit** : réponse perdue au rechargement pendant l'analyse (relance = 2ᵉ appel, demandé —
+  `docs/IDEMPOTENCE-DEBRIEF.md` §10) · réserve ⑤ (suppression PENDANT l'analyse : la réponse arrivée ensuite est encore rangée
+  sous l'identifiant disparu) · débriefs locaux seulement (D-047) · un débrief demandé quand le fil du Coach est illisible
+  est rangé et visible dans Progrès, mais n'entre pas dans le fil (plus de rattrapage pour l'y poser) · **N-G1** hors lot ·
+  le banc réel de Milo n'a pas tourné (R34) : la consigne « à ma demande » pour une séance ancienne n'est pas mesurée.
+- **Générateurs PDF historiques** (`tools/gen_ph2_politique_pdf.py`, `tools/gen_milo_consolidation_pdf.py`) : leurs gardes
+  recomptent des faits datés (le jeton, le rattrapage) et **refusent désormais de produire** — c'est leur rôle, le fait est
+  tombé. Ni corrigés ni régénérés : ce sont des dossiers d'une date. Hors passe et hors `check_regles`.
+

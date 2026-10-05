@@ -2006,6 +2006,20 @@ requêtes, 1 débrief, 1 message — **aucun doublon côté téléphone, un doub
 serveur, impossible à fermer côté client : décision toujours chez Michel. **Deux onglets** ouverts sont deux
 pages (§33). Preuve : P2 (banc), **aucune occurrence terrain (pas de P3)**.
 
+### 🎯 DEBRIEF-ON-DEMAND-01 : la famille est fermée PAR LA DÉCISION, pas par un verrou de plus *(05/10/2026, branche `claude/debrief-on-demand-01` — ⚠️ NON PUBLIÉ)*
+**Décision de Michel : le débrief de Milo se DEMANDE** (« Analyser cette séance avec Milo », fin de séance ou Progrès).
+Tous les chemins qui appelaient Milo sans geste sont **retirés** : la file `ft4_pending_debrief`, le « reçu », les
+livraisons `ft4_debrief_faits`, le rattrapage au démarrage (`load` + 3 s, `_dbfRecuperer`, `_dbfRattraper`),
+`_maybeAutoDebrief` à l'ouverture du Coach, la branche `debriefSess` de `sendToCoach`, et une boucle de **2 essais
+réseau cachés** dans le moteur (trouvée en le relisant : un « nouvel essai » qui pouvait payer deux fois une requête
+arrivée au serveur). ⭐ *E5 rendait l'automatisme sûr ; l'automatisme n'existe plus — c'est plus simple qu'un verrou
+de plus.* Ce qui reste du mécanisme E5 : « en vol » **par séance et par page** — il empêche un double clic de payer
+deux générations, et il permet de dire « Analyse interrompue » après un rechargement **sans rien relancer**.
+**Ce que ça change au cas B** : un rechargement pendant l'analyse ne déclenche plus de 2ᵉ requête toute seule. La
+1ʳᵉ réponse reste perdue avec la page (le serveur l'a facturée) ; si la personne relance, elle paie une 2ᵉ analyse
+**qu'elle a demandée**. *Le doublon de facturation n'est plus silencieux : il est un geste.* Banc
+`tools/banc_debrief_demande.js` (OD-01 → OD-17), contrôle négatif `tools/mut_debrief_demande.py`.
+
 ---
 
 ## 29. 🚧 LE GARDE-FOU CALIBRÉ SUR UN RATIO REFUSE LE CAS QU'IL VISE **(31/08/2026, ft-v1083)**

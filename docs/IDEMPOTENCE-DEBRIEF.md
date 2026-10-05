@@ -219,3 +219,19 @@ le jeton de la page qui l'a posé ; seul un appel laissé par une **autre** page
 **⭐ Ce que ça ne change PAS à la question du §8** — mesuré par E5-6 après correction : un rechargement pendant
 l'appel donne toujours **2 requêtes reçues par le serveur, 1 seul débrief, 1 seul message** (aucun doublon côté
 téléphone, un doublon de facturation). ⛔ **La question n°1 du §8 reste entière et reste à Michel.**
+
+---
+
+## 🎯 10. DEBRIEF-ON-DEMAND-01 — LE CAS B N'EST PLUS AUTOMATIQUE (05/10/2026, branche `claude/debrief-on-demand-01`, ⚠️ NON PUBLIÉ)
+
+**Décision de Michel : le débrief de Milo se demande** (« Analyser cette séance avec Milo »). Plus aucun appel sans
+geste : ni à la fin, ni au démarrage, ni à l'ouverture du Coach. Le rattrapage qui rejouait l'appel après un
+rechargement est **retiré**.
+
+**Effet mesuré sur le cas B (OD-06 / OD-07)** : rechargement pendant l'analyse → **1 seule requête** au serveur,
+aucun débrief rangé, et la séance affiche « Analyse interrompue — relancer ». Rien ne part avant le clic.
+
+⚠️ **Ce que ça ne règle pas** : la réponse de la 1ʳᵉ requête est toujours perdue avec la page (le serveur l'a
+facturée). Si la personne relance, elle paie une 2ᵉ analyse — **demandée** cette fois, plus jamais silencieuse.
+⛔ **La question n°1 du §8 (idempotence serveur) reste à Michel** ; ce lot n'ajoute aucun stockage serveur.
+

@@ -3371,3 +3371,25 @@ une seconde ; côté téléphone, un seul débrief et un seul message. ❓ **Dou
 jour de l'app qui tombe juste après une séance — c'était exactement le cas de Michel le 23/08) ? Vérifiable par du code : ✅
 (c'est E5-6). Fermer le doublon de facturation exige un stockage serveur : **décision de Michel** (`docs/IDEMPOTENCE-DEBRIEF.md`
 §8). État : **à trier**.
+
+### 🟡 DEUX ONGLETS : L'UN AFFICHE « ANALYSE INTERROMPUE » PENDANT QUE L'AUTRE ANALYSE ENCORE (05/10/2026 — DEBRIEF-ON-DEMAND-01)
+Plus rien ne part seul, donc plus de double appel automatique. Mais « en vol » appartient à la PAGE : un 2ᵉ onglet voit l'analyse
+du 1ᵉʳ comme « interrompue » et propose de relancer — un clic y paierait une 2ᵉ analyse. ❓ **Doute** : le libellé ment-il assez
+souvent pour gêner ? Vérifiable par du code : ✅ (deux pages Playwright sur le même stockage). État : **à trier**.
+
+### 🟡 RECHARGEMENT PENDANT L'ANALYSE : 1 REQUÊTE, RÉPONSE PERDUE, RELANCE = 2ᵉ APPEL DEMANDÉ (05/10/2026 — OD-06/07)
+Mesuré : rechargement pendant l'analyse → 1 seule requête au serveur, rien de rangé, « Analyse interrompue — relancer ». Le
+doublon de facturation de E5-6 n'est plus silencieux : il n'existe que si la personne relance. ❓ **Doute** : la personne
+comprend-elle qu'« interrompue » veut dire « déjà payée une fois » ? **Juge humain.** État : **à trier**.
+
+### 🟡 MILO ANALYSE UNE SÉANCE ANCIENNE « À MA DEMANDE » : PARLE-T-IL ENCORE COMME SI ELLE VENAIT DE FINIR ? (05/10/2026)
+Depuis Progrès, la consigne dit « Analyse cette séance de mon historique, à ma demande » au lieu de « Je viens de terminer ma
+séance ». ❓ **Doute** : Milo dit-il quand même « bravo pour ta séance d'aujourd'hui » sur une séance de la semaine dernière ?
+Le banc réel n'a pas tourné (R34, 0 appel). Vérifiable par du code : ⚠️ en partie (chercher « aujourd'hui » / « tout à
+l'heure » dans la réponse). État : **à trier**.
+
+### 🟡 LE DÉBRIEF À LA DEMANDE NOURRIT MOINS LA MÉMOIRE DE MILO (05/10/2026 — décision D-052)
+Seul un débrief demandé et réussi écrit dans la mémoire de débrief (objectif de la séance suivante, continuité). Une séance
+jamais analysée n'y laisse rien. ❓ **Doute** : la continuité « l'objectif de la fois d'avant » tient-elle encore si la personne
+n'analyse qu'une séance sur trois ? **Juge humain** (usage réel). État : **à trier**.
+
