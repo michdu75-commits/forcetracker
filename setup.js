@@ -1745,21 +1745,27 @@ function renderSessions(){
     /* 🛡️ SESSION-INTEGRITY-01 / D-043 (Michel) — « Voir le débrief Milo » : une PETITE action, seulement
        sur une séance qui a VRAIMENT un débrief rangé à son nom. Le texte ne s'affiche pas sous chaque
        carte (décision de Michel) ; il s'ouvre au tap, sans appel à l'IA. */
+    /* 🎯 DEBRIEF-ON-DEMAND-01 (Michel) — le MÊME emplacement porte l'autre action : « Analyser avec Milo »
+       tant qu'aucun débrief n'est rangé pour CETTE séance (identifiant exact, jamais la date), « Voir le
+       débrief Milo » ensuite. Jamais les deux. Une analyse coupée par un rechargement se DIT et attend un
+       clic. Un cardio seul n'a pas d'analyse (même règle que l'écran de fin). */
     const _dbfId=(typeof _dbfCle==='function')?_dbfCle(s):'';
-    const _dbfBtn=(_dbfId&&typeof _dbfTexteDe==='function'&&_dbfTexteDe(_dbfId))
-      ?'<button class="sess-dbf-btn" onclick="voirDebriefMilo('+_argAttr(_dbfId)+',event)">💬 Voir le débrief Milo</button>':'';
+    const _dbfArg=_dbfId?_argAttr(_dbfId):'';
+    const _dbfBtn=!_dbfId||typeof _dbfTexteDe!=='function' ? ''
+      : _dbfTexteDe(_dbfId) ? '<button class="sess-dbf-btn" onclick="voirDebriefMilo('+_dbfArg+',event)">💬 Voir le débrief Milo</button>'
+      : !_dbfAnalysable(s) ? ''
+      : _dbfEnVol(_dbfId) ? '<button class="sess-dbf-go" disabled>⏳ Milo analyse…</button>'
+      : _dbfInterrompue(_dbfId) ? '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">⏸️ Analyse interrompue — relancer</button>'
+      : '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">✨ Analyser avec Milo</button>';
     return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
   }).join('');
 }
 /* 💬 LA LECTURE D'UN DÉBRIEF — LOCALE, SANS APPEL, SANS TOUCHER À LA SÉANCE (D-043).
    ⛔ Elle ne relit aucune conversation et n'ouvre pas le Coach : elle lit le magasin canonique
    (`_dbfTexteDe`, coach.js), donc elle marche hors ligne. Ni la séance ni le fil ne sont modifiés. */
-function voirDebriefMilo(id, ev){
-  if(ev&&ev.stopPropagation)ev.stopPropagation();
-  const e=(typeof _dbfTexteDe==='function')?_dbfTexteDe(id):null;
-  if(!e){toast('Aucun débrief Milo rangé pour cette séance','info');return;}
+// La fenêtre « Débrief Milo » d'UNE séance : son en-tête (la séance identifiée), ouverte. Rend la zone de texte.
+function _dbfFenetre(id){
   const s=(S.sessions||[]).find(x=>x&&typeof _dbfCle==='function'&&_dbfCle(x)===String(id))||null;
-  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const sub=document.getElementById('dbf-milo-sub');
   if(sub){
     const nEx=s?(s.exs||s.exercises||[]).length:0;
@@ -1767,9 +1773,30 @@ function voirDebriefMilo(id, ev){
                        s.volume?Math.round(s.volume)+' kg':''].filter(Boolean).join(' · ')
                      :'Séance introuvable dans l\'historique';
   }
-  const body=document.getElementById('dbf-milo-body');
-  if(body)body.innerHTML=(typeof _coachFmtHtml==='function')?_coachFmtHtml(esc(e.texte)):'<p>'+esc(e.texte)+'</p>';
   const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.add('open');
+  return document.getElementById('dbf-milo-body');
+}
+function voirDebriefMilo(id, ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  const e=(typeof _dbfTexteDe==='function')?_dbfTexteDe(id):null;
+  if(!e){toast('Aucun débrief Milo rangé pour cette séance','info');return;}
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const body=_dbfFenetre(id);
+  if(body)body.innerHTML=(typeof _coachFmtHtml==='function')?_coachFmtHtml(esc(e.texte)):'<p>'+esc(e.texte)+'</p>';
+}
+/* 🎯 « ANALYSER AVEC MILO » — le seul geste qui demande un débrief (DEBRIEF-ON-DEMAND-01, décision de Michel).
+   Depuis l'écran de fin (la réponse s'écrit sous ses chiffres) ou depuis Progrès (dans la fenêtre « Débrief
+   Milo », la même que « Voir »). La séance est retrouvée par son identifiant exact. Le moteur, ses gardes et
+   ses échecs sont ceux de `_runSeDebrief` (log.js). */
+function analyserSeanceMilo(id, ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  const s=(S.sessions||[]).find(x=>x&&typeof _dbfCle==='function'&&_dbfCle(x)===String(id))||null;
+  if(!s){toast('Séance introuvable dans l\'historique','error');return;}
+  const fin=document.getElementById('ov-session-end');
+  if(fin&&fin.classList.contains('open')&&typeof _seDbfLast!=='undefined'&&_seDbfLast&&_dbfCle(_seDbfLast.sess)===String(id)){
+    _runSeDebrief(s,_seDbfLast.prCount,document.getElementById('se-debrief')); return; }
+  const body=_dbfFenetre(id);
+  if(body) _runSeDebrief(s,0,body);
 }
 function fermerDebriefMilo(){const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.remove('open');}
 // Déplie/replie la liste d'exos d'une carte d'historique sans ouvrir le détail (retour GPT, ft-v570)

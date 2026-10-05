@@ -4535,15 +4535,8 @@ async function finishWorkout(){
   // Séance confirmée en localStorage — on peut effacer le brouillon
   S.wkt=null;
   try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
-  // DÉBRIEF AUTO : Milo débriefera de lui-même la prochaine fois que l'utilisateur ouvre le Coach
-  // (une seule fois par séance ; seulement si de vrais exercices ont été validés, pas un cardio seul).
-  // ⚠️ UNE FILE, PLUS UN EMPLACEMENT UNIQUE (ft-v979) : `setItem` n'avait qu'une place, donc
-  // deux séances sans ouvrir Milo entre les deux et la première disparaissait SANS BRUIT.
-  if(_hasExs&&hasDone){
-    const _sid=String(sess.id||sess.ts||sess.date);
-    if(typeof _dbfAjouter==='function') _dbfAjouter(_sid);
-    else try{localStorage.setItem('ft4_pending_debrief',JSON.stringify([_sid]));}catch(e){}
-  }
+  // 🎯 DEBRIEF-ON-DEMAND-01 : la séance n'est plus mise en file pour un débrief automatique — Milo
+  // n'analyse une séance que si on le lui demande (écran de fin ou Progrès). Voir coach.js.
   persist();
   // Registre Athlète (brique 2) : recalcule les faits mesurés après la séance.
   try{if(typeof computeRegistreFacts==='function'){computeRegistreFacts();persist();}}catch(e){}
@@ -4595,9 +4588,9 @@ function _showSessionEnd(sess,bestPr,prCount,premieresRefs){
   _renderSeExs(sess);
   _renderSeMood();
   ov.classList.add('open');
-  /* Le texte d'attente NU a disparu (ft-v1022) : `_runSeDebrief` pose d'abord le socle
-     chiffré — qui ne dépend d'aucun réseau — puis l'attente de l'avis de Milo en dessous. */
-  _runSeDebrief(sess,prCount||0);
+  /* 🎯 DEBRIEF-ON-DEMAND-01 : le socle chiffré (local) et le bouton « Analyser cette séance avec Milo ».
+     ⛔ Aucun appel ici : l'analyse ne part que sur un clic. */
+  _seDebriefVue(sess,prCount||0);
 }
 function _renderSeStats(sess,prCount,premieresRefs){
   const el=document.getElementById('se-stats');if(!el)return;
@@ -4790,75 +4783,64 @@ function _debriefLocal(sess, prCount, opts){
   }catch(e){}
   return H.join('');
 }
-async function _runSeDebrief(sess,prCount){
-  const slot=document.getElementById('se-debrief');if(!slot)return;
+/* ⭐⭐ LE SOCLE CHIFFRÉ EST LE MÊME DANS TOUS LES CAS (ft-v1022) — local, sans réseau, affiché avant tout.
+   🎯 DEBRIEF-ON-DEMAND-01 : c'est lui, et lui seul, que la fin de séance montre d'office. */
+function _seDebriefChiffres(sess,prCount){
   const nExs=(sess.exs||[]).length;
   let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
-  /* ⚠️ QUAND MILO NE RÉPOND PAS, ON LE DIT (13/08/2026) ────────────────────────────────
-     Michel : *« le briefing d'après séance a bien disparu »*. Vérifié en rejouant une vraie
-     fin de séance : le mécanisme marche — dès que l'API répond, le texte de Milo s'affiche.
-     LE DÉFAUT EST AILLEURS : quand l'appel échoue (réseau, quota, backend), on retombait en
-     SILENCE sur ce résumé de chiffres. Rien ne distinguait « Milo a répondu court » de
-     « Milo n'a jamais répondu » — donc de l'autre côté, le débrief a « disparu » sans que
-     personne ne puisse le savoir. C'est la famille de pannes la plus coûteuse du projet
-     (la sauvegarde morte 36 jours, le déploiement rouge que personne ne voyait) : *ce qui
-     échoue en silence n'est pas rattrapable*.
-     Le résumé chiffré RESTE — il est utile — mais il est désormais suivi d'une ligne qui
-     dit ce qui s'est passé, et le jeton est toujours rendu : Milo débriefera à l'ouverture
-     du Coach. On ne perd rien, on le DIT. */
-  /* ⭐⭐ LE SOCLE CHIFFRÉ EST LE MÊME DANS TOUS LES CAS (ft-v1022) — hors ligne, en ligne,
-     en échec ou déjà débriefé. Avant, ces trois lignes étaient tout ce qu'on rendait sans
-     réseau ; maintenant elles ne sont plus qu'un repli si `_debriefLocal` ne rend rien. */
-  const chiffres=(typeof _debriefLocal==='function')
+  return (typeof _debriefLocal==='function')
     ? _debriefLocal(sess, prCount||0, {chiffres:false})   // les tuiles de l'écran les portent déjà
     : ('<p>'+nExs+' exercice'+(nExs>1?'s':'')+' · '+nSets+' série'+(nSets>1?'s':'')+' · '+(sess.volume||0)+' kg de volume.'+(prCount>0?' Nouveau record 💪 bien joué !':' Séance bouclée, continue comme ça 👊')+'</p>');
+}
+/* 🎯 L'ÉTAT DE L'ANALYSE D'UNE SÉANCE, EN UNE LIGNE (fin de séance) — rien n'est appelé ici.
+   Rangée → le texte · en cours (cette page) → l'attente · interrompue (rechargement) → le dire et
+   proposer de relancer · sinon → « Analyser cette séance avec Milo ». Un cardio seul n'a pas d'analyse. */
+function _dbfActionHtml(sess){
+  const sid=_dbfCle(sess), arg=_argAttr(sid);
+  const e=_dbfTexteDe(sid);
+  if(e) return '<div class="se-dbf-milo">'+((typeof _coachFmtHtml==='function')?_coachFmtHtml(_escNote(e.texte)):'<p>'+_escNote(e.texte)+'</p>')+'</div>';
+  if(!_dbfAnalysable(sess)) return '';
+  if(_dbfEnVol(sid)) return '<p class="se-dbf-off"><span class="se-load">Milo analyse ta séance…</span></p>';
+  if(_dbfInterrompue(sid)) return '<p class="se-dbf-off">⏸️ Analyse interrompue. <button class="se-dbf-retry" onclick="analyserSeanceMilo('+arg+',event)">Relancer l\'analyse</button></p>';
+  return '<p class="se-dbf-off"><button class="se-dbf-retry se-dbf-go" onclick="analyserSeanceMilo('+arg+',event)">✨ Analyser cette séance avec Milo</button></p>';
+}
+/* La séance que montre l'écran de fin (pour que « Analyser » y écrive sa réponse, avec ses chiffres). */
+let _seDbfLast=null;
+function _seDebriefVue(sess,prCount){
+  const slot=document.getElementById('se-debrief');if(!slot)return;
+  _seDbfLast={sess:sess,prCount:prCount||0};
+  slot.innerHTML=_seDebriefChiffres(sess,prCount)+_dbfActionHtml(sess);
+}
+/* 🎯 L'ANALYSE DEMANDÉE — LE SEUL CHEMIN QUI APPELLE MILO POUR UN DÉBRIEF (DEBRIEF-ON-DEMAND-01).
+   Appelée par un clic (« Analyser cette séance avec Milo », « Relancer l'analyse », « Réessayer »),
+   depuis l'écran de fin ou depuis Progrès. `slot` = où écrire la réponse.
+   ⛔ Les gardes, dans l'ordre : ① un débrief déjà rangé → on le montre, on ne repaie pas ; ② une analyse
+   de cette séance déjà en vol dans cette page → rien (double clic, deux écrans : une génération au plus) ;
+   ③ hors ligne → on le dit. Puis « en vol » est posé PAR SÉANCE (E5) : la réponse d'une séance ne
+   libère que la sienne.
+   ⛔ Un échec (réseau, HTTP, `complete:false`, repli « Désolé, réessaie. ») n'enregistre RIEN et
+   propose « Réessayer » — aucun nouvel essai ne part tout seul, ni maintenant ni plus tard. */
+async function _runSeDebrief(sess,prCount,slot){
+  slot=slot||document.getElementById('se-debrief');if(!slot||!sess)return;
+  const fin=(slot.id==='se-debrief');
+  const chiffres=fin?_seDebriefChiffres(sess,prCount):'';
+  const sid=_dbfCle(sess), arg=_argAttr(sid);
   const avec=(msg,retry)=>chiffres+'<p class="se-dbf-off">'+msg
-    +(retry?' <button class="se-dbf-retry" onclick="_retrySeDebrief()">Réessayer</button>':'')+'</p>';
-  /* ⛔⛔ ON AFFICHE LES CHIFFRES AVANT MÊME D'APPELER MILO. Ils ne dépendent d'aucun réseau :
-     les faire attendre la réponse, c'est retenir en otage une information déjà calculée
-     (règle d'or #3). L'attente devient alors une ATTENTE D'AVIS, pas une page vide. */
-  slot.innerHTML=chiffres+'<p class="se-dbf-off"><span class="se-load">Milo analyse ta séance…</span></p>';
-  _seDbfLast={sess:sess,prCount:prCount||0};   // pour le bouton « Réessayer »
-  // Pas de réseau → on le dit, et le jeton reste posé : le Coach débriefera à son ouverture.
+    +(retry?' <button class="se-dbf-retry" onclick="analyserSeanceMilo('+arg+',event)">Réessayer</button>':'')+'</p>';
+  const range=_dbfTexteDe(sid);
+  if(range){ slot.innerHTML=chiffres+_dbfActionHtml(sess); return; }
+  if(_dbfEnVol(sid)){ slot.innerHTML=chiffres+'<p class="se-dbf-off"><span class="se-load">Milo analyse déjà cette séance…</span></p>'; return; }
   if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){
-    slot.innerHTML=avec('📡 Hors ligne — Milo analysera ta séance dès que tu ouvriras le Coach.',false); return; }
-  // ⚠️ LE FLAG EST UN JETON : QUI LE PREND FAIT LE DÉBRIEF (ft-v786).
-  // Trouvé dans l'export de conversations de Michel : Milo a débriefé DEUX FOIS la même séance,
-  // avec deux objectifs mémorisés CONTRADICTOIRES — le second (faux) écrasait le premier, et
-  // c'est lui qui lui a fait dire « on avait pas dit samedi les pecs ? ».
-  // La cause était une COURSE entre les deux chemins : ici on ne retirait le flag qu'APRÈS la
-  // réponse de l'IA (plusieurs secondes). Passer sur l'écran Coach pendant ce temps déclenchait
-  // `_maybeAutoDebrief()`, qui voyait le flag encore posé et lançait un DEUXIÈME débrief.
-  // On prend donc le jeton AVANT l'appel — exactement ce que fait déjà `_maybeAutoDebrief`
-  // (R2 : une seule règle, appliquée pareil des deux côtés) — et on le REND si l'appel échoue.
-  // ⚠️ ft-v979 : `_dbfPrendre()` ne DÉTRUIT plus le jeton, il le met « en cours » avec son
-  // heure. Un rechargement de mise à jour pendant l'appel ne le fait donc plus disparaître —
-  // il retourne dans la file au démarrage suivant (`_dbfRecuperer`).
-  /* ⭐⭐ ON PREND LA SÉANCE AFFICHÉE, PLUS « LA PLUS ANCIENNE DE LA FILE » (15/09/2026 — anomalie B).
-     `_dbfPrendre()` rendait le plus ancien jeton : avec deux séances en attente, cet écran-ci
-     affichait une séance et débriefait l'autre. On cible désormais par IDENTIFIANT — le même que
-     celui de la séance que `_showSessionEnd` vient de rendre. *Les quatre identifiants (affiché,
-     pris, injecté, cité) coïncident alors par CONSTRUCTION, plus par coïncidence.* */
-  const _sid=String((sess&&(sess.id||sess.ts||sess.date))||'');
-  const _pid=(typeof _dbfPrendreCible==='function')?_dbfPrendreCible(_sid)
-            :((typeof _dbfPrendre==='function')?_dbfPrendre():null);
-  /* ⛔⛔ 04/09/2026 — « MILO A DÉJÀ DÉBRIEFÉ » ÉTAIT FAUX SUR UN CARDIO SEUL, et Michel l'a lu
-     sur sa propre capture. Le message répond à « le jeton n'est pas là » et en déduit « quelqu'un
-     l'a déjà pris ». Or il y a un SECOND cas : `finishWorkout` ne met en file que les séances
-     avec des séries validées (« pas un cardio seul »), donc le jeton n'a **jamais existé**.
-     👉 On envoyait alors chercher dans l'onglet Coach un débrief qui n'y est pas.
-     ⭐ *Un message qui nomme quelque chose d'inexistant est pire qu'un silence : on va le
-     chercher.* Même famille que le reste de cette version — le cas sans séries lu comme le cas
-     courant. ⚠️ Le socle CHIFFRÉ reste affiché : il ne dépend d'aucun appel. */
-  if(!_pid && !nSets){ slot.innerHTML=chiffres; return; }
-  // Le Coach a déjà débriefé cette séance : on ne repaie pas un appel — mais on le DIT,
-  // sinon l'écran de fin paraît vide de l'analyse alors qu'elle existe, dans le Coach.
-  if(!_pid){ slot.innerHTML=avec('\ud83d\udcac Milo a déjà débriefé cette séance — retrouve-la dans l\'onglet Coach.',false); return; }
-  /* ⭐⭐ LA SÉANCE EST NOMMÉE (anomalie B). Voir `_dbfDesignation` : l'identifiant CHOISIT la
-     séance, et c'est elle qui fournit sa date. La date ne sélectionne rien — elle décrit, au
-     format exact qu'emploie le contexte, seul repère que le modèle puisse retrouver. */
+    slot.innerHTML=avec('📡 Hors ligne — Milo pourra analyser ta séance quand tu auras du réseau.',true); return; }
+  _dbfVolPoser(sid);
+  /* ⛔⛔ ON AFFICHE LES CHIFFRES AVANT MÊME D'APPELER MILO (règle d'or #3) : l'attente est une
+     ATTENTE D'AVIS, pas une page vide. */
+  slot.innerHTML=chiffres+'<p class="se-dbf-off"><span class="se-load">Milo analyse ta séance…</span></p>';
   const _des=(typeof _dbfDesignation==='function')?_dbfDesignation(sess):'';
-  const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance. ⛔ LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI : '
+  /* ⚠️ « Je viens de terminer » n'est vrai qu'à la fin de séance : depuis Progrès, la séance peut dater de
+     plusieurs jours — un débrief qui ment sur le QUAND vaut moins que pas de débrief (R29). L'étiquette
+     `[DÉBRIEF AUTO]` reste : d'autres endroits du code la reconnaissent pour cacher la consigne. */
+  const instr='[DÉBRIEF AUTO] '+(fin?'Je viens de terminer ma séance.':'Analyse cette séance de mon historique, à ma demande.')+' ⛔ LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI : '
     +(_des?('**'+_des+'**'):'la plus récente dans mes dernières séances')
     +'. Ne débriefe aucune autre séance, même si une autre est plus récente dans la liste. '
     +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
@@ -4897,64 +4879,27 @@ async function _runSeDebrief(sess,prCount){
        part dans le `catch` AVANT tout « reçu » : jeton rendu, « Réessayer » affiché, rien d'écrit ni
        de résumé. */
     if(typeof _dbfReponseValide==='function' && !_dbfReponseValide(data))throw new Error('non confirmé');
-    /* ⭐⭐ ICI, ET PAS UNE LIGNE PLUS BAS — c'est le correctif de l'anomalie A (15/09/2026).
-       Tout ce qui suit (nettoyage, formatage, affichage, mémoire, historique) prend du temps et
-       peut être interrompu par un rechargement. Pendant cette fenêtre, le jeton était encore
-       « en cours » : au démarrage suivant, `_dbfRecuperer` en déduisait un appel jamais abouti
-       et REPAYAIT le débrief — 2 appels `coach` mesurés pour une seule séance.
-       ⛔ La réponse est donc PERSISTÉE avec la consigne au moment même où elle arrive : le
-       rattrapage n'a plus rien à refaire, il a juste à FINIR. *Marquer « reçu » sans garder le
-       texte aurait remplacé un doublon par une perte silencieuse* (R29). */
-    try{ if(typeof _dbfRecu==='function') _dbfRecu(_pid, reply, instr); }catch(e){}
-    // D-043 : le débrief est rangé avec SA séance au même instant que le « reçu » (même fenêtre de risque).
-    try{ if(typeof _dbfEnregistrer==='function') _dbfEnregistrer(_pid, reply, 'fin'); }catch(e){}
+    /* D-043 : le débrief est rangé avec SA séance à l'instant où il arrive — c'est le magasin qui fait foi. */
+    _dbfEnregistrer(sid, reply, fin?'fin':'progres');
     const clean=(typeof _stripCoachTech==='function')?_stripCoachTech(reply):reply;
-    /* ⛔⛔ MILO S'AJOUTE, IL NE REMPLACE PLUS (ft-v1022). Cette ligne écrasait le socle chiffré :
-       en ligne on recevait donc le JUGEMENT SANS LES FAITS, alors que hors ligne on avait les
-       faits sans jugement. *Les deux moitiés ne valent que posées ensemble.* */
+    /* ⛔⛔ MILO S'AJOUTE, IL NE REMPLACE PAS (ft-v1022) : les faits ET le jugement. */
     const _milo=(typeof _coachFmtHtml==='function')?_coachFmtHtml(clean):('<p>'+clean.replace(/</g,'&lt;')+'</p>');
     slot.innerHTML=chiffres+'<div class="se-dbf-milo">'+_milo+'</div>';
-    // Étape 2 — mémoire DURABLE : enregistre {objectif, décision, tendances, ressenti} dans le Registre
+    // Mémoire DURABLE : seulement pour un débrief DEMANDÉ et RÉUSSI (décision de Michel).
     try{ if(typeof _recordDebriefMemory==='function') _recordDebriefMemory(reply, sess); }catch(e){}
-    // Mémoire : pousse le débrief dans le fil du Coach (consigne cachée + réponse de Milo)
-    /* ⛔ UN SEUL PROPRIÉTAIRE POSE LE DÉBRIEF DANS LE FIL (R2) : ce chemin-ci et le rattrapage
-       au démarrage appellent la MÊME fonction. Sans ça, le rattrapage aurait sa propre version
-       de « comment on range un débrief », et l'une des deux finirait par diverger.
-       ⚠️ `_saveCoachMemory` RESTE ICI, et volontairement hors du propriétaire : c'est un SECOND
-       appel payant, et le rattrapage ne doit pas en créer (consigne explicite de Michel). */
-    let _pose=true;
+    /* Le débrief entre aussi dans le fil du Coach (la conversation continue avec Milo). `_saveCoachMemory`
+       reste ici, hors du propriétaire : c'est un second appel payant, et seulement après un vrai débrief. */
     try{
-      if(typeof _dbfPoserDansHistorique==='function') _pose=_dbfPoserDansHistorique(reply, instr);
+      if(typeof _dbfPoserDansHistorique==='function') _dbfPoserDansHistorique(reply, instr);
       if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
     }catch(e){}
-    // Livré : le jeton « en cours » disparaît pour de bon (ft-v979).
-    /* 🧵 LOT 1 / F07b : fil du Coach illisible → le débrief n'y a PAS été écrit. On garde son
-       « reçu » (le rattrapage au démarrage le posera) et on marque la séance livrée, pour ne
-       pas la repayer. `_dbfFini` aurait effacé ce reçu : débrief payé, puis perdu. */
-    try{ if(_pose===false && typeof _dbfMarquerFait==='function') _dbfMarquerFait(_pid);
-         else if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}
   }catch(e){
-    // Échec réseau → résumé local, et on REND le jeton pour que le Coach réessaie à son ouverture
-    // On REND le jeton (le Coach réessaiera à son ouverture) ET ON LE DIT. Le `catch`
-    // attrape tout — réseau coupé, HTTP 4xx/5xx, quota, réponse vide : on ne prétend pas
-    // savoir laquelle, on annonce le fait et on propose un nouvel essai.
-    // Échec PROPRE : le jeton repart EN TÊTE de file (ft-v979) — plus un simple `setItem`,
-    // qui écrasait la file entière et faisait disparaître les autres séances en attente.
-    try{ if(typeof _dbfRendre==='function') _dbfRendre(_pid);
-         else localStorage.setItem('ft4_pending_debrief', JSON.stringify([_pid])); }catch(_){}
-    slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est perdu : il le fera à l\'ouverture du Coach.',true);
+    // Échec → rien n'est enregistré ; on le DIT et on propose un nouvel essai, qui sera un nouveau clic.
+    slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est enregistré.',true);
+  }finally{
+    _dbfVolRetirer(sid);   // seulement CETTE séance (une autre peut être en vol, E5)
+    try{ if(typeof renderSessions==='function' && document.getElementById('sess-list')) renderSessions(); }catch(e){}
   }
-}
-
-/* Bouton « Réessayer » du débrief : rejoue exactement le même chemin. On garde la séance
-   de côté plutôt que de la relire dans S.sessions — celle-ci pourrait avoir changé (une
-   nouvelle séance, une restauration), et on débrieferait alors la mauvaise. */
-let _seDbfLast=null;
-function _retrySeDebrief(){
-  if(!_seDbfLast)return;
-  const slot=document.getElementById('se-debrief');
-  if(slot)slot.innerHTML='<span class="se-load">Milo analyse ta séance…</span>';
-  _runSeDebrief(_seDbfLast.sess,_seDbfLast.prCount);
 }
 
 // ── Niveau évolutif (débutant → intermédiaire → confirmé) ─────────────

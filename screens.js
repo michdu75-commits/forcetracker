@@ -146,7 +146,7 @@ function _applyScreen(id,btn){
   if(id==='nutrition'){renderNutrition();switchNuTab('macros',document.getElementById('ntab-macros'));}
   if(id==='setup'){_resetMenuView();renderSetup();_markAnchorSeen('menu-row-profil');}
   if(id==='cycle')renderCycleScreen();
-  if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();try{if(typeof _coachAuBasSiDu==='function')_coachAuBasSiDu();}catch(e){}try{if(typeof _maybeAutoDebrief==='function')_maybeAutoDebrief();}catch(e){}}
+  if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();try{if(typeof _coachAuBasSiDu==='function')_coachAuBasSiDu();}catch(e){}/* DEBRIEF-ON-DEMAND-01 : ouvrir le Coach ne lance plus aucun débrief (il se demande, voir coach.js) */}
   _markScreenSeen(id);
   _updateScreenDots(id);
   // Pill chrono flottante : show hors log, hide sur log
