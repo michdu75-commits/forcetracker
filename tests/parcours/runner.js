@@ -40334,8 +40334,11 @@ console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL 
     /const _DBF_RECU\s*=\s*'ft4_debrief_recu'/.test(srcC), '');
   t('B-CCCXII ② ⛔ il PORTE la réponse ET la consigne (sinon : perte silencieuse)',
     /reply:String\(reply\)/.test(nu(corps('_dbfRecu',srcC))) && /instr:String\(instr\|\|''\)/.test(nu(corps('_dbfRecu',srcC))), '');
+  /* 🔁 E5 (05/10/2026) : « en vol » est désormais rangé PAR SÉANCE ; poser le « reçu » retire l'entrée de CETTE
+     séance (`_dbfVolRetirer(id)`), plus tout l'emplacement — vider l'emplacement libérait aussi l'appel d'une autre
+     séance en vol (mutation M-E5-11, attrapée à l'écran par E5-9d). Le sens du témoin est inchangé. */
   t('B-CCCXII ③ ⛔ le poser retire le « en vol » : ce n\'est plus en vol, c\'est payé',
-    /removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_dbfRecu',srcC))), '');
+    /_dbfVolRetirer\(id\)/.test(nu(corps('_dbfRecu',srcC))) && !/removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_dbfRecu',srcC))), '');
   t('B-CCCXII ④ ⭐⭐ il est posé AVANT tout traitement de la réponse',
     /_dbfRecu\(_pid, reply, instr\)[\s\S]{0,400}_stripCoachTech/.test(nu(corps('_runSeDebrief',srcL))), '');
   t('B-CCCXII ⑤ ⭐⭐ le rattrapage TERMINE le travail au lieu de le refaire',
