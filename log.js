@@ -4892,9 +4892,11 @@ async function _runSeDebrief(sess,prCount,slot){
       if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
     }catch(e){}
   }catch(e){
+    if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // la page s'en va : l'analyse est INTERROMPUE, pas ratée
     // Échec → rien n'est enregistré ; on le DIT et on propose un nouvel essai, qui sera un nouveau clic.
     slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est enregistré.',true);
   }finally{
+    if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // laisser « en vol » : la page suivante dira « interrompue »
     _dbfVolRetirer(sid);   // seulement CETTE séance (une autre peut être en vol, E5)
     try{ if(typeof renderSessions==='function' && document.getElementById('sess-list')) renderSessions(); }catch(e){}
   }

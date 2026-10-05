@@ -52,6 +52,8 @@ MUT = [
            "  const s=(S.sessions||[]).find(x=>x&&x.date===((S.sessions||[]).find(y=>_dbfCle(y)===String(id))||{}).date)||null;\n  if(!s){toast('Séance introuvable dans l\\'historique','error');return;}\n  const fin=")], 'GARDE'),
     ('M-OD12 [deguisee] la mise a jour relance l\'ancienne file au lieu de l\'oublier',
      [(CO, OUBLI, "  try{ const f=JSON.parse(localStorage.getItem('ft4_pending_debrief')||'[]'); const s=(S.sessions||[]).find(x=>(Array.isArray(f)?f:[f]).map(String).indexOf(_dbfCle(x))>=0); if(s) setTimeout(()=>_runSeDebrief(s,0,document.createElement('div')),2500); }catch(e){}\n" + OUBLI)], 'GARDE'),
+    ('M-OD15 la page qui s\'en va efface « en vol » (la seance dit « Analyser » au lieu de « interrompue »)',
+     [(LO, "    if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // laisser « en vol » : la page suivante dira « interrompue »\n", "")], 'GARDE'),
     ('M-OD13 [negatif] commentaire citant les motifs (automatisme, file, minuteur, rattrapage)',
      [(LO, "function _seDebriefChiffres(sess,prCount){", "// _maybeAutoDebrief _dbfRattraper setTimeout(()=>_runSeDebrief ft4_pending_debrief _dbfPrendre : cite, jamais execute\nfunction _seDebriefChiffres(sess,prCount){")], 'OK'),
     ('M-OD14 [equivalente] la cle « en vol » passee en texte explicite (meme sens)',

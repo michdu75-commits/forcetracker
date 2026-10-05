@@ -6027,6 +6027,15 @@ function sendSuggestion(text) { sendToCoach(text); }
    — sans la relancer. Une séance ne libère que SON entrée (la réponse de A ne touche pas B). */
 const _DBF_ENCOURS = 'ft4_debrief_encours';   // analyses en vol, PAR SÉANCE : {v:2, vol:{[id]:{ts, page}}} — tolère l'ancien {id, ts}
 const _DBF_PAGE    = Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);   // la page qui attend la réponse
+/* ⛔ LA PAGE QUI S'EN VA NE TOUCHE PLUS À « EN VOL » (mesuré le 05/10/2026). Au rechargement, le navigateur ANNULE
+   la requête : la promesse rejette, le `catch`/`finally` de `_runSeDebrief` s'exécute pendant le déchargement et
+   effaçait l'entrée — 6 fois sur 6. La séance affichait alors « Analyser » au lieu de « Analyse interrompue ».
+   Une requête qui ne se termine jamais, elle, laissait l'entrée intacte 6 fois sur 6 : c'est bien l'annulation. */
+let _dbfQuitte=false;
+try{
+  window.addEventListener('pagehide', ()=>{ _dbfQuitte=true; });
+  window.addEventListener('pageshow', e=>{ if(e && e.persisted) _dbfQuitte=false; });
+}catch(e){}
 function _dbfVolLire(){
   let v=null; try{ v=JSON.parse(localStorage.getItem(_DBF_ENCOURS)||'null'); }catch(e){}
   if(v && v.vol && typeof v.vol==='object') return v.vol;

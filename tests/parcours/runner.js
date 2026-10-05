@@ -40169,7 +40169,7 @@ console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL 
   t('B-CCCXII ④′ ⭐⭐ la réponse VALIDE est rangée dans le magasin AVANT tout traitement (une réponse payée n\'est jamais perdue)',
     /_dbfReponseValide\(data\)\)throw[\s\S]{0,120}_dbfEnregistrer\(sid, reply[\s\S]{0,200}_stripCoachTech/.test(nu(corps('_runSeDebrief',srcL))), '');
   t('B-CCCXII ③′ ⛔ la fin de l\'appel ne libère QUE cette séance (E5) — jamais tout l\'emplacement',
-    /finally\{\s*_dbfVolRetirer\(sid\);/.test(nu(corps('_runSeDebrief',srcL)))
+    /finally\{(?:\s*if\([^)]*\)\s*return;(?:\s*\/\/[^\n]*)?)?\s*_dbfVolRetirer\(sid\);/.test(nu(corps('_runSeDebrief',srcL)))
     && !/removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_runSeDebrief',srcL))), '');
   t('B-CCCXII ⑨ ⛔ poser le débrief dans le fil ne crée AUCUN appel de résumé (pas de summarizeCoach en plus)',
     !/_saveCoachMemory/.test(nu(corps('_dbfPoserDansHistorique',srcC))), '');

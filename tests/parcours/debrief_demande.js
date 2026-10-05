@@ -45,7 +45,7 @@ module.exports.source = function (t, ROOT, fs, path) {
     run.indexOf('_dbfTexteDe(sid)') < run.indexOf('_dbfEnVol(sid)') && run.indexOf('_dbfEnVol(sid)') < run.indexOf('_dbfVolPoser(sid)') && run.indexOf('_dbfVolPoser(sid)') < run.indexOf('fetch('), '');
   t('S8 la mémoire de débrief n\'est écrite qu\'APRÈS validation de la réponse',
     run.indexOf('_dbfReponseValide') > 0 && run.indexOf('_dbfReponseValide') < run.indexOf('_recordDebriefMemory') && run.indexOf('_dbfReponseValide') < run.indexOf('_dbfEnregistrer('), '');
-  t('S9 la fin libère SEULEMENT la séance analysée (`_dbfVolRetirer(sid)` dans un `finally`)', /finally\{\s*_dbfVolRetirer\(sid\)/.test(run), '');
+  t('S9 la fin libère SEULEMENT la séance analysée (`_dbfVolRetirer(sid)` dans un `finally`)', /finally\{(?:\s*if\([^)]*\)\s*return;(?:\s*\/\/[^\n]*)?)?\s*_dbfVolRetirer\(sid\)/.test(run), '');
 };
 
 module.exports.ecran = async function (t, b, PORT) {
@@ -205,6 +205,33 @@ module.exports.ecran = async function (t, b, PORT) {
     t('OD-07b … le clic relance (2ᵉ requête, consigne « à ma demande », pas « je viens de terminer »), le débrief est rangé, la carte passe à « Voir »',
       ok && X.st.req.length === 2 && !X.st.req[1].fin && /DEBRIEF-OD relancé/.test(txt) && fin.mag.indexOf(r.sid) >= 0 && btn2 && /Voir le débrief/.test(btn2.join('|')) && !fin.encours,
       resume(X) + ' ' + js({ btn2, enc: fin.encours }));
+    await X.cx.close();
+  }
+  /* ═════════ OD-06c — la page qui s'en va ne transforme pas l'analyse en échec (déterministe) ═════════
+     Mesuré le 05/10 : au rechargement, le navigateur ANNULE la requête ; son rejet s'exécutait pendant le
+     déchargement et effaçait « en vol » → la carte disait « Analyser » au lieu de « Analyse interrompue ».
+     OD-07 ne le voyait que sous charge (course) : ce témoin rejoue la course sans dépendre du temps. */
+  {
+    const X = await ouvrir({});
+    const R = await X.pg.evaluate(async () => {
+      const vf = window.fetch; let rejeter = null;
+      window.fetch = () => new Promise((_, nok) => { rejeter = nok; });
+      try {
+        window._demoMode = false; S.connected = true;
+        const s = { id: 'OD06C', ts: 1, date: '2026-10-05', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 100, reps: 5, done: true, type: 'N' }] }] };
+        S.sessions = [s];
+        const d = document.createElement('div'); document.body.appendChild(d);
+        const p = _runSeDebrief(s, 0, d);
+        await new Promise(z => setTimeout(z, 50));
+        window.dispatchEvent(new Event('pagehide'));
+        if (rejeter) rejeter(new TypeError('Failed to fetch'));
+        await p;
+        const enc = JSON.parse(localStorage.getItem('ft4_debrief_encours') || 'null');
+        return { encore: !!(enc && enc.vol && enc.vol.OD06C), echecAffiche: /n'a pas pu/.test(d.textContent || ''), parti: !!rejeter };
+      } finally { window.fetch = vf; }
+    });
+    t('OD-06c ⛔ la requête annulée par un départ de page laisse « en vol » (la page suivante dira « interrompue »), sans afficher d\'échec',
+      R.parti === true && R.encore === true && R.echecAffiche === false, js(R));
     await X.cx.close();
   }
   /* ═════════ OD-09 / OD-10 — échecs : rien de rangé, reprise seulement sur un clic ═════════ */
