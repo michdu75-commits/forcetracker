@@ -6089,7 +6089,57 @@ function _recapSeance(pid){
    attente au moment de la mise à jour ne doit pas le perdre à cause du changement de format —
    ce serait exactement le défaut qu'on corrige.                                              */
 const _DBF_FILE    = 'ft4_pending_debrief';   // file : JSON [id,…] — tolère l'ancienne chaîne nue
-const _DBF_ENCOURS = 'ft4_debrief_encours';   // jeton pris, appel en vol : {id, ts}
+const _DBF_ENCOURS = 'ft4_debrief_encours';   // appels en vol, PAR SÉANCE : {v:2, vol:{[id]:{ts, page}}} — tolère l'ancien {id, ts}
+/* 🔁 E5 (05/10/2026) — « EN VOL » N'AVAIT PAS DE PROPRIÉTAIRE, ET C'ÉTAIT TOUT LE DÉFAUT.
+   Reproduit (banc Fantôme, puis `tools/banc_e5.js` sur ft-v1250) : la fin de séance lance le débrief et
+   pose « en cours » ; 3 s après le chargement, le rattrapage (`_dbfRecuperer`) trouve cet « en cours »,
+   le prend pour un appel INTERROMPU par une page précédente et remet la séance en file — alors que l'appel
+   est VIVANT, dans cette page-ci. La réponse arrive, la séance est marquée livrée mais reste en file ; à
+   l'ouverture du Coach, `_maybeAutoDebrief` la reprend → SECOND appel payé, même séance, deux débriefs.
+   ⛔ La remise en file ne disparaît PAS : elle existe pour qu'aucun débrief ne soit perdu (ft-v979), et un
+   appel réellement interrompu (rechargement, app tuée) doit toujours revenir.
+   👉 Ce qui manquait est une PREUVE DE VIE : chaque page porte un jeton tiré à son chargement (`_DBF_PAGE`),
+   et « en vol » est rangé PAR IDENTIFIANT DE SÉANCE avec la page qui l'a posé. Une entrée de CETTE page est
+   un appel vivant — personne n'y touche. Une entrée d'une AUTRE page (ou de l'ancien format) est un appel
+   que plus personne n'attend — le rattrapage la reprend, comme avant.
+   ⚖️ Pas de minuteur : un délai arbitraire dirait « mort » à un appel lent, ou « vivant » à une page morte.
+   La page, elle, ne se trompe pas — au rechargement elle change, donc aucun verrou ne survit à un plantage.
+   ⚠️ Limite dite : deux ONGLETS ouverts sont deux pages ; chacun voit l'appel de l'autre comme interrompu
+   (même famille que BUGS.md §33). Et un rechargement PENDANT l'appel laisse la 1ʳᵉ requête aboutir côté
+   serveur sans personne pour lire la réponse : la reprise en paie une seconde (cas B du 15/09, décision
+   d'idempotence serveur toujours chez Michel — `docs/IDEMPOTENCE-DEBRIEF.md`). */
+const _DBF_PAGE    = Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+function _dbfVolLire(){
+  let v=null; try{ v=JSON.parse(localStorage.getItem(_DBF_ENCOURS)||'null'); }catch(e){}
+  if(v && v.vol && typeof v.vol==='object') return v.vol;
+  if(v && v.id){ const o={}; o[String(v.id)]={ts:Number(v.ts)||0, page:null}; return o; }   // ancien format : une page précédente
+  return {};
+}
+function _dbfVolEcrire(vol){
+  try{
+    if(Object.keys(vol).length) localStorage.setItem(_DBF_ENCOURS, JSON.stringify({v:2, vol:vol}));
+    else localStorage.removeItem(_DBF_ENCOURS);
+  }catch(e){}
+}
+function _dbfVolPoser(id){ const v=_dbfVolLire(); v[String(id)]={ts:Date.now(), page:_DBF_PAGE}; _dbfVolEcrire(v); }
+function _dbfVolRetirer(id){
+  if(id==null || id==='') return;
+  const v=_dbfVolLire(); if(!Object.prototype.hasOwnProperty.call(v, String(id))) return;
+  delete v[String(id)]; _dbfVolEcrire(v);
+}
+// Un appel VIVANT pour cette séance, lancé par CETTE page.
+function _dbfEnVol(id){
+  if(id==null || id==='') return false;
+  const e=_dbfVolLire()[String(id)];
+  return !!(e && e.page===_DBF_PAGE);
+}
+/* ⛔ LE DROIT DE LANCER UN APPEL — un seul propriétaire, consulté par les DEUX preneurs (Coach, fin de
+   séance). Une séance est « déjà couverte » si un appel vivant la porte, ou si son débrief est déjà rangé
+   au magasin (D-047 — la preuve la plus forte qu'il existe : on ne repaie pas ce qu'on a).
+   ⚠️ Volontairement PAS `_dbfFaits` : l'ancienne version marquait « livrée » aussi à l'ÉCHEC, donc des
+   téléphones portent des séances « livrées » qui attendent encore leur reprise. Les refuser perdrait leur
+   débrief (témoin E5-12b). */
+function _dbfDejaCouvert(id){ return _dbfEnVol(id) || !!_dbfTexteDe(id); }
 const _DBF_FAITS   = 'ft4_debrief_faits';     // séances RÉELLEMENT débriefées (voir ci-dessous)
 /* ⭐⭐ L'ÉTAT QUI MANQUAIT — « RÉPONSE REÇUE, PAS ENCORE POSÉE » (15/09/2026).
    Mesuré avant d'écrire une ligne : un rechargement PENDANT l'appel faisait débriefer la même
@@ -6150,8 +6200,12 @@ function _dbfAjouter(id){
 // Prend le jeton le PLUS ANCIEN et le met « en cours ». Rend null si la file est vide.
 function _dbfPrendre(){
   const l=_dbfLire(); if(!l.length) return null;
-  const id=l.shift(); _dbfEcrire(l);
-  try{ localStorage.setItem(_DBF_ENCOURS, JSON.stringify({id:id, ts:Date.now()})); }catch(e){}
+  /* 🔁 E5 — une séance déjà couverte (appel vivant, ou débrief rangé) SORT de la file au lieu d'être
+     reprise : c'est le verrou du Coach. Un appel vivant qui échouera la remettra lui-même en file. */
+  const reste=l.filter(x=>!_dbfDejaCouvert(x));
+  if(!reste.length){ _dbfEcrire(reste); return null; }
+  const id=reste.shift(); _dbfEcrire(reste);
+  _dbfVolPoser(id);
   return id;
 }
 /* ⭐⭐ PRENDRE UNE SÉANCE PRÉCISE, PAS « LA PLUS ANCIENNE » (15/09/2026).
@@ -6174,9 +6228,10 @@ function _dbfPrendreCible(id){
      « Réessayer » ne déclenchait plus aucun appel : **le débrief était perdu en silence**,
      exactement ce que cette correction doit empêcher.
      👉 *Une séance présente dans la file est une séance à faire, quoi qu'en dise l'autre liste.* */
+  if(_dbfDejaCouvert(s)){ if(i>=0){ l.splice(i,1); _dbfEcrire(l); } return null; }   // 🔁 E5 : même verrou que le Coach
   if(i<0 && _dbfFaits().indexOf(s)>=0) return null;   // hors file ET déjà livrée : rien à repayer
   if(i>=0){ l.splice(i,1); _dbfEcrire(l); }
-  try{ localStorage.setItem(_DBF_ENCOURS, JSON.stringify({id:s, ts:Date.now()})); }catch(e){}
+  _dbfVolPoser(s);
   return s;
 }
 /* ⭐ « REÇU » — LE JETON N'EST PLUS EN VOL, ET LA RÉPONSE EST GARDÉE.
@@ -6186,7 +6241,7 @@ function _dbfRecu(id, reply, instr){
   if(!id || !reply) return;
   try{ localStorage.setItem(_DBF_RECU, JSON.stringify({
         id:String(id), ts:Date.now(), reply:String(reply), instr:String(instr||'') })); }catch(e){}
-  try{ localStorage.removeItem(_DBF_ENCOURS); }catch(e){}   // plus « en vol » : c'est payé
+  _dbfVolRetirer(id);   // plus « en vol » : c'est payé — et SEULEMENT cette séance (une autre peut être en vol, E5-9)
 }
 function _dbfLireRecu(){
   try{ const v=JSON.parse(localStorage.getItem(_DBF_RECU)||'null');
@@ -6343,12 +6398,15 @@ function _dbfSeanceParId(id){
 }
 // Succès : l'appel a abouti, le jeton disparaît pour de bon — et la séance est marquée
 // LIVRÉE, que Milo ait produit son bloc mémoire ou non (voir le commentaire de `_dbfFaits`).
-function _dbfFini(id){
-  _dbfMarquerFait(id);
-  try{
-    const e=JSON.parse(localStorage.getItem(_DBF_ENCOURS)||'null');
-    if(!e || !id || String(e.id)===String(id)) localStorage.removeItem(_DBF_ENCOURS);
-  }catch(e2){ try{ localStorage.removeItem(_DBF_ENCOURS); }catch(e3){} }
+/* 🔁 E5 — un succès retire AUSSI la séance de la file : si quelqu'un l'y avait remise pendant l'appel,
+   elle y restait, et le Coach la repayait. `echec` (appelé par `_dbfRendre` seulement) libère l'appel SANS
+   marquer la séance livrée : un échec n'est pas une livraison — l'ancienne version la marquait quand même. */
+function _dbfFini(id, echec){
+  if(!echec){
+    _dbfMarquerFait(id);
+    if(id){ const l=_dbfLire(), i=l.indexOf(String(id)); if(i>=0){ l.splice(i,1); _dbfEcrire(l); } }
+  }
+  _dbfVolRetirer(id);
   /* ⭐ Le « reçu » disparaît AVEC la livraison : sa seule raison d'être était de porter une
      réponse payée mais pas encore posée. La garder après coup ferait reposer le même débrief
      au prochain démarrage. */
@@ -6359,10 +6417,10 @@ function _dbfFini(id){
 }
 // Échec PROPRE (réseau, quota, réponse vide) : le jeton repasse EN TÊTE de file.
 function _dbfRendre(id){
-  if(!id){ _dbfFini(null); return; }
+  if(!id){ _dbfFini(null, true); return; }
   const l=_dbfLire(), s=String(id);
   if(l.indexOf(s)<0) l.unshift(s);
-  _dbfEcrire(l); _dbfFini(id);
+  _dbfEcrire(l); _dbfFini(id, true);
 }
 /* ⭐ LE RATTRAPAGE AU DÉMARRAGE — c'est lui qui répare le cas de Michel.
    Un « en cours » encore posé signifie qu'on est parti en appel et qu'on n'en est jamais
@@ -6397,11 +6455,18 @@ function _dbfRecuperer(){
     _dbfFini(_r.id);                       // efface le « reçu » ET le « en cours » du même id
     return;                                // ⛔ surtout pas de remise en file derrière
   }
-  let e=null; try{ e=JSON.parse(localStorage.getItem(_DBF_ENCOURS)||'null'); }catch(e2){}
-  if(!e || !e.id){ try{ localStorage.removeItem(_DBF_ENCOURS); }catch(e3){} return; }
-  const age=Date.now()-(Number(e.ts)||0);
-  try{ localStorage.removeItem(_DBF_ENCOURS); }catch(e3){}
-  if(age>=0 && age<_DBF_PEREMPTION) _dbfAjouter(e.id);
+  /* 🔁 E5 — seuls les appels laissés par une AUTRE page (rechargement, app tuée, ancien format) sont
+     repris ; un appel de CETTE page est vivant et sera conclu par celui qui l'attend. Une séance dont le
+     débrief est déjà rangé n'est pas reprise non plus (on ne repaie pas ce qu'on a). */
+  const vol=_dbfVolLire(); let change=false;
+  Object.keys(vol).forEach(id=>{
+    const e=vol[id];
+    if(e && e.page===_DBF_PAGE) return;
+    delete vol[id]; change=true;
+    const age=Date.now()-(Number(e&&e.ts)||0);
+    if(age>=0 && age<_DBF_PEREMPTION && !_dbfTexteDe(id)) _dbfAjouter(id);
+  });
+  if(change) _dbfVolEcrire(vol);
 }
 
 /* ⭐⭐ RATTRAPAGE N°3 — LE FILET QUI NE DÉPEND D'AUCUN DRAPEAU (ft-v979)
@@ -6439,6 +6504,7 @@ function _dbfRattraper(){
       if(!exs.length || !exs.some(e=>e&&(e.sets||[]).some(st=>st&&st.done))) return;
       const sid=s.id||s.ts||s.date; if(!sid) return;
       if(debriefees.has(String(sid)) || enFile.has(String(sid))) return;
+      if(_dbfEnVol(sid) || _dbfTexteDe(sid)) return;   // 🔁 E5 : un appel vivant, ou un débrief déjà rangé
       const q=Number(s.ts)||Number(s.id)||0;
       if(!q || (Date.now()-q)>=_DBF_PEREMPTION) return;   // trop vieille : « je viens de terminer » serait faux
       if(!cible || q>cible.q) cible={id:sid, q:q};

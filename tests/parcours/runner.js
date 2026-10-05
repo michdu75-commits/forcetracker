@@ -11519,6 +11519,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
 
     // ⭐⭐ ③ L'APPEL EST INTERROMPU (mise à jour / app fermée) : on ne revient JAMAIS.
     //    Au démarrage suivant, `_dbfRecuperer()` doit le remettre en file.
+    /* 🔁 E5 (05/10/2026) — CE TÉMOIN FIGEAIT LE DÉFAUT. Il appelait `_dbfRecuperer()` dans la MÊME page,
+       juste après `_dbfPrendre()`, et exigeait la remise en file : c'est exactement ce que le rattrapage
+       faisait à un appel VIVANT (load + 3 s), d'où le second appel payé (E5). Un appel interrompu, c'est
+       une page MORTE : on le simule désormais comme la vraie vie le produit — l'emplacement écrit par une
+       autre page (ancien format, sans jeton de page). Et l'appel vivant de cette page, lui, ne revient pas. */
+    _dbfRecuperer();
+    o.vivantPasRepris = _dbfLire().indexOf('S1')<0;
+    localStorage.setItem('ft4_debrief_encours', JSON.stringify({id:'S1', ts:Date.now()}));   // la page d'avant
     _dbfRecuperer();
     o.recupereApresCoupure = _dbfLire().indexOf('S1')>=0;
 
@@ -11555,6 +11563,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     F.maisEnCours===true, JSON.stringify(F));
   t('⭐⭐ DÉBRIEF : appel interrompu (mise à jour) → la séance REVIENT en file au démarrage',
     F.recupereApresCoupure===true, JSON.stringify(F));
+  t('🔁 E5 DÉBRIEF : un appel VIVANT de cette page n\'est PAS remis en file par le rattrapage (sinon il est payé deux fois)',
+    F.vivantPasRepris===true, JSON.stringify(F));
   t('DÉBRIEF : une fois LIVRÉ, il ne revient pas (pas de débrief fantôme)',
     F.succesNeRevientPas===true, JSON.stringify(F));
   t('⭐⭐ DÉBRIEF : la LIVRAISON est notée à part — elle ne dépend pas du bloc mémoire de Milo',
@@ -39734,6 +39744,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🛡️ SESSION-INTEGRITY-01 (session-B, 04/10/2026) — remplacement, débrief, persistance, historique, export,
      première référence, N-G2. Blocs B-SI01-*. Banc : tools/banc_session_integrity.js. */
   await require('./session_integrity.js').ecran(t, b, PORT);
+  /* 🔁 E5 (session-B, 05/10/2026) — une séance, un seul appel de débrief, sans jamais perdre un débrief :
+     rattrapage pendant l'appel, Coach pendant / après, échec réel, complete:false, rechargement, deux séances le
+     même jour, suppression. Blocs B-E5-*. Banc : tools/banc_e5.js. */
+  await require('./e5_idempotence.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40566,6 +40580,7 @@ require('./seance_fp01.js').source(t, ROOT, fs, path);
 require('./seance_fp01.js').sourceMixte(t, ROOT, fs, path);
 require('./seance_fp01.js').sourceExt(t, ROOT, fs, path);
 require('./session_integrity.js').source(t, ROOT, fs, path);
+require('./e5_idempotence.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
