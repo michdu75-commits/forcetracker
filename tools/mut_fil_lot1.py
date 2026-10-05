@@ -21,9 +21,10 @@ TRIM = "    _trimCoachHistory();\n    if(typeof _saveCoachHist==='function')_sav
 LISIBLE = ("  try{\n    const raw=localStorage.getItem('ft4_coach_hist');\n"
            "    if(raw!=null && !Array.isArray(JSON.parse(raw))) return false;\n  }catch(e){ return false; }\n")
 CHARGE = "  if(!_coachHistLoaded){ _loadCoachHist(); _coachHistLoaded=true; }\n  return true;\n}"
-FIN = ("    try{ if(_pose===false && typeof _dbfMarquerFait==='function') _dbfMarquerFait(_pid);\n"
-       "         else if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}")
-RECUP = "&& !_dbfPoserDansHistorique(_r.reply, _r.instr)){ _dbfMarquerFait(_r.id); return; }"
+# DEBRIEF-ON-DEMAND-01 (R30) : le « recu », la file et le rattrapage sont retires ; M05/M06/M11 visent leurs successeurs.
+RANGE = "    _dbfEnregistrer(sid, reply, fin?'fin':'progres');\n"
+ANCIEN_RECU = "    if(r && r.id && r.reply && String(r.reply).trim()!==_DBF_REPLI && !_dbfTexteDe(r.id)) _dbfEnregistrer(r.id, r.reply, 'rattrapage');\n"
+POSE = "      if(typeof _dbfPoserDansHistorique==='function') _dbfPoserDansHistorique(reply, instr);\n"
 SAVE = "function _saveCoachHist(){\n"
 PAYLOAD8 = "history:(typeof _coachHistPayload==='function'?_coachHistPayload(8):coachHistory.slice(-8))"
 
@@ -36,10 +37,10 @@ MUT = [
     ('M03 la garde prend un contenu ILLISIBLE pour un fil vide', [(CO, LISIBLE, '')], 'GARDE'),
     ('M04 [deguisee] la garde se fie au drapeau « charge » (Coach ouvert sur un fil illisible)',
      [(CO, LISIBLE, "  if(_coachHistLoaded) return true;\n" + LISIBLE)], 'GARDE'),
-    ('M05 fin de seance : le « recu » est efface meme quand le debrief n\'a pas ete pose',
-     [(LO, FIN, "    try{ if(typeof _dbfFini==='function') _dbfFini(_pid); }catch(e){}")], 'GARDE'),
-    ('M06 rattrapage : le « recu » est jete quand le fil est encore illisible',
-     [(CO, RECUP, ") _dbfPoserDansHistorique(_r.reply, _r.instr);")], 'GARDE'),
+    ('M05 le debrief paye n\'est plus range : un fil illisible le fait perdre',
+     [(LO, RANGE, '')], 'GARDE'),
+    ('M06 mise a jour : l\'ancien « recu » est jete au lieu d\'etre range',
+     [(CO, ANCIEN_RECU, '')], 'GARDE'),
     ('M07 [deguisee] la garde deplacee a l\'ENREGISTREMENT (_saveCoachHist refuse si non charge)',
      [(CO, GARDE, ''), (CO, SAVE, SAVE + "  if(!_coachHistLoaded) return;\n")], 'GARDE'),
     ('M08 [deguisee] l\'hydratation APRES la mutation (le chargement ecrase le debrief)',
@@ -47,8 +48,8 @@ MUT = [
     ('M09 la borne de securite (400) retiree du debrief', [(CO, TRIM, "    if(typeof _saveCoachHist==='function')_saveCoachHist();\n")], 'GARDE'),
     ('M10 le debrief envoie 10 messages a Milo au lieu de 8 (controle `_coachHistPayload(8)`)',
      [(LO, PAYLOAD8, PAYLOAD8.replace('(8)', '(10)'))], 'GARDE'),
-    ('M11 [deguisee] le « recu » survit a un debrief pose : reposE au rechargement (doublon)',
-     [(LO, FIN, "    try{ if(typeof _dbfMarquerFait==='function') _dbfMarquerFait(_pid); }catch(e){}")], 'GARDE'),
+    ('M11 [deguisee] le debrief est pose DEUX fois dans le fil (doublon)',
+     [(LO, POSE, POSE + POSE)], 'GARDE'),
     ('M12 [deguisee] le debrief range en TETE du fil (reordonnancement)',
      [(CO, "    coachHistory.push({role:'assistant',content:String(reply)});\n",
        "    coachHistory.unshift({role:'assistant',content:String(reply)});\n")], 'GARDE'),

@@ -4864,12 +4864,10 @@ async function _runSeDebrief(sess,prCount,slot){
     +((typeof _DEBRIEF_MEM_TAIL!=='undefined')?_DEBRIEF_MEM_TAIL:'');
   try{
     const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(instr),history:(typeof _coachHistPayload==='function'?_coachHistPayload(8):coachHistory.slice(-8)),coachMemory:S.coachMemory||''};
-    let resp=null,_err=null;
-    for(let a=1;a<=2;a++){
-      try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); _err=null; break; }
-      catch(e){ _err=e; if(a<2)await new Promise(r=>setTimeout(r,1200)); }
-    }
-    if(_err)throw _err;
+    /* ⛔ UN SEUL ESSAI PAR CLIC (DEBRIEF-ON-DEMAND-01) : il y avait ici une boucle de 2 essais réseau, relancée
+       toute seule 1,2 s plus tard — un nouvel essai CACHÉ, qui pouvait payer deux fois une requête arrivée
+       au serveur. Un échec est un échec : « Réessayer » est un nouveau clic. */
+    const resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const data=await resp.json();
     let reply=data.reply||'';

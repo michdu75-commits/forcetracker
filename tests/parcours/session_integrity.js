@@ -9,13 +9,13 @@
 
    Ce que les témoins CONDUISENT : l'onglet Séance, le remplacement par le sélecteur
    (`openExPickerForReplace` + `addExercise`, comme les témoins CXVI / CLXXVIII), la case ✓ d'une
-   série, le bouton « Terminer » (`finishWorkout`), le bouton « Réessayer » de l'écran de fin, sa
+   série, le bouton « Terminer » (`finishWorkout`), « Analyser cette séance avec Milo » et « Réessayer » de l'écran de fin, sa
    fermeture, l'onglet Coach, l'onglet Progrès, le bouton « Voir le débrief Milo », la fenêtre
    d'export (« Sans / Avec les débriefs », CSV, PDF), un VRAI rechargement.
    Frontières SIMULÉES : le Worker IA (réponses scriptées — succès, `complete:false` « Désolé,
    réessaie. », HTTP 502), Apps Script, Supabase. ⛔ 0 appel réel à Anthropic.
-   Ce qu'ils OBSERVENT : `S.wkt` / `ft4_wkt`, `S.sessions` / `ft4_sessions`, `S.prs`, la file
-   `ft4_pending_debrief`, le « reçu », le magasin `ft4_debriefs`, `coachHistory` / `ft4_coach_hist`,
+   Ce qu'ils OBSERVENT : `S.wkt` / `ft4_wkt`, `S.sessions` / `ft4_sessions`, `S.prs`, l'ABSENCE de la file
+   `ft4_pending_debrief` et du « reçu » (retirés, DEBRIEF-ON-DEMAND-01), le magasin `ft4_debriefs`, `coachHistory` / `ft4_coach_hist`,
    le DOM du fil Coach, de l'écran de fin et de Progrès, le nombre d'appels `coach` et
    `summarizeCoach`, le contenu des fichiers exportés (CSV texte, PDF brut), le contexte de Milo.
    Ce qu'ils NE COUVRENT PAS : Safari iOS, le cloud (Apps Script / Supabase simulés), la formulation
@@ -42,13 +42,17 @@ module.exports.source = function (t, ROOT, fs, path) {
     ['_dbfReponseValide', '_dbfEnregistrer', '_dbfTexteDe'].every(n => (tout.match(new RegExp('function ' + n + '\\(', 'g')) || []).length === 1), '');
   t('S5 le critère de succès repose sur `_miloEtatReponse` (fail-closed) et refuse le repli « Désolé, réessaie. »',
     /_miloEtatReponse\(data\)==='complete'/.test(val) && /_DBF_REPLI/.test(val), val.slice(0, 200));
-  t('S6 l\'écran de fin valide AVANT le « reçu » (aucun reçu ni enregistrement sur un faux succès)',
-    run.indexOf('_dbfReponseValide') > 0 && run.indexOf('_dbfReponseValide') < run.indexOf('_dbfRecu(') && run.indexOf('_dbfRecu(') < run.indexOf('_dbfEnregistrer('), '');
+  /* 🔁 DEBRIEF-ON-DEMAND-01 (05/10/2026) — R30. S6/S7/S8 visaient les TROIS chemins du débrief automatique
+     (l'écran de fin et son « reçu », le Coach `opts.debriefSess`, le rattrapage `_dbfRecuperer`). Le « reçu », le
+     chemin du Coach et le rattrapage sont retirés : il n'y a plus qu'UN chemin, le clic. L'invariant qu'ils
+     protégeaient — « aucun débrief n'est rangé sur un faux succès » — est réécrit sur ce qui existe. */
+  t('S6 le seul chemin valide AVANT d\'enregistrer (aucun enregistrement sur un faux succès)',
+    run.indexOf('_dbfReponseValide') > 0 && run.indexOf('_dbfEnregistrer(') > 0 && run.indexOf('_dbfReponseValide') < run.indexOf('_dbfEnregistrer('), '');
   const st = corps(co, 'sendToCoach');
-  t('S7 le Coach (débrief automatique) passe par le même critère et range le débrief à SA séance',
-    /opts\.debriefSess\s*&&\s*!_dbfReponseValide\(data\)/.test(st) && /_dbfEnregistrer\(opts\.debriefSess/.test(st), '');
-  t('S8 le rattrapage au démarrage range aussi le débrief, et refuse un ancien « reçu » de repli',
-    /_DBF_REPLI/.test(corps(co, '_dbfRecuperer')) && /_dbfEnregistrer\(_r\.id/.test(corps(co, '_dbfRecuperer')), '');
+  t('S7 le Coach n\'a plus de chemin de débrief (aucun second propriétaire de l\'écriture)',
+    st.length > 0 && !/debriefSess/.test(st) && !/_dbfEnregistrer\(/.test(st), '');
+  t('S8 à la mise à jour, un ancien « reçu » n\'est rangé que s\'il n\'est PAS le repli « Désolé, réessaie. »',
+    /_DBF_REPLI/.test(corps(co, '_dbfOublierAncienAutomatisme')) && /_dbfEnregistrer\(r\.id/.test(corps(co, '_dbfOublierAncienAutomatisme')), '');
   const fw = corps(lo, 'finishWorkout');
   t('S9 D-045 : une absence de référence n\'est plus un record (`!old` → première référence)',
     /if\(!old\)\{_refExs\.add/.test(fw) && !/if\(!old\|\|rm>old\.rm1\)/.test(fw), '');
@@ -152,7 +156,10 @@ module.exports.ecran = async function (t, b, PORT) {
   const attendreDebrief = async (pg, re) => { const t0 = Date.now(); let txt = '';
     while (Date.now() - t0 < 8000) { txt = await pg.evaluate(() => (document.getElementById('se-debrief') || {}).textContent || ''); if (re.test(txt)) break; await pg.waitForTimeout(150); }
     await pg.waitForTimeout(500); return txt.replace(/\s+/g, ' '); };
-  const terminer = async (X, re) => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); const f = await clic(X.pg, 'button[onclick="finishWorkout()"]');
+  /* 🔁 DEBRIEF-ON-DEMAND-01 : terminer n'appelle plus Milo. Ces blocs éprouvent ce qui se passe QUAND la personne
+     le demande — `terminer` clique donc « Analyser cette séance avec Milo », comme elle (sauf `sansAnalyse`). */
+  const terminer = async (X, re, sansAnalyse) => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); const f = await clic(X.pg, 'button[onclick="finishWorkout()"]');
+    if (!sansAnalyse) { await X.pg.waitForTimeout(300); await clic(X.pg, '#se-debrief .se-dbf-go'); }
     return { clic: f, ecran: await attendreDebrief(X.pg, re || /DEBRIEF-SI01|n'a pas pu|Hors ligne/) }; };
   const lire = pg => pg.evaluate(() => {
     const mag = JSON.parse(localStorage.getItem('ft4_debriefs') || 'null');
@@ -271,7 +278,10 @@ module.exports.ecran = async function (t, b, PORT) {
       && await X.pg.evaluate(() => !!document.querySelector('#se-debrief .se-dbf-retry')), f.ecran.slice(-200));
     t('D2 ⛔ aucun débrief enregistré : ni magasin, ni « reçu », ni message dans le fil (mémoire et disque)',
       !(L1.mag && L1.mag.seances && L1.mag.seances[sid]) && !L1.recu && !L1.fil.some(c => /Désolé|DÉBRIEF AUTO/.test(c)) && !L1.mem.some(c => /Désolé|DÉBRIEF AUTO/.test(c)), js({ mag: L1.mag, recu: L1.recu, fil: L1.fil }));
-    t('D3 ⛔ le jeton est RENDU : la séance est en tête de file, le nouvel essai reste possible', sid && L1.file[0] === sid, js(L1.file) + ' / ' + sid);
+    /* 🔁 DEBRIEF-ON-DEMAND-01 (R30) : D3 exigeait que le jeton revienne EN TÊTE DE FILE (le débrief repartait seul).
+       Il n'y a plus de file : l'invariant « le nouvel essai reste possible » est tenu par le bouton, et RIEN ne repart seul. */
+    t('D3 ⛔ aucun nouvel essai caché : aucune file, un seul appel, et « Réessayer » reste là pour la personne',
+      sid && L1.file.length === 0 && X.st.coach.length === 1 && await X.pg.evaluate(() => !!document.querySelector('#se-debrief .se-dbf-retry')), js(L1.file) + ' / ' + sid);
     t('D4 ⛔ aucun summarizeCoach payé sur le faux succès', X.st.summarize === 0 && X.st.coach.length === 1, 'summarize=' + X.st.summarize + ' coach=' + X.st.coach.length);
     const re = await clic(X.pg, '#se-debrief .se-dbf-retry');
     const txt = await attendreDebrief(X.pg, /DEBRIEF-SI01/);
@@ -280,7 +290,7 @@ module.exports.ecran = async function (t, b, PORT) {
     t('D6 ⛔⛔ UN seul débrief final : une entrée au magasin, un seul message dans le fil, aucun repli conservé',
       L2.mag && Object.keys(L2.mag.seances).length === 1 && /DEBRIEF-SI01/.test(L2.mag.seances[sid] && L2.mag.seances[sid].texte)
       && L2.fil.filter(c => /^a:DEBRIEF-SI01/.test(c)).length === 1 && L2.fil.filter(c => /^u\*:\[DÉBRIEF AUTO\]/.test(c)).length === 1 && !L2.fil.some(c => /Désolé/.test(c)), js({ mag: L2.mag, fil: L2.fil }));
-    t('D6b … le jeton est consommé (plus dans la file), le « reçu » effacé, un seul summarizeCoach (après le VRAI débrief)',
+    t('D6b … rien en file, aucun « reçu », un seul summarizeCoach (après le VRAI débrief)',
       L2.file.indexOf(sid) < 0 && !L2.recu && X.st.summarize === 1, js({ file: L2.file, recu: L2.recu, sum: X.st.summarize }));
     // Rendu immédiat : on ferme l'écran de fin et on va au Coach — SANS recharger.
     await clic(X.pg, '[onclick="closeSessionEnd()"]'); await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(400);
@@ -322,38 +332,50 @@ module.exports.ecran = async function (t, b, PORT) {
     await X.cx.close();
   }
   {
-    // D3b — échec, on QUITTE l'écran de fin, on revient par le Coach : le nouvel essai part tout seul.
-    const X = await ouvrir({ wkt: WKT([YATES()]), reponses: [REPLI, OK('DEBRIEF-SI01 rattrapé au Coach.')] });
+    /* 🔁 D3b — RETOURNÉ (DEBRIEF-ON-DEMAND-01, R30). Avant : échec → quitter l'écran → ouvrir le Coach, et le nouvel
+       essai partait TOUT SEUL (chemin du Coach). C'est exactement l'appel sans clic que la décision retire. Nouvel
+       attendu : le Coach ne relance rien ; le nouvel essai part quand la personne le demande, depuis Progrès, et le
+       débrief est rangé à SA séance. */
+    const X = await ouvrir({ wkt: WKT([YATES()]), reponses: [REPLI, OK('DEBRIEF-SI01 relancé depuis Progrès.')] });
     const f = await terminer(X);
     await clic(X.pg, '[onclick="closeSessionEnd()"]');
-    await clic(X.pg, '#nb-coach');
-    const t0 = Date.now(); let L = null;
-    while (Date.now() - t0 < 8000) { L = await lire(X.pg); if (L.mag && Object.keys(L.mag.seances).length) break; await X.pg.waitForTimeout(200); }
-    await X.pg.waitForTimeout(500); L = await lire(X.pg);
+    await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(2500);
+    let L = await lire(X.pg);
     const sid = String((L.sessions.find(s => (s.exs || []).some(e => e.name === 'Rowing Yates')) || {}).id || '');
-    t('D3b échec → quitter l\'écran → Coach : le débrief est refait et rangé à SA séance (chemin du Coach)',
-      /n'a pas pu/.test(f.ecran) && L.mag && L.mag.seances[sid] && /rattrapé au Coach/.test(L.mag.seances[sid].texte) && L.file.indexOf(sid) < 0 && /rattrapé au Coach/.test(L.coachDom), js({ mag: L.mag, file: L.file }));
+    t('D3b ⛔⛔ échec → quitter l\'écran → Coach : RIEN ne repart seul (1 appel, rien de rangé)',
+      /n'a pas pu/.test(f.ecran) && X.st.coach.length === 1 && !(L.mag && L.mag.seances && L.mag.seances[sid]), js({ coach: X.st.coach.length, mag: L.mag }));
+    await clic(X.pg, '#nb-progress'); await X.pg.waitForTimeout(500);
+    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} });
+    await X.pg.waitForTimeout(400);
+    const go = await clic(X.pg, '#sess-list .sess-dbf-go[onclick*="' + sid + '"]', 'ov-debrief-milo');
+    const t0 = Date.now();
+    while (Date.now() - t0 < 8000) { L = await lire(X.pg); if (L.mag && L.mag.seances && L.mag.seances[sid]) break; await X.pg.waitForTimeout(200); }
+    t('D3c … « Analyser avec Milo » dans Progrès relance (2ᵉ appel) et range le débrief à SA séance',
+      go && X.st.coach.length === 2 && L.mag && L.mag.seances[sid] && /relancé depuis Progrès/.test(L.mag.seances[sid].texte) && L.file.length === 0, js({ coach: X.st.coach.length, mag: L.mag }));
     await X.cx.close();
   }
   {
-    // D1b — le chemin du Coach, lui aussi, refuse `complete:false` : rien d'affiché, rien de rangé, jeton rendu.
+    /* 🔁 D1b — RÉÉCRIT (R30). Avant : « le chemin du COACH, lui aussi, refuse `complete:false` » (502 puis repli). Le
+       chemin du Coach est retiré, et le moteur faisait 2 essais réseau cachés. Invariant gardé : une erreur HTTP
+       n'affiche ni ne range rien, et ne laisse aucune consigne cachée dans le fil. Nouveau : UN essai par clic. */
     const X = await ouvrir({ wkt: WKT([YATES()]), reponses: [{ status: 502 }, REPLI] });
-    await terminer(X);
+    const f = await terminer(X);
     await clic(X.pg, '[onclick="closeSessionEnd()"]');
     await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(2500);
     const L = await lire(X.pg);
     const sid = String((L.sessions.find(s => (s.exs || []).some(e => e.name === 'Rowing Yates')) || {}).id || '');
-    t('D1b Coach : HTTP 502 puis `complete:false` → aucune bulle « Désolé », rien de rangé, jeton RENDU, aucune consigne cachée laissée',
-      X.st.coach.length === 2 && !/Désolé/.test(L.coachDom) && !(L.mag && L.mag.seances && L.mag.seances[sid]) && L.file[0] === sid
+    t('D1b HTTP 502 → UN seul appel (aucun essai caché), aucune bulle « Désolé », rien de rangé, aucune consigne cachée laissée, Coach muet',
+      /n'a pas pu/.test(f.ecran) && X.st.coach.length === 1 && !/Désolé/.test(L.coachDom) && !(L.mag && L.mag.seances && L.mag.seances[sid]) && L.file.length === 0
       && !L.mem.some(c => /DÉBRIEF AUTO/.test(c)) && X.st.summarize === 0, js({ coach: X.st.coach.length, file: L.file, mem: L.mem, sum: X.st.summarize }));
     await X.cx.close();
   }
   {
-    // D1c — un ancien « reçu » de repli (écrit par une version d'avant) n'est jamais posé comme débrief.
+    /* D1c — un ancien « reçu » de repli (écrit par une version d'avant) n'est jamais posé comme débrief.
+       🔁 (R30) Avant, la séance « retournait en file » ; il n'y a plus de file : la clé est oubliée, rien ne part. */
     const X = await ouvrir({ sessions: HIST(), stock: { ft4_debrief_recu: JSON.stringify({ id: '1001', ts: Date.now(), reply: 'Désolé, réessaie.', instr: '[DÉBRIEF AUTO] x' }) }, attente: 4500 });
     const L = await lire(X.pg);
-    t('D1c un ancien « reçu » « Désolé, réessaie. » → la séance retourne en file, rien n\'est posé ni rangé',
-      !L.recu && L.file.indexOf('1001') >= 0 && !L.fil.some(c => /Désolé/.test(c)) && !(L.mag && L.mag.seances && L.mag.seances['1001']), js(L));
+    t('D1c un ancien « reçu » « Désolé, réessaie. » → oublié, rien n\'est posé ni rangé, aucun appel',
+      !L.recu && L.file.length === 0 && !L.fil.some(c => /Désolé/.test(c)) && !(L.mag && L.mag.seances && L.mag.seances['1001']) && X.st.coach.length === 0, js(L));
     await X.cx.close();
   }
 
@@ -578,15 +600,17 @@ module.exports.ecran = async function (t, b, PORT) {
     await X.cx.close();
   }
   {
-    // Le débrief À VENIR : une séance terminée hors ligne attend le sien (jeton en file) ; on la supprime avant.
+    /* Le débrief À VENIR : une séance terminée hors ligne attendait le sien (jeton en file) ; on la supprime avant.
+       🔁 DEBRIEF-ON-DEMAND-01 (R30) : la file n'existe plus — une ancienne clé est OUBLIÉE au démarrage (OD-17).
+       L'invariant tient tel quel : aucune séance supprimée ne coûte un appel ni ne laisse un débrief orphelin. */
     const X = await ouvrir({ sessions: SEANCES_PDF(), prs: {}, reponses: [OK('ORPHELIN débrief d\'une séance supprimée.')],
       stock: { ft4_debriefs: JSON.stringify({ v: 1, seances: { [C]: { texte: 'TXT-C jambes', ts: 3, src: 'coach' } } }), ft4_pending_debrief: JSON.stringify([A]) } });
     const ok = await supprimer(X, A);
     const ap = await etatZ(X.pg);
     await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(2500);
     const fin = await etatZ(X.pg);
-    t('Z5 ⛔⛔ séance supprimée AVANT son débrief : son jeton quitte la file — au Coach, aucun appel payé, aucun débrief orphelin',
-      ok && JSON.parse(ap.file || '[]').indexOf(A) < 0 && X.st.coach.length === 0 && seances(fin.mag) === C && !/ORPHELIN/.test(fin.fil || ''),
+    t('Z5 ⛔⛔ séance supprimée AVANT son débrief : plus aucune file (clé oubliée) — au Coach, aucun appel payé, aucun débrief orphelin',
+      ok && ap.file === null && X.st.coach.length === 0 && seances(fin.mag) === C && !/ORPHELIN/.test(fin.fil || ''),
       js({ ok, file: ap.file, coach: X.st.coach.length, cles: seances(fin.mag) }));
     await X.cx.close();
   }

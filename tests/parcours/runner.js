@@ -1591,37 +1591,33 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     'app.js ne lit pas bk.lastDate / bk.lastName');
   // ⚠️ LE DOUBLE DÉBRIEF (07/08) — trouvé dans l'export de conversations de Michel : Milo a
   // débriefé DEUX FOIS la même séance, avec deux objectifs mémorisés contradictoires (le second,
-  // faux, écrasait le premier). Course entre `_runSeDebrief` (écran de fin) et `_maybeAutoDebrief`
-  // (écran Coach) : le premier ne rendait le jeton `ft4_pending_debrief` qu'APRÈS la réponse de
-  // l'IA, plusieurs secondes plus tard. ⚠️ On reproduit la course avec un appel réseau LENT —
-  // sans la lenteur, le bug ne se déclenche pas et le témoin serait vert des deux côtés.
+  // faux, écrasait le premier). La course était entre l'écran de fin et l'ouverture du Coach.
+  /* 🎯 DEBRIEF-ON-DEMAND-01 (05/10/2026, décision de Michel) — l'ouverture du Coach ne débriefe plus rien
+     (`_maybeAutoDebrief` est retiré), et il n'y a plus de jeton à consommer (la file est retirée). Le
+     SECOND DÉCLENCHEUR d'aujourd'hui, c'est un second clic sur la même séance : l'invariant, lui, est le
+     même — UNE analyse par séance. On garde la lenteur, sans elle la course ne se produit pas.
+     (L'ancien second témoin, « le jeton est consommé », n'a plus d'objet : il n'y a plus de jeton.) */
   const dbl=await p.evaluate(async()=>{
     const vf=window.fetch, vs=S.url;
     try{
       S.url='https://exemple.invalide/exec';
-      localStorage.setItem('ft4_pending_debrief','SEANCE-TEST');
       if(!document.getElementById('se-debrief')){
         const d=document.createElement('div'); d.id='se-debrief'; document.body.appendChild(d);
       }
       let appels=0;
-      /* 🛡️ SESSION-INTEGRITY-01 (04/10/2026) — la réponse simulée porte le format RÉEL du Worker (`complete`,
-         en production depuis MILO-PDF1) : un débrief valide est une réponse CONFIRMÉE terminée. Au format
-         d'avant, le « débrief » était refusé, le jeton RENDU, et ce témoin rougissait pour une simulation. */
       window.fetch=()=>{ appels++; return new Promise(r=>setTimeout(()=>r({
         ok:true, json:()=>Promise.resolve({reply:'Débrief de test.',_diag:'ok',stopReason:'end_turn',truncated:false,complete:true})
       }),400)); };
-      const p1=_runSeDebrief({exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}],
-                              volume:500,id:'SEANCE-TEST'},0);
-      const p2=_maybeAutoDebrief();      // le Coach s'ouvre PENDANT que le premier attend
+      const sess={exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}],volume:500,id:'SEANCE-TEST'};
+      const p1=_runSeDebrief(sess,0);
+      const p2=_runSeDebrief(sess,0);    // le second clic PENDANT que le premier attend
       await Promise.all([p1,p2]);
-      return {appels:appels, jeton:localStorage.getItem('ft4_pending_debrief')};
+      return {appels:appels, range:!!_dbfTexteDe('SEANCE-TEST')};
     }catch(e){ return {erreur:String(e&&e.message||e)}; }
-    finally{ window.fetch=vf; S.url=vs; localStorage.removeItem('ft4_pending_debrief'); }
+    finally{ window.fetch=vf; S.url=vs; try{ _dbfOublier('SEANCE-TEST'); }catch(e){} }
   });
-  t('⭐⭐ DÉBRIEF : la séance n\'est débriefée QU\'UNE FOIS, même si le Coach s\'ouvre pendant l\'appel',
-    dbl && dbl.appels===1, JSON.stringify(dbl));
-  t('DÉBRIEF : une fois fait, le jeton est consommé (pas de débrief au prochain lancement)',
-    dbl && dbl.jeton===null, JSON.stringify(dbl));
+  t('⭐⭐ DÉBRIEF : la séance n\'est analysée QU\'UNE FOIS, même si on redemande pendant l\'appel',
+    dbl && dbl.appels===1 && dbl.range===true, JSON.stringify(dbl));
   // ⚠️ LE REFUS D'AUTHENTIFICATION NE DOIT JAMAIS ÊTRE SILENCIEUX (ft-v788). Avant de poser un
   // code perso sur un compte, il fallait s'assurer qu'un appareil SANS le code le VOIE : le refus
   // tombait dans un `else` vide, donc la synchro mourait sans un mot. Et `_cloudSync` envoie en
@@ -4138,13 +4134,23 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
    Ce bloc fige les 4 chemins, y compris celui du silence — c'est le seul qui manquait.  */
 {
   console.log('\n── X. Le débrief de fin de séance ──');
+  /* 🎯 DEBRIEF-ON-DEMAND-01 (05/10/2026, décision de Michel) — le débrief ne part plus tout seul : il faut
+     « Analyser cette séance avec Milo ». Les 4 chemins de ce bloc restent figés (succès, échec dit, hors ligne,
+     reprise), mais ils passent par le CLIC. Deux attendus sont RETOURNÉS, avec leur raison :
+     · « le jeton est rendu : Milo débriefera à l'ouverture du Coach » → ⛔ plus rien ne repart seul ; un échec
+       = UN essai réseau (la boucle de 2 essais cachés est retirée), la reprise est un nouveau clic ;
+     · « hors ligne : sans bouton, ça ne servirait à rien » → le Coach ne rattrape plus, donc « Réessayer » EST
+       le seul chemin : il est proposé.
+     Et un attendu s'AJOUTE : sans clic, 0 appel. */
   const seance=()=>{ startWorkout();
     S.wkt.exs=[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}];
     return finishWorkout(); };
   const lire=()=>({txt:(document.getElementById('se-debrief')||{}).innerText||'',
-                   retry:!!document.querySelector('.se-dbf-retry'),
-                   jeton:!!localStorage.getItem('ft4_pending_debrief')});
-  // Un contexte par scénario : le jeton et l'historique ne doivent pas déborder de l'un à l'autre.
+                   retry:!!document.querySelector('#se-debrief .se-dbf-retry:not(.se-dbf-go)'),
+                   analyser:!!document.querySelector('#se-debrief .se-dbf-go'),
+                   range:(()=>{ try{ return Object.keys((JSON.parse(localStorage.getItem('ft4_debriefs')||'null')||{seances:{}}).seances).length; }catch(e){ return -1; } })()});
+  const cliquer=sel=>{ const b=document.querySelector(sel); if(b){ b.click(); return true; } return false; };
+  // Un contexte par scénario : rien ne doit déborder de l'un à l'autre.
   const jouer=async(nAbort,offline)=>{
     const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
     const pg=await cx.newPage(); const errs=[];
@@ -4155,10 +4161,6 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
         return r.fulfill({status:200,contentType:'application/json',body:'{}'});
       n++;
       if(n<=nAbort) return r.abort();
-      /* 🛡️ SESSION-INTEGRITY-01 (04/10/2026) — la réponse simulée porte le format RÉEL du Worker
-         (`complete`, `stopReason`, en production depuis MILO-PDF1, 25/09). Elle n'envoyait que `reply` :
-         un débrief valide est désormais une réponse CONFIRMÉE terminée (`_dbfReponseValide`), et une
-         simulation qui n'emploie pas le schéma de la production ne teste rien (SUIVI-AUDIT, leçon 1). */
       r.fulfill({status:200,contentType:'application/json',
                  body:JSON.stringify({reply:'Belle séance : 100 kg × 5, propre. Vise 102,5 kg.',_diag:'ok',stopReason:'end_turn',truncated:false,complete:true})});
     });
@@ -4168,43 +4170,41 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     if(offline) await cx.setOffline(true);
     await pg.evaluate(seance);
     await pg.waitForTimeout(2500);
-    const r1=await pg.evaluate(lire);
+    const r0=await pg.evaluate(lire), n0=n;
+    await pg.evaluate(cliquer,'#se-debrief .se-dbf-go');
+    await pg.waitForTimeout(2500);
+    const r1=await pg.evaluate(lire), n1=n;
     let r2=null;
-    if(r1.retry){ await pg.evaluate(()=>_retrySeDebrief()); await pg.waitForTimeout(2200);
+    if(r1.retry){ if(offline) await cx.setOffline(false);
+                  await pg.evaluate(cliquer,'#se-debrief .se-dbf-retry'); await pg.waitForTimeout(2200);
                   r2=await pg.evaluate(lire); }
     await cx.close();
-    return {r1,r2,errs,appels:n};
+    return {r0,n0,r1,n1,r2,errs,appels:n};
   };
 
   const OK   = await jouer(0,false);   // Milo répond
-  const KO   = await jouer(9,false);   // toutes les tentatives échouent
+  const KO   = await jouer(9,false);   // l'appel échoue
   const HORS = await jouer(0,true);    // hors ligne
-  const RATT = await jouer(2,false);   // les 2 essais auto échouent, le rattrapage réussit
+  const RATT = await jouer(1,false);   // le 1er clic échoue, « Réessayer » réussit
 
   const tz=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
-  tz('⭐ quand Milo répond, son analyse s\'affiche', /102,5 kg/.test(OK.r1.txt), OK.r1.txt);
-  tz('… et le jeton est consommé (pas de 2ᵉ débrief de la même séance)', OK.r1.jeton===false);
+  tz('⛔⛔ sans clic, AUCUN appel : l\'écran montre le bouton « Analyser cette séance avec Milo »',
+     [OK,KO,HORS,RATT].every(x=>x.n0===0 && x.r0.analyser), JSON.stringify([OK,KO,HORS,RATT].map(x=>x.n0)));
+  tz('⭐ quand Milo répond, son analyse s\'affiche, et elle est rangée avec la séance', /102,5 kg/.test(OK.r1.txt) && OK.r1.range===1, OK.r1.txt);
   tz('⭐⭐ quand l\'appel ÉCHOUE, l\'écran le DIT (ne fait plus semblant)',
      /n'a pas pu analyser/.test(KO.r1.txt), KO.r1.txt);
-  /* ⚠️⚠️ CE TÉMOIN FIGEAIT UNE FORMULATION, PAS UNE RÈGLE (corrigé ft-v1022). Il exigeait la
-     chaîne « kg de volume » — le résumé maigre d'alors. Depuis ft-v1022 l'écran rend le débrief
-     CHIFFRÉ complet (muscles, région, points à regarder, cadre) et les tuiles portent les
-     nombres, donc cette chaîne a disparu : le témoin accusait un écran DEVENU MEILLEUR.
-     ⭐ Sa raison d'avant est gardée : ce qu'il protège, c'est qu'un échec ne laisse JAMAIS la
-     personne devant une simple ligne d'erreur. C'est cette règle-là qui est figée maintenant.
-     *Un témoin qui fige un ÉTAT rougit dès qu'une décision est prise ; ce qu'on fige, c'est
-     une RÈGLE.* (3ᵉ fois cette semaine — ft-v992, ft-v1001, ici.) */
+  /* ⚠️⚠️ CE TÉMOIN FIGEAIT UNE FORMULATION, PAS UNE RÈGLE (corrigé ft-v1022) — voir l'historique : ce qu'il
+     protège, c'est qu'un échec ne laisse JAMAIS la personne devant une simple ligne d'erreur. */
   tz('… et le débrief MESURÉ reste affiché malgré l\'échec (jamais une simple ligne d\'erreur)',
      /Ce que tu as travaillé|kg de volume/.test(KO.r1.txt), KO.r1.txt.slice(0,120));
-  tz('… le jeton est RENDU : Milo débriefera à l\'ouverture du Coach', KO.r1.jeton===true);
+  tz('… ⛔ rien n\'est rangé, et UN SEUL essai réseau : aucune reprise cachée', KO.r1.range===0 && KO.n1===1, 'appels='+KO.n1);
   tz('… et un bouton « Réessayer » est proposé', KO.r1.retry===true);
-  tz('⭐ hors ligne : on l\'annonce, sans bouton (ça ne servirait à rien)',
-     /Hors ligne/.test(HORS.r1.txt)&&HORS.r1.retry===false, HORS.r1.txt);
-  tz('… et le jeton reste posé', HORS.r1.jeton===true);
+  tz('⭐ hors ligne : on l\'annonce, avec « Réessayer » (plus rien ne rattrape à la place de la personne)',
+     /Hors ligne/.test(HORS.r1.txt)&&HORS.r1.retry===true&&HORS.n1===0, HORS.r1.txt);
   tz('⭐ « Réessayer » relance vraiment et affiche l\'analyse',
      !!RATT.r2 && /102,5 kg/.test(RATT.r2.txt), RATT.r2?RATT.r2.txt:'(pas de bouton)');
-  tz('… et le message d\'échec disparaît après le rattrapage',
-     !!RATT.r2 && RATT.r2.retry===false && RATT.r2.jeton===false);
+  tz('… et le message d\'échec disparaît après la reprise, le débrief est rangé',
+     !!RATT.r2 && RATT.r2.retry===false && RATT.r2.range===1);
   t('0 erreur JS sur les 4 scénarios de débrief',
     [OK,KO,HORS,RATT].every(x=>x.errs.length===0),
     [].concat(...[OK,KO,HORS,RATT].map(x=>x.errs)).join(' | '));
@@ -7928,61 +7928,13 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
-/* == BLOC LXV - LE RECAP DU DEBRIEF EST ECRIT PAR LE CODE (20/08/2026) ==
-   Michel : « comme le debrief est automatique autant le faire en Haiku, ca coute pas cher ».
-   ⚠️ ON N'A PAS CHANGE DE MODELE (~0,17 €/mois d'ecart, et R9 : un modele leger suit mal les
-   consignes fines — on venait justement d'en ajouter une exigeante). Mais son intuition avait une
-   moitie juste, et c'est sa propre frontiere : LISTER est une transformation, COMMENTER est un
-   jugement. La liste ne merite donc meme pas Haiku — elle merite du CODE.
-   ⭐ Resultat : Milo ne PEUT plus sauter un exercice, au lieu qu'on lui DEMANDE de ne pas le faire. */
-{
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage();
-  await pg.addInitScript(seedScript({}));
-  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
-  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
-  const R=await pg.evaluate(()=>{
-    if(typeof _recapSeance!=='function') return {absente:true};
-    const mk=(n,sets)=>({name:n,sets:sets.map(x=>({kg:x[0],reps:x[1],done:true,type:x[2]||'N'}))});
-    S.sessions=[{id:'S-20', date:'2026-08-20', volume:9000, exs:[
-      mk('Soulevé de Terre',[[60,5,'É'],[100,2,'É'],[130,3],[130,3],[132,3]]),
-      mk('Tirage Poulie Haute (Lat Pulldown)',[[65,8],[65,8],[61,5]]),
-      mk('Rowing Poitrine Appuyée (Chest Supported)',[[52,8]]),
-      mk('Tirage Visage (Face Pull)',[[30,12]]),
-      mk('Crunch Poulie',[[40,12]])
-    ]}];
-    const o={};
-    o.txt = _recapSeance('S-20') || '';
-    o.parId   = /Soulevé de Terre/.test(o.txt);
-    o.tous    = ['Soulevé de Terre','Lat Pulldown','Rowing Poitrine Appuyée','Face Pull','Crunch Poulie']
-                  .every(n=>o.txt.indexOf(n)>=0);
-    o.compte  = /5 exercices/.test(o.txt);
-    o.charges = /3×130/.test(o.txt) && /3×132/.test(o.txt);
-    o.ech     = /\+2 échauffements/.test(o.txt);
-    o.repli   = (_recapSeance('inconnu')||'').indexOf('Soulevé de Terre')>=0;   // pid inconnu → la plus récente
-    /* ⚠️ jamais bloquant : pas de séance → chaîne vide, pas d'exception. */
-    const av=S.sessions; S.sessions=[];
-    try{ o.vide = _recapSeance('S-20')===''; }catch(e){ o.vide='EXCEPTION'; }
-    S.sessions=av;
-    return o;
-  });
-  console.log('\n-- LXV. Le récap du débrief est écrit par le CODE --');
-  if(R.absente){ t('⛔ _recapSeance existe', false, 'fonction absente'); }
-  else{
-    /* ⭐⭐ LE TÉMOIN CENTRAL : la liste est complète PAR CONSTRUCTION, pas par consigne. */
-    t('⭐⭐ LES 5 EXERCICES SONT LÀ, écrits par le code (Milo en sautait 2)',
-      R.tous===true, R.txt.replace(/\n/g,' | ').slice(0,220));
-    t('⭐ ... avec le compte annoncé', R.compte===true, R.txt.split('\n')[0]);
-    t('⭐ ... et les charges au format « reps × poids » de l\'app (ft-v396)',
-      R.charges===true, R.txt.split('\n')[1]||'');
-    t('⭐ les séries d\'ÉCHAUFFEMENT sont comptées, pas détaillées (le récap reste lisible)',
-      R.ech===true, R.txt.split('\n')[1]||'');
-    t('⭐ un identifiant inconnu retombe sur la séance la plus récente', R.repli===true, '');
-    t('/!\\ jamais bloquant : aucune séance → chaîne vide, pas d\'exception',
-      R.vide===true, String(R.vide));
-  }
-  await cx.close();
-}
+/* == BLOC LXV - RETIRE (DEBRIEF-ON-DEMAND-01, 05/10/2026) — R30 ==
+   Il testait `_recapSeance`, la liste d'exercices ecrite par le CODE devant le debrief du Coach
+   AUTOMATIQUE (20/08/2026 : Milo sautait 2 exercices sur 5). Ce chemin n'existe plus : le debrief
+   ne part que sur un clic, et il s'affiche A COTE de la liste ecrite par le code — l'ecran de fin
+   (`_renderSeExs` + les chiffres de `_debriefLocal`) ou la carte de Progres. L'invariant « la liste
+   complete est visible par construction » est donc tenu par l'ecran lui-meme, plus par un texte
+   colle devant la reponse. Temoin remplace : B-OD-E (tests/parcours/debrief_demande.js), OD-01. */
 
 /* == BLOC LXVI - LE BENCHMARK PEUT DEMANDER UN MODELE, SANS OUVRIR DE TROU (20/08/2026) ==
    Michel : « par la meme occasion test en haiku non ? ». Oui — et c'est la SEULE facon de
@@ -11482,160 +11434,24 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cx.close();
 }
 
-/* ═══ XCVII. LE DÉBRIEF NE SE PERD PLUS (ft-v979) ══════════════════════════════════════════
-   Michel : « je n'ai pas eu de briefing parce qu'il y a eu la mise à jour de l'application ».
-   ⛔ L'ancien code retirait le jeton AVANT l'appel et ne le remettait que `if(!ok)` — donc un
-   rechargement pendant l'appel le faisait disparaître pour de bon, en silence.
-   ⭐⭐ LE TÉMOIN CENTRAL SIMULE EXACTEMENT ÇA : on abandonne l'appel EN VOL (comme un
-   `location.reload()`), et on vérifie qu'au démarrage suivant la séance est de nouveau en
-   file. Sans ce scénario, tous les autres restent verts : le défaut ne se voit qu'au
-   DEUXIÈME lancement — donc jamais en testant une fois.                                     */
-{
-  console.log('\n── XCVII. Le débrief ne se perd plus ──');
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage(); pg.on('pageerror',e=>console.log('PAGEERROR',e.message));
-  await pg.addInitScript(seedScript({}));
-  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
-  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
-
-  const F=await pg.evaluate(()=>{
-    const o={};
-    o.api = ['_dbfLire','_dbfAjouter','_dbfPrendre','_dbfFini','_dbfRendre','_dbfRecuperer','_dbfRattraper']
-              .every(n=>typeof window[n]==='function');
-    if(!o.api) return o;
-    const raz=()=>{ localStorage.removeItem('ft4_pending_debrief'); localStorage.removeItem('ft4_debrief_encours'); };
-
-    // ① UNE FILE, PLUS UNE SEULE PLACE — deux séances sans ouvrir Milo entre les deux.
-    raz(); _dbfAjouter('S1'); _dbfAjouter('S2');
-    o.deuxGardees = _dbfLire().length===2 && _dbfLire()[0]==='S1';
-    // idempotent : la même séance ne s'inscrit jamais deux fois
-    _dbfAjouter('S1'); o.idempotent = _dbfLire().length===2;
-
-    // ② LE JETON N'EST PLUS DÉTRUIT : il passe « en cours », donc il existe TOUJOURS quelque part.
-    const pris=_dbfPrendre();
-    o.prisLePlusAncien = pris==='S1';
-    o.plusDansLaFile   = _dbfLire().indexOf('S1')<0;
-    o.maisEnCours      = !!localStorage.getItem('ft4_debrief_encours');
-
-    // ⭐⭐ ③ L'APPEL EST INTERROMPU (mise à jour / app fermée) : on ne revient JAMAIS.
-    //    Au démarrage suivant, `_dbfRecuperer()` doit le remettre en file.
-    /* 🔁 E5 (05/10/2026) — CE TÉMOIN FIGEAIT LE DÉFAUT. Il appelait `_dbfRecuperer()` dans la MÊME page,
-       juste après `_dbfPrendre()`, et exigeait la remise en file : c'est exactement ce que le rattrapage
-       faisait à un appel VIVANT (load + 3 s), d'où le second appel payé (E5). Un appel interrompu, c'est
-       une page MORTE : on le simule désormais comme la vraie vie le produit — l'emplacement écrit par une
-       autre page (ancien format, sans jeton de page). Et l'appel vivant de cette page, lui, ne revient pas. */
-    _dbfRecuperer();
-    o.vivantPasRepris = _dbfLire().indexOf('S1')<0;
-    localStorage.setItem('ft4_debrief_encours', JSON.stringify({id:'S1', ts:Date.now()}));   // la page d'avant
-    _dbfRecuperer();
-    o.recupereApresCoupure = _dbfLire().indexOf('S1')>=0;
-
-    // ④ SUCCÈS : le jeton disparaît pour de bon (pas de débrief fantôme au prochain lancement).
-    raz(); _dbfAjouter('S9'); const p9=_dbfPrendre(); _dbfFini(p9);
-    _dbfRecuperer();
-    o.succesNeRevientPas = _dbfLire().length===0 && !localStorage.getItem('ft4_debrief_encours');
-    // ⭐⭐ … et la LIVRAISON est notée à part, sans dépendre du bloc mémoire de Milo
-    o.livraisonNotee = _dbfFaits().indexOf('S9')>=0;
-
-    // ⑤ ÉCHEC PROPRE : le jeton repart EN TÊTE, et n'écrase PAS les autres en attente.
-    raz(); _dbfAjouter('A'); _dbfAjouter('B'); const pa=_dbfPrendre(); _dbfRendre(pa);
-    o.echecEnTete = JSON.stringify(_dbfLire())===JSON.stringify(['A','B']);
-
-    // ⑥ PÉREMPTION : un jeton vieux ne revient pas — « je viens de terminer » serait FAUX (R29).
-    raz();
-    localStorage.setItem('ft4_debrief_encours', JSON.stringify({id:'VIEUX', ts:Date.now()-40*3600*1000}));
-    _dbfRecuperer();
-    o.vieuxNeRevientPas = _dbfLire().length===0;
-
-    // ⑦ RÉTROCOMPATIBLE : un téléphone qui avait l'ANCIEN format (chaîne nue) ne perd rien.
-    raz(); localStorage.setItem('ft4_pending_debrief','ANCIEN-ID');
-    o.ancienFormatLu = _dbfLire().length===1 && _dbfLire()[0]==='ANCIEN-ID';
-    raz();
-    return o;
-  });
-  t('DÉBRIEF : la file expose bien ses 7 fonctions', F.api===true, JSON.stringify(F));
-  t('⭐⭐ DÉBRIEF : deux séances d\'affilée → les DEUX sont gardées (plus d\'écrasement silencieux)',
-    F.deuxGardees===true, JSON.stringify(F));
-  t('DÉBRIEF : la même séance ne s\'inscrit jamais deux fois', F.idempotent===true, JSON.stringify(F));
-  t('DÉBRIEF : on prend la PLUS ANCIENNE, et elle sort de la file (anti double-débrief)',
-    F.prisLePlusAncien===true && F.plusDansLaFile===true, JSON.stringify(F));
-  t('⭐⭐ DÉBRIEF : le jeton n\'est plus DÉTRUIT — il est « en cours », donc jamais nulle part',
-    F.maisEnCours===true, JSON.stringify(F));
-  t('⭐⭐ DÉBRIEF : appel interrompu (mise à jour) → la séance REVIENT en file au démarrage',
-    F.recupereApresCoupure===true, JSON.stringify(F));
-  t('🔁 E5 DÉBRIEF : un appel VIVANT de cette page n\'est PAS remis en file par le rattrapage (sinon il est payé deux fois)',
-    F.vivantPasRepris===true, JSON.stringify(F));
-  t('DÉBRIEF : une fois LIVRÉ, il ne revient pas (pas de débrief fantôme)',
-    F.succesNeRevientPas===true, JSON.stringify(F));
-  t('⭐⭐ DÉBRIEF : la LIVRAISON est notée à part — elle ne dépend pas du bloc mémoire de Milo',
-    F.livraisonNotee===true, JSON.stringify(F));
-  t('DÉBRIEF : échec propre → le jeton repart en tête SANS écraser les autres en attente',
-    F.echecEnTete===true, JSON.stringify(F));
-  t('⛔ DÉBRIEF : un jeton périmé ne revient PAS — « je viens de terminer » serait faux (R29)',
-    F.vieuxNeRevientPas===true, JSON.stringify(F));
-  t('⚠️ DÉBRIEF : l\'ANCIEN format (chaîne nue) est encore lu — personne ne perd son débrief à la mise à jour',
-    F.ancienFormatLu===true, JSON.stringify(F));
-
-  /* ⭐ LE FILET QUI NE DÉPEND D'AUCUN DRAPEAU : on compare ce qu'on a FAIT à ce qui a été
-     DÉBRIEFÉ. C'est lui qui rattrape une séance dont le jeton a disparu pour une raison
-     qu'on ne connaîtra jamais. */
-  const R=await pg.evaluate(()=>{
-    const o={}; if(typeof _dbfRattraper!=='function') return o;
-    const raz=()=>{ localStorage.removeItem('ft4_pending_debrief'); localStorage.removeItem('ft4_debrief_encours');
-                    localStorage.removeItem('ft4_debrief_faits'); };
-    const faire=(id,ageH,done)=>({id:id, ts:Date.now()-ageH*3600*1000, date:'2026-08-23',
-      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:done,type:'N'}]}]});
-    const vs=S.sessions, vr=S.registre;
-    try{
-      // une séance récente, validée, JAMAIS débriefée → rattrapée
-      raz(); S.sessions=[faire('X1',3,true)]; S.registre={sessionLog:[]};
-      _dbfRattraper(); o.rattrapee=_dbfLire().indexOf('X1')>=0;
-
-      // ⛔ déjà débriefée → on ne repaie pas un appel. Et le sessId est ici une CHAÎNE alors
-      //    que l'id est un NOMBRE : c'est exactement le type qui cassait la déduplication.
-      raz(); S.sessions=[faire(1787501464557,3,true)];
-      S.registre={sessionLog:[{sessId:'1787501464557',objectif:'x'}]};
-      _dbfRattraper(); o.pasDeDoublonMalgreLeType=_dbfLire().length===0;
-
-      // ⛔ un cardio seul (aucune série validée) ne déclenche rien — même règle qu'en fin de séance
-      raz(); S.sessions=[faire('X2',3,false)]; S.registre={sessionLog:[]};
-      _dbfRattraper(); o.cardioSeulIgnore=_dbfLire().length===0;
-
-      // ⛔ trop vieille → on ne la ressort pas (R29)
-      raz(); S.sessions=[faire('X3',72,true)]; S.registre={sessionLog:[]};
-      _dbfRattraper(); o.vieilleIgnoree=_dbfLire().length===0;
-
-      // ⛔ plusieurs en retard → UNE SEULE, la plus récente (pas 5 appels d'un coup)
-      raz(); S.sessions=[faire('V1',30,true),faire('V2',2,true),faire('V3',10,true)];
-      S.registre={sessionLog:[]};
-      _dbfRattraper(); o.uneSeuleLaPlusRecente=JSON.stringify(_dbfLire())===JSON.stringify(['V2']);
-
-      /* ⭐⭐ LE TÉMOIN QUI M'A FAIT CORRIGER MA PROPRE CONCEPTION. Une réponse de Milo SANS
-         bloc technique n'écrit rien dans le Registre. Si le rattrapage ne regardait que lui,
-         il ré-inscrirait la séance à CHAQUE lancement — un appel au modèle payé chaque fois,
-         en silence. Ici : Registre VIDE, mais débrief LIVRÉ → on ne repaie pas. */
-      raz(); S.sessions=[faire('Z1',2,true)]; S.registre={sessionLog:[]};
-      _dbfMarquerFait('Z1');
-      _dbfRattraper(); o.livreSansMemoireNeRepasse=_dbfLire().length===0;
-      raz();
-    } finally { S.sessions=vs; S.registre=vr; }
-    return o;
-  });
-  t('⭐⭐ RATTRAPAGE : une séance validée SANS aucun débrief revient dans la file',
-    R.rattrapee===true, JSON.stringify(R));
-  t('⭐⭐ RATTRAPAGE : une séance DÉJÀ débriefée ne revient pas — même quand le sessId est une chaîne et l\'id un nombre',
-    R.pasDeDoublonMalgreLeType===true, JSON.stringify(R));
-  t('⛔ RATTRAPAGE : un cardio seul ne déclenche aucun débrief (même règle qu\'en fin de séance)',
-    R.cardioSeulIgnore===true, JSON.stringify(R));
-  t('⛔ RATTRAPAGE : une séance trop vieille reste dehors — un débrief qui ment sur le QUAND vaut moins que rien',
-    R.vieilleIgnoree===true, JSON.stringify(R));
-  t('⛔⛔ RATTRAPAGE : plusieurs séances en retard → UNE SEULE, la plus récente (pas 5 appels d\'un coup)',
-    R.uneSeuleLaPlusRecente===true, JSON.stringify(R));
-  t('⛔⛔ RATTRAPAGE : un débrief LIVRÉ mais sans bloc mémoire ne se repaie pas à chaque lancement',
-    R.livreSansMemoireNeRepasse===true, JSON.stringify(R));
-
-  await cx.close();
-}
+/* ═══ XCVII. LE DÉBRIEF NE SE PERD PLUS (ft-v979) — RETIRÉ (DEBRIEF-ON-DEMAND-01, 05/10/2026) — R30 ═══
+   Il éprouvait la FILE d'attente du débrief automatique (`_dbfLire/_dbfAjouter/_dbfPrendre/_dbfFini/
+   _dbfRendre/_dbfRecuperer`) et le RATTRAPAGE (`_dbfRattraper`) : deux séances gardées, jeton jamais
+   détruit, reprise après coupure, rattrapage d'une séance jamais débriefée, une seule à la fois, rien
+   après 48 h, cardio seul ignoré, « livré sans mémoire » non repayé.
+   Pourquoi ils étaient NÉCESSAIRES : le débrief partait TOUT SEUL ; une mise à jour pendant l'appel
+   le faisait disparaître (Michel, ft-v979), et chaque relance était payée en silence.
+   Pourquoi ils sont sans objet : le débrief ne part plus que sur un CLIC. Il n'y a plus de jeton à
+   perdre, plus rien à rattraper, plus rien à payer en silence. Ce que chaque témoin protégeait :
+   · « une séance n'est jamais perdue » → la séance reste dans l'historique avec « ✨ Analyser avec
+     Milo », sans limite de temps (OD-16) ;
+   · « coupure pendant l'appel » → « Analyse interrompue — relancer », AUCUNE relance seule (OD-06/07) ;
+   · « jamais payé deux fois » → un geste = au plus un appel par séance (OD-05, OD-11, OD-13) ;
+   · « cardio seul ignoré » → aucun bouton sans série validée (`_dbfAnalysable`, B-OD-S) ;
+   · « l'ancien format lu à la mise à jour » → les clés de l'ancien automatisme sont oubliées, le
+     débrief déjà payé du « reçu » est rangé (OD-17).
+   ⛔ Ne PAS « réparer » en remettant une file : la décision est « Débrief Milo à la demande »
+   (docs/DECISIONS.md). Témoins : tests/parcours/debrief_demande.js. */
 
 /* ═══ XCVIII. LE CONTRÔLE D'INTENSITÉ (ft-v980) ════════════════════════════════════════════
    Michel : « comment il a pu déduire que je pouvais faire 3 séries de 5 reps à 95, c'est
@@ -14281,7 +14097,11 @@ console.log('\n-- CXXVII. Le débrief chiffré est calculé en LOCAL, toujours (
         {name:'Squat à la Barre',sets:[{kg:100,reps:8,done:true,type:''},{kg:100,reps:8,done:true,type:''}]}];
       persist();
       await finishWorkout();
-      await new Promise(r=>setTimeout(r,4000));       // 2 tentatives + 1,2 s d'attente
+      /* DEBRIEF-ON-DEMAND-01 : la fin de séance n'appelle plus Milo toute seule — on CLIQUE
+         « Analyser cette séance avec Milo », comme la personne. Un seul essai par clic. */
+      await new Promise(r=>setTimeout(r,300));
+      const go=document.querySelector('#se-debrief .se-dbf-go'); if(go) go.click();
+      await new Promise(r=>setTimeout(r,1500));
       const slot=document.getElementById('se-debrief');
       return {txt:(slot.innerText||'').replace(/\s+/g,' ').trim(),
               milo:!!slot.querySelector('.se-dbf-milo'),
@@ -21484,7 +21304,10 @@ console.log('\n-- CXCIII. La suite du lot d\'audit (ft-v1087) --');
     window.fetch=vrai;
     /* ⛔ LA DÉCISION À FIGER (R30) : « débrief LIVRÉ » et « mémoire PRODUITE » sont deux faits
        distincts, avec deux propriétaires — ce n'est pas un oubli, c'est écrit dans le code. */
-    o.deuxProprietaires = (typeof _dbfFaits==='function');
+    /* 🔁 DEBRIEF-ON-DEMAND-01 : « livré » n'a plus de registre à part (`_dbfFaits` retiré avec la file) —
+       c'est le MAGASIN `ft4_debriefs` (`_dbfTexteDe`) qui le dit. La décision tient : il reste distinct de
+       la mémoire de Milo (`S.coachMemory`). */
+    o.deuxProprietaires = (typeof _dbfTexteDe==='function') && (typeof _dbfFaits==='undefined');
 
     /* ── ④ L'ÉTAPE 1 A UNE FIN ── */
     const ctx=(sem)=>{ const d=new Date(Date.now()-sem*6048e5).toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
@@ -25841,25 +25664,25 @@ console.log('\n-- CCXXVI quater. L\'écran de fin n\'annonce pas un débrief ine
     const o={}, t=today(), ts=new Date(t+'T10:00:00').getTime();
     const slot=document.getElementById('se-debrief');
     if(!slot) return {err:'#se-debrief absent de la page'};
-    /* ⛔⛔ ON NE VIDE SURTOUT PAS `S.url` : le chemin « hors ligne » est testé AVANT le nôtre,
-       donc on sortirait par lui et ce bloc serait vert sans avoir jamais atteint la branche
-       qu'il prétend mesurer. ⭐ Et aucun appel n'est dépensé pour autant : dans les deux cas
-       `_dbfPrendre()` rend null (rien n'a été mis en file) et la fonction retourne avant le
-       moindre `fetch`. *Un témoin qui sort par une autre porte que celle qu'il vise ne mesure
-       rien — il rassure* (§31). */
+    /* 🔁 DEBRIEF-ON-DEMAND-01 : l'écran de fin ne lance plus aucun appel — il se REND par
+       `_seDebriefVue` (les chiffres + l'état de l'analyse). On rend donc ce que la personne voit,
+       et on compte les `fetch` : rien ne doit partir. ⛔ `S.url` reste posé, sinon on mesurerait
+       la branche « hors ligne » au lieu de la nôtre (§31). */
     const cardio={id:ts,ts,date:t,exs:[],volume:0,duration:45*60,calories:377,
                   cardio:{type:'tapis',duration:45,intensity:'modere'}};
     const muscu={id:ts+1,ts:ts+1,date:t,volume:2560,duration:45*60,calories:250,
                  exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]};
     o.enLigne=!!S.url && (typeof navigator==='undefined' || navigator.onLine!==false);
-    {
+    const vf=window.fetch; o.appels=0; window.fetch=function(){ o.appels++; return Promise.reject(new Error('aucun appel attendu')); };
+    try{
       S.sessions=[cardio]; slot.innerHTML='';
-      await _runSeDebrief(cardio,0); o.cardio=(slot.innerText||'').replace(/\s+/g,' ').trim();
-      /* ⛔ CONTRÔLE : sur une séance AVEC séries, le message honnête doit toujours sortir —
+      _seDebriefVue(cardio,0); o.cardio=(slot.innerText||'').replace(/\s+/g,' ').trim();
+      /* ⛔ CONTRÔLE : sur une séance AVEC séries, l'écran doit toujours proposer l'analyse —
          sinon on aurait juste rendu la branche muette pour tout le monde. */
       S.sessions=[muscu]; slot.innerHTML='';
-      await _runSeDebrief(muscu,0);  o.muscu=(slot.innerText||'').replace(/\s+/g,' ').trim();
-    }
+      _seDebriefVue(muscu,0);  o.muscu=(slot.innerText||'').replace(/\s+/g,' ').trim();
+      await new Promise(r=>setTimeout(r,300));
+    } finally { window.fetch=vf; }
     return o;
   }catch(e){ return {err:String(e&&e.message||e)}; } });
   await cx.close();
@@ -25880,6 +25703,7 @@ console.log('\n-- CCXXVI quater. L\'écran de fin n\'annonce pas un débrief ine
        n'apparaît JAMAIS, et le témoin ci-dessus serait vert en ne prouvant rien. */
     t('⛔⛔ CONTRÔLE — une séance AVEC séries, elle, dit bien quelque chose sur le débrief',
       /débrief|Coach|hors ligne|analyse/i.test(R.muscu||''), (R.muscu||'').slice(0,120));
+    t('⛔⛔ DEBRIEF-ON-DEMAND-01 — rendre l\'écran de fin n\'appelle JAMAIS Milo (0 fetch)', R.appels===0, String(R.appels));
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
 }
@@ -39744,10 +39568,14 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🛡️ SESSION-INTEGRITY-01 (session-B, 04/10/2026) — remplacement, débrief, persistance, historique, export,
      première référence, N-G2. Blocs B-SI01-*. Banc : tools/banc_session_integrity.js. */
   await require('./session_integrity.js').ecran(t, b, PORT);
-  /* 🔁 E5 (session-B, 05/10/2026) — une séance, un seul appel de débrief, sans jamais perdre un débrief :
-     rattrapage pendant l'appel, Coach pendant / après, échec réel, complete:false, rechargement, deux séances le
-     même jour, suppression. Blocs B-E5-*. Banc : tools/banc_e5.js. */
-  await require('./e5_idempotence.js').ecran(t, b, PORT);
+  /* 🎯 DEBRIEF-ON-DEMAND-01 (session-B, 05/10/2026) — le débrief de Milo part sur un CLIC, jamais seul : 0 appel
+     sans clic (fin, rechargement, démarrage, Coach), un geste = au plus une génération par séance, échecs sans
+     rien ranger, « Analyse interrompue » après rechargement, deux séances le même jour, suppression, export.
+     Blocs B-OD-*. Banc : tools/banc_debrief_demande.js.
+     ⛔ Il REMPLACE les blocs B-E5-* (tests/parcours/e5_idempotence.js, retiré — R30) : E5 rendait l'automatisme
+     sûr (rattrapage, Coach, file) ; cet automatisme n'existe plus. Ses invariants encore vivants (sessionId,
+     double clic, A ne libère pas B, complete:false, suppression) sont repris par OD-05/09/10/12/13/14. */
+  await require('./debrief_demande.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
@@ -40329,60 +40157,48 @@ console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL 
     for(;j<src.length;j++){ const c=src[j]; if(c==='{')d++; else if(c==='}'){d--; if(!d)return src.slice(i,j+1);} }
     return ''; };
 
-  // ── A : l'état qui manquait
-  t('B-CCCXII ① ⭐⭐ l\'état « reçu » existe, avec sa propre clé de stockage',
-    /const _DBF_RECU\s*=\s*'ft4_debrief_recu'/.test(srcC), '');
-  t('B-CCCXII ② ⛔ il PORTE la réponse ET la consigne (sinon : perte silencieuse)',
-    /reply:String\(reply\)/.test(nu(corps('_dbfRecu',srcC))) && /instr:String\(instr\|\|''\)/.test(nu(corps('_dbfRecu',srcC))), '');
-  /* 🔁 E5 (05/10/2026) : « en vol » est désormais rangé PAR SÉANCE ; poser le « reçu » retire l'entrée de CETTE
-     séance (`_dbfVolRetirer(id)`), plus tout l'emplacement — vider l'emplacement libérait aussi l'appel d'une autre
-     séance en vol (mutation M-E5-11, attrapée à l'écran par E5-9d). Le sens du témoin est inchangé. */
-  t('B-CCCXII ③ ⛔ le poser retire le « en vol » : ce n\'est plus en vol, c\'est payé',
-    /_dbfVolRetirer\(id\)/.test(nu(corps('_dbfRecu',srcC))) && !/removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_dbfRecu',srcC))), '');
-  t('B-CCCXII ④ ⭐⭐ il est posé AVANT tout traitement de la réponse',
-    /_dbfRecu\(_pid, reply, instr\)[\s\S]{0,400}_stripCoachTech/.test(nu(corps('_runSeDebrief',srcL))), '');
-  t('B-CCCXII ⑤ ⭐⭐ le rattrapage TERMINE le travail au lieu de le refaire',
-    /_dbfLireRecu\(\)[\s\S]{0,700}_dbfPoserDansHistorique\(_r\.reply, _r\.instr\)/.test(nu(corps('_dbfRecuperer',srcC))), '');
-  /* ⚠️ CE TÉMOIN ÉTAIT AVEUGLE : il cherchait « un `return;` quelque part entre le `recu` et le
-     `en cours` » — or la fonction en contient un AUTRE plus bas (`if(!e||!e.id){…return;}`), donc
-     retirer celui de la branche le laissait vert. *Un motif qui cherche une présence ne mesure
-     pas une absence quand le même mot vit ailleurs.* Il est ancré sur la SORTIE de la branche. */
-  t('B-CCCXII ⑥ ⛔ et il sort AVANT de regarder « en cours » (sinon on remet en file et on repaie)',
-    /_dbfFini\(_r\.id\);\s*return;/.test(nu(corps('_dbfRecuperer',srcC))), '');
-  /* ⚠️ Même piège : `removeItem(_DBF_RECU)` existe DEUX fois (le cas normal et le `catch`).
-     N'en exiger qu'une laissait le retrait du cas normal parfaitement vert. On COMPTE. */
-  t('B-CCCXII ⑦ ⛔ la livraison efface le « reçu » (sinon il serait reposé au démarrage suivant)',
-    (nu(corps('_dbfFini',srcC)).match(/removeItem\(_DBF_RECU\)/g)||[]).length===2, '');
-  /* ⚠️ Et encore : `_DBF_PEREMPTION` apparaît DEUX fois dans cette fonction (la branche « reçu »
-     et la branche « en cours »). Chercher le mot laissait passer un second seuil écrit en dur
-     dans l'une des deux — exactement ce que R2 interdit. */
-  t('B-CCCXII ⑧ ⛔ MÊME PÉREMPTION que le reste (R2) : pas de second seuil',
-    (nu(corps('_dbfRecuperer',srcC)).match(/_DBF_PEREMPTION/g)||[]).length===2
-    && !/<\s*\d+\s*\*\s*3600\s*\*\s*1000/.test(nu(corps('_dbfRecuperer',srcC))), '');
-  t('B-CCCXII ⑨ ⛔ le rattrapage ne crée AUCUN appel de résumé (pas de summarizeCoach en plus)',
+  /* 🔁 DEBRIEF-ON-DEMAND-01 (05/10/2026) — R30. ①②③⑤⑥⑦⑧⑪⑫ éprouvaient la machine du débrief
+     AUTOMATIQUE : l'état « reçu » (`_DBF_RECU`, `_dbfRecu`, `_dbfLireRecu`), la reprise au démarrage
+     (`_dbfRecuperer`, `_DBF_PEREMPTION`), la livraison (`_dbfFini`), la remise en file (`_dbfRendre`) et
+     la prise ciblée (`_dbfPrendreCible`, `_dbfFaits`). Ils étaient NÉCESSAIRES parce que l'appel partait
+     tout seul : un rechargement entre la réponse payée et son traitement la faisait REPAYER au démarrage.
+     Ils sont sans objet : rien ne repart au démarrage, un rechargement montre « Analyse interrompue »
+     (OD-06/07). Leur invariant — « une réponse payée n'est jamais repayée ni perdue » — est tenu par
+     ce qui suit (④′, ③′) et à l'écran par OD-05/OD-11/OD-17. ⛔ Ne pas les « réparer » en remettant
+     une file : la décision est « Débrief Milo à la demande ». */
+  t('B-CCCXII ④′ ⭐⭐ la réponse VALIDE est rangée dans le magasin AVANT tout traitement (une réponse payée n\'est jamais perdue)',
+    /_dbfReponseValide\(data\)\)throw[\s\S]{0,120}_dbfEnregistrer\(sid, reply[\s\S]{0,200}_stripCoachTech/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ③′ ⛔ la fin de l\'appel ne libère QUE cette séance (E5) — jamais tout l\'emplacement',
+    /finally\{\s*_dbfVolRetirer\(sid\);/.test(nu(corps('_runSeDebrief',srcL)))
+    && !/removeItem\(_DBF_ENCOURS\)/.test(nu(corps('_runSeDebrief',srcL))), '');
+  t('B-CCCXII ⑨ ⛔ poser le débrief dans le fil ne crée AUCUN appel de résumé (pas de summarizeCoach en plus)',
     !/_saveCoachMemory/.test(nu(corps('_dbfPoserDansHistorique',srcC))), '');
-  t('B-CCCXII ⑩ ⭐ un seul propriétaire pose le débrief dans le fil (R2), appelé des DEUX côtés',
-    (nu(srcC)+nu(srcL)).match(/_dbfPoserDansHistorique\(/g||[]).length>=3, '');
-  t('B-CCCXII ⑪ ⛔ l\'échec propre reste récupérable : `_dbfRendre` remet bien en file',
-    /l\.unshift\(s\)/.test(nu(corps('_dbfRendre',srcC))), '');
-  t('B-CCCXII ⑫ ⭐⭐ une séance EN FILE reste reprenable même si `_dbfFaits` la contient',
-    /if\(i<0 && _dbfFaits\(\)\.indexOf\(s\)>=0\) return null;/.test(nu(corps('_dbfPrendreCible',srcC))), '');
+  /* 🔁 ⑩ : il y avait deux appelants (le rattrapage et la fin de séance) ; il n'en reste qu'un. */
+  t('B-CCCXII ⑩ ⭐ un seul propriétaire pose le débrief dans le fil (R2), et le seul chemin l\'appelle',
+    (nu(srcC).match(/function _dbfPoserDansHistorique\(/g)||[]).length===1
+    && /_dbfPoserDansHistorique\(reply, instr\)/.test(nu(corps('_runSeDebrief',srcL))), '');
 
   // ── B : la séance est nommée, jamais devinée
-  t('B-CCCXII ⑬ ⭐⭐ l\'écran de fin cible la séance AFFICHÉE, par son identifiant',
-    /_dbfPrendreCible\(_sid\)/.test(nu(corps('_runSeDebrief',srcL)))
-    && /const _sid=String\(\(sess&&\(sess\.id\|\|sess\.ts\|\|sess\.date\)\)\|\|''\)/.test(nu(corps('_runSeDebrief',srcL))), '');
-  t('B-CCCXII ⑭ ⛔ les DEUX chemins nomment la séance et interdisent d\'en débriefer une autre',
-    (nu(srcL)+nu(srcC)).match(/LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI/g||[]).length===2
-    && (nu(srcL)+nu(srcC)).match(/Ne débriefe aucune autre séance/g||[]).length===2, '');
+  /* 🔁 ⑬ : `_dbfPrendreCible` est retiré avec la file ; la séance analysée est celle du bouton, par son identifiant. */
+  t('B-CCCXII ⑬ ⭐⭐ l\'analyse cible la séance du BOUTON, par son identifiant',
+    /const sid=_dbfCle\(sess\)/.test(nu(corps('_runSeDebrief',srcL)))
+    && /return sess \? String\(sess\.id\|\|sess\.ts\|\|sess\.date\|\|''\) : ''/.test(nu(corps('_dbfCle',srcC))), '');
+  /* 🔁 ⑭⑮ : il y avait DEUX chemins (fin de séance + Coach automatique) ; le Coach automatique est retiré. */
+  t('B-CCCXII ⑭ ⛔ le seul chemin nomme la séance et interdit d\'en débriefer une autre',
+    (nu(srcL)+nu(srcC)).match(/LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI/g||[]).length===1
+    && (nu(srcL)+nu(srcC)).match(/Ne débriefe aucune autre séance/g||[]).length===1, '');
   t('B-CCCXII ⑮ ⛔ « la plus récente » n\'est plus qu\'un REPLI, jamais la règle',
-    (nu(srcL)+nu(srcC)).match(/la plus récente dans mes dernières séances/g||[]).length===2
+    (nu(srcL)+nu(srcC)).match(/la plus récente dans mes dernières séances/g||[]).length===1
     && /_des\?\(/.test(nu(corps('_runSeDebrief',srcL))), '');
   t('B-CCCXII ⑯ ⭐⭐ l\'ID CHOISIT, la date DÉCRIT : la désignation part de la SÉANCE',
     /function _dbfDesignation\(sess\)/.test(srcC)
     && /_dateLisible\(sess\.date\)/.test(nu(corps('_dbfDesignation',srcC))), '');
-  t('B-CCCXII ⑰ ⛔ la séance est retrouvée par IDENTIFIANT, pas par date',
-    /String\(x\.id\|\|x\.ts\|\|x\.date\)===String\(id\)/.test(nu(corps('_dbfSeanceParId',srcC))), '');
+  /* 🔁 ⑰ : `_dbfSeanceParId` est retiré ; c'est le geste qui retrouve sa séance, toujours par identifiant. */
+  {
+    const srcS=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+    t('B-CCCXII ⑰ ⛔ la séance est retrouvée par IDENTIFIANT, pas par date',
+      /_dbfCle\(x\)===String\(id\)/.test(nu(corps('analyserSeanceMilo',srcS))), '');
+  }
   t('B-CCCXII ⑱ ⛔ PÉRIMÈTRE — le catalogue, le Gardien et le cache ne sont pas touchés',
     /EXERCICES DISPONIBLES DANS SON APPLICATION/.test(srcC)
     && /return _gardienRules\(\) \+ `Tu es \$\{/.test(srcC), '');
@@ -40583,7 +40399,7 @@ require('./seance_fp01.js').source(t, ROOT, fs, path);
 require('./seance_fp01.js').sourceMixte(t, ROOT, fs, path);
 require('./seance_fp01.js').sourceExt(t, ROOT, fs, path);
 require('./session_integrity.js').source(t, ROOT, fs, path);
-require('./e5_idempotence.js').source(t, ROOT, fs, path);
+require('./debrief_demande.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

@@ -4702,7 +4702,9 @@ function _recordDebriefMemory(reply, sess){
        contradictoires. Mesuré dans les données de Michel : 4 dates en double dans son
        `sessionLog` (30/07, 31/07, 03/08, 05/08) — et c'est ce qui lui a fait dire « on avait
        pas dit samedi les pecs ? ». Le correctif de course du 22/08 fermait la porte ; le
-       type, lui, laissait la fenêtre ouverte. */
+       type, lui, laissait la fenêtre ouverte.
+       (DEBRIEF-ON-DEMAND-01 : le chemin du Coach est retiré ; la comparaison en texte RESTE — le `sessionLog`
+       garde des `sessId` en chaîne écrits par ce chemin.) */
     if(sid && S.registre.sessionLog.some(x=>x && x.sessId!=null && String(x.sessId)===String(sid))) return false;
     S.registre.sessionLog.push({
       date: (sess&&sess.date) || (typeof today==='function'?today():new Date().toISOString().slice(0,10)),

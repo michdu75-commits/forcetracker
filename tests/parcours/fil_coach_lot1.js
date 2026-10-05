@@ -21,6 +21,10 @@
    Ce qu'ils NE COUVRENT PAS : la fenêtre de contexte envoyée à Milo quand le fil n'est pas
    chargé (F03 — inchangée, figée ici telle que master l'envoie), `continueInCoach` (autre
    écrivain du fil, hors lot), la lecture d'un fil illisible par l'ouverture du Coach (hors lot).
+   🔁 DEBRIEF-ON-DEMAND-01 (05/10/2026) : le débrief part sur un CLIC (« Analyser cette séance avec Milo »), le
+   « reçu », la file et le rattrapage sont retirés. Les témoins qui les supposaient (⑧ ⑨ G G2 G3 R D) sont
+   réécrits ou retournés, chacun avec sa raison (R30) ; l'invariant du lot — le fil n'est ni coupé ni écrasé —
+   est inchangé.
    Banc : tools/banc_fil_lot1.js · contrôle négatif : tools/mut_fil_lot1.py
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 const FIL = []; { const t0 = Date.now() - 3600000;
@@ -34,9 +38,9 @@ module.exports.source = function (t, ROOT, fs, path) {
   const co = nu('coach.js'), lo = nu('log.js');
   const corps = (src, nom) => { const i = src.search(new RegExp('(async\\s+)?function ' + nom + '\\(')); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10), k = src.indexOf('\nasync function ', i + 10);
     const fin = [j, k].filter(x => x > 0); return src.slice(i, fin.length ? Math.min(...fin) : undefined); };
-  const hyd = corps(co, '_coachHistHydrater'), pose = corps(co, '_dbfPoserDansHistorique'), rec = corps(co, '_dbfRecuperer'),
+  const hyd = corps(co, '_coachHistHydrater'), pose = corps(co, '_dbfPoserDansHistorique'),
         save = corps(co, '_saveCoachHist'), pay = corps(co, '_coachHistPayload'), run = corps(lo, '_runSeDebrief');
-  t('① les fonctions sont trouvées (sinon les témoins suivants ne mesurent rien)', hyd && pose && rec && save && pay && run, [hyd, pose, rec, save, pay, run].map(x => x.length).join('/'));
+  t('① les fonctions sont trouvées (sinon les témoins suivants ne mesurent rien)', hyd && pose && save && pay && run, [hyd, pose, save, pay, run].map(x => x.length).join('/'));
   t('② F07a : plus aucune coupe à 20 dans `_dbfPoserDansHistorique`', !/slice\(\s*-\s*20\s*\)/.test(pose) && !/length\s*>\s*20\b/.test(pose), pose.slice(0, 200));
   const iH = pose.indexOf('_coachHistHydrater()'), iP = pose.indexOf('coachHistory.push');
   t('③ F07b : le fil est hydraté AVANT la première mutation, et un refus arrête tout', iH > 0 && iP > iH && /if\(\s*!_coachHistHydrater\(\)\s*\)\s*return\s+false/.test(pose), iH + ' < ' + iP);
@@ -46,10 +50,13 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('⑥ budgets inchangés : 400 messages, 150 000 caractères', /const\s+_HIST_MAX_MSG\s*=\s*400\s*;/.test(co) && /const\s+_HIST_BUDGET\s*=\s*150000\s*;/.test(co), '');
   t('⑦ ce que Milo reçoit ne change pas : `_coachHistPayload` ne transmet que `role`/`content`, et le débrief en envoie 8',
     /\.map\(\s*m\s*=>\s*\(\{\s*role:\s*m\.role,\s*content:\s*m\.content\s*\}\)\)/.test(pay) && /history:\(typeof _coachHistPayload==='function'\?_coachHistPayload\(8\)/.test(run), '');
-  t('⑧ rattrapage : un fil illisible garde le « reçu » (séance marquée livrée, AVANT `_dbfFini`)',
-    /!_dbfPoserDansHistorique\(_r\.reply,\s*_r\.instr\)\)\{\s*_dbfMarquerFait\(_r\.id\);\s*return;\s*\}/.test(rec) && rec.indexOf('_dbfMarquerFait(_r.id)') < rec.indexOf('_dbfFini(_r.id)'), rec.slice(0, 300));
-  t('⑨ fin de séance : un débrief non posé n\'efface pas son « reçu » (`_dbfFini` seulement s\'il est posé)',
-    /_pose=_dbfPoserDansHistorique\(reply,\s*instr\)/.test(run) && /if\(_pose===false[^)]*\)\s*_dbfMarquerFait\(_pid\);\s*else if\(typeof _dbfFini==='function'\)\s*_dbfFini\(_pid\);/.test(run), '');
+  /* 🔁 DEBRIEF-ON-DEMAND-01 (05/10/2026) — R30. ⑧⑨ gardaient le « reçu » quand le fil était illisible (le rattrapage
+     le posait plus tard, sans repayer). Le « reçu » et le rattrapage sont retirés. Invariant gardé : un fil illisible ne
+     fait JAMAIS perdre un débrief payé — il est rangé dans le magasin AVANT d'être posé dans le fil. */
+  t('⑧ un débrief payé est rangé AVANT d\'être posé dans le fil (un fil illisible ne le fait pas perdre)',
+    run.indexOf('_dbfEnregistrer(') > 0 && run.indexOf('_dbfPoserDansHistorique(') > run.indexOf('_dbfEnregistrer('), '');
+  t('⑨ le seul chemin pose le débrief une fois, et n\'a plus de « reçu » ni de file à entretenir',
+    (run.match(/_dbfPoserDansHistorique\(/g) || []).length === 1 && !/_dbfFini|_dbfMarquerFait|_dbfRecu\(/.test(run), '');
 };
 
 module.exports.ecran = async function (t, b, PORT) {
@@ -104,6 +111,8 @@ module.exports.ecran = async function (t, b, PORT) {
   const terminer = async X => {
     const a = await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300);
     const f = await clic(X.pg, 'button[onclick="finishWorkout()"]');
+    /* 🔁 DEBRIEF-ON-DEMAND-01 : terminer n'appelle plus Milo — la personne clique « Analyser cette séance avec Milo ». */
+    await X.pg.waitForTimeout(300); await clic(X.pg, '#se-debrief .se-dbf-go');
     const t0 = Date.now(); let txt = '';
     while (Date.now() - t0 < 8000) { txt = await X.pg.evaluate(() => (document.getElementById('se-debrief') || {}).textContent || '');
       if (/DEBRIEF-LOT1|Hors ligne|n'a pas pu/.test(txt)) break; await X.pg.waitForTimeout(150); }
@@ -118,7 +127,7 @@ module.exports.ecran = async function (t, b, PORT) {
     return { brut: raw, disque: arr ? arr.length : null, memoire: coachHistory.length, charge: _coachHistLoaded, orig,
       contenus: arr ? arr.map(m => (m.role === 'user' ? (m._silent ? 'u*' : 'u') : 'a') + ':' + String(m.content).slice(0, 40)) : null,
       memContenus: coachHistory.map(m => (m.role === 'user' ? (m._silent ? 'u*' : 'u') : 'a') + ':' + String(m.content).slice(0, 40)),
-      recu: localStorage.getItem('ft4_debrief_recu'), faits: localStorage.getItem('ft4_debrief_faits'), file: localStorage.getItem('ft4_pending_debrief'),
+      mag: localStorage.getItem('ft4_debriefs'), recu: localStorage.getItem('ft4_debrief_recu'), faits: localStorage.getItem('ft4_debrief_faits'), file: localStorage.getItem('ft4_pending_debrief'),
       sessions: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').map(s => (s.exs || []).map(e => e.name + ':' + (e.sets || []).map(z => z.kg + 'x' + z.reps + (z.done ? 'v' : '')).join(',')).join('|')),
       wkt: localStorage.getItem('ft4_wkt'), cartes: document.querySelectorAll('#coach-msgs .coach-seance-carte').length };
   });
@@ -198,32 +207,37 @@ module.exports.ecran = async function (t, b, PORT) {
   const G = await ouvrir({ fil: ILLISIBLE }); tous.push(G);
   const gFin = await terminer(G), gAp = await lire(G.pg); const gW = G.n('coach');
   const gRe = await recharger(G);
-  let gRecu = null; try { gRecu = JSON.parse(gAp.recu); } catch (e) {}
+  const magA = r => { try { return Object.values(((JSON.parse(r.mag || 'null') || {}).seances) || {}).map(x => x.texte); } catch (e) { return []; } };
   t('G fil illisible : RIEN n\'est écrit par-dessus (contenu brut identique octet pour octet)', gAp.brut === ILLISIBLE && gRe.brut === ILLISIBLE, js(gAp.brut));
-  t('G le débrief n\'est pas perdu : affiché à l\'écran de fin, son « reçu » est GARDÉ, la séance marquée livrée',
-    /DEBRIEF-LOT1/.test(gFin.ecran) && !!gRecu && gRecu.reply === DEBRIEF && !!gAp.faits && gAp.faits.indexOf(String(gRecu.id)) >= 0 && !gAp.file, js({ recu: !!gRecu, faits: gAp.faits, file: gAp.file }));
-  t('G rechargement : aucun second appel payé (reçu toujours gardé)', G.n('coach') === gW && !!gRe.recu && !gRe.file, 'coach ' + gW + ' → ' + G.n('coach'));
-  // G3 · le fil redevient lisible (la personne écrit au Coach), puis le rattrapage pose le débrief UNE fois
+  /* 🔁 (R30) Avant : « son reçu est GARDÉ, la séance marquée livrée ». Le reçu est retiré ; c'est le MAGASIN qui le garde. */
+  t('G le débrief n\'est pas perdu : affiché à l\'écran de fin et RANGÉ dans le magasin ; ni reçu, ni file',
+    /DEBRIEF-LOT1/.test(gFin.ecran) && magA(gAp).indexOf(DEBRIEF) >= 0 && !gAp.recu && !gAp.file && !gAp.faits, js({ mag: magA(gAp), recu: gAp.recu, file: gAp.file }));
+  t('G rechargement : aucun second appel payé (le débrief reste rangé)', G.n('coach') === gW && magA(gRe).indexOf(DEBRIEF) >= 0 && !gRe.file, 'coach ' + gW + ' → ' + G.n('coach'));
+  /* 🔁 G3 — RETOURNÉ (R30). Avant : le fil redevenu lisible, le RATTRAPAGE posait le débrief gardé au démarrage suivant.
+     Le rattrapage est retiré. Nouvel attendu : rien n'est réinjecté dans le fil au démarrage (pas d'écriture cachée), et
+     le débrief reste rangé — lisible par « Voir le débrief Milo » (limite écrite : il n'entre pas dans le fil du Coach). */
   await clic(G.pg, '#nb-coach'); await G.pg.waitForTimeout(400);
   G.st.replies.push('Réponse au squat (LOT1).');
   await G.pg.fill('#coach-inp', 'Salut, une question sur le squat'); await clic(G.pg, '#coach-send-btn');
   await G.pg.waitForFunction(() => !coachBusy && coachHistory.length >= 2, null, { timeout: 8000 }).catch(() => {});
   const g3W = G.n('coach'); const g3Re = await recharger(G); const g3Re2 = await recharger(G);
-  t('G3 le fil redevenu lisible : le débrief gardé est posé au démarrage suivant, une seule fois, sans nouvel appel',
-    g3Re.disque === 4 && nDebrief(g3Re) === 1 && !g3Re.recu && g3Re2.brut === g3Re.brut && G.n('coach') === g3W, js(g3Re.contenus) + ' coach ' + g3W + ' → ' + G.n('coach'));
+  t('G3 le fil redevenu lisible : rien n\'y est réinjecté au démarrage, aucun appel, le débrief reste rangé',
+    g3Re.disque === 2 && nDebrief(g3Re) === 0 && magA(g3Re).indexOf(DEBRIEF) >= 0 && g3Re2.brut === g3Re.brut && G.n('coach') === g3W, js(g3Re.contenus) + ' coach ' + g3W + ' → ' + G.n('coach'));
 
   // ── G2 · contenu ILLISIBLE, et l'onglet Coach ouvert AVANT (qui le charge comme un fil vide) ──
   const G2 = await ouvrir({ fil: ILLISIBLE }); tous.push(G2);
   await clic(G2.pg, '#nb-coach'); await G2.pg.waitForTimeout(400);
   const g2Av = await lire(G2.pg); await terminer(G2); const g2Ap = await lire(G2.pg);
-  t('G2 le drapeau « chargé » ne suffit pas : fil illisible chargé comme vide → toujours RIEN écrit, reçu gardé',
-    g2Av.charge === true && g2Ap.brut === ILLISIBLE && !!g2Ap.recu, 'chargé ' + g2Av.charge + ' brut ' + js(g2Ap.brut));
+  t('G2 le drapeau « chargé » ne suffit pas : fil illisible chargé comme vide → toujours RIEN écrit, débrief rangé',
+    g2Av.charge === true && g2Ap.brut === ILLISIBLE && magA(g2Ap).indexOf(DEBRIEF) >= 0, 'chargé ' + g2Av.charge + ' brut ' + js(g2Ap.brut));
 
-  // ── R · rattrapage au démarrage : un débrief déjà reçu, fil 30 non chargé ────────────────────
+  // ── R · mise à jour : un ancien « reçu » (écrit par la version d'avant), fil 30 non chargé ──────
+  /* 🔁 R — RETOURNÉ (R30). Avant : le rattrapage posait le débrief reçu dans le fil au démarrage. Le rattrapage est retiré.
+     Invariant gardé : le fil de 30 n'est ni coupé ni remplacé, et rien n'est payé. Le débrief déjà payé est RANGÉ (OD-17). */
   const R = await ouvrir({ stock: { ft4_debrief_recu: JSON.stringify({ id: 's-recup', ts: Date.now() - 60000, reply: DEBRIEF, instr: '[DÉBRIEF AUTO] consigne' }) } }); tous.push(R);
   await R.pg.waitForTimeout(3500); const rAp = await lire(R.pg); const rRe = await recharger(R);
-  t('R (F07b) rattrapage au démarrage : le débrief reçu s\'AJOUTE au fil de 30 (plus un remplacement), sans appel',
-    ordreIntact(rAp) && finPropre(rAp) && !rAp.recu && R.st.req.length === 0 && rRe.brut === rAp.brut, 'disque ' + rAp.disque + ' appels ' + R.st.req.length);
+  t('R mise à jour : l\'ancien « reçu » est rangé (pas perdu), le fil de 30 reste intact (rien d\'injecté), aucun appel',
+    ordreIntact(rAp) && rAp.disque === 30 && magA(rAp).indexOf(DEBRIEF) >= 0 && !rAp.recu && R.st.req.length === 0 && rRe.brut === rAp.brut, 'disque ' + rAp.disque + ' appels ' + R.st.req.length);
 
   // ── D · départ RÉELLEMENT hors ligne (service worker, réseau coupé), puis retour réseau ───────
   const Dh = await ouvrir({ sw: true }); tous.push(Dh);
@@ -232,14 +246,22 @@ module.exports.ecran = async function (t, b, PORT) {
   Dh.st.offline = true; await Dh.cx.setOffline(true);
   let dCharge = true; try { await Dh.pg.reload({ timeout: 20000 }); await Dh.pg.waitForTimeout(2000); } catch (e) { dCharge = false; }
   const dAv = await lire(Dh.pg), dFin = await terminer(Dh), dAp = await lire(Dh.pg);
+  /* 🔁 D — RÉÉCRIT (R30). Avant : hors ligne, le débrief « attendait en file » et partait tout seul au retour du réseau
+     quand on ouvrait le Coach. Nouvel attendu : hors ligne, on le DIT avec « Réessayer » ; au retour du réseau rien ne
+     part seul (Coach ouvert compris) ; le clic sur « Réessayer » ajoute le débrief UNE fois aux 30. */
   Dh.st.offline = false; await Dh.cx.setOffline(false);
+  await Dh.pg.waitForTimeout(1200); const dSeul = Dh.n('coach');
+  const dRe1 = await clic(Dh.pg, '#se-debrief .se-dbf-retry');
+  await Dh.pg.waitForFunction(() => /DEBRIEF-LOT1/.test((document.getElementById('se-debrief') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
   await fermerFin(Dh.pg); await clic(Dh.pg, '#nb-coach');
   await Dh.pg.waitForFunction(() => !coachBusy && coachHistory.length >= 32, null, { timeout: 10000 }).catch(() => {});
   await Dh.pg.waitForTimeout(800);
   const dCo = await lire(Dh.pg); const dW = Dh.st.req.length; const dRe = await recharger(Dh);
   t('D départ hors ligne : l\'app s\'ouvre depuis le cache, fil non chargé', dCharge && dAv.charge === false && dAv.disque === 30, js({ charge: dCharge, disque: dAv.disque }));
-  t('D fin de séance hors ligne : aucune écriture du fil, le débrief attend (file)', /Hors ligne/.test(dFin.ecran) && dAp.brut === dAv.brut && !!dAp.file, js(dFin.ecran.slice(-80)));
-  t('D ⭐ réseau revenu + onglet Coach : le débrief s\'ajoute UNE fois aux 30', ordreIntact(dCo) && dCo.disque === 32 && (dCo.contenus || []).filter(c => /^u\*:\[DÉBRIEF AUTO\]/.test(c)).length === 1 && nDebrief(dCo) === 1, js(dCo.contenus && dCo.contenus.slice(-2)));
+  t('D fin de séance hors ligne : aucune écriture du fil, l\'écran le DIT avec « Réessayer », rien en file',
+    /Hors ligne/.test(dFin.ecran) && dAp.brut === dAv.brut && !dAp.file, js(dFin.ecran.slice(-80)));
+  t('D ⛔ réseau revenu : RIEN ne part tout seul', dSeul === 0, 'appels coach avant le clic : ' + dSeul);
+  t('D ⭐ « Réessayer » → le débrief s\'ajoute UNE fois aux 30', dRe1 && ordreIntact(dCo) && dCo.disque === 32 && (dCo.contenus || []).filter(c => /^u\*:\[DÉBRIEF AUTO\]/.test(c)).length === 1 && nDebrief(dCo) === 1, js(dCo.contenus && dCo.contenus.slice(-2)));
   t('D après VRAI rechargement : stockage identique, aucun appel au Worker', dRe.brut === dCo.brut && Dh.st.req.length === dW, 'appels ' + dW + ' → ' + Dh.st.req.length);
 
   const errs = tous.flatMap(X => X.errs);
