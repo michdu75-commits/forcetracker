@@ -50,8 +50,10 @@ MUT = [
     ('M-OD11 [deguisee] le geste retrouve la seance par sa DATE (la 1re du jour), pas par son identifiant',
      [(SE, "  const s=(S.sessions||[]).find(x=>x&&typeof _dbfCle==='function'&&_dbfCle(x)===String(id))||null;\n  if(!s){toast('Séance introuvable dans l\\'historique','error');return;}\n  const fin=",
            "  const s=(S.sessions||[]).find(x=>x&&x.date===((S.sessions||[]).find(y=>_dbfCle(y)===String(id))||{}).date)||null;\n  if(!s){toast('Séance introuvable dans l\\'historique','error');return;}\n  const fin=")], 'GARDE'),
+    # ⚠️ Premiere version inerte : elle lisait S.sessions au chargement de coach.js, AVANT load() — la seance n'y
+    # etait pas encore, donc rien ne partait. Une mutation qui ne peut rien casser ne mesure rien : differee au `load`.
     ('M-OD12 [deguisee] la mise a jour relance l\'ancienne file au lieu de l\'oublier',
-     [(CO, OUBLI, "  try{ const f=JSON.parse(localStorage.getItem('ft4_pending_debrief')||'[]'); const s=(S.sessions||[]).find(x=>(Array.isArray(f)?f:[f]).map(String).indexOf(_dbfCle(x))>=0); if(s) setTimeout(()=>_runSeDebrief(s,0,document.createElement('div')),2500); }catch(e){}\n" + OUBLI)], 'GARDE'),
+     [(CO, OUBLI, "  try{ const f=JSON.parse(localStorage.getItem('ft4_pending_debrief')||'[]'); window.addEventListener('load',()=>setTimeout(()=>{ try{ const s=(S.sessions||[]).find(x=>(Array.isArray(f)?f:[f]).map(String).indexOf(_dbfCle(x))>=0); if(s) _runSeDebrief(s,0,document.createElement('div')); }catch(e){} },2500)); }catch(e){}\n" + OUBLI)], 'GARDE'),
     ('M-OD15 la page qui s\'en va efface « en vol » (la seance dit « Analyser » au lieu de « interrompue »)',
      [(LO, "    if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // laisser « en vol » : la page suivante dira « interrompue »\n", "")], 'GARDE'),
     ('M-OD13 [negatif] commentaire citant les motifs (automatisme, file, minuteur, rattrapage)',

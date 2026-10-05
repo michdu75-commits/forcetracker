@@ -275,16 +275,18 @@ module.exports.ecran = async function (t, b, PORT) {
   {
     const B = SB(); const bid = String(B.id);
     const X = await ouvrir({ wkt: WKT([YATES()]), sessions: HIST().concat([B]),
-      reponses: [{ delai: 3000, rep: OK('DEBRIEF-OD séance A.') }, { delai: 7000, rep: OK('DEBRIEF-OD séance B.') }] });
+      reponses: [{ delai: 6000, rep: OK('DEBRIEF-OD séance A.') }, { delai: 12000, rep: OK('DEBRIEF-OD séance B.') }] });
+    /* ⚠️ Délais choisis pour qu'aucun rafraîchissement de la liste (réponse de A) ne tombe PENDANT le clic sur B :
+       à 3 s, la réponse de A redessinait la carte de B au moment du clic, et le clic se perdait (vu sous charge). */
     await terminer(X); await clic(X.pg, '#se-debrief .se-dbf-go');      // A part (écran de fin)
     await fermerFin(X); await versProgres(X);
     const okB = await clic(X.pg, '#sess-list .sess-card[onclick*="' + bid + '"] .sess-dbf-go', 'ov-debrief-milo');   // B part (Progrès)
     await X.pg.waitForTimeout(500);
     const deux = X.st.req.length;
-    await jusqua(X, Date.now() - X.st.T0 + 3500);                       // A a répondu, B est encore en vol
+    { const t0 = Date.now(); while (Date.now() - t0 < 12000) { const e = await etat(X.pg); if (e.mag.indexOf(e.sid) >= 0) break; await X.pg.waitForTimeout(200); } }   // A a répondu, B est encore en vol
     const vol = await X.pg.evaluate(i => { const v = JSON.parse(localStorage.getItem('ft4_debrief_encours') || 'null'); return !!(v && v.vol && v.vol[i]); }, bid);
     const mid = await etat(X.pg);
-    await attendre(X.pg, '#dbf-milo-body', /séance B/, 9000); await X.pg.waitForTimeout(400);
+    await attendre(X.pg, '#dbf-milo-body', /séance B/, 15000); await X.pg.waitForTimeout(400);
     const fin = await etat(X.pg);
     t('OD-12 ⛔⛔ deux séances le même jour : un appel CHACUNE, chacune désignée par la sienne (1 200 kg / 777 kg), débriefs rangés sous LEUR identifiant',
       okB && deux === 2 && X.st.req.filter(r => r.vol === 1200).length === 1 && X.st.req.filter(r => r.vol === 777).length === 1
@@ -332,6 +334,23 @@ module.exports.ecran = async function (t, b, PORT) {
     const fin = await etat(X.pg);
     t('OD-17 ⛔ mise à jour : les clés de l\'ancien automatisme (file, reçu, faits) disparaissent, le débrief payé du « reçu » est RANGÉ avec sa séance, 0 appel',
       fin.anciennes.length === 0 && /payé, jamais posé/.test(fin.magTxt.join('|')) && fin.mag.indexOf(sid) >= 0 && X.st.req.length === 0, js(fin) + ' ' + resume(X));
+    await X.cx.close();
+  }
+  {
+    /* OD-17b — l'ancienne FILE seule (sans « reçu ») : la séance attendait un débrief automatique. Après la mise à jour,
+       rien ne part (ni démarrage, ni Coach) ; la clé disparaît ; la séance garde « ✨ Analyser avec Milo ».
+       Ajouté parce que le contrôle négatif l'a demandé : OD-17 ne voyait pas une relance de l'ancienne file
+       (M-OD12), sa séance ayant déjà son débrief par le « reçu ». */
+    const S0 = { id: Date.now() - 1800e3, ts: Date.now() - 1800e3, date: J, volume: 1200, exs: [YATES()] }; const sid = String(S0.id);
+    const X = await ouvrir({ sessions: HIST().concat([S0]), reponses: [{ delai: 100, rep: OK('NE DOIT PAS PARTIR') }],
+      stock: { ft4_pending_debrief: JSON.stringify([sid]) } });
+    await jusqua(X, 4500); await coach(X, 2000);
+    const fin = await etat(X.pg);
+    await versProgres(X);
+    let btn = null; { const t0 = Date.now(); while (Date.now() - t0 < 4000) { btn = await boutons(X, sid); if (btn) break; await X.pg.waitForTimeout(200); } }   // la liste se dessine, on l'attend
+    const dbg = await X.pg.evaluate(() => [...document.querySelectorAll('#sess-list .sess-card')].map(c => (c.getAttribute('onclick') || '') + '|' + c.textContent.slice(0, 40)).slice(0, 4));
+    t('OD-17b ⛔ mise à jour, ancienne file SANS reçu : 0 appel, la clé disparaît, rien de rangé, la séance propose « Analyser »',
+      X.st.req.length === 0 && fin.anciennes.length === 0 && fin.mag.indexOf(sid) < 0 && btn && btn.length === 1 && /Analyser avec Milo/.test(btn[0]), js({ btn, dbg, fin }) + ' ' + resume(X));
     await X.cx.close();
   }
 };
