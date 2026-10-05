@@ -202,3 +202,20 @@ nouvelle fonctionnalité utilisateur.
    une seule fois par débrief logique** — en acceptant que le 2ᵉ appel modèle subsiste ?
 
 ⛔ **Je ne choisis pas à sa place** : la question n°1 n'est pas technique.
+
+---
+
+## 🔁 9. E5 — CE QUI ÉTAIT RÉPARABLE CÔTÉ TÉLÉPHONE L'EST (05/10/2026, branche `claude/e5-debrief-idempotence`, ⚠️ NON PUBLIÉ)
+
+**Le défaut E5 n'était PAS le cas B de ce document.** Le cas B (rechargement pendant l'appel) perd la réponse
+avec la page : le réparer exige un stockage serveur (§1). E5, lui, se produisait **dans une seule page, sans
+rechargement** : le rattrapage du démarrage remettait en file un appel **vivant**, et le Coach le repayait.
+Témoin rouge sur master `a1e39739` : **2 appels `coach` pour la même séance** (2,2 s puis 7,9 s).
+
+**Corrigé côté téléphone, sans rien stocker côté serveur** : « en vol » est rangé par identifiant de séance avec
+le jeton de la page qui l'a posé ; seul un appel laissé par une **autre** page est repris. Banc `tools/banc_e5.js`
+(E5-1 → E5-13), contrôle négatif `tools/mut_e5.py`. Détail : `BUGS.md` §28.
+
+**⭐ Ce que ça ne change PAS à la question du §8** — mesuré par E5-6 après correction : un rechargement pendant
+l'appel donne toujours **2 requêtes reçues par le serveur, 1 seul débrief, 1 seul message** (aucun doublon côté
+téléphone, un doublon de facturation). ⛔ **La question n°1 du §8 reste entière et reste à Michel.**

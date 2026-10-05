@@ -3358,3 +3358,16 @@ Sans plafond (D-047), un stockage local saturé fait échouer l'écriture du nou
 dans le fil du Coach, mais la séance n'a pas son bouton « Voir le débrief Milo » — et aucun message ne le dit. Mesuré : 5,24 M
 caractères par site dans Chromium, ~1 500 par débrief ; Safari non mesuré. ❓ **Doute** : à partir de quand ça arrive chez un
 vrai utilisateur, et faut-il le dire ? Vérifiable par du code : ✅ (remplir le stockage, terminer une séance). État : **à trier**.
+
+### 🟡 DEUX ONGLETS OUVERTS : CHACUN PREND L'APPEL DE L'AUTRE POUR UN APPEL INTERROMPU (05/10/2026 — E5)
+Le correctif E5 reconnaît un appel vivant à la PAGE qui l'a lancé. Deux onglets de l'app ouverts en même temps sont deux pages :
+le rattrapage de l'un peut reprendre un débrief que l'autre attend encore → second appel. ❓ **Doute** : est-ce que quelqu'un
+garde vraiment deux onglets ouverts (ordinateur, tableau de bord) au moment d'une fin de séance ? Vérifiable par du code : ✅
+(deux pages Playwright sur le même stockage). État : **à trier**.
+
+### 🟡 RECHARGEMENT PENDANT LE DÉBRIEF : 1 DÉBRIEF À L'ÉCRAN, 2 APPELS PAYÉS (05/10/2026 — E5-6, cas B du 15/09)
+Mesuré après le correctif E5 : rechargement 1 s après « Terminer » → la réponse de la page morte est perdue, la reprise en paie
+une seconde ; côté téléphone, un seul débrief et un seul message. ❓ **Doute** : à quelle fréquence ça arrive en vrai (mise à
+jour de l'app qui tombe juste après une séance — c'était exactement le cas de Michel le 23/08) ? Vérifiable par du code : ✅
+(c'est E5-6). Fermer le doublon de facturation exige un stockage serveur : **décision de Michel** (`docs/IDEMPOTENCE-DEBRIEF.md`
+§8). État : **à trier**.

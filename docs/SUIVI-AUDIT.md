@@ -477,3 +477,15 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   sont retirés sans traduction · ④ quota Safari / iOS non mesuré · ⑤ une séance supprimée PENDANT l'appel de son débrief peut
   encore recréer un orphelin · ⑥ un import « remplacer » peut laisser un débrief orphelin · ⑦ débriefs locaux seulement (D-047,
   limite assumée) · ⑧ téléphone plein : aucun message à l'utilisateur.
+
+### 🔁 E5 — UNE SÉANCE, UN SEUL APPEL DE DÉBRIEF (05/10/2026, session-B — ⚠️ BRANCHE `claude/e5-debrief-idempotence`, NON PUBLIÉ)
+- **Démontré, puis corrigé sur la branche** : rouge sur master `a1e39739` (2 appels `coach` pour la même séance — le rattrapage
+  du démarrage remettait en file un appel VIVANT ; au Coach, la séance était repayée). Cause et correctif : `BUGS.md` §28.
+  Banc `tools/banc_e5.js` (E5-1 → E5-13), contrôle négatif `tools/mut_e5.py`, passe complète D-031 : voir le rapport du lot.
+- **Ce que ça ferme aussi** : un échec n'est plus marqué « livré » (c'était faux depuis ft-v979) ; une séance dont le débrief est
+  déjà rangé n'est plus jamais repayée, même si elle était restée en file (l'état que E5 a laissé sur les téléphones).
+- **Ce qui reste ouvert, dit** : rechargement PENDANT l'appel → 2 requêtes reçues par le serveur pour 1 débrief (cas B du 15/09 —
+  décision d'idempotence serveur chez Michel, `docs/IDEMPOTENCE-DEBRIEF.md` §8) · deux onglets ouverts en même temps · réserve ⑤
+  ci-dessus (suppression pendant l'appel → débrief orphelin au magasin, mesuré par E5-11 : 1 seul appel, mais l'orphelin reste) ·
+  **N-G1** hors lot (dette voisine : le message courant part deux fois dans la charge utile — mécanisme Worker / payload
+  différent, effet sur le modèle non mesuré).

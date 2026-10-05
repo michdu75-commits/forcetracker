@@ -1986,6 +1986,26 @@ perdu** (ft-v979) : la fermer sans précaution échangerait un doublon contre un
 (accepter · fermer côté téléphone · idempotence serveur) **appartient à Michel** et attend depuis le
 15/09 (`docs/IDEMPOTENCE-DEBRIEF.md`).
 
+### 🔧 E5 : cause démontrée et corrigée sur BRANCHE — ⚠️ NON PUBLIÉ *(05/10/2026, `claude/e5-debrief-idempotence`)*
+**La cause, mesurée avant de corriger** (témoin rouge sur master `a1e39739` : 2 appels pour la même séance, à 2,2 s
+puis 7,9 s) : l'état « en vol » n'avait **pas de propriétaire**. Un seul emplacement `{id, ts}`, sans dire **qui**
+attendait la réponse — le rattrapage du démarrage (`load` + 3 s) ne pouvait donc pas distinguer un appel
+interrompu par une page MORTE d'un appel VIVANT de la page courante, et remettait le second en file. Et le succès
+ne retirait pas la séance de la file. *Deux portes ouvertes (le rattrapage `_dbfRecuperer`, le filet n°3
+`_dbfRattraper`), un seul défaut de fond : un état sans propriétaire.*
+**Le correctif** : « en vol » est rangé **par identifiant de séance** avec le jeton de la **page** qui l'a posé
+(`_DBF_PAGE`) ; une entrée de cette page est vivante, personne n'y touche ; une entrée d'une autre page (ou de
+l'ancien format) est reprise comme avant. Un seul verrou (`_dbfDejaCouvert` : en vol, ou débrief déjà rangé au
+magasin) pour les deux preneurs. Un succès retire la séance de la file ; **un échec ne la marque plus « livrée »**
+(c'était faux depuis ft-v979). ⛔ **La remise en file n'est PAS supprimée** : sans elle, on échangerait un doublon
+contre une perte. ⚖️ **Pas de minuteur** : un délai arbitraire dirait « mort » à un appel lent (mesuré par la
+mutation M-E5-9 : il perd le débrief au rechargement).
+**Ce qui reste, dit plutôt que masqué** : un **rechargement pendant l'appel** (cas B du 15/09) — la première
+requête aboutit côté serveur sans personne pour lire la réponse, la reprise en paie une seconde (mesuré : 2
+requêtes, 1 débrief, 1 message — **aucun doublon côté téléphone, un doublon de facturation**). Sans stockage
+serveur, impossible à fermer côté client : décision toujours chez Michel. **Deux onglets** ouverts sont deux
+pages (§33). Preuve : P2 (banc), **aucune occurrence terrain (pas de P3)**.
+
 ---
 
 ## 29. 🚧 LE GARDE-FOU CALIBRÉ SUR UN RATIO REFUSE LE CAS QU'IL VISE **(31/08/2026, ft-v1083)**
