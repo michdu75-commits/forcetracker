@@ -481,7 +481,8 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 ### 🔁 E5 — UNE SÉANCE, UN SEUL APPEL DE DÉBRIEF (05/10/2026, session-B — ⚠️ BRANCHE `claude/e5-debrief-idempotence`, NON PUBLIÉ)
 - **Démontré, puis corrigé sur la branche** : rouge sur master `a1e39739` (2 appels `coach` pour la même séance — le rattrapage
   du démarrage remettait en file un appel VIVANT ; au Coach, la séance était repayée). Cause et correctif : `BUGS.md` §28.
-  Banc `tools/banc_e5.js` (E5-1 → E5-13), contrôle négatif `tools/mut_e5.py`, passe complète D-031 : voir le rapport du lot.
+  Banc `tools/banc_e5.js` **35/0** (E5-1 → E5-13, dont E5-6c et E5-9d ajoutés après que le contrôle négatif a montré deux
+  trous), contrôle négatif `tools/mut_e5.py` **15/15**, bancs voisins verts, passe complète **5 890 ✅ / 0 ❌** sur `ef6b1901`.
 - **Ce que ça ferme aussi** : un échec n'est plus marqué « livré » (c'était faux depuis ft-v979) ; une séance dont le débrief est
   déjà rangé n'est plus jamais repayée, même si elle était restée en file (l'état que E5 a laissé sur les téléphones).
 - **Ce qui reste ouvert, dit** : rechargement PENDANT l'appel → 2 requêtes reçues par le serveur pour 1 débrief (cas B du 15/09 —
