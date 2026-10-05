@@ -281,6 +281,35 @@ module.exports.ecran = async function (t, b, PORT) {
       && sur(X, 1200).length === 2 && sur(X, 777).length === 1 && fin.mag.length === 2, resume(X) + ' ' + js(mid));
     await X.cx.close();
   }
+  {
+    /* E5-9d — trouvé par le contrôle négatif (M-E5-11 restait vert) : quand A répond, l'appel de B — toujours en vol —
+       doit le RESTER. On observe l'état persisté, parce qu'aucun appel en plus ne le trahit tant que rien ne plante. */
+    const B = SB(); const bid = String(B.id);
+    const X = await ouvrir({ wkt: WKT([YATES()]), sessions: HIST().concat([B]), stock: { ft4_pending_debrief: JSON.stringify([bid]) },
+      reponses: [{ delai: 2500, rep: OK('DEBRIEF-E5 séance A.') }, { delai: 7000, rep: OK('DEBRIEF-E5 séance B.') }] });
+    await terminer(X); await fermerFin(X); await coach(X, 400);           // A (fin de séance) et B (Coach) en vol ensemble
+    await jusqua(X, 6200);                                                // A a répondu, B est encore en vol
+    const vol = await X.pg.evaluate(b => { const v = JSON.parse(localStorage.getItem('ft4_debrief_encours') || 'null'); return { b: !!(v && v.vol && v.vol[b]), brut: v }; }, bid);
+    await jusqua(X, 11000);
+    t('E5-9d ⛔ A répond pendant que B est en vol : B reste « en vol » (une séance ne libère que SON appel), un appel chacune',
+      X.st.req.length === 2 && vol.b && sur(X, 1200).length === 1 && sur(X, 777).length === 1, resume(X) + ' ' + js(vol));
+    await X.cx.close();
+  }
+  {
+    /* E5-6c — trouvé par le contrôle négatif (M-E5-9, un minuteur à la place de la preuve de vie, restait vert : le filet
+       n°3 ne rattrape qu'UNE séance, la plus récente, et masquait la différence). DEUX appels en vol, rechargement : au
+       premier démarrage, les DEUX doivent revenir — quel que soit leur âge. Une page morte est morte tout de suite. */
+    const B = SB(); const bid = String(B.id);
+    const X = await ouvrir({ wkt: WKT([YATES()]), sessions: HIST().concat([B]), stock: { ft4_pending_debrief: JSON.stringify([bid]) },
+      reponses: [{ delai: 9000, rep: OK('PERDU A') }, { delai: 9000, rep: OK('PERDU B') }] });
+    await terminer(X); await fermerFin(X); await coach(X, 600);
+    const enVol = X.st.req.length;
+    await X.pg.reload(); X.st.T0 = Date.now(); await X.pg.waitForTimeout(3900);
+    const r = await etat(X.pg);
+    t('E5-6c ⛔ deux appels en vol puis rechargement → au premier démarrage, les DEUX séances reviennent en file (aucune attendue)',
+      enVol === 2 && r.sid && r.file.indexOf(r.sid) >= 0 && r.file.indexOf(bid) >= 0, 'en vol=' + enVol + ' ' + js(r));
+    await X.cx.close();
+  }
   /* ═════════ E5-10 / E5-11 — suppression de la séance ═════════ */
   const supprimer = async (X, id) => {
     await clic(X.pg, '#nb-progress');
