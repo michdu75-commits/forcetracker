@@ -498,6 +498,10 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   `ft4_debrief_faits`, rattrapage au démarrage, `_maybeAutoDebrief`, branche `debriefSess` de `sendToCoach`, `_recapSeance`,
   `_retrySeDebrief`, et 2 essais réseau cachés du moteur. Les clés des anciennes versions sont oubliées au démarrage ; un
   « reçu » valide (déjà payé) est rangé dans le magasin, pas perdu.
+- **Trouvé en route, corrigé** : au rechargement, le navigateur annule la requête ; son rejet s'exécutait pendant le
+  déchargement et effaçait « en vol » (mesuré 6/6) — la séance disait « Analyser » au lieu de « Analyse interrompue ». OD-07 ne
+  le voyait que sous charge (il a rougi une fois, bancs en parallèle). Garde `_dbfQuitte` (`pagehide`), témoin déterministe
+  OD-06c, mutation M-OD15.
 - **E5 est absorbé** : son banc (`banc_e5.js`, `mut_e5.py`, `e5_idempotence.js`) est retiré, ses invariants encore vivants
   (identifiant de séance, double clic, A ne libère pas B, `complete:false`, suppression) sont repris par OD-05/09/10/12/13/14.
 - **Ce qui reste ouvert, dit** : réponse perdue au rechargement pendant l'analyse (relance = 2ᵉ appel, demandé —
