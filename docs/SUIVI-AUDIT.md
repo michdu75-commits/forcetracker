@@ -512,4 +512,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Générateurs PDF historiques** (`tools/gen_ph2_politique_pdf.py`, `tools/gen_milo_consolidation_pdf.py`) : leurs gardes
   recomptent des faits datés (le jeton, le rattrapage) et **refusent désormais de produire** — c'est leur rôle, le fait est
   tombé. Ni corrigés ni régénérés : ce sont des dossiers d'une date. Hors passe et hors `check_regles`.
+- **Contrôles** : banc OD **37/0** · contrôle négatif `tools/mut_debrief_demande.py` **16/16** (13 sur une 1ʳᵉ exécution complète,
+  M-OD8/11/12 rejouées après le renfort de OD-12/13 et l'ajout de OD-17b) · bancs voisins verts (fil 39/0, SESSION-INTEGRITY 93/0,
+  provenance 24/0, séance C3 35/0, ML-B 60/0) · passe D-031 sur `accfa880` : **5 861 ✅ / 0 ❌**, 4 conditions (② déduite).
 
