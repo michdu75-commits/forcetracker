@@ -1114,6 +1114,15 @@ function _assurerRunIdSeance(){
     const r=_foodLineId(); if(r) S.wkt.runId=r;
   }catch(e){}
 }
+/* 🛡️ COOKIE-PROFILE-01 — « RESTAURATION ATTENDUE » : UN SEUL PROPRIÉTAIRE.
+   Un indice de compte (cookie `ft_email`, IndexedDB) n'est PAS la preuve qu'un profil a été récupéré. Tant que la question
+   « ce compte existe-t-il, et qu'y a-t-il dedans ? » n'est pas tranchée par une VRAIE réponse du serveur, l'app n'écrit RIEN
+   dans le cloud pour cet email : sinon un profil par défaut (sexe, objectif, réglages vierges) partait par-dessus le vrai.
+   Posé par : le cookie (index.html), la restauration depuis IndexedDB. Retiré par : un profil réellement restauré, un
+   « introuvable » explicite, une inscription terminée avec vérification. Jamais par une erreur réseau. */
+function _restauAttendue(){ try{ return localStorage.getItem('ft4_restau_attendue')==='1'; }catch(e){ return false; } }
+function _restauPoser(){ try{ localStorage.setItem('ft4_restau_attendue','1'); }catch(e){} }
+function _restauResolue(){ try{ localStorage.removeItem('ft4_restau_attendue'); }catch(e){} }
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
   if(window._demoMode)return;

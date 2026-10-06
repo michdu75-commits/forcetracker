@@ -967,6 +967,7 @@ let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
 function _cloudSync(){
   if(window._demoMode)return; // mode démo : aucune écriture cloud
   if(!S.email||!S.url)return;
+  if(typeof _restauAttendue==='function'&&_restauAttendue())return;   // COOKIE-PROFILE-01 : rien pour un compte pas encore récupéré
   // ⚠️ Le corps du message est construit UNE SEULE FOIS et servi aux DEUX destinations
   // (Apps Script + miroir Supabase). Deux constructions séparées finiraient par diverger,
   // et on enverrait deux versions différentes du même compte (R2).

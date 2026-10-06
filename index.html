@@ -24,7 +24,7 @@ window._premiumPending=false;
 window._deferredInstall=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._deferredInstall=e;});
 // Récupération email depuis cookie si localStorage vidé par iOS Safari (synchrone, avant load())
-(function(){if(window.__FT_CLONE__)return;try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});if(ck.ft_email&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ck.ft_email);localStorage.setItem('ft4_ob2','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
+(function(){if(window.__FT_CLONE__)return;try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});var ce=String(ck.ft_email||'').trim();if(ce&&/^[^\s@]+@[^\s@]+\.[^\s@.]{2,}$/.test(ce)&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ce);localStorage.setItem('ft4_restau_attendue','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
 // Apparence : halo bleu (defaut) ou fond uni -- applique au plus tot pour eviter le flash (cle ft4_halo)
 try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classList.add('no-halo');}catch(e){}

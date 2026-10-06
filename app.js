@@ -7687,6 +7687,9 @@ function finishOnboarding(){
      `state.js` interprète différemment selon l'endroit. */
   if(!_obDataRestored){_goalSet(_obGoal,'inscription');if(_obGender)S.gender=_obGender;}
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
+  /* 🛡️ COOKIE-PROFILE-01 : l'inscription TRANCHE l'attente — soit l'email a été vérifié (restauré ou introuvable) par
+     obCheckEmailAndFinish, soit la personne a vidé le champ : alors l'email venu du cookie ne reste PAS en douce. */
+  if(typeof _restauAttendue==='function'&&_restauAttendue()){ if(!emailFinal.trim())S.email=''; _restauResolue(); }
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   else if(emailFinal){S.email=emailFinal.trim();}
   persist();
@@ -9141,11 +9144,16 @@ async function _silentCloudRestore(email){
     const ctrl=new AbortController();const tId=setTimeout(()=>ctrl.abort(),5000);
     const r=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
     clearTimeout(tId);const d=await r.json();
-    if(d.status!=='ok'||!d.sessions||d.sessions.length===0)return false;
+    /* 🛡️ COOKIE-PROFILE-01 : « introuvable » est une RÉPONSE — l'indice (IndexedDB) ne vaut rien, on l'oublie. Un profil
+       trouvé SANS séance est un vrai profil (avant, il était ignoré et l'app repartait d'un profil par défaut). */
+    if(d.status==='not_found'&&typeof _restauAttendue==='function'&&_restauAttendue()){
+      S.email='';try{localStorage.removeItem('ft4_email');}catch(e){} _restauResolue(); return false; }
+    if(d.status!=='ok'||!d.profile)return false;
     S.email=email;
     try{localStorage.setItem('ft4_email',email);localStorage.setItem('ft4_ob2','1');document.documentElement.classList.add('ob-done');}catch(e){}
     _wnPremiereArrivee(false);   // appareil neuf d'un compte existant : pas l'historique des nouveautés
     _applyRestoreData(d);
+    if(typeof _restauResolue==='function')_restauResolue();   // COOKIE-PROFILE-01 : profil réellement récupéré
     _saveEmailRedundant(email);
     try{document.getElementById('ov-reconnect')?.classList.remove('open');}catch(e){}
     toast('✅ Données resynchronisées','success');
@@ -10760,6 +10768,29 @@ async function _ftBootstrapJeton(){
         // Auto-restauration silencieuse — local-first : ne pull que si local VRAIMENT vide
         // (sessions + prs + programmes tous à 0 → purge totale confirmée)
         const _localEmpty=(!S.sessions||S.sessions.length===0)&&(!S.prs||!Object.keys(S.prs).length)&&(!S.programmes||S.programmes.length===0);
+        /* 🛡️ COOKIE-PROFILE-01 — LE COMPTE N'ÉTAIT QU'UN INDICE (cookie / IndexedDB) : c'est CETTE réponse qui tranche.
+           · profil trouvé (même SANS séance — une femme en perte de gras avec 0 séance est un vrai profil) et rien en local
+             → on le restaure, l'inscription est faite, la synchro redevient possible ;
+           · « introuvable » explicite → l'indice ne vaut rien : on oublie l'email (gardé pour pré-remplir l'inscription)
+             et l'inscription normale reprend — aucun profil par défaut n'est créé pour ce compte ;
+           · des données locales SANS email + un compte trouvé → on ne tranche pas seul (deux personnes possibles) :
+             l'attente reste, et rien ne part. */
+        if(typeof _restauAttendue==='function'&&_restauAttendue()){
+          if(d2.status==='ok'&&d2.profile&&_localEmpty){
+            _applyRestoreData(d2);_restauResolue();
+            try{localStorage.setItem('ft4_ob2','1');document.documentElement.classList.add('ob-done');const _ob=document.getElementById('onboarding');if(_ob)_ob.style.display='none';}catch(e){}
+            try{if(typeof _wnPremiereArrivee==='function')_wnPremiereArrivee(false);}catch(e){}
+            _saveEmailRedundant(S.email);
+            toast('✅ Profil retrouvé','success');
+            try{renderHome();}catch(e){}try{if(typeof renderSetup==='function')renderSetup();}catch(e){}
+          }else if(d2.status==='not_found'){
+            const _indice=S.email;
+            S.email='';try{localStorage.removeItem('ft4_email');}catch(e){}
+            try{document.cookie='ft_email=;max-age=0;samesite=strict;path=/';}catch(e){}
+            _restauResolue();
+            try{['ob-email','ob-email-final'].forEach(id=>{const f=document.getElementById(id);if(f&&!f.value)f.value=_indice;});}catch(e){}
+          }
+        }else
         if(d2.status==='ok'&&d2.sessions&&d2.sessions.length>0&&_localEmpty){
           console.log('[FT auto-restore] local vide, cloud a',d2.sessions.length,'séances — restauration');
           _applyRestoreData(d2);_saveEmailRedundant(S.email);
@@ -10821,6 +10852,7 @@ async function _ftBootstrapJeton(){
     return;
   }
   console.log('[FT auto-restore] email récupéré depuis IDB:',email);
+  if(typeof _restauPoser==='function')_restauPoser();   // COOKIE-PROFILE-01 : un indice, pas une preuve — rien n'écrit avant la réponse
   localStorage.setItem('ft4_email',email);S.email=email;
   const ok=await _silentCloudRestore(email);
   if(!ok){const hadData=document.cookie.includes('ft_had_data=1');if(hadData)_showReconnectOverlay();}

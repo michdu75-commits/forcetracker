@@ -89,6 +89,7 @@ function _buildSyncRows(sess){
 async function syncSheets(sess){
   if(window._demoMode)return{ok:true}; // mode démo : rien n'est envoyé aux Sheets
   if(!S.url)return{ok:false,error:'URL manquante'};
+  if(typeof _restauAttendue==='function'&&_restauAttendue())return{ok:false,error:'compte pas encore récupéré'};   // COOKIE-PROFILE-01 : la séance reste en file
   try{
     const rows=_buildSyncRows(sess);
     const ctrl=new AbortController();
