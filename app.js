@@ -7726,7 +7726,7 @@ function finishOnboarding(){
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
   /* 🛡️ COOKIE-PROFILE-01 : l'inscription TRANCHE l'attente — soit l'email a été vérifié (restauré ou introuvable) par
      obCheckEmailAndFinish, soit la personne a vidé le champ : alors l'email venu du cookie ne reste PAS en douce. */
-  if(typeof _restauAttendue==='function'&&_restauAttendue()){ if(!emailFinal.trim())S.email=''; _restauResolue(); }
+  if(typeof _restauAttendue==='function'&&_restauAttendue()){ if(!emailFinal.trim()){S.email='';_oublierEmailLocal();} _restauResolue(); }   // AUTH-CLOUD-CLOSURE-01 (D1) : l'ancien compte ne revient pas au rechargement
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   else if(emailFinal){S.email=emailFinal.trim();}
   persist();
@@ -7774,12 +7774,13 @@ function verifyEmailCode(){
   if(!/^\d{6}$/.test(code)){ toast('Entre le code à 6 chiffres reçu par email','error'); return; }
   if(!S.url){ toast('Hors ligne — réessaie connecté','error'); return; }
   const btn=document.getElementById('ec-verify-btn'); if(btn){btn.disabled=true;btn.textContent='Vérification…';}
-  fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'verifyConfirmCode',email:S.email,code:code})})
+  const _compteVerifie=S.email;
+  fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'verifyConfirmCode',email:_compteVerifie,code:code})})
     .then(r=>r.json()).then(d=>{
       if(btn){btn.disabled=false;btn.textContent='Vérifier';}
       /* 🔐 AUTH-NEW-DEVICE-01 — le serveur rend un jeton d'appareil ici (S1, `handleVerifyConfirmCode_`) : c'est la
          2ᵉ preuve prévue par le dossier S1 (§3). Le client le JETAIT — un seul propriétaire, `_setFtToken`. */
-      if(d&&d.status==='ok'){ if(d.token)_setFtToken(d.token); S.emailVerified=true; persist(); closeEmailConfirm(); _renderEmailVerifyCard(); toast('✅ Email confirmé, merci !','success'); }
+      if(d&&d.status==='ok'){ if(d.token)_setFtToken(d.token,_compteVerifie); S.emailVerified=true; persist(); closeEmailConfirm(); _renderEmailVerifyCard(); toast('✅ Email confirmé, merci !','success'); }
       else if(d&&d.status==='expired'){ toast('Code expiré — renvoie-en un nouveau','error'); }
       else if(d&&d.status==='toomany'){ toast('Trop d\'essais — renvoie un nouveau code','error'); }
       else if(d&&d.status==='nocode'){ toast('Aucun code en attente — clique « Renvoyer »','error'); }
@@ -9183,6 +9184,21 @@ function _saveEmailRedundant(email){
     var req=indexedDB.open('ft_meta',1);
     req.onupgradeneeded=function(e){e.target.result.createObjectStore('meta',{keyPath:'key'});};
     req.onsuccess=function(e){try{e.target.result.transaction('meta','readwrite').objectStore('meta').put({key:'email',value:email});}catch(e2){}};
+  }catch(e){}
+}
+/* 🔐 AUTH-CLOUD-CLOSURE-01 — OUBLIER UN EMAIL, C'EST L'OUBLIER PARTOUT OÙ IL EST RANGÉ (D1).
+   L'email vit à TROIS endroits (`ft4_email`, le cookie `ft_email`, IndexedDB `ft_meta`) — c'est voulu, pour survivre à
+   une purge iOS. ⛔ Mais « continuer sans email » ne vidait que `S.email` : au rechargement, `index.html` réinjectait le
+   cookie (un `ft4_email` vide vaut absence), le compte A était restauré PAR-DESSUS le nouveau profil local, puis pesées et
+   séances partaient vers A (mesuré : 3 profils, 3 miroirs, 2 séances). Un seul propriétaire de l'oubli, ici. */
+function _oublierEmailLocal(){
+  try{localStorage.removeItem('ft4_email');}catch(e){}
+  try{document.cookie='ft_email=;max-age=0;samesite=strict;path=/';}catch(e){}
+  _lastSavedEmail='';
+  try{
+    var req=indexedDB.open('ft_meta',1);
+    req.onupgradeneeded=function(e){e.target.result.createObjectStore('meta',{keyPath:'key'});};
+    req.onsuccess=function(e){try{e.target.result.transaction('meta','readwrite').objectStore('meta').delete('email');}catch(e2){}};
   }catch(e){}
 }
 async function _getEmailFromIDB(){
@@ -10766,12 +10782,13 @@ async function _ftBootstrapJeton(){
   try{
     if(_ftToken()) return;                       // déjà un jeton sur cet appareil
     if(!S.url||!S.email||!_authCode()) return;   // aucune preuve disponible : on ne demande rien
+    const _compte=S.email;   // AUTH-CLOUD-CLOSURE-01 : le jeton est rangé avec le compte DEMANDÉ, pas celui du moment de la réponse
     const r=await fetch(S.url,{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'issueTokenByCode',email:S.email,authCode:_authCode(),
+      body:JSON.stringify({action:'issueTokenByCode',email:_compte,authCode:_authCode(),
                            appareil:(navigator.platform||'appareil').slice(0,24)})});
     const d=await r.json();
-    if(d&&d.status==='ok'&&d.token) _setFtToken(d.token);
+    if(d&&d.status==='ok'&&d.token) _setFtToken(d.token,_compte);
   }catch(e){ /* silencieux : l'absence de jeton se verra à l'usage, pas au démarrage */ }
 }
 
@@ -10845,8 +10862,7 @@ async function _ftBootstrapJeton(){
             try{renderHome();}catch(e){}try{if(typeof renderSetup==='function')renderSetup();}catch(e){}
           }else if(d2.status==='not_found'){
             const _indice=S.email;
-            S.email='';try{localStorage.removeItem('ft4_email');}catch(e){}
-            try{document.cookie='ft_email=;max-age=0;samesite=strict;path=/';}catch(e){}
+            S.email='';_oublierEmailLocal();   // cookie + IndexedDB + ft4_email (AUTH-CLOUD-CLOSURE-01 : IndexedDB n'était pas vidé)
             _restauResolue();
             try{['ob-email','ob-email-final'].forEach(id=>{const f=document.getElementById(id);if(f&&!f.value)f.value=_indice;});}catch(e){}
           }

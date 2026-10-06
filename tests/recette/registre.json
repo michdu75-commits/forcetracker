@@ -28,6 +28,7 @@
     "banc:session_integrity": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_session_integrity.js", "controle_negatif": "python3 tools/mut_session_integrity.py"},
     "banc:cookie_profile": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_cookie_profile.js", "controle_negatif": "python3 tools/mut_cookie_profile.py"},
     "banc:auth_new_device": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_auth_new_device.js", "controle_negatif": "python3 tools/mut_auth_new_device.py"},
+    "banc:auth_cloud_closure": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_auth_cloud_closure.js", "controle_negatif": "python3 tools/mut_auth_cloud_closure.py"},
     "banc:onboarding_quick": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_onboarding_quick.js", "controle_negatif": "python3 tools/mut_onboarding_quick.py"},
     "banc:debrief_demande": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_debrief_demande.js", "controle_negatif": "python3 tools/mut_debrief_demande.py"},
     "banc:fp01":             {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_fp01.js",             "controle_negatif": "python3 tools/mut_fp01.py"},

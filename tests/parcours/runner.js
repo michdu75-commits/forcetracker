@@ -39586,6 +39586,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      jamais lu comme « compte introuvable » : ni inscription d'un compte neuf, ni instantané par-dessus ; le parcours existant
      « Protéger mon compte » mène à la restauration. Banc : tools/banc_auth_new_device.js. */
   await require('./auth_new_device.js').ecran(t, b, PORT);
+  /* 🔐 AUTH-CLOUD-CLOSURE-01 (session-B, 06/10/2026) — « continuer sans email » oublie vraiment l'ancien compte (cookie +
+     IndexedDB) ; un jeton d'appareil n'est jamais envoyé pour un autre compte (vrai Code.js en local). Banc : tools/banc_auth_cloud_closure.js. */
+  await require('./auth_cloud_closure.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 

@@ -575,6 +575,32 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_cookie_profile.js` **16/0** (CP-00 invariant + CP-01 → CP-13) · 3 mutations **3/3** · bancs voisins
   verts · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
 
+### 🔐 AUTH-CLOUD-CLOSURE-01 — D1 + T-JETON (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-cloud-closure-01`, NON PUBLIÉ) — P1 intégrité
+- **Origine** : contre-vérification indépendante de `6db0ba5c` (AUTH-NEW-DEVICE-01 confirmé, mais deux défauts bloquants).
+- **D1 — « continuer sans email »** : `finishOnboarding` ne vidait que `S.email` ; cookie `ft_email` et email IndexedDB restaient,
+  `index.html` réinjectait le cookie au rechargement (`ft4_email` vide = absence), A était restauré par-dessus le nouveau profil
+  local, puis pesées et séances partaient vers A. **Correctif** : `_oublierEmailLocal()` (app.js, un propriétaire) efface
+  `ft4_email`, le cookie et IndexedDB ; appelé quand l'inscription abandonne l'attente sans email, et sur « introuvable »
+  (qui n'effaçait pas IndexedDB).
+- **T-JETON — jeton d'un compte envoyé pour un autre** (introduit par AUTH-NEW-DEVICE-01 : le passage A → B gardait `ft4_devtoken`
+  de A, et `_ftBootstrapJeton` s'arrêtait dès qu'un jeton existait). Le serveur fait gagner le jeton : mesuré sur le vrai Code.js,
+  A devient « Bob » et reçoit les 8 séances de B ; Milo et le miroir prennent l'identité A. **Correctif central** (`constants.js`,
+  seul propriétaire du jeton) : le jeton est rangé AVEC son compte (`ft4_devtoken_compte`) ; `_ftToken()` ne le rend que pour ce
+  compte, sinon il l'efface — tous les envois (synchro, inscription, Worker via l'injecteur) en héritent sans changer d'appelant ;
+  `_ftBootstrapJeton` et la vérification d'email rangent le jeton avec le compte DEMANDÉ. Jeton antérieur au correctif : rattaché
+  au compte courant à sa 1ʳᵉ lecture.
+- **Trouvé en route, HORS LOT (décision de Michel)** :
+  ① **lecture stricte ⇒ un email INCONNU reçoit `needsCode`, jamais `not_found`** (mesuré sur le vrai Code.js : `_lectureAutorisee_`
+  passe avant `loadUserData_`). Depuis AUTH-NEW-DEVICE-01, un NOUVEL utilisateur qui tape un email à « COMMENCER » lit « Ce compte
+  existe déjà, mais il n'a pas encore de code perso » (faux pour lui) et doit protéger l'email pour continuer avec ; après la
+  protection, la restauration dit « Aucun profil trouvé » et il faut appuyer de nouveau sur COMMENCER. Non destructif, mais
+  trompeur et bloquant. État réel de `LECTURE_STRICTE` en production NON vérifié (Apps Script injoignable depuis le conteneur).
+  ② `_getEmailFromIDB` lit `r.result` sur l'événement au lieu de `r.target.result` : elle rend TOUJOURS null — le repli IndexedDB
+  n'a jamais fonctionné (le réparer activerait un chemin de restauration jamais éprouvé).
+  ③ `ft4_authcode` n'est pas lié à un compte non plus (un code de A envoyé pour B est refusé par le serveur : non destructif).
+- **Contrôles** : banc `tools/banc_auth_cloud_closure.js` **8/0** (vrai Code.js local ; rouge sur `6db0ba5c` : AC-01/02/03/04/06) ·
+  2 mutations **MUT_AC** · voisins **VOISINS_AC** · D-031 NON lancée.
+
 ### 🔐 AUTH-NEW-DEVICE-01 — `needsCode` N'EST JAMAIS « COMPTE INTROUVABLE » (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-new-device-01`, NON PUBLIÉ) — P1 intégrité
 - **Origine** : audit « sécurisation des comptes existants » (06/10, lecture seule). Sur un NOUVEL appareil, un compte existant
   SANS code perso : `loadProfile` répond `auth` + `needsCode` (lecture stricte), et « COMMENCER » tombait dans le même `else` que
