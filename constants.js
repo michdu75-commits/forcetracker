@@ -870,6 +870,10 @@ const WHATS_NEW=[
        le canal par lequel ses retours arrivent. *Une disparition muette se lit comme une punition.*
        ⛔ POURQUOI `si:'testeur'` : les autres n'ont jamais vu ce pavé. Leur annoncer sa disparition
        serait du bruit pur, et le mécanisme existe exprès depuis ft-v1072. */
+  /* 🎯 DEBRIEF-ON-DEMAND-01 (D-052) — ELLE SE MÉRITE : il y a quelque chose à FAIRE. Jusqu'ici l'avis de Milo arrivait
+     tout seul à la fin de chaque séance ; désormais il faut le DEMANDER. Sans un mot, la personne conclurait que Milo
+     ne débriefe plus. ⛔ BORNÉE (R25) : ce qui change, le geste, ce qui ne bouge pas. Le POURQUOI vit dans l'aide. */
+    {v:76, ic:'✨', t:'L\'avis de Milo se demande', d:'① <b>Milo n\'analyse plus chaque séance tout seul.</b> À la fin, tes chiffres s\'affichent tout de suite. ② Pour avoir son avis, touche <b>« ✨ Analyser cette séance avec Milo »</b> — à la fin de la séance, ou plus tard dans <b>Progrès → historique</b> (« Analyser avec Milo »). ③ Un débrief déjà fait reste là : <b>« 💬 Voir le débrief Milo »</b>.'},
   /* 🗂️ ELLE SE MÉRITE, ET C'EST LE CRITÈRE « UN REPÈRE A BOUGÉ » DANS SA FORME LA PLUS NETTE :
      quelqu'un qui savait où trouver « Guide de la muscu » ne le trouvera plus au même endroit.
      ⛔ Et il y a quelque chose à SAVOIR FAIRE : le bloc Apparence se replie maintenant, ce qui

@@ -54,7 +54,10 @@ module.exports.ecran = async function (t, b, PORT) {
   const js = x => JSON.stringify(x).slice(0, 300);
   const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
   const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test', ft4_email: 't@t.t',
-    ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_lms: moisPrec, ft4_ok: '1', ft4_stmig1: '1' };
+    ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_lms: moisPrec, ft4_ok: '1', ft4_stmig1: '1',
+    /* OD-11 instable (1 rouge sur 3, « carte introuvable ») : sans ce repère, le « Quoi de neuf » s'ouvrait au démarrage
+       de CHAQUE test, par-dessus l'onglet visé. La fixture décrit un utilisateur à jour ; aucun critère ne change. */
+    ft4_wn_seen: '999' };
   const J = jourParis(), J1 = jourParis(-7);
   const HIST = () => [{ id: 1001, ts: 1001, date: J1, volume: 1000, exs: [{ name: 'Rowing Yates', sets: [{ kg: 35, reps: 10, type: 'N', done: true }] }] }];
   const MEM = '\n```json\n{"objectif":"OBJ-OD tenir 40 kg","decision":"garder"}\n```';
