@@ -40,7 +40,9 @@ module.exports.source = function (t, ROOT, fs, path) {
     /dKg\/T\s*>\s*0\.18\s*&&\s*dKg\s*>\s*15/.test(MD) && /k\s*>=\s*0\.85\s*\*\s*T\s*&&\s*r\s*>\s*2/.test(MD), MD === '' ? 'introuvable' : '');
   /* Le superset voyage jusqu'aux séances TERMINÉES du contexte, pas seulement la séance en cours. */
   t('B-CCCLVIII ② la ligne de séance terminée envoyée à Milo sait nommer un superset',
-    /_supersetTxt|superset avec/.test(CO.slice(CO.indexOf('const recentSessions'), CO.indexOf('Aucune séance'))), '');
+    /* 🔁 Correctif F1 (06/10) : le formateur des séances terminées a reçu un nom (`_ligneSeance`) pour servir aussi
+       la séance ciblée ; `recentSessions` l'appelle. On borne donc la lecture au FORMATEUR, pas à l'ancienne ligne. */
+    /_supersetTxt|superset avec/.test(CO.slice(CO.indexOf('const _ligneSeance'), CO.indexOf('Aucune séance'))) && CO.indexOf('const _ligneSeance') > 0, '');
   /* Un seul endroit pose la question du RIR : la barre de repos — et elle peut viser PLUSIEURS séries. */
   t('B-CCCLVIII ③ la barre de repos peut porter la question du RIR pour plusieurs séries (superset)',
     /Array\.isArray\(_rirCible\)/.test(_corps(LG, '_renderRirRow')), '');
