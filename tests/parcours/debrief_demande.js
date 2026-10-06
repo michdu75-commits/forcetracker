@@ -130,8 +130,13 @@ module.exports.ecran = async function (t, b, PORT) {
       log: (S.registre && S.registre.sessionLog || []).map(x => String(x.sessId)),
       anciennes: ['ft4_pending_debrief', 'ft4_debrief_recu', 'ft4_debrief_faits'].filter(k => localStorage.getItem(k) !== null) };
   });
-  const boutons = (X, id) => X.pg.evaluate(i => { const c = [...document.querySelectorAll('#sess-list .sess-card')].find(x => (x.getAttribute('onclick') || '').indexOf(String(i)) >= 0);
-    return c ? [...c.querySelectorAll('.sess-dbf-btn,.sess-dbf-go')].map(x => x.textContent.trim()) : null; }, id);
+  /* ⚠️ Une carte PRÉCISE peut arriver après les autres (vu le 06/10 : OD-10b « carte introuvable » sur du code sain) —
+     on l'attend, 3 s au plus ; absente au bout de 3 s, elle est vraiment absente. */
+  const boutons = async (X, id) => { const t0 = Date.now(); let r = null;
+    do { r = await X.pg.evaluate(i => { const c = [...document.querySelectorAll('#sess-list .sess-card')].find(x => (x.getAttribute('onclick') || '').indexOf(String(i)) >= 0);
+        return c ? [...c.querySelectorAll('.sess-dbf-btn,.sess-dbf-go')].map(x => x.textContent.trim()) : null; }, id);
+      if (r) break; await X.pg.waitForTimeout(150); } while (Date.now() - t0 < 3000);
+    return r; };
   const resume = X => js(X.st.req);
   const attendre = async (pg, sel, re, ms) => { const t0 = Date.now(); let txt = '';
     while (Date.now() - t0 < (ms || 9000)) { txt = await pg.evaluate(s => (document.querySelector(s) || {}).textContent || '', sel); if (re.test(txt)) break; await pg.waitForTimeout(150); }
