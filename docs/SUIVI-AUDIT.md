@@ -575,6 +575,33 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_cookie_profile.js` **16/0** (CP-00 invariant + CP-01 → CP-13) · 3 mutations **3/3** · bancs voisins
   verts · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
 
+### 📥 IMPORT-ECH-01 — ÉCHAUFFEMENT + SÉRIES DE TRAVAIL D'UN MÊME EXERCICE = UN EXERCICE (06/10/2026, session-B — ⚠️ BRANCHE `claude/import-echauffement-01`, NON PUBLIÉ)
+- **Terrain** (iPhone, import d'un programme Powerbuilding) : l'écran de vérification montre « Développé Couché » en plusieurs
+  blocs (1×5 @50 échauffement, 1×3 @65…, puis le travail) ; après import, autant de cartes d'UNE série, chacune « Déjà présent
+  ailleurs dans cette séance ».
+- **Cause racine (mesurée)** : l'import passe par le **Worker** depuis ft-v433 (`importDoc`, `PROG_PROMPT`), copie ANCIENNE de la
+  consigne d'Apps Script. Elle n'a ni la règle 8 (lignes ECH/TRAV du même exercice = UN exercice, `setTypePerSet`), ni la liste
+  du catalogue (ft-v1164), ni la règle des repos (ft-v1176), et elle dit « "échauffement" → NOTE ». Le modèle rend donc une
+  ligne = un exercice, au nom NU. Le filet client ft-v1158 (`_mergeImportEchauffements`) ne reconnaît un échauffement qu'à un
+  parenthésé en fin de nom (« (ECH) ») : il ne voit rien, et `finalImportProg` construit une carte par ligne. Reproduit sur
+  `6db0ba5c` : 9 témoins rouges sur 11 (5 cartes DC d'une série, 5 « Déjà présent »).
+- **Correctif (client, `log.js`)** : `_mergeImportBlocsEch`, 2ᵉ passe qui s'AJOUTE au filet ft-v1158, appelée avant le rattachement
+  catalogue et l'aperçu. Un BLOC CONTINU du même exercice canonique (clé après rattachement `auto`, donc alias compris), qui
+  COMMENCE par une preuve d'échauffement et contient du travail = UN exercice ; chaque série garde reps, charge, type (É/N),
+  repos (par série : le repos du travail ne déborde plus sur l'échauffement), indices spéciaux décalés, ordre du document.
+  Preuves : `setTypePerSet` W, `setType` W, marqueur dans le nom (fin « (ECH) » ou tête « ECH - »), note qui COMMENCE par
+  ECH / échauffement / montée. ⛔ Sans preuve, rien ne bouge ; un autre exercice coupe le bloc ; un échauffement après le
+  travail ouvre un autre bloc ; superset et dropset jamais touchés.
+- **Hors lot, à décider (Michel)** : la consigne du Worker reste en retard sur celle d'Apps Script (catalogue envoyé par l'app
+  mais IGNORÉ par le Worker, repos jamais demandés, `setTypePerSet` jamais demandé). Deux copies du même prompt (R2) — l'aligner
+  touche le Worker (déploiement Cloudflare).
+- **Limites** : deux lignes identiques SANS preuve d'échauffement restent deux exercices (choix R29 — « Déjà présent » s'affiche
+  alors, à juste titre ou non) ; un dropset placé juste après des échauffements laisse ceux-ci à part ; les notes des lignes
+  d'échauffement ne sont pas gardées (même choix écrit que ft-v1158).
+- **Contrôles** : banc `tools/banc_import_echauffement.js` **11/0** (IMP-WU-00 → 10) · 3 mutations **3/3** · blocs d'import du runner
+  (CCLIV, CCLVI, CCLXIV, CCLXVI, CCLXX, CCLXXIII, CCLXXIV, CCLXXVI) **187/0** · SESSION-INTEGRITY 93/0 · ML-B 60/0 · débrief 58/0 ·
+  `check_regles` vert · D-031 NON lancée.
+
 ### 🔐 AUTH-NEW-DEVICE-01 — `needsCode` N'EST JAMAIS « COMPTE INTROUVABLE » (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-new-device-01`, NON PUBLIÉ) — P1 intégrité
 - **Origine** : audit « sécurisation des comptes existants » (06/10, lecture seule). Sur un NOUVEL appareil, un compte existant
   SANS code perso : `loadProfile` répond `auth` + `needsCode` (lecture stricte), et « COMMENCER » tombait dans le même `else` que

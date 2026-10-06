@@ -6711,6 +6711,7 @@ async function analyzeImportPhotos(){
     _mergeImportEchauffements(); // ⛔ AVANT le rattachement VM, et l'ordre compte : la fusion rend au nom sa forme
                                  // nue (« Développé couché »), et c'est CE nom-là que le catalogue sait reconnaître.
                                  // Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
+    _mergeImportBlocsEch();      // IMPORT-ECH-01 : même filet quand le nom est NU (échauffement en note / en type)
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _renderImpConfirm();
     impGoStep(4);
@@ -6876,6 +6877,90 @@ function _mergeImportEchauffements(){
     day.exercises=out;
   });
   if(fus)console.log('[Import] '+fus+' exercice(s) recomposé(s) : séries d\'échauffement regroupées avec leur série de travail');
+}
+/* 📥 IMPORT-ECH-01 (06/10/2026) — LE MÊME FILET, QUAND LE NOM NE PORTE PLUS DE MARQUEUR.
+   ⛔⛔ CE QUI A CHANGÉ, ET C'EST MESURÉ. Le filet ci-dessus ne reconnaît un échauffement qu'à un parenthésé EN FIN de
+   nom (« Développé couché (ECH) »). Or l'import passe par le WORKER depuis ft-v433 (`importDoc`, `PROG_PROMPT`), dont la
+   consigne est une copie ANCIENNE de celle d'Apps Script : elle n'a ni la règle 8 (lignes ECH/TRAV = un exercice,
+   `setTypePerSet`) ni la liste du catalogue, et elle dit « "échauffement" → NOTE ». Le modèle rend donc une ligne = un
+   exercice, au NOM NU, avec « échauffement » en note : 5 cartes « Développé Couché » d'une série chacune, puis « Déjà
+   présent ailleurs dans cette séance » (iPhone, 06/10). Rien ici ne dépend du modèle : R7, le prompt est le DERNIER levier.
+   ⭐ LA RÈGLE, ET ELLE NE FUSIONNE PAS « tout ce qui porte le même nom » : un BLOC CONTINU du même exercice CANONIQUE
+   (même clé après rattachement catalogue `auto`, donc les alias aussi), qui COMMENCE par une PREUVE d'échauffement, et
+   contient au moins une série de travail = UN exercice. Preuves admises : `setTypePerSet` W (structuré), `setType` W,
+   marqueur dans le nom (fin « (ECH) » ou tête « ECH - »), note qui COMMENCE par ECH / échauffement / montée.
+   ⛔ Sans preuve, rien ne bouge (deux lignes identiques peuvent être voulues — R29) ; un autre exercice entre deux lignes
+   COUPE le bloc ; un échauffement APRÈS le travail ouvre un autre bloc ; superset et dropset ne sont jamais touchés.
+   ⛔ Chaque série garde ses reps, sa charge, son type, son repos, et l'ordre du document. */
+function _echNomTete(name){
+  const m=String(name==null?'':name).trim().match(/^(?:ech|[ée]chauffement|warm[\s-]?up)\s*[-–—:|]\s*(.+)$/i);
+  return m&&m[1].trim()?m[1].trim():null;
+}
+// La NOTE ne prouve un échauffement que si elle COMMENCE par lui : « après l'échauffement général, 3 séries lourdes » est du travail.
+function _noteEch(note){ return /^(ech\b|echauff|warm[\s-]?up|montee\b|series? d.?echauff)/.test(_naz(String(note||'').trim())); }
+function _typesLigneImport(ex){
+  const n=_seriesImport(ex).n;
+  if(Array.isArray(ex.setTypePerSet)&&ex.setTypePerSet.length)   // le structuré passe AVANT le texte
+    return Array.from({length:n},(_,s)=>String(ex.setTypePerSet[s]||'').toUpperCase()==='W'?'W':'');
+  const w=String(ex.setType||'').toUpperCase()==='W'||_nomSansEch(ex.name)!==null||_echNomTete(ex.name)!==null||_noteEch(ex.note);
+  return Array(n).fill(w?'W':'');
+}
+function _wPuisTravail(T){ let trav=false; for(const v of T){ if(v!=='W')trav=true; else if(trav)return false; } return true; }
+function _nomBlocImport(ex){ return _nomSansEch(ex.name)||_echNomTete(ex.name)||String(ex.name||'').trim(); }
+function _cleBlocImport(ex){
+  let nom=_nomBlocImport(ex);
+  try{ const r=(typeof _matchExercise==='function')?_matchExercise(nom):null; if(r&&r.tier==='auto'&&r.match)nom=r.match; }catch(e){}
+  return _naz(nom).replace(/\s+/g,' ').trim();
+}
+function _blocCompatible(ex){ return !!ex&&!ex.supersetGroup&&String(ex.setType||'').toUpperCase()!=='D'; }
+function _fusionneBlocImport(lignes){
+  const R=[],K=[],T=[],RE=[],SP=[];let nW=0,nLW=0;
+  lignes.forEach(l=>{
+    const x=_seriesImport(l),ty=_typesLigneImport(l),off=R.length;
+    R.push(...x.reps);K.push(...x.kgs);RE.push(...x.rests);
+    ty.forEach(v=>{T.push(v);if(v==='W')nW++;});
+    if(ty.every(v=>v==='W'))nLW++;
+    if(Array.isArray(l.specialSets))l.specialSets.forEach(k=>SP.push((parseInt(k)||0)+off));
+  });
+  const trav=lignes.filter(l=>_typesLigneImport(l).some(v=>v!=='W'));
+  const o=Object.assign({},trav[0]);
+  o.name=_nomBlocImport(trav[0]);
+  o.repsPerSet=R;o.kgPerSet=K;o.setTypePerSet=T;o.sets=R.length;
+  // Repos PAR SÉRIE : une ligne sans repos garde « défaut par type » ('') — sinon le repos du travail déborderait sur l'échauffement.
+  if(RE.some(v=>v!=null&&v!=='')){o.restPerSet=RE.map(v=>v==null?'':v);}else delete o.restPerSet;
+  if(SP.length)o.specialSets=SP;else delete o.specialSets;
+  // Même choix écrit que `_fusionneEch` : la note gardée est celle du TRAVAIL (toutes les notes de travail distinctes) ;
+  // à défaut, la première des échauffements.
+  const notes=[...new Set(trav.map(l=>String(l.note||'').trim()).filter(Boolean))];
+  o.note=notes.length?notes.join(' | '):(lignes.map(l=>l.note).filter(Boolean)[0]||'');
+  o._echFusion=nW;o._echLignes=nLW;o._blocLignes=lignes.length;
+  return o;
+}
+function _mergeImportBlocsEch(){
+  if(!_impExtracted||!(_impExtracted.days||[]).length)return;
+  let fus=0;
+  (_impExtracted.days||[]).forEach(day=>{
+    const src=day.exercises||[],out=[];
+    let i=0;
+    while(i<src.length){
+      const a=src[i],ta=_blocCompatible(a)?_typesLigneImport(a):[];
+      if(!ta.length||ta[0]!=='W'||!_wPuisTravail(ta)){out.push(a);i++;continue;}   // un bloc COMMENCE par une preuve d'échauffement
+      const cle=_cleBlocImport(a);
+      let j=i+1,travail=ta.some(v=>v!=='W');
+      while(j<src.length){
+        const b=src[j];
+        if(!_blocCompatible(b)||_cleBlocImport(b)!==cle)break;          // un autre exercice (ou un superset, un dropset) coupe le bloc
+        const tb=_typesLigneImport(b);
+        if(!_wPuisTravail(tb)||(travail&&tb.some(v=>v==='W')))break;    // un échauffement APRÈS le travail ouvre un autre bloc
+        if(tb.some(v=>v!=='W'))travail=true;
+        j++;
+      }
+      if(!travail||j-i<2){for(let k=i;k<j;k++)out.push(src[k]);i=j;continue;}   // pas de travail : on laisse le document tel quel
+      out.push(_fusionneBlocImport(src.slice(i,j)));fus++;i=j;
+    }
+    day.exercises=out;
+  });
+  if(fus)console.log('[Import] '+fus+' bloc(s) échauffement + travail regroupé(s) en un exercice (IMPORT-ECH-01)');
 }
 /* ⛔⛔ R2 — UN SEUL PROPRIÉTAIRE de la question « cet exercice sera-t-il CRÉÉ à l'import ? »
    (ft-v1166). Elle était calculée à DEUX endroits, avec DEUX comparaisons DIFFÉRENTES :

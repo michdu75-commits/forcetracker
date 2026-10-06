@@ -39586,6 +39586,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      jamais lu comme « compte introuvable » : ni inscription d'un compte neuf, ni instantané par-dessus ; le parcours existant
      « Protéger mon compte » mène à la restauration. Banc : tools/banc_auth_new_device.js. */
   await require('./auth_new_device.js').ecran(t, b, PORT);
+  /* 📥 IMPORT-ECH-01 (session-B, 06/10/2026) — un bloc continu « échauffement + travail » du même exercice canonique redevient
+     UN exercice même quand le Worker rend des noms nus (échauffement en note / en type) ; jamais de fusion sans preuve.
+     Banc : tools/banc_import_echauffement.js. */
+  await require('./import_echauffement.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
