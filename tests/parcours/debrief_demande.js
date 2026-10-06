@@ -111,7 +111,10 @@ module.exports.ecran = async function (t, b, PORT) {
   const fermerFin = X => clic(X.pg, '[onclick="closeSessionEnd()"]');
   const coach = async (X, ms) => { await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(ms || 1500); };
   const versProgres = async X => { await clic(X.pg, '#nb-progress');
-    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(350); };
+    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(350);
+    /* ⚠️ La liste de Progrès se dessine APRÈS l'onglet : sous charge, 350 ms ne suffisaient pas (OD-08b, OD-11, OD-17b ont
+       rougi sur du code sain, « carte introuvable »). On attend une carte, 3 s au plus. */
+    const t0 = Date.now(); while (Date.now() - t0 < 3000) { if (await X.pg.evaluate(() => !!document.querySelector('#sess-list .sess-card'))) break; await X.pg.waitForTimeout(150); } };
   const jusqua = async (X, ms) => { const r = ms - (Date.now() - X.st.T0); if (r > 0) await X.pg.waitForTimeout(r); };
   const etat = pg => pg.evaluate(() => {
     const mag = JSON.parse(localStorage.getItem('ft4_debriefs') || 'null');

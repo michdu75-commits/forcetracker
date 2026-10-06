@@ -127,7 +127,10 @@ def main():
             for f in FICHIERS:
                 open(os.path.join(arbre, f), 'w', encoding='utf-8').write(srcs[f])
         rouges = banc(arbre)
-        ecran = [x for x in rouges if 'ROUGE OD-' in x or 'PLANTAGE' in x]
+        # Ecran = tout temoin conduit (OD-, F1-, C1-, T1..T5, CF-) ; source = les S1..S9 de B-OD-S. (06/10 : seuls les OD-
+        # etaient comptes, et M-J1..M-J3, attrapes par F1/C1/T1, s'affichaient « non attrapes ».)
+        import re as _re
+        ecran = [x for x in rouges if 'PLANTAGE' in x or not _re.search(r'ROUGE S\d', x)]
         obtenu = 'GARDE' if ecran else 'OK'
         ok = obtenu == attendu; conformes += ok
         print('  %s  %-96s %-6s %2d ecran / %2d source  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(ecran), len(rouges) - len(ecran), ecran[0] if ecran else (rouges[0] if rouges else '')))
