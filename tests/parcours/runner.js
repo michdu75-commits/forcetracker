@@ -39579,6 +39579,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);
+  /* 🛡️ COOKIE-PROFILE-01 (session-B, 06/10/2026) — un cookie `ft_email` n'est qu'un indice : aucune écriture cloud pour cet
+     email tant que le profil n'est pas réellement récupéré ou déclaré introuvable. Banc : tools/banc_cookie_profile.js. */
+  await require('./cookie_profile.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
