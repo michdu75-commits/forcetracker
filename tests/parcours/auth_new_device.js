@@ -98,7 +98,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const e = await etat(X.pg);
     await solliciter(X.pg);
     t('AN-01 ⛔⛔ nouveau téléphone + compte existant SANS code (needsCode) → PAS un compte neuf : inscription non terminée, attente posée, sécurisation proposée, aucune demande de code inexistant',
-      e.obVisible && e.ob2 === null && e.flag === '1' && e.email === SANS && /pas encore de code perso/.test(e.msg) && !/Entre ton code/.test(e.msg), js(e));
+      e.obVisible && e.ob2 === null && e.flag === '1' && e.email === SANS && /Confirme cet e-mail/.test(e.msg) && !/Entre ton code/.test(e.msg), js(e));
     t('AN-09 ⛔⛔ aucune séquence (inscription, persist, synchro, séance, file) n\'envoie d\'instantané « nouveau compte » : 0 écriture, 20 séances en ligne intactes',
       X.ecrits(SANS) === 0 && X.enLigne(SANS) === 20 && X.st.profils.length === 0, js({ ecrits: X.st.ecrits, profils: X.st.profils, enLigne: X.enLigne(SANS) }));
 
@@ -108,7 +108,8 @@ module.exports.ecran = async function (t, b, PORT) {
     t('AN-02 ⛔ sécurisation (code email + code perso, la fenêtre existante) → jeton conservé, compte RESTAURÉ (20 séances), attente levée, 20 en ligne',
       e2.code === '9876' && e2.jeton === JETON_CODE && e2.nbSess === 20 && !e2.flag && X.enLigne(SANS) === 20 && X.st.appels.indexOf('setAccessCode') >= 0, js({ e2, appels: X.st.appels }));
     await X.pg.evaluate(() => { const f = document.getElementById('ob-email-final'); if (f) f.value = ''; });
-    const h = await X.pg.$('#ob-start-btn'); if (h) { await h.scrollIntoViewIfNeeded(); await h.click(); } await X.pg.waitForTimeout(800);
+    // AUTH-SIGNUP-STRICT-01 : après la preuve, l'inscription se termine SEULE (plus de 2ᵉ appui) — on n'appuie que si le bouton est encore là.
+    const h = await X.pg.$('#ob-start-btn'); if (h && await h.isVisible()) { await h.scrollIntoViewIfNeeded(); await h.click(); } await X.pg.waitForTimeout(800);
     await solliciter(X.pg);
     await X.pg.evaluate(() => fetch(AI_PROXY_URL, { method: 'POST', body: JSON.stringify({ action: 'coach', message: 'test' }) }).catch(() => {}));
     await X.pg.waitForTimeout(600);
@@ -124,8 +125,8 @@ module.exports.ecran = async function (t, b, PORT) {
     await restaurerOb(X.pg, SANS);
     const e = await etat(X.pg);
     await solliciter(X.pg);
-    t('AN-01b ⛔ « Restaurer mes données » + compte sans code → « pas encore de code perso », sécurisation proposée, AUCUN champ « ton code », 0 écriture',
-      /pas encore de code perso/.test(e.wrap) && !e.champCode && e.flag === '1' && X.ecrits(SANS) === 0 && X.enLigne(SANS) === 20, js(e));
+    t('AN-01b ⛔ « Restaurer mes données » + compte sans code → « Confirme cet e-mail » (texte AUTH-SIGNUP-STRICT-01 : l’app ne peut pas savoir si le compte existe), sécurisation proposée, AUCUN champ « ton code », 0 écriture',
+      /Confirme cet e-mail/.test(e.wrap) && !e.champCode && e.flag === '1' && X.ecrits(SANS) === 0 && X.enLigne(SANS) === 20, js(e));
     await X.cx.close();
   }
   /* ═════════ AN-03 / AN-04 — compte AVEC code ═════════ */
@@ -151,7 +152,7 @@ module.exports.ecran = async function (t, b, PORT) {
     await restaurerOb(X.pg, AVEC);
     const e = await etat(X.pg);
     t('AN-03b « Restaurer mes données » + compte AVEC code → le champ « ton code perso » (comportement existant conservé)',
-      /Ce compte est protégé/.test(e.wrap) && e.champCode && !/pas encore de code/.test(e.wrap), js(e));
+      /Ce compte est protégé/.test(e.wrap) && e.champCode && !/Confirme cet e-mail/.test(e.wrap), js(e));
     await X.cx.close();
   }
   /* ═════════ AN-05 — compte réellement inexistant ═════════ */
@@ -192,8 +193,8 @@ module.exports.ecran = async function (t, b, PORT) {
     await X.pg.evaluate(x => { openRestoreAccount(); document.getElementById('restore-email-inp').value = x; doRestoreAccount(); }, SANS); await X.pg.waitForTimeout(1800);
     const e = await etat(X.pg);
     await solliciter(X.pg);
-    t('AN-09b ⛔⛔ Profil → Restaurer (compte sans code, téléphone avec 1 séance locale) → « pas encore de code perso », aucun champ code, 0 écriture : les 20 séances en ligne ne deviennent PAS 1',
-      /pas encore de code perso/.test(e.rest) && !e.champCode && e.flag === '1' && X.ecrits(SANS) === 0 && X.enLigne(SANS) === 20, js({ e, ecrits: X.st.ecrits }));
+    t('AN-09b ⛔⛔ Profil → Restaurer (compte sans code, téléphone avec 1 séance locale) → « Confirme cet e-mail » (texte AUTH-SIGNUP-STRICT-01 : l’app ne peut pas savoir si le compte existe), aucun champ code, 0 écriture : les 20 séances en ligne ne deviennent PAS 1',
+      /Confirme cet e-mail/.test(e.rest) && !e.champCode && e.flag === '1' && X.ecrits(SANS) === 0 && X.enLigne(SANS) === 20, js({ e, ecrits: X.st.ecrits }));
     await proteger(X.pg, '#restore-status button');
     const e2 = await etat(X.pg);
     t('AN-02b sécurisation depuis Profil → restauration automatique (les 20 du cloud + la séance locale, fusion existante), attente levée, jeton conservé, rien perdu en ligne',

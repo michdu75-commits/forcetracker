@@ -575,6 +575,20 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_cookie_profile.js` **16/0** (CP-00 invariant + CP-01 → CP-13) · 3 mutations **3/3** · bancs voisins
   verts · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
 
+### 🔐 AUTH-SIGNUP-STRICT-01 — INSCRIPTION EN LECTURE STRICTE (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-signup-strict-01`, NON PUBLIÉ)
+- **Cause racine (mesurée sur le vrai Code.js)** : en lecture stricte (défaut quand `LECTURE_STRICTE` manque), `_lectureAutorisee_`
+  passe AVANT `loadUserData_` : un email INCONNU reçoit `needsCode`, jamais `not_found`. Depuis AUTH-NEW-DEVICE-01, l'app (à raison)
+  ne traite plus `needsCode` comme un compte neuf — mais disait « Ce compte existe déjà », et après la protection la restauration
+  répondait « Aucun profil trouvé » : il fallait appuyer une 2ᵉ fois sur COMMENCER.
+- **Correctif (app.js, texte setup.js)** : le texte dit la seule chose vraie dans les deux cas — « Confirme cet e-mail pour continuer »
+  (Profil → Restaurer aussi). Après la preuve de possession (code email + code perso, parcours existant), `_reprendreApresProtection`
+  relit par le chemin de « COMMENCER » (`obCheckEmailAndFinish`, qui envoie le code) : profil trouvé → restauré, inscription faite ;
+  « introuvable » — désormais une absence EXPLICITE, le serveur a vérifié le code → inscription neuve terminée seule, profil de
+  bienvenue envoyé AVEC le code. ⛔ Rien ne change avant la preuve : needsCode / erreur / réseau ne créent jamais de compte.
+- **Contrôles** : banc `tools/banc_auth_signup_strict.js` **8/0** (vrai Code.js en lecture stricte ; rouge sur `2e4913f4` : AS-01/02/03) ·
+  2 mutations **MUT_AS** · AN 16/0 (3 témoins réécrits sur le nouveau texte, 1 appui conditionnel : l'inscription se termine seule) ·
+  voisins **VOISINS_AS** · D-031 NON lancée.
+
 ### 🔐 AUTH-CLOUD-CLOSURE-01 — D1 + T-JETON (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-cloud-closure-01`, NON PUBLIÉ) — P1 intégrité
 - **Origine** : contre-vérification indépendante de `6db0ba5c` (AUTH-NEW-DEVICE-01 confirmé, mais deux défauts bloquants).
 - **D1 — « continuer sans email »** : `finishOnboarding` ne vidait que `S.email` ; cookie `ft_email` et email IndexedDB restaient,

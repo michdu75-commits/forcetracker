@@ -7626,17 +7626,22 @@ async function obDoRestore(){
    l'envoyer chercher un code qui n'existe pas (impasse mesurée par l'audit du 06/10). On propose le parcours EXISTANT :
    « Protéger mon compte » (code reçu par email + code perso), puis la récupération se fait toute seule
    (`_reprendreApresProtection`). Aucun mécanisme nouveau. */
+/* 🔐 AUTH-SIGNUP-STRICT-01 — ⛔ LE TEXTE NE DIT PLUS « CE COMPTE EXISTE DÉJÀ ». Mesuré sur le vrai Code.js : en lecture
+   stricte (défaut quand `LECTURE_STRICTE` manque), `_lectureAutorisee_` passe AVANT la recherche du compte — un email INCONNU
+   reçoit lui aussi `needsCode`. L'app ne peut donc pas savoir si le compte existe : elle demande la seule chose vraie dans les
+   deux cas, la preuve que l'email est à la personne. Après cette preuve, le serveur sait répondre : profil → restauré,
+   introuvable → compte neuf (`_reprendreApresProtection`). */
 function _obTexteSansCode(){
-  return '<div style="font-size:13.5px;color:var(--gold);font-weight:700;line-height:1.45;margin-bottom:6px;">🔒 Ce compte existe déjà, mais il n\'a pas encore de code perso.</div>'
-    +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-bottom:8px;">Pour le retrouver sur ce téléphone, protège-le d\'abord : un code arrive par email, tu choisis ton code perso, et tes données reviennent. Rien n\'est écrit sur ton compte d\'ici là.</div>'
-    +'<button class="btn btn-red" onclick="openProtect()" style="width:100%;padding:14px;font-size:16px;">🔒 Protéger et récupérer mon compte</button>';
+  return '<div style="font-size:13.5px;color:var(--gold);font-weight:700;line-height:1.45;margin-bottom:6px;">🔒 Confirme cet e-mail pour continuer.</div>'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-bottom:8px;">Nouveau compte ou compte existant, on vérifie d\'abord que l\'e-mail est bien à toi : un code arrive par email, tu choisis ton code perso. Si un profil existe, il revient ; sinon ton compte est créé. Rien n\'est écrit d\'ici là.</div>'
+    +'<button class="btn btn-red" onclick="openProtect()" style="width:100%;padding:14px;font-size:16px;">🔒 Confirmer mon e-mail et continuer</button>';
 }
 // Onboarding : compte protégé → demander le code perso et réessayer
 function _obShowCodePrompt(wrong,sansCode){
   const host=document.getElementById('ob-1-restore');if(!host)return;
   let el=document.getElementById('ob-code-wrap');
   if(!el){el=document.createElement('div');el.id='ob-code-wrap';el.style.marginTop='10px';host.appendChild(el);}
-  if(sansCode){ el.innerHTML=_obTexteSansCode(); return; }
+  if(sansCode){ window._obProtectionDepuis='restaurer'; el.innerHTML=_obTexteSansCode(); return; }
   el.innerHTML='<div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px;line-height:1.4;">'+(wrong?'❌ Code incorrect.':'🔒 Ce compte est protégé.')+' Entre ton code perso&nbsp;:</div>'
     +'<input class="ob-inp" id="ob-code-inp" type="password" inputmode="numeric" autocomplete="off" placeholder="Ton code" style="font-size:16px;">'
     +'<button class="btn btn-red" onclick="_obSubmitCode()" style="width:100%;margin-top:8px;padding:14px;font-size:16px;">Valider le code</button>';
@@ -7696,7 +7701,7 @@ async function obCheckEmailAndFinish(){
       _obEnvoi=false;btn.disabled=false;btn.textContent='⚡ COMMENCER';
       const hadCode=!!_authCode(); if(hadCode)_setAuthCode('');
       const autre=' — ou <span onclick="obContinuerSansEmail()" style="text-decoration:underline;cursor:pointer;">continue sans email</span>.';
-      if(data.needsCode) _obEmailMsg(_obTexteSansCode()+'<div style="font-size:12.5px;margin-top:6px;color:var(--t2);">Ce n\'est pas ton compte ? Change d\'email'+autre+'</div>');
+      if(data.needsCode){ window._obProtectionDepuis='commencer'; _obEmailMsg(_obTexteSansCode()+'<div style="font-size:12.5px;margin-top:6px;color:var(--t2);">Ce n\'est pas ton e-mail ? Change-le'+autre+'</div>'); }
       else if(data.blocked) _obEmailMsg('Trop d\'essais sur ce compte — réessaie demain'+autre);
       else _obEmailMsg('🔒 '+(hadCode?'Code incorrect.':'Ce compte est protégé par un code perso.')+' Entre ton code&nbsp;:'
         +'<input class="ob-inp" id="ob-code-final" type="password" inputmode="numeric" autocomplete="off" placeholder="Ton code" style="font-size:16px;margin-top:6px;">'
@@ -7924,9 +7929,19 @@ async function _reprendreApresProtection(){
   closeProtect();
   if(!localStorage.getItem('ft4_ob2')){
     const e=document.getElementById('ob-email'); if(e)e.value=S.email||'';
-    const f=document.getElementById('ob-email-final'); if(f)f.value='';
+    if(window._obProtectionDepuis!=='commencer'){ const f=document.getElementById('ob-email-final'); if(f)f.value=''; }
     try{_obEmailMsg('');}catch(e2){}
     const w=document.getElementById('ob-code-wrap'); if(w)w.innerHTML='';
+    /* 🔐 AUTH-SIGNUP-STRICT-01 — venu de « COMMENCER » : la preuve est faite (code posé), on RELIT par le même chemin
+       (`obCheckEmailAndFinish`, qui envoie le code) : profil trouvé → restauré et inscription faite ; « introuvable » →
+       maintenant une absence EXPLICITE (le serveur a vérifié le code) → inscription neuve terminée, sans 2ᵉ appui.
+       ⛔ needsCode / erreur / réseau gardent leur sens : jamais de compte neuf (aucune branche de cette fonction ne change). */
+    if(window._obProtectionDepuis==='commencer'){
+      window._obProtectionDepuis='';
+      const f2=document.getElementById('ob-email-final'); if(f2)f2.value=S.email||'';
+      _obEnvoi=false;
+      return obCheckEmailAndFinish();
+    }
     return obDoRestore();
   }
   if(typeof openRestoreAccount==='function'){ openRestoreAccount(); return doRestoreAccount(); }

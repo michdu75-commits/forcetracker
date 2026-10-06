@@ -3718,8 +3718,9 @@ async function doRestoreAccount(){
       S.email=email;
       if(data.needsCode&&st){
         st.style.display='block';st.style.color='var(--orange)';
-        st.innerHTML='🔒 Ce compte existe, mais il n\'a pas encore de code perso — il n\'y a donc aucun code à saisir. '
-          +'Pour le récupérer ici, protège-le d\'abord (code reçu par email, puis ton code perso) : la restauration se fera ensuite toute seule.'
+        /* AUTH-SIGNUP-STRICT-01 : en lecture stricte, l'app ne peut pas savoir si ce compte existe — elle ne l'affirme plus. */
+        st.innerHTML='🔒 Confirme cet e-mail pour continuer : aucun code perso n\'y est posé, il n\'y a donc aucun code à saisir. '
+          +'Un code arrive par email, tu choisis ton code perso, puis la restauration se fait toute seule s\'il existe un profil.'
           +'<button onclick="_restaurerProtegerCompte()" style="margin-top:8px;width:100%;padding:11px;border:none;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;">🔒 Protéger et récupérer mon compte</button>';
         if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
         return;
