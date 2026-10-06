@@ -3404,3 +3404,8 @@ code : ✅. État : **à trier** (qualification nocturne).
 personne arrive sans profil et sans être passée par l'inscription. ❓ **Doute** : combien de vrais cas (navigateur purgé, cookie
 gardé) ? Vérifiable par du code : ✅. État : **à trier** (lot séparé).
 
+### 🟢 OD-11 « CARTE INTROUVABLE » — CAUSE PROBABLE TRAITÉE DANS LE TEST (06/10/2026, package ft-v1251)
+La fixture du banc débrief n'avait pas de `ft4_wn_seen` : un « Quoi de neuf » s'ouvrait au démarrage de chaque test, par-dessus
+l'onglet visé. Repère posé (utilisateur à jour) ; aucun critère de réussite modifié. Mesuré ensuite : **3 exécutions sur 3 à 58/0**
+(dont une en parallèle d'un autre banc). ⚠️ Cause non PROUVÉE (pas d'enquête de jour) — à confirmer par la passe de nuit.
+
