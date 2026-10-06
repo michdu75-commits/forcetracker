@@ -39592,6 +39592,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🔐 AUTH-SIGNUP-STRICT-01 (session-B, 06/10/2026) — lecture stricte : un email inconnu reçoit needsCode ; l'app dit « confirme
      cet e-mail » (jamais « ce compte existe déjà ») et, après la preuve, restaure ou crée le compte seule. Banc : tools/banc_auth_signup_strict.js. */
   await require('./auth_signup_strict.js').ecran(t, b, PORT);
+  /* 📥 IMPORT-ECH-01 (session-B, 06/10/2026) — un bloc continu « échauffement + travail » du même exercice canonique redevient
+     UN exercice même quand le Worker rend des noms nus (échauffement en note / en type) ; jamais de fusion sans preuve.
+     Banc : tools/banc_import_echauffement.js. */
+  await require('./import_echauffement.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 

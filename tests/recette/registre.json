@@ -30,6 +30,7 @@
     "banc:auth_new_device": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_auth_new_device.js", "controle_negatif": "python3 tools/mut_auth_new_device.py"},
     "banc:auth_cloud_closure": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_auth_cloud_closure.js", "controle_negatif": "python3 tools/mut_auth_cloud_closure.py"},
     "banc:auth_signup_strict": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_auth_signup_strict.js", "controle_negatif": "python3 tools/mut_auth_signup_strict.py"},
+    "banc:import_echauffement": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_import_echauffement.js", "controle_negatif": "python3 tools/mut_import_echauffement.py"},
     "banc:onboarding_quick": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_onboarding_quick.js", "controle_negatif": "python3 tools/mut_onboarding_quick.py"},
     "banc:debrief_demande": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_debrief_demande.js", "controle_negatif": "python3 tools/mut_debrief_demande.py"},
     "banc:fp01":             {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_fp01.js",             "controle_negatif": "python3 tools/mut_fp01.py"},
