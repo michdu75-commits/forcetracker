@@ -7414,6 +7414,7 @@ function _initOb0(){
   if(ob1)ob1.classList.remove('ob-active');
   const ob0=document.getElementById('ob-0');
   if(ob0)ob0.classList.add('ob-active');
+  window._obInstallVu=true;   // l'invitation d'installation vient d'être montrée : pas de seconde à la fin
   _obStep=0;
   for(let i=1;i<=7;i++){const d=document.getElementById('od-'+i);if(d)d.classList.remove('ob-active');}
 }
@@ -7598,11 +7599,12 @@ function obHideRestore(){
 async function obDoRestore(){
   const email=(document.getElementById('ob-email').value||'').trim();
   if(!email){toast('Entre ton adresse email','error');return;}
+  if(!_obEmailValide(email)){toast('Cet email ne semble pas valide (exemple : prenom@gmail.com)','error');return;}
   if(!S.url){toast('URL Google Sheets manquante','error');return;}
   S.email=email;persist();
   toast('Restauration en cours…','info');
   try{
-    const data=await _fetchRestoreRaw(email);
+    const data=await _fetchRestoreRaw(email,_OB_DELAI_MS);   // ONBOARDING-QUICK-01 : borné, comme COMMENCER
     if(data&&data.error==='auth'){ const hadCode=!!_authCode(); if(hadCode)_setAuthCode(''); _obShowCodePrompt(hadCode); return; }
     if(!data||data.error||data.status==='not_found'){toast(data&&data.error?data.error:'Aucun profil trouvé pour cet email. Enregistre d\'abord ton profil depuis l\'appli.','error');return;}
     _obDataRestored=true;
@@ -7613,7 +7615,7 @@ async function obDoRestore(){
     if(emailSec)emailSec.style.display='none';
     obGoTo(5);
     toast('Profil restauré ✅','success');
-  }catch(e){toast(e.message,'error');}
+  }catch(e){toast((e&&e.name==='AbortError')?'Le serveur ne répond pas — réessaie dans un instant.':e.message,'error');}
 }
 
 // Onboarding : compte protégé → demander le code perso et réessayer
@@ -7632,13 +7634,30 @@ function _obSubmitCode(){
   if(!code){toast('Entre ton code','error');return;}
   _setAuthCode(code);obDoRestore();
 }
+/* 🚪 ONBOARDING-QUICK-01 — UN EMAIL MANIFESTEMENT FAUX EST REFUSÉ AVANT TOUT APPEL. Pas un validateur RFC : un
+   « @ », un domaine avec un point, pas d'espace. L'email reste FACULTATIF (vide = accepté). */
+function _obEmailValide(e){ return /^[^\s@]+@[^\s@]+\.[^\s@.]{2,}$/.test(String(e||'').trim()); }
+const _OB_DELAI_MS=7000;   // même famille que _silentCloudRestore (5 s) : au-delà, on rend la main
+let _obEnvoi=false;        // un seul envoi, même avec un double tap ou la touche Entrée
+function _obEmailMsg(html){ const m=document.getElementById('ob-email-msg'); if(!m)return; m.innerHTML=html||''; m.style.display=html?'':'none'; }
+function obContinuerSansEmail(){
+  const f=document.getElementById('ob-email-final'); if(f)f.value='';
+  _obEmailMsg(''); finishOnboarding();
+}
 async function obCheckEmailAndFinish(){
+  if(_obEnvoi)return;
   const emailFinal=(document.getElementById('ob-email-final')||{}).value.trim();
-  if(!emailFinal){finishOnboarding();return;}
+  if(!emailFinal){_obEnvoi=true;finishOnboarding();return;}
+  if(!_obEmailValide(emailFinal)){
+    _obEmailMsg('Cet email ne semble pas valide (exemple : prenom@gmail.com). Corrige-le, ou laisse le champ vide pour continuer sans sauvegarde.');
+    return;
+  }
+  _obEmailMsg('');
   const btn=document.getElementById('ob-start-btn');
+  _obEnvoi=true;
   btn.disabled=true;btn.textContent='Vérification…';
   try{
-    const data=await _fetchRestoreRaw(emailFinal);
+    const data=await _fetchRestoreRaw(emailFinal,_OB_DELAI_MS);
     if(data&&data.status==='ok'){
       // Compte existant → restauration automatique + entrée directe
       S.email=emailFinal;persist();
@@ -7650,7 +7669,13 @@ async function obCheckEmailAndFinish(){
       finishOnboarding();
     }
   }catch(e){
-    finishOnboarding();
+    /* ⛔ AVANT : une erreur ou un réseau qui pend finissait l'inscription comme un PROFIL NEUF avec cet email — donc
+       un `saveProfile` envoyé sans savoir si le compte existait déjà (et « Vérification… » pouvait rester affiché
+       indéfiniment). Maintenant : on rend la main, on le DIT, et la personne choisit — réessayer, ou continuer
+       sans email (aucune écriture cloud à l'aveugle). */
+    _obEnvoi=false;
+    btn.disabled=false;btn.textContent='⚡ COMMENCER';
+    _obEmailMsg('Impossible de vérifier ton email pour l\'instant (réseau). <b>Réessaie</b> avec « COMMENCER », ou <span onclick="obContinuerSansEmail()" style="text-decoration:underline;cursor:pointer;">continue sans email</span> (pas de sauvegarde pour l\'instant — tu pourras l\'ajouter dans ton Profil).');
   }
 }
 
@@ -7673,21 +7698,15 @@ function finishOnboarding(){
     if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
   }
   localStorage.setItem('ft4_ob2','1');
-  try{localStorage.setItem('ft4_whatsnew_v2','1');localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
+  _wnPremiereArrivee(true);   // nouvel inscrit ou compte restauré : l'historique des nouveautés ne lui est pas jeté au visage
   document.documentElement.classList.add('ob-done');
   const ob=document.getElementById('onboarding');
   if(ob){ob.style.transition='opacity .4s';ob.style.opacity='0';setTimeout(()=>{ob.style.display='none';ob.style.opacity='';ob.style.transition='';},400);}
   renderHome();renderNutrition();renderSetup();
-  // Nouvel inscrit → guide-film de l'application automatiquement (une seule fois),
-  // puis on enchaîne le prompt d'installation à la fermeture du guide.
-  // (Pas pour une restauration de compte existant : _obDataRestored.)
-  if(!_obDataRestored && !localStorage.getItem('ft4_guide_shown') && typeof openAppGuide==='function'){
-    try{localStorage.setItem('ft4_guide_shown','1');}catch(e){}
-    window._afterAppGuide=function(){setTimeout(showInstallPrompt,800);};
-    setTimeout(function(){try{openAppGuide();}catch(e){setTimeout(showInstallPrompt,1400);}},700);
-  }else{
-    setTimeout(showInstallPrompt,1400);
-  }
+  /* 🚪 ONBOARDING-QUICK-01 — LE GUIDE (≈ 50 diapos) NE S'OUVRE PLUS TOUT SEUL : il reste dans le Menu. Un nouvel
+     arrivant qui vient de remplir l'inscription n'a pas à traverser l'historique de l'app (R24 : informer sans bloquer).
+     ⛔ Et l'invitation d'installation ne revient pas si l'écran d'accueil de l'inscription l'a déjà montrée. */
+  if(!window._obInstallVu) setTimeout(showInstallPrompt,1400);
 }
 
 // ── Confirmation d'email (soft) — bonus sécurité, ne bloque JAMAIS l'app ──
@@ -9125,6 +9144,7 @@ async function _silentCloudRestore(email){
     if(d.status!=='ok'||!d.sessions||d.sessions.length===0)return false;
     S.email=email;
     try{localStorage.setItem('ft4_email',email);localStorage.setItem('ft4_ob2','1');document.documentElement.classList.add('ob-done');}catch(e){}
+    _wnPremiereArrivee(false);   // appareil neuf d'un compte existant : pas l'historique des nouveautés
     _applyRestoreData(d);
     _saveEmailRedundant(email);
     try{document.getElementById('ov-reconnect')?.classList.remove('open');}catch(e){}
@@ -9338,8 +9358,32 @@ function closeTesterGuide(){
 }
 // ─── Annonces : pop-up perso Christophe + « Quoi de neuf » pour tous (une seule fois) ──
 function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe@famillelanglois.fr';}
+/* 🚪 ONBOARDING-QUICK-01 — LA PREMIÈRE ARRIVÉE SUR CET APPAREIL. Les nouveautés DÉJÀ publiées sont considérées vues
+   (plafond `ft4_wn_seen` au maximum actuel) et les points rouges de nouveautés aussi : un nouvel arrivant découvre
+   l'app, pas son historique. Seules les nouveautés publiées APRÈS cette arrivée s'afficheront.
+   ⚠️ Les entrées CONDITIONNELLES (`si`) ne sont PAS touchées : elles se suivent par identifiant et ne s'affichent que
+   le jour où leur condition devient vraie pour cette personne (ft-v1072).
+   `force` : à la fin de l'inscription (y compris compte restauré). Sinon, seulement si cet appareil n'a encore AUCUN
+   repère — on n'écrase jamais l'état d'un utilisateur existant. */
+function _wnPremiereArrivee(force){
+  try{
+    /* ⚠️ LE REPÈRE DE « PREMIÈRE ARRIVÉE » EST `ft4_wn_seen` ABSENT, pas `ft4_seen_ft` : l'écran d'Accueil écrit déjà
+       `ft4_seen_ft` au démarrage (il marque ses propres nouveautés), même chez un nouvel arrivant — mesuré : 15 sur 151. */
+    if(!force && localStorage.getItem('ft4_wn_seen')!==null) return;   // un appareil qui a déjà un repère : on n'y touche pas
+    localStorage.setItem('ft4_whatsnew_v2','1');
+    localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));
+    const ids=(typeof NEW_FEATURES!=='undefined'?NEW_FEATURES:[]).map(f=>f.id);
+    S.seenFeatures=Array.from(new Set([...(S.seenFeatures||[]),...ids]));
+    localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
+    try{ if(typeof _updateNewBadges==='function')_updateNewBadges(); if(typeof _updateMenuDots==='function')_updateMenuDots(); }catch(e){}
+  }catch(e){}
+}
 function checkAnnouncements(){
   try{
+    // ⛔ Rien par-dessus l'inscription : tant qu'elle n'est pas finie, aucune annonce (finishOnboarding pose le repère).
+    if(!localStorage.getItem('ft4_ob2'))return;
+    // Navigateur neuf d'un compte existant (inscription sautée grâce au cookie) : c'est aussi une première arrivée.
+    if(window._emailRestoredFromCookie){ _wnPremiereArrivee(false); }
     // Testeuses (Eline/Emma/Tanna) : leur guide passe en priorité — pas de « Quoi de neuf » par-dessus tant qu'elles ne l'ont pas vu.
     if(_isGuidedTester()&&!localStorage.getItem('ft4_tester_guide_v1'))return;
     // Christophe : son pop perso « billoute » d'abord ; une fois vu, il reçoit les annonces générales comme tout le monde.
@@ -9779,6 +9823,11 @@ function closeWhatsNew(){
 }
 // ─── Pop testeurs : différenciation des types de matériel (test, une seule fois) ──
 function checkTesterEq(){
+  /* ⛔ RETIRÉE (ONBOARDING-QUICK-01, R30). Elle annonçait « 🧪 Test testeurs — Types de matériel » à des testeurs ;
+     depuis l'ouverture à tous du 02/08/2026, `_eqTestOn()` vaut `true` pour tout le monde, donc chaque NOUVEL
+     utilisateur recevait une pop-up de test qui ne le concerne pas. La fonctionnalité est générale : il n'y a plus
+     rien à tester ni à annoncer. `showTesterEq`/`closeTesterEq` et l'overlay restent (fermeture propre, R15). */
+  return;
   try{
     if(!(typeof _eqTestOn==='function'&&_eqTestOn()))return;      // testeurs + Michel uniquement
     if(localStorage.getItem('ft4_tester_eq_v1'))return;           // déjà vu

@@ -328,8 +328,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <img src="force-tracker-logo-gray.png" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
         <div class="ob-title" id="ob-cta-title" style="font-size:38px;">C'est parti !</div>
         <div id="ob-email-section" style="width:100%;margin-top:4px;">
-          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Ton email</label>
+          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Ton email <span id="ob-email-facultatif" style="font-size:13px;color:var(--t3);">— facultatif, mais sans email, pas de sauvegarde</span></label>
           <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
+          <div id="ob-email-msg" style="display:none;margin-top:8px;font-size:14px;line-height:1.5;text-align:left;color:var(--red);"></div>
           <div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--t2);line-height:1.55;text-align:left;">
             🔒 Ton compte te permet de <strong style="color:var(--t1);">retrouver ton historique si tu changes de téléphone</strong> — et tes données restent <strong style="color:var(--t1);">privées, à toi</strong>. Ensuite, complète ton <strong style="color:var(--t1);">Profil</strong> pour que Milo te connaisse mieux.
           </div>
@@ -2003,7 +2004,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
 
 <!-- POP-UP « Quoi de neuf » — tout le monde, une seule fois -->
 <div class="overlay" id="ov-whatsnew" style="z-index:500;">
-  <div class="modal" style="max-width:400px;text-align:center;">
+  <div class="modal" style="max-width:400px;text-align:center;position:relative;">
+    <!-- ONBOARDING-QUICK-01 : « Passer » est en BAS de la modale — sur un petit iPhone (320×568), il fallait deviner qu'on
+         pouvait défiler pour le trouver. Le ✕ en haut ferme pareil (closeWhatsNew : même marqueur « vu »). -->
+    <button id="wn-close-top" onclick="closeWhatsNew()" aria-label="Passer" style="position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:50%;border:none;background:var(--bg2);color:var(--t2);font-size:18px;line-height:36px;cursor:pointer;">✕</button>
     <div style="font-size:50px;line-height:1;">✨</div>
     <div id="whatsnew-title" style="font-size:22px;font-weight:800;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
     <div id="whatsnew-sub" style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Voici les dernières nouveautés 👇</div>

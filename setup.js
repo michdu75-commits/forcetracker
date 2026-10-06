@@ -3652,12 +3652,18 @@ function _applyRestoreData(raw){
   try{updateCoachHeader();}catch(e){}
 }
 
-async function _fetchRestoreRaw(email){
-  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
+async function _fetchRestoreRaw(email, delaiMs){
+  /* ONBOARDING-QUICK-01 : `delaiMs` (facultatif) borne l'attente — sans lui, un réseau qui pend laissait l'inscription
+     sur « Vérification… » indéfiniment. Même mécanisme que _silentCloudRestore (AbortController). */
+  const ctrl=(delaiMs&&typeof AbortController!=='undefined')?new AbortController():null;
+  const tId=ctrl?setTimeout(()=>ctrl.abort(),delaiMs):null;
+  try{
+  const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl?ctrl.signal:undefined,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
   const txt=await resp.text();
   let data;
   try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON : '+txt.substring(0,120));}
   return data;
+  }finally{ if(tId)clearTimeout(tId); }
 }
 
 // Restauration : l'utilisateur saisit son code perso → on le mémorise localement et on relance.
