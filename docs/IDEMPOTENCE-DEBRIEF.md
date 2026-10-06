@@ -234,4 +234,3 @@ aucun débrief rangé, et la séance affiche « Analyse interrompue — relancer
 ⚠️ **Ce que ça ne règle pas** : la réponse de la 1ʳᵉ requête est toujours perdue avec la page (le serveur l'a
 facturée). Si la personne relance, elle paie une 2ᵉ analyse — **demandée** cette fois, plus jamais silencieuse.
 ⛔ **La question n°1 du §8 (idempotence serveur) reste à Michel** ; ce lot n'ajoute aucun stockage serveur.
-

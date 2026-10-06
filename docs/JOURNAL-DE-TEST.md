@@ -3413,4 +3413,3 @@ l'onglet visé. Repère posé (utilisateur à jour) ; aucun critère de réussit
 L'entrée « à trier » du même jour est devenue un correctif : banc `cookie_profile` (16 témoins, dont l'invariant CP-00). ❓ **Doute
 restant** : données locales sans email + cookie d'un compte EXISTANT — l'attente ne se lève pas toute seule ; quel geste proposer ?
 **Juge humain** (décision produit). État : **à trier**.
-
