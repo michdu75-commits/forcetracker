@@ -39576,6 +39576,9 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      sûr (rattrapage, Coach, file) ; cet automatisme n'existe plus. Ses invariants encore vivants (sessionId,
      double clic, A ne libère pas B, complete:false, suppression) sont repris par OD-05/09/10/12/13/14. */
   await require('./debrief_demande.js').ecran(t, b, PORT);
+  /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
+     expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
+  await require('./onboarding_quick.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 

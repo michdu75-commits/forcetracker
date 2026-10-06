@@ -26,6 +26,7 @@
     "banc:ml_a":             {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_ml_a.js",              "controle_negatif": "python3 tools/mut_ml_a.py"},
     "banc:ml_b":             {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_ml_b.js",              "controle_negatif": "python3 tools/mut_ml_b.py"},
     "banc:session_integrity": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_session_integrity.js", "controle_negatif": "python3 tools/mut_session_integrity.py"},
+    "banc:onboarding_quick": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_onboarding_quick.js", "controle_negatif": "python3 tools/mut_onboarding_quick.py"},
     "banc:debrief_demande": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_debrief_demande.js", "controle_negatif": "python3 tools/mut_debrief_demande.py"},
     "banc:fp01":             {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_fp01.js",             "controle_negatif": "python3 tools/mut_fp01.py"},
     "banc:travail_lot2":     {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_travail_lot2.js",      "controle_negatif": "python3 tools/mut_travail_lot2.py"},

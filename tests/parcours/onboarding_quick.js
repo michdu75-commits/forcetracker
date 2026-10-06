@@ -101,6 +101,7 @@ module.exports.ecran = async function (t, b, PORT) {
     await versFin(X.pg);
     const res = [];
     for (const v of ['pas un email', 'michel@gmail', 'michel.gmail.com', '@gmail.com', 'michel @gmail.com']) {
+      if (!(await obVisible(X.pg))) { res.push({ v, ob: false, msg: 'inscription déjà terminée par l\'email précédent' }); break; }
       await taper(X.pg, v); await commencer(X.pg); await X.pg.waitForTimeout(300);
       res.push({ v, ob: await obVisible(X.pg), msg: (await etat(X.pg)).msg });
     }

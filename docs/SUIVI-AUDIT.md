@@ -537,3 +537,23 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   sur le vrai modèle).
 - **Protocole jour** : tests ciblés + 5 mutations ; **D-031 complète NON lancée volontairement** — à faire en qualification nocturne.
 
+### 🚪 ONBOARDING-QUICK-01 — L'INSCRIPTION / PREMIÈRE OUVERTURE NETTOYÉE (06/10/2026, session-B — ⚠️ BRANCHE `claude/onboarding-quick-01`, NON PUBLIÉ)
+- **Corrigé** : `checkAnnouncements` ne s'ouvre plus par-dessus une inscription en cours ; la **première arrivée** (fin
+  d'inscription, compte restauré, appareil neuf via le cookie ou la restauration silencieuse) marque vues les nouveautés DÉJÀ
+  publiées et leurs points rouges (`_wnPremiereArrivee`) — les conditionnelles (`si`) restent suivies par identifiant ; une
+  nouveauté publiée ensuite s'affiche (OBQ-04). Guide de 50 diapos plus ouvert automatiquement (reste dans le Menu). Pop-up
+  « Test testeurs — Types de matériel » retirée (R30 : `_eqTestOn()` vaut `true` pour tous depuis le 02/08). Email : facultatif
+  et dit « sans email, pas de sauvegarde » ; format manifestement faux refusé avant tout appel. Vérification bornée à 7 s
+  (`_fetchRestoreRaw(email, délai)`, aussi pour « Restaurer » de l'inscription).
+- **⭐ Trouvé en route, plus grave que le blocage** : sur erreur réseau, l'ancien code terminait l'inscription comme un PROFIL NEUF
+  avec cet email → `saveProfile` envoyé sans savoir si le compte existait. Désormais : message clair, « Réessayer » ou « continuer
+  sans email » — aucune écriture cloud à l'aveugle (OBQ-15b).
+- **Aussi** : ✕ en haut du « Quoi de neuf » (visible à 320×568) ; plus de seconde invitation d'installation quand l'écran
+  d'accueil de l'inscription l'a déjà montrée ; un seul envoi même avec double tap / Entrée.
+- **Hors lot, consignés** : cookie `ft_email` + profil cloud introuvable → l'inscription est sautée (dette, lot séparé : le
+  correctif touche le démarrage) · nouveau Guide de premier jour · instabilité intermittente d'OD-11 (banc débrief : 1 rouge sur
+  3 exécutions, « carte introuvable » — même famille que les courses de rendu de Progrès corrigées le 06/10 ; pré-existante,
+  hors code de l'app).
+- **Contrôles** : banc `tools/banc_onboarding_quick.js` **24/0** · 5 mutations **5/5** · bancs voisins verts · D-031 complète
+  NON lancée (règle jour/nuit) — le banc est branché dans la passe complète pour la qualification nocturne.
+

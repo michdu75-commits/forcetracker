@@ -3393,3 +3393,14 @@ Seul un débrief demandé et réussi écrit dans la mémoire de débrief (object
 jamais analysée n'y laisse rien. ❓ **Doute** : la continuité « l'objectif de la fois d'avant » tient-elle encore si la personne
 n'analyse qu'une séance sur trois ? **Juge humain** (usage réel). État : **à trier**.
 
+### 🟡 OD-11 ROUGIT PARFOIS : « CARTE INTROUVABLE » DANS PROGRÈS (06/10/2026 — banc débrief, hors code de l'app)
+1 rouge sur 3 exécutions du banc `debrief_demande` (OD-11, carte de la séance absente après 4 s d'attente), puis 2 verts. Même
+famille que les courses de rendu de Progrès déjà corrigées dans les témoins le 06/10. ❓ **Doute** : une pop-up de démarrage
+(« Quoi de neuf », la fixture n'a pas de `ft4_wn_seen`) recouvre-t-elle parfois l'onglet au moment du clic ? Vérifiable par du
+code : ✅. État : **à trier** (qualification nocturne).
+
+### 🟡 COOKIE `ft_email` + PROFIL CLOUD INTROUVABLE : L'INSCRIPTION EST SAUTÉE (06/10/2026 — ONBOARDING-QUICK-01, hors lot)
+`index.html` pose `ft4_ob2=1` dès qu'un cookie `ft_email` existe sur un stockage vide ; si la restauration ne trouve rien, la
+personne arrive sans profil et sans être passée par l'inscription. ❓ **Doute** : combien de vrais cas (navigateur purgé, cookie
+gardé) ? Vérifiable par du code : ✅. État : **à trier** (lot séparé).
+
