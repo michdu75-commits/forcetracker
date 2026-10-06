@@ -592,6 +592,6 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Hors lot, inchangé** : `_MIG_FERME_`, Code.js, Worker, anti-brute-force, longueur du code, appareil partagé, Lot 2 (textes et
   rappels). Un compte sans code reste écrasable par quelqu'un qui connaît l'email et écrit **hors de l'app** : seul `_MIG_FERME_` le
   fermera (décision de Michel).
-- **Contrôles** : banc `tools/banc_auth_new_device.js` **16/0** (AN-01 → AN-10 + 01b, 02b, 03a, 03b, 09b, 10b) · 3 mutations **MUT_AN** ·
+- **Contrôles** : banc `tools/banc_auth_new_device.js` **16/0** (AN-01 → AN-10 + 01b, 02b, 03a, 03b, 09b, 10b) · 3 mutations **3/3** (M1 needsCode → compte neuf · M2 jeton de `verifyConfirmCode` jeté · M3 code inexistant redemandé) ·
   bancs voisins **VOISINS_AN** · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
 
