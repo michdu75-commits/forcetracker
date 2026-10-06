@@ -16,9 +16,11 @@ MUT = [
     ('M1 needsCode redevient traite comme un compte neuf (« COMMENCER » termine l\'inscription)',
      [(AP, "    }else if(data&&data.error==='auth'){\n      /* \U0001f510 AUTH-NEW-DEVICE-01", "    }else if(data&&data.error==='auth'){ finishOnboarding(); return;\n      /* \U0001f510 AUTH-NEW-DEVICE-01")], 'GARDE'),
     ('M2 le jeton rendu par verifyConfirmCode est de nouveau jete',
-     [(AP, "if(d&&d.status==='ok'){ if(d.token)_setFtToken(d.token); S.emailVerified=true;", "if(d&&d.status==='ok'){ S.emailVerified=true;")], 'GARDE'),
+     # Ancre mise a jour (qualification ft-v1251) : AUTH-CLOUD-CLOSURE-01 range le jeton avec le compte DEMANDE.
+     [(AP, "if(d&&d.status==='ok'){ if(d.token&&S.email===_compteVerifie)_setFtToken(d.token); S.emailVerified=true;", "if(d&&d.status==='ok'){ S.emailVerified=true;")], 'GARDE'),
     ('M3 restauration sans code : on redemande un code inexistant au lieu de proposer la securisation',
-     [(AP, "  if(sansCode){ el.innerHTML=_obTexteSansCode(); return; }\n", ""),
+     # Ancre mise a jour (qualification ft-v1251) : AUTH-SIGNUP-STRICT-01 note d'ou vient la protection.
+     [(AP, "  if(sansCode){ window._obProtectionDepuis='restaurer'; el.innerHTML=_obTexteSansCode(); return; }\n", ""),
       (SE, "      if(data.needsCode&&st){", "      if(false&&data.needsCode&&st){")], 'GARDE'),
 ]
 
