@@ -516,3 +516,24 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   M-OD8/11/12 rejouées après le renfort de OD-12/13 et l'ajout de OD-17b) · bancs voisins verts (fil 39/0, SESSION-INTEGRITY 93/0,
   provenance 24/0, séance C3 35/0, ML-B 60/0) · passe D-031 sur `accfa880` : **5 861 ✅ / 0 ❌**, 4 conditions (② déduite).
 
+### 🎯 DEBRIEF-ON-DEMAND-01 — CORRECTIF CIBLÉ POST CONTRE-AUDIT (06/10/2026, session-B — ⚠️ BRANCHE, NON PUBLIÉ)
+- **F1 (le plus grave)** : une séance ancienne analysée depuis Progrès partait SANS ses données (Milo ne voit le détail que des 5
+  séances les plus récentes) alors que la consigne disait « tu les as ». **Corrigé** : `buildCoachContext(instr,{seanceCiblee})`
+  ajoute un bloc « SÉANCE À ANALYSER » écrit par le MÊME formateur que « DERNIÈRES SÉANCES » (nommé `_ligneSeance`), lu depuis la
+  séance par son identifiant, jamais recopié. Sans l'option, le prompt est **identique au caractère près** (mesuré sur deux copies
+  isolées : seule la ligne d'empreinte des fichiers change). Depuis Progrès, la consigne ne parle plus de « douleur du jour ».
+- **C1** : la fenêtre « Débrief Milo » est partagée — une réponse tardive de A s'affichait sous C. **Corrigé** : la zone d'affichage
+  porte l'identifiant de la séance montrée (`data-dbf-sid`) ; une réponse d'une autre séance est RANGÉE mais pas écrite (`_dbfSlotEst`).
+- **Témoins restaurés** : verrou sans minuteur (T1), cardio seul (T2), ancien format `ft4_debrief_encours` (T3), deux analyses en vol
+  + rechargement (T4), suppression pendant l'analyse **mesurée** (T5 — limite connue : orphelin rangé), `complete:false` + vrai texte
+  (CF-01), ancien reçu d'échec (CF-02), OD-16b réparé (il cherchait un exercice déjà présent dans la fixture).
+- **Textes** : `capacites-ia.js` (`milo.debrief` devient `manuel`, plus de « rattrapage 3 s ») + `docs/IA-FREE-PREMIUM.md` régénéré ;
+  avantage Premium réécrit (« à ta demande ») — ⚠️ **la politique Premium du débrief (PREMIUM décidé le 19/09, code FREE) reste une
+  décision séparée, non ouverte** ; aide Progrès (« pas encore analysée » était faux pour les débriefs d'avant le 04/10) ; titre de
+  fin de séance « Ta séance » pour un cardio seul. En plus : la carte de Progrès dit « Milo analyse… » dès le clic.
+- **Hors lot, consignés** : orphelin si suppression pendant l'analyse (T5) · `pagehide` en arrière-plan iOS non prouvé ·
+  idempotence serveur · cloud des débriefs · Premium · N-G1 · `tools/dump_prompt.js` écrit dans un chemin en dur
+  (`docs/PROMPT-MILO-REEL.txt` à régénérer au lot publication) · banc réel de Milo non lancé (R34 : le nouveau bloc n'est pas mesuré
+  sur le vrai modèle).
+- **Protocole jour** : tests ciblés + 5 mutations ; **D-031 complète NON lancée volontairement** — à faire en qualification nocturne.
+
