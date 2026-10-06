@@ -586,8 +586,8 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   « introuvable » — désormais une absence EXPLICITE, le serveur a vérifié le code → inscription neuve terminée seule, profil de
   bienvenue envoyé AVEC le code. ⛔ Rien ne change avant la preuve : needsCode / erreur / réseau ne créent jamais de compte.
 - **Contrôles** : banc `tools/banc_auth_signup_strict.js` **8/0** (vrai Code.js en lecture stricte ; rouge sur `2e4913f4` : AS-01/02/03) ·
-  2 mutations **MUT_AS** · AN 16/0 (3 témoins réécrits sur le nouveau texte, 1 appui conditionnel : l'inscription se termine seule) ·
-  voisins **VOISINS_AS** · D-031 NON lancée.
+  2 mutations **2/2** (M1 faux message + blocage → AS-01/02 · M2 needsCode = compte neuf → AS-01/05) · AN 16/0 (3 témoins réécrits sur le nouveau texte, 1 appui conditionnel : l'inscription se termine seule) ·
+  voisins verts (AUTH-CLOUD-CLOSURE 8/0 dont D1 et T-JETON · COOKIE-PROFILE 16/0 · onboarding 25/0 · foodlog_restore 35/0 · profil_atypique 37/0 · registre IA 40/0) · `check_regles` vert · D-031 NON lancée.
 
 ### 🔐 AUTH-CLOUD-CLOSURE-01 — D1 + T-JETON (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-cloud-closure-01`, NON PUBLIÉ) — P1 intégrité
 - **Origine** : contre-vérification indépendante de `6db0ba5c` (AUTH-NEW-DEVICE-01 confirmé, mais deux défauts bloquants).
