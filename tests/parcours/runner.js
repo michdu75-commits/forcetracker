@@ -283,6 +283,14 @@ const F=await p.evaluate(async()=>{
   const open=id=>{const o=document.getElementById(id);return !!(o&&o.classList.contains('open'));};
   // R15 : les deux pop-ups DOIVENT être dans la table des fermetures propres
   out.closers=!!(_OVERLAY_CLOSERS['ov-pesee-nav-c']&&_OVERLAY_CLOSERS['ov-pesee-nav-e']);
+  /* ⚠️ TÉMOIN MIS À JOUR (qualification ft-v1251, R30) — ONBOARDING-QUICK-01 a posé « rien par-dessus l'inscription » :
+     `checkAnnouncements` se tait tant que `ft4_ob2` manque. La page de ce runner ne posait jamais ce repère (état
+     irréaliste pour Christophe et Eline, inscrits depuis juillet) : leurs annonces ne pouvaient plus s'ouvrir, et le
+     bloc était rouge sans qu'aucun produit ne soit cassé. On pose le repère le temps du bloc, puis on rend l'état
+     d'avant : la garantie testée reste la même (chacun voit SON annonce, une seule fois). Le silence pendant
+     l'inscription est gardé par le banc OBQ. */
+  const _ob2Avant=localStorage.getItem('ft4_ob2');
+  localStorage.setItem('ft4_ob2','1');
   // un utilisateur LAMBDA ne voit RIEN
   S.email='quelquun@example.com';localStorage.setItem('ft4_wn_seen','999');
   checkAnnouncements();await wait(1300);
@@ -304,6 +312,7 @@ const F=await p.evaluate(async()=>{
   closePeseeNavE();
   out.elineUneFois=localStorage.getItem('ft4_pesee_nav_e_v1')==='1';
   S.email='';
+  if(_ob2Avant===null)localStorage.removeItem('ft4_ob2'); else localStorage.setItem('ft4_ob2',_ob2Avant);
   return out;
 });
 t('R15 : les 2 pop-ups sont dans la table des fermetures propres', F.closers);
@@ -656,7 +665,10 @@ const G=await p.evaluate(()=>{
   if(typeof showPremiumWall==='function'){window._premiumPending=false;_renderPremiumPerks();}
   out.nbWall=document.getElementById('coach-wall-perks').childElementCount;
   const txt=document.getElementById('premium-info-perks').textContent;
-  out.recap=/récap/i.test(txt); out.etude=/Étude du corps/i.test(txt);
+  /* ⚠️ TÉMOIN MIS À JOUR (qualification ft-v1251, R30) — D-052 : le débrief se DEMANDE. L'avantage « Le récap de
+     chaque séance » est devenu « L'avis de Milo sur tes séances » (DEBRIEF-ON-DEMAND-01, be96455f) : l'ancien libellé
+     serait FAUX aujourd'hui. La garantie reste celle que Michel avait signalée : l'avantage est dans la liste. */
+  out.recap=/avis de Milo sur tes séances/i.test(txt)&&!/récap de chaque séance/i.test(txt); out.etude=/Étude du corps/i.test(txt);
   out.nutri=/Nutrition IA/i.test(txt); out.journal=/journal de séances/i.test(txt);
   closePremiumInfo();
   out.ferme=!ov.classList.contains('open');
