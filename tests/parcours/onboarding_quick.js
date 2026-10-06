@@ -156,12 +156,18 @@ module.exports.ecran = async function (t, b, PORT) {
     const max = await Y0.pg.evaluate(() => WHATS_NEW_MAX); await Y0.cx.close();
     const Y = await ouvrir({ stock: { ft4_ob2: '1', ft4_guide_shown: '1', ft4_tester_eq_v1: '1', ft4_name: 'Ancien', ft4_wn_seen: String(max - 1) }, attente: 2800 });
     const wnY = await ouvert(Y.pg, 'ov-whatsnew'), seenFt = await Y.pg.evaluate(() => ({ n: JSON.parse(localStorage.getItem('ft4_seen_ft') || '[]').length, tot: NEW_FEATURES.length }));
+    /* PACKAGE ft-v1251 (§6) : l'utilisateur à jour jusqu'à la version d'avant voit EXACTEMENT la dernière entrée, et le bouton
+       final reste « C'est parti 💪 » (décision produit). Les conditionnelles ne s'invitent pas (aucune n'est vraie ici). */
+    const pk = await Y.pg.evaluate(() => ({ items: (_wnItems || []).map(f => f.v), dernier: WHATS_NEW_MAX, bouton: (document.getElementById('wn-next') || {}).textContent || '',
+      titre: (document.getElementById('ov-whatsnew') || {}).textContent.indexOf((WHATS_NEW.find(f => f.v === WHATS_NEW_MAX) || {}).t || '§§') >= 0 }));
     await Y.cx.close();
     const Z = await ouvrir({ stock: { ft4_ob2: '1', ft4_guide_shown: '1', ft4_tester_eq_v1: '1', ft4_name: 'Ancien', ft4_wn_seen: String(max) }, attente: 2800 });
     const wnZ = await ouvert(Z.pg, 'ov-whatsnew');
     await Z.cx.close();
     t('OBQ-20 ⛔⛔ utilisateur existant : une nouveauté qu\'il n\'a pas vue s\'affiche ENCORE ; à jour, rien ; et ses points rouges ne sont pas effacés',
       wnY && !wnZ && seenFt.n < seenFt.tot, js({ wnY, wnZ, seenFt }));
+    t('OBQ-23 ⛔ package : un utilisateur à jour jusqu\'à la version précédente voit EXACTEMENT la nouvelle entrée, bouton final « C\'est parti 💪 »',
+      wnY && pk.items.length === 1 && pk.items[0] === pk.dernier && pk.titre && /C'est parti 💪/.test(pk.bouton), js(pk));
     const W = await ouvrir({ stock: { ft4_ob2: '1', ft4_guide_shown: '1', ft4_name: 'Ancien', ft4_wn_seen: String(max) }, attente: 3200 });
     t('OBQ-08b ⛔ utilisateur existant qui n\'avait jamais fermé la pop-up testeurs : elle ne s\'ouvre plus non plus', !(await ouvert(W.pg, 'ov-tester-eq')), '');
     await W.cx.close();
