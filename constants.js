@@ -276,9 +276,12 @@ const FT_TOKEN_KEY='ft4_devtoken';
    séances de B atterrissaient dans A, et Milo / le miroir prenaient l'identité A.
    ⭐ LA RÈGLE VIT ICI, CHEZ LE SEUL PROPRIÉTAIRE DU JETON (R2) — donc elle couvre TOUS les envois (synchro, inscription,
    Worker via l'injecteur ci-dessous) sans toucher à un seul appelant : le jeton est rangé AVEC son compte, et il n'est
-   rendu que si le compte courant est le même. Sinon il est effacé sur place, et `_ftBootstrapJeton` en redemande un
-   pour le bon compte (pas de redémarrage). ⚠️ Un jeton posé AVANT ce correctif n'a pas de compte : il est rattaché au
-   compte courant à sa 1ʳᵉ lecture (on ne peut pas savoir mieux), puis suit la même règle. */
+   RENDU que si le compte courant est le même. ⛔⛔ MAIS IL N'EST JAMAIS EFFACÉ (MILO-AUTH1, B-CCCLXXV ⑥ — « une panne ne
+   coupe jamais le lien ») : qualification nocturne du 06/10, la 1ʳᵉ version l'effaçait dès que le compte différait —
+   mesuré, A → B → A perdait le jeton de A, et un email vide un instant aurait coupé le lien. Il reste donc rangé, inutilisé
+   pour un autre compte, et n'est REMPLACÉ que lorsque le bon compte obtient le sien (`_ftBootstrapJeton`, sans
+   redémarrage). ⚠️ Un jeton posé AVANT ce correctif n'a pas de compte : il est rattaché au compte courant à sa 1ʳᵉ
+   lecture (on ne peut pas savoir mieux), puis suit la même règle. */
 const FT_TOKEN_COMPTE_KEY='ft4_devtoken_compte';
 function _ftCompteCourant(){
   try{ const e=(typeof S!=='undefined'&&S)?S.email:localStorage.getItem('ft4_email'); return String(e||'').trim().toLowerCase(); }catch(e){ return ''; }
@@ -288,16 +291,11 @@ function _ftToken(){
     const t=localStorage.getItem(FT_TOKEN_KEY)||''; if(!t) return '';
     const cur=_ftCompteCourant(), own=localStorage.getItem(FT_TOKEN_COMPTE_KEY);
     if(own===null){ if(cur) localStorage.setItem(FT_TOKEN_COMPTE_KEY,cur); return t; }   // jeton d'avant le correctif
-    if(own!==cur){ localStorage.removeItem(FT_TOKEN_KEY); localStorage.removeItem(FT_TOKEN_COMPTE_KEY); return ''; }   // autre compte : jamais envoyé
-    return t;
+    return own===cur ? t : '';   // jeton d'un AUTRE compte : jamais envoyé — et jamais effacé (MILO-AUTH1)
   }catch(e){ return ''; }
 }
-function _setFtToken(t,compte){
-  try{
-    if(t){ localStorage.setItem(FT_TOKEN_KEY,String(t)); localStorage.setItem(FT_TOKEN_COMPTE_KEY,String(compte!=null?compte:_ftCompteCourant()).trim().toLowerCase()); }
-    else { localStorage.removeItem(FT_TOKEN_KEY); localStorage.removeItem(FT_TOKEN_COMPTE_KEY); }
-  }catch(e){}
-}
+// Le jeton est rangé avec le compte COURANT : les appelants n'appellent qu'après avoir vérifié que le compte n'a pas changé.
+function _setFtToken(t){ try{ if(t){ localStorage.setItem(FT_TOKEN_KEY,String(t)); localStorage.setItem(FT_TOKEN_COMPTE_KEY,_ftCompteCourant()); } else { localStorage.removeItem(FT_TOKEN_KEY); localStorage.removeItem(FT_TOKEN_COMPTE_KEY); } }catch(e){} }
 
 (function _ftPoserInjecteurJeton(){
   try{

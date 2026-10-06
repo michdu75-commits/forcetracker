@@ -7785,7 +7785,7 @@ function verifyEmailCode(){
       if(btn){btn.disabled=false;btn.textContent='Vérifier';}
       /* 🔐 AUTH-NEW-DEVICE-01 — le serveur rend un jeton d'appareil ici (S1, `handleVerifyConfirmCode_`) : c'est la
          2ᵉ preuve prévue par le dossier S1 (§3). Le client le JETAIT — un seul propriétaire, `_setFtToken`. */
-      if(d&&d.status==='ok'){ if(d.token)_setFtToken(d.token,_compteVerifie); S.emailVerified=true; persist(); closeEmailConfirm(); _renderEmailVerifyCard(); toast('✅ Email confirmé, merci !','success'); }
+      if(d&&d.status==='ok'){ if(d.token&&S.email===_compteVerifie)_setFtToken(d.token); S.emailVerified=true; persist(); closeEmailConfirm(); _renderEmailVerifyCard(); toast('✅ Email confirmé, merci !','success'); }
       else if(d&&d.status==='expired'){ toast('Code expiré — renvoie-en un nouveau','error'); }
       else if(d&&d.status==='toomany'){ toast('Trop d\'essais — renvoie un nouveau code','error'); }
       else if(d&&d.status==='nocode'){ toast('Aucun code en attente — clique « Renvoyer »','error'); }
@@ -10797,13 +10797,13 @@ async function _ftBootstrapJeton(){
   try{
     if(_ftToken()) return;                       // déjà un jeton sur cet appareil
     if(!S.url||!S.email||!_authCode()) return;   // aucune preuve disponible : on ne demande rien
-    const _compte=S.email;   // AUTH-CLOUD-CLOSURE-01 : le jeton est rangé avec le compte DEMANDÉ, pas celui du moment de la réponse
+    const _compte=S.email;   // AUTH-CLOUD-CLOSURE-01 : le jeton n'est rangé que si le compte est encore celui de la DEMANDE
     const r=await fetch(S.url,{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'issueTokenByCode',email:_compte,authCode:_authCode(),
                            appareil:(navigator.platform||'appareil').slice(0,24)})});
     const d=await r.json();
-    if(d&&d.status==='ok'&&d.token) _setFtToken(d.token,_compte);
+    if(d&&d.status==='ok'&&d.token&&S.email===_compte) _setFtToken(d.token);   // compte changé pendant la requête → jeton ignoré (il n'est pas le sien)
   }catch(e){ /* silencieux : l'absence de jeton se verra à l'usage, pas au démarrage */ }
 }
 

@@ -163,4 +163,23 @@ module.exports.ecran = async function (t, b, PORT) {
       js({ e2, envois: X.st.envois }));
     await X.cx.close();
   }
+  /* ═════════ AC-09 — qualification nocturne du 06/10 : le jeton d'un AUTRE compte n'est jamais envoyé, MAIS jamais effacé ═════════
+     ⛔ Trouvé par B-CCCLXXV ⑥ (MILO-AUTH1, « une panne ne coupe jamais le lien ») : la 1ʳᵉ version de T-JETON EFFAÇAIT le jeton
+     dès que le compte courant différait — mesuré, A → B → A perdait le jeton de A, et un email vide un instant l'aurait coupé. */
+  {
+    const TOK = 'f'.repeat(64);
+    const X = await ouvrir({ comptes: { [A]: { nom: 'Alice', n: 5, base: 100, code: 'aaaa' } },
+      stock: () => ({ ft4_ob2: '1', ft4_email: A, ft4_name: 'Alice', ft4_devtoken: TOK, ft4_devtoken_compte: A, ft4_guide_shown: '1', ft4_wn_seen: '999' }) });
+    const r = await X.pg.evaluate(([a, b2]) => {
+      const o = {};
+      S.email = b2; o.pourB = _ftToken(); o.stockB = localStorage.getItem('ft4_devtoken') || '';
+      S.email = ''; o.vide = _ftToken(); o.stockVide = localStorage.getItem('ft4_devtoken') || '';
+      S.email = a; o.retourA = _ftToken(); o.compte = localStorage.getItem('ft4_devtoken_compte') || '';
+      return o;
+    }, [A, B]);
+    t('AC-09 ⛔⛔ jeton de A : jamais ENVOYÉ pour B ni pour un email vide, mais jamais EFFACÉ — au retour sur A, le lien de A est intact (MILO-AUTH1)',
+      r.pourB === '' && r.vide === '' && r.stockB === TOK && r.stockVide === TOK && r.retourA === TOK && r.compte === A,
+      js({ pourB: r.pourB ? 'envoyé' : '-', vide: r.vide ? 'envoyé' : '-', stockB: r.stockB === TOK, stockVide: r.stockVide === TOK, retourA: r.retourA === TOK, compte: r.compte }));
+    await X.cx.close();
+  }
 };

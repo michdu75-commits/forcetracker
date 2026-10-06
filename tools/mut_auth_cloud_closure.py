@@ -17,7 +17,9 @@ MUT = [
     ('M1 D1 reintroduit : « continuer sans email » vide S.email mais laisse cookie + IndexedDB',
      [(AP, "if(!emailFinal.trim()){S.email='';_oublierEmailLocal();} _restauResolue(); }", "if(!emailFinal.trim()){S.email='';} _restauResolue(); }")], 'GARDE'),
     ('M2 le jeton de A survit au passage a B (le compte du jeton n\'est plus verifie)',
-     [(CO, "    if(own!==cur){ localStorage.removeItem(FT_TOKEN_KEY); localStorage.removeItem(FT_TOKEN_COMPTE_KEY); return ''; }", "    if(false&&own!==cur){ localStorage.removeItem(FT_TOKEN_KEY); localStorage.removeItem(FT_TOKEN_COMPTE_KEY); return ''; }")], 'GARDE'),
+     [(CO, "    return own===cur ? t : '';   // jeton d'un AUTRE compte", "    return t;   // jeton d'un AUTRE compte")], 'GARDE'),
+    ('M3 (nuit du 06/10) le jeton d\'un autre compte est EFFACE au lieu d\'etre seulement tenu a l\'ecart (lien de A perdu, MILO-AUTH1)',
+     [(CO, "    return own===cur ? t : '';   // jeton d'un AUTRE compte", "    if(own!==cur){ localStorage.removeItem(FT_TOKEN_KEY); localStorage.removeItem(FT_TOKEN_COMPTE_KEY); return ''; } return t;   // jeton d'un AUTRE compte")], 'GARDE'),
 ]
 
 def banc(arbre):
