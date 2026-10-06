@@ -599,7 +599,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   n'a jamais fonctionné (le réparer activerait un chemin de restauration jamais éprouvé).
   ③ `ft4_authcode` n'est pas lié à un compte non plus (un code de A envoyé pour B est refusé par le serveur : non destructif).
 - **Contrôles** : banc `tools/banc_auth_cloud_closure.js` **8/0** (vrai Code.js local ; rouge sur `6db0ba5c` : AC-01/02/03/04/06) ·
-  2 mutations **MUT_AC** · voisins **VOISINS_AC** · D-031 NON lancée.
+  2 mutations **2/2** (M1 D1 réintroduit → AC-01 · M2 jeton de A gardé → AC-03) · voisins verts (AUTH-NEW-DEVICE 16/0 · COOKIE-PROFILE 16/0 · onboarding 25/0 · foodlog_restore 35/0 · profil_atypique 37/0 · SESSION-INTEGRITY 93/0 · registre IA 40/0) · `check_regles` vert · D-031 NON lancée.
 
 ### 🔐 AUTH-NEW-DEVICE-01 — `needsCode` N'EST JAMAIS « COMPTE INTROUVABLE » (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-new-device-01`, NON PUBLIÉ) — P1 intégrité
 - **Origine** : audit « sécurisation des comptes existants » (06/10, lecture seule). Sur un NOUVEL appareil, un compte existant
