@@ -77,7 +77,9 @@ module.exports.ecran = async function (t, b, PORT) {
     await cx.route(/workers\.dev/, async r => { let c = {}; try { c = r.request().postDataJSON() || {}; } catch (e) {}
       if (c.action === 'coach') {
         const m = String(c.message || '');
-        st.req.push({ t: Date.now() - st.T0, vol: volDe(m), auto: /\[DÉBRIEF AUTO\]/.test(m), fin: /Je viens de terminer/.test(m) });
+        const cx0 = String(c.context || ''), cb = /SÉANCE À ANALYSER \(identifiant ([^ ]+) [^\n]*\n([^\n]*)/.exec(cx0);
+        st.req.push({ t: Date.now() - st.T0, vol: volDe(m), auto: /\[DÉBRIEF AUTO\]/.test(m), fin: /Je viens de terminer/.test(m),
+          cibleId: cb ? cb[1] : null, cible: cb ? cb[2] : '', msg: m, nbBlocs: (cx0.match(/SÉANCE À ANALYSER/g) || []).length });
         const x = st.file.length ? st.file.shift() : { rep: OK('DEBRIEF-OD par défaut.') };
         if (x.delai) await new Promise(z => setTimeout(z, x.delai));
         try {
@@ -132,6 +134,20 @@ module.exports.ecran = async function (t, b, PORT) {
     while (Date.now() - t0 < (ms || 9000)) { txt = await pg.evaluate(s => (document.querySelector(s) || {}).textContent || '', sel); if (re.test(txt)) break; await pg.waitForTimeout(150); }
     return txt.replace(/\s+/g, ' '); };
 
+  const { jourParis: jP } = require('../_jour.js');
+  const ser = (kg, reps, x) => Object.assign({ kg, reps, type: 'N', done: true, rm1: 0 }, x || {});
+  const RECENTES = () => [1, 2, 3, 4, 5, 6].map(k => ({ id: 2000 + k, ts: 2000 + k, date: jP(-k), volume: 120,
+    exs: [{ name: 'Curl Biceps Haltères', sets: [ser(12, 10)] }] }));
+  const ANC = () => ({ id: 3081, ts: 3081, date: jP(-81), volume: 630,
+    exs: [{ name: 'Développé Militaire', sets: [ser(52.5, 6, { rir: 2 }), ser(52.5, 6, { note: 'barre posée à la 5e' })] }] });
+  const sansDecor = x => String(x || '');
+  const ouvrirCarte = (X, id) => clic(X.pg, '#sess-list .sess-card[onclick*="' + id + '"] .sess-dbf-go', 'ov-debrief-milo');
+  const attendreReq = async (X, n, ms) => { const t0 = Date.now(); while (X.st.req.length < n && Date.now() - t0 < (ms || 6000)) await X.pg.waitForTimeout(100); };
+  const attendreMag = async (X, id, ms) => { const t0 = Date.now(); while (Date.now() - t0 < (ms || 12000)) {
+      const e = await etat(X.pg); if (e.mag.indexOf(String(id)) >= 0) return true; await X.pg.waitForTimeout(150); } return false; };
+  const versCarte = async (X, id) => { await versProgres(X); const t0 = Date.now();
+    while (Date.now() - t0 < 4000) { if (await boutons(X, id)) return true; await X.pg.waitForTimeout(200); } return false; };
+
   /* ═════════ OD-01 / OD-02 / OD-03 / OD-16 — sans clic, RIEN ne part ═════════ */
   {
     const X = await ouvrir({ wkt: WKT([YATES()]) });
@@ -149,7 +165,9 @@ module.exports.ecran = async function (t, b, PORT) {
     const b0 = await etat(X.pg), btn = await boutons(X, b0.sid);
     t('OD-16 la séance non analysée est là, entière : historique, carte « ✨ Analyser avec Milo » seule, aucun débrief rangé, aucune mémoire de débrief',
       b0.sid && b0.mag.length === 0 && b0.log.indexOf(b0.sid) < 0 && btn && btn.length === 1 && /Analyser avec Milo/.test(btn[0]) && b0.filAuto === 0, js({ btn, b0 }));
-    const ctx = await X.pg.evaluate(() => { try { return /Rowing Yates/.test(buildCoachContext('test')); } catch (e) { return 'ERR ' + e.message; } });
+    /* 🔁 Contre-audit : « Rowing Yates » existait DÉJÀ dans l'historique de la fixture (séance de J-7) — le témoin restait
+       vert même si la séance du jour manquait au contexte. On cherche la ligne de CETTE séance : 3 séries et 1 200 kg. */
+    const ctx = await X.pg.evaluate(() => { try { return /S3 40×10[^\n]*— 1200kg vol total/.test(buildCoachContext('test')); } catch (e) { return 'ERR ' + e.message; } });
     t('OD-16b … et Milo la voit toujours dans son contexte (la séance reste une vérité de Force Tracker)', ctx === true, String(ctx));
     t('OD-0x aucune erreur de page, 0 appel réel', X.errs.length === 0 && X.st.reels === 0, X.errs.join(' | '));
     await X.cx.close();
@@ -259,7 +277,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const S0 = { id: Date.now() - 3600e3, ts: Date.now() - 3600e3, date: J, volume: 1200, exs: [YATES()] }; const sid = String(S0.id);
     const X = await ouvrir({ sessions: HIST().concat([S0]), reponses: [{ delai: 100, rep: OK('DEBRIEF-OD REPAYÉ.') }],
       stock: { ft4_debriefs: JSON.stringify({ v: 1, seances: { [sid]: { texte: 'DEBRIEF-OD déjà rangé.', ts: 1, src: 'fin' } } }) } });
-    await jusqua(X, 4000); await coach(X, 1200); await versProgres(X);
+    await jusqua(X, 4000); await coach(X, 1200); await versCarte(X, sid);   // la liste se dessine : on attend la carte (course vue le 06/10)
     const btn = await boutons(X, sid);
     await clic(X.pg, '#sess-list .sess-dbf-btn', 'ov-debrief-milo');
     const vu = await X.pg.evaluate(() => document.getElementById('dbf-milo-body').textContent);
@@ -353,4 +371,188 @@ module.exports.ecran = async function (t, b, PORT) {
       X.st.req.length === 0 && fin.anciennes.length === 0 && fin.mag.indexOf(sid) < 0 && btn && btn.length === 1 && /Analyser avec Milo/.test(btn[0]), js({ btn, dbg, fin }) + ' ' + resume(X));
     await X.cx.close();
   }
+  /* ═════════════════════════════════════════════════════════════════════════════════════════════════
+     CORRECTIF POST CONTRE-AUDIT (06/10/2026) — F1 · C1 · témoins perdus · complete:false
+     ═════════════════════════════════════════════════════════════════════════════════════════════════ */
+  /* ═════════ F1 — Milo reçoit LA séance réelle, lue par son identifiant ═════════ */
+  {
+    const A = ANC();
+    const X = await ouvrir({ sessions: RECENTES().concat([A]), reponses: [{ delai: 200, rep: OK('DEBRIEF-F1 militaire.' + MEM) }] });
+    await versCarte(X, A.id); const go = await ouvrirCarte(X, A.id); await attendreReq(X, 1);
+    const r = X.st.req[0] || {};
+    const dl = await X.pg.evaluate(d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }); } catch (e) { return ''; } }, A.date);
+    t('F1-02 ⛔⛔ séance de 81 jours (hors des 5 récentes) → son bloc EXACT part : identifiant, exercice, séries, charges, RIR, note, volume',
+      go && r.cibleId === '3081' && /Développé Militaire/.test(r.cible) && /S1 52\.5×6 RIR2/.test(r.cible) && /S2 52\.5×6\[💬 barre posée/.test(r.cible)
+      && /630kg vol total/.test(r.cible) && r.nbBlocs === 1, js({ cible: r.cible, id: r.cibleId }));
+    t('F1-02b … avec sa date RÉELLE (81 jours), pas celle d\'aujourd\'hui', !!dl && r.cible.toLowerCase().indexOf(dl.split(' ')[0]) >= 0 && r.cible.indexOf(String(new Date().getDate()) + ' ') !== 0, dl + ' | ' + r.cible.slice(0, 60));
+    t('F1-05 ⛔ l\'historique récent (6 séances de curl) ne remplace pas la séance ciblée : le bloc ne parle que du développé militaire',
+      !/Curl Biceps/.test(r.cible), r.cible.slice(0, 120));
+    t('F1-06 ⛔ pas de mensonge dans la consigne : depuis Progrès, ni « je viens de terminer » ni « douleur du jour », et elle renvoie au bloc réellement fourni',
+      !r.fin && !/douleur du jour/.test(r.msg) && /SÉANCE À ANALYSER/.test(r.msg) && !/\(tu les as\)/.test(r.msg), sansDecor(r.msg).slice(0, 200));
+    const ok = await attendreMag(X, A.id);
+    const log = (await etat(X.pg)).log;
+    t('F1-07 ⛔ succès → débrief rangé sous 3081 et mémoire de débrief liée au MÊME identifiant', ok && log.indexOf('3081') >= 0, js({ ok, log }));
+    const ctxSans = await X.pg.evaluate(() => buildCoachContext('bonjour').indexOf('SÉANCE À ANALYSER'));
+    t('F1-00 ⛔ un message ordinaire au Coach ne reçoit AUCUN bloc de séance ciblée (le contexte par défaut est inchangé)', ctxSans === -1, String(ctxSans));
+    await X.cx.close();
+  }
+  {
+    /* F1-01 / F1-03 / F1-04 — séance récente, deux séances le même jour, A puis B */
+    const J0 = jP(-2);
+    const SA = { id: 4001, ts: 4001, date: J0, volume: 800, exs: [{ name: 'Squat à la Barre', sets: [ser(80, 5), ser(80, 5)] }] };
+    const SB = { id: 4002, ts: 4002, date: J0, volume: 300, exs: [{ name: 'Tirage Vertical', sets: [ser(50, 6)] }] };
+    const X = await ouvrir({ sessions: [SA, SB], reponses: [{ delai: 150, rep: OK('DEBRIEF-F1 A.') }, { delai: 150, rep: OK('DEBRIEF-F1 B.') }] });
+    await versCarte(X, SA.id); await ouvrirCarte(X, SA.id); await attendreReq(X, 1); await attendreMag(X, SA.id);
+    await clic(X.pg, '#ov-debrief-milo button[onclick="fermerDebriefMilo()"]', 'ov-debrief-milo');
+    await versCarte(X, SB.id); await ouvrirCarte(X, SB.id); await attendreReq(X, 2);
+    const [ra, rb] = [X.st.req[0] || {}, X.st.req[1] || {}];
+    t('F1-01 séance récente depuis Progrès → le bon identifiant et SES données (squat 80×5)',
+      ra.cibleId === '4001' && /Squat à la Barre: S1 80×5 · S2 80×5/.test(ra.cible) && /800kg vol total/.test(ra.cible), js(ra.cible));
+    t('F1-03 ⛔⛔ deux séances le MÊME jour → aucune confusion : B reçoit le tirage, jamais le squat',
+      rb.cibleId === '4002' && /Tirage Vertical: S1 50×6/.test(rb.cible) && !/Squat/.test(rb.cible), js(rb.cible));
+    t('F1-04 ⛔ A puis B → l\'analyse de B ne reçoit jamais les données de A (un seul bloc, le sien)', rb.nbBlocs === 1 && !/800kg/.test(rb.cible), js(rb));
+    await X.cx.close();
+  }
+
+  /* ═════════ C1 — une réponse ne s'affiche que sous SA séance ═════════ */
+  {
+    const J0 = jP(-3);
+    const SA = { id: 5001, ts: 5001, date: J0, volume: 500, exs: [{ name: 'Squat à la Barre', sets: [ser(100, 5)] }] };
+    const SC = { id: 5003, ts: 5003, date: jP(-4), volume: 400, exs: [{ name: 'Développé Couché', sets: [ser(80, 5)] }] };
+    const X = await ouvrir({ sessions: [SA, SC], reponses: [{ delai: 4000, rep: OK('REPONSE-A tardive.') }],
+      stock: { ft4_debriefs: JSON.stringify({ v: 1, seances: { '5003': { texte: 'TEXTE-C rangé.', ts: 1, src: 'fin' } } }) } });
+    await versCarte(X, SA.id); await ouvrirCarte(X, SA.id); await attendreReq(X, 1);
+    await clic(X.pg, '#ov-debrief-milo button[onclick="fermerDebriefMilo()"]', 'ov-debrief-milo');
+    await clic(X.pg, '#sess-list .sess-card[onclick*="5003"] .sess-dbf-btn', 'ov-debrief-milo');      // « Voir » de C, A en vol
+    const avant = await X.pg.evaluate(() => document.getElementById('dbf-milo-body').textContent);
+    const ok = await attendreMag(X, SA.id); await X.pg.waitForTimeout(300);
+    const vue = await X.pg.evaluate(() => ({ body: document.getElementById('dbf-milo-body').textContent, sub: document.getElementById('dbf-milo-sub').textContent,
+      ouvert: document.getElementById('ov-debrief-milo').classList.contains('open') }));
+    t('C1-02 ⛔⛔ analyse A → ouvrir C → réponse A : RIEN de A sous C (C reste affichée, avec son en-tête)',
+      /TEXTE-C/.test(avant) && ok && vue.ouvert && /TEXTE-C/.test(vue.body) && !/REPONSE-A/.test(vue.body), js(vue));
+    await clic(X.pg, '#ov-debrief-milo button[onclick="fermerDebriefMilo()"]', 'ov-debrief-milo');
+    await versCarte(X, SA.id);
+    const btnA = await boutons(X, SA.id);
+    await clic(X.pg, '#sess-list .sess-card[onclick*="5001"] .sess-dbf-btn', 'ov-debrief-milo');
+    const retour = await X.pg.evaluate(() => document.getElementById('dbf-milo-body').textContent);
+    t('C1-03 … retour sur A : la carte dit « Voir », et son débrief est là', btnA && /Voir le débrief/.test(btnA.join('|')) && /REPONSE-A/.test(retour), js({ btnA, retour: retour.slice(0, 80) }));
+    await X.cx.close();
+  }
+  {
+    /* C1-01 / C1-04 / C1-05 / C1-06 — A et B le même jour, B répond AVANT A */
+    const J0 = jP(-2);
+    const SA = { id: 6001, ts: 6001, date: J0, volume: 500, exs: [{ name: 'Squat à la Barre', sets: [ser(100, 5)] }] };
+    const SB = { id: 6002, ts: 6002, date: J0, volume: 300, exs: [{ name: 'Tirage Vertical', sets: [ser(50, 6)] }] };
+    const X = await ouvrir({ sessions: [SA, SB], reponses: [{ delai: 5000, rep: OK('REPONSE-A lente.') }, { delai: 600, rep: OK('REPONSE-B rapide.') }] });
+    await versCarte(X, SA.id); await ouvrirCarte(X, SA.id); await attendreReq(X, 1);
+    await clic(X.pg, '#ov-debrief-milo button[onclick="fermerDebriefMilo()"]', 'ov-debrief-milo');
+    await versCarte(X, SB.id); await ouvrirCarte(X, SB.id); await attendreReq(X, 2);
+    const okB = await attendreMag(X, SB.id);
+    const vueB = await X.pg.evaluate(() => document.getElementById('dbf-milo-body').textContent);
+    t('C1-01 la réponse de B s\'affiche sous B', okB && /REPONSE-B/.test(vueB), vueB.slice(0, 80));
+    const okA = await attendreMag(X, SA.id); await X.pg.waitForTimeout(300);
+    const vueApres = await X.pg.evaluate(() => document.getElementById('dbf-milo-body').textContent);
+    const m = await X.pg.evaluate(() => JSON.parse(localStorage.getItem('ft4_debriefs')).seances);
+    t('C1-05 ⛔⛔ B répond avant A, puis A arrive : la fenêtre de B ne montre JAMAIS A', okA && /REPONSE-B/.test(vueApres) && !/REPONSE-A/.test(vueApres), vueApres.slice(0, 80));
+    t('C1-04 / C1-06 ⛔ même date : chaque réponse est rangée sous SON identifiant, aucun croisement',
+      /REPONSE-A/.test(m['6001'].texte) && /REPONSE-B/.test(m['6002'].texte), js(m));
+    await X.cx.close();
+  }
+
+  /* ═════════ T1 — le verrou « en vol » n'a PAS de minuteur ═════════ */
+  {
+    const A = ANC();
+    const X = await ouvrir({ sessions: [A], reponses: [{ delai: 9000, rep: OK('LENT.') }] });
+    await versCarte(X, A.id); await ouvrirCarte(X, A.id); await attendreReq(X, 1);
+    await clic(X.pg, '#ov-debrief-milo button[onclick="fermerDebriefMilo()"]', 'ov-debrief-milo');
+    await X.pg.waitForTimeout(6500);                                         // au-delà d'un minuteur de 5 s
+    const btn = await boutons(X, A.id);
+    const relance = await X.pg.evaluate(id => { analyserSeanceMilo(String(id)); return true; }, A.id);
+    await X.pg.waitForTimeout(800);
+    t('T1 ⛔⛔ 6,5 s après le clic, l\'analyse toujours en cours reste VERROUILLÉE (pas de minuteur) : carte « Milo analyse… », un 2ᵉ geste ne paie rien',
+      relance && btn && /Milo analyse/.test(btn.join('|')) && X.st.req.length === 1, js({ btn, n: X.st.req.length }));
+    await X.cx.close();
+  }
+  /* ═════════ T2 — cardio seul : pas d'analyse (contrat depuis ft-v1118 : un débrief exige une série validée) ═════════ */
+  {
+    const X = await ouvrir({ wkt: { date: J, startHour: 10, exs: [], cardio: { type: 'velo', intensity: 'modere', duration: 30 } } });
+    const f = await terminer(X); await X.pg.waitForTimeout(400);
+    const fin = await X.pg.evaluate(() => ({ go: !!document.querySelector('#se-debrief .se-dbf-go'), titre: (document.getElementById('se-debrief-titre') || {}).textContent || '' }));
+    await fermerFin(X); await coach(X, 1500);
+    const sid = await X.pg.evaluate(() => String((S.sessions[0] || {}).id || ''));
+    await versCarte(X, sid); const btn = await boutons(X, sid);
+    t('T2 ⛔ cardio seul : aucun bouton d\'analyse (fin de séance ni Progrès), le titre ne promet pas « l\'avis de Milo », 0 appel',
+      f && !fin.go && fin.titre === 'Ta séance' && (!btn || btn.length === 0) && X.st.req.length === 0, js({ fin, btn, n: X.st.req.length }));
+    await X.cx.close();
+  }
+  /* ═════════ T3 — l'ancien format de `ft4_debrief_encours` (ft-v1250 : {id, ts}) ═════════ */
+  {
+    const A = ANC();
+    const X = await ouvrir({ sessions: [A], reponses: [{ delai: 200, rep: OK('REPRIS.') }],
+      stock: { ft4_debrief_encours: JSON.stringify({ id: String(A.id), ts: Date.now() - 60000 }) }, attente: 4000 });
+    await coach(X, 1500);
+    await versCarte(X, A.id); const btn = await boutons(X, A.id);
+    const n0 = X.st.req.length;
+    await ouvrirCarte(X, A.id); const ok = await attendreMag(X, A.id);
+    const enc = (await etat(X.pg)).encours;
+    t('T3 ⛔ stockage ft-v1250 (« en vol » ancien format) : 0 appel seul, carte « interrompue — relancer », le clic relance UNE fois et le verrou disparaît',
+      n0 === 0 && btn && /interrompue/.test(btn.join('|')) && ok && X.st.req.length === 1 && !(enc && enc.vol && enc.vol[String(A.id)]) && !(enc && enc.id),
+      js({ n0, btn, n: X.st.req.length, enc }));
+    await X.cx.close();
+  }
+  /* ═════════ T4 — deux analyses en vol, puis rechargement ═════════ */
+  {
+    const SA = { id: 7001, ts: 7001, date: jP(-2), volume: 500, exs: [{ name: 'Squat à la Barre', sets: [ser(100, 5)] }] };
+    const SB = { id: 7002, ts: 7002, date: jP(-2), volume: 300, exs: [{ name: 'Tirage Vertical', sets: [ser(50, 6)] }] };
+    const X = await ouvrir({ sessions: [SA, SB], reponses: [{ delai: 9000, rep: OK('A.') }, { delai: 9000, rep: OK('B.') }] });
+    await versCarte(X, SA.id); await ouvrirCarte(X, SA.id); await attendreReq(X, 1);
+    await clic(X.pg, '#ov-debrief-milo button[onclick="fermerDebriefMilo()"]', 'ov-debrief-milo');
+    await versCarte(X, SB.id); await ouvrirCarte(X, SB.id); await attendreReq(X, 2);
+    await X.pg.reload(); await X.pg.waitForTimeout(4000); await coach(X, 2000);
+    await versCarte(X, SA.id);
+    const ba = await boutons(X, SA.id), bb = await boutons(X, SB.id), e = await etat(X.pg);
+    t('T4 ⛔⛔ deux analyses en vol puis rechargement : 2 requêtes en tout (aucune relance), CHACUNE « interrompue », rien de rangé',
+      X.st.req.length === 2 && ba && bb && /interrompue/.test(ba.join()) && /interrompue/.test(bb.join()) && e.mag.length === 0, js({ n: X.st.req.length, ba, bb }));
+    await X.cx.close();
+  }
+  /* ═════════ T5 — suppression PENDANT l'analyse : LIMITE CONNUE, mesurée (hors lot) ═════════
+     Le contrat de D-047 (« une séance supprimée emporte SON débrief ») n'est pas tenu si la réponse arrive APRÈS la
+     suppression : elle est encore rangée sous l'identifiant disparu (orphelin, invisible dans l'app). Ce témoin FIGE
+     le comportement actuel pour qu'il reste visible ; le jour où il est corrigé, ce témoin doit être retourné. */
+  {
+    const SA = { id: 8001, ts: 8001, date: jP(-2), volume: 500, exs: [{ name: 'Squat à la Barre', sets: [ser(100, 5)] }] };
+    const X = await ouvrir({ sessions: [SA, ANC()], reponses: [{ delai: 4000, rep: OK('ORPHELIN.') }] });
+    await versCarte(X, SA.id); await ouvrirCarte(X, SA.id); await attendreReq(X, 1);
+    await clic(X.pg, '#ov-debrief-milo button[onclick="fermerDebriefMilo()"]', 'ov-debrief-milo');
+    const a = await clic(X.pg, '#sess-list .sess-card[onclick="openSessDetail(8001)"] .sess-title', 'ov-sess-detail');
+    await clic(X.pg, '#sd-del-btn', 'ov-sess-detail'); await clic(X.pg, '#sd-del-btn', 'ov-sess-detail');
+    await X.pg.waitForTimeout(5000);
+    const e = await etat(X.pg);
+    t('T5 ⚠️ LIMITE MESURÉE (hors lot) : séance supprimée PENDANT l\'analyse → 1 seul appel, séance partie, mais la réponse est rangée en orphelin sous 8001',
+      a && X.st.req.length === 1 && e.ids.indexOf('8001') < 0 && e.mag.indexOf('8001') >= 0, js({ a, ids: e.ids, mag: e.mag }));
+    await X.cx.close();
+  }
+
+  /* ═════════ CF — complete:false avec un VRAI texte n'est pas un débrief ═════════ */
+  {
+    const A = ANC();
+    const FAUX = { reply: 'Belle séance au développé militaire, charges tenues, garde ce cap.' + MEM, _diag: 'erreur', stopReason: 'max_tokens', truncated: true, complete: false, continued: false };
+    const X = await ouvrir({ sessions: [A], reponses: [{ delai: 200, rep: FAUX }] });
+    await versCarte(X, A.id); await ouvrirCarte(X, A.id); await attendreReq(X, 1);
+    const txt = await attendre(X.pg, '#dbf-milo-body', /n'a pas pu|Belle séance/, 6000); await X.pg.waitForTimeout(500);
+    const e = await etat(X.pg);
+    t('CF-01 ⛔⛔ réponse crédible mais `complete:false` → PAS un succès : rien de rangé, aucune mémoire, aucun résumé payé, « Réessayer » seul',
+      /n'a pas pu/.test(txt) && !/Belle séance/.test(txt) && e.mag.length === 0 && e.log.indexOf('3081') < 0 && X.st.summarize === 0
+      && await X.pg.evaluate(() => !!document.querySelector('#dbf-milo-body .se-dbf-retry')), js({ txt: txt.slice(0, 80), e: { mag: e.mag, log: e.log }, sum: X.st.summarize }));
+    await X.cx.close();
+  }
+  {
+    const A = ANC();
+    const X = await ouvrir({ sessions: [A], stock: { ft4_debrief_recu: JSON.stringify({ id: String(A.id), ts: Date.now() - 60000, reply: 'Désolé, réessaie.', instr: 'x' }) }, attente: 3500 });
+    const e = await etat(X.pg);
+    t('CF-02 ⛔ un ancien « reçu » porteur du message d\'échec n\'est PAS migré comme débrief (clé oubliée, rien de rangé, 0 appel)',
+      e.mag.length === 0 && e.anciennes.length === 0 && X.st.req.length === 0, js(e));
+    await X.cx.close();
+  }
+
 };

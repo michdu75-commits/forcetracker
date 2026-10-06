@@ -308,7 +308,10 @@ const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 // réservées au Premium dans le code (vérifier la porte S.premium correspondante).
 const PREMIUM_PERKS=[
   {i:'♾️', t:'<b>Milo en illimité</b> — questions, séances, conseils, à toute heure'},
-  {i:'📝', t:'<b>Le récap de chaque séance</b> — Milo débriefe tes perfs et fixe le prochain objectif'},
+  /* D-052 : le débrief se DEMANDE (« Analyser cette séance avec Milo ») — plus « chaque séance » automatiquement.
+     ⚠️ La politique Premium du débrief (décidée PREMIUM le 19/09, code FREE — `capacites-ia.js`) est une décision
+     SÉPARÉE, non ouverte ici : ce texte dit seulement ce que fait l'app. */
+  {i:'📝', t:'<b>L\'avis de Milo sur tes séances</b> — à ta demande, il analyse tes perfs et fixe le prochain objectif'},
   {i:'🧠', t:'<b>Contexte complet</b> — profil, records, cycle, nutrition : il te connaît vraiment'},
   {i:'💪', t:'<b>Programme sur mesure</b> — généré et ajusté avec toi, envoyé dans ta séance'},
   {i:'🤖', t:'<b>Analyse IA de tes programmes</b> importés (équilibre, volume, conseils)'},

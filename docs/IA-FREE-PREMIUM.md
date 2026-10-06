@@ -21,7 +21,7 @@
 | # | capacité | module | déclenchement | politique | état du code | quota | action serveur | 2ᵉ porte | serveur applique |
 |---:|---|---|---|---|---|---|---|---|---|
 | 1 | `milo.chat` | Milo | manuel | **FREEMIUM** | FREEMIUM | 10 · usage_total | `coach` | `coach` | non |
-| 2 | `milo.debrief` | Milo | **automatique** | **PREMIUM** | FREE | aucun (Premium) | `coach` | `coach` | non |
+| 2 | `milo.debrief` | Milo | manuel | **PREMIUM** | FREE | aucun (Premium) | `coach` | `coach` | non |
 | 3 | `milo.memory` | Milo | **automatique** | **PREMIUM** | FREE | aucun (Premium) | `summarizeCoach` | `summarizeCoach` | non |
 | 4 | `milo.sessionToJson` | Milo | **automatique** | **INTERNE** | INTERNE | illimité | `seanceJson` | **aucune** | non |
 | 5 | `nutrition.label.ai` | Nutrition | manuel | **FREEMIUM** | FREEMIUM | 25 · usage_total | `foodLabel` | `foodLabel` | non |
@@ -64,7 +64,7 @@ qu'un retrait volontaire s'écrit (**R30**) : *sans la raison à côté, le suiv
 « répare » une décision, ou croit à un oubli là où il y a un choix.*
 
 - **`milo.chat`** — politique **FREEMIUM**, code `FREEMIUM` : un chip `.coach-qr` présent dans le DOM fait passer TOUT message tapé en noQuota : la condition porte sur la présence d'un chip, pas sur le fait que le message y réponde
-- **`milo.debrief`** — politique **PREMIUM**, code `FREE` : AUCUN garde dans le code : le débrief part pour tout le monde. La décision du 19/09 n'est pas encore appliquée — le verrou appartient à la phase serveur. Défaut annexe inchangé : un jeton par séance empêche de payer deux fois, mais une boucle de réessai peut émettre DEUX appels pour une seule fin de séance.
+- **`milo.debrief`** — politique **PREMIUM**, code `FREE` : AUCUN garde Premium dans le code : le débrief part pour tout le monde, sur demande. La décision du 19/09 n'est pas encore appliquée — le verrou appartient à la phase serveur (décision Premium séparée, non ouverte ici).
 - **`milo.memory`** — politique **PREMIUM**, code `FREE` : le code ne porte AUCUN garde : _saveCoachMemory part dès 4 messages, pour tout le monde. La décision M12 n'est pas encore appliquée.
 - **`nutrition.label.ai`** — politique **FREEMIUM**, code `FREEMIUM` : le pot est désormais PROPRE (S.foodLabelAiUses) : la politique est appliquée par le client, pas par le serveur — `serveurApplique` reste false
 - **`nutrition.barcode.aiFallback`** — politique **PREMIUM**, code `FREEMIUM` : ⚠️ LE CODE ACCORDE ENCORE 25 USAGES GRATUITS, sur un compteur qui lui est PROPRE (S.foodBarcodeAiUses) depuis le 19/09. La séparation est faite, le verrou Premium ne l'est pas : il appartient à la phase serveur. ⛔ Le compteur propre n'est pas une demi-mesure, c'est le SEUL état sûr — retirer le pot sans poser le verrou aurait rendu cette capacité ILLIMITÉE ET GRATUITE, soit l'exact contraire de la décision (mesuré : deux portes réelles, le bouton « 🆘 si la caméra n'y arrive pas » et le repli du scanner).
@@ -114,13 +114,12 @@ Le registre ne suppose pas que tout quota s'exprime en « X appels par jour ».
 | `par_evenement` | N appels liés à **un événement**, pas à une période | `milo.memory.backfill` |
 | `non_decide` | undefined | `nutrition.mealPlan.ai` |
 
-## ⚡ Les capacités automatiques (4)
+## ⚡ Les capacités automatiques (3)
 
 Elles ne sont déclenchées par **aucun bouton** : la personne ne les demande pas et
 ne peut pas les refuser. *Un mur ne peut pas s'afficher devant une chose que
 personne n'a demandée* — c'est ce qui les rend particulières pour une politique.
 
-- **`milo.debrief`** — ⭐ LE SOCLE DÉTERMINISTE DE FIN DE SÉANCE RESTE DISPONIBLE SANS IA — c'est le débrief CHIFFRÉ, calculé en local (décision `SEANCE-DESSAI`). Ce qui devient Premium est le JUGEMENT de Milo par-dessus, pas les faits. Part aussi sur la navigation vers l'onglet Coach et sur un rattrapage 3 s après chaque chargement.
 - **`milo.memory`** — ⭐ M12 : la CONSERVATION des faits reste FREE ; c'est l'ENTRETIEN IA de la mémoire structurée qui devient Premium. Ne jamais confondre les deux.
 - **`milo.sessionToJson`** — le cervelet : il ne reçoit que du texte, ni profil ni e-mail. ⭐ SEULE capacité sans seconde porte Apps Script.
 - **`milo.memory.backfill`** — ⭐⭐ MÊME action serveur que milo.memory, capacité DIFFÉRENTE : l'une entretient une mémoire qui existe (déclenchement diffus), l'autre en construit une qui n'existe pas (rafale déclenchée par UN événement). ⚠️ quotaValeur est `null` et ce n'est pas un oubli : la taille d'une période est NON MESURÉE, et inventer un nombre serait inventer une décision (règle d'or 15).

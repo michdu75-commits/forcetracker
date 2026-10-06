@@ -4809,6 +4809,10 @@ let _seDbfLast=null;
 function _seDebriefVue(sess,prCount){
   const slot=document.getElementById('se-debrief');if(!slot)return;
   _seDbfLast={sess:sess,prCount:prCount||0};
+  slot.dataset.dbfSid=_dbfCle(sess);   // C1 : l'écran de fin dit quelle séance il montre
+  /* Contre-audit : un cardio seul n'a pas de bouton d'analyse — le titre ne lui promet donc pas « l'avis de Milo ». */
+  const titre=document.getElementById('se-debrief-titre');
+  if(titre) titre.textContent=_dbfAnalysable(sess)?'Ta séance, et l\'avis de Milo si tu le veux':'Ta séance';
   slot.innerHTML=_seDebriefChiffres(sess,prCount)+_dbfActionHtml(sess);
 }
 /* 🎯 L'ANALYSE DEMANDÉE — LE SEUL CHEMIN QUI APPELLE MILO POUR UN DÉBRIEF (DEBRIEF-ON-DEMAND-01).
@@ -4820,11 +4824,16 @@ function _seDebriefVue(sess,prCount){
    libère que la sienne.
    ⛔ Un échec (réseau, HTTP, `complete:false`, repli « Désolé, réessaie. ») n'enregistre RIEN et
    propose « Réessayer » — aucun nouvel essai ne part tout seul, ni maintenant ni plus tard. */
+/* 🎯 C1 (contre-audit) : une zone d'affichage montre UNE séance (`data-dbf-sid`). Une réponse qui revient après
+   que la personne a ouvert une autre séance est RANGÉE (magasin, mémoire) mais ne s'écrit pas sous l'autre séance :
+   en revenant sur la sienne, « Voir le débrief » la montre. Ni minuteur, ni drapeau global — l'identifiant. */
+function _dbfSlotEst(slot,sid){ return !!slot && (!slot.dataset || !slot.dataset.dbfSid || slot.dataset.dbfSid===String(sid)); }
 async function _runSeDebrief(sess,prCount,slot){
   slot=slot||document.getElementById('se-debrief');if(!slot||!sess)return;
   const fin=(slot.id==='se-debrief');
   const chiffres=fin?_seDebriefChiffres(sess,prCount):'';
   const sid=_dbfCle(sess), arg=_argAttr(sid);
+  if(slot.dataset && !slot.dataset.dbfSid) slot.dataset.dbfSid=sid;
   const avec=(msg,retry)=>chiffres+'<p class="se-dbf-off">'+msg
     +(retry?' <button class="se-dbf-retry" onclick="analyserSeanceMilo('+arg+',event)">Réessayer</button>':'')+'</p>';
   const range=_dbfTexteDe(sid);
@@ -4833,6 +4842,8 @@ async function _runSeDebrief(sess,prCount,slot){
   if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){
     slot.innerHTML=avec('📡 Hors ligne — Milo pourra analyser ta séance quand tu auras du réseau.',true); return; }
   _dbfVolPoser(sid);
+  // La carte de Progrès dit tout de suite « Milo analyse… » (sinon elle garde « Analyser » jusqu'à la réponse).
+  try{ if(typeof renderSessions==='function' && document.getElementById('sess-list')) renderSessions(); }catch(e){}
   /* ⛔⛔ ON AFFICHE LES CHIFFRES AVANT MÊME D'APPELER MILO (règle d'or #3) : l'attente est une
      ATTENTE D'AVIS, pas une page vide. */
   slot.innerHTML=chiffres+'<p class="se-dbf-off"><span class="se-load">Milo analyse ta séance…</span></p>';
@@ -4844,7 +4855,10 @@ async function _runSeDebrief(sess,prCount,slot){
     +(_des?('**'+_des+'**'):'la plus récente dans mes dernières séances')
     +'. Ne débriefe aucune autre séance, même si une autre est plus récente dans la liste. '
     +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
-    +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UNE piste '
+    /* F1 (contre-audit) : « tu les as » est maintenant VRAI pour toute séance — son détail exact part dans le bloc
+       « SÉANCE À ANALYSER » du contexte (`buildCoachContext(instr,{seanceCiblee:sess})`). Et la « douleur du jour »
+       n'est nommée qu'en fin de séance : depuis Progrès, la douleur d'aujourd'hui n'est pas celle de cette séance. */
+    +'en t\'appuyant sur ses charges et séries exactes (bloc « SÉANCE À ANALYSER » de ton contexte)'+(fin?', tiens compte d\'une éventuelle douleur du jour':'')+', et termine par UNE piste '
     +'pour la prochaine séance. ⚠️ Cette piste doit servir MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
     +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
     +'reflète ce que tu observes et demande-moi ma priorité. Court (4-6 phrases), direct, motivant. Ne me redemande JAMAIS mes charges.'
@@ -4863,7 +4877,7 @@ async function _runSeDebrief(sess,prCount,slot){
     +((typeof _DEBRIEF_CONTINUITY!=='undefined')?_DEBRIEF_CONTINUITY:'')
     +((typeof _DEBRIEF_MEM_TAIL!=='undefined')?_DEBRIEF_MEM_TAIL:'');
   try{
-    const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(instr),history:(typeof _coachHistPayload==='function'?_coachHistPayload(8):coachHistory.slice(-8)),coachMemory:S.coachMemory||''};
+    const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(instr,{seanceCiblee:sess}),history:(typeof _coachHistPayload==='function'?_coachHistPayload(8):coachHistory.slice(-8)),coachMemory:S.coachMemory||''};
     /* ⛔ UN SEUL ESSAI PAR CLIC (DEBRIEF-ON-DEMAND-01) : il y avait ici une boucle de 2 essais réseau, relancée
        toute seule 1,2 s plus tard — un nouvel essai CACHÉ, qui pouvait payer deux fois une requête arrivée
        au serveur. Un échec est un échec : « Réessayer » est un nouveau clic. */
@@ -4882,7 +4896,7 @@ async function _runSeDebrief(sess,prCount,slot){
     const clean=(typeof _stripCoachTech==='function')?_stripCoachTech(reply):reply;
     /* ⛔⛔ MILO S'AJOUTE, IL NE REMPLACE PAS (ft-v1022) : les faits ET le jugement. */
     const _milo=(typeof _coachFmtHtml==='function')?_coachFmtHtml(clean):('<p>'+clean.replace(/</g,'&lt;')+'</p>');
-    slot.innerHTML=chiffres+'<div class="se-dbf-milo">'+_milo+'</div>';
+    if(_dbfSlotEst(slot,sid)) slot.innerHTML=chiffres+'<div class="se-dbf-milo">'+_milo+'</div>';
     // Mémoire DURABLE : seulement pour un débrief DEMANDÉ et RÉUSSI (décision de Michel).
     try{ if(typeof _recordDebriefMemory==='function') _recordDebriefMemory(reply, sess); }catch(e){}
     /* Le débrief entre aussi dans le fil du Coach (la conversation continue avec Milo). `_saveCoachMemory`
@@ -4894,7 +4908,7 @@ async function _runSeDebrief(sess,prCount,slot){
   }catch(e){
     if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // la page s'en va : l'analyse est INTERROMPUE, pas ratée
     // Échec → rien n'est enregistré ; on le DIT et on propose un nouvel essai, qui sera un nouveau clic.
-    slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est enregistré.',true);
+    if(_dbfSlotEst(slot,sid)) slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est enregistré.',true);
   }finally{
     if(typeof _dbfQuitte!=='undefined' && _dbfQuitte) return;   // laisser « en vol » : la page suivante dira « interrompue »
     _dbfVolRetirer(sid);   // seulement CETTE séance (une autre peut être en vol, E5)

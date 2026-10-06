@@ -21,7 +21,7 @@ FICHIERS = ('coach.js', 'log.js', 'setup.js', 'screens.js', 'index.html', 'style
 
 AUTO = "try{const s=(S.sessions||[]).slice(-1)[0];if(s&&_dbfAnalysable(s)&&!_dbfTexteDe(_dbfCle(s))&&!_dbfEnVol(_dbfCle(s)))_runSeDebrief(s,0,document.createElement('div'));}catch(e){}"
 OUBLI = "  try{ ['ft4_pending_debrief','ft4_debrief_recu','ft4_debrief_faits'].forEach(k=>localStorage.removeItem(k)); }catch(e){}\n})();\n"
-ECHEC = "    slot.innerHTML=avec('\\u26a0\\ufe0f Milo n\\'a pas pu analyser ta séance. Rien n\\'est enregistré.',true);\n"
+ECHEC = "    if(_dbfSlotEst(slot,sid)) slot.innerHTML=avec('\\u26a0\\ufe0f Milo n\\'a pas pu analyser ta séance. Rien n\\'est enregistré.',true);\n"
 VOIR = "'<button class=\"sess-dbf-btn\" onclick=\"voirDebriefMilo('+_dbfArg+',event)\">💬 Voir le débrief Milo</button>'"
 
 MUT = [

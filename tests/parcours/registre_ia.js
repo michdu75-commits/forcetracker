@@ -100,8 +100,11 @@ function source(t, ROOT, fs, path) {
 
   // ── ⑫ à ⑬ : automatique et Admin doivent se lire sans interprétation ────────────────
   const auto = C.filter(c => c.declenchement === 'automatique').map(c => c.id);
+  /* 🔁 DEBRIEF-ON-DEMAND-01 (R30) : `milo.debrief` n'est plus automatique (D-052, il se demande). Le témoin comptait 4
+     capacités automatiques dont lui ; il en compte 3 et exige que le débrief soit déclaré `manuel`. */
+  const dbfCap = C.find(c => c.id === 'milo.debrief');
   t('B-CCCXXXI ⑫ ⭐ les capacités AUTOMATIQUES sont identifiables sans interprétation',
-    auto.length === 4 && auto.indexOf('milo.debrief') >= 0
+    auto.length === 3 && auto.indexOf('milo.debrief') < 0 && dbfCap && dbfCap.declenchement === 'manuel'
       && auto.indexOf('milo.memory') >= 0 && auto.indexOf('milo.sessionToJson') >= 0
       && auto.indexOf('milo.memory.backfill') >= 0, auto.join(', '));
   const adm = C.filter(c => c.politique === 'ADMIN').map(c => c.id);

@@ -27,8 +27,8 @@ MUT = [
        "  if(!r) return false;\n  return true;")], 'GARDE'),
     # DEBRIEF-ON-DEMAND-01 (R30) : M4 visait le jeton de la FILE (retire). Meme sens : apres un echec, plus de « Reessayer ».
     ('M4 le retry est supprime apres echec (plus de bouton « Reessayer »)',
-     [(LO, "    slot.innerHTML=avec('\\u26a0\\ufe0f Milo n\\'a pas pu analyser ta séance. Rien n\\'est enregistré.',true);",
-           "    slot.innerHTML=avec('\\u26a0\\ufe0f Milo n\\'a pas pu analyser ta séance. Rien n\\'est enregistré.',false);")], 'GARDE'),
+     [(LO, "    if(_dbfSlotEst(slot,sid)) slot.innerHTML=avec('\\u26a0\\ufe0f Milo n\\'a pas pu analyser ta séance. Rien n\\'est enregistré.',true);",
+           "    if(_dbfSlotEst(slot,sid)) slot.innerHTML=avec('\\u26a0\\ufe0f Milo n\\'a pas pu analyser ta séance. Rien n\\'est enregistré.',false);")], 'GARDE'),
     ('M5 summarizeCoach declenche sur le faux succes',
      [(LO, "    if(typeof _dbfReponseValide==='function' && !_dbfReponseValide(data))throw new Error('non confirmé');",
        "    if(typeof _dbfReponseValide==='function' && !_dbfReponseValide(data)){ if(typeof _saveCoachMemory==='function')_saveCoachMemory(); throw new Error('non confirmé'); }")], 'GARDE'),

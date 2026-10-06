@@ -3294,7 +3294,12 @@ function _incompatibleTxt(m){
     +(i.autre?' ; '+J[i.autre.jour]+' : '+i.autre.macros+' kcal (+'+i.autre.ecart+', '+(i.autre.ecrete||'glucides')+' écrêtés à 0)':'')
     +'. '+(i.ecart>0?'Ces macros':'Les macros de ce jour-là')+' NE respectent PAS la cible : ne les présente jamais comme la respectant. L\'app ne modifie ni la cible ni les macros.\n';
 }
-function buildCoachContext(msg) {
+function buildCoachContext(msg, opts) {
+  /* 🎯 `opts.seanceCiblee` (DEBRIEF-ON-DEMAND-01, F1 du contre-audit) : la séance qu'on demande à Milo d'analyser.
+     Son détail EXACT (date, séries, charges, RIR, notes, superset, volume) part dans un bloc à elle, écrit par le
+     MÊME formateur que « DERNIÈRES SÉANCES » — sinon une séance de 81 jours n'apparaissait nulle part et Milo
+     débriefait de mémoire. Lue depuis la séance elle-même, jamais recopiée ailleurs (R2). Sans `opts`, le contexte
+     est identique à l'octet près. */
   // ⚠️ LE BMR ARRIVE AVEC SA PROVENANCE (11/08/2026). L'app peut employer deux formules,
   // et l'écart atteint 180 kcal/jour chez quelqu'un de musclé. Sans le savoir, Milo
   // conseillerait des calories en croyant que le chiffre est mesuré alors qu'il est
@@ -3547,7 +3552,7 @@ function buildCoachContext(msg) {
   const _sessVues = _seancesRecentes(_NB_DETAIL);   // LOT 3 : les 5 plus récentes PAR DATE, pas les 5 premières du tableau
   const _nbTotalSess = (S.sessions||[]).length;
   const _depuisQuand = _sessVues.length ? _sessVues[_sessVues.length-1].date : '';
-  const recentSessions = _sessVues.map(s => {
+  const _ligneSeance = (s, _compter) => {
     const _exsS = (s.exs||s.exercises||[]);
     const exStr = _exsS.map(e => {
       const ds = (e.sets||[]).filter(x => x.done);
@@ -3596,7 +3601,8 @@ function buildCoachContext(msg) {
             const rir = (_r===null) ? '' : (' RIR'+_r);
             /* ⛔ LE COMPTE PASSE PAR LE PROPRIÉTAIRE, pas par une liste de types recopiée :
                une divergence entre ce qui est AFFICHÉ et ce qui est COMPTÉ serait invisible. */
-            if(typeof _serieDeTravail==='function' ? _serieDeTravail(x) : (!ech && x.type!=='X')){
+            if(!_compter){ /* la séance ciblée n'entre pas dans le compte RIR des séances récentes */ }
+            else if(typeof _serieDeTravail==='function' ? _serieDeTravail(x) : (!ech && x.type!=='X')){
               _rirTrav++; if(_r!==null) _rirNotes++;
             } else if(x.type==='X') _rirEchec++;
             return `${num}${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N'&&!ech)?'('+x.type+')':''}${rir}${n?'[💬 '+n+']':''}`;
@@ -3628,7 +3634,12 @@ function buildCoachContext(msg) {
     const _nbEx=(s.exs||s.exercises||[]).filter(e=>(e.sets||[]).some(x=>x.done)).length;
     return `${_dateLisible(s.date)} (${_nbEx} exercice${_nbEx>1?'s':''}): ${exStr} — ${s.volume}kg vol total`
       +(cardioStr?` — cardio: ${cardioStr}`:'');
-  }).join('\n') || 'Aucune séance';
+  };
+  const recentSessions = _sessVues.map(s => _ligneSeance(s, true)).join('\n') || 'Aucune séance';
+  const _cible = (opts && opts.seanceCiblee) || null;
+  const _blocCible = _cible
+    ? `\n\nSÉANCE À ANALYSER (identifiant ${String(_cible.id||_cible.ts||_cible.date||'')} — données EXACTES de CETTE séance, lues dans son historique) :\n${_ligneSeance(_cible, false)}\n→ ⛔ C'est la seule séance à analyser : ses charges, séries et date sont celles-ci, même si elle ne figure pas dans « DERNIÈRES SÉANCES ». N'en déduis rien d'une autre séance.`
+    : '';
 
   // Séance EN COURS (S.wkt) — permet au Coach d'aider PENDANT l'entraînement
   let wktText='';
@@ -4337,7 +4348,7 @@ ${(()=>{
 
 DERNIÈRES SÉANCES:
 ${recentSessions}
-→ ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans le bloc « SA MÉMOIRE LONGUE ». ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
+→ ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans le bloc « SA MÉMOIRE LONGUE ». ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.${_blocCible}
 → 💪 RIR = RÉPÉTITIONS EN RÉSERVE, notées par la personne juste après la série. « RIR2 » = il lui restait environ 2 répétitions avant l'échec. ⛔⛔ ET « (X) » N'EST PAS UN RIR DE 0, NE LES CONFONDS JAMAIS : « RIR0 » = la dernière répétition est PASSÉE mais une de plus aurait échoué (série réussie à la limite) ; « (X) » = une répétition prévue a été TENTÉE et N'EST PAS PASSÉE — c'est un cran AU-DELÀ de RIR 0. Exemple : 95×3 en réussissant la 3ᵉ = RIR0 ; tenter la 4ᵉ et caler = (X). ⛔ UNE SÉRIE SANS « RIR » N'EST PAS UN RIR DE 0 : elle n'a simplement pas été notée — ne conclus rien de son absence, et ne la compte jamais comme un échec.  ⛔⛔ ET UN « RIR0 » N'EST PAS UNE PRÉDICTION D'ÉCHEC, NE FAIS JAMAIS CE RACCOURCI : il dit seulement que sur CETTE série-là, elle/il estime n'avoir plus eu de répétition propre en réserve. Il ne prouve NI que la série suivante va échouer, NI que la charge est trop lourde, NI qu'il y a de la fatigue, NI qu'il faut alléger. ⭐ UN RIR 0 EST SOUVENT VOLONTAIRE — série lourde, dernière série, test, travail proche de l'échec prévu par le programme : c'est une information d'INTENSITÉ, pas un problème à corriger. ⛔ ET L'APPLICATION NE SAIT PAS À QUOI SERT UNE SÉRIE : elle ne stocke ni « top set », ni « back-off », ni « série de volume ». Ne transforme donc JAMAIS « la série la plus lourde » en « son top set » — si le rôle n'est pas dit dans votre échange, le rôle est INCONNU, et tu le dis. ⭐ UN RIR 0 PEUT ÊTRE SUIVI D'UNE BONNE SÉRIE, ce n'est pas contradictoire : 100×3 RIR0 puis 90×5 RIR2 (la charge a changé), ou même 100×3 RIR0 puis 100×3 RIR1 (meilleure exécution, placement, repos). N'exige aucune évolution mathématique du RIR d'une série à l'autre. ⛔ LE RIR EST UNE ESTIMATION HUMAINE, pas une mesure d'appareil : 0 puis 1 à charge identique, ou 1 puis 0, n'est PAS une anomalie — c'est la variabilité normale de la perception. Ne bâtis rien sur un écart d'un cran. ⛔⛔ ET AVANT DE PARLER DE FATIGUE, REGARDE PLUSIEURS SIGNAUX, jamais le RIR seul : l'évolution de la performance, les charges, les répétitions, la fréquence des RIR bas, les séries « (X) », le volume, la récupération, et la tendance sur PLUSIEURS séances. Exemple à ne pas rater : 100×3 RIR0 puis, la séance suivante, 102×3 RIR0 — la performance a AUGMENTÉ. Conclure « deux RIR 0 donc fatigue croissante » serait faux, et lui reprocher un progrès. ⛔ Un RIR bas isolé avec une performance en hausse n'est PAS le même signal que plusieurs séances qui baissent. ⭐ C'est ce qui te permet enfin de vérifier le cadre de sa discipline (« 1 à 3 en réserve », « jamais à l'échec »…) au lieu de le supposer : quand tu en parles, appuie-toi sur les RIR RÉELLEMENT notés, et dis-le s'il n'y en a pas.${(typeof _estRpe==='function'&&_estRpe())?` ⭐ ATTENTION AU VOCABULAIRE : cette personne a choisi l'échelle **RPE**, pas le RIR. Les données ci-dessus restent en RIR (c'est la mesure), mais PARLE-LUI EN RPE — la conversion est exacte : RPE = 10 − RIR (RIR0 = RPE 10, c'est-à-dire aucune répétition de plus — et un « (X) » est AU-DELÀ, il ne se dit pas en RPE ; RIR1 = RPE 9, RIR2 = RPE 8, RIR3 = RPE 7, RIR4+ = RPE 6 ou moins). ⛔ Ne lui écris JAMAIS « RIR », il ne l'emploie pas. ⛔ Et n'invente pas de demi-points (8,5 · 9,5) : l'app ne les mesure pas, donc tu n'as aucun moyen de savoir.`:''}
 ${(()=>{
   /* 🎚️ LE COMPTE, PAS L'INVENTAIRE — ft-v1154. La règle juste au-dessus dit quoi faire d'un RIR

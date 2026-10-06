@@ -1774,7 +1774,11 @@ function _dbfFenetre(id){
                      :'Séance introuvable dans l\'historique';
   }
   const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.add('open');
-  return document.getElementById('dbf-milo-body');
+  /* C1 (contre-audit) : la fenêtre est PARTAGÉE entre les séances — elle dit QUELLE séance elle montre. Une
+     réponse tardive d'une autre séance ne s'y écrit pas (`_dbfSlotEst`, log.js). */
+  const body=document.getElementById('dbf-milo-body');
+  if(body) body.dataset.dbfSid=String(id);
+  return body;
 }
 function voirDebriefMilo(id, ev){
   if(ev&&ev.stopPropagation)ev.stopPropagation();

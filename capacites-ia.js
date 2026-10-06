@@ -82,21 +82,20 @@ const CAPACITES_IA = [
     notes: "compteur S.coachFree — le SEUL qui ne part jamais au cloud",
   },
   {
-    id: 'milo.debrief', module: 'Milo', declenchement: 'automatique', emploieIA: true,
+    id: 'milo.debrief', module: 'Milo', declenchement: 'manuel', emploieIA: true,
     politique: 'PREMIUM', etatCode: 'FREE',
     gratuits: 0, quotaType: 'zero', quotaValeur: 0, quotaPeriode: null,
     actionServeur: 'coach', porteAppsScript: 'coach', serveurApplique: false,
     decisionSource: 'Michel, phase 3.1 (arbitrage 1)', decisionDate: '2026-09-19',
-    ecart: "AUCUN garde dans le code : le débrief part pour tout le monde. La décision " +
-           "du 19/09 n'est pas encore appliquée — le verrou appartient à la phase " +
-           "serveur. Défaut annexe inchangé : un jeton par séance empêche de payer deux " +
-           "fois, mais une boucle de réessai peut émettre DEUX appels pour une seule fin " +
-           "de séance.",
+    ecart: "AUCUN garde Premium dans le code : le débrief part pour tout le monde, sur " +
+           "demande. La décision du 19/09 n'est pas encore appliquée — le verrou appartient " +
+           "à la phase serveur (décision Premium séparée, non ouverte ici).",
     notes: "⭐ LE SOCLE DÉTERMINISTE DE FIN DE SÉANCE RESTE DISPONIBLE SANS IA — c'est le " +
            "débrief CHIFFRÉ, calculé en local (décision `SEANCE-DESSAI`). Ce qui devient " +
            "Premium est le JUGEMENT de Milo par-dessus, pas les faits. " +
-           "Part aussi sur la navigation vers l'onglet Coach et sur un rattrapage 3 s " +
-           "après chaque chargement.",
+           "D-052 (DEBRIEF-ON-DEMAND-01) : il ne part QUE sur le geste « Analyser cette " +
+           "séance avec Milo » (fin de séance ou Progrès) — plus à la fin, ni à l'ouverture " +
+           "du Coach, ni au démarrage ; un seul essai réseau par geste.",
   },
   {
     id: 'milo.memory', module: 'Milo', declenchement: 'automatique', emploieIA: true,
