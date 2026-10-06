@@ -557,3 +557,21 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_onboarding_quick.js` **24/0** · 5 mutations **5/5** · bancs voisins verts · D-031 complète
   NON lancée (règle jour/nuit) — le banc est branché dans la passe complète pour la qualification nocturne.
 
+### 🛡️ COOKIE-PROFILE-01 — UN COOKIE `ft_email` N'EST QU'UN INDICE DE COMPTE (06/10/2026, session-B — ⚠️ BRANCHE `claude/cookie-profile-01`, NON PUBLIÉ) — P1 intégrité
+- **Cause racine** : `index.html` posait `ft4_ob2=1` sur la seule foi du cookie (inscription « faite » sans rien vérifier) ;
+  `autoConnect` ne restaurait que si le profil avait **au moins une séance** ; rien n'annulait la décision ; `persist()` lançait
+  ensuite `_cloudSync` → un profil PAR DÉFAUT (sexe, objectif, réglages) partait vers le compte existant. Même famille sur le
+  chemin IndexedDB (`_autoRestoreFromIDB` → `_silentCloudRestore`, profil sans séance ignoré).
+- **Preuve** : P2 synthétique (audit du 06/10 + banc CP). **Aucun incident terrain prouvé** (pas de P3).
+- **Correctif** : un état explicite, un propriétaire (`state.js` : `_restauAttendue`/`_restauPoser`/`_restauResolue`,
+  clé `ft4_restau_attendue`). Le cookie (format valide seulement) pose l'email + l'attente, plus jamais `ft4_ob2`. `autoConnect`
+  tranche : profil trouvé (même sans séance) et local vide → restauré, inscription faite ; « introuvable » explicite → l'indice est
+  oublié (email gardé pour pré-remplir l'inscription, cookie effacé) ; erreur / hors ligne / délai / réponse invalide → l'attente
+  reste. **Garde central** : `_cloudSync` (profil + miroir) et `syncSheets` (séances, qui restent en file) n'écrivent rien tant que
+  l'attente existe. La fin d'inscription tranche aussi (email vidé → l'email du cookie ne reste pas en douce). Même état sur le
+  chemin IndexedDB ; `_silentCloudRestore` accepte un profil sans séance.
+- **Limite dite** : données locales SANS email + cookie d'un compte qui EXISTE → l'app ne tranche pas seule (deux personnes
+  possibles) : l'attente reste et rien ne part — il n'y a pas encore de geste pour la lever (à décider avec Michel).
+- **Contrôles** : banc `tools/banc_cookie_profile.js` **16/0** (CP-00 invariant + CP-01 → CP-13) · 3 mutations **3/3** · bancs voisins
+  verts · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
+

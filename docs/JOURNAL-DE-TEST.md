@@ -3409,3 +3409,8 @@ La fixture du banc débrief n'avait pas de `ft4_wn_seen` : un « Quoi de neuf »
 l'onglet visé. Repère posé (utilisateur à jour) ; aucun critère de réussite modifié. Mesuré ensuite : **3 exécutions sur 3 à 58/0**
 (dont une en parallèle d'un autre banc). ⚠️ Cause non PROUVÉE (pas d'enquête de jour) — à confirmer par la passe de nuit.
 
+### 🟢 COOKIE `ft_email` + PROFIL INTROUVABLE — TRAITÉ (06/10/2026, COOKIE-PROFILE-01)
+L'entrée « à trier » du même jour est devenue un correctif : banc `cookie_profile` (16 témoins, dont l'invariant CP-00). ❓ **Doute
+restant** : données locales sans email + cookie d'un compte EXISTANT — l'attente ne se lève pas toute seule ; quel geste proposer ?
+**Juge humain** (décision produit). État : **à trier**.
+
