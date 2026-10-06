@@ -575,3 +575,23 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_cookie_profile.js` **16/0** (CP-00 invariant + CP-01 → CP-13) · 3 mutations **3/3** · bancs voisins
   verts · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
 
+### 🔐 AUTH-NEW-DEVICE-01 — `needsCode` N'EST JAMAIS « COMPTE INTROUVABLE » (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-new-device-01`, NON PUBLIÉ) — P1 intégrité
+- **Origine** : audit « sécurisation des comptes existants » (06/10, lecture seule). Sur un NOUVEL appareil, un compte existant
+  SANS code perso : `loadProfile` répond `auth` + `needsCode` (lecture stricte), et « COMMENCER » tombait dans le même `else` que
+  `not_found` → inscription d'un compte NEUF → `saveProfile` de bienvenue puis instantanés à l'email seul, que le serveur accepte
+  encore (transition S1, `_MIG_FERME_ = false`) et qui REMPLACENT les séances (garde-fou « vide » seulement sous 30).
+- **Preuve** : sonde sur le vrai `Code.js` (20 séances en ligne → 1) + banc AN rejoué sur `060d13ad` : AN-01 et AN-09 ROUGES
+  (bienvenue + 2 instantanés, 6 écritures portant l'email). **Aucun incident terrain prouvé** (P2, pas de P3).
+- **Correctif (client seul)** : seul `not_found` crée un compte ; un refus `auth` garde l'email EN ATTENTE (`_restauPoser`, le
+  propriétaire de COOKIE-PROFILE-01 — donc le garde central coupe profil, miroir et séances) et ne termine pas l'inscription ;
+  toute autre réponse est traitée comme le réseau. `needsCode` → « ce compte n'a pas encore de code perso » + le parcours EXISTANT
+  « Protéger mon compte » (inscription, « Restaurer mes données », Profil → Restaurer) ; un compte AVEC code → le code existant,
+  comme avant. Après la pose du code, `_reprendreApresProtection` : jeton tout de suite (`_ftBootstrapJeton`), refus effacé, puis
+  restauration par les chemins existants (`obDoRestore` / `doRestoreAccount`), jamais d'envoi avant. Le jeton rendu par
+  `verifyConfirmCode` est enfin conservé (`_setFtToken`) — le client le jetait.
+- **Hors lot, inchangé** : `_MIG_FERME_`, Code.js, Worker, anti-brute-force, longueur du code, appareil partagé, Lot 2 (textes et
+  rappels). Un compte sans code reste écrasable par quelqu'un qui connaît l'email et écrit **hors de l'app** : seul `_MIG_FERME_` le
+  fermera (décision de Michel).
+- **Contrôles** : banc `tools/banc_auth_new_device.js` **16/0** (AN-01 → AN-10 + 01b, 02b, 03a, 03b, 09b, 10b) · 3 mutations **MUT_AN** ·
+  bancs voisins **VOISINS_AN** · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
+

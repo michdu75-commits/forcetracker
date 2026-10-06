@@ -7601,14 +7601,18 @@ async function obDoRestore(){
   if(!email){toast('Entre ton adresse email','error');return;}
   if(!_obEmailValide(email)){toast('Cet email ne semble pas valide (exemple : prenom@gmail.com)','error');return;}
   if(!S.url){toast('URL Google Sheets manquante','error');return;}
-  S.email=email;persist();
+  /* 🔐 AUTH-NEW-DEVICE-01 — l'email est posé AVANT la réponse (comme avant), donc l'attente de restauration aussi :
+     tant que ce compte n'est ni récupéré ni déclaré introuvable, rien ne part vers le cloud à son nom. */
+  S.email=email;_restauPoser();persist();
   toast('Restauration en cours…','info');
   try{
     const data=await _fetchRestoreRaw(email,_OB_DELAI_MS);   // ONBOARDING-QUICK-01 : borné, comme COMMENCER
-    if(data&&data.error==='auth'){ const hadCode=!!_authCode(); if(hadCode)_setAuthCode(''); _obShowCodePrompt(hadCode); return; }
+    if(data&&data.error==='auth'){ const hadCode=!!_authCode(); if(hadCode)_setAuthCode(''); _obShowCodePrompt(hadCode&&!data.needsCode,!!data.needsCode); return; }
+    if(data&&data.status==='not_found')_restauResolue();   // vraiment introuvable : l'absence est résolue
     if(!data||data.error||data.status==='not_found'){toast(data&&data.error?data.error:'Aucun profil trouvé pour cet email. Enregistre d\'abord ton profil depuis l\'appli.','error');return;}
     _obDataRestored=true;
     _applyRestoreData(data);
+    _restauResolue();
     const cta=document.getElementById('ob-cta-title');
     if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
     const emailSec=document.getElementById('ob-email-section');
@@ -7618,16 +7622,32 @@ async function obDoRestore(){
   }catch(e){toast((e&&e.name==='AbortError')?'Le serveur ne répond pas — réessaie dans un instant.':e.message,'error');}
 }
 
+/* 🔐 AUTH-NEW-DEVICE-01 — LE COMPTE EXISTE MAIS N'A PAS DE CODE (`needsCode`). Lui réclamer « ton code perso », c'est
+   l'envoyer chercher un code qui n'existe pas (impasse mesurée par l'audit du 06/10). On propose le parcours EXISTANT :
+   « Protéger mon compte » (code reçu par email + code perso), puis la récupération se fait toute seule
+   (`_reprendreApresProtection`). Aucun mécanisme nouveau. */
+function _obTexteSansCode(){
+  return '<div style="font-size:13.5px;color:var(--gold);font-weight:700;line-height:1.45;margin-bottom:6px;">🔒 Ce compte existe déjà, mais il n\'a pas encore de code perso.</div>'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-bottom:8px;">Pour le retrouver sur ce téléphone, protège-le d\'abord : un code arrive par email, tu choisis ton code perso, et tes données reviennent. Rien n\'est écrit sur ton compte d\'ici là.</div>'
+    +'<button class="btn btn-red" onclick="openProtect()" style="width:100%;padding:14px;font-size:16px;">🔒 Protéger et récupérer mon compte</button>';
+}
 // Onboarding : compte protégé → demander le code perso et réessayer
-function _obShowCodePrompt(wrong){
+function _obShowCodePrompt(wrong,sansCode){
   const host=document.getElementById('ob-1-restore');if(!host)return;
   let el=document.getElementById('ob-code-wrap');
   if(!el){el=document.createElement('div');el.id='ob-code-wrap';el.style.marginTop='10px';host.appendChild(el);}
+  if(sansCode){ el.innerHTML=_obTexteSansCode(); return; }
   el.innerHTML='<div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px;line-height:1.4;">'+(wrong?'❌ Code incorrect.':'🔒 Ce compte est protégé.')+' Entre ton code perso&nbsp;:</div>'
     +'<input class="ob-inp" id="ob-code-inp" type="password" inputmode="numeric" autocomplete="off" placeholder="Ton code" style="font-size:16px;">'
     +'<button class="btn btn-red" onclick="_obSubmitCode()" style="width:100%;margin-top:8px;padding:14px;font-size:16px;">Valider le code</button>';
   const c=document.getElementById('ob-code-inp');
   if(c){setTimeout(()=>c.focus(),120);c.addEventListener('keydown',e=>{if(e.key==='Enter')_obSubmitCode();});}
+}
+// AUTH-NEW-DEVICE-01 : même geste que _obSubmitCode, depuis l'écran « COMMENCER » (on revérifie, on ne suppose rien)
+function _obCodeFinal(){
+  const c=document.getElementById('ob-code-final');const code=(c?c.value:'').trim();
+  if(!code){toast('Entre ton code','error');return;}
+  _setAuthCode(code);_obEmailMsg('');obCheckEmailAndFinish();
 }
 function _obSubmitCode(){
   const c=document.getElementById('ob-code-inp');const code=(c?c.value:'').trim();
@@ -7665,8 +7685,25 @@ async function obCheckEmailAndFinish(){
       _applyRestoreData(data);
       toast('Profil restauré ✅','success');
       finishOnboarding();
+    }else if(data&&data.status==='not_found'){
+      finishOnboarding();          // vraiment introuvable : nouveau compte, comme avant
+    }else if(data&&data.error==='auth'){
+      /* 🔐 AUTH-NEW-DEVICE-01 — ⛔ AVANT : ce refus tombait dans le `else` ci-dessus et l'inscription se terminait comme un
+         COMPTE NEUF → `saveProfile` de bienvenue puis instantanés à l'email seul (transition S1 encore ouverte) : 20 séances
+         en ligne → 1, mesuré sur le vrai Code.js. Le compte EXISTE : on le garde en attente (aucune écriture cloud, garde
+         central COOKIE-PROFILE-01), on ne termine PAS l'inscription, et on propose la seule sortie qui le récupère. */
+      S.email=emailFinal;_restauPoser();persist();
+      _obEnvoi=false;btn.disabled=false;btn.textContent='⚡ COMMENCER';
+      const hadCode=!!_authCode(); if(hadCode)_setAuthCode('');
+      const autre=' — ou <span onclick="obContinuerSansEmail()" style="text-decoration:underline;cursor:pointer;">continue sans email</span>.';
+      if(data.needsCode) _obEmailMsg(_obTexteSansCode()+'<div style="font-size:12.5px;margin-top:6px;color:var(--t2);">Ce n\'est pas ton compte ? Change d\'email'+autre+'</div>');
+      else if(data.blocked) _obEmailMsg('Trop d\'essais sur ce compte — réessaie demain'+autre);
+      else _obEmailMsg('🔒 '+(hadCode?'Code incorrect.':'Ce compte est protégé par un code perso.')+' Entre ton code&nbsp;:'
+        +'<input class="ob-inp" id="ob-code-final" type="password" inputmode="numeric" autocomplete="off" placeholder="Ton code" style="font-size:16px;margin-top:6px;">'
+        +'<button class="btn btn-red" onclick="_obCodeFinal()" style="width:100%;margin-top:8px;padding:14px;font-size:16px;">Valider le code</button>'
+        +'<div style="font-size:12.5px;margin-top:6px;color:var(--t2);">Ce n\'est pas ton compte ? Change d\'email'+autre+'</div>');
     }else{
-      finishOnboarding();
+      throw new Error('réponse inattendue');   // erreur serveur : traitée comme le réseau, jamais comme « introuvable »
     }
   }catch(e){
     /* ⛔ AVANT : une erreur ou un réseau qui pend finissait l'inscription comme un PROFIL NEUF avec cet email — donc
@@ -7740,7 +7777,9 @@ function verifyEmailCode(){
   fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'verifyConfirmCode',email:S.email,code:code})})
     .then(r=>r.json()).then(d=>{
       if(btn){btn.disabled=false;btn.textContent='Vérifier';}
-      if(d&&d.status==='ok'){ S.emailVerified=true; persist(); closeEmailConfirm(); _renderEmailVerifyCard(); toast('✅ Email confirmé, merci !','success'); }
+      /* 🔐 AUTH-NEW-DEVICE-01 — le serveur rend un jeton d'appareil ici (S1, `handleVerifyConfirmCode_`) : c'est la
+         2ᵉ preuve prévue par le dossier S1 (§3). Le client le JETAIT — un seul propriétaire, `_setFtToken`. */
+      if(d&&d.status==='ok'){ if(d.token)_setFtToken(d.token); S.emailVerified=true; persist(); closeEmailConfirm(); _renderEmailVerifyCard(); toast('✅ Email confirmé, merci !','success'); }
       else if(d&&d.status==='expired'){ toast('Code expiré — renvoie-en un nouveau','error'); }
       else if(d&&d.status==='toomany'){ toast('Trop d\'essais — renvoie un nouveau code','error'); }
       else if(d&&d.status==='nocode'){ toast('Aucun code en attente — clique « Renvoyer »','error'); }
@@ -7871,6 +7910,26 @@ function openProtect(){
     .catch(()=>{_protectStatus={hasCode:!!_authCode(),emailVerified:!!S.emailVerified};_renderProtect();_majBoutonProtect();});
 }
 function closeProtect(){const ov=document.getElementById('ov-protect');if(ov)ov.classList.remove('open');}
+/* 🔐 AUTH-NEW-DEVICE-01 — LE CODE VIENT D'ÊTRE POSÉ : L'APPAREIL LE SAIT TOUT DE SUITE, SANS REDÉMARRAGE.
+   ① le jeton d'appareil (propriétaire existant `_ftBootstrapJeton`, preuve = le code) → Milo et le miroir le voient ;
+   ② le refus d'authentification affiché s'éteint ;
+   ③ si ce compte attendait d'être RÉCUPÉRÉ sur cet appareil (`_restauAttendue`), on le récupère maintenant, par les
+      chemins de restauration existants — jamais d'envoi avant ; sinon (appareil qui a déjà ses données), sync. */
+async function _reprendreApresProtection(){
+  try{ await _ftBootstrapJeton(); }catch(e){}
+  try{ localStorage.removeItem('ft4_auth_refus'); }catch(e){}
+  window._ftAuthRefusee=false;
+  if(!(typeof _restauAttendue==='function'&&_restauAttendue())){ if(typeof _cloudSync==='function')_cloudSync(); return; }
+  closeProtect();
+  if(!localStorage.getItem('ft4_ob2')){
+    const e=document.getElementById('ob-email'); if(e)e.value=S.email||'';
+    const f=document.getElementById('ob-email-final'); if(f)f.value='';
+    try{_obEmailMsg('');}catch(e2){}
+    const w=document.getElementById('ob-code-wrap'); if(w)w.innerHTML='';
+    return obDoRestore();
+  }
+  if(typeof openRestoreAccount==='function'){ openRestoreAccount(); return doRestoreAccount(); }
+}
 function _renderProtect(mode){
   const b=document.getElementById('protect-body');if(!b)return;
   const st=_protectStatus||{};
@@ -7960,6 +8019,7 @@ function protectActivate(){
         try{_renderEmailVerifyCard();}catch(e){}
         _protectStatus={hasCode:true,emailVerified:true};_renderProtect();
         toast('Compte protégé ✅','success');
+        _reprendreApresProtection();
       }else{toast(_protectErr(d),'error');if(btn){btn.disabled=false;btn.textContent='✅ Activer la protection';}}
     })
     .catch(()=>{toast('Erreur réseau, réessaie','error');if(btn){btn.disabled=false;btn.textContent='✅ Activer la protection';}});

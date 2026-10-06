@@ -3676,6 +3676,11 @@ function _restoreSubmitCode(){
   doRestoreAccount();            // relance → si le code est bon, la restauration s'applique
 }
 
+// AUTH-NEW-DEVICE-01 : compte sans code → le parcours EXISTANT « Protéger mon compte » ; la restauration suit d'elle-même
+function _restaurerProtegerCompte(){
+  try{document.getElementById('ov-restore-account').classList.remove('open');}catch(e){}
+  if(typeof openProtect==='function')openProtect();
+}
 function openRestoreAccount(){
   const ov=document.getElementById('ov-restore-account');
   if(!ov)return;
@@ -3706,7 +3711,19 @@ async function doRestoreAccount(){
     if(data&&data.error==='auth'){
       const hadCode=!!_authCode();
       if(hadCode)_setAuthCode('');           // le code tenté était faux → on l'enlève
+      /* 🔐 AUTH-NEW-DEVICE-01 — on bascule sur un compte EXISTANT pas encore récupéré : si c'est un autre email que celui
+         de l'appareil, ou que l'appareil n'a rien, ses instantanés locaux ne doivent pas partir vers ce compte. */
+      const _prevEmail=String(S.email||'').trim().toLowerCase();
+      if(_prevEmail!==email||!(S.sessions&&S.sessions.length))_restauPoser();
       S.email=email;
+      if(data.needsCode&&st){
+        st.style.display='block';st.style.color='var(--orange)';
+        st.innerHTML='🔒 Ce compte existe, mais il n\'a pas encore de code perso — il n\'y a donc aucun code à saisir. '
+          +'Pour le récupérer ici, protège-le d\'abord (code reçu par email, puis ton code perso) : la restauration se fera ensuite toute seule.'
+          +'<button onclick="_restaurerProtegerCompte()" style="margin-top:8px;width:100%;padding:11px;border:none;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;">🔒 Protéger et récupérer mon compte</button>';
+        if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+        return;
+      }
       if(st){
         st.style.display='block';st.style.color='var(--orange)';
         st.innerHTML=(hadCode?'❌ Code incorrect. ':'🔒 Ce compte est protégé. ')+'Entre ton code perso&nbsp;:'
@@ -3737,6 +3754,7 @@ async function doRestoreAccount(){
     // Écrire l'email dans S AVANT _applyRestoreData pour que persist() l'inclue
     S.email=email;
     _applyRestoreData(data); // remplit S + persist() → localStorage uniquement, sync cloud désactivé
+    if(typeof _restauResolue==='function')_restauResolue();   // AUTH-NEW-DEVICE-01 : compte récupéré, l'attente tombe
 
     const nbSess=S.sessions&&S.sessions.length||0;
     const nbPrs=S.prs&&Object.keys(S.prs).length||0;

@@ -39582,6 +39582,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   /* 🛡️ COOKIE-PROFILE-01 (session-B, 06/10/2026) — un cookie `ft_email` n'est qu'un indice : aucune écriture cloud pour cet
      email tant que le profil n'est pas réellement récupéré ou déclaré introuvable. Banc : tools/banc_cookie_profile.js. */
   await require('./cookie_profile.js').ecran(t, b, PORT);
+  /* 🔐 AUTH-NEW-DEVICE-01 (session-B, 06/10/2026) — sur un nouvel appareil, `needsCode` (compte existant sans code) n'est plus
+     jamais lu comme « compte introuvable » : ni inscription d'un compte neuf, ni instantané par-dessus ; le parcours existant
+     « Protéger mon compte » mène à la restauration. Banc : tools/banc_auth_new_device.js. */
+  await require('./auth_new_device.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
