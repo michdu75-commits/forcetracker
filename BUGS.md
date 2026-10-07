@@ -481,6 +481,16 @@ Couverture réelle, mesurée le 02/08 :
 *Les trous de ② et ③ ne sont pas des trous du contrôle mais des trous de DONNÉE : ajouter une
 animation ou un terme anglais élargit mécaniquement la détection.*
 
+### 🔄 Deux copies du même prompt d'import *(06/10/2026, IMPORT-ECH-01)*
+L'import de programme passe par le **Worker** depuis ft-v433 (`PROG_PROMPT`) — une copie **ancienne** de la
+consigne d'Apps Script. Il lui manque la règle « lignes ECH / TRAV du même exercice = UN exercice »
+(`setTypePerSet`), le catalogue (ft-v1164, envoyé par l'app mais ignoré) et les repos (ft-v1176). Le modèle
+rendait donc une ligne = un exercice, au nom nu, et le filet client ne reconnaissait un échauffement qu'à
+« (ECH) » en fin de nom. Terrain : « Développé Couché » en cinq cartes d'une série, chacune « Déjà présent ».
+🛡️ Corrigé **côté client seulement** (`_mergeImportBlocsEch`, `log.js` : un bloc continu du même exercice qui
+commence par une preuve d'échauffement = un exercice). ⛔ **Les deux prompts restent divergents (R2)** : les
+aligner touche le Worker — décision de Michel, non ouverte.
+
 ---
 
 ## 8. 🤥 La promesse écrite à l'utilisateur, et fausse
@@ -1653,6 +1663,17 @@ c'est « ça défile AUTANT QUE CHEZ LA PERSONNE ».**
 pouvait pas rougir ; ici le vert est **sincère**, il porte simplement sur un écran qui n'est pas
 celui de la personne. *Les deux coûtent le même prix — on cherche le défaut au mauvais endroit.*
 
+### 🔄 La variante ÉTAT : la fixture qui n'avait jamais fini l'inscription *(06/10/2026, qualification ft-v1251)*
+ONBOARDING-QUICK-01 a posé une règle juste : **aucune annonce par-dessus une inscription en cours**
+(`checkAnnouncements` se tait sans `ft4_ob2`). La page du runner complet ne posait **jamais** ce repère : sans le
+savoir, le bloc F (« Christophe voit SON annonce », « Eline voit LA SIENNE ») testait depuis des semaines une
+personne en pleine inscription. Tant que l'app ignorait cet état, c'était sans effet ; le jour où elle l'a lu, le
+bloc a rougi — **à la passe complète seulement**, aucun banc du lot ne l'exécutant. Le produit n'était pas cassé :
+Christophe et Eline sont inscrits depuis juillet. **Mis à jour (R30)** : le bloc pose le repère le temps du test,
+puis rend l'état d'avant ; le silence pendant l'inscription reste gardé par le banc OBQ.
+👉 *Une fixture décrit un état, qu'elle le dise ou non : quand le code apprend à lire un état, chaque fixture qui
+ne l'a jamais déclaré en choisit un sans le savoir.*
+
 ## 23. 🔢 UN CHAMP QUI « REFUSE » UNE SAISIE PEUT EN FAIT LA MUTILER *(30/08/2026, ft-v1057)*
 
 ### Ce qui s'est passé
@@ -1879,6 +1900,15 @@ de ft-v296 : corriger une étiquette. **Elle est devenue fausse par décision de
 ft-v1250)** : le remplacement change d'exercice, les séries faites restent à l'exercice d'origine
 (§13). Le témoin CLXXVIII a évolué avec sa raison écrite ; ce qu'il garde de l'esprit d'origine : le
 remplacement **marche** et **ne perd rien**.
+
+### 🔄 6ᵉ cas : « continuer sans email » ne quittait pas l'ancien compte *(06/10/2026, D1, AUTH-CLOUD-CLOSURE-01)*
+`finishOnboarding` vidait `S.email`, mais l'email vivait à **trois** autres endroits : `ft4_email`, le cookie
+`ft_email`, IndexedDB. Au rechargement, `index.html` réinjectait le cookie ; l'ancien compte A revenait, était
+restauré par-dessus le nouveau profil local, et les pesées et séances partaient vers A. 🛡️ `_oublierEmailLocal()`
+(`app.js`, un propriétaire) efface les quatre, quand l'inscription abandonne l'attente sans email et sur
+« introuvable ». ⚠️ **Défaut voisin, connu et NON corrigé** : `_getEmailFromIDB` lit `r.result` sur l'événement
+au lieu de `r.target.result` — elle rend **toujours** `null`, le repli IndexedDB n'a jamais fonctionné ; le réparer
+activerait un chemin de restauration jamais éprouvé.
 
 ---
 
@@ -2123,6 +2153,19 @@ témoin qui pose l'état à la main ne voit pas le chemin qui y mène).
 ⛔ **NON CORRIGÉ au 04/10/2026 (ft-v1250).** Date d'introduction déduite de l'historique git, pas
 rejouée.
 
+### 🔄 Protéger le compte B en effaçant le jeton de A *(06/10/2026, qualification nocturne ft-v1251)*
+AUTH-CLOUD-CLOSURE-01 (T-JETON) a lié le jeton d'appareil à son compte — c'était juste : avant, le jeton de A
+partait avec les données de B, et le serveur, qui fait gagner le jeton, écrivait B dans A. Mais sa première version
+**effaçait** le jeton dès que le compte courant n'était pas le sien. Or une règle plus ancienne dit l'inverse :
+**MILO-AUTH1, « aucun code client n'efface le jeton »** (témoin B-CCCLXXV ⑥, `tests/parcours/auth_ia.js`). Le banc
+du lot et ses voisins étaient verts ; c'est la série large de la nuit qui a rougi. Mesuré sur une sonde :
+**A → B → A perdait le jeton de A** — revenir sur son propre compte redemandait la preuve.
+🛡️ Correctif minimal (`constants.js`, même propriétaire) : le jeton d'un autre compte n'est **jamais envoyé, et
+jamais effacé** ; il resert dès que son compte revient. Témoin AC-09 (A → B → sans email → A), mutation M3
+(effacement réintroduit) rouge, `tools/mut_auth_ia.py` 8/8.
+👉 *Retirer l'état de A pour protéger B n'est pas une protection, c'est un échange — et seul un banc qui connaît
+les deux règles à la fois peut le voir.*
+
 ---
 
 ## 31. 🎯 LE TÉMOIN VISÉ SUR UNE FORME, PAS SUR SA GARANTIE **(01/09/2026, ft-v1092)**
@@ -2192,6 +2235,13 @@ sortait « enseigne », « rien », « hors ligne » comme des produits introuva
 trop large ne mesure pas la promesse, il mesure la mise en forme.* Éprouvé **dans les deux sens**
 sur le vrai corpus (rouge sur `mcnuggets`, vert sur `big mac` et `tenders kfc`).
 
+
+### 🔄 « Récap » renommé par une décision *(06/10/2026, qualification ft-v1251)*
+Le témoin du bloc G (« les manques signalés par Michel y sont : récap séances… ») cherchait le **mot** `récap`
+dans la liste Premium. D-052 (le débrief se demande) a réécrit l'avantage : « L'avis de Milo sur tes séances — à ta
+demande » (`be96455f`). L'ancien libellé, « Le récap de **chaque** séance », serait **faux** aujourd'hui. Rouge à
+la passe complète de la nuit, aucun banc du lot ne lisant cette liste. **Mis à jour (R30)** sur la garantie :
+l'avantage est présent, et la promesse « de chaque séance » est absente.
 
 ## 32. 🔗 L'ALLER-RETOUR CASSÉ AU MILIEU — les deux bouts sont justes, le maillon central n'existe pas **(01/09/2026, ft-v1093)**
 
@@ -2442,6 +2492,14 @@ Quand on borne une valeur, chercher **tout de suite** qui d'autre écrit dans le
 moins. ⛔ Et **on écarte la valeur, pas tout le document** : le reste de la lecture est
 peut-être bon (règle d'or #3). ⭐ Le refus **nomme la source** — *« la lecture de la photo s'est
 trompée »* — parce que c'est là que la personne doit regarder, pas dans ses propres doigts.
+
+### 🔄 Le cookie `ft_email` : un indice traité comme une preuve *(06/10/2026, COOKIE-PROFILE-01)*
+`index.html` posait `ft4_ob2=1` sur la seule foi du cookie (inscription « faite » sans rien vérifier) ;
+`autoConnect` ne restaurait que si le profil en ligne avait au moins une séance ; puis `persist()` lançait
+`_cloudSync` → un profil **par défaut** partait vers le compte existant. *Le chemin manuel (Restaurer)
+vérifiait ; le chemin automatique décidait seul.* 🛡️ Un état explicite à un seul propriétaire (`state.js`,
+`ft4_restau_attendue`) et un **garde central** (`_cloudSync`, `syncSheets`) : rien ne part tant que l'attente
+n'est pas résolue. P2 synthétique, aucun incident terrain prouvé.
 
 ---
 
@@ -2843,6 +2901,17 @@ l'écrire une fois, pour tout le monde.
 jumelles dès qu'on trouve une absence) et de **§32** (l'aller-retour cassé au milieu). ⚠️ Le cas
 dit aussi ce qui n'est PAS corrigé : le barème de récupération du cardio reste sur son plancher —
 le corriger demanderait d'inventer une échelle, et on ne l'invente pas (R29).*
+
+### 🔄 La variante RÉSEAU : un REFUS lu comme une ABSENCE — `needsCode` n'est pas `not_found` *(06/10/2026, AUTH-NEW-DEVICE-01 · AUTH-SIGNUP-STRICT-01)*
+`loadProfile` a trois réponses qui ne disent pas « voici le profil » : `not_found` (il n'existe pas), `auth` +
+`needsCode` (**je ne le dirai pas sans preuve**), et l'erreur réseau. « COMMENCER » rangeait `auth` dans le même
+`else` que `not_found` → compte **neuf** → profil de bienvenue et instantanés envoyés à l'email seul, que le
+serveur accepte encore (transition, `_MIG_FERME_ = false`) et qui **remplacent** les séances (mesuré sur le vrai
+`Code.js` : 20 → 1). Et en lecture stricte, un email **inconnu** reçoit lui aussi `needsCode` : le refus ne dit
+rien de l'existence du compte — d'où « Confirme cet e-mail pour continuer », et non « ce compte existe déjà ».
+🛡️ Seul `not_found` crée un compte ; `auth` garde l'email en attente (`_restauPoser`, garde central d'écriture) ;
+tout le reste est traité comme le réseau. Bancs AN et AS.
+👉 *Une réponse qui refuse de dire n'est pas une réponse qui dit non.*
 
 ### §40bis — LE BANC D'ESSAI FABRIQUE SES DATES EN UTC PENDANT QUE LA PAGE VIT À PARIS *(05/09/2026)*
 
@@ -4195,6 +4264,10 @@ lieu de laisser `pkill` choisir.
 👉 ***La règle générale : un motif qui cherche un processus ne doit jamais pouvoir se trouver
 lui-même.*** Si le motif est écrit dans la commande qui le cherche, il faut l'ancrer, ou le
 chercher ailleurs que dans sa propre ligne de commande.
+
+**⚠️ 5ᵉ FOIS (06/10/2026, qualification ft-v1251)** : pour relancer une passe, `pkill -f "tools/passe_valide.sh"`
+— le motif figurait dans la commande du shell qui l'exécutait : **le shell s'est tué lui-même** (code 144) pendant
+que la passe continuait, et il a fallu retrouver ses processus un par un. Même cause, même remède.
 
 ---
 

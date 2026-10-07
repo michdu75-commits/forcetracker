@@ -3407,9 +3407,17 @@ gardé) ? Vérifiable par du code : ✅. État : **à trier** (lot séparé).
 ### 🟢 OD-11 « CARTE INTROUVABLE » — CAUSE PROBABLE TRAITÉE DANS LE TEST (06/10/2026, package ft-v1251)
 La fixture du banc débrief n'avait pas de `ft4_wn_seen` : un « Quoi de neuf » s'ouvrait au démarrage de chaque test, par-dessus
 l'onglet visé. Repère posé (utilisateur à jour) ; aucun critère de réussite modifié. Mesuré ensuite : **3 exécutions sur 3 à 58/0**
-(dont une en parallèle d'un autre banc). ⚠️ Cause non PROUVÉE (pas d'enquête de jour) — à confirmer par la passe de nuit.
+(dont une en parallèle d'un autre banc). ↪️ **Nuit du 06/10 (qualification ft-v1251)** : OD-11 vert dans la passe complète n°1 (bloc B-OD-E) et les répétitions (8 exécutions du banc sur 9 à 58/0 ; la 9ᵉ à 57/1, témoin non conservé). ⚠️ **Mais la famille n'est pas éteinte** : OD-16, voisin (même attente de la carte dans Progrès, 3 s au plus), a rougi UNE fois pendant le contrôle négatif — sous la mutation M-OD13, un simple commentaire sans effet possible — puis vert au rejeu. Intermittence du banc, pas du produit ; cause non prouvée. État : **à trier**.
 
 ### 🟢 COOKIE `ft_email` + PROFIL INTROUVABLE — TRAITÉ (06/10/2026, COOKIE-PROFILE-01)
 L'entrée « à trier » du même jour est devenue un correctif : banc `cookie_profile` (16 témoins, dont l'invariant CP-00). ❓ **Doute
 restant** : données locales sans email + cookie d'un compte EXISTANT — l'attente ne se lève pas toute seule ; quel geste proposer ?
 **Juge humain** (décision produit). État : **à trier**.
+
+### 🟡 APRÈS UN CHANGEMENT DE COMPTE SUR LE MÊME TÉLÉPHONE, CE QUE B LIT DE MILO AVANT D'AVOIR PROUVÉ SON EMAIL (06/10/2026 — qualification ft-v1251)
+Depuis T-JETON, le jeton de A n'est **jamais** envoyé pour B (AC-03, AC-09). Tant que B n'a pas fait sa vérification, ses appels
+à Milo partent **sans jeton**, et le Worker répond 401 « Reconnecte ton appareil pour utiliser Milo 👍 » (lu dans `worker.js`).
+AC-06 prouve que tout revient dès la protection de B — mais ce que B **voit** entre les deux n'a pas été regardé. ❓ **Doute** :
+pour quelqu'un qui vient de taper son email sur un téléphone déjà utilisé, « reconnecte ton appareil » dit-il quoi faire, ou
+ressemble-t-il à une panne ? Vérifiable par du code : ✅ (passage A → B, un message à Milo, Worker simulé qui refuse sans jeton,
+lecture de la bulle). État : **à trier**.

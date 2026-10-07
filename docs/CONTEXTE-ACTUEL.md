@@ -10,8 +10,9 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1250` — 🛡️ SESSION-INTEGRITY-01 : remplacement sémantique, faux débrief refusé, débrief rangé à sa séance (« Voir le débrief Milo », export avec / sans, local, sans plafond, supprimé avec la séance), première référence ≠ record, séance jugée contre le record d'avant elle. Worker et Apps Script inchangés.
-- Prochaine : `ft-v1251`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
+- **Version en ligne (live) :** `ft-v1251` — ⚠️ **NUMÉRO POSÉ, VERSION NON PUBLIÉE** : qualifiée et prête à publier sur `claude/ft-v1251-night-qualification`. **La production reste `ft-v1250`** (master `a1e39739`) tant que Michel n'a pas donné son feu vert. *Le libellé « en ligne » est imposé par le contrôle 17 de `check_regles` (cette puce = le numéro de `sw.js`) ; il redevient exact à la publication.*
+- **Version précédente — TOUJOURS EN PRODUCTION jusqu'au feu vert :** `ft-v1250` — 🛡️ SESSION-INTEGRITY-01 : remplacement sémantique, faux débrief refusé, débrief rangé à sa séance (« Voir le débrief Milo », export avec / sans, local, sans plafond, supprimé avec la séance), première référence ≠ record, séance jugée contre le record d'avant elle. Worker et Apps Script inchangés.
+- Prochaine : `ft-v1252`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
 
 ## 🧊 Contraintes en vigueur — décisions actées (règle d'or #15)
 
@@ -22,6 +23,7 @@
 ## 🧭 État au 03/10/2026 soir (DOC-SYNC-03OCT) — trois niveaux à ne pas confondre
 
 - **PRODUCTION / MASTER** : `origin/master` `935388d5` = **`ft-v1250`** (publié le 04/10 à 19:38 UTC, Pages run n°1339 SUCCESS) — SESSION-INTEGRITY-01 y est actif ; les branches non publiées ci-dessous ne le sont pas.
+- **🌙 BRANCHE QUALIFIÉE, PRÊTE À PUBLIER — NON PUBLIÉE : `ft-v1251`** (06/10, session-B) : `claude/ft-v1251-night-qualification`, HEAD qualifié `fddcfde4` + un seul commit de version et documentation (passe complète **5 967 ✅ / 0 ❌** sur `fddcfde4`, 4 conditions vertes ; après elle, documentation seulement). Contient E5 et DEBRIEF-ON-DEMAND-01 (**D-052** : l'avis de Milo se demande) · ONBOARDING-QUICK-01 · « Quoi de neuf » v76 · COOKIE-PROFILE-01 · AUTH-NEW-DEVICE-01 · AUTH-CLOUD-CLOSURE-01 · AUTH-SIGNUP-STRICT-01 · IMPORT-ECH-01, plus le correctif nocturne du jeton (MILO-AUTH1). **Ne contient pas NUT-PUNCH-01.** Numéro `ft-v1251` posé dans `sw.js` et `CLAUDE.md` après la passe ; ⛔ **publication = feu vert de Michel** (avance rapide de master, sans autre commit). Étapes et défauts connus : `docs/SUIVI-AUDIT.md` (qualification nocturne).
 - **🌿 BRANCHE NON PUBLIÉE — NUT-PUNCH-01** (coup de poing Nutrition, session-B) : **TERMINÉ SUR BRANCHE, NON PUBLIÉ, aucune version, PRÊT POUR CONTRE-VÉRIFICATION**. Branche `claude/nut-punch-01`, HEAD `50546011` (documentaire ; passe complète 5 873 ✅ / 0 ❌ sur l'arbre `b9c11776`, 4 conditions vertes ; 60 mutations conformes ; 0 appel réel). Son détail vit **sur la branche** (`docs/NUT-PUNCH-01.md`, sa ligne ici, `SUIVI-AUDIT`, `JOURNAL-DE-TEST`, `NUTRITION-MOTEUR` §5.0) : il n'est **pas** recopié sur master pour ne pas créer de doublon — ⚠️ **à la fusion, garder la ligne détaillée de la branche et retirer celle-ci.** Prochaine étape : contre-vérification indépendante, puis décision de publication de Michel.
 - **🔬 DIAGNOSTIC — SESSION-MILO-E2E-01** (audit forensique du parcours réel du 03/10) : **DIAGNOSTIC TERMINÉ, AUCUNE CORRECTION**, 0 appel IA réel. Synthèse : `docs/SESSION-MILO-E2E-01.md`.
   - **P0** — remplacement d'exercice **hybride** (le nom change, les séries restent ; validé sans corriger, il contamine séance, PR, historique, Progrès et Milo).
