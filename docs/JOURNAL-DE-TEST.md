@@ -3421,3 +3421,17 @@ AC-06 prouve que tout revient dès la protection de B — mais ce que B **voit**
 pour quelqu'un qui vient de taper son email sur un téléphone déjà utilisé, « reconnecte ton appareil » dit-il quoi faire, ou
 ressemble-t-il à une panne ? Vérifiable par du code : ✅ (passage A → B, un message à Milo, Worker simulé qui refuse sans jeton,
 lecture de la bulle). État : **à trier**.
+
+### 🟡 MILO NE SAIT PAS QUEL PROGRAMME EST « EN COURS », ALORS QUE L'APP LE SAIT DÉSORMAIS (07/10/2026 — LOT 1 IMPORT PROGRAMME, branche)
+Le Lot 1 pose un statut « en cours » (0 ou 1 programme) et des versions, mais le contexte de Milo est **inchangé** (D-067,
+R34) : il reçoit toujours les 3 derniers programmes, **archivés compris**, et la phrase « CE QU'ELLE NE SAIT PAS : lequel
+est ACTIF aujourd'hui, sa version ». ❓ **Doute** : quand Michel demande « je fais quoi aujourd'hui ? », Milo propose-t-il
+un jour d'un programme **archivé** ou d'une ancienne copie ? Le banc réel n'a pas tourné (0 appel). Vérifiable par du code :
+✅ (un programme archivé + un en cours, chercher le nom du jour proposé). État : **à trier**.
+
+### 🟡 DEUX PROGRAMMES DE MÊME NOM : MILO PARLE-T-IL DU BON ? (07/10/2026 — LOT 1 IMPORT PROGRAMME, branche)
+Le Lot 1 laisse coexister deux programmes du même nom (D-061 : un même nom n'est jamais une preuve). Le contexte de Milo
+les désigne **par leur nom seul**, et le lien séance → programme qu'il reçoit passe encore par `progLabel` (le progRef,
+lui, n'est pas transmis). ❓ **Doute** : « Bloc 1 » et « Bloc 1 » (v1 et une copie modifiée) — Milo mélange-t-il les deux
+dans son analyse ? Vérifiable par du code : ⚠️ en partie (deux programmes homonymes aux exercices différents, chercher un
+exercice de l'un attribué à l'autre). État : **à trier**.

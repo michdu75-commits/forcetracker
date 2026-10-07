@@ -71,7 +71,7 @@ c'est la section elle-même qui fait foi.
 | 40 → 50 | vérificateur sur une tournure de langue · nombres verts, écran faux · cas sans l'attribut habituel lu comme « rien » · deux portes, une équipée · coupe d'affichage · définition qui essaime · correctif dans le prompt · plancher qui éteint le pourcentage · porte de secours absente · action silencieuse · règle générale lue sans la spécifique |
 | 51 → 57 | trois chemins, une ligne sans origine · frappe lettre par lettre · deux comparaisons pour une question · le commentaire dit vrai, pas le code · total séparé de sa quantité · bloc resté visible · le DOM comme mémoire |
 | §58 et 58 | **deux sections portent 58** : « une porte sans témoin » (§58) · « un témoin qui pose l'état final à la main » (58) |
-| §59 → §66 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée |
+| §59 → §67 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée · programme désigné par son nom ou sa position |
 
 ---
 
@@ -4426,3 +4426,47 @@ de repas, de programme, d'historique, et bilan sanguin. *Une lecture partielle n
 la leçon de ce paragraphe, appliquée à une lecture au lieu d'une génération.
 ⛔ **NON CORRIGÉ au 04/10/2026 (ft-v1250).** Le besoin produit est noté dans `IDEES-FUTURES.md`
 (import de documents).
+↪️ **07/10/2026 — LOT 1 IMPORT PROGRAMME (branche, NON publié)** : pour l'import de **programme** seulement, la
+limite de pages est désormais **refusée avec un message** (D-056) au lieu d'être tronquée — un PDF de 22 pages n'est
+plus lu à moitié. ⛔ `_pdfToImages` reste **inchangé** pour l'import d'historique et le bilan sanguin (hors périmètre,
+D12) : ces deux portes tronquent toujours en silence.
+
+## §67 — ⛔⛔ UN PROGRAMME SANS IDENTITÉ PROPRE : LE NOM ET LA POSITION FONT OFFICE DE CLÉ *(07/10/2026, LOT 1 IMPORT PROGRAMME — branche, NON publié)*
+
+**C'est §13 (le nom comme clé primaire) appliqué aux programmes, avec sa jumelle : la POSITION dans la liste.** Un
+programme n'avait ni identifiant ni version. L'app le retrouvait donc soit par son **nom**, soit par son **rang**.
+
+**Les cas mesurés sur `6969ce73`** (témoins écrits avant correction, 35 rouges) :
+- « 💾 Sauvegarder comme programme » **remplaçait sans demander** tout programme du même nom, casse ignorée : un
+  « Bloc X » de 3 jours sur 6 semaines devenait une séance à plat « bloc x ». *Le nom décidait d'une écriture.*
+- Charger, modifier, supprimer passaient un **nombre** (`loadProg(2)`, `deleteProg(2)`, `_editProgIdx`) : si la liste
+  bouge entre l'ouverture et le geste (suppression, import, synchronisation), c'est **le voisin** qui part ou qui est
+  réécrit. Et ✕ supprimait **en un tap**.
+- Le mode « mettre à jour » de l'import ciblait par le nom.
+
+**🔎 Comment le reconnaître** : une action sur un élément de liste qui reçoit un **index** ; un `find(p => p.name === …)`
+suivi d'une **écriture** ; un nom affiché comme seul moyen de distinguer deux objets.
+
+**🛡️ Ce qui protège (branche, non publié)** : un `id` stable par programme (migration déterministe et idempotente, en
+mémoire au chargement) ; toutes les actions par id ; **même nom = jamais une preuve** (D-061) — seule la même empreinte
+de document propose une mise à jour, un même nom n'ouvre qu'un choix explicite ; versions non destructives ; banc
+`import_prog_lot1` (51 témoins) et 25 contrôles négatifs (le code d'avant + 24 mutations) dont trois **déguisés** (la
+question est posée, mais la suppression vise l'index capturé au clic ; la migration « normalise » le contenu ; l'import
+vole le statut « en cours » case décochée).
+
+**⭐ Deux leçons de méthode payées pendant le lot** :
+- **Un témoin de présence n'est pas un témoin de visibilité.** Les deux nouvelles fenêtres s'ouvraient **derrière**
+  « Mes Programmes » (même `z-index`, placées plus haut dans le HTML) : le banc les trouvait dans le DOM, ouvertes, et
+  restait vert. Vu sur **capture d'écran**. Témoin corrigé : `elementFromPoint` au centre de l'écran doit tomber dans la
+  fenêtre ; mutation M22 (retour au `z-index` d'avant) le fait rougir.
+- **Un contrôle négatif qui ne rougit pas est une information, pas un échec du banc.** Au 1ᵉʳ tour, la mutation M20
+  (« plusieurs programmes peuvent être en cours ») est passée **verte** : le témoin vérifiait l'unicité avec un seul
+  programme capable d'être actif. En écrivant le témoin qui manquait (EC-01 → EC-04), un **vrai défaut** est sorti : un
+  choix manuel sur la case « en cours » restait collé aux imports suivants (drapeau jamais remis à zéro).
+- **Trois bancs voisins rougissaient pour une raison de SÉLECTEUR, pas de comportement** : ils cliquaient
+  `[onclick="loadProg(N)"]`. Le bouton est le même, l'argument est devenu l'id. Prouvé avant de les modifier (même
+  bouton cliqué, même garantie vérifiée) — un témoin périmé ne se « répare » pas, il se **met à jour sur sa garantie**.
+
+⛔ **Non couvert** : la même famille vit encore ailleurs — les **exercices** (§13, étapes ② et ③ non faites) et
+`_saveForceProgram` (coach.js), qui **renomme** « Nom 2 » en cas de collision au lieu d'écraser — non destructif, et le
+programme reçoit son id au `persist()` qui suit, mais deux programmes de Milo restent distingués à l'écran par un suffixe.

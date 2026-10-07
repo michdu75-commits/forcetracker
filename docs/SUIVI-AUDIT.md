@@ -709,3 +709,88 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   Passe D-031 finale : 5 967 / 0. ⚠️ Site servi **non lisible d'ici** (proxy : `CONNECT tunnel failed, response 403` vers github.io) :
   la version servie est établie par le déploiement Pages et `sw.js` de master, pas par une lecture du site. **Recette terrain iPhone à
   faire par Michel.** Les défauts reportés ci-dessus restent ouverts, comme dettes post-ft-v1251.
+
+### 📥 LOT 1 IMPORT PROGRAMME — CLIENT / DOCUMENT / IDENTITÉ / VERSIONNAGE / BIBLIOTHÈQUE (07/10/2026, session-B — ⚠️ BRANCHE `claude/import-programme-lot1-client` · NON PUBLIÉ)
+
+**Base** : master `6969ce73` (= `ft-v1251` en production). Brief de Michel du 07/10. ⚠️ La spec
+`SPEC-IMPORT-PROGRAMME-2026-10-07.pdf` citée par le brief est **introuvable** (dépôt, disque, Drive par titre et par
+contenu) : le lot est construit sur le brief, dont les décisions priment. **Worker, `Code.js`, routes de `constants.js` :
+non modifiés** (lecture seule). **0 appel IA réel**, aucun déploiement.
+
+**📍 État terrain après `ft-v1251` (ce que Michel voit aujourd'hui, et que ce lot traite côté client)** : plusieurs copies
+d'un même programme importé, **difficiles à distinguer** (même nom, rien d'autre à l'écran) ; l'app les désignait par
+**nom** (« Sauvegarder comme programme », mode « mettre à jour » de l'import) ou par **position** dans la liste (charger,
+modifier, supprimer) — deux identités insuffisantes. ⛔ **Le Worker n'est PAS corrigé par ce lot** : sa consigne d'import
+reste celle de `ft-v1251` (en retard sur Apps Script, R2 — décision de Michel) ; les programmes qu'il renvoie ne sont pas
+normalisés autrement qu'avant. C'est le **Lot 2**, qui attend un nouveau feu vert.
+
+**Défauts mesurés sur `6969ce73` (témoins écrits AVANT correction : 35 rouges / 9 verts, journal hors dépôt)** :
+1. ⛔⛔ « 💾 Sauvegarder comme programme » **remplaçait sans demander** tout programme du même nom (casse ignorée) — un
+   « Bloc X » de 3 jours sur 6 semaines devenait une séance à plat « bloc x » (T-L1-01) ;
+2. ⛔⛔ charger / modifier / supprimer visaient l'**index** : si la liste bouge entre l'ouverture et l'action, le voisin est
+   touché (T-L1-03, T-L1-03b) ; ✕ supprimait **en un tap**, sans question (T-L1-02) ;
+3. aucun identifiant de programme, aucune version, aucun « en cours », aucune trace de la séance → programme (progRef) ;
+4. import : PDF de plus de 8 pages **tronqué en silence** ; image illisible sans `onerror` (attente sans fin) ; une réponse
+   vide comptée comme un import réussi (import gratuit consommé) ; aucune annulation, aucun délai ; pages perdues au
+   rechargement ; deux variantes « Séance A » / « Séance B » d'un même document fusionnables par la passe de fusion.
+
+**Ce que le lot construit (client seulement)** :
+- **Identité** : chaque programme reçoit un `id` stable (migration déterministe, idempotente, hors réseau, non destructive :
+  `'pm'+FNV(contenu)`, ids existants réservés d'abord, doublon d'id ré-identifié), faite **en mémoire** au chargement et
+  écrite à la prochaine sauvegarde (aucune écriture disque au démarrage). Toutes les actions passent par l'id (l'index reste
+  accepté pour compatibilité). Schéma **additif** : `schema`, `status`, `version`, `versionAt`, `versionReason`, `origin`,
+  `editedSinceImport`, `previousVersions`, `activeAt`, `archivedAt`, `doc` — le contenu n'est **jamais réinterprété**.
+- **Même nom ≠ même programme (D-061/D-062)** : « Sauvegarder comme programme » sur un nom existant ouvre un **choix**
+  (nouveau programme, ou mise à jour d'un programme désigné) ; un programme à jours n'est **jamais** proposé comme cible d'une
+  séance à plat. À l'import, seule la **même empreinte de document** propose la mise à jour ; un même nom n'affiche qu'un
+  avertissement et les candidats avec ce qui les distingue (version, origine, date, jours).
+- **Versions (D-055)** : import, réimport, réanalyse, restauration et **première** modification manuelle après import
+  créent une version ; jamais à chaque frappe ; « Avant / Après » ; une restauration **crée** une nouvelle version (rien
+  n'est réécrit en place). **Aucune purge** dans ce lot : la politique est **à trancher par Michel (D-069)**.
+- **En cours (D-053)** : 0 ou 1, par une seule fonction propriétaire ; case cochée par défaut à l'import s'il n'y en a pas ;
+  charger un jour ne change jamais le statut. **Archivage** et **suppression confirmée** (la suppression complète efface
+  aussi le document local ; séances et records intacts).
+- **progRef (D-057)** : `{id, version, day}` posé sur la séance chargée depuis un programme et gardé à la fin ; additif,
+  les anciennes séances restent valides ; modifier le programme ne touche jamais une séance passée (vérifié octet pour octet).
+- **ImportDocument (D-054)** : pages normalisées (JPEG ≤ 1 200 px), empreintes SHA-256, rangées en **IndexedDB locale**
+  (`ft_import`) — jamais dans `ft4_progs`, jamais dans le cloud, ni dans le contexte de Milo ; vignettes numérotées,
+  réordonner, pivoter de 90°, retirer, ajouter ; doublon exact refusé ; **reprise après rechargement**. Mode démo et
+  personas étanches (aucune écriture, aucune reprise).
+- **Porte unique (D-060)** : un seul bouton « 📄 Ajouter mon programme (photo, PDF…) » ; le téléphone propose lui-même
+  caméra / photothèque / fichiers.
+- **Erreurs (D-056)** : limite de pages **refusée avec un message** (jamais tronquée), fichier illisible, PDF corrompu,
+  réponse vide, erreur serveur, délai (150 s), annulation : un message clair, **rien n'est enregistré**, l'ancienne version
+  reste, l'import gratuit n'est pas décompté.
+- **Variantes A/B** : jamais fusionnées (`_seanceVariante`).
+
+**Preuves** : banc `tools/banc_import_prog_lot1.js` — **51 OK / 0 rouge** (35 rouges sur le code d'avant) ; contrôle négatif
+`tools/mut_import_prog_lot1.py` (M00 = le code d'avant + 24 mutations, dont 3 déguisées). ⭐ **Le contrôle négatif a
+servi** : au 1ᵉʳ tour, **M20** (« plusieurs programmes peuvent être en cours ») n'a rougi **aucun** témoin — FC-03 vérifiait
+l'unicité là où elle ne pouvait pas casser. Le bloc **EC-01 → EC-04** a été écrit pour elle, et en l'écrivant un **vrai
+défaut** est apparu : un choix manuel sur la case « en cours » restait collé aux imports suivants (corrigé, mutation M23) ;
+le statut « disponible » est aussi devenu **explicite** (il était implicite par absence) ; bancs voisins verts
+(travail_lot2 48/0, ml_a 34/0, ml_b 60/0, import_echauffement 11/0, session_integrity 93/0, lot3 87/0, debrief_demande 58/0,
+debrief_provenance 24/0). **Témoins périmés prouvés avant modification** : `travail_existant`, `dropset_programme`,
+`groupes_orphelins` cliquaient `[onclick="loadProg(N)"]` — le bouton est le même, l'argument est devenu l'id ; même garantie.
+Un défaut de rendu a été trouvé **sur capture**, pas par le banc : les deux nouvelles fenêtres s'ouvraient **derrière**
+« Mes Programmes » → corrigé, témoin de visibilité (`elementFromPoint`) et mutation M22 ajoutés.
+
+**Taille mesurée (§22, `tools/mesure_versions_programme.js`, vraies fonctions)** : ≈ 10,6 Ko par version d'un programme type
+Powerbuilding, ≈ 1,5 Ko pour un simple. 3 gros + 3 simples × 10 versions ≈ **361 Ko** dans `ft4_progs` ; 10 gros × 10 ≈
+**1 Mo** (quota mobile ≈ 5 Mo pour toute l'app). Côté serveur (emballé gzip + base64) : 1,8 → 34 Ko, chiffres **optimistes**
+(les gabarits synthétiques se compressent mieux que de vrais programmes). ⚠️ Interaction à connaître : un quota local dépassé
+déclenche le repli existant qui tronque les séances **locales** à 50 (le cloud est protégé). **Aucune image dans `ft4_progs`.**
+
+**Limites connues, dites (non corrigées dans ce lot)** :
+- un brouillon d'import abandonné plus ancien que le dernier reste dans IndexedDB (seul le plus récent est repris) ;
+- Milo voit les programmes **archivés** et son contexte dit encore qu'il ne sait pas lequel est actif (**D-067** : contexte
+  inchangé, R34 — à mesurer au banc réel avant d'y toucher) ;
+- les programmes ne sont pas fusionnés entre deux onglets ; le quota gratuit reste vérifié côté client seulement ;
+- après une annulation ou un délai, l'app ne sait pas si le serveur a fini (pas d'idempotence serveur sans Lot 2) ;
+- `_pdfToImages` (import d'historique, bilan sanguin) **tronque encore à 8 pages en silence** — hors périmètre (D12) ;
+- le Worker renvoie les programmes sans normalisation supplémentaire (Lot 2).
+**📣 Règle d'or #11** : points 2 à 5 posés avec le code (point rouge `prog-bibliotheque` sur Séance, aide « ? » Séance,
+aide détaillée « Tes programmes ont une identité et des versions », diapo du Guide sans image) ; deux phrases d'aide devenues
+fausses corrigées (bouton « 📄 » au lieu de « 📄 PDF », limite de 8 pages désormais refusée). ⚖️ **Pop-up `WHATS_NEW` : à
+décider à la publication** (elle exige un numéro, interdit pendant le travail). Avis : **méritée** — un repère a bougé (trois
+boutons d'ajout devenus un seul) et un geste change (« Sauvegarder comme programme » sous un nom pris ouvre un choix).
