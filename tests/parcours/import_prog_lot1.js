@@ -304,6 +304,15 @@ module.exports.ecran = async function (t, b, PORT) {
     return o;
    } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
   });
+  /* CORPS-01 — ce qui part RÉELLEMENT au Worker. Écrit le 07/10 quand le témoin de source CCLXII (runner) a rougi :
+     il épinglait `images:_impPhotos` alors que l'app envoie maintenant `_impPagesPourEnvoi()` (pages normalisées).
+     La garantie de CCLXII — le catalogue part avec l'import — se prouve mieux en lisant le corps envoyé. */
+  const corpsV1 = cfg.dernierCorps ? JSON.parse(JSON.stringify(cfg.dernierCorps)) : null;
+  t('CORPS-01 le corps envoyé au Worker porte le CATALOGUE (liste non vide) et les pages du document, sans les champs internes (empreinte, rotation)',
+    !!corpsV1 && corpsV1.action === 'importProgram' && Array.isArray(corpsV1.catalogue) && corpsV1.catalogue.length > 50
+    && Array.isArray(corpsV1.images) && corpsV1.images.length === 1 && corpsV1.images[0].data === 'v1' && corpsV1.images[0].isText === true
+    && !('hash' in corpsV1.images[0]) && !('rot' in corpsV1.images[0]),
+    js(corpsV1 && { action: corpsV1.action, nCat: (corpsV1.catalogue || []).length, images: corpsV1.images }));
   cfg.reponse = PROG_V2;
   const V2 = await pg.evaluate(async (id) => {
    try {

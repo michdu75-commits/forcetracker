@@ -4450,7 +4450,7 @@ suivi d'une **écriture** ; un nom affiché comme seul moyen de distinguer deux 
 **🛡️ Ce qui protège (branche, non publié)** : un `id` stable par programme (migration déterministe et idempotente, en
 mémoire au chargement) ; toutes les actions par id ; **même nom = jamais une preuve** (D-061) — seule la même empreinte
 de document propose une mise à jour, un même nom n'ouvre qu'un choix explicite ; versions non destructives ; banc
-`import_prog_lot1` (51 témoins) et 25 contrôles négatifs (le code d'avant + 24 mutations) dont trois **déguisés** (la
+`import_prog_lot1` (52 témoins) et 26 contrôles négatifs (le code d'avant + 25 mutations) dont trois **déguisés** (la
 question est posée, mais la suppression vise l'index capturé au clic ; la migration « normalise » le contenu ; l'import
 vole le statut « en cours » case décochée).
 
@@ -4463,6 +4463,10 @@ vole le statut « en cours » case décochée).
   (« plusieurs programmes peuvent être en cours ») est passée **verte** : le témoin vérifiait l'unicité avec un seul
   programme capable d'être actif. En écrivant le témoin qui manquait (EC-01 → EC-04), un **vrai défaut** est sorti : un
   choix manuel sur la case « en cours » restait collé aux imports suivants (drapeau jamais remis à zéro).
+- **Deux témoins de SOURCE de la passe complète ont rougi sur du code sain** (CCLXII épinglait le nom de l'argument
+  `images:_impPhotos` ; B-CCCIII ⑪ comptait les appelants de `_pdfToImages`). C'est §64 (un témoin qui lit la source ne
+  distingue pas le code de ce qui en parle) dans sa variante « il épingle une ligne au lieu d'une garantie ». La garantie
+  de CCLXII est maintenant prouvée sur le **corps réellement envoyé** (CORPS-01).
 - **Trois bancs voisins rougissaient pour une raison de SÉLECTEUR, pas de comportement** : ils cliquaient
   `[onclick="loadProg(N)"]`. Le bouton est le même, l'argument est devenu l'id. Prouvé avant de les modifier (même
   bouton cliqué, même garantie vérifiée) — un témoin périmé ne se « répare » pas, il se **met à jour sur sa garantie**.

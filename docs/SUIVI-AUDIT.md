@@ -763,8 +763,8 @@ normalisés autrement qu'avant. C'est le **Lot 2**, qui attend un nouveau feu ve
   reste, l'import gratuit n'est pas décompté.
 - **Variantes A/B** : jamais fusionnées (`_seanceVariante`).
 
-**Preuves** : banc `tools/banc_import_prog_lot1.js` — **51 OK / 0 rouge** (35 rouges sur le code d'avant) ; contrôle négatif
-`tools/mut_import_prog_lot1.py` (M00 = le code d'avant + 24 mutations, dont 3 déguisées). ⭐ **Le contrôle négatif a
+**Preuves** : banc `tools/banc_import_prog_lot1.js` — **52 OK / 0 rouge** (35 rouges sur le code d'avant) ; contrôle négatif
+`tools/mut_import_prog_lot1.py` (M00 = le code d'avant + 25 mutations, dont 3 déguisées : 26/26 conformes). ⭐ **Le contrôle négatif a
 servi** : au 1ᵉʳ tour, **M20** (« plusieurs programmes peuvent être en cours ») n'a rougi **aucun** témoin — FC-03 vérifiait
 l'unicité là où elle ne pouvait pas casser. Le bloc **EC-01 → EC-04** a été écrit pour elle, et en l'écrivant un **vrai
 défaut** est apparu : un choix manuel sur la case « en cours » restait collé aux imports suivants (corrigé, mutation M23) ;
@@ -772,6 +772,11 @@ le statut « disponible » est aussi devenu **explicite** (il était implicite p
 (travail_lot2 48/0, ml_a 34/0, ml_b 60/0, import_echauffement 11/0, session_integrity 93/0, lot3 87/0, debrief_demande 58/0,
 debrief_provenance 24/0). **Témoins périmés prouvés avant modification** : `travail_existant`, `dropset_programme`,
 `groupes_orphelins` cliquaient `[onclick="loadProg(N)"]` — le bouton est le même, l'argument est devenu l'id ; même garantie.
+La 1ʳᵉ passe complète en a trouvé **deux autres**, dans `runner.js`, deux témoins qui lisent la SOURCE : **CCLXII** épinglait
+`images:_impPhotos` (l'app envoie maintenant `_impPagesPourEnvoi()` ; la garantie — le catalogue part avec l'import — est
+désormais aussi prouvée sur le **corps réellement envoyé**, CORPS-01, mutation M25) ; **B-CCCIII ⑪** comptait 2 appelants de
+`_pdfToImages` dans `log.js` : l'import de programme n'y passe plus, **par décision** (D-056 : refuser au lieu de tronquer), et
+les 3 autres appelants n'ont pas bougé (vérifié, et le garde rougit si `_impPdfPages` se remet à appeler `_pdfToImages`).
 Un défaut de rendu a été trouvé **sur capture**, pas par le banc : les deux nouvelles fenêtres s'ouvraient **derrière**
 « Mes Programmes » → corrigé, témoin de visibilité (`elementFromPoint`) et mutation M22 ajoutés.
 

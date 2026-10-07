@@ -29639,8 +29639,12 @@ console.log('\n-- CCLXII. Le catalogue part avec le document d\'import (ft-v1164
     /"name" : quand une LISTE DES EXERCICES est fournie/.test(_cj), '');
 
   const _lj=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+  /* ↪️ 07/10/2026 (LOT 1 IMPORT PROGRAMME) — témoin PÉRIMÉ, prouvé avant d'être touché : il épinglait
+     `images:_impPhotos` ; l'import de programme envoie désormais `_impPagesPourEnvoi()` (les pages normalisées,
+     sans les champs internes). La GARANTIE est inchangée — le catalogue part avec les deux imports — et elle est
+     aussi prouvée en lisant le CORPS réellement envoyé (CORPS-01, tests/parcours/import_prog_lot1.js). */
   t('CCLXII ⛔⛔ l\'app ENVOIE la liste sur les DEUX imports',
-    /action:'importProgram',images:_impPhotos,catalogue:_catalogueImport\(\)/.test(_lj)
+    /action:'importProgram',images:_impPagesPourEnvoi\(\),catalogue:_catalogueImport\(\)/.test(_lj)
     && /action:'importHistory',images:imgs,catalogue:_catalogueImport\(\)/.test(_lj), '');
 
   /* ── ET CÔTÉ APP, LA VRAIE FONCTION EST APPELÉE DANS LA PAGE ─────────────────────────── */
@@ -36059,9 +36063,14 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('B-CCCIII ⑪ ⛔ PÉRIMÈTRE — `_pdfToImages` n\'est PAS migrée (A2 attend le feu vert nutrition)',
     corpsImages!==null && !/etat:\s*LIRE_/.test(corpsImages) && !/pagesTotal/.test(corpsImages),
     corpsImages===null?'corps introuvable':'le contrat a débordé sur _pdfToImages');
-  t('B-CCCIII ⑪ ⛔ PÉRIMÈTRE — les 4 appelants de `_pdfToImages` lisent toujours `.length` (rien n\'a bougé chez eux)',
+  /* ↪️ 07/10/2026 (LOT 1 IMPORT PROGRAMME, décision D-056 de Michel) — témoin PÉRIMÉ pour UN appelant, prouvé
+     avant d'être touché : l'import de PROGRAMME ne passe plus par `_pdfToImages` (qui tronque à 8 pages en
+     silence) mais par `_impPdfPages`, qui REFUSE un document au-delà de la limite (ERR-01, ERR-03). Les 3 autres
+     appelants (historique, app.js, tracking.js) n'ont pas bougé : ce que ce garde protège pour eux reste vérifié. */
+  t('B-CCCIII ⑪ ⛔ PÉRIMÈTRE — les appelants de `_pdfToImages` HORS import de programme lisent toujours `.length` (rien n\'a bougé chez eux)',
     /const pages=await _pdfToImages\(f\);\s*\n?\s*if\(!pages\.length\)/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8')))
-    && (logC.match(/const pages=await _pdfToImages\(f\);/g)||[]).length===2
+    && (logC.match(/const pages=await _pdfToImages\(f\);/g)||[]).length===1
+    && /async function _impPdfPages\(/.test(logC) && !/function _impPdfPages[\s\S]{0,1200}?_pdfToImages\(/.test(logC)
     && /const imgs=await _pdfToImages\(f\); pages=imgs\.map/.test(sansCom(fs.readFileSync(path.join(ROOT,'tracking.js'),'utf8'))), '');
 }
 

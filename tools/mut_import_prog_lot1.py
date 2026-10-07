@@ -67,6 +67,8 @@ MUT = [
      [(LO, "  { const ec=document.getElementById('imp-en-cours'); if(ec) delete ec.dataset.touche; }", "  { }")], 'GARDE'),
     ('M24 [deguisee] importer vole le statut « en cours » meme case decochee',
      [(LO, "  if(enCours) _progDefinirEnCours(progId); else persist();", "  _progDefinirEnCours(progId);")], 'GARDE'),
+    ('M25 le catalogue ne part plus avec l\'import de programme (garantie de CCLXII, prouvee par le corps envoye)',
+     [(LO, "images:_impPagesPourEnvoi(),catalogue:_catalogueImport()})", "images:_impPagesPourEnvoi()})")], 'GARDE'),
 ]
 
 
