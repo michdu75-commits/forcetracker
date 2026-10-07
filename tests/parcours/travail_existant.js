@@ -119,7 +119,10 @@ module.exports.ecran = async function (t, b, PORT) {
   const programme = async X => {
     await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300);
     await clic(X.pg, '[onclick="openProgModal()"]'); await X.pg.waitForTimeout(300);
-    const ok = await clic(X.pg, '[onclick="loadProg(0)"]'); await X.pg.waitForTimeout(500); return ok;
+    /* LOT 1 IMPORT PROGRAMME (07/10/2026) : les boutons de programme visent l'ID (`loadProg("p…")`), plus l'index —
+       le sélecteur littéral `loadProg(N)` ne trouvait plus rien. Même bouton, même garantie, visé par l'id. */
+    const id0 = await X.pg.evaluate(() => (S.programmes[0] || {}).id || '');
+    const ok = await clic(X.pg, '[onclick=\'loadProg("' + id0 + '")\']'); await X.pg.waitForTimeout(500); return ok;
   };
   const identique = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const MILO_NOMS = MILO_EX.map(e => e[0]);

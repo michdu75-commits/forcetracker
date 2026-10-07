@@ -476,6 +476,9 @@ function load(){
     S.strengthGoals=_lsJson('ft4_strgoals',{}); // objectif de 1RM par exercice {nom:kg}
     S.name=localStorage.getItem('ft4_name')||'';
     S.programmes=_lsJson('ft4_progs',[]);
+    /* LOT 1 — migration TECHNIQUE des programmes (id, schema, version, origine), EN MÉMOIRE seulement :
+       le disque suit au prochain persist naturel. Le contenu d'entraînement n'est jamais touché. */
+    try{ if(typeof _progMigrerTous==='function') _progMigrerTous(); }catch(e){}
     S.progExos=_lsJson('ft4_progexos',null)||[...BIG4];
     S.seenFeatures=JSON.parse(localStorage.getItem('ft4_seen_ft')||'[]');
     S.menuAck=JSON.parse(localStorage.getItem('ft4_menu_ack')||'[]'); // features setup « vues au niveau onglet Menu » (le point onglet s'éteint à l'ouverture du Menu ; les points de ligne restent)
@@ -1208,6 +1211,7 @@ function persist(){
     localStorage.setItem('ft4_goallog',JSON.stringify(S.goalLog||[]));
     localStorage.setItem('ft4_strgoals',JSON.stringify(S.strengthGoals||{}));
     localStorage.setItem('ft4_name',S.name||'');
+    try{ if(typeof _progMigrerTous==='function') _progMigrerTous(); }catch(e){}   // LOT 1 : tout programme écrit porte son id
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
     localStorage.setItem('ft4_tester_ideas',JSON.stringify(S.testerIdeas||[]));
     /* 👎 ft-v1059 — PLAFOND À 40, et c'est un garde-fou de TAILLE autant que de TON.

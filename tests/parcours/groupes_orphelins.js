@@ -188,7 +188,10 @@ module.exports.ecran = async function (t, b, PORT) {
     await recharger(X); await allerSeance(X);
     await clic(X.pg, 'button[onclick="openProgModal()"]');
     const pi = await X.pg.evaluate(() => (S.programmes || []).findIndex(p => p.name === 'Prog ML-B'));
-    const ch = await clic(X.pg, '[onclick="loadProg(' + pi + ')"]');
+    /* LOT 1 IMPORT PROGRAMME (07/10/2026) : les boutons de programme visent l'ID (`loadProg("p…")`), plus l'index —
+       le sélecteur littéral `loadProg(N)` ne trouvait plus rien. Même bouton, même garantie, visé par l'id. */
+    const pidB = await X.pg.evaluate(k => (S.programmes[k] || {}).id || '', pi);
+    const ch = await clic(X.pg, '[onclick=\'loadProg("' + pidB + '")\']');
     await X.pg.waitForTimeout(300);
     const pc = await etat(X);
     const prog = pc.progs.find(p => p.name === 'Prog ML-B');

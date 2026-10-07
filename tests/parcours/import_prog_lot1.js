@@ -159,6 +159,8 @@ module.exports.ecran = async function (t, b, PORT) {
     o.blocIntact = !!(bx && Array.isArray(bx.days) && bx.days.length === 3 && bx.weeks === 6 && bx.startDate === '2026-10-01' && !bx.exs);
     o.nbApresClic = S.programmes.length;
     o.choixOuvert = !!document.querySelector('#ov-prog-cible.open');
+    /* ⛔ VU SUR CAPTURE : la question s'ouvrait DERRIÈRE « Mes Programmes ». On regarde ce qui est AU PREMIER PLAN. */
+    { const el = document.elementFromPoint(195, 600); o.choixAuPremierPlan = !!(el && el.closest && el.closest('#ov-prog-cible')); }
     o.cibleMultiProposee = !!document.querySelector('#ov-prog-cible.open [data-cible="pBlocX"]');
     o.texteChoix = (document.querySelector('#ov-prog-cible') || {}).innerText || '';
     const nouveau = document.querySelector('#ov-prog-cible.open [data-cible="__nouveau"]');
@@ -189,8 +191,8 @@ module.exports.ecran = async function (t, b, PORT) {
   });
   t('T-L1-01 ⛔⛔ « Bloc X » (3 jours, 6 semaines) + « bloc x » sauvegardé depuis une séance : le programme multi-jours n\'est NI détruit NI aplati',
     SAP.blocIntact === true && SAP.nbApresClic === 1, js(SAP));
-  t('T-L1-01b le même nom ouvre un CHOIX explicite ; un programme à jours n\'est jamais proposé comme cible d\'une séance à plat',
-    SAP.choixOuvert === true && SAP.cibleMultiProposee === false && /Bloc X/.test(SAP.texteChoix || ''), js({ ouvert: SAP.choixOuvert, multi: SAP.cibleMultiProposee, txt: String(SAP.texteChoix || '').slice(0, 200) }));
+  t('T-L1-01b le même nom ouvre un CHOIX explicite, VISIBLE au premier plan ; un programme à jours n\'est jamais proposé comme cible d\'une séance à plat',
+    SAP.choixOuvert === true && SAP.choixAuPremierPlan === true && SAP.cibleMultiProposee === false && /Bloc X/.test(SAP.texteChoix || ''), js({ ouvert: SAP.choixOuvert, premierPlan: SAP.choixAuPremierPlan, multi: SAP.cibleMultiProposee, txt: String(SAP.texteChoix || '').slice(0, 200) }));
   t('T-L1-01c « Créer un nouveau programme » ajoute un programme (origine session), l\'ancien reste intact',
     SAP.nbApresNouveau === 2 && SAP.creeOrigine === 'session' && SAP.creeExs === 2 && SAP.blocIntactApres === true, js(SAP));
   t('T-L1-13 ⛔ deux programmes de même nom : aucun écrasement automatique ; la mise à jour d\'une cible PLATE n\'a lieu que si on la choisit, et elle est versionnée (v2, v1 gardée)',
@@ -241,7 +243,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const AB2 = await pg.evaluate(async () => {
    try {
     impRecommencer(true);
-    _impPhotos = [{ type: 'text/plain', data: 'programme AB', name: 'ab.txt', isText: true }]; _impExtracted = null; _impMode = 'new';
+    _impPhotos = [{ type: 'text/plain', data: 'programme AB', name: 'ab.txt', isText: true }]; _impExtracted = null; _impMode = 'new'; S.premium = true;   // le quota gratuit n'est pas l'objet ici (ERR-05+)
     await analyzeImportPhotos();
     return { labels: ((_impExtracted || {}).days || []).map(d => d.label) };
    } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
@@ -252,6 +254,33 @@ module.exports.ecran = async function (t, b, PORT) {
   t('T-L1-07b non-régression : « Séance 1 - Dorsaux » + « Séance 1 - Biceps » (sections d\'une même séance) restent fusionnées',
     (AB2.labels || []).filter(l => /^S[ée]ance 1/.test(l)).length === 1, js(AB2));
 
+  /* ════════ T-L1-13b — À L'IMPORT, LE MÊME NOM NE CHOISIT JAMAIS UNE CIBLE ════════ */
+  cfg.reponse = PROG_V1; cfg.mode = 'ok';
+  const NOM = await pg.evaluate(async () => {
+   try {
+    S.programmes = [{ id: 'pN1', name: 'Powerbuilding test', weeks: 6, days: [{ label: 'J1', exs: [{ name: 'Squat', sets: [{ kg: 100, reps: 5 }] }] }] },
+                    { id: 'pN2', name: 'Powerbuilding test', exs: [{ name: 'Dips', sets: [{ kg: 0, reps: 10 }] }] }];
+    persist(); impRecommencer(true);
+    _impPhotos = [{ type: 'text/plain', data: 'meme nom', name: 'n.txt', isText: true }]; _impExtracted = null; S.premium = true;
+    await analyzeImportPhotos();
+    const o = { mode: _impMode, cible: _impCibleId, avert: ((document.getElementById('imp-cible') || {}).innerText || '') };
+    _setImpMode('update');
+    o.modeApres = _impMode; o.cibleApres = _impCibleId;
+    o.candidats = [...document.querySelectorAll('#imp-cible [data-cible-imp]')].map(x => x.getAttribute('data-cible-imp'));
+    o.distinctifs = [...document.querySelectorAll('#imp-cible [data-cible-imp]')].map(x => x.innerText.replace(/\s+/g, ' ').slice(0, 90));
+    const avant = JSON.stringify(S.programmes);
+    finalImportProg();
+    o.refusSansCible = JSON.stringify(S.programmes) === avant;
+    impRecommencer(true); try { closeImportProg(); } catch (e) {}
+    S.programmes = []; persist();
+    return o;
+   } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
+  });
+  t('T-L1-13b ⛔⛔ import d\'un programme qui porte le nom de DEUX programmes existants : aucune cible choisie (mode nouveau), un avertissement est montré',
+    NOM.mode === 'new' && NOM.cible === null && /déjà ce nom|porte/i.test(NOM.avert || ''), js(NOM));
+  t('T-L1-13c en « Mettre à jour », les deux homonymes sont proposés avec ce qui les distingue, AUCUN n\'est présélectionné, et sans choix rien n\'est écrit',
+    NOM.modeApres === 'update' && NOM.cibleApres === null && js((NOM.candidats || []).slice().sort()) === js(['pN1', 'pN2']) && (NOM.distinctifs || []).every(x => /v1/.test(x)) && NOM.refusSansCible === true, js(NOM));
+
   /* ════════ T-L1-05 / T-L1-06 — VERSIONNAGE et LIEN SÉANCE → VERSION ════════ */
   cfg.reponse = PROG_V1; cfg.mode = 'ok';
   const V = await pg.evaluate(async () => {
@@ -259,7 +288,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const o = {};
     S.programmes = []; S.sessions = []; S.prs = {}; S.wkt = null; persist();
     impRecommencer(true);
-    _impPhotos = [{ type: 'text/plain', data: 'v1', name: 'v1.txt', isText: true }]; _impExtracted = null; _impMode = 'new';
+    _impPhotos = [{ type: 'text/plain', data: 'v1', name: 'v1.txt', isText: true }]; _impExtracted = null; _impMode = 'new'; S.premium = true;   // le quota gratuit n'est pas l'objet ici (ERR-05+)
     await analyzeImportPhotos();
     finalImportProg();
     const p = S.programmes[S.programmes.length - 1];
@@ -280,11 +309,12 @@ module.exports.ecran = async function (t, b, PORT) {
    try {
     const o = {};
     impRecommencer(true);
-    _impPhotos = [{ type: 'text/plain', data: 'v2', name: 'v2.txt', isText: true }]; _impExtracted = null;
+    _impPhotos = [{ type: 'text/plain', data: 'v2', name: 'v2.txt', isText: true }]; _impExtracted = null; S.premium = true;
     await analyzeImportPhotos();
     if (typeof _setImpMode === 'function') _setImpMode('update');
     if (typeof _impChoisirCible === 'function') _impChoisirCible(id);
     o.avantApres = ((document.getElementById('imp-diff') || {}).innerText || '');
+    o.msgs = (window.__toasts || []).slice(-4); o.extrait = !!_impExtracted; o.prem = S.premium; o.imports = S.progImports;
     finalImportProg();
     const p = S.programmes.find(x => x.id === id);
     o.nb = S.programmes.length; o.memeId = !!p; o.v = p && p.version;
@@ -317,7 +347,7 @@ module.exports.ecran = async function (t, b, PORT) {
   t('T-L1-05 ⛔⛔ import v1 → mise à jour EXPLICITE : même id, version 2, v1 gardée dans les versions précédentes (contenu intact)',
     V.v1 === 1 && V.origine === 'import' && V2.nb === 1 && V2.memeId === true && V2.v === 2 && js(V2.prec) === js(['1:import']) && V2.precContenuJours === 2 && V2.courantJours3 === 1, js({ V, V2 }));
   t('T-L1-05b l\'Avant / Après est montré avant d\'appliquer, et la comparaison dit ce qui change',
-    /v1|Avant/i.test(V2.avantApres || '') && /v2|Après/i.test(V2.avantApres || '') && !!V2.cmp && (V2.cmp.exercicesAjoutes || []).indexOf('Dips') >= 0 && (V2.cmp.exercicesRetires || []).indexOf('Leg curl') >= 0, js({ diff: String(V2.avantApres || '').slice(0, 240), cmp: V2.cmp }));
+    /v1|Avant/i.test(V2.avantApres || '') && /v2|Après/i.test(V2.avantApres || '') && !!V2.cmp && (V2.cmp.exercicesAjoutes || []).some(n => /dips/i.test(n)) && (V2.cmp.exercicesRetires || []).some(n => /leg curl/i.test(n)), js({ diff: String(V2.avantApres || '').slice(0, 240), cmp: V2.cmp }));
   t('T-L1-05c restaurer la v1 crée une NOUVELLE version (v3, raison restore) ; la v2 reste accessible',
     V2.apresRestau === 3 && V2.raisonRestau === 'restore' && js(V2.precApresRestau) === js([1, 2]) && V2.contenuRestaure === 2, js(V2));
   t('T-L1-06 ⛔⛔ progRef : séance chargée depuis la v1 → {id, version 1, jour} sur S.wkt PUIS sur la séance enregistrée',
@@ -325,9 +355,65 @@ module.exports.ecran = async function (t, b, PORT) {
   t('T-L1-06b nouvelle séance après la v2 → progRef v2 ; la séance passée v1 reste OCTET POUR OCTET intacte (mise à jour puis restauration)',
     V2.refWkt2 === 2 && V2.refSeanceNouvelle === 2 && V3.seanceV1Intacte === true && V3.nbSeances === 2, js({ V2, V3 }));
 
+  /* ════════ EC-01 → EC-04 — PROGRAMME « EN COURS » (D-053) ════════
+     Ajoutés après le contrôle négatif : la mutation M20 (« plusieurs programmes peuvent être en cours ») n'avait
+     rougi AUCUN témoin — FC-03 vérifiait l'unicité avec un seul programme actif possible. Ce bloc la vérifie là où
+     elle peut casser : un 2ᵉ programme passé en cours, la case par défaut d'un import, et le chargement d'un jour. */
+  cfg.reponse = PROG_V1; cfg.mode = 'ok';
+  const EC = await pg.evaluate(async () => {
+   try {
+    const o = {};
+    const actifs = () => S.programmes.filter(x => x && x.status === 'active').map(x => x.id);
+    const scan = async (data) => { impRecommencer(true); _impPhotos = [{ type: 'text/plain', data: data, name: data + '.txt', isText: true }]; _impExtracted = null; _impMode = 'new'; S.premium = true; await analyzeImportPhotos(); };
+    // ⛔ Le bloc FC qui suit relit les programmes versionnés du bloc précédent : on les remet à la fin.
+    const sauveProgs = JSON.stringify(S.programmes || []), sauveSeances = JSON.stringify(S.sessions || []);
+    S.programmes = []; S.sessions = []; S.wkt = null; persist();
+    const A = _progNouveau({ name: 'Plat A', exs: [{ name: 'Développé Couché', sets: [{ kg: 60, reps: 8, type: 'N' }] }] }, 'manual', 'manual', null); S.programmes.push(A);
+    const B = _progNouveau({ name: 'Plat B', exs: [{ name: 'Squat à la Barre', sets: [{ kg: 80, reps: 5, type: 'N' }] }] }, 'manual', 'manual', null); S.programmes.push(B);
+    _progDefinirEnCours(A.id); o.unA = actifs();
+    _progDefinirEnCours(B.id); o.unB = actifs(); o.statutA = S.programmes.find(x => x.id === A.id).status;
+    _progDefinirEnCours(null); o.aucun = actifs();
+    // Case par défaut : aucun en cours → cochée ; décochée à la main ; NOUVEAU scan → de nouveau cochée (le choix d'avant ne colle pas)
+    await scan('ec1');
+    const ec = document.getElementById('imp-en-cours');
+    o.coche1 = !!(ec && ec.checked);
+    if (ec) { ec.checked = false; ec.dispatchEvent(new Event('change')); }
+    await scan('ec2');
+    o.coche2 = !!(ec && ec.checked);
+    finalImportProg();
+    const C = S.programmes[S.programmes.length - 1];
+    o.apresImport = actifs(); o.idC = C && C.id;
+    // Un programme est en cours → la case d'un nouvel import est décochée, et l'import ne vole pas le statut
+    await scan('ec3');
+    o.coche3 = !!(ec && ec.checked);
+    finalImportProg();
+    const D = S.programmes[S.programmes.length - 1];
+    o.apresImport2 = actifs(); o.statutD = D && D.status;
+    // Charger un jour (programme NON en cours) ou un programme à plat ne change JAMAIS le statut
+    const avant = JSON.stringify(S.programmes.map(x => [x.id, x.status]));
+    S.wkt = null; loadProgDay(D.id, 0); o.chargeD = !!(S.wkt && S.wkt.exs && S.wkt.exs.length);
+    S.wkt = null; loadProg(A.id); o.chargeA = !!(S.wkt && S.wkt.exs && S.wkt.exs.length);
+    o.statutsInchanges = JSON.stringify(S.programmes.map(x => [x.id, x.status])) === avant;
+    S.wkt = null;
+    try { document.querySelectorAll('.overlay.open').forEach(x => x.classList.remove('open')); } catch (e) {}
+    o.A = A.id; o.B = B.id;
+    S.programmes = JSON.parse(sauveProgs); S.sessions = JSON.parse(sauveSeances); persist();
+    return o;
+   } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
+  });
+  t('EC-01 ⛔⛔ 0 ou 1 programme « en cours » : passer B en cours retire A ; « aucun » est possible',
+    js(EC.unA) === js([EC.A]) && js(EC.unB) === js([EC.B]) && EC.statutA === 'available' && js(EC.aucun) === js([]), js(EC));
+  t('EC-02 import sans programme en cours : la case « en cours » est cochée par défaut, et un choix manuel ne colle PAS au scan suivant',
+    EC.coche1 === true && EC.coche2 === true && js(EC.apresImport) === js([EC.idC]), js(EC));
+  t('EC-03 import alors qu\'un programme est en cours : case décochée par défaut, le nouveau reste disponible, l\'ancien reste en cours',
+    EC.coche3 === false && js(EC.apresImport2) === js([EC.idC]) && EC.statutD === 'available', js(EC));
+  t('EC-04 charger un jour ou un programme à plat ne change JAMAIS le statut d\'aucun programme',
+    EC.chargeD === true && EC.chargeA === true && EC.statutsInchanges === true, js(EC));
+
   /* ════════ T-L1-08 / T-L1-09 — DOCUMENT D'IMPORT LOCAL : pages, ordre, rotation, retrait, doublon, reprise ════════ */
-  await pg.evaluate(() => { impRecommencer(true); try { closeImportProg(); } catch (e) {} openImportProg(); });
-  await pg.waitForTimeout(300);
+  await pg.evaluate(async () => { impRecommencer(true); try { closeImportProg(); } catch (e) {} openImportProg(); await new Promise(r => setTimeout(r, 900));
+    const bd = document.getElementById('imp-reprise'); if (bd && bd.style.display === 'flex' && bd.querySelector('[data-reset]')) bd.querySelector('[data-reset]').click();
+    await new Promise(r => setTimeout(r, 300)); });
   const a1 = await ajouter([fichier(0), fichier(1), fichier(2)]);
   const P1 = await pg.evaluate(() => ({ n: (_impPhotos || []).length, dims: (_impPhotos || []).map(p => (p.w || 0) + 'x' + (p.h || 0)), hashes: (_impPhotos || []).map(p => p.hash || null), nums: [...document.querySelectorAll('#imp-thumbs .imp-page-num')].map(x => x.textContent.trim()) }));
   await pg.evaluate(() => { if (typeof impPageDeplacer === 'function') impPageDeplacer(2, -1); });
@@ -435,6 +521,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const UPD = await pg.evaluate(async () => {
    try {
     const p = S.programmes[S.programmes.length - 1]; const avant = JSON.stringify(p);
+    S.premium = true;
     if (typeof _setImpMode === 'function') _setImpMode('update');
     if (typeof _impChoisirCible === 'function') _impChoisirCible(p.id);
     await analyzeImportPhotos();
@@ -446,7 +533,8 @@ module.exports.ecran = async function (t, b, PORT) {
 
   /* ════════ T-L1-10 / T-L1-11 — DÉMO et PERSONAS ÉTANCHES ════════ */
   const docsNormal = await idbDocs();
-  await pg.evaluate(() => { window._demoMode = true; impRecommencer(true); try { closeImportProg(); } catch (e) {} openImportProg(); });
+  const avantDemo = await pg.evaluate(() => (_impPhotos || []).length);
+  await pg.evaluate(() => { window._demoMode = true; try { closeImportProg(); } catch (e) {} openImportProg(); });
   await pg.waitForTimeout(700);
   const DEMO1 = await pg.evaluate(() => ({ pagesVisibles: (_impPhotos || []).length }));
   await ajouter([fichier(5, 'demo.png')]);
@@ -454,10 +542,10 @@ module.exports.ecran = async function (t, b, PORT) {
   const docsDemo = await idbDocs();
   const DEMO2 = await pg.evaluate(() => ({ pages: (_impPhotos || []).length }));
   t('T-L1-10 ⛔⛔ mode démo : aucune écriture dans la base d\'import (le mode normal, lui, y écrit bien), et le vrai brouillon n\'est pas repris',
-    docsNormal.n >= 1 && docsDemo.n === docsNormal.n && js(docsDemo.docs.map(d => d.pages)) === js(docsNormal.docs.map(d => d.pages)) && DEMO1.pagesVisibles === 0 && DEMO2.pages === 1, js({ docsNormal, docsDemo, DEMO1, DEMO2 }));
+    avantDemo === 2 && docsNormal.n >= 1 && docsDemo.n === docsNormal.n && js(docsDemo.docs.map(d => d.pages)) === js(docsNormal.docs.map(d => d.pages)) && DEMO1.pagesVisibles === 0 && DEMO2.pages === 1, js({ avantDemo, docsNormal, docsDemo, DEMO1, DEMO2 }));
   const PERS = await pg.evaluate(async () => {
    try {
-    window._demoMode = true;
+    window._demoMode = true; impRecommencer(true);
     try { _vcApplyPersona({ id: 'P-L1', nom: 'Persona L1', apply: {} }); } catch (e) { return { err: String(e) }; }
     try { closeImportProg(); } catch (e) {}
     openImportProg(); await new Promise(r => setTimeout(r, 700));
@@ -465,7 +553,7 @@ module.exports.ecran = async function (t, b, PORT) {
    } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
   });
   t('T-L1-11 ⛔⛔ persona : aucun document ni brouillon réel visible (0 page, pas de reprise), aucun programme réel',
-    !PERS.err && PERS.pages <= 1 && PERS.bandeau === false && PERS.progs === 0 && docsNormal.n >= 1, js({ PERS, docsNormal }));
+    !PERS.err && PERS.pages === 0 && PERS.bandeau === false && PERS.progs === 0 && docsNormal.n >= 1, js({ PERS, docsNormal }));
   await recharger();          // sortie du persona : on recharge les vraies données
 
   /* ════════ FC-* — CONSERVATION DES CHAMPS sur tous les chemins qui reconstruisent un objet ════════ */
@@ -481,15 +569,24 @@ module.exports.ecran = async function (t, b, PORT) {
     o.disque = !!disque && disque.version === p.version && (disque.previousVersions || []).length === p.previousVersions.length && !!disque.origin;
     // ② éditeur : ouvrir / enregistrer sans rien changer garde tout
     const avant = JSON.stringify(Object.assign({}, p, { editedSinceImport: undefined }));
-    editProg(id); saveProgEdit();
+    const vAvant = p.version, nPrevAvant = (p.previousVersions || []).length;
+    editProg(id); saveProgEdit();                                   // enregistrer SANS rien changer
+    const e0 = S.programmes.find(x => x.id === id);
+    o.videSansVersion = e0.version === vAvant && (e0.previousVersions || []).length === nPrevAvant && e0.editedSinceImport !== true;
+    editProg(id); document.getElementById('prog-edit-name').value = 'Powerbuilding modifié'; saveProgEdit();   // 1ʳᵉ VRAIE modification
     const e = S.programmes.find(x => x.id === id);
-    o.editeurGarde = !!e && e.version >= p.version && (e.previousVersions || []).length >= 2 && !!e.origin && e.origin.type === 'import';
-    o.beforeEditUneFois = (e.previousVersions || []).filter(x => x.reason === 'before-edit').length;
-    editProg(id); saveProgEdit();
+    o.editeurGarde = !!e && e.id === id && e.version === vAvant + 1 && (e.previousVersions || []).length === nPrevAvant + 1 && !!e.origin && e.origin.type === 'import' && e.name === 'Powerbuilding modifié';
+    o.beforeEditUneFois = (e.previousVersions || []).filter(x => x.archivedFor === 'before-edit').length;
+    editProg(id); document.getElementById('prog-edit-name').value = 'Powerbuilding modifié 2'; saveProgEdit();   // 2ᵉ modification
     const e2 = S.programmes.find(x => x.id === id);
-    o.beforeEditToujoursUne = (e2.previousVersions || []).filter(x => x.reason === 'before-edit').length;
+    o.beforeEditToujoursUne = (e2.previousVersions || []).filter(x => x.archivedFor === 'before-edit').length;
+    o.pasDeNouvelleVersion = e2.version === vAvant + 1 && e2.name === 'Powerbuilding modifié 2';
     o.edited = e2.editedSinceImport === true;
     // ③ « en cours » / archive / désarchive par la fonction propriétaire
+    openProgModal(); ouvrirProgGerer(id);
+    { const el = document.elementFromPoint(195, 600); o.gererAuPremierPlan = !!(el && el.closest && el.closest('#ov-prog-gerer')); }
+    o.gererVersions = [...document.querySelectorAll('#prog-gerer-content [data-restaurer]')].length;
+    fermerProgGerer(); closeProgModal();
     _progDefinirEnCours(id);
     o.unSeulEnCours = S.programmes.filter(x => x.status === 'active').length === 1;
     archiverProg(id); const ar = S.programmes.find(x => x.id === id);
@@ -506,10 +603,10 @@ module.exports.ecran = async function (t, b, PORT) {
   const corps = cfg.saveProfile[cfg.saveProfile.length - 1] || null;
   const progCloud = corps && (corps.programmes || []).find(x => x.previousVersions && x.previousVersions.length);
   t('FC-01 persist / relecture : version, versions précédentes et origine conservées sur le disque', FC.ok === true && FC.disque === true, js(FC));
-  t('FC-02 éditeur : ouvrir/enregistrer garde id, versions, origine ; la 1ʳᵉ modification après import crée UNE version « before-edit », pas une par enregistrement',
-    FC.editeurGarde === true && FC.beforeEditUneFois === 1 && FC.beforeEditToujoursUne === 1 && FC.edited === true, js(FC));
-  t('FC-03 programme en cours unique (fonction propriétaire) ; archiver puis désarchiver garde les versions',
-    FC.unSeulEnCours === true && FC.archiveGarde === true && FC.desarchive === true, js(FC));
+  t('FC-02 éditeur : enregistrer sans changement ne crée rien ; la 1ʳᵉ VRAIE modification après import crée UNE version (l\'importée, « before-edit »), les suivantes aucune ; id, versions, origine gardés',
+    FC.videSansVersion === true && FC.editeurGarde === true && FC.beforeEditUneFois === 1 && FC.beforeEditToujoursUne === 1 && FC.pasDeNouvelleVersion === true && FC.edited === true, js(FC));
+  t('FC-03 programme en cours unique (fonction propriétaire) ; archiver puis désarchiver garde les versions ; la fiche « Gérer » s\'ouvre AU PREMIER PLAN avec ses versions restaurables',
+    FC.unSeulEnCours === true && FC.archiveGarde === true && FC.desarchive === true && FC.gererAuPremierPlan === true && FC.gererVersions >= 2, js(FC));
   t('FC-04 synchro existante : le corps envoyé au cloud porte id, version, origine et versions précédentes (aucun champ perdu en route)',
     !!progCloud && !!progCloud.id && !!progCloud.origin && progCloud.version >= 2, js({ n: corps && (corps.programmes || []).length, p: progCloud && { id: progCloud.id, v: progCloud.version } }));
   const RST = await pg.evaluate((raw) => {
@@ -533,13 +630,36 @@ module.exports.ecran = async function (t, b, PORT) {
   t('FC-06 programme Milo (_normalizeForceProg) : origine « milo » déduite du signal force, id et version posés', MILO.ajoute && MILO.origine === 'milo' && MILO.force && MILO.id && MILO.version === 1, js(MILO));
   const DOCP = await pg.evaluate(() => {
    try {
-    const p = S.programmes.find(x => x.origin && x.origin.type === 'import' && x.origin.doc);
-    return { doc: p ? { pages: p.origin.doc.pages, hash: !!p.origin.doc.hash, id: !!p.origin.doc.id, pasDImages: JSON.stringify(p).length < 200000 && !/data:image|base64/.test(JSON.stringify(p.origin.doc)) } : null,
+    const p = S.programmes.find(x => x.origin && x.origin.type === 'import' && x.doc);
+    return { doc: p ? { pages: p.doc.pages, hash: !!p.doc.hash, id: !!p.doc.id } : null,
       ft4progsSansImages: !/iVBOR|\/9j\//.test(localStorage.getItem('ft4_progs') || '') };
    } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
   });
   t('FC-07 ⛔ le programme ne garde que les petites métadonnées du document (id, empreinte, nb de pages) — aucune image dans ft4_progs ni dans le cloud',
-    DOCP.ft4progsSansImages === true && !/iVBOR|\/9j\//.test(JSON.stringify(corps || {})), js(DOCP));
+    !!DOCP.doc && DOCP.doc.id === true && DOCP.ft4progsSansImages === true && !/iVBOR|\/9j\//.test(JSON.stringify(corps || {})), js(DOCP));
+
+  /* ════════ T-L1-13d — LE MÊME DOCUMENT (même empreinte) PROPOSE LA MISE À JOUR DU BON PROGRAMME ════════ */
+  cfg.reponse = PROG_V1; cfg.mode = 'ok';
+  await pg.evaluate(async () => { impRecommencer(true); try { closeImportProg(); } catch (e) {} openImportProg(); await new Promise(r => setTimeout(r, 900));
+    const bd = document.getElementById('imp-reprise'); if (bd && bd.style.display === 'flex' && bd.querySelector('[data-reset]')) bd.querySelector('[data-reset]').click();
+    await new Promise(r => setTimeout(r, 300)); });
+  await ajouter([fichier(1, 'doc-a.png'), fichier(3, 'doc-b.png')]);
+  const D1 = await pg.evaluate(async () => {
+   try {
+    S.premium = true; const h = _impDoc && _impDoc.docHash; await analyzeImportPhotos();
+    const modeNeuf = _impMode; finalImportProg();
+    const p = S.programmes[S.programmes.length - 1];
+    return { h, modeNeuf, id: p && p.id, hProg: p && p.doc && p.doc.hash };
+   } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
+  });
+  await pg.evaluate(async () => { impRecommencer(true); try { closeImportProg(); } catch (e) {} openImportProg(); await new Promise(r => setTimeout(r, 600)); });
+  await ajouter([fichier(3, 'autre-nom-b.png'), fichier(1, 'autre-nom-a.png')]);
+  const D2 = await pg.evaluate(async () => {
+   try { S.premium = true; const h = _impDoc && _impDoc.docHash; await analyzeImportPhotos(); const o = { h, mode: _impMode, cible: _impCibleId }; impRecommencer(); try { closeImportProg(); } catch (e) {} return o; }
+   catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
+  });
+  t('T-L1-13d ⭐ le même document réimporté (mêmes fichiers, autres noms, autre ordre) a la MÊME empreinte et propose « Mettre à jour » CE programme ; un document neuf part en « Nouveau »',
+    !!D1.h && D1.modeNeuf === 'new' && D1.hProg === D1.h && D2.h === D1.h && D2.mode === 'update' && D2.cible === D1.id, js({ D1, D2 }));
 
   t('B-L1-00 0 appel réel (Worker, Apps Script, Supabase, Anthropic, CDN simulés ou coupés), 0 erreur de page',
     reels === 0 && errs.length === 0, js({ reels, errs }));

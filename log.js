@@ -3269,7 +3269,7 @@ let _exPickerMode='workout';
    `_esc()` générique se serait fait employer là où il ne fallait pas. */
 function _argAttr(v){ return JSON.stringify(v).replace(/"/g,'&quot;'); }
 let _replaceEi=null; // index de l'exo à remplacer (menu ⋯ → Remplacer l'exercice)
-let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
+let _editProgIdx=-1,_editProgData=null,_editDayIdx=0,_editProgId=null;   // LOT 1 : _editProgId = l'identité, l'index n'est qu'un repère d'affichage
 function addExercise(name){
   /* ⭐⭐ LE MODE « PROG » RESTE OUVERT LUI AUSSI (25/08) — et c'est ici que ça compte le plus.
      Le sélecteur avait été rendu persistant côté SÉANCE la version d'avant… mais l'éditeur de
@@ -4458,6 +4458,9 @@ async function finishWorkout(){
   const vol=_workVol({exs:S.wkt.exs,uniConv:1});
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),uniConv:1,synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
+  /* LOT 1 / D5 — la séance garde la version du programme qu'elle a chargée (additif : une séance sans
+     elle reste valide ; modifier, archiver, réimporter ou supprimer le programme ne la touche jamais). */
+  if(S.wkt&&S.wkt.progRef)sess.progRef=JSON.parse(JSON.stringify(S.wkt.progRef));
   if(S.wkt.runId) sess.runId=S.wkt.runId;   // LOT 3C : la séance enregistrée garde l'identité de la séance en cours (voir `_assurerRunIdSeance`)
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
@@ -6448,7 +6451,336 @@ function _bandeauReprise(id, onReset){
 }
 function _cacheReprise(id){ const el=document.getElementById(id); if(el)el.style.display='none'; }
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   📄 LOT 1 — LE DOCUMENT D'IMPORT, AVANT TOUTE IA (07/10/2026, D-054)
+   Les pages NORMALISÉES réellement envoyées (JPEG ≤ 1200 px, comme avant) vivent dans une base
+   IndexedDB LOCALE (`ft_import`). ⛔ Jamais le cloud, jamais Apps Script, jamais Supabase, jamais le
+   contexte de Milo, jamais un export automatique ; ⛔ jamais en mode démo ni dans un persona (aucune
+   lecture, aucune écriture). Le programme ne garde que de petites métadonnées (`doc` : id, empreinte,
+   nombre de pages) — jamais une image dans `ft4_progs`.
+   ⭐ Ce que ça répare, mesuré : un rechargement ou une fermeture perdait le scan (il ne vivait qu'en
+   mémoire) ; un PDF de plus de 8 pages était TRONQUÉ EN SILENCE ; une image indécodable bloquait
+   l'ajout pour toujours (aucun `onerror`) ; une réponse vide consommait un import gratuit ; l'analyse
+   pouvait attendre sans fin.
+   ⛔ Les empreintes (SHA-256) ne se calculent QU'À L'AJOUT d'un fichier — jamais au démarrage.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+const IMP_MAX_PAGES=8;              // limite EXPLICITE : au-delà on REFUSE, on ne tronque jamais (D4)
+let IMP_TIMEOUT_MS=150000;          // délai client de l'analyse (150 s)
+const _IMP_DB='ft_import', _IMP_STORE='docs';
+let _impDoc=null;                   // {id, createdAt, updatedAt, kind, state, files, docHash, error, target, progId}
+let _impDemoScan=false;             // le scan en mémoire est-il né en mode démo ?
+let _impCibleId=null, _impRaison='import', _impAbort=null, _impRepriseJeton=0, _impEcriture=Promise.resolve();
+function _impDocDispo(){ return !(typeof window!=='undefined'&&window._demoMode) && typeof indexedDB!=='undefined'; }
+function _impDb(){
+  return new Promise((res,rej)=>{
+    let rq; try{ rq=indexedDB.open(_IMP_DB,1); }catch(e){ rej(e); return; }
+    rq.onupgradeneeded=()=>{ const db=rq.result; if(!db.objectStoreNames.contains(_IMP_STORE)) db.createObjectStore(_IMP_STORE,{keyPath:'id'}); };
+    rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error);
+  });
+}
+async function _impDbFaire(mode, fn){
+  const db=await _impDb();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(_IMP_STORE,mode); const rq=fn(tx.objectStore(_IMP_STORE));
+    tx.oncomplete=()=>{ db.close(); res(rq?rq.result:undefined); };
+    tx.onerror=()=>{ db.close(); rej(tx.error); }; tx.onabort=()=>{ db.close(); rej(tx.error); };
+  });
+}
+async function _impDocsTous(){ if(!_impDocDispo()) return []; try{ return (await _impDbFaire('readonly',st=>st.getAll()))||[]; }catch(e){ return []; } }
+async function _impDocLire(id){ if(!_impDocDispo()||!id) return null; try{ return await _impDbFaire('readonly',st=>st.get(id)); }catch(e){ return null; } }
+function _impDocEffacer(id){
+  if(!_impDocDispo()||!id) return Promise.resolve(false);
+  _impEcriture=_impEcriture.then(()=>_impDbFaire('readwrite',st=>st.delete(id))).then(()=>true).catch(()=>false);
+  return _impEcriture;
+}
+/* L'écriture du document courant — en file (jamais deux écritures croisées), silencieuse si
+   IndexedDB manque (le scan reste en mémoire : rien n'est perdu de ce qui marchait avant). */
+function _impDocSauver(){
+  if(!_impDocDispo()||!_impDoc) return Promise.resolve(false);
+  _impDoc.updatedAt=new Date().toISOString();
+  const rec=Object.assign({}, _impDoc, {
+    pages:(_impPhotos||[]).map(p=>Object.assign({},p)),
+    reading:_impExtracted?{data:JSON.parse(JSON.stringify(_impExtracted)), at:_impDoc.updatedAt}:null,
+    target:{mode:_impMode, cibleId:_impCibleId, raison:_impRaison}
+  });
+  _impEcriture=_impEcriture.then(()=>_impDbFaire('readwrite',st=>st.put(rec))).then(()=>true).catch(e=>{ console.warn('[Import] document non sauvegardé',e); return false; });
+  return _impEcriture;
+}
+function _impDocAssurer(){
+  if(!_impDoc) _impDoc={id:'d'+Date.now()+Math.random().toString(36).slice(2,6), createdAt:new Date().toISOString(),
+                         kind:'program', state:'draft', files:[], docHash:null, error:null, progId:null};
+  return _impDoc;
+}
+function _impDocEtat(etat, extra){ _impDocAssurer(); _impDoc.state=etat; if(extra) Object.assign(_impDoc, extra); return _impDocSauver(); }
+/* Les petites métadonnées que le PROGRAMME garde du document (jamais les pages). */
+function _impDocMeta(){
+  if(!_impDoc) return null;
+  return {id:_impDoc.id, hash:_impDoc.docHash||null, pages:(_impPhotos||[]).length,
+          files:(_impDoc.files||[]).map(f=>({name:f.name, hash:f.hash})), at:new Date().toISOString()};
+}
+async function _sha256Hex(entree){
+  try{
+    if(!(typeof crypto!=='undefined'&&crypto.subtle)) return null;
+    const buf=(typeof entree==='string')?new TextEncoder().encode(entree):entree;
+    const h=await crypto.subtle.digest('SHA-256',buf);
+    return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return null; }
+}
+/* L'empreinte DU DOCUMENT : l'ensemble (trié) des empreintes de ses fichiers d'origine. Le même PDF
+   réimporté redonne la même empreinte — c'est la seule preuve forte qu'on tienne (règle de Michel). */
+async function _impCalculerDocHash(){
+  const d=_impDocAssurer();
+  const hs=[...new Set((d.files||[]).map(f=>f.hash).filter(Boolean))].sort();
+  d.docHash=hs.length?await _sha256Hex(hs.join('|')):null;
+  return d.docHash;
+}
+/* Une image → JPEG ≤ 1200 px (le comportement d'avant), avec un VRAI `onerror` : une image
+   indécodable rend une erreur au lieu de bloquer l'ajout pour toujours. */
+function _impNormaliserImage(f){
+  return new Promise(res=>{
+    let url; try{ url=URL.createObjectURL(f); }catch(e){ res({err:'illisible'}); return; }
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const max=1200; let w=img.width,h=img.height;
+        if(!w||!h){ URL.revokeObjectURL(url); res({err:'illisible'}); return; }
+        if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        const c2=cv.getContext('2d'); if(!c2){ URL.revokeObjectURL(url); res({err:'illisible'}); return; }
+        c2.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
+        res({data:cv.toDataURL('image/jpeg',0.82).split(',')[1], w, h});
+      }catch(e){ try{URL.revokeObjectURL(url);}catch(x){} res({err:'illisible'}); }
+    };
+    img.onerror=()=>{ try{URL.revokeObjectURL(url);}catch(x){} res({err:'illisible'}); };
+    img.src=url;
+  });
+}
+async function _impPdfPages(pdf, nom){
+  const pages=[]; const MAX_DIM=1200;
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const vp0=page.getViewport({scale:1});
+    const scale=Math.min(MAX_DIM/vp0.width,MAX_DIM/vp0.height,2);
+    const vp=page.getViewport({scale});
+    const cv=document.createElement('canvas'); cv.width=Math.round(vp.width); cv.height=Math.round(vp.height);
+    const ctx=cv.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,cv.width,cv.height);
+    await page.render({canvasContext:ctx,viewport:vp}).promise;
+    pages.push({data:cv.toDataURL('image/jpeg',0.85).split(',')[1], w:cv.width, h:cv.height, name:nom+(pdf.numPages>1?' p.'+i:''), page:i});
+  }
+  return pages;
+}
+/* ⭐ LA PORTE UNIQUE (D8) : un seul sélecteur qui accepte images ET PDF — le téléphone propose
+   lui-même photothèque, appareil photo ou fichier. Doublon exact refusé, limite explicite. */
+async function impAjouterFichiers(input){
+  const fichiers=[...((input&&input.files)||[])]; if(!fichiers.length) return;
+  try{ input.value=''; }catch(e){}
+  if(_impDemoScan!==!!window._demoMode && !_scanEnCours(_impPhotos,_impExtracted)) _impDemoScan=!!window._demoMode;
+  const d=_impDocAssurer(); const msgs=[];
+  const dejaFichiers=new Set((d.files||[]).map(f=>f.hash).filter(Boolean));
+  const MAX_MB=15, lots=[];
+  for(const f of fichiers){
+    if(f.size>MAX_MB*1024*1024){ msgs.push('« '+f.name+' » est trop lourd (max '+MAX_MB+' Mo)'); continue; }
+    let buf; try{ buf=await f.arrayBuffer(); }catch(e){ msgs.push('« '+f.name+' » n\'a pas pu être lu'); continue; }
+    const fh=await _sha256Hex(buf);
+    if(fh&&dejaFichiers.has(fh)){ msgs.push('« '+f.name+' » est déjà dans le document — pas ajouté une 2ᵉ fois'); continue; }
+    if(fh) dejaFichiers.add(fh);
+    const estPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name||'');
+    if(estPdf){
+      let pdf=null;
+      try{ pdf=await _pdfOuvrir(f); }
+      catch(e){ msgs.push('PDF illisible : « '+f.name+' » ('+((e&&e.message)||'fichier abîmé ?')+')'); continue; }
+      if(pdf.numPages>IMP_MAX_PAGES){ msgs.push('Ce PDF a '+pdf.numPages+' pages : la limite est de '+IMP_MAX_PAGES+' pages par import. Rien n\'a été ajouté.'); continue; }
+      lots.push({f, fh, pdf, n:pdf.numPages});
+    }else lots.push({f, fh, pdf:null, n:1});
+  }
+  const ajout=lots.reduce((k,l)=>k+l.n,0);
+  if(ajout && (_impPhotos.length+ajout)>IMP_MAX_PAGES){
+    toast('Limite : '+IMP_MAX_PAGES+' pages par import — tu en as déjà '+_impPhotos.length+', ces fichiers en ajouteraient '+ajout+'. Rien n\'a été ajouté.','error');
+    return;
+  }
+  const hashesPages=new Set(_impPhotos.map(p=>p.hash).filter(Boolean));
+  let ajoutees=0;
+  for(const l of lots){
+    let pages=[];
+    if(l.pdf){
+      try{ toast('Lecture du PDF…','info'); pages=await _impPdfPages(l.pdf, l.f.name); }
+      catch(e){ msgs.push('PDF illisible : « '+l.f.name+' »'); continue; }
+    }else{
+      const r=await _impNormaliserImage(l.f);
+      if(r.err){ msgs.push('Image illisible : « '+l.f.name+' » n\'a pas pu être lue — rien n\'a été ajouté pour ce fichier'); continue; }
+      pages=[{data:r.data, w:r.w, h:r.h, name:l.f.name, page:1}];
+    }
+    let fichierGarde=false;
+    for(const pg of pages){
+      const h=await _sha256Hex(pg.data);
+      if(h&&hashesPages.has(h)){ msgs.push('Une page de « '+l.f.name+' » est déjà dans le document'); continue; }
+      if(h) hashesPages.add(h);
+      _impPhotos.push({id:'pg'+Date.now()+Math.random().toString(36).slice(2,6), data:pg.data, type:'image/jpeg', name:pg.name,
+        w:pg.w, h:pg.h, rot:0, hash:h, src:{name:l.f.name, type:l.pdf?'pdf':'image', page:pg.page, fileHash:l.fh}});
+      ajoutees++; fichierGarde=true;
+    }
+    if(fichierGarde) (d.files=d.files||[]).push({name:l.f.name, type:l.pdf?'application/pdf':(l.f.type||'image'), size:l.f.size, hash:l.fh});
+  }
+  if(msgs.length) toast(msgs.join(' · '), ajoutees?'info':'error');
+  if(ajoutees){
+    await _impCalculerDocHash();
+    d.state='draft';
+    _impDocSauver();
+    _renderImpThumbs(); impGoStep(2);
+  }
+}
+/* Les deux anciennes portes restent appelables (même chemin, R2). */
+function addImportPhoto(input){ return impAjouterFichiers(input); }
+function addImportFile(input){ return impAjouterFichiers(input); }
+function _impFichiersRecalculer(){
+  if(!_impDoc) return;
+  const util=new Set(_impPhotos.map(p=>p.src&&p.src.fileHash).filter(Boolean));
+  _impDoc.files=(_impDoc.files||[]).filter(f=>util.has(f.hash));
+}
+function impPageDeplacer(i, dir){
+  const j=i+dir; if(i<0||j<0||i>=_impPhotos.length||j>=_impPhotos.length) return;
+  const t=_impPhotos[i]; _impPhotos[i]=_impPhotos[j]; _impPhotos[j]=t;
+  _impDocSauver(); _renderImpThumbs();
+}
+/* Rotation de 90° (sens horaire) : la page envoyée est la page tournée ; son empreinte d'origine
+   (`hash`) ne change pas — c'est elle qui sert à reconnaître un doublon. */
+function impPageTourner(i){
+  const p=_impPhotos[i]; if(!p||p.isText||!p.data) return Promise.resolve(false);
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const cv=document.createElement('canvas'); cv.width=img.height; cv.height=img.width;
+        const c=cv.getContext('2d'); c.translate(cv.width,0); c.rotate(Math.PI/2); c.drawImage(img,0,0);
+        p.data=cv.toDataURL('image/jpeg',0.85).split(',')[1]; p.type='image/jpeg';
+        p.w=cv.width; p.h=cv.height; p.rot=((p.rot||0)+90)%360;
+        _impDocSauver(); _renderImpThumbs(); res(true);
+      }catch(e){ toast('Rotation impossible sur cette page','error'); res(false); }
+    };
+    img.onerror=()=>{ toast('Rotation impossible sur cette page','error'); res(false); };
+    img.src='data:'+(p.type||'image/jpeg')+';base64,'+p.data;
+  });
+}
+function _impPagesPourEnvoi(){
+  return (_impPhotos||[]).map(p=>{
+    const o={data:p.data, type:p.type||'image/jpeg'};
+    if(p.name) o.name=p.name;
+    if(p.isText) o.isText=true; if(p.isPdf) o.isPdf=true; if(p.isXlsx) o.isXlsx=true;
+    return o;
+  });
+}
+/* Une réponse qui ne contient AUCUN exercice n'est pas une lecture : c'est un échec, et il ne
+   consomme pas l'import gratuit. */
+function _impLectureUtile(data){
+  return !!(data&&Array.isArray(data.days)&&data.days.some(d=>d&&Array.isArray(d.exercises)&&d.exercises.some(e=>e&&String(e.name||'').trim())));
+}
+function impAnnulerAnalyse(){
+  if(_impAbort&&_impAbort.ctrl){ _impAbort.raison='annule'; try{ _impAbort.ctrl.abort(); }catch(e){} }
+}
+/* La reprise d'un brouillon gardé sur le téléphone (après fermeture ou rechargement). Asynchrone,
+   et elle ne s'applique QUE si rien n'a été commencé entre-temps (jeton). */
+async function _impDocReprendre(){
+  if(!_impDocDispo()) return false;
+  const jeton=++_impRepriseJeton;
+  const docs=(await _impDocsTous()).filter(x=>x&&['draft','analyzing','read','error'].indexOf(x.state)>=0&&(x.pages||[]).length);
+  if(!docs.length||jeton!==_impRepriseJeton||_scanEnCours(_impPhotos,_impExtracted)) return false;
+  docs.sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+  const x=docs[0];
+  _impDoc={id:x.id, createdAt:x.createdAt, updatedAt:x.updatedAt, kind:x.kind||'program', state:x.state==='analyzing'?'draft':x.state,
+           files:x.files||[], docHash:x.docHash||null, error:x.error||null, progId:x.progId||null};
+  _impPhotos=(x.pages||[]).map(p=>Object.assign({},p));
+  _impExtracted=(x.reading&&x.reading.data)?x.reading.data:null;
+  _impMode=(x.target&&x.target.mode==='update')?'update':'new';
+  _impCibleId=(x.target&&x.target.cibleId)||null; _impRaison=(x.target&&x.target.raison)||'import';
+  _impDemoScan=false;
+  const ov=document.getElementById('ov-import-prog');
+  if(ov&&ov.classList.contains('open')){
+    _bandeauReprise('imp-reprise', impRecommencer);
+    if(_impExtracted){ impGoStep(4); _renderImpConfirm(); } else { impGoStep(2); _renderImpThumbs(); }
+    if(x.state==='analyzing') toast('L\'analyse précédente a été interrompue — tes pages sont gardées, tu peux relancer','info');
+  }
+  return true;
+}
+/* ⭐ RÉANALYSER le document d'un programme : la cible est connue par son ID (identité forte). */
+async function reanalyserProg(ref){
+  const p=_progParRef(ref); if(!p||!p.doc||!p.doc.id){ toast('Aucun document gardé pour ce programme','info'); return; }
+  const x=await _impDocLire(p.doc.id);
+  if(!x||!(x.pages||[]).length){ toast('Le document de ce programme n\'est plus sur ce téléphone','info'); return; }
+  try{ fermerProgGerer(); closeProgModal(); }catch(e){}
+  impRecommencer(true);
+  _impDoc={id:'d'+Date.now()+Math.random().toString(36).slice(2,6), createdAt:new Date().toISOString(), kind:'program', state:'draft',
+           files:(x.files||[]).slice(), docHash:x.docHash||null, error:null, progId:null};
+  _impPhotos=(x.pages||[]).map(q=>Object.assign({},q));
+  _impMode='update'; _impCibleId=p.id; _impRaison='reanalyse';
+  _impDocSauver();
+  document.getElementById('ov-import-prog').classList.add('open');
+  impGoStep(2); _renderImpThumbs();
+}
+/* La cible proposée après lecture : même empreinte de document → mise à jour PROPOSÉE (preuve
+   forte) ; réanalyse → la cible est déjà connue par son id ; le nom seul ne sélectionne JAMAIS. */
+function _impProposerCible(){
+  if(_impRaison==='reanalyse'&&_impCibleId&&_progParRef(_impCibleId)){ _impMode='update'; return; }
+  const h=_impDoc&&_impDoc.docHash;
+  const forts=h?(S.programmes||[]).filter(p=>p&&((p.doc&&p.doc.hash===h)||(p.previousVersions||[]).some(v=>v&&v.doc&&v.doc.hash===h))):[];
+  if(forts.length===1){ _impMode='update'; _impCibleId=forts[0].id; }
+  else{ _impMode='new'; _impCibleId=null; }
+}
+function _impCandidats(){
+  const h=_impDoc&&_impDoc.docHash, nom=String((_impExtracted&&_impExtracted.name)||'').trim().toLowerCase();
+  return (S.programmes||[]).filter(Boolean).map(p=>({p,
+    fort:!!h&&((p.doc&&p.doc.hash===h)||(p.previousVersions||[]).some(v=>v&&v.doc&&v.doc.hash===h)),
+    memeNom:!!nom&&String(p.name||'').trim().toLowerCase()===nom}))
+    .sort((a,b)=>(b.fort-a.fort)||(b.memeNom-a.memeNom)||((a.p.status==='archived')-(b.p.status==='archived')));
+}
+function _impChoisirCible(id){
+  const p=_progParRef(id); if(!p) return;
+  _impMode='update'; _impCibleId=p.id;
+  _impDocSauver(); _renderImpCible();
+}
+function _renderImpCible(){
+  const z=document.getElementById('imp-cible'); if(!z) return;
+  const e=_escNote, cands=_impCandidats(), memes=cands.filter(c=>c.memeNom);
+  let h='<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Enregistrer comme</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button id="imp-mode-new" class="btn '+(_impMode!=='update'?'btn-red':'btn-bg2')+'" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode(\'new\')">➕ Nouveau</button>'
+    +'<button id="imp-mode-update" class="btn '+(_impMode==='update'?'btn-red':'btn-bg2')+'" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode(\'update\')">🔄 Mettre à jour</button></div>';
+  if(_impMode!=='update'&&memes.length){
+    h+='<div style="font-size:12px;color:var(--orange);line-height:1.4;margin-top:10px;">⚠️ '+memes.length+' programme'+(memes.length>1?'s portent':' porte')+' déjà ce nom. '
+      +'Rien ne sera remplacé : si c\'est le même, choisis « Mettre à jour » et désigne-le.</div>';
+  }
+  if(_impMode==='update'){
+    if(!cands.length) h+='<div style="font-size:12px;color:var(--t3);margin-top:10px;">Aucun programme à mettre à jour.</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:28dvh;overflow-y:auto;">';
+    cands.forEach(c=>{
+      const sel=c.p.id===_impCibleId;
+      h+='<div data-cible-imp="'+e(c.p.id)+'" onclick="_impChoisirCible('+_progArg(c.p.id)+')" style="cursor:pointer;border-radius:10px;padding:8px 10px;border:1.5px solid '+(sel?'var(--red)':'var(--sep)')+';background:'+(sel?'rgba(255,45,85,.08)':'var(--bg2)')+';">'
+        +'<div style="font-size:13px;font-weight:700;">'+(sel?'✓ ':'')+e(c.p.name||'Programme')
+        +(c.fort?' <span style="color:var(--green);font-size:11px;">⭐ même document</span>':'')
+        +(!c.fort&&c.memeNom?' <span style="color:var(--orange);font-size:11px;">⚠️ même nom</span>':'')+'</div>'
+        +'<div style="font-size:11.5px;color:var(--t3);margin-top:2px;">'+e(_progDistinctif(c.p))+'</div></div>';
+    });
+    h+='</div>';
+  }
+  z.innerHTML=h;
+  const diff=document.getElementById('imp-diff');
+  if(diff){
+    const cible=_impMode==='update'?_progParRef(_impCibleId):null;
+    diff.innerHTML=cible?_progComparaisonHtml(_progComparer(_progContenu(cible), _impContenuMaj(cible)), 'Avant · v'+(cible.version||1), 'Après · v'+((cible.version||1)+1)):'';
+    diff.style.display=cible?'block':'none';
+  }
+  const ec=document.getElementById('imp-en-cours'), ecl=document.getElementById('imp-en-cours-l');
+  if(ec&&ecl){
+    const actif=_progEnCours(), cible=_impMode==='update'?_progParRef(_impCibleId):null;
+    const dejaActif=!!(cible&&actif&&cible.id===actif.id);
+    ecl.style.display=dejaActif?'none':'flex';
+    if(ec.dataset.touche!=='1') ec.checked=!actif;
+  }
+}
+
+
 function openImportProg(){
+  /* ⛔ LOT 1 — un scan né en mode réel ne se montre JAMAIS en démo / persona (et inversement). */
+  if(_scanEnCours(_impPhotos,_impExtracted) && _impDemoScan!==!!window._demoMode) impRecommencer(true);
   /* ⭐ On REPREND si un scan est en cours, sinon on repart de zéro comme avant. */
   if(_scanEnCours(_impPhotos,_impExtracted)){
     _bandeauReprise('imp-reprise', impRecommencer);
@@ -6456,12 +6788,22 @@ function openImportProg(){
     else { impGoStep(2); if(typeof _renderImpThumbs==='function')_renderImpThumbs(); }
   }else{
     impRecommencer(true);
+    /* LOT 1 — sinon, un brouillon gardé sur ce téléphone (fermeture, rechargement) est repris. */
+    try{ _impDocReprendre(); }catch(e){}
   }
   document.getElementById('ov-import-prog').classList.add('open');
 }
 /* Vide le scan. `silencieux` = appelé à l'ouverture d'un import neuf (rien à annoncer). */
 function impRecommencer(silencieux){
-  _impPhotos=[];_impExtracted=null;_impMode='new';
+  /* LOT 1 — « Nouveau scan » demandé par la personne : le brouillon non importé est effacé du
+     téléphone. Appelé en silence (ouverture, après un import), on ne détruit rien. */
+  const ancien=_impDoc;
+  if(!silencieux && ancien && ancien.state!=='imported' && typeof _impDocEffacer==='function') _impDocEffacer(ancien.id);
+  _impPhotos=[];_impExtracted=null;_impMode='new';_impDoc=null;_impCibleId=null;_impRaison='import';_impRepriseJeton++;
+  _impDemoScan=!!window._demoMode;
+  /* LOT 1 (D-053) — la case « en cours » repart de sa valeur PAR DÉFAUT à chaque scan : un choix fait
+     à la main pour un import précédent ne doit pas décider du suivant. */
+  { const ec=document.getElementById('imp-en-cours'); if(ec) delete ec.dataset.touche; }
   _cacheReprise('imp-reprise');
   impGoStep(1);
   if(!silencieux && typeof toast==='function')toast('Nouveau scan','info');
@@ -6477,31 +6819,7 @@ function impGoStep(n){
   });
   const s=document.getElementById('imp-s'+n);
   if(s)s.style.display=(n===1||n===4)?'block':'flex';
-  if(n===1)['imp-cam-inp','imp-gal-inp','imp-more-inp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-}
-
-function addImportPhoto(input){
-  const files=[...input.files];if(!files.length)return;
-  const loadFile=f=>new Promise(res=>{
-    const img=new Image(),url=URL.createObjectURL(f);
-    img.onload=()=>{
-      const max=1200,canvas=document.createElement('canvas');
-      let w=img.width,h=img.height;
-      if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
-      canvas.width=w;canvas.height=h;
-      const _c2d=canvas.getContext('2d');
-      if(!_c2d){URL.revokeObjectURL(url);res(null);return;}
-      _c2d.drawImage(img,0,0,w,h);
-      URL.revokeObjectURL(url);
-      res({data:canvas.toDataURL('image/jpeg',0.82).split(',')[1],type:'image/jpeg'});
-    };
-    img.src=url;
-  });
-  Promise.all(files.map(loadFile)).then(results=>{
-    _impPhotos.push(...results.filter(Boolean));
-    _renderImpThumbs();
-    impGoStep(2);
-  });
+  if(n===1)['imp-add-inp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 
 function _loadPDFJS(){
@@ -6642,42 +6960,35 @@ async function _pdfToText(f){
   if(pagesLues<pagesTotal) return {etat:LIRE_PARTIEL, lignes:lines, pagesLues, pagesTotal, raison:'plafond_pages'};
   return {etat:LIRE_COMPLET, lignes:lines, pagesLues, pagesTotal, raison:''};
 }
-async function addImportFile(input){
-  const files=[...input.files];if(!files.length)return;
-  const MAX_MB=15;
-  const results=[];
-  for(const f of files){
-    if(f.size>MAX_MB*1024*1024){toast('Fichier trop volumineux (max '+MAX_MB+' MB)','error');continue;}
-    const name=f.name.toLowerCase();
-    if(f.type==='application/pdf'||name.endsWith('.pdf')){
-      try{
-        toast('Lecture du PDF…','info');
-        const pages=await _pdfToImages(f);
-        if(!pages.length){toast('PDF vide ou illisible','error');continue;}
-        results.push(...pages);
-      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');}
-    }
-  }
-  if(results.length){
-    _impPhotos.push(...results);
-    _renderImpThumbs();
-    impGoStep(2);
-  }
-}
-
 function _renderImpThumbs(){
   const el=document.getElementById('imp-thumbs');if(!el)return;
+  /* LOT 1 — pages NUMÉROTÉES dans l'ordre d'envoi, avec ◀ ▶ (ordre), ⟳ (rotation 90°) et ✕. */
+  const n=_impPhotos.length;
+  const bt='width:26px;height:24px;border-radius:7px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:12px;cursor:pointer;padding:0;line-height:1;touch-action:manipulation;';
   el.innerHTML=_impPhotos.map((p,i)=>{
     const fileIcon=p.isXlsx?'📊':p.isText?'📝':'📄';
     const thumb=(p.isPdf||p.isText)
-      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${fileIcon}</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote(p.name||'Fichier')}</span></div>`
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${fileIcon}</span><span style="font-size:9px;color:var(--t3);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote(p.name||'')}</span></div>`
       :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
-    return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeImpPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
+    return `<div class="imp-page" data-i="${i}" style="position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="position:relative;">${thumb}<span class="imp-page-num" style="position:absolute;bottom:3px;left:3px;min-width:18px;height:18px;border-radius:9px;background:rgba(0,0,0,.72);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;">${i+1}</span>
+      <button onclick="removeImpPhoto(${i})" title="Retirer" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;">✕</button></div>
+      <div style="display:flex;gap:3px;">
+        <button onclick="impPageDeplacer(${i},-1)" title="Avant" style="${bt}${i===0?'opacity:.35;':''}" ${i===0?'disabled':''}>◀</button>
+        ${(p.isText||p.isPdf)?'':`<button onclick="impPageTourner(${i})" title="Tourner" style="${bt}">⟳</button>`}
+        <button onclick="impPageDeplacer(${i},1)" title="Après" style="${bt}${i===n-1?'opacity:.35;':''}" ${i===n-1?'disabled':''}>▶</button>
+      </div></div>`;
   }).join('');
+  const cpt=document.getElementById('imp-pages-cpt');
+  if(cpt)cpt.textContent=n+' / '+IMP_MAX_PAGES+' pages';
 }
 
 function removeImpPhoto(i){
   _impPhotos.splice(i,1);
+  if(typeof _impFichiersRecalculer==='function')_impFichiersRecalculer();
+  /* LOT 1 — toutes les pages retirées : le brouillon (jamais importé) n'a plus de raison d'exister sur le téléphone. */
+  if(!_impPhotos.length&&_impDoc&&_impDoc.state!=='imported'){ _impDocEffacer(_impDoc.id); _impDoc=null; }
+  else if(_impDoc){ _impCalculerDocHash().then(()=>_impDocSauver()); }
   if(!_impPhotos.length){impGoStep(1);return;}
   _renderImpThumbs();
 }
@@ -6696,15 +7007,32 @@ async function analyzeImportPhotos(){
     return;
   }
   impGoStep(3);
+  /* ⛔ LOT 1 — UN ÉCHEC N'EST JAMAIS SILENCIEUX, ET IL NE COÛTE RIEN À LA PERSONNE.
+     · délai client (IMP_TIMEOUT_MS) et bouton « Annuler » : l'attente n'est plus infinie ;
+     · une réponse SANS aucun exercice est un échec (avant : un programme vide, et l'import gratuit
+       décompté) ;
+     · l'import gratuit n'est compté qu'APRÈS une lecture utile ; les pages restent sur le téléphone.
+     ⚠️ LIMITE DITE (Worker inchangé, Lot 2) : après une annulation ou un délai dépassé, l'app ne
+     peut pas savoir si le serveur a fini son appel — elle garantit seulement de ne rien
+     enregistrer et de ne pas décompter l'import gratuit. */
+  const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  const suivi={ctrl, raison:null}; _impAbort=suivi;
+  const minuteur=setTimeout(()=>{ if(_impAbort===suivi){ suivi.raison='delai'; try{ if(ctrl)ctrl.abort(); }catch(e){} } }, IMP_TIMEOUT_MS);
+  /* Sans AbortController (très vieux navigateur), le délai et l'annulation gagnent quand même la course. */
+  const arret=new Promise((_,rej)=>{ suivi.rejeter=rej; }); arret.catch(()=>{});
+  const _arreter=()=>{ if(suivi.rejeter) suivi.rejeter(Object.assign(new Error('arrêt'),{name:'AbortError'})); };
+  if(ctrl) ctrl.signal.addEventListener('abort',_arreter);
+  _impDocEtat('analyzing');
   let _rawResp='';
   try{
-    const r=await fetch(_aiUrl('importProgram'),{method:'POST',redirect:'follow',
+    const r=await Promise.race([fetch(_aiUrl('importProgram'),{method:'POST',redirect:'follow',signal:ctrl?ctrl.signal:undefined,
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'importProgram',images:_impPhotos,catalogue:_catalogueImport()})});
-    _rawResp=await r.text();
+      body:JSON.stringify({action:'importProgram',images:_impPagesPourEnvoi(),catalogue:_catalogueImport()})}), arret]);
+    _rawResp=await Promise.race([r.text(), arret]);
     console.log('[Import] Réponse brute Apps Script :', _rawResp);
     const d=JSON.parse(_rawResp);
     if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
+    if(!_impLectureUtile(d.data)) throw Object.assign(new Error('vide'),{code:'vide'});
     _impExtracted=d.data;
     if(!S.premium){S.progImports=(S.progImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();} // compte l'import réussi (limite gratuite)
     _mergeImportSeances(); // fusionne « Séance 1 - Dorsaux/Biceps/… » en UNE séance (groupes = sections internes)
@@ -6713,12 +7041,25 @@ async function analyzeImportPhotos(){
                                  // Après, on rattacherait « Développé couché (échauffement) » — c'est-à-dire rien.
     _mergeImportBlocsEch();      // IMPORT-ECH-01 : même filet quand le nom est NU (échauffement en note / en type)
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
+    _impProposerCible();   // LOT 1 : même document → mise à jour proposée ; le nom seul ne choisit jamais
+    _impDocEtat('read',{error:null});
     _renderImpConfirm();
     impGoStep(4);
   }catch(e){
-    console.error('[Import] Erreur :', e.message, '| Réponse brute :', _rawResp);
+    const raison=suivi.raison||((e&&e.code==='vide')?'vide':'erreur');
+    console.error('[Import] Erreur :', raison, e&&e.message, '| Réponse brute :', _rawResp);
+    _impExtracted=null;
     impGoStep(2);
-    toast('Erreur analyse : '+e.message,'error');
+    const garde=' Tes pages sont gardées, rien n\'a été enregistré'+(S.premium?'':', ton import gratuit n\'est pas décompté')+'.';
+    const msg=raison==='annule'?'Analyse annulée.'+garde
+      :raison==='delai'?'L\'analyse prend trop de temps (plus de '+Math.round(IMP_TIMEOUT_MS/1000)+' s) : elle a été arrêtée.'+garde+' Tu peux réessayer.'
+      :raison==='vide'?'Aucun exercice trouvé dans ce document.'+garde
+      :'Erreur d\'analyse : '+((e&&e.message)||'inconnue')+'.'+garde;
+    toast(msg, raison==='annule'?'info':'error');
+    _impDocEtat(raison==='annule'?'draft':'error',{error:{code:raison,message:String((e&&e.message)||''),at:new Date().toISOString()}});
+  }finally{
+    clearTimeout(minuteur);
+    if(_impAbort===suivi)_impAbort=null;
   }
 }
 
@@ -6753,12 +7094,22 @@ function _catalogueImport(){
 // dépend pas du modèle, qui découpe parfois à tort quand le doc met un en-tête par groupe.
 function _seanceNum(label){ const m=String(label||'').match(/s[ée]ance\s*(\d+)|jour\s*(\d+)|\bday\s*(\d+)|workout\s*(\d+)/i); return m?(m[1]||m[2]||m[3]||m[4]):null; }
 function _seanceKw(label){ const m=String(label||'').match(/(s[ée]ance|jour|day|workout)/i); const k=(m?m[1]:'séance').toLowerCase(); return k==='séance'||k==='seance'?'Séance':k.charAt(0).toUpperCase()+k.slice(1); }
+/* 🅰️🅱️ LOT 1 — LA VARIANTE D'UN JOUR (« Semaine A », « J3 B », « Séance 2 - B »). Deux jours de même
+   NUMÉRO mais de variantes différentes sont deux séances : les fusionner croisait les exercices de
+   la semaine A et de la semaine B dans un même jour. ⛔ Le libellé n'est jamais réécrit pour ça. */
+function _seanceVariante(label){
+  const t=String(label||'');
+  const m=t.match(/\b(?:semaine|sem\.?|variante|version|week|programme|prog\.?)\s*([A-Da-d])\b/i)
+       || t.match(/(?:[Ss][ée]ance|[Jj]our|[Dd]ay|[Ww]orkout|\b[Jj])\s*\d+\s*[-–—:]?\s*([A-D])\b/)
+       || t.match(/[-–—:]\s*([A-D])\s*$/);
+  return m?m[1].toUpperCase():null;
+}
 function _mergeImportSeances(){
   if(!_impExtracted||!(_impExtracted.days||[]).length)return;
   const out=[]; let merged=0;
   _impExtracted.days.forEach(day=>{
     const n=_seanceNum(day.label), prev=out[out.length-1];
-    if(prev && n!=null && _seanceNum(prev.label)===n){
+    if(prev && n!=null && _seanceNum(prev.label)===n && _seanceVariante(prev.label)===_seanceVariante(day.label)){
       prev.exercises=(prev.exercises||[]).concat(day.exercises||[]);
       prev.label=_seanceKw(prev.label)+' '+n;   // « Séance N » propre (groupes musculaires = sections internes)
       merged++;
@@ -7206,6 +7557,7 @@ function _renderImpConfirm(){
           </div>`).join('')}
       </div>
     </div>`).join('');
+  _renderImpCible();   // LOT 1 : nouveau / mise à jour d'un programme désigné, Avant / Après
 }
 
 function removeImpEx(di,ei){
@@ -7216,23 +7568,18 @@ function removeImpEx(di,ei){
   _renderImpConfirm();
 }
 
+/* LOT 1 — « Nouveau » ou « Mettre à jour » un programme DÉSIGNÉ (jamais par son nom, jamais par un
+   index pris dans un menu). `replace` est l'ancien nom du mode : il mène au même endroit. */
 function _setImpMode(mode){
-  _impMode=mode;
-  const btnN=document.getElementById('imp-mode-new');
-  const btnR=document.getElementById('imp-mode-replace');
-  const sel=document.getElementById('imp-replace-sel');
-  if(mode==='replace'){
-    const progs=S.programmes||[];
-    if(!progs.length){toast('Aucun programme existant à remplacer','info');_setImpMode('new');return;}
-    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(p.name)}</option>`).join('');
-    sel.style.display='block';
-    if(btnN)btnN.className='btn btn-bg2';
-    if(btnR)btnR.className='btn btn-red';
-  } else {
-    sel.style.display='none';
-    if(btnN)btnN.className='btn btn-red';
-    if(btnR)btnR.className='btn btn-bg2';
+  _impMode=(mode==='update'||mode==='replace')?'update':'new';
+  if(_impMode==='new') _impCibleId=null;
+  else if(!_impCibleId||!_progParRef(_impCibleId)){
+    const forts=_impCandidats().filter(c=>c.fort);
+    _impCibleId=forts.length===1?forts[0].p.id:null;
+    if(!(S.programmes||[]).length){ toast('Aucun programme existant à mettre à jour','info'); _impMode='new'; }
   }
+  if(typeof _impDocSauver==='function'&&_impDoc) _impDocSauver();
+  _renderImpCible();
 }
 
 /* 📅 LE FILET DE DATE, CÔTÉ APP — ft-v1168 (07/09/2026).
@@ -7307,10 +7654,98 @@ function _cardioVersWkt(day){
     if(r.apres&&!S.wkt.cardio)     S.wkt.cardio     =r.apres;
   }catch(e){}
 }
+/* LOT 1 — le jour de programme tel que l'import le construit depuis la lecture : une seule
+   fonction, appelée par l'aperçu (Avant / Après) ET par l'enregistrement (R2). Corps inchangé. */
+function _impConstruireJour(day,di){
+  const groupMap={};const gSeed=Date.now()+di;
+  /* 🏃 ft-v1168 — le jour RANGE son cardio au lieu de le laisser dans la liste des exercices.
+     ⭐ Même fonction que la séance de Milo (`_extraireCardioMilo`, R13/R2) : ce sont les BORNES
+     de la partie musculation qui disent « avant » ou « après », on ne devine pas depuis le titre.
+     ⛔ Un cardio au MILIEU reste un exercice — décision de ft-v995, non rouverte ici. */
+  const _jour={
+    label:day.label||'Jour '+(di+1),
+    exs:(day.exercises||[]).map(ex=>{
+      // Groupe superset/tri-set
+      let group;
+      if(ex.supersetGroup){
+        if(!groupMap[ex.supersetGroup])groupMap[ex.supersetGroup]='ss'+gSeed+'_'+ex.supersetGroup;
+        group=groupMap[ex.supersetGroup];
+      }
+      // Type de série (dropset D, méthode M, etc.)
+      const baseType=ex.setType||'N';
+      /* 🔥 LE TYPE PAR SÉRIE — ft-v1156 (07/09/2026). Le backend peut désormais renvoyer
+         `setTypePerSet` (un élément par série) quand le document porte une COLONNE qui classe
+         chaque ligne (ECH / TRAV). Sans lui, les 4 lignes d'échauffement du développé couché
+         de Michel étaient devenues 4 EXERCICES nommés « Développé couché (ECH) ».
+         ⛔ 'W' est le mot du backend, 'É' celui de l'app (`SET_TYPES`) : la traduction se fait
+         ICI, une fois, à l'entrée — c'est R33 (le format du fournisseur ne devient jamais le
+         format interne). Ailleurs dans l'app, seul 'É' existe.
+         ⛔ Et l'absence de champ ne change RIEN : on retombe sur `baseType`, donc un import
+         sans colonne de type se comporte exactement comme avant. */
+      const _typeAt=si=>{
+        const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
+        return v==='W' ? 'É' : baseType;
+      };
+      // Séries avec reps+kg par palier (dropsets) ou repsPerSet
+      let sets;
+      // Repos par série : backend peut fournir restPerSet[] (secondes) ou rest unique — sinon 0 (défaut par type)
+      const _restAt=si=>(ex.restPerSet&&ex.restPerSet[si]!=null?_secRepos(ex.restPerSet[si]):_secRepos(ex.rest));
+      if(ex.repsPerSet&&ex.repsPerSet.length>0){
+        sets=ex.repsPerSet.map((r,si)=>({
+          kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
+          reps:parseInt(r)||10,
+          type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
+          rest:_restAt(si)
+        }));
+      }else{
+        sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
+          kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
+          reps:ex.reps||10,
+          type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
+          rest:_restAt(si)
+        }));
+      }
+      const obj={name:ex.name,note:ex.note||'',sets};
+      if(group){obj.group=group;obj.groupType='super';} // FIX Emma : sans groupType='super' le superset importé n'était pas reconnu
+      return obj;
+    })
+  };
+  // 🏃 ft-v1168 — on range le cardio du jour (mêmes bornes que la séance de Milo).
+  try{
+    if(typeof _extraireCardioMilo==='function'){
+      const _r=_extraireCardioMilo(_jour.exs);
+      _jour.exs=_r.exs;
+      if(_r.avant)_jour.cardioAvant=_r.avant;
+      if(_r.apres)_jour.cardio     =_r.apres;
+    }
+  }catch(e){}
+  return _jour;
+}
+
+/* Le CONTENU du programme lu (nom, semaines, date validée, jours). */
+function _impContenuProgramme(){
+  const x=_impExtracted||{};
+  return {name:(x.name||'Programme '+new Date().toLocaleDateString('fr-FR')).trim(),
+    weeks:x.weeks||0,
+    startDate:_dateProgValide(x.startDate,x.weeks),
+    days:(x.days||[]).map((day,di)=>_impConstruireJour(day,di))};
+}
+/* Le contenu d'une MISE À JOUR : les jours viennent du document ; le nom, la date de début et les
+   semaines du programme désigné sont gardés quand le document ne les donne pas (une lecture n'a
+   pas le droit d'effacer ce que la personne a posé). Les autres champs du programme restent. */
+function _impContenuMaj(cible, contenu){
+  const n=contenu||_impContenuProgramme();
+  const base=_progContenu(cible);
+  delete base.exs;
+  return Object.assign(base, {name:cible.name||n.name, days:n.days,
+    weeks:(parseInt(n.weeks)>0)?n.weeks:(base.weeks||0), startDate:n.startDate||base.startDate||''});
+}
 function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
   if(!S.programmes)S.programmes=[];
-  const name=(_impExtracted.name||'Programme '+new Date().toLocaleDateString('fr-FR')).trim();
+  /* ⛔ LOT 1 — une mise à jour vise un programme DÉSIGNÉ par son id ; sans cible, on ne devine pas. */
+  const cible=_impMode==='update'?_progParRef(_impCibleId):null;
+  if(_impMode==='update'&&!cible){toast('Choisis le programme à mettre à jour (rien n\'a été enregistré)','error');return;}
   /* ⛔ R2 — la MÊME fonction que l'aperçu (`_exerciceInconnu`, ft-v1166). Avant, ce test était
      écrit ici en `allEx.includes(low)` et une 2ᵉ fois dans l'import d'historique avec un `Set` :
      l'aperçu ne pouvait pas promettre ce que la création allait faire. */
@@ -7341,92 +7776,26 @@ function finalImportProg(){
     toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
   }
   // Construire le programme avec groupes supersets et dropsets
-  const _buildProgDay=(day,di)=>{
-    const groupMap={};const gSeed=Date.now()+di;
-    /* 🏃 ft-v1168 — le jour RANGE son cardio au lieu de le laisser dans la liste des exercices.
-       ⭐ Même fonction que la séance de Milo (`_extraireCardioMilo`, R13/R2) : ce sont les BORNES
-       de la partie musculation qui disent « avant » ou « après », on ne devine pas depuis le titre.
-       ⛔ Un cardio au MILIEU reste un exercice — décision de ft-v995, non rouverte ici. */
-    const _jour={
-      label:day.label||'Jour '+(di+1),
-      exs:(day.exercises||[]).map(ex=>{
-        // Groupe superset/tri-set
-        let group;
-        if(ex.supersetGroup){
-          if(!groupMap[ex.supersetGroup])groupMap[ex.supersetGroup]='ss'+gSeed+'_'+ex.supersetGroup;
-          group=groupMap[ex.supersetGroup];
-        }
-        // Type de série (dropset D, méthode M, etc.)
-        const baseType=ex.setType||'N';
-        /* 🔥 LE TYPE PAR SÉRIE — ft-v1156 (07/09/2026). Le backend peut désormais renvoyer
-           `setTypePerSet` (un élément par série) quand le document porte une COLONNE qui classe
-           chaque ligne (ECH / TRAV). Sans lui, les 4 lignes d'échauffement du développé couché
-           de Michel étaient devenues 4 EXERCICES nommés « Développé couché (ECH) ».
-           ⛔ 'W' est le mot du backend, 'É' celui de l'app (`SET_TYPES`) : la traduction se fait
-           ICI, une fois, à l'entrée — c'est R33 (le format du fournisseur ne devient jamais le
-           format interne). Ailleurs dans l'app, seul 'É' existe.
-           ⛔ Et l'absence de champ ne change RIEN : on retombe sur `baseType`, donc un import
-           sans colonne de type se comporte exactement comme avant. */
-        const _typeAt=si=>{
-          const v=(ex.setTypePerSet&&ex.setTypePerSet[si]!=null)?String(ex.setTypePerSet[si]).toUpperCase():'';
-          return v==='W' ? 'É' : baseType;
-        };
-        // Séries avec reps+kg par palier (dropsets) ou repsPerSet
-        let sets;
-        // Repos par série : backend peut fournir restPerSet[] (secondes) ou rest unique — sinon 0 (défaut par type)
-        const _restAt=si=>(ex.restPerSet&&ex.restPerSet[si]!=null?_secRepos(ex.restPerSet[si]):_secRepos(ex.rest));
-        if(ex.repsPerSet&&ex.repsPerSet.length>0){
-          sets=ex.repsPerSet.map((r,si)=>({
-            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
-            reps:parseInt(r)||10,
-            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
-            rest:_restAt(si)
-          }));
-        }else{
-          sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
-            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
-            reps:ex.reps||10,
-            type:_typeAt(si), /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
-            rest:_restAt(si)
-          }));
-        }
-        const obj={name:ex.name,note:ex.note||'',sets};
-        if(group){obj.group=group;obj.groupType='super';} // FIX Emma : sans groupType='super' le superset importé n'était pas reconnu
-        return obj;
-      })
-    };
-    // 🏃 ft-v1168 — on range le cardio du jour (mêmes bornes que la séance de Milo).
-    try{
-      if(typeof _extraireCardioMilo==='function'){
-        const _r=_extraireCardioMilo(_jour.exs);
-        _jour.exs=_r.exs;
-        if(_r.avant)_jour.cardioAvant=_r.avant;
-        if(_r.apres)_jour.cardio     =_r.apres;
-      }
-    }catch(e){}
-    return _jour;
-  };
-  const prog={id:'p'+Date.now(),name,
-    weeks:_impExtracted.weeks||0,
-    startDate:_dateProgValide(_impExtracted.startDate,_impExtracted.weeks),
-    days:_impExtracted.days.map((day,di)=>_buildProgDay(day,di))
-  };
-  if(_impMode==='replace'){
-    const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
-    if(!isNaN(idx)&&S.programmes[idx]){
-      const oldName=S.programmes[idx].name;
-      prog.name=prog.name||oldName;
-      S.programmes[idx]=prog;
-      persist();impRecommencer(true);closeImportProg();   // ft-v1178 : scan consommé → on le vide
-      toast('"'+oldName+'" mis à jour ✅','success');
-      openProgModal();return;
-    }
+  const contenu=_impContenuProgramme();
+  if(!contenu.days.some(d=>d&&(d.exs||[]).length)){toast('Aucun exercice à importer — rien n\'a été enregistré','error');return;}
+  const enCours=!!(document.getElementById('imp-en-cours')||{}).checked;
+  const docMeta=_impDocMeta();
+  let progId, txt;
+  if(cible){
+    const v=_progNouvelleVersion(cible, _impContenuMaj(cible, contenu), _impRaison==='reanalyse'?'reanalyse':'update', docMeta);
+    progId=cible.id;
+    txt='« '+cible.name+' » mis à jour : v'+v+' — la v'+(v-1)+' reste restaurable ✅';
+  }else{
+    const prog=_progNouveau(contenu,'import','import',docMeta);
+    S.programmes.push(prog);
+    progId=prog.id;
+    txt='"'+prog.name+'" importé ! 💪';
   }
-  S.programmes.push(prog);
-  persist();
-  impRecommencer(true);                                  // ft-v1178 : scan consommé → on le vide
+  if(enCours) _progDefinirEnCours(progId); else persist();
+  if(_impDoc){ _impDoc.progId=progId; _impDocEtat('imported'); }
+  impRecommencer(true);                                  // ft-v1178 : scan consommé → on le vide (le document reste, lié au programme)
   closeImportProg();
-  toast('"'+name+'" importé ! 💪','success');
+  toast(txt,'success');
   openProgModal();
 }
 
@@ -8067,7 +8436,8 @@ function _varianteDeLaSemaine(prog){
 }
 
 function openDaySel(progIdx){
-  const prog=(S.programmes||[])[progIdx];if(!prog||!prog.days)return;
+  const prog=_progParRef(progIdx);if(!prog||!prog.days)return;
+  _progMigrerTous(); progIdx=prog.id;                 // LOT 1 : les boutons de jour visent l'ID
   _daySelProgIdx=progIdx;
   const nameEl=document.getElementById('day-sel-prog-name');
   if(nameEl)nameEl.textContent=prog.name;
@@ -8079,7 +8449,7 @@ function openDaySel(progIdx){
   const _semTxt=_vSem?(' (semaine '+getProgCurrentWeek(prog)+' / '+prog.weeks+')'):'';
   const btns=document.getElementById('day-sel-btns');
   if(btns)btns.innerHTML=(prog.days||[]).map((d,i)=>`
-    <button class="btn btn-bg2" style="padding:14px 16px;text-align:left;" onclick="loadProgDay(${progIdx},${i})">
+    <button class="btn btn-bg2" style="padding:14px 16px;text-align:left;" onclick="loadProgDay(${_progArg(progIdx)},${i})">
       <div style="font-weight:700;font-size:14px;">${_escNote(d.label)}</div>
       <div style="font-size:12px;color:var(--t2);margin-top:3px;">${_escNote((d.exs||[]).slice(0,3).map(e=>e.name).join(', '))}${(d.exs||[]).length>3?' +'+((d.exs||[]).length-3):''}</div>
       ${_aMettreEnAvant[i]?`<div style="display:inline-block;margin-top:7px;padding:3px 9px;border-radius:999px;background:rgba(255,159,10,.14);border:1px solid rgba(255,159,10,.35);font-size:11px;font-weight:800;color:var(--t2);">👉 ta semaine ${_vSem}${_semTxt}</div>`:''}
@@ -8894,8 +9264,9 @@ function _avertissementsSeance(newExs, mode){
   return msgs;
 }
 function loadProgDay(progIdx,dayIdx){
-  const prog=(S.programmes||[])[progIdx];
+  const prog=_progParRef(progIdx);
   if(!prog||!prog.days||!prog.days[dayIdx])return;
+  _progMigrerTous(); progIdx=prog.id;                 // LOT 1 : la confirmation éventuelle garde l'ID
   /* ⛔ LA JUMELLE (R8) : un programme à plusieurs jours passe par ICI, pas par `loadProg`.
      Le même remplacement, donc la même question — et le même propriétaire (R2). */
   if(_travailAPerdre()){
@@ -8906,8 +9277,9 @@ function loadProgDay(progIdx,dayIdx){
   return _loadProgDayVraiment(progIdx,dayIdx);
 }
 function _loadProgDayVraiment(progIdx,dayIdx){
-  const prog=(S.programmes||[])[progIdx];
+  const prog=_progParRef(progIdx);
   if(!prog||!prog.days||!prog.days[dayIdx])return;
+  _progMigrerTous();
   const day=prog.days[dayIdx];
   S.wkt={date:today(),progLabel:day.label||('Jour '+(dayIdx+1)),exs:(day.exs||[]).map(e=>{
     const prev=getPrev(e.name);
@@ -8935,6 +9307,7 @@ function _loadProgDayVraiment(progIdx,dayIdx){
         stockage — on interprète au chargement (R29, sa phrase « si je remets mon programme je
         repars à 0 »). */
   _cardioVersWkt(day);
+  S.wkt.progRef=_progRefPour(prog,dayIdx);   // LOT 1 / D5 : programme, version et jour chargés (additif)
   /* 🛡️ ft-v1153 — LES MÊMES AVERTISSEMENTS QUE SUR UNE SÉANCE DE MILO (une seule fonction, R2).
      ⛔ POSÉ ICI, entre la construction de `S.wkt` et le rendu : les avertissements s'ATTACHENT aux
         exercices, donc ils doivent exister AVANT `renderExBlocks()`, sinon l'écran n'en sait rien.
@@ -9127,7 +9500,8 @@ function _renderBeginnerSetup(){
 }
 function createBeginnerProg(){
   if(!S.programmes)S.programmes=[];
-  const prog=_beginnerProg(S.gender,_bgStyle,_bgFreq,_bgMatos);
+  /* LOT 1 — un programme GÉNÉRÉ porte sa vraie origine (« generator »), avec ou sans parcours débutant. */
+  const prog=_progNouveau(_beginnerProg(S.gender,_bgStyle,_bgFreq,_bgMatos),'generator','generator',null);
   S.programmes.push(prog);
   /* ⛔⛔ LE PARCOURS EN 12 SEMAINES NE SE POSE QUE S'IL EST DEMANDÉ (ft-v1023). Avant, cette
      ligne s'exécutait pour TOUT LE MONDE : un confirmé qui générait un programme se retrouvait
@@ -9153,6 +9527,408 @@ function _beginnerGoalText(){
 }
 
 // ─── PROGRAMMES ──────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   📥 LOT 1 IMPORT PROGRAMME — L'IDENTITÉ, LES VERSIONS ET LE STATUT D'UN PROGRAMME (07/10/2026)
+   ⛔⛔ CE QUI A ÉTÉ MESURÉ AVANT D'ÉCRIRE UNE LIGNE (témoins T-L1, 35 rouges sur 6969ce73) :
+   · les actions visaient un programme par sa POSITION dans le tableau (`S.programmes[idx]`) —
+     une liste qui bouge entre la question et la réponse frappait le voisin ;
+   · « Sauvegarder comme programme » identifiait par le NOM : « bloc x » remplaçait « Bloc X »,
+     un programme de 3 jours sur 6 semaines devenait une séance à plat, sans un mot ;
+   · « Remplacer » à l'import ÉCRASAIT l'ancien programme — aucun retour arrière ;
+   · un ✕ suffisait à supprimer un programme.
+   ⭐ CE QUI EST POSÉ ICI, ET SEULEMENT CECI : une identité stable (`id`), un numéro de version, une
+   origine, un statut (en cours / disponible / archivé), et des versions précédentes. ⛔ Le CONTENU
+   d'entraînement (noms, jours, séries, charges, notes…) n'est jamais réinterprété : la migration
+   est TECHNIQUE (D-053). Un champ absent = ancien programme, et il se comporte comme avant.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+const PROG_SCHEMA=1;
+/* Les MÉTADONNÉES d'un programme — tout le reste est son contenu (versionné tel quel). `doc` = les
+   petites métadonnées du document importé (id, empreinte, nb de pages) — JAMAIS ses images. */
+const _PROG_META=['id','schema','status','version','versionAt','versionReason','origin','editedSinceImport',
+  'previousVersions','activeAt','archivedAt','doc'];
+const _PROG_ORIGINES=['import','manual','session','milo','generator','unknown'];
+function _progFnv(txt){
+  let h=0x811c9dc5; const s=String(txt);
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  return ('0000000'+h.toString(16)).slice(-8);
+}
+/* Le CONTENU métier d'un programme : une copie profonde SANS ses métadonnées. C'est ce qu'on
+   archive dans une version, ce qu'on compare, et ce que la migration n'a pas le droit de changer. */
+function _progContenu(p){
+  const c=JSON.parse(JSON.stringify(p||{}));
+  _PROG_META.forEach(k=>{ delete c[k]; });
+  return c;
+}
+/* Empreinte canonique (clés triées) du contenu — sert aux témoins « contenu identique ». */
+function _progEmpreinte(p){
+  const tri=v=>Array.isArray(v)?v.map(tri):(v&&typeof v==='object'?Object.keys(v).sort().reduce((o,k)=>{o[k]=tri(v[k]);return o;},{}):v);
+  return JSON.stringify(tri(_progContenu(p)));
+}
+/* ⛔⛔ LA MIGRATION TECHNIQUE — déterministe, idempotente, hors réseau, sans effet sur l'entraînement.
+   Elle AJOUTE : schema, id (s'il manque), version 1, origine (seulement d'un signal déjà fiable :
+   `force` → milo, `beginner` → generator, sinon unknown). Elle ne relit, ne renomme, ne regroupe,
+   ne convertit RIEN du contenu (pas de regroupement d'échauffement, pas de catalogue, pas de
+   superset/dropset reconstruit, pas de conversion de charges/reps, pas de fusion de jours).
+   ⭐ L'id manquant est DÉRIVÉ DU CONTENU (même programme → même id d'un chargement à l'autre, même
+   sans écriture disque entre les deux) ; deux programmes identiques sans id reçoivent `-2`, `-3`…
+   dans l'ordre du tableau. Un id DÉJÀ PORTÉ par un autre programme est traité pareil : deux
+   programmes ne partagent jamais une identité. */
+function _progMigrer(p, vus){
+  if(!p||typeof p!=='object') return false;
+  let chg=false;
+  vus=vus||new Set();
+  if(!p.id||typeof p.id!=='string'){
+    const base=(p.id&&typeof p.id==='string')?p.id:('pm'+_progFnv(_progEmpreinte(p)));
+    let id=base,n=2; while(vus.has(id)){ id=base+'-'+n; n++; }
+    p.id=id; chg=true;
+  }
+  vus.add(p.id);
+  if(p.schema!==PROG_SCHEMA){ p.schema=PROG_SCHEMA; chg=true; }
+  if(!(parseInt(p.version)>0)){ p.version=1; chg=true; }
+  else if(typeof p.version!=='number'){ p.version=parseInt(p.version); chg=true; }
+  if(!p.origin||typeof p.origin!=='object'||_PROG_ORIGINES.indexOf(p.origin.type)<0){
+    p.origin={type:p.force?'milo':(p.beginner?'generator':'unknown')}; chg=true;
+  }
+  if(p.previousVersions!==undefined&&!Array.isArray(p.previousVersions)){ p.previousVersions=[]; chg=true; }
+  // Statut EXPLICITE (D-053) : tout ce qui n'est ni « en cours » ni « archivé » est « disponible ».
+  if(p.status!=='active'&&p.status!=='archived'&&p.status!=='available'){ p.status='available'; chg=true; }
+  return chg;
+}
+/* Tous les programmes. ⭐ Pas d'écriture disque ici : le prochain `persist` naturel l'emporte.
+   Et au plus UN programme « en cours » (D1) : si deux le sont (deux appareils), le plus récent garde. */
+function _progMigrerTous(){
+  if(typeof S==='undefined'||!Array.isArray(S.programmes)) return 0;
+  /* ⛔ Les id DÉJÀ PORTÉS sont réservés AVANT d'en fabriquer un : un ancien programme sans id placé
+     plus haut dans la liste ne peut jamais « prendre » l'id d'un programme qui l'avait déjà (une
+     séance peut le citer dans son `progRef`). Seul un id porté DEUX fois est re-identifié — et
+     c'est le second, dans l'ordre du tableau. */
+  const premier=new Map();
+  S.programmes.forEach((p,i)=>{ if(p&&typeof p.id==='string'&&p.id&&!premier.has(p.id)) premier.set(p.id,i); });
+  const vus=new Set(premier.keys()); let n=0;
+  S.programmes.forEach((p,i)=>{
+    if(!p||typeof p!=='object') return;
+    const garde=typeof p.id==='string'&&p.id&&premier.get(p.id)===i;
+    if(!garde&&typeof p.id==='string'&&p.id&&premier.get(p.id)!==i){ p.id=''; }   // doublon d'id : le second est re-identifié
+    if(_progMigrer(p,vus)) n++;
+  });
+  const actifs=S.programmes.filter(p=>p&&p.status==='active');
+  if(actifs.length>1){
+    const garde=actifs.slice().sort((a,b)=>String(b.activeAt||'').localeCompare(String(a.activeAt||'')))[0];
+    actifs.forEach(p=>{ if(p!==garde){ p.status='available'; n++; } });
+  }
+  return n;
+}
+/* ⛔ L'IDENTITÉ : une référence est un `id` (texte) — l'index (nombre) reste accepté pour les
+   anciens appelants, mais une action destructive ou différée capture TOUJOURS l'id. */
+function _progIdx(ref){
+  const L=(typeof S!=='undefined'&&S.programmes)||[];
+  if(typeof ref==='number') return (ref>=0&&ref<L.length&&L[ref])?ref:-1;
+  if(ref==null||ref==='') return -1;
+  return L.findIndex(p=>p&&p.id===String(ref));
+}
+function _progParRef(ref){ const i=_progIdx(ref); return i>=0?S.programmes[i]:null; }
+/* Argument sûr pour un `onclick="…"` (l'id vient parfois du cloud). */
+function _progArg(id){
+  return JSON.stringify(String(id)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function _progNouvelId(){ return 'p'+Date.now()+Math.random().toString(36).slice(2,6); }
+/* Un NOUVEAU programme, construit par l'un des producteurs : son origine est la VRAIE (import,
+   manual, session, milo, generator). On ne fabrique jamais de provenance pour un ancien contenu. */
+function _progNouveau(contenu, origine, raison, doc){
+  const p=JSON.parse(JSON.stringify(contenu||{}));
+  _PROG_META.forEach(k=>{ delete p[k]; });
+  p.id=_progNouvelId(); p.schema=PROG_SCHEMA; p.version=1; p.status='available';
+  p.versionReason=raison||origine; p.versionAt=new Date().toISOString();
+  p.origin={type:_PROG_ORIGINES.indexOf(origine)>=0?origine:'unknown', at:p.versionAt};
+  if(doc) p.doc=doc;
+  return p;
+}
+/* ⛔⛔ UNE NOUVELLE VERSION : la version courante part ENTIÈRE dans `previousVersions` (avec la
+   raison qui l'avait créée et l'événement qui l'archive), le contenu neuf devient courant, l'`id`
+   ne bouge pas. Rien n'est jamais retiré de `previousVersions` (aucune purge — D-055). */
+function _progNouvelleVersion(p, contenu, raison, doc){
+  if(!p) return 0;
+  _progMigrer(p, new Set((S.programmes||[]).filter(x=>x&&x!==p).map(x=>x.id)));
+  p.previousVersions=Array.isArray(p.previousVersions)?p.previousVersions:[];
+  const maintenant=new Date().toISOString();
+  p.previousVersions.push({version:p.version||1, reason:p.versionReason||'unknown', at:p.versionAt||null,
+    archivedAt:maintenant, archivedFor:raison, doc:p.doc?JSON.parse(JSON.stringify(p.doc)):null, content:_progContenu(p)});
+  const max=Math.max(p.version||1, ...p.previousVersions.map(v=>parseInt(v.version)||0));
+  Object.keys(p).forEach(k=>{ if(_PROG_META.indexOf(k)<0) delete p[k]; });
+  Object.assign(p, JSON.parse(JSON.stringify(contenu||{})));
+  p.version=max+1; p.versionReason=raison; p.versionAt=maintenant;
+  p.editedSinceImport=false;
+  if(doc!==undefined){ if(doc) p.doc=doc; else delete p.doc; }
+  return p.version;
+}
+/* La version « telle qu'importée » est sauvée UNE fois, à la PREMIÈRE modification manuelle qui
+   suit un import / une mise à jour / une restauration — jamais à chaque enregistrement. */
+function _progContenuVenuDUnImport(p){
+  if(!p) return false;
+  if(['import','update','reanalyse','restore'].indexOf(p.versionReason)>=0) return true;
+  return !p.versionReason && p.origin && ['import','unknown'].indexOf(p.origin.type)>=0;
+}
+function _progAvantEdition(p, contenuEdite){
+  if(!p) return false;
+  if(!p.editedSinceImport && _progContenuVenuDUnImport(p) && _progEmpreinte(p)!==_progEmpreinte(contenuEdite)){
+    _progNouvelleVersion(p, contenuEdite, 'edit', p.doc||null);
+    p.previousVersions[p.previousVersions.length-1].archivedFor='before-edit';
+    p.editedSinceImport=true;
+    return true;
+  }
+  return false;
+}
+/* ⛔ RESTAURER n'efface rien : la version courante est archivée, l'ancienne revient comme une
+   NOUVELLE version (raison « restore »). Une séance passée n'est jamais touchée. */
+function _progRestaurerVersion(ref, version){
+  const p=_progParRef(ref); if(!p) return 0;
+  const v=(p.previousVersions||[]).find(x=>parseInt(x.version)===parseInt(version));
+  if(!v||!v.content) return 0;
+  const n=_progNouvelleVersion(p, v.content, 'restore', v.doc||null);
+  persist();
+  return n;
+}
+/* L'Avant / Après : ce qui change entre deux contenus (noms comparés sous leur forme normalisée). */
+function _progComparer(avant, apres){
+  const jours=c=>(c&&Array.isArray(c.days)&&c.days.length)?c.days:[{label:(c&&c.name)||'Séance',exs:(c&&c.exs)||[]}];
+  const cle=n=>(typeof _cleNom==='function')?_cleNom(n):String(n||'').toLowerCase().trim();
+  const noms=c=>{ const m=new Map(); jours(c).forEach(d=>(d.exs||[]).forEach(e=>{ if(e&&e.name&&!m.has(cle(e.name))) m.set(cle(e.name),e.name); })); return m; };
+  const series=c=>jours(c).reduce((k,d)=>k+(d.exs||[]).reduce((q,e)=>q+((e&&e.sets)||[]).length,0),0);
+  const nbEx=c=>jours(c).reduce((k,d)=>k+(d.exs||[]).length,0);
+  const A=noms(avant), B=noms(apres);
+  const la=jours(avant).map(d=>d.label||''), lb=jours(apres).map(d=>d.label||'');
+  return {
+    nomAvant:(avant&&avant.name)||'', nomApres:(apres&&apres.name)||'',
+    semainesAvant:(avant&&avant.weeks)||0, semainesApres:(apres&&apres.weeks)||0,
+    joursAvant:la.length, joursApres:lb.length,
+    exercicesAvant:nbEx(avant), exercicesApres:nbEx(apres),
+    seriesAvant:series(avant), seriesApres:series(apres),
+    joursAjoutes:lb.filter(l=>la.indexOf(l)<0), joursRetires:la.filter(l=>lb.indexOf(l)<0),
+    exercicesAjoutes:[...B.keys()].filter(k=>!A.has(k)).map(k=>B.get(k)),
+    exercicesRetires:[...A.keys()].filter(k=>!B.has(k)).map(k=>A.get(k))
+  };
+}
+function _progComparaisonHtml(cmp, etiqA, etiqB){
+  if(!cmp) return '';
+  const e=_escNote, li=(t)=>'<div style="font-size:12px;color:var(--t2);line-height:1.45;">'+t+'</div>';
+  const ch=(a,b)=>a===b?String(b):(a+' → <b>'+b+'</b>');
+  let h='<div style="font-size:12px;font-weight:800;color:var(--t1);margin-bottom:4px;">'+e(etiqA)+' → '+e(etiqB)+'</div>';
+  h+=li('Jours : '+ch(cmp.joursAvant,cmp.joursApres)+' · exercices : '+ch(cmp.exercicesAvant,cmp.exercicesApres)+' · séries : '+ch(cmp.seriesAvant,cmp.seriesApres));
+  if(cmp.semainesAvant!==cmp.semainesApres) h+=li('Semaines : '+ch(cmp.semainesAvant||'—',cmp.semainesApres||'—'));
+  if(cmp.exercicesAjoutes.length) h+=li('➕ '+e(cmp.exercicesAjoutes.join(' · ')));
+  if(cmp.exercicesRetires.length) h+=li('➖ '+e(cmp.exercicesRetires.join(' · ')));
+  if(cmp.joursAjoutes.length) h+=li('📅 + '+e(cmp.joursAjoutes.join(' · ')));
+  if(cmp.joursRetires.length) h+=li('📅 − '+e(cmp.joursRetires.join(' · ')));
+  if(!cmp.exercicesAjoutes.length&&!cmp.exercicesRetires.length&&cmp.seriesAvant===cmp.seriesApres&&cmp.joursAvant===cmp.joursApres)
+    h+=li('Mêmes exercices, même nombre de séries (charges, répétitions ou notes peuvent différer).');
+  return h;
+}
+/* ⭐ « EN COURS » — 0 ou 1 programme, et UNE seule fonction qui le change (D1). Charger un jour ne
+   le modifie jamais. `ref` null = plus aucun programme en cours. */
+function _progDefinirEnCours(ref){
+  const cible=ref==null?null:_progParRef(ref);
+  (S.programmes||[]).forEach(p=>{
+    if(!p) return;
+    if(cible&&p===cible){ p.status='active'; p.activeAt=new Date().toISOString(); }
+    else if(p.status==='active'){ p.status='available'; }
+  });
+  persist();
+  return !!cible;
+}
+function _progEnCours(){ return (S.programmes||[]).find(p=>p&&p.status==='active')||null; }
+function archiverProg(ref){
+  const p=_progParRef(ref); if(!p) return false;
+  p.status='archived'; p.archivedAt=new Date().toISOString();
+  persist();
+  if(typeof toast==='function') toast('« '+(p.name||'Programme')+' » archivé — il reste restaurable','info');
+  _progRafraichir(p.id);
+  return true;
+}
+function desarchiverProg(ref){
+  const p=_progParRef(ref); if(!p) return false;
+  p.status='available'; delete p.archivedAt;
+  persist();
+  if(typeof toast==='function') toast('« '+(p.name||'Programme')+' » est de retour dans tes programmes','success');
+  _progRafraichir(p.id);
+  return true;
+}
+function _progRafraichir(id){
+  try{ if(document.getElementById('mod-prog')&&document.getElementById('mod-prog').classList.contains('open')) renderProgModal(); }catch(e){}
+  try{ const g=document.getElementById('ov-prog-gerer'); if(g&&g.classList.contains('open')) _renderProgGerer(id); }catch(e){}
+}
+/* Ce qui distingue deux programmes qui portent le même nom (version, origine, date, statut…). */
+function _progOrigineTxt(p){
+  const t=p&&p.origin&&p.origin.type;
+  return ({import:'importé',manual:'créé à la main',session:'sauvegardé depuis une séance',milo:'proposé par Milo',
+           generator:'généré',unknown:'origine inconnue'})[t]||'origine inconnue';
+}
+function _progDistinctif(p){
+  if(!p) return '';
+  const d=s=>{ try{ return s?new Date(s).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):''; }catch(e){ return ''; } };
+  const parts=['v'+(p.version||1), _progOrigineTxt(p)+((p.versionAt||(p.origin&&p.origin.at))?(' le '+d(p.versionAt||p.origin.at)):'')];
+  if(p.status==='active') parts.push('en cours');
+  if(p.status==='archived') parts.push('archivé');
+  const isMulti=p.days&&p.days.length;
+  parts.push(isMulti?(p.days.length+' jour'+(p.days.length>1?'s':'')):(((p.exs||[]).length)+' exercice'+((p.exs||[]).length>1?'s':'')));
+  if(p.weeks) parts.push(p.weeks+' sem.');
+  if(p.startDate) parts.push('début '+d(p.startDate));
+  return parts.join(' · ');
+}
+function _progMemeNom(nom, saufId){
+  const k=String(nom||'').trim().toLowerCase();
+  return (S.programmes||[]).filter(p=>p&&p.id!==saufId&&String(p.name||'').trim().toLowerCase()===k);
+}
+/* ⛔⛔ SUPPRIMER = UNE QUESTION, PUIS L'ID CAPTURÉ (jamais l'index) : la liste peut bouger entre
+   les deux (synchro, autre onglet). Séances passées, records : jamais touchés. Le document
+   d'import gardé sur ce téléphone part avec le programme (suppression complète confirmée). */
+function deleteProg(ref){
+  const p=_progParRef(ref); if(!p) return;
+  const id=p.id;
+  const docTxt=p.doc&&p.doc.id?' Le document importé gardé sur ce téléphone sera supprimé aussi.':'';
+  showConfirm('Supprimer ce programme ?',
+    '« '+(p.name||'Programme')+' » ('+_progDistinctif(p)+') et ses versions seront supprimés. Tes séances passées et tes records ne bougent pas.'+docTxt
+    +' Pour le garder sans le voir, archive-le plutôt.',
+    ()=>_progSupprimer(id), 'Supprimer');
+}
+function _progSupprimer(id){
+  const i=_progIdx(String(id)); if(i<0) return false;
+  const p=S.programmes[i];
+  S.programmes.splice(i,1);
+  if(p&&p.doc&&p.doc.id&&typeof _impDocEffacer==='function') _impDocEffacer(p.doc.id);
+  persist();
+  try{ const g=document.getElementById('ov-prog-gerer'); if(g) g.classList.remove('open'); }catch(e){}
+  try{ renderProgModal(); }catch(e){}
+  if(typeof toast==='function') toast('« '+((p&&p.name)||'Programme')+' » supprimé','info');
+  return true;
+}
+/* La référence stable qu'une séance garde vers ce qu'elle a chargé (D5) — additive : une séance
+   sans elle reste parfaitement valide, et rien ne dépend d'elle pour fonctionner. */
+function _progRefPour(prog, dayIdx){
+  if(!prog||!prog.id) return null;
+  const d=(dayIdx!=null&&prog.days&&prog.days[dayIdx])?{index:dayIdx,label:prog.days[dayIdx].label||''}:null;
+  return {id:prog.id, version:prog.version||1, day:d};
+}
+
+/* ── LE CHOIX DE LA CIBLE — un nom ne suffit jamais (règle de Michel, 07/10) ──────────────────
+   Même empreinte de document → preuve forte (mise à jour PROPOSÉE). Même id → identité. Même nom
+   seulement → une suggestion, un avertissement, des candidats distinguables ; la personne tranche. */
+let _progCibleCtx=null;          // {nom, construire:()=>contenu} — le « Sauvegarder comme programme » en attente
+function _ouvrirProgCible(nom, contenu){
+  _progCibleCtx={nom, contenu};
+  const memes=_progMemeNom(nom);
+  const e=_escNote;
+  let h='<div style="font-weight:800;font-size:16px;margin-bottom:6px;">Un programme s\'appelle déjà « '+e(nom)+' »</div>'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-bottom:12px;">Rien n\'est remplacé sans ton accord. Choisis :</div>'
+    +'<button class="btn btn-red" style="width:100%;margin-bottom:10px;" data-cible="__nouveau" onclick="_progCibleChoisir(\'__nouveau\')">➕ Créer un nouveau programme « '+e(nom)+' »</button>';
+  memes.forEach(p=>{
+    if(p.days&&p.days.length){
+      h+='<div style="font-size:12px;color:var(--t3);background:var(--bg3);border-radius:10px;padding:9px 11px;margin-bottom:8px;line-height:1.4;">« '+e(p.name)+' » — '+e(_progDistinctif(p))
+        +'<br>Programme organisé en jours : une séance ne peut pas le remplacer.</div>';
+    }else{
+      h+='<button class="btn btn-bg2" style="width:100%;margin-bottom:8px;text-align:left;" data-cible="'+e(p.id)+'" onclick="_progCibleChoisir('+_progArg(p.id)+')">🔄 Mettre à jour « '+e(p.name)+' »'
+        +'<div style="font-size:11.5px;color:var(--t3);margin-top:3px;font-weight:600;">'+e(_progDistinctif(p))+' — l\'ancienne version reste restaurable</div></button>';
+    }
+  });
+  h+='<button class="btn btn-bg2" style="width:100%;" onclick="fermerProgCible()">Annuler</button>';
+  const c=document.getElementById('prog-cible-content'); if(c) c.innerHTML=h;
+  const ov=document.getElementById('ov-prog-cible'); if(ov) ov.classList.add('open');
+}
+function fermerProgCible(){
+  _progCibleCtx=null;
+  const ov=document.getElementById('ov-prog-cible'); if(ov) ov.classList.remove('open');
+}
+function _progCibleChoisir(cible){
+  const ctx=_progCibleCtx; if(!ctx) return;
+  fermerProgCible();
+  if(cible==='__nouveau'){ _progEnregistrerNouveau(ctx.contenu,'session'); return; }
+  const p=_progParRef(String(cible));
+  if(!p||(p.days&&p.days.length)){ toast('Ce programme ne peut pas être mis à jour par une séance','error'); return; }
+  const v=_progNouvelleVersion(p, Object.assign({}, ctx.contenu, {name:p.name}), 'session', null);
+  persist(); renderProgModal();
+  toast('« '+p.name+' » mis à jour (v'+v+') — la version d\'avant reste restaurable','success');
+}
+function _progEnregistrerNouveau(contenu, origine){
+  if(!S.programmes)S.programmes=[];
+  const p=_progNouveau(contenu, origine, origine, null);
+  S.programmes.push(p);
+  persist(); renderProgModal();
+  toast('« '+p.name+' » sauvegardé ✅','success');
+  return p;
+}
+
+/* ── LA FICHE « GÉRER » : statut, versions (comparer / restaurer), document, archive, suppression ── */
+let _progGererId=null;
+function ouvrirProgGerer(ref){
+  const p=_progParRef(ref); if(!p) return;
+  _progGererId=p.id;
+  _renderProgGerer(p.id);
+  const ov=document.getElementById('ov-prog-gerer'); if(ov) ov.classList.add('open');
+}
+function fermerProgGerer(){
+  _progGererId=null;
+  const ov=document.getElementById('ov-prog-gerer'); if(ov) ov.classList.remove('open');
+}
+function _progRaisonTxt(r){
+  return ({import:'import',update:'mise à jour',reanalyse:'réanalyse',restore:'restauration',edit:'modifiée à la main',
+           session:'depuis une séance',manual:'créée à la main',milo:'proposée par Milo',generator:'générée'})[r]||'—';
+}
+function _renderProgGerer(id, versionComparee){
+  const p=_progParRef(String(id)); const c=document.getElementById('prog-gerer-content');
+  if(!c) return;
+  if(!p){ c.innerHTML='<div style="color:var(--t3);">Programme introuvable.</div>'; return; }
+  const e=_escNote, a=_progArg(p.id);
+  const dt=s=>{ try{ return s?new Date(s).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):''; }catch(x){ return ''; } };
+  let h='<div style="font-weight:800;font-size:17px;margin-bottom:2px;">'+e(p.name||'Programme')+'</div>'
+    +'<div style="font-size:12px;color:var(--t3);margin-bottom:12px;">'+e(_progDistinctif(p))+'</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">';
+  if(p.status==='archived'){
+    h+='<button class="btn btn-bg2" onclick="desarchiverProg('+a+')">↩ Désarchiver</button>';
+  }else{
+    h+=(p.status==='active')
+      ?'<button class="btn btn-bg2" onclick="_progDefinirEnCours(null);_progRafraichir('+a+')">Ne plus suivre ce programme</button>'
+      :'<button class="btn btn-red" onclick="_progDefinirEnCours('+a+');_progRafraichir('+a+')">⭐ En faire mon programme en cours</button>';
+    h+='<button class="btn btn-bg2" onclick="archiverProg('+a+')">🗄️ Archiver</button>';
+  }
+  h+='</div>';
+  // Versions
+  const prev=(p.previousVersions||[]).slice().sort((x,y)=>(parseInt(y.version)||0)-(parseInt(x.version)||0));
+  h+='<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Versions</div>';
+  h+='<div style="background:var(--bg3);border-radius:10px;padding:9px 11px;margin-bottom:6px;font-size:13px;"><b>v'+(p.version||1)+' — actuelle</b>'
+    +'<span style="color:var(--t3);font-size:12px;"> · '+e(_progRaisonTxt(p.versionReason))+(p.versionAt?' · '+dt(p.versionAt):'')+(p.editedSinceImport?' · modifiée depuis':'')+'</span></div>';
+  if(!prev.length) h+='<div style="font-size:12px;color:var(--t3);margin-bottom:12px;">Aucune version précédente.</div>';
+  prev.forEach(v=>{
+    h+='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:9px 11px;margin-bottom:6px;font-size:13px;">'
+      +'<b>v'+e(String(v.version))+'</b><span style="color:var(--t3);font-size:12px;"> · '+e(_progRaisonTxt(v.reason))+(v.at?' · '+dt(v.at):'')
+      +(v.archivedFor==='before-edit'?' · telle qu\'importée, avant tes modifications':'')+'</span>'
+      +'<div style="display:flex;gap:6px;margin-top:7px;">'
+      +'<button class="btn-xs" onclick="_renderProgGerer('+a+','+(parseInt(v.version)||0)+')">Comparer</button>'
+      +'<button class="btn-xs" data-restaurer="'+e(String(v.version))+'" onclick="_progRestaurerVersion('+a+','+(parseInt(v.version)||0)+');toast(\'Version '+(parseInt(v.version)||0)+' restaurée — rien n\\\'a été effacé\',\'success\');_progRafraichir('+a+')">Restaurer</button>'
+      +'</div>';
+    if(versionComparee!=null&&parseInt(versionComparee)===parseInt(v.version))
+      h+='<div style="margin-top:8px;">'+_progComparaisonHtml(_progComparer(v.content,_progContenu(p)),'v'+v.version,'v'+(p.version||1)+' (actuelle)')+'</div>';
+    h+='</div>';
+  });
+  // Document
+  if(p.doc&&p.doc.id){
+    h+='<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px;">Document importé</div>'
+      +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-bottom:8px;">📄 '+(p.doc.pages||0)+' page'+((p.doc.pages||0)>1?'s':'')+' — gardé seulement sur ce téléphone, jamais envoyé ailleurs.</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button class="btn-xs" onclick="reanalyserProg('+a+')">🔁 Réanalyser</button>'
+      +'<button class="btn-xs" style="color:var(--red);" onclick="supprimerDocProg('+a+')">🗑️ Supprimer le document</button></div>';
+  }
+  h+='<div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">'
+    +'<button class="btn btn-bg2" style="color:var(--red);" onclick="deleteProg('+a+')">🗑️ Supprimer le programme…</button>'
+    +'<button class="btn btn-bg2" onclick="fermerProgGerer()">Fermer</button></div>';
+  c.innerHTML=h;
+}
+function supprimerDocProg(ref){
+  const p=_progParRef(ref); if(!p||!p.doc) return;
+  const id=p.id;
+  showConfirm('Supprimer le document ?','Les pages importées de « '+(p.name||'Programme')+' » seront effacées de ce téléphone. Le programme et ses versions restent.',
+    ()=>{ const q=_progParRef(id); if(!q||!q.doc) return; if(typeof _impDocEffacer==='function') _impDocEffacer(q.doc.id); delete q.doc; persist(); _progRafraichir(id); toast('Document supprimé','info'); },
+    'Supprimer');
+}
+
 function openProgModal(){
   renderProgModal();
   document.getElementById('mod-prog').classList.add('open');
@@ -9173,6 +9949,7 @@ function closeProgModal(){
 }
 function renderProgModal(){
   if(!S.programmes)S.programmes=[];
+  _progMigrerTous();                       // LOT 1 : chaque programme a son id (en mémoire ; le disque suit au prochain persist)
   const progs=S.programmes;
   const begBtn=document.getElementById('prog-beginner-btn');
   /* ⛔ LE BOUTON NE DISPARAÎT PLUS (ft-v1023) : il s'effaçait dès qu'un programme « débutant »
@@ -9186,6 +9963,7 @@ function renderProgModal(){
   const begGoal=document.getElementById('prog-beginner-goal');
   if(begGoal){const g=_beginnerGoalText();begGoal.style.display=g?'block':'none';begGoal.textContent=g;}
   const list=document.getElementById('prog-list-modal');
+  const _actifs=progs.filter(p=>p&&p.status!=='archived'), _archives=progs.filter(p=>p&&p.status==='archived');
   if(!progs.length){
     /* ⚠️ CE MESSAGE EST DEVENU FAUX LE JOUR OÙ LE BOUTON EST ARRIVÉ (25/08) : il disait
        « Crée une séance et utilise "Sauvegarder" » — c'était le SEUL chemin, il ne l'est plus.
@@ -9193,7 +9971,8 @@ function renderProgModal(){
        *Quand on ouvre une porte, on relit ce que disent les panneaux.* */
     list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme pour l\'instant.<br>Crée-en un ci-dessus, ou sauvegarde une séance en cours.</div>';
   }else{
-    list.innerHTML=progs.map((p,i)=>{
+    const _carte=(p)=>{
+      const a=_progArg(p.id);
       const isMulti=p.days&&p.days.length;
       let detail='';
       if(isMulti){
@@ -9215,25 +9994,44 @@ function renderProgModal(){
           <span style="font-size:12px;font-weight:700;color:var(--t1);">Semaine ${curW} / ${p.weeks}</span>
           <div style="display:flex;align-items:center;gap:5px;">
             ${p.startDate?`<span style="font-size:11px;color:var(--t3);">${fmt_d(p.startDate)}${endDate?' → '+fmt_d(endDate.toISOString().split('T')[0]):''}</span>`:''}
-            <button onclick="event.stopPropagation();shiftProgStart(${i},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:13px;cursor:pointer;padding:0;line-height:1;font-family:var(--font);">−</button>
-            <button onclick="event.stopPropagation();shiftProgStart(${i},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:13px;cursor:pointer;padding:0;line-height:1;font-family:var(--font);">+</button>
+            <button onclick="event.stopPropagation();shiftProgStart(${a},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:13px;cursor:pointer;padding:0;line-height:1;font-family:var(--font);">−</button>
+            <button onclick="event.stopPropagation();shiftProgStart(${a},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:13px;cursor:pointer;padding:0;line-height:1;font-family:var(--font);">+</button>
           </div>
         </div>
         <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
       </div>`:'';
-      return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
-        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}</div>
+      /* LOT 1 — ce qui DISTINGUE deux programmes de même nom (version, origine, date, statut), et
+         des actions qui visent l'ID. « ⋯ » ouvre la fiche : en cours, versions, document, archive. */
+      const enCours=p.status==='active';
+      return `<div class="prog-card" data-prog-id="${_escNote(p.id)}" style="flex-direction:column;align-items:stretch;${enCours?'border-color:rgba(255,45,85,.55);':''}">
+        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}${enCours?' <span style="font-size:11px;font-weight:800;color:var(--red);">▶ EN COURS</span>':''}</div>
         <div class="prog-card-detail">${_escNote(detail)}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;">${_escNote(_progDistinctif(p))}</div>
         <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
-          <button class="btn-xs" style="flex:1;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
-          <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})" title="Modifier">✏️</button>
-          <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${i})" title="Exporter en PDF">📄 PDF</button>
-          ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
-          <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})" title="Supprimer">✕</button>
+          <button class="btn-xs" style="flex:1;min-width:88px;white-space:nowrap;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${a})">▶ Charger</button>
+          <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${a})" title="Modifier">✏️</button>
+          <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${a})" title="Exporter en PDF">📄</button>
+          ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${a})" title="Analyser avec le Coach IA">🤖</button>`:''}
+          <button class="btn-xs" style="color:var(--t2);" onclick="ouvrirProgGerer(${a})" title="Gérer : en cours, versions, archive">⋯</button>
+          <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${a})" title="Supprimer">✕</button>
         </div>
         ${cycleHtml}
       </div>`;
-    }).join('');
+    };
+    /* Les archivés restent là, repliés en bas : on les retrouve, on les restaure, rien n'est perdu. */
+    const _carteArchive=(p)=>{
+      const a=_progArg(p.id);
+      return `<div class="prog-card" data-prog-id="${_escNote(p.id)}" style="flex-direction:column;align-items:stretch;opacity:.75;">
+        <div class="prog-card-name">🗄️ ${_escNote(p.name)}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;">${_escNote(_progDistinctif(p))}</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn-xs" style="flex:1;" onclick="desarchiverProg(${a})">↩ Désarchiver</button>
+          <button class="btn-xs" onclick="ouvrirProgGerer(${a})" title="Gérer">⋯</button>
+          <button class="btn-xs" style="color:var(--red);" onclick="deleteProg(${a})" title="Supprimer">✕</button>
+        </div></div>`;
+    };
+    list.innerHTML=_actifs.map(_carte).join('')
+      +(_archives.length?`<details style="margin-top:10px;"><summary style="font-size:12.5px;font-weight:700;color:var(--t3);cursor:pointer;padding:6px 2px;">🗄️ Programmes archivés (${_archives.length})</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">${_archives.map(_carteArchive).join('')}</div></details>`:'');
   }
   // Affiche la section "Sauvegarder" seulement si une séance est en cours
   const saveSection=document.getElementById('prog-save-section');
@@ -9267,10 +10065,10 @@ function saveAsProg(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Aucun exercice dans la séance','error');return;}
   if(!S.programmes)S.programmes=[];
   const prog={
-    id:'p'+Date.now(),name,
+    name,
     exs:S.wkt.exs.map(ex=>{
-      // note conservée : sous le MÊME nom, saveAsProg REMPLACE le programme — sans elle, la
-      // consigne posée dans l'éditeur serait détruite au premier « Sauvegarder » (perte silencieuse).
+      // note conservée : une MISE À JOUR choisie d'un programme existant ne doit pas détruire la
+      // consigne posée dans l'éditeur (perte silencieuse) — LOT 1 : la mise à jour est versionnée.
       const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))};
       if(ex.note)o.note=String(ex.note).slice(0,300);
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
@@ -9278,11 +10076,13 @@ function saveAsProg(){
       return o;
     })
   };
-  const idx=S.programmes.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
-  if(idx>=0){S.programmes[idx]=prog;toast('"'+name+'" mis à jour ✅','success');}
-  else{S.programmes.push(prog);toast('"'+name+'" sauvegardé ✅','success');}
-  persist();
-  renderProgModal();
+  /* ⛔⛔ LOT 1 — LE NOM N'EST JAMAIS UNE IDENTITÉ (règle de Michel, 07/10). Avant : « bloc x » remplaçait
+     « Bloc X » — un programme de 3 jours sur 6 semaines devenait une séance à plat, `days`, `weeks`,
+     `startDate` et `id` perdus, sans un mot. Désormais : nom libre → nouveau programme ; même nom →
+     on DEMANDE (créer un nouveau, ou mettre à jour une cible à plat désignée, en version). */
+  const contenu={name, exs:prog.exs};
+  if(_progMemeNom(name).length){ _ouvrirProgCible(name, contenu); return; }
+  _progEnregistrerNouveau(contenu,'session');
 }
 /* ⛔⛔ LA TROISIÈME PORTE — LA SEULE QUI NE DEMANDAIT RIEN (ft-v1099).
    Charger un programme fait `S.wkt = {…}` : ça REMPLACE la séance en cours, en mémoire ET sur
@@ -9320,18 +10120,21 @@ function _confirmerRemplacementSeance(quoi, suite){
     +'pour garder ce travail, termine la séance d\'abord.',
     suite, 'Remplacer');
 }
-function loadProg(idx){
-  const prog=(S.programmes||[])[idx];
+function loadProg(ref){
+  const prog=_progParRef(ref);
   if(!prog)return;
+  _progMigrerTous();
+  const id=prog.id;                                   // LOT 1 : la suite vise l'ID, jamais un index
   if(_travailAPerdre() && !(prog.days&&prog.days.length)){
-    return _confirmerRemplacementSeance('« '+(prog.name||'ce programme')+' »', ()=>_loadProgVraiment(idx));
+    return _confirmerRemplacementSeance('« '+(prog.name||'ce programme')+' »', ()=>_loadProgVraiment(id));
   }
-  return _loadProgVraiment(idx);
+  return _loadProgVraiment(id);
 }
-function _loadProgVraiment(idx){
-  const prog=(S.programmes||[])[idx];
+function _loadProgVraiment(ref){
+  const prog=_progParRef(ref);
   if(!prog)return;
-  if(prog.days&&prog.days.length){closeProgModal();openDaySel(idx);return;}
+  _progMigrerTous();
+  if(prog.days&&prog.days.length){closeProgModal();openDaySel(prog.id);return;}
   S.wkt={
     date:today(),
     progLabel:prog.name,
@@ -9359,6 +10162,7 @@ function _loadProgVraiment(idx){
      `day` : c'est le programme lui-même qui porte ses exercices. On passe donc `prog`, et le
      rattrapage par extraction fait le reste — c'est lui qui compte pour les programmes existants. */
   _cardioVersWkt(prog);
+  S.wkt.progRef=_progRefPour(prog,null);   // LOT 1 / D5 : quelle version a été chargée (additif)
   /* 🛡️ ft-v1153 — LA JUMELLE (R8). Un programme à UN SEUL jour passe par ici, pas par
      `loadProgDay` : même besoin, même fonction, même ordre. *Poser le correctif d'un seul côté
      est précisément la faute que ce fichier passe son temps à rattraper.* */
@@ -9370,17 +10174,10 @@ function _loadProgVraiment(idx){
   toast('"'+prog.name+'" chargé ! 💪','success');
   if(_av.length&&typeof toast==='function') setTimeout(()=>toast(_av.join(' · '),'info'),2200);
 }
-function deleteProg(idx){
-  if(!S.programmes)return;
-  const name=S.programmes[idx].name;
-  S.programmes.splice(idx,1);
-  persist();renderProgModal();
-  toast('"'+name+'" supprimé','info');
-}
 // Impression / export PDF d'un programme — génère une feuille propre puis window.print()
 // (le navigateur propose « Imprimer » ou « Enregistrer en PDF » ; sur iPhone : Partager → Imprimer → PDF)
 function printProg(idx){
-  const p=(S.programmes||[])[idx];if(!p)return;
+  const p=_progParRef(idx);if(!p)return;
   const esc=_escNote;
   const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
   const scheme=(sets)=>{
@@ -9560,7 +10357,7 @@ function _pdfPied(doc,{M,mention}={}){
   }
 }
 async function exportProgPdf(idx){
-  const p=(S.programmes||[])[idx];if(!p)return;
+  const p=_progParRef(idx);if(!p)return;
   toast('Génération du PDF…','info');
   try{ await _loadJsPdf(); }
   catch(e){ toast('PDF indisponible ici — on passe par l\'impression','info'); printProg(idx); return; }
@@ -9640,9 +10437,11 @@ async function exportProgPdf(idx){
   }catch(e){ console.warn('[FT pdf]',e); toast('Souci PDF — on passe par l\'impression','error'); printProg(idx); }
 }
 function editProg(idx){
-  const prog=(S.programmes||[])[idx];
+  const prog=_progParRef(idx);
   if(!prog)return;
-  _editProgIdx=idx;
+  _progMigrerTous();
+  _editProgIdx=_progIdx(prog.id);
+  _editProgId=prog.id;                       // LOT 1 : l'enregistrement retrouve le programme par son ID
   _editProgData=JSON.parse(JSON.stringify(prog));
   _renderProgEdit();
   document.getElementById('ov-prog-edit').classList.add('open');
@@ -9664,7 +10463,8 @@ function creerProgramme(){
   if(!S.programmes)S.programmes=[];
   closeProgModal();
   _editProgIdx=S.programmes.length;          // index encore libre → « sauvegarder » ajoutera
-  _editProgData={id:'p'+Date.now(), name:'', exs:[]};
+  _editProgId=null;                          // LOT 1 : pas encore de programme → l'enregistrement le CRÉE
+  _editProgData={name:'', exs:[]};
   _renderProgEdit();
   document.getElementById('ov-prog-edit').classList.add('open');
   // Le nom est le seul champ obligatoire : on y met le curseur, sauf sur mobile où le
@@ -9964,7 +10764,23 @@ function saveProgEdit(){
   const startInp=document.getElementById('prog-edit-start');
   if(weeksInp)_editProgData.weeks=parseInt(weeksInp.value)||0;
   if(startInp)_editProgData.startDate=startInp.value||'';
-  S.programmes[_editProgIdx]=_editProgData;
+  /* ⛔ LOT 1 — L'ÉDITEUR RETROUVE SON PROGRAMME PAR L'ID, plus par la position qu'il avait à
+     l'ouverture : une liste qui bouge pendant l'édition (synchro, autre onglet) faisait écraser le
+     voisin. Création → un NOUVEAU programme (origine « manual »). Modification → le contenu change
+     en place ; la PREMIÈRE modification après un import sauve d'abord la version importée (une
+     seule fois, « before-edit »). Les métadonnées (id, versions, statut, origine) ne viennent
+     jamais de la copie d'édition. */
+  const cible=_editProgId?_progParRef(_editProgId):null;
+  if(!cible){
+    if(_editProgId){ toast('Ce programme n\'existe plus (supprimé entre-temps) — rien n\'a été écrasé','error'); closeProgEdit(); return; }
+    S.programmes.push(_progNouveau(_progContenu(_editProgData),'manual','manual',null));
+  }else{
+    const contenu=_progContenu(_editProgData);
+    if(!_progAvantEdition(cible, contenu)){
+      Object.keys(cible).forEach(k=>{ if(_PROG_META.indexOf(k)<0) delete cible[k]; });
+      Object.assign(cible, JSON.parse(JSON.stringify(contenu)));
+    }
+  }
   persist();
   closeProgEdit();
   toast('Programme mis à jour ✅','success');
@@ -9972,7 +10788,7 @@ function saveProgEdit(){
 }
 function closeProgEdit(){
   document.getElementById('ov-prog-edit').classList.remove('open');
-  _editProgIdx=-1;_editProgData=null;
+  _editProgIdx=-1;_editProgData=null;_editProgId=null;
 }
 function getProgCurrentWeek(prog){
   if(!prog.startDate||!prog.weeks)return 1;
@@ -10000,7 +10816,7 @@ function progPeriode(prog){
   return {weeks:w, start:iso(d0), end:iso(d1), semaine:getProgCurrentWeek(prog)};
 }
 function shiftProgStart(idx,delta){
-  const prog=(S.programmes||[])[idx];if(!prog)return;
+  const prog=_progParRef(idx);if(!prog)return;
   if(!prog.startDate)prog.startDate=today();
   const d=new Date(prog.startDate);
   d.setDate(d.getDate()+delta*7);
@@ -10040,7 +10856,7 @@ function _coachFmtHtml(text){
 }
 async function analyzeProgIa(idx){
   if(!S.premium){toast('Fonctionnalité Premium ⭐','info');return;}
-  const prog=(S.programmes||[])[idx];
+  const prog=_progParRef(idx);
   if(!prog){toast('Programme introuvable','error');return;}
   if(!S.url){toast('Configure ton URL Apps Script dans Profil','error');return;}
   const ov=document.getElementById('ov-prog-analysis');

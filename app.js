@@ -8272,6 +8272,9 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → L'application) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  /* 📥 LOT 1 IMPORT PROGRAMME — DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : une capture montrerait des
+     programmes qui ne sont pas ceux du lecteur. Elle dit OÙ vit la fiche et ce qu'une version ne touche pas. */
+  {icon:'🗂️', t:'Tes programmes ont une mémoire', cap:'Dans <b>📋 Mes Programmes</b>, le bouton <b>⋯</b> ouvre la fiche d\'un programme : le marquer <b>en cours</b>, comparer ses <b>versions</b> (Avant / Après) et revenir à une ancienne — sans toucher à tes séances passées.<br><br>⛔ Deux programmes du <b>même nom</b> ne s\'écrasent jamais : l\'app te demande.'},
   /* 🛡️ SESSION-INTEGRITY-01 — DIAPO DU GUIDE (règle d'or #11, point 5), SANS IMAGE : une capture montrerait
      un débrief qui n'est pas celui du lecteur. Elle dit ce que la pop-up ne dit pas : OÙ le retrouver. */
   {icon:'💬', t:'Chaque séance garde son débrief', cap:'À la fin d\'une séance, tes chiffres s\'affichent tout de suite ; l\'avis de Milo se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b> (rien ne part sans ce geste). Son débrief est alors <b>rangé avec la séance</b>. Retrouve-le quand tu veux : <b>Progrès → historique → « 💬 Voir le débrief Milo »</b> — sans réseau, sans appel. À l\'export, c\'est toi qui choisis : <b>avec</b> ou <b>sans</b> les débriefs.'},

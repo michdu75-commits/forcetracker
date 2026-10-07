@@ -810,9 +810,13 @@ const N=await p.evaluate(()=>{
   // 5. Programme 1 jour chargé en séance : la consigne SUIT (bug jumeau de loadProgDay, corrigé 01/08)
   loadProg(0);
   out.enSeance=!!(S.wkt&&S.wkt.exs&&S.wkt.exs[0].note==='Dos calé, cran 4, prise serrée');
-  // 6. « Sauvegarder comme programme » sous le MÊME nom remplace le programme : la consigne survit
+  // 6. « Sauvegarder comme programme » sous le MÊME nom : la consigne survit.
+  //    LOT 1 IMPORT PROGRAMME (07/10/2026) : le même nom ne REMPLACE plus rien en silence — une question
+  //    s'ouvre (créer un nouveau / mettre à jour une cible désignée, en version). Ici on ne répond pas :
+  //    le programme d'origine, sa consigne comprise, reste donc intact. On referme la question.
   const inp=document.getElementById('prog-name-inp');if(inp)inp.value='Prog Note';
   saveAsProg();
+  if(typeof fermerProgCible==='function')fermerProgCible();
   out.survitResave=S.programmes.length===1&&S.programmes[0].exs[0].note==='Dos calé, cran 4, prise serrée';
   S.wkt=null;S.programmes=[];persist(); // nettoyage pour la suite
   return out;
@@ -28575,7 +28579,8 @@ console.log('\n-- CCLIII. La porte d\'import est là où on cherche (ft-v1155) -
     /* ⛔ L'import s'ouvre bien à l'ÉTAPE 1 (le choix de la source), pas au milieu du parcours. */
     const s1=document.getElementById('imp-s1');
     o.etape1 = !!(s1 && s1.style.display!=='none');
-    o.choixPdf = !!document.getElementById('imp-file-inp');
+    /* LOT 1 IMPORT PROGRAMME (07/10/2026) : une SEULE porte (D8) — l'entrée unique accepte les PDF. */
+    o.choixPdf = /pdf/i.test(((document.getElementById('imp-add-inp')||{}).accept)||'');
     if(typeof closeImportProg==='function') closeImportProg();
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,200)};}
@@ -39608,6 +39613,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      UN exercice même quand le Worker rend des noms nus (échauffement en note / en type) ; jamais de fusion sans preuve.
      Banc : tools/banc_import_echauffement.js. */
   await require('./import_echauffement.js').ecran(t, b, PORT);
+  /* 📥 LOT 1 IMPORT PROGRAMME (session-B, 07/10/2026) — identité par id, versions, « Sauvegarder comme programme »
+     sans écrasement par nom, suppression confirmée, progRef, variantes A/B, document d'import local (IndexedDB),
+     erreurs explicites, démo et personas étanches. Blocs B-L1-*. Banc : tools/banc_import_prog_lot1.js. */
+  await require('./import_prog_lot1.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 

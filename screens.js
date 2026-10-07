@@ -453,6 +453,8 @@ const _HELP_DATA={
       {i:'⚡',t:'Super-séries : bouton "⚡ Grouper" dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Boutons 📉 Drop / 📈 +10% / 📉 −10% pour pyramides et drop sets.'},
       {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
       {i:'✋',t:'Superset au doigt : sur un exercice pas encore en superset, attrape la petite poignée (6 points, à côté du ⋯) et glisse-le sur un autre exercice → le superset se crée tout seul. Plus rapide que le bouton "⚡ Grouper". Pour défaire : "↩ Retirer". Marche aussi dans l\'éditeur de programme (✏️) : glisse une carte exercice sur une autre.'},
+      /* 📥 LOT 1 IMPORT PROGRAMME — règle d'or #11, point 3 (Séance) : la bibliothèque de programmes a changé. */
+      {i:'🗂️',t:'<b>Mes Programmes</b> : le bouton <b>⋯</b> d\'un programme ouvre sa fiche — le marquer <b>en cours</b>, voir ses <b>versions</b> et revenir à une ancienne (tes séances passées ne bougent pas), l\'<b>archiver</b>. Le ✕ demande toujours confirmation. ⛔ Deux programmes du <b>même nom</b> restent deux programmes : l\'app ne remplace jamais un programme à cause de son nom, elle te demande.'},
       /* 🎯 DEBRIEF-ON-DEMAND-01 — règle d'or #11, point 3 (Séance) : la fin de séance a changé. */
       {i:'✨',t:'<b>Fin de séance</b> : tes chiffres (volume, records, ce que tu as travaillé) s\'affichent <b>tout de suite</b>, sans réseau. L\'avis de Milo, lui, se <b>demande</b> : <b>« ✨ Analyser cette séance avec Milo »</b>. Sans ce geste, aucun appel à l\'IA. Pas de réseau ou Milo indisponible ? Rien n\'est enregistré, et <b>Réessayer</b> reste là — tu peux aussi le faire plus tard depuis Progrès.'},
       /* 🛡️ SESSION-INTEGRITY-01 — règle d'or #11, point 3 (Séance) : le comportement du remplacement a changé. */
@@ -463,7 +465,7 @@ const _HELP_DATA={
       {i:'📸',t:'Bouton 📸 pour importer un programme depuis une photo, un fichier Word ou Excel — l\'IA le convertit en séance automatiquement.'},
       {i:'⭐',t:'Recherche d\'exercices : quand tu cherches un exercice à ajouter, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en haut de la liste, avec une petite ★. Plus besoin de scroller pour retrouver tes mouvements habituels.'},
       {i:'🌱',t:'Débutant ? Dans 📋 Mes Programmes, bouton vert « Créer mon parcours débutant » : 2 questions (2 ou 3 séances/sem, style Full Body ou Split) et hop, un programme sur mesure sur machines (sécurité), adapté à ton profil. Étape 1 gratuite sur 3 semaines. +2,5 kg le haut du corps, +5 kg les jambes quand tes séries passent. Les mouvements techniques (squat, couché, soulevé) se débloquent ensuite. Pense au cardio léger en fin de séance.'},
-      {i:'📄',t:'Exporter en PDF : dans 📋 Mes Programmes, le bouton 📄 PDF génère un vrai fichier PDF du programme (exercices, séries × reps, colonne « Poids » vide à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer par message…) ; sur ordi ça se télécharge. Marche même hors-ligne.'},
+      {i:'📄',t:'Exporter en PDF : dans 📋 Mes Programmes, le bouton 📄 génère un vrai fichier PDF du programme (exercices, séries × reps, colonne « Poids » vide à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer par message…) ; sur ordi ça se télécharge. Marche même hors-ligne.'},
       {i:'⏸️',t:'Bouton "Pause" en haut : fige le chrono de durée si tu dois t\'interrompre (appel, pause…). Le temps en pause n\'est pas compté dans la durée de la séance. Appuie sur "Reprendre" pour relancer.'},
       {i:'🗑️',t:'Bouton "Vider" : retire tous les exercices d\'un coup si tu as chargé le mauvais programme. La séance reste ouverte et ton historique n\'est pas touché. (Le "✕" à côté annule complètement la séance.)'},
       {i:'📷',t:'Photo sur n\'importe quel exercice : tape le ⋯ sur un exercice (perso OU de la bibliothèque) → "Ajouter/Changer la photo". Pratique pour coller la photo de TA machine sur un exercice existant. Dans la liste de choix, tape la petite photo à gauche pour la voir en grand (ça n\'ajoute pas l\'exercice). Ta photo reste privée à ton compte.'},
@@ -672,6 +674,8 @@ const _OVERLAY_CLOSERS={
   'ov-ev-histo':'closeEvalHistorique',             // ft-v1141 (R15 : tout chemin de fermeture)
   'ov-histo-export':'closeHistoExport',            // ft-v1048 (R15 : tout chemin de fermeture)
   'ov-debrief-milo':'fermerDebriefMilo',           // SESSION-INTEGRITY-01 (R15 : tout chemin de fermeture)
+  'ov-prog-cible':'fermerProgCible',               // LOT 1 IMPORT : fermer au doigt = annuler, rien n'est enregistré
+  'ov-prog-gerer':'fermerProgGerer',               // LOT 1 IMPORT (R15 : tout chemin de fermeture)
   'ov-whatsnew':'closeWhatsNew',                   // marque les nouveautés comme vues
   'ov-super-welcome':'closeSuperWelcome',
   'ov-emma-welcome':'closeEmmaWelcome',

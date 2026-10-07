@@ -2515,28 +2515,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="text-align:center;margin-bottom:20px;">
         <div style="font-size:36px;margin-bottom:8px;">📸</div>
         <div style="font-weight:800;font-size:17px;margin-bottom:6px;">Importer un programme</div>
-        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Prends en photo ton programme ou sélectionne les images depuis ta galerie.</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Photo, image ou PDF de ton programme — jusqu'à 8 pages.</div>
       </div>
+      <!-- LOT 1 (D8) — UNE seule porte : le téléphone propose lui-même photothèque, appareil photo ou fichier. -->
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-cam-inp').click()">📷 Prendre une photo</button>
-        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
-        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-file-inp').click()">📄 Importer un PDF</button>
+        <button class="btn btn-red" id="imp-add-btn" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-add-inp').click()">📄 Ajouter mon programme (photo, PDF…)</button>
       </div>
-      <input type="file" id="imp-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addImportPhoto(this)">
-      <input type="file" id="imp-gal-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
-      <input type="file" id="imp-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addImportFile(this)">
+      <input type="file" id="imp-add-inp" accept="image/*,application/pdf,.pdf" multiple style="display:none" onchange="impAjouterFichiers(this)">
       <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportProg()">Annuler</button>
     </div>
     <!-- Étape 2 : Pages -->
     <div id="imp-s2" style="display:none;flex-direction:column;gap:12px;">
-      <div style="font-weight:800;font-size:16px;">Pages ajoutées</div>
-      <div id="imp-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;min-height:80px;"></div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('imp-more-inp').click()">+ Photo</button>
-        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('imp-more-file-inp').click()">+ PDF</button>
-      </div>
-      <input type="file" id="imp-more-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
-      <input type="file" id="imp-more-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addImportFile(this)">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><div style="font-weight:800;font-size:16px;">Pages, dans l'ordre</div><div id="imp-pages-cpt" style="font-size:12px;color:var(--t3);"></div></div>
+      <div style="font-size:12px;color:var(--t3);line-height:1.4;">◀ ▶ pour l'ordre · ⟳ pour tourner · ✕ pour retirer. Les pages restent sur ce téléphone.</div>
+      <div id="imp-thumbs" style="display:flex;flex-wrap:wrap;gap:10px;min-height:80px;"></div>
+      <button class="btn btn-bg2" onclick="document.getElementById('imp-add-inp').click()">+ Ajouter des pages</button>
       <button class="btn btn-red" style="margin-top:4px;" onclick="analyzeImportPhotos()">🤖 Analyser avec IA →</button>
       <button class="btn btn-bg2" onclick="impGoStep(1)">← Retour</button>
     </div>
@@ -2546,19 +2539,19 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-weight:700;font-size:16px;">Analyse en cours…</div>
       <div style="font-size:13px;color:var(--t2);text-align:center;">Milo analyse tes photos et extrait le programme</div>
       <div class="imp-spinner"></div>
+      <button class="btn btn-bg2" data-annuler onclick="impAnnulerAnalyse()" style="margin-top:6px;">Annuler l'analyse</button>
     </div>
     <!-- Étape 4 : Confirmation -->
     <div id="imp-s4" style="display:none;flex-direction:column;gap:12px;">
       <div style="font-weight:800;font-size:17px;" id="imp-prog-name"></div>
       <div style="font-size:13px;color:var(--t2);">Vérifie les exercices extraits. Appuie sur ✕ pour retirer un exercice.</div>
       <div id="imp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:40dvh;overflow-y:auto;"></div>
+      <!-- LOT 1 — nouveau OU mise à jour d'un programme DÉSIGNÉ (jamais par le nom seul), Avant / Après, en cours. -->
       <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;">
-        <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Enregistrer comme</div>
-        <div style="display:flex;gap:8px;margin-bottom:0;" id="imp-mode-btns">
-          <button id="imp-mode-new" class="btn btn-red" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode('new')">➕ Nouveau</button>
-          <button id="imp-mode-replace" class="btn btn-bg2" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode('replace')">🔄 Remplacer</button>
-        </div>
-        <select id="imp-replace-sel" style="display:none;width:100%;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:14px;font-family:var(--font);"></select>
+        <div id="imp-cible"></div>
+        <div id="imp-diff" style="display:none;margin-top:10px;background:var(--bg2);border-radius:10px;padding:9px 11px;"></div>
+        <label id="imp-en-cours-l" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--t1);cursor:pointer;">
+          <input type="checkbox" id="imp-en-cours" onchange="this.dataset.touche='1'" style="width:18px;height:18px;"> Définir comme programme en cours</label>
       </div>
       <button class="btn btn-red" onclick="finalImportProg()">✅ Importer ce programme</button>
       <button class="btn btn-bg2" onclick="impGoStep(2)">← Modifier les photos</button>
@@ -3486,6 +3479,23 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </div>
   </div>
 </div>
+<!-- LOT 1 — POSÉES APRÈS « Mes Programmes » et l'éditeur, et au-dessus (z-index 210) : elles s'ouvrent PAR-DESSUS eux.
+     ⛔ Placées plus haut dans le fichier, à z-index égal, elles s'ouvraient DERRIÈRE « Mes Programmes » (vu sur capture).
+     « Un programme porte déjà ce nom » : rien n'est remplacé sans un choix explicite. -->
+<div class="overlay" id="ov-prog-cible" style="z-index:210" onclick="if(event.target===this)fermerProgCible()">
+  <div class="modal" style="max-width:420px;max-height:88dvh;overflow-y:auto;padding:18px 16px 22px;">
+    <div class="modal-handle"></div>
+    <div id="prog-cible-content"></div>
+  </div>
+</div>
+<!-- LOT 1 — la fiche d'un programme : en cours, versions (comparer / restaurer), document, archive, suppression. -->
+<div class="overlay" id="ov-prog-gerer" style="z-index:210" onclick="if(event.target===this)fermerProgGerer()">
+  <div class="modal" style="max-width:420px;max-height:90dvh;overflow-y:auto;padding:18px 16px 22px;">
+    <div class="modal-handle"></div>
+    <div id="prog-gerer-content"></div>
+  </div>
+</div>
+
 
 <!-- OVERLAY: Analyse IA d'un programme -->
 <div class="overlay" id="ov-prog-analysis" onclick="if(event.target===this)this.classList.remove('open')">
