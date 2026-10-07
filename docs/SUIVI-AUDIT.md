@@ -478,7 +478,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   encore recréer un orphelin · ⑥ un import « remplacer » peut laisser un débrief orphelin · ⑦ débriefs locaux seulement (D-047,
   limite assumée) · ⑧ téléphone plein : aucun message à l'utilisateur.
 
-### 🔁 E5 — UNE SÉANCE, UN SEUL APPEL DE DÉBRIEF (05/10/2026, session-B — ⚠️ BRANCHE `claude/e5-debrief-idempotence` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ)
+### 🔁 E5 — UNE SÉANCE, UN SEUL APPEL DE DÉBRIEF (05/10/2026, session-B — ⚠️ BRANCHE `claude/e5-debrief-idempotence` · ✅ PUBLIÉ en `ft-v1251` le 07/10)
 - **Démontré, puis corrigé sur la branche** : rouge sur master `a1e39739` (2 appels `coach` pour la même séance — le rattrapage
   du démarrage remettait en file un appel VIVANT ; au Coach, la séance était repayée). Cause et correctif : `BUGS.md` §28.
   Banc `tools/banc_e5.js` **35/0** (E5-1 → E5-13, dont E5-6c et E5-9d ajoutés après que le contrôle négatif a montré deux
@@ -491,7 +491,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   **N-G1** hors lot (dette voisine : le message courant part deux fois dans la charge utile — mécanisme Worker / payload
   différent, effet sur le modèle non mesuré).
 
-### 🎯 DEBRIEF-ON-DEMAND-01 — LE DÉBRIEF MILO SE DEMANDE (05/10/2026, session-B — ⚠️ BRANCHE `claude/debrief-on-demand-01` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ)
+### 🎯 DEBRIEF-ON-DEMAND-01 — LE DÉBRIEF MILO SE DEMANDE (05/10/2026, session-B — ⚠️ BRANCHE `claude/debrief-on-demand-01` · ✅ PUBLIÉ en `ft-v1251` le 07/10)
 - **Décision de Michel (D-052)** : la fin de séance montre le résumé local ; l'avis de Milo part sur « ✨ Analyser cette séance
   avec Milo » (fin de séance ou Progrès). **0 appel IA sans clic** ; un geste = au plus une génération par séance.
 - **Retirés (R30, raison écrite dans `coach.js`)** : file `ft4_pending_debrief`, « reçu » `ft4_debrief_recu`, livraisons
@@ -516,7 +516,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   M-OD8/11/12 rejouées après le renfort de OD-12/13 et l'ajout de OD-17b) · bancs voisins verts (fil 39/0, SESSION-INTEGRITY 93/0,
   provenance 24/0, séance C3 35/0, ML-B 60/0) · passe D-031 sur `accfa880` : **5 861 ✅ / 0 ❌**, 4 conditions (② déduite).
 
-### 🎯 DEBRIEF-ON-DEMAND-01 — CORRECTIF CIBLÉ POST CONTRE-AUDIT (06/10/2026, session-B — ⚠️ BRANCHE · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ)
+### 🎯 DEBRIEF-ON-DEMAND-01 — CORRECTIF CIBLÉ POST CONTRE-AUDIT (06/10/2026, session-B — ⚠️ BRANCHE · ✅ PUBLIÉ en `ft-v1251` le 07/10)
 - **F1 (le plus grave)** : une séance ancienne analysée depuis Progrès partait SANS ses données (Milo ne voit le détail que des 5
   séances les plus récentes) alors que la consigne disait « tu les as ». **Corrigé** : `buildCoachContext(instr,{seanceCiblee})`
   ajoute un bloc « SÉANCE À ANALYSER » écrit par le MÊME formateur que « DERNIÈRES SÉANCES » (nommé `_ligneSeance`), lu depuis la
@@ -537,7 +537,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   sur le vrai modèle).
 - **Protocole jour** : tests ciblés + 5 mutations ; **D-031 complète NON lancée volontairement** — à faire en qualification nocturne.
 
-### 🚪 ONBOARDING-QUICK-01 — L'INSCRIPTION / PREMIÈRE OUVERTURE NETTOYÉE (06/10/2026, session-B — ⚠️ BRANCHE `claude/onboarding-quick-01` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ)
+### 🚪 ONBOARDING-QUICK-01 — L'INSCRIPTION / PREMIÈRE OUVERTURE NETTOYÉE (06/10/2026, session-B — ⚠️ BRANCHE `claude/onboarding-quick-01` · ✅ PUBLIÉ en `ft-v1251` le 07/10)
 - **Corrigé** : `checkAnnouncements` ne s'ouvre plus par-dessus une inscription en cours ; la **première arrivée** (fin
   d'inscription, compte restauré, appareil neuf via le cookie ou la restauration silencieuse) marque vues les nouveautés DÉJÀ
   publiées et leurs points rouges (`_wnPremiereArrivee`) — les conditionnelles (`si`) restent suivies par identifiant ; une
@@ -557,7 +557,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_onboarding_quick.js` **24/0** · 5 mutations **5/5** · bancs voisins verts · D-031 complète
   NON lancée (règle jour/nuit) — le banc est branché dans la passe complète pour la qualification nocturne.
 
-### 🛡️ COOKIE-PROFILE-01 — UN COOKIE `ft_email` N'EST QU'UN INDICE DE COMPTE (06/10/2026, session-B — ⚠️ BRANCHE `claude/cookie-profile-01` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ) — P1 intégrité
+### 🛡️ COOKIE-PROFILE-01 — UN COOKIE `ft_email` N'EST QU'UN INDICE DE COMPTE (06/10/2026, session-B — ⚠️ BRANCHE `claude/cookie-profile-01` · ✅ PUBLIÉ en `ft-v1251` le 07/10) — P1 intégrité
 - **Cause racine** : `index.html` posait `ft4_ob2=1` sur la seule foi du cookie (inscription « faite » sans rien vérifier) ;
   `autoConnect` ne restaurait que si le profil avait **au moins une séance** ; rien n'annulait la décision ; `persist()` lançait
   ensuite `_cloudSync` → un profil PAR DÉFAUT (sexe, objectif, réglages) partait vers le compte existant. Même famille sur le
@@ -575,7 +575,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_cookie_profile.js` **16/0** (CP-00 invariant + CP-01 → CP-13) · 3 mutations **3/3** · bancs voisins
   verts · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
 
-### 🔐 AUTH-SIGNUP-STRICT-01 — INSCRIPTION EN LECTURE STRICTE (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-signup-strict-01` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ)
+### 🔐 AUTH-SIGNUP-STRICT-01 — INSCRIPTION EN LECTURE STRICTE (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-signup-strict-01` · ✅ PUBLIÉ en `ft-v1251` le 07/10)
 - **Cause racine (mesurée sur le vrai Code.js)** : en lecture stricte (défaut quand `LECTURE_STRICTE` manque), `_lectureAutorisee_`
   passe AVANT `loadUserData_` : un email INCONNU reçoit `needsCode`, jamais `not_found`. Depuis AUTH-NEW-DEVICE-01, l'app (à raison)
   ne traite plus `needsCode` comme un compte neuf — mais disait « Ce compte existe déjà », et après la protection la restauration
@@ -589,7 +589,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   2 mutations **2/2** (M1 faux message + blocage → AS-01/02 · M2 needsCode = compte neuf → AS-01/05) · AN 16/0 (3 témoins réécrits sur le nouveau texte, 1 appui conditionnel : l'inscription se termine seule) ·
   voisins verts (AUTH-CLOUD-CLOSURE 8/0 dont D1 et T-JETON · COOKIE-PROFILE 16/0 · onboarding 25/0 · foodlog_restore 35/0 · profil_atypique 37/0 · registre IA 40/0) · `check_regles` vert · D-031 NON lancée.
 
-### 🔐 AUTH-CLOUD-CLOSURE-01 — D1 + T-JETON (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-cloud-closure-01` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ) — P1 intégrité
+### 🔐 AUTH-CLOUD-CLOSURE-01 — D1 + T-JETON (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-cloud-closure-01` · ✅ PUBLIÉ en `ft-v1251` le 07/10) — P1 intégrité
 - **Origine** : contre-vérification indépendante de `6db0ba5c` (AUTH-NEW-DEVICE-01 confirmé, mais deux défauts bloquants).
 - **D1 — « continuer sans email »** : `finishOnboarding` ne vidait que `S.email` ; cookie `ft_email` et email IndexedDB restaient,
   `index.html` réinjectait le cookie au rechargement (`ft4_email` vide = absence), A était restauré par-dessus le nouveau profil
@@ -615,7 +615,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   ③ `ft4_authcode` n'est pas lié à un compte non plus (un code de A envoyé pour B est refusé par le serveur : non destructif).
 - **Contrôles** : banc `tools/banc_auth_cloud_closure.js` **8/0** (vrai Code.js local ; rouge sur `6db0ba5c` : AC-01/02/03/04/06) ·
   2 mutations **2/2** (M1 D1 réintroduit → AC-01 · M2 jeton de A gardé → AC-03) · voisins verts (AUTH-NEW-DEVICE 16/0 · COOKIE-PROFILE 16/0 · onboarding 25/0 · foodlog_restore 35/0 · profil_atypique 37/0 · SESSION-INTEGRITY 93/0 · registre IA 40/0) · `check_regles` vert · D-031 NON lancée.
-### 📥 IMPORT-ECH-01 — ÉCHAUFFEMENT + SÉRIES DE TRAVAIL D'UN MÊME EXERCICE = UN EXERCICE (06/10/2026, session-B — ⚠️ BRANCHE `claude/import-echauffement-01` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ)
+### 📥 IMPORT-ECH-01 — ÉCHAUFFEMENT + SÉRIES DE TRAVAIL D'UN MÊME EXERCICE = UN EXERCICE (06/10/2026, session-B — ⚠️ BRANCHE `claude/import-echauffement-01` · ✅ PUBLIÉ en `ft-v1251` le 07/10)
 - **Terrain** (iPhone, import d'un programme Powerbuilding) : l'écran de vérification montre « Développé Couché » en plusieurs
   blocs (1×5 @50 échauffement, 1×3 @65…, puis le travail) ; après import, autant de cartes d'UNE série, chacune « Déjà présent
   ailleurs dans cette séance ».
@@ -642,7 +642,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   (CCLIV, CCLVI, CCLXIV, CCLXVI, CCLXX, CCLXXIII, CCLXXIV, CCLXXVI) **187/0** · SESSION-INTEGRITY 93/0 · ML-B 60/0 · débrief 58/0 ·
   `check_regles` vert · D-031 NON lancée.
 
-### 🔐 AUTH-NEW-DEVICE-01 — `needsCode` N'EST JAMAIS « COMPTE INTROUVABLE » (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-new-device-01` · intégré dans `ft-v1251`, QUALIFIÉ le 06/10, NON PUBLIÉ) — P1 intégrité
+### 🔐 AUTH-NEW-DEVICE-01 — `needsCode` N'EST JAMAIS « COMPTE INTROUVABLE » (06/10/2026, session-B — ⚠️ BRANCHE `claude/auth-new-device-01` · ✅ PUBLIÉ en `ft-v1251` le 07/10) — P1 intégrité
 - **Origine** : audit « sécurisation des comptes existants » (06/10, lecture seule). Sur un NOUVEL appareil, un compte existant
   SANS code perso : `loadProfile` répond `auth` + `needsCode` (lecture stricte), et « COMMENCER » tombait dans le même `else` que
   `not_found` → inscription d'un compte NEUF → `saveProfile` de bienvenue puis instantanés à l'email seul, que le serveur accepte
@@ -662,7 +662,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 - **Contrôles** : banc `tools/banc_auth_new_device.js` **16/0** (AN-01 → AN-10 + 01b, 02b, 03a, 03b, 09b, 10b) · 3 mutations **3/3** (M1 needsCode → compte neuf · M2 jeton de `verifyConfirmCode` jeté · M3 code inexistant redemandé) ·
   bancs voisins verts (COOKIE-PROFILE 16/0 · onboarding 25/0 · foodlog_restore 35/0 · profil_atypique 37/0 · débrief 58/0 · SESSION-INTEGRITY 93/0 · registre IA 40/0) · `check_regles` vert · D-031 complète NON lancée (règle jour/nuit) — banc branché dans la passe pour la nuit.
 
-### 🌙 QUALIFICATION NOCTURNE ft-v1251 (06/10/2026, session-B — branche `claude/ft-v1251-night-qualification` · ✅ QUALIFIÉE, PRÊTE À PUBLIER, ⛔ NON PUBLIÉE)
+### 🌙 QUALIFICATION NOCTURNE ft-v1251 (06/10/2026, session-B — branche `claude/ft-v1251-night-qualification` · ✅ PUBLIÉE le 07/10/2026)
 - **Périmètre** : les neuf lots ci-dessus (E5 absorbé par DEBRIEF-ON-DEMAND-01 et son correctif · ONBOARDING-QUICK-01 · « Quoi de
   neuf » v76 · COOKIE-PROFILE-01 · AUTH-NEW-DEVICE-01 · AUTH-CLOUD-CLOSURE-01 · AUTH-SIGNUP-STRICT-01 · IMPORT-ECH-01), HEAD fonctionnel
   gelé `3e420bd8`. **Ne contient pas NUT-PUNCH-01** (branche à part). Master inchangé `a1e39739` = `ft-v1250` en ligne.
@@ -703,3 +703,9 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   la puce « en ligne » perd sa mention « NON PUBLIÉE », `ft-v1250` y est rétrogradée en place, `D-052` et les en-têtes de lot
   ci-dessus passent à « publié en `ft-v1251` », ligne au journal de partage. **Aucun fichier backend** (ni `Code.js`, ni `worker.js`) :
   ni Apps Script, ni Worker à déployer.
+- **✅ PUBLIÉE le 07/10/2026 (feu vert de Michel)** : master avancé en **fast-forward** de `a1e39739` à `bd0b627c` (aucun merge, aucun
+  commit de plus), **Pages run n°1342 SUCCESS** (04:53 UTC), `sw.js` de master = `ft-v1251`. **Aucun backend redéployé** : ni Worker,
+  ni Apps Script (`Code.js` et `worker.js` identiques à `a1e39739`, `_MIG_FERME_` inchangé). Audit Nutrition final indépendant : OUI.
+  Passe D-031 finale : 5 967 / 0. ⚠️ Site servi **non lisible d'ici** (proxy : `CONNECT tunnel failed, response 403` vers github.io) :
+  la version servie est établie par le déploiement Pages et `sw.js` de master, pas par une lecture du site. **Recette terrain iPhone à
+  faire par Michel.** Les défauts reportés ci-dessus restent ouverts, comme dettes post-ft-v1251.

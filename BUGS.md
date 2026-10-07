@@ -2016,7 +2016,7 @@ perdu** (ft-v979) : la fermer sans précaution échangerait un doublon contre un
 (accepter · fermer côté téléphone · idempotence serveur) **appartient à Michel** et attend depuis le
 15/09 (`docs/IDEMPOTENCE-DEBRIEF.md`).
 
-### 🔧 E5 : cause démontrée et corrigée sur BRANCHE — ⚠️ NON PUBLIÉ *(05/10/2026, `claude/e5-debrief-idempotence`)*
+### 🔧 E5 : cause démontrée et corrigée — ✅ publié en `ft-v1251` le 07/10 *(05/10/2026, `claude/e5-debrief-idempotence`)*
 **La cause, mesurée avant de corriger** (témoin rouge sur master `a1e39739` : 2 appels pour la même séance, à 2,2 s
 puis 7,9 s) : l'état « en vol » n'avait **pas de propriétaire**. Un seul emplacement `{id, ts}`, sans dire **qui**
 attendait la réponse — le rattrapage du démarrage (`load` + 3 s) ne pouvait donc pas distinguer un appel
@@ -2036,7 +2036,7 @@ requêtes, 1 débrief, 1 message — **aucun doublon côté téléphone, un doub
 serveur, impossible à fermer côté client : décision toujours chez Michel. **Deux onglets** ouverts sont deux
 pages (§33). Preuve : P2 (banc), **aucune occurrence terrain (pas de P3)**.
 
-### 🎯 DEBRIEF-ON-DEMAND-01 : la famille est fermée PAR LA DÉCISION, pas par un verrou de plus *(05/10/2026, branche `claude/debrief-on-demand-01` — ⚠️ NON PUBLIÉ)*
+### 🎯 DEBRIEF-ON-DEMAND-01 : la famille est fermée PAR LA DÉCISION, pas par un verrou de plus *(05/10/2026, branche `claude/debrief-on-demand-01` — ✅ publié en `ft-v1251` le 07/10)*
 **Décision de Michel : le débrief de Milo se DEMANDE** (« Analyser cette séance avec Milo », fin de séance ou Progrès).
 Tous les chemins qui appelaient Milo sans geste sont **retirés** : la file `ft4_pending_debrief`, le « reçu », les
 livraisons `ft4_debrief_faits`, le rattrapage au démarrage (`load` + 3 s, `_dbfRecuperer`, `_dbfRattraper`),

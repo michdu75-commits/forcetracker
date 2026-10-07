@@ -205,7 +205,7 @@ nouvelle fonctionnalité utilisateur.
 
 ---
 
-## 🔁 9. E5 — CE QUI ÉTAIT RÉPARABLE CÔTÉ TÉLÉPHONE L'EST (05/10/2026, branche `claude/e5-debrief-idempotence`, ⚠️ NON PUBLIÉ)
+## 🔁 9. E5 — CE QUI ÉTAIT RÉPARABLE CÔTÉ TÉLÉPHONE L'EST (05/10/2026, branche `claude/e5-debrief-idempotence`, ✅ publié en `ft-v1251` le 07/10)
 
 **Le défaut E5 n'était PAS le cas B de ce document.** Le cas B (rechargement pendant l'appel) perd la réponse
 avec la page : le réparer exige un stockage serveur (§1). E5, lui, se produisait **dans une seule page, sans
@@ -222,7 +222,7 @@ téléphone, un doublon de facturation). ⛔ **La question n°1 du §8 reste ent
 
 ---
 
-## 🎯 10. DEBRIEF-ON-DEMAND-01 — LE CAS B N'EST PLUS AUTOMATIQUE (05/10/2026, branche `claude/debrief-on-demand-01`, ⚠️ NON PUBLIÉ)
+## 🎯 10. DEBRIEF-ON-DEMAND-01 — LE CAS B N'EST PLUS AUTOMATIQUE (05/10/2026, branche `claude/debrief-on-demand-01`, ✅ publié en `ft-v1251` le 07/10)
 
 **Décision de Michel : le débrief de Milo se demande** (« Analyser cette séance avec Milo »). Plus aucun appel sans
 geste : ni à la fin, ni au démarrage, ni à l'ouverture du Coach. Le rattrapage qui rejouait l'appel après un
