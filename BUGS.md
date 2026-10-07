@@ -71,7 +71,7 @@ c'est la section elle-même qui fait foi.
 | 40 → 50 | vérificateur sur une tournure de langue · nombres verts, écran faux · cas sans l'attribut habituel lu comme « rien » · deux portes, une équipée · coupe d'affichage · définition qui essaime · correctif dans le prompt · plancher qui éteint le pourcentage · porte de secours absente · action silencieuse · règle générale lue sans la spécifique |
 | 51 → 57 | trois chemins, une ligne sans origine · frappe lettre par lettre · deux comparaisons pour une question · le commentaire dit vrai, pas le code · total séparé de sa quantité · bloc resté visible · le DOM comme mémoire |
 | §58 et 58 | **deux sections portent 58** : « une porte sans témoin » (§58) · « un témoin qui pose l'état final à la main » (58) |
-| §59 → §67 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée · programme désigné par son nom ou sa position |
+| §59 → §69 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée · programme désigné par son nom ou sa position · écriture refusée qui passe pour un succès · base du téléphone prise pour celle d'une personne |
 
 ---
 
@@ -4474,3 +4474,40 @@ vole le statut « en cours » case décochée).
 ⛔ **Non couvert** : la même famille vit encore ailleurs — les **exercices** (§13, étapes ② et ③ non faites) et
 `_saveForceProgram` (coach.js), qui **renomme** « Nom 2 » en cas de collision au lieu d'écraser — non destructif, et le
 programme reçoit son id au `persist()` qui suit, mais deux programmes de Milo restent distingués à l'écran par un suffixe.
+
+## §68 — ⛔⛔ UNE ÉCRITURE REFUSÉE QUI PASSE POUR UN SUCCÈS : L'ÉCRAN ET LE CLOUD RACONTENT UN ÉTAT QUE LE DISQUE N'A PAS *(07/10/2026, fermeture de sûreté du LOT 1 IMPORT — branche, NON publié)*
+
+**Le cas, mesuré avec le vrai quota de Chromium (≈ 5 Mio) rempli au bord** : une mise à jour de programme agrandit
+`ft4_progs` ; `localStorage.setItem` lève `QuotaExceededError` ; `persist()` — un seul bloc `try` — s'arrête à cette clé ;
+son repli coupe les séances locales à 50. Mais **tout le reste continue comme si de rien n'était** : le programme est en
+mémoire, l'écran affiche « mis à jour ✅ », la synchro lit la mémoire et pousse la v3 au cloud. Au rechargement, le
+téléphone relit l'ancienne liste ; il ne restaure pas le cloud (sa liste n'est pas vide) ; la synchro suivante peut écraser
+le cloud avec l'ancienne. *Trois récits — écran, cloud, disque — et un seul est vrai.*
+
+**🔎 Comment le reconnaître** : une fonction appelle `persist()` puis annonce un succès **sans savoir** si la donnée est
+sur le disque ; ou une synchro qui envoie `S.<x>` (la mémoire) au lieu de ce qui est réellement écrit. `persist()` ne rend
+rien, n'échoue jamais vers l'appelant : *un succès qu'on ne peut pas vérifier n'est pas un succès, c'est une supposition.*
+
+**🛡️ Ce qui protège (branche)** : un propriétaire, `_progSauver` — écrire la clé **seule**, la **relire**, et seulement
+alors appeler `persist` ; sinon la mémoire redevient le disque et le message dit « NON enregistré ». Et un filet générique
+à la sortie : `_cloudSync` n'envoie `programmes` que s'il est identique au disque (sinon le champ est omis et le serveur
+garde le sien — le précédent `histTronque` des séances). Témoins SAFE-L1-06 → 11, mutations S08 → S17.
+
+⚠️ **Ce que la protection ne couvre pas, dit** : les AUTRES clés de `persist` (séances, journal alimentaire…) ont toujours
+le comportement d'avant — une écriture refusée au milieu du bloc saute les clés suivantes de cet appel. C'est hors du Lot 1 ;
+la famille est la même, la correction ne l'est pas encore.
+
+## §69 — ⛔ UNE BASE DU TÉLÉPHONE N'EST PAS UNE BASE DE LA PERSONNE *(07/10/2026, fermeture de sûreté du LOT 1 IMPORT — branche, NON publié)*
+
+`localStorage` et IndexedDB appartiennent à un **navigateur**, pas à un compte. Tant que le compte ne change jamais sur un
+téléphone, la différence est invisible — et c'est exactement ce qui la rend dangereuse. Mesuré : le brouillon d'import de A
+était **proposé** à B, **complété** par B, et « sans compte » se mêlait aux deux.
+
+**🔎 Comment le reconnaître** : un enregistrement local (IndexedDB, clé `ft4_*` d'un nouveau type) qui ne porte **aucune**
+trace du compte, et une lecture « le plus récent » ou « tous » sans filtre.
+
+**🛡️ Ce qui protège (branche)** : une **portée** écrite dans chaque document d'import (`compte:<email>` ou `local`), vérifiée
+à chaque lecture, écriture et suppression — dans la même transaction que l'opération ; aucune portée (aucun accès) en démo,
+en persona, et tant qu'une restauration est attendue. Témoins SAFE-L1-01 → 05, mutations S01 → S07.
+⚠️ **Limite** : seule la base d'import du Lot 1 porte une portée. Le reste du stockage local suit toujours la règle d'avant
+(un changement de compte remplace les données locales par la restauration du nouveau compte).

@@ -3435,3 +3435,22 @@ les désigne **par leur nom seul**, et le lien séance → programme qu'il reço
 lui, n'est pas transmis). ❓ **Doute** : « Bloc 1 » et « Bloc 1 » (v1 et une copie modifiée) — Milo mélange-t-il les deux
 dans son analyse ? Vérifiable par du code : ⚠️ en partie (deux programmes homonymes aux exercices différents, chercher un
 exercice de l'un attribué à l'autre). État : **à trier**.
+
+### 🟡 LE QUOTA DE STOCKAGE D'UN IPHONE N'EST PAS CELUI DE CHROMIUM (07/10/2026 — fermeture de sûreté LOT 1, branche)
+Le stockage plein est reproduit avec le VRAI quota de localStorage de **Chromium** (≈ 5 Mio, mesuré). Safari sur iPhone a ses
+propres limites, et iOS peut **évincer** le stockage d'un site peu utilisé. ❓ **Doute** : le message « Programme NON
+enregistré » s'affiche-t-il bien sur un iPhone plein, et la reprise du document d'import (IndexedDB) survit-elle à une
+éviction ? Vérifiable par du code : ❌ (il faut le vrai téléphone). **Juge humain** (recette terrain). État : **à trier**.
+
+### 🟡 UN SCAN COMMENCÉ PENDANT UNE RESTAURATION ATTENDUE N'EST JAMAIS SAUVEGARDÉ (07/10/2026 — fermeture de sûreté LOT 1, branche)
+Tant qu'une restauration de compte est attendue (cookie = simple indice), la base d'import n'est pas ouverte : des pages
+ajoutées pendant ces quelques secondes restent en mémoire seulement, et sont lâchées à la réouverture si le compte est
+ensuite résolu. ❓ **Doute** : combien de personnes ouvrent l'import pendant ces secondes au démarrage d'un téléphone vidé ?
+Vérifiable par du code : ✅ (restauration attendue → ajout de pages → résolution → réouverture). État : **à trier**.
+
+### 🟡 OD-11 A ENCORE ROUGI UNE FOIS (07/10/2026 — bancs voisins de la fermeture de sûreté LOT 1)
+Banc `debrief_demande` : **57/1** au 1ᵉʳ passage (OD-11, carte de la séance introuvable dans Progrès, `[] null`), puis
+**58/0 deux fois de suite** sur le même arbre. Même intermittence que l'entrée du 06/10 (« OD-11 ROUGIT PARFOIS ») : le
+correctif du repère « Quoi de neuf » a réduit la fréquence, il ne l'a pas éteinte. Aucun fichier de ce lot ne touche
+Progrès ni le débrief. ❓ **Doute** : une autre fenêtre de démarrage recouvre-t-elle encore l'onglet ? Vérifiable par du
+code : ✅ (capturer l'élément au point de clic quand la carte est introuvable). État : **à trier**.

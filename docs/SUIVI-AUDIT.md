@@ -805,3 +805,61 @@ aide détaillée « Tes programmes ont une identité et des versions », diapo d
 fausses corrigées (bouton « 📄 » au lieu de « 📄 PDF », limite de 8 pages désormais refusée). ⚖️ **Pop-up `WHATS_NEW` : à
 décider à la publication** (elle exige un numéro, interdit pendant le travail). Avis : **méritée** — un repère a bougé (trois
 boutons d'ajout devenus un seul) et un geste change (« Sauvegarder comme programme » sous un nom pris ouvre un choix).
+
+### 🛡️ LOT 1 IMPORT — FERMETURE DE SÛRETÉ après le contre-audit Nutrition (07/10/2026, session-B — même branche, NON PUBLIÉ)
+
+**Base** : HEAD de clôture du Lot 1 `36200085` (passe D-031 sur `c1f1466a`). Un contre-audit **indépendant** (couloir
+Nutrition), fait APRÈS le Lot 1, a nommé deux risques que le brief initial ne contenait pas. Fermeture **ciblée** : ni
+Worker, ni `Code.js`, ni AUTH, ni multi-appareils, ni purge D-069. 0 appel IA réel, aucun déploiement, aucune publication.
+
+**① Le document d'import n'appartenait à personne (P2 confidentialité).** La base IndexedDB `ft_import` est celle du
+TÉLÉPHONE : mesuré sur `36200085`, un brouillon créé sous A était **montré** à B (scan resté en mémoire comme reprise après
+rechargement), **complété** par B (sa page atterrissait dans le document de A), et « sans compte » n'avait aucune portée.
+👉 Chaque document porte désormais une **portée** (`scope`) : `compte:<email normalisé>`, ou `local` sans email — jamais
+mélangées. Toute lecture, reprise, écriture et suppression la vérifie (la suppression et l'écriture **dans la même
+transaction** que la vérification) ; un scan resté en mémoire sous un autre compte est lâché **en silence** à l'ouverture
+(son document reste intact chez A). ⛔ **Aucune portée, donc aucun accès**, en démo, dans un persona, et **tant qu'une
+restauration de compte est attendue** (un cookie n'est qu'un indice — COOKIE-PROFILE-01). Les documents écrits avant cette
+fermeture (sans portée) ne sont proposés à personne : le Lot 1 n'a jamais été publié, il n'en existe pas en production.
+⚠️ L'email sert de clé **sur ce téléphone seulement** (comme `ft4_email`) ; la base ne part jamais ailleurs.
+
+**② Stockage plein : un programme qui n'était pas sur le disque passait pour enregistré (P1 réel).** Reproduit avec le
+**vrai quota** de localStorage de Chromium (≈ 5 Mio, rempli au bord) : `ft4_sessions` s'écrit avant `ft4_progs` ; quand
+`ft4_progs` ne tenait plus, `persist` s'arrêtait là, le repli coupait les séances **locales** à 50, le programme restait
+**en mémoire**, « mis à jour ✅ » s'affichait, la synchro envoyait **v3 au cloud** ; au rechargement le programme avait
+disparu du téléphone, sans restauration (liste locale non vide) — et une synchro suivante pouvait l'effacer du cloud.
+Même chose sur « Sauvegarder comme programme », la restauration de version, l'éditeur et le programme de Milo.
+👉 **Un seul propriétaire, `_progSauver`** (log.js) : il écrit `ft4_progs` **seul, d'abord**, et le **relit**. S'il ne
+tient pas : la mémoire redevient le disque (rien d'affiché qui n'existe pas), un message dit **« Programme NON enregistré »**
+(et que la sauvegarde en ligne ne l'a pas non plus), et `persist` n'est **pas** appelé — un programme qui ne tient pas ne
+déclenche donc plus le repli des 50 séances. S'il tient : `persist` écrit le reste comme avant. Branché sur **toutes** les
+opérations programme (import / mise à jour / réanalyse, « Sauvegarder comme programme » nouveau et mise à jour,
+restauration, éditeur, programme de Milo, parcours débutant, en cours, archiver / désarchiver, suppression, document,
+décaler le début). Pour l'import : la lecture reste dans le document local (**réessayer sans nouvelle analyse**), les
+exercices inconnus ne sont créés qu'après l'enregistrement réussi. Le bouton « Restaurer » de la fiche n'annonce plus le
+succès sans le vérifier.
+👉 **Et le filet générique, côté synchro** : `_cloudSync` (setup.js) n'envoie `programmes` que s'il est **identique à
+`ft4_progs` sur le disque** ; sinon il **omet** le champ et Apps Script garde ce qu'il a (`body.programmes === undefined`,
+`Code.js`, lu, non modifié) — exactement le précédent des séances après une troncature (`histTronque`). Le miroir
+Supabase reçoit le même corps et garde lui aussi les siens (voie active `worker`, migration 0003 « champ absent =
+conservé », lue).
+⛔ **La politique historique des 50 séances n'est PAS modifiée** : `persist()` et son repli sont intacts ; ils se
+déclenchent toujours pour n'importe quelle autre écriture qui ne tient pas. Ce qui change : une opération **programme**
+vérifie qu'elle tient AVANT d'appeler `persist`.
+
+**③ Versions archivées** : déjà figées — la migration de noms du catalogue (au chargement) ne parcourt que la version
+courante. Épinglé (SAFE-L1-12 : « Câble Crunch » reste dans la version archivée, devient « Crunch Poulie » dans la
+courante ; la restauration marche). ⚠️ Effet à connaître : l'Avant / Après entre une ancienne version et la courante peut
+lister un exercice « retiré » et un « ajouté » qui sont le même mouvement renommé.
+
+**④ Multi-appareils (dernier écrivain gagnant) : OUVERT, préexistant, hors lot.** A pousse v2 au cloud ; B, resté en v1,
+persiste et synchronise → v1 peut écraser v2. Rien n'est fusionné, ni ici ni dans le Lot 1 : **le Lot 1 ne fournit pas de
+synchro multi-appareils**. L'identité (`id`) et la `version` sont compatibles avec une future fusion (comparer par id et
+garder la version la plus haute), qui reste à décider et à construire.
+
+**⑤ Réservoir Apps Script (≈ 512 Ko, plein à 102 % le 29/07)** : **remplissage actuel non mesurable depuis cet
+environnement**, pour deux raisons mesurées le 07/10 : le proxy du conteneur refuse la connexion vers `script.google.com`
+(`CONNECT tunnel failed, response 403`), et la route `?action=storeHealth` exige le **jeton d'administration** (Script
+Properties) — non contourné. Aucun workflow GitHub ne la lit. Lecture possible par Michel : Profil → Admin → Santé du
+système. Repère mesuré pour ce lot (§ Lot 1) : la part `programmes` d'un compte emballée (gzip + base64) va de 1,8 Ko à
+34 Ko selon le nombre de versions.
