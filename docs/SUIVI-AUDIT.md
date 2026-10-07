@@ -780,6 +780,12 @@ les 3 autres appelants n'ont pas bougé (vérifié, et le garde rougit si `_impP
 Un défaut de rendu a été trouvé **sur capture**, pas par le banc : les deux nouvelles fenêtres s'ouvraient **derrière**
 « Mes Programmes » → corrigé, témoin de visibilité (`elementFromPoint`) et mutation M22 ajoutés.
 
+**Qualification (D-031)** : passe complète sur `c1f1466a` — **6 019 ✅ / 0 ❌**, 4 conditions vertes (`tools/passe_valide.sh`).
+La 1ʳᵉ passe (sur `25861293`) avait rougi les deux témoins de source périmés ci-dessus, puis a été coupée par la limite de
+durée de la tâche de fond (pas par un échec) ; elle n'est pas comptée. Bloc annexe : **14 PASS + 1 DÉFAUT CONNU**
+(`discussions`, taille du prompt — le prompt de Milo est identique à master le même jour, hors empreinte et heure) ;
+`fil_lot1` 39/0. Après la passe : documentation seulement. **Aucun numéro de version posé** : il se pose à la publication.
+
 **Taille mesurée (§22, `tools/mesure_versions_programme.js`, vraies fonctions)** : ≈ 10,6 Ko par version d'un programme type
 Powerbuilding, ≈ 1,5 Ko pour un simple. 3 gros + 3 simples × 10 versions ≈ **361 Ko** dans `ft4_progs` ; 10 gros × 10 ≈
 **1 Mo** (quota mobile ≈ 5 Mo pour toute l'app). Côté serveur (emballé gzip + base64) : 1,8 → 34 Ko, chiffres **optimistes**
