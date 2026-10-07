@@ -1774,7 +1774,11 @@ function _saveForceProgram(idx,btn){
   while(S.programmes.some(p=>p.name===name)){name=prog.name+' '+n;n++;}
   prog.name=name;
   S.programmes.push(prog);
-  persist();
+  /* 🛡️ SÛRETÉ (07/10/2026) — « Enregistré » ne s'affiche que si le téléphone l'a VRAIMENT écrit
+     (`_progSauver`, log.js) ; sinon le bouton reste disponible pour réessayer. */
+  if(typeof _progSauver==='function'){
+    if(!_progSauver()){ if(typeof _progEchecStockage==='function')_progEchecStockage(); return; }
+  }else persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   if(btn){btn.textContent='✅ Enregistré dans Mes programmes';btn.disabled=true;btn.style.opacity='.7';}
   toast('"'+name+'" ajouté à Mes programmes 💪','success');

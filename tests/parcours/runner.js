@@ -39626,6 +39626,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      sans écrasement par nom, suppression confirmée, progRef, variantes A/B, document d'import local (IndexedDB),
      erreurs explicites, démo et personas étanches. Blocs B-L1-*. Banc : tools/banc_import_prog_lot1.js. */
   await require('./import_prog_lot1.js').ecran(t, b, PORT);
+  /* 🛡️ LOT 1 IMPORT — FERMETURE DE SÛRETÉ (07/10/2026, après le contre-audit Nutrition) : le document d'import est rattaché
+     au compte (A ≠ B, sans compte, démo, persona, restauration attendue) ; stockage plein RÉEL (quota Chromium) : une opération
+     programme n'est réussie que si `ft4_progs` est écrit, et un état absent du disque ne part jamais au cloud.
+     Blocs B-L1S-*. Banc : tools/banc_import_prog_surete.js. */
+  await require('./import_prog_surete.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 

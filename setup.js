@@ -982,6 +982,16 @@ function _cloudSync(){
      ⭐ LA CORRECTION NE CASSE PAS R2, ELLE LE PRÉCISE : on ne duplique pas le corps métier,
      on retire les justificatifs du corps COMMUN et on les ajoute au SEUL transport qui en a
      besoin. *Un justificatif de transport n'appartient pas aux données de la personne.* */
+  /* 🛡️ SÛRETÉ (07/10/2026, contre-audit Nutrition) — LES PROGRAMMES NE PARTENT QUE S'ILS SONT CEUX DU DISQUE.
+     Mesuré avant (SAFE-L1-08 / 08b) : stockage plein, `ft4_progs` refusé, la synchro lisait la MÉMOIRE et
+     envoyait au cloud un programme que le téléphone n'avait pas — au rechargement il disparaissait du
+     téléphone, et une synchro suivante pouvait l'effacer du cloud aussi. ⭐ Quand la mémoire diffère du
+     disque, on OMET le champ : Apps Script garde alors les programmes qu'il a (`body.programmes ===
+     undefined`, Code.js), exactement comme pour les séances après une troncature (`histTronque`).
+     Le miroir Supabase reçoit le même corps : sur la voie active (`SB_VOIE='worker'`, fonction
+     `ft_enregistrer_instantane`, migration 0003 « champ absent = conservé »), il garde lui aussi les siens. */
+  let _progsAEnvoyer;
+  try{ const _d=localStorage.getItem('ft4_progs'); _progsAEnvoyer=(_d!==null&&_d===JSON.stringify(S.programmes||[]))?(S.programmes||[]):undefined; }catch(e){ _progsAEnvoyer=undefined; }
   const _corpsSync={
       action:'saveProfile',email:S.email,
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
@@ -1042,7 +1052,7 @@ function _cloudSync(){
       evalPasses:(S.evalPasses||[]).slice(-12),
       evalHist:S.evalHist||{},
       cycle:S.cycle||null,
-      programmes:S.programmes||[],
+      programmes:_progsAEnvoyer,
       exRestPref:S.exRestPref||{},
       exSwaps:S.exSwaps||{},
       healthProfile:S.healthProfile||null,

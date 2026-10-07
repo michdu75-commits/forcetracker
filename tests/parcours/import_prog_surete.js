@@ -35,7 +35,8 @@ module.exports.ecran = async function (t, b, PORT) {
     ['Développé couché', 'Développé incliné haltères', 'Dips', 'Écarté poulie', 'Développé militaire', 'Élévations latérales', 'Extension triceps poulie', 'Barre au front', 'Pompes'],
     ['Soulevé de terre', 'Tractions', 'Rowing barre', 'Tirage vertical', 'Rowing haltère', 'Face pull', 'Curl barre', 'Curl marteau', 'Shrugs'],
     ['Squat avant', 'Développé couché prise serrée', 'Rowing poitrine appuyée', 'Développé épaules machine', 'Leg curl couché', 'Tirage poulie haute', 'Curl pupitre', 'Extension triceps haltère', 'Crunch poulie']];
-  const GROS = (suffixe) => ({ name: 'Powerbuilding sûreté', weeks: 6, startDate: '', days: JOURS.map((j, d) => ({ label: 'Séance ' + (d + 1) + ' ' + suffixe, exercises: j.map((n, i) => L(n, 5, i < 2 ? 4 : 10, 60 + i * 5, NOTE + ' (' + suffixe + ')')) })) });
+  const GROS = (suffixe) => ({ name: 'Powerbuilding sûreté', weeks: 6, startDate: '', days: JOURS.map((j, d) => ({ label: 'Séance ' + (d + 1) + ' ' + suffixe,
+    exercises: j.map((n, i) => L(n, 5, i < 2 ? 4 : 10, 60 + i * 5, NOTE + ' (' + suffixe + ')')).concat(d === 0 ? [L('Mouvement inconnu sûreté ' + suffixe, 3, 12, 0, '')] : []) })) });
 
   const contexte = async (graine) => {
     const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris' });
@@ -94,7 +95,7 @@ module.exports.ecran = async function (t, b, PORT) {
     openImportProg(); await new Promise(r => setTimeout(r, 1000));
     const bd = document.getElementById('imp-reprise');
     let lisibles = -1; try { lisibles = (await _impDocsTous()).length; } catch (e) {}
-    return { pages: (_impPhotos || []).length, bandeau: !!(bd && bd.style.display === 'flex'), lisibles };
+    return { pages: (_impPhotos || []).length, bandeau: !!(bd && bd.style.display === 'flex'), lisibles, docId: _impDoc ? _impDoc.id : null };
   });
 
   // ① A crée un brouillon de 2 pages
@@ -130,11 +131,23 @@ module.exports.ecran = async function (t, b, PORT) {
   const vueA = await vue();
   await pg.evaluate(() => { try { closeImportProg(); } catch (e) {} });
   t('SAFE-L1-01 ⛔⛔ un document créé sous A n\'est JAMAIS montré à B : ni le scan resté en mémoire, ni la reprise après rechargement, ni une lecture directe',
-    !!docA && vueB_memoire.pages === 0 && vueB_memoire.bandeau === false && vueB_reprise.pages === 0 && vueB_reprise.bandeau === false && vueB_reprise.lisibles === 0 && lireA_parB === null,
+    /* après rechargement, B retrouve SON brouillon (la page qu'il a ajoutée) — jamais celui de A */
+    !!docA && vueB_memoire.pages === 0 && vueB_memoire.bandeau === false && vueB_reprise.docId !== docA.id && vueB_reprise.pages === 1 && vueB_reprise.lisibles === 1 && lireA_parB === null,
     js({ docA, vueB_memoire, vueB_reprise, lireA_parB }));
   t('SAFE-L1-02 ⛔⛔ B ne complète, ne remplace ni n\'efface JAMAIS le document de A (ajout de page, effacement direct, « Nouveau scan ») — et A le retrouve intact',
     !!docA && !!docA1 && docA1.pages === 2 && docA1.h === docA.h && !!docA2 && docA2.pages === 2 && docA2.h === docA.h && vueA.pages === 2,
     js({ docA, docA1, docA2, vueA, base1: base1.map(d => [d.scope, d.pages, d.etat]), base2: base2.map(d => [d.scope, d.pages, d.etat]) }));
+
+  // ⑤ bis — A ouvre son brouillon ; le compte devient B PENDANT que l'écran d'import est ouvert ; une page est ajoutée
+  const ouvertA = await pg.evaluate(async () => { try { closeImportProg(); } catch (e) {} openImportProg(); await new Promise(r => setTimeout(r, 900)); return (_impPhotos || []).length; });
+  await pg.evaluate(() => { S.email = 'b@test.local'; });
+  await ajouter([fichier(5, 'pendant.png')]);
+  await pg.evaluate(async () => { try { await _impEcriture; } catch (e) {} });
+  const base2b = await brute(pg);
+  const docA2b = docA && base2b.find(d => d.id === docA.id);
+  await pg.evaluate(() => { try { closeImportProg(); } catch (e) {} impRecommencer(true); S.email = 'a@test.local'; });
+  t('SAFE-L1-02b ⛔⛔ le compte change PENDANT que le scan de A est ouvert : la page ajoutée n\'est jamais écrite dans le document de A',
+    ouvertA === 2 && !!docA2b && docA2b.pages === 2 && docA2b.h === docA.h, js({ ouvertA, docA2b }));
 
   // ⑥ SANS compte (« continuer sans email ») : une portée à part, dans les deux sens
   await compte('');
@@ -151,6 +164,22 @@ module.exports.ecran = async function (t, b, PORT) {
   t('SAFE-L1-03 ⛔ sans compte, une portée DISTINCTE : le brouillon de A n\'apparaît pas sans email, celui fait sans email n\'apparaît pas chez A, chacun retrouve le sien',
     vueLocal0.pages === 0 && vueLocal0.bandeau === false && !!docL && vueA2.pages === 2 && vueLocal1.pages === 1 && docL.scope !== (docA && docA.scope),
     js({ vueLocal0, docL, vueA2, vueLocal1 }));
+
+  // ⑥ bis — une restauration est ATTENDUE pour a@ (le compte n'est qu'un indice) : aucun brouillon, aucune ouverture de la base
+  const ATT = await pg.evaluate(async () => {
+    try { closeImportProg(); } catch (e) {}
+    impRecommencer(true);
+    S.email = 'a@test.local'; try { _restauPoser(); } catch (e) {}
+    window.__idbOuvertures = [];
+    openImportProg(); await new Promise(r => setTimeout(r, 1000));
+    const bd = document.getElementById('imp-reprise');
+    const o = { pages: (_impPhotos || []).length, bandeau: !!(bd && bd.style.display === 'flex'), ouvertures: (window.__idbOuvertures || []).filter(n => n === 'ft_import').length };
+    try { closeImportProg(); } catch (e) {}
+    try { _restauResolue(); } catch (e) {}
+    return o;
+  });
+  t('SAFE-L1-03b ⛔ tant qu\'une restauration de compte est ATTENDUE (cookie = simple indice), aucun brouillon n\'est proposé et la base d\'import n\'est pas ouverte',
+    ATT.pages === 0 && ATT.bandeau === false && ATT.ouvertures === 0, js(ATT));
 
   // ⑦ DÉMO : A réel → document A → démo → rien de visible, aucune lecture/écriture → sortie → document A intact
   await compte('a@test.local');
@@ -295,10 +324,13 @@ module.exports.ecran = async function (t, b, PORT) {
     await analyzeImportPhotos();
     _setImpMode('update'); _impChoisirCible(id);
     window.__toasts = [];
+    const persoAvant = JSON.stringify(S.customExercises || []);
     finalImportProg();
     try { await _impEcriture; } catch (e) {}
     const ov = document.getElementById('ov-import-prog');
-    return { etatDoc: _impDoc ? _impDoc.state : '(scan vidé)', ouvert: !!(ov && ov.classList.contains('open')), lecture: !!_impExtracted };
+    return { etatDoc: _impDoc ? _impDoc.state : '(scan vidé)', ouvert: !!(ov && ov.classList.contains('open')), lecture: !!_impExtracted,
+             persoInchanges: JSON.stringify(S.customExercises || []) === persoAvant, persoDisque: (localStorage.getItem('ft4_cuex') || '').indexOf('Mouvement inconnu sûreté v3') >= 0,
+             persoMemoire: JSON.stringify(S.customExercises || []).indexOf('Mouvement inconnu sûreté v3') >= 0 };
    } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
   }, SEED.id);
   const E1 = await etat(SEED.id);
@@ -308,7 +340,8 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-L1S-B0 ⛔ CONTRÔLE — la graine tient (v2 + un programme à plat, 120 séances) et le stockage est réellement plein',
     !SEED.err && !SEED2.err && SEED2.v === 2 && !!SEED2.idF && SEED2.sessions === 120 && REMPLI.max > 1000000, js({ SEED, SEED2, REMPLI }));
   t('SAFE-L1-06 ⛔⛔ stockage plein : `ft4_progs` n\'a pas reçu la mise à jour → l\'opération est ÉCHOUÉE (mémoire = disque, document pas marqué importé, scan gardé pour réessayer)',
-    !IMPORT.err && E1.disqueV === 2 && E1.memoireV === 2 && E1.memoireEgaleDisque === true && IMPORT.etatDoc !== 'imported' && IMPORT.lecture === true,
+    !IMPORT.err && E1.disqueV === 2 && E1.memoireV === 2 && E1.memoireEgaleDisque === true && IMPORT.etatDoc !== 'imported' && IMPORT.lecture === true
+    && IMPORT.persoInchanges === true && IMPORT.persoDisque === false && IMPORT.persoMemoire === false,
     js({ IMPORT, E1: Object.assign({}, E1, { toasts: undefined }) }));
   t('SAFE-L1-06b ⛔ un programme qui ne tient pas ne déclenche PAS le repli des 50 séances (historique local intact, aucun drapeau de troncature)',
     E1.sessionsDisque === 120 && E1.tronque === false, js({ sessions: E1.sessionsDisque, tronque: E1.tronque }));

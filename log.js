@@ -6470,7 +6470,21 @@ const _IMP_DB='ft_import', _IMP_STORE='docs';
 let _impDoc=null;                   // {id, createdAt, updatedAt, kind, state, files, docHash, error, target, progId}
 let _impDemoScan=false;             // le scan en mémoire est-il né en mode démo ?
 let _impCibleId=null, _impRaison='import', _impAbort=null, _impRepriseJeton=0, _impEcriture=Promise.resolve();
-function _impDocDispo(){ return !(typeof window!=='undefined'&&window._demoMode) && typeof indexedDB!=='undefined'; }
+/* 🛡️ SÛRETÉ (07/10/2026, contre-audit Nutrition) — LE DOCUMENT APPARTIENT À UN COMPTE.
+   La base `ft_import` est celle du TÉLÉPHONE, pas celle d'une personne : sans portée, un brouillon créé
+   sous A était proposé, repris, complété ou effacé sous B (mesuré : SAFE-L1-01 → 03).
+   ⭐ La portée est celle du compte que l'app considère comme le sien À CET INSTANT : `compte:<email>` ;
+   sans email, une portée À PART (`local`), jamais mélangée à un compte. ⛔ Aucune portée (donc aucun
+   accès, ni lecture ni écriture) en démo / persona, ni tant qu'une restauration est ATTENDUE : un cookie
+   n'est qu'un indice de compte (COOKIE-PROFILE-01), il n'ouvre pas les brouillons de quelqu'un.
+   ⚠️ L'email reste sur ce téléphone (comme `ft4_email`) : la base ne part jamais ailleurs. */
+function _impScope(){
+  if(typeof window!=='undefined'&&window._demoMode) return null;
+  try{ if(typeof _restauAttendue==='function'&&_restauAttendue()) return null; }catch(e){ return null; }
+  const e=String((typeof S!=='undefined'&&S&&S.email)||'').trim().toLowerCase();
+  return e?('compte:'+e):'local';
+}
+function _impDocDispo(){ return _impScope()!==null && typeof indexedDB!=='undefined'; }
 function _impDb(){
   return new Promise((res,rej)=>{
     let rq; try{ rq=indexedDB.open(_IMP_DB,1); }catch(e){ rej(e); return; }
@@ -6486,29 +6500,55 @@ async function _impDbFaire(mode, fn){
     tx.onerror=()=>{ db.close(); rej(tx.error); }; tx.onabort=()=>{ db.close(); rej(tx.error); };
   });
 }
-async function _impDocsTous(){ if(!_impDocDispo()) return []; try{ return (await _impDbFaire('readonly',st=>st.getAll()))||[]; }catch(e){ return []; } }
-async function _impDocLire(id){ if(!_impDocDispo()||!id) return null; try{ return await _impDbFaire('readonly',st=>st.get(id)); }catch(e){ return null; } }
+/* ⛔ Toute lecture passe par la portée : un document d'une autre portée (ou SANS portée, écrit avant
+   cette fermeture) n'existe pas pour le compte courant — il n'est ni proposé, ni lu, ni effacé. */
+async function _impDocsTous(){
+  const sc=_impScope(); if(!_impDocDispo()) return [];
+  try{ return ((await _impDbFaire('readonly',st=>st.getAll()))||[]).filter(x=>x&&x.scope===sc); }catch(e){ return []; }
+}
+async function _impDocLire(id){
+  const sc=_impScope(); if(!_impDocDispo()||!id) return null;
+  try{ const x=await _impDbFaire('readonly',st=>st.get(id)); return (x&&x.scope===sc)?x:null; }catch(e){ return null; }
+}
+/* L'effacement vérifie la portée DANS la même transaction que la suppression : rien ne s'intercale. */
 function _impDocEffacer(id){
+  const sc=_impScope();
   if(!_impDocDispo()||!id) return Promise.resolve(false);
-  _impEcriture=_impEcriture.then(()=>_impDbFaire('readwrite',st=>st.delete(id))).then(()=>true).catch(()=>false);
+  let fait=false;
+  _impEcriture=_impEcriture.then(()=>_impDbFaire('readwrite',st=>{
+    const rq=st.get(id);
+    rq.onsuccess=()=>{ const x=rq.result; if(x&&x.scope===sc){ st.delete(id); fait=true; } };
+    return rq;
+  })).then(()=>fait).catch(()=>false);
   return _impEcriture;
 }
 /* L'écriture du document courant — en file (jamais deux écritures croisées), silencieuse si
    IndexedDB manque (le scan reste en mémoire : rien n'est perdu de ce qui marchait avant). */
 function _impDocSauver(){
   if(!_impDocDispo()||!_impDoc) return Promise.resolve(false);
+  /* ⛔ Un scan né sous une AUTRE portée (le compte a changé pendant qu'il était en mémoire) n'est jamais
+     écrit : il ne peut ni compléter ni remplacer le document de quelqu'un d'autre. */
+  const sc=_impScope();
+  if(_impDoc.scope!==sc) return Promise.resolve(false);
   _impDoc.updatedAt=new Date().toISOString();
   const rec=Object.assign({}, _impDoc, {
     pages:(_impPhotos||[]).map(p=>Object.assign({},p)),
     reading:_impExtracted?{data:JSON.parse(JSON.stringify(_impExtracted)), at:_impDoc.updatedAt}:null,
     target:{mode:_impMode, cibleId:_impCibleId, raison:_impRaison}
   });
-  _impEcriture=_impEcriture.then(()=>_impDbFaire('readwrite',st=>st.put(rec))).then(()=>true).catch(e=>{ console.warn('[Import] document non sauvegardé',e); return false; });
+  let ecrit=false;
+  _impEcriture=_impEcriture.then(()=>_impDbFaire('readwrite',st=>{
+    const rq=st.get(rec.id);
+    rq.onsuccess=()=>{ const x=rq.result; if(!x||x.scope===sc){ st.put(rec); ecrit=true; } };
+    return rq;
+  })).then(()=>ecrit).catch(e=>{ console.warn('[Import] document non sauvegardé',e); return false; });
   return _impEcriture;
 }
 function _impDocAssurer(){
+  /* Un document vide d'une autre portée (compte changé entre deux scans) n'est jamais réutilisé. */
+  if(_impDoc && _impDoc.scope!==_impScope() && !_scanEnCours(_impPhotos,_impExtracted)) _impDoc=null;
   if(!_impDoc) _impDoc={id:'d'+Date.now()+Math.random().toString(36).slice(2,6), createdAt:new Date().toISOString(),
-                         kind:'program', state:'draft', files:[], docHash:null, error:null, progId:null};
+                         kind:'program', state:'draft', files:[], docHash:null, error:null, progId:null, scope:_impScope()};
   return _impDoc;
 }
 function _impDocEtat(etat, extra){ _impDocAssurer(); _impDoc.state=etat; if(extra) Object.assign(_impDoc, extra); return _impDocSauver(); }
@@ -6687,7 +6727,7 @@ async function _impDocReprendre(){
   docs.sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
   const x=docs[0];
   _impDoc={id:x.id, createdAt:x.createdAt, updatedAt:x.updatedAt, kind:x.kind||'program', state:x.state==='analyzing'?'draft':x.state,
-           files:x.files||[], docHash:x.docHash||null, error:x.error||null, progId:x.progId||null};
+           files:x.files||[], docHash:x.docHash||null, error:x.error||null, progId:x.progId||null, scope:x.scope};
   _impPhotos=(x.pages||[]).map(p=>Object.assign({},p));
   _impExtracted=(x.reading&&x.reading.data)?x.reading.data:null;
   _impMode=(x.target&&x.target.mode==='update')?'update':'new';
@@ -6709,7 +6749,7 @@ async function reanalyserProg(ref){
   try{ fermerProgGerer(); closeProgModal(); }catch(e){}
   impRecommencer(true);
   _impDoc={id:'d'+Date.now()+Math.random().toString(36).slice(2,6), createdAt:new Date().toISOString(), kind:'program', state:'draft',
-           files:(x.files||[]).slice(), docHash:x.docHash||null, error:null, progId:null};
+           files:(x.files||[]).slice(), docHash:x.docHash||null, error:null, progId:null, scope:_impScope()};
   _impPhotos=(x.pages||[]).map(q=>Object.assign({},q));
   _impMode='update'; _impCibleId=p.id; _impRaison='reanalyse';
   _impDocSauver();
@@ -6781,6 +6821,9 @@ function _renderImpCible(){
 function openImportProg(){
   /* ⛔ LOT 1 — un scan né en mode réel ne se montre JAMAIS en démo / persona (et inversement). */
   if(_scanEnCours(_impPhotos,_impExtracted) && _impDemoScan!==!!window._demoMode) impRecommencer(true);
+  /* 🛡️ SÛRETÉ — un scan resté en mémoire sous un AUTRE compte (A → B sans rechargement) n'est jamais
+     montré : on le lâche EN SILENCE (son document reste intact sur le téléphone, chez A). */
+  if(_scanEnCours(_impPhotos,_impExtracted) && _impDoc && _impDoc.scope!==_impScope()) impRecommencer(true);
   /* ⭐ On REPREND si un scan est en cours, sinon on repart de zéro comme avant. */
   if(_scanEnCours(_impPhotos,_impExtracted)){
     _bandeauReprise('imp-reprise', impRecommencer);
@@ -7770,16 +7813,18 @@ function finalImportProg(){
     const low=_cleNom(ex.name);
     if(!toCreate.find(n=>_cleNom(n)===low))toCreate.push(ex.name);
   }));
-  if(toCreate.length){
-    if(!S.customExercises)S.customExercises=[];
-    toCreate.forEach(n=>{S.customExercises.push({n,g:'Autres',custom:true});_reportCustomEx(n,'Autres',null,'import');});
-    toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
-  }
   // Construire le programme avec groupes supersets et dropsets
   const contenu=_impContenuProgramme();
   if(!contenu.days.some(d=>d&&(d.exs||[]).length)){toast('Aucun exercice à importer — rien n\'a été enregistré','error');return;}
   const enCours=!!(document.getElementById('imp-en-cours')||{}).checked;
   const docMeta=_impDocMeta();
+  /* 🛡️ SÛRETÉ — les exercices inconnus ne sont créés (et signalés) que si le programme est ENREGISTRÉ :
+     un import qui n'a pas tenu sur le téléphone ne laisse rien derrière lui. */
+  const persoAvant=S.customExercises?S.customExercises.slice():S.customExercises;
+  if(toCreate.length){
+    if(!S.customExercises)S.customExercises=[];
+    toCreate.forEach(n=>S.customExercises.push({n,g:'Autres',custom:true}));
+  }
   let progId, txt;
   if(cible){
     const v=_progNouvelleVersion(cible, _impContenuMaj(cible, contenu), _impRaison==='reanalyse'?'reanalyse':'update', docMeta);
@@ -7791,7 +7836,17 @@ function finalImportProg(){
     progId=prog.id;
     txt='"'+prog.name+'" importé ! 💪';
   }
-  if(enCours) _progDefinirEnCours(progId); else persist();
+  if(enCours) _progMarquerEnCours(progId);
+  if(!_progSauver()){
+    S.customExercises=persoAvant;
+    _progEchecStockage('Tes pages et leur lecture restent gardées : libère de la place, puis réessaie — sans nouvelle analyse.');
+    try{ _renderImpConfirm(); }catch(e){}
+    return;
+  }
+  if(toCreate.length){
+    toCreate.forEach(n=>_reportCustomEx(n,'Autres',null,'import'));
+    toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
+  }
   if(_impDoc){ _impDoc.progId=progId; _impDocEtat('imported'); }
   impRecommencer(true);                                  // ft-v1178 : scan consommé → on le vide (le document reste, lié au programme)
   closeImportProg();
@@ -9508,9 +9563,10 @@ function createBeginnerProg(){
      inscrit en « phase 1 débutant », avec l'objectif d'étape affiché dans la modale. *C'est
      écrire un fait faux sur quelqu'un* (R29) — et il n'avait aucun moyen d'en sortir.
      ⛔ Et on n'écrase pas un parcours déjà commencé : il porte une date de départ. */
+  const parcoursAvant=S.beginnerJourney;
   if(_bgEstParcoursDebutant(_bgMatos) && !S.beginnerJourney)
     S.beginnerJourney={style:_bgStyle,freq:_bgFreq,startDate:today(),phase:1};
-  persist();
+  if(!_progSauver()){ S.beginnerJourney=parcoursAvant; _progEchecStockage(); return; }
   closeBeginnerSetup();
   openProgModal();
   toast('Ton programme est prêt ! '+(prog.beginner?'🌱 ':'')+_bgFreq+' séances/semaine','success');
@@ -9685,7 +9741,17 @@ function _progRestaurerVersion(ref, version){
   const v=(p.previousVersions||[]).find(x=>parseInt(x.version)===parseInt(version));
   if(!v||!v.content) return 0;
   const n=_progNouvelleVersion(p, v.content, 'restore', v.doc||null);
-  persist();
+  if(!_progSauver()) return 0;
+  return n;
+}
+/* Le bouton « Restaurer » de la fiche : le succès ne s'annonce que s'il a eu lieu. */
+function restaurerVersionProg(ref, version){
+  const p=_progParRef(ref), v=p&&(p.previousVersions||[]).find(x=>parseInt(x.version)===parseInt(version));
+  if(!v||!v.content){ toast('Cette version n\'existe plus sur ce téléphone — rien n\'a changé','error'); _progRafraichir(ref); return 0; }
+  const n=_progRestaurerVersion(ref, version);
+  if(n) toast('Version '+(parseInt(version)||0)+' restaurée — rien n\'a été effacé','success');
+  else _progEchecStockage();
+  _progRafraichir(ref);
   return n;
 }
 /* L'Avant / Après : ce qui change entre deux contenus (noms comparés sous leur forme normalisée). */
@@ -9723,33 +9789,73 @@ function _progComparaisonHtml(cmp, etiqA, etiqB){
     h+=li('Mêmes exercices, même nombre de séries (charges, répétitions ou notes peuvent différer).');
   return h;
 }
+/* 🛡️ SÛRETÉ (07/10/2026, contre-audit Nutrition) — UNE OPÉRATION PROGRAMME N'EST RÉUSSIE QUE SI LE
+   TÉLÉPHONE L'A RÉELLEMENT ÉCRITE. Mesuré avant ce correctif (SAFE-L1-06 → 09), stockage plein :
+   `ft4_progs` ne tenait plus, `persist` s'arrêtait là (et coupait les séances locales à 50), le programme
+   restait en MÉMOIRE, « mis à jour ✅ » s'affichait, la synchro l'envoyait au cloud — et au rechargement il
+   avait disparu du téléphone, sans que le cloud soit restauré (la liste locale n'était pas vide).
+   ⭐ Le geste : écrire `ft4_progs` SEUL, d'abord, et le relire. S'il ne tient pas : la mémoire redevient
+   ce qui est sur le disque (rien d'affiché qui n'existe pas), un message le dit, et on n'appelle PAS
+   `persist` — un programme qui ne tient pas ne déclenche donc pas le repli des 50 séances. S'il tient :
+   `persist` écrit le reste comme avant (il réécrit `ft4_progs` à l'identique).
+   ⛔ Ce n'est pas une transaction : une vérification après écriture suffit, parce que `setItem` est
+   atomique par clé — l'ancienne valeur reste entière quand la nouvelle est refusée.
+   Démo / persona : rien n'est jamais écrit, par construction (la mémoire seule fait foi). */
+function _progSauver(){
+  if(typeof window!=='undefined'&&window._demoMode){ try{ persist(); }catch(e){} return true; }
+  try{ if(typeof _progMigrerTous==='function') _progMigrerTous(); }catch(e){}
+  const attendu=JSON.stringify(S.programmes||[]);
+  let ok=false;
+  try{ localStorage.setItem('ft4_progs',attendu); ok=(localStorage.getItem('ft4_progs')===attendu); }catch(e){ ok=false; }
+  if(!ok){ _progRetourDisque(); return false; }
+  persist();
+  return true;
+}
+/* La mémoire redevient le DISQUE : ce que l'écran montre est ce qui existe sur ce téléphone. */
+function _progRetourDisque(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem('ft4_progs')||'[]'); }catch(e){ d=null; }
+  if(Array.isArray(d)){ S.programmes=d; try{ if(typeof _progMigrerTous==='function') _progMigrerTous(); }catch(e){} }
+}
+/* Le message de l'échec — UN propriétaire. ⛔ Il ne dit jamais que la sauvegarde en ligne protège ce
+   programme : elle ne l'a pas reçu (la synchro n'envoie que ce que le disque porte, `_cloudSync`). */
+function _progEchecStockage(suite){
+  if(typeof toast==='function') toast('⚠️ Programme NON enregistré : le stockage de ce téléphone est plein. Rien n\'a changé, ni ici ni dans ta sauvegarde en ligne.'+(suite?' '+suite:' Libère de la place (par exemple en supprimant un ancien programme), puis réessaie.'),'error');
+}
+
 /* ⭐ « EN COURS » — 0 ou 1 programme, et UNE seule fonction qui le change (D1). Charger un jour ne
    le modifie jamais. `ref` null = plus aucun programme en cours. */
-function _progDefinirEnCours(ref){
+function _progMarquerEnCours(ref){
   const cible=ref==null?null:_progParRef(ref);
   (S.programmes||[]).forEach(p=>{
     if(!p) return;
     if(cible&&p===cible){ p.status='active'; p.activeAt=new Date().toISOString(); }
     else if(p.status==='active'){ p.status='available'; }
   });
-  persist();
   return !!cible;
+}
+function _progDefinirEnCours(ref){
+  const cible=_progMarquerEnCours(ref);
+  if(!_progSauver()){ _progEchecStockage(); return false; }
+  return cible;
 }
 function _progEnCours(){ return (S.programmes||[]).find(p=>p&&p.status==='active')||null; }
 function archiverProg(ref){
   const p=_progParRef(ref); if(!p) return false;
   p.status='archived'; p.archivedAt=new Date().toISOString();
-  persist();
+  const id=p.id;
+  if(!_progSauver()){ _progEchecStockage(); _progRafraichir(id); return false; }
   if(typeof toast==='function') toast('« '+(p.name||'Programme')+' » archivé — il reste restaurable','info');
-  _progRafraichir(p.id);
+  _progRafraichir(id);
   return true;
 }
 function desarchiverProg(ref){
   const p=_progParRef(ref); if(!p) return false;
   p.status='available'; delete p.archivedAt;
-  persist();
+  const id=p.id;
+  if(!_progSauver()){ _progEchecStockage(); _progRafraichir(id); return false; }
   if(typeof toast==='function') toast('« '+(p.name||'Programme')+' » est de retour dans tes programmes','success');
-  _progRafraichir(p.id);
+  _progRafraichir(id);
   return true;
 }
 function _progRafraichir(id){
@@ -9794,8 +9900,8 @@ function _progSupprimer(id){
   const i=_progIdx(String(id)); if(i<0) return false;
   const p=S.programmes[i];
   S.programmes.splice(i,1);
+  if(!_progSauver()){ _progEchecStockage(); try{ renderProgModal(); }catch(e){} return false; }
   if(p&&p.doc&&p.doc.id&&typeof _impDocEffacer==='function') _impDocEffacer(p.doc.id);
-  persist();
   try{ const g=document.getElementById('ov-prog-gerer'); if(g) g.classList.remove('open'); }catch(e){}
   try{ renderProgModal(); }catch(e){}
   if(typeof toast==='function') toast('« '+((p&&p.name)||'Programme')+' » supprimé','info');
@@ -9844,14 +9950,17 @@ function _progCibleChoisir(cible){
   const p=_progParRef(String(cible));
   if(!p||(p.days&&p.days.length)){ toast('Ce programme ne peut pas être mis à jour par une séance','error'); return; }
   const v=_progNouvelleVersion(p, Object.assign({}, ctx.contenu, {name:p.name}), 'session', null);
-  persist(); renderProgModal();
-  toast('« '+p.name+' » mis à jour (v'+v+') — la version d\'avant reste restaurable','success');
+  const nom=p.name;
+  if(!_progSauver()){ _progEchecStockage(); renderProgModal(); return; }
+  renderProgModal();
+  toast('« '+nom+' » mis à jour (v'+v+') — la version d\'avant reste restaurable','success');
 }
 function _progEnregistrerNouveau(contenu, origine){
   if(!S.programmes)S.programmes=[];
   const p=_progNouveau(contenu, origine, origine, null);
   S.programmes.push(p);
-  persist(); renderProgModal();
+  if(!_progSauver()){ _progEchecStockage(); renderProgModal(); return null; }
+  renderProgModal();
   toast('« '+p.name+' » sauvegardé ✅','success');
   return p;
 }
@@ -9902,7 +10011,7 @@ function _renderProgGerer(id, versionComparee){
       +(v.archivedFor==='before-edit'?' · telle qu\'importée, avant tes modifications':'')+'</span>'
       +'<div style="display:flex;gap:6px;margin-top:7px;">'
       +'<button class="btn-xs" onclick="_renderProgGerer('+a+','+(parseInt(v.version)||0)+')">Comparer</button>'
-      +'<button class="btn-xs" data-restaurer="'+e(String(v.version))+'" onclick="_progRestaurerVersion('+a+','+(parseInt(v.version)||0)+');toast(\'Version '+(parseInt(v.version)||0)+' restaurée — rien n\\\'a été effacé\',\'success\');_progRafraichir('+a+')">Restaurer</button>'
+      +'<button class="btn-xs" data-restaurer="'+e(String(v.version))+'" onclick="restaurerVersionProg('+a+','+(parseInt(v.version)||0)+')">Restaurer</button>'
       +'</div>';
     if(versionComparee!=null&&parseInt(versionComparee)===parseInt(v.version))
       h+='<div style="margin-top:8px;">'+_progComparaisonHtml(_progComparer(v.content,_progContenu(p)),'v'+v.version,'v'+(p.version||1)+' (actuelle)')+'</div>';
@@ -9925,7 +10034,9 @@ function supprimerDocProg(ref){
   const p=_progParRef(ref); if(!p||!p.doc) return;
   const id=p.id;
   showConfirm('Supprimer le document ?','Les pages importées de « '+(p.name||'Programme')+' » seront effacées de ce téléphone. Le programme et ses versions restent.',
-    ()=>{ const q=_progParRef(id); if(!q||!q.doc) return; if(typeof _impDocEffacer==='function') _impDocEffacer(q.doc.id); delete q.doc; persist(); _progRafraichir(id); toast('Document supprimé','info'); },
+    ()=>{ const q=_progParRef(id); if(!q||!q.doc) return; const docId=q.doc.id; delete q.doc;
+          if(!_progSauver()){ _progEchecStockage(); _progRafraichir(id); return; }
+          if(typeof _impDocEffacer==='function') _impDocEffacer(docId); _progRafraichir(id); toast('Document supprimé','info'); },
     'Supprimer');
 }
 
@@ -10781,7 +10892,7 @@ function saveProgEdit(){
       Object.assign(cible, JSON.parse(JSON.stringify(contenu)));
     }
   }
-  persist();
+  if(!_progSauver()){ _progEchecStockage('Tes modifications sont encore dans l\'éditeur : libère de la place, puis enregistre de nouveau.'); return; }
   closeProgEdit();
   toast('Programme mis à jour ✅','success');
   openProgModal();
@@ -10821,7 +10932,8 @@ function shiftProgStart(idx,delta){
   const d=new Date(prog.startDate);
   d.setDate(d.getDate()+delta*7);
   prog.startDate=d.toISOString().split('T')[0];
-  persist();renderProgModal();
+  if(!_progSauver()) _progEchecStockage();
+  renderProgModal();
 }
 let _lastProgAnalysisProg=null,_lastProgAnalysisReply='';
 let _lastProgAnalysisCoupee='';   // MILO-PDF1 : 'analyse' si la dernière analyse est restée coupée
