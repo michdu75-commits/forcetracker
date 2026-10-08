@@ -4497,6 +4497,22 @@ garde le sien — le précédent `histTronque` des séances). Témoins SAFE-L1-0
 le comportement d'avant — une écriture refusée au milieu du bloc saute les clés suivantes de cet appel. C'est hors du Lot 1 ;
 la famille est la même, la correction ne l'est pas encore.
 
+**🔁 Rechute mesurée LE LENDEMAIN, par une contre-vérification indépendante de `19db28b5` (08/10/2026)** — et elle
+était dans l'angle mort de la protection elle-même. `_progSauver` vérifiait **une** clé ; l'opération en changeait
+**deux**. Téléphone presque plein : `ft4_progs` tenait, puis `persist` échouait sur l'exercice perso créé par l'import
+(`ft4_cuex`) → repli des 50 séances, exercice perso jamais écrit, et « mis à jour ✅ » **par-dessus** l'alerte : l'app n'a
+qu'**un** toast, le dernier message efface le précédent. Le témoin SAFE-L1-06b ne voyait rien : son remplissage laissait
+3 000 caractères, ni assez pour le programme ni trop peu pour le reste — *un témoin de stockage plein qui ne calibre pas
+la place libre teste un seul des deux bords.*
+👉 **Ce qui protège désormais** : `_progSauver(extras)` écrit et relit **toutes** les clés que l'opération change
+(`ft4_cuex` à l'import, `ft4_bjourney` au programme débutant), les remet en place si une seule refuse, et n'appelle
+`persist` qu'ensuite ; un compteur (`_persistReplis`) dit à `_progAnnoncer` que le repli vient d'avoir lieu pour une
+AUTRE clé, et le succès ne recouvre plus l'alerte. Témoins SAFE-L1-13 → 15 (remplissage **calibré** sur les vraies
+chaînes de l'opération : le programme tient, l'autre clé non), mutations S19 → S29.
+**🔎 Le réflexe qui en sort** : *« quelles clés cette opération change-t-elle ? »* — se répond en lisant ce qu'elle
+modifie dans `S`, pas en regardant la clé dont elle porte le nom. Et *« quel est le DERNIER message affiché ? »* : un
+succès juste exact (le programme EST enregistré) peut quand même mentir par omission s'il efface une alerte.
+
 ## §69 — ⛔ UNE BASE DU TÉLÉPHONE N'EST PAS UNE BASE DE LA PERSONNE *(07/10/2026, fermeture de sûreté du LOT 1 IMPORT — branche, NON publié)*
 
 `localStorage` et IndexedDB appartiennent à un **navigateur**, pas à un compte. Tant que le compte ne change jamais sur un

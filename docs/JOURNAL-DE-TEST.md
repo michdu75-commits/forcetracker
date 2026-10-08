@@ -3454,3 +3454,26 @@ Banc `debrief_demande` : **57/1** au 1ᵉʳ passage (OD-11, carte de la séance 
 correctif du repère « Quoi de neuf » a réduit la fréquence, il ne l'a pas éteinte. Aucun fichier de ce lot ne touche
 Progrès ni le débrief. ❓ **Doute** : une autre fenêtre de démarrage recouvre-t-elle encore l'onglet ? Vérifiable par du
 code : ✅ (capturer l'élément au point de clic quand la carte est introuvable). État : **à trier**.
+
+### 🟡 L'ALERTE « STOCKAGE PLEIN » DE `persist` PROMET LA SAUVEGARDE EN LIGNE MÊME SANS COMPTE (08/10/2026 — fermeture du P2, LOT 1 import)
+Le repli de `persist` (state.js) affiche toujours « Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer »
+dans Profil pour tout récupérer », y compris pour quelqu'un **sans email** : il n'a aucune sauvegarde en ligne, et les
+séances coupées ne sont gardées qu'en mémoire jusqu'au prochain démarrage. Les opérations **programme** disent
+désormais le vrai (`_progAlerteTexte`, SAFE-L1-14b) ; le texte de `persist` lui-même n'a pas été touché (hors du choix
+de Michel, politique du repli inchangée). ❓ **Doute** : faut-il aligner l'alerte générale sur ce texte ? Vérifiable par du
+code : ✅ (sans email, remplir le stockage, déclencher `persist`, lire le dernier message). État : **à trier**.
+
+### 🟡 UN MESSAGE LONG DANS UN TOAST DE 2,8 SECONDES (08/10/2026 — fermeture du P2, LOT 1 import)
+Quand `persist` se replie pendant une opération programme réussie, le dernier message dit les deux choses (« … mis à
+jour : v2 … ⚠️ Mais le stockage de ce téléphone est plein : seules tes 50 dernières séances y restent… ») : environ
+200 caractères, dans un toast qui disparaît après 2,8 s (`toast`, tracking.js). L'alerte de `persist` avait déjà cette
+longueur. ❓ **Doute** : est-ce lisible à la salle, sur un iPhone ? Vérifiable par du code : ❌ (la lisibilité se juge sur le
+téléphone). État : **juge humain**.
+
+### 🟡 UN BROUILLON D'IMPORT COMMENCÉ « SANS COMPTE » DISPARAÎT DE LA VUE QUAND UN EMAIL EST AJOUTÉ (08/10/2026 — contre-vérification de `19db28b5`, P3)
+La portée du document d'import est `local` sans email et `compte:<email>` avec : quelqu'un qui scanne son programme
+avant de créer son compte ne retrouve plus son brouillon une fois l'email ajouté. Rien n'est perdu (le document reste
+sur le téléphone, sous `local`) et rien ne fuit, mais il est invisible. Choix fait le 07/10 : les deux portées ne se
+mélangent jamais ; un rattachement à l'inscription n'a été ni décidé ni construit. ❓ **Doute** : faut-il proposer, à
+la création du compte, de rattacher les brouillons `local` ? Vérifiable par du code : ✅ (sans email → scan → email
+ajouté → réouverture de l'import). État : **à trier**.
