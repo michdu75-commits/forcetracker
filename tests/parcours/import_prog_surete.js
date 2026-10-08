@@ -246,6 +246,39 @@ module.exports.ecran = async function (t, b, PORT) {
     !PERS.err && PERS.pages === 0 && PERS.bandeau === false && PERS2.pagesPersona === 1 && PERS2.ouverturesImport === 0 && PERS2.email === 'a@test.local' && PERS2.pagesApres === 2
     && js(apresPersona.map(d => [d.id, d.pages, d.h, d.maj])) === js(avantDemo.map(d => [d.id, d.pages, d.h, d.maj])),
     js({ PERS, PERS2 }));
+  // ⑨ LE BOUTON « IMPORTER » (contre-vérification de 19db28b5, P3) : C a lu son scan ; le compte devient D
+  //   PENDANT que l'écran d'import est ouvert ; la personne appuie sur « Importer ».
+  cfg.reponse = GROS('c');
+  await compte('c@test.local');
+  await pg.evaluate(() => { impRecommencer(true); try { closeImportProg(); } catch (e) {} openImportProg(); });
+  await pg.waitForTimeout(600);
+  await ajouter([fichier(0, 'c.png')]);
+  const IMPC = await pg.evaluate(async () => {
+    const o = {};
+    try { await _impEcriture; } catch (e) {}
+    S.premium = true;
+    try { await analyzeImportPhotos(); } catch (e) { o.errAnalyse = String(e).slice(0, 120); }
+    try { await _impEcriture; } catch (e) {}
+    o.lu = !!_impExtracted; o.scope = _impDoc ? _impDoc.scope : null; o.docId = _impDoc ? _impDoc.id : null;
+    const progsAvant = localStorage.getItem('ft4_progs'), persoAvant = localStorage.getItem('ft4_cuex');
+    o.nAvant = (S.programmes || []).length;
+    S.email = 'd@test.local';                                   // le compte change, l'écran reste ouvert
+    window.__toasts = [];
+    try { finalImportProg(); } catch (e) { o.errImport = String(e).slice(0, 120); }
+    try { await _impEcriture; } catch (e) {}
+    o.nApres = (S.programmes || []).length;
+    o.disqueInchange = localStorage.getItem('ft4_progs') === progsAvant && localStorage.getItem('ft4_cuex') === persoAvant;
+    o.toasts = (window.__toasts || []).slice();
+    try { closeImportProg(); } catch (e) {}
+    return o;
+  });
+  const baseC = await brute(pg);
+  const docC = IMPC.docId ? baseC.find(d => d.id === IMPC.docId) : null;
+  t('SAFE-L1-02c ⛔⛔ « Importer » après un changement de compte (écran resté ouvert) : REFUSÉ — aucun programme ajouté au compte D, rien d\'écrit, le document de C reste un brouillon, un message le dit',
+    IMPC.lu === true && IMPC.scope === 'compte:c@test.local' && IMPC.nApres === IMPC.nAvant && IMPC.disqueInchange === true
+    && !!docC && docC.scope === 'compte:c@test.local' && docC.etat !== 'imported'
+    && !IMPC.toasts.some(m => /importé|mis à jour|✅|💪/i.test(m)) && IMPC.toasts.some(m => /compte a changé/i.test(m)),
+    js({ IMPC, docC }));
   t('B-L1S-A0 aucune erreur de page dans le bloc compte / démo / persona', A.errs.length === 0, js(A.errs.slice(0, 3)));
   await A.cx.close();
 
@@ -459,6 +492,117 @@ module.exports.ecran = async function (t, b, PORT) {
   }, FIG.id);
   t('SAFE-L1-12 ⛔ previousVersions FIGÉES : la migration de nom du catalogue renomme la version courante (« Câble Crunch » → « Crunch Poulie ») et JAMAIS une version archivée ; la restauration marche',
     FIG.ok === true && FIG2.courant === 'Crunch Poulie' && FIG2.archive === 'Câble Crunch' && FIG2.n === 3 && FIG2.v === 3 && FIG2.restaure === 'Câble Crunch', js({ FIG, FIG2 }));
-  t('B-L1S-00 0 appel réel (Worker / Apps Script simulés, Supabase / Anthropic coupés) et aucune erreur de page', reels === 0 && Q.errs.length === 0, js({ reels, errs: Q.errs.slice(0, 3) }));
   await Q.cx.close();
+
+  /* ════════════════ B-L1S-C — LE CAS LIMITE (contre-vérification de 19db28b5, P2) ════════════════
+     `ft4_progs` TIENT, mais une autre clé que l'opération change ne tient plus (`ft4_cuex`, l'exercice inconnu
+     créé par l'import). Mesuré sur 19db28b5 : le programme était écrit, puis `persist` échouait sur
+     `ft4_cuex` → repli des 50 séances, exercice perso perdu, et « mis à jour ✅ » par-dessus l'alerte.
+     SANS COMPTE : rien ne garde ailleurs les séances coupées. Le remplissage est CALIBRÉ sur les vraies
+     chaînes que l'opération écrit (essai à blanc avec de la place, puis disque remis comme avant) :
+     place libre ≈ (ce qu'il faut au programme) + (la MOITIÉ de ce qu'il faut à l'exercice perso). */
+  const N = await contexte({ ft4_ob2: '1', ft4_name: 'Testeur', ft4_premium: 'true', ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_email: '', ft4_ok: '0', ft4_sessions: JSON.stringify(SESSIONS) });
+  const nq = N.pg;
+  await N.ouvrir();
+  const importer = (data, maj, cible) => nq.evaluate(async ({ data, maj, cible }) => {
+   try {
+    impRecommencer(true);
+    _impPhotos = [{ type: 'text/plain', data: data, name: data + '.txt', isText: true }]; _impExtracted = null; _impMode = 'new'; S.premium = true;
+    await analyzeImportPhotos();
+    if (maj) { _setImpMode('update'); _impChoisirCible(cible); }
+    const ec = document.getElementById('imp-en-cours'); if (ec) { ec.checked = false; ec.dataset.touche = '1'; }
+    return { lu: !!_impExtracted };
+   } catch (e) { return { err: String(e && e.stack || e).slice(0, 300) }; }
+  }, { data, maj, cible });
+  cfg.reponse = GROS('n1');
+  await importer('limite-v1', false, null);
+  const SEEDN = await nq.evaluate(() => { finalImportProg(); try { document.querySelectorAll('.overlay.open').forEach(x => x.classList.remove('open')); } catch (e) {}
+    const P = S.programmes[S.programmes.length - 1]; return { id: P && P.id, v: P && P.version, sessions: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').length }; });
+  // Essai à blanc AVEC de la place : les chaînes exactes que la mise à jour écrit — puis le disque remis comme avant
+  cfg.reponse = GROS('n2');
+  await importer('limite-v2', true, SEEDN.id);
+  const BLANC = await nq.evaluate(() => {
+    const avant = { p: localStorage.getItem('ft4_progs'), c: localStorage.getItem('ft4_cuex') };
+    finalImportProg(); try { document.querySelectorAll('.overlay.open').forEach(x => x.classList.remove('open')); } catch (e) {}
+    const apres = { p: localStorage.getItem('ft4_progs'), c: localStorage.getItem('ft4_cuex') };
+    localStorage.setItem('ft4_progs', avant.p); localStorage.setItem('ft4_cuex', avant.c);
+    return { P: apres.p, C: apres.c, dp: apres.p.length - avant.p.length, dc: apres.c.length - avant.c.length,
+             nouveauPerso: apres.c.indexOf('Mouvement inconnu sûreté n2') >= 0 && avant.c.indexOf('Mouvement inconnu sûreté n2') < 0 };
+  });
+  await N.recharger();                                       // la mémoire redevient le disque (v1)
+  const CAL = await nq.evaluate(({ P, C }) => {
+    const OLDP = localStorage.getItem('ft4_progs'), OLDC = localStorage.getItem('ft4_cuex');
+    const essai = (F, avecC) => {
+      try { localStorage.setItem('zz_remplissage', 'x'.repeat(F)); } catch (e) { return false; }
+      let ok = true;
+      try { localStorage.setItem('ft4_progs', P); if (avecC) localStorage.setItem('ft4_cuex', C); } catch (e) { ok = false; }
+      try { localStorage.setItem('ft4_progs', OLDP); } catch (e) {}
+      try { localStorage.setItem('ft4_cuex', OLDC); } catch (e) {}
+      try { localStorage.removeItem('zz_remplissage'); } catch (e) {}
+      return ok;
+    };
+    const cherche = (avecC) => { let lo = 0, hi = 6 * 1024 * 1024; while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (essai(mid, avecC)) lo = mid; else hi = mid; } return lo; };
+    const Fp = cherche(false), Fpc = cherche(true), F = Math.floor((Fp + Fpc) / 2);
+    localStorage.setItem('zz_remplissage', 'x'.repeat(F));
+    return { Fp, Fpc, F, disqueRemis: localStorage.getItem('ft4_progs') === OLDP && localStorage.getItem('ft4_cuex') === OLDC };
+  }, { P: BLANC.P, C: BLANC.C });
+  cfg.reponse = GROS('n2');
+  await importer('limite-v2', true, SEEDN.id);
+  const LIM = await nq.evaluate((id) => {
+    window.__toasts = [];
+    finalImportProg();
+    const disque = JSON.parse(localStorage.getItem('ft4_progs') || '[]').find(x => x.id === id), memoire = (S.programmes || []).find(x => x.id === id);
+    const ov = document.getElementById('ov-import-prog');
+    return { disqueV: disque && disque.version, memoireV: memoire && memoire.version, egal: localStorage.getItem('ft4_progs') === JSON.stringify(S.programmes || []),
+             persoDisque: (localStorage.getItem('ft4_cuex') || '').indexOf('Mouvement inconnu sûreté n2') >= 0,
+             persoMemoire: JSON.stringify(S.customExercises || []).indexOf('Mouvement inconnu sûreté n2') >= 0,
+             sessions: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').length, tronque: localStorage.getItem('ft4_hist_tronque') === '1',
+             lecture: !!_impExtracted, ouvert: !!(ov && ov.classList.contains('open')), toasts: (window.__toasts || []).slice() };
+  }, SEEDN.id);
+  t('B-L1S-C0 ⛔ CONTRÔLE — le cas limite est réellement construit : la mise à jour crée un exercice perso, le programme seul TIENT, programme + exercice perso ne tiennent PAS',
+    SEEDN.v === 1 && SEEDN.sessions === 120 && BLANC.nouveauPerso === true && BLANC.dp > 1000 && BLANC.dc > 20
+    && CAL.Fpc < CAL.F && CAL.F < CAL.Fp && CAL.Fp - CAL.Fpc >= 20 && CAL.disqueRemis === true,
+    js({ SEEDN, dp: BLANC.dp, dc: BLANC.dc, CAL }));
+  t('SAFE-L1-13 ⛔⛔ cas limite (le programme tient, son exercice perso non) : l\'opération est ATOMIQUE — ni programme ni exercice perso sur le disque, mémoire = disque, AUCUNE séance coupée, aucun succès, « NON enregistré », scan gardé',
+    LIM.disqueV === 1 && LIM.memoireV === 1 && LIM.egal === true && LIM.persoDisque === false && LIM.persoMemoire === false
+    && LIM.sessions === 120 && LIM.tronque === false && LIM.lecture === true
+    && !LIM.toasts.some(m => /importé|mis à jour|✅|💪/i.test(m)) && LIM.toasts.some(m => /NON enregistré/i.test(m)),
+    js(LIM));
+
+  /* SAFE-L1-14 — une AUTRE clé (le journal alimentaire, grossi en mémoire seulement) ne tient plus dans
+     `persist`, APRÈS que les clés de l'opération ont tenu : le repli des 50 séances a lieu (politique
+     inchangée) — et son alerte ne doit JAMAIS être recouverte par un succès. On réessaie le même scan. */
+  const AUT = await nq.evaluate(({ id, Fpc }) => {
+    const o = {};
+    localStorage.setItem('zz_remplissage', 'x'.repeat(Math.max(0, Fpc - 40)));   // de la place pour l'opération
+    S.foodLog = (S.foodLog || []).concat([{ id: 'gros-repas', date: '2026-01-01', name: 'Repas très long '.repeat(400), kcal: 500, p: 30, c: 50, f: 20 }]);
+    window.__toasts = [];
+    try { finalImportProg(); } catch (e) { o.err = String(e).slice(0, 160); }
+    const disque = JSON.parse(localStorage.getItem('ft4_progs') || '[]').find(x => x.id === id);
+    o.disqueV = disque && disque.version;
+    o.persoDisque = (localStorage.getItem('ft4_cuex') || '').indexOf('Mouvement inconnu sûreté n2') >= 0;
+    o.tronque = localStorage.getItem('ft4_hist_tronque') === '1';
+    o.toasts = (window.__toasts || []).slice(); o.dernier = o.toasts[o.toasts.length - 1] || '';
+    o.affiche = (document.getElementById('toast') || {}).textContent || '';
+    return o;
+  }, { id: SEEDN.id, Fpc: CAL.Fpc });
+  t('SAFE-L1-14 ⛔⛔ une autre clé échoue dans la sauvegarde générale APRÈS l\'opération : le programme est bien enregistré, mais le DERNIER message est l\'alerte (50 dernières séances, stockage plein) — jamais un succès par-dessus ; sans compte, aucune promesse de sauvegarde en ligne',
+    !AUT.err && AUT.disqueV === 2 && AUT.persoDisque === true && AUT.tronque === true
+    && /plein/i.test(AUT.dernier) && /50 dernières séances/.test(AUT.dernier) && !/Restaurer|sauvegarde en ligne est intacte/i.test(AUT.dernier)
+    && AUT.affiche === AUT.dernier,
+    js(AUT));
+  /* Le message dit « libère de la place tout de suite » : c'est VRAI tant que l'app est ouverte — la mémoire
+     garde les 120 séances, une sauvegarde qui tient les réécrit toutes (comportement d'avant, mesuré ici). */
+  const LIB = await nq.evaluate(() => {
+    localStorage.removeItem('zz_remplissage'); persist();
+    return { sessions: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').length,
+             avecEmail: (() => { const e = S.email; S.email = 'x@test.local'; let t = ''; try { t = _progAlerteTexte(); } catch (x) { t = 'ERR'; } S.email = e; return t; })(),
+             sansEmail: (() => { let t = ''; try { t = _progAlerteTexte(); } catch (x) { t = 'ERR'; } return t; })() };
+  });
+  t('SAFE-L1-14b ⭐ le message de l\'alerte dit vrai : place libérée → les 120 séances gardées en mémoire sont réécrites ; avec un compte il renvoie à « Restaurer », sans compte il ne promet aucune sauvegarde en ligne',
+    LIB.sessions === 120 && /Restaurer/.test(LIB.avecEmail) && /50 dernières séances/.test(LIB.avecEmail)
+    && !/Restaurer/.test(LIB.sansEmail) && /50 dernières séances/.test(LIB.sansEmail) && /libère de la place/i.test(LIB.sansEmail),
+    js(LIB));
+  t('B-L1S-00 0 appel réel (Worker / Apps Script simulés, Supabase / Anthropic coupés) et aucune erreur de page', reels === 0 && Q.errs.length === 0 && N.errs.length === 0, js({ reels, errs: Q.errs.concat(N.errs).slice(0, 3) }));
+  await N.cx.close();
 };
