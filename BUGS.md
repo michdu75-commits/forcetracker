@@ -71,7 +71,7 @@ c'est la section elle-même qui fait foi.
 | 40 → 50 | vérificateur sur une tournure de langue · nombres verts, écran faux · cas sans l'attribut habituel lu comme « rien » · deux portes, une équipée · coupe d'affichage · définition qui essaime · correctif dans le prompt · plancher qui éteint le pourcentage · porte de secours absente · action silencieuse · règle générale lue sans la spécifique |
 | 51 → 57 | trois chemins, une ligne sans origine · frappe lettre par lettre · deux comparaisons pour une question · le commentaire dit vrai, pas le code · total séparé de sa quantité · bloc resté visible · le DOM comme mémoire |
 | §58 et 58 | **deux sections portent 58** : « une porte sans témoin » (§58) · « un témoin qui pose l'état final à la main » (58) |
-| §59 → §69 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée · programme désigné par son nom ou sa position · écriture refusée qui passe pour un succès · base du téléphone prise pour celle d'une personne |
+| §59 → §70 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée · programme désigné par son nom ou sa position · écriture refusée qui passe pour un succès · base du téléphone prise pour celle d'une personne · suppression qui ne suit pas ses copies (registre court des bugs ouverts, 08/10) |
 
 ---
 
@@ -4527,3 +4527,44 @@ trace du compte, et une lecture « le plus récent » ou « tous » sans filtre.
 en persona, et tant qu'une restauration est attendue. Témoins SAFE-L1-01 → 05, mutations S01 → S07.
 ⚠️ **Limite** : seule la base d'import du Lot 1 porte une portée. Le reste du stockage local suit toujours la règle d'avant
 (un changement de compte remplace les données locales par la restauration du nouveau compte).
+
+---
+
+## §70 — ⛔ UNE SUPPRESSION QUI NE SUIT PAS SES COPIES, UNE LECTURE QUI S'ARRÊTE EN SILENCE · registre court des bugs **encore ouverts** confirmés par la mise en conflit Architecture UX *(08-09/10/2026, session-B — analyse seulement, rien n'est corrigé)*
+
+La mise en conflit de la cartographie `ARCHITECTURE-UX-FORCE-TRACKER-v1` (08/10) avec le code de `fb3d9fe6` a
+reclassé ses 115 constats (`docs/ARCHITECTURE-UX-FORCE-TRACKER-v1.1-CONFLIT.md`). **Ici, seulement les vrais bugs**
+— comportement faux, donnée perdue ou faille — **encore ouverts** et **prouvés** (lu dans le code, ou sonde locale) ;
+les points d'interface, de produit et d'architecture restent dans l'addendum.
+
+**🔎 La famille qui domine** : *une donnée a plusieurs copies, et une seule suit l'action*. Supprimer une séance emporte
+son débrief (D-047) mais **pas** son extrait relu par Milo ni ses records ; supprimer sur un appareil ne supprime pas
+sur l'autre ; un `load()` qui rencontre une valeur illisible s'arrête et **le `persist()` suivant écrit vide** tout ce
+qu'il n'a pas eu le temps de charger. Même réflexe que §59 (*la porte et sa jumelle*) : avant de déclarer une
+suppression ou une lecture correcte, **compter les endroits** où vit la donnée.
+
+| ID | Ce qui casse | Gravité | Preuve | Lot proposé |
+|---|---|---|---|---|
+| CC-01 | « 📉 Drop » / « +% » / « Retirer dropset » effacent les séries **déjà validées** | **P0** | lu (`applyDropset` : `ex.sets=newSets`) + banc v1 | SEANCE-SAFE |
+| DN-04 | une clé illisible (ex. `ft4_badges`) arrête `load()` : journal alimentaire et bilans non chargés, **le persist suivant les écrit vides** | **P1** | **sonde locale 08/10** | DATA-INTEGRITE |
+| CC-05 | un 1RM laissé vide prend la valeur d'exemple du champ : le cycle démarre sur des charges inventées | P1 | lu (`getCycleInputRM`) + banc v1 | SEANCE-SAFE |
+| CC-06 | les messages d'erreur (inscription, Restaurer, Protéger) s'affichent **sous** les fenêtres | P1 | lu (CSS) + banc v1 | SEC-COMPTE |
+| CC-13 | « Restaurer » un autre compte fusionne les séances du téléphone dans ce compte, puis les envoie — le texte promet l'inverse | P1 | lu | SEC-COMPTE |
+| CC-37 | une séance supprimée laisse son extrait de débrief (relu par Milo) et ses records | P2 | lu (`deleteSessOrConfirm`) | DATA-INTEGRITE |
+| DN-02 | les records ne sont jamais recalculés après une suppression | P2 | lu | DATA-INTEGRITE |
+| CC-22 | import d'historique « Remplacer » : supprime la 1ʳᵉ séance du jour, débrief orphelin | P2 | lu | DATA-INTEGRITE |
+| CC-24 | `_pdfToImages` coupe encore à 8 pages **sans le dire** (historique, bilan sanguin ; plan de repas : Nutrition gelée) | P2 | lu | DATA-INTEGRITE |
+| CC-42 | deux onglets sur une même séance : le dernier qui écrit efface les séries de l'autre | P2 | **sonde locale 08/10** | DATA-INTEGRITE |
+| CC-43 / CC-44 | suppressions jamais transmises : une séance ou le dernier programme supprimé **revient** depuis l'autre appareil ou la restauration | P2 | lu | DATA-SYNC (serveur) |
+| CC-17 | le nom tapé d'un nouveau programme s'efface à l'ajout d'un exercice | P2 | lu + banc v1 | SEANCE-SAFE |
+| CC-18 | « Durée » du détail de séance rouvre la version enregistrée : corrections perdues | P2 | lu | UX-HIST |
+| CC-19 | charger un jour de programme remet la date à aujourd'hui | P2 | lu | SEANCE-SAFE |
+| CC-25 / DB-06 | une 1ʳᵉ fois reste une « ⭐ » / un « record » au calendrier, au graphe et au badge (résidu de D-045) | P2 | lu | UX-HIST |
+| CC-26 / CC-28 | la mise à jour recharge l'app pendant une analyse de Milo, ou au premier `persist` sur l'Accueil | P2 | lu | MAJ-DEMARRAGE |
+| CC-45 | le verrou santé reste ouvert après un changement de compte (`ft4_hascode` jamais effacé) | P2 | lu | SEC-COMPTE |
+| S-01 / S-02 / NX-01 / NX-03 | quatre points de sécurité serveur et admin — **détail hors dépôt** (dépôt public) | P1 → P3 | lu | SEC-ADMIN (serveur) |
+| DN-07 / ET-04 / ET-05 / NX-02 / NX-04 → NX-06 | repli IndexedDB de l'email mort · date figée · faux toast en démo · plafonds IA affichés ≠ appliqués · brouillon « sans compte » invisible après ajout d'un email · alerte de stockage qui promet le cloud sans compte · un échec au milieu de `persist` saute les clés suivantes | P3 | lu / journal de test | divers |
+
+**🛡️ Ce qui protège aujourd'hui** : rien de plus qu'avant — ce registre **constate**. Les témoins viendront avec chaque
+lot (rouges d'abord, R17). ⚠️ Tout est présent **en production** `ft-v1251` ; le Lot 1 (branche, non publié) n'en ferme aucun
+(pour CC-24, seule la partie « import programme » est fermée, et elle est déjà retirée de cette ligne).

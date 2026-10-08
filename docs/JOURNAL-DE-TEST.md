@@ -3485,3 +3485,24 @@ puis **58/0 deux fois de suite** seul sur le même arbre. Le banc le signale lui
 introuvable sur du code sain »). Aucun fichier de ce lot ne touche le débrief ni Progrès. ❓ **Doute** : l'attente de 3 s
 de la carte suffit-elle sous charge ? Vérifiable par du code : ✅ (journaliser l'état de la liste au moment du clic).
 État : **à trier**.
+
+### 🟢 UNE SEULE CLÉ ILLISIBLE, ET LE JOURNAL ALIMENTAIRE EST ÉCRIT VIDE AU PERSIST SUIVANT (08/10/2026 — mise en conflit Architecture UX, sonde locale)
+**Témoin non destructif exécuté** (copie de l'arbre `fb3d9fe6`, réseau externe coupé, 0 appel IA, hors dépôt) :
+`ft4_badges` posé à une valeur illisible, `ft4_foodlog` (1 ligne) et `ft4_bodyscans` (1 bilan) valides. Au chargement :
+`S.foodLog` = 0 ligne, `S.bodyScans` = 0 (le `JSON.parse` de `ft4_badges` n'est pas protégé et `load()` est un seul
+`try`) ; au `persist()` suivant, **`ft4_foodlog` et `ft4_bodyscans` valent `[]` sur le disque**. Témoin sain : 1 / 1,
+rien perdu. Le constat DN-04 du v1 était une inférence : il est désormais **mesuré**, et passe en P1. ❓ **Doute** : quelle
+est la vraie fréquence d'une valeur illisible sur un téléphone (écriture interrompue, `"undefined"`, ancienne version) ?
+Vérifiable par du code : ✅ (balayer chaque clé de `load()` avec une valeur illisible, une à la fois). État : **prête**.
+
+### 🟢 DEUX ONGLETS, UNE SÉANCE : LE DERNIER QUI ÉCRIT EFFACE L'AUTRE (08/10/2026 — mise en conflit Architecture UX, sonde locale)
+**Témoin non destructif exécuté** (même cadre) : onglet 1 → séance avec 2 séries faites, `persist` ; onglet 2 → une autre
+séance, `persist` → `ft4_wkt` ne contient plus que l'onglet 2. Confirme CC-42 (inférence du v1). Exposition faible en app
+installée (une seule fenêtre). Vérifiable par du code : ✅. État : **prête**.
+
+### 🟡 MILO PEUT-IL CITER UNE SÉANCE SUPPRIMÉE ? (08/10/2026 — mise en conflit Architecture UX, lu dans le code)
+Supprimer une séance emporte son débrief (D-047) mais **pas** son extrait dans `registre.sessionLog`, que Milo relit
+(3 derniers, **par ordre d'arrivée**). Et un débrief demandé aujourd'hui pour une séance ancienne arrive **en dernier** :
+Milo peut le prendre pour la séance la plus récente. ❓ **Doute sur le comportement de Milo** : cite-t-il réellement une
+séance supprimée, ou une ancienne séance comme « la dernière » ? Vérifiable par du code : ✅ pour le contexte envoyé
+(le bloc « DERNIERS DÉBRIEFS » contient-il l'extrait ?) ; ❌ pour ce que Milo en dit (banc réel, R34). État : **à trier**.

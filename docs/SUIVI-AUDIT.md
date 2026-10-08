@@ -906,3 +906,35 @@ dont l'ancre touche une zone modifiée, **2/2**. Bancs voisins verts (import_pro
 lot3 87/0, chaos 56/0…) ; une exception, **OD-10b** du banc débrief, rouge une fois sous la charge du contrôle négatif
 puis **58/0 deux fois** seul — même famille qu'OD-11, consignée au journal de test. Prompt de Milo identique (date et
 empreintes seulement). Après la passe : documentation seulement. **Aucun numéro de version posé.**
+
+---
+
+## 🗺️ MISE EN CONFLIT — ARCHITECTURE UX v1 / CONTRE-AUDIT / CODE (08-09/10/2026, session-B — ⛔ analyse et documentation uniquement, 0 code produit, 0 appel IA)
+
+**Le document qui fait foi** : `docs/ARCHITECTURE-UX-FORCE-TRACKER-v1.1-CONFLIT.md` (addendum ; le document maître de
+103 pages reste **hors dépôt**, identifié par son empreinte). Base de l'audit : `ft-v1251` / `6969ce73`. HEAD confronté :
+`fb3d9fe6` (branche Lot 1, **non publiée**).
+
+**Le score des 115 constats du v1** :
+
+| État à `fb3d9fe6` | Nombre | Lesquels |
+|---|---|---|
+| **Fermés** (sur branche) | 4 | CC-02, CC-03, CC-04, CC-23 |
+| **Partiels** | 8 | CC-24, CC-50, CC-52, DB-03, LB-01, LB-05, AR-01, AR-02 |
+| **Ouverts** | 93 | dont **1 P0** (CC-01, dropset) |
+| **En attente d'une décision** | 9 | CC-10, CC-20, CC-34, CC-40, CC-49, DB-07, DB-22, ET-01, FP-01 |
+| **Faux positif (partiel)** | 1 | NV-14 (retraits volontaires R30) |
+
+Ouverts + partiels + décisions = **110** : P0 1 · P1 21 · P2 56 · P3 32. **+ 9 constats nouveaux** (NX-01 → NX-09 :
+2 sécurité serveur mineurs, plafonds IA affichés ≠ appliqués, 3 dettes du Lot 1, versions sur deux appareils, quota
+iPhone, purge D-069).
+⚠️ **Tout est encore présent en production** : les fermetures sont sur une branche non publiée.
+
+**Mesuré cette nuit** (sondes locales non destructives, copie de l'arbre, réseau coupé) : **DN-04 monte en P1** (une
+clé illisible → journal alimentaire et bilans écrits vides au `persist` suivant) ; **CC-42 confirmé, ramené en P2**.
+
+**Ordre recommandé** (sécurité → vérité des données → identité → persistance → flux → visuel) : préalable = décision
+de publier le Lot 1 · ① SEC-ADMIN (serveur) · ② SEANCE-SAFE (P0) · ③ DATA-INTEGRITE · ④ SEC-COMPTE (client) · puis
+UX-HIST sur le contrat de données §12 et MILO-FLUX sur le contrat §13 (la partie « contexte » attend le banc R34).
+⛔ **R30 / REGISTRE §16 — un audit documentaire n'ouvre aucun chantier par lui-même** : chaque lot attend le feu vert
+de Michel.

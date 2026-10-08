@@ -190,6 +190,24 @@ registre ne fait que lui donner de quoi mordre.*
 | D-068 | 07/10/2026 | Carte d'un programme : où vivent les nouvelles actions ? | **Claude** | **Comment** : le ✕ reste sur la carte (avec une question), un « ⋯ » ouvre la fiche « Gérer » (en cours, versions, document, archive, suppression) ; le bouton PDF devient « 📄 » (titre « Exporter en PDF ») pour que « ▶ Charger » reste lisible à 390 px — mesuré sur capture. | retirer le ✕ de la carte · une rangée de 8 boutons | neutre | PROPOSÉ |
 | D-069 | 07/10/2026 | Combien de versions garder ? (purge) | **Claude** | ⏳ **À TRANCHER PAR MICHEL** — mesure (`tools/mesure_versions_programme.js`) : ≈ 10,6 Ko par version d'un programme type Powerbuilding (1,5 Ko pour un programme simple) ; 3 gros + 3 simples × 10 versions ≈ 361 Ko dans `ft4_progs` (et dans le corps envoyé au cloud) ; 10 gros × 10 versions ≈ 1 Mo (quota local ≈ 5 Mo pour toute l'app). **Proposition** : garder TOUTES les versions tant qu'un programme en a ≤ 20, puis ne retirer que les plus anciennes **hors** la version importée d'origine, avec un message — rien n'est retiré dans ce lot. | purge silencieuse · aucune borne à vie | écart à soumettre | À TRANCHER |
 
+
+## ⏳ À ARBITRER — mise en conflit Architecture UX (08-09/10/2026) · ⛔ ce ne sont PAS des décisions
+
+> Liste de **questions ouvertes**, pas des lignes du registre : rien ici n'est acté. Chaque point
+> renvoie à `docs/ARCHITECTURE-UX-FORCE-TRACKER-v1.1-CONFLIT.md` (§9, §11). Quand Michel tranche,
+> la décision entre **dans le tableau ci-dessus** avec son origine, son alternative écartée et sa
+> réponse à la Vision — et la ligne correspondante sort d'ici.
+
+- **Publier ou non le Lot 1** (branche qualifiée, non publiée) — préalable à tout lot client suivant.
+- **Fermer la route de diagnostic du serveur** (S-01, données de comptes Premium) : changement serveur + redéploiement.
+- **Ordre des lots** proposé : SEC-ADMIN → SEANCE-SAFE → DATA-INTEGRITE → SEC-COMPTE → Séances → flux Milo.
+- **Cycle de vie du compte** (M-04 : se déconnecter, changer, supprimer — la page de confidentialité promet l'effacement).
+- **« Milo en illimité » face au plafond serveur commun** (CC-49) — décision commerciale, P1 avant toute vente.
+- **Purge des versions de programme** : **D-069** (déjà au registre, statut À TRANCHER).
+- ⚠️ **Renvois cassés à corriger par une ligne datée** : D-055 renvoie à « D-071 » et D-056 à « D-070 », qui
+  n'existent pas (la purge est **D-069**, la limite de 8 pages est **D-066**). Le registre s'ajoute, il ne se
+  réécrit pas : la correction se fera par une mention datée, pas en éditant les lignes.
+
 ---
 
 *Lié à : `docs/VISION-FORCE-TRACKER.md` (la question de référence) · `docs/PROCESSUS-DEVELOPPEMENT.md`

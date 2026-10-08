@@ -11,6 +11,11 @@
 > ❓ = **absent de toute la doc**. Un ❓ n'est pas un bug : c'est une chose qui existe dans le code
 > mais dont personne (ni humain ni IA) ne sait qu'elle existe en lisant la doc. C'est précisément
 > ce qui a fait conclure à tort, le 27/07, qu'une fonctionnalité manquait.
+>
+> 🗺️ **Références d'architecture** (lues à la demande) : `docs/ARCHITECTURE-UX-FORCE-TRACKER-v1.1-CONFLIT.md`
+> — la cartographie Architecture UX du 08/10/2026 (document maître hors dépôt) confrontée au code : chaînes
+> fonctionnelles, contrats Historique/Séances et flux Milo. ⚠️ Elle comptait **85** fenêtres sur `ft-v1251` (66
+> ici à la même date) : l'expression de ce script ne lit pas les fenêtres écrites `id=… class="overlay"` (écart connu).
 
 ## 📊 Vue d'ensemble
 
