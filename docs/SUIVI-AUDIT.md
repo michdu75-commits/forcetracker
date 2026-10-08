@@ -857,6 +857,14 @@ persiste et synchronise → v1 peut écraser v2. Rien n'est fusionné, ni ici ni
 synchro multi-appareils**. L'identité (`id`) et la `version` sont compatibles avec une future fusion (comparer par id et
 garder la version la plus haute), qui reste à décider et à construire.
 
+**Qualification (D-031)** : passe complète sur `244b20b6` — **6 039 ✅ / 0 ❌**, 4 conditions vertes. Banc B-L1S **20/0**
+(**14 rouges sur `36200085`** au premier jet, journal hors dépôt). Contrôles négatifs : sûreté **19/19** (le code d'avant + 18
+mutations, dont 3 déguisées), Lot 1 **26/26** (trois ancres mises à jour sur le nouveau code, même intention). Bancs voisins
+verts (import_prog_lot1 52/0, session_integrity 93/0, chaos 56/0 après démarrage de son PostgreSQL local…) ; une seule
+exception, **OD-11** du banc débrief, rouge une fois puis vert deux fois de suite — l'intermittence connue depuis le 06/10,
+consignée au journal de test. Prompt de Milo identique à master (hors empreinte et heure). Après la passe : documentation
+seulement. **Aucun numéro de version posé.**
+
 **⑤ Réservoir Apps Script (≈ 512 Ko, plein à 102 % le 29/07)** : **remplissage actuel non mesurable depuis cet
 environnement**, pour deux raisons mesurées le 07/10 : le proxy du conteneur refuse la connexion vers `script.google.com`
 (`CONNECT tunnel failed, response 403`), et la route `?action=storeHealth` exige le **jeton d'administration** (Script
