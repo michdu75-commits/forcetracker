@@ -7785,6 +7785,15 @@ function _impContenuMaj(cible, contenu){
 }
 function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
+  /* 🛡️ 08/10/2026 (contre-vérification de `19db28b5`, P3 — SAFE-L1-02c) — le scan appartient au compte qui
+     l'a commencé. L'écran resté ouvert pendant un changement de compte importait le programme de A chez B.
+     ⛔ Rien n'est écrit ; le document reste chez son compte, intact, et l'écran se referme (le rouvrir
+     lâche ce scan : `openImportProg`). */
+  if(_impDoc&&_impDoc.scope!==_impScope()){
+    toast('⚠️ Le compte a changé pendant l\'import : rien n\'a été enregistré. Rouvre l\'import depuis ce compte.','error');
+    try{ closeImportProg(); }catch(e){}
+    return;
+  }
   if(!S.programmes)S.programmes=[];
   /* ⛔ LOT 1 — une mise à jour vise un programme DÉSIGNÉ par son id ; sans cible, on ne devine pas. */
   const cible=_impMode==='update'?_progParRef(_impCibleId):null;
@@ -7837,21 +7846,24 @@ function finalImportProg(){
     txt='"'+prog.name+'" importé ! 💪';
   }
   if(enCours) _progMarquerEnCours(progId);
-  if(!_progSauver()){
+  /* Les exercices perso créés font partie de l'opération : écrits AVEC le programme, ou pas du tout. */
+  if(!_progSauver(toCreate.length?[['ft4_cuex',JSON.stringify(S.customExercises||[])]]:null)){
     S.customExercises=persoAvant;
     _progEchecStockage('Tes pages et leur lecture restent gardées : libère de la place, puis réessaie — sans nouvelle analyse.');
     try{ _renderImpConfirm(); }catch(e){}
     return;
   }
   if(toCreate.length){
-    toCreate.forEach(n=>_reportCustomEx(n,'Autres',null,'import'));
+    /* Le signalement écrit `ft4_rep_cex` : stockage plein, il peut refuser — l'import est déjà enregistré,
+       il ne doit pas s'arrêter là (document non marqué, écran ouvert, réessai = doublon). */
+    toCreate.forEach(n=>{ try{ _reportCustomEx(n,'Autres',null,'import'); }catch(e){} });
     toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
   }
   if(_impDoc){ _impDoc.progId=progId; _impDocEtat('imported'); }
   impRecommencer(true);                                  // ft-v1178 : scan consommé → on le vide (le document reste, lié au programme)
   closeImportProg();
-  toast(txt,'success');
   openProgModal();
+  _progAnnoncer(txt,'success');                          // le DERNIER message : jamais un succès par-dessus l'alerte
 }
 
 // ─── IMPORT HISTORIQUE (flow isolé — ne touche pas au flow programme) ─────────
@@ -9566,10 +9578,11 @@ function createBeginnerProg(){
   const parcoursAvant=S.beginnerJourney;
   if(_bgEstParcoursDebutant(_bgMatos) && !S.beginnerJourney)
     S.beginnerJourney={style:_bgStyle,freq:_bgFreq,startDate:today(),phase:1};
-  if(!_progSauver()){ S.beginnerJourney=parcoursAvant; _progEchecStockage(); return; }
+  /* Le parcours débutant fait partie de l'opération : écrit AVEC le programme, ou pas du tout. */
+  if(!_progSauver(S.beginnerJourney!==parcoursAvant?[['ft4_bjourney',JSON.stringify(S.beginnerJourney||null)]]:null)){ S.beginnerJourney=parcoursAvant; _progEchecStockage(); return; }
   closeBeginnerSetup();
   openProgModal();
-  toast('Ton programme est prêt ! '+(prog.beginner?'🌱 ':'')+_bgFreq+' séances/semaine','success');
+  _progAnnoncer('Ton programme est prêt ! '+(prog.beginner?'🌱 ':'')+_bgFreq+' séances/semaine','success');
 }
 // Ancien point d'entrée conservé (bouton) → ouvre désormais le setup
 function addBeginnerProg(){openBeginnerSetup();}
@@ -9749,7 +9762,7 @@ function restaurerVersionProg(ref, version){
   const p=_progParRef(ref), v=p&&(p.previousVersions||[]).find(x=>parseInt(x.version)===parseInt(version));
   if(!v||!v.content){ toast('Cette version n\'existe plus sur ce téléphone — rien n\'a changé','error'); _progRafraichir(ref); return 0; }
   const n=_progRestaurerVersion(ref, version);
-  if(n) toast('Version '+(parseInt(version)||0)+' restaurée — rien n\'a été effacé','success');
+  if(n) _progAnnoncer('Version '+(parseInt(version)||0)+' restaurée — rien n\'a été effacé','success');
   else _progEchecStockage();
   _progRafraichir(ref);
   return n;
@@ -9800,16 +9813,59 @@ function _progComparaisonHtml(cmp, etiqA, etiqB){
    `persist` écrit le reste comme avant (il réécrit `ft4_progs` à l'identique).
    ⛔ Ce n'est pas une transaction : une vérification après écriture suffit, parce que `setItem` est
    atomique par clé — l'ancienne valeur reste entière quand la nouvelle est refusée.
-   Démo / persona : rien n'est jamais écrit, par construction (la mémoire seule fait foi). */
-function _progSauver(){
+   Démo / persona : rien n'est jamais écrit, par construction (la mémoire seule fait foi).
+   🛡️ 08/10/2026 — LE CAS LIMITE (contre-vérification de `19db28b5`, P2, mesuré par SAFE-L1-13) : écrire
+   `ft4_progs` seul ne suffisait pas. Quand il TENAIT mais que l'exercice perso créé par l'import ne tenait
+   plus, `persist` échouait sur `ft4_cuex` → repli des 50 séances, exercice perso perdu, et « mis à jour ✅ »
+   recouvrait l'alerte. ⭐ Donc : TOUTES les clés que l'opération change (`extras`, des paires
+   [clé, valeur] sérialisées EXACTEMENT comme `persist` les écrit) sont écrites ici, avant `persist`, et
+   relues. Une seule refuse → les clés déjà écrites reprennent leur ancienne valeur (ordre inverse) : rien
+   de l'opération ne reste sur le disque, et rien ne déclenche le repli. Ensuite `persist` réécrit ces clés
+   à l'identique (même taille, donc elles tiennent).
+   ⚠️ `persist` peut encore se replier pour une AUTRE clé (une donnée grossie ailleurs) : le programme est
+   alors bien enregistré, mais l'alerte vient de s'afficher — `_progAlerte` le retient pour que
+   `_progAnnoncer` ne la recouvre jamais d'un succès (SAFE-L1-14). */
+let _progAlerte=null;
+function _progSauver(extras){
+  _progAlerte=null;
   if(typeof window!=='undefined'&&window._demoMode){ try{ persist(); }catch(e){} return true; }
   try{ if(typeof _progMigrerTous==='function') _progMigrerTous(); }catch(e){}
-  const attendu=JSON.stringify(S.programmes||[]);
-  let ok=false;
-  try{ localStorage.setItem('ft4_progs',attendu); ok=(localStorage.getItem('ft4_progs')===attendu); }catch(e){ ok=false; }
-  if(!ok){ _progRetourDisque(); return false; }
+  const ecrire=[['ft4_progs',JSON.stringify(S.programmes||[])]].concat(extras||[]);
+  const remettre=[];
+  let ok=true;
+  for(let i=0;i<ecrire.length&&ok;i++){
+    const k=ecrire[i][0], v=ecrire[i][1];
+    let ancien=null; try{ ancien=localStorage.getItem(k); }catch(e){}
+    remettre.push([k,ancien]);
+    try{ localStorage.setItem(k,v); ok=(localStorage.getItem(k)===v); }catch(e){ ok=false; }
+  }
+  if(!ok){
+    for(let i=remettre.length-1;i>=0;i--){
+      try{ if(remettre[i][1]===null) localStorage.removeItem(remettre[i][0]); else localStorage.setItem(remettre[i][0],remettre[i][1]); }catch(e){}
+    }
+    _progRetourDisque(); return false;
+  }
+  const replis=(typeof _persistReplis==='number')?_persistReplis:0;
   persist();
+  if(typeof _persistReplis==='number'&&_persistReplis!==replis) _progAlerte=_progAlerteTexte();
   return true;
+}
+/* Le texte de l'alerte quand `persist` s'est replié PENDANT une opération programme réussie. ⛔ Sans
+   compte, il ne promet aucune sauvegarde en ligne : il n'y en a pas. « Libère de la place tout de suite »
+   est vrai : la mémoire garde toutes les séances, une sauvegarde qui tient les réécrit (SAFE-L1-14b). */
+function _progAlerteTexte(){
+  return 'le stockage de ce téléphone est plein : seules tes 50 dernières séances y restent. '
+    +((typeof S!=='undefined'&&S&&S.email)
+      ? 'Ta sauvegarde en ligne n\'est pas modifiée : « Restaurer » dans Profil pour les récupérer.'
+      : 'Sans sauvegarde en ligne, les plus anciennes ne sont gardées nulle part ailleurs : libère de la place tout de suite.');
+}
+/* Le succès d'une opération programme — ⛔ JAMAIS par-dessus l'alerte : si `persist` vient de se replier,
+   le message dit les DEUX choses (le programme est enregistré · le stockage est plein), en erreur. */
+function _progAnnoncer(msg,type){
+  const a=_progAlerte; _progAlerte=null;
+  if(typeof toast!=='function') return;
+  if(!a){ toast(msg,type); return; }
+  toast(String(msg).replace(/[\s!]*(✅|💪)\s*$/u,'')+'. ⚠️ Mais '+a,'error');
 }
 /* La mémoire redevient le DISQUE : ce que l'écran montre est ce qui existe sur ce téléphone. */
 function _progRetourDisque(){
@@ -9845,7 +9901,7 @@ function archiverProg(ref){
   p.status='archived'; p.archivedAt=new Date().toISOString();
   const id=p.id;
   if(!_progSauver()){ _progEchecStockage(); _progRafraichir(id); return false; }
-  if(typeof toast==='function') toast('« '+(p.name||'Programme')+' » archivé — il reste restaurable','info');
+  _progAnnoncer('« '+(p.name||'Programme')+' » archivé — il reste restaurable','info');
   _progRafraichir(id);
   return true;
 }
@@ -9854,7 +9910,7 @@ function desarchiverProg(ref){
   p.status='available'; delete p.archivedAt;
   const id=p.id;
   if(!_progSauver()){ _progEchecStockage(); _progRafraichir(id); return false; }
-  if(typeof toast==='function') toast('« '+(p.name||'Programme')+' » est de retour dans tes programmes','success');
+  _progAnnoncer('« '+(p.name||'Programme')+' » est de retour dans tes programmes','success');
   _progRafraichir(id);
   return true;
 }
@@ -9904,7 +9960,7 @@ function _progSupprimer(id){
   if(p&&p.doc&&p.doc.id&&typeof _impDocEffacer==='function') _impDocEffacer(p.doc.id);
   try{ const g=document.getElementById('ov-prog-gerer'); if(g) g.classList.remove('open'); }catch(e){}
   try{ renderProgModal(); }catch(e){}
-  if(typeof toast==='function') toast('« '+((p&&p.name)||'Programme')+' » supprimé','info');
+  _progAnnoncer('« '+((p&&p.name)||'Programme')+' » supprimé','info');
   return true;
 }
 /* La référence stable qu'une séance garde vers ce qu'elle a chargé (D5) — additive : une séance
@@ -9953,7 +10009,7 @@ function _progCibleChoisir(cible){
   const nom=p.name;
   if(!_progSauver()){ _progEchecStockage(); renderProgModal(); return; }
   renderProgModal();
-  toast('« '+nom+' » mis à jour (v'+v+') — la version d\'avant reste restaurable','success');
+  _progAnnoncer('« '+nom+' » mis à jour (v'+v+') — la version d\'avant reste restaurable','success');
 }
 function _progEnregistrerNouveau(contenu, origine){
   if(!S.programmes)S.programmes=[];
@@ -9961,7 +10017,7 @@ function _progEnregistrerNouveau(contenu, origine){
   S.programmes.push(p);
   if(!_progSauver()){ _progEchecStockage(); renderProgModal(); return null; }
   renderProgModal();
-  toast('« '+p.name+' » sauvegardé ✅','success');
+  _progAnnoncer('« '+p.name+' » sauvegardé ✅','success');
   return p;
 }
 
@@ -10894,7 +10950,7 @@ function saveProgEdit(){
   }
   if(!_progSauver()){ _progEchecStockage('Tes modifications sont encore dans l\'éditeur : libère de la place, puis enregistre de nouveau.'); return; }
   closeProgEdit();
-  toast('Programme mis à jour ✅','success');
+  _progAnnoncer('Programme mis à jour ✅','success');
   openProgModal();
 }
 function closeProgEdit(){

@@ -4,7 +4,8 @@
 
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord. M00 = le CODE D'AVANT (36200085, HEAD de cloture du Lot 1)
-avec les temoins d'aujourd'hui. Chaque mutation retire UNE protection ; trois sont deguisees (le code a l'air raisonnable).
+avec les temoins d'aujourd'hui ; M00b = le code de 19db28b5 (fermeture de surete, AVANT la fermeture du P2 de la
+contre-verification, 08/10). Chaque mutation retire UNE protection ; plusieurs sont deguisees (le code a l'air raisonnable).
 Usage : python3 tools/mut_import_prog_surete.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
 import os, shutil, subprocess, sys, tempfile
@@ -12,10 +13,11 @@ import os, shutil, subprocess, sys, tempfile
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FICHIERS = ('log.js', 'state.js', 'setup.js', 'coach.js')
 LO, ST, SE, CO = 'log.js', 'state.js', 'setup.js', 'coach.js'
-BASE = '36200085'
+BASES = ('36200085', '19db28b5')
 
 MUT = [
-    ('M00 le code d\'avant (36200085) avec les temoins d\'aujourd\'hui', 'AVANT', 'GARDE'),
+    ('M00 le code d\'avant (36200085) avec les temoins d\'aujourd\'hui', 'AVANT:36200085', 'GARDE'),
+    ('M00b le code de 19db28b5 (avant la fermeture du P2) avec les temoins d\'aujourd\'hui', 'AVANT:19db28b5', 'GARDE'),
     # ── la portee du document d'import ──
     ('S01 la portee ignore le compte (tout le monde partage « local »)',
      [(LO, "  return e?('compte:'+e):'local';", "  return 'local';")], 'GARDE'),
@@ -34,12 +36,12 @@ MUT = [
      [(LO, "  if(typeof window!=='undefined'&&window._demoMode) return null;\n  try{ if(typeof _restauAttendue", "  try{ if(typeof _restauAttendue")], 'GARDE'),
     # ── le stockage plein ──
     ('S08 _progSauver ne verifie plus rien (persist puis « reussi »)',
-     [(LO, "  if(!ok){ _progRetourDisque(); return false; }\n  persist();\n  return true;", "  persist();\n  return true;")], 'GARDE'),
+     [(LO, "    try{ localStorage.setItem(k,v); ok=(localStorage.getItem(k)===v); }catch(e){ ok=false; }", "    try{ localStorage.setItem(k,v); }catch(e){}")], 'GARDE'),
     ('S09 echec annonce, mais la memoire n\'est pas ramenee au disque',
-     [(LO, "  if(!ok){ _progRetourDisque(); return false; }", "  if(!ok){ return false; }")], 'GARDE'),
+     [(LO, "    _progRetourDisque(); return false;\n  }", "    return false;\n  }")], 'GARDE'),
     ('S10 [deguisee] persist AVANT la verification (le repli des 50 seances se declenche)',
-     [(LO, "  const attendu=JSON.stringify(S.programmes||[]);\n  let ok=false;\n  try{ localStorage.setItem('ft4_progs',attendu); ok=(localStorage.getItem('ft4_progs')===attendu); }catch(e){ ok=false; }",
-           "  persist();\n  const attendu=JSON.stringify(S.programmes||[]);\n  let ok=(localStorage.getItem('ft4_progs')===attendu);")], 'GARDE'),
+     [(LO, "  const ecrire=[['ft4_progs',JSON.stringify(S.programmes||[])]].concat(extras||[]);",
+           "  persist();\n  const ecrire=[['ft4_progs',JSON.stringify(S.programmes||[])]].concat(extras||[]);")], 'GARDE'),
     ('S11 la synchro envoie les programmes de la MEMOIRE',
      [(SE, "      programmes:_progsAEnvoyer,", "      programmes:S.programmes||[],")], 'GARDE'),
     ('S12 l\'import en echec marque quand meme le document « importe »',
@@ -51,12 +53,35 @@ MUT = [
     ('S15 l\'editeur se ferme et annonce le succes sans verifier',
      [(LO, "  if(!_progSauver()){ _progEchecStockage('Tes modifications sont encore", "  if(false){ _progEchecStockage('Tes modifications sont encore")], 'GARDE'),
     ('S16 le bouton Restaurer annonce le succes sans verifier',
-     [(LO, "  if(n) toast('Version '+(parseInt(version)||0)+' restaur", "  if(true) toast('Version '+(parseInt(version)||0)+' restaur")], 'GARDE'),
+     [(LO, "  if(n) _progAnnoncer('Version '+(parseInt(version)||0)+' restaur", "  if(true) _progAnnoncer('Version '+(parseInt(version)||0)+' restaur")], 'GARDE'),
     ('S17 « Sauvegarder comme programme » (nouveau) ignore l\'echec',
      [(LO, "  if(!_progSauver()){ _progEchecStockage(); renderProgModal(); return null; }", "  _progSauver();")], 'GARDE'),
     ('S18 [deguisee] la migration de noms du catalogue reecrit aussi les versions archivees',
      [(ST, "(p.days||[]).forEach(d=>((d&&d.exs)||[]).forEach(e=>{if(e&&e.name)e.name=ren(e.name);}));});",
            "(p.days||[]).forEach(d=>((d&&d.exs)||[]).forEach(e=>{if(e&&e.name)e.name=ren(e.name);}));(p.previousVersions||[]).forEach(v=>{const c=v&&v.content;if(!c)return;(c.exs||[]).forEach(e=>{if(e&&e.name)e.name=ren(e.name);});});});")], 'GARDE'),
+    # ── le cas limite (contre-verification de 19db28b5, P2) ──
+    ('S19 l\'import n\'ecrit plus son exercice perso AVEC le programme (pre-ecriture retiree)',
+     [(LO, "  if(!_progSauver(toCreate.length?[['ft4_cuex',JSON.stringify(S.customExercises||[])]]:null)){", "  if(!_progSauver()){")], 'GARDE'),
+    ('S20 [deguisee] pre-ecriture sans remise en place des cles deja ecrites',
+     [(LO, "    for(let i=remettre.length-1;i>=0;i--){\n      try{ if(remettre[i][1]===null) localStorage.removeItem(remettre[i][0]); else localStorage.setItem(remettre[i][0],remettre[i][1]); }catch(e){}\n    }\n", "")], 'GARDE'),
+    ('S21 le repli de persist pendant l\'operation n\'est pas retenu',
+     [(LO, "  if(typeof _persistReplis==='number'&&_persistReplis!==replis) _progAlerte=_progAlerteTexte();\n", "")], 'GARDE'),
+    ('S22 _progAnnoncer affiche le succes meme apres l\'alerte',
+     [(LO, "  if(!a){ toast(msg,type); return; }", "  if(true){ toast(msg,type); return; }")], 'GARDE'),
+    ('S23 le compteur de replis n\'est jamais incremente (state.js)',
+     [(ST, "      _persistReplis++;\n", "")], 'GARDE'),
+    ('S24 l\'import annonce son succes par un toast direct',
+     [(LO, "  _progAnnoncer(txt,'success');", "  toast(txt,'success');")], 'GARDE'),
+    ('S25 [deguisee] l\'alerte promet la sauvegarde en ligne meme sans compte',
+     [(LO, "    +((typeof S!=='undefined'&&S&&S.email)", "    +((true)")], 'GARDE'),
+    ('S26 « Importer » ne verifie plus le compte du scan',
+     [(LO, "  if(_impDoc&&_impDoc.scope!==_impScope()){\n    toast('⚠️ Le compte a chang", "  if(false){\n    toast('⚠️ Le compte a chang")], 'GARDE'),
+    ('S27 [deguisee] « Importer » ne refuse qu\'un document SANS portee',
+     [(LO, "  if(_impDoc&&_impDoc.scope!==_impScope()){\n    toast('⚠️ Le compte a chang", "  if(_impDoc&&!_impDoc.scope){\n    toast('⚠️ Le compte a chang")], 'GARDE'),
+    ('S28 le programme debutant n\'ecrit plus son parcours AVEC le programme',
+     [(LO, "  if(!_progSauver(S.beginnerJourney!==parcoursAvant?[['ft4_bjourney',JSON.stringify(S.beginnerJourney||null)]]:null)){", "  if(!_progSauver()){")], 'GARDE'),
+    ('S29 [deguisee] la boucle d\'ecriture ne s\'arrete pas au premier refus',
+     [(LO, "  for(let i=0;i<ecrire.length&&ok;i++){", "  for(let i=0;i<ecrire.length;i++){")], 'GARDE'),
 ]
 
 
@@ -79,12 +104,14 @@ def cloner():
 
 def main():
     filtres = [f for f in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if f]
-    avant = {}
-    for f in FICHIERS:
-        try:
-            avant[f] = subprocess.run(['git', 'show', BASE + ':' + f], cwd=SRC, capture_output=True, text=True, check=True).stdout
-        except Exception:
-            avant[f] = ''
+    avants = {}
+    for base in BASES:
+        avants[base] = {}
+        for f in FICHIERS:
+            try:
+                avants[base][f] = subprocess.run(['git', 'show', base + ':' + f], cwd=SRC, capture_output=True, text=True, check=True).stdout
+            except Exception:
+                avants[base][f] = ''
     tmp0, a0 = cloner()
     rouges = banc(a0)
     shutil.rmtree(tmp0, ignore_errors=True)
@@ -97,7 +124,8 @@ def main():
             continue
         total += 1
         tmp, arbre = cloner()
-        if remplacements == 'AVANT':
+        if isinstance(remplacements, str) and remplacements.startswith('AVANT:'):
+            avant = avants[remplacements.split(':', 1)[1]]
             cur = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
             if any(not avant[f] for f in FICHIERS) or all(avant[f] == cur[f] for f in FICHIERS):
                 print('  INVALIDE  %s (code d\'avant introuvable ou identique)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue

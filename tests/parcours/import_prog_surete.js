@@ -7,6 +7,11 @@
    ② STOCKAGE PLEIN — `ft4_sessions` s'écrit avant `ft4_progs` ; quand `ft4_progs` ne tient plus, le repli
      coupe les séances locales à 50, `ft4_progs` n'est pas réécrit, le programme reste en mémoire, le succès
      s'affiche et la synchro l'envoie au cloud ; au rechargement il disparaît du téléphone.
+   ③ LE CAS LIMITE (contre-vérification de 19db28b5, P2 — 08/10) : `ft4_progs` tient, une AUTRE clé que
+     l'opération change (`ft4_cuex`, `ft4_bjourney`) ne tient plus → `persist` se repliait (50 séances),
+     l'exercice perso était perdu, et le succès recouvrait l'alerte. Témoins 13 → 15, sans compte, avec un
+     remplissage CALIBRÉ sur les vraies chaînes de l'opération. Et le bouton « Importer » après un
+     changement de compte, écran ouvert (P3) : SAFE-L1-02c.
    CONDUIT : la vraie entrée de fichiers (`#imp-add-inp`) et la vraie base `ft_import` ; un changement de
      compte tel que le termine une inscription ou une restauration (`S.email` posé, puis `persist`) —
      ⚠️ le parcours d'authentification lui-même n'est PAS rejoué ; « continuer sans email »
@@ -603,6 +608,50 @@ module.exports.ecran = async function (t, b, PORT) {
     LIB.sessions === 120 && /Restaurer/.test(LIB.avecEmail) && /50 dernières séances/.test(LIB.avecEmail)
     && !/Restaurer/.test(LIB.sansEmail) && /50 dernières séances/.test(LIB.sansEmail) && /libère de la place/i.test(LIB.sansEmail),
     js(LIB));
+  /* SAFE-L1-15 — L'AUTRE opération qui change une 2ᵉ clé : le programme débutant pose le parcours en
+     12 semaines (`ft4_bjourney`). Même cas limite, calibré de la même façon : le programme tient, le
+     parcours non. */
+  const BLANC2 = await nq.evaluate(() => {
+    const avant = { p: localStorage.getItem('ft4_progs'), j: localStorage.getItem('ft4_bjourney') };
+    const o = { journeyAvant: S.beginnerJourney || null };
+    _bgFreq = 3; _bgStyle = 'fullbody'; _bgMatos = 'machines';
+    createBeginnerProg(); try { document.querySelectorAll('.overlay.open').forEach(x => x.classList.remove('open')); } catch (e) {}
+    const apres = { p: localStorage.getItem('ft4_progs'), j: localStorage.getItem('ft4_bjourney') };
+    localStorage.setItem('ft4_progs', avant.p); localStorage.setItem('ft4_bjourney', avant.j === null ? 'null' : avant.j);
+    o.P = apres.p; o.J = apres.j; o.dp = apres.p.length - avant.p.length; o.dj = apres.j.length - String(avant.j).length;
+    return o;
+  });
+  await N.recharger();
+  const CAL2 = await nq.evaluate(({ P, J }) => {
+    const OLDP = localStorage.getItem('ft4_progs'), OLDJ = localStorage.getItem('ft4_bjourney');
+    const essai = (F, avecJ) => {
+      try { localStorage.setItem('zz_remplissage', 'x'.repeat(F)); } catch (e) { return false; }
+      let ok = true;
+      try { localStorage.setItem('ft4_progs', P); if (avecJ) localStorage.setItem('ft4_bjourney', J); } catch (e) { ok = false; }
+      try { localStorage.setItem('ft4_progs', OLDP); } catch (e) {}
+      try { localStorage.setItem('ft4_bjourney', OLDJ); } catch (e) {}
+      try { localStorage.removeItem('zz_remplissage'); } catch (e) {}
+      return ok;
+    };
+    const cherche = (avecJ) => { let lo = 0, hi = 6 * 1024 * 1024; while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (essai(mid, avecJ)) lo = mid; else hi = mid; } return lo; };
+    const Fp = cherche(false), Fpj = cherche(true), F = Math.floor((Fp + Fpj) / 2);
+    localStorage.setItem('zz_remplissage', 'x'.repeat(F));
+    return { Fp, Fpj, F, n: (S.programmes || []).length };
+  }, { P: BLANC2.P, J: BLANC2.J });
+  const DEB = await nq.evaluate(() => {
+    const progsAvant = localStorage.getItem('ft4_progs');
+    window.__toasts = [];
+    _bgFreq = 3; _bgStyle = 'fullbody'; _bgMatos = 'machines';
+    try { createBeginnerProg(); } catch (e) {}
+    return { progsInchanges: localStorage.getItem('ft4_progs') === progsAvant, egal: localStorage.getItem('ft4_progs') === JSON.stringify(S.programmes || []),
+             parcoursDisque: localStorage.getItem('ft4_bjourney'), parcoursMemoire: S.beginnerJourney || null,
+             sessions: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').length, toasts: (window.__toasts || []).slice() };
+  });
+  t('SAFE-L1-15 ⛔⛔ programme débutant, cas limite (le programme tient, le parcours en 12 semaines non) : ATOMIQUE — ni programme ni parcours, aucune séance coupée, « NON enregistré »',
+    BLANC2.journeyAvant === null && BLANC2.dj > 20 && CAL2.Fpj < CAL2.F && CAL2.F < CAL2.Fp
+    && DEB.progsInchanges === true && DEB.egal === true && (DEB.parcoursDisque === null || DEB.parcoursDisque === 'null') && DEB.parcoursMemoire === null
+    && DEB.sessions === 120 && !DEB.toasts.some(m => /est prêt|✅|💪/i.test(m)) && DEB.toasts.some(m => /NON enregistré/i.test(m)),
+    js({ dp: BLANC2.dp, dj: BLANC2.dj, CAL2, DEB }));
   t('B-L1S-00 0 appel réel (Worker / Apps Script simulés, Supabase / Anthropic coupés) et aucune erreur de page', reels === 0 && Q.errs.length === 0 && N.errs.length === 0, js({ reels, errs: Q.errs.concat(N.errs).slice(0, 3) }));
   await N.cx.close();
 };

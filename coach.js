@@ -1781,7 +1781,9 @@ function _saveForceProgram(idx,btn){
   }else persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   if(btn){btn.textContent='✅ Enregistré dans Mes programmes';btn.disabled=true;btn.style.opacity='.7';}
-  toast('"'+name+'" ajouté à Mes programmes 💪','success');
+  /* Jamais un succès par-dessus l'alerte « stockage plein » de `persist` (`_progAnnoncer`, log.js). */
+  if(typeof _progAnnoncer==='function') _progAnnoncer('"'+name+'" ajouté à Mes programmes 💪','success');
+  else toast('"'+name+'" ajouté à Mes programmes 💪','success');
 }
 
 // ─── SÉANCE DU JOUR : Milo → écran Séance en 1 clic (demande Michel) ───────────

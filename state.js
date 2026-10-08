@@ -1126,6 +1126,12 @@ function _assurerRunIdSeance(){
 function _restauAttendue(){ try{ return localStorage.getItem('ft4_restau_attendue')==='1'; }catch(e){ return false; } }
 function _restauPoser(){ try{ localStorage.setItem('ft4_restau_attendue','1'); }catch(e){} }
 function _restauResolue(){ try{ localStorage.removeItem('ft4_restau_attendue'); }catch(e){} }
+/* 🛡️ SÛRETÉ (08/10/2026, contre-vérification du Lot 1 import) — combien de fois `persist` a dû se
+   REPLIER (stockage plein → 50 dernières séances). ⛔ Le compteur ne change rien au repli : il permet à
+   une opération qui vient d'appeler `persist` de SAVOIR que l'alerte vient d'être affichée, pour ne pas
+   la recouvrir d'un succès (`_progSauver`, log.js). Le même toast remplace le précédent : le dernier
+   message est le seul qu'on lit. */
+let _persistReplis=0;
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
   if(window._demoMode)return;
@@ -1269,6 +1275,7 @@ function persist(){
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
   }catch(e){
     if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
+      _persistReplis++;
       try{
         // Fallback : allège les sessions à 50 et réessaie les clés critiques
         // ⚠️ 02/08 : on POSE UN DRAPEAU. Sans lui, au redémarrage suivant l'app ne connaissait
