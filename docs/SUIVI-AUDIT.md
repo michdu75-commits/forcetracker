@@ -871,3 +871,38 @@ environnement**, pour deux raisons mesurées le 07/10 : le proxy du conteneur re
 Properties) — non contourné. Aucun workflow GitHub ne la lit. Lecture possible par Michel : Profil → Admin → Santé du
 système. Repère mesuré pour ce lot (§ Lot 1) : la part `programmes` d'un compte emballée (gzip + base64) va de 1,8 Ko à
 34 Ko selon le nombre de versions.
+
+**⑥ Fermeture du P2 de la contre-vérification de `19db28b5` (08/10/2026, choix de Michel : « je le ferme »).** Une
+contre-vérification **indépendante** de la fermeture ci-dessus a trouvé le **cas limite** qu'elle laissait passer —
+reproduit ici AVANT correction (SAFE-L1-13 rouge sur `19db28b5`) : téléphone presque plein, `ft4_progs` **tient**, mais
+l'exercice perso créé par l'import (`ft4_cuex`) ne tient plus. `_progSauver` ne vérifiait que `ft4_progs` ; `persist`
+échouait ensuite sur `ft4_cuex` → **repli des 50 séances**, exercice perso jamais écrit (le programme le cite), et
+« mis à jour ✅ » **recouvrait** l'alerte — l'app n'a qu'un toast, le dernier message efface le précédent. Sans compte,
+rien ne garde ailleurs les séances coupées. Le témoin SAFE-L1-06b ne pouvait pas le voir (remplissage fixe à 3 000
+caractères : ni assez pour le programme, ni trop peu pour le reste).
+👉 **Toutes les clés que l'opération change, avant la sauvegarde générale** : `_progSauver(extras)` écrit `ft4_progs`
+**et** `ft4_cuex` (import) ou `ft4_bjourney` (programme débutant), sérialisées exactement comme `persist`, et les
+relit. Une seule refuse → les clés déjà écrites reprennent leur ancienne valeur, la mémoire redevient le disque,
+« Programme NON enregistré », **pas de `persist`** : l'opération est atomique et ne déclenche plus le repli. Les autres
+opérations programme ne changent que `ft4_progs`.
+👉 **Jamais un succès par-dessus l'alerte** : `persist` peut encore se replier pour une AUTRE clé (une donnée grossie
+ailleurs — SAFE-L1-14). Le programme est alors bien enregistré, mais l'alerte vient de s'afficher : un compteur
+(`_persistReplis`, state.js — ⛔ le repli lui-même et la politique des 50 séances ne sont **pas** modifiés) le dit à
+`_progAnnoncer`, qui remplace le succès par un message qui dit les deux choses, en erreur. Sans compte, il ne promet
+aucune sauvegarde en ligne et dit « libère de la place tout de suite » — vrai : la mémoire garde toutes les séances,
+une sauvegarde qui tient les réécrit (SAFE-L1-14b). Tous les succès d'opération programme passent par lui.
+👉 **P3 fermé au passage** : « Importer » refuse un scan qui n'appartient plus au compte courant (écran resté ouvert
+pendant un changement de compte — SAFE-L1-02c) ; rien n'est écrit, le document reste chez son compte. Et le
+signalement des exercices perso (`ft4_rep_cex`) ne peut plus interrompre un import déjà enregistré.
+⚠️ **Restent écrits, non corrigés** (hors du choix de Michel) : un brouillon commencé **sans compte** devient invisible
+quand un email est ajouté (portée `local` ≠ `compte:`) · l'alerte générale de `persist` promet toujours « ta sauvegarde
+en ligne est intacte », même sans compte · une écriture refusée au milieu de `persist` saute toujours les clés suivantes
+de cet appel (BUGS §68, préexistant). Les trois sont au journal de test.
+**Qualification (D-031)** : passe complète sur `45567b08` — **6 045 ✅ / 0 ❌**, 4 conditions vertes (6 témoins de plus
+que la passe du 07/10). Banc B-L1S **26/0** ; **5 rouges sur `19db28b5`** (02c, 13, 14, 14b, 15 — contrôle M00b), dont 4
+écrits et vus rouges AVANT la correction. Contrôle négatif de sûreté **31/31** (le code de `36200085` et de
+`19db28b5`, les 18 mutations d'origine, 11 nouvelles S19 → S29 dont 4 déguisées) ; Lot 1 : M04 et M24, les seules
+dont l'ancre touche une zone modifiée, **2/2**. Bancs voisins verts (import_prog_lot1 52/0, session_integrity 93/0,
+lot3 87/0, chaos 56/0…) ; une exception, **OD-10b** du banc débrief, rouge une fois sous la charge du contrôle négatif
+puis **58/0 deux fois** seul — même famille qu'OD-11, consignée au journal de test. Prompt de Milo identique (date et
+empreintes seulement). Après la passe : documentation seulement. **Aucun numéro de version posé.**

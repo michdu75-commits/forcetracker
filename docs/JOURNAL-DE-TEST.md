@@ -3477,3 +3477,11 @@ sur le téléphone, sous `local`) et rien ne fuit, mais il est invisible. Choix 
 mélangent jamais ; un rattachement à l'inscription n'a été ni décidé ni construit. ❓ **Doute** : faut-il proposer, à
 la création du compte, de rattacher les brouillons `local` ? Vérifiable par du code : ✅ (sans email → scan → email
 ajouté → réouverture de l'import). État : **à trier**.
+
+### 🟡 OD-10b A ROUGI UNE FOIS, MÊME FAMILLE QU'OD-11 (08/10/2026 — bancs voisins de la fermeture du P2, LOT 1 import)
+Banc `debrief_demande` : **57/1** au 1ᵉʳ passage (OD-10b « HTTP 502 … la reprise ne part QUE sur le clic » : une seule
+requête au lieu de deux après le clic sur la carte de Progrès), pendant que le contrôle négatif tournait en parallèle,
+puis **58/0 deux fois de suite** seul sur le même arbre. Le banc le signale lui-même (« vu le 06/10 : OD-10b carte
+introuvable sur du code sain »). Aucun fichier de ce lot ne touche le débrief ni Progrès. ❓ **Doute** : l'attente de 3 s
+de la carte suffit-elle sous charge ? Vérifiable par du code : ✅ (journaliser l'état de la liste au moment du clic).
+État : **à trier**.
