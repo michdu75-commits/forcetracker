@@ -712,11 +712,12 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 
 ---
 
-## 🔒 SEC-ADMIN-01 — S-01 fermée, admin durci (09/10/2026, session-B — ⛔ BRANCHE `claude/sec-admin-01`, NON PUBLIÉE)
+## 🔒 SEC-ADMIN-01 — S-01 fermée, admin durci (09/10/2026, session-B — ✅ PUBLIÉ en `ft-v1252` le 09/10/2026, déploiement @191)
 
 > **Lot de sécurité ciblé**, indépendant du Lot 1 Import (base : master `6969ce73` = `ft-v1251`). Aucune publication, **aucun
-> redéploiement Apps Script**, Worker non touché, 0 appel IA réel. ⚠️ **En production, rien de ce qui suit n'est fermé** tant que
-> `Code.js` n'est pas redéployé — la publication sur `master` le redéploie automatiquement (workflow Apps Script).
+> redéploiement Apps Script**, Worker non touché, 0 appel IA réel. ✅ **Publié le 09/10/2026 en `ft-v1252`** : master `6969ce73` →
+> `30525fa7`, workflow Apps Script n°122 SUCCESS (déploiement @191), Pages n°1344 SUCCESS. ⚠️ **Le contrôle anonyme de la route
+> S-01 n'a pas pu être fait** depuis la session (réseau : `script.google.com` refusé) — fermée par le code déployé, vérification à faire une fois.
 
 **Le score** (le compte de Michel est protégé par son code perso — contexte produit confirmé ; le code n'est stocké nulle part) :
 

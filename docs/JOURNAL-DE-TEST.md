@@ -3427,7 +3427,7 @@ Le banc `sec_admin` prouve la fermeture de S-01 sur le **vrai `Code.js` exécut�
 Le workflow Apps Script vérifie déjà `?test=1` et `authStatus` après chaque déploiement ; la même vérification sur le diagnostic
 premium — **sans jeton → `{"status":"error","error":"token"}`, aucune adresse dans la réponse** — prouverait la fermeture en
 production. ⛔ « On ne touche pas au workflow de déploiement » (Michel, 27/08) : donc un seul appel, sans jeton, après la
-publication, ou une décision de Michel. Vérifiable par du code : ✅. État : **prête**.
+publication, ou une décision de Michel. Vérifiable par du code : ✅. État : **prête**. ↪️ **09/10/2026, publication `ft-v1252`** : déploiement @191 confirmé par le workflow, mais **l'appel n'a pas pu partir** de la session (`script.google.com` refusé par le réseau : proxy 403, WebFetch nom introuvable). Toujours **à faire une fois** — réponse attendue : le refus « token », sans aucune adresse.
 
 ### 🟡 QUELQU'UN TAPE L'ADRESSE D'UN COMPTE « PREMIUM À VIE » : L'APP L'AFFICHE PREMIUM (09/10/2026 — SEC-ADMIN-01, hors lot)
 Mesuré par le banc (B-SEC-E, témoin E6) : sans code perso ni jeton, l'app affiche « Premium local : OUI » et ouvre l'interface

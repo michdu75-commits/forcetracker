@@ -4430,7 +4430,7 @@ la leçon de ce paragraphe, appliquée à une lecture au lieu d'une génération
 
 ---
 
-## §71 — ⛔⛔ LE VERROU POSÉ SUR LES ROUTES NEUVES, PAS SUR LES ANCIENNES : DEUX DIAGNOSTICS RESTÉS OUVERTS *(09/10/2026, SEC-ADMIN-01 — branche `claude/sec-admin-01`, NON publié)*
+## §71 — ⛔⛔ LE VERROU POSÉ SUR LES ROUTES NEUVES, PAS SUR LES ANCIENNES : DEUX DIAGNOSTICS RESTÉS OUVERTS *(09/10/2026, SEC-ADMIN-01 — ✅ publié en `ft-v1252` le 09/10/2026, déploiement @191)*
 
 > ⚠️ Numéro **71** et non 67 : la branche du Lot 1 Import (non publiée) porte déjà §67 → §70. Réutiliser
 > ces numéros aurait créé deux sections au même numéro à la fusion (le piège « §58 et 58 » ci-dessus).
@@ -4456,14 +4456,14 @@ perso de son compte les faisait refuser. *Un verrou d'interface ne doit jamais c
 **Et le libellé qui promettait.** La carte « 🔐 Qui a protégé son compte » affirmait *« sans lire aucune
 donnée personnelle »* en affichant des adresses e-mail — qui en sont.
 
-🛡️ **SEC-ADMIN-01 (branche, non publié)** : les deux routes exigent le jeton admin **avant toute lecture**
+🛡️ **SEC-ADMIN-01 (publié en `ft-v1252`, déploiement @191)** : les deux routes exigent le jeton admin **avant toute lecture**
 (fermées si le secret manque) ; la réponse admin ne porte que ce que la carte affiche ; le journal ne
 reçoit plus d'adresse ; le mode admin ne change plus l'identité ; la carte « Statut Premium » présente le
 jeton et oublie un jeton refusé ; le libellé dit ce qu'il affiche. Banc `tools/banc_sec_admin.js` — le vrai
 `Code.js` exécuté en local par `doGet` / `doPost`, adresses fictives uniquement : **23 rouges sur master
 `6969ce73` → 69/0** ; contrôle négatif `tools/mut_sec_admin.py` **17/17** ; passe complète **6 036 / 0**.
-⛔ **En production, rien n'est fermé tant que `Code.js` n'est pas redéployé.** La publication sur `master` le
-redéploie automatiquement (workflow Apps Script).
+✅ **`Code.js` redéployé le 09/10/2026** (publication `ft-v1252`, workflow Apps Script n°122, déploiement @191).
+⚠️ Vérification par un appel anonyme : **non faite** depuis la session (réseau bloqué) — à faire une fois.
 
 **Ce qui reste ouvert, dit plutôt que masqué** (aucune de ces portes ne donne un droit d'administration —
 le banc le prouve) :
