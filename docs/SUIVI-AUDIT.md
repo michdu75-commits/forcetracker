@@ -735,6 +735,8 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
 | Journal des séances (feuille « Sessions ») : ajout de lignes sans preuve d'identité | **nouveau constat** | inchangé — pollution possible, aucune lecture |
 | Le contrôle premium normal écrit adresse + liste brute dans le journal **privé** du serveur | **nouveau constat (mineur)** | inchangé (hors administration) |
 | Premium **local** accordé à qui tape une adresse « premium à vie » (miroir côté app, « anti-curieux ») | dette documentée | inchangé — aucun appel Milo sans jeton d'appareil |
+| `aiCount` (comptage des appels IA venus du Worker) écrivable sans jeton | dette connue (repli ouvert documenté : le blocage reste désarmé sans le secret du Worker) | **consignée à la publication, non corrigée** |
+| `_checkIdeesTok_` juge la longueur du secret **avant** le `trim` : une propriété courte entourée d'espaces passerait le contrôle des 12 caractères | relevé par la contre-vérification indépendante | **consignée à la publication, non corrigée** (le secret réel n'est pas concerné tant qu'il fait ≥ 12 caractères utiles) |
 
 **Les réponses de l'audit S-02** (A → F) :
 - **A — Le code admin public donne-t-il un privilège serveur ?** Non. Le serveur ne voit jamais ce code ; chaque route Admin exige

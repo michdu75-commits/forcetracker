@@ -10,9 +10,9 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1251` — ✅ **PUBLIÉE le 07/10/2026** (feu vert de Michel ; master `a1e39739` → `bd0b627c` en avance rapide, Pages run n°1342 SUCCESS à 04:53 UTC ; audit Nutrition final indépendant : OUI ; aucun backend redéployé). Comptes et inscription sans écriture à l'aveugle, l'avis de Milo se demande (D-052), l'échauffement importé reste avec son exercice. Worker et Apps Script inchangés. ⚠️ Recette terrain iPhone à faire par Michel.
-- **Version précédente :** `ft-v1250` — 🛡️ SESSION-INTEGRITY-01 : remplacement sémantique, faux débrief refusé, débrief rangé à sa séance (« Voir le débrief Milo », export avec / sans, local, sans plafond, supprimé avec la séance), première référence ≠ record, séance jugée contre le record d'avant elle. Worker et Apps Script inchangés.
-- Prochaine : `ft-v1252`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
+- **Version en ligne (live) :** `ft-v1252` — 🔒 **SEC-ADMIN-01, publication en cours le 09/10/2026** (feu vert de Michel après contre-vérification indépendante : PRÊT À PUBLIER) : ce commit est celui que master reçoit en avance rapide depuis `6969ce73` ; le workflow Apps Script redéploie `Code.js` ; la clôture dira le résultat (workflows et contrôle anonyme de production). La route de diagnostic premium (S-01) et `testGardeFou` exigent le jeton admin côté serveur ; le mode admin ne change plus l'identité. Worker inchangé.
+- **Version précédente :** `ft-v1251` — ✅ publiée le 07/10/2026 (master `a1e39739` → `bd0b627c`, puis clôture `6969ce73`) : comptes et inscription sans écriture à l'aveugle, l'avis de Milo se demande (D-052), l'échauffement importé reste avec son exercice.
+- Prochaine : `ft-v1253`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
 
 ## 🧊 Contraintes en vigueur — décisions actées (règle d'or #15)
 
