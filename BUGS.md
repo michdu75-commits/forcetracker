@@ -72,6 +72,7 @@ c'est la section elle-même qui fait foi.
 | 51 → 57 | trois chemins, une ligne sans origine · frappe lettre par lettre · deux comparaisons pour une question · le commentaire dit vrai, pas le code · total séparé de sa quantité · bloc resté visible · le DOM comme mémoire |
 | §58 et 58 | **deux sections portent 58** : « une porte sans témoin » (§58) · « un témoin qui pose l'état final à la main » (58) |
 | §59 → §66 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée |
+| §71 | verrou posé sur les routes neuves, pas sur les anciennes (deux diagnostics restés ouverts) · verrou d'interface qui choisissait le compte · libellé qui promettait de ne lire aucune donnée personnelle *(§67 → §70 : branche Lot 1, non publiée)* |
 
 ---
 
@@ -4426,3 +4427,53 @@ de repas, de programme, d'historique, et bilan sanguin. *Une lecture partielle n
 la leçon de ce paragraphe, appliquée à une lecture au lieu d'une génération.
 ⛔ **NON CORRIGÉ au 04/10/2026 (ft-v1250).** Le besoin produit est noté dans `IDEES-FUTURES.md`
 (import de documents).
+
+---
+
+## §71 — ⛔⛔ LE VERROU POSÉ SUR LES ROUTES NEUVES, PAS SUR LES ANCIENNES : DEUX DIAGNOSTICS RESTÉS OUVERTS *(09/10/2026, SEC-ADMIN-01 — branche `claude/sec-admin-01`, NON publié)*
+
+> ⚠️ Numéro **71** et non 67 : la branche du Lot 1 Import (non publiée) porte déjà §67 → §70. Réutiliser
+> ces numéros aurait créé deux sections au même numéro à la fusion (le piège « §58 et 58 » ci-dessus).
+
+**Le mécanisme.** Le 07/08/2026, le jeton d'administration a quitté le frontend et **toutes les routes
+Admin de l'époque** ont reçu un contrôle serveur, fermé par défaut. **Deux routes plus anciennes n'étaient
+pas dans la liste** : le diagnostic premium (créé le 29/06 pour traquer le déclencheur fantôme qui
+réécrivait `PREMIUM_EMAILS`) et le test du garde-fou universel (backend @51). Elles sont restées ouvertes
+à tous : la première rendait la liste **complète** des adresses premium — et l'écrivait au passage dans le
+journal du serveur ; la seconde écrivait un compte de test et une sauvegarde de profil.
+*Un correctif posé sur la liste qu'on a sous les yeux laisse les routes plus anciennes dans l'état d'avant.*
+C'est §59 (la porte et sa jumelle) appliqué à la sécurité.
+
+**À quoi on le reconnaît.** Une route d'administration ou de diagnostic dont la **première ligne n'est pas**
+un contrôle de jeton serveur. Une carte Admin qui fonctionne sans que le jeton ait jamais été demandé sur
+cet appareil.
+
+**La variante côté app (même lot).** Le déverrouillage du mode admin — un verrou d'**interface**, dont le
+code est dans le JS public — écrivait l'adresse de l'admin dans l'identité locale d'un appareil sans
+e-mail, puis sauvegardait. Les données de cet appareil partaient alors **au nom de l'admin** ; seul le code
+perso de son compte les faisait refuser. *Un verrou d'interface ne doit jamais choisir le compte.*
+
+**Et le libellé qui promettait.** La carte « 🔐 Qui a protégé son compte » affirmait *« sans lire aucune
+donnée personnelle »* en affichant des adresses e-mail — qui en sont.
+
+🛡️ **SEC-ADMIN-01 (branche, non publié)** : les deux routes exigent le jeton admin **avant toute lecture**
+(fermées si le secret manque) ; la réponse admin ne porte que ce que la carte affiche ; le journal ne
+reçoit plus d'adresse ; le mode admin ne change plus l'identité ; la carte « Statut Premium » présente le
+jeton et oublie un jeton refusé ; le libellé dit ce qu'il affiche. Banc `tools/banc_sec_admin.js` — le vrai
+`Code.js` exécuté en local par `doGet` / `doPost`, adresses fictives uniquement : **22 rouges sur master
+`6969ce73` → 69/0** ; contrôle négatif `tools/mut_sec_admin.py`.
+⛔ **En production, rien n'est fermé tant que `Code.js` n'est pas redéployé.** La publication sur `master` le
+redéploie automatiquement (workflow Apps Script).
+
+**Ce qui reste ouvert, dit plutôt que masqué** (aucune de ces portes ne donne un droit d'administration —
+le banc le prouve) :
+- la question « cette adresse a-t-elle un code perso ? » reste ouverte à tous pour une adresse **connue**
+  (`authStatus`, ouvert par décision du 07/08 ; l'écran de connexion et le workflow de déploiement s'en
+  servent) ;
+- sans jeton d'appareil, un compte **sans code** reste écrasable par qui connaît son adresse (transition
+  `_MIG_FERME_`, décision de Michel) ;
+- des adresses réelles restent écrites dans le code public (listes admin / testeurs / premium de l'app,
+  liste premium en dur du serveur) — et l'historique git les garde de toute façon ;
+- le code admin de l'app reste public : il n'ouvre qu'une **interface** ;
+- l'ajout de lignes au journal des séances (feuille « Sessions ») accepte n'importe quelle adresse, sans
+  preuve — pollution possible, aucune lecture.

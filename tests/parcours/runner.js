@@ -2813,7 +2813,7 @@ console.log('\n═══ L. Les annonces aux utilisateurs — aucune ne doit êt
 // `loadProfile` sert un compte ENTIER quand la personne n'a pas de code perso. Il fallait
 // pouvoir savoir QUI est protégé — sans ouvrir les Script Properties (qui affichent aussi
 // ANTHROPIC_API_KEY en clair) et sans lire la moindre donnée personnelle.
-console.log('\n═══ M. Admin : qui a protégé son compte (aucune donnée personnelle lue) ═══');
+console.log('\n═══ M. Admin : qui a protégé son compte (aucun profil ouvert ; les adresses s\'affichent) ═══');
 {
   const c13=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const p13=await c13.newPage();
@@ -2861,7 +2861,7 @@ console.log('\n═══ M. Admin : qui a protégé son compte (aucune donnée p
   t('⭐⭐ une panne réseau n\'est confondue NI avec protégé NI avec ouvert',
     r.pannePasConfondue===true, JSON.stringify(r));
   t('le nombre de comptes ouverts est annoncé', r.compteLesOuverts===true, JSON.stringify(r));
-  t('⭐ AUCUNE donnée personnelle n\'est lue ni affichée (authStatus ne renvoie que hasCode)',
+  t('⭐ aucune donnée de PROFIL n\'est lue ni affichée — seulement l\'adresse et un oui/non (authStatus ne renvoie que hasCode)',
     r.aucuneDonneePerso===true, JSON.stringify(r));
   t('⭐⭐ le résumé annonce AUSSI les non vérifiés (sinon on croit le reste protégé)',
     r.diteLesInconnus===true, JSON.stringify(r));
@@ -39608,6 +39608,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      UN exercice même quand le Worker rend des noms nus (échauffement en note / en type) ; jamais de fusion sans preuve.
      Banc : tools/banc_import_echauffement.js. */
   await require('./import_echauffement.js').ecran(t, b, PORT);
+  /* 🔒 SEC-ADMIN-01 (session-B, 09/10/2026) — la route de diagnostic premium (S-01) et `testGardeFou` exigent le jeton admin
+     côté serveur (refus sans rien lire ni écrire) ; le mode admin ne change plus l'identité locale ; la carte « Statut
+     Premium » présente le jeton ; la carte des comptes dit qu'elle affiche des adresses. Vrai Code.js en local (doGet /
+     doPost réels), adresses fictives example.test uniquement. Banc : tools/banc_sec_admin.js. */
+  await require('./sec_admin.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 

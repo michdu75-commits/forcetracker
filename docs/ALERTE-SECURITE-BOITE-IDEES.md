@@ -166,6 +166,10 @@ correspondants.**
 Elle s'appuie sur la route **`authStatus`**, qui ne renvoie **que** `{hasCode, emailVerified}` :
 aucune donnée personnelle ne transite, rien n'est lu du compte.
 
+> ⚠️ **Corrigé le 09/10/2026 (SEC-ADMIN-01)** : la phrase ci-dessus était fausse sur un point. Les
+> **adresses e-mail** partent au serveur et s'affichent : ce sont des données personnelles. Le reste
+> tient — ni le code, ni le profil, ni les séances ne sont lus. La carte de l'app dit désormais la même chose.
+
 > ⚠️ **N'utilise PAS les Script Properties pour ça.** Cette page affiche aussi
 > `ANTHROPIC_API_KEY`, `ADMIN_TOKEN` et `KOFI_TOKEN` **en clair** — et donc toute capture d'écran
 > de cette page fait fuiter tes secrets. *Chercher qui est protégé ne doit pas obliger à exposer

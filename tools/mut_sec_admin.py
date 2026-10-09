@@ -49,7 +49,7 @@ MUT = [
      [(AP, "    const eInp=document.getElementById('email-inp');\n    if(eInp)eInp.value=S.email||'';\n",
            "    if(!S.email){S.email=(ADMIN_EMAILS[0]||'');persist();}\n    const eInp=document.getElementById('email-inp');\n    if(eInp)eInp.value=S.email||'';\n")], 'GARDE'),
     ('M10 (client) la carte « Statut Premium » ne presente plus le jeton admin',
-     [(SE, "'&token='+encodeURIComponent(tok),{redirect:'follow'});", ",{redirect:'follow'});")], 'GARDE'),
+     [(SE, "+'&token='+encodeURIComponent(tok),{redirect:'follow'});", ",{redirect:'follow'});")], 'GARDE'),
     ('M11 (client) un refus du serveur n\'est plus traite : la carte affiche un en-tete de liste',
      [(SE, "      if(_adminTokRefuse(dbg)){ refuse=true; dbg=null; }\n", "      _adminTokRefuse(dbg);\n")], 'GARDE'),
     ('M12 le diagnostic ecrit de nouveau les adresses dans le journal du serveur',
@@ -77,6 +77,12 @@ def banc(arbre):
     if r.returncode not in (0, 1) and not rouges:
         rouges = ['PLANTAGE (code %d)' % r.returncode]
     return rouges, out
+
+
+def syntaxe_ok(chemin):
+    r = subprocess.run(['node', '-e', "new (require('vm').Script)(require('fs').readFileSync(process.argv[1],'utf8'))", chemin],
+                       capture_output=True, text=True)
+    return r.returncode == 0
 
 
 def cloner():
@@ -128,6 +134,10 @@ def main():
                 print('  INVALIDE  %s (ancre absente ou multiple : %s)' % (nom, invalide)); shutil.rmtree(tmp, ignore_errors=True); continue
             for f in FICHIERS:
                 open(os.path.join(arbre, f), 'w', encoding='utf-8').write(srcs[f])
+            # ⛔ Une mutation qui casse la SYNTAXE fait planter le banc : ce rouge-là ne prouve rien (M10, 09/10).
+            casses = [f for f, _, _ in remplacements if f.endswith('.js') and not syntaxe_ok(os.path.join(arbre, f))]
+            if casses:
+                print('  INVALIDE  %s (syntaxe cassée par la mutation : %s)' % (nom, casses)); shutil.rmtree(tmp, ignore_errors=True); continue
         rouges, _ = banc(arbre)
         obtenu = 'GARDE' if rouges else 'OK'
         ok = obtenu == attendu

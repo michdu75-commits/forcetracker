@@ -709,3 +709,51 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   Passe D-031 finale : 5 967 / 0. ⚠️ Site servi **non lisible d'ici** (proxy : `CONNECT tunnel failed, response 403` vers github.io) :
   la version servie est établie par le déploiement Pages et `sw.js` de master, pas par une lecture du site. **Recette terrain iPhone à
   faire par Michel.** Les défauts reportés ci-dessus restent ouverts, comme dettes post-ft-v1251.
+
+---
+
+## 🔒 SEC-ADMIN-01 — S-01 fermée, admin durci (09/10/2026, session-B — ⛔ BRANCHE `claude/sec-admin-01`, NON PUBLIÉE)
+
+> **Lot de sécurité ciblé**, indépendant du Lot 1 Import (base : master `6969ce73` = `ft-v1251`). Aucune publication, **aucun
+> redéploiement Apps Script**, Worker non touché, 0 appel IA réel. ⚠️ **En production, rien de ce qui suit n'est fermé** tant que
+> `Code.js` n'est pas redéployé — la publication sur `master` le redéploie automatiquement (workflow Apps Script).
+
+**Le score** (le compte de Michel est protégé par son code perso — contexte produit confirmé ; le code n'est stocké nulle part) :
+
+| Sujet | Avant (master) | Après (branche) |
+|---|---|---|
+| **S-01** — diagnostic premium appelable sans jeton : liste complète des adresses premium, écrite aussi dans le journal du serveur | ouvert | ✅ **fermé** : jeton admin vérifié côté serveur avant toute lecture, fermé si le secret manque ; réponse réduite à ce que la carte affiche ; aucune adresse au journal |
+| **NX-01** — test du garde-fou (diagnostic qui écrit un compte de test) appelable sans jeton | ouvert | ✅ **fermé** (même jeton) |
+| **NX-03** — valeur de jeton d'exemple dans deux commentaires de `Code.js` | présente | ✅ retirée. C'était l'**ancien** jeton en dur : mesuré le 04/08, la propriété `BACKUP_TOKEN` ne le contient pas (la route répondait « Unknown GET action ») — **aucune rotation nécessaire** sur cette base |
+| **S-02 / B** — le mode admin écrivait l'adresse de l'admin dans l'identité d'un appareil sans e-mail | ouvert | ✅ **fermé** : le mode admin ne change plus l'identité, le champ n'est plus pré-rempli |
+| **S-02 / carte « Statut Premium »** — fonctionnait sans jeton | ouvert | ✅ présente le jeton, oublie un jeton refusé, n'affiche aucune liste sans lui |
+| **S-02 / libellé** « sans lire aucune donnée personnelle » (la carte affiche des adresses) | faux | ✅ exact |
+| **S-02 / verrou admin de l'app** — code public, ou adresse de l'admin tapée | dette | ⚠️ **dette assumée** : verrou d'**interface** seulement — prouvé par le banc, il n'ouvre **aucune** donnée serveur |
+| « Cette adresse a-t-elle un code ? » (`authStatus`) répond à tous | décision du 07/08 | inchangé (écran de connexion, workflow de déploiement) |
+| Compte **sans code** écrasable sans jeton par qui connaît l'adresse | décision `_MIG_FERME_` | inchangé (constat figé par un témoin) |
+| Adresses réelles écrites dans le code public (app + serveur) | dette | inchangé (l'historique git les garde de toute façon) |
+| Journal des séances (feuille « Sessions ») : ajout de lignes sans preuve d'identité | **nouveau constat** | inchangé — pollution possible, aucune lecture |
+| Le contrôle premium normal écrit adresse + liste brute dans le journal **privé** du serveur | **nouveau constat (mineur)** | inchangé (hors administration) |
+| Premium **local** accordé à qui tape une adresse « premium à vie » (miroir côté app, « anti-curieux ») | dette documentée | inchangé — aucun appel Milo sans jeton d'appareil |
+
+**Les réponses de l'audit S-02** (A → F) :
+- **A — Le code admin public donne-t-il un privilège serveur ?** Non. Le serveur ne voit jamais ce code ; chaque route Admin exige
+  un secret des Script Properties. Les seules exceptions étaient S-01 et NX-01, **ouvertes même sans le code** : fermées.
+- **B — Modifie-t-il l'identité locale ?** Oui, avant ce lot (appareil sans e-mail → adresse de l'admin + sauvegarde). Plus maintenant.
+- **C — Lecture ou écriture cloud incorrecte ?** Lecture : non (le compte admin a un code). Écriture du profil : refusée (code).
+  Mais des requêtes **partaient** au nom de l'admin (mesuré sur l'arbre d'avant), et le journal des séances accepte n'importe
+  quelle adresse. Fermé à la source (B).
+- **D — Le code perso protège-t-il côté serveur ?** Oui pour les **données du compte** : lecture (`loadProfile`), écriture
+  (`saveProfile`, `pushHealth`), délivrance d'un jeton d'appareil. Non pour les journaux périphériques (séances, idées) ni pour la
+  question « a-t-elle un code ? ».
+- **E — Un compte testeur sans code est-il plus exposé ?** Oui : écrasable sans jeton par qui connaît son adresse (transition décidée
+  par Michel). La lecture est fermée par la lecture stricte (état réel en production **non vérifié** d'ici). Le mode admin n'y ajoute rien.
+- **F — D'autres routes avec le même défaut ?** Inventaire complet `doGet` / `doPost` : une seule autre route de diagnostic sans jeton
+  (NX-01, fermée). Toutes les autres routes Admin refusent sans leur jeton — **sans donnée ni écriture** (prouvé par le banc, en
+  anonyme et avec une identité normale) ; à la lecture du code, le contrôle du jeton est leur première instruction.
+
+**Preuves.** Banc `tools/banc_sec_admin.js` — le vrai `Code.js` exécuté en local par `doGet` / `doPost`, puis la vraie app contre lui ;
+adresses fictives `example.test` uniquement, chaque remplacement compté : **22 rouges sur master `6969ce73` → 69/0 sur la branche**.
+Contrôle négatif `tools/mut_sec_admin.py` (17 mutations du vrai code, dont M00 = master et un témoin « commentaire seul » qui doit rester vert) : *en cours au moment de ce commit* — M00 → M13 conformes ; M10 relancée (sa première ancre cassait la syntaxe : un plantage n'est pas une preuve, l'outil refuse désormais ce cas). Non-régressions (désignées par `tools/recette_selecteur.py --diff`) : chaos **56/0** (vrai `Code.js` + PostgreSQL local) · lot3 **87/0** · AUTH-NEW-DEVICE **16/0** · AUTH-CLOUD-CLOSURE **9/0** · AUTH-SIGNUP-STRICT **8/0** · COOKIE-PROFILE **16/0** · s2b_bascule **71/0** · annexes `s2b-worker` et `pwa-offline` PASS ; annexe complète *en cours*. Passe complète (D-031) : *à lancer sur le HEAD de ce commit*.
+
+**Ce que le banc ne prouve pas** : le vrai déploiement Apps Script (aucun redéploiement dans ce lot), les vraies Script Properties, Safari iOS.

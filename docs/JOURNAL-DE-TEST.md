@@ -3421,3 +3421,17 @@ AC-06 prouve que tout revient dès la protection de B — mais ce que B **voit**
 pour quelqu'un qui vient de taper son email sur un téléphone déjà utilisé, « reconnecte ton appareil » dit-il quoi faire, ou
 ressemble-t-il à une panne ? Vérifiable par du code : ✅ (passage A → B, un message à Milo, Worker simulé qui refuse sans jeton,
 lecture de la bulle). État : **à trier**.
+
+### 🟢 APRÈS REDÉPLOIEMENT : LE DIAGNOSTIC PREMIUM APPELÉ SANS JETON DOIT RÉPONDRE « token » (09/10/2026 — SEC-ADMIN-01)
+Le banc `sec_admin` prouve la fermeture de S-01 sur le **vrai `Code.js` exécuté en local** ; il ne voit pas le déploiement réel.
+Le workflow Apps Script vérifie déjà `?test=1` et `authStatus` après chaque déploiement ; la même vérification sur le diagnostic
+premium — **sans jeton → `{"status":"error","error":"token"}`, aucune adresse dans la réponse** — prouverait la fermeture en
+production. ⛔ « On ne touche pas au workflow de déploiement » (Michel, 27/08) : donc un seul appel, sans jeton, après la
+publication, ou une décision de Michel. Vérifiable par du code : ✅. État : **prête**.
+
+### 🟡 QUELQU'UN TAPE L'ADRESSE D'UN COMPTE « PREMIUM À VIE » : L'APP L'AFFICHE PREMIUM (09/10/2026 — SEC-ADMIN-01, hors lot)
+Mesuré par le banc (B-SEC-E, témoin E6) : sans code perso ni jeton, l'app affiche « Premium local : OUI » et ouvre l'interface
+admin — par le miroir premium « anti-curieux » de `constants.js` et par la liste des adresses admin. Le serveur refuse le compte
+(code perso) et Milo refuse sans jeton d'appareil (`worker.js`). ❓ **Doute** : quelles fonctions premium ne passent **pas** par le
+serveur, et s'ouvrent donc avec une simple adresse tapée ? Vérifiable par du code : ✅. État : **à trier** (lot Premium, hors
+SEC-ADMIN).
