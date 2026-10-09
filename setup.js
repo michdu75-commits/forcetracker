@@ -3864,12 +3864,17 @@ async function debugPremiumCheck(){
     const srvPrem=d&&d.premium===true;
     const srvStatus=d&&d.status||'?';
 
-    // 2. debug GET — contenu brut de PREMIUM_EMAILS
-    let dbg=null;
-    try{
-      const r2=await fetch(S.url+'?debugPremium=1&email='+encodeURIComponent(S.email),{redirect:'follow'});
+    // 2. diagnostic GET — 🔒 SEC-ADMIN-01 (09/10/2026) : la route exige le JETON ADMIN, et c'est le SERVEUR qui
+    //    décide. Elle était publique et rendait la liste de TOUS les comptes premium à qui l'appelait. Sans jeton
+    //    (ou jeton refusé, alors oublié pour être redemandé), la carte n'affiche que ce qui concerne cet appareil.
+    let dbg=null, refuse=false;
+    const tok=_adminTok();
+    if(!tok) refuse=true;
+    else try{
+      const r2=await fetch(S.url+'?debugPremium=1&email='+encodeURIComponent(S.email)+'&token='+encodeURIComponent(tok),{redirect:'follow'});
       const txt2=await r2.text();
       try{dbg=JSON.parse(txt2);}catch(_){}
+      if(_adminTokRefuse(dbg)){ refuse=true; dbg=null; }
     }catch(_){}
 
     const fullList=dbg&&dbg.fullPremiumList||[];
@@ -3884,10 +3889,12 @@ async function debugPremiumCheck(){
       `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
       `Premium serveur : <b style="color:${srvPrem?'var(--green)':'var(--red)'}">${srvPrem?'OUI ✅':'NON ❌'}</b> (${srvStatus})<br>`+
       `Source match : <b>${matchHard?'hardcodé':''}${matchHard&&matchProp?' + ':''}${matchProp?'PREMIUM_EMAILS':''||'—'}</b><br>`+
-      `──── Tous les comptes premium (${fullCount}) ────<br>`+
-      fullList.map(e=>`<span style="display:block;font-size:11px;padding:1px 0;">✅ ${e}</span>`).join('')+
-      `──── PREMIUM_EMAILS (Script Property) ────<br>`+
-      `<span style="font-size:10px;color:var(--t3);word-break:break-all;">"${rawEmails}"</span>`;
+      (refuse
+        ? `──── Liste premium : jeton admin absent ou refusé — relance, il te sera redemandé ────`
+        : `──── Tous les comptes premium (${fullCount}) ────<br>`+
+          fullList.map(e=>`<span style="display:block;font-size:11px;padding:1px 0;">✅ ${e}</span>`).join('')+
+          `──── PREMIUM_EMAILS (Script Property) ────<br>`+
+          `<span style="font-size:10px;color:var(--t3);word-break:break-all;">"${rawEmails}"</span>`);
 
     if(d&&(d.status==='ok'||d.status==='not_found')){
       const was=S.premium;

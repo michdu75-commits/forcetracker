@@ -496,8 +496,21 @@ function doGet(e) {
     return json_({status:'online', version:'3.5'});
   }
 
-  // Debug premium — ?debugPremium=1&email=xxx@xxx.com
-  if (p.debugPremium && p.email) {
+  /* 🔑 DIAGNOSTIC PREMIUM — ?debugPremium=1&email=…&token=<jeton admin>
+     🔒 SEC-ADMIN-01 (09/10/2026) — CETTE ROUTE ÉTAIT PUBLIQUE. Sans le moindre jeton, `?debugPremium=1&email=x`
+     rendait la liste COMPLÈTE des adresses premium (liste en dur + propriété PREMIUM_EMAILS, brute ET découpée),
+     et l'écrivait au passage dans le journal du serveur. Or l'adresse de ce serveur est publique (constants.js).
+     ⛔ LE JETON D'ABORD, DÉCIDÉ ICI : `_checkIdeesTok_`, le même que les autres cartes Admin (getIdees, storeHealth…).
+        Absent, faux, ou propriété manquante → refus, AVANT toute lecture. Ni l'adresse de l'admin, ni un paramètre
+        `admin=true`, ni l'état de l'app ne comptent : le serveur ne les lit pas.
+     ⛔ ET SEULEMENT CE QUE LA CARTE « 🔑 Statut Premium » AFFICHE : les doublons de la liste (`hardcodedList`,
+        `parsedWhitelist`, `emailQueried`, `whitelistCount`, `premiumResult`) sont partis, et le journal ne reçoit
+        plus aucune adresse.
+     Pourquoi elle reste (R30) : c'est l'outil qui a démasqué le déclencheur fantôme qui réécrivait PREMIUM_EMAILS
+     (d'où le relevé des déclencheurs — des noms de fonctions, aucune donnée de compte), et la carte s'en sert. */
+  if (p.debugPremium) {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    if (!p.email) return json_({status:'error', error:'email'});
     const props2 = PropertiesService.getScriptProperties();
     const rawList = props2.getProperty('PREMIUM_EMAILS') || '';
     const whitelist = rawList.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
@@ -513,19 +526,15 @@ function doGet(e) {
         src: t.getTriggerSource().toString()
       }));
     } catch(_) {}
-    Logger.log('[FT debugPremium] email=' + emailQ + ' | raw="' + rawList + '" | matchProp=' + matchProp + ' | matchHard=' + matchHard);
+    Logger.log('[FT debugPremium] matchProp=' + matchProp + ' | matchHard=' + matchHard + ' | propriete=' + whitelist.length + ' adresse(s)');
     // Liste complète = hardcodé + propriété, sans doublons
     const fullList = Array.from(new Set([...PREMIUM_HARDCODED_, ...whitelist]));
     return json_({
+      status: 'ok',
       debugPremium: true,
-      emailQueried: emailQ,
       rawPremiumEmails: rawList,
-      parsedWhitelist: whitelist,
-      whitelistCount: whitelist.length,
       matchProperty: matchProp,
       matchHardcoded: matchHard,
-      premiumResult: matchProp || matchHard,
-      hardcodedList: PREMIUM_HARDCODED_,
       fullPremiumList: fullList,
       fullPremiumCount: fullList.length,
       projectTriggers: triggers,
@@ -535,7 +544,7 @@ function doGet(e) {
   }
 
   // Installation trigger backup quotidien — ouvrir l'URL dans le navigateur une seule fois
-  // ?action=installDailyBackup&t=FT_BACKUP_INIT_2026
+  // ?action=installDailyBackup&t=<BACKUP_TOKEN>   (jamais de valeur d'exemple ici : SEC-ADMIN-01, 09/10/2026)
   if (p.action === 'installDailyBackup' && _checkTok_('BACKUP_TOKEN', p.t)) {
     try {
       installDailyBackupTrigger_();
@@ -546,7 +555,7 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
-  // Migration onglets Sheet → Drive — ?action=migrateBackups&t=FT_BACKUP_INIT_2026
+  // Migration onglets Sheet → Drive — ?action=migrateBackups&t=<BACKUP_TOKEN>
   if (p.action === 'migrateBackups' && _checkTok_('BACKUP_TOKEN', p.t)) {
     try {
       const result = migrateSheetBackupsToDrive_();
@@ -963,8 +972,12 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
-  // Test garde-fou universel — ?action=testGardeFou
+  // Test garde-fou universel — ?action=testGardeFou&token=<jeton admin>
+  // 🔒 SEC-ADMIN-01 (09/10/2026) : une route de DIAGNOSTIC qui ÉCRIT (un compte de test, une sauvegarde de profil,
+  // le compteur de transition) était ouverte à tous. Même jeton que les autres routes Admin ; sans lui, rien n'est
+  // écrit. Le test lui-même ne change pas.
   if (p.action === 'testGardeFou') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
     try {
       const te = 'ft_gf_' + Date.now() + '@test.internal';
       saveUserData_(te, {email:te, profile:{name:'TestGardeFou', age:35, bw:80, goal:'muscle'},

@@ -8233,9 +8233,13 @@ function _toggleAdminMode(){
   const bar=document.getElementById('setup-tabs-bar');
   if(bar)bar.style.display=window._adminMode?'flex':'none';
   if(window._adminMode){
-    if(!S.email){S.email='michdu75@gmail.com';persist();}
+    /* 🔒 SEC-ADMIN-01 (09/10/2026) — LE MODE ADMIN NE CHANGE PLUS L'IDENTITÉ. Il écrivait l'adresse de l'admin dans
+       S.email (puis persist) sur tout appareil SANS e-mail : quiconque déverrouillait l'interface admin — son code
+       est dans le JS public — faisait partir les données de CET appareil au nom de l'admin (synchro, journal des
+       séances). Refusé côté serveur seulement parce que ce compte a un code perso. Un verrou d'interface ne choisit
+       pas le compte : l'adresse se tape (ou se restaure) comme pour tout le monde. */
     const eInp=document.getElementById('email-inp');
-    if(eInp)eInp.value=S.email||'michdu75@gmail.com';
+    if(eInp)eInp.value=S.email||'';
     goScreen('setup',document.getElementById('nb-setup'));
     switchSetupTab('connexion',document.getElementById('stab-connexion'));
   }else{
@@ -9738,8 +9742,12 @@ async function _nettoyageAppel(confirme){
 // n'a pas de code perso (`_authCheck_` renvoie ok:true dans ce cas — invariant de
 // rétrocompatibilité). Il fallait donc savoir QUI est protégé, sans avoir à ouvrir les
 // Script Properties (qui affichent aussi ANTHROPIC_API_KEY et les autres secrets en clair).
-// ⚠️ La route `authStatus` ne renvoie QUE {hasCode, emailVerified} : aucune donnée
-// personnelle ne transite ici. C'est ce qui rend cette carte acceptable.
+// ⚠️ La route `authStatus` ne renvoie QUE {hasCode, emailVerified} : elle n'ouvre ni le code, ni le profil, ni
+// les séances. ⚠️ MAIS L'ADRESSE E-MAIL de chaque compte part au serveur et s'affiche — c'est une donnée
+// personnelle (SEC-ADMIN-01, 09/10/2026 : le libellé de la carte affirmait le contraire).
+// ⛔ Et cette carte ne donne AUCUN droit : la liste vient de constants.js (public) et `authStatus` est ouverte à
+// tous (décision du 07/08, et l'écran de connexion en a besoin). `_isAdminUnlocked()` n'est ici qu'un verrou
+// d'INTERFACE ; aucune donnée réservée à l'admin ne passe par cette carte.
 async function loadAuthStatusAdmin(){
   const box=document.getElementById('admin-auth-list');
   if(!box)return;
@@ -9775,7 +9783,7 @@ async function loadAuthStatusAdmin(){
   // croire que le reste est protégé — c'est exactement l'erreur qu'un « je ne sais pas » évite.
   box.innerHTML=lignes.join('')
     +'<div style="font-size:12px;color:var(--t2);margin-top:9px;line-height:1.5;">'
-    +(nbOuv?('🔓 <strong>'+nbOuv+' compte'+(nbOuv>1?'s':'')+' sans code</strong> — leurs données sont lisibles côté serveur par qui connaît l\'adresse. Demande-leur : Profil → « protéger mon compte ».')
+    +(nbOuv?('🔓 <strong>'+nbOuv+' compte'+(nbOuv>1?'s':'')+' sans code</strong> — '+(nbOuv>1?'protégés seulement par leur':'protégé seulement par son')+' adresse e-mail. Demande-leur : Profil → « protéger mon compte ».')
            :(nbInc?'':'🔒 Tous les comptes ont un code perso.'))
     +(nbInc?('<br>⚠️ <strong>'+nbInc+' non vérifié'+(nbInc>1?'s':'')+'</strong> — le serveur n\'a pas répondu. <b>On ne sait pas</b> s\'ils sont protégés : relance la vérification, ne conclus rien.'):'')
     +'</div>';
