@@ -24,7 +24,9 @@ const FONDATEUR = 'fondateur@example.test', ALICE = 'alice@example.test', BOB = 
 const hex = n => crypto.randomBytes(n).toString('hex');
 const SECRETS = { IDEES: 'idees-' + hex(16), ADMIN: 'admin-' + hex(16), BACKUP: 'backup-' + hex(16) };
 const CODE_ADMIN_CLIENT = '135790';
-const SYNTH = /@(example\.test|test\.internal)$/i;
+/* Domaine fictif reconnu même collé à un mot : le texte d'une liste rendue sans séparateur donne
+   « bob@example.testOUVERT », qui n'est pas une adresse réelle (09/10 : un faux « adresse réelle masquée »). */
+const SYNTH = /@(example\.test|test\.internal)/i;
 const adresses = s => (String(s == null ? '' : s).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || []);
 const reelles = s => adresses(s).filter(a => !SYNTH.test(a));
 const court = (x, n) => String(x == null ? '' : x).slice(0, n || 220);
