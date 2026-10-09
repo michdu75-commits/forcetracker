@@ -4460,8 +4460,8 @@ donnée personnelle »* en affichant des adresses e-mail — qui en sont.
 (fermées si le secret manque) ; la réponse admin ne porte que ce que la carte affiche ; le journal ne
 reçoit plus d'adresse ; le mode admin ne change plus l'identité ; la carte « Statut Premium » présente le
 jeton et oublie un jeton refusé ; le libellé dit ce qu'il affiche. Banc `tools/banc_sec_admin.js` — le vrai
-`Code.js` exécuté en local par `doGet` / `doPost`, adresses fictives uniquement : **22 rouges sur master
-`6969ce73` → 69/0** ; contrôle négatif `tools/mut_sec_admin.py`.
+`Code.js` exécuté en local par `doGet` / `doPost`, adresses fictives uniquement : **23 rouges sur master
+`6969ce73` → 69/0** ; contrôle négatif `tools/mut_sec_admin.py` **17/17** ; passe complète **6 036 / 0**.
 ⛔ **En production, rien n'est fermé tant que `Code.js` n'est pas redéployé.** La publication sur `master` le
 redéploie automatiquement (workflow Apps Script).
 
