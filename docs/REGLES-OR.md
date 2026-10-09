@@ -420,3 +420,59 @@ que la #15 accepte. *Une impossibilité non mesurée est la porte dérobée de l
 
 ⭐ **Elle s'applique aux DEUX sessions** — Claude principal et Claude Nutrition — parce que les
 deux erreurs qui l'ont fondée viennent de chantiers différents.
+
+---
+
+**17. 🧹 COMPLEXITÉ — UNE FONCTION DE PLUS NE DOIT PAS CRÉER TROIS PROBLÈMES DE PLUS.**
+
+*Texte de Michel, 04/10/2026, retravaillé en trois versions avec Claude avant d'être adopté.*
+
+### ⚙️ QUAND ELLE S'ACTIVE — 5 déclencheurs, un seul suffit
+
+Le chantier :
+- ajoute une **donnée persistée** ;
+- ajoute une **clé de stockage** ;
+- ajoute un **fichier applicatif** (un fichier servi, créé — pas seulement touché) ;
+- ajoute un **nouveau chemin d'exécution ou de donnée** ;
+- **crée ou modifie une fonction appelée depuis plusieurs endroits** de l'app — c'est là que se
+  cache le vrai rayon de régression.
+
+### ⛔ CE QU'ELLE EXIGE
+
+1. **Appliquer R1 / R2 / R13** (`docs/REGLES-ARCHITECTURE.md`) : un propriétaire par donnée, pas de
+   nouvelle source de vérité si une référence ou une dérivation suffit, enrichir l'existant.
+   *La règle les cite au lieu de les recopier : recopier R2 serait exactement ce que R2 interdit.*
+2. **Chercher si un ancien chemin peut être supprimé ou fusionné** — mais en respectant **R30**
+   (chercher d'abord *pourquoi* il a été nécessaire) et la **#15** (on ne retire jamais seul un
+   comportement validé par Michel).
+3. **Si le bénéfice utilisateur est faible face au coût architectural : STOP AVANT DE CODER**, et
+   proposer plus simple à Michel. Même esprit que **R38** : s'arrêter avec la cause et le chiffre,
+   jamais avec une impression.
+4. **Un test protège un INVARIANT, pas une implémentation.** Tout témoin réécrit doit ensuite
+   **rougir sous mutation volontaire** — sinon la réécriture est un affaiblissement déguisé.
+5. **Rapport final à 4 compteurs**, dès qu'un déclencheur est touché, **sur le code applicatif
+   uniquement** (les tests ne comptent pas : un lot qui ajoute 300 lignes de tests est mieux
+   protégé, pas plus complexe) :
+   1. données persistées ajoutées ;
+   2. fichiers applicatifs touchés ;
+   3. lignes ajoutées − lignes retirées ;
+   4. anciens chemins supprimés / fusionnés.
+
+### ⚠️ POURQUOI ELLE EXISTE — ce qu'on avait déjà vu
+
+- **Des témoins qui figeaient une implémentation au lieu d'une garantie** : `B-CCCXXXVI ②`
+  exigeait une **signature** de fonction (`ft-v1233`), `B-CCCXLIX ⑮` une **phrase** exacte
+  (`ft-v1234`). Les deux ont rougi sur du code sain et ont dû être réécrits pour mesurer
+  l'invariant. *Un témoin qui fige une formulation interdit d'améliorer ce qu'il protège.*
+- **Le garde-fou de la réécriture est déjà pratiqué** : lors de la contre-vérification de
+  NUT-PUNCH-01 (03/10/2026), les deux anciens témoins modifiés (`CXXV ③`, `B-CCCXXIII H0`) ont été
+  vérifiés verts sur l'arbre sain **puis rouges sous mutation** avant d'être acceptés. La règle
+  rend obligatoire ce qui était une habitude.
+- **Ajouter est toujours plus facile que retirer** : R13 dit déjà « réutiliser l'existant », mais
+  rien ne demandait de **supprimer** un chemin devenu inutile. Exemple du bon geste :
+  `ft-v1234` a retiré une deuxième table de libellés de repas au lieu d'en ajouter une troisième.
+- **Rien ne mesurait la complexité d'un lot** : chaque livraison disait ce qu'elle ajoutait,
+  jamais ce qu'elle coûtait. Les 4 compteurs rendent ce coût visible, avec des chiffres plutôt
+  qu'une impression.
+
+⭐ *Le but n'est pas d'interdire d'ajouter : c'est qu'un ajout se paie en connaissance de cause.*

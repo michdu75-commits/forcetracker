@@ -4,6 +4,8 @@
 > **`docs/REGLES-OR.md`** — à ouvrir quand une règle est contestée ou qu'on hésite à la contourner.
 > *Une règle noyée dans un fichier qu'on ne lit plus n'est plus une règle.*
 
+17. **🧹 COMPLEXITÉ — UNE FONCTION DE PLUS NE DOIT PAS CRÉER TROIS PROBLÈMES DE PLUS.** Cette règle s'active si un chantier ajoute une donnée persistée, une clé de stockage, un **nouveau fichier applicatif créé**, un nouveau chemin d'exécution/donnée, ou crée/modifie une fonction appelée depuis plusieurs endroits. Appliquer R1/R2/R13 ; chercher si un ancien chemin peut être supprimé ou fusionné en respectant R30/#15 ; si le bénéfice utilisateur est faible face au coût architectural, **STOP avant de coder et proposer plus simple**. **Un test protège un invariant, pas une implémentation** : tout témoin réécrit doit ensuite **rougir sous mutation volontaire**. Si un déclencheur est touché, le rapport final donne **4 compteurs sur le code applicatif uniquement** : données persistées ajoutées · fichiers applicatifs touchés · lignes ajoutées − lignes retirées · anciens chemins supprimés/fusionnés. → `docs/REGLES-OR.md#17`
+
 1. **🚀 Apps Script : TOUJOURS redéployer** après un changement de code. `clasp push` ne met à jour que le brouillon. → `docs/REGLES-OR.md#1`
 2. **💎 Premium : ne JAMAIS écraser `PREMIUM_EMAILS`.** Deux sources ; aucune fonction ne doit les réinitialiser. → `docs/REGLES-OR.md#2`
 3. **🛡️ Zéro perte de séance — priorité n°1 absolue.** Local d'abord, le réseau ne bloque jamais. → `docs/REGLES-OR.md#3`
