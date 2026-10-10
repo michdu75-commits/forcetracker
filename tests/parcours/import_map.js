@@ -27,7 +27,13 @@ function materielEcrit(s) {
   if (/ (poulie|cable|cables) /.test(s)) return 'poulie';
   if (/ (machine|guide|guidee) /.test(s)) return 'machine';
   if (/ (haltere|halteres|dumbbell|dumbbells|kettlebell) /.test(s)) return 'libre';
-  if (/ (barre|barbell) /.test(s)) return 'barre';
+  /* IMPORT-MAP-02 (oracle corrigé, preuve : conception IMPORT-MAP-02 §H, catalogue) : au poste de poulie, une barre
+     est la POIGNÉE, pas la charge. Le catalogue le dit lui-même (`triceps-poulie-haute-barre`, `tirage-vertical-
+     poitrine`). Ce témoin le dit avec ses mots : le geste se fait à la poulie quand le nom porte un geste de poulie
+     (pushdown, pulldown, une corde qui n'est pas à sauter) ou un tirage vertical / poitrine / nuque. */
+  const geste = / (pushdown|pulldown) /.test(s) || (/ (corde|rope) /.test(s) && !/ (sauter|saut|sauts|jump|battle) /.test(s))
+    || (/ tirage /.test(s) && / (vertical|verticale|poitrine|nuque) /.test(s));
+  if (/ (barre|barbell) /.test(s)) return geste ? 'poulie' : 'barre';
   return null;
 }
 module.exports.materielEcrit = materielEcrit;

@@ -31,7 +31,12 @@ const EXCEPTIONS = { 'lat machine': 'Tirage Poulie Haute (Lat Pulldown)' };
 /* Dette du MOTEUR (hors périmètre de 01B, le moteur IMPORT-MAP-01 n'est pas touché) : le nom anglais du catalogue
    dit un autre matériel, mais `_exEquip` ne le sait pas — retirer l'alias ne change RIEN, le moteur rattache pareil.
    Liste FIGÉE : une clé de plus = rouge ; une clé qui en sort parce que l'alias devient la cause = rouge (S1). */
-const DETTE_MOTEUR = ['cable hip abduction', 'cable hip adduction', 'cable leg extension', 'leg extension poulie', 'dumbbell lunge', 'fentes halteres'];
+const DETTE_MOTEUR = ['cable hip abduction', 'cable hip adduction', 'cable leg extension', 'leg extension poulie'];
+/* IMPORT-MAP-02 (oracle corrigé, décision P.1 de Michel) : Fentes est MULTI-MATÉRIEL — barre, haltères ou poids du
+   corps, « les 3 » (01/08, ft-v697, réaffirmé ft-v843). « dumbbell lunge » et « fentes halteres » → Fentes ne sont donc
+   PAS des contradictions : ils sortent de la dette (où 01B les avait mis en lisant « lunge barbell », le nom anglais
+   d'alors, que ce lot a ramené à « lunge »). Le témoin le dit lui-même, sans dépendre du nom anglais. */
+const MULTI = { 'Fentes': 'barre, haltères ou poids du corps (« les 3 », Michel)' };
 // Retraits volontaires de 01B (R30) : aucune cible du bon matériel n'existe, ou plusieurs sont plausibles.
 const RETIRES = ['cable leg curl', 'leg curl poulie', 'low cable leg curl', 'barbell step up', 'step up barre', 'cable kickback',
   'low cable knee extension', 'db lunge', 'rowing halteres', 'db row', 'dumbbell row'];
@@ -76,7 +81,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const CAT = await pg.evaluate(() => (EXLIB || []).map(e => [e.n, (typeof EX_EN !== 'undefined' && EX_EN[e.n]) || '']));
   const NOMS = [...new Set(CAT.map(c => c[0]))], EN = Object.fromEntries(CAT);
   // Matériel d'une CIBLE selon le catalogue : nom FR → variante sœur du matériel de la source → nom EN → inconnu.
-  const matCible = (n, src) => { const fr = oracle(n); if (fr) return fr;
+  const matCible = (n, src) => { if (MULTI[n]) return null; const fr = oracle(n); if (fr) return fr;
     const soeur = NOMS.find(x => x !== n && base(x) === base(n) && oracle(x) === src); if (soeur) return 'variante ' + soeur;
     return oracle(EN[n]) || null; };
   const contredit = (src, n) => { if (!src || src === 'ambigu' || !n) return false; const c = matCible(n, src); return !!c && c !== 'ambigu' && c !== src; };
@@ -140,8 +145,14 @@ module.exports.ecran = async function (t, b, PORT) {
   t('S2 ⛔ une seule exception, et c\'est « lat machine » (aucune exception ajoutée en silence)',
     Object.keys(EXCEPTIONS).length === 1 && exc.every(a => EXCEPTIONS[a.k] === a.match), js(exc.map(a => a.k + ' → ' + a.match)));
   const horsListe = moteur.filter(a => !DETTE_MOTEUR.includes(a.k));
-  t('S3 ⛔ dette MOTEUR figée (retirer l\'alias n\'y change rien, `_exEquip` ignore le matériel du nom anglais) — aucune nouvelle clé',
+  t('S3 ⛔ dette MOTEUR figée (retirer l\'alias n\'y change rien : la cible est un « guidé » que le garde-fou ne précise pas) — aucune nouvelle clé',
     horsListe.length === 0, js(horsListe.map(a => a.k + ' → ' + a.match)));
+  const sorties = DETTE_MOTEUR.filter(k => !moteur.some(a => a.k === k));
+  t('S3b la dette moteur figée est EXACTE : aucune clé n\'en sort sans qu\'on la retire de la liste (IMPORT-MAP-02 : 6 → 4, les 2 alias Fentes sont conformes à « les 3 »)',
+    sorties.length === 0, js(sorties));
+  const fen = ['dumbbell lunge', 'fentes halteres'].map(k => A.find(a => a.k === k) || { k });
+  t('S5 ⭐ P.1 (Michel) : « dumbbell lunge » et « fentes halteres » → AUTO Fentes, multi-matériel (« les 3 »)',
+    fen.every(a => a.tier === 'auto' && a.match === 'Fentes'), js(fen.map(a => a.k + ' → ' + a.tier + ' ' + a.match)));
   // Niveau DONNÉE : même un alias LATENT (un autre chemin gagne aujourd'hui) ne doit pas viser un autre matériel —
   // la recherche du sélecteur d'exercice lit `_EX_EQUIV` directement (« synonyme de salle »).
   const latents = ecrits.filter(a => !(a.k in EXCEPTIONS) && !DETTE_MOTEUR.includes(a.k) && contredit(oracle(a.k), a.cible));

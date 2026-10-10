@@ -138,6 +138,16 @@ module.exports.ecran = async function (t, b, PORT) {
   t('X9 R8 : « Lat machine » → AUTO « Tirage Poulie Haute » (l\'alias déclaré reste le propriétaire de ce cas)',
     auto('Lat machine', TPH) && auto('Lat Pulldown', TPH) && auto('Triceps Rope Pushdown', TCP), lot(['Lat machine', 'Lat Pulldown', 'Triceps Rope Pushdown']));
 
+  const prop = await pg.evaluate(() => ['Tirage menton barre', 'Upright row barre', 'Tirage horizontal barre', 'Lat machine', 'Tirage vertical barre', 'Triceps corde',
+    'EZ Preacher Curl', 'Curl barre EZ', 'Pushdown barre EZ']
+    .map(n => [n, _materielDe(n, true)]));
+  const attProp = { 'Tirage menton barre': 'barre', 'Upright row barre': 'barre', 'Tirage horizontal barre': 'barre', 'Lat machine': 'machine', 'Tirage vertical barre': 'poulie', 'Triceps corde': 'poulie',
+    'EZ Preacher Curl': 'barre', 'Curl barre EZ': 'barre', 'Pushdown barre EZ': 'poulie' };
+  // La lecture est la même des deux côtés : une EZ lue « poignée » PARTOUT ne change aucun rattachement (mesuré, M6b).
+  // Elle ne se protège donc qu'ici, chez le propriétaire — comme la corde à sauter (X2).
+  t('X10 ⛔ le propriétaire `_materielDe` : « tirage menton » (P.2) et « tirage horizontal » (P.4) ne sont PAS des contextes de poulie (la barre reste une barre) ; « lat machine » n\'a pas de règle moteur (l\'alias en est propriétaire) ; l\'EZ est une barre, poignée seulement en contexte de poulie',
+    prop.every(([n, m]) => m === attProp[n]), js(prop));
+
   console.log('\n═══ B-IMAP2-H (session-B). IMPORT-MAP-02 — historique par le VRAI chemin d\'import ═══');
   const H = await pg.evaluate(async () => {
     S.premium = true; _impPhotos = [{ type: 'text/plain', data: 'programme', name: 'prog.txt', isText: true }]; _impMode = 'new';
