@@ -39630,6 +39630,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      prouver), retraits R30, historique par le vrai import. Banc : tools/banc_import_map_alias.js · contrôle négatif :
      tools/mut_import_map.py (M-A → M-E). */
   await require('./import_map_alias.js').ecran(t, b, PORT);
+  /* 🏷️ IMPORT-MAP-02 (session-B, 10/10/2026) — le matériel se lit à sa place : une barre en contexte de poulie est la
+     POIGNÉE (« Tirage vertical barre » → Tirage Poulie Haute) ; pushdown / pulldown / corde / rope écrivent la poulie,
+     EZ la barre (D-053 cesse de demander à tort) ; une cible « Polyvalent » se lit dans son nom anglais (« Lateral Raise
+     (Cable) » ↛ élévations aux haltères). Fentes reste « les 3 » (décision de Michel). Historique par le vrai import,
+     corpus externe (387 occurrences) en cliquet. Banc : tools/banc_import_map2.js · contrôle négatif : tools/mut_import_map2.py. */
+  await require('./import_map2.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 

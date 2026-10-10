@@ -1,0 +1,3641 @@
+{
+"_lisezmoi": "Corpus externe IMPORT-MAP-02 (24 sources publiques, 6 langues, 387 occurrences). Colonnes : id, libellé tel qu'écrit, langue, confiance de la cible proposée, cible attendue, résultat sur la branche 01B (790932a3). A_fige = lignes « high » AUTO justes : 93 sur 01B + 4 que la conception IMPORT-MAP-02 fait passer à AUTO juste (cliquet : aucune ne recule). faux_fige = seuls AUTO faux tolérés parmi les « high » (P0-2, hors lot). supprimes = les 10 AUTO dangereux supprimés par 01/01B, avec la cible fausse qu'ils ne doivent plus jamais rejoindre en AUTO.",
+"colonnes": [
+"id",
+"libelle",
+"langue",
+"confiance",
+"attendu",
+"tier_01B",
+"cible_01B"
+],
+"lignes": [
+[
+"EXT-0001",
+"Développé couché",
+"fr",
+"high",
+"Développé Couché",
+"auto",
+"Développé Couché"
+],
+[
+"EXT-0002",
+"Écarté incliné",
+"fr",
+"high",
+"Écarté Incliné Haltères",
+"confirm",
+"Écarté Incliné Haltères"
+],
+[
+"EXT-0003",
+"Développé incliné",
+"fr",
+"high",
+"Développé Incliné",
+"auto",
+"Développé Incliné"
+],
+[
+"EXT-0004",
+"Tirage vertical nuque à la poulie haute",
+"fr",
+"high",
+"Tirage Nuque",
+"new",
+""
+],
+[
+"EXT-0005",
+"Rowing à la barre en pronation prise large",
+"fr",
+"medium",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0006",
+"Tirage vertical à la poulie haute prise V",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0007",
+"Développé nuque",
+"fr",
+"high",
+"Développé Nuque",
+"auto",
+"Développé Nuque"
+],
+[
+"EXT-0008",
+"Élévation latérale avec haltères",
+"fr",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévation Latérale Landmine"
+],
+[
+"EXT-0009",
+"Élévation latérale buste penché",
+"fr",
+"high",
+"Oiseau",
+"confirm",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0010",
+"Extension des triceps à la poulie en pronation",
+"fr",
+"high",
+"Triceps Poulie",
+"new",
+""
+],
+[
+"EXT-0011",
+"Barre au front",
+"fr",
+"high",
+"Barre au Front",
+"auto",
+"Barre au Front"
+],
+[
+"EXT-0012",
+"Extension des triceps à la poulie haute avec la corde",
+"fr",
+"high",
+"Extension Nuque Poulie Haute",
+"new",
+""
+],
+[
+"EXT-0013",
+"Curl à la barre",
+"fr",
+"high",
+"Curl Barre",
+"auto",
+"Curl Barre"
+],
+[
+"EXT-0014",
+"Curl avec haltères assis",
+"fr",
+"high",
+"Curl Haltères",
+"confirm",
+"Curl Haltères"
+],
+[
+"EXT-0015",
+"Curl concentré",
+"fr",
+"high",
+"Curl Concentré",
+"auto",
+"Curl Concentré"
+],
+[
+"EXT-0016",
+"Rowing assis à la poulie basse en pronation",
+"fr",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0017",
+"Leg extension",
+"fr",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"auto",
+"Extension Quadriceps (Leg Extension)"
+],
+[
+"EXT-0018",
+"Squat arrière",
+"fr",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0019",
+"Presse à cuisses incliné",
+"fr",
+"medium",
+"Press Jambes 45°",
+"new",
+""
+],
+[
+"EXT-0020",
+"Leg curl allongé",
+"fr",
+"high",
+"Leg Curl Couché Machine",
+"new",
+""
+],
+[
+"EXT-0021",
+"Dvlp Décliné Barre",
+"fr",
+"high",
+"Développé Décliné",
+"new",
+""
+],
+[
+"EXT-0022",
+"Dvlp Couché Haltères",
+"fr",
+"high",
+"Développé Couché Haltères",
+"new",
+""
+],
+[
+"EXT-0023",
+"Curl Incliné",
+"fr",
+"high",
+"Curl Incliné",
+"auto",
+"Curl Incliné"
+],
+[
+"EXT-0024",
+"Crunch Poulie Haute",
+"fr",
+"high",
+"Crunch Poulie",
+"new",
+""
+],
+[
+"EXT-0025",
+"Belt Squat",
+"fr",
+"high",
+"Belt Squat",
+"auto",
+"Belt Squat"
+],
+[
+"EXT-0026",
+"RDL Barre",
+"fr",
+"high",
+"Soulevé de Terre Roumain Barre",
+"auto",
+"Soulevé de Terre Roumain Barre"
+],
+[
+"EXT-0027",
+"Élévation Latérale",
+"fr",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0028",
+"Tirage Verticale",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0029",
+"Rowing T-Bar",
+"fr",
+"medium",
+"Rowing Landmine (T-Bar)",
+"auto",
+"Rowing T-Bar Machine"
+],
+[
+"EXT-0030",
+"Tirage Verticale Supination",
+"fr",
+"high",
+"Tirage Poulie Haute Prise Inversée",
+"new",
+""
+],
+[
+"EXT-0031",
+"Rowing T-Bar Pronation",
+"fr",
+"medium",
+"Rowing Landmine (T-Bar)",
+"new",
+""
+],
+[
+"EXT-0032",
+"Tirage Horizontale Poulie Basse Unilatérale",
+"fr",
+"medium",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0033",
+"Rowing Machine Coudes Ouverts",
+"fr",
+"high",
+"Rowing Machine (Tirage Horizontal)",
+"confirm",
+"Rowing T-Bar Machine"
+],
+[
+"EXT-0034",
+"Hip Thrust",
+"fr",
+"medium",
+"Hip Thrust Barre (Poussée de Hanche)",
+"auto",
+"Hip Thrust Barre (Poussée de Hanche)"
+],
+[
+"EXT-0035",
+"Soulevé de Terre Roumain Haltères",
+"fr",
+"high",
+"Soulevé de Terre Roumain Haltères",
+"auto",
+"Soulevé de Terre Roumain Haltères"
+],
+[
+"EXT-0036",
+"Tirage Verticale Pronation",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0037",
+"Élévations Latérales Haltères",
+"fr",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévation Latérale Landmine"
+],
+[
+"EXT-0038",
+"Magic TRYCeps",
+"fr",
+"medium",
+"Extension Triceps Couché Haltères",
+"new",
+""
+],
+[
+"EXT-0039",
+"Développé couché",
+"fr",
+"high",
+"Développé Couché",
+"auto",
+"Développé Couché"
+],
+[
+"EXT-0040",
+"Tirage vertical poulie haute prise pronation",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0041",
+"Ecartés à la machine",
+"fr",
+"high",
+"Pec Deck",
+"confirm",
+"Écarté Hyght (Hyght Fly)"
+],
+[
+"EXT-0042",
+"Tirage horizontal poulie basse prise neutre",
+"fr",
+"high",
+"Tirage Poulie Basse Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0043",
+"Elévations latérales buste légèrement penché à 60°",
+"fr",
+"medium",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0044",
+"Oiseau haltères sur banc incliné 30°",
+"fr",
+"high",
+"Oiseau",
+"new",
+""
+],
+[
+"EXT-0045",
+"Soulevé de terre roumain avec haltères léger",
+"fr",
+"high",
+"Soulevé de Terre Roumain Haltères",
+"confirm",
+"Soulevé de Terre Roumain Haltères"
+],
+[
+"EXT-0046",
+"Tirage vertical à la poulie haute en unilatéral",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0047",
+"Tirage horizontal à la poulie basse en unilatéral",
+"fr",
+"medium",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0048",
+"Tirage horizontal à la poulie basse coudes ouverts",
+"fr",
+"medium",
+"Tirage Poulie Basse Prise Large",
+"new",
+""
+],
+[
+"EXT-0049",
+"Tractions prise neutre",
+"fr",
+"high",
+"Traction Prise Neutre",
+"auto",
+"Traction Prise Neutre"
+],
+[
+"EXT-0050",
+"Développé couché prise serrée",
+"fr",
+"medium",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0051",
+"Leg curl assis pieds",
+"fr",
+"high",
+"Leg Curl Assis Machine",
+"confirm",
+"Leg Curl Assis Machine"
+],
+[
+"EXT-0052",
+"Hip Thrust",
+"fr",
+"medium",
+"Hip Thrust Barre (Poussée de Hanche)",
+"auto",
+"Hip Thrust Barre (Poussée de Hanche)"
+],
+[
+"EXT-0053",
+"Leg extension",
+"fr",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"auto",
+"Extension Quadriceps (Leg Extension)"
+],
+[
+"EXT-0054",
+"Fente bulgare avec 1 haltère",
+"fr",
+"medium",
+"Squat Bulgare",
+"new",
+""
+],
+[
+"EXT-0055",
+"Abducteurs à la machine",
+"fr",
+"high",
+"Abduction Cuisses (Leg Abduction)",
+"new",
+""
+],
+[
+"EXT-0056",
+"Développé couché haltère",
+"fr",
+"high",
+"Développé Couché Haltères",
+"auto",
+"Développé Couché Haltères"
+],
+[
+"EXT-0057",
+"Développé couché au cadre guidé trajectoire déclinée",
+"fr",
+"medium",
+"Chest Press Machine Déclinée",
+"new",
+""
+],
+[
+"EXT-0058",
+"Curl pupitre haltère",
+"fr",
+"low",
+"Curl Pupitre Barre EZ (Larry Scott)",
+"confirm",
+"Curl Haltères"
+],
+[
+"EXT-0059",
+"DC",
+"fr",
+"high",
+"Développé Couché",
+"auto",
+"Développé Couché"
+],
+[
+"EXT-0060",
+"Tirage Vertical",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0061",
+"DI",
+"fr",
+"high",
+"Développé Incliné",
+"auto",
+"Développé Incliné"
+],
+[
+"EXT-0062",
+"Rowing poulie",
+"fr",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0063",
+"Elevation latérales",
+"fr",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0064",
+"Curl incliné",
+"fr",
+"high",
+"Curl Incliné",
+"auto",
+"Curl Incliné"
+],
+[
+"EXT-0065",
+"Magic Tryceps",
+"fr",
+"medium",
+"Extension Triceps Couché Haltères",
+"new",
+""
+],
+[
+"EXT-0066",
+"Crunch poulie",
+"fr",
+"high",
+"Crunch Poulie",
+"auto",
+"Crunch Poulie"
+],
+[
+"EXT-0067",
+"Squat barre",
+"fr",
+"medium",
+"Squat à la Barre",
+"auto",
+"Squat à la Barre"
+],
+[
+"EXT-0068",
+"Soulevé de Terre jambes tendues",
+"fr",
+"high",
+"Soulevé de Terre Jambes Tendues",
+"auto",
+"Soulevé de Terre Jambes Tendues"
+],
+[
+"EXT-0069",
+"Fentes avant",
+"fr",
+"high",
+"Fentes",
+"confirm",
+"Fentes"
+],
+[
+"EXT-0070",
+"SDT",
+"fr",
+"high",
+"Soulevé de Terre",
+"auto",
+"Soulevé de Terre"
+],
+[
+"EXT-0071",
+"SDTJT",
+"fr",
+"high",
+"Soulevé de Terre Jambes Tendues",
+"new",
+""
+],
+[
+"EXT-0072",
+"hip thrust",
+"fr",
+"medium",
+"Hip Thrust Barre (Poussée de Hanche)",
+"auto",
+"Hip Thrust Barre (Poussée de Hanche)"
+],
+[
+"EXT-0073",
+"leg curl",
+"fr",
+"ambiguous",
+"",
+"auto",
+"Leg Curl Couché Machine"
+],
+[
+"EXT-0074",
+"Traction pronation poulie haute",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0075",
+"Rowing assis prise neutre",
+"fr",
+"medium",
+"Tirage Poulie Basse Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0076",
+"Rowing haltère à un bras 45°",
+"fr",
+"high",
+"Rowing Haltère (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0077",
+"Tirage poulie haute prise neutre serrée 45°",
+"fr",
+"high",
+"Tirage Poulie Haute Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0078",
+"DC prise serrée",
+"fr",
+"medium",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0079",
+"Développé couché haltères",
+"fr",
+"high",
+"Développé Couché Haltères",
+"auto",
+"Développé Couché Haltères"
+],
+[
+"EXT-0080",
+"Écarté sur pecdeck",
+"fr",
+"high",
+"Pec Deck",
+"confirm",
+"Écarté Haltères"
+],
+[
+"EXT-0081",
+"Ecarté sur poulie bas-haut",
+"fr",
+"high",
+"Écarté Poulie",
+"confirm",
+"Écarté Poulie"
+],
+[
+"EXT-0082",
+"Tirage vertical sur poulie",
+"fr",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0083",
+"Tirage horizontal prise serrée",
+"fr",
+"high",
+"Tirage Poulie Basse Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0084",
+"Tirage horizontal prise large",
+"fr",
+"high",
+"Tirage Poulie Basse Prise Large",
+"new",
+""
+],
+[
+"EXT-0085",
+"Élévations latérales",
+"fr",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"auto",
+"Élévations Latérales (Lateral Raise)"
+],
+[
+"EXT-0086",
+"Élévations frontales",
+"fr",
+"high",
+"Élévations Frontales",
+"auto",
+"Élévations Frontales"
+],
+[
+"EXT-0087",
+"Oiseau sur poulie",
+"fr",
+"medium",
+"Oiseau Poulie 45°",
+"auto",
+"Oiseau"
+],
+[
+"EXT-0088",
+"Drag curling sur poulie coude vers l’arrière",
+"fr",
+"high",
+"Curl Poulie",
+"new",
+""
+],
+[
+"EXT-0089",
+"Curl marteau sur poulie avec corde",
+"fr",
+"high",
+"Marteau",
+"new",
+""
+],
+[
+"EXT-0090",
+"Curl sur banc incliné preacher curl",
+"fr",
+"medium",
+"Curl Pupitre Barre EZ (Larry Scott)",
+"confirm",
+"Curl Incliné"
+],
+[
+"EXT-0091",
+"Dips prise serrée",
+"fr",
+"high",
+"Dips Triceps (Buste Droit)",
+"new",
+""
+],
+[
+"EXT-0092",
+"Extensions de bras sur poulie",
+"fr",
+"high",
+"Triceps Poulie",
+"confirm",
+"Extension Triceps"
+],
+[
+"EXT-0093",
+"Extensions verticales sur poulie",
+"fr",
+"high",
+"Extension Nuque Poulie Haute",
+"new",
+""
+],
+[
+"EXT-0094",
+"Squat",
+"en",
+"high",
+"Squat à la Barre",
+"auto",
+"Squat à la Barre"
+],
+[
+"EXT-0095",
+"Bench Press",
+"en",
+"high",
+"Développé Couché",
+"auto",
+"Développé Couché"
+],
+[
+"EXT-0096",
+"Barbell Row",
+"en",
+"high",
+"Rowing Barre (Tirage Horizontal)",
+"auto",
+"Rowing Barre (Tirage Horizontal)"
+],
+[
+"EXT-0097",
+"Overhead Press",
+"en",
+"high",
+"Développé Militaire",
+"auto",
+"Développé Militaire"
+],
+[
+"EXT-0098",
+"Deadlift",
+"en",
+"high",
+"Soulevé de Terre",
+"auto",
+"Soulevé de Terre"
+],
+[
+"EXT-0099",
+"Back Squat",
+"en",
+"high",
+"Squat à la Barre",
+"auto",
+"Squat à la Barre"
+],
+[
+"EXT-0100",
+"Front Squat",
+"en",
+"high",
+"Squat Avant",
+"auto",
+"Squat Avant"
+],
+[
+"EXT-0101",
+"Safety Bar Squat",
+"en",
+"high",
+"Safety Bar Squat",
+"auto",
+"Safety Bar Squat"
+],
+[
+"EXT-0102",
+"Bench Press",
+"en",
+"high",
+"Développé Couché",
+"auto",
+"Développé Couché"
+],
+[
+"EXT-0103",
+"Dumbbell Press",
+"en",
+"medium",
+"Développé Couché Haltères",
+"confirm",
+"Développé Couché Haltères"
+],
+[
+"EXT-0104",
+"Overhead Press",
+"en",
+"high",
+"Développé Militaire",
+"auto",
+"Développé Militaire"
+],
+[
+"EXT-0105",
+"Landmine Press",
+"en",
+"high",
+"Développé Landmine (Épaules)",
+"confirm",
+"Développé Haltères Assis"
+],
+[
+"EXT-0106",
+"Conventional Deadlift",
+"en",
+"high",
+"Soulevé de Terre",
+"auto",
+"Soulevé de Terre"
+],
+[
+"EXT-0107",
+"Sumo Deadlift",
+"en",
+"high",
+"Soulevé de Terre Sumo",
+"auto",
+"Soulevé de Terre Sumo"
+],
+[
+"EXT-0108",
+"Romanian Deadlift",
+"en",
+"high",
+"Soulevé de Terre Roumain Barre",
+"auto",
+"Soulevé de Terre Roumain Barre"
+],
+[
+"EXT-0109",
+"Good Morning",
+"en",
+"high",
+"Inclinaison Lombaire (Good Morning)",
+"auto",
+"Inclinaison Lombaire (Good Morning)"
+],
+[
+"EXT-0110",
+"Bulgarian Split Squats",
+"en",
+"high",
+"Squat Bulgare",
+"auto",
+"Squat Bulgare"
+],
+[
+"EXT-0111",
+"Lunges",
+"en",
+"high",
+"Fentes",
+"auto",
+"Fentes"
+],
+[
+"EXT-0112",
+"Pistol Squats",
+"en",
+"high",
+"Squat Pistol",
+"auto",
+"Squat Pistol"
+],
+[
+"EXT-0113",
+"Calf Raises with Smith Machine",
+"en",
+"medium",
+"Élévations Mollets Debout",
+"confirm",
+"Élévations Mollets Debout"
+],
+[
+"EXT-0114",
+"Calf Raises with Leg Press",
+"en",
+"high",
+"Presse Mollets (Leg Press)",
+"confirm",
+"Presse Mollets (Leg Press)"
+],
+[
+"EXT-0115",
+"Hammer Strength Machine Bench Press",
+"en",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0116",
+"Machine Incline Press",
+"en",
+"high",
+"Chest Press Machine Inclinée",
+"confirm",
+"Chest Press Machine Inclinée"
+],
+[
+"EXT-0117",
+"Pec Dec Fly",
+"en",
+"high",
+"Pec Deck",
+"confirm",
+"Pec Deck"
+],
+[
+"EXT-0118",
+"Machine Shoulder Press",
+"en",
+"high",
+"Développé Épaules Machine",
+"auto",
+"Développé Épaules Machine"
+],
+[
+"EXT-0119",
+"Machine Lateral Raise",
+"en",
+"high",
+"Élévations Latérales Machine",
+"auto",
+"Élévations Latérales Machine"
+],
+[
+"EXT-0120",
+"Tricep Rope Pushdown",
+"en",
+"high",
+"Triceps Corde Poulie",
+"confirm",
+"Triceps Corde Poulie"
+],
+[
+"EXT-0121",
+"Lat Pulldown",
+"en",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0122",
+"Cable Row",
+"en",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"auto",
+"Rowing Câble (Tirage Horizontal)"
+],
+[
+"EXT-0123",
+"Machine Pullover",
+"en",
+"high",
+"Pullover Machine",
+"auto",
+"Pullover Machine"
+],
+[
+"EXT-0124",
+"Machine Preacher Curl",
+"en",
+"high",
+"Curl Pupitre Machine",
+"auto",
+"Curl Pupitre Machine"
+],
+[
+"EXT-0125",
+"Cable Hammer Curls",
+"en",
+"high",
+"Marteau",
+"auto",
+"Marteau"
+],
+[
+"EXT-0126",
+"Hack Squat",
+"en",
+"high",
+"Squat Hack (Hack Squat)",
+"auto",
+"Squat Hack (Hack Squat)"
+],
+[
+"EXT-0127",
+"Leg Press",
+"en",
+"medium",
+"Press Jambes 45°",
+"auto",
+"Press Jambes 45°"
+],
+[
+"EXT-0128",
+"Leg Curl",
+"en",
+"ambiguous",
+"",
+"auto",
+"Leg Curl Couché Machine"
+],
+[
+"EXT-0129",
+"Leg Extension",
+"en",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"auto",
+"Extension Quadriceps (Leg Extension)"
+],
+[
+"EXT-0130",
+"Machine Glute Kickbacks",
+"en",
+"high",
+"Kickback Machine",
+"auto",
+"Extension Fessiers Arrière (Kickback)"
+],
+[
+"EXT-0131",
+"Calf Raises",
+"en",
+"medium",
+"Élévations Mollets Debout",
+"confirm",
+"Élévations Mollets Debout"
+],
+[
+"EXT-0132",
+"Leg Press",
+"en",
+"medium",
+"Press Jambes 45°",
+"auto",
+"Press Jambes 45°"
+],
+[
+"EXT-0133",
+"Leg Curl",
+"en",
+"ambiguous",
+"",
+"auto",
+"Leg Curl Couché Machine"
+],
+[
+"EXT-0134",
+"Chest Press",
+"en",
+"medium",
+"Chest Press Machine Horizontale",
+"auto",
+"Chest Press Machine Horizontale"
+],
+[
+"EXT-0135",
+"Lat Pulldown",
+"en",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0136",
+"Machine Shoulder Press",
+"en",
+"high",
+"Développé Épaules Machine",
+"auto",
+"Développé Épaules Machine"
+],
+[
+"EXT-0137",
+"Cable Curl",
+"en",
+"high",
+"Curl Poulie",
+"auto",
+"Curl Poulie"
+],
+[
+"EXT-0138",
+"Triceps Pushdown",
+"en",
+"high",
+"Triceps Poulie",
+"auto",
+"Extension Triceps"
+],
+[
+"EXT-0139",
+"Machine Crunch",
+"en",
+"high",
+"Crunch Machine",
+"auto",
+"Crunch Machine"
+],
+[
+"EXT-0140",
+"Standing Calf Raise",
+"en",
+"medium",
+"Élévations Mollets Debout",
+"auto",
+"Élévations Mollets Debout"
+],
+[
+"EXT-0141",
+"Leg Extension",
+"en",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"auto",
+"Extension Quadriceps (Leg Extension)"
+],
+[
+"EXT-0142",
+"Machine Chest Fly",
+"en",
+"high",
+"Pec Deck",
+"confirm",
+"Chest Press Machine Horizontale"
+],
+[
+"EXT-0143",
+"Machine Row",
+"en",
+"high",
+"Rowing Machine (Tirage Horizontal)",
+"auto",
+"Rowing Machine (Tirage Horizontal)"
+],
+[
+"EXT-0144",
+"Machine Lateral Raise",
+"en",
+"high",
+"Élévations Latérales Machine",
+"auto",
+"Élévations Latérales Machine"
+],
+[
+"EXT-0145",
+"Cable Crunch",
+"en",
+"high",
+"Crunch Poulie",
+"auto",
+"Crunch Poulie"
+],
+[
+"EXT-0146",
+"Bench Press",
+"en",
+"high",
+"Développé Couché",
+"auto",
+"Développé Couché"
+],
+[
+"EXT-0147",
+"Incline DB Press",
+"en",
+"high",
+"Développé Incliné Haltères",
+"auto",
+"Développé Incliné Haltères"
+],
+[
+"EXT-0148",
+"Cable / DB Fly",
+"en",
+"ambiguous",
+"",
+"confirm",
+"Écarté Poulie"
+],
+[
+"EXT-0149",
+"Rope Pushdown",
+"en",
+"high",
+"Triceps Corde Poulie",
+"confirm",
+"Triceps Corde Poulie"
+],
+[
+"EXT-0150",
+"Overhead DB Extension",
+"en",
+"high",
+"Extension Nuque Haltère",
+"confirm",
+"Extension Triceps"
+],
+[
+"EXT-0151",
+"Dips",
+"en",
+"high",
+"Dips",
+"auto",
+"Dips"
+],
+[
+"EXT-0152",
+"Lat Pulldown / Pull-ups",
+"en",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"confirm",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0153",
+"Seated Cable Row",
+"en",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"auto",
+"Rowing Câble (Tirage Horizontal)"
+],
+[
+"EXT-0154",
+"One Arm DB Row",
+"en",
+"medium",
+"Rowing Haltère (Tirage Horizontal)",
+"confirm",
+"Rowing Haltère (Tirage Horizontal)"
+],
+[
+"EXT-0155",
+"Barbell Curl",
+"en",
+"high",
+"Curl Barre",
+"auto",
+"Curl Barre"
+],
+[
+"EXT-0156",
+"Incline DB Curl",
+"en",
+"high",
+"Curl Incliné",
+"confirm",
+"Curl Incliné"
+],
+[
+"EXT-0157",
+"Hammer Curl",
+"en",
+"high",
+"Marteau",
+"auto",
+"Marteau"
+],
+[
+"EXT-0158",
+"Squats / Leg Press",
+"en",
+"medium",
+"Squat à la Barre",
+"confirm",
+"Presse à Cuisses sur le Côté"
+],
+[
+"EXT-0159",
+"Leg Curl",
+"en",
+"ambiguous",
+"",
+"auto",
+"Leg Curl Couché Machine"
+],
+[
+"EXT-0160",
+"Leg Extension",
+"en",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"auto",
+"Extension Quadriceps (Leg Extension)"
+],
+[
+"EXT-0161",
+"Standing Calf Raises",
+"en",
+"medium",
+"Élévations Mollets Debout",
+"auto",
+"Élévations Mollets Debout"
+],
+[
+"EXT-0162",
+"Hanging Leg Raise",
+"en",
+"high",
+"Relevé de Jambes",
+"auto",
+"Relevé de Jambes"
+],
+[
+"EXT-0163",
+"Cable Crunch",
+"en",
+"high",
+"Crunch Poulie",
+"auto",
+"Crunch Poulie"
+],
+[
+"EXT-0164",
+"DB Shoulder Press",
+"en",
+"high",
+"Développé Militaire",
+"confirm",
+"Développé Épaules Machine"
+],
+[
+"EXT-0165",
+"Rear Delt Fly",
+"en",
+"high",
+"Oiseau",
+"auto",
+"Oiseau"
+],
+[
+"EXT-0166",
+"Incline Bench Press (Dumbbell)",
+"en",
+"high",
+"Développé Incliné Haltères",
+"auto",
+"Développé Incliné Haltères"
+],
+[
+"EXT-0167",
+"Shoulder Press (Machine Plates)",
+"en",
+"high",
+"Développé Épaules Machine",
+"confirm",
+"Développé Épaules Machine"
+],
+[
+"EXT-0168",
+"Chest Press (Machine)",
+"en",
+"high",
+"Chest Press Machine Horizontale",
+"auto",
+"Chest Press Machine Horizontale"
+],
+[
+"EXT-0169",
+"Chest Fly (Machine)",
+"en",
+"high",
+"Pec Deck",
+"auto",
+"Pec Deck"
+],
+[
+"EXT-0170",
+"Lateral Raise (Cable)",
+"en",
+"high",
+"Élévations Latérales Câble",
+"auto",
+"Élévations Latérales (Lateral Raise)"
+],
+[
+"EXT-0171",
+"Triceps Rope Pushdown",
+"en",
+"high",
+"Triceps Corde Poulie",
+"auto",
+"Triceps Corde Poulie"
+],
+[
+"EXT-0172",
+"Lat Pulldown (Cable)",
+"en",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0173",
+"Chest Supported Incline Row (Dumbbell)",
+"en",
+"high",
+"Rowing Poitrine Appuyée (Chest Supported)",
+"new",
+""
+],
+[
+"EXT-0174",
+"Seated Cable Row (Bar Grip)",
+"en",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"confirm",
+"Tirage Poulie Basse Prise Large"
+],
+[
+"EXT-0175",
+"Rear Delt Reverse Fly (Machine)",
+"en",
+"high",
+"Machine Oiseau",
+"confirm",
+"Oiseau"
+],
+[
+"EXT-0176",
+"Preacher Curl (Machine)",
+"en",
+"high",
+"Curl Pupitre Machine",
+"auto",
+"Curl Pupitre Machine"
+],
+[
+"EXT-0177",
+"Lat Pulldown (Close Grip, Cable)",
+"en",
+"high",
+"Tirage Poulie Haute Prise Serrée",
+"auto",
+"Tirage Poulie Haute Prise Serrée"
+],
+[
+"EXT-0178",
+"Behind-the-Back Curl (Cable)",
+"en",
+"high",
+"Curl Poulie",
+"confirm",
+"Curl Poulie"
+],
+[
+"EXT-0179",
+"Incline Bench Press Smith Machine",
+"en",
+"high",
+"Smith Machine Développé Incliné",
+"auto",
+"Smith Machine Développé Incliné"
+],
+[
+"EXT-0180",
+"Low to High Cable Flys",
+"en",
+"high",
+"Écarté Poulie",
+"new",
+""
+],
+[
+"EXT-0181",
+"Seated Overhead Press DB",
+"en",
+"high",
+"Développé Haltères Assis",
+"confirm",
+"Développé Militaire"
+],
+[
+"EXT-0182",
+"Cable Lat Raise",
+"en",
+"high",
+"Élévations Latérales Câble",
+"auto",
+"Élévations Latérales (Lateral Raise)"
+],
+[
+"EXT-0183",
+"Straight Bar Tricep Pushdown",
+"en",
+"high",
+"Triceps Poulie",
+"confirm",
+"Triceps Poulie"
+],
+[
+"EXT-0184",
+"Unilateral Tricep Extension",
+"en",
+"medium",
+"Extension Triceps Concentrée Poulie",
+"new",
+""
+],
+[
+"EXT-0185",
+"Ab Cable Crunch",
+"en",
+"high",
+"Crunch Poulie",
+"confirm",
+"Crunch Poulie"
+],
+[
+"EXT-0186",
+"Lat Pulldown",
+"en",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0187",
+"Incline Dumbell Row",
+"en",
+"high",
+"Rowing Haltère (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0188",
+"Seated Cable Row",
+"en",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"auto",
+"Rowing Câble (Tirage Horizontal)"
+],
+[
+"EXT-0189",
+"EZ Preacher Curl",
+"en",
+"high",
+"Curl Pupitre Barre EZ (Larry Scott)",
+"confirm",
+"Curl Pupitre Barre EZ (Larry Scott)"
+],
+[
+"EXT-0190",
+"Hammer Curl DB",
+"en",
+"high",
+"Marteau",
+"confirm",
+"Marteau"
+],
+[
+"EXT-0191",
+"Lying Leg Curl",
+"en",
+"high",
+"Leg Curl Couché Machine",
+"auto",
+"Leg Curl Couché Machine"
+],
+[
+"EXT-0192",
+"Romanian Deadlift DB",
+"en",
+"high",
+"Soulevé de Terre Roumain Haltères",
+"confirm",
+"Soulevé de Terre Roumain Barre"
+],
+[
+"EXT-0193",
+"Seated Calf Raise",
+"en",
+"high",
+"Élévations Mollets Assis",
+"auto",
+"Élévations Mollets Assis"
+],
+[
+"EXT-0194",
+"Hip Abductor",
+"en",
+"high",
+"Abduction Cuisses (Leg Abduction)",
+"confirm",
+"Abduction Cuisses (Leg Abduction)"
+],
+[
+"EXT-0195",
+"Pec Dec Machine",
+"en",
+"high",
+"Pec Deck",
+"auto",
+"Pec Deck"
+],
+[
+"EXT-0196",
+"Reverse Fly Machine",
+"en",
+"high",
+"Machine Oiseau",
+"auto",
+"Oiseau"
+],
+[
+"EXT-0197",
+"Seated Wide Grip Row",
+"en",
+"high",
+"Tirage Poulie Basse Prise Large",
+"confirm",
+"Tirage Poulie Basse Prise Large"
+],
+[
+"EXT-0198",
+"Tricep Dips",
+"en",
+"high",
+"Dips Triceps (Buste Droit)",
+"confirm",
+"Dips"
+],
+[
+"EXT-0199",
+"Press banca",
+"es",
+"high",
+"Développé Couché",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0200",
+"Press superior con barra/mancuernas",
+"es",
+"medium",
+"Développé Incliné",
+"new",
+""
+],
+[
+"EXT-0201",
+"Aperturas en banco inclinado con mancuernas",
+"es",
+"high",
+"Écarté Incliné Haltères",
+"new",
+""
+],
+[
+"EXT-0202",
+"Aperturas en máquina",
+"es",
+"high",
+"Pec Deck",
+"new",
+""
+],
+[
+"EXT-0203",
+"Curl con barra",
+"es",
+"high",
+"Curl Barre",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0204",
+"Martillo alterno sentado",
+"es",
+"high",
+"Marteau",
+"new",
+""
+],
+[
+"EXT-0205",
+"Curl en banco scott",
+"es",
+"medium",
+"Curl Pupitre Barre EZ (Larry Scott)",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0206",
+"Jalón delante en polea",
+"es",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0207",
+"Jalón tras nuca en polea",
+"es",
+"high",
+"Tirage Nuque",
+"new",
+""
+],
+[
+"EXT-0208",
+"Remo con polea baja",
+"es",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0209",
+"Remo con mancuernas en banco plano",
+"es",
+"medium",
+"Rowing Haltère (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0210",
+"Extensión en polea de pie",
+"es",
+"high",
+"Triceps Poulie",
+"confirm",
+"Extension Triceps"
+],
+[
+"EXT-0211",
+"Press francés tumbado con barra o mancuernas",
+"es",
+"medium",
+"Barre au Front",
+"new",
+""
+],
+[
+"EXT-0212",
+"Fondo lastrado",
+"es",
+"high",
+"Dips",
+"new",
+""
+],
+[
+"EXT-0213",
+"Extensión de cuádriceps",
+"es",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"confirm",
+"Extension Triceps"
+],
+[
+"EXT-0214",
+"Sentadilla",
+"es",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0215",
+"Femoral tumbado",
+"es",
+"high",
+"Leg Curl Couché Machine",
+"new",
+""
+],
+[
+"EXT-0216",
+"Gemelos en Multipower con step",
+"es",
+"medium",
+"Élévations Mollets Debout",
+"new",
+""
+],
+[
+"EXT-0217",
+"Press militar de pie con mancuernas o barra",
+"es",
+"high",
+"Développé Militaire Haltères",
+"new",
+""
+],
+[
+"EXT-0218",
+"Elevaciones laterales con mancuernas",
+"es",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"new",
+""
+],
+[
+"EXT-0219",
+"Sentadilla goblet con mancuerna",
+"es",
+"high",
+"Squat Gobelet (Goblet Squat)",
+"new",
+""
+],
+[
+"EXT-0220",
+"Press de pecho en máquina",
+"es",
+"medium",
+"Chest Press Machine Horizontale",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0221",
+"Remo en máquina",
+"es",
+"high",
+"Rowing Machine (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0222",
+"Press de hombro con mancuernas",
+"es",
+"high",
+"Développé Haltères Assis",
+"new",
+""
+],
+[
+"EXT-0223",
+"Peso muerto rumano con mancuernas",
+"es",
+"high",
+"Soulevé de Terre Roumain Haltères",
+"new",
+""
+],
+[
+"EXT-0224",
+"Press banca plano con barra",
+"es",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0225",
+"Press militar con mancuernas",
+"es",
+"high",
+"Développé Haltères Assis",
+"new",
+""
+],
+[
+"EXT-0226",
+"Fondos en paralelas",
+"es",
+"high",
+"Dips",
+"new",
+""
+],
+[
+"EXT-0227",
+"Jalón al pecho",
+"es",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0228",
+"Remo con barra",
+"es",
+"high",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0229",
+"Curl predicador con barra EZ",
+"es",
+"high",
+"Curl Pupitre Barre EZ (Larry Scott)",
+"confirm",
+"Curl EZ"
+],
+[
+"EXT-0230",
+"Press francés",
+"es",
+"medium",
+"Barre au Front",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0231",
+"Zancadas andando con barra",
+"es",
+"medium",
+"Fentes Marchées",
+"new",
+""
+],
+[
+"EXT-0232",
+"Remo en polea baja",
+"es",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0233",
+"Sentadilla en multipower",
+"es",
+"high",
+"Smith Machine Squat",
+"new",
+""
+],
+[
+"EXT-0234",
+"Hip thrust con barra",
+"es",
+"medium",
+"Hip Thrust Barre (Poussée de Hanche)",
+"confirm",
+"Hip Thrust Barre (Poussée de Hanche)"
+],
+[
+"EXT-0235",
+"Extensión en polea alta con cuerda",
+"es",
+"high",
+"Triceps Corde Poulie",
+"new",
+""
+],
+[
+"EXT-0236",
+"Press inclinado con mancuernas 30°",
+"es",
+"high",
+"Développé Incliné Haltères",
+"new",
+""
+],
+[
+"EXT-0237",
+"Aperturas en peck deck",
+"es",
+"high",
+"Pec Deck",
+"confirm",
+"Pec Deck"
+],
+[
+"EXT-0238",
+"Remo en barra T",
+"es",
+"medium",
+"Rowing Landmine (T-Bar)",
+"confirm",
+"Rowing T-Bar Machine"
+],
+[
+"EXT-0239",
+"Jalón al pecho",
+"es",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0240",
+"Curl predicador en máquina",
+"es",
+"high",
+"Curl Pupitre Machine",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0241",
+"Press frances",
+"es",
+"medium",
+"Barre au Front",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0242",
+"Elevaciones laterales",
+"es",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0243",
+"Sentadilla libre con barra",
+"es",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0244",
+"Hip thrust",
+"es",
+"medium",
+"Hip Thrust Barre (Poussée de Hanche)",
+"auto",
+"Hip Thrust Barre (Poussée de Hanche)"
+],
+[
+"EXT-0245",
+"Elevaciones de talones",
+"es",
+"medium",
+"Élévations Mollets Debout",
+"new",
+""
+],
+[
+"EXT-0246",
+"Hiperextensiones lumbares",
+"es",
+"high",
+"Hyperextension (Back Extension)",
+"new",
+""
+],
+[
+"EXT-0247",
+"Extensión de cuadriceps",
+"es",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"confirm",
+"Extension Triceps"
+],
+[
+"EXT-0248",
+"Curl de femoral acostado",
+"es",
+"high",
+"Leg Curl Couché Machine",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0249",
+"Crunch en polea",
+"es",
+"high",
+"Crunch Poulie",
+"confirm",
+"Crunch"
+],
+[
+"EXT-0250",
+"Press banca",
+"es",
+"high",
+"Développé Couché",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0251",
+"Press militar con mancuernas",
+"es",
+"high",
+"Développé Haltères Assis",
+"new",
+""
+],
+[
+"EXT-0252",
+"Side-facing rear delt flyes peck deck reverse",
+"es",
+"high",
+"Machine Oiseau",
+"confirm",
+"Oiseau"
+],
+[
+"EXT-0253",
+"Press banca",
+"es",
+"high",
+"Développé Couché",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0254",
+"Press inclinado con mancuernas",
+"es",
+"high",
+"Développé Incliné Haltères",
+"new",
+""
+],
+[
+"EXT-0255",
+"Remo con barra",
+"es",
+"high",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0256",
+"Jalón al pecho",
+"es",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0257",
+"Press militar",
+"es",
+"high",
+"Développé Militaire",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0258",
+"Elevaciones laterales",
+"es",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0259",
+"Curl de bíceps con barra EZ",
+"es",
+"high",
+"Curl EZ",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0260",
+"Press francés",
+"es",
+"medium",
+"Barre au Front",
+"confirm",
+"Développé Couché"
+],
+[
+"EXT-0261",
+"Sentadilla libre",
+"es",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0262",
+"Sentadilla Hack o prensa frontal",
+"es",
+"high",
+"Squat Avant",
+"new",
+""
+],
+[
+"EXT-0263",
+"Curl femoral tumbado",
+"es",
+"high",
+"Leg Curl Couché Machine",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0264",
+"Schrägbankdrücken KH",
+"de",
+"high",
+"Développé Incliné Haltères",
+"new",
+""
+],
+[
+"EXT-0265",
+"Brustpresse",
+"de",
+"medium",
+"Chest Press Machine Horizontale",
+"new",
+""
+],
+[
+"EXT-0266",
+"Rudern am Kabel eng",
+"de",
+"high",
+"Tirage Poulie Basse Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0267",
+"Latzug eng",
+"de",
+"high",
+"Tirage Poulie Haute Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0268",
+"Schulterdrücken",
+"de",
+"high",
+"Développé Militaire",
+"new",
+""
+],
+[
+"EXT-0269",
+"Seitheben Kabel oder KH",
+"de",
+"high",
+"Élévations Latérales Câble",
+"new",
+""
+],
+[
+"EXT-0270",
+"Preacher Curls",
+"de",
+"ambiguous",
+"",
+"confirm",
+"Curl Pupitre Machine"
+],
+[
+"EXT-0271",
+"Beinpresse",
+"de",
+"medium",
+"Press Jambes 45°",
+"new",
+""
+],
+[
+"EXT-0272",
+"RDL",
+"de",
+"high",
+"Soulevé de Terre Roumain Barre",
+"auto",
+"Soulevé de Terre Roumain Barre"
+],
+[
+"EXT-0273",
+"Bulgarian Split Squats",
+"de",
+"high",
+"Squat Bulgare",
+"auto",
+"Squat Bulgare"
+],
+[
+"EXT-0274",
+"Beinbeuger Maschine",
+"de",
+"high",
+"Leg Curl Assis Machine",
+"new",
+""
+],
+[
+"EXT-0275",
+"Wadenheben an Beinpresse",
+"de",
+"high",
+"Presse Mollets (Leg Press)",
+"new",
+""
+],
+[
+"EXT-0276",
+"Bauchpresse",
+"de",
+"high",
+"Crunch Machine",
+"new",
+""
+],
+[
+"EXT-0277",
+"Trizeps Pushdown",
+"de",
+"high",
+"Triceps Poulie",
+"confirm",
+"Triceps Poulie"
+],
+[
+"EXT-0278",
+"Rudern am Kabel breit",
+"de",
+"high",
+"Tirage Poulie Basse Prise Large",
+"new",
+""
+],
+[
+"EXT-0279",
+"Latzug breit",
+"de",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0280",
+"Trizeps Overhead Kabel",
+"de",
+"high",
+"Triceps Poulie",
+"new",
+""
+],
+[
+"EXT-0281",
+"Hammer Curls KH",
+"de",
+"high",
+"Marteau",
+"confirm",
+"Marteau"
+],
+[
+"EXT-0282",
+"Bankdrücken an der Smith Machine",
+"de",
+"high",
+"Smith Machine Développé Couché",
+"new",
+""
+],
+[
+"EXT-0283",
+"Butterfly",
+"de",
+"high",
+"Pec Deck",
+"auto",
+"Pec Deck"
+],
+[
+"EXT-0284",
+"Ruderzug am Kabelzug mit engem Griff",
+"de",
+"high",
+"Tirage Poulie Basse Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0285",
+"Latzug mit breitem Griff",
+"de",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0286",
+"Latzug mit engem Griff",
+"de",
+"high",
+"Tirage Poulie Haute Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0287",
+"Bauchpresse",
+"de",
+"high",
+"Crunch Machine",
+"new",
+""
+],
+[
+"EXT-0288",
+"Legpress",
+"de",
+"medium",
+"Press Jambes 45°",
+"new",
+""
+],
+[
+"EXT-0289",
+"Bizepsmaschine",
+"de",
+"medium",
+"Curl Pupitre Machine",
+"new",
+""
+],
+[
+"EXT-0290",
+"Kreuzheben",
+"de",
+"high",
+"Soulevé de Terre",
+"new",
+""
+],
+[
+"EXT-0291",
+"Kniebeugen",
+"de",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0292",
+"Bankdrücken",
+"de",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0293",
+"LH-Rudern",
+"de",
+"high",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0294",
+"Schulterdrücken",
+"de",
+"high",
+"Développé Militaire",
+"new",
+""
+],
+[
+"EXT-0295",
+"Latziehen UG",
+"de",
+"high",
+"Tirage Poulie Haute Prise Inversée",
+"new",
+""
+],
+[
+"EXT-0296",
+"Klimmzüge",
+"de",
+"high",
+"Tractions (Pull-up)",
+"new",
+""
+],
+[
+"EXT-0297",
+"Dips",
+"de",
+"high",
+"Dips",
+"auto",
+"Dips"
+],
+[
+"EXT-0298",
+"Latzug",
+"de",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0299",
+"Kniebeuge mit Langhantel",
+"de",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0300",
+"Bankdrücken",
+"de",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0301",
+"Kreuzheben",
+"de",
+"high",
+"Soulevé de Terre",
+"new",
+""
+],
+[
+"EXT-0302",
+"Klimmzüge",
+"de",
+"high",
+"Tractions (Pull-up)",
+"new",
+""
+],
+[
+"EXT-0303",
+"Langhantelrudern",
+"de",
+"high",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0304",
+"Schulterdrücken mit Langhantel",
+"de",
+"high",
+"Développé Militaire",
+"new",
+""
+],
+[
+"EXT-0305",
+"Beinbeuger",
+"de",
+"ambiguous",
+"",
+"new",
+""
+],
+[
+"EXT-0306",
+"Butterfly Reverse / Face Pulls",
+"de",
+"high",
+"Tirage Visage (Face Pull)",
+"confirm",
+"Tirage Visage (Face Pull)"
+],
+[
+"EXT-0307",
+"Bizepscurls",
+"de",
+"high",
+"Curl Barre",
+"new",
+""
+],
+[
+"EXT-0308",
+"Trizepsdrücken",
+"de",
+"high",
+"Triceps Poulie",
+"new",
+""
+],
+[
+"EXT-0309",
+"Squat",
+"it",
+"high",
+"Squat à la Barre",
+"auto",
+"Squat à la Barre"
+],
+[
+"EXT-0310",
+"Spinta su Panca piana",
+"it",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0311",
+"Lat Machine",
+"it",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0312",
+"Curl con manubri",
+"it",
+"high",
+"Curl Haltères",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0313",
+"Leg Press",
+"it",
+"medium",
+"Press Jambes 45°",
+"auto",
+"Press Jambes 45°"
+],
+[
+"EXT-0314",
+"Crunch",
+"it",
+"medium",
+"Crunch",
+"auto",
+"Crunch"
+],
+[
+"EXT-0315",
+"Stacco con manubri",
+"it",
+"high",
+"Soulevé de Terre Roumain Haltères",
+"new",
+""
+],
+[
+"EXT-0316",
+"Rematore con manubri",
+"it",
+"high",
+"Rowing Haltère (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0317",
+"Piegamenti sulle braccia",
+"it",
+"high",
+"Pompes (Push-up)",
+"new",
+""
+],
+[
+"EXT-0318",
+"Lento manubri",
+"it",
+"high",
+"Développé Haltères Assis",
+"new",
+""
+],
+[
+"EXT-0319",
+"Affondi",
+"it",
+"high",
+"Fentes",
+"new",
+""
+],
+[
+"EXT-0320",
+"Plank",
+"it",
+"high",
+"Gainage",
+"confirm",
+"Planche Inversée"
+],
+[
+"EXT-0321",
+"Spinte con manubri su panca inclinata",
+"it",
+"high",
+"Développé Incliné Haltères",
+"new",
+""
+],
+[
+"EXT-0322",
+"Dip alle parallele",
+"it",
+"high",
+"Dips",
+"confirm",
+"Dips"
+],
+[
+"EXT-0323",
+"Alzate laterali",
+"it",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"new",
+""
+],
+[
+"EXT-0324",
+"Calf in piedi",
+"it",
+"medium",
+"Élévations Mollets Debout",
+"new",
+""
+],
+[
+"EXT-0325",
+"Panca Piana",
+"it",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0326",
+"Trazioni",
+"it",
+"high",
+"Tractions (Pull-up)",
+"new",
+""
+],
+[
+"EXT-0327",
+"Lento Avanti",
+"it",
+"high",
+"Développé Militaire",
+"new",
+""
+],
+[
+"EXT-0328",
+"Rematore",
+"it",
+"medium",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0329",
+"Curl con bilanciere",
+"it",
+"high",
+"Curl Barre",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0330",
+"Squat",
+"it",
+"high",
+"Squat à la Barre",
+"auto",
+"Squat à la Barre"
+],
+[
+"EXT-0331",
+"Panca piana",
+"it",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0332",
+"Affondi",
+"it",
+"high",
+"Fentes",
+"new",
+""
+],
+[
+"EXT-0333",
+"Leg press",
+"it",
+"medium",
+"Press Jambes 45°",
+"auto",
+"Press Jambes 45°"
+],
+[
+"EXT-0334",
+"Stacco",
+"it",
+"high",
+"Soulevé de Terre",
+"new",
+""
+],
+[
+"EXT-0335",
+"Trazioni",
+"it",
+"high",
+"Tractions (Pull-up)",
+"new",
+""
+],
+[
+"EXT-0336",
+"Rematore bilanciere",
+"it",
+"high",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0337",
+"Pulley",
+"it",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0338",
+"Curl bilanciere",
+"it",
+"high",
+"Curl Barre",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0339",
+"Curl manubri",
+"it",
+"high",
+"Curl Haltères",
+"confirm",
+"Curl Barre"
+],
+[
+"EXT-0340",
+"Panca inclinata manubri",
+"it",
+"high",
+"Développé Incliné Haltères",
+"new",
+""
+],
+[
+"EXT-0341",
+"Dip",
+"it",
+"high",
+"Dips",
+"auto",
+"Dips"
+],
+[
+"EXT-0342",
+"Tricipiti",
+"it",
+"ambiguous",
+"",
+"new",
+""
+],
+[
+"EXT-0343",
+"Lat machine",
+"it",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"auto",
+"Tirage Poulie Haute (Lat Pulldown)"
+],
+[
+"EXT-0344",
+"Alzate laterali 90°",
+"it",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"new",
+""
+],
+[
+"EXT-0345",
+"Supino Reto",
+"pt",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0346",
+"Puxador Frente Pronado",
+"pt",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0347",
+"Remada Aberta",
+"pt",
+"high",
+"Rowing Barre (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0348",
+"Clean and press",
+"pt",
+"medium",
+"Clean & Jerk",
+"confirm",
+"Clean & Jerk"
+],
+[
+"EXT-0349",
+"Rosca Martelo",
+"pt",
+"high",
+"Marteau",
+"new",
+""
+],
+[
+"EXT-0350",
+"Supino Fechado",
+"pt",
+"medium",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0351",
+"Encolhimento",
+"pt",
+"medium",
+"Haussements d'Épaules Barre",
+"new",
+""
+],
+[
+"EXT-0352",
+"Leg Press",
+"pt",
+"medium",
+"Press Jambes 45°",
+"auto",
+"Press Jambes 45°"
+],
+[
+"EXT-0353",
+"Extensora",
+"pt",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"new",
+""
+],
+[
+"EXT-0354",
+"Flexora",
+"pt",
+"ambiguous",
+"",
+"new",
+""
+],
+[
+"EXT-0355",
+"Panturrilha",
+"pt",
+"medium",
+"Élévations Mollets Debout",
+"new",
+""
+],
+[
+"EXT-0356",
+"Supino Inclinado",
+"pt",
+"high",
+"Développé Incliné",
+"new",
+""
+],
+[
+"EXT-0357",
+"Puxador Frente Supinado",
+"pt",
+"high",
+"Tirage Poulie Haute Prise Inversée",
+"new",
+""
+],
+[
+"EXT-0358",
+"Remada Baixa",
+"pt",
+"high",
+"Rowing Câble (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0359",
+"Desenvolvimento",
+"pt",
+"high",
+"Développé Militaire",
+"new",
+""
+],
+[
+"EXT-0360",
+"Rosca Alternada",
+"pt",
+"high",
+"Curl Haltères",
+"new",
+""
+],
+[
+"EXT-0361",
+"Paralelas",
+"pt",
+"high",
+"Dips",
+"new",
+""
+],
+[
+"EXT-0362",
+"Agachamento",
+"pt",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0363",
+"Supino reto",
+"pt",
+"high",
+"Développé Couché",
+"new",
+""
+],
+[
+"EXT-0364",
+"Supino inclinado",
+"pt",
+"high",
+"Développé Incliné",
+"new",
+""
+],
+[
+"EXT-0365",
+"Supino declinado",
+"pt",
+"high",
+"Développé Décliné",
+"new",
+""
+],
+[
+"EXT-0366",
+"Elevação frontal",
+"pt",
+"high",
+"Élévations Frontales",
+"new",
+""
+],
+[
+"EXT-0367",
+"Elevação lateral",
+"pt",
+"high",
+"Élévations Latérales (Lateral Raise)",
+"confirm",
+"Élévations Latérales (Lateral Raise)"
+],
+[
+"EXT-0368",
+"Tríceps corda",
+"pt",
+"high",
+"Triceps Corde Poulie",
+"confirm",
+"Triceps Poulie"
+],
+[
+"EXT-0369",
+"Remada aberta maquina",
+"pt",
+"high",
+"Rowing Machine (Tirage Horizontal)",
+"new",
+""
+],
+[
+"EXT-0370",
+"Puxada alta frontal",
+"pt",
+"high",
+"Tirage Poulie Haute (Lat Pulldown)",
+"new",
+""
+],
+[
+"EXT-0371",
+"Puxada alta fechada",
+"pt",
+"high",
+"Tirage Poulie Haute Prise Serrée",
+"new",
+""
+],
+[
+"EXT-0372",
+"Encolhimento",
+"pt",
+"medium",
+"Haussements d'Épaules Barre",
+"new",
+""
+],
+[
+"EXT-0373",
+"Rosca inversa",
+"pt",
+"medium",
+"Curl Barre",
+"new",
+""
+],
+[
+"EXT-0374",
+"Rosca alternada",
+"pt",
+"high",
+"Curl Haltères",
+"new",
+""
+],
+[
+"EXT-0375",
+"Agachamento",
+"pt",
+"high",
+"Squat à la Barre",
+"new",
+""
+],
+[
+"EXT-0376",
+"Leg press",
+"pt",
+"medium",
+"Press Jambes 45°",
+"auto",
+"Press Jambes 45°"
+],
+[
+"EXT-0377",
+"Cadeira extensora",
+"pt",
+"high",
+"Extension Quadriceps (Leg Extension)",
+"new",
+""
+],
+[
+"EXT-0378",
+"Stiff",
+"pt",
+"high",
+"Soulevé de Terre Jambes Tendues",
+"new",
+""
+],
+[
+"EXT-0379",
+"Panturrilha no leg press",
+"pt",
+"high",
+"Presse Mollets (Leg Press)",
+"confirm",
+"Presse à Cuisses sur le Côté"
+],
+[
+"EXT-0380",
+"Remada cavalinho",
+"pt",
+"medium",
+"Rowing Landmine (T-Bar)",
+"new",
+""
+],
+[
+"EXT-0381",
+"Supino reto maquina",
+"pt",
+"medium",
+"Chest Press Machine Horizontale",
+"new",
+""
+],
+[
+"EXT-0382",
+"Peck deck",
+"pt",
+"high",
+"Pec Deck",
+"auto",
+"Pec Deck"
+],
+[
+"EXT-0383",
+"Desenvolvimento",
+"pt",
+"high",
+"Développé Militaire",
+"new",
+""
+],
+[
+"EXT-0384",
+"Tríceps testa",
+"pt",
+"high",
+"Barre au Front",
+"confirm",
+"Triceps Poulie"
+],
+[
+"EXT-0385",
+"Rosca martelo",
+"pt",
+"high",
+"Marteau",
+"new",
+""
+],
+[
+"EXT-0386",
+"Mesa flexora",
+"pt",
+"high",
+"Leg Curl Couché Machine",
+"new",
+""
+],
+[
+"EXT-0387",
+"Flexora em pé",
+"pt",
+"high",
+"Leg Curl Unilatéral Debout",
+"new",
+""
+]
+],
+"A_fige": [
+"EXT-0001",
+"EXT-0003",
+"EXT-0007",
+"EXT-0011",
+"EXT-0013",
+"EXT-0015",
+"EXT-0017",
+"EXT-0023",
+"EXT-0025",
+"EXT-0026",
+"EXT-0035",
+"EXT-0039",
+"EXT-0049",
+"EXT-0053",
+"EXT-0056",
+"EXT-0059",
+"EXT-0060",
+"EXT-0061",
+"EXT-0064",
+"EXT-0066",
+"EXT-0068",
+"EXT-0070",
+"EXT-0079",
+"EXT-0082",
+"EXT-0085",
+"EXT-0086",
+"EXT-0094",
+"EXT-0095",
+"EXT-0096",
+"EXT-0097",
+"EXT-0098",
+"EXT-0099",
+"EXT-0100",
+"EXT-0101",
+"EXT-0102",
+"EXT-0104",
+"EXT-0106",
+"EXT-0107",
+"EXT-0108",
+"EXT-0109",
+"EXT-0110",
+"EXT-0111",
+"EXT-0112",
+"EXT-0118",
+"EXT-0119",
+"EXT-0120",
+"EXT-0121",
+"EXT-0122",
+"EXT-0123",
+"EXT-0124",
+"EXT-0125",
+"EXT-0126",
+"EXT-0129",
+"EXT-0130",
+"EXT-0135",
+"EXT-0136",
+"EXT-0137",
+"EXT-0139",
+"EXT-0141",
+"EXT-0143",
+"EXT-0144",
+"EXT-0145",
+"EXT-0146",
+"EXT-0147",
+"EXT-0151",
+"EXT-0153",
+"EXT-0155",
+"EXT-0157",
+"EXT-0160",
+"EXT-0162",
+"EXT-0163",
+"EXT-0165",
+"EXT-0166",
+"EXT-0168",
+"EXT-0169",
+"EXT-0170",
+"EXT-0171",
+"EXT-0172",
+"EXT-0176",
+"EXT-0177",
+"EXT-0179",
+"EXT-0186",
+"EXT-0188",
+"EXT-0189",
+"EXT-0191",
+"EXT-0193",
+"EXT-0195",
+"EXT-0272",
+"EXT-0273",
+"EXT-0283",
+"EXT-0297",
+"EXT-0309",
+"EXT-0311",
+"EXT-0330",
+"EXT-0341",
+"EXT-0343",
+"EXT-0382"
+],
+"faux_fige": {
+"EXT-0138": "Extension Triceps"
+},
+"supprimes": [
+[
+"EXT-0008",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0027",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0037",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0041",
+"Écarté Haltères"
+],
+[
+"EXT-0056",
+"Développé Couché"
+],
+[
+"EXT-0058",
+"Curl Pupitre Machine"
+],
+[
+"EXT-0063",
+"Élévations Latérales Câble"
+],
+[
+"EXT-0116",
+"Développé Incliné"
+],
+[
+"EXT-0142",
+"Écarté Haltères"
+],
+[
+"EXT-0148",
+"Écarté Haltères"
+]
+]
+}
