@@ -809,7 +809,7 @@ annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à mast
 contrôle négatif `tools/mut_import_map.py` : **24/24 conformes** ; CCLXXIII réécrit (R30). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict
 C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexistant, même chiffre avec le log.js d'avant). Passe complète sur `bbd6e054` : **6 078 ✅ / 0 ❌ (4 conditions vertes)**.
 
-## 🏷️ IMPORT-MAP-02 — le matériel se lit à sa place (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — EN QUALIFICATION (passe complète en cours) — NON PUBLIÉ)
+## 🏷️ IMPORT-MAP-02 — le matériel se lit à sa place (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ)
 
 > Micro-lot ciblé après l'audit du corpus externe (387 lignes) et le Ghost du Drive. Base master `b280ea5d` (`ft-v1252`), branche
 > `claude/import-map-01` (`790932a3` → `8c5a8480`). Un seul propriétaire touché, `_materielDe` (log.js), plus une donnée du catalogue
@@ -836,4 +836,4 @@ C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexista
 **Preuves.** Banc `tools/banc_import_map2.js` : **24 rouges sur `790932a3` → 43/0** ; oracles adaptés et justifiés : banc 01 22/0
 (la grille apprend le rôle de la barre), banc 01B 22/0 (Fentes « les 3 », dette 6 → 4) ; contrôle négatif `tools/mut_import_map2.py` :
 **25/25 conformes** ; rejeu du vrai code sur 719 libellés distincts = simulation de la conception (21 changements, 12 nouveaux AUTO tous justes,
-0 régression). Voisins : import_echauffement 11/0 · lot3 87/0 · séance C1 29/0 · C3 35/0 · mutations 01 / 01B **24/24 conformes** (oracles adaptés compris) · sélecteur de recette propre (EX_EN rattaché au scénario) · annexe 14 PASS + 1 défaut connu (discussions, préexistant : mêmes chiffres 71 726 / 76 645 / 68 781 avec le log.js d'avant — le lot ne change pas le contexte de Milo) · `check_regles.py` vert. Passe complète : en cours (résultat au commit suivant, D-031).
+0 régression). Voisins : import_echauffement 11/0 · lot3 87/0 · séance C1 29/0 · C3 35/0 · mutations 01 / 01B **24/24 conformes** (oracles adaptés compris) · sélecteur de recette propre (EX_EN rattaché au scénario) · annexe 14 PASS + 1 défaut connu (discussions, préexistant : mêmes chiffres 71 726 / 76 645 / 68 781 avec le log.js d'avant — le lot ne change pas le contexte de Milo) · `check_regles.py` vert. Passe complète : **6 123 ✅ / 0 ❌** sur `972fcce1` (4 conditions vertes).
