@@ -3119,7 +3119,13 @@ function _materielDe(nom, ecritSeulement){
   if(cable) return 'poulie';
   if(ecritSeulement) return null;
   const eq=_exEquip(nom);
-  return (!eq||eq==='autre')?null:eq;
+  if(eq&&eq!=='autre') return eq;
+  /* IMPORT-MAP-02 (T2) : une cible « Polyvalent » se lit dans le nom anglais du catalogue (« lateral raise dumbbell »),
+     seulement là, et par les MOTS écrits (jamais `_exEquip` : « hammer » y vaut Hammer Strength). Le garde-fou ne
+     peut que s'y RESTREINDRE. Jamais dans la lecture « écrite » ci-dessus, celle de D-053. Fentes n'écrit pas de
+     matériel en anglais : multi-matériel, décision de Michel (« les 3 »). */
+  const en=(typeof EX_EN!=='undefined'&&EX_EN[nom])||'';
+  return en?_materielDe(en,true):null;
 }
 // tier : 'auto' (≥90 → rattacher direct) · 'confirm' (grise → demander à l'utilisateur) · 'new' (<seuil → créer).
 function _matchExercise(name,opts){
@@ -10809,7 +10815,7 @@ const EX_EN={
   'Leg Press':'leg press machine',
   'Extension Quadriceps (Leg Extension)':'leg extension machine',
   'Leg Curl Couché Machine':'lying leg curl machine','Leg Curl Assis Machine':'seated leg curl machine',
-  'Fentes':'lunge barbell','Fentes Marchées':'walking lunge',
+  'Fentes':'lunge','Fentes Marchées':'walking lunge', // Fentes : « les 3 » (Michel, 01/08) — plus « lunge barbell » (IMPORT-MAP-02)
   'Fentes Arrière':'reverse lunge','Fentes Latérales':'lateral lunge',
   'Smith Machine Fentes':'smith machine lunge',
   'Montée sur Box (Step-up)':'box step up','Montée sur Box Haltères':'step up dumbbell',
