@@ -760,3 +760,27 @@ adresses fictives `example.test` uniquement, chaque remplacement compté : **23 
 Contrôle négatif `tools/mut_sec_admin.py` : **17/17 conformes** — 16 mutations du vrai code rougissent, chacune sur son témoin (M00 = master : 23 rouges ; M02 « l'adresse seule suffit » n'est attrapée que par SEC-ADMIN-03 ; M07 « fermé par défaut » que par 05b), et la mutation d'un **commentaire** reste verte. ⚠️ M10 a d'abord « rougi » par un **plantage** (son ancre cassait la syntaxe de `setup.js`) : relancée avec une ancre juste, elle rougit sur E4 et E4b ; l'outil refuse désormais une mutation qui casse la syntaxe — *un plantage n'est pas une preuve*. Non-régressions (désignées par `tools/recette_selecteur.py --diff`) : chaos **56/0** (vrai `Code.js` + PostgreSQL local) · lot3 **87/0** · AUTH-NEW-DEVICE **16/0** · AUTH-CLOUD-CLOSURE **9/0** · AUTH-SIGNUP-STRICT **8/0** · COOKIE-PROFILE **16/0** · s2b_bascule **71/0** · annexe complète **14 PASS + 1 défaut connu** (`discussions`, taille du prompt : maison 71 627 · salle 76 546 · avant marqueur 68 779 — **valeurs identiques sur master le même jour**). ⚠️ Un premier passage avait classé `calculs` en « erreur d'infra » : mon commit `e6a9e91d` était tombé pendant la suite (arbre modifié) ; relancée sur arbre stable : PASS. Passe complète (D-031) sur `6738624e` : **6 036 ✅ / 0 ❌, 4 conditions vertes** (`tools/passe_valide.sh` ; 5 967 de ft-v1251 + les 69 témoins SEC-ADMIN) — 57 min. Après elle : documentation seulement. **Aucun numéro de version** : rien n'est publié.
 
 **Ce que le banc ne prouve pas** : le vrai déploiement Apps Script (aucun redéploiement dans ce lot), les vraies Script Properties, Safari iOS.
+
+## 🏷️ IMPORT-MAP-01 — l'identité automatique ne change plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ)
+
+> Base master `b280ea5d` (`ft-v1252`). Aucune version, aucune publication, Worker et Apps Script non touchés, 0 appel IA réel.
+> **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.
+
+| Sujet | Avant (master) | Après (branche) |
+|---|---|---|
+| « Squat machine » → Squat à la Barre (AUTO 95) | ouvert | ✅ jamais AUTO (exercice nouveau) |
+| « Élévations latérales haltères » → …Câble (AUTO 100) | ouvert | ✅ jamais AUTO (confirmation) |
+| même famille : squat / DC / shrug / soulevé de terre « haltères », « Squat guidé » | ouvert | ✅ jamais AUTO vers un autre matériel |
+| import : la carte reprend les charges, séances et record d'un autre exercice | ouvert (140 kg du squat barre) | ✅ fermé (vrai chemin d'import conduit) |
+| nom sans matériel → variante matérielle en AUTO (« Développé épaules », « Curl biceps »…) | AUTO | ✅ confirmation (D-053) — 51 noms génériques du catalogue concernés |
+| grille du catalogue (1 518 variantes) — AUTO inter-matériel | 626 | ✅ 5, tous par alias déclaré (0 par rapprochement) ; 0 rapprochement sain perdu |
+| **23 alias déclarés** qui contredisent leur matériel écrit (`dumbbell row` → Rowing Barre…) | dette | ⚠️ **inchangés** (étage conservé) — cliquet G5 ; **décision de Michel attendue** |
+| « Presse Zeta » (nom propriétaire inconnu) | suggestion 25 % | inchangé : jamais AUTO ; gardé en exercice perso si la suggestion est refusée |
+| suggestion de « Élévations latérales haltères » | — | ⚠️ propose « Élévation Latérale Landmine » (classement fuzzy, hors périmètre) |
+| fautes d'orthographe (« Devlopé couché » → nouveau) | — | hors périmètre (jamais d'AUTO faux, mesuré) |
+| historique déjà contaminé avant ce lot | — | non migré (hors périmètre) |
+
+**Preuves.** Banc `tools/banc_import_map.js` : **8 rouges sur master → 23/0** ; contrôle négatif `tools/mut_import_map.py` : **12/12**
+(M00 = master ; M1/M1b/M1c pas assez strict ; M2/M3 trop strict — DC Barre, Peck deck, Pendulum, alias ; M4 décision retirée ;
+M5/M6/M7/M9 déguisées ; M10 commentaire, vert). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict C1 29/0 · C3 35/0 ;
+annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à master). Passe complète sur `755924a0` : **6 059 ✅ / 0 ❌ (4 conditions vertes)**.

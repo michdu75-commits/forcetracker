@@ -73,6 +73,7 @@ c'est la section elle-même qui fait foi.
 | §58 et 58 | **deux sections portent 58** : « une porte sans témoin » (§58) · « un témoin qui pose l'état final à la main » (58) |
 | §59 → §66 | porte et jumelle · fichier servi muté pendant une passe · outil de mesure tronqué · protection qui tenait par l'absence de ménage · motif qui suppose une syntaxe · témoin qui lit la source · `pgrep -f` · réponse IA non confirmée |
 | §71 | verrou posé sur les routes neuves, pas sur les anciennes (deux diagnostics restés ouverts) · verrou d'interface qui choisissait le compte · libellé qui promettait de ne lire aucune donnée personnelle *(§67 → §70 : branche Lot 1, non publiée)* |
+| §72 | le mot vide qui efface ce qui distingue (le matériel retiré avant de comparer) · la famille qui passe avant le mot écrit · l'alias déclaré qui contredit sa propre clé *(branche `claude/import-map-01`, non publiée)* |
 
 ---
 
@@ -4477,3 +4478,28 @@ le banc le prouve) :
 - le code admin de l'app reste public : il n'ouvre qu'une **interface** ;
 - l'ajout de lignes au journal des séances (feuille « Sessions ») accepte n'importe quelle adresse, sans
   preuve — pollution possible, aucune lecture.
+
+## §72 — ⛔⛔ LE MOT VIDE QUI EFFACE CE QUI DISTINGUE : LE MATÉRIEL RETIRÉ AVANT DE COMPARER *(10/10/2026, IMPORT-MAP-01 — branche `claude/import-map-01`, NON publié)*
+
+**Le cas.** `_EX_STOP` range `machine`, `barre`, `haltères`, `poulie`, `câble` parmi les mots vides, avec le bruit commercial
+(« Evolution X900 »). Pour la reconnaissance, ils disparaissent. Mesuré sur master `b280ea5d` : « Squat machine » se réduisait à
+« squat » → équivalence → **Squat à la Barre (AUTO 95)** ; « Élévations latérales haltères » partageait 100 % de ses mots
+utiles avec **« …Câble » (AUTO 100)**. Par l'import réel, la carte « Squat machine » devenait « Squat à la Barre », pré-remplie à
+**140 kg** avec les séances et le record du squat barre. Grille du catalogue : **626 AUTO inter-matériel** sur 1 518 variantes.
+
+**À quoi on la reconnaît** : une normalisation qui jette un mot parce qu'il « gêne » une comparaison — alors que ce mot est
+précisément ce qui DISTINGUE deux identités. *Un mot vide n'est vide que pour la question posée.*
+
+**Deux pièges de la même famille, rencontrés en corrigeant :**
+- **la famille qui passe avant le mot écrit** : ma 1ʳᵉ version lisait le matériel de la source avec `_exEquip`, qui classe
+  « Chest Press **barre** » en guidé (la famille « chest press » gagne). La grille a montré **253** AUTO inter-matériel restants ;
+  les cas nommés, eux, étaient tous verts. *Une grille fabriquée attrape ce qu'une liste de cas ne voit pas.*
+- **l'alias déclaré qui contredit sa propre clé** : **23** des 531 alias de `_EX_EQUIV` envoient un matériel écrit vers un autre
+  (`dumbbell row` → Rowing Barre, `overhead press machine` → Développé Militaire…). « Rowing haltère » va vers la version
+  haltère, « Rowing haltères » (pluriel) vers la barre.
+
+**Ce qui protège (branche)** : `_materielDe` + `_matchExercise` (le mot écrit décide ; rapprochements approximatifs jamais contre
+lui ; nom sans matériel → confirmation, D-053) ; banc `tools/banc_import_map.js` (B-IMAP-A/H/G, dont un CLIQUET : les 23 alias
+contradictoires ne peuvent que diminuer) ; contrôle négatif `tools/mut_import_map.py` (les deux côtés : pas assez strict ET trop
+strict) ; grille avant/après `tools/grille_import_map.js`. ⚠️ **Non corrigé** : les 23 alias déclarés (décision de Michel), l'historique
+déjà contaminé avant ce lot (aucune migration).
