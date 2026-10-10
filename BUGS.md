@@ -4503,3 +4503,17 @@ lui ; nom sans matériel → confirmation, D-053) ; banc `tools/banc_import_map.
 contradictoires ne peuvent que diminuer) ; contrôle négatif `tools/mut_import_map.py` (les deux côtés : pas assez strict ET trop
 strict) ; grille avant/après `tools/grille_import_map.js`. ⚠️ **Non corrigé** : les 23 alias déclarés (décision de Michel), l'historique
 déjà contaminé avant ce lot (aucune migration).
+
+**↪️ IMPORT-MAP-01B (10/10/2026, même branche, NON publié) — après contre-vérification Nutrition.** L'alias déclaré passe AVANT le
+garde-fou matériel : « rowing halteres », « db row », « hip thrust halteres », « thruster halteres »… emportaient la charge, les séances et le
+record de la barre (vrai import : 100 / 160 / 60 kg). Inventaire complet des 531 alias avec un vocabulaire de test PROPRE (db / bb / kb) et le
+matériel de la cible lu dans le catalogue (nom FR, variante sœur, nom anglais) : **25 alias causaient un AUTO contradictoire** (pas 23).
+**16 redirigés** vers la seule cible du bon matériel, **11 retirés** (R30, commentés dans `log.js`), « lat machine » gardé (exception
+sémantique). Trois leçons de méthode, payées ici :
+- **un cliquet qui COMPTE se contourne par ÉCHANGE** : « ≤ 23 » restait vert en retirant un alias dangereux et en ajoutant un autre. Il faut
+  juger chaque élément, pas leur nombre ;
+- **un témoin qui recopie le vocabulaire de l'app partage son angle mort** : ni l'app ni l'ancien témoin ne lisaient « db » ;
+- **une contradiction peut être portée par le MOTEUR, pas par l'alias** : le cliquet retire l'alias DANS la page et recommence ; si le moteur
+  rattache pareil, retirer l'alias ne protège rien — c'est une dette du moteur, nommée et figée (6 clés : `_exEquip` ne lit pas le nom anglais
+  du catalogue, « Fentes » est la fente à la barre). *Retirer pour retirer aurait donné un diff propre et zéro protection.*
+**Protège (branche)** : banc `tools/banc_import_map_alias.js` (B-IMAPB-O/A/R/S/H) ; contrôle négatif `tools/mut_import_map.py` (24/24 conformes).

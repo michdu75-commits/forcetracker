@@ -784,3 +784,27 @@ Contrôle négatif `tools/mut_sec_admin.py` : **17/17 conformes** — 16 mutatio
 (M00 = master ; M1/M1b/M1c pas assez strict ; M2/M3 trop strict — DC Barre, Peck deck, Pendulum, alias ; M4 décision retirée ;
 M5/M6/M7/M9 déguisées ; M10 commentaire, vert). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict C1 29/0 · C3 35/0 ;
 annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à master). Passe complète sur `755924a0` : **6 059 ✅ / 0 ❌ (4 conditions vertes)**.
+
+## 🏷️ IMPORT-MAP-01B — les alias déclarés ne changent plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ)
+
+> Correction des alias contradictoires **après contre-vérification Nutrition** d'IMPORT-MAP-01. Base master `b280ea5d` (`ft-v1252`),
+> branche `claude/import-map-01` (`1a98fb65` → `bbd6e054`). Aucune version, aucune publication, Worker et Apps Script non touchés, 0 appel IA réel.
+> **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.
+
+| Sujet | Avant (`1a98fb65`) | Après (branche) |
+|---|---|---|
+| « Rowing haltères » / « db row » / « dumbbell row » → Rowing Barre (AUTO, 100 kg + record repris) | ouvert | ✅ jamais AUTO (alias retirés, l'import demande) — ⚠️ cible définitive à Michel (D-055) |
+| « Hip thrust haltères » / « db hip thrust » → Hip Thrust Barre (160 kg) | ouvert | ✅ → Hip Thrust Haltère |
+| « Thruster haltères » → Thruster barre (60 kg) | ouvert | ✅ → Thrusters Haltères |
+| curl machine ×3 → Curl Barre · overhead press machine ×2 → Développé Militaire · triceps machine ×2 → Triceps Poulie · extension nuque poulie → …Haltère | ouvert | ✅ redirigés vers la seule cible du bon matériel |
+| leg curl poulie ×3 · step up barre ×2 · low cable knee extension · db lunge · cable kickback | ouvert | ✅ retirés (aucune cible du bon matériel / ambigu) |
+| cliquet « ≤ 23 » (battu par échange d'alias, vocabulaire recopié de l'app) | faible | ✅ remplacé par « 0 alias qui CAUSE un AUTO contradictoire » (db / bb / kb) |
+| « lat machine » → Tirage Poulie Haute | — | ✅ exception sémantique documentée (seule) |
+| **dette MOTEUR** : fentes haltères / dumbbell lunge → Fentes (barre) ; cable hip abduction / adduction, cable leg extension, leg extension poulie → machines | — | ⚠️ **inchangé** : retirer l'alias ne change rien, `_exEquip` ignore le nom anglais (hors périmètre, figé) |
+| suggestions faibles après retrait (« DB row » → Rowing Câble, « Rowing haltères » → Landmine) | — | ⚠️ question, jamais AUTO ; le moteur ne lit pas « db » (hors périmètre) |
+| doutes d'illustration seulement (cable triceps pushdown, extension triceps poulie, seal barbell row, dumbbell goblet squat) | — | ⚠️ inchangés, à trancher (preuve faible) |
+| réserve D-053 : noms génériques en confirmation (historique non repris si non confirmé, regroupements ECH générique + TRAV précis) | — | constat seulement — **non traité ici** (IMPORT-ECH-02) |
+
+**Preuves.** Banc `tools/banc_import_map_alias.js` : **10 rouges sur `1a98fb65` → 20/0** ; banc IMPORT-MAP-01 22/0 (G5 retiré, R30) ;
+contrôle négatif `tools/mut_import_map.py` : **24/24 conformes** ; CCLXXIII réécrit (R30). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict
+C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexistant, même chiffre avec le log.js d'avant). Passe complète sur `bbd6e054` : **6 078 ✅ / 0 ❌ (4 conditions vertes)**.

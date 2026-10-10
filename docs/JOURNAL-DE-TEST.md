@@ -3435,3 +3435,16 @@ admin — par le miroir premium « anti-curieux » de `constants.js` et par la l
 (code perso) et Milo refuse sans jeton d'appareil (`worker.js`). ❓ **Doute** : quelles fonctions premium ne passent **pas** par le
 serveur, et s'ouvrent donc avec une simple adresse tapée ? Vérifiable par du code : ✅. État : **à trier** (lot Premium, hors
 SEC-ADMIN).
+
+### 🟡 « ROWING HALTÈRES », « DB ROW » IMPORTÉS : UNE QUESTION, MAIS UNE MAUVAISE SUGGESTION (10/10/2026 — IMPORT-MAP-01B)
+Après le retrait des alias ambigus, ces noms ne partent plus en AUTO vers la barre : l'import **demande**. Mais la suggestion affichée est
+faible — « Rowing haltères » → *Rowing Landmine (T-Bar)*, « DB row » → *Rowing Câble*, « dumbbell row » → *Renegade Row* — parce que le
+moteur ne lit pas « db » et que les deux rowings haltères ont le même score. ❓ **Doute** : la personne refuse-t-elle bien une suggestion
+fausse, ou l'accepte-t-elle par réflexe ? Vérifiable par du code : ✅ (la suggestion se mesure). État : **à trier** — la cible définitive
+(un bras ou buste penché) est une décision de Michel (D-055).
+
+### 🟡 DETTE MOTEUR : LE NOM ANGLAIS DU CATALOGUE DIT UN MATÉRIEL QUE LE MOTEUR IGNORE (10/10/2026 — IMPORT-MAP-01B, hors lot)
+« Fentes haltères » / « dumbbell lunge » → *Fentes* (nom anglais : *lunge barbell*) ; « cable hip abduction / adduction », « cable leg
+extension », « leg extension poulie » → les machines ; « Élévations frontales machine / poulie » → la générique alors que les variantes
+existent. Retirer un alias n'y change rien : `_exEquip` ne lit pas le nom anglais. Vérifiable par du code : ✅ (le banc B-IMAPB-S le
+prouve à chaque passe en retirant l'alias dans la page). État : **à trier** (moteur, hors IMPORT-MAP-01B).
