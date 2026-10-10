@@ -39618,6 +39618,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (décision de Michel) ; historique, charges et records d'un autre exercice jamais récupérés par l'import. Banc :
      tools/banc_import_map.js · contrôle négatif : tools/mut_import_map.py · grille : tools/grille_import_map.js. */
   await require('./import_map.js').ecran(t, b, PORT);
+  /* 🏷️ IMPORT-MAP-01B (session-B, 10/10/2026) — après contre-vérification Nutrition : un ALIAS déclaré (`_EX_EQUIV`) ne
+     change jamais en silence le matériel écrit (« Rowing haltères » ↛ Rowing Barre). Vocabulaire de test indépendant
+     (db / bb / kb), cliquet strict « 0 alias contradictoire qui cause un AUTO » (l'alias est retiré dans la page pour le
+     prouver), retraits R30, historique par le vrai import. Banc : tools/banc_import_map_alias.js · contrôle négatif :
+     tools/mut_import_map.py (M-A → M-E). */
+  await require('./import_map_alias.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
