@@ -156,6 +156,15 @@ module.exports.ecran = async function (t, b, PORT) {
   const perdus = AL.filter(a => !(a.tier === 'auto' && (a.match === a.cible || /^exact/.test(a.via) || a.via === 'synonyme EN')));
   t('G3 ⭐ les ' + AL.length + ' alias déclarés (`_EX_EQUIV`) restent tous AUTO vers leur cible (ou vers une identité exacte) — garde-fou contre le correctif trop strict',
     AL.length > 300 && perdus.length === 0, js(perdus.slice(0, 8)));
+  /* ⚠️ DETTE CONSIGNÉE, PAS CORRIGÉE ICI : 23 alias DÉCLARÉS dans `_EX_EQUIV` contredisent le matériel écrit
+     de leur propre clé (« dumbbell row » → Rowing Barre, « overhead press machine » → Développé Militaire…).
+     L'étage « alias déclaré » est conservé par ce lot (consigne de la mission) : leur correction est une
+     décision de Michel. Le témoin est un CLIQUET : le nombre peut baisser, jamais monter en silence. */
+  const ALC = await pg.evaluate(() => Object.keys(_EX_EQUIV).map(k => ({ k, c: _EX_EQUIV[k], eq: _exEquip(_EX_EQUIV[k]) })));
+  const contradictoires = ALC.filter(a => { const s = materielEcrit(a.k), c = matCible(a.c, a.eq); if (!s || !c || s === c) return false;
+    if (c === 'guide') return !['machine', 'poulie', 'smith'].includes(s); return true; });
+  t('G5 cliquet : alias déclarés qui contredisent leur matériel écrit ≤ 23 (dette consignée, jamais d\'ajout silencieux)',
+    contradictoires.length <= 23, contradictoires.length + ' : ' + js(contradictoires.map(a => a.k + ' → ' + a.c)));
   const EN = await pg.evaluate(() => (EXLIB || []).filter(ex => typeof EX_EN !== 'undefined' && EX_EN[ex.n]).map(ex => { const r = _matchExercise(EX_EN[ex.n]) || {}; return { en: EX_EN[ex.n], n: ex.n, tier: r.tier, match: r.match }; }));
   const enPerdus = EN.filter(e => !(e.tier === 'auto'));
   t('G4 les ' + EN.length + ' synonymes anglais du catalogue restent tous AUTO', EN.length > 100 && enPerdus.length === 0, js(enPerdus.slice(0, 6)));

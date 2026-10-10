@@ -3080,10 +3080,37 @@ Object.assign(_EX_EQUIV,{
   'chest fly':'Écarté Haltères','db fly':'Écarté Haltères','dumbbell fly':'Écarté Haltères','ecarte poitrine halteres':'Écarté Haltères','pec fly':'Écarté Haltères',
   'cable chest fly':'Écarté Poulie','cable fly':'Écarté Poulie','poulie vis a vis':'Écarté Poulie','standing cable fly':'Écarté Poulie',
 });
+/* 🏷️ IMPORT-MAP-01 (10/10/2026) — LE MATÉRIEL ÉCRIT DANS UN NOM NE SE PERD PLUS AU RAPPROCHEMENT.
+   `_EX_STOP` retire machine / barre / haltères / poulie / câble (ils y sont avec le bruit commercial) :
+   mesuré sur master b280ea5d, « Squat machine » se réduisait à « squat » → « Squat à la Barre » (AUTO 95)
+   et « Élévations latérales haltères » partageait tous ses mots utiles avec « …Câble » (AUTO 100). À l'import,
+   la carte prenait alors les charges, les séances et le record d'un AUTRE exercice (140 kg du squat barre).
+   ⭐ Le mot ÉCRIT décide (Smith › poulie/câble › machine/guidé › haltères › barre) : `_exEquip` fait passer
+   la FAMILLE avant lui (« Chest Press barre » → guidé, mesuré), ce qui est juste pour ranger le catalogue
+   mais pas pour respecter ce que le programme a écrit. Quand RIEN n'est écrit, le matériel est celui que
+   `_exEquip` déduit (R13 : pas un 2ᵉ classement), et un guidé déduit reste « un guidé quelconque ».
+   `ecritSeulement` : null si le nom n'écrit aucun matériel — côté source on ne déduit jamais une famille
+   (« Pec deck », « Pendulum » ne disent rien). */
+function _materielDe(nom, ecritSeulement){
+  const s=' '+_normEx(nom)+' ';
+  if(/ smith /.test(s)) return 'smith';
+  if(/ (poulie|cable|cables) /.test(s)) return 'poulie';
+  if(/ (machine|guide|guidee) /.test(s)) return 'machine';
+  if(/ (haltere|halteres|dumbbell|dumbbells|kettlebell) /.test(s)) return 'libre';
+  if(/ (barre|barbell) /.test(s)) return 'barre';
+  if(ecritSeulement) return null;
+  const eq=_exEquip(nom);
+  return (!eq||eq==='autre')?null:eq;
+}
 // tier : 'auto' (≥90 → rattacher direct) · 'confirm' (grise → demander à l'utilisateur) · 'new' (<seuil → créer).
 function _matchExercise(name,opts){
   opts=opts||{}; const all=(typeof EXLIB!=='undefined')?EXLIB:[];
   const q=_normEx(name); if(!q)return{match:null,score:0,confidence:0,tier:'new',via:'vide'};
+  // IMPORT-MAP-01 : le matériel ÉCRIT par la source contredit-il celui de la cible ? (machine/poulie/Smith
+  // restent compatibles avec un guidé que la cible n'écrit pas : « Peck deck machine » → Pec Deck.)
+  const matSrc=_materielDe(name,true);
+  const contredit=cible=>{ if(!matSrc)return false; const c=_materielDe(cible,false);
+    if(!c||c===matSrc)return false; return !(c==='guide'&&/^(machine|poulie|smith)$/.test(matSrc)); };
   // 1) exact (après normalisation accents/casse/ponctuation)
   for(const ex of all){ if(_normEx(ex.n)===q) return {match:ex.n,score:1,confidence:100,tier:'auto',via:'exact'}; }
   // 1bis) EXACT SUR LE NOM SANS SA PARENTHÈSE — 77 exercices du catalogue portent une
@@ -3110,7 +3137,9 @@ function _matchExercise(name,opts){
   if(typeof EX_EN!=='undefined'){ for(const ex of all){ const en=EX_EN[ex.n]; if(en&&_normEx(en)===q) return {match:ex.n,score:.96,confidence:96,tier:'auto',via:'synonyme EN'}; } }
   // 3) équivalence sémantique connue (curatée → fiable), tolérante au mot « machine »
   const eq=_eqLookup(q,name);
-  if(eq){ return {match:eq,score:.95,confidence:95,tier:'auto',via:'équivalence connue'}; }
+  // IMPORT-MAP-01 : l'alias COMPLET déclaré reste souverain ; la forme RÉDUITE (mots vides retirés, dont le
+  // matériel) ne s'applique pas contre le matériel écrit — on passe au recouvrement de mots, gardé pareil.
+  if(eq&&(_EX_EQUIV[q]||!contredit(eq))){ return {match:eq,score:.95,confidence:95,tier:'auto',via:'équivalence connue'}; }
   // 4) recouvrement de mots (Jaccard) contre le NOM FR *et* le synonyme EN, + garde-fou modificateurs
   const qt=_exTokens(name); if(!qt.length)return{match:null,score:0,confidence:0,tier:'new',via:'aucun mot utile'};
   const qset=new Set(qt); let best=null,bestScore=0;
@@ -3118,6 +3147,7 @@ function _matchExercise(name,opts){
   const qPat=_movPattern(name);   // garde-fou taxonomie : schémas moteurs différents → jamais fusionner
   for(const ex of all){
     if(qPat){ const cPat=_movPattern(ex.n); if(cPat && cPat!==qPat) continue; }
+    if(contredit(ex.n)) continue;   // IMPORT-MAP-01 : un autre matériel n'est jamais candidat
     const jN=_exJac(qset,new Set(_exTokens(ex.n)));                                   // vs nom français
     const jE=hasEN&&EX_EN[ex.n]?_exJac(qset,new Set(_exTokens(EX_EN[ex.n]))):0;       // vs synonyme anglais
     const jac=Math.max(jN,jE);
@@ -3125,7 +3155,10 @@ function _matchExercise(name,opts){
   }
   const conf=Math.round(bestScore*100);
   const AUTO=(opts.auto!=null)?opts.auto:90, CONFIRM=(opts.confirm!=null)?opts.confirm:22;
-  if(best && conf>=AUTO) return {match:best,score:+bestScore.toFixed(2),confidence:conf,tier:'auto',via:'mots'};
+  // IMPORT-MAP-01 (décision de Michel) : un nom qui n'écrit AUCUN matériel ne devient pas en silence une
+  // variante qui en écrit un (« Développé épaules » → « …Machine ») : on demande. Les alias déclarés et les
+  // identités exactes, plus haut, ne passent pas par ici.
+  if(best && conf>=AUTO) return {match:best,score:+bestScore.toFixed(2),confidence:conf,tier:(!matSrc&&_materielDe(best,true))?'confirm':'auto',via:'mots'};
   if(best && conf>=CONFIRM) return {match:best,score:+bestScore.toFixed(2),confidence:conf,tier:'confirm',via:(conf>=34?'mots':'ambigu → IA')};
   return {match:null,score:+bestScore.toFixed(2),confidence:conf,tier:'new',via:'nouveau'};
 }

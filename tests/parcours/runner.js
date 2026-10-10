@@ -39613,6 +39613,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      Premium » présente le jeton ; la carte des comptes dit qu'elle affiche des adresses. Vrai Code.js en local (doGet /
      doPost réels), adresses fictives example.test uniquement. Banc : tools/banc_sec_admin.js. */
   await require('./sec_admin.js').ecran(t, b, PORT);
+  /* 🏷️ IMPORT-MAP-01 (session-B, 10/10/2026) — un rapprochement automatique ne change jamais le matériel écrit
+     (machine ≠ barre ≠ haltères ≠ poulie ≠ Smith) ; un nom sans matériel vers une variante qui en écrit un → confirmation
+     (décision de Michel) ; historique, charges et records d'un autre exercice jamais récupérés par l'import. Banc :
+     tools/banc_import_map.js · contrôle négatif : tools/mut_import_map.py · grille : tools/grille_import_map.js. */
+  await require('./import_map.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
