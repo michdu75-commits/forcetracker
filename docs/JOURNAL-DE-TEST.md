@@ -3448,3 +3448,25 @@ fausse, ou l'accepte-t-elle par réflexe ? Vérifiable par du code : ✅ (la sug
 extension », « leg extension poulie » → les machines ; « Élévations frontales machine / poulie » → la générique alors que les variantes
 existent. Retirer un alias n'y change rien : `_exEquip` ne lit pas le nom anglais. Vérifiable par du code : ✅ (le banc B-IMAPB-S le
 prouve à chaque passe en retirant l'alias dans la page). État : **à trier** (moteur, hors IMPORT-MAP-01B).
+⚠️ *Mise à jour du 10/10 (IMPORT-MAP-02)* : « Fentes » n'est plus dans cette dette — son nom anglais disait *lunge barbell* alors que la
+décision est « les 3 » (Michel, **D-056**) ; il dit maintenant *lunge*, et les 2 alias Fentes sont conformes. Le moteur lit désormais le nom
+anglais d'une cible « Polyvalent » (pas des autres). « Élévations frontales poulie » → *…Câble* (AUTO juste ; « …machine » → *…Machine* l'était déjà).
+Restent 4 clés (abduction / adduction / extension quadriceps : des « guidé » que le garde-fou ne précise pas).
+
+### 🟡 « TRACTIONS BARRE FIXE » : UN EXERCICE NOUVEAU AU LIEU DE « TRACTIONS » (10/10/2026 — IMPORT-MAP-02, hors lot)
+Depuis IMPORT-MAP-01, la barre **de traction** est lue comme une charge : « Tractions barre fixe », « Traction à la barre » → **nouveau**
+(master : question vers *Traction Lestée*, une suggestion fausse aussi). Rien n'est repris à tort, mais la personne risque de créer un
+doublon de ses tractions. ❓ **Doute** : à l'import, crée-t-elle le doublon ou corrige-t-elle ? Vérifiable par du code : ✅ (le
+rattachement se mesure). État : **à trier** — « barre de traction » est exclue d'IMPORT-MAP-02 (agrès ≠ charge ≠ poignée).
+
+### 🟡 APRÈS EXCLUSION, LA QUESTION PROPOSE PARFOIS UNE MAUVAISE CIBLE (10/10/2026 — IMPORT-MAP-02, hors lot)
+Le faux AUTO est parti, mais la suggestion n'est pas toujours la bonne : « Cable Lat Raise » et « Élév. lat. poulie » → question
+*Tirage Poulie Haute* (« lat » lu comme *lat pulldown*) ; « Kickback câble triceps » → question *Triceps Poulie* ; « Oiseau sur poulie » et
+« Elev lat machine » → **nouveau** alors que *Oiseau Poulie 45°* et *Élévations Latérales Machine* existent. ❓ **Doute** : la personne
+refuse-t-elle la suggestion fausse, ou l'accepte-t-elle par réflexe ? Vérifiable par du code : ✅. État : **à trier** (qualité des
+suggestions P1-3, modificateurs P1-4, abréviation « elev » — hors lot).
+
+### 🟡 « TIRAGE HORIZONTAL BARRE » : ROWING À LA BARRE OU POULIE BASSE AVEC UNE BARRE ? (10/10/2026 — IMPORT-MAP-02)
+Ambigu par décision de Michel (**D-056**, P.4) : jamais AUTO, ni vers *Rowing Barre*, ni vers *Rowing Câble* ; une question est acceptable.
+Aujourd'hui : question vers *Rowing Barre*. ❓ **Doute** : que veut dire le coach qui l'écrit ? Le code ne peut pas le savoir. État :
+**juge humain** (le sens se lit dans le programme, pas dans le nom).

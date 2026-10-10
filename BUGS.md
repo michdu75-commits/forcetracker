@@ -4517,3 +4517,27 @@ sémantique). Trois leçons de méthode, payées ici :
   rattache pareil, retirer l'alias ne protège rien — c'est une dette du moteur, nommée et figée (6 clés : `_exEquip` ne lit pas le nom anglais
   du catalogue, « Fentes » est la fente à la barre). *Retirer pour retirer aurait donné un diff propre et zéro protection.*
 **Protège (branche)** : banc `tools/banc_import_map_alias.js` (B-IMAPB-O/A/R/S/H) ; contrôle négatif `tools/mut_import_map.py` (24/24 conformes).
+⚠️ *Ajout du 10/10 (IMPORT-MAP-02)* : la parenthèse ci-dessus « « Fentes » est la fente à la barre » décrivait le nom anglais du
+catalogue (« lunge barbell »), **pas la décision** : Fentes est multi-matériel, « les 3 » (barre, haltères ou poids du corps — Michel, 01/08,
+réaffirmé le 10/10, **D-056**). Le nom anglais a été aligné (« lunge »), et 2 des 6 clés de la dette moteur en sortent.
+
+**↪️ IMPORT-MAP-02 (10/10/2026, même branche, NON publié) — le mot lu, mais pas son RÔLE.** Après 01 / 01B, trois défauts restaient dans
+le même propriétaire, `_materielDe` (audit du corpus externe + Ghost du Drive) :
+- **la cible « Polyvalent » était aveugle** : `_exEquip` range 31 exercices en « autre », et le garde-fou ne leur voyait aucun matériel.
+  « Lateral Raise (Cable) » partait en AUTO vers les élévations **aux haltères**, « Machine Glute Kickbacks » vers le kickback **à la poulie**,
+  « Reverse Fly Machine » vers l'Oiseau aux haltères — avec leurs charges ;
+- **« barre » lu comme une charge partout** : « Tirage vertical barre » (programme réel du 21 juin) est une poulie haute dont la barre
+  est la **poignée** — l'illustration du catalogue s'appelle elle-même `triceps-poulie-haute-barre` ;
+- **la poulie écrite sans le mot** (corde, rope, pushdown, pulldown) et l'**EZ** n'étaient pas lus : « Triceps corde » ×2 du Drive passait
+  pour un nom « sans matériel » et D-053 demandait une confirmation à tort.
+**À quoi on la reconnaît** : un mot qui change de sens selon ses voisins (barre = charge, poignée ou agrès), et une catégorie de
+**rangement** (le sélecteur) employée comme une **identité**. *Une case « Polyvalent » sert à ranger, pas à dire ce qu'est la chose.*
+**Le piège évité, de la même famille** : lire le nom anglais **avant** `_exEquip` (ordre T1) aurait tranché Tirage Menton en barre **en
+silence** — une décision de Michel prise par l'ordre de deux lignes. Le nom anglais n'est lu **que** quand la famille ne sait rien.
+**Deux protections qui ne se voient QUE chez le propriétaire** (mesuré) : l'exclusion cardio de la corde et l'EZ lue « poignée » partout
+ne changent **aucun** rattachement, parce que la lecture est la même des deux côtés. *Une erreur symétrique est invisible à une comparaison* :
+elle se teste sur `_materielDe` directement (X2, X10), pas sur le résultat de l'import.
+**Protège (branche)** : banc `tools/banc_import_map2.js` (B-IMAP2-A/I/Q/D/X/H/C, corpus externe figé en cliquet) ; contrôle négatif
+`tools/mut_import_map2.py` ; oracles 01 / 01B adaptés (rôle de la barre dans la grille, Fentes « les 3 » dans le cliquet).
+⚠️ **Non corrigé** (hors lot, consigné) : alias « triceps pushdown » (P0-2), Tirage Menton (P.2) et Tirage en Rack / Waiter Curl (P.3)
+différés, suggestions faibles, modificateurs, pluriel « poulies », barre de traction, élastique, langues autres que FR / EN.
