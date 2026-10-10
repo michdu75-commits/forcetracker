@@ -3109,7 +3109,14 @@ function _materielDe(nom, ecritSeulement){
   if(/ (poulie|cable|cables) /.test(s)) return 'poulie';
   if(/ (machine|guide|guidee) /.test(s)) return 'machine';
   if(/ (haltere|halteres|dumbbell|dumbbells|kettlebell) /.test(s)) return 'libre';
-  if(/ (barre|barbell) /.test(s)) return 'barre';
+  /* IMPORT-MAP-02 : la poulie écrite SANS le mot (pushdown, pulldown, corde, rope) — sauf élastique, et sauf corde de
+     cardio. Mesuré : le Drive écrit « Triceps corde » ; le catalogue a aussi « Sauts à la Corde » et un pushdown élastique.
+     Et une barre (ou EZ) en contexte de poulie est la POIGNÉE, pas la charge : « Tirage vertical barre » est une poulie
+     haute (l'illustration du catalogue s'appelle elle-même `tirage-vertical-poitrine`). « tirage horizontal » (traduction
+     de quatre rowings au catalogue) et « tirage menton » n'en sont PAS : décisions P.2 / P.4 de Michel. */
+  const cable=!/ (elastique|elastiques|band|bands|bande|bandes|resistance) /.test(s)&&(/ (pushdown|pulldown)s? /.test(s)||(/ (corde|rope)s? /.test(s)&&!/ (sauter|sauts?|jump|battle|ondulatoires?|climb|grimper|montee) /.test(s)));
+  if(/ (barre|barbell|ez) /.test(s)) return (cable||(/ tirage /.test(s)&&/ (verticale?|poitrine|nuque) /.test(s)))?'poulie':'barre';
+  if(cable) return 'poulie';
   if(ecritSeulement) return null;
   const eq=_exEquip(nom);
   return (!eq||eq==='autre')?null:eq;
