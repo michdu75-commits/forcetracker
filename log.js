@@ -2944,6 +2944,11 @@ Object.assign(_EX_EQUIV,{
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles 6-14 + spéciales) → nom canonique EXLIB ───
 // Fentes, Quadriceps, Ischios, Mollets, Gainage/Abdos, Curl, Triceps, Épaules, Poussée verticale.
 // Même principe : rattache un libellé importé au bon exo EXLIB, ne crée jamais d'exercice.
+// ⛔ IMPORT-MAP-01B (10/10/2026) : un alias ne change JAMAIS le matériel écrit dans sa clé — il passe AVANT le garde-fou
+// matériel de `_matchExercise`, donc il le contourne (« rowing halteres » → Rowing Barre donnait aux haltères la charge, les
+// séances et le record de la barre). Une clé qui écrit un matériel vise une cible du MÊME matériel ; s'il n'en existe aucune,
+// ou plusieurs plausibles, la clé est retirée (le moteur demande). Seule exception : « lat machine » (le poste de tirage EST
+// la poulie haute). Témoin : B-IMAPB (tests/parcours/import_map_alias.js), vocabulaire db/bb/kb compris.
 Object.assign(_EX_EQUIV,{
   'french press':'Barre au Front','lying triceps extension':'Barre au Front','skull crusher':'Barre au Front',
   'battle ropes':'Battle Rope','rope waves':'Battle Rope',
@@ -2954,27 +2959,31 @@ Object.assign(_EX_EQUIV,{
   'ab crunch machine':'Crunch Machine','machine crunch':'Crunch Machine',
   'kneeling cable crunch':'Crunch Poulie',
   'spider curl':'Curl Araignée (Spider Curl)','spider db curl':'Curl Araignée (Spider Curl)',
-  'arm curl machine':'Curl Barre','barbell curl':'Curl Barre','bb curl':'Curl Barre','biceps curl machine':'Curl Barre','machine curl':'Curl Barre','standing barbell curl':'Curl Barre',
+  'arm curl machine':'Curl Pupitre Machine','barbell curl':'Curl Barre','bb curl':'Curl Barre','biceps curl machine':'Curl Pupitre Machine','machine curl':'Curl Pupitre Machine','standing barbell curl':'Curl Barre',
   'concentration curl':'Curl Concentré','concentration db curl':'Curl Concentré',
   // Le Bayesian Curl est retiré du catalogue (09/08) : on redirige vers le curl à la poulie, dont il est une variante.
   'bayesian cable curl':'Curl Poulie','bayesian curl':'Curl Poulie',
   'ez bar curl':'Curl EZ','ez curl':'Curl EZ',
   'db curl':'Curl Haltères','dumbbell curl':'Curl Haltères',
   'incline curl':'Curl Incliné','incline dumbbell curl':'Curl Incliné',
-  'cable leg curl':'Leg Curl Couché Machine','leg curl poulie':'Leg Curl Couché Machine','low cable leg curl':'Leg Curl Couché Machine',   // ft-v1175 : cible renommée (voir plus haut)
+  // IMPORT-MAP-01B (R30) : 'cable leg curl', 'leg curl poulie', 'low cable leg curl' RETIRÉS — aucun leg curl à la poulie au catalogue.
   'cable curl':'Curl Poulie','standing cable curl':'Curl Poulie',
   'curl pupitre':'Curl Pupitre Machine','preacher curl':'Curl Pupitre Machine','preacher machine curl':'Curl Pupitre Machine','scott curl':'Curl Pupitre Machine',
   'dragon flag':'Drapeau (Dragon Flag)','dragon flag hold':'Drapeau (Dragon Flag)',
   'competition bench press':'Développé Couché','flat bench':'Développé Couché','powerlifting bench':'Développé Couché',
-  'barbell overhead press':'Développé Militaire','developpe militaire barre':'Développé Militaire','machine overhead press':'Développé Militaire','military press':'Développé Militaire','ohp':'Développé Militaire','overhead press':'Développé Militaire','overhead press machine':'Développé Militaire','standing military press':'Développé Militaire',
+  'barbell overhead press':'Développé Militaire','developpe militaire barre':'Développé Militaire','machine overhead press':'Développé Épaules Machine','military press':'Développé Militaire','ohp':'Développé Militaire','overhead press':'Développé Militaire','overhead press machine':'Développé Épaules Machine','standing military press':'Développé Militaire',
   'db overhead press':'Développé Militaire Haltères','dumbbell shoulder press':'Développé Militaire Haltères',
   'machine shoulder press':'Développé Épaules Machine','seated shoulder press':'Développé Épaules Machine','shoulder press machine':'Développé Épaules Machine',
-  'db overhead extension':'Extension Nuque Haltère','extension nuque poulie':'Extension Nuque Haltère','overhead cable triceps extension':'Extension Nuque Haltère','overhead dumbbell triceps extension':'Extension Nuque Haltère',
-  'cable leg extension':'Extension Quadriceps (Leg Extension)','leg extension machine':'Extension Quadriceps (Leg Extension)','leg extension poulie':'Extension Quadriceps (Leg Extension)','leg extension seated':'Extension Quadriceps (Leg Extension)','low cable knee extension':'Extension Quadriceps (Leg Extension)','machine leg extension':'Extension Quadriceps (Leg Extension)','quadriceps extension':'Extension Quadriceps (Leg Extension)','seated leg extension':'Extension Quadriceps (Leg Extension)',
+  'db overhead extension':'Extension Nuque Haltère','extension nuque poulie':'Extension Nuque Poulie Haute','overhead cable triceps extension':'Extension Nuque Poulie Haute','overhead dumbbell triceps extension':'Extension Nuque Haltère',
+  // IMPORT-MAP-01B (R30) : 'low cable knee extension' RETIRÉ — aucune extension quadriceps à la poulie au catalogue.
+  'cable leg extension':'Extension Quadriceps (Leg Extension)','leg extension machine':'Extension Quadriceps (Leg Extension)','leg extension poulie':'Extension Quadriceps (Leg Extension)','leg extension seated':'Extension Quadriceps (Leg Extension)','machine leg extension':'Extension Quadriceps (Leg Extension)','quadriceps extension':'Extension Quadriceps (Leg Extension)','seated leg extension':'Extension Quadriceps (Leg Extension)',
   'cable triceps pushdown':'Extension Triceps','extension triceps poulie':'Extension Triceps','triceps pushdown':'Extension Triceps',
-  'cable kickback':'Extension Triceps Arrière (Kickback)','db kickback':'Extension Triceps Arrière (Kickback)','kickback triceps':'Extension Triceps Arrière (Kickback)','triceps kickback':'Extension Triceps Arrière (Kickback)',
+  // IMPORT-MAP-01B (R30) : 'cable kickback' RETIRÉ — la cible est le kickback aux haltères ; aucun kickback triceps à la poulie, et le
+  // mot désigne aussi le kickback fessiers à la poulie : ambigu, le moteur demande.
+  'db kickback':'Extension Triceps Arrière (Kickback)','kickback triceps':'Extension Triceps Arrière (Kickback)','triceps kickback':'Extension Triceps Arrière (Kickback)',
   'farmer carry':'Farmer\'s Walk','farmer walk':'Farmer\'s Walk','loaded carry':'Farmer\'s Walk',
-  'barbell lunge':'Fentes','bb lunge':'Fentes','db lunge':'Fentes','dumbbell lunge':'Fentes','fentes barre':'Fentes','fentes halteres':'Fentes','forward lunge':'Fentes','lunge':'Fentes','static lunge':'Fentes',
+  // IMPORT-MAP-01B (R30) : 'db lunge' RETIRÉ — « Fentes » est la fente à la barre (nom anglais du catalogue) ; aucune fente aux haltères.
+  'barbell lunge':'Fentes','bb lunge':'Fentes','dumbbell lunge':'Fentes','fentes barre':'Fentes','fentes halteres':'Fentes','forward lunge':'Fentes','lunge':'Fentes','static lunge':'Fentes',
   'backward lunge':'Fentes Arrière','reverse lunge':'Fentes Arrière',
   'kb lunge':'Fentes Kettlebell','kettlebell lunge':'Fentes Kettlebell',
   'cossack lunge':'Fentes Latérales','lateral lunge':'Fentes Latérales','side lunge':'Fentes Latérales',
@@ -2987,7 +2996,8 @@ Object.assign(_EX_EQUIV,{
   'leg curl debout unilateral':'Leg Curl Unilatéral Debout','one leg standing curl':'Leg Curl Unilatéral Debout','single leg curl':'Leg Curl Unilatéral Debout','standing leg curl':'Leg Curl Unilatéral Debout',
   'band leg curl':'Leg Curl Élastique','resistance band leg curl':'Leg Curl Élastique',
   'calf raise machine':'Mollets Machine Debout','mollets debout machine':'Mollets Machine Debout','standing calf machine':'Mollets Machine Debout','standing calf raise':'Mollets Machine Debout',
-  'barbell step up':'Montée sur Box Haltères','bench step up':'Montée sur Box Haltères','box step up':'Montée sur Box Haltères','db step up':'Montée sur Box Haltères','dumbbell step up':'Montée sur Box Haltères','step up':'Montée sur Box Haltères','step up barre':'Montée sur Box Haltères','step up halteres':'Montée sur Box Haltères',
+  // IMPORT-MAP-01B (R30) : 'barbell step up', 'step up barre' RETIRÉS — aucune montée sur box à la barre au catalogue.
+  'bench step up':'Montée sur Box Haltères','box step up':'Montée sur Box Haltères','db step up':'Montée sur Box Haltères','dumbbell step up':'Montée sur Box Haltères','step up':'Montée sur Box Haltères','step up halteres':'Montée sur Box Haltères',
   'bent over reverse fly':'Oiseau','rear delt fly':'Oiseau','reverse fly':'Oiseau',
   // Le Sit-up est retiré (09/08). « sit up » reste un mot de salle TRÈS courant : sans cible il
   // rendrait « Aucun résultat » et la personne créerait un doublon perso. Redirigé vers le Crunch.
@@ -3004,10 +3014,10 @@ Object.assign(_EX_EQUIV,{
   'fentes smith machine':'Smith Machine Fentes','smith machine lunge':'Smith Machine Fentes','smith split squat':'Smith Machine Fentes',
   'competition deadlift':'Soulevé de Terre','powerlifting deadlift':'Soulevé de Terre',
   'competition squat':'Squat à la Barre','powerlifting squat':'Squat à la Barre','squat':'Squat à la Barre',
-  'barbell thruster':'Thruster','dumbbell thruster':'Thruster','squat to press':'Thruster','thruster halteres':'Thruster',
+  'barbell thruster':'Thruster','dumbbell thruster':'Thrusters Haltères','squat to press':'Thruster','thruster halteres':'Thrusters Haltères',
   'high pull upright':'Tirage Menton','rowing menton':'Tirage Menton','upright row':'Tirage Menton',
   'cable face pull':'Tirage Visage (Face Pull)','face pull':'Tirage Visage (Face Pull)','rope face pull':'Tirage Visage (Face Pull)',
-  'machine triceps':'Triceps Poulie','seated triceps machine':'Triceps Poulie',
+  'machine triceps':'Triceps Machine','seated triceps machine':'Triceps Machine',
   // 'tgu' retiré le 09/08 avec l'exercice Turkish Get-Up (un synonyme sans cible = « Aucun résultat »)
   'db front raise':'Élévations Frontales','front raise':'Élévations Frontales',
   'db lateral raise':'Élévations Latérales (Lateral Raise)','lateral raise':'Élévations Latérales (Lateral Raise)',
@@ -3040,7 +3050,7 @@ Object.assign(_EX_EQUIV,{
   'diamond push up':'Pompes Diamant','diamond pushup':'Pompes Diamant',
   'pompes avec lest':'Pompes Lestées','weighted push up':'Pompes Lestées','weighted pushup':'Pompes Lestées',
   'bridge':'Pont Fessier (Glute Bridge)','floor bridge':'Pont Fessier (Glute Bridge)','glute bridge':'Pont Fessier (Glute Bridge)',
-  'barbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','db hip thrust':'Hip Thrust Barre (Poussée de Hanche)','dumbbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','glute thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust barbell':'Hip Thrust Barre (Poussée de Hanche)','hip thrust halteres':'Hip Thrust Barre (Poussée de Hanche)',
+  'barbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','db hip thrust':'Hip Thrust Haltère (Poussée de Hanche)','dumbbell hip thrust':'Hip Thrust Haltère (Poussée de Hanche)','glute thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust barbell':'Hip Thrust Barre (Poussée de Hanche)','hip thrust halteres':'Hip Thrust Haltère (Poussée de Hanche)',
   'hip thrust machine':'Hip Thrust Machine (Poussée de Hanche)','machine hip thrust':'Hip Thrust Machine (Poussée de Hanche)',
   // ⚠️ CORRIGÉ le 25/08 — ces 4 équivalences pointaient vers « Pull-over » tout court, retiré du
   //    catalogue ce jour-là : un import les aurait rattachées à un exercice qui n'existe plus.
@@ -3049,7 +3059,9 @@ Object.assign(_EX_EQUIV,{
   //    Trouvé en cherchant les jumelles du retrait (R8), pas après coup.
   'cable pullover':'Pull-over Poulie','pullover poulie':'Pull-over Poulie','straight arm lat pulldown':'Pull-over Poulie','straight arm pulldown':'Pull-over Poulie',
   'machine pullover':'Pullover Machine','nautilus pullover':'Pullover Machine',
-  'barbell bent over row':'Rowing Barre (Tirage Horizontal)','barbell row':'Rowing Barre (Tirage Horizontal)','bb row':'Rowing Barre (Tirage Horizontal)','bent over dumbbell row':'Rowing Barre (Tirage Horizontal)','bent over row':'Rowing Barre (Tirage Horizontal)','bent row':'Rowing Barre (Tirage Horizontal)','db row':'Rowing Barre (Tirage Horizontal)','dumbbell row':'Rowing Barre (Tirage Horizontal)','rowing barre pronation':'Rowing Barre (Tirage Horizontal)','rowing deux halteres':'Rowing Barre (Tirage Horizontal)','rowing halteres':'Rowing Barre (Tirage Horizontal)',
+  'barbell bent over row':'Rowing Barre (Tirage Horizontal)','barbell row':'Rowing Barre (Tirage Horizontal)','bb row':'Rowing Barre (Tirage Horizontal)','bent over dumbbell row':'Rowing Haltères Buste Penché','bent over row':'Rowing Barre (Tirage Horizontal)','bent row':'Rowing Barre (Tirage Horizontal)','rowing barre pronation':'Rowing Barre (Tirage Horizontal)','rowing deux halteres':'Rowing Haltères Buste Penché',
+  // IMPORT-MAP-01B (R30) : 'db row', 'dumbbell row', 'rowing halteres' RETIRÉS — un bras (Rowing Haltère) ou buste penché
+  // (Rowing Haltères Buste Penché) : deux cibles plausibles, le moteur demande. Le choix est à Michel.
   'chest supported row machine':'Rowing Machine (Tirage Horizontal)','machine row':'Rowing Machine (Tirage Horizontal)','row machine':'Rowing Machine (Tirage Horizontal)','seated row machine':'Rowing Machine (Tirage Horizontal)',
   'chest supported t bar row':'Rowing T-Bar Machine','landmine row':'Rowing T-Bar Machine','rowing t bar':'Rowing T-Bar Machine','t bar row':'Rowing T-Bar Machine',
   'safety squat bar':'Safety Bar Squat','ssb squat':'Safety Bar Squat',

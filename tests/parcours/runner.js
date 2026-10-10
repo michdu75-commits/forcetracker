@@ -31104,9 +31104,15 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
     t('CCLXXIII ⭐ les 4 formes FRANÇAISES rendent la même chose que « leg curl » (R8)',
       R.en.t==='auto' && R.fr.every(x=>x.q===R.en.q && x.t==='auto'),
       'en : '+R.en.q+' · fr : '+R.fr.map(x=>x.q+'('+x.t+')').join(' | '));
-    t('CCLXXIII ⛔ les 3 formes « poulie » suivent aussi le nom actuel',
-      R.poulie.every(x=>x.q==='Leg Curl Couché Machine' && x.t==='auto'),
-      R.poulie.map(x=>x.q).join(' | '));
+    /* ⛔ RÉÉCRIT (R30) PAR IMPORT-MAP-01B (10/10/2026) — ce témoin exigeait que « cable leg curl », « leg curl poulie »,
+       « low cable leg curl » partent en AUTO vers « Leg Curl Couché Machine ». Il protégeait le renommage de ft-v1175
+       (la cible fantôme), mais il figeait du même coup un alias POULIE → MACHINE : le leg curl au câble recevait la
+       charge, les séances et le record de la machine couchée. Le catalogue n'a AUCUN leg curl à la poulie : les trois
+       alias sont retirés, et l'invariant devient « aucune cible du bon matériel → jamais d'identité inventée ». La
+       garantie de ft-v1175 (pas d'exercice fantôme pour « leg curl ») reste portée par les témoins juste au-dessus. */
+    t('CCLXXIII ⛔ les 3 formes « poulie » ne reçoivent JAMAIS en AUTO l\'identité de la machine couchée (aucun leg curl à la poulie au catalogue)',
+      R.poulie.every(x=>x.t!=='auto' && x.q!=='Leg Curl Couché Machine'),
+      R.poulie.map(x=>x.q+'('+x.t+')').join(' | '));
     /* ⛔⛔ LE TÉMOIN QUI FIGE UN RETRAIT (R30) : sans lui, la prochaine session « répare » en
        remettant les deux clés, et refait le synonyme faux. */
     t('CCLXXIII ⛔⛔ RETRAIT VOLONTAIRE — « nordic curl » et « trx ham curl » ne sont PLUS dans la table',
