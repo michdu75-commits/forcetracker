@@ -850,7 +850,7 @@ C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexista
 
 Les dettes ci-dessous sont **consignées, non corrigées** (constats du Ghost final ; V-4 re-mesuré ici). Aucune ne crée d'AUTO faux ni de
 contamination d'historique. ⛔ **P0-2** (« Triceps Pushdown » / « Cable triceps pushdown » / « Extension triceps poulie » → *Extension
-Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUTO high restant) est **hors de ce lot** : prochain micro-lot.
+Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUTO high restant) est **hors de ce lot** : prochain micro-lot. ↪️ *Traité par IMPORT-P0-2 (section suivante) : **QUALIFIÉ / NON INTÉGRÉ / NON PUBLIÉ**.*
 
 | | Dette (Ghost final) | État |
 |---|---|---|
@@ -878,7 +878,7 @@ Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUT
 | élastique (« Banded pushdown », « Pushdown élastique ») | question → Triceps Poulie, jamais AUTO | ✅ inchangé |
 | « Extension triceps haltère », « Skull crusher », « Barre au front », « Extension Triceps » exact | AUTO juste | ✅ inchangé |
 | corpus externe, AUTO faux « high » | 1 (EXT-0138) | ✅ **0** (EXT-0138 rejoint le cliquet A_fige, 97 → 98 justes) ; AUTO faux toutes confiances 6 → 5 (Rowing T-Bar « medium », Leg Curl ×4 « ambiguous », inchangés) |
-| ⚠️ famille « extension triceps + matériel » (« Extension triceps à la poulie », « … câble », « Cable triceps extension », « Extensions triceps poulie », « Extension triceps barre », « Extension triceps machine » — 10 tournures) | AUTO Extension Triceps **par les mots**, pas par un alias | ⚠️ **inchangé — limite connue, nommée et figée** (le banc rougit si elle grandit). Cause : « Extension Triceps » est rangée « Polyvalent » et son nom anglais (« triceps extension overhead ») ne dit aucun matériel, donc le garde-fou d'IMPORT-MAP ne peut pas s'y opposer. **Décision de Michel attendue** : que désigne « Extension Triceps » ? (haltère seulement → lui donner un matériel lisible, précédent Fentes D-056 ; ou alias au cas par cas) |
+| ⚠️ famille « extension triceps + matériel » (« Extension triceps à la poulie », « … câble », « Cable triceps extension », « Extensions triceps poulie », « Extension triceps barre », « Extension triceps machine » — 10 tournures) | AUTO Extension Triceps **par les mots**, pas par un alias | ⚠️ **inchangé — limite connue, nommée et figée** (le banc rougit si elle grandit). Cause : « Extension Triceps » est rangée « Polyvalent » et son nom anglais (« triceps extension overhead ») ne dit aucun matériel, donc le garde-fou d'IMPORT-MAP ne peut pas s'y opposer. **Décision de Michel attendue** : que désigne « Extension Triceps » ? (haltère seulement → lui donner un matériel lisible, précédent Fentes D-056 ; ou alias au cas par cas). **Option recommandée, à soumettre** : « Extension Triceps » représente aujourd'hui l'extension **verticale à l'haltère** (son illustration et son nom anglais le disent) — ⛔ *recommandation, pas un code : rien n'est changé sans décision* (11/10, CLOTURE-CHANTIERS-DOCS-01). Dette **séparée**, non bloquante pour P0-2 |
 | « Pushdown corde » | question → Triceps Poulie | ⚠️ inchangé (question, jamais AUTO ; la corde serait plus juste) |
 
 **Preuves.** Banc `tools/banc_p02_triceps.js` (B-P02-A/P/H/∅) : **11 rouges sur `7d7bb5a8` → 23/0** ; contrôle négatif
@@ -887,3 +887,16 @@ contamination pré-saisie / nom écrit par l'import d'historique / record, M7 co
 Non-régressions : IMPORT-MAP-02 43/0 (cliquet 98, faux figés vides) · IMPORT-MAP-01 22/0 · IMPORT-MAP-01B 22/0 · import_echauffement 11/0 ·
 `check_regles` vert ; contrôle négatif IMPORT-MAP-02 relancé (oracle modifié) **25/25 conformes**. Passe complète D-031 sur `e4609c16` :
 **6 146 ✅ / 0 ❌ (4 conditions vertes)** — +23 = les témoins B-P02. Après elle : documentation seulement (D-031).
+
+### 🧹 CLOTURE-CHANTIERS-DOCS-01 (11/10/2026) — où en est l'Import, en une ligne par sujet
+
+> Consolidation **documentaire** seulement (aucun code), avant le ménage des branches. Les statuts ci-dessous sont mesurés sur le dépôt.
+
+| Sujet | Statut |
+|---|---|
+| IMPORT-MAP-01 / 01B / 02 | ✅ **INTÉGRÉ MASTER `7d7bb5a8` — NON PUBLIÉ** (production `ft-v1252`) |
+| IMPORT-P0-2 (Triceps Pushdown) | ✅ **QUALIFIÉ — NON INTÉGRÉ — NON PUBLIÉ** (branche `claude/p0-2-triceps-pushdown`, passe 6 146 / 0) |
+| Dettes Import du Ghost final | ⚠️ **V-1 → V-8**, consignées **une seule fois** (tableau IMPORT-MAP-INTEGRATION-01 ci-dessus), non corrigées |
+| Dette « Extension Triceps + matériel » (10 tournures) | ⚠️ **séparée, non bloquante**, préexistante sur master — décision de Michel attendue (section IMPORT-P0-2) |
+| IMPORT-ECH-02 (noms génériques en confirmation, regroupements ECH générique + TRAV précis) | ⏳ **futur, non commencé** |
+| LOT 1 IMPORT PROGRAMME (branche `claude/import-programme-lot1-client`) | 🟠 **qualifié sur `6969ce73`, NON INTÉGRÉ, qualification périmée** — son détail vit sur sa branche ; ⚠️ collision de numéros de décision (D-053 → D-057), voir `docs/DECISIONS.md` |

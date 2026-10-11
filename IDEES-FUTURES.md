@@ -2806,6 +2806,14 @@ minimale » plus haut :
 
 *(Décidé avec Michel le 2026-07-11 : construire chaque gros chantier sur SA branche, isolé de la prod ; tester dans le bac à sable `/clone/` ; ne mettre en ligne que sur validation.)*
 
+> 🧹 **Mesuré le 11/10/2026 (CLOTURE-CHANTIERS-DOCS-01, avant le ménage des branches)** — ce que ces branches contiennent **encore
+> seules** : `feat/commandes-vocales` (6 commits, dont `voice.js`) et `feat/programmes-complexes` (21 commits, dont
+> `programs-lib.js`) sont la **seule copie** de leur code — ⚠️ à **archiver** (étiquette) avant toute suppression, sinon l'idée
+> perd son prototype. `feat/score-sante` et `feat/accueil-calendrier` : fonctionnalités **en prod** depuis juillet (ft-v387 /
+> ft-v388) ; leurs commits propres restants (10 et 4) sont l'histoire de l'essai et des synchronisations du clone (retiré en
+> ft-v976) — *rien d'unique attendu, à confirmer par un diff ciblé lors du ménage*. `feat/coach-v2` ne contient **aucun** commit
+> hors master : rien n'y a été construit, l'idée vit ici seulement.
+
 - **`feat/score-sante`** — 🥗 Score santé produit (module `food-health.js` : Nutri-Score + NOVA + additifs + macros sur le scan code-barres). ✅ **EN PROD (ft-v388)** — ouvert à tout le monde (2026-07-11). Code-barres + score = gratuit (0 token, Open Food Facts client). IA (📸 étiquette, 🤖 estimation) = freemium 25 essais + Premium.
 - **`feat/accueil-calendrier`** — 📅 Calendrier mensuel sur l'Accueil + anneau doré sur les jours de record + icône 📊 perf par exercice dans l'historique. ✅ **EN PROD (ft-v387).** Cycle de force déplacé dans Menu > Outils ; niveau/PRs restent dans Progrès.
 - **`feat/coach-v2`** — 🧠 Coach IA v2 : plus de techniques d'entraînement (périodisation, RPE, tempo, techniques d'intensité, powerlifting/BB) + dimension **coach de vie** (sommeil, stress, motivation, habitudes). *(branche prête, à construire)*
