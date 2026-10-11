@@ -393,6 +393,10 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   d'un plat qu'on n'a pas pesé, et CIQUAL n'a que des plats **industriels** (« préemballé ») — un plat de restaurant peut
   être bien plus riche. Rejoint l'item déjà séparé « **simplification UX Nutrition** ».
 - **Quand le traiter** : dans un lot Nutrition dédié, sur décision de Michel ; pas en passant dans un autre lot.
+- ↪️ **11/10/2026 — NUT-D042-01 (branche `claude/nut-d042-01`, NON PUBLIÉE, rien en production)** : FS-01 → FS-03
+  portés sur master `b280ea5d` (FS-04 non porté) et **D-042 implémentée** (générique pertinent avant le fast-food,
+  intention de marque gardée). Ce retour terrain n'est **pas** clos : il le sera à la publication, après recette.
+  Mesures et limites : `docs/FOOD-SEMANTICS.md` §14 ; décision : `docs/DECISIONS.md` D-042.
 
 ### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
 - **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,
