@@ -55,6 +55,11 @@ module.exports.ecran = async function (t, b, PORT) {
     /* Garde de harnais : sur un code sans FS-02 / FS-04 (M00 = master), l'absence de la fonction rend « rien » au
        lieu de planter — les témoins du corpus rougissent alors un par un, ce qui est la vraie mesure. */
     const badge = n => typeof _fsBadgeForme === 'function' ? _fsBadgeForme(n).replace(/<[^>]+>/g, '') : '';   // le TEXTE affiché par FS-04
+    /* ⛔ NUT-D042-01 (11/10/2026) : FS-04 (le libellé de forme AFFICHÉ) n'est PAS porté sur master — un affichage nouveau,
+       hors de D-042 (D-040 PROPOSÉ, jamais validé). Les attentes de libellé RESTENT dans le corpus, intactes : elles se
+       réactivent d'elles-mêmes le jour où `_fsBadgeForme` est servi. D'ici là elles ne sont pas évaluées — et le banc
+       le DIT (une ligne qui compte les contrôles suspendus, un témoin qui vérifie que FS-04 est bien absent). */
+    const fs04 = typeof _fsBadgeForme === 'function';
     const formesDe = n => typeof _fsFormesDuTexte === 'function' ? _fsFormesDuTexte(n) : [];
     const juger = (c) => {
       const r = (_ciqualChercher(c.q, 6) || []).map(a => a[1]); const p = r[0] || '', ko = [];
@@ -63,8 +68,8 @@ module.exports.ecran = async function (t, b, PORT) {
       if ('nom' in c && p !== c.nom) ko.push('nom');
       if ('re' in c && !new RegExp(c.re).test(p)) ko.push('re');
       if ('pasNom' in c && p === c.pasNom) ko.push('pasNom');
-      if ('forme' in c && badge(p) !== c.forme) ko.push('forme=' + badge(p));
-      if ('formeContient' in c && !badge(p).split(' · ').includes(c.formeContient)) ko.push('formeContient');
+      if (fs04 && 'forme' in c && badge(p) !== c.forme) ko.push('forme=' + badge(p));
+      if (fs04 && 'formeContient' in c && !badge(p).split(' · ').includes(c.formeContient)) ko.push('formeContient');
       if ('porte' in c && !c.porte.every(f => formesDe(p).includes(f))) ko.push('porte');
       if ('top' in c && !r.slice(1, c.top.n).some(x => new RegExp(c.top.re).test(x))) ko.push('top');
       if ('jamais' in c && r.slice(0, c.jamais.n).some(x => new RegExp(c.jamais.re).test(x))) ko.push('jamais');
@@ -82,9 +87,15 @@ module.exports.ecran = async function (t, b, PORT) {
     for (let k = 0; k < 3; k++) { const c = orig.slice(); for (let i = c.length - 1; i > 0; i--) { const j = Math.floor(hasard() * (i + 1)); [c[i], c[j]] = [c[j], c[i]]; }
       _ciqual.a = c; perm.push(sig(tout()) === ref); }
     _ciqual.a = orig.slice().reverse(); perm.push(sig(tout()) === ref); _ciqual.a = orig;
-    return { res, det: { rep, perm } };
+    return { res, det: { rep, perm }, fs04 };
   }, CAS);
   console.log('\n-- B-CDXXXIX. FS-05 — le corpus conduit sur la vraie base (en ligne et hors ligne) --');
+  /* NUT-D042-01 : FS-04 n'est pas porté — on le DIT, on compte ce qui n'est pas évalué, et un témoin vérifie que c'est
+     bien la raison (si FS-04 arrive un jour, les contrôles se réactivent et ce témoin le signale). */
+  const suspendus = CAS.filter(c => c.niveau !== 'KNOWN_LIMITATION' && ('forme' in c || 'formeContient' in c)).length;
+  console.log('   ℹ️  FS-04 (libellé de forme affiché) non porté : ' + suspendus + ' contrôle(s) de libellé conservé(s) dans le corpus, NON évalué(s)');
+  t('B-CDXXXIX NUT-D042-01 : les contrôles de libellé ne sont suspendus QUE parce que FS-04 est absent du code servi (`_fsBadgeForme` non défini) — aucun autre contrôle n\'est retiré',
+    R.fs04 === false && suspendus > 0, 'fs04=' + R.fs04);
   const det = o => JSON.stringify(o);
   for (const c of CAS) {
     const r = R.res[c.id], tag = c.id + ' [' + c.niveau + '] ' + (c.mode === 'hors' ? 'HORS LIGNE ' : '') + '« ' + c.q + ' » — ' + c.raison;

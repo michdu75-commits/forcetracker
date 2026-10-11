@@ -99,6 +99,11 @@ async function session(b, PORT, nomCtx, cas) {
   await pg.evaluate(async () => {
     document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
     openAddFood(); await new Promise(r => setTimeout(r, 300));
+    /* NUT-D042-01 (11/10/2026) — LES SOURCES LOCALES SONT CHARGÉES AVANT LE PREMIER CAS. Mesuré : sous charge (six bancs
+       en parallèle), le 1ᵉʳ cas de chaque session était lu avant que CIQUAL, la table d'alias et le fast-food aient fini
+       d'arriver — une liste vide, jamais un défaut du moteur (seul : 131 / 0). Le tout premier affichage, lui, a son
+       propre témoin, qui l'observe rendu par rendu : `food_d042.js`, bloc B-D42-T. */
+    try { await Promise.all([_ciqualCharger(), _aliasCharger(), _marquesCharger()]); } catch (e) {}
   });
   const obs = {};
   for (const c of cas) {

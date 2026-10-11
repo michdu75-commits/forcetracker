@@ -53,6 +53,36 @@ CORRECTIONS = {
     # pour un mot générique — on ne choisit pas une variété à la place de la personne (R29).
     'tomate':  (20385, 'GPT visait « Tomate, séchée » (kcal non déterminées, jamais proposable)'),
     'tomates': (20385, 'idem'),
+    # 🔎 FS-01 (02/10/2026, Food Semantics V1) — la table envoyait le mot GÉNÉRIQUE vers une forme
+    #    TRANSFORMÉE, et l'alias passant devant tout, c'était le 1ᵉʳ résultat proposé. Mesuré sur
+    #    master f31dc234 : « pomme » → « Pomme, sèche » (247 kcal/100 g au lieu de ~51) et
+    #    « haricots verts » → « Haricots verts, purée ». Une pomme n'est pas une pomme séchée.
+    #    ⭐ Même convention que `tomate` : l'aliment moyen quand CIQUAL en a un (pomme) ; sinon la
+    #    forme CUITE, celle de la décision de Michel sur le cru/cuit (« les deux, le cuit en
+    #    premier », ft-v1115). L'ancienne cible reste trouvable juste dessous : « pomme séchée »,
+    #    « haricots verts purée ». ⏭️ « courgette » vise aussi une purée : même défaut, hors des
+    #    témoins de FS-01, consigné pour FS-03 (on ne corrige pas en silence au-delà du lot).
+    'pomme':          (13396, 'GPT visait « Pomme, sèche » — une pomme n\'est pas une pomme séchée (247 kcal/100 g au lieu de 51)'),
+    'pommes':         (13396, 'idem'),
+    'haricot vert':   (20030, 'GPT visait « Haricots verts, purée » — le légume, cuit en premier (décision cru/cuit, ft-v1115)'),
+    'haricots verts': (20030, 'idem'),
+}
+
+# 🎯 FS-03 (02/10/2026) — LES ALIAS QUI IMPOSAIENT UNE FORME TRANSFORMÉE OU UN DESSERT À UN FRUIT / LÉGUME
+#    GÉNÉRIQUE. Mesuré en classant les 633 alias (487 lexicaux, 146 « de préférence » qui choisissent une forme
+#    parmi plusieurs) : trois défauts prouvés, et seulement eux — le reste de la table n'est pas touché.
+#    ⭐ Même convention que `pomme` et `tomate` : l'aliment moyen quand CIQUAL en a un ; sinon RETRAIT, et c'est
+#    le moteur (`_fsPreference`, qui évite la purée) qui choisit — il n'impose ni cru ni cuit.
+CORRECTIONS.update({
+    'poire':   (13397, 'FS-03 : visait « Poire belle Hélène » (un dessert glacé) — une poire est un fruit cru'),
+    'poires':  (13397, 'idem'),
+    'raisin':  (13395, 'FS-03 : visait « Raisin sec » — un raisin est un fruit frais ; « raisins secs » reste explicite'),
+    'raisins': (13395, 'idem'),
+})
+# ⛔ RETRAITS — un mot qui ne doit plus avoir d'alias du tout (R30 : le retrait s'écrit, avec sa raison).
+RETRAITS = {
+    'courgette':  'FS-03 : visait « Courgette, purée » ; aucun aliment moyen — le moteur évite la purée sans imposer cru ou cuit',
+    'courgettes': 'idem',
 }
 
 # ⛔ AJOUTS QUI NE VIENNENT PAS DU CLASSEUR — nommés, avec leur raison, jamais silencieux.
@@ -85,6 +115,9 @@ AJOUTS = {
     #    confond pas avec la précédente, elles ne portent pas les mêmes valeurs.
     'coca zero sans cafeine': (18068, 'CIQUAL distingue la version sans caféine — on ne fusionne pas'),
     'coca sans cafeine':      (18067, 'le cola sucré sans caféine, qui existe aussi'),
+    # 🔎 FS-01 — « eau » tenait à la COUPURE À 400 (l'ordre du fichier écartait « Eau de coco »). La
+    #    coupure retirée, le nom le plus court passait devant. On garde le résultat de master.
+    'eau':            (18066, 'FS-01 : garde « Eau du robinet » (résultat de master) — sans la coupure à 400, « Eau de coco » passait devant'),
 
     # ═══ 🥤 ft-v1117 — LE PIÈGE DU COCA N'ÉTAIT PAS CELUI DU COCA : IL Y EN A 9 ═══════════════
     #  Michel : *« et les autres boissons ? »*. **Mesuré** : CIQUAL porte **9 paires**
@@ -216,13 +249,14 @@ def main(src):
 
     out, vus = {}, {}
     rej = {'hors_ciqual': [], 'inconnu': [], 'non_proposable': [], 'macro': [],
-           'collision': [], 'doublon': [], 'court': []}
+           'collision': [], 'doublon': [], 'court': [], 'retrait': []}
     corrigees, ajoutees = [], []
 
     for l in lignes:
         a = norm(l['alias'])
         if len(a) < 3:                    rej['court'].append(l['alias']); continue
         if a in deja:                     rej['collision'].append(l['alias']); continue
+        if a in RETRAITS:                 rej['retrait'].append((l['alias'], RETRAITS[a])); continue
 
         code, raison = l.get('code_ciqual'), None
         if a in CORRECTIONS:
@@ -293,7 +327,8 @@ def main(src):
                        ('macro',         "écartés — macros divergentes (la valeur aurait été réécrite)"),
                        ('collision',     "écartés — déjà dans FOOD_SYNONYMES (R2, un propriétaire)"),
                        ('doublon',       "écartés — DEUX cibles pour le même mot (ambigu, on ne tranche pas)"),
-                       ('court',         "écartés — moins de 3 caractères")):
+                       ('court',         "écartés — moins de 3 caractères"),
+                       ('retrait',       "RETIRÉS exprès (RETRAITS, raison écrite)")):
         v = rej[cle]
         if not v: continue
         print(f'\n⚠️ {len(v)} {titre} :')

@@ -10347,7 +10347,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.poisPasPoireau=/^Pois/.test(top('pois'));                 // pas « Poireau »
     o.patePate=/^Pâté/.test(top('pate'));                    // « pate » veut toujours dire pâté
     /* ⛔ ... et le reste ne bouge pas. */
-    o.stable=top('oeuf')==='Oeuf dur' && /^Riz/.test(top('riz')) && /^Poulet/.test(top('poulet'))
+    /* 🔎 FS-01 (02/10/2026, porté par NUT-D042-01) — « Oeuf dur » est devenu « Oeuf cru », et c'est voulu (R30) : les
+       deux noms ont la MÊME longueur, et « dur » ne gagnait que par l'ORDRE DU FICHIER — ce que FS-01 retire (D-036 :
+       même requête = même ordre, quel que soit l'ordre d'arrivée). « Oeuf cru » est aussi la cible de la table d'alias
+       pour « oeuf » (22000, décision cru/cuit ft-v1115). */
+    o.stable=top('oeuf')==='Oeuf cru' && /^Riz/.test(top('riz')) && /^Poulet/.test(top('poulet'))
              && /^Ananas/.test(top('ananas')) && /^Pois chiche/.test(top('pois chiche'));
 
     /* ⭐⭐ LES FORMES DE PATES — 0 resultat avant, et « spaghetti » rendait la COURGE. */
@@ -25157,8 +25161,13 @@ console.log('\n-- CCXXIII. Les mots qu\'on emploie atteignent un aliment précis
     t('⛔⛔ la correspondance porte sur la REQUÊTE ENTIÈRE (« riz au lait » n\'est pas détourné)',
       /riz au lait/i.test(String(R.pasDeMotIsole)), String(R.pasDeMotIsole));
     /* ⛔ Règle d'or #4 : un échec de chargement rend le comportement d'AVANT, pas une erreur. */
+    /* 🔎 FS-01 / 🎯 FS-03 (02/10/2026, portés par NUT-D042-01) — LE NOM EXACT ET LA FORME ONT CHANGÉ, PAS L'INTENTION
+       (R30). Sans table, c'est le résolveur qui répond : il préfère le nom de tête EXACT (la règle qui rend « Fromage »
+       et non « Fromage de tête »), et la préférence « riz → cuit » vit maintenant dans le MOTEUR (`_FS_PREFS_GENERIQUES`)
+       — donc hors ligne aussi, « riz » rend un riz CUIT, comme la décision de Michel du 03/09 (ft-v1115). Ce qui est
+       protégé reste protégé : jamais bloquant, et du riz. */
     t('⛔ sans la table (hors ligne), la recherche redevient celle d\'avant — jamais bloquante',
-      /^Riz blanc, cru/.test(String(R.sansTable)), String(R.sansTable));
+      /^Riz\b/.test(String(R.sansTable)) && /\bcuit\b/.test(String(R.sansTable)), String(R.sansTable));
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
 }
