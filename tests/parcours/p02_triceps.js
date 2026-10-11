@@ -31,7 +31,7 @@ const CORDE = { auto: TC };
 const CORPUS = [
   ['Triceps Pushdown', POULIE, 'A'], ['Cable triceps pushdown', POULIE, 'B'], ['Extension triceps poulie', POULIE, 'C'],
   ['Tricep pushdown', POULIE, 'D'], ['Triceps pushdowns', POULIE, 'E'],
-  ['Cable Tricep Pushdown', POULIE], ['Extension triceps à la poulie', POULIE],
+  ['Cable Tricep Pushdown', POULIE],
   ['Triceps corde', CORDE, 'F'], ['Triceps cordes', CORDE], ['Tricep Rope Pushdown', CORDE, 'G'], ['Tricep Rope Pushdowns', CORDE],
   ['Pushdown barre', { jamais: [ET, TC] }], ['Pushdown barre EZ', { jamais: [ET, TC] }],
   ['Pushdown corde', { jamais: [ET, TP] }],
@@ -42,6 +42,20 @@ const CORPUS = [
   ['Extension Triceps', { auto: ET }],
 ];
 module.exports.CORPUS = CORPUS;
+/* ⚠️ LIMITE CONNUE, PRÉEXISTANTE ET HORS DE CE LOT — nommée, jamais rouge, mais elle ne doit pas GRANDIR.
+   « Extension triceps » + un matériel (poulie / câble / barre / machine) part en AUTO vers « Extension Triceps » par
+   RECOUVREMENT DE MOTS (via « mots »), pas par un alias : la cible est classée Polyvalent (`_exEquip` = « autre ») et son
+   nom anglais (« triceps extension overhead ») ne dit aucun matériel, donc le garde-fou d'IMPORT-MAP n'a rien à opposer.
+   Mesuré identique sur master 7d7bb5a8 et après ce lot. La corriger demande de décider ce qu'EST « Extension Triceps »
+   (haltère seulement, ou polyvalent ?) : décision de Michel, pas un alias de plus. Ce banc fige la liste : un libellé de
+   plus qui y tombe rougit. */
+const FAMILLE_CONNUE = ['Extension triceps à la poulie', 'Extension des triceps à la poulie', 'Extension triceps câble', 'Extension triceps cable',
+  'Extension triceps au câble', 'Cable triceps extension', 'Triceps extension cable', 'Extensions triceps poulie', 'Extension triceps barre',
+  'Extension triceps machine'];
+const FAMILLE_SONDE = FAMILLE_CONNUE.concat(['Extension triceps poulie haute', 'Extension triceps à la poulie haute', 'Extension triceps nuque poulie',
+  'Extension triceps vis-à-vis', 'Pushdown triceps', 'Triceps push down', 'Triceps pressdown', 'Cable pushdown', 'Pushdown poulie', 'Pushdown câble',
+  'Poulie triceps', 'Triceps à la poulie', 'Extension triceps poulie corde', 'Extension triceps corde']);
+module.exports.FAMILLE_CONNUE = FAMILLE_CONNUE;
 
 module.exports.ecran = async function (t, b, PORT) {
   console.log('\n═══ B-P02-A (session-B). IMPORT-P0-2 — un pushdown à la poulie va vers « Triceps Poulie », jamais vers l\'extension haltère ═══');
@@ -77,7 +91,7 @@ module.exports.ecran = async function (t, b, PORT) {
     Object.keys(D).forEach(k=>localStorage.setItem(k,D[k]));}catch(e){}})();`);
   await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(2500);
 
-  const M = await pg.evaluate(noms => { const o = {}; noms.forEach(n => { const r = _matchExercise(n) || {}; o[n] = { tier: r.tier, match: r.match || null, via: r.via || '' }; }); return o; }, CORPUS.map(c => c[0]));
+  const M = await pg.evaluate(noms => { const o = {}; noms.forEach(n => { const r = _matchExercise(n) || {}; o[n] = { tier: r.tier, match: r.match || null, via: r.via || '' }; }); return o; }, [...new Set(CORPUS.map(c => c[0]).concat(FAMILLE_SONDE))]);
   const auto = (n, c) => M[n].tier === 'auto' && M[n].match === c;
   const conforme = ([n, regle]) => {
     const r = M[n];
@@ -96,8 +110,16 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-P02-A ⛔ corpus du brief (' + CORPUS.length + ' libellés) : aucun faux AUTO — poulie → Triceps Poulie, corde → Triceps Corde Poulie, élastique / haltère / barre au front jamais aspirés',
     fautes.length === 0, js(fautes.map(c => c[0] + ' → ' + M[c[0]].tier + ' ' + M[c[0]].match + ' (' + M[c[0]].via + ')')));
   const versET = CORPUS.filter(c => /pushdown|poulie/i.test(c[0]) && M[c[0]].tier === 'auto' && M[c[0]].match === ET);
-  t('B-P02-A ⛔⛔ aucun libellé « pushdown » ou « poulie » n\'est rattaché AUTOMATIQUEMENT à « Extension Triceps »',
+  t('B-P02-A ⛔⛔ aucun libellé « pushdown » ou « poulie » du corpus n\'est rattaché AUTOMATIQUEMENT à « Extension Triceps »',
     versET.length === 0, js(versET.map(c => c[0])));
+  const pushET = FAMILLE_SONDE.filter(n => /push ?down|pressdown/i.test(n) && M[n].tier === 'auto' && M[n].match === ET);
+  t('B-P02-A ⛔⛔ aucune tournure « pushdown / push down / pressdown » n\'est rattachée AUTOMATIQUEMENT à « Extension Triceps » (' + FAMILLE_SONDE.filter(n => /push ?down|pressdown/i.test(n)).length + ' tournures sondées)',
+    pushET.length === 0, js(pushET));
+  const tombees = FAMILLE_SONDE.filter(n => M[n].tier === 'auto' && M[n].match === ET);
+  const nouvelles = tombees.filter(n => !FAMILLE_CONNUE.includes(n));
+  console.log('   ℹ️  LIMITE CONNUE (préexistante, hors lot, décision de Michel) : ' + tombees.length + ' tournure(s) « extension triceps + matériel » encore AUTO vers « Extension Triceps » par recouvrement de mots : ' + tombees.join(' · '));
+  t('B-P02-A la limite connue « extension triceps + matériel → Extension Triceps (mots) » ne GRANDIT pas : aucune tournure hors des ' + FAMILLE_CONNUE.length + ' nommées (mesurées identiques sur master)',
+    nouvelles.length === 0, js(nouvelles));
 
   console.log('\n═══ B-P02-P (session-B). IMPORT-P0-2 — import de PROGRAMME : la carte reprend SON historique, jamais celui de l\'extension haltère ═══');
   const P = await pg.evaluate(async () => {

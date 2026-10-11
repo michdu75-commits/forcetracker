@@ -2977,7 +2977,11 @@ Object.assign(_EX_EQUIV,{
   'db overhead extension':'Extension Nuque Haltère','extension nuque poulie':'Extension Nuque Poulie Haute','overhead cable triceps extension':'Extension Nuque Poulie Haute','overhead dumbbell triceps extension':'Extension Nuque Haltère',
   // IMPORT-MAP-01B (R30) : 'low cable knee extension' RETIRÉ — aucune extension quadriceps à la poulie au catalogue.
   'cable leg extension':'Extension Quadriceps (Leg Extension)','leg extension machine':'Extension Quadriceps (Leg Extension)','leg extension poulie':'Extension Quadriceps (Leg Extension)','leg extension seated':'Extension Quadriceps (Leg Extension)','machine leg extension':'Extension Quadriceps (Leg Extension)','quadriceps extension':'Extension Quadriceps (Leg Extension)','seated leg extension':'Extension Quadriceps (Leg Extension)',
-  'cable triceps pushdown':'Extension Triceps','extension triceps poulie':'Extension Triceps','triceps pushdown':'Extension Triceps',
+  /* ⛔ IMPORT-P0-2 (11/10/2026) : ces trois clés visaient « Extension Triceps » — l'extension verticale À L'HALTÈRE (son
+     illustration et son nom anglais le disent). Un pushdown à la poulie importé reprenait alors ses charges, ses séances et
+     son record, et l'import d'historique écrivait sous son nom. La cible juste existe : « Triceps Poulie ». Témoin :
+     B-P02 (tests/parcours/p02_triceps.js). La corde reste « Triceps Corde Poulie » (clés corde / rope, inchangées). */
+  'cable triceps pushdown':'Triceps Poulie','extension triceps poulie':'Triceps Poulie','triceps pushdown':'Triceps Poulie',
   // IMPORT-MAP-01B (R30) : 'cable kickback' RETIRÉ — la cible est le kickback aux haltères ; aucun kickback triceps à la poulie, et le
   // mot désigne aussi le kickback fessiers à la poulie : ambigu, le moteur demande.
   'db kickback':'Extension Triceps Arrière (Kickback)','kickback triceps':'Extension Triceps Arrière (Kickback)','triceps kickback':'Extension Triceps Arrière (Kickback)',

@@ -183,11 +183,12 @@ module.exports.ecran = async function (t, b, PORT) {
   const hi = FX.lignes.filter(l => l[3] === 'high');
   const aJuste = l => RC2[l[1]][0] === 'auto' && RC2[l[1]][1] === l[4];
   const recul = FX.A_fige.filter(id => { const l = FX.lignes.find(x => x[0] === id); return !aJuste(l); });
-  t('C1 ⭐ CLIQUET — les ' + FX.A_fige.length + ' lignes « high » AUTO justes le restent (93 d\'IMPORT-MAP-01B + 4 que ce lot corrige)',
+  t('C1 ⭐ CLIQUET — les ' + FX.A_fige.length + ' lignes « high » AUTO justes le restent (93 d\'IMPORT-MAP-01B + 4 d\'IMPORT-MAP-02 + 1 d\'IMPORT-P0-2)',
     recul.length === 0, js(recul.map(id => { const l = FX.lignes.find(x => x[0] === id); return id + ' ' + l[1] + ' → ' + RC2[l[1]].join(' '); })));
   const faux = hi.filter(l => RC2[l[1]][0] === 'auto' && RC2[l[1]][1] !== l[4]);
   const fauxHors = faux.filter(l => FX.faux_fige[l[0]] !== RC2[l[1]][1]);
-  t('C2 ⛔⛔ aucun AUTO faux parmi les 312 lignes « high », hors la liste figée (« Triceps Pushdown » → Extension Triceps : alias P0-2, hors lot)',
+  /* IMPORT-P0-2 (11/10/2026) : la liste figée est VIDE — « Triceps Pushdown » (EXT-0138) va vers « Triceps Poulie ». */
+  t('C2 ⛔⛔ aucun AUTO faux parmi les 312 lignes « high » (liste figée vide depuis IMPORT-P0-2)',
     fauxHors.length === 0, js(fauxHors.map(l => l[0] + ' ' + l[1] + ' → ' + RC2[l[1]][1] + ' (attendu ' + l[4] + ')')));
   const revenus = FX.supprimes.filter(([id, cible]) => { const l = FX.lignes.find(x => x[0] === id); return RC2[l[1]][0] === 'auto' && RC2[l[1]][1] === cible; });
   t('C3 ⛔⛔ les 10 AUTO dangereux supprimés par 01 / 01B ne reviennent pas', revenus.length === 0, js(revenus));

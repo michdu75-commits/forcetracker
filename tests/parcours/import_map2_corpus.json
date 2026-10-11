@@ -1,5 +1,5 @@
 {
-"_lisezmoi": "Corpus externe IMPORT-MAP-02 (24 sources publiques, 6 langues, 387 occurrences). Colonnes : id, libellé tel qu'écrit, langue, confiance de la cible proposée, cible attendue, résultat sur la branche 01B (790932a3). A_fige = lignes « high » AUTO justes : 93 sur 01B + 4 que la conception IMPORT-MAP-02 fait passer à AUTO juste (cliquet : aucune ne recule). faux_fige = seuls AUTO faux tolérés parmi les « high » (P0-2, hors lot). supprimes = les 10 AUTO dangereux supprimés par 01/01B, avec la cible fausse qu'ils ne doivent plus jamais rejoindre en AUTO.",
+"_lisezmoi": "Corpus externe IMPORT-MAP-02 (24 sources publiques, 6 langues, 387 occurrences). Colonnes : id, libellé tel qu'écrit, langue, confiance de la cible proposée, cible attendue, résultat sur la branche 01B (790932a3). A_fige = lignes « high » AUTO justes : 93 sur 01B + 4 que la conception IMPORT-MAP-02 fait passer à AUTO juste (cliquet : aucune ne recule). faux_fige = seuls AUTO faux tolérés parmi les « high » — VIDE depuis IMPORT-P0-2 (11/10/2026) : « Triceps Pushdown » (EXT-0138) va vers « Triceps Poulie » et rejoint A_fige (98). supprimes = les 10 AUTO dangereux supprimés par 01/01B, avec la cible fausse qu'ils ne doivent plus jamais rejoindre en AUTO.",
 "colonnes": [
 "id",
 "libelle",
@@ -3552,6 +3552,7 @@
 "EXT-0135",
 "EXT-0136",
 "EXT-0137",
+"EXT-0138",
 "EXT-0139",
 "EXT-0141",
 "EXT-0143",
@@ -3593,9 +3594,7 @@
 "EXT-0343",
 "EXT-0382"
 ],
-"faux_fige": {
-"EXT-0138": "Extension Triceps"
-},
+"faux_fige": {},
 "supprimes": [
 [
 "EXT-0008",
