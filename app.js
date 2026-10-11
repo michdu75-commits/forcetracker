@@ -4909,7 +4909,10 @@ const MARQUE_ALIAS={
      ne trouvait RIEN. On ne devine pas les espaces manquants en général (ça ferait remonter
      n'importe quoi) : on nomme les cas qui arrivent. */
   'bigmac':'big mac', 'mcchicken':'mcchicken', 'babywhopper':'baby whopper',
-  'whopperrings':'whopper rings', 'kentuckyfries':'kentucky fries'
+  'whopperrings':'whopper rings', 'kentuckyfries':'kentucky fries',
+  /* 🍽️ D-042 (Michel) — « Coca-Cola » est une MARQUE, « coca » un générique. Le nom complet de la marque se lit ici
+     comme les autres noms de produit (même identité que « mcchicken ») ; « coca » seul n'y est pas, exprès. */
+  'coca cola':'coca cola'
 };
 /* Recherche dans la base de marques. Les mots peuvent être dans le désordre, et ils sont
    cherchés dans « enseigne + nom » — donc « mcdo frite » et « frite mcdo » marchent tous deux. */
@@ -4942,6 +4945,42 @@ function _marquesChercher(q, max){
   }
   out.sort((x,y)=> x[0]-y[0] || x[1]-y[1] || x[2]-y[2]);
   return out.slice(0, max||6).map(x=>x[3]);
+}
+/* ═══ 🍽️ D-042 (Michel, 03/10/2026, confirmée le 10/10) — L'INTENTION DE MARQUE ══════════════════════════════
+   La requête NOMME-t-elle une marque ou un produit d'enseigne (« KFC », « Big Mac », « Whopper », « Coca-Cola »,
+   « O'Tacos », « frites mcdo ») ? Alors le fast-food reste devant (`_afSuggRendu`). Sinon (« poulet », « coca »,
+   « tenders », « tacos »), c'est une requête générique : l'aliment générique passe devant, quand il existe.
+   ⭐ R2 — AUCUNE LISTE NOUVELLE : on lit les noms que le code connaît DÉJÀ comme marques — les enseignes de la base
+   fast-food (`_marques.enseignes`), `MARQUE_ALIAS` (ce qu'on dit pour nommer une enseigne ou un produit), et la
+   famille « restauration rapide » de `FOOD_SYNONYMES` (les produits d'enseigne tapés sans elle : big mac, whopper…).
+   ⛔ En MOTS ENTIERS : « tacos » n'est pas « O'Tacos », « coca » n'est pas « coca cola ».
+   ⛔ Le NOM d'un produit de la base n'est jamais lu comme une marque : « hamburger », « cheeseburger », « frites »
+   sont des plats, même quand une enseigne les vend sous ce nom (mesuré : 3 enseignes vendent un « Hamburger »). */
+function _afIntentionMarque(q){
+  const n=' '+_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim()+' ';
+  const noms=Object.keys(MARQUE_ALIAS).concat(Object.values(MARQUE_ALIAS),
+    Object.keys(FOOD_SYNONYMES).filter(k=>FOOD_SYNONYMES[k].indexOf('restauration rapide')>=0),
+    Object.keys((_marques&&_marques.enseignes)||{}));
+  return noms.some(m=>{ const x=_afNorm(m).replace(/[-_.]+/g,' ').trim(); return !!x && n.indexOf(' '+x+' ')>=0; });
+}
+/* 🍽️ D-042 — LE GÉNÉRIQUE PASSE-T-IL DEVANT LE FAST-FOOD ? Trois conditions, et c'est toute la règle :
+   ① la requête ne nomme ni une enseigne ni un produit d'enseigne (`_afIntentionMarque`) ;
+   ② CIQUAL a répondu — on n'invente jamais un générique absent (« tenders », « tacos ») ;
+   ③ son 1ᵉʳ aliment est RÉELLEMENT pertinent : la cible que la table d'alias a décidée (« mayo » → mayonnaise,
+      « toast » → pain de mie), ou un aliment dont le nom porte chaque mot tapé EN ENTIER (le test de FS-01,
+      `_fsMotsEntiers`), synonymes compris (« coca » → cola). Les mots de FORME (« séchée », « cru ») ne comptent
+      pas ici : la forme se juge dans le classement CIQUAL, pas dans l'ordre des sections.
+   ⛔ Mesuré le 11/10 sur 117 requêtes tirées des noms du fast-food : sans ③, « wings » mettait un chewing-gum
+   devant les Hot Wings, « big » (en tapant « big mac ») un bigorneau devant le Big Mac — 27 fois un aliment qui ne
+   porte même pas le mot tapé. Aucune liste, aucun score : la table d'alias et le test FS-01 existent déjà. */
+function _afGeneriqueDevant(q, ciq){
+  if(!ciq || !ciq.length || _afIntentionMarque(q)) return false;
+  const a=ciq[0], c=(typeof _aliasCible==='function')?_aliasCible(q):null;
+  if(c && c[0]===a[0]) return true;
+  return _foodSynonymes(q).some(r=>{
+    const m=_afMots(r), aliment=m.filter(x=>!_fsFormesDuTexte(x).length);
+    return _fsMotsEntiers(aliment.length?aliment:m, a[1]);
+  });
 }
 /* ═══ ⛔⛔ LE PLURIEL — LE PLUS GROS TROU DE LA RECHERCHE (22/08/2026) ══════════════════════
    Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je
@@ -5346,10 +5385,15 @@ function _fsCle(a, it, r){
   /* nom de tête au SINGULIER : « crêpes » → « Crêpe, nature ». */
   const teteSing = (_fsTete(a[1], true)===it.mots.map(_fsSing).join(' '))?0:1;
   /* mot ENTIER : « gaufre » est un mot de « Gaufre bruxelloise », pas de « Gaufrette ». */
-  const mots=n.split(' ');
-  const entier = it.mots.every(m=>{ const s=_fsSing(m);
-    return mots.some(w=>w===m||w===s||_fsSing(w)===s); })?0:1;
+  const entier = _fsMotsEntiers(it.mots, a[1])?0:1;
   return [r[0], forme, r[1], entier, teteExacte, teteSing, n.length, n, a[0]];
+}
+/* Le test « mot ENTIER » de la clé, seul propriétaire (R2) : la clé de tri ci-dessus ET la pertinence de D-042
+   (`_afGeneriqueDevant`) le lisent — deux copies divergeraient. Chaque mot tapé est un mot du nom, au singulier près. */
+function _fsMotsEntiers(mots, nom){
+  const w=_afNorm(nom).split(' ');
+  return mots.every(m=>{ const s=_fsSing(m);
+    return w.some(x=>x===m||x===s||_fsSing(x)===s); });
 }
 function _fsComparer(x, y){
   for(let i=0;i<x.length;i++){ if(x[i]<y[i]) return -1; if(x[i]>y[i]) return 1; }
@@ -5601,12 +5645,20 @@ function _afSuggRendu(){
       (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),
       '_afSuggPrendreLocale('+i+')'); });
   }
-  /* ⭐⭐ LE FAST-FOOD PASSE AVANT LE GÉNÉRIQUE, et c'est l'inverse du choix fait pour les
-     bananes : quand on tape « big mac », on ne cherche pas « un hamburger en général » — on
-     cherche CE produit-là. Le nom tapé est déjà une marque, donc la marque gagne.
-     ⛔ Et chaque ligne dit son enseigne : le chiffre ne se présente jamais tout nu. */
+  /* ⭐⭐ D-042 (Michel, 03/10/2026, confirmée le 10/10) — L'ORDRE FAST-FOOD ↔ GÉNÉRIQUE DÉPEND DE L'INTENTION.
+     ft-v1114 mettait le fast-food AU-DESSUS du générique pour TOUTE requête, pensé pour « big mac » : on y cherche CE
+     produit-là, pas « un hamburger en général ». Mais « poulet » rendait 4 lignes KFC avant le poulet, « fromage »
+     des pizzas Domino's, « coca » le Coca-Cola de Quick avant le cola.
+     👉 Requête GÉNÉRIQUE → l'aliment générique (CIQUAL, classé par Food Semantics) passe DEVANT, s'il existe ET s'il
+     est pertinent — on n'en invente jamais : sans résultat CIQUAL, le fast-food s'affiche seul (« tenders »). Requête
+     qui NOMME une marque ou un produit d'enseigne → la marque reste devant, comme avant. La règle entière vit dans
+     `_afGeneriqueDevant` ; ce rendu ne fait que la lire.
+     ⛔ Rien d'autre ne bouge : « Déjà noté par toi » reste au-dessus de tout, Open Food Facts après CIQUAL, le
+     plafond de 4 lignes fast-food, les lignes elles-mêmes. ⛔ Et chaque ligne dit son enseigne : le chiffre ne se
+     présente jamais tout nu. */
+  let ff='', ciq='';
   if(_afSuggMarq.length && _marques){
-    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">FAST-FOOD (SOURCES OFFICIELLES)</div>';
+    ff+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">FAST-FOOD (SOURCES OFFICIELLES)</div>';
     _afSuggMarq.forEach((idx,i)=>{ const a=_marques.a[idx];
       const p=a[7];
       /* ⛔⛔ LE DOUTE S'AFFICHE, IL NE FAIT PAS DISPARAÎTRE LA LIGNE (03/09/2026). Michel :
@@ -5615,7 +5667,7 @@ function _afSuggRendu(){
          douteuse. *C'est le mécanisme qui a fabriqué son pot de protéine faux.*
          👉 On montre la valeur ET ce qui clochе, avec le chiffre qui permet de juger
          (« 38 kcal/pièce »). R29 : informer sans décider. */
-      h+=ligne(a[9]?'⚠️':'🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
+      ff+=ligne(a[9]?'⚠️':'🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
         (p? (Math.round(a[3]*p/100)+' kcal la portion ('+p+' g)') : (a[3]+' kcal/100 g'))
         + (a[8]? ' · <span style="color:var(--orange);">kcal calculées</span>' : '')
         + (a[9]? '<br><span style="color:var(--orange);">⚠️ '+_marqueEsc(String(a[9]))+'</span>' : ''),
@@ -5624,11 +5676,12 @@ function _afSuggRendu(){
   /* ⭐ CIQUAL AVANT OPEN FOOD FACTS, et c'est un choix : quand on tape « banane », l'aliment
      GÉNÉRIQUE est presque toujours ce qu'on cherche — les bananes de marque viennent après. */
   if(_afSuggCiq.length){
-    h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">ALIMENTS (CIQUAL · ANSES)</div>';
-    _afSuggCiq.forEach((a,i)=>{ h+=ligne('🥗', a[1],
+    ciq+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">ALIMENTS (CIQUAL · ANSES)</div>';
+    _afSuggCiq.forEach((a,i)=>{ ciq+=ligne('🥗', a[1],
       (a[3]||0)+' kcal/100 g · P '+(a[4]==null?'?':a[4])+' · G '+(a[5]==null?'?':a[5])+' · L '+(a[6]==null?'?':a[6]),
       '_afSuggPrendreCiqual('+i+')'); });
   }
+  h+=_afGeneriqueDevant((document.getElementById('af-desc')||{}).value||'', _afSuggCiq) ? ciq+ff : ff+ciq;
   if(_afSuggOff.length){
     h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">PRODUITS DE MARQUE (OPEN FOOD FACTS)</div>';
     _afSuggOff.forEach((p,i)=>{ h+=ligne('🔎', _afSuggNom(p),
@@ -5709,21 +5762,18 @@ function _afSuggInput(){
        Le 1ᵉʳ affichage et l'affichage stabilisé doivent être le MÊME. Les deux requêtes partent
        ensemble ; on attend la plus lente des deux (la table d'alias pèse ~4 Ko). ⚠️ Un échec reste
        non bloquant : `_aliasCharger` rend `null` hors ligne, et la liste sort sans alias, une fois. */
-    Promise.all([_ciqualCharger(), _aliasCharger()]).then(()=>{
+    /* 🍔 LA BASE DE MARQUES, MÊME RÉGIME (ft-v1114) : locale, chargée au premier besoin et jamais au démarrage ;
+       son fichier est SÉPARÉ de CIQUAL exprès (deux sources, deux provenances). ⛔ 4 propositions et non 6 : occuper
+       tout l'écran avec du fast-food quand on tape « poulet » serait un remède pire que le mal.
+       ⛔⛔ D-042 (NUT-D042-01, 11/10/2026) — ELLE ENTRE DANS LE MÊME RENDU. Mesuré : à la 1ʳᵉ recherche, le petit
+       fichier fast-food arrivait avant CIQUAL et s'affichait SEUL (« poulet » → les Tenders KFC), puis le générique
+       s'insérait au-dessus : la liste sautait sous le doigt — exactement le défaut que FS-01 a fermé pour la table
+       d'alias. Les trois chargeurs ne rejettent jamais (un échec rend `null`) : une source absente n'en bloque aucune. */
+    Promise.all([_ciqualCharger(), _aliasCharger(), _marquesCharger()]).then(()=>{
       const enCours=(document.getElementById('af-desc')||{}).value||'';
       if(_afNorm(enCours)!==_afNorm(q)) return;    // la frappe a continué : résultat périmé
-      _afSuggCiq=_ciqualChercher(q,6); _afSuggRendu();
+      _afSuggCiq=_ciqualChercher(q,6); _afSuggMarq=_marquesChercher(q,4); _afSuggRendu();
       _afSuggVoir();   // ⚖️ ft-v1182 — APRÈS le rendu : avant, le bloc est vide et n'a pas de hauteur
-    });
-    /* 🍔 LA BASE DE MARQUES, MÊME RÉGIME (ft-v1114) : locale, chargée au premier besoin et
-       jamais au démarrage. ⭐ Elle est petite (23 produits) mais son fichier est SÉPARÉ de
-       CIQUAL exprès — deux sources, deux provenances, et l'une peut grandir sans toucher
-       l'autre. ⛔ 4 propositions et non 6 : elles passent AVANT les génériques, et occuper tout
-       l'écran avec du fast-food quand on tape « poulet » serait un remède pire que le mal. */
-    _marquesCharger().then(()=>{
-      const enCours=(document.getElementById('af-desc')||{}).value||'';
-      if(_afNorm(enCours)!==_afNorm(q)) return;
-      _afSuggMarq=_marquesChercher(q,4); _afSuggRendu();
     });
   }
   if(_afSuggTimer) clearTimeout(_afSuggTimer);

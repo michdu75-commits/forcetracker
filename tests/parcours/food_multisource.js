@@ -36,9 +36,14 @@ const CTX = {
 const NIVEAUX = ['MUST', 'SHOULD', 'KNOWN_LIMITATION', 'OBSERVATION'];
 /* ⛔ LES LIMITES ET LES OBSERVATIONS, NOMMÉES PAR IDENTIFIANT — exprès en double avec le corpus : changer le niveau
    d'un de ces cas (en faire un contrat, ou l'inverse) doit se faire ICI AUSSI, sciemment. Sans cette liste, une
-   limite promue en SHOULD passerait au vert sans que personne ne le voie (contrôle négatif M18 → M20). */
-const LIMITES_NOMMEES = ["MS-011", "MS-012", "MS-013", "MS-014", "MS-042", "MS-043", "MS-044", "MS-046", "MS-047", "MS-048", "MS-049", "MS-050", "MS-051", "MS-052", "MS-053", "MS-054", "MS-055", "MS-056", "MS-057", "MS-058", "MS-059", "MS-060", "MS-061", "MS-062", "MS-063", "MS-064", "MS-065", "MS-066", "MS-067", "MS-068", "MS-069", "MS-070", "MS-071", "MS-072", "MS-073", "MS-074", "MS-075", "MS-076", "MS-077", "MS-078", "MS-079", "MS-080", "MS-081", "MS-086", "MS-087", "MS-088", "MS-089", "MS-090", "MS-142", "MS-143", "MS-144", "MS-146", "MS-147", "MS-148", "MS-149", "MS-150", "MS-151", "MS-152", "MS-153", "MS-154", "MS-163", "MS-165", "MS-166", "MS-177", "MS-178", "MS-179", "MS-180", "MS-191", "MS-192", "MS-193", "MS-194", "MS-195"];
-const OBSERVATIONS_NOMMEES = ["MS-015", "MS-017", "MS-018", "MS-024", "MS-025", "MS-026", "MS-027", "MS-045", "MS-137", "MS-138", "MS-139", "MS-140", "MS-145", "MS-155", "MS-169", "MS-170", "MS-196", "MS-197"];
+   limite promue en SHOULD passerait au vert sans que personne ne le voie (contrôle négatif M18 → M20).
+   NUT-D042-01 (11/10) : 36 limites retirées SCIEMMENT d'ici — les écarts D-042 MS-046 → MS-081, devenus MUST — et
+   10 observations, celles des questions Q1 → Q4 tranchées par Michel et « coca cola » (MUST) ; MS-169 reste une
+   observation de données. ⛔ Les 4 frappes partielles MS-192 → MS-195 RESTENT des limites, inchangées : « po »,
+   « ri », « co » ne retrouvent aucun générique PERTINENT (critère D de D-042), donc le fast-food reste devant,
+   comme sur master. */
+const LIMITES_NOMMEES = ["MS-011", "MS-012", "MS-013", "MS-014", "MS-042", "MS-043", "MS-044", "MS-086", "MS-087", "MS-088", "MS-089", "MS-090", "MS-142", "MS-143", "MS-144", "MS-146", "MS-147", "MS-148", "MS-149", "MS-150", "MS-151", "MS-152", "MS-153", "MS-154", "MS-163", "MS-165", "MS-166", "MS-177", "MS-178", "MS-179", "MS-180", "MS-191", "MS-192", "MS-193", "MS-194", "MS-195"];
+const OBSERVATIONS_NOMMEES = ["MS-137", "MS-138", "MS-139", "MS-140", "MS-145", "MS-169", "MS-196", "MS-197"];
 const SOURCES = ['FF', 'CIQ', 'OFF'];
 const ENSEIGNE = / · (KFC|Quick|Burger King|McDonald's|Domino's)$/;
 const MENTION = 'Données aliments : table Ciqual 2025 — ANSES';
@@ -118,6 +123,12 @@ async function session(b, PORT, nomCtx, cas) {
       await pg.waitForTimeout(200 + ((REPONSES[c.offCle || 'vide'] || {}).delai || 0));
     } else await pg.waitForTimeout(700);  // sous 3 lettres : aucune requête attendue, on laisse passer la pause
     if ('signal' in c) await pg.waitForTimeout(1500);   // l'anti-rebond du signal « recherche vide » (1,2 s)
+    /* NUT-D042-01 — ON LIT APRÈS LE RENDU LOCAL, PAS APRÈS UNE PAUSE. Hors ligne, la table d'alias échoue et se
+       redemande à chaque frappe ; sous charge (six bancs en parallèle), « salade » hors ligne a été lu une fois AVANT
+       que ce chargement ait fini — liste vide, puis pleine au rejeu (mesuré : seul, 177 / 0). On attend les mêmes
+       chargeurs que l'écran : le rendu de l'app, inscrit avant nous, passe le premier. Un rendu qui n'arriverait
+       jamais laisserait la liste vide, et le cas rougirait quand même. */
+    await pg.evaluate(() => Promise.all([_ciqualCharger(), _aliasCharger(), _marquesCharger()]).then(() => new Promise(r => setTimeout(r, 0)), () => {}));
     const v = await pg.evaluate(lire, c.q);
     obs[c.id] = Object.assign(v, { offReq: J.offReq.slice(n0), posts: J.posts.slice(p0) });
   }
@@ -234,20 +245,25 @@ module.exports.ecran = async function (t, b, PORT) {
     !P1.anomalies.length && !P1.errs.length, det(P1.anomalies.concat(P1.errs).slice(0, 3)));
 
   console.log('\n-- B-CDXLIII. FS-05B — inter-sources : structure des limites, déterminisme, course, débit réseau --');
-  /* ⛔ D-042 : l'écart « fast-food avant le générique » ne se fige QU'EN KNOWN_LIMITATION — et les questions
-     ouvertes de Michel ne se tranchent pas ici : elles restent des OBSERVATION. */
+  /* ⛔ D-042 : jusqu'au 11/10, l'écart « fast-food avant le générique » ne se figeait QU'EN KNOWN_LIMITATION.
+     NUT-D042-01 l'a implémentée : les 36 écarts nommés sont des MUST « CIQUAL avant le fast-food » — et aucun
+     CONTRAT (MUST / SHOULD) générique ou partiel ne fige le fast-food au-dessus de CIQUAL. Les frappes partielles
+     MS-192 → MS-195 restent des limites : aucun générique pertinent n'y répond (critère D). */
   const kl = CAS.filter(c => c.d042);
-  t('B-CDXLIII [D-042] les ' + ECARTS_D042.length + ' écarts nommés à D-042 (fast-food au-dessus du générique) restent KNOWN_LIMITATION — aucun n\'est devenu MUST ou SHOULD',
-    ECARTS_D042.every(k => CAS.some(c => c.d042 && c.q + '|' + c.ctx === k)) && kl.every(c => c.niveau === 'KNOWN_LIMITATION' && ECARTS_D042.includes(c.q + '|' + c.ctx))
+  t('B-CDXLIII [D-042] les ' + ECARTS_D042.length + ' écarts nommés à D-042 sont devenus des MUST « générique CIQUAL avant le fast-food » (NUT-D042-01) — et aucun contrat générique ne fige l\'ordre inverse',
+    ECARTS_D042.every(k => CAS.some(c => c.d042 && c.q + '|' + c.ctx === k)) && kl.length === ECARTS_D042.length
+      && kl.every(c => c.niveau === 'MUST' && ECARTS_D042.includes(c.q + '|' + c.ctx) && (c.avant || []).some(([a, z]) => a === 'CIQ' && z === 'FF'))
       && CAS.filter(c => c.niveau === 'MUST' || c.niveau === 'SHOULD').every(c => !((c.avant || []).some(([a, z]) => a === 'FF' && z === 'CIQ') && (c.kind === 'generique' || c.kind === 'partiel'))),
-    det(kl.filter(c => c.niveau !== 'KNOWN_LIMITATION').map(c => c.id)));
+    det(kl.filter(c => c.niveau !== 'MUST').map(c => c.id)));
   const nomme = (niv, L) => JSON.stringify(CAS.filter(c => c.niveau === niv).map(c => c.id)) === JSON.stringify(L);
   t('B-CDXLIII les ' + LIMITES_NOMMEES.length + ' limites connues et les ' + OBSERVATIONS_NOMMEES.length + ' observations sont EXACTEMENT celles nommées par le banc — aucune n\'a été promue en contrat, aucun contrat n\'a été rétrogradé',
     nomme('KNOWN_LIMITATION', LIMITES_NOMMEES) && nomme('OBSERVATION', OBSERVATIONS_NOMMEES),
     det(CAS.filter(c => (c.niveau === 'KNOWN_LIMITATION') !== LIMITES_NOMMEES.includes(c.id) || (c.niveau === 'OBSERVATION') !== OBSERVATIONS_NOMMEES.includes(c.id)).map(c => c.id + ':' + c.niveau)));
-  t('B-CDXLIII [questions de Michel] les cas des ' + QUESTIONS.length + ' questions ouvertes restent des OBSERVATION — le corpus ne décide pas à sa place',
-    QUESTIONS.every(qq => CAS.some(c => c.question === qq.id)) && CAS.filter(c => c.question).every(c => c.niveau === 'OBSERVATION'),
-    det(CAS.filter(c => c.question && c.niveau !== 'OBSERVATION').map(c => c.id)));
+  /* Les questions ouvertes le 03/10 ne se tranchaient pas ici ; Michel les a tranchées le 11/10 (brief NUT-D042-01) :
+     chaque question porte sa réponse écrite (`tranchee`), et ses cas sont des MUST — ni OBSERVATION, ni SHOULD. */
+  t('B-CDXLIII [questions de Michel] les ' + QUESTIONS.length + ' questions, tranchées par Michel le 11/10, portent leur réponse écrite — et leurs cas sont des MUST',
+    QUESTIONS.every(qq => qq.tranchee && CAS.some(c => c.question === qq.id)) && CAS.filter(c => c.question).every(c => c.niveau === 'MUST'),
+    det(CAS.filter(c => c.question && c.niveau !== 'MUST').map(c => c.id)));
   /* Déterminisme : même entrée, même version → même sortie, que l'on rejoue le corpus à l'endroit ou à l'envers. */
   const P2 = await executer(b, PORT, CAS, true);
   const diff = CAS.filter(c => P1.obs[c.id] && P2.obs[c.id] && signature(P1.obs[c.id]) !== signature(P2.obs[c.id])).map(c => c.id);
