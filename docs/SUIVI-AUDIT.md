@@ -860,4 +860,5 @@ C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexista
 `tools/mut_p02_triceps.py` : **10/10 conformes** (M00 code d'avant, M1-M3 alias remis, M4 vers la corde, M5 corde → poulie, M6 a/b/c
 contamination pré-saisie / nom écrit par l'import d'historique / record, M7 commentaire vert ; chaque rouge est un témoin, aucun plantage).
 Non-régressions : IMPORT-MAP-02 43/0 (cliquet 98, faux figés vides) · IMPORT-MAP-01 22/0 · IMPORT-MAP-01B 22/0 · import_echauffement 11/0 ·
-`check_regles` vert. Passe complète D-031 : voir le journal de partage (clôture du lot).
+`check_regles` vert ; contrôle négatif IMPORT-MAP-02 relancé (oracle modifié) **25/25 conformes**. Passe complète D-031 sur `e4609c16` :
+**6 146 ✅ / 0 ❌ (4 conditions vertes)** — +23 = les témoins B-P02. Après elle : documentation seulement (D-031).
