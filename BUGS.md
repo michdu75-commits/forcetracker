@@ -4479,7 +4479,7 @@ le banc le prouve) :
 - l'ajout de lignes au journal des séances (feuille « Sessions ») accepte n'importe quelle adresse, sans
   preuve — pollution possible, aucune lecture.
 
-## §72 — ⛔⛔ LE MOT VIDE QUI EFFACE CE QUI DISTINGUE : LE MATÉRIEL RETIRÉ AVANT DE COMPARER *(10/10/2026, IMPORT-MAP-01 — branche `claude/import-map-01` ; ↪️ intégré à master `7d7bb5a8` le 11/10, NON publié)*
+## §72 — ⛔⛔ LE MOT VIDE QUI EFFACE CE QUI DISTINGUE : LE MATÉRIEL RETIRÉ AVANT DE COMPARER *(10/10/2026, IMPORT-MAP-01 — branche `claude/import-map-01` ; ↪️ intégré à master `7d7bb5a8` le 11/10, ✅ publié en `ft-v1253` le 11/10)*
 
 **Le cas.** `_EX_STOP` range `machine`, `barre`, `haltères`, `poulie`, `câble` parmi les mots vides, avec le bruit commercial
 (« Evolution X900 »). Pour la reconnaissance, ils disparaissent. Mesuré sur master `b280ea5d` : « Squat machine » se réduisait à
@@ -4539,9 +4539,9 @@ ne changent **aucun** rattachement, parce que la lecture est la même des deux c
 elle se teste sur `_materielDe` directement (X2, X10), pas sur le résultat de l'import.
 **Protège (branche)** : banc `tools/banc_import_map2.js` (B-IMAP2-A/I/Q/D/X/H/C, corpus externe figé en cliquet) ; contrôle négatif
 `tools/mut_import_map2.py` ; oracles 01 / 01B adaptés (rôle de la barre dans la grille, Fentes « les 3 » dans le cliquet).
-⚠️ **Non corrigé** (hors lot, consigné) : alias « triceps pushdown » (P0-2 — ✅ **corrigé sur la branche IMPORT-P0-2**, non intégrée, voir plus bas), Tirage Menton (P.2) et Tirage en Rack / Waiter Curl (P.3)
+⚠️ **Non corrigé** (hors lot, consigné) : alias « triceps pushdown » (P0-2 — ✅ **corrigé par IMPORT-P0-2**, publié en `ft-v1253`, voir plus bas), Tirage Menton (P.2) et Tirage en Rack / Waiter Curl (P.3)
 différés, suggestions faibles, modificateurs, pluriel « poulies », barre de traction, élastique, langues autres que FR / EN.
-**IMPORT-P0-2 (11/10/2026, branche `claude/p0-2-triceps-pushdown`, NON INTÉGRÉ)** : la même famille, mais par un **alias** — donc
+**IMPORT-P0-2 (11/10/2026, branche `claude/p0-2-triceps-pushdown` ; ✅ publié en `ft-v1253` le 11/10)** : la même famille, mais par un **alias** — donc
 **avant** le garde-fou. Trois clés (« triceps pushdown », « cable triceps pushdown », « extension triceps poulie ») visaient « Extension
 Triceps », l'extension **à l'haltère** : un alias complet est souverain, il passe devant `_materielDe`. Corrigé en changeant leurs
 **valeurs** vers « Triceps Poulie » (0 clé ajoutée). ⚠️ **Ce qui reste, et pourquoi on ne l'a pas « réparé »** : dix tournures

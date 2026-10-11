@@ -761,10 +761,10 @@ Contrôle négatif `tools/mut_sec_admin.py` : **17/17 conformes** — 16 mutatio
 
 **Ce que le banc ne prouve pas** : le vrai déploiement Apps Script (aucun redéploiement dans ce lot), les vraies Script Properties, Safari iOS.
 
-## 🏷️ IMPORT-MAP-01 — l'identité automatique ne change plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) — NON PUBLIÉ)
+## 🏷️ IMPORT-MAP-01 — l'identité automatique ne change plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) · ✅ PUBLIÉ en `ft-v1253` le 11/10/2026)
 
 > Base master `b280ea5d` (`ft-v1252`). Aucune version, aucune publication, Worker et Apps Script non touchés, 0 appel IA réel.
-> **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.
+> ~~**En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.~~ ↪️ **Publié en `ft-v1253` le 11/10/2026.**
 
 | Sujet | Avant (master) | Après (branche) |
 |---|---|---|
@@ -785,11 +785,11 @@ Contrôle négatif `tools/mut_sec_admin.py` : **17/17 conformes** — 16 mutatio
 M5/M6/M7/M9 déguisées ; M10 commentaire, vert). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict C1 29/0 · C3 35/0 ;
 annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à master). Passe complète sur `755924a0` : **6 059 ✅ / 0 ❌ (4 conditions vertes)**.
 
-## 🏷️ IMPORT-MAP-01B — les alias déclarés ne changent plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) — NON PUBLIÉ)
+## 🏷️ IMPORT-MAP-01B — les alias déclarés ne changent plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) · ✅ PUBLIÉ en `ft-v1253` le 11/10/2026)
 
 > Correction des alias contradictoires **après contre-vérification Nutrition** d'IMPORT-MAP-01. Base master `b280ea5d` (`ft-v1252`),
 > branche `claude/import-map-01` (`1a98fb65` → `bbd6e054`). Aucune version, aucune publication, Worker et Apps Script non touchés, 0 appel IA réel.
-> **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.
+> ~~**En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.~~ ↪️ **Publié en `ft-v1253` le 11/10/2026.**
 
 | Sujet | Avant (`1a98fb65`) | Après (branche) |
 |---|---|---|
@@ -802,33 +802,33 @@ annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à mast
 | « lat machine » → Tirage Poulie Haute | — | ✅ exception sémantique documentée (seule) |
 | **dette MOTEUR** : fentes haltères / dumbbell lunge → Fentes (barre) ; cable hip abduction / adduction, cable leg extension, leg extension poulie → machines | — | ⚠️ **inchangé** : retirer l'alias ne change rien, `_exEquip` ignore le nom anglais (hors périmètre, figé) |
 | suggestions faibles après retrait (« DB row » → Rowing Câble, « Rowing haltères » → Landmine) | — | ⚠️ question, jamais AUTO ; le moteur ne lit pas « db » (hors périmètre) |
-| doutes d'illustration seulement (cable triceps pushdown, extension triceps poulie, seal barbell row, dumbbell goblet squat) | — | ⚠️ inchangés, à trancher (preuve faible) — **cable triceps pushdown et extension triceps poulie : ✅ tranchés par IMPORT-P0-2** (→ Triceps Poulie, branche, non intégré) |
+| doutes d'illustration seulement (cable triceps pushdown, extension triceps poulie, seal barbell row, dumbbell goblet squat) | — | ⚠️ inchangés, à trancher (preuve faible) — **cable triceps pushdown et extension triceps poulie : ✅ tranchés par IMPORT-P0-2** (→ Triceps Poulie, publié en `ft-v1253`) |
 | réserve D-053 : noms génériques en confirmation (historique non repris si non confirmé, regroupements ECH générique + TRAV précis) | — | constat seulement — **non traité ici** (IMPORT-ECH-02) |
 
 **Preuves.** Banc `tools/banc_import_map_alias.js` : **10 rouges sur `1a98fb65` → 20/0** ; banc IMPORT-MAP-01 22/0 (G5 retiré, R30) ;
 contrôle négatif `tools/mut_import_map.py` : **24/24 conformes** ; CCLXXIII réécrit (R30). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict
 C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexistant, même chiffre avec le log.js d'avant). Passe complète sur `bbd6e054` : **6 078 ✅ / 0 ❌ (4 conditions vertes)**.
 
-## 🏷️ IMPORT-MAP-02 — le matériel se lit à sa place (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) — NON PUBLIÉ)
+## 🏷️ IMPORT-MAP-02 — le matériel se lit à sa place (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) · ✅ PUBLIÉ en `ft-v1253` le 11/10/2026)
 
 > Micro-lot ciblé après l'audit du corpus externe (387 lignes) et le Ghost du Drive. Base master `b280ea5d` (`ft-v1252`), branche
 > `claude/import-map-01` (`790932a3` → `8c5a8480`). Un seul propriétaire touché, `_materielDe` (log.js), plus une donnée du catalogue
 > (nom anglais de Fentes). Aucune version, aucune publication, Worker et Apps Script non touchés, 0 appel IA réel.
-> **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.
+> ~~**En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.~~ ↪️ **Publié en `ft-v1253` le 11/10/2026.**
 
 | Sujet | Avant (`790932a3`) | Après (branche) |
 |---|---|---|
 | **P0-1** cible « Polyvalent » invisible : « Lateral Raise (Cable) » / « Cable Lat Raise » → Élévations aux haltères, « Machine Glute Kickbacks » → kickback poulie, « Reverse Fly Machine » / « Oiseau sur poulie » → Oiseau (AUTO, charges reprises) | ouvert | ✅ jamais AUTO vers l'autre matériel ; la cible Polyvalent est lue dans son nom anglais (T2), seulement si `_exEquip` ne sait rien |
 | **P1-1** « barre » poignée lue comme charge : « Tirage vertical / poitrine / nuque barre » | NEW | ✅ AUTO Tirage Poulie Haute / Tirage Nuque (historique repris) |
 | **P1-2** poulie implicite non lue : « Triceps corde » ×2 (Drive), « Tricep Rope Pushdown », « EZ Preacher Curl » | question D-053 à tort | ✅ AUTO juste (historique repris) |
-| corpus externe, faux AUTO dangereux | 6 | ✅ 1 (alias « triceps pushdown », P0-2, hors lot) → **0 avec IMPORT-P0-2** (branche, non intégré) |
+| corpus externe, faux AUTO dangereux | 6 | ✅ 1 (alias « triceps pushdown », P0-2, hors lot) → **0 avec IMPORT-P0-2** (publié en `ft-v1253`) |
 | barre libre (Rowing / Curl / Squat / DC / SdT / Hip thrust barre) | AUTO juste | ✅ inchangé |
 | Fentes (P.1) | nom anglais « lunge barbell » | ✅ « lunge » — multi-matériel « les 3 » (**D-056**) ; effet : la recherche vidéo / image se fait sur « lunge » |
 | Tirage Menton (P.2) | — | ⏸️ **différé** (Michel) : « Tirage menton barre » peut rester nouveau, aucune rustine |
 | Tirage en Rack / Waiter Curl (P.3) | — | ⏸️ **différé** (Michel) : `_exEquip` inchangé |
 | « Tirage horizontal barre » (P.4) | question | ✅ ambigu : jamais AUTO (ni Rowing Barre, ni Rowing Câble) |
 | dette moteur figée (01B) | 6 clés | ✅ 4 clés (les 2 alias Fentes sont conformes à « les 3 ») |
-| alias « triceps pushdown » → Extension Triceps (P0-2), « reverse fly » en double, landmine / T-bar | ouvert | ⚠️ **hors lot**, inchangé — **P0-2 : ✅ corrigé par IMPORT-P0-2** (branche `claude/p0-2-triceps-pushdown`, QUALIFIÉ / NON INTÉGRÉ / NON PUBLIÉ) ; « reverse fly », landmine / T-bar toujours ouverts |
+| alias « triceps pushdown » → Extension Triceps (P0-2), « reverse fly » en double, landmine / T-bar | ouvert | ⚠️ **hors lot**, inchangé — **P0-2 : ✅ corrigé par IMPORT-P0-2** (publié en `ft-v1253` le 11/10/2026) ; « reverse fly », landmine / T-bar toujours ouverts |
 | suggestions faibles après exclusion (p. ex. « Cable Lat Raise » → Tirage Poulie Haute), modificateurs (Oiseau poulie 45°) | ouvert | ⚠️ **hors lot** (P1-3, P1-4) — question, jamais AUTO |
 | pluriel « poulies », barre de traction, élastique, langues ES/DE/IT/PT, fautes de frappe | ouvert | ⚠️ **hors lot** |
 | `docs/export/catalogue-exercices.json` (instantané daté du 02/08) porte encore « lunge barbell » | — | ⚠️ instantané non régénéré (outil `tools/export_catalogue.js`) |
@@ -843,14 +843,14 @@ C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexista
 > Master `b280ea5d` → **`7d7bb5a8`** en **avance rapide** (aucun commit de fusion, aucun conflit, arbre fonctionnel = `972fcce1`
 > qualifié : passe complète 6 123 ✅ / 0 ❌, confirmée par le Ghost final indépendant, verdict **B — vert avec dettes non bloquantes**).
 > Bancs rejoués sur le master intégré : IMPORT-MAP-02 43/0 · IMPORT-MAP-01 22/0 · 01B 22/0 · import_echauffement 11/0 · `check_regles` vert.
-> ⛔ **NON PUBLIÉ** : production = `ft-v1252`. ⚠️ Le push sur master a déclenché le déploiement Pages (`on: push: master`) ; il a été
+> ⛔ **NON PUBLIÉ** : production = `ft-v1252`. ↪️ *Publié en `ft-v1253` le 11/10/2026, avec IMPORT-P0-2.* ⚠️ Le push sur master a déclenché le déploiement Pages (`on: push: master`) ; il a été
 > **annulé avant mise en ligne** (run 38140901833, déploiement `7d7bb5a8` en état `error`, dernier déploiement réussi = `b280ea5d`).
 > ⛔⛔ **Tout prochain push sur master redéploiera Pages et servira ce `log.js`** : la prochaine publication doit poser `ft-v1253`
 > (`sw.js`) dans le même push. Aucun commit documentaire n'est poussé sur master tant que ce n'est pas décidé.
 
 Les dettes ci-dessous sont **consignées, non corrigées** (constats du Ghost final ; V-4 re-mesuré ici). Aucune ne crée d'AUTO faux ni de
 contamination d'historique. ⛔ **P0-2** (« Triceps Pushdown » / « Cable triceps pushdown » / « Extension triceps poulie » → *Extension
-Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUTO high restant) est **hors de ce lot** : prochain micro-lot. ↪️ *Traité par IMPORT-P0-2 (section suivante) : **QUALIFIÉ / NON INTÉGRÉ / NON PUBLIÉ**.*
+Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUTO high restant) est **hors de ce lot** : prochain micro-lot. ↪️ *Traité par IMPORT-P0-2 (section suivante) : **publié en `ft-v1253`** le 11/10/2026.*
 
 | | Dette (Ghost final) | État |
 |---|---|---|
@@ -863,12 +863,12 @@ Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUT
 | **V-7** | questions faibles : « Élévations latérales haltères », « Elevation latérales » (la première est déjà notée plus haut : suggestion *Élévation Latérale Landmine*) | ⚠️ ouverte |
 | **V-8** | certains bancs officiels tentent encore des connexions réseau (bloquées dans l'environnement du Ghost) | ⚠️ ouverte (outillage de test) |
 
-## 🏷️ IMPORT-P0-2 — les pushdowns poulie ne vont plus vers « Extension Triceps » (11/10/2026, session-B — ⛔ BRANCHE `claude/p0-2-triceps-pushdown` : QUALIFIÉ / NON INTÉGRÉ / NON PUBLIÉ)
+## 🏷️ IMPORT-P0-2 — les pushdowns poulie ne vont plus vers « Extension Triceps » (11/10/2026, session-B — BRANCHE `claude/p0-2-triceps-pushdown` : QUALIFIÉ → INTÉGRÉ MASTER · ✅ PUBLIÉ en `ft-v1253` le 11/10/2026)
 
 > Micro-lot sur le dernier faux AUTO « high » du corpus externe. Base master `7d7bb5a8` (code d'IMPORT-MAP intégré, **non publié** ;
 > production `ft-v1252`). **Trois valeurs** d'alias changées dans `_EX_EQUIV` (log.js) — aucune clé ajoutée, aucune fonction, aucune
 > table, aucune persistance. Aucune version, aucun push master, Worker et Apps Script non touchés, 0 appel IA réel.
-> **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas intégrée puis publiée.
+> ~~**En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas intégrée puis publiée.~~ ↪️ **Intégré master et publié en `ft-v1253` le 11/10/2026.**
 
 | Sujet | Avant (`7d7bb5a8`) | Après (branche) |
 |---|---|---|
@@ -894,8 +894,8 @@ Non-régressions : IMPORT-MAP-02 43/0 (cliquet 98, faux figés vides) · IMPORT-
 
 | Sujet | Statut |
 |---|---|
-| IMPORT-MAP-01 / 01B / 02 | ✅ **INTÉGRÉ MASTER `7d7bb5a8` — NON PUBLIÉ** (production `ft-v1252`) |
-| IMPORT-P0-2 (Triceps Pushdown) | ✅ **QUALIFIÉ — NON INTÉGRÉ — NON PUBLIÉ** (branche `claude/p0-2-triceps-pushdown`, passe 6 146 / 0) |
+| IMPORT-MAP-01 / 01B / 02 | ✅ **PUBLIÉ en `ft-v1253`** (11/10/2026) — recette terrain de Michel à faire |
+| IMPORT-P0-2 (Triceps Pushdown) | ✅ **INTÉGRÉ MASTER · PUBLIÉ en `ft-v1253`** (11/10/2026, passe 6 146 / 0) — recette terrain de Michel à faire |
 | Dettes Import du Ghost final | ⚠️ **V-1 → V-8**, consignées **une seule fois** (tableau IMPORT-MAP-INTEGRATION-01 ci-dessus), non corrigées |
 | Dette « Extension Triceps + matériel » (10 tournures) | ⚠️ **séparée, non bloquante**, préexistante sur master — décision de Michel attendue (section IMPORT-P0-2) |
 | IMPORT-ECH-02 (noms génériques en confirmation, regroupements ECH générique + TRAV précis) | ⏳ **futur, non commencé** |
