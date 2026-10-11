@@ -39529,7 +39529,8 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
   await require('./food_multisource.js').ecran(t, b, PORT);
   /* 🍽️ NUT-D042-01 (11/10/2026) : D-042 — pour une requête GÉNÉRIQUE, l'aliment générique pertinent passe avant le
      fast-food ; une intention de marque explicite garde la marque devant ; « Déjà noté par toi » inchangé.
-     Blocs B-D42-A → B-D42-L, contrôle négatif `tools/mut_food_d042.py`. */
+     Blocs B-D42-A (structure), B-D42-B (vraie frappe), B-D42-J (« Déjà noté »), B-D42-T (premier affichage),
+     contrôle négatif `tools/mut_food_d042.py`. */
   await require('./food_d042.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */

@@ -109,6 +109,17 @@ const CAS = [
   /* ── E. SOURCE ABSENTE : rien n'est inventé ── */
   G('D42-080', 'poulet', { ctx: 'sans-ciqual', sources: ['FF'], presents: ['FF'], absents: ['CIQ'], raison: 'sans CIQUAL, on n\'invente pas de générique : le fast-food s\'affiche' }),
   G('D42-081', 'poulet', { ctx: 'sans-marques', sources: ['CIQ'], presents: ['CIQ'], absents: ['FF'], ciq: { re1: '^Poulet\\b' }, raison: 'sans fast-food, le générique seul' }),
+  /* ── G. PERTINENCE (critère D) : le générique ne passe devant que s'il EST pertinent. Mesuré le 11/10 sur les 117
+     requêtes tirées des noms du fast-food : la 1ʳᵉ version de D-042 (CIQUAL non vide et pas de marque) mettait
+     27 fois devant un aliment qui ne porte même pas le mot tapé — ces cas sont verts sur master et rougissaient
+     sur cette 1ʳᵉ version : ce sont les témoins de ce qui a été corrigé avant tout commit. ── */
+  G('D42-100', 'wings', { avant: AVANT_MARQUE, ff: { re1: 'Hot Wings' }, raison: '« wings » : aucun générique pertinent (le 1ᵉʳ CIQUAL est un chewing-gum) — le fast-food reste devant' }),
+  G('D42-101', 'rings', { avant: AVANT_MARQUE, ff: { re1: 'Rings' }, raison: '« rings » : le 1ᵉʳ CIQUAL est une meringue — pas un générique pertinent' }),
+  G('D42-102', 'cheese', { avant: AVANT_MARQUE, ff: { re1: '^Cheeseburger' }, raison: '« cheese » : le 1ᵉʳ CIQUAL est un cheesecake — pas un générique pertinent' }),
+  G('D42-103', 'big', { kind: 'partiel', avant: AVANT_MARQUE, ff: { re1: '^Big Mac' }, raison: 'en tapant « big mac » : un bigorneau ne passe pas devant le Big Mac' }),
+  G('D42-104', 'mayo', { avant: AVANT_GEN, ciq: { re1: '^Mayonnaise\\b' }, raison: 'la table d\'alias a décidé que « mayo » est la mayonnaise : générique pertinent, il passe devant' }),
+  G('D42-105', 'carottes', { avant: AVANT_GEN, ciq: { re1: '^Carotte\\b' }, raison: 'le pluriel retrouve le générique en mot entier (FS-01) : il passe devant les « Funny Carottes »' }),
+  G('D42-106', 'fish burger', { avant: AVANT_GEN, ciq: { re1: '^Burger au poisson' }, raison: 'alias : le burger au poisson générique avant le Long Fish' }),
   /* ── F. « DÉJÀ NOTÉ PAR TOI » (journal amorcé) : au-dessus de tout quand il répond ; D-042 vient dessous ── */
   G('D42-090', 'poulet', { ctx: 'journal', avant: [['LOC', 'CIQ'], ['CIQ', 'FF']], presents: ['LOC'], loc: LOC_MASTER.poulet, raison: 'vraie correspondance : « Déjà noté » en tête, puis le générique, puis le fast-food' }),
   G('D42-091', 'oeuf', { ctx: 'journal', avant: [['LOC', 'CIQ'], ['CIQ', 'FF']], presents: ['LOC'], loc: LOC_MASTER.oeuf, raison: 'faux ami « Bœuf haché » : PRÉEXISTANT, INCHANGÉ (hors lot)' }),
@@ -127,6 +138,9 @@ module.exports.source = function (t) {
   t('B-D42-A ② le corpus couvre le minimum demandé : génériques (poulet, fromage, salade, pâtes, oeuf, riz, pomme, café, thé, coca, tenders, tacos), marques (Coca-Cola, Big Mac, Whopper, KFC tenders, KFC, O\'Tacos), formes (cru / cuit / séché / poudre / infusé)',
     ['poulet', 'fromage', 'salade', 'pâtes', 'oeuf', 'riz', 'pomme', 'café', 'thé', 'coca', 'tenders', 'tacos', 'Coca-Cola', 'Big Mac', 'Whopper', 'KFC tenders', 'KFC', 'O’Tacos', 'riz cru', 'riz cuit', 'pomme séchée']
       .every(q => CAS.some(c => c.q === q)), '');
+  t('B-D42-A ③ le critère D (« un résultat RÉELLEMENT pertinent ») a ses témoins dans les deux sens : un CIQUAL non pertinent ne passe jamais devant (wings, rings, cheese, big), un générique pertinent par alias ou par pluriel passe devant (mayo, carottes, fish burger)',
+    ['wings', 'rings', 'cheese', 'big'].every(q => CAS.some(c => c.q === q && JSON.stringify(c.avant) === JSON.stringify(AVANT_MARQUE)))
+      && ['mayo', 'carottes', 'fish burger'].every(q => CAS.some(c => c.q === q && JSON.stringify(c.avant) === JSON.stringify(AVANT_GEN))), '');
 };
 
 /* Les contrôles propres à D-042, en plus de ceux du harnais FS-05B (`juger`) : le contenu EXACT de « Déjà noté ». */

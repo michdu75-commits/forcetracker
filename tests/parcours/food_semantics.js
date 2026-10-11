@@ -69,8 +69,14 @@ module.exports.source = function (t, ROOT, fs, path) {
     && (AP.match(/function_fsCle\(/g) || []).length === 1, 'classement modifié ou dupliqué');
   t('B-CDXXVIII ② la clé est explicable et finit par le nom puis le code (jamais l\'ordre du fichier)',
     corps(AP, '_fsCle').includes('return[r[0],forme,r[1],entier,teteExacte,teteSing,n.length,n,a[0]];'), 'clé modifiée');
+  /* R30 — NUT-D042-01 (11/10/2026) : le témoin lisait la chaîne exacte de FS-01 (`Promise.all([_ciqualCharger(),
+     _aliasCharger()])`). D-042 y fait entrer le fast-food (le petit fichier s'affichait seul, puis le générique
+     s'insérait dessus) : la garantie « UN rendu » est GARDÉE et ÉTENDUE — le témoin exige les deux chargeurs de FS-01
+     dans le même `Promise.all`, aucun rendu séparé pour l'alias NI pour le fast-food, une seule recherche CIQUAL. */
+  const pa = (inp.match(/Promise\.all\(\[([^\]]*)\]\)\.then\(/) || [])[1] || '';
   t('B-CDXXVIII ③ CIQUAL et alias : UN rendu, quand les deux sont chargés (plus de re-classement sous le doigt)',
-    inp.includes('Promise.all([_ciqualCharger(),_aliasCharger()]).then(') && !inp.includes('_aliasCharger().then(')
+    pa.includes('_ciqualCharger()') && pa.includes('_aliasCharger()') && !inp.includes('_aliasCharger().then(')
+    && !inp.includes('_marquesCharger().then(')
     && (inp.match(/_afSuggCiq=_ciqualChercher\(q,6\);/g) || []).length === 1, 'deux rendus');
   const AL = fs.readFileSync(path.join(ROOT, 'tools', 'alias.py'), 'utf8');
   const J = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'alias.json'), 'utf8')).a;
