@@ -39636,6 +39636,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (Cable) » ↛ élévations aux haltères). Fentes reste « les 3 » (décision de Michel). Historique par le vrai import,
      corpus externe (387 occurrences) en cliquet. Banc : tools/banc_import_map2.js · contrôle négatif : tools/mut_import_map2.py. */
   await require('./import_map2.js').ecran(t, b, PORT);
+  /* 🏷️ IMPORT-P0-2 (session-B, 11/10/2026) — « Triceps Pushdown », « Cable triceps pushdown » et « Extension triceps
+     poulie » vont vers « Triceps Poulie », jamais vers « Extension Triceps » (l'extension à l'haltère) : ni sa carte, ni
+     ses charges, ni ses séances, ni son record — par l'import de programme ET par l'import d'historique. La corde reste
+     « Triceps Corde Poulie ». Banc : tools/banc_p02_triceps.js · contrôle négatif : tools/mut_p02_triceps.py. */
+  await require('./p02_triceps.js').ecran(t, b, PORT);
 
 await b.close(); srv.close();
 
