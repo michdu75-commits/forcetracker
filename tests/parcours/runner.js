@@ -39499,6 +39499,29 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      `tools/mut_nutri_lipides25.py`. */
   await require('./nutri_lipides25.js').ecran(t, b, PORT);
   await require('./nutri_lipides25.js').ecranVue(t, b, PORT);
+  /* 🔎 FS-01 Food Semantics V1 (02/10/2026, porté par NUT-D042-01 le 11/10) : résolveur déterministe de la recherche
+     d'aliments (une forme nommée gagne toujours) et un seul premier affichage quand CIQUAL ET les alias sont là.
+     Blocs B-CDXXIX / B-CDXXX, contrôle négatif `tools/mut_food_semantics.py`. */
+  await require('./food_semantics.js').ecran(t, b, PORT);
+  await require('./food_semantics.js').ecranVue(t, b, PORT);
+  /* 🧩 FS-02 (porté par NUT-D042-01) : une seule taxonomie des formes (requête ET candidats), ambiguïtés figées.
+     Bloc B-CDXXXII, contrôle négatif `tools/mut_food_formes.py`. */
+  await require('./food_formes.js').ecran(t, b, PORT);
+  /* 🎯 FS-03 (porté par NUT-D042-01) : préférences par défaut des requêtes génériques (une couche, séparée de la
+     taxonomie). Bloc B-CDXXXIV, contrôle négatif `tools/mut_food_prefs.py`. */
+  await require('./food_prefs.js').ecran(t, b, PORT);
+  /* ⛔ FS-04 (le libellé de forme affiché) N'EST PAS PORTÉ par NUT-D042-01 : un affichage nouveau, hors de D-042
+     (D-040 PROPOSÉ, jamais validé). Son banc `food_affichage.js` reste sur `claude/food-semantics-fs05b`. */
+  /* 📚 FS-05 (porté par NUT-D042-01) : le corpus de référence des recherches alimentaires — il MESURE et FIGE.
+     Blocs B-CDXXXIX / B-CDXL, contrôle négatif `tools/mut_food_reference.py`. */
+  await require('./food_reference.js').ecran(t, b, PORT);
+  /* 🧭 FS-05B (porté par NUT-D042-01) : le corpus MULTI-SOURCE conduit par la vraie frappe. Blocs B-CDXLII /
+     B-CDXLIII, contrôle négatif `tools/mut_food_multisource.py`. */
+  await require('./food_multisource.js').ecran(t, b, PORT);
+  /* 🍽️ NUT-D042-01 (11/10/2026) : D-042 — pour une requête GÉNÉRIQUE, l'aliment générique pertinent passe avant le
+     fast-food ; une intention de marque explicite garde la marque devant ; « Déjà noté par toi » inchangé.
+     Blocs B-D42-A → B-D42-L, contrôle négatif `tools/mut_food_d042.py`. */
+  await require('./food_d042.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40415,6 +40438,12 @@ require('./profil_atypique.js').source(t, ROOT, fs, path);
 require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
+require('./food_semantics.js').source(t, ROOT, fs, path);
+require('./food_formes.js').source(t, ROOT, fs, path);
+require('./food_prefs.js').source(t, ROOT, fs, path);
+require('./food_reference.js').source(t, ROOT, fs, path);
+require('./food_multisource.js').source(t, ROOT, fs, path);
+require('./food_d042.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
