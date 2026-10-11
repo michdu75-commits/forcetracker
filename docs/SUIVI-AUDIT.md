@@ -398,7 +398,7 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   intention de marque gardée). Ce retour terrain n'est **pas** clos : il le sera à la publication, après recette.
   Mesures et limites : `docs/FOOD-SEMANTICS.md` §14 ; décision : `docs/DECISIONS.md` D-042.
   ↪️ **11/10 (NUT-D042-CLOSURE-01)** : repositionné sur master `7b75f3c1` (`ft-v1253`), branche `claude/nut-d042-closure-01` —
-  **QUALIFIÉ SUR MASTER ACTUEL · NON INTÉGRÉ · NON PUBLIÉ · EN ATTENTE DE CONTRE-VÉRIFICATION**.
+  **QUALIFIÉ SUR MASTER ACTUEL · NON INTÉGRÉ · NON PUBLIÉ · EN ATTENTE DE CONTRE-VÉRIFICATION**. 6 bancs Food 0 rouge, 117 / 117 mutations conformes, passe complète D-031 **6 661 ✅ / 0 ❌** sur `0407516b` (4 conditions vertes).
 
 ### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
 - **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,
