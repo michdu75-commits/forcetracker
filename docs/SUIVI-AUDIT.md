@@ -802,7 +802,7 @@ annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à mast
 | « lat machine » → Tirage Poulie Haute | — | ✅ exception sémantique documentée (seule) |
 | **dette MOTEUR** : fentes haltères / dumbbell lunge → Fentes (barre) ; cable hip abduction / adduction, cable leg extension, leg extension poulie → machines | — | ⚠️ **inchangé** : retirer l'alias ne change rien, `_exEquip` ignore le nom anglais (hors périmètre, figé) |
 | suggestions faibles après retrait (« DB row » → Rowing Câble, « Rowing haltères » → Landmine) | — | ⚠️ question, jamais AUTO ; le moteur ne lit pas « db » (hors périmètre) |
-| doutes d'illustration seulement (cable triceps pushdown, extension triceps poulie, seal barbell row, dumbbell goblet squat) | — | ⚠️ inchangés, à trancher (preuve faible) |
+| doutes d'illustration seulement (cable triceps pushdown, extension triceps poulie, seal barbell row, dumbbell goblet squat) | — | ⚠️ inchangés, à trancher (preuve faible) — **cable triceps pushdown et extension triceps poulie : ✅ tranchés par IMPORT-P0-2** (→ Triceps Poulie, branche, non intégré) |
 | réserve D-053 : noms génériques en confirmation (historique non repris si non confirmé, regroupements ECH générique + TRAV précis) | — | constat seulement — **non traité ici** (IMPORT-ECH-02) |
 
 **Preuves.** Banc `tools/banc_import_map_alias.js` : **10 rouges sur `1a98fb65` → 20/0** ; banc IMPORT-MAP-01 22/0 (G5 retiré, R30) ;
@@ -821,14 +821,14 @@ C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexista
 | **P0-1** cible « Polyvalent » invisible : « Lateral Raise (Cable) » / « Cable Lat Raise » → Élévations aux haltères, « Machine Glute Kickbacks » → kickback poulie, « Reverse Fly Machine » / « Oiseau sur poulie » → Oiseau (AUTO, charges reprises) | ouvert | ✅ jamais AUTO vers l'autre matériel ; la cible Polyvalent est lue dans son nom anglais (T2), seulement si `_exEquip` ne sait rien |
 | **P1-1** « barre » poignée lue comme charge : « Tirage vertical / poitrine / nuque barre » | NEW | ✅ AUTO Tirage Poulie Haute / Tirage Nuque (historique repris) |
 | **P1-2** poulie implicite non lue : « Triceps corde » ×2 (Drive), « Tricep Rope Pushdown », « EZ Preacher Curl » | question D-053 à tort | ✅ AUTO juste (historique repris) |
-| corpus externe, faux AUTO dangereux | 6 | ✅ 1 (alias « triceps pushdown », P0-2, hors lot) |
+| corpus externe, faux AUTO dangereux | 6 | ✅ 1 (alias « triceps pushdown », P0-2, hors lot) → **0 avec IMPORT-P0-2** (branche, non intégré) |
 | barre libre (Rowing / Curl / Squat / DC / SdT / Hip thrust barre) | AUTO juste | ✅ inchangé |
 | Fentes (P.1) | nom anglais « lunge barbell » | ✅ « lunge » — multi-matériel « les 3 » (**D-056**) ; effet : la recherche vidéo / image se fait sur « lunge » |
 | Tirage Menton (P.2) | — | ⏸️ **différé** (Michel) : « Tirage menton barre » peut rester nouveau, aucune rustine |
 | Tirage en Rack / Waiter Curl (P.3) | — | ⏸️ **différé** (Michel) : `_exEquip` inchangé |
 | « Tirage horizontal barre » (P.4) | question | ✅ ambigu : jamais AUTO (ni Rowing Barre, ni Rowing Câble) |
 | dette moteur figée (01B) | 6 clés | ✅ 4 clés (les 2 alias Fentes sont conformes à « les 3 ») |
-| alias « triceps pushdown » → Extension Triceps (P0-2), « reverse fly » en double, landmine / T-bar | ouvert | ⚠️ **hors lot**, inchangé |
+| alias « triceps pushdown » → Extension Triceps (P0-2), « reverse fly » en double, landmine / T-bar | ouvert | ⚠️ **hors lot**, inchangé — **P0-2 : ✅ corrigé par IMPORT-P0-2** (branche `claude/p0-2-triceps-pushdown`, QUALIFIÉ / NON INTÉGRÉ / NON PUBLIÉ) ; « reverse fly », landmine / T-bar toujours ouverts |
 | suggestions faibles après exclusion (p. ex. « Cable Lat Raise » → Tirage Poulie Haute), modificateurs (Oiseau poulie 45°) | ouvert | ⚠️ **hors lot** (P1-3, P1-4) — question, jamais AUTO |
 | pluriel « poulies », barre de traction, élastique, langues ES/DE/IT/PT, fautes de frappe | ouvert | ⚠️ **hors lot** |
 | `docs/export/catalogue-exercices.json` (instantané daté du 02/08) porte encore « lunge barbell » | — | ⚠️ instantané non régénéré (outil `tools/export_catalogue.js`) |
@@ -837,3 +837,27 @@ C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexista
 (la grille apprend le rôle de la barre), banc 01B 22/0 (Fentes « les 3 », dette 6 → 4) ; contrôle négatif `tools/mut_import_map2.py` :
 **25/25 conformes** ; rejeu du vrai code sur 719 libellés distincts = simulation de la conception (21 changements, 12 nouveaux AUTO tous justes,
 0 régression). Voisins : import_echauffement 11/0 · lot3 87/0 · séance C1 29/0 · C3 35/0 · mutations 01 / 01B **24/24 conformes** (oracles adaptés compris) · sélecteur de recette propre (EX_EN rattaché au scénario) · annexe 14 PASS + 1 défaut connu (discussions, préexistant : mêmes chiffres 71 726 / 76 645 / 68 781 avec le log.js d'avant — le lot ne change pas le contexte de Milo) · `check_regles.py` vert. Passe complète : **6 123 ✅ / 0 ❌** sur `972fcce1` (4 conditions vertes).
+
+## 🏷️ IMPORT-P0-2 — les pushdowns poulie ne vont plus vers « Extension Triceps » (11/10/2026, session-B — ⛔ BRANCHE `claude/p0-2-triceps-pushdown` : QUALIFIÉ / NON INTÉGRÉ / NON PUBLIÉ)
+
+> Micro-lot sur le dernier faux AUTO « high » du corpus externe. Base master `7d7bb5a8` (code d'IMPORT-MAP intégré, **non publié** ;
+> production `ft-v1252`). **Trois valeurs** d'alias changées dans `_EX_EQUIV` (log.js) — aucune clé ajoutée, aucune fonction, aucune
+> table, aucune persistance. Aucune version, aucun push master, Worker et Apps Script non touchés, 0 appel IA réel.
+> **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas intégrée puis publiée.
+
+| Sujet | Avant (`7d7bb5a8`) | Après (branche) |
+|---|---|---|
+| « Triceps Pushdown », « Cable triceps pushdown », « Extension triceps poulie » | AUTO **Extension Triceps** (l'extension à l'haltère) : ses charges, ses séances, son record ; l'import d'historique écrivait sous son nom | ✅ AUTO **Triceps Poulie** (programme, historique, pré-saisie, record) |
+| « Tricep pushdown », « Triceps pushdowns », « Cable Tricep Pushdown » | AUTO Triceps Poulie | ✅ inchangé |
+| corde / rope (« Triceps corde », « Tricep Rope Pushdown ») | AUTO Triceps Corde Poulie | ✅ inchangé |
+| élastique (« Banded pushdown », « Pushdown élastique ») | question → Triceps Poulie, jamais AUTO | ✅ inchangé |
+| « Extension triceps haltère », « Skull crusher », « Barre au front », « Extension Triceps » exact | AUTO juste | ✅ inchangé |
+| corpus externe, AUTO faux « high » | 1 (EXT-0138) | ✅ **0** (EXT-0138 rejoint le cliquet A_fige, 97 → 98 justes) ; AUTO faux toutes confiances 6 → 5 (Rowing T-Bar « medium », Leg Curl ×4 « ambiguous », inchangés) |
+| ⚠️ famille « extension triceps + matériel » (« Extension triceps à la poulie », « … câble », « Cable triceps extension », « Extensions triceps poulie », « Extension triceps barre », « Extension triceps machine » — 10 tournures) | AUTO Extension Triceps **par les mots**, pas par un alias | ⚠️ **inchangé — limite connue, nommée et figée** (le banc rougit si elle grandit). Cause : « Extension Triceps » est rangée « Polyvalent » et son nom anglais (« triceps extension overhead ») ne dit aucun matériel, donc le garde-fou d'IMPORT-MAP ne peut pas s'y opposer. **Décision de Michel attendue** : que désigne « Extension Triceps » ? (haltère seulement → lui donner un matériel lisible, précédent Fentes D-056 ; ou alias au cas par cas) |
+| « Pushdown corde » | question → Triceps Poulie | ⚠️ inchangé (question, jamais AUTO ; la corde serait plus juste) |
+
+**Preuves.** Banc `tools/banc_p02_triceps.js` (B-P02-A/P/H/∅) : **11 rouges sur `7d7bb5a8` → 23/0** ; contrôle négatif
+`tools/mut_p02_triceps.py` : **10/10 conformes** (M00 code d'avant, M1-M3 alias remis, M4 vers la corde, M5 corde → poulie, M6 a/b/c
+contamination pré-saisie / nom écrit par l'import d'historique / record, M7 commentaire vert ; chaque rouge est un témoin, aucun plantage).
+Non-régressions : IMPORT-MAP-02 43/0 (cliquet 98, faux figés vides) · IMPORT-MAP-01 22/0 · IMPORT-MAP-01B 22/0 · import_echauffement 11/0 ·
+`check_regles` vert. Passe complète D-031 : voir le journal de partage (clôture du lot).

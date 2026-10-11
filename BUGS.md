@@ -4539,5 +4539,13 @@ ne changent **aucun** rattachement, parce que la lecture est la même des deux c
 elle se teste sur `_materielDe` directement (X2, X10), pas sur le résultat de l'import.
 **Protège (branche)** : banc `tools/banc_import_map2.js` (B-IMAP2-A/I/Q/D/X/H/C, corpus externe figé en cliquet) ; contrôle négatif
 `tools/mut_import_map2.py` ; oracles 01 / 01B adaptés (rôle de la barre dans la grille, Fentes « les 3 » dans le cliquet).
-⚠️ **Non corrigé** (hors lot, consigné) : alias « triceps pushdown » (P0-2), Tirage Menton (P.2) et Tirage en Rack / Waiter Curl (P.3)
+⚠️ **Non corrigé** (hors lot, consigné) : alias « triceps pushdown » (P0-2 — ✅ **corrigé sur la branche IMPORT-P0-2**, non intégrée, voir plus bas), Tirage Menton (P.2) et Tirage en Rack / Waiter Curl (P.3)
 différés, suggestions faibles, modificateurs, pluriel « poulies », barre de traction, élastique, langues autres que FR / EN.
+**IMPORT-P0-2 (11/10/2026, branche `claude/p0-2-triceps-pushdown`, NON INTÉGRÉ)** : la même famille, mais par un **alias** — donc
+**avant** le garde-fou. Trois clés (« triceps pushdown », « cable triceps pushdown », « extension triceps poulie ») visaient « Extension
+Triceps », l'extension **à l'haltère** : un alias complet est souverain, il passe devant `_materielDe`. Corrigé en changeant leurs
+**valeurs** vers « Triceps Poulie » (0 clé ajoutée). ⚠️ **Ce qui reste, et pourquoi on ne l'a pas « réparé »** : dix tournures
+« extension triceps + matériel » (« à la poulie », « câble », « barre », « machine »…) arrivent encore AUTO sur « Extension Triceps » par
+les **mots** — sa case est « Polyvalent » et son nom anglais ne dit aucun matériel, le garde-fou n'a rien à opposer. *C'est le même trou
+que P0-1 (une cible « Polyvalent » invisible), sur une cible dont l'identité n'a jamais été tranchée.* Ajouter dix alias serait du cas par
+cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Figée par B-P02-A (la liste ne peut que rétrécir).
