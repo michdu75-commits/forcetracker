@@ -397,6 +397,8 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   portés sur master `b280ea5d` (FS-04 non porté) et **D-042 implémentée** (générique pertinent avant le fast-food,
   intention de marque gardée). Ce retour terrain n'est **pas** clos : il le sera à la publication, après recette.
   Mesures et limites : `docs/FOOD-SEMANTICS.md` §14 ; décision : `docs/DECISIONS.md` D-042.
+  ↪️ **11/10 (NUT-D042-CLOSURE-01)** : repositionné sur master `7b75f3c1` (`ft-v1253`), branche `claude/nut-d042-closure-01` —
+  **QUALIFIÉ SUR MASTER ACTUEL · NON INTÉGRÉ · NON PUBLIÉ · EN ATTENTE DE CONTRE-VÉRIFICATION**.
 
 ### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
 - **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,

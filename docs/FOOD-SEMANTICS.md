@@ -671,3 +671,22 @@ après normalisation (§6) · « couscous », « tikka masala » · les données
 B-D42-T premier affichage) ; contrôle négatif `python3 tools/mut_food_d042.py` ; scénario `NUTRI-RECHERCHE-D042` ;
 rapport `NUT-D042-01-RAPPORT-IMPLEMENTATION-2026-10-11` (hors dépôt).
 
+### 14 bis. NUT-D042-CLOSURE-01 — repositionnement sur le master actuel (11/10/2026, branche non intégrée)
+
+**Pourquoi** : `claude/nut-d042-01` avait été qualifiée sur `b280ea5d` ; master est passé à `7b75f3c1` (`ft-v1253` :
+IMPORT-MAP-01 / 01B / 02 + IMPORT-P0-2). **Ce qui a été fait** : nouvelle branche `claude/nut-d042-closure-01` depuis
+`origin/master`, reprise **par cherry-pick** des 6 commits de la branche historique (témoins, FS-01 → FS-03, D-042,
+recette, corpus FS-05, documentation) ; l'ancienne réservation du journal n'est pas reprise. **Aucun conflit de code** :
+la Nutrition touche `app.js`, `data/alias.json`, `tools/alias.py` ; master avait touché `log.js` et `sw.js`. Le code
+Nutrition est **identique** à la version qualifiée (`git diff` vide sur `app.js`, `data/`, `tools/alias.py`, bancs et
+contrôles négatifs `food_*`). Conflits résolus à la main : documentation seulement (`CONTEXTE-ACTUEL`, `JOURNAL-DE-PARTAGE`,
+`INVENTAIRE`).
+
+**Avant (master `7b75f3c1`, mêmes témoins)** : D-042 36 / 29 · FS-01, FS-02, FS-03 plantent (résolveur absent) · FS-05
+38 / 97 · FS-05B 129 / 2 — **identique à `b280ea5d`** (rejoué : IMPORT-MAP et IMPORT-P0-2 ne touchent pas la recherche
+d'aliments). **Après (branche)** : D-042 **73 / 0** · FS-01 **44 / 0** · FS-02 **46 / 0** · FS-03 **39 / 0** · FS-05
+**136 / 0** · FS-05B **177 / 0**. Contrôles négatifs et passe complète : rapport `NUT-D042-CLOSURE-01-RAPPORT-2026-10-11`
+(hors dépôt) et `HANDOFF-NUT-D042-CLOSURE-01.json` (racine de la branche).
+
+**Toujours hors lot** : FS-04 (affichage des formes, **D-040** non portée) · NUT-PUNCH-01 · UX « crème fraîche » · champ
+« quantité consommée » · suite « pizza 4 fromages » au-delà de D-042.
