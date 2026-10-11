@@ -862,4 +862,3 @@ Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUT
 | **V-6** | 5 AUTO **justes** du master devenus prudents / nouveaux depuis 01 / 01B : Tirage vertical machine · Tirage poitrine machine barre · Dips barre · Pull-up barre · Face pull barre | ⚠️ ouverte (perte de confort, pas d'erreur) |
 | **V-7** | questions faibles : « Élévations latérales haltères », « Elevation latérales » (la première est déjà notée plus haut : suggestion *Élévation Latérale Landmine*) | ⚠️ ouverte |
 | **V-8** | certains bancs officiels tentent encore des connexions réseau (bloquées dans l'environnement du Ghost) | ⚠️ ouverte (outillage de test) |
-
