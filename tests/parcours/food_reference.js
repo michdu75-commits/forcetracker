@@ -50,7 +50,8 @@ module.exports.ecran = async function (t, b, PORT) {
   await pg.waitForTimeout(1800);
   /* ⭐ L'ÉVALUATION SE FAIT DANS LA PAGE, PAR LE CODE SERVI ; `_alias = null` = la table indisponible (hors ligne),
      exactement comme le runner CCXXIII. Aucun historique, aucun profil personnel : la page est vierge. */
-  const R = await pg.evaluate(async (CAS) => {
+  const R = await pg.evaluate(async ({ CAS, MAPPING }) => {
+    const INV = {}; Object.keys(MAPPING).forEach(k => { INV[MAPPING[k]] = k; });   // « Cuit » → cuit (NUT-D042-01)
     await _ciqualCharger(); await _aliasCharger();
     /* Garde de harnais : sur un code sans FS-02 / FS-04 (M00 = master), l'absence de la fonction rend « rien » au
        lieu de planter — les témoins du corpus rougissent alors un par un, ce qui est la vraie mesure. */
@@ -70,6 +71,15 @@ module.exports.ecran = async function (t, b, PORT) {
       if ('pasNom' in c && p === c.pasNom) ko.push('pasNom');
       if (fs04 && 'forme' in c && badge(p) !== c.forme) ko.push('forme=' + badge(p));
       if (fs04 && 'formeContient' in c && !badge(p).split(' · ').includes(c.formeContient)) ko.push('formeContient');
+      /* NUT-D042-01 — SANS FS-04, LA FORME RESTE JUGÉE, SUR LA DONNÉE ET NON SUR L'ÉCRAN. Mesuré : sans ce repli, le
+         contrôle négatif de ce corpus ne voyait plus « riz » servi cru, ni une règle cuit > cru appliquée aux viandes
+         (M1, M12, DG3) — le libellé était son seul œil sur la forme. L'attente « Cuit » se relit en forme « cuit » par
+         le MAPPING inverse, et se juge sur la taxonomie FS-02 portée (`_fsFormesDuTexte`) : chaque forme attendue doit
+         y être ; une attente vide veut dire « aucune forme ». Plus large que le libellé exact (la projection FS-04 n'est
+         pas recopiée ici), jamais plus lâche que rien. */
+      if (!fs04 && 'forme' in c) { const att = c.forme ? c.forme.split(' · ').map(l => INV[l]) : [], f = formesDe(p);
+        if (att.length ? !att.every(x => f.includes(x)) : f.length) ko.push('forme(donnée)=' + f.join('+')); }
+      if (!fs04 && 'formeContient' in c && !formesDe(p).includes(INV[c.formeContient])) ko.push('formeContient(donnée)');
       if ('porte' in c && !c.porte.every(f => formesDe(p).includes(f))) ko.push('porte');
       if ('top' in c && !r.slice(1, c.top.n).some(x => new RegExp(c.top.re).test(x))) ko.push('top');
       if ('jamais' in c && r.slice(0, c.jamais.n).some(x => new RegExp(c.jamais.re).test(x))) ko.push('jamais');
@@ -88,12 +98,12 @@ module.exports.ecran = async function (t, b, PORT) {
       _ciqual.a = c; perm.push(sig(tout()) === ref); }
     _ciqual.a = orig.slice().reverse(); perm.push(sig(tout()) === ref); _ciqual.a = orig;
     return { res, det: { rep, perm }, fs04 };
-  }, CAS);
+  }, { CAS, MAPPING });
   console.log('\n-- B-CDXXXIX. FS-05 — le corpus conduit sur la vraie base (en ligne et hors ligne) --');
   /* NUT-D042-01 : FS-04 n'est pas porté — on le DIT, on compte ce qui n'est pas évalué, et un témoin vérifie que c'est
      bien la raison (si FS-04 arrive un jour, les contrôles se réactivent et ce témoin le signale). */
   const suspendus = CAS.filter(c => c.niveau !== 'KNOWN_LIMITATION' && ('forme' in c || 'formeContient' in c)).length;
-  console.log('   ℹ️  FS-04 (libellé de forme affiché) non porté : ' + suspendus + ' contrôle(s) de libellé conservé(s) dans le corpus, NON évalué(s)');
+  console.log('   ℹ️  FS-04 (libellé de forme affiché) non porté : ' + suspendus + ' contrôle(s) de libellé conservé(s) dans le corpus — le TEXTE affiché n\'est pas évalué, la FORME l\'est, sur la taxonomie FS-02 portée');
   t('B-CDXXXIX NUT-D042-01 : les contrôles de libellé ne sont suspendus QUE parce que FS-04 est absent du code servi (`_fsBadgeForme` non défini) — aucun autre contrôle n\'est retiré',
     R.fs04 === false && suspendus > 0, 'fs04=' + R.fs04);
   const det = o => JSON.stringify(o);
