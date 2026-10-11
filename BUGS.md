@@ -4479,7 +4479,7 @@ le banc le prouve) :
 - l'ajout de lignes au journal des séances (feuille « Sessions ») accepte n'importe quelle adresse, sans
   preuve — pollution possible, aucune lecture.
 
-## §72 — ⛔⛔ LE MOT VIDE QUI EFFACE CE QUI DISTINGUE : LE MATÉRIEL RETIRÉ AVANT DE COMPARER *(10/10/2026, IMPORT-MAP-01 — branche `claude/import-map-01`, NON publié)*
+## §72 — ⛔⛔ LE MOT VIDE QUI EFFACE CE QUI DISTINGUE : LE MATÉRIEL RETIRÉ AVANT DE COMPARER *(10/10/2026, IMPORT-MAP-01 — branche `claude/import-map-01` ; ↪️ intégré à master `7d7bb5a8` le 11/10, NON publié)*
 
 **Le cas.** `_EX_STOP` range `machine`, `barre`, `haltères`, `poulie`, `câble` parmi les mots vides, avec le bruit commercial
 (« Evolution X900 »). Pour la reconnaissance, ils disparaissent. Mesuré sur master `b280ea5d` : « Squat machine » se réduisait à

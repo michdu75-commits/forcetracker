@@ -761,7 +761,7 @@ Contrôle négatif `tools/mut_sec_admin.py` : **17/17 conformes** — 16 mutatio
 
 **Ce que le banc ne prouve pas** : le vrai déploiement Apps Script (aucun redéploiement dans ce lot), les vraies Script Properties, Safari iOS.
 
-## 🏷️ IMPORT-MAP-01 — l'identité automatique ne change plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ)
+## 🏷️ IMPORT-MAP-01 — l'identité automatique ne change plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) — NON PUBLIÉ)
 
 > Base master `b280ea5d` (`ft-v1252`). Aucune version, aucune publication, Worker et Apps Script non touchés, 0 appel IA réel.
 > **En production, rien de ce qui suit n'est fermé** tant que la branche n'est pas publiée.
@@ -785,7 +785,7 @@ Contrôle négatif `tools/mut_sec_admin.py` : **17/17 conformes** — 16 mutatio
 M5/M6/M7/M9 déguisées ; M10 commentaire, vert). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict C1 29/0 · C3 35/0 ;
 annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à master). Passe complète sur `755924a0` : **6 059 ✅ / 0 ❌ (4 conditions vertes)**.
 
-## 🏷️ IMPORT-MAP-01B — les alias déclarés ne changent plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ)
+## 🏷️ IMPORT-MAP-01B — les alias déclarés ne changent plus le matériel écrit (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) — NON PUBLIÉ)
 
 > Correction des alias contradictoires **après contre-vérification Nutrition** d'IMPORT-MAP-01. Base master `b280ea5d` (`ft-v1252`),
 > branche `claude/import-map-01` (`1a98fb65` → `bbd6e054`). Aucune version, aucune publication, Worker et Apps Script non touchés, 0 appel IA réel.
@@ -809,7 +809,7 @@ annexe : 14 PASS + 1 défaut connu (discussions, préexistant, identique à mast
 contrôle négatif `tools/mut_import_map.py` : **24/24 conformes** ; CCLXXIII réécrit (R30). Voisins : import_echauffement 11/0 · lot3 87/0 · Milo strict
 C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexistant, même chiffre avec le log.js d'avant). Passe complète sur `bbd6e054` : **6 078 ✅ / 0 ❌ (4 conditions vertes)**.
 
-## 🏷️ IMPORT-MAP-02 — le matériel se lit à sa place (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ)
+## 🏷️ IMPORT-MAP-02 — le matériel se lit à sa place (10/10/2026, session-B — ⛔ BRANCHE `claude/import-map-01` : CORRIGÉ SUR BRANCHE — QUALIFIÉ — NON PUBLIÉ · ↪️ INTÉGRÉ MASTER `7d7bb5a8` (11/10, avance rapide) — NON PUBLIÉ)
 
 > Micro-lot ciblé après l'audit du corpus externe (387 lignes) et le Ghost du Drive. Base master `b280ea5d` (`ft-v1252`), branche
 > `claude/import-map-01` (`790932a3` → `8c5a8480`). Un seul propriétaire touché, `_materielDe` (log.js), plus une donnée du catalogue
@@ -837,6 +837,31 @@ C1 29/0 · C3 35/0 ; annexe : 14 PASS + 1 défaut connu (discussions, préexista
 (la grille apprend le rôle de la barre), banc 01B 22/0 (Fentes « les 3 », dette 6 → 4) ; contrôle négatif `tools/mut_import_map2.py` :
 **25/25 conformes** ; rejeu du vrai code sur 719 libellés distincts = simulation de la conception (21 changements, 12 nouveaux AUTO tous justes,
 0 régression). Voisins : import_echauffement 11/0 · lot3 87/0 · séance C1 29/0 · C3 35/0 · mutations 01 / 01B **24/24 conformes** (oracles adaptés compris) · sélecteur de recette propre (EX_EN rattaché au scénario) · annexe 14 PASS + 1 défaut connu (discussions, préexistant : mêmes chiffres 71 726 / 76 645 / 68 781 avec le log.js d'avant — le lot ne change pas le contexte de Milo) · `check_regles.py` vert. Passe complète : **6 123 ✅ / 0 ❌** sur `972fcce1` (4 conditions vertes).
+
+### 🧾 IMPORT-MAP-INTEGRATION-01 (11/10/2026) — intégré master, NON publié, et les dettes du Ghost final
+
+> Master `b280ea5d` → **`7d7bb5a8`** en **avance rapide** (aucun commit de fusion, aucun conflit, arbre fonctionnel = `972fcce1`
+> qualifié : passe complète 6 123 ✅ / 0 ❌, confirmée par le Ghost final indépendant, verdict **B — vert avec dettes non bloquantes**).
+> Bancs rejoués sur le master intégré : IMPORT-MAP-02 43/0 · IMPORT-MAP-01 22/0 · 01B 22/0 · import_echauffement 11/0 · `check_regles` vert.
+> ⛔ **NON PUBLIÉ** : production = `ft-v1252`. ⚠️ Le push sur master a déclenché le déploiement Pages (`on: push: master`) ; il a été
+> **annulé avant mise en ligne** (run 38140901833, déploiement `7d7bb5a8` en état `error`, dernier déploiement réussi = `b280ea5d`).
+> ⛔⛔ **Tout prochain push sur master redéploiera Pages et servira ce `log.js`** : la prochaine publication doit poser `ft-v1253`
+> (`sw.js`) dans le même push. Aucun commit documentaire n'est poussé sur master tant que ce n'est pas décidé.
+
+Les dettes ci-dessous sont **consignées, non corrigées** (constats du Ghost final ; V-4 re-mesuré ici). Aucune ne crée d'AUTO faux ni de
+contamination d'historique. ⛔ **P0-2** (« Triceps Pushdown » / « Cable triceps pushdown » / « Extension triceps poulie » → *Extension
+Triceps*, alias souverain historique, **préexistant sur master**, seul faux AUTO high restant) est **hors de ce lot** : prochain micro-lot.
+
+| | Dette (Ghost final) | État |
+|---|---|---|
+| **V-1** | **D-057, listes fermées** : des formes corde / rope / élastique hors liste donnent des questions moins bonnes — jamais d'AUTO, jamais de contamination | ⚠️ ouverte |
+| **V-2** | pas de témoin propre aux **pluriels** de D-057 (pushdowns, pulldowns, cordes, ropes) — l'absence d'effet sur les corpus n'est pas une preuve qu'ils sont lus | ⚠️ ouverte |
+| **V-3** | oracle de test `MULTI['Fentes']` **trop large** (un témoin, pas l'app) | ⚠️ ouverte |
+| **V-4** | recherche d'exercice : « **lunge barbell** » ne retrouve **plus** Fentes (la trouvait sur `b280ea5d`) ; « **barbell** » la trouve **toujours** (via alias) — mesuré le 11/10 par `filterEx` dans la vraie page. La phrase de D-056 qui disait le contraire est corrigée. | ⚠️ ouverte |
+| **V-5** | « Tirage nuque barre fixe » peut produire une question vers *Tirage Nuque* | ⚠️ ouverte |
+| **V-6** | 5 AUTO **justes** du master devenus prudents / nouveaux depuis 01 / 01B : Tirage vertical machine · Tirage poitrine machine barre · Dips barre · Pull-up barre · Face pull barre | ⚠️ ouverte (perte de confort, pas d'erreur) |
+| **V-7** | questions faibles : « Élévations latérales haltères », « Elevation latérales » (la première est déjà notée plus haut : suggestion *Élévation Latérale Landmine*) | ⚠️ ouverte |
+| **V-8** | certains bancs officiels tentent encore des connexions réseau (bloquées dans l'environnement du Ghost) | ⚠️ ouverte (outillage de test) |
 
 ## 🏷️ IMPORT-P0-2 — les pushdowns poulie ne vont plus vers « Extension Triceps » (11/10/2026, session-B — ⛔ BRANCHE `claude/p0-2-triceps-pushdown` : QUALIFIÉ / NON INTÉGRÉ / NON PUBLIÉ)
 
