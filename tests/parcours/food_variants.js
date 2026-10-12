@@ -112,6 +112,9 @@ const CAS = [
   V('FV-092', 'allégé', 'jambon allégé', 'hors', 'MUST', { top: 'allégé' }, 'allégé demandé'),
   V('FV-093', 'beurre', 'beurre', 'hors', 'MUST', { varie: { re: ['80% MG', '39-41% MG', '60-62% MG'], min: 2 } }, 'sans qualificatif : plusieurs beurres'),
   V('FV-094', 'beurre', 'beurre demi-sel', 'hors', 'MUST', { top: 'demi-sel', jamais: 'doux' }, 'demi-sel demandé : jamais doux'),
+  V('FV-095', 'beurre', 'beurre demi-sel', 'en', 'MUST', { top: 'demi-sel', aussi: ['^Beurre sans précision.*\\(allégé ou non\\), demi-sel'], jamais: 'doux' }, '« (allégé ou non), demi-sel » : « ou non » ne nie pas le mot qui suit — l\'aliment moyen reste proposé'),
+  V('FV-096', 'beurre', 'barre céréalière enrichie', 'hors', 'MUST', { aussi: ['au chocolat ou non, enrichie'] }, '« au chocolat ou non, enrichie » : la barre EST enrichie — « ou non » porte sur ce qui précède'),
+  V('FV-097', 'beurre', 'terrine de poisson', 'hors', 'MUST', { aussi: ['avec ou sans poisson'] }, '« avec ou sans poisson » : le poisson PEUT y être — « ou sans » ne nie rien'),
 
   /* ── BOISSONS : sans sucre / zéro ── */
   V('FV-100', 'boissons', 'cola sans sucre', 'hors', 'MUST', { top: 'sans sucres ajoutés', compat: 'sans sucres ajoutés', incompat: '^Cola, sucré' }, '« sans sucre » demandé : jamais « Cola, sucré, sans caféine » devant'),

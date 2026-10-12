@@ -5035,13 +5035,34 @@ const _AF_FORMES_PATES=['spaghetti','penne','macaroni','coquillette','fusilli','
    trouvable ; on ajoute une porte, on n'en ferme aucune. */
 function _afSqueeze(m){ return m.replace(/h/g,'').replace(/(.)\1+/g,'$1'); }
 const _AF_FORMES_CLES=_AF_FORMES_PATES.map(_afSqueeze);
+/* 🥛 NUT-FOOD-VARIANTS-01 (12/10/2026) — OÙ UN MOT TAPÉ SE TROUVE VRAIMENT DANS UN NOM. Deux occurrences ne
+   comptent pas, et c'est la règle « un qualificatif demandé est respecté » (brief de Michel) :
+   ① un TAUX collé à d'autres chiffres : « 5% » n'est pas dans « 15% », « 0% » pas dans « 10% », « 2% » pas dans
+     « 1.2% » (mesuré : « steak haché 5% » proposait le 15 %, « petit suisse 0% » le 10 %) ;
+   ② un mot NIÉ par le nom : « allege » dans « non allege », « sucre » dans « sans sucres » — sauf si la frappe le
+     nie aussi (« sans sucre », lu d'un bloc par `_afRang`). Mesuré : « yaourt allégé » ne rendait QUE du « non
+     allégé », « cola sans sucre » mettait « Cola, sucré, sans caféine » en tête. C'est la règle de FS-02 (« sans X
+     n'est pas X »), appliquée au mot tapé et non plus seulement à la forme. */
+function _afTrouve(n, t){
+  const nie=/^(sans|non) /.test(t);
+  for(let i=n.indexOf(t); i>=0; i=n.indexOf(t, i+1)){
+    if(/^[0-9]/.test(t) && /[0-9.]/.test(n[i-1]||'')) continue;
+    /* ⚠️ « OU NON » et « OU SANS » ne nient rien — mesuré sur la table (14 noms) : « avec ou sans poisson » (il PEUT y
+       en avoir), « (allégé ou non), demi-sel » et « au chocolat ou non, enrichie » (la normalisation efface la
+       ponctuation et colle « non » au mot suivant). */
+    const avant=n.slice(Math.max(0,i-9), i);
+    if(!nie && /(^|\s)(sans|non) $/.test(avant) && !/(^|\s)ou (sans|non) $/.test(avant)) continue;
+    return i;
+  }
+  return -1;
+}
 /* Un mot tapé peut atteindre un nom par 3 chemins, du plus sûr au moins sûr. Rend `null` si
    aucun ne marche, sinon le texte réellement trouvé + s'il a fallu approximer. */
 function _afMotDansNom(m, n){
-  if(n.indexOf(m)>=0) return {t:m, approx:0};
+  if(_afTrouve(n, m)>=0) return {t:m, approx:0};
   const fin=m.slice(-1);
   const sg=(m.length>=4 && (fin==='s'||fin==='x')) ? m.slice(0,-1) : null;
-  if(sg && n.indexOf(sg)>=0) return {t:sg, approx:1};
+  if(sg && _afTrouve(n, sg)>=0) return {t:sg, approx:1};
   if(n.indexOf('pates')>=0){
     for(const c of [m, sg]){
       if(!c) continue;
@@ -5058,10 +5079,14 @@ function _afMotDansNom(m, n){
 function _afRang(mots, n){
   let debut=1, approx=0;
   for(let i=0;i<mots.length;i++){
-    const h=_afMotDansNom(mots[i], n);
+    const premier=i===0;
+    /* 🥛 NUT-FOOD-VARIANTS-01 : « sans sucre », « non allégé » se cherchent D'UN BLOC — sinon « sans » et « sucre »
+       se trouvent chacun ailleurs (« Cola, sucré, sans caféine »). */
+    const m=(/^(sans|non)$/.test(mots[i]) && i+1<mots.length) ? mots[i]+' '+mots[++i] : mots[i];
+    const h=_afMotDansNom(m, n);
     if(!h) return null;
     if(h.approx) approx=1;
-    if(i===0 && n.indexOf(h.t)===0) debut=0;
+    if(premier && n.indexOf(h.t)===0) debut=0;
   }
   return [debut, approx];
 }
@@ -5541,8 +5566,13 @@ const _AF_SUGG_DELAI=450;      // on ne part pas au réseau à chaque lettre
    ⚠️ CETTE FONCTION EST LE MIROIR DE `norm()` DANS `tools/alias.py` : les clés de la table
    d'alias sont normalisées là-bas. Toute règle ajoutée ici DOIT l'être là-bas, sinon une clé
    devient introuvable — mesuré sur `lait 1/2 ecreme`, la seule qui portait de la ponctuation. */
+/* 🥛 NUT-FOOD-VARIANTS-01 (12/10/2026) — UN TAUX RESTE UN NOMBRE COLLÉ À SON « % ». « 5 % » (typographie
+   française) et « 5% » s'écrivent pareil ; la virgule décimale (« 1,2% ») devient un point au lieu de couper le
+   nombre en deux. Mesuré : « steak haché 5 % » perdait son 5 et son % (deux mots d'une lettre, que `_afMots` écarte),
+   et « chocolat noir 70% » ne retrouvait pas « Chocolat noir 70 % de cacao ». Un seul propriétaire : la requête ET
+   les noms passent ici (R2). */
 function _afNorm(t){
-  return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  return String(t||'').toLowerCase().replace(/(\d),(\d)/g,'$1.$2').replace(/(\d)\s+%/g,'$1%').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae')
     .replace(/['\u2019\u2018`\u00b4\u02bc]/g,'')
     .replace(/[,;:!?()\[\]{}\u00ab\u00bb"\u2013\u2014]+/g,' ')
