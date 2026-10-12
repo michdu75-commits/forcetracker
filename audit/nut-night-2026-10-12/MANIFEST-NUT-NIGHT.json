@@ -6,7 +6,7 @@
  "head_fonctionnel_source": "ae2f950c00fe794f937988f4d453bf9e53fc60ef",
  "tree_fonctionnel_source": "5785192494bb0d50c6f9320197b134be43b6ef95",
  "branche_audit": "claude/nut-night-audit-2026-10-12",
- "head_audit": "cf228bbd621c42efd691a0c3beb4cd0b896f03f1",
+ "head_audit": "060ad0c8ef8e59fa00d6579ad38681c1f8f07172",
  "master_observe": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
  "git_status_depart": "propre (0 fichier modifié, vérifié 20:40 UTC)",
  "git_status_fin": "propre",
@@ -64,7 +64,17 @@
   "preuves/ (légers sur Drive ; complets dans audit/nut-night-2026-10-12/preuves/ sur la branche)"
  ],
  "chemin_drive": "Force Tracker/Nutrition/AUDIT-NIGHT-2026-10-12/",
- "contre_verification_declenchee": false,
- "statut_final": "PAQUET_PRINCIPAL_DEPOSE_EN_ATTENTE_CV",
+ "contre_verification_declenchee": true,
+ "contre_verification": {
+  "session": "Claude Nutrition (session cloud distincte)",
+  "branche_attendue": "claude/nut-night-cv-2026-10-12",
+  "artefacts_attendus": [
+   "CONTRE-VERIFICATION-NUTRITION-NIGHT.md",
+   "CONTRE-VERIFICATION-NUTRITION-NIGHT.json"
+  ],
+  "etat_constate": "contre-vérification exécutée par Claude Nutrition de 21:29 à 21:50 UTC (déclenchée par Principal à 21:28) ; résultats restés dans sa session, NON déposés (ni Drive ni git) : sa consigne propre de Michel impose la lecture seule stricte, elle attend la décision de Michel. Résumé d'état visible : LOT-C et LOT-A prêts, LOT-B a besoin de 3 corrections avant. Verdict VARIANTS-03 : non connu de Principal."
+ },
+ "synthese_croisee": "SYNTHESE-CROISEE-NUT-NIGHT.md",
+ "statut_final": "PAQUET_PRINCIPAL_DEPOSE_CV_FAITE_NON_DEPOSEE",
  "pdf": "aucun (consigne : pas de PDF cette nuit)"
 }
