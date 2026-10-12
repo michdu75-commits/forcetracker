@@ -37,7 +37,7 @@ const CAS = [
   V('FV-005', 'lait', 'lait demi-écrémé', 'hors', 'MUST', { top: '^Lait demi-écrémé', jamais: '^Lait écrémé|entier' }, 'demi-écrémé : ni écrémé ni entier'),
   V('FV-006', 'lait', 'lait demi écrémé', 'hors', 'MUST', { top: '^Lait demi-écrémé', jamais: '^Lait écrémé|entier' }, 'sans tiret'),
   V('FV-007', 'lait', 'lait 1/2 écrémé', 'en', 'MUST', { top: '^Lait demi-écrémé' }, '« 1/2 » = demi (table d\'alias)'),
-  V('FV-008', 'lait', 'lait 1/2 écrémé', 'hors', 'KNOWN_LIMITATION', { vide: true }, 'hors ligne, la table d\'alias n\'est pas chargée et « 1/2 » n\'est écrit dans aucun nom : rien en local (hors lot : un synonyme est une décision)'),
+  V('FV-008', 'lait', 'lait 1/2 écrémé', 'hors', 'MUST', { top: '^Lait demi-écrémé', jamais: '^Lait (écrémé|entier)' }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — « 1/2 » = demi, hors ligne aussi (synonyme de recherche)'),
   V('FV-009', 'lait', 'lait entier', 'en', 'MUST', { top: '^Lait entier', jamais: 'écrémé' }, 'entier demandé : jamais un écrémé'),
   V('FV-010', 'lait', 'lait entier', 'hors', 'MUST', { top: '^Lait entier', jamais: 'écrémé' }, 'hors ligne aussi'),
   V('FV-011', 'lait', 'lait 1,2%', 'hors', 'MUST', { top: '1,2% MG' }, 'un taux décimal'),
@@ -55,8 +55,8 @@ const CAS = [
   V('FV-028', 'fromage blanc', 'fromage blanc 7-8%', 'hors', 'MUST', { top: '^Fromage blanc, nature, 7-8% MG', jamais: TAUX(0) + '|2-3% MG' }, '7-8 % demandé'),
   V('FV-029', 'fromage blanc', 'fromage blanc 20%', 'hors', 'MUST', { vide: true }, 'aucun fromage blanc à 20 % dans la base : RIEN, jamais un autre taux'),
   V('FV-030', 'fromage blanc', 'fromage blanc zéro', 'en', 'MUST', { top: '^Fromage blanc, nature, 0% MG' }, '« zéro » = 0 % (table d\'alias)'),
-  V('FV-031', 'fromage blanc', 'fromage blanc zéro', 'hors', 'KNOWN_LIMITATION', { top: 'avec édulcorants' }, 'hors ligne, « zéro » est traduit en « édulcorants » (synonyme pensé pour les boissons, ft-v1113) : le 0 % reste respecté mais l\'aromatisé passe devant le nature (hors lot : un synonyme est une décision)'),
-  V('FV-032', 'fromage blanc', 'fromage blanc 2%', 'hors', 'KNOWN_LIMITATION', { vide: true }, '2 % n\'est écrit nulle part (la table dit « 2-3 % ») : lire une fourchette serait une règle nouvelle, non demandée'),
+  V('FV-031', 'fromage blanc', 'fromage blanc zéro', 'hors', 'MUST', { top: '^Fromage blanc, nature, 0% MG' }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — « zéro » d\'un laitage = 0 %, plus « édulcorants »'),
+  V('FV-032', 'fromage blanc', 'fromage blanc 2%', 'hors', 'MUST', { top: '2-3% MG', jamais: '7-8% MG|(^|[^0-9-])0% MG' }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — BORNE BASSE : 2 % se lit dans la fourchette 2-3 %'),
   V('FV-033', 'fromage blanc', 'fromage blanc allégé', 'hors', 'KNOWN_LIMITATION', { vide: true }, 'la table ne dit jamais « allégé » pour le fromage blanc (elle dit 0 % ou 2-3 %) : on ne choisit pas à la place de la personne'),
 
   /* ── STEAK HACHÉ / BŒUF HACHÉ : 5 / 10 / 15 / 20 % ── */
@@ -77,7 +77,7 @@ const CAS = [
   V('FV-054', 'steak haché', 'steak haché 5% cru', 'hors', 'MUST', { top: '^Boeuf, steak haché 5% MG cru', jamais: AUTRES(10, 15, 20) }, 'taux ET forme nommés : les deux tiennent'),
   V('FV-055', 'steak haché', 'steak haché 15% cuit', 'hors', 'MUST', { top: '^Boeuf, steak haché 15% MG cuit', jamais: AUTRES(5, 10, 20) }, 'taux ET forme nommés'),
   V('FV-056', 'steak haché', 'haché 20%', 'hors', 'MUST', { top: TAUX(20), jamais: AUTRES(5, 10, 15) }, 'frappe courte'),
-  V('FV-057', 'steak haché', 'viande hachée 15%', 'en', 'KNOWN_LIMITATION', { vide: true }, 'la table d\'alias ne connaît « viande hachée » qu\'à 5 % ; CIQUAL ne dit pas « viande hachée » (hors lot)'),
+  V('FV-057', 'steak haché', 'viande hachée 15%', 'en', 'MUST', { top: TAUX(15), aussi: ['^Boeuf, steak haché 15% MG', '^Veau, steak haché 15% MG'], jamais: AUTRES(5, 10, 20) }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — « viande hachée » = steak haché (bœuf ET veau, rien d\'imposé)'),
   V('FV-058', 'steak haché', 'steak haché 5', 'en', 'OBSERVATION', { varie: { re: [TAUX(5), TAUX(10), TAUX(15), TAUX(20)], min: 3 } }, 'un chiffre SANS « % » n\'est pas un taux explicite (« pizza 4 fromages ») : il reste ignoré'),
 
   /* ── CRÈME : 30 % / légère / fluide ── */
@@ -85,9 +85,9 @@ const CAS = [
   V('FV-061', 'crème', 'crème 30 %', 'hors', 'MUST', { top: '^Crème 30% MG', compat: '^Crème 30% MG', incompat: 'légère|12 à' }, '30 % avec une espace'),
   V('FV-062', 'crème', 'crème légère', 'hors', 'MUST', { top: 'légère', jamais: '^Crème 30% MG' }, 'légère demandée : jamais la crème à 30 %'),
   V('FV-063', 'crème', 'crème fluide', 'hors', 'MUST', { top: 'fluide' }, 'fluide demandée'),
-  V('FV-064', 'crème', 'crème fraîche', 'en', 'KNOWN_LIMITATION', { vide: true }, 'CIQUAL ne dit pas « fraîche » (« Crème 30% MG, épaisse, rayon frais ») — FR-119 ; dire que l\'une est l\'autre est une décision de Michel'),
-  V('FV-065', 'crème', 'crème fraîche 30%', 'hors', 'KNOWN_LIMITATION', { vide: true }, 'même cause : le mot « fraîche »'),
-  V('FV-066', 'crème', 'crème 15%', 'hors', 'KNOWN_LIMITATION', { vide: true }, 'la table écrit des fourchettes (« 12 à 25 % », « 12 à 20 % ») : lire une fourchette serait une règle nouvelle'),
+  V('FV-064', 'crème', 'crème fraîche', 'en', 'MUST', { varie: { re: ['^Crème 30% MG, épaisse, rayon frais', '^Crème 12 à 25% MG, légère, épaisse, rayon frais', '^Crème 12 à 20% MG, légère, fluide, rayon frais'], min: 3 }, jamais: 'dessert|caramel|brûlée|UHT' }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — « crème fraîche » = la FAMILLE des crèmes du rayon frais, toutes proposées, aucun taux choisi'),
+  V('FV-065', 'crème', 'crème fraîche 30%', 'hors', 'MUST', { top: '^Crème 30% MG, épaisse, rayon frais', jamais: 'légère' }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — 30 % demandé : la 30 % épaisse, jamais une légère'),
+  V('FV-066', 'crème', 'crème 15%', 'hors', 'MUST', { aussi: ['^Crème 12 à 25% MG', '^Crème 12 à 20% MG'], jamais: '^Crème 30% MG' }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — VALEUR INTÉRIEURE : 15 % se lit dans « 12 à 25 % » et « 12 à 20 % »'),
   V('FV-067', 'crème', 'crème entière', 'hors', 'KNOWN_LIMITATION', { vide: true }, '« entière » n\'est écrit pour aucune crème : on ne décide pas qu\'elle vaut 30 %'),
 
   /* ── YAOURT : 0 % / grec / nature / allégé ── */
@@ -120,11 +120,40 @@ const CAS = [
   V('FV-100', 'boissons', 'cola sans sucre', 'hors', 'MUST', { top: 'sans sucres ajoutés', compat: 'sans sucres ajoutés', incompat: '^Cola, sucré' }, '« sans sucre » demandé : jamais « Cola, sucré, sans caféine » devant'),
   V('FV-101', 'boissons', 'cola sans sucre', 'en', 'MUST', { top: 'sans sucres ajoutés', compat: 'sans sucres ajoutés', incompat: '^Cola, sucré' }, 'en ligne aussi'),
   V('FV-102', 'boissons', 'coca zéro', 'en', 'MUST', { top: '^Cola, sans sucres ajoutés' }, 'zéro = sans sucres ajoutés (table d\'alias)'),
-  V('FV-103', 'boissons', 'coca zéro', 'hors', 'KNOWN_LIMITATION', { top: '^Cola, sucré, avec édulcorants' }, 'hors ligne, « zéro » est traduit en « édulcorants » (ft-v1113) : le cola sucré aux édulcorants passe devant le sans sucres (hors lot : un synonyme est une décision)'),
+  V('FV-103', 'boissons', 'coca zéro', 'hors', 'MUST', { top: '^Cola, sans sucres ajoutés', jamais: '^Cola, sucré' }, 'levée par NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — « zéro » d\'une boisson = sans sucres, jamais un cola sucré en tête'),
 
   /* ── CHOCOLAT : un taux écrit avec une espace DANS LA TABLE ── */
   V('FV-110', 'chocolat', 'chocolat noir 70%', 'hors', 'MUST', { top: '^Chocolat noir 70 % de cacao' }, 'la table écrit « 70 % » avec une espace : « 70% » la retrouve'),
   V('FV-111', 'chocolat', 'chocolat noir 70 %', 'hors', 'MUST', { top: '^Chocolat noir 70 % de cacao', jamais: '50 %' }, 'et l\'inverse'),
+  /* ── NUT-FOOD-VARIANTS-03 (12/10/2026) : les trous confirmés par la contre-vérification express de VARIANTS-02, tous
+     PRÉEXISTANTS à VARIANTS-01/02. Décisions de Michel : crème fraîche = la famille « rayon frais » ; un taux tapé se lit
+     dans une fourchette qui le contient (exact d'abord) ; steak haché : cru en premier, cuit présent. ── */
+  V('FV-140', 'zéro', 'fromage blanc zero', 'hors', 'MUST', { top: '^Fromage blanc, nature, 0% MG' }, '« zero » sans accent, hors ligne : la famille 0 %'),
+  V('FV-141', 'zéro', 'cola zéro', 'hors', 'MUST', { top: '^Cola, sans sucres ajoutés', jamais: '^Cola, sucré|hocolat' }, '« cola zéro » hors ligne : sans sucres, jamais sucré, jamais un chocolat'),
+  V('FV-142', 'cola', 'cola light', 'hors', 'MUST', { aussi: ['^Cola'], jamais: 'hocolat' }, '« cola » n\'est pas dans « chocolat » : les colas restent, aucun chocolat'),
+  V('FV-143', 'cola', 'cola sans sucre', 'hors', 'MUST', { top: '^Cola, sans sucres ajoutés', jamais: 'hocolat' }, '« cola sans sucre » : aucun chocolat sans sucres'),
+  V('FV-144', 'cola', 'jus orange', 'hors', 'MUST', { aussi: ["^Jus d'orange"] }, 'non-régression : un mot après une ÉLISION (« d\'orange ») reste trouvé'),
+  V('FV-145', 'cola', 'huile olive', 'hors', 'MUST', { aussi: ["^Huile d'olive"] }, 'non-régression : « huile olive » retrouve l\'huile d\'olive'),
+  V('FV-146', 'cola', 'chocolat noir', 'hors', 'MUST', { top: '^Chocolat noir' }, 'non-régression : « chocolat » reste un chocolat'),
+  V('FV-147', 'demi', 'lait 1/2 ecreme', 'hors', 'MUST', { top: '^Lait demi-écrémé', jamais: '^Lait (écrémé|entier)' }, '« 1/2 ecreme » sans accent, hors ligne'),
+  V('FV-148', 'viande hachée', 'viande hachée', 'hors', 'MUST', { varie: { re: [TAUX(5), TAUX(10), TAUX(15), TAUX(20)], min: 3 } }, '« viande hachée » sans taux : plusieurs taux, rien d\'inventé'),
+  V('FV-149', 'viande hachée', 'viande hachée 5%', 'en', 'MUST', { top: TAUX(5) + ' cru', aussi: [TAUX(5) + ' cuit'], jamais: AUTRES(10, 15, 20) }, '5 % : cru en premier, cuit présent (décision G)'),
+  V('FV-150', 'viande hachée', 'viande hachée 15 %', 'hors', 'MUST', { top: TAUX(15), aussi: ['^Veau, steak haché 15% MG'], jamais: AUTRES(5, 10, 20) }, '15 % avec une espace, hors ligne : bœuf et veau'),
+  V('FV-151', 'crème fraîche', 'crème fraîche', 'hors', 'MUST', { varie: { re: ['^Crème 30% MG, épaisse, rayon frais', '^Crème 12 à 25% MG, légère, épaisse, rayon frais', '^Crème 12 à 20% MG, légère, fluide, rayon frais'], min: 3 }, jamais: 'dessert|caramel|brûlée|UHT' }, 'hors ligne aussi : la famille entière'),
+  V('FV-152', 'crème fraîche', 'crème fraîche épaisse', 'hors', 'MUST', { aussi: ['^Crème 30% MG, épaisse, rayon frais', '^Crème 12 à 25% MG, légère, épaisse, rayon frais'], jamais: 'fluide' }, 'épaisse : les deux épaisses, jamais la fluide'),
+  V('FV-153', 'crème fraîche', 'crème fraîche légère', 'hors', 'MUST', { aussi: ['légère, épaisse, rayon frais', 'légère, fluide, rayon frais'], jamais: '^Crème 30% MG' }, 'légère : les deux légères, jamais la 30 %'),
+  V('FV-154', 'fourchette', 'crème 20%', 'hors', 'MUST', { aussi: ['^Crème 12 à 20% MG', '^Crème 12 à 25% MG'], jamais: '^Crème 30% MG' }, 'BORNE HAUTE : 20 % = « 12 à 20 % » (exact) et « 12 à 25 % » (contient)'),
+  V('FV-155', 'fourchette', 'fromage blanc 7%', 'hors', 'MUST', { aussi: ['^Fromage blanc, nature, 7-8% MG'], jamais: '2-3% MG|(^|[^0-9-])0% MG' }, '7 % dans « 7-8 % » (et « 6-7 % » s\'il répond), jamais 2-3 % ni 0 %'),
+  V('FV-156', 'fourchette', 'beurre 60%', 'hors', 'MUST', { aussi: ['60-62% MG'], jamais: '80% MG|39-41% MG' }, 'borne basse d\'une autre famille : 60 % dans « 60-62 % »'),
+  V('FV-157', 'fourchette', 'beurre 61%', 'hors', 'MUST', { aussi: ['60-62% MG'], jamais: '80% MG|39-41% MG' }, 'valeur intérieure : 61 % dans « 60-62 % »'),
+  V('FV-158', 'fourchette', 'beurre 62%', 'hors', 'MUST', { aussi: ['60-62% MG'], jamais: '80% MG|39-41% MG' }, 'borne haute : 62 % dans « 60-62 % »'),
+  V('FV-159', 'fourchette', 'fromage blanc 4%', 'hors', 'MUST', { vide: true }, 'HORS FOURCHETTE : 4 % n\'est dans aucune — RIEN, jamais un 2-3 % ni un 6-7 %'),
+  V('FV-160', 'fourchette', 'beurre 70%', 'hors', 'MUST', { vide: true }, 'hors fourchette : 70 % n\'est ni « 60-62 % » ni « 80 % »'),
+  V('FV-161', 'steak cru/cuit', 'steak haché 5%', 'en', 'MUST', { top: TAUX(5) + ' cru', aussi: [TAUX(5) + ' cuit'] }, 'décision G : 5 % aligné sur 10 / 15 / 20 % — cru en premier, cuit présent'),
+  V('FV-162', 'steak cru/cuit', 'boeuf haché 5%', 'en', 'MUST', { top: TAUX(5) + ' cru', aussi: [TAUX(5) + ' cuit'] }, 'même alias, même convention'),
+  V('FV-163', 'steak cru/cuit', 'steak haché', 'en', 'MUST', { aussi: [' cuit', ' cru'] }, 'sans précision : cru ET cuit visibles (l\'aliment moyen cuit, puis les crus)'),
+  V('FV-164', 'steak cru/cuit', 'steak haché', 'hors', 'KNOWN_LIMITATION', { jamais: ' cuit' }, 'hors ligne, sans alias : le départage par la longueur ne montre que des crus — le corriger toucherait la clé de tri générale (dette nommée)'),
+  V('FV-165', 'steak cru/cuit', 'viande hachée', 'en', 'KNOWN_LIMITATION', { jamais: ' cuit' }, 'même cause que FV-164, en ligne aussi : aucun alias (un alias vers l\'aliment moyen imposerait le bœuf, exclu) — dette nommée'),
   /* ── NUT-FOOD-VARIANTS-02 (12/10/2026, contre-vérification) : la négation tapée ne vide plus une recherche dont un
      résultat COMPATIBLE existe sous une autre écriture ; elle refuse toujours le CONTRAIRE explicite. Les témoins
      disent l'invariant (compatible présent · contraire absent · absence réelle), pas un ordre arbitraire. ── */

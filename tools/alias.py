@@ -79,6 +79,14 @@ CORRECTIONS.update({
     'raisin':  (13395, 'FS-03 : visait « Raisin sec » — un raisin est un fruit frais ; « raisins secs » reste explicite'),
     'raisins': (13395, 'idem'),
 })
+# 🥛 NUT-FOOD-VARIANTS-03 (12/10/2026, décision de Michel) — STEAK HACHÉ : cru en premier, cuit présent. Les alias à
+#    10 / 15 / 20 % visaient déjà le CRU ; ceux à 5 % visaient le CUIT (6251) — la seule incohérence de la famille.
+CORRECTIONS.update({
+    'steak hache 5%':   (6250, 'NUT-FOOD-VARIANTS-03 : visait le CUIT (6251) quand 10 / 15 / 20 % visent le cru — aligné, le cuit reste juste dessous'),
+    'boeuf hache 5%':   (6250, 'idem'),
+    'hache 5%':         (6250, 'idem'),
+    'viande hachee 5%': (6250, 'idem'),
+})
 # ⛔ RETRAITS — un mot qui ne doit plus avoir d'alias du tout (R30 : le retrait s'écrit, avec sa raison).
 RETRAITS = {
     'courgette':  'FS-03 : visait « Courgette, purée » ; aucun aliment moyen — le moteur évite la purée sans imposer cru ou cuit',
@@ -117,6 +125,9 @@ AJOUTS = {
     'coca sans cafeine':      (18067, 'le cola sucré sans caféine, qui existe aussi'),
     # 🔎 FS-01 — « eau » tenait à la COUPURE À 400 (l'ordre du fichier écartait « Eau de coco »). La
     #    coupure retirée, le nom le plus court passait devant. On garde le résultat de master.
+    # 🥛 NUT-FOOD-VARIANTS-03 — « steak haché » SANS taux ni cuisson : sans alias, le départage par la longueur ne
+    #    montrait que des CRUS. L'aliment moyen (cuit) en tête, les crus dessous : les deux formes visibles (décision G).
+    'steak hache':    (6259, 'NUT-FOOD-VARIANTS-03 : sans précision, l\'aliment moyen (cuit) devant les crus — cru ET cuit visibles'),
     'eau':            (18066, 'FS-01 : garde « Eau du robinet » (résultat de master) — sans la coupure à 400, « Eau de coco » passait devant'),
 
     # ═══ 🥤 ft-v1117 — LE PIÈGE DU COCA N'ÉTAIT PAS CELUI DU COCA : IL Y EN A 9 ═══════════════

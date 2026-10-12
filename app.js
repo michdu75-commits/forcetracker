@@ -5064,6 +5064,12 @@ function _afMotDansNom(m, n){
   const fin=m.slice(-1);
   const sg=(m.length>=4 && (fin==='s'||fin==='x')) ? m.slice(0,-1) : null;
   if(sg && _afTrouve(n, sg)>=0) return {t:sg, approx:1};
+  /* 🥛 NUT-FOOD-VARIANTS-03 (décision de Michel, 12/10) — UN TAUX TAPÉ SE LIT DANS UNE FOURCHETTE QUI LE CONTIENT
+     (« 2% » dans « 2-3% », « 15% » dans « 12 à 25% »), APRÈS la valeur exacte (`approx`). Bornes comprises ; une valeur
+     hors de toute fourchette ne trouve rien. */
+  const v=/^(\d+(?:\.\d+)?)%$/.exec(m), F=/(\d+(?:\.\d+)?) ?(?:-|a) ?(\d+(?:\.\d+)?)%/g;
+  for(let f; v && (f=F.exec(n));)
+    if((f.index===0 || !/[0-9.]/.test(n[f.index-1])) && +v[1]>=+f[1] && +v[1]<=+f[2]) return {t:f[0], approx:1};
   if(n.indexOf('pates')>=0){
     for(const c of [m, sg]){
       if(!c) continue;
@@ -5077,8 +5083,21 @@ function _afMotDansNom(m, n){
    les compléments, et son propre journal) avaient le même défaut ; elles le corrigent donc au
    même endroit, sinon la prochaine correction n'en réparerait qu'une et personne ne le verrait.
    Rend `null` si le nom ne correspond pas, sinon [commence-par, a-dû-approximer]. */
-function _afRang(mots, n){
+function _afRang(mots, n, mot){
   let debut=1, approx=0;
+  /* 🥛 NUT-FOOD-VARIANTS-03 : un mot SUIVI d'un autre a été tapé EN ENTIER — c'est un mot du nom, pas un morceau de
+     mot (« cola zéro » ↛ « chocolat », « lait 2% » ↛ « spécialité laitière »). Seul le DERNIER mot peut être un début
+     de mot ou un morceau (on est peut-être en train de le taper). Le mot qui suit « sans » / « non », un taux et une
+     forme (cru, cuit, sec… — lus par FS-02) sont lus ailleurs.
+     Table nationale seulement (`mot`) : « Déjà noté par toi » garde ses faux amis connus, figés par D-042. */
+  if(mot && mots.length>1){
+    const w=n.split(' ').concat(n.split(/[ -]/)), we=w.concat(w.filter(x=>/^[dlj][aeiouyh]/.test(x)).map(x=>x.slice(1)));
+    for(let k=0;k<mots.length-1;k++){
+      if(/^(sans|non)$/.test(mots[k])){ k++; continue; }
+      if(/%$/.test(mots[k]) || _fsFormesDuTexte(mots[k]).length) continue;   // un taux, une forme (FS-02 : « sèche » → « sec »)
+      if(!we.some(x=>x===mots[k] || _fsSing(x)===_fsSing(mots[k]))) return null;
+    }
+  }
   for(let i=0;i<mots.length;i++){
     const premier=i===0;
     /* 🥛 NUT-FOOD-VARIANTS-01/02 : « sans X » / « non X » tapés se lisent D'UN BLOC — sinon « sans » et « sucre » se
@@ -5140,7 +5159,15 @@ const FOOD_SYNONYMES={
   /* ⭐ « light » et « zéro » ne rendaient RIEN — mesuré : ces deux mots n'existent nulle part
      dans les 3 484 noms, alors que la table dit « avec édulcorants ». Les mapper est donc un
      gain sans contrepartie : on ne casse aucune recherche qui marchait. */
-  'light':['edulcorants'], 'zero':['edulcorants'], 'sans sucre':['sans sucres ajoutes'],
+  'light':['edulcorants'], 'sans sucre':['sans sucres ajoutes'],
+  /* 🥛 NUT-FOOD-VARIANTS-03 (12/10/2026) — « zéro » n'est PLUS « édulcorants » : hors ligne, « coca zéro » mettait le
+     cola SUCRÉ aux édulcorants en tête et « fromage blanc zéro » un aromatisé. Il veut dire 0 % OU sans sucres : on joue
+     les DEUX (une liste = des requêtes jouées ensemble), la table dit lequel existe (« cola 0% » ne rend rien). */
+  'zero':['0%','sans sucres'],
+  /* Des EXPRESSIONS que la table n'écrit pas (une expression qui ouvre la requête garde ce qui suit) : « 1/2 écrémé »
+     = demi-écrémé ; « viande hachée » = steak haché (bœuf ET veau, rien d'imposé) ; « crème fraîche » = la famille
+     des crèmes à taux de matière grasse du rayon frais (décision de Michel, 12/10) — jamais une crème dessert. */
+  '1/2':['demi'], 'viande hachee':['steak hache'], 'creme fraiche':['creme mg rayon frais'],
   'mcdo':['restauration rapide','frites pommes de terre','nuggets'],
   'mac do':['restauration rapide','frites pommes de terre','nuggets'],
   'macdo':['restauration rapide','frites pommes de terre','nuggets'],
@@ -5166,15 +5193,20 @@ const FOOD_SYNONYMES={
 function _foodSynonymes(q){
   const n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
   if(FOOD_SYNONYMES[n]) return FOOD_SYNONYMES[n].slice();
-  /* Sinon mot à mot : « un coca light » doit devenir « un cola light ». */
-  const mots=n.split(' ');
-  let touche=false;
-  const rendus=mots.map(m=>{
-    const syn=FOOD_SYNONYMES[m];
-    if(syn && syn.length===1){ touche=true; return syn[0]; }
-    return m;
-  });
-  return touche ? [rendus.join(' ')] : [q];
+  /* 🥛 NUT-FOOD-VARIANTS-03 : une EXPRESSION connue qui OUVRE la requête garde ce qui suit (« viande hachée 15 % »,
+     « crème fraîche épaisse ») — seulement une expression à UNE traduction. */
+  let tete=null;
+  for(const k in FOOD_SYNONYMES)
+    if(k.indexOf(' ')>0 && FOOD_SYNONYMES[k].length===1 && n.indexOf(k+' ')===0 && (!tete || k.length>tete.length)) tete=k;
+  /* Sinon mot à mot : « un coca light » doit devenir « un cola light ». Un mot à PLUSIEURS traductions (« zéro ») les
+     joue toutes — ⛔ jamais une enseigne (« frites mcdo », « poulet kfc » : l'intention de marque est D-042, R2). */
+  let touche=!!tete, reqs=[tete?FOOD_SYNONYMES[tete][0]:''];
+  for(const m of (tete?n.slice(tete.length+1):n).split(' ')){
+    const syn=FOOD_SYNONYMES[m], alt=(syn && (syn.length===1 || !MARQUE_ALIAS[m])) ? syn : null;
+    if(alt) touche=true;
+    reqs=[].concat.apply([], reqs.map(r=>(alt||[m]).map(a=>(r?r+' ':'')+a)));
+  }
+  return touche ? reqs : [q];
 }
 /* Recherche par nom. Les mots peuvent être dans le DÉSORDRE : « riz cuit » doit retrouver
    « Riz blanc, cuit, sans sel ajouté ». On exige que TOUS les mots tapés soient présents —
@@ -5451,7 +5483,10 @@ function _ciqualChercherUne(q, max, promouvoir){
        fichier, c'est l'affichage qui la filtre. */
     if(a[3]===null||a[3]===undefined) continue;
     const n=_afNorm(a[1]);
-    const r=_afRang(mots, n);
+    /* 🥛 NUT-FOOD-VARIANTS-03 : dans la table nationale, un mot SUIVI d'un autre est un mot ENTIER du nom (« cola zéro »
+       ↛ « chocolat ») ; le dernier mot reste partiel (« cola » seul touche encore « chocolat » : dette nommée).
+       ⛔ Seulement ici : « Déjà noté par toi » garde ses faux amis connus (œuf → Bœuf haché), figés par D-042. */
+    const r=_afRang(mots, n, true);
     if(!r) continue;
     /* Un nom COURT qui commence par ce qu'on a tapé reste un critère — mais APRÈS la forme et le nom
        de tête (FS-01) : « Banane » avant « Banane plantain, crue, prélevée en Guadeloupe ». */

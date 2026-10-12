@@ -64,6 +64,19 @@ MUT = [
     ('M14 « ou non » tape redevient une negation (les noms complets se perdent)', [(BLOC, BLOC.replace(" && mots[i-1]!=='ou'", ''))], 'GARDE'),
     ('M15 « decafeine », « decouenne » ne passent plus devant un nom qui ne dit rien', [(DANSMOT, '2')], 'GARDE'),
     ('M16 X n\'a plus besoin d\'etre en debut de mot pour etre un contraire', [(DEBUTMOT, '')], 'GARDE'),
+    # NUT-FOOD-VARIANTS-03 (12/10/2026) : les trous fermes — vocabulaire, fourchettes, mot entier, alias du 5 %.
+    ('M17 « zero » redevient globalement « edulcorants »', [("  'zero':['0%','sans sucres'],", "  'zero':['edulcorants'],")], 'GARDE'),
+    ('M18 « cola » redevient un morceau de « chocolat » (un mot suivi d\'un autre n\'est plus un mot entier)',
+     [("      if(!we.some(x=>x===mots[k] || _fsSing(x)===_fsSing(mots[k]))) return null;\n", '')], 'GARDE'),
+    ('M19 « 1/2 ecreme » n\'est plus compris', [("'1/2':['demi'], ", '')], 'GARDE'),
+    ('M20 « viande hachee » n\'est plus relie au steak hache', [("'viande hachee':['steak hache'], ", '')], 'GARDE'),
+    ('M21 la BORNE BASSE d\'une fourchette ne matche plus', [("+v[1]>=+f[1] && +v[1]<=+f[2]", "+v[1]>+f[1] && +v[1]<=+f[2]")], 'GARDE'),
+    ('M22 une valeur INTERIEURE d\'une fourchette ne matche plus', [("+v[1]>=+f[1] && +v[1]<=+f[2]", "(+v[1]===+f[1] || +v[1]===+f[2])")], 'GARDE'),
+    ('M23 une valeur HORS fourchette est acceptee', [("+v[1]>=+f[1] && +v[1]<=+f[2]", "+v[1]>=+f[1] && +v[1]<=+f[2]+10")], 'GARDE'),
+    ('M24 « creme fraiche » perd son vocabulaire', [(", 'creme fraiche':['creme mg rayon frais']", '')], 'GARDE'),
+    ('M25 une expression en tete ne garde plus ce qui suit (« creme fraiche 30% »)', [("n.indexOf(k+' ')===0 && (!tete", "n.indexOf(k+' ')===0 && false && (!tete")], 'GARDE'),
+    ('M26 l\'alias « steak hache 5% » repointe sur le CUIT', [('data/alias.json', '"steak hache 5%":6250', '"steak hache 5%":6251')], 'GARDE'),
+    ('M27 l\'alias « steak hache » (aliment moyen, cru ET cuit visibles) disparait', [('data/alias.json', '"steak hache":6259,', '')], 'GARDE'),
     ('MC1 (controle) un COMMENTAIRE modifie : le banc doit rester VERT', [(COMM, COMM.replace('(12/10/2026)', '(12/10/2026, controle)'))], 'OK'),
     ('MC2 (controle) une ecriture EQUIVALENTE : le banc doit rester VERT', [(PREM, "    const premier=(i===0);")], 'OK'),
 ]
@@ -98,7 +111,11 @@ def jouer(item, avant):
     nom, remplacements, attendu = item
     tmp, arbre = cloner()
     try:
-        cible = os.path.join(arbre, APP); src = open(cible, encoding='utf-8').read()
+        if remplacements != 'AVANT' and remplacements and len(remplacements[0]) == 3:   # (fichier, avant, apres)
+            fich = remplacements[0][0]; remplacements = [(av, ap) for _, av, ap in remplacements]
+        else:
+            fich = APP
+        cible = os.path.join(arbre, fich); src = open(cible, encoding='utf-8').read()
         if remplacements == 'AVANT':
             if not avant or avant == src:
                 return (nom, 'INVALIDE', "code d'avant introuvable ou identique", [], attendu)
@@ -112,7 +129,7 @@ def jouer(item, avant):
             for av, ap in remplacements:
                 src = src.replace(av, ap, 1)
         open(cible, 'w', encoding='utf-8').write(src)
-        if not syntaxe_ok(cible):
+        if cible.endswith('.js') and not syntaxe_ok(cible):
             return (nom, 'INVALIDE', 'syntaxe cassee par la mutation', [], attendu)
         rouges = banc(arbre)
         sem = [r for r in rouges if 'PLANTAGE' not in r]
