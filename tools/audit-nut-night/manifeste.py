@@ -2,7 +2,8 @@
 """AUDIT NUTRITION DE NUIT — MANIFESTE, relu depuis git et le registre (rien à la main). Usage : manifeste.py <sortie.json> <statut> <cv_declenchee 0|1> [chemin_drive]"""
 import json, subprocess, sys, os
 out, statut, cv = sys.argv[1], sys.argv[2], sys.argv[3] == '1'
-drive = sys.argv[4] if len(sys.argv) > 4 else 'Force Tracker/Nutrition/AUDIT-NIGHT-2026-10-12/'
+drive = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] else 'Force Tracker/Nutrition/AUDIT-NIGHT-2026-10-12/'
+etat_cv = sys.argv[5] if len(sys.argv) > 5 else None   # état CONSTATÉ de la contre-vérification, jamais supposé
 g = lambda *a: subprocess.run(['git', *a], capture_output=True, text=True, check=True).stdout.strip()
 SRC = '7dd1b0051af290267d6f498bf96b8e32de885498'
 diff = [f for f in g('diff', '--name-only', SRC, 'HEAD').split('\n') if f]
@@ -28,8 +29,10 @@ m = {
   'artefacts': ['MANIFEST-NUT-NIGHT.json', 'REGISTRE-NUT-NIGHT.json', 'RAPPORT-PRINCIPAL-NUT-NIGHT.md', 'REPRISE-DEMAIN.md',
                 'PROMPT-NUT-LOT-A.md', 'PROMPT-NUT-LOT-B.md', 'PROMPT-NUT-LOT-C.md', 'preuves/ (légers sur Drive ; complets dans audit/nut-night-2026-10-12/preuves/ sur la branche)'],
   'chemin_drive': drive, 'contre_verification_declenchee': cv,
-  'contre_verification': ({'session': 'Claude Nutrition (session cloud distincte)', 'branche': 'claude/nut-night-cv-2026-10-12',
-                           'artefacts': ['CONTRE-VERIFICATION-NUTRITION-NIGHT.md', 'CONTRE-VERIFICATION-NUTRITION-NIGHT.json', 'SYNTHESE-CROISEE-NUT-NIGHT.md']} if cv else None), 'statut_final': statut, 'pdf': 'aucun (consigne : pas de PDF cette nuit)'}
+  'contre_verification': ({'session': 'Claude Nutrition (session cloud distincte)', 'branche_attendue': 'claude/nut-night-cv-2026-10-12',
+                           'artefacts_attendus': ['CONTRE-VERIFICATION-NUTRITION-NIGHT.md', 'CONTRE-VERIFICATION-NUTRITION-NIGHT.json'],
+                           'etat_constate': etat_cv} if cv else None),
+  'synthese_croisee': 'SYNTHESE-CROISEE-NUT-NIGHT.md' if cv else None, 'statut_final': statut, 'pdf': 'aucun (consigne : pas de PDF cette nuit)'}
 assert m['fichiers_produit_modifies'] == [], m['fichiers_produit_modifies']
 json.dump(m, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1); open(out, 'a').write('\n')
 print(json.dumps({k: m[k] for k in ('head_audit', 'fichiers_produit_modifies', 'nombre_P0', 'nombre_P1', 'nombre_P2', 'nombre_dettes', 'nombre_causes', 'statut_final')}, ensure_ascii=False))
