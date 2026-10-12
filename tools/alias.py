@@ -208,8 +208,8 @@ def norm(t):
     """La MÊME normalisation que `_afNorm` dans app.js — sinon la clé ne serait jamais trouvée."""
     t = str(t or '').lower()
     # 🥛 MIROIR DE NUT-FOOD-VARIANTS-01 : un taux reste un nombre collé à son « % » (« 5 % » = « 5% ») et la
-    #    virgule décimale devient un point (« 1,2% » → « 1.2% »), AVANT que la ponctuation ne devienne une espace.
-    t = re.sub(r'(\d),(\d)', r'\1.\2', t)
+    #    virgule décimale d'un TAUX devient un point (« 1,2% » → « 1.2% »), AVANT que la ponctuation ne devienne une espace.
+    t = re.sub(r'(\d),(\d+)\s*%', r'\1.\2%', t)   # la virgule d'un TAUX seulement (NUT-FOOD-VARIANTS-02)
     t = re.sub(r'(\d)\s+%', r'\1%', t)
     t = unicodedata.normalize('NFD', t)
     t = ''.join(c for c in t if unicodedata.category(c) != 'Mn')

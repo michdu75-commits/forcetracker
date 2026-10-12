@@ -125,6 +125,24 @@ const CAS = [
   /* ── CHOCOLAT : un taux écrit avec une espace DANS LA TABLE ── */
   V('FV-110', 'chocolat', 'chocolat noir 70%', 'hors', 'MUST', { top: '^Chocolat noir 70 % de cacao' }, 'la table écrit « 70 % » avec une espace : « 70% » la retrouve'),
   V('FV-111', 'chocolat', 'chocolat noir 70 %', 'hors', 'MUST', { top: '^Chocolat noir 70 % de cacao', jamais: '50 %' }, 'et l\'inverse'),
+  /* ── NUT-FOOD-VARIANTS-02 (12/10/2026, contre-vérification) : la négation tapée ne vide plus une recherche dont un
+     résultat COMPATIBLE existe sous une autre écriture ; elle refuse toujours le CONTRAIRE explicite. Les témoins
+     disent l'invariant (compatible présent · contraire absent · absence réelle), pas un ordre arbitraire. ── */
+  V('FV-120', 'négation', 'café non sucré', 'hors', 'MUST', { aussi: ['^Café.*sans sucres ajoutés'], jamais: ', sucrée?(,|$)' }, '« non sucré » : la table écrit « sans sucres ajoutés » — compatible ; jamais un café « sucré »'),
+  V('FV-121', 'négation', 'café sans caféine', 'hors', 'MUST', { aussi: ['^Café décaféiné'] }, '« sans caféine » : un café DÉCAFÉINÉ est compatible (« caféine » n\'y est pas un mot, il est dans « décaféiné »)'),
+  V('FV-122', 'négation', 'jambon sans couenne', 'hors', 'MUST', { aussi: ['découenné'] }, '« sans couenne » : un jambon DÉCOUENNÉ est compatible'),
+  V('FV-123', 'négation', 'yaourt sans sucre', 'hors', 'MUST', { aussi: ['^Yaourt'], jamais: ', sucrée?(,|$)' }, '« sans sucre » : jamais un yaourt « sucré » ; un yaourt qui ne dit rien du sucre reste proposé (aucune équivalence inventée)'),
+  V('FV-124', 'négation', 'sel non iodé', 'hors', 'MUST', { aussi: ['non iodé'], jamais: '(^|, )iodé' }, '« non X » : le sel non iodé, jamais le sel « iodé »'),
+  V('FV-125', 'négation', 'fromage non allégé', 'hors', 'MUST', { aussi: ['non allégé'], jamais: ', allégé' }, '« non X » : jamais un fromage « allégé »'),
+  V('FV-126', 'négation', 'céréales non enrichies', 'hors', 'MUST', { aussi: ['non enrichies'], jamais: ', enrichies' }, '« non X » au pluriel : jamais des céréales « enrichies »'),
+  V('FV-127', 'pluriel', 'yaourts allégés', 'hors', 'MUST', { vide: true, jamais: 'non allégé' }, 'pluriel : jamais « non allégé » (la table n\'a aucun yaourt allégé : RIEN)'),
+  V('FV-128', 'pluriel', 'biscuits enrichis', 'hors', 'MUST', { aussi: ['^Biscuit.*, enrichi'], jamais: 'non enrichi' }, 'pluriel : des biscuits enrichis, jamais « non enrichi »'),
+  V('FV-129', 'décimal', 'eau 1,5 l', 'hors', 'MUST', { aussi: ['^Eau'] }, 'une QUANTITÉ décimale n\'est pas un taux : « eau 1,5 l » trouve de l\'eau'),
+  V('FV-130', 'décimal', 'lait 1,2 %', 'hors', 'MUST', { top: '1,2% MG' }, 'un taux décimal avec une espace'),
+  V('FV-131', 'décimal', 'lait 2 %', 'hors', 'MUST', { vide: true, jamais: '1,2% MG' }, '2 % n\'est pas 1,2 %, avec une espace aussi'),
+  V('FV-132', 'ou non', 'Café au lait, café crème ou cappuccino, instantané ou non, sans sucres ajoutés, prêt à boire', 'hors', 'MUST', { aussi: ['^Café au lait, café crème ou cappuccino, instantané ou non'] }, 'un nom complet avec « ou non » se retrouve lui-même'),
+  V('FV-133', 'ou non', 'Maquereau, filet (grillé ou non), au naturel, appertisé, égoutté', 'hors', 'MUST', { aussi: ['^Maquereau, filet \\(grillé ou non\\)'] }, 'un nom complet avec « ou non » se retrouve lui-même'),
+  V('FV-134', 'ou non', 'Terrine de fruits de mer (par ex. de Saint-Jacques), avec ou sans poisson, préemballée', 'hors', 'MUST', { aussi: ['^Terrine de fruits de mer'] }, 'un nom complet avec « ou sans » se retrouve lui-même'),
 ];
 const NIVEAUX = ['MUST', 'KNOWN_LIMITATION', 'OBSERVATION'];
 
@@ -177,6 +195,25 @@ module.exports.ecran = async function (t, b, PORT) {
   const diff = CAS.filter(c => sig(P.obs[c.id]) !== sig(P2.obs[c.id])).map(c => c.id);
   console.log('\n-- B-FV-D. NUT-FOOD-VARIANTS-01 — déterminisme --');
   t('B-FV-D le corpus rejoué dans des contextes neufs, cas dans l\'ordre INVERSE → mêmes lignes, même ordre (' + CAS.length + ' cas)', diff.length === 0, diff.join(' '));
+  await module.exports.nomsComplets(t, b, PORT);
+};
+
+/* B-FV-N — NUT-FOOD-VARIANTS-02 : L'INVARIANT GÉNÉRAL. Chaque nom CIQUAL proposable, tapé EN ENTIER, se retrouve
+   lui-même (moteur hors ligne, sans table d'alias). Mesuré par la contre-vérification : la 1ʳᵉ version de la négation
+   en perdait 2 (« … ou non … »). Sur 0407516b : 0 perdu. */
+module.exports.nomsComplets = async function (t, b, PORT) {
+  console.log('\n-- B-FV-N. NUT-FOOD-VARIANTS-02 — chaque nom CIQUAL complet se retrouve lui-même --');
+  const cx = await b.newContext({ serviceWorkers: 'block' });
+  await cx.route(/script\.google\.com|workers\.dev|anthropic|openfoodfacts/, rt => rt.abort());
+  const pg = await cx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  await pg.addInitScript(`try{localStorage.setItem('ft4_ob2','1');localStorage.setItem('ft4_guide_shown','1');localStorage.setItem('ft4_wn_seen','99');}catch(e){}`);
+  await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
+  const r = await pg.evaluate(async () => { await _ciqualCharger(); _alias = null;
+    const L = _ciqual.a.filter(a => a[3] != null);
+    return { n: L.length, perdus: L.filter(a => !_ciqualChercher(a[1], 400).some(x => x[0] === a[0])).map(a => a[1]) }; });
+  t('B-FV-N les ' + r.n + ' noms CIQUAL proposables, tapés en entier, se retrouvent tous eux-mêmes', r.n > 3000 && r.perdus.length === 0 && !errs.length,
+    JSON.stringify(r.perdus.slice(0, 3)) + ' ' + errs.join(' | '));
+  await cx.close();
 };
 
 module.exports.CAS = CAS;

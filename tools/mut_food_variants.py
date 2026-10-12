@@ -11,6 +11,8 @@ proprietaires existants de la recherche d'aliments : `_afNorm` (le taux colle a 
   M5  forcer une variante par defaut sans qualificatif M6a supprimer la protection d'un mot NIE dans le nom
   M6b « sans X » tape ne se lit plus d'un bloc         M7  « 5 % » (espace) n'est plus recolle
   M8  la virgule decimale coupe de nouveau le nombre   M9  « ou non / ou sans » redevient une negation
+  M10 [Y3] « non X » M11 [Y13] pluriels M12 decimal de quantite M13 contraire M14 « ou non » tape M15 rang « dans un mot »
+  M16 debut de mot (NUT-FOOD-VARIANTS-02, contre-verification)
   MC1 (controle) un COMMENTAIRE modifie : VERT         MC2 (controle) une ecriture EQUIVALENTE : VERT
 [!!] Chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60). Une mutation qui casse la
 SYNTAXE est refusee, et un rouge qui n'est QU'un plantage ne compte pas. M00 = l'app.js de 0407516b (base du lot).
@@ -24,13 +26,17 @@ APP = 'app.js'
 BASE_AVANT = '0407516b'     # le code D-042 qualifie, avant NUT-FOOD-VARIANTS-01
 BANCS = ['tools/banc_food_variants.js']
 
-GLUE_DEC = ".replace(/(\\d),(\\d)/g,'$1.$2')"
+GLUE_DEC = ".replace(/(\\d),(\\d+)\\s*%/g,'$1.$2%')"
 GLUE_PCT = ".replace(/(\\d)\\s+%/g,'$1%')"
 BRUTS = "const bruts=_afNorm(q).split(/\\s+/).filter(m=>m.length>1);"
 BORNE = "    if(/^[0-9]/.test(t) && /[0-9.]/.test(n[i-1]||'')) continue;\n"
 NEG = "    if(!nie && /(^|\\s)(sans|non) $/.test(avant) && !/(^|\\s)ou (sans|non) $/.test(avant)) continue;\n"
 OU = " && !/(^|\\s)ou (sans|non) $/.test(avant)"
-BLOC = "    const m=(/^(sans|non)$/.test(mots[i]) && i+1<mots.length) ? mots[i]+' '+mots[++i] : mots[i];"
+BLOC = "    if(/^(sans|non)$/.test(mots[i]) && i+1<mots.length && mots[i-1]!=='ou'){"
+CONTRAIRE = "      if(xs.some(t=>_afTrouve(n, t, true)>=0)) return null;\n"
+DANSMOT = "xs.some(t=>_afTrouve(n, t)>=0) ? 1 : 2"
+DEBUTMOT = "    if(mot && i>0 && !/[ -]/.test(n[i-1])) continue;"
+SG = "  if(sg && _afTrouve(n, sg)>=0) return {t:sg, approx:1};"
 ENTIER = "  const entier = _fsMotsEntiers(it.mots, a[1])?0:1;"
 TRI = "  out.sort((x,y)=>_fsComparer(x.k, y.k));\n"
 COMM = "/* 🥛 NUT-FOOD-VARIANTS-01 (12/10/2026) — OÙ UN MOT TAPÉ SE TROUVE VRAIMENT DANS UN NOM."
@@ -45,10 +51,19 @@ MUT = [
     ('M5 forcer une variante par defaut quand aucun qualificatif n\'est tape',
      [(TRI, TRI + "  if(!/\\d/.test(q)){ const k=out.findIndex(x=>/(^|[^0-9])(0|5)% mg/.test(_afNorm(x.a[1]))); if(k>=0) return [out[k].a]; }\n")], 'GARDE'),
     ('M6a supprimer la protection d\'un mot NIE dans le nom (non allege, sans sucres)', [(NEG, '')], 'GARDE'),
-    ('M6b « sans X » tape ne se lit plus d\'un bloc', [(BLOC, "    const m=mots[i];")], 'GARDE'),
+    ('M6b « sans X » tape ne se lit plus d\'un bloc', [(BLOC, "    if(false){")], 'GARDE'),
     ('M7 « 5 % » (espace) n\'est plus recolle a son %', [(GLUE_PCT, '')], 'GARDE'),
     ('M8 la virgule decimale coupe de nouveau le nombre (1,2 %)', [(GLUE_DEC, '')], 'GARDE'),
     ('M9 « ou non / ou sans » redevient une negation', [(OU, '')], 'GARDE'),
+    # NUT-FOOD-VARIANTS-02 (12/10/2026, contre-verification) : Y3 « non X », Y13 pluriels, decimal de taux / de quantite,
+    # retour du contraire, « ou non » tape, rang des mots qui ne portent X qu'a l'interieur, debut de mot.
+    ('M10 [Y3] « non X » tape n\'est plus une negation (seul « sans » l\'est)', [(BLOC, BLOC.replace('(sans|non)', '(sans)'))], 'GARDE'),
+    ('M11 [Y13] au pluriel, le singulier redevient une sous-chaine (« non enrichi » repond a « enrichis »)', [(SG, "  if(sg && n.indexOf(sg)>=0) return {t:sg, approx:1};")], 'GARDE'),
+    ('M12 la virgule est gardee pour TOUT nombre decimal (« eau 1,5 l » vide)', [(GLUE_DEC, ".replace(/(\\d),(\\d)/g,'$1.$2')")], 'GARDE'),
+    ('M13 le CONTRAIRE explicite n\'est plus ecarte (« sel iode » pour « sel non iode »)', [(CONTRAIRE, '')], 'GARDE'),
+    ('M14 « ou non » tape redevient une negation (les noms complets se perdent)', [(BLOC, BLOC.replace(" && mots[i-1]!=='ou'", ''))], 'GARDE'),
+    ('M15 « decafeine », « decouenne » ne passent plus devant un nom qui ne dit rien', [(DANSMOT, '2')], 'GARDE'),
+    ('M16 X n\'a plus besoin d\'etre en debut de mot pour etre un contraire', [(DEBUTMOT, '')], 'GARDE'),
     ('MC1 (controle) un COMMENTAIRE modifie : le banc doit rester VERT', [(COMM, COMM.replace('(12/10/2026)', '(12/10/2026, controle)'))], 'OK'),
     ('MC2 (controle) une ecriture EQUIVALENTE : le banc doit rester VERT', [(PREM, "    const premier=(i===0);")], 'OK'),
 ]
