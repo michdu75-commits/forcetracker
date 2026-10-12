@@ -714,7 +714,7 @@ appelée par `_afMotDansNom`) refuse un taux collé à d'autres chiffres et un m
 « ou sans », qui ne nient rien (14 noms mesurés) ; `_afRang` cherche « sans X » / « non X » d'un bloc. Choix pris seul :
 **D-059** (PROPOSÉ).
 
-**Banc `food_variants`** (74 cas, 10 familles, blocs B-FV-A / B / D) : **52 / 19 avant → 74 / 0 après**. Différentiel
+**Banc `food_variants`** (74 cas, 10 familles, blocs B-FV-A / B / D) : **55 / 19 avant → 74 / 0 après** (52 / 19 sur les 71 premiers cas). Différentiel
 moteur sur **6 628 requêtes** (avec et sans table d'alias) : **78** changent, toutes dans les règles ci-dessus (un
 résultat qui disait le contraire de la requête disparaît : « pomme chair et peau » ↛ « chair sans peau », « café
 instantané » ↛ « non instantané », « muesli enrichi » ↛ « non enrichi »). D-042 et FS-01 → FS-05B : **inchangés**
@@ -728,3 +728,33 @@ boissons) · « lait 1/2 écrémé » hors ligne (alias non chargé) · « viand
 « allégé » / « entière » absents de la table pour le fromage blanc et la crème. Observé, non corrigé : la table d'alias
 envoie « steak haché 5% » vers le **cuit** et « 10 / 15 / 20 % » vers le **cru** ; « cola » se trouve dans « chocolat »
 (sous-chaîne préexistante, les chocolats restent sous les colas).
+
+### 15 bis. NUT-FOOD-VARIANTS-02 — micro-retouche après contre-vérification (12/10/2026, même branche)
+
+La contre-vérification de VARIANTS-01 a trouvé des effets **trop stricts**, tous mesurés et reproduits ici. Ils venaient
+du même lot, et non de l'existant :
+- « café non sucré », « café sans caféine », « jambon sans couenne » et « yaourt sans sucre » ne rendaient rien : l'écriture
+  littérale « sans X » était exigée ;
+- « eau 1,5 l » ne rendait rien : la virgule décimale était gardée pour tout nombre ;
+- 2 noms CIQUAL complets « … ou non … » étaient introuvables : « ou non » était aussi lu comme une négation dans la frappe.
+
+**Correctif dans les mêmes propriétaires, sans aucune table** :
+- `_afRang` lit « sans X » / « non X » en quatre rangs :
+  1. le nom le **dit** (« sans X » ou « non X », l'un vaut l'autre) ;
+  2. le nom porte X **en début de mot** : c'est le CONTRAIRE, écarté ;
+  3. le nom ne porte X qu'**à l'intérieur d'un mot** (« décaféiné », « découenné ») ;
+  4. le nom n'en dit **rien**.
+
+  Après « ou », ce n'est pas une négation.
+- `_afTrouve` sait chercher en début de mot.
+- `_afNorm` (et son miroir `tools/alias.py`) ne garde la virgule décimale que devant un « % ».
+
+D-059 est corrigée (son point ③ est retiré : il n'était pas implémenté).
+
+⭐ **Invariant ajouté (B-FV-N)** : chaque nom CIQUAL proposable (3 341), tapé en entier, se retrouve lui-même.
+
+⚠️ **Ces règles sont partagées** par toutes les recherches qui passent par `_afRang` : la table CIQUAL, les compléments,
+le fast-food et « Déjà noté par toi ».
+
+**Banc `food_variants`** : 90 cas, **82 / 8 avant → 90 / 0 après**. La passe complète D-031 est **différée à l'arbre final
+intégré** (D-042 + variantes).
