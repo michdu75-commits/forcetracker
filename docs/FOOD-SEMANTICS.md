@@ -718,7 +718,8 @@ appelée par `_afMotDansNom`) refuse un taux collé à d'autres chiffres et un m
 moteur sur **6 628 requêtes** (avec et sans table d'alias) : **78** changent, toutes dans les règles ci-dessus (un
 résultat qui disait le contraire de la requête disparaît : « pomme chair et peau » ↛ « chair sans peau », « café
 instantané » ↛ « non instantané », « muesli enrichi » ↛ « non enrichi »). D-042 et FS-01 → FS-05B : **inchangés**
-(73 · 44 · 46 · 39 · 136 · 177, aucune limite connue n'a bougé).
+(73 · 44 · 46 · 39 · 136 · 177, aucune limite connue n'a bougé). Contrôle négatif `tools/mut_food_variants.py` **13 / 13** ;
+passe complète D-031 **6 735 ✅ / 0 ❌** sur `4ed73994` (4 conditions vertes).
 
 **Limites nommées (KNOWN_LIMITATION, hors lot)** : « crème fraîche » (CIQUAL dit « Crème 30 % MG, épaisse, rayon frais »
 — dire que l'une est l'autre est une décision de Michel) · fourchettes de la table (« fromage blanc 2% » ↛ « 2-3% »,
