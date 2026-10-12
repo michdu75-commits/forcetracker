@@ -3470,3 +3470,15 @@ suggestions P1-3, modificateurs P1-4, abréviation « elev » — hors lot).
 Ambigu par décision de Michel (**D-056**, P.4) : jamais AUTO, ni vers *Rowing Barre*, ni vers *Rowing Câble* ; une question est acceptable.
 Aujourd'hui : question vers *Rowing Barre*. ❓ **Doute** : que veut dire le coach qui l'écrit ? Le code ne peut pas le savoir. État :
 **juge humain** (le sens se lit dans le programme, pas dans le nom).
+
+### 🟡 « CRÈME FRAÎCHE » ET LES TAUX EN FOURCHETTE NE RETROUVENT RIEN EN LOCAL (12/10/2026 — NUT-FOOD-VARIANTS-01, hors lot)
+CIQUAL n'écrit jamais « fraîche » (« Crème 30% MG, épaisse, rayon frais ») et donne certains taux en fourchette (« 2-3% »,
+« 12 à 25% ») : « crème fraîche », « crème fraîche 30% », « fromage blanc 2% », « crème 15% » ne rendent rien hors ligne.
+❓ **Doute** : faut-il dire qu'une « crème fraîche » est la crème « rayon frais », et lire « 2 % » dans « 2-3 % » ? Ce sont des
+décisions de Michel, pas des correctifs. Vérifiable par du code : ✅ (KNOWN_LIMITATION FV-064 → FV-067, FV-032). État : **à trier**.
+
+### 🟡 « ZÉRO » HORS LIGNE DEVIENT « ÉDULCORANTS » (12/10/2026 — NUT-FOOD-VARIANTS-01, hors lot)
+Le synonyme `zero → edulcorants` (ft-v1113, pensé pour les boissons) fait passer « Cola, sucré, avec édulcorants » devant
+« Cola, sans sucres ajoutés » pour « coca zéro » hors ligne, et l'aromatisé devant le nature pour « fromage blanc zéro ».
+En ligne, la table d'alias corrige le premier résultat. ❓ **Doute** : « zéro » veut-il dire « sans sucre » partout ?
+Vérifiable par du code : ✅ (FV-031, FV-103). État : **à trier**.

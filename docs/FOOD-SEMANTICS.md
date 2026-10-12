@@ -690,3 +690,40 @@ d'aliments). **Après (branche)** : D-042 **73 / 0** · FS-01 **44 / 0** · FS-0
 
 **Toujours hors lot** : FS-04 (affichage des formes, **D-040** non portée) · NUT-PUNCH-01 · UX « crème fraîche » · champ
 « quantité consommée » · suite « pizza 4 fromages » au-delà de D-042.
+
+## 15. NUT-FOOD-VARIANTS-01 — les variantes nutritionnelles d'un même aliment (12/10/2026, branche non intégrée)
+
+**La règle (D-058, Michel)** : un qualificatif TAPÉ qui change réellement l'aliment — un taux de matière grasse, entier /
+écrémé, allégé, « sans sucre » — est respecté ; une requête SANS qualificatif n'en reçoit pas un inventé ; aucune donnée
+n'est inventée. Branche `claude/nut-food-variants-01`, **depuis `0407516b`** (le code D-042 qualifié) ;
+`claude/nut-d042-closure-01` n'est pas touchée.
+
+**L'audit d'abord, par la vraie frappe** (82 requêtes, en ligne et hors ligne) : les données étaient là (lait écrémé /
+demi / entier / 1,2 %, fromage blanc 0 / 2-3 / 7-8 %, steak haché 5 / 10 / 15 / 20 % cru et cuit, crème 30 % / légère,
+yaourts 0 % et à la grecque, faisselle, petit-suisse, fromages allégés, colas sans sucres). Le moteur gérait déjà bien
+les mots collés (« lait écrémé », « fromage blanc 0% », « steak haché 10% ») ; **quatre causes** faisaient le reste :
+① **« 5 % » avec une espace** perdait son 5 et son % (deux « mots » d'une lettre, écartés par `_afMots`) ;
+② **un taux lu comme du texte** : « 5% » se trouvait dans « 15% », « 0% » dans « 10% », « 2% » dans « 1,2% » ;
+③ **la négation ignorée** : « yaourt allégé » ne rendait que du « non allégé », « cola sans sucre » mettait « Cola,
+sucré, sans caféine » en tête ; ④ **un taux espacé dans la table** (« Chocolat noir 70 % de cacao ») introuvable par
+« 70% » hors ligne.
+
+**Le correctif — trois propriétaires existants, aucune table** : `_afNorm` recolle le nombre à son % et garde la
+virgule décimale (miroir porté dans `tools/alias.py` ; `alias.json` régénéré : identique) ; `_afTrouve` (nouvelle,
+appelée par `_afMotDansNom`) refuse un taux collé à d'autres chiffres et un mot NIÉ par le nom — sauf « ou non » /
+« ou sans », qui ne nient rien (14 noms mesurés) ; `_afRang` cherche « sans X » / « non X » d'un bloc. Choix pris seul :
+**D-059** (PROPOSÉ).
+
+**Banc `food_variants`** (74 cas, 10 familles, blocs B-FV-A / B / D) : **52 / 19 avant → 74 / 0 après**. Différentiel
+moteur sur **6 628 requêtes** (avec et sans table d'alias) : **78** changent, toutes dans les règles ci-dessus (un
+résultat qui disait le contraire de la requête disparaît : « pomme chair et peau » ↛ « chair sans peau », « café
+instantané » ↛ « non instantané », « muesli enrichi » ↛ « non enrichi »). D-042 et FS-01 → FS-05B : **inchangés**
+(73 · 44 · 46 · 39 · 136 · 177, aucune limite connue n'a bougé).
+
+**Limites nommées (KNOWN_LIMITATION, hors lot)** : « crème fraîche » (CIQUAL dit « Crème 30 % MG, épaisse, rayon frais »
+— dire que l'une est l'autre est une décision de Michel) · fourchettes de la table (« fromage blanc 2% » ↛ « 2-3% »,
+« crème 15% » ↛ « 12 à 25% ») · « zéro » hors ligne traduit en « édulcorants » (synonyme ft-v1113 pensé pour les
+boissons) · « lait 1/2 écrémé » hors ligne (alias non chargé) · « viande hachée 15% » (alias à 5 % seulement) ·
+« allégé » / « entière » absents de la table pour le fromage blanc et la crème. Observé, non corrigé : la table d'alias
+envoie « steak haché 5% » vers le **cuit** et « 10 / 15 / 20 % » vers le **cru** ; « cola » se trouve dans « chocolat »
+(sous-chaîne préexistante, les chocolats restent sous les colas).

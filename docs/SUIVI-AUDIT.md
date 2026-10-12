@@ -399,6 +399,9 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   Mesures et limites : `docs/FOOD-SEMANTICS.md` §14 ; décision : `docs/DECISIONS.md` D-042.
   ↪️ **11/10 (NUT-D042-CLOSURE-01)** : repositionné sur master `7b75f3c1` (`ft-v1253`), branche `claude/nut-d042-closure-01` —
   **QUALIFIÉ SUR MASTER ACTUEL · NON INTÉGRÉ · NON PUBLIÉ · EN ATTENTE DE CONTRE-VÉRIFICATION**.
+  ↪️ **12/10 (NUT-FOOD-VARIANTS-01, branche `claude/nut-food-variants-01` depuis `0407516b`)** : un qualificatif nutritionnel
+  tapé est respecté (D-058) — quatre causes corrigées dans `_afNorm` / `_afTrouve` / `_afRang` ; banc `food_variants` 52/19 → 74/0 ;
+  **NON INTÉGRÉ · NON PUBLIÉ · EN ATTENTE DE CONTRE-VÉRIFICATION**. Limites nommées : `docs/FOOD-SEMANTICS.md` §15.
 
 ### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
 - **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,

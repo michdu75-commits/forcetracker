@@ -39538,6 +39538,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      Blocs B-D42-A (structure), B-D42-B (vraie frappe), B-D42-J (« Déjà noté »), B-D42-T (premier affichage),
      contrôle négatif `tools/mut_food_d042.py`. */
   await require('./food_d042.js').ecran(t, b, PORT);
+  /* 🥛 NUT-FOOD-VARIANTS-01 (12/10/2026) : un qualificatif nutritionnel tapé est respecté — un taux (5 % ≠ 15 %, « 5 % »
+     = « 5% »), entier / écrémé, allégé (jamais « non allégé »), « sans sucre » ; une requête SANS qualificatif garde
+     plusieurs variantes ; un taux absent de la base ne rend rien. Blocs B-FV-A (structure), B-FV-B (vraie frappe, en
+     ligne et hors ligne), B-FV-D (déterminisme), contrôle négatif `tools/mut_food_variants.py`. */
+  await require('./food_variants.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40482,6 +40487,7 @@ require('./food_prefs.js').source(t, ROOT, fs, path);
 require('./food_reference.js').source(t, ROOT, fs, path);
 require('./food_multisource.js').source(t, ROOT, fs, path);
 require('./food_d042.js').source(t, ROOT, fs, path);
+require('./food_variants.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
