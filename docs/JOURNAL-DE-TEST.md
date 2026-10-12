@@ -3476,9 +3476,17 @@ CIQUAL n'écrit jamais « fraîche » (« Crème 30% MG, épaisse, rayon frais �
 « 12 à 25% ») : « crème fraîche », « crème fraîche 30% », « fromage blanc 2% », « crème 15% » ne rendent rien hors ligne.
 ❓ **Doute** : faut-il dire qu'une « crème fraîche » est la crème « rayon frais », et lire « 2 % » dans « 2-3 % » ? Ce sont des
 décisions de Michel, pas des correctifs. Vérifiable par du code : ✅ (KNOWN_LIMITATION FV-064 → FV-067, FV-032). État : **à trier**.
+↪️ *Mise à jour du 12/10 (NUT-FOOD-VARIANTS-03)* : **tranché par Michel (D-060)** et corrigé — « crème fraîche » rend les trois crèmes
+« rayon frais » (aucun taux choisi), « crème fraîche 30% » met la 30 % devant, un taux tapé se lit dans une fourchette qui le contient
+(« 2 % » dans « 2-3 % », « 15 % » dans « 12 à 25 % »), et un taux hors de toute fourchette ne rend rien. FV-064/065/066/032 sont MUST.
+Reste : « crème entière » (FV-067, aucun taux écrit), les crèmes d'Isigny et UHT hors de la famille (D-061). État : **promue**.
 
 ### 🟡 « ZÉRO » HORS LIGNE DEVIENT « ÉDULCORANTS » (12/10/2026 — NUT-FOOD-VARIANTS-01, hors lot)
 Le synonyme `zero → edulcorants` (ft-v1113, pensé pour les boissons) fait passer « Cola, sucré, avec édulcorants » devant
 « Cola, sans sucres ajoutés » pour « coca zéro » hors ligne, et l'aromatisé devant le nature pour « fromage blanc zéro ».
 En ligne, la table d'alias corrige le premier résultat. ❓ **Doute** : « zéro » veut-il dire « sans sucre » partout ?
 Vérifiable par du code : ✅ (FV-031, FV-103). État : **à trier**.
+↪️ *Mise à jour du 12/10 (NUT-FOOD-VARIANTS-03)* : corrigé — « zéro » se lit « 0 % » ou « sans sucres » (D-061), plus « édulcorants » ;
+« coca zéro » et « cola zéro » hors ligne rendent « Cola, sans sucres ajoutés », « fromage blanc zéro / zero » la famille 0 %, et « cola »
+suivi d'un autre mot ne trouve plus « chocolat ». Reste : « light » → « édulcorants » inchangé ; « cola » tapé SEUL (dernier mot, partiel
+autorisé) peut encore toucher « chocolat ». FV-031/103/140→143 sont MUST. État : **promue**.

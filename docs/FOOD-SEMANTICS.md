@@ -758,3 +758,28 @@ le fast-food et « Déjà noté par toi ».
 
 **Banc `food_variants`** : 90 cas, **82 / 8 avant → 90 / 0 après**. La passe complète D-031 est **différée à l'arbre final
 intégré** (D-042 + variantes).
+
+### 15 ter. NUT-FOOD-VARIANTS-03 — fermeture des trous confirmés (12/10/2026, branche `claude/nut-food-variants-03`)
+
+Les trous relevés par la contre-vérification express de VARIANTS-02 sont tous **PRÉEXISTANTS** à VARIANTS-01/02. Décisions
+de Michel : **D-060** ; choix de mise en œuvre : **D-061** (PROPOSÉ).
+
+- **« zéro » hors ligne** : `FOOD_SYNONYMES` le traduit désormais en « 0 % » OU « sans sucres », joués ensemble, et plus en
+  « édulcorants ». Résultat : « fromage blanc zéro » donne le 0 % nature, « coca zéro » donne un cola sans sucres.
+- **« cola » ↛ « chocolat »** : dans la table CIQUAL, un mot suivi d'un autre doit être un mot du nom ; l'élision compte
+  (« jus orange » retrouve « Jus d'orange »). Seul le dernier mot reste une frappe partielle. « Déjà noté par toi » n'est
+  pas touché.
+- **« 1/2 écrémé »**, **« viande hachée »** (bœuf et veau), **« crème fraîche »** (la famille « rayon frais ») : du
+  vocabulaire dans `FOOD_SYNONYMES`. Une expression connue en tête de requête garde ce qui suit (« … 15 % », « … épaisse »).
+- **Fourchettes** : un taux tapé se lit dans une fourchette qui le contient (`_afMotDansNom`), après la valeur exacte ;
+  hors de toute fourchette, rien.
+- **Steak haché** : les alias à 5 % (`tools/alias.py`, CORRECTIONS) visent le cru, comme 10 / 15 / 20 %. « steak haché »
+  sans précision vise l'aliment moyen (cuit), les crus dessous. ⚠️ Hors ligne, seuls les crus restent visibles : dette, car
+  il faudrait toucher la clé de tri générale (FV-164). « viande hachée » sans précision : crus seulement, en ligne aussi
+  (FV-165) — un alias vers l'aliment moyen imposerait le bœuf.
+
+**Banc `food_variants`** : 120 cas (115 MUST · 4 KNOWN_LIMITATION · 1 OBSERVATION) ; **96 / 26 avant → 122 / 0 après**. D-042, FS-01 → FS-05B, `repas_actif` et
+`habitudes_alim` sont inchangés.
+
+⚠️ **FS-05 FR-119** (« crème fraîche », KNOWN_LIMITATION) s'affiche désormais **« limite levée — à reclasser »** : ce n'est
+pas un rouge, et le corpus FS-05 n'est pas modifié par ce lot. Passe D-031 : **différée à l'arbre final intégré**.
