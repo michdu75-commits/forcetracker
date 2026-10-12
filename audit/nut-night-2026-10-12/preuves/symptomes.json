@@ -1,0 +1,2463 @@
+[
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "poêlée de légumes assaisonnés sans champignon",
+  "mode": "en",
+  "observe": [
+   "Poêlée de légumes assaisonnés à l'asiatiques ou wok de légumes, surgelée, crue",
+   "Poêlée de légumes assaisonnés grillée, méridionale ou méditerranéenne, surgelée, crue"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "poêlée de légumes assaisonnés sans champignon",
+  "mode": "hors",
+  "observe": [
+   "Poêlée de légumes assaisonnés à l'asiatiques ou wok de légumes, surgelée, crue",
+   "Poêlée de légumes assaisonnés grillée, méridionale ou méditerranéenne, surgelée, crue"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pâtes à la bolognaise (spaghetti",
+  "mode": "en",
+  "observe": [
+   "Pâtes fraîches farcies (ex : raviolis, tortellinis), au boeuf (ex : bolognaise), préemballées, crues",
+   "Pâtes fraîches farcies (ex : raviolis, tortellinis), au boeuf (ex : bolognaise), préemballées, cuites"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pâtes à la bolognaise (spaghetti",
+  "mode": "hors",
+  "observe": [
+   "Pâtes fraîches farcies (ex : raviolis, tortellinis), au boeuf (ex : bolognaise), préemballées, crues",
+   "Pâtes fraîches farcies (ex : raviolis, tortellinis), au boeuf (ex : bolognaise), préemballées, cuites"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pâtes en sauce aux fromages (spaghetti",
+  "mode": "en",
+  "observe": [
+   "Salade de pâtes au fromage et légumes, avec sauce",
+   "Salade de pâtes au poulet, fromage et crudités, avec sauce, préemballée",
+   "Salade de pâtes au jambon cru, fromage et crudités, avec sauce, préemballée"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pâtes en sauce aux fromages (spaghetti",
+  "mode": "hors",
+  "observe": [
+   "Salade de pâtes au fromage et légumes, avec sauce",
+   "Salade de pâtes au poulet, fromage et crudités, avec sauce, préemballée",
+   "Salade de pâtes au jambon cru, fromage et crudités, avec sauce, préemballée"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "laitue",
+  "mode": "en",
+  "observe": [
+   "Salade verte, crue, sans assaisonnement"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "oseille",
+  "mode": "en",
+  "observe": [
+   "Groseille, crue",
+   "Groseille à maquereau, crue",
+   "Gelée de groseille (extra ou classique)"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": true,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "oseille",
+  "mode": "hors",
+  "observe": [
+   "Groseille, crue",
+   "Groseille à maquereau, crue",
+   "Gelée de groseille (extra ou classique)"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": true,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "batavia",
+  "mode": "en",
+  "observe": [
+   "Salade verte, crue, sans assaisonnement"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "roquette",
+  "mode": "en",
+  "observe": [
+   "Croquette de pomme de terre, surgelée, à cuire",
+   "Nuggets ou croquette panée de poulet, préemballé",
+   "Nuggets ou croquette panée de poisson, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "roquette",
+  "mode": "hors",
+  "observe": [
+   "Croquette de pomme de terre, surgelée, à cuire",
+   "Nuggets ou croquette panée de poulet, préemballé",
+   "Nuggets ou croquette panée de poisson, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "tomate sans précision",
+  "mode": "en",
+  "observe": [
+   "Tomate ronde, crue",
+   "Tomate verte, crue",
+   "Tomate cerise, crue"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "tomate sans précision",
+  "mode": "hors",
+  "observe": [
+   "Tomate ronde, crue",
+   "Tomate verte, crue",
+   "Tomate cerise, crue"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pomme de terre vapeur",
+  "mode": "en",
+  "observe": [
+   "Pomme de terre, cuite (aliment moyen)"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pomme de terre poêlée",
+  "mode": "en",
+  "observe": [
+   "Pomme de terre sautée/poêlée/rissolée à la graisse de canard",
+   "Pomme de terre sautée/poêlée/rissolée, préfrite, surgelée, cuite",
+   "Pomme de terre sautée/poêlée/rissolée, préfrite, surgelée, à cuire"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": true,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pomme de terre poêlée",
+  "mode": "hors",
+  "observe": [
+   "Pomme de terre sautée/poêlée/rissolée à la graisse de canard",
+   "Pomme de terre sautée/poêlée/rissolée, préfrite, surgelée, cuite",
+   "Pomme de terre sautée/poêlée/rissolée, préfrite, surgelée, à cuire"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": true,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "lin",
+  "mode": "en",
+  "observe": [
+   "Blinis",
+   "Praline"
+  ],
+  "rang_faux": 4,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "lin",
+  "mode": "hors",
+  "observe": [
+   "Blinis",
+   "Praline"
+  ],
+  "rang_faux": 4,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "riz semi-complet",
+  "mode": "en",
+  "observe": [
+   "Riz complet, cuit, sans sel ajouté"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "riz thaï",
+  "mode": "en",
+  "observe": [
+   "Riz blanc, cuit, sans sel ajouté"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "gari",
+  "mode": "en",
+  "observe": [
+   "Matière grasse ou graisse végétale solide (type margarine) pour friture ou graisse à frire"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "gari",
+  "mode": "hors",
+  "observe": [
+   "Matière grasse ou graisse végétale solide (type margarine) pour friture ou graisse à frire"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain aux graines sans gluten",
+  "mode": "en",
+  "observe": [
+   "Pain aux céréales et/ou graines",
+   "Pain aux céréales et/ou aux graines, préemballé",
+   "Pain de mie aux céréales et/ou graines, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain aux graines sans gluten",
+  "mode": "hors",
+  "observe": [
+   "Pain aux céréales et/ou graines",
+   "Pain aux céréales et/ou aux graines, préemballé",
+   "Pain de mie aux céréales et/ou graines, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain au son",
+  "mode": "en",
+  "observe": [
+   "Pain blanc, fait maison (avec farine pour machine à pain)",
+   "Pain de campagne, fait maison (avec farine pour machine à pain)",
+   "Sandwich pain de mie complet, saucisson ou rosette, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain au son",
+  "mode": "hors",
+  "observe": [
+   "Pain blanc, fait maison (avec farine pour machine à pain)",
+   "Pain de campagne, fait maison (avec farine pour machine à pain)",
+   "Sandwich pain de mie complet, saucisson ou rosette, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain de mie blanc sans gluten",
+  "mode": "en",
+  "observe": [
+   "Pain de mie blanc, préemballé",
+   "Pain de mie blanc, sans croûte, préemballé",
+   "Pain de mie blanc, sans sucres ajoutés, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain de mie blanc sans gluten",
+  "mode": "hors",
+  "observe": [
+   "Pain de mie blanc, préemballé",
+   "Pain de mie blanc, sans croûte, préemballé",
+   "Pain de mie blanc, sans sucres ajoutés, préemballé"
+  ],
+  "rang_faux": 1,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain sans gluten",
+  "mode": "en",
+  "observe": [
+   "Pain pita",
+   "Pain bagel"
+  ],
+  "rang_faux": 4,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "pain sans gluten",
+  "mode": "hors",
+  "observe": [
+   "Pain pita",
+   "Pain bagel"
+  ],
+  "rang_faux": 4,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "jambon de bayonne",
+  "mode": "en",
+  "observe": [
+   "Jambon cru"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "jambon sec",
+  "mode": "en",
+  "observe": [
+   "Jambon cru"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "lieu noir",
+  "mode": "en",
+  "observe": [
+   "Lieu ou colin d'Alaska, cru"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "raie",
+  "mode": "en",
+  "observe": [
+   "Dorade royale ou daurade ou vraie daurade, élevage, crue",
+   "Dorade royale ou daurade ou vraie daurade, sauvage, crue",
+   "Dorade royale ou daurade ou vraie daurade, rôtie/cuite au four"
+  ],
+  "rang_faux": 3,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "raie",
+  "mode": "hors",
+  "observe": [
+   "Dorade royale ou daurade ou vraie daurade, élevage, crue",
+   "Dorade royale ou daurade ou vraie daurade, sauvage, crue",
+   "Dorade royale ou daurade ou vraie daurade, rôtie/cuite au four"
+  ],
+  "rang_faux": 3,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "gruyère",
+  "mode": "en",
+  "observe": [
+   "Emmental ou emmenthal"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "boisson au thé",
+  "mode": "en",
+  "observe": [
+   "Boisson préparée à partir de sirop à diluer type menthe, fraise, etc, sucré, dilué dans l'eau"
+  ],
+  "rang_faux": 5,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "boisson au thé",
+  "mode": "hors",
+  "observe": [
+   "Boisson préparée à partir de sirop à diluer type menthe, fraise, etc, sucré, dilué dans l'eau"
+  ],
+  "rang_faux": 5,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "boisson plate aux fruits (teneur en fruits non spécifiée)",
+  "mode": "en",
+  "observe": [
+   "Boisson plate aux fruits (teneur en fruits < 10%), sucrée",
+   "Boisson plate aux fruits (teneur en fruits >= 50%), rayon ambiant",
+   "Boisson plate aux fruits (teneur en fruits >= 10% et < 50%), sucrée"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "boisson plate aux fruits (teneur en fruits non spécifiée)",
+  "mode": "hors",
+  "observe": [
+   "Boisson plate aux fruits (teneur en fruits < 10%), sucrée",
+   "Boisson plate aux fruits (teneur en fruits >= 50%), rayon ambiant",
+   "Boisson plate aux fruits (teneur en fruits >= 10% et < 50%), sucrée"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "bière sans alcool",
+  "mode": "en",
+  "observe": [
+   "Bière brune",
+   "Bière blanche",
+   "Saucisse de bière"
+  ],
+  "rang_faux": 3,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "bière sans alcool",
+  "mode": "hors",
+  "observe": [
+   "Bière brune",
+   "Bière blanche",
+   "Saucisse de bière"
+  ],
+  "rang_faux": 3,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "gin",
+  "mode": "en",
+  "observe": [
+   "Aubergine, crue",
+   "Aubergine, cuite",
+   "Caviar d'aubergine, préemballé"
+  ],
+  "rang_faux": 3,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "gin",
+  "mode": "hors",
+  "observe": [
+   "Aubergine, crue",
+   "Aubergine, cuite",
+   "Caviar d'aubergine, préemballé"
+  ],
+  "rang_faux": 3,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "confiture de fraise",
+  "mode": "en",
+  "observe": [
+   "Confiture de lait"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "confiture d'abricot",
+  "mode": "en",
+  "observe": [
+   "Confiture de lait"
+  ],
+  "rang_faux": 0,
+  "avant_un_vrai": true,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "biscuit sec sans gluten",
+  "mode": "en",
+  "observe": [
+   "Biscuit sec nature",
+   "Biscuit sec, assortiment",
+   "Biscuit sec petit beurre"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "biscuit sec sans gluten",
+  "mode": "hors",
+  "observe": [
+   "Biscuit sec nature",
+   "Biscuit sec, assortiment",
+   "Biscuit sec petit beurre"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "biscuit sec sans chocolat",
+  "mode": "en",
+  "observe": [
+   "Biscuit sec nature",
+   "Biscuit sec, assortiment",
+   "Biscuit sec petit beurre"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI",
+  "requete": "biscuit sec sans chocolat",
+  "mode": "hors",
+  "observe": [
+   "Biscuit sec nature",
+   "Biscuit sec, assortiment",
+   "Biscuit sec petit beurre"
+  ],
+  "rang_faux": 2,
+  "avant_un_vrai": false,
+  "top1_faux": false
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "risotto aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   25188
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "risotto aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   25188
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "lait à 1 2%",
+  "mode": "en",
+  "dim": "taux",
+  "val": 2,
+  "observe": [],
+  "codes_existants": [
+   19038
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "lait à 1 2%",
+  "mode": "hors",
+  "dim": "taux",
+  "val": 2,
+  "observe": [],
+  "codes_existants": [
+   19038
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "lait fermenté type yaourt aux esters de stérol aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   19543
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "lait fermenté type yaourt aux esters de stérol aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   19543
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "yaourt au lait de chèvre aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   19727
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "yaourt au lait de chèvre aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   19727
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "liégeois ou viennois (chocolat aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   19681
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "liégeois ou viennois (chocolat aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   19681
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "crème aux oeufs (petit pot de crème chocolat aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   39211
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "crème aux oeufs (petit pot de crème chocolat aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   39211
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "mousse liégeoise (chocolat aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   39235
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "mousse liégeoise (chocolat aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   39235
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "tartine craquante aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   7412,
+   7413
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "tartine craquante aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   7412,
+   7413
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec sans gluten aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24019
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec sans gluten aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24019
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec pour petit déjeuner aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24040
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec pour petit déjeuner aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24040
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24050,
+   24054,
+   24057
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24050,
+   24054,
+   24057
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec (tartelette) aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24052,
+   24679
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit sec (tartelette) aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24052,
+   24679
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gaufrette fourrée aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24312,
+   24320
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gaufrette fourrée aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24312,
+   24320
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gaufrette aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24313
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gaufrette aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24313
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit (génoise) aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24678,
+   24686
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "biscuit (génoise) aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24678,
+   24686
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "céréales pour petit déjeuner riches en fibres aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   32008,
+   32033,
+   32034
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "céréales pour petit déjeuner riches en fibres aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   32008,
+   32033,
+   32034
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "barre céréalière pour petit déjeuner au lait aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   31100
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "barre céréalière pour petit déjeuner au lait aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   31100
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "forêt noire aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   23006
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "forêt noire aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   23006
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gaufre moelleuse (type bruxelloise ou liégeoise) aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   23852
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gaufre moelleuse (type bruxelloise ou liégeoise) aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   23852
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "muffin aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   23951,
+   23952
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "muffin aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   23951,
+   23952
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gâteau moelleux sans gluten (cake aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24675
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "gâteau moelleux sans gluten (cake aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   24675
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "glace à l'eau ou sorbet ou crème glacée aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   39500
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "glace à l'eau ou sorbet ou crème glacée aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   39500
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "dessert infantile lacté aromatisé",
+  "mode": "en",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   13166
+  ]
+ },
+ {
+  "famille": "variante",
+  "type": "VARIANTE_ABSENTE_TOP6",
+  "requete": "dessert infantile lacté aromatisé",
+  "mode": "hors",
+  "dim": "gout",
+  "val": "aromatise",
+  "observe": [],
+  "codes_existants": [
+   13166
+  ]
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "coca",
+  "mode": "en",
+  "observe": [
+   "Cola, sucré",
+   "Cola, sucré, sans caféine",
+   "Cola, sucré, avec édulcorants"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "coca",
+  "mode": "hors",
+  "observe": [
+   "Cola, sucré",
+   "Cola, sucré, sans caféine",
+   "Cola, sucré, avec édulcorants"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "yogourt",
+  "mode": "en",
+  "observe": [
+   "Yaourt ou lait fermenté, nature"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "yogourt",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "laitue",
+  "mode": "en",
+  "observe": [
+   "Salade verte, crue, sans assaisonnement"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "spaghetti",
+  "mode": "en",
+  "observe": [
+   "Pâtes sèches, standard, cuites, sans sel ajouté",
+   "Pâtes sèches, standard, crues",
+   "Pâtes sèches, aux oeufs, crues"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "spaghetti",
+  "mode": "hors",
+  "observe": [
+   "Pâtes sèches, standard, cuites, sans sel ajouté",
+   "Pâtes sèches, standard, crues",
+   "Pâtes sèches, aux oeufs, crues"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "granola",
+  "mode": "en",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "granola",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "burger",
+  "mode": "en",
+  "observe": [
+   "Hamburger, de restauration rapide"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "burger",
+  "mode": "hors",
+  "observe": [
+   "Cheeseburger, préemballé"
+  ],
+  "rang_faux": 5,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "frites",
+  "mode": "en",
+  "observe": [
+   "Poêlée de pommes de terre préfrites, lardons ou poulet, et autres, sans légumes verts, préemballée"
+  ],
+  "rang_faux": 5,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "frites",
+  "mode": "hors",
+  "observe": [
+   "Poêlée de pommes de terre préfrites, lardons ou poulet, et autres, sans légumes verts, préemballée"
+  ],
+  "rang_faux": 5,
+  "top1_faux": false
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "muscle",
+  "mode": "en",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "muscle",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "whey",
+  "mode": "en",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "whey",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "nutella",
+  "mode": "en",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "nutella",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "gruyère",
+  "mode": "en",
+  "observe": [
+   "Emmental ou emmenthal"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "ricotta",
+  "mode": "en",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "ricotta",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "skyr",
+  "mode": "en",
+  "observe": [
+   "Spécialité laitière riche en protéines, nature"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "skyr",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "soda",
+  "mode": "en",
+  "observe": [
+   "Boisson gazeuse aromatisée, sans fruit, sucrée",
+   "Boisson gazeuse aux fruits (teneur en fruits < 10%), sucrée",
+   "Boisson gazeuse aromatisée, sans fruit, sucrée, avec édulcorants"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "soda",
+  "mode": "hors",
+  "observe": [
+   "Boisson gazeuse aromatisée, sans fruit, sucrée",
+   "Boisson gazeuse aux fruits (teneur en fruits < 10%), sucrée",
+   "Boisson gazeuse aromatisée, sans fruit, sucrée, avec édulcorants"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "latte",
+  "mode": "en",
+  "observe": [
+   "Café au lait, café crème ou cappuccino, instantané ou non, sans sucres ajoutés, prêt à boire"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "latte",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "nems",
+  "mode": "en",
+  "observe": [
+   "Salade verte, crue, sans assaisonnement",
+   "Crudité, sans assaisonnement (aliment moyen)"
+  ],
+  "rang_faux": 4,
+  "top1_faux": false
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "nems",
+  "mode": "hors",
+  "observe": [
+   "Salade verte, crue, sans assaisonnement",
+   "Crudité, sans assaisonnement (aliment moyen)"
+  ],
+  "rang_faux": 4,
+  "top1_faux": false
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "tacos",
+  "mode": "en",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "tacos",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "patate",
+  "mode": "en",
+  "observe": [
+   "Pomme de terre, cuite (aliment moyen)"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "popcorn",
+  "mode": "en",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "popcorn",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "sous_chaine",
+  "type": "FAUX_AMI_MOT_COURANT",
+  "requete": "lait d'amande",
+  "mode": "en",
+  "observe": [
+   "Boisson à l'amande, préemballée (aliment moyen)"
+  ],
+  "rang_faux": 0,
+  "top1_faux": true
+ },
+ {
+  "famille": "accessibilite",
+  "type": "MOT_COURANT_VIDE",
+  "requete": "lait d'amande",
+  "mode": "hors",
+  "observe": "aucun résultat (CIQUAL ni fast-food)"
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "jus d'orange ⇄ jus d orange",
+  "mode": "en",
+  "observe": {
+   "jus d'orange": "Jus d'orange, frais",
+   "jus d orange": "Jus multifruit, base orange, standard"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "jus d'orange ⇄ jus d orange",
+  "mode": "hors",
+  "observe": {
+   "jus d'orange": "Jus d'orange, frais",
+   "jus d orange": "Jus multifruit, base orange, standard"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "lait demi-écrémé ⇄ lait demiecreme",
+  "mode": "en",
+  "observe": {
+   "lait demi-écrémé": "Lait demi-écrémé, UHT",
+   "lait demiecreme": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "lait demi-écrémé ⇄ lait demiecreme",
+  "mode": "hors",
+  "observe": {
+   "lait demi-écrémé": "Lait demi-écrémé, UHT",
+   "lait demiecreme": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "oeuf ⇄ oeufs",
+  "mode": "hors",
+  "observe": {
+   "oeuf": "Oeuf cru",
+   "oeufs": "Oeufs au lait, rayon frais"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "lentille ⇄ lentilles",
+  "mode": "en",
+  "observe": {
+   "lentille": "Lentille, cuisinée, appertisée, égouttée",
+   "lentilles": "Lentille verte, bouillie/cuite à l'eau"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "steak haché ⇄ steaks hachés",
+  "mode": "en",
+  "observe": {
+   "steak haché": "Boeuf, steak haché, cuit (aliment moyen)",
+   "steaks hachés": "Boeuf, steak haché 5% MG cru"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "yaourt nature ⇄ yaourts nature",
+  "mode": "en",
+  "observe": {
+   "yaourt nature": "Yaourt ou lait fermenté, nature",
+   "yaourts nature": "Yaourt à la grecque nature"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "pain complet ⇄ pain complet.",
+  "mode": "en",
+  "observe": {
+   "pain complet": "Pain complet ou intégral (à la farine T150)",
+   "pain complet.": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "pain complet ⇄ pain complet.",
+  "mode": "hors",
+  "observe": {
+   "pain complet": "Pain de mie complet, préemballé",
+   "pain complet.": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "huile d'olive ⇄ l'huile d'olive",
+  "mode": "en",
+  "observe": {
+   "huile d'olive": "Huile d'olive vierge extra",
+   "l'huile d'olive": "Sardine, à l'huile d'olive, appertisée, égouttée"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "huile d'olive ⇄ l'huile d'olive",
+  "mode": "hors",
+  "observe": {
+   "huile d'olive": "Huile d'olive vierge extra",
+   "l'huile d'olive": "Sardine, à l'huile d'olive, appertisée, égouttée"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "blanc de poulet ⇄ poulet blanc",
+  "mode": "en",
+  "observe": {
+   "blanc de poulet": "Poulet, filet sans peau cru",
+   "poulet blanc": "Poulet blanc, viande et peau crues"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "filet de saumon ⇄ saumon filet",
+  "mode": "en",
+  "observe": {
+   "filet de saumon": "Saumon, élevage, cru",
+   "saumon filet": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "coca zéro ⇄ coca 0",
+  "mode": "en",
+  "observe": {
+   "coca zéro": "Cola, sans sucres ajoutés, avec édulcorants",
+   "coca 0": "Cola, sucré"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "coca zéro ⇄ coca 0",
+  "mode": "hors",
+  "observe": {
+   "coca zéro": "Cola, sans sucres ajoutés, avec édulcorants",
+   "coca 0": "Cola, sucré"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "chou-fleur ⇄ choufleur",
+  "mode": "en",
+  "observe": {
+   "chou-fleur": "Chou-fleur, cru",
+   "choufleur": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "chou-fleur ⇄ choufleur",
+  "mode": "hors",
+  "observe": {
+   "chou-fleur": "Chou-fleur, cru",
+   "choufleur": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "pomme-de-terre ⇄ pomme de terre",
+  "mode": "en",
+  "observe": {
+   "pomme-de-terre": "(rien)",
+   "pomme de terre": "Pomme de terre, cuite (aliment moyen)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "pomme-de-terre ⇄ pomme de terre",
+  "mode": "hors",
+  "observe": {
+   "pomme-de-terre": "(rien)",
+   "pomme de terre": "Pomme de terre, sans peau, crue"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "cacahuète ⇄ cacahouète",
+  "mode": "en",
+  "observe": {
+   "cacahuète": "Cacahuète, sans sel ajouté",
+   "cacahouète": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "cacahuète ⇄ cacahouète",
+  "mode": "hors",
+  "observe": {
+   "cacahuète": "Cacahuète, grillée, salée",
+   "cacahouète": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "yaourt ⇄ yoghourt",
+  "mode": "hors",
+  "observe": {
+   "yaourt": "Yaourt à la grecque nature",
+   "yoghourt": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "yaourt ⇄ yogourt",
+  "mode": "hors",
+  "observe": {
+   "yaourt": "Yaourt à la grecque nature",
+   "yogourt": "(rien)"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "PAIRE_DIVERGE",
+  "requete": "jambon blanc ⇄ jambon cuit",
+  "mode": "hors",
+  "observe": {
+   "jambon blanc": "Jambon de dinde ou blanc de dinde en tranche",
+   "jambon cuit": "Jambon cuit, fumé"
+  }
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "riz 100g",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "riz 100g",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "riz 100 g",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "riz 100 g",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "lait 1L",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "lait 1L",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "lait 250ml",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "lait 250ml",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "eau 50cl",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "eau 50cl",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "200g de poulet",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "200g de poulet",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "poulet 200g",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "poulet 200g",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "pâtes 80g",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "pâtes 80g",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "1 verre de lait",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "1 verre de lait",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "une canette de coca",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "une canette de coca",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "30g de whey",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "30g de whey",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "banane x2",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "banane x2",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "café 1 tasse",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "café 1 tasse",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "riz cuit 150 g",
+  "mode": "en",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "UNITE_DANS_REQUETE",
+  "requete": "riz cuit 150 g",
+  "mode": "hors",
+  "observe": "aucun résultat CIQUAL"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "yaourht",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "chocolta",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "brocolli",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "cacahouette",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "courgete",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "poullet",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "saumonn",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "fromge",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "bananne",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "tomatte",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "yahourt",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "mozarella",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "parmesant",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "croisant",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "omlette",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "lazagne",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "normalisation",
+  "type": "FAUTE_NON_TOLEREE",
+  "requete": "gnochi",
+  "mode": "en+hors",
+  "observe": "aucun résultat"
+ },
+ {
+  "famille": "alias",
+  "type": "ALIAS_CONTREDIT_QUALIFICATIF",
+  "requete": "lait 1/2 ecreme",
+  "mode": "en",
+  "observe": "Lait demi-écrémé, UHT",
+  "val": "ecreme"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "FASTFOOD_INTROUVABLE_PAR_SON_NOM",
+  "requete": "Grande Frites",
+  "mode": "en+hors",
+  "observe": "Quick"
+ },
+ {
+  "famille": "accessibilite",
+  "type": "FASTFOOD_INTROUVABLE_PAR_SON_NOM",
+  "requete": "Moyenne Frites",
+  "mode": "en+hors",
+  "observe": "Quick"
+ },
+ {
+  "famille": "coherence",
+  "type": "FASTFOOD_KCAL_VS_MACROS",
+  "requete": "Korean Whopper",
+  "mode": "-",
+  "observe": {
+   "kcal100": 289.2,
+   "atwater": 236.5,
+   "doute_affiche": "752 kcal publiées, 616 calculées depuis ses macros",
+   "kcal_derivee": 0
+  }
+ },
+ {
+  "famille": "coherence",
+  "type": "FASTFOOD_KCAL_VS_MACROS",
+  "requete": "Dosette salade vinaigre balsamique",
+  "mode": "-",
+  "observe": {
+   "kcal100": 20,
+   "atwater": 14.4,
+   "doute_affiche": 0,
+   "kcal_derivee": 0
+  }
+ },
+ {
+  "famille": "coherence",
+  "type": "FASTFOOD_KCAL_VS_MACROS",
+  "requete": "Salade Qréative été - Long Chicken",
+  "mode": "-",
+  "observe": {
+   "kcal100": 36.6,
+   "atwater": 19.6,
+   "doute_affiche": 0,
+   "kcal_derivee": 0
+  }
+ },
+ {
+  "famille": "coherence",
+  "type": "FASTFOOD_KCAL_VS_MACROS",
+  "requete": "Tomates cerises",
+  "mode": "-",
+  "observe": {
+   "kcal100": 32.7,
+   "atwater": 23.2,
+   "doute_affiche": 0,
+   "kcal_derivee": 0
+  }
+ },
+ {
+  "famille": "classement",
+  "type": "COMPLEMENTS_COUPURE_400",
+  "requete": "vitamine d",
+  "mode": "en+hors",
+  "observe": {
+   "total_correspondances": 4045,
+   "affiches": [
+    "Vitamine E · Onatera",
+    "Vitamine C · Gloryfeel",
+    "Vitamine C · Vita Elements Nature's Power"
+   ],
+   "meilleurs_sans_coupure": [
+    "Vitamine · LB Nutrition",
+    "Vitaminée · ",
+    "VITAMINES · "
+   ]
+  }
+ },
+ {
+  "famille": "classement",
+  "type": "COMPLEMENTS_COUPURE_400",
+  "requete": "omega 3",
+  "mode": "en+hors",
+  "observe": {
+   "total_correspondances": 2226,
+   "affiches": [
+    "Oméga · LA GINESTE",
+    "Oméga · ",
+    "OMEGA · "
+   ],
+   "meilleurs_sans_coupure": [
+    "Oméga · LA GINESTE",
+    "Oméga · ",
+    "OMEGA · "
+   ]
+  }
+ },
+ {
+  "famille": "classement",
+  "type": "COMPLEMENTS_COUPURE_400",
+  "requete": "whey",
+  "mode": "en+hors",
+  "observe": {
+   "total_correspondances": 565,
+   "affiches": [
+    "WHEY AMINO · HX NUTRITION",
+    "Whey isolat · Onatera",
+    "Whey Protein · Will's"
+   ],
+   "meilleurs_sans_coupure": [
+    "WHEY · ",
+    "Whey 140 · Fairvital",
+    "WHEY 100 · BODYMAXX SPORTS NUTRITION"
+   ]
+  }
+ },
+ {
+  "famille": "classement",
+  "type": "COMPLEMENTS_COUPURE_400",
+  "requete": "vitamine c",
+  "mode": "en+hors",
+  "observe": {
+   "total_correspondances": 4045,
+   "affiches": [
+    "Vitamine E · Onatera",
+    "Vitamine C · Gloryfeel",
+    "Vitamine C · Vita Elements Nature's Power"
+   ],
+   "meilleurs_sans_coupure": [
+    "Vitamine · LB Nutrition",
+    "Vitaminée · ",
+    "VITAMINES · "
+   ]
+  }
+ },
+ {
+  "famille": "journal",
+  "type": "PARCOURS_ECART",
+  "requete": "J3 CIQUAL à glucides NON DÉTERMINÉS (null) → ce qui est écrit au journal",
+  "mode": "ui",
+  "observe": {
+   "choix": "Merguez crue (aliment moyen)",
+   "ciqual": [
+    30151,
+    "Merguez crue (aliment moyen)",
+    11,
+    381,
+    12.8,
+    null,
+    36.3
+   ],
+   "ligne": {
+    "kcal": 381,
+    "prot": 13,
+    "carbs": 0,
+    "fat": 36,
+    "per100": {
+     "kcal": 381,
+     "prot": 12.8,
+     "carbs": 0,
+     "fat": 36.3
+    }
+   }
+  },
+  "attendu": {
+   "liste": "G ?",
+   "journal": "glucides inconnus, pas 0"
+  }
+ },
+ {
+  "famille": "journal",
+  "type": "PARCOURS_ECART",
+  "requete": "J4b fast-food, quantité tapée puis remplacée par «  » → refus (pas d'enregistrement sans quantité)",
+  "mode": "ui",
+  "observe": {
+   "ajoutees": 1,
+   "ligne": {
+    "kcal": 228,
+    "prot": 12,
+    "q": null,
+    "u": null,
+    "per100": {
+     "kcal": 228.4,
+     "prot": 11.6,
+     "carbs": 18.1,
+     "fat": 11.6
+    }
+   }
+  },
+  "attendu": {
+   "ajoutees": 0
+  }
+ },
+ {
+  "famille": "journal",
+  "type": "PARCOURS_ECART",
+  "requete": "J4c fast-food, quantité tapée puis remplacée par « 0 » → refus (pas d'enregistrement sans quantité)",
+  "mode": "ui",
+  "observe": {
+   "ajoutees": 1,
+   "ligne": {
+    "kcal": 228,
+    "prot": 12,
+    "q": null,
+    "u": null,
+    "per100": {
+     "kcal": 228.4,
+     "prot": 11.6,
+     "carbs": 18.1,
+     "fat": 11.6
+    }
+   }
+  },
+  "attendu": {
+   "ajoutees": 0
+  }
+ },
+ {
+  "famille": "journal",
+  "type": "PARCOURS_ECART",
+  "requete": "J4d fast-food, quantité tapée puis remplacée par « abc » → refus (pas d'enregistrement sans quantité)",
+  "mode": "ui",
+  "observe": {
+   "ajoutees": 1,
+   "ligne": {
+    "kcal": 228,
+    "prot": 12,
+    "q": null,
+    "u": null,
+    "per100": {
+     "kcal": 228.4,
+     "prot": 11.6,
+     "carbs": 18.1,
+     "fat": 11.6
+    }
+   }
+  },
+  "attendu": {
+   "ajoutees": 0
+  }
+ },
+ {
+  "famille": "journal",
+  "type": "PARCOURS_ECART",
+  "requete": "J4e CIQUAL, quantité tapée puis VIDÉE → refus (pas de ligne « pour 100 g » sans quantité)",
+  "mode": "ui",
+  "observe": {
+   "ajoutees": 1,
+   "ligne": {
+    "kcal": 155,
+    "q": null,
+    "u": null
+   }
+  },
+  "attendu": {
+   "ajoutees": 0
+  }
+ },
+ {
+  "famille": "journal",
+  "type": "PARCOURS_ECART",
+  "requete": "J4f Modifier une ligne de 250 g, champ grammes remplacé par «  » → refus ou ligne inchangée",
+  "mode": "ui",
+  "observe": {
+   "kcal": 155,
+   "prot": 3,
+   "q": 0,
+   "u": "g"
+  },
+  "attendu": {
+   "kcal": 388,
+   "q": 250
+  }
+ },
+ {
+  "famille": "journal",
+  "type": "PARCOURS_ECART",
+  "requete": "J4g Modifier une ligne de 250 g, champ grammes remplacé par « 0 » → refus ou ligne inchangée",
+  "mode": "ui",
+  "observe": {
+   "kcal": 155,
+   "prot": 3,
+   "q": 0,
+   "u": "g"
+  },
+  "attendu": {
+   "kcal": 388,
+   "q": 250
+  }
+ }
+]

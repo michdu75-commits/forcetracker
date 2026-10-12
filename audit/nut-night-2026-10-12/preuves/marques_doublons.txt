@@ -1,0 +1,18 @@
+5 groupe(s) de valeurs identiques sur 123 produits
+  kcal100=254.9 P=3.1 G=22.1 L=16.4 portion=226 g → 576 kcal la portion
+      Quick · Dosette salade fromage blanc ciboulette | doute affiché : aucun
+      Quick · Grande Frites supplément Sauce Poivre Intense | doute affiché : aucun
+      Quick · Grande Rustiques | doute affiché : les tailles de cette gamme donnent le même poids (226 g) : au moins une est fausse
+      Quick · Grande Rustiques supplément Sauce Cheddar | doute affiché : aucun
+  kcal100=267.5 P=3.3 G=35.1 L=11.9 portion=151 g → 404 kcal la portion
+      Quick · Grande Frite | doute affiché : aucun
+      Quick · Grande Frites supplément Sauce Teriyaki | doute affiché : aucun
+  kcal100=244.8 P=3.3 G=30.4 L=11.6 portion=181 g → 443 kcal la portion
+      Quick · Grande Frite Cheddar | doute affiché : aucun
+      Quick · Grande Frites supplément Sauce Ranch Fusion | doute affiché : aucun
+  kcal100=264.6 P=3.1 G=35.4 L=12.3 portion=65 g → 172 kcal la portion
+      Quick · Grande Frites supplément Sauce Ranch | doute affiché : aucun
+      Quick · Petite Frite | doute affiché : aucun
+  kcal100=266.7 P=3.6 G=35.1 L=11.7 portion=111 g → 296 kcal la portion
+      Quick · Grande Frites supplément Sauce Sriracha | doute affiché : aucun
+      Quick · Moyenne Frite | doute affiché : aucun

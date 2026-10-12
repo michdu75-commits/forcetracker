@@ -1,0 +1,60 @@
+{
+ "b1_total_proposables": 3341,
+ "b1_masques_kcal_non_determinees": 143,
+ "b1_nom_entier_introuvable": 0,
+ "b1_nom_entier_en_ligne_seulement": 0,
+ "b1_nom_entier_hors_ligne_seulement": 0,
+ "b1_mots_necessaires": {
+  "1": 1852,
+  "2": 716,
+  "3": 562,
+  "4": 80,
+  "5": 63,
+  "6": 35,
+  "7": 14,
+  "8": 15,
+  "9": 1,
+  "10": 3
+ },
+ "b1_tete_introuvable_en_et_hors": 304,
+ "b2_tetes": 2132,
+ "b2_tetes_avec_faux_ami": 51,
+ "b3_requetes": 1270,
+ "b3_violations": {
+  "aucune_compatible": 46
+ },
+ "b5_alias": {
+  "total": 632,
+  "cible_absente": 0,
+  "cible_non_proposable": 0,
+  "qualificatif_contredit": 1,
+  "cible_hors_top6_hors_ligne": 236
+ },
+ "b6": {
+  "fastfood_produits": 123,
+  "fastfood_introuvables_par_nom": 2,
+  "fastfood_kcal_vs_macros_>15%": 4,
+  "complements_requetes": 15,
+  "complements_classement_change_par_coupure": 4
+ },
+ "journal": {
+  "scenarios": 20,
+  "ecarts": 7,
+  "erreurs_page": 0
+ },
+ "symptomes": 222,
+ "par_type": {
+  "FAUX_AMI": 51,
+  "VARIANTE_ABSENTE_TOP6": 46,
+  "FAUX_AMI_MOT_COURANT": 19,
+  "MOT_COURANT_VIDE": 18,
+  "PAIRE_DIVERGE": 25,
+  "UNITE_DANS_REQUETE": 28,
+  "FAUTE_NON_TOLEREE": 17,
+  "ALIAS_CONTREDIT_QUALIFICATIF": 1,
+  "FASTFOOD_INTROUVABLE_PAR_SON_NOM": 2,
+  "FASTFOOD_KCAL_VS_MACROS": 4,
+  "COMPLEMENTS_COUPURE_400": 4,
+  "PARCOURS_ECART": 7
+ }
+}

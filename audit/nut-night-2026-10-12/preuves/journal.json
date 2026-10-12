@@ -1,0 +1,391 @@
+{
+ "scenarios": [
+  {
+   "id": "J1a",
+   "titre": "CIQUAL « riz blanc cuit » 150 g → ligne du journal = pour-100 g × 1,5",
+   "attendu": {
+    "kcal": 233,
+    "prot": 5,
+    "carbs": 50,
+    "fat": 1
+   },
+   "observe": {
+    "nom": "Riz blanc, cuit, sans sel ajouté",
+    "kcal": 233,
+    "prot": 5,
+    "carbs": 50,
+    "fat": 1,
+    "q": 150,
+    "u": "g",
+    "per100": {
+     "kcal": 155,
+     "prot": 3.3,
+     "carbs": 33.2,
+     "fat": 0.7
+    },
+    "src": "ciqual"
+   },
+   "ok": true,
+   "choix": "Riz blanc, cuit, sans sel ajouté"
+  },
+  {
+   "id": "J1b",
+   "titre": "la ligne est dans le stockage local",
+   "attendu": "présente",
+   "observe": 1,
+   "ok": true
+  },
+  {
+   "id": "J1c",
+   "titre": "après rechargement : la ligne est identique",
+   "attendu": {
+    "kcal": 233,
+    "prot": 5,
+    "carbs": 50,
+    "fat": 1
+   },
+   "observe": {
+    "kcal": 233,
+    "prot": 5,
+    "carbs": 50,
+    "fat": 1,
+    "q": 150
+   },
+   "ok": true
+  },
+  {
+   "id": "J1d",
+   "titre": "Modifier → 200 g : les 4 valeurs suivent",
+   "attendu": {
+    "kcal": 310,
+    "prot": 7,
+    "carbs": 66,
+    "fat": 1
+   },
+   "observe": {
+    "champ": true,
+    "kcal": 310,
+    "prot": 7,
+    "carbs": 66,
+    "fat": 1,
+    "q": 200,
+    "u": "g"
+   },
+   "ok": true
+  },
+  {
+   "id": "J1e",
+   "titre": "la modification survit au rechargement",
+   "attendu": {
+    "kcal": 310,
+    "q": 200
+   },
+   "observe": {
+    "kcal": 310,
+    "q": 200
+   },
+   "ok": true
+  },
+  {
+   "id": "J2",
+   "titre": "reprise d'une ligne déjà notée → 100 g → valeurs = pour-100 g",
+   "attendu": {
+    "kcal": 155,
+    "prot": 3,
+    "carbs": 33,
+    "fat": 1
+   },
+   "observe": {
+    "kcal": 155,
+    "prot": 3,
+    "carbs": 33,
+    "fat": 1,
+    "q": 100
+   },
+   "ok": true,
+   "choix": "Riz blanc, cuit, sans sel ajouté",
+   "avant_saisie": {
+    "grams": "",
+    "visible": "block"
+   }
+  },
+  {
+   "id": "J3",
+   "titre": "CIQUAL à glucides NON DÉTERMINÉS (null) → ce qui est écrit au journal",
+   "attendu": {
+    "liste": "G ?",
+    "journal": "glucides inconnus, pas 0"
+   },
+   "observe": {
+    "choix": "Merguez crue (aliment moyen)",
+    "ciqual": [
+     30151,
+     "Merguez crue (aliment moyen)",
+     11,
+     381,
+     12.8,
+     null,
+     36.3
+    ],
+    "ligne": {
+     "kcal": 381,
+     "prot": 13,
+     "carbs": 0,
+     "fat": 36,
+     "per100": {
+      "kcal": 381,
+      "prot": 12.8,
+      "carbs": 0,
+      "fat": 36.3
+     }
+    }
+   },
+   "ok": false
+  },
+  {
+   "id": "J4",
+   "titre": "fast-food « big mac » : portion publiée → ligne cohérente",
+   "attendu": {
+    "kcal": 530,
+    "prot": 27,
+    "carbs": 42,
+    "fat": 27
+   },
+   "observe": {
+    "kcal": 530,
+    "prot": 27,
+    "q": 232,
+    "u": "g"
+   },
+   "ok": true,
+   "choix": "Big Mac · McDonald's",
+   "portion_preremplie": "232",
+   "ajout_sans_toucher_quantite": false
+  },
+  {
+   "id": "J4b",
+   "titre": "fast-food, quantité tapée puis remplacée par «  » → refus (pas d'enregistrement sans quantité)",
+   "attendu": {
+    "ajoutees": 0
+   },
+   "observe": {
+    "ajoutees": 1,
+    "ligne": {
+     "kcal": 228,
+     "prot": 12,
+     "q": null,
+     "u": null,
+     "per100": {
+      "kcal": 228.4,
+      "prot": 11.6,
+      "carbs": 18.1,
+      "fat": 11.6
+     }
+    }
+   },
+   "ok": false,
+   "choix": "Big Mac · McDonald's"
+  },
+  {
+   "id": "J4c",
+   "titre": "fast-food, quantité tapée puis remplacée par « 0 » → refus (pas d'enregistrement sans quantité)",
+   "attendu": {
+    "ajoutees": 0
+   },
+   "observe": {
+    "ajoutees": 1,
+    "ligne": {
+     "kcal": 228,
+     "prot": 12,
+     "q": null,
+     "u": null,
+     "per100": {
+      "kcal": 228.4,
+      "prot": 11.6,
+      "carbs": 18.1,
+      "fat": 11.6
+     }
+    }
+   },
+   "ok": false,
+   "choix": "Big Mac · McDonald's"
+  },
+  {
+   "id": "J4d",
+   "titre": "fast-food, quantité tapée puis remplacée par « abc » → refus (pas d'enregistrement sans quantité)",
+   "attendu": {
+    "ajoutees": 0
+   },
+   "observe": {
+    "ajoutees": 1,
+    "ligne": {
+     "kcal": 228,
+     "prot": 12,
+     "q": null,
+     "u": null,
+     "per100": {
+      "kcal": 228.4,
+      "prot": 11.6,
+      "carbs": 18.1,
+      "fat": 11.6
+     }
+    }
+   },
+   "ok": false,
+   "choix": "Big Mac · McDonald's"
+  },
+  {
+   "id": "J4e",
+   "titre": "CIQUAL, quantité tapée puis VIDÉE → refus (pas de ligne « pour 100 g » sans quantité)",
+   "attendu": {
+    "ajoutees": 0
+   },
+   "observe": {
+    "ajoutees": 1,
+    "ligne": {
+     "kcal": 155,
+     "q": null,
+     "u": null
+    }
+   },
+   "ok": false,
+   "choix": "Riz blanc, cuit, sans sel ajouté"
+  },
+  {
+   "id": "J4f",
+   "titre": "Modifier une ligne de 250 g, champ grammes remplacé par «  » → refus ou ligne inchangée",
+   "attendu": {
+    "kcal": 388,
+    "q": 250
+   },
+   "observe": {
+    "kcal": 155,
+    "prot": 3,
+    "q": 0,
+    "u": "g"
+   },
+   "ok": false
+  },
+  {
+   "id": "J4g",
+   "titre": "Modifier une ligne de 250 g, champ grammes remplacé par « 0 » → refus ou ligne inchangée",
+   "attendu": {
+    "kcal": 388,
+    "q": 250
+   },
+   "observe": {
+    "kcal": 155,
+    "prot": 3,
+    "q": 0,
+    "u": "g"
+   },
+   "ok": false
+  },
+  {
+   "id": "J5",
+   "titre": "OFF (figé) énergie en kJ seulement : 1674 kJ → 400 kcal/100 g ; 40 g → 160 kcal",
+   "attendu": {
+    "kcal100": 400,
+    "kcal40g": 160
+   },
+   "observe": {
+    "choix": "Barre kJ seulement (fixture) (TestMarque)",
+    "per100": {
+     "kcal": 400,
+     "p": 20,
+     "g": 45,
+     "l": 15
+    },
+    "ligne": {
+     "kcal": 160,
+     "q": 40
+    }
+   },
+   "ok": true,
+   "lignes_proposees": [
+    "_afSuggPrendreOff(0) | 🔎 Skyr nature (fixture) (TestMarque) 64 kcal/100 g",
+    "_afSuggPrendreOff(1) | 🔎 Barre kJ seulement (fixture) (TestMarque) 400 kcal/100 g"
+   ]
+  },
+  {
+   "id": "J6a",
+   "titre": "scan : énergie en kJ seulement (176 kJ/100 ml) → ~42 kcal/100",
+   "attendu": {
+    "kcal100": 42
+   },
+   "observe": {
+    "fonction": true,
+    "per100": {
+     "kcal": 42.1,
+     "p": 0,
+     "g": 10.4,
+     "l": 0
+    },
+    "grams": "",
+    "form": [
+     "Boisson kJ (fixture) (TestMarque)",
+     "42",
+     "0",
+     "10",
+     "0"
+    ],
+    "note": ""
+   },
+   "ok": true
+  },
+  {
+   "id": "J6b",
+   "titre": "scan : valeurs PAR PORTION seulement (120 kcal / 25 g) → jamais présentées comme pour 100 g",
+   "attendu": {
+    "kcal100": 480,
+    "ou": "refus / saisie demandée"
+   },
+   "observe": {
+    "fonction": true,
+    "per100": null,
+    "grams": "",
+    "form": [
+     "Biscuit portion seule (fixture) (TestMarque)",
+     "",
+     "",
+     "",
+     ""
+    ],
+    "note": ""
+   },
+   "ok": true
+  },
+  {
+   "id": "J7",
+   "titre": "journal positionné sur HIER : la ligne ajoutée porte la date d'hier",
+   "attendu": "2026-10-11",
+   "observe": "2026-10-11",
+   "ok": true
+  },
+  {
+   "id": "J8",
+   "titre": "supprimer UNE ligne : seule elle disparaît, et ça survit au rechargement",
+   "attendu": {
+    "retiree": "e4eba681-f983-4e52-b9b4-ef9be71df4e7",
+    "restantes": 5
+   },
+   "observe": {
+    "restantes": 5,
+    "encore": false
+   },
+   "ok": true
+  },
+  {
+   "id": "J9",
+   "titre": "somme des kcal du jour (lignes) — relevé",
+   "attendu": "information",
+   "observe": {
+    "somme": 1226,
+    "lignes": 4,
+    "affiche": null
+   },
+   "ok": true
+  }
+ ],
+ "erreurs": []
+}

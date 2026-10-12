@@ -1,0 +1,4233 @@
+{
+ "total_alias": 632,
+ "cible_ne_porte_pas_tous_les_mots": 273,
+ "dont_un_autre_aliment_les_porte_tous": 49,
+ "cas": [
+  {
+   "cle": "7up",
+   "cible": [
+    18048,
+    "Boisson gazeuse aux fruits (teneur en jus non spécifiée), sucrée (aliment moyen)",
+    45
+   ],
+   "mots_absents_de_la_cible": [
+    "7up"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "aiguillette de dinde",
+   "cible": [
+    36304,
+    "Dinde, escalope crue",
+    108
+   ],
+   "mots_absents_de_la_cible": [
+    "aiguillette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "aiguillette de poulet",
+   "cible": [
+    36017,
+    "Poulet, filet sans peau cru",
+    110
+   ],
+   "mots_absents_de_la_cible": [
+    "aiguillette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "aiguillettes de poulet",
+   "cible": [
+    36017,
+    "Poulet, filet sans peau cru",
+    110
+   ],
+   "mots_absents_de_la_cible": [
+    "aiguillette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "algue kombu",
+   "cible": [
+    20990,
+    "Kombu ou kombu japonais (Saccharina japonica), séché ou déshydraté",
+    222
+   ],
+   "mots_absents_de_la_cible": [
+    "algue"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "algue nori",
+   "cible": [
+    20987,
+    "Nori (Porphyra sp., Pyropia), séchée ou déshydratée",
+    257
+   ],
+   "mots_absents_de_la_cible": [
+    "algue"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "arachide",
+   "cible": [
+    15001,
+    "Cacahuète, sans sel ajouté",
+    623
+   ],
+   "mots_absents_de_la_cible": [
+    "arachide"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     15202,
+     "Beurre de cacahuète ou pâte d'arachide",
+     643
+    ],
+    [
+     26698,
+     "Sardine, à l'huile d'arachide, appertisée, égouttée",
+     223
+    ],
+    [
+     17040,
+     "Huile d'arachide",
+     899
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "arachides",
+   "cible": [
+    15001,
+    "Cacahuète, sans sel ajouté",
+    623
+   ],
+   "mots_absents_de_la_cible": [
+    "arachide"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     15202,
+     "Beurre de cacahuète ou pâte d'arachide",
+     643
+    ],
+    [
+     26698,
+     "Sardine, à l'huile d'arachide, appertisée, égouttée",
+     223
+    ],
+    [
+     17040,
+     "Huile d'arachide",
+     899
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "araignee de boeuf",
+   "cible": [
+    6201,
+    "Boeuf, steak ou bifteck cru",
+    229
+   ],
+   "mots_absents_de_la_cible": [
+    "araignee"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "arborio",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "arborio"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "baguette tradition",
+   "cible": [
+    7001,
+    "Pain blanc (par ex. : baguette, boule…)",
+    287
+   ],
+   "mots_absents_de_la_cible": [
+    "tradition"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     7007,
+     "Pain de tradition française (par ex. : baguette, boule…)",
+     279
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "batavia",
+   "cible": [
+    25604,
+    "Salade verte, crue, sans assaisonnement",
+    14
+   ],
+   "mots_absents_de_la_cible": [
+    "batavia"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     20123,
+     "Batavia, crue",
+     15
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "bavette daloyau",
+   "cible": [
+    6211,
+    "Boeuf, bavette d'aloyau grillée/poêlée",
+    162
+   ],
+   "mots_absents_de_la_cible": [
+    "daloyau"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "bavette daloyau de boeuf",
+   "cible": [
+    6211,
+    "Boeuf, bavette d'aloyau grillée/poêlée",
+    162
+   ],
+   "mots_absents_de_la_cible": [
+    "daloyau"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "beurre sale",
+   "cible": [
+    16402,
+    "Beurre à 80% MG, demi-sel",
+    725
+   ],
+   "mots_absents_de_la_cible": [
+    "sale"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     16403,
+     "Beurre à 80% MG, salé",
+     732
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "biere blonde",
+   "cible": [
+    5001,
+    "Bière \"coeur de marché\" (4-5° alcool)",
+    39
+   ],
+   "mots_absents_de_la_cible": [
+    "blonde"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "blanc de dinde",
+   "cible": [
+    36304,
+    "Dinde, escalope crue",
+    108
+   ],
+   "mots_absents_de_la_cible": [
+    "blanc"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     28964,
+     "Jambon de dinde ou blanc de dinde en tranche",
+     99
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "blanc de poulet",
+   "cible": [
+    36017,
+    "Poulet, filet sans peau cru",
+    110
+   ],
+   "mots_absents_de_la_cible": [
+    "blanc"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     36007,
+     "Poulet blanc, viande et peau crues",
+     122
+    ],
+    [
+     28963,
+     "Jambon de poulet ou blanc de poulet en tranche",
+     105
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "blanc doeuf",
+   "cible": [
+    22001,
+    "Oeuf, blanc (blanc d'oeuf), cru",
+    48
+   ],
+   "mots_absents_de_la_cible": [
+    "doeuf"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "blancs doeufs",
+   "cible": [
+    22001,
+    "Oeuf, blanc (blanc d'oeuf), cru",
+    48
+   ],
+   "mots_absents_de_la_cible": [
+    "doeuf"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "blueberries",
+   "cible": [
+    13028,
+    "Myrtille, crue",
+    58
+   ],
+   "mots_absents_de_la_cible": [
+    "blueberrie"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "blueberry",
+   "cible": [
+    13028,
+    "Myrtille, crue",
+    58
+   ],
+   "mots_absents_de_la_cible": [
+    "blueberry"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "boisson energisante zero",
+   "cible": [
+    18353,
+    "Boisson énergisante, sans sucres ajoutés, avec édulcorants, enrichie en vitamines",
+    9
+   ],
+   "mots_absents_de_la_cible": [
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "boisson gazeuse light",
+   "cible": [
+    18001,
+    "Boisson gazeuse aromatisée, sans fruit, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "boisson gazeuse zero",
+   "cible": [
+    18001,
+    "Boisson gazeuse aromatisée, sans fruit, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "boite de thon",
+   "cible": [
+    26039,
+    "Thon, au naturel, appertisé, égoutté",
+    143
+   ],
+   "mots_absents_de_la_cible": [
+    "boite"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "boulghour",
+   "cible": [
+    9691,
+    "Boulgour de blé, cuit, sans sel ajouté",
+    131
+   ],
+   "mots_absents_de_la_cible": [
+    "boulghour"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "brown rice",
+   "cible": [
+    9103,
+    "Riz complet, cuit, sans sel ajouté",
+    187
+   ],
+   "mots_absents_de_la_cible": [
+    "brown",
+    "rice"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "bucatini",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "bucatini"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "bulgur",
+   "cible": [
+    9691,
+    "Boulgour de blé, cuit, sans sel ajouté",
+    131
+   ],
+   "mots_absents_de_la_cible": [
+    "bulgur"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "burger",
+   "cible": [
+    25413,
+    "Hamburger, de restauration rapide",
+    251
+   ],
+   "mots_absents_de_la_cible": [
+    "burger"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25416,
+     "Burger au poisson, de restauration rapide",
+     263
+    ],
+    [
+     25502,
+     "Burger au poulet, de restauration rapide",
+     249
+    ],
+    [
+     25643,
+     "Burger au poulet, préemballé",
+     230
+    ],
+    [
+     7259,
+     "Pain pour burger ou hot dog (bun), préemballé",
+     283
+    ],
+    [
+     7262,
+     "Pain pour burger ou hot dog (bun) complet, préemballé",
+     296
+    ]
+   ],
+   "n_autres": 6
+  },
+  {
+   "cle": "cafe latte",
+   "cible": [
+    18151,
+    "Café au lait, café crème ou cappuccino, instantané ou non, sans sucres ajoutés, prêt à boire",
+    22
+   ],
+   "mots_absents_de_la_cible": [
+    "latte"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "capellini",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "capellini"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "carnaroli",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "carnaroli"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "casarecce",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "casarecce"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "cashews",
+   "cible": [
+    15019,
+    "Noix de cajou, grillée, salée",
+    632
+   ],
+   "mots_absents_de_la_cible": [
+    "cashew"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "chateaubriand",
+   "cible": [
+    6116,
+    "Boeuf, filet cru",
+    132
+   ],
+   "mots_absents_de_la_cible": [
+    "chateaubriand"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "chickpeas",
+   "cible": [
+    20507,
+    "Pois chiche, bouilli/cuit à l'eau",
+    148
+   ],
+   "mots_absents_de_la_cible": [
+    "chickpea"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "chocolat 70%",
+   "cible": [
+    31074,
+    "Chocolat noir 70 % de cacao environ, de dégustation, tablette",
+    591
+   ],
+   "mots_absents_de_la_cible": [
+    "70%"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "chocolat noir 70%",
+   "cible": [
+    31074,
+    "Chocolat noir 70 % de cacao environ, de dégustation, tablette",
+    591
+   ],
+   "mots_absents_de_la_cible": [
+    "70%"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "chow mein",
+   "cible": [
+    9085,
+    "Nouilles asiatiques cuisinées (boeuf, poulet, légumes…) non instantanées",
+    140
+   ],
+   "mots_absents_de_la_cible": [
+    "chow",
+    "mein"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coca light",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "coca",
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coca sans cafeine",
+   "cible": [
+    18067,
+    "Cola, sucré, sans caféine",
+    41
+   ],
+   "mots_absents_de_la_cible": [
+    "coca"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coca sans sucre",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "coca"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coca zero",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "coca",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coca zero sans cafeine",
+   "cible": [
+    18068,
+    "Cola, sans sucres ajoutés, avec édulcorants, sans caféine",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "coca",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coconut milk",
+   "cible": [
+    18041,
+    "Lait de coco",
+    199
+   ],
+   "mots_absents_de_la_cible": [
+    "coconut",
+    "milk"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coke light",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "coke",
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coke zero",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "coke",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "cola light",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "cola zero",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "colin dalaska",
+   "cible": [
+    26006,
+    "Lieu ou colin d'Alaska, cru",
+    73
+   ],
+   "mots_absents_de_la_cible": [
+    "dalaska"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "conchiglie",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "conchiglie"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "confiture dabricot",
+   "cible": [
+    31040,
+    "Confiture de lait",
+    340
+   ],
+   "mots_absents_de_la_cible": [
+    "dabricot"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "confiture de fraise",
+   "cible": [
+    31040,
+    "Confiture de lait",
+    340
+   ],
+   "mots_absents_de_la_cible": [
+    "fraise"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     30995,
+     "Confiture de fraise, allégée en sucres",
+     166
+    ],
+    [
+     31024,
+     "Confiture de fraise (extra ou classique)",
+     248
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "confiture fruits rouges",
+   "cible": [
+    31040,
+    "Confiture de lait",
+    340
+   ],
+   "mots_absents_de_la_cible": [
+    "fruit",
+    "rouge"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coquillette",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "coquillette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coquillettes",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "coquillette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "coquillettes completes",
+   "cible": [
+    9871,
+    "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+    179
+   ],
+   "mots_absents_de_la_cible": [
+    "coquillette",
+    "complete"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "cote echine",
+   "cible": [
+    28302,
+    "Porc, échine crue",
+    238
+   ],
+   "mots_absents_de_la_cible": [
+    "cote"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "cotelette dagneau",
+   "cible": [
+    21500,
+    "Agneau, côtelette crue",
+    333
+   ],
+   "mots_absents_de_la_cible": [
+    "dagneau"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "cotelettes dagneau",
+   "cible": [
+    21500,
+    "Agneau, côtelette crue",
+    333
+   ],
+   "mots_absents_de_la_cible": [
+    "dagneau"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ditalini",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "ditalini"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "dos de cabillaud",
+   "cible": [
+    26043,
+    "Cabillaud, cru",
+    77
+   ],
+   "mots_absents_de_la_cible": [
+    "dos"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "eau petillante",
+   "cible": [
+    18046,
+    "Eau minérale, embouteilée, gazeuse (aliment moyen)",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "petillante"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ecrase de pommes de terre",
+   "cible": [
+    4047,
+    "Purée de pomme de terre (aliment moyen)",
+    97
+   ],
+   "mots_absents_de_la_cible": [
+    "ecrase"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "energy drink",
+   "cible": [
+    18324,
+    "Boisson énergisante, sans précision sur la teneur en sucres et édulcorants (aliment moyen)",
+    35
+   ],
+   "mots_absents_de_la_cible": [
+    "energy",
+    "drink"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "energy drink zero",
+   "cible": [
+    18353,
+    "Boisson énergisante, sans sucres ajoutés, avec édulcorants, enrichie en vitamines",
+    9
+   ],
+   "mots_absents_de_la_cible": [
+    "energy",
+    "drink",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "escalope de poulet",
+   "cible": [
+    36017,
+    "Poulet, filet sans peau cru",
+    110
+   ],
+   "mots_absents_de_la_cible": [
+    "escalope"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     36036,
+     "Escalope panée, viennoise ou milanaise, poulet, cuite",
+     339
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "fanta",
+   "cible": [
+    18048,
+    "Boisson gazeuse aux fruits (teneur en jus non spécifiée), sucrée (aliment moyen)",
+    45
+   ],
+   "mots_absents_de_la_cible": [
+    "fanta"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "farfalle",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "farfalle"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "fettuccine",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "fettuccine"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "fettuccine fraiches",
+   "cible": [
+    9816,
+    "Pâtes fraîches, aux oeufs, cuites, sans sel ajouté",
+    168
+   ],
+   "mots_absents_de_la_cible": [
+    "fettuccine"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "feuille de chene",
+   "cible": [
+    25604,
+    "Salade verte, crue, sans assaisonnement",
+    14
+   ],
+   "mots_absents_de_la_cible": [
+    "feuille",
+    "chene"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     20295,
+     "Salade feuille de chêne, crue",
+     11
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "filet de cabillaud",
+   "cible": [
+    26043,
+    "Cabillaud, cru",
+    77
+   ],
+   "mots_absents_de_la_cible": [
+    "filet"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "filet de colin",
+   "cible": [
+    26006,
+    "Lieu ou colin d'Alaska, cru",
+    73
+   ],
+   "mots_absents_de_la_cible": [
+    "filet"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "filet de dinde",
+   "cible": [
+    36304,
+    "Dinde, escalope crue",
+    108
+   ],
+   "mots_absents_de_la_cible": [
+    "filet"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "filet de maquereau",
+   "cible": [
+    26051,
+    "Maquereau, cru",
+    198
+   ],
+   "mots_absents_de_la_cible": [
+    "filet"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25994,
+     "Maquereau, filet grillé, appertisé, en sauce, égoutté",
+     259
+    ],
+    [
+     26086,
+     "Maquereau, filet sauce tomate, appertisé, égoutté",
+     240
+    ],
+    [
+     26096,
+     "Maquereau, filet sauce moutarde, appertisé, égoutté",
+     218
+    ],
+    [
+     26097,
+     "Maquereau, filet au vin blanc, appertisé, égoutté",
+     202
+    ],
+    [
+     26123,
+     "Maquereau, filet (grillé ou non), au naturel, appertisé, égoutté",
+     221
+    ]
+   ],
+   "n_autres": 5
+  },
+  {
+   "cle": "filet de merlu",
+   "cible": [
+    26044,
+    "Merlu, cru",
+    83
+   ],
+   "mots_absents_de_la_cible": [
+    "filet"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     26048,
+     "Merlu, filet, surgelé, cru",
+     89
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "filet de saumon",
+   "cible": [
+    26036,
+    "Saumon, élevage, cru",
+    193
+   ],
+   "mots_absents_de_la_cible": [
+    "filet"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "filet de truite",
+   "cible": [
+    27008,
+    "Truite ou truite fario, élevage, crue",
+    133
+   ],
+   "mots_absents_de_la_cible": [
+    "filet"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "filet mignon de boeuf",
+   "cible": [
+    6116,
+    "Boeuf, filet cru",
+    132
+   ],
+   "mots_absents_de_la_cible": [
+    "mignon"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "fish burger",
+   "cible": [
+    25416,
+    "Burger au poisson, de restauration rapide",
+    263
+   ],
+   "mots_absents_de_la_cible": [
+    "fish"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "flocons davoine",
+   "cible": [
+    32140,
+    "Flocons d'avoine",
+    369
+   ],
+   "mots_absents_de_la_cible": [
+    "davoine"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "french fries",
+   "cible": [
+    4032,
+    "Frites de pommes de terre, surgelées, cuites en friteuse",
+    258
+   ],
+   "mots_absents_de_la_cible": [
+    "french",
+    "frie"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "fromage blanc zero",
+   "cible": [
+    19644,
+    "Fromage blanc, nature, 0% MG",
+    48
+   ],
+   "mots_absents_de_la_cible": [
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "fusilli",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "fusilli"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "fusilli complets",
+   "cible": [
+    9871,
+    "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+    179
+   ],
+   "mots_absents_de_la_cible": [
+    "fusilli"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "gemelli",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "gemelli"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "germes de soja",
+   "cible": [
+    20183,
+    "Graine germée de haricot mungo ou pousse de \"soja\", crue",
+    28
+   ],
+   "mots_absents_de_la_cible": [
+    "germe"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "gigot dagneau",
+   "cible": [
+    21502,
+    "Agneau, gigot cru",
+    128
+   ],
+   "mots_absents_de_la_cible": [
+    "dagneau"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "gingembre frais",
+   "cible": [
+    11074,
+    "Gingembre, racine fraîche",
+    33
+   ],
+   "mots_absents_de_la_cible": [
+    "frai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "gourde compote",
+   "cible": [
+    13187,
+    "Purée de pommes, type \"compote sans sucres ajoutés\", rayon ambiant",
+    56
+   ],
+   "mots_absents_de_la_cible": [
+    "gourde"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "greek yogurt",
+   "cible": [
+    19860,
+    "Yaourt à la grecque nature",
+    103
+   ],
+   "mots_absents_de_la_cible": [
+    "greek",
+    "yogurt"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "gruyere",
+   "cible": [
+    12115,
+    "Emmental ou emmenthal",
+    373
+   ],
+   "mots_absents_de_la_cible": [
+    "gruyere"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     12113,
+     "Gruyère IGP France",
+     415
+    ],
+    [
+     12114,
+     "Gruyère, sans précision (origine France ou Suisse)",
+     408
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "haricot mungo germe",
+   "cible": [
+    20183,
+    "Graine germée de haricot mungo ou pousse de \"soja\", crue",
+    28
+   ],
+   "mots_absents_de_la_cible": [
+    "germe"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "haut de cuisse de poulet",
+   "cible": [
+    36024,
+    "Poulet, cuisse, viande crue",
+    114
+   ],
+   "mots_absents_de_la_cible": [
+    "haut"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     36019,
+     "Poulet, haut de cuisse, viande crue",
+     116
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "huile dolive",
+   "cible": [
+    17270,
+    "Huile d'olive vierge extra",
+    899
+   ],
+   "mots_absents_de_la_cible": [
+    "dolive"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "hummus",
+   "cible": [
+    25621,
+    "Houmous, préemballé",
+    258
+   ],
+   "mots_absents_de_la_cible": [
+    "hummu"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ice tea",
+   "cible": [
+    18062,
+    "Boisson au thé, aromatisée, sans précision sur la teneur en sucres et édulcorants (aliment moyen)",
+    21
+   ],
+   "mots_absents_de_la_cible": [
+    "ice",
+    "tea"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ice tea light",
+   "cible": [
+    18065,
+    "Boisson au thé, aromatisée, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "ice",
+    "tea",
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ice tea zero",
+   "cible": [
+    18065,
+    "Boisson au thé, aromatisée, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "ice",
+    "tea",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "icetea",
+   "cible": [
+    18062,
+    "Boisson au thé, aromatisée, sans précision sur la teneur en sucres et édulcorants (aliment moyen)",
+    21
+   ],
+   "mots_absents_de_la_cible": [
+    "icetea"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "jambon blanc",
+   "cible": [
+    28906,
+    "Jambon cuit, supérieur, découenné dégraissé",
+    115
+   ],
+   "mots_absents_de_la_cible": [
+    "blanc"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     28963,
+     "Jambon de poulet ou blanc de poulet en tranche",
+     105
+    ],
+    [
+     28964,
+     "Jambon de dinde ou blanc de dinde en tranche",
+     99
+    ],
+    [
+     28965,
+     "Jambon de volaille ou blanc de volaille, à teneur réduite en sel, en tranche",
+     108
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "jambon de bayonne",
+   "cible": [
+    28800,
+    "Jambon cru",
+    239
+   ],
+   "mots_absents_de_la_cible": [
+    "bayonne"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     28811,
+     "Jambon de Bayonne",
+     243
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "jambon sec",
+   "cible": [
+    28800,
+    "Jambon cru",
+    239
+   ],
+   "mots_absents_de_la_cible": [
+    "sec"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     28812,
+     "Jambon sec",
+     230
+    ],
+    [
+     28844,
+     "Jambon sec de Parme",
+     248
+    ],
+    [
+     28845,
+     "Jambon sec Serrano",
+     235
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "jaune doeuf",
+   "cible": [
+    22002,
+    "Oeuf, jaune (jaune d'oeuf), cru",
+    307
+   ],
+   "mots_absents_de_la_cible": [
+    "doeuf"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "jaunes doeufs",
+   "cible": [
+    22002,
+    "Oeuf, jaune (jaune d'oeuf), cru",
+    307
+   ],
+   "mots_absents_de_la_cible": [
+    "doeuf"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "kidney beans",
+   "cible": [
+    20503,
+    "Haricot rouge, bouilli/cuit à l'eau",
+    116
+   ],
+   "mots_absents_de_la_cible": [
+    "kidney",
+    "bean"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lait 1/2 ecreme",
+   "cible": [
+    19041,
+    "Lait demi-écrémé, UHT",
+    48
+   ],
+   "mots_absents_de_la_cible": [
+    "1",
+    "2"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lait amande",
+   "cible": [
+    18111,
+    "Boisson à l'amande, préemballée (aliment moyen)",
+    36
+   ],
+   "mots_absents_de_la_cible": [
+    "lait"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     31018,
+     "Chocolat au lait aux fruits secs (noisettes, amandes, raisins, praline), tablette",
+     559
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "lait avoine",
+   "cible": [
+    18899,
+    "Boisson à l'avoine, nature, sans sucres ajoutés, non enrichie, préemballée",
+    41
+   ],
+   "mots_absents_de_la_cible": [
+    "lait"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lait d amande",
+   "cible": [
+    18111,
+    "Boisson à l'amande, préemballée (aliment moyen)",
+    36
+   ],
+   "mots_absents_de_la_cible": [
+    "lait"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     31018,
+     "Chocolat au lait aux fruits secs (noisettes, amandes, raisins, praline), tablette",
+     559
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "lait d avoine",
+   "cible": [
+    18899,
+    "Boisson à l'avoine, nature, sans sucres ajoutés, non enrichie, préemballée",
+    41
+   ],
+   "mots_absents_de_la_cible": [
+    "lait"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lait damande",
+   "cible": [
+    18111,
+    "Boisson à l'amande, préemballée (aliment moyen)",
+    36
+   ],
+   "mots_absents_de_la_cible": [
+    "lait",
+    "damande"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lait de riz",
+   "cible": [
+    18904,
+    "Boisson au riz, nature, préemballée",
+    52
+   ],
+   "mots_absents_de_la_cible": [
+    "lait"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     39212,
+     "Riz au lait vanille, cannelle ou nature, rayon frais",
+     121
+    ],
+    [
+     39251,
+     "Riz au lait, au caramel, rayon frais",
+     146
+    ],
+    [
+     39252,
+     "Riz au lait, rhum raisins, rayon frais",
+     133
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "lait de soja",
+   "cible": [
+    18113,
+    "Boisson au soja, préemballée (aliment moyen)",
+    46
+   ],
+   "mots_absents_de_la_cible": [
+    "lait"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lait soja",
+   "cible": [
+    18113,
+    "Boisson au soja, préemballée (aliment moyen)",
+    46
+   ],
+   "mots_absents_de_la_cible": [
+    "lait"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "laitue",
+   "cible": [
+    25604,
+    "Salade verte, crue, sans assaisonnement",
+    14
+   ],
+   "mots_absents_de_la_cible": [
+    "laitue"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     20031,
+     "Laitue, crue",
+     15
+    ],
+    [
+     20171,
+     "Laitue romaine, crue",
+     17
+    ],
+    [
+     20200,
+     "Laitue iceberg, crue",
+     17
+    ],
+    [
+     20985,
+     "Laitue de mer (Ulva sp.), séchée ou déshydratée",
+     203
+    ]
+   ],
+   "n_autres": 4
+  },
+  {
+   "cle": "latte",
+   "cible": [
+    18151,
+    "Café au lait, café crème ou cappuccino, instantané ou non, sans sucres ajoutés, prêt à boire",
+    22
+   ],
+   "mots_absents_de_la_cible": [
+    "latte"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lentilles blondes",
+   "cible": [
+    20587,
+    "Lentille verte, bouillie/cuite à l'eau",
+    125
+   ],
+   "mots_absents_de_la_cible": [
+    "blonde"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     20588,
+     "Lentille blonde, bouillie/cuite à l'eau",
+     122
+    ],
+    [
+     20586,
+     "Lentille blonde, sèche",
+     339
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "lieu noir",
+   "cible": [
+    26006,
+    "Lieu ou colin d'Alaska, cru",
+    73
+   ],
+   "mots_absents_de_la_cible": [
+    "noir"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     26015,
+     "Lieu noir, cuit",
+     100
+    ],
+    [
+     26047,
+     "Lieu noir, surgelé, cru",
+     82
+    ],
+    [
+     26134,
+     "Lieu noir, cru",
+     82
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "limonade light",
+   "cible": [
+    18035,
+    "Limonade, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "limonade zero",
+   "cible": [
+    18035,
+    "Limonade, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "lingots",
+   "cible": [
+    20502,
+    "Haricot blanc, bouilli/cuit à l'eau",
+    112
+   ],
+   "mots_absents_de_la_cible": [
+    "lingot"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "linguine",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "linguine"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "macaroni",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "macaroni"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "macaronis",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "macaroni"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "mafaldine",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "mafaldine"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "mayo",
+   "cible": [
+    11054,
+    "Mayonnaise (70% MG min.), préemballée",
+    692
+   ],
+   "mots_absents_de_la_cible": [
+    "mayo"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "merlan de boeuf",
+   "cible": [
+    6201,
+    "Boeuf, steak ou bifteck cru",
+    229
+   ],
+   "mots_absents_de_la_cible": [
+    "merlan"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "mogettes",
+   "cible": [
+    20502,
+    "Haricot blanc, bouilli/cuit à l'eau",
+    112
+   ],
+   "mots_absents_de_la_cible": [
+    "mogette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "monster",
+   "cible": [
+    18324,
+    "Boisson énergisante, sans précision sur la teneur en sucres et édulcorants (aliment moyen)",
+    35
+   ],
+   "mots_absents_de_la_cible": [
+    "monster"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "morue fraiche",
+   "cible": [
+    26043,
+    "Cabillaud, cru",
+    77
+   ],
+   "mots_absents_de_la_cible": [
+    "morue",
+    "fraiche"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "moutarde de dijon",
+   "cible": [
+    11013,
+    "Moutarde",
+    151
+   ],
+   "mots_absents_de_la_cible": [
+    "dijon"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "mozza",
+   "cible": [
+    19590,
+    "Mozzarella au lait de vache",
+    227
+   ],
+   "mots_absents_de_la_cible": [
+    "mozza"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "noix de veau",
+   "cible": [
+    6521,
+    "Veau, escalope crue",
+    114
+   ],
+   "mots_absents_de_la_cible": [
+    "noi"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     6523,
+     "Veau, noix grillée/poêlée",
+     147
+    ],
+    [
+     6524,
+     "Veau, noix rôtie/cuite au four",
+     147
+    ],
+    [
+     6522,
+     "Veau, noix,crue",
+     111
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "nouilles chinoises",
+   "cible": [
+    9085,
+    "Nouilles asiatiques cuisinées (boeuf, poulet, légumes…) non instantanées",
+    140
+   ],
+   "mots_absents_de_la_cible": [
+    "chinoise"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "oasis",
+   "cible": [
+    18048,
+    "Boisson gazeuse aux fruits (teneur en jus non spécifiée), sucrée (aliment moyen)",
+    45
+   ],
+   "mots_absents_de_la_cible": [
+    "oasi"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "oatmeal",
+   "cible": [
+    32140,
+    "Flocons d'avoine",
+    369
+   ],
+   "mots_absents_de_la_cible": [
+    "oatmeal"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "oeuf entier",
+   "cible": [
+    22000,
+    "Oeuf cru",
+    140
+   ],
+   "mots_absents_de_la_cible": [
+    "entier"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "oeufs entiers",
+   "cible": [
+    22000,
+    "Oeuf cru",
+    140
+   ],
+   "mots_absents_de_la_cible": [
+    "entier"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "orangina",
+   "cible": [
+    18048,
+    "Boisson gazeuse aux fruits (teneur en jus non spécifiée), sucrée (aliment moyen)",
+    45
+   ],
+   "mots_absents_de_la_cible": [
+    "orangina"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "orecchiette",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "orecchiette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "orzo pates",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "orzo"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "paccheri",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "paccheri"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pain aux cereales",
+   "cible": [
+    7110,
+    "Pain complet ou intégral (à la farine T150)",
+    234
+   ],
+   "mots_absents_de_la_cible": [
+    "cereale"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     7098,
+     "Pain aux céréales et/ou aux graines, préemballé",
+     282
+    ],
+    [
+     7113,
+     "Pain de mie aux céréales et/ou graines, préemballé",
+     290
+    ],
+    [
+     7255,
+     "Pain aux céréales et/ou graines",
+     269
+    ],
+    [
+     7409,
+     "Petit pain grillé suédois aux céréales et graines",
+     404
+    ],
+    [
+     7425,
+     "Pain grillé aux céréales, tranches, préemballé",
+     417
+    ]
+   ],
+   "n_autres": 5
+  },
+  {
+   "cle": "pain de mie integral",
+   "cible": [
+    7111,
+    "Pain de mie complet, préemballé",
+    257
+   ],
+   "mots_absents_de_la_cible": [
+    "integral"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pain francais",
+   "cible": [
+    7001,
+    "Pain blanc (par ex. : baguette, boule…)",
+    287
+   ],
+   "mots_absents_de_la_cible": [
+    "francai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pain sandwich",
+   "cible": [
+    7200,
+    "Pain de mie blanc, préemballé",
+    279
+   ],
+   "mots_absents_de_la_cible": [
+    "sandwich"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25575,
+     "Sandwich pain de mie complet, thon crudités, préemballé",
+     207
+    ],
+    [
+     25576,
+     "Sandwich pain de mie complet, jambon fromage, préemballé",
+     240
+    ],
+    [
+     25577,
+     "Sandwich pain de mie complet, poulet crudités, préemballé",
+     199
+    ],
+    [
+     25599,
+     "Sandwich pain de mie complet, jambon, préemballé",
+     246
+    ],
+    [
+     25641,
+     "Sandwich pain de mie complet, saucisson ou rosette, préemballé",
+     336
+    ]
+   ],
+   "n_autres": 19
+  },
+  {
+   "cle": "pappardelle",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "pappardelle"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "parmigiano",
+   "cible": [
+    12120,
+    "Parmesan",
+    411
+   ],
+   "mots_absents_de_la_cible": [
+    "parmigiano"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "parmigiano reggiano",
+   "cible": [
+    12120,
+    "Parmesan",
+    411
+   ],
+   "mots_absents_de_la_cible": [
+    "parmigiano",
+    "reggiano"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "patate",
+   "cible": [
+    4048,
+    "Pomme de terre, cuite (aliment moyen)",
+    95
+   ],
+   "mots_absents_de_la_cible": [
+    "patate"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     20812,
+     "Farine de pulpe de patate douce, prélevée à la Martinique",
+     223
+    ],
+    [
+     20832,
+     "Patate douce, pulpe, cuite à la vapeur, prélevée à la Martinique",
+     126
+    ],
+    [
+     4101,
+     "Patate douce, crue",
+     81
+    ],
+    [
+     4102,
+     "Patate douce, cuite",
+     79
+    ],
+    [
+     4103,
+     "Patate douce, purée, cuisinée à la crème",
+     80
+    ]
+   ],
+   "n_autres": 5
+  },
+  {
+   "cle": "patate vapeur",
+   "cible": [
+    4048,
+    "Pomme de terre, cuite (aliment moyen)",
+    95
+   ],
+   "mots_absents_de_la_cible": [
+    "patate",
+    "vapeur"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     20832,
+     "Patate douce, pulpe, cuite à la vapeur, prélevée à la Martinique",
+     126
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "patates",
+   "cible": [
+    4048,
+    "Pomme de terre, cuite (aliment moyen)",
+    95
+   ],
+   "mots_absents_de_la_cible": [
+    "patate"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     20812,
+     "Farine de pulpe de patate douce, prélevée à la Martinique",
+     223
+    ],
+    [
+     20832,
+     "Patate douce, pulpe, cuite à la vapeur, prélevée à la Martinique",
+     126
+    ],
+    [
+     4101,
+     "Patate douce, crue",
+     81
+    ],
+    [
+     4102,
+     "Patate douce, cuite",
+     79
+    ],
+    [
+     4103,
+     "Patate douce, purée, cuisinée à la crème",
+     80
+    ]
+   ],
+   "n_autres": 5
+  },
+  {
+   "cle": "patates roties",
+   "cible": [
+    4026,
+    "Pomme de terre, rôtie/cuite au four",
+    91
+   ],
+   "mots_absents_de_la_cible": [
+    "patate"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pate miso",
+   "cible": [
+    20916,
+    "Miso",
+    188
+   ],
+   "mots_absents_de_la_cible": [
+    "pate"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pates completes",
+   "cible": [
+    9871,
+    "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+    179
+   ],
+   "mots_absents_de_la_cible": [
+    "complete"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     9877,
+     "Pâtes sèches, semi-complètes, cuites, sans sel ajouté",
+     173
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "pates semi-completes",
+   "cible": [
+    9871,
+    "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+    179
+   ],
+   "mots_absents_de_la_cible": [
+    "semi",
+    "complete"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     9877,
+     "Pâtes sèches, semi-complètes, cuites, sans sel ajouté",
+     173
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "pave de boeuf",
+   "cible": [
+    6201,
+    "Boeuf, steak ou bifteck cru",
+    229
+   ],
+   "mots_absents_de_la_cible": [
+    "pave"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pave de saumon",
+   "cible": [
+    26036,
+    "Saumon, élevage, cru",
+    193
+   ],
+   "mots_absents_de_la_cible": [
+    "pave"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pave de thon",
+   "cible": [
+    26053,
+    "Thon, cru",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "pave"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pave de truite",
+   "cible": [
+    27008,
+    "Truite ou truite fario, élevage, crue",
+    133
+   ],
+   "mots_absents_de_la_cible": [
+    "pave"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pdt",
+   "cible": [
+    4048,
+    "Pomme de terre, cuite (aliment moyen)",
+    95
+   ],
+   "mots_absents_de_la_cible": [
+    "pdt"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "penne",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "penne"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "penne completes",
+   "cible": [
+    9871,
+    "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+    179
+   ],
+   "mots_absents_de_la_cible": [
+    "penne",
+    "complete"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "penne rigate",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "penne",
+    "rigate"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pepsi light",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "pepsi",
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pepsi max",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "pepsi",
+    "max"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pepsi zero",
+   "cible": [
+    18060,
+    "Cola, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "pepsi",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pilon de poulet",
+   "cible": [
+    36024,
+    "Poulet, cuisse, viande crue",
+    114
+   ],
+   "mots_absents_de_la_cible": [
+    "pilon"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     36022,
+     "Poulet, pilon cru",
+     155
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "pilons de poulet",
+   "cible": [
+    36024,
+    "Poulet, cuisse, viande crue",
+    114
+   ],
+   "mots_absents_de_la_cible": [
+    "pilon"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     36022,
+     "Poulet, pilon cru",
+     155
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "piment frais",
+   "cible": [
+    20151,
+    "Piment, cru",
+    37
+   ],
+   "mots_absents_de_la_cible": [
+    "frai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pipe rigate",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "pipe",
+    "rigate"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pizza 4 fromages",
+   "cible": [
+    25478,
+    "Pizza aux fromages, préemballée",
+    269
+   ],
+   "mots_absents_de_la_cible": [
+    "4"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pizza quatre fromages",
+   "cible": [
+    25478,
+    "Pizza aux fromages, préemballée",
+    269
+   ],
+   "mots_absents_de_la_cible": [
+    "quatre"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "poire de boeuf",
+   "cible": [
+    6201,
+    "Boeuf, steak ou bifteck cru",
+    229
+   ],
+   "mots_absents_de_la_cible": [
+    "poire"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pomme de terre a leau",
+   "cible": [
+    4048,
+    "Pomme de terre, cuite (aliment moyen)",
+    95
+   ],
+   "mots_absents_de_la_cible": [
+    "leau"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "pomme de terre vapeur",
+   "cible": [
+    4048,
+    "Pomme de terre, cuite (aliment moyen)",
+    95
+   ],
+   "mots_absents_de_la_cible": [
+    "vapeur"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     4014,
+     "Pomme de terre vapeur, sous vide",
+     76
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "pommes de terre vapeur",
+   "cible": [
+    4048,
+    "Pomme de terre, cuite (aliment moyen)",
+    95
+   ],
+   "mots_absents_de_la_cible": [
+    "vapeur"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     4014,
+     "Pomme de terre vapeur, sous vide",
+     76
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "porridge",
+   "cible": [
+    32140,
+    "Flocons d'avoine",
+    369
+   ],
+   "mots_absents_de_la_cible": [
+    "porridge"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "potatoes",
+   "cible": [
+    4026,
+    "Pomme de terre, rôtie/cuite au four",
+    91
+   ],
+   "mots_absents_de_la_cible": [
+    "potatoe"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     4025,
+     "Potatoes ou wedges ou quartiers de pommes de terre épicés, surgelées, cuites",
+     175
+    ],
+    [
+     4052,
+     "Potatoes ou wedges ou quartiers de pommes de terre épicés, surgelées, à cuire",
+     141
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "prosciutto",
+   "cible": [
+    28800,
+    "Jambon cru",
+    239
+   ],
+   "mots_absents_de_la_cible": [
+    "prosciutto"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "quasi de veau",
+   "cible": [
+    6521,
+    "Veau, escalope crue",
+    114
+   ],
+   "mots_absents_de_la_cible": [
+    "quasi"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "radiatori",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "radiatori"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ramen instantane",
+   "cible": [
+    25243,
+    "Nouilles asiatiques instantanées, aromatisées, cuites",
+    164
+   ],
+   "mots_absents_de_la_cible": [
+    "ramen",
+    "instantane"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ratatouille nicoise",
+   "cible": [
+    25018,
+    "Ratatouille cuisinée, préemballée",
+    57
+   ],
+   "mots_absents_de_la_cible": [
+    "nicoise"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "red bull",
+   "cible": [
+    18324,
+    "Boisson énergisante, sans précision sur la teneur en sucres et édulcorants (aliment moyen)",
+    35
+   ],
+   "mots_absents_de_la_cible": [
+    "red",
+    "bull"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "red bull sans sucre",
+   "cible": [
+    18353,
+    "Boisson énergisante, sans sucres ajoutés, avec édulcorants, enrichie en vitamines",
+    9
+   ],
+   "mots_absents_de_la_cible": [
+    "red",
+    "bull"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "red bull zero",
+   "cible": [
+    18353,
+    "Boisson énergisante, sans sucres ajoutés, avec édulcorants, enrichie en vitamines",
+    9
+   ],
+   "mots_absents_de_la_cible": [
+    "red",
+    "bull",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "redbull",
+   "cible": [
+    18324,
+    "Boisson énergisante, sans précision sur la teneur en sucres et édulcorants (aliment moyen)",
+    35
+   ],
+   "mots_absents_de_la_cible": [
+    "redbull"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "rib eye",
+   "cible": [
+    6103,
+    "Boeuf, entrecôte crue",
+    231
+   ],
+   "mots_absents_de_la_cible": [
+    "rib",
+    "eye"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ribeye",
+   "cible": [
+    6103,
+    "Boeuf, entrecôte crue",
+    231
+   ],
+   "mots_absents_de_la_cible": [
+    "ribeye"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "rice noodles",
+   "cible": [
+    9901,
+    "Vermicelle de riz, cuite, sans sel ajouté",
+    87
+   ],
+   "mots_absents_de_la_cible": [
+    "rice",
+    "noodle"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "rigatoni",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "rigatoni"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "risoni",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "risoni"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz a risotto",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "risotto"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz a sushi",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "sushi"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz arborio",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "arborio"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz basmati blanc",
+   "cible": [
+    9125,
+    "Riz basmati, cuit, sans sel ajouté",
+    148
+   ],
+   "mots_absents_de_la_cible": [
+    "blanc"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz brun",
+   "cible": [
+    9103,
+    "Riz complet, cuit, sans sel ajouté",
+    187
+   ],
+   "mots_absents_de_la_cible": [
+    "brun"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz cantonnais",
+   "cible": [
+    25088,
+    "Riz cantonais, préemballé",
+    164
+   ],
+   "mots_absents_de_la_cible": [
+    "cantonnai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz carnaroli",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "carnaroli"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz collant",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "collant"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz gluant",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "gluant"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz incollable",
+   "cible": [
+    9105,
+    "Riz blanc étuvé, cuit, sans sel ajouté",
+    146
+   ],
+   "mots_absents_de_la_cible": [
+    "incollable"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz japonais",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "japonai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     38416,
+     "Biscuit ou cracker apéritif, à base de riz et cacahuètes enrobées, mélange japonais",
+     409
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "riz jasmin",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "jasmin"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz long",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "long"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz long grain",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "long",
+    "grain"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz parboiled",
+   "cible": [
+    9105,
+    "Riz blanc étuvé, cuit, sans sel ajouté",
+    146
+   ],
+   "mots_absents_de_la_cible": [
+    "parboiled"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz parfume",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "parfume"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz risotto",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "risotto"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz rond",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "rond"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz semi-complet",
+   "cible": [
+    9103,
+    "Riz complet, cuit, sans sel ajouté",
+    187
+   ],
+   "mots_absents_de_la_cible": [
+    "semi"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     9113,
+     "Riz semi-complet, cuit, sans sel ajouté",
+     165
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "riz sushi",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "sushi"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "riz thai",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "thai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     9124,
+     "Riz thaï, cuit, sans sel ajouté",
+     143
+    ],
+    [
+     9119,
+     "Riz thaï ou basmati, cru",
+     351
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "rosette",
+   "cible": [
+    30300,
+    "Saucisson sec",
+    418
+   ],
+   "mots_absents_de_la_cible": [
+    "rosette"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25641,
+     "Sandwich pain de mie complet, saucisson ou rosette, préemballé",
+     336
+    ],
+    [
+     30304,
+     "Rosette ou fuseau",
+     392
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "rumsteak",
+   "cible": [
+    6207,
+    "Boeuf, rumsteck grillé/poêlé",
+    138
+   ],
+   "mots_absents_de_la_cible": [
+    "rumsteak"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "samosa",
+   "cible": [
+    25108,
+    "Samossa ou samoussa ou brick garni, préemballé, cuit",
+    230
+   ],
+   "mots_absents_de_la_cible": [
+    "samosa"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "samosa boeuf",
+   "cible": [
+    25558,
+    "Samossa ou samoussa ou brick au boeuf, fait maison, cuit",
+    342
+   ],
+   "mots_absents_de_la_cible": [
+    "samosa"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "sardines en boite",
+   "cible": [
+    26065,
+    "Sardine, crue",
+    160
+   ],
+   "mots_absents_de_la_cible": [
+    "boite"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "saumon frais",
+   "cible": [
+    26036,
+    "Saumon, élevage, cru",
+    193
+   ],
+   "mots_absents_de_la_cible": [
+    "frai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "schweppes",
+   "cible": [
+    18344,
+    "Tonic ou bitter, sucré",
+    33
+   ],
+   "mots_absents_de_la_cible": [
+    "schweppe"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "schweppes light",
+   "cible": [
+    18013,
+    "Tonic ou bitter, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "schweppe",
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "schweppes zero",
+   "cible": [
+    18013,
+    "Tonic ou bitter, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "schweppe",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "semoule de ble",
+   "cible": [
+    9683,
+    "Semoule ou graine de couscous, cuite, sans sel ajouté",
+    164
+   ],
+   "mots_absents_de_la_cible": [
+    "ble"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     9610,
+     "Semoule de blé dur, crue",
+     350
+    ],
+    [
+     9681,
+     "Graine de couscous (semoule de blé dur précuite), à cuire",
+     366
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "seven up",
+   "cible": [
+    18048,
+    "Boisson gazeuse aux fruits (teneur en jus non spécifiée), sucrée (aliment moyen)",
+    45
+   ],
+   "mots_absents_de_la_cible": [
+    "seven",
+    "up"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "shitake",
+   "cible": [
+    20212,
+    "Champignon, lentin comestible ou shiitaké, cuit",
+    61
+   ],
+   "mots_absents_de_la_cible": [
+    "shitake"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "sirloin",
+   "cible": [
+    6111,
+    "Boeuf, faux-filet cru",
+    152
+   ],
+   "mots_absents_de_la_cible": [
+    "sirloin"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "skyr",
+   "cible": [
+    19724,
+    "Spécialité laitière riche en protéines, nature",
+    74
+   ],
+   "mots_absents_de_la_cible": [
+    "skyr"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "skyr nature",
+   "cible": [
+    19724,
+    "Spécialité laitière riche en protéines, nature",
+    74
+   ],
+   "mots_absents_de_la_cible": [
+    "skyr"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "soda light",
+   "cible": [
+    18001,
+    "Boisson gazeuse aromatisée, sans fruit, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "soda",
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "soda sans sucre",
+   "cible": [
+    18001,
+    "Boisson gazeuse aromatisée, sans fruit, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "soda"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "soda zero",
+   "cible": [
+    18001,
+    "Boisson gazeuse aromatisée, sans fruit, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "soda",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "soy sauce",
+   "cible": [
+    11104,
+    "Sauce soja, préemballée",
+    40
+   ],
+   "mots_absents_de_la_cible": [
+    "soy"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "spaghetti",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "spaghetti"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25085,
+     "Pâtes à la bolognaise (spaghetti, tagliatelles…), préemballées",
+     116
+    ],
+    [
+     25135,
+     "Pâtes à la carbonara (spaghetti, tagliatelles…), préemballées",
+     161
+    ],
+    [
+     25198,
+     "Pâtes en sauce aux fromages (spaghetti, tagliatelles…), préemballées",
+     163
+    ],
+    [
+     20145,
+     "Courge spaghetti, chair sans peau, crue",
+     32
+    ],
+    [
+     20143,
+     "Courge spaghetti, chair sans peau, cuite",
+     28
+    ]
+   ],
+   "n_autres": 5
+  },
+  {
+   "cle": "spaghetti complets",
+   "cible": [
+    9871,
+    "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+    179
+   ],
+   "mots_absents_de_la_cible": [
+    "spaghetti"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "spaghettis",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "spaghetti"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25085,
+     "Pâtes à la bolognaise (spaghetti, tagliatelles…), préemballées",
+     116
+    ],
+    [
+     25135,
+     "Pâtes à la carbonara (spaghetti, tagliatelles…), préemballées",
+     161
+    ],
+    [
+     25198,
+     "Pâtes en sauce aux fromages (spaghetti, tagliatelles…), préemballées",
+     163
+    ],
+    [
+     20145,
+     "Courge spaghetti, chair sans peau, crue",
+     32
+    ],
+    [
+     20143,
+     "Courge spaghetti, chair sans peau, cuite",
+     28
+    ]
+   ],
+   "n_autres": 5
+  },
+  {
+   "cle": "spaghettis complets",
+   "cible": [
+    9871,
+    "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+    179
+   ],
+   "mots_absents_de_la_cible": [
+    "spaghetti"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "sprite",
+   "cible": [
+    18048,
+    "Boisson gazeuse aux fruits (teneur en jus non spécifiée), sucrée (aliment moyen)",
+    45
+   ],
+   "mots_absents_de_la_cible": [
+    "sprite"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "steak de thon",
+   "cible": [
+    26053,
+    "Thon, cru",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "steak"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "stelline",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "stelline"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "sticky rice",
+   "cible": [
+    9104,
+    "Riz blanc, cuit, sans sel ajouté",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "sticky",
+    "rice"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "supreme de poulet",
+   "cible": [
+    36017,
+    "Poulet, filet sans peau cru",
+    110
+   ],
+   "mots_absents_de_la_cible": [
+    "supreme"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "sweet soy sauce",
+   "cible": [
+    11216,
+    "Sauce soja sucrée, préemballée",
+    171
+   ],
+   "mots_absents_de_la_cible": [
+    "sweet",
+    "soy"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "tagliatelle",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "tagliatelle"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25085,
+     "Pâtes à la bolognaise (spaghetti, tagliatelles…), préemballées",
+     116
+    ],
+    [
+     25135,
+     "Pâtes à la carbonara (spaghetti, tagliatelles…), préemballées",
+     161
+    ],
+    [
+     25198,
+     "Pâtes en sauce aux fromages (spaghetti, tagliatelles…), préemballées",
+     163
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "tagliatelles",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "tagliatelle"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25085,
+     "Pâtes à la bolognaise (spaghetti, tagliatelles…), préemballées",
+     116
+    ],
+    [
+     25135,
+     "Pâtes à la carbonara (spaghetti, tagliatelles…), préemballées",
+     161
+    ],
+    [
+     25198,
+     "Pâtes en sauce aux fromages (spaghetti, tagliatelles…), préemballées",
+     163
+    ]
+   ],
+   "n_autres": 3
+  },
+  {
+   "cle": "tagliatelles fraiches",
+   "cible": [
+    9816,
+    "Pâtes fraîches, aux oeufs, cuites, sans sel ajouté",
+    168
+   ],
+   "mots_absents_de_la_cible": [
+    "tagliatelle"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "tajine agneau",
+   "cible": [
+    25159,
+    "Tajine de mouton, préemballé",
+    131
+   ],
+   "mots_absents_de_la_cible": [
+    "agneau"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "the glace",
+   "cible": [
+    18062,
+    "Boisson au thé, aromatisée, sans précision sur la teneur en sucres et édulcorants (aliment moyen)",
+    21
+   ],
+   "mots_absents_de_la_cible": [
+    "glace"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "the glace light",
+   "cible": [
+    18065,
+    "Boisson au thé, aromatisée, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "glace",
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "the glace zero",
+   "cible": [
+    18065,
+    "Boisson au thé, aromatisée, sans sucres ajoutés, avec édulcorants",
+    1
+   ],
+   "mots_absents_de_la_cible": [
+    "glace",
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "thon conserve",
+   "cible": [
+    26039,
+    "Thon, au naturel, appertisé, égoutté",
+    143
+   ],
+   "mots_absents_de_la_cible": [
+    "conserve"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "thon en boite",
+   "cible": [
+    26039,
+    "Thon, au naturel, appertisé, égoutté",
+    143
+   ],
+   "mots_absents_de_la_cible": [
+    "boite"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "thon frais",
+   "cible": [
+    26053,
+    "Thon, cru",
+    155
+   ],
+   "mots_absents_de_la_cible": [
+    "frai"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "toast",
+   "cible": [
+    7200,
+    "Pain de mie blanc, préemballé",
+    279
+   ],
+   "mots_absents_de_la_cible": [
+    "toast"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25523,
+     "Toasts ou canapés salés, garnitures diverses, préemballés",
+     251
+    ],
+    [
+     7399,
+     "Toast ou pain grillé brioché aux raisins secs, tranches, préemballé",
+     405
+    ]
+   ],
+   "n_autres": 2
+  },
+  {
+   "cle": "tonic light",
+   "cible": [
+    18013,
+    "Tonic ou bitter, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "light"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "tonic zero",
+   "cible": [
+    18013,
+    "Tonic ou bitter, sans sucres ajoutés, avec édulcorants",
+    0
+   ],
+   "mots_absents_de_la_cible": [
+    "zero"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "tortiglioni",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "tortiglioni"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "tournedos",
+   "cible": [
+    6116,
+    "Boeuf, filet cru",
+    132
+   ],
+   "mots_absents_de_la_cible": [
+    "tournedo"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "tradition",
+   "cible": [
+    7001,
+    "Pain blanc (par ex. : baguette, boule…)",
+    287
+   ],
+   "mots_absents_de_la_cible": [
+    "tradition"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     7007,
+     "Pain de tradition française (par ex. : baguette, boule…)",
+     279
+    ]
+   ],
+   "n_autres": 1
+  },
+  {
+   "cle": "tranche de bacon",
+   "cible": [
+    28727,
+    "Filet de bacon",
+    118
+   ],
+   "mots_absents_de_la_cible": [
+    "tranche"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "tropico",
+   "cible": [
+    18048,
+    "Boisson gazeuse aux fruits (teneur en jus non spécifiée), sucrée (aliment moyen)",
+    45
+   ],
+   "mots_absents_de_la_cible": [
+    "tropico"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "turmeric",
+   "cible": [
+    11089,
+    "Curcuma, poudre",
+    291
+   ],
+   "mots_absents_de_la_cible": [
+    "turmeric"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "vermicelles",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "vermicelle"
+   ],
+   "aliments_qui_portent_tous_les_mots": [
+    [
+     25908,
+     "Soupe à la volaille et aux vermicelles, préemballée à réchauffer",
+     23
+    ],
+    [
+     25933,
+     "Soupe à la tomate et aux vermicelles, préemballée à réchauffer",
+     38
+    ],
+    [
+     25949,
+     "Soupe à la tomate et aux vermicelles, déshydratée reconstituée",
+     28
+    ],
+    [
+     25950,
+     "Soupe à la volaille et aux vermicelles, déshydratée reconstituée",
+     21
+    ],
+    [
+     25973,
+     "Soupe aux légumes et aux vermicelles, déshydratée reconstituée",
+     36
+    ]
+   ],
+   "n_autres": 12
+  },
+  {
+   "cle": "viande hachee 5%",
+   "cible": [
+    6250,
+    "Boeuf, steak haché 5% MG cru",
+    130
+   ],
+   "mots_absents_de_la_cible": [
+    "viande",
+    "hachee"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "yaourt grec",
+   "cible": [
+    19860,
+    "Yaourt à la grecque nature",
+    103
+   ],
+   "mots_absents_de_la_cible": [
+    "grec"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "yoghourt",
+   "cible": [
+    19593,
+    "Yaourt ou lait fermenté, nature",
+    50
+   ],
+   "mots_absents_de_la_cible": [
+    "yoghourt"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "yogourt",
+   "cible": [
+    19593,
+    "Yaourt ou lait fermenté, nature",
+    50
+   ],
+   "mots_absents_de_la_cible": [
+    "yogourt"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "yogourt grec",
+   "cible": [
+    19860,
+    "Yaourt à la grecque nature",
+    103
+   ],
+   "mots_absents_de_la_cible": [
+    "yogourt",
+    "grec"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  },
+  {
+   "cle": "ziti",
+   "cible": [
+    9811,
+    "Pâtes sèches, standard, cuites, sans sel ajouté",
+    167
+   ],
+   "mots_absents_de_la_cible": [
+    "ziti"
+   ],
+   "aliments_qui_portent_tous_les_mots": [],
+   "n_autres": 0
+  }
+ ]
+}

@@ -1,0 +1,1 @@
+{"avant":{"kcal":388,"q":250,"u":"g"},"apres_vide":{"kcal":155,"prot":3,"q":0,"u":"g"},"apres_0":{"kcal":155,"prot":3,"q":0,"u":"g"}}
