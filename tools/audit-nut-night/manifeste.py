@@ -27,7 +27,9 @@ m = {
   'lots_proposes': ['LOT-C', 'LOT-A', 'LOT-B'],
   'artefacts': ['MANIFEST-NUT-NIGHT.json', 'REGISTRE-NUT-NIGHT.json', 'RAPPORT-PRINCIPAL-NUT-NIGHT.md', 'REPRISE-DEMAIN.md',
                 'PROMPT-NUT-LOT-A.md', 'PROMPT-NUT-LOT-B.md', 'PROMPT-NUT-LOT-C.md', 'preuves/ (légers sur Drive ; complets dans audit/nut-night-2026-10-12/preuves/ sur la branche)'],
-  'chemin_drive': drive, 'contre_verification_declenchee': cv, 'statut_final': statut, 'pdf': 'aucun (consigne : pas de PDF cette nuit)'}
+  'chemin_drive': drive, 'contre_verification_declenchee': cv,
+  'contre_verification': ({'session': 'Claude Nutrition (session cloud distincte)', 'branche': 'claude/nut-night-cv-2026-10-12',
+                           'artefacts': ['CONTRE-VERIFICATION-NUTRITION-NIGHT.md', 'CONTRE-VERIFICATION-NUTRITION-NIGHT.json', 'SYNTHESE-CROISEE-NUT-NIGHT.md']} if cv else None), 'statut_final': statut, 'pdf': 'aucun (consigne : pas de PDF cette nuit)'}
 assert m['fichiers_produit_modifies'] == [], m['fichiers_produit_modifies']
 json.dump(m, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1); open(out, 'a').write('\n')
 print(json.dumps({k: m[k] for k in ('head_audit', 'fichiers_produit_modifies', 'nombre_P0', 'nombre_P1', 'nombre_P2', 'nombre_dettes', 'nombre_causes', 'statut_final')}, ensure_ascii=False))
