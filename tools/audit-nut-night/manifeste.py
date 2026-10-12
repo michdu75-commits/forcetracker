@@ -16,7 +16,7 @@ m = {
   'branche_audit': 'claude/nut-night-audit-2026-10-12', 'head_audit': g('rev-parse', 'HEAD'), 'master_observe': g('rev-parse', 'origin/master'),
   'git_status_depart': 'propre (0 fichier modifié, vérifié 20:40 UTC)', 'git_status_fin': (g('status', '--porcelain') or 'propre'),
   'fichiers_produit_modifies': produit,
-  'scripts_audit_crees': sorted(f for f in diff if f.startswith('tools/audit-nut-night/')) + ['tools/audit-nut-night/manifeste.py'],
+  'scripts_audit_crees': sorted({f for f in diff if f.startswith('tools/audit-nut-night/')} | {'tools/audit-nut-night/manifeste.py'}),
   'bancs_utilises': ['sondes d\'audit : sonde_machine.js (B1–B6), sonde_journal.js (20 scénarios réels), sonde_ciblee.js',
                      'référence VARIANTS-03 (HANDOFF) : food_variants 122/0, D-042 73, FS-01 44, FS-02 46, FS-03 39, FS-05 136, FS-05B 177, repas_actif 24, habitudes_alim 37 ; mutations 31/31 — non relancés (consigne)'],
   'sources_auditees': ['CIQUAL (data/ciqual.json, 3484 / 3341 proposables)', 'table d\'alias (632)', 'fast-food (123)', 'compléments (129 033, identification)',

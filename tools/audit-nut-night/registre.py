@@ -60,7 +60,7 @@ E(id='NIGHT-P-003', titre='Fast-food Quick : 5 groupes de produits DIFFÉRENTS p
   commande_ou_procedure_reproduction='python3 ' + T + 'marques_doublons.py', fichiers_probablement_concernes=['tools/marques.py', 'data/marques.json (régénéré)'],
   fonctions_probablement_concernees=['tools/marques.py : contrôles de cohérence (le doute « mêmes poids » existe déjà)'],
   cause_probable='décalage nom ↔ valeurs dans le classeur (déjà vu en ft-v1114 sur le bloc Quick) ; aucun contrôle « valeurs identiques entre produits différents »',
-  confiance_cause='haute', cas_voisins=['NIGHT-P-021'], deja_connu=False,
+  confiance_cause='haute', cas_voisins=['NIGHT-P-018'], deja_connu=False,
   recommendation='Michel décide : marquer ces lignes en DOUTE (mécanisme existant, décision ft-v1114 « tout mettre et marquer le doute ») ou les retirer ; ajouter le contrôle au générateur ; vérifier la PDF officielle Quick (injoignable d\'ici, 403)',
   lot_propose='LOT-A', bloque_fermeture_nutrition=True)
 E(id='NIGHT-P-004', titre='Une QUANTITÉ tapée dans la recherche vide la liste (« riz 100g », « poulet 200g », « riz cuit 150 g », « lait 250ml »)',
@@ -91,7 +91,7 @@ E(id='NIGHT-P-006', titre='Un POINT final (« pain complet. », « riz. ») vide
 E(id='NIGHT-P-007', titre='Garde « Combien en as-tu mangé ? » contournable : quantité tapée puis vidée / 0 / texte → la ligne s\'enregistre avec les valeurs POUR 100 g',
   famille_cause='C-C garde de quantité fondée sur un drapeau d\'interaction', source='toutes les sources qui posent `_bcNutr` (CIQUAL, fast-food, OFF, scan, reprise)',
   requete='big mac (portion 232 g) · riz blanc cuit', online_offline='indépendant', scenario='choisir l\'aliment → taper « 5 » puis effacer (ou « 0 », ou « abc ») → Ajouter',
-  attendu='refus (comme quand on ne touche pas au champ)', observe='; '.join('%s : %s' % (k, json.dumps(JR[k]['observe'], ensure_ascii=False)[:110]) for k in ('J4b', 'J4c', 'J4e') if k in JR),
+  attendu='refus (comme quand on ne touche pas au champ)', observe='; '.join('%s : %s' % (k, json.dumps({x: (JR[k]['observe'].get('ligne') or {}).get(x) for x in ('kcal', 'q', 'u')}, ensure_ascii=False)) for k in ('J4b', 'J4c', 'J4d', 'J4e') if k in JR),
   gravite='P1', statut='BUG_CONFIRME', reproductible=True, preuve='journal.json J4b/J4c/J4d/J4e', commande_ou_procedure_reproduction='node ' + T + 'sonde_journal.js out (scénarios J4b → J4e)',
   fichiers_probablement_concernes=['app.js', 'index.html (oninput de #af-bc-grams)'], fonctions_probablement_concernees=['addFoodEntry (garde _bcQtyPose)', '_qtyRescale (repli sur la référence 100 g)', '_bcApplyGrams'],
   cause_probable='la garde lit `_bcQtyPose` (« le champ a été touché ») et non la VALIDITÉ de la quantité ; un champ vide/0 retombe sur la référence 100 g', confiance_cause='haute',
@@ -165,7 +165,7 @@ E(id='NIGHT-P-018', titre='Fast-food : kcal publiées ≠ macros (> 15 %) sans d
   preuve='b6_sources.json', commande_ou_procedure_reproduction='voir sonde_machine.js bloc B6', cause_probable='fibres / acides / arrondis de la source sur de petites valeurs', confiance_cause='moyenne',
   recommendation='rien, ou doute si LOT-A ajoute un contrôle', lot_propose='DETTE', bloque_fermeture_nutrition=False)
 E(id='NIGHT-P-019', titre='« Dernier mot partiel » : un mot seul touche l\'intérieur d\'un autre (roquette→croquette, oseille→groseille, gin→aubergine, raie→« vraie daurade », lin→blinis, gari→margarine, cola→chocolat)',
-  famille_cause='sous-chaîne (dernier mot)', source='CIQUAL', requete=', '.join(sorted({s['requete'] for s in S if s['type'] in ('FAUX_AMI', 'FAUX_AMI_MOT_COURANT') and s['mode'] == 'hors' and not s.get('top1_faux')})[:12]),
+  famille_cause='sous-chaîne (dernier mot)', source='CIQUAL', requete='roquette (→ croquette) · oseille (→ groseille) · gin (→ aubergine) · raie (→ vraie daurade) · lin (→ blinis) · gari (→ margarine) · burger (→ cheeseburger) · frites (→ préfrites) · cola (→ chocolat)',
   online_offline='en et hors ligne', attendu='le vrai aliment 1ᵉʳ', observe='le vrai aliment reste 1ᵉʳ ; le faux ami apparaît plus bas dans la liste', gravite='P3', statut='DETTE_CONNUE', reproductible=True,
   preuve='b2_tetes.json / b4_adversarial.json (FAUX_AMI, mode hors, top1 non faux)', commande_ou_procedure_reproduction=SC + '"roquette" "oseille" "gin"',
   cause_probable='le dernier mot reste une frappe partielle (on est peut-être en train de le taper)', confiance_cause='haute', deja_connu=True, id_dette_connue_si_applicable='D-061 ② / VARIANTS-03 (« cola » seul)',

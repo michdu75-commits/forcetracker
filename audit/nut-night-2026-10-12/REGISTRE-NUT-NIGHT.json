@@ -157,7 +157,7 @@
    "cause_probable": "décalage nom ↔ valeurs dans le classeur (déjà vu en ft-v1114 sur le bloc Quick) ; aucun contrôle « valeurs identiques entre produits différents »",
    "confiance_cause": "haute",
    "cas_voisins": [
-    "NIGHT-P-021"
+    "NIGHT-P-018"
    ],
    "deja_connu": false,
    "id_dette_connue_si_applicable": "",
@@ -274,7 +274,7 @@
    "online_offline": "indépendant",
    "scenario": "choisir l'aliment → taper « 5 » puis effacer (ou « 0 », ou « abc ») → Ajouter",
    "attendu": "refus (comme quand on ne touche pas au champ)",
-   "observe": "J4b : {\"ajoutees\": 1, \"ligne\": {\"kcal\": 228, \"prot\": 12, \"q\": null, \"u\": null, \"per100\": {\"kcal\": 228.4, \"prot\": 11.; J4c : {\"ajoutees\": 1, \"ligne\": {\"kcal\": 228, \"prot\": 12, \"q\": null, \"u\": null, \"per100\": {\"kcal\": 228.4, \"prot\": 11.; J4e : {\"ajoutees\": 1, \"ligne\": {\"kcal\": 155, \"q\": null, \"u\": null}}",
+   "observe": "J4b : {\"kcal\": 228, \"q\": null, \"u\": null}; J4c : {\"kcal\": 228, \"q\": null, \"u\": null}; J4d : {\"kcal\": 228, \"q\": null, \"u\": null}; J4e : {\"kcal\": 155, \"q\": null, \"u\": null}",
    "gravite": "P1",
    "statut": "BUG_CONFIRME",
    "reproductible": true,
@@ -615,7 +615,7 @@
    "titre": "« Dernier mot partiel » : un mot seul touche l'intérieur d'un autre (roquette→croquette, oseille→groseille, gin→aubergine, raie→« vraie daurade », lin→blinis, gari→margarine, cola→chocolat)",
    "famille_cause": "sous-chaîne (dernier mot)",
    "source": "CIQUAL",
-   "requete": "biscuit sec sans chocolat, biscuit sec sans gluten, bière sans alcool, boisson au thé, boisson plate aux fruits (teneur en fruits non spécifiée), burger, frites, gari, gin, lin, nems, oseille",
+   "requete": "roquette (→ croquette) · oseille (→ groseille) · gin (→ aubergine) · raie (→ vraie daurade) · lin (→ blinis) · gari (→ margarine) · burger (→ cheeseburger) · frites (→ préfrites) · cola (→ chocolat)",
    "online_offline": "en et hors ligne",
    "scenario": "",
    "attendu": "le vrai aliment 1ᵉʳ",

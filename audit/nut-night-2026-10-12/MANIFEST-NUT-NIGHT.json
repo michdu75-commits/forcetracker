@@ -6,10 +6,10 @@
  "head_fonctionnel_source": "ae2f950c00fe794f937988f4d453bf9e53fc60ef",
  "tree_fonctionnel_source": "5785192494bb0d50c6f9320197b134be43b6ef95",
  "branche_audit": "claude/nut-night-audit-2026-10-12",
- "head_audit": "a53e441c757c88ed90349d9deac27eca313d129d",
+ "head_audit": "1a8c5c8985d7171fceb79faafeb54afdad404eb1",
  "master_observe": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
  "git_status_depart": "propre (0 fichier modifié, vérifié 20:40 UTC)",
- "git_status_fin": "propre",
+ "git_status_fin": "M audit/nut-night-2026-10-12/REGISTRE-NUT-NIGHT.json\n M tools/audit-nut-night/manifeste.py\n M tools/audit-nut-night/registre.py",
  "fichiers_produit_modifies": [],
  "scripts_audit_crees": [
   "tools/audit-nut-night/alias_semantique.py",
@@ -19,8 +19,7 @@
   "tools/audit-nut-night/registre.py",
   "tools/audit-nut-night/sonde_ciblee.js",
   "tools/audit-nut-night/sonde_journal.js",
-  "tools/audit-nut-night/sonde_machine.js",
-  "tools/audit-nut-night/manifeste.py"
+  "tools/audit-nut-night/sonde_machine.js"
  ],
  "bancs_utilises": [
   "sondes d'audit : sonde_machine.js (B1–B6), sonde_journal.js (20 scénarios réels), sonde_ciblee.js",
