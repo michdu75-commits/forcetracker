@@ -8,18 +8,18 @@
   "master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
   "reservation_journal": "bf912df3"
  },
- "head_fonctionnel": "43b35546ce1edd7d893115d2d852e57c96851e7d",
- "tree_fonctionnel": "731158a02fe007f72376fc1d36782b1cff72f95d",
- "head_fonctionnel_precedent": "5f5e4545 (1re version : le « 0 » gardé comme mot partout — changeait les têtes de « lait 0 » et « yaourt 0 », retirée par 43b35546)",
+ "head_fonctionnel": "8039d629868902c688a7184866fdf08e637bcdd6",
+ "tree_fonctionnel": "fcdfc463c04e5275a2a9fd96c9247dded0dd2ac7",
+ "head_fonctionnel_precedent": "43b35546 (avant les arbitrages de Michel sur D-075) ; 5f5e4545 (1re version : « 0 » gardé comme mot partout, retirée)",
  "head_final": "(commit de clôture qui porte ce fichier — voir le journal de partage)",
  "drive": "non utilisé",
  "d2": "la quantité tapée sert UNIQUEMENT à retrouver l'aliment ; rien n'est pré-rempli (champ quantité inchangé, garde LOT-C)",
  "strategie": {
-  "proprietaire": "_afRequete (frappe : point final retiré, quantité lue d'un bloc « 100 g » → « 100g », virgule décimale avant une unité) + _afAliment (partie alimentaire : sans quantités, sans compte en tête « 2 oeufs » / « 30g de », « 0 » / « 0% » lus « zero »). Tous deux appellent _afNorm : pas de second normaliseur.",
+  "proprietaire": "_afRequete (frappe : point final retiré, quantité lue d'un bloc « 100 g » → « 100g », virgule décimale avant une unité) + _afAliment (partie alimentaire : sans quantités, sans compte en tête « 2 oeufs » / « 30g de »). Tous deux appellent _afNorm : pas de second normaliseur.",
   "repli": "_afSinonAliment, un seul endroit pour les 4 sources (CIQUAL, fast-food, compléments, déjà noté) : la partie alimentaire si c'est ELLE que la table d'alias reconnaît ; sinon la frappe telle quelle, puis l'aliment seul si rien ne répond.",
-  "alias": "_aliasCle : la clé telle que tapée D'ABORD (B1, 632/632 identiques), sinon la partie alimentaire ; aucune clé nouvelle — seules celles de data/alias.json (contrôlées par le générateur de LOT-A) répondent. _aliasCible lit _aliasCle.",
+  "alias": "_aliasCle : la clé telle que tapée D'ABORD (B1), sinon la partie alimentaire, sinon sa lecture « zéro » (« coca 0 » → « coca zero ») — seules les clés de data/alias.json répondent. _aliasCible lit _aliasCle.",
   "noms_de_la_base": "jamais nettoyés (B2) ; un nom qui PORTE une quantité (« Coca-Cola 500 ml ») se retrouve par _afMotDansNom (quantité entière, ni « /100 g », ni « 100 gélules »).",
-  "zero": "le « 0 » n'est lu « zéro » que là où la table connaît « X zéro » (coca, cola, pepsi, fromage blanc, ice tea, soda…) ou quand la frappe ne trouve RIEN (« coca 0% ») ; ailleurs il reste ignoré comme sur la base (« lait 0 », « yaourt 0 », « petit suisse 0 »). FOOD_SYNONYMES réutilisé (zero → 0% / sans sucres), aucun moteur « zéro »."
+  "zero": "le « 0 » / « 0% » n'est lu « zéro » QUE pour consulter la table (coca, cola, pepsi, fromage blanc, ice tea, soda…) ; la famille lait a ses clés (« lait 0 », « lait 0% » → lait écrémé) ; ailleurs rien (« yaourt 0 » = base, « compote 0% » vide). FOOD_SYNONYMES réutilisé, aucun moteur « zéro »."
  },
  "avant_apres": {
   "riz 100g": {
@@ -56,11 +56,11 @@
   },
   "coca 0": {
    "avant": "Cola, sucré en tête ; Coca-Cola Quick ; Glucocal",
-   "apres": "Cola sans sucres ajoutés ; aucun sucré (en ligne). Hors ligne SANS table : inchangé (dette LB-D02)"
+   "apres": "Cola sans sucres ajoutés, aucun sucré (en ligne). Hors ligne SANS table : comme la base (dette D-075 ②)"
   },
   "coca 0%": {
    "avant": "vide",
-   "apres": "Cola sans sucres ajoutés (en ligne et hors ligne)"
+   "apres": "Cola sans sucres ajoutés (en ligne) ; hors ligne SANS table : vide comme la base (dette D-075 ②)"
   },
   "coca zéro": {
    "avant": "Cola sans sucres ajoutés",
@@ -68,11 +68,11 @@
   },
   "lait 0": {
    "avant": "Lait à 1,2% MG, UHT",
-   "apres": "inchangé"
+   "apres": "Lait écrémé, UHT en tête (D-075 ①), puis la liste de la base (1,2 %, sans précision, coco) ; hors ligne sans table : la base"
   },
   "lait 0%": {
    "avant": "Lait fermenté type yaourt au bifidus, nature, 0% MG",
-   "apres": "inchangé"
+   "apres": "Lait écrémé, UHT en tête (D-075 ①), puis les laits fermentés 0 % ; aucun lait entier, demi-écrémé ou 1,2 % ; hors ligne sans table : la base"
   },
   "yaourt 0": {
    "avant": "Yaourt à la grecque nature",
@@ -93,78 +93,83 @@
   "100g / 250ml / 200 g": {
    "avant": "CIQUAL vide ; « 200 g » proposait Fuze Tea 200 ml, Coca-Cola 200 ml et des compléments « 2000 »",
    "apres": "CIQUAL vide ; seuls des noms qui PORTENT la quantité (« 200 g » → Boost 200g, Inositol 200G… ; « 250ml » ajoute Reguven 250 ml) — changement documenté (§11)"
+  },
+  "compote 0% / jus d orange 0%": {
+   "avant": "vides",
+   "apres": "vides (D-075 ③)"
+  },
+  "lait zéro": {
+   "avant": "Lait fermenté au bifidus 0% en tête",
+   "apres": "inchangé (hors des arbitrages : aucune clé « lait zero »)"
   }
  },
- "b2_noms": "empreinte _fsTete des 3 341 noms proposables identique à l'instantané de 205cd17b ; Mimolette 12 mois, Crème 12 à 25% MG, Beurre 80% MG, Eau minérale (Arcachon, 33) retrouvés ; B-FV-N vert (food_variants 131/0) ; 35 noms seraient altérés SI le nettoyage leur était appliqué (0% MG → zero, points de suspension) — M6 le prouve.",
+ "b2_noms": "empreinte _fsTete des 3 341 noms proposables identique à l'instantané de 205cd17b ; Mimolette 12 mois, Crème 12 à 25% MG, Beurre 80% MG, Eau minérale (Arcachon, 33) retrouvés ; B-FV-N vert (food_variants 131/0) ; M6 (nettoyage appliqué aux noms) attrapé par l'empreinte.",
  "temoins": {
   "banc": "tests/parcours/food_lot_b.js + tools/banc_food_lot_b.js (blocs B-LB-A, B-LB-E, B-LB-I, B-LB-C) ; instantané tests/parcours/food_lot_b_instantane.json (généré sur 205cd17b, 632 clés, 3 341 noms)",
   "base": "41 OK / 29 rouges (app.js de 205cd17b ; les témoins de préservation y sont verts)",
-  "apres": "70 OK / 0 rouge",
+  "apres": "73 OK / 0 rouge (70 + LB-D15, LB-D16, LB-D17 ; LB-D04, D09, D11, D12 et B-LB-I ① réécrits sur les arbitrages) ; avant le code des arbitrages : 67 OK / 6 rouges, exactement les 3 décisions",
   "runner": "branché (source + écran) pour la passe finale",
   "registre": "banc:food_lot_b + scénario NUTRI-REQUETE-QUANTITE"
  },
  "mutations": {
   "outil": "tools/mut_nut_lot_b.py (arbre cloné)",
-  "resultat": "8/8 conformes",
+  "resultat": "10/10 conformes",
   "detail": [
    "M1 aucune unité reconnue : 17 rouges",
-   "M2 unité séparée cassée : 8 rouges",
-   "M3 % traité comme une unité : 7 rouges (lait 1,2%, fromage blanc 20%, lait 0%, yaourt 0%, coca 0%)",
-   "M4 lecture « zéro » cassée : 5 rouges (coca 0, coca 0%, fromage blanc 0)",
-   "M5 point final gardé : 6 rouges",
-   "M6 nettoyage appliqué aux noms CIQUAL : 4 rouges (lait 0%, yaourt 0%, 632 clés, empreinte _fsTete)",
-   "M7 alias sur la frappe brute : 15 rouges",
-   "MC1 commentaire : vert (70/0)"
+   "M2 unité séparée cassée : 8",
+   "M3 % traité comme une unité : 8",
+   "M4 lecture « zéro » pour la table cassée : 4",
+   "M5 point final gardé : 6",
+   "M6 nettoyage appliqué aux noms CIQUAL : 1 (empreinte _fsTete)",
+   "M7 alias sur la frappe brute : 16",
+   "M8 [D-075 ③] « X 0% » relu « X zero » sans alias : 3 (coca 0% hors, compote 0%, jus d'orange 0%)",
+   "M9 [D-075 ①] clés « lait 0 » / « lait 0% » retirées : 3",
+   "MC1 commentaire : vert (73/0)"
   ]
  },
  "bancs": {
-  "food_lot_b": "70/0",
-  "food_alias_sens": "77/0",
-  "food_variants": "131/0 (B-FV-N compris)",
-  "food_d042": "73/0",
-  "food_semantics": "44/0",
-  "food_formes": "46/0",
-  "food_prefs": "39/0",
-  "food_reference": "136/0",
-  "food_multisource": "177/0",
-  "repas_actif": "24/0",
-  "habitudes_alim": "37/0",
-  "journal_qty_guard": "21/0",
-  "arbre": "731158a0 (HEAD fonctionnel 43b35546) ; depuis : documentation et registre seulement",
+  "rejoues_sur_8039d629": {
+   "food_lot_b": "73/0",
+   "food_alias_sens": "77/0",
+   "food_variants": "131/0 (B-FV-N compris)",
+   "food_d042": "73/0",
+   "food_multisource": "177/0"
+  },
+  "non_rejoues_et_pourquoi": "food_semantics 44/0, food_formes 46/0, food_prefs 39/0, food_reference 136/0, repas_actif 24/0, habitudes_alim 37/0, journal_qty_guard 21/0 — verts sur 43b35546 ; les arbitrages ne touchent que la lecture du « 0 » et deux clés « lait 0 / 0% », qu'aucun de ces bancs ne joue (consigne de Michel : seulement les bancs réellement impactés)",
   "totaux_de_reference": "tous inchangés"
  },
  "controles": {
-  "check_regles": "0 erreur",
+  "check_regles": "0 erreur (registre des décisions conforme)",
   "git_diff_check": "propre",
-  "recette_selecteur": "--diff 205cd17b : 16 contrôles, aucune fonction sans scénario ; --auto-test 15/0"
+  "recette_selecteur": "--diff 205cd17b : aucune fonction sans scénario ; --auto-test 15/0"
  },
  "lot_a": "non régressé : confiture, confiture de fraise / d'abricot / fruits rouges, gruyère, lieu noir, potatoes, riz thaï, beurre salé verts (LB-L01→07, food_alias_sens 77/0) ; « gruyère 30g », « confiture 20 g » passent par le même alias (LB-B05/B06)",
  "d031": "non lancée (brief §15 : une seule passe après LOT-B, sur l'arbre Nutrition final intégré)",
  "regle_17": {
-  "fichiers_runtime_applicatifs": "1 (app.js)",
-  "lignes": "+71 −9 (dont ~27 de commentaires)",
+  "fichiers_runtime_applicatifs": "1 (app.js) + la table générée data/alias.json (2 clés) par son générateur tools/alias.py (+6)",
+  "lignes_app_js": "+70 −9",
   "donnees_persistees_ajoutees": 0,
   "cles_de_stockage": 0,
   "fonctions_ajoutees": "4 (_afRequete, _afAliment, _afSinonAliment, _aliasCle) + 3 constantes (_AF_UNITES, _AF_QTE, _AF_QTE_MOT)",
-  "fonctions_modifiees": "_aliasCible, _afGeneriqueDevant, _afMotDansNom, _ciqualChercherSansAlias, _marquesChercher, _complChercher, _afSuggLocales (paramètre interne `brut`)",
-  "moteur_second": "aucun (pas de second moteur de recherche, ni de second normaliseur, ni de table par aliment)",
+  "moteur_second": "aucun (ni second moteur, ni second normaliseur, ni table par aliment dans le runtime ; la famille lait passe par la table d'alias existante)",
   "anciens_chemins_supprimes_ou_fusionnes": "0 supprimé ; le repli des 4 sources est UN seul chemin (_afSinonAliment)"
  },
  "decisions": {
-  "D-075": "Claude, PROPOSÉ : lecture de la requête (①→⑤) ; l'alternative « 0 = zéro partout » (1re version) écartée parce qu'elle changeait lait 0 / yaourt 0"
+  "D-075": "VALIDÉ par Michel le 13/10 avec trois arbitrages (lait écrémé par la famille lait · coca hors ligne = dette · pas de lecture générique « X 0% »)"
  },
- "a_decider_par_michel": [
-  "lait 0 / lait 0% : le lait écrémé n'est en tête d'aucun des deux (inchangé par LOT-B, état de la base)",
-  "coca 0 hors ligne SANS table d'alias : lire 0 = zéro partout le corrigerait mais changerait lait 0 / yaourt 0 (dette LB-D02)",
-  "« X 0% » qui ne trouvait rien trouve maintenant « X zéro » (compote 0%, jus d'orange 0%)"
- ],
+ "a_decider_par_michel": [],
  "dettes_hors_lot": [
+  "D-075 ② : « coca 0 » / « coca 0% » hors ligne SANS table d'alias (correction future : disponibilité hors ligne de l'alias Coca)",
+  "« lait 0 » / « lait 0% » hors ligne SANS table : tête de la base (même cause)",
+  "« lait zéro » (le mot) : inchangé, lait fermenté en tête — hors des arbitrages",
   "Open Food Facts reçoit la frappe telle quelle (hors des 4 sources du brief, aucun appel réel)",
-  "unités non reconnues : pièce, tranche, cuillère… (« 2 tranches de pain » garde « tranches »)",
+  "unités non reconnues : pièce, tranche, cuillère…",
   "coca light, aide coach.js, aide fast-food, crème fraîche, taux en fourchette, ml comme quantité de journal, OD-08b : non touchés"
  ],
  "fichiers_modifies": [
   "app.js",
+  "tools/alias.py",
+  "data/alias.json (régénéré, +2 clés)",
   "tests/parcours/food_lot_b.js (nouveau)",
   "tests/parcours/food_lot_b_instantane.json (nouveau)",
   "tools/banc_food_lot_b.js (nouveau)",
@@ -172,11 +177,16 @@
   "tools/mut_nut_lot_b.py (nouveau)",
   "tests/parcours/runner.js",
   "tests/recette/registre.json",
-  "docs/DECISIONS.md (D-075)",
-  "docs/JOURNAL-DE-TEST.md (5 doutes)",
+  "docs/DECISIONS.md (D-075 VALIDÉ)",
+  "docs/JOURNAL-DE-TEST.md",
   "docs/JOURNAL-DE-PARTAGE.md",
   "HANDOFF-NUT-LOT-B.json"
  ],
  "appels_reels": 0,
- "verdict": "QUALIFIÉ AVEC DETTE — tous les témoins verts (70/0), mutations 8/8, 12 bancs voisins verts aux totaux de référence ; dette nommée LB-D02 (coca 0 hors ligne sans table) et 3 points soumis à Michel. Ni intégration, ni publication, ni D-031, ni autre lot."
+ "verdict": "QUALIFIÉ AVEC DETTE — arbitrages de Michel sur D-075 appliqués ; food_lot_b 73/0, mutations 10/10, 4 bancs impactés verts aux totaux de référence ; dette non bloquante D-075 ② (coca 0 / 0% hors ligne sans table). D-075 VALIDÉ. Ni intégration, ni publication, ni D-031, ni autre lot.",
+ "arbitrages_michel_d075": {
+  "1_lait": "« lait 0 » / « lait 0% » → Lait écrémé, UHT (19050) en tête, par deux clés de la famille lait dans tools/alias.py (AJOUTS ; « lait 0% » dans TRADUCTIONS_VOULUES, sinon refusée par le contrôle de sens). data/alias.json 632 → 634 clés, rien d'autre ne change.",
+  "2_coca_hors_ligne": "dette non bloquante gardée : « coca 0 » (cola sucré) et « coca 0% » (vide) hors ligne SANS table = comportement de la base ; une correction future passera par la disponibilité hors ligne de l'alias Coca (LB-D02, LB-D04).",
+  "3_X_0pc": "plus de lecture générique : _afAliment ne lit plus « 0 » / « 0% » ; seule _aliasCle le lit « zéro », pour consulter la table. « compote 0% », « jus d'orange 0% » vides comme sur la base (LB-D16, LB-D17)."
+ }
 }
