@@ -3490,3 +3490,16 @@ Vérifiable par du code : ✅ (FV-031, FV-103). État : **à trier**.
 « coca zéro » et « cola zéro » hors ligne rendent « Cola, sans sucres ajoutés », « fromage blanc zéro / zero » la famille 0 %, et « cola »
 suivi d'un autre mot ne trouve plus « chocolat ». Reste : « light » → « édulcorants » inchangé ; « cola » tapé SEUL (dernier mot, partiel
 autorisé) peut encore toucher « chocolat ». FV-031/103/140→143 sont MUST. État : **promue**.
+↪️ *Mise à jour du 13/10 (NUT-VARIANTS-03-RED-CLOSURE, **D-070**, décision de Michel)* : « coca zéro » ne propose plus du tout
+« Cola, sucré, avec édulcorants », même en dessous ; le témoin ft-v1116 (runner CCXXIV) qui l'exigeait juste en dessous est retiré
+avec sa raison (R30). L'aliment reste trouvable quand on le nomme (« cola sucré avec édulcorants » → en tête, FV-178). ❓ **Doute
+restant** : « coca light » le montre encore en dessous (« light » → « édulcorants », non touché) ; et l'aide détaillée de la recherche
+(`coach.js`) dit encore « l'autre reste juste en dessous ». Vérifiable par du code : ✅. État : **à trier**.
+
+### 🟡 OD-08b ROUGIT SOUS CHARGE : « CARTE INTROUVABLE » DANS PROGRÈS (13/10/2026 — passe complète, hors code de l'app)
+Passe D-031 finale de NUT-VARIANTS-03-RED-CLOSURE (`d7b8616f`) : 6 792 ✅ / **1 ❌**, OD-08b (« la carte porte « 💬 Voir le
+débrief Milo » et SEULEMENT lui » → `null`, carte de la séance absente après 3 s). OD-08 juste avant est vert (le débrief est rangé
+et affiché) ; aucun fichier du débrief n'a changé depuis la passe précédente, où OD-08b était vert. Rejoué seul 3 fois sur le même
+arbre : **58/0 à chaque fois**. Même famille qu'OD-11 et OD-16 (06/10) : l'attente de la carte dans Progrès sous charge.
+❓ **Doute** : l'attente de 3 s suffit-elle quand la passe complète charge la machine, ou la liste de Progrès se dessine-t-elle
+parfois après un autre événement ? Vérifiable par du code : ✅. État : **à trier** (famille non éteinte, banc débrief).
