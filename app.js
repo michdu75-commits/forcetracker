@@ -5095,7 +5095,11 @@ function _afRang(mots, n, mot){
     for(let k=0;k<mots.length-1;k++){
       if(/^(sans|non)$/.test(mots[k])){ k++; continue; }
       if(/%$/.test(mots[k]) || _fsFormesDuTexte(mots[k]).length) continue;   // un taux, une forme (FS-02 : « sèche » → « sec »)
-      if(!we.some(x=>x===mots[k] || _fsSing(x)===_fsSing(mots[k]))) return null;
+      /* 🔴 NUT-VARIANTS-03-RED-CLOSURE (13/10) : ce que `_afMotDansNom` a TROUVÉ compte aussi s'il est un mot entier du
+         nom — une forme de pâtes tapée (« spaghetti cuit », « penne cuites ») vaut le mot « pâtes ». Sans ça la garde
+         fermait ce chemin : la courge spaghetti seule, ou rien. */
+      const r=we.some(x=>x===mots[k] || _fsSing(x)===_fsSing(mots[k])) || _afMotDansNom(mots[k], n);
+      if(!r || (r!==true && !we.includes(r.t))) return null;
     }
   }
   for(let i=0;i<mots.length;i++){
