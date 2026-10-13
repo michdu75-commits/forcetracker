@@ -39554,6 +39554,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      contourne l'aliment nommé, et le fast-food Quick suspect est CONSERVÉ avec un ⚠️ (D4). Blocs B-AS-D (données),
      B-AS-G (générateurs sur copie), B-AS-E (vraie frappe), contrôle négatif `tools/mut_food_alias_sens.py`. */
   await require('./food_alias_sens.js').ecran(t, b, PORT);
+  /* 🍽️ NUT-LOT-B (13/10/2026) : la REQUÊTE dit l'aliment, pas la quantité — « riz 100g », « 30g de whey », « eau 1,5 l »,
+     « riz. » trouvent l'aliment ; « coca 0 » se lit « coca zéro » (D-070) ; les nombres des NOMS de la base ne bougent pas
+     (B2) et une clé d'alias tapée sans quantité garde sa cible (B1). Blocs B-LB-A (structure), B-LB-E (vraie frappe, en
+     ligne, hors ligne, journal amorcé), B-LB-I (instantané de la base), B-LB-C (compléments), contrôle négatif
+     `tools/mut_nut_lot_b.py`. */
+  await require('./food_lot_b.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40500,6 +40506,7 @@ require('./food_multisource.js').source(t, ROOT, fs, path);
 require('./food_d042.js').source(t, ROOT, fs, path);
 require('./food_variants.js').source(t, ROOT, fs, path);
 require('./food_alias_sens.js').source(t, ROOT, fs, path);
+require('./food_lot_b.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

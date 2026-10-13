@@ -4761,8 +4761,9 @@ async function _complCharger(){
 }
 /* Même logique que `_ciqualChercher` (R13) : tous les mots tapés doivent être présents, dans
    n'importe quel ordre. */
-function _complChercher(q, max){
+function _complChercher(q, max, brut){
   if(!_compl) return [];
+  if(!brut) return _afSinonAliment(q, x=>_complChercher(x, max, true));   // NUT-LOT-B : la quantité ne cache plus l'aliment
   const mots=_afMots(q);                      // R2 : un seul propriétaire (ft-v1119)
   if(!mots.length) return [];
   const out=[];
@@ -4877,7 +4878,11 @@ async function _aliasCharger(){
 /* Rend l'aliment CIQUAL visé par ce que la personne a tapé, ou `null`. */
 function _aliasCible(q){
   if(!_alias||!_ciqual) return null;
-  const c=_alias.a[_afNorm(q).replace(/\s+/g,' ').trim()];
+  /* 🍽️ NUT-LOT-B : la clé telle que tapée D'ABORD — une clé connue ne change jamais de cible (B1) — puis la PARTIE
+     ALIMENTAIRE (« eau 1,5 l » → « eau », « 2 oeufs » → « oeufs », « coca 0 » → « coca zero »). Aucune clé nouvelle :
+     seules celles de la table, contrôlées par son générateur (LOT-A), peuvent répondre. */
+  const k=_afNorm(q).replace(/\s+/g,' ').trim(), f=_afAliment(q);
+  const c=(_alias.a[k]!=null) ? _alias.a[k] : (f && f!==k ? _alias.a[f] : null);
   if(c==null) return null;
   for(const a of _ciqual.a) if(a[0]===c) return a;
   return null;
@@ -4925,8 +4930,9 @@ const MARQUE_ALIAS={
    parfaitement correcte. ⏭️ Le vrai sujet reste ouvert : cinq échappeurs pour un besoin est un
    défaut R2 à traiter d'un coup, pas au détour d'une version nutrition. */
 function _marqueEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function _marquesChercher(q, max){
+function _marquesChercher(q, max, brut){
   if(!_marques) return [];
+  if(!brut) return _afSinonAliment(q, x=>_marquesChercher(x, max, true));   // NUT-LOT-B
   let n=_afNorm(q).replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
   if(MARQUE_ALIAS[n]) n=_afNorm(MARQUE_ALIAS[n]);
   else{
@@ -4977,7 +4983,8 @@ function _afGeneriqueDevant(q, ciq){
   if(!ciq || !ciq.length || _afIntentionMarque(q)) return false;
   const a=ciq[0], c=(typeof _aliasCible==='function')?_aliasCible(q):null;
   if(c && c[0]===a[0]) return true;
-  return _foodSynonymes(q).some(r=>{
+  /* NUT-LOT-B : la pertinence se juge sur ce qui a été CHERCHÉ — la partie alimentaire quand la quantité n'a rien trouvé. */
+  return _foodSynonymes(_afAliment(q)||q).some(r=>{
     const m=_afMots(r), aliment=m.filter(x=>!_fsFormesDuTexte(x).length);
     return _fsMotsEntiers(aliment.length?aliment:m, a[1]);
   });
@@ -5061,6 +5068,10 @@ function _afTrouve(n, t, mot){
    aucun ne marche, sinon le texte réellement trouvé + s'il a fallu approximer. */
 function _afMotDansNom(m, n){
   if(_afTrouve(n, m)>=0) return {t:m, approx:0};
+  /* 🍽️ NUT-LOT-B : une QUANTITÉ lue d'un bloc (« 500ml », `_afRequete`) se retrouve écrite avec une espace dans un nom
+     (« Coca-Cola 500 ml ») — le nom n'est jamais retouché (B2). */
+  const qte=_AF_QTE_MOT.exec(m), esp=qte && new RegExp('(^|\\s)'+qte[1].replace('.','\\.')+' '+qte[2]+'(?![a-z0-9])').exec(n);
+  if(esp) return {t:esp[0].trim(), approx:0};   // une quantité ENTIÈRE : ni « /100 g » (une teneur), ni « 100 gélules »
   const fin=m.slice(-1);
   const sg=(m.length>=4 && (fin==='s'||fin==='x')) ? m.slice(0,-1) : null;
   if(sg && _afTrouve(n, sg)>=0) return {t:sg, approx:1};
@@ -5235,8 +5246,9 @@ function _ciqualChercher(q, max){
 }
 /* ⭐ Le corps d'origine, inchangé — extrait pour que l'alias puisse l'appeler par-dessous sans
    dupliquer une ligne de la recherche (R2). */
-function _ciqualChercherSansAlias(q, max, promouvoir){
+function _ciqualChercherSansAlias(q, max, promouvoir, brut){
   if(!_ciqual) return [];
+  if(!brut) return _afSinonAliment(q, x=>_ciqualChercherSansAlias(x, max, promouvoir, true));   // NUT-LOT-B
   /* 🍔 ft-v1113 — LA REQUÊTE EST TRADUITE AVANT D'ÊTRE JOUÉE, la recherche elle-même ne change
      pas d'une ligne. Plusieurs requêtes possibles (« mcdo » ouvre la famille), unies dans
      l'ordre : les sandwichs d'abord, puis les frites, puis les nuggets. */
@@ -5651,14 +5663,52 @@ function _afNorm(t){
    version CRUE au lieu de la cuite. *On retire les mots-outils pour CHERCHER, jamais pour
    RECONNAÎTRE.* */
 const _AF_OUTILS=new Set(['de','du','des','la','le','les','un','une','au','aux','en','et']);
+/* 🍽️ NUT-LOT-B (13/10/2026) : un « 0 » tapé seul n'est plus jeté avec les lettres isolées — c'est un nombre (« lait 0 »,
+   « coca 0 »). S'il ne trouve rien dans les noms, `_afAliment` le lit comme le mot « zéro ». */
 function _afMots(q){
-  const bruts=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
+  const bruts=_afNorm(q).split(/\s+/).filter(m=>m.length>1||m==='0');
   const gardes=bruts.filter(m=>!_AF_OUTILS.has(m));
   return gardes.length?gardes:bruts;          // jamais vide si la frappe ne l'était pas
 }
+/* ═══ 🍽️ NUT-LOT-B (13/10/2026, mission de Michel) — LA REQUÊTE DIT L'ALIMENT, PAS LA QUANTITÉ ═══════════════════════
+   Mesuré sur la base : « riz 100g », « poulet 200g », « lait 250 ml », « riz. » (le point de la saisie mobile) ne rendaient
+   RIEN ; « eau 1,5 l » et « 2 oeufs » perdaient leur alias (la table se lit sur la requête ENTIÈRE) ; « coca 0 » jetait le 0
+   et mettait le cola SUCRÉ en tête (D-070) ; « magnésium 20 g » proposait du « 200 mg » (le « g » d'une lettre était jeté).
+   ⭐ D2 (Michel) : une quantité tapée sert UNIQUEMENT à retrouver l'aliment — elle ne pré-remplit rien (garde LOT-C).
+   UN propriétaire, deux lectures, TOUJOURS de la REQUÊTE (jamais d'un nom de la base — B2) :
+   ① `_afRequete(q)` : la requête comme on la cherche — le point final de saisie retiré, une quantité lue d'un bloc
+      (« 100 g » → « 100g », « 1,5 l » → « 1.5l ») ; `_afMotDansNom` la retrouve écrite avec une espace dans un nom
+      (« Coca-Cola 500 ml »). Un TAUX n'en est pas une (« 20% » reste un taux : « fromage blanc 20% » ne rend toujours rien).
+   ② `_afAliment(q)` : sa PARTIE ALIMENTAIRE — sans les quantités, sans un compte en tête (« 2 oeufs », « 30g de whey »),
+      un zéro en chiffre lu comme le mot « zéro » (« coca 0 », « coca 0% » → « coca zero », que la table connaît : D-070).
+      Elle sert la table d'alias (après la clé telle que tapée : B1) et le REPLI — une source qui ne trouve rien avec la
+      quantité cherche l'aliment seul (`_afSinonAliment`). Une requête faite d'une quantité seule n'a pas d'aliment : elle
+      ne devient jamais « tout le catalogue ». */
+const _AF_UNITES='g|gr|grs|gramme|grammes|kg|kgs|kilo|kilos|ml|cl|dl|l|litre|litres';
+const _AF_QTE=new RegExp('(^|\\s)(\\d+(?:\\.\\d+)?)\\s?('+_AF_UNITES+')(?=\\s|$)','g');
+const _AF_QTE_MOT=new RegExp('^(\\d+(?:\\.\\d+)?)('+_AF_UNITES+')$');
+function _afRequete(q){
+  const t=String(q||'').toLowerCase().replace(new RegExp('(\\d),(\\d+)(?=\\s?(?:'+_AF_UNITES+')(?:\\s|$))','g'),'$1.$2');
+  return _afNorm(t).replace(/[.\u2026]+$/,'').trim().replace(_AF_QTE, (x,a,nb,u)=>a+nb+u);
+}
+function _afAliment(q){
+  return _afRequete(q)
+    .replace(new RegExp('^\\d+(?:\\.\\d+)?(?:'+_AF_UNITES+')?\\s+(?:(?:de|du|des|d)\\s+)?'),'')   // en tête : « 30g de whey », « 2 oeufs »
+    .replace(new RegExp('(^|\\s)\\d+(?:\\.\\d+)?(?:'+_AF_UNITES+')(?=\\s|$)','g'),'$1')       // ailleurs : « riz 100g »
+    .replace(/(^|\s)0%?(?=\s|$)/g,'$1zero')
+    .replace(/\s+/g,' ').trim();
+}
+/* Le repli, en un seul endroit : la requête telle quelle, puis — si rien ne répond — sa partie alimentaire. */
+function _afSinonAliment(q, chercher){
+  const r=_afRequete(q), res=chercher(r);
+  if(res.length) return res;
+  const f=_afAliment(q);
+  return (f && f!==r) ? chercher(f) : res;
+}
 /* ① CE QU'IL A DÉJÀ NOTÉ. Dédoublonné par nom, le plus RÉCENT gagne : si la quantité a changé,
    c'est la dernière qui reflète ce qu'il mange aujourd'hui. */
-function _afSuggLocales(q){
+function _afSuggLocales(q, brut){
+  if(!brut) return _afNorm(q).length<_AF_SUGG_MIN ? [] : _afSinonAliment(q, x=>_afSuggLocales(x, true));   // NUT-LOT-B
   const n=_afNorm(q); if(n.length<_AF_SUGG_MIN) return [];
   /* ⭐ R2 (ft-v963) : son journal se cherche comme le reste — sinon il serait la SEULE des trois
      recherches à ne pas retrouver « amandes » dans son propre « Amande grillée ». */
