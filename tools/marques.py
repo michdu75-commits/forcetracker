@@ -127,6 +127,21 @@ HERITAGE = [
 ]
 
 
+# ⛔⛔ NUT-LOT-A (13/10/2026, décision D4 de Michel) — LES DOUTES NOMMÉS : une donnée source manifestement suspecte
+#   qu'aucun contrôle générique ne peut voir. *Donnée suspecte mais non vérifiée = CONSERVER + MARQUER « doute »* : on
+#   ne supprime pas le produit, on n'invente pas de valeur de remplacement, et on n'invente pas non plus un seuil
+#   universel de portion pour l'attraper.
+#   🍔 Le cas qui l'a fait naître (CV-NUT-NEW-004, contre-vérification de l'audit de nuit du 12/10) : « Double
+#   Cheeseburger Bacon · Quick » à 2 808 kcal pour 996 g, sans avertissement. Mesuré sur le classeur (« Base
+#   nutrition », lignes 51-52) : CHAQUE valeur de la ligne vaut 3 fois celle du « Double Cheeseburger » (936 → 2 808 kcal,
+#   43 → 129 g de protéines, 90 → 269 g de glucides, 43 → 128 g de lipides, 332 → 996 g) — le pour-100 g est identique.
+#   C'est la PORTION de la source qui est suspecte, pas la recette ; seule la table officielle Quick peut trancher.
+#   ⚠️ Le texte reste sous 90 caractères : c'est ce que la provenance d'une ligne du journal en garde (`_afSetSrc`).
+DOUTES_SOURCE = {
+    ('Quick', 'Double Cheeseburger Bacon'): 'portion suspecte dans la source : 996 g, 3 fois celle du Double Cheeseburger',
+}
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage : python3 tools/marques.py <classeur.xlsx>")
@@ -341,6 +356,30 @@ def main():
     #    exécution sans qu'aucune valeur ne bouge, et `git diff` cesserait de vouloir dire
     #    quelque chose.
     out['a'].sort(key=lambda a: (a[0], a[1]))
+    # ── ⑤ NUT-LOT-A — DES PRODUITS DIFFÉRENTS AUX VALEURS IDENTIQUES (kcal, P, G, L, portion). Mesuré par l'audit de
+    #    nuit du 12/10 : 5 groupes Quick, dont une « Dosette salade fromage blanc ciboulette » à 576 kcal — les valeurs de
+    #    « Grande Rustiques » — et des « Grande Frites supplément Sauce … » aux valeurs exactes des frites seules (hérités
+    #    compris : c'est pour ça que le contrôle passe APRÈS la fusion). Le décalage est dans le classeur source : on ne
+    #    sait pas laquelle des lignes est juste, donc TOUTES portent le doute (comme le contrôle ② entre tailles), et
+    #    aucune n'est retirée ni réécrite (décision D4). Un doute déjà posé n'est pas remplacé.
+    par_valeurs = defaultdict(list)
+    for a in out['a']:
+        par_valeurs[tuple(a[3:8])].append(a)
+    copies = [g for g in par_valeurs.values() if len({(a[0], a[1]) for a in g}) > 1]
+    for g in copies:
+        for a in g:
+            autres = [b[1] for b in g if b is not a]
+            if not a[9]:
+                a[9] = 'au moins une ligne est fausse : valeurs identiques à « %s »%s' % (
+                    autres[0], ' (+%d)' % (len(autres) - 1) if len(autres) > 1 else '')
+    nommes_absents = []
+    for (ens, nom), raison in DOUTES_SOURCE.items():
+        cible = [a for a in out['a'] if a[0] == ens and a[1] == nom]
+        if not cible:
+            nommes_absents.append('%s · %s' % (ens, nom))
+        for a in cible:
+            if not a[9]:
+                a[9] = raison
     out['n'] = len(out['a'])
     os.makedirs(os.path.dirname(SORTIE), exist_ok=True)
     with io.open(SORTIE, 'w', encoding='utf-8') as f:
@@ -358,6 +397,15 @@ def main():
               % len(doublons))
         for h in doublons:
             print('        · %s · %s' % (h[0], h[1]))
+    if copies:
+        print('\n⚠️ %d GROUPE(S) de produits DIFFÉRENTS aux valeurs identiques — tous marqués « doute », aucun retiré (D4) :' % len(copies))
+        for g in copies:
+            print('        · ' + ' = '.join('%s · %s' % (a[0], a[1]) for a in g))
+    print('\n⚠️ %d doute(s) NOMMÉ(S) (DOUTES_SOURCE, donnée source suspecte) :' % len(DOUTES_SOURCE))
+    for (ens, nom), raison in DOUTES_SOURCE.items():
+        print('        · %s · %s — %s' % (ens, nom, raison))
+    if nommes_absents:
+        print('⛔ doute(s) nommé(s) sans produit (le classeur a changé ? à relire) : ' + ', '.join(nommes_absents))
     par_ens = defaultdict(int)
     for a in gardees:
         par_ens[a['ens']] += 1
