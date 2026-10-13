@@ -31,7 +31,7 @@ const CORRIGES = {
   'confiture': [30999, '^Confiture ou marmelade, tout type de fruits, sans précision', 'D1 : générique, ni « de lait », ni « non allégée » imposée'],
   'confiture de fraise': [31024, '^Confiture de fraise', 'l\'aliment nommé existe'],
   'confiture dabricot': [31037, '^Confiture d\'abricot', 'l\'aliment nommé existe (« confiture d\'abricot » tapée)'],
-  'confiture fruits rouges': [31083, '^Confiture, autres fruits ou mélange de fruits', 'pas de confiture « fruits rouges » dans CIQUAL : le mélange de fruits correspondant'],
+  'confiture fruits rouges': [31083, '^Confiture, autres fruits ou mélange de fruits', 'pas de confiture « fruits rouges » dans CIQUAL : la confiture multi-fruits correspondante (D-074)'],
   'gruyere': [12114, '^Gruyère', 'un Gruyère existe — l\'Emmental n\'en est pas un'],
   'lieu noir': [26134, '^Lieu noir', 'le lieu noir existe — le lieu d\'Alaska est un autre poisson'],
   'pilon de poulet': [36022, '^Poulet, pilon', 'le pilon existe'],
@@ -55,16 +55,17 @@ const CORRIGES = {
   'noix de veau': [6522, '^Veau, noix', 'D1 règle générale : la noix de veau crue existe'],
   'rosette': [30304, '^Rosette', 'D1 règle générale : la rosette existe'],
   'pomme de terre a leau': [4003, '^Pomme de terre, bouillie/cuite à l\'eau', 'D1 règle générale : trouvé par le contrôle de sens (l\'apostrophe cachait le mot « eau »)'],
+  // D-074 (Michel, 13/10) : l'aliment exact existe — la forme CUITE, comme l'ancienne cible (« rôtie / cuite au four »)
+  'potatoes': [4025, '^Potatoes ou wedges.*, cuites$', 'D-074 : « Potatoes ou wedges » existe — l\'oracle MS-105 (« Pomme de terre, rôtie ») était obsolète'],
 };
-/* Ce qui NE DOIT PAS bouger : les requêtes génériques et les traductions voulues (D1), plus « potatoes », figé par
-   le témoin MS-105 (FS-05B) — une cible qu'un ancien témoin exige ne se change pas sans décision (brief §6). */
+/* Ce qui NE DOIT PAS bouger : les requêtes génériques et les traductions voulues (D1). (« potatoes » y figurait, figé par
+   le témoin MS-105 en attendant la décision de Michel : tranché par D-074, il est passé dans CORRIGES.) */
 const INCHANGES = {
   'salade': [25604, '^Salade verte', 'D1 : « salade » reste le générique'],
   'blanc de poulet': [36017, '^Poulet, filet', 'D1 : la viande, pas la tranche de charcuterie'],
   'blanc de dinde': [36304, '^Dinde, escalope', 'D1 : la viande, pas la tranche de charcuterie'],
   'pomme de terre vapeur': [4048, '^Pomme de terre, cuite', 'D1 : cuite générique, pas « vapeur sous vide » imposée'],
   'pommes de terre vapeur': [4048, '^Pomme de terre, cuite', 'idem'],
-  'potatoes': [4026, '^Pomme de terre, rôtie', 'NON TOUCHÉ : MS-105 fige cette cible — décision de Michel attendue'],
 };
 const FRAPPE = {   // la requête telle qu'on la tape, avec accents et apostrophe, pour la clé normalisée
   'confiture dabricot': 'confiture d\'abricot', 'gruyere': 'gruyère', 'pain aux cereales': 'pain aux céréales',
@@ -120,7 +121,7 @@ module.exports.source = function (t) {
   for (const [k, [c, , raison]] of Object.entries(CORRIGES))
     t('B-AS-D « ' + k + ' » → ' + c + ' ' + (by[c] ? by[c][1].slice(0, 46) : '?') + ' — ' + raison, A[k] === c,
       'table : ' + A[k] + ' ' + (by[A[k]] ? by[A[k]][1].slice(0, 46) : ''));
-  t('B-AS-D ⛔ NE BOUGE PAS : salade, blanc de poulet / de dinde, pomme(s) de terre vapeur (D1) et potatoes (MS-105)',
+  t('B-AS-D ⛔ NE BOUGE PAS : salade, blanc de poulet / de dinde, pomme(s) de terre vapeur (D1)',
     Object.entries(INCHANGES).every(([k, [c]]) => A[k] === c), Object.entries(INCHANGES).filter(([k, [c]]) => A[k] !== c).map(([k]) => k + '→' + A[k]).join(' '));
 
   const G = groupesIdentiques(M);

@@ -122,6 +122,9 @@ CORRECTIONS.update({
     'noix de veau':             (6522,  'NUT-LOT-A, D1 : visait l\'escalope — la noix de veau crue existe'),
     'rosette':                  (30304, 'NUT-LOT-A, D1 : visait le saucisson sec — la rosette existe'),
     'pomme de terre a leau':    (4003,  'NUT-LOT-A, D1 : visait la pomme de terre cuite moyenne — « bouillie/cuite à l\'eau » existe (trouvé par le contrôle de sens)'),
+    # D-074 (Michel, 13/10) : « potatoes » → l'aliment exact, dans sa forme CUITE comme l'ancienne cible (« rôtie / cuite
+    #    au four ») ; l'oracle MS-105 de FS-05B, qui figeait « Pomme de terre, rôtie », était historique et a été mis à jour.
+    'potatoes':                 (4025,  'NUT-LOT-A, D-074 : visait la pomme de terre rôtie (91 kcal) — « Potatoes ou wedges…, cuites » existe (175 kcal)'),
 })
 
 # ⛔ RETRAITS — un mot qui ne doit plus avoir d'alias du tout (R30 : le retrait s'écrit, avec sa raison).
@@ -289,9 +292,7 @@ TRADUCTIONS_VOULUES = {
     'tagliatelle':            (9811,  _PATES),
     'tagliatelles':           (9811,  _PATES),
     'vermicelles':            (9811,  _PATES),
-    # ⏳ À TRANCHER PAR MICHEL — PAS une traduction voulue : « Potatoes ou wedges… » existe (4025, 175 kcal contre 91), mais le
-    #    témoin MS-105 (FS-05B) fige la cible actuelle, et le brief de NUT-LOT-A interdit de changer un témoin sans décision.
-    'potatoes':               (4026,  '⏳ À TRANCHER PAR MICHEL : « Potatoes ou wedges » existe (4025) ; MS-105 fige la cible actuelle'),
+    # (« potatoes » figurait ici comme À TRANCHER — tranché par D-074 : il est passé dans CORRECTIONS, vers l'aliment exact.)
 }
 
 def norm(t):

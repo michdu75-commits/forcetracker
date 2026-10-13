@@ -32,6 +32,8 @@ MUT = [
      [(AL, "    'gruyere':                  (12114,", "    'gruyere':                  (12115,")], 'GARDE'),
     ('M6 retirer le doute du Double Cheeseburger Bacon',
      [(MQ, "    ('Quick', 'Double Cheeseburger Bacon'): 'portion suspecte dans la source : 996 g, 3 fois celle du Double Cheeseburger',\n", "")], 'GARDE'),
+    ('M7 remettre « potatoes » -> Pomme de terre, rotie (4026) — D-074',
+     [(AL, "    'potatoes':                 (4025,", "    'potatoes':                 (4026,")], 'GARDE'),
     ('MC1 [negatif] commentaire seulement',
      [(AL, "def controle_semantique(out, brut, base):\n", "# (commentaire de controle)\ndef controle_semantique(out, brut, base):\n")], 'OK'),
 ]
