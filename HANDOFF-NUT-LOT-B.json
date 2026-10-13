@@ -1,0 +1,182 @@
+{
+ "lot": "NUT-LOT-B — la requête dit l'aliment, pas la quantité",
+ "branche": "claude/nut-lot-b",
+ "base": {
+  "lot_a_head": "205cd17bfa3c791c324b2bd32f4c4d47ffd4ea7d",
+  "lot_a_fonctionnel": "cb22b6a1",
+  "lot_a_tree": "d78b765267322a0c4d5c48e1648e991b56abef3a",
+  "master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
+  "reservation_journal": "bf912df3"
+ },
+ "head_fonctionnel": "43b35546ce1edd7d893115d2d852e57c96851e7d",
+ "tree_fonctionnel": "731158a02fe007f72376fc1d36782b1cff72f95d",
+ "head_fonctionnel_precedent": "5f5e4545 (1re version : le « 0 » gardé comme mot partout — changeait les têtes de « lait 0 » et « yaourt 0 », retirée par 43b35546)",
+ "head_final": "(commit de clôture qui porte ce fichier — voir le journal de partage)",
+ "drive": "non utilisé",
+ "d2": "la quantité tapée sert UNIQUEMENT à retrouver l'aliment ; rien n'est pré-rempli (champ quantité inchangé, garde LOT-C)",
+ "strategie": {
+  "proprietaire": "_afRequete (frappe : point final retiré, quantité lue d'un bloc « 100 g » → « 100g », virgule décimale avant une unité) + _afAliment (partie alimentaire : sans quantités, sans compte en tête « 2 oeufs » / « 30g de », « 0 » / « 0% » lus « zero »). Tous deux appellent _afNorm : pas de second normaliseur.",
+  "repli": "_afSinonAliment, un seul endroit pour les 4 sources (CIQUAL, fast-food, compléments, déjà noté) : la partie alimentaire si c'est ELLE que la table d'alias reconnaît ; sinon la frappe telle quelle, puis l'aliment seul si rien ne répond.",
+  "alias": "_aliasCle : la clé telle que tapée D'ABORD (B1, 632/632 identiques), sinon la partie alimentaire ; aucune clé nouvelle — seules celles de data/alias.json (contrôlées par le générateur de LOT-A) répondent. _aliasCible lit _aliasCle.",
+  "noms_de_la_base": "jamais nettoyés (B2) ; un nom qui PORTE une quantité (« Coca-Cola 500 ml ») se retrouve par _afMotDansNom (quantité entière, ni « /100 g », ni « 100 gélules »).",
+  "zero": "le « 0 » n'est lu « zéro » que là où la table connaît « X zéro » (coca, cola, pepsi, fromage blanc, ice tea, soda…) ou quand la frappe ne trouve RIEN (« coca 0% ») ; ailleurs il reste ignoré comme sur la base (« lait 0 », « yaourt 0 », « petit suisse 0 »). FOOD_SYNONYMES réutilisé (zero → 0% / sans sucres), aucun moteur « zéro »."
+ },
+ "avant_apres": {
+  "riz 100g": {
+   "avant": "vide (4 sources)",
+   "apres": "riz (alias Riz blanc, cuit) = « riz », journal compris"
+  },
+  "poulet 200g": {
+   "avant": "vide",
+   "apres": "= « poulet » (CIQUAL + fast-food, ordre D-042)"
+  },
+  "riz cuit 150 g": {
+   "avant": "vide",
+   "apres": "= « riz cuit »"
+  },
+  "lait 250ml": {
+   "avant": "vide",
+   "apres": "= « lait » (alias Lait demi-écrémé)"
+  },
+  "30g de whey": {
+   "avant": "journal vide ; compléments « WHEY PRO (30g, 1000g) »",
+   "apres": "journal : sa whey ; compléments inchangés (le nom porte 30g)"
+  },
+  "pain complet. / riz. / banane. / lait demi-écrémé.": {
+   "avant": "vides",
+   "apres": "= sans le point"
+  },
+  "eau 1,5 l": {
+   "avant": "Eau de coco en tête",
+   "apres": "Eau du robinet (alias « eau »)"
+  },
+  "2 oeufs": {
+   "avant": "Oeufs au lait en tête",
+   "apres": "Oeuf cru (alias « oeufs »)"
+  },
+  "coca 0": {
+   "avant": "Cola, sucré en tête ; Coca-Cola Quick ; Glucocal",
+   "apres": "Cola sans sucres ajoutés ; aucun sucré (en ligne). Hors ligne SANS table : inchangé (dette LB-D02)"
+  },
+  "coca 0%": {
+   "avant": "vide",
+   "apres": "Cola sans sucres ajoutés (en ligne et hors ligne)"
+  },
+  "coca zéro": {
+   "avant": "Cola sans sucres ajoutés",
+   "apres": "inchangé (D-070)"
+  },
+  "lait 0": {
+   "avant": "Lait à 1,2% MG, UHT",
+   "apres": "inchangé"
+  },
+  "lait 0%": {
+   "avant": "Lait fermenté type yaourt au bifidus, nature, 0% MG",
+   "apres": "inchangé"
+  },
+  "yaourt 0": {
+   "avant": "Yaourt à la grecque nature",
+   "apres": "inchangé"
+  },
+  "yaourt 0%": {
+   "avant": "Yaourt ou lait fermenté, nature, 0% MG",
+   "apres": "inchangé"
+  },
+  "fromage blanc 0": {
+   "avant": "0% en tête puis 2-3 %, 7-8 % ; dosette Quick",
+   "apres": "0% en tête, seulement des 0 % ; plus de dosette (la table connaît « fromage blanc zero »)"
+  },
+  "fromage blanc 0%": {
+   "avant": "0% nature",
+   "apres": "inchangé"
+  },
+  "100g / 250ml / 200 g": {
+   "avant": "CIQUAL vide ; « 200 g » proposait Fuze Tea 200 ml, Coca-Cola 200 ml et des compléments « 2000 »",
+   "apres": "CIQUAL vide ; seuls des noms qui PORTENT la quantité (« 200 g » → Boost 200g, Inositol 200G… ; « 250ml » ajoute Reguven 250 ml) — changement documenté (§11)"
+  }
+ },
+ "b2_noms": "empreinte _fsTete des 3 341 noms proposables identique à l'instantané de 205cd17b ; Mimolette 12 mois, Crème 12 à 25% MG, Beurre 80% MG, Eau minérale (Arcachon, 33) retrouvés ; B-FV-N vert (food_variants 131/0) ; 35 noms seraient altérés SI le nettoyage leur était appliqué (0% MG → zero, points de suspension) — M6 le prouve.",
+ "temoins": {
+  "banc": "tests/parcours/food_lot_b.js + tools/banc_food_lot_b.js (blocs B-LB-A, B-LB-E, B-LB-I, B-LB-C) ; instantané tests/parcours/food_lot_b_instantane.json (généré sur 205cd17b, 632 clés, 3 341 noms)",
+  "base": "41 OK / 29 rouges (app.js de 205cd17b ; les témoins de préservation y sont verts)",
+  "apres": "70 OK / 0 rouge",
+  "runner": "branché (source + écran) pour la passe finale",
+  "registre": "banc:food_lot_b + scénario NUTRI-REQUETE-QUANTITE"
+ },
+ "mutations": {
+  "outil": "tools/mut_nut_lot_b.py (arbre cloné)",
+  "resultat": "8/8 conformes",
+  "detail": [
+   "M1 aucune unité reconnue : 17 rouges",
+   "M2 unité séparée cassée : 8 rouges",
+   "M3 % traité comme une unité : 7 rouges (lait 1,2%, fromage blanc 20%, lait 0%, yaourt 0%, coca 0%)",
+   "M4 lecture « zéro » cassée : 5 rouges (coca 0, coca 0%, fromage blanc 0)",
+   "M5 point final gardé : 6 rouges",
+   "M6 nettoyage appliqué aux noms CIQUAL : 4 rouges (lait 0%, yaourt 0%, 632 clés, empreinte _fsTete)",
+   "M7 alias sur la frappe brute : 15 rouges",
+   "MC1 commentaire : vert (70/0)"
+  ]
+ },
+ "bancs": {
+  "food_lot_b": "70/0",
+  "food_alias_sens": "77/0",
+  "food_variants": "131/0 (B-FV-N compris)",
+  "food_d042": "73/0",
+  "food_semantics": "44/0",
+  "food_formes": "46/0",
+  "food_prefs": "39/0",
+  "food_reference": "136/0",
+  "food_multisource": "177/0",
+  "repas_actif": "24/0",
+  "habitudes_alim": "37/0",
+  "journal_qty_guard": "21/0",
+  "arbre": "731158a0 (HEAD fonctionnel 43b35546) ; depuis : documentation et registre seulement",
+  "totaux_de_reference": "tous inchangés"
+ },
+ "controles": {
+  "check_regles": "0 erreur",
+  "git_diff_check": "propre",
+  "recette_selecteur": "--diff 205cd17b : 16 contrôles, aucune fonction sans scénario ; --auto-test 15/0"
+ },
+ "lot_a": "non régressé : confiture, confiture de fraise / d'abricot / fruits rouges, gruyère, lieu noir, potatoes, riz thaï, beurre salé verts (LB-L01→07, food_alias_sens 77/0) ; « gruyère 30g », « confiture 20 g » passent par le même alias (LB-B05/B06)",
+ "d031": "non lancée (brief §15 : une seule passe après LOT-B, sur l'arbre Nutrition final intégré)",
+ "regle_17": {
+  "fichiers_runtime_applicatifs": "1 (app.js)",
+  "lignes": "+71 −9 (dont ~27 de commentaires)",
+  "donnees_persistees_ajoutees": 0,
+  "cles_de_stockage": 0,
+  "fonctions_ajoutees": "4 (_afRequete, _afAliment, _afSinonAliment, _aliasCle) + 3 constantes (_AF_UNITES, _AF_QTE, _AF_QTE_MOT)",
+  "fonctions_modifiees": "_aliasCible, _afGeneriqueDevant, _afMotDansNom, _ciqualChercherSansAlias, _marquesChercher, _complChercher, _afSuggLocales (paramètre interne `brut`)",
+  "moteur_second": "aucun (pas de second moteur de recherche, ni de second normaliseur, ni de table par aliment)",
+  "anciens_chemins_supprimes_ou_fusionnes": "0 supprimé ; le repli des 4 sources est UN seul chemin (_afSinonAliment)"
+ },
+ "decisions": {
+  "D-075": "Claude, PROPOSÉ : lecture de la requête (①→⑤) ; l'alternative « 0 = zéro partout » (1re version) écartée parce qu'elle changeait lait 0 / yaourt 0"
+ },
+ "a_decider_par_michel": [
+  "lait 0 / lait 0% : le lait écrémé n'est en tête d'aucun des deux (inchangé par LOT-B, état de la base)",
+  "coca 0 hors ligne SANS table d'alias : lire 0 = zéro partout le corrigerait mais changerait lait 0 / yaourt 0 (dette LB-D02)",
+  "« X 0% » qui ne trouvait rien trouve maintenant « X zéro » (compote 0%, jus d'orange 0%)"
+ ],
+ "dettes_hors_lot": [
+  "Open Food Facts reçoit la frappe telle quelle (hors des 4 sources du brief, aucun appel réel)",
+  "unités non reconnues : pièce, tranche, cuillère… (« 2 tranches de pain » garde « tranches »)",
+  "coca light, aide coach.js, aide fast-food, crème fraîche, taux en fourchette, ml comme quantité de journal, OD-08b : non touchés"
+ ],
+ "fichiers_modifies": [
+  "app.js",
+  "tests/parcours/food_lot_b.js (nouveau)",
+  "tests/parcours/food_lot_b_instantane.json (nouveau)",
+  "tools/banc_food_lot_b.js (nouveau)",
+  "tools/instantane_food_lot_b.js (nouveau)",
+  "tools/mut_nut_lot_b.py (nouveau)",
+  "tests/parcours/runner.js",
+  "tests/recette/registre.json",
+  "docs/DECISIONS.md (D-075)",
+  "docs/JOURNAL-DE-TEST.md (5 doutes)",
+  "docs/JOURNAL-DE-PARTAGE.md",
+  "HANDOFF-NUT-LOT-B.json"
+ ],
+ "appels_reels": 0,
+ "verdict": "QUALIFIÉ AVEC DETTE — tous les témoins verts (70/0), mutations 8/8, 12 bancs voisins verts aux totaux de référence ; dette nommée LB-D02 (coca 0 hors ligne sans table) et 3 points soumis à Michel. Ni intégration, ni publication, ni D-031, ni autre lot."
+}
