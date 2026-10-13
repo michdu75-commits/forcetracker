@@ -3535,3 +3535,35 @@ CIQUAL n'a pas de confiture « fruits rouges ». J'ai choisi 31083 « autres fru
 bon ? **Juge humain**. État : **à trier**.
 ↪️ *Décision de Michel (13/10, D-074 ③)* : validé à condition que 31083 soit une confiture — libellé exact « Confiture, autres
 fruits ou mélange de fruits (extra ou classique) » : c'en est une. État : **écartée** (tranché, rien à changer).
+
+### 🟡 « LAIT 0 » / « LAIT 0% » : LE LAIT ÉCRÉMÉ N'EST EN TÊTE NI DE L'UN NI DE L'AUTRE (13/10/2026 — NUT-LOT-B)
+Mesuré sur la base (`205cd17b`) et inchangé par LOT-B (brief §8 : aucune tête de « lait 0 » ou « yaourt 0 » ne change sans
+décision) : « lait 0 » ignore le 0 → tête « Lait à 1,2% MG, UHT, enrichi en vitamines » ; « lait 0% » → tête « Lait
+fermenté type yaourt au bifidus, nature, 0% MG ». Le « Lait écrémé, UHT » (19050, celui de la clé « lait ecreme ») n'est en
+tête d'aucun des deux. ⚠️ La 1ʳᵉ version de LOT-B rendait à « lait 0 » la tête de « lait 0% » : retirée (D-075 ④).
+❓ **Doute** : une personne qui tape « lait 0 » ou « lait 0% » veut-elle le lait écrémé ? Vérifiable par du code : ✅ (la
+tête attendue). État : **à trier** — décision de Michel.
+
+### 🟡 « COCA 0 » HORS LIGNE SANS TABLE D'ALIAS : LE 0 RESTE IGNORÉ (13/10/2026 — NUT-LOT-B, dette LB-D02)
+En ligne, « coca 0 » vaut « coca zéro » parce que la table d'alias connaît « coca zero ». Hors ligne au tout premier usage
+(table pas encore chargée), rien ne dit que ce « 0 » veut dire « zéro » : « coca 0 » = « coca » (le cola sucré en tête),
+comme sur la base. « coca 0% » est, lui, corrigé partout (la frappe ne trouve rien, on cherche « coca zéro »). Lire « 0 » =
+« zéro » sans la table changerait aussi « lait 0 » et « yaourt 0 ». ❓ **Doute** : faut-il le faire ? Vérifiable par du
+code : ✅ (LB-D02 rougira). État : **à trier** — décision de Michel.
+
+### 🟡 « X 0% » QUI NE TROUVAIT RIEN TROUVE MAINTENANT « X ZÉRO » (13/10/2026 — NUT-LOT-B, D-075 ④)
+Quand la frappe ne trouve rien, la recherche essaie la partie alimentaire, où un « 0 » / « 0% » se lit « zéro » (D-061 ① :
+0 % OU sans sucres). Mesuré : « compote 0% » était vide et propose maintenant « Compote ou assimilé, tout type de fruits,
+sans précision sur la teneur en sucres » en tête ; « jus d orange 0% » propose les jus d'orange frais / pur jus. Aucun
+résultat qui existait déjà ne change. ❓ **Doute** : une liste qui était vide doit-elle le rester pour ces aliments ?
+Vérifiable par du code : ✅. État : **à trier**.
+
+### 🟡 « FROMAGE BLANC 0 » : LA DOSETTE DU FAST-FOOD NE REMONTE PLUS (13/10/2026 — NUT-LOT-B)
+La table connaît « fromage blanc zero » : « fromage blanc 0 » cherche donc « fromage blanc zéro » dans les 4 sources. Sur la
+base, le 0 était ignoré : on voyait « Dosette salade fromage blanc ciboulette · Quick » et les 2-3 % / 7-8 % sous le 0 %.
+Maintenant : seulement les 0 %. ❓ **Doute** : voulu partout ? Vérifiable par du code : ✅. État : **à trier**.
+
+### 🟡 OPEN FOOD FACTS REÇOIT LA FRAPPE TELLE QUELLE (13/10/2026 — NUT-LOT-B, hors périmètre)
+`_offRechercher` envoie le texte tapé (« riz 100g », « riz. ») sans passer par la partie alimentaire. Le brief limitait
+LOT-B aux 4 sources locales ; aucun appel réel n'a été fait. ❓ **Doute** : OFF gère-t-il bien la quantité tapée ?
+Vérifiable par du code : ⚠️ (avec une fixture, pas en vrai). État : **à trier**.
