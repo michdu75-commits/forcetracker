@@ -6,14 +6,15 @@
   "master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
   "reservation_journal": "8e9b8f13"
  },
- "head_fonctionnel": "75b0cd49",
- "tree_fonctionnel": "86ca8ec3831d176dbbfa63972bdf399eb5d1a6b2",
+ "head_fonctionnel": "cb22b6a1",
+ "tree_fonctionnel": "d78b765267322a0c4d5c48e1648e991b56abef3a",
  "head_final": "(commit de clôture qui porte ce fichier — voir le journal de partage)",
  "drive": "non utilisé : les preuves de l'audit de nuit sont dans le dépôt (branche claude/nut-night-audit-2026-10-12)",
  "decisions": {
   "D1": "D-071 (Michel) : requête explicite → aliment nommé ; générique reste générique",
   "D4": "D-072 (Michel) : Quick suspect = conserver + doute, sans seuil universel ni valeur inventée",
-  "mise_en_oeuvre": "D-073 (Claude, PROPOSÉ) : choix détaillés, dont « confiture fruits rouges » → 31083 et le doute porté par TOUS les membres d'un groupe copié"
+  "mise_en_oeuvre": "D-073 (Claude, PROPOSÉ) : choix détaillés, dont « confiture fruits rouges » → 31083 et le doute porté par TOUS les membres d'un groupe copié",
+  "cloture": "D-074 (Michel) : « potatoes » → l'aliment exact « Potatoes ou wedges » (MS-105 obsolète) ; D-073 ①②④ validés ; « confiture fruits rouges » 31083 validé (libellé exact : « Confiture, autres fruits ou mélange de fruits (extra ou classique) », c'est une confiture) ; aide fast-food = dette séparée"
  },
  "alias": {
   "corrections_retenues": {
@@ -269,6 +270,18 @@
      81
     ]
    },
+   "potatoes": {
+    "avant": [
+     4026,
+     "Pomme de terre, rôtie/cuite au four",
+     91
+    ],
+    "apres": [
+     4025,
+     "Potatoes ou wedges ou quartiers de pommes de terre épicés, surgelées, cuites",
+     175
+    ]
+   },
    "riz semi-complet": {
     "avant": [
      9103,
@@ -318,16 +331,17 @@
     ]
    }
   },
-  "n_corrigees": 25,
+  "n_corrigees": 26,
   "liste_audit_rejouee": "16 cas de l'audit tous reproduits et démontrés (CIQUAL vérifié) ; « jambon sec », « haut de cuisse » et « pâtes semi-complètes » compris",
   "d1_inchanges": "salade → 25604 · blanc de poulet → 36017 · blanc de dinde → 36304 · pomme(s) de terre vapeur → 4048 (déjà conformes à D1, figés par témoin)",
   "au_dela_de_la_liste": "tradition, baguette tradition, noix de veau, rosette, pomme de terre à l'eau — trouvés par le contrôle de sens, D1 règle générale (D-073 ②)",
-  "non_touche_stop": "potatoes → 4026 : « Potatoes ou wedges » (4025) existe, mais le témoin MS-105 fige la cible actuelle — décision de Michel attendue"
+  "potatoes": "D-074 : → 4025 « Potatoes ou wedges ou quartiers de pommes de terre épicés, surgelées, cuites » (175 kcal), la forme cuite comme l'ancienne cible (4026 « Pomme de terre, rôtie/cuite au four », 91 kcal). Rouge → vert : AS-26 75/2 → 77/0 ; MS-105 (food_multisource) 176/1 sur la nouvelle table avec l'ancien oracle, puis 177/0 une fois l'oracle historique mis à jour",
+  "confiture_fruits_rouges": "31083 « Confiture, autres fruits ou mélange de fruits (extra ou classique) » — validé (D-074 ③)"
  },
  "controle_semantique": {
   "regle": "refus de générer (rien écrit, code 1) si la cible ne porte pas les mots de la clé alors qu'un autre aliment proposable les porte tous ; mots outils ignorés, pluriel et accord tolérés, élision détachée",
-  "base_audit": "mesuré sur la table de base, sans liste blanche : 50 alias refusés (l'oracle de l'audit en voyait 49 ; + « confiture d'abricot » et « pomme de terre à l'eau » grâce à l'élision détachée, − « pâtes complètes », faux positif d'accord complet/complète) ; après les 25 corrections : 27, exactement la liste blanche",
-  "apres": "0 refus · 27 traductions voulues, chacune liée à SA cible et justifiée (TRADUCTIONS_VOULUES) — dont « potatoes » marqué À TRANCHER",
+  "base_audit": "mesuré sur la table de base, sans liste blanche : 50 alias refusés (l'oracle de l'audit en voyait 49 ; + « confiture d'abricot » et « pomme de terre à l'eau » grâce à l'élision détachée, − « pâtes complètes », faux positif d'accord complet/complète) ; après les 26 corrections : 26, exactement la liste blanche",
+  "apres": "0 refus · 26 traductions voulues, chacune liée à SA cible et justifiée (TRADUCTIONS_VOULUES) — « potatoes » en est sorti (D-074)",
   "preuve_refus": "copie de tools/alias.py + clé injectée « pain de seigle » → pain complet : REFUS, aucun fichier écrit ; « spaghetti » détourné vers le riz complet : REFUS (la justification est liée à la cible)"
  },
  "quick": {
@@ -335,57 +349,66 @@
   "dosette": "« Dosette salade fromage blanc ciboulette » (576 kcal / 226 g) : conservée, valeurs intactes, ⚠️ « au moins une ligne est fausse : valeurs identiques à … »",
   "sauce_ranch": "« Grande Frites supplément Sauce Ranch » (172 kcal / 65 g = Petite Frite) : conservée, ⚠️",
   "double_cheeseburger_bacon": "CV-NUT-NEW-004 : conservé, valeurs intactes (281,9 kcal/100 g, 996 g, 2 808 kcal), doute NOMMÉ « portion suspecte dans la source : 996 g, 3 fois celle du Double Cheeseburger » (DOUTES_SOURCE) — affiché dans la liste, redit au formulaire, posé sur la provenance au clic ; aucun seuil universel de portion, aucune valeur corrigée",
-  "controles": "le Double Cheeseburger et le Big Mac ne reçoivent AUCUN doute (le doute est ciblé)"
+  "controles": "le Double Cheeseburger et le Big Mac ne reçoivent AUCUN doute (le doute est ciblé)",
+  "doute_sur_les_deux": "D-074 ② : lignes dupliquées dont la source ne dit pas laquelle est juste — les deux conservées, le doute sur les deux, aucune valeur modifiée (en place, rien à changer)"
  },
  "temoins": {
   "banc": "tests/parcours/food_alias_sens.js + tools/banc_food_alias_sens.js (blocs B-AS-D, B-AS-G, B-AS-E)",
   "base": "18 OK / 58 rouges",
-  "apres": "76 OK / 0 rouge",
+  "apres": "77 OK / 0 rouge",
   "runner": "branché (source + écran) pour la passe finale après LOT-B",
-  "registre": "banc:food_alias_sens + scénario NUTRI-TABLES-SENS"
+  "registre": "banc:food_alias_sens + scénario NUTRI-TABLES-SENS",
+  "potatoes": "AS-26 + B-AS-D : rouges avant le correctif (75/2), verts après (77/0)"
  },
  "mutations": {
   "outil": "tools/mut_food_alias_sens.py (arbre cloné, régénéré)",
-  "resultat": "7/7 conformes",
+  "resultat": "8/8 conformes",
   "detail": [
    "M1 confiture → Confiture de lait : 2 rouges",
    "M2 contrôle sémantique désactivé : 2 rouges",
    "M3 refus sans arrêt (clé non blanchie passe) : 2 rouges",
    "M4 contrôle Quick des valeurs copiées supprimé : 3 rouges",
-   "M5 gruyère → Emmental : le générateur REFUSE, 1 rouge (copie ≠ table)",
+   "M5 gruyère → Emmental : le générateur REFUSE, 1 rouge",
    "M6 doute du Double Cheeseburger Bacon retiré : 3 rouges",
-   "MC1 commentaire : vert 76/0"
+   "M7 potatoes → Pomme de terre, rôtie : le générateur REFUSE, 1 rouge",
+   "MC1 commentaire : vert 77/0"
   ]
  },
  "bancs": {
-  "food_alias_sens": "76/0",
-  "food_variants": "131/0",
-  "food_d042": "73/0",
-  "food_semantics": "44/0",
-  "food_formes": "46/0",
-  "food_prefs": "39/0",
-  "food_reference": "136/0",
-  "food_multisource": "177/0",
-  "repas_actif": "24/0",
-  "habitudes_alim": "37/0",
-  "journal_qty_guard": "21/0",
-  "check_regles": "0 erreur",
-  "git_diff_check": "propre",
-  "selecteur_autotest": "15/0"
+  "rejoues_apres_D074": {
+   "food_alias_sens": "77/0",
+   "food_multisource": "177/0 (MS-105 : 176/1 avant mise à jour de l'oracle)",
+   "mutations": "8/8",
+   "check_regles": "0 erreur",
+   "git_diff_check": "propre"
+  },
+  "pourquoi_seulement_ceux_la": "seule la clé « potatoes » a changé depuis 75b0cd49 ; dans tests/, seuls MS-105 (food_multisource) et food_alias_sens la citent (recherche faite)",
+  "sur_75b0cd49": {
+   "food_variants": "131/0",
+   "food_d042": "73/0",
+   "food_semantics": "44/0",
+   "food_formes": "46/0",
+   "food_prefs": "39/0",
+   "food_reference": "136/0",
+   "repas_actif": "24/0",
+   "habitudes_alim": "37/0",
+   "journal_qty_guard": "21/0",
+   "selecteur_autotest": "15/0"
+  }
  },
  "generation": {
   "reproductible": "les deux générateurs, relancés sur une copie, produisent EXACTEMENT data/alias.json et data/marques.json (B-AS-G ① ④ + point de départ des mutations)",
   "edition_manuelle": "aucune",
-  "diff_alias_json": "632 → 632 clés, 0 ajoutée, 0 retirée, 25 cibles changées",
+  "diff_alias_json": "632 → 632 clés, 0 ajoutée, 0 retirée, 26 cibles changées depuis la base fcad78b0 (dont « potatoes »)",
   "diff_marques_json": "123 → 123 produits, seul le champ « doute » change, sur 12 produits ; aucune valeur, aucun nom, aucune portion modifiés"
  },
  "d031": "non lancée (décision de Michel : une seule passe complète, sur l'arbre Nutrition final intégré après LOT-B)",
  "regle_17": {
   "fichiers_runtime_applicatifs": 0,
-  "generateurs_modifies": "2 (tools/alias.py +129 −1, tools/marques.py +48)",
+  "generateurs_modifies": "2 (tools/alias.py +130 −1, tools/marques.py +48)",
   "donnees_generees_regenerees": "2 (data/alias.json, data/marques.json)",
   "fonctions_ajoutees": "3, dans le générateur seulement (_mots_sens, _porte, controle_semantique) — aucune au runtime",
-  "tables_ajoutees": "2, dans les générateurs (TRADUCTIONS_VOULUES 27 entrées, DOUTES_SOURCE 1 entrée)",
+  "tables_ajoutees": "2, dans les générateurs (TRADUCTIONS_VOULUES 26 entrées, DOUTES_SOURCE 1 entrée)",
   "moteurs_ou_chemins_paralleles": 0,
   "donnees_persistees_ajoutees": 0,
   "anciens_chemins_supprimes_ou_fusionnes": 0
@@ -398,21 +421,21 @@
   "tests/parcours/food_alias_sens.js (nouveau)",
   "tools/banc_food_alias_sens.js (nouveau)",
   "tools/mut_food_alias_sens.py (nouveau)",
+  "tests/parcours/food_multisource_corpus.js (MS-105, D-074)",
   "tests/parcours/runner.js (branchement)",
   "tests/recette/registre.json",
-  "docs/DECISIONS.md (D-071, D-072, D-073)",
+  "docs/DECISIONS.md (D-071 → D-074)",
   "docs/JOURNAL-DE-TEST.md",
   "docs/JOURNAL-DE-PARTAGE.md",
   "HANDOFF-NUT-LOT-A.json"
  ],
  "dettes_hors_lot": [
-  "potatoes (À TRANCHER, MS-105)",
-  "doute porté aussi par les frites héritées « vérifiées » (D-073 ④, à confirmer)",
-  "aide du fast-food : n'annonce que le ⚠️ « kcal ≠ macros » (texte applicatif, non touché)",
-  "« confiture fruits rouges » : 31083 plutôt que 30999 (à confirmer)",
+  "aide du fast-food : n'annonce que le ⚠️ « kcal ≠ macros » — dette SÉPARÉE (D-074 ④), texte applicatif non touché",
+  "D-073 ③ (refus + liste blanche liée à la cible) et ⑤ (accord en genre, élision) : choix techniques de mise en œuvre, restés PROPOSÉ",
   "les 273 cibles « sans tous les mots » non contrôlées par le sens (seules celles qu'un autre aliment porte entièrement le sont)",
   "LOT-B, quantités dans la requête, « coca light », macros CIQUAL non déterminées : hors lot",
   "dettes de l'audit : pluriels sans alias (P-015), variantes d'écriture (P-013), fautes de frappe (P-012), nom exact fast-food pas en tête (P-017), kcal ≠ macros sur 3 petites lignes (P-018)"
  ],
- "verdict": "QUALIFIÉ AVEC DETTE — erreurs d'alias démontrées corrigées, générateur qui refuse une clé fautive, Quick suspect conservé avec doute ; dettes : potatoes et trois choix D-073 à confirmer par Michel"
+ "verdict": "QUALIFIÉ — décisions de Michel du 13/10 appliquées (D-074) ; tous les témoins verts, mutations 8/8 ; reste une dette SÉPARÉE (aide du fast-food). Ni intégration, ni publication, LOT-B non lancé.",
+ "head_fonctionnel_precedent": "75b0cd49 (avant les décisions de Michel du 13/10 soir)"
 }

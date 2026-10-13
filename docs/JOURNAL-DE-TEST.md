@@ -3511,20 +3511,27 @@ Le contrôle de sens du générateur d'alias le voit : la règle D1 (l'aliment n
 cuites ». ⛔ Non corrigé : le témoin MS-105 (FS-05B) fige la cible actuelle, et le brief interdit de changer un témoin sans
 décision. Il figure dans `TRADUCTIONS_VOULUES` comme **À TRANCHER**. ❓ **Doute** : quelqu'un qui tape « potatoes » mange-t-il des
 wedges de fast-food (≈ ×2 en calories) ou des pommes de terre au four ? Vérifiable par du code : ✅. État : **à trier** (décision de Michel).
+↪️ *Décision de Michel (13/10, D-074)* : l'aliment exact. « potatoes » → 4025 « Potatoes ou wedges…, cuites » (la forme cuite, comme
+l'ancienne cible) ; MS-105 reproduit rouge (176 / 1) puis mis à jour (177 / 0) ; témoins B-AS-D / B-AS-E (AS-26), mutation M7. État : **promue**.
 
 ### 🟡 LES FRITES QUICK « VÉRIFIÉES » PORTENT MAINTENANT UN DOUTE (13/10/2026 — NUT-LOT-A, D4)
 « Petite / Moyenne / Grande Frite » et « Grande Frite Cheddar » viennent de la feuille « FRITES vérifiées » (lignes héritées) ;
 le classeur V2 a recopié leurs valeurs sur des « Grande Frites supplément Sauce … ». Comme on ne sait pas quelle ligne est
 juste, les DEUX portent « au moins une ligne est fausse » (D-073 ④). ❓ **Doute** : les lignes héritées étant celles qu'on a
 vérifiées, faudrait-il réserver le doute aux seules lignes du V2 ? **Juge humain** (décision de Michel). État : **à trier**.
+↪️ *Décision de Michel (13/10, D-074 ②)* : quand la source ne dit pas laquelle est juste, les deux lignes restent et portent le
+doute, aucune valeur modifiée — c'est ce qui est en place. État : **écartée** (tranché, rien à changer).
 
 ### 🟡 L'AIDE DU FAST-FOOD N'ANNONCE QU'UNE SORTE DE ⚠️ (13/10/2026 — NUT-LOT-A, hors lot)
 La diapo du Guide et l'aide détaillée disent qu'un avertissement apparaît « quand une enseigne publie des calories qui ne
 collent pas aux macros ». Depuis NUT-LOT-A, un ⚠️ apparaît aussi pour des valeurs COPIÉES d'un autre produit et pour une
 PORTION suspecte. Le texte n'est pas faux, il est incomplet — non modifié (lot sans fichier applicatif). ❓ **Doute** : à
 compléter avant publication ? Vérifiable par du code : ✅. État : **à trier**.
+↪️ *Décision de Michel (13/10, D-074 ④)* : dette séparée, hors de NUT-LOT-A. État : **à trier** (lot à part).
 
 ### 🟡 « CONFITURE FRUITS ROUGES » : LE MÉLANGE DE FRUITS PLUTÔT QUE LE GÉNÉRIQUE (13/10/2026 — NUT-LOT-A, D-073 ①)
 CIQUAL n'a pas de confiture « fruits rouges ». J'ai choisi 31083 « autres fruits ou mélange de fruits (extra ou classique) »
 (244 kcal) plutôt que 30999 « tout type de fruits, sans précision sur les sucres » (235). ❓ **Doute** : le choix est-il le
 bon ? **Juge humain**. État : **à trier**.
+↪️ *Décision de Michel (13/10, D-074 ③)* : validé à condition que 31083 soit une confiture — libellé exact « Confiture, autres
+fruits ou mélange de fruits (extra ou classique) » : c'en est une. État : **écartée** (tranché, rien à changer).
