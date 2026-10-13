@@ -1,0 +1,65 @@
+{
+ "chantier": "INTÉGRATION FINALE NUTRITION + D-031",
+ "branche": "claude/nut-integration-finale",
+ "base": {
+  "master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c (ancêtre de l'arbre final, inchangé)",
+  "chaine_qualifiee": "origin/claude/nut-lot-b 90f50da4"
+ },
+ "arbre_final_integre": "afe1e5686aa17d50a2b1406abc2e984c7b0d5681",
+ "head_teste_d031": "bfd11ee356864dfb3e05199aaaa21ffafa559486",
+ "head_final": "(commit de clôture qui porte ce fichier — documentation seulement, après la passe : D-031)",
+ "lots_integres_dans_l_ordre": [
+  "NUT-D042-CLOSURE-01 (D-042 + FS-01→FS-03, corpus FS-05 / 05B) — code dans la chaîne, + ses 2 commits de documentation fusionnés ici",
+  "NUT-FOOD-VARIANTS-01 / 02",
+  "NUT-FOOD-VARIANTS-03",
+  "NUT-JOURNAL-QTY-GUARD-01 (LOT-C)",
+  "NUT-VARIANTS-03-RED-CLOSURE",
+  "NUT-LOT-A",
+  "NUT-LOT-B (avec les arbitrages D-075)"
+ ],
+ "non_integres_et_pourquoi": {
+  "claude/nut-punch-01": "jamais contre-vérifié, qualification périmée (base ft-v1249) — à reprendre ou abandonner (décision de Michel)",
+  "claude/food-semantics-fs04": "FS-04 non porté (décision à prendre)",
+  "claude/nut-d042-01, claude/food-semantics-fs01..fs05b": "remplacées : leur contenu est porté dans NUT-D042-CLOSURE-01",
+  "claude/nut-night-audit-2026-10-12": "paquet d'audit (outils et rapports), pas un lot"
+ },
+ "conflits": "documentation seulement (CONTEXTE-ACTUEL, JOURNAL-DE-PARTAGE, SUIVI-AUDIT) : les deux côtés gardés, ligne D042 prise dans sa version close",
+ "fichiers_hors_docs_modifies_par_l_integration": 0,
+ "d031": {
+  "resultat": "6942 ✅ · 1 ❌",
+  "conditions": {
+   "1_ligne_de_total": "verte",
+   "2_code_du_runner": "1 (à cause du seul rouge)",
+   "3_arbre_inchange": "vert (bfd11ee3)",
+   "4_aucune_publication_concurrente": "vert"
+  },
+  "rouge": {
+   "temoin": "CCXXVIII ⭐⭐ « CHAQUE générateur qui lit un .xlsx est DÉCLARÉ dans le tableau des sources » → non déclaré : mut_food_alias_sens.py",
+   "classement": "FAUX POSITIF du harnais — le témoin prend tout tools/*.py qui CITE « .xlsx » pour un générateur ; mut_food_alias_sens.py est l'outil de contrôle négatif de LOT-A (il cite le chemin du classeur fast-food), pas un générateur",
+   "origine": "ajouté par LOT-A (79354561) ; absent lors de la D-031 de RED-CLOSURE (d7b8616f), où le témoin était vert ; l'intégration n'a touché aucun fichier tools/",
+   "fonctionnel": "non — aucun fichier applicatif concerné",
+   "minimum_necessaire": "une ligne de documentation : déclarer tools/mut_food_alias_sens.py (outil de test, pas de sortie) dans data/sources/README.md — OU exclure mut_*.py du témoin. Non fait : « aucun nouveau correctif » (décision de Michel)"
+  },
+  "od_08b": "non apparu (vert sur cette passe)"
+ },
+ "controles_finaux": {
+  "git_status": "propre",
+  "master": "7b75f3c1 inchangé, ancêtre",
+  "check_regles": "0 erreur",
+  "git_diff_check": "propre (master..HEAD)",
+  "recette_selecteur_autotest": "15/0"
+ },
+ "dettes_restantes": [
+  "faux positif du harnais CCXXVIII (ci-dessus)",
+  "D-075 ② : « coca 0 » / « coca 0% » hors ligne avant chargement de la table d'alias ; « lait 0 » / « lait 0% » hors ligne sans table (même cause)",
+  "« lait zéro » en toutes lettres : lait fermenté en tête",
+  "VARIANTS-03 : FV-164 steak haché sans précision hors ligne (crus seuls), FV-165 « viande hachée » (crus seuls), « light » → édulcorants, « cola » seul touche « chocolat », crèmes d'Isigny / UHT hors « crème fraîche », FV-067 « crème entière », FR-119 à reclasser",
+  "RED-CLOSURE : aide détaillée de la recherche (coach.js) obsolète depuis D-070 ; « coca light » montre le cola sucré dessous ; OD-08b (banc débrief, instable)",
+  "LOT-A : aide du fast-food incomplète ; 273 cibles « sans tous les mots » non contrôlées ; dettes de l'audit P-012 / P-013 / P-015 / P-017 / P-018",
+  "LOT-B : Open Food Facts reçoit la frappe telle quelle ; unités pièce / tranche non lues",
+  "LOT-C : NIGHT-P-009 (macro non déterminée enregistrée à 0, décision D3) ; mode proportionnel ef-prop ; unité ml / portions",
+  "D-042-CLOSURE : FS-04 non porté"
+ ],
+ "publication": "aucune (ni master, ni ft-v1254) — décision de Michel",
+ "verdict": "NUTRITION_FERMEE"
+}
