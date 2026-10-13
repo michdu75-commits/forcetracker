@@ -3543,6 +3543,7 @@ fermenté type yaourt au bifidus, nature, 0% MG ». Le « Lait écrémé, UHT »
 tête d'aucun des deux. ⚠️ La 1ʳᵉ version de LOT-B rendait à « lait 0 » la tête de « lait 0% » : retirée (D-075 ④).
 ❓ **Doute** : une personne qui tape « lait 0 » ou « lait 0% » veut-elle le lait écrémé ? Vérifiable par du code : ✅ (la
 tête attendue). État : **à trier** — décision de Michel.
+↪️ *Décision de Michel (13/10, D-075 ①)* : le lait écrémé en tête, par des clés de la famille lait (« lait 0 », « lait 0% » → 19050). Fait : LB-D09 / LB-D12 verts. Hors ligne sans table, la tête de la base reste (dette ②). État : **promue** (LB-D09, LB-D11, LB-D12, LB-D15).
 
 ### 🟡 « COCA 0 » HORS LIGNE SANS TABLE D'ALIAS : LE 0 RESTE IGNORÉ (13/10/2026 — NUT-LOT-B, dette LB-D02)
 En ligne, « coca 0 » vaut « coca zéro » parce que la table d'alias connaît « coca zero ». Hors ligne au tout premier usage
@@ -3550,6 +3551,7 @@ En ligne, « coca 0 » vaut « coca zéro » parce que la table d'alias connaît
 comme sur la base. « coca 0% » est, lui, corrigé partout (la frappe ne trouve rien, on cherche « coca zéro »). Lire « 0 » =
 « zéro » sans la table changerait aussi « lait 0 » et « yaourt 0 ». ❓ **Doute** : faut-il le faire ? Vérifiable par du
 code : ✅ (LB-D02 rougira). État : **à trier** — décision de Michel.
+↪️ *Décision de Michel (13/10, D-075 ②)* : dette non bloquante, pas de règle générale ; une correction future passera par la disponibilité hors ligne de l'alias Coca. « coca 0% » hors ligne sans table est dans le même cas (vide, comme sur la base). État : **promue** comme dette figée (LB-D02, LB-D04).
 
 ### 🟡 « X 0% » QUI NE TROUVAIT RIEN TROUVE MAINTENANT « X ZÉRO » (13/10/2026 — NUT-LOT-B, D-075 ④)
 Quand la frappe ne trouve rien, la recherche essaie la partie alimentaire, où un « 0 » / « 0% » se lit « zéro » (D-061 ① :
@@ -3557,6 +3559,7 @@ Quand la frappe ne trouve rien, la recherche essaie la partie alimentaire, où u
 sans précision sur la teneur en sucres » en tête ; « jus d orange 0% » propose les jus d'orange frais / pur jus. Aucun
 résultat qui existait déjà ne change. ❓ **Doute** : une liste qui était vide doit-elle le rester pour ces aliments ?
 Vérifiable par du code : ✅. État : **à trier**.
+↪️ *Décision de Michel (13/10, D-075 ③)* : non — « X 0% » n'est lu d'aucune façon si ni la table ni les données ne disent ce que 0 % veut dire. Retiré : « compote 0% » et « jus d'orange 0% » sont de nouveau vides. État : **promue** (LB-D16, LB-D17, mutation M8).
 
 ### 🟡 « FROMAGE BLANC 0 » : LA DOSETTE DU FAST-FOOD NE REMONTE PLUS (13/10/2026 — NUT-LOT-B)
 La table connaît « fromage blanc zero » : « fromage blanc 0 » cherche donc « fromage blanc zéro » dans les 4 sources. Sur la
