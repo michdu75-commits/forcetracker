@@ -154,6 +154,15 @@ const CAS = [
   V('FV-163', 'steak cru/cuit', 'steak haché', 'en', 'MUST', { aussi: [' cuit', ' cru'] }, 'sans précision : cru ET cuit visibles (l\'aliment moyen cuit, puis les crus)'),
   V('FV-164', 'steak cru/cuit', 'steak haché', 'hors', 'KNOWN_LIMITATION', { jamais: ' cuit' }, 'hors ligne, sans alias : le départage par la longueur ne montre que des crus — le corriger toucherait la clé de tri générale (dette nommée)'),
   V('FV-165', 'steak cru/cuit', 'viande hachée', 'en', 'KNOWN_LIMITATION', { jamais: ' cuit' }, 'même cause que FV-164, en ligne aussi : aucun alias (un alias vers l\'aliment moyen imposerait le bœuf, exclu) — dette nommée'),
+  /* ── NUT-VARIANTS-03-RED-CLOSURE (13/10/2026) : la garde « mot entier » de VARIANTS-03 (`_afRang`) ne doit pas fermer
+     un chemin déjà connu de `_afMotDansNom` — une FORME de pâtes (« spaghetti », « penne »…) vaut le mot « pâtes » du nom.
+     Trouvé par la passe complète (runner LXXXVI « spaghetti cuit ») : correct sur VARIANTS-02, courge sur VARIANTS-03. ── */
+  V('FV-170', 'forme de pâtes', 'spaghetti cuit', 'en', 'MUST', { top: '^Pâtes .*cuites', compat: '^Pâtes', incompat: '^Courge' }, 'une forme suivie d\'un état : les PÂTES cuites, jamais la courge spaghetti devant'),
+  V('FV-171', 'forme de pâtes', 'spaghetti cuit', 'hors', 'MUST', { top: '^Pâtes .*cuites', compat: '^Pâtes', incompat: '^Courge' }, 'hors ligne aussi'),
+  V('FV-172', 'forme de pâtes', 'penne cuites', 'hors', 'MUST', { top: '^Pâtes .*cuites' }, 'une autre forme de pâtes, même chemin'),
+  V('FV-173', 'forme de pâtes', 'coquillettes cuites', 'hors', 'MUST', { top: '^Pâtes .*cuites' }, 'une forme au pluriel suivie d\'un état'),
+  V('FV-174', 'forme de pâtes', 'courge spaghetti', 'hors', 'MUST', { top: '^Courge spaghetti' }, 'non-régression : la courge reste trouvable quand on la NOMME'),
+  V('FV-175', 'forme de pâtes', 'cola zéro', 'hors', 'MUST', { jamais: '[Cc]hocolat' }, 'non-régression V03 : la garde « mot entier » tient toujours (« cola » suivi d\'un mot ↛ « chocolat »)'),
   /* ── NUT-FOOD-VARIANTS-02 (12/10/2026, contre-vérification) : la négation tapée ne vide plus une recherche dont un
      résultat COMPATIBLE existe sous une autre écriture ; elle refuse toujours le CONTRAIRE explicite. Les témoins
      disent l'invariant (compatible présent · contraire absent · absence réelle), pas un ordre arbitraire. ── */
