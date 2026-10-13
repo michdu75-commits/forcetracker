@@ -6051,8 +6051,14 @@ function addFoodEntry(){
      phrase qu'elle disait déjà.
      ⛔ CE QUI RESTE VRAIMENT HORS PORTÉE : un aliment tapé entièrement à la main, sans aucune
      fiche nutritionnelle posée — `_bcNutr` est nul, le bloc est masqué, rien ne change. */
+  /* 🧮⛔ LE GESTE NE SUFFIT PAS, IL FAUT AUSSI UNE QUANTITÉ (NUT-JOURNAL-QTY-GUARD-01, audit de
+     nuit du 12/10 confirmé par la contre-vérification Nutrition). Ce garde ne lisait que
+     `_bcQtyPose` : taper « 5 » puis effacer (ou « 0 », « abc ») levait le drapeau, et la ligne
+     partait avec les valeurs POUR 100 g et `q:null` — riz 155 kcal, Big Mac 228 kcal au lieu de
+     530. Même refus, même toast : un nombre > 0 est exigé, comme pour le geste. */
   const _bcRow=document.getElementById('af-bc-row');
-  if(_bcRow && _bcRow.style.display!=='none' && _bcNutr && !_bcQtyPose){
+  if(_bcRow && _bcRow.style.display!=='none' && _bcNutr
+     && !(_bcQtyPose && numFR((document.getElementById('af-bc-grams')||{}).value)>0)){
     toast('Combien en as-tu mangé ? Touche une pastille ou tape ton poids.','error'); return;
   }
   if(!S.foodLog)S.foodLog=[];
@@ -7392,6 +7398,15 @@ function _per100SuitLaPortion(av){
 }
 function saveEditFood(){
   const e=(S.foodLog||[]).find(x=>x&&x.id===_editFoodId); if(!e){toast('Entrée introuvable','error');return;}
+  /* 🧮⛔ LA PORTE JUMELLE DE LA GARDE D'AJOUT (NUT-JOURNAL-QTY-GUARD-01, R8). Champ grammes vidé,
+     « 0 » ou illisible : les champs se repliaient sur la référence 100 g et l'enregistrement
+     ÉCRASAIT une ligne juste — 250 g / 388 kcal devenait 0 g / 155 kcal, rechargement compris.
+     ⛔ Le refus vient AVANT toute écriture dans `e` : la ligne reste strictement intacte et la
+     modale reste ouverte pour corriger. Une ligne sans pour-100 g (pas de champ grammes) : inchangé. */
+  const gEl=document.getElementById('ef-grams');
+  if(gEl && !(numFR(gEl.value)>0)){
+    toast('Combien en as-tu mangé ? Tape un poids supérieur à 0 g — la ligne n\'a pas été modifiée.','error'); return;
+  }
   /* ⛔ L'ÉTAT D'AVANT SE CAPTURE ICI, avant que les lignes suivantes ne réécrivent `e` : sans ça
      on jugerait la provenance de l'ancien pour-100 g sur les NOUVELLES valeurs. */
   const _av={q:+e.q||0, pw:+e.portionWeightG||0, kcal:+e.kcal||0, prot:+e.prot||0,
@@ -7405,7 +7420,6 @@ function saveEditFood(){
   e.fat=parseInt(document.getElementById('ef-fat').value)||0;
   // La quantité ne se met à jour QUE si le champ était affiché (per100 connu) — sinon `q`/`u`
   // ne veulent rien dire et on ne les invente pas (R29).
-  const gEl=document.getElementById('ef-grams');
   if(gEl){ e.q=numFR(gEl.value)||0; e.u='g'; }
   /* ⭐ R4 (ft-v1064) — LE POIDS DÉCLARÉ DESCEND JUSQU'À LA DONNÉE. Sans ça la personne le donne,
      les 4 valeurs se recalculent à l'écran… et rien n'est retenu : à la prochaine ouverture
