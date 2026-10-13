@@ -10,14 +10,16 @@
    ⛔ MAIS RIEN DE CE QUI MARCHAIT NE DOIT BOUGER : les 632 clés d'alias tapées sans quantité gardent leur tête (B1) ; les
    NOMS de la base gardent leur découpage (B2 : « Mimolette 12 mois », « Crème 12 à 25% MG », « Coca-Cola 500 ml ») ; un
    TAUX reste un taux (« fromage blanc 20% » ne rend toujours rien) ; « coca 0 » vaut « coca zéro » et ne réintroduit pas
-   le cola sucré (D-070).
+   le cola sucré (D-070) — parce que la TABLE connaît « coca zéro » ; « lait 0 » et « yaourt 0 », qu'elle ne connaît pas,
+   gardent la tête de la base (brief §8 : « 0 » n'est pas automatiquement « 0 % »).
 
    ⭐ CE QUI EST CONDUIT : le vrai champ `#af-desc` (harnais de FS-05B, `food_multisource.js`, réutilisé — R2) et le vrai
    champ `#compl-desc`. ⭐ CE QUI EST OBSERVÉ : le HTML rendu (sections CIQUAL, fast-food, « Déjà noté par toi »,
    compléments) ; et, en page, `_aliasCible` et `_fsTete` comparés à l'instantané de la base (`food_lot_b_instantane.json`,
    généré sur `205cd17b` par `tools/instantane_food_lot_b.js`).
    ⛔ CE QUI N'EST PAS COUVERT : Open Food Facts (jamais appelé pour de vrai) ; le pré-remplissage de la quantité
-   (hors lot, D2) ; « coca light », la crème fraîche, les taux en fourchette (dettes séparées).
+   (hors lot, D2) ; « coca light », la crème fraîche, les taux en fourchette (dettes séparées). ⚠️ DETTE NOMMÉE et figée
+   (LB-D02) : « coca 0 » hors ligne SANS table d'alias reste « coca » (décision de Michel s'il faut lire 0 = zéro partout).
    Contrôle négatif : `tools/mut_nut_lot_b.py`.
    ══════════════════════════════════════════════════════════════════════════════════════ */
 
@@ -57,14 +59,23 @@ const CAS = [
   C('LB-B06', 'confiture 20 g', 'en', { ref: 'confiture', top: '^Confiture ou marmelade, tout type de fruits', raison: 'LOT-A : la confiture générique en tête, jamais la confiture de lait' }),
   /* ── D. ZÉRO (D-070 : « coca zéro » n'a jamais le cola SUCRÉ) ── */
   C('LB-D01', 'coca 0', 'en', { ref: 'coca zéro', src: ['CIQ', 'FF'], top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: '« 0 » = zéro : le cola sans sucres, jamais un sucré' }),
-  C('LB-D02', 'coca 0', 'hors', { ref: 'coca zéro', top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: 'idem hors ligne' }),
+  /* ⚠️ DETTE NOMMÉE (figée, pas cachée) : hors ligne SANS table d'alias, rien ne dit que « coca 0 » veut dire « zéro » — le
+     « 0 » reste ignoré comme sur la base. Le lire « zéro » partout changerait aussi « lait 0 » et « yaourt 0 » (brief §8) :
+     c'est une décision de Michel, pas un correctif. Le jour où elle change, ce témoin DOIT rougir. */
+  C('LB-D02', 'coca 0', 'hors', { ref: 'coca', topRef: true, raison: 'DETTE : hors ligne sans table, le « 0 » reste ignoré (= « coca »)' }),
   C('LB-D03', 'coca 0%', 'en', { ref: 'coca zéro', top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: 'non vide, sans sucré' }),
   C('LB-D04', 'coca 0%', 'hors', { top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: 'idem hors ligne' }),
   C('LB-D05', 'coca zéro', 'en', { top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: 'D-070 tient' }),
   C('LB-D06', 'fromage blanc 0', 'en', { top: '^Fromage blanc, nature, 0% MG', compat: '(^|[^0-9,-])0% MG', incompat: '2-3% MG|7-8% MG', raison: 'la variante réellement 0 %, aucun 2-3 % au-dessus' }),
   C('LB-D07', 'fromage blanc 0%', 'en', { top: '^Fromage blanc, nature, 0% MG', compat: '(^|[^0-9,-])0% MG', incompat: '2-3% MG|7-8% MG', raison: 'inchangé' }),
-  C('LB-D08', 'yaourt 0', 'en', { ref: 'yaourt 0%', topRef: true, raison: '« 0 » tapé cherche le 0 de la table : même tête que « yaourt 0% »' }),
-  C('LB-D09', 'lait 0', 'en', { ref: 'lait 0%', topRef: true, raison: 'idem : même tête que « lait 0% » (changement de tête SIGNALÉ à Michel)' }),
+  /* §8 — têtes de la BASE (`205cd17b`, mesurées avant le code) : « 0 » n'est pas automatiquement « 0 % ». */
+  C('LB-D08', 'yaourt 0', 'en', { top: '^Yaourt à la grecque nature$', raison: '§8 : tête de la base gardée' }),
+  C('LB-D09', 'lait 0', 'en', { top: '^Lait à 1,2% MG, UHT', raison: '§8 : tête de la base gardée' }),
+  C('LB-D10', 'yaourt 0', 'hors', { top: '^Yaourt à la grecque nature$', raison: '§8 : idem hors ligne' }),
+  C('LB-D11', 'lait 0', 'hors', { top: '^Lait à 1,2% MG, UHT', raison: '§8 : idem hors ligne' }),
+  C('LB-D12', 'lait 0%', 'en', { top: '^Lait fermenté type yaourt au bifidus, nature, 0% MG$', raison: '§8 + B2 : le taux tapé trouve le nom qui le porte (tête de la base)' }),
+  C('LB-D13', 'yaourt 0%', 'en', { top: '^Yaourt ou lait fermenté, nature, 0% MG$', raison: '§8 + B2 : idem' }),
+  C('LB-D14', 'fromage blanc 0', 'hors', { top: '^Fromage blanc, nature, 0% MG$', raison: '§8 : la variante réellement 0 % reste en tête hors ligne' }),
   /* ── E. PONCTUATION FINALE ── */
   C('LB-E01', 'riz.', 'en', { ref: 'riz', raison: 'le point de la saisie mobile' }),
   C('LB-E02', 'riz.', 'hors', { ref: 'riz', raison: 'idem hors ligne' }),

@@ -4877,15 +4877,23 @@ async function _aliasCharger(){
 }
 /* Rend l'aliment CIQUAL visé par ce que la personne a tapé, ou `null`. */
 function _aliasCible(q){
-  if(!_alias||!_ciqual) return null;
-  /* 🍽️ NUT-LOT-B : la clé telle que tapée D'ABORD — une clé connue ne change jamais de cible (B1) — puis la PARTIE
-     ALIMENTAIRE (« eau 1,5 l » → « eau », « 2 oeufs » → « oeufs », « coca 0 » → « coca zero »). Aucune clé nouvelle :
-     seules celles de la table, contrôlées par son générateur (LOT-A), peuvent répondre. */
-  const k=_afNorm(q).replace(/\s+/g,' ').trim(), f=_afAliment(q);
-  const c=(_alias.a[k]!=null) ? _alias.a[k] : (f && f!==k ? _alias.a[f] : null);
-  if(c==null) return null;
+  if(!_ciqual) return null;
+  const k=_aliasCle(q); if(!k) return null;
+  const c=_alias.a[k.cle];
   for(const a of _ciqual.a) if(a[0]===c) return a;
   return null;
+}
+/* 🍽️ NUT-LOT-B : QUELLE clé de la table répond — la frappe telle que tapée D'ABORD (une clé connue ne change jamais de
+   cible : B1), sinon sa PARTIE ALIMENTAIRE (« eau 1,5 l » → « eau », « 2 oeufs » → « oeufs », « coca 0 » → « coca zero »).
+   Aucune clé nouvelle : seules celles de la table, contrôlées par son générateur (LOT-A), peuvent répondre. ⭐ C'est donc
+   la TABLE qui dit où un « 0 » veut dire « zéro » (coca, fromage blanc, ice tea…) : ailleurs il reste ignoré comme avant
+   (« lait 0 », « yaourt 0 » gardent leur tête — brief §8 : « 0 » n'est pas automatiquement « 0 % »). */
+function _aliasCle(q){
+  if(!_alias) return null;
+  const k=_afNorm(q).replace(/\s+/g,' ').trim();
+  if(_alias.a[k]!=null) return {cle:k, aliment:false};
+  const f=_afAliment(q);
+  return (f && f!==k && _alias.a[f]!=null) ? {cle:f, aliment:true} : null;
 }
 let _marques=null, _marquesEnCours=null;
 async function _marquesCharger(){
@@ -4983,11 +4991,11 @@ function _afGeneriqueDevant(q, ciq){
   if(!ciq || !ciq.length || _afIntentionMarque(q)) return false;
   const a=ciq[0], c=(typeof _aliasCible==='function')?_aliasCible(q):null;
   if(c && c[0]===a[0]) return true;
-  /* NUT-LOT-B : la pertinence se juge sur ce qui a été CHERCHÉ — la partie alimentaire quand la quantité n'a rien trouvé. */
-  return _foodSynonymes(_afAliment(q)||q).some(r=>{
+  /* NUT-LOT-B : la pertinence se juge sur la frappe, PUIS sur sa partie alimentaire — l'ordre de `_afSinonAliment`. */
+  return [q, _afAliment(q)].some(t=>t && _foodSynonymes(t).some(r=>{
     const m=_afMots(r), aliment=m.filter(x=>!_fsFormesDuTexte(x).length);
     return _fsMotsEntiers(aliment.length?aliment:m, a[1]);
-  });
+  }));
 }
 /* ═══ ⛔⛔ LE PLURIEL — LE PLUS GROS TROU DE LA RECHERCHE (22/08/2026) ══════════════════════
    Michel : *« c'est comme j'ai cherché les pâtes, j'ai pas trouvé — enfin si, mais pas ce que je
@@ -5663,10 +5671,8 @@ function _afNorm(t){
    version CRUE au lieu de la cuite. *On retire les mots-outils pour CHERCHER, jamais pour
    RECONNAÎTRE.* */
 const _AF_OUTILS=new Set(['de','du','des','la','le','les','un','une','au','aux','en','et']);
-/* 🍽️ NUT-LOT-B (13/10/2026) : un « 0 » tapé seul n'est plus jeté avec les lettres isolées — c'est un nombre (« lait 0 »,
-   « coca 0 »). S'il ne trouve rien dans les noms, `_afAliment` le lit comme le mot « zéro ». */
 function _afMots(q){
-  const bruts=_afNorm(q).split(/\s+/).filter(m=>m.length>1||m==='0');
+  const bruts=_afNorm(q).split(/\s+/).filter(m=>m.length>1);
   const gardes=bruts.filter(m=>!_AF_OUTILS.has(m));
   return gardes.length?gardes:bruts;          // jamais vide si la frappe ne l'était pas
 }
@@ -5681,9 +5687,11 @@ function _afMots(q){
       (« Coca-Cola 500 ml »). Un TAUX n'en est pas une (« 20% » reste un taux : « fromage blanc 20% » ne rend toujours rien).
    ② `_afAliment(q)` : sa PARTIE ALIMENTAIRE — sans les quantités, sans un compte en tête (« 2 oeufs », « 30g de whey »),
       un zéro en chiffre lu comme le mot « zéro » (« coca 0 », « coca 0% » → « coca zero », que la table connaît : D-070).
-      Elle sert la table d'alias (après la clé telle que tapée : B1) et le REPLI — une source qui ne trouve rien avec la
-      quantité cherche l'aliment seul (`_afSinonAliment`). Une requête faite d'une quantité seule n'a pas d'aliment : elle
-      ne devient jamais « tout le catalogue ». */
+      Elle sert la table d'alias (après la clé telle que tapée : B1 — `_aliasCle`) et le REPLI — une source qui ne trouve
+      rien avec la frappe cherche l'aliment seul (`_afSinonAliment`). ⛔ Le « 0 » n'est donc lu « zéro » que là où la table
+      connaît « X zéro », ou quand la frappe ne trouve RIEN (« coca 0% ») — jamais une règle universelle de pourcentage :
+      « lait 0 », « yaourt 0 » gardent leur tête. Une requête faite d'une quantité seule n'a pas d'aliment : elle ne
+      devient jamais « tout le catalogue ». */
 const _AF_UNITES='g|gr|grs|gramme|grammes|kg|kgs|kilo|kilos|ml|cl|dl|l|litre|litres';
 const _AF_QTE=new RegExp('(^|\\s)(\\d+(?:\\.\\d+)?)\\s?('+_AF_UNITES+')(?=\\s|$)','g');
 const _AF_QTE_MOT=new RegExp('^(\\d+(?:\\.\\d+)?)('+_AF_UNITES+')$');
@@ -5698,8 +5706,12 @@ function _afAliment(q){
     .replace(/(^|\s)0%?(?=\s|$)/g,'$1zero')
     .replace(/\s+/g,' ').trim();
 }
-/* Le repli, en un seul endroit : la requête telle quelle, puis — si rien ne répond — sa partie alimentaire. */
+/* Ce qu'on cherche, en un seul endroit, pour les 4 sources : la PARTIE ALIMENTAIRE quand c'est elle que la table d'alias
+   reconnaît (« coca 0 » → « coca zero » : la frappe, le « 0 » ignoré, remettrait le cola SUCRÉ — D-070) ; sinon la requête
+   telle quelle, puis — si rien ne répond — sa partie alimentaire. */
 function _afSinonAliment(q, chercher){
+  const k=_aliasCle(q);
+  if(k && k.aliment) return chercher(k.cle);
   const r=_afRequete(q), res=chercher(r);
   if(res.length) return res;
   const f=_afAliment(q);

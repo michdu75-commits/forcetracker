@@ -31,9 +31,9 @@ MUT = [
      [(APP, "    const n=_afNorm(a[1]);\n", "    const n=_afAliment(a[1]);\n"),
       (APP, r"  const m=_afMots(String(nom||'').split(',')[0].replace(/\(aliment moyen\)/i,''));",
             r"  const m=_afMots(_afAliment(String(nom||'').split(',')[0].replace(/\(aliment moyen\)/i,'')));")], 'GARDE'),
-    ('M7 remettre `_aliasCible` sur la requete brute',
-     [(APP, "  const c=(_alias.a[k]!=null) ? _alias.a[k] : (f && f!==k ? _alias.a[f] : null);",
-            "  const c=_alias.a[k];")], 'GARDE'),
+    ('M7 remettre `_aliasCible` sur la requete brute (la partie alimentaire ne repond plus)',
+     [(APP, "  return (f && f!==k && _alias.a[f]!=null) ? {cle:f, aliment:true} : null;",
+            "  return null;")], 'GARDE'),
     ('MC1 [negatif] commentaire seulement',
      [(APP, "function _afSinonAliment(q, chercher){", "/* (commentaire de controle) */\nfunction _afSinonAliment(q, chercher){")], 'OK'),
 ]
