@@ -3505,3 +3505,26 @@ arbre : **58/0 à chaque fois**. Même famille qu'OD-11 et OD-16 (06/10) : l'att
 parfois après un autre événement ? Vérifiable par du code : ✅. État : **à trier** (famille non éteinte, banc débrief).
 ↪️ *Décision de Michel (13/10)* : accepté pour ce lot comme test instable connu, hors périmètre ; le lot passe QUALIFIÉ avec la mesure
 6 792 ✅ / 1 ❌ conservée telle quelle. La famille reste ouverte : l'entrée reste **à trier**.
+
+### 🟡 « POTATOES » → POMME DE TERRE RÔTIE (91 kcal) ALORS QUE « POTATOES OU WEDGES » EXISTE (175 kcal) (13/10/2026 — NUT-LOT-A)
+Le contrôle de sens du générateur d'alias le voit : la règle D1 (l'aliment nommé d'abord) dirait 4025 « Potatoes ou wedges…,
+cuites ». ⛔ Non corrigé : le témoin MS-105 (FS-05B) fige la cible actuelle, et le brief interdit de changer un témoin sans
+décision. Il figure dans `TRADUCTIONS_VOULUES` comme **À TRANCHER**. ❓ **Doute** : quelqu'un qui tape « potatoes » mange-t-il des
+wedges de fast-food (≈ ×2 en calories) ou des pommes de terre au four ? Vérifiable par du code : ✅. État : **à trier** (décision de Michel).
+
+### 🟡 LES FRITES QUICK « VÉRIFIÉES » PORTENT MAINTENANT UN DOUTE (13/10/2026 — NUT-LOT-A, D4)
+« Petite / Moyenne / Grande Frite » et « Grande Frite Cheddar » viennent de la feuille « FRITES vérifiées » (lignes héritées) ;
+le classeur V2 a recopié leurs valeurs sur des « Grande Frites supplément Sauce … ». Comme on ne sait pas quelle ligne est
+juste, les DEUX portent « au moins une ligne est fausse » (D-073 ④). ❓ **Doute** : les lignes héritées étant celles qu'on a
+vérifiées, faudrait-il réserver le doute aux seules lignes du V2 ? **Juge humain** (décision de Michel). État : **à trier**.
+
+### 🟡 L'AIDE DU FAST-FOOD N'ANNONCE QU'UNE SORTE DE ⚠️ (13/10/2026 — NUT-LOT-A, hors lot)
+La diapo du Guide et l'aide détaillée disent qu'un avertissement apparaît « quand une enseigne publie des calories qui ne
+collent pas aux macros ». Depuis NUT-LOT-A, un ⚠️ apparaît aussi pour des valeurs COPIÉES d'un autre produit et pour une
+PORTION suspecte. Le texte n'est pas faux, il est incomplet — non modifié (lot sans fichier applicatif). ❓ **Doute** : à
+compléter avant publication ? Vérifiable par du code : ✅. État : **à trier**.
+
+### 🟡 « CONFITURE FRUITS ROUGES » : LE MÉLANGE DE FRUITS PLUTÔT QUE LE GÉNÉRIQUE (13/10/2026 — NUT-LOT-A, D-073 ①)
+CIQUAL n'a pas de confiture « fruits rouges ». J'ai choisi 31083 « autres fruits ou mélange de fruits (extra ou classique) »
+(244 kcal) plutôt que 30999 « tout type de fruits, sans précision sur les sucres » (235). ❓ **Doute** : le choix est-il le
+bon ? **Juge humain**. État : **à trier**.

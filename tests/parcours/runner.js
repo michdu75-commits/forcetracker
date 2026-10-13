@@ -39549,6 +39549,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      plusieurs variantes ; un taux absent de la base ne rend rien. Blocs B-FV-A (structure), B-FV-B (vraie frappe, en
      ligne et hors ligne), B-FV-D (déterminisme), contrôle négatif `tools/mut_food_variants.py`. */
   await require('./food_variants.js').ecran(t, b, PORT);
+  /* 🍽️ NUT-LOT-A (13/10/2026) : les TABLES GÉNÉRÉES ont du sens — un alias mène à l'aliment qu'il NOMME (D1 : « confiture
+     de fraise » n'est plus la confiture de lait, « gruyère » n'est plus l'Emmental), le générateur REFUSE une clé qui
+     contourne l'aliment nommé, et le fast-food Quick suspect est CONSERVÉ avec un ⚠️ (D4). Blocs B-AS-D (données),
+     B-AS-G (générateurs sur copie), B-AS-E (vraie frappe), contrôle négatif `tools/mut_food_alias_sens.py`. */
+  await require('./food_alias_sens.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40494,6 +40499,7 @@ require('./food_reference.js').source(t, ROOT, fs, path);
 require('./food_multisource.js').source(t, ROOT, fs, path);
 require('./food_d042.js').source(t, ROOT, fs, path);
 require('./food_variants.js').source(t, ROOT, fs, path);
+require('./food_alias_sens.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

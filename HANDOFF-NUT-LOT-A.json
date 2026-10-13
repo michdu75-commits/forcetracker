@@ -1,0 +1,418 @@
+{
+ "lot": "NUT-LOT-A — tables générées : alias + fast-food Quick",
+ "branche": "claude/nut-lot-a",
+ "base": {
+  "red_closure_head": "fcad78b0fb6e54771249924d57478cf833186faa",
+  "master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
+  "reservation_journal": "8e9b8f13"
+ },
+ "head_fonctionnel": "75b0cd49",
+ "tree_fonctionnel": "86ca8ec3831d176dbbfa63972bdf399eb5d1a6b2",
+ "head_final": "(commit de clôture qui porte ce fichier — voir le journal de partage)",
+ "drive": "non utilisé : les preuves de l'audit de nuit sont dans le dépôt (branche claude/nut-night-audit-2026-10-12)",
+ "decisions": {
+  "D1": "D-071 (Michel) : requête explicite → aliment nommé ; générique reste générique",
+  "D4": "D-072 (Michel) : Quick suspect = conserver + doute, sans seuil universel ni valeur inventée",
+  "mise_en_oeuvre": "D-073 (Claude, PROPOSÉ) : choix détaillés, dont « confiture fruits rouges » → 31083 et le doute porté par TOUS les membres d'un groupe copié"
+ },
+ "alias": {
+  "corrections_retenues": {
+   "baguette tradition": {
+    "avant": [
+     7001,
+     "Pain blanc (par ex. : baguette, boule…)",
+     287
+    ],
+    "apres": [
+     7007,
+     "Pain de tradition française (par ex. : baguette, boule…)",
+     279
+    ]
+   },
+   "batavia": {
+    "avant": [
+     25604,
+     "Salade verte, crue, sans assaisonnement",
+     14
+    ],
+    "apres": [
+     20123,
+     "Batavia, crue",
+     15
+    ]
+   },
+   "beurre sale": {
+    "avant": [
+     16402,
+     "Beurre à 80% MG, demi-sel",
+     725
+    ],
+    "apres": [
+     16403,
+     "Beurre à 80% MG, salé",
+     732
+    ]
+   },
+   "confiture": {
+    "avant": [
+     31040,
+     "Confiture de lait",
+     340
+    ],
+    "apres": [
+     30999,
+     "Confiture ou marmelade, tout type de fruits, sans précision sur la teneur en sucres (aliment moyen)",
+     235
+    ]
+   },
+   "confiture dabricot": {
+    "avant": [
+     31040,
+     "Confiture de lait",
+     340
+    ],
+    "apres": [
+     31037,
+     "Confiture d'abricot (extra ou classique)",
+     246
+    ]
+   },
+   "confiture de fraise": {
+    "avant": [
+     31040,
+     "Confiture de lait",
+     340
+    ],
+    "apres": [
+     31024,
+     "Confiture de fraise (extra ou classique)",
+     248
+    ]
+   },
+   "confiture fruits rouges": {
+    "avant": [
+     31040,
+     "Confiture de lait",
+     340
+    ],
+    "apres": [
+     31083,
+     "Confiture, autres fruits ou mélange de fruits (extra ou classique)",
+     244
+    ]
+   },
+   "feuille de chene": {
+    "avant": [
+     25604,
+     "Salade verte, crue, sans assaisonnement",
+     14
+    ],
+    "apres": [
+     20295,
+     "Salade feuille de chêne, crue",
+     11
+    ]
+   },
+   "gruyere": {
+    "avant": [
+     12115,
+     "Emmental ou emmenthal",
+     373
+    ],
+    "apres": [
+     12114,
+     "Gruyère, sans précision (origine France ou Suisse)",
+     408
+    ]
+   },
+   "haut de cuisse de poulet": {
+    "avant": [
+     36024,
+     "Poulet, cuisse, viande crue",
+     114
+    ],
+    "apres": [
+     36019,
+     "Poulet, haut de cuisse, viande crue",
+     116
+    ]
+   },
+   "jambon de bayonne": {
+    "avant": [
+     28800,
+     "Jambon cru",
+     239
+    ],
+    "apres": [
+     28811,
+     "Jambon de Bayonne",
+     243
+    ]
+   },
+   "jambon sec": {
+    "avant": [
+     28800,
+     "Jambon cru",
+     239
+    ],
+    "apres": [
+     28812,
+     "Jambon sec",
+     230
+    ]
+   },
+   "laitue": {
+    "avant": [
+     25604,
+     "Salade verte, crue, sans assaisonnement",
+     14
+    ],
+    "apres": [
+     20031,
+     "Laitue, crue",
+     15
+    ]
+   },
+   "lentilles blondes": {
+    "avant": [
+     20587,
+     "Lentille verte, bouillie/cuite à l'eau",
+     125
+    ],
+    "apres": [
+     20588,
+     "Lentille blonde, bouillie/cuite à l'eau",
+     122
+    ]
+   },
+   "lieu noir": {
+    "avant": [
+     26006,
+     "Lieu ou colin d'Alaska, cru",
+     73
+    ],
+    "apres": [
+     26134,
+     "Lieu noir, cru",
+     82
+    ]
+   },
+   "noix de veau": {
+    "avant": [
+     6521,
+     "Veau, escalope crue",
+     114
+    ],
+    "apres": [
+     6522,
+     "Veau, noix,crue",
+     111
+    ]
+   },
+   "pain aux cereales": {
+    "avant": [
+     7110,
+     "Pain complet ou intégral (à la farine T150)",
+     234
+    ],
+    "apres": [
+     7255,
+     "Pain aux céréales et/ou graines",
+     269
+    ]
+   },
+   "pates semi-completes": {
+    "avant": [
+     9871,
+     "Pâtes sèches, au blé complet, cuites, sans sel ajouté",
+     179
+    ],
+    "apres": [
+     9877,
+     "Pâtes sèches, semi-complètes, cuites, sans sel ajouté",
+     173
+    ]
+   },
+   "pilon de poulet": {
+    "avant": [
+     36024,
+     "Poulet, cuisse, viande crue",
+     114
+    ],
+    "apres": [
+     36022,
+     "Poulet, pilon cru",
+     155
+    ]
+   },
+   "pilons de poulet": {
+    "avant": [
+     36024,
+     "Poulet, cuisse, viande crue",
+     114
+    ],
+    "apres": [
+     36022,
+     "Poulet, pilon cru",
+     155
+    ]
+   },
+   "pomme de terre a leau": {
+    "avant": [
+     4048,
+     "Pomme de terre, cuite (aliment moyen)",
+     95
+    ],
+    "apres": [
+     4003,
+     "Pomme de terre, bouillie/cuite à l'eau",
+     81
+    ]
+   },
+   "riz semi-complet": {
+    "avant": [
+     9103,
+     "Riz complet, cuit, sans sel ajouté",
+     187
+    ],
+    "apres": [
+     9113,
+     "Riz semi-complet, cuit, sans sel ajouté",
+     165
+    ]
+   },
+   "riz thai": {
+    "avant": [
+     9104,
+     "Riz blanc, cuit, sans sel ajouté",
+     155
+    ],
+    "apres": [
+     9124,
+     "Riz thaï, cuit, sans sel ajouté",
+     143
+    ]
+   },
+   "rosette": {
+    "avant": [
+     30300,
+     "Saucisson sec",
+     418
+    ],
+    "apres": [
+     30304,
+     "Rosette ou fuseau",
+     392
+    ]
+   },
+   "tradition": {
+    "avant": [
+     7001,
+     "Pain blanc (par ex. : baguette, boule…)",
+     287
+    ],
+    "apres": [
+     7007,
+     "Pain de tradition française (par ex. : baguette, boule…)",
+     279
+    ]
+   }
+  },
+  "n_corrigees": 25,
+  "liste_audit_rejouee": "16 cas de l'audit tous reproduits et démontrés (CIQUAL vérifié) ; « jambon sec », « haut de cuisse » et « pâtes semi-complètes » compris",
+  "d1_inchanges": "salade → 25604 · blanc de poulet → 36017 · blanc de dinde → 36304 · pomme(s) de terre vapeur → 4048 (déjà conformes à D1, figés par témoin)",
+  "au_dela_de_la_liste": "tradition, baguette tradition, noix de veau, rosette, pomme de terre à l'eau — trouvés par le contrôle de sens, D1 règle générale (D-073 ②)",
+  "non_touche_stop": "potatoes → 4026 : « Potatoes ou wedges » (4025) existe, mais le témoin MS-105 fige la cible actuelle — décision de Michel attendue"
+ },
+ "controle_semantique": {
+  "regle": "refus de générer (rien écrit, code 1) si la cible ne porte pas les mots de la clé alors qu'un autre aliment proposable les porte tous ; mots outils ignorés, pluriel et accord tolérés, élision détachée",
+  "base_audit": "mesuré sur la table de base, sans liste blanche : 50 alias refusés (l'oracle de l'audit en voyait 49 ; + « confiture d'abricot » et « pomme de terre à l'eau » grâce à l'élision détachée, − « pâtes complètes », faux positif d'accord complet/complète) ; après les 25 corrections : 27, exactement la liste blanche",
+  "apres": "0 refus · 27 traductions voulues, chacune liée à SA cible et justifiée (TRADUCTIONS_VOULUES) — dont « potatoes » marqué À TRANCHER",
+  "preuve_refus": "copie de tools/alias.py + clé injectée « pain de seigle » → pain complet : REFUS, aucun fichier écrit ; « spaghetti » détourné vers le riz complet : REFUS (la justification est liée à la cible)"
+ },
+ "quick": {
+  "groupes_copies": "5 groupes de produits différents aux valeurs identiques (kcal, P, G, L, portion) : 12 produits, 11 nouvellement marqués « doute » (« Grande Rustiques » avait déjà le doute des tailles, conservé)",
+  "dosette": "« Dosette salade fromage blanc ciboulette » (576 kcal / 226 g) : conservée, valeurs intactes, ⚠️ « au moins une ligne est fausse : valeurs identiques à … »",
+  "sauce_ranch": "« Grande Frites supplément Sauce Ranch » (172 kcal / 65 g = Petite Frite) : conservée, ⚠️",
+  "double_cheeseburger_bacon": "CV-NUT-NEW-004 : conservé, valeurs intactes (281,9 kcal/100 g, 996 g, 2 808 kcal), doute NOMMÉ « portion suspecte dans la source : 996 g, 3 fois celle du Double Cheeseburger » (DOUTES_SOURCE) — affiché dans la liste, redit au formulaire, posé sur la provenance au clic ; aucun seuil universel de portion, aucune valeur corrigée",
+  "controles": "le Double Cheeseburger et le Big Mac ne reçoivent AUCUN doute (le doute est ciblé)"
+ },
+ "temoins": {
+  "banc": "tests/parcours/food_alias_sens.js + tools/banc_food_alias_sens.js (blocs B-AS-D, B-AS-G, B-AS-E)",
+  "base": "18 OK / 58 rouges",
+  "apres": "76 OK / 0 rouge",
+  "runner": "branché (source + écran) pour la passe finale après LOT-B",
+  "registre": "banc:food_alias_sens + scénario NUTRI-TABLES-SENS"
+ },
+ "mutations": {
+  "outil": "tools/mut_food_alias_sens.py (arbre cloné, régénéré)",
+  "resultat": "7/7 conformes",
+  "detail": [
+   "M1 confiture → Confiture de lait : 2 rouges",
+   "M2 contrôle sémantique désactivé : 2 rouges",
+   "M3 refus sans arrêt (clé non blanchie passe) : 2 rouges",
+   "M4 contrôle Quick des valeurs copiées supprimé : 3 rouges",
+   "M5 gruyère → Emmental : le générateur REFUSE, 1 rouge (copie ≠ table)",
+   "M6 doute du Double Cheeseburger Bacon retiré : 3 rouges",
+   "MC1 commentaire : vert 76/0"
+  ]
+ },
+ "bancs": {
+  "food_alias_sens": "76/0",
+  "food_variants": "131/0",
+  "food_d042": "73/0",
+  "food_semantics": "44/0",
+  "food_formes": "46/0",
+  "food_prefs": "39/0",
+  "food_reference": "136/0",
+  "food_multisource": "177/0",
+  "repas_actif": "24/0",
+  "habitudes_alim": "37/0",
+  "journal_qty_guard": "21/0",
+  "check_regles": "0 erreur",
+  "git_diff_check": "propre",
+  "selecteur_autotest": "15/0"
+ },
+ "generation": {
+  "reproductible": "les deux générateurs, relancés sur une copie, produisent EXACTEMENT data/alias.json et data/marques.json (B-AS-G ① ④ + point de départ des mutations)",
+  "edition_manuelle": "aucune",
+  "diff_alias_json": "632 → 632 clés, 0 ajoutée, 0 retirée, 25 cibles changées",
+  "diff_marques_json": "123 → 123 produits, seul le champ « doute » change, sur 12 produits ; aucune valeur, aucun nom, aucune portion modifiés"
+ },
+ "d031": "non lancée (décision de Michel : une seule passe complète, sur l'arbre Nutrition final intégré après LOT-B)",
+ "regle_17": {
+  "fichiers_runtime_applicatifs": 0,
+  "generateurs_modifies": "2 (tools/alias.py +129 −1, tools/marques.py +48)",
+  "donnees_generees_regenerees": "2 (data/alias.json, data/marques.json)",
+  "fonctions_ajoutees": "3, dans le générateur seulement (_mots_sens, _porte, controle_semantique) — aucune au runtime",
+  "tables_ajoutees": "2, dans les générateurs (TRADUCTIONS_VOULUES 27 entrées, DOUTES_SOURCE 1 entrée)",
+  "moteurs_ou_chemins_paralleles": 0,
+  "donnees_persistees_ajoutees": 0,
+  "anciens_chemins_supprimes_ou_fusionnes": 0
+ },
+ "fichiers_modifies": [
+  "tools/alias.py",
+  "tools/marques.py",
+  "data/alias.json (régénéré)",
+  "data/marques.json (régénéré)",
+  "tests/parcours/food_alias_sens.js (nouveau)",
+  "tools/banc_food_alias_sens.js (nouveau)",
+  "tools/mut_food_alias_sens.py (nouveau)",
+  "tests/parcours/runner.js (branchement)",
+  "tests/recette/registre.json",
+  "docs/DECISIONS.md (D-071, D-072, D-073)",
+  "docs/JOURNAL-DE-TEST.md",
+  "docs/JOURNAL-DE-PARTAGE.md",
+  "HANDOFF-NUT-LOT-A.json"
+ ],
+ "dettes_hors_lot": [
+  "potatoes (À TRANCHER, MS-105)",
+  "doute porté aussi par les frites héritées « vérifiées » (D-073 ④, à confirmer)",
+  "aide du fast-food : n'annonce que le ⚠️ « kcal ≠ macros » (texte applicatif, non touché)",
+  "« confiture fruits rouges » : 31083 plutôt que 30999 (à confirmer)",
+  "les 273 cibles « sans tous les mots » non contrôlées par le sens (seules celles qu'un autre aliment porte entièrement le sont)",
+  "LOT-B, quantités dans la requête, « coca light », macros CIQUAL non déterminées : hors lot",
+  "dettes de l'audit : pluriels sans alias (P-015), variantes d'écriture (P-013), fautes de frappe (P-012), nom exact fast-food pas en tête (P-017), kcal ≠ macros sur 3 petites lignes (P-018)"
+ ],
+ "verdict": "QUALIFIÉ AVEC DETTE — erreurs d'alias démontrées corrigées, générateur qui refuse une clé fautive, Quick suspect conservé avec doute ; dettes : potatoes et trois choix D-073 à confirmer par Michel"
+}
