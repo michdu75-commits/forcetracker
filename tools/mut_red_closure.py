@@ -20,6 +20,8 @@ MUT = [
      [(A, CHEMIN, "const r=we.some(x=>x===mots[k] || _fsSing(x)===_fsSing(mots[k]));")], 'GARDE'),
     ('M2 ce que _afMotDansNom trouve est accepte SANS exiger un mot entier (la garde V03 tombe : cola -> chocolat)',
      [(A, GARDE, "      if(!r) return null;")], 'GARDE'),
+    ('M3 « zéro » redevient « édulcorants » (comportement d\'avant D-061 ① : le cola sucré revient sous le zéro)',
+     [(A, "'zero':['0%','sans sucres'],", "'zero':['edulcorants'],")], 'GARDE'),
     ('MC1 [negatif] commentaire seulement', [(A, GARDE, "      /* garde : mot entier */\n" + GARDE)], 'OK'),
 ]
 

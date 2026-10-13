@@ -25262,7 +25262,7 @@ console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) -
     const n=q=>(_ciqualChercher(q,4)||[]).map(x=>[x[0],x[1],x[3]]);
     const o={};
     ['coca zero','coca zéro','coca light','coke zero','pepsi max','coca sans sucre',
-     'coca zero sans cafeine','coca','cola','coca cola','soda'].forEach(q=>o[q]=n(q));
+     'coca zero sans cafeine','coca','cola','coca cola','soda','cola sucre avec edulcorants'].forEach(q=>o[q]=n(q));
     return o;
   }catch(e){ return {err:String(e)}; } });
   await cx.close();
@@ -25279,11 +25279,17 @@ console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) -
     t('⛔ … avec ou sans accent, et pour « light », « coke zero », « pepsi max »',
       [R['coca zéro'],R['coca light'],R['coke zero'],R['pepsi max']].every(r=>r[0]&&r[0][0]===18060),
       [R['coca zéro'][0],R['coca light'][0],R['coke zero'][0],R['pepsi max'][0]].map(x=>x?x[0]:'RIEN').join(' · '));
-    /* ⛔⛔ ON N'A RIEN SUPPRIMÉ : le cola sucré aux édulcorants reste JUSTE DESSOUS. C'est un
-       vrai aliment (type stévia), on l'empêche seulement de répondre à la place du zéro (R29). */
-    t('⛔⛔ le cola SUCRÉ aux édulcorants n\'a pas disparu — il est juste en dessous',
-      R['coca zero'].slice(1).some(x=>x[0]===18037),
-      R['coca zero'].map(x=>x[0]).join(' · '));
+    /* ⛔⛔ D-070 — DÉCISION DE MICHEL DU 13/10/2026 : pour « coca zéro », le cola SUCRÉ aux édulcorants n'est
+       PAS proposé, MÊME EN DESSOUS. Il remplace le choix de ft-v1116 (« il reste juste en dessous », R29), devenu
+       obsolète : « zéro » veut dire 0 % ou sans sucres (D-061 ①), et un nom qui dit le CONTRAIRE (« sucré ») est
+       écarté, pas descendu (D-059 ①) — les deux sont validés par D-070. R30 : le retrait s'écrit avec sa raison.
+       ⛔ L'aliment n'est pas supprimé pour autant : nommé, il reste trouvable (témoin suivant). */
+    t('⛔⛔ D-070 — « coca zéro » ne propose PAS le cola SUCRÉ aux édulcorants, même en dessous',
+      R['coca zero'].length>0 && !R['coca zero'].some(x=>x[0]===18037) && !R['coca zéro'].some(x=>x[0]===18037),
+      R['coca zero'].map(x=>x[0]).join(' · ')+' | '+R['coca zéro'].map(x=>x[0]).join(' · '));
+    t('⛔ … mais l\'aliment n\'est pas supprimé : « cola sucré avec édulcorants », NOMMÉ, le rend en tête',
+      R['cola sucre avec edulcorants'][0] && R['cola sucre avec edulcorants'][0][0]===18037,
+      String(R['cola sucre avec edulcorants'][0]));
     /* ⛔ CIQUAL distingue la version SANS CAFÉINE : on ne fusionne pas ce qui diffère. */
     t('⛔ « coca zéro sans caféine » a SA propre entrée (on ne fusionne pas deux aliments distincts)',
       R['coca zero sans cafeine'][0] && R['coca zero sans cafeine'][0][0]===18068,

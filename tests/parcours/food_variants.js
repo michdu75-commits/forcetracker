@@ -163,6 +163,12 @@ const CAS = [
   V('FV-173', 'forme de pâtes', 'coquillettes cuites', 'hors', 'MUST', { top: '^Pâtes .*cuites' }, 'une forme au pluriel suivie d\'un état'),
   V('FV-174', 'forme de pâtes', 'courge spaghetti', 'hors', 'MUST', { top: '^Courge spaghetti' }, 'non-régression : la courge reste trouvable quand on la NOMME'),
   V('FV-175', 'forme de pâtes', 'cola zéro', 'hors', 'MUST', { jamais: '[Cc]hocolat' }, 'non-régression V03 : la garde « mot entier » tient toujours (« cola » suivi d\'un mot ↛ « chocolat »)'),
+  /* ── D-070 (décision de Michel, 13/10/2026) : « coca zéro » ne propose PAS le cola SUCRÉ aux édulcorants, même en
+     dessous (D-059 ① + D-061 ① validés ; le « juste en dessous » de ft-v1116 est obsolète). L'aliment reste trouvable
+     quand on le nomme. ── */
+  V('FV-176', 'zéro', 'coca zéro', 'en', 'MUST', { top: '^Cola, sans sucres ajoutés', jamais: '^Cola, sucré' }, 'D-070 : jamais un cola « sucré », même en dessous'),
+  V('FV-177', 'zéro', 'coca zéro', 'hors', 'MUST', { top: '^Cola, sans sucres ajoutés', jamais: '^Cola, sucré' }, 'D-070, hors ligne aussi'),
+  V('FV-178', 'zéro', 'cola sucré avec édulcorants', 'hors', 'MUST', { top: '^Cola, sucré, avec édulcorants' }, 'D-070 : l\'aliment n\'est pas supprimé — nommé, il reste trouvable'),
   /* ── NUT-FOOD-VARIANTS-02 (12/10/2026, contre-vérification) : la négation tapée ne vide plus une recherche dont un
      résultat COMPATIBLE existe sous une autre écriture ; elle refuse toujours le CONTRAIRE explicite. Les témoins
      disent l'invariant (compatible présent · contraire absent · absence réelle), pas un ordre arbitraire. ── */
