@@ -25884,8 +25884,9 @@ console.log('\n-- CCXXVIII. Un fichier généré doit rester régénérable (04/
     const doc=fs.readFileSync(readme,'utf8');
     /* ⭐⭐ TOUT GÉNÉRATEUR QUI LIT UN .xlsx DOIT ÊTRE DÉCLARÉ. C'est le témoin qui rougira le jour
        où quelqu'un ajoute un `tools/xxx.py` sans se poser la question de sa source. */
-    const gens=fs.readdirSync(dirTools).filter(f=>f.endsWith('.py'))
-      .filter(f=>/\.xlsx/i.test(fs.readFileSync(path.join(dirTools,f),'utf8')));
+    /* 🧾 13/10/2026 (clôture technique Nutrition) : la détection vit dans `gouv_generateurs.js` — un OUTIL DE MUTATION
+       (`tools/mut_*.py` qui travaille sur une copie) cite un classeur sans être un générateur. Une seule logique (R2). */
+    const gens=require('./gouv_generateurs.js').generateursXlsx(fs.readdirSync(dirTools), f=>fs.readFileSync(path.join(dirTools,f),'utf8'));
     const nonDeclares=gens.filter(f=>doc.indexOf('tools/'+f)<0);
     t('⛔ CONTRÔLE — des générateurs lisant un .xlsx existent bien (sinon le témoin ne mesure rien)',
       gens.length>=2, gens.join(' · '));
@@ -25911,6 +25912,9 @@ console.log('\n-- CCXXVIII. Un fichier généré doit rester régénérable (04/
       /data',\s*'sources'/.test(py), '');
   }
 }
+/* 🧾 CCXXVIII bis (13/10/2026) : qui est un générateur — le faux positif de l'outil de mutation, et le contrôle négatif qui
+   prouve qu'un vrai générateur non déclaré rougit toujours. Banc seul : `tools/banc_gouv_generateurs.js`. */
+require('./gouv_generateurs.js').source(t, ROOT, fs, path);
 
 /* ═══ CCXXIX. LA BASE FAST-FOOD PASSE DE 27 À 128 — FUSION, PAS REMPLACEMENT (ft-v1120) ═════
    Michel renvoie le classeur perdu, en **version 2** : 114 produits au lieu de 27.
