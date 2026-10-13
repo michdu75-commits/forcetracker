@@ -1,0 +1,87 @@
+{
+ "lot": "NUT-JOURNAL-QTY-GUARD-01 (LOT-C de l'audit Nutrition de nuit du 12/10/2026)",
+ "branche": "claude/nut-journal-qty-guard-01",
+ "base": {
+  "branche": "claude/nut-food-variants-03",
+  "head": "7dd1b0051af290267d6f498bf96b8e32de885498",
+  "head_fonctionnel_variants03": "ae2f950c00fe794f937988f4d453bf9e53fc60ef",
+  "tree_fonctionnel_variants03": "5785192494bb0d50c6f9320197b134be43b6ef95",
+  "master_observe": "7b75f3c1b029b713d1a6db9692f407af302a0d6c"
+ },
+ "head_fonctionnel": "c97fa3605a93db285dea07e2c5b2e429894ac455",
+ "tree_fonctionnel": "96161b513cda69455a82b0c4401c97186d425181",
+ "invariant": "quand le bloc quantite fait autorite (pour-100 g connu), une quantite vide, 0, negative ou illisible ne modifie JAMAIS le journal : aucune ligne ajoutee, aucune ligne existante reecrite (memoire et stockage)",
+ "tests_avant": {
+  "base": "7dd1b005",
+  "banc": "node tools/banc_journal_qty_guard.js",
+  "resultat": "10 OK / 11 rouge",
+  "rouges_reproduits": [
+   "ajout CIQUAL quantite engagee puis vide / 0 / abc / -5 -> ligne enregistree 155 kcal q:null",
+   "ajout refuse puis corrige (formulaire ferme apres l'ajout fautif)",
+   "fast-food vide -> 228 kcal q:null (Big Mac)",
+   "modifier 250 g -> vide / 0 / abc / -5 -> 155 kcal q:0 (ou q:-5), ecrit en memoire ET dans le stockage",
+   "rechargement -> la ligne corrompue persiste"
+  ]
+ },
+ "tests_apres": {
+  "arbre": "c97fa3605a93db285dea07e2c5b2e429894ac455",
+  "banc": "node tools/banc_journal_qty_guard.js",
+  "resultat": "21 OK / 0 rouge"
+ },
+ "mutations": {
+  "script": "python3 tools/mut_journal_qty_guard.py",
+  "arbre": "clone",
+  "resultat": "6/6 conformes",
+  "detail": [
+   "M1 garde d'ajout = seul drapeau _bcQtyPose (code d'avant) -> 6 rouges",
+   "M2 garde de modification neutralisee -> 5 rouges",
+   "M3 ajout accepte 0 (>=0) -> 1 rouge",
+   "M4 modification n'exclut que le negatif (<0) -> 5 rouges",
+   "M5 garde d'ajout trop large (refuse une quantite valide) -> 10 rouges",
+   "MC1 commentaire -> vert"
+  ]
+ },
+ "bancs_rejoues": {
+  "banc_journal_qty_guard": "21/0",
+  "banc_repas_actif": "24/0",
+  "banc_ia_ref100": "36/0",
+  "banc_pots_nutrition": "48/0",
+  "banc_habitudes_alim": "37/0",
+  "runner_tests_parcours": "6781 OK / 2 rouges (code 1, 71 min) sur c97fa360. Les 2 rouges sont PRE-EXISTANTS, introduits par VARIANTS-03 et sans lien avec LOT-C : (1) runner LXXXVI « spaghetti cuit » rend Courge spaghetti cuite au lieu de Pates cuites ; (2) runner CCXXIV « coca zero » ne liste plus 18037 Cola sucre avec edulcorants juste en dessous. Preuve : _ciqualChercher identique sur 7dd1b005 et c97fa360 (app.js ne differe que dans addFoodEntry/saveEditFood, data/ inchange) ; correct sur 800840ed (VARIANTS-02) et 4ed73994 (VARIANTS-01). Tous les blocs journal verts : LXXXV, CLX, CLXI, CCLXXXVII 15, B-CCCXVII identite, douane CCCIII 12.",
+  "check_regles": "0 erreur",
+  "git_diff_check": "propre"
+ },
+ "bancs_non_rejoues_et_pourquoi": "aucun code de recherche modifie : food_variants / D-042 / FS / 28 000 requetes / mutations VARIANTS-03 non relances (consigne). D-031 differee a l'arbre final integre.",
+ "selecteur_de_recette": "addFoodEntry, saveEditFood -> NUTRI-JOURNAL-01 : T1 repas_actif, ia_ref100, journal_qty_guard (ajoute) ; T2 pots_nutrition, passe",
+ "fichiers_modifies": [
+  "app.js (+16 -2)",
+  "tests/parcours/journal_qty_guard.js (+207 -0)",
+  "tests/recette/registre.json (+2 -1)",
+  "tools/banc_journal_qty_guard.js (+63 -0)",
+  "tools/mut_journal_qty_guard.py (+70 -0)",
+  "docs/JOURNAL-DE-PARTAGE.md (ligne de reservation puis cloture)",
+  "HANDOFF-NUT-JOURNAL-QTY-GUARD-01.json (ce fichier)"
+ ],
+ "fonctions_modifiees": [
+  "addFoodEntry (app.js) : condition de la garde ft-v1051 = geste ET numFR(af-bc-grams) > 0",
+  "saveEditFood (app.js) : refus avant toute ecriture si ef-grams present et numFR <= 0 / illisible ; declaration de gEl remontee"
+ ],
+ "regle_17": {
+  "donnees_persistees_ajoutees": 0,
+  "fichiers_applicatifs_touches": 1,
+  "lignes_app_ajoutees_moins_retirees": "16 - 2 = +14 (dont 10 de commentaire)",
+  "anciens_chemins_supprimes_ou_fusionnes": "0 (le meme toast / mecanisme de refus existant est reutilise, aucun nouveau systeme d'alerte)"
+ },
+ "dettes_hors_scope": [
+  "NIGHT-P-009 macro non determinee enregistree a 0 (decision D3)",
+  "mode proportionnel ef-prop : une valeur invalide est ignoree (q inchange, champs repliés sur la reference) - non corrompu, non modifie",
+  "unite ml / portions : hors portee, inchangees",
+  "report d'une quantite tapee dans la recherche (D2, LOT-B)",
+  "LOT-A et LOT-B non lances (STOP)"
+ ],
+ "regle_or_11": "aucune pop-up : un refus qui protege ne merite pas d'annonce ; aucun texte d'aide devenu faux",
+ "publication": "aucune ; master non touche ; pas de numero de version ; D-031 differee a l'arbre final integre",
+ "verdict": "QUALIFIE (perimetre LOT-C) — avec une decouverte HORS LOT a traiter avant integration : 2 regressions de recherche introduites par VARIANTS-03, invisibles tant que la passe D-031 etait differee",
+ "rejeu_final_arbre_commite": "banc_journal_qty_guard 21/0 rejoue sur c97fa360 (arbre propre, apres commit)",
+ "duree_reelle": "LOT-C (temoins rouges -> correctif -> mutations -> bancs voisins) : ~20 min, 04:45 -> 05:05 UTC ; runner complet en plus : 71 min"
+}
