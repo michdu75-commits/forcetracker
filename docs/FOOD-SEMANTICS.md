@@ -766,6 +766,9 @@ de Michel : **D-060** ; choix de mise en œuvre : **D-061** (PROPOSÉ).
 
 - **« zéro » hors ligne** : `FOOD_SYNONYMES` le traduit désormais en « 0 % » OU « sans sucres », joués ensemble, et plus en
   « édulcorants ». Résultat : « fromage blanc zéro » donne le 0 % nature, « coca zéro » donne un cola sans sucres.
+  ⭐ **D-070 (décision de Michel, 13/10/2026)** : pour « coca zéro », le « Cola, sucré, avec édulcorants » n'est **pas proposé,
+  même en dessous** — D-059 ① et D-061 ① validés. Le « juste en dessous » de ft-v1116 est obsolète (témoin CCXXIV réécrit) ;
+  nommé, l'aliment reste trouvable. « coca light » le montre encore dessous (dette « light », hors décision).
 - **« cola » ↛ « chocolat »** : dans la table CIQUAL, un mot suivi d'un autre doit être un mot du nom ; l'élision compte
   (« jus orange » retrouve « Jus d'orange »). Seul le dernier mot reste une frappe partielle. « Déjà noté par toi » n'est
   pas touché.
