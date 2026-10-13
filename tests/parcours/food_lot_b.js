@@ -64,16 +64,26 @@ const CAS = [
      c'est une décision de Michel, pas un correctif. Le jour où elle change, ce témoin DOIT rougir. */
   C('LB-D02', 'coca 0', 'hors', { ref: 'coca', topRef: true, raison: 'DETTE : hors ligne sans table, le « 0 » reste ignoré (= « coca »)' }),
   C('LB-D03', 'coca 0%', 'en', { ref: 'coca zéro', top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: 'non vide, sans sucré' }),
-  C('LB-D04', 'coca 0%', 'hors', { top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: 'idem hors ligne' }),
+  /* ⚠️ DETTE (D-075 ②, Michel) : hors ligne sans table, « coca 0% » reste vide comme sur la base — le corriger passera par
+     la disponibilité hors ligne de l'alias Coca, jamais par une lecture générale « X 0% » = « X zéro » (D-075 ③). */
+  C('LB-D04', 'coca 0%', 'hors', { vide: true, raison: 'DETTE D-075 ② : hors ligne sans table, vide comme sur la base' }),
   C('LB-D05', 'coca zéro', 'en', { top: '^Cola, sans sucres ajoutés', jamais: 'Cola, sucré', raison: 'D-070 tient' }),
   C('LB-D06', 'fromage blanc 0', 'en', { top: '^Fromage blanc, nature, 0% MG', compat: '(^|[^0-9,-])0% MG', incompat: '2-3% MG|7-8% MG', raison: 'la variante réellement 0 %, aucun 2-3 % au-dessus' }),
   C('LB-D07', 'fromage blanc 0%', 'en', { top: '^Fromage blanc, nature, 0% MG', compat: '(^|[^0-9,-])0% MG', incompat: '2-3% MG|7-8% MG', raison: 'inchangé' }),
-  /* §8 — têtes de la BASE (`205cd17b`, mesurées avant le code) : « 0 » n'est pas automatiquement « 0 % ». */
+  /* §8 — « 0 » n'est pas automatiquement « 0 % » : « yaourt 0 » garde la tête de la BASE (`205cd17b`, mesurée avant le code).
+     D-075 ① (Michel, 13/10) : « lait 0 » et « lait 0% » = le LAIT ÉCRÉMÉ, par la table d'alias de la famille lait — le reste
+     de la liste est celui de la base (aucun lait entier, demi-écrémé ou 1,2 % sous « lait 0% »). Hors ligne SANS table, la
+     tête de la base reste : même dette que « coca 0 » (D-075 ②). */
   C('LB-D08', 'yaourt 0', 'en', { top: '^Yaourt à la grecque nature$', raison: '§8 : tête de la base gardée' }),
-  C('LB-D09', 'lait 0', 'en', { top: '^Lait à 1,2% MG, UHT', raison: '§8 : tête de la base gardée' }),
+  C('LB-D09', 'lait 0', 'en', { top: '^Lait écrémé, UHT$', raison: 'D-075 ① : le lait écrémé en tête' }),
   C('LB-D10', 'yaourt 0', 'hors', { top: '^Yaourt à la grecque nature$', raison: '§8 : idem hors ligne' }),
-  C('LB-D11', 'lait 0', 'hors', { top: '^Lait à 1,2% MG, UHT', raison: '§8 : idem hors ligne' }),
-  C('LB-D12', 'lait 0%', 'en', { top: '^Lait fermenté type yaourt au bifidus, nature, 0% MG$', raison: '§8 + B2 : le taux tapé trouve le nom qui le porte (tête de la base)' }),
+  C('LB-D11', 'lait 0', 'hors', { top: '^Lait à 1,2% MG, UHT', raison: 'DETTE D-075 ② : hors ligne sans table, tête de la base' }),
+  C('LB-D12', 'lait 0%', 'en', { top: '^Lait écrémé, UHT$', jamais: 'entier|demi-écrémé|1,2%', raison: 'D-075 ① : le lait écrémé en tête, aucun lait plus gras dessous' }),
+  C('LB-D15', 'lait 0%', 'hors', { top: '^Lait fermenté type yaourt au bifidus, nature, 0% MG$', raison: 'DETTE D-075 ② : hors ligne sans table, tête de la base' }),
+  /* D-075 ③ (Michel) : « X 0% » n'est pas lu « X zéro » si aucune donnée ni alias ne dit ce que 0 % veut dire — vide, comme
+     sur la base. */
+  C('LB-D16', 'compote 0%', 'en', { vide: true, raison: 'D-075 ③ : aucune interprétation particulière (vide, comme sur la base)' }),
+  C('LB-D17', 'jus d\'orange 0%', 'en', { vide: true, raison: 'D-075 ③ : idem' }),
   C('LB-D13', 'yaourt 0%', 'en', { top: '^Yaourt ou lait fermenté, nature, 0% MG$', raison: '§8 + B2 : idem' }),
   C('LB-D14', 'fromage blanc 0', 'hors', { top: '^Fromage blanc, nature, 0% MG$', raison: '§8 : la variante réellement 0 % reste en tête hors ligne' }),
   /* ── E. PONCTUATION FINALE ── */
@@ -173,7 +183,10 @@ module.exports.ecran = async function (t, b, PORT) {
   await cx.close();
   console.log('\n-- B-LB-I. NUT-LOT-B — l\'instantané de la base : ce qui ne doit PAS bouger --');
   const diffCles = Object.keys(INST.cles).filter(k => JSON.stringify(INST.cles[k]) !== JSON.stringify(I.cles[k]));
-  t('B-LB-I ① B1 — les 632 clés d\'alias tapées SANS quantité rendent les MÊMES 3 premiers aliments que sur la base', diffCles.length === 0 && Object.keys(I.cles).length === 632,
+  /* D-075 ① : la table compte 2 clés de plus que la base (« lait 0 », « lait 0% »), et seulement elles. */
+  const nouvelles = Object.keys(I.cles).filter(k => !(k in INST.cles)).sort();
+  t('B-LB-I ① B1 — les 632 clés d\'alias de la base rendent les MÊMES 3 premiers aliments ; seules « lait 0 » et « lait 0% » s\'ajoutent (D-075 ①)',
+    diffCles.length === 0 && Object.keys(I.cles).length === 634 && JSON.stringify(nouvelles) === JSON.stringify(['lait 0', 'lait 0%']),
     diffCles.slice(0, 4).map(k => k + ' ' + JSON.stringify(INST.cles[k]) + '→' + JSON.stringify(I.cles[k])).join(' · '));
   t('B-LB-I ② B1 — chaque clé désigne toujours SA cible (`_aliasCible`)', I.aliasSansQuantite === 0, String(I.aliasSansQuantite));
   const diffTetes = INST.tetes.filter((x, i) => I.tetes[i] !== x);

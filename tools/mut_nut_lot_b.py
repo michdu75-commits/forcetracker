@@ -8,7 +8,7 @@ mutation OK (commentaire) l'est s'il reste vert. Un PLANTAGE (code 2) n'est jama
 Pour chaque mutation, les premiers temoins rouges sont affiches : on voit QUEL bloc mord (conduit, pas structure).
 Usage : python3 tools/mut_nut_lot_b.py
 """
-import os, shutil, subprocess, sys, tempfile
+import json, os, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP = 'app.js'
@@ -23,8 +23,9 @@ MUT = [
     ('M3 traiter N% comme une quantite ordinaire (le taux devient une unite)',
      [(APP, r"const _AF_UNITES='g|gr|grs|gramme|grammes|kg|kgs|kilo|kilos|ml|cl|dl|l|litre|litres';",
             r"const _AF_UNITES='g|gr|grs|gramme|grammes|kg|kgs|kilo|kilos|ml|cl|dl|l|litre|litres|%';")], 'GARDE'),
-    ('M4 casser la prise en charge du « 0 » (plus de lecture « zero »)',
-     [(APP, "    .replace(/(^|\\s)0%?(?=\\s|$)/g,'$1zero')\n", "")], 'GARDE'),
+    ('M4 casser la prise en charge du « 0 » (plus de lecture « zero » pour la table)',
+     [(APP, r"  const f=_afAliment(q), z=f.replace(/(^|\s)0%?(?=\s|$)/g,'$1zero');",
+            r"  const f=_afAliment(q), z=f;")], 'GARDE'),
     ('M5 garder le point final comme mot obligatoire',
      [(APP, r"  return _afNorm(t).replace(/[.\u2026]+$/,'').trim()", r"  return _afNorm(t).trim()")], 'GARDE'),
     ('M6 appliquer le nettoyage aussi aux NOMS CIQUAL (recherche + empreinte `_fsTete`)',
@@ -32,8 +33,11 @@ MUT = [
       (APP, r"  const m=_afMots(String(nom||'').split(',')[0].replace(/\(aliment moyen\)/i,''));",
             r"  const m=_afMots(_afAliment(String(nom||'').split(',')[0].replace(/\(aliment moyen\)/i,'')));")], 'GARDE'),
     ('M7 remettre `_aliasCible` sur la requete brute (la partie alimentaire ne repond plus)',
-     [(APP, "  return (f && f!==k && _alias.a[f]!=null) ? {cle:f, aliment:true} : null;",
-            "  return null;")], 'GARDE'),
+     [(APP, "  for(const c of [f, z]) if(c && c!==k && _alias.a[c]!=null) return {cle:c, aliment:true};\n", "")], 'GARDE'),
+    ('M8 [D-075 ③] relire tout « X 0% » comme « X zero », sans alias (compote 0%, jus d\'orange 0%)',
+     [(APP, "function _afAliment(q){\n  return _afRequete(q)\n", "function _afAliment(q){\n  return _afRequete(q).replace(/(^|\\s)0%?(?=\\s|$)/g,'$1zero')\n")], 'GARDE'),
+    ('M9 [D-075 ①] retirer de la table les cles « lait 0 » / « lait 0% »',
+     [('data/alias.json', '"lait 0":19050,"lait 0%":19050,', '')], 'GARDE'),
     ('MC1 [negatif] commentaire seulement',
      [(APP, "function _afSinonAliment(q, chercher){", "/* (commentaire de controle) */\nfunction _afSinonAliment(q, chercher){")], 'OK'),
 ]
@@ -71,6 +75,10 @@ def main():
                 print('  !! ANCRE INTROUVABLE OU MULTIPLE (%d) : %s' % (s.count(old), nom)); shutil.rmtree(tmp, ignore_errors=True); return 1
             open(p, 'w', encoding='utf-8').write(s.replace(old, new))
         chk = subprocess.run(['node', '--check', os.path.join(arbre, APP)], capture_output=True)
+        try:
+            json.load(open(os.path.join(arbre, 'data', 'alias.json'), encoding='utf-8'))
+        except ValueError:
+            chk = subprocess.CompletedProcess([], 1)
         if chk.returncode != 0:
             print('  !! MUTATION QUI CASSE LA SYNTAXE (refusee) : %s' % nom); shutil.rmtree(tmp, ignore_errors=True); return 1
         rc, res, rouges = banc(arbre)

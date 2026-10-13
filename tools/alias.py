@@ -253,6 +253,11 @@ AJOUTS = {
     'rose':     (5216, 'rendait « Rosette ou fuseau » — le saucisson, 392 kcal au lieu de 69'),
     'vin rose': (5216, 'idem'),
     '7up':      (18048, 'ne rendait RIEN — l\'aliment moyen « Boisson gazeuse aux fruits, sucrée »'),
+    # 🥛 D-075 ① (Michel, 13/10/2026, NUT-LOT-B) — « lait 0 » / « lait 0% » = le LAIT ÉCRÉMÉ. Sur la base, « lait 0 » ignorait
+    #    le 0 (« Lait à 1,2% MG ») et « lait 0% » mettait en tête un lait FERMENTÉ au bifidus. La même cible que « lait ecreme »
+    #    (UHT) ; les laits fermentés 0 % restent juste dessous. ⛔ Une clé de la FAMILLE LAIT, pas une règle « 0 = zéro ».
+    'lait 0':   (19050, 'D-075 ① (Michel) : rendait « Lait à 1,2% MG » (le 0 ignoré) — le lait écrémé'),
+    'lait 0%':  (19050, 'D-075 ① (Michel) : rendait un lait FERMENTÉ au bifidus — le lait écrémé'),
 }
 
 # ⛔⛔ NUT-LOT-A (13/10/2026) — LES TRADUCTIONS VOULUES, et elles seulement. Le contrôle de sens (`controle_semantique`)
@@ -278,6 +283,7 @@ TRADUCTIONS_VOULUES = {
     'lait amande':            (18111, _BOISS),
     'lait d amande':          (18111, _BOISS),
     'lait de riz':            (18904, _BOISS),
+    'lait 0%':                (19050, 'D-075 ① (Michel, 13/10) : « lait 0% » = le lait écrémé ; les autres aliments qui portent les mots sont des laits FERMENTÉS'),
     'pain sandwich':          (7200,  'le pain de mie ; les autres aliments sont des SANDWICHS garnis'),
     'toast':                  (7200,  'le pain de mie ; les autres sont des toasts briochés aux raisins ou des canapés garnis'),
     'patate':                 (4048,  _PATATE),

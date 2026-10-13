@@ -4886,14 +4886,16 @@ function _aliasCible(q){
 /* 🍽️ NUT-LOT-B : QUELLE clé de la table répond — la frappe telle que tapée D'ABORD (une clé connue ne change jamais de
    cible : B1), sinon sa PARTIE ALIMENTAIRE (« eau 1,5 l » → « eau », « 2 oeufs » → « oeufs », « coca 0 » → « coca zero »).
    Aucune clé nouvelle : seules celles de la table, contrôlées par son générateur (LOT-A), peuvent répondre. ⭐ C'est donc
-   la TABLE qui dit où un « 0 » veut dire « zéro » (coca, fromage blanc, ice tea…) : ailleurs il reste ignoré comme avant
-   (« lait 0 », « yaourt 0 » gardent leur tête — brief §8 : « 0 » n'est pas automatiquement « 0 % »). */
+   la TABLE qui dit où un « 0 » veut dire « zéro » (coca, fromage blanc, ice tea…) — et elle seule (D-075 ③, Michel) :
+   ailleurs le « 0 » reste ignoré comme avant (« yaourt 0 »), et « compote 0% » n'est lu d'aucune façon. La famille lait a
+   ses propres clés (« lait 0 », « lait 0% » → le lait écrémé, D-075 ①). */
 function _aliasCle(q){
   if(!_alias) return null;
   const k=_afNorm(q).replace(/\s+/g,' ').trim();
   if(_alias.a[k]!=null) return {cle:k, aliment:false};
-  const f=_afAliment(q);
-  return (f && f!==k && _alias.a[f]!=null) ? {cle:f, aliment:true} : null;
+  const f=_afAliment(q), z=f.replace(/(^|\s)0%?(?=\s|$)/g,'$1zero');
+  for(const c of [f, z]) if(c && c!==k && _alias.a[c]!=null) return {cle:c, aliment:true};
+  return null;
 }
 let _marques=null, _marquesEnCours=null;
 async function _marquesCharger(){
@@ -5685,13 +5687,11 @@ function _afMots(q){
    ① `_afRequete(q)` : la requête comme on la cherche — le point final de saisie retiré, une quantité lue d'un bloc
       (« 100 g » → « 100g », « 1,5 l » → « 1.5l ») ; `_afMotDansNom` la retrouve écrite avec une espace dans un nom
       (« Coca-Cola 500 ml »). Un TAUX n'en est pas une (« 20% » reste un taux : « fromage blanc 20% » ne rend toujours rien).
-   ② `_afAliment(q)` : sa PARTIE ALIMENTAIRE — sans les quantités, sans un compte en tête (« 2 oeufs », « 30g de whey »),
-      un zéro en chiffre lu comme le mot « zéro » (« coca 0 », « coca 0% » → « coca zero », que la table connaît : D-070).
+   ② `_afAliment(q)` : sa PARTIE ALIMENTAIRE — sans les quantités, sans un compte en tête (« 2 oeufs », « 30g de whey »).
       Elle sert la table d'alias (après la clé telle que tapée : B1 — `_aliasCle`) et le REPLI — une source qui ne trouve
-      rien avec la frappe cherche l'aliment seul (`_afSinonAliment`). ⛔ Le « 0 » n'est donc lu « zéro » que là où la table
-      connaît « X zéro », ou quand la frappe ne trouve RIEN (« coca 0% ») — jamais une règle universelle de pourcentage :
-      « lait 0 », « yaourt 0 » gardent leur tête. Une requête faite d'une quantité seule n'a pas d'aliment : elle ne
-      devient jamais « tout le catalogue ». */
+      rien avec la frappe cherche l'aliment seul (`_afSinonAliment`). ⛔ Un « 0 » / « 0% » n'est lu « zéro » QUE pour
+      consulter la table (`_aliasCle` : « coca 0 » → « coca zero », D-070) — jamais une règle universelle (D-075 ③, Michel).
+      Une requête faite d'une quantité seule n'a pas d'aliment : elle ne devient jamais « tout le catalogue ». */
 const _AF_UNITES='g|gr|grs|gramme|grammes|kg|kgs|kilo|kilos|ml|cl|dl|l|litre|litres';
 const _AF_QTE=new RegExp('(^|\\s)(\\d+(?:\\.\\d+)?)\\s?('+_AF_UNITES+')(?=\\s|$)','g');
 const _AF_QTE_MOT=new RegExp('^(\\d+(?:\\.\\d+)?)('+_AF_UNITES+')$');
@@ -5703,12 +5703,11 @@ function _afAliment(q){
   return _afRequete(q)
     .replace(new RegExp('^\\d+(?:\\.\\d+)?(?:'+_AF_UNITES+')?\\s+(?:(?:de|du|des|d)\\s+)?'),'')   // en tête : « 30g de whey », « 2 oeufs »
     .replace(new RegExp('(^|\\s)\\d+(?:\\.\\d+)?(?:'+_AF_UNITES+')(?=\\s|$)','g'),'$1')       // ailleurs : « riz 100g »
-    .replace(/(^|\s)0%?(?=\s|$)/g,'$1zero')
     .replace(/\s+/g,' ').trim();
 }
 /* Ce qu'on cherche, en un seul endroit, pour les 4 sources : la PARTIE ALIMENTAIRE quand c'est elle que la table d'alias
    reconnaît (« coca 0 » → « coca zero » : la frappe, le « 0 » ignoré, remettrait le cola SUCRÉ — D-070) ; sinon la requête
-   telle quelle, puis — si rien ne répond — sa partie alimentaire. */
+   telle quelle, puis — si rien ne répond — sa partie alimentaire, sans aucune lecture du « 0 » (D-075 ③). */
 function _afSinonAliment(q, chercher){
   const k=_aliasCle(q);
   if(k && k.aliment) return chercher(k.cle);
