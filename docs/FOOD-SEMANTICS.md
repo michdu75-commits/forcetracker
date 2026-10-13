@@ -685,7 +685,8 @@ contrôles négatifs `food_*`). Conflits résolus à la main : documentation seu
 **Avant (master `7b75f3c1`, mêmes témoins)** : D-042 36 / 29 · FS-01, FS-02, FS-03 plantent (résolveur absent) · FS-05
 38 / 97 · FS-05B 129 / 2 — **identique à `b280ea5d`** (rejoué : IMPORT-MAP et IMPORT-P0-2 ne touchent pas la recherche
 d'aliments). **Après (branche)** : D-042 **73 / 0** · FS-01 **44 / 0** · FS-02 **46 / 0** · FS-03 **39 / 0** · FS-05
-**136 / 0** · FS-05B **177 / 0**. Contrôles négatifs et passe complète : rapport `NUT-D042-CLOSURE-01-RAPPORT-2026-10-11`
+**136 / 0** · FS-05B **177 / 0**. Contrôles négatifs **117 / 117** conformes ;
+passe complète D-031 **6 661 ✅ / 0 ❌** sur `0407516b` (4 conditions vertes). Détail : rapport `NUT-D042-CLOSURE-01-RAPPORT-2026-10-11`
 (hors dépôt) et `HANDOFF-NUT-D042-CLOSURE-01.json` (racine de la branche).
 
 **Toujours hors lot** : FS-04 (affichage des formes, **D-040** non portée) · NUT-PUNCH-01 · UX « crème fraîche » · champ
