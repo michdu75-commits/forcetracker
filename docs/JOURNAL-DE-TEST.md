@@ -3503,3 +3503,5 @@ et affiché) ; aucun fichier du débrief n'a changé depuis la passe précédent
 arbre : **58/0 à chaque fois**. Même famille qu'OD-11 et OD-16 (06/10) : l'attente de la carte dans Progrès sous charge.
 ❓ **Doute** : l'attente de 3 s suffit-elle quand la passe complète charge la machine, ou la liste de Progrès se dessine-t-elle
 parfois après un autre événement ? Vérifiable par du code : ✅. État : **à trier** (famille non éteinte, banc débrief).
+↪️ *Décision de Michel (13/10)* : accepté pour ce lot comme test instable connu, hors périmètre ; le lot passe QUALIFIÉ avec la mesure
+6 792 ✅ / 1 ❌ conservée telle quelle. La famille reste ouverte : l'entrée reste **à trier**.

@@ -57,7 +57,8 @@
   "rouge": "OD-08b (banc débrief) « dans Progrès, la carte porte « 💬 Voir le débrief Milo » et SEULEMENT lui » -> null (carte de la séance introuvable après 3 s)",
   "classement_rouge": "PRÉEXISTANT, INSTABLE, HORS LOT : aucun fichier du débrief ni aucun fichier applicatif modifié depuis 67ea20e6 ; OD-08b vert dans la passe précédente ; OD-08 (débrief rangé et affiché) vert dans la même passe ; famille consignée le 06/10 (OD-11, OD-16 : attente de la carte dans Progrès sous charge, commentaire dans tests/parcours/debrief_demande.js) ; rejoué seul 3 fois sur d7b8616f -> 58/0 à chaque fois",
   "cola": "témoins D-070 (CCXXIV) verts dans la passe ; R1 vert (LXXXVI + FV-170/171)",
-  "verdict_passe": "NON VALIDE au sens strict de passe_valide.sh (1 rouge). Le rouge n'est pas causé par ce lot ; le corriger ouvrirait un chantier banc débrief (hors périmètre) -> décision Michel : relancer la passe complète ou accepter le classement"
+  "verdict_passe": "NON VALIDE au sens strict de passe_valide.sh (6792 OK / 1 rouge) — ce n'est PAS une D-031 à 0 rouge. Le rouge OD-08b est accepté par Michel (13/10) comme test instable connu, hors périmètre ; aucune nouvelle passe complète relancée (décision de Michel)",
+  "decision_michel": "option (b), 13/10 : « J'accepte OD-08b comme test instable connu hors périmètre, au vu des 3 rejeux consécutifs à 58/0 sur le même arbre et de l'absence de modification du débrief. Ne relance pas une nouvelle D-031 complète. »"
  },
  "regle_17": {
   "fichiers_applicatifs": 1,
@@ -78,6 +79,12 @@
   "HANDOFF-NUT-VARIANTS-03-RED-CLOSURE.json"
  ],
  "hors_lot": "LOT-A, LOT-B, crème, plages %, « zéro » global, ml : non touchés ; aucune publication ; master non touché",
- "verdict": "BLOQUÉ — DÉCISION MICHEL : R1 corrigé et qualifié ; R2 tranché (D-070) et témoigné ; passe complète finale 6792/1, le seul rouge (OD-08b) est un témoin instable préexistant hors lot (3/3 vert en rejeu) — la passe n'est pas « 0 rouge », donc pas de QUALIFIÉ sans ton accord ou une nouvelle passe",
- "head_arbre_d031_precedente": "f628f7230bd02ccc5b4f93d22abe03aa25452150"
+ "verdict": "QUALIFIÉ (décision de Michel, 13/10) — R1 corrigé et qualifié ; R2 tranché (D-070) et témoigné ; mesure conservée : passe complète finale 6792 ✅ / 1 ❌ sur d7b8616f, le rouge OD-08b classé test instable documenté (préexistant, hors lot, 3/3 à 58/0 en rejeu, débrief non modifié). Aucune D-031 à 0 rouge n'est revendiquée. Ni intégration ni publication.",
+ "head_arbre_d031_precedente": "f628f7230bd02ccc5b4f93d22abe03aa25452150",
+ "dettes_ouvertes": [
+  "aide détaillée de la recherche (coach.js) : dit encore « l'autre reste juste en dessous » — obsolète depuis D-070",
+  "« coca light » : le cola sucré aux édulcorants apparaît encore en dessous (« light » -> « édulcorants »)",
+  "OD-08b / famille « carte introuvable dans Progrès sous charge » (banc débrief) : instable, non corrigée"
+ ],
+ "head_final": "(commit de clôture qui porte ce fichier — voir le journal de partage)"
 }
