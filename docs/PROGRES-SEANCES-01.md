@@ -17,7 +17,7 @@
 | Exercices garde raccourcis, recherche, graphique, objectif, « Voir cette séance » | ✅ inchangés (chiffres du graphique épinglés par PS-E07) | — |
 | Corps & santé inchangé | ✅ | — |
 | **Badges** : destination non décidée, ne pas le rendre inaccessible | ✅ **reste un 4ᵉ onglet**, aucune relocalisation | `PROG_ONGLETS` |
-| Historique **Année → Mois → Séance**, plus de plafond de 20 | ✅ années repliées sauf l'année en cours, un mois se déplie à la demande, rendu **par mois** | `renderSessions` |
+| Historique **Année → Mois → Séance**, plus de plafond de 20 | ✅ années repliées sauf l'année en cours, un mois se déplie à la demande, rendu **par mois** ; ⭐ **mois en cours déplié** en entrée normale s'il existe (décision de Michel du 14/10, §8) | `renderSessions`, `_sessMoisEstOuvert` |
 | Accueil « Séances ce mois », calendrier, « Revoir la séance » → Séances, au bon mois / sur la séance | ✅ par la clé **existante** `ts‖id` (celle de la carte et de `openSessDetail`) — aucune nouvelle identité | `goSessionsHistory`, `_calDayPanel`, vue semaine |
 | Volume **14 jours \| 28 jours**, 28 par défaut, moyenne = total / 2 ou / 4 | ✅ choix à l'écran (en mémoire) | `_volumeParMuscle(refTs, jours)`, `_renderVolumeSemaine` |
 | **Milo garde son comportement** (pas de changement silencieux) | ✅ `_ctxVolumeMuscles` appelle toujours `_volumeParMuscle()` → 14 jours ; prompt **identique** master ↔ branche (généré des deux côtés, hors date/heure) | coach.js inchangé côté prompt |
@@ -37,6 +37,8 @@
    du contrat : replié (« un mois se déplie à la demande »). Il s'ouvre seul quand on arrive par « Séances
    ce mois » ou par le calendrier. ⚠️ À confirmer par Michel : c'est un tap de plus qu'avant pour voir sa
    dernière séance depuis la barre du bas.
+   ⭐ **TRANCHÉ par Michel le 14/10** (PROGRES-SEANCES-INTEGRATION-01, §8) : en entrée normale, le **mois
+   courant s'ouvre seul s'il existe** ; sans séance ce mois-ci, aucun mois ne s'ouvre et aucun n'est inventé.
 3. **« Revoir la séance » n'ouvre pas le détail** : il amène sur la **carte** de la séance (entourée de
    bleu), dans son mois. Ouvrir directement le détail ouvrirait aujourd'hui l'éditeur, ce que le contrat
    veut justement éviter (point 1).
@@ -52,6 +54,8 @@
    > ton histoire montre et ce que tu travailles. ② L'historique n'est plus limité à 20 séances : il est
    > rangé par **année** puis par **mois** — tape un mois pour l'ouvrir. ③ **Exercices** garde la
    > progression d'un exercice.
+   ↪️ *Ajusté le 14/10 après la décision du mois courant (§8)* : ② devient « … rangé par **année** puis par
+   **mois** — le mois en cours est déjà ouvert, tape un autre mois pour le voir. »
 8. **Passation 08/10 (« ne pas coder UX-HIST avant DATA-CONTRAT-SÉANCES »)** : ce lot ne touche **ni**
    l'identité des séances, **ni** le stockage, **ni** la suppression, **ni** la rétention — il ne fait que
    ranger l'affichage et diriger les portes d'entrée, avec la clé déjà utilisée par la carte. La
@@ -115,7 +119,7 @@ cassé) : **5 / 5 attrapées**.
 | **CLXXII** cartes d'entraînement (1 ❌ + **① vert à vide**) | « que sur Exercices » | **que sur Séances** ; **①bis nouveau** : absentes sur Exercices, analyse en haut ; revient sur Séances |
 | **CLXXIII** haut de Progrès (**④ vert à vide**) | mesurait la recherche cachée (y = 0) | cartes mesurées sur Séances ; progression et recherche **mesurées sur Exercices**, et **visibles** (h > 0) |
 | **CCXXVI ter** cardio dans l'historique (6 ❌ + « 0 kg » vert à vide) | lit la liste : mois repliés | déplie les mois, puis lit |
-| **CCXXXIX** tuiles de l'Accueil (1 ❌) | l'arrivée nue EST Séances : plus d'écart d'onglet ni de défilement | « ciblé » = **le mois en cours est déplié**, ce que l'arrivée nue ne fait pas |
+| **CCXXXIX** tuiles de l'Accueil (1 ❌) | l'arrivée nue EST Séances : plus d'écart d'onglet ni de défilement | « ciblé » = **le mois en cours est déplié**, ce que l'arrivée nue ne fait pas — ↪️ *re-visé à l'intégration (§8)* : l'arrivée nue ouvre maintenant le mois courant, la comparaison se fait depuis un **état dérangé** (Séances, mois courant replié par la personne) |
 
 ## 7. Règle d'or #17 — compteurs (code applicatif seulement)
 
@@ -127,3 +131,28 @@ cassé) : **5 / 5 attrapées**.
 | Lignes ajoutées − retirées | **+192 / −56 (net +136)**, dont une bonne part de commentaires et de textes d'aide |
 | Anciens chemins supprimés / fusionnés | `slice(0,20)` retiré ; les 3 bascules d'onglet recopiées → **une table** (`PROG_ONGLETS`) ; le « forcé à Exercices » de `renderProgress` retiré ; la fenêtre du volume devient **un paramètre** du même propriétaire (aucune copie du calcul) ; les 2 `goSessionsHistory()` nus du calendrier visent la séance |
 | Fonction multi-appelants modifiée | `_volumeParMuscle` (écran + Milo) : sans période → **14 jours, inchangé pour Milo** (PS-S5, PS-E22, M7, M8) ; `goSessionsHistory` (tuile + calendrier) : sans argument → mois en cours |
+
+## 8. Intégration — PROGRES-SEANCES-INTEGRATION-01 (14/10/2026, session-B, feu vert de Michel)
+
+Branche `claude/progres-seances-integration-01` depuis master `a0eab5b3` : **LOT 0 Séance → Nutrition**
+(`f5c93e63`) fusionné d'abord, puis ce lot (`7ac0580e`). Conflits **en documentation seulement**
+(`JOURNAL-DE-PARTAGE.md`, trois lignes de `CONTEXTE-ACTUEL.md` fusionnées sans perte) ; aucun dans le code,
+le runner ou le registre. L'outil `tools/integrer_progres_seances.py` a été appliqué au runner final (toutes
+ses ancres trouvées, idempotent).
+
+**Décision D de Michel (14/10) — le mois courant.** En ouvrant Progrès normalement : onglet Séances, année
+courante ouverte, **mois courant ouvert s'il existe dans l'historique** (pas un clic de plus pour voir ses
+séances récentes). Sans séance ce mois-ci : aucun mois ouvert, aucun inventé. Les entrées ciblées restent
+prioritaires (« Séances ce mois », calendrier, Accueil).
+- **Code** : `_sessMoisEstOuvert(m)` dans `setup.js`, miroir exact de `_sessAnEstOuvert` — défaut = mois
+  courant, un tap de la personne prime pour la session (en mémoire, aucune clé). La bascule lit l'état
+  **effectif** : écrite `!état brut`, elle aurait lu « absent » comme « replié » et rouvert le mois au 1ᵉʳ tap.
+- **Détail d'interaction non spécifié, signalé** : si la personne replie le mois courant puis revient sur
+  Progrès dans la même session, il reste replié (son geste prime, comme pour les années). Au prochain
+  lancement de l'app, il est de nouveau ouvert.
+- **Témoins** : PS-E10 **réécrit** (R30 : « tous repliés » → « seul le mois courant déplié ») ; PS-E41 (mois
+  courant absent) ; PS-E42 (un tap replie, un 2ᵉ redéplie) ; PS-E43 (4 onglets sur une ligne, 390 et 320 px).
+  Sur l'ancien comportement : PS-E10 et PS-E42 **rouges** (49 / 2) ; après : **51 / 0**.
+- **Runner** : CCXXXIX re-visé (R30) — la tuile est comparée à l'arrivée nue depuis le **même état dérangé**.
+- **Mutations** : M5 et M17 ré-ancrées ; M31 → M35 ajoutées (défaut replié, bascule sur l'état brut, mois le
+  plus récent ouvert à la place, mois courant inventé, équivalente `in`).
