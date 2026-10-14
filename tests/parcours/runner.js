@@ -39524,6 +39524,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      `tools/mut_nutri_lipides25.py`. */
   await require('./nutri_lipides25.js').ecran(t, b, PORT);
   await require('./nutri_lipides25.js').ecranVue(t, b, PORT);
+  /* 🍽️ LOT 0 — contrat Séance → Nutrition (NUT-LOT0-CONTRAT, 14/10/2026 ; porté du sous-lot A de NUT-PUNCH-01,
+     03/10) : vraie séance, rechargements, contrôles négatifs durée / volume / méthode / discipline / niveau,
+     et des OBSERVATIONS nommées jamais rouges (une observation qui change s'affiche « LEVÉE — À RECLASSER »).
+     Bloc B-NP01-A, contrôle négatif `tools/mut_nut_punch01.py`. */
+  await require('./nut_punch01.js').contrat(t, b, PORT);
   /* 🔎 FS-01 Food Semantics V1 (02/10/2026, porté par NUT-D042-01 le 11/10) : résolveur déterministe de la recherche
      d'aliments (une forme nommée gagne toujours) et un seul premier affichage quand CIQUAL ET les alias sont là.
      Blocs B-CDXXIX / B-CDXXX, contrôle négatif `tools/mut_food_semantics.py`. */
@@ -40502,6 +40507,7 @@ require('./profil_atypique.js').source(t, ROOT, fs, path);
 require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
+require('./nut_punch01.js').sourceContrat(t, ROOT, fs, path);
 require('./food_semantics.js').source(t, ROOT, fs, path);
 require('./food_formes.js').source(t, ROOT, fs, path);
 require('./food_prefs.js').source(t, ROOT, fs, path);
