@@ -1,0 +1,321 @@
+{
+  "chantier": "NUT-D042-CLOSURE-01",
+  "role_source": "Principal",
+  "branch": "claude/nut-d042-closure-01",
+  "base_master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
+  "production": "ft-v1253",
+  "historical_branch": {
+    "name": "claude/nut-d042-01",
+    "head": "e024b1b4546e78536019973b67ff4b348520b3dc",
+    "qualified_on": "b280ea5d19b16a20e417c5249db221863c8f437a"
+  },
+  "final_head": "7b5a613a0339a1e4027b0bb4d5780802c77b003a",
+  "final_head_note": "commit qui précède celui qui ajoute ce fichier (un fichier ne peut pas contenir le hash de son propre commit) ; le commit du handoff est l'enfant direct de final_head et n'ajoute que ce fichier : git diff <final_head> HEAD --name-only",
+  "functional_head": "0407516b0c3ab745713c45434ea9e2c02209f12b",
+  "functional_tree": "60323aeeee0fe86cd8f1174d7af5b3b12b70c376",
+  "after_functional_head": {
+    "files": [
+      "docs/CONTEXTE-ACTUEL.md",
+      "docs/FOOD-SEMANTICS.md",
+      "docs/JOURNAL-DE-PARTAGE.md",
+      "docs/JOURNAL-DE-TEST.md",
+      "docs/SUIVI-AUDIT.md"
+    ],
+    "nature": "documentation seulement (D-031)"
+  },
+  "cherry_picks": {
+    "c534f5e6": "63960fd9",
+    "7046a346": "6c60e0bf",
+    "b6c29583": "011caaf0",
+    "46eff10d": "e9e3d847",
+    "f5267d3e": "bda0d185",
+    "e024b1b4": "a6247d68",
+    "9d720c11": "non repris (réservation remplacée par 998a07e7)"
+  },
+  "nutrition_code_identical_to_historical": true,
+  "master_files_untouched": true,
+  "scope": [
+    "D-042",
+    "FS-01",
+    "FS-02",
+    "FS-03",
+    "FS-05",
+    "FS-05B"
+  ],
+  "out_of_scope": [
+    "FS-04",
+    "NUT-PUNCH",
+    "creme-fraiche-UX",
+    "quantite-consommee",
+    "pizza-generic-followup"
+  ],
+  "files_changed": [
+    "BUGS.md",
+    "app.js",
+    "data/alias.json",
+    "docs/CONTEXTE-ACTUEL.md",
+    "docs/DECISIONS.md",
+    "docs/FOOD-SEMANTICS.md",
+    "docs/JOURNAL-DE-PARTAGE.md",
+    "docs/JOURNAL-DE-TEST.md",
+    "docs/SUIVI-AUDIT.md",
+    "tests/parcours/food_d042.js",
+    "tests/parcours/food_formes.js",
+    "tests/parcours/food_multisource.js",
+    "tests/parcours/food_multisource_corpus.js",
+    "tests/parcours/food_multisource_off.js",
+    "tests/parcours/food_prefs.js",
+    "tests/parcours/food_reference.js",
+    "tests/parcours/food_reference_corpus.js",
+    "tests/parcours/food_semantics.js",
+    "tests/parcours/runner.js",
+    "tests/recette/registre.json",
+    "tools/alias.py",
+    "tools/banc_food_d042.js",
+    "tools/banc_food_formes.js",
+    "tools/banc_food_multisource.js",
+    "tools/banc_food_prefs.js",
+    "tools/banc_food_reference.js",
+    "tools/banc_food_semantics.js",
+    "tools/mut_food_d042.py",
+    "tools/mut_food_formes.py",
+    "tools/mut_food_multisource.py",
+    "tools/mut_food_prefs.py",
+    "tools/mut_food_reference.py",
+    "tools/mut_food_semantics.py",
+    "tools/recette_selecteur.py"
+  ],
+  "app_files_changed": [
+    "app.js",
+    "data/alias.json"
+  ],
+  "rule17": {
+    "persisted_data_added": 0,
+    "storage_keys_added": 0,
+    "app_files": 2,
+    "app_js_added": 302,
+    "app_js_removed": 43,
+    "alias_json_changed_lines": 1,
+    "new_functions": [
+      "_fsCle",
+      "_fsComparer",
+      "_fsTete",
+      "_fsSing",
+      "_fsMotsEntiers",
+      "_fsFormesDuTexte",
+      "_fsIntention",
+      "_fsProfil",
+      "_fsPreference",
+      "_fsPromouvoir",
+      "_afGeneriqueDevant",
+      "_afIntentionMarque"
+    ],
+    "new_tables": [
+      "_FS_FORMES",
+      "_FS_ORDRE",
+      "_FS_EVITE_GENERIQUE",
+      "_FS_PREFS_GENERIQUES",
+      "_FS_VERSION"
+    ],
+    "new_engines": 0,
+    "new_business_paths": 0,
+    "same_as_historical_branch": true
+  },
+  "tests": {
+    "cibles": {
+      "banc_food_d042": {
+        "avant_master_7b75f3c1": {
+          "ok": 36,
+          "rouge": 29
+        },
+        "apres": {
+          "ok": 73,
+          "rouge": 0
+        }
+      },
+      "banc_food_semantics": {
+        "avant_master_7b75f3c1": "PLANTAGE (fonctions FS absentes de master)",
+        "apres": {
+          "ok": 44,
+          "rouge": 0
+        }
+      },
+      "banc_food_formes": {
+        "avant_master_7b75f3c1": "PLANTAGE (fonctions FS absentes de master)",
+        "apres": {
+          "ok": 46,
+          "rouge": 0
+        }
+      },
+      "banc_food_prefs": {
+        "avant_master_7b75f3c1": "PLANTAGE (fonctions FS absentes de master)",
+        "apres": {
+          "ok": 39,
+          "rouge": 0
+        }
+      },
+      "banc_food_reference": {
+        "avant_master_7b75f3c1": {
+          "ok": 38,
+          "rouge": 97
+        },
+        "apres": {
+          "ok": 136,
+          "rouge": 0
+        }
+      },
+      "banc_food_multisource": {
+        "avant_master_7b75f3c1": {
+          "ok": 129,
+          "rouge": 2
+        },
+        "apres": {
+          "ok": 177,
+          "rouge": 0
+        }
+      }
+    },
+    "voisins": {
+      "banc_repas_actif": {
+        "ok": 24,
+        "rouge": 0
+      },
+      "banc_habitudes_alim": {
+        "ok": 37,
+        "rouge": 0
+      }
+    },
+    "check_regles": "vert",
+    "diff_check": "propre",
+    "selecteur_autotest": "15/0"
+  },
+  "mutations": {
+    "mut_food_d042": {
+      "conformes": 18,
+      "total": 18,
+      "statuts": {
+        "GARDE": 15,
+        "OK": 3
+      }
+    },
+    "mut_food_semantics": {
+      "conformes": 20,
+      "total": 20,
+      "statuts": {
+        "GARDE": 18,
+        "SOURCE": 1,
+        "OK": 1
+      }
+    },
+    "mut_food_formes": {
+      "conformes": 17,
+      "total": 17,
+      "statuts": {
+        "GARDE": 15,
+        "OK": 2
+      }
+    },
+    "mut_food_prefs": {
+      "conformes": 18,
+      "total": 18,
+      "statuts": {
+        "GARDE": 16,
+        "OK": 2
+      }
+    },
+    "mut_food_reference": {
+      "conformes": 18,
+      "total": 18,
+      "statuts": {
+        "GARDE": 16,
+        "OK": 2
+      }
+    },
+    "mut_food_multisource": {
+      "conformes": 26,
+      "total": 26,
+      "statuts": {
+        "GARDE": 22,
+        "OK": 4
+      }
+    }
+  },
+  "d031": {
+    "ok": 6661,
+    "non": 0,
+    "exit_code": 0,
+    "tree_stable": true,
+    "master_stable": true,
+    "tree": "0407516b0c3ab745713c45434ea9e2c02209f12b"
+  },
+  "d031_history": [
+    {
+      "pass": 1,
+      "tree": "0407516b0c3ab745713c45434ea9e2c02209f12b",
+      "ok": 6660,
+      "non": 1,
+      "exit_code": 1,
+      "valid": false,
+      "red": [
+        "OD-16 la séance non analysée est là, entière : historique, c"
+      ],
+      "classification": "faux rouge — instabilité préexistante du banc débrief (carte Progrès pas encore rendue au contrôle : carte null ; séance présente, aucun débrief rangé, aucune mémoire)",
+      "evidence": {
+        "bench": "tools/banc_debrief_demande.js",
+        "reruns_branch": [
+          {
+            "ok": 58,
+            "rouge": 0
+          },
+          {
+            "ok": 58,
+            "rouge": 0
+          },
+          {
+            "ok": 58,
+            "rouge": 0
+          },
+          {
+            "ok": 58,
+            "rouge": 0
+          },
+          {
+            "ok": 58,
+            "rouge": 0
+          }
+        ],
+        "reruns_master_7b75f3c1_without_lot": [
+          {
+            "ok": 58,
+            "rouge": 0
+          },
+          {
+            "ok": 57,
+            "rouge": 1
+          },
+          {
+            "ok": 58,
+            "rouge": 0
+          }
+        ],
+        "master_red": "OD-08b (même famille : carte Progrès null)",
+        "diff_scope": "app.js : fonctions de recherche d'aliments seulement",
+        "prior_record": "docs/JOURNAL-DE-TEST.md, entrée « OD-11 CARTE INTROUVABLE » (OD-16 rouge une fois sous une mutation de commentaire, 06/10)"
+      }
+    },
+    {
+      "pass": 2,
+      "tree": "0407516b0c3ab745713c45434ea9e2c02209f12b",
+      "valid": false,
+      "interrupted": "coupée par la limite de temps de la commande qui la lançait (1 h), pas par un rouge ; aucun ❌ écrit avant la coupure"
+    },
+    {
+      "pass": 3,
+      "tree": "0407516b0c3ab745713c45434ea9e2c02209f12b",
+      "valid": true,
+      "note": "relancée sur le même arbre, sans modification de code"
+    }
+  ],
+  "status": "QUALIFIE_NON_INTEGRE_NON_PUBLIE",
+  "report": "NUT-D042-CLOSURE-01-RAPPORT-2026-10-11.md"
+}

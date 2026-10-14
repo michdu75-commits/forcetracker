@@ -367,6 +367,17 @@ vraiment. Voisin de §1 (le premier match gagnant).
 FS-05B, D-036 → D-042) sur des branches **NON PUBLIÉES** : sa protection n'entre ici qu'à sa
 publication.
 
+### 🔄 3ᵉ cas : « générique devant » sans pertinence (11/10/2026, NUT-D042-01, branche non publiée)
+La 1ʳᵉ version de D-042 faisait passer CIQUAL devant le fast-food **dès que CIQUAL répondait** (et que la requête
+ne nommait pas de marque). Mesuré avant tout commit, sur 117 requêtes tirées des noms du fast-food : **27 fois**, le
+premier aliment ainsi poussé devant **ne portait même pas le mot tapé** — « wings » → un chewing-gum devant les Hot
+Wings, « big » (en tapant « big mac ») → un bigorneau devant le Big Mac, « cheese » → un cheesecake. *Un résultat
+non vide n'est pas un résultat pertinent* : c'est exactement ce paragraphe, appliqué à l'ordre des SECTIONS.
+🛡️ **Ce qui protège** : le critère ③ de `_afGeneriqueDevant` (cible de la table d'alias, ou chaque mot tapé en
+entier — le test de la clé FS-01, partagé) ; témoins D42-100 → 106 (verts sur master, rouges sur la 1ʳᵉ version) ;
+mutations M9, M10, DG2 de `tools/mut_food_d042.py`. ⚠️ **Limite dite** : un mot entier n'est pas un sens (« petites »
+→ « Pancake (petite crêpe…) » passe encore devant les « Petites frites »).
+
 ---
 
 ## 6. 📶 Les seuils en marche d'escalier

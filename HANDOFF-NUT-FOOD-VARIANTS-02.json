@@ -1,0 +1,302 @@
+{
+  "chantier": "NUT-FOOD-VARIANTS-02",
+  "role_source": "Principal",
+  "branch": "claude/nut-food-variants-01",
+  "base_previous_functional": "4ed73994491f1e8dbed9d02a9bf70f8d15f36ab2",
+  "base_previous_head": "5b5f8138842f2776280dad4691e28220aaec4ff8",
+  "base_d042": "0407516b0c3ab745713c45434ea9e2c02209f12b",
+  "base_master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c",
+  "production": "ft-v1253",
+  "final_head": "319eeaa277444888e659de34e09e788b45e8287c",
+  "final_head_note": "commit qui précède celui du handoff ; le commit du handoff est son enfant direct et n'ajoute que ce fichier",
+  "functional_head": "1be4e422bbafbc490f276e62252aa8d1b0797f9c",
+  "functional_tree": "1dd482b8e73aa7494e47cc5f5eba3115d7c3b988",
+  "after_functional_head": {
+    "files": [
+      "docs/CONTEXTE-ACTUEL.md",
+      "docs/DECISIONS.md",
+      "docs/FOOD-SEMANTICS.md",
+      "docs/JOURNAL-DE-PARTAGE.md",
+      "docs/SUIVI-AUDIT.md"
+    ],
+    "nature": "documentation seulement"
+  },
+  "changed_app_files": [
+    "app.js",
+    "tools/alias.py"
+  ],
+  "numstat_vs_4ed73994": {
+    "app.js": [
+      20,
+      8
+    ],
+    "tools/alias.py": [
+      2,
+      2
+    ]
+  },
+  "target_cases": {
+    "cafe_non_sucre": {
+      "avant_5b5f8138": [],
+      "apres": [
+        "Café, non instantané, sans sucres ajoutés, prêt à boire",
+        "Café expresso, non instantané, sans sucres ajoutés, prêt à boire",
+        "Café décaféiné, non instantané, sans sucres ajoutés, prêt à boire"
+      ]
+    },
+    "cafe_sans_cafeine": {
+      "avant_5b5f8138": [],
+      "apres": [
+        "Café décaféiné, instantané, sans sucres ajoutés, prêt à boire",
+        "Café décaféiné, non instantané, sans sucres ajoutés, prêt à boire",
+        "Café, instantané, sans sucres ajoutés, prêt à boire"
+      ]
+    },
+    "jambon_sans_couenne": {
+      "avant_5b5f8138": [],
+      "apres": [
+        "Jambon cuit, supérieur, découenné",
+        "Jambon cuit, choix, découenné dégraissé",
+        "Jambon cuit, de Paris, découenné dégraissé"
+      ]
+    },
+    "eau_1_5_l": {
+      "avant_5b5f8138": [],
+      "apres": [
+        "Eau de coco",
+        "Eau du robinet",
+        "Eau de vie de fruits"
+      ]
+    },
+    "yaourt_sans_sucre": {
+      "avant_5b5f8138": [],
+      "apres": [
+        "Yaourt à la grecque nature",
+        "Yaourt ou lait fermenté, nature",
+        "Yaourt au lait de chèvre, nature"
+      ]
+    },
+    "non_x": {
+      "sel non iodé": {
+        "avant_5b5f8138": [
+          "Sel marin gris, non iodé, non fluoré",
+          "Sel blanc alimentaire, non iodé, non fluoré (marin, ignigène ou gemme)",
+          "Fleur de sel, non iodée, non fluorée"
+        ],
+        "apres": [
+          "Sel marin gris, non iodé, non fluoré",
+          "Sel blanc alimentaire, non iodé, non fluoré (marin, ignigène ou gemme)",
+          "Sel au céleri"
+        ]
+      },
+      "fromage non allégé": {
+        "avant_5b5f8138": [
+          "Fromage bleu au lait de vache, non allégé en matière grasse",
+          "Fromage à pâte molle et croûte lavée, non allégé en matière grasse",
+          "Fromage à pâte pressée non cuite type maasdam, non allégé en matière grasse"
+        ],
+        "apres": [
+          "Fromage bleu au lait de vache, non allégé en matière grasse",
+          "Fromage à pâte molle et croûte lavée, non allégé en matière grasse",
+          "Fromage à pâte pressée non cuite type maasdam, non allégé en matière grasse"
+        ]
+      },
+      "céréales non enrichies": {
+        "avant_5b5f8138": [
+          "Céréales pour petit déjeuner, non enrichies en vitamines et minéraux (aliment moyen)",
+          "Céréales pour petit déjeuner riches en fibres, nature, non enrichies en vitamines et minéraux",
+          "Céréales pour petit déjeuner chocolatées, non fourrées, non enrichies en vitamines et minéraux"
+        ],
+        "apres": [
+          "Céréales pour petit déjeuner, non enrichies en vitamines et minéraux (aliment moyen)",
+          "Céréales pour petit déjeuner riches en fibres, nature, non enrichies en vitamines et minéraux",
+          "Céréales pour petit déjeuner chocolatées, non fourrées, non enrichies en vitamines et minéraux"
+        ]
+      }
+    },
+    "pluriels": {
+      "yaourts allégés": {
+        "avant_5b5f8138": [],
+        "apres": []
+      },
+      "biscuits enrichis": {
+        "avant_5b5f8138": [
+          "Biscuit sec au soja, enrichi en vitamines et minéraux",
+          "Biscuit sec au sésame, enrichi en vitamines et minéraux",
+          "Biscuit sec au chocolat, enrichi en vitamines et minéraux"
+        ],
+        "apres": [
+          "Biscuit sec au soja, enrichi en vitamines et minéraux",
+          "Biscuit sec au sésame, enrichi en vitamines et minéraux",
+          "Biscuit sec au chocolat, enrichi en vitamines et minéraux"
+        ]
+      }
+    },
+    "ou_non_ou_sans": {
+      "noms_complets_introuvables_5b5f8138": [
+        "Maquereau, filet (grillé ou non), au naturel, appertisé, égoutté",
+        "Café au lait, café crème ou cappuccino, instantané ou non, sans sucres ajoutés, prêt à boire"
+      ],
+      "noms_complets_introuvables_apres": []
+    },
+    "terrain": {
+      "cola sans sucre": {
+        "avant_5b5f8138": [
+          "Cola, sans sucres ajoutés, avec édulcorants",
+          "Cola, sans sucres ajoutés, avec édulcorants, sans caféine",
+          "Chocolat au lait sans sucres ajoutés, avec édulcorants, tablette"
+        ],
+        "apres": [
+          "Cola, sans sucres ajoutés, avec édulcorants",
+          "Cola, sans sucres ajoutés, avec édulcorants, sans caféine",
+          "Chocolat au lait sans sucres ajoutés, avec édulcorants, tablette"
+        ]
+      },
+      "yaourt allégé": {
+        "avant_5b5f8138": [],
+        "apres": []
+      },
+      "steak haché 5 %": {
+        "avant_5b5f8138": [
+          "Boeuf, steak haché 5% MG cru",
+          "Boeuf, steak haché 5% MG cuit"
+        ],
+        "apres": [
+          "Boeuf, steak haché 5% MG cru",
+          "Boeuf, steak haché 5% MG cuit"
+        ]
+      },
+      "lait 1,2 %": {
+        "avant_5b5f8138": [
+          "Lait à 1,2% MG, UHT, enrichi en vitamines"
+        ],
+        "apres": [
+          "Lait à 1,2% MG, UHT, enrichi en vitamines"
+        ]
+      },
+      "lait 2 %": {
+        "avant_5b5f8138": [],
+        "apres": []
+      },
+      "chocolat noir 70 %": {
+        "avant_5b5f8138": [
+          "Chocolat noir 70 % de cacao environ, de dégustation, tablette"
+        ],
+        "apres": [
+          "Chocolat noir 70 % de cacao environ, de dégustation, tablette"
+        ]
+      },
+      "beurre demi-sel": {
+        "avant_5b5f8138": [
+          "Beurre à 80% MG, demi-sel",
+          "Beurre à 39-41% MG, léger, demi-sel",
+          "Beurre à 60-62% MG, à teneur réduite en matière grasse, demi-sel"
+        ],
+        "apres": [
+          "Beurre à 80% MG, demi-sel",
+          "Beurre à 39-41% MG, léger, demi-sel",
+          "Beurre à 60-62% MG, à teneur réduite en matière grasse, demi-sel"
+        ]
+      }
+    }
+  },
+  "tests": {
+    "food_variants_avant_code": {
+      "ok": 82,
+      "rouge": 8
+    },
+    "bancs_apres": {
+      "banc_food_variants": {
+        "ok": 90,
+        "rouge": 0
+      },
+      "banc_food_d042": {
+        "ok": 73,
+        "rouge": 0
+      },
+      "banc_food_semantics": {
+        "ok": 44,
+        "rouge": 0
+      },
+      "banc_food_formes": {
+        "ok": 46,
+        "rouge": 0
+      },
+      "banc_food_prefs": {
+        "ok": 39,
+        "rouge": 0
+      },
+      "banc_food_reference": {
+        "ok": 136,
+        "rouge": 0
+      },
+      "banc_food_multisource": {
+        "ok": 177,
+        "rouge": 0
+      },
+      "banc_repas_actif": {
+        "ok": 24,
+        "rouge": 0
+      },
+      "banc_habitudes_alim": {
+        "ok": 37,
+        "rouge": 0
+      }
+    },
+    "check_regles": "vert",
+    "diff_check": "propre",
+    "alias_json_regenere": "identique"
+  },
+  "mutations": {
+    "outil": "tools/mut_food_variants.py",
+    "conformes": 20,
+    "total": 20,
+    "detail": [
+      "OK  M00 le code d'AVANT (app.js de 0407516b)",
+      "OK  M1 ignorer completement les pourcentages",
+      "OK  M2 5 %, 10 %, 15 %, 20 % equivalents (le taux redevient une sous-chaine)",
+      "OK  M3 ignorer entier / ecreme / demi-ecreme",
+      "OK  M4 promouvoir une variante incompatible (mot entier inverse dans la cle)",
+      "OK  M5 forcer une variante par defaut quand aucun qualificatif n'est tape",
+      "OK  M6a supprimer la protection d'un mot NIE dans le nom (non allege, sans sucres)",
+      "OK  M6b « sans X » tape ne se lit plus d'un bloc",
+      "OK  M7 « 5 % » (espace) n'est plus recolle a son %",
+      "OK  M8 la virgule decimale coupe de nouveau le nombre (1,2 %)",
+      "OK  M9 « ou non / ou sans » redevient une negation",
+      "OK  M10 [Y3] « non X » tape n'est plus une negation (seul « sans » l'est)",
+      "OK  M11 [Y13] au pluriel, le singulier redevient une sous-chaine (« non enrichi » re GARDE",
+      "OK  M12 la virgule est gardee pour TOUT nombre decimal (« eau 1,5 l » vide)",
+      "OK  M13 le CONTRAIRE explicite n'est plus ecarte (« sel iode » pour « sel non iode » GARDE",
+      "OK  M14 « ou non » tape redevient une negation (les noms complets se perdent)",
+      "OK  M15 « decafeine », « decouenne » ne passent plus devant un nom qui ne dit rien",
+      "OK  M16 X n'a plus besoin d'etre en debut de mot pour etre un contraire",
+      "OK  MC1 (controle) un COMMENTAIRE modifie : le banc doit rester VERT",
+      "OK  MC2 (controle) une ecriture EQUIVALENTE : le banc doit rester VERT"
+    ]
+  },
+  "rule17": {
+    "app_files": [
+      "app.js"
+    ],
+    "generation_tool": [
+      "tools/alias.py"
+    ],
+    "app_js_plus_minus": [
+      20,
+      8
+    ],
+    "alias_py_plus_minus": [
+      2,
+      2
+    ],
+    "new_functions": 0,
+    "new_tables": 0,
+    "new_engines": 0,
+    "new_storage": 0,
+    "food_specific_exceptions": 0,
+    "merged_paths": "la négation tapée passe par _afMotDansNom / _afTrouve existants (option « début de mot » ajoutée à _afTrouve)"
+  },
+  "d031_final": "DEFERRED_TO_FINAL_INTEGRATED_TREE",
+  "status": "READY_FOR_TARGETED_COUNTERCHECK",
+  "report": "NUT-FOOD-VARIANTS-02-RAPPORT-2026-10-12.md"
+}

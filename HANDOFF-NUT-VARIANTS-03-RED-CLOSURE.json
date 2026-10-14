@@ -1,0 +1,90 @@
+{
+ "lot": "NUT-VARIANTS-03-RED-CLOSURE",
+ "branche": "claude/nut-variants03-red-closure",
+ "base": {
+  "lot_c_head": "2f977c1bfa3cba8f180a471181bbcf08882b1dbb",
+  "variants03": "7dd1b0051af290267d6f498bf96b8e32de885498",
+  "variants03_fonctionnel": "ae2f950c00fe794f937988f4d453bf9e53fc60ef",
+  "variants03_tree": "5785192494bb0d50c6f9320197b134be43b6ef95",
+  "master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c"
+ },
+ "head_fonctionnel": "67ea20e60418b113fd3f5f074cad1edb2a5d5b62",
+ "tree_fonctionnel": "cef77d4a04225ebdcbc7130346ce1994aa7ebcee",
+ "head_arbre_d031": "d7b8616f746e157ec9ef395626706d8c882adfde",
+ "tree_arbre_d031": "b224178a7feb25fbc7c8fbd14648c6cec7f3ec94",
+ "preflight": "hashes conformes ; les 2 rouges reproduits sur 7dd1b005 (identiques sur c97fa360, LOT-C n'en est pas la cause) ; corrects sur 800840ed (VARIANTS-02)",
+ "R1": {
+  "symptome": "« spaghetti cuit » -> Courge spaghetti seule ; « penne cuites » / « coquillettes cuites » -> rien",
+  "cause": "VARIANTS-03 a ajouté dans _afRang une garde « un mot suivi d'un autre doit être un mot ENTIER du nom » qui ne regardait que l'écriture littérale : elle fermait le chemin existant de _afMotDansNom (une forme de pâtes vaut le mot « pates » du nom)",
+  "correctif": "dans la même garde, ce que _afMotDansNom a trouvé compte aussi s'il est un mot entier du nom (1 condition, aucune table, aucune fonction nouvelle) ; « cola zéro » ↛ chocolat tient toujours",
+  "temoins": "FV-170 → FV-175 dans tests/parcours/food_variants.js : 124 OK / 4 rouges avant → 128 / 0 après",
+  "mutations": "tools/mut_red_closure.py 4/4 conformes : M1 garde d'avant -> 4 rouges · M2 garde « mot entier » retirée -> 6 rouges (cola zéro -> chocolat) · M3 « zéro » relu « édulcorants » -> 6 rouges · MC1 commentaire -> vert"
+ },
+ "R2": {
+  "classement": "C — DÉCISION MICHEL NÉCESSAIRE (13/10), puis TRANCHÉ par Michel : ÉCARTÉ (D-070)",
+  "temoin": "runner CCXXIV (ft-v1116) : « coca zéro » -> 18060 en tête ET 18037 « Cola, sucré, avec édulcorants » présent juste en dessous",
+  "variants02": "18060 · 18037 · 18068 · 18063 (vert)",
+  "variants03": "18060 · 18068 (18037 écarté)",
+  "cause": "D-061 ① (zéro = « 0% » OU « sans sucres ») + D-059 ① (un nom qui dit le CONTRAIRE, « sucré » pour « sans sucre », est écarté) : 18037 n'est plus proposé",
+  "pourquoi_C": "ft-v1116 (publié) a choisi EXPRÈS de garder 18037 juste en dessous (R29) ; D-058 (Michel, VALIDÉ) n'exige que « jamais au-dessus » ; D-059 ① et D-061 ① sont des choix de Claude au statut PROPOSÉ. Les règles validées ne tranchent pas entre « descendu » et « écarté ».",
+  "options": {
+   "garder_ecarte": "comportement V03 : « coca zéro » ne montre que les colas sans sucres ; le témoin CCXXIV serait mis à jour (oracle) ; D-059 ① et D-061 ① deviendraient VALIDÉS",
+   "revenir_dessous": "comportement ft-v1116 : 18037 réapparaît sous le zéro ; il faut une exception à D-059 ① pour « zéro » (ou ne l'appliquer qu'au mot tapé littéralement) — changement de code + témoins"
+  },
+  "action": "témoins seulement : runner CCXXIV — le témoin ft-v1116 « juste en dessous » est retiré avec sa raison (R30) et remplacé par « 18037 absent de coca zero / coca zéro » + « cola sucré avec édulcorants » NOMMÉ -> 18037 en tête ; FV-176/177 (coca zéro en/hors ligne : cola sans sucres en tête, jamais le cola sucré) et FV-178 (le cola sucré nommé reste trouvable) ; M3 dans mut_red_closure.py ; DECISIONS.md D-059/D-061 (① validé) + D-070 ; FOOD-SEMANTICS §15 ter",
+  "decision_michel": "« Pour “coca zéro”, le “Cola, sucré, avec édulcorants” ne doit pas être proposé, même en dessous. L'ancien témoin ft-v1116 est obsolète. » D-059 ① et D-061 ① VALIDÉS sur ce principe ; aucun changement applicatif.",
+  "reste": "« coca light » montre encore 18037 en dessous (« light » -> « édulcorants », non touché, hors lot) ; l'aide détaillée de la recherche (coach.js) dit encore « l'autre reste juste en dessous » — texte applicatif, non modifié (consigne : aucun changement applicatif). Consignés dans JOURNAL-DE-TEST.md."
+ },
+ "bancs": {
+  "food_variants": "131/0 (FV-176→178 ajoutés)",
+  "food_d042": "73/0",
+  "food_semantics": "44/0",
+  "food_formes": "46/0",
+  "food_prefs": "39/0",
+  "food_reference": "136/0",
+  "food_multisource": "177/0",
+  "repas_actif": "24/0",
+  "habitudes_alim": "37/0",
+  "journal_qty_guard": "21/0",
+  "check_regles": "0 erreur",
+  "git_diff_check": "propre"
+ },
+ "d031": {
+  "precedente": "f628f723 : 6788 OK / 1 rouge — CCXXIV ft-v1116 (R2, classé C)",
+  "arbre": "d7b8616f746e157ec9ef395626706d8c882adfde",
+  "total": "6792 OK / 1 rouge",
+  "conditions": "① total présent · ② code 1 (ce seul rouge) · ③ arbre inchangé · ④ aucune publication concurrente (origin/master 7b75f3c1)",
+  "rouge": "OD-08b (banc débrief) « dans Progrès, la carte porte « 💬 Voir le débrief Milo » et SEULEMENT lui » -> null (carte de la séance introuvable après 3 s)",
+  "classement_rouge": "PRÉEXISTANT, INSTABLE, HORS LOT : aucun fichier du débrief ni aucun fichier applicatif modifié depuis 67ea20e6 ; OD-08b vert dans la passe précédente ; OD-08 (débrief rangé et affiché) vert dans la même passe ; famille consignée le 06/10 (OD-11, OD-16 : attente de la carte dans Progrès sous charge, commentaire dans tests/parcours/debrief_demande.js) ; rejoué seul 3 fois sur d7b8616f -> 58/0 à chaque fois",
+  "cola": "témoins D-070 (CCXXIV) verts dans la passe ; R1 vert (LXXXVI + FV-170/171)",
+  "verdict_passe": "NON VALIDE au sens strict de passe_valide.sh (6792 OK / 1 rouge) — ce n'est PAS une D-031 à 0 rouge. Le rouge OD-08b est accepté par Michel (13/10) comme test instable connu, hors périmètre ; aucune nouvelle passe complète relancée (décision de Michel)",
+  "decision_michel": "option (b), 13/10 : « J'accepte OD-08b comme test instable connu hors périmètre, au vu des 3 rejeux consécutifs à 58/0 sur le même arbre et de l'absence de modification du débrief. Ne relance pas une nouvelle D-031 complète. »"
+ },
+ "regle_17": {
+  "fichiers_applicatifs": 1,
+  "lignes_app": "+5 -1 (dont 3 de commentaire)",
+  "fonctions_tables_moteurs_stockages_ajoutes": 0,
+  "chemins_paralleles": 0,
+  "proprietaire": "_afRang (garde existante) réutilise _afMotDansNom (chemin existant)"
+ },
+ "fichiers_modifies": [
+  "app.js (+5 -1)",
+  "tests/parcours/food_variants.js (+15)",
+  "tests/parcours/runner.js (CCXXIV, +12 -6)",
+  "tools/mut_red_closure.py (+71, nouveau : M1/M2/M3/MC1)",
+  "docs/DECISIONS.md (D-059, D-061 : ① validé ; D-070)",
+  "docs/FOOD-SEMANTICS.md (§15 ter)",
+  "docs/JOURNAL-DE-TEST.md",
+  "docs/JOURNAL-DE-PARTAGE.md",
+  "HANDOFF-NUT-VARIANTS-03-RED-CLOSURE.json"
+ ],
+ "hors_lot": "LOT-A, LOT-B, crème, plages %, « zéro » global, ml : non touchés ; aucune publication ; master non touché",
+ "verdict": "QUALIFIÉ (décision de Michel, 13/10) — R1 corrigé et qualifié ; R2 tranché (D-070) et témoigné ; mesure conservée : passe complète finale 6792 ✅ / 1 ❌ sur d7b8616f, le rouge OD-08b classé test instable documenté (préexistant, hors lot, 3/3 à 58/0 en rejeu, débrief non modifié). Aucune D-031 à 0 rouge n'est revendiquée. Ni intégration ni publication.",
+ "head_arbre_d031_precedente": "f628f7230bd02ccc5b4f93d22abe03aa25452150",
+ "dettes_ouvertes": [
+  "aide détaillée de la recherche (coach.js) : dit encore « l'autre reste juste en dessous » — obsolète depuis D-070",
+  "« coca light » : le cola sucré aux édulcorants apparaît encore en dessous (« light » -> « édulcorants »)",
+  "OD-08b / famille « carte introuvable dans Progrès sous charge » (banc débrief) : instable, non corrigée"
+ ],
+ "head_final": "(commit de clôture qui porte ce fichier — voir le journal de partage)"
+}

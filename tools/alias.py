@@ -53,6 +53,84 @@ CORRECTIONS = {
     # pour un mot générique — on ne choisit pas une variété à la place de la personne (R29).
     'tomate':  (20385, 'GPT visait « Tomate, séchée » (kcal non déterminées, jamais proposable)'),
     'tomates': (20385, 'idem'),
+    # 🔎 FS-01 (02/10/2026, Food Semantics V1) — la table envoyait le mot GÉNÉRIQUE vers une forme
+    #    TRANSFORMÉE, et l'alias passant devant tout, c'était le 1ᵉʳ résultat proposé. Mesuré sur
+    #    master f31dc234 : « pomme » → « Pomme, sèche » (247 kcal/100 g au lieu de ~51) et
+    #    « haricots verts » → « Haricots verts, purée ». Une pomme n'est pas une pomme séchée.
+    #    ⭐ Même convention que `tomate` : l'aliment moyen quand CIQUAL en a un (pomme) ; sinon la
+    #    forme CUITE, celle de la décision de Michel sur le cru/cuit (« les deux, le cuit en
+    #    premier », ft-v1115). L'ancienne cible reste trouvable juste dessous : « pomme séchée »,
+    #    « haricots verts purée ». ⏭️ « courgette » vise aussi une purée : même défaut, hors des
+    #    témoins de FS-01, consigné pour FS-03 (on ne corrige pas en silence au-delà du lot).
+    'pomme':          (13396, 'GPT visait « Pomme, sèche » — une pomme n\'est pas une pomme séchée (247 kcal/100 g au lieu de 51)'),
+    'pommes':         (13396, 'idem'),
+    'haricot vert':   (20030, 'GPT visait « Haricots verts, purée » — le légume, cuit en premier (décision cru/cuit, ft-v1115)'),
+    'haricots verts': (20030, 'idem'),
+}
+
+# 🎯 FS-03 (02/10/2026) — LES ALIAS QUI IMPOSAIENT UNE FORME TRANSFORMÉE OU UN DESSERT À UN FRUIT / LÉGUME
+#    GÉNÉRIQUE. Mesuré en classant les 633 alias (487 lexicaux, 146 « de préférence » qui choisissent une forme
+#    parmi plusieurs) : trois défauts prouvés, et seulement eux — le reste de la table n'est pas touché.
+#    ⭐ Même convention que `pomme` et `tomate` : l'aliment moyen quand CIQUAL en a un ; sinon RETRAIT, et c'est
+#    le moteur (`_fsPreference`, qui évite la purée) qui choisit — il n'impose ni cru ni cuit.
+CORRECTIONS.update({
+    'poire':   (13397, 'FS-03 : visait « Poire belle Hélène » (un dessert glacé) — une poire est un fruit cru'),
+    'poires':  (13397, 'idem'),
+    'raisin':  (13395, 'FS-03 : visait « Raisin sec » — un raisin est un fruit frais ; « raisins secs » reste explicite'),
+    'raisins': (13395, 'idem'),
+})
+# 🥛 NUT-FOOD-VARIANTS-03 (12/10/2026, décision de Michel) — STEAK HACHÉ : cru en premier, cuit présent. Les alias à
+#    10 / 15 / 20 % visaient déjà le CRU ; ceux à 5 % visaient le CUIT (6251) — la seule incohérence de la famille.
+CORRECTIONS.update({
+    'steak hache 5%':   (6250, 'NUT-FOOD-VARIANTS-03 : visait le CUIT (6251) quand 10 / 15 / 20 % visent le cru — aligné, le cuit reste juste dessous'),
+    'boeuf hache 5%':   (6250, 'idem'),
+    'hache 5%':         (6250, 'idem'),
+    'viande hachee 5%': (6250, 'idem'),
+})
+# 🍽️ NUT-LOT-A (13/10/2026, audit de nuit du 12/10 + décision D1 de Michel) — L'ALIMENT NOMMÉ EXISTE, L'ALIAS EN
+#    VISAIT UN AUTRE. *« Une requête explicite privilégie l'aliment qu'elle nomme ; une requête générique reste générique
+#    et n'invente pas de variante. »* Mesuré en ligne (l'alias passe devant tout) : « confiture de fraise » rendait
+#    « Confiture de LAIT » (340 kcal), « gruyère » l'Emmental, « lieu noir » le lieu d'Alaska. Chaque code est vérifié
+#    dans `data/ciqual.json` (proposable, nom relu) ; la forme (cru / cuit) de l'ancienne cible est conservée.
+#    ⭐ Ce qui manquait n'était pas un contrôle de code ni de macros — ft-v1115 les avait — c'était le SENS : voir
+#    `controle_semantique` plus bas, qui refuse désormais de générer une table où l'aliment nommé est contourné.
+CORRECTIONS.update({
+    'confiture':                (30999, 'NUT-LOT-A, D1 : visait « Confiture de lait » — le générique « sans précision sur la teneur en sucres », rien d\'imposé'),
+    'confiture de fraise':      (31024, 'NUT-LOT-A : visait « Confiture de lait » — la confiture de fraise existe'),
+    'confiture dabricot':       (31037, 'NUT-LOT-A : visait « Confiture de lait » — la confiture d\'abricot existe'),
+    'confiture fruits rouges':  (31083, 'NUT-LOT-A, D1 : visait « Confiture de lait » ; CIQUAL n\'a pas de « fruits rouges » — le mélange de fruits correspondant'),
+    'gruyere':                  (12114, 'NUT-LOT-A : visait l\'Emmental — le Gruyère (sans précision) existe'),
+    'lieu noir':                (26134, 'NUT-LOT-A : visait le lieu d\'Alaska, un autre poisson — le lieu noir cru existe'),
+    'pilon de poulet':          (36022, 'NUT-LOT-A : visait la cuisse — le pilon existe'),
+    'pilons de poulet':         (36022, 'idem'),
+    'riz semi-complet':         (9113,  'NUT-LOT-A : visait le riz complet — le semi-complet existe'),
+    'pain aux cereales':        (7255,  'NUT-LOT-A : visait le pain complet — le pain aux céréales existe'),
+    'jambon de bayonne':        (28811, 'NUT-LOT-A : visait le jambon cru générique — le jambon de Bayonne existe'),
+    'jambon sec':               (28812, 'NUT-LOT-A : visait le jambon cru générique — le jambon sec existe'),
+    'lentilles blondes':        (20588, 'NUT-LOT-A : visait la lentille verte — la lentille blonde existe'),
+    'pates semi-completes':     (9877,  'NUT-LOT-A : visait les pâtes complètes — les semi-complètes existent'),
+    'haut de cuisse de poulet': (36019, 'NUT-LOT-A : visait la cuisse — le haut de cuisse existe'),
+    'beurre sale':              (16403, 'NUT-LOT-A : visait le demi-sel, un autre beurre — le beurre salé existe'),
+    'riz thai':                 (9124,  'NUT-LOT-A : visait le riz blanc — le riz thaï existe'),
+    # D1 : les salades — l'aliment exact quand CIQUAL le possède ; « salade » seule reste la salade verte générique.
+    'laitue':                   (20031, 'NUT-LOT-A, D1 : visait « Salade verte » — la laitue existe'),
+    'batavia':                  (20123, 'NUT-LOT-A, D1 : visait « Salade verte » — la batavia existe'),
+    'feuille de chene':         (20295, 'NUT-LOT-A, D1 : visait « Salade verte » — la feuille de chêne existe'),
+    # D1, règle générale, appliquée aux autres alias que le contrôle sémantique a trouvés et où l'aliment nommé existe :
+    'tradition':                (7007,  'NUT-LOT-A, D1 : visait le pain blanc — le pain de tradition française existe'),
+    'baguette tradition':       (7007,  'idem'),
+    'noix de veau':             (6522,  'NUT-LOT-A, D1 : visait l\'escalope — la noix de veau crue existe'),
+    'rosette':                  (30304, 'NUT-LOT-A, D1 : visait le saucisson sec — la rosette existe'),
+    'pomme de terre a leau':    (4003,  'NUT-LOT-A, D1 : visait la pomme de terre cuite moyenne — « bouillie/cuite à l\'eau » existe (trouvé par le contrôle de sens)'),
+    # D-074 (Michel, 13/10) : « potatoes » → l'aliment exact, dans sa forme CUITE comme l'ancienne cible (« rôtie / cuite
+    #    au four ») ; l'oracle MS-105 de FS-05B, qui figeait « Pomme de terre, rôtie », était historique et a été mis à jour.
+    'potatoes':                 (4025,  'NUT-LOT-A, D-074 : visait la pomme de terre rôtie (91 kcal) — « Potatoes ou wedges…, cuites » existe (175 kcal)'),
+})
+
+# ⛔ RETRAITS — un mot qui ne doit plus avoir d'alias du tout (R30 : le retrait s'écrit, avec sa raison).
+RETRAITS = {
+    'courgette':  'FS-03 : visait « Courgette, purée » ; aucun aliment moyen — le moteur évite la purée sans imposer cru ou cuit',
+    'courgettes': 'idem',
 }
 
 # ⛔ AJOUTS QUI NE VIENNENT PAS DU CLASSEUR — nommés, avec leur raison, jamais silencieux.
@@ -85,6 +163,12 @@ AJOUTS = {
     #    confond pas avec la précédente, elles ne portent pas les mêmes valeurs.
     'coca zero sans cafeine': (18068, 'CIQUAL distingue la version sans caféine — on ne fusionne pas'),
     'coca sans cafeine':      (18067, 'le cola sucré sans caféine, qui existe aussi'),
+    # 🔎 FS-01 — « eau » tenait à la COUPURE À 400 (l'ordre du fichier écartait « Eau de coco »). La
+    #    coupure retirée, le nom le plus court passait devant. On garde le résultat de master.
+    # 🥛 NUT-FOOD-VARIANTS-03 — « steak haché » SANS taux ni cuisson : sans alias, le départage par la longueur ne
+    #    montrait que des CRUS. L'aliment moyen (cuit) en tête, les crus dessous : les deux formes visibles (décision G).
+    'steak hache':    (6259, 'NUT-FOOD-VARIANTS-03 : sans précision, l\'aliment moyen (cuit) devant les crus — cru ET cuit visibles'),
+    'eau':            (18066, 'FS-01 : garde « Eau du robinet » (résultat de master) — sans la coupure à 400, « Eau de coco » passait devant'),
 
     # ═══ 🥤 ft-v1117 — LE PIÈGE DU COCA N'ÉTAIT PAS CELUI DU COCA : IL Y EN A 9 ═══════════════
     #  Michel : *« et les autres boissons ? »*. **Mesuré** : CIQUAL porte **9 paires**
@@ -169,11 +253,61 @@ AJOUTS = {
     'rose':     (5216, 'rendait « Rosette ou fuseau » — le saucisson, 392 kcal au lieu de 69'),
     'vin rose': (5216, 'idem'),
     '7up':      (18048, 'ne rendait RIEN — l\'aliment moyen « Boisson gazeuse aux fruits, sucrée »'),
+    # 🥛 D-075 ① (Michel, 13/10/2026, NUT-LOT-B) — « lait 0 » / « lait 0% » = le LAIT ÉCRÉMÉ. Sur la base, « lait 0 » ignorait
+    #    le 0 (« Lait à 1,2% MG ») et « lait 0% » mettait en tête un lait FERMENTÉ au bifidus. La même cible que « lait ecreme »
+    #    (UHT) ; les laits fermentés 0 % restent juste dessous. ⛔ Une clé de la FAMILLE LAIT, pas une règle « 0 = zéro ».
+    'lait 0':   (19050, 'D-075 ① (Michel) : rendait « Lait à 1,2% MG » (le 0 ignoré) — le lait écrémé'),
+    'lait 0%':  (19050, 'D-075 ① (Michel) : rendait un lait FERMENTÉ au bifidus — le lait écrémé'),
+}
+
+# ⛔⛔ NUT-LOT-A (13/10/2026) — LES TRADUCTIONS VOULUES, et elles seulement. Le contrôle de sens (`controle_semantique`)
+#    REFUSE de générer la table quand la cible d'un alias ne porte pas les mots de sa clé ALORS QU'UN AUTRE aliment
+#    proposable les porte tous : l'alias contournerait l'aliment nommé (« gruyère » → Emmental). Les clés ci-dessous sont
+#    les traductions VOULUES que ce contrôle voit — chacune liée à SA cible (un alias détourné ailleurs n'est plus
+#    couvert) et avec SA raison (R30). ⛔ Ce n'est pas une porte de sortie : une ligne de plus ici est une décision.
+_PATES  = 'une forme de pâtes vaut les pâtes sèches cuites ; les autres aliments qui portent le mot sont des PLATS (bolognaise, soupe)'
+_BOISS  = 'CIQUAL écrit « Boisson à… » (ft-v1116) ; l\'autre aliment qui porte les mots est un chocolat / un riz au lait'
+_PATATE = '« patate » = pomme de terre en français courant ; l\'autre aliment est la PATATE DOUCE, un autre légume'
+_BLANC  = 'D1 (Michel, 13/10) : le blanc = la viande ; la tranche de charcuterie seulement si la requête la nomme'
+_VAPEUR = 'D1 (Michel, 13/10) : la pomme de terre cuite générique ; « vapeur, sous vide » n\'est pas imposé'
+TRADUCTIONS_VOULUES = {
+    'arachide':               (15001, 'arachide = cacahuète ; les autres sont le beurre, l\'huile ou une sardine à l\'huile d\'arachide'),
+    'arachides':              (15001, 'idem'),
+    'burger':                 (25413, 'le générique est le hamburger ; poisson / poulet sont des variantes qu\'on nomme'),
+    'escalope de poulet':     (36017, 'l\'escalope de poulet = le filet ; l\'autre aliment est une escalope PANÉE'),
+    'filet de maquereau':     (26051, 'le poisson cru ; les filets de la table sont en conserve, en sauce'),
+    'filet de merlu':         (26044, 'le poisson cru ; le seul filet de la table est SURGELÉ, une forme non demandée (D1)'),
+    'jambon blanc':           (28906, 'jambon blanc = jambon cuit de porc ; les autres sont des jambons de VOLAILLE'),
+    'blanc de poulet':        (36017, _BLANC),
+    'blanc de dinde':         (36304, _BLANC),
+    'lait amande':            (18111, _BOISS),
+    'lait d amande':          (18111, _BOISS),
+    'lait de riz':            (18904, _BOISS),
+    'lait 0%':                (19050, 'D-075 ① (Michel, 13/10) : « lait 0% » = le lait écrémé ; les autres aliments qui portent les mots sont des laits FERMENTÉS'),
+    'pain sandwich':          (7200,  'le pain de mie ; les autres aliments sont des SANDWICHS garnis'),
+    'toast':                  (7200,  'le pain de mie ; les autres sont des toasts briochés aux raisins ou des canapés garnis'),
+    'patate':                 (4048,  _PATATE),
+    'patates':                (4048,  _PATATE),
+    'patate vapeur':          (4048,  _PATATE),
+    'pomme de terre vapeur':  (4048,  _VAPEUR),
+    'pommes de terre vapeur': (4048,  _VAPEUR),
+    'riz japonais':           (9104,  'le riz cuit ; l\'autre aliment est un BISCUIT apéritif « mélange japonais »'),
+    'semoule de ble':         (9683,  'la semoule CUITE en premier (décision cru / cuit de Michel, ft-v1115) ; la crue reste trouvable'),
+    'spaghetti':              (9811,  _PATES),
+    'spaghettis':             (9811,  _PATES),
+    'tagliatelle':            (9811,  _PATES),
+    'tagliatelles':           (9811,  _PATES),
+    'vermicelles':            (9811,  _PATES),
+    # (« potatoes » figurait ici comme À TRANCHER — tranché par D-074 : il est passé dans CORRECTIONS, vers l'aliment exact.)
 }
 
 def norm(t):
     """La MÊME normalisation que `_afNorm` dans app.js — sinon la clé ne serait jamais trouvée."""
     t = str(t or '').lower()
+    # 🥛 MIROIR DE NUT-FOOD-VARIANTS-01 : un taux reste un nombre collé à son « % » (« 5 % » = « 5% ») et la
+    #    virgule décimale d'un TAUX devient un point (« 1,2% » → « 1.2% »), AVANT que la ponctuation ne devienne une espace.
+    t = re.sub(r'(\d),(\d+)\s*%', r'\1.\2%', t)   # la virgule d'un TAUX seulement (NUT-FOOD-VARIANTS-02)
+    t = re.sub(r'(\d)\s+%', r'\1%', t)
     t = unicodedata.normalize('NFD', t)
     t = ''.join(c for c in t if unicodedata.category(c) != 'Mn')
     t = t.replace('œ', 'oe').replace('æ', 'ae')
@@ -193,6 +327,42 @@ def synonymes_existants(app_js):
     bloc = s[i:s.index('\n};', i)]
     bloc = re.sub(r'/\*.*?\*/', '', bloc, flags=re.S)
     return {norm(m) for m in re.findall(r"'([^']+)'\s*:", bloc)}
+
+# ⛔⛔ NUT-LOT-A — LE CONTRÔLE DE SENS. Ft-v1115 vérifiait le CODE (il existe), les MACROS (rien n'est réécrit) et la
+#    PROPOSABILITÉ — jamais le SENS. L'audit de nuit du 12/10 a mesuré le trou : 49 clés dont la cible ne porte pas les
+#    mots alors qu'un autre aliment proposable les porte tous. Oracle écrit ici, indépendant du moteur de l'app : mots
+#    entiers, mots outils ignorés, pluriel et accord (complet / complète) tolérés, élision détachée (« d'abricot »).
+_OUTILS_SENS = {'de', 'du', 'des', 'la', 'le', 'les', 'un', 'une', 'au', 'aux', 'en', 'et', 'a', 'd', 'l', 'avec'}
+
+def _mots_sens(t):
+    t = unicodedata.normalize('NFD', str(t or '').lower())
+    t = ''.join(c for c in t if unicodedata.category(c) != 'Mn').replace('œ', 'oe').replace('æ', 'ae')
+    t = re.sub(r"['’]", ' ', t)              # l'élision se détache : « d'abricot » → « d abricot »
+    t = re.sub(r'[^a-z0-9% ]+', ' ', t)
+    return [w[:-1] if len(w) > 3 and w[-1] in 'sx' else w for w in t.split() if w not in _OUTILS_SENS]
+
+def _porte(noms, mots):
+    """Le nom (ensemble de mots) porte-t-il tous les mots de la clé ? L'accord en genre est toléré (complet / complète)."""
+    return all(w in noms or (w.endswith('e') and w[:-1] in noms) or (w + 'e') in noms for w in mots)
+
+def controle_semantique(out, brut, base):
+    """Rend (refusés, blanchis, entrées inutiles de la liste blanche). Un refus = une clé dont la cible ne porte pas les
+       mots alors qu'un autre aliment proposable les porte tous, et qui n'est pas une traduction voulue VERS CETTE CIBLE."""
+    noms = {c: set(_mots_sens(e[1])) for c, e in base.items()}
+    prop = [c for c, e in base.items() if e[3] is not None]
+    refus, blanchis = [], []
+    for a, code in sorted(out.items()):
+        mots = _mots_sens(brut.get(a, a))
+        if not mots or _porte(noms[code], mots):
+            continue
+        autres = [c for c in prop if c != code and _porte(noms[c], mots)]
+        if not autres:
+            continue
+        tv = TRADUCTIONS_VOULUES.get(a)
+        if tv and tv[0] == code:
+            blanchis.append(a); continue
+        refus.append((a, code, base[code][1], autres[0], base[autres[0]][1], len(autres)))
+    return refus, blanchis, sorted(set(TRADUCTIONS_VOULUES) - set(blanchis))
 
 def main(src):
     import openpyxl
@@ -216,13 +386,15 @@ def main(src):
 
     out, vus = {}, {}
     rej = {'hors_ciqual': [], 'inconnu': [], 'non_proposable': [], 'macro': [],
-           'collision': [], 'doublon': [], 'court': []}
+           'collision': [], 'doublon': [], 'court': [], 'retrait': []}
     corrigees, ajoutees = [], []
+    brut = {}   # la clé telle qu'écrite (accents, apostrophe) — c'est elle que lit le contrôle de sens
 
     for l in lignes:
         a = norm(l['alias'])
         if len(a) < 3:                    rej['court'].append(l['alias']); continue
         if a in deja:                     rej['collision'].append(l['alias']); continue
+        if a in RETRAITS:                 rej['retrait'].append((l['alias'], RETRAITS[a])); continue
 
         code, raison = l.get('code_ciqual'), None
         if a in CORRECTIONS:
@@ -258,6 +430,7 @@ def main(src):
             continue
         vus[a] = code
         out[a] = code
+        brut.setdefault(a, l['alias'])
 
     # ⛔ LES AJOUTS PASSENT LES MÊMES GARDE-FOUS QUE LE CLASSEUR — sinon ils seraient une porte
     #    dérobée par laquelle une cible morte pourrait entrer.
@@ -269,9 +442,17 @@ def main(src):
         if e[3] is None: rej['non_proposable'].append((a0, code, e[1])); continue
         if a in vus and vus[a] != code:
             rej['doublon'].append((a0, vus[a], code)); out.pop(a, None); continue
-        vus[a] = code; out[a] = code
+        vus[a] = code; out[a] = code; brut.setdefault(a, a0)
         ajoutees.append((a0, code, e[1], raison))
 
+    # ⛔⛔ LE SENS AVANT L'ÉCRITURE (NUT-LOT-A) : une clé qui contourne l'aliment qu'elle nomme ARRÊTE la génération —
+    #    rien n'est écrit, l'ancienne table reste en place. Corriger dans CORRECTIONS, ou justifier dans TRADUCTIONS_VOULUES.
+    refus, blanchis, inutiles = controle_semantique(out, brut, base)
+    if refus:
+        print(f'⛔⛔ GÉNÉRATION REFUSÉE — {len(refus)} alias contournent l\'aliment qu\'ils nomment (aucun fichier écrit) :')
+        for a, c, lib, c2, lib2, n in refus:
+            print(f'   · « {a} » → {c} {lib}\n     alors que {c2} « {lib2} » porte tous ses mots ({n} aliment(s))')
+        sys.exit(1)
     dst = os.path.join(ROOT, 'data', 'alias.json')
     with open(dst, 'w', encoding='utf-8') as f:
         json.dump({'source': 'Alias FR → codes Ciqual 2025 (ANSES) — aucune valeur nutritionnelle créée',
@@ -281,6 +462,9 @@ def main(src):
     import gzip as _gz
     kz = len(_gz.compress(open(dst, 'rb').read())) / 1024
     print(f'{len(out)} alias → {dst} ({ko:.0f} Ko · {kz:.0f} Ko gzippé)')
+    print(f'\n✅ contrôle de sens : 0 refus · {len(blanchis)} traduction(s) voulue(s), chacune justifiée dans TRADUCTIONS_VOULUES')
+    if inutiles:
+        print(f'⚠️ {len(inutiles)} entrée(s) de TRADUCTIONS_VOULUES ne servent plus (à retirer) : ' + ', '.join(inutiles))
     if ajoutees:
         print(f'\n⭐ {len(ajoutees)} AJOUT(S) HORS CLASSEUR — nommés, avec leur raison :')
         for a, c, lib, r in ajoutees: print(f'   · « {a} » → {c} {lib}\n     raison : {r}')
@@ -293,7 +477,8 @@ def main(src):
                        ('macro',         "écartés — macros divergentes (la valeur aurait été réécrite)"),
                        ('collision',     "écartés — déjà dans FOOD_SYNONYMES (R2, un propriétaire)"),
                        ('doublon',       "écartés — DEUX cibles pour le même mot (ambigu, on ne tranche pas)"),
-                       ('court',         "écartés — moins de 3 caractères")):
+                       ('court',         "écartés — moins de 3 caractères"),
+                       ('retrait',       "RETIRÉS exprès (RETRAITS, raison écrite)")):
         v = rej[cle]
         if not v: continue
         print(f'\n⚠️ {len(v)} {titre} :')

@@ -393,6 +393,18 @@ sont déposés dans `docs/JOURNAL-DE-TEST.md`.
   d'un plat qu'on n'a pas pesé, et CIQUAL n'a que des plats **industriels** (« préemballé ») — un plat de restaurant peut
   être bien plus riche. Rejoint l'item déjà séparé « **simplification UX Nutrition** ».
 - **Quand le traiter** : dans un lot Nutrition dédié, sur décision de Michel ; pas en passant dans un autre lot.
+- ↪️ **11/10/2026 — NUT-D042-01 (branche `claude/nut-d042-01`, NON PUBLIÉE, rien en production)** : FS-01 → FS-03
+  portés sur master `b280ea5d` (FS-04 non porté) et **D-042 implémentée** (générique pertinent avant le fast-food,
+  intention de marque gardée). Ce retour terrain n'est **pas** clos : il le sera à la publication, après recette.
+  Mesures et limites : `docs/FOOD-SEMANTICS.md` §14 ; décision : `docs/DECISIONS.md` D-042.
+  ↪️ **11/10 (NUT-D042-CLOSURE-01)** : repositionné sur master `7b75f3c1` (`ft-v1253`), branche `claude/nut-d042-closure-01` —
+  **QUALIFIÉ SUR MASTER ACTUEL · NON INTÉGRÉ · NON PUBLIÉ · EN ATTENTE DE CONTRE-VÉRIFICATION**. 6 bancs Food 0 rouge, 117 / 117 mutations conformes, passe complète D-031 **6 661 ✅ / 0 ❌** sur `0407516b` (4 conditions vertes).
+  ↪️ **12/10 (NUT-FOOD-VARIANTS-01, branche `claude/nut-food-variants-01` depuis `0407516b`)** : un qualificatif nutritionnel
+  tapé est respecté (D-058) — quatre causes corrigées dans `_afNorm` / `_afTrouve` / `_afRang` ; banc `food_variants` 55/19 → 74/0 (74 cas ; 52/19 sur les 71 premiers) ;
+  **NON INTÉGRÉ · NON PUBLIÉ · EN ATTENTE DE CONTRE-VÉRIFICATION**. Limites nommées : `docs/FOOD-SEMANTICS.md` §15.
+  ↪️ **12/10 (NUT-FOOD-VARIANTS-03, branche `claude/nut-food-variants-03`)** : trous PRÉEXISTANTS fermés — « zéro » hors ligne,
+  « cola » ↛ « chocolat », « 1/2 écrémé », « viande hachée », crème fraîche (D-060), taux en fourchette, steak haché 5 % cru ;
+  banc 96/26 → 122/0 ; **NON INTÉGRÉ · NON PUBLIÉ** ; dettes : steak haché sans précision hors ligne et « viande hachée » sans précision (crus seuls, FV-164 / FV-165). `docs/FOOD-SEMANTICS.md` §15 ter.
 
 ### 🟤 Deux points relevés par la contre-vérification du lot Nutrition 1 (B3), NON corrigés (hors lot, 30/09/2026)
 - **Texte d'intro du réglage manuel en kéto** : « les glucides s'ajustent tout seuls » (texte de master, `index.html`,

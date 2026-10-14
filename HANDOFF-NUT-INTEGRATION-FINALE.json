@@ -1,0 +1,132 @@
+{
+ "chantier": "INTÉGRATION FINALE NUTRITION + D-031",
+ "branche": "claude/nut-integration-finale",
+ "base": {
+  "master": "7b75f3c1b029b713d1a6db9692f407af302a0d6c (ancêtre de l'arbre final, inchangé)",
+  "chaine_qualifiee": "origin/claude/nut-lot-b 90f50da4"
+ },
+ "arbre_final_integre": "afe1e5686aa17d50a2b1406abc2e984c7b0d5681",
+ "head_teste_d031": "bfd11ee356864dfb3e05199aaaa21ffafa559486",
+ "head_final": "(commit de clôture qui porte ce fichier — documentation seulement, après la passe : D-031)",
+ "lots_integres_dans_l_ordre": [
+  "NUT-D042-CLOSURE-01 (D-042 + FS-01→FS-03, corpus FS-05 / 05B) — code dans la chaîne, + ses 2 commits de documentation fusionnés ici",
+  "NUT-FOOD-VARIANTS-01 / 02",
+  "NUT-FOOD-VARIANTS-03",
+  "NUT-JOURNAL-QTY-GUARD-01 (LOT-C)",
+  "NUT-VARIANTS-03-RED-CLOSURE",
+  "NUT-LOT-A",
+  "NUT-LOT-B (avec les arbitrages D-075)"
+ ],
+ "non_integres_et_pourquoi": {
+  "claude/nut-punch-01": "jamais contre-vérifié, qualification périmée (base ft-v1249) — à reprendre ou abandonner (décision de Michel)",
+  "claude/food-semantics-fs04": "FS-04 non porté (décision à prendre)",
+  "claude/nut-d042-01, claude/food-semantics-fs01..fs05b": "remplacées : leur contenu est porté dans NUT-D042-CLOSURE-01",
+  "claude/nut-night-audit-2026-10-12": "paquet d'audit (outils et rapports), pas un lot"
+ },
+ "conflits": "documentation seulement (CONTEXTE-ACTUEL, JOURNAL-DE-PARTAGE, SUIVI-AUDIT) : les deux côtés gardés, ligne D042 prise dans sa version close",
+ "fichiers_hors_docs_modifies_par_l_integration": 0,
+ "d031": {
+  "resultat": "6942 ✅ · 1 ❌",
+  "conditions": {
+   "1_ligne_de_total": "verte",
+   "2_code_du_runner": "1 (à cause du seul rouge)",
+   "3_arbre_inchange": "vert (bfd11ee3)",
+   "4_aucune_publication_concurrente": "vert"
+  },
+  "rouge": {
+   "temoin": "CCXXVIII ⭐⭐ « CHAQUE générateur qui lit un .xlsx est DÉCLARÉ dans le tableau des sources » → non déclaré : mut_food_alias_sens.py",
+   "classement": "FAUX POSITIF du harnais — le témoin prend tout tools/*.py qui CITE « .xlsx » pour un générateur ; mut_food_alias_sens.py est l'outil de contrôle négatif de LOT-A (il cite le chemin du classeur fast-food), pas un générateur",
+   "origine": "ajouté par LOT-A (79354561) ; absent lors de la D-031 de RED-CLOSURE (d7b8616f), où le témoin était vert ; l'intégration n'a touché aucun fichier tools/",
+   "fonctionnel": "non — aucun fichier applicatif concerné",
+   "minimum_necessaire": "une ligne de documentation : déclarer tools/mut_food_alias_sens.py (outil de test, pas de sortie) dans data/sources/README.md — OU exclure mut_*.py du témoin. Non fait : « aucun nouveau correctif » (décision de Michel)"
+  },
+  "od_08b": "non apparu (vert sur cette passe)"
+ },
+ "controles_finaux": {
+  "git_status": "propre",
+  "master": "7b75f3c1 inchangé, ancêtre",
+  "check_regles": "0 erreur",
+  "git_diff_check": "propre (master..HEAD)",
+  "recette_selecteur_autotest": "15/0"
+ },
+ "dettes_restantes": [
+  "D-075 ② : « coca 0 » / « coca 0% » hors ligne avant chargement de la table d'alias ; « lait 0 » / « lait 0% » hors ligne sans table (même cause)",
+  "« lait zéro » en toutes lettres : lait fermenté en tête",
+  "VARIANTS-03 : FV-164 steak haché sans précision hors ligne (crus seuls), FV-165 « viande hachée » (crus seuls), « light » → édulcorants, « cola » seul touche « chocolat », crèmes d'Isigny / UHT hors « crème fraîche », FV-067 « crème entière », FR-119 à reclasser",
+  "RED-CLOSURE : aide détaillée de la recherche (coach.js) obsolète depuis D-070 ; « coca light » montre le cola sucré dessous ; OD-08b (banc débrief, instable)",
+  "LOT-A : aide du fast-food incomplète ; 273 cibles « sans tous les mots » non contrôlées ; dettes de l'audit P-012 / P-013 / P-015 / P-017 / P-018",
+  "LOT-B : Open Food Facts reçoit la frappe telle quelle ; unités pièce / tranche non lues",
+  "LOT-C : NIGHT-P-009 (macro non déterminée enregistrée à 0, décision D3) ; mode proportionnel ef-prop ; unité ml / portions",
+  "D-042-CLOSURE : FS-04 non porté",
+  "témoin CXVIII (export des conversations) fragile à minuit heure de Paris — rouge si la passe le joue dans la dernière minute avant minuit ; minimum : ancrer la fixture à midi du jour (consigné, non corrigé cette nuit)",
+  "faux positif CCXXVIII : CORRIGÉ cette nuit (retiré des dettes)"
+ ],
+ "publication": "aucune (ni master, ni ft-v1254) — décision de Michel",
+ "verdict": "NUTRITION_QUALIFIEE_FINALE — D-031 6946 ✅ / 0 ❌ sur 4681bc91 (4 conditions vertes) ; ft-v1254 prête à publier sur décision de Michel ; ni master, ni version, ni publication",
+ "cloture_technique_nuit_13_14_10": {
+  "micro_fix": {
+   "cause": "témoin de gouvernance CCXXVIII : tout tools/*.py dont le TEXTE cite « .xlsx » était compté comme générateur ; tools/mut_food_alias_sens.py (contrôle négatif de LOT-A) cite le classeur fast-food pour faire régénérer data/marques.json sur une COPIE de l'arbre",
+   "correction": "détection partagée tests/parcours/gouv_generateurs.js (generateursXlsx) : un outil de mutation = nommé mut_*.py ET travaillant sur une copie (copytree) ; le nom seul n'excuse rien ; lue par le bloc CCXXVIII + 3 nouveaux témoins CCXXVIII bis",
+   "commit": "4681bc911666858389e9db5ba6f9a6451d175770",
+   "arbre": "c2245c08276d2f2edc365d3ac56e670c1d5e7ec0",
+   "test_d_abord": "banc gouv_generateurs 1/2 avant, 3/0 après ; rouge seul reproduit avant tout changement",
+   "mutations": "tools/mut_gouv_generateurs.py 6/6 conformes : M1 faux positif réintroduit (3 rouges) · M2 générateur retiré du tableau (1) · M3 nouveau générateur non déclaré (1) · M4 exclusion trop large (2) · M5 exclusion par le seul nom (1) · MC1 commentaire (vert)",
+   "regle_17": {
+    "fichiers_runtime": 0,
+    "moteur": 0,
+    "table_metier": 0,
+    "stockage": 0,
+    "fichiers_touches": "tests/parcours/runner.js (+6 −2 : la détection lit le module, appel de CCXXVIII bis) · tests/parcours/gouv_generateurs.js (nouveau, 56) · tools/banc_gouv_generateurs.js (nouveau, 18) · tools/mut_gouv_generateurs.py (nouveau, 84)",
+    "temoins_runner": "4155 (→, aucun retiré)"
+   }
+  },
+  "d031_finale": {
+   "arbre_fonctionnel": "4681bc911666858389e9db5ba6f9a6451d175770 (arbre c2245c08)",
+   "resultat": "6946 ✅ · 0 ❌",
+   "code_runner": 0,
+   "arbre_stable": true,
+   "master_stable": "7b75f3c1 du début à la fin",
+   "horaire": "23:08:58 → 00:24:49 UTC",
+   "passe_precedente_meme_arbre": "21:51 → 23:07 UTC : 6945 ✅ · 1 ❌ — CXVIII « le jour ne s'écrit QUE quand il change » (séparateurs=4) : ARTEFACT DE MINUIT du témoin, prouvé (fixture à « maintenant » ± 60/90 s ; rouge seulement si « maintenant » ∈ [23:59:00, minuit[ heure de Paris ; le bloc a tourné vers 21:59 UTC = 23:59 Paris ; rejoué : 23:58:00 → 2, 23:59:30 → 4, 00:00:30 → 2, maintenant → 2) ; code de l'export inchangé et juste ; relance justifiée par la preuve, hors de la fenêtre"
+  },
+  "incident": "pendant la passe du soir, `python3 tools/inventaire.py --help` a régénéré docs/INVENTAIRE.md (1 ligne) ; remis à l'identique en quelques secondes (git checkout) ; le runner ne lit pas ce fichier ; HEAD inchangé ; aucune incidence sur les passes",
+  "statut": "NUTRITION_QUALIFIEE_FINALE"
+ },
+ "ft_v1254_readiness": {
+  "verdict": "PRÊTE À PUBLIER (sur décision de Michel)",
+  "hash_candidat": "HEAD final de claude/nut-integration-finale (commit de documentation qui porte ce fichier, arbre fonctionnel 4681bc91 / c2245c08) — le bump se pose AU-DESSUS",
+  "fast_forward": "oui : master 7b75f3c1 est ancêtre ; aucun conflit (avance rapide pure, un seul push)",
+  "changements_app_vs_master": "app.js (recherche d'aliments + garde de quantité du journal), data/alias.json, data/marques.json ; Code.js, worker.js, appsscript.json INCHANGÉS → aucun redéploiement Apps Script ni Worker",
+  "bump_a_faire": [
+   "sw.js : const CACHE = 'ft-v1254' (+ résumé en commentaire)",
+   "CLAUDE.md : « Version actuelle : ft-v1254 (prochaine ft-v1255) » + entrée de journal ft-v1254 ; le journal récent est à 8 entrées (seuil) → déménager la plus ancienne (ft-v1246) dans docs/JOURNAL-ARCHIVE.md, en AJOUT seulement",
+   "docs/CONTEXTE-ACTUEL.md : en-tête « Version en ligne » → ft-v1254",
+   "docs/INVENTAIRE.md : python3 tools/inventaire.py",
+   "règle d'or #11 : à peser — correctifs de recherche + refus d'une quantité invalide (LOT-C : « aucune pop-up, aucun texte d'aide devenu faux ») ; dettes d'aide connues non bloquantes (coach.js obsolète, aide fast-food)"
+  ],
+  "tests_apres_bump": [
+   "git diff --check",
+   "python3 tools/check_regles.py (dont la cohérence de version CLAUDE.md / CONTEXTE-ACTUEL / sw.js)",
+   "python3 tools/recette_selecteur.py --diff <candidat> --publication → zone sw.js:version : T0 + T3 seulement, aucune recette métier",
+   "pas de nouvelle D-031 : après la passe, version, cache et documentation seulement (D-031)",
+   "après push : run deploy-pages.yml vert + pages_build_version = commit publié + sw.js servi = ft-v1254"
+  ],
+  "recette_iphone": [
+   "version ft-v1254 visible (Menu → À propos)",
+   "« confiture » générique (jamais confiture de lait) ; « gruyère » = Gruyère ; « potatoes » = Potatoes ou wedges, cuites",
+   "« riz 100g » = la liste de « riz », quantité non pré-remplie",
+   "« eau 1,5 l » → Eau du robinet en tête",
+   "« coca 0 », « coca 0% », « coca zéro » → Cola sans sucres ajoutés en tête, jamais sucré",
+   "journal : quantité vide / 0 / « abc » refusée, 150 g acceptée",
+   "Quick suspect (« double cheeseburger bacon ») : ⚠️ doute visible",
+   "recherche sans quantité (« poulet », « banane », « lait ») inchangée ; « lait 0 » → lait écrémé"
+  ]
+ },
+ "preflight_seance_lecture_seule": [
+  "**Base** : la chaîne Nutrition ne touche AUCUN fichier Séance (`log.js`, `screens.js`, `coach.js`, `setup.js`, `state.js` identiques à master `7b75f3c1`) — mesuré par `git diff`. Depuis la publication `ft-v1251` (07/10), le code Séance de master n'a changé que par IMPORT-MAP / IMPORT-P0-2 (`_matchExercise` / `_materielDe` / `_EX_EQUIV`, rapprochement des noms à l'IMPORT — pas le déroulé d'une séance).",
+  "**⚠️ Limite** : le rapport de fermeture Séance (classement A–E, constats C1 / C2) vit **hors dépôt** (Drive) — interdit cette nuit. **Ses constats C1 / C2 ne sont donc PAS revérifiés** ; à relire demain avant d'ouvrir un lot.",
+  "**Ce que le dépôt dit (à jour)** : SESSION-MILO-E2E-01 (03/10) → SESSION-INTEGRITY-01 (`ft-v1250`) a corrigé A / A-bis, C-bis, D, E, N-G2. **Restent ouverts** : B (un seul objet prévu / réalisé — dette structurelle) · F montée en charge à seuils fixes · H carte sous une question · H′ ancien J1 / programmes sans statut · 14 intention · I `summarizeCoach` · G cycle de vie des discussions · K panneau maintenance · N-G1 message envoyé deux fois (MILO / TRANSPORT). Réserves SI-01 ① → ⑧ (backlog non bloquant : témoin permanent « stockage plein ne jamais effacer », PDF « ≈ ✓ », quota iOS, orphelins suppression / import, débriefs locaux, téléphone plein muet).",
+  "**C1 / C2 dans le dépôt = MILO-SEANCE-02 / C1** (formats lus, faux exercices refusés, une carte) **et MILO-SEANCE-03 / C2** (mémoire et séance coexistent, une seule carte) : leurs témoins sont **verts sur la chaîne finale** (passe du 13/10 sur l'arbre 4681bc91 : C1 22/0 + 7/0 source, C2 17/0 + 5/0, C3 31/0 + 4/0, SESSION-INTEGRITY 80/0 + 13/0, DEBRIEF-ON-DEMAND 49/0 + 9/0, FP-01 20/17/12/6, « onglet Séance » 210/0). Toujours PERTINENTS (le code qu'ils gardent est inchangé) et toujours TENUS. ⚠️ Le témoin d'unicité seance_unicite.js n'est toujours **pas branché** dans la passe (12/12 en banc seul, consigné).",
+  "**Plan de reprise court (demain)** : ① relire le rapport A–E (Drive) et confronter C1 / C2 au code de master `7b75f3c1` (le code Séance n'a pas bougé côté Nutrition) ; ② choisir UN lot parmi les ouverts ci-dessus (l'audit E2E recommandait l'ordre 1③ → 3 → 4 → 5 ; 1①② et 2 sont faits) ; ③ décisions de Michel attendues avant tout code : B (prévu / réalisé), F (montée en charge), N-G1."
+ ]
+}

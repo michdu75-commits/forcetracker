@@ -3407,7 +3407,7 @@ gardé) ? Vérifiable par du code : ✅. État : **à trier** (lot séparé).
 ### 🟢 OD-11 « CARTE INTROUVABLE » — CAUSE PROBABLE TRAITÉE DANS LE TEST (06/10/2026, package ft-v1251)
 La fixture du banc débrief n'avait pas de `ft4_wn_seen` : un « Quoi de neuf » s'ouvrait au démarrage de chaque test, par-dessus
 l'onglet visé. Repère posé (utilisateur à jour) ; aucun critère de réussite modifié. Mesuré ensuite : **3 exécutions sur 3 à 58/0**
-(dont une en parallèle d'un autre banc). ↪️ **Nuit du 06/10 (qualification ft-v1251)** : OD-11 vert dans la passe complète n°1 (bloc B-OD-E) et les répétitions (8 exécutions du banc sur 9 à 58/0 ; la 9ᵉ à 57/1, témoin non conservé). ⚠️ **Mais la famille n'est pas éteinte** : OD-16, voisin (même attente de la carte dans Progrès, 3 s au plus), a rougi UNE fois pendant le contrôle négatif — sous la mutation M-OD13, un simple commentaire sans effet possible — puis vert au rejeu. Intermittence du banc, pas du produit ; cause non prouvée. État : **à trier**.
+(dont une en parallèle d'un autre banc). ↪️ **Nuit du 06/10 (qualification ft-v1251)** : OD-11 vert dans la passe complète n°1 (bloc B-OD-E) et les répétitions (8 exécutions du banc sur 9 à 58/0 ; la 9ᵉ à 57/1, témoin non conservé). ⚠️ **Mais la famille n'est pas éteinte** : OD-16, voisin (même attente de la carte dans Progrès, 3 s au plus), a rougi UNE fois pendant le contrôle négatif — sous la mutation M-OD13, un simple commentaire sans effet possible — puis vert au rejeu. Intermittence du banc, pas du produit ; cause non prouvée. État : **à trier**. ↪️ **11/10 (NUT-D042-CLOSURE-01) : la famille rougit encore, et cette fois SANS le lot.** Passe complète n°1 sur `0407516b` : **OD-16** rouge (`carte:null` — la séance est dans l'historique, aucun débrief rangé, aucune mémoire : seul l'affichage de la carte dans Progrès manque au moment du contrôle). Rejeux du banc : branche **5 sur 5 à 58/0** ; **master pur `7b75f3c1`, sans aucune ligne du lot : 58/0 · 57/1 (OD-08b, même `null` de carte Progrès) · 58/0**. Intermittence **préexistante** du banc, indépendante du lot (qui ne touche que la recherche d'aliments) ; la passe a été relancée sur le même arbre, sans modification. Cause toujours non prouvée. État : **à trier**.
 
 ### 🟢 COOKIE `ft_email` + PROFIL INTROUVABLE — TRAITÉ (06/10/2026, COOKIE-PROFILE-01)
 L'entrée « à trier » du même jour est devenue un correctif : banc `cookie_profile` (16 témoins, dont l'invariant CP-00). ❓ **Doute
@@ -3470,3 +3470,110 @@ suggestions P1-3, modificateurs P1-4, abréviation « elev » — hors lot).
 Ambigu par décision de Michel (**D-056**, P.4) : jamais AUTO, ni vers *Rowing Barre*, ni vers *Rowing Câble* ; une question est acceptable.
 Aujourd'hui : question vers *Rowing Barre*. ❓ **Doute** : que veut dire le coach qui l'écrit ? Le code ne peut pas le savoir. État :
 **juge humain** (le sens se lit dans le programme, pas dans le nom).
+
+### 🟡 « CRÈME FRAÎCHE » ET LES TAUX EN FOURCHETTE NE RETROUVENT RIEN EN LOCAL (12/10/2026 — NUT-FOOD-VARIANTS-01, hors lot)
+CIQUAL n'écrit jamais « fraîche » (« Crème 30% MG, épaisse, rayon frais ») et donne certains taux en fourchette (« 2-3% »,
+« 12 à 25% ») : « crème fraîche », « crème fraîche 30% », « fromage blanc 2% », « crème 15% » ne rendent rien hors ligne.
+❓ **Doute** : faut-il dire qu'une « crème fraîche » est la crème « rayon frais », et lire « 2 % » dans « 2-3 % » ? Ce sont des
+décisions de Michel, pas des correctifs. Vérifiable par du code : ✅ (KNOWN_LIMITATION FV-064 → FV-067, FV-032). État : **à trier**.
+↪️ *Mise à jour du 12/10 (NUT-FOOD-VARIANTS-03)* : **tranché par Michel (D-060)** et corrigé — « crème fraîche » rend les trois crèmes
+« rayon frais » (aucun taux choisi), « crème fraîche 30% » met la 30 % devant, un taux tapé se lit dans une fourchette qui le contient
+(« 2 % » dans « 2-3 % », « 15 % » dans « 12 à 25 % »), et un taux hors de toute fourchette ne rend rien. FV-064/065/066/032 sont MUST.
+Reste : « crème entière » (FV-067, aucun taux écrit), les crèmes d'Isigny et UHT hors de la famille (D-061). État : **promue**.
+
+### 🟡 « ZÉRO » HORS LIGNE DEVIENT « ÉDULCORANTS » (12/10/2026 — NUT-FOOD-VARIANTS-01, hors lot)
+Le synonyme `zero → edulcorants` (ft-v1113, pensé pour les boissons) fait passer « Cola, sucré, avec édulcorants » devant
+« Cola, sans sucres ajoutés » pour « coca zéro » hors ligne, et l'aromatisé devant le nature pour « fromage blanc zéro ».
+En ligne, la table d'alias corrige le premier résultat. ❓ **Doute** : « zéro » veut-il dire « sans sucre » partout ?
+Vérifiable par du code : ✅ (FV-031, FV-103). État : **à trier**.
+↪️ *Mise à jour du 12/10 (NUT-FOOD-VARIANTS-03)* : corrigé — « zéro » se lit « 0 % » ou « sans sucres » (D-061), plus « édulcorants » ;
+« coca zéro » et « cola zéro » hors ligne rendent « Cola, sans sucres ajoutés », « fromage blanc zéro / zero » la famille 0 %, et « cola »
+suivi d'un autre mot ne trouve plus « chocolat ». Reste : « light » → « édulcorants » inchangé ; « cola » tapé SEUL (dernier mot, partiel
+autorisé) peut encore toucher « chocolat ». FV-031/103/140→143 sont MUST. État : **promue**.
+↪️ *Mise à jour du 13/10 (NUT-VARIANTS-03-RED-CLOSURE, **D-070**, décision de Michel)* : « coca zéro » ne propose plus du tout
+« Cola, sucré, avec édulcorants », même en dessous ; le témoin ft-v1116 (runner CCXXIV) qui l'exigeait juste en dessous est retiré
+avec sa raison (R30). L'aliment reste trouvable quand on le nomme (« cola sucré avec édulcorants » → en tête, FV-178). ❓ **Doute
+restant** : « coca light » le montre encore en dessous (« light » → « édulcorants », non touché) ; et l'aide détaillée de la recherche
+(`coach.js`) dit encore « l'autre reste juste en dessous ». Vérifiable par du code : ✅. État : **à trier**.
+
+### 🟡 OD-08b ROUGIT SOUS CHARGE : « CARTE INTROUVABLE » DANS PROGRÈS (13/10/2026 — passe complète, hors code de l'app)
+Passe D-031 finale de NUT-VARIANTS-03-RED-CLOSURE (`d7b8616f`) : 6 792 ✅ / **1 ❌**, OD-08b (« la carte porte « 💬 Voir le
+débrief Milo » et SEULEMENT lui » → `null`, carte de la séance absente après 3 s). OD-08 juste avant est vert (le débrief est rangé
+et affiché) ; aucun fichier du débrief n'a changé depuis la passe précédente, où OD-08b était vert. Rejoué seul 3 fois sur le même
+arbre : **58/0 à chaque fois**. Même famille qu'OD-11 et OD-16 (06/10) : l'attente de la carte dans Progrès sous charge.
+❓ **Doute** : l'attente de 3 s suffit-elle quand la passe complète charge la machine, ou la liste de Progrès se dessine-t-elle
+parfois après un autre événement ? Vérifiable par du code : ✅. État : **à trier** (famille non éteinte, banc débrief).
+↪️ *Décision de Michel (13/10)* : accepté pour ce lot comme test instable connu, hors périmètre ; le lot passe QUALIFIÉ avec la mesure
+6 792 ✅ / 1 ❌ conservée telle quelle. La famille reste ouverte : l'entrée reste **à trier**.
+
+### 🟡 « POTATOES » → POMME DE TERRE RÔTIE (91 kcal) ALORS QUE « POTATOES OU WEDGES » EXISTE (175 kcal) (13/10/2026 — NUT-LOT-A)
+Le contrôle de sens du générateur d'alias le voit : la règle D1 (l'aliment nommé d'abord) dirait 4025 « Potatoes ou wedges…,
+cuites ». ⛔ Non corrigé : le témoin MS-105 (FS-05B) fige la cible actuelle, et le brief interdit de changer un témoin sans
+décision. Il figure dans `TRADUCTIONS_VOULUES` comme **À TRANCHER**. ❓ **Doute** : quelqu'un qui tape « potatoes » mange-t-il des
+wedges de fast-food (≈ ×2 en calories) ou des pommes de terre au four ? Vérifiable par du code : ✅. État : **à trier** (décision de Michel).
+↪️ *Décision de Michel (13/10, D-074)* : l'aliment exact. « potatoes » → 4025 « Potatoes ou wedges…, cuites » (la forme cuite, comme
+l'ancienne cible) ; MS-105 reproduit rouge (176 / 1) puis mis à jour (177 / 0) ; témoins B-AS-D / B-AS-E (AS-26), mutation M7. État : **promue**.
+
+### 🟡 LES FRITES QUICK « VÉRIFIÉES » PORTENT MAINTENANT UN DOUTE (13/10/2026 — NUT-LOT-A, D4)
+« Petite / Moyenne / Grande Frite » et « Grande Frite Cheddar » viennent de la feuille « FRITES vérifiées » (lignes héritées) ;
+le classeur V2 a recopié leurs valeurs sur des « Grande Frites supplément Sauce … ». Comme on ne sait pas quelle ligne est
+juste, les DEUX portent « au moins une ligne est fausse » (D-073 ④). ❓ **Doute** : les lignes héritées étant celles qu'on a
+vérifiées, faudrait-il réserver le doute aux seules lignes du V2 ? **Juge humain** (décision de Michel). État : **à trier**.
+↪️ *Décision de Michel (13/10, D-074 ②)* : quand la source ne dit pas laquelle est juste, les deux lignes restent et portent le
+doute, aucune valeur modifiée — c'est ce qui est en place. État : **écartée** (tranché, rien à changer).
+
+### 🟡 L'AIDE DU FAST-FOOD N'ANNONCE QU'UNE SORTE DE ⚠️ (13/10/2026 — NUT-LOT-A, hors lot)
+La diapo du Guide et l'aide détaillée disent qu'un avertissement apparaît « quand une enseigne publie des calories qui ne
+collent pas aux macros ». Depuis NUT-LOT-A, un ⚠️ apparaît aussi pour des valeurs COPIÉES d'un autre produit et pour une
+PORTION suspecte. Le texte n'est pas faux, il est incomplet — non modifié (lot sans fichier applicatif). ❓ **Doute** : à
+compléter avant publication ? Vérifiable par du code : ✅. État : **à trier**.
+↪️ *Décision de Michel (13/10, D-074 ④)* : dette séparée, hors de NUT-LOT-A. État : **à trier** (lot à part).
+
+### 🟡 « CONFITURE FRUITS ROUGES » : LE MÉLANGE DE FRUITS PLUTÔT QUE LE GÉNÉRIQUE (13/10/2026 — NUT-LOT-A, D-073 ①)
+CIQUAL n'a pas de confiture « fruits rouges ». J'ai choisi 31083 « autres fruits ou mélange de fruits (extra ou classique) »
+(244 kcal) plutôt que 30999 « tout type de fruits, sans précision sur les sucres » (235). ❓ **Doute** : le choix est-il le
+bon ? **Juge humain**. État : **à trier**.
+↪️ *Décision de Michel (13/10, D-074 ③)* : validé à condition que 31083 soit une confiture — libellé exact « Confiture, autres
+fruits ou mélange de fruits (extra ou classique) » : c'en est une. État : **écartée** (tranché, rien à changer).
+
+### 🟡 « LAIT 0 » / « LAIT 0% » : LE LAIT ÉCRÉMÉ N'EST EN TÊTE NI DE L'UN NI DE L'AUTRE (13/10/2026 — NUT-LOT-B)
+Mesuré sur la base (`205cd17b`) et inchangé par LOT-B (brief §8 : aucune tête de « lait 0 » ou « yaourt 0 » ne change sans
+décision) : « lait 0 » ignore le 0 → tête « Lait à 1,2% MG, UHT, enrichi en vitamines » ; « lait 0% » → tête « Lait
+fermenté type yaourt au bifidus, nature, 0% MG ». Le « Lait écrémé, UHT » (19050, celui de la clé « lait ecreme ») n'est en
+tête d'aucun des deux. ⚠️ La 1ʳᵉ version de LOT-B rendait à « lait 0 » la tête de « lait 0% » : retirée (D-075 ④).
+❓ **Doute** : une personne qui tape « lait 0 » ou « lait 0% » veut-elle le lait écrémé ? Vérifiable par du code : ✅ (la
+tête attendue). État : **à trier** — décision de Michel.
+↪️ *Décision de Michel (13/10, D-075 ①)* : le lait écrémé en tête, par des clés de la famille lait (« lait 0 », « lait 0% » → 19050). Fait : LB-D09 / LB-D12 verts. Hors ligne sans table, la tête de la base reste (dette ②). État : **promue** (LB-D09, LB-D11, LB-D12, LB-D15).
+
+### 🟡 « COCA 0 » HORS LIGNE SANS TABLE D'ALIAS : LE 0 RESTE IGNORÉ (13/10/2026 — NUT-LOT-B, dette LB-D02)
+En ligne, « coca 0 » vaut « coca zéro » parce que la table d'alias connaît « coca zero ». Hors ligne au tout premier usage
+(table pas encore chargée), rien ne dit que ce « 0 » veut dire « zéro » : « coca 0 » = « coca » (le cola sucré en tête),
+comme sur la base. « coca 0% » est, lui, corrigé partout (la frappe ne trouve rien, on cherche « coca zéro »). Lire « 0 » =
+« zéro » sans la table changerait aussi « lait 0 » et « yaourt 0 ». ❓ **Doute** : faut-il le faire ? Vérifiable par du
+code : ✅ (LB-D02 rougira). État : **à trier** — décision de Michel.
+↪️ *Décision de Michel (13/10, D-075 ②)* : dette non bloquante, pas de règle générale ; une correction future passera par la disponibilité hors ligne de l'alias Coca. « coca 0% » hors ligne sans table est dans le même cas (vide, comme sur la base). État : **promue** comme dette figée (LB-D02, LB-D04).
+
+### 🟡 « X 0% » QUI NE TROUVAIT RIEN TROUVE MAINTENANT « X ZÉRO » (13/10/2026 — NUT-LOT-B, D-075 ④)
+Quand la frappe ne trouve rien, la recherche essaie la partie alimentaire, où un « 0 » / « 0% » se lit « zéro » (D-061 ① :
+0 % OU sans sucres). Mesuré : « compote 0% » était vide et propose maintenant « Compote ou assimilé, tout type de fruits,
+sans précision sur la teneur en sucres » en tête ; « jus d orange 0% » propose les jus d'orange frais / pur jus. Aucun
+résultat qui existait déjà ne change. ❓ **Doute** : une liste qui était vide doit-elle le rester pour ces aliments ?
+Vérifiable par du code : ✅. État : **à trier**.
+↪️ *Décision de Michel (13/10, D-075 ③)* : non — « X 0% » n'est lu d'aucune façon si ni la table ni les données ne disent ce que 0 % veut dire. Retiré : « compote 0% » et « jus d'orange 0% » sont de nouveau vides. État : **promue** (LB-D16, LB-D17, mutation M8).
+
+### 🟡 « FROMAGE BLANC 0 » : LA DOSETTE DU FAST-FOOD NE REMONTE PLUS (13/10/2026 — NUT-LOT-B)
+La table connaît « fromage blanc zero » : « fromage blanc 0 » cherche donc « fromage blanc zéro » dans les 4 sources. Sur la
+base, le 0 était ignoré : on voyait « Dosette salade fromage blanc ciboulette · Quick » et les 2-3 % / 7-8 % sous le 0 %.
+Maintenant : seulement les 0 %. ❓ **Doute** : voulu partout ? Vérifiable par du code : ✅. État : **à trier**.
+
+### 🟡 OPEN FOOD FACTS REÇOIT LA FRAPPE TELLE QUELLE (13/10/2026 — NUT-LOT-B, hors périmètre)
+`_offRechercher` envoie le texte tapé (« riz 100g », « riz. ») sans passer par la partie alimentaire. Le brief limitait
+LOT-B aux 4 sources locales ; aucun appel réel n'a été fait. ❓ **Doute** : OFF gère-t-il bien la quantité tapée ?
+Vérifiable par du code : ⚠️ (avec une fixture, pas en vrai). État : **à trier**.
+
+### 🟡 LE TÉMOIN CXVIII (EXPORT DES CONVERSATIONS) ROUGIT SI LA PASSE LE JOUE JUSTE AVANT MINUIT (14/10/2026 — clôture Nutrition)
+Mesuré : sa fixture date les messages à « maintenant » ± 60 / 90 s et compte les changements de jour en heure de Paris. Si
+« maintenant » tombe dans la dernière minute avant minuit, chaque paire enjambe minuit : 4 séparateurs au lieu de 2. Rejoué sur
+l'arbre `4681bc91` : 23:58:00 → 2 · **23:59:30 → 4** · 00:00:30 → 2. Arrivé pour de vrai à la passe du 13/10 lancée à 21:51 UTC
+(le bloc a tourné vers 23:59 à Paris) ; la passe relancée hors de la fenêtre est verte (6 946 / 0). L'export, lui, fait juste. ❓
+**Doute** : ancrer la fixture à midi du jour ? Vérifiable par du code : ✅. État : **à trier** (dette du harnais, non bloquante).

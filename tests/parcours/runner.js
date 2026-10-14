@@ -10347,7 +10347,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.poisPasPoireau=/^Pois/.test(top('pois'));                 // pas « Poireau »
     o.patePate=/^Pâté/.test(top('pate'));                    // « pate » veut toujours dire pâté
     /* ⛔ ... et le reste ne bouge pas. */
-    o.stable=top('oeuf')==='Oeuf dur' && /^Riz/.test(top('riz')) && /^Poulet/.test(top('poulet'))
+    /* 🔎 FS-01 (02/10/2026, porté par NUT-D042-01) — « Oeuf dur » est devenu « Oeuf cru », et c'est voulu (R30) : les
+       deux noms ont la MÊME longueur, et « dur » ne gagnait que par l'ORDRE DU FICHIER — ce que FS-01 retire (D-036 :
+       même requête = même ordre, quel que soit l'ordre d'arrivée). « Oeuf cru » est aussi la cible de la table d'alias
+       pour « oeuf » (22000, décision cru/cuit ft-v1115). */
+    o.stable=top('oeuf')==='Oeuf cru' && /^Riz/.test(top('riz')) && /^Poulet/.test(top('poulet'))
              && /^Ananas/.test(top('ananas')) && /^Pois chiche/.test(top('pois chiche'));
 
     /* ⭐⭐ LES FORMES DE PATES — 0 resultat avant, et « spaghetti » rendait la COURGE. */
@@ -25157,8 +25161,13 @@ console.log('\n-- CCXXIII. Les mots qu\'on emploie atteignent un aliment précis
     t('⛔⛔ la correspondance porte sur la REQUÊTE ENTIÈRE (« riz au lait » n\'est pas détourné)',
       /riz au lait/i.test(String(R.pasDeMotIsole)), String(R.pasDeMotIsole));
     /* ⛔ Règle d'or #4 : un échec de chargement rend le comportement d'AVANT, pas une erreur. */
+    /* 🔎 FS-01 / 🎯 FS-03 (02/10/2026, portés par NUT-D042-01) — LE NOM EXACT ET LA FORME ONT CHANGÉ, PAS L'INTENTION
+       (R30). Sans table, c'est le résolveur qui répond : il préfère le nom de tête EXACT (la règle qui rend « Fromage »
+       et non « Fromage de tête »), et la préférence « riz → cuit » vit maintenant dans le MOTEUR (`_FS_PREFS_GENERIQUES`)
+       — donc hors ligne aussi, « riz » rend un riz CUIT, comme la décision de Michel du 03/09 (ft-v1115). Ce qui est
+       protégé reste protégé : jamais bloquant, et du riz. */
     t('⛔ sans la table (hors ligne), la recherche redevient celle d\'avant — jamais bloquante',
-      /^Riz blanc, cru/.test(String(R.sansTable)), String(R.sansTable));
+      /^Riz\b/.test(String(R.sansTable)) && /\bcuit\b/.test(String(R.sansTable)), String(R.sansTable));
     t('⛔ 0 erreur JS', errs.length===0, errs.join(' | '));
   }
 }
@@ -25253,7 +25262,7 @@ console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) -
     const n=q=>(_ciqualChercher(q,4)||[]).map(x=>[x[0],x[1],x[3]]);
     const o={};
     ['coca zero','coca zéro','coca light','coke zero','pepsi max','coca sans sucre',
-     'coca zero sans cafeine','coca','cola','coca cola','soda'].forEach(q=>o[q]=n(q));
+     'coca zero sans cafeine','coca','cola','coca cola','soda','cola sucre avec edulcorants'].forEach(q=>o[q]=n(q));
     return o;
   }catch(e){ return {err:String(e)}; } });
   await cx.close();
@@ -25270,11 +25279,17 @@ console.log('\n-- CCXXIV. Le Coca Zéro était compté 24 fois trop (ft-v1116) -
     t('⛔ … avec ou sans accent, et pour « light », « coke zero », « pepsi max »',
       [R['coca zéro'],R['coca light'],R['coke zero'],R['pepsi max']].every(r=>r[0]&&r[0][0]===18060),
       [R['coca zéro'][0],R['coca light'][0],R['coke zero'][0],R['pepsi max'][0]].map(x=>x?x[0]:'RIEN').join(' · '));
-    /* ⛔⛔ ON N'A RIEN SUPPRIMÉ : le cola sucré aux édulcorants reste JUSTE DESSOUS. C'est un
-       vrai aliment (type stévia), on l'empêche seulement de répondre à la place du zéro (R29). */
-    t('⛔⛔ le cola SUCRÉ aux édulcorants n\'a pas disparu — il est juste en dessous',
-      R['coca zero'].slice(1).some(x=>x[0]===18037),
-      R['coca zero'].map(x=>x[0]).join(' · '));
+    /* ⛔⛔ D-070 — DÉCISION DE MICHEL DU 13/10/2026 : pour « coca zéro », le cola SUCRÉ aux édulcorants n'est
+       PAS proposé, MÊME EN DESSOUS. Il remplace le choix de ft-v1116 (« il reste juste en dessous », R29), devenu
+       obsolète : « zéro » veut dire 0 % ou sans sucres (D-061 ①), et un nom qui dit le CONTRAIRE (« sucré ») est
+       écarté, pas descendu (D-059 ①) — les deux sont validés par D-070. R30 : le retrait s'écrit avec sa raison.
+       ⛔ L'aliment n'est pas supprimé pour autant : nommé, il reste trouvable (témoin suivant). */
+    t('⛔⛔ D-070 — « coca zéro » ne propose PAS le cola SUCRÉ aux édulcorants, même en dessous',
+      R['coca zero'].length>0 && !R['coca zero'].some(x=>x[0]===18037) && !R['coca zéro'].some(x=>x[0]===18037),
+      R['coca zero'].map(x=>x[0]).join(' · ')+' | '+R['coca zéro'].map(x=>x[0]).join(' · '));
+    t('⛔ … mais l\'aliment n\'est pas supprimé : « cola sucré avec édulcorants », NOMMÉ, le rend en tête',
+      R['cola sucre avec edulcorants'][0] && R['cola sucre avec edulcorants'][0][0]===18037,
+      String(R['cola sucre avec edulcorants'][0]));
     /* ⛔ CIQUAL distingue la version SANS CAFÉINE : on ne fusionne pas ce qui diffère. */
     t('⛔ « coca zéro sans caféine » a SA propre entrée (on ne fusionne pas deux aliments distincts)',
       R['coca zero sans cafeine'][0] && R['coca zero sans cafeine'][0][0]===18068,
@@ -25869,8 +25884,9 @@ console.log('\n-- CCXXVIII. Un fichier généré doit rester régénérable (04/
     const doc=fs.readFileSync(readme,'utf8');
     /* ⭐⭐ TOUT GÉNÉRATEUR QUI LIT UN .xlsx DOIT ÊTRE DÉCLARÉ. C'est le témoin qui rougira le jour
        où quelqu'un ajoute un `tools/xxx.py` sans se poser la question de sa source. */
-    const gens=fs.readdirSync(dirTools).filter(f=>f.endsWith('.py'))
-      .filter(f=>/\.xlsx/i.test(fs.readFileSync(path.join(dirTools,f),'utf8')));
+    /* 🧾 13/10/2026 (clôture technique Nutrition) : la détection vit dans `gouv_generateurs.js` — un OUTIL DE MUTATION
+       (`tools/mut_*.py` qui travaille sur une copie) cite un classeur sans être un générateur. Une seule logique (R2). */
+    const gens=require('./gouv_generateurs.js').generateursXlsx(fs.readdirSync(dirTools), f=>fs.readFileSync(path.join(dirTools,f),'utf8'));
     const nonDeclares=gens.filter(f=>doc.indexOf('tools/'+f)<0);
     t('⛔ CONTRÔLE — des générateurs lisant un .xlsx existent bien (sinon le témoin ne mesure rien)',
       gens.length>=2, gens.join(' · '));
@@ -25896,6 +25912,9 @@ console.log('\n-- CCXXVIII. Un fichier généré doit rester régénérable (04/
       /data',\s*'sources'/.test(py), '');
   }
 }
+/* 🧾 CCXXVIII bis (13/10/2026) : qui est un générateur — le faux positif de l'outil de mutation, et le contrôle négatif qui
+   prouve qu'un vrai générateur non déclaré rougit toujours. Banc seul : `tools/banc_gouv_generateurs.js`. */
+require('./gouv_generateurs.js').source(t, ROOT, fs, path);
 
 /* ═══ CCXXIX. LA BASE FAST-FOOD PASSE DE 27 À 128 — FUSION, PAS REMPLACEMENT (ft-v1120) ═════
    Michel renvoie le classeur perdu, en **version 2** : 114 produits au lieu de 27.
@@ -39505,6 +39524,46 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      `tools/mut_nutri_lipides25.py`. */
   await require('./nutri_lipides25.js').ecran(t, b, PORT);
   await require('./nutri_lipides25.js').ecranVue(t, b, PORT);
+  /* 🔎 FS-01 Food Semantics V1 (02/10/2026, porté par NUT-D042-01 le 11/10) : résolveur déterministe de la recherche
+     d'aliments (une forme nommée gagne toujours) et un seul premier affichage quand CIQUAL ET les alias sont là.
+     Blocs B-CDXXIX / B-CDXXX, contrôle négatif `tools/mut_food_semantics.py`. */
+  await require('./food_semantics.js').ecran(t, b, PORT);
+  await require('./food_semantics.js').ecranVue(t, b, PORT);
+  /* 🧩 FS-02 (porté par NUT-D042-01) : une seule taxonomie des formes (requête ET candidats), ambiguïtés figées.
+     Bloc B-CDXXXII, contrôle négatif `tools/mut_food_formes.py`. */
+  await require('./food_formes.js').ecran(t, b, PORT);
+  /* 🎯 FS-03 (porté par NUT-D042-01) : préférences par défaut des requêtes génériques (une couche, séparée de la
+     taxonomie). Bloc B-CDXXXIV, contrôle négatif `tools/mut_food_prefs.py`. */
+  await require('./food_prefs.js').ecran(t, b, PORT);
+  /* ⛔ FS-04 (le libellé de forme affiché) N'EST PAS PORTÉ par NUT-D042-01 : un affichage nouveau, hors de D-042
+     (D-040 PROPOSÉ, jamais validé). Son banc `food_affichage.js` reste sur `claude/food-semantics-fs05b`. */
+  /* 📚 FS-05 (porté par NUT-D042-01) : le corpus de référence des recherches alimentaires — il MESURE et FIGE.
+     Blocs B-CDXXXIX / B-CDXL, contrôle négatif `tools/mut_food_reference.py`. */
+  await require('./food_reference.js').ecran(t, b, PORT);
+  /* 🧭 FS-05B (porté par NUT-D042-01) : le corpus MULTI-SOURCE conduit par la vraie frappe. Blocs B-CDXLII /
+     B-CDXLIII, contrôle négatif `tools/mut_food_multisource.py`. */
+  await require('./food_multisource.js').ecran(t, b, PORT);
+  /* 🍽️ NUT-D042-01 (11/10/2026) : D-042 — pour une requête GÉNÉRIQUE, l'aliment générique pertinent passe avant le
+     fast-food ; une intention de marque explicite garde la marque devant ; « Déjà noté par toi » inchangé.
+     Blocs B-D42-A (structure), B-D42-B (vraie frappe), B-D42-J (« Déjà noté »), B-D42-T (premier affichage),
+     contrôle négatif `tools/mut_food_d042.py`. */
+  await require('./food_d042.js').ecran(t, b, PORT);
+  /* 🥛 NUT-FOOD-VARIANTS-01 (12/10/2026) : un qualificatif nutritionnel tapé est respecté — un taux (5 % ≠ 15 %, « 5 % »
+     = « 5% »), entier / écrémé, allégé (jamais « non allégé »), « sans sucre » ; une requête SANS qualificatif garde
+     plusieurs variantes ; un taux absent de la base ne rend rien. Blocs B-FV-A (structure), B-FV-B (vraie frappe, en
+     ligne et hors ligne), B-FV-D (déterminisme), contrôle négatif `tools/mut_food_variants.py`. */
+  await require('./food_variants.js').ecran(t, b, PORT);
+  /* 🍽️ NUT-LOT-A (13/10/2026) : les TABLES GÉNÉRÉES ont du sens — un alias mène à l'aliment qu'il NOMME (D1 : « confiture
+     de fraise » n'est plus la confiture de lait, « gruyère » n'est plus l'Emmental), le générateur REFUSE une clé qui
+     contourne l'aliment nommé, et le fast-food Quick suspect est CONSERVÉ avec un ⚠️ (D4). Blocs B-AS-D (données),
+     B-AS-G (générateurs sur copie), B-AS-E (vraie frappe), contrôle négatif `tools/mut_food_alias_sens.py`. */
+  await require('./food_alias_sens.js').ecran(t, b, PORT);
+  /* 🍽️ NUT-LOT-B (13/10/2026) : la REQUÊTE dit l'aliment, pas la quantité — « riz 100g », « 30g de whey », « eau 1,5 l »,
+     « riz. » trouvent l'aliment ; « coca 0 » se lit « coca zéro » (D-070) ; les nombres des NOMS de la base ne bougent pas
+     (B2) et une clé d'alias tapée sans quantité garde sa cible (B1). Blocs B-LB-A (structure), B-LB-E (vraie frappe, en
+     ligne, hors ligne, journal amorcé), B-LB-I (instantané de la base), B-LB-C (compléments), contrôle négatif
+     `tools/mut_nut_lot_b.py`. */
+  await require('./food_lot_b.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40443,6 +40502,15 @@ require('./profil_atypique.js').source(t, ROOT, fs, path);
 require('./nutri_dash1.js').source(t, ROOT, fs, path);
 require('./foodlog_restore.js').source(t, ROOT, fs, path);
 require('./nutri_lipides25.js').source(t, ROOT, fs, path);
+require('./food_semantics.js').source(t, ROOT, fs, path);
+require('./food_formes.js').source(t, ROOT, fs, path);
+require('./food_prefs.js').source(t, ROOT, fs, path);
+require('./food_reference.js').source(t, ROOT, fs, path);
+require('./food_multisource.js').source(t, ROOT, fs, path);
+require('./food_d042.js').source(t, ROOT, fs, path);
+require('./food_variants.js').source(t, ROOT, fs, path);
+require('./food_alias_sens.js').source(t, ROOT, fs, path);
+require('./food_lot_b.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

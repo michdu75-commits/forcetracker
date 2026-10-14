@@ -1,0 +1,789 @@
+# 🔎 FOOD SEMANTICS V1 — la recherche d'aliments propose la forme qu'on mange
+
+> ⚙️ **ÉTAT AU 11/10/2026 — À LIRE D'ABORD.** Ce fichier a été écrit sur la branche `claude/food-semantics-fs05b`
+> (02 → 03/10, checkpoints **non publiés**). **NUT-D042-01** (11/10/2026, branche `claude/nut-d042-01`, **non publiée**)
+> l'a **porté sur master `b280ea5d` sans fusion en bloc** : **FS-01, FS-02, FS-03** (le code) et **FS-05, FS-05B** (les
+> corpus et leurs bancs) sont **portés** ; ⛔ **FS-04 (la forme affichée) N'EST PAS PORTÉ** (le brief exigeait 0 nouvelle
+> interface ; D-040 n'a jamais été validée) — ses attentes de libellé se jugent sur la **forme** (taxonomie FS-02), pas sur le texte affiché (témoin B-CDXXXIX).
+> ⭐ **D-042 est IMPLÉMENTÉE** (§14) et **les 4 questions de §13 sont TRANCHÉES par Michel** (brief du 11/10).
+> Les §1 → §13 restent le récit d'origine, **daté** : là où ils disent « non publié », « écart à D-042 » ou « question
+> ouverte », §14 dit ce qui est vrai aujourd'hui.
+>
+> **Créé le 02/10/2026 (FS-01, session-B, demande de Michel)**, après son retour terrain du 01/10
+> (`docs/SUIVI-AUDIT.md`, « la recherche d'aliments propose le mauvais aliment en premier »).
+> **FS-01** → classement déterministe · **FS-02** → taxonomie des formes · **FS-03** → préférences génériques
+> conservatrices · **FS-04** → la forme affichée dans les résultats (⛔ non porté).
+> ⛔⛔ **« Une préférence générique n'est jamais une correction d'une requête explicite. »**
+> ⛔⛔ **« Il n'existe pas de règle universelle cuit > cru. »**
+> ⚖️ **D-036 (Michel, 02/10)** : l'ordre physique des entrées du fichier CIQUAL n'est **pas** une règle métier et ne
+> sert **jamais** de départage sémantique.
+
+## 1. Le principe (Michel)
+
+- **Déterministe** : même requête + même base + mêmes alias + même version du moteur = **même résultat, même ordre**.
+  Pas d'IA dans la V1.
+- **Une requête EXPLICITE gagne toujours sur une préférence par défaut** : « café » → la boisson, mais
+  « café moulu » → le café moulu. Le moteur ne « corrige » jamais ce que la personne a écrit.
+
+## 2. Le pipeline (FS-01)
+
+```
+frappe dans #af-desc → _afSuggInput
+  ├─ ① son journal (_afSuggLocales, le plus récent d'abord) ............ immédiat, inchangé
+  ├─ ② CIQUAL + table d'alias → _ciqualChercher ......................... SOURCE CANONIQUE
+  │     _aliasCible(requête entière)  → la cible de la table passe devant
+  │     _ciqualChercherSansAlias      → FOOD_SYNONYMES (« coca » → « cola »…), en tourniquet
+  │     _ciqualChercherUne            → _fsIntention(q) → filtre _afRang → clé _fsCle → tri
+  ├─ ③ marques (_marquesChercher) ........................................ inchangé
+  └─ ④ Open Food Facts (réseau, différé) .................................. inchangé
+→ _afSuggRendu → #af-sugg
+```
+
+**Avant FS-01** (master `f31dc234`) : le tri tenait en trois clés — « commence par » · « a dû approximer » ·
+« nom le plus court » — puis **l'ordre du fichier**, avec une coupure aux **400 premiers** candidats (elle aussi
+dépendante de l'ordre du fichier). Et CIQUAL et la table d'alias **rendaient chacun de leur côté** : si CIQUAL
+arrivait d'abord, la liste s'affichait sans alias (« riz » → « Riz blanc, **cru** ») puis se reclassait sous le
+doigt (« Riz blanc, **cuit** »). **Mesuré dans un navigateur, alias retardés de 1,5 s.**
+
+**Après FS-01** :
+- **un seul rendu**, quand CIQUAL **et** la table d'alias sont là (`Promise.all`) — le 1ᵉʳ affichage est
+  l'affichage stabilisé. Hors ligne, `_aliasCharger` rend `null` et la liste sort une fois, sans alias ;
+- **un ordre total** : la clé finit par le nom puis le code CIQUAL — plus jamais l'ordre d'arrivée ;
+- **plus de coupure à 400** (trier les ~3 500 lignes au pire coûte ~1 ms).
+
+## 3. Le résolveur (`app.js`)
+
+| Pièce | Rôle |
+|---|---|
+| `_FS_VERSION` (= **3** depuis FS-03) | la version du moteur, rendue dans l'intention |
+| `_FS_FORMES` · `_FS_ORDRE` | **la taxonomie** (FS-02, §9) : 12 formes, une seule table |
+| `_FS_EVITE_GENERIQUE` · `_FS_PREFS_GENERIQUES` · `_fsProfil` · `_fsPreference` · `_fsPromouvoir` | **la couche de préférences** (FS-03, §10) — elle remplace `_FS_TRANSFORMEES` (FS-01/02) |
+| `_fsFormesDuTexte(texte, opt)` | **la fonction canonique** (FS-02) : les formes d'un texte, pour la requête comme pour l'aliment. `opt.qualificatifs` : après la 1ʳᵉ virgule · `opt.debut` : en tête de segment, éventuellement après un petit mot (« Oeuf, **en** poudre ») |
+| `_fsIntention(q)` | → `{version, mots, formes, generique}` : générique = aucune forme nommée ; les formes viennent de `_fsFormesDuTexte(q)` |
+| `_fsCle(a, it, r)` | la clé de tri, **plus petite = plus haut** |
+| `_fsComparer` | comparaison de deux clés |
+
+**La clé, position par position** (chacune se dit en une phrase) :
+
+1. **commence par** ce qu'on a tapé (master) ;
+2. **forme** — **3** : il manque une forme **nommée** par la personne (lue partout dans le nom : « Lait en poudre ») ;
+   sinon la préférence par défaut `_fsPreference` (FS-03, §10) : **2** évité · **1** neutre. L'explicite passe donc
+   toujours AVANT la préférence ;
+3. **approximation** — la forme tapée bat la forme dépluralisée (« pates » → des pâtes, jamais « Pâté ») (master).
+   Après la forme, mesuré : sinon « Haricots verts, purée » (pluriel exact) passait devant « Haricot vert » ;
+4. **mot entier** — « gaufre » est un mot de « Gaufre bruxelloise », pas de « Gaufrette » ;
+5. **nom de tête exact** — « Fromage (aliment moyen) » avant « Fromage de tête » ;
+6. **nom de tête au singulier** — « crêpes » → « Crêpe, nature » ;
+7. **longueur** du nom ; 8. **nom** ; 9. **code** CIQUAL.
+
+⚠️ **Une forme se lit là où la table la range** : jamais dans le 1ᵉʳ segment pour une préférence par défaut —
+« Pâtes **sèches**, standard, cuites » sont des pâtes CUITES, et « **Purée** de pommes » est une compote.
+
+⛔ **Essayé puis retiré, sur mesure** : une préférence « aliment moyen » dans la clé. Elle passait « Pâtes fraîches
+farcies (aliment moyen) » devant les pâtes et « Cola, sans précision » devant « Cola, sucré » (non-régression
+ft-v1113). **L'aliment moyen reste le choix de la TABLE D'ALIAS**, mot par mot, là où il se lit.
+
+## 4. La table d'alias (`tools/alias.py` → `data/alias.json`)
+
+Trois changements, tous dans le générateur avec leur raison (R27) :
+- `pomme`/`pommes` → **13396** « Pomme, chair sans peau, crue (aliment moyen) » (la table visait « Pomme, sèche »,
+  247 kcal/100 g au lieu de ~51) ;
+- `haricot vert`/`haricots verts` → **20030** « Haricot vert, cuit » (la table visait la purée ; cuit en premier,
+  décision cru/cuit ft-v1115) ;
+- `eau` → **18066** « Eau du robinet » (le résultat de master ; il ne tenait qu'à la coupure à 400 — sans elle,
+  « Eau de coco » passait devant).
+
+## 5. Avant / après (1ᵉʳ résultat, vraie base + vraie table d'alias)
+
+| Requête | master `f31dc234` | FS-01 |
+|---|---|---|
+| café | Café, moulu | Café, instantané, sans sucres ajoutés, prêt à boire |
+| café au lait / cappuccino | Café au lait ou cappuccino, poudre soluble | Café au lait, café crème ou cappuccino, …, prêt à boire |
+| thé | Thé, feuille | Thé infusé, sans sucres ajoutés |
+| pomme | Pomme, sèche | Pomme, chair sans peau, crue (aliment moyen) |
+| fromage | Fromage de tête | Fromage (aliment moyen) |
+| omelette | Omelette norvégienne | Omelette, garnitures diverses … (aliment moyen) |
+| crêpe | Crêpe dentelle nature | Crêpe, nature, préemballée, rayon frais |
+| gaufre | Gaufrette, fourrée vanille | Gaufre bruxelloise ou liégeoise nature, artisanale |
+| curry | Curry, poudre | **Curry, poudre** (inchangé, voir §6) |
+| haricots verts | Haricots verts, purée | Haricot vert, cuit |
+| spaghetti bolognaise · carbonara | le plat | le plat (inchangé) |
+| café moulu · café poudre · thé feuilles | la forme nommée | la forme nommée |
+| pomme séchée | **RIEN** | Pomme, sèche |
+| haricots verts purée | Haricots verts, purée | Haricots verts, purée |
+
+**Différentiel** sur 2 519 requêtes (1ᵉʳ mot et 2 premiers mots de chaque nom CIQUAL + toutes les clés d'alias) :
+**138 premiers résultats changent**, en grande majorité vers la forme courante (citron, fève, menthe, chocolat,
+huître, cidre, vin, sauce…). Quelques changements **neutres ou discutables**, laissés à FS-03 plutôt que de
+multiplier les règles : `pois` → « Pois d'Angole » · `legume` → « Légumes, mélange surgelé » (au lieu de « Légume
+cuit (aliment moyen) ») · `haricot(s)` · les soupes (« déshydratée reconstituée » et « préemballée à réchauffer »
+ont la même longueur : l'ordre alphabétique tranche, là où l'ordre du fichier tranchait).
+
+**Deux témoins du runner adaptés, avec leur raison (R30)** — ils ne tenaient qu'à l'ordre du fichier :
+- `oeuf` **sans** table d'alias : « Oeuf dur » → **« Oeuf cru »** (même longueur ; « cru » est aussi la cible de
+  la table) ;
+- `riz` **sans** table (hors ligne) : « Riz blanc, cru » → **« Riz, mélange de variétés …, cru »** (le nom de tête
+  exact passe devant un nom composé plus court — la règle même qui rend « Fromage » et non « Fromage de tête ») ;
+  l'intention du témoin (jamais bloquant, un riz cru) reste vérifiée.
+
+## 6. Limites connues (mesurées, non corrigées)
+
+- **curry** reste « Curry, poudre » : les données ne séparent pas proprement le plat de l'épice (cannelle,
+  paprika suivent le même motif). Figé par un témoin pour qu'il ne change pas en passant.
+- **riz sec** rend « Vermicelles de riz sèches, crues » (comme master) : pour CIQUAL, le riz « sec » s'appelle
+  « cru ». ↪️ FS-02 a **classé** (la requête nomme `seche`, l'aliment porte `cru`) **sans inventer** d'équivalence
+  (cadrage de Michel) : décider que « riz sec » doit rendre le riz cru est une préférence, donc **FS-03** (§9).
+- **courgette** : la table d'alias vise la purée, même défaut que pomme / haricots verts (signalé dans
+  `tools/alias.py`, laissé à FS-03).
+
+## 7. Le contrat des lots suivants (⛔ FS-06 → FS-07 non construits)
+
+| Lot | Contenu | Ce que FS-01 → FS-03 lui laissent |
+|---|---|---|
+| **FS-01** ✅ | pipeline canonique, résolveur déterministe, explicite prioritaire, alias avant le 1ᵉʳ affichage | — |
+| **FS-02** ✅ | taxonomie des formes (§9) | — |
+| **FS-03** ✅ | préférences génériques conservatrices (§10) | — |
+| **FS-04** ✅ | affichage de la forme dans les résultats (§11) | — |
+| **FS-05** ✅ | corpus de référence des recherches (§12) | — |
+| **FS-05B** ✅ | corpus **multi-source** (fast-food, plats étrangers, Open Food Facts figé, ordre des sections) — §13 | — |
+| *lot séparé, non nommé* | **correction de l'ordre inter-sources selon D-042** (générique avant fast-food / marque, sauf intention explicite) — §12.3 | ⛔ **non ouvert** : son lancement et sa place dans la séquence sont à décider par Michel |
+| **FS-06** | mutations étendues | `tools/mut_food_semantics.py` · `mut_food_formes.py` · `mut_food_prefs.py` · `mut_food_affichage.py` · `mut_food_reference.py` · `mut_food_multisource.py` ; **la couverture restante (§12.1) et les constats de FS-05B (§13)** |
+| **FS-07** | passe complète + publication | ⚠️ **le contrôle sur iPhone du badge de forme (RENDU-IOS-01, T4 manuel)** : le conteneur n'a que Chromium (WebKit absent, vérifié le 03/10) |
+
+**Les invariants à garder dans tous les lots** : même entrée = même ordre (les témoins de déterminisme mélangent la
+base 4 fois) · **jamais l'ordre du fichier** (D-036) · une forme nommée gagne toujours · un seul rendu quand CIQUAL et
+les alias sont là · une seule table de formes · un choix pour **un mot précis** va dans la table d'alias (R2, le
+générateur est le seul propriétaire), une règle **générale** va dans la clé · une préférence ne touche JAMAIS une
+requête explicite et ne choisit que le PREMIER résultat (le cru reste juste sous le cuit, ft-v1115).
+
+## 8. Les preuves
+
+- Banc `node tools/banc_food_semantics.js` — blocs B-CDXXVIII (source) · B-CDXXIX (résolveur conduit sur la vraie
+  base) · B-CDXXX (premier affichage par la vraie frappe : alias retardés, CIQUAL retardé, alias injoignables).
+- Contrôle négatif `python3 tools/mut_food_semantics.py` (M00 = le code de master, M1 → M6 demandés par Michel,
+  M7 → M11 pour les autres pièces, 5 déguisées, 1 équivalente, 1 commentaire).
+- Banc `node tools/banc_food_formes.js` — blocs B-CDXXXI (une table, une fonction) · B-CDXXXII (vraie base :
+  corpus par forme, pièges, comptes, requêtes explicites, ambiguïtés, déterminisme). Contrôle négatif
+  `python3 tools/mut_food_formes.py` (M00 = le code de FS-01, M1 → M10 demandés par Michel, 4 déguisées,
+  1 équivalente, 1 commentaire).
+- Scénarios de recette `NUTRI-RECHERCHE-FS01` et `NUTRI-RECHERCHE-FS02` ; la table d'alias est une zone du sélecteur.
+
+## 9. FS-02 — la taxonomie des formes (02/10/2026, checkpoint non publié)
+
+**Trois notions séparées, jamais mélangées** : ① les formes **nommées** dans la requête (`_fsIntention(q).formes`) ·
+② les formes que **porte** un candidat (`_fsFormesDuTexte(nom)`) · ③ la **préférence** par défaut d'une requête
+générique (`_FS_TRANSFORMEES`, celle de FS-01, **inchangée** en FS-02 — ↪️ FS-03 l'a déplacée dans sa propre couche, §10). ① et ② passent par **la même
+fonction et la même table** : l'ancienne `_fsFormesDuNom` et son dictionnaire FS-01 ont disparu.
+
+**Comment un mot devient une forme** : mots **entiers** (découpés sur l'espace et la barre : « sauté/poêlé ») ·
+« **sans** X » n'est pas X · une **sauce** doit ouvrir le **nom** · une **partie** exige l'œuf dans le texte ·
+plusieurs formes possibles (« Haricot vert, surgelé, cuit » → `cuit` + `surgele`) · sortie dans l'ordre de la table.
+
+**Mesuré sur la vraie base** (`data/ciqual.json`, **3 341** aliments proposables ; 1 298 ne portent aucune forme,
+253 en portent plusieurs) — figé par B-CDXXXII :
+
+| Forme | Mots reconnus (normalisés) | Aliments | dont en tête de qualificatif | Exemples CIQUAL |
+|---|---|---|---|---|
+| `cru` | cru, crue, crus, crues | 598 | 460 | Poulet, viande crue · Haricot vert, cru |
+| `cuit` | cuit(e)(s), bouilli(e)(s), braisé(e)(s), frit(e)(s), grillé(e)(s), sauté(e)(s), poêlé(s), vapeur | 526 | 351 | Riz blanc, cuit, sans sel ajouté · Champignon de Paris, sauté/poêlé |
+| `seche` | sec, secs, sèche(s), séchée(s) | 164 | 58 | Pomme, sèche · Abricot, dénoyauté, sec · Lentille, sèche |
+| `poudre` | poudre(s), moulu(e)(s), soluble(s) | 38 | 30 | Café, moulu · Lait en poudre, entier · Oeuf, en poudre |
+| `feuille` | feuille(s) | 11 | 3 | Thé, feuille |
+| `boisson` | boisson(s), prêt(e)(s) à boire, infusé(e), infusion | 106 | 15 | Café, instantané, …, prêt à boire · Thé infusé |
+| `puree` | purée(s) | 34 | 10 | Haricots verts, purée · Tomate, purée, appertisée |
+| `sauce` | sauce(s) — **en tête du nom** | 70 | 0 | Sauce au curry, chaude, préemballée · Sauce carbonara |
+| `prepare` | préemballé(e)(s), cuisiné(e)(s), fait(e) maison, restauration rapide | 571 | 565 | Poulet basquaise, préemballé |
+| `partie` | blanc(s), jaune(s) — **avec l'œuf** | 6 | 6 | Oeuf, blanc (blanc d'oeuf), cru |
+| `surgele` | surgelé(e)(s) | 67 | 66 | Haricot vert, surgelé, cuit |
+| `conserve` | appertisé(e)(s), conserve(s), semi-conserve | 114 | 110 | Haricot vert, appertisé, égoutté |
+
+**Les pièges mesurés, et pourquoi ces mots ne sont PAS des formes** :
+- « **sèche** » sert au fruit séché (« Pomme, sèche ») **et** au légume sec (« Lentille, sèche ») : sec et séché ne font
+  donc **qu'une** forme — les séparer reposerait sur les accents, que la personne ne tape pas ;
+- « **poêlée** » est le plus souvent un plat (« Poêlée de légumes, surgelée, crue ») · « **rôti** » un morceau (« Porc,
+  rôti cru ») · « **plat** » un légume (« Haricot plat ») · « **précuit** » n'est pas cuit · « **déshydratée
+  reconstituée** » (34 soupes et bouillons) n'est ni sèche ni une boisson ;
+- « **sauce** » en tête d'un qualificatif est un plat EN sauce (« Ravioli au boeuf, sauce tomate », « Maquereau, …, en
+  sauce ») ; « avec sauce » un ingrédient ;
+- « **blanc** » / « **jaune** » seuls ne sont pas une partie (« Riz blanc », « Fromage blanc », « Poivron, vert, jaune ou
+  rouge ») ;
+- ⚠️ **limite** : une cuisson dite par un mot propre au plat n'est pas reconnue (« Oeuf dur », « Oeuf poché », « à la
+  coque », « brouillé ») — « dur » sert aussi à « blé dur ». Et une virgule **dans une parenthèse** coupe un segment
+  comme les autres (« Salade César (salade verte, fromage, croûtons, sauce) »).
+
+**Les ambiguïtés, figées telles quelles (ce sont des décisions de FS-03, pas de FS-02)** — ↪️ FS-03 (§10) : riz sec, curry et poulet restent **volontairement sans préférence** ; courgette est **tranchée** (alias retiré) :
+1. **« riz sec »** → la requête nomme `seche` ; « Riz blanc, cru » porte `cru`. CIQUAL range le riz sec sous « cru » ;
+   **aucune équivalence sec = cru n'est inventée** — le 1ᵉʳ résultat reste « Vermicelles de riz sèches, crues ».
+2. **« curry »** → « Curry, poudre » = `poudre` · « Sauce au curry » = `sauce` + `prepare` · « Poulet au curry et au
+   lait de coco, préemballé » = `prepare`. Rien n'est décidé : « curry » rend toujours la poudre.
+3. **« poulet »** → requête générique, jamais transformée en « poulet cuit » ; les premiers résultats restent crus.
+4. **« courgette »** → la table d'alias vise « Courgette, purée » (`puree`) ; laissé tel quel.
+
+**Requêtes explicites** (le 1ᵉʳ résultat porte la forme nommée) : café moulu · café poudre · thé feuilles · pomme
+séchée · haricots verts purée · riz cuit · riz cru · poulet cru · haricots verts surgelés cuits (`cuit` + `surgele`) ·
+lait en poudre · sauce curry.
+
+**Différentiel FS-01 → FS-02** : **0** premier résultat changé sur **2 519** requêtes génériques ; **2** sur **974**
+requêtes explicites (1ᵉʳ mot d'un nom + un mot de forme réellement présent dans ce nom), les deux vers la forme
+nommée : « bar cuit » → « Bar commun ou loup, rôti/cuit au four » (au lieu d'une barre chocolatée) ; « bette
+feuille » → « Bette ou blette, côte et feuille, … » (au lieu de la bette « sans feuille »). **0** requête devenue
+sans résultat.
+
+## 10. FS-03 — les préférences génériques conservatrices (02/10/2026, checkpoint non publié)
+
+**La question** : *quand la personne ne précise pas la forme, laquelle proposer en premier ?* **Une seule couche**
+(`app.js`) qui LIT la taxonomie et n'y écrit rien — `_FS_FORMES` reste purement descriptive :
+
+| Pièce | Rôle |
+|---|---|
+| `_FS_EVITE_GENERIQUE` | pour TOUTE requête générique, un aliment qui porte, en tête d'un segment, une forme transformée NON nommée descend : `poudre`, `feuille`, `seche`, `puree`, `partie` (la règle de FS-01) **+ `sauce`** |
+| `_FS_PREFS_GENERIQUES` | 4 profils, chacun avec sa raison : **riz** → cuit · **pâtes** et leurs formes (`_AF_FORMES_PATES` : spaghetti, penne, macaroni…) → cuit · **haricot vert** → cuit · **curry** → **ambigu** (aucune préférence) |
+| `_fsProfil(it)` | le profil d'une requête **générique**, à l'**identique** (au pluriel près) — jamais par préfixe : « riz au lait », « pâtes bolognaise » n'héritent de rien |
+| `_fsPreference(it, nom)` | 1 neutre · 2 évité — une forme **nommée** n'est jamais évitée |
+| `_fsPromouvoir(it, out)` | remonte en tête le meilleur candidat qui porte la forme préférée — **le premier résultat seulement** |
+
+**Deux choix, mesurés avant d'être faits** :
+1. **La préférence choisit le PREMIER résultat, pas l'ordre entier.** Appliquée à toute la liste, elle repoussait
+   tout le cru sous le cuit (« riz » : cinq riz cuits avant le premier cru) — contre la **décision de Michel du
+   03/09** (*« les deux, le cuit en premier »*, ft-v1115), figée par deux témoins du runner : **le cru reste juste
+   dessous**.
+2. **Elle ne rejoue pas un choix déjà fait par la table d'alias** (R2) : quand « riz » a sa cible (« Riz blanc,
+   cuit »), la préférence ne s'applique pas à la suite de la liste. Elle sert donc là où l'alias ne répond pas :
+   **hors ligne** (alias indisponibles), et les mots **sans alias** (macaroni, fusilli, farfalle, linguine…).
+
+**Ce qui est volontairement SANS préférence (ambiguïtés assumées)** :
+- **curry** : poudre, sauce ou plat — profil `ambigu`, comportement de FS-01 conservé (« Curry, poudre ») ;
+- **viandes, poissons, œufs** : on pèse cru OU cuit — aucune préférence de cuisson ; les premiers résultats restent
+  ceux de FS-02 (crus, par la table d'alias historique) ;
+- **sec ≠ cru** quand CIQUAL ne permet pas l'équivalence : « riz sec » respecte la forme nommée, sans proposer le riz cru ;
+- **légumes en général, courgette, soupes** : aucune préférence cru/cuit prouvée ; CIQUAL ne sépare pas une soupe en
+  poudre d'une soupe prête (« déshydratée reconstituée » EST prête) ;
+- ⚠️ **limite** : hors ligne, « raisin » rend encore « Raisin sec » — le mot est dans le nom même (comme « Biscuit sec »,
+  « Saucisson sec »), et l'éviter casserait ces produits-là. En ligne, la table d'alias répond (ci-dessous).
+
+**Les alias, classés (633)** : **487 lexicaux** (synonyme, orthographe, nom courant) · **146 « de préférence »** (ils
+choisissent une forme parmi plusieurs : 67 → cru, 51 → cuit, 18 → pâtes cuites, …). ⛔ **On n'a pas nettoyé la table** :
+seuls les trois défauts prouvés sont migrés, dans `tools/alias.py` avec leur raison :
+- `courgette(s)` → « Courgette, purée » : **RETIRÉ** (nouvelle liste `RETRAITS`) — pas d'aliment moyen ; le moteur
+  évite la purée sans imposer cru ou cuit ;
+- `poire(s)` → « Poire belle Hélène » (un dessert glacé) → **« Poire, chair, crue (aliment moyen) »** ;
+- `raisin(s)` → « Raisin sec » → **« Raisin cru (aliment moyen) »** (« raisins secs » reste explicite).
+
+**Avant / après (1ᵉʳ résultat)** :
+
+| Requête | FS-02 (en ligne · hors ligne) | FS-03 (en ligne · hors ligne) |
+|---|---|---|
+| riz | Riz blanc, cuit · **Riz, mélange…, cru** | Riz blanc, cuit · **Riz thaï, cuit** |
+| pâtes / spaghetti | Pâtes sèches, cuites · **Pâtes sèches, crues** | Pâtes sèches, cuites · **Pâtes sèches, cuites** |
+| macaroni, fusilli, penne… (sans alias) | **Pâtes sèches, crues** | **Pâtes sèches, cuites** |
+| haricots verts | Haricot vert, cuit · **Haricot vert, cru** | Haricot vert, cuit · **Haricot vert, cuit** |
+| courgette | **Courgette, purée** · Courgette, crue | Courgette, chair et peau, crue (les deux) |
+| poire | **Poire belle Hélène** · Poire, crue | **Poire, chair, crue (aliment moyen)** · Poire, crue |
+| raisin | **Raisin sec** · Raisin sec | **Raisin cru (aliment moyen)** · Raisin sec |
+| carbonara | Pâtes à la carbonara · **Sauce carbonara** | Pâtes à la carbonara (les deux) |
+| café · thé · pomme · curry · poulet · fromage · lait · soupe | inchangés | inchangés |
+
+**Différentiel FS-02 → FS-03** (mêmes requêtes rejouées des deux côtés) — **en ligne** : 6 premiers résultats changés
+sur 2 519 génériques (les 6 alias migrés), **0** sur 974 explicites, 0 vide ; **hors ligne** : 20 sur 2 520 génériques
+(17 pâtes et formes de pâtes → cuites, 2 haricots verts → cuit, riz → cuit, et carbonara → le plat), **0** explicite,
+0 vide.
+
+## 11. FS-04 — la forme affichée dans les résultats (03/10/2026, checkpoint non publié)
+
+**Un lot d'affichage, rien d'autre.** La forme affichée est une **projection** de la taxonomie FS-02
+(`_fsFormesDuTexte`) : aucune 2ᵉ taxonomie, aucune modification du classement (FS-01 → FS-03), des alias, de la
+recherche ni des valeurs. Le classement ne lit rien de l'affichage (vérifié par témoin de source).
+
+**Le rendu** : chaque résultat CIQUAL de la recherche d'aliments porte, en tête de sa **ligne de détail** (celle des
+kcal, jamais tronquée), un petit libellé texte — `Cuit` · `155 kcal/100 g · P 3,3 · …`. Le nom, lui, est tronqué
+sur une ligne ; la forme ne l'est jamais. Style `.af-forme` (`style.css`) : petit, couleur de texte secondaire,
+bordure fine — **du texte, jamais une couleur seule**. Pas de popup, pas de texte explicatif.
+⚠️ Périmètre : la liste **CIQUAL** seulement (la source de Food Semantics) — « déjà noté par toi », fast-food et Open
+Food Facts sont inchangés.
+
+**Le mapping (12 formes FS-02 → libellés)** :
+
+| Forme | Libellé | Forme | Libellé |
+|---|---|---|---|
+| `cru` | Cru | `puree` | Purée |
+| `cuit` | Cuit | `sauce` | Sauce |
+| `seche` | Sec / séché | `prepare` | Préparé |
+| `poudre` | Poudre / moulu | `partie` | Blanc ou jaune d'œuf |
+| `feuille` | Feuilles | `surgele` | Surgelé |
+| `boisson` | Boisson | `conserve` | Conserve |
+
+Libellés au masculin : la forme est un ÉTAT, pas un accord (« Pomme, chair et peau, crue » → `Cru`). `Sec / séché`
+dit honnêtement que CIQUAL ne distingue pas les deux (§9).
+
+**Aucune forme reconnue → rien.** 1 298 aliments sur 3 341 ; aucun libellé « standard », « brut » ou « inconnu » —
+*l'absence de forme n'est pas un défaut*.
+
+**Plusieurs formes (253 aliments) — inventaire réel, puis deux règles et un plafond** :
+
+| Combinaison (nb) | Exemple | Affiché |
+|---|---|---|
+| sauce + préparé (64) | Sauce tartare, préemballée | Sauce |
+| cuit + préparé (43) | Paupiette de veau, préemballée, rôtie/cuite au four | Cuit |
+| cru + surgelé (33) | Haricot vert, surgelé, cru | Cru · Surgelé |
+| cru + préparé (17) | Boulettes au porc et au boeuf, préemballées, crues | Cru |
+| boisson + préparé (14) | Boisson à l'amande, …, préemballée | Boisson |
+| cuit + surgelé (14) | Haricot vert, surgelé, cuit | Cuit · Surgelé |
+| cuit + sec (10) | Pâtes sèches, standard, cuites | Cuit |
+| purée + préparé (9) | Aligot (purée de pomme de terre…), préemballé | Purée |
+| cru + sec (8) | Pâtes sèches, standard, crues | Cru |
+| 3 formes ou plus (8) | Meloukhia, feuilles de corète séchées, en poudre | Poudre / moulu · Feuilles |
+
+① « **sec** » à côté de cru / cuit dit le TYPE de produit, pas l'état — retiré (18 aliments) ; ② « **préparé** » à côté
+d'une autre forme n'ajoute rien — retiré (il reste seul sur les plats préparés : « Crêpe, nature, préemballée ») ;
+③ **2 libellés au plus**, dans un ordre fixe : ce que l'aliment EST (boisson, sauce, poudre, purée, feuilles, partie)
+avant son état (cru, cuit, sec) avant son conditionnement (surgelé, conserve), « préparé » en dernier.
+⚠️ Limite : « Poêlée de légumes … grillée …, surgelée, crue » affiche `Cru · Cuit` (« grillée » est dans le nom du
+plat) — 1 aliment, laissé tel quel plutôt qu'une règle de plus.
+
+**En ligne / hors ligne** : le libellé ne dépend que du NOM de l'aliment, donc un même aliment s'affiche pareil dans
+les deux cas. ⚠️ **La limite connue de FS-03 reste VISIBLE, honnêtement** : hors ligne, « raisin » rend « Raisin sec »,
+affiché `Sec / séché` ; le classement n'est pas corrigé ici (hors périmètre).
+
+**Preuves** : banc `node tools/banc_food_affichage.js` (B-CDXXXV source · B-CDXXXVI projection sur la vraie base ·
+B-CDXXXVII vraie frappe, en ligne et hors ligne, 390 et 430 px, noms longs) ; contrôle négatif
+`python3 tools/mut_food_affichage.py` ; **différentiel FS-03 → FS-04 : 0 changement** sur 2 518 requêtes génériques et
+974 explicites, en ligne et hors ligne, sur les **6 premiers résultats entiers et leurs valeurs** (kcal, P, G, L).
+
+## 12. FS-05 — le corpus de référence des recherches alimentaires (03/10/2026, checkpoint non publié)
+
+**Un lot de MESURE, rien d'autre.** FS-05 n'améliore pas le moteur : il **fige** le comportement déjà validé par
+FS-01 → FS-04, sur des recherches plausibles, pour qu'aucun lot futur ne le dégrade sans qu'un témoin rougisse.
+**0 ligne de production modifiée** (`app.js`, `style.css`, `data/alias.json`, `tools/alias.py` : inchangés).
+
+**Le corpus** : `tests/parcours/food_reference_corpus.js` — **145 cas** `FR-001` → `FR-145`, de la DONNÉE pure. Chaque
+cas porte : la requête, la catégorie, le type (générique · explicite · ambigu · technique · sans forme · multi-formes),
+le mode (**en ligne** = avec la table d'alias · **hors ligne** = table indisponible, `_alias = null`), le niveau, ce
+qu'on attend du 1ᵉʳ résultat (un nom exact SEULEMENT là où une décision porte dessus — poire ≠ Poire belle Hélène,
+œuf → « Oeuf cru » ; sinon le bon TYPE d'aliment par une expression), le libellé de forme FS-04 attendu, d'éventuelles
+contraintes sur les rangs 2-3 (« le cru juste sous le cuit », ft-v1115 ; « jamais la purée dans les 6 premiers »), la
+provenance (FS-01 · FS-02 · FS-03 · FS-04 · alias · historique · retour terrain · observé FS-05) et une raison courte.
+
+**Les trois niveaux** :
+
+| Niveau | Nb | Sens | Au banc |
+|---|---|---|---|
+| **MUST** | 81 | une décision de Michel ou un contrat FS-01 → FS-04 | rouge s'il casse |
+| **SHOULD** | 47 | le comportement actuel, jugé bon, sans décision écrite | rouge s'il casse (à re-trancher, pas à « réparer ») |
+| **KNOWN_LIMITATION** | 17 | un défaut MESURÉ, non corrigé | **jamais rouge** : « toujours observée » ou « LEVÉE — à reclasser » |
+
+⛔ **Une limite connue ne devient pas une règle** : la liste des 17 limites est nommée dans le banc, et un cas MUST /
+SHOULD qui porterait le même contrôle qu'une limite fait rougir (contrôle négatif M14). ⭐ Une limite **levée** par un
+lot futur n'est pas une régression : c'est une bonne nouvelle à décider (la reclasser), jamais un rouge.
+
+**Répartition** : catégories féculents 33 · fruits 18 · légumes 22 · boissons 20 · viandes/poissons/œufs 19 · laitiers
+7 · plats/sauces 18 · sans forme 3 · multi-formes 5 — types générique 71 · technique 16 (pluriels, ligatures,
+majuscules) · sans forme 16 · explicite 28 · multi-formes 8 · ambigu 6 (≈ 71 % sans forme nommée / 29 % avec) —
+**116 en ligne, 29 hors ligne**. Libellés de forme contrôlés : Cuit 25 · Cru 24 · aucun libellé 16 · Boisson 9 ·
+Poudre / moulu 7 · Sec / séché 5 · Purée 4 · Feuilles 3 · Préparé 3 · Sauce 3 · Conserve 2 · Surgelé 2 · Blanc ou
+jaune d'œuf 1 — **les 12 libellés du mapping FS-04, aucun autre** (témoin de source).
+
+**Les 11 cas historiques** (pomme, haricots verts, café, thé, courgette, poire, raisin, riz, pâtes, carbonara, curry) :
+chacun a un contrat MUST / SHOULD en ligne ET un cas hors ligne (témoin). ⚠️ « raisin » hors ligne → « Raisin sec »
+est une **KNOWN_LIMITATION**, séparée du cas attendu en ligne (Raisin, cru), jamais corrigée ici.
+
+**Déterminisme** : le corpus entier (145 cas, en ligne et hors ligne) rend le même verdict, le même top 3 et le même
+libellé, rejoué 2 fois de plus, puis sur 3 bases CIQUAL mélangées et sur la base inversée (D-036). Page vierge :
+aucun historique, aucun profil personnel.
+
+**Les 17 limites connues (mesurées, NON corrigées — candidats pour un lot futur, sur décision de Michel)** :
+
+| Cas | Mode | Observé |
+|---|---|---|
+| riz sec | en ligne | vermicelles de riz (CIQUAL range le riz sec sous « cru », §9) |
+| riz complet · semoule · pomme de terre | hors ligne | la forme crue en tête (le profil riz est EXACT, pas de profil semoule / pomme de terre) |
+| lentilles · tomate | hors ligne | une conserve / un plat préparé devant le produit simple |
+| raisin | hors ligne | « Raisin sec » (« sec » est dans le nom même) — affiché honnêtement `Sec / séché` |
+| eau | hors ligne | « Eau de coco » (le nom le plus court gagne) |
+| thon en boite | hors ligne | aucun résultat (« boite » n'est pas dans CIQUAL) |
+| oeufs | hors ligne | « Oeufs au lait » (un dessert) |
+| spaghetti bolognaise | hors ligne | raviolis farcis crus — **le défaut du retour terrain du 01/10 revient sans la table** |
+| fruits rouges | en ligne | une tarte (aucun « fruits rouges » nu dans CIQUAL) |
+| jus d orange | en ligne | un jus multifruit devant « Jus d'orange, frais » |
+| bolognaise | en ligne | une pizza devant le plat de pâtes |
+| pomme cuite | en ligne | une pomme de terre (la pomme cuite existe) |
+| camembert | en ligne | affiché `Cru` (« au lait cru » lu comme une forme) |
+| crème fraîche | en ligne | aucun résultat CIQUAL |
+
+**Preuves** : banc `node tools/banc_food_reference.js` (B-CDXXXVIII structure du corpus · B-CDXXXIX le corpus conduit
+sur la vraie base, en ligne et hors ligne · B-CDXL déterminisme) — **135 OK / 0 rouge**, 17 limites « toujours
+observées » ; contrôle négatif `python3 tools/mut_food_reference.py`.
+
+### 12.1 COUVERTURE DU CORPUS — ce qui reste pour FS-06 (⛔ FS-05 ne comble rien)
+
+**Bien couvert** : les féculents (33 cas : riz, pâtes, semoule, pomme de terre, légumineuses, pain), les 11 cas
+historiques en ligne et hors ligne, les boissons chaudes (café, thé : boisson vs poudre / feuilles), les formes
+nommées (cru / cuit / purée / sauce / sec / poudre), le « pas de cuit > cru » des viandes, les ligatures et pluriels.
+
+**Faiblement couvert** : les laitiers (7 cas), les aliments sans forme (16 cas, 3 en catégorie propre), les
+multi-formes (8 cas sur 253 aliments concernés), les requêtes explicites (28), le hors ligne (29 cas sur 145), les
+conserves et surgelés (2 libellés chacun), « Blanc ou jaune d'œuf » (1 cas).
+
+**Types de requêtes absents** : les fautes de frappe (« spagetti », « yahourt ») · les marques et noms commerciaux
+(« nutella », « skyr ») — hors CIQUAL par nature · les repas composés en une phrase (« riz poulet brocolis ») · les
+quantités dans la requête (« 200 g de riz ») · les requêtes très courtes (2 lettres) · les régionalismes.
+
+**Ambiguïtés repérées pendant la mesure (non tranchées)** : « riz sec » (pas d'équivalence sec = cru, D-037 proposé) ·
+« camembert » (« lait cru » n'est pas une forme de l'aliment) · « amandes » affichées `Cuit` (grillées) · « pomme
+crue » dont le 2ᵉ résultat est une pomme de terre crue · « lait d'amande » hors ligne → une boisson chocolatée ·
+whey / barre protéinée → aucun résultat CIQUAL · quinoa, boulgour, brocoli, épinards, carotte, aubergine hors ligne
+→ la forme crue en tête (cohérent avec « pas de cuit > cru universel », mais à confirmer par Michel).
+
+### 12.2 COMPLÉMENT (03/10) — les sources réellement recherchables : le corpus FS-05 ne couvre QUE CIQUAL
+
+**Relevé dans le code courant (`app.js`, `index.html`), pas dans les anciens documents.** L'écran « Ajouter un aliment »
+interroge, à chaque frappe de 2 lettres et plus (`_afSuggInput`), **quatre sources**, rendues dans cet ordre par
+`_afSuggRendu` :
+
+| # | Source (section affichée) | Données | Hors ligne ? | Dans le corpus FS-05 ? |
+|---|---|---|---|---|
+| ① | **Son propre journal** (« DÉJÀ NOTÉ PAR TOI ») — `_afSuggLocales`, `S.foodLog` | personnelles | oui | ⛔ non — exclu exprès (aucun historique, consigne FS-05) |
+| ② | **Fast-food** (« FAST-FOOD (SOURCES OFFICIELLES) ») — `_marquesChercher`, `data/marques.json` + `MARQUE_ALIAS` | **123 produits, 5 enseignes** : Quick 95 · Burger King 10 · KFC 10 · McDonald's 6 · Domino's 2 ; 4 lignes au plus, **affichées AU-DESSUS de CIQUAL** | oui (fichier local) | ⛔ **0 cas** |
+| ③ | **CIQUAL + table d'alias** (« ALIMENTS (CIQUAL · ANSES) ») — `_ciqualChercher`, `data/ciqual.json`, `data/alias.json` | 3 484 entrées (3 341 exploitables), dont les **plats étrangers** (sushi, nem, couscous, kebab, burrito, tajine, falafel, houmous, paëlla…) — il n'existe **aucune** source « plats du monde » séparée | oui (fichiers locaux ; si la table d'alias n'a pas pu se charger, la recherche sort sans elle — c'est le mode « hors ligne » du corpus) | ✅ **145 cas** — mais **aucun plat étranger** sauf « curry » |
+| ④ | **Open Food Facts** (« PRODUITS DE MARQUE ») — `_offRechercher`, `world.openfoodfacts.org/cgi/search.pl`, après une pause de frappe, 3 lettres et plus | produits de marque (seule source pour whey, barres, skyr de marque…) | ⛔ non (réseau) | ⛔ **0 cas** — et **injoignable depuis le conteneur** (mesuré : `CONNECT tunnel failed, response 403`) : il faudra des **réponses figées** |
+
+**Hors de la recherche texte (même écran, non concernés par un corpus de requêtes, listés pour ne pas les oublier)** :
+le **code-barres** (`scanBarcode` en capture + saisie des chiffres `_manualBarcode` → `_offFetchProduct`, réseau ;
+⚠️ le bouton caméra EST présent dans le code — décision de Michel du 17/09, écrite dans `index.html` ; la phrase de
+`CLAUDE.md` « le scanner caméra n'a pas de bouton » est **périmée**) · le **secours IA** du code-barres
+(`scanBarcodeIA`) · la **lecture d'étiquette** (`readFoodLabel`, action `foodLabel`) et l'**estimation IA**
+(`estimateFoodAI`, action `estimateFood`) — appels IA, hors FS (0 IA) · « **Mes aliments** » (`S.savedFoods`), une
+liste de favoris repliée dès qu'on tape, pas une source de recherche · **Compl'Alim** (`data/complalim.json`), une
+recherche **séparée** dans l'écran Suppléments, identification seulement, **aucune valeur nutritionnelle**.
+
+**Ce que la mesure a montré (03/10, vraie page, lecture seule — rien n'est corrigé)** :
+- ⚠️ **Le fast-food passe devant CIQUAL même pour une requête générique** : « poulet » → 4 lignes KFC Tenders
+  au-dessus du poulet CIQUAL ; « salade » → 4 salades Quick ; « fromage » et « pates » → des pizzas Domino's (« pâte
+  fine ») ; « burger », « frites », « wrap », « coca » → fast-food en tête. Le commentaire du code assume l'ordre
+  (« le nom tapé est déjà une marque ») ET plafonne à 4 lignes pour « poulet ». ↪️ **Tranché par Michel le 03/10 :
+  D-042** (§12.3) — ce paragraphe décrit l'état ACTUEL du code, pas la cible.
+- ⚠️ **Faux rapprochements fast-food** : « oeuf » → « Quick · Qarré bœuf » (« bœuf » contient « oeuf ») ; « nem »
+  → « Quick · Cup Kiri » et « Grande Frites ».
+- **Aucun résultat local** (CIQUAL ET fast-food vides — seul Open Food Facts, en ligne, peut répondre) : tacos · naan
+  · ramen · pad thaï · poke · bibimbap · whey · barre protéinée ; « skyr » hors ligne.
+- Hors ligne, « kebab » → « Pizza kebab, préemballée » (en ligne : le sandwich grec, par l'alias).
+
+**⇒ Micro-lot séparé proposé : FS-05B — corpus multi-source, AVANT FS-06** — ✅ **fait, §13** (même règle que FS-05 : mesurer et figer,
+ne rien corriger, 0 IA) :
+1. **Fast-food** : les noms de marque (big mac, whopper, tenders kfc, frites mcdo…) ET les génériques qui le
+   déclenchent (poulet, salade, fromage, pâtes, burger, frites, coca, oeuf, nem), avec l'**ordre des sections**
+   (fast-food ↔ CIQUAL) comme propriété contrôlée — ⚠️ l'ordre actuel sur une requête GÉNÉRIQUE s'y enregistre en
+   KNOWN_LIMITATION (écart à **D-042**, §12.3), jamais en MUST / SHOULD ; les faux rapprochements ci-dessus en
+   KNOWN_LIMITATION.
+2. **Plats étrangers** (via CIQUAL + alias) : sushi, nem, couscous, kebab, burrito, tajine, falafel, houmous, paëlla,
+   curry de poulet, en ligne et hors ligne ; les absents (tacos, naan, ramen, pad thaï, poke, bibimbap) en limite.
+3. **Open Food Facts** : réponses **figées** (fichiers de réponse rejoués dans le navigateur de test, le réseau
+   réel étant bloqué ici) pour contrôler la fusion — section après CIQUAL, filtre « nom + kcal », 6 au plus, échec
+   réseau non bloquant ; les requêtes « seulement OFF » (whey, barre protéinée, skyr de marque).
+4. **Inter-sources** : le rendu unique quand plusieurs sources répondent, le cas « tout vide » (`_signalerRechercheVide`).
+5. Hors FS-05B, à garder en tête : le journal personnel (exclu par principe tant qu'aucune décision ne l'inclut), le
+   code-barres et les chemins IA (pas des requêtes texte).
+
+### 12.3 DÉCISION D-042 (Michel, 03/10/2026) — requête générique : l'aliment générique AVANT le fast-food et les marques
+
+> ⚠️ **Trois choses distinctes, à ne jamais confondre** : ce que fait le code AUJOURD'HUI (①), ce que Michel a
+> DÉCIDÉ (②), ce qui reste À FAIRE dans un lot séparé (③). Cette section ne change aucune ligne de code.
+
+**① COMPORTEMENT ACTUEL OBSERVÉ** (branche au `7c79b613`, vraie page, lecture seule, 03/10) — `_afSuggRendu` (`app.js`)
+rend les sections dans cet ordre : « Déjà noté par toi » → **fast-food** → **CIQUAL** → Open Food Facts. La section
+fast-food (4 lignes au plus, `_marquesChercher(q,4)`) passe donc **au-dessus de CIQUAL dès qu'elle a un résultat,
+quelle que soit la requête** — choix d'implémentation de ft-v1114 (04/09), pensé pour « big mac » ; la demande de
+Michel portait alors sur le fait de *trouver* « big mac » ou « pizza 4 fromages », pas sur l'ordre. **Même ordre sur
+master `ft-v1249`** (vérifié dans le code) : l'écart existe en production.
+
+| Requête | Fast-food, affiché AU-DESSUS | 1ᵉʳ résultat CIQUAL, en dessous |
+|---|---|---|
+| poulet | 4 lignes KFC (2 Tenders · 5 Tenders · 3 Hot Wings · 8 Hot Wings) | Poulet, filet sans peau cru |
+| salade | 4 salades Quick « Qréative été » | Salade verte, crue, sans assaisonnement |
+| fromage | Domino's 4 Fromages · Quick dosette fromage blanc ciboulette | Fromage (aliment moyen) |
+| pâtes | 2 pizzas Domino's (« pâte fine ») | Pâtes sèches, standard, cuites, sans sel ajouté |
+| poulet KFC | 4 lignes KFC | aucun |
+| tenders KFC | 4 lignes KFC | aucun |
+
+Open Food Facts (« produits de marque ») est déjà rendu APRÈS CIQUAL (lu dans le code ; non mesuré ici, le service
+étant injoignable depuis le conteneur).
+
+**② DÉCISION PRODUIT VALIDÉE PAR MICHEL (03/10/2026)** — le COMPORTEMENT CIBLE :
+> Pour une requête alimentaire **GÉNÉRIQUE** (« poulet », « salade », « fromage », « pâtes » ou équivalent), un
+> **aliment générique de référence doit apparaître AVANT** les produits fast-food ou de marque. Les produits fast-food
+> / de marque **peuvent passer devant uniquement lorsque la requête exprime explicitement cette intention**.
+
+Ses exemples : « poulet » → l'aliment générique avant KFC · « salade » → la salade générique avant Quick ·
+« fromage » → le fromage générique avant Domino's / Quick · « poulet KFC » et « tenders KFC » → KFC peut passer devant.
+⚠️ **Ce n'est PAS le comportement actuel.** Écart mesuré aujourd'hui : poulet, salade, fromage, pâtes (①). Les deux
+exemples explicites sont **déjà conformes** (KFC en tête, CIQUAL ne rend rien).
+
+**③ CORRECTION FUTURE — DANS UN LOT SÉPARÉ** (non ouvert, non nommé, non planifié) :
+- **Rien n'est corrigé** ici, ni par FS-05 / FS-05B. La correction se fera dans un lot dédié, lancé par Michel, avec
+  ses propres témoins, contrôle négatif et passe complète avant toute publication.
+- **D'ici là, aucun banc ne fige l'ordre actuel comme une règle** : sur une requête générique, « fast-food avant le
+  générique » s'enregistre en **KNOWN_LIMITATION (écart à D-042)**, jamais en MUST / SHOULD — sinon le banc
+  cimenterait l'inverse de la décision. Les deux exemples explicites peuvent être figés tels quels.
+- **Non couverts par les exemples de la décision — à faire préciser par Michel AVANT d'écrire la correction** (rien
+  n'est tranché ici) : un nom de produit propre à une enseigne tapé SANS l'enseigne (« big mac », « whopper ») ; une
+  requête sans aliment générique en local (« tenders », « tacos ») ; la section « Déjà noté par toi » (journal
+  personnel), hors du périmètre de la décision.
+- **Non visés par la décision** : le plafond de 4 lignes fast-food, les faux rapprochements de §12.2 (« oeuf » →
+  « Qarré bœuf »… — défauts séparés), l'ordre CIQUAL → Open Food Facts.
+
+## 13. FS-05B — le corpus MULTI-SOURCE de la recherche d'aliments (03/10/2026, checkpoint non publié)
+
+**Un lot de MESURE, rien d'autre.** FS-05 ne couvrait que CIQUAL + alias (§12.2). FS-05B fige le comportement de
+**toute** la recherche « Ajouter un aliment », telle qu'une personne la vit, pour qu'aucun lot futur ne la dégrade sans
+qu'un témoin rougisse. **0 ligne de production modifiée** (`app.js`, `style.css`, `data/*`, `tools/alias.py`, Worker,
+Apps Script : diff vide contre FS-05). **D-042 n'est PAS corrigée** : son écart est mesuré et figé en limite connue.
+
+**Les sources réellement branchées** (relevées dans le code courant, §12.2) :
+
+| Source | Où dans le code | Hors ligne | Dans FS-05B |
+|---|---|---|---|
+| CIQUAL + table d'alias | `_ciqualChercher` (`data/ciqual.json`, `data/alias.json`) | oui (sans alias si la table n'a pas pu se charger) | ✅ conduite à chaque cas (section rendue = `_ciqualChercher(q,6)`) |
+| Fast-food | `_marquesChercher` (`data/marques.json`, 123 produits, 5 enseignes ; `MARQUE_ALIAS`) | oui | ✅ 99 cas où il répond |
+| Open Food Facts | `_offRechercher` (`cgi/search.pl`, après 450 ms de pause, dès 3 lettres) | non | ✅ par **réponses FIGÉES** (`tests/parcours/food_multisource_off.js`) — ⛔ **jamais le réseau réel** |
+| Journal personnel (« Déjà noté par toi ») | `_afSuggLocales` (`S.foodLog`) | oui | ⛔ hors périmètre (stockage vidé ; sa place est mesurée à part, Q5) |
+
+**Le corpus** : `tests/parcours/food_multisource_corpus.js` — **198 cas** `MS-001` → `MS-198`, de la DONNÉE, une ligne par
+cas. ⭐ **Il est conduit par la VRAIE FRAPPE** : le champ `#af-desc` de l'écran « Ajouter un aliment » est rempli puis
+notifié (`input`), donc `_afSuggInput` tourne exactement comme sous le doigt, et le banc lit le HTML **réellement rendu**
+(sections, lignes, en-têtes, mentions). Quatre configurations de sources (`ctx`) : `en` (tout disponible, Open Food
+Facts figé) · `hors` (alias non chargés, Open Food Facts injoignable) · `sans-marques` (fichier fast-food en 404) ·
+`sans-ciqual` (fichier CIQUAL en 404).
+
+| Niveau | Nb | Sens | Au banc |
+|---|---|---|---|
+| **MUST** | 9 | une décision de Michel (D-042 : le générique de référence existe ; CIQUAL **avant** Open Food Facts) | rouge |
+| **SHOULD** | 99 | le comportement actuel jugé bon, sans décision écrite | rouge (à re-trancher, pas à « réparer ») |
+| **KNOWN_LIMITATION** | 72 | un défaut mesuré | jamais rouge (« toujours observée » / « LEVÉE — à reclasser ») |
+| **OBSERVATION** | 18 | un fait mesuré qui pose une question NON tranchée | jamais rouge (« toujours vraie » / « CHANGÉE — à relire ») |
+
+⛔ **Les 72 limites et les 18 observations sont nommées par identifiant dans le banc** : en promouvoir une en contrat
+(ou l'inverse) fait rougir (contrôles négatifs M18 → M20). ⛔ **Les 36 écarts à D-042 sont nommés** (« requête|configuration »)
+et ne peuvent être que KNOWN_LIMITATION. ⛔ **Les cas des 4 questions ouvertes restent des OBSERVATION.**
+
+**Répartition** — catégories : enseignes 14 · produits fast-food 31 · génériques qui déclenchent le fast-food 40 · faux
+rapprochements 5 · génériques sans fast-food 21 · plats du monde présents 35 · plats du monde absents 9 · Open Food Facts
+8 · inter-sources 8 · pannes 4 + vide 1 · signal « recherche vide » 6 · source absente 9 · frappe partielle 4 · données 3 —
+sources qui répondent : fast-food + CIQUAL 66 · CIQUAL seul 59 · fast-food seul 30 · Open Food Facts seul 8 · CIQUAL + OFF 7
+· les trois 3 · aucune 25 — configurations : en ligne 176 · hors ligne 16 · sans fast-food 3 · sans CIQUAL 3 — **23 cas**
+servent une réponse Open Food Facts figée (15 réponses : produits, kJ seuls, 9 produits proches, 0 kcal, nom long, erreur
+500, panne réseau, JSON invalide, réponse sans produits, réponse lente).
+
+**Propriétés vérifiées sur TOUT le corpus** (une ligne de banc chacune) : la section CIQUAL affichée = `_ciqualChercher`,
+même ordre (MUST) · la section fast-food = `_marquesChercher` (4 au plus) · chaque ligne fast-food nomme son enseigne ·
+la mention « table Ciqual 2025 — ANSES » apparaît **si et seulement si** CIQUAL est affiché (Licence Ouverte, MUST) · un
+produit fast-food douteux garde son ⚠️ et sa raison (décision de Michel du 03/09, MUST) · des kcal calculées le disent ·
+chaque source forme UN bloc sous son en-tête · plafonds 4 / 6 / 6 · 193 requêtes Open Food Facts : frappe nettoyée,
+6 produits, tri par popularité, champs utiles · aucune requête hors du cas, aucune erreur de page dans les 4
+configurations. **Inter-sources** : déterminisme (corpus rejoué dans des contextes neufs, cas dans l'ordre INVERSE → même
+rendu, MUST) · la course (réponse Open Food Facts de « whey » arrivée après la frappe de « skyr » : jamais affichée) · la
+frappe lettre à lettre ne part au réseau qu'après la pause · le clavier et le champ notifié rendent la même liste · un
+résultat Open Food Facts de la requête précédente ne reste jamais à l'écran.
+
+**Ce que la mesure a trouvé — classé, documenté, NON corrigé** :
+- **D-042, l'écart mesuré** : sur 701 mots courants (clés d'alias + requêtes FS-05), **40** font sortir du fast-food
+  au-dessus de CIQUAL ; 36 sont figés comme écarts nommés (29 en ligne, 7 hors ligne — le fast-food est local). Les
+  exemples explicites de D-042 (« poulet KFC », « tenders KFC ») sont **déjà conformes**.
+- **Faux rapprochements** (la recherche fast-food compare des SOUS-CHAÎNES, catégorie comprise) : « nem » ⊂
+  « accompag**nem**ent » (Cup Kiri, frites, carottes sortent comme des nems) · « oeuf » ⊂ « b**oeuf** » · « pâté » = « pâte »
+  sans accents (pizzas « pâte fine ») · en frappe partielle, « ri » ⊂ « c**ri**spy », « po » / « pou » → les Tenders KFC.
+- ⚠️ **Le signal « recherche vide » (ft-v1168, R36) part pour des recherches qui ONT des résultats** : « poulet »
+  (10 lignes), « riz » (6), « kfc » (10), « whey » (4 produits OFF) sont envoyés au serveur comme recherches vides. Cause
+  lue dans le code : le 1ᵉʳ rendu de `_afSuggInput`, synchrone, a lieu AVANT que CIQUAL réponde — il est vide, appelle
+  `_signalerRechercheVide`, et rien n'annule ce signal quand les résultats arrivent. **Mesuré aussi sur master
+  (`ft-v1249`) : en production depuis ft-v1168.** Conséquence : la liste des « mots que la base n'a pas » est polluée par
+  des mots qu'elle a.
+- **Open Food Facts** (réponses figées) : un produit à **0 kcal** est écarté (0 lu comme « pas d'énergie » : l'eau minérale
+  disparaît) · deux produits identiques s'affichent **deux fois** · un nom long est coupé à 60 caractères APRÈS l'ajout de
+  la marque, qui **disparaît**.
+- **Couverture** : 4 enseignes sont citées dans les sources de `marques.json` sans AUCUN produit (Subway, Starbucks,
+  Five Guys, O'Tacos) · produits McDonald's absents (Royal Cheese, McFlurry) · plats absents de toute source locale
+  (naan, ramen, pad thaï, poke, bibimbap, gyoza, bo bun, sashimi, tacos) · hors ligne, « samosa », « hummus »,
+  « chow mein » ne vivent que par l'alias (rien) et « kebab » rend une pizza.
+- **Alias d'enseigne redondants** (sans effet sur le comportement) : « mcdo » et « dominos » sont déjà des SOUS-CHAÎNES de
+  « mcdonalds » / « dominos » une fois le nom normalisé — retirer ces alias ne change rien (contrôle négatif EQ3), et le
+  commentaire de `MARQUE_ALIAS` (« « mcdo » n'apparaît nulle part dans les données ») est inexact. « bk », « macdo »,
+  « bigmac » sont, eux, de vrais alias (M16).
+- **Données fast-food à vérifier** (hors périmètre de la recherche, remonté) : **5 groupes de produits Quick portent des
+  valeurs nutritionnelles STRICTEMENT IDENTIQUES** sous des noms différents (ex. « Dosette salade fromage blanc
+  ciboulette » = « Grande Rustiques » = « Grande Frites supplément Sauce Poivre Intense » : 254,9 kcal/100 g, 226 g ;
+  « Petite Frite » = « Grande Frites supplément Sauce Ranch ») — la trace d'un décalage nom ↔ ligne, la famille déjà vue
+  en ft-v1114 · « Double Cheeseburger Bacon » : 2 808 kcal pour 996 g, sans ⚠️.
+
+**Questions produit OUVERTES** (mesurées, non tranchées — à Michel) :
+- **Q1** un nom de produit propre à une enseigne, tapé SANS elle (« big mac », « mcchicken ») : aujourd'hui le fast-food
+  passe devant le hamburger générique — intention explicite ou requête générique ?
+- **Q2** « whopper » sans « Burger King » : même situation.
+- **Q3** « tenders » (et « hot wings », « bucket », « chicken ») : aucun aliment générique en local, seul KFC / Quick répond.
+- **Q4** « tacos » : rien en local (O'Tacos n'a aucun produit) ; en ligne, seul Open Food Facts répond.
+- **Q5** (hors corpus, mesuré à part) « Déjà noté par toi » s'affiche **au-dessus de tout**, fast-food compris : la
+  relation avec D-042 n'est pas tranchée.
+- **Q6** (mesuré à chaque passe, jamais rouge) à score égal, l'ordre des lignes fast-food suit l'ordre **physique** de
+  `marques.json` (relu à l'envers : 8 requêtes sur 10 changent d'ordre) — D-036 l'interdit pour CIQUAL ; vaut-elle pour le
+  fast-food ?
+- Hors liste, non tranché : « coca cola » (marque de soda, pas une enseigne) · « couscous » (la graine en ligne, le plat
+  hors ligne) · « tikka masala » / « tandoori » (la sauce, faute de plat).
+
+**Preuves** : banc `node tools/banc_food_multisource.js` (B-CDXLI structure · B-CDXLII corpus par la vraie frappe ·
+B-CDXLIII inter-sources) ; contrôle négatif `python3 tools/mut_food_multisource.py` ; scénario de recette
+`NUTRI-RECHERCHE-FS05B`.
+
+## 14. NUT-D042-01 — D-042 implémentée, FS-01 → FS-05B portés sur master (11/10/2026, branche non publiée)
+
+**La règle (Michel, D-042)** : pour une requête **générique**, l'aliment générique **pertinent** passe **avant** le
+fast-food, les recettes de restaurant et les produits de marque — quand il existe. Une requête qui vise une **marque ou
+un produit** garde cette intention. **« Coca-Cola » = marque, « coca » = générique.** « tenders » / « tacos » : jamais
+de générique inventé. La forme demandée est gardée (aucun cuit > cru universel). « Déjà noté par toi » inchangé.
+Aucune pop-up.
+
+**Le code (un seul propriétaire, aucun second moteur)** — `_afSuggRendu` lit **une** règle, `_afGeneriqueDevant(q, ciq)` :
+
+| condition | ce qui la porte | pourquoi |
+|---|---|---|
+| ① pas d'intention de marque | `_afIntentionMarque` : `MARQUE_ALIAS` (+ `'coca cola'`), la famille « restauration rapide » de `FOOD_SYNONYMES`, les enseignes de `data/marques.json` — en **mots entiers** | aucune liste nouvelle (R2) ; « tacos » n'est pas « O'Tacos » |
+| ② CIQUAL a répondu | `ciq.length` | on n'invente jamais un générique |
+| ③ le 1ᵉʳ CIQUAL est **pertinent** | cible de la **table d'alias**, ou **chaque mot tapé en entier** (`_fsMotsEntiers`, le test de la clé FS-01, partagé), synonymes compris, mots de forme exclus | mesuré : sans ③, 27 requêtes sur 117 mettaient devant un aliment sans le mot tapé |
+
+Et le fast-food entre dans le **même premier rendu** que CIQUAL et l'alias (`Promise.all` des trois chargeurs) : avant,
+il s'affichait seul puis le générique s'insérait au-dessus.
+
+**Mesures** (vraie frappe, vraie base) :
+- banc D-042 `food_d042.js` : **73 / 0** sur la branche, **32 rouges sur master `b280ea5d`** (dont les 2 du premier
+  affichage) ; les témoins du critère ③ (« wings », « rings », « cheese », « big ») sont **verts sur master** et
+  rougissaient sur la 1ʳᵉ version sans ③ ;
+- critère ③ sur 117 requêtes tirées des noms du fast-food : générique devant **45**, fast-food devant **72** (dont 2
+  enseignes nommées) ; le seul cas restant où le générique devant n'est pas le bon sens est « petites » → « Pancake (petite
+  crêpe…) » (frappe partielle de « petites frites ») — **mot entier ≠ sens**, risque résiduel ;
+- corpus FS-05B : les **36 écarts** nommés deviennent des **MUST** « CIQUAL avant le fast-food » ; **Q1 → Q4** tranchées
+  par Michel → **MUST** (« big mac », « mcchicken », « whopper » : produit explicite, fast-food devant ; « tenders »,
+  « hot wings », « bucket », « chicken », « tacos » : rien d'inventé) ; « coca cola » → **MUST** marque ; les frappes
+  partielles « po », « pou », « ri », « co » **restent des limites** (aucun générique pertinent : fast-food devant, comme
+  sur master). Banc **177 / 0**.
+
+**Ce qui reste ouvert, inchangé** : Q5 (« Déjà noté » au-dessus de tout) est **hors périmètre** par décision (faux amis
+PRÉEXISTANTS) · Q6 (départage du fast-food par l'ordre du fichier) non tranchée · « pâte » / « pâté » indiscernables
+après normalisation (§6) · « couscous », « tikka masala » · les données Quick à vérifier.
+
+**Preuves** : `node tools/banc_food_d042.js` (B-D42-A structure · B-D42-B vraie frappe · B-D42-J « Déjà noté » ·
+B-D42-T premier affichage) ; contrôle négatif `python3 tools/mut_food_d042.py` ; scénario `NUTRI-RECHERCHE-D042` ;
+rapport `NUT-D042-01-RAPPORT-IMPLEMENTATION-2026-10-11` (hors dépôt).
+
+### 14 bis. NUT-D042-CLOSURE-01 — repositionnement sur le master actuel (11/10/2026, branche non intégrée)
+
+**Pourquoi** : `claude/nut-d042-01` avait été qualifiée sur `b280ea5d` ; master est passé à `7b75f3c1` (`ft-v1253` :
+IMPORT-MAP-01 / 01B / 02 + IMPORT-P0-2). **Ce qui a été fait** : nouvelle branche `claude/nut-d042-closure-01` depuis
+`origin/master`, reprise **par cherry-pick** des 6 commits de la branche historique (témoins, FS-01 → FS-03, D-042,
+recette, corpus FS-05, documentation) ; l'ancienne réservation du journal n'est pas reprise. **Aucun conflit de code** :
+la Nutrition touche `app.js`, `data/alias.json`, `tools/alias.py` ; master avait touché `log.js` et `sw.js`. Le code
+Nutrition est **identique** à la version qualifiée (`git diff` vide sur `app.js`, `data/`, `tools/alias.py`, bancs et
+contrôles négatifs `food_*`). Conflits résolus à la main : documentation seulement (`CONTEXTE-ACTUEL`, `JOURNAL-DE-PARTAGE`,
+`INVENTAIRE`).
+
+**Avant (master `7b75f3c1`, mêmes témoins)** : D-042 36 / 29 · FS-01, FS-02, FS-03 plantent (résolveur absent) · FS-05
+38 / 97 · FS-05B 129 / 2 — **identique à `b280ea5d`** (rejoué : IMPORT-MAP et IMPORT-P0-2 ne touchent pas la recherche
+d'aliments). **Après (branche)** : D-042 **73 / 0** · FS-01 **44 / 0** · FS-02 **46 / 0** · FS-03 **39 / 0** · FS-05
+**136 / 0** · FS-05B **177 / 0**. Contrôles négatifs **117 / 117** conformes ;
+passe complète D-031 **6 661 ✅ / 0 ❌** sur `0407516b` (4 conditions vertes). Détail : rapport `NUT-D042-CLOSURE-01-RAPPORT-2026-10-11`
+(hors dépôt) et `HANDOFF-NUT-D042-CLOSURE-01.json` (racine de la branche).
+
+**Toujours hors lot** : FS-04 (affichage des formes, **D-040** non portée) · NUT-PUNCH-01 · UX « crème fraîche » · champ
+« quantité consommée » · suite « pizza 4 fromages » au-delà de D-042.
+
+## 15. NUT-FOOD-VARIANTS-01 — les variantes nutritionnelles d'un même aliment (12/10/2026, branche non intégrée)
+
+**La règle (D-058, Michel)** : un qualificatif TAPÉ qui change réellement l'aliment — un taux de matière grasse, entier /
+écrémé, allégé, « sans sucre » — est respecté ; une requête SANS qualificatif n'en reçoit pas un inventé ; aucune donnée
+n'est inventée. Branche `claude/nut-food-variants-01`, **depuis `0407516b`** (le code D-042 qualifié) ;
+`claude/nut-d042-closure-01` n'est pas touchée.
+
+**L'audit d'abord, par la vraie frappe** (82 requêtes, en ligne et hors ligne) : les données étaient là (lait écrémé /
+demi / entier / 1,2 %, fromage blanc 0 / 2-3 / 7-8 %, steak haché 5 / 10 / 15 / 20 % cru et cuit, crème 30 % / légère,
+yaourts 0 % et à la grecque, faisselle, petit-suisse, fromages allégés, colas sans sucres). Le moteur gérait déjà bien
+les mots collés (« lait écrémé », « fromage blanc 0% », « steak haché 10% ») ; **quatre causes** faisaient le reste :
+① **« 5 % » avec une espace** perdait son 5 et son % (deux « mots » d'une lettre, écartés par `_afMots`) ;
+② **un taux lu comme du texte** : « 5% » se trouvait dans « 15% », « 0% » dans « 10% », « 2% » dans « 1,2% » ;
+③ **la négation ignorée** : « yaourt allégé » ne rendait que du « non allégé », « cola sans sucre » mettait « Cola,
+sucré, sans caféine » en tête ; ④ **un taux espacé dans la table** (« Chocolat noir 70 % de cacao ») introuvable par
+« 70% » hors ligne.
+
+**Le correctif — trois propriétaires existants, aucune table** : `_afNorm` recolle le nombre à son % et garde la
+virgule décimale (miroir porté dans `tools/alias.py` ; `alias.json` régénéré : identique) ; `_afTrouve` (nouvelle,
+appelée par `_afMotDansNom`) refuse un taux collé à d'autres chiffres et un mot NIÉ par le nom — sauf « ou non » /
+« ou sans », qui ne nient rien (14 noms mesurés) ; `_afRang` cherche « sans X » / « non X » d'un bloc. Choix pris seul :
+**D-059** (PROPOSÉ).
+
+**Banc `food_variants`** (74 cas, 10 familles, blocs B-FV-A / B / D) : **55 / 19 avant → 74 / 0 après** (52 / 19 sur les 71 premiers cas). Différentiel
+moteur sur **6 628 requêtes** (avec et sans table d'alias) : **78** changent, toutes dans les règles ci-dessus (un
+résultat qui disait le contraire de la requête disparaît : « pomme chair et peau » ↛ « chair sans peau », « café
+instantané » ↛ « non instantané », « muesli enrichi » ↛ « non enrichi »). D-042 et FS-01 → FS-05B : **inchangés**
+(73 · 44 · 46 · 39 · 136 · 177, aucune limite connue n'a bougé). Contrôle négatif `tools/mut_food_variants.py` **13 / 13** ;
+passe complète D-031 **6 735 ✅ / 0 ❌** sur `4ed73994` (4 conditions vertes).
+
+**Limites nommées (KNOWN_LIMITATION, hors lot)** : « crème fraîche » (CIQUAL dit « Crème 30 % MG, épaisse, rayon frais »
+— dire que l'une est l'autre est une décision de Michel) · fourchettes de la table (« fromage blanc 2% » ↛ « 2-3% »,
+« crème 15% » ↛ « 12 à 25% ») · « zéro » hors ligne traduit en « édulcorants » (synonyme ft-v1113 pensé pour les
+boissons) · « lait 1/2 écrémé » hors ligne (alias non chargé) · « viande hachée 15% » (alias à 5 % seulement) ·
+« allégé » / « entière » absents de la table pour le fromage blanc et la crème. Observé, non corrigé : la table d'alias
+envoie « steak haché 5% » vers le **cuit** et « 10 / 15 / 20 % » vers le **cru** ; « cola » se trouve dans « chocolat »
+(sous-chaîne préexistante, les chocolats restent sous les colas).
+
+### 15 bis. NUT-FOOD-VARIANTS-02 — micro-retouche après contre-vérification (12/10/2026, même branche)
+
+La contre-vérification de VARIANTS-01 a trouvé des effets **trop stricts**, tous mesurés et reproduits ici. Ils venaient
+du même lot, et non de l'existant :
+- « café non sucré », « café sans caféine », « jambon sans couenne » et « yaourt sans sucre » ne rendaient rien : l'écriture
+  littérale « sans X » était exigée ;
+- « eau 1,5 l » ne rendait rien : la virgule décimale était gardée pour tout nombre ;
+- 2 noms CIQUAL complets « … ou non … » étaient introuvables : « ou non » était aussi lu comme une négation dans la frappe.
+
+**Correctif dans les mêmes propriétaires, sans aucune table** :
+- `_afRang` lit « sans X » / « non X » en quatre rangs :
+  1. le nom le **dit** (« sans X » ou « non X », l'un vaut l'autre) ;
+  2. le nom porte X **en début de mot** : c'est le CONTRAIRE, écarté ;
+  3. le nom ne porte X qu'**à l'intérieur d'un mot** (« décaféiné », « découenné ») ;
+  4. le nom n'en dit **rien**.
+
+  Après « ou », ce n'est pas une négation.
+- `_afTrouve` sait chercher en début de mot.
+- `_afNorm` (et son miroir `tools/alias.py`) ne garde la virgule décimale que devant un « % ».
+
+D-059 est corrigée (son point ③ est retiré : il n'était pas implémenté).
+
+⭐ **Invariant ajouté (B-FV-N)** : chaque nom CIQUAL proposable (3 341), tapé en entier, se retrouve lui-même.
+
+⚠️ **Ces règles sont partagées** par toutes les recherches qui passent par `_afRang` : la table CIQUAL, les compléments,
+le fast-food et « Déjà noté par toi ».
+
+**Banc `food_variants`** : 90 cas, **82 / 8 avant → 90 / 0 après**. La passe complète D-031 est **différée à l'arbre final
+intégré** (D-042 + variantes).
+
+### 15 ter. NUT-FOOD-VARIANTS-03 — fermeture des trous confirmés (12/10/2026, branche `claude/nut-food-variants-03`)
+
+Les trous relevés par la contre-vérification express de VARIANTS-02 sont tous **PRÉEXISTANTS** à VARIANTS-01/02. Décisions
+de Michel : **D-060** ; choix de mise en œuvre : **D-061** (PROPOSÉ).
+
+- **« zéro » hors ligne** : `FOOD_SYNONYMES` le traduit désormais en « 0 % » OU « sans sucres », joués ensemble, et plus en
+  « édulcorants ». Résultat : « fromage blanc zéro » donne le 0 % nature, « coca zéro » donne un cola sans sucres.
+  ⭐ **D-070 (décision de Michel, 13/10/2026)** : pour « coca zéro », le « Cola, sucré, avec édulcorants » n'est **pas proposé,
+  même en dessous** — D-059 ① et D-061 ① validés. Le « juste en dessous » de ft-v1116 est obsolète (témoin CCXXIV réécrit) ;
+  nommé, l'aliment reste trouvable. « coca light » le montre encore dessous (dette « light », hors décision).
+- **« cola » ↛ « chocolat »** : dans la table CIQUAL, un mot suivi d'un autre doit être un mot du nom ; l'élision compte
+  (« jus orange » retrouve « Jus d'orange »). Seul le dernier mot reste une frappe partielle. « Déjà noté par toi » n'est
+  pas touché.
+- **« 1/2 écrémé »**, **« viande hachée »** (bœuf et veau), **« crème fraîche »** (la famille « rayon frais ») : du
+  vocabulaire dans `FOOD_SYNONYMES`. Une expression connue en tête de requête garde ce qui suit (« … 15 % », « … épaisse »).
+- **Fourchettes** : un taux tapé se lit dans une fourchette qui le contient (`_afMotDansNom`), après la valeur exacte ;
+  hors de toute fourchette, rien.
+- **Steak haché** : les alias à 5 % (`tools/alias.py`, CORRECTIONS) visent le cru, comme 10 / 15 / 20 %. « steak haché »
+  sans précision vise l'aliment moyen (cuit), les crus dessous. ⚠️ Hors ligne, seuls les crus restent visibles : dette, car
+  il faudrait toucher la clé de tri générale (FV-164). « viande hachée » sans précision : crus seulement, en ligne aussi
+  (FV-165) — un alias vers l'aliment moyen imposerait le bœuf.
+
+**Banc `food_variants`** : 120 cas (115 MUST · 4 KNOWN_LIMITATION · 1 OBSERVATION) ; **96 / 26 avant → 122 / 0 après**. D-042, FS-01 → FS-05B, `repas_actif` et
+`habitudes_alim` sont inchangés.
+
+⚠️ **FS-05 FR-119** (« crème fraîche », KNOWN_LIMITATION) s'affiche désormais **« limite levée — à reclasser »** : ce n'est
+pas un rouge, et le corpus FS-05 n'est pas modifié par ce lot. Passe D-031 : **différée à l'arbre final intégré**.
