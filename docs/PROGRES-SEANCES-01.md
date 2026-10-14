@@ -169,3 +169,4 @@ prioritaires (« Séances ce mois », calendrier, Accueil).
   ne fabriquait pas d'étiquette sur deux lignes) ; D-076 / D-077 au registre. Arbre fonctionnel `efa251b9` / `f3813e86` : B-PS01
   **57 / 0**, mutations **44 / 44**, LOT 0 **36 / 0**, voisins verts, **D-031 7 040 ✅ / 0 ❌** (4 conditions, 20:10:14 → 21:23:27 UTC).
   Statut : **READY_FOR_MASTER_INTEGRATION**.
+- **Intégré à master le 14/10 (nuit), NON PUBLIÉ** : avance rapide `a0eab5b3` → `b9e91127`, tête `[skip ci]` (aucun déploiement), même arbre fonctionnel que l'arbre qualifié `f3813e86`. Prochaine étape : recette iPhone, puis décision de publication de Michel.

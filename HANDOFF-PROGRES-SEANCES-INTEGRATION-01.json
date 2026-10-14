@@ -319,7 +319,7 @@
   "branches sources non modifiées",
   "Drive en lecture seule"
  ],
- "statut": "READY_FOR_MASTER_INTEGRATION",
+ "statut": "INTÉGRÉ À MASTER — NON PUBLIÉ — READY_FOR_TERRAIN_RECIPE",
  "rapport": "docs/PROGRES-SEANCES-01.md §8 (pas de PDF pour la micro-fermeture : consigne de Michel)",
  "qualification_precedente": {
   "functional_head": "bd8ae92ec2994e3172aaf562c7b8c510a8b7b439",
@@ -384,5 +384,19 @@
   "WHATS_NEW à poser à la publication",
   "consignés hors lot : 14 / 28 / défaut 28 en dur dans setup.js ; commentaire _ctxVolumeMuscles ; dump_prompt.js à chemin absolu",
   "recette iPhone"
- ]
+ ],
+ "integration_master": {
+  "date": "2026-10-14 (nuit)",
+  "autorisation": "écrite de Michel (phase de nuit), après verdict READY_FOR_MASTER_INTEGRATION",
+  "master_avant": "a0eab5b31ecce7d9a2dab6baeefd248916c19d8d",
+  "master_integre": "b9e91127f2928571f8531a117f46da1f505c40e4",
+  "methode": "avance rapide (aucun commit de fusion, aucun forçage), tête [skip ci]",
+  "deploiements": "aucun run Pages / Worker / Apps Script déclenché (vérifié par l’API GitHub)",
+  "version": "inchangée (sw.js ft-v1254)",
+  "identite_fonctionnelle": "0 fichier fonctionnel différent de l'arbre qualifié f3813e86 (documentation et handoff seulement)",
+  "bancs_rejoues_sur_master": "Progrès 57/0 · LOT 0 36/0 · session_integrity 93/0 · debrief_demande 58/0 · debrief_provenance 24/0 · historique_cloud 87/0 · accueil_mini 54/0 · mutations critiques M31/M37/M40 3/3 · git diff --check propre · check_regles vert",
+  "avertissement": "master porte du code NON PUBLIÉ : tout push sur master sans [skip ci] publierait ce lot sur Pages sans changement de version",
+  "statut": "READY_FOR_TERRAIN_RECIPE",
+  "passation_maitre_drive": "NON modifiée (règle d’or #18 : aucun fichier Drive existant touché sans accord explicite) — texte de mise à jour fourni dans le rapport du matin"
+ }
 }

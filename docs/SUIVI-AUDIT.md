@@ -981,3 +981,8 @@ PS-E27 / PS-E29 isolés) ; outil de mutation durci (plantage ≠ attrapée, tém
 registre. Arbre fonctionnel `efa251b9` / `f3813e86` : B-PS01 **57 / 0**, mutations **44 / 44**, LOT 0 **36 / 0**, **D-031 7 040 ✅ / 0 ❌**.
 ⛔ Restent consignés, non traités (consigne de Michel) : 14 / 28 / défaut 28 écrits en dur dans `setup.js`, commentaire de
 `_ctxVolumeMuscles`, `dump_prompt.js` à chemin absolu.
+
+**➡️ Intégré à master (14/10, nuit) — NON PUBLIÉ.** Avance rapide `a0eab5b3` → `b9e91127` (autorisation écrite de Michel), tête `[skip ci]` :
+aucun run Pages, Worker ni Apps Script ; `sw.js` toujours `ft-v1254`. Arbre de master = arbre de la branche ; 0 fichier fonctionnel différent de
+l'arbre qualifié `f3813e86` (documentation et handoff seulement). Bancs rejoués sur master : Progrès 57/0 · LOT 0 36/0 · session_integrity 93/0 · debrief_demande 58/0 · debrief_provenance 24/0 · historique_cloud 87/0 · accueil_mini 54/0 · mutations critiques M31/M37/M40 3/3 · git diff --check propre · check_regles vert. Prochaine étape : recette terrain
+iPhone, puis décision de publication de Michel.
