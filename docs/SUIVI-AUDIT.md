@@ -943,3 +943,15 @@ avant `ft-v1250`) · inversions charge / 1RM de la formule de Brzycki (57).
 **Identité** : nom exact partout (sauf `refAvant` et l'unilatéral) ; 0 renommage actif chez Michel ; « SDT roumain » et
 « Soulevé de Terre Roumain Barre » = deux identités (fusion : décision de Michel, pas prise). **Machine** : aucune identité
 dans les données — reporté au benchmark.
+
+**Complément du 14/10 — la structure de l'onglet Progrès** (orientation de Michel, **non décidée** : Progrès → Séances →
+Exercices → Corps & santé ; Badges sort de Progrès, destination non décidée ; **rien n'est déplacé**). Mesuré : le panneau
+« Exercices » contient **trois** groupes, pas deux — les deux cartes de synthèse (haut), l'analyse d'un exercice (milieu)
+et l'historique + 📤 Exporter + filtre + 20 cartes (bas, hors des captures), plus la bannière du **cycle menstruel**
+(femmes seulement). Synthèse, volume et liste rendent la même chose quel que soit l'exercice choisi (vrai code). Séparation
+**simple dans le code** (4 points de couplage : `switchProgTab`, `renderProgress` qui force « Exercices », `goSessionsHistory`,
+`ft4_progAcc`) ; **le travail est autour** : 3 portes d'entrée (Accueil, calendrier ×2), 19 points rouges (un point dont
+l'ancrage disparaît n'est jamais posé, sans erreur — screens.js:61), aide / Guide (⚠️ 4 textes disent encore « Poids »
+depuis le renommage du 02/09 : screens.js:380/388, coach.js:8487/8494), témoins CLXXII / CLXXIII à réécrire avec leur
+raison. L'ordre est cohérent (source → vue par mouvement → autres données ; 3 des 4 portes visent déjà l'historique) ; il
+remplacerait la décision de Michel du 30/08 (cartes dans « Exercices ») — à confirmer et à inscrire au registre.
