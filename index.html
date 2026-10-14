@@ -648,14 +648,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
        doit être atteignable sans défiler ; ② depuis ft-v1065 ces deux cartes n'appartiennent
        qu'à l'onglet Exercices — leur place est donc DANS son contenu, pas au-dessus de la
        barre qui sert à en sortir. -->
+  <!-- 🗂️ PROGRES-SEANCES-01 (14/10/2026, décision de Michel) : SÉANCES passe en premier. Ce qui parle
+       de l'ENTRAÎNEMENT EN GÉNÉRAL (synthèse, volume, historique, export) quitte « Exercices », qui ne
+       garde que l'analyse d'UN exercice. ⛔ « Badges » reste un onglet : sa destination n'est pas
+       décidée, et le déplacer ailleurs serait une décision produit prise seul (règle d'or #15). -->
   <div class="nu-tabs">
-    <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
+    <button class="nu-tab active" id="ptab-seances" onclick="switchProgTab('seances',this)">Séances</button>
+    <button class="nu-tab" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
     <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Corps &amp; santé</button>
     <button class="nu-tab" id="ptab-badges" onclick="switchProgTab('badges',this)">Badges</button>
   </div>
 
-  <!-- TAB: Exercices -->
-  <div id="prog-exo" style="display:flex;flex-direction:column;gap:10px;">
+  <!-- TAB: Séances (PROGRES-SEANCES-01) — l'entraînement dans son ensemble : constantes, volume,
+       historique Année → Mois → Séance. ⛔ Les id restent les mêmes : `_renderSynthese`,
+       `_renderVolumeSemaine` et `renderSessions` restent les seuls auteurs (R2) — seul le parent change. -->
+  <div id="prog-seances" style="display:flex;flex-direction:column;gap:10px;">
     <!-- 🔭 ft-v1041 — brique 8 « Synthèse » · 📊 ft-v1045 — le volume par groupe musculaire.
          ⛔ REPLIABLES depuis ft-v1066, et l'état est RETENU (`ft4_progAcc`) : à 561 px les deux
          repoussaient tout le reste hors de l'écran. ⭐ R13 : on réutilise `details.acc`, le
@@ -677,19 +684,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <summary>
         <span style="display:flex;flex-direction:column;gap:2px;min-width:0;">
           <span>📊 Ce que tu travailles, par semaine</span>
-          <span style="font-size:11.5px;font-weight:600;color:var(--t3);">Tes séries par muscle, sur 14 jours</span>
+          <span id="prog-volume-sous" style="font-size:11.5px;font-weight:600;color:var(--t3);">Tes séries par muscle, sur 28 jours</span>
         </span>
       </summary>
       <div id="prog-volume" style="padding:0 14px 14px;"></div>
     </details>
-    <div class="sec">Progression</div>
-    <div id="big4-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-    <div id="prog-search-wrap" style="position:relative;">
-      <input id="prog-search" type="text" placeholder="🔍 Rechercher un exercice…" autocomplete="off" oninput="_filterProgSearch(this.value)" onfocus="_filterProgSearch(this.value)" onblur="_blurProgSearch()" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);">
-      <div id="prog-search-results" style="display:none;max-height:240px;overflow-y:auto;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;margin-top:4px;-webkit-overflow-scrolling:touch;"></div>
-    </div>
-    <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
-    <div id="prog-cycle-banner" style="display:none;"></div>
     <!-- 📤 ft-v1048 — la porte de l'export vit ICI, à côté de l'historique : c'est là que
          Michel regardait quand il l'a demandé. ⛔ L'export JSON reste dans Menu → Exporter mes
          données — sauvegarder ses données et regarder son historique sont deux besoins
@@ -701,6 +700,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </div>
     <div id="sess-filter"></div>
     <div id="sess-list"></div>
+  </div>
+
+  <!-- TAB: Exercices -->
+  <div id="prog-exo" style="display:none;flex-direction:column;gap:10px;">
+    <div class="sec">Progression</div>
+    <div id="big4-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    <div id="prog-search-wrap" style="position:relative;">
+      <input id="prog-search" type="text" placeholder="🔍 Rechercher un exercice…" autocomplete="off" oninput="_filterProgSearch(this.value)" onfocus="_filterProgSearch(this.value)" onblur="_blurProgSearch()" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);">
+      <div id="prog-search-results" style="display:none;max-height:240px;overflow-y:auto;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;margin-top:4px;-webkit-overflow-scrolling:touch;"></div>
+    </div>
+    <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
+    <div id="prog-cycle-banner" style="display:none;"></div>
   </div>
 
   <!-- 📤 ft-v1048 — CHOISIR LE FORMAT. Deux boutons, pas une liste : le choix est porté par le

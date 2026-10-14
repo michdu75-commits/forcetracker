@@ -912,3 +912,55 @@ Non-régressions : IMPORT-MAP-02 43/0 (cliquet 98, faux figés vides) · IMPORT-
 | Dette « Extension Triceps + matériel » (10 tournures) | ⚠️ **séparée, non bloquante**, préexistante sur master — décision de Michel attendue (section IMPORT-P0-2) |
 | IMPORT-ECH-02 (noms génériques en confirmation, regroupements ECH générique + TRAV précis) | ⏳ **futur, non commencé** |
 | LOT 1 IMPORT PROGRAMME (branche `claude/import-programme-lot1-client`) | 🟠 **qualifié sur `6969ce73`, NON INTÉGRÉ, qualification périmée** — son détail vit sur sa branche ; ⚠️ collision de numéros de décision (D-053 → D-057), voir `docs/DECISIONS.md` |
+
+## 🔎 AUDIT DELTA — HISTORIQUE / PROGRÈS / STATISTIQUES (14/10/2026, session-B — lecture seule, master `a0eab5b3`, `ft-v1254`)
+
+> ⛔ **Aucune ligne de production modifiée, aucun appel Milo.** Source terrain : l'export réel du 14/10 (63 séances,
+> 1 077 séries validées + 50 lignes de cardio). 11 témoins **hors dépôt** sur le vrai code, 7/7 mutations.
+> Rapport complet : PDF hors dépôt `AUDIT-DELTA-HISTORIQUE-PROGRES-STATS-2026-10-14.pdf`.
+
+| ID | Classe · gravité | Constat (une ligne) | État |
+|---|---|---|---|
+| HP-01 | A/E · P2 | Le bouton « échec » enregistre `rir:0` sur une série N → export « 0 », « précédent » ·0r, Milo « RIR0 » = **réussie** (14 séries depuis le 07/09) | ⏳ décision RIR / ÉCHEC |
+| HP-02 | D/E · P2 | Une série X compte pour le record et le graphe, sans marque pour Milo (Développé Couché 108 = 105×2 X ; 105,9 sans) | ⏳ décision X / records |
+| HP-03 | D/E · P2 | « 1RM actuel » = dernier point, « Progrès » = dernier − premier, axe par rang : 15/57 « Progrès » négatifs, 13 « actuels » > 10 % sous le record | ⏳ décision définitions |
+| HP-04 | D · P3 | Graphe et « Charge max soulevée » ne lisent que le 1er bloc (0 effet sur l'export de Michel) | ouvert |
+| HP-05 | E · P3 | Le nom de la séance (`progLabel`) n'est jamais exporté ; titres PDF = libellé du cardio (39 « Cardio avant ») | ouvert |
+| HP-06 | E · P3 | PDF regroupé par **jour** ; l'en-tête compte des jours et des lignes de cardio (« 1127 séries » = 1 077 + 50) | ouvert |
+| HP-07 | E · P3 | Cardio « après » imprimé avant les exercices ; « après » perdu si avant + après | ouvert |
+| HP-08 | E · P3 | Trois numérotations (export = position avec non validées et échauffements ; Milo = S1… travail) ; aucun trou n'est une perte | ouvert |
+| HP-09 | C/D · P3 | Unilatéral en 2 blocs : volume ×4 (9 920 kg pour 4 960), Milo « 2 exercices » | ⏳ décision unilatéral |
+| HP-10 | C · P3 | Recherche de Progrès : catalogue + exercices perso seulement ; un nom présent dans le seul historique est injoignable | ouvert |
+| HP-11 | D/E · P3 | Poids du corps (kg = 0) : graphe vide, « Aucune donnée — commence à logger ! » faux | ⏳ décision affichage |
+| HP-12 | E · P3 | RIR invisible dans le détail d'une séance passée | ouvert (lot UX-HIST) |
+| HP-13 | E · P3 | Débrief d'une séance au-delà des 20 dernières : plus joignable dans l'app (conséquence de NV-01) | ouvert (lot UX-HIST) |
+
+**Légitime ou indéterminable, NE PAS « corriger »** : Dips 09/07 (kg/reps probablement inversés, origine non prouvée) ·
+Rowing Haltère (convention total → par bras ; « laisse pour l'instant » tient) · Rowing Hammer / Leg Curl Couché
+(machine ou réglage) · 2 blocs identiques du 04/10 (côté ou doublon) · « record personnel » du 04/10 (séance enregistrée
+avant `ft-v1250`) · inversions charge / 1RM de la formule de Brzycki (57).
+**Toujours présents, déjà connus** : C2, C4, D1, D3, D5 (07/10) · DB-06, NV-01, AR-03, CC-12, AR-02, DN-05 (08/10).
+**Identité** : nom exact partout (sauf `refAvant` et l'unilatéral) ; 0 renommage actif chez Michel ; « SDT roumain » et
+« Soulevé de Terre Roumain Barre » = deux identités (fusion : décision de Michel, pas prise). **Machine** : aucune identité
+dans les données — reporté au benchmark.
+
+**Complément du 14/10 — la structure de l'onglet Progrès** (orientation de Michel, **non décidée** : Progrès → Séances →
+Exercices → Corps & santé ; Badges sort de Progrès, destination non décidée ; **rien n'est déplacé**). Mesuré : le panneau
+« Exercices » contient **trois** groupes, pas deux — les deux cartes de synthèse (haut), l'analyse d'un exercice (milieu)
+et l'historique + 📤 Exporter + filtre + 20 cartes (bas, hors des captures), plus la bannière du **cycle menstruel**
+(femmes seulement). Synthèse, volume et liste rendent la même chose quel que soit l'exercice choisi (vrai code). Séparation
+**simple dans le code** (4 points de couplage : `switchProgTab`, `renderProgress` qui force « Exercices », `goSessionsHistory`,
+`ft4_progAcc`) ; **le travail est autour** : 3 portes d'entrée (Accueil, calendrier ×2), 19 points rouges (un point dont
+l'ancrage disparaît n'est jamais posé, sans erreur — screens.js:61), aide / Guide (⚠️ 4 textes disent encore « Poids »
+depuis le renommage du 02/09 : screens.js:380/388, coach.js:8487/8494), témoins CLXXII / CLXXIII à réécrire avec leur
+raison. L'ordre est cohérent (source → vue par mouvement → autres données ; 3 des 4 portes visent déjà l'historique) ; il
+remplacerait la décision de Michel du 30/08 (cartes dans « Exercices ») — à confirmer et à inscrire au registre.
+
+**➡️ État au 14/10 (après-midi) — LOT STRUCTUREL 01 CODÉ, NON PUBLIÉ** (mission de Michel « PROGRÈS → SÉANCES / UX-HIST » :
+l'orientation est devenue décision — Séances en premier, volume 14 | 28, 28 par défaut, Milo inchangé). Détail :
+`docs/PROGRES-SEANCES-01.md`. Fait : onglet Séances, blocs déplacés, historique Année → Mois **sans plafond de 20**, portes
+d'entrée ciblées par la clé `ts‖id`, volume 14 | 28, sous-onglet qui survit, aides / Guide / point rouge, les 4 « Poids »
+corrigés. ⛔ **Non fait, faute de décision** : séparation lecture / modification du détail ; mois en cours replié ou ouvert
+à l'arrivée par la barre du bas (appliqué à la lettre du contrat : replié) ; destination de **Badges** (reste un onglet) ;
+bandeau de cycle (statu quo dans Exercices). Les témoins CLXXII / CLXXIII et 6 autres blocs du runner sont réécrits **dans
+un outil** (`tools/integrer_progres_seances.py`) à exécuter après le LOT 0 Nutrition — `runner.js` non touché.

@@ -567,6 +567,11 @@ const NEW_FEATURES=[
   /* 🎯 DEBRIEF-ON-DEMAND-01 (05/10/2026) — règle d'or #11, point 2. Sur SÉANCE : c'est à la fin d'une séance que le
      geste a changé (le débrief ne part plus seul). */
   {id:'debrief-demande', screen:'log', desc:'Nouveau : à la fin d\'une séance, tes <b>chiffres</b> s\'affichent tout de suite, et Milo n\'analyse plus ta séance tout seul — c\'est toi qui le demandes : <b>« ✨ Analyser cette séance avec Milo »</b>. Tu peux aussi le faire plus tard, depuis <b>Progrès → historique</b>.'},
+  /* 🗂️ PROGRES-SEANCES-01 (14/10/2026) — règle d'or #11, point 2. Le point rouge se pose sur l'onglet SÉANCES : c'est
+     là que l'historique, la synthèse et le volume sont partis. ⚖️ La pop-up WHATS_NEW se MÉRITE (un repère a bougé :
+     l'historique n'est plus dans « Exercices ») mais se pose à la PUBLICATION — elle exige un numéro de version,
+     interdit pendant le travail (protocole du 13/09). Texte proposé : docs/PROGRES-SEANCES-01.md. */
+  {id:'progres-seances', screen:'progress', spot:'ptab-seances', desc:'Nouveau : l\'onglet <b>Séances</b>, en premier dans Progrès — ton historique (rangé par année et par mois, plus seulement les 20 dernières séances), ce que ton histoire montre et ce que tu travailles. « Exercices » garde la progression d\'un exercice.'},
   {id:'debrief-seance', screen:'progress', desc:'Nouveau : chaque séance débriefée par Milo a son bouton <b>« 💬 Voir le débrief Milo »</b> dans ton historique — et l\'export peut inclure (ou pas) ces débriefs. Une <b>première fois</b> sur un exercice s\'appelle maintenant « <b>Première référence enregistrée</b> », plus « record ».'},
   /* 🛡️ POINT ROUGE sur SÉANCE (ft-v1153) : c'est là que les avertissements APPARAISSENT, donc
      là que la pastille doit ramener. ⛔ Le poser sur l'Accueil enverrait chercher sur un écran où
@@ -796,7 +801,7 @@ const NEW_FEATURES=[
   // Progrès — spot = id de l'élément (onglet) où poser le point rouge « ici »
   {id:'prog-chart-interactive', screen:'progress', spot:'ptab-exo', desc:'Nouveau : graphe 1RM interactif — périodes (3M/6M/1an/Tout) + tape un point → « Voir cette séance »'},
   {id:'strength-goal', screen:'progress', spot:'ptab-exo', desc:'Nouveau : fixe un OBJECTIF DE FORCE (1RM visé) par exercice → barre de progression + ligne repère sur le graphe'},
-  {id:'sess-filter', screen:'progress', spot:'ptab-exo', desc:'Nouveau : filtre ton historique de séances par groupe musculaire (chips sous « Historique séances »)'},
+  {id:'sess-filter', screen:'progress', spot:'ptab-seances', desc:'Nouveau : filtre ton historique de séances par groupe musculaire (chips sous « Historique séances »)'},
   {id:'weight-edit', screen:'progress', spot:'ptab-poids', desc:'Nouveau : tape un point du graphique de poids pour modifier/supprimer la pesée + navigation par période (1M/3M/6M/Tout)'},
   {id:'bodyfat-track', screen:'progress', spot:'ptab-poids', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},
   {id:'target-weight', screen:'progress', spot:'ptab-poids', desc:'Nouveau : fixe un poids objectif (ligne repère sur le graphique + kg restants)'},

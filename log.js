@@ -4209,8 +4209,15 @@ function _mscScores(exs){
 
    ⚠️ CE QUE CE COMPTEUR NE FAIT PAS, ET C'EST DÉLIBÉRÉ : il **ne juge pas**. Voir
    `_volumeSemaineHtml` (setup.js) pour la raison — un mercredi, tout le monde est sous son cadre. */
-const VOL_FENETRE_JOURS = 14;          // ⛔ un seul propriétaire de la fenêtre (l'écran ET Milo)
-function _volumeParMuscle(refTs){
+const VOL_FENETRE_JOURS = 14;          // ⛔ un seul propriétaire de la fenêtre PAR DÉFAUT — celle de Milo
+/* 🗂️ PROGRES-SEANCES-01 (décision de Michel, 14/10/2026) — LA PÉRIODE DEVIENT UN PARAMÈTRE, PAS UNE COPIE.
+   L'écran Progrès propose 14 jours | 28 jours (28 par défaut) ; Milo, lui, garde EXACTEMENT ce qu'il
+   recevait (14 jours) : `_ctxVolumeMuscles` appelle toujours `_volumeParMuscle()` sans période.
+   ⛔ Un seul moteur de calcul (R2) : on ne recopie pas cette fonction pour 28 jours, on lui passe la
+   période. La moyenne reste « par semaine » : total / 2 sur 14 jours, total / 4 sur 28 jours.
+   ⛔ Seules les périodes décidées sont acceptées ; toute autre valeur retombe sur la fenêtre par défaut. */
+const VOL_PERIODES_JOURS = [14, 28];
+function _volumeParMuscle(refTs, jours){
   /* ⚠️ `series` = séries de travail RATTACHÉES à au moins un muscle. Ce n'est PAS la somme de
      `liste` : un squat crédite quadriceps ET fessiers, donc la somme des lignes est plus grande.
      Deux chiffres qui se contredisent à l'écran, c'est le défaut de ft-v1027 — on ne les affiche
@@ -4219,13 +4226,14 @@ function _volumeParMuscle(refTs){
      de contrôle (« combien de séries n'ont pu créditer personne »), pas des grandeurs à comparer
      au cadre. Seules les lignes de `liste` portent la moyenne hebdomadaire — et c'est le nom du
      champ qui le dit (`parSem`), pour qu'on ne puisse pas les confondre en les relisant. */
-  const out={jours:VOL_FENETRE_JOURS, semaines:VOL_FENETRE_JOURS/7,
+  const J=(VOL_PERIODES_JOURS.indexOf(jours)>=0)?jours:VOL_FENETRE_JOURS;
+  const out={jours:J, semaines:J/7,
              series:0, nonRattachees:0, seances:0, liste:[], depuis:'', jusqu:''};
   try{
     const auj=(typeof today==='function')?today(refTs):null;
     if(!auj) return out;
     const fin=new Date(auj+'T12:00:00');
-    const deb=new Date(fin.getTime()-(VOL_FENETRE_JOURS-1)*864e5);   // aujourd'hui compris
+    const deb=new Date(fin.getTime()-(J-1)*864e5);                   // aujourd'hui compris
     const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
     out.depuis=iso(deb); out.jusqu=auj;
     const cnt={};

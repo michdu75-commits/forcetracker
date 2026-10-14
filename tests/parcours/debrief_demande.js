@@ -21,6 +21,10 @@
    d'Anthropic quand le client disparaît, l'export (couvert par B-SI01-E/F, qui ne dépend pas du déclencheur).
    Banc : tools/banc_debrief_demande.js · contrôle négatif : tools/mut_debrief_demande.py
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
+/* 🗂️ PROGRES-SEANCES-01 (14/10/2026, R30) — l'historique a quitté l'onglet « Exercices » pour « Séances », rangé par
+   année puis par mois (mois repliés). Ces témoins visaient la liste en passant par « Exercices » : ils passent
+   maintenant par « Séances » et déplient les mois des séances de la fixture. Leur garantie (les boutons de
+   débrief d'UNE séance) est inchangée ; la navigation elle-même est conduite par B-PS01-E. */
 const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); const k = src.indexOf('\nasync function ', i + 10);
   const l = src.indexOf('\nconst ', i + 10), m = src.indexOf('\nlet ', i + 10), n = src.indexOf('\n(function', i + 10);
   const fin = [j, k, l, m, n].filter(x => x > 0); return src.slice(i, fin.length ? Math.min(...fin) : undefined); };
@@ -114,7 +118,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const fermerFin = X => clic(X.pg, '[onclick="closeSessionEnd()"]');
   const coach = async (X, ms) => { await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(ms || 1500); };
   const versProgres = async X => { await clic(X.pg, '#nb-progress');
-    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(350);
+    await X.pg.evaluate(() => { try { switchProgTab('seances', document.getElementById('ptab-seances')); (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} }); await X.pg.waitForTimeout(350);
     /* ⚠️ La liste de Progrès se dessine APRÈS l'onglet : sous charge, 350 ms ne suffisaient pas (OD-08b, OD-11, OD-17b ont
        rougi sur du code sain, « carte introuvable »). On attend une carte, 3 s au plus. */
     const t0 = Date.now(); while (Date.now() - t0 < 3000) { if (await X.pg.evaluate(() => !!document.querySelector('#sess-list .sess-card'))) break; await X.pg.waitForTimeout(150); } };
