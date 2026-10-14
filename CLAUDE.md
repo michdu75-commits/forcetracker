@@ -30,6 +30,8 @@
 
 16. **🔍 AUCUNE IMPOSSIBILITÉ NI ACTION MANUELLE SANS PREUVE.** Avant d'affirmer qu'un test est **impossible** ou de demander une **manipulation manuelle** à Michel, vérifier d'abord si l'**accès existe réellement**, si l'action est **déjà automatisée** (workflow GitHub Actions · Cloudflare · Supabase · un script du dépôt), si l'**état demandé est déjà atteint**, et si l'impossibilité a été **mesurée**. ⛔ **Une supposition ne devient JAMAIS une contrainte.** ⚙️ La chaîne obligatoire est **TESTÉE → OBSERVÉE → EXPLIQUÉE**, jamais *supposée → transformée en décision* : un blocage se dit avec sa **cause technique précise** (« HTTP 403 même avec l'`Origin` attendu, domaine bloqué par le proxy »), jamais par « je ne peux pas ». ⭐ **Toute instruction donnée à Michel est une sortie critique** — nécessaire · pas déjà faite · pas automatisée · compatible avec l'état réel · réversible. ⚖️ **Elle complète la #15** : *Michel décide ce qui DOIT ÊTRE, le code dit ce qui EST — et Claude ne transforme jamais une supposition sur ce qui EST en contrainte sur ce qui DOIT ÊTRE.* → `docs/REGLES-OR.md#16`
 
+18. **📁 DRIVE — ACCÈS TESTÉ AU DÉBUT, ET RIEN D'EXISTANT N'EST TOUCHÉ SANS L'ACCORD DE MICHEL.** Au **tout début** d'un chantier qui lit ou écrit sur Google Drive, **tester l'accès** ; si une validation de Michel est nécessaire, la **déclencher immédiatement**, avant tout calcul long. ⛔ **Ne jamais supprimer, mettre à la corbeille, renommer, déplacer ou remplacer un fichier Drive existant sans son autorisation EXPLICITE.** Si l'outil ne sait pas modifier un fichier existant, **créer une nouvelle version clairement nommée et laisser l'ancienne intacte.** → `docs/REGLES-OR.md#18`
+
 ---
 
 ## 💬 LE TON QUI MARCHE ICI — pour tout Claude qui travaille sur Force Tracker

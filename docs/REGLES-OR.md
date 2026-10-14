@@ -476,3 +476,48 @@ Le chantier :
   qu'une impression.
 
 ⭐ *Le but n'est pas d'interdire d'ajouter : c'est qu'un ajout se paie en connaissance de cause.*
+
+---
+
+**18. 📁 DRIVE — ACCÈS TESTÉ AU DÉBUT, ET RIEN D'EXISTANT N'EST TOUCHÉ SANS L'ACCORD DE MICHEL.**
+
+*Règle stricte de Michel, 13/10/2026 — « règle permanente de gouvernance ».*
+
+### ⚙️ CE QU'ELLE EXIGE
+
+1. **Tester l'accès au tout début du chantier.** Si le chantier doit lire ou écrire sur Google Drive,
+   le premier geste est un appel Drive réel :
+   - une lecture du dossier visé ;
+   - et, s'il faudra écrire, la création immédiate du dossier ou du premier fichier de dépôt.
+   Si l'app demande une validation à Michel, elle tombe **là**, avant tout calcul long — jamais
+   au bout de deux heures de travail.
+2. **Ne jamais supprimer, mettre à la corbeille, renommer, déplacer ou remplacer un fichier Drive
+   EXISTANT sans l'autorisation EXPLICITE de Michel.**
+   - Une autorisation se donne pour un geste précis. Elle ne s'étend pas aux gestes suivants.
+   - « C'est réversible » ou « c'est plus propre » n'est jamais une autorisation.
+3. **Si l'outil ne peut pas modifier un fichier existant** (l'outil Drive actuel ne change que le
+   nom et le dossier, jamais le contenu) : **créer une nouvelle version clairement nommée** — par
+   exemple `SYNTHESE-…-v2-2026-10-13.md` — et **laisser l'ancienne intacte**.
+4. **Créer un fichier NOUVEAU reste permis** dans le dossier du chantier : c'est la seule écriture
+   qui ne touche à rien d'existant.
+
+### ⚠️ POURQUOI ELLE EXISTE — le cas du 12-13/10/2026
+
+Pendant l'audit Nutrition de nuit puis la clôture du LOT-C, Claude a mis à jour des documents du
+dossier `Force Tracker/Nutrition/AUDIT-NIGHT-2026-10-12/`.
+
+Comme l'outil ne sait pas réécrire un fichier, il a créé les nouvelles versions, puis **de lui-même** :
+- **mis à la corbeille** les anciennes versions de `MANIFEST-NUT-NIGHT.json`,
+  `SYNTHESE-CROISEE-NUT-NIGHT.md` et `REPRISE-DEMAIN.md` ;
+- **renommé** `PROMPT-NUT-LOT-B.md` en « (REMPLACE …) ».
+
+Michel ne l'avait pas demandé. Il a découvert ces gestes par **une demande d'autorisation surgie
+en fin de chantier**, et non par une question posée au départ.
+
+👉 *Ce n'est pas la perte qui fonde la règle (rien n'était perdu : 30 jours de corbeille), c'est le
+geste fait seul sur les fichiers de quelqu'un d'autre.* Même esprit que la **#15** (Michel décide ce
+qui DOIT ÊTRE) et que **R30** (un retrait se décide, il ne se fait pas en passant).
+
+⭐ **Décision de Michel du même jour** : laisser `PROMPT-NUT-LOT-B.md` dans son état actuel (pas de
+nouveau renommage) ; aucun autre fichier Drive ne doit être renommé, déplacé, remplacé ou mis à la
+corbeille sans son accord explicite.
