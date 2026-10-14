@@ -4338,7 +4338,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await pd.waitForTimeout(1200);
   const D=await pd.evaluate(()=>{
    try{
-    goScreen('progress'); renderSessions();
+    /* 🗂️ PROGRES-SEANCES-01 (R30) : l'historique est rangé par année puis par mois, mois REPLIÉS par défaut.
+       On déplie les mois des séances avant de lire la liste — la garantie (la durée se lit sur la carte) est la même. */
+    goScreen('progress'); (S.sessions||[]).forEach(x=>_sessOuvrir([_sessMoisDe(x)])); renderSessions();
     const liste=document.getElementById('sess-list').innerText;
     openSessDetail(1);
     return { liste, detail:(document.getElementById('sd-sub')||{}).textContent||'',
@@ -16066,7 +16068,12 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
        périme à la première restructuration ; un témoin qui mesure ce qu'on VOIT, non.* */
     const _vuSynth=()=>{ const e=document.getElementById('prog-synth'); return !!(e&&e.offsetParent); };
     o.masqueeHorsExo=!_vuSynth();
+    /* 🗂️ PROGRES-SEANCES-01 (R30, décision de Michel du 14/10) : la carte a quitté « Exercices » pour « Séances ».
+       Même garantie, sur son nouvel onglet : masquée ailleurs (Exercices COMPRIS), et elle revient intacte. */
     switchProgTab('exo',document.getElementById('ptab-exo'));
+    await new Promise(r=>setTimeout(r,250));
+    o.masqueeSurExo=!_vuSynth();
+    switchProgTab('seances',document.getElementById('ptab-seances'));
     await new Promise(r=>setTimeout(r,250));
     o.surviteOnglet=(document.getElementById('prog-synth').textContent||'').trim().length>0
                     && _vuSynth();
@@ -16111,9 +16118,9 @@ console.log('\n-- CXLV. Brique 8 : les constantes (ft-v1041) --');
        exact du DOM où le titre est peint.* */
     t('⭐⭐ LA PORTE : la section s\'affiche en tête de Progrès',
       /CE QUE TON HISTOIRE MONTRE/i.test(G.accSynth||''), (G.accSynth||'').slice(0,100));
-    t('⛔ elle est MASQUÉE hors de l\'onglet Exercices (Poids et Badges parlent d\'autre chose)',
-      G.masqueeHorsExo===true, 'masquée = '+G.masqueeHorsExo);
-    t('⛔ … et elle REVIENT intacte quand on retourne sur Exercices (elle ne se perd pas)',
+    t('⛔ elle est MASQUÉE hors de l\'onglet Séances (Exercices, Poids et Badges parlent d\'autre chose)',
+      G.masqueeHorsExo===true && G.masqueeSurExo===true, 'masquée Poids = '+G.masqueeHorsExo+' · Exercices = '+G.masqueeSurExo);
+    t('⛔ … et elle REVIENT intacte quand on retourne sur Séances (elle ne se perd pas)',
       G.surviteOnglet===true, 'toujours là = '+G.surviteOnglet);
     t('🔴 règle d\'or #9 : le bouton central « + » est à sa place',
       G.fab[2]>0 && G.fab[3]>0, JSON.stringify(G.fab));
@@ -18328,7 +18335,10 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
     const pec=(v.liste||[]).find(x=>/Pectoraux/i.test(x.label))||{};
     o.brut=pec.series; o.parSem=pec.parSem;
     // ── L'ECRAN ──
-    goScreen('progress');
+    /* 🗂️ PROGRES-SEANCES-01 (R30, décision de Michel du 14/10) : l'écran propose 14 | 28 jours, 28 par défaut.
+       Ce bloc protège la fenêtre de 14 jours et l'unité « par semaine » : il CHOISIT donc 14 jours, comme la
+       personne le ferait. Le défaut à 28 et la moyenne ÷ 4 sont témoignés par B-PS01-E (PS-E17 → PS-E19). */
+    goScreen('progress'); choisirVolumeJours(14);
     const c=document.getElementById('prog-volume');
     /* ⚠️ RE-VISÉ (ft-v1066) : le titre a migré dans le `<summary>` de l'accordéon. Ce que ce
        témoin protège est que le titre dise « par semaine » — pas l'élément qui le porte. */
@@ -18359,7 +18369,7 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
       return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
     const ex=(nom,n)=>({name:nom, sets:Array.from({length:n},()=>({kg:60,reps:8,type:'N',done:true}))});
     S.sessions=[{date:J(2),exs:[ex('Développé Couché',4)]},{date:J(9),exs:[ex('Développé Couché',5)]}];
-    persist(); goScreen('progress');
+    persist(); goScreen('progress'); choisirVolumeJours(14);   // PROGRES-SEANCES-01 : 14 jours choisi (voir plus haut)
     const n=(document.querySelector('#prog-volume .vol-n')||{}).textContent||'';
     return {affiche:n, brut:((_volumeParMuscle().liste||[]).find(x=>/Pectoraux/i.test(x.label))||{}).series};
    }catch(e){ return {err:String(e)}; }
@@ -18393,7 +18403,7 @@ console.log('\n-- CLXIV. Le volume par muscle : 14 jours, ramenés à la semaine
     t('⛔⛔ ⑥ toujours AUCUNE cible affichée (la décision de ft-v1045 tient)',
       W.aucuneCible===true, 'aucune cible = '+W.aucuneCible);
     /* ⭐⭐ R2 — MILO REÇOIT LA MÊME GRANDEUR. Sans ça, l'écran dirait 6 et Milo dirait 12. */
-    t('⭐⭐ ⑦ Milo reçoit la MÊME grandeur que l\'écran (6/semaine), jamais le brut',
+    t('⭐⭐ ⑦ Milo reçoit la MÊME grandeur que l\'écran réglé sur 14 jours (6/semaine), jamais le brut',
       W.miloParSem===true && W.miloPasDeBrut===true,
       JSON.stringify({parSem:W.miloParSem,pasDeBrut:W.miloPasDeBrut}));
     t('⛔ ⑧ … et il est prévenu que c\'est une moyenne (pas « cette semaine »)',
@@ -18916,7 +18926,9 @@ console.log('\n-- CLXIX. Aucune modale n\'est enfermée dans un écran qui défi
       const r=md.getBoundingClientRect();
       return {y:Math.round(r.y), dansLEcran:(r.bottom>0 && r.top<window.innerHeight)}; };
     const o={};
-    goScreen('progress');
+    /* 🗂️ PROGRES-SEANCES-01 (R30) : l'historique est rangé par mois, REPLIÉS par défaut — 30 séances repliées ne
+       font plus défiler. On les déplie (ce que fait la personne qui va tout en bas) : même garantie, écran défilé. */
+    goScreen('progress'); (S.sessions||[]).forEach(x=>_sessOuvrir([_sessMoisDe(x)])); renderSessions();
     const ep=document.getElementById('s-progress');
     ep.scrollTop=ep.scrollHeight;                       // comme Michel : tout en bas
     o.defilement=Math.round(ep.scrollTop);
@@ -19111,7 +19123,7 @@ console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v
 
    ⭐ MESURE : les deux cartes pesent 216 + 191 = 407 px. Sur Poids, les sous-onglets passent de
    y=545 a y=118 — 427 px rendus a l'ecran, et la pesee du jour remonte de ~600 a 170. */
-console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur « Exercices » (ft-v1065) --');
+console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur « Séances » (ft-v1065 → PROGRES-SEANCES-01) --');
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
@@ -19137,13 +19149,19 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
     const haut=id=>{ const e=document.getElementById(id); return e?Math.round(e.getBoundingClientRect().height):0; };
     const y=id=>{ const e=document.getElementById(id); return e?Math.round(e.getBoundingClientRect().y):null; };
     const o={};
+    /* 🗂️ PROGRES-SEANCES-01 (R30, décision de Michel du 14/10) : les deux cartes parlent de TOUT l'entraînement ;
+       elles ont quitté « Exercices » (l'analyse d'UN exercice) pour « Séances ». Même garantie, sur le bon onglet :
+       là sur Séances, absentes partout ailleurs — Exercices COMPRIS —, et elles reviennent intactes. */
+    switchProgTab('seances',document.getElementById('ptab-seances'));
     o.exo={synth:vis('prog-synth'), volume:vis('prog-volume'),
-           px:haut('prog-synth')+haut('prog-volume'), ongletsY:y('ptab-exo')};
+           px:haut('prog-synth')+haut('prog-volume'), ongletsY:y('ptab-seances')};
     /* ⚠️ LA RÉFÉRENCE SE PREND ICI, PENDANT QUE LA CARTE EST VISIBLE, et avec `textContent`.
        `innerText` respecte le RENDU : sur un élément `display:none` il rend une chaîne VIDE —
        le témoin comparait donc « rien » à « quelque chose » et rougissait sur du code correct.
        C'est le piège de ft-v1046, retrouvé ici par un autre chemin. */
     const refSynth=(document.getElementById('prog-synth').textContent||'').trim();
+    switchProgTab('exo',document.getElementById('ptab-exo'));
+    o.surExo={synth:vis('prog-synth'), volume:vis('prog-volume'), contenuVisible:vis('prog-exo'), contenuY:y('prog-exo')};
     switchProgTab('poids',document.getElementById('ptab-poids'));
     o.poids={synth:vis('prog-synth'), volume:vis('prog-volume'), ongletsY:y('ptab-poids'),
              contenuY:y('prog-poids'), contenuVisible:vis('prog-poids')};
@@ -19152,7 +19170,7 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
               contenuY:y('prog-badges'), contenuVisible:vis('prog-badges')};
     /* ⛔ ET LE RETOUR : elles reviennent INTACTES, sans recalcul — c'est ce que l'ancienne
        décision protégeait vraiment, et ça ne doit pas se perdre. */
-    switchProgTab('exo',document.getElementById('ptab-exo'));
+    switchProgTab('seances',document.getElementById('ptab-seances'));
     o.retour={synth:vis('prog-synth'), volume:vis('prog-volume'),
               memeContenu:(document.getElementById('prog-synth').textContent||'').trim()===refSynth,
               contenuNonVide:refSynth.length>20};
@@ -19165,9 +19183,13 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
   else{
     /* ⛔ SANS CE TÉMOIN, TOUT LE BLOC SERAIT VERT EN NE MESURANT RIEN : si les cartes ne se
        rendaient pas du tout, « masquée sur Poids » serait vrai pour la mauvaise raison. */
-    t('⛔ ① les deux cartes sont bien LÀ sur Exercices (sinon le reste ne mesure rien)',
+    t('⛔ ① les deux cartes sont bien LÀ sur Séances (sinon le reste ne mesure rien)',
       W.exo.synth===true && W.exo.volume===true && W.exo.px>300,
       JSON.stringify(W.exo));
+    /* ⭐⭐ PROGRES-SEANCES-01 : « Exercices » ne garde que l'analyse d'UN exercice — les cartes n'y sont plus. */
+    t('⭐⭐ ①bis sur EXERCICES, elles ne s\'affichent plus — et l\'analyse d\'un exercice commence en haut',
+      W.surExo.synth===false && W.surExo.volume===false && W.surExo.contenuVisible===true && W.surExo.contenuY < 250,
+      JSON.stringify(W.surExo));
     /* ⚠️ RE-VISÉ (ft-v1066) : ce témoin mesurait « les onglets REMONTENT sur Poids » — vrai tant
        que les cartes étaient AU-DESSUS d'eux. Depuis que les onglets sont en tête, ils ne bougent
        plus : il n'y a plus de mouvement à mesurer, et le témoin rougissait sur du code correct.
@@ -19181,7 +19203,7 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
       W.badges.synth===false && W.badges.volume===false && W.badges.contenuVisible===true,
       JSON.stringify(W.badges));
     /* ⛔ CE QUE L'ANCIENNE DÉCISION PROTÉGEAIT VRAIMENT, et qui reste vrai. */
-    t('⛔ ④ … et elles REVIENNENT intactes sur Exercices (elles ne se perdent pas, R30)',
+    t('⛔ ④ … et elles REVIENNENT intactes sur Séances (elles ne se perdent pas, R30)',
       W.retour.synth===true && W.retour.volume===true
       && W.retour.memeContenu===true && W.retour.contenuNonVide===true,
       JSON.stringify(W.retour));
@@ -19382,9 +19404,15 @@ console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes replia
     goScreen('progress');
     const R=id=>{const e=document.getElementById(id); if(!e)return null;
       const r=e.getBoundingClientRect(); return {y:Math.round(r.y),h:Math.round(r.height)};};
-    const o={ecran:844, onglets:R('ptab-exo'), synth:R('prog-synth-acc'), vol:R('prog-volume-acc'),
-             progression:R('big4-chips'), recherche:R('prog-search'),
+    /* 🗂️ PROGRES-SEANCES-01 (R30) : les cartes repliables vivent dans « Séances » (onglet par défaut) ; la
+       progression et la recherche, dans « Exercices ». Chacune se mesure sur SON onglet — mesurer un élément
+       masqué rend y = 0 et le témoin était vert sans rien voir (trouvé par la passe de diagnostic du 14/10). */
+    switchProgTab('seances',document.getElementById('ptab-seances'));
+    const o={ecran:844, onglets:R('ptab-seances'), synth:R('prog-synth-acc'), vol:R('prog-volume-acc'),
              lignesVolume:document.querySelectorAll('#prog-volume .vol-l').length};
+    switchProgTab('exo',document.getElementById('ptab-exo'));
+    o.progression=R('big4-chips'); o.recherche=R('prog-search');
+    switchProgTab('seances',document.getElementById('ptab-seances'));
     /* ⛔ REPLIÉES PAR DÉFAUT — c'est le choix de Michel, et c'est ce qui rend la place. */
     o.repliees={synth:!document.getElementById('prog-synth-acc').open,
                 volume:!document.getElementById('prog-volume-acc').open};
@@ -19417,7 +19445,7 @@ console.log('\n-- CLXXIII. Le haut de Progrès : onglets en tête, cartes replia
       'synth '+W.synth.h+' + volume '+W.vol.h+' = '+(W.synth.h+W.vol.h)+' px');
     /* ⭐⭐ ET LE VRAI GAIN SE LIT SUR LE CONTENU : la recherche était au ras du bord (821). */
     t('⭐⭐ ④ la progression et la recherche remontent DANS l\'écran (avant : 776 et 821)',
-      W.progression.y<450 && W.recherche.y<500,
+      W.progression.h>0 && W.recherche.h>0 && W.progression.y<450 && W.recherche.y<500,
       'progression y='+W.progression.y+' · recherche y='+W.recherche.y);
     /* ⛔ ON MASQUE, ON NE VIDE PAS : le contenu est peint une fois par `renderProgress`. */
     t('⛔ ⑤ le contenu est déjà peint sous le repli (on masque, on ne recalcule pas)',
@@ -25617,7 +25645,8 @@ console.log('\n-- CCXXVI ter. Le cardio se reconnaît dans l\'historique (ft-v11
   await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
   const R=await p.evaluate(()=>{ try{
     const o={}, t=today(), ts=new Date(t+'T10:00:00').getTime();
-    const lire=()=>{ renderSessions(); const el=document.getElementById('sess-list');
+    /* 🗂️ PROGRES-SEANCES-01 (R30) : mois repliés par défaut — on déplie ceux des séances avant de lire la carte. */
+    const lire=()=>{ (S.sessions||[]).forEach(x=>_sessOuvrir([_sessMoisDe(x)])); renderSessions(); const el=document.getElementById('sess-list');
                      return (el?el.innerText:'').replace(/\s+/g,' ').trim(); };
     goScreen('progress',document.getElementById('nb-progress'));
     /* ① le cas de Michel : cardio SEUL */
@@ -27063,9 +27092,13 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
     const lire=()=>{
       const onglet=[...document.querySelectorAll('.nu-tab')].find(x=>x.classList.contains('active'));
       const anc=document.getElementById('sess-hist-title');
+      /* 🗂️ PROGRES-SEANCES-01 (R30) : Progrès s'ouvre désormais SUR Séances, mois repliés. « Ciblé » se lit alors
+         au mois déplié : la tuile « Séances ce mois » ouvre le mois en cours, l'arrivée nue n'en ouvre aucun. */
+      const mo=document.querySelector('#sess-list .sess-mois[aria-expanded="true"]');
       return {ecran:(document.querySelector('.screen.active')||{}).id||'?',
               onglet:onglet?onglet.textContent.trim():'—',
-              ancre:anc?Math.round(anc.getBoundingClientRect().top):null};
+              ancre:anc?Math.round(anc.getBoundingClientRect().top):null,
+              moisOuvert:mo?mo.getAttribute('data-mois'):null, moisCourant:today().slice(0,7)};
     };
     /* ⭐⭐ LE TÉMOIN DE CONTRÔLE : où atterrit-on en ouvrant Progrès SANS rien viser ?
        ⚠️ RE-VISÉ après un rouge : j'avais d'abord écrit « l'ancre doit être à moins de 400 px ».
@@ -27141,12 +27174,13 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
        80. Il est haut au-dessus du bruit de rendu et bas sous n'importe quel vrai défilement. */
     const cible=x=> x.ecran==='s-progress' &&
       ( x.onglet!==nue.onglet ||
+        (x.moisOuvert===x.moisCourant && nue.moisOuvert!==x.moisCourant) ||
         (x.ancre!==null && nue.ancre!==null && (nue.ancre-x.ancre)>=100) );
     const mauvaises=d.filter(x=>!cible(x));
     t('CCXXXIX ⭐⭐ chaque tuile restante mène à une destination CIBLÉE (plus au haut générique)',
       d.length===2 && mauvaises.length===0,
       'nu : '+nue.onglet+' / ancre '+nue.ancre+' — '
-      +d.map(x=>x.titre+' → '+x.onglet+' / ancre '+x.ancre).join(' | '));
+      +d.map(x=>x.titre+' → '+x.onglet+' / ancre '+x.ancre+' / mois '+x.moisOuvert).join(' | '));
   }
   /* ⛔⛔ R30 — LE RETRAIT EST FIGÉ, AVEC SA RAISON. Une rangée de 2 ressemble exactement à un
      oubli : sans ce témoin, le suivant (moi, dans six mois) « répare » une décision de Michel.
@@ -39658,6 +39692,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      sûr (rattrapage, Coach, file) ; cet automatisme n'existe plus. Ses invariants encore vivants (sessionId,
      double clic, A ne libère pas B, complete:false, suppression) sont repris par OD-05/09/10/12/13/14. */
   await require('./debrief_demande.js').ecran(t, b, PORT);
+  /* 🗂️ PROGRES-SEANCES-01 (session-B, 14/10/2026) — Progrès : Séances | Exercices | Corps & santé | Badges ; historique
+     Année → Mois sans plafond de 20 ; Accueil et calendrier → Séances ; volume 14 | 28 (28 par défaut), Milo inchangé.
+     Blocs B-PS01-*. Banc : tools/banc_progres_seances.js · contrôle négatif : tools/mut_progres_seances.py. */
+  await require('./progres_seances.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);
@@ -40539,6 +40577,7 @@ require('./seance_fp01.js').sourceMixte(t, ROOT, fs, path);
 require('./seance_fp01.js').sourceExt(t, ROOT, fs, path);
 require('./session_integrity.js').source(t, ROOT, fs, path);
 require('./debrief_demande.js').source(t, ROOT, fs, path);
+require('./progres_seances.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
