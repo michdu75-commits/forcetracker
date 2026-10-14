@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-/* BANC CIBLÉ — NUT-PUNCH-01 (coup de poing Nutrition, 03/10/2026), blocs B-NP01-A → B-NP01-F.
+/* BANC CIBLÉ — LOT 0, contrat Séance → Nutrition (bloc B-NP01-A ; porté le 14/10/2026 du sous-lot A
+   de NUT-PUNCH-01, 03/10/2026). Les sous-lots B → F ne sont PAS portés sur master.
    Il existe pour que le contrôle négatif (`tools/mut_nut_punch01.py`) rejoue ses mutations en
-   secondes au lieu d'une passe complète. Usage : node tools/banc_nut_punch01.js [partie …]
-   (racine ou clone ; sans argument = toutes les parties). Parties : contrat. */
+   minutes au lieu d'une passe complète. Usage : node tools/banc_nut_punch01.js [partie …]
+   (racine ou clone ; sans argument = toutes les parties). Parties : contrat.
+   ⚠️ Une ligne « LEVÉE — À RECLASSER » n'est PAS un rouge : une observation a changé, à relire. */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.dirname(__dirname);

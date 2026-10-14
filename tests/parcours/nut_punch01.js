@@ -35,7 +35,9 @@
      O6 un programme actif, jour non annoncé = jour de repos (G5)
      O7 le cardio APRÈS une séance de musculation (champ `cardio`) : jour et région de la séance
      O8 les anciens codes W / E / D au rechargement (migration une seule fois, `ft4_stmig1`)
-     O9 une annonce puis une séance annulée : l'annonce reste, le jour reste « annoncé » (G5)
+     O9 une annonce puis une séance annulée : l'annonce reste (G5) ; JUSTE APRÈS, le jour se lit
+        « en cours » — c'est l'objet vide recréé par l'écran Séance, donc l'anomalie O10 (LOT B),
+        PAS une question G5 ; « annoncé » après rechargement
      O10 ⚠️ ANOMALIE DE DÉCLENCHEMENT, À TRAITER DANS LE LOT B — l'écran Séance simplement affiché
          (ou le bouton central sans rien noter) fait du jour un jour de séance « en cours ».
          ⛔ Ce n'est PAS une décision G5 ni une règle produit : la définition existante d'une
@@ -339,18 +341,21 @@ async function _complementsLot0(t, b, PORT) {
   const P = await _ouvrir(b, PORT, '2026-10-05T09:00:00+02:00');   // lundi matin
   const P6 = await P.pg.evaluate(() => {
     __np.base({}); __np.historique([1, 3, 5], 'haut');
-    const ex = n => ({ name: n, sets: [{ kg: 50, reps: 10 }, { kg: 50, reps: 10 }] });
+    /* La forme STOCKÉE par l'app (`days[].exs`, séries typées) — jamais la forme intermédiaire de l'import
+       (`exercises`) : une fixture qui n'a pas le schéma de la production ne teste rien, elle rassure. */
+    const ex = n => ({ name: n, sets: [{ kg: 50, reps: 10, type: 'N' }, { kg: 50, reps: 10, type: 'N' }] });
     S.programmes = [{ name: 'Programme test LOT 0', startDate: __np.jour(-14), weeks: 8,
-      days: [{ label: 'Jambes', exercises: __np.EXS.jambes.map(ex) }, { label: 'Haut', exercises: __np.EXS.haut.map(ex) }] }];
+      days: [{ label: 'Jambes', exs: __np.EXS.jambes.map(ex) }, { label: 'Haut', exs: __np.EXS.haut.map(ex) }] }];
     persist();
     const avant = JSON.stringify(S.programmes);
     const per = progPeriode(S.programmes[0]);
     const n = __np.nutri();
     const repas = getMeals(calcMacros('charge'), 'charge').map(m => m.name).join(' | ');
-    return { actif: !!(per && per.start <= today() && today() <= per.end), n, repas, inchange: JSON.stringify(S.programmes) === avant, annonce: S.nextPlanned };
+    return { actif: !!(per && per.start <= today() && today() <= per.end), exs: S.programmes[0].days.map(d => (d.exs || []).length),
+      n, repas, inchange: JSON.stringify(S.programmes) === avant, annonce: S.nextPlanned };
   });
-  t('B-NP01-A O6 sonde vivante : le programme est bien ACTIF aujourd\'hui (sa période couvre le jour), aucune annonce, et le calcul Nutrition ne le modifie pas',
-    P6.actif === true && P6.annonce === null && P6.inchange === true, _det({ actif: P6.actif, annonce: P6.annonce, inchange: P6.inchange }));
+  t('B-NP01-A O6 sonde vivante : le programme est bien ACTIF aujourd\'hui (sa période couvre le jour), ses jours portent leurs exercices (forme stockée `exs`), aucune annonce, et le calcul Nutrition ne le modifie pas',
+    P6.actif === true && P6.exs.every(n => n > 0) && P6.annonce === null && P6.inchange === true, _det({ actif: P6.actif, exs: P6.exs, annonce: P6.annonce, inchange: P6.inchange }));
   _obs('O6', 'programme ACTIF, jour NON annoncé, rien fait → la Nutrition lit un jour de REPOS (le programme n\'est jamais lu)',
     { js: P6.n.js, cycle: P6.n.cycle && P6.n.cycle.jour, repasEntrainement: /entraînement/i.test(P6.repas) },
     { js: 'repos', cycle: 'repos', repasEntrainement: false });
@@ -456,7 +461,9 @@ async function _complementsLot0(t, b, PORT) {
   const lireE = () => E.pg.evaluate(() => { const n = __np.nutri();
     return { js: n.js, cycle: n.cycle && n.cycle.jour, nbSeances: S.sessions.length, ouverte: _seanceOuverte(),
       repasEntrainement: /entraînement/i.test(getMeals(calcMacros('charge'), 'charge').map(m => m.name).join(' | ')) }; });
+  /* Le point de départ est lu APRÈS un vrai démarrage de l'app : c'est lui qui dit « jour de repos ». */
   await E.pg.evaluate(() => { __np.base({}); __np.historique([1, 3, 5], 'haut'); persist(); });
+  await E.recharger();
   const e0 = await lireE();
   await E.pg.evaluate(() => goScreen('log', document.getElementById('nb-log'))); await E.pg.waitForTimeout(300);
   const e1 = await lireE();
