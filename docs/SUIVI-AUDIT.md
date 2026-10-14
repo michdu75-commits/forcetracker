@@ -974,3 +974,10 @@ TRANCHÉ par Michel** : le **mois courant s'ouvre seul** en entrée normale s'il
 LOT 0 **36 / 0** et **35 / 35**, 8 bancs voisins verts, contexte Milo **identique** à master (81 018 caractères, avec 32 séances,
 écran 14 ou 28), **D-031 7 035 ✅ / 0 ❌** (4 conditions). ⛔ Toujours non tranchés : lecture / modification du détail,
 destination de Badges, Milo 14 j vs écran 28 j. Détail : `docs/PROGRES-SEANCES-01.md` §8.
+
+**➡️ Micro-fermeture (14/10, soir) — réserves du contre-check B fermées, READY_FOR_MASTER_INTEGRATION.** Diapo du Guide
+« Tes progrès » refaite (4 onglets, Séances d'abord) ; témoins durcis (PS-S8, PS-E41 positif, PS-E43 deux lignes, PS-E45 → PS-E48,
+PS-E27 / PS-E29 isolés) ; outil de mutation durci (plantage ≠ attrapée, témoin attendu, MUT_J=1, arbre sain rejoué) ; D-076 / D-077 au
+registre. Arbre fonctionnel `efa251b9` / `f3813e86` : B-PS01 **57 / 0**, mutations **44 / 44**, LOT 0 **36 / 0**, **D-031 7 040 ✅ / 0 ❌**.
+⛔ Restent consignés, non traités (consigne de Michel) : 14 / 28 / défaut 28 écrits en dur dans `setup.js`, commentaire de
+`_ctxVolumeMuscles`, `dump_prompt.js` à chemin absolu.

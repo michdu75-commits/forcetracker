@@ -9,9 +9,9 @@
  "lot0_source_tree": "d9b2b4e67d5579317640d1b9d46ad32773950346",
  "progres_source_head": "7ac0580ef74fc87172492c94dc0ecc1f011022fb",
  "progres_source_tree": "82639dc1120713b49ce0cf9e8ca5713924189d9e",
- "functional_head": "bd8ae92ec2994e3172aaf562c7b8c510a8b7b439",
- "tree": "80bc98a225f57a9a07eb0a8b507025c2dd010533",
- "final_head": "le commit qui contient ce fichier (documentation et handoff seulement, après la D-031) : git log -1 -- HANDOFF-PROGRES-SEANCES-INTEGRATION-01.json",
+ "functional_head": "efa251b928a7b1955d2d728327939015d585c7a8",
+ "tree": "f3813e86a880ba6e5a286e5c0756250056911c3d",
+ "final_head": "le commit qui contient cette version de ce fichier (documentation et handoff seulement, après la D-031) : git log -1 -- HANDOFF-PROGRES-SEANCES-INTEGRATION-01.json",
  "ordre_integration": [
   "821c4c37 réservation du journal de partage (avant toute fusion)",
   "23449cf4 fusion LOT 0 (f5c93e63) — conflit : journal de partage seulement, les deux lignes gardées",
@@ -31,7 +31,13 @@
   ]
  },
  "files_changed": {
+  "reference": "a0eab5b3 → tête finale (ce commit documentaire)",
   "vs_master": [
+   {
+    "etat": "A",
+    "fichier": "HANDOFF-PROGRES-SEANCES-INTEGRATION-01.json",
+    "applicatif": false
+   },
    {
     "etat": "M",
     "fichier": "app.js",
@@ -50,6 +56,16 @@
    {
     "etat": "M",
     "fichier": "docs/CONTEXTE-ACTUEL.md",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "docs/DECISIONS.md",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "docs/INVENTAIRE.md",
     "applicatif": false
    },
    {
@@ -76,6 +92,11 @@
     "etat": "M",
     "fichier": "docs/SUIVI-AUDIT.md",
     "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "guide/progres.jpg",
+    "applicatif": true
    },
    {
     "etat": "M",
@@ -167,6 +188,7 @@
    "app.js",
    "coach.js",
    "constants.js",
+   "guide/progres.jpg",
    "index.html",
    "log.js",
    "screens.js",
@@ -187,15 +209,8 @@
  },
  "tests": {
   "B-PS01": {
-   "ancien_comportement_mois_replie": "49 / 2 (PS-E10, PS-E42 rouges)",
-   "arbre_final": "52 / 0",
-   "nouveaux": [
-    "PS-E10 réécrit (R30)",
-    "PS-E41 mois courant absent",
-    "PS-E42 le tap replie",
-    "PS-E43 4 onglets 390 et 320 px",
-    "PS-E44 calendrier → séance ancienne, vrai geste, app fraîche"
-   ]
+   "arbre_final": "57 / 0",
+   "precedent": "52 / 0 (bd8ae92e)"
   },
   "lot0_banc": "36 / 0",
   "runner_8_blocs_reecrits_reduit": "73 / 0 (CCXXXIX re-visé R30)",
@@ -231,35 +246,41 @@
    "18": "PS-E16 + routes Worker comptées (0 réel)",
    "19": "PS-E35, PS-E36",
    "20": "PS-E43"
+  },
+  "voisins_rejoues": {
+   "session_integrity": "93/0",
+   "debrief_demande": "58/0",
+   "debrief_provenance": "24/0",
+   "historique_cloud": "87/0",
+   "accueil_mini": "54/0"
   }
  },
  "mutations": {
-  "progres_seances": "37 / 37 conformes sur l'arbre final (M31 → M36 nouvelles ; M5, M17 ré-ancrées)",
-  "lot0": "35 / 35 conformes",
-  "runner_reduit": "6 / 6 attrapées (dont R6 : tuile en goScreen nu)",
-  "piege_corrige": "M36 passait au travers (mois déjà dépliés par PS-E11) → PS-E44 déplacé en contexte neuf, attrapée"
+  "progres_seances": "44 / 44 conformes (MUT_J=1, témoin attendu exigé, arbre sain rejoué : 0 rouge)",
+  "lot0": "35 / 35 conformes (qualification précédente ; LOT 0 inchangé)",
+  "premiere_campagne_micro_fermeture": "43 / 44 — M39 non conforme (ne fabriquait aucune étiquette sur deux lignes), re-visée puis campagne complète rejouée"
  },
  "d031": {
-  "head": "bd8ae92ec2994e3172aaf562c7b8c510a8b7b439",
-  "tree": "80bc98a225f57a9a07eb0a8b507025c2dd010533",
-  "total": "7 035 OK / 0 rouge",
+  "head": "efa251b928a7b1955d2d728327939015d585c7a8",
+  "tree": "f3813e86a880ba6e5a286e5c0756250056911c3d",
+  "total": "7 040 OK / 0 rouge",
   "conditions": {
    "1_total": true,
    "2_code_runner_0": true,
    "3_arbre_inchange": true,
    "4_aucune_publication_concurrente": true
   },
-  "debut_utc": "14:07:36",
-  "fin_utc": "15:27:15",
-  "apres_la_passe": "documentation et handoff seulement (D-031 : pas de nouvelle passe)"
+  "debut_utc": "20:10:14",
+  "fin_utc": "21:23:27",
+  "apres_la_passe": "documentation et handoff seulement"
  },
  "check_regles": "vert (git diff --check propre)",
  "regle_17": {
   "donnees_persistees_ajoutees": 0,
   "cles_stockage_ajoutees": 0,
   "fichiers_applicatifs_crees": 0,
-  "fichiers_applicatifs_touches": 8,
-  "lignes": "+198 / -56 (net +142) ; décision D : +10 / -4 dans setup.js",
+  "fichiers_applicatifs_touches": "8 + 1 image du Guide (guide/progres.jpg, remplacée)",
+  "lignes": "+201 / -57 (net +144) vs master ; micro-fermeture : app.js +3 / -1 (légende et commentaire de la diapo)",
   "fonctions_nouvelles": [
    "_sessAnEstOuvert",
    "_sessCarteHtml",
@@ -298,6 +319,70 @@
   "branches sources non modifiées",
   "Drive en lecture seule"
  ],
- "statut": "READY_FOR_COUNTERCHECK",
- "rapport": "docs/PROGRES-SEANCES-01.md §8 ; PDF hors dépôt PROGRES-SEANCES-INTEGRATION-01-RAPPORT-2026-10-14.pdf"
+ "statut": "READY_FOR_MASTER_INTEGRATION",
+ "rapport": "docs/PROGRES-SEANCES-01.md §8 (pas de PDF pour la micro-fermeture : consigne de Michel)",
+ "qualification_precedente": {
+  "functional_head": "bd8ae92ec2994e3172aaf562c7b8c510a8b7b439",
+  "tree": "80bc98a225f57a9a07eb0a8b507025c2dd010533",
+  "d031": {
+   "head": "bd8ae92ec2994e3172aaf562c7b8c510a8b7b439",
+   "tree": "80bc98a225f57a9a07eb0a8b507025c2dd010533",
+   "total": "7 035 OK / 0 rouge",
+   "conditions": {
+    "1_total": true,
+    "2_code_runner_0": true,
+    "3_arbre_inchange": true,
+    "4_aucune_publication_concurrente": true
+   },
+   "debut_utc": "14:07:36",
+   "fin_utc": "15:27:15",
+   "apres_la_passe": "documentation et handoff seulement (D-031 : pas de nouvelle passe)"
+  },
+  "mutations": {
+   "progres_seances": "37 / 37 conformes sur l'arbre final (M31 → M36 nouvelles ; M5, M17 ré-ancrées)",
+   "lot0": "35 / 35 conformes",
+   "runner_reduit": "6 / 6 attrapées (dont R6 : tuile en goScreen nu)",
+   "piege_corrige": "M36 passait au travers (mois déjà dépliés par PS-E11) → PS-E44 déplacé en contexte neuf, attrapée"
+  },
+  "statut": "READY_FOR_COUNTERCHECK → contre-check B (réserves non bloquantes)"
+ },
+ "micro_fermeture": {
+  "date": "2026-10-14",
+  "base": "889425ea (HEAD documentaire de la qualification précédente)",
+  "guide": "diapo « Tes progrès » : capture refaite (Séances · Exercices · Corps & santé · Badges, Séances active, profil de démonstration, séances de la fixture B-PS01), légende et doigt (tap [.15,.17]) à jour ; aucune autre diapo touchée",
+  "temoins": [
+   "PS-S8 diapo du Guide",
+   "PS-E41 assertions positives",
+   "PS-E43 étiquette sur deux lignes",
+   "PS-E45 année passée repliée",
+   "PS-E46 porte ciblée > repli manuel",
+   "PS-E47 relance : repli, 14 jours et sous-onglet non gardés",
+   "PS-E48 marque bleue effacée en entrée normale",
+   "PS-E27 et PS-E29 isolés dans un contexte neuf"
+  ],
+  "outil_mutation": [
+   "plantage (code hors 0/1, ligne PLANTAGE, pas de total) ≠ attrapée",
+   "témoin attendu exigé (41 mutations)",
+   "MUT_J=1 par défaut",
+   "arbre sain rejoué en fin de campagne",
+   "M37 → M43 ajoutées ; M39 re-visée (ne fabriquait pas de défaut)"
+  ],
+  "docs": [
+   "D-076 et D-077 au registre",
+   "commentaires R30 à jour (runner + 3 bancs)",
+   "PROGRES-SEANCES-01 : +198 / −56 (arbre intégré), +192 / −56 (lot seul), +201 / −57 (après micro-fermeture)",
+   "journal : coach.js et screens.js listés"
+  ],
+  "hors_lot_consigne_non_traite": [
+   "14 / 28 / défaut 28 écrits en dur dans setup.js",
+   "commentaire de _ctxVolumeMuscles",
+   "tools/dump_prompt.js à chemin absolu"
+  ]
+ },
+ "reserves_ouvertes": [
+  "décisions produit non tranchées : lecture / modification du détail d'une séance ; destination de Badges ; Milo 14 j vs écran 28 j",
+  "WHATS_NEW à poser à la publication",
+  "consignés hors lot : 14 / 28 / défaut 28 en dur dans setup.js ; commentaire _ctxVolumeMuscles ; dump_prompt.js à chemin absolu",
+  "recette iPhone"
+ ]
 }

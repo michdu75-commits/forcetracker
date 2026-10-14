@@ -161,3 +161,11 @@ prioritaires (« Séances ce mois », calendrier, Accueil).
   verts ; contexte Milo **identique** à master (81 018 caractères avec 32 séances, écran sur 14 ou 28 jours) ; **D-031 unique :
   7 035 ✅ / 0 ❌**, 4 conditions vertes (14/10, 14:07 → 15:27 UTC). Après la passe : documentation et handoff seulement.
   Statut : **READY_FOR_COUNTERCHECK** — `HANDOFF-PROGRES-SEANCES-INTEGRATION-01.json`.
+- **Micro-fermeture du 14/10 (soir), réserves du contre-check B** : diapo du Guide « Tes progrès » refaite (capture à 4 onglets,
+  Séances active, profil de démonstration ; légende et doigt à jour) ; témoins durcis — PS-S8 (diapo), PS-E41 positif, PS-E43
+  (étiquette sur deux lignes), PS-E45 (année passée repliée), PS-E46 (porte ciblée > repli manuel), PS-E47 (relance : rien de
+  gardé), PS-E48 (marque bleue effacée en entrée normale), PS-E27 / PS-E29 rejoués dans un contexte neuf ; outil de mutation durci
+  (un plantage n'est jamais « attrapé », témoin attendu exigé, `MUT_J=1`, arbre sain rejoué à la fin) — M39 re-visée (l'ancienne
+  ne fabriquait pas d'étiquette sur deux lignes) ; D-076 / D-077 au registre. Arbre fonctionnel `efa251b9` / `f3813e86` : B-PS01
+  **57 / 0**, mutations **44 / 44**, LOT 0 **36 / 0**, voisins verts, **D-031 7 040 ✅ / 0 ❌** (4 conditions, 20:10:14 → 21:23:27 UTC).
+  Statut : **READY_FOR_MASTER_INTEGRATION**.
