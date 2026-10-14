@@ -3570,3 +3570,10 @@ Maintenant : seulement les 0 %. ❓ **Doute** : voulu partout ? Vérifiable par 
 `_offRechercher` envoie le texte tapé (« riz 100g », « riz. ») sans passer par la partie alimentaire. Le brief limitait
 LOT-B aux 4 sources locales ; aucun appel réel n'a été fait. ❓ **Doute** : OFF gère-t-il bien la quantité tapée ?
 Vérifiable par du code : ⚠️ (avec une fixture, pas en vrai). État : **à trier**.
+
+### 🟡 LE TÉMOIN CXVIII (EXPORT DES CONVERSATIONS) ROUGIT SI LA PASSE LE JOUE JUSTE AVANT MINUIT (14/10/2026 — clôture Nutrition)
+Mesuré : sa fixture date les messages à « maintenant » ± 60 / 90 s et compte les changements de jour en heure de Paris. Si
+« maintenant » tombe dans la dernière minute avant minuit, chaque paire enjambe minuit : 4 séparateurs au lieu de 2. Rejoué sur
+l'arbre `4681bc91` : 23:58:00 → 2 · **23:59:30 → 4** · 00:00:30 → 2. Arrivé pour de vrai à la passe du 13/10 lancée à 21:51 UTC
+(le bloc a tourné vers 23:59 à Paris) ; la passe relancée hors de la fenêtre est verte (6 946 / 0). L'export, lui, fait juste. ❓
+**Doute** : ancrer la fixture à midi du jour ? Vérifiable par du code : ✅. État : **à trier** (dette du harnais, non bloquante).
