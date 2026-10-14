@@ -49,7 +49,10 @@ function fixture() {
   seance(-22, 0, [{ name: 'Développé Couché', sets: serie(75, 8, 2) }, { name: 'Squat à la Barre', sets: serie(95, 5, 5) }]);
   for (let k = 0; k < 27; k++) {
     const off = -35 - 15 * k;
-    seance(off, 0, k % 2 ? [{ name: 'Squat à la Barre', sets: serie(90 + k, 5, 3) }] : [{ name: 'Développé Couché', sets: serie(70 + k, 8, 3) }]);
+    /* ⚠️ La PLUS VIEILLE séance de DC (k = 26) est volontairement plus légère que le record (k = 24) : sinon
+       « dernière − première » et « dernière − record » donnent le même chiffre et PS-E07 ne verrait pas la
+       différence (trouvé par la mutation M24, qui passait au travers). */
+    seance(off, 0, k % 2 ? [{ name: 'Squat à la Barre', sets: serie(90 + k, 5, 3) }] : [{ name: 'Développé Couché', sets: serie(k === 26 ? 60 : 70 + k, 8, 3) }]);
   }
   out.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : (b.ts || 0) - (a.ts || 0)));
   return out;
@@ -171,7 +174,7 @@ module.exports.ecran = async function (t, b, PORT) {
   /* ⚠️ Les chiffres épinglés sont ceux de master a0eab5b3 sur cette fixture : ce lot ne doit PAS les changer.
      Un futur lot statistique (HP-02, HP-03…) qui les change mettra ce témoin à jour, avec sa raison. */
   t('PS-E07 le graphique d\'un exercice est dessiné (courbe + 1RM) et ses chiffres sont ceux d\'avant le lot',
-    ana.svg > 0 && /99\.3 kg 1RM Actuel/.test(ana.txt) && /119\.2 kg Record/.test(ana.txt) && /-19\.9 kg Progrès -17%/.test(ana.txt), ana.txt.slice(0, 220) + ' | svg=' + ana.svg);
+    ana.svg > 0 && /99\.3 kg 1RM Actuel/.test(ana.txt) && /116\.7 kg Record/.test(ana.txt) && /\+24\.8 kg Progrès \+33%/.test(ana.txt), ana.txt.slice(0, 220) + ' | svg=' + ana.svg);
   t('PS-E08 les 4 raccourcis d\'exercice sont toujours là', ana.chips.length === 4, JSON.stringify(ana.chips));
 
   /* ── 4. Année → Mois → Séance (invariant 5) ────────────────────────────────────────────────── */
@@ -200,7 +203,12 @@ module.exports.ecran = async function (t, b, PORT) {
   const det = await X.pg.evaluate(() => ({ ouvert: !!document.querySelector('#ov-sess-detail.open'), id: typeof _sessId !== 'undefined' ? _sessId : null }));
   t('PS-E13 la plus vieille séance (32ᵉ, ' + plusVieille.date + ') s\'ouvre en détail par sa carte',
     okVieille && det.ouvert && det.id === cleDe(plusVieille), JSON.stringify(det));
+  const posAvant = await X.pg.evaluate(k => { const c = document.querySelector('#sess-list .sess-card[onclick="openSessDetail(' + k + ')"]'); return c ? Math.round(c.getBoundingClientRect().top) : null; }, cleDe(plusVieille));
   await X.pg.evaluate(() => { try { closeSessDetail(); } catch (e) {} document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
+  await X.pg.waitForTimeout(200);
+  const posApres = await X.pg.evaluate(k => { const c = document.querySelector('#sess-list .sess-card[onclick="openSessDetail(' + k + ')"]'); return c ? { top: Math.round(c.getBoundingClientRect().top), vis: c.offsetParent !== null } : null; }, cleDe(plusVieille));
+  t('PS-E13b fermer le détail ramène au MÊME mois, à la même position (contrat UX-HIST)', posAvant !== null && posApres && posApres.vis && Math.abs(posApres.top - posAvant) <= 1,
+    JSON.stringify({ posAvant, posApres }));
 
   /* ── 6. Le débrief d'une vieille séance reste atteignable, sans appel (invariant 6) ─────────── */
   const cDbf = tout.find(c => c.cle === cleDe(sDbf)) || {};
@@ -294,6 +302,21 @@ module.exports.ecran = async function (t, b, PORT) {
   t('PS-E29 une cible = UNE séance (par sa clé) : son année et son mois s\'ouvrent, sa carte est visible et seule marquée',
     okSeule && cSeule.length === 1 && cSeule[0].cle === cleDe(seule) && cSeule[0].vis, JSON.stringify(cSeule));
 
+  /* Un filtre de muscle actif cacherait la séance visée : la porte d'entrée repasse sur « Tous ». */
+  await versProgres(X); await onglet(X, 'ptab-seances');
+  const okFiltre = await clic(X.pg, '#sess-filter .sessf-chip:not(.on)');            // un muscle (pas « Tous »)
+  const filtreAvant = await X.pg.evaluate(() => (document.querySelector('#sess-filter .sessf-chip.on') || {}).textContent || '');
+  const squatJ0 = FIX.find(s => s.date === J0 && s.exs[0].name === 'Squat à la Barre'), pecJ0 = FIX.find(s => s.date === J0 && s.exs[0].name === 'Développé Couché');
+  const cibleFiltree = /Pector/i.test(filtreAvant) ? squatJ0 : pecJ0;                // la séance que ce filtre CACHE
+  await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
+  await X.pg.evaluate(k => { try { goSessionsHistory([k]); } catch (e) {} }, cleDe(cibleFiltree));
+  await X.pg.waitForTimeout(700);
+  const apresFiltre = await cartes(X.pg);
+  const filtreApres = await X.pg.evaluate(() => (document.querySelector('#sess-filter .sessf-chip.on') || {}).textContent || '');
+  const cF = apresFiltre.find(c => c.cle === cleDe(cibleFiltree)) || {};
+  t('PS-E40 une porte d\'entrée remet le filtre de muscle sur « Tous » : la séance visée n\'est jamais cachée par un filtre',
+    okFiltre && filtreAvant && filtreAvant !== 'Tous' && filtreApres === 'Tous' && cF.vis && cF.cible, JSON.stringify({ filtreAvant, filtreApres, cF }));
+
   /* La vue semaine du calendrier : la ligne d'un jour à séance vise ses séances. */
   await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
   /* La semaine qui contient aujourd'hui : on la cherche par ses lignes (`_calZoom(wi)` = le vrai geste du n° de semaine). */
@@ -337,6 +360,18 @@ module.exports.ecran = async function (t, b, PORT) {
   t('PS-E36 ⛔ et ne crée aucune nouvelle clé de stockage (mois ouvert, onglet, période : en mémoire seulement)', !nouvelles.length, JSON.stringify(nouvelles));
   t('PS-E37 aucune erreur JavaScript pendant tout le parcours', !X.errs.length, X.errs.slice(0, 3).join(' | '));
   await X.cx.close();
+
+  /* ── 13 bis. Séances sans date ou mal datées : rien ne se perd (invariant 5) ──────────────────── */
+  { const base = FIX.slice(0, 2).map(s => JSON.parse(JSON.stringify(s)));
+    const sans = Object.assign(JSON.parse(JSON.stringify(FIX[2])), { ts: 4242, id: 4343 }); delete sans.date;
+    const mal = Object.assign(JSON.parse(JSON.stringify(FIX[3])), { ts: 5252, id: 5353, date: 'n/a' });
+    const Y = await ouvrir({ sessions: base.concat([sans, mal]) });
+    await versProgres(Y); await onglet(Y, 'ptab-seances'); await toutDeplier(Y);
+    const c = await cartes(Y.pg);
+    const ans = await Y.pg.evaluate(() => [...document.querySelectorAll('#sess-list .sess-an')].map(a => a.textContent.replace(/\s+/g, ' ').trim()));
+    t('PS-E39 une séance SANS date et une séance MAL datée restent atteignables (rangées en dernier, « Sans date »), aucune perdue',
+      c.length === 4 && [4242, 5252].every(k => c.some(x => x.cle === k && x.vis)) && /Sans date/.test(ans[ans.length - 1] || ''), JSON.stringify({ n: c.length, ans }));
+    await Y.cx.close(); }
 
   /* ── 13. Bandeau de cycle : comportement actuel préservé (statu quo, non tranché) ──────────── */
   X = await ouvrir({ stock: { ft4_gender: 'F', ft4_mcstart: jourParis(-3) } });
