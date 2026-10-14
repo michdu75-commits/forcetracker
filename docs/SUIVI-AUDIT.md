@@ -955,3 +955,12 @@ l'ancrage disparaît n'est jamais posé, sans erreur — screens.js:61), aide / 
 depuis le renommage du 02/09 : screens.js:380/388, coach.js:8487/8494), témoins CLXXII / CLXXIII à réécrire avec leur
 raison. L'ordre est cohérent (source → vue par mouvement → autres données ; 3 des 4 portes visent déjà l'historique) ; il
 remplacerait la décision de Michel du 30/08 (cartes dans « Exercices ») — à confirmer et à inscrire au registre.
+
+**➡️ État au 14/10 (après-midi) — LOT STRUCTUREL 01 CODÉ, NON PUBLIÉ** (mission de Michel « PROGRÈS → SÉANCES / UX-HIST » :
+l'orientation est devenue décision — Séances en premier, volume 14 | 28, 28 par défaut, Milo inchangé). Détail :
+`docs/PROGRES-SEANCES-01.md`. Fait : onglet Séances, blocs déplacés, historique Année → Mois **sans plafond de 20**, portes
+d'entrée ciblées par la clé `ts‖id`, volume 14 | 28, sous-onglet qui survit, aides / Guide / point rouge, les 4 « Poids »
+corrigés. ⛔ **Non fait, faute de décision** : séparation lecture / modification du détail ; mois en cours replié ou ouvert
+à l'arrivée par la barre du bas (appliqué à la lettre du contrat : replié) ; destination de **Badges** (reste un onglet) ;
+bandeau de cycle (statu quo dans Exercices). Les témoins CLXXII / CLXXIII et 6 autres blocs du runner sont réécrits **dans
+un outil** (`tools/integrer_progres_seances.py`) à exécuter après le LOT 0 Nutrition — `runner.js` non touché.

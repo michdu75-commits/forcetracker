@@ -3588,3 +3588,11 @@ Mesuré : sa fixture date les messages à « maintenant » ± 60 / 90 s et compt
 l'arbre `4681bc91` : 23:58:00 → 2 · **23:59:30 → 4** · 00:00:30 → 2. Arrivé pour de vrai à la passe du 13/10 lancée à 21:51 UTC
 (le bloc a tourné vers 23:59 à Paris) ; la passe relancée hors de la fenêtre est verte (6 946 / 0). L'export, lui, fait juste. ❓
 **Doute** : ancrer la fixture à midi du jour ? Vérifiable par du code : ✅. État : **à trier** (dette du harnais, non bloquante).
+
+### 🟡 MILO COMPTE LE VOLUME SUR 14 JOURS, L'ÉCRAN SUR 28 PAR DÉFAUT — peut-il contredire ce que la personne lit ? (14/10/2026 — PROGRES-SEANCES-01)
+Décision de Michel (14/10) : l'écran Progrès → Séances affiche « Ce que tu travailles » sur **28 jours par défaut** (14 au
+choix) ; Milo **garde** ses 14 jours (rien de silencieux : le prompt est identique à master, prouvé). Conséquence mesurée sur
+la fixture du banc : l'écran dit **Pectoraux 3 / semaine**, Milo reçoit **4 / semaine** pour la même personne. L'aide « ? » et
+l'aide détaillée le disent. ❓ **Doute** : si la personne demande « combien de séries pecs je fais ? », Milo répond-il « 4 »
+pendant que l'écran montre « 3 », sans dire que ce n'est pas la même période ? Vérifiable par du code : ⚠️ seulement avec un
+appel réel (banc R34). État : **à trier** — à trancher par Michel s'il veut aligner Milo (changement de contexte → banc avant/après).
