@@ -23,6 +23,10 @@
    la montée en charge (hors lot).
    Banc : tools/banc_session_integrity.js · contrôle négatif : tools/mut_session_integrity.py
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
+/* 🗂️ PROGRES-SEANCES-01 (14/10/2026, R30) — l'historique a quitté l'onglet « Exercices » pour « Séances », rangé par
+   année puis par mois (mois repliés). Ces témoins visaient la liste en passant par « Exercices » : ils passent
+   maintenant par « Séances » et déplient les mois des séances de la fixture. Leur garantie (les boutons de
+   débrief d'UNE séance) est inchangée ; la navigation elle-même est conduite par B-PS01-E. */
 const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); const k = src.indexOf('\nasync function ', i + 10);
   const fin = [j, k].filter(x => x > 0); return src.slice(i, fin.length ? Math.min(...fin) : undefined); };
 
@@ -304,7 +308,7 @@ module.exports.ecran = async function (t, b, PORT) {
       L3.mag && L3.mag.seances[sid] && /DEBRIEF-SI01/.test(L3.mag.seances[sid].texte) && X.st.coach.length === 2 && L3.file.indexOf(sid) < 0, js({ cles: L3.mag && Object.keys(L3.mag.seances), coach: X.st.coach.length }));
     // B-SI01-H — Progrès
     await clic(X.pg, '#nb-progress'); await X.pg.waitForTimeout(500);
-    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} });
+    await X.pg.evaluate(() => { try { switchProgTab('seances', document.getElementById('ptab-seances')); (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} });
     await X.pg.waitForTimeout(400);
     const btns = await X.pg.evaluate(() => [...document.querySelectorAll('#sess-list .sess-dbf-btn')].map(x => x.getAttribute('onclick')));
     t('H1 ⛔ la séance débriefée porte « 💬 Voir le débrief Milo » (après rechargement)', btns.length === 1 && btns[0].indexOf(sid) > 0, js(btns));
@@ -345,7 +349,7 @@ module.exports.ecran = async function (t, b, PORT) {
     t('D3b ⛔⛔ échec → quitter l\'écran → Coach : RIEN ne repart seul (1 appel, rien de rangé)',
       /n'a pas pu/.test(f.ecran) && X.st.coach.length === 1 && !(L.mag && L.mag.seances && L.mag.seances[sid]), js({ coach: X.st.coach.length, mag: L.mag }));
     await clic(X.pg, '#nb-progress'); await X.pg.waitForTimeout(500);
-    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} });
+    await X.pg.evaluate(() => { try { switchProgTab('seances', document.getElementById('ptab-seances')); (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} });
     await X.pg.waitForTimeout(400);
     const go = await clic(X.pg, '#sess-list .sess-dbf-go[onclick*="' + sid + '"]', 'ov-debrief-milo');
     const t0 = Date.now();
@@ -393,7 +397,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const sS = String((L.sessions.find(s => s.date === J && (s.exs || []).some(e => e.name === 'Shoulder Press')) || {}).id || '');
     t('D9 ⛔⛔ deux séances le même jour : chacune SON débrief, aucun croisement',
       sY && sS && sY !== sS && /TXT-UN/.test(L.mag.seances[sY].texte) && /TXT-DEUX/.test(L.mag.seances[sS].texte), js(L.mag));
-    await clic(X.pg, '#nb-progress'); await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(400);
+    await clic(X.pg, '#nb-progress'); await X.pg.evaluate(() => { try { switchProgTab('seances', document.getElementById('ptab-seances')); (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} }); await X.pg.waitForTimeout(400);
     const lus = await X.pg.evaluate(([a, c]) => { voirDebriefMilo(a); const x = document.getElementById('dbf-milo-body').textContent; voirDebriefMilo(c); const y = document.getElementById('dbf-milo-body').textContent; fermerDebriefMilo(); return [x, y]; }, [sY, sS]);
     t('D9b … et chaque bouton ouvre le bon texte', /TXT-UN/.test(lus[0]) && !/TXT-DEUX/.test(lus[0]) && /TXT-DEUX/.test(lus[1]) && !/TXT-UN/.test(lus[1]), js(lus));
     // Export : on capte le fichier au lieu de le donner (la livraison réelle n'est pas l'objet ici).
@@ -488,7 +492,7 @@ module.exports.ecran = async function (t, b, PORT) {
     await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(300);
     const coach = await X.pg.evaluate(() => (document.getElementById('coach-msgs') || {}).textContent || '');
     await X.pg.reload(); await X.pg.waitForTimeout(4200);                       // ⑥ rechargement
-    await clic(X.pg, '#nb-progress'); await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(300);
+    await clic(X.pg, '#nb-progress'); await X.pg.evaluate(() => { try { switchProgTab('seances', document.getElementById('ptab-seances')); (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} }); await X.pg.waitForTimeout(300);
     const o = await clic(X.pg, '#sess-list .sess-dbf-btn', 'ov-debrief-milo');
     const vu = await X.pg.evaluate(() => document.getElementById('dbf-milo-body').textContent);
     const L = await lire(X.pg);
@@ -540,7 +544,7 @@ module.exports.ecran = async function (t, b, PORT) {
     await X.pg.reload(); await X.pg.waitForTimeout(3000);
     const r3 = await X.pg.evaluate(ids => { const m = JSON.parse(localStorage.getItem('ft4_debriefs'));
       return { n: Object.keys(m.seances).length, prem: !!_dbfTexteDe(ids[0]), der: !!_dbfTexteDe(ids[ids.length - 1]) }; }, ids);
-    await clic(X.pg, '#nb-progress'); await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(400);
+    await clic(X.pg, '#nb-progress'); await X.pg.evaluate(() => { try { switchProgTab('seances', document.getElementById('ptab-seances')); (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} }); await X.pg.waitForTimeout(400);
     const vus = await X.pg.evaluate(() => ({ cartes: document.querySelectorAll('#sess-list .sess-card').length, btns: document.querySelectorAll('#sess-list .sess-dbf-btn').length }));
     t('K3 ⛔ après rechargement : les 260 associations tiennent, et chaque séance affichée garde son « Voir le débrief Milo »',
       r3.n === N && r3.prem && r3.der && vus.cartes > 0 && vus.btns === vus.cartes, js({ r3, vus }));
@@ -555,7 +559,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const A = String(MS(8, 7)), B = String(MS(8, 16)), C = String(MS(1, 8)), D = String(MS(1, 6));
   const MAGZ = () => ({ v: 1, seances: { [A]: { texte: 'TXT-A matin', ts: 1, src: 'fin' }, [B]: { texte: 'TXT-B soir', ts: 2, src: 'fin' }, [C]: { texte: 'TXT-C jambes', ts: 3, src: 'coach' } } });
   const versHistorique = async X => { await clic(X.pg, '#nb-progress');
-    await X.pg.evaluate(() => { try { switchProgTab('exo', document.getElementById('ptab-exo')); } catch (e) {} }); await X.pg.waitForTimeout(350); };
+    await X.pg.evaluate(() => { try { switchProgTab('seances', document.getElementById('ptab-seances')); (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} }); await X.pg.waitForTimeout(350); };
   const supprimer = async (X, id) => {
     await versHistorique(X);
     const a = await clic(X.pg, '#sess-list .sess-card[onclick="openSessDetail(' + id + ')"] .sess-title', 'ov-sess-detail');

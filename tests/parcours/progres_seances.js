@@ -67,10 +67,10 @@ module.exports.source = function (t, ROOT, fs, path) {
   const rs = corps(se, 'renderSessions'), vpm = corps(lo, '_volumeParMuscle'), ctx = corps(co, '_ctxVolumeMuscles');
   const gsh = corps(se, 'goSessionsHistory'), cal = corps(sc, '_renderHomeCalendar') + corps(sc, '_calDayPanel');
   t('PS-S1 les fonctions sont trouvées (sinon les témoins suivants ne mesurent rien)', rs && vpm && ctx && gsh && cal, [rs, vpm, ctx, gsh, cal].map(x => x.length).join('/'));
-  t('PS-S2 ⛔ l\'historique n\'a plus de plafond : aucun `slice(0,20)` (ni autre borne numérique) dans `renderSessions`',
-    !/\.slice\(\s*0\s*,\s*\d+\s*\)/.test(rs), (rs.match(/\.slice\([^)]*\)/g) || []).join(' '));
-  t('PS-S3 ⛔ UN seul producteur de carte d\'historique (`class="sess-card"`) dans setup.js — pas de 2ᵉ moteur',
-    (se.match(/class="sess-card"/g) || []).length === 1, (se.match(/class="sess-card"/g) || []).length + ' producteur(s)');
+  t('PS-S2 ⛔ l\'historique n\'a plus de plafond : `renderSessions` ne coupe plus la liste des séances (ni `slice(0,20)`, ni autre coupe)',
+    !/(flist|S\.sessions|liste)\s*\.slice\(/.test(rs) && !/\.slice\(\s*0\s*,\s*20\s*\)/.test(rs), (rs.match(/\w+\.slice\([^)]*\)/g) || []).join(' '));
+  t('PS-S3 ⛔ UN seul producteur de carte d\'historique (`class="sess-card…`) dans setup.js — pas de 2ᵉ moteur',
+    (se.match(/class="sess-card(?![\w-])/g) || []).length === 1, (se.match(/class="sess-card(?![\w-])/g) || []).length + ' producteur(s)');
   t('PS-S4 la fenêtre du volume reste UN seul propriétaire : `VOL_FENETRE_JOURS = 14` et `_volumeParMuscle` reçoit la période',
     /const VOL_FENETRE_JOURS\s*=\s*14\s*;/.test(lo) && /function _volumeParMuscle\(\s*refTs\s*,\s*\w+\s*\)/.test(lo), vpm.slice(0, 120));
   t('PS-S5 ⛔ Milo ne reçoit PAS la période de l\'écran : `_ctxVolumeMuscles` appelle `_volumeParMuscle()` sans période',
@@ -276,7 +276,7 @@ module.exports.ecran = async function (t, b, PORT) {
   await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
   const J0 = jourParis(0), duJour = FIX.filter(s => s.date === J0).map(cleDe);
   const okJour = await clic(X.pg, '#s-home [onclick="_calSelect(\'' + J0 + '\')"]');
-  const okRevoir = await clic(X.pg, '#s-home [onclick^="goSessionsHistory("]');
+  const okRevoir = await clic(X.pg, '#s-home .ft-press[onclick^="goSessionsHistory(["]');   // « Revoir la séance » (pas la tuile)
   await X.pg.waitForTimeout(600);
   const apresJour = await cartes(X.pg);
   const cibles = apresJour.filter(c => c.cible).map(c => c.cle).sort();
@@ -296,11 +296,16 @@ module.exports.ecran = async function (t, b, PORT) {
 
   /* La vue semaine du calendrier : la ligne d'un jour à séance vise ses séances. */
   await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
-  const zoom = await X.pg.evaluate(j => { const c = document.querySelector('#s-home [onclick="_calSelect(\'' + j + '\')"]'); if (!c) return null;
-    try { for (let wi = 0; wi < 7; wi++) { _calZoom(wi); if (document.querySelector('#s-home [onclick^="goSessionsHistory("]')) return wi; } } catch (e) {} return null; }, J0);
-  const ligne = await X.pg.evaluate(() => { const l = [...document.querySelectorAll('#s-home [onclick^="goSessionsHistory("]')]; return l.map(x => x.getAttribute('onclick')); });
-  t('PS-E30 vue semaine : la ligne d\'un jour à séance appelle `goSessionsHistory` avec les clés de ses séances (jamais nu)',
-    zoom !== null && ligne.length >= 1 && ligne.every(o => /goSessionsHistory\(\[[\d,]+\]\)/.test(o.replace(/&quot;/g, '"'))), JSON.stringify(ligne).slice(0, 200));
+  /* La semaine qui contient aujourd'hui : on la cherche par ses lignes (`_calZoom(wi)` = le vrai geste du n° de semaine). */
+  const zoom = await X.pg.evaluate(k => { try { for (let wi = 0; wi < 7; wi++) { _calZoom(wi);
+      const l = [...document.querySelectorAll('#s-home [onclick^="_calZoom(null)"]')].length ? [...document.querySelectorAll('#s-home div[onclick^="goSessionsHistory("]')] : [];
+      if (l.some(x => (x.getAttribute('onclick') || '').indexOf(String(k)) >= 0)) return wi; } } catch (e) {} return null; }, duJour[0]);
+  const ligne = await X.pg.evaluate(() => [...document.querySelectorAll('#s-home div[onclick^="goSessionsHistory("]')].filter(x => !x.closest('[id^="h-"]') && !/^goSessionsHistory\(\)$/.test(x.getAttribute('onclick'))).map(x => x.getAttribute('onclick')));
+  const ligneJour = ligne.find(o => o.indexOf(String(duJour[0])) >= 0) || '';
+  const nus = await X.pg.evaluate(() => [...document.querySelectorAll('#s-home [onclick="goSessionsHistory()"]')].map(x => x.textContent.replace(/\s+/g, ' ').trim().slice(0, 30)));
+  t('PS-E30 vue semaine : chaque ligne à séance appelle `goSessionsHistory` avec des clés, et celle d\'aujourd\'hui avec LES DEUX clés du jour (seule la tuile reste sans argument)',
+    zoom !== null && ligne.length >= 1 && ligne.every(o => /^goSessionsHistory\(\[[\d,]+\]\)$/.test(o)) && duJour.every(k => ligneJour.indexOf(String(k)) >= 0) && nus.every(x => /Séances/.test(x)),
+    'wi=' + zoom + ' ' + JSON.stringify(ligne).slice(0, 160) + ' nus=' + JSON.stringify(nus));
   await X.pg.evaluate(() => { try { _calZoom(null); } catch (e) {} });
 
   /* ── 11. Points rouges, aide, Guide : rien ne vise un onglet absent (invariant 13) ──────── */

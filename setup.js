@@ -185,10 +185,28 @@ function _renderSynthese(){
    ⛔ LA LISTE EST BORNÉE (R19/R25) : 22 groupes affichés en entier, c'est un tableur, pas une
    information — 8 lignes puis « et N autres ». */
 const VOL_LIGNES_MAX = 8;
+/* 🗂️ PROGRES-SEANCES-01 (décision de Michel, 14/10/2026) — 14 jours | 28 jours, 28 PAR DÉFAUT.
+   ⛔ En mémoire seulement : aucune clé de stockage pour retenir le choix (il revient à 28 au
+   prochain lancement — décision : « 28 par défaut »). ⛔ Ce choix ne touche QUE l'écran : Milo
+   garde sa fenêtre de 14 jours (`_ctxVolumeMuscles`, coach.js), et ce n'est pas silencieux —
+   c'est écrit là-bas, dans `_volumeParMuscle` (log.js) et dans le rapport du lot. */
+let _volJours=28;
+function choisirVolumeJours(j){ if(typeof VOL_PERIODES_JOURS==='undefined'||VOL_PERIODES_JOURS.indexOf(j)<0) return; _volJours=j; _renderVolumeSemaine(); }
 function _renderVolumeSemaine(){
   const el=document.getElementById('prog-volume'); if(!el) return;
-  const v=(typeof _volumeParMuscle==='function')?_volumeParMuscle():null;
-  if(!v || !v.series || !v.liste.length){ el.innerHTML=''; return; }  // ⛔ rien à compter → rien
+  // ⚠️ Le sous-titre de l'accordéon nomme la période MONTRÉE (la leçon de ft-v1057 : un titre suit sa fenêtre).
+  const sous=document.getElementById('prog-volume-sous'); if(sous) sous.textContent='Tes séries par muscle, sur '+_volJours+' jours';
+  const v=(typeof _volumeParMuscle==='function')?_volumeParMuscle(undefined,_volJours):null;
+  /* ⭐ Le choix de période reste joignable même si la période choisie est vide : sans ça, passer à
+     14 jours après une semaine sans séance ferait disparaître la carte ET le bouton pour revenir. */
+  const choix='<div style="display:flex;gap:6px;margin-bottom:10px;">'
+    +[14,28].map(j=>'<button class="wrange-chip'+(_volJours===j?' active':'')+'" data-vol-jours="'+j+'" aria-pressed="'+(_volJours===j)+'" onclick="choisirVolumeJours('+j+')">'+j+' jours</button>').join('')+'</div>';
+  if(!v || !v.series || !v.liste.length){                             // ⛔ rien à compter → rien
+    const large=(_volJours!==28&&typeof _volumeParMuscle==='function')?_volumeParMuscle(undefined,28):null;
+    el.innerHTML=(large&&large.series&&large.liste.length)
+      ? '<div class="vol-card">'+choix+'<div class="vol-fen">Aucune série de travail comptée sur '+_volJours+' jours.</div></div>' : '';
+    return;
+  }
   const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const jour=d=>{ try{ const x=new Date(d+'T12:00:00');
       return x.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }catch(e){ return d; } };
@@ -198,7 +216,7 @@ function _renderVolumeSemaine(){
      Un « ,0 » sur une série entière donne l'air d'une mesure de laboratoire là où on a juste
      divisé par deux — et c'est la moitié des lignes qui en porterait un. */
   const nb=x=>(Math.round(x)===x)?String(x):String(x).replace('.',',');
-  el.innerHTML='<div class="vol-card">'
+  el.innerHTML='<div class="vol-card">'+choix
     /* ⚠️ LE TITRE A DÛ SUIVRE LA FENÊTRE (ft-v1057). Il disait « ce que TA SEMAINE a travaillé »
        au-dessus de chiffres désormais calculés sur DEUX semaines : un titre qui nomme une période
        que le calcul n'emploie plus est exactement le motif que ce projet passe son temps à
@@ -217,7 +235,7 @@ function _renderVolumeSemaine(){
        Une moyenne hebdomadaire calculée sur 14 jours NOIE une semaine à zéro : « 5 séances »
        à côté dit ce que la moyenne, elle, ne peut pas dire. Sans ce nombre, deux personnes très
        différentes afficheraient la même ligne (le défaut de ft-v1027, sous une autre forme). */
-    +'<div class="vol-fen">Moyenne par semaine, sur 14 jours ('
+    +'<div class="vol-fen">Moyenne par semaine, sur '+v.jours+' jours ('
       +esc(jour(v.depuis))+' → '+esc(jour(v.jusqu))+') · '+v.seances+' séance'+(v.seances>1?'s':'')+'</div>'
     /* ⛔ LE CHOIX DE COMPTAGE RESTE DIT, MAIS EN UNE LIGNE (ft-v1047, R25 : la carte annonce,
        l'aide explique). Sa raison d'être tient — quelqu'un qui recompte à la main doit retrouver
@@ -663,7 +681,11 @@ function renderProgress(){
   if(typeof _renderSynthese==='function')_renderSynthese();
   if(typeof _renderVolumeSemaine==='function')_renderVolumeSemaine();
   _progAccRestore();
-  switchProgTab('exo',document.getElementById('ptab-exo'));
+  /* 🗂️ PROGRES-SEANCES-01 — le sous-onglet choisi SURVIT (contrat UX-HIST du 08/10 : « aujourd'hui forcé
+     à Exercices »). Défaut : Séances, le premier onglet. En mémoire seulement : aucune clé de stockage. */
+  if(!_progCibleNav) _sessCibles=[];          // une marque ne vit que pour la navigation qui l'a posée
+  _progCibleNav=false;
+  switchProgTab(_progTab,document.getElementById(PROG_ONGLETS[_progTab][0]));
   const chips=document.getElementById('big4-chips');
   if(chips)_renderProgChips(chips);
   // Recherche d'exercice (remplace l'ancien dropdown déroulant)
@@ -800,21 +822,47 @@ function switchProgTab(tab,btn){
      désormais DANS le panneau Exercices, qui est déjà masqué par le sous-onglet. Ces deux lignes
      restent quand même — ceinture et bretelles — parce que rien ne garantit que le panneau reste
      leur seul parent, et parce que le témoin de ft-v1065 les épingle. */
-  const tete=(tab==='exo')?'':'none';
+  /* 🗂️ PROGRES-SEANCES-01 (14/10/2026) — les deux cartes vivent désormais dans le panneau SÉANCES ;
+     elles suivent donc l'onglet Séances. Ceinture et bretelles, comme avant : on masque le `details`. */
+  if(!PROG_ONGLETS[tab]) tab='seances';
+  _progTab=tab;
+  const tete=(tab==='seances')?'':'none';
   ['prog-synth-acc','prog-volume-acc'].forEach(id=>{ const e=document.getElementById(id); if(e)e.style.display=tete; });
-  const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids'),bg=document.getElementById('prog-badges');
-  if(exo){exo.style.display=tab==='exo'?'flex':'none';exo.style.flexDirection='column';exo.style.gap='10px';}
-  if(pw){pw.style.display=tab==='poids'?'flex':'none';pw.style.flexDirection='column';pw.style.gap='10px';}
-  if(bg){bg.style.display=tab==='badges'?'flex':'none';bg.style.flexDirection='column';bg.style.gap='12px';}
-  document.getElementById('ptab-exo').classList.toggle('active',tab==='exo');
-  document.getElementById('ptab-poids').classList.toggle('active',tab==='poids');
-  const ptBadges=document.getElementById('ptab-badges');if(ptBadges)ptBadges.classList.toggle('active',tab==='badges');
+  /* ⭐ UNE table, plus quatre copies du même geste : ajouter un onglet = une ligne (règle d'or #17). */
+  Object.keys(PROG_ONGLETS).forEach(k=>{
+    const o=PROG_ONGLETS[k], pe=document.getElementById(o[1]), be=document.getElementById(o[0]);
+    if(pe){pe.style.display=k===tab?'flex':'none';pe.style.flexDirection='column';pe.style.gap=o[2];}
+    if(be)be.classList.toggle('active',k===tab);
+  });
   if(tab==='poids')renderWeightTab();
   if(tab==='badges')renderBadges();
 }
+/* Les sous-onglets de Progrès : [bouton, panneau, espacement]. ⛔ « badges » reste ici tant que sa
+   destination n'est pas décidée (mission du 14/10 : « ne rends pas Badges inaccessible »). */
+const PROG_ONGLETS={seances:['ptab-seances','prog-seances','10px'], exo:['ptab-exo','prog-exo','10px'],
+                    poids:['ptab-poids','prog-poids','10px'], badges:['ptab-badges','prog-badges','12px']};
+let _progTab='seances', _progCibleNav=false;
 function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
-// Tuile « Séances ce mois » (Accueil) → Progrès, onglet Exercices, historique des séances
-function goSessionsHistory(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>{switchProgTab('exo',document.getElementById('ptab-exo'));setTimeout(()=>{const el=document.getElementById('sess-hist-title');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},140);},80);}
+/* 🗂️ PROGRES-SEANCES-01 — LES PORTES DE L'HISTORIQUE MÈNENT À SÉANCES, AU BON ENDROIT.
+   · sans argument (tuile « Séances ce mois » de l'Accueil) → le MOIS EN COURS, déplié ;
+   · une liste de clés (calendrier : un jour, « Revoir la séance », la vue semaine) → l'année et le mois
+     de CES séances se déplient, et leurs cartes sont marquées. Plusieurs séances ce jour-là → toutes
+     celles du jour (contrat UX-HIST : « la liste du jour »).
+   ⛔ LA CLÉ EST CELLE QUI EXISTE DÉJÀ : `ts||id`, celle de la carte et de `openSessDetail`. Aucune
+   nouvelle identité de séance. ⛔ Tout vit en mémoire : rien n'est écrit dans le stockage.
+   ⚠️ Un filtre de muscle actif cacherait la séance visée : on repasse sur « Tous ». */
+function goSessionsHistory(cles){
+  _sessCibles=Array.isArray(cles)?cles.filter(k=>k!=null&&k!==0):[];
+  const vis=_sessCibles.length?(S.sessions||[]).filter(s=>_sessCibles.indexOf(s.ts||s.id||0)>=0):[];
+  const mois=vis.length?vis.map(_sessMoisDe):[_sessMoisDe({date:today()})];
+  _sessFilter=null;
+  _sessOuvrir(mois);
+  _progTab='seances'; _progCibleNav=true;
+  goScreen('progress',document.getElementById('nb-progress'));
+  setTimeout(()=>{switchProgTab('seances',document.getElementById('ptab-seances'));setTimeout(()=>{
+    const el=document.querySelector('#sess-list .sess-cible')||document.querySelector('#sess-list .sess-mois[data-mois="'+mois[0]+'"]')||document.getElementById('sess-hist-title');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},140);},80);
+}
 function renderChart(){
   const name=_progEx,box=document.getElementById('chart-box');
   if(!box)return;
@@ -1687,9 +1735,49 @@ function renderSessions(){
   if(_sessFilter&&!present.includes(_sessFilter))_sessFilter=null;
   let flist=S.sessions;
   if(_sessFilter)flist=flist.filter(s=>_sessMusclesPresent(s).includes(_sessFilter));
-  flist=flist.slice(0,20);
   if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour ce muscle</div>';return;}
-  el.innerHTML=flist.map((s)=>{
+  /* 🗂️ PROGRES-SEANCES-01 — ANNÉE → MOIS → SÉANCE, ET PLUS DE PLAFOND DE 20 (contrat UX-HIST du 08/10).
+     Avant : `slice(0,20)` — la 21ᵉ séance n'était atteignable NULLE PART dans l'app (63 séances réelles
+     chez Michel le 14/10). Maintenant toutes le sont ; pour ne pas dessiner 1 500 cartes, on ne dessine
+     QUE les mois dépliés (années repliées sauf l'année en cours ; un mois se déplie à la demande).
+     ⛔ Ce n'est pas un 2ᵉ moteur d'historique : un simple regroupement de la MÊME liste, à l'affichage,
+     et la carte reste produite par une seule fonction (`_sessCarteHtml`). Rien n'est stocké. */
+  const ans=[],parAn={};
+  flist.forEach(s=>{const m=_sessMoisDe(s),an=m==='?'?'?':m.slice(0,4);
+    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0};ans.push(an);}
+    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;});
+  const desc=(a,b)=>a==='?'?1:b==='?'?-1:(a<b?1:a>b?-1:0);   // le plus récent d'abord, « sans date » à la fin
+  ans.sort(desc);
+  const chev=o=>'<span class="sess-chev'+(o?' ouvert':'')+'">›</span>';
+  const nb=n=>n+' séance'+(n>1?'s':'');
+  el.innerHTML=ans.map(an=>{const A=parAn[an],ouvert=_sessAnEstOuvert(an);A.mois.sort(desc);
+    return '<div class="sess-an-bloc" data-an="'+an+'">'
+      +'<button class="sess-an" data-an="'+an+'" aria-expanded="'+ouvert+'" onclick="basculerSessAnnee(\''+an+'\')">'
+        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nb(A.n)+'</span></button>'
+      +(!ouvert?'':A.mois.map(m=>{const o=!!_sessMoisOuvert[m],L=A.parMois[m];
+        return '<div class="sess-mois-bloc" data-mois="'+m+'">'
+          +'<button class="sess-mois" data-mois="'+m+'" aria-expanded="'+o+'" onclick="basculerSessMois(\''+m+'\')">'
+            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nb(L.length)+'</span></button>'
+          +(o?'<div class="sess-mois-cartes">'+L.map(_sessCarteHtml).join('')+'</div>':'')
+          +'</div>';}).join(''))
+      +'</div>';}).join('');
+}
+/* L'état déplié vit EN MÉMOIRE (contrat UX-HIST : « aucune nouvelle clé persistée juste pour mémoriser
+   un mois sélectionné »). Absent = défaut : année en cours dépliée, mois repliés. */
+const _sessAnOuvert={}, _sessMoisOuvert={};
+let _sessCibles=[];
+function _sessMoisDe(s){const d=String(s&&s.date||'');return /^\d{4}-\d{2}/.test(d)?d.slice(0,7):'?';}
+function _sessMoisNom(m){
+  if(m==='?')return 'Date inconnue';
+  try{const t=new Date(m+'-01T12:00:00').toLocaleDateString('fr-FR',{month:'long'});return t.charAt(0).toUpperCase()+t.slice(1);}catch(e){return m;}
+}
+function _sessAnEstOuvert(an){return Object.prototype.hasOwnProperty.call(_sessAnOuvert,an)?_sessAnOuvert[an]:(an===today().slice(0,4));}
+function _sessOuvrir(mois){(mois||[]).forEach(m=>{_sessMoisOuvert[m]=true;_sessAnOuvert[m==='?'?'?':m.slice(0,4)]=true;});}
+function basculerSessAnnee(an){_sessAnOuvert[an]=!_sessAnEstOuvert(an);renderSessions();}
+function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisOuvert[m];renderSessions();}
+/* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
+   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise. */
+function _sessCarteHtml(s){
     const i=S.sessions.indexOf(s);
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     // ⚠️ NUAGE DESSINÉ, PAS L'EMOJI ☁️ (05/08/2026, signalé par Michel : « le petit nuage est
@@ -1758,8 +1846,8 @@ function renderSessions(){
       : _dbfEnVol(_dbfId) ? '<button class="sess-dbf-go" disabled>⏳ Milo analyse…</button>'
       : _dbfInterrompue(_dbfId) ? '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">⏸️ Analyse interrompue — relancer</button>'
       : '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">✨ Analyser avec Milo</button>';
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
-  }).join('');
+    const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
+    return`<div class="sess-card${_cible?' sess-cible':''}" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
 }
 /* 💬 LA LECTURE D'UN DÉBRIEF — LOCALE, SANS APPEL, SANS TOUCHER À LA SÉANCE (D-043).
    ⛔ Elle ne relit aucune conversation et n'ouvre pas le Coach : elle lit le magasin canonique

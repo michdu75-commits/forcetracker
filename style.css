@@ -1858,3 +1858,20 @@ html.ob-done #onboarding{display:none;}
   color:var(--t1);font-size:13px;cursor:pointer;}
 /* ⛔ L'échec se DIT, et il ne se déguise pas en avertissement d'intensité : fond neutre. */
 .milo-ask-fail{margin-top:9px;font-size:12px;line-height:1.45;color:var(--t3);}
+
+/* 🗂️ PROGRES-SEANCES-01 (14/10/2026) — l'historique Année → Mois → Séance de l'onglet Séances.
+   En-têtes plats et pleine largeur (un tap = déplier) ; la carte visée par une porte d'entrée
+   (Accueil, calendrier) porte un liseré, sans changer de contenu. */
+.sess-an,.sess-mois{display:flex;align-items:center;gap:8px;width:100%;border:none;background:transparent;font-family:var(--font);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:left;}
+.sess-an{padding:10px 4px 6px;color:var(--t1);font-size:15px;font-weight:800;}
+.sess-mois{padding:9px 12px;margin-bottom:8px;border-radius:12px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);color:var(--t1);font-size:13.5px;font-weight:700;}
+.sess-an-nom,.sess-mois-nom{flex:1;min-width:0;}
+.sess-n{font-size:12px;font-weight:600;color:var(--t3);}
+.sess-chev{display:inline-block;width:12px;color:var(--t3);font-weight:800;transition:transform .18s;}
+.sess-chev.ouvert{transform:rotate(90deg);}
+.sess-mois-cartes{margin-bottom:6px;}
+.sess-card.sess-cible{box-shadow:inset 0 0 0 2px var(--blue);}
+/* 4 onglets dans Progrès (Séances | Exercices | Corps & santé | Badges) : à largeur égale, « Corps & santé »
+   passait sur 2 lignes (barre 56 px au lieu de 38, mesuré à 390 et 320 px). Largeur au contenu, sur une ligne. */
+#s-progress .nu-tab{flex:1 1 auto;white-space:nowrap;padding:10px 6px;}
+@media (max-width:360px){#s-progress .nu-tab{font-size:12px;padding:10px 2px;}}
