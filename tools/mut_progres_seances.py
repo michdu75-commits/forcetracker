@@ -96,6 +96,8 @@ MUT = [
     ('M34 [deguisee] le mois courant est INVENTE (en-tete vide) quand il n\'a aucune seance',
      [(SE, "  const desc=(a,b)=>a==='?'?1:b==='?'?-1:(a<b?1:a>b?-1:0);",
            "  {const mc=today().slice(0,7),ac=mc.slice(0,4);if(!parAn[ac]){parAn[ac]={mois:[],parMois:{},n:0};ans.push(ac);}if(!parAn[ac].parMois[mc]){parAn[ac].parMois[mc]=[];parAn[ac].mois.push(mc);}}\n  const desc=(a,b)=>a==='?'?1:b==='?'?-1:(a<b?1:a>b?-1:0);")], 'GARDE'),
+    ('M36 [deguisee] une porte d\'entree ouvre toujours le mois COURANT (le mois de la seance visee reste replie)',
+     [(SE, "  const mois=vis.length?vis.map(_sessMoisDe):[_sessMoisDe({date:today()})];", "  const mois=[_sessMoisDe({date:today()})];")], 'GARDE'),
     ('M35 [equivalente] mois : hasOwnProperty -> in (meme sens sur ces cles)',
      [(SE, "return Object.prototype.hasOwnProperty.call(_sessMoisOuvert,m)?_sessMoisOuvert[m]:", "return (m in _sessMoisOuvert)?_sessMoisOuvert[m]:")], 'OK'),
     ('M26 [negatif] commentaire citant les motifs cherches (slice(0,20), localStorage.setItem, goSessionsHistory())',

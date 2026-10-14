@@ -15,7 +15,7 @@
    · le sous-onglet choisi survit (contrat UX-HIST) ; ⛔ consulter Progrès ne modifie jamais S.sessions.
 
    Blocs : B-PS01-S (source) · B-PS01-E (écran conduit) · B-PSI01-E (session-B, PROGRES-SEANCES-INTEGRATION-01 :
-   PS-E41 → PS-E43, mois courant et largeur 390 / 320 px).
+   PS-E41 → PS-E44, mois courant, largeur 390 / 320 px, calendrier → séance ancienne par le vrai geste).
    Ce que les témoins CONDUISENT : la barre du bas, les onglets de Progrès, les en-têtes Année / Mois,
    la tuile « Séances ce mois », le calendrier (jour, « Revoir la séance », vue semaine), le choix
    14 | 28 jours, une carte (détail), « 💬 Voir le débrief Milo ».
@@ -427,6 +427,34 @@ module.exports.ecran = async function (t, b, PORT) {
     t('PS-E43 Séances | Exercices | Corps & santé | Badges : une seule ligne, sans débordement ni texte coupé, à 390 px ET à 320 px',
       ok(m390) && ok(m320) && m390.largeur === 390 && m320.largeur === 320, JSON.stringify({ m390, m320 }));
     await Y.cx.close(); }
+
+  /* ── 13 quinquies. B-PSI01-E — CALENDRIER → une séance ANCIENNE (au-delà des 20 dernières), par le VRAI geste ────
+     App FRAÎCHE (contexte neuf : seuls l'année et le mois en cours sont dépliés) → flèche ‹ du calendrier jusqu'à son
+     mois → son jour → « Revoir la séance » → Séances, sa carte visible, marquée, seule marquée, et à l'écran.
+     ⚠️ Contexte neuf EXPRÈS : dans le parcours principal, tous les mois ont déjà été dépliés (PS-E11) ; la séance y
+     serait visible même si la porte n'ouvrait pas son mois — la mutation M36 est passée au travers ainsi. */
+  { const X = await ouvrir();
+    const vieille = FIX[24];                                // 25ᵉ séance : seule de son jour, hors des 20 dernières
+    const seuleDuJour = FIX.filter(s => s.date === vieille.date).length === 1;
+    const d0 = new Date(jourParis(0) + 'T12:00:00'), d1 = new Date(vieille.date + 'T12:00:00');
+    const recul = (d0.getFullYear() - d1.getFullYear()) * 12 + (d0.getMonth() - d1.getMonth());
+    await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
+    await X.pg.evaluate(() => { try { _calZoom(null); } catch (e) {} });
+    let fleches = 0;
+    for (let k = 0; k < recul; k++) { if (await clic(X.pg, '#s-home button[onclick="_calArrow(-1)"]')) fleches++; }
+    const okJ = await clic(X.pg, '#s-home [onclick="_calSelect(\'' + vieille.date + '\')"]');
+    const okR = await clic(X.pg, '#s-home .ft-press[onclick^="goSessionsHistory(["]');
+    await X.pg.waitForTimeout(700);
+    const apres = await cartes(X.pg);
+    const c = apres.filter(x => x.cible);
+    const aEcran = await X.pg.evaluate(k => { const e = document.querySelector('#sess-list .sess-card[onclick="openSessDetail(' + k + ')"]'); if (!e) return null;
+      const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight; }, cleDe(vieille));
+    t('PS-E44 calendrier → ' + recul + ' mois en arrière → le jour d\'une séance hors des 20 dernières → « Revoir la séance » → Séances, CETTE carte visible, seule marquée, à l\'écran',
+      seuleDuJour && FIX.indexOf(vieille) >= 20 && fleches === recul && okJ && okR && (await ongletActif(X.pg)) === 'ptab-seances'
+      && c.length === 1 && c[0].cle === cleDe(vieille) && c[0].vis && aEcran === true,
+      JSON.stringify({ recul, fleches, okJ, okR, c, aEcran }));
+    await X.cx.close(); }
+
 
   /* ── 13. Bandeau de cycle : comportement actuel préservé (statu quo, non tranché) ──────────── */
   X = await ouvrir({ stock: { ft4_gender: 'F', ft4_mcstart: jourParis(-3) } });
