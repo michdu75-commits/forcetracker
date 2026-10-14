@@ -113,8 +113,10 @@ MUT = [
      [(SE, "function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}",
            "function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);try{localStorage.setItem('ft4_mc_'+m,_sessMoisOuvert[m]?'1':'0');}catch(e){}renderSessions();}"),
       (SE, ":(m===today().slice(0,7));}", ":(m===today().slice(0,7)&&localStorage.getItem('ft4_mc_'+m)!=='0');}")], 'GARDE', 'PS-E47'),
-    ('M39 les onglets de Progres peuvent passer a la ligne (white-space:nowrap retire)',
-     [('style.css', "#s-progress .nu-tab{flex:1 1 auto;white-space:nowrap;padding:10px 6px;}", "#s-progress .nu-tab{flex:1 1 auto;padding:10px 6px;}")], 'GARDE', 'PS-E43'),
+    # ⚠️ M39 re-visee : retirer seulement `nowrap` ne fait passer AUCUNE etiquette a la ligne (mesure du 14/10 : 0 rouge,
+    #    la mutation ne fabriquait pas le defaut qu'elle pretendait). Celle-ci le fabrique : « Corps & sante » sur 2 lignes a 390 px.
+    ('M39 une etiquette d\'onglet passe sur deux lignes (white-space:normal, onglets plus larges)',
+     [('style.css', "#s-progress .nu-tab{flex:1 1 auto;white-space:nowrap;padding:10px 6px;}", "#s-progress .nu-tab{flex:1 1 auto;white-space:normal;padding:10px 22px;}")], 'GARDE', 'PS-E43'),
     ('M40 la marque bleue survit a une entree normale',
      [(SE, "  if(!_progCibleNav) _sessCibles=[];", "  if(!_progCibleNav) {}")], 'GARDE', 'PS-E48'),
     ('M41 la diapo « Tes progres » du Guide revient a l\'ancienne legende',
