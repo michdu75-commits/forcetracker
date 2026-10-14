@@ -15,7 +15,8 @@
    · le sous-onglet choisi survit (contrat UX-HIST) ; ⛔ consulter Progrès ne modifie jamais S.sessions.
 
    Blocs : B-PS01-S (source) · B-PS01-E (écran conduit) · B-PSI01-E (session-B, PROGRES-SEANCES-INTEGRATION-01 :
-   PS-E41 → PS-E44, mois courant, largeur 390 / 320 px, calendrier → séance ancienne par le vrai geste).
+   PS-E41 → PS-E44, mois courant, largeur 390 / 320 px, calendrier → séance ancienne par le vrai geste ;
+   micro-fermeture du 14/10 : PS-S8 diapo du Guide, PS-E45 → PS-E48, PS-E27 / PS-E29 isolés dans un contexte neuf).
    Ce que les témoins CONDUISENT : la barre du bas, les onglets de Progrès, les en-têtes Année / Mois,
    la tuile « Séances ce mois », le calendrier (jour, « Revoir la séance », vue semaine), le choix
    14 | 28 jours, une carte (détail), « 💬 Voir le débrief Milo ».
@@ -83,6 +84,15 @@ module.exports.source = function (t, ROOT, fs, path) {
   const ecritures = [rs, gsh, corps(se, 'switchProgTab'), corps(se, 'basculerSessAnnee'), corps(se, 'basculerSessMois'), corps(se, 'choisirVolumeJours')].join('\n');
   t('PS-S6 ⛔ aucune nouvelle clé persistée pour l\'historique, le mois ouvert, l\'onglet ou la période (aucun `localStorage.setItem`)',
     !/localStorage\.setItem/.test(ecritures), (ecritures.match(/localStorage\.setItem\([^,]*/g) || []).join(' '));
+  /* PS-S8 — la diapo « Tes progrès » du Guide (règle d'or #11) : l'ancienne capture montrait 3 onglets avec « Exercices »
+     actif. La légende nomme les 4 onglets dans l'ordre, Séances d'abord, et l'image n'est plus l'ancienne capture. */
+  { const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    const d = (ap.split('\n').find(l => /img:'guide\/progres\.jpg'/.test(l)) || '');
+    const ordre = ['Séances', 'Exercices', 'Corps &amp; santé', 'Badges'].map(x => d.indexOf(x));
+    const h = require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'guide', 'progres.jpg'))).digest('hex');
+    t('PS-S8 diapo « Tes progrès » : légende Séances · Exercices · Corps & santé · Badges (dans l\'ordre) et capture refaite (≠ ancienne capture à 3 onglets)',
+      d && ordre.every(i => i > 0) && ordre.every((v, i) => !i || v > ordre[i - 1]) && !/graphiques clairs/.test(d)
+      && h !== 'f3a5ff8147a7a06371ed48638baa3702790b36a431d430a794708f901c8fa954', JSON.stringify({ ordre, h: h.slice(0, 12) })); }
   t('PS-S7 le calendrier vise la séance par sa clé : plus aucun `goSessionsHistory()` NU dans le calendrier',
     !/goSessionsHistory\(\)/.test(cal) && /goSessionsHistory\(/.test(cal), (cal.match(/goSessionsHistory\([^)]{0,40}/g) || []).join(' | '));
 };
@@ -208,6 +218,16 @@ module.exports.ecran = async function (t, b, PORT) {
     n: document.querySelectorAll('#sess-list .sess-mois-bloc[data-mois="' + m + '"] .sess-card').length }), MOIS_AUJ);
   t('PS-E42 un tap sur le mois courant (déplié par défaut) le REPLIE, un 2ᵉ tap le redéplie — le geste n\'est jamais confisqué',
     plie.ouvert === 'false' && plie.n === 0 && redeplie.ouvert === 'true' && redeplie.n === nAuj, JSON.stringify({ plie, redeplie }));
+  /* PS-E45 — déplier une ANNÉE PASSÉE ne déplie aucun de ses mois : seul le mois EN COURS est ouvert par défaut. */
+  const anPasse = String(Number(AN_AUJ) - 1);
+  const okAn = await clic(X.pg, '#sess-list .sess-an[data-an="' + anPasse + '"]');
+  const passe = await X.pg.evaluate(a => { const bloc = document.querySelector('#sess-list .sess-an-bloc[data-an="' + a + '"]');
+    return { ouverte: (document.querySelector('#sess-list .sess-an[data-an="' + a + '"]') || { getAttribute: () => null }).getAttribute('aria-expanded'),
+      mois: bloc ? [...bloc.querySelectorAll('.sess-mois')].map(m => m.getAttribute('aria-expanded')) : [],
+      cartes: bloc ? bloc.querySelectorAll('.sess-card').length : -1 }; }, anPasse);
+  const nMoisPasse = new Set(FIX.filter(s => s.date.slice(0, 4) === anPasse).map(s => s.date.slice(0, 7))).size;
+  t('PS-E45 une année passée dépliée garde TOUS ses mois repliés (aucune carte) — seul le mois en cours s\'ouvre par défaut',
+    okAn && passe.ouverte === 'true' && nMoisPasse > 0 && passe.mois.length === nMoisPasse && passe.mois.every(m => m === 'false') && passe.cartes === 0, JSON.stringify(passe));
   await toutDeplier(X);
   const tout = await cartes(X.pg);
   const clesVues = tout.map(c => c.cle);
@@ -288,18 +308,8 @@ module.exports.ecran = async function (t, b, PORT) {
   t('PS-E26 la tuile Poids de l\'Accueil ouvre toujours Corps & santé', (await ongletActif(X.pg)) === 'ptab-poids', await ongletActif(X.pg));
 
   /* ── 10. Les portes d'entrée mènent à Séances, au bon endroit (invariant 3) ──────────────── */
-  await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
-  await X.pg.evaluate(() => { try { if (typeof _ceMoisOuvert === 'function' && !_ceMoisOuvert() && typeof toggleCeMois === 'function') toggleCeMois(); } catch (e) {} });
-  await X.pg.waitForTimeout(200);
-  const okTuile = await clic(X.pg, '#s-home [onclick="goSessionsHistory()"]');
-  await X.pg.waitForTimeout(600);
-  const apresTuile = await cartes(X.pg);
-  const moisOuverts = await X.pg.evaluate(() => [...document.querySelectorAll('#sess-list .sess-mois[aria-expanded="true"]')].map(m => m.getAttribute('data-mois')));
-  const nMoisAuj = FIX.filter(s => s.date.slice(0, 7) === MOIS_AUJ).length;
-  t('PS-E27 « Séances ce mois » (Accueil) → Progrès → Séances, sur le mois en cours, ses séances visibles',
-    okTuile && (await ongletActif(X.pg)) === 'ptab-seances' && moisOuverts.indexOf(MOIS_AUJ) >= 0
-    && apresTuile.filter(c => c.mois === MOIS_AUJ && c.vis).length === nMoisAuj, okTuile + ' ' + (await ongletActif(X.pg)) + ' ' + JSON.stringify(moisOuverts) + ' ' + apresTuile.filter(c => c.mois === MOIS_AUJ).length + '/' + nMoisAuj);
-
+  /* PS-E27 et PS-E29 sont joués plus bas, chacun dans un CONTEXTE NEUF (micro-fermeture du 14/10) : ici, l'état laissé par
+     les témoins précédents (mois dépliés, onglet choisi) pouvait les satisfaire sans que la porte fasse son travail. */
   await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
   const J0 = jourParis(0), duJour = FIX.filter(s => s.date === J0).map(cleDe);
   const okJour = await clic(X.pg, '#s-home [onclick="_calSelect(\'' + J0 + '\')"]');
@@ -310,16 +320,6 @@ module.exports.ecran = async function (t, b, PORT) {
   t('PS-E28 calendrier → jour à DEUX séances → « Revoir la séance » → Séances, avec LES DEUX séances du jour visibles et marquées (et elles seules)',
     okJour && okRevoir && (await ongletActif(X.pg)) === 'ptab-seances' && cibles.join(',') === duJour.slice().sort().join(',') && apresJour.filter(c => c.cible && c.vis).length === duJour.length,
     okJour + ' ' + okRevoir + ' cibles=' + JSON.stringify(cibles) + ' attendu=' + JSON.stringify(duJour));
-
-  /* Un jour à UNE séance — pris dans une autre année / un autre mois, pour prouver que le bon mois s'ouvre. */
-  const seule = sDbf;                                        // séance seule de son jour, année précédente
-  await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
-  const okSeule = await X.pg.evaluate(k => { try { goSessionsHistory([k]); return true; } catch (e) { return false; } }, cleDe(seule));
-  await X.pg.waitForTimeout(700);
-  const apresSeule = await cartes(X.pg);
-  const cSeule = apresSeule.filter(c => c.cible);
-  t('PS-E29 une cible = UNE séance (par sa clé) : son année et son mois s\'ouvrent, sa carte est visible et seule marquée',
-    okSeule && cSeule.length === 1 && cSeule[0].cle === cleDe(seule) && cSeule[0].vis, JSON.stringify(cSeule));
 
   /* Un filtre de muscle actif cacherait la séance visée : la porte d'entrée repasse sur « Tous ». */
   await versProgres(X); await onglet(X, 'ptab-seances');
@@ -405,8 +405,13 @@ module.exports.ecran = async function (t, b, PORT) {
       courant: !!document.querySelector('#sess-list [data-mois="' + m + '"]'),
       nCartes: document.querySelectorAll('#sess-list .sess-card').length }), MOIS_AUJ);
     const anCourant = h.ans.find(a => a.an === AN_AUJ);
-    t('PS-E41 aucune séance ce mois-ci : Progrès s\'ouvre sur Séances, AUCUN mois n\'est déplié, le mois courant n\'est pas inventé, aucune carte',
+    /* ⭐ Positif (micro-fermeture du 14/10) : l'historique est BIEN là — les années attendues, dans l'ordre, et les mois réels de
+       l'année en cours, chacun avec son en-tête — sinon « rien d'ouvert, rien d'inventé » serait vrai d'une liste vide. */
+    const ansAttendus = [...new Set(sansMois.map(s => s.date.slice(0, 4)))].sort().reverse();
+    const moisAttendus = [...new Set(sansMois.filter(s => s.date.slice(0, 4) === AN_AUJ).map(s => s.date.slice(0, 7)))].sort().reverse();
+    t('PS-E41 aucune séance ce mois-ci : Progrès s\'ouvre sur Séances, l\'historique est là (années, mois réels), AUCUN mois n\'est déplié, le mois courant n\'est pas inventé, aucune carte',
       sansMois.length === FIX.length - FIX.filter(s => s.date.slice(0, 7) === MOIS_AUJ).length && h.onglet === 'ptab-seances'
+      && h.ans.length > 0 && h.ans.map(a => a.an).join(',') === ansAttendus.join(',') && h.mois.join(',') === moisAttendus.join(',')
       && !h.ouverts.length && !h.courant && !h.nCartes && h.mois.every(m => moisReels.indexOf(m) >= 0) && (!anCourant || anCourant.ouvert === 'true'),
       JSON.stringify(h).slice(0, 300));
     await Y.cx.close(); }
@@ -419,11 +424,15 @@ module.exports.ecran = async function (t, b, PORT) {
       const r = bar.getBoundingClientRect(), tops = tabs.map(x => Math.round(x.getBoundingClientRect().top));
       return { n: tabs.length, uneLigne: tops.every(x => Math.abs(x - tops[0]) <= 1), dedans: tabs.every(x => { const b = x.getBoundingClientRect(); return b.left >= r.left - 1 && b.right <= r.right + 1; }),
         barre: bar.scrollWidth <= bar.clientWidth + 1, page: document.documentElement.scrollWidth <= window.innerWidth + 1,
-        texteEntier: tabs.every(x => x.scrollWidth <= x.clientWidth + 1), largeur: window.innerWidth }; });
+        texteEntier: tabs.every(x => x.scrollWidth <= x.clientWidth + 1), largeur: window.innerWidth,
+        /* ⭐ micro-fermeture du 14/10 : une étiquette passée sur DEUX lignes garde le même haut d'onglet — on compte les lignes
+           de son TEXTE (les points rouges, en position absolue, ne sont pas du texte). */
+        lignes: tabs.map(x => { const tops = new Set(); [...x.childNodes].filter(n => n.nodeType === 3 && n.textContent.trim()).forEach(n => {
+          const r = document.createRange(); r.selectNodeContents(n); [...r.getClientRects()].forEach(q => tops.add(Math.round(q.top))); }); return tops.size; }) }; });
     const m390 = await mesurer();
     await Y.pg.setViewportSize({ width: 320, height: 700 }); await Y.pg.waitForTimeout(300);
     const m320 = await mesurer();
-    const ok = m => m.n === 4 && m.uneLigne && m.dedans && m.barre && m.page && m.texteEntier;
+    const ok = m => m.n === 4 && m.uneLigne && m.dedans && m.barre && m.page && m.texteEntier && m.lignes.every(n => n === 1);
     t('PS-E43 Séances | Exercices | Corps & santé | Badges : une seule ligne, sans débordement ni texte coupé, à 390 px ET à 320 px',
       ok(m390) && ok(m320) && m390.largeur === 390 && m320.largeur === 320, JSON.stringify({ m390, m320 }));
     await Y.cx.close(); }
@@ -455,6 +464,87 @@ module.exports.ecran = async function (t, b, PORT) {
       JSON.stringify({ recul, fleches, okJ, okR, c, aEcran }));
     await X.cx.close(); }
 
+
+  /* ── 13 sexies. B-PSI01-E (micro-fermeture du 14/10) — LES PORTES, CHACUNE DANS UN CONTEXTE NEUF ──────────────────────
+     L'état de départ est posé par de VRAIS gestes dans le témoin lui-même (jamais hérité d'un témoin précédent). */
+  { const Y = await ouvrir();
+    const nAujT = FIX.filter(s => s.date.slice(0, 7) === MOIS_AUJ).length;
+    const J0b = jourParis(0), duJourB = FIX.filter(s => s.date === J0b).map(cleDe);
+    const etatMois = () => Y.pg.evaluate(m => (document.querySelector('#sess-list .sess-mois[data-mois="' + m + '"]') || { getAttribute: () => null }).getAttribute('aria-expanded'), MOIS_AUJ);
+    /* état DÉRANGÉ : mois en cours replié à la main, Progrès laissé sur Corps & santé */
+    await versProgres(Y);
+    await clic(Y.pg, '#sess-list .sess-mois[data-mois="' + MOIS_AUJ + '"]');
+    const replie1 = await etatMois();
+    await onglet(Y, 'ptab-poids');
+    await clic(Y.pg, '#nb-home'); await Y.pg.waitForTimeout(300);
+    await Y.pg.evaluate(() => { try { if (typeof _ceMoisOuvert === 'function' && !_ceMoisOuvert() && typeof toggleCeMois === 'function') toggleCeMois(); } catch (e) {} });
+    await Y.pg.waitForTimeout(200);
+    const okTuile = await clic(Y.pg, '#s-home [onclick="goSessionsHistory()"]');
+    await Y.pg.waitForTimeout(600);
+    const apresTuile = await cartes(Y.pg);
+    const ongTuile = await ongletActif(Y.pg), moisTuile = await etatMois();
+    t('PS-E27 « Séances ce mois » (Accueil), depuis Corps & santé et le mois en cours REPLIÉ à la main → Séances, mois en cours rouvert, ses séances visibles',
+      replie1 === 'false' && okTuile && ongTuile === 'ptab-seances' && moisTuile === 'true' && apresTuile.filter(c => c.mois === MOIS_AUJ && c.vis).length === nAujT,
+      JSON.stringify({ replie1, okTuile, ongTuile, moisTuile, n: apresTuile.filter(c => c.mois === MOIS_AUJ && c.vis).length, nAujT }));
+    /* PS-E46 — la porte du CALENDRIER gagne elle aussi sur un repli manuel */
+    await clic(Y.pg, '#sess-list .sess-mois[data-mois="' + MOIS_AUJ + '"]');
+    const replie2 = await etatMois();
+    await clic(Y.pg, '#nb-home'); await Y.pg.waitForTimeout(300);
+    const okJ = await clic(Y.pg, '#s-home [onclick="_calSelect(\'' + J0b + '\')"]');
+    const okR = await clic(Y.pg, '#s-home .ft-press[onclick^="goSessionsHistory(["]');
+    await Y.pg.waitForTimeout(600);
+    const apresCal = await cartes(Y.pg);
+    const ciblesCal = apresCal.filter(c => c.cible).map(c => c.cle).sort();
+    t('PS-E46 une porte ciblée gagne sur un repli manuel : mois en cours replié à la main → calendrier → « Revoir la séance » → mois rouvert, les séances du jour visibles et marquées',
+      replie2 === 'false' && okJ && okR && (await etatMois()) === 'true' && ciblesCal.join(',') === duJourB.slice().sort().join(',') && apresCal.filter(c => c.cible && c.vis).length === duJourB.length,
+      JSON.stringify({ replie2, okJ, okR, ciblesCal, duJourB }));
+    await Y.cx.close(); }
+
+  { const Z = await ouvrir();
+    const seule = sDbf;                                       // séance seule de son jour, année précédente
+    const anS = seule.date.slice(0, 4), moisS = seule.date.slice(0, 7);
+    await versProgres(Z);
+    const avantPorte = await Z.pg.evaluate(a => (document.querySelector('#sess-list .sess-an[data-an="' + a + '"]') || { getAttribute: () => null }).getAttribute('aria-expanded'), anS);
+    await clic(Z.pg, '#nb-home'); await Z.pg.waitForTimeout(300);
+    const okSeule = await Z.pg.evaluate(k => { try { goSessionsHistory([k]); return true; } catch (e) { return false; } }, cleDe(seule));
+    await Z.pg.waitForTimeout(700);
+    const apresSeule = await cartes(Z.pg);
+    const cSeule = apresSeule.filter(c => c.cible);
+    t('PS-E29 une cible = UNE séance (par sa clé), depuis une app fraîche où son année est REPLIÉE : son année et son mois s\'ouvrent, sa carte est visible et seule marquée',
+      avantPorte === 'false' && okSeule && cSeule.length === 1 && cSeule[0].cle === cleDe(seule) && cSeule[0].mois === moisS && cSeule[0].vis, JSON.stringify({ avantPorte, cSeule }));
+    /* PS-E48 — la marque bleue ne vit que pour la navigation qui l'a posée : une entrée normale l'efface */
+    await clic(Z.pg, '#nb-home'); await Z.pg.waitForTimeout(300);
+    await versProgres(Z);
+    const marques = await Z.pg.evaluate(() => document.querySelectorAll('#sess-list .sess-card.sess-cible').length);
+    const apresNormale = await cartes(Z.pg);
+    t('PS-E48 la marque bleue ne survit pas à une entrée normale dans Progrès (aucune carte marquée), la séance reste atteignable',
+      cSeule.length === 1 && marques === 0 && apresNormale.length > 0, JSON.stringify({ marques, n: apresNormale.length }));
+    await Z.cx.close(); }
+
+  /* ── 13 septies. B-PSI01-E — RELANCE : le repli d'un mois, la période 14 jours et le sous-onglet ne survivent pas ─── */
+  { const R = await ouvrir();
+    const clesAvant = await R.pg.evaluate(() => Object.keys(localStorage).sort());
+    await versProgres(R);
+    await clic(R.pg, '#sess-list .sess-mois[data-mois="' + MOIS_AUJ + '"]');
+    await R.pg.evaluate(() => { const d = document.getElementById('prog-volume-acc'); if (d && !d.open) d.open = true; });
+    await clic(R.pg, '#prog-volume-acc [data-vol-jours="14"]');
+    const avant = await R.pg.evaluate(m => ({ mois: (document.querySelector('#sess-list .sess-mois[data-mois="' + m + '"]') || { getAttribute: () => null }).getAttribute('aria-expanded'),
+      vol: (document.querySelector('#prog-volume-acc [data-vol-jours="14"]') || { getAttribute: () => null }).getAttribute('aria-pressed') }), MOIS_AUJ);
+    await onglet(R, 'ptab-exo');
+    const ongAvant = await ongletActif(R.pg);
+    await R.pg.reload(); await R.pg.waitForTimeout(1500);
+    await R.pg.evaluate(() => document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')));
+    await versProgres(R);
+    await R.pg.evaluate(() => { const d = document.getElementById('prog-volume-acc'); if (d && !d.open) d.open = true; });
+    const apres = await R.pg.evaluate(m => ({ onglet: (document.querySelector('#s-progress .nu-tabs .nu-tab.active') || {}).id || null,
+      mois: (document.querySelector('#sess-list .sess-mois[data-mois="' + m + '"]') || { getAttribute: () => null }).getAttribute('aria-expanded'),
+      vol28: (document.querySelector('#prog-volume-acc [data-vol-jours="28"]') || { getAttribute: () => null }).getAttribute('aria-pressed'),
+      cles: Object.keys(localStorage).sort() }), MOIS_AUJ);
+    const nouvelles = apres.cles.filter(k => clesAvant.indexOf(k) < 0 && !/^ft4_(seen_ft|progAcc|sb_last)$/.test(k));
+    t('PS-E47 relance de l\'app : le repli du mois en cours, le choix « 14 jours » et le sous-onglet ne sont PAS gardés (Séances, mois en cours ouvert, 28 jours), et aucune clé de stockage nouvelle',
+      avant.mois === 'false' && avant.vol === 'true' && ongAvant === 'ptab-exo' && apres.onglet === 'ptab-seances' && apres.mois === 'true' && apres.vol28 === 'true' && !nouvelles.length,
+      JSON.stringify({ avant, ongAvant, apres: { onglet: apres.onglet, mois: apres.mois, vol28: apres.vol28 }, nouvelles }));
+    await R.cx.close(); }
 
   /* ── 13. Bandeau de cycle : comportement actuel préservé (statu quo, non tranché) ──────────── */
   X = await ouvrir({ stock: { ft4_gender: 'F', ft4_mcstart: jourParis(-3) } });
