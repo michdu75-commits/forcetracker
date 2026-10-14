@@ -139,6 +139,17 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 LE BOUTON « ÉCHEC » ARRIVE CHEZ MILO COMME « RIR0 », QU'IL LIT « SÉRIE RÉUSSIE » — que comprend-il vraiment ? (14/10/2026)
+
+**Ce qui déclenche la question** : audit delta Historique / Progrès du 14/10, sur l'export réel (63 séances). Le bouton
+« échec » de la barre de repos enregistre `rir:0` sur une série `N` (log.js `_reserveBoutonTxt` / `setRir`) ; le contexte
+envoie « RIR0 » avec la consigne « série **réussie** à la limite ». **14 séries** ainsi notées depuis le 07/09. Débrief
+du 06/10 : *« le single à 105 **passe** à RIR0 »*. **Jumelles** : ① la ligne des records ne dit pas qu'un record vient
+d'une série X (Développé Couché 105×2 X → Milo : *« ton 1RM estimé est à 108 kg »*) ; ② un unilatéral saisi en deux
+blocs part comme « 2 exercices », « 4 séries DE CHAQUE CÔTÉ » deux fois (04/10).
+**Vérifiable par du code ?** Le FAIT transmis : oui (déjà prouvé hors dépôt). Ce que Milo en conclut : non mesuré
+(0 appel). **État : à trier** — suspendu à la décision RIR / ÉCHEC (contradiction ft-v1154 / convention du 14/10).
+
 ### 🟡 `S.savedFoods` SE PERD ENTRE DEUX ONGLETS — **mesuré, et le correctif évident est FAUX** (11/09/2026)
 
 **Mesuré à la sonde `tools/sonde_fuites_nutrition.js` (rejouable), avec un témoin de contrôle :**
