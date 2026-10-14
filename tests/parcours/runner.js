@@ -27092,8 +27092,8 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
     const lire=()=>{
       const onglet=[...document.querySelectorAll('.nu-tab')].find(x=>x.classList.contains('active'));
       const anc=document.getElementById('sess-hist-title');
-      /* 🗂️ PROGRES-SEANCES-01 (R30) : Progrès s'ouvre désormais SUR Séances, mois repliés. « Ciblé » se lit alors
-         au mois déplié : la tuile « Séances ce mois » ouvre le mois en cours, l'arrivée nue n'en ouvre aucun. */
+      /* 🗂️ PROGRES-SEANCES-01 (R30) : Progrès s'ouvre désormais SUR Séances. « Ciblé » se lit aussi au mois déplié :
+         la tuile « Séances ce mois » ouvre le mois en cours, MÊME s'il avait été replié (voir l'état dérangé plus bas). */
       const mo=document.querySelector('#sess-list .sess-mois[aria-expanded="true"]');
       return {ecran:(document.querySelector('.screen.active')||{}).id||'?',
               onglet:onglet?onglet.textContent.trim():'—',
@@ -27106,8 +27106,20 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
        au-dessus de l'ancre, pas le fait que la tuile vise quelque chose. Ici on compare à
        l'arrivée NUE : *« ciblé » veut dire « différent de ce qu'on obtient sans viser »*, et
        cette formulation-là ne dépend d'aucun jeu de données. */
-    goScreen('home',document.getElementById('nb-home')); renderHome();
-    await new Promise(r=>setTimeout(r,300));
+    /* ⚠️ RE-VISÉ (R30) — PROGRES-SEANCES-INTEGRATION-01, décision de Michel du 14/10 : l'arrivée NORMALE ouvre
+       désormais le mois courant (Séances, mois déplié) — exactement ce que vise « Séances ce mois ». Depuis l'état
+       par défaut, la tuile ne se distingue donc plus de l'arrivée nue, PAR DÉCISION, pas par défaut de ciblage.
+       La garantie est reprise là où elle garde un sens : depuis un état DÉRANGÉ — Progrès laissé sur Séances, mois
+       courant REPLIÉ par la personne —, une tuile ciblée mène ailleurs que l'arrivée nue depuis ce MÊME état.
+       Une tuile qui n'ouvrirait aucun mois, ou qui ne ferait que `goScreen('progress')`, rougit toujours. */
+    const deranger=async()=>{
+      goScreen('progress',document.getElementById('nb-progress')); await new Promise(r=>setTimeout(r,400));
+      switchProgTab('seances',document.getElementById('ptab-seances'));
+      const mc=today().slice(0,7);
+      if(typeof _sessMoisEstOuvert==='function' && _sessMoisEstOuvert(mc)) basculerSessMois(mc);
+      goScreen('home',document.getElementById('nb-home')); renderHome(); await new Promise(r=>setTimeout(r,350));
+    };
+    await deranger();
     goScreen('progress',document.getElementById('nb-progress'));
     await new Promise(r=>setTimeout(r,800));
     o.arriveeNue=lire();
@@ -27116,6 +27128,7 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
     const gg=document.getElementById('home-stats').querySelector('div[style*="grid-template-columns"]');
     o.destinations=[];
     for(let i=0;i<(gg?gg.children.length:0);i++){
+      await deranger();                                   // chaque tuile part du MÊME état que l'arrivée nue
       goScreen('home',document.getElementById('nb-home')); renderHome();
       await new Promise(r=>setTimeout(r,350));
       const gr=document.getElementById('home-stats').querySelector('div[style*="grid-template-columns"]');
@@ -27162,9 +27175,9 @@ console.log('\n═══ CCXXXIX. Accueil allégé : bouton conditionnel + CE MO
     const d=E.destinations||[], nue=E.arriveeNue||{};
     /* ⛔ CONTRÔLE D'ABORD — sans arrivée nue mesurée, « différent de l'arrivée nue » serait
        vrai par accident, et le témoin ne prouverait rien. */
-    t('CCXXXIX ⛔ CONTRÔLE — l\'arrivée NUE sur Progrès a bien été mesurée',
-      nue.ecran==='s-progress' && nue.ancre!==null,
-      'écran '+nue.ecran+' · ancre '+nue.ancre);
+    t('CCXXXIX ⛔ CONTRÔLE — l\'arrivée NUE sur Progrès a bien été mesurée (depuis l\'état dérangé : Séances, mois courant replié)',
+      nue.ecran==='s-progress' && nue.ancre!==null && nue.onglet==='Séances' && nue.moisOuvert===null,
+      'écran '+nue.ecran+' · ancre '+nue.ancre+' · onglet '+nue.onglet+' · mois ouvert '+nue.moisOuvert);
     /* ⭐ « CIBLÉ » = la destination DIFFÈRE de ce qu'on obtient en ouvrant Progrès sans viser :
        soit un autre sous-onglet, soit une vraie descente vers l'ancre.
        ⛔ On ne vérifie PAS « le clic ouvre Progrès » : les 4 tuiles le faisaient déjà, et c'est

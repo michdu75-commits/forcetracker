@@ -1739,7 +1739,8 @@ function renderSessions(){
   /* 🗂️ PROGRES-SEANCES-01 — ANNÉE → MOIS → SÉANCE, ET PLUS DE PLAFOND DE 20 (contrat UX-HIST du 08/10).
      Avant : `slice(0,20)` — la 21ᵉ séance n'était atteignable NULLE PART dans l'app (63 séances réelles
      chez Michel le 14/10). Maintenant toutes le sont ; pour ne pas dessiner 1 500 cartes, on ne dessine
-     QUE les mois dépliés (années repliées sauf l'année en cours ; un mois se déplie à la demande).
+     QUE les mois dépliés (années repliées sauf l'année en cours ; le mois en cours déplié s'il existe —
+     décision de Michel du 14/10 —, les autres à la demande).
      ⛔ Ce n'est pas un 2ᵉ moteur d'historique : un simple regroupement de la MÊME liste, à l'affichage,
      et la carte reste produite par une seule fonction (`_sessCarteHtml`). Rien n'est stocké. */
   const ans=[],parAn={};
@@ -1754,7 +1755,7 @@ function renderSessions(){
     return '<div class="sess-an-bloc" data-an="'+an+'">'
       +'<button class="sess-an" data-an="'+an+'" aria-expanded="'+ouvert+'" onclick="basculerSessAnnee(\''+an+'\')">'
         +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nb(A.n)+'</span></button>'
-      +(!ouvert?'':A.mois.map(m=>{const o=!!_sessMoisOuvert[m],L=A.parMois[m];
+      +(!ouvert?'':A.mois.map(m=>{const o=_sessMoisEstOuvert(m),L=A.parMois[m];
         return '<div class="sess-mois-bloc" data-mois="'+m+'">'
           +'<button class="sess-mois" data-mois="'+m+'" aria-expanded="'+o+'" onclick="basculerSessMois(\''+m+'\')">'
             +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nb(L.length)+'</span></button>'
@@ -1763,7 +1764,11 @@ function renderSessions(){
       +'</div>';}).join('');
 }
 /* L'état déplié vit EN MÉMOIRE (contrat UX-HIST : « aucune nouvelle clé persistée juste pour mémoriser
-   un mois sélectionné »). Absent = défaut : année en cours dépliée, mois repliés. */
+   un mois sélectionné »). Absent = défaut : année en cours dépliée, MOIS EN COURS déplié, les autres repliés.
+   ⭐ Décision de Michel du 14/10 (PROGRES-SEANCES-INTEGRATION-01) : en ouvrant Progrès normalement, on voit
+   ses séances du mois sans un tap de plus. Le défaut ne vaut que pour un mois qui EXISTE (on ne dessine que
+   les mois de la liste) : aucune séance ce mois-ci → aucun mois ouvert, aucun inventé. Un tap de la personne
+   (replier, déplier) prime sur le défaut, pour la session. */
 const _sessAnOuvert={}, _sessMoisOuvert={};
 let _sessCibles=[];
 function _sessMoisDe(s){const d=String(s&&s.date||'');return /^\d{4}-\d{2}/.test(d)?d.slice(0,7):'?';}
@@ -1772,9 +1777,10 @@ function _sessMoisNom(m){
   try{const t=new Date(m+'-01T12:00:00').toLocaleDateString('fr-FR',{month:'long'});return t.charAt(0).toUpperCase()+t.slice(1);}catch(e){return m;}
 }
 function _sessAnEstOuvert(an){return Object.prototype.hasOwnProperty.call(_sessAnOuvert,an)?_sessAnOuvert[an]:(an===today().slice(0,4));}
+function _sessMoisEstOuvert(m){return Object.prototype.hasOwnProperty.call(_sessMoisOuvert,m)?_sessMoisOuvert[m]:(m===today().slice(0,7));}
 function _sessOuvrir(mois){(mois||[]).forEach(m=>{_sessMoisOuvert[m]=true;_sessAnOuvert[m==='?'?'?':m.slice(0,4)]=true;});}
 function basculerSessAnnee(an){_sessAnOuvert[an]=!_sessAnEstOuvert(an);renderSessions();}
-function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisOuvert[m];renderSessions();}
+function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}
 /* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
    même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise. */
 function _sessCarteHtml(s){

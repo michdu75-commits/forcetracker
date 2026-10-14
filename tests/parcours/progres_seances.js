@@ -7,13 +7,15 @@
    · Séances porte « Ce que ton histoire montre », « Ce que tu travailles, par semaine », l'historique,
      l'export, le filtre, la liste et le débrief ; Exercices garde chips, recherche, graphique, objectif ;
    · historique Année → Mois → Séance : années repliées sauf l'année en cours, un mois se déplie à la
-     demande, plus de plafond de 20 ;
+     demande, plus de plafond de 20 ; ⭐ décision de Michel du 14/10 (PROGRES-SEANCES-INTEGRATION-01) : en
+     entrée normale, le MOIS COURANT est déplié s'il existe — sinon aucun mois ne s'ouvre et aucun n'est inventé ;
    · Accueil « Séances ce mois » → Séances, mois en cours ; calendrier → Séances, sur LA séance (par sa clé
      `ts||id`, la même que la carte et `openSessDetail`), plusieurs séances ce jour-là → celles du jour ;
    · volume : 14 jours | 28 jours, 28 par défaut, moyenne = total / 2 ou / 4 ; ⛔ Milo garde 14 jours ;
    · le sous-onglet choisi survit (contrat UX-HIST) ; ⛔ consulter Progrès ne modifie jamais S.sessions.
 
-   Blocs : B-PS01-S (source) · B-PS01-E (écran conduit).
+   Blocs : B-PS01-S (source) · B-PS01-E (écran conduit) · B-PSI01-E (session-B, PROGRES-SEANCES-INTEGRATION-01 :
+   PS-E41 → PS-E43, mois courant et largeur 390 / 320 px).
    Ce que les témoins CONDUISENT : la barre du bas, les onglets de Progrès, les en-têtes Année / Mois,
    la tuile « Séances ce mois », le calendrier (jour, « Revoir la séance », vue semaine), le choix
    14 | 28 jours, une carte (détail), « 💬 Voir le débrief Milo ».
@@ -182,13 +184,30 @@ module.exports.ecran = async function (t, b, PORT) {
   const tete = await X.pg.evaluate(() => ({
     ans: [...document.querySelectorAll('#sess-list .sess-an')].map(a => ({ an: a.getAttribute('data-an'), ouvert: a.getAttribute('aria-expanded') })),
     mois: [...document.querySelectorAll('#sess-list .sess-mois')].map(m => ({ mois: m.getAttribute('data-mois'), ouvert: m.getAttribute('aria-expanded') })),
-    nCartes: document.querySelectorAll('#sess-list .sess-card').length }));
+    nCartes: document.querySelectorAll('#sess-list .sess-card').length,
+    cartesMois: [...document.querySelectorAll('#sess-list .sess-card')].map(c => (c.closest('[data-mois]') || { getAttribute: () => null }).getAttribute('data-mois')) }));
   const ansAttendus = [...new Set(FIX.map(s => s.date.slice(0, 4)))].sort().reverse();
   t('PS-E09 l\'historique est rangé par ANNÉE, la plus récente d\'abord ; seule l\'année en cours est dépliée',
     tete.ans.map(a => a.an).join(',') === ansAttendus.join(',') && tete.ans.every(a => a.ouvert === (a.an === AN_AUJ ? 'true' : 'false')), JSON.stringify(tete.ans));
   const moisAnAuj = [...new Set(FIX.filter(s => s.date.slice(0, 4) === AN_AUJ).map(s => s.date.slice(0, 7)))].sort().reverse();
-  t('PS-E10 dans l\'année en cours : un en-tête par MOIS (le plus récent d\'abord), tous repliés — aucune carte avant un tap (contrat UX-HIST)',
-    tete.mois.map(m => m.mois).join(',') === moisAnAuj.join(',') && tete.mois.every(m => m.ouvert === 'false') && tete.nCartes === 0, JSON.stringify(tete));
+  /* ⚠️ RÉÉCRIT (R30) — PROGRES-SEANCES-INTEGRATION-01, décision de Michel du 14/10. Ce témoin exigeait « tous les mois
+     repliés, aucune carte avant un tap » (contrat UX-HIST appliqué à la lettre). Michel : en entrée NORMALE, le MOIS
+     COURANT s'ouvre seul s'il existe — sinon un tap de plus pour voir ses séances récentes. Les autres mois restent
+     repliés (pas de centaines de cartes). L'ancien comportement (mois courant replié) fait rougir ce témoin. */
+  const nAuj = FIX.filter(s => s.date.slice(0, 7) === MOIS_AUJ).length;
+  t('PS-E10 dans l\'année en cours : un en-tête par MOIS (le plus récent d\'abord) ; seul le MOIS COURANT est déplié en entrée normale — ses séances, et elles seules',
+    tete.mois.map(m => m.mois).join(',') === moisAnAuj.join(',') && tete.mois.every(m => m.ouvert === (m.mois === MOIS_AUJ ? 'true' : 'false'))
+    && nAuj > 0 && tete.nCartes === nAuj && tete.cartesMois.every(m => m === MOIS_AUJ), JSON.stringify(tete));
+  /* ⭐ Le défaut ne doit pas confisquer le geste : un tap sur le mois courant le REPLIE (puis le redéplie). Piège réel :
+     une bascule écrite `!état brut` lit « absent » comme « replié » et rouvre le mois au premier tap. */
+  await clic(X.pg, '#sess-list .sess-mois[data-mois="' + MOIS_AUJ + '"]');
+  const plie = await X.pg.evaluate(m => ({ ouvert: (document.querySelector('#sess-list .sess-mois[data-mois="' + m + '"]') || { getAttribute: () => null }).getAttribute('aria-expanded'),
+    n: document.querySelectorAll('#sess-list .sess-mois-bloc[data-mois="' + m + '"] .sess-card').length }), MOIS_AUJ);
+  await clic(X.pg, '#sess-list .sess-mois[data-mois="' + MOIS_AUJ + '"]');
+  const redeplie = await X.pg.evaluate(m => ({ ouvert: (document.querySelector('#sess-list .sess-mois[data-mois="' + m + '"]') || { getAttribute: () => null }).getAttribute('aria-expanded'),
+    n: document.querySelectorAll('#sess-list .sess-mois-bloc[data-mois="' + m + '"] .sess-card').length }), MOIS_AUJ);
+  t('PS-E42 un tap sur le mois courant (déplié par défaut) le REPLIE, un 2ᵉ tap le redéplie — le geste n\'est jamais confisqué',
+    plie.ouvert === 'false' && plie.n === 0 && redeplie.ouvert === 'true' && redeplie.n === nAuj, JSON.stringify({ plie, redeplie }));
   await toutDeplier(X);
   const tout = await cartes(X.pg);
   const clesVues = tout.map(c => c.cle);
@@ -371,6 +390,42 @@ module.exports.ecran = async function (t, b, PORT) {
     const ans = await Y.pg.evaluate(() => [...document.querySelectorAll('#sess-list .sess-an')].map(a => a.textContent.replace(/\s+/g, ' ').trim()));
     t('PS-E39 une séance SANS date et une séance MAL datée restent atteignables (rangées en dernier, « Sans date »), aucune perdue',
       c.length === 4 && [4242, 5252].every(k => c.some(x => x.cle === k && x.vis)) && /Sans date/.test(ans[ans.length - 1] || ''), JSON.stringify({ n: c.length, ans }));
+    await Y.cx.close(); }
+
+  /* ── 13 ter. B-PSI01-E — mois courant ABSENT : rien ne s'ouvre, rien n'est inventé (décision de Michel, 14/10) ── */
+  { const sansMois = FIX.filter(s => s.date.slice(0, 7) !== MOIS_AUJ);
+    const moisReels = [...new Set(sansMois.map(s => s.date.slice(0, 7)))];
+    const Y = await ouvrir({ sessions: sansMois });
+    await versProgres(Y);
+    const h = await Y.pg.evaluate(m => ({
+      onglet: (document.querySelector('#s-progress .nu-tabs .nu-tab.active') || {}).id || null,
+      ans: [...document.querySelectorAll('#sess-list .sess-an')].map(a => ({ an: a.getAttribute('data-an'), ouvert: a.getAttribute('aria-expanded') })),
+      mois: [...document.querySelectorAll('#sess-list .sess-mois')].map(x => x.getAttribute('data-mois')),
+      ouverts: [...document.querySelectorAll('#sess-list .sess-mois[aria-expanded="true"]')].map(x => x.getAttribute('data-mois')),
+      courant: !!document.querySelector('#sess-list [data-mois="' + m + '"]'),
+      nCartes: document.querySelectorAll('#sess-list .sess-card').length }), MOIS_AUJ);
+    const anCourant = h.ans.find(a => a.an === AN_AUJ);
+    t('PS-E41 aucune séance ce mois-ci : Progrès s\'ouvre sur Séances, AUCUN mois n\'est déplié, le mois courant n\'est pas inventé, aucune carte',
+      sansMois.length === FIX.length - FIX.filter(s => s.date.slice(0, 7) === MOIS_AUJ).length && h.onglet === 'ptab-seances'
+      && !h.ouverts.length && !h.courant && !h.nCartes && h.mois.every(m => moisReels.indexOf(m) >= 0) && (!anCourant || anCourant.ouvert === 'true'),
+      JSON.stringify(h).slice(0, 300));
+    await Y.cx.close(); }
+
+  /* ── 13 quater. B-PSI01-E — les 4 onglets temporaires tiennent sur UNE ligne, à 390 ET à 320 px ─────────────── */
+  { const Y = await ouvrir();
+    await versProgres(Y);
+    const mesurer = () => Y.pg.evaluate(() => {
+      const bar = document.querySelector('#s-progress .nu-tabs'), tabs = [...document.querySelectorAll('#s-progress .nu-tabs .nu-tab')];
+      const r = bar.getBoundingClientRect(), tops = tabs.map(x => Math.round(x.getBoundingClientRect().top));
+      return { n: tabs.length, uneLigne: tops.every(x => Math.abs(x - tops[0]) <= 1), dedans: tabs.every(x => { const b = x.getBoundingClientRect(); return b.left >= r.left - 1 && b.right <= r.right + 1; }),
+        barre: bar.scrollWidth <= bar.clientWidth + 1, page: document.documentElement.scrollWidth <= window.innerWidth + 1,
+        texteEntier: tabs.every(x => x.scrollWidth <= x.clientWidth + 1), largeur: window.innerWidth }; });
+    const m390 = await mesurer();
+    await Y.pg.setViewportSize({ width: 320, height: 700 }); await Y.pg.waitForTimeout(300);
+    const m320 = await mesurer();
+    const ok = m => m.n === 4 && m.uneLigne && m.dedans && m.barre && m.page && m.texteEntier;
+    t('PS-E43 Séances | Exercices | Corps & santé | Badges : une seule ligne, sans débordement ni texte coupé, à 390 px ET à 320 px',
+      ok(m390) && ok(m320) && m390.largeur === 390 && m320.largeur === 320, JSON.stringify({ m390, m320 }));
     await Y.cx.close(); }
 
   /* ── 13. Bandeau de cycle : comportement actuel préservé (statu quo, non tranché) ──────────── */
