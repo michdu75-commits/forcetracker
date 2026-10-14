@@ -964,3 +964,13 @@ corrigés. ⛔ **Non fait, faute de décision** : séparation lecture / modifica
 à l'arrivée par la barre du bas (appliqué à la lettre du contrat : replié) ; destination de **Badges** (reste un onglet) ;
 bandeau de cycle (statu quo dans Exercices). Les témoins CLXXII / CLXXIII et 6 autres blocs du runner sont réécrits **dans
 un outil** (`tools/integrer_progres_seances.py`) à exécuter après le LOT 0 Nutrition — `runner.js` non touché.
+
+**➡️ État au 14/10 (soir) — INTÉGRÉ AVEC LE LOT 0, QUALIFIÉ, READY_FOR_COUNTERCHECK** (PROGRES-SEANCES-INTEGRATION-01,
+feu vert de Michel). Branche `claude/progres-seances-integration-01` depuis master `a0eab5b3` : LOT 0 (`f5c93e63`) puis ce lot
+(`7ac0580e`), conflits en documentation seulement ; outil du runner appliqué (ancres trouvées, idempotent). ⭐ **Point 2 ci-dessus
+TRANCHÉ par Michel** : le **mois courant s'ouvre seul** en entrée normale s'il existe (sinon aucun mois, aucun inventé) —
+`_sessMoisEstOuvert`, miroir de `_sessAnEstOuvert`, aucune clé. Témoins : PS-E10 réécrit (R30), PS-E41 → PS-E44 ; CCXXXIX re-visé
+(comparé depuis un état dérangé). Arbre fonctionnel `bd8ae92e` / `80bc98a2` : B-PS01 **52 / 0**, mutations Progrès **37 / 37**,
+LOT 0 **36 / 0** et **35 / 35**, 8 bancs voisins verts, contexte Milo **identique** à master (81 018 caractères, avec 32 séances,
+écran 14 ou 28), **D-031 7 035 ✅ / 0 ❌** (4 conditions). ⛔ Toujours non tranchés : lecture / modification du détail,
+destination de Badges, Milo 14 j vs écran 28 j. Détail : `docs/PROGRES-SEANCES-01.md` §8.

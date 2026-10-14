@@ -1,0 +1,303 @@
+{
+ "chantier": "PROGRES-SEANCES-INTEGRATION-01",
+ "date": "2026-10-14",
+ "session": "session-B (claude-md-docs)",
+ "branche": "claude/progres-seances-integration-01",
+ "base_master": "a0eab5b31ecce7d9a2dab6baeefd248916c19d8d",
+ "production_fonctionnelle": "ft-v1254 (aa808110) — écart master→production : documentation / gouvernance seulement (règle d'or #18)",
+ "lot0_source_head": "f5c93e63741a0aad119a13deafb5177b83ef492b",
+ "lot0_source_tree": "d9b2b4e67d5579317640d1b9d46ad32773950346",
+ "progres_source_head": "7ac0580ef74fc87172492c94dc0ecc1f011022fb",
+ "progres_source_tree": "82639dc1120713b49ce0cf9e8ca5713924189d9e",
+ "functional_head": "bd8ae92ec2994e3172aaf562c7b8c510a8b7b439",
+ "tree": "80bc98a225f57a9a07eb0a8b507025c2dd010533",
+ "final_head": "le commit qui contient ce fichier (documentation et handoff seulement, après la D-031) : git log -1 -- HANDOFF-PROGRES-SEANCES-INTEGRATION-01.json",
+ "ordre_integration": [
+  "821c4c37 réservation du journal de partage (avant toute fusion)",
+  "23449cf4 fusion LOT 0 (f5c93e63) — conflit : journal de partage seulement, les deux lignes gardées",
+  "19292bef fusion PROGRES-SEANCES-01 (7ac0580e) — conflits : journal de partage + 3 lignes de CONTEXTE-ACTUEL, fusionnées sans perte",
+  "08c4660d outil integrer_progres_seances.py appliqué au runner final (ancres trouvées, idempotent)",
+  "81ac661b décision D : mois courant ouvert + témoins + CCXXXIX re-visé + mutations",
+  "fa194c5c documentation (PROGRES-SEANCES-01.md §8)",
+  "bd8ae92e aides « ? » / détaillée + PS-E44 + M36 (arbre fonctionnel qualifié)"
+ ],
+ "conflits": {
+  "code_applicatif": 0,
+  "runner": 0,
+  "registre": 0,
+  "documentation": [
+   "docs/JOURNAL-DE-PARTAGE.md",
+   "docs/CONTEXTE-ACTUEL.md"
+  ]
+ },
+ "files_changed": {
+  "vs_master": [
+   {
+    "etat": "M",
+    "fichier": "app.js",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "coach.js",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "constants.js",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "docs/CONTEXTE-ACTUEL.md",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "docs/JOURNAL-DE-PARTAGE.md",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "docs/JOURNAL-DE-TEST.md",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "docs/PROGRES-SEANCES-01.md",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "docs/PROMPT-MILO-REEL.txt",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "docs/SUIVI-AUDIT.md",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "index.html",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "log.js",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "screens.js",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "setup.js",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "style.css",
+    "applicatif": true
+   },
+   {
+    "etat": "M",
+    "fichier": "tests/parcours/debrief_demande.js",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "tests/parcours/historique_cloud.js",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "tests/parcours/nut_punch01.js",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "tests/parcours/progres_seances.js",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "tests/parcours/runner.js",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "tests/parcours/session_integrity.js",
+    "applicatif": false
+   },
+   {
+    "etat": "M",
+    "fichier": "tests/recette/registre.json",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "tools/banc_nut_punch01.js",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "tools/banc_progres_seances.js",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "tools/integrer_progres_seances.py",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "tools/mut_nut_punch01.py",
+    "applicatif": false
+   },
+   {
+    "etat": "A",
+    "fichier": "tools/mut_progres_seances.py",
+    "applicatif": false
+   }
+  ],
+  "applicatifs": [
+   "app.js",
+   "coach.js",
+   "constants.js",
+   "index.html",
+   "log.js",
+   "screens.js",
+   "setup.js",
+   "style.css"
+  ]
+ },
+ "decisions_produit_appliquees": {
+  "A_structure": "Séances | Exercices | Corps & santé | Badges ; Séances premier et ouvert par défaut ; Badges 4e onglet TEMPORAIRE, non déplacé",
+  "B_contenu": "Séances : synthèse, volume, historique, export, filtre/liste, débrief ; Exercices : raccourcis, recherche, graphique, objectif, « Voir cette séance » ; Corps & santé inchangé ; bannière cycle : statu quo (Exercices)",
+  "C_historique": "Année → Mois → Séance, sans plafond de 20, rétention et stockage inchangés, rendu par mois à la demande, portes externes vers année + mois + séance par la clé existante ts||id",
+  "D_mois_courant": "entrée normale : Séances + année courante + MOIS COURANT ouvert s'il existe ; absent : aucun mois ouvert, aucun inventé ; entrées ciblées prioritaires ; un tap de la personne prime pour la session (en mémoire, signalé comme détail non spécifié)",
+  "E_detail_seance": "non ouvert : le détail reste l'éditeur ; « Revoir la séance » mène à la carte ciblée",
+  "F_volume": "14 | 28 jours, 28 par défaut, ÷2 / ÷4, aucune clé ; Milo garde 14 jours, contexte identique à master",
+  "G_debrief": "D-052 : 0 appel automatique, sessionId conservé, débrief au-delà des 20 accessible",
+  "H_aide": "aide courte, aide détaillée, Guide, point rouge à jour ; « Poids » → « Corps & santé » ; aide : « l'année et le mois en cours sont ouverts »",
+  "I_whats_new": "non posé (aucun numéro de version) ; texte proposé dans docs/PROGRES-SEANCES-01.md, à poser à la publication"
+ },
+ "tests": {
+  "B-PS01": {
+   "ancien_comportement_mois_replie": "49 / 2 (PS-E10, PS-E42 rouges)",
+   "arbre_final": "52 / 0",
+   "nouveaux": [
+    "PS-E10 réécrit (R30)",
+    "PS-E41 mois courant absent",
+    "PS-E42 le tap replie",
+    "PS-E43 4 onglets 390 et 320 px",
+    "PS-E44 calendrier → séance ancienne, vrai geste, app fraîche"
+   ]
+  },
+  "lot0_banc": "36 / 0",
+  "runner_8_blocs_reecrits_reduit": "73 / 0 (CCXXXIX re-visé R30)",
+  "voisins": {
+   "session_integrity": "93/0",
+   "debrief_demande": "58/0",
+   "debrief_provenance": "24/0",
+   "historique_cloud": "87/0",
+   "accueil_mini": "54/0",
+   "poids_chaine": "78/0",
+   "mensurations": "40/0",
+   "masse_grasse_source": "52/0"
+  },
+  "milo": "contexte complet (buildCoachContext) identique à master : 81 018 caractères, fixture de 32 séances, écran sur 14 ou 28 jours ; prompt de démonstration identique hors empreintes de sources ; 0 appel IA réel",
+  "cas_mission_1_a_20": {
+   "1": "PS-E02",
+   "2": "PS-E10",
+   "3": "PS-E41",
+   "4": "PS-E44 (+ PS-E29)",
+   "5": "PS-E27, PS-E28",
+   "6": "PS-E13",
+   "7": "PS-E28, PS-E11",
+   "8": "PS-E14, PS-E16",
+   "9": "PS-E11, PS-E12, PS-E39",
+   "10": "PS-E21",
+   "11": "PS-E17 → PS-E19",
+   "12": "PS-E22 + sonde de contexte complet",
+   "13": "PS-E07, PS-E08",
+   "14": "PS-E24, PS-E26 + voisins poids/mensurations/masse grasse",
+   "15": "PS-E01, PS-E25",
+   "16": "PS-E38",
+   "17": "PS-E31 → PS-E34",
+   "18": "PS-E16 + routes Worker comptées (0 réel)",
+   "19": "PS-E35, PS-E36",
+   "20": "PS-E43"
+  }
+ },
+ "mutations": {
+  "progres_seances": "37 / 37 conformes sur l'arbre final (M31 → M36 nouvelles ; M5, M17 ré-ancrées)",
+  "lot0": "35 / 35 conformes",
+  "runner_reduit": "6 / 6 attrapées (dont R6 : tuile en goScreen nu)",
+  "piege_corrige": "M36 passait au travers (mois déjà dépliés par PS-E11) → PS-E44 déplacé en contexte neuf, attrapée"
+ },
+ "d031": {
+  "head": "bd8ae92ec2994e3172aaf562c7b8c510a8b7b439",
+  "tree": "80bc98a225f57a9a07eb0a8b507025c2dd010533",
+  "total": "7 035 OK / 0 rouge",
+  "conditions": {
+   "1_total": true,
+   "2_code_runner_0": true,
+   "3_arbre_inchange": true,
+   "4_aucune_publication_concurrente": true
+  },
+  "debut_utc": "14:07:36",
+  "fin_utc": "15:27:15",
+  "apres_la_passe": "documentation et handoff seulement (D-031 : pas de nouvelle passe)"
+ },
+ "check_regles": "vert (git diff --check propre)",
+ "regle_17": {
+  "donnees_persistees_ajoutees": 0,
+  "cles_stockage_ajoutees": 0,
+  "fichiers_applicatifs_crees": 0,
+  "fichiers_applicatifs_touches": 8,
+  "lignes": "+198 / -56 (net +142) ; décision D : +10 / -4 dans setup.js",
+  "fonctions_nouvelles": [
+   "_sessAnEstOuvert",
+   "_sessCarteHtml",
+   "_sessMoisDe",
+   "_sessMoisEstOuvert (décision D)",
+   "_sessMoisNom",
+   "_sessOuvrir",
+   "basculerSessAnnee",
+   "basculerSessMois",
+   "choisirVolumeJours"
+  ],
+  "anciens_chemins_supprimes_fusionnes": [
+   "slice(0,20) retiré",
+   "3 bascules d'onglet → une table PROG_ONGLETS",
+   "« forcé à Exercices » retiré",
+   "fenêtre du volume = paramètre du même propriétaire",
+   "2 goSessionsHistory() nus du calendrier visent la séance"
+  ],
+  "second_moteur": false,
+  "nouvelle_identite_seance": false
+ },
+ "hors_lot_consigne": [
+  "lecture / modification du détail d'une séance : non décidé",
+  "destination de Badges : non décidée",
+  "Milo 14 j vs écran 28 j : à trancher si alignement voulu (banc R34)",
+  "WHATS_NEW à poser à la publication",
+  "CONTEXTE-ACTUEL : ligne périmée sur la règle d'or #18 corrigée (elle est sur master depuis a0eab5b3)"
+ ],
+ "interdits_respectes": [
+  "aucune publication",
+  "aucun bump de version",
+  "aucun Pages",
+  "ni Worker ni Apps Script",
+  "aucun merge master",
+  "ni LOT B, ni RIR/RPE/méthodes/machines/records/Milo",
+  "branches sources non modifiées",
+  "Drive en lecture seule"
+ ],
+ "statut": "READY_FOR_COUNTERCHECK",
+ "rapport": "docs/PROGRES-SEANCES-01.md §8 ; PDF hors dépôt PROGRES-SEANCES-INTEGRATION-01-RAPPORT-2026-10-14.pdf"
+}

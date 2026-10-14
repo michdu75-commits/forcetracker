@@ -156,3 +156,8 @@ prioritaires (« Séances ce mois », calendrier, Accueil).
 - **Runner** : CCXXXIX re-visé (R30) — la tuile est comparée à l'arrivée nue depuis le **même état dérangé**.
 - **Mutations** : M5 et M17 ré-ancrées ; M31 → M35 ajoutées (défaut replié, bascule sur l'état brut, mois le
   plus récent ouvert à la place, mois courant inventé, équivalente `in`).
+- **Qualification de l'arbre combiné** (fonctionnel `bd8ae92e` / arbre `80bc98a2`) : B-PS01 **52 / 0** ; mutations Progrès
+  **37 / 37** ; LOT 0 **36 / 0** et **35 / 35** ; 8 blocs du runner réécrits **73 / 0** (6 mutations attrapées) ; 8 bancs voisins
+  verts ; contexte Milo **identique** à master (81 018 caractères avec 32 séances, écran sur 14 ou 28 jours) ; **D-031 unique :
+  7 035 ✅ / 0 ❌**, 4 conditions vertes (14/10, 14:07 → 15:27 UTC). Après la passe : documentation et handoff seulement.
+  Statut : **READY_FOR_COUNTERCHECK** — `HANDOFF-PROGRES-SEANCES-INTEGRATION-01.json`.
