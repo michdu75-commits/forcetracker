@@ -485,12 +485,11 @@ Le chantier :
 
 ### ⚙️ CE QU'ELLE EXIGE
 
-1. **Tester l'accès au tout début du chantier.** Si le chantier doit lire ou écrire sur Google Drive,
-   le premier geste est un appel Drive réel :
-   - une lecture du dossier visé ;
-   - et, s'il faudra écrire, la création immédiate du dossier ou du premier fichier de dépôt.
-   Si l'app demande une validation à Michel, elle tombe **là**, avant tout calcul long — jamais
-   au bout de deux heures de travail.
+1. **Tester l'accès au tout début du chantier, avant tout travail long.** Si le chantier doit lire
+   ou écrire sur Google Drive, le premier geste est un appel Drive réel — **une lecture non
+   destructive du dossier visé suffit**.
+   **Si une permission interactive est nécessaire : STOP immédiat.** Elle se demande à Michel
+   **là**, avant tout calcul long — jamais au bout de deux heures de travail.
 2. **Ne jamais supprimer, mettre à la corbeille, renommer, déplacer ou remplacer un fichier Drive
    EXISTANT sans l'autorisation EXPLICITE de Michel.**
    - Une autorisation se donne pour un geste précis. Elle ne s'étend pas aux gestes suivants.
@@ -500,6 +499,9 @@ Le chantier :
    exemple `SYNTHESE-…-v2-2026-10-13.md` — et **laisser l'ancienne intacte**.
 4. **Créer un fichier NOUVEAU reste permis** dans le dossier du chantier : c'est la seule écriture
    qui ne touche à rien d'existant.
+5. **Aucun nettoyage Drive autonome.** Trier, ranger, mettre à la corbeille ou renommer d'anciennes
+   versions « pour faire propre » ne se fait jamais de sa propre initiative — c'est exactement le
+   geste du 12-13/10 qui a fondé cette règle.
 
 ### ⚠️ POURQUOI ELLE EXISTE — le cas du 12-13/10/2026
 
@@ -521,3 +523,7 @@ qui DOIT ÊTRE) et que **R30** (un retrait se décide, il ne se fait pas en pass
 ⭐ **Décision de Michel du même jour** : laisser `PROMPT-NUT-LOT-B.md` dans son état actuel (pas de
 nouveau renommage) ; aucun autre fichier Drive ne doit être renommé, déplacé, remplacé ou mis à la
 corbeille sans son accord explicite.
+
+↪️ **14/10/2026 — texte aligné sur la formulation de Michel** à l'intégration sur master : une
+lecture non destructive suffit pour tester l'accès ; STOP immédiat si une permission interactive est
+nécessaire ; aucun nettoyage Drive autonome. Les points 2 à 4 sont inchangés depuis le 13/10.
