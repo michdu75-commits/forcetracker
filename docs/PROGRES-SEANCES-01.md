@@ -128,7 +128,7 @@ cassé) : **5 / 5 attrapées**.
 | Données persistées ajoutées | **0** |
 | Clés de stockage ajoutées | **0** (PS-S6, PS-E36) |
 | Fichiers applicatifs touchés | **8** (`index.html`, `setup.js`, `screens.js`, `log.js`, `constants.js`, `coach.js`, `app.js`, `style.css`) — **aucun fichier applicatif créé** |
-| Lignes ajoutées − retirées | **+192 / −56 (net +136)**, dont une bonne part de commentaires et de textes d'aide |
+| Lignes ajoutées − retirées | **+198 / −56 (net +142)** pour l'arbre intégré qualifié (`bd8ae92e` : ce lot + décision D + aides) ; le lot seul (`7ac0580e`) faisait +192 / −56 (net +136) ; après la micro-fermeture (diapo du Guide) : **+201 / −57 (net +144)** — dont une bonne part de commentaires et de textes d'aide |
 | Anciens chemins supprimés / fusionnés | `slice(0,20)` retiré ; les 3 bascules d'onglet recopiées → **une table** (`PROG_ONGLETS`) ; le « forcé à Exercices » de `renderProgress` retiré ; la fenêtre du volume devient **un paramètre** du même propriétaire (aucune copie du calcul) ; les 2 `goSessionsHistory()` nus du calendrier visent la séance |
 | Fonction multi-appelants modifiée | `_volumeParMuscle` (écran + Milo) : sans période → **14 jours, inchangé pour Milo** (PS-S5, PS-E22, M7, M8) ; `goSessionsHistory` (tuile + calendrier) : sans argument → mois en cours |
 

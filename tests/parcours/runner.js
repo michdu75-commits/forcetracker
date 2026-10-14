@@ -4338,7 +4338,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await pd.waitForTimeout(1200);
   const D=await pd.evaluate(()=>{
    try{
-    /* 🗂️ PROGRES-SEANCES-01 (R30) : l'historique est rangé par année puis par mois, mois REPLIÉS par défaut.
+    /* 🗂️ PROGRES-SEANCES-01 (R30) : l'historique est rangé par année puis par mois ; seul le mois EN COURS est ouvert par défaut (décision du 14/10), les autres sont repliés.
        On déplie les mois des séances avant de lire la liste — la garantie (la durée se lit sur la carte) est la même. */
     goScreen('progress'); (S.sessions||[]).forEach(x=>_sessOuvrir([_sessMoisDe(x)])); renderSessions();
     const liste=document.getElementById('sess-list').innerText;
@@ -18926,7 +18926,7 @@ console.log('\n-- CLXIX. Aucune modale n\'est enfermée dans un écran qui défi
       const r=md.getBoundingClientRect();
       return {y:Math.round(r.y), dansLEcran:(r.bottom>0 && r.top<window.innerHeight)}; };
     const o={};
-    /* 🗂️ PROGRES-SEANCES-01 (R30) : l'historique est rangé par mois, REPLIÉS par défaut — 30 séances repliées ne
+    /* 🗂️ PROGRES-SEANCES-01 (R30) : l'historique est rangé par mois ; hors mois en cours (ouvert par défaut, 14/10), REPLIÉS — 30 séances repliées ne
        font plus défiler. On les déplie (ce que fait la personne qui va tout en bas) : même garantie, écran défilé. */
     goScreen('progress'); (S.sessions||[]).forEach(x=>_sessOuvrir([_sessMoisDe(x)])); renderSessions();
     const ep=document.getElementById('s-progress');
@@ -25645,7 +25645,7 @@ console.log('\n-- CCXXVI ter. Le cardio se reconnaît dans l\'historique (ft-v11
   await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1900);
   const R=await p.evaluate(()=>{ try{
     const o={}, t=today(), ts=new Date(t+'T10:00:00').getTime();
-    /* 🗂️ PROGRES-SEANCES-01 (R30) : mois repliés par défaut — on déplie ceux des séances avant de lire la carte. */
+    /* 🗂️ PROGRES-SEANCES-01 (R30) : hors mois en cours (ouvert par défaut, 14/10), les mois sont repliés — on déplie ceux des séances avant de lire la carte. */
     const lire=()=>{ (S.sessions||[]).forEach(x=>_sessOuvrir([_sessMoisDe(x)])); renderSessions(); const el=document.getElementById('sess-list');
                      return (el?el.innerText:'').replace(/\s+/g,' ').trim(); };
     goScreen('progress',document.getElementById('nb-progress'));

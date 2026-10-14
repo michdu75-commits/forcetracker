@@ -137,7 +137,7 @@ module.exports.ecran = async function (t, b, PORT) {
   };
   const historique = async X => {
     await clic(X.pg, '#nb-progress'); await X.pg.waitForTimeout(400);
-    /* 🗂️ PROGRES-SEANCES-01 (R30) — la liste est rangée par année puis par mois (mois repliés) : on déplie les mois
+    /* 🗂️ PROGRES-SEANCES-01 (R30) — la liste est rangée par année puis par mois (mois repliés, sauf le mois en cours depuis le 14/10) : on déplie les mois
        des séances et on lit les CARTES dans l'ordre affiché. Même garantie qu'avant : l'ordre de l'historique. */
     await X.pg.evaluate(() => { try { (S.sessions || []).forEach(s => _sessOuvrir([_sessMoisDe(s)])); renderSessions(); } catch (e) {} });
     return X.pg.evaluate(() => [...document.querySelectorAll('#sess-list .sess-card')].map(e => e.textContent.replace(/\s+/g, ' ').slice(0, 40)));

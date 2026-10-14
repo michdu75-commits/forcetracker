@@ -24,7 +24,7 @@
    Banc : tools/banc_session_integrity.js · contrôle négatif : tools/mut_session_integrity.py
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 /* 🗂️ PROGRES-SEANCES-01 (14/10/2026, R30) — l'historique a quitté l'onglet « Exercices » pour « Séances », rangé par
-   année puis par mois (mois repliés). Ces témoins visaient la liste en passant par « Exercices » : ils passent
+   année puis par mois (mois repliés, sauf le mois en cours depuis le 14/10). Ces témoins visaient la liste en passant par « Exercices » : ils passent
    maintenant par « Séances » et déplient les mois des séances de la fixture. Leur garantie (les boutons de
    débrief d'UNE séance) est inchangée ; la navigation elle-même est conduite par B-PS01-E. */
 const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\nfunction ', i + 10); const k = src.indexOf('\nasync function ', i + 10);
