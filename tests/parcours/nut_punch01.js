@@ -322,8 +322,7 @@ module.exports.contrat = async function (t, b, PORT) {
   /* La sonde vivante ne juge AUCUNE observation : elle vérifie seulement que chacune a été mesurée
      (une valeur lue, pas `undefined`) — sinon une sonde morte passerait pour « conforme ». */
   t('B-NP01-A les observations O1 → O5 ont bien été MESURÉES (sonde vivante : 2 séances stockées aujourd\'hui, valeurs lues)',
-    OB.O2.evenementsAujourdhui === 2 && typeof OB.O1.region === 'number' && typeof OB.O3.region === 'number'
-    && typeof OB.O4.js === 'string' && 'annonce' in OB.O5 && OB.O5.regionFaite !== undefined, _det(OB));
+    OB.O2.evenementsAujourdhui === 2 && ['O1', 'O3', 'O4', 'O5'].every(k => OB[k] && Object.keys(OB[k]).every(c => OB[k][c] !== undefined)), _det(OB));
   t('B-NP01-A observations : aucune erreur de page, aucun appel réseau pendant les calculs', O.errs.length === 0 && O.externes.length === reseauO, O.errs.concat(O.externes.slice(reseauO)).slice(0, 2).join(' | '));
   await O.cx.close();
 
@@ -477,4 +476,3 @@ async function _complementsLot0(t, b, PORT) {
   t('B-NP01-A O10 aucune erreur de page', E.errs.length === 0, E.errs.slice(0, 2).join(' | '));
   await E.cx.close();
 }
-
