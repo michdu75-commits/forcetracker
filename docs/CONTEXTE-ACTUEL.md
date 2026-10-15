@@ -10,11 +10,10 @@
 
 ## 📌 Version
 
-- **Version en ligne (live) :** `ft-v1254` — 🍽️ **NUTRITION (chaîne qualifiée : NUT-D042-CLOSURE-01 → VARIANTS-01 / 02 / 03 → LOT-C → RED-CLOSURE → LOT-A → LOT-B)** — ✅ **PUBLIÉE le 14/10/2026** (autorisation de Michel : « OUI, PUBLIER » ; master `7b75f3c1` → commit de publication en avance rapide, aucun merge ; un seul push master ; Pages : voir `docs/JOURNAL-DE-PARTAGE.md`). La recherche d'aliments lit l'aliment et non la quantité, respecte un qualificatif tapé, met le générique avant le fast-food ; le journal refuse une quantité vide, nulle ou illisible. Seuls `app.js`, `data/alias.json` et `data/marques.json` changent côté application. Worker et Apps Script inchangés. ✅ **Recette terrain iPhone faite par Michel le 14/10** (voir « Ordre de travail », A).
-- **Version précédente :** `ft-v1253` — 🏷️ **IMPORT-MAP-01 / 01B / 02 + IMPORT-P0-2** — ✅ **PUBLIÉE le 11/10/2026** (master `7d7bb5a8` → `7b75f3c1` en avance rapide, aucun merge, un seul push). À l'import, le matériel écrit et l'identité d'un exercice ne changent plus en silence ; « Triceps Pushdown » va vers Triceps Poulie. Seul `log.js` changeait côté application. *(Avant : `ft-v1252` — SEC-ADMIN-01, publiée le 09/10.)*
-- Prochaine : `ft-v1255`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
-- **Candidat `ft-v1255` (15/10, soir) : branche `claude/claude-md-docs-ytabnv` `3ab50f10` — READY_FOR_PUBLICATION, NON PUBLIÉ, version non posée.** = master `058a1de6` (le candidat `41fa44e8` intégré, docs à part) + **micro-lot BADGES → MENU (D-078, décision de Michel)** : Badges quitte Progrès (Séances · Exercices · Corps & santé) et s'ouvre par Menu ☰ → Ton suivi → Badges ; `renderBadges()` inchangé, 0 donnée persistée. **D-031 VALIDE `3ab50f10` : 7 052 ✅ · 0 ❌** (4 conditions). Mutations Badges 19 / 19 (M22 et M56 réécrits : leur 1ʳᵉ version ne cassait rien, `BUGS.md` §74). Avant : OD-CLÉ-CARTE (défaut de test, `BUGS.md` §73). Détail : `docs/SUIVI-AUDIT.md`. ⛔ Publication seulement sur feu vert explicite de Michel.
-- **Master (15/10) : `058a1de6` — INTÉGRÉ, NON PUBLIÉ** (PHASE 1, feu vert de Michel : avance rapide `98aa71b8` → `058a1de6`, tête `[skip ci]`, aucun workflow parti). Master = candidat qualifié `41fa44e8` (D-031 7 046 / 0) + docs. Le micro-lot Badges → Menu est sur la branche, **pas encore sur master**. Production toujours `ft-v1254` (`aa808110`). ⛔⛔ **Master porte du code NON PUBLIÉ : tout push sur master SANS `[skip ci]` publierait ce lot sur Pages, sans changement de version.**
+- **Version en ligne (live) :** `ft-v1255` — 🗂️ **PROGRÈS → SÉANCES + 🏅 BADGES → MENU** — ✅ **PUBLIÉE le 15/10/2026** (feu vert explicite de Michel ; master `058a1de6` → commit de publication en avance rapide, aucun merge, un seul push ; Pages : voir `docs/JOURNAL-DE-PARTAGE.md`). Progrès = **Séances · Exercices · Corps & santé**, Séances en premier ; tout l'historique par année puis par mois, le mois en cours ouvert ; « Séances ce mois » et le calendrier mènent à la bonne séance ; volume 14 | 28 jours (Milo garde 14) ; pop-up v77 ; **Badges dans le Menu ☰ → Ton suivi → Badges** (D-078). Arbre fonctionnel qualifié `3ab50f10` (tree `d124d65f`), **D-031 7 052 ✅ / 0 ❌**. ⚠️ **Recette terrain iPhone À FAIRE PAR MICHEL.**
+- **Version précédente :** `ft-v1254` — 🍽️ **NUTRITION (chaîne qualifiée NUT-D042-CLOSURE-01 → LOT-B)** — ✅ **PUBLIÉE le 14/10/2026** (master `7b75f3c1` → `aa808110`). *(Avant : `ft-v1253` — IMPORT-MAP + IMPORT-P0-2, publiée le 11/10.)*
+- Prochaine : `ft-v1256`. ⚠️ Le numéro fait foi dans `sw.js` et dans l'en-tête du journal de `CLAUDE.md`, jamais ici. *(↪️ 30/09 : cette ligne disait encore `ft-v1244` après sa publication — corrigée.)*
+- **Master (15/10) = production** : le commit de publication `ft-v1255`. Plus aucun code non publié sur master.
 
 ## 🧭 ORDRE DE TRAVAIL — décidé par Michel le 14/10/2026 (règle d'or #15)
 
@@ -37,7 +36,7 @@
 
 ## 🗂️ TABLEAU DE BORD DES CHANTIERS — état au 11/10/2026 (CLOTURE-CHANTIERS-DOCS-01)
 
-> **Mesuré, pas recopié** (`git fetch --all`, historique complet). ↪️ **Mis à jour à la publication `ft-v1254` (14/10)** : production = master =
+> **Mesuré, pas recopié** (`git fetch --all`, historique complet). ↪️ **15/10 : production = master = le commit de publication `ft-v1255`** (Progrès → Séances + Badges → Menu). ↪️ **Mis à jour à la publication `ft-v1254` (14/10)** : production = master =
 > le commit de publication `ft-v1254` (chaîne Nutrition), au-dessus de `ft-v1253` (IMPORT-MAP + IMPORT-P0-2). ⛔⛔ Tout push sur master redéploie Pages : chaque publication pose
 > son numéro dans le même push. Détail des branches et de leur contenu : rapport CLOTURE-CHANTIERS-DOCS-01.
 
