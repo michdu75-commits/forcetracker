@@ -170,3 +170,4 @@ prioritaires (« Séances ce mois », calendrier, Accueil).
   **57 / 0**, mutations **44 / 44**, LOT 0 **36 / 0**, voisins verts, **D-031 7 040 ✅ / 0 ❌** (4 conditions, 20:10:14 → 21:23:27 UTC).
   Statut : **READY_FOR_MASTER_INTEGRATION**.
 - **Intégré à master le 14/10 (nuit), NON PUBLIÉ** : avance rapide `a0eab5b3` → `b9e91127`, tête `[skip ci]` (aucun déploiement), même arbre fonctionnel que l'arbre qualifié `f3813e86`. Prochaine étape : recette iPhone, puis décision de publication de Michel.
+- **Petit lot UX du 15/10 (soir), après `ft-v1255`** — décisions de Michel **D-079** (filtre de l'historique en panneau compact, plusieurs zones en logique OU, mémoire seulement) et **D-080** (volume replié à chaque lancement, état gardé pendant la session). Arbre fonctionnel `8a7c5a9f` / `c435f3eb`, **D-031 7 067 ✅ / 0 ❌**. Détail et réserves : `docs/SUIVI-AUDIT.md`. NON PUBLIÉ.

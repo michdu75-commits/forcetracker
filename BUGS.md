@@ -4580,3 +4580,13 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 **Ce qui le protège.** Le commentaire en tête de M22 / M56 dans `tools/mut_progres_seances.py` garde la 1ʳᵉ version et la mesure qui l'a disqualifiée.
 
 **À quoi on le reconnaît.** Une mutation « évidente » qui ne fait rien rougir. 👉 *Avant de réécrire un témoin parce qu'une mutation passe au travers, vérifier dans la page que la mutation produit vraiment l'effet annoncé* (`hidden` contre un `display` d'auteur ; une marge dans un conteneur qui ne bouge pas). Le miroir de §73 : là le témoin cherchait mal, ici c'est la mutation qui ne cassait pas.
+
+## §75 — ⛔ « VISIBLE » SELON `offsetParent` : DANS UN `<details>` FERMÉ, CHROMIUM GARDE LA BOÎTE *(15/10/2026, petit lot UX Progrès → Séances / D-079 — branche, avant publication)*
+
+**Symptôme.** Témoin PS-E54 (« fermé, le filtre ne montre aucune pastille ») rouge sur du code sain : les pastilles, rangées dans le panneau « Filtrer les séances » fermé, étaient comptées visibles.
+
+**Cause — mesurée par une sonde avant de toucher au code.** L'aide du banc jugeait la visibilité par `offsetParent !== null` et la hauteur du rectangle. Dans un `<details>` fermé, Chromium rend le contenu invisible sans lui retirer sa boîte : `offsetParent` reste non nul et `getBoundingClientRect().height` vaut 31 px. Seul `el.checkVisibility()` rend `false`. Le produit était juste ; le témoin mesurait mal.
+
+**Ce qui le protège.** `pastillesVisibles` (tests/parcours/progres_seances.js) passe par `checkVisibility()` ; la mutation M65 (panneau ouvert d'office) fait rougir PS-E54, donc le témoin sait rougir.
+
+**À quoi on le reconnaît.** Un élément « visible » pour le banc et invisible à l'écran, dans un `<details>`, un `content-visibility` ou un élément `hidden` par l'agent. 👉 *Pour un contenu replié, mesurer avec `checkVisibility()`, pas avec la boîte.*
