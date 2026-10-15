@@ -79,8 +79,11 @@ MUT = [
            "{icon:'🗂️', t:'Le haut de Progrès se replie', cap:'Les trois onglets (<b>Exercices · Poids · Badges</b>) sont <b>tout en haut</b>. <b>Séances</b> passe en premier")], 'GARDE', 'PS-E34'),
     # D-078 (15/10) : M22 est REECRIT. Il prouvait « l'onglet Badges ne disparait pas » (relocalisation non decidee) ;
     # la regle est devenue « Badges doit rester JOIGNABLE depuis le Menu et sa grille doit etre fonctionnelle ».
+    # [!!] 1re version (attribut `hidden` sur la ligne) : 0 rouge, et c'etait la MUTATION qui ne mordait pas — mesure :
+    #      `.menu-row{display:flex}` (style.css) l'emporte sur `hidden`, la ligne restait visible et Badges joignable.
+    #      La mutation retire donc la ligne pour de bon.
     ("M22 Badges n'est plus joignable depuis le Menu (sa ligne est retiree)",
-     [(IX, '      <div class="menu-row" id="menu-row-badges" onclick="openBadges()">', '      <div class="menu-row" id="menu-row-badges" onclick="openBadges()" hidden>')], 'GARDE', 'PS-E01'),
+     [(IX, '      <div class="menu-row" id="menu-row-badges" onclick="openBadges()">', '      <div class="menu-row-retiree" style="display:none">')], 'GARDE', 'PS-E01'),
     ('M23 [deguisee] le bouton de debrief disparait au-dela des 20 dernieres seances',
      [(SE, "    const _dbfId=(typeof _dbfCle==='function')?_dbfCle(s):'';", "    const _dbfId=(typeof _dbfCle==='function'&&S.sessions.indexOf(s)<20)?_dbfCle(s):'';")], 'GARDE', 'PS-E14'),
     ('M24 [deguisee] l\'analyse d\'un exercice change (Progres = derniere - record)',
@@ -156,8 +159,10 @@ MUT = [
      [(SC, "<b>Progrès a trois onglets, et Séances passe en premier.</b>", "<b>Progrès a quatre onglets, et Séances passe en premier.</b>")], 'GARDE', 'PS-E51'),
     ('M59 [deguisee] l\'aide de l\'ACCUEIL renvoie encore a « l\'onglet Badges dans Progres »',
      [(SC, "Pour tout voir : Menu ☰ → <b>Ton suivi</b> → <b>Badges</b>.'},", "Consulte l\\'onglet Badges dans Progrès pour tout voir.'},")], 'GARDE', 'PS-E51'),
+    # [!!] 1re version (`marginTop='2px'`) : 0 rouge, et c'etait la MUTATION — mesure : la marge est appliquee (2px calcule)
+    #      mais le rectangle du « + » ne bouge pas d'un pixel. Un decalage qui ne deplace rien ne prouve rien : translateY.
     ('M56 [deguisee] ouvrir Badges deplace le « + » central de 2 px (regle d\'or #9)',
-     [(SE, "function openBadges(){\n", "function openBadges(){\n  {const f=document.getElementById('nb-log');if(f)f.style.marginTop='2px';}\n")], 'GARDE', 'PS-E53'),
+     [(SE, "function openBadges(){\n", "function openBadges(){\n  {const f=document.getElementById('nb-log');if(f)f.style.transform='translateY(2px)';}\n")], 'GARDE', 'PS-E53'),
     ('M57 [deguisee] un 2e moteur : une seconde grille Badges dans index.html',
      [(IX, '      <div class="menu-row" id="menu-row-badges" onclick="openBadges()">', '      <div id="badge-grid" class="badge-grid" hidden></div>\n      <div class="menu-row" id="menu-row-badges" onclick="openBadges()">')], 'GARDE', 'PS-S10'),
     ('M58 [equivalente] openBadges : typeof inverse (meme sens)',
