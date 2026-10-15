@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1254`, dernier commit 2026-10-14).
+> Généré depuis **le code** (version `ft-v1254`, dernier commit 2026-10-15).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -17,11 +17,11 @@
 | Élément | Nombre | Absents de la doc |
 |---|---|---|
 | Écrans | 7 | 0 |
-| Lignes de menu | 16 | 2 |
+| Lignes de menu | 17 | 3 |
 | Fenêtres (modales) | 66 | 15 |
 | Actions du serveur | 51 | 3 |
-| Fonctions JS | 630 | — |
-| Nouveautés annoncées | 70 | — |
+| Fonctions JS | 631 | — |
+| Nouveautés annoncées | 71 | — |
 
 ## 🖥️ Écrans
 
@@ -44,6 +44,7 @@
 | **Ce que Milo sait de toi** | `menu-row-miloknows` | `openMiloKnows` | ✅ |
 | **Bilans mensuels** | `menu-row-bilanmois` | `openMonthReports` | ✅ |
 | **Exporter mes données** | — | `exportData` | ✅ |
+| **Badges** | `menu-row-badges` | `openBadges` | ✅ |
 | **Cycle de force** | — | `goScreen` | ✅ |
 | **Calculateur 1RM** | — | `openDrawerContent` | ✅ |
 | **Guide de la muscu** | — | `openDrawerContent` | ✅ |
@@ -191,6 +192,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 77 | 🗂️ | Progrès : Séances d'abord |
 | 76 | ✨ | L'avis de Milo se demande |
 | 75 | 🗂️ | Le menu est rangé en 4 rayons |
 | 74 | 📊 | « Ce mois » ne garde que deux tuiles |

@@ -19165,9 +19165,11 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
     switchProgTab('poids',document.getElementById('ptab-poids'));
     o.poids={synth:vis('prog-synth'), volume:vis('prog-volume'), ongletsY:y('ptab-poids'),
              contenuY:y('prog-poids'), contenuVisible:vis('prog-poids')};
-    switchProgTab('badges',document.getElementById('ptab-badges'));
-    o.badges={synth:vis('prog-synth'), volume:vis('prog-volume'),
-              contenuY:y('prog-badges'), contenuVisible:vis('prog-badges')};
+    /* 🏅 D-078 (15/10/2026, R30) : Badges a QUITTÉ Progrès pour le Menu. « Même les badges » (Michel) reste vrai, et
+       par construction : il n'y a plus d'onglet Badges sur lequel les cartes pourraient s'afficher. On mesure donc
+       cette absence (un ancien `switchProgTab('badges')` retombe sur Séances) ; Badges lui-même est éprouvé dans le
+       Menu par le banc PROGRES-SEANCES (PS-E01, PS-E25, PS-E50 → PS-E53). */
+    o.badges={onglet:!!document.getElementById('ptab-badges'), panneau:!!document.getElementById('prog-badges')};
     /* ⛔ ET LE RETOUR : elles reviennent INTACTES, sans recalcul — c'est ce que l'ancienne
        décision protégeait vraiment, et ça ne doit pas se perdre. */
     switchProgTab('seances',document.getElementById('ptab-seances'));
@@ -19199,8 +19201,8 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
       W.poids.synth===false && W.poids.volume===false && W.poids.contenuVisible===true
       && W.poids.contenuY < 250,
       JSON.stringify({poids:W.poids}));
-    t('⭐⭐ ③ sur BADGES aussi (« même les badges » — Michel)',
-      W.badges.synth===false && W.badges.volume===false && W.badges.contenuVisible===true,
+    t('⭐⭐ ③ « même les badges » (Michel) : Badges n\'est plus un onglet de Progrès (D-078, il vit dans le Menu) — les cartes ne peuvent plus s\'y afficher',
+      W.badges.onglet===false && W.badges.panneau===false,
       JSON.stringify(W.badges));
     /* ⛔ CE QUE L'ANCIENNE DÉCISION PROTÉGEAIT VRAIMENT, et qui reste vrai. */
     t('⛔ ④ … et elles REVIENNENT intactes sur Séances (elles ne se perdent pas, R30)',
@@ -39705,7 +39707,7 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      sûr (rattrapage, Coach, file) ; cet automatisme n'existe plus. Ses invariants encore vivants (sessionId,
      double clic, A ne libère pas B, complete:false, suppression) sont repris par OD-05/09/10/12/13/14. */
   await require('./debrief_demande.js').ecran(t, b, PORT);
-  /* 🗂️ PROGRES-SEANCES-01 (session-B, 14/10/2026) — Progrès : Séances | Exercices | Corps & santé | Badges ; historique
+  /* 🗂️ PROGRES-SEANCES-01 (session-B, 14/10/2026) — Progrès : Séances | Exercices | Corps & santé (🏅 Badges → Menu, D-078) ; historique
      Année → Mois sans plafond de 20 ; Accueil et calendrier → Séances ; volume 14 | 28 (28 par défaut), Milo inchangé.
      Blocs B-PS01-*. Banc : tools/banc_progres_seances.js · contrôle négatif : tools/mut_progres_seances.py. */
   await require('./progres_seances.js').ecran(t, b, PORT);

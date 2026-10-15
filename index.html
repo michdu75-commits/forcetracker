@@ -650,13 +650,13 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
        barre qui sert à en sortir. -->
   <!-- 🗂️ PROGRES-SEANCES-01 (14/10/2026, décision de Michel) : SÉANCES passe en premier. Ce qui parle
        de l'ENTRAÎNEMENT EN GÉNÉRAL (synthèse, volume, historique, export) quitte « Exercices », qui ne
-       garde que l'analyse d'UN exercice. ⛔ « Badges » reste un onglet : sa destination n'est pas
-       décidée, et le déplacer ailleurs serait une décision produit prise seul (règle d'or #15). -->
+       garde que l'analyse d'UN exercice.
+       🏅 D-078 (15/10/2026, décision de Michel) : « Badges » a QUITTÉ Progrès pour le Menu (« Ton suivi » → Badges).
+       Progrès = Séances · Exercices · Corps & santé. ⛔ Ne pas remettre l'onglet : c'est une décision, pas un oubli (R30). -->
   <div class="nu-tabs">
     <button class="nu-tab active" id="ptab-seances" onclick="switchProgTab('seances',this)">Séances</button>
     <button class="nu-tab" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
     <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Corps &amp; santé</button>
-    <button class="nu-tab" id="ptab-badges" onclick="switchProgTab('badges',this)">Badges</button>
   </div>
 
   <!-- TAB: Séances (PROGRES-SEANCES-01) — l'entraînement dans son ensemble : constantes, volume,
@@ -718,11 +718,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
      BOUTON qu'on touche, comme la modale d'export existante — il n'y a donc aucun état coché
      quelque part sur lequel se tromper (R13, même geste que `ov-export-choix`). -->
 
-<!-- TAB: Badges -->
-  <div id="prog-badges" style="display:none;flex-direction:column;gap:12px;">
-    <div class="sec">Mes Récompenses</div>
-    <div id="badge-grid" class="badge-grid"></div>
-  </div>
+<!-- 🏅 D-078 (15/10/2026, Michel) : l'ancien onglet Badges vit dans le Menu (« Ton suivi » → Badges). Sa grille
+       `#badge-grid` est créée à l'ouverture par la surface des contenus du Menu (coach.js, `_DRAWER_CONTENT.badges`) ;
+       `renderBadges()` (app.js) est inchangé et reste le SEUL moteur. ⛔ Panneau retiré exprès (R30). -->
 
   <!-- TAB: Poids -->
   <div id="prog-poids" style="display:none;flex-direction:column;gap:10px;">
@@ -3576,6 +3574,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="menu-row" id="menu-row-miloknows" onclick="closeMenuDrawer();openMiloKnows()"><div class="menu-row-ic" style="background:rgba(239,62,87,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/><line x1="9.5" y1="22" x2="14.5" y2="22"/></svg></div><span class="menu-row-lbl">Ce que Milo sait de toi</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" id="menu-row-bilanmois" onclick="closeMenuDrawer();openMonthReports()"><div class="menu-row-ic" style="background:rgba(52,211,153,.12);"><span style="font-size:16px;line-height:1;">📅</span></div><div class="menu-row-tx"><div class="menu-row-t">Bilans mensuels</div><div class="menu-row-d">Ce que tu as fait chaque mois — tous consultables</div></div><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
       <div class="menu-row" onclick="closeMenuDrawer();exportData()"><div class="menu-row-ic" style="background:rgba(234,179,8,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><span class="menu-row-lbl">Exporter mes données</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <!-- 🏅 D-078 (15/10/2026, Michel) : Badges quitte Progrès et vit ici (« ce qui parle de TOI et de ton histoire »). Dernière ligne du rayon : les trois premières restent sur le premier écran (CCXL). -->
+      <div class="menu-row" id="menu-row-badges" onclick="openBadges()"><div class="menu-row-ic" style="background:rgba(255,199,84,.12);"><span style="font-size:16px;line-height:1;">🏅</span></div><div class="menu-row-tx"><div class="menu-row-t">Badges</div><div class="menu-row-d">Tes récompenses débloquées et celles à venir</div></div><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
     </div>
     <!-- TES OUTILS -->
     <div class="sec">Tes outils</div>

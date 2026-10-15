@@ -835,14 +835,24 @@ function switchProgTab(tab,btn){
     if(be)be.classList.toggle('active',k===tab);
   });
   if(tab==='poids')renderWeightTab();
-  if(tab==='badges')renderBadges();
 }
-/* Les sous-onglets de Progrès : [bouton, panneau, espacement]. ⛔ « badges » reste ici tant que sa
-   destination n'est pas décidée (mission du 14/10 : « ne rends pas Badges inaccessible »). */
+/* Les sous-onglets de Progrès : [bouton, panneau, espacement].
+   🏅 D-078 (15/10/2026, décision de Michel) : « badges » n'en fait plus partie — Badges vit dans le Menu
+   (`openBadges`, plus bas). Un ancien `switchProgTab('badges')` retombe sur Séances (garde ci-dessus). */
 const PROG_ONGLETS={seances:['ptab-seances','prog-seances','10px'], exo:['ptab-exo','prog-exo','10px'],
-                    poids:['ptab-poids','prog-poids','10px'], badges:['ptab-badges','prog-badges','12px']};
+                    poids:['ptab-poids','prog-poids','10px']};
 let _progTab='seances', _progCibleNav=false;
 function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
+/* 🏅 BADGES DANS LE MENU (D-078, décision de Michel du 15/10/2026) — Menu ☰ → « Ton suivi » → Badges.
+   ⭐ R13 : la surface est celle de TOUS les contenus du Menu (`openDrawerContent`, modale `ov-drawer-cnt` :
+   ✕, tap à côté, glissé vers le bas, bouton retour — les portes génériques) ; elle crée `#badge-grid`, puis `renderBadges()`
+   (app.js) la remplit, INCHANGÉ : aucun 2ᵉ moteur, aucune logique de badge copiée. ⛔ Ouvrir n'écrit rien —
+   ni badge, ni clé ; seul le point rouge de la ligne s'éteint (R15 : posé à l'ouverture, pas à la fermeture). */
+function openBadges(){
+  openDrawerContent('badges');
+  if(typeof renderBadges==='function')renderBadges();
+  if(typeof _markAnchorSeen==='function')_markAnchorSeen('menu-row-badges');
+}
 /* 🗂️ PROGRES-SEANCES-01 — LES PORTES DE L'HISTORIQUE MÈNENT À SÉANCES, AU BON ENDROIT.
    · sans argument (tuile « Séances ce mois » de l'Accueil) → le MOIS EN COURS, déplié ;
    · une liste de clés (calendrier : un jour, « Revoir la séance », la vue semaine) → l'année et le mois

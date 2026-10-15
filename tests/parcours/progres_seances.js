@@ -2,8 +2,8 @@
    🗂️ PROGRES-SEANCES-01 — PROGRÈS → SÉANCES / UX-HIST, LOT STRUCTUREL 01 (session-B · 14/10/2026, mission de Michel)
 
    Contrat (décisions de Michel du 14/10 + contrat UX-HIST du 08/10, §12 de l'addendum d'architecture) :
-   · Progrès = SÉANCES | EXERCICES | CORPS & SANTÉ, Séances en premier ; Badges reste un onglet tant que sa
-     destination n'est pas décidée (aucune relocalisation) ;
+   · Progrès = SÉANCES | EXERCICES | CORPS & SANTÉ, Séances en premier, et rien d'autre : 🏅 Badges a quitté Progrès
+     pour le Menu ☰ → « Ton suivi » → Badges (D-078, décision de Michel du 15/10/2026), même grille (`renderBadges`) ;
    · Séances porte « Ce que ton histoire montre », « Ce que tu travailles, par semaine », l'historique,
      l'export, le filtre, la liste et le débrief ; Exercices garde chips, recherche, graphique, objectif ;
    · historique Année → Mois → Séance : années repliées sauf l'année en cours, un mois se déplie à la
@@ -17,8 +17,10 @@
    Blocs : B-PS01-S (source) · B-PS01-E (écran conduit) · B-PSI01-E (session-B, PROGRES-SEANCES-INTEGRATION-01 :
    PS-E41 → PS-E44, mois courant, largeur 390 / 320 px, calendrier → séance ancienne par le vrai geste ;
    micro-fermeture du 14/10 : PS-S8 diapo du Guide, PS-E45 → PS-E48, PS-E27 / PS-E29 isolés dans un contexte neuf ;
-   publication ft-v1255 du 15/10 : PS-S9 et PS-E49, la pop-up « Quoi de neuf » « Progrès : Séances d'abord »).
-   Ce que les témoins CONDUISENT : la barre du bas, les onglets de Progrès, les en-têtes Année / Mois,
+   publication ft-v1255 du 15/10 : PS-S9 et PS-E49, la pop-up « Quoi de neuf » « Progrès : Séances d'abord » ;
+   D-078 du 15/10, Badges → Menu : PS-S10, PS-E01 réécrit, PS-E01b, PS-E25 réécrit, PS-E50 → PS-E53).
+   Ce que les témoins CONDUISENT : la barre du bas, le Menu ☰ et sa ligne Badges, la fenêtre Badges et ses trois
+   fermetures (✕, tap à côté, bouton retour), les onglets de Progrès, les en-têtes Année / Mois,
    la tuile « Séances ce mois », le calendrier (jour, « Revoir la séance », vue semaine), le choix
    14 | 28 jours, une carte (détail), « 💬 Voir le débrief Milo ».
    Frontières SIMULÉES : Worker IA (compté, jamais réel), Apps Script, Supabase. ⛔ 0 appel réel à Anthropic.
@@ -26,7 +28,8 @@
    et les cartes de l'historique, le texte de la carte volume, le texte que Milo reçoit
    (`_ctxVolumeMuscles`), `ft4_sessions` et la liste des clés du stockage, les requêtes `coach`.
    Ce qu'ils NE COUVRENT PAS : Safari iOS, le rendu visuel fin (captures), la séparation lecture /
-   modification du détail (non décidée), la destination finale de Badges (non décidée).
+   modification du détail (non décidée), le glissé vers le bas de la fenêtre Badges (geste tactile, porte commune à
+   tous les contenus du Menu, non conduite ici).
    Banc : tools/banc_progres_seances.js · contrôle négatif : tools/mut_progres_seances.py
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 const { jourParis } = require('../_jour.js');
@@ -85,15 +88,17 @@ module.exports.source = function (t, ROOT, fs, path) {
   const ecritures = [rs, gsh, corps(se, 'switchProgTab'), corps(se, 'basculerSessAnnee'), corps(se, 'basculerSessMois'), corps(se, 'choisirVolumeJours')].join('\n');
   t('PS-S6 ⛔ aucune nouvelle clé persistée pour l\'historique, le mois ouvert, l\'onglet ou la période (aucun `localStorage.setItem`)',
     !/localStorage\.setItem/.test(ecritures), (ecritures.match(/localStorage\.setItem\([^,]*/g) || []).join(' '));
-  /* PS-S8 — la diapo « Tes progrès » du Guide (règle d'or #11) : l'ancienne capture montrait 3 onglets avec « Exercices »
-     actif. La légende nomme les 4 onglets dans l'ordre, Séances d'abord, et l'image n'est plus l'ancienne capture. */
+  /* PS-S8 — la diapo « Tes progrès » du Guide (règle d'or #11). La légende nomme les 3 onglets dans l'ordre, Séances
+     d'abord, et dit que les badges sont dans le Menu (D-078) ; l'image n'est ni la capture d'avant PROGRES-SEANCES-01
+     (3 onglets, « Exercices » actif) ni celle à 4 onglets (Badges en dernier) du 14/10. */
   { const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
     const d = (ap.split('\n').find(l => /img:'guide\/progres\.jpg'/.test(l)) || '');
-    const ordre = ['Séances', 'Exercices', 'Corps &amp; santé', 'Badges'].map(x => d.indexOf(x));
+    const ordre = ['Séances', 'Exercices', 'Corps &amp; santé'].map(x => d.indexOf(x));
     const h = require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'guide', 'progres.jpg'))).digest('hex');
-    t('PS-S8 diapo « Tes progrès » : légende Séances · Exercices · Corps & santé · Badges (dans l\'ordre) et capture refaite (≠ ancienne capture à 3 onglets)',
+    const anciennes = ['f3a5ff8147a7a06371ed48638baa3702790b36a431d430a794708f901c8fa954', 'f82c8f6a1a77af56'];
+    t('PS-S8 diapo « Tes progrès » : légende Séances · Exercices · Corps & santé (dans l\'ordre), badges dans le Menu, et capture refaite (≠ capture d\'avant, ≠ capture à 4 onglets)',
       d && ordre.every(i => i > 0) && ordre.every((v, i) => !i || v > ordre[i - 1]) && !/graphiques clairs/.test(d)
-      && h !== 'f3a5ff8147a7a06371ed48638baa3702790b36a431d430a794708f901c8fa954', JSON.stringify({ ordre, h: h.slice(0, 12) })); }
+      && /<b>badges<\/b>[^.]*<b>Menu<\/b>/i.test(d) && anciennes.every(a => h.indexOf(a) !== 0), JSON.stringify({ ordre, h: h.slice(0, 12) })); }
   /* PS-S9 — la pop-up « Quoi de neuf » de la publication ft-v1255 (règle d'or #11 : un repère a bougé). Elle existe,
      APRÈS la dernière annonce de la production d'avant (ft-v1254 : v76), elle est courte (R25 : ≤ 600 caractères) et
      elle dit ce qui a bougé : Séances en premier, l'historique par année puis par mois, Exercices garde la progression. */
@@ -103,6 +108,19 @@ module.exports.source = function (t, ROOT, fs, path) {
     t('PS-S9 pop-up « Progrès : Séances d\'abord » : après v76, ≤ 600 caractères, dit Séances · année puis mois · Exercices',
       v > 76 && d.length > 0 && d.length <= 600 && /Séances/.test(d) && /<b>année<\/b>[^.]*<b>mois<\/b>/.test(d) && /<b>Exercices<\/b>/.test(d),
       JSON.stringify({ v, n: d.length })); }
+  /* PS-S10 — D-078 : Badges a quitté Progrès SANS deuxième moteur. Une seule définition de `renderBadges`, un seul
+     `badge-grid` (la fenêtre du Menu, dans coach.js), plus aucun onglet ni panneau Badges dans index.html, et le point
+     rouge « prog-badges » vise la ligne du Menu (aucun point ne vise un élément retiré). */
+  { const raw = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+    const html = raw('index.html'), tous = ['app.js', 'setup.js', 'coach.js', 'screens.js', 'log.js', 'tracking.js', 'state.js', 'constants.js'].map(nu).join('\n');
+    const defs = (tous.match(/function renderBadges\(/g) || []).length;
+    const grilles = ((html + '\n' + tous).match(/id="badge-grid"/g) || []).length;
+    const retires = /id="(ptab-badges|prog-badges)"/.test(html);
+    const ct = raw('constants.js'), pb = (ct.match(/\{id:'prog-badges'[^}]*\}/) || [''])[0];
+    const viseRetire = /(spot|anchor):'(ptab-badges|prog-badges)'/.test(ct);
+    t('PS-S10 D-078 : un seul `renderBadges`, un seul `badge-grid`, aucun onglet / panneau Badges dans Progrès, le point « prog-badges » vise la ligne Badges du Menu',
+      defs === 1 && grilles === 1 && !retires && !viseRetire && /screen:'setup'/.test(pb) && /anchor:'menu-row-badges'/.test(pb) && /id="menu-row-badges"/.test(html),
+      JSON.stringify({ defs, grilles, retires, viseRetire, pb: pb.slice(0, 80) })); }
   t('PS-S7 le calendrier vise la séance par sa clé : plus aucun `goSessionsHistory()` NU dans le calendrier',
     !/goSessionsHistory\(\)/.test(cal) && /goSessionsHistory\(/.test(cal), (cal.match(/goSessionsHistory\([^)]{0,40}/g) || []).join(' | '));
 };
@@ -169,8 +187,10 @@ module.exports.ecran = async function (t, b, PORT) {
   /* ── 1. L'onglet Séances existe, en premier, et c'est lui qui s'ouvre ─────────────────────── */
   await versProgres(X);
   const tabs = await X.pg.evaluate(() => [...document.querySelectorAll('#s-progress .nu-tabs .nu-tab')].map(b => ({ id: b.id, txt: b.textContent.trim() })));
-  t('PS-E01 Progrès porte Séances | Exercices | Corps & santé dans cet ordre (Badges reste un onglet, à la fin)',
-    tabs.map(x => x.id).join(',') === 'ptab-seances,ptab-exo,ptab-poids,ptab-badges' && tabs[0].txt === 'Séances' && tabs[1].txt === 'Exercices' && tabs[2].txt === 'Corps & santé', JSON.stringify(tabs));
+  const panneaux = await X.pg.evaluate(() => [...document.querySelectorAll('#s-progress [id^="prog-"]')].filter(e => /^prog-(seances|exo|poids|badges)$/.test(e.id)).map(e => e.id));
+  t('PS-E01b Progrès porte EXACTEMENT 3 onglets, Séances | Exercices | Corps & santé dans cet ordre — plus d\'onglet ni de panneau Badges (D-078)',
+    tabs.map(x => x.id).join(',') === 'ptab-seances,ptab-exo,ptab-poids' && tabs[0].txt === 'Séances' && tabs[1].txt === 'Exercices' && tabs[2].txt === 'Corps & santé'
+    && panneaux.join(',') === 'prog-seances,prog-exo,prog-poids', JSON.stringify({ tabs, panneaux }));
   t('PS-E02 sans cible, Progrès s\'ouvre sur Séances (premier onglet) et le panneau Exercices est masqué',
     (await ongletActif(X.pg)) === 'ptab-seances' && await visible(X.pg, 'prog-seances') && !(await visible(X.pg, 'prog-exo')), await ongletActif(X.pg));
 
@@ -304,15 +324,12 @@ module.exports.ecran = async function (t, b, PORT) {
   await versProgres(X);
   t('PS-E23 le sous-onglet choisi survit à un aller-retour (Corps & santé reste Corps & santé)', (await ongletActif(X.pg)) === 'ptab-poids', await ongletActif(X.pg));
 
-  /* ── 9. Corps & santé et Badges inchangés (invariants 11 et 12) ──────────────────────────── */
+  /* ── 9. Corps & santé inchangé (invariant 11) ; Badges → Menu : voir 9 bis (D-078) ─────────── */
   await onglet(X, 'ptab-poids');                           // conduit explicitement : ne dépend pas de PS-E23
   const poids = await X.pg.evaluate(() => ({ vis: !!(document.getElementById('prog-poids') || {}).offsetParent, entree: !!(document.getElementById('weight-entry-card') || {}).offsetParent,
     exp: !!(document.getElementById('poids-exp-btn') || {}).offsetParent }));
   const globPoids = await Promise.all(GLOBAUX.map(id => visible(X.pg, id)));
   t('PS-E24 Corps & santé : la pesée et son export sont là, et aucun bloc de Séances ne s\'y affiche', poids.vis && poids.entree && poids.exp && globPoids.every(v => !v), JSON.stringify(poids) + ' ' + globPoids.join(','));
-  await onglet(X, 'ptab-badges');
-  const bad = await X.pg.evaluate(() => ({ vis: !!(document.getElementById('prog-badges') || {}).offsetParent, n: (document.getElementById('badge-grid') || { children: [] }).children.length }));
-  t('PS-E25 Badges n\'est pas perdu : l\'onglet s\'ouvre et montre ses récompenses', bad.vis && bad.n > 0, JSON.stringify(bad));
   await clic(X.pg, '#nb-home'); await X.pg.waitForTimeout(300);
   await X.pg.evaluate(() => { try { goWeightTab(); } catch (e) {} }); await X.pg.waitForTimeout(500);
   t('PS-E26 la tuile Poids de l\'Accueil ouvre toujours Corps & santé', (await ongletActif(X.pg)) === 'ptab-poids', await ongletActif(X.pg));
@@ -362,7 +379,7 @@ module.exports.ecran = async function (t, b, PORT) {
 
   /* ── 11. Points rouges, aide, Guide : rien ne vise un onglet absent (invariant 13) ──────── */
   const dots = await X.pg.evaluate(() => {
-    const PAN = { 'ptab-seances': 'prog-seances', 'ptab-exo': 'prog-exo', 'ptab-poids': 'prog-poids', 'ptab-badges': 'prog-badges' };
+    const PAN = { 'ptab-seances': 'prog-seances', 'ptab-exo': 'prog-exo', 'ptab-poids': 'prog-poids' };
     const f = (typeof NEW_FEATURES !== 'undefined' ? NEW_FEATURES : []).filter(x => x.screen === 'progress' && x.spot);
     return f.map(x => { const el = document.getElementById(x.spot); return { id: x.id, spot: x.spot, existe: !!el, onglet: !!(el && el.closest('#s-progress .nu-tabs')), panneau: PAN[x.spot] || null }; });
   });
@@ -389,6 +406,87 @@ module.exports.ecran = async function (t, b, PORT) {
   t('PS-E36 ⛔ et ne crée aucune nouvelle clé de stockage (mois ouvert, onglet, période : en mémoire seulement)', !nouvelles.length, JSON.stringify(nouvelles));
   t('PS-E37 aucune erreur JavaScript pendant tout le parcours', !X.errs.length, X.errs.slice(0, 3).join(' | '));
   await X.cx.close();
+
+  /* ── 12 bis. B-PS01-E, D-078 (décision de Michel du 15/10/2026) — BADGES DANS LE MENU ─────────────────────────────
+     Contexte NEUF. Un badge débloqué est posé (« Premier soulevé », daté) ; la fixture a 32 séances, donc « Légende »
+     (100 séances) est en cours, avec sa barre. Le parcours est celui d'une personne : ☰ → ligne « Badges » (rayon
+     « Ton suivi ») → la grille → ✕ → ☰ de nouveau → Badges → tap à côté → Badges → bouton retour.
+     ⛔ Les références (badges, séances, clés) sont prises APRÈS le démarrage : `checkBadges(true)` débloque au lancement
+     ce que la fixture mérite, ce n'est pas l'ouverture qui écrit. */
+  { const B = await ouvrir({ stock: { ft4_badges: JSON.stringify({ first_session: { unlockedAt: '2026-01-02' } }) } });
+    const fab = () => B.pg.evaluate(() => { const e = document.getElementById('nb-log'); if (!e) return null; const r = e.getBoundingClientRect();
+      return [r.left, r.top, r.width, r.height].map(v => Math.round(v * 10) / 10).join(','); });
+    const etat = () => B.pg.evaluate(() => ({ badges: localStorage.getItem('ft4_badges'), sess: localStorage.getItem('ft4_sessions'),
+      cles: Object.keys(localStorage).sort(), mem: JSON.stringify(S.badges || {}), ecran: window._curScreen }));
+    const ouvertDC = () => B.pg.evaluate(() => { const o = document.getElementById('ov-drawer-cnt'); return !!(o && o.classList.contains('open')); });
+    const menuOuvert = () => B.pg.evaluate(() => { const m = document.getElementById('menu-drawer'); return !!(m && m.classList.contains('open')); });
+    const grille = () => B.pg.evaluate(() => {
+      const g = document.getElementById('badge-grid'), ov = document.getElementById('ov-drawer-cnt');
+      const cartes = g ? [...g.querySelectorAll('.badge-card')] : [];
+      const carte = n => cartes.find(c => ((c.querySelector('.badge-name') || {}).textContent || '') === n) || null;
+      const pre = carte('Premier soulevé'), leg = carte('Légende');
+      return { dansMenu: !!(g && g.closest('#ov-drawer-cnt')), visible: !!(g && g.offsetParent !== null && ov && ov.classList.contains('open')),
+        n: cartes.length, attendu: (typeof BADGES !== 'undefined') ? BADGES.length : -1,
+        titre: ((document.querySelector('#drawer-cnt-body') || {}).textContent || '').indexOf('Badges') >= 0,
+        premier: pre ? { debloque: pre.classList.contains('unlocked'), date: ((pre.querySelector('.badge-date') || {}).textContent || '').trim() } : null,
+        legende: leg ? { verrou: leg.classList.contains('locked'), barre: !!leg.querySelector('.badge-prog-fill'),
+          txt: ((leg.querySelector('.badge-prog-txt') || {}).textContent || '').trim() } : null,
+        nSeances: ((typeof S !== 'undefined' && S.sessions) || []).length }; });
+    const ligne = () => B.pg.evaluate(() => { const r = document.getElementById('menu-row-badges'); const g = r && r.closest('.menu-group');
+      const sec = g && g.previousElementSibling; return { vis: !!(r && r.offsetParent !== null), rayon: sec ? sec.textContent.trim() : null,
+        point: !!(r && r.querySelector('.menu-new-dot')), vu: ((typeof S !== 'undefined' && S.seenFeatures) || []).indexOf('prog-badges') >= 0 }; });
+    const rouvrirMenu = async () => { await clic(B.pg, '#nb-setup'); await B.pg.waitForTimeout(350); };
+    const versBadges = async () => { await rouvrirMenu(); const ok = await clic(B.pg, '#menu-row-badges', 'ov-drawer-cnt'); await B.pg.waitForTimeout(350); return ok; };
+
+    await clic(B.pg, '#nb-home'); await B.pg.waitForTimeout(300);
+    const fab0 = await fab(), e0 = await etat();
+    /* ① le Menu montre la ligne, au bon rayon, avec son point rouge — puis l'ouvre */
+    await rouvrirMenu();
+    const l0 = await ligne();
+    const ok1 = await clic(B.pg, '#menu-row-badges', 'ov-drawer-cnt'); await B.pg.waitForTimeout(350);
+    const g1 = await grille(), menuApres = await menuOuvert();
+    t('PS-E01 ⭐ Badges est JOIGNABLE depuis le Menu et sa grille est FONCTIONNELLE : ☰ → « Badges » (rayon « Ton suivi ») ouvre la fenêtre, le Menu se range, et la grille montre TOUS les badges',
+      l0.vis && l0.rayon === 'Ton suivi' && ok1 && !menuApres && g1.dansMenu && g1.visible && g1.titre && g1.attendu > 0 && g1.n === g1.attendu,
+      JSON.stringify({ l0, ok1, menuApres, g1: { dansMenu: g1.dansMenu, visible: g1.visible, titre: g1.titre, n: g1.n, attendu: g1.attendu } }));
+    t('PS-E25 Badges n\'est pas perdu : un badge DÉBLOQUÉ (« Premier soulevé ») avec sa date, et un badge EN COURS (« Légende ») avec sa barre « ' + g1.nSeances + '/100 »',
+      !!(g1.premier && g1.premier.debloque && g1.premier.date) && !!(g1.legende && g1.legende.verrou && g1.legende.barre && g1.legende.txt === g1.nSeances + '/100') && g1.nSeances > 0,
+      JSON.stringify({ premier: g1.premier, legende: g1.legende, nSeances: g1.nSeances }));
+    /* ② trois fermetures, chacune suivie d'un retour au Menu */
+    await clic(B.pg, '#drawer-cnt-body button[onclick="closeDrawerContent()"]', 'ov-drawer-cnt'); await B.pg.waitForTimeout(450);
+    const f1 = await ouvertDC(); await rouvrirMenu(); const m1 = await menuOuvert(), l1 = await ligne();
+    const ok2 = await clic(B.pg, '#menu-row-badges', 'ov-drawer-cnt'); await B.pg.waitForTimeout(350);
+    const o2 = await ouvertDC(), g2 = await grille();
+    await B.pg.mouse.click(8, 60); await B.pg.waitForTimeout(450);
+    const f2 = await ouvertDC(); await rouvrirMenu(); const m2 = await menuOuvert();
+    const ok3 = await clic(B.pg, '#menu-row-badges', 'ov-drawer-cnt'); await B.pg.waitForTimeout(350);
+    const o3 = await ouvertDC();
+    await B.pg.evaluate(() => history.back()); await B.pg.waitForTimeout(600);
+    const f3 = await ouvertDC(), ecranFin = (await etat()).ecran;
+    t('PS-E52 la fenêtre Badges se FERME par ✕, par un tap à côté et par le bouton retour ; après chacune, ☰ rouvre le Menu avec sa ligne Badges, et l\'écran d\'en dessous n\'a pas changé',
+      !f1 && m1 && l1.vis && ok2 && o2 && g2.n === g2.attendu && !f2 && m2 && ok3 && o3 && !f3 && ecranFin === e0.ecran,
+      JSON.stringify({ f1, m1, l1vis: l1.vis, ok2, o2, n2: g2.n, f2, m2, ok3, o3, f3, ecran: [e0.ecran, ecranFin] }));
+    /* ③ le point rouge : là avant, éteint après la première ouverture (R15 : posé à l'ouverture) */
+    t('PS-E50 le point rouge « Badges » est sur la ligne du Menu avant ouverture et s\'éteint dès la première ouverture (marqueur « vu » posé)',
+      l0.point && !l0.vu && !l1.point && l1.vu, JSON.stringify({ avant: l0, apres: l1 }));
+    /* ④ ouvrir ne modifie rien ; le « + » central n'a pas bougé */
+    await B.pg.evaluate(() => { try { closeMenuDrawer(); } catch (e) {} }); await B.pg.waitForTimeout(300);
+    const e1 = await etat(), fab1 = await fab();
+    const nouvelles = e1.cles.filter(k => e0.cles.indexOf(k) < 0 && !/^ft4_(seen_ft|menu_ack|sb_last)$/.test(k));   // seen_ft / menu_ack : le mécanisme EXISTANT des points rouges
+    t('PS-E53 ⛔ ouvrir / fermer Badges ne modifie ni les badges (stockés et en mémoire) ni les séances, ne crée aucune clé, et le « + » central ne bouge pas (règle d\'or #9)',
+      e1.badges === e0.badges && e1.mem === e0.mem && e1.sess === e0.sess && !nouvelles.length && !!fab0 && fab1 === fab0 && !B.errs.length,
+      JSON.stringify({ badges: e1.badges === e0.badges, mem: e1.mem === e0.mem, sess: e1.sess === e0.sess, nouvelles, fab: [fab0, fab1], errs: B.errs.slice(0, 2) }));
+    /* ⑤ PS-E51 — l'aide et le Guide disent « Menu », plus « onglet Badges de Progrès » */
+    const txt = await B.pg.evaluate(() => {
+      const tips = ((typeof _HELP_DATA !== 'undefined' && _HELP_DATA.progress && _HELP_DATA.progress.tips) || []).map(x => x.t).join('\n');
+      /* toutes les aides « ? » (Accueil compris : sa carte des badges récents renvoyait à « l'onglet Badges dans Progrès ») */
+      const toutes = (typeof _HELP_DATA !== 'undefined' ? Object.keys(_HELP_DATA) : []).map(k => ((_HELP_DATA[k] && _HELP_DATA[k].tips) || []).map(x => x.t).join('\n')).join('\n');
+      const guide = (typeof APP_GUIDE_SLIDES !== 'undefined' ? APP_GUIDE_SLIDES : []).map(x => (x.t || '') + ' ' + (x.cap || '')).join('\n');
+      return { tips, toutes, guide }; });
+    const ancien = s => /quatre onglets|4 onglets|\| Badges|· Badges\b|onglet <b>Badges<\/b>|onglet Badges/i.test(s);
+    t('PS-E51 les aides « ? » (toutes) et le Guide ne présentent plus Badges comme un onglet de Progrès, et l\'aide de Progrès comme le Guide disent où il est (le Menu)',
+      txt.toutes.length > txt.tips.length && !ancien(txt.toutes) && !ancien(txt.guide) && /[Bb]adges[^\n]*Menu/.test(txt.tips) && /[Bb]adges<\/b>[^\n]*Menu/.test(txt.guide),
+      JSON.stringify({ tips: (txt.tips.match(/.{0,50}[Bb]adges.{0,50}/) || [''])[0], guide: (txt.guide.match(/.{0,40}[Bb]adges<\/b>.{0,40}/) || [''])[0] }));
+    await B.cx.close(); }
 
   /* ── 13 bis. Séances sans date ou mal datées : rien ne se perd (invariant 5) ──────────────────── */
   { const base = FIX.slice(0, 2).map(s => JSON.parse(JSON.stringify(s)));
@@ -426,7 +524,7 @@ module.exports.ecran = async function (t, b, PORT) {
       JSON.stringify(h).slice(0, 300));
     await Y.cx.close(); }
 
-  /* ── 13 quater. B-PSI01-E — les 4 onglets temporaires tiennent sur UNE ligne, à 390 ET à 320 px ─────────────── */
+  /* ── 13 quater. B-PSI01-E — les 3 onglets tiennent sur UNE ligne, à 390 ET à 320 px (4 jusqu'à D-078) ───────── */
   { const Y = await ouvrir();
     await versProgres(Y);
     const mesurer = () => Y.pg.evaluate(() => {
@@ -442,8 +540,8 @@ module.exports.ecran = async function (t, b, PORT) {
     const m390 = await mesurer();
     await Y.pg.setViewportSize({ width: 320, height: 700 }); await Y.pg.waitForTimeout(300);
     const m320 = await mesurer();
-    const ok = m => m.n === 4 && m.uneLigne && m.dedans && m.barre && m.page && m.texteEntier && m.lignes.every(n => n === 1);
-    t('PS-E43 Séances | Exercices | Corps & santé | Badges : une seule ligne, sans débordement ni texte coupé, à 390 px ET à 320 px',
+    const ok = m => m.n === 3 && m.uneLigne && m.dedans && m.barre && m.page && m.texteEntier && m.lignes.every(n => n === 1);
+    t('PS-E43 Séances | Exercices | Corps & santé : une seule ligne, sans débordement ni texte coupé, à 390 px ET à 320 px',
       ok(m390) && ok(m320) && m390.largeur === 390 && m320.largeur === 320, JSON.stringify({ m390, m320 }));
     await Y.cx.close(); }
 

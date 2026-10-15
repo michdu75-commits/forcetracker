@@ -220,9 +220,7 @@ await shot('07-seance-en-cours',()=>{
 // ── Onglets internes ────────────────────────────────────────────────
 await shot('08-progres-poids',  ()=>{ goScreen('progress');
   switchProgTab('poids',document.getElementById('ptab-poids')); });
-await shot('09-progres-badges', ()=>{ goScreen('progress');
-  if(typeof checkBadges==='function'){try{checkBadges(true);}catch(e){}}
-  switchProgTab('badges',document.getElementById('ptab-badges')); });
+// 🏅 09 (Badges) : D-078 (15/10/2026) — Badges a quitté Progrès pour le Menu ; il est pris plus bas, parmi les modales.
 await shot('10-nutrition-journal',()=>{ goScreen('nutrition');
   switchNuTab('journal',document.getElementById('ntab-journal')); });
 await shot('11-nutrition-supplements',()=>{ goScreen('nutrition');
@@ -244,6 +242,11 @@ async function modal(name,fn){
   await p.waitForTimeout(400);
 }
 console.log('\n── modales ──');
+await modal('09-badges-menu',()=>{                          // D-078 : Menu ☰ → Ton suivi → Badges
+  goScreen('home');
+  if(typeof checkBadges==='function'){try{checkBadges(true);}catch(e){}}
+  if(typeof openBadges==='function') openBadges();
+});
 await modal('20-muscles-travailles',()=>{                    // ⭐ la figurine, la marque de fabrique
   goScreen('home');
   const s=S.sessions[0];

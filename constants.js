@@ -806,7 +806,8 @@ const NEW_FEATURES=[
   {id:'bodyfat-track', screen:'progress', spot:'ptab-poids', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},
   {id:'target-weight', screen:'progress', spot:'ptab-poids', desc:'Nouveau : fixe un poids objectif (ligne repère sur le graphique + kg restants)'},
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
-  {id:'prog-badges', screen:'progress', spot:'ptab-badges', desc:'Onglet Badges (🏅)'},
+  /* 🏅 D-078 (15/10/2026) : Badges a quitté Progrès — le point vise la ligne « Badges » du Menu (screen 'setup' = l'onglet Menu). */
+  {id:'prog-badges', screen:'setup', anchor:'menu-row-badges', desc:'🏅 <b>Tes badges sont dans le Menu</b> : ☰ → Ton suivi → Badges (ils ont quitté Progrès).'},
   {id:'hist-ex-perf', screen:'progress', desc:'Nouveau : dans le détail d\'une séance passée, une icône 📊 sur chaque exercice → voir ta progression (ton poids sur les dernières séances)'},
   // Coach — spot = carte/bouton précis de l'écran Coach
   {id:'coach-photo', screen:'coach', spot:'coach-cam-btn', desc:'Envoi de photo au Coach IA (📷)'},
@@ -904,8 +905,9 @@ const WHATS_NEW=[
      graphiques d'exercice, l'historique en bas de cet onglet et coupé à 20 séances ; il s'ouvre maintenant sur
      Séances, l'historique rangé par année puis par mois. Sans un mot, la personne chercherait son historique là où
      il était. ⛔ BORNÉE (R25) : ce qui a bougé, où le trouver, ce qui ne bouge pas. Chaque phrase est vraie dans le
-     code servi (PS-S2 plus de plafond · PS-E10 mois courant ouvert · onglet Exercices = progression). */
-    {v:77, ic:'🗂️', t:'Progrès : Séances d\'abord', d:'① <b>Progrès s\'ouvre maintenant sur Séances</b> : ton historique, ce que ton histoire montre et ce que tu travailles. ② <b>Tout ton historique est là</b>, rangé par <b>année</b> puis par <b>mois</b> — avant, seules les 20 dernières séances s\'affichaient. Le mois en cours est déjà ouvert ; tape un autre mois pour le voir. ③ <b>Exercices</b> garde la progression de chaque exercice.'},
+     code servi (PS-S2 plus de plafond · PS-E10 mois courant ouvert · onglet Exercices = progression).
+     🏅 ④ D-078 (15/10) : Badges quitte Progrès pour le Menu dans la MÊME release — sans un mot, on le chercherait dans Progrès. */
+    {v:77, ic:'🗂️', t:'Progrès : Séances d\'abord', d:'① <b>Progrès s\'ouvre maintenant sur Séances</b> : ton historique, ce que ton histoire montre et ce que tu travailles. ② <b>Tout ton historique est là</b>, rangé par <b>année</b> puis par <b>mois</b> — avant, seules les 20 dernières séances s\'affichaient. Le mois en cours est déjà ouvert ; tape un autre mois pour le voir. ③ <b>Exercices</b> garde la progression de chaque exercice. ④ Tes <b>Badges</b> passent dans le <b>Menu</b> ☰ (Ton suivi).'},
   /* 🎯 DEBRIEF-ON-DEMAND-01 (D-052) — ELLE SE MÉRITE : il y a quelque chose à FAIRE. Jusqu'ici l'avis de Milo arrivait
      tout seul à la fin de chaque séance ; désormais il faut le DEMANDER. Sans un mot, la personne conclurait que Milo
      ne débriefe plus. ⛔ BORNÉE (R25) : ce qui change, le geste, ce qui ne bouge pas. Le POURQUOI vit dans l'aide. */

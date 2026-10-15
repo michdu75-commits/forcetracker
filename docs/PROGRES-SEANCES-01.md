@@ -16,7 +16,7 @@
 | Séances porte « Ce que ton histoire montre », « Ce que tu travailles, par semaine », l'historique, l'export, le filtre, la liste, le débrief | ✅ blocs déplacés **avec leurs id** : `_renderSynthese`, `_renderVolumeSemaine`, `renderSessions` restent les seuls auteurs (R2) | `index.html` |
 | Exercices garde raccourcis, recherche, graphique, objectif, « Voir cette séance » | ✅ inchangés (chiffres du graphique épinglés par PS-E07) | — |
 | Corps & santé inchangé | ✅ | — |
-| **Badges** : destination non décidée, ne pas le rendre inaccessible | ✅ **reste un 4ᵉ onglet**, aucune relocalisation | `PROG_ONGLETS` |
+| **Badges** : destination non décidée, ne pas le rendre inaccessible | ✅ resté un 4ᵉ onglet jusqu'au 15/10 ; ⏩ **D-078 (15/10, décision de Michel)** : Badges **quitte Progrès** et vit dans le **Menu ☰ → Ton suivi → Badges** (même grille, `renderBadges` inchangé) | `PROG_ONGLETS` (3 onglets), `openBadges` |
 | Historique **Année → Mois → Séance**, plus de plafond de 20 | ✅ années repliées sauf l'année en cours, un mois se déplie à la demande, rendu **par mois** ; ⭐ **mois en cours déplié** en entrée normale s'il existe (décision de Michel du 14/10, §8) | `renderSessions`, `_sessMoisEstOuvert` |
 | Accueil « Séances ce mois », calendrier, « Revoir la séance » → Séances, au bon mois / sur la séance | ✅ par la clé **existante** `ts‖id` (celle de la carte et de `openSessDetail`) — aucune nouvelle identité | `goSessionsHistory`, `_calDayPanel`, vue semaine |
 | Volume **14 jours \| 28 jours**, 28 par défaut, moyenne = total / 2 ou / 4 | ✅ choix à l'écran (en mémoire) | `_volumeParMuscle(refTs, jours)`, `_renderVolumeSemaine` |
@@ -42,7 +42,7 @@
 3. **« Revoir la séance » n'ouvre pas le détail** : il amène sur la **carte** de la séance (entourée de
    bleu), dans son mois. Ouvrir directement le détail ouvrirait aujourd'hui l'éditeur, ce que le contrat
    veut justement éviter (point 1).
-4. **Badges** : reste un onglet de Progrès (destination non décidée).
+4. **Badges** : ~~reste un onglet de Progrès (destination non décidée)~~ — **tranché le 15/10 (D-078)** : il est dans le Menu ☰ → Ton suivi → Badges.
 5. **Bandeau de cycle** : reste dans Exercices (non tranché).
 6. **Milo 14 jours, écran 28 jours par défaut** : les deux chiffres peuvent différer. C'est la conséquence
    directe de la décision (« Milo conserve son comportement actuel ») ; l'aide « ? » et l'aide détaillée
