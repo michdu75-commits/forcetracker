@@ -56,7 +56,9 @@ module.exports.source = function (t, ROOT, fs, path) {
 module.exports.ecran = async function (t, b, PORT) {
   console.log('\n═══ B-OD-E (session-B). DEBRIEF-ON-DEMAND-01 — écran conduit, Worker simulé, requêtes comptées ═══');
   const { jourParis } = require('../_jour.js');
-  const js = x => JSON.stringify(x).slice(0, 300);
+  /* OD-CLÉ-CARTE (15/10) : String(…) — JSON.stringify(undefined) vaut undefined, et une requête absente faisait PLANTER le
+     banc au lieu de le faire rougir (vu sous mutation : « Cannot read properties of undefined (reading 'slice') »). */
+  const js = x => String(JSON.stringify(x)).slice(0, 300);
   const moisPrec = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
   const BASE = { ft4_bw: '80', ft4_age: '40', ft4_ht: '178', ft4_gender: 'H', ft4_goal: 'force', ft4_ob2: '1', ft4_name: 'Test', ft4_email: 't@t.t',
     ft4_devtoken: 'f'.repeat(64), ft4_tester_eq_v1: '1', ft4_lms: moisPrec, ft4_ok: '1', ft4_stmig1: '1',
