@@ -521,10 +521,11 @@ module.exports.ecran = async function (t, b, PORT) {
     t('C1-01 la réponse de B s\'affiche sous B', okB && /REPONSE-B/.test(vueB), vueB.slice(0, 80));
     const okA = await attendreMag(X, SA.id); await X.pg.waitForTimeout(300);
     const vueApres = await X.pg.evaluate(() => document.getElementById('dbf-milo-body').textContent);
-    const m = await X.pg.evaluate(() => JSON.parse(localStorage.getItem('ft4_debriefs')).seances);
+    /* OD-CLÉ-CARTE (15/10) : un magasin ou une entrée absents doivent ROUGIR, pas faire planter le banc (vu sous mutation). */
+    const m = await X.pg.evaluate(() => (JSON.parse(localStorage.getItem('ft4_debriefs') || 'null') || {}).seances || {});
     t('C1-05 ⛔⛔ B répond avant A, puis A arrive : la fenêtre de B ne montre JAMAIS A', okA && /REPONSE-B/.test(vueApres) && !/REPONSE-A/.test(vueApres), vueApres.slice(0, 80));
     t('C1-04 / C1-06 ⛔ même date : chaque réponse est rangée sous SON identifiant, aucun croisement',
-      /REPONSE-A/.test(m['6001'].texte) && /REPONSE-B/.test(m['6002'].texte), js(m));
+      /REPONSE-A/.test((m['6001'] || {}).texte) && /REPONSE-B/.test((m['6002'] || {}).texte), js(m));
     await X.cx.close();
   }
 
