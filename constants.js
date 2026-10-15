@@ -801,6 +801,9 @@ const NEW_FEATURES=[
   // Progrès — spot = id de l'élément (onglet) où poser le point rouge « ici »
   {id:'prog-chart-interactive', screen:'progress', spot:'ptab-exo', desc:'Nouveau : graphe 1RM interactif — périodes (3M/6M/1an/Tout) + tape un point → « Voir cette séance »'},
   {id:'strength-goal', screen:'progress', spot:'ptab-exo', desc:'Nouveau : fixe un OBJECTIF DE FORCE (1RM visé) par exercice → barre de progression + ligne repère sur le graphe'},
+  /* 🔎 D-079 (15/10/2026) : le filtre de l'historique tient sur une ligne et prend plusieurs muscles (OU). Sans `spot`,
+     comme `debrief-seance` : le point est sur l'onglet Progrès. ⛔ Pas de pop-up (décision de Michel). */
+  {id:'sess-filtre-multi', screen:'progress', desc:'🔎 <b>Filtrer les séances</b> (Progrès → Séances) : le filtre de ton historique tient sur <b>une ligne</b> ; ouvre-le et coche <b>un ou plusieurs</b> muscles — tu vois les séances qui travaillent l\'un <b>ou</b> l\'autre.'},
   {id:'sess-filter', screen:'progress', spot:'ptab-seances', desc:'Nouveau : filtre ton historique de séances par groupe musculaire (chips sous « Historique séances »)'},
   {id:'weight-edit', screen:'progress', spot:'ptab-poids', desc:'Nouveau : tape un point du graphique de poids pour modifier/supprimer la pesée + navigation par période (1M/3M/6M/Tout)'},
   {id:'bodyfat-track', screen:'progress', spot:'ptab-poids', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},

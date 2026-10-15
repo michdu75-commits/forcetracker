@@ -655,13 +655,20 @@ function _majChoixDebriefs(){
    une donnée de la personne — et deux clés pour la même intention divergeraient (R2).
    ⛔ Et jamais bloquant : un stockage refusé (navigation privée) laisse simplement les cartes
    repliées, le comportement par défaut. */
-const PROG_ACC=['prog-synth-acc','prog-volume-acc'];
+/* 🗂️ D-080 (15/10/2026, décision de Michel, option B) — « Ce que tu travailles, par semaine » n'est PLUS retenu d'un
+   lancement à l'autre : il repart REPLIÉ à chaque lancement / rechargement ; ouvert pendant la session, il le reste
+   jusqu'au prochain lancement (mémoire de SESSION, aucune clé). « Ce que ton histoire montre » garde `ft4_progAcc`,
+   inchangé. Une ancienne valeur de la clé qui cite encore le volume est ignorée pour lui (et réécrite sans lui au
+   prochain geste). */
+const PROG_ACC=['prog-synth-acc'];
+const PROG_ACC_SESSION=['prog-volume-acc'];
+const _progAccSession={};                       // id → ouvert, pour CETTE session seulement (jamais stocké)
 function _progAccRestore(){
   let ouverts=[];
   try{ ouverts=JSON.parse(localStorage.getItem('ft4_progAcc')||'[]')||[]; }catch(e){ ouverts=[]; }
-  PROG_ACC.forEach(id=>{
+  PROG_ACC.concat(PROG_ACC_SESSION).forEach(id=>{
     const d=document.getElementById(id); if(!d) return;
-    d.open = ouverts.indexOf(id)>=0;
+    d.open = PROG_ACC.indexOf(id)>=0 ? ouverts.indexOf(id)>=0 : !!_progAccSession[id];
     if(!d.dataset.accWired){                    // ⛔ un seul écouteur, même si on re-rend
       d.dataset.accWired='1';
       d.addEventListener('toggle',_progAccSave);
@@ -669,6 +676,7 @@ function _progAccRestore(){
   });
 }
 function _progAccSave(){
+  PROG_ACC_SESSION.forEach(id=>{ const d=document.getElementById(id); if(d) _progAccSession[id]=d.open; });
   try{
     const ouverts=PROG_ACC.filter(id=>{ const d=document.getElementById(id); return d&&d.open; });
     localStorage.setItem('ft4_progAcc', JSON.stringify(ouverts));
@@ -865,7 +873,7 @@ function goSessionsHistory(cles){
   _sessCibles=Array.isArray(cles)?cles.filter(k=>k!=null&&k!==0):[];
   const vis=_sessCibles.length?(S.sessions||[]).filter(s=>_sessCibles.indexOf(s.ts||s.id||0)>=0):[];
   const mois=vis.length?vis.map(_sessMoisDe):[_sessMoisDe({date:today()})];
-  _sessFilter=null;
+  _sessFiltres=[];
   _sessOuvrir(mois);
   _progTab='seances'; _progCibleNav=true;
   goScreen('progress',document.getElementById('nb-progress'));
@@ -1714,7 +1722,14 @@ function showSessMuscleMap(i,ev){
   showMuscleMap(s.exs||s.exercises||[],null);
 }
 // Filtre de l'historique par groupe musculaire (retour GPT, ft-v561 ; logique présence ft-v563)
-let _sessFilter=null;
+/* 🔎 D-079 (15/10/2026, décision de Michel) — PLUSIEURS zones à la fois, en logique OU : une séance est montrée si
+   elle travaille AU MOINS UNE des zones cochées (« Pectoraux + Triceps » = l'une OU l'autre). Le filtre parcourt la
+   liste UNE fois (`filter` + `some`) : une séance qui coche deux zones ne peut pas apparaître deux fois.
+   « Tous » = liste vide ; décocher la dernière zone revient à « Tous ».
+   ⛔ En mémoire seulement (comme depuis ft-v561) : aucune clé ; remis à « Tous » au relancement et par les portes
+   Accueil / calendrier (`goSessionsHistory`).
+   ⚠️ Inchangé, et exprès hors de ce lot : les pastilles viennent des muscles DOMINANTS, le filtre teste la PRÉSENCE. */
+let _sessFiltres=[];
 function _sessTopMuscle(s){
   const sc=_mscScores(s.exs||s.exercises||[]);const _sc=sc.sc||{};
   let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
@@ -1726,26 +1741,37 @@ function _sessMusclesPresent(s){
   const sc=_mscScores(s.exs||s.exercises||[]).sc||{};
   return Object.keys(sc).filter(m=>sc[m]>=2);
 }
-function setSessFilter(code){ _sessFilter=(_sessFilter===code?null:code); renderSessions(); }
+function setSessFilter(code){
+  if(code==null) _sessFiltres=[];
+  else _sessFiltres=_sessFiltres.indexOf(code)>=0?_sessFiltres.filter(m=>m!==code):_sessFiltres.concat([code]);
+  renderSessions();
+}
 function renderSessions(){
   const el=document.getElementById('sess-list');
   const fEl=document.getElementById('sess-filter');
-  if(!S.sessions.length){if(fEl)fEl.innerHTML='';el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
+  const fAcc=document.getElementById('sess-filter-acc'), fRes=document.getElementById('sess-filter-resume');
+  if(!S.sessions.length){if(fEl)fEl.innerHTML='';if(fAcc)fAcc.hidden=true;el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
   // Muscles principaux présents dans l'historique → chips (triés par fréquence)
   const counts={},present=[];
   S.sessions.forEach(s=>{const m=_sessTopMuscle(s);if(m){counts[m]=(counts[m]||0)+1;if(!present.includes(m))present.push(m);}});
   present.sort((a,b)=>counts[b]-counts[a]);
+  // Sécurité : un muscle filtré qui n'existe plus est retiré (s'il n'en reste aucun, on est sur « Tous »)
+  _sessFiltres=_sessFiltres.filter(m=>present.includes(m));
+  const nomM=m=>_MG[m]?_MG[m].label:m;
   if(fEl){
     if(present.length>=2){
-      fEl.innerHTML='<button class="sessf-chip'+(_sessFilter===null?' on':'')+'" onclick="setSessFilter(null)">Tous</button>'+
-        present.map(m=>'<button class="sessf-chip'+(_sessFilter===m?' on':'')+'" onclick="setSessFilter(\''+m+'\')">'+_escNote(_MG[m]?_MG[m].label:m)+'</button>').join('');
+      fEl.innerHTML='<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
+        present.map(m=>{const on=_sessFiltres.indexOf(m)>=0;
+          return '<button class="sessf-chip'+(on?' on':'')+'" aria-pressed="'+on+'" data-m="'+m+'" onclick="setSessFilter(\''+m+'\')">'+_escNote(nomM(m))+'</button>';}).join('');
     } else fEl.innerHTML='';
   }
-  // Sécurité : si le muscle filtré n'existe plus, on repasse sur « Tous »
-  if(_sessFilter&&!present.includes(_sessFilter))_sessFilter=null;
+  /* Le panneau n'existe que s'il y a de quoi filtrer ; fermé, il dit ce qui est filtré (une ligne). */
+  if(fAcc)fAcc.hidden=!(fEl&&fEl.innerHTML);
+  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length?'Tous'
+    :_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres');
   let flist=S.sessions;
-  if(_sessFilter)flist=flist.filter(s=>_sessMusclesPresent(s).includes(_sessFilter));
-  if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour ce muscle</div>';return;}
+  if(_sessFiltres.length)flist=flist.filter(s=>{const p=_sessMusclesPresent(s);return _sessFiltres.some(m=>p.includes(m));});
+  if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}
   /* 🗂️ PROGRES-SEANCES-01 — ANNÉE → MOIS → SÉANCE, ET PLUS DE PLAFOND DE 20 (contrat UX-HIST du 08/10).
      Avant : `slice(0,20)` — la 21ᵉ séance n'était atteignable NULLE PART dans l'app (63 séances réelles
      chez Michel le 14/10). Maintenant toutes le sont ; pour ne pas dessiner 1 500 cartes, on ne dessine

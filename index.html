@@ -698,7 +698,14 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button id="histo-exp-btn" onclick="openHistoExport()" title="Exporter mon historique"
         style="flex-shrink:0;background:var(--bg3);color:var(--t2);border:none;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">📤 Exporter</button>
     </div>
-    <div id="sess-filter"></div>
+    <!-- 🔎 D-079 (15/10/2026, Michel) : les filtres de l'historique vivent dans un panneau repliable compact
+         (« Filtrer les séances · Tous ▾ »), fermé à chaque lancement (pas d'attribut `open`, aucune clé). ⛔ La LISTE
+         reste dessous, HORS du panneau : jamais cachée. ⭐ R13 : même `<details class="acc">` natif que les deux
+         cartes du haut ; `#sess-filter` garde son id et son seul auteur (`renderSessions`). -->
+    <details class="acc" id="sess-filter-acc" hidden>
+      <summary><span id="sess-filter-resume">Filtrer les séances · Tous</span></summary>
+      <div id="sess-filter"></div>
+    </details>
     <div id="sess-list"></div>
   </div>
 

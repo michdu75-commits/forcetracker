@@ -18,7 +18,9 @@
    PS-E41 → PS-E44, mois courant, largeur 390 / 320 px, calendrier → séance ancienne par le vrai geste ;
    micro-fermeture du 14/10 : PS-S8 diapo du Guide, PS-E45 → PS-E48, PS-E27 / PS-E29 isolés dans un contexte neuf ;
    publication ft-v1255 du 15/10 : PS-S9 et PS-E49, la pop-up « Quoi de neuf » « Progrès : Séances d'abord » ;
-   D-078 du 15/10, Badges → Menu : PS-S10, PS-E01 réécrit, PS-E01b, PS-E25 réécrit, PS-E50 → PS-E53).
+   D-078 du 15/10, Badges → Menu : PS-S10, PS-E01 réécrit, PS-E01b, PS-E25 réécrit, PS-E50 → PS-E53 ;
+   D-079 / D-080 du 15/10 soir (filtres compacts multi OU, volume replié au lancement) : PS-S11, PS-E40 adapté,
+   PS-E54 → PS-E66).
    Ce que les témoins CONDUISENT : la barre du bas, le Menu ☰ et sa ligne Badges, la fenêtre Badges et ses trois
    fermetures (✕, tap à côté, bouton retour), les onglets de Progrès, les en-têtes Année / Mois,
    la tuile « Séances ce mois », le calendrier (jour, « Revoir la séance », vue semaine), le choix
@@ -85,9 +87,9 @@ module.exports.source = function (t, ROOT, fs, path) {
     /const VOL_FENETRE_JOURS\s*=\s*14\s*;/.test(lo) && /function _volumeParMuscle\(\s*refTs\s*,\s*\w+\s*\)/.test(lo), vpm.slice(0, 120));
   t('PS-S5 ⛔ Milo ne reçoit PAS la période de l\'écran : `_ctxVolumeMuscles` appelle `_volumeParMuscle()` sans période',
     /_volumeParMuscle\(\s*\)/.test(ctx) && !/_volumeParMuscle\([^)]+\)/.test(ctx), (ctx.match(/_volumeParMuscle\([^)]*\)/g) || []).join(' '));
-  const ecritures = [rs, gsh, corps(se, 'switchProgTab'), corps(se, 'basculerSessAnnee'), corps(se, 'basculerSessMois'), corps(se, 'choisirVolumeJours')].join('\n');
-  t('PS-S6 ⛔ aucune nouvelle clé persistée pour l\'historique, le mois ouvert, l\'onglet ou la période (aucun `localStorage.setItem`)',
-    !/localStorage\.setItem/.test(ecritures), (ecritures.match(/localStorage\.setItem\([^,]*/g) || []).join(' '));
+  const ecritures = [rs, gsh, corps(se, 'switchProgTab'), corps(se, 'basculerSessAnnee'), corps(se, 'basculerSessMois'), corps(se, 'choisirVolumeJours'), corps(se, 'setSessFilter')].join('\n');
+  t('PS-S6 ⛔ aucune nouvelle clé persistée pour l\'historique, le mois ouvert, l\'onglet, la période ou le filtre (aucun `localStorage.setItem`)',
+    corps(se, 'setSessFilter').length > 0 && !/localStorage\.setItem/.test(ecritures), (ecritures.match(/localStorage\.setItem\([^,]*/g) || []).join(' '));
   /* PS-S8 — la diapo « Tes progrès » du Guide (règle d'or #11). La légende nomme les 3 onglets dans l'ordre, Séances
      d'abord, et dit que les badges sont dans le Menu (D-078) ; l'image n'est ni la capture d'avant PROGRES-SEANCES-01
      (3 onglets, « Exercices » actif) ni celle à 4 onglets (Badges en dernier) du 14/10. */
@@ -95,8 +97,8 @@ module.exports.source = function (t, ROOT, fs, path) {
     const d = (ap.split('\n').find(l => /img:'guide\/progres\.jpg'/.test(l)) || '');
     const ordre = ['Séances', 'Exercices', 'Corps &amp; santé'].map(x => d.indexOf(x));
     const h = require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'guide', 'progres.jpg'))).digest('hex');
-    const anciennes = ['f3a5ff8147a7a06371ed48638baa3702790b36a431d430a794708f901c8fa954', 'f82c8f6a1a77af56'];
-    t('PS-S8 diapo « Tes progrès » : légende Séances · Exercices · Corps & santé (dans l\'ordre), badges dans le Menu, et capture refaite (≠ capture d\'avant, ≠ capture à 4 onglets)',
+    const anciennes = ['f3a5ff8147a7a06371ed48638baa3702790b36a431d430a794708f901c8fa954', 'f82c8f6a1a77af56', '1f6d97351bd5c633'];   // 3ᵉ : ft-v1255, filtres sur plusieurs lignes
+    t('PS-S8 diapo « Tes progrès » : légende Séances · Exercices · Corps & santé (dans l\'ordre), badges dans le Menu, et capture refaite (≠ capture d\'avant, ≠ capture à 4 onglets, ≠ capture aux filtres sur plusieurs lignes)',
       d && ordre.every(i => i > 0) && ordre.every((v, i) => !i || v > ordre[i - 1]) && !/graphiques clairs/.test(d)
       && /<b>badges<\/b>[^.]*<b>Menu<\/b>/i.test(d) && anciennes.every(a => h.indexOf(a) !== 0), JSON.stringify({ ordre, h: h.slice(0, 12) })); }
   /* PS-S9 — la pop-up « Quoi de neuf » de la publication ft-v1255 (règle d'or #11 : un repère a bougé). Elle existe,
@@ -121,6 +123,13 @@ module.exports.source = function (t, ROOT, fs, path) {
     t('PS-S10 D-078 : un seul `renderBadges`, un seul `badge-grid`, aucun onglet / panneau Badges dans Progrès, le point « prog-badges » vise la ligne Badges du Menu',
       defs === 1 && grilles === 1 && !retires && !viseRetire && /screen:'setup'/.test(pb) && /anchor:'menu-row-badges'/.test(pb) && /id="menu-row-badges"/.test(html),
       JSON.stringify({ defs, grilles, retires, viseRetire, pb: pb.slice(0, 80) })); }
+  /* PS-S11 — D-079 / D-080, règle d'or #11 : PAS de pop-up (décision de Michel : aucune annonce au-delà de v77), mais un point
+     rouge qui dit le nouveau geste. */
+  { const ct = fs.readFileSync(path.join(ROOT, 'constants.js'), 'utf8');
+    const vmax = Math.max(...[...ct.matchAll(/\{v:(\d+),/g)].map(m => +m[1]));
+    const pt = (ct.match(/\{id:'sess-filtre-multi'[^}]*\}/) || [''])[0];
+    t('PS-S11 D-079 : aucune pop-up « Quoi de neuf » nouvelle (la dernière reste v77) et un point rouge Progrès dit « Filtrer les séances », plusieurs muscles',
+      vmax === 77 && /screen:'progress'/.test(pt) && /Filtrer les séances/.test(pt) && /un ou plusieurs/.test(pt), JSON.stringify({ vmax, pt: pt.slice(0, 90) })); }
   t('PS-S7 le calendrier vise la séance par sa clé : plus aucun `goSessionsHistory()` NU dans le calendrier',
     !/goSessionsHistory\(\)/.test(cal) && /goSessionsHistory\(/.test(cal), (cal.match(/goSessionsHistory\([^)]{0,40}/g) || []).join(' | '));
 };
@@ -350,6 +359,8 @@ module.exports.ecran = async function (t, b, PORT) {
 
   /* Un filtre de muscle actif cacherait la séance visée : la porte d'entrée repasse sur « Tous ». */
   await versProgres(X); await onglet(X, 'ptab-seances');
+  /* D-079 : les pastilles vivent dans le panneau « Filtrer les séances », fermé à l'entrée — on l'ouvre d'abord (vrai geste). */
+  if (!(await X.pg.evaluate(() => { const a = document.getElementById('sess-filter-acc'); return !!(a && a.open); }))) await clic(X.pg, '#sess-filter-acc > summary');
   const okFiltre = await clic(X.pg, '#sess-filter .sessf-chip:not(.on)');            // un muscle (pas « Tous »)
   const filtreAvant = await X.pg.evaluate(() => (document.querySelector('#sess-filter .sessf-chip.on') || {}).textContent || '');
   const squatJ0 = FIX.find(s => s.date === J0 && s.exs[0].name === 'Squat à la Barre'), pecJ0 = FIX.find(s => s.date === J0 && s.exs[0].name === 'Développé Couché');
@@ -653,6 +664,167 @@ module.exports.ecran = async function (t, b, PORT) {
       avant.mois === 'false' && avant.vol === 'true' && ongAvant === 'ptab-exo' && apres.onglet === 'ptab-seances' && apres.mois === 'true' && apres.vol28 === 'true' && !nouvelles.length,
       JSON.stringify({ avant, ongAvant, apres: { onglet: apres.onglet, mois: apres.mois, vol28: apres.vol28 }, nouvelles }));
     await R.cx.close(); }
+
+  /* ── 13 octies. D-079 / D-080 (15/10/2026 au soir, décisions de Michel) — FILTRE COMPACT, MULTI-SÉLECTION « OU »,
+     « CE QUE TU TRAVAILLES » REPLIÉ AU LANCEMENT ─────────────────────────────────────────────────────────────────
+     Fixture propre (6 séances, une par jour, aucune n'a un autre muscle « présent » que ceux listés ici — mesuré) :
+     A = Développé Couché (pec) · B = Extension Triceps Poulie (triceps) · C = Squat (quads) · D = Curl (biceps) ·
+     E = Développé Couché + Extension Triceps (pec ET triceps : la séance qui piège un filtre à doublons) · F = Rowing (dos).
+     L'oracle est écrit ICI, à la main : Pectoraux = {A, E} · Triceps = {B, E} · Pectoraux OU Triceps = {A, B, E}. */
+  { const mk = (off, noms) => { const date = jourParis(off), ts = Date.parse(date + 'T08:00:00Z');
+      return { date, ts, id: ts, volume: 1000, duration: 3000, exs: noms.map(n => ({ name: n, sets: serie(50, 8, 3) })) }; };
+    const FF = { A: mk(0, ['Développé Couché']), B: mk(-1, ['Extension Triceps Poulie']), C: mk(-2, ['Squat à la Barre']),
+      D: mk(-3, ['Curl Biceps Haltères']), E: mk(-4, ['Développé Couché', 'Extension Triceps Poulie']), F: mk(-5, ['Rowing Barre (Tirage Horizontal)']) };
+    const K = x => String(x.ts), TOUTES = Object.values(FF).map(K).sort();
+    const att = (...l) => l.map(x => K(FF[x])).sort();
+    const etatF = pg => pg.evaluate(() => { const a = document.getElementById('sess-filter-acc'), ch = [...document.querySelectorAll('#sess-filter .sessf-chip')];
+      return { existe: !!a, cache: !!(a && a.hidden), ouvert: !!(a && a.open), resume: ((document.getElementById('sess-filter-resume') || {}).textContent || '').trim(),
+        on: ch.filter(c => c.classList.contains('on')).map(c => c.dataset.m || 'tous'),
+        presse: ch.filter(c => c.getAttribute('aria-pressed') === 'true').map(c => c.dataset.m || 'tous'),
+        /* ⚠️ `offsetParent` (et même la hauteur) voient encore une pastille dans un <details> FERMÉ sous Chromium : seule
+           `checkVisibility()` dit ce que la personne voit (mesuré le 15/10, BUGS §74 — la mesure qui ne mesure pas). */
+        pastillesVisibles: ch.filter(c => (c.checkVisibility ? c.checkVisibility() : c.offsetParent !== null)).length,
+        listeHorsPanneau: !!(document.getElementById('sess-list') && !document.getElementById('sess-list').closest('#sess-filter-acc')) }; });
+    const visibles = async Y => { await toutDeplier(Y); const c = (await cartes(Y.pg)).filter(x => x.vis).map(x => String(x.cle)); return c; };
+    const panneau = Y => clic(Y.pg, '#sess-filter-acc > summary');
+    const ouvrirPanneau = async Y => { if (!(await etatF(Y.pg)).ouvert) await panneau(Y); };
+    const chip = (Y, m) => clic(Y.pg, '#sess-filter .sessf-chip[data-m="' + m + '"]');
+    const tousChip = Y => clic(Y.pg, '#sess-filter .sessf-chip:not([data-m])');
+    const RES = 'Filtrer les séances · ';
+
+    const Y = await ouvrir({ sessions: Object.values(FF) });
+    const clesAvant = await Y.pg.evaluate(() => Object.keys(localStorage).sort());
+    await versProgres(Y);
+    /* PS-E54 — à l'entrée, sans AUCUN tap : panneau fermé sur « Tous », pastilles invisibles, liste visible et hors du panneau */
+    const e0 = await etatF(Y.pg);
+    const vis0 = (await cartes(Y.pg)).filter(x => x.vis).length;
+    t('PS-E54 à l\'entrée, sans aucun tap : « Filtrer les séances · Tous » est FERMÉ (aucune pastille visible) et la liste des séances est visible, hors du panneau',
+      e0.existe && !e0.cache && !e0.ouvert && e0.resume === RES + 'Tous' && e0.pastillesVisibles === 0 && e0.listeHorsPanneau && vis0 > 0,
+      JSON.stringify({ e0, vis0 }));
+    /* PS-E56 / PS-E57 — Pectoraux puis Triceps : OU, sans doublon */
+    await ouvrirPanneau(Y);
+    const okP = await chip(Y, 'pec'), okT = await chip(Y, 'triceps');
+    const e1 = await etatF(Y.pg), v1 = await visibles(Y);
+    t('PS-E56 D-079 « OU » : Pectoraux + Triceps montre les séances qui travaillent l\'un OU l\'autre ({A, B, E}), résumé « Pectoraux + Triceps », les deux pastilles pressées et « Tous » relâché',
+      okP && okT && JSON.stringify(v1.slice().sort()) === JSON.stringify(att('A', 'B', 'E')) && e1.resume === RES + 'Pectoraux + Triceps'
+      && e1.on.slice().sort().join(',') === 'pec,triceps' && e1.presse.slice().sort().join(',') === 'pec,triceps', JSON.stringify({ okP, okT, v1, att: att('A', 'B', 'E'), e1 }));
+    t('PS-E57 aucun doublon : la séance E (Pectoraux ET Triceps) n\'apparaît qu\'UNE fois, et le nombre de cartes = le nombre de séances distinctes',
+      v1.filter(k => k === K(FF.E)).length === 1 && v1.length === new Set(v1).size && v1.length === 3, JSON.stringify(v1));
+    /* PS-E58 — décocher : Triceps retiré → Pectoraux seul ; décocher la dernière → « Tous » */
+    await chip(Y, 'triceps'); const e2 = await etatF(Y.pg), v2 = await visibles(Y);
+    await chip(Y, 'pec'); const e3 = await etatF(Y.pg), v3 = await visibles(Y);
+    t('PS-E58 décocher Triceps garde Pectoraux seul ({A, E}) ; décocher la DERNIÈRE zone revient à « Tous » (toutes les séances)',
+      JSON.stringify(v2.slice().sort()) === JSON.stringify(att('A', 'E')) && e2.resume === RES + 'Pectoraux'
+      && e3.on.join(',') === 'tous' && e3.resume === RES + 'Tous' && JSON.stringify(v3.slice().sort()) === JSON.stringify(TOUTES), JSON.stringify({ e2, v2, e3, n3: v3.length }));
+    /* PS-E59 — trois zones puis « Tous » */
+    await chip(Y, 'pec'); await chip(Y, 'triceps'); await chip(Y, 'biceps');
+    const e4 = await etatF(Y.pg);
+    await tousChip(Y); const e5 = await etatF(Y.pg), v5 = await visibles(Y);
+    t('PS-E59 trois zones → résumé court « Pectoraux + 2 autres » ; « Tous » vide la sélection et réaffiche toutes les séances',
+      e4.on.length === 3 && e4.resume === RES + 'Pectoraux + 2 autres' && e5.on.join(',') === 'tous' && e5.resume === RES + 'Tous'
+      && JSON.stringify(v5.slice().sort()) === JSON.stringify(TOUTES), JSON.stringify({ e4, e5, n5: v5.length }));
+    /* PS-E55 — une seule ligne, fermé, à 390 et à 320 px, y compris avec un résumé long */
+    const ligne = () => Y.pg.evaluate(() => { const a = document.getElementById('sess-filter-acc'), s = a && a.querySelector('summary'), sp = document.getElementById('sess-filter-resume');
+      if (!a || !s || !sp) return { absent: true };                    // ⛔ un panneau absent ROUGIT, il ne fait pas planter le banc
+      const r = s.getBoundingClientRect(), l = document.getElementById('sess-list').getBoundingClientRect();
+      const tops = new Set(); [...sp.childNodes].filter(n => n.nodeType === 3).forEach(n => { const g = document.createRange(); g.selectNodeContents(n); [...g.getClientRects()].forEach(q => tops.add(Math.round(q.top))); });
+      return { largeur: innerWidth, ouvert: a.open, h: Math.round(r.height), lignesTexte: tops.size, deborde: s.scrollWidth > s.clientWidth + 1, page: document.documentElement.scrollWidth <= innerWidth + 1,
+        ecart: Math.round(l.top - r.bottom), resume: sp.textContent }; });
+    if ((await etatF(Y.pg)).ouvert) await panneau(Y);
+    const m390 = await ligne();
+    await Y.pg.setViewportSize({ width: 320, height: 700 }); await Y.pg.waitForTimeout(250);
+    const m320 = await ligne();
+    await ouvrirPanneau(Y); await chip(Y, 'pec'); await chip(Y, 'triceps'); await chip(Y, 'quads'); await panneau(Y);
+    const m320long = await ligne();
+    const uneLigne = m => !m.absent && !m.ouvert && m.h <= 46 && m.lignesTexte === 1 && !m.deborde && m.page && m.ecart >= 0 && m.ecart < 40;
+    t('PS-E55 fermé, le filtre tient sur UNE ligne, sans débordement, la liste juste dessous — à 390 px, à 320 px, et à 320 px avec trois zones choisies',
+      uneLigne(m390) && uneLigne(m320) && uneLigne(m320long) && m390.largeur === 390 && m320.largeur === 320 && /\+ 2 autres/.test(m320long.resume),
+      JSON.stringify({ m390, m320, m320long }));
+    await Y.pg.setViewportSize({ width: 390, height: 844 }); await Y.pg.waitForTimeout(200);
+    /* PS-E60 — la tuile « Séances ce mois » (Accueil) remet une multi-sélection à « Tous » */
+    await ouvrirPanneau(Y); await chip(Y, 'quads'); await chip(Y, 'biceps');     // il reste Pectoraux + Triceps + Quadriceps → on retire Quads, ajoute Biceps
+    const avantTuile = await etatF(Y.pg);
+    await clic(Y.pg, '#nb-home'); await Y.pg.waitForTimeout(300);
+    await Y.pg.evaluate(() => { try { if (typeof _ceMoisOuvert === 'function' && !_ceMoisOuvert() && typeof toggleCeMois === 'function') toggleCeMois(); } catch (e) {} });
+    const okTuile = await clic(Y.pg, '#s-home [onclick="goSessionsHistory()"]'); await Y.pg.waitForTimeout(600);
+    const apTuile = await etatF(Y.pg);
+    t('PS-E60 Accueil « Séances ce mois », depuis une multi-sélection (Pectoraux + Triceps + Biceps) → le filtre revient sur « Tous »',
+      avantTuile.on.length === 3 && okTuile && apTuile.on.join(',') === 'tous' && apTuile.resume === RES + 'Tous', JSON.stringify({ avantTuile: avantTuile.on, okTuile, apTuile }));
+    /* PS-E61 — le calendrier (« Revoir la séance ») remet le filtre à « Tous » : la séance A (Pectoraux) était CACHÉE par « Triceps » */
+    await ouvrirPanneau(Y); await chip(Y, 'triceps');
+    const avantCal = await etatF(Y.pg), cacheeAvant = (await visibles(Y)).indexOf(K(FF.A)) < 0;
+    await clic(Y.pg, '#nb-home'); await Y.pg.waitForTimeout(300);
+    const okJ = await clic(Y.pg, '#s-home [onclick="_calSelect(\'' + FF.A.date + '\')"]');
+    const okR = await clic(Y.pg, '#s-home .ft-press[onclick^="goSessionsHistory(["]'); await Y.pg.waitForTimeout(700);
+    const apCal = await etatF(Y.pg), cA = (await cartes(Y.pg)).find(x => String(x.cle) === K(FF.A)) || {};
+    t('PS-E61 calendrier → « Revoir la séance » depuis un filtre qui la cachait (Triceps) → filtre sur « Tous », la séance visible et marquée',
+      avantCal.on.join(',') === 'triceps' && cacheeAvant && okJ && okR && apCal.on.join(',') === 'tous' && apCal.resume === RES + 'Tous' && cA.vis && cA.cible,
+      JSON.stringify({ avantCal: avantCal.on, cacheeAvant, okJ, okR, apCal: apCal.on, cA }));
+    /* PS-E64 — « Ce que tu travailles » ouvert : il le RESTE pendant la session (Accueil ↔ Progrès, Exercices ↔ Séances), et refermé il le reste */
+    const volOuvert = () => Y.pg.evaluate(() => !!document.getElementById('prog-volume-acc').open);
+    await versProgres(Y); await onglet(Y, 'ptab-seances');
+    const v0 = await volOuvert();
+    await clic(Y.pg, '#prog-volume-acc > summary'); await Y.pg.waitForTimeout(250);
+    const vOuv = await volOuvert();
+    await clic(Y.pg, '#nb-home'); await Y.pg.waitForTimeout(300); await versProgres(Y);
+    const vApresAccueil = await volOuvert();
+    await onglet(Y, 'ptab-exo'); await onglet(Y, 'ptab-seances');
+    const vApresOnglet = await volOuvert();
+    await clic(Y.pg, '#prog-volume-acc > summary'); await Y.pg.waitForTimeout(250);
+    await clic(Y.pg, '#nb-home'); await Y.pg.waitForTimeout(300); await versProgres(Y);
+    const vRefermeGarde = await volOuvert();
+    t('PS-E64 D-080 : « Ce que tu travailles » replié à l\'entrée ; ouvert, il RESTE ouvert pendant la session (Accueil ↔ Progrès, Exercices ↔ Séances) ; refermé, il reste fermé',
+      v0 === false && vOuv === true && vApresAccueil === true && vApresOnglet === true && vRefermeGarde === false,
+      JSON.stringify({ v0, vOuv, vApresAccueil, vApresOnglet, vRefermeGarde }));
+    /* PS-E63 / PS-E62 — relancement : volume REPLIÉ, filtre sur « Tous », et rien n'a été écrit pour l'un ou l'autre */
+    await clic(Y.pg, '#prog-volume-acc > summary'); await Y.pg.waitForTimeout(250);        // ouvert juste avant le relancement
+    await ouvrirPanneau(Y); await chip(Y, 'pec'); await chip(Y, 'biceps');
+    const avantReload = { vol: await volOuvert(), f: (await etatF(Y.pg)).on, cle: await Y.pg.evaluate(() => localStorage.getItem('ft4_progAcc')) };
+    await Y.pg.reload(); await Y.pg.waitForTimeout(1500);
+    await Y.pg.evaluate(() => document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')));
+    await versProgres(Y);
+    const apresReload = { vol: await volOuvert(), e: await etatF(Y.pg), n: (await visibles(Y)).length, cle: await Y.pg.evaluate(() => localStorage.getItem('ft4_progAcc')) };
+    t('PS-E63 D-080 : ouvert avant le relancement, « Ce que tu travailles » repart REPLIÉ après, et `ft4_progAcc` ne l\'a jamais retenu',
+      avantReload.vol === true && apresReload.vol === false && !/prog-volume-acc/.test(String(avantReload.cle)) && !/prog-volume-acc/.test(String(apresReload.cle)),
+      JSON.stringify({ avantReload, apresReload: { vol: apresReload.vol, cle: apresReload.cle } }));
+    const clesApres = await Y.pg.evaluate(() => Object.keys(localStorage).sort());
+    const nouvellesCles = clesApres.filter(k => clesAvant.indexOf(k) < 0 && !/^ft4_(seen_ft|progAcc|sb_last|menu_ack)$/.test(k));
+    t('PS-E62 D-079 : le filtre n\'est gardé qu\'en MÉMOIRE — après relancement « Tous », panneau fermé, toutes les séances ; aucune clé nouvelle de tout ce parcours',
+      avantReload.f.length === 2 && apresReload.e.on.join(',') === 'tous' && apresReload.e.resume === RES + 'Tous' && !apresReload.e.ouvert && apresReload.n === TOUTES.length && !nouvellesCles.length
+      && !Y.errs.length, JSON.stringify({ avant: avantReload.f, apres: apresReload.e.on, n: apresReload.n, nouvellesCles, errs: Y.errs.slice(0, 2) }));
+    await Y.cx.close(); }
+
+  /* PS-E65 / PS-E66 — « Ce que ton histoire montre » GARDE sa mémoire ; une ancienne valeur de `ft4_progAcc` qui cite encore le
+     volume (tous les utilisateurs qui l'avaient ouvert avant D-080) ne le rouvre plus. */
+  { const Z = await ouvrir({ stock: { ft4_progAcc: JSON.stringify(['prog-synth-acc', 'prog-volume-acc']) } });
+    await versProgres(Z);
+    const e66 = await Z.pg.evaluate(() => ({ synth: document.getElementById('prog-synth-acc').open, vol: document.getElementById('prog-volume-acc').open }));
+    t('PS-E66 une ANCIENNE valeur `ft4_progAcc` qui cite le volume : la synthèse s\'ouvre comme avant, « Ce que tu travailles » reste REPLIÉ',
+      e66.synth === true && e66.vol === false, JSON.stringify(e66));
+    await clic(Z.pg, '#prog-synth-acc > summary'); await Z.pg.waitForTimeout(250);           // on la REPLIE
+    await Z.pg.reload(); await Z.pg.waitForTimeout(1500);
+    await Z.pg.evaluate(() => document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')));
+    await versProgres(Z);
+    const ferme = await Z.pg.evaluate(() => ({ synth: document.getElementById('prog-synth-acc').open, cle: localStorage.getItem('ft4_progAcc') }));
+    await clic(Z.pg, '#prog-synth-acc > summary'); await Z.pg.waitForTimeout(250);           // on la ROUVRE
+    await Z.pg.reload(); await Z.pg.waitForTimeout(1500);
+    await Z.pg.evaluate(() => document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')));
+    await versProgres(Z);
+    const ouv = await Z.pg.evaluate(() => ({ synth: document.getElementById('prog-synth-acc').open, cle: localStorage.getItem('ft4_progAcc') }));
+    t('PS-E65 « Ce que ton histoire montre » garde sa mémoire d\'un lancement à l\'autre (repliée → repliée, ouverte → ouverte), dans `ft4_progAcc`',
+      ferme.synth === false && ouv.synth === true && /prog-synth-acc/.test(String(ouv.cle)) && !/prog-synth-acc/.test(String(ferme.cle)), JSON.stringify({ ferme, ouv }));
+    /* PS-E68 — les aides disent le nouveau geste (règle d'or #11, points 3 à 5 ; pas de pop-up) */
+    const aides = await Z.pg.evaluate(() => {
+      const tips = ((typeof _HELP_DATA !== 'undefined' && _HELP_DATA.progress && _HELP_DATA.progress.tips) || []).map(x => x.t).join('\n');
+      const h = (typeof _DRAWER_CONTENT !== 'undefined' && _DRAWER_CONTENT.help) ? (typeof _DRAWER_CONTENT.help.html === 'function' ? _DRAWER_CONTENT.help.html() : _DRAWER_CONTENT.help.html) : '';
+      const guide = (typeof APP_GUIDE_SLIDES !== 'undefined' ? APP_GUIDE_SLIDES : []).map(x => (x.t || '') + ' ' + (x.cap || '')).join('\n');
+      return { tips, h: String(h), guide }; });
+    t('PS-E68 aide « ? » de Progrès, aide détaillée et Guide disent « Filtrer les séances », plusieurs muscles, et que le volume repart replié — plus « tape un groupe » ni « l\'app retient ton choix »',
+      [aides.tips, aides.h, aides.guide].every(x => /Filtrer les séances/.test(x) && /un ou plusieurs/.test(x))
+      && /repliée à chaque lancement/.test(aides.tips) && /repliée à chaque lancement/.test(aides.h)
+      && !/tape un groupe musculaire/.test(aides.tips) && !/l\\'app retient ton choix|l'app retient ton choix/.test(aides.tips),
+      JSON.stringify({ tips: /Filtrer les séances/.test(aides.tips), h: /Filtrer les séances/.test(aides.h), guide: /Filtrer les séances/.test(aides.guide) }));
+    await Z.cx.close(); }
 
   /* ── 13. Bandeau de cycle : comportement actuel préservé (statu quo, non tranché) ──────────── */
   X = await ouvrir({ stock: { ft4_gender: 'F', ft4_mcstart: jourParis(-3) } });
