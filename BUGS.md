@@ -4570,3 +4570,13 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 **Ce qui le protège.** Les aides du banc retrouvent la carte par la clé du produit (`openSessDetail(ts || id)`, correspondance exacte) ; OD-18 garde une séance **id ≠ ts** fixe (⛔ ne jamais la « corriger » en id = ts : de telles séances existent) ; contrôle négatif `tools/mut_od_cle_carte.py` (T1 : l'ancienne recherche par id fait rougir OD-18).
 
 **À quoi on le reconnaît.** Un rouge aléatoire « élément introuvable » sur du code sain, plus fréquent sous charge, qui disparaît au rejeu — et une attente ajoutée qui ne le fait pas disparaître. 👉 *Avant d'ajouter une attente, vérifier que le témoin cherche avec la clé que le produit écrit.* Corollaire vu sous mutation : une aide d'affichage (`JSON.stringify(undefined).slice`) peut faire **planter** le banc au lieu de le faire rougir — un plantage n'attrape rien.
+
+## §74 — ⛔ LA MUTATION QUI NE MUTE RIEN : UN « ROUGE ATTENDU » QUI NE VIENT PAS N'ACCUSE PAS FORCÉMENT LE TÉMOIN *(15/10/2026, BADGES → MENU / D-078 — avant `ft-v1255`)*
+
+**Symptôme.** Campagne de mutations du micro-lot Badges : 17 / 19 conformes. M22 (« Badges n'est plus joignable depuis le Menu ») et M56 (« ouvrir Badges déplace le « + » de 2 px ») donnaient **0 rouge**.
+
+**Cause — mesurée avant de toucher au témoin.** Ce sont les MUTATIONS qui ne cassaient rien. M22 posait l'attribut `hidden` sur la ligne du Menu, or `.menu-row{display:flex}` (style.css) l'emporte sur `hidden` : la ligne restait visible, Badges restait joignable — le témoin avait raison d'être vert. M56 posait `margin-top:2px` sur le « + » : la marge est bien appliquée (2 px calculés) mais le rectangle du bouton ne bouge pas d'un pixel. Réécrites (ligne réellement retirée ; `translateY(2px)`, qui déplace le rectangle de 792 → 794 px), elles rougissent : 19 / 19.
+
+**Ce qui le protège.** Le commentaire en tête de M22 / M56 dans `tools/mut_progres_seances.py` garde la 1ʳᵉ version et la mesure qui l'a disqualifiée.
+
+**À quoi on le reconnaît.** Une mutation « évidente » qui ne fait rien rougir. 👉 *Avant de réécrire un témoin parce qu'une mutation passe au travers, vérifier dans la page que la mutation produit vraiment l'effet annoncé* (`hidden` contre un `display` d'auteur ; une marge dans un conteneur qui ne bouge pas). Le miroir de §73 : là le témoin cherchait mal, ici c'est la mutation qui ne cassait pas.
