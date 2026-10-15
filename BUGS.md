@@ -4560,3 +4560,13 @@ Triceps », l'extension **à l'haltère** : un alias complet est souverain, il p
 les **mots** — sa case est « Polyvalent » et son nom anglais ne dit aucun matériel, le garde-fou n'a rien à opposer. *C'est le même trou
 que P0-1 (une cible « Polyvalent » invisible), sur une cible dont l'identité n'a jamais été tranchée.* Ajouter dix alias serait du cas par
 cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Figée par B-P02-A (la liste ne peut que rétrécir).
+
+## §73 — ⛔⛔ LE TÉMOIN QUI CHERCHE LA SÉANCE PAR LA MAUVAISE CLÉ : LA CARTE EST LÀ, IL CONCLUT « ABSENTE » *(15/10/2026, OD-CLÉ-CARTE — avant `ft-v1255`)*
+
+**Symptôme.** D-031 du 15/10 : OD-07 / OD-07b rouges (« carte introuvable » après un rechargement pendant l'analyse), verts au rejeu. Les commentaires du banc attribuaient déjà des « carte introuvable » (OD-08b, OD-10b, OD-11, OD-16, OD-17b) à la **lenteur du rendu** — des attentes de 3 s avaient été ajoutées, sans effet : la carte n'était jamais trouvée, pas trouvée trop tard.
+
+**Cause.** La carte d'historique porte `openSessDetail(ts || id)` ; le débrief est rangé sous l'id (`_dbfCle`) ; `finishWorkout` écrit `{id:Date.now(), …, ts:Date.now()}` — deux lectures d'horloge, qui diffèrent d'1 ms de temps en temps. Le banc cherchait l'**id** dans l'`onclick` de la carte : quand id ≠ ts, la carte affichée n'est jamais reconnue. **Le produit est juste** (chaque clé est lue là où elle est écrite) ; mesuré identique sur candidat, master et production d'avant Progrès (`aa808110`) en forçant l'horloge.
+
+**Ce qui le protège.** Les aides du banc retrouvent la carte par la clé du produit (`openSessDetail(ts || id)`, correspondance exacte) ; OD-18 garde une séance **id ≠ ts** fixe (⛔ ne jamais la « corriger » en id = ts : de telles séances existent) ; contrôle négatif `tools/mut_od_cle_carte.py` (T1 : l'ancienne recherche par id fait rougir OD-18).
+
+**À quoi on le reconnaît.** Un rouge aléatoire « élément introuvable » sur du code sain, plus fréquent sous charge, qui disparaît au rejeu — et une attente ajoutée qui ne le fait pas disparaître. 👉 *Avant d'ajouter une attente, vérifier que le témoin cherche avec la clé que le produit écrit.* Corollaire vu sous mutation : une aide d'affichage (`JSON.stringify(undefined).slice`) peut faire **planter** le banc au lieu de le faire rougir — un plantage n'attrape rien.
