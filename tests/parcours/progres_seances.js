@@ -16,7 +16,8 @@
 
    Blocs : B-PS01-S (source) · B-PS01-E (écran conduit) · B-PSI01-E (session-B, PROGRES-SEANCES-INTEGRATION-01 :
    PS-E41 → PS-E44, mois courant, largeur 390 / 320 px, calendrier → séance ancienne par le vrai geste ;
-   micro-fermeture du 14/10 : PS-S8 diapo du Guide, PS-E45 → PS-E48, PS-E27 / PS-E29 isolés dans un contexte neuf).
+   micro-fermeture du 14/10 : PS-S8 diapo du Guide, PS-E45 → PS-E48, PS-E27 / PS-E29 isolés dans un contexte neuf ;
+   publication ft-v1255 du 15/10 : PS-S9 et PS-E49, la pop-up « Quoi de neuf » « Progrès : Séances d'abord »).
    Ce que les témoins CONDUISENT : la barre du bas, les onglets de Progrès, les en-têtes Année / Mois,
    la tuile « Séances ce mois », le calendrier (jour, « Revoir la séance », vue semaine), le choix
    14 | 28 jours, une carte (détail), « 💬 Voir le débrief Milo ».
@@ -93,6 +94,15 @@ module.exports.source = function (t, ROOT, fs, path) {
     t('PS-S8 diapo « Tes progrès » : légende Séances · Exercices · Corps & santé · Badges (dans l\'ordre) et capture refaite (≠ ancienne capture à 3 onglets)',
       d && ordre.every(i => i > 0) && ordre.every((v, i) => !i || v > ordre[i - 1]) && !/graphiques clairs/.test(d)
       && h !== 'f3a5ff8147a7a06371ed48638baa3702790b36a431d430a794708f901c8fa954', JSON.stringify({ ordre, h: h.slice(0, 12) })); }
+  /* PS-S9 — la pop-up « Quoi de neuf » de la publication ft-v1255 (règle d'or #11 : un repère a bougé). Elle existe,
+     APRÈS la dernière annonce de la production d'avant (ft-v1254 : v76), elle est courte (R25 : ≤ 600 caractères) et
+     elle dit ce qui a bougé : Séances en premier, l'historique par année puis par mois, Exercices garde la progression. */
+  { const ct = fs.readFileSync(path.join(ROOT, 'constants.js'), 'utf8');
+    const l = ct.split('\n').find(x => /^\s*\{v:\d+,[^\n]*t:'Progrès : Séances d\\'abord'/.test(x)) || '';
+    const v = +((l.match(/\{v:(\d+)/) || [])[1] || 0), d = ((l.match(/ d:'(.*)'\},?\s*$/) || [])[1] || '').replace(/\\'/g, "'");
+    t('PS-S9 pop-up « Progrès : Séances d\'abord » : après v76, ≤ 600 caractères, dit Séances · année puis mois · Exercices',
+      v > 76 && d.length > 0 && d.length <= 600 && /Séances/.test(d) && /<b>année<\/b>[^.]*<b>mois<\/b>/.test(d) && /<b>Exercices<\/b>/.test(d),
+      JSON.stringify({ v, n: d.length })); }
   t('PS-S7 le calendrier vise la séance par sa clé : plus aucun `goSessionsHistory()` NU dans le calendrier',
     !/goSessionsHistory\(\)/.test(cal) && /goSessionsHistory\(/.test(cal), (cal.match(/goSessionsHistory\([^)]{0,40}/g) || []).join(' | '));
 };
@@ -122,7 +132,7 @@ module.exports.ecran = async function (t, b, PORT) {
     await pg.addInitScript(`(()=>{try{ if(sessionStorage.getItem('_ps'))return; sessionStorage.setItem('_ps','1'); localStorage.clear();
       const D=${JSON.stringify(init)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k]));}catch(e){}})();`);
     await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
-    await pg.evaluate(() => document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')));
+    if (!o.garderOverlays) await pg.evaluate(() => document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')));
     return { cx, pg, st, errs };
   };
   const clic = async (pg, sel, garder) => {
@@ -551,5 +561,20 @@ module.exports.ecran = async function (t, b, PORT) {
   await versProgres(X); await onglet(X, 'ptab-exo');
   const ban = await X.pg.evaluate(() => { const e = document.getElementById('prog-cycle-banner'); return { vis: !!(e && e.offsetParent), dansExo: !!(e && e.closest('#prog-exo')), txt: e ? e.textContent.trim().slice(0, 60) : '' }; });
   t('PS-E38 le bandeau de cycle reste dans Exercices et s\'affiche comme avant (statu quo jusqu\'à décision)', ban.vis && ban.dansExo && /Jour/.test(ban.txt), JSON.stringify(ban));
+  await X.cx.close();
+
+  /* ── 14. PS-E49 — la pop-up de la publication ATTEINT la personne (règle d'or #11). Quelqu'un qui a vu toutes les
+     nouveautés de la production d'avant (ft-v1254 : WHATS_NEW_MAX = 76, donc ft4_wn_seen = '76') la reçoit au
+     démarrage, par le vrai mécanisme (checkAnnouncements → showWhatsNew), sans rien toucher. ⛔ « 76 » est l'état RÉEL
+     des utilisateurs à la publication, pas un nombre de commodité : une annonce numérotée sous 76 ne leur parviendrait
+     jamais. ── */
+  X = await ouvrir({ stock: { ft4_wn_seen: '76' }, garderOverlays: true });
+  await X.pg.waitForTimeout(800);
+  const wn = await X.pg.evaluate(() => { const ov = document.getElementById('ov-whatsnew');
+    const it = (typeof _wnItems !== 'undefined' && _wnItems) || [];
+    return { ouvert: !!(ov && ov.classList.contains('open')), titres: it.map(f => f.v + ':' + f.t),
+      premier: !!(ov && it[0] && ov.textContent.indexOf(it[0].t) >= 0) }; });
+  t('PS-E49 au démarrage (vu jusqu\'à v76, état de ft-v1254) la pop-up « Quoi de neuf » s\'ouvre et porte « Progrès : Séances d\'abord »',
+    wn.ouvert && wn.premier && wn.titres.some(x => /Progrès : Séances d'abord/.test(x)), JSON.stringify(wn));
   await X.cx.close();
 };

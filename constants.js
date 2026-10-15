@@ -900,6 +900,12 @@ const WHATS_NEW=[
        le canal par lequel ses retours arrivent. *Une disparition muette se lit comme une punition.*
        ⛔ POURQUOI `si:'testeur'` : les autres n'ont jamais vu ce pavé. Leur annoncer sa disparition
        serait du bruit pur, et le mécanisme existe exprès depuis ft-v1072. */
+  /* 🗂️ PROGRES-SEANCES-01 (D-076, D-077) — ELLE SE MÉRITE : UN REPÈRE A BOUGÉ. Progrès s'ouvrait sur les
+     graphiques d'exercice, l'historique en bas de cet onglet et coupé à 20 séances ; il s'ouvre maintenant sur
+     Séances, l'historique rangé par année puis par mois. Sans un mot, la personne chercherait son historique là où
+     il était. ⛔ BORNÉE (R25) : ce qui a bougé, où le trouver, ce qui ne bouge pas. Chaque phrase est vraie dans le
+     code servi (PS-S2 plus de plafond · PS-E10 mois courant ouvert · onglet Exercices = progression). */
+    {v:77, ic:'🗂️', t:'Progrès : Séances d\'abord', d:'① <b>Progrès s\'ouvre maintenant sur Séances</b> : ton historique, ce que ton histoire montre et ce que tu travailles. ② <b>Tout ton historique est là</b>, rangé par <b>année</b> puis par <b>mois</b> — avant, seules les 20 dernières séances s\'affichaient. Le mois en cours est déjà ouvert ; tape un autre mois pour le voir. ③ <b>Exercices</b> garde la progression de chaque exercice.'},
   /* 🎯 DEBRIEF-ON-DEMAND-01 (D-052) — ELLE SE MÉRITE : il y a quelque chose à FAIRE. Jusqu'ici l'avis de Milo arrivait
      tout seul à la fin de chaque séance ; désormais il faut le DEMANDER. Sans un mot, la personne conclurait que Milo
      ne débriefe plus. ⛔ BORNÉE (R25) : ce qui change, le geste, ce qui ne bouge pas. Le POURQUOI vit dans l'aide. */
