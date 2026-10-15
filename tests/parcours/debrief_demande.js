@@ -7,7 +7,8 @@
    UNE génération active par séance. Un échec ne range rien et n'est repris que sur un clic. Une analyse
    coupée par un rechargement se DIT (« Analyse interrompue ») et ne repart pas seule.
 
-   Blocs : B-OD-S (source) · B-OD-E (écran conduit, OD-01 → OD-17).
+   Blocs : B-OD-S (source) · B-OD-E (écran conduit, OD-01 → OD-18 ; OD-18 = session-B, 15/10, OD-CLÉ-CARTE :
+   une séance id ≠ ts retrouvée par la clé du produit `ts || id`, relancée, son débrief retrouvé après rechargement).
    Ce que les témoins CONDUISENT : « Terminer », le minuteur RÉEL du démarrage (on attend au-delà de
    load + 3 s), le bouton « ✨ Analyser cette séance avec Milo » de l'écran de fin, « Réessayer »,
    l'onglet Coach, l'onglet Progrès et le bouton de la carte de séance (« Analyser avec Milo » / « Relancer » /
@@ -19,7 +20,7 @@
    de l'écran de fin, de la carte Progrès et de la fenêtre « Débrief Milo ».
    Ce qu'ils NE COUVRENT PAS : deux ONGLETS ouverts en même temps, Safari iOS, le comportement réel
    d'Anthropic quand le client disparaît, l'export (couvert par B-SI01-E/F, qui ne dépend pas du déclencheur).
-   Banc : tools/banc_debrief_demande.js · contrôle négatif : tools/mut_debrief_demande.py
+   Banc : tools/banc_debrief_demande.js · contrôle négatif : tools/mut_debrief_demande.py · tools/mut_od_cle_carte.py (OD-CLÉ-CARTE)
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 /* 🗂️ PROGRES-SEANCES-01 (14/10/2026, R30) — l'historique a quitté l'onglet « Exercices » pour « Séances », rangé par
    année puis par mois (mois repliés, sauf le mois en cours depuis le 14/10). Ces témoins visaient la liste en passant par « Exercices » : ils passent
@@ -127,7 +128,8 @@ module.exports.ecran = async function (t, b, PORT) {
     const mag = JSON.parse(localStorage.getItem('ft4_debriefs') || 'null');
     const sess = JSON.parse(localStorage.getItem('ft4_sessions') || '[]');
     const auj = sess.find(s => (s.exs || []).some(e => e.name === 'Rowing Yates') && s.volume === 1200) || null;
-    const carte = id => { const c = [...document.querySelectorAll('#sess-list .sess-card')].find(x => (x.getAttribute('onclick') || '').indexOf(String(id)) >= 0);
+    const carte = id => { const s0 = sess.find(x => x && String(x.id) === String(id)); const k = s0 ? String(s0.ts || s0.id) : null;   // OD-CLÉ-CARTE : clé du produit
+      const c = k ? [...document.querySelectorAll('#sess-list .sess-card')].find(x => (x.getAttribute('onclick') || '') === 'openSessDetail(' + k + ')') : null;
       return c ? [...c.querySelectorAll('.sess-dbf-btn,.sess-dbf-go')].map(x => x.textContent.trim()) : null; };
     return { sid: auj ? String(auj.id) : '', mag: mag ? Object.keys(mag.seances) : [], magTxt: mag ? Object.values(mag.seances).map(e => e.texte.slice(0, 50)) : [],
       encours: JSON.parse(localStorage.getItem('ft4_debrief_encours') || 'null'),
@@ -138,9 +140,22 @@ module.exports.ecran = async function (t, b, PORT) {
       anciennes: ['ft4_pending_debrief', 'ft4_debrief_recu', 'ft4_debrief_faits'].filter(k => localStorage.getItem(k) !== null) };
   });
   /* ⚠️ Une carte PRÉCISE peut arriver après les autres (vu le 06/10 : OD-10b « carte introuvable » sur du code sain) —
-     on l'attend, 3 s au plus ; absente au bout de 3 s, elle est vraiment absente. */
+     on l'attend, 3 s au plus ; absente au bout de 3 s, elle est vraiment absente.
+     🔑 OD-CLÉ-CARTE (session-B, 15/10, décision de Michel) — LA CARTE SE RETROUVE PAR LA CLÉ DU PRODUIT, JAMAIS PAR L'ID.
+     La carte porte `openSessDetail(ts || id)` (setup.js, `_sessCarteHtml`) ; le débrief, lui, est rangé sous l'id (`_dbfCle`).
+     `finishWorkout` écrit `{id:Date.now(), …, ts:Date.now()}` : deux lectures d'horloge, qui diffèrent d'1 ms de temps en
+     temps (plus souvent sous charge). Ces aides cherchaient l'id DANS l'onclick de la carte : quand id ≠ ts, la carte était
+     là et le témoin concluait « absente » — c'est l'échec de la D-031 du 15/10 (OD-07 / OD-07b), et très probablement les
+     « carte introuvable » d'OD-08b, OD-10b, OD-11, OD-16, OD-17b attribués jusqu'ici à la lenteur du rendu. Mesuré sur
+     candidat, master ET production d'avant Progrès (`aa808110`) : défaut de TEST, préexistant ; le produit est juste.
+     ⛔ Ne pas « réparer » en forçant id = ts dans les fixtures : des séances id ≠ ts existent (OD-18 garde ce cas). */
+  const cleCarte = (X, id) => X.pg.evaluate(i => { const s = ((typeof S !== 'undefined' && S && S.sessions) || []).find(x => x && String(x.id) === String(i));
+    return s ? String(s.ts || s.id) : null; }, id);
+  const selCarte = k => '#sess-list .sess-card[onclick="openSessDetail(' + k + ')"]';
   const boutons = async (X, id) => { const t0 = Date.now(); let r = null;
-    do { r = await X.pg.evaluate(i => { const c = [...document.querySelectorAll('#sess-list .sess-card')].find(x => (x.getAttribute('onclick') || '').indexOf(String(i)) >= 0);
+    do { r = await X.pg.evaluate(i => { const s = ((typeof S !== 'undefined' && S && S.sessions) || []).find(x => x && String(x.id) === String(i));
+        const k = s ? String(s.ts || s.id) : null;
+        const c = k ? [...document.querySelectorAll('#sess-list .sess-card')].find(x => (x.getAttribute('onclick') || '') === 'openSessDetail(' + k + ')') : null;
         return c ? [...c.querySelectorAll('.sess-dbf-btn,.sess-dbf-go')].map(x => x.textContent.trim()) : null; }, id);
       if (r) break; await X.pg.waitForTimeout(150); } while (Date.now() - t0 < 3000);
     return r; };
@@ -156,7 +171,7 @@ module.exports.ecran = async function (t, b, PORT) {
   const ANC = () => ({ id: 3081, ts: 3081, date: jP(-81), volume: 630,
     exs: [{ name: 'Développé Militaire', sets: [ser(52.5, 6, { rir: 2 }), ser(52.5, 6, { note: 'barre posée à la 5e' })] }] });
   const sansDecor = x => String(x || '');
-  const ouvrirCarte = (X, id) => clic(X.pg, '#sess-list .sess-card[onclick*="' + id + '"] .sess-dbf-go', 'ov-debrief-milo');
+  const ouvrirCarte = async (X, id) => { const k = await cleCarte(X, id); return k ? clic(X.pg, selCarte(k) + ' .sess-dbf-go', 'ov-debrief-milo') : false; };
   const attendreReq = async (X, n, ms) => { const t0 = Date.now(); while (X.st.req.length < n && Date.now() - t0 < (ms || 6000)) await X.pg.waitForTimeout(100); };
   const attendreMag = async (X, id, ms) => { const t0 = Date.now(); while (Date.now() - t0 < (ms || 12000)) {
       const e = await etat(X.pg); if (e.mag.indexOf(String(id)) >= 0) return true; await X.pg.waitForTimeout(150); } return false; };
@@ -232,7 +247,7 @@ module.exports.ecran = async function (t, b, PORT) {
     const btn = await boutons(X, r.sid);
     t('OD-07 ⛔ … la carte dit « Analyse interrompue — relancer », et rien ne part avant le clic',
       btn && btn.length === 1 && /interrompue/.test(btn[0]) && X.st.req.length === 1, js(btn));
-    const ok = await clic(X.pg, '#sess-list .sess-dbf-go', 'ov-debrief-milo');
+    const ok = await ouvrirCarte(X, r.sid);   // OD-CLÉ-CARTE : le bouton de CETTE carte, trouvée par sa clé
     const txt = await attendre(X.pg, '#dbf-milo-body', /DEBRIEF-OD relancé/);
     const fin = await etat(X.pg), btn2 = await boutons(X, r.sid);
     t('OD-07b … le clic relance (2ᵉ requête, consigne « à ma demande », pas « je viens de terminer »), le débrief est rangé, la carte passe à « Voir »',
@@ -289,7 +304,9 @@ module.exports.ecran = async function (t, b, PORT) {
   }
   /* ═════════ OD-11 — un débrief existe déjà : « Voir », jamais d'appel ═════════ */
   {
-    const S0 = { id: Date.now() - 3600e3, ts: Date.now() - 3600e3, date: J, volume: 1200, exs: [YATES()] }; const sid = String(S0.id);
+    /* OD-CLÉ-CARTE (15/10) : UNE lecture d'horloge (fixture déterministe — deux `Date.now()` indépendants pouvaient différer
+       d'1 ms), et ts = id + 1 EXPRÈS : c'est la forme réelle d'une séance dont les deux lectures ont différé. */
+    const T11 = Date.now() - 3600e3, S0 = { id: T11, ts: T11 + 1, date: J, volume: 1200, exs: [YATES()] }; const sid = String(S0.id);
     const X = await ouvrir({ sessions: HIST().concat([S0]), reponses: [{ delai: 100, rep: OK('DEBRIEF-OD REPAYÉ.') }],
       stock: { ft4_debriefs: JSON.stringify({ v: 1, seances: { [sid]: { texte: 'DEBRIEF-OD déjà rangé.', ts: 1, src: 'fin' } } }) } });
     await jusqua(X, 4000); await coach(X, 1200); await versCarte(X, sid);   // la liste se dessine : on attend la carte (course vue le 06/10)
@@ -300,6 +317,40 @@ module.exports.ecran = async function (t, b, PORT) {
     const fin = await etat(X.pg);
     t('OD-11 ⛔⛔ débrief déjà rangé → la carte porte « Voir » seul, il s\'ouvre, et même le geste « analyser » ne repaie rien (0 appel)',
       btn && btn.length === 1 && /Voir le débrief/.test(btn[0]) && /déjà rangé/.test(vu) && X.st.req.length === 0 && /déjà rangé/.test(fin.magTxt.join('|')), resume(X) + ' ' + js(btn));
+    await X.cx.close();
+  }
+  /* ═════════ OD-18 (session-B, 15/10, OD-CLÉ-CARTE) — une séance dont id ≠ ts reste retrouvable ET exploitable ═════════
+     Le cas qu'OD-07 ne voyait qu'au hasard (deux lectures d'horloge qui diffèrent d'1 ms dans `finishWorkout`) est ici FIXÉ :
+     séance historique avec ts = id + 1, analyse coupée par une autre page (« en vol », page « ancienne »).
+     Conduit : Progrès → la carte (par sa clé ts || id) → « relancer » → « Voir » → rechargement → « Voir ».
+     Observe : l'onclick de la carte, ses boutons, les requêtes (cible, consigne), le magasin `ft4_debriefs`, la fenêtre du débrief.
+     ⛔ NE JAMAIS « corriger » ce témoin en id = ts : c'est précisément le cas qu'il garde (Michel, 15/10). */
+  {
+    const T18 = Date.now() - 2 * 86400e3, D = { id: T18, ts: T18 + 1, date: jP(-2), volume: 1200, exs: [YATES()] }, did = String(D.id), dts = String(D.ts);
+    const X = await ouvrir({ sessions: HIST().concat([D]), reponses: [{ delai: 300, rep: OK('DEBRIEF-OD18 relancé.') }],
+      stock: { ft4_debrief_encours: JSON.stringify({ v: 2, vol: { [did]: { ts: Date.now() - 60e3, page: 'ancienne' } } }) } });
+    await jusqua(X, 4000); await coach(X, 1200); await versCarte(X, did);
+    const c0 = await X.pg.evaluate(([i, k]) => { const c = [...document.querySelectorAll('#sess-list .sess-card')].find(x => (x.getAttribute('onclick') || '') === 'openSessDetail(' + k + ')');
+      return { trouvee: !!c, onclick: c ? c.getAttribute('onclick') : null, porteId: !!(c && (c.getAttribute('onclick') || '').indexOf(i) >= 0) }; }, [did, dts]);
+    const btn = await boutons(X, did);
+    t('OD-18 ⛔ séance historique id ≠ ts (ts = id + 1) : sa carte est retrouvée par la clé du produit (openSessDetail(ts), qui ne contient PAS l\'id), elle dit « Analyse interrompue — relancer », rien ne part avant le clic',
+      did !== dts && c0.trouvee && !c0.porteId && btn && btn.length === 1 && /interrompue/.test(btn[0]) && X.st.req.length === 0, js({ c0, btn, req: X.st.req.length }));
+    const ok = await ouvrirCarte(X, did);
+    const txt = await attendre(X.pg, '#dbf-milo-body', /DEBRIEF-OD18 relancé/);
+    await attendreMag(X, did, 6000);
+    const fin = await etat(X.pg), btn2 = await boutons(X, did);
+    t('OD-18b … le clic relance CETTE séance (1 requête, identifiant = id, consigne « à ma demande »), le débrief est rangé sous l\'id (pas sous ts), la carte passe à « Voir »',
+      ok && X.st.req.length === 1 && X.st.req[0].cibleId === did && !X.st.req[0].fin && /DEBRIEF-OD18 relancé/.test(txt)
+      && fin.mag.indexOf(did) >= 0 && fin.mag.indexOf(dts) < 0 && btn2 && btn2.length === 1 && /Voir le débrief/.test(btn2[0]) && !fin.encours,
+      resume(X) + ' ' + js({ mag: fin.mag, btn2, enc: fin.encours }));
+    await X.pg.reload(); X.st.T0 = Date.now(); await X.pg.waitForTimeout(3500);
+    await versCarte(X, did); const btn3 = await boutons(X, did), k3 = await cleCarte(X, did);
+    const vuOk = !!k3 && await clic(X.pg, selCarte(k3) + ' .sess-dbf-btn', 'ov-debrief-milo');
+    const vu = await attendre(X.pg, '#dbf-milo-body', /DEBRIEF-OD18 relancé/, 4000);
+    t('OD-18c … après rechargement, le débrief est retrouvé : la carte porte « Voir » seul et l\'ouvre, 0 appel de plus',
+      k3 === dts && btn3 && btn3.length === 1 && /Voir le débrief/.test(btn3[0]) && vuOk && /DEBRIEF-OD18 relancé/.test(vu) && X.st.req.length === 1,
+      js({ k3, btn3, vu: vu.slice(0, 80), req: X.st.req.length }));
+    t('OD-18d aucune erreur de page, 0 appel réel', X.errs.length === 0 && X.st.reels === 0, X.errs.join(' | '));
     await X.cx.close();
   }
   /* ═════════ OD-12 / OD-13 — deux séances, le même jour ═════════ */
@@ -313,7 +364,7 @@ module.exports.ecran = async function (t, b, PORT) {
        à 3 s, la réponse de A redessinait la carte de B au moment du clic, et le clic se perdait (vu sous charge). */
     await terminer(X); await clic(X.pg, '#se-debrief .se-dbf-go');      // A part (écran de fin)
     await fermerFin(X); await versProgres(X);
-    const okB = await clic(X.pg, '#sess-list .sess-card[onclick*="' + bid + '"] .sess-dbf-go', 'ov-debrief-milo');   // B part (Progrès)
+    const okB = await ouvrirCarte(X, bid);   // B part (Progrès) — OD-CLÉ-CARTE : carte trouvée par sa clé (ts || id)
     await X.pg.waitForTimeout(500);
     const deux = X.st.req.length;
     { const t0 = Date.now(); while (Date.now() - t0 < 12000) { const e = await etat(X.pg); if (e.mag.indexOf(e.sid) >= 0) break; await X.pg.waitForTimeout(200); } }   // A a répondu, B est encore en vol
@@ -331,7 +382,8 @@ module.exports.ecran = async function (t, b, PORT) {
   /* ═════════ OD-14 — suppression d'une séance (comportement SESSION-INTEGRITY gardé) ═════════ */
   const supprimer = async (X, id) => {
     await versProgres(X);
-    const a = await clic(X.pg, '#sess-list .sess-card[onclick="openSessDetail(' + id + ')"] .sess-title');
+    const k = await cleCarte(X, id);   // OD-CLÉ-CARTE : la carte porte ts || id, pas l'id
+    const a = !!k && await clic(X.pg, selCarte(k) + ' .sess-title');
     const b1 = await clic(X.pg, '#sd-del-btn'); const b2 = await clic(X.pg, '#sd-del-btn');
     await X.pg.waitForTimeout(300); return a && b1 && b2;
   };
