@@ -115,6 +115,28 @@ function _etatTravailWkt(){
   if(_cardioNoteMin()>0 || exs.some(e=>e&&(e.sets||[]).some(s=>s&&s.done))) return 'TRAVAIL';
   return exs.length?'PREPARATION':'RIEN';
 }
+/* 🏋️ UX SÉANCE (16/10/2026, décision ① de Michel) — « N / M séries » ET « IL RESTE N SÉRIES » COMPTENT LES SÉRIES
+   DE TRAVAIL. ⛔ AUCUNE RÈGLE NOUVELLE : c'est celle que `toggleSet` emploie depuis le 25/08 pour dire qu'un exercice
+   est fini (« il n'y reste aucune série de travail »), sortie ici dans UN propriétaire pour que l'en-tête de séance,
+   la confirmation de fin et la carte « terminée » ne la recopient pas (R2).
+   Un palier d'échauffement (`É`, ou l'ancien `W` qu'une vieille sauvegarde peut ramener) ne compte pas ; un échec
+   (`X`) COMPTE — c'est une série faite pour de vrai.
+   ⚠️ CE N'EST PAS `_serieDeTravail` (plus bas) : celle-là répond à « cette série a-t-elle une réserve à déclarer ? »
+   et exclut donc aussi `X`. Deux questions, deux propriétaires — les fusionner changerait l'une des deux. */
+function _estPalierEch(s){ return !!(s && (s.type==='É' || s.type==='W')); }
+function _bilanTravailEx(ex){
+  let total=0, faites=0;
+  for(const s of ((ex&&ex.sets)||[])){ if(!s||_estPalierEch(s)) continue; total++; if(s.done) faites++; }
+  return {total, faites, restantes:total-faites};
+}
+function _bilanTravailWkt(){
+  let total=0, faites=0;
+  for(const ex of ((typeof S!=='undefined'&&S.wkt&&S.wkt.exs)||[])){ const b=_bilanTravailEx(ex); total+=b.total; faites+=b.faites; }
+  return {total, faites, restantes:total-faites};
+}
+// « Exercice terminé » : plus aucune série de travail à faire, et au moins une faite (sans travail validé, rien ne
+// dit qu'on en a fini — R29). Lu par `toggleSet` (avance au suivant) ET par la carte repliée (marque « terminé »).
+function _exTermine(ex){ const b=_bilanTravailEx(ex); return b.restantes===0 && b.faites>0; }
 function _fmtElapsed(){
   if(!S.wkt||!S.wkt.startTs){
     const c=_cardioNoteMin();
@@ -136,21 +158,42 @@ function _startWktChrono(){
 }
 function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChronoIv=null;}}
 // Bouton Pause/Reprendre (affiché tant que la séance tourne, avec ou sans exos)
-function _pauseBtnHtml(){
-  if(!S.wkt||!S.wkt.startTs)return'';
-  const p=_isWktPaused();
-  const ico=p
-    ?'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>'
-    :'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
-  return '<button id="wkt-pause-btn" onclick="toggleWktPause()" style="padding:7px 10px;border-radius:10px;border:1px solid '+(p?'rgba(255,159,10,.45)':'var(--sep)')+';background:'+(p?'rgba(255,159,10,.14)':'var(--bg3)')+';color:'+(p?'var(--orange)':'var(--t2)')+';font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;">'+ico+(p?'Reprendre':'Pause')+'</button>';
+/* 🏋️ UX SÉANCE (16/10/2026, décision ② de Michel) — L'EN-TÊTE DE LA SÉANCE OUVERTE VIT DANS LA BARRE HAUTE.
+   Pendant une séance, la barre de marque (logo, aide « ? », partage, Sheets) laisse la place à ce qui sert À LA
+   SALLE : l'état (en cours / en pause), le chrono, « N / M séries » de TRAVAIL, le menu ⋯ et « Terminer ». Les
+   autres écrans gardent la barre de marque (la règle CSS ne joue que sur `#root.on-log.seance-on`).
+   ⛔ AUCUN ÉTAT NOUVEAU : tout se lit sur `S.wkt` par les propriétaires existants (`_seanceOuverte`,
+   `_isWktPaused`, `_fmtElapsed`, `_bilanTravailWkt`, `_contenuFinSeance`). Le seul ajout est une CLASSE
+   d'affichage (`#root.seance-on`), recalculée à chaque rendu — jamais stockée.
+   ⭐ Et c'est ce même rendu qui tient le bouton central à jour (pastille + libellé, décision ⑤) : une séance
+   ouverte = UNE vérité, lue à un seul endroit.
+   R30 : l'ancien en-tête de l'écran (« Séance » + chrono + Pause ✕ Vider Changer) n'est pas perdu, il est RANGÉ :
+   le chrono est ici, Pause / Vider / Abandonner / Programmes sont dans le menu ⋯ (`openWktMenu`), la reprise
+   d'une pause est ici (bouton ▶). Chaque action garde son propriétaire. */
+function _renderEnteteSeance(){
+  const ouverte=_seanceOuverte();
+  const root=document.getElementById('root'); if(root) root.classList.toggle('seance-on',ouverte);
+  const nb=document.getElementById('nb-log'); if(nb) nb.setAttribute('aria-label',ouverte?'Revenir à ta séance':'Démarrer une séance');
+  const el=document.getElementById('tb-seance'); if(!el) return;
+  if(!ouverte){ el.innerHTML=''; return; }
+  const p=_isWktPaused(), b=_bilanTravailWkt(), c=_contenuFinSeance(), exs=S.wkt.exs||[];
+  const lbl=S.wkt.progLabel||((!exs.length&&_cardioNoteMin()>0)?'Cardio':'Séance libre');
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const progres=b.total?(b.faites+' / '+b.total+' série'+(b.total>1?'s':'')):'';
+  const ic=(d,f)=>'<svg viewBox="0 0 24 24" aria-hidden="true" '+(f?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"')+'>'+d+'</svg>';
+  const segs=exs.map(ex=>{ const x=_bilanTravailEx(ex), pct=x.total?Math.round(x.faites/x.total*100):0;
+    return '<i'+(_exTermine(ex)?' class="ok"':'')+'><b style="width:'+pct+'%"></b></i>'; }).join('');
+  el.innerHTML='<div class="tbs-r'+(p?' tbs-pause':'')+'">'
+    +'<div class="tbs-meta"><b class="tbs-etat"><span class="tbs-live" aria-hidden="true"></span>'+(p?'Séance en pause':'Séance en cours')+'</b>'
+    +'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono">'+_fmtElapsed()+'</span>'+(progres?' · '+progres:'')+' · '+esc(lbl)+'</span></div>'
+    +(p?'<button id="wkt-pause-btn" class="tbs-btn tbs-rep" onclick="toggleWktPause()" aria-label="Reprendre la séance" title="Reprendre">'+ic('<path d="M7 4l13 8-13 8z"/>',1)+'</button>':'')
+    +'<button class="tbs-btn" onclick="openWktMenu()" aria-label="Plus d\'actions sur la séance" aria-haspopup="dialog">'+ic('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>',1)+'</button>'
+    +((c.fait||c.cardio)?'<button class="tbs-fin" onclick="terminerSeance()">'+ic('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>')+'Terminer</button>':'')
+    +'</div>'
+    +(exs.length?'<div id="tbs-segs" class="tbs-segs" role="img" aria-label="Progression : '+b.faites+' série'+(b.faites>1?'s':'')+' de travail sur '+b.total+'">'+segs+'</div>':'');
 }
-// Rafraîchit l'affichage chrono + bouton sans re-render complet
-function _syncWktPauseUI(){
-  const c=document.getElementById('wkt-chrono');
-  if(c){c.textContent=_fmtElapsed();c.style.color=_isWktPaused()?'var(--orange)':'var(--t3)';}
-  const b=document.getElementById('wkt-pause-btn');
-  if(b)b.outerHTML=_pauseBtnHtml();
-}
+// Rafraîchit l'en-tête après une pause / une reprise (le chrono, l'état et le bouton ▶ vivent au même endroit).
+function _syncWktPauseUI(){ _renderEnteteSeance(); }
 // Met la séance en pause ou la reprend — fige/relance le chrono de durée.
 // Le temps en pause n'est PAS compté dans la durée finale de la séance.
 function toggleWktPause(){
@@ -223,9 +266,103 @@ function startWorkout(){
   _syncWakeLock();
 }
 function _fmtWktDate(d){
+  // UX SÉANCE (16/10) : le jour même, la puce de date dit « Aujourd'hui » (cible validée) ; sinon la date longue.
+  if(d===today()) return 'Aujourd\'hui';
   const dt=new Date(d+'T12:00:00');
   return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 }
+/* 🏋️ UX SÉANCE (16/10/2026, cadrage validé par Michel) — AVANT LA SÉANCE : « Séance libre », puis « Programme »,
+   puis le contexte du jour (récup + dernière séance, SECONDAIRE), puis les types de séance, et seulement ensuite le
+   cardio et l'import. Les boutons sont dans la page (index.html, `#log-avant`) ; ce rendu ne remplit que ce qui
+   dépend des données. ⛔ Rien d'inventé : la récup vient de `calcRecoveryScore`/`getRecoveryInfo` (Accueil), le nom
+   de la dernière séance de `_calSessLabel` (calendrier), sa figurine de `_mscSVGmini(_mscScores(…))` (Progrès). */
+function _renderAvantSeance(){
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const sub=document.getElementById('la-prog-sub');
+  if(sub){ const pr=(S.programmes||[]).filter(p=>p&&p.name);
+    sub.textContent=pr.length?(pr.length+' programme'+(pr.length>1?'s':'')+' · '+pr.slice(0,3).map(p=>p.name).join(', ')):'Crée ou importe ton programme'; }
+  const ctx=document.getElementById('la-ctx'); if(!ctx) return;
+  if(_seanceOuverte()){ ctx.innerHTML=''; return; }
+  let html='';
+  try{
+    const der=(S.sessions||[])[0]||null;            // la plus récente : `_trierSeances` range S.sessions (state.js)
+    let score=null; try{ if(typeof calcRecoveryScore==='function') score=calcRecoveryScore(); }catch(e){ score=null; }
+    const info=(score!==null&&typeof getRecoveryInfo==='function')?getRecoveryInfo(score):null;
+    const parts=[];
+    if(info) parts.push('<span class="la-recup" style="--c:'+info.color+'"><i></i>Récup '+score+' · '+esc(info.label)+'</span>');
+    if(der&&der.date){
+      const nom=(typeof _calSessLabel==='function')?_calSessLabel(der):(der.progLabel||'Séance');
+      const quand=new Date(der.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+      parts.push('<span class="la-der">Dernière séance : <b>'+esc(nom)+'</b> · '+esc(quand)+'</span>');
+    }
+    let fig='';
+    if(der&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
+      try{ fig=_mscSVGmini(_mscScores(der.exs||der.exercises||[])).replace('width:32px','width:28px'); }catch(e){ fig=''; }
+    }
+    if(parts.length) html='<div class="la-ctx">'+(fig?'<div class="la-fig" role="img" aria-label="Muscles travaillés à la dernière séance">'+fig+'</div>':'')
+      +'<div class="la-ctx-t">'+parts.join('')+'</div></div>';
+  }catch(e){ html=''; }
+  ctx.innerHTML=html;
+}
+/* 🏁 UX SÉANCE (16/10/2026, cadrage validé — « Terminer intelligent ») — LA porte de fin de séance.
+   Le « Terminer » de l'en-tête, le « 🏁 Terminer la séance » du bas et le « 🔄 Réessayer » après un stockage plein
+   passent TOUS ici (un propriétaire, R2), et c'est toujours `finishWorkout()` qui enregistre — inchangé.
+   ⭐ La question ne se pose que si elle a un sens : 0 série de TRAVAIL restante (échauffements sautés compris,
+   décision ①) → on enregistre tout de suite ; sinon « Il reste N séries à faire · Terminer quand même ? ».
+   ⛔ « Continuer la séance » ne touche à RIEN. Une séance de cardio seul n'a aucune série : elle s'enregistre. */
+function terminerSeance(){
+  if(!S.wkt) return;
+  const n=_bilanTravailWkt().restantes;
+  if(n<=0) return finishWorkout();
+  showConfirm('Il reste '+n+' série'+(n>1?'s':'')+' à faire','Terminer quand même ?',()=>finishWorkout(),'Terminer quand même','Continuer la séance');
+}
+/* ⋯ UX SÉANCE (16/10/2026, cadrage validé) — LE MENU DE LA SÉANCE. Il RANGE les actions rares qui encombraient
+   l'écran ; chaque ligne appelle le propriétaire EXISTANT, rien n'est réécrit : pause → `toggleWktPause`, date →
+   le champ `#s-date` (même étiquette qu'avant la séance), tout dérouler → `toggleExpandAll`, grouper →
+   `toggleGroupMode`, programmes → `openProgModal`, aide → `showHelp`, vider → `clearAllEx`, abandonner →
+   `clearWkt` (ces deux-là gardent leur propre confirmation). Les actions à risque sont séparées, en bas.
+   ⛔ Fermer le menu n'a aucun effet de bord (pas de marqueur à poser) : le repli générique suffit (R15). */
+function openWktMenu(){
+  if(!_seanceOuverte()) return;
+  let ov=document.getElementById('ov-wkt-menu');
+  if(!ov){
+    ov=document.createElement('div');ov.className='overlay';ov.id='ov-wkt-menu';
+    ov.style.alignItems='flex-end';
+    ov.onclick=e=>{if(e.target===ov)closeWktMenu();};
+    document.body.appendChild(ov);
+  }
+  const exs=(S.wkt&&S.wkt.exs)||[], p=_isWktPaused();
+  const ic=d=>'<span class="wm-ic"><svg viewBox="0 0 24 24" aria-hidden="true">'+d+'</svg></span>';
+  const ligne=(icone,titre,sous,action,cls)=>'<button class="wm-row'+(cls?' '+cls:'')+'" onclick="'+action+'">'+icone
+    +'<span class="wm-t"><b>'+titre+'</b>'+(sous?'<small>'+sous+'</small>':'')+'</span></button>';
+  const quand=_fmtWktDate(S.wkt.date||today());
+  const min=S.wkt.startTs?Math.floor(_wktElapsedMs()/60000):null;
+  const meta=[S.wkt.progLabel||'',quand,min!==null?min+' min':''].filter(Boolean).join(' · ');
+  let g1='';
+  if(S.wkt.startTs) g1+=ligne(ic(p?'<path d="M7 4l13 8-13 8z"/>':'<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'),
+    p?'Reprendre la séance':'Mettre en pause', p?'Le chrono repart d\'où il s\'était arrêté':'Le chrono s\'arrête, rien n\'est perdu','closeWktMenu();toggleWktPause()');
+  g1+='<label class="wm-row" for="s-date" onclick="closeWktMenu()">'+ic('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>')
+    +'<span class="wm-t"><b>Date de la séance</b></span><span class="wm-v">'+quand+'</span></label>';
+  if(exs.length>=2){
+    g1+=ligne(ic(S.expandAll?'<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>':'<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>'),
+      S.expandAll?'Un exercice à la fois':'Tout dérouler', S.expandAll?'Seul l\'exercice en cours reste ouvert':'Voir les séries de tous les exercices','closeWktMenu();toggleExpandAll()');
+    g1+=ligne(ic('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),'Grouper des exercices','Superset ou circuit','closeWktMenu();toggleGroupMode()');
+  }
+  g1+=ligne(ic('<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>'),
+    'Programmes','Charger un programme, ou enregistrer celle-ci','closeWktMenu();openProgModal()');
+  g1+=ligne(ic('<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),'Aide de l\'écran Séance','','closeWktMenu();showHelp()');
+  let g2='';
+  if(exs.length) g2+=ligne(ic('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>'),
+    'Vider la séance','Retire les exercices, la séance reste ouverte','closeWktMenu();clearAllEx()','wm-danger');
+  g2+=ligne(ic('<circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'),
+    'Abandonner la séance','Rien ne sera enregistré','closeWktMenu();clearWkt()','wm-danger');
+  ov.innerHTML='<div class="wm-sheet" role="dialog" aria-label="Menu de la séance"><div class="wm-grab" aria-hidden="true"></div>'
+    +'<div class="wm-h"><b>'+(p?'Séance en pause':'Séance en cours')+'</b>'+(meta?'<span>'+meta.replace(/</g,'&lt;')+'</span>':'')+'</div>'
+    +'<div class="wm-g">'+g1+'</div><div class="wm-g">'+g2+'</div>'
+    +'<button class="wm-x" onclick="closeWktMenu()">Fermer</button></div>';
+  ov.classList.add('open');
+}
+function closeWktMenu(){const ov=document.getElementById('ov-wkt-menu');if(ov)ov.classList.remove('open');}
 function _setLogDate(d,auto){
   if(S.wkt){S.wkt.date=d;if(!auto)_wktDateChoisie=S.wkt;persist();}
   const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
@@ -391,24 +528,19 @@ function renderLog(){
   if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
   /* ⑤ la ligne « Scanner / Importer » suit l'usage (ft-v1024) — voir `_renderImportRow`. */
   try{_renderImportRow();}catch(e){}
-  /* 🏋️ Les types de séances : SEULEMENT sur un écran vide (ft-v1026). Dès qu'un exercice
-     est posé, ils disparaissent — ils proposent un départ, ils ne commentent pas un travail
-     en cours (R24 : jamais en travers). */
+  /* 🏋️ Les types de séances : SEULEMENT avant la séance (ft-v1026). Dès qu'une séance est ouverte, ils
+     disparaissent — ils proposent un départ, ils ne commentent pas un travail en cours (R24 : jamais en travers).
+     ⚠️ UX SÉANCE (16/10) : « avant la séance » se lit désormais sur `_seanceOuverte()` (la définition unique, R2)
+     et plus sur « aucun exercice » : un cardio noté OUVRE la séance (décision ④ : la séance existe, on ajoute). */
   try{
     const _tz=document.getElementById('log-types');
-    if(_tz) _tz.innerHTML=(S.wkt&&S.wkt.exs&&S.wkt.exs.length)?'':( (typeof _typeSeanceHtml==='function')?_typeSeanceHtml():'' );
+    if(_tz) _tz.innerHTML=_seanceOuverte()?'':( (typeof _typeSeanceHtml==='function')?_typeSeanceHtml():'' );
   }catch(e){}
-  const hdr=document.getElementById('log-hdr');
-  const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
-  if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
-    +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
-    +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:'+(_isWktPaused()?'var(--orange)':'var(--t3)')+';letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
-    +'<span id="log-hdr-btns" style="display:flex;gap:8px;">'
-    +_pauseBtnHtml()
-    +(hasExs?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>':'')
-    +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
-    +'</span>'
-    +'</div>';
+  /* 🏋️ UX SÉANCE (16/10/2026) — l'ancien en-tête de l'écran (« Séance » + chrono + Pause ✕ Vider Changer) n'est plus
+     écrit ici : avant la séance, le titre et la date sont dans la page (`#log-hdr`, index.html) ; pendant, l'en-tête
+     vit dans la barre haute (`_renderEnteteSeance`) et les actions rares dans le menu ⋯ (`openWktMenu`). */
+  _renderAvantSeance();
+  _renderEnteteSeance();
   _startWktChrono();
   // Refresh immédiat des timers au retour sur l'écran (ne pas attendre le prochain tick)
   if(restIv)_restTick();
@@ -877,41 +1009,40 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
        un bloc absent. */
     const notePreview=(ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${_tempoChip(ex)}</div>`:'')
       + _intensiteBandeau(ex);
-    const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
+    /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — UNE CARTE REPLIÉE SE LIT, ELLE NE S'ENCOMBRE PLUS.
+       Elle dit le nom, les séries faites et ce que ça représente ; un exercice FINI (plus aucune série de travail à
+       faire, au moins une faite — `_exTermine`, la règle qui fait déjà avancer au suivant) porte la marque « terminé ».
+       R30 — rien n'est retiré, tout est RANGÉ : ↑ ↓ sont dans le menu ⋯ de l'exercice (« Monter » / « Descendre »),
+       📊 y est déjà (« Statistiques »), ✕ aussi (« Supprimer l'exercice », appui maintenu) ; ⚡ Super / 📉 Drop /
+       📈 +% restent sur la carte OUVERTE, au moment où on fait l'exercice ; la poignée de glisser-déposer aussi.
+       Une carte repliée n'est plus grisée (`opacity:.75`) : « les autres restent lisibles » (cadrage). */
+    const _fini=!_groupMode&&!inGroup&&_exTermine(ex);
+    const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':'';
     const clickAttr=_groupMode
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
       :` onclick="toggleExBlock(${ei})" style="cursor:pointer;${selStyle}"`;
-    return`<div class="ex-block${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
+    return`<div class="ex-block ex-mini${_fini?' ex-fini':''}${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
       +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'};align-items:center;">`
       +_cThumbHtml
       +`<div style="flex:1;min-width:0;">`
       +`<div class="ex-name" style="font-size:14px">${_escNote(ex.name)}${_uniTag} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
-      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
-        +((!ex.group&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
-        +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
-        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${_escAttrJs(ex.name)}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
+      +(_fini?`<span class="ex-fini-b" data-fini="1" role="img" aria-label="Exercice terminé"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>`:'')
       +`</div>`
       +notePreview
-      +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
-        ?`<div style="display:flex;gap:4px;padding:2px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
-          +`<button class="btn-xs" style="font-size:10px;color:var(--orange);border-color:rgba(255,109,0,.2);padding:2px 7px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
-          +`<button class="btn-xs" style="font-size:10px;color:#BF5AF2;border-color:rgba(191,90,242,.2);padding:2px 7px;" onclick="openDropsetConfig(${ei},'down')">📉 Drop</button>`
-          +`<button class="btn-xs" style="font-size:10px;color:var(--green);border-color:rgba(0,230,118,.2);padding:2px 7px;" onclick="openDropsetConfig(${ei},'up')">📈 +%</button>`
-          +`</div>`
-        :'')
       +`</div>`;
   }
 
   // Vue développée
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
+  const _curSi=ex.sets.findIndex(x=>x&&!x.done);   // UX SÉANCE : la série à faire maintenant (affichage seul)
   const _rowsHtml=ex.sets.map((set,si)=>{
     const p=prevAl[si];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     return`<div id="sr-wrap-${ei}-${si}">`
-      +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
+      +`<div class="set-row${set.done?' done-row':''}${si===_curSi?' set-cur':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
       +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}${_prevRirBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
@@ -979,7 +1110,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
      +`<span>${suiteText}</span>`
      +`</div>`:`` ;
 
-  return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
+  return`<div class="ex-block${(!inGroup&&ei===_expandedEx)?' ex-actif':''}${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
     +`<img src="${_thumbSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:${hasLocalGif?'cover':'contain'};${hasLocalGif?'':'padding:3px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`
     +`<div style="flex:1;min-width:0;">`
@@ -1086,6 +1217,11 @@ function openExMenu(ei,hasGif){
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${_escNote(nm)}</div>`
     +mRow('🔄','Remplacer l\'exercice',`openExPickerForReplace(${ei})`)
     +((ei>0 && !ex.group && !ex.dropset)?mRow('⚡','Superset avec l\'exercice du dessus',`closeExMenu();supersetWithPrev(${ei})`):'')
+    /* 🏋️ UX SÉANCE (16/10) — ↑ ↓ quittent la carte repliée et viennent ICI (cadrage validé) : même propriétaire,
+       `moveExBlock`, qui déplace le bloc entier (un superset reste d'un seul tenant) et ne fait rien en bord de liste.
+       Les membres d'un superset gardent leurs flèches DANS le groupe (`moveInGroup`, carte ouverte). */
+    +((!ex.group && ei>0)?mRow('⬆️','Monter',`closeExMenu();moveExBlock(${ei},-1)`):'')
+    +((!ex.group && ei<S.wkt.exs.length-1)?mRow('⬇️','Descendre',`closeExMenu();moveExBlock(${ei},1)`):'')
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
@@ -1245,9 +1381,12 @@ function renderExBlocks(){
        qu'en ft-v1012, où le message envoyait faire un détour juste au-dessus du raccourci.
        ⛔ Et il RÉTRÉCIT : avec les cartes en dessous, l'écran n'est plus vide — un gros bloc
        de texte au milieu du rien était la réponse à un problème qui n'existe plus. */
-    c.innerHTML=`<div class="empty">Choisis par quoi tu commences 👇</div>`;
+    /* 🏋️ UX SÉANCE (16/10/2026) — PLUS DE MESSAGE ICI : avant la séance, l'écran porte « Séance libre » et
+       « Programme » (index.html, `#log-avant`) — un 3ᵉ texte qui renverrait vers eux serait un panneau de plus à tenir
+       juste (ft-v1012/ft-v1026 : deux fois, ce message a désigné un bouton qui n'existait plus). */
+    c.innerHTML='';
     if(typeof renderLogFinish==='function')renderLogFinish(); // vide le bloc "Terminer la séance" (sinon fantôme après suppression/vidage)
-    _syncLogHdrBtns();return;
+    _renderEnteteSeance();return;
   }
   const exCount=S.wkt.exs.length;
   if(_expandedEx===null||_expandedEx>=exCount)_expandedEx=exCount-1;
@@ -1274,12 +1413,10 @@ function renderExBlocks(){
         ?`<button class="btn btn-sm ft-press" style="flex:2;background:var(--orange);border-color:var(--orange);color:#fff;" onclick="createSuperset()">⚡ Lier en supersérie (${selCount})</button>`
         :`<button class="btn btn-bg2 btn-sm" style="flex:2;opacity:.45;" disabled>Sélectionne 2+ exos</button>`)
       +`</div>`;
-  } else if(exCount>=2){
-    topBar=`<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px;">`
-      +`<button class="btn-xs" style="color:var(--t2);border-color:var(--sep);font-size:12px;padding:4px 10px;" onclick="toggleExpandAll()">${S.expandAll?'⊟ Concentration':'⊞ Tout dérouler'}</button>`
-      +`<button class="btn-xs" style="color:var(--orange);border-color:rgba(255,109,0,.4);font-size:12px;padding:4px 10px;" onclick="toggleGroupMode()">⚡ Grouper</button>`
-      +`</div>`;
   }
+  /* UX SÉANCE (16/10) — « ⊞ Tout dérouler » et « ⚡ Grouper » ont quitté cette rangée pour le menu ⋯ de la séance
+     (`openWktMenu`, mêmes propriétaires `toggleExpandAll` / `toggleGroupMode`). La barre du MODE groupe, elle, reste
+     ici : une fois le mode lancé, « Annuler » et « Lier » doivent être sous les yeux, à côté des cartes à cocher. */
 
   c.innerHTML=topBar+parts.map((part,pIdx)=>{
     if(part.type==='single') return _renderExHtml(part.ei,false,undefined,undefined,pIdx,parts.length);
@@ -1288,7 +1425,7 @@ function renderExBlocks(){
   // Notes d'exercice affichées EN ENTIER dès le départ (sinon tronquées à 1 ligne jusqu'au 1er tap)
   c.querySelectorAll('textarea[id^="ex-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
   renderLogFinish();
-  _syncLogHdrBtns();
+  _renderEnteteSeance();
 }
 // ⚠️ LA COLONNE « PRÉCÉDENT » DISAIT « 5×70 » SANS DIRE QUE C'ÉTAIT UN ÉCHAUFFEMENT (ft-v827).
 // Retour de Michel, capture à l'appui : « là il n'y a rien de marqué, on ne sait pas si c'est de
@@ -1726,11 +1863,8 @@ function toggleSet(ei,si){
        ⚠️ UNE SÉRIE DE TRAVAIL non cochée bloque toujours (elle peut encore être faite), et un
        exercice qui n'aurait QUE des paliers n'avance pas non plus : sans série de travail
        validée, rien ne dit qu'on en a fini avec lui (R29 — le coût de l'erreur décide). */
-    const _estEch = s => !!(s && (s.type==='É' || s.type==='W'));
-    const _sets = S.wkt.exs[ei].sets || [];
-    const _travailRestant = _sets.some(s => !s.done && !_estEch(s));
-    const _travailFait     = _sets.some(s =>  s.done && !_estEch(s));
-    const _tousFaits = !_travailRestant && _travailFait;
+    // UX SÉANCE (16/10) : la règle n'a pas changé, elle a quitté ce bloc pour son propriétaire (`_exTermine`, R2).
+    const _tousFaits = _exTermine(S.wkt.exs[ei]);
     let _suiv=null;
     if(_tousFaits && !S.wkt.exs[ei].group){
       for(let k=ei+1;k<S.wkt.exs.length;k++){
@@ -3318,22 +3452,9 @@ function clearAllEx(){
     toast('Séance vidée','info');
   },'Vider');
 }
-// Sync boutons ✕/Changer dans l'en-tête + repositionne le FAB
-// Appellé à chaque renderExBlocks() pour rester cohérent sans passer par renderLog() entier
-function _syncLogHdrBtns(){
-  const el=document.getElementById('log-hdr-btns');
-  if(!el)return;
-  const hasExs=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
-  el.innerHTML=_pauseBtnHtml()+(hasExs
-    ?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>'
-     +'<button onclick="clearAllEx()" style="padding:7px 10px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Vider</button>'
-     +'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>'
-    :'');
-  // ⛔ `requestAnimationFrame(_positionFab)` retiré le 11/08/2026 avec la fonction elle-même :
-  //    elle repositionnait un bouton flottant `#fab-session` qui n'existe plus (docké dans la
-  //    barre depuis un redesign). Le bouton central est désormais protégé par la MESURE —
-  //    règle d'or #9, témoin permanent dans les tests de parcours. Détail dans `app.js`.
-}
+/* ⛔ `_syncLogHdrBtns` RETIRÉE LE 16/10/2026 (UX SÉANCE, R30) : elle réécrivait la rangée « Pause ✕ Vider Changer »
+   de l'ancien en-tête. Ces boutons sont rangés dans le menu ⋯ de la séance (`openWktMenu`) ; ses deux appels dans
+   `renderExBlocks` appellent maintenant `_renderEnteteSeance` (en-tête de la barre haute + bouton central). */
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
 let _rmHoldTimer=null;
 function _rmHoldStart(btn,ei){
@@ -5061,7 +5182,7 @@ function _showSaveError(){
   el.innerHTML=`<div style="margin-top:12px;background:rgba(255,45,85,.10);border:1.5px solid var(--red);border-radius:14px;padding:16px;">
     <div style="font-weight:700;color:var(--red);margin-bottom:6px;">⚠️ Impossible d'enregistrer la séance</div>
     <div style="font-size:13px;color:var(--t2);margin-bottom:12px;">Stockage plein. Ta séance est <strong>toujours là</strong> — libère de l'espace puis réessaie, ou note tes données avant de fermer.</div>
-    <button class="btn btn-red" onclick="finishWorkout()" style="width:100%;">🔄 Réessayer</button>
+    <button class="btn btn-red" onclick="terminerSeance()" style="width:100%;">🔄 Réessayer</button>
     <button class="btn btn-bg2" onclick="this.closest('div[style]').remove();" style="width:100%;margin-top:8px;">Continuer la séance</button>
   </div>`;
 }
@@ -5381,6 +5502,28 @@ function startRest(sec){
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
   _pillIv=setInterval(_updPill,500);
+  setTimeout(_dockDegager,80);   // UX SÉANCE : affichage seul — la série suivante ne reste pas sous le dock
+}
+/* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — LE DOCK DE REPOS NE CACHE JAMAIS LA SÉRIE SUIVANTE.
+   Le repos s'affiche en bas, au-dessus de la barre de navigation, SANS pousser la liste (la barre collante d'avant la
+   décalait à chaque série). Le prix connu : il peut recouvrir le bas de l'écran. Donc, quand un repos démarre, si la
+   prochaine série à faire de l'exercice ouvert tombe sous le dock, on fait défiler juste ce qu'il faut pour la poser
+   au-dessus. ⛔ LECTURE SEULE DE L'ÉCRAN : ni `S.wkt`, ni le chrono (`restIv`/`restStartTs`) ne sont touchés.
+   Lancé APRÈS le rendu (`toggleSet` redessine les cartes juste après `startRest`). */
+function _dockDegager(){
+  try{
+    if(window._curScreen!=='log') return;
+    const bar=document.getElementById('rest-bar'), sc=document.getElementById('s-log');
+    if(!bar||!sc||!bar.classList.contains('show')) return;
+    // La série SUIVANTE = la 1ʳᵉ non faite APRÈS celle qu'on vient de valider (la cible du RIR, posée par `toggleSet`).
+    // Exercice fini → rien à faire ici : l'avance au suivant (fin du repos, `_restDoneCb`) fait défiler d'elle-même.
+    const cib=Array.isArray(_rirCible)?_rirCible[_rirCible.length-1]:_rirCible; if(!cib) return;
+    const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[cib.ei]; if(!ex) return;
+    const k=(ex.sets||[]).findIndex((x,i)=>i>cib.si&&x&&!x.done); if(k<0) return;
+    const ligne=document.getElementById('sr-'+cib.ei+'-'+k); if(!ligne) return;
+    const haut=bar.getBoundingClientRect().top-12, r=ligne.getBoundingClientRect();
+    if(r.bottom>haut) sc.scrollTop+=Math.ceil(r.bottom-haut);
+  }catch(e){}
 }
 
 /* ── LE CHRONO CONTINUE EN NÉGATIF (14/08/2026, idée de Michel) ────────────────────────
@@ -5424,6 +5567,12 @@ function updRest(){
   const c=dep?'var(--gold)':pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
   const bc=dep?'rgba(255,214,0,.45)':pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
   timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
+  /* 🏋️ UX SÉANCE (16/10) — le dock montre la même progression sur un ANNEAU, et le total réglé à côté de « Repos ».
+     Affichage seul : mêmes `pct`, `c` et `restTot` que la barre ci-dessus (rien n'est recalculé ailleurs, R2). */
+  const rg=document.getElementById('rest-ring');
+  if(rg){ rg.style.strokeDashoffset=String(100-pct); rg.style.stroke=c; }
+  const tt=document.getElementById('rest-tot');
+  if(tt){ const a=Math.max(0,Math.round(restTot)||0); tt.textContent=' · '+Math.floor(a/60)+':'+String(a%60).padStart(2,'0'); }
 }
 
 // Arrête chrono + barre + pastille SANS fermer l'overlay décompte (utilisé au GO,

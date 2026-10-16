@@ -3546,21 +3546,40 @@ function _toggleSleepSaveBtn(v){
    NOMMER (le message qui dit « appuie sur … en bas »), le recopier aurait garanti que les deux
    divergent : on aurait envoyé quelqu'un chercher un bouton qui ne s'appelle plus comme ça. */
 function _labelFinSeance(){
-  const hasDone=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.some(ex=>(ex.sets||[]).some(s=>s.done)));
-  return hasDone?'🏁 Terminer la séance':'🏁 Enregistrer le cardio';
+  return _contenuFinSeance().fait?'🏁 Terminer la séance':'🏁 Enregistrer le cardio';
 }
+/* 🏁 « Y A-T-IL QUELQUE CHOSE À ENREGISTRER ? » — UN propriétaire (UX SÉANCE, 16/10/2026, R2). La réponse était
+   écrite ici, dans le bloc du bas ; l'en-tête de séance (barre haute) pose désormais la même question pour montrer
+   — ou non — son « Terminer ». Deux copies de la condition auraient fini par montrer un « Terminer » d'un côté et
+   rien de l'autre. Une série validée OU des minutes de cardio notées (avant/après) : la règle n'a pas changé. */
+function _contenuFinSeance(){
+  if(!S.wkt) return {fait:false,cardio:false};
+  return {fait:!!(S.wkt.exs&&S.wkt.exs.some(ex=>(ex.sets||[]).some(s=>s.done))),
+          cardio:!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration))};
+}
+/* 🏋️ UX SÉANCE (16/10/2026) — LE BAS DE LA SÉANCE : « Ta séance jusqu'ici » + « Terminer la séance ».
+   ⛔ Les chiffres ne changent pas de source : volume = séries faites hors échauffement (comme avant), et
+   « séries » = séries de TRAVAIL faites (`_bilanTravailWkt`, décision ① — le même compte que « N / M » en haut :
+   deux chiffres différents pour la même séance à deux endroits de l'écran feraient douter des deux).
+   ⛔ Le bouton passe par `terminerSeance()`, LA porte de fin (décision ④ du cadrage) : celle du haut et celle du
+   bas posent donc la même question, avec les mêmes mots. */
 function renderLogFinish(){
   const el=document.getElementById('log-finish');if(!el)return;
   if(!S.wkt){el.innerHTML='';return;}
-  const hasCardio=!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration));
-  const hasDone=!!(S.wkt.exs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done)));
+  const c=_contenuFinSeance(), hasCardio=c.cardio, hasDone=c.fait;
   if(!hasDone&&!hasCardio){el.innerHTML='';return;} // rien à enregistrer (ni série validée, ni cardio)
-  let summary='';
+  let kv='', fig='', cardioTxt='';
   if(hasDone){
-    const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
-    const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
+    const b=(typeof _bilanTravailWkt==='function')?_bilanTravailWkt():{faites:0};
     const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
-    summary=`${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume`;
+    const min=S.wkt.startTs?Math.floor(((typeof _wktElapsedMs==='function')?_wktElapsedMs():0)/60000):null;
+    const tuile=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
+    kv=`<div class="lf-kv">${min!==null?tuile(min+' min','durée'):''}${tuile(b.faites,'série'+(b.faites>1?'s':''))}${tuile(vol.toLocaleString('fr-FR')+' kg','volume')}</div>`;
+    try{
+      const faits=S.wkt.exs.filter(ex=>(ex.sets||[]).some(s=>s.done));
+      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function')
+        fig=`<div class="lf-fig" role="img" aria-label="Muscles travaillés dans cette séance">${_mscSVGmini(_mscScores(faits)).replace('width:32px','width:46px')}</div>`;
+    }catch(e){ fig=''; }
   }
   if(hasCardio){
     // Les deux moments sont nommés dans le résumé : « avant 10min · après 20min » — sans ça,
@@ -3569,14 +3588,12 @@ function renderLogFinish(){
     const bouts=[];
     if(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration)bouts.push('avant '+S.wkt.cardioAvant.duration+'min');
     if(S.wkt.cardio&&S.wkt.cardio.duration)bouts.push('après '+S.wkt.cardio.duration+'min');
-    const cardioTxt=`🏃 Cardio ${bouts.join(' · ')}${kcal?` · ~${kcal}kcal`:''}`;
-    summary = summary ? summary+' · '+cardioTxt : cardioTxt;
+    cardioTxt=`🏃 Cardio ${bouts.join(' · ')}${kcal?` · ~${kcal}kcal`:''}`;
   }
   const label = _labelFinSeance();
-  el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
-    <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${summary}</div>
-    <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">${label}</button>
-  </div>`;
+  el.innerHTML=`<div class="lf-titre">Ta séance jusqu'ici</div>
+    <div class="lf-bilan">${fig}<div class="lf-t">${kv}${cardioTxt?`<div class="lf-cardio">${cardioTxt}</div>`:''}</div></div>
+    <button class="btn btn-red lf-fin" onclick="terminerSeance()">${label}</button>`;
 }
 
 // Note de sommeil selon la DURÉE — interpolation linéaire entre points d'ancrage, donc

@@ -163,21 +163,52 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .slq-btn.active .slq-bar{background:var(--green);}
 .slq-bar-off{background:rgba(255,255,255,.1)!important;}
 
-/* REST BAR */
-#rest-bar{position:sticky;top:52px;z-index:20;display:none;flex-direction:column;align-items:center;
-  gap:4px;padding:5px 12px 6px;margin:0 -14px;
-  background:var(--bg2);border:1px solid rgba(52,211,153,.3);border-radius:0 0 16px 16px;
-  transition:border-color .4s;}
+/* REST BAR — LE DOCK DE REPOS (UX SÉANCE, 16/10/2026, cadrage validé par Michel).
+   Il était COLLANT en haut de la liste (`position:sticky`) et la poussait de ~150 px à chaque série validée.
+   Il est maintenant FIXÉ en bas, juste au-dessus de la barre de navigation, et ne décale plus rien ; l'espace de
+   fin de liste grandit pendant le repos (règle `#rest-bar.show ~ .scroll-spacer`) et `_dockDegager` (log.js) remonte
+   la série suivante si elle tombe dessous. ⛔ Le moteur ne change pas (`startRest`/`updRest`/`restIv`/`restStartTs`).
+   ⚠️ La largeur suit `#root` (430 px max, centré) : `left:50%` + `translateX(-50%)`, pas `left/right` — sur un écran
+   plus large que le téléphone, le dock déborderait de l'app. Le bas tient compte de l'encoche (safe-area). */
+#rest-bar{position:fixed;left:50%;transform:translateX(-50%);width:calc(min(100vw,430px) - 24px);
+  bottom:calc(max(env(safe-area-inset-bottom),8px) + 76px);z-index:25;display:none;flex-direction:column;
+  padding:12px 12px 12px 14px;border-radius:22px;background:var(--bg2);border:1px solid rgba(52,211,153,.34);
+  box-shadow:0 24px 54px -12px rgba(0,0,0,.95);box-sizing:border-box;transition:border-color .4s;}
 #rest-bar.show{display:flex;}
-#rest-time{font-family:var(--font-cond);font-size:26px;font-weight:700;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--green);transition:color .4s;}
+#rest-bar.show ~ .scroll-spacer{height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px + 200px);}
+.rd-top{display:flex;align-items:center;gap:12px;}
+.rd-ring{width:52px;height:52px;flex:none;}
+.rd-ring svg{width:100%;height:100%;display:block;transform:rotate(-90deg);}
+.rd-ring-bg{fill:none;stroke:var(--sep);stroke-width:3.2;}
+.rd-ring-fg{fill:none;stroke:var(--green);stroke-width:3.2;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:0;transition:stroke-dashoffset .3s linear,stroke .4s;}
+.rd-tt{flex:1;min-width:0;}
+.rd-l{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--green);white-space:nowrap;}
+.rd-tot{letter-spacing:.04em;color:var(--t2);}
+.rd-time{display:flex;align-items:center;gap:6px;margin-top:2px;padding:0;background:none;border:none;cursor:pointer;color:inherit;font-family:var(--font-cond);touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.rd-pen{width:15px;height:15px;stroke:var(--t2);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+#rest-time{font-family:var(--font-cond);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--green);transition:color .4s;}
 #rest-label:empty{display:none;}          /* ligne label masquée quand vide → gagne ~15px de hauteur */
+#rest-over{font-size:11px;color:var(--gold);line-height:1.3;}
+#rest-over:empty{display:none;}
 /* Écran GO : après 5 s sans tap, cycle de couleurs (attrape-l'œil) */
 #ov-rest-countdown.go-cycle{animation:goCycle 3.2s linear infinite;}
 @keyframes goCycle{0%{background:#00e676;}20%{background:#2979FF;}40%{background:#AA00FF;}60%{background:#FF6C00;}80%{background:#FF2D55;}100%{background:#00e676;}}
-#rest-wrap{width:100%;max-width:260px;height:5px;background:var(--sep);border-radius:3px;overflow:hidden;}
-#rest-bar .rbtn{padding:5px 9px;font-size:12px;border-radius:7px;}
+/* La barre linéaire reste (`updRest` y écrit la progression) mais c'est l'ANNEAU qui la montre dans le dock. */
+#rest-wrap{display:none;}
+#rest-bar .rbtn{height:42px;min-width:46px;padding:0 10px;border-radius:12px;border:none;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);font-size:13px;font-weight:800;color:var(--t1);}
+#rest-bar .rd-skip{color:var(--green);background:rgba(52,211,153,.12);box-shadow:inset 0 0 0 1px rgba(52,211,153,.38);}
 #rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s linear,background .4s;}
-#rest-btns{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;}
+#rest-btns{display:flex;gap:6px;align-items:center;flex:none;}
+#rest-rir{margin-top:12px;padding-top:10px;border-top:1px solid var(--sep);}
+#rest-rir:empty{display:none;}
+#rest-bar .rir-lbl{font-size:13.5px;font-weight:700;color:var(--t1);text-align:left;margin-top:0;}
+#rest-bar .rir-row{justify-content:stretch;flex-wrap:nowrap;margin-top:9px;}
+#rest-bar .rir-b{flex:1;min-width:0;height:42px;}
+/* Les préréglages 1:00 / 1:30 / 2:00 vivent dans « Régler » (décision ③). */
+.re-presets{display:flex;gap:8px;margin-bottom:16px;}
+.re-presets .rbtn{flex:1;font-size:15px;font-weight:800;padding:11px 0;border-radius:12px;}
+/* Texte lu par les lecteurs d'écran, invisible à l'écran (le crayon ✎ dit « Régler » aux yeux). */
+.vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 
 /* PILL CHRONO FLOTTANTE */
 #rest-pill{display:none;flex-shrink:0;height:38px;padding:0 14px;
@@ -419,9 +450,15 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .nb-ctr{color:var(--t3);}
 .nb-ctr.active{color:var(--red);}
 /* Bouton central « + » — docké DANS la barre (fini le flottant #fab-session) */
-.nb-plus{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px -6px rgba(239,62,87,.6);transition:box-shadow .2s,transform .15s;}
+.nb-plus{position:relative;width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px -6px rgba(239,62,87,.6);transition:box-shadow .2s,transform .15s;}
 .nb-plus svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
 #root.on-log .nb-plus{box-shadow:0 8px 20px -6px rgba(239,62,87,.85);transform:scale(1.06);}
+/* 🟢 UX SÉANCE (16/10/2026, décision ⑤ de Michel) — UNE SÉANCE EST OUVERTE : PASTILLE VERTE SUR LE « + ».
+   Purement INFORMATIVE : elle ne change ni la taille ni la position du bouton (positionnée en absolu DANS `.nb-plus`,
+   règle d'or #9 — le bouton est mesuré par le banc), et elle ne lit aucune donnée nouvelle : la classe
+   `#root.seance-on` est posée par `_renderEnteteSeance` d'après `_seanceOuverte()`. Le libellé du bouton suit aussi
+   (« Revenir à ta séance »). Couleur par variable : les modes daltonisme la reprennent. */
+#root.seance-on .nb-plus::after{content:'';position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2.5px var(--bg);pointer-events:none;}
 
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}
@@ -591,6 +628,144 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .chk{width:30px;height:30px;border-radius:50%;border:2px solid var(--sep);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-family:var(--font);padding:0;transition:all .2s;touch-action:manipulation;}
 .chk.done{background:var(--green);border-color:var(--green);color:#000;box-shadow:0 2px 8px rgba(0,230,118,.3);}
 .ex-foot{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--sep);}
+
+/* ═══ 🏋️ UX SÉANCE (16/10/2026, cadrage validé par Michel) ═══════════════════════════════════════════════════
+   Refonte de PRÉSENTATION de l'écran Séance : aucune donnée, aucune clé, aucun moteur ne change. Deux états, une
+   même page, basculés par une CLASSE d'affichage (`#root.seance-on`, posée par `_renderEnteteSeance` d'après
+   `_seanceOuverte()`) :
+   · AVANT — titre + date, « Séance libre » puis « Programme », contexte du jour, types, « Autres options » ;
+   · PENDANT — l'en-tête vit dans la barre haute, les cartes, « Ajouter un exercice », le cardio, le bilan, « Terminer ».
+   Couleurs par VARIABLES partout où un mode (clair, daltonisme) doit pouvoir les reprendre. */
+
+/* ① En-tête de séance dans la barre haute (décision ②) — la barre de marque reste sur les autres écrans. */
+.tb-seance{display:none;flex:1;min-width:0;}
+#root.on-log.seance-on .topbar .tb-marque{display:none!important;}   /* !important : ces blocs portent un `display:flex` EN LIGNE (index.html) */
+#root.on-log.seance-on .topbar .tb-seance{display:block;}
+.tbs-r{display:flex;align-items:center;gap:8px;min-height:44px;}
+.tbs-meta{flex:1;min-width:0;}
+.tbs-etat{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;color:#F2F3F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tbs-live{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(52,211,153,.16);flex:none;}
+.tbs-pause .tbs-live{background:var(--orange);box-shadow:0 0 0 4px rgba(255,138,114,.16);}
+.tbs-l2{display:block;margin-top:4px;padding-left:18px;font-size:12.5px;color:#9AA0AA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tbs-chrono{font-family:var(--font-cond);font-size:15px;font-weight:700;color:#F2F3F5;font-variant-numeric:tabular-nums;}
+.tbs-pause .tbs-chrono{color:var(--orange);}
+.topbar .tbs-btn{width:40px;height:40px;border-radius:12px;border:none;padding:0;background:#1B1E26;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#C9CDD5;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.topbar .tbs-btn svg{width:20px;height:20px;}
+.topbar .tbs-rep{color:var(--orange);background:rgba(255,138,114,.14);box-shadow:inset 0 0 0 1px rgba(255,138,114,.45);}
+.topbar .tbs-fin{height:40px;padding:0 13px;border-radius:12px;border:none;background:rgba(255,106,115,.14);box-shadow:inset 0 0 0 1px rgba(255,106,115,.38);color:var(--red);font-family:var(--font);font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px;flex:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.topbar .tbs-fin svg{width:16px;height:16px;}
+.tbs-segs{display:flex;gap:4px;margin-top:10px;}
+.tbs-segs i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden;display:block;}
+.tbs-segs i b{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--red),#FF8A72);}
+.tbs-segs i.ok b{background:var(--green);}
+
+/* ② Avant la séance — titre + date, puis les deux actions, le contexte, les types et « Autres options ». */
+.log-ttl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;}
+.log-h1{margin:0;font-family:var(--font-cond);font-size:28px;font-weight:700;letter-spacing:-.025em;line-height:1;color:var(--t1);}
+.log-chip-date{display:flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:12px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);font-size:13.5px;font-weight:700;color:var(--t1);cursor:pointer;white-space:nowrap;min-width:0;max-width:66%;-webkit-tap-highlight-color:transparent;}
+.log-chip-date svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+.log-chip-date span{overflow:hidden;text-overflow:ellipsis;}
+.log-chip-date .log-chip-chev{width:14px;height:14px;stroke:var(--t3);}
+#root.light-mode #log-hdr{background:rgba(231,232,236,.96)!important;}
+.log-avant{display:flex;flex-direction:column;gap:12px;}
+.la-go{position:relative;display:flex;flex-direction:column;gap:10px;}
+.la-glow{position:absolute;left:-14px;right:-14px;top:-46px;height:170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,106,115,.16),rgba(255,106,115,0));pointer-events:none;}
+.la-cta1{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:70px;padding:12px 18px 12px 12px;border:none;border-radius:18px;background:linear-gradient(135deg,#FF6A73 0%,#EF3E57 100%);color:#fff;font-family:var(--font);text-align:left;cursor:pointer;box-shadow:0 14px 30px -12px rgba(239,62,87,.8),inset 0 1px 0 rgba(255,255,255,.25);touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.la-cta1-ic{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none;}
+.la-cta1-ic svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;}
+.la-cta-t{flex:1;min-width:0;display:block;}
+.la-cta-t b{display:block;font-size:18px;font-weight:800;letter-spacing:-.01em;}
+.la-cta-t small{display:block;font-size:12.5px;font-weight:600;opacity:.92;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.la-arr{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+.la-cta2{display:flex;align-items:center;gap:14px;width:100%;min-height:66px;padding:10px 16px 10px 12px;border:none;border-radius:18px;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);color:var(--t1);font-family:var(--font);text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.la-cta2-ic{width:46px;height:46px;border-radius:14px;background:rgba(91,168,255,.12);display:flex;align-items:center;justify-content:center;flex:none;}
+.la-cta2-ic svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.la-cta2 .la-cta-t b{font-size:16.5px;}
+.la-cta2 .la-cta-t small{color:var(--t2);opacity:1;}
+.la-chev{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+.la-ctx{display:flex;align-items:center;gap:13px;padding:9px 14px 9px 12px;border-radius:16px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);}
+.la-fig{flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));}
+.la-ctx-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+.la-recup{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border-radius:999px;background:var(--bg3);color:var(--c,var(--t2));font-size:12px;font-weight:700;}
+.la-recup i{width:7px;height:7px;border-radius:50%;background:var(--c,var(--t2));display:block;}
+.la-der{font-size:13px;color:var(--t2);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.la-der b{color:var(--t1);font-weight:700;}
+.la-sec{margin:10px 2px 0;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);}
+/* Pendant la séance : le bloc « avant » se range, « Ajouter un exercice » apparaît (décision ④). */
+.log-add{display:none;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border-radius:18px;background:rgba(255,106,115,.05);border:1.5px dashed rgba(255,106,115,.55);color:var(--red);font-family:var(--font);font-size:16px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.log-add svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;}
+#root.seance-on .log-add{display:flex;}
+#root.seance-on #log-hdr,#root.seance-on #log-avant,#root.seance-on #log-types,#root.seance-on #la-autres,#root.seance-on #log-import-wrap{display:none!important;}
+
+/* ③ Cartes : l'exercice ouvert est souligné, la série à faire aussi ; un exercice fini est compact et marqué. */
+.ex-block.ex-actif{border-color:rgba(255,106,115,.34);box-shadow:0 18px 40px -26px rgba(239,62,87,.5);}
+.set-row.set-cur{background:rgba(255,106,115,.07);}
+.set-row.set-cur .snum{color:var(--red);}
+.ex-mini .ex-hdr{padding:11px 14px;border-bottom:none;}
+.ex-fini-b{width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;flex:none;margin-left:8px;box-shadow:0 5px 14px -5px rgba(52,211,153,.7);}
+.ex-fini-b svg{width:16px;height:16px;stroke:#0C0D11;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ④ Bas de séance — « Ta séance jusqu'ici » puis « Terminer la séance » (même porte que l'en-tête). */
+.lf-titre{margin:10px 2px 10px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);}
+.lf-bilan{display:flex;gap:16px;align-items:center;border-radius:20px;padding:14px 16px 14px 18px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);}
+.lf-fig{flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5));}
+.lf-t{flex:1;min-width:0;}
+.lf-kv{display:flex;gap:18px;flex-wrap:wrap;}
+.lf-kv div b{display:block;font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.1;color:var(--t1);white-space:nowrap;}
+.lf-kv div span{display:block;font-size:11.5px;color:var(--t2);margin-top:2px;}
+.lf-cardio{margin-top:8px;font-size:12.5px;color:var(--t2);font-weight:600;}
+.lf-fin{margin-top:12px;font-size:17px;padding:16px;letter-spacing:.3px;}
+
+/* ⑤ Menu ⋯ de la séance — actions rares rangées, actions à risque séparées en bas. */
+.wm-sheet{width:100%;max-width:430px;background:var(--bg2);border-radius:24px 24px 0 0;padding:8px 14px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -24px 60px rgba(0,0,0,.6);max-height:88dvh;overflow-y:auto;box-sizing:border-box;}
+.wm-grab{width:38px;height:5px;border-radius:3px;background:var(--sep);margin:2px auto 10px;}
+.wm-h{padding:0 6px 12px;}
+.wm-h b{display:block;font-family:var(--font-cond);font-size:19px;font-weight:700;color:var(--t1);}
+.wm-h span{display:block;font-size:12.5px;color:var(--t2);margin-top:3px;}
+.wm-g{border-radius:18px;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);overflow:hidden;margin-bottom:10px;}
+.wm-g:empty{display:none;}
+.wm-row{display:flex;align-items:center;gap:13px;width:100%;min-height:56px;padding:9px 14px 9px 12px;background:none;border:none;font-family:var(--font);color:var(--t1);text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+.wm-row+.wm-row{border-top:1px solid var(--sep);}
+.wm-ic{width:36px;height:36px;border-radius:11px;background:var(--bg2);color:var(--t2);display:flex;align-items:center;justify-content:center;flex:none;}
+.wm-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.wm-t{flex:1;min-width:0;}
+.wm-t b{display:block;font-size:15px;font-weight:700;}
+.wm-t small{display:block;font-size:12px;color:var(--t2);margin-top:1px;}
+.wm-v{font-size:13px;font-weight:700;color:var(--t2);white-space:nowrap;}
+.wm-danger .wm-ic{background:rgba(255,106,115,.12);color:var(--red);}
+.wm-danger .wm-t b{color:var(--red);}
+.wm-x{display:flex;align-items:center;justify-content:center;width:100%;height:52px;border-radius:16px;background:var(--bg3);border:none;font-family:var(--font);font-size:15px;font-weight:800;color:var(--t1);cursor:pointer;}
+
+/* ⑥ Petits écrans (≤ 374 px : iPhone SE, mini, Android 360) — mêmes éléments, un peu moins d'air. */
+@media (max-width:374px){
+  .topbar .tbs-fin{padding:0 11px;}
+  .tbs-l2{padding-left:0;}
+  .la-cta-t b{font-size:17px;}
+  .rd-ring{width:44px;height:44px;}
+  #rest-time{font-size:26px;}
+  #rest-bar .rbtn{min-width:42px;padding:0 8px;}
+  #rest-bar{padding:12px 10px 12px 12px;}
+  .rd-top{gap:10px;}
+  .lf-kv{gap:14px;}
+}
+
+/* ⑦ Texte agrandi (accessibilité) — les nouveaux éléments suivent la même échelle que le reste de l'écran. */
+#root.a11y-lv .tbs-etat            { font-size: 17px !important; }
+#root.a11y-lv .tbs-l2              { font-size: 14px !important; }
+#root.a11y-lv .la-cta-t b          { font-size: 20px !important; }
+#root.a11y-lv .la-cta-t small      { font-size: 14px !important; }
+#root.a11y-lv .log-h1              { font-size: 31px !important; }
+#root.a11y-lv .log-add             { font-size: 18px !important; }
+#root.a11y-lv .wm-t b              { font-size: 17px !important; }
+#root.a11y-lv .wm-t small          { font-size: 14px !important; }
+#root.a11y-lv .lf-kv div b         { font-size: 24px !important; }
+#root.a11y-lv #rest-time           { font-size: 32px !important; }
+#root.a11y-lv #rest-bar .rir-lbl   { font-size: 15px !important; }
+/* Texte agrandi : les boutons du dock grossissent (règle `.rbtn` plus haut) — ils passent sur leur propre rangée
+   plutôt que d'écraser le temps restant (mesuré à 360 px : « 2:00 » coupé par « −15s »). */
+#root.a11y-lv .rd-top              { flex-wrap: wrap; }
+#root.a11y-lv #rest-btns           { flex-basis: 100%; }
+#root.a11y-lv #rest-btns .rbtn     { flex: 1; }
 
 /* PR LIST */
 .pr-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--sep);gap:10px;}
@@ -1276,8 +1451,14 @@ html.ob-done #onboarding{display:none;}
 #root.cb-trit .tbtn.D{border-color:rgba(0,155,119,.5)!important;background:rgba(0,155,119,.1)!important;}
 
 /* ─── GAUCHER ────────────────────────────────────────────── */
-#root.lh #rest-bar          { flex-direction:column; }
+/* UX SÉANCE (16/10) : le dock est une rangée [anneau · temps · boutons] — pour un gaucher, elle s'inverse (boutons à
+   gauche, sous le pouce) ; même chose pour l'en-tête de séance (⋯ et « Terminer » à gauche). */
+#root.lh .rd-top            { flex-direction:row-reverse; }
 #root.lh #rest-btns         { flex-direction:row-reverse; }
+#root.lh .tbs-r             { flex-direction:row-reverse; }
+#root.lh .tbs-meta          { text-align:right; }
+#root.lh .tbs-etat          { justify-content:flex-end; }
+#root.lh .tbs-l2            { padding-left:0; }
 #root.lh .ex-hdr-btns       { order:-1; }
 
 /* ─── Impression / export PDF d'un programme ─────────────────── */
@@ -1707,15 +1888,24 @@ html.ob-done #onboarding{display:none;}
    on remplit ~700 px de vide avec quelque chose d'utile, pas avec du décor. */
 .ts-bloc{margin-top:14px;}
 .ts-titre{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;padding-left:2px;}
-.ts-liste{display:flex;flex-direction:column;gap:8px;}
-.ts-carte{width:100%;text-align:left;background:var(--bg2);border:none;box-shadow:inset 0 0 0 1px var(--sep);
+/* UX SÉANCE (16/10/2026) — les types deviennent un CARROUSEL (cible validée) : ils restent tous là, mais ils ne
+   repoussent plus le cardio et l'import sous trois écrans de cartes. Le carrousel sort jusqu'aux bords de l'écran. */
+.ts-liste{display:flex;flex-direction:row;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -14px;padding:2px 14px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.ts-liste::-webkit-scrollbar{display:none;}
+.ts-carte{flex:none;width:180px;scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;background:var(--bg2);border:none;box-shadow:inset 0 0 0 1px var(--sep);
   border-radius:14px;padding:12px 14px;font-family:var(--font);cursor:pointer;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:box-shadow .15s;}
 .ts-carte:active{box-shadow:inset 0 0 0 1px var(--red2);}
 /* La discipline DÉJÀ choisie est signalée — pas mise en avant : c'est un repère, pas une
    recommandation. L'app ne décide pas à la place de la personne (R29). */
 .ts-carte.ts-actif{box-shadow:inset 0 0 0 1.5px var(--red2);}
-.ts-h{display:flex;align-items:center;gap:8px;}
+.ts-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+/* Carte de carrousel (180 px) : icône · « la tienne » · ⓘ sur la 1ʳᵉ ligne, le NOM dessous (comme la cible validée) —
+   sur une seule ligne, le nom et l'étiquette se chevauchaient. L'ordre est visuel seulement (rendu inchangé). */
+.ts-h .ts-ico{order:0;}
+.ts-h .ts-tag{order:1;}
+.ts-h .ts-info{order:2;}
+.ts-h .ts-nom{order:3;flex-basis:100%;margin-top:6px;}
 .ts-ico{font-size:17px;flex:none;}
 .ts-nom{font-size:14.5px;font-weight:700;color:var(--t1);min-width:0;}
 .ts-tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);

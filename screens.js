@@ -140,6 +140,9 @@ function _applyScreen(id,btn){
      va justement parler à Milo ou regarder ses records (18/08). `_syncWakeLock` (log.js) tient
      l'écran tant qu'une séance TOURNE, et le rend dès qu'elle est finie ou en pause. */
   if(typeof _syncWakeLock==='function')_syncWakeLock(); else if(id!=='log')_releaseWakeLock();
+  /* 🏋️ UX SÉANCE (16/10) — l'en-tête de séance (barre haute) et la pastille du bouton central suivent la séance sur
+     TOUS les écrans : un seul rendu, recalculé à chaque navigation (`_renderEnteteSeance`, log.js). */
+  if(typeof _renderEnteteSeance==='function')_renderEnteteSeance();
   if(id==='home')renderHome();
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();
