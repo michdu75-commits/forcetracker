@@ -179,13 +179,15 @@ function _renderEnteteSeance(){
   const p=_isWktPaused(), b=_bilanTravailWkt(), c=_contenuFinSeance(), exs=S.wkt.exs||[];
   const lbl=S.wkt.progLabel||((!exs.length&&_cardioNoteMin()>0)?'Cardio':'Séance libre');
   const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const progres=b.total?(b.faites+' / '+b.total+' série'+(b.total>1?'s':'')):'';
+  // L'unité et le libellé sont dans LEUR élément : la traduction (translations.js) ne remplace qu'un texte EXACT.
+  // ⚠️ Ce dictionnaire n'est chargé par AUCUNE page aujourd'hui (mesuré le 16/10 ; connu depuis 348556e1) : sans effet visible.
+  const progres=b.total?(b.faites+' / '+b.total+' <span>'+(b.total>1?'séries':'série')+'</span>'):'';
   const ic=(d,f)=>'<svg viewBox="0 0 24 24" aria-hidden="true" '+(f?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"')+'>'+d+'</svg>';
   const segs=exs.map(ex=>{ const x=_bilanTravailEx(ex), pct=x.total?Math.round(x.faites/x.total*100):0;
     return '<i'+(_exTermine(ex)?' class="ok"':'')+'><b style="width:'+pct+'%"></b></i>'; }).join('');
   el.innerHTML='<div class="tbs-r'+(p?' tbs-pause':'')+'">'
     +'<div class="tbs-meta"><b class="tbs-etat"><span class="tbs-live" aria-hidden="true"></span>'+(p?'Séance en pause':'Séance en cours')+'</b>'
-    +'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono">'+_fmtElapsed()+'</span>'+(progres?' · '+progres:'')+' · '+esc(lbl)+'</span></div>'
+    +'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono">'+_fmtElapsed()+'</span>'+(progres?' · '+progres:'')+' · <span>'+esc(lbl)+'</span></span></div>'
     +(p?'<button id="wkt-pause-btn" class="tbs-btn tbs-rep" onclick="toggleWktPause()" aria-label="Reprendre la séance" title="Reprendre">'+ic('<path d="M7 4l13 8-13 8z"/>',1)+'</button>':'')
     +'<button class="tbs-btn" onclick="openWktMenu()" aria-label="Plus d\'actions sur la séance" aria-haspopup="dialog">'+ic('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>',1)+'</button>'
     +((c.fait||c.cardio)?'<button class="tbs-fin" onclick="terminerSeance()">'+ic('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>')+'Terminer</button>':'')

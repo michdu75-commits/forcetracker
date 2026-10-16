@@ -542,6 +542,10 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
+  /* 🏋️ POINT ROUGE sur SÉANCE (UX SÉANCE, 16/10/2026, cadrage validé par Michel) — l'écran Séance a changé de FORME :
+     c'est là que la pastille doit ramener. ⛔ Sans `spot`, comme les entrées voisines de cet écran : un ancrage qui
+     n'existe que dans un des deux états de l'écran (avant / pendant) serait une annonce qui n'a jamais lieu. */
+  {id:'seance-ux', screen:'log', desc:'Nouveau : l\'<b>écran Séance</b> s\'allège. Avant : « Séance libre » ou « Programme ». Pendant : l\'en-tête « Séance en cours » (chrono, séries de travail faites, <b>⋯</b>, <b>Terminer</b>), le repos en bas, 1:00 · 1:30 · 2:00 dans <b>Régler</b>.'},
   /* 📷 POINT ROUGE sur SÉANCE (ft-v1155) : c'est de là qu'on ouvre « Mes Programmes », donc
      là que la pastille doit ramener. ⛔ Sans `spot` : `_featSpots` fait `if(!el)return;`, donc
      un ancrage qui n'existe pas est une annonce qui n'a jamais lieu, en silence (ft-v1153).
@@ -904,6 +908,11 @@ const WHATS_NEW=[
        le canal par lequel ses retours arrivent. *Une disparition muette se lit comme une punition.*
        ⛔ POURQUOI `si:'testeur'` : les autres n'ont jamais vu ce pavé. Leur annoncer sa disparition
        serait du bruit pur, et le mécanisme existe exprès depuis ft-v1072. */
+  /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé par Michel) — ELLE SE MÉRITE : DES REPÈRES ONT BOUGÉ. « Terminer », la pause,
+     « Vider », « Changer » et les préréglages de repos ne sont plus là où on les trouvait ; sans un mot, on les chercherait.
+     ⛔ BORNÉE (R25) : où sont les choses maintenant, et ce qui ne change pas. Le POURQUOI vit dans l'aide (« ? » et aide
+     détaillée). Chaque phrase est vraie dans le code servi (banc B-UXS). */
+    {v:78, ic:'🏋️', t:'L\'écran Séance s\'allège', d:'① Avant la séance : <b>« Séance libre »</b> ou <b>« Programme »</b>. ② Pendant : <b>« Séance en cours »</b> en haut, avec ton chrono, tes séries de travail et <b>« Terminer »</b> — s\'il en reste, l\'app te le dit avant d\'enregistrer. ③ Pause, date, grouper, programmes, vider : dans <b>⋯</b>. ④ Le repos s\'affiche <b>en bas</b> ; 1:00 · 1:30 · 2:00 sont dans <b>Régler</b> (touche le temps ✎). Rien ne change dans tes séries ni ton historique.'},
   /* 🗂️ PROGRES-SEANCES-01 (D-076, D-077) — ELLE SE MÉRITE : UN REPÈRE A BOUGÉ. Progrès s'ouvrait sur les
      graphiques d'exercice, l'historique en bas de cet onglet et coupé à 20 séances ; il s'ouvre maintenant sur
      Séances, l'historique rangé par année puis par mois. Sans un mot, la personne chercherait son historique là où
