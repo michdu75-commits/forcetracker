@@ -39716,6 +39716,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      portes (« + », balayage, app restée ouverte, rechargement) ; une séance réellement commencée garde sa date ; une date
      choisie par la personne est gardée. Blocs B-S01-*. Banc : tools/banc_seance_date.js · contrôle négatif : tools/mut_seance_date.py. */
   await require('./seance_date.js').ecran(t, b, PORT);
+  /* 🛡️ CC-01 (session-B, 16/10/2026) — une série validée est du passé : « 📉 Drop », « 📈 +% », « ⚙️ Modifier paliers » et
+     « ✕ Retirer dropset » ne touchent plus que la suite non faite (décisions de Michel du 16/10). Blocs B-CC01-*.
+     Banc : tools/banc_cc01_dropset.js · contrôle négatif : tools/mut_cc01_dropset.py. */
+  await require('./cc01_dropset.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);
