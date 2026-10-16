@@ -42,7 +42,7 @@ MUT = [
            "const b=_bilanTravailEx(ex); total+=b.total; faites+=b.faites; }\n  return {total, faites, restantes:total};")], 'GARDE', 'B-UXS-D2'),
     ('M4 le « + » cree une DEUXIEME seance quand une seance est ouverte',
      [(LO, "  if(!ouverte) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};",
-           "  S.wkt={date:today(),exs:[],startHour:new Date().getHours()};")], 'GARDE', 'B-UXS-E4'),
+           "  if(true) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};")], 'GARDE', 'B-UXS-E4'),   # `if(true)` : le `else` suivant reste valide (1re version : syntaxe cassee, INVALIDE)
     ('M5 la confirmation « Il reste N series » est retiree (Terminer enregistre toujours)',
      [(LO, "  if(n<=0) return finishWorkout();", "  return finishWorkout();")], 'GARDE', 'B-UXS-D2'),
     ('M6 [deguisee] une seance ouverte dont le chrono n\'a pas demarre s\'affiche VIDE',

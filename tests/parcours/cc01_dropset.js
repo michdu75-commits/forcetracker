@@ -223,7 +223,7 @@ async function ecran(t, b, PORT) {
      Drop, et aucun rechargement après « Modifier » / « Retirer » ; une 9ᵉ mutation, d'affichage (cas mixte), passait aussi.
      ⛔ TESTS SEULEMENT : le moteur CC-01 ne change pas (décision : ne pas rouvrir le correctif).
      ⚠️ Les mutations O1 → O14 de la contre-vérification ne sont ni dans le dépôt ni sur le Drive (cherché le 16/10) :
-     elles sont reconstruites depuis leur DESCRIPTION (`docs/SUIVI-AUDIT.md`, fiche CC-01), une par perte décrite,
+     elles sont RECONSTRUITES, ÉQUIVALENTES aux pertes que décrit la fiche CC-01 (`docs/SUIVI-AUDIT.md`) — pas les originales —,
      dans `tools/mut_cc01_dropset.py` (MF1 → MF11) — et chacune doit faire rougir SON témoin ci-dessous.
      Conduit : les vrais boutons (« 📉 Drop », « 📈 +% », « ⚙️ Modifier paliers », « ✕ Retirer dropset »), la vraie modale,
      le rechargement. Observe : chaque série faite, objet JSON complet ; `ex.dropset` ; `ft4_wkt` et le brouillon ; les
