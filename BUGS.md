@@ -4602,3 +4602,15 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 **Ce qui le protège.** Banc `tools/banc_seance_date.js` (B-S01-*), contrôle négatif `tools/mut_seance_date.py` (suppression, renouvellement trop agressif, une seule porte, date choisie ignorée, barre non mise à jour, 2ᵉ définition).
 
 **À quoi on le reconnaît.** Une donnée juste par une porte et fausse par une autre. 👉 *Quand une porte « nettoie » un état avant de l'utiliser, chercher toutes les autres portes qui utilisent le même état.* ⚠️ **Reste ouvert, consigné** : un cardio noté en premier sur une vieille séance vide la rend « ouverte » avec sa vieille date (`setCardioField`, hors S-01 — le brief exclut le cardio).
+
+## §77 — ⛔⛔ UNE MÉTHODE QUI RECONSTRUIT LA LISTE EFFACE LE PASSÉ : DROP / +% / MODIFIER / RETIRER DROPSET *(16/10/2026, CC-01 — branche `claude/cc-01-dropset`, non intégré, non publié)*
+
+**Symptôme (mesuré sur master `1717edc4`).** Deux séries validées (100 × 8 avec RIR 2 et une note, puis 92,5 × 7), un tap sur « 📉 Drop » : il ne reste que 3 paliers vides. Même chose avec « 📈 +% » et « ⚙️ Modifier paliers » ; « ✕ Retirer dropset » remplaçait les paliers faits par une série vide. La séance enregistrée ne gardait que ce qui restait.
+
+**Cause.** `applyDropset` fabriquait la nouvelle liste puis l'**affectait entière** (`ex.sets=newSets`) ; `removeDropset` aussi. Aucune des deux ne regardait `set.done` — la seule définition d'une série validée, lue partout ailleurs.
+
+**Correctif.** Tout ce qui précède la DERNIÈRE série validée reste tel quel (mêmes objets, même place) ; seule la suite est remplacée ou retirée. Décisions de Michel du 16/10 pour le futur : la suite part de la prochaine série prévue, sinon de la dernière faite ; « Modifier paliers » compte les paliers restants et repart de la dernière charge faite ; une série normale faite avant le dropset reste affichée comme série normale (les paliers sont les `ex.dropset.paliers` dernières séries, `_dropDebut` — aucune donnée nouvelle).
+
+**Ce qui le protège.** Banc `tools/banc_cc01_dropset.js` (B-CC01-*, vraies portes de l'écran), contrôle négatif `tools/mut_cc01_dropset.py` (protection supprimée, partielle, une seule porte, première série seule, Retirer destructeur, base fausse, affichage).
+
+**À quoi on le reconnaît.** Une action qui « reconfigure » un objet en affectant une liste entière (`x.sets=…`, `x.items=…`) alors que certains éléments sont déjà des faits. 👉 *Avant d'écrire `liste = nouvelle`, se demander : un élément de l'ancienne liste est-il déjà du passé ?*
