@@ -4614,3 +4614,13 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 **Ce qui le protège.** Banc `tools/banc_cc01_dropset.js` (B-CC01-*, vraies portes de l'écran), contrôle négatif `tools/mut_cc01_dropset.py` (protection supprimée, partielle, une seule porte, première série seule, Retirer destructeur, base fausse, affichage).
 
 **À quoi on le reconnaît.** Une action qui « reconfigure » un objet en affectant une liste entière (`x.sets=…`, `x.items=…`) alors que certains éléments sont déjà des faits. 👉 *Avant d'écrire `liste = nouvelle`, se demander : un élément de l'ancienne liste est-il déjà du passé ?*
+
+## §78 — ⛔ UNE PHOTO D'UNE AUTRE EXÉCUTION N'EST PAS UNE RÉFÉRENCE : L'HORODATAGE D'UNE SÉRIE VALIDÉE BOUGE D'UNE SECONDE *(16/10/2026, contre-vérification de CC-01 — session-A, sonde hors dépôt, aucun code de l'app)*
+
+**Symptôme.** Pour juger 14 mutations du moteur dropset, ma sonde comparait les séries faites de chaque mutant à celles d'une exécution de référence sur master (le « golden »). Résultat : des « pertes » dans 4 scénarios que la mutation ne pouvait pas atteindre — une mutation d'affichage signalait, par exemple, une perte dans « ✕ Retirer dropset ».
+
+**Cause.** Une série validée PENDANT le scénario (par le vrai ✓) reçoit `at` = la lecture du chrono, en secondes (`toggleSet`). D'une exécution à l'autre, cette lecture bouge d'une seconde (903 / 904) : l'égalité stricte avec la référence échoue alors que la série est intacte. *On mesurait l'horloge, pas le code.*
+
+**Correctif (de la sonde).** Trois références qui ne dépendent pas de l'horloge : les fixtures (valeurs fixes, `at` compris) ; la photo « avant » prise dans la MÊME exécution ; le nombre de séries faites. Les écarts d'affichage ou de futur se comparent sans `at`. Contrôle sur l'arbre SAIN avec la même comparaison : 0 perte, 0 écart ; tout a été rejoué, et le verdict n'a été écrit qu'après.
+
+**À quoi on le reconnaît.** Un rouge qui touche des scénarios hors de portée de la mutation, et qui porte sur une donnée posée pendant le test (horodatage, durée, identifiant). 👉 *Une référence n'est valide que si elle est produite dans les mêmes conditions que ce qu'on compare ; et le contrôle de l'arbre sain se fait avec la MÊME comparaison que les mutants, avant d'interpréter un seul rouge.* Même famille que §61 (c'est l'outil de mesure qui se trompait, pas le code mesuré), dans l'autre sens : là-bas des rouges cachés, ici des rouges fabriqués.
