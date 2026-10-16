@@ -13266,16 +13266,20 @@ console.log('\n-- CXIX. Créer un programme depuis zéro (écran Séance ②/5) 
    séance, et lui) : nommer un seul bouton est devenu faux, et le message a été relu.
    👉 Ce qu'on fige désormais : s'il NOMME un bouton, ce bouton doit exister. S'il n'en
    nomme aucun — le cas depuis ft-v1026 — il ne peut pas se contredire, et c'est valide. */
-t('⭐ le message de l\'écran vide ne désigne jamais un bouton qui n\'existe pas',
+/* ⚠️⚠️ TÉMOIN RE-VISÉ LE 16/10/2026 (UX SÉANCE, R30, décision ④ de Michel) — « + Créer ma séance » a été REMPLACÉ :
+   « Séance libre » AVANT la séance, « Ajouter un exercice » PENDANT (même propriétaire, `openExPicker()`). Et le message
+   de l'écran vide a DISPARU : les deux actions sont désormais les boutons eux-mêmes (`#log-avant`) — deux fois déjà
+   (ft-v1012, ft-v1026) ce texte a désigné un bouton qui n'existait plus ; sans texte, il ne peut plus mentir.
+   Ce qu'on fige : (a) aucun message d'écran vide ne revient dans log.js ; (b) les deux portes existent, avec leur
+   propriétaire ; (c) les anciens libellés ne reviennent pas. */
+t('⭐ l\'écran Séance nomme ses VRAIS boutons : « Séance libre » et « Ajouter un exercice » existent, « + Créer ma séance » non',
   (()=>{const h=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
-        const m=l.match(/<div class="empty">([^<]*)</);
-        const txt=m?m[1]:'';
-        const cite=txt.match(/[«"]\s*(\+[^»"]+?)\s*[»"]/);
-        const okCite=!cite || h.indexOf('>'+cite[1]+'</button>')>=0;
-        return h.indexOf('>+ Créer ma séance</button>')>=0
-            && h.indexOf('>+ Ajouter</button>')<0
-            && !!txt && okCite;})());
+        return !/<div class="empty">/.test(l)
+            && /onclick="openExPicker\(\)"><span class="la-cta1-ic">[\s\S]{0,400}?<b>Séance libre<\/b>/.test(h)
+            && /id="log-add-ex"[^>]*onclick="openExPicker\(\)"[\s\S]{0,400}?Ajouter un exercice<\/button>/.test(h)
+            && h.indexOf('>+ Créer ma séance</button>')<0
+            && h.indexOf('>+ Ajouter</button>')<0;})());
 
 /* == BLOC CXX - L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT (ft-v1013) ==
    Michel : « compare la difference des exportations pour tout le monde et celle que je fais en
@@ -14601,6 +14605,7 @@ console.log('\n-- CXXXI. Les types de séances remplissent l\'écran vide (ft-v1
     const z=document.getElementById('log-types');
     o.n=z.querySelectorAll('.ts-carte').length;
     o.h=Math.round(z.getBoundingClientRect().height);
+    { const li=z.querySelector('.ts-liste'); o.defile=li?(li.scrollWidth-li.clientWidth):-1; }   // UX SÉANCE (16/10) : carrousel
     o.actif=(z.querySelector('.ts-actif .ts-nom')||{}).textContent||'';
     /* ⛔ AUCUNE ligne de cadre ne doit être une phrase TRONQUÉE. On exige le motif chiffré. */
     o.cadres=[...z.querySelectorAll('.ts-cadre')].map(e=>e.textContent.trim());
@@ -14633,8 +14638,14 @@ console.log('\n-- CXXXI. Les types de séances remplissent l\'écran vide (ft-v1
   });
   if(G.err)t('CXXXI n\'a pas pu tourner',false,G.err);
   else{
-    t('⭐⭐ les 5 types remplissent l\'écran vide (le vide était la plainte d\'origine)',
-      G.n===5 && G.h>300, JSON.stringify({cartes:G.n,hauteur:G.h}));
+    /* ⚠️⚠️ TÉMOIN RE-VISÉ LE 16/10/2026 (UX SÉANCE, R30) — il exigeait une COLONNE de plus de 300 px : les 5 cartes
+       remplissaient l'écran vide, c'était la plainte d'origine (« quand on arrive c'est vide »). L'écran avant séance
+       porte désormais « Séance libre », « Programme » et le contexte du jour AVANT les types (cadrage validé par
+       Michel) : l'écran n'est plus vide, et les 5 types passent en CARROUSEL pour ne plus repousser le cardio et
+       l'import sous trois écrans. Ce qu'on garde : les 5 types sont tous là et lisibles ; ce qui change : ils
+       défilent de côté au lieu d'empiler 300 px. */
+    t('⭐⭐ les 5 types sont tous là, en carrousel lisible (l\'écran vide est rempli par « Séance libre » et « Programme » d\'abord)',
+      G.n===5 && G.h>100 && G.defile>0, JSON.stringify({cartes:G.n,hauteur:G.h,defile:G.defile}));
     t('⛔⛔ AUCUNE ligne de cadre n\'est une phrase TRONQUÉE — que du motif chiffré',
       G.tousChiffres===true, JSON.stringify(G.cadres));
     t('⭐ (a) un tap monte la séance du type — et elle porte les REPS de la discipline',

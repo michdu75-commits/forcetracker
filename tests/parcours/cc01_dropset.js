@@ -118,7 +118,9 @@ async function ecran(t, b, PORT) {
     await X.pg.evaluate(() => toggleSet(0, 2));
     await X.pg.waitForTimeout(150);
     await X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
-    await clic(X, 'button[onclick="finishWorkout()"]');
+    /* UX SÉANCE (16/10/2026, R30) — la porte de fin est `terminerSeance()` (« Terminer » de l'en-tête et du bas) : s'il reste des séries de TRAVAIL, elle demande « Terminer quand même ? » et on confirme, comme la personne. La conduite change ; ce que le banc mesure ne change pas. */
+    await clic(X, '.topbar button[onclick="terminerSeance()"]');
+    await (async X => { await X.pg.waitForTimeout(150); if (await X.pg.evaluate(() => { const o = document.getElementById('ov-confirm'); return !!(o && o.classList.contains('open')); })) await X.pg.click('#confirm-ok'); })(X);
     await X.pg.waitForTimeout(1600);
     const h = await X.pg.evaluate(() => { const s = (S.sessions || [])[0]; return s ? JSON.parse(JSON.stringify(s.exs[0].sets)) : null; });
     t('B-CC01-D3 ⭐ la séance ENREGISTRÉE garde les 2 séries faites identiques, plus le palier validé',

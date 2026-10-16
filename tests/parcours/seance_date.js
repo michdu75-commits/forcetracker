@@ -74,7 +74,9 @@ async function ecran(t, b, PORT) {
     await fermerOverlays(X.pg);
     await X.pg.evaluate(() => goScreen('log', document.getElementById('nb-log')));
     await X.pg.waitForTimeout(200);
-    await X.pg.click('button[onclick="finishWorkout()"]');
+    /* UX SÉANCE (16/10/2026, R30) — la porte de fin est `terminerSeance()` (« Terminer » de l'en-tête et du bas) : s'il reste des séries de TRAVAIL, elle demande « Terminer quand même ? » et on confirme, comme la personne. La conduite change ; ce que le banc mesure ne change pas. */
+    await X.pg.click('.topbar button[onclick="terminerSeance()"]');
+    await (async X => { await X.pg.waitForTimeout(150); if (await X.pg.evaluate(() => { const o = document.getElementById('ov-confirm'); return !!(o && o.classList.contains('open')); })) await X.pg.click('#confirm-ok'); })(X);
     await X.pg.waitForTimeout(1600);
     await X.pg.evaluate(() => { try { if (typeof closeSessionEnd === 'function') closeSessionEnd(); } catch (e) {} });
     return X.pg.evaluate(() => (S.sessions || []).map(s => s.date));
