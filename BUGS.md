@@ -4590,3 +4590,15 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 **Ce qui le protège.** `pastillesVisibles` (tests/parcours/progres_seances.js) passe par `checkVisibility()` ; la mutation M65 (panneau ouvert d'office) fait rougir PS-E54, donc le témoin sait rougir.
 
 **À quoi on le reconnaît.** Un élément « visible » pour le banc et invisible à l'écran, dans un `<details>`, un `content-visibility` ou un élément `hidden` par l'agent. 👉 *Pour un contenu replié, mesurer avec `checkVisibility()`, pas avec la boîte.*
+
+## §76 — ⛔⛔ DEUX PORTES VERS LA MÊME SÉANCE, UNE SEULE RENOUVELAIT LA DATE *(16/10/2026, SÉANCE S-01 « DATE JUSTE » — branche `claude/claude-md-docs-ytabnv`, non publié)*
+
+**Symptôme (audit Séance ft-v1255 / ft-v1256, reproduit).** Une séance faite le 15/10 enregistrée au **01/10**. Par le « + » central, la date était juste ; en revenant sur Séance autrement (balayage, app restée ouverte, rechargement), non.
+
+**Cause — mesurée sur master `3f61e7e2` (B-S01-A1, A4, P2 → P4 rouges).** L'écran Séance (`renderLog`) et le « + » sans rien noter laissent un objet de séance VIDE daté du jour où il est né ; `persist()` l'écrit dans `ft4_wkt`, il peut dormir des jours. `startWorkout` (le « + ») le jette et en recrée un daté du jour si la séance n'est pas ouverte (`_seanceOuverte`). Les autres portes réutilisent l'objet tel quel : `addExercise` et `lancerTypeSeance` le remplissaient sans regarder sa date. *Le même objet, deux portes, une seule équipée* — la famille du marqueur `_milo` (`_startSessionFromMilo` / `_applyMiloSession`).
+
+**Correctif.** `_dateSeanceReelle()` (log.js), appelée là où la séance devient réelle (1er exercice, carte « type de séance ») : une séance **pas encore commencée** (`_seanceOuverte()` faux — la seule définition) prend la date du jour ; une séance **commencée** garde la sienne ; une date **choisie par la personne** sur la séance vide est gardée (`_wktDateChoisie`, mémoire seulement). Aucune clé, aucune migration, `renderLog` intact.
+
+**Ce qui le protège.** Banc `tools/banc_seance_date.js` (B-S01-*), contrôle négatif `tools/mut_seance_date.py` (suppression, renouvellement trop agressif, une seule porte, date choisie ignorée, barre non mise à jour, 2ᵉ définition).
+
+**À quoi on le reconnaît.** Une donnée juste par une porte et fausse par une autre. 👉 *Quand une porte « nettoie » un état avant de l'utiliser, chercher toutes les autres portes qui utilisent le même état.* ⚠️ **Reste ouvert, consigné** : un cardio noté en premier sur une vieille séance vide la rend « ouverte » avec sa vieille date (`setCardioField`, hors S-01 — le brief exclut le cardio).
