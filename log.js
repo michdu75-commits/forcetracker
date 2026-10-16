@@ -579,27 +579,51 @@ function _renderDropCfg(ov){
     +`</div>`;
 }
 function closeDropCfg(){const ov=document.getElementById('ov-drop-cfg');if(ov)ov.classList.remove('open');}
+/* 🛡️ CC-01 (16/10/2026, décisions de Michel) — UNE SÉRIE VALIDÉE EST DU PASSÉ.
+   Mesuré sur master 1717edc4 : `applyDropset` remplaçait TOUTE la liste (`ex.sets=newSets`) → « 📉 Drop »,
+   « 📈 +% » et « ⚙️ Modifier paliers » effaçaient les séries déjà validées ; `removeDropset` les remplaçait
+   par une série vide. 👉 Tout ce qui précède la DERNIÈRE série validée (`set.done`) reste tel quel, à sa
+   place, mêmes objets ; seule la suite (le futur) est remplacée ou retirée.
+   Les paliers d'un dropset sont toujours ses DERNIÈRES séries (`ex.dropset.paliers`, posé ici seulement) :
+   ce qui les précède est une série normale faite avant la méthode. Ancien format, ou nombre incohérent :
+   toutes les séries sont des paliers (affichage d'avant). Aucune donnée nouvelle. */
+function _dropDebut(ex){
+  const n=(ex&&ex.sets||[]).length, p=ex&&ex.dropset?Math.round(+ex.dropset.paliers)||0:-1;
+  return p<0?n:((p>0&&p<=n)?n-p:0);
+}
 function applyDropset(){
   closeDropCfg();
   const ei=_dropCfgEi;
   if(ei===null||!S.wkt?.exs[ei])return;
   const ex=S.wkt.exs[ei];
-  const baseKg=ex.sets[0]?.kg||(getPrev(ex.name)[0]?.kg)||0;
-  const baseReps=ex.sets[0]?.reps||(getPrev(ex.name)[0]?.reps)||8;
+  const fait=ex.sets.map(s=>!!(s&&s.done)).lastIndexOf(true);   // dernière série validée (-1 : aucune)
+  const p0=_dropDebut(ex), suite=!!ex.dropset&&fait>=p0;        // « Modifier paliers » après un palier fait
+  const derniere=fait>=0?ex.sets[fait]:null, prochaine=ex.sets[fait+1]||null;
+  let baseKg,baseReps;
+  if(!derniere){                                                 // rien de fait : le départ d'avant
+    baseKg=ex.sets[0]?.kg||(getPrev(ex.name)[0]?.kg)||0;
+    baseReps=ex.sets[0]?.reps||(getPrev(ex.name)[0]?.reps)||8;
+  }else{                                                         // la prochaine série prévue, sinon la dernière faite
+    baseKg=+((suite||!prochaine)?derniere:prochaine).kg||+derniere.kg||0;
+    baseReps=+(prochaine||derniere).reps||+derniere.reps||8;
+  }
   const f=_dropCfgPct/100;const dir=_dropCfgDir;
   const newSets=[];let kg=baseKg;
   for(let i=0;i<_dropCfgPaliers;i++){
-    if(i>0)kg=_roundToGym(dir==='down'?kg*(1-f):kg*(1+f));
+    if(i>0||suite)kg=_roundToGym(dir==='down'?kg*(1-f):kg*(1+f));   // la suite repart de la dernière charge faite
     newSets.push({kg:kg||0,reps:baseReps,done:false,type:'N'});
   }
-  ex.sets=newSets;ex.dropset={paliers:_dropCfgPaliers,pct:_dropCfgPct,direction:dir};
+  const garde=ex.sets.slice(0,fait+1);                           // le passé : intact, à sa place
+  ex.sets=garde.concat(newSets);ex.dropset={paliers:(suite?garde.length-p0:0)+_dropCfgPaliers,pct:_dropCfgPct,direction:dir};
   delete ex.group;delete ex.groupType;
   _expandedEx=ei;persist();renderExBlocks();
   toast((dir==='down'?'Dropset':'Pyramide')+' créé ✓','success');
 }
 function removeDropset(ei){
   const ex=S.wkt.exs[ei];if(!ex||!ex.dropset)return;
-  ex.sets=[{kg:ex.sets[0]?.kg||0,reps:ex.sets[0]?.reps||8,done:false,type:'N'}];
+  const fait=ex.sets.map(s=>!!(s&&s.done)).lastIndexOf(true);
+  ex.sets=fait>=0?ex.sets.slice(0,fait+1)                         // CC-01 : seule la partie non faite part
+    :[{kg:ex.sets[0]?.kg||0,reps:ex.sets[0]?.reps||8,done:false,type:'N'}];
   delete ex.dropset;persist();renderExBlocks();toast('Dropset supprimé','info');
 }
 /* 🧩 LOT 6 / ML-B — UN GROUPEMENT N'EXISTE QU'À PARTIR DE DEUX MEMBRES (29/09/2026).
@@ -841,7 +865,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   };
   // Vue réduite
   if(!isExpanded){
-    const _dsLbl=ex.dropset?'palier':'série';
+    const _dsLbl=(ex.dropset&&!_dropDebut(ex))?'palier':'série';
     const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
     /* ⚠️⚠️ LES PARENTHÈSES NE SONT PAS COSMÉTIQUES — elles corrigent un vrai défaut (ft-v1028).
        C'était écrit `ex.note ? '…' : '' + _intensiteBandeau(ex)`, que JavaScript lit
@@ -883,7 +907,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   // Vue développée
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
-  const rows=ex.sets.map((set,si)=>{
+  const _rowsHtml=ex.sets.map((set,si)=>{
     const p=prevAl[si];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     return`<div id="sr-wrap-${ei}-${si}">`
@@ -895,19 +919,22 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
       +`</div></div>`;
-  }).join('');
+  });
+  const rows=_rowsHtml.join('');
 
   // ─── Override rendu si dropset actif ───────────────────────────────────────
   let useSetsHdr,useRows,useDropBanner='';
   if(ex.dropset){
     const {pct,direction}=ex.dropset;
     const isDown=direction==='down';
-    const curPi=ex.sets.findIndex(s=>!s.done);
+    const p0=_dropDebut(ex);                         // CC-01 : avant p0, des séries normales faites avant le dropset
+    const curPi=ex.sets.findIndex((s,i)=>i>=p0&&!s.done);
     useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>Reps</span><span>KG</span><span></span><span>✓</span></div>`;
     useRows=ex.sets.map((set,si)=>{
+      if(si<p0)return _rowsHtml[si];                // une série normale reste une série normale
       const isDone=set.done;
       const isCur=!isDone&&si===curPi;
-      const label=si===0?'Charge de départ':(isDown?`Drop −${pct}%`:`+${pct}%`);
+      const label=si===p0?'Charge de départ':(isDown?`Drop −${pct}%`:`+${pct}%`);
       const isLast=si===ex.sets.length-1;
       const p=prevAl[si];
       if(isCur){
@@ -958,7 +985,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${_escNote(ex.name)}${_uniTag} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
-    +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
+    +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${(ex.dropset&&!_dropDebut(ex))?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
     +`<div style="pointer-events:auto;flex-shrink:0;display:flex;align-items:center;gap:4px;" onclick="event.stopPropagation()">`
     +((!inGroup&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
