@@ -15420,7 +15420,12 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
    on epingle donc l'opacite, avec sa raison. La preuve visuelle est la capture avant/apres. */
 console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (ft-v1032) --');
 {
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  /* UX SÉANCE (16/10/2026, R30 — re-visé, écrit) : l'écran « avant séance » est devenu compact (« Séance libre » /
+     « Programme », contexte, types en carrousel horizontal). À 430×932 il ne défile plus que de 20 px — la condition du
+     défaut n'existe plus à CETTE taille, et le témoin « MORD » ci-dessous rougissait pour cette raison. Mesuré sur la
+     même graine : 390×844 → 108 px, 375×667 → 302 px, 360×780 → 207 px. Le témoin se mesure donc à 390×844, là où du
+     contenu passe encore sous la barre ; ce qu'il protège (barre collante, opaque ≥ 0,9, floutée) ne change pas. */
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
   await pg.addInitScript(seedScript({ft4_discipline:'powerbuilding'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
@@ -39731,6 +39736,13 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      « ✕ Retirer dropset » ne touchent plus que la suite non faite (décisions de Michel du 16/10). Blocs B-CC01-*.
      Banc : tools/banc_cc01_dropset.js · contrôle négatif : tools/mut_cc01_dropset.py. */
   await require('./cc01_dropset.js').ecran(t, b, PORT);
+  /* 🏋️ UX SÉANCE (session-B, 16/10/2026, cadrage validé par Michel) — l'écran Séance en deux états : avant (« Séance libre »,
+     « Programme », contexte, types, autres options), pendant (en-tête « Séance en cours » dans la barre haute : chrono,
+     séries de TRAVAIL faites / prévues, ⋯, « Terminer » qui demande s'il reste des séries) ; menu ⋯ ; bouton central (même
+     séance, pastille, immobile) ; dock de repos en bas (préréglages dans « Régler »). Présentation seulement : les
+     propriétaires des données sont inchangés (différentiel : tools/diff_seance_ux.js). Blocs B-UXS-*.
+     Banc : tools/banc_seance_ux.js · contrôle négatif : tools/mut_seance_ux.py. */
+  await require('./seance_ux.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

@@ -261,6 +261,20 @@ async function ecran(t, b, PORT) {
     await X.cx.close();
   }
   {
+    // « 🔄 Réessayer » (après un stockage plein, `_showSaveError`) repasse par la MÊME porte de fin : rien n'est enregistré
+    // sans la question tant qu'il reste des séries de travail (une seule porte, R2).
+    const X = await ouvrir({ wkt: wkt([{ name: DC, sets: [N(100, 8, true), N(100, 8)] }]) });
+    await fixDate(X); await versSeance(X);
+    const avant = await etat(X);
+    await X.pg.evaluate(() => { _showSaveError(); });
+    const okR = await clicTexte(X, 'Réessayer', '#log-finish button');
+    const c = await confirmTexte(X);
+    const apres = await etat(X);
+    t('B-UXS-D9 ⭐ « 🔄 Réessayer » après un stockage plein repasse par la même porte : « Il reste 1 série à faire », rien d\'enregistré sans réponse',
+      okR && await confirmOuvert(X) && /Il reste 1 série à faire/.test(c.titre) && apres.nSess === avant.nSess && _det(apres.wkt) === _det(avant.wkt), _det({ okR, c, n: [avant.nSess, apres.nSess] }));
+    await X.cx.close();
+  }
+  {
     const X = await ouvrir({ wkt: wkt([{ name: DC, sets: [N(100, 8, true), N(100, 8)] }]) });
     await fixDate(X); await versSeance(X);
     await terminerEntete(X);
@@ -273,6 +287,13 @@ async function ecran(t, b, PORT) {
     await fixDate(X); await versSeance(X);
     t('B-UXS-D7 rien de fait : l\'en-tête n\'offre pas « Terminer » (rien à enregistrer — même règle que le bas)',
       (await parTexte(X, 'Séance en cours', '.topbar *')) >= 1 && (await parTexte(X, 'Terminer', '.topbar button')) === 0, await enteteTexte(X));
+    // ⭐ « Séance active affichée vide » : une séance OUVERTE dont le chrono n'a pas démarré (exercices posés, rien validé —
+    //    l'état juste après un programme chargé) montre ses exercices, jamais l'écran « avant séance » ni une liste vide.
+    const v = await X.pg.evaluate(() => { const vis = e => !!(e && e.offsetParent !== null && e.getBoundingClientRect().height > 0);
+      return { cartes: document.querySelectorAll('#wkt-exs .ex-block').length, avant: vis(document.getElementById('log-avant')),
+        ajout: vis(document.getElementById('log-add-ex')), noms: [...document.querySelectorAll('#wkt-exs .ex-name')].map(n => n.textContent.trim().slice(0, 18)) }; });
+    t('B-UXS-B14 ⭐ séance ouverte SANS chrono démarré (rien validé) : l\'exercice est affiché, l\'écran « avant séance » est masqué, « Ajouter un exercice » est là',
+      v.cartes === 1 && !v.avant && v.ajout, _det(v));
     await X.cx.close();
   }
   {

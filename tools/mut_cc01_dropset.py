@@ -25,6 +25,10 @@ AVANT = '1717edc4'
 LO = 'log.js'
 FICHIERS = ('log.js',)
 
+# UX SEANCE (16/10/2026) : les deux ancres du filet MF* (le passe garde dans applyDropset, et dans removeDropset)
+_GARDE = "  const garde=ex.sets.slice(0,fait+1);                           // le passé"
+_RETIRE = "  ex.sets=fait>=0?ex.sets.slice(0,fait+1)                         // CC-01"
+
 MUT = [
     ("M00 code d'AVANT le lot remis mot pour mot (master 1717edc4)", 'AVANT', 'GARDE', 'B-CC01-B1'),
     ('M1 suppression de la protection : la methode remplace toute la liste',
@@ -53,6 +57,32 @@ MUT = [
      [(LO, "  ex.sets=fait>=0?ex.sets.slice(0,fait+1)                         // CC-01", "  ex.sets=fait>=0?ex.sets.slice(0,fait+1).concat([{kg:0,reps:8,done:false,type:'N'}])                         // CC-01")], 'GARDE', 'B-CC01-H1'),
     ('M12 [equivalente] s.done -> s.done===true (meme sens sur ces donnees)',
      [(LO, "  const fait=ex.sets.map(s=>!!(s&&s.done)).lastIndexOf(true);   // dernière", "  const fait=ex.sets.map(s=>!!(s&&s.done===true)).lastIndexOf(true);   // dernière")], 'OK'),
+    # ── UX SEANCE (16/10/2026) : le FILET de la contre-verification CC-01. Ses mutations O1 -> O14 ne sont ni dans le depot
+    #    ni sur le Drive (cherche le 16/10) : celles-ci sont RECONSTRUITES, EQUIVALENTES aux pertes que la fiche CC-01 decrit
+    #    (docs/SUIVI-AUDIT.md) — pas les originales. Chacune doit faire rougir SON temoin B-CC01-FIL-*.
+    ('MF1 [perte] un echauffement valide n\'est plus protege par « 📉 Drop » (filtre sur le passe)',
+     [(LO, _GARDE, _GARDE.replace("ex.sets.slice(0,fait+1);", "ex.sets.slice(0,fait+1).filter(s=>s.type!=='É');"))], 'GARDE', 'B-CC01-FIL-1'),
+    ('MF2 [perte] [deguisee] la derniere serie faite ignore les echauffements (un echauffement seul valide est efface)',
+     [(LO, "  const fait=ex.sets.map(s=>!!(s&&s.done)).lastIndexOf(true);   // dernière", "  const fait=ex.sets.map(s=>!!(s&&s.done&&s.type!=='É')).lastIndexOf(true);   // dernière")], 'GARDE', 'B-CC01-FIL-2'),
+    ('MF3 [perte] É / X reecrits en N (le passe est reconstruit avec le type par defaut)',
+     [(LO, _GARDE, _GARDE.replace("ex.sets.slice(0,fait+1);", "ex.sets.slice(0,fait+1).map(s=>Object.assign({},s,{type:'N'}));"))], 'GARDE', 'B-CC01-FIL-3'),
+    ('MF4 [perte] le champ `maxi` d\'une serie faite est perdu (passe reconstruit sans lui)',
+     [(LO, _GARDE, _GARDE.replace("ex.sets.slice(0,fait+1);", "ex.sets.slice(0,fait+1).map(s=>{const c=Object.assign({},s);delete c.maxi;return c;});"))], 'GARDE', 'B-CC01-FIL-4'),
+    ('MF5 [perte] « Modifier paliers » en MONTEE efface les paliers faits',
+     [(LO, _GARDE, _GARDE.replace("ex.sets.slice(0,fait+1);", "(suite&&dir==='up')?ex.sets.slice(0,p0):ex.sets.slice(0,fait+1);"))], 'GARDE', 'B-CC01-FIL-5'),
+    ('MF6 [perte] « Retirer dropset » en MONTEE efface les paliers faits',
+     [(LO, _RETIRE, _RETIRE.replace("ex.sets=fait>=0?", "ex.sets=(fait>=0&&ex.dropset.direction!=='up')?"))], 'GARDE', 'B-CC01-FIL-6'),
+    ('MF7 [perte] TOUT FAIT + « Modifier paliers » : la derniere serie faite est perdue',
+     [(LO, _GARDE, _GARDE.replace("ex.sets.slice(0,fait+1);", "ex.sets.slice(0,(suite&&!prochaine)?fait:fait+1);"))], 'GARDE', 'B-CC01-FIL-7'),
+    ('MF8 [perte] TOUT FAIT + « Retirer dropset » : la derniere serie faite est perdue',
+     [(LO, _RETIRE, _RETIRE.replace("ex.sets.slice(0,fait+1)", "ex.sets.slice(0,fait===ex.sets.length-1?fait:fait+1)"))], 'GARDE', 'B-CC01-FIL-8'),
+    ('MF9 [affichage] cas mixte : le nombre de paliers compte la serie normale faite (elle redevient un palier)',
+     [(LO, "ex.dropset={paliers:(suite?garde.length-p0:0)+_dropCfgPaliers,", "ex.dropset={paliers:(suite?garde.length:0)+_dropCfgPaliers,")], 'GARDE', 'B-CC01-FIL-9'),
+    ('MF10 [rechargement] « Modifier paliers » n\'est plus enregistre (le rechargement revient en arriere)',
+     [(LO, "  _expandedEx=ei;persist();renderExBlocks();\n  toast((dir==='down'?'Dropset':'Pyramide')+' créé ✓','success');",
+           "  _expandedEx=ei;renderExBlocks();\n  toast((dir==='down'?'Dropset':'Pyramide')+' créé ✓','success');")], 'GARDE', 'B-CC01-FIL-10'),
+    ('MF11 [rechargement] « Retirer dropset » n\'est plus enregistre (le dropset revient au rechargement)',
+     [(LO, "  delete ex.dropset;persist();renderExBlocks();toast('Dropset supprimé','info');", "  delete ex.dropset;renderExBlocks();toast('Dropset supprimé','info');")], 'GARDE', 'B-CC01-FIL-11'),
 ]
 
 
