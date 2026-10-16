@@ -39711,6 +39711,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      Année → Mois sans plafond de 20 ; Accueil et calendrier → Séances ; volume 14 | 28 (28 par défaut), Milo inchangé.
      Blocs B-PS01-*. Banc : tools/banc_progres_seances.js · contrôle négatif : tools/mut_progres_seances.py. */
   await require('./progres_seances.js').ecran(t, b, PORT);
+  /* 📅 SÉANCE S-01 « DATE JUSTE » (session-B, 16/10/2026) — une séance prend la date du jour où elle devient RÉELLE :
+     une séance vide d'un autre jour reçoit la date du jour au 1er exercice / à la carte « type de séance », par toutes les
+     portes (« + », balayage, app restée ouverte, rechargement) ; une séance réellement commencée garde sa date ; une date
+     choisie par la personne est gardée. Blocs B-S01-*. Banc : tools/banc_seance_date.js · contrôle négatif : tools/mut_seance_date.py. */
+  await require('./seance_date.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);
@@ -40593,6 +40598,7 @@ require('./seance_fp01.js').sourceExt(t, ROOT, fs, path);
 require('./session_integrity.js').source(t, ROOT, fs, path);
 require('./debrief_demande.js').source(t, ROOT, fs, path);
 require('./progres_seances.js').source(t, ROOT, fs, path);
+require('./seance_date.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

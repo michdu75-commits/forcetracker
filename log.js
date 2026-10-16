@@ -226,10 +226,27 @@ function _fmtWktDate(d){
   const dt=new Date(d+'T12:00:00');
   return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 }
-function _setLogDate(d){
-  if(S.wkt){S.wkt.date=d;persist();}
+function _setLogDate(d,auto){
+  if(S.wkt){S.wkt.date=d;if(!auto)_wktDateChoisie=S.wkt;persist();}
   const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
   const inp=document.getElementById('s-date');if(inp)inp.value=d;
+}
+/* 📅 S-01 « DATE JUSTE » (16/10/2026, brief de Michel, P1) — UNE SÉANCE PREND LA DATE DU JOUR OÙ ELLE DEVIENT RÉELLE.
+   L'écran Séance (et le « + » sans rien noter) laisse un objet VIDE daté du jour où il est né, et il peut dormir des
+   jours. Le « + » le renouvelle (`startWorkout`) ; le balayage, l'app restée ouverte et le rechargement, non : le 1er
+   exercice ajouté le 15/10 enregistrait une séance au 01/10 (audit Séance ft-v1255/1256, reproduit : B-S01-A1).
+   👉 Au moment où elle devient réelle (1er exercice, carte « type de séance »), une séance PAS ENCORE COMMENCÉE prend
+   la date du jour. « Pas encore commencée » = `_seanceOuverte()` faux — la seule définition (R2), aucune 2ᵉ.
+   ⛔ Une séance RÉELLEMENT commencée garde sa date (reprise J1 → J2 : J1, B-S01-N1) : c'est la garde de tête.
+   ⛔ Une date CHOISIE par la personne sur la séance vide (sélecteur, pour noter une séance passée) est gardée :
+      `_wktDateChoisie` retient l'objet dont elle a choisi la date — en MÉMOIRE seulement, aucune clé, rien de
+      persisté. Limite écrite : un rechargement entre ce choix et le 1er exercice fait reprendre la date du jour.
+   ⏭️ Hors S-01 (consigné, brief : cardio exclu) : un cardio noté sur une séance vide (`setCardioField`) n'y passe pas. */
+let _wktDateChoisie=null;
+function _dateSeanceReelle(){
+  if(typeof S==='undefined'||!S.wkt||_seanceOuverte()||_wktDateChoisie===S.wkt)return;
+  const d=today();
+  if(S.wkt.date!==d)_setLogDate(d,true);
 }
 function resetToday(){_setLogDate(today());}
 // ⚠️ « Hier » s'ancre sur today() (l'heure du téléphone) et JAMAIS sur l'heure de Greenwich :
@@ -337,6 +354,7 @@ function lancerTypeSeance(d){
     if(!modele||!modele.length) return;
     if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){ if(typeof toast==='function')toast('Une séance est déjà commencée','info'); return; }
     if(!S.wkt) S.wkt={date:today(),exs:[]};
+    _dateSeanceReelle();                       // S-01 : une séance vide d'un autre jour prend la date du jour
     S.wkt.exs=modele.map(function(x){
       const sets=[];
       for(let i=0;i<(x.sets||3);i++) sets.push({kg:0,reps:x.reps||10,type:'N',rest:x.rest||120});
@@ -3379,6 +3397,7 @@ function addExercise(name){
     return;
   }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
+  _dateSeanceReelle();                         // S-01 : une séance vide d'un autre jour prend la date du jour
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
   const _mod=[0,1,2].map(i=>({type:i===0&&prev.length?'É':'N'}));
