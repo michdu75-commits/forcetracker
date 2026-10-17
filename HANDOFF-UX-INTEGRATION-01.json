@@ -1,0 +1,75 @@
+{
+ "chantier": "UX — INTÉGRATION DES DÉCISIONS DU 17/10/2026 (D-085, décisions A→M de Michel)",
+ "pour": "Michel (validation) et toute contre-vérification indépendante",
+ "base": "claude/ux-seance-01 @ 1ab2b38f + fusion de master 4960ce72 (clone D-084, documentation seulement)",
+ "branche": "claude/ux-seance-02",
+ "head_fonctionnel": "6d9b6c90",
+ "tree_fonctionnel": "70ace6e8",
+ "passe_d031": {
+  "n1": "5cc04fd9 : 7 260 ✅ / 1 ❌ — NON VALIDE (doublon .ts-h, témoin CXL) — corrigé dans le code",
+  "n2": "6d9b6c90 : 7 261 ✅ / 0 ❌ — VALIDE, 4 conditions"
+ },
+ "statut": "QUALIFIÉ SUR BRANCHE, NON INTÉGRÉ, NON PUBLIÉ — aucun numéro de version ; STOP, validation de Michel attendue",
+ "decisions": {
+  "appliquees": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F (gardée)",
+   "G",
+   "H",
+   "I",
+   "J",
+   "K (déjà conforme, vérifié)",
+   "M"
+  ],
+  "non_construite": [
+   "L — FUTUR — Autre activité : idée produit validée comme piste à étudier, mais non implémentée dans ce chantier."
+  ]
+ },
+ "ce_qui_a_change": [
+  "jeton --sea / --sea-fill (Cobalt) dédié à la séance, teinte foncée en mode clair",
+  "Terminer (en-tête, bas, « Terminer quand même ») en Cobalt ; rouge gardé pour Vider / Abandonner / Supprimer",
+  "point bleu plein et entier sur le « + » ; point nouveauté à gauche ; « + » 44 px partout (×1,06 retiré)",
+  "_seancePrete() — « Séance prête » (affichage seul)",
+  "type de série en badge sur le numéro ; 1RM dans sa colonne ; cibles 44 px",
+  "kbd-serie : barre du bas masquée pendant la saisie d'une série, ligne active ramenée au-dessus du clavier",
+  "cartes de type sans icône",
+  "onglets « Discussion / Espace Milo » (_coachOnglet en mémoire)",
+  "courbes Progrès neutres (record or, progrès vert)",
+  "aides corrigées (point bleu, numéro de série, colonne 1RM, ligne « deux onglets »)"
+ ],
+ "ce_qui_ne_change_pas": "0 donnée persistée, 0 clé, 0 migration, 0 propriétaire, 0 appel réseau ; _seanceOuverte, finishWorkout, cycleType, moteur de repos, Milo inchangés",
+ "a_rejouer": [
+  "node tools/banc_ux_integration.js  (69/0)",
+  "python3 tools/mut_ux_integration.py  (27/27)",
+  "node tools/banc_seance_ux.js  (69/0)",
+  "node tools/banc_cc01_dropset.js  (31/0)",
+  "python3 tools/mut_cc01_dropset.py MF  (11/11)",
+  "git worktree add --detach /tmp/ft_base 1ab2b38f && ROOT_A=/tmp/ft_base ROOT_B=$PWD node tools/diff_seance_ux.js  (7/7 identiques)",
+  "bash tools/passe_valide.sh /tmp/passe.log  (7 261 / 0)"
+ ],
+ "temoins_re_vises_R30": [
+  "B-UXS-D7 : « Séance en cours » → « Séance prête » (décision M) ; garantie gardée : pas de « Terminer » quand rien n'est fait",
+  "B-UXS-E3 : pastille verte rgb(52,211,153) → point bleu rgb(124,149,255) (décision C) ; garantie gardée : point présent + libellé « Revenir à ta séance »"
+ ],
+ "non_couvert": [
+  "vrai clavier iOS (simulé par visualViewport)",
+  "env(safe-area-inset-bottom) réel (0 en Chromium)",
+  "lecteur d'écran",
+  "lisibilité du Cobalt en plein soleil"
+ ],
+ "non_applique_a_trancher": [
+  "« 🔄 Réessayer » (stockage plein) reste rouge",
+  "une baisse reste chiffrée en rouge dans Progrès",
+  "puces Super / Drop / +% inchangées",
+  "« Séance libre » avant séance garde le rouge de marque",
+  "règle d'or #11 (Guide, pop-up « Quoi de neuf ») au moment d'une publication"
+ ],
+ "residuel_mesure": [
+  "« + » de nouvelle discussion de l'en-tête de Milo coupé à 360 px — identique sur la base (préexistant)"
+ ],
+ "fichier_place": "racine du dépôt (même place que les autres HANDOFF-*.json — servi par Pages, dette connue)"
+}

@@ -1033,7 +1033,7 @@ iPhone, puis décision de publication de Michel.
 
 **Tests** : nouveau banc B-UXI (`tests/parcours/ux_integration.js`, `tools/banc_ux_integration.js`) **69 / 0** (base `1ab2b38f` : 27 / 42) ; contrôle négatif `tools/mut_ux_integration.py` **27 / 27** (M00 = 42 rouges ; M26 équivalente : 0 rouge ; arbre sain rejoué à la fin : 0) ; banc B-UXS 69 / 0 (témoins D7 et E3 re-visés sur leur garantie, R30, décisions M et C) ; CC-01 31 / 0.
 
-**Règle #17** : 0 donnée persistée · 8 fichiers applicatifs (`app.js`, `coach.js`, `index.html`, `log.js`, `screens.js`, `setup.js`, `style.css`, `tracking.js`) · +211 / −64 · retirés ou fusionnés : la table d'icônes des types, l'agrandissement du « + » sur Séance, la colonne « Type » (fusionnée dans le numéro), le 1RM logé dans le bouton du type.
+**Règle #17** : 0 donnée persistée · 8 fichiers applicatifs (`app.js`, `coach.js`, `index.html`, `log.js`, `screens.js`, `setup.js`, `style.css`, `tracking.js`) · +212 / −65 · retirés ou fusionnés : la table d'icônes des types, l'agrandissement du « + » sur Séance, la colonne « Type » (fusionnée dans le numéro), le 1RM logé dans le bouton du type.
 
 **Non appliqué (à trancher par Michel)** : « 🔄 Réessayer » (stockage plein) reste rouge (panneau d'erreur) ; une baisse reste chiffrée en rouge dans Progrès ; puces Super / Drop / +% inchangées ; « Séance libre » (avant séance) garde le rouge de marque ; Guide (captures) et pop-up « Quoi de neuf » non refaits — règle d'or #11 au moment d'une publication.
 
@@ -1041,4 +1041,6 @@ iPhone, puis décision de publication de Michel.
 
 **Passe complète n°1 (sur `5cc04fd9`) : 7 260 ✅ / 1 ❌ — NON VALIDE.** Le rouge était un vrai défaut de ce lot : `.ts-h` déclaré deux fois dans `style.css` (témoin CXL, ft-v1036 — « la 2ᵉ gagne, la 1ʳᵉ trompe le suivant »). Corrigé dans le code (une seule déclaration), le témoin n'a pas été touché ; bancs B-UXI et B-UXS rejoués 69 / 0.
 
-**À faire** : passe complète n°2 ; recette iPhone de Michel (vrai clavier, encoche, point du « + ») ; feu vert de Michel avant toute intégration.
+**Passe complète n°2 (sur `6d9b6c90`, arbre `70ace6e8`) : 7 261 ✅ / 0 ❌ — VALIDE, 4 conditions** (`tools/passe_valide.sh`). Depuis : documentation seulement (D-031). Aucun numéro de version posé (rien n'est publié).
+
+**À faire** : recette iPhone de Michel (vrai clavier, encoche, point du « + ») ; feu vert de Michel avant toute intégration ou publication.
