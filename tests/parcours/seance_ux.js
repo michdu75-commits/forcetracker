@@ -285,8 +285,11 @@ async function ecran(t, b, PORT) {
     // Préparation (exercices posés, rien de fait, pas de cardio) : pas de « Terminer » dans l'en-tête.
     const X = await ouvrir({ wkt: wkt([{ name: DC, sets: [N(100, 8), N(100, 8)] }], { startTs: undefined }) });
     await fixDate(X); await versSeance(X);
-    t('B-UXS-D7 rien de fait : l\'en-tête n\'offre pas « Terminer » (rien à enregistrer — même règle que le bas)',
-      (await parTexte(X, 'Séance en cours', '.topbar *')) >= 1 && (await parTexte(X, 'Terminer', '.topbar button')) === 0, await enteteTexte(X));
+    // ⚖️ R30 (17/10, décision M de Michel) : une séance préparée dont rien n'est fait s'appelle « Séance prête »
+    //    (présentation seule, _seanceOuverte inchangée) — le témoin gardait « Séance en cours ». La GARANTIE ne bouge pas :
+    //    l'en-tête de séance est là et n'offre pas « Terminer ».
+    t('B-UXS-D7 rien de fait : l\'en-tête (« Séance prête ») n\'offre pas « Terminer » (rien à enregistrer — même règle que le bas)',
+      (await parTexte(X, 'Séance prête', '.topbar *')) >= 1 && (await parTexte(X, 'Terminer', '.topbar button')) === 0, await enteteTexte(X));
     // ⭐ « Séance active affichée vide » : une séance OUVERTE dont le chrono n'a pas démarré (exercices posés, rien validé —
     //    l'état juste après un programme chargé) montre ses exercices, jamais l'écran « avant séance » ni une liste vide.
     const v = await X.pg.evaluate(() => { const vis = e => !!(e && e.offsetParent !== null && e.getBoundingClientRect().height > 0);
@@ -327,8 +330,10 @@ async function ecran(t, b, PORT) {
     await versAccueil(X); fabs.push(await fab(X));
     const aria1 = await X.pg.evaluate(() => document.getElementById('nb-log').getAttribute('aria-label'));
     const point1 = await X.pg.evaluate(() => { const s = getComputedStyle(document.querySelector('#nb-log .nb-plus'), '::after'); return { c: s.content, bg: s.backgroundColor, w: s.width }; });
-    t('B-UXS-E3 ⭐ séance ouverte : pastille verte sur le « + » et libellé « Revenir à ta séance » (décision ⑤, informative)',
-      point1.c !== 'none' && point1.c !== 'normal' && /rgb\(52, 211, 153\)/.test(point1.bg) && aria1 === 'Revenir à ta séance', _det({ point1, aria1 }));
+    // ⚖️ R30 (17/10, décision C de Michel) : la pastille VERTE devient un point BLEU plein (jeton Cobalt de séance, --sea).
+    //    Ce qui l'allume ne change pas (#root.seance-on, _seanceOuverte). Le témoin figeait le vert rgb(52, 211, 153).
+    t('B-UXS-E3 ⭐ séance ouverte : point bleu sur le « + » et libellé « Revenir à ta séance » (décision ⑤, informative)',
+      point1.c !== 'none' && point1.c !== 'normal' && /rgb\(124, 149, 255\)/.test(point1.bg) && aria1 === 'Revenir à ta séance', _det({ point1, aria1 }));
     await X.pg.click('#nb-log'); await X.pg.waitForTimeout(300);
     const apres = await etat(X);
     t('B-UXS-E4 ⭐ séance ouverte : le « + » ramène à LA MÊME séance — jamais une deuxième', (await X.pg.evaluate(() => window._curScreen)) === 'log'

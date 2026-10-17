@@ -457,7 +457,7 @@ const _HELP_DATA={
       {i:'💪',t:'<b>RIR — répétitions en réserve</b> : après une série de travail, le repos (en bas de l\'écran) demande « il t\'en restait combien ? ». Un tap, c\'est tout, et c\'est facultatif. <b>échec</b> = 0 en réserve — c\'est la même chose que le tag <b>X</b>. Tu le relis la fois d\'après dans « précédent » (<i>8×80·2r</i>), et Milo s\'en sert pour vérifier le cadre de ta discipline. Une série non notée n\'est <b>pas</b> comptée comme un échec. 🎚️ <b>Tu préfères le RPE ?</b> Profil → <b>Échelle d\'effort</b> : la question, la colonne « précédent » (<i>8×80·@8</i>) et Milo passent en RPE. C\'est la <b>même mesure</b> (<i>RPE = 10 − RIR</i>) — rien n\'est perdu, et tu peux revenir.'},
       {i:'🎽',t:'<b>Le repos exigé suit ta discipline</b> : l\'avertissement « repos trop court pour du lourd » ne dit plus la même chose à tout le monde. Il lit le <b>cadre de ta discipline</b> — celui que tu vois dans Profil — et le conseil cite <b>sa</b> plage (<i>3 à 5 min</i> en force athlétique). ⚠️ Il ne se relâche jamais en dessous du repère d\'origine : il resserre seulement là où ton cadre est plus exigeant.'},
       {i:'📍',t:'<b>Charge sans repère</b> : si Milo propose un poids sur un exercice que tu n\'as <b>jamais noté dans l\'app</b>, un 📍 le signale sous l\'exercice. C\'est un <b>point de départ</b>, pas une mesure — il n\'a rien dans ton historique sur lequel se caler — <b>même si tu le pratiques depuis des années ailleurs</b>. Dès ta première série notée, le message disparaît et le contrôle d\'intensité (⚡) prend le relais.'},
-      {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Appuie sur la pastille pour changer, le nom complet s\'affiche en toast.'},
+      {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. La lettre s\'affiche sur le <b>numéro</b> de la série : touche-le pour changer, le nom complet s\'affiche en toast. Le 1RM estimé a sa propre colonne.'},
       {i:'⏱️',t:'Timer adaptatif : É = 45s <b>si le palier suivant est léger</b>, <b>90s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 % (la barre affiche alors « palier lourd ») — jamais plus que ton repos de travail · N = 2:10 · X = 4min. Boutons −15s/+15s ; les presets 1:00/1:30/2:00 sont dans « Régler » (touche le temps ✎). <b>C\'est un MAXIMUM, pas un temps à attendre</b> : tu peux repartir avant, c\'est permis. Le chrono ne s\'arrête plus à zéro — il continue en +0:12, +0:45… avec « au-delà de ton repos max ». Ce n\'est pas un reproche, c\'est une information ; au-delà de 15 min il s\'arrête seul.'},
       {i:'⚡',t:'Super-séries : ⋯ → « Grouper des exercices » dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Boutons 📉 Drop / 📈 +10% / 📉 −10% pour pyramides et drop sets.'},
       {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
@@ -499,6 +499,7 @@ const _HELP_DATA={
   coach:{
     title:'🤖 Coach IA',
     tips:[
+      {i:'🗂️',t:'<b>Deux onglets en haut du Coach</b> : <b>Discussion</b> (ton échange avec Milo) et <b>Espace Milo</b> (tes raccourcis : questions toutes prêtes, analyses, ce qu\'il sait de toi). Rien n\'est effacé en passant de l\'un à l\'autre.'},
       /* ⛔ POURQUOI CETTE ENTREE EXISTE (ft-v1059) : le bouton dit ce qu'il FAIT, pas ce
          qu'il ne fait PAS. Quelqu'un peut hesiter a taper « à côté » en croyant envoyer sa
          conversation. L'aide repond a la seule question qui retient la main. Le bouton
@@ -1063,7 +1064,8 @@ function _renderHomeHero(){
 
        ⭐ Gain : **54 px + sa marge** les jours normaux, c'est-à-dire presque tous. */
     +(hasPending
-      ? '<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
+      // 🎨 D-085 (décision A de Michel, 17/10) : « Reprendre » est une action de SÉANCE → bleu séance (Cobalt), plus le rouge de marque.
+      ? '<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:var(--sea-fill);box-shadow:0 12px 28px -10px rgba(47,91,255,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
         +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
         +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button>'
       : '')
