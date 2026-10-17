@@ -1955,11 +1955,11 @@ html.ob-done #onboarding{display:none;}
 /* La discipline DÉJÀ choisie est signalée — pas mise en avant : c'est un repère, pas une
    recommandation. L'app ne décide pas à la place de la personne (R29). */
 .ts-carte.ts-actif{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5);}   /* D-085 : repère neutre (le rouge est réservé à la marque et au destructif) */
-.ts-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ts-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:22px;}   /* D-085 : hauteur gardée sans icône (cartes alignées) */
 /* Carte de carrousel (180 px) : « la tienne » · ⓘ sur la 1ʳᵉ ligne, le NOM dessous (comme la cible validée) —
    sur une seule ligne, le nom et l'étiquette se chevauchaient. L'ordre est visuel seulement (rendu inchangé).
-   D-085 : plus d'icône (texte seul) ; la 1ʳᵉ ligne garde sa hauteur pour que les cartes restent alignées. */
-.ts-h{min-height:22px;}
+   D-085 : plus d'icône (texte seul) ; la 1ʳᵉ ligne garde sa hauteur (min-height posé sur `.ts-h` ci-dessus — une
+   seule déclaration par sélecteur, témoin CXL) pour que les cartes restent alignées. */
 .ts-h .ts-tag{order:1;}
 .ts-h .ts-info{order:2;}
 .ts-h .ts-nom{order:3;flex-basis:100%;margin-top:6px;}

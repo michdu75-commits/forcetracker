@@ -1039,4 +1039,6 @@ iPhone, puis décision de publication de Michel.
 
 **Résiduel mesuré** : le « + » de nouvelle discussion de l'en-tête de Milo est coupé à 360 px — **identique sur la base** (préexistant, hors périmètre).
 
-**À faire** : passe complète D-031 ; recette iPhone de Michel (vrai clavier, encoche, point du « + ») ; feu vert de Michel avant toute intégration.
+**Passe complète n°1 (sur `5cc04fd9`) : 7 260 ✅ / 1 ❌ — NON VALIDE.** Le rouge était un vrai défaut de ce lot : `.ts-h` déclaré deux fois dans `style.css` (témoin CXL, ft-v1036 — « la 2ᵉ gagne, la 1ʳᵉ trompe le suivant »). Corrigé dans le code (une seule déclaration), le témoin n'a pas été touché ; bancs B-UXI et B-UXS rejoués 69 / 0.
+
+**À faire** : passe complète n°2 ; recette iPhone de Michel (vrai clavier, encoche, point du « + ») ; feu vert de Michel avant toute intégration.
