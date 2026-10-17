@@ -41,9 +41,82 @@
     "traductions (translations.js non chargé)"
   ],
   "a_savoir": [
-    "commentaire résiduel log.js:160 « Bouton Pause/Reprendre (affiché tant que la séance tourne) » : obsolète (le bouton ▶ n'apparaît plus qu'en pause ; la pause se met par ⋯). Non corrigé : l'arbre fonctionnel ne change plus après la passe D-031."
+    "commentaire résiduel log.js:160 « Bouton Pause/Reprendre (affiché tant que la séance tourne) » : obsolète (le bouton ▶ n'apparaît plus qu'en pause ; la pause se met par ⋯). Non corrigé : l'arbre fonctionnel ne change plus après la passe D-031.",
+    "tests/parcours/historique_cloud.js, ecran3c, témoin T3 (« pause, rechargement pendant la pause, reprise ») : il reste vert quand la pause ne se fait pas (il compare des runId). PRÉEXISTANT, mesuré identique sur master 5a29d149 (18 / 0 sous pause neutralisée). Non corrigé : hors brief.",
+    "témoins « aucune erreur de page, aucun appel Milo » (ml_a T4g, groupes_orphelins C1d) : un rouge chacun sous 4 bancs lancés en parallèle ; verts seuls et dans la passe séquentielle D-031. À ne pas lancer en parallèle pour juger."
   ],
   "note_mutations_cc01": "MF1 → MF11 sont des mutations RECONSTRUITES, équivalentes aux pertes décrites par la contre-vérification CC-01 (BUGS §78). Les définitions exactes des O1 → O14 originales ne sont ni dans le dépôt ni sur le Drive : elles ne sont PAS reproduites à l'identique.",
   "note_mutations_uxs": "tools/mut_seance_ux.py : M00 (code de master), M1 → M11, M13, M19, M18 (équivalente, attendue 0 rouge). M12, M14 → M17 retirées avec leur raison écrite dans l'outil (déjà couvertes par un autre témoin, aucune information nouvelle).",
-  "fichier_place": "HANDOFF-UX-SEANCE-01.json à la racine (convention des lots précédents ; dette connue : les HANDOFF-*.json sont servis par Pages une fois publiés)"
+  "fichier_place": "HANDOFF-UX-SEANCE-01.json à la racine (convention des lots précédents ; dette connue : les HANDOFF-*.json sont servis par Pages une fois publiés)",
+  "mutations_temoins_et_conduites_re_vises": {
+    "pourquoi": "règle d'or #17 : tout témoin réécrit doit rougir sous mutation volontaire — y compris les conduites des bancs voisins re-visées en c38146e1",
+    "comment": "copie de l'arbre (git archive), une chaîne remplacée (exactement 1 occurrence), puis le code MÊME des témoins (extrait de tests/parcours/runner.js) ou les fonctions ecran* des bancs voisins rejoués contre la copie",
+    "resultat": "témoins du runner : arbre sain 17 / 0, MR1 → MR5 : 5 / 5 rouges sur le témoin visé ; conduites : MC_FIN (porte de fin neutralisée) → rouges dans 5 bancs sur 6 (fil_coach_lot1 20, debrief_demande 7, seance_date 3, cc01_dropset 1, historique_cloud 1) et plantage de session_integrity (la passe n'aurait plus de ligne de total) ; MC_PROG (ligne « Programmes » neutralisée) → travail_existant 13 rouges, dropset_programme et groupes_orphelins plantent (même effet sur la passe) ; MC_PAUSE (ligne « Mettre en pause » neutralisée) → historique_cloud ecran3b 2 rouges, mais **ecran3c 0 rouge** : son témoin T3 vérifie que l'identifiant de séance ne change pas, ce qui reste vrai SANS pause — **préexistant, mesuré identique sur master** (18 / 0 ; la même mutation y fait rougir ecran3b 9 / 2, elle casse donc bien la pause), non corrigé (hors brief). Observation : deux témoins « aucune erreur de page, aucun appel Milo » (ml_a T4g le 16/10, groupes_orphelins C1d le 17/10) ont rougi une fois sous 4 bancs en parallèle ; seuls ils sont verts (C1d 23 / 0 deux fois) et la passe séquentielle D-031 est verte — sensibles à la charge, détail non capturé",
+    "mutations": [
+      {
+        "id": "MR1",
+        "temoin": "runner CXXXI — « les 5 types sont tous là, en carrousel lisible »",
+        "fichier": "style.css",
+        "avant": ".ts-liste{display:flex;flex-direction:row;",
+        "apres": ".ts-liste{display:flex;flex-direction:column;",
+        "attendu": "rouge (defile = 0)"
+      },
+      {
+        "id": "MR2",
+        "temoin": "runner CXIX re-visé — « l'écran Séance nomme ses VRAIS boutons »",
+        "fichier": "log.js",
+        "avant": "(fin du fichier)",
+        "apres": "function _msgVide(){ return '<div class=\"empty\">Choisis par quoi tu commences 👇</div>'; }",
+        "attendu": "rouge (le message d'écran vide revient)"
+      },
+      {
+        "id": "MR3",
+        "temoin": "runner CXIX re-visé",
+        "fichier": "index.html",
+        "avant": "onclick=\"openExPicker()\"><span class=\"la-cta1-ic\">",
+        "apres": "onclick=\"startWorkout()\"><span class=\"la-cta1-ic\">",
+        "attendu": "rouge (« Séance libre » perd son propriétaire)"
+      },
+      {
+        "id": "MR4",
+        "temoin": "runner CXIX re-visé",
+        "fichier": "index.html",
+        "avant": "</body>",
+        "apres": "<button class=\"btn\" onclick=\"openExPicker()\">+ Créer ma séance</button></body>",
+        "attendu": "rouge (l'ancien libellé revient)"
+      },
+      {
+        "id": "MR5",
+        "temoin": "runner CXXXVIII à 390×844 — « opaque ≥ 0,9 »",
+        "fichier": "index.html",
+        "avant": "position:sticky;top:0;z-index:26;background:rgba(12,13,17,.96);",
+        "apres": "position:sticky;top:0;z-index:26;background:rgba(12,13,17,.6);",
+        "attendu": "rouge (alpha 0,6)"
+      },
+      {
+        "id": "MC_FIN",
+        "temoin": "conduites de fin re-visées (c38146e1) : fil_coach_lot1, session_integrity, debrief_demande, seance_date, cc01_dropset, historique_cloud",
+        "fichier": "log.js",
+        "avant": "function terminerSeance(",
+        "apres": "function terminerSeance(){ return; }\nfunction _terminerSeance_neutralisee(",
+        "attendu": "rouge dans chaque banc (la séance n'est plus terminée)"
+      },
+      {
+        "id": "MC_PAUSE",
+        "temoin": "conduite « pause par le menu ⋯ » (historique_cloud ecran3b / ecran3c)",
+        "fichier": "log.js",
+        "avant": "'closeWktMenu();toggleWktPause()'",
+        "apres": "'closeWktMenu()'",
+        "attendu": "rouge (la ligne du menu ne met plus en pause)"
+      },
+      {
+        "id": "MC_PROG",
+        "temoin": "conduite « Programmes par le menu ⋯ » (dropset_programme, groupes_orphelins, travail_existant)",
+        "fichier": "log.js",
+        "avant": "'closeWktMenu();openProgModal()'",
+        "apres": "'closeWktMenu()'",
+        "attendu": "rouge (la ligne du menu n'ouvre plus les programmes)"
+      }
+    ]
+  }
 }
