@@ -1,7 +1,7 @@
 {
   "ref": "claude/ux-seance-01",
   "sha": "1ab2b38f8f30c09c1ddd787ddfe602a8e953f888",
-  "genere_le": "2026-10-17 07:46 UTC",
+  "genere_le": "2026-10-17 08:00 UTC",
   "fichiers": [
     "index.html",
     "style.css",
@@ -18,5 +18,7 @@
     "coach.js",
     "food-health.js",
     "app.js"
-  ]
+  ],
+  "banc_isolation": "22 OK / 0 rouge",
+  "empreinte": "5aef208cd26bc2dada2dc17bfcbeb8865cb022079a13bd03c8e10a37e432e0fe"
 }

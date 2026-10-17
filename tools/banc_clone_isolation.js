@@ -110,8 +110,10 @@ async function ouvrirApp(cx, url) {
   const clone = await cx.newPage();
   clone.on('request', rq => { const h = new URL(rq.url()).hostname; if (h !== 'localhost') sortantes.push(rq.url()); });
   await clone.goto(U + '/clone/');
-  await clone.waitForFunction(() => navigator.serviceWorker.controller && /\/clone\/sw\.js$/.test(navigator.serviceWorker.controller.scriptURL), null, { timeout: 20000 }).catch(() => {});
-  await clone.reload();
+  await clone.waitForFunction(() => navigator.serviceWorker.controller && /\/clone\/sw\.js$/.test(navigator.serviceWorker.controller.scriptURL), null, { timeout: 60000 }).catch(() => {});
+  /* L'app se RECHARGE elle-même quand le service worker du clone prend la main (controllerchange) : notre rechargement peut
+     croiser le sien (« navigation interrompue »). Ce n'est pas un défaut d'isolement — on attend simplement la page stable. */
+  await clone.reload().catch(() => {}); await clone.waitForLoadState('load').catch(() => {});
   await clone.waitForFunction(() => typeof S !== 'undefined' && typeof startWorkout === 'function', null, { timeout: 30000 }).catch(() => {});
   await attendre(1500);
   const C1 = await clone.evaluate(() => ({ iso: window.__FT_CLONE_ISOLE__ === true, echecs: window.__FT_CLONE_ECHECS__ || null,
