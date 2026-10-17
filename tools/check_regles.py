@@ -1059,3 +1059,31 @@ except SystemExit:
 except Exception as _e19:
     print("⚠️ contrôle « prompt de référence » NON EXÉCUTÉ (%s: %s)" % (type(_e19).__name__, _e19))
     print("   → ce n'est pas un feu vert : la garantie n'a pas été vérifiée du tout.")
+
+# ── 🧪 CLONE DE TEST (D-084, décision de Michel du 17/10/2026) : EN LIGNE SEULEMENT S'IL A ÉTÉ VÉRIFIÉ TEL QUEL ──
+#    Le clone partage le domaine de la prod : seul son isolement (tools/clone_shim.js) le sépare des vraies données.
+#    `tools/clone_build.py` ne pose son tampon (empreinte de clone/ + total du banc d'isolement) QUE si
+#    `tools/banc_clone_isolation.js` est vert. Ici : si clone/ existe, son contenu doit être EXACTEMENT celui qui a été
+#    vérifié. Un fichier du clone retouché à la main, ou un clone régénéré sans le banc, bloque la livraison.
+#    ⛔ Condition de Michel : « si l'isolation du stockage n'est pas démontrée proprement, STOP avant mise en ligne ».
+try:
+    import hashlib as _h84, json as _j84
+    _c84 = racine / 'clone'
+    if _c84.exists():
+        _src84 = _c84 / 'CLONE-SOURCE.json'
+        _t84 = _j84.loads(_src84.read_text(encoding='utf-8')) if _src84.exists() else {}
+        _e84 = _h84.sha256()
+        for _f84 in sorted(p for p in _c84.iterdir() if p.is_file() and p.name != 'CLONE-SOURCE.json'):
+            _e84.update(_f84.name.encode() + b'\0' + _f84.read_bytes() + b'\0')
+        _verifie84 = re.match(r'^\d+ OK / 0 rouge$', str(_t84.get('banc_isolation', '')))
+        if _t84.get('empreinte') != _e84.hexdigest() or not _verifie84:
+            print("❌ clone de test : clone/ n'est pas celui qui a été VÉRIFIÉ (empreinte ou banc d'isolement absent).")
+            print("   → régénérer : python3 tools/clone_build.py  (il relance le banc et ne tamponne que s'il est vert)")
+            sys.exit(1)
+        print("✅ clone de test : isolement vérifié (%s), contenu inchangé depuis — source %s @ %s"
+              % (_t84['banc_isolation'], _t84.get('ref'), str(_t84.get('sha'))[:8]))
+except SystemExit:
+    raise
+except Exception as _e84x:
+    print("❌ contrôle « clone de test » NON EXÉCUTÉ (%s: %s) — un clone non vérifié ne part pas en ligne." % (type(_e84x).__name__, _e84x))
+    sys.exit(1)

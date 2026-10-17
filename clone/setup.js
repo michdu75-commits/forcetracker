@@ -1,0 +1,4414 @@
+/* 🧪 CLONE DE TEST — garde posée par tools/clone_build.py : sans isolement VÉRIFIÉ, ce script ne démarre pas. */
+if(!window.__FT_CLONE_ISOLE__){try{if(window.__FT_CLONE__){document.documentElement.innerHTML='<body style="font:16px system-ui,sans-serif;padding:24px;background:#111;color:#fff"><h3>Clone de test : isolation non garantie sur ce navigateur</h3><p>'+String(window.__FT_CLONE_ECHECS__||'')+'</p><p>Le clone ne démarre pas : tes vraies données ne sont pas touchées.</p></body>';}else{document.documentElement.innerHTML='';location.replace('../');}}catch(e){}throw new Error('clone : isolation absente');}
+/*!
+ * Force Tracker — © 2026 Michel (michdu75@gmail.com). Tous droits réservés.
+ * Code propriétaire. Toute reproduction, copie, distribution ou réutilisation,
+ * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
+ * All Rights Reserved — unauthorized copying or reuse is prohibited.
+ */
+// ─── PROGRESS SCREEN ─────────────────────────────────────────
+let _progEx=BIG4[0];
+let _progRange='all';   // vue par période du graphe 1RM (retour GPT) : all/3m/6m/1y
+let _ttSid=null;        // id de la séance du point sélectionné (→ « Voir cette séance »)
+const _PROG_RANGES=[['3m','3 mois',90],['6m','6 mois',180],['1y','1 an',365],['all','Tout',0]];
+function setProgRange(r){_progRange=r;renderChart();}
+function openChartSession(){if(_ttSid)openSessDetail(_ttSid);} // tap point → ouvre le détail de cette séance
+
+function _renderProgChips(chips){
+  const exos=S.progExos||BIG4;
+  chips.innerHTML=exos.map((n,i)=>`<button onclick="selectProgEx('${_escAttrJs(n)}',${i})" id="pchip-${i}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</button>`).join('')
+  +`<button onclick="openProgExoEditor()" title="Personnaliser" style="flex-shrink:0;width:36px;border-radius:14px;border:none;background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent;">✏️</button>`;
+}
+
+/* 🔭 BRIQUE 8 — « SYNTHÈSE » : LES CONSTANTES (27/08/2026, ft-v1041)
+   Michel : *« la brique 8 alors »*.
+
+   ⭐⭐ LA FRONTIÈRE AVEC LA BRIQUE 7 EST ÉCRITE DANS LA VISION, ET ELLE DÉCIDE DE TOUT :
+     · la **7** répond à *« que s'est-il passé ? »* — relier les événements (le souvenir, ft-v1039) ;
+     · la **8** répond à ***« qu'est-ce que cette histoire m'apprend ? »*** — prendre du recul.
+   Tournures autorisées par la Vision : *« ton historique semble montrer que… »*, *« une constante
+   apparaît… »*. ⛔⛔ **JAMAIS « tu devrais »** — sinon on trahit la Vision, et la brique devient
+   un coach qui prescrit au lieu d'un miroir (P14).
+
+   ⛔ UNE CONSTANTE EST UN FAIT COMPTÉ, PAS UN JUGEMENT. « Le haut du corps revient 3 fois plus
+   souvent que le bas » se vérifie ; « tu négliges tes jambes » est un reproche, et personne n'a
+   demandé un avis. La personne tire sa propre conclusion — c'est tout l'objet de la brique.
+
+   ⛔ CHAQUE LIGNE NOMME SA FENÊTRE. Sans ça, deux constantes calculées sur des périodes
+   différentes se contredisent à l'écran sans que rien ne le dise — exactement le défaut de
+   ft-v1027, qu'on ne refait pas.
+
+   ⛔ ET SOUS LE SEUIL, ELLE DIT QU'ELLE NE SAIT PAS ENCORE — elle ne se tait pas : un cadre vide
+   se lit comme un chargement qui n'a pas abouti (leçon de ft-v1021). */
+const SYNTH_MIN_SEANCES = 8;    // en deçà, « une constante » n'a aucun sens : c'est du hasard
+const SYNTH_MIN_JOURS   = 21;   // …et il faut aussi de la DURÉE, pas 8 séances en une semaine
+/* ⛔ Le plancher d'une RÉGION : en dessous, ce n'est pas une constante, c'est du bruit.
+   Trouvé sur une vidéo de Michel — « Le tronc domine 1 fois » se lisait comme un fait notable. */
+const SYNTH_MIN_REGION  = 3;
+
+/* ⛔ UN SEUL PROPRIÉTAIRE de « que montre ton historique ? » — la carte et un futur message de
+   Milo doivent lire la même chose, sinon ils se contrediront un jour (R2). */
+function _synthConstantes(refTs){
+  const out={pret:false, nSeances:0, nJours:0, lignes:[]};
+  try{
+    const auj=(typeof today==='function')?today(refTs):null;
+    const sess=(S.sessions||[]).filter(s=>s&&s.date&&(!auj||s.date<=auj));
+    out.nSeances=sess.length;
+    if(!sess.length) return out;
+    const dates=sess.map(s=>s.date).sort();
+    const jours=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+    out.nJours=jours(dates[0], dates[dates.length-1])+1;
+    if(out.nSeances<SYNTH_MIN_SEANCES || out.nJours<SYNTH_MIN_JOURS) return out;
+    out.pret=true;
+    const sem=out.nJours/7;
+
+    /* ① LE RYTHME RÉEL — pas celui qu'on croit tenir. C'est un fait, sans cible : on ne compare
+       à AUCUNE norme (« il faudrait 3 fois par semaine » serait une prescription déguisée). */
+    const parSem=Math.round((out.nSeances/sem)*10)/10;
+    out.lignes.push({
+      cle:'rythme',
+      txt:'Tu t\'entraînes <b>'+String(parSem).replace('.',',')+' fois par semaine</b> en moyenne.',
+      fen:'sur '+out.nSeances+' séances étalées sur '+out.nJours+' jours'
+    });
+
+    /* ② CE QUI REVIENT LE PLUS — l'exercice le plus fidèle de son histoire. */
+    const cpt={};
+    sess.forEach(s=>{
+      const vus={};
+      (s.exs||s.exercises||[]).forEach(e=>{ const n=e&&e.name; if(n&&!vus[n]){vus[n]=1;cpt[n]=(cpt[n]||0)+1;} });
+    });
+    const top=Object.keys(cpt).sort((a,b)=>cpt[b]-cpt[a])[0];
+    /* ⛔ On ne sort la constante que si elle EN EST une : un exercice vu 2 fois sur 20 séances
+       n'est pas « ce qui revient le plus », c'est du bruit. */
+    if(top && cpt[top]>=3 && cpt[top]/out.nSeances>=0.3){
+      out.lignes.push({
+        cle:'fidele',
+        txt:'<b>'+top+'</b> revient dans <b>'+cpt[top]+' de tes '+out.nSeances+' séances</b>.',
+        fen:'sur tout ton historique'
+      });
+    }
+
+    /* ③ L'ÉQUILIBRE — réutilise `_calSessMix`, qui range déjà en haut/dos/bas/tronc via
+       `_mscScores` (R13/R2 : on ne recrée pas une 2ᵉ façon de classer un exercice). */
+    if(typeof _calSessMix==='function'){
+      const reg={haut:0,dos:0,bas:0,tronc:0}; let n=0;
+      /* ⚠️ LA CLÉ EST `reg`, PAS `region` — vérifié dans `_calSessMix` (elle rend `{reg, pc}`).
+         Mon 1er jet lisait `m.region` : la constante d'équilibre ne sortait JAMAIS, en silence. */
+      sess.forEach(s=>{ const m=_calSessMix(s); const r=m&&m.reg;
+        if(r&&reg[r]!==undefined){reg[r]++;n++;} });
+      if(n>=SYNTH_MIN_SEANCES){
+        const LBL={haut:'le haut du corps',dos:'le dos',bas:'le bas du corps',tronc:'le tronc'};
+        const cles=Object.keys(reg).sort((a,b)=>reg[b]-reg[a]);
+        const fort=cles[0], faible=cles[cles.length-1];
+        if(reg[fort]>=2*Math.max(1,reg[faible]) && reg[fort]>=3){
+          /* ⚠️⚠️ ① DEUX DÉNOMINATEURS QUI SE CONTREDISAIENT — TROUVÉ SUR UNE VIDÉO DE MICHEL
+             (28/08, ft-v1047). La carte annonçait « sur 37 séances étalées sur 74 jours » puis
+             « 11 sur 27 » : **37 ≠ 27, et rien ne le disait**. La cause est réelle et mesurée —
+             `_calSessMix` ne sait pas classer toutes les séances (un exercice hors catalogue ne
+             rend aucune région), donc l'équilibre porte sur un sous-ensemble.
+             👉 C'est **exactement le défaut de ft-v1027**, refait par moi. Le correctif est le
+             même : la ligne NOMME sa fenêtre, et les deux nombres apparaissent ENSEMBLE pour
+             qu'ils ne puissent plus se contredire en silence. ⛔ On ne « répare » PAS en
+             comptant sur 37 : les 10 non classées deviendraient des séances « non dominées par
+             le haut », ce qui serait un fait faux (R29). */
+          const fen=(n<out.nSeances)
+            ? 'd\'après la région dominante de '+n+' de tes '+out.nSeances+' séances (les autres ne sont pas classables)'
+            : 'd\'après la région dominante de chaque séance';
+          /* ⚠️ ② « LE PLUS SOUVENT DOMINÉES » SUR-AFFIRMAIT. Mesuré sur son écran : 11/27 = 41 %.
+             C'est bien le MODE, mais la phrase se lit « la majorité du temps » — et 41 % n'est pas
+             une majorité. On dit donc ce qu'on mesure vraiment : *la région la plus fréquente*,
+             avec ses deux nombres. *Une mesure juste peut produire une phrase fausse* (ft-v1035). */
+          let txt='Ta région dominante la plus fréquente est <b>'+LBL[fort]+'</b> — '
+                 +reg[fort]+' séances sur '+n+'.';
+          /* ⚠️ ③ « LE TRONC DOMINE 1 FOIS » N'EST PAS UNE CONSTANTE, C'EST DU BRUIT. La seconde
+             moitié ne sort donc que si la région la moins fréquente atteint le MÊME plancher que
+             la première (3). En dessous, on se tait : signaler une occurrence unique fabrique
+             une régularité à partir de rien, ce que le seuil de cette brique existe pour éviter. */
+          const faibles=cles.filter(k=>reg[k]>=SYNTH_MIN_REGION && k!==fort);
+          const bas=faibles.length?faibles[faibles.length-1]:null;
+          if(bas) txt+=' '+LBL[bas].charAt(0).toUpperCase()+LBL[bas].slice(1)+' domine <b>'+reg[bas]+' fois</b>.';
+          out.lignes.push({cle:'equilibre', txt:txt, fen:fen});
+        }
+      }
+    }
+  }catch(e){ /* jamais bloquant : une synthèse est un plus, pas une fonctionnalité */ }
+  return out;
+}
+
+/* ⛔ LE RENDU N'INVENTE RIEN : il met en forme ce que `_synthConstantes` a compté, et il AFFICHE
+   la fenêtre de chaque ligne. Aucun verbe de prescription ici — un témoin le vérifie. */
+function _renderSynthese(){
+  const el=document.getElementById('prog-synth'); if(!el) return;
+  const c=(typeof _synthConstantes==='function')?_synthConstantes():null;
+  if(!c || !c.nSeances){ el.innerHTML=''; return; }   // aucune séance : la section n'existe pas
+  /* ⛔ PLUS DE TITRE NI DE CARTE ICI (ft-v1066) : depuis que la section vit dans un
+     `<details class="acc">`, l'accordéon porte DÉJÀ le titre et l'encadré. Les répéter donnait
+     « Ce que ton histoire montre » deux fois de suite, dans deux cadres emboîtés — trouvé à la
+     capture, invisible à toute mesure de chaîne. */
+  const tete='';
+  if(!c.pret || !c.lignes.length){
+    /* ⛔ ELLE DIT QU'ELLE NE SAIT PAS ENCORE, elle ne se tait pas : un cadre vide se lit comme un
+       chargement qui a échoué, et un silence laisserait croire qu'il n'y a rien à apprendre. */
+    el.innerHTML='<div class="synth-card">'+tete
+      +'<div class="synth-vide">Pas encore de quoi dégager une constante — il faut au moins '
+      +SYNTH_MIN_SEANCES+' séances sur '+SYNTH_MIN_JOURS+' jours. '
+      +'Tu en es à <b>'+c.nSeances+'</b> sur '+c.nJours+' jours.</div></div>';
+    return;
+  }
+  el.innerHTML='<div class="synth-card">'+tete
+    +c.lignes.map(l=>'<div class="synth-l"><div class="synth-txt">'+l.txt+'</div>'
+       +'<div class="synth-fen">'+l.fen+'</div></div>').join('')
+    /* ⭐ LA PHRASE QUI DIT CE QU'EST CETTE SECTION — et ce qu'elle n'est pas. Sans elle, une
+       liste de faits se lit comme un bulletin de notes. */
+    +'<div class="synth-pied">Des faits tirés de ton historique — à toi d\'en tirer ce que tu veux.</div>'
+    +'</div>';
+}
+
+/* 📊 CE QUE TA SEMAINE A TRAVAILLÉ (28/08/2026, ft-v1045)
+   Le pendant visible de `_volumeParMuscle` : ce qu'on envoie à Milo, la personne doit pouvoir le
+   voir. *Un calcul qui change en silence est indiscernable d'un bug* (la leçon de ft-v1028).
+
+   ⛔⛔ AUCUNE CIBLE À L'ÉCRAN, ET C'EST LA DÉCISION CENTRALE DE CETTE VERSION.
+   `DISC_CADRE.volume` dit « 10 à 20 séries par groupe et par semaine » — mais **un mercredi, tout
+   le monde est sous son cadre**. Afficher « Pectoraux 6 · cadre 10-20 » se lit comme un déficit
+   alors que la semaine n'est pas finie : c'est un **reproche sur une période inachevée**, le défaut
+   exact refusé en ft-v1022 (le débrief) et en ft-v1029 (« ce qu'il te reste » le soir).
+   👉 L'écran montre des **faits** ; **Milo** reçoit les deux côtés — le compte ET le cadre — et lui
+   sait quel jour on est, donc il peut dire quelque chose d'utile sans se tromper. *C'est la
+   frontière `ARCHITECTURE-CERVEAU-CERVELET` : le code compte, Milo juge.*
+
+   ⛔ ET RIEN NE S'AFFICHE S'IL N'Y A RIEN À COMPTER. Une section qui annoncerait « aucune séance
+   ces 7 derniers jours » ne serait pas une information, ce serait un constat sur la personne — et
+   personne n'a demandé d'avis (R29/R24). Elle ne prend alors pas un pixel.
+   ⚠️ Différence assumée avec la synthèse juste au-dessus, qui, elle, DIT qu'elle ne sait pas
+   encore : son seuil parle de **validité statistique**, celui-ci parlerait de **la semaine de
+   quelqu'un**. Ce n'est pas la même chose, donc le silence n'est pas le même.
+
+   ⛔ LA LISTE EST BORNÉE (R19/R25) : 22 groupes affichés en entier, c'est un tableur, pas une
+   information — 8 lignes puis « et N autres ». */
+const VOL_LIGNES_MAX = 8;
+/* 🗂️ PROGRES-SEANCES-01 (décision de Michel, 14/10/2026) — 14 jours | 28 jours, 28 PAR DÉFAUT.
+   ⛔ En mémoire seulement : aucune clé de stockage pour retenir le choix (il revient à 28 au
+   prochain lancement — décision : « 28 par défaut »). ⛔ Ce choix ne touche QUE l'écran : Milo
+   garde sa fenêtre de 14 jours (`_ctxVolumeMuscles`, coach.js), et ce n'est pas silencieux —
+   c'est écrit là-bas, dans `_volumeParMuscle` (log.js) et dans le rapport du lot. */
+let _volJours=28;
+function choisirVolumeJours(j){ if(typeof VOL_PERIODES_JOURS==='undefined'||VOL_PERIODES_JOURS.indexOf(j)<0) return; _volJours=j; _renderVolumeSemaine(); }
+function _renderVolumeSemaine(){
+  const el=document.getElementById('prog-volume'); if(!el) return;
+  // ⚠️ Le sous-titre de l'accordéon nomme la période MONTRÉE (la leçon de ft-v1057 : un titre suit sa fenêtre).
+  const sous=document.getElementById('prog-volume-sous'); if(sous) sous.textContent='Tes séries par muscle, sur '+_volJours+' jours';
+  const v=(typeof _volumeParMuscle==='function')?_volumeParMuscle(undefined,_volJours):null;
+  /* ⭐ Le choix de période reste joignable même si la période choisie est vide : sans ça, passer à
+     14 jours après une semaine sans séance ferait disparaître la carte ET le bouton pour revenir. */
+  const choix='<div style="display:flex;gap:6px;margin-bottom:10px;">'
+    +[14,28].map(j=>'<button class="wrange-chip'+(_volJours===j?' active':'')+'" data-vol-jours="'+j+'" aria-pressed="'+(_volJours===j)+'" onclick="choisirVolumeJours('+j+')">'+j+' jours</button>').join('')+'</div>';
+  if(!v || !v.series || !v.liste.length){                             // ⛔ rien à compter → rien
+    const large=(_volJours!==28&&typeof _volumeParMuscle==='function')?_volumeParMuscle(undefined,28):null;
+    el.innerHTML=(large&&large.series&&large.liste.length)
+      ? '<div class="vol-card">'+choix+'<div class="vol-fen">Aucune série de travail comptée sur '+_volJours+' jours.</div></div>' : '';
+    return;
+  }
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const jour=d=>{ try{ const x=new Date(d+'T12:00:00');
+      return x.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }catch(e){ return d; } };
+  const haut=v.liste[0].series||1;
+  const vues=v.liste.slice(0,VOL_LIGNES_MAX), reste=v.liste.length-vues.length;
+  /* ⭐ « 6 » plutôt que « 6,0 », et la virgule française plutôt que le point (ft-v1057).
+     Un « ,0 » sur une série entière donne l'air d'une mesure de laboratoire là où on a juste
+     divisé par deux — et c'est la moitié des lignes qui en porterait un. */
+  const nb=x=>(Math.round(x)===x)?String(x):String(x).replace('.',',');
+  el.innerHTML='<div class="vol-card">'+choix
+    /* ⚠️ LE TITRE A DÛ SUIVRE LA FENÊTRE (ft-v1057). Il disait « ce que TA SEMAINE a travaillé »
+       au-dessus de chiffres désormais calculés sur DEUX semaines : un titre qui nomme une période
+       que le calcul n'emploie plus est exactement le motif que ce projet passe son temps à
+       rattraper — un changement appliqué d'un seul côté. */
+    /* ⛔ Idem : le titre vit dans le `<summary>` de l'accordéon (ft-v1066). */
+    +vues.map(m=>'<div class="vol-l">'
+        +'<div class="vol-nom">'+esc(m.label)+'</div>'
+        /* ⭐ La barre est une aide à la LECTURE (elle range à l'œil), pas une jauge vers une
+           cible : elle est relative au plus travaillé de la fenêtre, et rien d'autre.
+           ⛔ Elle reste calculée sur le BRUT : diviser les deux termes par le même nombre de
+           semaines donnerait exactement la même barre, avec un arrondi en plus. */
+        +'<div class="vol-bar"><i style="width:'+Math.round(100*m.series/haut)+'%"></i></div>'
+        +'<div class="vol-n">'+nb(m.parSem)+'</div></div>').join('')
+    +(reste>0?'<div class="vol-plus">et '+reste+' autre'+(reste>1?'s':'')+'</div>':'')
+    /* ⛔⛔ LA FENÊTRE SE NOMME, ET LE NOMBRE DE SÉANCES AVEC — c'est le garde-fou de la moyenne.
+       Une moyenne hebdomadaire calculée sur 14 jours NOIE une semaine à zéro : « 5 séances »
+       à côté dit ce que la moyenne, elle, ne peut pas dire. Sans ce nombre, deux personnes très
+       différentes afficheraient la même ligne (le défaut de ft-v1027, sous une autre forme). */
+    +'<div class="vol-fen">Moyenne par semaine, sur '+v.jours+' jours ('
+      +esc(jour(v.depuis))+' → '+esc(jour(v.jusqu))+') · '+v.seances+' séance'+(v.seances>1?'s':'')+'</div>'
+    /* ⛔ LE CHOIX DE COMPTAGE RESTE DIT, MAIS EN UNE LIGNE (ft-v1047, R25 : la carte annonce,
+       l'aide explique). Sa raison d'être tient — quelqu'un qui recompte à la main doit retrouver
+       le même nombre — donc on ne le SUPPRIME pas ; l'exemple du développé couché, lui, vit
+       désormais dans l'aide « ? » de l'onglet et dans l'aide détaillée, où il était déjà. */
+    +'<div class="vol-pied">Comptées sur le <b>muscle principal</b> de chaque exercice.'
+    /* ⛔ LE SOUS-COMPTAGE EST DIT, JAMAIS TU : un exercice dont l'app ne connaît pas les muscles
+       (nom ambigu, exercice perso sans muscles cochés) ne peut créditer personne. Le passer sous
+       silence donnerait un total plus petit que la réalité, présenté comme un fait (R29). */
+    +(v.nonRattachees>0?' ⚠️ <b>'+v.nonRattachees+' série'+(v.nonRattachees>1?'s':'')+'</b> ne '+(v.nonRattachees>1?'sont':'est')+' rattachée'+(v.nonRattachees>1?'s':'')+' à aucun muscle : l\'app ne connaît pas cet exercice. Coche ses muscles pour qu\'il compte.':'')
+    +'</div>'
+    +'</div>';
+}
+
+/* 📤 EXPORTER SON HISTORIQUE — EN CSV ET EN PDF (28/08/2026, ft-v1048)
+   Demande de Michel sur sa vidéo : *« pense que l'on peut aussi exporter l'historique des
+   séances »* — formats choisis par lui.
+
+   ⚠️⚠️ R23 D'ABORD, ET ÇA A CHANGÉ LE TRAVAIL : un export **existe déjà** (Menu → Exporter mes
+   données → « mes séances seulement », `lancerExportSeances`). J'ai failli le reconstruire.
+   **Mais il sort du JSON** — bon pour une machine, illisible pour un humain, inouvrable dans un
+   tableur. *Le trou n'était pas l'export, c'était le FORMAT.*
+   ⛔ L'export JSON RESTE où il est : sauvegarder ses données et regarder son historique sont deux
+   besoins différents, et il porte des garanties (liste blanche, aucune donnée de santé) qu'on ne
+   duplique pas.
+
+   ⛔⛔ UN SEUL PRODUCTEUR DE LIGNES POUR LES DEUX FORMATS (R2). Le CSV et le PDF lisent
+   `_histoLignes()`. Deux producteurs finiraient par ne pas dire la même chose du même historique,
+   et on ne saurait pas lequel croire — c'est exactement le défaut que ft-v1047 vient de corriger
+   deux cartes plus haut.
+
+   ⛔ MÊMES COLONNES QUE L'ONGLET `Sessions` DU GOOGLE SHEET, qui existe côté serveur depuis
+   toujours (`date · exercise · set_num · type · kg · reps · volume`). On n'invente pas un 2ᵉ
+   vocabulaire pour la même chose (R2/R33) ; on ajoute seulement ce que le Sheet n'a pas : le NOM
+   de la séance et le RIR.
+
+   ⛔⛔ ET AUCUNE DONNÉE DE SANTÉ N'Y ENTRE — même règle que l'export restreint : pas de poids de
+   corps, pas d'âge, pas de sexe, pas d'e-mail. Ce fichier part par mail ou dans un tableur
+   partagé ; il ne doit contenir que de l'entraînement. */
+const HISTO_COLONNES = ['date','seance','exercise','set_num','type','kg','reps','rir','volume'];
+/* 🛡️ SESSION-INTEGRITY-01 / D-044 (Michel) — LES DÉBRIEFS MILO SONT UN CHOIX, JAMAIS IMPOSÉS.
+   « Sans » : le fichier est EXACTEMENT celui d'avant (mêmes colonnes, mêmes lignes) — aucun texte de
+   débrief. « Avec » : deux colonnes de plus — `seance_id` sur chaque ligne (deux séances le même jour
+   ne se confondent plus) et `debrief_milo`, porté par UNE ligne `type = DEBRIEF` par séance débriefée,
+   juste après ses séries. Le format « une ligne par chose » reste celui du cardio (R13). */
+const HISTO_COLONNES_DEBRIEF = HISTO_COLONNES.concat(['seance_id','debrief_milo']);
+let _histoAvecDebriefs = false;   // le choix de la fenêtre d'export — remis à « sans » à chaque ouverture
+/* ⛔⛔ L'ORDRE APPARTIENT À CE PRODUCTEUR, ET IL VA DU PLUS RÉCENT AU PLUS ANCIEN (31/08/2026).
+   Michel : *« la dernière séance n'apparaît pas dans mon export »*. Elle Y ÉTAIT — **tout en bas**,
+   parce que le CSV triait du plus ANCIEN au plus récent, quand l'écran Historique **et** le PDF
+   vont du plus récent au plus ancien. 👉 ***Une donnée qu'on doit chercher à l'autre bout du
+   fichier se lit comme une donnée absente*** — et c'est bien ce qu'il a lu.
+   ⛔ L'ordre est décidé ICI, une fois (R2) : le CSV et le PDF le SUIVENT au lieu de le refaire
+   chacun de son côté — deux tris finissent par ne plus donner le même fichier.
+   ⛔ Et le tri ne porte que sur les SÉANCES : à l'intérieur d'une séance, les séries restent
+   1, 2, 3 — c'est l'ordre dans lequel elles ont été faites, il ne s'inverse pas. */
+function _histoLignes(avecDebriefs){
+  const out=[];
+  try{
+    (S.sessions||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).forEach(s=>{
+      if(!s||!s.date) return;
+      const nom=s.name||s.label||'';
+      const sid=(typeof _dbfCle==='function')?_dbfCle(s):String(s.id||s.ts||s.date);
+      const _n0=out.length;
+      /* 🏃 LE CARDIO ENTRE DANS L'EXPORT (04/09/2026). Michel, en regardant son fichier :
+         *« il faut que le cardio soit sur l'export de l'historique »*.
+         ⛔⛔ IL N'Y ÉTAIT PAS DU TOUT, et pas par oubli de filtrage : ce producteur ne parcourt
+         que des SÉRIES, or un cardio n'en a aucune — il vit dans `cardioAvant` / `cardio`. Donc
+         **aucun cardio n'a jamais pu apparaître**, ni sur une séance de muscu, ni seule. Sur son
+         historique réel : **27 cardios enregistrés, 0 exporté.**
+         ⭐ UNE LIGNE PAR CARDIO, avec `type = CARDIO` — le format « une ligne par série » n'est
+         pas cassé, le filtre d'un tableur continue de marcher, et rien d'autre ne bouge (R13).
+         La DURÉE va dans `reps` (c'est la colonne du « combien »), et `kg`/`volume` restent à 0 :
+         *on n'invente pas un tonnage pour un tapis.*
+         ⛔ Le libellé lit `_cardioClair` (log.js), le propriétaire unique du nom d'un cardio —
+         le recopier ici, c'est se retrouver un jour avec deux orthographes du même tapis (R2).
+         ⛔ ET LES DEUX MOMENTS SONT DISTINGUÉS dans `seance` (« avant » / « après ») : un
+         échauffement et un cardio de fin ne sont pas la même chose, et les fondre en une seule
+         ligne perdrait l'information au moment même où on la publie. */
+      const _cc=(c,moment)=>{
+        if(!c||!(+c.duration>0)) return;
+        const clair=(typeof _cardioClair==='function')?_cardioClair(c):'';
+        if(!clair) return;
+        out.push({date:s.date, seance:(nom?nom+' — ':'')+'cardio '+moment, exercise:clair,
+                  set_num:1, type:'CARDIO', kg:0, reps:+c.duration, rir:'', volume:0});
+      };
+      _cc(s.cardioAvant,'avant'); _cc(s.cardio,'après');
+      (s.exs||s.exercises||[]).forEach(ex=>{
+        if(!ex||!ex.name) return;
+        (ex.sets||[]).forEach((st,i)=>{
+          if(!st||!st.done) return;                 // ⛔ une série non validée n'a pas eu lieu
+          const kg=+st.kg||0, reps=+st.reps||0;
+          /* ⭐ Le RIR passe par son propriétaire (`_rirDeSet`) — jamais relu à la main : une série
+             non notée reste VIDE, jamais 0 (règle de ft-v1038).
+             ⛔ ET DEPUIS ft-v1154, UN `X` LAISSE LA COLONNE RIR VIDE LUI AUSSI — ce n'est pas une
+             perte : la colonne `type` porte déjà le `X`. Écrire « 0 » y serait faux d'un cran
+             (une répétition a été TENTÉE et n'est pas passée, c'est au-delà de RIR 0), et un
+             fichier exporté se relit ailleurs, sans personne pour rattraper la nuance. */
+          const r=(typeof _rirDeSet==='function')?_rirDeSet(st):null;
+          out.push({date:s.date, seance:nom, exercise:ex.name, set_num:i+1,
+                    type:st.type||'N', kg:kg, reps:reps,
+                    rir:(r===null?'':r), volume:Math.round(kg*reps)});
+        });
+      });
+      for(let k=_n0;k<out.length;k++) out[k].seance_id=sid;     // lu seulement par l'export « avec »
+      if(avecDebriefs){
+        const d=(typeof _dbfTexteDe==='function')?_dbfTexteDe(sid):null;
+        if(d) out.push({date:s.date, seance:nom, exercise:'Débrief Milo', set_num:'', type:'DEBRIEF',
+                        kg:'', reps:'', rir:'', volume:'', seance_id:sid, debrief_milo:d.texte});
+      }
+    });
+  }catch(e){ /* jamais bloquant */ }
+  return out;
+}
+/* ⭐ Un seul endroit sait fabriquer un fichier et le donner — le même geste que les autres
+   exports de l'app (R13), y compris la feuille de partage iPhone quand elle existe.
+
+   ⛔⛔ RÉÉCRITE LE 30/08/2026 — LE BOUTON NE DONNAIT RIEN SUR L'iPHONE DE MICHEL, ET IL
+   ANNONÇAIT UNE RÉUSSITE. Trois défauts, dont deux indépendants de la plateforme :
+
+   ① ⭐⭐ LE TYPE PORTAIT UN `;charset=utf-8`, ET C'EST MESURABLE : sur les **7** endroits de
+      l'app qui livrent un fichier, celui-ci était **le seul**. Les six autres — le CSV du banc
+      d'essai, les PDF de séance et de programme, l'export de conversation — passent des types
+      **propres** (`text/csv`, `application/pdf`), et eux marchent sur son téléphone.
+      *`navigator.canShare` d'iOS ne reconnaît pas un type paramétré et rend `false`*, donc on
+      tombait sur `<a download>` — **qu'iOS n'honore pas**, encore moins dans une PWA installée
+      en plein écran : rien ne se passe, aucune erreur.
+      ⛔ Et le charset y était **décoratif** : ce qui fait lire l'UTF-8 à Excel, c'est le **BOM**
+      dans les octets du fichier, pas le type MIME d'un fichier qu'on partage — il n'y a aucun
+      en-tête HTTP dans cette histoire. On ne perd donc rien, et un témoin fige le BOM.
+
+   ② ⛔ LE PARTAGE N'ÉTAIT PAS ATTENDU (`.catch()` sans `await`) : le toast « 2 séries
+      exportées » partait avant que la feuille de partage ait rendu quoi que ce soit.
+
+   ③ ⛔⛔ ET SURTOUT `return true` APRÈS `a.click()`, SANS RIEN SAVOIR. *Un succès menteur est
+      pire qu'un échec* : Michel voyait « exportées » et n'avait aucun fichier. On ne prétend
+      plus : quand on ne peut pas confirmer, on rend `'inconnu'` et l'appelant le dit. */
+async function _donnerFichier(contenu, nom, mime){
+  try{
+    /* ⛔ Le type est NETTOYÉ de ses paramètres pour le partage (voir ① ci-dessus). */
+    const propre=String(mime||'application/octet-stream').split(';')[0].trim();
+    const blob=new Blob([contenu],{type:propre});
+    const f=(typeof File!=='undefined')?new File([blob],nom,{type:propre}):null;
+    if(f && navigator.share && navigator.canShare && navigator.canShare({files:[f]})){
+      /* ⛔⛔ AUCUN `title` SUR UN PARTAGE DE FICHIER — un témoin existant l'interdit, et il m'a
+         attrapé. La règle vient d'un vrai bug du projet (« Conseil de Milo » partait à la place
+         du fichier). Le nom du fichier suffit à le nommer. */
+      try{ await navigator.share({files:[f]}); return 'ok'; }
+      /* ⛔ Fermer la feuille de partage n'est PAS un échec : on ne crie pas « impossible » à
+         quelqu'un qui vient de dire non. Mais on ne dit pas « exporté » non plus. */
+      catch(err){ if(err && err.name==='AbortError') return 'annule'; }
+    }
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=nom;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+    /* ⚠️ ON NE SAIT PAS SI ÇA A MARCHÉ, et on le dit. `a.click()` ne rend rien, ne lève rien, et
+       sur iOS il ne fait souvent RIEN. `download` est justement l'attribut qu'iOS n'honore pas :
+       c'est donc exactement là que l'incertitude est la plus grande. */
+    return (typeof _iosStandalone==='function' && _iosStandalone()) ? 'inconnu' : 'ok';
+  }catch(e){ return 'echec'; }
+}
+/* ⛔ « Sommes-nous dans l'app installée sur iPhone ? » — c'est le seul cas où `<a download>` ne
+   fait RIEN sans le dire. Ailleurs il marche, et prétendre le contraire inquiéterait pour rien. */
+function _iosStandalone(){
+  try{
+    const ios=/iP(hone|ad|od)/.test(navigator.userAgent)
+      || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);   // iPad récent
+    const seul=!!(window.navigator.standalone) ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    return ios && seul;
+  }catch(e){ return false; }
+}
+/* ⛔ CE QU'ON DIT APRÈS COUP, ET SEULEMENT CE QU'ON SAIT (30/08/2026). Avant, le toast annonçait
+   « N séries exportées » dans TOUS les cas, y compris quand rien n'était parti — c'est ce que
+   Michel a vécu. Les quatre issues sont maintenant distinctes, et l'incertitude en est une. */
+function _toastFichier(etat, n, unite){
+  if(etat==='ok'){ toast(n+' '+(unite||'séries')+' exportées','success'); return; }
+  if(etat==='annule') return;                     // il a fermé la feuille de partage : rien à dire
+  if(etat==='inconnu'){                           // iPhone en plein écran : `download` n'y fait rien
+    toast('Ouvre l\'app dans Safari pour enregistrer le fichier','info'); return;
+  }
+  toast('Export impossible','error');
+}
+async function exportHistoCsv(){
+  const avec=_histoAvecDebriefs;
+  const L=_histoLignes(avec);
+  if(!L.length){ toast('Aucune séance à exporter','info'); return; }
+  const COLS=avec?HISTO_COLONNES_DEBRIEF:HISTO_COLONNES;
+  /* ⛔ ÉCHAPPEMENT CSV RÉEL : un nom d'exercice peut contenir une virgule (« Rowing Barre (Tirage
+     Horizontal) », un exercice perso « Curl, prise marteau »). Sans guillemets, la ligne se
+     décale d'une colonne dans le tableur — et rien ne le signale. */
+  const q=v=>{ const t=String(v==null?'':v);
+    return /[",;\n]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; };
+  /* ⚠️ SÉPARATEUR « ; » ET BOM UTF-8, exprès : Excel en français ouvre le « , » comme du texte
+     dans une seule colonne, et sans BOM il rend « Développé » en « DÃ©veloppÃ© ». Ce sont les
+     deux défauts qui font dire « ton export est cassé » alors que le fichier est correct. */
+  const csv='﻿'+COLS.join(';')+'\n'
+    +L.map(r=>COLS.map(c=>q(r[c])).join(';')).join('\n');
+  /* ⛔ Type PROPRE : le BOM ci-dessus porte déjà l'UTF-8 pour Excel, et un `;charset=…` ici
+     empêchait `canShare` de reconnaître le fichier sur iPhone (voir `_donnerFichier`). */
+  closeHistoExport();                     // on referme AVANT : la feuille de partage iOS prend la main
+  const etat=await _donnerFichier(csv,'forcetracker-historique_'+today()+'.csv','text/csv');
+  _toastFichier(etat, L.filter(r=>r.type!=='DEBRIEF').length, 'séries');
+}
+/* 📤 EXPORTS DATÉS — NUTRITION ET POIDS (02/09/2026) — demande de Michel : « il faudra créer
+   un export daté de la nutrition et aussi côté poids ».
+   ⭐ ON RÉUTILISE LE PATRON DE `exportHistoCsv`, ON N'EN ÉCRIT PAS UN SECOND (R13) : le même
+   échappement CSV, le même séparateur `;` + BOM (Excel FR ouvre le « , » en une seule colonne
+   et rend « Développé » en « DÃ©veloppÃ© » sans BOM), le même `_donnerFichier` (feuille de
+   partage iOS) et le même `_toastFichier` — qui est le seul à savoir dire « je ne sais pas »
+   quand `<a download>` ne fait rien sur iPhone en plein écran.
+   ⛔ UN SEUL PROPRIÉTAIRE DE L'ÉCHAPPEMENT ET DE L'EN-TÊTE (R2) : `_csvFichier` ci-dessous. Trois
+   exports qui recopieraient chacun leur guillemet finiraient par ne plus se ressembler. */
+function _csvEchappe(v){
+  const t = String(v == null ? '' : v);
+  return /[",;\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+async function _csvFichier(colonnes, lignes, nomCourt, unite){
+  if(!lignes.length){ toast('Rien à exporter pour l\'instant','info'); return; }
+  const csv = '﻿' + colonnes.join(';') + '\n'
+    + lignes.map(r => colonnes.map(c => _csvEchappe(r[c])).join(';')).join('\n');
+  /* ⛔ Le nom porte la DATE : deux exports du même écran ne s'écrasent pas dans les
+     téléchargements, et on sait de quand date le fichier qu'on rouvre trois mois plus tard. */
+  const etat = await _donnerFichier(csv, 'forcetracker-' + nomCourt + '_' + today() + '.csv', 'text/csv');
+  _toastFichier(etat, lignes.length, unite);
+}
+
+/* 🍽️ NUTRITION — une ligne par aliment noté, la plus récente d'abord.
+   ⛔ ON EXPORTE AUSSI LA PROVENANCE (`saisie`, `origine`) : c'est ce qui permet, en relisant le
+   fichier, de savoir si une valeur a été SCANNÉE, tapée à la main ou estimée par l'IA. Sans
+   elle, toutes les lignes se ressemblent et on ne peut plus juger laquelle croire (R33). */
+/* 🏷️ ft-v1186 — DEUX COLONNES DE PLUS : sans elles, l'export perd exactement l'information
+   qu'on vient de sauver — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant. */
+const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source'];
+async function exportNutritionCsv(){
+  const REPAS = {matin:'Petit-déjeuner', midi:'Déjeuner', soir:'Dîner', collation:'Collation'};
+  const L = (S.foodLog || [])
+    .slice()
+    .sort((a,b) => String(b && b.date || '').localeCompare(String(a && a.date || ''))
+                || ((b && b.ts || 0) - (a && a.ts || 0)))
+    .map(e => ({
+      date: e && e.date || '', repas: REPAS[e && e.meal] || (e && e.meal) || '',
+      aliment: e && e.name || '',
+      quantite: (e && e.q != null) ? e.q : '', unite: e && e.u || '',
+      portion_label: e && e.portionLabel || '',
+      portion_poids_g: (e && +e.portionWeightG > 0) ? e.portionWeightG : '',
+      kcal: (e && e.kcal != null) ? e.kcal : '',
+      proteines_g: (e && e.prot != null) ? e.prot : '',
+      glucides_g: (e && e.carbs != null) ? e.carbs : '',
+      lipides_g: (e && e.fat != null) ? e.fat : '',
+      saisie: e && e.saisie || '', source: e && e.origine || ''
+    }));
+  await _csvFichier(NUTRI_COLONNES, L, 'nutrition', 'lignes');
+}
+
+/* ⚖️ POIDS — une ligne par pesée, la plus récente d'abord.
+   ⚠️ LA COLONNE S'APPELLE `poids_kg` ET SE LIT DANS `kg`, PAS DANS `bw` : la doc du projet a dit
+   `bw` pendant des mois alors que l'app écrit `kg` PARTOUT, et une fixture écrite d'après cette
+   ligne avait rendu « undefined » à l'écran (corrigé le 30/08). On lit le code, pas la doc. */
+const POIDS_COLONNES = ['date','poids_kg','masse_grasse_pct'];
+async function exportPoidsCsv(){
+  const L = (S.weightLog || [])
+    .slice()
+    .sort((a,b) => String(b && b.date || '').localeCompare(String(a && a.date || '')))
+    .map(e => ({ date: e && e.date || '',
+                 poids_kg: (e && e.kg != null) ? e.kg : '',
+                 masse_grasse_pct: (e && e.bf != null) ? e.bf : '' }));
+  await _csvFichier(POIDS_COLONNES, L, 'poids', 'pesées');
+}
+
+/* 📄 CE QUE LA POLICE DU PDF SAIT ÉCRIRE (SESSION-INTEGRITY-01, finition du 04/10 — décision de Michel).
+   Mesuré dans jsPDF 2.5.2 (celui de l'app) : la police standard encode tout Windows-1252 — les accents,
+   mais aussi œ Œ € ’ ‘ “ ” „ • – — … ™ (27 caractères sur 27). Le premier filtre des débriefs les
+   retirait sur une fausse prémisse (« jsPDF ne dessine que le latin ») : « cœur » sortait « cur ».
+   ⛔ Un seul caractère HORS de ce jeu fait passer TOUTE la ligne en charabia 16 bits (mesuré : un emoji
+   dans un nom de programme cassait le titre du débrief). Donc on TRADUIT ce qui porte du sens — « → »
+   vaut « -> », « −5 kg » doit rester négatif, « 1ʳᵉ » n'est pas « 1 » — et on retire le reste (emoji,
+   pictogrammes). Sert aux débriefs seulement : le PDF « sans » reste celui d'avant (témoin F4). */
+const _PDF_TRADUIT = {'→':'->','←':'<-','≥':'>=','≤':'<=','≠':'!=','\u2212':'-','\u2010':'-','\u2011':'-','ʳ':'r','ᵉ':'e'};   // − ‐ ‑ : trois tirets qui ne sont pas « - »
+const _PDF_A_TRADUIRE = new RegExp('['+Object.keys(_PDF_TRADUIT).join('')+']','g');
+function _pdfTexte(t){
+  return String(t==null?'':t)
+    .replace(/[\u2000-\u200A\u202F\u205F]/g,'\u00A0')          // espaces fines / étroites → insécable
+    .replace(_PDF_A_TRADUIRE, c=>_PDF_TRADUIT[c])
+    .replace(/[^\x00-\xFF\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/g,'');
+}
+async function exportHistoPdf(){
+  const L=_histoLignes();
+  if(!L.length){ toast('Aucune séance à exporter','info'); return; }
+  try{
+    if(typeof _loadJsPdf==='function') await _loadJsPdf();
+    const JS=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    if(!JS) throw new Error('jsPDF indisponible');
+    const doc=new JS({unit:'pt',format:'a4'});
+    const M=40; let y=M;
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('Historique d\'entraînement',M,y); y+=18;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120);
+    /* ⛔ LE DOCUMENT DIT CE QU'IL CONTIENT ET CE QU'IL NE CONTIENT PAS — il va sortir de l'app
+       (mail, coach, kiné) et il doit se lire seul, sans l'app à côté. */
+    const seances=[...new Set(L.map(r=>r.date))].length;
+    doc.text(seances+' séances · '+L.length+' séries · exporté le '+new Date().toLocaleDateString('fr-FR'),M,y); y+=12;
+    doc.text('Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).'
+      +(_histoAvecDebriefs?' Débriefs Milo inclus, sous leur séance.':''),M,y); y+=6;
+    doc.setTextColor(0);
+    /* ⭐ R13 : `autotable` est déjà chargé avec jsPDF pour les autres PDF de l'app. Une séance
+       par tableau, pour qu'on retrouve ses séances plutôt qu'un mur de lignes. */
+    /* ⛔ LE PDF SUIT L'ORDRE DU PRODUCTEUR, IL NE LE REFAIT PAS (R2, 31/08/2026). Il triait ses
+       dates lui-même (`.sort().reverse()`) : le résultat était le même, mais c'était un DEUXIÈME
+       propriétaire de l'ordre — et le CSV, lui, en avait un troisième, à l'envers. *C'est comme ça
+       que deux exports du même historique finissent par ne pas se ressembler.* */
+    const parJour={}, ordre=[];
+    L.forEach(r=>{ if(!parJour[r.date]){ parJour[r.date]=[]; ordre.push(r.date); } parJour[r.date].push(r); });
+    ordre.forEach(d=>{
+      const rows=parJour[d];
+      /* ⚠️⚠️ LE TITRE SE POSE AVANT LE TABLEAU, PAS APRÈS — et c'est un défaut mesuré, pas un
+         choix de style. Mon 1er jet écrivait le titre après coup à `doc.lastAutoTable.startY-5` :
+         **`lastAutoTable` ne porte que `finalY`, il n'a PAS de `startY`** (sondé dans le
+         navigateur). `undefined - 5` vaut `NaN`, `doc.text(..., NaN)` lève, et mon `catch` ne
+         montrait qu'un toast « Export PDF impossible » — un échec parfaitement silencieux.
+         👉 *On vérifie les propriétés, on ne les devine pas* — 3ᵉ fois de la session (après
+         `m.reg` et `exNomCatalogue`). Ici on n'a même pas besoin de la lire : on CONNAÎT le y,
+         puisque c'est nous qui le passons. */
+      if(y>690){ doc.addPage(); y=M; }              // ⛔ un titre ne reste jamais seul en bas de page
+      const titre=(rows[0].seance? rows[0].seance+' — ':'')
+        +new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(0);
+      doc.text(titre.charAt(0).toUpperCase()+titre.slice(1),M,y+18);
+      doc.setFont('helvetica','normal');
+      doc.autoTable({
+        startY:y+24, margin:{left:M,right:M},
+        /* ⚠️ L'EN-TÊTE PORTE SON PROPRE ALIGNEMENT, cellule par cellule. Vu à la capture du PDF :
+           `columnStyles` alignait bien les VALEURS à droite, mais `headStyles` gagnait sur
+           l'en-tête, qui restait à gauche — « kg » à gauche au-dessus de « 80 » à droite.
+           *Un tableau dont l'en-tête ne suit pas sa colonne se lit de travers*, et aucune mesure
+           de chaîne ne le voit : il a fallu regarder la page. */
+        head:[[ 'Exercice',
+                {content:'Série',  styles:{halign:'center'}},
+                {content:'Type',   styles:{halign:'center'}},
+                {content:'kg',     styles:{halign:'right'}},
+                {content:'Reps',   styles:{halign:'right'}},
+                {content:'RIR',    styles:{halign:'center'}},
+                {content:'Volume', styles:{halign:'right'}} ]],
+        body:rows.map(r=>[r.exercise,r.set_num,r.type,r.kg,r.reps,r.rir,r.volume]),
+        styles:{fontSize:8.5,cellPadding:3.5,overflow:'linebreak'},
+        headStyles:{fillColor:[239,62,87],textColor:255,fontStyle:'bold',fontSize:8},
+        alternateRowStyles:{fillColor:[247,247,250]},
+        columnStyles:{0:{cellWidth:150},1:{halign:'center'},2:{halign:'center'},
+                      3:{halign:'right'},4:{halign:'right'},5:{halign:'center'},6:{halign:'right'}},
+        theme:'plain'
+      });
+      y=doc.lastAutoTable.finalY;                   // ⭐ `finalY` EXISTE, lui — vérifié
+      /* 🛡️ D-044 — « avec » : le débrief de CHAQUE séance de ce jour, sous son tableau, nommé par la
+         séance (deux séances le même jour ne se confondent pas). Texte ET titre passent par `_pdfTexte` :
+         tout ce que la police sait écrire reste écrit, le reste est traduit ou retiré. */
+      if(_histoAvecDebriefs){
+        const ids=[]; rows.forEach(r=>{ if(r.seance_id&&ids.indexOf(r.seance_id)<0) ids.push(r.seance_id); });
+        ids.forEach(id=>{
+          const dd=(typeof _dbfTexteDe==='function')?_dbfTexteDe(id):null; if(!dd) return;
+          const ss=(S.sessions||[]).find(x=>x&&_dbfCle(x)===id)||{};
+          const quand=ss.ts?new Date(+ss.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+          const propre=_pdfTexte(String(dd.texte).replace(/\*\*/g,'')).replace(/[ \t]+\n/g,'\n');
+          const lignes=doc.splitTextToSize(propre, 515);
+          if(y>700){ doc.addPage(); y=M; }
+          doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+          doc.text(_pdfTexte('Débrief Milo'+(ss.progLabel?' — '+ss.progLabel:'')+(quand?' (séance terminée à '+quand+')':'')),M,y+16); y+=20;
+          doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+          lignes.forEach(l=>{ if(y>790){ doc.addPage(); y=M; } doc.text(l,M,y+10); y+=11; });
+          y+=4;
+        });
+      }
+    });
+    const nom='forcetracker-historique_'+today()+'.pdf';
+    /* ⛔⛔ LE PDF PASSE PAR LE MÊME PROPRIÉTAIRE QUE LE CSV (R2, 30/08/2026). Il recopiait ici la
+       livraison de fichier — donc il portait **les mêmes trois défauts**, et le correctif posé
+       d'un seul côté les aurait laissés vivre. *Deux façons de donner un fichier finissent par ne
+       plus donner le même résultat, et on ne sait plus laquelle croire.* */
+    closeHistoExport();                   // avant le partage : la feuille iOS prend la main
+    const etat=await _donnerFichier(doc.output('blob'), nom, 'application/pdf');
+    _toastFichier(etat, seances, 'séances');
+    return;
+  }catch(e){ toast('Export PDF impossible','error'); }
+  closeHistoExport();
+}
+function openHistoExport(){
+  const n=_histoLignes().length;
+  if(!n){ toast('Aucune séance à exporter','info'); return; }
+  const el=document.getElementById('histo-exp-n');
+  if(el) el.textContent=n;
+  /* D-044 : le choix n'apparaît que s'il y a au moins un débrief à inclure (proposer d'inclure zéro
+     chose est du bruit, R24) — et il repart TOUJOURS sur « sans » : on n'impose rien. */
+  _histoAvecDebriefs=false;
+  const nb=(S.sessions||[]).filter(x=>typeof _dbfTexteDe==='function'&&_dbfTexteDe(_dbfCle(x))).length;
+  const ch=document.getElementById('histo-exp-dbf');
+  if(ch) ch.style.display=nb?'':'none';
+  const nn=document.getElementById('histo-exp-dbf-n'); if(nn) nn.textContent=nb;
+  _majChoixDebriefs();
+  const ov=document.getElementById('ov-histo-export'); if(ov) ov.classList.add('open');
+}
+function closeHistoExport(){
+  const ov=document.getElementById('ov-histo-export'); if(ov) ov.classList.remove('open');
+}
+function choisirDebriefsExport(avec){ _histoAvecDebriefs=!!avec; _majChoixDebriefs(); }
+function _majChoixDebriefs(){
+  const a=document.getElementById('histo-exp-sans'), b=document.getElementById('histo-exp-avec');
+  if(a){ a.classList.toggle('on', !_histoAvecDebriefs); a.setAttribute('aria-pressed', String(!_histoAvecDebriefs)); }
+  if(b){ b.classList.toggle('on', _histoAvecDebriefs); b.setAttribute('aria-pressed', String(_histoAvecDebriefs)); }
+}
+
+/* ⭐⭐ L'ÉTAT DES DEUX ACCORDÉONS EST RETENU (30/08/2026, ft-v1066).
+   Michel a choisi « repliées par défaut » pour récupérer les 561 px qu'elles prenaient. Mais
+   ⛔ *un accordéon qu'on doit rouvrir à chaque visite est un accordéon qu'on n'ouvre plus* :
+   si quelqu'un déplie sa synthèse, elle doit être dépliée la fois d'après. C'est la leçon de
+   ft-v1024 (« le rangement SUIT L'USAGE »).
+   ⛔ Une seule clé pour les deux (`ft4_progAcc`), pas deux : c'est un réglage d'affichage, pas
+   une donnée de la personne — et deux clés pour la même intention divergeraient (R2).
+   ⛔ Et jamais bloquant : un stockage refusé (navigation privée) laisse simplement les cartes
+   repliées, le comportement par défaut. */
+/* 🗂️ D-080 (15/10/2026, décision de Michel, option B) — « Ce que tu travailles, par semaine » n'est PLUS retenu d'un
+   lancement à l'autre : il repart REPLIÉ à chaque lancement / rechargement ; ouvert pendant la session, il le reste
+   jusqu'au prochain lancement (mémoire de SESSION, aucune clé). « Ce que ton histoire montre » garde `ft4_progAcc`,
+   inchangé. Une ancienne valeur de la clé qui cite encore le volume est ignorée pour lui (et réécrite sans lui au
+   prochain geste). */
+const PROG_ACC=['prog-synth-acc'];
+const PROG_ACC_SESSION=['prog-volume-acc'];
+const _progAccSession={};                       // id → ouvert, pour CETTE session seulement (jamais stocké)
+function _progAccRestore(){
+  let ouverts=[];
+  try{ ouverts=JSON.parse(localStorage.getItem('ft4_progAcc')||'[]')||[]; }catch(e){ ouverts=[]; }
+  PROG_ACC.concat(PROG_ACC_SESSION).forEach(id=>{
+    const d=document.getElementById(id); if(!d) return;
+    d.open = PROG_ACC.indexOf(id)>=0 ? ouverts.indexOf(id)>=0 : !!_progAccSession[id];
+    if(!d.dataset.accWired){                    // ⛔ un seul écouteur, même si on re-rend
+      d.dataset.accWired='1';
+      d.addEventListener('toggle',_progAccSave);
+    }
+  });
+}
+function _progAccSave(){
+  PROG_ACC_SESSION.forEach(id=>{ const d=document.getElementById(id); if(d) _progAccSession[id]=d.open; });
+  try{
+    const ouverts=PROG_ACC.filter(id=>{ const d=document.getElementById(id); return d&&d.open; });
+    localStorage.setItem('ft4_progAcc', JSON.stringify(ouverts));
+  }catch(e){ /* stockage refusé : on repart repliées, c'est le défaut */ }
+}
+function renderProgress(){
+  /* 🔭 ft-v1041 — la synthèse et le volume se peignent ICI, une seule fois, indépendamment du
+     sous-onglet : `_renderSynthese()` et `_renderVolumeSemaine()` restent leurs seuls auteurs
+     (R2). Changer d'onglet ne fait que les MASQUER — jamais les vider ni les recalculer. */
+  if(typeof _renderSynthese==='function')_renderSynthese();
+  if(typeof _renderVolumeSemaine==='function')_renderVolumeSemaine();
+  _progAccRestore();
+  /* 🗂️ PROGRES-SEANCES-01 — le sous-onglet choisi SURVIT (contrat UX-HIST du 08/10 : « aujourd'hui forcé
+     à Exercices »). Défaut : Séances, le premier onglet. En mémoire seulement : aucune clé de stockage. */
+  if(!_progCibleNav) _sessCibles=[];          // une marque ne vit que pour la navigation qui l'a posée
+  _progCibleNav=false;
+  switchProgTab(_progTab,document.getElementById(PROG_ONGLETS[_progTab][0]));
+  const chips=document.getElementById('big4-chips');
+  if(chips)_renderProgChips(chips);
+  // Recherche d'exercice (remplace l'ancien dropdown déroulant)
+  const srch=document.getElementById('prog-search');if(srch)srch.value='';
+  const res=document.getElementById('prog-search-results');if(res)res.style.display='none';
+  selectProgEx(_progEx);
+  renderSessions();
+  _updateProgCycleBanner();
+}
+
+function selectProgEx(name){
+  if(!name)return;
+  _progEx=name;
+  const exos=S.progExos||BIG4;
+  exos.forEach((n,i)=>{
+    const c=document.getElementById('pchip-'+i);if(!c)return;
+    const active=n===name;
+    c.style.background=active?'linear-gradient(135deg,#FF6A73,#EF3E57)':'var(--bg3)';
+    c.style.color=active?'#fff':'var(--t3)';
+    c.style.boxShadow=active?'0 4px 12px -4px rgba(239,62,87,.5)':'inset 0 0 0 1px rgba(255,255,255,.08)';
+  });
+  const srch=document.getElementById('prog-search');
+  if(srch&&exos.includes(name))srch.value='';   // exo dans les 4 chips → vide la recherche
+  renderChart();
+}
+
+// ─── Recherche d'exercice dans Progrès (remplace le long dropdown) ──────────
+function _filterProgSearch(q){
+  const res=document.getElementById('prog-search-results');if(!res)return;
+  const qn=_naz((q||'').trim());
+  if(!qn){res.style.display='none';res.innerHTML='';return;}
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  const hits=all.filter(n=>_naz(n).includes(qn)).slice(0,30);
+  if(!hits.length){res.innerHTML=`<div style="padding:11px 13px;font-size:13px;color:var(--t3);">Aucun exercice trouvé</div>`;res.style.display='block';return;}
+  res.innerHTML=hits.map(n=>`<div onmousedown="event.preventDefault()" onclick="_pickProgSearch('${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join('');
+  res.style.display='block';
+}
+function _pickProgSearch(name){
+  if(!name)return;
+  const srch=document.getElementById('prog-search');if(srch)srch.value=name;
+  const res=document.getElementById('prog-search-results');if(res){res.style.display='none';res.innerHTML='';}
+  selectProgEx(name);
+}
+function _blurProgSearch(){
+  // Ferme la liste après le tap (petit délai pour laisser le onmousedown/touch se déclencher)
+  setTimeout(()=>{const res=document.getElementById('prog-search-results');if(res)res.style.display='none';},200);
+}
+
+function openProgExoEditor(){
+  const exos=S.progExos||BIG4;
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  let el=document.getElementById('ov-progexo-edit');
+  if(!el){
+    el=document.createElement('div');el.className='overlay';el.id='ov-progexo-edit';
+    el.style.alignItems='flex-end';
+    el.onclick=e=>{if(e.target===el)el.classList.remove('open');};
+    document.body.appendChild(el);
+  }
+  el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 28px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
+    +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">`
+    +`<div style="font-weight:800;font-size:15px;color:var(--t1);">Personnaliser les 4 exercices</div>`
+    +`<button onclick="document.getElementById('ov-progexo-edit').classList.remove('open')" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;touch-action:manipulation;">✕</button>`
+    +`</div>`
+    +exos.map((n,i)=>`<div style="margin-bottom:12px;">`
+      +`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Emplacement ${i+1}</div>`
+      +`<button id="progslot-btn-${i}" onclick="_toggleProgSlot(${i})" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:14px;font-family:var(--font);cursor:pointer;text-align:left;touch-action:manipulation;"><span>${_escNote(n)}</span><span style="color:var(--t3);margin-left:8px;">▾</span></button>`
+      +`<div id="progslot-box-${i}" style="display:none;margin-top:6px;">`
+        +`<input id="progslot-inp-${i}" type="text" autocomplete="off" oninput="_filterProgSlot(${i},this.value)" placeholder="🔍 Rechercher un exercice…" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-family:var(--font);">`
+        +`<div id="progslot-res-${i}" style="max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;margin-top:4px;"></div>`
+      +`</div>`
+      +`</div>`).join('')
+    +`</div>`;
+  el.classList.add('open');
+}
+// Ouvre/ferme la recherche d'un emplacement (un seul ouvert à la fois)
+function _toggleProgSlot(i){
+  const box=document.getElementById('progslot-box-'+i);if(!box)return;
+  const willOpen=box.style.display==='none';
+  (S.progExos||BIG4).forEach((_,j)=>{const b=document.getElementById('progslot-box-'+j);if(b)b.style.display='none';});
+  if(willOpen){
+    box.style.display='block';
+    _filterProgSlot(i,'');
+    const inp=document.getElementById('progslot-inp-'+i);if(inp){inp.value='';try{inp.focus();}catch(e){}}
+  }
+}
+// Filtre la liste d'un emplacement (insensible aux accents/majuscules) — tap scroll-safe (onclick)
+function _filterProgSlot(i,q){
+  const res=document.getElementById('progslot-res-'+i);if(!res)return;
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  const qn=_naz((q||'').trim());
+  const hits=(qn?all.filter(n=>_naz(n).includes(qn)):all).slice(0,60);
+  res.innerHTML=hits.length?hits.map(n=>`<div onclick="_pickProgSlot(${i},'${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join(''):`<div style="padding:11px 13px;font-size:13px;color:var(--t3);">Aucun exercice trouvé</div>`;
+}
+function _pickProgSlot(i,name){
+  if(!name)return;
+  _saveProgExoSlot(i,name);   // persiste + met à jour les 4 chips + la recherche de l'écran principal
+  openProgExoEditor();        // re-render : le bouton du slot affiche le nouveau nom, recherche refermée
+}
+
+function _saveProgExoSlot(idx,name){
+  if(!name)return;
+  const old=S.progExos[idx];
+  S.progExos[idx]=name;
+  localStorage.setItem('ft4_progexos',JSON.stringify(S.progExos));
+  // Re-render chips
+  const chips=document.getElementById('big4-chips');
+  if(chips)_renderProgChips(chips);
+  // Mettre à jour le dropdown (exclure les nouvelles chips)
+  const sel=document.getElementById('prog-sel');
+  if(sel){
+    const others=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].filter(n=>!S.progExos.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'));
+    sel.innerHTML=`<option value="">— Autre exercice… —</option>`+others.map(n=>`<option value="${n}">${n}</option>`).join('');
+    if(!S.progExos.includes(_progEx))sel.value=_progEx;
+  }
+  // Si l'exercice affiché était dans ce slot, switcher vers le nouveau
+  if(_progEx===old)selectProgEx(name);
+  else selectProgEx(_progEx);
+}
+function switchProgTab(tab,btn){
+  /* ⛔⛔ LES DEUX CARTES DU HAUT SUIVENT LE SOUS-ONGLET (30/08/2026) — et c'est un RETOUR SUR MA
+     PROPRE DÉCISION de ft-v1041, où j'avais écrit *« elle survit au changement de sous-onglet »*
+     et posé un témoin dessus.
+     Michel, vidéo à l'appui : *« sur le poids et le record on s'en fout un peu de ça non ? »*.
+     ⭐ Il a raison, et la raison est de fond : « Ce que ton histoire montre » et « Ce que tu
+     travailles, par semaine » parlent d'**ENTRAÎNEMENT**. Sur **Poids** (une pesée) et sur
+     **Badges** (des récompenses), elles ne répondent à aucune question qu'on vient s'y poser —
+     elles repoussent seulement le contenu hors de l'écran. Mesuré sur sa vidéo : l'onglet Poids
+     est *entièrement* occupé par les deux cartes, la pesée du jour est au ras du bas.
+     ⚠️ L'intention d'origine reste juste — ne pas les faire clignoter quand on change d'onglet —
+     mais sa PORTÉE était trop large : « ne pas clignoter » ne veut pas dire « être partout ».
+     ⛔ On ne les VIDE pas et on ne les recalcule pas : on les masque. Leur contenu est déjà peint
+     par `renderProgress` ; les recalculer à chaque bascule coûterait pour rien (R19). */
+  /* ⚠️ ON MASQUE LE `details`, PLUS LE `div` INTÉRIEUR (ft-v1066) : les deux cartes vivent
+     désormais DANS le panneau Exercices, qui est déjà masqué par le sous-onglet. Ces deux lignes
+     restent quand même — ceinture et bretelles — parce que rien ne garantit que le panneau reste
+     leur seul parent, et parce que le témoin de ft-v1065 les épingle. */
+  /* 🗂️ PROGRES-SEANCES-01 (14/10/2026) — les deux cartes vivent désormais dans le panneau SÉANCES ;
+     elles suivent donc l'onglet Séances. Ceinture et bretelles, comme avant : on masque le `details`. */
+  if(!PROG_ONGLETS[tab]) tab='seances';
+  _progTab=tab;
+  const tete=(tab==='seances')?'':'none';
+  ['prog-synth-acc','prog-volume-acc'].forEach(id=>{ const e=document.getElementById(id); if(e)e.style.display=tete; });
+  /* ⭐ UNE table, plus quatre copies du même geste : ajouter un onglet = une ligne (règle d'or #17). */
+  Object.keys(PROG_ONGLETS).forEach(k=>{
+    const o=PROG_ONGLETS[k], pe=document.getElementById(o[1]), be=document.getElementById(o[0]);
+    if(pe){pe.style.display=k===tab?'flex':'none';pe.style.flexDirection='column';pe.style.gap=o[2];}
+    if(be)be.classList.toggle('active',k===tab);
+  });
+  if(tab==='poids')renderWeightTab();
+}
+/* Les sous-onglets de Progrès : [bouton, panneau, espacement].
+   🏅 D-078 (15/10/2026, décision de Michel) : « badges » n'en fait plus partie — Badges vit dans le Menu
+   (`openBadges`, plus bas). Un ancien `switchProgTab('badges')` retombe sur Séances (garde ci-dessus). */
+const PROG_ONGLETS={seances:['ptab-seances','prog-seances','10px'], exo:['ptab-exo','prog-exo','10px'],
+                    poids:['ptab-poids','prog-poids','10px']};
+let _progTab='seances', _progCibleNav=false;
+function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
+/* 🏅 BADGES DANS LE MENU (D-078, décision de Michel du 15/10/2026) — Menu ☰ → « Ton suivi » → Badges.
+   ⭐ R13 : la surface est celle de TOUS les contenus du Menu (`openDrawerContent`, modale `ov-drawer-cnt` :
+   ✕, tap à côté, glissé vers le bas, bouton retour — les portes génériques) ; elle crée `#badge-grid`, puis `renderBadges()`
+   (app.js) la remplit, INCHANGÉ : aucun 2ᵉ moteur, aucune logique de badge copiée. ⛔ Ouvrir n'écrit rien —
+   ni badge, ni clé ; seul le point rouge de la ligne s'éteint (R15 : posé à l'ouverture, pas à la fermeture). */
+function openBadges(){
+  openDrawerContent('badges');
+  if(typeof renderBadges==='function')renderBadges();
+  if(typeof _markAnchorSeen==='function')_markAnchorSeen('menu-row-badges');
+}
+/* 🗂️ PROGRES-SEANCES-01 — LES PORTES DE L'HISTORIQUE MÈNENT À SÉANCES, AU BON ENDROIT.
+   · sans argument (tuile « Séances ce mois » de l'Accueil) → le MOIS EN COURS, déplié ;
+   · une liste de clés (calendrier : un jour, « Revoir la séance », la vue semaine) → l'année et le mois
+     de CES séances se déplient, et leurs cartes sont marquées. Plusieurs séances ce jour-là → toutes
+     celles du jour (contrat UX-HIST : « la liste du jour »).
+   ⛔ LA CLÉ EST CELLE QUI EXISTE DÉJÀ : `ts||id`, celle de la carte et de `openSessDetail`. Aucune
+   nouvelle identité de séance. ⛔ Tout vit en mémoire : rien n'est écrit dans le stockage.
+   ⚠️ Un filtre de muscle actif cacherait la séance visée : on repasse sur « Tous ». */
+function goSessionsHistory(cles){
+  _sessCibles=Array.isArray(cles)?cles.filter(k=>k!=null&&k!==0):[];
+  const vis=_sessCibles.length?(S.sessions||[]).filter(s=>_sessCibles.indexOf(s.ts||s.id||0)>=0):[];
+  const mois=vis.length?vis.map(_sessMoisDe):[_sessMoisDe({date:today()})];
+  _sessFiltres=[];
+  _sessOuvrir(mois);
+  _progTab='seances'; _progCibleNav=true;
+  goScreen('progress',document.getElementById('nb-progress'));
+  setTimeout(()=>{switchProgTab('seances',document.getElementById('ptab-seances'));setTimeout(()=>{
+    const el=document.querySelector('#sess-list .sess-cible')||document.querySelector('#sess-list .sess-mois[data-mois="'+mois[0]+'"]')||document.getElementById('sess-hist-title');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},140);},80);
+}
+function renderChart(){
+  const name=_progEx,box=document.getElementById('chart-box');
+  if(!box)return;
+  if(!name){box.innerHTML='<div class="empty">Sélectionne un exercice</div>';return;}
+  // Filtre de période (retour GPT) : ne garde que les séances récentes selon _progRange (all = tout).
+  const _rDays=(_PROG_RANGES.find(r=>r[0]===_progRange)||['all','',0])[2];
+  let _cut=null;
+  if(_rDays){const dc=new Date(today()+'T12:00:00');dc.setDate(dc.getDate()-_rDays);_cut=dc.toISOString().slice(0,10);} // midi local : la coupure ne glisse plus d'un jour entre minuit et 2 h
+  const _inRange=d=>!_cut||d>=_cut;
+  const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—'; // ⭐ PR = record ABSOLU (jamais filtré par période)
+  // Barre de périodes (visible dès qu'il y a des données) — réutilise le style .wrange-chip du poids.
+  const chipsHtml='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">'
+    +_PROG_RANGES.map(r=>'<button class="wrange-chip'+(_progRange===r[0]?' active':'')+'" onclick="setProgRange(\''+r[0]+'\')">'+r[1]+'</button>').join('')+'</div>';
+  const pts=[];
+  [...S.sessions].reverse().forEach(s=>{
+    if(!_inRange(s.date))return;
+    const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
+    const best=(ex.sets||[]).filter(s=>s.done!==false&&s.kg&&s.reps&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>{const r=bz(s.kg,s.reps);return r>(b?bz(b.kg,b.reps):0)?s:b;},null);
+    if(best)pts.push({date:s.date,kg:best.kg,reps:best.reps,rm1:bz(best.kg,best.reps),sid:(s.ts||s.id)});
+  });
+  // Charge max RÉELLE soulevée (poids le plus lourd sur la barre) — distinct du 1RM estimé, respecte la période
+  let maxLoad=null;
+  S.sessions.forEach(s=>{
+    if(!_inRange(s.date))return;
+    const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
+    (ex.sets||[]).forEach(set=>{
+      if(set.done===false||!set.kg||!set.reps||set.type==='É'||set.type==='W')return;
+      if(!maxLoad||set.kg>maxLoad.kg||(set.kg===maxLoad.kg&&set.reps>maxLoad.reps))maxLoad={kg:set.kg,reps:set.reps};
+    });
+  });
+  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>${chipsHtml}<div class="empty" style="padding:20px 0;">${_cut?'Aucune séance sur cette période — choisis « Tout ».':'Aucune donnée — commence à logger !'}</div>`;return;}
+  _chartPts=pts;
+  const last=pts[pts.length-1],maxPt=pts.reduce((m,p)=>p.rm1>m.rm1?p:m,pts[0]);
+  const delta=pts.length>1?fmt(last.rm1-pts[0].rm1):null;
+  const deltaPct=pts.length>1?Math.round((last.rm1-pts[0].rm1)/pts[0].rm1*100):null;
+  const pos=delta!==null&&parseFloat(delta)>=0;
+  const W=340,H=170,pad={t:18,r:14,b:32,l:44},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  const vals=pts.map(p=>p.rm1);
+  const goal=(S.strengthGoals&&S.strengthGoals[name])||0; // objectif de force (1RM visé) pour cet exercice
+  const rangeVals=vals.concat(goal>0?[goal]:[]);
+  const minY=Math.floor(Math.min(...rangeVals)*.94),maxY=Math.ceil(Math.max(...rangeVals)*1.06),rY=maxY-minY||1;
+  const xS=pts.length>1?iW/(pts.length-1):0;
+  const toX=i=>pad.l+(pts.length>1?i*xS:iW/2);
+  const toY=v=>pad.t+iH-((v-minY)/rY)*iH;
+  const xs=pts.map((_,i)=>toX(i)),ys=pts.map(p=>toY(p.rm1));
+  const tk=0.35;
+  let line=`M${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
+  for(let i=0;i<pts.length-1;i++){
+    const x0=xs[Math.max(0,i-1)],y0=ys[Math.max(0,i-1)];
+    const x1=xs[i],y1=ys[i],x2=xs[i+1],y2=ys[i+1];
+    const x3=xs[Math.min(pts.length-1,i+2)],y3=ys[Math.min(pts.length-1,i+2)];
+    line+=` C${(x1+(x2-x0)*tk).toFixed(1)},${(y1+(y2-y0)*tk).toFixed(1)} ${(x2-(x3-x1)*tk).toFixed(1)},${(y2-(y3-y1)*tk).toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+  }
+  const area=line+` L${xs[pts.length-1].toFixed(1)},${(pad.t+iH).toFixed(1)} L${xs[0].toFixed(1)},${(pad.t+iH).toFixed(1)} Z`;
+  const ticks=Array.from({length:5},(_,i)=>minY+rY*i/4);
+  const n=Math.min(4,pts.length);
+  const xIdxs=[...new Set(pts.length===1?[0]:Array.from({length:n},(_,i)=>Math.round(i*(pts.length-1)/(n-1))))];
+  const prIdx=vals.indexOf(Math.max(...vals));
+  const trend=pts.length>1?(pos?'📈 +':'📉 ')+fmt(last.rm1-pts[0].rm1)+' kg':'—';
+  // Carte « Objectif de force » : 1RM visé par exercice + barre de progression (retour maquettes Gemini/GPT)
+  const curRm=last.rm1;
+  const gPct=goal>0?Math.min(100,Math.round(curRm/goal*100)):0;
+  const gRem=goal>0?Math.round((goal-curRm)*10)/10:0;
+  const gReached=goal>0&&curRm>=goal;
+  const goalCard='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:12px 13px;margin-top:12px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+      +'<div style="font-size:13.5px;font-weight:800;color:var(--t1);">🎯 Objectif de force</div>'
+      +'<div style="display:flex;gap:7px;align-items:center;flex-shrink:0;">'
+        +'<input type="text" id="strgoal-inp" value="'+(goal||'')+'" placeholder="kg" step="0.5" min="1" max="600" inputmode="decimal" style="width:66px;padding:8px 9px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+        +'<button class="ft-press" onclick="setStrengthGoal()" style="background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;border:none;border-radius:8px;padding:9px 12px;font-size:15px;font-weight:700;cursor:pointer;">✓</button>'
+      +'</div></div>'
+    +(goal>0?('<div style="margin-top:10px;height:8px;border-radius:5px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:'+gPct+'%;background:linear-gradient(90deg,#22C55E,#5BE39A);border-radius:5px;"></div></div>'
+      +'<div style="margin-top:7px;font-size:12.5px;color:var(--t2);display:flex;justify-content:space-between;gap:8px;"><span><b style="color:var(--t1);">'+fmt(curRm)+'</b> / '+fmt(goal)+' kg · '+gPct+'%</span><span style="font-weight:700;color:'+(gReached?'var(--green)':'var(--t2)')+';">'+(gReached?'🎉 Atteint !':'encore '+gRem+' kg')+'</span></div>')
+      :'<div style="margin-top:6px;font-size:12px;color:var(--t3);">Fixe le 1RM que tu vises — une ligne repère verte apparaît sur ton graphe.</div>')
+    +'</div>';
+  box.innerHTML=`
+<div class="chart-hdr" style="margin-bottom:12px;"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
+${chipsHtml}
+<div style="display:flex;margin-bottom:16px;">
+  <div style="flex:1;text-align:center;">
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:700;color:var(--t1);line-height:1;">${fmt(last.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">1RM Actuel</div>
+  </div>
+  <div style="flex:1;text-align:center;border-left:1px solid var(--sep);">
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:700;color:var(--gold);line-height:1;">${fmt(maxPt.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">Record</div>
+  </div>
+  <div style="flex:1;text-align:center;border-left:1px solid var(--sep);">
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:700;color:${pos?'var(--green)':'var(--red)'};line-height:1;">${delta!==null?(pos?'+':'')+delta:'—'}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">Progrès${deltaPct!==null?' '+(deltaPct>=0?'+':'')+deltaPct+'%':''}</div>
+  </div>
+</div>
+${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
+  <span style="color:var(--t2);font-weight:600;white-space:nowrap;">🏋️ Charge max soulevée</span>
+  <span style="white-space:nowrap;"><span style="color:var(--t3);">${maxLoad.reps} reps ×</span> <b style="font-family:var(--font-cond);font-size:16px;font-weight:700;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
+</div>`:''}
+<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
+  <defs>
+    <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF2D55" stop-opacity=".45"/>
+      <stop offset="70%" stop-color="#FF2D55" stop-opacity=".06"/>
+      <stop offset="100%" stop-color="#FF2D55" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  ${ticks.map(v=>`<line x1="${pad.l}" y1="${toY(v).toFixed(1)}" x2="${W-pad.r}" y2="${toY(v).toFixed(1)}" style="stroke:var(--sep);" stroke-width="1" stroke-dasharray="4 3"/>`).join('')}
+  ${ticks.filter((_,i)=>i%2===0).map(v=>`<text x="${pad.l-6}" y="${(toY(v)+3.5).toFixed(1)}" text-anchor="end" style="fill:var(--t3);font-size:9.5px;font-family:-apple-system,sans-serif;font-weight:600;">${Math.round(v)}</text>`).join('')}
+  <path d="${area}" fill="url(#cg)"/>
+  <path d="${line}" style="stroke:var(--red);" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  ${goal>0?`<line x1="${pad.l}" y1="${toY(goal).toFixed(1)}" x2="${W-pad.r}" y2="${toY(goal).toFixed(1)}" style="stroke:#22C55E;" stroke-width="1.5" stroke-dasharray="5 4" opacity=".9"/><text x="${W-pad.r}" y="${(toY(goal)-4).toFixed(1)}" text-anchor="end" style="fill:#22C55E;font-size:9px;font-weight:700;font-family:-apple-system,sans-serif;">Objectif ${fmt(goal)}</text>`:''}
+  ${pts.map((p,i)=>{const cx=toX(i).toFixed(1),cy=toY(p.rm1).toFixed(1),isPR=i===prIdx;return(isPR?`<circle cx="${cx}" cy="${cy}" r="11" fill="rgba(255,214,0,.18)"/>`:'')+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(isPR?6:4)+'" style="fill:'+(isPR?'var(--gold)':'var(--red)')+';stroke:var(--bg);" stroke-width="2.5"/><circle cx="'+cx+'" cy="'+cy+'" r="16" fill="transparent" style="cursor:pointer;" onclick="showChartTooltip('+i+')"/>';}).join('')}
+  ${xIdxs.map(i=>`<text x="${toX(i).toFixed(1)}" y="${H-6}" text-anchor="middle" style="fill:var(--t3);font-size:9px;font-family:-apple-system,sans-serif;">${new Date(pts[i].date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</text>`).join('')}
+</svg>
+<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(41,121,255,.06);border:1px solid rgba(41,121,255,.15);border-radius:10px;padding:9px 12px;margin-top:8px;min-height:42px;">
+  <span style="font-size:12px;color:var(--t3);font-weight:600;" id="tt-hint">Tape un point pour les détails</span>
+  <div style="text-align:right;display:none;" id="tt-vals">
+    <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);" id="tt-rm"></div>
+    <div style="font-size:13px;color:var(--t2);" id="tt-set"></div>
+  </div>
+</div>
+<button id="tt-see" onclick="openChartSession()" class="ft-press" style="display:none;width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:rgba(41,121,255,.12);color:var(--blue);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;">Voir cette séance ›</button>
+${goalCard}
+<div class="chart-meta" style="margin-top:10px;"><span>${pts.length} séance${pts.length>1?'s':''}</span><span>${trend}</span></div>`;
+}
+// Objectif de force par exercice : fixe/retire le 1RM visé pour l'exo affiché
+function setStrengthGoal(){
+  const name=_progEx; if(!name)return;
+  const v=numFR((document.getElementById('strgoal-inp')||{}).value);
+  S.strengthGoals=S.strengthGoals||{};
+  if(!v){delete S.strengthGoals[name];persist();renderChart();toast('Objectif retiré','info');return;}
+  if(v<1||v>600){toast('Objectif invalide (1–600 kg)','error');return;}
+  S.strengthGoals[name]=v;persist();renderChart();
+  toast('Objectif '+name+' : '+v+' kg 🎯','success');
+}
+function showChartTooltip(i){
+  const p=_chartPts[i];if(!p)return;
+  const hint=document.getElementById('tt-hint'),rm=document.getElementById('tt-rm'),set=document.getElementById('tt-set'),vals=document.getElementById('tt-vals');
+  if(!hint)return;
+  hint.textContent=new Date(p.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'});
+  if(rm)rm.textContent=fmt(p.rm1)+' kg 1RM';
+  if(set)set.textContent=p.reps+' reps × '+p.kg+' kg';
+  if(vals)vals.style.display='block';
+  // « Voir cette séance » : visible seulement si on connaît la séance d'origine (retour GPT : lier le graphe à l'historique)
+  _ttSid=p.sid||null;
+  const see=document.getElementById('tt-see');
+  if(see)see.style.display=(_ttSid&&S.sessions.some(s=>(s.ts||s.id)===_ttSid))?'block':'none';
+}
+// ─── SESSION DETAIL / EDIT ───────────────────────────────────
+let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
+
+function _cloudSync(){
+  if(window._demoMode)return; // mode démo : aucune écriture cloud
+  if(!S.email||!S.url)return;
+  if(typeof _restauAttendue==='function'&&_restauAttendue())return;   // COOKIE-PROFILE-01 : rien pour un compte pas encore récupéré
+  // ⚠️ Le corps du message est construit UNE SEULE FOIS et servi aux DEUX destinations
+  // (Apps Script + miroir Supabase). Deux constructions séparées finiraient par diverger,
+  // et on enverrait deux versions différentes du même compte (R2).
+  /* 🗄️🗄️ S2-A — LE CORPS CI-DESSOUS EST *MÉTIER SEULEMENT* : AUCUN JUSTIFICATIF DEDANS.
+     ⛔⛔ CE QUI S'EST PASSÉ, ET POURQUOI CE N'ÉTAIT PAS UN OUBLI. S1 (la veille) a ajouté ici
+     `authCode:_authCode()` et `token:_ftToken()` pour authentifier l'écriture Apps Script.
+     Or ce corps est construit UNE FOIS et servi aux DEUX destinations — c'est **R2**, et c'est
+     juste : deux constructions séparées finiraient par diverger. 👉 ***Le miroir Supabase a
+     donc reçu le jeton BRUT et le code perso EN CLAIR par la même occasion***, mesuré en
+     interceptant le vrai `fetch`. Apps Script, lui, ne les écrit jamais (il recopie 58 champs
+     nommés) ; Supabase reçoit le blob ENTIER.
+     ⭐ LA CORRECTION NE CASSE PAS R2, ELLE LE PRÉCISE : on ne duplique pas le corps métier,
+     on retire les justificatifs du corps COMMUN et on les ajoute au SEUL transport qui en a
+     besoin. *Un justificatif de transport n'appartient pas aux données de la personne.* */
+  const _corpsSync={
+      action:'saveProfile',email:S.email,
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
+      ...(_adnFilled()?{adn:S.adn}:{}),
+      activityLevel:S.activityLevel,activitySrc:S.activitySrc||'',workType:S.workType,smoker:S.smoker,
+      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,strengthGoals:S.strengthGoals||{},manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
+      barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
+      foodMode:S.foodMode||'',fasting:S.fasting||'',   // mode alimentaire + jeûne (02/08)
+
+      morpho:S.morpho||'',morphotype:S.morphotype||'',
+      bday:S.bday||'',badges:S.badges||{},
+      histImports:S.histImports||0,
+      bodyScanImports:S.bodyScanImports||0,
+      progImports:S.progImports||0,
+      coachMemory:S.coachMemory||'',
+      /* 🧾 La provenance voyage AVEC le texte (20/09/2026). Sans elle, chaque restauration
+         rétrograderait en `legacy` une mémoire dont on connaissait le moteur et la date :
+         *on perdrait une information qu'on avait*, ce qui est pire que de ne l'avoir
+         jamais posée. ⛔ Elle ne contient que des métadonnées — aucun mot de la personne. */
+      coachMemoryMeta:S.coachMemoryMeta||null,
+      // 🛡️ Compteur du Gardien : ~150 octets de NOMBRES. Aucune phrase de Milo, aucun mot de
+      // la personne — ses conversations, elles, ne quittent toujours pas son téléphone.
+      gardienStats:S.gardienStats||null,
+      // Photos d'exercices = LOCAL SEULEMENT (n'alourdissent plus le store cloud de 9 Mo) :
+      // on envoie les exos perso SANS leur photo (img), et on n'envoie plus exPhotos du tout.
+      customExercises:(S.customExercises||[]).map(function(e){var c={};for(var k in e){if(k!=='img')c[k]=e[k];}return c;}),
+      // ⚠️ Si le stockage du téléphone a saturé, l'historique LOCAL a été ramené à 50 séances.
+      // L'envoyer écraserait la sauvegarde cloud complète par la version tronquée. On omet
+      // donc le champ : le serveur laisse alors les séances existantes intactes (02/08).
+      sessions:S.histTronque?undefined:(S.sessions||[]).slice(0,2000), // ~8-10 ans de séances
+      prs:S.prs||{},
+      goalLog:(S.goalLog||[]).slice(-20),      // ⛔ borné à 20 (ft-v1010) — sans ça, changer de
+                                               //    téléphone perdrait l'histoire de l'objectif (R4)
+      weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
+      sleepLog:(S.sleepLog||[]).slice(-4000),
+      dayStateLog:(S.dayStateLog||[]).slice(-800), // historique du check-in du jour (brique 7) — 1 entrée/jour, ~2 ans
+      /* ☁️ ft-v1140 — `mensLog` ET `missedLog` NE QUITTAIENT JAMAIS LE TÉLÉPHONE.
+         Trouvé en construisant l'inventaire des données (`tools/donnees.py`, ft-v1136) :
+         `mensLog` avait **zéro occurrence dans `Code.js`** et n'était ni ici ni dans
+         `_applyRestoreData`. 👉 ***Un changement de téléphone, un navigateur vidé ou une
+         restauration effaçait tout l'historique de mensurations*** — et avec lui la carte du
+         ratio poids/centimètres livrée la veille. C'est la **règle d'or #3** ailleurs que sur
+         une séance : ce que la personne a saisi ne se perd pas.
+         ⚠️ LE VOLUME EST BORNÉ EXPRÈS, ET CE N'EST PAS DE LA PRUDENCE DE PRINCIPE : le
+         réservoir Script Properties a été **plein à 102 % le 29/07** et plus AUCUNE écriture
+         n'aboutissait pendant deux jours. Le local garde 4000 entrées ; on n'en envoie que
+         **800** — soit ~7 ans de mensurations mensuelles sur les 9 zones.
+         ⛔ `mensLog` est trié du PLUS RÉCENT au plus ancien (`mensAjouter`), donc on coupe par
+         le DÉBUT (`slice(0,800)`) — un `slice(-800)` copié sur ses voisins garderait les plus
+         VIEILLES et jetterait les mesures d'aujourd'hui. *Un comportement copié d'un contexte à
+         un autre peut devenir faux* (**R14**). */
+      mensLog:(S.mensLog||[]).slice(0,800),
+      missedLog:(S.missedLog||[]).slice(-12), // même borne que le local (state.js) : 12 suffisent
+      /* 📊 ft-v1141 — l'historique du banc d'essai. Minuscule (12 passes × 6 nombres, et
+         un objet d'états V/R plafonné à 8 par scénario) : aucun risque pour le réservoir.
+         ⛔ On envoie les DEUX : les totaux sans le détail par scénario ne diraient plus
+         « systématique ou intermittent », qui est la lecture qui décide quoi corriger. */
+      evalPasses:(S.evalPasses||[]).slice(-12),
+      evalHist:S.evalHist||{},
+      cycle:S.cycle||null,
+      programmes:S.programmes||[],
+      exRestPref:S.exRestPref||{},
+      exSwaps:S.exSwaps||{},
+      healthProfile:S.healthProfile||null,
+      bodyStudy:S.bodyStudy||null,
+      bodyStudies:S.bodyStudies||[],   // historique des études corporelles (persistance cloud active — backend déployé via CI 2026-07-11)
+      bodyScans:(S.bodyScans||[]).slice(-2000),
+      bloodTests:(S.bloodTests||[]).slice(-40),
+      coachQuiz:S.coachQuiz||null,
+      coachQuizPro:S.coachQuizPro||null,
+      scaleType:S.scaleType||'',
+      diet:S.diet||'',
+      dietRestrictions:S.dietRestrictions||[],
+      dietNotes:S.dietNotes||'',
+      foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
+      savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
+      /* 🫙 L'ANCIEN POT PART TOUJOURS — gelé, mais pas retiré du transport : un appareil
+         resté sur l'ancienne version le lit encore. Les trois pots séparés partent à côté
+         (19/09/2026, phase 3.1). ⛔ Sans eux, une restauration rendrait 25 essais neufs sur
+         chaque capacité : un compteur qui ne voyage pas est un compteur qui se remet à zéro. */
+      foodAiUses:S.foodAiUses||0,
+      foodLabelAiUses:S.foodLabelAiUses||0,
+      foodMealEstimateAiUses:S.foodMealEstimateAiUses||0,
+      foodBarcodeAiUses:S.foodBarcodeAiUses||0,
+      a11y:S.a11y||false,
+      colorblind:S.colorblind||'',
+      leftHand:S.leftHand||false
+  };
+  /* 🪪 LE JUSTIFICATIF NE VOYAGE QUE SUR LE TRANSPORT QUI EN A BESOIN.
+     Apps Script en a besoin : c'est le jeton qui décide du compte écrit (S1), et le code
+     perso qui autorise l'écriture d'un compte protégé. Il est donc ajouté ICI, au moment de
+     l'envoi, et jamais posé dans `_corpsSync` — qui part aussi ailleurs. */
+  fetch(S.url,{method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(Object.assign({},_corpsSync,{
+      authCode:_authCode(), token:_ftToken()
+    }))
+  }).catch(()=>{});
+  /* MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
+     vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,
+     et surtout : ça ne retarde ni ne bloque JAMAIS la sauvegarde principale (règle d'or #3).
+     🔀 S2-B PHASE 4 (18/09/2026) — `sbEnvoyer` remplace `sbMirror` ICI, et nulle part ailleurs.
+     L'identité du compte écrit ne vient plus d'une adresse choisie par le navigateur mais du
+     jeton S1 résolu côté serveur. ⛔ `sbMirror` n'est PAS supprimée : elle reste disponible
+     pour le retour en arrière, qui tient en une ligne (`SB_VOIE` dans `supabase.js`).
+     ⛔ Le corps reste le MÊME que celui d'Apps Script (R2) : on ne construit pas un second
+     instantané métier, qui finirait par diverger. */
+  try{ if(typeof sbEnvoyer==='function')sbEnvoyer(_corpsSync); }catch(e){}
+}
+// Alias pour compatibilité
+function _cloudSyncSessions(){_cloudSync();}
+let _syncTimer=null;
+function _cloudSyncDebounced(){clearTimeout(_syncTimer);_syncTimer=setTimeout(_cloudSync,4000);}
+
+
+/* ⏱️ UNE DURÉE INVRAISEMBLABLE EST SIGNALÉE, PAS CORRIGÉE (15/08/2026)
+   Michel, en parcourant son historique : *« par contre la séance du 12 juillet, 4 h de séance
+   lol »*. Vérifié : 254 min stockées pour **14 séries validées**, soit **18 minutes par série**.
+   C'est l'ancien chrono qui a continué à tourner — celui qui démarrait à l'ouverture de l'écran
+   et qu'on a corrigé le 14/08 (ft-v852). Sa montre dit la même chose ce jour-là : deux activités
+   laissées tourner, 3 h 12 au total.
+   ⚠️ ON NE LA CORRIGE PAS. On ne sait pas ce que la séance a réellement duré, et remplacer une
+   mesure douteuse par une estimation inventée serait pire (R29). Mais on ne l'affiche plus comme
+   un FAIT : elle est marquée, et la personne peut la corriger — l'éditeur existe déjà (ft-v852).
+   *Même choix qu'en ft-v853 pour le constat périmé de la carte Santé : on signale, on ne devine pas.*
+   ⚠️ LE SEUIL EST VÉRIFIÉ CONTRE SA MONTRE, pas choisi à vue : sa médiane est de 4,5 min par série.
+   À 10 min/série, on attrape le 12/07 (254 min stockées contre 192 relevées) ET le 10/07 (124
+   contre 47) — et on ÉPARGNE le 03/08 (140 contre 111), qui était réellement une longue séance.
+   Un seuil à 9 l'aurait signalée à tort, un seuil à 12 aurait raté le 10/07. */
+function _dureeDouteuse(sess){
+  const min=(sess&&sess.duration)?sess.duration/60:0;
+  if(!min) return false;
+  if(sess.durationDite) return false;              // durée saisie à la main : c'est elle qui sait
+  if(min>180) return true;                         // plus de 3 h : ce n'est plus une séance
+  let n=0;
+  (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x&&x.done) n++; }));
+  if(!n) return false;
+  const parSerie = min/n;
+  if(parSerie>10) return true;                     // le chrono a continué à tourner
+  /* ⏱️ ET LE DÉFAUT INVERSE, trouvé par Michel dans la foulée : *« Trapèze 19 minutes lol »*.
+     Le 04/07 : 19 min stockées pour **16 séries validées**, soit 1,2 min par série — et sa montre
+     dit 31 min. On n'a pas pu faire 16 séries en 19 minutes : une série plus le repos minimal,
+     c'est au moins 1 min 30. Le chrono a démarré en retard (séance reprise, exercices ajoutés
+     après coup).
+     ⚠️ LE PLANCHER EST PHYSIQUE, pas ajusté sur ses données : il vient de ce qu'un être humain
+     peut faire, pas d'une moyenne. Vérifié quand même : sa séance la plus dense (15/08, 2,4
+     min/série) est HORODATÉE et colle à sa montre (69 min contre 64) — le plancher l'épargne.
+     ⚠️ Seulement au-delà de 6 séries : sur 2 ou 3 séries, une séance vraiment expédiée existe. */
+  if(n>=6 && parSerie<1.5) return true;
+  return false;
+}
+
+function openSessDetail(id){
+  const sess=S.sessions.find(s=>(s.ts||s.id)===id);
+  if(!sess)return;
+  _sessId=id;
+  _sessEdits=JSON.parse(JSON.stringify(sess));
+  /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
+     Le contrôle négatif a montré qu'aucune des deux ne pouvait faire rougir un témoin — elles se
+     couvraient l'une l'autre. La seconde est donc retirée (R19). ⛔ Et je dis ce que la mesure
+     dit VRAIMENT : même celle-ci n'a aucun cas d'échec atteignable, parce que le garde
+     `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien
+     nom, donc aucun record ne bouge. Elle reste parce qu'elle garantit qu'une fenêtre s'ouvre
+     TOUJOURS propre, pas parce qu'un témoin l'exige. */
+  _sessRenames=[];
+  _sdDelConfirm=false;
+  if(_sdDelTimer)clearTimeout(_sdDelTimer);
+  const db=document.getElementById('sd-del-btn');
+  if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
+  document.getElementById('sd-title').textContent=fmtD(sess.date);
+  const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
+  /* ⏱️ LA DURÉE RÉELLE DE LA SÉANCE — elle EXISTAIT et ne remontait jamais (13/08/2026).
+     `sess.duration` est écrite à chaque fin de séance depuis toujours (chrono réel, temps
+     en pause déduit). Elle ne servait QU'À l'écran de fin, qui disparaît aussitôt : elle
+     n'apparaissait nulle part dans l'historique. Michel, en relevant ses calories : *« pas
+     de durée sur l'application »* — alors que l'app l'avait, pour chacune de ses séances.
+     C'est R4 dans sa forme la plus banale : la donnée descend jusqu'au fichier et ne
+     remonte pas jusqu'à la personne. Et c'est précisément le chiffre qu'il faut pour
+     comparer aux montres (CALORIES-SOURCES.md §14). */
+  const _dm=sess.duration?Math.max(1,Math.round(sess.duration/60)):0;
+  const _fmtD=m=>m>=60?Math.floor(m/60)+' h '+String(m%60).padStart(2,'0'):m+' min';
+  /* ── LA DURÉE SE SAISIT À LA MAIN QUAND ELLE N'A PAS PU ÊTRE MESURÉE (14/08/2026) ────
+     Michel : *« si on veut rattraper une séance qu'on a oublié de noter, on aura pas cette
+     donnée ; l'import en photographiant une feuille sera forcément refusé puisqu'il n'y aura
+     pas de timing »*. Il a raison, et une séance rattrapée reste une VRAIE séance : la
+     refuser reviendrait à punir quelqu'un d'avoir noté sur papier.
+     ⚠️ ON NE DEVINE PAS, ON DEMANDE (R8 : une donnée absente se collecte dans l'interface,
+     elle ne se compense pas par une formule). Et on garde la distinction : `durationDite`
+     marque une durée DÉCLARÉE, jamais confondue avec une durée mesurée au chrono. */
+  const _dout=_dureeDouteuse(sess);
+  /* ⏱️➕ LE CARDIO D'AVANT COMPTE DANS LE TOTAL (18/08/2026) — voir `_dureeTotaleMin` (app.js).
+     `sess.duration` est le chrono de la MUSCULATION : depuis le 14/08 il démarre à la 1ʳᵉ série
+     validée, donc un cardio fait AVANT n'y est pas. On affiche donc le total, et on DIT d'où
+     viennent les minutes ajoutées — un chiffre qui gonfle sans explication est pire que le trou
+     qu'il comble (R29). Le clic reste sur la même modification : c'est bien la durée de muscu
+     que la personne corrige, pas le cardio (qui a son propre champ, juste en dessous). */
+  /* ⚠️ ET ON LE CALCULE MÊME QUAND LE CHRONO EST À ZÉRO : une séance de CARDIO SEUL est valide
+     depuis le 02/08 (`finishWorkout` l'accepte explicitement) — mais comme le chrono ne démarre
+     qu'à la 1ʳᵉ série de muscu, elle arrivait ici avec `duration = 0` et affichait « ajouter la
+     durée » alors que la personne venait de faire 30 minutes de vélo. */
+  let _dtot=_dm, _cardioTxt='';
+  if(typeof _dureeTotaleMin==='function'){
+    let _ns=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{if(x&&x.done)_ns++;}));
+    const _t=_dureeTotaleMin(sess,_ns,0);
+    if(_t&&_t.cardioMin>0){ _dtot=Math.max(1,Math.round(_t.min)); _cardioTxt=` <i>(dont ${_t.cardioMin} min de cardio)</i>`; }
+  }
+  const duree=_dtot
+    ? ` · <span class="sd-dur${_dout?' douteuse':''}" onclick="editSessDuree()" title="${_dout?'Durée douteuse — appuie pour la corriger':'Modifier la durée'}">⏱️ ${_fmtD(_dtot)}${sess.durationDite?' <i>(saisie)</i>':(_dout?' ⚠️':'')}${_cardioTxt}</span>`
+    : ` · <span class="sd-dur vide" onclick="editSessDuree()">⏱️ ajouter la durée</span>`;
+  // ── Temps EFFECTIF, lu sur les horodatages de séries (12/08/2026) ────────────────────
+  // Ne s'affiche que si la séance en porte (donc à partir de ft-v835) : les séances
+  // antérieures n'ont pas d'horodatage, et on préfère ne rien dire que d'inventer (R29).
+  // C'est aussi la ligne de relevé du protocole des 10 séances (CALORIES-SOURCES.md §12.7).
+  let eff='';
+  if(typeof _dureeEffective==='function'){
+    const d=_dureeEffective(sess);
+    if(d&&d.actifSec>60) eff=` · ⏱️ ${Math.round(d.actifSec/60)} min effectifs · ${String(d.densite).replace('.',',')} série/min`;
+  }
+  /* 🔬 L'ESTIMATION « TEMPS RÉEL », À CÔTÉ DU CHIFFRE ACTUEL (14/08/2026).
+     Michel : *« comme ça je peux voir si je me rapproche de ma montre »*. Elle est AFFICHÉE,
+     jamais enregistrée : `sess.calories` ne bouge pas, le suivi nutrition non plus. Le jour
+     où elle colle aux montres sur plusieurs séances, on la branchera — pas avant. */
+  let estim='';
+  if(typeof _estimCalTempsReel==='function'){
+    const e=_estimCalTempsReel(sess);
+    if(e&&sess.calories) estim=` · 🔬 ~${e.kcal} kcal en comptant le temps réel`;
+  }
+  document.getElementById('sd-sub').innerHTML=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}${estim}`;
+
+  _renderHealthInbox(sess);
+  _updateSdMuscles(sess);
+  _renderSessDetailContent();
+  document.getElementById('ov-sess-detail').classList.add('open');
+}
+
+/* ⌚ CE QUE TA MONTRE A ENREGISTRÉ CE JOUR-LÀ (16/08/2026, ft-v880)
+   Michel : *« j'aimerais que l'information arrive direct dans mon appli pour éviter de donner les
+   csv, juste le cardio »*. Un raccourci iOS lit Santé (où Garmin écrit tout seul) et pousse les
+   activités vers le backend ; elles reviennent avec le profil, dans `S.healthInbox`.
+
+   ⚠️⚠️ ON PROPOSE, ON N'ÉCRIT JAMAIS TOUT SEUL. Rattacher automatiquement un cardio à une séance
+   demanderait de deviner lequel des trois « Marche » de la journée était l'échauffement — et une
+   erreur écraserait une saisie manuelle. *L'app montre ce qu'elle voit, la personne tranche*
+   (R29, et c'est exactement l'arbitrage de ft-v868 sur les durées douteuses).
+   ⚠️ ET ON N'AFFICHE QUE LE JOUR DE LA SÉANCE : une activité du lendemain n'a rien à faire là.
+   ⚠️ LES CALORIES DE LA MONTRE SONT REÇUES MAIS JAMAIS UTILISÉES, et c'est mesuré : en résistance
+   elles corrèlent à r = 0,10-0,34 contre calorimétrie indirecte. On prend son HORLOGE, pas son
+   estimation. Elles restent visibles à titre indicatif, jamais reprises dans un calcul. */
+/* ⚠️ LE JOUR ET L'HEURE SE LISENT EN LOCAL, PAS EN DÉCOUPANT LA CHAÎNE (ft-v883).
+   `start` peut arriver en heure locale sans décalage (raccourci iOS) ou en UTC (app d'export).
+   Découper les caractères 0-10 donnait donc le bon jour dans un cas et le mauvais dans l'autre —
+   un décalage d'une ou deux heures qui ne se voit qu'en fin de soirée, et jamais en test.
+   `new Date()` lit les deux : une date sans décalage est comprise comme locale, une date avec
+   décalage est convertie. Une seule fonction pour le jour ET pour l'heure affichée (R2). */
+function _jourLocal(iso){
+  try{ const d=new Date(iso); return isNaN(d) ? String(iso).slice(0,10)
+    : d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  catch(e){ return String(iso).slice(0,10); }
+}
+function _heureLocale(iso){
+  try{ const d=new Date(iso); return isNaN(d) ? String(iso).slice(11,16).replace(':','h')
+    : String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0'); }
+  catch(e){ return ''; }
+}
+function _renderHealthInbox(sess){
+  const el=document.getElementById('sd-health');
+  if(!el) return;
+  const inbox=(typeof S!=='undefined'&&S.healthInbox)||[];
+  const jour=(sess&&sess.date)||'';
+  const act=inbox.filter(a=>a&&_jourLocal(a.start)===jour);
+  // rien reçu ET jamais utilisé → on n'encombre pas l'écran de ceux qui n'ont rien branché
+  if(!act.length && !inbox.length){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='block';
+  /* ⚠️ LE SILENCE DOIT SE VOIR (ft-v883). Apple Santé n'est lisible QUE téléphone déverrouillé :
+     une automatisation nocturne sur un iPhone posé sur la table ne remonte rien, sans la moindre
+     erreur. Sans cette ligne, le tuyau peut se taire des semaines et personne ne le sait —
+     exactement la famille du « déploiement silencieux » (R18). On affiche donc la date du dernier
+     import, et un bouton qui lance le raccourci DEPUIS l'app : l'app au premier plan, c'est un
+     téléphone déverrouillé par construction. */
+  let dernier=''; inbox.forEach(a=>{ if(a&&a.recu&&a.recu>dernier) dernier=a.recu; });
+  const pied='<div class="hi-pied">'
+    + (dernier?`Dernier import : ${_jourLocal(dernier)} à ${_heureLocale(dernier)}`:'Aucun import reçu pour l\'instant')
+    + ' · <span class="hi-lien" onclick="lancerImportMontre()">⌚ importer maintenant</span></div>';
+  el.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:6px">⌚ Ta montre a enregistré ce jour-là</div>'
+    + (act.length
+        ? act.map((a,i)=>{
+            const kcal=a.kcal?` · ${a.kcal} kcal`:'';
+            const hr=a.hr?` · ${a.hr} bpm`:'';
+            return `<div class="hi-row"><span class="hi-txt">${_heureLocale(a.start)} · <b>${a.type}</b> · ${a.min} min<span class="hi-dim">${kcal}${hr}</span></span>`
+                 + `<button class="hi-btn" onclick="utiliserActiviteMontre(${i})">Utiliser</button></div>`;
+          }).join('')
+        : '<div class="hi-txt hi-dim">Rien reçu pour ce jour-là.</div>')
+    + pied;
+  el._act=act;
+}
+/* ⌚ Ouvre le raccourci iOS depuis l'app. C'est le seul chemin qui GARANTIT un téléphone
+   déverrouillé, donc une lecture de Santé qui aboutit. Le déclencheur horaire reste un bonus.
+   ⚠️ Le nom doit correspondre EXACTEMENT à celui du raccourci sur le téléphone. */
+const RACCOURCI_MONTRE='Force Tracker';
+function lancerImportMontre(){
+  try{
+    toast('Ouverture du raccourci…','info');
+    location.href='shortcuts://run-shortcut?name='+encodeURIComponent(RACCOURCI_MONTRE);
+    // ⚠️ On ne peut pas savoir si le raccourci existe : iOS ne rend pas la main. On ne prétend
+    // donc jamais que l'import a réussi — c'est la date affichée qui le dira au retour (R29).
+  }catch(e){ toast('Impossible d\'ouvrir Raccourcis','error'); }
+}
+/* Rattache une activité reçue au CARDIO de la séance ouverte. On demande AVANT ou APRÈS :
+   l'app ne peut pas le savoir, et se tromper mettrait 40 min d'échauffement là où il y avait
+   un retour au calme — donc un calcul de calories faux, sans que rien ne le signale. */
+function utiliserActiviteMontre(i){
+  const el=document.getElementById('sd-health');
+  const a=el&&el._act&&el._act[i];
+  if(!a||!_sessEdits) return;
+  const avant=confirm(`« ${a.type} » de ${a.min} min\n\nOK = échauffement (AVANT la séance)\nAnnuler = retour au calme (APRÈS)`);
+  const cible=avant?'cardioAvant':'cardio';
+  const dejaLa=_sessEdits[cible]&&+_sessEdits[cible].duration>0;
+  if(dejaLa && !confirm(`Il y a déjà ${_sessEdits[cible].duration} min de cardio ${avant?'avant':'après'}. Le remplacer ?`)) return;
+  _sessEdits[cible]={type:_typeCardioDepuisMontre(a.type), intensity:'modere', duration:a.min};
+  toast('Cardio ajouté — pense à enregistrer','success');
+  _renderSessDetailContent();
+}
+/* Le nom d'Apple Santé (« Walking », « Marche à pied », « Indoor Cycling »…) vers les types que
+   l'app connaît. ⚠️ Inconnu → « autre », jamais un type deviné : le barème calorique en dépend. */
+function _typeCardioDepuisMontre(nom){
+  const n=String(nom||'').toLowerCase();
+  if(/march|walk|randonn|hik/.test(n))            return 'marche';
+  if(/cours|run|jog|tapis|treadmill/.test(n))     return 'course';
+  if(/vélo|velo|cycl|bike|spinning/.test(n))      return 'velo';
+  if(/rameur|row/.test(n))                        return 'rameur';
+  if(/ellipt/.test(n))                            return 'elliptique';
+  if(/nat|swim/.test(n))                          return 'natation';
+  if(/corde|rope/.test(n))                        return 'corde';
+  return 'autre';
+}
+function _updateSdMuscles(sess){
+  // Unifié (ft-v171) : même moteur que la grande carte et le mini-bonhomme des cartes
+  // (_mscScores/_MEX) → reconnaît aussi les exercices machines/perso, pas seulement EXLIB.
+  const exs=sess.exs||sess.exercises||[];
+  const muscleEl=document.getElementById('sd-muscles');
+  if(!muscleEl)return;
+  const res=_mscScores(exs);
+  if(!Object.keys(res.sc).length){muscleEl.style.display='none';return;}
+  muscleEl.style.display='flex';
+  muscleEl.style.alignItems='center';
+  muscleEl.style.gap='12px';
+  muscleEl.style.cursor='pointer';
+  muscleEl.title='Voir la carte musculaire';
+  muscleEl.onclick=()=>showMuscleMap(exs,null);
+  const mini=_mscSVGmini(res).replace('width:32px','width:56px');
+  muscleEl.innerHTML=`<div style="flex-shrink:0">${mini}</div>`+
+    `<div style="font-size:12px;color:var(--t2);line-height:1.4"><span style="font-weight:700;color:var(--t1)">💪 Muscles travaillés</span><br>Tape pour agrandir</div>`;
+}
+
+/* Saisie de la durée d'une séance — sert aux séances importées (photo d'une feuille) et à
+   celles d'avant les horodatages. ⚠️ Elle ne recalcule AUCUNE calorie : `sess.calories` reste
+   figé (même principe qu'`uniConv`). Elle alimente l'estimation 🔬 et les comparaisons. */
+function editSessDuree(){
+  // ⚠️ Même clé que `openSessDetail` : (ts || id), pas `id` seul — sinon on éditerait la
+  //    mauvaise séance sur les entrées où les deux diffèrent.
+  const s=(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId);
+  if(!s)return;
+  const cur=s.duration?Math.round(s.duration/60):'';
+  /* 💬 QUAND LA DURÉE EST DOUTEUSE, ON DIT CE QU'ON A VU ET CE QU'ON PEUT FAIRE (15/08/2026)
+     Michel, après avoir retrouvé la cause de sa séance de 19 min : *« c'est quand j'ai perdu la
+     séance et j'ai recommencé »*, puis *« une séance qui est rentrée après pour X raison, il faut
+     le prendre en compte »*.
+     ⚠️ L'app SAVAIT déjà effacer une durée (laisser le champ vide), et savait déjà la SIGNALER
+     (ft-v868/869) — mais elle ne reliait pas les deux : au moment précis où la personne tape sur
+     le ⚠️, rien ne lui disait ce qui clochait ni qu'une séance ressaisie n'a pas de durée à
+     donner. *Une capacité qu'on ne nomme pas au bon moment n'existe pas.*
+     ⚠️ ON MONTRE LE CALCUL, on n'assène pas un verdict : « 19 min pour 16 séries, soit 1,2 min par
+     série ». C'est la personne qui sait pourquoi, pas l'app (R29 : informer sans décider). */
+  let entete='Durée de la séance, en minutes\n(laisse vide pour l\'effacer)';
+  if(typeof _dureeDouteuse==='function' && _dureeDouteuse(s)){
+    let n=0; (s.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x&&x.done) n++; }));
+    const m=Math.round(s.duration/60);
+    entete='⚠️ Cette durée semble fausse : '+m+' min pour '+n+' série'+(n>1?'s':'')+' validée'+(n>1?'s':'')
+      +(n?' (soit '+(m/n).toFixed(1).replace('.',',')+' min par série)':'')+'.\n\n'
+      +'Si tu as ressaisi cette séance APRÈS coup, le chrono n\'a mesuré que ta saisie : laisse le champ '
+      +'VIDE, mieux vaut aucune durée qu\'une fausse.\n\n'
+      +'Sinon, entre la vraie durée en minutes.';
+  }
+  const v=prompt(entete,cur);
+  if(v===null)return;
+  const t=String(v).trim();
+  if(!t){ delete s.duration; delete s.durationDite; }
+  else{
+    const m=parseInt(t.replace(/[^0-9]/g,''),10);
+    if(!m||m<1||m>600){ toast('Durée attendue entre 1 et 600 minutes','error'); return; }
+    s.duration=m*60; s.durationDite=true;
+  }
+  persist();
+  try{ if(typeof _cloudSyncSessions==='function')_cloudSyncSessions(); }catch(e){}
+  openSessDetail(s.ts||s.id);
+  renderSessions();
+  toast(t?'Durée enregistrée ✅':'Durée effacée — mieux vaut rien qu\'un chiffre faux','success');
+}
+function _renderSessDetailContent(){
+  const el=document.getElementById('sd-content');
+  if(!_sessEdits||!el)return;
+  let html=(_sessEdits.exs||[]).map((ex,ei)=>{
+    const done=ex.sets.filter(s=>s.done);
+    const maxRM=done.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
+    return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
+        <div style="font-weight:700;font-size:14px">${_escNote(ex.name)}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--gold)" onclick="openExHistory('${_escNote(ex.name).replace(/'/g,"\\'")}')" title="Voir mes perfs sur cet exercice">📊</button>
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--blue)" onclick="replaceSessEx(${ei})" title="Remplacer l'exercice">🔄</button>
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
+        </div>
+      </div>
+      ${ex.note?`<div style="font-size:12px;color:var(--gold);font-style:italic;line-height:1.4;margin-bottom:8px;">💬 ${ex.note}</div>`:''}
+      ${maxRM>0?`<div style="font-size:13px;color:var(--t1);font-weight:700;margin-bottom:8px;">🎯 Meilleur 1RM potentiel : <span style="font-weight:800">${fmt(maxRM)} kg</span></div>`:''}
+      ${(()=>{ let _n=0; return ex.sets.map((s,si)=>{ if(!s.done) return ''; _n++; return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--t3);min-width:14px">${_n}</span>
+        <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
+        <input type="number" min="1" inputmode="numeric" value="${_champNum(s.reps)}"
+               style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
+               onchange="updateSessSet(${ei},${si},'reps',this.value)">
+        <span style="color:var(--t2);font-size:12px">reps ×</span>
+        <input type="text" step="0.5" min="0" inputmode="decimal" value="${_champNum(s.kg)}"
+               style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
+               onchange="updateSessSet(${ei},${si},'kg',this.value)">
+        <span style="color:var(--t2);font-size:12px">kg</span>
+        ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
+        <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
+      </div>`; }).join(''); })()}
+      ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série — ajoutes-en une</div>':''}
+      <button class="btn btn-bg2" style="width:100%;margin-top:4px;padding:6px;font-size:12px;color:var(--t2)" onclick="addSessSet(${ei})">+ Ajouter une série</button>
+    </div>`;
+  }).join('');
+  // Ajouter un exercice oublié à cette séance passée
+  html+=`<button class="btn btn-bg2" style="width:100%;margin-bottom:10px;padding:11px;font-size:14px;font-weight:700;color:var(--red)" onclick="openSessAddEx()">+ Ajouter un exercice</button>`;
+  // Cardio de la séance — DEUX moments depuis le 02/08 (« avant et après séance ce n'est pas
+  // pareil »). `cardio` = APRÈS (champ historique) · `cardioAvant` = échauffement. Une séance
+  // enregistrée avant ce jour n'a que `cardio` : elle s'affiche donc dans « Après », inchangée.
+  const ckTot=(typeof calcCardioKcal==='function')
+    ? calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null) : 0;
+  const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
+  const voletSess=(moment,titre)=>{
+    const c=(moment==='avant'?_sessEdits.cardioAvant:_sessEdits.cardio)||null;
+    const k=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+    return `<div style="margin-top:7px;">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${k?` <span style="font-weight:600;color:var(--green)">· ~${k} kcal</span>`:''}</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <select onchange="setSessCardio('type',this.value,'${moment}')" style="${selSty}">
+          ${Object.keys(CARDIO_LABELS).map(t=>`<option value="${t}" ${(c?c.type:'elliptique')===t?'selected':''}>${CARDIO_LABELS[t]}</option>`).join('')}
+        </select>
+        <select onchange="setSessCardio('intensity',this.value,'${moment}')" style="${selSty}">
+          ${[['leger','Léger'],['modere','Modéré'],['intense','Intense']].map(([v,l])=>`<option value="${v}" ${(c?c.intensity:'modere')===v?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <input type="number" min="0" max="300" inputmode="numeric" value="${c&&c.duration?c.duration:''}" placeholder="min" onchange="setSessCardio('duration',this.value,'${moment}')" style="width:56px;padding:6px 4px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:14px;text-align:center;font-family:var(--font)">
+        <span style="font-size:12px;color:var(--t3)">min</span>
+        ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0,'${moment}')">Retirer</button>`:''}
+      </div>
+    </div>`;
+  };
+  html+=`<div class="card" style="margin-bottom:8px;padding:10px 12px">
+    <div style="font-weight:700;font-size:14px;">🏃 Cardio ${ckTot?`<span style="font-weight:600;font-size:12px;color:var(--green)">· ~${ckTot} kcal au total</span>`:'<span style="font-weight:500;font-size:12px;color:var(--t3)">(optionnel)</span>'}</div>
+    ${voletSess('avant','🔥 Avant la séance')}
+    ${voletSess('apres','🧊 Après la séance')}
+  </div>`;
+  el.innerHTML=html;
+}
+function addSessSet(ei){
+  if(!_sessEdits||!_sessEdits.exs[ei])return;
+  const sets=_sessEdits.exs[ei].sets;
+  const last=sets.filter(s=>s.done).slice(-1)[0]||sets.slice(-1)[0];
+  sets.push({kg:last?last.kg:0,reps:last?last.reps:0,type:'N',done:true,rm1:0});
+  _renderSessDetailContent();
+}
+function openSessAddEx(){
+  if(!_sessEdits)return;
+  openExPicker('addSess');
+  toast('Choisis l\'exercice à ajouter','info');
+}
+function _addSessExPick(name){
+  if(!_sessEdits)return;
+  if(!_sessEdits.exs)_sessEdits.exs=[];
+  _sessEdits.exs.push({name,sets:[{kg:0,reps:0,type:'N',done:true,rm1:0}]});
+  _renderSessDetailContent();
+  _updateSdMuscles(_sessEdits);
+  toast(name+' ajouté — remplis les séries puis Enregistre','info');
+}
+function setSessCardio(field,val,moment){
+  if(!_sessEdits)return;
+  const k=(moment==='avant')?'cardioAvant':'cardio';
+  if(!_sessEdits[k])_sessEdits[k]={type:'elliptique',intensity:'modere',duration:0};
+  _sessEdits[k][field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
+  if(field==='duration'&&!_sessEdits[k].duration)delete _sessEdits[k]; // 0 → pas de cardio
+  _renderSessDetailContent();
+}
+
+/* ⛔⛔ « null » DANS LE CHAMP KG — retour de Michel sur le compte d'Eline (01/09/2026), capture
+   à l'appui : son Pec Deck affichait `10 reps × null kg` sur deux séries.
+   ⛔⛔ ET « null » N'EST PAS LA CAUSE, C'EST LE RÉSIDU — Michel a trouvé la vraie : *« Eline
+   avait mis des valeurs, et si je dis pas de bêtises c'est en mettant la virgule »*. La chaîne
+   est établie dans le code, maillon par maillon :
+     ① **ft-v1057** (30/08) fait passer CE champ de `type="number"` à `type="text"`…
+        ⛔⛔ **…en laissant `+this.value`.** *Le correctif de la virgule a corrigé 22 champs et
+        oublié celui-là — et en le passant en texte, il a RETIRÉ la seule chose qui le
+        protégeait* : `type="number"` filtrait la virgule (`.value` rendait `''`, donc `+'' = 0`).
+     ② à partir de là, `+'62,5'` = **`NaN`** ;
+     ③ `persist()` fait `JSON.stringify`, et **`JSON.stringify(NaN)` vaut `null`** ;
+     ④ au rechargement, `value="${s.kg}"` écrit le mot **« null »** à l'écran.
+   ⚠️ **Donc sa valeur est PERDUE, pas masquée** — elle a tapé un poids, il n'existe plus. On ne
+   le devine pas à sa place (**R29**).
+   ⭐ *Un correctif qui enlève un garde-fou du navigateur sans le remplacer par le sien fabrique
+   un bug PIRE que celui qu'il répare.* Le champ passe donc par `numFR`, comme celui de l'écran
+   de séance — c'est-à-dire ce que ft-v1057 aurait dû faire ici.
+   ⭐ L'écran de séance, lui, était déjà juste (`value="${set.kg||''}"`) : la jumelle cherchée
+   (R8) existait, et c'est le détail d'une séance PASSÉE qui ne l'avait pas.
+   ⛔ ON NE DEVINE PAS À SA PLACE (R29) : un poids inconnu reste vide, il ne devient pas 0.
+   *Écrire 0 dirait « elle a poussé zéro », ce qui est faux ; vide dit « on ne sait pas ».* */
+function _champNum(v){
+  return (v===null || v===undefined || (typeof v==='number' && !isFinite(v))) ? '' : v;
+}
+function updateSessSet(ei,si,field,val){
+  if(!(_sessEdits&&_sessEdits.exs[ei]&&_sessEdits.exs[ei].sets[si]))return;
+  /* ⛔ Un champ vidé rend `null` (« je ne sais pas »), jamais 0 ni NaN. */
+  const t=String(val==null?'':val).trim();
+  let n=null;
+  if(t!==''){ n=(typeof numFR==='function')?numFR(t):parseFloat(t.replace(',','.')); if(!isFinite(n))n=null; }
+  _sessEdits.exs[ei].sets[si][field]=n;
+}
+function deleteSessSet(ei,si){
+  if(!_sessEdits)return;
+  _sessEdits.exs[ei].sets.splice(si,1);
+  _renderSessDetailContent();
+}
+function deleteSessEx(ei){
+  if(!_sessEdits)return;
+  const name=_sessEdits.exs[ei]&&_sessEdits.exs[ei].name||'cet exercice';
+  showConfirm('Supprimer l\'exercice ?',`"${name}" sera retiré de cette séance.`,()=>{_sessEdits.exs.splice(ei,1);_renderSessDetailContent();_updateSdMuscles(_sessEdits);});
+}
+// Remplacer un exercice mal choisi dans une SÉANCE PASSÉE (garde les séries).
+// Ouvre le sélecteur ; le choix est routé par addExercise (mode 'replaceSess').
+let _replaceSessEi=null;
+/* 🔗 ft-v1189 (10/09/2026) — LE RECORD ORPHELIN, ET C'EST LA PORTE JUMELLE DE ft-v1187.
+   Michel : « je ne trouve pas dans choisir un exercice tirage vertical ». MESURÉ, et c'est moi
+   qui l'avais envoyé au mauvais endroit : il n'a PLUS d'exercice perso « Tirage vertical » (s'il
+   en avait un, il sortirait EN TÊTE du sélecteur). Le nom ne vit plus que dans sa séance du
+   9 sept — donc le bouton « Rattacher » de ft-v1187 ne l'atteint pas, et le bon geste est le 🔄
+   de la carte, ici.
+   ⛔⛔ CE CHEMIN MARCHE, MAIS IL LAISSE UN RECORD DERRIÈRE LUI. Mesuré de bout en bout :
+   séries gardées, volume inchangé, `S.prs['Tirage Poulie Haute (Lat Pulldown)']` créé à 81,4 —
+   et `S.prs['Tirage vertical']` TOUJOURS LÀ. Un exercice fantôme continue donc d'apparaître
+   dans Progrès, avec un record dedans, alors que plus aucune séance ne le porte.
+   ⭐ C'est R8 pour la 9ᵉ fois : `_renameExEverywhere` (chemin exo perso) déplace le record et
+   supprime l'ancien ; cette porte-ci, non. On ne réécrit pas la règle de fusion — on applique
+   LA MÊME (garder le meilleur 1RM, puis supprimer la source), R2/R13.
+   ⛔⛔ ET LE CORRECTIF NE PEUT PAS ÊTRE « SUPPRIMER L'ANCIEN RECORD » : le nom peut vivre dans
+   D'AUTRES séances (on ne renomme qu'ici). On ne déplace donc QUE si plus AUCUNE séance ne le
+   porte — sinon on effacerait le record d'un exercice encore bien vivant (R29 : le droit de
+   trancher dépend du coût de l'erreur, et celui-là est une perte de donnée silencieuse). */
+let _sessRenames=[];                                      // [[ancien, nouveau], …] de CETTE fenêtre
+function replaceSessEx(ei){
+  if(!_sessEdits||!_sessEdits.exs[ei])return;
+  _replaceSessEi=ei;
+  openExPicker('replaceSess');
+  toast('Choisis le bon exercice','info');
+}
+function _replaceSessExPick(name){
+  const ei=_replaceSessEi;_replaceSessEi=null;
+  if(ei===null||!_sessEdits||!_sessEdits.exs[ei])return;
+  const old=_sessEdits.exs[ei].name;
+  if(name===old){_renderSessDetailContent();return;}
+  _sessEdits.exs[ei].name=name; // on garde toutes les séries, on change juste le nom
+  _noterRenommageSeance(old,name);
+  _renderSessDetailContent();
+  _updateSdMuscles(_sessEdits);
+  toast('Remplacé par '+name+' — pense à Enregistrer','info');
+}
+/* Enregistre le renommage, en REPLIANT les chaînes : A→B puis B→C doit valoir A→C, sinon on
+   chercherait à déplacer le record de B, un nom qui n'a jamais rien porté. Et A→B puis B→A
+   s'annule — on ne touche alors à aucun record. */
+function _noterRenommageSeance(ancien,nouveau){
+  const dejaLa=_sessRenames.find(r=>r[1]===ancien);
+  if(dejaLa){ dejaLa[1]=nouveau; }
+  else if(!_sessRenames.some(r=>r[0]===ancien&&r[1]===nouveau)){ _sessRenames.push([ancien,nouveau]); }
+  /* ⚠️ HONNÊTETÉ : le contrôle négatif ne peut PAS faire rougir cette ligne — un aller-retour
+     A→B→A laisse le nom dans la séance, donc `encoreLa` bloque de toute façon. Elle reste parce
+     qu'elle protège l'endroit qui FAIT MAL : sans elle, une entrée `[A,A]` ferait
+     `S.prs[A]=S.prs[A]` puis `delete S.prs[A]` — le record disparaîtrait. On garde un invariant
+     à côté d'un `delete`, et on écrit qu'aucun témoin ne le couvre plutôt que de le prétendre. */
+  _sessRenames=_sessRenames.filter(r=>r[0]!==r[1]);
+}
+// Déplace les records des noms qui ont VRAIMENT disparu de l'historique. Appelée APRÈS
+// l'écriture de la séance, sinon la séance qu'on vient de renommer porterait encore l'ancien nom.
+function _deplacerRecordsRenommes(){
+  if(!_sessRenames.length)return;
+  _sessRenames.forEach(([o,n])=>{
+    if(!S.prs||!S.prs[o])return;
+    const encoreLa=(S.sessions||[]).some(s=>(s.exs||s.exercises||[]).some(e=>e.name===o));
+    if(encoreLa)return;                                   // le nom sert ailleurs : on ne touche à rien
+    // MÊME RÈGLE QUE `_renameExEverywhere` : on garde le meilleur 1RM, jamais on n'écrase mieux.
+    if(!S.prs[n]||(S.prs[o].rm1||0)>(S.prs[n].rm1||0))S.prs[n]=S.prs[o];
+    delete S.prs[o];
+  });
+  _sessRenames=[];
+}
+
+function deleteSessOrConfirm(){
+  if(!_sdDelConfirm){
+    _sdDelConfirm=true;
+    const btn=document.getElementById('sd-del-btn');
+    btn.textContent='⚠️ Confirmer ?';btn.style.color='#FF9500';
+    _sdDelTimer=setTimeout(()=>{_sdDelConfirm=false;btn.textContent='🗑️ Supprimer';btn.style.color='var(--red)';},3000);
+    return;
+  }
+  if(_sdDelTimer)clearTimeout(_sdDelTimer);
+  /* 🗑️ SESSION-INTEGRITY-01 (décision de Michel, 04/10) : la séance emporte SON débrief Milo — par son
+     identifiant canonique (`_dbfCle`, coach.js), jamais par date : pas de débrief orphelin. */
+  const _parties=S.sessions.filter(s=>(s.ts||s.id)===_sessId);
+  S.sessions=S.sessions.filter(s=>(s.ts||s.id)!==_sessId);
+  if(typeof _dbfOublier==='function') _parties.forEach(s=>_dbfOublier(_dbfCle(s)));
+  persist();_cloudSyncSessions();renderSessions();closeSessDetail();
+  toast('Séance supprimée','info');
+}
+
+function saveSessEdits(){
+  if(!_sessEdits||_sessId===null)return;
+  const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
+  if(idx===-1)return;
+  let vol=0;
+  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
+  _sessEdits.volume=Math.round(vol);
+  /* 🏅 C1 (13/09/2026) — LA RÈGLE D'ÉLIGIBILITÉ N'EST PLUS RECOPIÉE ICI. Elle disait exactement
+     la même chose que `_serieFaitFoiPourPR` (log.js), et c'est précisément le problème : deux
+     écritures d'une même règle finissent par diverger, la seule question est quand (**R2**).
+     ⛔ Appel DIRECT, sans garde `typeof` : `log.js` est chargé AVANT `setup.js` dans
+     `index.html`, et cette fonction ne s'exécute que sur une action de la personne, longtemps
+     après le chargement. *Un garde avec repli écrit à la main serait la copie qu'on retire.*
+     ⚠️ Aucun changement de comportement : mesuré sur les 6 types × fait/pas fait, instantané
+     identique (`tools/instantane_records.js`). */
+  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{
+    if(_serieFaitFoiPourPR(s)){
+      s.rm1=bz(s.kg,s.reps);
+      const cur=S.prs[ex.name];
+      if(!cur||s.rm1>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:s.rm1,date:_sessEdits.date};
+    }
+  }));
+  const calData=calcSessionCalories(_sessEdits);
+  const cardioKcal=(typeof calcCardioKcal==='function')?(calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null)):0;
+  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
+  _sessEdits.calories=calData.total;
+  _sessEdits.calData=calData;
+  S.sessions[idx]=_sessEdits;
+  _deplacerRecordsRenommes();   // ⚠️ APRÈS l'écriture : avant, la séance porterait encore l'ancien nom
+  persist();_cloudSyncSessions();renderSessions();closeSessDetail();
+  toast('Séance mise à jour ✓','success');
+}
+
+function closeSessDetail(){
+  document.getElementById('ov-sess-detail').classList.remove('open');
+  _sessId=null;_sessEdits=null;_sdDelConfirm=false;
+  if(_sdDelTimer){clearTimeout(_sdDelTimer);_sdDelTimer=null;}
+}
+
+function _mscSVGmini({sc,ind}){
+  const pd={};
+  Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const[f,k]=v>=2?['#FF5555','#AA0010']:v>=1?['#FF9500','#AA5500']:isI?['#8FA9C4','#5B7C9E']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
+  const pt=([id,d])=>{const c=id?(pd[id]||{f:'#C07060',k:'#7A3828'}):{f:'#D89070',k:'#A86040'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.28':'0.18'}" stroke-linejoin="round"/>`;};
+  return `<svg viewBox="1 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${_FP.map(pt).join('')}</svg>`;
+}
+function showSessMuscleMap(i,ev){
+  ev&&ev.stopPropagation();
+  const s=S.sessions[i];
+  if(!s)return;
+  showMuscleMap(s.exs||s.exercises||[],null);
+}
+// Filtre de l'historique par groupe musculaire (retour GPT, ft-v561 ; logique présence ft-v563)
+/* 🔎 D-079 (15/10/2026, décision de Michel) — PLUSIEURS zones à la fois, en logique OU : une séance est montrée si
+   elle travaille AU MOINS UNE des zones cochées (« Pectoraux + Triceps » = l'une OU l'autre). Le filtre parcourt la
+   liste UNE fois (`filter` + `some`) : une séance qui coche deux zones ne peut pas apparaître deux fois.
+   « Tous » = liste vide ; décocher la dernière zone revient à « Tous ».
+   ⛔ En mémoire seulement (comme depuis ft-v561) : aucune clé ; remis à « Tous » au relancement et par les portes
+   Accueil / calendrier (`goSessionsHistory`).
+   ⚠️ Inchangé, et exprès hors de ce lot : les pastilles viennent des muscles DOMINANTS, le filtre teste la PRÉSENCE. */
+let _sessFiltres=[];
+function _sessTopMuscle(s){
+  const sc=_mscScores(s.exs||s.exercises||[]);const _sc=sc.sc||{};
+  let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
+  return b;
+}
+// Muscles réellement TRAVAILLÉS dans la séance (score ≥ 2 = primaire dans ≥1 exo, ou secondaire ≥2×)
+// → utilisé pour le FILTRE (présence), pas pour le titre. Chips = muscles dominants (jeu compact).
+function _sessMusclesPresent(s){
+  const sc=_mscScores(s.exs||s.exercises||[]).sc||{};
+  return Object.keys(sc).filter(m=>sc[m]>=2);
+}
+function setSessFilter(code){
+  if(code==null) _sessFiltres=[];
+  else _sessFiltres=_sessFiltres.indexOf(code)>=0?_sessFiltres.filter(m=>m!==code):_sessFiltres.concat([code]);
+  renderSessions();
+}
+function renderSessions(){
+  const el=document.getElementById('sess-list');
+  const fEl=document.getElementById('sess-filter');
+  const fAcc=document.getElementById('sess-filter-acc'), fRes=document.getElementById('sess-filter-resume');
+  if(!S.sessions.length){if(fEl)fEl.innerHTML='';if(fAcc)fAcc.hidden=true;el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
+  // Muscles principaux présents dans l'historique → chips (triés par fréquence)
+  const counts={},present=[];
+  S.sessions.forEach(s=>{const m=_sessTopMuscle(s);if(m){counts[m]=(counts[m]||0)+1;if(!present.includes(m))present.push(m);}});
+  present.sort((a,b)=>counts[b]-counts[a]);
+  // Sécurité : un muscle filtré qui n'existe plus est retiré (s'il n'en reste aucun, on est sur « Tous »)
+  _sessFiltres=_sessFiltres.filter(m=>present.includes(m));
+  const nomM=m=>_MG[m]?_MG[m].label:m;
+  if(fEl){
+    if(present.length>=2){
+      fEl.innerHTML='<button class="sessf-chip'+(!_sessFiltres.length?' on':'')+'" aria-pressed="'+!_sessFiltres.length+'" onclick="setSessFilter(null)">Tous</button>'+
+        present.map(m=>{const on=_sessFiltres.indexOf(m)>=0;
+          return '<button class="sessf-chip'+(on?' on':'')+'" aria-pressed="'+on+'" data-m="'+m+'" onclick="setSessFilter(\''+m+'\')">'+_escNote(nomM(m))+'</button>';}).join('');
+    } else fEl.innerHTML='';
+  }
+  /* Le panneau n'existe que s'il y a de quoi filtrer ; fermé, il dit ce qui est filtré (une ligne). */
+  if(fAcc)fAcc.hidden=!(fEl&&fEl.innerHTML);
+  if(fRes)fRes.textContent='Filtrer les séances · '+(!_sessFiltres.length?'Tous'
+    :_sessFiltres.length<=2?_sessFiltres.map(nomM).join(' + '):nomM(_sessFiltres[0])+' + '+(_sessFiltres.length-1)+' autres');
+  let flist=S.sessions;
+  if(_sessFiltres.length)flist=flist.filter(s=>{const p=_sessMusclesPresent(s);return _sessFiltres.some(m=>p.includes(m));});
+  if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour '+(_sessFiltres.length>1?'ces muscles':'ce muscle')+'</div>';return;}
+  /* 🗂️ PROGRES-SEANCES-01 — ANNÉE → MOIS → SÉANCE, ET PLUS DE PLAFOND DE 20 (contrat UX-HIST du 08/10).
+     Avant : `slice(0,20)` — la 21ᵉ séance n'était atteignable NULLE PART dans l'app (63 séances réelles
+     chez Michel le 14/10). Maintenant toutes le sont ; pour ne pas dessiner 1 500 cartes, on ne dessine
+     QUE les mois dépliés (années repliées sauf l'année en cours ; le mois en cours déplié s'il existe —
+     décision de Michel du 14/10 —, les autres à la demande).
+     ⛔ Ce n'est pas un 2ᵉ moteur d'historique : un simple regroupement de la MÊME liste, à l'affichage,
+     et la carte reste produite par une seule fonction (`_sessCarteHtml`). Rien n'est stocké. */
+  const ans=[],parAn={};
+  flist.forEach(s=>{const m=_sessMoisDe(s),an=m==='?'?'?':m.slice(0,4);
+    if(!parAn[an]){parAn[an]={mois:[],parMois:{},n:0};ans.push(an);}
+    const A=parAn[an];if(!A.parMois[m]){A.parMois[m]=[];A.mois.push(m);}A.parMois[m].push(s);A.n++;});
+  const desc=(a,b)=>a==='?'?1:b==='?'?-1:(a<b?1:a>b?-1:0);   // le plus récent d'abord, « sans date » à la fin
+  ans.sort(desc);
+  const chev=o=>'<span class="sess-chev'+(o?' ouvert':'')+'">›</span>';
+  const nb=n=>n+' séance'+(n>1?'s':'');
+  el.innerHTML=ans.map(an=>{const A=parAn[an],ouvert=_sessAnEstOuvert(an);A.mois.sort(desc);
+    return '<div class="sess-an-bloc" data-an="'+an+'">'
+      +'<button class="sess-an" data-an="'+an+'" aria-expanded="'+ouvert+'" onclick="basculerSessAnnee(\''+an+'\')">'
+        +chev(ouvert)+'<span class="sess-an-nom">'+(an==='?'?'Sans date':an)+'</span><span class="sess-n">'+nb(A.n)+'</span></button>'
+      +(!ouvert?'':A.mois.map(m=>{const o=_sessMoisEstOuvert(m),L=A.parMois[m];
+        return '<div class="sess-mois-bloc" data-mois="'+m+'">'
+          +'<button class="sess-mois" data-mois="'+m+'" aria-expanded="'+o+'" onclick="basculerSessMois(\''+m+'\')">'
+            +chev(o)+'<span class="sess-mois-nom">'+_sessMoisNom(m)+'</span><span class="sess-n">'+nb(L.length)+'</span></button>'
+          +(o?'<div class="sess-mois-cartes">'+L.map(_sessCarteHtml).join('')+'</div>':'')
+          +'</div>';}).join(''))
+      +'</div>';}).join('');
+}
+/* L'état déplié vit EN MÉMOIRE (contrat UX-HIST : « aucune nouvelle clé persistée juste pour mémoriser
+   un mois sélectionné »). Absent = défaut : année en cours dépliée, MOIS EN COURS déplié, les autres repliés.
+   ⭐ Décision de Michel du 14/10 (PROGRES-SEANCES-INTEGRATION-01) : en ouvrant Progrès normalement, on voit
+   ses séances du mois sans un tap de plus. Le défaut ne vaut que pour un mois qui EXISTE (on ne dessine que
+   les mois de la liste) : aucune séance ce mois-ci → aucun mois ouvert, aucun inventé. Un tap de la personne
+   (replier, déplier) prime sur le défaut, pour la session. */
+const _sessAnOuvert={}, _sessMoisOuvert={};
+let _sessCibles=[];
+function _sessMoisDe(s){const d=String(s&&s.date||'');return /^\d{4}-\d{2}/.test(d)?d.slice(0,7):'?';}
+function _sessMoisNom(m){
+  if(m==='?')return 'Date inconnue';
+  try{const t=new Date(m+'-01T12:00:00').toLocaleDateString('fr-FR',{month:'long'});return t.charAt(0).toUpperCase()+t.slice(1);}catch(e){return m;}
+}
+function _sessAnEstOuvert(an){return Object.prototype.hasOwnProperty.call(_sessAnOuvert,an)?_sessAnOuvert[an]:(an===today().slice(0,4));}
+function _sessMoisEstOuvert(m){return Object.prototype.hasOwnProperty.call(_sessMoisOuvert,m)?_sessMoisOuvert[m]:(m===today().slice(0,7));}
+function _sessOuvrir(mois){(mois||[]).forEach(m=>{_sessMoisOuvert[m]=true;_sessAnOuvert[m==='?'?'?':m.slice(0,4)]=true;});}
+function basculerSessAnnee(an){_sessAnOuvert[an]=!_sessAnEstOuvert(an);renderSessions();}
+function basculerSessMois(m){_sessMoisOuvert[m]=!_sessMoisEstOuvert(m);renderSessions();}
+/* La carte d'UNE séance — l'unique producteur (inchangé : même contenu, même identité `ts||id`,
+   même bouton de débrief). Seule nouveauté : la marque `sess-cible` quand une porte d'entrée la vise. */
+function _sessCarteHtml(s){
+    const i=S.sessions.indexOf(s);
+    const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
+    // ⚠️ NUAGE DESSINÉ, PAS L'EMOJI ☁️ (05/08/2026, signalé par Michel : « le petit nuage est
+    // blanc sur l'historique »). La pastille `.synced-pill` porte pourtant `color:var(--green)` —
+    // mais un EMOJI garde ses propres couleurs, `color` ne l'atteint jamais. On avait donc un
+    // nuage blanc sur un fond vert, ce qui ressemble à un bug de synchro alors que tout va bien.
+    // Le SVG, lui, hérite de `currentColor` : il suit la couleur de la pastille, en clair comme
+    // en sombre, et pour toujours. (Ailleurs dans l'app, l'emoji ☁️ reste très bien : il n'y est
+    // jamais censé prendre une couleur — c'est ici seulement qu'il devait être vert.)
+    const sync=s.synced?' <span class="synced-pill" title="Séance sauvegardée dans le cloud">'
+      +'<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">'
+      +'<path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13a5 5 0 0 0 .35-9.96z"/>'
+      +'</svg></span>':'';
+    const sc=_mscScores(s.exs||s.exercises||[]);
+    const mini=_mscSVGmini(sc).replace('width:32px','width:46px'); // figurine plus grande sur les cartes (retour GPT, ft-v570)
+    // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé → devient le TITRE de la carte
+    let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}
+    /* 🏃 04/09/2026 — UNE SÉANCE DE CARDIO SEUL SE RECONNAÎT DANS LA LISTE (ft-v1118).
+       Michel : *« pourquoi le cardio n'apparaît pas dans mon historique ? »*. ⭐ Mesuré : il y
+       EST — mais il s'affichait *« 💪 jeu. 3 sept. · 0 kg · ⏱️45 min · 🔥351 kcal · — »*.
+       Une figurine vide, un muscle imaginaire, un volume de zéro et un tiret : ***ça ressemble
+       à une séance ratée, pas à 45 minutes de tapis.*** 👉 Il n'y a aucun muscle à nommer, donc
+       le titre nomme ce qu'elle EST, et la ligne d'exercices porte le cardio en clair. */
+    const _nEx=(s.exs||s.exercises||[]).length;
+    const _cardioTxt=(typeof _cardioSeanceTxt==='function')?_cardioSeanceTxt(s):'';
+    const _cardioSeul=(_nEx===0&&!!_cardioTxt);
+    const _tag=s.progLabel?('🗂️ '+s.progLabel):(_topLbl?('💪 '+_topLbl):(_cardioSeul?'🏃 Cardio':''));
+    const headline=_tag||('💪 '+fmtD(s.date));
+    // Ligne info : date (si le titre = muscle) · volume (rouge) · calories (discret)
+    const parts=[];
+    if(_tag)parts.push('<span class="sess-date2">'+fmtD(s.date)+'</span>');
+    // ⛔ « 0 kg » n'apprend rien sur un cardio, et laisse croire à une séance vide. On le retire
+    //    UNIQUEMENT dans ce cas — une séance avec exercices garde sa ligne de volume, même à 0.
+    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg</span>');
+    // ⏱️ La durée était stockée depuis toujours et n'apparaissait NULLE PART (voir le
+    //    commentaire du détail de séance plus haut). Ici on la met dans la liste : c'est
+    //    là qu'on compare plusieurs séances d'un coup d'œil.
+    if(s.duration){const _m=Math.max(1,Math.round(s.duration/60));
+      const _d=(typeof _dureeDouteuse==='function')&&_dureeDouteuse(s);
+      parts.push('<span class="sess-dur2'+(_d?' douteuse':'')+'">⏱️'+(_m>=60?Math.floor(_m/60)+'h'+String(_m%60).padStart(2,'0'):_m+' min')+(_d?' ⚠️':'')+'</span>');}
+    if(s.calories)parts.push('<span class="sess-cal2">🔥'+s.calories+' kcal</span>');
+    const metaHtml=parts.join('<span style="opacity:.4">·</span>')+sync;
+    // Liste d'exos repliable (retour GPT, ft-v570) : clampée à 2 lignes, dépliable inline si beaucoup d'exos.
+    const _exsArr=(s.exs||s.exercises||[]).map(e=>e.name);
+    // ⭐ Sur un cardio seul, la ligne des exercices porte le cardio en clair (« Tapis 45 min
+    //   (modéré) ») au lieu du tiret. ⚠️ Et un cardio noté SUR une séance de muscu s'ajoute à
+    //   la suite des exercices : il faisait déjà partie de la séance, il n'y était juste pas dit.
+    const _exsStr=_cardioSeul?_cardioTxt
+                 :(_cardioTxt?[_exsArr.join(', '),_cardioTxt].filter(Boolean).join(' · ')
+                             :_exsArr.join(', '));
+    const _canExpand=_exsArr.length>4||_exsStr.length>70;
+    const _exsHtml='<div class="sess-exs2" id="sess-exs-'+i+'">'+(_escNote(_exsStr)||'—')+'</div>'
+      +(_canExpand?'<button class="sess-exs-more" id="sess-exs-'+i+'-b" onclick="toggleSessExs('+i+',event)">voir tout ›</button>':'');
+    /* 🛡️ SESSION-INTEGRITY-01 / D-043 (Michel) — « Voir le débrief Milo » : une PETITE action, seulement
+       sur une séance qui a VRAIMENT un débrief rangé à son nom. Le texte ne s'affiche pas sous chaque
+       carte (décision de Michel) ; il s'ouvre au tap, sans appel à l'IA. */
+    /* 🎯 DEBRIEF-ON-DEMAND-01 (Michel) — le MÊME emplacement porte l'autre action : « Analyser avec Milo »
+       tant qu'aucun débrief n'est rangé pour CETTE séance (identifiant exact, jamais la date), « Voir le
+       débrief Milo » ensuite. Jamais les deux. Une analyse coupée par un rechargement se DIT et attend un
+       clic. Un cardio seul n'a pas d'analyse (même règle que l'écran de fin). */
+    const _dbfId=(typeof _dbfCle==='function')?_dbfCle(s):'';
+    const _dbfArg=_dbfId?_argAttr(_dbfId):'';
+    const _dbfBtn=!_dbfId||typeof _dbfTexteDe!=='function' ? ''
+      : _dbfTexteDe(_dbfId) ? '<button class="sess-dbf-btn" onclick="voirDebriefMilo('+_dbfArg+',event)">💬 Voir le débrief Milo</button>'
+      : !_dbfAnalysable(s) ? ''
+      : _dbfEnVol(_dbfId) ? '<button class="sess-dbf-go" disabled>⏳ Milo analyse…</button>'
+      : _dbfInterrompue(_dbfId) ? '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">⏸️ Analyse interrompue — relancer</button>'
+      : '<button class="sess-dbf-go" onclick="analyserSeanceMilo('+_dbfArg+',event)">✨ Analyser avec Milo</button>';
+    const _cible=_sessCibles.indexOf(s.ts||s.id||0)>=0;
+    return`<div class="sess-card${_cible?' sess-cible':''}" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}${_dbfBtn}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+}
+/* 💬 LA LECTURE D'UN DÉBRIEF — LOCALE, SANS APPEL, SANS TOUCHER À LA SÉANCE (D-043).
+   ⛔ Elle ne relit aucune conversation et n'ouvre pas le Coach : elle lit le magasin canonique
+   (`_dbfTexteDe`, coach.js), donc elle marche hors ligne. Ni la séance ni le fil ne sont modifiés. */
+// La fenêtre « Débrief Milo » d'UNE séance : son en-tête (la séance identifiée), ouverte. Rend la zone de texte.
+function _dbfFenetre(id){
+  const s=(S.sessions||[]).find(x=>x&&typeof _dbfCle==='function'&&_dbfCle(x)===String(id))||null;
+  const sub=document.getElementById('dbf-milo-sub');
+  if(sub){
+    const nEx=s?(s.exs||s.exercises||[]).length:0;
+    sub.textContent=s?[(s.progLabel||''),fmtD(s.date),nEx?nEx+' exercice'+(nEx>1?'s':''):'',
+                       s.volume?Math.round(s.volume)+' kg':''].filter(Boolean).join(' · ')
+                     :'Séance introuvable dans l\'historique';
+  }
+  const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.add('open');
+  /* C1 (contre-audit) : la fenêtre est PARTAGÉE entre les séances — elle dit QUELLE séance elle montre. Une
+     réponse tardive d'une autre séance ne s'y écrit pas (`_dbfSlotEst`, log.js). */
+  const body=document.getElementById('dbf-milo-body');
+  if(body) body.dataset.dbfSid=String(id);
+  return body;
+}
+function voirDebriefMilo(id, ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  const e=(typeof _dbfTexteDe==='function')?_dbfTexteDe(id):null;
+  if(!e){toast('Aucun débrief Milo rangé pour cette séance','info');return;}
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const body=_dbfFenetre(id);
+  if(body)body.innerHTML=(typeof _coachFmtHtml==='function')?_coachFmtHtml(esc(e.texte)):'<p>'+esc(e.texte)+'</p>';
+}
+/* 🎯 « ANALYSER AVEC MILO » — le seul geste qui demande un débrief (DEBRIEF-ON-DEMAND-01, décision de Michel).
+   Depuis l'écran de fin (la réponse s'écrit sous ses chiffres) ou depuis Progrès (dans la fenêtre « Débrief
+   Milo », la même que « Voir »). La séance est retrouvée par son identifiant exact. Le moteur, ses gardes et
+   ses échecs sont ceux de `_runSeDebrief` (log.js). */
+function analyserSeanceMilo(id, ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  const s=(S.sessions||[]).find(x=>x&&typeof _dbfCle==='function'&&_dbfCle(x)===String(id))||null;
+  if(!s){toast('Séance introuvable dans l\'historique','error');return;}
+  const fin=document.getElementById('ov-session-end');
+  if(fin&&fin.classList.contains('open')&&typeof _seDbfLast!=='undefined'&&_seDbfLast&&_dbfCle(_seDbfLast.sess)===String(id)){
+    _runSeDebrief(s,_seDbfLast.prCount,document.getElementById('se-debrief')); return; }
+  const body=_dbfFenetre(id);
+  if(body) _runSeDebrief(s,0,body);
+}
+function fermerDebriefMilo(){const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.remove('open');}
+// Déplie/replie la liste d'exos d'une carte d'historique sans ouvrir le détail (retour GPT, ft-v570)
+function toggleSessExs(i,ev){
+  ev&&ev.stopPropagation();
+  const d=document.getElementById('sess-exs-'+i),b=document.getElementById('sess-exs-'+i+'-b');
+  if(!d)return;
+  const open=d.classList.toggle('expanded');
+  if(b)b.textContent=open?'replier ▴':'voir tout ›';
+}
+
+// ─── 1RM CALCULATOR ──────────────────────────────────────────
+function calcRM(){
+  const kg=numFR(document.getElementById('rm-kg').value);
+  const r=parseInt(document.getElementById('rm-reps').value);
+  const rm=bz(kg,r);
+  document.getElementById('rm-out').textContent=rm?fmt(rm)+' kg':'— kg';
+  PCT_IDS.forEach((id,i)=>{document.getElementById(id).textContent=rm?fmt(rm*PCT_VALS[i]/100)+' kg':'—';});
+}
+
+// ─── SETUP ───────────────────────────────────────────────────
+function genderEditMode(){
+  document.getElementById('gender-ro').style.display='none';
+  document.getElementById('gender-edit').style.display='flex';
+}
+function _updateGenderRO(g){
+  const ro=document.getElementById('gender-ro-txt');
+  if(ro)ro.textContent=g==='H'?'♂ Homme':'♀ Femme';
+}
+function setGender(g){
+  S.gender=g;persist();
+  _updateGenderRO(g);
+  if(!window._adminMode){
+    document.getElementById('gender-edit').style.display='none';
+    document.getElementById('gender-ro').style.display='flex';
+  }
+  const gtH=document.getElementById('gt-h');if(gtH)gtH.classList.toggle('active',g==='H');
+  const gtF=document.getElementById('gt-f');if(gtF)gtF.classList.toggle('active',g==='F');
+  const cs=document.getElementById('cycle-acc');
+  if(cs)cs.style.display=g==='F'?'':'none';
+  const hf=document.getElementById('hip-fg');
+  if(hf)hf.style.display=g==='F'?'':'none';
+  renderBFCard();
+}
+function setWorkType(t){
+  S.workType=t;persist();
+  ['bureau','debout','actif','physique'].forEach(x=>{const el=document.getElementById('wt-'+x);if(el)el.classList.toggle('active',x===t);});
+}
+function setSmoker(v){
+  S.smoker=v;persist();
+  const n=document.getElementById('sm-non'),o=document.getElementById('sm-oui');
+  if(n)n.classList.toggle('active',!v);
+  if(o)o.classList.toggle('active',v);
+}
+function setContraception(val){
+  S.contraception=val;persist();
+  const hormonal=['pill-combo','pill-prog','implant','iud-hormonal'].includes(val);
+  const trackEl=document.getElementById('cycle-tracking-section');
+  if(trackEl)trackEl.style.display=hormonal?'none':'';
+  renderCycleProfileCard();
+  renderHome();renderNutrition();
+  _updateProgCycleBanner();
+}
+
+const _MORPHOTYPE_DATA={
+  ecto:{label:'Ectomorphe',icon:'🦴',desc:'Ossature légère, métabolisme rapide. Tu restes naturellement mince et as du mal à prendre du muscle. Besoin de beaucoup de calories et de glucides.'},
+  meso:{label:'Mésomorphe',icon:'💪',desc:'Corps athlétique naturel, muscles bien dessinés. Tu prends et perds du muscle facilement. Réagit vite à l\'entraînement.'},
+  endo:{label:'Endomorphe',icon:'🔥',desc:'Corps rond, métabolisme lent. Tu prends du poids facilement et as du mal à perdre de la graisse. Besoin de contrôler les calories.'}
+};
+const _MORPHO_DATA_H={
+  H:{label:'Rectangle',icon:'▬',desc:'Épaules, taille et hanches de largeur similaire. Corps équilibré, facile à sculpter.'},
+  A:{label:'Triangle',icon:'▲',desc:'Hanches et taille plus larges que les épaules. Travail des épaules et du haut du corps recommandé.'},
+  T:{label:'Trapèze',icon:'⬠',desc:'Épaules légèrement plus larges que les hanches. Proche du V, silhouette naturellement masculine.'},
+  V:{label:'Triangle inversé',icon:'▽',desc:'Épaules beaucoup plus larges que hanches et taille. Travailler les jambes pour équilibrer.'},
+  O:{label:'Ovale',icon:'⬭',desc:'Ventre et bas du torse plus larges que les épaules. Priorité cardio + déficit calorique + gainage.'}
+};
+const _MORPHO_DATA_F={
+  H:{label:'Rectangle',icon:'▬',desc:'Épaules, taille et hanches de largeur similaire. Définir les courbes avec travail des épaules et des hanches.'},
+  A:{label:'Poire',icon:'🍐',desc:'Hanches et cuisses plus larges que les épaules. Développer le haut du corps pour équilibrer.'},
+  V:{label:'Triangle inversé',icon:'▽',desc:'Épaules plus larges que les hanches. Travailler les fessiers et l\'intérieur cuisses.'},
+  X:{label:'Sablier',icon:'⏳',desc:'Épaules et hanches équilibrées, taille très marquée. Silhouette idéale — entretenir les proportions.'},
+  O:{label:'Ronde',icon:'⬭',desc:'Poids concentré autour du ventre et du torse. Cardio régulier + musculation full body.'}
+};
+
+// ── Main dominante ────────────────────────────────────────────
+function _applyLeftHand(){
+  const r=document.getElementById('root');
+  if(!r)return;
+  if(S.leftHand)r.classList.add('lh');else r.classList.remove('lh');
+  const on='padding:8px 12px;border-radius:10px;border:1.5px solid var(--purp);background:rgba(170,0,255,.1);font-size:13px;font-weight:700;cursor:pointer;color:var(--purp);font-family:var(--font);';
+  const off='padding:8px 12px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);font-size:13px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);';
+  const rBtn=document.getElementById('lh-right-btn');
+  const lBtn=document.getElementById('lh-left-btn');
+  if(rBtn)rBtn.style.cssText=!S.leftHand?on:off;
+  if(lBtn)lBtn.style.cssText=S.leftHand?on:off;
+}
+function setHandedness(side){
+  S.leftHand=side==='left';persist();_applyLeftHand();
+  toast(S.leftHand?'Mode gaucher activé 🤛':'Mode droitier activé 🤜','info');
+}
+
+// ── Daltonisme ────────────────────────────────────────────────
+const _CB_DESC={
+  deut:'Deutéranopie — confusion rouge/vert (8% des hommes). Rouge → orange, vert → bleu.',
+  prot:'Protanopie — cécité au rouge (1% des hommes). Rouge → orange-brun, vert → bleu.',
+  trit:'Tritanopie — confusion bleu/jaune (rare). Bleu → rose, or/jaune → émeraude.'
+};
+function _applyColorblind(){
+  const r=document.getElementById('root');
+  if(!r)return;
+  ['cb-deut','cb-prot','cb-trit'].forEach(c=>r.classList.remove(c));
+  if(S.colorblind)r.classList.add('cb-'+S.colorblind);
+  const active='padding:8px 4px;border-radius:8px;border:1.5px solid var(--red);background:rgba(255,45,85,.1);font-size:11px;font-weight:700;cursor:pointer;color:var(--red);font-family:var(--font);';
+  const idle='padding:8px 4px;border-radius:8px;border:1.5px solid var(--sep);background:var(--bg2);font-size:11px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);';
+  [['cb-none',''],['cb-deut-btn','deut'],['cb-prot-btn','prot'],['cb-trit-btn','trit']].forEach(([id,v])=>{
+    const b=document.getElementById(id);if(b)b.style.cssText=S.colorblind===v?active:idle;
+  });
+  const desc=document.getElementById('cb-desc');
+  if(desc){
+    if(S.colorblind&&_CB_DESC[S.colorblind]){desc.textContent=_CB_DESC[S.colorblind];desc.style.display='';}
+    else desc.style.display='none';
+  }
+}
+function setColorblind(type){
+  S.colorblind=type;persist();_applyColorblind();
+  const label={deut:'Deutéranopie',prot:'Protanopie',trit:'Tritanopie'}[type];
+  toast(label?`Mode ${label} activé 🎨`:'Couleurs normales rétablies','info');
+}
+
+// ── Accessibilité ─────────────────────────────────────────────
+function _applyA11y(){
+  const r=document.getElementById('root');
+  if(!r)return;
+  if(S.a11y)r.classList.add('a11y-lv');
+  else r.classList.remove('a11y-lv');
+  const btn=document.getElementById('a11y-btn');
+  if(!btn)return;
+  if(S.a11y){
+    btn.textContent='Activé ✓';
+    btn.style.cssText='padding:8px 16px;border-radius:20px;border:2px solid var(--purp);background:rgba(170,0,255,.12);color:var(--purp);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;min-width:80px;';
+  }else{
+    btn.textContent='Désactivé';
+    btn.style.cssText='padding:8px 16px;border-radius:20px;border:2px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;min-width:80px;';
+  }
+}
+function toggleA11y(){
+  S.a11y=!S.a11y;persist();_applyA11y();
+  toast(S.a11y?'Affichage agrandi activé ♿':'Affichage normal rétabli','info');
+}
+
+// ── Profil Santé ──────────────────────────────────────────────
+const _HC=[
+  {id:'cardio',label:'Cardio/HTA',icon:'❤️'},
+  {id:'diabete',label:'Diabète',icon:'🩸'},
+  {id:'hernie',label:'Hernie discale',icon:'🦴'},
+  {id:'asthme',label:'Asthme',icon:'🫁'},
+  {id:'arthrite',label:'Arthrose',icon:'🦵'},
+  {id:'osteo',label:'Ostéoporose',icon:'💀'},
+  {id:'epilepsie',label:'Épilepsie',icon:'⚡'},
+  {id:'migraine',label:'Migraines',icon:'🤕'},
+  {id:'endometriose',label:'Endométriose',icon:'🌸',f:true},
+];
+const _HIZ=[
+  {id:'epaule_d',label:'Épaule droite'},{id:'epaule_g',label:'Épaule gauche'},
+  {id:'genou_d',label:'Genou droit'},{id:'genou_g',label:'Genou gauche'},
+  {id:'dos_bas',label:'Bas du dos (lombaires)'},{id:'dos_haut',label:'Haut du dos'},
+  {id:'hanche_d',label:'Hanche droite'},{id:'hanche_g',label:'Hanche gauche'},
+  {id:'cheville_d',label:'Cheville droite'},{id:'cheville_g',label:'Cheville gauche'},
+  {id:'coude_d',label:'Coude droit'},{id:'coude_g',label:'Coude gauche'},
+  {id:'poignet_d',label:'Poignet droit'},{id:'poignet_g',label:'Poignet gauche'},
+  {id:'cou',label:'Cou/Cervicales'},{id:'autre',label:'Autre zone'},
+];
+const _HIS=[
+  {id:'active',label:'Active',bg:'rgba(255,45,85,.15)',color:'#FF2D55'},
+  {id:'recente',label:'Récente',bg:'rgba(255,149,0,.15)',color:'#FF9500'},
+  {id:'ancienne',label:'Ancienne',bg:'rgba(48,209,88,.15)',color:'#30D158'},
+];
+let _addingInjury=false;
+
+function _getHP(){if(!S.healthProfile)S.healthProfile={conditions:[],injuries:[],notes:''};return S.healthProfile;}
+
+function _renderHealthSection(){
+  const el=document.getElementById('health-section');
+  if(!el)return;
+  const hp=_getHP();
+  const conds=hp.conditions||[];
+  const injs=hp.injuries||[];
+
+  const condHtml=_HC.filter(c=>!c.f||S.gender==='F').map(c=>{
+    const on=conds.includes(c.id);
+    return `<button onclick="toggleHC('${c.id}')" style="padding:6px 10px;border-radius:20px;border:1.5px solid ${on?'#FF2D55':'var(--sep)'};background:${on?'rgba(255,45,85,.12)':'var(--bg3)'};font-size:12px;font-weight:600;cursor:pointer;color:${on?'#FF2D55':'var(--t2)'};display:inline-flex;align-items:center;gap:4px;">${c.icon} ${c.label}</button>`;
+  }).join('');
+
+  const injHtml=injs.length?injs.map((inj,i)=>{
+    const z=_HIZ.find(x=>x.id===inj.zone);
+    const s=_HIS.find(x=>x.id===inj.status);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;">
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--t1);">${z?z.label:inj.zone}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${s?s.bg:'rgba(120,120,120,.15)'};color:${s?s.color:'var(--t3)'};">${s?s.label:inj.status}</span>
+      <button onclick="removeHI(${i})" style="background:none;border:none;color:var(--t3);font-size:18px;line-height:1;cursor:pointer;padding:0 2px;">×</button>
+    </div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--t3);padding:4px 0;">Aucune blessure renseignée</div>';
+
+  const addFormHtml=_addingInjury?`<div style="background:var(--bg3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+    <select id="hi-zone-sel" style="padding:8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:13px;">
+      ${_HIZ.map(z=>`<option value="${z.id}">${z.label}</option>`).join('')}
+    </select>
+    <select id="hi-status-sel" style="padding:8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:13px;">
+      ${_HIS.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}
+    </select>
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveHI()" style="flex:1;padding:8px;border-radius:8px;background:#FF2D55;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Ajouter</button>
+      <button onclick="cancelHI()" style="flex:1;padding:8px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t2);font-size:13px;cursor:pointer;">Annuler</button>
+    </div>
+  </div>`:`<button onclick="openHI()" style="padding:8px 14px;border-radius:8px;border:1.5px dashed var(--sep);background:var(--bg3);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2);width:100%;">+ Ajouter une blessure</button>`;
+
+  // TRT — réservé à l'admin pour l'instant (traitement de testostérone PRESCRIT par un médecin).
+  // Info santé privée : Milo l'utilise pour adapter l'entraînement/la récup, et renvoie toujours au médecin.
+  const trtHtml=(typeof _isAdminUnlocked==='function'&&_isAdminUnlocked())?`
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:14px;margin-bottom:6px;">Traitement médical (privé)</div>
+    <button onclick="toggleTrt()" style="padding:8px 12px;border-radius:20px;border:1.5px solid ${hp.trt?'#FF2D55':'var(--sep)'};background:${hp.trt?'rgba(255,45,85,.12)':'var(--bg3)'};font-size:12px;font-weight:600;cursor:pointer;color:${hp.trt?'#FF2D55':'var(--t2)'};display:inline-flex;align-items:center;gap:5px;">⚕️ Sous TRT (prescrit par un médecin)</button>
+    <div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Milo en tient compte pour ta récupération et ton entraînement, et te renvoie toujours à ton médecin. Il ne parle jamais de doses. Privé et synchronisé avec ton compte.</div>`:'';
+
+  el.innerHTML=`
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:6px;">Conditions médicales</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">${condHtml}</div>
+    ${trtHtml}
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:14px;margin-bottom:6px;">Blessures & douleurs</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">${injHtml}</div>
+    <div style="margin-top:8px;">${addFormHtml}</div>
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:14px;margin-bottom:4px;">Notes santé libres</div>
+    <textarea id="health-notes-ta" rows="2" style="width:100%;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);padding:8px 10px;font-size:13px;resize:none;box-sizing:border-box;" placeholder="Ex: allergie au lactose, prise de statines, glycémie à surveiller..." oninput="saveHN()">${hp.notes||''}</textarea>
+  `;
+}
+
+function toggleTrt(){
+  if(typeof _isAdminUnlocked==='function'&&!_isAdminUnlocked())return; // sécurité : admin uniquement pour l'instant
+  const hp=_getHP();hp.trt=!hp.trt;
+  persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();_renderHealthSection();
+  if(typeof toast==='function')toast(hp.trt?'TRT enregistré — Milo en tient compte (privé)':'TRT retiré','success');
+}
+function toggleHC(id){
+  const hp=_getHP();const idx=(hp.conditions||[]).indexOf(id);
+  if(idx>=0)hp.conditions.splice(idx,1);else(hp.conditions=hp.conditions||[]).push(id);
+  persist();_renderHealthSection();
+}
+function openHI(){_addingInjury=true;_renderHealthSection();}
+function cancelHI(){_addingInjury=false;_renderHealthSection();}
+function saveHI(){
+  const zone=(document.getElementById('hi-zone-sel')||{}).value;
+  const status=(document.getElementById('hi-status-sel')||{}).value;
+  if(!zone)return;
+  const hp=_getHP();(hp.injuries=hp.injuries||[]).push({zone,status,since:today()});
+  _addingInjury=false;persist();_renderHealthSection();
+}
+function removeHI(i){
+  const hp=_getHP();if(!hp.injuries)return;hp.injuries.splice(i,1);persist();_renderHealthSection();
+}
+function saveHN(){
+  const ta=document.getElementById('health-notes-ta');if(!ta)return;_getHP().notes=ta.value;persist();
+}
+
+function _renderMorphoSection(){
+  const mtEl=document.getElementById('morphotype-btns');
+  const moEl=document.getElementById('morpho-btns');
+  if(!mtEl||!moEl)return;
+  // Morphotype buttons
+  mtEl.innerHTML=Object.entries(_MORPHOTYPE_DATA).map(([k,d])=>`
+    <button onclick="setMorphotype('${k}')" id="mt-btn-${k}" style="padding:10px 6px;border-radius:10px;border:2px solid ${S.morphotype===k?'var(--red)':'var(--sep)'};background:${S.morphotype===k?'rgba(255,45,85,.08)':'var(--bg3)'};font-size:13px;font-weight:700;cursor:pointer;color:var(--t1);display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <span style="font-size:20px;">${d.icon}</span>${d.label}
+    </button>`).join('');
+  const mtDesc=document.getElementById('morphotype-desc');
+  if(mtDesc){
+    if(S.morphotype&&_MORPHOTYPE_DATA[S.morphotype]){
+      mtDesc.style.display='block';
+      mtDesc.textContent=_MORPHOTYPE_DATA[S.morphotype].desc;
+    }else{mtDesc.style.display='none';}
+  }
+  // Morphology buttons (gender-aware)
+  const morphoData=S.gender==='F'?_MORPHO_DATA_F:_MORPHO_DATA_H;
+  const keys=Object.keys(morphoData);
+  moEl.style.gridTemplateColumns=`repeat(${keys.length},1fr)`;
+  moEl.innerHTML=keys.map(k=>`
+    <button onclick="setMorpho('${k}')" id="mo-btn-${k}" style="padding:10px 6px;border-radius:10px;border:2px solid ${S.morpho===k?'var(--orange)':'var(--sep)'};background:${S.morpho===k?'rgba(255,149,0,.08)':'var(--bg3)'};font-size:13px;font-weight:700;cursor:pointer;color:var(--t1);display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <span style="font-size:18px;">${morphoData[k].icon}</span>${morphoData[k].label}
+    </button>`).join('');
+  const moDesc=document.getElementById('morpho-desc');
+  if(moDesc){
+    if(S.morpho&&morphoData[S.morpho]){
+      moDesc.style.display='block';
+      moDesc.textContent=morphoData[S.morpho].desc;
+    }else{moDesc.style.display='none';}
+  }
+}
+
+function setMorphotype(val){
+  S.morphotype=val;persist();_renderMorphoSection();
+}
+function setMorpho(val){
+  S.morpho=val;persist();_renderMorphoSection();
+  _cloudSyncDebounced();
+}
+
+// ── Morpho photo analysis ──────────────────────────────────────
+let _morphoPhotos=[null,null,null];
+function openMorphoAnalysis(){
+  if(!S.premium){toast('Analyse morphologique réservée aux membres Premium ⭐','info');return;}
+  _morphoPhotos=[null,null,null];
+  [0,1,2].forEach(i=>{
+    const sl=document.getElementById('morpho-slot-'+i);
+    if(sl){sl.innerHTML='<span style="font-size:22px;">📷</span>';sl.style.border='2px dashed var(--sep)';}
+    const fi=document.getElementById('morpho-file-'+i);
+    if(fi)fi.value='';
+  });
+  const res=document.getElementById('morpho-result');
+  if(res){res.style.display='none';res.innerHTML='';}
+  const btn=document.getElementById('morpho-analyze-btn');
+  if(btn){btn.textContent='🔍 Analyser';btn.disabled=false;}
+  document.getElementById('ov-morpho-analysis').classList.add('open');
+}
+function closeMorphoAnalysis(){document.getElementById('ov-morpho-analysis').classList.remove('open');}
+
+function addMorphoPhoto(input,slot){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=800;
+      const scale=Math.min(1,MAX/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      const _mc2d=c.getContext('2d');if(!_mc2d)return;
+      _mc2d.drawImage(img,0,0,c.width,c.height);
+      const b64=c.toDataURL('image/jpeg',0.8).split(',')[1];
+      _morphoPhotos[slot]=b64;
+      const slotEl=document.getElementById('morpho-slot-'+slot);
+      if(slotEl){
+        slotEl.style.border='2px solid var(--green)';
+        slotEl.innerHTML=`<img src="${c.toDataURL('image/jpeg',0.8)}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`;
+      }
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeMorphoPhotos(){
+  const filled=_morphoPhotos.filter(Boolean);
+  if(filled.length===0){toast('Ajoute au moins une photo','error');return;}
+  const btn=document.getElementById('morpho-analyze-btn');
+  if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
+  const res=document.getElementById('morpho-result');
+  if(res){res.style.display='none';res.innerHTML='';}
+  showMorphoLoading(_morphoPhotos);
+  try{
+    const labels=['face','dos','profil'];
+    const images=_morphoPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:labels[i]}:null).filter(Boolean);
+    const resp=await fetch(_aiUrl('morphoAnalysis'),{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'morphoAnalysis',images,gender:S.gender||'H',email:S.email||''})
+    });
+    const txt=await resp.text();
+    let data;
+    try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
+    if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
+    const d=data.data;
+    applyMorphoResult(d);
+    if(res){
+      res.style.display='block';
+      res.innerHTML=''
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+          +'<div style="width:28px;height:28px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+            +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          +'</div>'
+          +'<span style="font-weight:700;font-size:14px;color:#5be3b4;">Profil morphologique mis à jour</span>'
+        +'</div>'
+        +(d.morphotype?'<div style="margin-bottom:6px;font-size:14px;"><b>Morphotype :</b> '+d.morphotype+'</div>':'')
+        +(d.morpho?'<div style="margin-bottom:6px;font-size:14px;"><b>Silhouette :</b> '+d.morpho+'</div>':'')
+        +(d.bodyComp?'<div style="margin-bottom:6px;font-size:14px;"><b>Composition estimée :</b> '+d.bodyComp+'</div>':'')
+        +(d.strengths?'<div style="margin-bottom:6px;font-size:14px;"><b>Points forts :</b> '+d.strengths+'</div>':'')
+        +(d.advice?'<div style="font-size:14px;"><b>Conseils :</b> '+d.advice+'</div>':'');
+    }
+  }catch(e){
+    hideMorphoLoading();
+    if(res){res.style.display='block';res.innerHTML=`<div style="color:var(--red);">Erreur : ${e.message}</div>`;}
+    toast('Erreur analyse: '+e.message,'error');
+  }finally{
+    hideMorphoLoading();
+    if(btn){btn.textContent='🔍 Analyser';btn.disabled=false;}
+  }
+}
+
+function applyMorphoResult(d){
+  const morphoData=S.gender==='F'?_MORPHO_DATA_F:_MORPHO_DATA_H;
+  const mtMap={'ecto':'ecto','ectomorphe':'ecto','meso':'meso','mésomorphe':'meso','endo':'endo','endomorphe':'endo'};
+  const moMap={...Object.fromEntries(Object.keys(morphoData).map(k=>[k.toLowerCase(),k]))};
+  if(d.morphotype){const k=mtMap[(d.morphotype+'').toLowerCase().split(' ')[0]];if(k)S.morphotype=k;}
+  if(d.morpho){const k=moMap[(d.morpho+'').toLowerCase().trim()];if(k)S.morpho=k;}
+  persist();_cloudSyncDebounced();
+  _renderMorphoSection();
+}
+
+function _updateCoachMorphoBtn(){
+  const w=document.getElementById('coach-morpho-btn-wrap');
+  if(!w)return;
+  w.style.display='block';
+  // Un seul bouton compact → ouvre un petit menu avec les 2 analyses photo (libère la place pour le chat)
+  w.innerHTML='<button class="btn btn-bg2" style="width:100%;padding:10px;font-size:13.5px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openPhotoMenu()">'
+    +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>'
+    +'Analyses photo de Milo'
+    +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>'
+    +'</button>';
+}
+// Petit menu « 1 bouton → 2 choix » : Étude du corps (4 photos) + Morphologie (3 photos)
+function openPhotoMenu(){ _renderPhotoMenu(); const o=document.getElementById('ov-photo-menu'); if(o)o.classList.add('open'); }
+function closePhotoMenu(){ const o=document.getElementById('ov-photo-menu'); if(o)o.classList.remove('open'); }
+function _renderPhotoMenu(){
+  const b=document.getElementById('photo-menu-body'); if(!b)return;
+  const prem=!!S.premium;
+  const badge='<span style="font-size:10.5px;background:rgba(234,179,8,.16);color:var(--gold);border-radius:6px;padding:2px 7px;font-weight:800;">Premium</span>';
+  const opt=(ic,title,sub,fn)=>'<button class="pm-opt" onclick="closePhotoMenu();'+(prem?fn:'showPremiumWall()')+'">'
+    +'<div class="pm-ic">'+ic+'</div>'
+    +'<div style="flex:1;min-width:0;text-align:left;"><div class="pm-title">'+(prem?'':'🔒 ')+title+'</div><div class="pm-sub">'+sub+'</div></div>'
+    +(prem?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>':badge)
+    +'</button>';
+  b.innerHTML=
+    opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5be3b4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7l9-4 9 4M5 11l7-3 7 3"/></svg>','Étude du corps','4 photos · bilan posture/insertions/équilibre · 📚 historique de tes bilans','openBodyStudy()')
+    +opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>','Analyser ma morphologie','3 photos · à faire une seule fois — définit ton type morpho','openMorphoAnalysis()')
+    // Suivi photos (séries 4 photos, comparaison d'évolution) — SUPER TESTEURS uniquement.
+    // Déplacé ici depuis l'Espace testeur le 31/07/2026 (la carte « avant-première » n'avait
+    // plus de sens depuis l'Étude du corps Premium). Pas de porte Premium : c'est un statut.
+    +((typeof _isSuperTester==='function'&&_isSuperTester())
+      ?'<button class="pm-opt" onclick="closePhotoMenu();openBodySeries();">'
+       +'<div class="pm-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>'
+       +'<div style="flex:1;min-width:0;text-align:left;"><div class="pm-title">Mon suivi photos</div><div class="pm-sub">Séries comparées mois par mois · photos gardées sur CE téléphone uniquement</div></div>'
+       +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>'
+       +'</button>'
+      :'');
+}
+
+// ── Étude du corps — bilan morpho-postural (4 photos relâché + contracté) ──
+const _BODY_SLOTS=[
+  {key:'face_relax', t:'Face — relâché', d:'Debout, face à la caméra, bras le long du corps, détendu. Torse nu ou tenue ajustée.'},
+  {key:'face_flex',  t:'Face — contracté', d:'Face à la caméra, contracte le haut du corps (pose « double biceps » avant si possible).'},
+  {key:'back_flex',  t:'Dos — contracté', d:'Dos tourné, contracte le dos et les bras (pose « double biceps » arrière).'},
+  {key:'profil',     t:'Profil', d:'De côté (gauche ou droit), debout naturellement, bras le long du corps.'}
+];
+let _bodyPhotos=[null,null,null,null];
+let _bsViewing=null; // bilan actuellement affiché (dernier par défaut, ou un bilan de l'historique)
+function openBodyStudy(){
+  if(!S.premium){toast('Étude du corps réservée aux membres Premium ⭐','info');return;}
+  _bodyPhotos=[null,null,null,null];
+  _BODY_SLOTS.forEach((s,i)=>{
+    const sl=document.getElementById('body-slot-'+i);
+    if(sl){sl.innerHTML='<span style="font-size:22px;">📷</span>';sl.style.border='2px dashed var(--sep)';}
+    const fi=document.getElementById('body-file-'+i);if(fi)fi.value='';
+  });
+  const res=document.getElementById('body-result');if(res){res.style.display='none';res.innerHTML='';}
+  const btn=document.getElementById('body-analyze-btn');if(btn){btn.textContent='🔍 Analyser mon corps';btn.disabled=false;}
+  // Rappelle le dernier bilan s'il existe — et si bodyStudy a été perdu (vieille restauration)
+  // mais que l'historique existe, on rappelle le plus récent de l'historique : sans ça, le
+  // bouton Historique (qui vit DANS le bilan affiché) devenait inaccessible.
+  if(S.bodyStudy)_renderBodyStudyReport(S.bodyStudy,true);
+  else if((S.bodyStudies||[]).length)_renderBodyStudyReport(S.bodyStudies[0],true);
+  // 31/07/2026 (Michel : « je ne trouve pas l'historique » — il avait 2 bilans) : le bilan et son
+  // bouton Historique s'affichent SOUS les 4 cases photos, soit un écran entier plus bas — invisible
+  // sans faire défiler. L'accès à l'historique vit maintenant AUSSI tout en haut de la fenêtre.
+  const _ht=document.getElementById('body-history-top');
+  if(_ht){const n=(S.bodyStudies||[]).length;
+    _ht.innerHTML=n?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin:10px 0 2px;padding:10px;font-size:12.5px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Mes bilans précédents — '+n+' bilan'+(n>1?'s':'')+' <span style="color:var(--t3);font-weight:600;">(le dernier est affiché plus bas)</span></button>':'';}
+  document.getElementById('ov-body-study').classList.add('open');
+}
+function closeBodyStudy(){document.getElementById('ov-body-study').classList.remove('open');}
+function addBodyPhoto(input,slot){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=800,scale=Math.min(1,MAX/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      const ctx=c.getContext('2d');if(!ctx)return;
+      ctx.drawImage(img,0,0,c.width,c.height);
+      _bodyPhotos[slot]=c.toDataURL('image/jpeg',0.8).split(',')[1];
+      const sl=document.getElementById('body-slot-'+slot);
+      if(sl){sl.style.border='2px solid var(--green)';sl.innerHTML=`<img src="${c.toDataURL('image/jpeg',0.8)}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`;}
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+async function analyzeBodyStudy(){
+  const filled=_bodyPhotos.filter(Boolean);
+  if(filled.length<2){toast('Ajoute au moins 2 photos (face relâché + un contracté)','error');return;}
+  const btn=document.getElementById('body-analyze-btn');
+  if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
+  const res=document.getElementById('body-result');if(res){res.style.display='none';res.innerHTML='';}
+  showMorphoLoading(_bodyPhotos);
+  try{
+    const images=_bodyPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:_BODY_SLOTS[i].key}:null).filter(Boolean);
+    // Santé injectée pour des conseils sûrs (contre-indications)
+    const hp=S.healthProfile||{};
+    const resp=await fetch(_aiUrl('bodyStudy'),{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'bodyStudy',images,gender:S.gender||'H',age:S.age||0,
+        goal:S.goal||'muscle',discipline:S.discipline||'muscu',
+        health:{conditions:hp.conditions||[],injuries:hp.injuries||[],notes:hp.notes||''},
+        email:S.email||''})
+    });
+    const txt=await resp.text();
+    let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
+    if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
+    const d=data.data;d.date=today();
+    S.bodyStudy=d;
+    // Historique : le plus récent en tête, un seul bilan par jour (relance le même jour = remplace), plafonné à 24
+    S.bodyStudies=S.bodyStudies||[];
+    S.bodyStudies=S.bodyStudies.filter(x=>x&&x.date!==d.date);
+    S.bodyStudies.unshift(d);
+    if(S.bodyStudies.length>24)S.bodyStudies=S.bodyStudies.slice(0,24);
+    _bsViewing=d;
+    persist();_cloudSyncDebounced();
+    // Photos gardées EN LOCAL uniquement (IndexedDB, jamais le cloud), pour les 4 derniers bilans
+    try{
+      const _ph={};_bodyPhotos.forEach((b,i)=>{if(b&&_BODY_SLOTS[i])_ph[_BODY_SLOTS[i].key]=b;});
+      if(Object.keys(_ph).length){await _bsPhotosSave(d.date,_ph);await _bsPhotosPrune((S.bodyStudies||[]).slice(0,_BS_KEEP).map(x=>x.date));}
+    }catch(e){}
+    _renderBodyStudyReport(d,false);
+    if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
+  }catch(e){
+    hideMorphoLoading();
+    if(res){res.style.display='block';res.innerHTML=`<div style="color:var(--red);">Erreur : ${e.message}</div>`;}
+    toast('Erreur analyse: '+e.message,'error');
+  }finally{
+    hideMorphoLoading();
+    if(btn){btn.textContent='🔍 Analyser mon corps';btn.disabled=false;}
+  }
+}
+function _bsSection(icon,title,body,color){
+  if(!body)return '';
+  return '<div style="margin-bottom:12px;">'
+    +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><span style="font-size:15px;">'+icon+'</span>'
+    +'<span style="font-weight:800;font-size:13px;color:'+(color||'var(--t1)')+';">'+title+'</span></div>'
+    +'<div style="font-size:13px;line-height:1.55;color:var(--t2);">'+body+'</div></div>';
+}
+function _renderBodyStudyReport(d,isRecall){
+  const res=document.getElementById('body-result');if(!res)return;
+  const esc=s=>(s==null?'':(''+s));
+  let exos='';
+  if(Array.isArray(d.exercises)&&d.exercises.length){
+    exos=d.exercises.map(x=>{
+      if(typeof x==='string')return '<li style="margin-bottom:5px;">'+esc(x)+'</li>';
+      const nm=esc(x.zone||x.muscle||'');const why=esc(x.why||x.reason||'');const list=Array.isArray(x.exercises)?x.exercises.join(', '):esc(x.exercises||x.exos||'');
+      return '<li style="margin-bottom:6px;"><b>'+nm+'</b>'+(list?' — '+list:'')+(why?'<div style="font-size:12px;color:var(--t3);">'+why+'</div>':'')+'</li>';
+    }).join('');
+  }else if(typeof d.exercises==='string'){exos='<li>'+esc(d.exercises)+'</li>';}
+  _bsViewing=d;   // mémorise le bilan affiché (pour l'export PDF)
+  const _isLatest=!(S.bodyStudy)||!d.date||d.date===S.bodyStudy.date;
+  res.style.display='block';
+  res.innerHTML=''
+    +(isRecall?'<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">📅 '+(_isLatest?'Dernier bilan':'Ancien bilan')+' du '+_bsFmtDate(d.date)+(_isLatest?' — relance une analyse pour le mettre à jour.':'.')+'</div>'
+      :'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div style="width:26px;height:26px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span style="font-weight:800;font-size:14px;color:#5be3b4;">Bilan de ton corps</span></div>')
+    +((S.bodyStudies||[]).length>0?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Historique — '+(S.bodyStudies.length)+' bilan'+(S.bodyStudies.length>1?'s':'')+'</button>'
+      +(!_isLatest?'<button onclick="_viewBodyStudyAt(0)" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--blue);cursor:pointer;touch-action:manipulation;">‹ Revenir au dernier bilan</button>':''):'')
+    +'<div id="bs-photos"></div>'
+    +_bsSection('🧍','Stature & posture',esc(d.stature))
+    +_bsSection('🧬','Insertions musculaires',esc(d.insertions))
+    +_bsSection('⚖️','Équilibre du corps',esc(d.balance),'var(--gold)')
+    +_bsSection('💪','Points forts',esc(d.strengths),'var(--green)')
+    +_bsSection('📉','Points à travailler',esc(d.weaknesses),'var(--orange)')
+    +(exos?'<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><span style="font-size:15px;">🎯</span><span style="font-weight:800;font-size:13px;color:var(--red);">Exercices suggérés</span></div><ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.5;color:var(--t2);">'+exos+'</ul></div>':'')
+    +_bsSection('⚕️','Santé prise en compte',esc(d.healthNotes),'#5BA8FF')
+    +(d.summary?'<div style="margin-top:6px;padding:10px 12px;background:rgba(239,62,87,.08);border-radius:10px;font-size:13px;line-height:1.5;color:var(--t1);"><b>En résumé :</b> '+esc(d.summary)+'</div>':'')
+    +'<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.4;">⚕️ Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou d\'un coach en personne.</div>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;padding:11px;font-size:13px;border-radius:12px;" onclick="exportBodyStudyPdf()">📄 Exporter en PDF</button>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;padding:11px;font-size:13px;border-radius:12px;" onclick="_bodyStudyToCoach()">💬 En parler avec Milo</button>';
+  if(d.date)_bsInjectPhotos(d.date);   // charge les vignettes photo (async, local)
+}
+function _bodyStudyToCoach(){
+  closeBodyStudy();
+  try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
+  const inp=document.getElementById('coach-inp');
+  if(inp){inp.value='Explique-moi mon bilan corporel et propose-moi un plan pour rééquilibrer mon corps.';}
+}
+// ─── Historique des études corporelles ─────────────────────────────────────
+function _bsFmtDate(iso){ if(!iso)return '?'; const p=(''+iso).split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
+async function _openBodyStudyHistory(){
+  const res=document.getElementById('body-result');if(!res)return;
+  const list=S.bodyStudies||[];
+  if(!list.length){toast('Aucun bilan enregistré','info');return;}
+  let photoDates=[];try{photoDates=await _bsPhotosDates();}catch(e){}
+  res.style.display='block';
+  res.innerHTML='<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:4px;">📚 Historique des bilans</div>'
+    +'<div style="font-size:11px;color:var(--t3);margin-bottom:12px;">Tape un bilan pour le revoir (et l\'exporter en PDF).</div>'
+    +(photoDates.length>=2?'<button onclick="_bsCompare()" style="width:100%;margin-bottom:12px;padding:11px;font-size:13px;font-weight:700;border-radius:12px;border:1px solid var(--sep);background:rgba(52,211,153,.10);color:#5be3b4;cursor:pointer;touch-action:manipulation;">📸 Comparer mon évolution (avant / après)</button>':'')
+    +list.map((d,i)=>{
+      const sum=(d.summary||d.balance||d.stature||'').toString();
+      const snip=sum.length>90?sum.slice(0,89)+'…':sum;
+      const hasPh=photoDates.indexOf(d.date)>=0;
+      return '<div style="display:flex;align-items:stretch;gap:6px;margin-bottom:8px;">'
+        +'<div onclick="_viewBodyStudyAt('+i+')" style="flex:1;min-width:0;text-align:left;padding:11px 12px;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);cursor:pointer;touch-action:manipulation;">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:13px;">'+_bsFmtDate(d.date)+(hasPh?' <span title="Photos disponibles">📷</span>':'')+(i===0?' <span style="color:var(--green);font-size:11px;">· dernier</span>':'')+'</span><span style="color:var(--t3);font-size:16px;">›</span></div>'
+          +(snip?'<div style="font-size:12px;color:var(--t3);line-height:1.4;margin-top:3px;">'+_escNote(snip)+'</div>':'')
+        +'</div>'
+        +'<button onclick="deleteBodyStudy('+i+')" title="Supprimer ce bilan" style="flex:none;background:none;border:1px solid var(--sep);border-radius:12px;padding:0 11px;cursor:pointer;color:var(--red);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+        +'</div>';
+    }).join('');
+  // La liste se dessine sous les 4 cases photos → on y amène l'écran (sinon, ouverte depuis le
+  // bouton du HAUT, elle resterait hors de vue — exactement le problème qu'on vient de corriger).
+  try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+function _viewBodyStudyAt(i){
+  const d=(S.bodyStudies||[])[i];if(!d)return;
+  _renderBodyStudyReport(d,true);
+  const res=document.getElementById('body-result');if(res)try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+// Supprime un bilan « Étude du corps » (texte synchronisé cloud + éventuelles photos locales).
+// Contrairement au suivi photos (local), ce bilan est dans le cloud → persist()+sync le retire aussi côté cloud.
+function deleteBodyStudy(i){
+  const list=S.bodyStudies||[]; const d=list[i]; if(!d)return;
+  const doDel=()=>{
+    const date=d.date;
+    S.bodyStudies.splice(i,1);
+    if(S.bodyStudy&&S.bodyStudy.date===date)S.bodyStudy=S.bodyStudies[0]||null; // n'affiche plus le bilan supprimé
+    if(typeof persist==='function')persist();
+    if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); // met à jour la sauvegarde cloud (bodyStudies y est synchronisé)
+    try{ if(date)_bsPhotosDelete(date); }catch(e){}                    // photos éventuelles de ce bilan (base interne)
+    if(S.bodyStudies.length){ _openBodyStudyHistory(); }
+    else { const res=document.getElementById('body-result'); if(res)res.style.display='none'; if(typeof renderBodyStudyCard==='function')try{renderBodyStudyCard();}catch(e){} }
+    if(typeof toast==='function')toast('Bilan supprimé','info');
+  };
+  if(typeof showConfirm==='function')showConfirm('Supprimer ce bilan ?','Le bilan (et ses éventuelles photos) sera effacé de ton téléphone et de ta sauvegarde cloud.',doDel);
+  else doDel();
+}
+
+// ─── Photos Étude du corps — stockage LOCAL uniquement (IndexedDB, jamais le cloud) ──
+const _BS_IDB='ft_bodyphotos', _BS_STORE='photos', _BS_KEEP=4; // garde les photos des 4 derniers bilans
+const _BS_POSES=[{k:'face_relax',l:'Face relâché'},{k:'face_flex',l:'Face contracté'},{k:'back_flex',l:'Dos'},{k:'profil',l:'Profil'}];
+function _bsIdbOpen(){
+  return new Promise((res,rej)=>{
+    try{
+      const req=indexedDB.open(_BS_IDB,1);
+      req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(_BS_STORE))db.createObjectStore(_BS_STORE,{keyPath:'date'});};
+      req.onsuccess=e=>res(e.target.result);
+      req.onerror=()=>rej(req.error);
+      setTimeout(()=>rej(new Error('idb timeout')),1500);
+    }catch(e){rej(e);}
+  });
+}
+function _bsPhotosSave(date,photos){ // photos = {face_relax,face_flex,back_flex,profil} en base64
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const tx=db.transaction(_BS_STORE,'readwrite');tx.objectStore(_BS_STORE).put({date,photos});tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+function _bsPhotosGet(date){
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const g=db.transaction(_BS_STORE,'readonly').objectStore(_BS_STORE).get(date);g.onsuccess=()=>res(g.result?g.result.photos:null);g.onerror=()=>res(null);}catch(e){res(null);}
+  })).catch(()=>null);
+}
+function _bsPhotosDates(){
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const g=db.transaction(_BS_STORE,'readonly').objectStore(_BS_STORE).getAllKeys();g.onsuccess=()=>res(g.result||[]);g.onerror=()=>res([]);}catch(e){res([]);}
+  })).catch(()=>[]);
+}
+function _bsPhotosPrune(keepDates){ // supprime les photos des bilans hors des N derniers (place maîtrisée)
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const st=db.transaction(_BS_STORE,'readwrite').objectStore(_BS_STORE);const g=st.getAllKeys();g.onsuccess=()=>{(g.result||[]).forEach(k=>{if(keepDates.indexOf(k)<0)try{st.delete(k);}catch(e){}});res(true);};g.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+function _bsPhotosDelete(date){ // supprime les photos d'UNE série (par date) dans la base interne
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const tx=db.transaction(_BS_STORE,'readwrite');tx.objectStore(_BS_STORE).delete(date);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+// Supprime définitivement une série de photos (ligne + images localStorage + base interne).
+// Utile ex. quand un testeur a pris les photos de quelqu'un d'autre et veut les retirer de son tel.
+function deleteBodySeries(i){
+  const series=S.bodySeries||[]; const s=series[i]; if(!s)return;
+  const doDel=()=>{
+    const date=s.date;
+    S.bodySeries.splice(i,1);
+    if(typeof persist==='function')persist();      // met à jour ft4_body_series (retire les images gardées en local)
+    try{ _bsPhotosDelete(date); }catch(e){}          // retire aussi les photos de la base interne (IndexedDB)
+    _bserView='list'; _renderBodySeries();
+    if(typeof toast==='function')toast('Série supprimée','info');
+  };
+  if(typeof showConfirm==='function')showConfirm('Supprimer cette série ?','Les photos et le bilan de cette série seront définitivement effacés de ton téléphone.',doDel);
+  else doDel();
+}
+// Injecte les vignettes photo dans le bilan affiché (async — IDB)
+function _bsInjectPhotos(date){
+  const el=document.getElementById('bs-photos');if(!el)return;
+  _bsPhotosGet(date).then(photos=>{
+    const el2=document.getElementById('bs-photos');if(!el2)return;
+    if(!photos){el2.innerHTML='';return;}
+    const thumbs=_BS_POSES.filter(p=>photos[p.k]).map(p=>
+      '<div style="text-align:center;"><img src="data:image/jpeg;base64,'+photos[p.k]+'" onclick="_viewBsPhoto(\''+date+'\',\''+p.k+'\')" style="width:62px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--sep);cursor:zoom-in;"><div style="font-size:9px;color:var(--t3);margin-top:2px;">'+p.l+'</div></div>').join('');
+    el2.innerHTML=thumbs?('<div style="font-size:11px;color:var(--t3);margin-bottom:6px;">📷 Tes photos (sur ton téléphone) — tape pour agrandir :</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'+thumbs+'</div>'):'';
+  }).catch(()=>{});
+}
+// Visionneuse plein écran d'une photo corporelle
+function _bsViewFull(b64,title){
+  let ov=document.getElementById('ov-bs-photo');
+  if(!ov){ov=document.createElement('div');ov.id='ov-bs-photo';ov.className='overlay';ov.style.zIndex='600';ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
+  ov.innerHTML='<div class="modal" style="max-width:94vw;padding:14px;text-align:center;">'
+    +'<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:10px;">'+_escNote(title||'')+'</div>'
+    +'<img src="data:image/jpeg;base64,'+b64+'" style="max-width:100%;max-height:74vh;border-radius:12px;display:block;margin:0 auto;">'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;" onclick="document.getElementById(\'ov-bs-photo\').classList.remove(\'open\')">Fermer</button>'
+    +'</div>';
+  ov.classList.add('open');
+}
+function _viewBsPhoto(date,key){
+  _bsPhotosGet(date).then(photos=>{ if(photos&&photos[key])_bsViewFull(photos[key],_bsFmtDate(date)+' · '+((_BS_POSES.find(p=>p.k===key)||{}).l||'')); });
+}
+// Comparaison visuelle avant/après : plus ancien bilan avec photos vs plus récent
+async function _bsCompare(){
+  const res=document.getElementById('body-result');if(!res)return;
+  const dates=(await _bsPhotosDates()).slice().sort(); // croissant YYYY-MM-DD
+  if(dates.length<2){toast('Il faut au moins 2 bilans avec photos pour comparer','info');return;}
+  const dA=dates[0], dB=dates[dates.length-1];
+  const [pA,pB]=await Promise.all([_bsPhotosGet(dA),_bsPhotosGet(dB)]);
+  if(!pA||!pB){toast('Photos indisponibles','error');return;}
+  const cell=(b64,date,key)=>b64
+    ? '<img src="data:image/jpeg;base64,'+b64+'" onclick="_viewBsPhoto(\''+date+'\',\''+key+'\')" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;border:1px solid var(--sep);cursor:zoom-in;">'
+    : '<div style="width:100%;aspect-ratio:3/4;border-radius:8px;border:1px dashed var(--sep);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:10px;">—</div>';
+  res.style.display='block';
+  res.innerHTML='<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:4px;">📸 Évolution — avant / après</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--t2);text-align:center;"><div>'+_bsFmtDate(dA)+'</div><div>'+_bsFmtDate(dB)+'</div></div>'
+    +_BS_POSES.filter(p=>pA[p.k]||pB[p.k]).map(p=>
+      '<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);margin-bottom:4px;">'+p.l+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+cell(pA[p.k],dA,p.k)+cell(pB[p.k],dB,p.k)+'</div></div>').join('')
+    +'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-top:4px;padding:11px;font-size:13px;font-weight:700;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;">‹ Retour à l\'historique</button>';
+  try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+// Nettoie un texte pour le PDF (helvetica gère les accents mais pas les emojis/flèches)
+function _bsPdfClean(s){
+  s=(s==null?'':(''+s)).replace(/→/g,'->').replace(/←/g,'<-').replace(/[’]/g,"'");
+  s=s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu,'');
+  return s.replace(/[ \t]{2,}/g,' ').trim();
+}
+// Export PDF propre du bilan « Étude du corps » (même moteur jsPDF que le Coach / les programmes).
+async function exportBodyStudyPdf(){
+  const d=_bsViewing||S.bodyStudy;   // le bilan affiché (dernier OU un bilan de l'historique)
+  if(!d){toast('Aucun bilan à exporter','error');return;}
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }
+  catch(e){ toast('PDF indisponible ici','error'); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
+    const dt=new Date();
+    // Date affichée = celle du bilan (JJ/MM/AAAA) si connue, sinon aujourd'hui
+    const dispDate=(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date.split('-').reverse().join('/'):dt.toLocaleDateString('fr-FR');
+    let y=await _pdfEntete(doc,{sousTitre:'Étude du corps',
+      droite:dispDate+(S.name?(' · '+S.name):''),M});
+    const lh=15;
+    const ensure=sp=>{ if(y>H-64-(sp||0)){doc.addPage();y=56;} };
+    const section=(title,body)=>{
+      body=_bsPdfClean(body); if(!body)return;
+      ensure(34);
+      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...PDF_COL.rouge);
+      doc.text(title,M,y);
+      // filet doré sous le titre de section — le même repère que sur la feuille imprimée
+      doc.setLineWidth(1);doc.setDrawColor(...PDF_COL.or);doc.line(M,y+3.5,M+34,y+3.5);
+      y+=6+lh;
+      doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...PDF_COL.encre);
+      doc.splitTextToSize(body,W-2*M).forEach(l=>{ ensure(lh); doc.text(l,M,y); y+=lh; });
+      y+=9;
+    };
+    section('Stature & posture',d.stature);
+    section('Insertions musculaires',d.insertions);
+    section('Équilibre du corps',d.balance);
+    section('Points forts',d.strengths);
+    section('Points à travailler',d.weaknesses);
+    // Exercices suggérés (liste structurée ou texte)
+    let exText='';
+    if(Array.isArray(d.exercises)&&d.exercises.length){
+      exText=d.exercises.map(x=>{
+        if(typeof x==='string')return '- '+x;
+        const nm=(x.zone||x.muscle||'');
+        const list=Array.isArray(x.exercises)?x.exercises.join(', '):(x.exercises||x.exos||'');
+        const why=(x.why||x.reason||'');
+        return '- '+nm+(list?' : '+list:'')+(why?'\n   ('+why+')':'');
+      }).join('\n');
+    }else if(typeof d.exercises==='string'){exText=d.exercises;}
+    section('Exercices suggérés',exText);
+    section('Santé prise en compte',d.healthNotes);
+    if(d.summary)section('En résumé',d.summary);
+    // Pied de page sur toutes les pages : contact + disclaimer + numéro
+    _pdfPied(doc,{M,mention:'Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou coach.'});
+    const fname='etude-du-corps-'+((d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date:dt.toISOString().slice(0,10))+'.pdf';
+    const blob=doc.output('blob');
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file]}); return; }
+      catch(err){ if(err&&err.name==='AbortError')return; }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+    toast('PDF enregistré 📄','success');
+  }catch(e){ console.warn('[FT bodystudy pdf]',e); toast('Souci PDF','error'); }
+}
+
+// ─── SUIVI PHOTOS (Super Testeur) — séries mensuelles comparées ──
+// Christophe prend jusqu'à 4 séries de 4 photos/mois. Chaque série est analysée à fond
+// et comparée à la précédente (évolution). Photos stockées LOCALEMENT (servent à comparer).
+let _bserPhotos=[null,null,null,null];
+let _bserView='list';
+let _bserReportIdx=-1;
+const _BSER_MONTHLY_LIMIT=4;
+function _bserFmtDate(iso){ if(!iso)return '?'; const p=(''+iso).split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
+function _bserTrunc(s,n){ s=(s==null?'':(''+s)); return s.length>n?s.slice(0,n-1)+'…':s; }
+function _bserMonthKey(d){ return (''+(d||today())).slice(0,7); }
+function _bserCountThisMonth(){ const mk=_bserMonthKey(today()); return (S.bodySeries||[]).filter(s=>_bserMonthKey(s.date)===mk).length; }
+function openBodySeries(){
+  if(!(typeof _isSuperTester==='function'&&_isSuperTester())){toast('Réservé au testeur de l’application','info');return;}
+  _bserView='list'; _renderBodySeries();
+  document.getElementById('ov-body-series').classList.add('open');
+}
+function closeBodySeries(){document.getElementById('ov-body-series').classList.remove('open');}
+function _bserBackToList(){_bserView='list';_renderBodySeries();}
+function openBodySeriesReport(i){_bserReportIdx=i;_bserView='report';_renderBodySeries();}
+function _bserStartCapture(){
+  if(_bserCountThisMonth()>=_BSER_MONTHLY_LIMIT){toast('Tu as fait tes 4 séries ce mois — reviens le mois prochain 🙂','info');return;}
+  _bserPhotos=[null,null,null,null]; _bserView='capture'; _renderBodySeries();
+}
+function _bserAddPhoto(input,slot){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=800,scale=Math.min(1,MAX/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      const ctx=c.getContext('2d');if(!ctx)return;
+      ctx.drawImage(img,0,0,c.width,c.height);
+      _bserPhotos[slot]=c.toDataURL('image/jpeg',0.72).split(',')[1];
+      const sl=document.getElementById('bser-slot-'+slot);
+      if(sl){sl.style.border='2px solid var(--green)';sl.innerHTML='<img src="data:image/jpeg;base64,'+_bserPhotos[slot]+'" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">';}
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function _bserCaptureHtml(){
+  const slots=_BODY_SLOTS.map((s,i)=>
+    '<div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">'
+    +'<label id="bser-slot-'+i+'" for="bser-file-'+i+'" style="width:66px;height:88px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><span style="font-size:20px;">📷</span></label>'
+    +'<div style="flex:1;"><div style="font-weight:800;font-size:13.5px;margin-bottom:2px;">'+s.t+'</div><div style="font-size:11.5px;color:var(--t3);line-height:1.4;margin-bottom:8px;">'+s.d+'</div>'
+    +'<label for="bser-file-'+i+'" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer / prendre</label></div>'
+    +'<input type="file" id="bser-file-'+i+'" accept="image/*" style="display:none;" onchange="_bserAddPhoto(this,'+i+')"></div>'
+  ).join('');
+  return '<div style="font-size:12px;color:var(--t3);margin-bottom:10px;">🔒 Tes photos restent sur ton téléphone (elles servent à comparer avec ta prochaine série).</div><div style="display:flex;flex-direction:column;gap:10px;">'+slots+'</div>';
+}
+function _bserReportHtml(d){
+  if(!d)return '';
+  const esc=s=>(s==null?'':(''+s));
+  let exos='';
+  if(Array.isArray(d.exercises)&&d.exercises.length){
+    exos=d.exercises.map(x=>{ if(typeof x==='string')return '<li style="margin-bottom:5px;">'+esc(x)+'</li>'; const nm=esc(x.zone||x.muscle||'');const list=Array.isArray(x.exercises)?x.exercises.join(', '):esc(x.exercises||x.exos||'');const why=esc(x.why||x.reason||''); return '<li style="margin-bottom:6px;"><b>'+nm+'</b>'+(list?' — '+list:'')+(why?'<div style="font-size:12px;color:var(--t3);">'+why+'</div>':'')+'</li>';}).join('');
+  }else if(typeof d.exercises==='string'){exos='<li>'+esc(d.exercises)+'</li>';}
+  return ''
+    +(d.evolution?'<div style="margin-bottom:14px;padding:12px;background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.30);border-radius:12px;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;"><span style="font-size:15px;">📈</span><span style="font-weight:800;font-size:13px;color:#5be3b4;">Évolution depuis ta dernière série</span></div><div style="font-size:13px;line-height:1.55;color:var(--t2);">'+esc(d.evolution)+'</div></div>':'')
+    +_bsSection('🧍','Stature & posture',esc(d.stature))
+    +_bsSection('🧬','Insertions musculaires',esc(d.insertions))
+    +_bsSection('⚖️','Équilibre du corps',esc(d.balance),'var(--gold)')
+    +_bsSection('💪','Points forts',esc(d.strengths),'var(--green)')
+    +_bsSection('📉','Points à travailler',esc(d.weaknesses),'var(--orange)')
+    +(exos?'<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><span style="font-size:15px;">🎯</span><span style="font-weight:800;font-size:13px;color:var(--red);">Exercices suggérés</span></div><ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.5;color:var(--t2);">'+exos+'</ul></div>':'')
+    +_bsSection('⚕️','Santé prise en compte',esc(d.healthNotes),'#5BA8FF')
+    +(d.summary?'<div style="margin-top:6px;padding:10px 12px;background:rgba(239,62,87,.08);border-radius:10px;font-size:13px;line-height:1.5;color:var(--t1);"><b>En résumé :</b> '+esc(d.summary)+'</div>':'');
+}
+function _renderBodySeries(){
+  const body=document.getElementById('bser-body');if(!body)return;
+  const series=S.bodySeries||[];
+  if(_bserView==='capture'){
+    body.innerHTML=_bserCaptureHtml()
+      +'<div style="margin-top:14px;display:flex;gap:8px;">'
+      +'<button class="btn btn-bg2" style="flex:1;" onclick="_bserBackToList()">← Retour</button>'
+      +'<button class="btn btn-red" id="bser-analyze-btn" style="flex:2;" onclick="analyzeBodySeries()">🔍 Analyser cette série</button>'
+      +'</div>';
+    return;
+  }
+  if(_bserView==='report'&&series[_bserReportIdx]){
+    const s=series[_bserReportIdx];
+    body.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:10px;">📅 Série du '+_bserFmtDate(s.date)+'</div>'
+      +_bserReportHtml(s.report)
+      +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;" onclick="_bserBackToList()">← Retour à mes séries</button>';
+    return;
+  }
+  const count=_bserCountThisMonth();
+  const canNew=count<_BSER_MONTHLY_LIMIT;
+  let hist;
+  if(series.length){
+    hist=series.map((s,i)=>({s,i})).reverse().map(({s,i})=>
+      '<div onclick="openBodySeriesReport('+i+')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border:1px solid var(--sep);border-radius:11px;margin-bottom:8px;cursor:pointer;">'
+      +'<div style="min-width:0;"><div style="font-weight:700;font-size:13.5px;color:var(--t1);">Série du '+_bserFmtDate(s.date)+'</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+((s.report&&s.report.summary)?_bserTrunc(s.report.summary,54):'Bilan complet')+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex:none;">'
+      +'<button onclick="event.stopPropagation();deleteBodySeries('+i+')" title="Supprimer cette série" style="background:none;border:none;padding:6px;margin:-6px 0;cursor:pointer;color:var(--red);line-height:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+      +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
+    ).join('');
+  }else{
+    hist='<div style="font-size:13px;color:var(--t3);font-style:italic;text-align:center;padding:14px 0;">Aucune série pour l’instant — prends ta première série de 4 photos 📸</div>'
+      +'<div style="font-size:12px;color:var(--t3);text-align:center;padding:2px 0 8px;">Tu cherches tes bilans « Étude du corps » ? Ils ne sont pas ici → <span onclick="closeBodySeries();openBodyStudy();" style="color:var(--gold);font-weight:700;cursor:pointer;text-decoration:underline;">les voir 📚</span></div>';
+  }
+  body.innerHTML=
+    '<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Prends une <b>série de 4 photos</b> (face relâché, face contracté, dos contracté, profil). L’IA fait un bilan complet et le <b>compare à ta série précédente</b> pour suivre ton évolution.</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(234,179,8,.10);border:1px solid rgba(234,179,8,.32);border-radius:11px;padding:10px 13px;margin-bottom:12px;">'
+      +'<span style="font-size:12.5px;color:var(--t2);">Ce mois-ci</span>'
+      +'<span style="font-weight:800;color:var(--gold);">'+count+' / '+_BSER_MONTHLY_LIMIT+' séries</span></div>'
+    +'<button class="btn" onclick="_bserStartCapture()" '+(canNew?'':'disabled')+' style="width:100%;padding:13px;margin-bottom:16px;background:'+(canNew?'rgba(234,179,8,.16)':'var(--bg3)')+';border:1px solid '+(canNew?'rgba(234,179,8,.42)':'var(--sep)')+';color:'+(canNew?'var(--gold)':'var(--t3)')+';font-weight:800;'+(canNew?'':'opacity:.6;cursor:default;')+'">'+(canNew?'📸 Nouvelle série de photos':'✅ 4 séries faites ce mois')+'</button>'
+    +'<div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:700;">Tes séries</div>'
+    +hist
+    +'<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.4;">🔒 Tes photos restent sur ton téléphone. Analyse indicative — ne remplace pas un médecin.</div>';
+}
+async function analyzeBodySeries(){
+  const filled=_bserPhotos.filter(Boolean);
+  if(filled.length<2){toast('Ajoute au moins 2 photos (face relâché + un contracté)','error');return;}
+  if(_bserCountThisMonth()>=_BSER_MONTHLY_LIMIT){toast('Limite de 4 séries/mois atteinte','info');return;}
+  const btn=document.getElementById('bser-analyze-btn');
+  if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
+  showMorphoLoading(_bserPhotos);
+  const prev=(S.bodySeries||[]).filter(s=>s.photos&&s.photos.length).slice(-1)[0]||null;
+  try{
+    const images=_bserPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:_BODY_SLOTS[i].key}:null).filter(Boolean);
+    const hp=S.healthProfile||{};
+    const payload={action:'bodyStudy',images,gender:S.gender||'H',age:S.age||0,
+      goal:S.goal||'muscle',discipline:S.discipline||'muscu',
+      health:{conditions:hp.conditions||[],injuries:hp.injuries||[],notes:hp.notes||''},
+      email:S.email||'',deep:true};
+    if(prev&&prev.photos&&prev.photos.length){
+      payload.compare=true; payload.prevDate=prev.date;
+      payload.prevImages=prev.photos.map((b,i)=>({data:b,type:'image/jpeg',label:(prev.slots&&prev.slots[i])||('p'+i)}));
+      payload.prevAnalysis=prev.report?(prev.report.summary||''):'';
+    }
+    const resp=await fetch(_aiUrl('bodyStudy'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    const txt=await resp.text();
+    let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
+    if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
+    const d=data.data;d.date=today();
+    S.bodySeries=S.bodySeries||[];
+    S.bodySeries.push({date:today(),ts:Date.now(),photos:_bserPhotos.slice(),slots:_BODY_SLOTS.map(s=>s.key),report:d});
+    if(S.bodySeries.length>6)S.bodySeries=S.bodySeries.slice(-6);
+    // Ne garde les photos que des 2 dernières séries (comparaison + stockage maîtrisé)
+    S.bodySeries.forEach((s,idx)=>{ if(idx<S.bodySeries.length-2)s.photos=[]; });
+    persist();
+    _bserPhotos=[null,null,null,null];
+    hideMorphoLoading();
+    _bserReportIdx=S.bodySeries.length-1; _bserView='report'; _renderBodySeries();
+    if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
+  }catch(e){
+    hideMorphoLoading();
+    toast('Erreur analyse : '+e.message,'error');
+    if(btn){btn.textContent='🔍 Analyser cette série';btn.disabled=false;}
+  }
+}
+
+function _updateProgCycleBanner(){
+  const el=document.getElementById('prog-cycle-banner');if(!el)return;
+  const cp=getMensCyclePhase();
+  if(!cp||S.gender!=='F'){el.style.display='none';return;}
+  el.style.display='block';
+  const advice=cp.hormonal?'Entraîne-toi selon ta forme du jour.':cp.training;
+  const label=cp.hormonal?'Contraception hormonale':`${cp.icon} ${cp.phase} — Jour ${cp.day}/${cp.dur}`;
+  el.innerHTML=`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(170,0,255,.07);border:1px solid rgba(170,0,255,.15);margin-bottom:2px;">
+    <div style="flex:1;min-width:0;">
+      <span style="font-size:12px;font-weight:700;color:${cp.color};">${label}</span>
+      <span style="font-size:12px;color:var(--t2);"> · ${advice}</span>
+    </div>
+  </div>`;
+}
+
+function renderCycleProfileCard(){
+  const el=document.getElementById('cycle-phase-card');
+  if(!el)return;
+  const cp=getMensCyclePhase();
+  if(!cp||cp.hormonal){el.innerHTML='';return;}
+  el.innerHTML=`<div style="font-size:12px;color:${cp.color};font-weight:700;margin-top:2px;">${cp.icon} ${cp.phase} — Jour ${cp.day}/${cp.dur}</div>`;
+}
+
+function renderBFCard(){
+  const el=document.getElementById('bf-result-card');if(!el)return;
+  const neck=numFR((document.getElementById('neck-inp')||{}).value)||S.neck||0;
+  const waist=numFR((document.getElementById('waist-inp')||{}).value)||S.waist||0;
+  const hip=numFR((document.getElementById('hip-inp')||{}).value)||S.hip||0;
+  const ht=numFR((document.getElementById('ht-inp')||{}).value)||S.height||0;
+  const bw=numFR((document.getElementById('bw-inp')||{}).value)||S.bw||0;
+  if(!ht||!neck||!waist){el.innerHTML='';return;}
+  let bf;
+  if(S.gender==='H'){
+    if(waist<=neck){el.innerHTML='';return;}
+    bf=495/(1.0324-0.19077*Math.log10(waist-neck)+0.15456*Math.log10(ht))-450;
+  }else{
+    if(!hip||waist+hip<=neck){el.innerHTML='';return;}
+    bf=495/(1.29579-0.35004*Math.log10(waist+hip-neck)+0.22100*Math.log10(ht))-450;
+  }
+  bf=Math.max(2,Math.round(bf*10)/10);
+  const cats=S.gender==='H'
+    ?[[6,'Essentiel','var(--purp)'],[14,'Athlète','var(--green)'],[18,'Fitness','var(--blue)'],[25,'Moyen','var(--orange)'],[99,'Élevé','var(--red)']]
+    :[[11,'Essentiel','var(--purp)'],[21,'Athlète','var(--green)'],[25,'Fitness','var(--blue)'],[32,'Moyen','var(--orange)'],[99,'Élevé','var(--red)']];
+  const cat=cats.find(c=>bf<c[0])||cats[cats.length-1];
+  const grasse=bw?Math.round(bw*bf/100):0;
+  const maigre=bw?Math.round(bw*(1-bf/100)):0;
+  el.innerHTML=`<div style="background:rgba(41,121,255,.08);border:1px solid rgba(41,121,255,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+    <div><div style="font-size:28px;font-weight:700;font-family:var(--font-cond);color:${cat[2]};">${bf}%</div>
+    <div style="font-size:13px;color:var(--t3);margin-top:1px;">Masse grasse (Marine US)</div></div>
+    <div style="text-align:right;"><span style="background:${cat[2]};color:#fff;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:800;">${cat[1]}</span>
+    ${bw?`<div style="font-size:13px;color:var(--t3);margin-top:6px;">${grasse} kg gras · ${maigre} kg maigre</div>`:''}
+    </div>
+  </div>`;
+}
+
+const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',recomp:'Perte de gras + muscle',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
+const GOAL_DESCS={
+  muscle:'Surplus de +350 kcal · Protéines 2.2 g/kg · Macros orientées hypertrophie avec charge glucidique.',
+  perte:'Déficit de −450 kcal · Protéines 2.5 g/kg (préservation musculaire) · Glucides réduits, satiété maximale.',
+  recomp:'Recomposition : léger déficit −250 kcal · Protéines très élevées 2.6 g/kg → perdre du gras tout en gardant/formant du muscle (éviter le « skinny fat »). Idéal muscles toniques.',
+  force:'Surplus léger +200 kcal · Protéines 2.0 g/kg · Énergie maximale.',
+  equilibre:'Maintenance calorique · Protéines 2.0 g/kg · Améliorer la composition corporelle sans prise/perte de masse.',
+  endurance:'Surplus modéré +100 kcal · Protéines 1.7 g/kg · Glucides élevés pour le glycogène musculaire.',
+};
+function setGoal(g){
+  // ⛔ Passe par le propriétaire unique (state.js) : c'est LUI qui journalise le changement
+  //    dans `S.goalLog`. Écrire `S.goal` ici laisserait Milo aveugle au changement (R2/R8).
+  _goalSet(g,'profil');persist();
+  ['muscle','perte','recomp','force','equilibre','endurance'].forEach(x=>{
+    const el=document.getElementById('g-'+x);if(el)el.classList.toggle('active',x===g);
+  });
+  const el=document.getElementById('goal-desc');
+  if(el)el.textContent=GOAL_DESCS[g]||'';
+  _renderGoal2();
+}
+// Priorité complémentaire (2e objectif, retour GPT — option A) : pilote SEULEMENT Milo + l'entraînement,
+// jamais la nutrition (qui ne suit qu'une seule direction calorique). On masque les objectifs incompatibles
+// avec le principal, et muscle+perte → on propose « recomposition » (mode dédié déjà existant).
+function _goal2Options(){
+  const p=S.goal||'muscle';
+  const excl={muscle:['muscle','perte'],perte:['perte','muscle'],recomp:['recomp','muscle','perte']};
+  const ex=excl[p]||[p];
+  return ['muscle','perte','recomp','force','equilibre','endurance'].filter(g=>ex.indexOf(g)<0);
+}
+function setGoal2(g){
+  S.goal2=(S.goal2===g?'':g);persist();_renderGoal2();
+}
+function _renderGoal2(){
+  const el=document.getElementById('goal2-section');if(!el)return;
+  const opts=_goal2Options();
+  if(S.goal2&&opts.indexOf(S.goal2)<0){S.goal2='';persist();} // devenu incompatible → on retire
+  const chips=opts.map(g=>'<button class="goal2-chip'+(S.goal2===g?' on':'')+'" onclick="setGoal2(\''+g+'\')">'+GOAL_LABELS[g]+'</button>').join('');
+  const nudge=(S.goal==='muscle'||S.goal==='perte')
+    ? '<div class="goal2-nudge" onclick="setGoal(\'recomp\')">Tu veux <b>perdre du gras ET prendre du muscle</b> ? → choisis l\'objectif principal « Perte de gras + muscle » (recomposition).</div>'
+    : '';
+  el.innerHTML='<div class="goal2-hdr">💡 Priorité complémentaire <span style="font-weight:400;color:var(--t3);">(optionnelle)</span></div>'
+    +'<div class="goal2-grid">'+chips+'</div>'
+    +'<div class="goal2-note">La nutrition (calories, macros, repas) suit <b>uniquement ton objectif principal</b>. La priorité complémentaire adapte les conseils de Milo et ton entraînement.</div>'
+    +nudge;
+}
+// Priorités musculaires (Phase 1, retour Michel/GPT — brique « vrai coach ») : jusqu'à 2 groupes
+// que l'utilisateur veut développer en priorité → injecté dans Milo (fréquence/volume/variantes/conseils).
+// L'objectif reste le pilote ; la nutrition n'est PAS touchée. Répond à « où je veux progresser ? ».
+const PRIORITY_MUSCLES=[['pec','Pectoraux'],['dos','Dos'],['epaules','Épaules'],['biceps','Biceps'],['triceps','Triceps'],['quads','Quadriceps'],['ischios','Ischios'],['fessiers','Fessiers'],['mollets','Mollets'],['abdos','Abdominaux']];
+const PRIORITY_MAX=2;
+function _priorityLbl(c){const e=PRIORITY_MUSCLES.find(x=>x[0]===c);return e?e[1]:c;}
+function togglePriority(c){
+  S.priorities=S.priorities||[];
+  const i=S.priorities.indexOf(c);
+  if(i>=0)S.priorities.splice(i,1);
+  else{ if(S.priorities.length>=PRIORITY_MAX){toast('2 muscles prioritaires maximum','info');return;} S.priorities.push(c); }
+  persist();_renderPriorities();
+}
+function _renderPriorities(){
+  const el=document.getElementById('priorities-section');if(!el)return;
+  S.priorities=S.priorities||[];
+  const chips=PRIORITY_MUSCLES.map(m=>{
+    const on=S.priorities.indexOf(m[0])>=0;
+    return '<button class="prio-chip'+(on?' on':'')+'" onclick="togglePriority(\''+m[0]+'\')">'+m[1]+'</button>';
+  }).join('');
+  const n=S.priorities.length;
+  el.innerHTML='<div class="goal2-hdr">💪 Muscles à développer en priorité <span style="font-weight:400;color:var(--t3);">(jusqu\'à 2, optionnel)</span></div>'
+    +'<div class="goal2-grid">'+chips+'</div>'
+    +'<div class="goal2-note">Milo augmentera la fréquence, le volume et les variantes sur '+(n?'ces muscles':'les muscles que tu choisis')+', en maintenant le reste. Ça n\'affecte pas ta nutrition — c\'est pour cibler <b>où tu veux progresser</b>.</div>';
+}
+// Discipline pratiquée — nourrit le Coach IA + l'analyse morpho + la nutrition
+const DISC_LABELS={muscu:'Musculation',bodybuilding:'Bodybuilding / Culturisme',powerbuilding:'Powerbuilding',powerlifting:'Force athlétique / Powerlifting',haltero:'Haltérophilie'};
+const DISC_DESCS={
+  muscu:'Entraînement général force + esthétique, polyvalent et santé.',
+  bodybuilding:'Priorité hypertrophie, symétrie et sèche — le coach cible tes points faibles et la contraction.',
+  powerbuilding:'Le meilleur des deux mondes : soulever lourd (force) ET construire du muscle (hypertrophie). Le coach équilibre gros mouvements et volume esthétique.',
+  powerlifting:'Force maximale sur squat, développé couché et soulevé de terre (1RM).',
+  haltero:'Arraché et épaulé-jeté : explosivité, mobilité et technique olympique.',
+};
+/* 🎚️ L'ÉCHELLE D'EFFORT — RIR ou RPE (28/08/2026, ft-v1046)
+   ⛔⛔ CE BOUTON NE CHANGE AUCUNE DONNÉE, ET C'EST TOUT LE SUJET. `set.rir` reste la mesure et
+   le seul propriétaire (R2) ; le RPE en est la traduction exacte (`RPE = 10 − RIR`). Basculer ne
+   convertit rien, n'efface rien, et l'historique se relit dans la nouvelle langue — c'est
+   justement ce qu'un 2ᵉ champ aurait rendu impossible.
+   ⛔ ET LE CHOIX EST DISCRET, c'est le critère de Michel : *« c'est des gens qui connaissent bien
+   qui connaissent le RPE »*. Personne n'est interrogé là-dessus à l'inscription ; qui ne connaît
+   pas garde le RIR sans rien faire. */
+const ECH_DESCS={
+  rir:'<b>RIR — répétitions en réserve.</b> Après une série, l\'app demande combien de répétitions tu aurais encore pu faire. <b>0 = échec.</b> C\'est l\'échelle par défaut, et la plus directe à répondre.',
+  rpe:'<b>RPE — effort perçu (échelle de 6 à 10).</b> <b>10 = échec</b>, 9 = il t\'en restait 1, 8 = il t\'en restait 2… C\'est la <b>même mesure que le RIR</b>, dite dans l\'autre sens : ton historique se relit tout seul, rien n\'est perdu. ⚠️ Sans demi-points (pas de 8,5) : l\'app ne les mesure pas, et les afficher serait une fausse précision.'
+};
+function setEchelleReserve(e){
+  S.echelleReserve=(e==='rpe')?'rpe':'rir';
+  persist();
+  ['rir','rpe'].forEach(x=>{ const el=document.getElementById('ech-'+x);
+    if(el)el.classList.toggle('active',x===S.echelleReserve); });
+  const d=document.getElementById('ech-desc');
+  if(d)d.innerHTML=ECH_DESCS[S.echelleReserve];
+  /* ⛔ LA SÉANCE EN COURS SUIT IMMÉDIATEMENT : sans ce rafraîchissement, la barre de repos et la
+     colonne « précédent » resteraient dans l'ancienne langue jusqu'au prochain rendu — c'est-à-dire
+     que le réglage aurait l'air de n'avoir rien fait. */
+  try{ if(typeof _renderRirRow==='function')_renderRirRow();
+       if(typeof renderExBlocks==='function'&&S.wkt)renderExBlocks(); }catch(_){}
+}
+
+function setDiscipline(d){
+  S.discipline=d;persist();
+  ['muscu','bodybuilding','powerbuilding','powerlifting','haltero'].forEach(x=>{
+    const el=document.getElementById('disc-'+x);if(el)el.classList.toggle('active',x===d);
+  });
+  /* 🎽 ON MONTRE LE CADRE, PAS SEULEMENT UNE PHRASE (16/08/2026, ft-v877).
+     Le choix de discipline n'affichait qu'une description d'ambiance (« priorité hypertrophie,
+     symétrie et sèche »). On ne pouvait donc pas savoir ce que ce bouton CHANGE — et Michel a
+     constaté qu'il ne changeait effectivement à peu près rien. Maintenant qu'un cadre chiffré
+     existe (`DISC_CADRE`), on l'affiche : c'est la même donnée que reçoit Milo, montrée à la
+     personne. Une seule source, deux lecteurs (R1/R2) — si le tableau évolue, l'écran suit.
+     ⚠️ ET ÇA REND LE CHOIX VÉRIFIABLE : on voit avant de choisir, et on peut contredire après.
+     C'est le comportement observable qu'une donnée doit produire (R3). */
+  const el=document.getElementById('disc-desc');
+  if(!el) return;
+  el.innerHTML=_cadreHtml(d);
+}
+/* ⭐ SORTI EN FONCTION (ft-v1026) — l'écran Séance montre désormais le MÊME cadre depuis le
+   « ⓘ » d'un type de séance. Deux mises en forme du même `DISC_CADRE` finiraient par se
+   contredire : une seule source, un seul rendu, deux lecteurs (R2).
+   ⚠️ La sortie est volontairement identique à ce qu'affichait le Profil depuis ft-v877 — on
+   déplace, on ne redessine pas : un changement d'apparence ici passerait pour un bug là-bas. */
+function _cadreHtml(d){
+  const c=(typeof DISC_CADRE!=='undefined')?DISC_CADRE[d]:null;
+  if(!c) return (typeof DISC_DESCS!=='undefined'&&DISC_DESCS[d])||'';
+  const li=(k,v)=>'<div style="margin-top:5px"><b style="color:var(--t2)">'+k+'</b> : '+v+'</div>';
+  return '<div>'+((typeof DISC_DESCS!=='undefined'&&DISC_DESCS[d])||'')+'</div>'
+    +'<div style="margin-top:9px;padding-top:8px;border-top:1px solid var(--bg4);font-size:13px">'
+    +'<div style="color:var(--t2);font-weight:600">Ce que Milo applique pour toi</div>'
+    +li('Répétitions',c.reps)+li('Charge',c.charge)+li('Repos',c.repos)+li('Le cœur',c.coeur)
+    +'<div style="margin-top:5px;color:var(--t3)"><b>⛔ Pas sa place ici</b> : '+c.evite+'</div>'
+    +'</div>';
+}
+// Niveau déclaré (évolue tout seul avec les séances — voir _checkLevelUp dans log.js)
+const LEVEL_LABELS={debutant:'Débutant',intermediaire:'Intermédiaire',confirme:'Confirmé'};
+const LEVEL_DESCS={
+  debutant:'Tu débutes en muscu — le Coach explique la technique et reste pédagogue. Tu passeras intermédiaire tout seul avec tes progrès.',
+  intermediaire:'Les bases sont acquises — le Coach devient plus technique et pousse ta progression.',
+  confirme:'Expérimenté — le Coach te parle d\'égal à égal, techniques avancées bienvenues.',
+};
+function setLevel(l){
+  S.level=l;S.levelAuto=false;persist();
+  _renderLevelSel();
+  toast('Niveau : '+(LEVEL_LABELS[l]||l),'success');
+}
+function _renderLevelSel(){
+  ['debutant','intermediaire','confirme'].forEach(x=>{
+    const el=document.getElementById('lvl-'+x);if(el)el.classList.toggle('active',x===S.level);
+  });
+  const d=document.getElementById('lvl-desc');
+  if(d)d.textContent=S.level?(LEVEL_DESCS[S.level]||''):'Choisis ton niveau — le Coach adaptera ses conseils, et il évoluera tout seul avec tes séances.';
+}
+// Ton de Milo (Coach IA) — change SA FAÇON DE PARLER, pas son caractère ni ses conseils.
+// Brique 0 du « Dossier Athlète ». '' = ton actuel (aucun changement pour l'existant).
+const COACH_TONE_LABELS={cool:'Cool',classique:'Classique',dynamique:'Dynamique',scientifique:'Scientifique'};
+const COACH_TONE_DESCS={
+  cool:'Décontracté et complice, comme un pote de salle. Simple et détendu.',
+  classique:'Équilibré : pro, clair et bienveillant.',
+  dynamique:'Énergique et motivant, qui te booste et te pousse à te dépasser.',
+  scientifique:'Précis et technique : explique le pourquoi (mécanismes, données) sans jargon inutile.',
+};
+const COACH_TONE_AUTO_DESC='Par défaut, Milo choisit tout seul le ton qui te correspond (et s\'ajuste au fil des échanges). Tu peux forcer un ton ci-dessous si tu préfères.';
+// '' ou 'auto' = Milo choisit ; sinon = ton imposé.
+function _isToneAuto(){return !S.coachTone||S.coachTone==='auto';}
+function setCoachTone(t){
+  if(t==='auto')S.coachTone='auto';
+  else S.coachTone=(S.coachTone===t)?'auto':t; // re-tap d'un ton imposé = retour auto
+  persist();
+  _renderCoachToneSel();
+  toast(_isToneAuto()?'Ton de Milo : automatique (Milo choisit)':('Ton de Milo : '+(COACH_TONE_LABELS[S.coachTone]||S.coachTone)),'success');
+}
+function _renderCoachToneSel(){
+  const auto=_isToneAuto();
+  const a=document.getElementById('tone-auto');if(a)a.classList.toggle('active',auto);
+  Object.keys(COACH_TONE_LABELS).forEach(x=>{
+    const el=document.getElementById('tone-'+x);if(el)el.classList.toggle('active',!auto&&x===S.coachTone);
+  });
+  const d=document.getElementById('tone-desc');
+  if(d)d.textContent=auto?COACH_TONE_AUTO_DESC:(COACH_TONE_DESCS[S.coachTone]||'');
+}
+
+// ── ADN sportif (Dossier Athlète, brique 4A) — portrait durable déclaré ──
+// « zones fragiles » a quitté l'ADN pour le Profil Santé (séparation ADN=identité de pratique / Santé=vigilance). 4 champs.
+const _ADN_FIELDS=['motivation','lifestyle','preferences','experience'];
+function _adnFilled(){return !!(S.adn&&_ADN_FIELDS.some(k=>(S.adn[k]||'').trim()));}
+function saveAdn(field,val){
+  if(_ADN_FIELDS.indexOf(field)<0)return;
+  S.adn=S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};
+  S.adn[field]=val;
+  persist();
+}
+function _renderAdnSection(){
+  const a=S.adn||{};
+  _ADN_FIELDS.forEach(f=>{
+    const el=document.getElementById('adn-'+f);
+    if(el&&el.value!==(a[f]||'')){el.value=a[f]||'';el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+  });
+  _renderExSwaps();
+}
+
+/* 🔁 CE QUE L'APP A RETENU DE MES CHANGEMENTS D'EXERCICE (ft-v888)
+   ⚠️ CETTE LISTE N'EST PAS UN CONFORT, C'EST LA CONTREPARTIE DE LA QUESTION. On ne pose une
+   question sur quelqu'un que si la réponse est ensuite VISIBLE et EFFAÇABLE par lui — sinon on
+   accumule un dossier qu'il ne peut ni relire ni corriger (Constitution P3, `PROFIL-VIVANT.md`).
+   ⚠️ Seules les raisons DURABLES s'affichent, exactement comme pour Milo : montrer « machine
+   prise le 12 » laisserait croire qu'une circonstance est devenue une règle (R2 — une source,
+   deux lecteurs, jamais deux définitions du durable). */
+const _EX_SWAP_LBL={gene:'tu le sens mal', long:'trop long'};
+function _renderExSwaps(){
+  const box=document.getElementById('ex-swaps-box'), list=document.getElementById('ex-swaps-list');
+  if(!box||!list) return;
+  const sw=S.exSwaps||{};
+  const keys=Object.keys(sw).filter(k=>sw[k]&&_EX_SWAP_LBL[sw[k].r]);
+  if(!keys.length){ box.style.display='none'; list.innerHTML=''; return; }
+  box.style.display='';
+  list.innerHTML=keys.map(k=>{
+    const v=sw[k], esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:10px;padding:9px 11px;">'
+      +'<div style="flex:1;min-width:0;font-size:13px;line-height:1.4;">'
+      +'<b>'+esc(k)+'</b><div style="color:var(--t3);font-size:11.5px;">'+_EX_SWAP_LBL[v.r]
+      +(v.to?' · tu lui préfères '+esc(v.to):'')+'</div></div>'
+      +'<button class="btn btn-bg2" style="padding:6px 11px;font-size:14px;" '
+      +'onclick="oublierExSwap('+_argAttr(k)+')" aria-label="Retirer">✕</button></div>';
+  }).join('');
+}
+function oublierExSwap(nom){
+  if(!S.exSwaps||!S.exSwaps[nom]) return;
+  delete S.exSwaps[nom];
+  persist(); _renderExSwaps();
+  if(typeof toast==='function') toast('Oublié — Milo pourra te le reproposer','info');
+}
+
+let _screenHistory=['home'];
+function openMenuDrawer(){
+  const _ob=document.getElementById('onboarding');
+  if(_ob&&window.getComputedStyle(_ob).display!=='none')return;
+  const _ip=document.getElementById('install-popup');
+  if(_ip&&!_ip.classList.contains('hidden'))return;
+  document.getElementById('menu-drawer').classList.add('open');
+  document.getElementById('menu-drawer-bd').classList.add('open');
+  document.getElementById('nb-setup').classList.add('active');
+  // Mettre à jour la carte profil dans le drawer
+  const _mn=document.getElementById('menu-name-lbl');
+  const _ms=document.getElementById('menu-profile-sub');
+  const _ma=document.getElementById('menu-avatar');
+  // (bannière premium retirée 31/07 → la ligne ⭐ Premium sous le profil se met à jour via _premiumInfoRender)
+  if(_mn)_mn.textContent=S.name||'Athlète';
+  if(_ma)_ma.textContent=(S.name||'A').charAt(0).toUpperCase();
+  if(_ms){
+    const GOAL_SHORT={muscle:'💪 Prise de muscle',perte:'🔥 Perte de poids',force:'🏋️ Force max',equilibre:'⚖️ Rééquilibrage',endurance:'🏃 Endurance'};
+    const parts=[];
+    if(S.goal)parts.push(GOAL_SHORT[S.goal]||'');
+    if(S.bw)parts.push(S.bw+' kg');
+    if(S.height)parts.push(S.height+' cm');
+    _ms.textContent=parts.length?parts.join(' · '):'Profil non configuré';
+  }
+  if(typeof _premiumInfoRender==='function')_premiumInfoRender();
+  // Points rouges « nouveauté » sur les lignes concernées (ex. carte Profil) → montre OÙ est le neuf
+  if(typeof _updateMenuDots==='function')_updateMenuDots();
+  // Ouvrir le Menu éteint le point rouge de l'ONGLET Menu (les points des lignes restent pour guider)
+  if(typeof _ackMenu==='function')_ackMenu();
+  // Version affichée = vrai build tournant (jamais périmé)
+  if(typeof _setAppVersionEls==='function')_setAppVersionEls();
+  /* ⤵️ Le pli d'« Apparence » est réappliqué À CHAQUE OUVERTURE (05/09/2026).
+     ⛔ Sans cette ligne le pli ne servirait à RIEN : le menu est du HTML statique, donc il
+     rouvrirait déplié à chaque fois — c'est-à-dire exactement le comportement qu'on vient de
+     retirer. *Un pli mémorisé mais jamais réappliqué est un pli qui n'existe pas.* */
+  if(typeof _appliquerPliApparence==='function')_appliquerPliApparence();
+}
+function closeMenuDrawer(){
+  document.getElementById('menu-drawer').classList.remove('open');
+  document.getElementById('menu-drawer-bd').classList.remove('open');
+  if(window._curScreen!=='setup')document.getElementById('nb-setup').classList.remove('active');
+}
+function toggleMenuDrawer(){
+  const d=document.getElementById('menu-drawer');
+  if(d.classList.contains('open'))closeMenuDrawer();
+  else openMenuDrawer();
+}
+function _resetMenuView(){}
+function openProfil(){
+  closeMenuDrawer();
+  closeDrawer();
+  closeDrawerContent();
+  // goScreen('setup') → _applyScreen marque les nouveautés de la carte Profil comme « vues »
+  goScreen('setup',null);
+  document.getElementById('s-setup')?.scrollTo(0,0);
+}
+function closeProfil(){ navBack(); }
+
+// ─── COMPLÉTION DU PROFIL (% rempli) ─────────────────────────
+// Plus le profil est rempli, plus Milo (Coach IA), la récup et les calories
+// sont précis. On calcule un % simple + la liste des champs manquants.
+function _profileCompletion(){
+  const items=[
+    ['name',        !!S.name,                       'ton nom'],
+    ['age',         (+S.age)>0,                      'âge'],
+    ['height',      (+S.height)>0,                   'taille'],
+    ['bw',          (+S.bw)>0,                       'poids'],
+    ['goal',        !!S.goal,                        'objectif'],
+    ['level',       !!S.level,                       'niveau'],
+    ['discipline',  !!S.discipline,                  'discipline'],
+    ['activityLevel',!!S.activityLevel,              'activité'],
+    ['bday',        !!S.bday,                        'date de naissance'],
+    ['targetWeight',(+S.targetWeight)>0,             'poids visé'],
+    ['neck',        (+S.neck)>0,                     'tour de cou'],
+    ['waist',       (+S.waist)>0,                    'tour de taille'],
+    ['morphotype',  !!S.morphotype,                  'morphotype'],
+    ['morpho',      !!S.morpho,                      'morphologie'],
+  ];
+  if(S.gender==='F') items.push(['hip',(+S.hip)>0,'tour de hanches']);
+  const total=items.length;
+  const done=items.filter(i=>i[1]).length;
+  const missing=items.filter(i=>!i[1]).map(i=>i[2]);
+  return {pct:Math.round(done/total*100),done,total,missing};
+}
+function _renderProfileCompletion(){
+  const el=document.getElementById('profil-completion');
+  if(!el)return;
+  const c=_profileCompletion();
+  el.style.display='block';
+  const col=c.pct>=80?'var(--green)':c.pct>=50?'var(--gold)':'var(--orange)';
+  let nudge;
+  if(c.pct>=100){
+    nudge='<b>Profil complet 💪</b> — Milo, ton coach IA, est au top et tout est ultra précis.';
+  }else{
+    const miss=c.missing.slice(0,4).join(', ')+(c.missing.length>4?'…':'');
+    nudge='<b>Prends le temps de bien le remplir 📋</b> — plus il est complet, plus <b>Milo te connaît</b> et plus ses conseils (et tes calculs) sont VRAIMENT faits pour toi.<br><span style="color:var(--t3);font-size:11.5px;">Encore à ajouter : '+miss+'</span>';
+  }
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">'
+     +'<span style="font-size:13px;font-weight:700;color:var(--t1);">Profil rempli</span>'
+     +'<span style="font-family:var(--font-cond);font-size:20px;font-weight:700;color:'+col+';">'+c.pct+'%</span>'
+    +'</div>'
+    +'<div style="height:8px;border-radius:6px;background:var(--bg3);overflow:hidden;margin-bottom:9px;">'
+     +'<div style="height:100%;width:'+c.pct+'%;background:'+col+';border-radius:6px;transition:width .5s;"></div>'
+    +'</div>'
+    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.5;">'+nudge+'</div>';
+}
+function renderSetup(){
+  // Update menu profile card
+  const _mn=document.getElementById('menu-name-lbl');
+  const _ms=document.getElementById('menu-profile-sub');
+  const _ma=document.getElementById('menu-avatar');
+  // (bannière premium retirée 31/07 → la ligne ⭐ Premium sous le profil se met à jour via _premiumInfoRender)
+  if(_mn)_mn.textContent=S.name||'Athlète';
+  if(_ma)_ma.textContent=(S.name||'A').charAt(0).toUpperCase();
+  if(_ms){
+    const GOAL_SHORT={muscle:'💪 Prise de muscle',perte:'🔥 Perte de poids',force:'🏋️ Force max',equilibre:'⚖️ Rééquilibrage',endurance:'🏃 Endurance'};
+    const parts=[];
+    if(S.goal)parts.push(GOAL_SHORT[S.goal]||'');
+    if(S.bw)parts.push(S.bw+' kg');
+    if(S.height)parts.push(S.height+' cm');
+    _ms.textContent=parts.length?parts.join(' · '):'Profil non configuré';
+  }
+  if(typeof _premiumInfoRender==='function')_premiumInfoRender();
+  _updateGenderRO(S.gender);
+  const ro=document.getElementById('gender-ro');
+  const ed=document.getElementById('gender-edit');
+  if(ro)ro.style.display=window._adminMode?'none':'flex';
+  if(ed)ed.style.display=window._adminMode?'flex':'none';
+  setGender(S.gender);
+  const nameEl=document.getElementById('name-inp');if(nameEl)nameEl.value=S.name||'';
+  const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
+  const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
+  /* ⚖️ LE CHAMP POIDS SAIT S'IL A ÉTÉ TOUCHÉ (24/09/2026). Il est prérempli : un « Enregistrer »
+     pour corriger sa TAILLE renvoyait donc le poids affiché, qui pouvait être périmé. Seule une
+     saisie réelle de la personne (`input`) en fait une pesée — voir `saveProfile`. */
+  const bwEl=document.getElementById('bw-inp');
+  if(bwEl){ bwEl.value=S.bw||''; bwEl.dataset.touche=''; bwEl.oninput=function(){this.dataset.touche='1';}; }
+  const actEl=document.getElementById('act-sel');if(actEl){actEl.value=(_activiteValide(S.activityLevel)!=null)?String(S.activityLevel):''; actEl.dataset.touche='';}   // B1 : rien de choisi → « À choisir », jamais « Modéré » d'office
+  /* D-021 : un 1,55 à confirmer le DIT sous le sélecteur — prérempli n'est pas choisi. */
+  {const h=document.getElementById('act-src-hint'); if(h){ const _e=(typeof etatActivite==='function')?etatActivite():''; h.style.display=_e==='a_confirmer'?'':'none'; }}
+  const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
+  const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
+  const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
+  const profilEmailLbl=document.getElementById('profil-email-lbl');
+  const profilSyncDot=document.getElementById('profil-sync-dot');
+  if(profilEmailLbl){
+    profilEmailLbl.textContent=S.email||'Non connecté';
+    if(profilSyncDot)profilSyncDot.style.background=S.email&&S.connected?'#34c759':S.email?'#ff9500':'var(--t3)';
+  }
+  setWorkType(S.workType);
+  setSmoker(S.smoker);
+  const csEl=document.getElementById('cycle-start-inp');if(csEl)csEl.value=S.mensCycleStart||'';
+  const cdEl=document.getElementById('cycle-dur-inp');if(cdEl)cdEl.value=S.mensCycleDur||28;
+  const contraEl=document.getElementById('contra-sel');if(contraEl)contraEl.value=S.contraception||'';
+  const _hormonal=['pill-combo','pill-prog','implant','iud-hormonal'].includes(S.contraception||'');
+  const _trackEl=document.getElementById('cycle-tracking-section');
+  if(_trackEl)_trackEl.style.display=_hormonal?'none':'';
+  const neckEl=document.getElementById('neck-inp');if(neckEl)neckEl.value=S.neck||'';
+  const waistEl=document.getElementById('waist-inp');if(waistEl)waistEl.value=S.waist||'';
+  const hipEl=document.getElementById('hip-inp');if(hipEl)hipEl.value=S.hip||'';
+  const bdayEl=document.getElementById('bday-inp');if(bdayEl)bdayEl.value=S.bday||'';
+  renderCycleProfileCard();
+  // Objectif « Perte de gras + muscle » (recomposition) réservé aux testeurs pour l'instant
+  const _gr=document.getElementById('g-recomp');
+  if(_gr)_gr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
+  setGoal(S.goal||'muscle');
+  _renderPriorities();
+  setDiscipline(S.discipline||'muscu');
+  if(typeof setEchelleReserve==='function')setEchelleReserve(S.echelleReserve||'rir');
+  _renderLevelSel();
+  _renderCoachToneSel();
+  _renderAdnSection();
+  renderBFCard();
+  _renderProfileCompletion();
+  try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
+  try{if(typeof _majBoutonProtect==='function')_majBoutonProtect();}catch(e){}
+  _renderMorphoSection();
+  _renderHealthSection();
+  _applyA11y();
+  _applyColorblind();
+  _applyLeftHand();
+  updSetup();
+  chainInputs(['name-inp','age-inp','ht-inp','bw-inp'],saveProfile);
+  const bfIds=S.gender==='F'?['neck-inp','waist-inp','hip-inp']:['neck-inp','waist-inp'];
+  chainInputs(bfIds,saveProfile);
+}
+function updSetup(){
+  const d=document.getElementById('setup-dot'),t=document.getElementById('setup-txt');if(!d)return;
+  if(S.connected){d.className='sdot g';t.textContent='Connecté — sync automatique active ✓';}
+  else{d.className='sdot';t.textContent='Non connecté — clique Tester la connexion';}
+}
+/* 🔌 CE BOUTON NE FAISAIT PLUS RIEN DU TOUT — trouvé le 01/09/2026 en APPUYANT sur les 166
+   boutons de l'app dans un navigateur, pas en relisant le code.
+   ⛔⛔ Il plantait à sa PREMIÈRE ligne : `getElementById('setup-dot').className = …` sur un
+   élément **qui n'existe plus dans le HTML**. `Cannot set properties of null` — la fonction
+   s'arrêtait là, donc **aucun test, aucun message, rien**. Pour la personne, le bouton est mort.
+   ⚠️ ET LA VOISINE, ELLE, ÉTAIT GARDÉE : `updSetup()` fait `if(!d)return;` deux lignes plus haut.
+   *Le même élément, deux lectures, une seule protégée* — c'est ce qui rend le défaut invisible :
+   l'app ne lève aucune erreur ailleurs, seul CE bouton casse.
+   ⛔ POURQUOI L'ÉLÉMENT A DISPARU (cherché avant de réparer, R30) : la pastille de statut a été
+   retirée du HTML — son CSS `.sdot` est resté, orphelin — et une carte **« Santé du système »**
+   fait ce test bien mieux depuis (elle appelle vraiment `?test=1`).
+   👉 On GARDE le bouton et on le rend fonctionnel : son vrai retour a toujours été le **toast**,
+   pas la pastille. Le supprimer serait une décision produit, pas un correctif (R29). */
+async function testConn(){
+  const _d=document.getElementById('setup-dot'); if(_d)_d.className='sdot a';
+  const _t=document.getElementById('setup-txt'); if(_t)_t.textContent='Test…';
+  toast('Test…','info');
+  try{
+    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
+    S.connected=true;persist();updSetup();updatePill();toast('Serveur joignable ✅','success');
+  }catch(e){S.connected=false;persist();updSetup();toast('Erreur de connexion : '+e.message,'error');}
+}
+function saveProfile(){
+  // ⚠️ Le prénom se saisissait UNIQUEMENT à l'inscription : une fois passé, il était
+  // invisible et impossible à corriger (bug signalé par Michel, ft-v652).
+  const nmEl=document.getElementById('name-inp');
+  if(nmEl){ const nm=nmEl.value.trim().slice(0,30);
+    if(nm!==S.name){ S.name=nm;
+      // le prénom s'affiche aussi en tête du menu : sans ça il restait « Athlète »
+      try{const mn=document.getElementById('menu-name-lbl');if(mn)mn.textContent=S.name||'Athlète';}catch(e){}
+    } }
+  const age=parseInt(document.getElementById('age-inp').value);
+  const ht=numFR(document.getElementById('ht-inp').value);
+  const bwEl=document.getElementById('bw-inp');
+  const bw=numFR(bwEl?bwEl.value:'');
+  const _bwTouche=!!(bwEl&&bwEl.dataset.touche==='1');
+  const actEl=document.getElementById('act-sel');
+  const restEl=document.getElementById('rest-sel');
+  /* B1 : « À choisir » ne s'enregistre pas. ⛔ D-021 : SEULEMENT si le sélecteur a été TOUCHÉ — prérempli
+     avec un ancien 1,55, « Enregistrer » pour corriger son poids aurait transformé l'ambiguïté en choix
+     (exactement le piège du champ poids prérempli, F011). */
+  const act=(actEl&&actEl.dataset.touche==='1')?_activiteValide(actEl.value):null;
+  const rest=restEl?parseInt(restEl.value):S.defRest;
+  if(age){if(_ageValide(age))S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
+  if(ht){if(_tailleValide(ht))S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
+  /* ⚖️ LE POIDS DU PROFIL EST UNE PESÉE, PAR LA MÊME RÈGLE ET LE MÊME PROPRIÉTAIRE (24/09/2026).
+     ⛔⛔ MESURÉ : cette ligne écrivait `S.bw` et RIEN d'autre — Nutrition et Milo calculaient sur
+     84 kg pendant que l'Accueil et la courbe affichaient 86 (F011). Et elle avait SA règle :
+     `>20 && <300` refusait 20 et 300 kg, que la pesée du jour, l'édition et le bilan acceptent, et
+     son message annonçait « 20–299 » — une plage que personne d'autre n'appliquait (F005).
+     👉 Même règle (`_poidsValide`, dont la raison est écrite), même propriétaire que la carte
+     « Pesée du jour » : c'est ce que ft-v1136 a fait pour les mensurations de ce même formulaire.
+     ⛔ Et SEULEMENT si le champ a été touché : prérempli, il pouvait porter un poids périmé, et
+     « Enregistrer » pour une taille le remettait en place. Touché avec la MÊME valeur, c'est une
+     nouvelle mesure — on l'enregistre (Michel : même valeur ≠ rien à enregistrer). */
+  if(_bwTouche&&bw){
+    if(!_poidsValide(bw)){toast('Poids invalide (20–300 kg)','error');return;}
+    if(typeof _enregistrerPesee==='function')_enregistrerPesee(bw);else S.bw=bw;   // repli : rien de tapé ne se perd (règle d'or #3)
+    bwEl.dataset.touche='';
+  }
+  if(act!=null){ choisirActivite(act); actEl.dataset.touche=''; }   // D-021 : valeur ET provenance, un seul écrivain
+  // (poids de la barre : propriétaire unique = setBarWeight(), dans le calculateur de plaques)
+  if(rest) S.defRest=rest;
+  const csEl=document.getElementById('cycle-start-inp');
+  const cdEl=document.getElementById('cycle-dur-inp');
+  const contraEl2=document.getElementById('contra-sel');
+  if(csEl&&csEl.value)S.mensCycleStart=csEl.value;
+  if(cdEl&&cdEl.value){const d=parseInt(cdEl.value);if(d>=18&&d<=45)S.mensCycleDur=d;}
+  if(contraEl2)S.contraception=contraEl2.value||'';
+  /* ═══ 📏 LES MENSURATIONS DU PROFIL PASSENT PAR LE MÊME PROPRIÉTAIRE (ft-v1136) ═══════════
+     Michel, après la livraison du ratio poids ↔ centimètres : *« la mesure qu'il y a sur mon
+     appli là, du tour de cou et taille, elle est datée ou pas ? »*.
+     ⛔⛔ MESURÉ : NON, PAS TOUJOURS — et c'était la famille des DEUX PORTES, la 3ᵉ fois de la
+     semaine (le superset de Milo en ft-v1130, l'IMC de l'import en ft-v1129). L'écran Progrès
+     (carte « Masse grasse ») passe par `_mensEnregistrerSaisie` → `mensAjouter`, qui **DATE**
+     la valeur dans `S.mensLog`. Ce formulaire-ci écrivait `S.neck`/`S.waist`/`S.hip` **et rien
+     d'autre**. 👉 ***La même mesure comptait ou ne comptait pas pour la courbe selon l'écran
+     par lequel elle entrait.***
+     ⛔ ET LES BORNES AVAIENT DÉJÀ DIVERGÉ : ce formulaire refusait un cou > 60 cm quand
+     `MENS_DEFS` va jusqu'à 80. *Deux jeux de règles pour la même grandeur* (**R2**) — un seul
+     propriétaire désormais, et c'est `MENS_DEFS` qui dit ce qui est impossible.
+
+     ⛔⛔ ON NE DATE QUE CE QUI A CHANGÉ, ET C'EST LE CŒUR DU CORRECTIF (R29).
+     Ces champs sont **pré-remplis** avec la valeur connue (`renderProfile`, plus haut). Écrire
+     dans le journal à chaque « Enregistrer » stamperait *« cou mesuré aujourd'hui »* alors que
+     la personne vient seulement de corriger son poids — ***on fabriquerait une mesure qu'elle
+     n'a pas prise***, et c'est exactement ce que le journal existe pour éviter.
+     ⚠️ Le prix assumé : se remesurer et retrouver **exactement** la même valeur ne pose pas de
+     date ici. *Rater une confirmation coûte moins cher qu'inventer une mesure.*
+     ⭐ La carte « Masse grasse » de Progrès, elle, garde son comportement : y appuyer sur ✓ EST
+     l'acte de déclarer ses mensurations. Les deux portes écrivent au même endroit ; seul le
+     DÉCLENCHEUR diffère, parce que les deux gestes ne veulent pas dire la même chose. */
+  const neckEl=document.getElementById('neck-inp');
+  const waistEl=document.getElementById('waist-inp');
+  const hipEl=document.getElementById('hip-inp');
+  const _mensProfil=[[neckEl,'cou','neck',20,60],[waistEl,'taille','waist',40,200],
+                     [hipEl,'hanches','hip',40,200]];
+  _mensProfil.forEach(function(m){
+    const el=m[0]; if(!el||!el.value) return;      // ⚠️ vide ≠ effacer
+    const v=numFR(el.value); if(!isFinite(v)) return;
+    const avant=+S[m[2]]||0;
+    if(Math.abs(v-avant)<0.05) return;             // inchangé → rien à dater
+    /* ⭐ `mensAjouter` valide, déduplique par jour ET repose `S.neck`/`S.waist`/`S.hip` :
+       un seul appel fait les deux, il n'y a pas d'écriture à recopier ici. */
+    if(typeof mensAjouter==='function' && mensAjouter(m[1],v,'profil')) return;
+    /* ⛔ REPLI — RÈGLE D'OR #3 : si le journal est indisponible (ordre de chargement) ou refuse
+       la valeur, ce que la personne a tapé ne se perd pas pour autant. Bornes d'origine. */
+    if(v>m[3]&&v<m[4]) S[m[2]]=v;
+  });
+  persist();renderHome();renderNutrition();
+  renderCycleProfileCard();renderBFCard();_renderProfileCompletion();
+  if(typeof toast==='function')toast('Profil enregistré ✅','success');
+  const saveBtn=document.querySelector('[onclick="saveProfile()"]');
+  if(saveBtn){const _orig=saveBtn.innerHTML;saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML=_orig;saveBtn.disabled=false;},2000);}
+  _cloudSync();
+}
+
+function _applyRestoreData(raw){
+  // Extrait les sous-objets selon le format reçu
+  let d, prs, sessions, weightLog, sleepLog, dayStateLog;
+  try{
+    if(raw&&typeof raw.profile==='object'){
+      d=raw.profile||{};
+      prs=raw.prs||{};
+      sessions=raw.sessions||[];
+      weightLog=raw.weightLog||[];
+      sleepLog=raw.sleepLog||[];
+      dayStateLog=raw.dayStateLog||[];
+    }else{
+      d=raw||{};
+      prs=d.prs||{};
+      sessions=d.sessions||[];
+      weightLog=d.weightLog||[];
+      sleepLog=d.sleepLog||[];
+      dayStateLog=d.dayStateLog||[];
+    }
+  }catch(e){console.error('[FT restore] parse structure',e);d={};prs={};sessions=[];weightLog=[];sleepLog=[];dayStateLog=[];}
+
+  const hasProfile=d.name||d.bw||d.age||d.gender||d.goal;
+  if(!hasProfile)throw new Error('Aucun profil trouvé sur le serveur pour cet email.');
+
+  // Profil de base — chaque champ isolé pour qu'une erreur n'en bloque pas d'autres
+  try{if(d.name)S.name=d.name;}catch(e){console.warn('[FT restore] name',e);}
+  /* ⛔⛔ LE POIDS AUSSI, ET IL ÉTAIT LE SEUL À PASSER (F003, mesuré le 24/09/2026) : −10, 500,
+     3000, `1e4` et `Infinity` entraient dans le poids courant — l'âge et la taille, deux lignes plus
+     bas, étaient déjà bornés. Et `parseFloat("85,9")` rendait **85** : la virgule tronquait en
+     silence. `numFR` lit la virgule ; `_poidsValide` écarte l'impossible, qui n'écrase rien. */
+  try{const _b=numFR(d.bw); if(_poidsValide(_b))S.bw=_b;}catch(e){console.warn('[FT restore] bw',e);}
+  /* ⛔ MÊMES BORNES QUE LA SAISIE MANUELLE (R2/R8, §35) : une valeur hors limites est
+     ÉCARTÉE, elle n'écrase pas ce qu'on a déjà — un âge absurde rendait le TDEE négatif. */
+  try{const _a=parseInt(d.age); if(_ageValide(_a))S.age=_a;}catch(e){console.warn('[FT restore] age',e);}
+  try{const _h=parseFloat(d.height); if(_tailleValide(_h))S.height=_h;}catch(e){console.warn('[FT restore] height',e);}
+  // NOTE : _obGender/_obGoal sont des vars onboarding (app.js) — on n'y touche pas depuis setup.js
+  // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
+  /* ⚧ ON NORMALISE À L'ENTRÉE, ON NE RATTRAPE PAS PARTOUT (R33, 01/09/2026)
+     Cette ligne écrivait `S.gender = d.gender` **tel quel**. Un fichier de sauvegarde qui porte
+     « Homme », « M » ou « male » posait donc une valeur que l'app ne sait pas lire — et mesuré,
+     les deux règles se contredisaient alors : BMR de **femme** (1524) + plancher d'**homme**
+     (1500) sur le même profil. *Le format d'une source ne devient jamais le format interne.*
+     ⛔ ET ON N'INVENTE RIEN (R29) : une valeur qu'on ne reconnaît pas ne remplace pas celle qui
+     est déjà là — on préfère garder l'ancienne que poser un fait faux sur la personne. */
+  try{
+    const _g=String(d.gender==null?'':d.gender).trim().toLowerCase();
+    const _map={h:'H',homme:'H',m:'H',male:'H',man:'H',masculin:'H',
+                f:'F',femme:'F',female:'F',woman:'F',feminin:'F','féminin':'F'};
+    if(_map[_g]) S.gender=_map[_g];
+    else if(_g) console.warn('[FT restore] sexe non reconnu, valeur conservée :',d.gender);
+  }catch(e){console.warn('[FT restore] gender',e);}
+  /* ⛔ RESTAURER N'EST PAS CHANGER (ft-v1010) : on écrit `S.goal` DIRECTEMENT ici, exprès —
+     passer par `_goalSet` fabriquerait un faux changement daté du jour de la restauration.
+     ⭐ Et l'HISTORIQUE se restaure avec, sinon une restauration effacerait l'histoire en
+     silence : on ne garde le journal sauvegardé que s'il est au moins aussi riche que celui
+     du téléphone — même règle prudente que `weightLog` juste en dessous. */
+  try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
+  /* 🎯 ft-v1092 — `d` vaut `raw.profile`, or le serveur renvoie `goalLog` à la RACINE de la
+     réponse. On lisait donc toujours `undefined` → `[]` → l'histoire de l'objectif était
+     perdue à chaque restauration, malgré ft-v1010. Ses voisins (`raw.cycle`, `raw.programmes`,
+     `raw.exSwaps`, quelques lignes plus bas) avaient déjà la bonne forme : la jumelle était
+     à portée de regard (R8). ⛔ `d.goalLog` reste en repli — une sauvegarde restaurée depuis un
+     FICHIER arrive à plat, et la retirer casserait ce chemin-là. */
+  try{const gl=(raw&&Array.isArray(raw.goalLog)&&raw.goalLog.length?raw.goalLog:(d.goalLog||[]));if(Array.isArray(gl)&&gl.length>=(S.goalLog||[]).length)S.goalLog=gl;}catch(e){console.warn('[FT restore] goalLog',e);}
+  /* ☁️☁️ ft-v1140 — LES MENSURATIONS ET LES SÉANCES MANQUÉES REVIENNENT DU CLOUD.
+     ⭐⭐ ET ELLES SE FUSIONNENT, ELLES NE SE REMPLACENT PAS — c'est la seule décision de
+     conception de ce correctif, et elle n'est pas cosmétique. Le patron du voisin (`goalLog`,
+     juste au-dessus) est *« je remplace si le serveur en a AU MOINS AUTANT »*. Appliqué ici,
+     un téléphone qui porte **3 mesures que le serveur ne connaît pas** contre **4 côté
+     serveur** les perdrait toutes les trois — sans un mot. 👉 ***Une fusion ne peut rien
+     perdre*** : elle ajoute ce qu'elle ne connaissait pas, et en cas d'égalité la mémoire
+     locale gagne.
+     ⭐ `_fusionListe` existe déjà dans `state.js` pour le multi-onglet, avec **exactement la
+     même signature** pour `mensLog` (`jour|zone`) — on ne réécrit pas une deuxième union
+     (R13/R2). ⛔ Repli sur une simple reprise si la fonction n'est pas chargée : *une
+     restauration ne doit jamais échouer parce qu'un utilitaire manque.*
+     ⚠️ `raw` d'abord, `d` en repli : la réponse du serveur met ces listes à la RACINE, un
+     fichier de sauvegarde restauré à la main les met à plat — le défaut exact de `goalLog`
+     en ft-v1092 (R8). */
+  try{
+    const _fus=(nom,cle)=>{
+      const srv=(raw&&Array.isArray(raw[nom])&&raw[nom].length)?raw[nom]:(Array.isArray(d[nom])?d[nom]:null);
+      if(!srv||!srv.length) return;                     // rien à ajouter : on ne touche à rien
+      const local=Array.isArray(S[nom])?S[nom]:[];
+      S[nom]=(typeof _fusionListe==='function')?_fusionListe(local,srv,cle)
+                                               :(srv.length>=local.length?srv:local);
+    };
+    _fus('mensLog',   e=>String(e&&e.d||'')+'|'+String(e&&e.k||''));
+    _fus('missedLog', e=>String(e&&e.date||'')+'|'+String(e&&e.label||''));
+    /* 📊 ft-v1141 — LE BANC SE FUSIONNE AUSSI, pour la même raison que les mensurations :
+       une passe lancée sur ce téléphone et pas encore envoyée ne doit pas être effacée par
+       le serveur. La signature est l'HORODATAGE : deux passes le même jour sont distinctes.
+       ⛔ Puis on retrie par date et on recoupe à 12 — une fusion peut désordonner et
+       dépasser le plafond, et l'écran lit la liste dans l'ordre. */
+    _fus('evalPasses', e=>String(e&&e.ts||e&&e.d||''));
+    if(Array.isArray(S.evalPasses)){
+      S.evalPasses.sort((a,b)=>(+a.ts||0)-(+b.ts||0));
+      if(S.evalPasses.length>12) S.evalPasses=S.evalPasses.slice(-12);
+    }
+    /* ⛔ `evalHist` est un OBJET, pas une liste : `_fusionListe` ne s'applique pas. On
+       fusionne par clé, et pour un scénario connu des deux côtés on garde la série la
+       PLUS LONGUE — c'est celle qui porte le plus de passes, donc la plus informative.
+       *Remplacer en bloc perdrait les scénarios que seul le téléphone connaît.* */
+    try{
+      const hs=(raw&&raw.evalHist)||d.evalHist;
+      if(hs&&typeof hs==='object'){
+        S.evalHist=S.evalHist||{};
+        Object.keys(hs).forEach(id=>{
+          const srv=Array.isArray(hs[id])?hs[id]:[], loc=Array.isArray(S.evalHist[id])?S.evalHist[id]:[];
+          if(srv.length>loc.length) S.evalHist[id]=srv;
+        });
+        try{ localStorage.setItem('ft4_evalHist',JSON.stringify(S.evalHist)); }catch(e){}
+      }
+    }catch(e){console.warn('[FT restore] evalHist',e);}
+    /* ⛔ La fusion peut désordonner : `mensLog` DOIT rester trié du plus récent au plus
+       ancien — `mensDerniere()` prend simplement le premier élément, et un tri perdu lui
+       ferait rendre une vieille valeur SANS que rien ne plante. */
+    if(Array.isArray(S.mensLog)) S.mensLog.sort((a,b)=>String(b&&b.d||'').localeCompare(String(a&&a.d||'')));
+  }catch(e){console.warn('[FT restore] mensLog/missedLog',e);}
+  try{if(d.goal2!==undefined)S.goal2=d.goal2;}catch(e){console.warn('[FT restore] goal2',e);}
+  try{if(Array.isArray(d.priorities))S.priorities=d.priorities;}catch(e){console.warn('[FT restore] priorities',e);}
+  try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
+  try{if(d.coachTone!==undefined)S.coachTone=d.coachTone;}catch(e){console.warn('[FT restore] coachTone',e);}
+  try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length||(d.registre.sessionLog||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
+  try{if(d.adn&&typeof d.adn==='object'){S.adn=S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};['motivation','lifestyle','preferences','experience'].forEach(k=>{if(d.adn[k]&&!(S.adn[k]||'').trim())S.adn[k]=d.adn[k];});}}catch(e){console.warn('[FT restore] adn',e);}
+  try{if(d.level)S.level=d.level;}catch(e){}
+  /* ⛔ B2 (24/09/2026) : mesuré, `-1` donnait un TDEE de −1 749 kcal et `99` de 173 151. La valeur du
+     cloud passe par la règle de l'écran (les 5 niveaux) ; hors de ça, on garde ce qu'on a. */
+  try{if(d.activityLevel!=null&&d.activityLevel!==''){const _act=_activiteValide(d.activityLevel); if(_act!=null){
+    /* ⛔ D-021 : LA PROVENANCE NE SURVIT JAMAIS À SA VALEUR (leçon de coachMemoryMeta, ft-v1227).
+       Valeur CHANGÉE → la provenance vient du cloud ou n'existe pas ; valeur IDENTIQUE → on garde la
+       provenance locale, et un 'choisi' du cloud la complète. Un ancien 1,55 sans provenance ne
+       devient donc jamais « confirmé » par une restauration. */
+    const _srcCloud=(d.activitySrc==='choisi')?'choisi':null;
+    if(_act!==S.activityLevel){ S.activityLevel=_act; S.activitySrc=_srcCloud; }
+    else if(_srcCloud) S.activitySrc='choisi';
+  } else console.warn('[FT restore] activityLevel refusé',d.activityLevel);}}catch(e){console.warn('[FT restore] activityLevel',e);}
+  try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
+  try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
+  try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
+  try{if(d.targetWeight)S.targetWeight=parseFloat(d.targetWeight)||0;}catch(e){}
+  try{if(d.strengthGoals&&typeof d.strengthGoals==='object')S.strengthGoals=d.strengthGoals;}catch(e){}
+  /* ⛔ B2 : `Infinity` ou `1e9` donnaient des glucides infinis. Hors 800-6000 → refusé, on garde l'état local. */
+  try{if(d.manualKcal){const _k=_kcalManuelleValide(d.manualKcal); if(_k!=null)S.manualKcal=_k;}}catch(e){}
+  try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
+  try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
+  try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}
+  try{if(d.barW)S.barW=parseFloat(d.barW)||20;}catch(e){}
+  try{if(d.foodMode!==undefined){S.foodMode=d.foodMode||'';S.keto=(S.foodMode==='keto');}}catch(e){}
+  try{if(d.fasting!==undefined)S.fasting=d.fasting||'';}catch(e){}
+  try{const _r=parseInt(d.defRest); if(_reposValide(_r))S.defRest=_r;}catch(e){}
+  try{if(d.mensCycleStart)S.mensCycleStart=d.mensCycleStart;}catch(e){}
+  try{if(d.mensCycleDur)S.mensCycleDur=parseInt(d.mensCycleDur)||28;}catch(e){}
+  try{if(d.contraception!==undefined)S.contraception=d.contraception||'';}catch(e){}
+  try{if(d.morpho)S.morpho=d.morpho;}catch(e){}
+  try{if(d.morphotype)S.morphotype=d.morphotype;}catch(e){}
+  try{if(d.bday)S.bday=d.bday;}catch(e){}
+  try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
+  // « zones fragiles » a quitté l'ADN pour la Santé : si le cloud renvoie un vieil ADN avec `fragile`, on le bascule dans les notes Santé APRÈS avoir restauré la Santé (ne rien perdre, ne pas être écrasé).
+  try{const cf=((d.adn&&d.adn.fragile)||'').trim();if(cf){S.healthProfile=S.healthProfile||{conditions:[],injuries:[],notes:''};const n=(S.healthProfile.notes||'').trim();if(n.indexOf(cf)<0)S.healthProfile.notes=(n?n+'\n':'')+'Zones fragiles : '+cf;if(S.adn)S.adn.fragile='';}}catch(e){console.warn('[FT restore] fragile→health',e);}
+  try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
+  try{if(Array.isArray(d.bodyStudies)&&d.bodyStudies.length)S.bodyStudies=d.bodyStudies;}catch(e){console.warn('[FT restore] bodyStudies',e);}
+  try{if(Array.isArray(d.bodyScans)&&d.bodyScans.length>=(S.bodyScans||[]).length)S.bodyScans=d.bodyScans;}catch(e){console.warn('[FT restore] bodyScans',e);}
+  try{if(Array.isArray(d.bloodTests)&&d.bloodTests.length>=(S.bloodTests||[]).length)S.bloodTests=d.bloodTests;}catch(e){console.warn('[FT restore] bloodTests',e);}
+  try{if(d.coachQuiz&&d.coachQuiz.answers&&!(S.coachQuiz&&S.coachQuiz.done))S.coachQuiz=d.coachQuiz;}catch(e){console.warn('[FT restore] coachQuiz',e);}
+  try{if(d.coachQuizPro&&d.coachQuizPro.answers&&!(S.coachQuizPro&&S.coachQuizPro.done))S.coachQuizPro=d.coachQuizPro;}catch(e){console.warn('[FT restore] coachQuizPro',e);}
+  try{if(d.scaleType&&!S.scaleType)S.scaleType=d.scaleType;}catch(e){console.warn('[FT restore] scaleType',e);}
+  try{if(d.diet&&!S.diet)S.diet=d.diet;}catch(e){}
+  try{if(Array.isArray(d.dietRestrictions)&&d.dietRestrictions.length&&!(S.dietRestrictions||[]).length)S.dietRestrictions=d.dietRestrictions;}catch(e){}
+  try{if(d.dietNotes&&!(S.dietNotes||'').trim())S.dietNotes=d.dietNotes;}catch(e){}
+  /* 🍽️ NUT-FOODLOG-RESTORE-01 (01/10/2026) — UNION par identifiant, plus de « la liste la plus longue
+     gagne » : celle-ci effaçait une ligne locale jamais synchronisée dès que le cloud avait autant de
+     lignes (`_fusionnerFoodLogRestauration`, state.js). Puis l'identité canonique (`_foodLogIdentifier`). */
+  try{if(Array.isArray(d.foodLog)){S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);}}catch(e){console.warn('[FT restore] foodLog',e);}
+  try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
+  try{if(typeof d.foodAiUses==='number')S.foodAiUses=Math.max(S.foodAiUses||0,d.foodAiUses);}catch(e){}
+  /* 🫙 LES TROIS POTS SÉPARÉS (19/09/2026) — même geste que la ligne au-dessus : un MAXIMUM,
+     jamais un remplacement, pour qu'une restauration ne puisse pas RENDRE des essais déjà
+     consommés sur cet appareil.
+     ⭐⭐ ET LE REPLI EST LE CŒUR DU SUJET : quand le profil du cloud vient d'une version
+     d'AVANT, il ne porte QUE l'ancien pot commun — on dérive alors chaque pot de lui.
+     Sans ce repli, le cas réel « téléphone neuf + sauvegarde ancienne » donnerait 25 essais
+     neufs sur chaque capacité, c'est-à-dire exactement ce que la migration doit empêcher.
+     ⛔ Idempotent : `Math.max` appliqué deux fois rend la même chose. */
+  try{
+    const _anc=(typeof d.foodAiUses==='number')?Math.max(0,d.foodAiUses|0):null;
+    [['foodLabelAiUses','foodLabelAiUses'],
+     ['foodMealEstimateAiUses','foodMealEstimateAiUses'],
+     ['foodBarcodeAiUses','foodBarcodeAiUses']].forEach(function(p){
+      const recu=(typeof d[p[1]]==='number')?Math.max(0,d[p[1]]|0):_anc;
+      if(recu===null||recu===undefined)return;       // le cloud ne sait rien → on ne touche pas
+      S[p[0]]=Math.max(parseInt(S[p[0]],10)||0, recu);
+    });
+  }catch(e){console.warn('[FT restore] pots IA nutrition',e);}
+  /* ⛔ Rejouée APRÈS la fusion : si le profil restauré n'apportait aucun des quatre champs,
+     les pots peuvent être absents — la règle les redérive plutôt que de les laisser `null`
+     (un `null` deviendrait 0 au premier `persist`, donc 25 essais neufs en silence). */
+  try{if(typeof _foodAiMigrer==='function')_foodAiMigrer();}catch(e){}
+  try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
+  try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
+  try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}
+
+  // Données d'entraînement — LOCAL-FIRST : n'écrase le local QUE si local est vide
+  // (règle absolue : une purge cloud ou une restauration ne doit jamais effacer du local non-vide)
+  // badges + customExercises — local-first si non vide
+  try{const cb=d.badges&&Object.keys(d.badges).length;const lb=S.badges&&Object.keys(S.badges).length;if(cb&&(!lb||cb>lb))S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
+  // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
+  try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
+  try{if(d.bodyScanImports!==undefined)S.bodyScanImports=Math.max(S.bodyScanImports||0,parseInt(d.bodyScanImports)||0);}catch(e){}
+  try{if(d.progImports!==undefined)S.progImports=Math.max(S.progImports||0,parseInt(d.progImports)||0);}catch(e){}
+  // customExercises restauré depuis le cloud SANS photo (local-only) → on réinjecte la photo locale
+  // si on l'a encore (même exo par nom) pour ne perdre aucune photo sur le même appareil.
+  try{if(d.customExercises&&d.customExercises.length){
+    const _li={}; (S.customExercises||[]).forEach(function(e){if(e&&e.img)_li[e.n]=e.img;});
+    S.customExercises=d.customExercises.map(function(e){var c={};for(var k in e){c[k]=e[k];} if(!c.img&&_li[c.n])c.img=_li[c.n]; return c;});
+  }}catch(e){console.warn('[FT restore] customEx',e);}
+  // exPhotos = local-only : on garde ce qui est sur le téléphone (le cloud n'en a plus). Fusion si vieux cloud en a encore.
+  try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(d.exPhotos),...(S.exPhotos||{})};}catch(e){console.warn('[FT restore] exPhotos',e);}
+  // PRs — prend le plus complet
+  try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
+  /* ☁️ Sessions — LOT 3 / CL (28/09/2026) : UNION, plus « la liste la plus longue gagne ».
+     Mesuré par l'écran « Restaurer » : un cloud plus long remplaçait le téléphone (une séance
+     jamais synchronisée disparaissait, une note ou un superset corrigés sur place étaient écrasés),
+     un cloud plus court n'apportait rien. La règle d'union a un seul propriétaire :
+     `_fusionnerSeancesRestauration` (state.js) — identité forte `id`, aucune signature approximative.
+     ⛔ Une même séance (même `id`) en deux versions : celle du TÉLÉPHONE reste active, celle du
+     cloud est GARDÉE à part dans `ft4_sessions_conflits` (rien ne dit laquelle est la plus
+     récente) — et on le dit. */
+  try{
+    const _r=_fusionnerSeancesRestauration(S.sessions, sessions);
+    S.sessions=_r.liste;
+    if(_r.conflits.length){
+      let _anc=[]; try{ _anc=JSON.parse(localStorage.getItem('ft4_sessions_conflits')||'[]'); }catch(e){ _anc=[]; }
+      if(!Array.isArray(_anc)) _anc=[];
+      const _vus=new Set(_anc.map(_empreinteSeance));
+      _r.conflits.forEach(c=>{ const e=_empreinteSeance(c); if(!_vus.has(e)){ _vus.add(e); _anc.push(c); } });
+      try{ localStorage.setItem('ft4_sessions_conflits',JSON.stringify(_anc)); }catch(e){ console.warn('[FT restore] conflits non enregistrés',e); }
+      const _n=_r.conflits.length;
+      setTimeout(()=>{ try{ toast(_n+' séance'+(_n>1?'s existent':' existe')+' en deux versions : celle du téléphone est gardée, celle du cloud est mise de côté.','info'); }catch(e){} },3000);
+    }
+    console.log('[FT restore] sessions : '+S.sessions.length+' ('+_r.ajoutees+' ajoutée(s) depuis le cloud, '+_r.conflits.length+' en deux versions)');
+  }catch(e){console.warn('[FT restore] sessions',e);}
+  // ⚠️ Le drapeau « historique tronqué » se LÈVE dès qu'une restauration a rendu l'historique
+  // complet : sans ça, l'app cesserait pour toujours d'envoyer ses séances au cloud (02/08).
+  try{ if(S.histTronque && (S.sessions||[]).length > 50){
+    S.histTronque=false; localStorage.removeItem('ft4_hist_tronque');
+    console.log('[FT restore] historique complet retrouvé — la sauvegarde cloud reprend');
+  } }catch(e){}
+  // Poids / sommeil — prend le plus complet (un cloud plus petit ne doit JAMAIS écraser un local plus fourni)
+  try{if(weightLog&&weightLog.length>=(S.weightLog||[]).length)S.weightLog=weightLog;}catch(e){}
+  try{if(sleepLog&&sleepLog.length>=(S.sleepLog||[]).length)S.sleepLog=sleepLog;}catch(e){}
+  try{if(dayStateLog&&dayStateLog.length>=(S.dayStateLog||[]).length)S.dayStateLog=dayStateLog;}catch(e){}
+  try{if(raw&&raw.cycle)S.cycle=raw.cycle;}catch(e){}
+  // Programmes — local-first
+  try{if(raw&&raw.programmes&&raw.programmes.length&&(!S.programmes||!S.programmes.length)){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
+  try{if(raw&&raw.exRestPref&&Object.keys(raw.exRestPref).length&&(!S.exRestPref||!Object.keys(S.exRestPref).length))S.exRestPref=raw.exRestPref;}catch(e){}
+  try{if(raw&&raw.exSwaps&&Object.keys(raw.exSwaps).length&&(!S.exSwaps||!Object.keys(S.exSwaps).length))S.exSwaps=raw.exSwaps;}catch(e){}
+
+  // Premium
+  try{if(raw&&raw.premium!==undefined)S.premium=(raw.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());}catch(e){}
+  try{if(raw&&raw.premiumExpiry!==undefined)S.premiumExpiry=raw.premiumExpiry||'';}catch(e){}
+  /* 🧾 coachMemory ET SA PROVENANCE — top-level dans la réponse ET dans profile.
+     ⛔⛔ LA PROVENANCE SUIT LE TEXTE, ELLE NE LUI SURVIT JAMAIS. Si la restauration
+     remplace le texte et que le nuage n'apporte PAS de provenance (profil sauvegardé
+     avant le 20/09), l'ancienne provenance locale décrirait un texte qui n'existe plus :
+     elle deviendrait une **fausse provenance**, c'est-à-dire exactement ce que ce champ
+     existe pour empêcher. On la jette d'abord ; la règle la reclassera en `legacy`.
+     ⚠️ ET L'ORDRE EST DÉLIBÉRÉ : texte → provenance du nuage → règle. Poser la règle
+     avant de lire le nuage écraserait une provenance parfaitement connue. */
+  try{
+    const cm=raw.coachMemory||d.coachMemory||'';
+    if(cm && cm!==S.coachMemory){ S.coachMemory=cm; S.coachMemoryMeta=null; }
+    const mm=raw.coachMemoryMeta||d.coachMemoryMeta||null;
+    if(mm&&typeof mm==='object'&&mm.statut) S.coachMemoryMeta=mm;
+  }catch(e){}
+  /* ⛔ Rejouée systématiquement, jamais derrière un drapeau « déjà migré » : une
+     restauration remplace l'état APRÈS le chargement et peut ramener un profil d'avant
+     des mois plus tard (leçon `ft4_stmig1`, ft-v1213, et des pots de ft-v1225). */
+  try{if(typeof _coachMemProvenance==='function')_coachMemProvenance();}catch(e){}
+
+  // Sauvegarde locale + application des préférences UI
+  try{persist();}catch(e){console.error('[FT restore] persist échoué !',e);}
+  try{_applyA11y();}catch(e){}
+  try{_applyColorblind();}catch(e){}
+  try{_applyLeftHand();}catch(e){}
+  try{updateCoachHeader();}catch(e){}
+}
+
+async function _fetchRestoreRaw(email, delaiMs){
+  /* ONBOARDING-QUICK-01 : `delaiMs` (facultatif) borne l'attente — sans lui, un réseau qui pend laissait l'inscription
+     sur « Vérification… » indéfiniment. Même mécanisme que _silentCloudRestore (AbortController). */
+  const ctrl=(delaiMs&&typeof AbortController!=='undefined')?new AbortController():null;
+  const tId=ctrl?setTimeout(()=>ctrl.abort(),delaiMs):null;
+  try{
+  const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl?ctrl.signal:undefined,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
+  const txt=await resp.text();
+  let data;
+  try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON : '+txt.substring(0,120));}
+  return data;
+  }finally{ if(tId)clearTimeout(tId); }
+}
+
+// Restauration : l'utilisateur saisit son code perso → on le mémorise localement et on relance.
+function _restoreSubmitCode(){
+  const c=document.getElementById('restore-code-inp');
+  const code=(c?c.value:'').trim();
+  if(!code){toast('Entre ton code','error');return;}
+  _setAuthCode(code);            // mémorisé sur l'appareil ; sera envoyé par _fetchRestoreRaw
+  doRestoreAccount();            // relance → si le code est bon, la restauration s'applique
+}
+
+// AUTH-NEW-DEVICE-01 : compte sans code → le parcours EXISTANT « Protéger mon compte » ; la restauration suit d'elle-même
+function _restaurerProtegerCompte(){
+  try{document.getElementById('ov-restore-account').classList.remove('open');}catch(e){}
+  if(typeof openProtect==='function')openProtect();
+}
+function openRestoreAccount(){
+  const ov=document.getElementById('ov-restore-account');
+  if(!ov)return;
+  const inp=document.getElementById('restore-email-inp');
+  if(inp)inp.value=S.email||'';
+  const st=document.getElementById('restore-status');if(st)st.style.display='none';
+  const btn=document.getElementById('restore-account-btn');
+  if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+  ov.classList.add('open');
+  setTimeout(()=>{if(inp){inp.focus();try{inp.select();}catch(e){}}},250);
+}
+
+async function doRestoreAccount(){
+  const inp=document.getElementById('restore-email-inp');
+  const email=(inp?inp.value:'').trim().toLowerCase();
+  if(!email){toast('Entre ton adresse email','error');return;}
+  if(!S.url){toast('URL Apps Script manquante','error');return;}
+  const btn=document.getElementById('restore-account-btn');
+  const st=document.getElementById('restore-status');
+  if(btn){btn.disabled=true;btn.textContent='Restauration en cours…';}
+  if(st){st.style.display='block';st.style.color='var(--t2)';st.textContent='⏳ Lecture du cloud…';}
+  try{
+    // PULL-ONLY : on lit, on ne pousse rien avant
+    const data=await _fetchRestoreRaw(email);
+    console.log('[FT restore] raw server response',JSON.stringify(data).substring(0,500));
+
+    // Compte protégé par un code perso → demander le code (et réessayer)
+    if(data&&data.error==='auth'){
+      const hadCode=!!_authCode();
+      if(hadCode)_setAuthCode('');           // le code tenté était faux → on l'enlève
+      /* 🔐 AUTH-NEW-DEVICE-01 — on bascule sur un compte EXISTANT pas encore récupéré : si c'est un autre email que celui
+         de l'appareil, ou que l'appareil n'a rien, ses instantanés locaux ne doivent pas partir vers ce compte. */
+      const _prevEmail=String(S.email||'').trim().toLowerCase();
+      if(_prevEmail!==email||!(S.sessions&&S.sessions.length))_restauPoser();
+      S.email=email;
+      if(data.needsCode&&st){
+        st.style.display='block';st.style.color='var(--orange)';
+        /* AUTH-SIGNUP-STRICT-01 : en lecture stricte, l'app ne peut pas savoir si ce compte existe — elle ne l'affirme plus. */
+        st.innerHTML='🔒 Confirme cet e-mail pour continuer : aucun code perso n\'y est posé, il n\'y a donc aucun code à saisir. '
+          +'Un code arrive par email, tu choisis ton code perso, puis la restauration se fait toute seule s\'il existe un profil.'
+          +'<button onclick="_restaurerProtegerCompte()" style="margin-top:8px;width:100%;padding:11px;border:none;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;">🔒 Protéger et récupérer mon compte</button>';
+        if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+        return;
+      }
+      if(st){
+        st.style.display='block';st.style.color='var(--orange)';
+        st.innerHTML=(hadCode?'❌ Code incorrect. ':'🔒 Ce compte est protégé. ')+'Entre ton code perso&nbsp;:'
+          +'<input type="password" inputmode="numeric" id="restore-code-inp" placeholder="Ton code" autocomplete="off" '
+          +'style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--orange);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:16px;">'
+          +'<button onclick="_restoreSubmitCode()" style="margin-top:8px;width:100%;padding:11px;border:none;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;">Valider le code</button>';
+        setTimeout(()=>{const c=document.getElementById('restore-code-inp');if(c){c.focus();c.addEventListener('keydown',e=>{if(e.key==='Enter')_restoreSubmitCode();});}},120);
+      }
+      if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+      return;
+    }
+
+    if(!data||data.status==='not_found'||data.error){
+      const msg=data&&data.error?data.error:'Aucun profil trouvé pour cet email.';
+      if(st){st.textContent='❌ '+msg;st.style.color='var(--red)';}
+      toast(msg,'error');
+      if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+      return;
+    }
+
+    // Afficher ce qu'on a reçu du serveur (diagnostic avant écriture)
+    const srvSess=(data.sessions||[]).length;
+    const srvPrs=Object.keys(data.prs||{}).length;
+    const srvName=(data.profile&&data.profile.name)||'';
+    if(st){st.textContent='☁️ Cloud : '+(srvName||'?')+' · '+srvSess+' séances · '+srvPrs+' PRs — Application…';}
+    console.log('[FT restore] server data',{sessions:srvSess,prs:srvPrs,name:srvName});
+
+    // Écrire l'email dans S AVANT _applyRestoreData pour que persist() l'inclue
+    S.email=email;
+    _applyRestoreData(data); // remplit S + persist() → localStorage uniquement, sync cloud désactivé
+    if(typeof _restauResolue==='function')_restauResolue();   // AUTH-NEW-DEVICE-01 : compte récupéré, l'attente tombe
+
+    const nbSess=S.sessions&&S.sessions.length||0;
+    const nbPrs=S.prs&&Object.keys(S.prs).length||0;
+    console.log('[FT restore] après apply',{sessions:nbSess,prs:nbPrs,name:S.name});
+
+    // Si le prénom n'est pas dans le cloud (effacé par ancien bug), montrer un champ de saisie
+    const noName=!S.name;
+    if(noName&&st){
+      st.style.display='block';
+      st.style.color='var(--orange)';
+      st.innerHTML='⚠️ Prénom non trouvé dans le cloud. Saisis-le&nbsp;:'
+        +'<input type="text" id="restore-name-inp2" placeholder="Ton prénom" autocomplete="given-name" '
+        +'style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--red);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:15px;">';
+      const ni=document.getElementById('restore-name-inp2');
+      if(ni){
+        setTimeout(()=>ni.focus(),100);
+        ni.addEventListener('input',function(){
+          S.name=this.value.trim();
+          if(S.name){try{persist();}catch(e){}}
+          try{const mn=document.getElementById('menu-name-lbl');if(mn)mn.textContent=S.name||'Athlète';}catch(e){}
+        });
+        ni.addEventListener('blur',function(){
+          if(S.name){try{_cloudSync();}catch(e){}};
+        });
+      }
+    }
+
+    // Fermer l'overlay uniquement si le prénom est connu
+    if(!noName){
+      try{document.getElementById('ov-restore-account').classList.remove('open');}catch(e){}
+    }
+    // Rafraîchir l'UI — erreur de rendu non bloquante
+    try{if(typeof renderSetup==='function')renderSetup();}catch(e){console.warn('[FT restore] renderSetup err',e);}
+    try{if(typeof renderHome==='function')renderHome();}catch(e){console.warn('[FT restore] renderHome err',e);}
+    try{if(typeof renderNutrition==='function')renderNutrition();}catch(e){console.warn('[FT restore] renderNutrition err',e);}
+
+    if(!noName){
+      toast('✅ Restauré — '+nbSess+' séance'+(nbSess>1?'s':'')+' · '+nbPrs+' PRs','success');
+    }else{
+      toast('✅ '+nbSess+' séance'+(nbSess>1?'s':'')+' · '+nbPrs+' PRs restaurés. Entre ton prénom.','info');
+    }
+  }catch(e){
+    const msg=e.message||'Erreur réseau';
+    console.error('[FT restore] ERREUR',e);
+    if(st){st.textContent='❌ '+msg;st.style.color='var(--red)';}
+    toast(msg,'error');
+    if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+  }
+}
+
+async function restoreFromEmail(){
+  if(!S.email){toast('Entre ton email dans le champ Email Admin','error');return;}
+  if(!S.url){toast('URL Apps Script manquante','error');return;}
+  toast('Restauration en cours…','info');
+  try{
+    const data=await _fetchRestoreRaw(S.email);
+    if(!data||data.error||data.status==='not_found'){toast(data&&data.error?data.error:'Aucun profil trouvé pour cet email.','error');return;}
+    _applyRestoreData(data);
+    renderSetup();renderHome();renderNutrition();
+    toast('Profil restauré ✅','success');
+  }catch(e){toast(e.message,'error');}
+}
+
+async function debugRestore(){
+  if(!S.email){toast('Pas d\'email configuré','error');return;}
+  toast('Test API en cours…','info');
+  try{
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
+    const txt=await resp.text();
+    console.log('[FT debug restore]',txt);
+    toast('Réponse API : '+txt.substring(0,80),'info');
+  }catch(e){toast('Erreur réseau : '+e.message,'error');}
+}
+
+function _showAdminPremiumStatic(){
+  const el=document.getElementById('admin-premium-info');
+  if(!el)return;
+  const urlEnd=(S.url||'').slice(-28);
+  el.innerHTML=
+    `Email&nbsp;app : <b>${S.email||'<span style="color:var(--red)">(vide — premium impossible)</span>'}</b><br>`+
+    `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
+    `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
+    `<span style="color:var(--t3);">← Tap "Vérifier" pour check serveur</span>`;
+  if(typeof _updateAdminSyncInfo==='function')_updateAdminSyncInfo();
+}
+
+async function debugPremiumCheck(){
+  const el=document.getElementById('admin-premium-info');
+  if(!el)return;
+  const urlEnd=(S.url||'').slice(-28);
+  const emailDisp=S.email||'<span style="color:var(--red)">(vide)</span>';
+  el.innerHTML=
+    `Email&nbsp;app : <b>${emailDisp}</b><br>`+
+    `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
+    `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
+    `<i style="color:var(--t3);">Vérification serveur…</i>`;
+  if(!S.email){
+    el.innerHTML+=`<br><b style="color:var(--red)">Email vide — impossible de vérifier.</b>`;
+    return;
+  }
+  try{
+    // 1. check loadProfile (POST) — résultat premium
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
+    const txt=await r.text();
+    let d=null;try{d=JSON.parse(txt);}catch(_){}
+    const srvPrem=d&&d.premium===true;
+    const srvStatus=d&&d.status||'?';
+
+    // 2. diagnostic GET — 🔒 SEC-ADMIN-01 (09/10/2026) : la route exige le JETON ADMIN, et c'est le SERVEUR qui
+    //    décide. Elle était publique et rendait la liste de TOUS les comptes premium à qui l'appelait. Sans jeton
+    //    (ou jeton refusé, alors oublié pour être redemandé), la carte n'affiche que ce qui concerne cet appareil.
+    let dbg=null, refuse=false;
+    const tok=_adminTok();
+    if(!tok) refuse=true;
+    else try{
+      const r2=await fetch(S.url+'?debugPremium=1&email='+encodeURIComponent(S.email)+'&token='+encodeURIComponent(tok),{redirect:'follow'});
+      const txt2=await r2.text();
+      try{dbg=JSON.parse(txt2);}catch(_){}
+      if(_adminTokRefuse(dbg)){ refuse=true; dbg=null; }
+    }catch(_){}
+
+    const fullList=dbg&&dbg.fullPremiumList||[];
+    const fullCount=dbg&&dbg.fullPremiumCount!=null?dbg.fullPremiumCount:'?';
+    const rawEmails=dbg&&dbg.rawPremiumEmails!=null?dbg.rawPremiumEmails:'(erreur GET)';
+    const matchHard=dbg&&dbg.matchHardcoded;
+    const matchProp=dbg&&dbg.matchProperty;
+
+    el.innerHTML=
+      `Email&nbsp;app : <b>${S.email}</b><br>`+
+      `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
+      `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
+      `Premium serveur : <b style="color:${srvPrem?'var(--green)':'var(--red)'}">${srvPrem?'OUI ✅':'NON ❌'}</b> (${srvStatus})<br>`+
+      `Source match : <b>${matchHard?'hardcodé':''}${matchHard&&matchProp?' + ':''}${matchProp?'PREMIUM_EMAILS':''||'—'}</b><br>`+
+      (refuse
+        ? `──── Liste premium : jeton admin absent ou refusé — relance, il te sera redemandé ────`
+        : `──── Tous les comptes premium (${fullCount}) ────<br>`+
+          fullList.map(e=>`<span style="display:block;font-size:11px;padding:1px 0;">✅ ${e}</span>`).join('')+
+          `──── PREMIUM_EMAILS (Script Property) ────<br>`+
+          `<span style="font-size:10px;color:var(--t3);word-break:break-all;">"${rawEmails}"</span>`);
+
+    if(d&&(d.status==='ok'||d.status==='not_found')){
+      const was=S.premium;
+      S.premium=(d.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());
+      S.premiumExpiry=d.premiumExpiry||'';
+      persist();
+      updateCoachHeader();
+      toast(S.premium?'✅ Premium activé !':'Non-premium confirmé','info');
+    }
+  }catch(e){
+    el.innerHTML+=`<br><b style="color:var(--red)">Erreur réseau : ${e.message}</b>`;
+  }
+}
+
+/* 🔤 LES DEUX BOUTONS DE FUSION DOIVENT ÊTRE DISTINGUABLES — ft-v1149 (06/09/2026).
+   ⛔⛔ Le défaut, mesuré sur la capture de Michel le jour même de ft-v1148 : les étiquettes
+   étaient coupées aux **18 PREMIERS** caractères, donc sur ses 4 doublons réels **2 paires
+   affichaient DEUX FOIS LE MÊME BOUTON** — « Garder "Développé Épaules …" » à gauche comme à
+   droite — et les 2 autres ne différaient que par un « … » ou une parenthèse ouvrante.
+   ⭐⭐ Et ce n'est pas un hasard de longueur : la famille « suffixe » ouverte la veille est
+   **par définition** celle où les deux noms partagent leur DÉBUT. *Le correctif d'hier a rendu
+   fréquent le cas que cette coupe ne savait pas afficher.*
+   ⛔ Ce que ça coûte : `mergeExercises` est **IRRÉVERSIBLE**. Deux boutons indiscernables sur
+   une fusion définitive sont pires que pas de bouton du tout — on ne renonce pas, on tape au
+   hasard une chance sur deux (**R29** : le coût de l'erreur décide de la méthode).
+   👉 **La règle** : on coupe là où c'est INFORMATIF. Si les deux têtes se ressemblent, on garde
+   la **FIN** — c'est-à-dire exactement ce qui les sépare. Et en dernier recours on ne coupe
+   plus du tout : un bouton long est laid, un bouton ambigu est dangereux.
+   ⚠️ La comparaison ignore le « … » et la ponctuation de fin : « Hip Thrust Barre » contre
+   « Hip Thrust Barre ( » sont deux chaînes différentes pour le code et **le même mot** pour
+   l'œil — *la seule égalité qui compte ici est celle que la personne LIT.* */
+function _libellesDoublon(a,b){
+  const A=String(a==null?'':a), B=String(b==null?'':b);
+  const _nu=s=>s.replace(/[\s…(«"'\-]+$/,'').replace(/^…/,'');
+  const _tete=n=> n.length>18 ? n.slice(0,18)+'…' : n;
+  const _queue=n=> n.length>22 ? '…'+n.slice(-22) : n;
+  let la=_tete(A), lb=_tete(B);
+  if(_nu(la)===_nu(lb)){ la=_queue(A); lb=_queue(B); }
+  if(_nu(la)===_nu(lb)){ la=A; lb=B; }
+  /* ⛔ Dernier recours, et il est nécessaire : deux noms qui ne diffèrent que par une ESPACE de
+     fin s'affichent pareil **même sans aucune coupe** (« Squat » et « Squat »), et c'est un vrai
+     cas — la famille « même nom normalisé » existe dans ce détecteur depuis toujours. On rend
+     alors la différence LISIBLE au lieu de laisser deux boutons jumeaux sur une action définitive. */
+  /* ⚠️ On compare ici ce que l'ŒIL voit, pas ce que la chaîne CONTIENT : « Squat » et
+     « Squat » diffèrent d'une espace pour le code et de RIEN pour la personne. Comparer les
+     chaînes brutes rendrait ce garde-fou vert sans qu'il protège quoi que ce soit. */
+  const _vu=s=>s.replace(/\s+/g,' ').trim();
+  if(_vu(la)===_vu(lb)){ la=A+' ('+A.length+' car.)'; lb=B+' ('+B.length+' car.)'; }
+  if(_vu(la)===_vu(lb)){ la=A+' « 1 »'; lb=B+' « 2 »'; }
+  return [la,lb];
+}
+
+function detectDuplicates(){
+  const seen=new Map();
+  (S.sessions||[]).forEach(s=>(s.exs||[]).forEach(ex=>{if(ex.name)seen.set(ex.name,ex.name);}));
+  Object.keys(S.prs||{}).forEach(n=>seen.set(n,n));
+  (S.customExercises||[]).forEach(e=>seen.set(e.n,e.n));
+  EXLIB.forEach(e=>seen.set(e.n,e.n));
+  const arr=[...seen.values()];
+  const pairs=[];
+  for(let i=0;i<arr.length;i++){
+    const na=_normEx(arr[i]);
+    for(let j=i+1;j<arr.length;j++){
+      const nb=_normEx(arr[j]);
+      if(na===nb){pairs.push([arr[i],arr[j],0]);continue;}
+      /* 🔗 LA FAMILLE « SUFFIXE » — invisible pour ce détecteur jusqu'au 06/09/2026 (ft-v1147).
+         ⛔⛔ MESURÉ SUR L'HISTORIQUE DE MICHEL : il portait **4 doublons de cette famille**
+         (`Développé Épaules Assis Machine` contre `… (Shoulder Press)`, et 3 autres) — et le
+         détecteur n'en voyait **aucun**. La raison est structurelle, pas un réglage : il
+         rapproche sur l'égalité normalisée ou une **distance de Levenshtein ≤ 1**, or
+         ` (Shoulder Press)` fait **15 caractères d'écart**. 👉 ***Il est fait pour les fautes
+         de frappe, pas pour les suffixes*** — deux familles différentes, un seul critère.
+         ⭐ R13 : `exNomCatalogue` sait déjà rapprocher un nom de base de son nom complet
+         (`_EX_BASE2NOM`, ft-v996) et refuse d'elle-même les bases ambiguës. On la BRANCHE,
+         on n'écrit pas un second rapprochement qui divergerait (R2).
+         ⛔ Ce n'est PAS un assouplissement du seuil : la distance reste ≤ 1 pour tout le
+         reste. On ajoute une famille nommée, on n'élargit pas l'à-peu-près — sinon
+         `Développé Épaules Machine` et `Développé Épaules Assis Machine`, deux machines
+         RÉELLEMENT différentes, finiraient par être proposées à la fusion. */
+      try{
+        if(typeof exNomCatalogue==='function'){
+          const ca=exNomCatalogue(arr[i]), cb=exNomCatalogue(arr[j]);
+          if(ca && cb && _normEx(ca)===_normEx(cb)){ pairs.push([arr[i],arr[j],'suffixe']); continue; }
+        }
+      }catch(e){ /* jamais bloquant : au pire on retombe sur le critère d'avant */ }
+      const minL=Math.min(na.length,nb.length);
+      if(minL<5)continue;
+      const d=_lev(na,nb);
+      if(d<=1)pairs.push([arr[i],arr[j],d]);
+    }
+  }
+  const el=document.getElementById('admin-dupes');
+  el.style.display='flex';
+  if(!pairs.length){el.innerHTML='<div style="color:var(--t3);padding:8px 0;">Aucun doublon détecté ✅</div>';return;}
+  el.innerHTML=pairs.map(([a,b,d])=>{
+    const [la,lb]=_libellesDoublon(a,b);
+    /* 🔗 ft-v1147 — on DIT de quelle famille vient le rapprochement, et laquelle est au
+       catalogue. ⛔ On ne tranche pas à sa place (R29) : les deux boutons restent, on
+       montre juste ce qu'il faut pour décider en une seconde. Un « dist.suffixe » brut
+       n'aurait rien voulu dire — et « dist.0 » ne disait déjà pas grand-chose. */
+    const _auCat=n=>{ try{ return EXLIB.some(e=>e&&e.n===n); }catch(e){ return false; } };
+    const _etiq = (d==='suffixe')
+      ? '↔ même exercice, un nom est raccourci' + (_auCat(a)?' — « '+a+' » est celui du catalogue'
+                                                 :(_auCat(b)?' — « '+b+' » est celui du catalogue':''))
+      : (d===0 ? '↔ même nom (accents ou ponctuation)' : '↔ '+d+' lettre d\'écart');
+    return '<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">'
+      +'<div style="color:var(--t3);font-size:11px;">'+_etiq+'</div>'
+      +'<div style="color:var(--t1);font-weight:600;font-size:13px;">'+a+' <span style="color:var(--t3);font-weight:400;">≈</span> '+b+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(a)+','+_argAttr(b)+')" style="padding:7px 10px;font-size:12px;flex:1;min-width:0;overflow-wrap:anywhere;">Garder "'+la+'"</button>'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+_argAttr(b)+','+_argAttr(a)+')" style="padding:7px 10px;font-size:12px;flex:1;min-width:0;overflow-wrap:anywhere;">Garder "'+lb+'"</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function mergeExercises(keep,remove){
+  const sessCount=(S.sessions||[]).reduce((n,s)=>n+(s.exs||[]).filter(e=>e.name===remove).length,0);
+  const hasPr=!!(S.prs||{})[remove];
+  const details=[];
+  if(sessCount)details.push(sessCount+' séance'+(sessCount>1?'s':''));
+  if(hasPr)details.push('1 PR');
+  const desc=details.length?' ('+details.join(', ')+')':'';
+  showConfirm(
+    'Fusionner les exercices',
+    'Renommer "'+remove+'"'+desc+' en "'+keep+'" ? Cette action est irréversible.',
+    ()=>{
+      (S.sessions||[]).forEach(s=>(s.exs||[]).forEach(ex=>{if(ex.name===remove)ex.name=keep;}));
+      if((S.prs||{})[remove]){
+        const pr=S.prs[remove];
+        if(!S.prs[keep]||pr.rm1>(S.prs[keep].rm1||0))S.prs[keep]=pr;
+        delete S.prs[remove];
+      }
+      S.customExercises=(S.customExercises||[]).filter(e=>e.n!==remove);
+      persist();
+      toast('"'+remove+'" fusionné dans "'+keep+'" ✅','success');
+      detectDuplicates();
+    }
+  ,'Fusionner');
+}
+
+/* ⏱️ RECALER LES CALORIES DES ANCIENNES SÉANCES — UN BOUTON, AUCUN FICHIER
+   (15/08/2026 — Michel : « ça ne me plaît pas de mettre le csv de garmin », « je veux un truc
+   simple et efficace comme une mise à jour »)
+
+   ⭐ POURQUOI ELLES SONT BASSES, ET CE N'EST PAS L'INTENSITÉ. Mesuré sur ses 31 séances : le MET
+   que produit le modèle par exercice a une médiane de 3,11, contre 3,5 publié au Compendium et
+   3,49 mesuré à sa montre sur 42 séances. L'intensité est à ~12 %. Le vrai trou est la **DURÉE** :
+   avant les horodatages (ft-v835/852), elle était DÉDUITE du nombre de séries — le 03/08, 28 min
+   comptées pour une séance d'1 h 51.
+
+   ⭐⭐ POURQUOI UN SIMPLE FACTEUR, ET PAS UNE FORMULE PLUS FINE. Quatre approches ont été mesurées
+   contre ses 27 séances relevées à la montre. La plus SIMPLE gagne, et largement :
+     · aujourd'hui .................................. médiane −35 %,  6/27 à moins de 20 %
+     · chrono stocké × MET 3,5 ...................... médiane +29 %, une séance à +217 %
+     · MET par exercice × durée réelle .............. médiane +16 %
+     · durée = 3 min × nb de séries ................. médiane  −3 %, 14/27
+     · **valeur actuelle × 1,55** ................... médiane  −2,7 %, **18/27**
+   *Le chiffre actuel encode déjà le mélange d'exercices et le volume ; il n'est que mal mis à
+   l'échelle.* Une formule plus savante rajoutait du bruit sans rien gagner (R19).
+
+   ⚠️ LE FACTEUR EST UNE CALIBRATION PERSONNELLE, et il faut le dire : 1,55 est la médiane des
+   27 séances de Michel relevées à sa montre (juin 1,54 · juillet 1,36 · août 1,69). Ce n'est PAS
+   une constante physiologique — d'où le verrou admin. Il ne partira pour tout le monde que le jour
+   où on aura des mesures d'autres personnes.
+
+   ⚠️⚠️ ET ON NE TOUCHE PAS AUX SÉANCES QUI PORTENT L'HEURE DE CHAQUE SÉRIE : leur durée est déjà
+   RÉELLE. Mesuré : le 15/08 ne demande qu'un × 1,13, contre × 1,54 en médiane pour les autres —
+   le recaler l'éloignerait de la vérité au lieu de l'en rapprocher.
+   ⚠️ Le CARDIO n'est pas recalé non plus : ses minutes sont saisies, donc déjà justes.
+
+   🛟 RIEN N'EST PERDU : la valeur d'origine part dans `caloriesAvant`, écrite UNE SEULE FOIS (un
+   2ᵉ passage ne l'écrase pas), et `_annulerRecalageCalories()` remet tout en place. */
+const _RECALAGE_ANCIEN = 1.55;
+
+// La séance porte-t-elle l'heure de ses séries ? (→ sa durée est réelle, on n'y touche pas)
+function _seanceHorodatee(s){
+  return (s.exs||[]).some(e=>(e.sets||[]).some(x=>x&&x.at!==undefined&&x.at!==null));
+}
+
+/* 🏅 RECALCULER LES RECORDS DEPUIS L'HISTORIQUE (01/09/2026) — demandé par Michel, et né
+   d'un faux record MESURÉ dans ses données : `Rowing Hammer Strength` portait **66 kg × 8 →
+   81,9 kg**, c'est-à-dire **exactement les chiffres de son Tirage Poulie Haute**, même date.
+   Le sélecteur avait renommé son exercice (ft-v1073) ; il a réparé la séance, le bon record
+   du Tirage est revenu — **mais le fantôme est resté**. Sa vraie perf ce jour-là : 60 kg × 8,
+   soit ~74,5. Record surévalué de **7,4 kg**.
+   ⚠️ CE N'EST PAS COSMÉTIQUE : ce maximum sert de référence aux charges que Milo propose, à la
+   montée en charge que l'app ajoute, et au % du max dans le calcul des calories. Et comme il
+   est faux VERS LE HAUT, il ne sera jamais battu — il resterait pour toujours.
+
+   ⛔⛔ TROIS RÈGLES, ET LA TROISIÈME EST LA PLUS IMPORTANTE :
+   ① La règle d'éligibilité n'est PAS réécrite : `_serieFaitFoiPourPR` est le propriétaire
+      unique, partagé avec la fin de séance (R2). Un recalcul qui n'appliquerait pas la même
+      règle que la production fabriquerait un 2ᵉ historique, pas une correction.
+   ② APERÇU D'ABORD : la fonction ne fait que CALCULER et rendre l'écart. Rien n'est écrit
+      tant que la personne n'a pas vu ce qui changerait (R29).
+   ③ ⛔⛔ ON NE SUPPRIME JAMAIS UN RECORD QU'ON NE PEUT PAS VÉRIFIER. Un exercice sans aucune
+      série dans l'historique (import ancien, séance effacée, autre appareil) garde son record
+      TEL QUEL et est listé à part. *Recalculer, c'est corriger ce qu'on peut prouver — pas
+      effacer ce qu'on ne retrouve pas.* Sans cette règle, l'outil détruirait des records
+      légitimes en silence, ce qui est bien pire que le fantôme qu'il vient réparer. */
+function _prsDepuisSeances(){
+  const calc={}, premiere={};
+  (S.sessions||[]).forEach(sess=>{
+    const d=sess&&sess.date; if(!d) return;
+    (sess.exs||sess.exercises||[]).forEach(ex=>{
+      if(!ex||!ex.name) return;
+      /* ⛔ LA PLUS ANCIENNE APPARITION DE L'EXERCICE, toutes séries confondues — même un
+         échauffement, même une série non faite. On ne cherche pas ici une performance : on
+         cherche **depuis quand l'app voit cet exercice**. Un échauffement prouve que la séance
+         est là autant qu'une série de travail. */
+      if(!premiere[ex.name] || String(d) < String(premiere[ex.name])) premiere[ex.name]=d;
+      (ex.sets||[]).forEach(st=>{
+        if(typeof _serieFaitFoiPourPR==='function' ? !_serieFaitFoiPourPR(st)
+           : !(st&&st.done&&st.kg&&st.reps&&st.type!=='É'&&st.type!=='W')) return;
+        const rm=bz(st.kg,st.reps), cur=calc[ex.name];
+        if(!cur||rm>cur.rm1) calc[ex.name]={kg:st.kg,reps:st.reps,rm1:rm,date:d};
+      });
+    });
+  });
+  const corriges=[], intacts=[], sansSeance=[], horsHistorique=[];
+  Object.keys(S.prs||{}).forEach(n=>{
+    const av=S.prs[n], ap=calc[n];
+    if(!ap){ sansSeance.push({nom:n, rm1:av&&av.rm1}); return; }   // ③ jamais supprimé
+    if(Math.abs((av&&av.rm1||0)-ap.rm1)<=0.05){ intacts.push(n); return; }
+    /* ⛔⛔ LE TROU DE LA 1ʳᵉ VERSION, TROUVÉ PAR MICHEL SUR SES VRAIES DONNÉES (01/09/2026).
+       La règle ③ ne protégeait que « aucune séance DU TOUT ». Or son `Développé Décliné` porte
+       un record du **14/06** — l'app est née le **17 juin** : la séance qui l'a fait ne peut pas
+       être dans l'historique, elle vient d'un import ou d'une saisie. L'exercice, lui, a des
+       séances plus récentes → il échappait à ③ et tombait dans « baisse ».
+       👉 ***Un record ANTÉRIEUR à la plus ancienne séance de son exercice est, par construction,
+       invérifiable*** — et l'appliquer effacerait un vrai record. Un record SANS DATE l'est
+       aussi : on ne peut pas prouver que la séance est encore là.
+       ⛔ La protection ne vaut que pour une BAISSE : une montée est prouvée par l'historique
+       lui-même, elle ne détruit rien. */
+    const monte = ap.rm1 > (av&&av.rm1||0);
+    if(!monte){
+      const dRec=av&&av.date, dPrem=premiere[n];
+      if(!dRec || (dPrem && String(dRec) < String(dPrem))){
+        horsHistorique.push({nom:n, rm1:av&&av.rm1, date:dRec||null, premiere:dPrem||null, propose:ap});
+        return;
+      }
+    }
+    corriges.push({nom:n, avant:av, apres:ap});
+  });
+  const nouveaux=Object.keys(calc).filter(n=>!(S.prs||{})[n])
+                       .map(n=>({nom:n, apres:calc[n]}));
+  return {calc, premiere, corriges, intacts, sansSeance, horsHistorique, nouveaux};
+}
+
+/* ⛔ EN DEUX TEMPS, comme le nettoyage des doublons : le bouton qui ÉCRIT n'existe pas tant
+   qu'on n'a pas vu ce qui changerait. C'est le seul outil qui touche aux records. */
+function apercuRecordsAdmin(){
+  const box=document.getElementById('admin-records'); if(!box) return;
+  if(typeof _isAdminUnlocked==='function' && !_isAdminUnlocked()){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  const r=_prsDepuisSeances();
+  const f=(p)=>p? (p.kg+' kg × '+p.reps+' → '+(Math.round(p.rm1*10)/10)+' kg'+(p.date?' · '+p.date:'')) : '—';
+  /* ⛔⛔ MONTER ET DESCENDRE NE SE VALENT PAS, ET C'EST LA MESURE QUI L'A DIT (01/09/2026).
+     Rejoué sur les 39 séances réelles de Michel : 6 corrections, dont **2 vers le HAUT** (son
+     Pec Deck passe de 93,1 à 119,2 — son historique contient mieux que son record) et **4 vers
+     le BAS**. ⭐ Une MONTÉE est sûre : l'historique en porte la preuve. ⚠️ Une BAISSE ne l'est
+     pas : elle suppose que la séance qui a fait le record est **encore** dans l'historique. Si
+     elle a été effacée, importée d'ailleurs ou faite sur un autre appareil, on détruit un vrai
+     record. 👉 Les deux sont donc SÉPARÉS à l'écran et la baisse porte son avertissement.
+     *Un outil de correction qui ne distingue pas « je complète » de « j'efface » finit par
+     effacer.* */
+  const monte=r.corriges.filter(c=>c.apres.rm1>(c.avant&&c.avant.rm1||0));
+  const baisse=r.corriges.filter(c=>c.apres.rm1<=(c.avant&&c.avant.rm1||0));
+  const ligne=(c,couleur)=>'<div><b>'+_escIdea(c.nom)+'</b><br><span style="color:var(--t3)">'
+    +_escIdea(f(c.avant))+'</span> → <span style="color:var('+couleur+')">'+_escIdea(f(c.apres))+'</span></div>';
+  let h='';
+  if(!r.corriges.length && !r.nouveaux.length){
+    h='<div style="font-size:13px;color:var(--green);font-weight:700;">✅ Tes records collent à ton historique — rien à corriger.</div>';
+  }else{
+    h='<div style="font-size:13px;color:var(--gold);font-weight:700;">🏅 '
+      +r.corriges.length+' record'+(r.corriges.length>1?'s':'')+' à corriger'
+      +(r.nouveaux.length?' · '+r.nouveaux.length+' à créer':'')+'.</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);margin-top:4px;">Rien n\'est modifié pour l\'instant.</div>';
+    if(monte.length||r.nouveaux.length){
+      h+='<div style="font-size:12px;color:var(--t2);margin-top:10px;line-height:1.7;">'
+        +'<div style="color:var(--green);font-weight:700;margin-bottom:4px;">⬆️ Ton historique prouve mieux — sans risque</div>';
+      monte.slice(0,10).forEach(c=>{ h+=ligne(c,'--green'); });
+      r.nouveaux.slice(0,6).forEach(c=>{
+        h+='<div><b>'+_escIdea(c.nom)+'</b><br><span style="color:var(--t3)">aucun record</span> → '+_escIdea(f(c.apres))+'</div>'; });
+      h+='</div>';
+    }
+    if(baisse.length){
+      h+='<div style="font-size:12px;color:var(--t2);margin-top:12px;line-height:1.7;">'
+        +'<div style="color:var(--red);font-weight:700;margin-bottom:4px;">⬇️ Plus bas que ton record actuel — à lire</div>'
+        +'<div style="font-size:11.5px;color:var(--t3);margin-bottom:6px;">Ça corrige un record fantôme (exercice renommé), <b>mais</b> ça efface aussi un vrai record si la séance qui l\'a fait n\'est plus dans ton historique (import, autre appareil, séance supprimée). Vérifie les lignes avant.</div>';
+      baisse.slice(0,10).forEach(c=>{ h+=ligne(c,'--red'); });
+      h+='</div>';
+    }
+    h+='<button class="btn btn-red" style="width:100%;padding:12px;margin-top:10px;font-size:14px;" onclick="appliquerRecordsAdmin()">🏅 Appliquer ces corrections</button>';
+  }
+  /* ⛔⛔ LES INVÉRIFIABLES SE VOIENT, AVEC LEUR RAISON ET LEUR DATE. Les cacher serait pire que
+     de les corriger : la personne croirait que l'outil n'a rien trouvé là, alors qu'il a trouvé
+     et REFUSÉ. *Un refus muet ressemble à une absence de problème.* */
+  if(r.horsHistorique.length){
+    h+='<div style="font-size:12px;color:var(--t2);margin-top:12px;line-height:1.7;">'
+      +'<div style="color:var(--t1);font-weight:700;margin-bottom:4px;">🛡️ Gardés tels quels — plus vieux que ton historique</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);margin-bottom:6px;">Leur record est <b>antérieur</b> à la plus ancienne séance que l\'app connaît pour cet exercice (ou n\'a pas de date) : la séance qui l\'a fait vient d\'un import ou d\'un autre appareil. <b>On n\'y touche pas.</b></div>';
+    r.horsHistorique.slice(0,10).forEach(c=>{
+      h+='<div><b>'+_escIdea(c.nom)+'</b><br><span style="color:var(--t3)">record '
+        +(Math.round((c.rm1||0)*10)/10)+' kg'+(c.date?' du '+_escIdea(c.date):' (sans date)')
+        +(c.premiere?' · l\'app ne le voit qu\'à partir du '+_escIdea(c.premiere):'')
+        +'</span></div>'; });
+    h+='</div>';
+  }
+  /* ⛔ ON DIT CE QU'ON NE TOUCHE PAS — sinon la personne croit que l'outil a tout vu. */
+  h+='<div style="font-size:11.5px;color:var(--t3);margin-top:10px;line-height:1.5;">'
+    +r.intacts.length+' record'+(r.intacts.length>1?'s':'')+' déjà juste'+(r.intacts.length>1?'s':'')+'.'
+    +(r.sansSeance.length? ' · <b>'+r.sansSeance.length+'</b> gardé'+(r.sansSeance.length>1?'s':'')
+      +' tel'+(r.sansSeance.length>1?'s':'')+' quel'+(r.sansSeance.length>1?'s':'')
+      +' : aucune séance dans l\'historique pour les vérifier (import ancien, autre appareil) — <b>jamais supprimés</b>.':'')
+    +'</div>';
+  box.innerHTML=h;
+}
+function appliquerRecordsAdmin(){
+  const box=document.getElementById('admin-records'); if(!box) return;
+  const r=_prsDepuisSeances();
+  const n=r.corriges.length+r.nouveaux.length;
+  if(!n){ apercuRecordsAdmin(); return; }
+  showConfirm('Corriger '+n+' record'+(n>1?'s':'')+' ?',
+    'Recalculés depuis tes séances. ⚠️ Ceux qui BAISSENT effacent le record actuel — assure-toi d\'avoir lu la liste rouge. Les records sans aucune séance ne sont pas touchés.',
+    ()=>{
+      r.corriges.forEach(c=>{ S.prs[c.nom]=c.apres; });
+      r.nouveaux.forEach(c=>{ S.prs[c.nom]=c.apres; });
+      persist();
+      try{ if(typeof _cloudSync==='function') _cloudSync(); }catch(e){}
+      toast(n+' record'+(n>1?'s':'')+' corrigé'+(n>1?'s':'')+' ✅','success');
+      apercuRecordsAdmin();
+    }, 'Corriger');
+}
+
+function _recalerAnciennesSeances(){
+  if(!_isAdminUnlocked()){ toast('Réservé à l\'admin','error'); return; }
+  const el=document.getElementById('admin-recal-res');
+  let n=0, deja=0, avant=0, apres=0; const lignes=[];
+  (S.sessions||[]).forEach(s=>{
+    if(!s || !s.calories) return;
+    if(_seanceHorodatee(s)){ deja++; return; }          // durée déjà réelle
+    if(s.caloriesAvant===undefined) s.caloriesAvant=s.calories;   // 🛟 une seule fois
+    const car=(s.calData&&s.calData.cardio)||0;
+    const vieux=s.caloriesAvant;
+    const neuf=Math.round((vieux-car)*_RECALAGE_ANCIEN + car);    // le cardio garde sa valeur
+    avant+=vieux; apres+=neuf; n++;
+    s.calories=neuf; s.calSource='recale';
+    if(s.calData) s.calData.total=neuf;
+    if(lignes.length<5) lignes.push(`${s.date} : ${vieux} → <strong>${neuf}</strong> kcal`);
+  });
+  if(!n){ if(el)el.innerHTML='<span style="color:var(--t3);">Rien à recaler — toutes les séances ont déjà une durée mesurée.</span>'; return; }
+  persist();
+  try{ renderProgress(); }catch(e){}
+  const btn=document.getElementById('admin-recal-undo'); if(btn)btn.style.display='';
+  if(el)el.innerHTML='<strong style="color:var(--green);">'+n+' séance'+(n>1?'s':'')+' recalée'+(n>1?'s':'')+'.</strong>'
+    +(deja?' <span style="color:var(--t3);">'+deja+' déjà juste'+(deja>1?'s':'')+' (durée mesurée) — non touchée'+(deja>1?'s':'')+'.</span>':'')
+    +'<br>Total : '+avant+' → <strong>'+apres+' kcal</strong><br>'+lignes.join('<br>')
+    +(n>lignes.length?('<br>… et '+(n-lignes.length)+' autres'):'');
+  toast(n+' séances recalées','success');
+}
+
+/* ⚠️ L'ANNULATION N'EST PAS VERROUILLÉE, ET C'EST VOULU (trouvé en testant, 15/08/2026)
+   La première version mettait le même garde-fou admin sur l'application ET sur le retour en
+   arrière. Or si l'état admin se perd entre les deux (code oublié, données du navigateur
+   nettoyées, autre appareil), on se retrouve avec un historique modifié et **plus aucun moyen de
+   le remettre comme avant**. *Remettre une donnée dans son état d'origine n'est jamais une action
+   risquée ; l'empêcher, si.* L'action reste protégée, le filet ne l'est pas (R29). */
+function _annulerRecalageCalories(){
+  let n=0;
+  (S.sessions||[]).forEach(s=>{
+    if(s.caloriesAvant===undefined) return;
+    if(s.caloriesAvant===null) delete s.calories; else s.calories=s.caloriesAvant;
+    if(s.calDataAvant!==undefined) s.calData=s.calDataAvant;
+    delete s.caloriesAvant; delete s.calDataAvant; delete s.calSource;
+    n++;
+  });
+  persist();
+  try{ renderProgress(); }catch(e){}
+  const el=document.getElementById('admin-recal-res');
+  if(el)el.innerHTML= n? ('<strong>'+n+' séance'+(n>1?'s':'')+' remise'+(n>1?'s':'')+' à sa valeur d\'origine.</strong>')
+                       : '<span style="color:var(--t3);">Rien à annuler.</span>';
+  const btn=document.getElementById('admin-recal-undo'); if(btn&&!n)btn.style.display='none';
+  toast(n?(n+' séances restaurées'):'Rien à annuler', n?'success':'info');
+}

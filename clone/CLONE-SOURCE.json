@@ -1,0 +1,22 @@
+{
+  "ref": "claude/ux-seance-01",
+  "sha": "1ab2b38f8f30c09c1ddd787ddfe602a8e953f888",
+  "genere_le": "2026-10-17 07:46 UTC",
+  "fichiers": [
+    "index.html",
+    "style.css",
+    "manifest.json",
+    "sw.js",
+    "capacites-ia.js",
+    "constants.js",
+    "state.js",
+    "supabase.js",
+    "screens.js",
+    "log.js",
+    "setup.js",
+    "tracking.js",
+    "coach.js",
+    "food-health.js",
+    "app.js"
+  ]
+}
