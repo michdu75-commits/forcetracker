@@ -332,7 +332,13 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - ⚠️ **Ce code est la brique clé pour un futur « photos cryptées sur le Drive »** (chiffrement côté téléphone avec une clé dérivée du code perso → même l'admin ne voit que du charabia). Voir IDEES-FUTURES.md.
 
 
-### 🧪 Clone de test (`/clone/`) — ⛔ RETIRÉ le 23/08/2026 (ft-v976)
+### 🧪 Clone de test (`/clone/`) — ⭐ REMIS EN ROUTE le 17/10/2026 (**D-084**), après son retrait du 23/08 (ft-v976)
+- **Ce qu'il est aujourd'hui** (décision de Michel) : l'**environnement de test UX** — le code d'une BRANCHE servi sous https://michdu75-commits.github.io/forcetracker/clone/ pour les recettes iPhone, **gardé** jusqu'à ce que Michel décide qu'il ne sert plus.
+- ⛔ **On ne l'édite JAMAIS à la main** : `python3 tools/clone_build.py <branche>` le régénère, relance le banc d'isolement (`tools/banc_clone_isolation.js`) et ne le **tamponne** que s'il est vert ; `check_regles` refuse un clone non tamponné. Contrôle négatif : `python3 tools/mut_clone_isolation.py`.
+- ⛔ **Même domaine que la prod** : seul `tools/clone_shim.js` le sépare des vraies données (stockage local, IndexedDB, cookies sous `/clone/`, caches, événements, réseau vers le serveur / Milo / Supabase **coupé**). Il **refuse de démarrer** si un canal n'est pas vérifié. Conséquence assumée : dans le clone, Milo, la synchro et la restauration ne marchent pas, et les essais derrière `window.__FT_CLONE__` sont actifs.
+- Ce qui suit est l'histoire de son **premier** retrait, gardée telle quelle (R30).
+
+#### (Archive) ⛔ RETIRÉ le 23/08/2026 (ft-v976)
 - **Ce qu'il était** : une copie fonctionnelle et live de l'app, dans un sous-dossier du même
   dépôt (un dépôt séparé m'étant impossible), pour essayer un restylage **sans toucher la prod**.
   Stockage isolé par un shim `cl_`, service worker propre, badge « 🧪 CLONE ».
