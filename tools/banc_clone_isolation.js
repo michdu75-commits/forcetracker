@@ -35,6 +35,9 @@ const srv = http.createServer((q, r) => {
 let ok = 0, ko = 0;
 const t = (nom, cond, det) => { if (cond) { ok++; console.log('   OK  ' + nom); } else { ko++; console.log('❌ ROUGE ' + nom + (det ? '  >> ' + String(det).slice(0, 300) : '')); } };
 const attendre = ms => new Promise(r => setTimeout(r, ms));
+/* Lecture d'une page qui peut se recharger sous nos pieds (une prod VIDÉE repart sur l'inscription et se recharge) :
+   3 essais, puis {__err} — le témoin concerné ROUGIT avec la raison ; le banc ne plante jamais (un plantage ne prouve rien). */
+async function lire(pg, fn) { let der = ''; for (let i = 0; i < 3; i++) { try { return await pg.evaluate(fn); } catch (e) { der = String(e && e.message || e); await attendre(1200); } } return { __err: der.slice(0, 200) }; }
 
 /* Instantané BRUT de l'origine, lu depuis une page sans aucun script de l'app. */
 async function instantane(cx, U) {
@@ -178,33 +181,37 @@ async function ouvrirApp(cx, url) {
   t('B-CLONE-16 service worker de la prod toujours en place, celui du clone limité à /clone/', P1.regs.some(s => s.endsWith('/forcetracker/')) && P1.regs.every(s => s.endsWith('/forcetracker/') || s.endsWith('/forcetracker/clone/')), JSON.stringify(P1.regs));
 
   console.log('\n═══ B-CLONE ④bis — la prod rouverte, et un clone qui écrit pendant qu\'elle est ouverte ═══');
+  try {
   const prod2 = await ouvrirApp(cx, U + '/index.html');
   const clone2 = await ouvrirApp(cx, U + '/clone/');
-  await clone2.evaluate(() => { localStorage.setItem('ft4_sessions', '[]'); localStorage.setItem('ft4_wkt', '{"exs":[]}'); persist(); });
+  await lire(clone2, () => { localStorage.setItem('ft4_sessions', '[]'); localStorage.setItem('ft4_wkt', '{"exs":[]}'); persist(); });
   await attendre(800);
-  const P2 = await prod2.evaluate(() => ({ email: S.email, sessions: S.sessions.length, autre: typeof _ftAutreOnglet !== 'undefined' ? _ftAutreOnglet : 'absent',
+  const P2 = await lire(prod2, () => ({ email: S.email, sessions: S.sessions.length, autre: typeof _ftAutreOnglet !== 'undefined' ? _ftAutreOnglet : 'absent',
     reconnect: !!(document.querySelector('#ov-reconnect.open') || document.querySelector('.overlay.open[id*="reconnect"]')) }));
   t('B-CLONE-17 la prod rouverte retrouve ses données (e-mail, séance)', P2.email === 'michel.prod@example.test' && P2.sessions === 1, JSON.stringify(P2));
   t('B-CLONE-18 les écritures du clone ne se font pas passer pour un « autre onglet » de la prod', P2.autre === false, JSON.stringify(P2));
-  await prod2.evaluate(() => { localStorage.setItem('ft4_evt_banc', '1'); localStorage.removeItem('ft4_evt_banc'); });   // la prod écrit pendant que le clone est ouvert
+  await lire(prod2, () => { localStorage.setItem('ft4_evt_banc', '1'); localStorage.removeItem('ft4_evt_banc'); });   // la prod écrit pendant que le clone est ouvert
   await attendre(800);
-  const C4 = await clone2.evaluate(() => (typeof _ftAutreOnglet !== 'undefined' ? _ftAutreOnglet : 'absent'));
+  const C4 = await lire(clone2, () => (typeof _ftAutreOnglet !== 'undefined' ? _ftAutreOnglet : 'absent'));
   t('B-CLONE-22 le clone ignore les écritures de la prod (aucun « autre onglet » vu de son côté)', C4 === false, String(C4));
-  await clone2.close(); await prod2.close();
+  await clone2.close().catch(() => {}); await prod2.close().catch(() => {});
+  } catch (e) { t('B-CLONE-17b la phase « prod rouverte » est allée au bout', false, 'interrompue : ' + String(e && e.message || e).slice(0, 200)); }
 
   console.log('\n═══ B-CLONE ⑤ — fail-closed ═══');
+  try {
   const casse = await cx.newPage();
   await casse.addInitScript(() => { try { Object.defineProperty(Storage.prototype, 'setItem', { writable: false, configurable: false }); } catch (e) {} });
   await casse.goto(U + '/clone/');
   await attendre(2000);
-  const C5 = await casse.evaluate(() => ({ iso: window.__FT_CLONE_ISOLE__ === true, texte: document.body ? document.body.innerText : '', app: (() => { try { return typeof S; } catch (e) { return 'tdz'; } })() }));
+  const C5 = await lire(casse, () => ({ iso: window.__FT_CLONE_ISOLE__ === true, texte: document.body ? document.body.innerText : '', app: (() => { try { return typeof S; } catch (e) { return 'tdz'; } })() }));
   t('B-CLONE-19 isolement impossible → le clone NE DÉMARRE PAS et le dit', !C5.iso && /isolation non garantie/i.test(C5.texte) && C5.app !== 'object', JSON.stringify(C5).slice(0, 300));
-  await casse.close();
+  await casse.close().catch(() => {});
   const sans = await cx.newPage();
   await sans.goto(U + '/__sans-shim.html');
   await attendre(1500);
   t('B-CLONE-20 un document SANS isolement qui charge un script du clone est renvoyé ailleurs, sans l\'exécuter', !/__sans-shim\.html$/.test(sans.url()), sans.url());
-  await sans.close();
+  await sans.close().catch(() => {});
+  } catch (e) { t('B-CLONE-19b la phase « fail-closed » est allée au bout', false, 'interrompue : ' + String(e && e.message || e).slice(0, 200)); }
   const P3 = await instantane(cx, U);
   const y = sansClone(P3);
   t('B-CLONE-21 après tout le banc (prod rouverte comprise), la prod n\'a perdu aucune donnée',
