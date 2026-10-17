@@ -4624,3 +4624,27 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 **Correctif (de la sonde).** Trois références qui ne dépendent pas de l'horloge : les fixtures (valeurs fixes, `at` compris) ; la photo « avant » prise dans la MÊME exécution ; le nombre de séries faites. Les écarts d'affichage ou de futur se comparent sans `at`. Contrôle sur l'arbre SAIN avec la même comparaison : 0 perte, 0 écart ; tout a été rejoué, et le verdict n'a été écrit qu'après.
 
 **À quoi on le reconnaît.** Un rouge qui touche des scénarios hors de portée de la mutation, et qui porte sur une donnée posée pendant le test (horodatage, durée, identifiant). 👉 *Une référence n'est valide que si elle est produite dans les mêmes conditions que ce qu'on compare ; et le contrôle de l'arbre sain se fait avec la MÊME comparaison que les mutants, avant d'interpréter un seul rouge.* Même famille que §61 (c'est l'outil de mesure qui se trompait, pas le code mesuré), dans l'autre sens : là-bas des rouges cachés, ici des rouges fabriqués.
+
+## §79 — ⛔ UN TÉMOIN QUI FIGE UNE VALEUR DU MOMENT ROUGIT AU LOT SUIVANT, SANS DÉFAUT *(16/10/2026, UX SÉANCE — branche, avant intégration)*
+
+**Symptôme.** Deux témoins anciens rougissent sur la branche UX SÉANCE alors que rien de ce qu'ils protègent n'a cassé :
+`PS-S11` (lot Progrès D-079) exigeait « la dernière pop-up « Quoi de neuf » reste **v77** » — or ce lot ajoute légitimement la v78
+(écran Séance, règle d'or #11, D-083) ; `CXXXVIII` (barre « Séance » opaque, ft-v1032) exigeait que l'écran Séance vide défile de
+plus de 50 px **à 430 × 932** — or l'écran « avant séance » est devenu compact (20 px à cette taille, 108 px à 390 × 844).
+
+**Cause.** Chaque témoin encodait une **valeur contingente** (un numéro de version, une taille d'écran) au lieu de sa **garantie**.
+La garantie de D-079 est « aucune pop-up n'annonce le filtre de l'historique » ; celle de CXXXVIII est « la barre est collante,
+opaque ≥ 0,9 et floutée, mesurée là où du contenu passe dessous ». Le prochain lot qui change la valeur, sans toucher la garantie,
+fait rougir le témoin.
+
+**Correctif (R30, écrit à côté du témoin).** PS-S11 vérifie maintenant qu'aucune entrée `WHATS_NEW` n'annonce le filtre (vert sur
+le code sain, **rouge** sous une pop-up injectée qui l'annonce) ; CXXXVIII se mesure à 390 × 844. Les deux re-visées disent pourquoi.
+
+**Et la mutation qui ne mutait rien (même famille que §74).** Dans `tools/mut_seance_ux.py`, la 1ʳᵉ version de M4 (« le + crée une
+2ᵉ séance ») supprimait un `if(…)` et laissait un `else` orphelin : **erreur de syntaxe**. L'outil l'a classée INVALIDE au lieu de
+la compter comme « attrapée » — c'est exactement pour ça qu'il vérifie la syntaxe avant de lancer le banc. Corrigée en `if(true)`,
+elle fait rougir B-UXS-E4 et E5.
+
+**À quoi on le reconnaît.** Un témoin qui rougit sur un lot qui ne touche pas son sujet, et dont le libellé contient une **valeur
+exacte** (« reste v77 », « 430 × 932 », « 3 lignes », « défile de 50 px »). 👉 *Avant de « réparer » le code pour satisfaire un vieux
+témoin, chercher la GARANTIE qu'il protège ; le re-viser sur elle, et le prouver sur une mutation qui casse la garantie.*

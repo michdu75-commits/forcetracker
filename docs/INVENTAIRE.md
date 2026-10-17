@@ -20,8 +20,8 @@
 | Lignes de menu | 17 | 3 |
 | Fenêtres (modales) | 66 | 15 |
 | Actions du serveur | 51 | 3 |
-| Fonctions JS | 631 | — |
-| Nouveautés annoncées | 71 | — |
+| Fonctions JS | 634 | — |
+| Nouveautés annoncées | 72 | — |
 
 ## 🖥️ Écrans
 
@@ -192,6 +192,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 78 | 🏋️ | L'écran Séance s'allège |
 | 77 | 🗂️ | Progrès : Séances d'abord |
 | 76 | ✨ | L'avis de Milo se demande |
 | 75 | 🗂️ | Le menu est rangé en 4 rayons |

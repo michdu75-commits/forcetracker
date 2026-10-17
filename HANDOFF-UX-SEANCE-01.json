@@ -1,0 +1,49 @@
+{
+  "chantier": "UX-SEANCE-01 — écran Séance : avant / pendant, en-tête « Séance en cours », menu ⋯, Terminer, bouton central, dock de repos",
+  "pour": "une autre session Claude, en CONTRE-VÉRIFICATION, LECTURE SEULE (aucun commit, aucun merge, aucune publication, aucun Ghost automatique)",
+  "base_master": "5a29d149 (ft-v1256, production inchangée)",
+  "branche": "claude/ux-seance-01",
+  "head_fonctionnel": "858423f3bfb407ccace025bd5d3bda37ec89438f",
+  "tree_fonctionnel": "4e36964403f505b400c407c53b98f8d8510b3971",
+  "passe_d031": "7 192 ✅ / 0 ❌ sur 858423f3 (tree 4e369644) — 4 conditions vertes : ligne de total, runner fini (code 0), arbre inchangé, aucun commit concurrent sur origin/master (5a29d149). Après la passe : documentation seulement (D-031).",
+  "decisions": "docs/DECISIONS.md D-083 (décisions ① → ⑤ de Michel du 16/10) ; D-082 (CC-01) inchangée",
+  "ce_qui_a_change": [
+    "log.js : _estPalierEch / _bilanTravailEx / _bilanTravailWkt / _exTermine (règle « séries de travail », sortie de toggleSet) ; _renderEnteteSeance (barre haute pendant la séance) ; _renderAvantSeance ; terminerSeance (porte unique de fin) ; openWktMenu / closeWktMenu ; _dockDegager ; cartes repliées allégées ; Monter / Descendre dans le ⋯ de l'exercice ; _syncLogHdrBtns et _pauseBtnHtml retirées",
+    "tracking.js : _contenuFinSeance (une seule réponse à « y a-t-il quelque chose à enregistrer ? ») ; bas de séance « Ta séance jusqu'ici » → terminerSeance",
+    "index.html / style.css : #log-avant, #log-add-ex, #tb-seance, dock #rest-bar, préréglages dans #ov-rest-edit, pastille du « + »",
+    "screens.js / coach.js / constants.js / app.js : aide « ? », aide détaillée, point rouge seance-ux, pop-up v78, diapo du Guide (guide/seance.jpg)",
+    "translations.js : 50 libellés ajoutés — ⚠️ ce fichier n'est chargé par aucune page (mesuré, connu depuis 348556e1)"
+  ],
+  "a_rejouer": [
+    "node tools/banc_seance_ux.js                        → attendu 69 OK / 0 rouge",
+    "python3 tools/mut_seance_ux.py                      → attendu 15/15 conformes (M00 = code de master : 46 rouges ; M18 équivalente : 0 rouge)",
+    "node tools/banc_cc01_dropset.js                     → attendu 31 OK / 0 rouge (dont B-CC01-FIL-1 → 12)",
+    "python3 tools/mut_cc01_dropset.py MF                → attendu 11/11 conformes",
+    "git worktree add --detach /tmp/ft_master 5a29d149 && ROOT_A=/tmp/ft_master ROOT_B=$PWD node tools/diff_seance_ux.js → attendu 7/7 identiques",
+    "bash tools/passe_valide.sh /tmp/passe.log           → les 4 conditions"
+  ],
+  "a_verifier_en_priorite": [
+    "aucune donnée nouvelle : pas de clé ft4_* ajoutée, S.wkt / S.sessions / set.done / _seanceOuverte / finishWorkout / records inchangés (différentiel 7/7)",
+    "« Terminer » : 0 série de TRAVAIL restante → enregistre ; sinon « Il reste N séries à faire » ; « Continuer la séance » ne touche à rien ; les 3 portes (en-tête, bas, « 🔄 Réessayer ») passent par terminerSeance",
+    "le « + » ne crée jamais une 2e séance et ne bouge pas (règle d'or #9, B-UXS-E6)",
+    "le dock ne masque ni la barre du bas, ni la série suivante, ni le bas de la liste (B-UXS-F1 / F3 / F12)",
+    "CC-01 : les mutations MF1 → MF11 sont RECONSTRUITES, équivalentes aux pertes décrites par la contre-vérification — les O1 → O14 originales ne sont ni dans le dépôt ni sur le Drive"
+  ],
+  "temoins_re_vises_R30": [
+    "CXXXVIII (runner) : mesuré à 390×844 au lieu de 430×932 — l'écran avant séance compact ne défile plus que de 20 px à 430×932 (108 px à 390×844)",
+    "PS-S11 (progres_seances) : « aucune pop-up n'annonce le filtre de l'historique » au lieu de « la dernière pop-up reste v77 »",
+    "conduites des bancs voisins (c38146e1) : fin par terminerSeance + confirmation, pause / Programmes / Grouper par le menu ⋯, « ⚡ Super » après ouverture de la carte"
+  ],
+  "non_couvert": [
+    "Safari / WebKit iOS (clavier ouvert avec le dock, zone de sécurité réelle) — recette iPhone de Michel",
+    "lecteur d'écran réel",
+    "mode clair (LIGHT_MODE_PAUSED : inatteignable par l'utilisateur)",
+    "traductions (translations.js non chargé)"
+  ],
+  "a_savoir": [
+    "commentaire résiduel log.js:160 « Bouton Pause/Reprendre (affiché tant que la séance tourne) » : obsolète (le bouton ▶ n'apparaît plus qu'en pause ; la pause se met par ⋯). Non corrigé : l'arbre fonctionnel ne change plus après la passe D-031."
+  ],
+  "note_mutations_cc01": "MF1 → MF11 sont des mutations RECONSTRUITES, équivalentes aux pertes décrites par la contre-vérification CC-01 (BUGS §78). Les définitions exactes des O1 → O14 originales ne sont ni dans le dépôt ni sur le Drive : elles ne sont PAS reproduites à l'identique.",
+  "note_mutations_uxs": "tools/mut_seance_ux.py : M00 (code de master), M1 → M11, M13, M19, M18 (équivalente, attendue 0 rouge). M12, M14 → M17 retirées avec leur raison écrite dans l'outil (déjà couvertes par un autre témoin, aucune information nouvelle).",
+  "fichier_place": "HANDOFF-UX-SEANCE-01.json à la racine (convention des lots précédents ; dette connue : les HANDOFF-*.json sont servis par Pages une fois publiés)"
+}
