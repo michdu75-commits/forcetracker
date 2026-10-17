@@ -39743,6 +39743,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      propriétaires des données sont inchangés (différentiel : tools/diff_seance_ux.js). Blocs B-UXS-*.
      Banc : tools/banc_seance_ux.js · contrôle négatif : tools/mut_seance_ux.py. */
   await require('./seance_ux.js').ecran(t, b, PORT);
+  /* 🎨 UX — INTÉGRATION DES DÉCISIONS DU 17/10/2026 (D-085, décisions A→M de Michel) — jeton Cobalt de séance, « Terminer »
+     Cobalt (rouge réservé au destructif), point bleu entier sur le « + » de taille constante, « Séance prête », type en badge
+     sur le numéro + colonne 1RM, barre du bas masquée pendant la saisie d'une série, cartes de type en texte seul, onglets
+     « Discussion / Espace Milo », courbes Progrès neutres. Présentation seulement (aucune clé, aucune donnée). Blocs B-UXI-*.
+     Banc : tools/banc_ux_integration.js · contrôle négatif : tools/mut_ux_integration.py. */
+  await require('./ux_integration.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

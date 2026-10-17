@@ -3593,7 +3593,7 @@ function renderLogFinish(){
   const label = _labelFinSeance();
   el.innerHTML=`<div class="lf-titre">Ta séance jusqu'ici</div>
     <div class="lf-bilan">${fig}<div class="lf-t">${kv}${cardioTxt?`<div class="lf-cardio">${cardioTxt}</div>`:''}</div></div>
-    <button class="btn btn-red lf-fin" onclick="terminerSeance()">${label}</button>`;
+    <button class="btn lf-fin" onclick="terminerSeance()">${label}</button>`;   // D-085 (décision B) : Terminer = Cobalt, le rouge est réservé au destructif
 }
 
 // Note de sommeil selon la DURÉE — interpolation linéaire entre points d'ancrage, donc

@@ -4648,3 +4648,27 @@ elle fait rougir B-UXS-E4 et E5.
 **À quoi on le reconnaît.** Un témoin qui rougit sur un lot qui ne touche pas son sujet, et dont le libellé contient une **valeur
 exacte** (« reste v77 », « 430 × 932 », « 3 lignes », « défile de 50 px »). 👉 *Avant de « réparer » le code pour satisfaire un vieux
 témoin, chercher la GARANTIE qu'il protège ; le re-viser sur elle, et le prouver sur une mutation qui casse la garantie.*
+
+## §80 — ⛔ UNE RÈGLE GÉNÉRALE `button{overflow:hidden}` ROGNE UNE PASTILLE POSÉE EN DÉBORDEMENT *(17/10/2026, UX INTÉGRATION / D-085 — branche `claude/ux-seance-02`, non publié)*
+
+**Symptôme.** La pastille de séance du « + » (le petit rond posé en haut à droite du bouton central) s'affichait en **demi-disque** :
+elle est dessinée **en débordement** (`top:-4px; right:-4px`), et le bouton qui la porte hérite de la règle générale
+`button{overflow:hidden}` — tout ce qui dépasse est coupé. Au même endroit, le point rouge « nouveauté » du même bouton tombait
+**sur** la pastille (même coin). Et le « + » **grossissait** (×1,06, ombre renforcée) sur l'écran Séance seulement : sa taille
+changeait d'un écran à l'autre (règle d'or #9 : le mesurer, pas le regarder).
+
+**Cause.** Aucune n'est une erreur de logique : la pastille était juste (allumée par `#root.seance-on`, d'après `_seanceOuverte()`),
+c'est son **conteneur** qui la rognait. Personne ne le voit en lisant le CSS de la pastille — il faut remonter les ancêtres.
+
+**Correctif (D-085, décisions C et D de Michel).** `#nb-log{overflow:visible}` (le bouton central seulement, ni sa taille ni sa
+place ne changent) ; le point « nouveauté » du « + » passe à gauche ; l'agrandissement sur l'écran Séance est retiré (R30, retrait
+écrit). La pastille devient un **point bleu plein** (jeton de séance).
+
+**Le témoin qui le voit, et comment.** `B-UXI-C3` calcule le rectangle du point et remonte **chaque ancêtre** jusqu'à la barre : si
+l'un n'est pas `overflow:visible` et que le point dépasse de sa boîte, il est rogné → rouge. `B-UXI-C4` mesure l'intersection avec
+le point « nouveauté » (créé s'il est absent). `B-UXI-C1` compare position, taille, ombre et transformation du « + » sur cinq
+écrans, séance ouverte ou non. Éprouvés par mutation : M7 (overflow remis), M8 (point nouveauté remis à droite), M9 (agrandissement
+remis) — `tools/mut_ux_integration.py`.
+
+**À quoi on le reconnaît.** Un élément décoratif placé en **position négative** (badge, pastille, compteur) qui paraît coupé net :
+chercher un `overflow:hidden` sur un **ancêtre**, souvent une règle générale (`button`, `.card`), pas sur l'élément lui-même.

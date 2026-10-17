@@ -52,6 +52,9 @@ img {
   --sep: #CBCCD6; --t1: #12121E; --t2: #4A4A6A; --t3: #8888AA;
   --red: #D91843; --green: #00A856; --blue: #1565C0;
   --gold: #CC8800; --orange: #CC5200;
+  /* D-085 : le Cobalt clair (#7C95FF) ne fait que ~2,8:1 sur fond clair — même parade que --green ci-dessus,
+     la teinte FONCÉE du jeton. Pas une refonte du mode clair : seulement ne pas le rendre moins lisible. */
+  --sea: #2F5BFF; --sea-a: rgba(47,91,255,.10); --sea-a2: rgba(47,91,255,.35);
 }
 #root.light-mode .topbar {
   background: #0C0D11;
@@ -752,7 +755,11 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .lf-kv div b{display:block;font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.1;color:var(--t1);white-space:nowrap;}
 .lf-kv div span{display:block;font-size:11.5px;color:var(--t2);margin-top:2px;}
 .lf-cardio{margin-top:8px;font-size:12.5px;color:var(--t2);font-weight:600;}
-.lf-fin{margin-top:12px;font-size:17px;padding:16px;letter-spacing:.3px;}
+.lf-fin{margin-top:12px;font-size:17px;padding:16px;letter-spacing:.3px;background:var(--sea-fill);color:#fff;box-shadow:0 10px 24px -10px rgba(47,91,255,.6);}   /* D-085 : Terminer = Cobalt */
+/* D-085 (décision B) : dans la question « Il reste N séries », « Terminer quand même » est une fin de séance, pas une
+   suppression → Cobalt. La classe est posée par `terminerSeance` et retirée par `showConfirm` à chaque ouverture :
+   toutes les autres confirmations (Supprimer, Vider, Abandonner…) gardent leur bouton rouge. */
+#ov-confirm.cf-seance #confirm-ok{background:var(--sea-fill);box-shadow:0 4px 20px rgba(47,91,255,.3);}
 
 /* ⑤ Menu ⋯ de la séance — actions rares rangées, actions à risque séparées en bas. */
 .wm-sheet{width:100%;max-width:430px;background:var(--bg2);border-radius:24px 24px 0 0;padding:8px 14px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -24px 60px rgba(0,0,0,.6);max-height:88dvh;overflow-y:auto;box-sizing:border-box;}

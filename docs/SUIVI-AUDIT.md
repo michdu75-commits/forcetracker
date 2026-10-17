@@ -1022,3 +1022,21 @@ iPhone, puis décision de publication de Michel.
 **Réserves (non bloquantes)** : le compteur de la carte (« 3/4 séries », toutes lignes) ≠ l'en-tête (séries de travail) — à trancher par Michel ; volume de carte avec échauffements (préexistant) ; types de séance masqués dès qu'une séance est ouverte, cardio noté compris ; clavier iOS + dock et zone de sécurité réelle : recette iPhone ; mode clair en pause (inatteignable) ; `translations.js` chargé par aucune page (dictionnaire tenu, sans effet) ; commentaire résiduel `log.js:160` ; les 7 réserves UX du dropset (contre-vérification CC-01) ne sont **pas** traitées (hors brief).
 
 **À faire** : recette iPhone de Michel ; contre-vérification indépendante (`HANDOFF-UX-SEANCE-01.json`) ; feu vert de Michel pour l'intégration, puis la publication.
+
+### 🎨 UX — INTÉGRATION DES DÉCISIONS DU 17/10/2026 (D-085, décisions A→M de Michel, brief « Claude Principal ») — QUALIFIÉ SUR BRANCHE `claude/ux-seance-02`, NON INTÉGRÉ, NON PUBLIÉ
+
+**Base** : `claude/ux-seance-01` @ `1ab2b38f` + fusion de master `4960ce72` (clone D-084, documentation seulement). Production `ft-v1256` non touchée.
+
+**Ce qui change (présentation seulement)** : jeton « Cobalt » DÉDIÉ à la séance (`--sea` #7C95FF, `--sea-fill` #2F5BFF ; teinte foncée en mode clair) — en-tête, exercice et série actifs, coche validée, exercice fini, « Ajouter un exercice », repos (anneau, temps, barre, « Passer », pilule), « Reprendre » (en-tête et Accueil) ; « Terminer » Cobalt (en-tête, bas, « Terminer quand même ») et le rouge gardé pour Vider / Abandonner / Supprimer ; point bleu plein et ENTIER sur le « + » (le bouton central ne rogne plus), point nouveauté déplacé à gauche, « + » de 44 px et même ombre partout (agrandissement ×1,06 retiré) ; « Séance prête » (`_seancePrete`, affichage seul) ; type de série en badge sur le numéro (même `cycleType`), 1RM dans sa colonne, cibles de 44 px ; barre du bas masquée pendant la saisie d'une série (`kbd-serie`), ligne active ramenée au-dessus du clavier ; cartes de type en texte seul ; onglets « Discussion / Espace Milo » (onglet en mémoire) ; courbes Progrès neutres (record or, progrès vert) ; aides corrigées (point bleu, numéro de série, 1RM, ligne « deux onglets » au « ? » du Coach).
+
+**Ce qui ne change pas** : 0 donnée persistée, 0 clé, 0 migration, 0 propriétaire ; `_seanceOuverte`, `finishWorkout`, `cycleType`, moteur de repos, Milo (moteur, appels, quota, mémoire) inchangés — différentiel des données base ↔ branche `tools/diff_seance_ux.js` **7 / 7 identiques**.
+
+**Tests** : nouveau banc B-UXI (`tests/parcours/ux_integration.js`, `tools/banc_ux_integration.js`) **69 / 0** (base `1ab2b38f` : 27 / 42) ; contrôle négatif `tools/mut_ux_integration.py` **27 / 27** (M00 = 42 rouges ; M26 équivalente : 0 rouge ; arbre sain rejoué à la fin : 0) ; banc B-UXS 69 / 0 (témoins D7 et E3 re-visés sur leur garantie, R30, décisions M et C) ; CC-01 31 / 0.
+
+**Règle #17** : 0 donnée persistée · 8 fichiers applicatifs (`app.js`, `coach.js`, `index.html`, `log.js`, `screens.js`, `setup.js`, `style.css`, `tracking.js`) · +211 / −64 · retirés ou fusionnés : la table d'icônes des types, l'agrandissement du « + » sur Séance, la colonne « Type » (fusionnée dans le numéro), le 1RM logé dans le bouton du type.
+
+**Non appliqué (à trancher par Michel)** : « 🔄 Réessayer » (stockage plein) reste rouge (panneau d'erreur) ; une baisse reste chiffrée en rouge dans Progrès ; puces Super / Drop / +% inchangées ; « Séance libre » (avant séance) garde le rouge de marque ; Guide (captures) et pop-up « Quoi de neuf » non refaits — règle d'or #11 au moment d'une publication.
+
+**Résiduel mesuré** : le « + » de nouvelle discussion de l'en-tête de Milo est coupé à 360 px — **identique sur la base** (préexistant, hors périmètre).
+
+**À faire** : passe complète D-031 ; recette iPhone de Michel (vrai clavier, encoche, point du « + ») ; feu vert de Michel avant toute intégration.

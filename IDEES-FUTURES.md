@@ -11,6 +11,21 @@ Fichier de notes : fonctionnalités et directions à explorer. Rien ici n'est en
 
 ---
 
+## 🏃 FUTUR — AUTRE ACTIVITÉ *(décision L de Michel, 17/10/2026 — `D-085`)*
+
+**FUTUR — Autre activité : idée produit validée comme piste à étudier, mais non implémentée dans ce chantier.**
+**PISTE · NON CONSTRUITE.** Pouvoir noter une activité qui n'est ni de la musculation ni du cardio
+(un sport, une sortie, une activité de la vie). Rien n'est construit : ni écran, ni donnée, ni clé.
+- **Aujourd'hui (mesuré sur `claude/ux-seance-02`)** : l'écran Séance propose « Séance libre »,
+  « Programme », les types de séance, puis le **cardio**, à part, dans « Autres options »
+  (décision K) ; aucune entrée « Autre activité » — un témoin le vérifie (`B-UXI-F4`).
+- ⚠️ **Avant de la construire** : c'est une **donnée nouvelle** (règle d'or #17 et R3 : qui la produit,
+  qui l'exploite, quel comportement change — calories, récupération, Milo ?) et elle touche
+  l'existant « autre sport » du profil (`S.coachQuiz.answers.othersport`, déjà compté dans le TDEE par
+  `calcSportExtra` et transmis à Milo). À cadrer avec Michel, pas à déduire.
+
+---
+
 ## 📚 PROGRAMME STRUCTURÉ ET VERSIONNÉ — décision de Michel du 25/09/2026 *(consignée le 04/10)*
 
 **DÉCISION VALIDÉE — `D-048` · NON CONSTRUITE.** Tout programme intégré devient une **donnée

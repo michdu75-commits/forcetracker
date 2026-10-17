@@ -360,6 +360,7 @@ function terminerSeance(){
   const n=_bilanTravailWkt().restantes;
   if(n<=0) return finishWorkout();
   showConfirm('Il reste '+n+' série'+(n>1?'s':'')+' à faire','Terminer quand même ?',()=>finishWorkout(),'Terminer quand même','Continuer la séance');
+  document.getElementById('ov-confirm').classList.add('cf-seance');   // D-085 (décision B) : Terminer = Cobalt
 }
 /* ⋯ UX SÉANCE (16/10/2026, cadrage validé) — LE MENU DE LA SÉANCE. Il RANGE les actions rares qui encombraient
    l'écran ; chaque ligne appelle le propriétaire EXISTANT, rien n'est réécrit : pause → `toggleWktPause`, date →
@@ -1971,6 +1972,7 @@ function openUniHelp(nom){
 function closeUniHelp(){document.getElementById('ov-uni-help').classList.remove('open');}
 let _confirmCb=null,_confirmAltCb=null;
 function showConfirm(title,msg,cb,okLabel,altLabel,altCb){
+  document.getElementById('ov-confirm').classList.remove('cf-seance');   // D-085 : bouton rouge par défaut (seule la fin de séance le passe en Cobalt)
   document.getElementById('confirm-title').textContent=title;
   document.getElementById('confirm-msg').textContent=msg;
   _confirmCb=cb;_confirmAltCb=altCb||null;
