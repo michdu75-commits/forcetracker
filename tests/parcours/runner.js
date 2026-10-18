@@ -39766,6 +39766,13 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      « Note de la dernière séance » (point gardé si le texte est identique), et l'outil du prompt de Milo confiné (leurre de
      dépôt + garde d'écriture). Blocs B-D088-*. Banc : tools/banc_d088.js · contrôle négatif : tools/mut_d088.py. */
   await require('./d088_import_notes.js').ecran(t, b, PORT);
+  /* 🧍🧍 « TA SÉANCE JUSQU'ICI » : FACE · CHIFFRES · DOS (18/10/2026, décision D-091 de Michel) — la figurine de face à gauche,
+     les chiffres au centre, la figurine de dos à droite, visibles ensemble sans appui ni alternance ; les vraies figurines
+     (`_mscSVGmini`, le dos étant le dessin de la grande figurine `_BP`) colorées par le même moteur — comparées à la grande
+     figurine et aux données, zone par zone. Mise en page à 360 / 375 / 390 / 430 px (longues valeurs, texte agrandi), « + »
+     mesuré, rien d'écrit, autres figurines de face, cardio seul inchangé. Blocs B-FFD-*.
+     Banc : tools/banc_fig_face_dos.js · contrôle négatif : tools/mut_fig_face_dos.py. */
+  await require('./fig_face_dos.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

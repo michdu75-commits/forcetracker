@@ -802,6 +802,13 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .lf-kv div b{display:block;font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.1;color:var(--t1);white-space:nowrap;}
 .lf-kv div span{display:block;font-size:11.5px;color:var(--t2);margin-top:2px;}
 .lf-cardio{margin-top:8px;font-size:12.5px;color:var(--t2);font-weight:600;}
+/* 🧍🧍 Face · chiffres · dos (18/10/2026, D-091) : la face à gauche, le dos à droite, les chiffres empilés au centre (une colonne
+   de trois lignes tient entre deux figurines même à 360 px, et la pile (≈ 132 px) a la hauteur d'une figurine : à 360 px la carte
+   garde sa hauteur). Figurines de 44 px (petits écrans) à 54 px (430 px), espacements et marges symétriques. */
+.lf-2fig{gap:clamp(8px,3vw,14px);padding:14px clamp(12px,4vw,18px);}
+.lf-2fig .lf-fig{width:clamp(44px,12.5vw,54px);}
+.lf-2fig .lf-t{text-align:center;}
+.lf-2fig .lf-kv{flex-direction:column;flex-wrap:nowrap;align-items:center;gap:6px;}
 .lf-fin{margin-top:12px;font-size:17px;padding:16px;letter-spacing:.3px;background:var(--sea-fill);color:#fff;box-shadow:0 10px 24px -10px rgba(47,91,255,.6);}   /* D-085 : Terminer = Cobalt */
 /* D-085 (décision B) : dans la question « Il reste N séries », « Terminer quand même » est une fin de séance, pas une
    suppression → Cobalt. La classe est posée par `terminerSeance` et retirée par `showConfirm` à chaque ouverture :

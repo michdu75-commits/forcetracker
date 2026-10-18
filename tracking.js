@@ -3568,18 +3568,25 @@ function renderLogFinish(){
   if(!S.wkt){el.innerHTML='';return;}
   const c=_contenuFinSeance(), hasCardio=c.cardio, hasDone=c.fait;
   if(!hasDone&&!hasCardio){el.innerHTML='';return;} // rien à enregistrer (ni série validée, ni cardio)
-  let kv='', fig='', cardioTxt='';
+  let kv='', figF='', figD='', cardioTxt='';
   if(hasDone){
     const b=(typeof _bilanTravailWkt==='function')?_bilanTravailWkt():{faites:0};
     const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
     const min=S.wkt.startTs?Math.floor(((typeof _wktElapsedMs==='function')?_wktElapsedMs():0)/60000):null;
     const tuile=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
     kv=`<div class="lf-kv">${min!==null?tuile(min+' min','durée'):''}${tuile(b.faites,'série'+(b.faites>1?'s':''))}${tuile(vol.toLocaleString('fr-FR')+' kg','volume')}</div>`;
+    /* 🧍🧍 FACE · CHIFFRES · DOS (18/10/2026, décision D-091 de Michel) — les deux vues de la séance, ENSEMBLE et sans appui :
+       la face à gauche, le dos à droite (le dessin de dos de la grande figurine « Muscles travaillés »), colorées par les MÊMES
+       données (`_mscScores`, calculé une fois pour les deux). Ni bouton, ni bascule, ni alternance : deux images. La taille
+       suit l'écran (CSS `.lf-2fig`) — d'où `width:100%` : le dessin remplit sa colonne. */
     try{
       const faits=S.wkt.exs.filter(ex=>(ex.sets||[]).some(s=>s.done));
-      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function')
-        fig=`<div class="lf-fig" role="img" aria-label="Muscles travaillés dans cette séance">${_mscSVGmini(_mscScores(faits)).replace('width:32px','width:46px')}</div>`;
-    }catch(e){ fig=''; }
+      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
+        const res=_mscScores(faits);
+        const vue=v=>`<div class="lf-fig lf-fig-${v}" role="img" aria-label="Muscles travaillés dans cette séance, vue de ${v}">${_mscSVGmini(res,v).replace('width:32px','width:100%')}</div>`;
+        figF=vue('face'); figD=vue('dos');
+      }
+    }catch(e){ figF=figD=''; }
   }
   if(hasCardio){
     // Les deux moments sont nommés dans le résumé : « avant 10min · après 20min » — sans ça,
@@ -3592,7 +3599,7 @@ function renderLogFinish(){
   }
   const label = _labelFinSeance();
   el.innerHTML=`<div class="lf-titre">Ta séance jusqu'ici</div>
-    <div class="lf-bilan">${fig}<div class="lf-t">${kv}${cardioTxt?`<div class="lf-cardio">${cardioTxt}</div>`:''}</div></div>
+    <div class="lf-bilan${figF&&figD?' lf-2fig':''}">${figF}<div class="lf-t">${kv}${cardioTxt?`<div class="lf-cardio">${cardioTxt}</div>`:''}</div>${figD}</div>
     <button class="btn lf-fin" onclick="terminerSeance()">${label}</button>`;   // D-085 (décision B) : Terminer = Cobalt, le rouge est réservé au destructif
 }
 
