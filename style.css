@@ -217,6 +217,31 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .re-presets .rbtn{flex:1;font-size:15px;font-weight:800;padding:11px 0;border-radius:12px;}
 /* Texte lu par les lecteurs d'écran, invisible à l'écran (le crayon ✎ dit « Régler » aux yeux). */
 .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+/* ⏱️ D-086 (recette iPhone de Michel, 18/10) — LE DOCK SE LIT [ −15 s ] [ ◔ temps ] [ +15 s ] [ Passer ].
+   Le temps est au CENTRE, entre les deux boutons qui le règlent, en grand ; l'anneau reste, dans le bouton du temps ;
+   « Passer » au bout, en Cobalt. Toucher le temps ouvre « Régler ». Les libellés de repos (`#rest-label`, `#rest-over`)
+   passent sous la rangée. ⛔ Affichage seul : `startRest` / `updRest` / `addRT` / `skipRest` ne changent pas. */
+#rest-bar .rd-top{gap:6px;}
+#rest-bar .rbtn{height:48px;min-width:52px;padding:0 9px;white-space:nowrap;}
+#rest-bar .rd-skip{padding:0 12px;}
+#rest-bar .rd-time{flex:1;min-width:0;height:52px;justify-content:center;gap:8px;margin:0;padding:0 8px;border-radius:16px;background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);}
+#rest-bar .rd-ring{width:34px;height:34px;}
+#rest-bar .rd-tt{display:flex;flex-direction:column;align-items:flex-start;flex:none;min-width:0;}
+#rest-bar .rd-l{font-size:9.5px;letter-spacing:.1em;line-height:1.1;}
+#rest-bar #rest-time{font-size:32px;line-height:1;}
+#rest-bar .rd-pen{width:13px;height:13px;}
+#rest-bar #rest-label,#rest-bar #rest-over{margin-top:6px;text-align:center;}
+/* Gaucher : « Passer » passe à gauche, mais −15 s / temps / +15 s gardent leur ordre (se lisent toujours de gauche à droite). */
+#root.lh #rest-bar .rd-top{flex-direction:row;}
+#root.lh #rest-bar .rd-skip{order:-1;}
+/* « Régler » : 30 s · 45 s · 1:00 · 1:30 · 2:00 sur une rangée, puis la durée personnalisée ; Valider et la durée choisie
+   en Cobalt (couleur du repos), plus en rouge. */
+#ov-rest-edit .re-presets{gap:6px;margin-bottom:12px;}
+#ov-rest-edit .re-presets .rbtn{min-height:44px;padding:0;font-size:14px;}
+#ov-rest-edit .rbtn.rp-active{background:var(--sea-fill);border-color:var(--sea-fill);color:#fff;}
+.re-perso{margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);text-align:center;}
+#ov-rest-edit .re-ok{background:var(--sea-fill);box-shadow:0 4px 16px rgba(47,91,255,.3);}
+#root.a11y-lv #ov-rest-edit .re-ok{background:var(--sea-fill)!important;box-shadow:0 4px 16px rgba(47,91,255,.3)!important;}
 
 /* PILL CHRONO FLOTTANTE */
 #rest-pill{display:none;flex-shrink:0;height:38px;padding:0 14px;
@@ -722,20 +747,37 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .ex-block.ex-actif{border-color:var(--sea-a2);box-shadow:0 18px 40px -26px rgba(47,91,255,.45);}
 .set-row.set-cur{background:var(--sea-a);}
 .set-row.set-cur .snum{color:var(--sea);}
-/* 🎨 D-085 (décision G de Michel, 17/10) — LE TYPE SUR LE NUMÉRO, LE 1RM DANS SA COLONNE. Le numéro est le bouton
-   du type (même `cycleType`) : 44 px de haut, un petit badge quand la série n'est pas normale (É échauffement,
-   X échec). Le 1RM n'est plus un bouton : une valeur, dans sa colonne. Le ✓ garde son dessin de 30 px mais
-   reçoit une zone d'appui de 44 px. ⚠️ `.tbtn` reste sur le numéro, exprès : c'est LE bouton du type (le banc
-   CC-01 s'en sert pour reconnaître une ligne de série normale). */
-#s-log .sets-hdr,#s-log .set-row{grid-template-columns:30px 1fr 64px 54px 42px 44px;padding-left:12px;padding-right:10px;}
+/* 🎨 D-086 (recette iPhone de Michel, 18/10) — LE TYPE A SA COLONNE. Il remplace la décision G de D-085 (« le type sur
+   le numéro », un petit badge qui n'apparaissait que pour É / X : Michel ne l'a pas trouvé à l'usage). La ligne se lit
+   # · Type · Précédent · Reps · KG · 1RM · ✓ — le 1RM garde SA colonne (D-085), la coche aussi.
+   La place vient des écarts (5 → 3 px), des marges et de la colonne Reps (64 → 50 px) : « Précédent » GAGNE de la
+   largeur (mesuré à 360 px : 49 px avant, 64 après). La pastille (colonne de 36 px) et le ✓ ont une zone d'appui de
+   44 × 44 — le bouton de la pastille déborde de 4 px dans les écarts, qui sont vides.
+   ⚠️ `.tbtn` est sur la PASTILLE, exprès : le banc CC-01 s'en sert pour reconnaître une ligne de série normale, et
+   les couleurs de type et les modes daltoniens existants (`.tbtn.É`, `.tbtn.X`, `#root.cb-*`) s'y appliquent tels quels.
+   R30 — retiré : `.set-row .tbtn.snum`, `.snum-n`, `.stype-b` (le numéro-bouton et son badge de D-085). */
+#s-log .sets-hdr,#s-log .set-row{grid-template-columns:14px 36px minmax(0,1fr) 50px 54px 38px 44px;column-gap:3px;padding-left:8px;padding-right:4px;}
 #s-log .set-row{padding-top:5px;padding-bottom:5px;}
-.set-row .tbtn.snum{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:calc(100% + 8px);margin-left:-8px;height:44px;padding:0;border:none;border-radius:10px;background:none;color:var(--t3);font-family:var(--font);font-size:13px;font-weight:800;letter-spacing:0;cursor:pointer;touch-action:manipulation;}
-.set-row.set-cur .tbtn.snum{color:var(--sea);}
-.snum-n{line-height:1;}
-.stype-b{display:block;min-width:16px;padding:1px 3px;border-radius:5px;font-size:9.5px;font-weight:800;line-height:1.2;letter-spacing:0;background:var(--bg3);color:var(--t2);box-shadow:inset 0 0 0 1px var(--sep);}
-.tbtn.É .stype-b,.tbtn.W .stype-b{color:var(--t2);}
-.tbtn.X .stype-b,.tbtn.E .stype-b{color:var(--orange);box-shadow:inset 0 0 0 1px rgba(255,138,114,.45);}
-#root[class*="cb-"] .set-row .tbtn.snum{border-color:transparent!important;background:none!important;}
+#s-log .sets-hdr span{font-size:10px;letter-spacing:.02em;}
+#s-log .sets-hdr span:first-child{text-align:center;}
+#s-log .ds-lbl{grid-column:span 2;}
+.set-row .stype{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0 -4px;padding:0;border:none;border-radius:12px;background:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.set-row .stype .tbtn{display:flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;border-radius:9px;font-family:var(--font-cond);font-size:15px;font-weight:800;line-height:1;letter-spacing:0;pointer-events:none;}
+.set-row .stype .tbtn.N{color:var(--t2);border-color:var(--sep);background:var(--bg3);}
+/* D-086 — « Précédent » plus lisible : chiffres compacts (Space Grotesk), 15 px, contraste nettement relevé (gris clair
+   au lieu de --t3) ; le nombre ne se coupe jamais (`.sprev-n`) — s'il n'y a vraiment pas la place (« 10×142.5 X » à
+   360 px), c'est le marqueur É / X ou le RIR qui passe à la ligne (`<wbr>`), jamais le nombre, jamais rogné. Le point bleu signale un commentaire de la dernière fois SUR CETTE série. */
+#s-log .sprev{position:relative;overflow:visible;font-family:var(--font-cond);font-size:15px;font-weight:600;line-height:1.2;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#C3C7D0;}
+#root.light-mode #s-log .sprev{color:var(--t2);}
+#s-log .sprev-n{white-space:nowrap;}
+@media (max-width:374px){ #s-log .sprev{font-size:14px;letter-spacing:-.02em;} }   /* pire cas mesuré : « 10×142.5 » tient dans 64 px */
+#s-log .sprev .prev-rir{font-size:11px;color:var(--t2);white-space:nowrap;}
+#s-log .sprev-pt{position:absolute;top:-2px;right:0;width:8px;height:8px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 2px var(--bg2);}
+/* La fenêtre « Note — série N » montre le commentaire de la dernière fois, avec son origine (D-086). */
+.sn-prev{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);}
+.sn-prev-t{font-size:12px;font-weight:800;color:var(--sea);}
+.sn-prev-o{margin-top:2px;font-size:11.5px;color:var(--t2);}
+.sn-prev-x{margin-top:6px;font-size:14px;line-height:1.4;color:var(--t1);word-break:break-word;}
 .srm{font-family:var(--font-cond);font-size:12px;font-weight:700;color:var(--t3);text-align:center;white-space:nowrap;overflow:hidden;}
 #s-log .chk{width:44px;height:44px;border:none;background:none;position:relative;isolation:isolate;color:#fff;}
 #s-log .chk::before{content:'';position:absolute;left:7px;top:7px;width:30px;height:30px;box-sizing:border-box;border-radius:50%;border:2px solid var(--sep);z-index:-1;transition:all .2s;}
@@ -788,6 +830,10 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
   .la-cta-t b{font-size:17px;}
   .rd-ring{width:44px;height:44px;}
   #rest-time{font-size:26px;}
+  #rest-bar .rd-ring{width:30px;height:30px;}                 /* D-086 */
+  #rest-bar #rest-time{font-size:28px;}
+  #rest-bar .rbtn{min-width:48px;padding:0 7px;}
+  #rest-bar .rd-time{gap:6px;padding:0 6px;}
   #rest-bar .rbtn{min-width:42px;padding:0 8px;}
   #rest-bar{padding:12px 10px 12px 12px;}
   .rd-top{gap:10px;}
@@ -811,6 +857,11 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 #root.a11y-lv .rd-top              { flex-wrap: wrap; }
 #root.a11y-lv #rest-btns           { flex-basis: 100%; }
 #root.a11y-lv #rest-btns .rbtn     { flex: 1; }
+/* D-086 : plus de groupe `#rest-btns` — le bouton du temps prend la 1ʳᵉ rangée, −15 s / +15 s / Passer la 2ᵉ. */
+#root.a11y-lv #rest-bar .rd-time   { flex-basis: 100%; order: -1; }
+#root.a11y-lv #rest-bar .rbtn      { flex: 1; }
+#root.a11y-lv #s-log .sprev        { font-size: 17px !important; }
+#root.a11y-lv .set-row .stype .tbtn { font-size: 17px !important; }
 
 /* PR LIST */
 .pr-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--sep);gap:10px;}
@@ -1141,6 +1192,11 @@ html.is-clone .ob-clone-only{ display:block; }
 .msg-bubble{max-width:86%;overflow-wrap:anywhere;padding:11px 14px;border-radius:18px;font-size:15px;line-height:1.6;font-weight:500;}
 .msg-user{align-self:flex-end;background:linear-gradient(135deg,#FF6A73,#EF3E57);color:#fff;border-bottom-right-radius:4px;}
 .msg-coach{align-self:flex-start;background:var(--bg2);color:var(--t1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);border-bottom-left-radius:4px;}
+/* 🕒 D-086 (recette de Michel, 18/10) — la date et l'heure de CHAQUE message, en bas de la bulle, discrètes. Dessinées
+   depuis l'attribut `data-heure` (posé par `renderCoachMsg`) : elles n'entrent pas dans le texte de la bulle. */
+.msg-bubble[data-heure]::after{content:attr(data-heure);display:block;margin-top:6px;font-size:11px;font-weight:600;line-height:1.2;letter-spacing:.01em;opacity:.62;}
+.msg-user[data-heure]::after{text-align:right;}
+.msg-coach[data-heure]::after{color:var(--t2);opacity:1;}
 .msg-typing{align-self:flex-start;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:12px 16px;border-radius:18px;border-bottom-left-radius:4px;display:flex;gap:5px;align-items:center;}
 .typing-dot{width:7px;height:7px;border-radius:50%;background:var(--t3);animation:typing-bounce .8s infinite;}
 .typing-dot:nth-child(2){animation-delay:.15s;}
@@ -1320,7 +1376,11 @@ html.is-clone .ob-clone-only{ display:block; }
 .cal-item{font-size:14px;color:var(--t2);display:flex;justify-content:space-between;}
 .cal-item strong{color:var(--t1);}
 .cal-today-card{background:var(--bg2);border-radius:var(--r-sm);padding:12px 14px;border:1px solid rgba(255,45,85,.2);display:flex;justify-content:space-between;align-items:center;}
-#toast{position:absolute;top:100px;left:50%;transform:translateX(-50%) translateY(-8px);padding:12px 22px;border-radius:24px;font-size:14px;font-weight:700;color:#fff;opacity:0;pointer-events:none;white-space:nowrap;z-index:600;transition:opacity .2s,transform .2s;letter-spacing:.3px;}
+/* D-086 (recette iPhone de Michel, 18/10) : un message long (« Séance en cours — 1 exercice · 2 séries validées ·
+   Appuie sur Reprendre ») débordait des DEUX côtés de l'écran (538 px de large à 360 px, mesuré) parce que le toast
+   était forcé sur une seule ligne. Il garde sa largeur naturelle s'il tient, sinon il passe à la ligne, centré, sans
+   jamais dépasser l'écran (16 px de marge de chaque côté). Texte inchangé ; il ne capte toujours aucun appui. */
+#toast{position:absolute;top:100px;left:50%;transform:translateX(-50%) translateY(-8px);padding:12px 22px;border-radius:24px;font-size:14px;font-weight:700;color:#fff;opacity:0;pointer-events:none;white-space:normal;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center;line-height:1.35;z-index:600;transition:opacity .2s,transform .2s;letter-spacing:.3px;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #toast.success{background:linear-gradient(135deg,#00C853,#00E676);color:#000;}
 #toast.error{background:linear-gradient(135deg,#FF2D55,#FF4D6D);}

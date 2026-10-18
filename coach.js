@@ -1437,8 +1437,9 @@ function _renderCoachThread(){
     if(m.role==='user' && m._silent) return; // consigne interne (débrief auto) : jamais affichée
     const t = (typeof m.content === 'string') ? m.content
             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
-    if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
-    else if(t) renderCoachMsg('coach', t, {coupee: m.coupee});   // MILO-PDF1 : le marqueur revient avec la bulle
+    // D-086 : chaque bulle porte l'heure ENREGISTRÉE avec le message (`m.ts`) — jamais l'heure où l'on ouvre le fil.
+    if(m.role === 'user') renderCoachMsg('user', t || '[photo]', {ts: m.ts});
+    else if(t) renderCoachMsg('coach', t, {coupee: m.coupee, ts: m.ts});   // MILO-PDF1 : le marqueur revient avec la bulle
   });
   /* ⚡ LE BOUTON « COMMENCER CETTE SÉANCE » SURVIT À LA FERMETURE DE L'APP (14/08/2026)
      Michel, en allant à la salle : *« je lui ai demandé de me lancer la séance, je ferme
@@ -5375,11 +5376,26 @@ async function _miloRaterEnvoyer(){
     if(typeof toast==='function')toast('Envoyé à Michel 📩 Merci !','success');
   }catch(e){ if(typeof toast==='function')toast('Pas de réseau — c\'est noté quand même 👍','info'); }
 }
+/* 🕒 D-086 (recette de Michel, 18/10) — LA DATE ET L'HEURE D'UN MESSAGE, TELLES QU'ENREGISTRÉES.
+   « 18/10/2026 · 11:32 », à l'heure locale du téléphone. ⛔ Sans heure enregistrée (messages d'avant le 25/08/2026,
+   débrief, « continuer dans le Coach »), on écrit « Date indisponible » : jamais l'heure à laquelle on regarde le fil,
+   jamais une date devinée. Affichage seul : l'historique, son ordre et son enregistrement ne changent pas. */
+function _heureMsgTxt(ts){
+  const n = (ts === null || ts === undefined || ts === '') ? NaN : Number(ts);
+  if (!isFinite(n) || n < Date.UTC(2020, 0, 1)) return 'Date indisponible';
+  const d = new Date(n);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'})
+    + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+}
 function renderCoachMsg(role, text, opts) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
   const div = document.createElement('div');
   div.className = 'msg-bubble ' + (role === 'user' ? 'msg-user' : 'msg-coach');
+  /* D-086 : l'heure se lit dans un ATTRIBUT, dessinée par le CSS (`::after`) — elle n'entre donc ni dans le texte de
+     la bulle (que relisent le 👎 « à côté », le partage, le PDF et les cartes séance), ni dans `dataset.raw`.
+     Posée seulement quand l'appelant la fournit : les cartes et outils d'administration n'en portent pas. */
+  if (opts && Object.prototype.hasOwnProperty.call(opts, 'ts')) div.dataset.heure = _heureMsgTxt(opts.ts);
   let _gFlags = [];
   if (role === 'coach') {
     /* 🛡️ LE GARDIEN TOURNE MAINTENANT POUR TOUT LE MONDE (21/08/2026), plus seulement sur le
@@ -5502,6 +5518,7 @@ function renderCoachMsg(role, text, opts) {
   }
   msgs.appendChild(div);
   _coachAuBas();
+  return div;   // D-086 : `sendToCoach` y pose l'heure du message juste après l'avoir enregistré
 }
 // Nettoie le markdown pour un partage texte propre (+ sécurité : retire tout bloc technique)
 function _coachPlain(text){
@@ -5780,8 +5797,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
   if (_estHorsSujet(msg, hasImg, opts)) {
     if (inp) inp.value = '';
     if (coachHistory.length === 0) _showCoachChat();
-    renderCoachMsg('user', displayMsg || msg);
-    renderCoachMsg('coach', _REPONSE_HORS_SUJET);
+    const _tsL = Date.now();   // D-086 : l'échange a lieu maintenant (il n'est pas enregistré, voir plus haut)
+    renderCoachMsg('user', displayMsg || msg, {ts: _tsL});
+    renderCoachMsg('coach', _REPONSE_HORS_SUJET, {ts: _tsL});
     return false;
   }
 
@@ -5794,8 +5812,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     if (_rep) {
       if (inp) inp.value = '';
       if (coachHistory.length === 0) _showCoachChat();
-      renderCoachMsg('user', displayMsg || msg);
-      renderCoachMsg('coach', _rep);
+      const _tsL = Date.now();   // D-086 : même chose que le refus hors sujet
+      renderCoachMsg('user', displayMsg || msg, {ts: _tsL});
+      renderCoachMsg('coach', _rep, {ts: _tsL});
       return false;
     }
   }
@@ -5816,6 +5835,8 @@ async function sendToCoach(customMsg, displayMsg, opts) {
   const suggs = document.getElementById('coach-suggs');
 
   // Bulle utilisateur avec image optionnelle — sauf débrief auto (opts.silent : Milo vient à toi, pas de bulle « toi »)
+  // D-086 : la bulle reçoit l'heure ENREGISTRÉE avec le message (`_msgU.ts`, ligne inchangée plus bas) — posée juste après.
+  let _bulleU = null;
   if (opts.silent) {
     /* pas de bulle utilisateur */
   } else if (hasImg) {
@@ -5826,10 +5847,11 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       div.innerHTML = (msg ? '<p style="margin:0 0 6px">' + msg.replace(/</g,'&lt;') + '</p>' : '') +
         '<img src="data:' + imgType + ';base64,' + imgData + '" style="max-width:180px;border-radius:8px;display:block;">';
       msgs.appendChild(div);
+      _bulleU = div;
       _coachAuBas();
     }
   } else {
-    renderCoachMsg('user', displayMsg || msg);
+    _bulleU = renderCoachMsg('user', displayMsg || msg);
   }
 
   const userHistContent = hasImg
@@ -5838,6 +5860,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     : msg;
   const _msgU = { role: 'user', content: userHistContent, ts: Date.now(), ...(opts.silent?{_silent:true}:{}) };
   coachHistory.push(_msgU);
+  if (_bulleU) _bulleU.dataset.heure = _heureMsgTxt(_msgU.ts);   // D-086 : affichage seul
   showTyping();
 
   try {
@@ -5960,7 +5983,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
        que chaque voie qui pose une carte séance puisse lui rattacher la séance proposée, y compris la
        traduction qui revient APRÈS l'enregistrement. Désigné par sa référence, jamais par son texte. */
     const _msgA = { role: 'assistant', content: reply, ts: Date.now(), ...(_coupee?{coupee:_coupee}:{}) };
-    renderCoachMsg('coach', _disp, {coupee: _coupee});
+    renderCoachMsg('coach', _disp, {coupee: _coupee, ts: _msgA.ts});   // D-086 : l'heure enregistrée avec la réponse
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds, null, _msgA);
     else if (_dsCervelet) {
@@ -6021,7 +6044,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
        connexion », qui est faux et fait chercher au mauvais endroit. */
     if (!opts.silent) renderCoachMsg('coach', e && e.duServeur
       ? String(e.message)
-      : 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
+      : 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.', {ts: Date.now()});   // D-086 : l'erreur arrive maintenant
   }
 
   coachBusy = false;

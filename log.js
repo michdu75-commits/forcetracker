@@ -1086,17 +1086,26 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
   const _curSi=ex.sets.findIndex(x=>x&&!x.done);   // UX SÉANCE : la série à faire maintenant (affichage seul)
+  const _notesPrev=_notesPrecedentes(ex);            // D-086 : commentaire de la dernière fois, SEULEMENT sur sa série exacte
   const _rowsHtml=ex.sets.map((set,si)=>{
     const p=prevAl[si];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
+    const _tt=set.type||'N', _tl=SET_TYPE_LABELS[set.type]||'Normal', _pn=_notesPrev[si];
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}${si===_curSi?' set-cur':''}" id="sr-${ei}-${si}">`
-      /* 🎨 D-085 (décision G de Michel, 17/10) : le TYPE de la série vit SUR SON NUMÉRO (un petit badge quand ce n'est
-         pas une série normale) et le 1RM a SA colonne — on ne mélange plus « type » et « 1RM » dans la même case.
-         ⛔ Même action qu'avant : un appui change le type (`cycleType`, inchangé) ; mêmes ids (`tbtn-…`, `trm-…`) que
-         lisent `updateRMLive` et les bancs. Zone d'appui de 44 px de haut. */
-      +`<button class="snum tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" id="tbtn-${ei}-${si}" title="${SET_TYPE_LABELS[set.type]||'Normal'} — appuie pour changer le type" aria-label="Série ${si+1}, ${SET_TYPE_LABELS[set.type]||'Normal'} — changer le type"><span class="snum-n">${si+1}</span>${set.type&&set.type!=='N'?`<span class="stype-b">${set.type}</span>`:''}</button>`
-      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}${_prevRirBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
+      /* 🎨 D-086 (recette iPhone de Michel, 18/10) — LE TYPE A SA COLONNE, VISIBLE SUR CHAQUE SÉRIE.
+         D-085 (décision G) l'avait posé en petit badge sur le numéro : une série normale n'affichait rien, et rien ne
+         disait qu'on pouvait le changer — Michel ne l'a pas trouvé. Maintenant le numéro est du texte, puis une
+         PASTILLE « N » / « É » / « X » sur chaque ligne, dans une cible d'appui de 44 × 44.
+         ⛔ Même action qu'avant (`cycleType`, inchangé, avec son toast) ; mêmes ids (`tbtn-…`, `trm-…`) que lisent
+         `updateRMLive` et les bancs. La pastille porte `.tbtn` + le type : ses couleurs et les modes daltoniens
+         existants s'appliquent tels quels. Le 1RM garde SA colonne (D-085). */
+      +`<div class="snum">${si+1}</div>`
+      +`<button class="stype" onclick="cycleType(${ei},${si})" id="tbtn-${ei}-${si}" title="${_tl} — appuie pour changer le type" aria-label="Série ${si+1} : ${_tl} — appuie pour changer le type"><span class="tbtn ${_tt}">${_tt}</span></button>`
+      /* D-086 — un commentaire de la dernière fois n'est plus écrit en petit dans la case (il s'y tassait sur 3-4
+         lignes, et le REPLI de `_prevAligne` le recopiait sur les lignes en trop) : un point bleu le signale, l'appui
+         sur « Précédent » l'affiche avec sa date et sa série (`openSetNote`). Rien n'est enregistré de plus. */
+      +`<div class="sprev${_pn?' a-note':''}" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="${_pn?'Commentaire de la dernière fois — touche pour le lire':'Ajouter une note'}">${p?`<div class="sprev-v"><span class="sprev-n">${p.reps}×${p.kg}</span><wbr>${_prevTypeBadge(p)}<wbr>${_prevRirBadge(p)}</div>`:'<div class="sprev-v">—</div>'}${_setPrevNote(set,p)}${_pn?'<span class="sprev-pt" aria-hidden="true"></span>':''}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<div class="srm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`
@@ -1112,7 +1121,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     const isDown=direction==='down';
     const p0=_dropDebut(ex);                         // CC-01 : avant p0, des séries normales faites avant le dropset
     const curPi=ex.sets.findIndex((s,i)=>i>=p0&&!s.done);
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>Reps</span><span>KG</span><span></span><span>✓</span></div>`;
+    // D-086 : la ligne a 7 colonnes (le type a la sienne) — le libellé du palier couvre « Type » + « Précédent ».
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span class="ds-lbl">Palier</span><span>Reps</span><span>KG</span><span></span><span>✓</span></div>`;
     useRows=ex.sets.map((set,si)=>{
       if(si<p0)return _rowsHtml[si];                // une série normale reste une série normale
       const isDone=set.done;
@@ -1123,7 +1133,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       if(isCur){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
           +`<div class="snum" style="color:var(--orange);font-weight:800;">${si+1}</div>`
-          +`<div style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
+          +`<div class="ds-lbl" style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
           +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
           +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
           +`<div></div>`
@@ -1132,7 +1142,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       }else{
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row${isDone?' done-row':''}" id="sr-${ei}-${si}" style="${!isDone?'opacity:.55;':''}">`
           +`<div class="snum">${si+1}</div>`
-          +`<div style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
+          +`<div class="ds-lbl" style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
           +`<div style="text-align:center;font-size:13px;color:${isDone?'var(--t2)':'var(--t3)'};">${set.reps||'?'}</div>`
           +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
           +`<div></div>`
@@ -1145,7 +1155,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<span style="font-size:11px;color:var(--t2);line-height:1.4;">${isDown?'Baisse le poids sans repos — repos unique après le dernier drop.':'Monte le poids — repos normal entre les séries.'}</span>`
       +`</div>`;
   }else{
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>Reps</span><span>KG</span><span>1RM</span><span>✓</span></div>`;
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Type</span><span>Précédent</span><span>Reps</span><span>KG</span><span>1RM</span><span>✓</span></div>`;
     useRows=rows;
   }
 
@@ -1379,21 +1389,46 @@ function _escNote(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').r
 // Échappe une valeur destinée à un '…' JS DANS un attribut "…" (ex. onclick="f('${_escAttrJs(nom)}')").
 // D'abord échappement JS (backslash + apostrophe), puis échappement HTML d'attribut ("<>&) → aucune évasion possible.
 function _escAttrJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* ⛔ D-086 (18/10/2026) — R30 : LA NOTE DE LA DERNIÈRE FOIS N'EST PLUS ÉCRITE ICI. Cette fonction l'affichait en
+   italique 9,5 px sous la valeur « Précédent » (`p.note`) : elle s'y tassait sur 3 ou 4 lignes, et surtout le REPLI de
+   `_prevAligne` (plus de séries qu'avant → on répète la dernière) la recopiait sur des lignes qui n'étaient PAS sa
+   série — mesuré : la note de la 4ᵉ série d'avant s'affichait aussi sur la 5ᵉ ligne. Elle est maintenant signalée par
+   un point bleu, sur sa série EXACTE seulement (`_notesPrecedentes`), et se lit dans `openSetNote` avec son origine.
+   Reste ici la note que la personne écrit AUJOURD'HUI sur cette série (or), inchangée. */
 function _setPrevNote(set,p){
   if(set&&set.note)return `<div style="font-size:9.5px;color:var(--gold);line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(set.note)}</div>`;
-  if(p&&p.note)return `<div style="font-size:9.5px;color:var(--t3);font-style:italic;line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(p.note)}</div>`;
   return '';
 }
+/* 💬 D-086 — LE COMMENTAIRE DE LA DERNIÈRE FOIS, SÉRIE PAR SÉRIE, SANS JAMAIS LE PRÊTER À UNE AUTRE.
+   Les commentaires vivent à deux niveaux (mesuré dans le code) : la note d'une SÉRIE (`set.note`, écrite par
+   `saveSetNote`) et la note de l'EXERCICE (`ex.note`, le champ « Note perso »). Seule la première désigne une série ;
+   la seconde n'est JAMAIS rattachée à une ligne ici (décision de Michel attendue sur où l'afficher).
+   ⛔ Même séance que la colonne « Précédent » (`_prevSeance`), même rapprochement par rôle (`_prevAligneDetail`) — et
+   seulement quand la série d'avant correspond EXACTEMENT : sur une ligne obtenue par repli, la valeur reste affichée
+   comme avant, mais aucune note n'y est attachée. Lecture seule : rien n'est enregistré.
+   Rend, par série d'aujourd'hui, `{texte, date, num, nom}` ou `null`. */
+function _notesPrecedentes(ex){
+  const v=ex&&_prevSeance(ex.name); if(!v) return (ex&&ex.sets||[]).map(()=>null);
+  return _prevAligneDetail(v.sets, ex.sets).map(d=>{
+    const t=(d.exact&&d.p&&typeof d.p.note==='string')?d.p.note.trim():'';
+    if(!t) return null;
+    return {texte:t, date:String(v.sess&&v.sess.date||''), num:(v.ex.sets||[]).indexOf(d.p)+1, nom:String(v.ex.name||'')};
+  });
+}
+// « 2026-10-16 » → « 16/10/2026 » ; une date illisible n'est pas réinventée.
+function _dateNoteFR(d){ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||'')); return m?m[3]+'/'+m[2]+'/'+m[1]:'date inconnue'; }
 let _setNoteCtx=null;
 function openSetNote(ei,si){
   const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(!set)return;
   _setNoteCtx={ei,si};
+  const _np=_notesPrecedentes(S.wkt.exs[ei])[si];   // D-086 : le commentaire de la dernière fois, s'il est à CETTE série
   let ov=document.getElementById('ov-set-note');
   if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-set-note';ov.onclick=e=>{if(e.target===ov)closeSetNote();};document.body.appendChild(ov);}
   ov.innerHTML=`<div class="modal" style="max-width:360px;">
     <div class="modal-handle"></div>
     <div style="font-weight:800;font-size:16px;margin-bottom:3px;text-align:center;">💬 Note — série ${si+1}</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Une info à retrouver la prochaine fois (réglage machine, sensation, technique…). Elle s'affichera dans « précédent ».</div>
+    ${_np?`<div class="sn-prev" id="sn-prev"><div class="sn-prev-t">💬 Commentaire de la dernière fois</div><div class="sn-prev-o">Séance du ${_dateNoteFR(_np.date)} · série ${_np.num} · ${_escNote(_np.nom)}</div><div class="sn-prev-x">« ${_escNote(_np.texte)} »</div></div>`:''}
     <textarea id="set-note-ta" rows="3" style="width:100%;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);padding:10px;font-size:15px;font-family:var(--font);resize:none;box-sizing:border-box;outline:none;" placeholder="Ex: cran 4 sur la machine, prise serrée, dos bien calé…">${_escNote(set.note)}</textarea>
     <div style="margin-top:12px;display:flex;gap:8px;">
       ${set.note?`<button class="btn btn-bg2" style="flex:1;color:var(--red);" onclick="deleteSetNote()">🗑 Retirer</button>`:''}
@@ -1492,7 +1527,8 @@ function _prevTypeBadge(p){
   const t=p&&p.type;
   if(!t||t==='N') return '';                                  // série normale → rien, pas de bruit
   const col={'É':'var(--blue)','W':'var(--blue)','X':'var(--red)','E':'var(--red)','D':'#BF5AF2'}[t]||'var(--t3)';
-  return `<sup style="font-size:9px;font-weight:800;color:${col};margin-left:2px;">${t}</sup>`;
+  // D-086 : marqueur plus lisible (11 px au lieu de 9) — même lettre, même couleur (`var(--blue)` / `var(--red)`).
+  return `<sup style="font-size:11px;font-weight:800;color:${col};margin-left:2px;line-height:0;">${t}</sup>`;
 }
 
 /* 💪 CE QUE LE RIR SERT VRAIMENT : le revoir LA FOIS D'APRÈS (ft-v1038).
@@ -1695,22 +1731,35 @@ function _reserveBadgeTxt(n){
    échauffement ↔ échauffement, travail ↔ travail, chacun dans son ordre.
    ⚠️ Et si la dernière fois ne contient aucun échauffement (le cas le plus courant — presque
    personne ne les note), la ligne reste VIDE : mieux vaut un tiret qu'un repère faux (R29). */
-function _prevAligne(prev, sets){
+/* D-086 — UN SEUL PROPRIÉTAIRE DU RAPPROCHEMENT (R2) : `_prevAligneDetail` dit en plus, pour chaque ligne, si la série
+   d'avant lui correspond EXACTEMENT (`exact`) ou si elle vient du REPLI (la dernière, répétée). La colonne « Précédent »
+   garde ses valeurs telles quelles (`_prevAligne`, mêmes 8 appelants) ; seul le commentaire exige `exact`. */
+function _prevAligneDetail(prev, sets){
   const ech = s => !!(s && (s.type==='É' || s.type==='W'));
   const pe=[], pt=[];
   (prev||[]).forEach(s=>{ (ech(s)?pe:pt).push(s); });
   let ie=0, it=0;
   return (sets||[]).map(s=>{
-    if(ech(s)){ const p = pe[ie] || pe[pe.length-1] || null; ie++; return p; }
-    const p = pt[it] || pt[pt.length-1] || null; it++; return p;
+    if(ech(s)){ const x = pe[ie]; const p = x || pe[pe.length-1] || null; ie++; return {p, exact:!!x}; }
+    const x = pt[it]; const p = x || pt[pt.length-1] || null; it++; return {p, exact:!!x};
   });
 }
-function getPrev(name){
+function _prevAligne(prev, sets){ return _prevAligneDetail(prev, sets).map(d=>d.p); }
+/* D-086 — la séance « dernière fois » d'un exercice, avec sa date : la même que lit `getPrev` (R2), qui n'en garde que
+   les séries. La 1ʳᵉ séance (la plus récente) où l'exercice a au moins une série faite. */
+function _prevSeance(name){
   for(const s of S.sessions){
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);
-    if(ex){const sets=(ex.sets||[]).filter(s=>s.done!==false);if(sets.length)return sets;}
-  }return[];
+    if(ex){const sets=(ex.sets||[]).filter(x=>x.done!==false);if(sets.length)return {sess:s,ex,sets};}
+  }return null;
 }
+function getPrev(name){ const v=_prevSeance(name); return v?v.sets:[]; }
+/* ⏱️ D-086 (recette de Michel, 18/10) — LES DURÉES PROPOSÉES DANS « RÉGLER » : 30 s et 45 s rejoignent 1:00 / 1:30 / 2:00.
+   Une seule liste (R2) : les boutons `rp-*` du panneau, leur surbrillance et les 4 endroits de `toggleSet` qui la posent
+   la lisent ici. ⛔ Le moteur ne change pas : `setRestPreset` règle le repos en cours et mémorise la durée de
+   l'exercice dans `S.exRestPref` (clé existante `ft4_exRp`) — c'est elle que la série suivante reprend.
+   ⛔ Déclarée AVANT ses usages (`toggleSet`, `_highlightRestPreset`), comme `RIR_MAX`. */
+const _REPOS_PRESETS=[30,45,60,90,120];
 /* 🔢 ft-v1057 : `numFR` et pas `parseFloat` — la valeur arrive du HTML en ARGUMENT
    (`this.value`), donc elle echappait a la recherche sur `.value`. C'est le champ le
    PLUS utilise de l'app : `parseFloat('62,5')` y rendait 62, la moitie du poids. */
@@ -1780,7 +1829,7 @@ function toggleSet(ei,si){
     _restStep=isAbdo?5:15;
     _restEx=isAbdo?null:exName;
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
-    if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
+    if(mb)mb.textContent=`−${_restStep}\u00a0s`;if(pb)pb.textContent=`+${_restStep}\u00a0s`;   // D-086 : « −15 s » (espace insécable)
     /* ⏱️ LE REPOS REGARDE CE QUI VIENT APRÈS, PAS SEULEMENT CE QU'ON VIENT DE FAIRE (17/08/2026)
        Michel, pendant sa séance du 16/08 : *« si je supprime un échauffement, le temps de repos ne
        sera pas bon entre les deux »*. Il a raison, et c'est structurel : le repos se lisait sur le
@@ -1830,7 +1879,7 @@ function toggleSet(ei,si){
         // Dernier palier → repos
         if(lbl)lbl.textContent='📉 Série dégressive terminée';
         startRest(sec);
-        if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+        if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
         if(navigator.vibrate)navigator.vibrate([50]);
         renderExBlocks();return;
       }
@@ -1865,7 +1914,7 @@ function toggleSet(ei,si){
       _restDoneCb=()=>{_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);};
       const lbl=document.getElementById('rest-label');
       if(lbl)lbl.textContent=groupType==='pyramid-up'?'📈 Pyramide +':'📉 Pyramide −';
-      if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+      if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
       if(navigator.vibrate)navigator.vibrate([50]);
       return;
     } else if(groupType==='drop'&&S.wkt.exs[ei].group){
@@ -1884,7 +1933,7 @@ function toggleSet(ei,si){
         startRest(sec);   // ⚠️ la consigne d'avance se pose APRÈS (startRest efface _restDoneCb)
         _restDoneCb=()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
         if(lbl)lbl.textContent='⚡ Tour suivant';
-        if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+        if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
         if(navigator.vibrate)navigator.vibrate([50]);
         return;
       }
@@ -1949,7 +1998,7 @@ function toggleSet(ei,si){
       const _n=String(S.wkt.exs[_suiv].name||'');
       if(_lb&&!_lb.textContent)_lb.textContent='⏭️ Ensuite : '+(_n.length>26?_n.slice(0,25).trim()+'…':_n);
     }
-    if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+    if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
     if(navigator.vibrate)navigator.vibrate([50]);
   }
   renderExBlocks();
@@ -5745,8 +5794,9 @@ function setRir(ei,si,n){
   if(navigator.vibrate)navigator.vibrate(30);
 }
 let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null,_editingCustomExName=null;
+/* D-086 : la liste des durées proposées est `_REPOS_PRESETS` (déclarée avant `toggleSet`, qui la lit). */
 function _highlightRestPreset(sec){
-  [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
+  _REPOS_PRESETS.forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
 function setRestPreset(sec){
   if(!restStartTs){startRest(sec);return;}
@@ -10417,8 +10467,10 @@ function continueInCoach(){
     const msgs=document.getElementById('coach-msgs');
     if(msgs){
       msgs.innerHTML='';
-      renderCoachMsg('user','Analyse mon programme "'+_lastProgAnalysisProg.name+'".');
-      renderCoachMsg('coach',_lastProgAnalysisReply,{coupee:_lastProgAnalysisCoupee});
+      /* D-086 : ces deux messages entrent dans le fil SANS heure (enregistrement inchangé — proposition à part) :
+         l'écran le dit (« Date indisponible ») plutôt que d'afficher l'heure d'ouverture du fil. */
+      renderCoachMsg('user','Analyse mon programme "'+_lastProgAnalysisProg.name+'".',{ts:null});
+      renderCoachMsg('coach',_lastProgAnalysisReply,{coupee:_lastProgAnalysisCoupee,ts:null});
     }
     const suggs=document.getElementById('coach-suggs');
     if(suggs)suggs.style.display='none';
