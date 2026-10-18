@@ -1155,7 +1155,7 @@ que l'ancien écran (`openImportHist`) : **16 fonctions et les 2 fenêtres d'imp
 n'écrit que l'historique (`S.sessions`), ni `S.wkt` ni sa copie de secours ; conflit de date « Les 2 » par défaut, « Remplacer » explicite et limité à la
 séance TERMINÉE ; la fin de séance ne fusionne rien par date et la reprise du brouillon se fait par `runId` — **l'ancien fonctionnement n'écrase pas une
 séance en cours, aucune règle de fusion nouvelle n'était nécessaire** (mesuré dans le code ET par les gestes). L'import de programme garde sa porte.
-Sous-titre de l'entrée sur une ligne (l'ancien passait sur deux jusqu'à 390 px). iPhone, mesuré : le « + » ne bouge pas (4 largeurs) ; la feuille du menu
+Sous-titre de l'entrée sur une ligne (l'ancien passait sur deux jusqu'à 390 px) ↪️ *18/10, mesuré dans le clone (R23) : une ligne à 375 / 390 / 430 px, **deux à 360 px**.* iPhone, mesuré : le « + » ne bouge pas (4 largeurs) ; la feuille du menu
 défile à 375 × 667 (« Abandonner » et « Fermer » sous le bord, atteignables — elle défilait déjà pour « Fermer ») ; à 360 × 740 « Fermer » passe sous le bord.
 
 **② Note de la dernière séance.** Fiche et indicateur : « Note de la dernière séance » ; point gardé même si le texte du jour est identique (la proposition
@@ -1182,3 +1182,38 @@ l'ancien écran est réutilisé, aucun moteur ajouté).
 
 **À faire** : passe complète sur l'arbre final après refusion de master ; aides (règle d'or #11 : la ligne du menu, la fiche renommée — chantier AIDES-01) ;
 recette iPhone de Michel ; décision de Michel sur la proposition de l'outil ; feu vert de Michel avant tout push, clone ou publication.
+
+### 🧪 D-088 SUR LE CLONE DE TEST — PUBLIÉ (18/10/2026, autorisation explicite de Michel : le clone SEULEMENT, production `ft-v1256` intouchée)
+
+**Quoi.** `clone/` régénéré par `tools/clone_build.py` depuis `claude/ux-d086` @ `0965619d` = D-088 (`434fa100`) + refusion de master `dbb50941`
+(documentation et clone D-085 : fichiers de l'app identiques à `434fa100`). Commit master `75288092` : **uniquement `clone/`** (5 fichiers : `CLONE-SOURCE.json`,
+`coach.js`, `index.html`, `log.js`, `style.css` — exactement les fichiers de code changés entre D-085 `6d9b6c90` et D-088), sans `[skip ci]`, avance rapide ;
+Pages n°1354 SUCCESS, seul workflow déclenché (Apps Script et Worker filtrés par chemins). La branche `claude/ux-d086` est poussée et porte cette documentation.
+
+**Production.** Avant : arbre de publication = master + `clone/` régénéré, 0 fichier hors `clone/`, `sw.js` `ft-v1256`, `check_regles` code 0 ; fichiers servis
+changés depuis le dernier publié `ac71030f` (`BUGS.md` §81) : `clone/` seulement. Après (API GitHub) : parent `dbb50941`, 1 118 fichiers hors `clone/` identiques,
+`sw.js` `ft-v1256`. Site en ligne non relisible d'ici (proxy : `CONNECT tunnel failed, 403` vers github.io).
+
+**Tests.** Passe complète D-031 **7 505 ✅ / 0 ❌** sur `0965619d` (4 conditions vertes, 83 min) ; annexe 14 PASS + 1 défaut connu (rejouée sans charge ; au 1er passage, pendant la passe : 1 FAIL `pwa-offline` P9, cause mesurée : minutage du témoin) ; isolement 22 / 0, contrôle négatif 8 / 8 ;
+à travers le clone (shim actif) : B-D086 122 / 0, B-NOTE 70 / 0, B-UXI 69 / 0, B-UXS 69 / 0, sonde réseau 11 / 0 ; B-D088 41 / 11 **dont les 11 rouges viennent
+tous de la coupure réseau du clone** (prouvé : une copie du clone avec le SEUL réseau rouvert — mutation MI5 — donne 52 / 0 ; `BUGS.md` §84) ; données
+clone = source 7 / 7 et clone = prod 7 / 7 ; 21 captures avec le vrai service worker du clone, « + » identique à D-085 aux 3 largeurs (règle d'or #9, mesuré).
+
+**Annexe — le rouge du 1er passage.** Lancée pendant la passe, l'annexe a eu 1 FAIL : `pwa-offline` P9 (« le serveur n'a reçu aucune
+requête après la coupure » → 23). Cause mesurée (copie instrumentée du test, hors dépôt) : après s'être activé, le service worker télécharge les images
+d'exercices en arrière-plan (voulu, `sw.js` identique à la prod) ; sur une machine chargée, ce flux est encore en cours à la coupure et le test le compte
+« après ». Rejoué seul : 11 / 0 ; annexe entière rejouée sans charge : 14 PASS + 1 défaut connu. Fragilité du TÉMOIN (minutage), pas de l'app — témoin
+non modifié.
+
+**Ce que le clone ne peut pas montrer (D-084, voulu).** La lecture par l'IA de l'import (« Erreur analyse : Clone de test : réseau coupé vers … », retour à
+l'étape 2, rien n'est écrit) ; les réponses de Milo (la question s'affiche datée, puis une bulle d'erreur datée, badge « Gardien » réservé au clone) ;
+synchro et restauration.
+
+**Réserves pour la recette.** 8 images « muscles » en 404 au tout premier chargement, avant que le service worker du clone prenne la main (déjà vu avec
+D-085) ; diapo « Séance » du Guide = image de la prod ; une page déjà ouverte garde l'ancien clone jusqu'au rechargement ; seule sortie réseau observée :
+l'image QR de partage (lien public de l'app, identique en prod).
+
+**Règle #17** : non déclenchée côté application (0 donnée, 0 fichier applicatif, 0 chemin) — seul `clone/` est régénéré par l'outil existant.
+**Durées** : estimé ≈ 2 h 15 (travail ≈ 50 min, tests ≈ 85 min de passe + ≈ 20 min en parallèle, risques à part) ; mesuré 103 min (17:08 → 18:51 UTC),
+passe 83 min ; aucun risque survenu ; travail non prévu : diagnostic de l'import et de Milo coupés dans le clone, deux artefacts de banc (§84).
+**Suite** : recette iPhone de Michel sur le clone ; intégration dans l'app réelle = nouvelle autorisation explicite ; les 3 arbitrages D-086 restent ouverts.

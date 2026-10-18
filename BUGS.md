@@ -4769,3 +4769,20 @@ retrouvé, puis point absent) · `tools/mut_notes_d087.py` 21 / 21 (M9 rougit sa
 **À quoi on le reconnaît.** Un rouge dont le détail parle d'autre chose que du geste testé (une adresse au démarrage, un nom
 d'exercice différent), ou un vert qui resterait vert si la fonction n'existait pas. Avant de conclure « l'app a perdu X », refaire le
 geste **comme la personne** (faire défiler, ouvrir la carte) et vérifier que la sonde a bien atteint l'endroit voulu.
+
+## §84 — ⛔ REJOUER UN BANC À TRAVERS LE CLONE : UN ROUGE N'EST PAS UN DÉFAUT TANT QU'ON N'A PAS PROUVÉ SA CAUSE *(18/10/2026, publication de D-088 sur le clone — session-B, aucun code de l'app modifié)*
+
+**Symptôme.** Rejoués à travers le clone (shim d'isolement actif), deux bancs rougissent alors qu'ils sont verts sur leur arbre source : B-D086 120 / 2 (⑮b à
+360 et 430 px) et B-D088 41 / 11 (tous les témoins d'import d'historique et d'import de programme).
+
+**Causes (mesurées).** ① ⑮b espionne `Storage.prototype.setItem` dans un script posé AVANT le shim : il voit la clé RÉELLE, préfixée `cl_` par le shim, et
+la compare à des noms écrits en clair (`ft4_seen_ft`, `ft4_gardienStats`). Rendre à l'espion le nom côté application (adaptation ④ du lanceur, hors dépôt) :
+122 / 0. ② B-D088 simule l'IA d'import en interceptant le réseau ; le shim rejette l'appel AVANT le réseau (« Clone de test : réseau coupé vers … ») — c'est
+sa raison d'être (D-084). Preuve par **mutation inverse** : sur une COPIE du clone dont SEUL le réseau est rouvert (la mutation MI5 du contrôle négatif), 52 / 0.
+
+**À quoi on le reconnaît.** Un banc vert sur sa source, rouge dans le clone, sur des témoins qui touchent le stockage brut ou le réseau.
+
+**La règle.** On ne classe pas un rouge « artefact » à l'œil : on retire **la seule** différence suspectée (une copie, une adaptation nommée) et on montre que
+le rouge disparaît — ni plus, ni moins. ⚠️ Et une sonde qui affirme « aucune requête ne sort » se trompe de périmètre : le shim coupe les canaux de DONNÉES
+(fetch, XHR, beacon, WebSocket, EventSource), pas les images — l'image QR de partage (lien public de l'app) sort, comme en production. *Un témoin dit ce que
+le système promet, pas plus.*
