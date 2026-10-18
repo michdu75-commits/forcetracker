@@ -63,7 +63,7 @@ MUT = [
     ('M13 [deguisee] le point est masque (display:none, la couleur reste)',
      [(CS, '.exn-prev .exn-pt{position:absolute;', '.exn-prev .exn-pt{display:none;position:absolute;')], 'GARDE', 'B-NOTE-⑧a'),
     ('M14 l\'indicateur ne dit plus ce qu\'il ouvre (aucune date)',
-     [(LO, 'aria-label="Note de la dernière fois, séance du ${_dateNoteFR(_noteExPrev.date)} — touche pour la lire"', 'aria-label="Note"')], 'GARDE', 'B-NOTE-⑧f'),
+     [(LO, 'aria-label="Note de la dernière séance, du ${_dateNoteFR(_noteExPrev.date)} — touche pour la lire"', 'aria-label="Note"')], 'GARDE', 'B-NOTE-⑧f'),
     # ── ① · conservation
     ('M15 [deguisee] la fin de seance range les exercices SANS leur note',
      [(LO, "const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,",

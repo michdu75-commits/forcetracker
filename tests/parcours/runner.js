@@ -39760,6 +39760,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      de série sans contamination, types N / É / X indépendants, contexte de Milo SIMULÉ (aucun appel), 360 / 375 / 390 / 430 px.
      Blocs B-NOTE-*. Banc : tools/banc_notes_d087.js · contrôle négatif : tools/mut_notes_d087.py. */
   await require('./notes_d087.js').ecran(t, b, PORT);
+  /* 📥 Brief « D-088 » (18/10/2026, décisions de Michel, registre D-089) — « Importer un historique » de retour dans le menu
+     « … » de la séance (même moteur que l'ancien écran, IA d'import SIMULÉE), la séance en cours jamais touchée (import,
+     annulation, fermeture, rechargement, analyse vide, historique vide, remplacement explicite), l'import de programme intact,
+     « Note de la dernière séance » (point gardé si le texte est identique), et l'outil du prompt de Milo confiné (leurre de
+     dépôt + garde d'écriture). Blocs B-D088-*. Banc : tools/banc_d088.js · contrôle négatif : tools/mut_d088.py. */
+  await require('./d088_import_notes.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

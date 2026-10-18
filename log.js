@@ -396,6 +396,15 @@ function openWktMenu(){
   }
   g1+=ligne(ic('<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>'),
     'Programmes','Charger un programme, ou enregistrer celle-ci','closeWktMenu();openProgModal()');
+  /* 📥 Brief « D-088 » (décision de Michel, 18/10) — IMPORTER UN HISTORIQUE PENDANT LA SÉANCE. L'ancien écran le permettait (la
+     ligne « J'ai déjà un programme ou un historique » restait visible pendant la séance) ; D-085 l'a rangée dans l'écran d'avant
+     séance seulement. ⛔ Même moteur, aucun second : `openImportHist`, la porte de l'ancien bouton. Les séances importées vont dans
+     l'HISTORIQUE (`S.sessions`) — `finalImportHist` n'écrit ni `S.wkt` ni son brouillon (banc B-D088). Le programme garde sa porte
+     (« Programmes » → « Importer un programme »). Icône « import » et non le calendrier de l'ancien bouton : « Date de la séance »
+     le porte déjà dans ce menu. Sous-titre sur UNE ligne comme les autres : l'ancien (« Séances déjà réalisées → historique + stats +
+     PRs aux bonnes dates ») passait sur deux lignes jusqu'à 390 px et allongeait la feuille (mesuré). */
+  g1+=ligne(ic('<path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/>'),
+    'Importer un historique','Séances passées → historique, stats et records','closeWktMenu();openImportHist()');
   g1+=ligne(ic('<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),'Aide de l\'écran Séance','','closeWktMenu();showHelp()');
   let g2='';
   if(exs.length) g2+=ligne(ic('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>'),
@@ -1198,7 +1207,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     })()
     +`<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
     +(_noteExPrev
-      ?`<button class="exn-prev" id="exn-prev-${ei}" onclick="openExNotePrev(${ei})" title="Note de la dernière fois (${_dateNoteFR(_noteExPrev.date)}) — touche pour la lire" aria-label="Note de la dernière fois, séance du ${_dateNoteFR(_noteExPrev.date)} — touche pour la lire">💬<span class="exn-pt" aria-hidden="true"></span></button>`
+      ?`<button class="exn-prev" id="exn-prev-${ei}" onclick="openExNotePrev(${ei})" title="Note de la dernière séance (${_dateNoteFR(_noteExPrev.date)}) — touche pour la lire" aria-label="Note de la dernière séance, du ${_dateNoteFR(_noteExPrev.date)} — touche pour la lire">💬<span class="exn-pt" aria-hidden="true"></span></button>`
       :`<span style="font-size:14px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>`)
     +`<textarea id="ex-note-${ei}" rows="1" placeholder="Note perso (trop léger, fatigue, douleur…)" oninput="saveExNote(${ei},this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="flex:1;resize:none;overflow:hidden;border:none;background:transparent;color:var(--t2);font-size:12px;font-family:inherit;padding:4px 2px;line-height:1.4;min-height:26px;outline:none;caret-color:var(--red);">${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`
     +_tempoChip(ex)   // 🐢 ce que l'app a COMPRIS de la consigne, à côté de la consigne elle-même
@@ -1425,7 +1434,12 @@ function _notesPrecedentes(ex){
    ⛔ LECTURE SEULE : rien n'est recopié, prérempli ni modifié dans la note du jour (`ex.note` de la séance en cours).
    ⚠️ Mesuré dans le code : le champ porte aussi la consigne d'un programme ou de Milo, recopiée au chargement
    (`_loadProgDayVraiment`, `_applyMiloSession`…) — c'est donc LA note de l'exercice telle qu'elle a été enregistrée.
-   Rend `{texte, date, nom}` ou `null` (aucune note la dernière fois → aucun indicateur). */
+   Rend `{texte, date, nom}` ou `null` (aucune note la dernière fois → aucun indicateur).
+   🏷️ Brief « D-088 » (Michel, 18/10) : la fenêtre dit « Note de la dernière séance » — un nom NEUTRE, parce que ce texte peut être
+   une observation personnelle, une indication de matériel, une consigne de programme ou de Milo, et qu'on ne devine PAS l'origine
+   d'un texte en le lisant. Aucune provenance fiable n'existe pour la note elle-même (`_milo`, `progLabel` disent d'où vient
+   l'EXERCICE, pas qui a écrit la note, que la personne peut avoir réécrite). ⛔ Le point reste même si le texte est identique à
+   celui du champ du jour (la proposition de le masquer est écartée). */
 function _noteExPrecedente(ex){
   const v=ex&&_prevSeance(ex.name);
   const t=(v&&v.ex&&typeof v.ex.note==='string')?v.ex.note.trim():'';
@@ -1437,7 +1451,7 @@ function openExNotePrev(ei){
   if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-ex-note-prev';ov.onclick=e=>{if(e.target===ov)closeExNotePrev();};document.body.appendChild(ov);}
   ov.innerHTML=`<div class="modal" style="max-width:360px;">
     <div class="modal-handle"></div>
-    <div class="sn-prev" id="exn-prev-fiche"><div class="sn-prev-t">💬 Note de la dernière fois</div><div class="sn-prev-o">Séance du ${_dateNoteFR(np.date)} · ${_escNote(np.nom)}</div><div class="sn-prev-x" style="white-space:pre-wrap;">« ${_escNote(np.texte)} »</div></div>
+    <div class="sn-prev" id="exn-prev-fiche"><div class="sn-prev-t">💬 Note de la dernière séance</div><div class="sn-prev-o">Séance du ${_dateNoteFR(np.date)} · ${_escNote(np.nom)}</div><div class="sn-prev-x" style="white-space:pre-wrap;">« ${_escNote(np.texte)} »</div></div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Lecture seule : ta note d'aujourd'hui ne change pas.</div>
     <button class="btn btn-bg2" style="width:100%;" onclick="closeExNotePrev()">Fermer</button>
   </div>`;
