@@ -1061,17 +1061,17 @@ ENREGISTRÉES de chaque message Milo, « Date indisponible » sinon, dessinées 
 `_seanceOuverte`, `finishWorkout`, les valeurs de « Précédent » (repli compris), le prompt, les quotas, la mémoire et l'ENREGISTREMENT des messages de Milo.
 
 **Tests** : banc B-D086 (`tests/parcours/ux_d086.js`, `tools/banc_ux_d086.js`, 15 points × 360 / 375 / 390 / 430 px) **122 / 0** ; le même banc sur le code D-085
-`6d9b6c90` : **61 / 61** (les 61 verts sont les invariants), sans plantage ; contrôle négatif `tools/mut_ux_d086.py` **26 / 26** (M00 + 24 ciblées + 1 équivalente,
+`6d9b6c90` : **59 verts / 63 rouges** (les verts sont les invariants ; les rouges, les décisions D-086 et les témoins de leur parcours — dont les 2 « pire cas » ③e à 360 / 375 px, ajoutés après un premier essai à 61 / 61 : sur D-085, « Précédent » y est rogné), sans plantage ; contrôle négatif `tools/mut_ux_d086.py` **26 / 26** (M00 + 24 ciblées + 1 équivalente,
 arbre sain rejoué à 0). Bancs voisins rejoués : B-UXI 69 / 0 (4 témoins de D-085 G réécrits, R30) · B-UXS 69 / 0 · B-CC01 31 / 0 ; contrôle négatif de D-085
 `tools/mut_ux_integration.py` rejoué : **27 / 27** (M19 réécrite pour viser la pastille de la colonne Type, R30 ; arbre sain 0 au début et à la fin).
 
-**Règle #17** : 0 donnée persistée · 4 fichiers applicatifs (`log.js`, `style.css`, `index.html`, `coach.js`) · +209 / −68 · fusionnés ou retirés : le numéro-bouton
+**Règle #17** : 0 donnée persistée · 4 fichiers applicatifs (`log.js`, `style.css`, `index.html`, `coach.js`) · +210 / −68 (correctif CXLI compris) · fusionnés ou retirés : le numéro-bouton
 de type et son badge (`.set-row .tbtn.snum`, `.snum-n`, `.stype-b`, règle daltonienne associée) ; la note de la dernière fois écrite dans la ligne ; le groupe
 `#rest-btns` ; la liste `[60,90,120]` recopiée 5 fois (→ `_REPOS_PRESETS`) ; `getPrev` / `_prevAligne` deviennent les reflets de `_prevSeance` /
 `_prevAligneDetail` (un seul propriétaire).
 
 **À trancher par Michel** : ① où afficher la note d'EXERCICE de la dernière fois (« Note perso ») — elle n'est rattachable à aucune série ; ② poser une heure au
-débrief et à « continuer dans le Coach » (ils entrent dans le fil sans `ts` : c'est un changement d'enregistrement, donc STOP, proposition à part) ; ③ abdos :
+débrief et à « continuer dans le Coach » (ils entrent dans le fil sans `ts` : c'est un changement d'enregistrement, donc STOP, proposition à part — poser `ts` à leur entrée dans le fil, 2 endroits, le même champ que les autres messages, aucune clé ; le fil reste sur le téléphone, rien ne part sur Internet ; les anciens restent « Date indisponible ») ; ③ abdos :
 repos fixe de 30 s sans mémoire (règle existante) ; ④ choisir 30 s quand plus de 30 s sont déjà écoulées arrête le repos SANS mémoriser la durée (comportement
 existant de `setRestPreset`, non modifié).
 
@@ -1084,5 +1084,9 @@ commentaire ni l'heure des messages (règle d'or #11, points 2 à 5, à faire av
 y prendrait l'heure de consultation ; la définition de X dans « Tags de série » (« menée jusqu'à l'échec musculaire ») diffère de celle de Michel (« répétition
 tentée et non réussie »).
 
-**À faire** : passe complète D-031 sur l'arbre fonctionnel final ; recette iPhone de Michel ; feu vert de Michel avant toute régénération du clone, intégration ou
+**Bancs voisins (sélecteur de recette, T1 + T2)** : ml_a 34 / 0 · fil_lot1 39 / 0 · nut_punch01 36 / 0 · ml_b 60 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · milo_pdf1 97 / 0 · auth_ia 25 / 0 · seance_c3 35 / 0 · nutri_moteur 28 / 0 · selecteur_autotest 15 / 0 · annexe 1 DÉFAUT CONNU · 14 PASS — le défaut connu est la suite « discussions » (2 témoins de TAILLE du prompt de Milo, connus depuis ft-v1239) : 35/37 sur D-085 comme sur D-086, mêmes témoins, mêmes tailles.
+
+**Passe complète D-031 (sur `ab8ab183`, arbre `ffa231be`, 83 min) : 7 382 ✅ / 1 ❌ — NON VALIDE.** Le rouge est un **vrai défaut de D-086**, attrapé par le témoin CXLI (ft-v1037) : la pastille de type demandait une graisse 800 en Space Grotesk, police qui s'arrête à 700 (le navigateur ramenait déjà à 700 : rien ne changeait à l'écran). **Corrigé dans `1242ed62`** (700, et la raison écrite à côté). Le témoin CXLI, extrait tel quel du runner et rejoué seul : 3 / 1 rouge sur `ab8ab183`, 4 / 0 sur `1242ed62`, 4 / 0 sur D-085. Rejoués sur `1242ed62` : B-D086 122 / 0 · B-UXI 69 / 0 · B-UXS 69 / 0 · CC-01 31 / 0 · mutations D-086 26 / 26 · captures identiques au pixel près. Conditions : ① total ✅ · ② code 1 (la conséquence du rouge, pas un plantage) · ③ arbre inchangé ✅ · ④ ❌ **par construction** : les 6 commits de master absents de la branche sont la publication du clone (`clone/`, docs, `BUGS.md` — 0 fichier applicatif de la racine, vérifié) ; la branche part de la source D-085, comme demandé ; une fusion master → branche a été tentée pour verdir ④, puis annulée (bloquée par l'outil de sécurité de la session ; non demandée par le brief). ⛔ **Pas de 2ᵉ passe** : le brief n'en autorise qu'une. Depuis la passe : ce correctif (une valeur CSS et son commentaire) et de la documentation.
+
+**À faire** : une passe complète sur l'arbre final, après refusion de master, avant toute intégration (protocole #13) ; recette iPhone de Michel ; feu vert de Michel avant toute régénération du clone, intégration ou
 publication.
