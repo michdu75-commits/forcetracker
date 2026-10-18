@@ -10,6 +10,18 @@
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const http=require('http'), fs=require('fs'), path=require('path');
 const ROOT='/home/user/forcetracker';
+/* ⛔⛔ CONFINEMENT (BUGS.md §83 ⑦, brief « D-088 » du 18/10/2026) — CET OUTIL LIT ET ÉCRIT `ROOT`, ET RIEN D'AUTRE.
+   Lancé depuis un dossier de travail (une branche, une copie), il réécrivait docs/PROMPT-MILO-REEL.txt du DÉPÔT PRINCIPAL à partir
+   du code de master — deux fois le 18/10 — sans jamais lire le code du dossier où l'on travaillait. 👉 Il refuse donc de tourner
+   ailleurs qu'à la racine de ROOT. ⚠️ Les deux lignes à chemin fixe restent telles quelles, exprès : tools/gen_milo_consolidation_pdf.py
+   les remplace mot pour mot pour se rediriger, et le lance depuis sa propre racine. Version qui marche depuis une branche : proposition
+   à part (elle touche aussi ce générateur), en attente de validation. */
+let _ici=''; try{ _ici=fs.realpathSync(process.cwd()); }catch(e){}
+if(_ici!==ROOT){
+  console.error('⛔ dump_prompt.js lit et écrit '+ROOT+' : lancé depuis « '+(_ici||process.cwd())+' », il REFUSE (aucune lecture, aucune écriture).'
+    +'\n   Dépôt principal : cd '+ROOT+' && node tools/dump_prompt.js');
+  process.exit(2);
+}
 const M={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.webp':'image/webp'};
 const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);if(p==='/')p='/index.html';
   const f=path.join(ROOT,p);
