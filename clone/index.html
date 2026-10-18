@@ -25,7 +25,7 @@
    fichier, posée par le générateur) refuse de démarrer et le dit à l'écran.
    ⚠️ Les gardes `window.__FT_CLONE__` du code de l'app (cookie ft_email, identité IDB) en
    dépendent : le drapeau est posé en premier, quoi qu'il arrive.
-   ⚠️ Ce fichier est un MODÈLE : `["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"]` et `{"ref": "claude/ux-seance-01", "sha": "1ab2b38f8f30c09c1ddd787ddfe602a8e953f888", "genere_le": "2026-10-17 08:00 UTC"}` sont remplacés par le
+   ⚠️ Ce fichier est un MODÈLE : `["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"]` et `{"ref": "6d9b6c90", "sha": "6d9b6c909dc9016b5d05649e2ecc07c9607234f7", "genere_le": "2026-10-18 06:10 UTC"}` sont remplacés par le
    générateur. Ne pas éditer clone/index.html à la main — régénérer.
    ============================================================================================ */
 (function(){
@@ -37,7 +37,7 @@
   var PROPRES = ["", "index.html", "style.css", "manifest.json", "sw.js", "capacites-ia.js", "constants.js", "state.js", "supabase.js", "screens.js", "log.js", "setup.js", "tracking.js", "coach.js", "food-health.js", "app.js"];                                // fichiers servis PAR le clone
   var echecs = [];
   function echec(r){ echecs.push(r); }
-  window.__FT_CLONE_SOURCE__ = {"ref": "claude/ux-seance-01", "sha": "1ab2b38f8f30c09c1ddd787ddfe602a8e953f888", "genere_le": "2026-10-17 08:00 UTC"};
+  window.__FT_CLONE_SOURCE__ = {"ref": "6d9b6c90", "sha": "6d9b6c909dc9016b5d05649e2ecc07c9607234f7", "genere_le": "2026-10-18 06:10 UTC"};
 
   /* 1. localStorage / sessionStorage — le prototype commun aux deux. */
   try {
@@ -1843,6 +1843,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </button>
   </div>
 
+  <!-- 🎨 D-085 (décision I de Michel, 17/10/2026) — DEUX ONGLETS PERMANENTS. « Espace Milo » montre l'accueil de Milo
+       (#coach-home : ce que Milo sait de toi, son questionnaire, Programme perso, Analyse mes stats, Conseil nutrition,
+       Analyses photo…) même quand une discussion existe — avant, il disparaissait dès le 1er échange. Aucun contenu
+       dupliqué : les deux onglets montrent les éléments qui existaient déjà (coach.js, `coachTab`). Affichage seul. -->
+  <div class="coach-tabs" id="coach-tabs" role="tablist" aria-label="Milo">
+    <button type="button" role="tab" id="ctab-disc" onclick="coachTab('disc')">Discussion</button>
+    <button type="button" role="tab" id="ctab-espace" onclick="coachTab('espace')">Espace Milo</button>
+  </div>
+
   <!-- HISTORIQUE DES DISCUSSIONS (Coach) -->
   <div class="overlay" id="ov-coach-convs" onclick="if(event.target===this)closeCoachConvs()">
     <div class="modal" style="max-width:430px;">
@@ -2588,9 +2597,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       </div>
     </div>
     <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6">
-      💡 Le <strong>1RM estimé</strong> s'affiche en temps réel sous chaque série. Le <strong>volume</strong> affiché = séries de travail uniquement (échauffement exclu).
+      💡 Le <strong>1RM estimé</strong> s'affiche en temps réel dans la colonne 1RM de chaque série. Le <strong>volume</strong> affiché = séries de travail uniquement (échauffement exclu).
     </div>
-    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Tape sur la pastille en séance pour changer le tag — le nom s'affiche en toast</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Touche le numéro de la série, en séance, pour changer le tag — le nom s'affiche en toast</div>
     <div style="border-top:1px solid var(--sep);padding-top:16px;margin-bottom:12px">
       <div style="font-weight:800;font-size:15px;margin-bottom:12px;text-align:center">Chaînes d'exercices</div>
       <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5">Dans le footer d'un exercice, des boutons permettent d'enchaîner automatiquement plusieurs exercices ou séries :</div>

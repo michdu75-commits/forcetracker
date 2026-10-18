@@ -172,13 +172,23 @@ function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChron
    R30 : l'ancien en-tête de l'écran (« Séance » + chrono + Pause ✕ Vider Changer) n'est pas perdu, il est RANGÉ :
    le chrono est ici, Pause / Vider / Abandonner / Programmes sont dans le menu ⋯ (`openWktMenu`), la reprise
    d'une pause est ici (bouton ▶). Chaque action garde son propriétaire. */
+/* 🏷️ « SÉANCE PRÊTE » (décision M de Michel, 17/10/2026 — D-085). Un programme chargé dont aucune série n'est faite
+   n'est pas « en cours » : on le DIT « prête ». ⛔ AFFICHAGE SEUL — `_seanceOuverte()` (la règle métier lue par
+   l'Accueil, la Nutrition, la reprise et le point du « + ») ne change pas : une séance prête reste OUVERTE.
+   Prête = ouverte, chrono pas encore parti (`startTs` se pose à la 1ʳᵉ série validée), rien à enregistrer (aucune
+   série faite, aucun cardio noté) — les propriétaires existants répondent, rien n'est stocké. */
+function _seancePrete(){
+  if(!_seanceOuverte()||S.wkt.startTs) return false;
+  const c=(typeof _contenuFinSeance==='function')?_contenuFinSeance():{fait:false,cardio:false};
+  return !c.fait && !c.cardio && !(_cardioNoteMin()>0);
+}
 function _renderEnteteSeance(){
   const ouverte=_seanceOuverte();
   const root=document.getElementById('root'); if(root) root.classList.toggle('seance-on',ouverte);
   const nb=document.getElementById('nb-log'); if(nb) nb.setAttribute('aria-label',ouverte?'Revenir à ta séance':'Démarrer une séance');
   const el=document.getElementById('tb-seance'); if(!el) return;
   if(!ouverte){ el.innerHTML=''; return; }
-  const p=_isWktPaused(), b=_bilanTravailWkt(), c=_contenuFinSeance(), exs=S.wkt.exs||[];
+  const p=_isWktPaused(), b=_bilanTravailWkt(), c=_contenuFinSeance(), exs=S.wkt.exs||[], pret=_seancePrete();
   const lbl=S.wkt.progLabel||((!exs.length&&_cardioNoteMin()>0)?'Cardio':'Séance libre');
   const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   // L'unité et le libellé sont dans LEUR élément : la traduction (translations.js) ne remplace qu'un texte EXACT.
@@ -187,15 +197,48 @@ function _renderEnteteSeance(){
   const ic=(d,f)=>'<svg viewBox="0 0 24 24" aria-hidden="true" '+(f?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"')+'>'+d+'</svg>';
   const segs=exs.map(ex=>{ const x=_bilanTravailEx(ex), pct=x.total?Math.round(x.faites/x.total*100):0;
     return '<i'+(_exTermine(ex)?' class="ok"':'')+'><b style="width:'+pct+'%"></b></i>'; }).join('');
-  el.innerHTML='<div class="tbs-r'+(p?' tbs-pause':'')+'">'
-    +'<div class="tbs-meta"><b class="tbs-etat"><span class="tbs-live" aria-hidden="true"></span>'+(p?'Séance en pause':'Séance en cours')+'</b>'
-    +'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono">'+_fmtElapsed()+'</span>'+(progres?' · '+progres:'')+' · <span>'+esc(lbl)+'</span></span></div>'
+  el.innerHTML='<div class="tbs-r'+(p?' tbs-pause':'')+(pret?' tbs-pret':'')+'">'
+    +'<div class="tbs-meta"><b class="tbs-etat"><span class="tbs-live" aria-hidden="true"></span>'+(p?'Séance en pause':pret?'Séance prête':'Séance en cours')+'</b>'
+    +(pret
+      // prête : « Push · 0 / 7 séries » — pas de chrono (il n'est pas parti) ; l'élément reste là, caché, pour son propriétaire
+      ?'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono" hidden>'+_fmtElapsed()+'</span><span>'+esc(lbl)+'</span>'+(progres?' · '+progres:'')+'</span></div>'
+      :'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono">'+_fmtElapsed()+'</span>'+(progres?' · '+progres:'')+' · <span>'+esc(lbl)+'</span></span></div>')
     +(p?'<button id="wkt-pause-btn" class="tbs-btn tbs-rep" onclick="toggleWktPause()" aria-label="Reprendre la séance" title="Reprendre">'+ic('<path d="M7 4l13 8-13 8z"/>',1)+'</button>':'')
     +'<button class="tbs-btn" onclick="openWktMenu()" aria-label="Plus d\'actions sur la séance" aria-haspopup="dialog">'+ic('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>',1)+'</button>'
     +((c.fait||c.cardio)?'<button class="tbs-fin" onclick="terminerSeance()">'+ic('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>')+'Terminer</button>':'')
     +'</div>'
     +(exs.length?'<div id="tbs-segs" class="tbs-segs" role="img" aria-label="Progression : '+b.faites+' série'+(b.faites>1?'s':'')+' de travail sur '+b.total+'">'+segs+'</div>':'');
 }
+/* ⌨️ CLAVIER OUVERT PENDANT LA SAISIE D'UNE SÉRIE (décision H de Michel, 17/10/2026 — D-085).
+   Pendant qu'on tape des reps ou une charge, la barre du bas se MASQUE (elle revient à la fermeture du clavier) et la
+   ligne en cours est ramenée au-dessus du clavier. ⛔ Affichage seul : une classe sur `#root` (`kbd-serie`), posée par le
+   focus d'un champ de série de l'écran Séance et retirée quand plus aucun ne l'a — rien n'est stocké, aucune donnée ne
+   change. ⚠️ Sur iOS le clavier ne rétrécit pas `innerHeight` : la hauteur visible se lit sur `visualViewport` (même
+   règle que app.js). Le vrai clavier iPhone n'est pas reproductible ici : recette iPhone obligatoire. */
+function _estChampSerie(el){ return !!(el&&el.classList&&el.classList.contains('sinp')&&el.closest&&el.closest('#s-log')); }
+function _garderLigneVisible(el){
+  try{
+    const row=el.closest('.set-row')||el, scr=el.closest('.screen'); if(!scr) return;
+    const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+    const r=row.getBoundingClientRect(), bas=vh-16, haut=96;   // 96 : sous l'en-tête de séance
+    if(r.bottom>bas) scr.scrollTop+=r.bottom-bas;
+    else if(r.top<haut) scr.scrollTop-=haut-r.top;
+  }catch(e){}
+}
+function _clavierSerie(on,el){
+  const root=document.getElementById('root'); if(!root) return;
+  root.classList.toggle('kbd-serie',!!on);
+  if(on&&el){ _garderLigneVisible(el); setTimeout(()=>{ if(document.activeElement===el) _garderLigneVisible(el); },320); }
+}
+document.addEventListener('focusin',e=>{ if(_estChampSerie(e.target)) _clavierSerie(true,e.target); });
+document.addEventListener('focusout',e=>{
+  if(!_estChampSerie(e.target)) return;
+  // le focus passe souvent d'un champ au suivant (reps → kg) : on attend de savoir où il va avant de rendre la barre
+  setTimeout(()=>{ if(!_estChampSerie(document.activeElement)) _clavierSerie(false); },60);
+});
+if(window.visualViewport) window.visualViewport.addEventListener('resize',()=>{
+  const a=document.activeElement; if(_estChampSerie(a)) _garderLigneVisible(a);
+});
 // Rafraîchit l'en-tête après une pause / une reprise (le chrono, l'état et le bouton ▶ vivent au même endroit).
 function _syncWktPauseUI(){ _renderEnteteSeance(); }
 // Met la séance en pause ou la reprend — fige/relance le chrono de durée.
@@ -319,6 +362,7 @@ function terminerSeance(){
   const n=_bilanTravailWkt().restantes;
   if(n<=0) return finishWorkout();
   showConfirm('Il reste '+n+' série'+(n>1?'s':'')+' à faire','Terminer quand même ?',()=>finishWorkout(),'Terminer quand même','Continuer la séance');
+  document.getElementById('ov-confirm').classList.add('cf-seance');   // D-085 (décision B) : Terminer = Cobalt
 }
 /* ⋯ UX SÉANCE (16/10/2026, cadrage validé) — LE MENU DE LA SÉANCE. Il RANGE les actions rares qui encombraient
    l'écran ; chaque ligne appelle le propriétaire EXISTANT, rien n'est réécrit : pause → `toggleWktPause`, date →
@@ -361,7 +405,7 @@ function openWktMenu(){
   g2+=ligne(ic('<circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'),
     'Abandonner la séance','Rien ne sera enregistré','closeWktMenu();clearWkt()','wm-danger');
   ov.innerHTML='<div class="wm-sheet" role="dialog" aria-label="Menu de la séance"><div class="wm-grab" aria-hidden="true"></div>'
-    +'<div class="wm-h"><b>'+(p?'Séance en pause':'Séance en cours')+'</b>'+(meta?'<span>'+meta.replace(/</g,'&lt;')+'</span>':'')+'</div>'
+    +'<div class="wm-h"><b>'+(p?'Séance en pause':_seancePrete()?'Séance prête':'Séance en cours')+'</b>'+(meta?'<span>'+meta.replace(/</g,'&lt;')+'</span>':'')+'</div>'
     +'<div class="wm-g">'+g1+'</div><div class="wm-g">'+g2+'</div>'
     +'<button class="wm-x" onclick="closeWktMenu()">Fermer</button></div>';
   ov.classList.add('open');
@@ -448,7 +492,9 @@ function _typeSeanceHtml(){
   try{
     if(typeof DISC_SEANCE==='undefined'||typeof DISC_CADRE==='undefined') return '';
     const ordre=['muscu','bodybuilding','powerbuilding','powerlifting','haltero'];
-    const ICO={muscu:'🏋️',bodybuilding:'💪',powerbuilding:'⚡',powerlifting:'🥇',haltero:'🤸'};
+    /* 🎨 D-085 (décision E de Michel, 17/10) : les petits emojis des types (🏋️ 💪 ⚡ 🥇 🤸) sont RETIRÉS — cartes en
+       TEXTE SEUL, sobres : le titre, le cadre reps / repos et la hiérarchie typographique suffisent (R30 : retrait écrit).
+       ⛔ Rien à voir avec la silhouette musculaire de Force Tracker, qui reste (contexte, « Ta séance jusqu'ici »). */
     const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
     /* ⭐ LA LIGNE COURTE SE DÉDUIT DU CADRE, elle ne se réécrit pas : `DISC_CADRE` est la
        source. Réécrire « 1-5 reps » à la main créerait une 2ᵉ vérité qui se périmerait (R2).
@@ -466,7 +512,7 @@ function _typeSeanceHtml(){
       const nEx=(DISC_SEANCE[d]||[]).length;
       const actif=(S.discipline||'muscu')===d;
       return '<button class="ts-carte'+(actif?' ts-actif':'')+'" onclick="lancerTypeSeance(\''+d+'\')">'
-        +'<div class="ts-h"><span class="ts-ico">'+ICO[d]+'</span>'
+        +'<div class="ts-h">'
         +'<span class="ts-nom">'+esc(lbl)+'</span>'
         +(actif?'<span class="ts-tag">la tienne</span>':'')
         +'<span class="ts-info" onclick="event.stopPropagation();ouvrirCadreType(\''+d+'\')" '
@@ -1047,11 +1093,15 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}${si===_curSi?' set-cur':''}" id="sr-${ei}-${si}">`
-      +`<div class="snum">${si+1}</div>`
+      /* 🎨 D-085 (décision G de Michel, 17/10) : le TYPE de la série vit SUR SON NUMÉRO (un petit badge quand ce n'est
+         pas une série normale) et le 1RM a SA colonne — on ne mélange plus « type » et « 1RM » dans la même case.
+         ⛔ Même action qu'avant : un appui change le type (`cycleType`, inchangé) ; mêmes ids (`tbtn-…`, `trm-…`) que
+         lisent `updateRMLive` et les bancs. Zone d'appui de 44 px de haut. */
+      +`<button class="snum tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" id="tbtn-${ei}-${si}" title="${SET_TYPE_LABELS[set.type]||'Normal'} — appuie pour changer le type" aria-label="Série ${si+1}, ${SET_TYPE_LABELS[set.type]||'Normal'} — changer le type"><span class="snum-n">${si+1}</span>${set.type&&set.type!=='N'?`<span class="stype-b">${set.type}</span>`:''}</button>`
       +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}${_prevRirBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
-      +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
+      +`<div class="srm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
       +`</div></div>`;
   });
@@ -1097,7 +1147,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<span style="font-size:11px;color:var(--t2);line-height:1.4;">${isDown?'Baisse le poids sans repos — repos unique après le dernier drop.':'Monte le poids — repos normal entre les séries.'}</span>`
       +`</div>`;
   }else{
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>Reps</span><span>KG</span><span>Type</span><span>✓</span></div>`;
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>Reps</span><span>KG</span><span>1RM</span><span>✓</span></div>`;
     useRows=rows;
   }
 
@@ -1183,13 +1233,13 @@ function _buildExHistChart(data){
   let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">`;
   if(n>1){
     const area=`M${px(0)},${py(data[0].kg)} `+data.slice(1).map((d,i)=>`L${px(i+1)},${py(d.kg)}`).join(' ')+` L${px(n-1)},${H-PB} L${px(0)},${H-PB} Z`;
-    s+=`<path d="${area}" fill="rgba(255,45,85,.08)"/>`;
+    s+=`<path d="${area}" fill="rgba(242,243,245,.06)"/>`;   // D-085 (décision J) : courbe de progression neutre
     const line=data.map((d,i)=>`${i===0?'M':'L'}${px(i)},${py(d.kg)}`).join(' ');
-    s+=`<path d="${line}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s+=`<path d="${line}" fill="none" stroke="var(--t1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   }
   data.forEach((d,i)=>{
     const cx=px(i),cy=py(d.kg);
-    s+=`<circle cx="${cx}" cy="${cy}" r="4" fill="var(--red)" stroke="var(--bg2)" stroke-width="2"/>`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="4" fill="var(--t1)" stroke="var(--bg2)" stroke-width="2"/>`;
     const above=cy>PT+16;
     s+=`<text x="${cx}" y="${above?cy-9:cy+16}" text-anchor="middle" font-size="11" fill="var(--t1)" font-weight="700" font-family="system-ui,sans-serif">${d.kg}kg</text>`;
     const dl=d.date?d.date.split('-').slice(1).reverse().join('/'):'';
@@ -1924,6 +1974,7 @@ function openUniHelp(nom){
 function closeUniHelp(){document.getElementById('ov-uni-help').classList.remove('open');}
 let _confirmCb=null,_confirmAltCb=null;
 function showConfirm(title,msg,cb,okLabel,altLabel,altCb){
+  document.getElementById('ov-confirm').classList.remove('cf-seance');   // D-085 : bouton rouge par défaut (seule la fin de séance le passe en Cobalt)
   document.getElementById('confirm-title').textContent=title;
   document.getElementById('confirm-msg').textContent=msg;
   _confirmCb=cb;_confirmAltCb=altCb||null;
@@ -5238,9 +5289,9 @@ function _updPill(){
   pillTime.textContent=(_dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
   const pct=Math.max(0,Math.min(100,left/restTot*100));
   pillFill.style.width=pct+'%';
-  const c=_dep?'var(--gold)':pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+  const c=_dep?'var(--gold)':pct>50?'var(--sea)':pct>20?'var(--gold)':'var(--red)';   // D-085 : Cobalt pendant le repos
   pillFill.style.background=c;
-  pill.style.borderColor=pct>50?'rgba(52,211,153,.5)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
+  pill.style.borderColor=pct>50?'var(--sea-a2)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
 }
 
 function _restTick(){
@@ -5568,8 +5619,10 @@ function updRest(){
   // La barre, elle, reste bornée à 0 : une largeur négative n'a pas de sens.
   const pct=Math.max(0,Math.min(100,reste/restTot*100));
   fillEl.style.width=pct+'%';
-  const c=dep?'var(--gold)':pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
-  const bc=dep?'rgba(255,214,0,.45)':pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
+  /* 🎨 D-085 (Michel, 17/10) : le repos QUI COURT est en bleu séance (Cobalt) ; les paliers de fin (or, rouge) et le
+     dépassement (or) sont inchangés — ils disent le temps qui reste, pas la séance. */
+  const c=dep?'var(--gold)':pct>50?'var(--sea)':pct>20?'var(--gold)':'var(--red)';
+  const bc=dep?'rgba(255,214,0,.45)':pct>50?'var(--sea-a2)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
   timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
   /* 🏋️ UX SÉANCE (16/10) — le dock montre la même progression sur un ANNEAU, et le total réglé à côté de « Repos ».
      Affichage seul : mêmes `pct`, `c` et `restTot` que la barre ci-dessus (rien n'est recalculé ailleurs, R2). */

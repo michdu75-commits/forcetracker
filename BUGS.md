@@ -4673,6 +4673,18 @@ remis) — `tools/mut_ux_integration.py`.
 **À quoi on le reconnaît.** Un élément décoratif placé en **position négative** (badge, pastille, compteur) qui paraît coupé net :
 chercher un `overflow:hidden` sur un **ancêtre**, souvent une règle générale (`button`, `.card`), pas sur l'élément lui-même.
 
+## §81 — ⛔⛔ « INTÉGRÉ À MASTER, NON PUBLIÉ » NE TIENT QUE JUSQU'AU PREMIER PUSH SANS `[skip ci]` *(18/10/2026, constaté en préparant le clone D-085 — session-B, aucun code de l'app modifié)*
+
+**Symptôme.** Le 18/10, les documents d'état disaient encore : « master = production `ft-v1256` + SEANCE-01 et CC-01 intégrés, non publiés ». C'était faux depuis le 17/10 à 09:26 UTC.
+
+**Cause.** Pages déploie à chaque push sur master **tout le dépôt** (`deploy-pages.yml`, `path: .`), sauf si le commit de tête porte `[skip ci]`. SEANCE-01 et CC-01 avaient été intégrés le 16/10 avec des têtes `[skip ci]`. Le 17/10, la publication du clone de test (D-084, autorisée par Michel pour `/clone/` seulement) a été poussée **sans** `[skip ci]` — c'est ce qui la publiait — et le déploiement n°1352 (SUCCESS, tête `4960ce72`) a mis en ligne la racine entière : le `log.js` de SEANCE-01 + CC-01 (+59 / −13 depuis `ef160ddd`), **sous la même clé de cache `ft-v1256`**, sans numéro ni annonce. Le commit disait « prod `ft-v1256` inchangée » : vrai pour le commit, faux pour le push. *J'avais vérifié que le commit ne touchait aucun fichier de la prod, pas que master ne portait rien de non publié.*
+
+**Conséquence (lue dans `sw.js`, pas observée sur un appareil).** Les scripts sont servis « cache d'abord » sans revalidation : qui avait déjà `ft-v1256` en cache garde l'ancien `log.js` ; une nouvelle installation, ou un cache vidé, reçoit le nouveau. Deux populations sous un seul numéro. Le site en ligne n'a pas pu être relu d'ici (proxy : `CONNECT tunnel failed, 403` vers github.io) : la preuve est le run de déploiement et le contenu de master.
+
+**Ce qui a été fait.** Rien n'est corrigé en production : garder, régulariser par une version, ou revenir en arrière est une décision de Michel (règle d'or #15). Les documents d'état sont rectifiés (`docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`). ↪️ **Décision de Michel (18/10) : option A — garder tel quel** ; le problème de cache reste ouvert.
+
+**À quoi on le reconnaît.** Un état « intégré, non publié » sur master, puis n'importe quel push sur master sans `[skip ci]`, quelle qu'en soit la raison — même pour un dossier à part comme `/clone/`. Le piège était même écrit le 16/10 (« le prochain push sans `[skip ci]` le publie ») : il n'a pas été relu au moment de pousser. 👉 *Avant tout push sur master sans `[skip ci]`, lister les fichiers servis qui ont changé depuis le dernier commit publié (`git diff --stat <dernier publié> HEAD -- . ':!docs/**' ':!tests/**' ':!tools/**' ':!*.md'`) : tout ce qui n'est pas l'objet de la publication part avec elle.* Rien ne le vérifie automatiquement aujourd'hui (piste notée, non construite). Même famille que le « déploiement silencieux », à l'envers : le déploiement n'a pas échoué en silence, il a **réussi** en silence.
+
 ## §82 — ⛔ UN REPLI QUI RÉPÈTE UNE VALEUR NE DOIT PAS RÉPÉTER CE QUI LUI EST ATTACHÉ : LA NOTE D'UNE SÉRIE RECOPIÉE SUR D'AUTRES *(18/10/2026, D-086 — branche locale `claude/ux-d086`, non publié ; défaut PRÉSENT en production `ft-v1256`)*
 
 > Numéro **§82** et non §81 : master porte déjà un §81 (clone D-085, 18/10) que cette branche n'a pas encore ; les deux se

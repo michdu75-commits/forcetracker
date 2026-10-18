@@ -982,23 +982,25 @@ ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;fl
 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
   <defs>
     <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#FF2D55" stop-opacity=".45"/>
-      <stop offset="70%" stop-color="#FF2D55" stop-opacity=".06"/>
-      <stop offset="100%" stop-color="#FF2D55" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#F2F3F5" stop-opacity=".16"/>
+      <stop offset="70%" stop-color="#F2F3F5" stop-opacity=".03"/>
+      <stop offset="100%" stop-color="#F2F3F5" stop-opacity="0"/>
     </linearGradient>
   </defs>
   ${ticks.map(v=>`<line x1="${pad.l}" y1="${toY(v).toFixed(1)}" x2="${W-pad.r}" y2="${toY(v).toFixed(1)}" style="stroke:var(--sep);" stroke-width="1" stroke-dasharray="4 3"/>`).join('')}
   ${ticks.filter((_,i)=>i%2===0).map(v=>`<text x="${pad.l-6}" y="${(toY(v)+3.5).toFixed(1)}" text-anchor="end" style="fill:var(--t3);font-size:9.5px;font-family:-apple-system,sans-serif;font-weight:600;">${Math.round(v)}</text>`).join('')}
   <path d="${area}" fill="url(#cg)"/>
-  <path d="${line}" style="stroke:var(--red);" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 🎨 D-085 (décision J de Michel, 17/10) : la courbe de progression est NEUTRE (blanche) — une couleur permanente lui
+       prêterait un sens qu'elle n'a pas (une courbe peut descendre). Le record reste en or, le progrès chiffré en vert. -->
+  <path d="${line}" style="stroke:var(--t1);" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   ${goal>0?`<line x1="${pad.l}" y1="${toY(goal).toFixed(1)}" x2="${W-pad.r}" y2="${toY(goal).toFixed(1)}" style="stroke:#22C55E;" stroke-width="1.5" stroke-dasharray="5 4" opacity=".9"/><text x="${W-pad.r}" y="${(toY(goal)-4).toFixed(1)}" text-anchor="end" style="fill:#22C55E;font-size:9px;font-weight:700;font-family:-apple-system,sans-serif;">Objectif ${fmt(goal)}</text>`:''}
-  ${pts.map((p,i)=>{const cx=toX(i).toFixed(1),cy=toY(p.rm1).toFixed(1),isPR=i===prIdx;return(isPR?`<circle cx="${cx}" cy="${cy}" r="11" fill="rgba(255,214,0,.18)"/>`:'')+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(isPR?6:4)+'" style="fill:'+(isPR?'var(--gold)':'var(--red)')+';stroke:var(--bg);" stroke-width="2.5"/><circle cx="'+cx+'" cy="'+cy+'" r="16" fill="transparent" style="cursor:pointer;" onclick="showChartTooltip('+i+')"/>';}).join('')}
+  ${pts.map((p,i)=>{const cx=toX(i).toFixed(1),cy=toY(p.rm1).toFixed(1),isPR=i===prIdx;return(isPR?`<circle cx="${cx}" cy="${cy}" r="11" fill="rgba(255,214,0,.18)"/>`:'')+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(isPR?6:4)+'" style="fill:'+(isPR?'var(--gold)':'var(--t1)')+';stroke:var(--bg);" stroke-width="2.5"/><circle cx="'+cx+'" cy="'+cy+'" r="16" fill="transparent" style="cursor:pointer;" onclick="showChartTooltip('+i+')"/>';}).join('')}
   ${xIdxs.map(i=>`<text x="${toX(i).toFixed(1)}" y="${H-6}" text-anchor="middle" style="fill:var(--t3);font-size:9px;font-family:-apple-system,sans-serif;">${new Date(pts[i].date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</text>`).join('')}
 </svg>
 <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(41,121,255,.06);border:1px solid rgba(41,121,255,.15);border-radius:10px;padding:9px 12px;margin-top:8px;min-height:42px;">
   <span style="font-size:12px;color:var(--t3);font-weight:600;" id="tt-hint">Tape un point pour les détails</span>
   <div style="text-align:right;display:none;" id="tt-vals">
-    <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);" id="tt-rm"></div>
+    <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--t1);" id="tt-rm"></div>
     <div style="font-size:13px;color:var(--t2);" id="tt-set"></div>
   </div>
 </div>

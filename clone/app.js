@@ -9773,7 +9773,9 @@ if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.
   // n'a pas d'exercice, et « 0 exercice » se lirait comme une panne.
   const quoi=nEx?(nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+(cMin?' · '+cMin+' min de cardio':''))
                 :(cMin+' min de cardio en attente');
-  setTimeout(()=>toast('Séance en cours — '+quoi+' · Appuie sur Reprendre','info'),1000);
+  // D-085 : une séance chargée sans aucune série n'est pas « en cours », elle est « prête » (affichage seul).
+  const etat=(typeof _seancePrete==='function'&&_seancePrete())?'Séance prête':'Séance en cours';
+  setTimeout(()=>toast(etat+' — '+quoi+' · Appuie sur Reprendre','info'),1000);
 }
 _initSwipe();
 _blockEdgeBackSwipe(); // iOS : neutralise le geste "retour" bord gauche (page blanche)
