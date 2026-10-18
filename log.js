@@ -1087,6 +1087,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
   const _curSi=ex.sets.findIndex(x=>x&&!x.done);   // UX SÉANCE : la série à faire maintenant (affichage seul)
   const _notesPrev=_notesPrecedentes(ex);            // D-086 : commentaire de la dernière fois, SEULEMENT sur sa série exacte
+  const _noteExPrev=_noteExPrecedente(ex);           // D-087 : la note générale de l'exercice la dernière fois (ou null)
   const _rowsHtml=ex.sets.map((set,si)=>{
     const p=prevAl[si];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
@@ -1196,7 +1197,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       return`<div class="ex-foot">${footBtn}</div>`;
     })()
     +`<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
-    +`<span style="font-size:14px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>`
+    +(_noteExPrev
+      ?`<button class="exn-prev" id="exn-prev-${ei}" onclick="openExNotePrev(${ei})" title="Note de la dernière fois (${_dateNoteFR(_noteExPrev.date)}) — touche pour la lire" aria-label="Note de la dernière fois, séance du ${_dateNoteFR(_noteExPrev.date)} — touche pour la lire">💬<span class="exn-pt" aria-hidden="true"></span></button>`
+      :`<span style="font-size:14px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>`)
     +`<textarea id="ex-note-${ei}" rows="1" placeholder="Note perso (trop léger, fatigue, douleur…)" oninput="saveExNote(${ei},this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="flex:1;resize:none;overflow:hidden;border:none;background:transparent;color:var(--t2);font-size:12px;font-family:inherit;padding:4px 2px;line-height:1.4;min-height:26px;outline:none;caret-color:var(--red);">${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`
     +_tempoChip(ex)   // 🐢 ce que l'app a COMPRIS de la consigne, à côté de la consigne elle-même
     +`</div>`
@@ -1415,6 +1418,32 @@ function _notesPrecedentes(ex){
     return {texte:t, date:String(v.sess&&v.sess.date||''), num:(v.ex.sets||[]).indexOf(d.p)+1, nom:String(v.ex.name||'')};
   });
 }
+/* 💬 D-087 (décision de Michel, 18/10) — LA NOTE GÉNÉRALE DE L'EXERCICE LA DERNIÈRE FOIS, À CÔTÉ DE « NOTE PERSO ».
+   Elle appartient à l'EXERCICE d'une séance (« Matériel Fitness Park », « pivot différent, charges non comparables »),
+   jamais à une série : elle ne se mélange ni aux commentaires de série (`_notesPrecedentes`) ni au type N / É / X.
+   ⛔ Même séance que la colonne « Précédent » (`_prevSeance`, R2) : la note explique les chiffres qu'on a sous les yeux.
+   ⛔ LECTURE SEULE : rien n'est recopié, prérempli ni modifié dans la note du jour (`ex.note` de la séance en cours).
+   ⚠️ Mesuré dans le code : le champ porte aussi la consigne d'un programme ou de Milo, recopiée au chargement
+   (`_loadProgDayVraiment`, `_applyMiloSession`…) — c'est donc LA note de l'exercice telle qu'elle a été enregistrée.
+   Rend `{texte, date, nom}` ou `null` (aucune note la dernière fois → aucun indicateur). */
+function _noteExPrecedente(ex){
+  const v=ex&&_prevSeance(ex.name);
+  const t=(v&&v.ex&&typeof v.ex.note==='string')?v.ex.note.trim():'';
+  return t?{texte:t, date:String(v.sess&&v.sess.date||''), nom:String(v.ex.name||'')}:null;
+}
+function openExNotePrev(ei){
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; const np=ex&&_noteExPrecedente(ex); if(!np)return;
+  let ov=document.getElementById('ov-ex-note-prev');
+  if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-ex-note-prev';ov.onclick=e=>{if(e.target===ov)closeExNotePrev();};document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="modal" style="max-width:360px;">
+    <div class="modal-handle"></div>
+    <div class="sn-prev" id="exn-prev-fiche"><div class="sn-prev-t">💬 Note de la dernière fois</div><div class="sn-prev-o">Séance du ${_dateNoteFR(np.date)} · ${_escNote(np.nom)}</div><div class="sn-prev-x" style="white-space:pre-wrap;">« ${_escNote(np.texte)} »</div></div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Lecture seule : ta note d'aujourd'hui ne change pas.</div>
+    <button class="btn btn-bg2" style="width:100%;" onclick="closeExNotePrev()">Fermer</button>
+  </div>`;
+  ov.classList.add('open');
+}
+function closeExNotePrev(){const ov=document.getElementById('ov-ex-note-prev');if(ov)ov.classList.remove('open');}
 // « 2026-10-16 » → « 16/10/2026 » ; une date illisible n'est pas réinventée.
 function _dateNoteFR(d){ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||'')); return m?m[3]+'/'+m[2]+'/'+m[1]:'date inconnue'; }
 let _setNoteCtx=null;

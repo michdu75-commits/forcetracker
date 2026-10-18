@@ -779,6 +779,10 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .sn-prev-t{font-size:12px;font-weight:800;color:var(--sea);}
 .sn-prev-o{margin-top:2px;font-size:11.5px;color:var(--t2);}
 .sn-prev-x{margin-top:6px;font-size:14px;line-height:1.4;color:var(--t1);word-break:break-word;}
+/* 💬 D-087 — la note générale de la dernière fois : un point bleu sur le 💬 de « Note perso ». Zone d'appui 44 × 44 (iPhone) :
+   elle prend la marge gauche et la hauteur de la ligne de note, sans recouvrir le champ ni les boutons voisins ; le 💬 reste à sa place. */
+.exn-prev{position:relative;flex-shrink:0;display:flex;align-items:flex-start;justify-content:flex-start;width:44px;height:44px;margin:-4px -6px -6px -8px;padding:9px 0 0 8px;border:none;border-radius:10px;background:none;font-size:14px;line-height:1;color:var(--t3);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.exn-prev .exn-pt{position:absolute;top:5px;left:22px;width:8px;height:8px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 2px var(--bg2);}
 .srm{font-family:var(--font-cond);font-size:12px;font-weight:700;color:var(--t3);text-align:center;white-space:nowrap;overflow:hidden;}
 #s-log .chk{width:44px;height:44px;border:none;background:none;position:relative;isolation:isolate;color:#fff;}
 #s-log .chk::before{content:'';position:absolute;left:7px;top:7px;width:30px;height:30px;box-sizing:border-box;border-radius:50%;border:2px solid var(--sep);z-index:-1;transition:all .2s;}
