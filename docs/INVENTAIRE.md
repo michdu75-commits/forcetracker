@@ -20,7 +20,7 @@
 | Lignes de menu | 17 | 3 |
 | Fenêtres (modales) | 66 | 15 |
 | Actions du serveur | 51 | 3 |
-| Fonctions JS | 635 | — |
+| Fonctions JS | 637 | — |
 | Nouveautés annoncées | 72 | — |
 
 ## 🖥️ Écrans

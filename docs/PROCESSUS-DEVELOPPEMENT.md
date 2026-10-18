@@ -216,6 +216,42 @@ les mêmes 5 points** (fait partie de la « Clôture obligatoire », pas optionn
 
 ---
 
+## ⏱️ Estimer une tâche — la méthode validée (**D-088**, Michel, 18/10/2026)
+
+**D'où ça vient** : D-086 avait été estimé **6 à 8 h** ; il a duré **3 h 44**. Michel : *« Je ne vais pas me plaindre
+que ça soit moins long, par contre il va falloir être un peu plus juste. »* Une estimation trop prudente n'est pas
+une précaution : elle fausse les arbitrages (on renonce à un lot « trop long », on bloque une soirée pour rien).
+
+**Les cinq points, à chaque estimation :**
+
+1. **Partir des durées MESURÉES**, avec leur contexte (quel banc, combien de témoins, en parallèle ou non) — jamais
+   d'une impression.
+2. **Séparer** le temps de **développement** (lire, coder, écrire les témoins, documenter) et le temps
+   d'**exécution des tests** (bancs, mutations, passe complète), qui est mécanique et se mesure.
+3. **Dire à part le risque de reprise** — p. ex. une 2ᵉ passe complète *si elle est nécessaire et autorisée*, un
+   témoin à re-viser, une décision à attendre. Il ne gonfle pas le chiffre central : il s'ajoute, nommé.
+4. **Donner une estimation centrale raisonnable** (« ≈ 2 h 45 ») plutôt qu'une fourchette trop prudente.
+5. **Dans le rapport final, comparer estimé et réel**, et expliquer les écarts — c'est ce qui recale les repères.
+
+**Repères mesurés** (conteneur de session, 4 processeurs ; un repère se remplace par une NOUVELLE mesure) :
+
+| Étape | Durée mesurée | Contexte de la mesure |
+|---|---|---|
+| Passe complète D-031 (`tools/passe_valide.sh`) | **~80 min** (83 min le 18/10) | ~7 400 témoins, une seule à la fois |
+| Contrôle négatif (mutations) d'un lot | **12 à 16 min** (7 min en 2 files parallèles) | 20 à 27 mutations, arbre copié, banc rejoué à chaque fois |
+| Bancs voisins choisis par `tools/recette_selecteur.py` | **~20 min** (5 min 30 en 2 files) | 6 à 8 bancs Playwright |
+| Contrôle ciblé (un banc ou un témoin seul) | **1 à 2 min** | un banc de 30 à 120 témoins |
+| Codage d'une correction d'écran bornée | **~40 min** (D-086) · **~12 min** (D-087) | code seul, hors tests et documentation |
+
+**Historique estimé / réel** (à compléter à chaque tâche estimée) :
+
+| Tâche | Estimé | Réel | Écart expliqué |
+|---|---|---|---|
+| D-086 — 7 corrections UX (18/10) | 6 à 8 h | **3 h 44** | fourchette « par sécurité » sur un travail en grande partie déjà cadré (code ≈ 40 min) ; la passe complète (83 min) était le vrai poste |
+| D-087 — note de la dernière fois + contrôle de non-régression (18/10) | **≈ 2 h 45** (≈ 2 h de travail + ≈ 45 min de tests ; risques à part : +30 min si un témoin est à re-viser, +80 min si une passe complète est demandée) | *rempli à la clôture* | *rempli à la clôture* |
+
+---
+
 ## 🎯 Objectif
 
 Le code n'est qu'une **partie** du travail. Une brique n'est terminée que

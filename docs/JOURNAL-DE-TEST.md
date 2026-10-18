@@ -3596,3 +3596,17 @@ la fixture du banc : l'écran dit **Pectoraux 3 / semaine**, Milo reçoit **4 / 
 l'aide détaillée le disent. ❓ **Doute** : si la personne demande « combien de séries pecs je fais ? », Milo répond-il « 4 »
 pendant que l'écran montre « 3 », sans dire que ce n'est pas la même période ? Vérifiable par du code : ⚠️ seulement avec un
 appel réel (banc R34). État : **à trier** — à trancher par Michel s'il veut aligner Milo (changement de contexte → banc avant/après).
+
+### 🟡 MILO NE VOIT LES COMMENTAIRES DE SÉRIE QU'APRÈS LA FIN DE LA SÉANCE (18/10/2026 — D-087, contrôle de non-régression)
+Mesuré sur le contexte simulé (0 appel) : une séance TERMINÉE porte ses commentaires de série (`S1 92.5×8[💬 Coudes serrés]`) ; la SÉANCE EN COURS ne porte
+que la note d'exercice (`[note: …]`) — un commentaire tapé sur la 3ᵉ série pendant la séance (« douleur épaule ») n'arrive pas à Milo avant la fin. C'est le
+comportement d'avant, à l'identique sur l'ancien code, D-085 et D-086/087. ❓ **Doute** : si la personne écrit « douleur » sur une série puis demande à Milo
+pendant la séance « je continue ? », Milo répond-il sans le savoir ? Vérifiable par du code : la PRÉSENCE oui (contexte simulé), l'usage par Milo ⚠️ seulement
+avec un appel réel (banc R34). État : **à trier** — à trancher par Michel (changer le contexte = banc avant / après).
+
+### 🟡 LA CONSIGNE D'UN PROGRAMME ARRIVE CHEZ MILO, ET DANS LE POINT BLEU, COMME UNE « NOTE » (18/10/2026 — D-087)
+Mesuré : le champ « Note perso » d'un exercice est rempli au chargement par la consigne du programme ou de Milo (`_loadProgDayVraiment`, `_loadProgVraiment`,
+`_applyMiloSession`, `_startSessionFromMilo`) et par la mention « ⚡ Montée en charge … » ; la séance terminée la garde, Milo la reçoit en `[note: Dos calé,
+cran 4, 2 s en descente]` et le point bleu de D-087 l'affiche comme « Note de la dernière fois ». ❓ **Doute** : Milo distingue-t-il une CONSIGNE (écrite par
+le programme) d'un RESSENTI (écrit par la personne) quand les deux portent la même étiquette ? Vérifiable par du code : la présence oui ; la lecture par Milo
+⚠️ seulement avec un appel réel. État : **à trier** — à trancher par Michel (étiquette distincte = changement de données ou de contexte).

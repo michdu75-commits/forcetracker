@@ -39755,6 +39755,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      à la ligne, date et heure enregistrées de chaque message Milo. Présentation seulement (aucune clé, aucune donnée). Blocs
      B-D086-*. Banc : tools/banc_ux_d086.js · contrôle négatif : tools/mut_ux_d086.py. */
   await require('./ux_d086.js').ecran(t, b, PORT);
+  /* 💬 D-087 (18/10/2026, décision de Michel) — LA NOTE GÉNÉRALE DE L'EXERCICE LA DERNIÈRE FOIS : point bleu sur le 💬 de
+     « Note perso », fiche en LECTURE SEULE avec la date de la séance, jamais recopiée ; conservation des notes, commentaires
+     de série sans contamination, types N / É / X indépendants, contexte de Milo SIMULÉ (aucun appel), 360 / 375 / 390 / 430 px.
+     Blocs B-NOTE-*. Banc : tools/banc_notes_d087.js · contrôle négatif : tools/mut_notes_d087.py. */
+  await require('./notes_d087.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

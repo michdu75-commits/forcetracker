@@ -1090,3 +1090,43 @@ tentée et non réussie »).
 
 **À faire** : une passe complète sur l'arbre final, après refusion de master, avant toute intégration (protocole #13) ; recette iPhone de Michel ; feu vert de Michel avant toute régénération du clone, intégration ou
 publication.
+
+### 💬 D-087 — LA NOTE DE LA DERNIÈRE FOIS + CONTRÔLE DE NON-RÉGRESSION DE LA REFONTE (18/10/2026, brief « Claude Principal ») — MÊME BRANCHE LOCALE `claude/ux-d086`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-d086` @ `be27b060` (D-086 qualifié, passe faite) ; code D-087 en `97931827`. Master `dbb50941`, production `ft-v1256` et clone en ligne non
+touchés. ⛔ Aucun push, aucun appel réel à Milo (brief de Michel).
+
+**La fonction (décision D-087)** : un point bleu discret sur le 💬 de « Note perso » quand la DERNIÈRE séance de l'exercice (la même que « Précédent »,
+`_prevSeance`) porte une note ; un appui ouvre la note en LECTURE SEULE avec la date de cette séance (`#ov-ex-note-prev`) ; rien n'est recopié, prérempli ni
+modifié dans la note du jour ; aucun indicateur sans note (une note plus ancienne ne remonte pas). Zone d'appui 44 × 44 qui ne recouvre ni le champ ni les
+boutons voisins ; le « + » central ne bouge pas (mesuré aux 4 largeurs). ⚠️ **Différence visible mesurée** : avec le point, la ligne de note fait **45 px au lieu de
+37** et le texte démarre **13 px plus à droite** (360 → 430 px) ; sans point, rien ne change.
+
+**Conservation et Milo (simulé, 0 appel)** : chemin vérifié champ → `saveExNote` → `S.wkt` → `finishWorkout` (les exercices gardent leur note) → `S.sessions` →
+`buildCoachContext` (`[note: …]` sur la séance, commentaires de série `[💬 …]` sur LEUR série) ; contexte de Milo **identique à l'octet** entre l'ancien code
+(`dbb50941`), D-085 et D-086/087 sur les mêmes données et la même heure (78 856 caractères). ⚠️ Mesuré : le champ porte aussi la consigne d'un programme ou de
+Milo recopiée au chargement (`_loadProgDayVraiment`, `_loadProgVraiment`, `_applyMiloSession`, `_startSessionFromMilo`) et la mention « ⚡ Montée en charge … » :
+le point montre alors ce texte (exemple : « Dos calé, cran 4, 2 s en descente »), comme Milo le reçoit déjà. Proposition à part, NON faite : ne pas montrer le
+point quand la note précédente est identique au champ du jour.
+
+**Tests** : banc B-NOTE (`tests/parcours/notes_d087.js`, `tools/banc_notes_d087.js`, 9 points × 360 / 375 / 390 / 430 px) **70 / 0** ; sur le code d'avant D-087
+(`6a1b2b9e`) **50 / 20** (les 20 rouges sont exactement les témoins du point et de la fiche ; les 50 verts protègent l'existant : conservation, commentaires,
+types, Milo) ; contrôle négatif `tools/mut_notes_d087.py` **21 / 21** (M00 + 19 ciblées + 1 équivalente ; arbre sain 0 au début et à la fin ; un 1ᵉʳ passage à
+19 / 21 venait de l'outil — une ancre non unique, un plantage du banc quand « Fermer » est cassé — corrigés, puis tout rejoué). Bancs voisins (sélecteur) :
+ml_a 34 / 0 · cc01_dropset 31 / 0 · ml_b 60 / 0 · ux_d086 122 / 0 · ux_integration 69 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · seance_ux 69 / 0.
+Pas de passe complète (brief : pas pour une correction minime ; obligatoire avant toute publication, sur le code final intégré).
+
+**Comparaison fonctionnelle ancien code (`dbb50941`) / D-085 (`6d9b6c90`) / D-086-087** — mêmes gestes réels rejoués sur les trois (dossier de session, hors
+dépôt) : **aucune donnée perdue, aucune fonction perdue** dans le périmètre (types, « Précédent », commentaires, note d'exercice, historique, Milo, séries,
+repos, chrono). **Déplacées** (décision D-083) : ↑ / ↓, 📊 et ✕ des cartes repliées → menu ⋯ de la carte ouverte ; Pause, Tout dérouler, Grouper, Programmes,
+Vider, Abandonner → menu ⋯ de la séance ; 1:00 / 1:30 / 2:00 → « Régler » (+ 30 s, 45 s) ; « Skip » → « Passer » ; la poignée « glisser pour créer un superset »
+seulement sur la carte ouverte. **Corrigées** : type visible, commentaire de la dernière fois sur sa série exacte. **Nouvelle** : la note de la dernière fois.
+**⚠️ Une différence à faire trancher par Michel** : « 📷 J'ai déjà un programme ou un historique » n'est plus visible PENDANT une séance (seulement avant) ;
+l'import de programme reste possible par ⋯ → Programmes, **l'import d'historique n'est plus atteignable pendant une séance** (il l'était dans l'ancien écran).
+Non corrigé (hors périmètre validé).
+
+**Règle #17** : 0 donnée persistée · 2 fichiers applicatifs (`log.js`, `style.css`) · +34 / −1 · 0 ancien chemin supprimé — la note se lit par le propriétaire
+existant `_prevSeance`, aucune copie.
+
+**À faire** : passe complète sur l'arbre final après refusion de master (protocole #13) ; recette iPhone de Michel ; textes d'aide (chantier AIDES-01 : le point
+de la note n'est décrit nulle part, règle d'or #11) ; feu vert de Michel avant tout push, clone ou publication.

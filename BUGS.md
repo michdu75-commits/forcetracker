@@ -4702,3 +4702,28 @@ M10 (la note d'exercice prêtée à la 1ʳᵉ série), M12 (la note réécrite d
 **À quoi on le reconnaît.** Une valeur « par défaut » ou « répétée » (repli, dernière connue, valeur précédente) qui transporte avec
 elle un **objet** — une note, un identifiant, une date. Le repli peut être juste pour la valeur et faux pour tout ce qui l'accompagne :
 le séparer explicitement (`exact`) plutôt que de laisser l'objet voyager avec.
+
+## §83 — ⛔ UN BANC QUI MESURE AU MAUVAIS ENDROIT ROUGIT (OU VERDIT) POUR UNE AUTRE RAISON : SIX PIÈGES DE MÉTHODE EN UNE JOURNÉE *(18/10/2026, D-087 — branche locale `claude/ux-d086`, non poussée)*
+
+> Erreurs de MÉTHODE (les miennes, dans mes bancs et mes sondes), pas des défauts de l'app : aucune n'a touché le code servi.
+> Numéro **§83** : suit §82 sur cette branche (master porte §81).
+
+**Symptômes et causes, mesurés.** ① « Aucune requête pendant la lecture » rougissait : le compteur partait du **chargement** de la
+page, où l'app tente déjà sa vérification serveur et une image QR (coupées) → mesurer la **fenêtre du geste** (écart avant / après).
+② « Aucune requête vers Milo » rougissait sur la fin de séance : le Worker sert aussi la **synchronisation** (`cloudSave`) — son adresse
+ne dit pas « Milo » → reconnaître Milo par l'**action** du corps, liste figée dans le banc (relue dans l'app, une mutation qui
+retirerait « coach » de sa liste passerait inaperçue). ③ « La note est gardée » rougissait : l'app range l'exercice sous son **nom
+du catalogue** (« Rowing Barre » → « Rowing Barre (Tirage Horizontal) ») → écrire les données de test avec les noms du catalogue.
+④ « Pas d'indicateur sans note » aurait **verdi pour rien** si l'historique n'était pas retrouvé du tout (nom différent) → un témoin
+d'ABSENCE porte un **contrôle positif** (« Précédent » est bien retrouvé pour cet exercice). ⑤ Une mutation (« Fermer » cassé)
+faisait **planter** le banc plus loin (une fiche restée ouverte bloquait le clic suivant) : un plantage n'attrape rien → le banc doit
+survivre au défaut qu'il teste (son propre témoin le voit, la suite continue). ⑥ Dans la comparaison ancien / nouveau, des commandes
+« INTROUVABLES » ne l'étaient que pour la sonde : bouton sous la barre du bas (il faut faire défiler, comme le pouce), carte repliée
+(il faut l'ouvrir d'abord, comme la personne).
+
+**Le témoin qui le voit.** `B-NOTE-⑨b` / `⑨d` (écart pendant le geste + liste d'actions d'IA) · `B-NOTE-③a` / `③b` (« Précédent »
+retrouvé, puis point absent) · `tools/mut_notes_d087.py` 21 / 21 (M9 rougit sans plantage ; arbre sain rejoué à 0 à la fin).
+
+**À quoi on le reconnaît.** Un rouge dont le détail parle d'autre chose que du geste testé (une adresse au démarrage, un nom
+d'exercice différent), ou un vert qui resterait vert si la fonction n'existait pas. Avant de conclure « l'app a perdu X », refaire le
+geste **comme la personne** (faire défiler, ouvrir la carte) et vérifier que la sonde a bien atteint l'endroit voulu.
