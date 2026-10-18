@@ -248,7 +248,7 @@ une précaution : elle fausse les arbitrages (on renonce à un lot « trop long 
 | Tâche | Estimé | Réel | Écart expliqué |
 |---|---|---|---|
 | D-086 — 7 corrections UX (18/10) | 6 à 8 h | **3 h 44** | fourchette « par sécurité » sur un travail en grande partie déjà cadré (code ≈ 40 min) ; la passe complète (83 min) était le vrai poste |
-| D-087 — note de la dernière fois + contrôle de non-régression (18/10) | **≈ 2 h 45** (≈ 2 h de travail + ≈ 45 min de tests ; risques à part : +30 min si un témoin est à re-viser, +80 min si une passe complète est demandée) | *rempli à la clôture* | *rempli à la clôture* |
+| D-087 — note de la dernière fois + contrôle de non-régression (18/10) | **≈ 2 h 45** (≈ 2 h de travail + ≈ 45 min de tests ; risques à part : +30 min si un témoin est à re-viser, +80 min si une passe complète est demandée) | **52 min** de travail et de contrôles (13:38 → 14:30), puis le PDF et le rapport | encore trop haut, ×3 : ① les tests (mutations 7 min, bancs voisins 5 min 30) ont tourné **en 2 files, pendant** l'écriture de la comparaison et des documents — compter leur durée murale, pas leur somme ; ② le code était petit (12 min) et la comparaison a été **automatisée** (le même script rejoué sur 3 versions) au lieu d'une inspection à la main ; ③ aucun des deux risques ne s'est produit |
 
 ---
 
