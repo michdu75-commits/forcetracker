@@ -762,7 +762,8 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 #s-log .sets-hdr span:first-child{text-align:center;}
 #s-log .ds-lbl{grid-column:span 2;}
 .set-row .stype{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0 -4px;padding:0;border:none;border-radius:12px;background:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-.set-row .stype .tbtn{display:flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;border-radius:9px;font-family:var(--font-cond);font-size:15px;font-weight:800;line-height:1;letter-spacing:0;pointer-events:none;}
+/* 700 et non 800 : Space Grotesk s'arrête à 700 — 800 était ramené à 700 sans rien changer à l'écran (témoin CXLI, ft-v1037 ; trouvé par la passe complète D-086). */
+.set-row .stype .tbtn{display:flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;border-radius:9px;font-family:var(--font-cond);font-size:15px;font-weight:700;line-height:1;letter-spacing:0;pointer-events:none;}
 .set-row .stype .tbtn.N{color:var(--t2);border-color:var(--sep);background:var(--bg3);}
 /* D-086 — « Précédent » plus lisible : chiffres compacts (Space Grotesk), 15 px, contraste nettement relevé (gris clair
    au lieu de --t3) ; le nombre ne se coupe jamais (`.sprev-n`) — s'il n'y a vraiment pas la place (« 10×142.5 X » à
