@@ -1,7 +1,7 @@
 {
-  "ref": "6d9b6c90",
-  "sha": "6d9b6c909dc9016b5d05649e2ecc07c9607234f7",
-  "genere_le": "2026-10-18 06:10 UTC",
+  "ref": "claude/ux-d086",
+  "sha": "0965619d6d606a61cfdfd161154801ed30e99025",
+  "genere_le": "2026-10-18 17:12 UTC",
   "fichiers": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "app.js"
   ],
   "banc_isolation": "22 OK / 0 rouge",
-  "empreinte": "68276c0ea941504d832149c8ebb2a097d2ca7acee2f657ff9e91c2cbbc2aa3b8"
+  "empreinte": "1b5a54560b449ca2140139f79dad856d9e66a3233389e13ce67338158f933887"
 }
