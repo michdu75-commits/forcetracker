@@ -1217,3 +1217,48 @@ l'image QR de partage (lien public de l'app, identique en prod).
 **Durées** : estimé ≈ 2 h 15 (travail ≈ 50 min, tests ≈ 85 min de passe + ≈ 20 min en parallèle, risques à part) ; mesuré 103 min (17:08 → 18:51 UTC),
 passe 83 min ; aucun risque survenu ; travail non prévu : diagnostic de l'import et de Milo coupés dans le clone, deux artefacts de banc (§84).
 **Suite** : recette iPhone de Michel sur le clone ; intégration dans l'app réelle = nouvelle autorisation explicite ; les 3 arbitrages D-086 restent ouverts.
+
+### 🧍🧍 « TA SÉANCE JUSQU'ICI » : FACE · CHIFFRES · DOS (18/10/2026, décision **D-091**, qui remplace **D-090**) — BRANCHE LOCALE `claude/ux-fig-face-dos-v2`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-d086` @ `daa1a737` (= code D-088 : fichiers de l'app identiques à `0965619d`). Master `75288092`, production `ft-v1256` et clone
+en ligne non touchés ; dépôt principal propre. ⛔ Aucun push (brief) ; aucun appel réel à Milo ; ni Nutrition, ni OPTI-TEST-02, ni AIDES-01.
+
+**D-090 → D-091 (R30).** La 1ʳᵉ demande du soir (D-090 : une figurine à retourner d'un appui) a été construite et testée sur la branche locale
+`claude/ux-fig-face-dos` (banc 80 / 0, contrôle négatif 24 / 24), puis **remplacée entièrement** par Michel : les deux vues ensemble. Cette branche-là
+reste en local, pour mémoire ; rien n'en a été repris sauf la petite figurine qui sait dessiner le dos (`_mscSVGmini(…, 'dos')`), identique.
+
+**Ce qui change.** « Ta séance jusqu'ici » : la figurine de **face à gauche**, les **chiffres au centre** (durée, séries, volume — empilés), la figurine
+de **dos à droite**, visibles ensemble dès l'ouverture, sans appui ni alternance. Le dos = `_BP`, le dessin de la grande figurine « Muscles travaillés » ;
+les deux sont colorées par le même `_mscScores` (calculé une fois) → `_MG`. Sans paramètre, `_mscSVGmini` rend la face à l'octet : l'Accueil, Progrès et la
+carte du jour gardent une seule vue, de face. Cardio seul : carte inchangée (pas de figurine). Aucune donnée persistée, aucune clé, aucune requête.
+
+**Écart avec les documents UX antérieurs (signalé, demandé par le brief).** La maquette cible du 16/10 et le plan d'intégration prévoyaient **une**
+figurine (de face, « celle des cartes d'historique ») à gauche, les chiffres à droite **et des pastilles de zones** dessous (Pectoraux, Épaules, Triceps) ;
+les pastilles n'ont jamais été construites (D-085) et ne sont pas reprises ici. Les maquettes du 17/10 avaient retiré les figurines (consigne du jour),
+rétablies par D-085 F « silhouette musculaire gardée ». Aucune décision active n'interdit deux vues : D-091 étend D-085 F.
+
+**Mise en page (mesurée).** Figurines de 44 px (petits écrans) à 54 px (430 px), marges et espacements symétriques ; chiffres empilés et centrés.
+Carte : 160 px de haut à 360 px (163 en D-088), 166 à 375, 171 à 390, 186 à 430. Avec les plus longues valeurs (112 min · 24 séries · 37 440 kg) et en
+texte agrandi : rien ne déborde, rien ne se chevauche, aucune valeur coupée. « + » identique au pixel avec et sans la carte, et à D-088 (4 largeurs).
+
+**Tests.** Banc **B-FFD** réécrit (`tests/parcours/fig_face_dos.js`, `tools/banc_fig_face_dos.js`) **64 / 0** — deux oracles indépendants du dessin de
+la petite figurine (la grande figurine ET les données, zone par zone, 10 exercices dont le soulevé de terre), vrais gestes (toucher, coche, sélecteur
+d'exercice, barre du bas, « Terminer la séance », rechargement), 4 largeurs, longues valeurs, texte agrandi, cardio seul. **Sur le code D-088 : 39 rouges / 64** — la nouveauté (2ᵉ figurine, ordre, dos, mise en page à deux vues) ; les 25 autres (chiffres, rien d'écrit, fin de séance, autres figurines, « + », cardio seul) restent verts. Contrôle négatif
+`tools/mut_fig_face_dos.py` **21 / 21** (arbre sain 0 au début et à la fin ; dont 1 équivalente). Bancs voisins (sélecteur) : ux_d086 122 / 0 · seance_ux 69 / 0 · ux_integration 69 / 0 · cc01_dropset 31 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · debrief_demande 62 / 0 · progres_seances 80 / 0 ; annexe 14 PASS + 1 défaut connu (`discussions`, inchangé) ; `check_regles` code 0 ; sélecteur auto-test 15 / 15 ; `git diff --check`
+propre. Pas de passe complète (brief : obligatoire avant publication). ⚠️ La 1ʳᵉ campagne de contrôles négatifs a trouvé **3 faiblesses du banc** (pas de
+l'app), corrigées puis rejouées : il plantait sur le code D-088 (lecture d'une 2ᵉ figurine absente) ; un témoin relisait la carte après l'avoir réaffichée
+(ce qui effaçait le défaut à détecter) ; une mutation « espacements trop larges » ne cassait rien de visible (la mise en page absorbe), remplacée par
+« figurines collées au bord ».
+
+**Règle #17** : 0 donnée persistée · 3 fichiers applicatifs (`setup.js`, `tracking.js`, `style.css`) · **+27 / −7** lignes (dont 12 de commentaires) ·
+0 ancien chemin supprimé — un chemin RÉUTILISÉ au lieu d'en créer : le dessin et les couleurs de la grande figurine.
+
+**Règle d'or #11** : rien tant que ce n'est pas en production ; à faire avec la mise en production (point rouge, aide « ? » de la Séance, aide détaillée,
+diapo du Guide — chantier AIDES-01). Pop-up : probablement pas (rien à faire pour la personne, rien n'a bougé de place) — à trancher à ce moment-là.
+
+**Remarqué au passage, hors périmètre, non touché.** ① La figurine colore un exercice dès qu'UNE série est cochée, échauffement compris, alors que
+« séries » et « volume » ne comptent que le travail (consigné dans `IDEES-FUTURES.md`, à trancher). ② Même écart dans le message de reprise (`app.js`,
+« Séance en cours — … · N séries validées ») : il compte les échauffements, la carte et l'en-tête non (D-085 ①).
+
+**À faire** : décision de Michel pour le clone ; recette iPhone au doigt ; passe complète D-031 avant toute publication ; règle d'or #11 avec la mise
+en production ; l'Accueil et Progrès doivent-ils montrer aussi le dos (hors périmètre) ?

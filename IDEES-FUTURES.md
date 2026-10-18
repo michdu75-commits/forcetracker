@@ -13,6 +13,11 @@ Fichier de notes : fonctionnalités et directions à explorer. Rien ici n'est en
 
 ## 🧍 VUE DE DOS DANS LA FIGURINE DE « TA SÉANCE JUSQU'ICI » — DEMANDE DE MICHEL *(18/10/2026)*
 
+↪️ ***18/10/2026, soir — DÉCIDÉE PAR MICHEL ET CONSTRUITE sur la branche LOCALE `claude/ux-fig-face-dos-v2`, NON POUSSÉE, NON
+PUBLIÉE*** : **D-091** — la figurine de face à gauche, les chiffres au centre, la figurine de dos à droite, visibles ensemble, sans appui.
+Elle remplace **D-090** (une figurine à retourner d'un appui), construite puis abandonnée le même soir. Clone puis production : décisions
+séparées. L'Accueil et Progrès restent une seule vue, de face (hors périmètre). Le texte ci-dessous est l'état constaté AVANT, gardé tel quel (R30).
+
 **PISTE · NON CONSTRUITE · décision de Michel attendue.** Constaté par Michel sur iPhone (clone D-085, séance avec
 soulevé de terre) : « Ta séance jusqu'ici » ne montre que la silhouette **de face** ; il veut voir aussi les muscles postérieurs.
 - **Affichage (mesuré dans le code de `claude/ux-d086` @ `3c0acce0`, D-088 compris)** : la petite figurine `_mscSVGmini`
