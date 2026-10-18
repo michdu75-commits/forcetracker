@@ -238,7 +238,7 @@ une précaution : elle fausse les arbitrages (on renonce à un lot « trop long 
 | Étape | Durée mesurée | Contexte de la mesure |
 |---|---|---|
 | Passe complète D-031 (`tools/passe_valide.sh`) | **~80 min** (83 min le 18/10) | ~7 400 témoins, une seule à la fois |
-| Contrôle négatif (mutations) d'un lot | **12 à 16 min** (7 min en 2 files parallèles) | 20 à 27 mutations, arbre copié, banc rejoué à chaque fois |
+| Contrôle négatif (mutations) d'un lot | **12 à 16 min** (7 min en 2 files parallèles) · 12 min 30 (21 mutations, banc de 32 s) · 25 min 30 min (23 mutations, banc de 60 s) — **≈ nombre de mutations × durée du banc** | 20 à 27 mutations, arbre copié, banc rejoué à chaque fois |
 | Bancs voisins choisis par `tools/recette_selecteur.py` | **~20 min** (5 min 30 en 2 files) | 6 à 8 bancs Playwright |
 | Contrôle ciblé (un banc ou un témoin seul) | **1 à 2 min** | un banc de 30 à 120 témoins |
 | Codage d'une correction d'écran bornée | **~40 min** (D-086) · **~12 min** (D-087) | code seul, hors tests et documentation |
@@ -249,6 +249,7 @@ une précaution : elle fausse les arbitrages (on renonce à un lot « trop long 
 |---|---|---|---|
 | D-086 — 7 corrections UX (18/10) | 6 à 8 h | **3 h 44** | fourchette « par sécurité » sur un travail en grande partie déjà cadré (code ≈ 40 min) ; la passe complète (83 min) était le vrai poste |
 | D-087 — note de la dernière fois + contrôle de non-régression (18/10) | **≈ 2 h 45** (≈ 2 h de travail + ≈ 45 min de tests ; risques à part : +30 min si un témoin est à re-viser, +80 min si une passe complète est demandée) | **52 min** de travail et de contrôles (13:38 → 14:30), puis le PDF et le rapport | encore trop haut, ×3 : ① les tests (mutations 7 min, bancs voisins 5 min 30) ont tourné **en 2 files, pendant** l'écriture de la comparaison et des documents — compter leur durée murale, pas leur somme ; ② le code était petit (12 min) et la comparaison a été **automatisée** (le même script rejoué sur 3 versions) au lieu d'une inspection à la main ; ③ aucun des deux risques ne s'est produit |
+| Brief « D-088 » — import d'historique pendant la séance, « Note de la dernière séance », outil du prompt confiné (18/10, D-089) | **≈ 1 h 40** (≈ 1 h 20 de travail + ≈ 20 min de tests en durée murale ; risques à part : +20 min pour piloter l'import dans le banc, +15 min si l'import touchait la séance ; passe complète non prévue, +80 min si demandée) | **73 min** de travail et de contrôles (15:27 → 16:40), puis le PDF et le rapport | ≈ −27 % : ① le moteur existait — 2 lignes de code et 3 libellés, aucune logique neuve ; ② les tests (mutations 12 min 30 puis 25 min 30, bancs voisins + annexe 22 min, comparaisons 3 min) ont tourné **en 2 files, pendant** l'écriture — durée murale, pas leur somme ; ③ le risque « piloter l'import dans le banc » s'est produit (capture du message, panneau de l'ancienne ligne qui se replie) et a été absorbé (≈ 10 min) ; « l'import touche la séance » ne s'est pas produit. Poste dominant de la fin : la campagne de mutations D-088 (banc de 60 s × 23) |
 
 ---
 

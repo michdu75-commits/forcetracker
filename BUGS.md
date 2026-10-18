@@ -4725,9 +4725,34 @@ survivre au défaut qu'il teste (son propre témoin le voit, la suite continue).
 code de master (non commité, remis à l'identique aussitôt chaque fois) et n'a **rien** vérifié du code du dossier de travail. → vérifier sur
 une COPIE de l'outil pointée vers le dossier de travail (fait : seule la phrase de l'heure diffère). Proposition, NON faite (outil partagé,
 hors périmètre) : `ROOT = path.dirname(__dirname)` et la sortie relative à ROOT.
+↪️ **Suite (brief « D-088 », même jour, décision D-089)** : la cause exacte est **deux** chemins codés en dur — `const ROOT=` (ligne 12, la
+LECTURE) et la sortie de `fs.writeFileSync` (ligne 99, l'ÉCRITURE). **Garde appliqué** : l'outil refuse de tourner ailleurs qu'à la racine de
+ROOT (`fs.realpathSync(process.cwd()) !== ROOT` → code 2, aucune lecture ni écriture) ; les deux lignes restent mot pour mot parce que
+`tools/gen_milo_consolidation_pdf.py` les **remplace texte pour texte** pour se rediriger (corriger l'outil seul aurait cassé ce générateur
+en silence). **Prouvé uniquement dans un environnement temporaire** : copie de l'outil, LEURRE de dépôt principal, garde d'écriture préchargé
+(`node -r`) — l'outil d'origine tente l'écriture (bloquée), l'outil corrigé refuse depuis une copie ou un sous-dossier et n'écrit que son
+fichier depuis la racine ; dépôt principal et dossier de travail inchangés. **Proposition en attente de validation** (transversale) :
+`ROOT` et la sortie relatifs à l'outil (ou passés par variables d'environnement), et le générateur qui passe ces variables au lieu de
+remplacer du texte. ⚠️ **D'autres outils du dépôt portent le même chemin** (relevé, non corrigé — hors périmètre) : 6 `tools/mut_*.py`
+(`SRC='/home/user/forcetracker'` : lancés depuis une branche, ils clonent et éprouvent **master** sans le dire — lecture seule) ·
+`tools/sonde_fuites_nutrition.js` (lecture seule) · 10 générateurs de PDF qui LISENT par défaut le dépôt principal (sortie dans `/tmp`,
+racine réglable par variable d'environnement) · et 4 anciens générateurs (`gen_audit_pdf`, `gen_bug_reprise_pdf`, `gen_dossier_pdf`,
+`gen_miseaupoint_pdf`) qui **écrivent** dans `/home/user/forcetracker/docs/` — les seuls, avec `dump_prompt.js`, à pouvoir le salir.
+
+**Suite — quatre pièges de méthode de plus (brief « D-088 », mêmes erreurs de banc, aucune dans l'app).** ⑧ Capturer les messages en
+posant `Object.defineProperty(window,'toast',…)` AVANT le chargement : la déclaration `function toast(){}` de l'app **remplace** la
+propriété — le témoin ne voyait aucun message → envelopper la vraie fonction APRÈS le chargement. ⑨ Pour comparer avec l'ancien écran,
+la sonde touchait « 📷 J'ai déjà un programme ou un historique » à chaque ouverture : ce bouton **replie** le panneau s'il est déjà ouvert,
+et « l'ancien chemin » semblait absent → ne le toucher que si le bouton voulu n'est pas déjà à l'écran. ⑩ « La séance en cours est
+intacte » comparait la mémoire et le stockage mais **pas la copie de secours** (`ft4_wkt_draft`, règle d'or #3) : une mutation qui
+l'effaçait serait passée → le témoin exige que la copie de secours soit toujours CETTE séance. ⑪ Le garde d'écriture comparait des
+chemins **sans suivre les liens** (un leurre fait de liens symboliques vers l'arbre testé laissait passer une écriture) ni les adresses
+`file://` → chemins réels comparés, et le garde est d'abord **éprouvé sur une zone jetable** (témoin `B-D088-OUTIL-⑪-0`).
 
 **Le témoin qui le voit.** `B-NOTE-⑨b` / `⑨d` (écart pendant le geste + liste d'actions d'IA) · `B-NOTE-③a` / `③b` (« Précédent »
-retrouvé, puis point absent) · `tools/mut_notes_d087.py` 21 / 21 (M9 rougit sans plantage ; arbre sain rejoué à 0 à la fin).
+retrouvé, puis point absent) · `tools/mut_notes_d087.py` 21 / 21 (M9 rougit sans plantage ; arbre sain rejoué à 0 à la fin) ·
+`B-D088-OUTIL-⑪-0` et `①a`-`①e` (l'outil du prompt, leurre + garde éprouvé) · `B-D088-IMP-⑥a` (le message vu) · `B-D088-IMP-②b`
+(copie de secours comprise) · `tools/mut_d088.py`.
 
 **À quoi on le reconnaît.** Un rouge dont le détail parle d'autre chose que du geste testé (une adresse au démarrage, un nom
 d'exercice différent), ou un vert qui resterait vert si la fonction n'existait pas. Avant de conclure « l'app a perdu X », refaire le

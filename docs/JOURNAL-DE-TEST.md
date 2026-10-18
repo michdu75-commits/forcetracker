@@ -3610,3 +3610,11 @@ Mesuré : le champ « Note perso » d'un exercice est rempli au chargement par l
 cran 4, 2 s en descente]` et le point bleu de D-087 l'affiche comme « Note de la dernière fois ». ❓ **Doute** : Milo distingue-t-il une CONSIGNE (écrite par
 le programme) d'un RESSENTI (écrit par la personne) quand les deux portent la même étiquette ? Vérifiable par du code : la présence oui ; la lecture par Milo
 ⚠️ seulement avec un appel réel. État : **à trier** — à trancher par Michel (étiquette distincte = changement de données ou de contexte).
+
+### 🟡 UNE SÉANCE IMPORTÉE PENDANT LA SÉANCE ARRIVE CHEZ MILO COMME UNE SÉANCE SAISIE (18/10/2026 — brief « D-088 », décision D-089)
+Mesuré (code, 0 appel) : `finalImportHist` marque les séances importées `importedHistory:true`, mais `buildCoachContext` ne lit pas ce
+marqueur — une séance lue par l'IA sur la photo d'un carnet (charges parfois mal lues) arrive chez Milo exactement comme une séance tapée dans
+l'app ; et depuis D-089 on peut importer EN PLEINE séance, donc la « dernière fois » d'un exercice (et « Précédent ») peut changer entre deux
+séries. ❓ **Doute** : Milo s'appuie-t-il sur une charge importée (non vérifiée par la personne) comme sur un fait, et le dit-il ? Vérifiable par
+du code : l'absence de marqueur oui ; la lecture par Milo ⚠️ seulement avec un appel réel (banc R34). État : **à trier** — à trancher par Michel
+(marquer la provenance = changement de contexte, banc avant / après).

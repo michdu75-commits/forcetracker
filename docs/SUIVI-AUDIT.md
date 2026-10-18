@@ -1132,3 +1132,41 @@ existant `_prevSeance`, aucune copie.
 
 **À faire** : passe complète sur l'arbre final après refusion de master (protocole #13) ; recette iPhone de Michel ; textes d'aide (chantier AIDES-01 : le point
 de la note n'est décrit nulle part, règle d'or #11) ; feu vert de Michel avant tout push, clone ou publication.
+
+### 📥 BRIEF « D-088 » — FINALISATION DE D-087 ET PROTECTION DES FONCTIONNALITÉS (18/10/2026, décisions **D-089**) — MÊME BRANCHE LOCALE `claude/ux-d086`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-d086` @ `f2457ec8` (D-087 clos). Master `dbb50941`, production `ft-v1256` et clone en ligne non touchés ; dépôt principal propre.
+⛔ Aucun push, aucun appel réel à Milo, ni Nutrition ni AIDES-01, les 3 autres arbitrages de D-086 non touchés (brief de Michel).
+
+**① Import d'historique pendant la séance (« OUI » de Michel).** « … » → « Importer un historique », juste après « Programmes », par le MÊME moteur
+que l'ancien écran (`openImportHist`) : **16 fonctions et les 2 fenêtres d'import identiques au caractère près** à la production (`ft-v1256`). Le moteur
+n'écrit que l'historique (`S.sessions`), ni `S.wkt` ni sa copie de secours ; conflit de date « Les 2 » par défaut, « Remplacer » explicite et limité à la
+séance TERMINÉE ; la fin de séance ne fusionne rien par date et la reprise du brouillon se fait par `runId` — **l'ancien fonctionnement n'écrase pas une
+séance en cours, aucune règle de fusion nouvelle n'était nécessaire** (mesuré dans le code ET par les gestes). L'import de programme garde sa porte.
+Sous-titre de l'entrée sur une ligne (l'ancien passait sur deux jusqu'à 390 px). iPhone, mesuré : le « + » ne bouge pas (4 largeurs) ; la feuille du menu
+défile à 375 × 667 (« Abandonner » et « Fermer » sous le bord, atteignables — elle défilait déjà pour « Fermer ») ; à 360 × 740 « Fermer » passe sous le bord.
+
+**② Note de la dernière séance.** Fiche et indicateur : « Note de la dernière séance » ; point gardé même si le texte du jour est identique (la proposition
+de le masquer n'est PAS appliquée) ; aucune origine devinée (`_milo` / `progLabel` décrivent l'exercice / la séance, pas l'auteur) ; aucun stockage ajouté.
+**Contexte de Milo simulé** (4 jeux × 2 questions, horloge figée, 0 requête IA) : **8 contextes identiques à l'octet** entre le code d'avant ce brief, la
+branche et la production ; les notes y figurent (contrôle positif).
+
+**③ Outil du prompt de Milo.** Cause exacte : **deux** chemins codés en dur dans `tools/dump_prompt.js` (`ROOT`, ligne 12 — la lecture ; la sortie,
+ligne 99 — l'écriture). Garde appliqué (+12 lignes) : refus hors de la racine du dépôt principal (code 2, aucune lecture ni écriture) ; les deux lignes
+restent mot pour mot (`tools/gen_milo_consolidation_pdf.py` les remplace texte pour texte). Prouvé uniquement en environnement temporaire (copie, leurre de
+dépôt principal, garde d'écriture préchargé) ; rejoué par le banc à chaque passage (leurre + garde éprouvé sur zone jetable). **Proposition en attente de
+validation** (version qui marche depuis une branche, touche aussi le générateur). Autres outils au chemin codé en dur relevés, non corrigés (`BUGS.md` §83 ⑦).
+
+**Tests** : banc **B-D088** (`tests/parcours/d088_import_notes.js`, `tools/banc_d088.js`) **52 / 0** (code d'avant ce brief : 20 / 32 ; production : 29 / 23) ; contrôle négatif `tools/mut_d088.py` **23 / 23** (arbre sain 0 au début et à la fin) ;
+banc des notes **70 / 0**, `tools/mut_notes_d087.py` **21 / 21** (ancre M14 sur la nouvelle appellation) ; bancs voisins (sélecteur) : ux_d086 122 / 0 · cc01_dropset 31 / 0 · seance_ux 69 / 0 · ux_integration 69 / 0 · ml_a 34 / 0 · ml_b 60 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · debrief_demande 62 / 0 ; annexe 14 PASS + 1 défaut connu (discussions : taille du contexte de Milo, préexistant — contexte identique à l'octet).
+Pas de passe complète (brief : pas pour ces corrections ; obligatoire sur la version préparée pour publication).
+
+**Comparaison ancien parcours / nouveau** (même banc, mêmes gestes, IA d'import simulée) : en production l'ancienne ligne ouvre le même moteur 8 fois sur 8
+et tous les témoins d'import sont verts — seuls rougissent l'entrée du menu, la fiche renommée (le point de D-087 n'y existe pas) et l'outil non confiné ;
+sur le code d'avant ce brief, l'import n'est atteignable par **aucune** porte pendant la séance (0 / 8). Menu « … » : 8 → 9 lignes, « + » identique aux 4 largeurs, toutes les lignes atteignables (témoin `B-D088-IMP-①e`).
+
+**Règle #17** : 0 donnée persistée · 1 fichier applicatif (`log.js`) + 1 outil (`tools/dump_prompt.js`) · +17 / −3 dans `log.js` (2 lignes de code nouvelles, 3 libellés modifiés, le reste en commentaires) · 0 ancien chemin supprimé (le chemin de
+l'ancien écran est réutilisé, aucun moteur ajouté).
+
+**À faire** : passe complète sur l'arbre final après refusion de master ; aides (règle d'or #11 : la ligne du menu, la fiche renommée — chantier AIDES-01) ;
+recette iPhone de Michel ; décision de Michel sur la proposition de l'outil ; feu vert de Michel avant tout push, clone ou publication.
