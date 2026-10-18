@@ -39749,6 +39749,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      « Discussion / Espace Milo », courbes Progrès neutres. Présentation seulement (aucune clé, aucune donnée). Blocs B-UXI-*.
      Banc : tools/banc_ux_integration.js · contrôle négatif : tools/mut_ux_integration.py. */
   await require('./ux_integration.js').ecran(t, b, PORT);
+  /* 🛠️ D-086 (session-B, 18/10/2026) — corrections UX après la recette iPhone de D-085 : colonne Type visible (pastille N / É / X
+     sur chaque série), « Précédent » lisible, commentaire de la dernière fois signalé sur sa série EXACTE, dock de repos
+     [−15 s][temps][+15 s][Passer] + 30 s / 45 s dans « Régler », « Passer » Cobalt en plein écran, bandeau de reprise qui passe
+     à la ligne, date et heure enregistrées de chaque message Milo. Présentation seulement (aucune clé, aucune donnée). Blocs
+     B-D086-*. Banc : tools/banc_ux_d086.js · contrôle négatif : tools/mut_ux_d086.py. */
+  await require('./ux_d086.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

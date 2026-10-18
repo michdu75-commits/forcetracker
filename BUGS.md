@@ -4672,3 +4672,33 @@ remis) — `tools/mut_ux_integration.py`.
 
 **À quoi on le reconnaît.** Un élément décoratif placé en **position négative** (badge, pastille, compteur) qui paraît coupé net :
 chercher un `overflow:hidden` sur un **ancêtre**, souvent une règle générale (`button`, `.card`), pas sur l'élément lui-même.
+
+## §82 — ⛔ UN REPLI QUI RÉPÈTE UNE VALEUR NE DOIT PAS RÉPÉTER CE QUI LUI EST ATTACHÉ : LA NOTE D'UNE SÉRIE RECOPIÉE SUR D'AUTRES *(18/10/2026, D-086 — branche locale `claude/ux-d086`, non publié ; défaut PRÉSENT en production `ft-v1256`)*
+
+> Numéro **§82** et non §81 : master porte déjà un §81 (clone D-085, 18/10) que cette branche n'a pas encore ; les deux se
+> rejoindront sans collision à l'intégration.
+
+**Symptôme.** Dans la colonne « Précédent » de l'écran Séance, le commentaire écrit sur une série la dernière fois
+(« 💬 Échec à la 7e ») s'affichait aussi sur des lignes qui n'étaient **pas** cette série. Mesuré (captures D-086 « avant »,
+360 → 430 px) : la séance d'avant avait 4 séries dont la 4ᵉ commentée ; aujourd'hui il y en a 5 → la note de la 4ᵉ apparaît sur la
+4ᵉ **et** sur la 5ᵉ ligne. Rien n'est faux dans les données ; c'est l'affichage qui prête une note à la mauvaise série.
+
+**Cause.** `_prevAligne` rapproche les séries par rôle et, quand la dernière fois en avait moins, **répète la dernière** (« repli ») :
+pour une VALEUR (« 6×90 ») c'est un repère utile et assumé (décision du 15/08/2026, témoin XIX ④ « REPLI » du runner). Mais `_setPrevNote` lisait
+`p.note` sur le même objet : la note, attachée à UNE série précise, était répétée avec la valeur. *Une approximation acceptable
+pour un chiffre devient une fausse attribution pour un texte.*
+
+**Correctif (D-086, correction ⑥ du brief de Michel).** `_prevAligneDetail` dit en plus, pour chaque ligne, si la série d'avant
+correspond **exactement** (`exact`) ou vient du repli ; `_prevAligne` en est le reflet (mêmes valeurs, mêmes 8 appelants). Le
+commentaire n'est plus écrit dans la ligne : un **point bleu** le signale sur sa série exacte seulement (`_notesPrecedentes`), et il
+se lit dans la fenêtre de note avec son origine (séance du JJ/MM/AAAA · série N · exercice). La note d'**exercice** (« Note perso »)
+n'est jamais rattachée à une ligne. Lecture seule : rien n'est enregistré.
+
+**Le témoin qui le voit.** `B-D086-⑩a` (point sur les séries 2 et 4, pas sur la 5ᵉ remplie par repli) · `B-D086-⑩b` (aucune note
+écrite dans les lignes, ni d'une autre séance ni d'un autre exercice) · `B-D086-⑩g` (la ligne de repli n'attribue aucun commentaire)
+· `B-D086-③a` (les VALEURS de « Précédent », repli compris, sont inchangées). Éprouvés par mutation : M9 (le point ignore `exact`),
+M10 (la note d'exercice prêtée à la 1ʳᵉ série), M12 (la note réécrite dans la ligne) — `tools/mut_ux_d086.py`.
+
+**À quoi on le reconnaît.** Une valeur « par défaut » ou « répétée » (repli, dernière connue, valeur précédente) qui transporte avec
+elle un **objet** — une note, un identifiant, une date. Le repli peut être juste pour la valeur et faux pour tout ce qui l'accompagne :
+le séparer explicitement (`exact`) plutôt que de laisser l'objet voyager avec.

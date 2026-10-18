@@ -1044,3 +1044,45 @@ iPhone, puis décision de publication de Michel.
 **Passe complète n°2 (sur `6d9b6c90`, arbre `70ace6e8`) : 7 261 ✅ / 0 ❌ — VALIDE, 4 conditions** (`tools/passe_valide.sh`). Depuis : documentation seulement (D-031). Aucun numéro de version posé (rien n'est publié).
 
 **À faire** : recette iPhone de Michel (vrai clavier, encoche, point du « + ») ; feu vert de Michel avant toute intégration ou publication.
+
+### 🛠️ D-086 — CORRECTIONS UX APRÈS LA RECETTE IPHONE DE D-085 (18/10/2026, brief « Claude Principal ») — BRANCHE LOCALE `claude/ux-d086`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-seance-02` @ `08090b33` = code D-085 `6d9b6c90` + clôture documentaire (4 fichiers, aucun applicatif). Dossier de travail séparé ;
+master `dbb50941`, production `ft-v1256` et clone en ligne (`6d9b6c90`) non touchés. ⛔ Aucun push (brief de Michel).
+
+**Les sept corrections (décision D-086)** : ① colonne **Type**, pastille N / É / X sur chaque série, cible 44 × 44, même `cycleType` (remplace le « badge sur le
+numéro » de D-085 G) · ② « Précédent » 15 px (14 px sous 375 px), contraste ≥ 7:1, marqueurs É / X à 11 px, jamais rogné (pire cas mesuré : « 10×142.5 X ») ·
+③ dock [ −15 s ][ ◔ temps ][ +15 s ][ Passer ], « Régler » = 30 s · 45 s · 1:00 · 1:30 · 2:00 · personnalisée, durée reprise à la série de travail suivante par
+`S.exRestPref` (existant, clé `ft4_exRp`) · ④ « Passer » Cobalt en plein écran · ⑤ bandeau de reprise : passe à la ligne, ne déborde plus (538 px → 328 px à 360) ·
+⑥ point bleu du commentaire de la dernière fois, sur sa série EXACTE seulement (`BUGS.md` §82), lu avec son origine dans la fenêtre de note · ⑦ date et heure
+ENREGISTRÉES de chaque message Milo, « Date indisponible » sinon, dessinées hors du texte des bulles.
+
+**Ce qui ne change pas** : 0 donnée persistée, 0 clé, 0 migration, 0 appel réseau ; `cycleType`, `setRestPreset`, `addRT`, `skipRest`, le décompte des 10 s,
+`_seanceOuverte`, `finishWorkout`, les valeurs de « Précédent » (repli compris), le prompt, les quotas, la mémoire et l'ENREGISTREMENT des messages de Milo.
+
+**Tests** : banc B-D086 (`tests/parcours/ux_d086.js`, `tools/banc_ux_d086.js`, 15 points × 360 / 375 / 390 / 430 px) **122 / 0** ; le même banc sur le code D-085
+`6d9b6c90` : **61 / 61** (les 61 verts sont les invariants), sans plantage ; contrôle négatif `tools/mut_ux_d086.py` **26 / 26** (M00 + 24 ciblées + 1 équivalente,
+arbre sain rejoué à 0). Bancs voisins rejoués : B-UXI 69 / 0 (4 témoins de D-085 G réécrits, R30) · B-UXS 69 / 0 · B-CC01 31 / 0 ; contrôle négatif de D-085
+`tools/mut_ux_integration.py` rejoué : **27 / 27** (M19 réécrite pour viser la pastille de la colonne Type, R30 ; arbre sain 0 au début et à la fin).
+
+**Règle #17** : 0 donnée persistée · 4 fichiers applicatifs (`log.js`, `style.css`, `index.html`, `coach.js`) · +209 / −68 · fusionnés ou retirés : le numéro-bouton
+de type et son badge (`.set-row .tbtn.snum`, `.snum-n`, `.stype-b`, règle daltonienne associée) ; la note de la dernière fois écrite dans la ligne ; le groupe
+`#rest-btns` ; la liste `[60,90,120]` recopiée 5 fois (→ `_REPOS_PRESETS`) ; `getPrev` / `_prevAligne` deviennent les reflets de `_prevSeance` /
+`_prevAligneDetail` (un seul propriétaire).
+
+**À trancher par Michel** : ① où afficher la note d'EXERCICE de la dernière fois (« Note perso ») — elle n'est rattachable à aucune série ; ② poser une heure au
+débrief et à « continuer dans le Coach » (ils entrent dans le fil sans `ts` : c'est un changement d'enregistrement, donc STOP, proposition à part) ; ③ abdos :
+repos fixe de 30 s sans mémoire (règle existante) ; ④ choisir 30 s quand plus de 30 s sont déjà écoulées arrête le repos SANS mémoriser la durée (comportement
+existant de `setRestPreset`, non modifié).
+
+**Textes d'aide devenus faux ou incomplets (chantier AIDES-01, non touchés ici)** : `index.html` « Tags de série » — « Touche le numéro de la série… » (FAUX : c'est la
+pastille de la colonne Type) et « Normal (défaut, non affiché) » (FAUX : « N » est affiché) ; « 1:00 · 1:30 · 2:00 dans Régler » (incomplet : + 30 s / 45 s) dans
+`screens.js` (aide « ? » Séance), `coach.js` (aide détaillée), `constants.js` (point rouge `seance-ux` et pop-up v78) ; rien ne décrit encore le point bleu du
+commentaire ni l'heure des messages (règle d'or #11, points 2 à 5, à faire avant la production).
+
+**Résiduels mesurés (préexistants, hors périmètre)** : la liste des discussions rangées de Milo affiche `new Date(c.ts || Date.now())` — une discussion sans date
+y prendrait l'heure de consultation ; la définition de X dans « Tags de série » (« menée jusqu'à l'échec musculaire ») diffère de celle de Michel (« répétition
+tentée et non réussie »).
+
+**À faire** : passe complète D-031 sur l'arbre fonctionnel final ; recette iPhone de Michel ; feu vert de Michel avant toute régénération du clone, intégration ou
+publication.

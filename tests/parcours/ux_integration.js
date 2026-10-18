@@ -254,21 +254,26 @@ async function ecran(t, b, PORT) {
   {
     const X = await ouvrir({ wkt: wkt([{ name: DC, sets: [N(40, 10, true, 'É'), N(100, 8, true), N(100, 8, false), N(102.5, 5, false, 'X')] }]) });
     await fixDate(X); await X.pg.evaluate(() => { _expandedEx = 0; }); await vers(X, 'log'); await X.pg.evaluate(() => renderLog());
+    /* ⛔ R30 — D-086 (18/10/2026, recette iPhone de Michel) REMPLACE la décision G « le type sur le numéro » : Michel n'a pas
+       trouvé le badge (une série normale n'affichait rien, rien ne disait qu'on pouvait toucher le numéro). Ces quatre
+       témoins disaient « badge sur le numéro » et « plus de colonne Type » ; ils disent maintenant ce que D-086 a décidé —
+       une colonne Type, une pastille sur CHAQUE série, même `cycleType` — et gardent ce que G avait acquis : le 1RM dans SA
+       colonne, hors de tout bouton, et des cibles d'au moins 44 px. Le détail est dans `tests/parcours/ux_d086.js`. */
     const s = await X.pg.evaluate(() => { const rows = [...document.querySelectorAll('#s-log .ex-block .set-row')];
       return { hdr: [...document.querySelectorAll('#s-log .sets-hdr span')].map(x => x.textContent.trim()),
-        badges: rows.map(r => { const b = r.querySelector('.tbtn.snum .stype-b'); return b ? b.textContent.trim() : ''; }),
-        num: rows.map(r => { const n = r.querySelector('.tbtn.snum'); return n ? Math.round(n.getBoundingClientRect().height) : 0; }),
+        pastilles: rows.map(r => { const b = r.querySelector('button.stype .tbtn'); return b ? b.textContent.trim() : ''; }),
+        type: rows.map(r => { const n = r.querySelector('button.stype'); return n ? Math.round(Math.min(n.getBoundingClientRect().width, n.getBoundingClientRect().height)) : 0; }),
         chk: rows.map(r => { const c = r.querySelector('.chk'); return c ? Math.round(Math.min(c.getBoundingClientRect().width, c.getBoundingClientRect().height)) : 0; }),
         rm: rows.map(r => { const e = r.querySelector('[id^="trm-"]'); return e ? { cls: e.className, dansBouton: !!e.closest('button'), t: e.textContent.trim() } : null; }) }; });
-    t('B-UXI-F5 ⭐ décision G : le type est un BADGE sur le numéro (É, rien, rien, X) ; la colonne « Précédent » reste',
-      _det(s.badges) === _det(['É', '', '', 'X']) && s.hdr.includes('Précédent'), _det(s));
-    t('B-UXI-F6 ⭐ décision G : le 1RM a SA colonne (en-tête « 1RM », valeur hors de tout bouton) — plus de colonne « Type »',
-      s.hdr.includes('1RM') && !s.hdr.includes('Type') && s.rm.every(x => x && x.cls === 'srm' && !x.dansBouton) && /~/.test(s.rm[1].t), _det(s));
-    t('B-UXI-F7 décision G : numéro (type) et coche : zones d\'appui ≥ 44 px', s.num.every(h => h >= 44) && s.chk.every(w => w >= 44), _det(s));
-    // Changer le type : on appuie sur le NUMÉRO (même action qu'avant, cycleType) — la donnée change, le badge suit.
+    t('B-UXI-F5 ⭐ D-086 (remplace G) : le type a SA colonne, une pastille sur CHAQUE série (É, N, N, X) ; « Précédent » reste',
+      _det(s.pastilles) === _det(['É', 'N', 'N', 'X']) && s.hdr.includes('Précédent'), _det(s));
+    t('B-UXI-F6 ⭐ décision G gardée : le 1RM a SA colonne (en-tête « 1RM », valeur hors de tout bouton) — et le type a la sienne (D-086)',
+      s.hdr.includes('1RM') && s.hdr.includes('Type') && s.rm.every(x => x && x.cls === 'srm' && !x.dansBouton) && /~/.test(s.rm[1].t), _det(s));
+    t('B-UXI-F7 pastille de type et coche : zones d\'appui ≥ 44 × 44 px', s.type.every(h => h >= 44) && s.chk.every(w => w >= 44), _det(s));
+    // Changer le type : on appuie sur la PASTILLE (même action qu'avant, cycleType) — la donnée change, la pastille suit.
     await clic(X, '#tbtn-0-2'); await X.pg.waitForTimeout(250);
-    const c = await X.pg.evaluate(() => ({ type: S.wkt.exs[0].sets[2].type, badge: (document.querySelector('#tbtn-0-2 .stype-b') || {}).textContent || '' }));
-    t('B-UXI-F8 ⭐ appuyer sur le numéro change le type (cycleType) et le badge suit', c.type === 'É' && c.badge === 'É', _det(c));
+    const c = await X.pg.evaluate(() => ({ type: S.wkt.exs[0].sets[2].type, pastille: (document.querySelector('#tbtn-0-2 .tbtn') || {}).textContent || '' }));
+    t('B-UXI-F8 ⭐ appuyer sur la pastille change le type (cycleType) et la pastille suit', c.type === 'É' && c.pastille === 'É', _det(c));
     t('B-UXI-F9 la progression N / M exclut toujours les échauffements', /1\s*\/\s*2/.test(await entete(X)), await entete(X));
     await X.cx.close();
   }

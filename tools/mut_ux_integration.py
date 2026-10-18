@@ -52,7 +52,8 @@ MUT = [
      [(IX, '  <div id="log-types" style="padding-top:6px;"></div>\n  <div class="la-sec" id="la-autres">Autres options</div>\n  <div id="log-cardio"></div>',
            '  <div class="la-sec" id="la-autres">Autres options</div>\n  <div id="log-cardio"></div>\n  <div id="log-types" style="padding-top:6px;"></div>')], 'GARDE', 'B-UXI-F3'),
     ('M18 une entree « Autre activite » apparait (decision L : non construite)', [(IX, '  <div id="log-cardio"></div>', '  <div id="log-cardio"></div>\n  <button class="btn btn-bg2">Autre activité</button>')], 'GARDE', 'B-UXI-F4'),
-    ('M19 le badge de type ne s\'affiche plus sur le numero', [(LO, "${set.type&&set.type!=='N'?`<span class=\"stype-b\">${set.type}</span>`:''}", "")], 'GARDE', 'B-UXI-F5'),
+    # R30 — D-086 (18/10) remplace la decision G (badge sur le numero) par une pastille de type dans sa colonne : M19 vise la pastille.
+    ('M19 la pastille de type ne montre plus le type', [(LO, '<span class="tbtn ${_tt}">${_tt}</span>', '<span class="tbtn ${_tt}"></span>')], 'GARDE', 'B-UXI-F5'),
     ('M20 [deguisee] le 1RM retourne DANS un bouton', [(LO, "+`<div class=\"srm\" id=\"trm-${ei}-${si}\">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`", "+`<button class=\"srm\" id=\"trm-${ei}-${si}\">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</button>`")], 'GARDE', 'B-UXI-F6'),
     ('M21 la coche retombe a 30 px (cible trop petite)', [(CS, "#s-log .chk{width:44px;height:44px;", "#s-log .chk{width:30px;height:30px;")], 'GARDE', 'B-UXI-F7'),
     # ── I · Milo
