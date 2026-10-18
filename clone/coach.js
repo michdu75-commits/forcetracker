@@ -1609,6 +1609,7 @@ function newCoachChat(){
   coachHistory = [];
   try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
   const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
+  _coachOnglet=null;                            // D-085 : plus de discussion → retour à l'onglet automatique
   updateCoachHeader();
   if(typeof toast==='function') toast('Nouvelle discussion','info');
 }
@@ -1674,13 +1675,34 @@ function deleteCoachConv(id){
   if(typeof toast==='function') toast('Discussion supprimée','info');
 }
 
+/* 🎨 ONGLETS « DISCUSSION / ESPACE MILO » (décision I de Michel, 17/10/2026 — D-085). Le contenu ne change pas :
+   « Espace Milo » montre l'accueil de Milo (#coach-home), « Discussion » montre le fil (#coach-msgs + suggestions).
+   ⛔ AFFICHAGE SEUL : ni le moteur, ni les appels, ni le quota, ni la mémoire ne bougent. L'onglet choisi vit EN
+   MÉMOIRE (aucune clé) : `null` = automatique — « Espace Milo » tant qu'il n'y a aucune discussion (exactement l'écran
+   d'arrivée d'avant), « Discussion » dès qu'il y en a une (exactement l'écran d'avant). Envoyer un message ramène
+   toujours sur « Discussion ». La saisie reste visible dans les deux onglets : on peut écrire à Milo d'un geste. */
+let _coachOnglet=null;
+function _ongletCoachEffectif(){ return _coachOnglet || ((coachHistory&&coachHistory.length)?'disc':'espace'); }
+function _appliquerOngletCoach(){
+  const scr=document.getElementById('s-coach'); if(!scr) return;
+  const o=_ongletCoachEffectif();
+  scr.classList.toggle('ct-espace',o==='espace');
+  scr.classList.toggle('ct-disc',o==='disc');
+  [['ctab-disc','disc'],['ctab-espace','espace']].forEach(([id,k])=>{
+    const b=document.getElementById(id); if(!b) return;
+    b.classList.toggle('on',o===k); b.setAttribute('aria-selected',o===k?'true':'false');
+  });
+}
+function coachTab(t){ _coachOnglet=(t==='espace')?'espace':'disc'; _appliquerOngletCoach(); }
 function _showCoachChat(){
+  _coachOnglet='disc';                          // un échange commence ou reprend : on le montre
   const home=document.getElementById('coach-home');
   const msgs=document.getElementById('coach-msgs');
   const suggs=document.getElementById('coach-suggs');
   if(home)home.style.display='none';
   if(msgs){msgs.style.display='flex';msgs.style.flexDirection='column';}
   if(suggs)suggs.style.display='flex';
+  _appliquerOngletCoach();
 }
 function _updateCoachCtxTags(){
   const morphoTag=document.getElementById('coach-ctx-morpho');
@@ -2847,6 +2869,7 @@ function updateCoachHeader() {
     if(msgs && msgs.children.length===0) _renderCoachThread();
     if(newBtn)newBtn.style.display='flex';
   }
+  _appliquerOngletCoach();                      // D-085 : onglets Discussion / Espace Milo
   const badge = document.getElementById('coach-quota-badge');
   if (!badge) return;
   if (S.premium) {
@@ -8456,7 +8479,7 @@ const _DRAWER_CONTENT = {
         /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — règle d'or #11, point 4 : l'aide détaillée de la nouvelle forme de
            l'écran. L'endroit du POURQUOI : ce qui sert à la salle reste sous la main, le rare est rangé — et ce qui NE
            change PAS (séries, records, historique, moteur du repos). */
-        {ic:'🏋️',t:'L\'écran Séance : ce qui a changé, et pourquoi',d:'Depuis le <b>16/10/2026</b>, l\'écran Séance garde sous la main ce qui sert <b>à la salle</b> et range le reste. <b>Avant</b> la séance : « Séance libre » ou « Programme », puis ta récup et ta dernière séance, les types de séance, et plus bas le cardio et l\'import. <b>Pendant</b> : la barre du haut devient l\'<b>en-tête de la séance</b> — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas, comme pour savoir si un exercice est fini), ⋯ et « Terminer ». Les actions rares (pause, date, tout dérouler, grouper, programmes, vider, abandonner) sont dans <b>⋯</b>, l\'aide « ? » aussi. <b>« Terminer »</b> enregistre tout de suite si toutes tes séries de travail sont faites ; sinon il te dit combien il en reste — tu continues ou tu termines quand même, rien n\'est perdu. Le <b>repos</b> s\'affiche en bas et ne décale plus ta liste ; 1:00 · 1:30 · 2:00 sont dans <b>Régler</b> (touche le temps ✎). Une <b>pastille verte</b> sur le « + » rappelle qu\'une séance est ouverte : le « + » te ramène à <b>la même</b> séance, il n\'en crée jamais une deuxième. ⛔ <b>Rien ne change</b> dans tes séries, tes records ou ton historique.'},
+        {ic:'🏋️',t:'L\'écran Séance : ce qui a changé, et pourquoi',d:'Depuis le <b>16/10/2026</b>, l\'écran Séance garde sous la main ce qui sert <b>à la salle</b> et range le reste. <b>Avant</b> la séance : « Séance libre » ou « Programme », puis ta récup et ta dernière séance, les types de séance, et plus bas le cardio et l\'import. <b>Pendant</b> : la barre du haut devient l\'<b>en-tête de la séance</b> — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas, comme pour savoir si un exercice est fini), ⋯ et « Terminer ». Les actions rares (pause, date, tout dérouler, grouper, programmes, vider, abandonner) sont dans <b>⋯</b>, l\'aide « ? » aussi. <b>« Terminer »</b> enregistre tout de suite si toutes tes séries de travail sont faites ; sinon il te dit combien il en reste — tu continues ou tu termines quand même, rien n\'est perdu. Le <b>repos</b> s\'affiche en bas et ne décale plus ta liste ; 1:00 · 1:30 · 2:00 sont dans <b>Régler</b> (touche le temps ✎). Un <b>point bleu</b> sur le « + » rappelle qu\'une séance est ouverte : le « + » te ramène à <b>la même</b> séance, il n\'en crée jamais une deuxième. ⛔ <b>Rien ne change</b> dans tes séries, tes records ou ton historique.'},
         /* ⚠️ « Timer : É 45s » est devenu FAUX le 31/08 (ft-v1082) : le repos d'un palier suit
            maintenant sa charge. Une aide qui annonce un chiffre que l'app n'applique plus est
            pire qu'une aide absente, parce qu'on la croit (R23). Le détail va dans l'entrée 🔥

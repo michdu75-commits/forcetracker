@@ -1,7 +1,7 @@
 {
-  "ref": "claude/ux-seance-01",
-  "sha": "1ab2b38f8f30c09c1ddd787ddfe602a8e953f888",
-  "genere_le": "2026-10-17 08:00 UTC",
+  "ref": "6d9b6c90",
+  "sha": "6d9b6c909dc9016b5d05649e2ecc07c9607234f7",
+  "genere_le": "2026-10-18 06:10 UTC",
   "fichiers": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "app.js"
   ],
   "banc_isolation": "22 OK / 0 rouge",
-  "empreinte": "5aef208cd26bc2dada2dc17bfcbeb8865cb022079a13bd03c8e10a37e432e0fe"
+  "empreinte": "68276c0ea941504d832149c8ebb2a097d2ca7acee2f657ff9e91c2cbbc2aa3b8"
 }
