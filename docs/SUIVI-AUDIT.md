@@ -1125,6 +1125,8 @@ seulement sur la carte ouverte. **Corrigées** : type visible, commentaire de la
 l'import de programme reste possible par ⋯ → Programmes, **l'import d'historique n'est plus atteignable pendant une séance** (il l'était dans l'ancien écran).
 Non corrigé (hors périmètre validé).
 
+**Prompt réel de Milo** : régénéré depuis le code D-087 sur une COPIE de `tools/dump_prompt.js` (l'outil écrit dans le dépôt principal, chemin codé en dur — il l'a fait une 2ᵉ fois aujourd'hui, remis à l'identique, `BUGS.md` §83 ⑦) : identique à la référence sauf la phrase de l'heure (87 caractères).
+
 **Règle #17** : 0 donnée persistée · 2 fichiers applicatifs (`log.js`, `style.css`) · +34 / −1 · 0 ancien chemin supprimé — la note se lit par le propriétaire
 existant `_prevSeance`, aucune copie.
 

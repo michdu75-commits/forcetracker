@@ -4720,6 +4720,11 @@ faisait **planter** le banc plus loin (une fiche restée ouverte bloquait le cli
 survivre au défaut qu'il teste (son propre témoin le voit, la suite continue). ⑥ Dans la comparaison ancien / nouveau, des commandes
 « INTROUVABLES » ne l'étaient que pour la sonde : bouton sous la barre du bas (il faut faire défiler, comme le pouce), carte repliée
 (il faut l'ouvrir d'abord, comme la personne).
+⑦ **Deux fois le même jour** (D-086 puis D-087) : `tools/dump_prompt.js` LIT et ÉCRIT le **dépôt principal** (chemin codé en dur,
+`/home/user/forcetracker`) ; lancé depuis un dossier de travail, il a réécrit `docs/PROMPT-MILO-REEL.txt` du dépôt principal à partir du
+code de master (non commité, remis à l'identique aussitôt chaque fois) et n'a **rien** vérifié du code du dossier de travail. → vérifier sur
+une COPIE de l'outil pointée vers le dossier de travail (fait : seule la phrase de l'heure diffère). Proposition, NON faite (outil partagé,
+hors périmètre) : `ROOT = path.dirname(__dirname)` et la sortie relative à ROOT.
 
 **Le témoin qui le voit.** `B-NOTE-⑨b` / `⑨d` (écart pendant le geste + liste d'actions d'IA) · `B-NOTE-③a` / `③b` (« Précédent »
 retrouvé, puis point absent) · `tools/mut_notes_d087.py` 21 / 21 (M9 rougit sans plantage ; arbre sain rejoué à 0 à la fin).
