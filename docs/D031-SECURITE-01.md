@@ -60,7 +60,10 @@ python3 tools/isoler_reseau.py --en-ligne -- tools/sous_garde.sh python3 tools/r
   démonstration, **non appliqué** (changement de protocole : un plantage de module ne rend plus la passe invalide,
   il la rend rouge, et les modules suivants tournent).
 - **Témoins D-091 (volume total, échauffements compris)** : préparés dans `tests/parcours/d091_volume_prepare.js`,
-  **non branchés** — à brancher avec Principal quand D-091 est livré (les noms de champs de `lire()` sont des hypothèses).
+  **non branchés** — à brancher avec Principal quand D-091 est livré. Ils lisent le panneau « Ta séance jusqu'ici »
+  (`#log-finish`) tel que D-092 l'affiche, et la séance enregistrée. Mesuré sur le code de D-091 (`clone/` de
+  `origin/master` `ed05faa1`) : 8/8 verts ; sur le code d'avant : 3/8 (les totaux rougissent, attendu). Contrôle
+  négatif : `python3 tools/mut_d091_volume_prepare.py <arbre-qui-porte-D-091>` — 7/7 conformes.
 - **Bancs et outils lancés seuls** : non modifiés (115 fichiers) — `tools/sous_garde.sh` les garde ; rendre le garde
   obligatoire pour les **nouveaux** bancs est une proposition.
 - **`tests/milo/eval.js`, `eval-scenarios.js`** : portent encore une identité réelle — c'est le banc d'essai **réel**
