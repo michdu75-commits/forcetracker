@@ -62,8 +62,7 @@ python3 tools/isoler_reseau.py --en-ligne -- tools/sous_garde.sh python3 tools/r
   (`#log-finish`) tel que D-092 l'affiche, et la séance enregistrée. Mesuré sur le code de D-091 (`clone/` de
   `origin/master` `ed05faa1`) : 8/8 verts ; sur le code d'avant : 3/8 (les totaux rougissent, attendu). Contrôle
   négatif : `python3 tools/mut_d091_volume_prepare.py <arbre-qui-porte-D-091>` — 7/7 conformes.
-- **Bancs et outils lancés seuls** : non modifiés (115 fichiers) — `tools/sous_garde.sh` les garde ; rendre le garde
-  obligatoire pour les **nouveaux** bancs est une proposition.
+- ~~Bancs et outils lancés seuls~~ → **garde OBLIGATOIRE pour les nouveaux bancs, décidée le 19/10/2026** — voir § 8.
 - **`tests/milo/eval.js`, `eval-scenarios.js`** : portent encore une identité réelle — c'est le banc d'essai **réel**
   de Milo, qui choisit son modèle par l'adresse (`worker.js`) ; hors de ce chantier, non modifié.
 
@@ -85,3 +84,39 @@ python3 tools/isoler_reseau.py --en-ligne -- tools/sous_garde.sh python3 tools/r
   `python3 tools/mut_plantages.py --contre-epreuve` (SEC-04 retiré de la copie : les 10 plantages doivent alors ÉCHOUER au
   contrôle, le témoin de contrôle rester vert). Dans la passe, `D031S-IV ②` rougit si SEC-04 n'est plus installé avant
   le premier module (mutation H2 de `tools/mut_garde_reseau.py`).
+
+## 8. La garde obligatoire (décision de Michel du 19/10/2026 : « OUI »)
+
+**La règle** : tout fichier de `tests/` ou `tools/` qui pilote Playwright charge le garde **en première instruction**,
+avant Playwright :
+
+```js
+'use strict';
+require('../tests/_garde_reseau.js');        // ⛔ TOUJOURS la 1ʳᵉ instruction (chemin relatif au fichier)
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+```
+
+C'est le **fichier lui-même** qui se garde : il reste gardé quel que soit le chemin qui le lance (directement, par un
+outil de mutation, par la recette annexe, par la passe).
+
+**Ce qui la rend obligatoire** :
+
+- **Fermé par défaut, à chaque lancement** : le garde PROUVE, avant de rendre un navigateur, que Node est coupé, que le
+  contexte naît avec le refus par défaut (une requête non simulée → `ERR_BLOCKED_BY_CLIENT`) et qu'une requête laissée
+  partir bute sur le proxy mort. Un échec = le navigateur est fermé et le lancement **lève** (« PREUVE AU LANCEMENT
+  ÉCHOUÉE ») : aucun banc ne tourne avec un garde non prouvé. Témoins : `D031S-I ⑯` (début) et `D031S-II ③` (fin).
+- **Le cliquet** (`D031S-VII`, dans la passe) : un NOUVEAU point d'entrée non gardé rougit (①) ; les anciens sont
+  inscrits dans `tests/garde_existants.json` et cette liste **ne fait que rétrécir** (② : un inscrit devenu gardé doit
+  en sortir, une ligne qui ne désigne plus rien aussi) ; les chemins de lancement officiels chargent le garde (③ : la
+  passe, la recette annexe, `tools/sous_garde.sh`).
+- **La recette annexe** (`tools/recette_annexe.py`) lance ses 15 suites **sous le garde** (`NODE_OPTIONS --require`),
+  sans modifier les suites. Sans le fichier du garde, Node ne démarre pas : ERREUR D'INFRA (fermé par défaut).
+
+**Les réponses simulées restent la règle** : le garde ne simule rien, il coupe. Un test qui a besoin d'un service
+externe le **simule** (`route.fulfill`) — le garde laisse passer les simulations (`D031S-I ⑤`).
+
+**Les anciens bancs** (« à migrer ») se migrent progressivement, jamais à l'aveugle :
+`python3 tools/migrer_garde.py <fichier>` les joue avant/après l'ajout de la ligne, dans une copie et un espace réseau
+isolé, et **refuse** si un seul verdict ou le code de sortie change (un écart est rejoué une fois : un banc instable ne
+passe pas pour un effet du garde). En attendant, un ancien se lance gardé par `tools/sous_garde.sh node <fichier>`.
+Les fichiers « Milo — conservé (décision 3) » ne sont pas migrés (voir la proposition séparée).

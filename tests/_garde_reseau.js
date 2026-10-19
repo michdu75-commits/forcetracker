@@ -35,8 +35,12 @@
        Un test qui veut vérifier un comportement doit SIMULER la réponse (route.fulfill) —
        le garde est un filet, pas une simulation ;
      · il ne protège que les processus qui le chargent : la passe le charge en première ligne
-       (`tests/parcours/runner.js`) ; un banc lancé seul doit être lancé avec
-       `node -r ./tests/_garde_reseau.js tools/banc_x.js` tant qu'il ne le charge pas lui-même.
+       (`tests/parcours/runner.js`), la recette annexe le passe à ses 15 suites (`--require`), et — décision
+       de Michel du 19/10/2026 — TOUT NOUVEAU banc le charge lui-même en première instruction (le cliquet
+       D031S-VII de la passe le vérifie). Les anciens sont inscrits dans `tests/garde_existants.json` (la liste
+       ne fait que rétrécir : `tools/migrer_garde.py`) et se lancent gardés par `tools/sous_garde.sh`.
+   ⛔ ET IL SE PROUVE À CHAQUE LANCEMENT DE NAVIGATEUR (D031S-2) : Node coupé, refus par défaut effectif, proxy mort
+   effectif — sinon le navigateur est fermé et le lancement lève (« PREUVE AU LANCEMENT ÉCHOUÉE »).
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 const MARQUE = Symbol.for('forcetracker.gardeReseau');
@@ -60,7 +64,7 @@ const RE_CLIENT_PW = /playwright-core[\\/]lib[\\/]client[\\/](browserType|browse
 const RE_ENTREE_PW = /[\\/]playwright(-core)?[\\/]index\.js$/;
 
 // ── l'état du garde : compteurs et journal (en mémoire ; dans un fichier si FT_GARDE_JOURNAL nomme un dossier) ──
-const compte = { nodeRefusees: 0, lancements: 0, contextes: 0, enfants: 0, copiesPlaywright: 0,
+const compte = { nodeRefusees: 0, lancements: 0, preuves: 0, preuvesEchouees: 0, contextes: 0, enfants: 0, copiesPlaywright: 0,
   nav: { 'simulée': 0, 'refusée par le test': 0, 'bloquée (refus par défaut)': 0, 'bloquée (garde de processus)': 0,
          'SORTIE': 0, 'interrompue': 0, 'autre échec': 0, websocket: 0 } };
 const journal = [];
@@ -242,6 +246,10 @@ function patcherClient(fichier, ex) {
       const nav = await la0.call(this, optionsSures(o));
       // ⛔ fermé par défaut : un navigateur dont la classe n'est pas patchée créerait des contextes sans refus par défaut
       if (!nav || !DEJA.has(Object.getPrototypeOf(nav))) { try { await nav.close(); } catch (e) {} throw erreurGarde('navigateur d\'une copie de Playwright non patchée', 'EGARDE'); }
+      // ⛔ LA PREUVE AU LANCEMENT (décision de Michel du 19/10/2026 : « la protection doit échouer en mode fermé si elle ne
+      //    peut pas être garantie ») : avant de rendre le navigateur, le garde vérifie qu'il TIENT — sinon, pas de navigateur.
+      try { await preuveLancement(nav); compte.preuves++; }
+      catch (e) { compte.preuvesEchouees++; try { await nav.close(); } catch (e2) {} throw e; }
       return nav;
     };
     for (const nom of ['launchPersistentContext', 'connect', 'connectOverCDP', 'launchServer']) {
@@ -267,6 +275,25 @@ function patcherClient(fichier, ex) {
       R.prototype[nom] = function (...a) { try { const rq = this.request(); if (!DECISION.has(rq) || decision !== 'fallback') DECISION.set(rq, decision); } catch (e) {} return f0.apply(this, a); };
     }
   }
+}
+/* ⛔ LA PREUVE AU LANCEMENT — trois couches, sur des destinations FICTIVES (RFC 6761), en ~0,2 s, à chaque navigateur :
+   ① Node : le canari (TCP, DNS, fetch) est refusé PAR LE GARDE ; ② le contexte naît AVEC le refus par défaut, et une requête
+   non simulée est abandonnée (ERR_BLOCKED_BY_CLIENT) ; ③ une requête qu'un test laisse PARTIR (route.continue) bute sur le
+   proxy mort. Un échec = le navigateur est FERMÉ et le lancement LÈVE : aucun banc ne tourne sans garde prouvé. */
+const echecPreuve = (quoi) => Object.assign(new Error('garde réseau : PREUVE AU LANCEMENT ÉCHOUÉE — ' + quoi + ' (fermé par défaut : aucun navigateur sans garde prouvé)'), { code: 'EGARDE', gardeReseau: true });
+async function preuveLancement(nav) {
+  const r = await canariNode();
+  if (!canariOk(r)) throw echecPreuve('Node n\'est pas gardé ' + JSON.stringify(r));
+  const c = await nav.newContext();
+  try {
+    if (!CONTEXTES.has(c)) throw echecPreuve('le contexte est né SANS refus par défaut');
+    const p = await c.newPage();
+    const e1 = await p.goto('http://preuve.d031s.invalid/', { timeout: 10000 }).then(() => 'la page a RÉPONDU', (e) => String(e.message));
+    if (!/ERR_BLOCKED_BY_CLIENT/.test(e1)) throw echecPreuve('refus par défaut non prouvé (' + e1.split('\n')[0].slice(0, 90) + ')');
+    await c.route('**/*', (rt) => rt.continue());
+    const e2 = await p.goto('http://preuve-proxy.d031s.invalid/', { timeout: 10000 }).then(() => 'la page a RÉPONDU', (e) => String(e.message));
+    if (!/ERR_PROXY_CONNECTION_FAILED|ERR_TUNNEL_CONNECTION_FAILED|ERR_NAME_NOT_RESOLVED/.test(e2)) throw echecPreuve('proxy mort non prouvé (' + e2.split('\n')[0].slice(0, 90) + ')');
+  } finally { try { await c.close(); } catch (e) {} }
 }
 // ⛔ fermé par défaut, copie par copie : les navigateurs qu'une copie de Playwright exporte doivent avoir une classe patchée
 const verifierEntree = (ex) => {

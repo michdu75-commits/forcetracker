@@ -155,9 +155,12 @@ module.exports.debut = async function (t, b, PORT, chromium) {
   const vus = module.exports.contournements();
   t('D031S-I ⑮ aucun fichier de la passe n\'écrit un contournement du garde (proxy, contexte persistant, CDP, patch réseau, environnement)',
     vus.length === 0, vus.slice(0, 6).join(' · '));
+  { const k = GARDE().compteurs();
+    t('D031S-I ⑯ chaque navigateur lancé s\'est PROUVÉ avant de servir (Node, refus par défaut, proxy mort) — sinon il n\'aurait pas été rendu',
+      k.lancements >= 1 && k.preuves === k.lancements && k.preuvesEchouees === 0, k.preuves + ' preuve(s) / ' + k.lancements + ' lancement(s), ' + k.preuvesEchouees + ' échec(s)'); }
   const sans = module.exports.entreesSansGarde();
-  console.log('  ℹ️ ' + sans.length + ' point(s) d\'entrée lancent Playwright sans charger le garde (bancs et outils lancés SEULS ; la passe, elle, est gardée) — '
-    + 'les lancer gardés : node -r ./tests/_garde_reseau.js <fichier>');
+  console.log('  ℹ️ ' + sans.length + ' ancien(s) point(s) d\'entrée lancent Playwright sans charger le garde (inscrits dans tests/garde_existants.json, la liste ne fait que rétrécir — D031S-VII) — '
+    + 'les lancer gardés : tools/sous_garde.sh node <fichier>');
 };
 
 /* ⛔ CE QUI CONTOURNERAIT LE GARDE, cherché dans le TEXTE des fichiers que la passe charge. Le garde refuse déjà ces chemins
@@ -179,18 +182,78 @@ module.exports.contournements = () => {
   }
   return vus;
 };
-/* ℹ️ les points d'entrée qui lancent Playwright SANS charger le garde (bancs lancés seuls, outils). Information, pas verdict :
-   la passe, elle, est gardée. Un banc se lance gardé avec `node -r ./tests/_garde_reseau.js tools/banc_x.js`. */
-module.exports.entreesSansGarde = () => {
-  const liste = [];
-  for (const dir of ['tools', 'tests', path.join('tests', 'parcours'), path.join('tests', 'milo'), path.join('tests', 'recette')]) {
-    let fichiers = []; try { fichiers = fs.readdirSync(path.join(RACINE, dir)); } catch (e) { continue; }
-    for (const f of fichiers.filter(x => x.endsWith('.js'))) {
-      const src = fs.readFileSync(path.join(RACINE, dir, f), 'utf8');
-      if (/require\([^)]*playwright[^)]*\)|_playwright\.js/.test(src) && !/_garde_reseau/.test(src) && !/^tests[\\/]parcours[\\/](?!runner\.js)/.test(path.join(dir, f))) liste.push(path.join(dir, f));
-    }
+/* ═══ D031S-VII — LA GARDE OBLIGATOIRE (décision de Michel du 19/10/2026 : « OUI ») ════════════════════════════════
+   Tout fichier de tests/ ou tools/ qui pilote Playwright doit charger le garde AVANT Playwright — quel que soit le chemin
+   qui le lance (directement, par un outil de mutation, par la recette annexe), c'est le fichier lui-même qui se garde.
+   Les fichiers d'AVANT la décision sont inscrits dans tests/garde_existants.json (« à migrer », ou conservés par décision) :
+   ⛔ la liste ne peut que RÉTRÉCIR. Rougissent : un NOUVEAU point d'entrée non gardé · un inscrit devenu gardé (à retirer
+   de la liste) · une ligne qui ne désigne plus rien. Un module de la passe (tests/parcours/*.js sans programme principal)
+   n'est pas un point d'entrée : il ne tourne que dans la passe, qui est gardée. */
+const RE_PW_JS = /require\(\s*[^)]*playwright[^)]*\)|from\s+['"][^'"]*playwright|chargerPlaywright\s*\(|\/opt\/pw-browsers|chromium\.launch\s*\(/;
+const RE_PW_PY = /chargerPlaywright\s*\(|chromium\.launch\s*\(|\.launch\(\s*\{\s*executablePath/;
+const RE_GARDE_CHARGE = /require\(\s*[^)]*_garde_reseau(?:\.js)?['"]\s*\)|--require[ =]\S*_garde_reseau\.js|-r\s+\S*_garde_reseau\.js/;
+const INFRA = /^tests\/(_garde_reseau|_playwright|_plantages|identites_fictives)\.js$/;
+const sansCommPy = (s) => s.split('\n').map(l => (l.trim().startsWith('#') ? '' : l)).join('\n');
+const parcourir = (dir) => {
+  const out = [];
+  let lus = []; try { lus = fs.readdirSync(path.join(RACINE, dir), { withFileTypes: true }); } catch (e) { return out; }
+  for (const d of lus) {
+    if (/^(node_modules|\.git|__pycache__)$/.test(d.name)) continue;
+    const rel = dir + '/' + d.name;
+    if (d.isDirectory()) out.push(...parcourir(rel)); else out.push(rel);
   }
-  return liste;
+  return out;
+};
+module.exports.pointsEntree = () => {
+  const r = [];
+  for (const f of [].concat(parcourir('tests'), parcourir('tools'))) {
+    if (!/\.(js|mjs|py|sh)$/.test(f) || INFRA.test(f)) continue;
+    const brut = fs.readFileSync(path.join(RACINE, f), 'utf8'), py = /\.(py|sh)$/.test(f);
+    const code = py ? sansCommPy(brut) : sansCommentaires(brut);
+    const iPW = code.search(py ? RE_PW_PY : RE_PW_JS); if (iPW < 0) continue;
+    if (/^tests\/parcours\/(?!runner\.js$)/.test(f) && !/require\.main\s*===\s*module/.test(code)) continue;
+    const iG = code.search(RE_GARDE_CHARGE);
+    r.push({ f, garde: iG >= 0 && iG < iPW });
+  }
+  return r;
+};
+module.exports.cliquet = () => {
+  const liste = JSON.parse(fs.readFileSync(path.join(RACINE, 'tests', 'garde_existants.json'), 'utf8'));
+  const inscrits = new Map(liste.fichiers.map(x => [x.fichier, x]));
+  const pts = module.exports.pointsEntree(), parF = new Map(pts.map(p => [p.f, p]));
+  const parEtat = {}; for (const x of liste.fichiers) parEtat[x.etat] = (parEtat[x.etat] || 0) + 1;
+  return {
+    total: pts.length, gardes: pts.filter(p => p.garde).length, inscrits: inscrits.size, parEtat,
+    nouveaux: pts.filter(p => !p.garde && !inscrits.has(p.f)).map(p => p.f),
+    aRetirer: [...inscrits.keys()].filter(f => parF.has(f) && parF.get(f).garde),
+    perimes: [...inscrits.keys()].filter(f => !parF.has(f)),
+  };
+};
+// ℹ️ compatibilité : le compte affiché au début de la passe vient du même scanner (R2 : une seule définition)
+module.exports.entreesSansGarde = () => module.exports.pointsEntree().filter(p => !p.garde).map(p => p.f);
+/* les CHEMINS DE LANCEMENT officiels : la passe, la recette annexe (elle lance ses 15 suites), le lanceur à la demande */
+module.exports.cheminsGardes = () => {
+  const lire = (f) => { try { return fs.readFileSync(path.join(RACINE, f), 'utf8'); } catch (e) { return ''; } };
+  const run = sansCommentaires(lire('tests/parcours/runner.js')), ann = sansCommPy(lire('tools/recette_annexe.py')), sg = sansCommPy(lire('tools/sous_garde.sh'));
+  const iG = run.search(/require\('\.\.\/_garde_reseau\.js'\)/), iP = run.search(RE_PW_JS);
+  return {
+    'tests/parcours/runner.js': iG >= 0 && iG < iP,
+    'tools/recette_annexe.py': /NODE_OPTIONS/.test(ann) && /_garde_reseau\.js/.test(ann) && /env\s*=\s*_env_garde\(\)/.test(ann),
+    'tools/sous_garde.sh': /NODE_OPTIONS="--require[^\n]*_garde_reseau\.js/.test(sg) && /export NODE_OPTIONS\b/.test(sg),
+  };
+};
+module.exports.obligatoire = function (t) {
+  console.log('\n═══ D031S-VII. LA GARDE OBLIGATOIRE — AUCUN NOUVEAU BANC SANS GARDE, LA LISTE DES ANCIENS NE FAIT QUE RÉTRÉCIR ═══');
+  const c = module.exports.cliquet();
+  t('D031S-VII ① aucun NOUVEAU point d\'entrée Playwright sans garde (tests/, tools/ : le garde est chargé AVANT Playwright)',
+    c.nouveaux.length === 0, c.nouveaux.slice(0, 8).join(' · ') + (c.nouveaux.length ? ' — charger le garde en 1ʳᵉ ligne : require(\'../tests/_garde_reseau.js\')' : ''));
+  t('D031S-VII ② la liste des anciens (tests/garde_existants.json) ne fait que RÉTRÉCIR : aucun inscrit devenu gardé, aucune ligne périmée',
+    c.aRetirer.length === 0 && c.perimes.length === 0, 'à retirer : ' + c.aRetirer.slice(0, 6).join(' · ') + ' | périmés : ' + c.perimes.slice(0, 6).join(' · '));
+  const ch = module.exports.cheminsGardes();
+  t('D031S-VII ③ les chemins de lancement officiels chargent le garde : la passe, la recette annexe (ses 15 suites), tools/sous_garde.sh',
+    Object.values(ch).every(Boolean), Object.entries(ch).filter(([, v]) => !v).map(([k]) => k).join(' · '));
+  console.log('  ℹ️ ' + c.total + ' point(s) d\'entrée Playwright : ' + c.gardes + ' gardé(s) · ' + c.inscrits + ' ancien(s) inscrit(s) (' +
+    Object.entries(c.parEtat).map(([e, n]) => e + ' ' + n).join(' · ') + ') — un ancien se lance gardé : tools/sous_garde.sh node <fichier>');
 };
 
 /* ═══ D031S-III — LES IDENTITÉS : fictives dans les tests, fictives dans l'app servie, reconnues comme les vraies ═══
@@ -270,6 +333,7 @@ module.exports.hygiene = function (t) {
   let api = null; try { api = require('../_plantages.js'); } catch (e) {}
   t('D031S-IV ② SEC-04 est installé AVANT le premier module chargé par la passe (un module qui plante devient un KO nommé)',
     iSec >= 0 && iMod > iSec && !!api && typeof api.installer === 'function', 'installation ' + iSec + ' · premier module ' + iMod + ' · tests/_plantages.js ' + (api ? 'présent' : 'ABSENT'));
+  module.exports.obligatoire(t);
 };
 
 /* ═══ D031S-V — DES ORACLES INDÉPENDANTS : des valeurs calculées À LA MAIN, pas par la fonction testée ═══
@@ -319,6 +383,8 @@ module.exports.fin = async function (t) {
   const k = g.compteurs(), sorties = g.journal().filter(e => e.type === 'nav' && e.sort === 'SORTIE');
   t('D031S-II ② ⛔ aucune requête de la passe n\'a reçu de réponse du vrai réseau (SORTIE = 0)',
     k.nav.SORTIE === 0, sorties.slice(0, 5).map(e => e.hote + (e.action ? ' · ' + e.action : '') + (e.adresse ? ' · ' + JSON.stringify(e.adresse) : '')).join(' | '));
+  t('D031S-II ③ chaque navigateur lancé pendant la passe s\'est PROUVÉ au lancement (aucun n\'a servi sans garde)',
+    k.lancements >= 1 && k.preuves === k.lancements && k.preuvesEchouees === 0, k.preuves + ' preuve(s) / ' + k.lancements + ' lancement(s), ' + k.preuvesEchouees + ' échec(s)');
   /* ℹ️ L'INFORMATION, PAS UN VERDICT : ce que les tests n'ont PAS simulé. Bloqué n'est pas sorti — c'est la sécurité, et
      elle tient. Mais chaque ligne est une panne réseau que l'app a vue sans que le test l'ait voulue : la qualité du test
      (simuler ce qu'on attend) est un autre sujet que la sécurité, et elle se lit ici. */

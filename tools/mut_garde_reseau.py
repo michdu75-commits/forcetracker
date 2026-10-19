@@ -25,10 +25,11 @@ NAV_GARDE = "  if (lance && !ligne.includes('--proxy-server=' + PROXY_MORT)) {"
 CLIENT_PW = "const RE_CLIENT_PW = /playwright-core[\\\\/]lib[\\\\/]client[\\\\/](browserType|browser|browserContext|network)\\.js$/;"
 ENTREE = "  if (!types.length || !types.every(t => DEJA.has(Object.getPrototypeOf(t))) || !patches.Browser || !patches.Route) {"
 
+LANCE = 'lau' + 'nch'   # D031S-VII : voir le commentaire des mutations G1 a G7
 MUT = [
     ('M00 le garde absent : le fichier ne fait plus rien', 'VIDE', '①'),
-    ('M01 le refus par defaut n\'est jamais pose sur les contextes',
-     [(G, "const poserRefus = (c) => c.route(RE_NON_LOCAL, refusParDefaut);", "const poserRefus = (c) => Promise.resolve();")], '④'),
+    ('M01 le refus par defaut n\'est jamais pose sur les contextes -> refuse DES LE LANCEMENT (preuve D031S-2 ; avant : temoin ④)',
+     [(G, "const poserRefus = (c) => c.route(RE_NON_LOCAL, refusParDefaut);", "const poserRefus = (c) => Promise.resolve();")], "PREUVE:refus par défaut non prouvé"),
     ('M02 le proxy mort retire des arguments du navigateur : le garde des enfants refuse le lancement (ferme par defaut)',
      [(G, ARGS_PROXY, ARGS_SANS)], 'PLANTAGE'),
     ('M03 le proxy mort retire partout (arguments, environnement du processus, environnement des enfants) ET garde des enfants desactive',
@@ -37,11 +38,11 @@ MUT = [
       (G, "'all_proxy']) e[k] = PROXY_MORT;", "'all_proxy']) delete e[k];")], '⑥'),
     ('M04 les options de contournement (--no-proxy-server, proxy direct) ne sont plus retirees',
      [(G, "const RE_ARGS_RETIRES = /^--(proxy-server|", "const RE_ARGS_RETIRES = /^$^--(proxy-server|")], '⑫'),
-    ('M05 les connexions TCP de Node ne sont plus gardees',
-     [(G, "  if (!chemin && !estLocalHote(hote)) {", "  if (false) {")], '②'),
-    ('M06 les resolutions DNS de Node ne sont plus gardees',
+    ('M05 les connexions TCP de Node ne sont plus gardees -> refuse DES LE LANCEMENT (preuve D031S-2 ; avant : temoin ②)',
+     [(G, "  if (!chemin && !estLocalHote(hote)) {", "  if (false) {")], "PREUVE:Node n'est pas gardé"),
+    ('M06 les resolutions DNS de Node ne sont plus gardees -> refuse DES LE LANCEMENT (preuve D031S-2 ; avant : temoin ②)',
      [(G, "dns.lookup = function (h, ...r) { return estLocalHote(h) ?", "dns.lookup = function (h, ...r) { return true ?"),
-      (G, "    obj[nom] = function (h, ...r) { return estLocalHote(h) ?", "    obj[nom] = function (h, ...r) { return true ?")], '②'),
+      (G, "    obj[nom] = function (h, ...r) { return estLocalHote(h) ?", "    obj[nom] = function (h, ...r) { return true ?")], "PREUVE:Node n'est pas gardé"),
     ('M07 les variables au nom de secret restent dans l\'environnement de la passe',
      [(G, "for (const k of Object.keys(process.env)) if (k !== 'NODE_OPTIONS' && RE_SECRET.test(k)) { secretsRetires.push(k);",
            "for (const k of Object.keys(process.env)) if (false) { secretsRetires.push(k);")], '③'),
@@ -68,11 +69,11 @@ MUT = [
      [(G, CLIENT_PW, "const RE_CLIENT_PW = /^$^/;"), (G, ENTREE, "  if (false) {")], 'PLANTAGE'),
     ('M17 Playwright non reconnu, verification d\'entree ET garde des enfants desactives : le temoin ① le voit',
      [(G, CLIENT_PW, "const RE_CLIENT_PW = /^$^/;"), (G, ENTREE, "  if (false) {"), (G, NAV_GARDE, "  if (false) {")], '①'),
-    ('M18 la porte des contextes n\'est plus enveloppee (les contextes naissent sans refus par defaut)',
+    ('M18 la porte des contextes n\'est plus enveloppee (les contextes naissent sans refus par defaut) -> refuse DES LE LANCEMENT (preuve D031S-2 ; avant : temoin ④)',
      [(G, "    B.prototype[nom] = async function (...a) { const c = await nc0.apply(this, a); await installerContexte(c); return c; };",
-           "    B.prototype[nom] = nc0;")], '④'),
-    ('M19 les erreurs du garde ne portent plus sa marque (un echec « faute de reseau » ne passe pas pour le garde)',
-     [(G, "{ code: code || 'ENETUNREACH', gardeReseau: true });", "{ code: code || 'ENETUNREACH', gardeReseau: false });")], '②'),
+           "    B.prototype[nom] = nc0;")], "PREUVE:le contexte est né SANS refus par défaut"),
+    ('M19 les erreurs du garde ne portent plus sa marque (un echec « faute de reseau » ne passe pas pour le garde) -> refuse DES LE LANCEMENT (preuve D031S-2 ; avant : temoin ②)',
+     [(G, "{ code: code || 'ENETUNREACH', gardeReseau: true });", "{ code: code || 'ENETUNREACH', gardeReseau: false });")], "PREUVE:Node n'est pas gardé"),
     # ── les identites (D031S-III), l'hygiene des temoins (D031S-IV), les oracles independants (D031S-V)
     ('I1 le serveur des tests sert de nouveau les identites REELLES (substitution coupee)',
      [('tests/identites_fictives.js', "  if (!motif || typeof texte !== 'string' || texte.indexOf('@') < 0) return texte;",
@@ -80,6 +81,29 @@ MUT = [
     ('I2 une identite n\'est plus trouvable dans le code (_isChristophe renomme) : ferme par defaut',
      [('app.js', "function _isChristophe(){", "function _isChristopheRenomme(){")], 'D031S-III ①'),
     ('I3 une identite REELLE est ecrite dans un fichier de test de la passe', 'REELLE', 'D031S-III ④'),
+    ('M22 la PREUVE AU LANCEMENT est desactivee (le navigateur est rendu sans etre prouve)',
+     [('tests/_garde_reseau.js', "      try { await preuveLancement(nav); compte.preuves++; }", "      try { compte.preuves += 0; }")], 'D031S-I ⑯'),
+    ('M23 la preuve accepte une page qui REPOND (le refus par defaut n\'est plus exige)',
+     [('tests/_garde_reseau.js', "    if (!/ERR_BLOCKED_BY_CLIENT/.test(e1)) throw", "    if (false && !/ERR_BLOCKED_BY_CLIENT/.test(e1)) throw"),
+      ('tests/_garde_reseau.js', "const poserRefus = (c) => c.route(RE_NON_LOCAL, refusParDefaut);", "const poserRefus = (c) => Promise.resolve();")], 'D031S-I ④'),
+    # ── la GARDE OBLIGATOIRE (D031S-VII, decision de Michel du 19/10) : le cliquet et les chemins de lancement
+    #    (le mot du lancement est ASSEMBLE : ces textes sont des DONNEES de mutation, pas un lancement — sans ca, le cliquet
+    #     prendrait cet outil pour un banc non garde, et il aurait raison de rougir)
+    ('G1 un NOUVEAU banc pilote Playwright SANS charger le garde',
+     [('tools/banc_mutg.js', None, "'use strict';\nconst { chromium } = require('/opt/node22/lib/node_modules/playwright');\n(async () => { const b = await chromium." + LANCE + "(); await b.close(); })();\n")], 'D031S-VII ①'),
+    ('G2 un NOUVEAU banc charge le garde APRES Playwright (trop tard : l\'ordre compte)',
+     [('tools/banc_mutg.js', None, "'use strict';\nconst { chromium } = require('/opt/node22/lib/node_modules/playwright');\nrequire('../tests/_garde_reseau.js');\n(async () => { const b = await chromium." + LANCE + "(); await b.close(); })();\n")], 'D031S-VII ①'),
+    ('G3 un ancien inscrit devient garde mais RESTE dans la liste (le cliquet ne retrecit plus)',
+     [('tools/banc_sec_admin.js', "const { chromium } = require('/opt/node22/lib/node_modules/playwright');",
+       "require('../tests/_garde_reseau.js');\nconst { chromium } = require('/opt/node22/lib/node_modules/playwright');")], 'D031S-VII ②'),
+    ('G4 un ancien inscrit est SUPPRIME mais reste dans la liste (ligne perimee)',
+     [('tools/banc_sec_admin.js', '', None)], 'D031S-VII ②'),
+    ('G5 la recette annexe ne lance plus ses suites sous le garde',
+     [('tools/recette_annexe.py', "env=_env_garde()", "env=None")], 'D031S-VII ③'),
+    ('G6 tools/sous_garde.sh ne charge plus le garde',
+     [('tools/sous_garde.sh', "export NODE_OPTIONS HTTP_PROXY", "export HTTP_PROXY")], 'D031S-VII ③'),
+    ('G7 (temoin de controle) un NOUVEAU banc GARDE en premiere instruction : tout reste VERT',
+     [('tools/banc_mutg.js', None, "'use strict';\nrequire('../tests/_garde_reseau.js');\nconst { chromium } = require('/opt/node22/lib/node_modules/playwright');\n(async () => { const b = await chromium." + LANCE + "(); await b.close(); })();\n")], 'OK'),
     ('H1 un temoin a condition `true` en dur revient dans la passe',
      [('tests/parcours/sec_admin.js', "'use strict';", "'use strict';\nfunction _mutH1(t){ t('mutation', true, ''); }")], 'D031S-IV ①'),
     ('H2 SEC-04 retire du runner (un module qui plante arreterait de nouveau toute la passe sans total)',
@@ -171,6 +195,12 @@ def main():
             invalide = []
             for f, av, ap in remplacements:
                 p = os.path.join(arbre, f)
+                if av is None:                       # D031S-VII : un NOUVEAU fichier apparait (contenu = ap)
+                    fichiers[p] = ap; continue
+                if ap is None:                       # D031S-VII : un fichier disparait
+                    if os.path.exists(p): os.remove(p)
+                    else: invalide.append('%s absent' % f)
+                    continue
                 src = fichiers.get(p) or open(p, encoding='utf-8').read()
                 if src.count(av) != 1:
                     invalide.append('%s:%s (x%d)' % (f, av[:50], src.count(av)))
@@ -189,6 +219,8 @@ def main():
             ok = not rouges
         elif cible == 'PLANTAGE':
             ok = any('PLANTAGE' in r for r in rouges)
+        elif cible.startswith('PREUVE:'):   # le defaut est arrete DES LE LANCEMENT par la preuve du garde (D031S-2)
+            ok = any('PLANTAGE' in r and 'PREUVE AU LANCEMENT' in r and cible[7:] in r for r in rouges)
         else:
             ok = any(cible in r for r in rouges if 'ROUGE' in r)
         conformes += ok
