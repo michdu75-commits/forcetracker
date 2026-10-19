@@ -1369,3 +1369,46 @@ moins que les 10 min prévues.
 **Reste** : recette iPhone de Michel sur https://michdu75-commits.github.io/forcetracker/clone/ ; la branche source `claude/ux-fig-face-dos-v2`
 (code, tests, registre, cette fiche) n'existe qu'**en local** — la pousser = autre autorisation ; chronomètre persistant et libellés de l'écran de fin :
 chantiers séparés (décision de Michel, 19/10) ; règle d'or #11 avec une éventuelle mise en production.
+### 🔁 RETOUR DE RECETTE iPhone DE D-088 (19/10/2026) — RIR EN SUPERSET ET BARRE DU BAS AU PREMIER LANCEMENT — BRANCHE LOCALE `claude/rir-superset-d088`, NON POUSSÉE, AUCUN CODE DE L'APP MODIFIÉ
+
+**Le retour (Michel).** ① En prod, au repos d'un superset, une question de réserve par exercice ; dans le clone D-088, « une seule question générale ».
+② Au premier lancement du clone sur iPhone, la barre du bas trop basse, replacée après quelques gestes ou un rechargement. Les captures annoncées ne sont
+pas arrivées dans la session (dernier envoi reçu : 18/10 18:24 UTC, le clone D-085).
+
+**① Diagnostic — aucune régression dans le code.** Fonction par fonction, le moteur du RIR est IDENTIQUE entre la prod `ft-v1256` (racine de master
+`75288092`) et D-088 (`0965619d`) : `_renderRirRow`, `_rirQuestionHtml`, `setRir`, `_rirDeSet`, `skipRest`, `_stopRestTimerOnly`, `_restTick`,
+`_nextInGroup`, `_ssMembers`, `createSupersetFrom`, `_doAddToGroup`, `addExercise`, `finishWorkout`. Dans `toggleSet` et `startRest` ne changent que les
+durées proposées (D-086), `_exTermine` (même règle, D-085) et l'appel à `_dockDegager` (affichage). Aucun essai réservé au clone (`__FT_CLONE__`) ne touche
+la séance. Dix parcours par vrais gestes (ordre normal, ordre inversé, échauffements, repos en cours, repos terminé, « Passer », changement d'écran,
+rechargement, trois exercices, superset créé par « ⚡ Super ») donnent le même écran sur la prod, sur D-088 et À TRAVERS le clone publié.
+**Quand la question unique et sans nom apparaît — sur les deux versions** : une seule série attend sa réponse quand le repos démarre. (a) Le 2ᵉ exercice
+du superset validé en premier : c'est lui qui lance le repos du tour. Or au rechargement, et dans une séance montée à la main, l'app ouvre la carte du
+DERNIER exercice (`_expandedEx = exCount-1` ; un programme chargé, lui, ouvre le premier : `_loadProgDayVraiment`). La question du 1ᵉʳ exercice arrive alors
+au repos suivant, nommée, sur sa bonne série. (b) La page rechargée entre les deux séries : la question en attente (`_rirPending`) ne vit qu'en mémoire.
+**Hypothèse la plus probable pour la recette** (non prouvable sans les captures) : dans le clone, séance de test montée à la main ou rechargée → carte du
+2ᵉ exercice ouverte → validé en premier → une seule question ; en prod, séance du programme → 1ᵉʳ exercice ouvert → deux questions.
+**Enregistrement, restauration, usage** : sur les deux versions, chaque réponse s'écrit sur SA série (`set.rir`), est dans le brouillon (`ft4_wkt`), survit
+au rechargement, passe dans la séance terminée, l'export (colonne RIR), le contexte de Milo (« S1 35×12 RIR1 », construit localement, aucun appel) et
+« Précédent » à la séance suivante.
+
+**② Barre du bas — non reproduite.** Mesurée dans Chromium (360 / 375 / 390 / 430 px, profil vierge, service worker actif) : même position en prod et dans
+le clone, au premier chargement (relevés de 150 ms à 6 s), après rechargement et à la 2ᵉ ouverture. Le CSS de la barre (`.nav`, `#root{height:100dvh}`,
+`env(safe-area-inset-bottom)`) est le même qu'en prod et date de juin (`097df966`). Au premier lancement, la page se recharge d'elle-même jusqu'à 3 fois en
+2 secondes (prise de contrôle par le service worker), en prod comme dans le clone. Seule différence propre au clone : la balise `viewport` arrive après le script
+d'isolement (ligne ~152 au lieu de 8) — aucun effet mesuré. Cause non démontrée ici (pas d'iPhone) : un défaut d'iOS au premier lancement d'une app
+fraîchement installée reste l'hypothèse ; la prod, déjà installée, n'y est presque jamais exposée.
+
+**Ce que porte la branche.** Aucun code de l'app. Banc `tests/parcours/rir_superset.js` (blocs B-RSS-① à ⑤, 52 témoins : quatre largeurs, chaîne des
+données, ordre inversé, rechargement, trois exercices, échauffements, dropset, exercice seul) + `tools/banc_rir_superset.js` + contrôle négatif
+`tools/mut_rir_superset.py` ; branché dans la passe et le registre (`SEANCE-RIR-SUPERSET-01`). Banc : **D-088 52 / 0 · prod `ft-v1256` 52 / 0**.
+Contrôle négatif : **17 / 17 conformes**, arbre sain 0 rouge au début et à la fin — dont P00 (tout le code de la prod remis : reste vert) et M2 (le symptôme décrit : le superset n'accumule plus → rouge).
+
+**Propositions — décision de Michel attendue, rien de codé.** (a) Nommer l'exercice dans la question dès qu'elle concerne un superset, même seule.
+(b) Garder la question en attente au rechargement (la liste dans le brouillon de séance ; règle #17 : une donnée persistée de plus, dans `ft4_wkt`).
+(c) Au rechargement (et en séance montée à la main), ouvrir la première série à faire dans l'ordre de la séance et du superset, pas le dernier exercice.
+(d) Barre du bas : une mesure réservée au clone (hauteurs et marges relevées au lancement puis après) pour obtenir les chiffres de l'iPhone — demande une
+mise à jour du clone.
+
+**Règle #17** : non déclenchée côté application (0 donnée, 0 fichier applicatif, 0 chemin).
+**Durée** : ≈ 55 min (05:28 → ≈ 06:25 UTC) — diagnostic et sondes ≈ 25 min, banc ≈ 10 min, contrôle négatif ≈ 20 min (machine), doc ≈ 10 min. Pas de passe
+complète (aucun code de l'app ; obligatoire avant toute publication).
