@@ -1,7 +1,7 @@
 {
-  "ref": "claude/ux-d086",
-  "sha": "0965619d6d606a61cfdfd161154801ed30e99025",
-  "genere_le": "2026-10-18 17:12 UTC",
+  "ref": "claude/ux-fig-face-dos-v2",
+  "sha": "e8ffb71cb9a869afbcac6d5591493d8ad711259a",
+  "genere_le": "2026-10-19 13:42 UTC",
   "fichiers": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "app.js"
   ],
   "banc_isolation": "22 OK / 0 rouge",
-  "empreinte": "1b5a54560b449ca2140139f79dad856d9e66a3233389e13ce67338158f933887"
+  "empreinte": "0ac835d6169e0439a54b7426447256d3a92e6ac032ac442470c2fa9350866a19"
 }

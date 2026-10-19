@@ -1713,11 +1713,17 @@ function closeSessDetail(){
   if(_sdDelTimer){clearTimeout(_sdDelTimer);_sdDelTimer=null;}
 }
 
-function _mscSVGmini({sc,ind}){
+/* 🧍 FACE / DOS (18/10/2026, D-091) — `vue === 'dos'` dessine la vue ARRIÈRE (`_BP`, le dessin de dos de la grande figurine
+   « Muscles travaillés »), avec exactement les mêmes couleurs : `_MG` rattache déjà chaque groupe à ses zones avant ET arrière,
+   donc rien n'est recalculé ni deviné. Cadrage : le même décalage que la grande figurine (`_mscSVG`, vue avant centrée en x 17,
+   vue arrière en x 52), même taille (32 × 94).
+   ⛔ Sans `vue`, la sortie reste la vue avant À L'OCTET PRÈS : l'Accueil, Progrès et la carte du jour l'appellent ainsi. */
+function _mscSVGmini({sc,ind},vue){
   const pd={};
   Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const[f,k]=v>=2?['#FF5555','#AA0010']:v>=1?['#FF9500','#AA5500']:isI?['#8FA9C4','#5B7C9E']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
   const pt=([id,d])=>{const c=id?(pd[id]||{f:'#C07060',k:'#7A3828'}):{f:'#D89070',k:'#A86040'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.28':'0.18'}" stroke-linejoin="round"/>`;};
-  return `<svg viewBox="1 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${_FP.map(pt).join('')}</svg>`;
+  const dos=vue==='dos';
+  return `<svg viewBox="${dos?36:1} 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${(dos?_BP:_FP).map(pt).join('')}</svg>`;
 }
 function showSessMuscleMap(i,ev){
   ev&&ev.stopPropagation();
