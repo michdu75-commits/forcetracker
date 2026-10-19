@@ -38,6 +38,9 @@ const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]
   r.writeHead(200,{'Content-Type':M[path.extname(f)]||'application/octet-stream'});const fictif=IDF.servir(f);if(fictif)return r.end(fictif);fs.createReadStream(f).pipe(r);});
 let ok=0,ko=0;
 const t=(n,c,x)=>{c?(ok++,console.log('  ✅ '+n)):(ko++,console.log('  ❌ '+n+(x?'\n       → '+x:'')));};
+/* ⛔ SEC-04 (décision de Michel, 19/10/2026) : un module qui plante devient un KO IDENTIFIÉ, les suivants continuent, et la
+   passe ne peut plus être déclarée réussie (une sortie avant la ligne de total rend un code non nul). Détail : tests/_plantages.js. */
+require('../_plantages.js').installer(__filename, t, ()=>ok+ko);
 
 function seedScript(extra){
   const base={ft4_name:'Testeur',ft4_bw:'80',ft4_age:'30',ft4_ht:'178',ft4_gender:'H',

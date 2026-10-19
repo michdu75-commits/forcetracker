@@ -263,6 +263,13 @@ module.exports.hygiene = function (t) {
   const vus = module.exports.formesFautives();
   t('D031S-IV ① aucun témoin de la passe n\'a une condition `true` en dur, un `.match(/…/g||[])` ou un corps absent remplacé par une chaîne',
     vus.length === 0, vus.slice(0, 8).join(' · '));
+  /* SEC-04 (décision de Michel, 19/10) : sans lui, un module qui plante arrête tout sans total — le retirer doit se VOIR ici.
+     Le comportement lui-même est éprouvé par tools/mut_plantages.py (11 plantages volontaires + contre-épreuve). */
+  const run = sansCommentaires(fs.readFileSync(path.join(RACINE, 'tests', 'parcours', 'runner.js'), 'utf8'));
+  const iSec = run.search(/require\('\.\.\/_plantages\.js'\)\.installer\(__filename,\s*t,/), iMod = run.search(/require\('\.\/[\w.-]+\.js'\)/);
+  let api = null; try { api = require('../_plantages.js'); } catch (e) {}
+  t('D031S-IV ② SEC-04 est installé AVANT le premier module chargé par la passe (un module qui plante devient un KO nommé)',
+    iSec >= 0 && iMod > iSec && !!api && typeof api.installer === 'function', 'installation ' + iSec + ' · premier module ' + iMod + ' · tests/_plantages.js ' + (api ? 'présent' : 'ABSENT'));
 };
 
 /* ═══ D031S-V — DES ORACLES INDÉPENDANTS : des valeurs calculées À LA MAIN, pas par la fonction testée ═══

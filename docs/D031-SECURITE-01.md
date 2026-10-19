@@ -56,9 +56,7 @@ python3 tools/isoler_reseau.py --en-ligne -- tools/sous_garde.sh python3 tools/r
 
 ## 6. Ce qui n'est PAS fait, et attend une décision de Michel
 
-- **SEC-04 — un module qui plante devient un rouge nommé, la passe continue** : préparé et prouvé sur des modules de
-  démonstration, **non appliqué** (changement de protocole : un plantage de module ne rend plus la passe invalide,
-  il la rend rouge, et les modules suivants tournent).
+- ~~SEC-04~~ → **APPLIQUÉ le 19/10/2026 (décision de Michel : « OUI »)** — voir § 7.
 - **Témoins D-091 (volume total, échauffements compris)** : préparés dans `tests/parcours/d091_volume_prepare.js`,
   **non branchés** — à brancher avec Principal quand D-091 est livré. Ils lisent le panneau « Ta séance jusqu'ici »
   (`#log-finish`) tel que D-092 l'affiche, et la séance enregistrée. Mesuré sur le code de D-091 (`clone/` de
@@ -68,3 +66,22 @@ python3 tools/isoler_reseau.py --en-ligne -- tools/sous_garde.sh python3 tools/r
   obligatoire pour les **nouveaux** bancs est une proposition.
 - **`tests/milo/eval.js`, `eval-scenarios.js`** : portent encore une identité réelle — c'est le banc d'essai **réel**
   de Milo, qui choisit son modèle par l'adresse (`worker.js`) ; hors de ce chantier, non modifié.
+
+## 7. SEC-04 — un module qui plante devient un KO identifié (décision de Michel du 19/10/2026)
+
+- **Où** : `tests/_plantages.js`, installé par UNE ligne du runner, juste après la définition de `t` (avant le premier
+  module). La passe reçoit une VUE (Proxy) des exports de chaque `require('./x.js')` : toute fonction exportée est appelée
+  dans une enveloppe. Le module lui-même n'est jamais modifié ; les autres modules voient l'original.
+- **Ce qui devient un KO nommé (la passe continue, total rouge, code 1)** : une exception synchrone · une promesse
+  rejetée (fonction `async` ou fonction qui rend une promesse) · un `throw` qui n'est pas une `Error` · un module qui ne
+  se CHARGE pas (ses appels sont alors nommés « non joué ») · un `module.exports = function` qui plante · une promesse
+  rejetée que personne n'attend (« ⛔ PROMESSE REJETÉE SANS ÊTRE ATTENDUE (fichier:ligne) »).
+- **Ce qui reste une passe INVALIDE (aucun total, code ≠ 0)** : un plantage du CORPS de la passe (hors module) · une
+  exception non rattrapée (reprendre après n'est pas sûr) · un `process.exit(0)` ou une fin avant la ligne de total
+  (code forcé à 3, message « PASSE INTERROMPUE AVANT LA LIGNE DE TOTAL ») · la preuve du garde qui plante (KO, puis
+  arrêt fermé, code 97).
+- ⛔ **Jamais réussie après un plantage** : `tools/passe_valide.sh` refuse (condition ② ou ①, et rouges réels).
+- **Preuves** : `python3 tools/mut_plantages.py` (11 plantages volontaires, chacun doit être conforme) et
+  `python3 tools/mut_plantages.py --contre-epreuve` (SEC-04 retiré de la copie : les 10 plantages doivent alors ÉCHOUER au
+  contrôle, le témoin de contrôle rester vert). Dans la passe, `D031S-IV ②` rougit si SEC-04 n'est plus installé avant
+  le premier module (mutation H2 de `tools/mut_garde_reseau.py`).
