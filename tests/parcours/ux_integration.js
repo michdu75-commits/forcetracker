@@ -265,8 +265,10 @@ async function ecran(t, b, PORT) {
         type: rows.map(r => { const n = r.querySelector('button.stype'); return n ? Math.round(Math.min(n.getBoundingClientRect().width, n.getBoundingClientRect().height)) : 0; }),
         chk: rows.map(r => { const c = r.querySelector('.chk'); return c ? Math.round(Math.min(c.getBoundingClientRect().width, c.getBoundingClientRect().height)) : 0; }),
         rm: rows.map(r => { const e = r.querySelector('[id^="trm-"]'); return e ? { cls: e.className, dansBouton: !!e.closest('button'), t: e.textContent.trim() } : null; }) }; });
-    t('B-UXI-F5 ⭐ D-086 (remplace G) : le type a SA colonne, une pastille sur CHAQUE série (É, N, N, X) ; « Précédent » reste',
-      _det(s.pastilles) === _det(['É', 'N', 'N', 'X']) && s.hdr.includes('Précédent'), _det(s));
+    /* ⛔ R30 — D-093 (19/10/2026, recette iPhone de Michel) : quand l'exercice a un historique, l'en-tête de la colonne se lit
+       « Précédent ▾ » (il ouvre « 4 dernières séances »). La garantie de ce témoin ne change pas : la colonne Précédent RESTE. */
+    t('B-UXI-F5 ⭐ D-086 (remplace G) : le type a SA colonne, une pastille sur CHAQUE série (É, N, N, X) ; « Précédent » reste (« Précédent ▾ » avec un historique, D-093)',
+      _det(s.pastilles) === _det(['É', 'N', 'N', 'X']) && s.hdr.some(h => /^Précédent( ▾)?$/.test(h)), _det(s));
     t('B-UXI-F6 ⭐ décision G gardée : le 1RM a SA colonne (en-tête « 1RM », valeur hors de tout bouton) — et le type a la sienne (D-086)',
       s.hdr.includes('1RM') && s.hdr.includes('Type') && s.rm.every(x => x && x.cls === 'srm' && !x.dansBouton) && /~/.test(s.rm[1].t), _det(s));
     t('B-UXI-F7 pastille de type et coche : zones d\'appui ≥ 44 × 44 px', s.type.every(h => h >= 44) && s.chk.every(w => w >= 44), _det(s));
