@@ -160,7 +160,7 @@ MUT = [
   'ROUGE'),
 
  ('M39  la liste premium du client perd une adresse',
-  [('constants.js', r"const PREMIUM_CLIENT_EMAILS=\['michdu75@gmail\.com',",
+  [('constants.js', r"const PREMIUM_CLIENT_EMAILS=\['[^']+',",
     "const PREMIUM_CLIENT_EMAILS=[")], 'ROUGE'),
 
  ('M40  S.premium perd sa 2e source client (la liste d e-mails)',
@@ -168,10 +168,10 @@ MUT = [
     '')], 'ROUGE'),
 
  ('M41  un super-testeur sort de la liste premium (le 2e chemin devient un contournement)',
-  [('constants.js', r"const PREMIUM_CLIENT_EMAILS=\['michdu75@gmail\.com','elineazs32@gmail\.com',"
-    r"'christophe@famillelanglois\.fr','emma\.david16@gmail\.com','tanna\.valery\.studio@gmail\.com'\]",
-    "const PREMIUM_CLIENT_EMAILS=['michdu75@gmail.com','elineazs32@gmail.com',"
-    "'emma.david16@gmail.com','tanna.valery.studio@gmail.com','x@y.z']")], 'ROUGE'),
+  # D031S (19/10/2026) : les adresses ne sont plus écrites ici — le 3e élément de la liste (un super-testeur) est retiré
+  # par sa POSITION ; résultat vérifié identique à l'ancienne ancre, qui recopiait les 5 adresses réelles.
+  [('constants.js', r"const PREMIUM_CLIENT_EMAILS=\[('[^']+','[^']+',)'[^']+',('[^']+','[^']+')\]",
+    r"const PREMIUM_CLIENT_EMAILS=[\1\2,'x@y.z']")], 'ROUGE'),
 
  ('M42  la boucle de reessai du debrief disparait',
   [('log.js', r'for\(let a=1;a<=2;a\+\+\)\{', 'for(let a=1;a<=1;a++){')], 'ROUGE'),

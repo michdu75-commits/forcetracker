@@ -22,6 +22,10 @@
    externe, enfants gardés, secrets retirés de l'environnement. Il se PROUVE au début (D031S-I) et se vérifie à la fin
    (D031S-II) ; s'il n'est pas prouvé, la passe s'arrête avant le premier test. Détail : tests/_garde_reseau.js. */
 const GARDE=require('../_garde_reseau.js');
+/* ⛔ et les IDENTITÉS servies sont FICTIVES : chaque adresse réelle que l'app reconnaît (ses listes, ses comparaisons en
+   dur) est servie sous une adresse example.test de même rôle — l'app garde sa logique, seule la valeur change. Les tests
+   n'écrivent plus que ces adresses-là (IDF.ID). Détail : tests/identites_fictives.js. */
+const IDF=require('../identites_fictives.js');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const http=require('http'), fs=require('fs'), path=require('path');
 const ROOT=path.resolve(__dirname,'../..');
@@ -31,7 +35,7 @@ const M={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'
 const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);if(p==='/')p='/index.html';
   const f=path.join(ROOT,p);
   if(!f.startsWith(ROOT)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){r.writeHead(404);return r.end('404');}
-  r.writeHead(200,{'Content-Type':M[path.extname(f)]||'application/octet-stream'});fs.createReadStream(f).pipe(r);});
+  r.writeHead(200,{'Content-Type':M[path.extname(f)]||'application/octet-stream'});const fictif=IDF.servir(f);if(fictif)return r.end(fictif);fs.createReadStream(f).pipe(r);});
 let ok=0,ko=0;
 const t=(n,c,x)=>{c?(ok++,console.log('  ✅ '+n)):(ko++,console.log('  ❌ '+n+(x?'\n       → '+x:'')));};
 
@@ -86,6 +90,10 @@ b.close=async(...a)=>{ await D031S.fin(t); return _fermeNav(...a); };
 { const ko0=ko; await D031S.debut(t, b, PORT, chromium);
   if(ko>ko0){ console.log('\n⛔ GARDE RÉSEAU NON PROUVÉ — la passe s\'arrête ici, avant le premier test (fermé par défaut). Aucun total : passe invalide.');
     await _fermeNav(); srv.close(); process.exit(97); } }
+await D031S.identites(t, b, PORT);
+D031S.hygiene(t);
+await D031S.oracles(t, b, PORT);
+await require('./d031s_rir_superset.js').ecran(t, b, PORT);
 const c=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
 const p=await c.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
 await p.addInitScript(seedScript({}));
@@ -312,7 +320,7 @@ const F=await p.evaluate(async()=>{
   checkAnnouncements();await wait(1300);
   out.lambda=!open('ov-pesee-nav-c')&&!open('ov-pesee-nav-e');
   // Christophe (ses pop-ups perso précédentes déjà vues) → la sienne s'ouvre
-  S.email='christophe@famillelanglois.fr';
+  S.email='christophe@example.test';
   localStorage.setItem('ft4_billoute_v3','1');localStorage.setItem('ft4_christophe_photodel_v1','1');
   checkAnnouncements();await wait(1300);
   out.chris=open('ov-pesee-nav-c')&&!open('ov-pesee-nav-e');
@@ -321,7 +329,7 @@ const F=await p.evaluate(async()=>{
   checkAnnouncements();await wait(1300);
   out.chrisUneFois=!open('ov-pesee-nav-c');
   // Eline (guide testeuse déjà vu) → la sienne s'ouvre, avec le mot « masse maigre »
-  S.email='elineazs32@gmail.com';localStorage.setItem('ft4_tester_guide_v1','1');
+  S.email='eline@example.test';localStorage.setItem('ft4_tester_guide_v1','1');
   checkAnnouncements();await wait(1300);
   out.eline=open('ov-pesee-nav-e')&&!open('ov-pesee-nav-c');
   out.elineTxt=(document.getElementById('ov-pesee-nav-e').textContent||'').includes('masse maigre');
@@ -345,7 +353,7 @@ t('… et une seule fois aussi', F.elineUneFois);
 // apparaît dès le PREMIER bilan (avant : à partir de 2).
 const FB=await p.evaluate(()=>{
   const out={};
-  S.email='christophe@famillelanglois.fr';
+  S.email='christophe@example.test';
   _renderTesterSpace();
   const tsp=document.getElementById('tester-space-body').innerHTML;
   out.carteRetiree=!/Analyse approfondie/.test(tsp);
@@ -754,10 +762,10 @@ t('comptes compressés : pack auto-vérifié + les 3 lecteurs décompressent + m
             && /_unpackUser_\(gz\) === json/.test(s)
             && /action === 'compressStore'/.test(s);})());
 t('boîte à idées : échec de mail tracé (plus de catch vide) + 2 destinataires + route mailFails',
-  (()=>{const s=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  (()=>{const s=IDF.substituer(fs.readFileSync(path.join(ROOT,'Code.js'),'utf8'));   // identités lues comme l'app servie (D031S)
         return !/catch \(eMail\) \{\}/.test(s)
             && /_logMailFail_\('idee/.test(s)
-            && /forcetracker\.app@gmail\.com,michdu75@gmail\.com/.test(s)
+            && /boite-idees@example\.test,fondateur@example\.test/.test(s)
             && /action === 'mailFails'/.test(s);})());
 t('⭐ la liste des avantages vient de PREMIUM_PERKS (source unique) : fiche ET mur du Coach au complet',
   G.nbFiche===G.nbPerks&&G.nbWall===G.nbPerks&&G.nbPerks>=10, JSON.stringify({perks:G.nbPerks,fiche:G.nbFiche,mur:G.nbWall}));
@@ -1529,7 +1537,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       wnRestantApresVu: (()=>{ try{ localStorage.setItem('ft4_wn_seen',String(WHATS_NEW_MAX));
         return WHATS_NEW.filter(f=>f.v>WHATS_NEW_MAX).length; }catch(e){ return -1; } })(),
       texteAvec: buildCoachContext("fais-moi une séance jambes pour ce soir stp"),
-      secretAdmin: (()=>{ const av=S.email; S.email='michdu75@gmail.com';
+      secretAdmin: (()=>{ const av=S.email; S.email='fondateur@example.test';
         const t=buildCoachContext('coucou'); S.email=av;
         return {autorise:/tu parles ici à MICHEL/.test(t), interdit:/CONSIGNES SONT PRIVÉES/.test(t)}; })(),
       secretAutre: (()=>{ const av=S.email; S.email='quelquun@exemple.test';
@@ -1628,7 +1636,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   const dbl=await p.evaluate(async()=>{
     const vf=window.fetch, vs=S.url;
     try{
-      S.url='https://exemple.invalide/exec';
+      S.url='https://exemple.invalid/exec';
       if(!document.getElementById('se-debrief')){
         const d=document.createElement('div'); d.id='se-debrief'; document.body.appendChild(d);
       }
@@ -1654,7 +1662,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   const refus = await p.evaluate(async()=>{
     const vf=window.fetch, vs=S.url, ve=S.email;
     try{
-      S.url='https://exemple.invalide/exec'; S.email='x@y.z';
+      S.url='https://exemple.invalid/exec'; S.email='x@y.z';
       const el=document.getElementById('email-verify-card');
       let toasts=[]; const vt=window.toast; window.toast=(m)=>toasts.push(String(m));
       window.fetch=()=>Promise.resolve({json:()=>Promise.resolve({status:'error',error:'auth'})});
@@ -1868,7 +1876,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       avecPhoto:    _estHorsSujet("écris-moi un poème sur l'automne", true, {}),
       debriefAuto:  _estHorsSujet("écris-moi un poème sur l'automne", false, {silent:true}),
       // Michel doit pouvoir tout tester
-      admin: (()=>{ const av=S.email; S.email='michdu75@gmail.com';
+      admin: (()=>{ const av=S.email; S.email='fondateur@example.test';
         const v=_estHorsSujet("écris-moi un poème sur l'automne",false,{}); S.email=av; return v; })(),
       // la consigne de recentrage est-elle dans le prompt ? et LARGE pour la vraie vie ?
       prompt: (()=>{ const av=S.email; S.email='pas-michel@exemple.fr';
@@ -1876,7 +1884,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         return { perimetre:/TON PÉRIMÈTRE, C'EST LE SPORT/.test(t),
                  sourire:/RECENTRE AVEC LE SOURIRE/.test(t),
                  vie:/TOUT CE QUE LA VIE DE LA PERSONNE FAIT À SON SPORT/.test(t) }; })(),
-      promptAdmin: (()=>{ const av=S.email; S.email='michdu75@gmail.com';
+      promptAdmin: (()=>{ const av=S.email; S.email='fondateur@example.test';
         const t=buildCoachContext('salut'); S.email=av;
         return /aucune restriction de sujet/.test(t); })()
     };
@@ -2700,7 +2708,7 @@ console.log('\n═══ J. L\'étage du milieu — les séances plus anciennes,
     S.email='quelquun@exemple.com';
     const sans=buildCoachContext(); o.tailleSans=sans.length;
     o.absentPourLesAutres=!/SÉANCES PLUS ANCIENNES/.test(sans);
-    S.email='michdu75@gmail.com';
+    S.email='fondateur@example.test';
     const avec=buildCoachContext(); o.tailleAvec=avec.length;
     o.presentPourMichel=/SÉANCES PLUS ANCIENNES/.test(avec);
     o.surcoutPct=Math.round(100*(avec.length-sans.length)/sans.length);
@@ -2714,7 +2722,7 @@ console.log('\n═══ J. L\'étage du milieu — les séances plus anciennes,
     const j5=avec.indexOf('DERNIÈRES SÉANCES:');
     const dates5=(avec.slice(j5,j5+900).match(/\d{4}-(\d\d)-(\d\d)/g)||[]).map(d=>d.slice(8)+'/'+d.slice(5,7));
     o.aucunDoublon=dates5.every(d=>!blocSeul.includes('\n  · '+d+' '));
-    S.email='christophe@famillelanglois.fr';
+    S.email='christophe@example.test';
     o.presentPourChristophe=/SÉANCES PLUS ANCIENNES/.test(buildCoachContext());
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
@@ -2845,18 +2853,18 @@ console.log('\n═══ M. Admin : qui a protégé son compte (aucun profil ouv
     o.refuseSansAdmin=/Réservé à l/.test(document.getElementById('admin-auth-list').innerHTML);
     // ② trois cas : protégé · ouvert · injoignable
     window._isAdminUnlocked=()=>true;
-    const rep={'christophe@famillelanglois.fr':{status:'ok',hasCode:true},
-               'elineazs32@gmail.com':{status:'ok',hasCode:false}};
-    window._protectPost=async(pl)=>{ if(pl.email==='emma.david16@gmail.com') throw new Error('réseau');
+    const rep={'christophe@example.test':{status:'ok',hasCode:true},
+               'eline@example.test':{status:'ok',hasCode:false}};
+    window._protectPost=async(pl)=>{ if(pl.email==='emma@example.test') throw new Error('réseau');
                                      return rep[pl.email]||{status:'ok',hasCode:false}; };
     await loadAuthStatusAdmin();
     const h=document.getElementById('admin-auth-list').innerHTML;
     o.protege=/christophe[\s\S]{0,240}protégé/.test(h);
-    o.ouvert=/elineazs32[\s\S]{0,240}OUVERT/.test(h);
+    o.ouvert=/eline@example\.test[\s\S]{0,240}OUVERT/.test(h);
     // ⚠️ le point qui compte : une PANNE ne doit pas s'afficher comme « protégé » NI comme
     // « ouvert » — on agirait sur du faux dans les deux sens.
-    o.pannePasConfondue=/emma\.david16[\s\S]{0,240}non vérifié/.test(h);
-    // 3 ouverts dans ce scénario : eline + tanna + michdu75 (le cas par défaut du simulateur)
+    o.pannePasConfondue=/emma@example\.test[\s\S]{0,240}non vérifié/.test(h);
+    // 3 ouverts dans ce scénario : eline + testeur-1 + fondateur (le cas par défaut du simulateur)
     o.compteLesOuverts=/3 comptes sans code/.test(h);
     // ⚠️ le résumé doit AUSSI annoncer les non vérifiés — « 1 sans code » à côté de 4 inconnus
     // laisse croire que le reste est protégé (capture Michel, 04/08).
@@ -12370,7 +12378,7 @@ console.log('\n-- CVII. La mémoire élargie ouverte à tout le monde (ft-v992) 
     S.sessions=fab(20);
     S.email='quelquun@exemple.fr'; o.inconnu=_historiqueCompact().length;
     S.email='';                    o.sansEmail=_historiqueCompact().length;
-    S.email='michdu75@gmail.com';  o.michel=_historiqueCompact().length;
+    S.email='fondateur@example.test';  o.michel=_historiqueCompact().length;
     o.memeTaillePourTous=(o.inconnu===o.sansEmail && o.inconnu===o.michel);
 
     // ② AUTO-DÉGRESSIVE — on ne paie que ce qu'on a VÉCU (les 5 dernières partent en détail)
@@ -13823,14 +13831,14 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
 
   // ① onglet EXISTANT a 11 colonnes, avec une vieille ligne : c'est LE cas de production
   let o=faireOnglet(EN,[['2026-08-01','Développé Couché',1,'N',80,8,640,'99',84,'H',43]]);
-  lancer(o,{rows,email:'christophe@famillelanglois.fr'});
+  lancer(o,{rows,email:'christophe@example.test'});
   t('⛔⛔ la colonne `email` est ajoutée À LA FIN de l\'en-tête existant (rien n\'est décalé)',
     JSON.stringify(o._g.entete)===JSON.stringify(EN.concat(['email'])), JSON.stringify(o._g.entete));
   t('⛔⛔ … et les VIEILLES lignes ne bougent pas d\'une cellule (11 colonnes, intactes)',
     o._g.lignes[0].length===11 && o._g.lignes[0][1]==='Développé Couché',
     JSON.stringify(o._g.lignes[0]));
   t('⭐ la nouvelle ligne porte bien l\'email en 12ᵉ position',
-    o._g.lignes[1].length===12 && o._g.lignes[1][11]==='christophe@famillelanglois.fr',
+    o._g.lignes[1].length===12 && o._g.lignes[1][11]==='christophe@example.test',
     JSON.stringify(o._g.lignes[1]));
   // ② un 2e passage ne re-ecrit pas l'en-tete
   const avant=JSON.stringify(o._g.entete);
@@ -13839,11 +13847,11 @@ console.log('\n-- CXXV. La ligne du classeur porte son email (ft-v1018) --');
     JSON.stringify(o._g.entete)===avant && o._g.lignes.length===3, JSON.stringify(o._g.entete));
   // ③ onglet NEUF (il n'existe pas encore)
   o=faireOnglet([],[]);
-  lancer(o,{rows,email:'Michdu75@Gmail.com '},false);
+  lancer(o,{rows,email:'Fondateur@Example.TEST '},false);
   t('⭐ un onglet NEUF naît directement avec les 12 colonnes',
     JSON.stringify(o._g.entete)===JSON.stringify(EN.concat(['email'])), JSON.stringify(o._g.entete));
   t('⭐ l\'email est normalisé (minuscules, sans espaces) — sinon on aurait 2 « personnes »',
-    o._g.lignes[0][11]==='michdu75@gmail.com', JSON.stringify(o._g.lignes[0][11]));
+    o._g.lignes[0][11]==='fondateur@example.test', JSON.stringify(o._g.lignes[0][11]));
   // ④ onglet PRESENT mais VIDE : on pose l'en-tete complet, pas « email » en colonne 12
   o=faireOnglet([],[]);
   lancer(o,{rows,email:'a@b.fr'});
@@ -18193,7 +18201,7 @@ console.log('\n-- CLX. Le banc d\'essai ne part pas anonyme --');
      l'appel : le jour ou `MODELE_MICHEL` repasse sur un autre modele, le banc mesurerait un Milo
      que personne n'utilise. Un commentaire pose au mauvais endroit ne previent personne. */
   const w=fsx.readFileSync(__dirname+'/../../worker.js','utf8');
-  const iAvert=w.indexOf('BANC D\'ESSAI envoie l\'e-mail'), iLigne=w.indexOf("em === 'michdu75@gmail.com'");
+  const iAvert=w.indexOf('BANC D\'ESSAI envoie l\'e-mail'), iLigne=w.search(/if \(em === '[^']+@[^']+'\) model = MODELE_MICHEL/);
   t('⚠️ l\'avertissement R9 est posé JUSTE AVANT la ligne qui choisit le modèle',
     iAvert>0 && iLigne>iAvert && (iLigne-iAvert)<1600, 'avert@'+iAvert+' · ligne@'+iLigne);
   /* ⭐ ET LA CONDITION QUI REND TOUT CA VRAI AUJOURD'HUI, epinglee : les deux modeles sont
@@ -18461,7 +18469,7 @@ console.log('\n-- CLXVII. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:900},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99',
-    ft4_email:'michdu75@gmail.com'}));
+    ft4_email:'fondateur@example.test'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2300);
   const F=await pg.evaluate(async()=>{
@@ -18473,8 +18481,8 @@ console.log('\n-- CLXVII. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
        chemin, pas en appelant à la main la fonction qu'on vient d'écrire). */
     const rep={ status:'ok', capArmed:true, capSeenAt:'30/08/2026 12:54', capKnown:true,
       date:'20260830', global:47, globalMax:600, emailMax:50, uniqueUsers:3,
-      topUsers:[{email:'christophe@famillelanglois.fr',count:31},
-                {email:'michdu75@gmail.com',count:12},
+      topUsers:[{email:'christophe@example.test',count:31},
+                {email:'fondateur@example.test',count:12},
                 {email:'<script>alert(1)</script>@x.fr',count:4}],
       usage:{date:'20260830',totals:{inTok:6146,outTok:246,cacheW:0,cacheR:0,calls:2},
              byAction:{coach:{calls:1}},byModel:{},euroTotal:0.16} };
@@ -18501,7 +18509,7 @@ console.log('\n-- CLXVII. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
       /Plafond de dépense/.test(F.txt), F.txt.slice(0,80));
     /* ⭐⭐ LA DEMANDE DE MICHEL. */
     t('⭐⭐ la ligne « Qui a appelé Milo aujourd\'hui » existe et nomme les personnes',
-      /Qui a appelé Milo aujourd'hui/.test(F.txt) && /christophe/.test(F.txt) && /michdu75/.test(F.txt),
+      /Qui a appelé Milo aujourd'hui/.test(F.txt) && /christophe/.test(F.txt) && /fondateur/.test(F.txt),
       (F.txt.match(/Qui a appelé Milo[^]{0,110}/)||[''])[0]);
     t('⭐ … avec leur nombre d\'appels et le total du jour sur le plafond global',
       /31/.test(F.txt) && /47 sur 600/.test(F.txt), '');
@@ -18510,7 +18518,7 @@ console.log('\n-- CLXVII. Qui a appelé Milo aujourd\'hui (ft-v1058) --');
       /Des APPELS, pas des euros/.test(F.txt), '');
     /* ⛔ Le strict nécessaire : reconnaître ses testeurs, pas une liste d'adresses. */
     t('⛔ seule la partie AVANT l\'arobase est affichée (pas les adresses complètes)',
-      !/famillelanglois\.fr/.test(F.txt) && !/@gmail\.com/.test(F.txt.split('Plafond')[0]),
+      !/christophe@/.test(F.txt) && !/@example\.test/.test(F.txt.split('Plafond')[0]),
       (F.txt.match(/christophe[^·]{0,30}/)||[''])[0]);
     /* ⛔⛔ LES EMAILS VIENNENT DU SERVEUR ET PARTENT DANS `innerHTML` : ils s'échappent. */
     t('⛔⛔ un email piégé ne peut pas injecter de HTML (échappé avant affichage)',
@@ -19393,9 +19401,17 @@ console.log('\n-- CLXXII. Les 4 routes de quantité se comportent pareil (ft-v10
     /* ⛔⛔ La nuance de ft-v966, qui a rougi pendant l'écriture de cette version. */
     t('⛔⛔ les VALEURS se replient, mais la phrase « pour tes n g » se TAIT (ft-v966)',
       F.totalMuet===true, 'ligne verte affichée : '+(!F.totalMuet));
-    /* ⛔ Un seul propriétaire : le jour où une 5ᵉ route apparaît, elle passe par là. */
+    /* ⛔ Un seul propriétaire : le jour où une 5ᵉ route apparaît, elle passe par là.
+       🔁 D031S (19/10/2026) : ce témoin valait `true` en dur (« vérifié par lecture du code ») — il ne pouvait
+       pas rougir. Il MESURE désormais le code : une définition, et chacune des 4 routes l'appelle. */
+    const _srcQ=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
+    const _corpsQ=(n)=>{ const m=_srcQ.match(new RegExp('function '+n+'\\s*\\(')); if(!m) return null;
+      let i=_srcQ.indexOf('{',m.index),p=0,j=i; for(;j<_srcQ.length;j++){ if(_srcQ[j]==='{')p++; else if(_srcQ[j]==='}'){p--; if(!p) return _srcQ.slice(i,j+1);} } return null; };
+    const _routesQ=['_bcApplyGrams','_afApplyProp','_efApplyGrams','_efApplyProp'];
+    const _fautesQ=_routesQ.map(n=>{ const c=_corpsQ(n); return c===null?n+' introuvable':(/_qtyRescale\(/.test(c)?null:n+' sans _qtyRescale'); }).filter(Boolean);
+    const _defsQ=(_srcQ.match(/function _qtyRescale\s*\(/g)||[]).length;
     t('⛔ R2 : les 4 routes passent par le MÊME moteur `_qtyRescale`',
-      true, 'vérifié par lecture du code — 4 appels, 1 définition');
+      _fautesQ.length===0 && _defsQ===1, (_fautesQ.join(' · ')||'4 routes')+' · définitions de _qtyRescale : '+_defsQ);
   }
   await cx.close();
 }
@@ -20417,7 +20433,7 @@ console.log('\n-- CLXXXII. La séance qui ne partait pas : 1 écriture au lieu d
   const seance=(n)=>({rows:Array.from({length:n},(_,i)=>({
       date:'2026-08-31',exercise:'Tirage Poulie Haute',set_num:i+1,type:'N',
       kg:60,reps:8,volume:480,rm1:'75',bw:84,gender:'H',age:43})),
-    email:'michdu75@gmail.com'});
+    email:'fondateur@example.test'});
 
   // ⛔ ① SANS LUI, « 1 écriture » serait vert parce qu'on n'écrit RIEN.
   const o25=onglet(EN.concat(['email']),[['2026-08-01','Développé Couché',1,'N',80,8,640,'99',84,'H',43,'x@y.z']]);
@@ -20436,7 +20452,7 @@ console.log('\n-- CLXXXII. La séance qui ne partait pas : 1 écriture au lieu d
   // ⛔ ③ ET RIEN N'A CHANGÉ DE CE QUI EST ÉCRIT : 12 colonnes, l'email en 12ᵉ, l'ancienne ligne intacte.
   t('⛔ ③ le contenu ne change pas : 12 colonnes, email en 12ᵉ, et la ligne d\'avant est intacte',
     o25._g.lignes[0][1]==='Développé Couché' && o25._g.lignes[0][11]==='x@y.z'
-    && o25._g.lignes[1].length===12 && o25._g.lignes[1][11]==='michdu75@gmail.com'
+    && o25._g.lignes[1].length===12 && o25._g.lignes[1][11]==='fondateur@example.test'
     && o25._g.lignes[1][1]==='Tirage Poulie Haute',
     JSON.stringify(o25._g.lignes[1]));
 
@@ -20476,7 +20492,7 @@ console.log('\n-- CLXXXII (suite). Un délai dépassé n\'est pas une perte (ft-
     }
     const o={}; let toasts=[];
     window.toast=(m,ty)=>toasts.push({m:String(m),ty:String(ty||'')});
-    S.url='https://exemple.invalide/exec'; S.email='michdu75@gmail.com';
+    S.url='https://exemple.invalid/exec'; S.email='fondateur@example.test';
     S.sessions=[{date:'2026-08-31', ts:Date.now(), id:Date.now(), synced:false, volume:1000,
                  exs:[{name:'Tirage Poulie Haute',sets:[{kg:60,reps:8,done:true,type:'N'}]}]}];
     // ① DÉLAI DÉPASSÉ (ce qu'a vu Michel)
@@ -20744,14 +20760,14 @@ console.log('\n-- CLXXXV. Voir les doublons du classeur, sans rien supprimer (ft
   };
   const JET='jeton-de-test-assez-long';
   const serie=(d,ex,n,em)=>[d,ex,n,'N',60,8,480,'75',84,'H',43,em];
-  const MOI='michdu75@gmail.com';
+  const MOI='fondateur@example.test';
   /* SON CAS : une séance de 3 séries, écrite TROIS FOIS (les 3 essais avant ft-v1077),
      + une séance saine la veille, + une ligne d'un autre testeur, + une vieille ligne
      sans email (écrite avant ft-v1018). */
   const L=[];
   for(let k=0;k<3;k++) for(let i=1;i<=3;i++) L.push(serie('2026-08-31','Tirage Poulie Haute',i,MOI));
   for(let i=1;i<=2;i++) L.push(serie('2026-08-30','Squat à la Barre',i,MOI));
-  L.push(serie('2026-08-31','Rowing Machine',1,'christophe@famillelanglois.fr'));
+  L.push(serie('2026-08-31','Rowing Machine',1,'christophe@example.test'));
   L.push(serie('2026-07-01','Développé Couché',1,''));
 
   const o=onglet(L);
@@ -20979,14 +20995,14 @@ console.log('\n-- CLXXXVIII. Nettoyer les doublons : la seule route qui supprime
     const r=vm.runInContext('doGet',ctx)({parameter:params});
     try{ return JSON.parse(r&&r._t||'{}'); }catch(e){ return {brut:String(r&&r._t||'')}; }
   };
-  const JET='jeton-de-test-assez-long', MOI='michdu75@gmail.com';
+  const JET='jeton-de-test-assez-long', MOI='fondateur@example.test';
   const li=(d,ex,n,em)=>[d,ex,n,'N',60,8,480,'75',84,'H',43,em];
   /* SON CAS : une séance de 3 séries écrite 3 fois · une séance saine · un autre testeur ·
      une vieille ligne sans email. */
   const base=()=>{ const L=[];
     for(let k=0;k<3;k++) for(let i=1;i<=3;i++) L.push(li('2026-08-31','Tirage Poulie Haute',i,MOI));
     for(let i=1;i<=2;i++) L.push(li('2026-08-30','Squat à la Barre',i,MOI));
-    L.push(li('2026-08-31','Rowing Machine',1,'christophe@famillelanglois.fr'));
+    L.push(li('2026-08-31','Rowing Machine',1,'christophe@example.test'));
     L.push(li('2026-07-01','Développé Couché',1,''));
     return L; };
 
@@ -21014,7 +21030,7 @@ console.log('\n-- CLXXXVIII. Nettoyer les doublons : la seule route qui supprime
 
   /* ⛔⛔ ④ ET SURTOUT : CE QU'ELLE N'A PAS LE DROIT DE TOUCHER EST INTACT. */
   t('⛔⛔ ④ la ligne d\'un autre testeur et la ligne SANS email sont intactes',
-    reste.some(r=>r[11]==='christophe@famillelanglois.fr')
+    reste.some(r=>r[11]==='christophe@example.test')
     && reste.some(r=>r[11]==='' && r[1]==='Développé Couché'),
     JSON.stringify(reste.map(r=>r[11])));
 
@@ -21657,7 +21673,7 @@ console.log('\n-- CXCV. Les séries abîmées par la virgule, chez tout le monde
    necessaire, ③ le fait que les donnees sensibles en sont exclues, ④ le droit de s'y opposer. */
 console.log('\n-- CXCVI. La politique de confidentialité dit ce qu\'on fait vraiment (ft-v1090) --');
 {
-  const pol=fs.readFileSync(path.join(ROOT,'confidentialite.html'),'utf8');
+  const pol=IDF.substituer(fs.readFileSync(path.join(ROOT,'confidentialite.html'),'utf8'));   // identités lues comme l'app servie (D031S)
   /* ⛔ Le témoin a-t-il bien lu la page ? Sinon les 4 « présent » seraient faux pour rien. */
   t('⛔ le témoin a bien LU la politique (elle est servie et non vide)',
     pol.length>3000 && pol.indexOf('Politique de confidentialité')>=0, 'taille = '+pol.length);
@@ -21668,7 +21684,7 @@ console.log('\n-- CXCVI. La politique de confidentialité dit ce qu\'on fait vra
   t('⛔⛔ … les données SENSIBLES sont explicitement hors du diagnostic technique',
     /ne sont pas consultées pour du diagnostic technique/i.test(pol), '');
   t('⛔ … et le droit de s\'y OPPOSER est offert, avec l\'adresse pour le faire',
-    /opposer/i.test(pol) && /forcetracker\.app@gmail\.com/.test(pol), '');
+    /opposer/i.test(pol) && /boite-idees@example\.test/.test(pol), '');
   /* ⛔⛔ ET LA PHRASE DEVENUE FAUSSE NE DOIT PAS REVENIR : « uniquement pour toi » contredirait
      la section qu'on vient d'écrire, et c'est la contradiction qu'un lecteur croirait. */
   t('⛔⛔ la promesse devenue fausse (« servent UNIQUEMENT à faire fonctionner l\'app pour toi ») a disparu',
@@ -23128,6 +23144,9 @@ console.log('\n-- CCVI. Une seule source pour les plages de poids (ft-v1100) --'
       return {g,wc,juge,flou:!!(plage&&plage.flou),pos:positionDansLaPlage(wc,g),rythme:rythmeVsPlage(wc,g),
               texteVientDeLaTable: plage? txt.indexOf(plage.txt)>=0 : null};
     });
+    /* 🔁 D031S : le témoin « objectif inconnu → null » valait `true` en dur ; on interroge les 3 juges. */
+    out.inconnu={juge:poidsDansLaPlage(0.3,'objectif-inconnu'), pos:positionDansLaPlage(0.3,'objectif-inconnu'),
+                 rythme:rythmeVsPlage(0.3,'objectif-inconnu')};
     return out;
   });
   await cx.close();
@@ -23191,7 +23210,8 @@ console.log('\n-- CCVI. Une seule source pour les plages de poids (ft-v1100) --'
   t('⛔ une plage qui TRAVERSE ZÉRO garde le vocabulaire géométrique (ni vite ni lent n\'y veut dire quelque chose)',
     R.accord.find(a=>a.g==='equilibre'&&a.wc===0.3).rythme==='au-dessus', '');
   t('⛔ un objectif inconnu rend `null`, jamais un verdict par défaut',
-    true, '');   // vérifié côté source ci-dessous
+    !!R.inconnu && R.inconnu.juge===null && R.inconnu.pos===null && R.inconnu.rythme===null,
+    JSON.stringify(R.inconnu));
   const st=fs.readFileSync(path.join(ROOT,'state.js'),'utf8');
   t('⛔ … et c\'est écrit dans le code, pas seulement espéré',
     /if\(!t\|\|!isFinite\(kgParSemaine\)\)\s*return null/.test(st), '');
@@ -23441,7 +23461,7 @@ console.log('\n-- CCX. Où Milo va chercher ses informations : la carte mesurée
    try{
     const o={};
     const j=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
-    S.url='https://exemple.invalide/exec'; S.email='sonde@test.fr'; S.premium=true;
+    S.url='https://exemple.invalid/exec'; S.email='sonde@test.fr'; S.premium=true;
     S.sessions=[];
     for(let i=0;i<12;i++) S.sessions.push({ts:7000+i,date:j(i*3),volume:9000,synced:true,
       exs:[{name:'Squat',sets:[{kg:120,reps:5,done:true,rm1:135,type:'N'}]}]});
@@ -26481,9 +26501,9 @@ console.log('\n-- CCXXXIII. « anon » n\'est pas quelqu\'un (ft-v1128) --');
     const txt=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ').trim();};
     const src=(typeof loadHealthAdmin==='function')?String(loadHealthAdmin):'';
     const co=(typeof _abRun==='function')?String(_abRun):'';
-    return { sien:txt(rendu([{email:'michdu75@gmail.com',count:16},{email:'anon',count:9}],2)),
+    return { sien:txt(rendu([{email:'fondateur@example.test',count:16},{email:'anon',count:9}],2)),
              deux:txt(rendu([{email:'a@x.fr',count:16},{email:'b@x.fr',count:4},{email:'anon',count:9}],3)),
-             zero:txt(rendu([{email:'michdu75@gmail.com',count:16}],1)),
+             zero:txt(rendu([{email:'fondateur@example.test',count:16}],1)),
              litAnon:/toLowerCase\(\)==='anon'/.test(src),
              abEnvoieEmail:/coachEmail:\s*S\.email/.test(co) };
   }catch(e){ return {err:e.message}; } });
@@ -26716,7 +26736,7 @@ console.log('\n═══ CCXXXVI. Accueil désencombré (carte testeur → bouto
 {
   const ca=await b.newContext({serviceWorkers:'block',viewport:{width:393,height:852},timezoneId:'Europe/Paris'});
   const pa=await ca.newPage(); const ea=[]; pa.on('pageerror',e=>ea.push(e.message));
-  await pa.addInitScript(seedScript({ft4_email:'christophe@famillelanglois.fr'}));
+  await pa.addInitScript(seedScript({ft4_email:'christophe@example.test'}));
   await pa.goto('http://localhost:'+PORT+'/index.html');
   await pa.waitForTimeout(2200);
   const A=await pa.evaluate(async()=>{
@@ -27910,7 +27930,7 @@ console.log('\n-- CCXLIV. Milo sait qu\'on le teste — chez Michel seul (ft-v11
                         bi:c.indexOf(MARQ) });
 
     /* ① MICHEL — il reçoit le bloc, avec la note de la dernière passe. */
-    S.email='michdu75@gmail.com'; const cM=buildCoachContext();
+    S.email='fondateur@example.test'; const cM=buildCoachContext();
     const k=coupe(cM);
     o.michel={ present:k.bi>=0, len:cM.length, dansPerso:(k.bi>k.pi && k.bi<k.mi && k.pi>0 && k.mi>0) };
     o.note=/54 situations sur 56/.test(cM);
@@ -27930,13 +27950,13 @@ console.log('\n-- CCXLIV. Milo sait qu\'on le teste — chez Michel seul (ft-v11
 
     /* ③ LE BANC LUI-MÊME — `_vcApplyPersona` efface l'e-mail : c'est CE mécanisme qui rend
        la décision de Michel sûre, donc c'est LUI qu'on épingle, pas une intention. */
-    S.email='michdu75@gmail.com';
+    S.email='fondateur@example.test';
     _vcApplyPersona({apply:{name:'Testeur',age:30,bw:70}});
     o.emailApresPersona=S.email;
     o.banc={ superAdmin:_estSuperAdmin(), present:buildCoachContext().indexOf(MARQ)>=0 };
 
     /* ④ STABILITÉ — le bloc personnel doit être identique d'un message à l'autre (cache). */
-    S.email='michdu75@gmail.com'; S.name='Michel';
+    S.email='fondateur@example.test'; S.name='Michel';
     const a1=buildCoachContext(), a2=buildCoachContext();
     const perso=(c)=>c.slice(c.indexOf('PROFIL ATHLÈTE:'), c.indexOf("═══ SITUATION DE L'INSTANT ═══"));
     o.stable = perso(a1)===perso(a2);
@@ -39394,11 +39414,18 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     /_eanValide\(/.test(corpsN('_bcFusionnerCandidats'))
     && !/%\s*10/.test(corpsN('_bcFusionnerCandidats')), '');
 
+  /* 🔁 D031S (19/10/2026) — FAUX VERT CORRIGÉ : `corpsN(…)||'x'` rendait vert un corps ABSENT, et
+     `onLoad` n'existe pas dans app.js (corps vide → « x » → « aucun moteur » vrai sur du vide). Le
+     démarrage réel, ce sont les écouteurs `load` d'app.js et `DOMContentLoaded` d'index.html. */
+  const _ecouteurs=(src,ev)=>{ const out=[]; const re=new RegExp("addEventListener\\(\\s*['\"]"+ev+"['\"]\\s*,",'g'); let m;
+    while((m=re.exec(src))){ let i=src.indexOf('{',m.index),p=0,j=i; for(;j<src.length;j++){ if(src[j]==='{')p++; else if(src[j]==='}'){p--; if(!p){out.push(src.slice(i,j+1)); break;}} } }
+    return out; };
+  const _oaf=corpsN('openAddFood'), _dem=_ecouteurs(AN,'load').concat(_ecouteurs(IN,'DOMContentLoaded'));
   t('CCCXI ⑱ ⛔⛔ HORS PÉRIMÈTRE — aucun moteur du banc n\'est référencé dans un chemin '+
     'utilisateur : ni dans l\'écran d\'ajout d\'aliment, ni au démarrage',
-    !/ZXingWASM/.test(corpsN('openAddFood')||'x')
-    && !/Quagga/.test(corpsN('openAddFood')||'x')
-    && !/(ZXingWASM|Quagga)/.test(corpsN('onLoad')||'x'), '');
+    _oaf.length>0 && !/ZXingWASM/.test(_oaf) && !/Quagga/.test(_oaf)
+    && _dem.length>=2 && !_dem.some(c=>/(ZXingWASM|Quagga)/.test(c)),
+    'openAddFood '+(_oaf.length?_oaf.length+' car.':'INTROUVABLE')+' · démarrage : '+_dem.length+' écouteur(s)');
 
   await pgY.close();
 }
@@ -40399,6 +40426,10 @@ console.log('\n-- CCXLVIII. Les deux boutons de fusion sont distinguables (ft-v1
 
 // ════════════════════════════════════════════════════════════════════════════════════════════
 console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL NOMME SA SÉANCE ═══');
+/* 🔁 D031S (19/10/2026) — ⑭ ⑮ ⑲ écrivaient `.match(/…/g||[]).length` : le `||[]` portait sur l'EXPRESSION
+   RATIONNELLE (toujours vraie), pas sur le résultat. Un texte absent rendait `null.length` → la passe
+   PLANTAIT au lieu de rougir (mesuré : OPTI-TEST-02, anomalies/B-CCCXII). Parenthèses remises ; le motif
+   est refusé dans toute la passe par D031S-IV. */
 {
   const srcC=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8');
   const srcL=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
@@ -40438,10 +40469,10 @@ console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL 
     && /return sess \? String\(sess\.id\|\|sess\.ts\|\|sess\.date\|\|''\) : ''/.test(nu(corps('_dbfCle',srcC))), '');
   /* 🔁 ⑭⑮ : il y avait DEUX chemins (fin de séance + Coach automatique) ; le Coach automatique est retiré. */
   t('B-CCCXII ⑭ ⛔ le seul chemin nomme la séance et interdit d\'en débriefer une autre',
-    (nu(srcL)+nu(srcC)).match(/LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI/g||[]).length===1
-    && (nu(srcL)+nu(srcC)).match(/Ne débriefe aucune autre séance/g||[]).length===1, '');
+    ((nu(srcL)+nu(srcC)).match(/LA SÉANCE À DÉBRIEFER EST EXACTEMENT CELLE-CI/g)||[]).length===1
+    && ((nu(srcL)+nu(srcC)).match(/Ne débriefe aucune autre séance/g)||[]).length===1, '');
   t('B-CCCXII ⑮ ⛔ « la plus récente » n\'est plus qu\'un REPLI, jamais la règle',
-    (nu(srcL)+nu(srcC)).match(/la plus récente dans mes dernières séances/g||[]).length===1
+    ((nu(srcL)+nu(srcC)).match(/la plus récente dans mes dernières séances/g)||[]).length===1
     && /_des\?\(/.test(nu(corps('_runSeDebrief',srcL))), '');
   t('B-CCCXII ⑯ ⭐⭐ l\'ID CHOISIT, la date DÉCRIT : la désignation part de la SÉANCE',
     /function _dbfDesignation\(sess\)/.test(srcC)
@@ -40456,7 +40487,7 @@ console.log('\n═══ B-CCCXII. LE DÉBRIEF NE SE PAIE PLUS DEUX FOIS, ET IL 
     /EXERCICES DISPONIBLES DANS SON APPLICATION/.test(srcC)
     && /return _gardienRules\(\) \+ `Tu es \$\{/.test(srcC), '');
   t('B-CCCXII ⑲ ⛔ PÉRIMÈTRE — le seuil de mémoire reste à 4 et n\'a pas bougé',
-    (nu(srcC)+nu(srcL)).match(/coachHistory\.length\s*>=\s*4/g||[]).length===2, '');
+    ((nu(srcC)+nu(srcL)).match(/coachHistory\.length\s*>=\s*4/g)||[]).length===2, '');
   t('B-CCCXII ⑳ ⛔ PÉRIMÈTRE — les règles RIR de ft-v1213 sont intactes',
     /return t!=='É' && t!=='W' && t!=='E' && t!=='X';/.test(srcL), '');
 }

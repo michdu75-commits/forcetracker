@@ -168,10 +168,13 @@ const fichiersDeLaPasse = () => [].concat(
   fs.readdirSync(path.join(RACINE, 'tests', 'parcours')).filter(f => f.endsWith('.js')).map(f => path.join('tests', 'parcours', f)),
   fs.readdirSync(path.join(RACINE, 'tests')).filter(f => f.endsWith('.js')).map(f => path.join('tests', f)))
   .filter(f => !/(^|[\\/])(_garde_reseau|garde_reseau)\.js$/.test(f));
+/* le CODE sans ce qui en PARLE : commentaires blanchis, numéros de ligne gardés (famille ft-v1193/1205/1210) */
+const sansCommentaires = (src) => src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+  .split('\n').map(l => (l.trim().startsWith('//') ? '' : l)).join('\n');
 module.exports.contournements = () => {
   const vus = [];
   for (const f of fichiersDeLaPasse()) {
-    const lignes = fs.readFileSync(path.join(RACINE, f), 'utf8').split('\n');
+    const lignes = sansCommentaires(fs.readFileSync(path.join(RACINE, f), 'utf8')).split('\n');
     lignes.forEach((l, i) => { const m = l.match(RE_CONTOURNEMENT); if (m) vus.push(f + ':' + (i + 1) + ' « ' + m[0] + ' »'); });
   }
   return vus;
@@ -188,6 +191,114 @@ module.exports.entreesSansGarde = () => {
     }
   }
   return liste;
+};
+
+/* ═══ D031S-III — LES IDENTITÉS : fictives dans les tests, fictives dans l'app servie, reconnues comme les vraies ═══
+   Les adresses réelles ne sont JAMAIS affichées : un témoin rouge dit un NOMBRE et un nom de FICHIER, pas l'adresse. */
+const IDF = require('../identites_fictives.js');
+const http = require('http');
+const recuperer = (PORT, f) => new Promise((ok) => { http.get('http://localhost:' + PORT + '/' + f, (r) => { const b = []; r.on('data', x => b.push(x)); r.on('end', () => ok(Buffer.concat(b).toString('utf8'))); }).on('error', () => ok('')); });
+module.exports.identites = async function (t, b, PORT) {
+  console.log('\n═══ D031S-III. LES IDENTITÉS DE TEST — FICTIVES, SUR UN DOMAINE RÉSERVÉ (example.test) ═══');
+  const ro = IDF.roles(), manquants = Object.entries(ro).filter(([, v]) => !v).map(([k]) => k);
+  t('D031S-III ① les identités que l\'app reconnaît sont LUES dans son code (fondateur, Christophe, Eline, Emma, boîte à idées, 4 listes) — aucune recopiée',
+    manquants.length === 0 && IDF.adressesReelles().length >= 5, manquants.length ? 'introuvable(s) dans le code : ' + manquants.join(', ') : IDF.adressesReelles().length + ' identité(s)');
+  const fichiers = ['index.html', 'constants.js', 'app.js', 'coach.js', 'tracking.js', 'log.js', 'setup.js', 'screens.js', 'state.js'];
+  const servis = {}; for (const f of fichiers) servis[f] = await recuperer(PORT, f);
+  const fuite = fichiers.filter(f => IDF.compterReelles(servis[f]) > 0 || !servis[f]);
+  t('D031S-III ② l\'app servie aux tests ne porte AUCUNE identité réelle (listes, comparaisons en dur, textes)',
+    fuite.length === 0 && /fondateur@example\.test/.test(servis['constants.js']),
+    fuite.map(f => f + ' : ' + (servis[f] ? IDF.compterReelles(servis[f]) + ' identité(s) réelle(s)' : 'non servi')).join(' · '));
+  const c = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
+  const p = await c.newPage();
+  await p.goto('http://localhost:' + PORT + '/index.html');
+  const R = await p.evaluate((ID) => { const o = {};
+    try { o.admin = ADMIN_EMAILS[0] === ID.fondateur;
+      const av = S.email;
+      S.email = ID.christophe; o.christophe = _isChristophe() && !_isEline() && !_isEmma();
+      S.email = ID.eline; o.eline = _isEline() && !_isChristophe();
+      S.email = ID.emma; o.emma = _isEmma() && !_isEline();
+      S.email = 'quelquun@example.com'; o.lambda = !_isChristophe() && !_isEline() && !_isEmma();
+      o.testeur = TESTER_EMAILS.indexOf(ID.testeur1) >= 0 && TESTER_EMAILS.indexOf(ID.christophe) >= 0;
+      S.email = av; } catch (e) { o.err = String(e && e.message || e); }
+    return o; }, IDF.ID);
+  await c.close();
+  t('D031S-III ③ l\'app servie reconnaît les identités fictives comme les vraies (admin, Christophe, Eline, Emma, testeurs) — et pas un inconnu',
+    !R.err && R.admin && R.christophe && R.eline && R.emma && R.lambda && R.testeur, JSON.stringify(R));
+  const ecrites = fichiersDeLaPasse().concat([path.join('tests', 'parcours', 'garde_reseau.js')])
+    .map(f => [f, IDF.compterReelles(fs.readFileSync(path.join(RACINE, f), 'utf8'))]).filter(([, n]) => n > 0);
+  t('D031S-III ④ aucune identité réelle n\'est ÉCRITE dans les fichiers de test de la passe',
+    ecrites.length === 0, ecrites.map(([f, n]) => f + ' : ' + n).join(' · '));
+  const ailleurs = [];
+  for (const dir of ['tools', path.join('tests', 'milo'), path.join('tests', 'recette'), path.join('tests', 'calculs'), path.join('tests', 'donnees')]) {
+    let fs_ = []; try { fs_ = fs.readdirSync(path.join(RACINE, dir)); } catch (e) { continue; }
+    for (const f of fs_.filter(x => /\.(js|py|sh)$/.test(x))) { const n = IDF.compterReelles(fs.readFileSync(path.join(RACINE, dir, f), 'utf8')); if (n) ailleurs.push(path.join(dir, f) + ' (' + n + ')'); }
+  }
+  console.log('  ℹ️ hors passe, ' + ailleurs.length + ' fichier(s) portent encore une identité réelle : ' + (ailleurs.join(' · ') || 'aucun'));
+};
+
+/* ═══ D031S-IV — L'HYGIÈNE DES TÉMOINS : les trois formes de faux vert déjà payées ne reviennent pas ═══
+   Chacune a été MESURÉE dans cette passe (contre-expertise du 19/10, OPTI-TEST-02) :
+   ① un témoin dont la condition est `true` en dur — il ne peut pas rougir (« vérifié par lecture du code ») ;
+   ② `.match(/…/g||[]).length` — le `||[]` porte sur l'expression rationnelle, pas sur le résultat : un texte absent
+      fait PLANTER la passe au lieu de rougir ;
+   ③ `corps…(…)||'x'` — un corps de fonction ABSENT devient une chaîne quelconque, et « ne contient pas X » est vrai
+      sur du vide.
+   Lu dans le TEXTE des fichiers de la passe : un retour de ces formes rougit avant de servir. */
+const FORMES = [
+  ['condition `true` en dur', /\bt\w*\(\s*((?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`)\s*(?:\+\s*(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|\w+)\s*)*),\s*(?:true|!0|!!1)\s*[,)]/g],
+  ['`.match(/…/g||[])` (le repli est dans l\'appel)', /\.match\(\/(?:[^/\\\n]|\\.)+\/[gimsuy]*\s*\|\|\s*\[\]\s*\)/g],
+  ['corps absent remplacé par une chaîne (`corps…(…)||\'…\'`)', /\bcorps\w*\([^()]*\)\s*\|\|\s*(['"])[^'"]+\1/g],
+];
+module.exports.formesFautives = () => {
+  const vus = [];
+  for (const f of fichiersDeLaPasse()) {
+    const src = sansCommentaires(fs.readFileSync(path.join(RACINE, f), 'utf8'));
+    for (const [nom, re] of FORMES) { re.lastIndex = 0; let m; while ((m = re.exec(src))) vus.push(f + ':' + src.slice(0, m.index).split('\n').length + ' ' + nom); }
+  }
+  return vus;
+};
+module.exports.hygiene = function (t) {
+  console.log('\n═══ D031S-IV. L\'HYGIÈNE DES TÉMOINS — LES FAUX VERTS DÉJÀ PAYÉS NE REVIENNENT PAS ═══');
+  const vus = module.exports.formesFautives();
+  t('D031S-IV ① aucun témoin de la passe n\'a une condition `true` en dur, un `.match(/…/g||[])` ou un corps absent remplacé par une chaîne',
+    vus.length === 0, vus.slice(0, 8).join(' · '));
+};
+
+/* ═══ D031S-V — DES ORACLES INDÉPENDANTS : des valeurs calculées À LA MAIN, pas par la fonction testée ═══
+   POURQUOI : plusieurs témoins comparent le résultat de l'app à… l'app (« le PR = Math.max(bz(102.5,3),bz(100,5)) »,
+   « l'écran affiche calcMacros() »). Ils prouvent la COHÉRENCE, jamais la JUSTESSE : si `bz` se trompait, les deux
+   côtés se tromperaient pareil. Ces témoins posent la valeur ATTENDUE en chiffres, calculée ici à la main :
+   ① 1RM (Brzycki, la formule de l'app : kg / (1,0278 − 0,0278 × reps), arrondie au dixième) :
+      100 × 5 → 100 / 0,8888 = 112,51 → 112,5 · 102,5 × 3 → 102,5 / 0,9444 = 108,53 → 108,5 · 20 × 12 → 20 / 0,6942
+      = 28,81 → 28,8 · 1 répétition → la charge · 25 reps → plafonné à 20 : 100 / 0,4718 = 211,95 → 212 · 0 → 0.
+   ② macros des modes standards (D-035, décision de Michel du 02/10/2026, exemples écrits dans le journal) :
+      80 kg, prise de muscle, 3 122 kcal → protéines 80 × 2,2 = 176 g · lipides 3 122 × 25 % / 9 = 86,7 → 87 g ·
+      glucides (3 122 − 704 − 783) / 4 = 408,75 → 409 g ; 130 kg, perte, 1 932 kcal → 325 g · 53,7 → 54 g ·
+      (1 932 − 1 300 − 486) / 4 = 36,5 → 37 g.
+   ⛔ Un rouge ici n'autorise PAS à changer une formule : c'est une anomalie à SOUMETTRE à Michel (consigne du 19/10). */
+module.exports.oracles = async function (t, b, PORT) {
+  console.log('\n═══ D031S-V. DES ORACLES INDÉPENDANTS — 1RM ET MACROS, VALEURS CALCULÉES À LA MAIN ═══');
+  const c = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
+  const p = await c.newPage();
+  await p.goto('http://localhost:' + PORT + '/index.html');
+  const R = await p.evaluate(() => { const o = {};
+    try {
+      o.bz = [bz(100, 5), bz(102.5, 3), bz(20, 12), bz(150, 1), bz(100, 25), bz(0, 5), bz(80, 0)];
+      const sauve = { bw: S.bw, goal: S.goal, gender: S.gender, foodMode: S.foodMode, keto: S.keto };
+      S.gender = 'H'; S.foodMode = ''; S.keto = false;
+      S.bw = 80; S.goal = 'muscle'; o.m1 = macrosForKcal(3122);
+      S.bw = 130; S.goal = 'perte'; o.m2 = macrosForKcal(1932);
+      Object.assign(S, sauve);
+    } catch (e) { o.err = String(e && e.message || e); }
+    return o; });
+  await c.close();
+  const egal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  t('D031S-V ① 1RM (Brzycki) : 112,5 · 108,5 · 28,8 · charge seule à 1 rép · plafond à 20 reps (212) · 0 sans charge ni rép — valeurs calculées à la main',
+    !R.err && egal(R.bz, [112.5, 108.5, 28.8, 150, 212, 0, 0]), R.err || JSON.stringify(R.bz));
+  t('D031S-V ② macros standards (D-035) : 80 kg muscle 3 122 kcal → 176 / 87 / 409 g ; 130 kg perte 1 932 kcal → 325 / 54 / 37 g',
+    !R.err && egal(R.m1, { prot_g: 176, fat_g: 87, carbs_g: 409 }) && egal(R.m2, { prot_g: 325, fat_g: 54, carbs_g: 37 }),
+    R.err || JSON.stringify([R.m1, R.m2]));
 };
 
 module.exports.fin = async function (t) {

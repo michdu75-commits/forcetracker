@@ -73,6 +73,19 @@ MUT = [
            "    B.prototype[nom] = nc0;")], '④'),
     ('M19 les erreurs du garde ne portent plus sa marque (un echec « faute de reseau » ne passe pas pour le garde)',
      [(G, "{ code: code || 'ENETUNREACH', gardeReseau: true });", "{ code: code || 'ENETUNREACH', gardeReseau: false });")], '②'),
+    # ── les identites (D031S-III), l'hygiene des temoins (D031S-IV), les oracles independants (D031S-V)
+    ('I1 le serveur des tests sert de nouveau les identites REELLES (substitution coupee)',
+     [('tests/identites_fictives.js', "  if (!motif || typeof texte !== 'string' || texte.indexOf('@') < 0) return texte;",
+       "  return texte;")], 'D031S-III ②'),
+    ('I2 une identite n\'est plus trouvable dans le code (_isChristophe renomme) : ferme par defaut',
+     [('app.js', "function _isChristophe(){", "function _isChristopheRenomme(){")], 'D031S-III ①'),
+    ('I3 une identite REELLE est ecrite dans un fichier de test de la passe', 'REELLE', 'D031S-III ④'),
+    ('H1 un temoin a condition `true` en dur revient dans la passe',
+     [('tests/parcours/sec_admin.js', "'use strict';", "'use strict';\nfunction _mutH1(t){ t('mutation', true, ''); }")], 'D031S-IV'),
+    ('O1 la formule du 1RM derive (0,0278 -> 0,0270)',
+     [('state.js', "fmt(kg/(1.0278-0.0278*Math.min(r,20)))", "fmt(kg/(1.0278-0.0270*Math.min(r,20)))")], 'D031S-V ①'),
+    ('O2 la part des lipides derive (25 % -> 30 %)',
+     [('state.js', "const _LIPIDES_PART_STANDARD=0.25;", "const _LIPIDES_PART_STANDARD=0.30;")], 'D031S-V ②'),
     ('M20 (temoin de controle) un COMMENTAIRE du garde modifie : le banc doit rester VERT',
      [(G, "   LE GARDE RÉSEAU DES TESTS — FERMÉ PAR DÉFAUT (D-031-SÉCURITÉ-01, 19/10/2026)",
            "   LE GARDE RÉSEAU DES TESTS — FERMÉ PAR DÉFAUT, TOUJOURS (D-031-SÉCURITÉ-01, 19/10/2026)")], 'OK'),
@@ -130,19 +143,31 @@ def main():
         chemin = os.path.join(arbre, G)
         if remplacements == 'VIDE':
             open(chemin, 'w', encoding='utf-8').write("'use strict';\nmodule.exports = {};\n")
+        elif remplacements == 'REELLE':
+            # une identite reelle LUE dans le code (jamais ecrite dans cet outil), posee dans un fichier de test de la copie
+            r = subprocess.run(['node', '-e', "process.stdout.write(require('./tests/identites_fictives.js').adressesReelles()[0]||'')"],
+                               cwd=arbre, capture_output=True, text=True)
+            if not r.stdout:
+                print('  INVALIDE  %s (aucune identite lue)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
+            cible = os.path.join(arbre, 'tests', 'parcours', 'garde_reseau.js')
+            open(cible, 'a', encoding='utf-8').write("\nconst _mutI3 = '" + r.stdout + "';\n")
         else:
-            src = open(chemin, encoding='utf-8').read()
+            fichiers = {}
             invalide = []
             for f, av, ap in remplacements:
+                p = os.path.join(arbre, f)
+                src = fichiers.get(p) or open(p, encoding='utf-8').read()
                 if src.count(av) != 1:
-                    invalide.append('%s (x%d)' % (av[:60], src.count(av)))
+                    invalide.append('%s:%s (x%d)' % (f, av[:50], src.count(av)))
                 else:
-                    src = src.replace(av, ap, 1)
+                    fichiers[p] = src.replace(av, ap, 1)
             if invalide:
                 print('  INVALIDE  %s (ancre absente ou multiple : %s)' % (nom, invalide)); shutil.rmtree(tmp, ignore_errors=True); continue
-            open(chemin, 'w', encoding='utf-8').write(src)
+            for p, src in fichiers.items():
+                open(p, 'w', encoding='utf-8').write(src)
             # ⛔ une mutation qui casse la SYNTAXE fait planter le banc : ce rouge-la ne prouverait rien (M10, 09/10)
-            if not syntaxe_ok(chemin):
+            casses = [p for p in fichiers if p.endswith('.js') and not syntaxe_ok(p)]
+            if casses:
                 print('  INVALIDE  %s (syntaxe cassee par la mutation)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
         rouges, _ = banc(arbre)
         if cible == 'OK':
