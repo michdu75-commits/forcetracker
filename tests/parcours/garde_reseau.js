@@ -242,6 +242,29 @@ module.exports.cheminsGardes = () => {
     'tools/sous_garde.sh': /NODE_OPTIONS="--require[^\n]*_garde_reseau\.js/.test(sg) && /export NODE_OPTIONS\b/.test(sg),
   };
 };
+/* DÉCISION 3 de Michel (19/10/2026) : les essais Milo RÉELS (appels IA facturés) sont conservés tels quels, mais EXCLUS
+   des exécutions non protégées. Ce qui les exclut, vérifié ici : aucun chemin automatique ne les lance — ni la passe, ni
+   la recette annexe, ni un workflow — sauf banc-milo.yml, qui ne part QUE à la main (workflow_dispatch) avec « LANCER ». */
+// LANCER un essai = l'EXÉCUTER (require du script, `node …`, ['node', '…']) ; LIRE sa source (témoins statiques) n'en est pas un
+const ESSAIS_MILO = /require\(\s*(?:path\.join\([^)]*?)?['"][^'"]*milo\/(?:eval|r34_banc|ab-memoire)\.js['"]|node\s+\S*milo\/(?:eval|r34_banc|ab-memoire)\.js|['"]node['"]\s*,\s*['"][^'"]*milo\/(?:eval|r34_banc|ab-memoire)\.js['"]/;
+module.exports.cheminsMilo = () => {
+  const lire = (f) => { try { return fs.readFileSync(path.join(RACINE, f), 'utf8'); } catch (e) { return null; } };
+  const ecarts = [];
+  if (ESSAIS_MILO.test(sansCommentaires(lire('tests/parcours/runner.js') || ''))) ecarts.push('la passe charge un essai Milo réel');
+  if (ESSAIS_MILO.test(lire('tests/recette/suites-annexes.json') || '')) ecarts.push('la recette annexe lance un essai Milo réel');
+  let wfs = []; try { wfs = fs.readdirSync(path.join(RACINE, '.github', 'workflows')).filter(f => /\.ya?ml$/.test(f)); } catch (e) {}
+  for (const f of wfs) {
+    const y = sansCommPy(lire('.github/workflows/' + f) || '');
+    if (f === 'banc-milo.yml') {
+      const on = (y.match(/^on:\s*\n((?:[ \t]+.*\n|\s*\n)*)/m) || [null, ''])[1];
+      if (!/^\s+workflow_dispatch:/m.test(on)) ecarts.push('banc-milo.yml ne part plus à la main');
+      if (/^\s{1,4}(push|pull_request|pull_request_target|schedule|workflow_run|repository_dispatch|workflow_call):/m.test(on)) ecarts.push('banc-milo.yml a un déclencheur AUTOMATIQUE');
+      if (!/!=\s*"LANCER"/.test(y)) ecarts.push('banc-milo.yml ne demande plus la confirmation LANCER');
+    } else if (ESSAIS_MILO.test(y)) ecarts.push(f + ' lance un essai Milo réel');
+  }
+  if (!wfs.includes('banc-milo.yml') && wfs.length) { /* pas de banc réel : rien à exclure de plus */ }
+  return ecarts;
+};
 module.exports.obligatoire = function (t) {
   console.log('\n═══ D031S-VII. LA GARDE OBLIGATOIRE — AUCUN NOUVEAU BANC SANS GARDE, LA LISTE DES ANCIENS NE FAIT QUE RÉTRÉCIR ═══');
   const c = module.exports.cliquet();
@@ -252,6 +275,9 @@ module.exports.obligatoire = function (t) {
   const ch = module.exports.cheminsGardes();
   t('D031S-VII ③ les chemins de lancement officiels chargent le garde : la passe, la recette annexe (ses 15 suites), tools/sous_garde.sh',
     Object.values(ch).every(Boolean), Object.entries(ch).filter(([, v]) => !v).map(([k]) => k).join(' · '));
+  const em = module.exports.cheminsMilo();
+  t('D031S-VII ④ les essais Milo RÉELS (décision 3 : conservés) ne partent par AUCUN chemin automatique : ni la passe, ni la recette annexe, ni un workflow — sauf banc-milo, à la main, avec « LANCER »',
+    em.length === 0, em.join(' · '));
   console.log('  ℹ️ ' + c.total + ' point(s) d\'entrée Playwright : ' + c.gardes + ' gardé(s) · ' + c.inscrits + ' ancien(s) inscrit(s) (' +
     Object.entries(c.parEtat).map(([e, n]) => e + ' ' + n).join(' · ') + ') — un ancien se lance gardé : tools/sous_garde.sh node <fichier>');
 };

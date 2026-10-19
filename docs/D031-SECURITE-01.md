@@ -120,3 +120,18 @@ externe le **simule** (`route.fulfill`) — le garde laisse passer les simulatio
 isolé, et **refuse** si un seul verdict ou le code de sortie change (un écart est rejoué une fois : un banc instable ne
 passe pas pour un effet du garde). En attendant, un ancien se lance gardé par `tools/sous_garde.sh node <fichier>`.
 Les fichiers « Milo — conservé (décision 3) » ne sont pas migrés (voir la proposition séparée).
+
+## 9. tests/milo — conservation provisoire (décision 3 de Michel du 19/10/2026)
+
+- **Rien n'est modifié dans `tests/milo`** : ni les identités, ni la logique des modèles évalués. Les 4 points d'entrée
+  (`eval.js`, `r34_banc.js`, `ab-memoire.js`, `runner.js`) sont inscrits dans `tests/garde_existants.json` sous l'état
+  « Milo — conservé (décision 3) » : ils ne sont pas migrés.
+- **Exclus des exécutions non protégées** : le témoin `D031S-VII ④` vérifie qu'AUCUN chemin automatique ne lance un
+  essai réel (exécuter = `require` du script, `node …`, `["node", …]` ; lire sa source pour un témoin statique n'en est
+  pas un) — ni la passe, ni la recette annexe, ni un workflow, sauf `banc-milo.yml`, qui ne part qu'à la main
+  (`workflow_dispatch`) avec la confirmation `LANCER`. Le noyau déterministe (`runner.js`) tourne dans la recette annexe,
+  désormais sous le garde. Lancé sous le garde, un essai réel échoue fermé.
+- **La proposition de sécurisation est séparée** (dossier du chantier, hors dépôt) : sortir l'adresse réelle du dépôt
+  sans changer ce qui est mesuré (même valeur lue dans un secret), seconde confirmation pour les vrais appels en local,
+  garde en liste blanche pendant une vraie passe (à mesurer d'abord, à blanc), et la fiche « Christophe » à vérifier
+  côté serveur avant tout changement. Aucun appel réel à Milo n'a été fait dans ce chantier.
