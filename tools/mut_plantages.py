@@ -13,8 +13,8 @@ la fin, ~25 s) dans un espace reseau isole. Elle est conforme si TOUT ce qu'elle
 P0 (un commentaire) doit, lui, rester entierement VERT : code 0, conditions ① ② vertes, 0 rouge.
 [!!] DANS LA COPIE (BUGS.md §60) et DANS UN ESPACE RESEAU ISOLE (tools/isoler_reseau.py --en-ligne).
 Usage : python3 tools/mut_plantages.py [PREFIXE[,PREFIXE...]]
-        python3 tools/mut_plantages.py --contre-epreuve   # SEC-04 RETIRE de la copie : P0 doit rester conforme et TOUTES les
-        autres mutations doivent echouer (preuve que ce controle mesure SEC-04, et pas autre chose)
+        python3 tools/mut_plantages.py --contre-epreuve   # SEC-04 RETIRE de la copie : la passe doit le VOIR (P0 : seul rouge
+        D031S-IV ②) et TOUTES les autres mutations doivent echouer (preuve que ce controle mesure SEC-04, et pas autre chose)
 """
 import os, re, shutil, subprocess, sys, tempfile
 
@@ -150,6 +150,12 @@ def main():
         out, code = jouer(a)
         journal = os.path.join(tmp, 'passe.log'); open(journal, 'w', encoding='utf-8').write(out)
         raisons = juger(out, code, att, journal)
+        if contre and nom.startswith('P0 '):
+            # sans SEC-04, la passe le VOIT d'elle-meme : D031S-IV ② (SEC-04 installe avant le premier module) est le SEUL rouge
+            rouges_ = [l for l in out.split('\n') if l.startswith('  ❌ ')]
+            tot_ = re.search(r'TOTAL CROISÉ : (\d+) ✅ · (\d+) ❌', out)
+            raisons = [] if (code == 1 and len(rouges_) == 1 and 'D031S-IV ②' in rouges_[0] and tot_ and tot_.group(2) == '1') else \
+                ['attendu : un seul rouge, D031S-IV ② (SEC-04 absent) ; obtenu code %s, %d rouge(s)' % (code, len(rouges_))]
         ok = not raisons
         if contre and not nom.startswith('P0 '): ok = bool(raisons)   # sans SEC-04, le controle DOIT voir le defaut
         conformes += ok

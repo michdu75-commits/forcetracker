@@ -13,7 +13,7 @@ L'environnement du banc est vide de tout nom de secret ; on y pose UN faux secre
 le temoin ③ ait quelque chose a voir.
 Usage : python3 tools/mut_garde_reseau.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
-import os, re, shutil, subprocess, sys, tempfile
+import json, os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 G = 'tests/_garde_reseau.js'
@@ -94,10 +94,9 @@ MUT = [
     ('G2 un NOUVEAU banc charge le garde APRES Playwright (trop tard : l\'ordre compte)',
      [('tools/banc_mutg.js', None, "'use strict';\nconst { chromium } = require('/opt/node22/lib/node_modules/playwright');\nrequire('../tests/_garde_reseau.js');\n(async () => { const b = await chromium." + LANCE + "(); await b.close(); })();\n")], 'D031S-VII ①'),
     ('G3 un ancien inscrit devient garde mais RESTE dans la liste (le cliquet ne retrecit plus)',
-     [('tools/banc_sec_admin.js', "const { chromium } = require('/opt/node22/lib/node_modules/playwright');",
-       "require('../tests/_garde_reseau.js');\nconst { chromium } = require('/opt/node22/lib/node_modules/playwright');")], 'D031S-VII ②'),
+     'INSCRIT_GARDE', 'D031S-VII ②'),
     ('G4 un ancien inscrit est SUPPRIME mais reste dans la liste (ligne perimee)',
-     [('tools/banc_sec_admin.js', '', None)], 'D031S-VII ②'),
+     'INSCRIT_SUPPRIME', 'D031S-VII ②'),
     ('G5 la recette annexe ne lance plus ses suites sous le garde',
      [('tools/recette_annexe.py', "env=_env_garde()", "env=None")], 'D031S-VII ③'),
     ('G6 tools/sous_garde.sh ne charge plus le garde',
@@ -188,6 +187,21 @@ def main():
         chemin = os.path.join(arbre, G)
         if remplacements == 'VIDE':
             open(chemin, 'w', encoding='utf-8').write("'use strict';\nmodule.exports = {};\n")
+        elif remplacements in ('INSCRIT_GARDE', 'INSCRIT_SUPPRIME'):
+            # le premier ancien ENCORE inscrit « à migrer » qui charge Playwright par le chemin du conteneur
+            liste = json.load(open(os.path.join(arbre, 'tests', 'garde_existants.json'), encoding='utf-8'))['fichiers']
+            RE_PW_L = re.compile(r"^(const \{ chromium \} = require\('/opt/node22/lib/node_modules/playwright'\);)$", re.M)
+            choix = next((x['fichier'] for x in liste if x['etat'] == 'à migrer' and x['fichier'].endswith('.js')
+                          and RE_PW_L.search(open(os.path.join(arbre, x['fichier']), encoding='utf-8').read())), None)
+            if not choix:
+                print('  INVALIDE  %s (aucun ancien inscrit utilisable)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
+            p_ = os.path.join(arbre, choix)
+            if remplacements == 'INSCRIT_SUPPRIME': os.remove(p_)
+            else:
+                rel = os.path.relpath(os.path.join(arbre, 'tests', '_garde_reseau.js'), os.path.dirname(p_)).replace(os.sep, '/')
+                src_ = open(p_, encoding='utf-8').read()
+                open(p_, 'w', encoding='utf-8').write(RE_PW_L.sub(lambda m: "require('" + rel + "');\n" + m.group(1), src_, count=1))
+            nom = nom + ' [' + choix + ']'
         elif remplacements == 'REELLE':
             # une identite reelle LUE dans le code (jamais ecrite dans cet outil), posee dans un fichier de test de la copie
             r = subprocess.run(['node', '-e', "process.stdout.write(require('./tests/identites_fictives.js').adressesReelles()[0]||'')"],
