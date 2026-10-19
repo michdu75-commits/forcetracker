@@ -21,8 +21,10 @@
         (Python, git, curl les lisent) ; un navigateur lancé hors Playwright sans le proxy mort
         est REFUSÉ.
      ③ JOURNAL : chaque requête externe a un sort — simulée · refusée par le test · bloquée par
-        le refus par défaut · bloquée par le garde de processus · ⛔ SORTIE (une vraie réponse
-        réseau est arrivée : ce cas doit rester à zéro).
+        le refus par défaut · bloquée par le garde de processus · servie par le service worker ·
+        interrompue · autre échec · ⛔ SORTIE (une vraie réponse réseau est arrivée : ce cas doit
+        rester à zéro, D031S-II ② le vérifie). Détail par requête (destination, action, sort) dans
+        `FT_GARDE_JOURNAL/garde-<pid>.jsonl` quand cette variable nomme un dossier.
    ⛔ FERMÉ PAR DÉFAUT : toute copie de Playwright chargée est patchée ; une copie dont la
    structure est inconnue fait ÉCHOUER le chargement au lieu de laisser un navigateur sans garde.
    Les variables d'environnement dont le NOM ressemble à un secret (clé, jeton, mot de passe…)
