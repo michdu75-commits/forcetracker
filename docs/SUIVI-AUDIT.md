@@ -1262,3 +1262,67 @@ diapo du Guide — chantier AIDES-01). Pop-up : probablement pas (rien à faire 
 
 **À faire** : décision de Michel pour le clone ; recette iPhone au doigt ; passe complète D-031 avant toute publication ; règle d'or #11 avec la mise
 en production ; l'Accueil et Progrès doivent-ils montrer aussi le dos (hors périmètre) ?
+
+### 🧍🧍🧮 D-091 FINALISÉE + COMPTAGE D-092 (19/10/2026, « GO pour finaliser D-091 », Michel) — BRANCHE LOCALE `claude/ux-fig-face-dos-v2`, CLONE PRÉPARÉ EN LOCAL (`claude/clone-d091-pub`), RIEN POUSSÉ
+
+**Ce que Michel a demandé.** Valider les deux figurines face · chiffres · dos de « Ta séance jusqu'ici », sans toucher à l'Accueil ni à Progrès ;
+corriger le comptage : **toutes les séries validées, échauffements compris, comptent dans le volume TOTAL et le nombre TOTAL de séries ; les
+statistiques de travail restent distinctes** (registre : **D-092**) ; ni RIR, ni chronomètre ; tests ciblés et contrôles négatifs ; la passe D-031
+seulement sous protection réseau démontrée (zéro appel réel à Milo, Apps Script ou au Worker) ; préparer la publication du clone, arrêt avant tout
+push ou déploiement ; production strictement inchangée.
+
+**Ce qui change (affichage seul).** La carte : « 5 séries · dont 3 de travail », « 3 120 kg · dont 2 240 kg de travail » ; sans échauffement, rien
+n'est ajouté (« 24 séries », « 37 440 kg »). Le « dont N de travail » est le nombre de « N / M » en haut (D-083 ①, inchangée) ; le « dont … kg de
+travail » est exactement le volume de l'écran de fin, de Progrès et de l'Accueil. Le volume vient de LA règle (`_workVol`, 2ᵉ argument optionnel
+`avecEchauffements`) ; sans lui rien ne change : séance enregistrée, Progrès, Accueil, résumés de la semaine, Milo.
+
+**Écart existant corrigé au passage (BUGS §85).** La carte avait sa propre copie de la règle de volume, sans la convention unilatérale : un Curl
+Haltères y valait la moitié du volume enregistré (416 kg affichés, 832 kg enregistrés et montrés à l'écran de fin).
+
+**Mesures.**
+- Banc B-FFD **77 / 0** (10 témoins nouveaux ou réécrits : ④b × 4 largeurs, ⑧a, ⑧d, ⑩a → ⑩g ; valeurs comptées À LA MAIN + formule recalculée
+  dans le test) ; sur le code d'avant (`e4e49152`) : **67 / 10** — exactement les 10 du nouveau contrat.
+- Contrôle négatif `tools/mut_fig_face_dos.py` **32 / 32** (arbre sain 0 rouge au début et à la fin ; M00b = le code de D-091 d'avant le comptage ;
+  M21 → M30 visent chacun un rouage du comptage ; 2 équivalentes ; **M18 retirée** avec sa raison, R30 : elle simulait la règle désormais voulue).
+- Différentiel avant / après (horloge, hasard et identifiants figés, réseau coupé, même séance terminée par la vraie porte) : séance enregistrée,
+  **113 clés de stockage**, écran de fin, Accueil, Progrès et détail de séance **identiques à l'octet** ; seule la carte change.
+- Mise en page : libellés sur une ligne à 360 / 375 / 390 / 430 px, texte agrandi compris ; carte 160 px à 360 px (inchangée) ; « + » immobile.
+- Bancs voisins (sélecteur), dans l'environnement isolé : ux_integration 69 / 0 · progres_seances 80 / 0 · seance_ux 69 / 0 · session_integrity
+  93 / 0 · cc01_dropset 31 / 0 · seance_date 25 / 0 · ux_d086 122 / 0 · debrief_demande 62 / 0 · annexe muscles PASS · fig_face_dos 77 / 0 ;
+  `check_regles` 0 défaut (prompt de référence de Milo : sources inchangées).
+- **Passe complète D-031** : **7 582 ✅ / 0 ❌**, 4 conditions vertes (④ revérifiée hors isolement, `git fetch` étant impossible dedans), sur `e8ffb71c` (13:41 → 15:07 UTC, 86 min) — dans l'environnement isolé (ci-dessous).
+- Bloc annexe de la recette (`tools/recette_annexe.py`, isolé) : **14 PASS** + 1 défaut connu (`discussions`, listé dans `tests/recette/defauts-connus.json`) — rejoué sur master `75288092`, isolé de la même façon : sortie du banc `discussions` **identique** (35 / 37, mêmes 2 rouges connus, taille du prompt de Milo au caractère près : « maison » 71 541, « salle » 76 460, partie en cache 68 781).
+- Clone (local, `claude/clone-d091-pub` = `origin/master` + `clone/` seul) : régénéré par `tools/clone_build.py` depuis `e8ffb71c`, isolement
+  22 / 0, contrôle négatif de l'isolement 8 / 8, bancs rejoués À TRAVERS le clone : B-FFD 77 / 0 · ux_d086 122 / 0 · seance_ux 69 / 0 ·
+  ux_integration 69 / 0 ; racine de la production identique octet pour octet à `75288092` (`ft-v1256`) ; 6 fichiers sous `clone/`.
+
+**Protection réseau démontrée (nouveau, hors dépôt).** Les bancs voisins, la passe complète, l'annexe et le clone ont tourné dans un
+**espace réseau neuf** (`unshare -n`) où n'existent que `lo` et une interface factice **sans aucune route vers l'extérieur** (Chromium se croit
+« en ligne », comme un téléphone, sinon l'app passe en mode hors ligne et des bancs testent autre chose — essayé d'abord, deux bancs ont échoué
+pour cette seule raison) ; à la place du mandataire, un **puits** note chaque tentative de sortie et la refuse (403). Canaris dans le même espace,
+AVANT chaque lot (Node puis Chromium) et APRÈS (Node) : serveur local joignable ; Apps Script, Worker et API Anthropic injoignables en direct
+(DNS / réseau) comme par le mandataire (403) ; Chromium : `navigator.onLine = true`, navigation et `fetch()` vers les trois cibles en échec.
+⚠️ Dans cet espace, `git fetch` est impossible : la condition ④ de la passe (aucune publication concurrente) a été revérifiée HORS isolement,
+après la passe. Une garde refuse de lancer quoi que
+ce soit si une cible est joignable (éprouvée sur 4 cas). Passe complète : **7919 tentatives de sortie, toutes refusées** — dont, vers les trois cibles : 487 × script.google.com, 28 × dry-field-e931.forcetracker-app.workers.dev, 2 × api.anthropic.com (canaris compris). Le puits ne voit que l'hôte (tunnel chiffré), pas la requête : il ne dit pas QUEL banc a tenté chaque appel. Le reste : Chromium lui-même (services Google), l'image QR de partage, Open Food Facts. **Aucune n'a quitté la machine : zéro appel réel à Milo, Apps Script ou au Worker.**
+
+**Avant l'outil d'isolement** (12:49 → 13:13 UTC) : le banc B-FFD avant / après, le contrôle négatif (32 mutations) et le différentiel ont
+tourné sur le réseau normal de la session, **protégés par le banc lui-même** : toute requête de la page hors du serveur local est interceptée et
+annulée AVANT de partir (`route` → `abort`, service worker bloqué), et le témoin ⑩y exige zéro appel d'IA sur tout le parcours. Ce qui n'est pas une
+requête de la page (connexions de Chromium lui-même) n'y est pas couvert — c'est précisément ce que l'espace isolé ajoute.
+
+**Remarqué au passage, hors périmètre, non touché.** ① `tools/banc_clone_isolation.js` (et son contrôle négatif) ouvre la VRAIE app et tente
+exprès des appels vers Apps Script, un Worker et Supabase, sans couper lui-même le réseau : hors isolement, il dépend du mandataire de la session.
+Dans ce lot, tout a été refusé par le puits. ② L'écran de fin affiche « Volume » et « Séries » de TRAVAIL sans le dire (ses chiffres égalent le
+« dont … de travail » de la carte), comme le débrief local — à décider par Michel. ③ Pendant le banc du débrief, Chromium a ouvert 2 tunnels
+vers le Worker sans aucune requête de page (trace : aucune requête partie sur le réseau) ; refusés.
+
+**Règle #17** : D-092 seul : 0 donnée persistée · 2 fichiers applicatifs (`log.js`, `tracking.js`) · **+17 / −7** (dont 11 lignes de commentaire)
+· **1 ancien chemin fusionné** (la copie de la règle de volume de la carte → `_workVol`). D-091 + D-092 : 0 donnée · 4 fichiers (`log.js`,
+`setup.js`, `style.css`, `tracking.js`) · **+44 / −14** · 1 chemin fusionné + 1 réutilisé (le dessin de dos de la grande figurine).
+
+**Règle d'or #11** : rien pour le clone ; à faire avec la mise en production (point rouge, aide « ? » de la Séance, aide détaillée, diapo du Guide —
+la carte n'y est décrite nulle part aujourd'hui). Pop-up : probablement pas (rien à faire, rien n'a bougé de place).
+
+**À faire** : feu vert de Michel pour publier le clone (un push de `claude/clone-d091-pub` sur master, `clone/` seul) ; recette iPhone au doigt ;
+production = autre décision ; ② ci-dessus.

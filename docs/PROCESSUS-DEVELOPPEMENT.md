@@ -238,7 +238,8 @@ une précaution : elle fausse les arbitrages (on renonce à un lot « trop long 
 | Étape | Durée mesurée | Contexte de la mesure |
 |---|---|---|
 | Passe complète D-031 (`tools/passe_valide.sh`) | **~80 min** (83 min le 18/10) | ~7 400 témoins, une seule à la fois |
-| Contrôle négatif (mutations) d'un lot | **12 à 16 min** (7 min en 2 files parallèles) · 12 min 30 (21 mutations, banc de 32 s) · 25 min 30 min (23 mutations, banc de 60 s) — **≈ nombre de mutations × durée du banc** | 20 à 27 mutations, arbre copié, banc rejoué à chaque fois |
+| Passe complète D-031 **dans un espace réseau isolé** (`unshare -n` + puits, outil hors dépôt au 19/10) | **86 min** (19/10) | 7 582 témoins ; l'isolement ne coûte rien de mesurable (canaris : ~1 min avant, quelques secondes après) |
+| Contrôle négatif (mutations) d'un lot | **12 à 16 min** (7 min en 2 files parallèles) · 12 min 30 (21 mutations, banc de 32 s) · 25 min 30 min (23 mutations, banc de 60 s) · **~17 min** (32 mutations, banc de ~75 s, 3 files, 19/10) — **≈ nombre de mutations × durée du banc ÷ files** | 20 à 27 mutations, arbre copié, banc rejoué à chaque fois |
 | Bancs voisins choisis par `tools/recette_selecteur.py` | **~20 min** (5 min 30 en 2 files) | 6 à 8 bancs Playwright |
 | Contrôle ciblé (un banc ou un témoin seul) | **1 à 2 min** | un banc de 30 à 120 témoins |
 | Codage d'une correction d'écran bornée | **~40 min** (D-086) · **~12 min** (D-087) | code seul, hors tests et documentation |
