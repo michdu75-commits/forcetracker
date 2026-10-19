@@ -86,6 +86,19 @@ MUT = [
      [('state.js', "fmt(kg/(1.0278-0.0278*Math.min(r,20)))", "fmt(kg/(1.0278-0.0270*Math.min(r,20)))")], 'D031S-V ①'),
     ('O2 la part des lipides derive (25 % -> 30 %)',
      [('state.js', "const _LIPIDES_PART_STANDARD=0.25;", "const _LIPIDES_PART_STANDARD=0.30;")], 'D031S-V ②'),
+    # ── le RIR en superset, conduit par de vrais appuis (D031S-VI) : chaque defaut vise le comportement, pas le texte
+    ('R1 la question de reserve est posee aussi sur l\'ECHAUFFEMENT',
+     [('log.js', "return st&&st.type!=='É'&&st.type!=='W';", "return !!st;")], 'D031S-VI ②'),
+    ('R2 le superset n\'attend plus ses series : seule la DERNIERE recoit sa question',
+     [('log.js', "      : []).concat([{ei,si}]);", "      : []).slice(0,0).concat([{ei,si}]);")], 'D031S-VI ②'),
+    ('R3 les questions d\'un superset ne nomment plus leur exercice',
+     [('log.js', "  const avecNom=cibles.length>1;", "  const avecNom=false;")], 'D031S-VI ②'),
+    ('R4 la reponse va a la PREMIERE serie attendue, pas a celle de la question',
+     [('log.js', 'onclick="setRir(${c.ei},${c.si},${n})"',
+       'onclick="setRir(${(Array.isArray(_rirCible)?_rirCible[0]:c).ei},${(Array.isArray(_rirCible)?_rirCible[0]:c).si},${n})"')], 'D031S-VI ④'),
+    ('R5 les boutons de reserve sont rendus mais NON appuyables (rien ne repond au doigt)',
+     [('log.js', "  z.innerHTML=cibles.map(c=>_rirQuestionHtml(c,avecNom)).join('');",
+       "  z.innerHTML='<div style=\"pointer-events:none\">'+cibles.map(c=>_rirQuestionHtml(c,avecNom)).join('')+'</div>';")], 'D031S-VI ③'),
     ('M20 (temoin de controle) un COMMENTAIRE du garde modifie : le banc doit rester VERT',
      [(G, "   LE GARDE RÉSEAU DES TESTS — FERMÉ PAR DÉFAUT (D-031-SÉCURITÉ-01, 19/10/2026)",
            "   LE GARDE RÉSEAU DES TESTS — FERMÉ PAR DÉFAUT, TOUJOURS (D-031-SÉCURITÉ-01, 19/10/2026)")], 'OK'),
@@ -149,8 +162,8 @@ def main():
                                cwd=arbre, capture_output=True, text=True)
             if not r.stdout:
                 print('  INVALIDE  %s (aucune identite lue)' % nom); shutil.rmtree(tmp, ignore_errors=True); continue
-            cible = os.path.join(arbre, 'tests', 'parcours', 'garde_reseau.js')
-            open(cible, 'a', encoding='utf-8').write("\nconst _mutI3 = '" + r.stdout + "';\n")
+            fichier_mute = os.path.join(arbre, 'tests', 'parcours', 'garde_reseau.js')
+            open(fichier_mute, 'a', encoding='utf-8').write("\nconst _mutI3 = '" + r.stdout + "';\n")
         else:
             fichiers = {}
             invalide = []

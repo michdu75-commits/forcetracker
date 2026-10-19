@@ -33,24 +33,26 @@ module.exports.ecran = async function (t, b, PORT) {
       persist();
       goScreen('log', document.getElementById('nb-log'));
       _expandedEx = 0; renderLog(); renderExBlocks();
-      return { ok: true, lignes: ['#sr-0-0', '#sr-0-1', '#sr-1-0'].map(s => !!document.querySelector(s + ' .chk')) };
+      return { ok: true, lignes: ['#sr-0-0', '#sr-0-1'].map(s => !!document.querySelector(s + ' .chk')) };
     } catch (e) { return { err: String(e && e.message || e) }; }
   });
-  t('D031S-VI ⓪ CONTRÔLE — le superset est à l\'écran : les 3 cases ✓ (É + travail du 1er exercice, travail du 2ᵉ) sont rendues',
+  t('D031S-VI ⓪ CONTRÔLE — le superset est à l\'écran : les cases ✓ du 1er exercice (É + travail) sont rendues',
     !!pret.ok && pret.lignes.every(Boolean), JSON.stringify(pret));
   if (!pret.ok || !pret.lignes.every(Boolean)) { await c.close(); return; }
 
   const questions = () => p.evaluate(() => [...document.querySelectorAll('#rest-rir .rir-lbl')].map(x => x.textContent.trim()));
   const appui = async (sel) => { await p.locator(sel).scrollIntoViewIfNeeded(); await p.locator(sel).click(); await p.waitForTimeout(350); };
 
-  await appui('#sr-0-0 .chk');                 // l'échauffement du 1er exercice
+  await appui('#sr-0-0 .chk');                 // l'échauffement du 1er exercice — l'app passe au 2ᵉ (superset, sans repos)
   const q1 = await questions();
-  await appui('#sr-0-1 .chk');                 // la série de travail du 1er exercice (le superset continue SANS repos)
+  await appui('#ex-block-0');                  // la personne rouvre le 1er exercice (appui sur sa carte repliée)
+  await appui('#sr-0-1 .chk');                 // sa série de travail — l'app repasse au 2ᵉ, toujours sans repos
   const q2 = await questions();
+  const ouvert2 = await p.evaluate(() => !!document.querySelector('#sr-1-0 .chk'));
   await appui('#sr-1-0 .chk');                 // la série de travail du 2ᵉ : le tour est fini, le repos commence
   const q3 = await questions();
-  t('D031S-VI ① aucune question de réserve sur l\'ÉCHAUFFEMENT, ni au milieu du tour (le superset avance sans repos)',
-    q1.length === 0 && q2.length === 0, JSON.stringify({ apresEchauffement: q1, apresPremierExercice: q2 }));
+  t('D031S-VI ① aucune question de réserve sur l\'ÉCHAUFFEMENT, ni au milieu du tour ; le superset passe de lui-même au 2ᵉ exercice',
+    q1.length === 0 && q2.length === 0 && ouvert2, JSON.stringify({ apresEchauffement: q1, apresPremierExercice: q2, deuxiemeOuvert: ouvert2 }));
   t('D031S-VI ② à la fin du tour, UNE question PAR série de travail, chacune NOMME son exercice (Développé Couché, puis Rowing Barre)',
     q3.length === 2 && /Développé Couché/.test(q3[0]) && /Rowing Barre/.test(q3[1]), JSON.stringify(q3));
 
