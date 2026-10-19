@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — LOT 0, contrat Séance → Nutrition (bloc B-NP01-A ; porté le 14/10/2026 du sous-lot A
    de NUT-PUNCH-01, 03/10/2026). Les sous-lots B → F ne sont PAS portés sur master.
    Il existe pour que le contrôle négatif (`tools/mut_nut_punch01.py`) rejoue ses mutations en

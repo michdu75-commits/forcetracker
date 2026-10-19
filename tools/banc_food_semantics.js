@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — FOOD SEMANTICS V1 / FS-01 (résolveur déterministe de la recherche d'aliments), blocs
    B-CDXXVIII (source), B-CDXXIX (résolveur conduit sur la vraie base) et B-CDXXX (premier affichage, vraie
    frappe, alias en retard ou absents). Il existe pour que le contrôle négatif (`tools/mut_food_semantics.py`)

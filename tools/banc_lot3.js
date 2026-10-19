@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — LOT 3 (session-B) : historique ordonné + restauration cloud sans perte, F03 + F03b + CL (B-CCCXCVII + B-CCCXCVIII).
    Destiné à la passe complète (tests/parcours/runner.js) après validation du checkpoint.
    Sert aussi au contrôle négatif : `python3 tools/mut_lot3.py`.

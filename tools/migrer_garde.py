@@ -71,6 +71,9 @@ def jouer(arbre, fichier):
 
 
 def ecart(a, b):
+    # ⛔ un délai dépassé ne prouve rien (deux délais « identiques » ne sont pas une mesure) : refusé, jamais migré
+    if 'DELAI' in (a['code'], b['code']): return 'non mesurable : delai depasse (%s s) avant=%s apres=%s' % (DELAI, a['code'], b['code'])
+    if not a['v'] and not b['v']: return 'non mesurable : aucun temoin lisible dans la sortie'
     if a['code'] != b['code']: return 'code %s -> %s' % (a['code'], b['code'])
     if a['v'] != b['v']:
         sa, sb = set(a['v']), set(b['v'])
@@ -110,17 +113,16 @@ def main():
             if e2 or ecart(avant, avant2):
                 open(cible, 'w', encoding='utf-8').write(original)
                 refuses.append((f, e2 or ('instable sans le garde : ' + ecart(avant, avant2))))
-                print('  ECART    %-52s %s' % (f, (e2 or 'instable sans le garde')[:150]))
+                print('  ECART    %-52s %s' % (f, (e2 or 'instable sans le garde')[:150]), flush=True)
                 if os.environ.get('MIGRER_SEC'): print(apres2['out'][-1500:])
                 continue
             avant, apres = avant2, apres2
         migres.append(f)
-        print('  IDENTIQUE %-51s code %s · %d temoin(s) · %.0f s / %.0f s' % (f, apres['code'], apres['n'], avant['duree'], apres['duree']))
-        if not essai:
+        print('  IDENTIQUE %-51s code %s · %d temoin(s) · %.0f s / %.0f s' % (f, apres['code'], apres['n'], avant['duree'], apres['duree']), flush=True)
+        if not essai:                           # enregistre TOUT DE SUITE : une vague interrompue garde ce qu'elle a prouve
             shutil.copyfile(cible, os.path.join(SRC, f))
-    if migres and not essai:
-        doc['fichiers'] = [x for x in doc['fichiers'] if x['fichier'] not in set(migres)]
-        open(LISTE, 'w', encoding='utf-8').write(json.dumps(doc, ensure_ascii=False, indent=1) + '\n')
+            doc['fichiers'] = [x for x in doc['fichiers'] if x['fichier'] != f]
+            open(LISTE, 'w', encoding='utf-8').write(json.dumps(doc, ensure_ascii=False, indent=1) + '\n')
     shutil.rmtree(tmp, ignore_errors=True)
     print('\n%d migre(s)%s, %d refuse(s) ou en ecart' % (len(migres), ' (ESSAI : rien ecrit)' if essai else '', len(refuses)))
     for f, r in refuses: print('   - %s : %s' % (f, r[:160]))

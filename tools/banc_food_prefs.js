@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — FOOD SEMANTICS V1 / FS-03 (préférences sémantiques par défaut), blocs B-CDXXXIII (source :
    une couche, séparée de la taxonomie) et B-CDXXXIV (vraie base, avec et sans table d'alias : génériques,
    explicites, ambiguïtés, aliments sans forme, déterminisme). Il existe pour que le contrôle négatif

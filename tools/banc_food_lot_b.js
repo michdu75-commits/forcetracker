@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — NUT-LOT-B (13/10/2026) : la requête dit l'aliment, pas la quantité. Blocs B-LB-A (structure), B-LB-E (vraie
    frappe), B-LB-I (instantané de la base : ce qui ne doit pas bouger), B-LB-C (compléments).
    Il existe pour que le contrôle négatif (`tools/mut_nut_lot_b.py`) rejoue ses mutations vite.

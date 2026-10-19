@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — IMPORT-MAP-01B (session-B) : un alias déclaré ne change jamais le matériel écrit (B-IMAPB-O/A/R/S/H).
    Destiné à la passe complète (tests/parcours/runner.js) après validation du checkpoint.
    Sert aussi au contrôle négatif : `python3 tools/mut_import_map.py` (mutations M-A → M-E).

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — IMPORT-P0-2 (session-B) : « Triceps Pushdown » n'est pas « Extension Triceps » (B-P02-A/P/H).
    Destiné à la passe complète (tests/parcours/runner.js) après validation du checkpoint.
    Sert aussi au contrôle négatif : `python3 tools/mut_p02_triceps.py`.

@@ -88,57 +88,12 @@
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
-   "fichier": "tools/banc_activite_provenance.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_auth_cloud_closure.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_auth_ia.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_auth_new_device.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_auth_signup_strict.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
    "fichier": "tools/banc_cc01_dropset.js",
    "etat": "à migrer",
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
    "fichier": "tools/banc_clone_isolation.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_coach_memoire.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_contrat_milo.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_cookie_profile.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_d021_activite.js",
    "etat": "à migrer",
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
@@ -158,77 +113,12 @@
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
-   "fichier": "tools/banc_fil_lot1.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_alias_sens.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_d042.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_formes.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_lot_b.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_multisource.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_prefs.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_reference.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_semantics.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_food_variants.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_foodlog_restore.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
    "fichier": "tools/banc_forensique_profil.js",
    "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
+   "raison": "NON MESURABLE par tools/migrer_garde.py (19/10/2026) : la sortie n'a aucun témoin lisible (outil de mesure ou outil périmé) ; une migration demandera une comparaison de la sortie entière — d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
    "fichier": "tools/banc_fp01.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_habitudes_alim.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_ia_ref100.js",
    "etat": "à migrer",
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
@@ -238,137 +128,17 @@
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
-   "fichier": "tools/banc_import_map.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_import_map2.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_import_map_alias.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_journal_qty_guard.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_lot3.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_masse_grasse.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_mensurations.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_milo_pdf1.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_ml_a.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_ml_b.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
    "fichier": "tools/banc_notes_d087.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_nut_punch01.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_nutri_b3.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_nutri_dash1.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_nutri_lipides25.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_nutri_moteur.js",
    "etat": "à migrer",
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
    "fichier": "tools/banc_nutri_objectifs.js",
    "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_nutri_proprietes.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_onboarding_quick.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_ordre_repas.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_p02_triceps.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_plan_incomplet.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_poids_chaine.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_pots_nutrition.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_profil_atypique.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
+   "raison": "NON MESURABLE par tools/migrer_garde.py (19/10/2026) : la sortie n'a aucun témoin lisible (outil de mesure ou outil périmé) ; une migration demandera une comparaison de la sortie entière — d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
    "fichier": "tools/banc_progres_seances.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
-   "fichier": "tools/banc_repas_actif.js",
    "etat": "à migrer",
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
@@ -403,11 +173,6 @@
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
-   "fichier": "tools/banc_sec_admin.js",
-   "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
-  },
-  {
    "fichier": "tools/banc_session_integrity.js",
    "etat": "à migrer",
    "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
@@ -430,12 +195,12 @@
   {
    "fichier": "tools/banc_v8.js",
    "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
+   "raison": "NON MESURABLE par tools/migrer_garde.py (19/10/2026) : la sortie n'a aucun témoin lisible (outil de mesure ou outil périmé) ; une migration demandera une comparaison de la sortie entière — d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
    "fichier": "tools/banc_v9.js",
    "etat": "à migrer",
-   "raison": "antérieur à la garde obligatoire (19/10/2026) : à migrer après vérification avant/après (tools/migrer_garde.py) ; d'ici là, se lance gardé par tools/sous_garde.sh"
+   "raison": "NON MESURABLE par tools/migrer_garde.py (19/10/2026) : la sortie n'a aucun témoin lisible (outil de mesure ou outil périmé) ; une migration demandera une comparaison de la sortie entière — d'ici là, se lance gardé par tools/sous_garde.sh"
   },
   {
    "fichier": "tools/cache-coupure.js",

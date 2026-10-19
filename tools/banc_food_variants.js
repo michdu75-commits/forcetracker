@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — NUT-FOOD-VARIANTS-01 (les variantes nutritionnelles d'un même aliment : taux de matière grasse, entier /
    écrémé, allégé, sans sucre), blocs B-FV-A (structure), B-FV-B (le corpus par la VRAIE FRAPPE, en ligne et hors ligne)
    et B-FV-D (déterminisme). Il existe pour que le contrôle négatif (`tools/mut_food_variants.py`) rejoue ses mutations

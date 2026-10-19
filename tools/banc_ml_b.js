@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — LOT 6 / ML-B (session-B) : un groupement ne reste jamais actif à moins de deux membres (B-CDIV + B-CDV) · extension : annuler la création d'un groupe ne laisse rien (B-CDVI + B-CDVII).
    Destiné à la passe complète (tests/parcours/runner.js) après validation du checkpoint.
    Sert aussi au contrôle négatif : `python3 tools/mut_ml_b.py`.

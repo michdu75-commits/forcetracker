@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — MILO-AUTH1 : panne du pont d'identité ≠ refus (B-CCCLXXV source, B-CCCLXXVI
    Worker conduit, B-CCCLXXVII écran). ⭐ Il existe pour le contrôle négatif
    (`tools/mut_auth_ia.py`) ET parce que le Worker n'est pas conduit par la passe complète
