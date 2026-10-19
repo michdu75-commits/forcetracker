@@ -39766,6 +39766,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      « Note de la dernière séance » (point gardé si le texte est identique), et l'outil du prompt de Milo confiné (leurre de
      dépôt + garde d'écriture). Blocs B-D088-*. Banc : tools/banc_d088.js · contrôle négatif : tools/mut_d088.py. */
   await require('./d088_import_notes.js').ecran(t, b, PORT);
+  /* 💪🔗 RIR EN SUPERSET (19/10/2026, retour de recette iPhone de Michel sur le clone D-088) — au repos d'un superset, UNE
+     question par mouvement, nommée, chacune enregistrée sur SA série jusqu'à la séance terminée, l'export, Milo (contexte
+     construit, jamais envoyé) et « Précédent » ; superset de trois, échauffements, dropset et exercice seul inchangés ; ordre
+     inversé et rechargement : aucune réponse au mauvais mouvement. Vert sur la prod ft-v1256 ET sur D-088 (même moteur).
+     Blocs B-RSS-*. Banc : tools/banc_rir_superset.js · contrôle négatif : tools/mut_rir_superset.py. */
+  await require('./rir_superset.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);
