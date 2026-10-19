@@ -14,10 +14,12 @@
      + un É NON validé (8 × 40) → rien ne change.
      + une série X validée 6 × 55 = 330 kg → « 3 séries · dont 2 de travail » et « 1 010 kg · dont 770 kg de travail »
        (un X est du TRAVAIL : règle existante de `_bilanTravailEx`, décision ① de Michel du 16/10).
-     Séance enregistrée : 440 kg (le TRAVAIL) ; record du jour 55 × 8 → 55 / (1,0278 − 0,2224) = 68,29 → 68,3 — l'É à
-     30 kg n'est jamais un record.
+     Séance enregistrée : 440 kg (le TRAVAIL) ; record du jour 55 × 8 → 55 / (1,0278 − 0,2224) = 68,29 → 68,3.
+     + ⑥b un É PLUS LOURD que le travail (60 × 8 → 74,5 s'il comptait) : le record reste 68,3 — sinon « l'É n'est
+       jamais un record » ne se mesurait pas (à 30 kg, il aurait perdu de toute façon).
    ⚠️ SUR LE CODE D'AVANT D-091, les témoins des TOTAUX rougissent : c'est ATTENDU, la règle n'y est pas encore.
    Banc : tools/sous_garde.sh node tools/banc_d091_volume_prepare.js
+   Contrôle négatif (sur un arbre qui porte D-091) : python3 tools/mut_d091_volume_prepare.py <arbre-D-091>
    ═════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
 const SEED = `(()=>{try{${Object.entries({ ft4_name: 'Testeur', ft4_bw: '80', ft4_age: '30', ft4_ht: '178', ft4_gender: 'H',
@@ -82,8 +84,19 @@ module.exports.ecran = async function (t, b, PORT) {
   /* ⑥ LA SÉANCE ENREGISTRÉE garde le TRAVAIL ; le record ne bouge pas */
   const F = await p.evaluate(async () => { try { await finishWorkout(); const s = S.sessions[0];
     return { vol: s && s.volume, pr: (S.prs['Développé Couché'] || {}).rm1 || null }; } catch (e) { return { err: String(e) }; } });
-  t('D031S-B ⑥ la séance ENREGISTRÉE garde le volume de TRAVAIL (440 kg) ; le record vaut 68,3 (55 × 8), l\'É n\'en fait jamais',
+  t('D031S-B ⑥ la séance ENREGISTRÉE garde le volume de TRAVAIL (440 kg) ; le record vaut 68,3 (55 × 8)',
     !F.err && F.vol === 440 && F.pr === 68.3, F.err || JSON.stringify(F));
+
+  /* ⑥b UN ÉCHAUFFEMENT PLUS LOURD QUE LE TRAVAIL ne devient JAMAIS un record. Sans ce cas, « l'É n'en fait jamais »
+     ne se mesurait pas : à 30 kg, l'É était plus léger que le travail et aurait perdu de toute façon.
+     É 60 × 8 → 60 / 0,8054 = 74,5 s'il comptait ; travail 55 × 8 → 68,3. Volume enregistré : 440 (le travail seul). */
+  const G = await p.evaluate(async () => { try {
+    S.wkt = null; S.sessions = []; S.prs = {}; persist(); startWorkout();
+    S.wkt.exs.push({ name: 'Développé Couché', sets: [{ kg: 60, reps: 8, done: true, type: 'É' }, { kg: 55, reps: 8, done: true, type: 'N' }] });
+    persist(); await finishWorkout(); const s = S.sessions[0];
+    return { vol: s && s.volume, pr: (S.prs['Développé Couché'] || {}).rm1 || null }; } catch (e) { return { err: String(e) }; } });
+  t('D031S-B ⑥b un échauffement PLUS LOURD (60 × 8) que le travail : record 68,3 (jamais 74,5), séance enregistrée 440 kg',
+    !G.err && G.vol === 440 && G.pr === 68.3, G.err || JSON.stringify(G));
   t('D031S-B ⑦ 0 erreur JS', errs.length === 0, errs.join(' | '));
   await c.close();
 };
