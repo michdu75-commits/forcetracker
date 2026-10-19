@@ -17,6 +17,10 @@ Fichier de notes : fonctionnalités et directions à explorer. Rien ici n'est en
 PUBLIÉE*** : **D-091** — la figurine de face à gauche, les chiffres au centre, la figurine de dos à droite, visibles ensemble, sans appui.
 Elle remplace **D-090** (une figurine à retourner d'un appui), construite puis abandonnée le même soir. Clone puis production : décisions
 séparées. L'Accueil et Progrès restent une seule vue, de face (hors périmètre). Le texte ci-dessous est l'état constaté AVANT, gardé tel quel (R30).
+↪️ ***19/10/2026 — VALIDÉE PAR MICHEL (« GO pour finaliser D-091 »), avec le comptage D-092*** : « séries » et « volume » de la carte sont
+des TOTAUX (échauffements compris), le travail dit à part (« dont N de travail »). ⇒ Le point « À trancher en même temps » ci-dessous
+change de nature : la carte compte désormais comme la figurine (tout ce qui est validé) ; « N / M » en haut garde le travail (D-083 ①).
+La question « un échauffement SEUL doit-il colorer la figurine ? » n'a pas été posée en tant que telle : la figurine est validée telle quelle.
 
 **PISTE · NON CONSTRUITE · décision de Michel attendue.** Constaté par Michel sur iPhone (clone D-085, séance avec
 soulevé de terre) : « Ta séance jusqu'ici » ne montre que la silhouette **de face** ; il veut voir aussi les muscles postérieurs.

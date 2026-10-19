@@ -11,21 +11,29 @@ Les autres mutations visent un INVARIANT ou un rouage precis, chacune avec SES t
 [deguisee] = casse l'invariant sans toucher la ligne evidente ; [equivalente] = ne doit PAS rougir.
 Un PLANTAGE du banc (code hors 0/1, ligne PLANTAGE, pas de ligne de total) n'est jamais « garde ».
 ⛔ Aucune mutation ne fait d'appel reel : le banc coupe toute requete hors du serveur local ; Milo n'est jamais appele.
+D-092 (19/10/2026, le COMPTAGE) : M00b remet le code de D-091 d'AVANT le comptage (f7c4537b) — les temoins ⑩ / ⑧a / ④b y
+rougissent, les figurines y restent vertes ; M21 a M31 visent chacun un rouage du comptage. M18 est RETIREE (R30) : elle
+simulait « la carte compte les echauffements dans le volume », qui est desormais la regle voulue (D-092).
 Usage : python3 tools/mut_fig_face_dos.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges · MUT_J=1 par defaut)
 """
 import os, re, shutil, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-AVANT = 'daa1a737'
-SE, TR, CS = 'setup.js', 'tracking.js', 'style.css'
-FICHIERS = (SE, TR, CS)
+AVANT = 'daa1a737'          # le code D-088 : une seule figurine, de face
+AVANT_D092 = 'f7c4537b'     # le code D-091 avant le comptage D-092 : deux figurines, totaux = travail seul
+SE, TR, CS, LG = 'setup.js', 'tracking.js', 'style.css', 'log.js'
+FICHIERS = (SE, TR, CS, LG)
+DONT_S = "(nTot!==b.faites?' · dont '+b.faites+' de travail':'')"
+WVOL = "if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;"
 CARTE = "${figF}<div class=\"lf-t\">${kv}${cardioTxt?`<div class=\"lf-cardio\">${cardioTxt}</div>`:''}</div>${figD}</div>"
 KV = ".lf-2fig .lf-kv{flex-direction:column;flex-wrap:nowrap;align-items:center;gap:6px;}"
 
 MUT = [
     ("M00 code d'AVANT remis mot pour mot (daa1a737 = D-088 : une seule figurine, de face)", 'AVANT', 'GARDE',
-     ('B-FFD-①a', 'B-FFD-②a', 'B-FFD-⑦-SDT', 'B-FFD-⑧g')),
+     ('B-FFD-①a', 'B-FFD-②a', 'B-FFD-⑦-SDT', 'B-FFD-⑧g', 'B-FFD-⑩a')),
+    ("M00b code de D-091 d'AVANT le comptage remis mot pour mot (f7c4537b : deux figurines, totaux = travail seul)", 'AVANT:' + AVANT_D092, 'GARDE',
+     ('B-FFD-④b', 'B-FFD-⑧a', 'B-FFD-⑩a', 'B-FFD-⑩b', 'B-FFD-⑩d', 'B-FFD-⑩f')),
     # ── le dos lui-meme
     ('M1 la petite figurine ignore la vue demandee : la figurine de droite est une 2e face',
      [(SE, "const dos=vue==='dos';", "const dos=false;")], 'GARDE', ('B-FFD-①a', 'B-FFD-②a')),
@@ -73,12 +81,37 @@ MUT = [
      [(TR, "figF=vue('face'); figD=vue('dos');", "figF=vue('face'); figD=vue('dos'); try{localStorage.setItem('ft4_lfFig','2');}catch(e){}")], 'GARDE', ('B-FFD-⑧b',)),
     ('M17 [deguisee] les autres figurines passent de dos (vue par defaut inversee)',
      [(SE, "const dos=vue==='dos';", "const dos=vue!=='face';")], 'GARDE', ('B-FFD-⑧e', 'B-FFD-⑧g')),
-    ('M18 [deguisee] les chiffres de la carte comptent les echauffements dans le volume',
-     [(TR, "const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W')",
-           "const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done)")], 'GARDE', ('B-FFD-⑧a',)),
+    # M18 RETIREE (19/10/2026, R30) : elle simulait « la carte compte les echauffements dans le volume » — c'est la regle voulue
+    # depuis D-092. Son inverse (la carte les OUBLIE) est M22 ; son ancre (la copie de la regle de volume) n'existe plus.
     ('M19 [deguisee] cardio seul : la carte passe quand meme en trois colonnes',
      [(TR, "${figF&&figD?' lf-2fig':''}", "${' lf-2fig'}")], 'GARDE', ('B-FFD-⑨a',)),
-    # ── equivalente
+    # ── le comptage (D-092)
+    ('M21 [deguisee] le nombre TOTAL de series oublie les echauffements (la tuile affiche le travail)',
+     [(TR, "${tuile(nTot,'série'", "${tuile(b.faites,'série'")], 'GARDE', ('B-FFD-⑩a', 'B-FFD-⑩b', 'B-FFD-⑩f')),
+    ('M22 [deguisee] le volume TOTAL oublie les echauffements (comportement d\'avant D-092)',
+     [(TR, "const vol=volDe(true), volTrav=volDe(false)", "const vol=volDe(false), volTrav=volDe(false)")], 'GARDE', ('B-FFD-⑩a', 'B-FFD-⑩b', 'B-FFD-⑩d')),
+    ('M23 [deguisee] la carte oublie la convention unilaterale (un Curl Halteres vaut la moitie du volume enregistre)',
+     [(TR, "const vs={exs:S.wkt.exs,uniConv:1}", "const vs={exs:S.wkt.exs,uniConv:0}")], 'GARDE', ('B-FFD-⑩d',)),
+    ('M24 [deguisee] _workVol compte TOUJOURS les echauffements (2e argument ignore) : la seance enregistree change',
+     [(LG, WVOL, WVOL.replace("(avecEchauffements||", "(true||"))], 'GARDE', ('B-FFD-⑩e',)),
+    ('M25 [deguisee] « dont N de travail » affiche meme sans echauffement',
+     [(TR, DONT_S, "(' · dont '+b.faites+' de travail')")], 'GARDE', ('B-FFD-⑩g',)),
+    ('M26 [deguisee] le travail n\'est plus dit a part (jamais de « dont »)',
+     [(TR, DONT_S, "('')")], 'GARDE', ('B-FFD-⑩a', 'B-FFD-⑧a')),
+    ('M27 [deguisee] « dont N de travail » compte les echauffements',
+     [(TR, DONT_S, "(nTot!==b.faites?' · dont '+nTot+' de travail':'')")], 'GARDE', ('B-FFD-⑩a',)),
+    ('M28 [deguisee] « N / M » de l\'en-tete compte aussi les echauffements valides',
+     [(LG, "const progres=b.total?(b.faites+' / '+b.total+",
+           "const progres=b.total?((b.faites+(S.wkt.exs||[]).reduce((a,e)=>a+(e.sets||[]).filter(s=>s&&s.done&&(s.type==='É'||s.type==='W')).length,0))+' / '+b.total+")],
+     'GARDE', ('B-FFD-⑩c',)),
+    ('M29 [deguisee] la seance ENREGISTREE prend le volume total (echauffements compris)',
+     [(LG, "const vol=_workVol({exs:S.wkt.exs,uniConv:1});", "const vol=_workVol({exs:S.wkt.exs,uniConv:1},true);")], 'GARDE', ('B-FFD-⑩e',)),
+    ('M30 [deguisee] le volume de travail affiche dans la carte prend le total (« dont » du volume disparait)',
+     [(TR, "const vol=volDe(true), volTrav=volDe(false)", "const vol=volDe(true), volTrav=volDe(true)")], 'GARDE', ('B-FFD-⑩a', 'B-FFD-⑩d')),
+    # ── equivalentes
+    ('M31 [equivalente] le total de series compte autrement (meme resultat)',
+     [(TR, "const nTot=S.wkt.exs.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s&&s.done).length,0);",
+           "const nTot=S.wkt.exs.reduce((a,ex)=>(ex.sets||[]).reduce((n,s)=>n+(s&&s.done?1:0),a),0);")], 'OK'),
     ('M20 [equivalente] un pixel de plus entre les chiffres empiles (7 px au lieu de 6)',
      [(CS, KV, KV.replace("gap:6px", "gap:7px"))], 'OK'),
 ]
@@ -119,12 +152,13 @@ def une(m, avant):
     temoins = m[3] if len(m) > 3 else ()
     tmp, arbre = cloner()
     try:
-        if remplacements == 'AVANT':
+        if isinstance(remplacements, str) and remplacements.startswith('AVANT'):
+            av = avant[remplacements.split(':', 1)[1] if ':' in remplacements else AVANT]
             cur = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
-            if any(not avant[f] for f in FICHIERS) or all(avant[f] == cur[f] for f in FICHIERS):
+            if any(not av[f] for f in FICHIERS) or all(av[f] == cur[f] for f in FICHIERS):
                 return nom, None, "INVALIDE (code d'avant introuvable ou identique)", []
             for f in FICHIERS:
-                open(os.path.join(arbre, f), 'w', encoding='utf-8').write(avant[f])
+                open(os.path.join(arbre, f), 'w', encoding='utf-8').write(av[f])
         else:
             srcs = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
             invalide = []
@@ -158,7 +192,8 @@ def une(m, avant):
 
 def main():
     filtres = [f for f in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if f]
-    avant = {f: subprocess.run(['git', 'show', AVANT + ':' + f], cwd=SRC, capture_output=True, text=True).stdout for f in FICHIERS}
+    avant = {ref: {f: subprocess.run(['git', 'show', ref + ':' + f], cwd=SRC, capture_output=True, text=True).stdout for f in FICHIERS}
+             for ref in (AVANT, AVANT_D092)}
     tmp0, a0 = cloner()
     rouges, plantage = banc(a0)
     shutil.rmtree(tmp0, ignore_errors=True)

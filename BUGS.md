@@ -4786,3 +4786,20 @@ sa raison d'être (D-084). Preuve par **mutation inverse** : sur une COPIE du cl
 le rouge disparaît — ni plus, ni moins. ⚠️ Et une sonde qui affirme « aucune requête ne sort » se trompe de périmètre : le shim coupe les canaux de DONNÉES
 (fetch, XHR, beacon, WebSocket, EventSource), pas les images — l'image QR de partage (lien public de l'app) sort, comme en production. *Un témoin dit ce que
 le système promet, pas plus.*
+
+## §85 — ⛔ UNE COPIE DE LA RÈGLE DE VOLUME DANS UN AFFICHAGE : UN UNILATÉRAL Y VALAIT LA MOITIÉ *(19/10/2026, finalisation de D-091 + comptage D-092 — branche locale `claude/ux-fig-face-dos-v2`)*
+
+**Symptôme.** Pendant la séance, « Ta séance jusqu'ici » affichait 416 kg pour un Curl Haltères (3 séries de travail) ; « Terminer » enregistrait 832 kg,
+et l'écran de fin, Progrès et l'Accueil montraient 832. Personne ne l'avait signalé : la carte disparaît au moment où l'écran de fin s'ouvre.
+
+**Cause (mesurée).** La carte (16/10) recalculait le volume elle-même, en recopiant le filtre de `_workVol` mais pas sa **convention unilatérale**
+(`uniConv` : un unilatéral se note par côté, son volume est doublé — 11/08/2026). Deux calculs du même chiffre : famille « les deux sources qui se
+contredisent » (R2). Trouvé en écrivant le témoin du comptage D-092 (un unilatéral était dans le scénario exprès), pas par un retour.
+
+**Correction.** La carte lit LA règle (`_workVol`, qui reçoit un 2ᵉ argument optionnel `avecEchauffements` pour le total D-092), avec la même convention
+que `finishWorkout` (`uniConv:1`). Témoins B-FFD-⑩d (la carte) et ⑩e (le « dont … kg de travail » = l'écran de fin = la séance enregistrée, par la vraie
+porte « Terminer »), mutations M23 et M29.
+
+**À quoi on le reconnaît.** Un même chiffre (volume, séries, durée) calculé à deux endroits par deux expressions qui « disent la même chose ». La
+recopie oublie toujours la partie la moins visible de la règle — ici le cas unilatéral, ailleurs les échecs `X` (le commentaire de `_effortConnu`, `log.js`, décrit la même recopie qui « oublierait la moitié `X` »).
+*Un affichage n'a pas le droit de posséder une règle : il la lit.*
