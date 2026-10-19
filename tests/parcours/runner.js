@@ -39771,6 +39771,8 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      (`_mscSVGmini`, le dos étant le dessin de la grande figurine `_BP`) colorées par le même moteur — comparées à la grande
      figurine et aux données, zone par zone. Mise en page à 360 / 375 / 390 / 430 px (longues valeurs, texte agrandi), « + »
      mesuré, rien d'écrit, autres figurines de face, cardio seul inchangé. Blocs B-FFD-*.
+     ⑩ LE COMPTAGE (19/10/2026, décision D-092 de Michel) : séries et volume TOTAUX, échauffements compris ; le travail dit à
+     part (« dont N de travail ») ; « N / M », « Il reste N » et la séance enregistrée gardent le travail.
      Banc : tools/banc_fig_face_dos.js · contrôle négatif : tools/mut_fig_face_dos.py. */
   await require('./fig_face_dos.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et

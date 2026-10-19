@@ -4796,13 +4796,18 @@ function _initSheetHandles(){
 // Une courbe qui change toute seule dans le passé est pire qu'une courbe imparfaite.
 // → Le jour où on décidera de corriger l'historique, ce sera une migration explicite qui
 //   pose `uniConv:1` sur les séances reprises, pas un changement de cette fonction.
-function _workVol(sess){
+//
+// 🧮 D-092 (Michel, 19/10/2026) — `avecEchauffements` : le volume TOTAL de « Ta séance jusqu'ici » compte AUSSI les paliers
+// d'échauffement. Une seule règle de volume (R2) : même filtre, même convention unilatérale, seul le tri des paliers change.
+// ⛔ Sans ce 2ᵉ argument rien ne bouge : la séance enregistrée (`sess.volume`), Progrès, l'Accueil et les résumés de la
+// semaine gardent le volume de TRAVAIL.
+function _workVol(sess, avecEchauffements){
   let v=0;
   const dbl=!!(sess&&sess.uniConv);
   (sess.exs||sess.exercises||[]).forEach(ex=>{
     const k=(dbl&&typeof estUnilateral==='function'&&estUnilateral(ex.name))?2:1;
     (ex.sets||[]).forEach(s=>{
-      if(s.done&&s.type!=='É'&&s.type!=='W'&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
+      if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
     });
   });
   return v;

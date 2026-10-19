@@ -4,6 +4,9 @@
    figurine de DOS à droite, visibles ENSEMBLE, sans appui ni alternance. Les deux sont les vraies figurines de l'app : la
    petite figurine (`_mscSVGmini`), le dos étant le dessin de la grande figurine « Muscles travaillés » (`_BP`), colorées par
    le même moteur (`_mscScores` → `_MG`). Remplace la proposition « une figurine à retourner » (D-090).
+   ⑩ LE COMPTAGE (19/10/2026, décision D-092 de Michel) : le nombre TOTAL de séries et le volume TOTAL comptent TOUTES les séries
+   validées, échauffements compris ; le travail reste dit à part (« dont N de travail »), et « N / M » en haut, « Il reste N » et la
+   séance enregistrée gardent le TRAVAIL (D-083 ①). Oracles : des valeurs comptées À LA MAIN, et une formule recalculée ici.
    Ce que les témoins CONDUISENT : la vraie app servie en local, de vrais gestes — toucher, coche d'une série, ouverture d'un
    exercice, « Ajouter un exercice » → recherche → choix, barre du bas et « + », « Terminer la séance » → « Terminer quand
    même », un vrai rechargement —, 4 largeurs d'iPhone, de longues valeurs, le mode « texte agrandi ».
@@ -37,6 +40,19 @@ const WKT_LONG = () => ({ date: '__TODAY__', startHour: 18, startTs: Date.now() 
   { name: SDT, sets: Array.from({ length: 12 }, () => S_(250, 8, 1)) }, { name: DC, sets: Array.from({ length: 12 }, () => S_(140, 8, 1)) } ] });
 // Cardio seul : pas de figurine (rien de musculaire), la carte reste celle d'avant.
 const WKT_CARDIO = () => ({ date: '__TODAY__', startHour: 18, exs: [], cardio: { type: 'velo', duration: 20 } });
+/* ⑩ D-092 : un UNILATÉRAL (son volume enregistré est DOUBLÉ, convention `uniConv`), un échauffement, un échec (`X`, qui compte comme
+   travail) et une série de travail restante (« Il reste 1 série »). */
+const CU = 'Curl Haltères';
+const WKT_UNI = () => ({ date: '__TODAY__', startHour: 18, startTs: Date.now() - 20 * 60000, exs: [
+  { name: CU, sets: [S_(8, 12, 1, 'É'), S_(16, 10, 1), S_(16, 10, 1), S_(16, 6, 1, 'X'), S_(16, 10)] } ] });
+// un échauffement SEUL validé : le total le compte, le travail dit 0 (les figurines ne sont PAS jugées ici — question ouverte)
+const WKT_ECH_SEUL = () => ({ date: '__TODAY__', startHour: 18, startTs: Date.now() - 6 * 60000, exs: [
+  { name: SDT, sets: [S_(60, 8, 1, 'É'), S_(100, 5), S_(120, 5)] } ] });
+// les plus longs libellés plausibles : 33 séries dont 24 de travail, 40 920 kg dont 37 440 kg de travail
+const WKT_LONG_ECH = () => ({ date: '__TODAY__', startHour: 18, startTs: Date.now() - 112 * 60000, exs: [
+  { name: SDT, sets: [S_(60, 8, 1, 'É'), S_(100, 5, 1, 'É'), S_(140, 3, 1, 'É'), S_(180, 2, 1, 'É'), S_(200, 1, 1, 'É'), S_(220, 1, 1, 'É')]
+      .concat(Array.from({ length: 12 }, () => S_(250, 8, 1))) },
+  { name: DC, sets: [S_(60, 10, 1, 'É'), S_(80, 5, 1, 'É'), S_(100, 3, 1, 'É')].concat(Array.from({ length: 12 }, () => S_(140, 8, 1))) } ] });
 const TAILLES = [[360, 740], [375, 667], [390, 844], [430, 932]];
 const FACE = '1 0 32 94', DOS = '36 0 32 94';
 const IA = ['coach', 'summarizeCoach', 'seanceJson', 'importProgram', 'importHistory', 'importBodyScan', 'importBloodTest', 'foodLabel', 'readBarcode',
@@ -61,23 +77,29 @@ const AIDE = `(()=>{
     const grp={}; Object.entries(_MG).forEach(([k,d])=>d.paths.forEach(id=>{grp[id]=k;}));
     const niv=k=>{const v=r.sc[k]||0; return v>=2?'p':v>=1?'s':(r.ind[k]&&!v)?'i':'b';};
     const att=a=>a.map(([id])=>id?(grp[id]?niv(grp[id]):'b'):'peau');
-    const trav=((S.wkt&&S.wkt.exs)||[]).reduce((a,ex)=>a.concat((ex.sets||[]).filter(s=>s.done&&s.type!=='É'&&s.type!=='W')),[]);
+    /* ⑩ D-092, recalculé ICI sans la règle de l'app : chaque série validée compte dans les TOTAUX, échauffements compris ; le
+       TRAVAIL exclut É / W ; le volume d'un unilatéral est doublé (la séance enregistrée l'est : uniConv). */
+    let nTot=0,nTrav=0,vTot=0,vTrav=0;
+    ((S.wkt&&S.wkt.exs)||[]).forEach(ex=>{ const k=estUnilateral(ex.name)?2:1; (ex.sets||[]).forEach(s=>{ if(!s||!s.done) return;
+      const v=((s.kg||0)>0&&(s.reps||0)>0)?s.kg*s.reps*k:0, ech=s.type==='É'||s.type==='W'; nTot++; vTot+=v; if(!ech){ nTrav++; vTrav+=v; } }); });
+    const fr=n=>Math.round(n).toLocaleString('fr-FR');
     return { nF:_FP.length, nB:_BP.length, face:{grande:g.slice(0,_FP.length),donnees:att(_FP)}, dos:{grande:g.slice(_FP.length,_FP.length+_BP.length),donnees:att(_BP)},
       grpF:_FP.map(([id])=>id?(grp[id]||null):null), grpB:_BP.map(([id])=>id?(grp[id]||null):null),
-      groupes:Object.keys(_MG).filter(k=>niv(k)!=='b'), series:String(trav.length),
-      volume:Math.round(trav.reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0)).toLocaleString('fr-FR')+' kg' }; };
+      groupes:Object.keys(_MG).filter(k=>niv(k)!=='b'), series:String(nTot), seriesLbl:'série'+(nTot>1?'s':'')+(nTot!==nTrav?' · dont '+nTrav+' de travail':''),
+      volume:fr(vTot)+' kg', volumeLbl:'volume'+(Math.round(vTot)!==Math.round(vTrav)?' · dont '+fr(vTrav)+' kg de travail':''), nTot, nTrav, vTrav:Math.round(vTrav) }; };
   window.__ffdMesure=()=>{ const c=document.querySelector('#log-finish .lf-bilan'); if(!c) return null; c.scrollIntoView({block:'center'});
     const R=e=>{ if(!e) return null; const r=e.getBoundingClientRect(); return {x:r.left,y:r.top,r:r.right,b:r.bottom,w:r.width,h:r.height}; };
     const figs=[...c.querySelectorAll('.lf-fig')], t=c.querySelector('.lf-t');
     const inter=(a,b)=>(a&&b)?Math.max(0,Math.min(a.r,b.r)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.b,b.b)-Math.max(a.y,b.y)):0;
     const vals=[...c.querySelectorAll('.lf-kv b')].map(b=>({ t:b.textContent, r:R(b), coupe:b.scrollWidth>b.clientWidth+0.5, fs:parseFloat(getComputedStyle(b).fontSize) }));
+    const labs=[...c.querySelectorAll('.lf-kv span')].map(s=>({ t:s.textContent, r:R(s), coupe:s.scrollWidth>s.clientWidth+0.5 }));   // ⑩ D-092 : « dont … de travail »
     const cadre=f=>{ const sv=f.querySelector('svg'); try{ const k=sv.getBBox(), v=sv.getAttribute('viewBox').split(' ').map(Number);
       return k.x>=v[0]-0.01&&k.x+k.width<=v[0]+v[2]+0.01&&k.y>=v[1]-0.01&&k.y+k.height<=v[1]+v[3]+0.01; }catch(e){ return false; } };
     const p=document.querySelector('#nb-log .nb-plus');
     const rf=figs.map(f=>R(f)), rt=R(t), rc=R(c);
-    return { carte:rc, figs:rf, t:rt, vals, cadres:figs.map(cadre), ombre:figs.map(f=>getComputedStyle(f).filter||''),
-      chevauche:Math.max(0,...rf.map(a=>inter(a,rt)), ...vals.map(v=>Math.max(0,...rf.map(a=>inter(a,v.r))))),
-      dedans:rf.concat(vals.map(v=>v.r)).every(a=>a.x>=rc.x-0.5&&a.r<=rc.r+0.5&&a.y>=rc.y-0.5&&a.b<=rc.b+0.5),
+    return { carte:rc, figs:rf, t:rt, vals, labs, cadres:figs.map(cadre), ombre:figs.map(f=>getComputedStyle(f).filter||''),
+      chevauche:Math.max(0,...rf.map(a=>inter(a,rt)), ...vals.concat(labs).map(v=>Math.max(0,...rf.map(a=>inter(a,v.r))))),
+      dedans:rf.concat(vals.map(v=>v.r), labs.map(l=>l.r)).every(a=>a.x>=rc.x-0.5&&a.r<=rc.r+0.5&&a.y>=rc.y-0.5&&a.b<=rc.b+0.5),
       docW:document.documentElement.scrollWidth, vw:innerWidth, plus:R(p),
       anims:(document.getAnimations?document.getAnimations().filter(a=>a.effect&&a.effect.target&&c.contains(a.effect.target)).length:0) }; };
 })();`;
@@ -147,7 +169,8 @@ async function ecran(t, b, PORT) {
   // Les deux vues présentes, dans l'ordre face · chiffres · dos, chacune dans SON cadre
   const deuxVues = (L, O) => !!L && L.n === 2 && L.deux && !!L.figs[0] && !!L.figs[1] && L.figs[0].vis && L.figs[1].vis && L.figs[0].vb === FACE && L.figs[0].n === O.nF && L.figs[1].vb === DOS && L.figs[1].n === O.nB
     && _det(L.ordre) === _det(['fig', 'chiffres', 'fig']);
-  const kvConforme = (L, O) => !!L && !!O && L.kv.length === 3 && L.kv[1][1] === O.series && L.kv[2][1] === O.volume && /min$/.test(L.kv[0][1] || '');
+  const kvConforme = (L, O) => !!L && !!O && L.kv.length === 3 && L.kv[1][1] === O.series && L.kv[2][1] === O.volume && /min$/.test(L.kv[0][1] || '')
+    && L.kv[1][0] === O.seriesLbl && L.kv[2][0] === O.volumeLbl;   // ⑩ D-092 : le travail dit à part, exactement
   const ajouterExercice = async (X, porte, q, nom) => {
     const o = await clic(X.pg, porte);
     if (!o) return false;
@@ -163,8 +186,10 @@ async function ecran(t, b, PORT) {
     return ok && await X.pg.evaluate(([ei, si]) => !!(S.wkt && S.wkt.exs[ei] && S.wkt.exs[ei].sets[si] && S.wkt.exs[ei].sets[si].done), [ei, si]); };
   // La mise en page d'une carte à deux figurines : rien ne déborde, rien ne se chevauche, chaque chiffre entier et lisible.
   const pageOK = m => !!m && m.figs.length === 2 && m.docW <= m.vw && m.dedans && m.chevauche === 0 && m.cadres.every(Boolean)
-    && m.vals.length >= 3 && m.vals.every(v => !v.coupe && v.fs >= 18);
-  const pageDet = m => _det(m && { docW: m.docW, vw: m.vw, dedans: m.dedans, ch: m.chevauche, cadres: m.cadres, vals: m.vals.map(v => [v.t, v.coupe, v.fs]) });
+    && m.vals.length >= 3 && m.vals.every(v => !v.coupe && v.fs >= 18) && (m.labs || []).length === m.vals.length && m.labs.every(l => !l.coupe);
+  const pageDet = m => _det(m && { docW: m.docW, vw: m.vw, dedans: m.dedans, ch: m.chevauche, cadres: m.cadres, vals: m.vals.map(v => [v.t, v.coupe, v.fs]),
+    labs: (m.labs || []).map(l => [l.t, l.coupe]) });
+  const nb = x => String(x == null ? '' : x).replace(/\s/g, ' ');   // le séparateur de milliers français est une espace fine insécable
 
   /* ══ ①②③ · AUX QUATRE LARGEURS : LES DEUX VUES D'EMBLÉE, DANS L'ORDRE, BIEN DESSINÉES, BIEN PLACÉES ══════════════════════ */
   for (const [W, H] of TAILLES) {
@@ -204,14 +229,23 @@ async function ecran(t, b, PORT) {
     t('B-FFD-④a ⭐ ' + W + ' px : avec les plus longues valeurs (' + (LL ? LL.kv.map(k => k[1]).join(' · ') : '?') + '), puis en texte agrandi, rien ne déborde ni ne se chevauche, tout reste entier',
       pageOK(mL) && pageOK(mA), pageDet(mL) + ' | ' + pageDet(mA));
     await Y.cx.close();
+    // ④b (D-092) les plus longs LIBELLÉS : 33 séries dont 24 de travail, 40 920 kg dont 37 440 kg de travail — puis en texte agrandi
+    const Z = await ouvrir({ w: W, h: H, wkt: WKT_LONG_ECH() });
+    const mZ = await mesure(Z), LZ = await lire(Z);
+    await Z.pg.evaluate(() => { document.getElementById('root').classList.add('a11y-lv'); renderLog(); }); await Z.pg.waitForTimeout(200);
+    const mZA = await mesure(Z);
+    t('B-FFD-④b ⭐ ' + W + ' px : avec les plus longs libellés (« ' + (LZ ? LZ.kv.slice(1).map(k => k[0]).join(' » · « ') : '?') + ' »), puis en texte agrandi, rien ne déborde ni ne se chevauche, chaque libellé tient entier dans la carte',
+      pageOK(mZ) && pageOK(mZA) && !!LZ && nb(LZ.kv[1][0]) === 'séries · dont 24 de travail' && nb(LZ.kv[2][0]) === 'volume · dont 37 440 kg de travail',
+      pageDet(mZ) + ' | ' + pageDet(mZA));
+    await Z.cx.close();
   }
 
   /* ══ ⑤⑥⑧ · LA MÊME SÉANCE PAR LES VRAIS GESTES (390 px) : AUCUN APPUI NÉCESSAIRE, MISES À JOUR, RIEN D'ÉCRIT ══════════════ */
   {
     const X = await ouvrir({});
     const O0 = await oracle(X), L0 = await lire(X);
-    t('B-FFD-⑧a ⭐ les chiffres de la carte sont ceux de la séance (séries de travail faites, volume hors échauffement) — recalculés ici',
-      kvConforme(L0, O0), _det({ kv: L0 && L0.kv, oracle: [O0.series, O0.volume] }));
+    t('B-FFD-⑧a ⭐ les chiffres de la carte sont ceux de la séance : TOUTES les séries validées et TOUT le volume, échauffements compris, le travail dit à part (D-092) — recalculés ici',
+      kvConforme(L0, O0), _det({ kv: L0 && L0.kv, oracle: [O0.seriesLbl, O0.series, O0.volumeLbl, O0.volume] }));
     // ⑤ rien ne bouge tout seul, rien n'est à toucher : relue 10 fois en 2,5 s, puis un toucher sur chaque figurine ne change rien
     let stable = true; const ref = _det(L0);
     for (let i = 0; i < 10; i++) { await X.pg.waitForTimeout(250); if (_det(await lire(X)) !== ref) { stable = false; break; } }
@@ -243,7 +277,7 @@ async function ecran(t, b, PORT) {
       okDC && deuxVues(L2, O2) && conforme(L2.figs[0], O2, 'face') && conforme(L2.figs[1], O2, 'dos') && triB.length > 0 && pecF.length > 0
         && !!L0.figs[1] && triB.every(i => L0.figs[1].niv[i] === 'b' && L2.figs[1].niv[i] !== 'b') && pecF.every(i => L0.figs[0].niv[i] === 'b' && L2.figs[0].niv[i] === 'p'),
       _det({ okDC, tri: triB.map(i => [L0.figs[1] && L0.figs[1].niv[i], L2 && L2.figs[1] && L2.figs[1].niv[i]]), pec: pecF.map(i => [L0.figs[0] && L0.figs[0].niv[i], L2 && L2.figs[0] && L2.figs[0].niv[i]]) }));
-    t('B-FFD-⑧d après la série validée, les chiffres suivent la séance (oracle recalculé)', kvConforme(L2, O2), _det({ kv: L2 && L2.kv, o: [O2.series, O2.volume] }));
+    t('B-FFD-⑧d après la série validée, les chiffres suivent la séance (oracle recalculé)', kvConforme(L2, O2), _det({ kv: L2 && L2.kv, o: [O2.seriesLbl, O2.series, O2.volumeLbl, O2.volume] }));
     const okAj = await ajouterExercice(X, '#log-add-ex', 'Tractions', TR);
     const L3 = await lire(X);
     t('B-FFD-⑥b ajouter un exercice (vrai sélecteur) : les deux vues restent, rien de neuf n\'est coloré tant qu\'aucune série n\'est faite',
@@ -317,6 +351,56 @@ async function ecran(t, b, PORT) {
       P.every(p => p.egal && p.vbA === FACE && p.nA === p.nF && p.vbD === DOS && p.nD === p.nB), _det(P));
     t('B-FFD-⑦z aucune erreur de page, aucun appel d\'IA (Milo compris)', X.errs.length === 0 && appelsIA(X).length === 0, X.errs.concat(appelsIA(X)).join(' | ').slice(0, 200));
     await X.cx.close();
+  }
+
+  /* ══ ⑩ · LE COMPTAGE (19/10/2026, décision D-092 de Michel) : TOUT CE QUI EST VALIDÉ COMPTE DANS LES TOTAUX, ÉCHAUFFEMENTS
+     COMPRIS ; LE TRAVAIL RESTE DIT À PART — ET « N / M », « Il reste N » ET LA SÉANCE ENREGISTRÉE GARDENT LE TRAVAIL (D-083 ①) ═ */
+  {
+    const kvDe = L => L ? _det(L.kv.slice(1).map(k => k.map(nb))) : null;
+    const X = await ouvrir({});
+    const L = await lire(X);
+    t('B-FFD-⑩a ⭐ la séance du banc (1 échauffement + 2 séries de travail validées) : « 3 séries · dont 2 de travail » et « 2 080 kg · dont 1 600 kg de travail » — comptés À LA MAIN (60×8 + 100×10 + 120×5)',
+      kvDe(L) === _det([['séries · dont 2 de travail', '3'], ['volume · dont 1 600 kg de travail', '2 080 kg']]), _det(L && L.kv));
+    const tete = () => X.pg.evaluate(() => (document.querySelector('#tb-seance .tbs-l2') || {}).textContent || '');
+    const h0 = nb(await tete());
+    // une VRAIE coche sur l'échauffement du développé couché (40 × 10) : le total bouge, le travail non
+    const okE = await cocher(X, 1, 0);
+    const L1 = await lire(X), O1 = await oracle(X), h1 = nb(await tete());
+    t('B-FFD-⑩b ⭐ valider un ÉCHAUFFEMENT (vraie coche) : le total passe à « 4 séries » et « 2 480 kg », le travail reste « dont 2 » et « dont 1 600 kg »',
+      okE && kvDe(L1) === _det([['séries · dont 2 de travail', '4'], ['volume · dont 1 600 kg de travail', '2 480 kg']]) && kvConforme(L1, O1), _det({ okE, kv: L1 && L1.kv }));
+    t('B-FFD-⑩c « N / M » de l\'en-tête compte toujours le TRAVAIL (D-083 ①) : « 2 / 5 séries » avant ET après l\'échauffement — le même nombre que « dont 2 de travail »',
+      /(^|\D)2 \/ 5 séries/.test(h0) && /(^|\D)2 \/ 5 séries/.test(h1), _det([h0, h1]));
+    t('B-FFD-⑩x aucune erreur de page, aucun appel d\'IA (Milo compris)', X.errs.length === 0 && appelsIA(X).length === 0, X.errs.concat(appelsIA(X)).join(' | ').slice(0, 200));
+    await X.cx.close();
+    // ⑩d-e un unilatéral, un échauffement, un échec, puis la VRAIE porte de fin
+    const Y = await ouvrir({ wkt: WKT_UNI() });
+    const uni = await Y.pg.evaluate(nom => estUnilateral(nom), CU);
+    const LY = await lire(Y), OY = await oracle(Y);
+    t('B-FFD-⑩d ⭐ un UNILATÉRAL (Curl Haltères : volume DOUBLÉ, comme la séance enregistrée), un échauffement et un échec : « 4 séries · dont 3 de travail » (l\'échec est du travail), « 1 024 kg · dont 832 kg de travail » — comptés à la main',
+      uni && kvDe(LY) === _det([['séries · dont 3 de travail', '4'], ['volume · dont 832 kg de travail', '1 024 kg']]) && kvConforme(LY, OY), _det({ uni, kv: LY && LY.kv }));
+    const okT = await clic(Y.pg, '#log-finish .lf-fin');
+    const q = await Y.pg.evaluate(() => ((document.getElementById('ov-confirm') || {}).textContent || '').replace(/\s+/g, ' '));
+    const okC = await clic(Y.pg, '#confirm-ok');
+    await Y.pg.waitForTimeout(1500);
+    const fin = await Y.pg.evaluate(() => ({ tuiles: [...document.querySelectorAll('#se-stats .se-stat')].map(d => [(d.querySelector('.se-stat-l') || {}).textContent,
+      (d.querySelector('.se-stat-v') || {}).textContent]), vol: ((S.sessions || [])[0] || {}).volume, ouverte: _seanceOuverte() }));
+    const tuileFin = l => (fin.tuiles.find(x => x[0] === l) || [])[1];
+    t('B-FFD-⑩e ⭐ « Il reste N » compte le TRAVAIL (« Il reste 1 série à faire ») ; « Terminer quand même » ENREGISTRE le volume de TRAVAIL comme avant (832 kg, échauffement exclu), et l\'écran de fin montre exactement le « dont … de travail » de la carte : Volume 832 kg · Séries 3',
+      okT && okC && /Il reste 1 série à faire/.test(q) && !fin.ouverte && fin.vol === 832 && nb(tuileFin('Volume')) === '832 kg' && tuileFin('Séries') === '3',
+      _det({ okT, okC, q: q.slice(0, 80), fin }));
+    t('B-FFD-⑩y aucune erreur de page, aucun appel d\'IA (Milo compris), fin de séance comprise', Y.errs.length === 0 && appelsIA(Y).length === 0, Y.errs.concat(appelsIA(Y)).join(' | ').slice(0, 200));
+    await Y.cx.close();
+    // ⑩f un échauffement seul ; ⑩g aucun échauffement : rien n'est ajouté
+    const Z = await ouvrir({ wkt: WKT_ECH_SEUL() });
+    const LZ = await lire(Z), OZ = await oracle(Z);
+    t('B-FFD-⑩f un échauffement SEUL validé : « 1 série · dont 0 de travail » et « 480 kg · dont 0 kg de travail » — le total le compte, le travail dit 0',
+      kvDe(LZ) === _det([['série · dont 0 de travail', '1'], ['volume · dont 0 kg de travail', '480 kg']]) && kvConforme(LZ, OZ), _det(LZ && LZ.kv));
+    await Z.cx.close();
+    const V = await ouvrir({ wkt: WKT_LONG() });
+    const LV = await lire(V);
+    t('B-FFD-⑩g sans échauffement, rien n\'est ajouté : « 24 séries » et « 37 440 kg », sans « dont … de travail » (le total EST le travail)',
+      kvDe(LV) === _det([['séries', '24'], ['volume', '37 440 kg']]), _det(LV && LV.kv));
+    await V.cx.close();
   }
 
   /* ══ ⑨ · CARDIO SEUL : AUCUNE FIGURINE, LA CARTE RESTE CELLE D'AVANT ═══════════════════════════════════════════════════════ */

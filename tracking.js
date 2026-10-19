@@ -3558,9 +3558,12 @@ function _contenuFinSeance(){
           cardio:!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration))};
 }
 /* 🏋️ UX SÉANCE (16/10/2026) — LE BAS DE LA SÉANCE : « Ta séance jusqu'ici » + « Terminer la séance ».
-   ⛔ Les chiffres ne changent pas de source : volume = séries faites hors échauffement (comme avant), et
-   « séries » = séries de TRAVAIL faites (`_bilanTravailWkt`, décision ① — le même compte que « N / M » en haut :
-   deux chiffres différents pour la même séance à deux endroits de l'écran feraient douter des deux).
+   🧮 LES CHIFFRES (D-092, Michel, 19/10/2026 — remplace le choix du 16/10, qui ne comptait ici que le travail) :
+   « séries » et « volume » sont des TOTAUX — toutes les séries validées, échauffements compris. Le TRAVAIL reste dit à
+   part, quand il diffère : « dont N de travail ». Ce N est le compte de « N / M » en haut (`_bilanTravailWkt`, D-083 ①) :
+   les deux nombres se recoupent à l'écran au lieu de se contredire. Les deux volumes viennent de LA règle de volume
+   (`_workVol`, R2), avec la convention unilatérale de la séance enregistrée (`uniConv:1`, comme `finishWorkout`) : le
+   « dont … kg de travail » est donc exactement le volume que l'écran de fin, Progrès et l'Accueil afficheront.
    ⛔ Le bouton passe par `terminerSeance()`, LA porte de fin (décision ④ du cadrage) : celle du haut et celle du
    bas posent donc la même question, avec les mêmes mots. */
 function renderLogFinish(){
@@ -3571,10 +3574,12 @@ function renderLogFinish(){
   let kv='', figF='', figD='', cardioTxt='';
   if(hasDone){
     const b=(typeof _bilanTravailWkt==='function')?_bilanTravailWkt():{faites:0};
-    const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
+    const nTot=S.wkt.exs.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s&&s.done).length,0);
+    const vs={exs:S.wkt.exs,uniConv:1}, volDe=avec=>Math.round((typeof _workVol==='function')?_workVol(vs,avec):0);
+    const vol=volDe(true), volTrav=volDe(false), kg=n=>n.toLocaleString('fr-FR');
     const min=S.wkt.startTs?Math.floor(((typeof _wktElapsedMs==='function')?_wktElapsedMs():0)/60000):null;
     const tuile=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
-    kv=`<div class="lf-kv">${min!==null?tuile(min+' min','durée'):''}${tuile(b.faites,'série'+(b.faites>1?'s':''))}${tuile(vol.toLocaleString('fr-FR')+' kg','volume')}</div>`;
+    kv=`<div class="lf-kv">${min!==null?tuile(min+' min','durée'):''}${tuile(nTot,'série'+(nTot>1?'s':'')+(nTot!==b.faites?' · dont '+b.faites+' de travail':''))}${tuile(kg(vol)+' kg','volume'+(vol!==volTrav?' · dont '+kg(volTrav)+' kg de travail':''))}</div>`;
     /* 🧍🧍 FACE · CHIFFRES · DOS (18/10/2026, décision D-091 de Michel) — les deux vues de la séance, ENSEMBLE et sans appui :
        la face à gauche, le dos à droite (le dessin de dos de la grande figurine « Muscles travaillés »), colorées par les MÊMES
        données (`_mscScores`, calculé une fois pour les deux). Ni bouton, ni bascule, ni alternance : deux images. La taille
