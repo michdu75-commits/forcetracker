@@ -15,6 +15,13 @@
  *
  * Lancer : node tests/parcours/runner.js
  */
+/* ⛔⛔ LE GARDE RÉSEAU, EN PREMIÈRE LIGNE — AVANT PLAYWRIGHT (D-031-SÉCURITÉ-01, 19/10/2026).
+   La contre-expertise du 19/10 a recompté 1 356 requêtes externes que cette passe laissait partir, dont des écritures
+   sans jeton vers la production : son innocuité dépendait du réseau de la machine qui la lançait. Le garde ferme par
+   défaut : refus de toute adresse non locale dans chaque contexte, proxy mort pour le navigateur, Node sans réseau
+   externe, enfants gardés, secrets retirés de l'environnement. Il se PROUVE au début (D031S-I) et se vérifie à la fin
+   (D031S-II) ; s'il n'est pas prouvé, la passe s'arrête avant le premier test. Détail : tests/_garde_reseau.js. */
+const GARDE=require('../_garde_reseau.js');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const http=require('http'), fs=require('fs'), path=require('path');
 const ROOT=path.resolve(__dirname,'../..');
@@ -69,7 +76,16 @@ const PORT=srv.address().port;
 const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
 /* ⛔ TOUT contexte reçoit l'outil, y compris ceux que les blocs créent eux-mêmes. */
 const _newContext=b.newContext.bind(b);
-b.newContext=async(o)=>{ const c=await _newContext(o); await c.addInitScript(OUTIL_TS); return c; };
+/* ⛔ et le refus réseau par défaut, posé ici EXPLICITEMENT (le garde le pose aussi seul : deux portes, une seule route). */
+b.newContext=async(o)=>{ const c=await _newContext(o); await GARDE.installerContexte(c); await c.addInitScript(OUTIL_TS); return c; };
+/* 🛡️ D031S — le garde éprouvé AVANT le premier test, sur des destinations fictives ; vérifié à la fermeture du navigateur.
+   Fermé par défaut : un garde non prouvé arrête la passe ici, sans total (passe invalide), avant toute requête de test. */
+const D031S=require('./garde_reseau.js');
+const _fermeNav=b.close.bind(b);
+b.close=async(...a)=>{ await D031S.fin(t); return _fermeNav(...a); };
+{ const ko0=ko; await D031S.debut(t, b, PORT, chromium);
+  if(ko>ko0){ console.log('\n⛔ GARDE RÉSEAU NON PROUVÉ — la passe s\'arrête ici, avant le premier test (fermé par défaut). Aucun total : passe invalide.');
+    await _fermeNav(); srv.close(); process.exit(97); } }
 const c=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
 const p=await c.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
 await p.addInitScript(seedScript({}));
