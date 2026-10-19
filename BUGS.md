@@ -4803,3 +4803,40 @@ porte « Terminer »), mutations M23 et M29.
 **À quoi on le reconnaît.** Un même chiffre (volume, séries, durée) calculé à deux endroits par deux expressions qui « disent la même chose ». La
 recopie oublie toujours la partie la moins visible de la règle — ici le cas unilatéral, ailleurs les échecs `X` (le commentaire de `_effortConnu`, `log.js`, décrit la même recopie qui « oublierait la moitié `X` »).
 *Un affichage n'a pas le droit de posséder une règle : il la lit.*
+
+## §86 — ⛔⛔ UN LIBELLÉ QUI DIT UNE CHOSE, UNE DONNÉE QUI EN DIT UNE AUTRE : « ÉCHEC » ÉCRIVAIT 0, « VOLUME » ET « KG TOTAL » DISAIENT LE TRAVAIL *(19/10/2026, recette iPhone de Michel sur le clone — chantier SÉANCE, branche locale `claude/seance-recette-precedent`, non publié ; défauts PRÉSENTS en production `ft-v1256`)*
+
+**Symptômes (recette du 19/10, mesurés).** ① Dans la barre de repos, le premier bouton s'appelait « échec » et enregistrait `rir: 0` — un RIR 0
+**réussi** et un vrai échec se notaient par le même geste. ② L'écran de fin affichait « 4200 kg » sous « Volume » juste après une carte qui annonçait
+« 5 600 kg · dont 4 200 kg de travail » (D-092) : le travail présenté comme le tout. ③ Le détail d'une séance (Progrès) disait « 4200 kg total » pour la
+même raison. ④ L'aide « ? » de l'onglet Séance écrivait encore « échec = 0 en réserve — c'est la même chose que le tag X », et l'échelle d'effort du Profil
+« 0 = échec » / « 10 = échec ».
+
+**Cause.** ft-v1154 (06/09) avait tranché, avec Michel, qu'un RIR 0 et un `X` sont **deux données** — et corrigé le code, le prompt de Milo et l'aide
+détaillée. Mais **le bouton** gardait son mot (`_reserveBoutonTxt(0)` → « échec ») et deux textes d'aide n'avaient pas suivi. Pour le volume, la tuile
+et le sous-titre lisaient `sess.volume` — le **travail**, sémantique historique voulue — sous un **nom de total**. *Le calcul était juste ; c'est le
+nom posé dessus qui mentait.*
+
+**Correction (D-093, décisions de Michel du 19/10).** « Échec » devient un bouton à part qui pose **le tag X** ; « 0 » écrit un RIR 0 marqué
+`rirV: 2` ; un ancien 0 (sans marqueur) se lit « 0 ou échec », **rien n'est réécrit**. L'écran de fin dit « Volume total · dont … kg de travail » et
+« Séries de travail · N validées » ; le détail « X kg total · dont Y kg de travail » (affichage seul) ; `sess.volume`, l'export et Milo inchangés. Les
+cinq textes d'aide sont alignés. Témoins B-SR-②③④ (`tests/parcours/seance_recette.js`), mutations M01-M18 (`tools/mut_seance_recette.py`).
+
+**À quoi on le reconnaît.** Un **mot** sur un bouton ou au-dessus d'un chiffre qui n'a pas suivi une décision prise sur la **donnée**. Quand une
+décision change le sens d'une valeur, chercher **tous** les endroits qui la NOMMENT — bouton, tuile, aide « ? », aide détaillée, Guide, pop-up —
+pas seulement ceux qui la calculent. *ft-v1154 a corrigé trois textes sur cinq : les deux oubliés sont ceux qu'on lit le plus.*
+
+## §87 — ⛔ UN REPLI AFFICHÉ COMME UN HISTORIQUE : « PRÉCÉDENT » RÉPÉTAIT LA DERNIÈRE SÉRIE AU-DELÀ DE LA DERNIÈRE FOIS *(19/10/2026, même chantier)*
+
+**Symptôme.** La dernière fois : 4 séries de travail ; aujourd'hui : 6. Les lignes 5 et 6 de « Précédent » affichaient la 4ᵉ série d'avant,
+répétée — deux séries qui n'ont jamais existé, présentées comme l'historique.
+
+**Cause.** Le repli de `_prevAligne` (15/08/2026) répète la dernière série quand il y en a moins qu'aujourd'hui : juste comme **suggestion** de charge
+(les chiffres gris dans les champs), faux comme **historique affiché**. D-086 (§82) avait séparé la NOTE du repli (`exact`), pas la VALEUR.
+
+**Correction (D-093 — « ne jamais inventer ou dupliquer des séries »).** La case n'affiche que la série **exacte** de la dernière fois (`pv`), « — »
+au-delà ; les suggestions grises gardent le repli (`p`). La feuille « 4 dernières séances » applique la même règle : « — » pour une série absente à un
+rang, jamais une série recopiée. Témoins B-SR-⑤a, ⑤c, ⑥d ; runner XIX ④ et B-D086-③a mis à jour (R30) ; mutations M19, M20, M28.
+
+**À quoi on le reconnaît.** Une valeur de **commodité** (repli, dernière connue, valeur par défaut) qui sort de son rôle — une suggestion qu'on
+laisse s'afficher à l'endroit où la personne lit des **faits**. Le repli peut rester ; il ne doit pas se présenter comme mesuré.

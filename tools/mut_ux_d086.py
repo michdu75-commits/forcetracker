@@ -29,7 +29,8 @@ MUT = [
     ('M3 la zone d\'appui du type retombe a 34 px',
      [(CS, '.set-row .stype{display:flex;align-items:center;justify-content:center;width:44px;height:44px;', '.set-row .stype{display:flex;align-items:center;justify-content:center;width:34px;height:34px;')], 'GARDE', 'B-D086-④a'),
     ('M4 l\'en-tete perd « Type » (colonnes decalees)',
-     [(LO, '<span>#</span><span>Type</span><span>Précédent</span>', '<span>#</span><span>Précédent</span>')], 'GARDE', 'B-D086-①a'),
+     # D-093 : la cellule « Précédent » de l'en-tête est `${_pH}` (« Précédent ▾ » quand il y a un historique) — même mutation.
+     [(LO, '<span>#</span><span>Type</span>${_pH}', '<span>#</span>${_pH}')], 'GARDE', 'B-D086-①a'),
     # ── ③ · Precedent
     ('M5 « Precedent » retombe en petit et en gris (13 px, --t3)',
      [(CS, 'font-family:var(--font-cond);font-size:15px;font-weight:600;line-height:1.2;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#C3C7D0;}',
@@ -37,7 +38,8 @@ MUT = [
     ('M6 [deguisee] la taille reduite des petits ecrans disparait (le nombre deborde a 360 px)',
      [(CS, "@media (max-width:374px){ #s-log .sprev{font-size:14px;letter-spacing:-.02em;} }", "")], 'GARDE', 'B-D086-③e'),
     ('M7 [deguisee] le marqueur ne peut plus passer a la ligne (il deborde de la case)',
-     [(LO, '<span class="sprev-n">${p.reps}×${p.kg}</span><wbr>${_prevTypeBadge(p)}<wbr>${_prevRirBadge(p)}', '<span class="sprev-n">${p.reps}×${p.kg}${_prevTypeBadge(p)}${_prevRirBadge(p)}</span>')], 'GARDE', 'B-D086-③e'),
+     # D-093 : la case affiche `pv` (la série EXACTE d'avant) — même mutation, nouvelle ancre.
+     [(LO, '<span class="sprev-n">${pv.reps}×${pv.kg}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}', '<span class="sprev-n">${pv.reps}×${pv.kg}${_prevTypeBadge(pv)}${_prevRirBadge(pv)}</span>')], 'GARDE', 'B-D086-③e'),
     ('M8 les marqueurs E / X retombent a 9 px',
      [(LO, 'return `<sup style="font-size:11px;font-weight:800;color:${col};margin-left:2px;line-height:0;">${t}</sup>`;', 'return `<sup style="font-size:9px;font-weight:800;color:${col};margin-left:2px;line-height:0;">${t}</sup>`;')], 'GARDE', 'B-D086-③c'),
     # ── ⑩ · le commentaire de la derniere fois

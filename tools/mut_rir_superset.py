@@ -39,8 +39,9 @@ MUT = [
     ('M4 [deguisee] les boutons sous « Marteau » ecrivent sur l\'Oiseau (bon nom, mauvaise serie)',
      [(LG, 'onclick="setRir(${c.ei},${c.si},${n})"', 'onclick="setRir(${c.ei?c.ei-1:c.ei},${c.si},${n})"')], 'GARDE', ('B-RSS-①b', 'B-RSS-②a')),
     ('M5 [deguisee] la reponse s\'ecrit toujours sur le 1er exercice de la seance',
-     [(LG, "const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];\n  if(!set||set.type==='X') return;",
-           "const set=S.wkt&&S.wkt.exs&&S.wkt.exs[0]&&S.wkt.exs[0].sets[si];\n  if(!set||set.type==='X') return;")], 'GARDE', ('B-RSS-②a',)),
+     # D-093 : la garde de `setRir` est `if(!set) return;` (« Échec » répond aussi sur une série X) — même mutation, nouvelle ancre.
+     [(LG, "const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];\n  if(!set) return;",
+           "const set=S.wkt&&S.wkt.exs&&S.wkt.exs[0]&&S.wkt.exs[0].sets[si];\n  if(!set) return;")], 'GARDE', ('B-RSS-②a',)),
     ('M15 [deguisee] les noms sont croises : la question de l\'Oiseau porte « Marteau » et inversement',
      [(LG, NOM, "String(S.wkt.exs[c.ei?0:1]&&S.wkt.exs[c.ei?0:1].name||'')")], 'GARDE', ('B-RSS-①b',)),
     # ── a l'ecran : les deux questions se voient et se touchent

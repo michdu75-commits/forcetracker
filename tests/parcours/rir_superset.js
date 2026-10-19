@@ -35,6 +35,8 @@ const IA = ['coach', 'summarizeCoach', 'seanceJson', 'importProgram', 'importHis
   'morphoAnalysis', 'bodyStudy', 'estimateFood', 'importMealPlan', 'generateMealPlan'];
 
 /* Lectures DANS la page — le panneau de repos tel qu'il est AFFICHÉ (un libellé `.rir-lbl` puis sa rangée `.rir-row`). */
+/* ⛔ R30 — D-093 (19/10/2026) : chaque question a SIX réponses (Échec | 0 | 1 | 2 | 3 | 4+), elle en avait cinq ; `n` compte les
+   boutons de réponse hors « ✕ ». La garantie des blocs B-RSS ne change pas : une question par mouvement, à son nom, à sa série. */
 const AIDE = `(()=>{
   window.__rssDock=()=>{ const bar=document.getElementById('rest-bar'), z=document.getElementById('rest-rir');
     const ouvert=!!(bar&&bar.classList.contains('show')&&getComputedStyle(bar).display!=='none');
@@ -121,7 +123,7 @@ async function ecran(t, b, PORT) {
     return ok; };
   // Une question est-elle À SON EXERCICE ? Une seule série visée, faite, et — si la question porte un nom — le nom de CET exercice.
   const attribuee = (D, wkt) => D.q.every(q => q.cibles.length === 1 && (() => { const [ei, si] = q.cibles[0].split(',').map(Number);
-    const ex = wkt.exs[ei], st = ex && ex.sets[si]; return !!st && st.done && (q.nom === '' || q.nom === ex.name) && q.n === 5; })());
+    const ex = wkt.exs[ei], st = ex && ex.sets[si]; return !!st && st.done && (q.nom === '' || q.nom === ex.name) && q.n === 6; })());
   const wktDe = X => X.pg.evaluate(() => JSON.parse(JSON.stringify(S.wkt)));
   const resume = D => _det({ ouvert: D.ouvert, q: D.q.map(q => [q.nom, q.cibles.join('|'), q.n, q.on.join('')]) });
 
@@ -136,11 +138,12 @@ async function ecran(t, b, PORT) {
     const b0 = await cocher(X, 1, 0);
     const D2 = await dock(X);
     t('B-RSS-①b ⭐⭐ ' + W + ' px : au repos du tour, le panneau porte DEUX questions, dans l\'ordre du superset — « Machine Oiseau — … » vise la série de l\'Oiseau, « Marteau — … » celle du Marteau, cinq réponses chacune',
-      b0 && D2.ouvert && D2.q.length === 2 && D2.q[0].nom === OI && _det(D2.q[0].cibles) === _det(['0,0']) && D2.q[0].n === 5 && D2.q[0].texte.indexOf(OI) === 0
-        && D2.q[1].nom === MA && _det(D2.q[1].cibles) === _det(['1,0']) && D2.q[1].n === 5 && D2.q[1].texte.indexOf(MA) === 0, resume(D2));
+      b0 && D2.ouvert && D2.q.length === 2 && D2.q[0].nom === OI && _det(D2.q[0].cibles) === _det(['0,0']) && D2.q[0].n === 6 && D2.q[0].texte.indexOf(OI) === 0
+        && D2.q[1].nom === MA && _det(D2.q[1].cibles) === _det(['1,0']) && D2.q[1].n === 6 && D2.q[1].texte.indexOf(MA) === 0, resume(D2));
     const B2 = await X.pg.evaluate(() => window.__rssBoutons());
-    t('B-RSS-①c ⭐ ' + W + ' px : les 10 boutons de réponse sont ENTIERS à l\'écran, au-dessus de la barre du bas, et rien ne les recouvre — les deux mouvements se répondent sans défiler',
-      B2.length === 10 && B2.every(x => x.ok), _det(B2.filter(x => !x.ok).slice(0, 4)) + ' / ' + B2.length);
+    /* ⛔ R30 — D-093 : 2 questions × 6 réponses = 12 boutons (il y en avait 10 : « échec » écrivait un 0). Même garantie géométrique. */
+    t('B-RSS-①c ⭐ ' + W + ' px : les 12 boutons de réponse sont ENTIERS à l\'écran, au-dessus de la barre du bas, et rien ne les recouvre — les deux mouvements se répondent sans défiler',
+      B2.length === 12 && B2.every(x => x.ok), _det(B2.filter(x => !x.ok).slice(0, 4)) + ' / ' + B2.length);
     const t0 = D2.temps;
     const ra = await repondre(X, 0, 0, 1), rb = await repondre(X, 1, 0, 2);
     const R = await rir(X), D3 = await dock(X);
@@ -164,7 +167,7 @@ async function ecran(t, b, PORT) {
     await passer(X);
     const c0 = await cocher(X, 2, 0); const D8 = await dock(X);
     t('B-RSS-②e ' + W + ' px : un exercice HORS superset garde la question d\'avant — une seule, SANS nom, sur sa série',
-      c0 && D8.ouvert && D8.q.length === 1 && D8.q[0].nom === '' && _det(D8.q[0].cibles) === _det(['2,0']) && D8.q[0].texte.indexOf(CP) < 0 && D8.q[0].n === 5, resume(D8));
+      c0 && D8.ouvert && D8.q.length === 1 && D8.q[0].nom === '' && _det(D8.q[0].cibles) === _det(['2,0']) && D8.q[0].texte.indexOf(CP) < 0 && D8.q[0].n === 6, resume(D8));
     t('B-RSS-②f ' + W + ' px : aucune erreur de page, aucun appel d\'IA (Milo compris)', X.errs.length === 0 && appelsIA(X).length === 0, X.errs.concat(appelsIA(X)).join(' | ').slice(0, 200));
     await X.cx.close();
   }

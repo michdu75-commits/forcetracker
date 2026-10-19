@@ -106,8 +106,10 @@ async function ecran(t, b, PORT) {
         nav: [...document.querySelectorAll('.nav > .nb, .nav > button')].filter(e => getComputedStyle(e).display !== 'none').length };
     });
     const r = L.rows;
+    /* ⛔ R30 — D-093 (19/10/2026) : l'en-tête « Précédent » porte « ▾ » quand l'exercice a une dernière fois (il ouvre « 4 dernières
+       séances ») ; la colonne « Type » reste à sa place, entre « # » et « Précédent ». */
     t('B-D086-①a ⭐ ' + W + ' px : une colonne « Type » a sa propre en-tête, entre « # » et « Précédent » ; 1RM, Reps, KG et ✓ restent séparés',
-      _det(L.hdr) === _det(['#', 'Type', 'Précédent', 'Reps', 'KG', '1RM', '✓']), _det(L.hdr));
+      _det(L.hdr) === _det(['#', 'Type', 'Précédent ▾', 'Reps', 'KG', '1RM', '✓']), _det(L.hdr));
     t('B-D086-①b ⭐ ' + W + ' px : CHAQUE série montre son type sans ouvrir de menu — pastilles É, N, N, X, N (même les séries normales)',
       _det(r.map(x => x.pill)) === _det(['É', 'N', 'N', 'X', 'N']) && r.every((x, i) => x.id === 'tbtn-0-' + i), _det(r.map(x => [x.pill, x.id])));
     t('B-D086-④a ⭐ ' + W + ' px : pastille de type et ✓ — zones d\'appui ≥ 44 × 44', r.every(x => x.ty && x.ty.w >= 44 && x.ty.h >= 44 && x.chk && x.chk.w >= 44 && x.chk.h >= 44),
@@ -115,8 +117,10 @@ async function ecran(t, b, PORT) {
     t('B-D086-④b ' + W + ' px : les 7 en-têtes sont centrées sur leurs colonnes (écart ≤ 3 px, ligne de série normale)',
       L.hdrCx.length === 7 && r[2].cells.length === 7 && L.hdrCx.every((c, i) => Math.abs(c - r[2].cells[i]) <= 3), _det({ h: L.hdrCx.map(Math.round), c: r[2].cells.map(Math.round) }));
     t('B-D086-④c ⭐ ' + W + ' px : aucune ligne ne déborde, aucune défilement horizontal de la page', r.every(x => x.rowOver <= 0) && L.docW <= L.vw, _det({ over: r.map(x => x.rowOver), docW: L.docW, vw: L.vw }));
-    t('B-D086-③a ⭐ ' + W + ' px : « Précédent » montre les MÊMES valeurs qu\'avant D-086 (par rôle, la 5ᵉ ligne par repli)',
-      _det(r.map(x => x.val)) === _det(['10×60É', '8×92.5', '8×92.5', '6×90X', '6×90X']), _det(r.map(x => x.val)));
+    /* ⛔ R30 — D-093 (recette iPhone du 19/10) : la 5ᵉ ligne n'affiche plus la 4ᵉ série d'avant RÉPÉTÉE (repli) — « — ». Michel :
+       une série qui n'a pas existé ne s'invente pas. Le repli ne sert plus qu'aux suggestions grises des champs (B-SR-⑤c). */
+    t('B-D086-③a ⭐ ' + W + ' px : « Précédent » montre les séries de la dernière fois (par rôle) ; la 5ᵉ ligne, sans série d\'avant, « — »',
+      _det(r.map(x => x.val)) === _det(['10×60É', '8×92.5', '8×92.5', '6×90X', '—']), _det(r.map(x => x.val)));
     t('B-D086-③b ⭐ ' + W + ' px : « Précédent » plus grand (≥ 14 px, 15 px dès 375) et contraste nettement relevé (≥ 7:1 sur la carte)',
       r.every(x => x.fs >= (W < 375 ? 14 : 15)) && contraste(r[2].col, L.fond) >= 7, _det({ fs: r[2].fs, col: r[2].col, fond: L.fond, c: contraste(r[2].col, L.fond).toFixed(2) }));
     t('B-D086-③c ' + W + ' px : marqueurs É / X plus lisibles (11 px), dans leur couleur (bleu / rouge)',

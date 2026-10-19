@@ -212,6 +212,13 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 #rest-bar .rir-lbl{font-size:13.5px;font-weight:700;color:var(--t1);text-align:left;margin-top:0;}
 #rest-bar .rir-row{justify-content:stretch;flex-wrap:nowrap;margin-top:9px;}
 #rest-bar .rir-b{flex:1;min-width:0;height:42px;}
+/* 💪 D-093 — SIX RÉPONSES (Échec | 0 | 1 | 2 | 3 | 4+) + « ✕ » sur UNE ligne, aucune sous 36 px à 360 px (mesuré). « Échec » est
+   un mot : un peu plus de place et une police resserrée ; « ✕ » garde une largeur fixe. L'ancien 0 se signale en petit. */
+#rest-bar .rir-row{gap:5px;}
+#rest-bar .rir-b{padding:0 2px;}
+#rest-bar .rir-b.rir-ech{flex:1.4;font-size:12.5px;letter-spacing:-.01em;}
+#rest-bar .rir-b.rir-x{flex:0 0 36px;}
+#rest-bar .rir-anc{font-size:11.5px;font-weight:600;color:var(--t3);}
 /* Les préréglages 1:00 / 1:30 / 2:00 vivent dans « Régler » (décision ③). */
 .re-presets{display:flex;gap:8px;margin-bottom:16px;}
 .re-presets .rbtn{flex:1;font-size:15px;font-weight:800;padding:11px 0;border-radius:12px;}
@@ -775,6 +782,44 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 #s-log .sprev .prev-rir{font-size:11px;color:var(--t2);white-space:nowrap;}
 #s-log .sprev-pt{position:absolute;top:-2px;right:0;width:8px;height:8px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 2px var(--bg2);}
 /* La fenêtre « Note — série N » montre le commentaire de la dernière fois, avec son origine (D-086). */
+/* 📋 D-093 — « Précédent ▾ » : la porte vers « 4 dernières séances », dans l'en-tête des séries. Une pastille visible (on voit
+   qu'elle se touche), centrée dans sa colonne ; la case « Précédent » de chaque série garde la note. */
+#s-log .sets-hdr .sprev-h{display:flex;align-items:center;justify-content:center;width:100%;height:28px;margin:0;padding:0 4px;border:none;border-radius:14px;
+  background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
+  color:var(--sea);white-space:nowrap;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+/* 📋 D-093 — la feuille « 4 dernières séances » : même famille que « Statistiques » (feuille du bas). La grille tient dans la
+   largeur (360 → 430 px) : colonnes égales, le texte passe à la ligne plutôt qu'un défilement horizontal. Lecture seule. */
+#ov-prev4 .p4-sheet{width:100%;max-width:430px;max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border-radius:16px 16px 0 0;
+  padding:14px 12px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);box-sizing:border-box;}
+.p4-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.p4-tt{flex:1;min-width:0;}
+.p4-titre{font-weight:800;font-size:15px;color:var(--t1);}
+.p4-ex{margin-top:2px;font-size:12.5px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p4-fermer{flex:none;width:36px;height:36px;border-radius:50%;border:none;background:var(--bg3);font-size:15px;color:var(--t2);cursor:pointer;touch-action:manipulation;}
+.p4-grille{width:100%;table-layout:fixed;border-collapse:collapse;font-family:var(--font-cond);font-variant-numeric:tabular-nums;}
+.p4-grille th,.p4-grille td{padding:6px 2px;border-top:1px solid var(--sep);text-align:center;vertical-align:top;word-break:break-word;}
+.p4-grille thead th{border-top:none;padding-bottom:4px;}
+.p4-k{width:20px;font-size:11px;font-weight:700;color:var(--t3);}
+.p4-h{font-size:12.5px;font-weight:800;color:var(--t1);line-height:1.2;}
+.p4-h .p4-d{display:block;}
+.p4-h .p4-rg{display:block;font-size:10.5px;font-weight:600;color:var(--t2);}
+.p4-c{font-size:14px;font-weight:600;line-height:1.25;color:var(--t1);}
+.p4-c[data-vide]{color:var(--t3);font-weight:400;}
+.p4-s{display:block;}
+.p4-t{display:inline-block;margin-top:2px;padding:0 5px;border-radius:5px;font-size:11px;font-weight:800;line-height:16px;}
+.p4-t-x{color:#fff;background:var(--red);}
+.p4-t-o{color:var(--t2);background:var(--bg3);}
+.p4-rir{display:block;margin-top:2px;font-size:11px;font-weight:600;color:var(--t2);}
+.p4-n{display:block;font-size:11px;line-height:1.2;}
+.p4-ech th,.p4-ech-c{font-size:12px;font-weight:500;color:var(--t2);}
+.p4-ech-c[data-vide]{color:var(--t3);}
+.p4-notes{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.p4-note{font-size:12.5px;line-height:1.4;color:var(--t2);word-break:break-word;}
+.p4-note b{color:var(--t1);}
+.p4-leg{margin-top:10px;font-size:11.5px;line-height:1.4;color:var(--t3);}
+.p4-vide{padding:16px 4px;font-size:13px;line-height:1.45;color:var(--t2);text-align:center;}
+/* 💪 D-093 — la réserve d'une série dans le détail d'une séance (Progrès) : une ligne sous la série, en lecture seule. */
+.sd-rir{margin:0 0 6px 20px;font-size:11.5px;font-weight:600;color:var(--t2);}
 .sn-prev{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);}
 .sn-prev-t{font-size:12px;font-weight:800;color:var(--sea);}
 .sn-prev-o{margin-top:2px;font-size:11.5px;color:var(--t2);}

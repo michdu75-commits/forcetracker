@@ -1277,7 +1277,13 @@ function openSessDetail(id){
     const e=_estimCalTempsReel(sess);
     if(e&&sess.calories) estim=` · 🔬 ~${e.kcal} kcal en comptant le temps réel`;
   }
-  document.getElementById('sd-sub').innerHTML=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}${estim}`;
+  /* 🧮 D-093 (décision de Michel, 19/10/2026 — affichage seul) — « 4200 kg total » désignait le TRAVAIL : les paliers
+     d'échauffement n'y étaient pas. Le total les compte maintenant, et le travail est dit à part quand il diffère.
+     ⛔ Rien n'est recalculé ni réécrit : le travail affiché est `sess.volume` tel qu'enregistré (la carte de l'historique
+     le montre aussi) ; seuls les échauffements s'y ajoutent, par LA règle de volume (`_workVol`, R2). */
+  const _vTrav=Math.round(sess.volume||0), _vEch=(typeof _workVol==='function')?Math.max(0,Math.round(_workVol(sess,true)-_workVol(sess))):0;
+  const _kgfr=n=>n.toLocaleString('fr-FR');
+  document.getElementById('sd-sub').innerHTML=`${_kgfr(_vTrav+_vEch)} kg total${_vEch>0?' · dont '+_kgfr(_vTrav)+' kg de travail':''}${duree}${cals}${eff}${estim}`;
 
   _renderHealthInbox(sess);
   _updateSdMuscles(sess);
@@ -1465,9 +1471,15 @@ function _renderSessDetailContent(){
       </div>
       ${ex.note?`<div style="font-size:12px;color:var(--gold);font-style:italic;line-height:1.4;margin-bottom:8px;">💬 ${ex.note}</div>`:''}
       ${maxRM>0?`<div style="font-size:13px;color:var(--t1);font-weight:700;margin-bottom:8px;">🎯 Meilleur 1RM potentiel : <span style="font-weight:800">${fmt(maxRM)} kg</span></div>`:''}
-      ${(()=>{ let _n=0; return ex.sets.map((s,si)=>{ if(!s.done) return ''; _n++; return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <span style="font-size:11px;color:var(--t3);min-width:14px">${_n}</span>
-        <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
+      ${(()=>{ let _n=0; return ex.sets.map((s,si)=>{ if(!s.done) return ''; _n++;
+        /* 💪 D-093 — LE RIR SE LIT ENFIN DANS L'HISTORIQUE DÉTAILLÉ. Il partait dans l'export PDF et chez Milo, mais ce
+           détail ne l'affichait nulle part (recette du 19/10). Une ligne sous la série, seulement quand il existe :
+           « RIR 2 », « 0 ou échec » pour un ancien 0 — rien pour un échauffement, un `X` (son type le dit) ou une série
+           non notée (`_reserveHistoTxt`, le même propriétaire que « 4 dernières séances »). Lecture seule. */
+        const _rt=(typeof _reserveHistoTxt==='function')?_reserveHistoTxt(s):'';
+        return `<div class="sd-set"><div style="display:flex;gap:6px;align-items:center;margin-bottom:${_rt?'2':'6'}px">
+        <span class="sd-num" style="font-size:11px;color:var(--t3);min-width:14px">${_n}</span>
+        <span class="sd-type" style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
         <input type="number" min="1" inputmode="numeric" value="${_champNum(s.reps)}"
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',this.value)">
@@ -1478,7 +1490,7 @@ function _renderSessDetailContent(){
         <span style="color:var(--t2);font-size:12px">kg</span>
         ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
-      </div>`; }).join(''); })()}
+      </div>${_rt?`<div class="sd-rir"${_rt.indexOf('ou échec')>=0?' title="Noté avant la mise à jour du 19/10 : l\'ancien bouton « échec » enregistrait un 0"':''}>${_rt}</div>`:''}</div>`; }).join(''); })()}
       ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série — ajoutes-en une</div>':''}
       <button class="btn btn-bg2" style="width:100%;margin-top:4px;padding:6px;font-size:12px;color:var(--t2)" onclick="addSessSet(${ei})">+ Ajouter une série</button>
     </div>`;
@@ -3045,8 +3057,9 @@ const DISC_DESCS={
    qui connaissent le RPE »*. Personne n'est interrogé là-dessus à l'inscription ; qui ne connaît
    pas garde le RIR sans rien faire. */
 const ECH_DESCS={
-  rir:'<b>RIR — répétitions en réserve.</b> Après une série, l\'app demande combien de répétitions tu aurais encore pu faire. <b>0 = échec.</b> C\'est l\'échelle par défaut, et la plus directe à répondre.',
-  rpe:'<b>RPE — effort perçu (échelle de 6 à 10).</b> <b>10 = échec</b>, 9 = il t\'en restait 1, 8 = il t\'en restait 2… C\'est la <b>même mesure que le RIR</b>, dite dans l\'autre sens : ton historique se relit tout seul, rien n\'est perdu. ⚠️ Sans demi-points (pas de 8,5) : l\'app ne les mesure pas, et les afficher serait une fausse précision.'
+  /* D-093 — « 0 = échec » et « 10 = échec » contredisaient ft-v1154 (RIR 0 = série RÉUSSIE à la limite ; l'échec = le tag X). */
+  rir:'<b>RIR — répétitions en réserve.</b> Après une série, l\'app demande combien de répétitions tu aurais encore pu faire. <b>0</b> = ta dernière répétition est passée, une de plus n\'aurait pas tenu ; <b>Échec</b> = une répétition tentée n\'est pas passée (la série passe en <b>X</b>). C\'est l\'échelle par défaut, et la plus directe à répondre.',
+  rpe:'<b>RPE — effort perçu (échelle de 6 à 10).</b> <b>10</b> = ta dernière répétition est passée, une de plus n\'aurait pas tenu ; 9 = il t\'en restait 1, 8 = il t\'en restait 2… <b>Échec</b> = une répétition tentée n\'est pas passée (la série passe en <b>X</b>). C\'est la <b>même mesure que le RIR</b>, dite dans l\'autre sens : ton historique se relit tout seul, rien n\'est perdu. ⚠️ Sans demi-points (pas de 8,5) : l\'app ne les mesure pas, et les afficher serait une fausse précision.'
 };
 function setEchelleReserve(e){
   S.echelleReserve=(e==='rpe')?'rpe':'rir';

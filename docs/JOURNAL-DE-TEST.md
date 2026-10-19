@@ -3618,3 +3618,17 @@ l'app ; et depuis D-089 on peut importer EN PLEINE séance, donc la « dernière
 séries. ❓ **Doute** : Milo s'appuie-t-il sur une charge importée (non vérifiée par la personne) comme sur un fait, et le dit-il ? Vérifiable par
 du code : l'absence de marqueur oui ; la lecture par Milo ⚠️ seulement avec un appel réel (banc R34). État : **à trier** — à trancher par Michel
 (marquer la provenance = changement de contexte, banc avant / après).
+
+### 🟡 UN ANCIEN « ÉCHEC » ARRIVE CHEZ MILO COMME UN « RIR0 » RÉUSSI (19/10/2026 — chantier Séance, décision D-093)
+Mesuré (code, 0 appel) : avant D-093, le bouton « échec » de la barre de repos enregistrait `rir: 0`. Ces anciennes réponses restent telles quelles
+(décision de Michel : rien n'est réécrit) et l'écran les dit « 0 ou échec » ; mais le contexte de Milo n'a pas changé (consigne du brief : « aucun
+changement silencieux des données transmises à Milo ») — il reçoit « RIR0 », et son prompt dit « RIR0 = la dernière répétition est PASSÉE ». Une série
+où la personne a vraiment échoué (et tapé « échec ») est donc lue comme une série réussie à la limite. ❓ **Doute** : Milo conclut-il « tu tiens ta
+charge » sur une série qui a en fait échoué ? Vérifiable par du code : l'ambiguïté du stock oui (un 0 sans `rirV`) ; la lecture par Milo ⚠️ seulement
+avec un appel réel (banc R34). État : **à trier** — à trancher par Michel (dire « 0 ou échec » à Milo = changement de contexte, banc avant / après).
+
+### 🟡 « STATISTIQUES » COMPARE LA CHARGE MAX SEULE, ÉCHAUFFEMENTS COMPRIS, AVEC UNE FLÈCHE (19/10/2026 — chantier Séance, §9 du brief, rien corrigé)
+Mesuré (code) : la courbe « Poids max · 5 dernières séances » (`_getExHistory`) prend la charge maximale de toutes les séries faites — échauffements et
+`X` compris —, ignore les répétitions, et affiche « 📈/📉 ±N kg (±N %) » entre la 1ʳᵉ et la dernière séance : 5 × 100 puis 10 × 80 s'y lit
+« 📉 −20 kg (−20 %) », la fausse régression que le brief interdit dans la comparaison. Deux séances du même jour y sont deux points portant la même
+date (« 16/10 », sans rang). Hors périmètre : signalé, pas modifié (le brief demande de documenter les limites, pas de refondre). État : **à trier**.

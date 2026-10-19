@@ -4663,8 +4663,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       Z.inverse[0]==='100×5'||Z.inverse[0]==='5×100', 'reçu : '+Z.inverse.join(' · '));
     t('⚠️ non-régression : sans échauffement des deux côtés, rien ne change',
       Z.simple[0]==='10×60' && Z.simple[1]==='10×65', 'reçu : '+Z.simple.join(' · '));
-    t('⚠️ repli : une série de travail en plus répète la dernière série de TRAVAIL (jamais un palier)',
-      Z.repli.every(x=>x==='5×120'), 'reçu : '+Z.repli.join(' · '));
+    /* ⛔ R30 — D-093 (brief « Séance » du 19/10/2026, recette iPhone de Michel : « ne jamais inventer ou dupliquer des séries »).
+       Ce témoin figeait le REPLI affiché (15/08/2026 : une série de travail en plus répétait la dernière). La colonne n'affiche plus
+       que la série EXACTE de la dernière fois : au-delà, « — ». Le repli reste pour la SUGGESTION grise des champs (B-SR-⑤c), et la
+       1ʳᵉ série garde sa série d'avant, jamais un palier : c'est la garantie d'origine du bloc. */
+    t('⚠️ une série de travail en plus n\'affiche plus la dernière série d\'avant répétée : « — » (la 1ʳᵉ garde 5×120, jamais un palier)',
+      Z.repli[0]==='5×120' && Z.repli.slice(1).every(x=>x==='—'), 'reçu : '+Z.repli.join(' · '));
   }
 }
 
@@ -15800,8 +15804,10 @@ console.log('\n-- CXLII. Le RIR : il t\'en restait combien ? (ft-v1038) --');
     t('⛔ une valeur hors bornes est refusée plutôt que tronquée',
       G.f.horsBorne===null, 'rir:9 → '+G.f.horsBorne);
     /* ⭐⭐ LE VRAI CHEMIN — c'est lui qui a attrapé l'erreur d'ordre (startRest vide la cible). */
+    /* ⛔ R30 — D-093 (décision de Michel, 19/10/2026) : SIX réponses (Échec | 0 | 1 | 2 | 3 | 4+), il y en avait cinq (« échec »
+       écrivait un 0). La garantie ne change pas : la question est posée, sur le vrai chemin. */
     t('⭐⭐ valider une série de TRAVAIL pose la question dans la barre de repos',
-      /restait combien/i.test(G.question) && G.nbBoutons===5, JSON.stringify({q:G.question,n:G.nbBoutons}));
+      /restait combien/i.test(G.question) && G.nbBoutons===6, JSON.stringify({q:G.question,n:G.nbBoutons}));
     t('⭐ un tap enregistre la réserve et se voit',
       G.apresTap===2 && G.marque===true, JSON.stringify({rir:G.apresTap,marque:G.marque}));
     t('⛔ on peut RETIRER sa réponse (un tap par erreur n\'est pas définitif)',
@@ -16756,8 +16762,9 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
       /restait combien/.test(P.rir.q) && /quel RPE/.test(P.rpe.q)
       && P.rirBadge==='2r' && P.rpeBadge==='@8', JSON.stringify([P.rir.q,P.rpe.q,P.rirBadge,P.rpeBadge]));
     /* ⛔ L'ordre s'inverse exprès. */
+    /* ⛔ R30 — D-093 : en RIR l'échelle part de « Échec » (le tag X) puis 0 — avant, « échec » écrivait un 0. */
     t('⛔ l\'ordre des boutons s\'inverse en RPE (le barème se lit de 6 vers 10)',
-      P.rir.boutons.slice(0,5).join(',')==='échec,1,2,3,4+'
+      P.rir.boutons.slice(0,5).join(',')==='Échec,0,1,2,3'
       && P.rpe.boutons.slice(0,5).join(',')==='≤6,7,8,9,10', JSON.stringify([P.rir.boutons,P.rpe.boutons]));
     /* ⛔ Aucun demi-point : on n'affiche pas une précision qu'on ne mesure pas. */
     t('⛔ aucun demi-point (8,5 · 9,5) : l\'app ne les mesure pas, les afficher serait une fausse précision',
@@ -34079,13 +34086,17 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('B-CCCIV ① le propriétaire de la conversion RPE existe', R.owner===true);
   t('B-CCCIV ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
   t('B-CCCIV ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
-  t('B-CCCIV ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
+  /* ⛔ R30 — D-093 (19/10/2026) : le cran 0 se lit « 0 » ; l'échec a son propre bouton (le tag X). Ce témoin figeait
+     « échec » pour le cran 0 : c'est la règle qu'il protégeait qui a été corrigée, sur décision de Michel. */
+  t('B-CCCIV ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR (0 se lit « 0 » depuis D-093)', R.rirBouton==='0|1|2|3|4+', 'reçu : '+R.rirBouton);
   t('B-CCCIV ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
   t('B-CCCIV ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
   t('B-CCCIV ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
   t('B-CCCIV ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
-    R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir">·0r</span>|<span class="prev-rir">·4+r</span>|'
-    && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir">·@10</span>|<span class="prev-rir">·@≤6</span>|',
+    /* ⛔ R30 — D-093 : un 0 SANS marqueur `rirV` (réponse de l'ancien bouton « échec ») se lit « 0/X » (« 0 ou échec ») —
+       décision de Michel : l'app ne devine pas lequel des deux c'était. */
+    R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir" title="0 ou échec — noté avant la mise à jour du 19/10">·0/X</span>|<span class="prev-rir">·4+r</span>|'
+    && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir" title="0 ou échec — noté avant la mise à jour du 19/10">·@10/X</span>|<span class="prev-rir">·@≤6</span>|',
     'RIR '+R.prevRir+' · RPE '+R.prevRpe);
   t('B-CCCIV ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
     R.horsEchelleRpe==='|||' && R.horsEchelleRir==='|', 'RPE ['+R.horsEchelleRpe+'] · RIR ['+R.horsEchelleRir+']');
@@ -39781,6 +39792,13 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      inversé et rechargement : aucune réponse au mauvais mouvement. Vert sur la prod ft-v1256 ET sur D-088 (même moteur).
      Blocs B-RSS-*. Banc : tools/banc_rir_superset.js · contrôle négatif : tools/mut_rir_superset.py. */
   await require('./rir_superset.js').ecran(t, b, PORT);
+  /* 🏋️ SÉANCE — CORRECTIONS DE LA RECETTE IPHONE DU 19/10/2026 + « PRÉCÉDENT » SUR 4 SÉANCES (décisions de Michel du 19/10, D-093) :
+     le compteur de travail (protégé), l'écran de fin (volume TOTAL, travail à part ; la séance enregistrée garde le travail), le
+     sélecteur Échec | 0 | 1 | 2 | 3 | 4+ (« Échec » = le tag X ; un ancien 0 se lit « 0 ou échec »), le RIR dans le détail d'une
+     séance (export et Milo inchangés), « Précédent » sans série dupliquée, la feuille « 4 dernières séances » (séries de travail par
+     rang, échauffements à part, deux séances du même jour distinctes, aucun verdict, rien d'écrit) ; dropset, superset, exercice
+     remplacé ; 360 → 430 px. Blocs B-SR-*. Banc : tools/banc_seance_recette.js · contrôle négatif : tools/mut_seance_recette.py. */
+  await require('./seance_recette.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

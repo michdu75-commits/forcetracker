@@ -384,9 +384,13 @@ async function ecran(t, b, PORT) {
     await Y.pg.waitForTimeout(1500);
     const fin = await Y.pg.evaluate(() => ({ tuiles: [...document.querySelectorAll('#se-stats .se-stat')].map(d => [(d.querySelector('.se-stat-l') || {}).textContent,
       (d.querySelector('.se-stat-v') || {}).textContent]), vol: ((S.sessions || [])[0] || {}).volume, ouverte: _seanceOuverte() }));
-    const tuileFin = l => (fin.tuiles.find(x => x[0] === l) || [])[1];
-    t('B-FFD-⑩e ⭐ « Il reste N » compte le TRAVAIL (« Il reste 1 série à faire ») ; « Terminer quand même » ENREGISTRE le volume de TRAVAIL comme avant (832 kg, échauffement exclu), et l\'écran de fin montre exactement le « dont … de travail » de la carte : Volume 832 kg · Séries 3',
-      okT && okC && /Il reste 1 série à faire/.test(q) && !fin.ouverte && fin.vol === 832 && nb(tuileFin('Volume')) === '832 kg' && tuileFin('Séries') === '3',
+    const tuileFin = re => (fin.tuiles.find(x => re.test(String(x[0] || ''))) || []);
+    /* ⛔ R30 — D-093 (recette iPhone du 19/10) : la tuile disait « Volume 832 kg », le travail présenté comme le tout. Elle dit
+       maintenant le TOTAL et le travail à part, comme la carte : « 1 024 kg — Volume total · dont 832 kg de travail » ; « Séries de
+       travail · 4 validées » = 3. La garantie reste : la séance ENREGISTRE le travail (832), et l'écran de fin redit la carte. */
+    t('B-FFD-⑩e ⭐ « Il reste N » compte le TRAVAIL (« Il reste 1 série à faire ») ; « Terminer quand même » ENREGISTRE le volume de TRAVAIL comme avant (832 kg, échauffement exclu), et l\'écran de fin redit la carte : 1 024 kg · dont 832 kg de travail · Séries de travail 3 (4 validées)',
+      okT && okC && /Il reste 1 série à faire/.test(q) && !fin.ouverte && fin.vol === 832 && nb(tuileFin(/^Volume total/)[1]) === '1 024 kg' && /dont 832 kg de travail/.test(nb(tuileFin(/^Volume total/)[0]))
+        && tuileFin(/^Séries de travail/)[1] === '3' && /4 validées/.test(String(tuileFin(/^Séries de travail/)[0] || '')),
       _det({ okT, okC, q: q.slice(0, 80), fin }));
     t('B-FFD-⑩y aucune erreur de page, aucun appel d\'IA (Milo compris), fin de séance comprise', Y.errs.length === 0 && appelsIA(Y).length === 0, Y.errs.concat(appelsIA(Y)).join(' | ').slice(0, 200));
     await Y.cx.close();

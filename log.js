@@ -1016,7 +1016,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const ex=S.wkt.exs[ei];
   const exCount=S.wkt.exs.length;
   const prev=getPrev(ex.name);
-  const prevAl=_prevAligne(prev, ex.sets);   // rapprochement PAR RÔLE (voir _prevAligne)
+  /* rapprochement PAR RÔLE (voir _prevAligneDetail). ⛔ D-093 : la colonne n'affiche que la série EXACTE de la dernière
+     fois (`exact`) — au-delà, « — ». Le repli (la dernière série répétée) ne sert plus qu'aux suggestions grises des champs. */
+  const prevDet=_prevAligneDetail(prev, ex.sets), prevAl=prevDet.map(d=>d.p);
   const doneSets=ex.sets.filter(s=>s.done);
   // ⚠️ Même règle que le tonnage de la séance : un unilatéral compte double (la série se
   // refait de l'autre côté). Si ce chiffre-ci ne doublait pas, l'exercice et la séance
@@ -1098,7 +1100,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const _notesPrev=_notesPrecedentes(ex);            // D-086 : commentaire de la dernière fois, SEULEMENT sur sa série exacte
   const _noteExPrev=_noteExPrecedente(ex);           // D-087 : la note générale de l'exercice la dernière fois (ou null)
   const _rowsHtml=ex.sets.map((set,si)=>{
-    const p=prevAl[si];
+    const p=prevAl[si], pv=(prevDet[si]&&prevDet[si].exact)?p:null;   // pv : ce qu'on AFFICHE ; p : la suggestion grise
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     const _tt=set.type||'N', _tl=SET_TYPE_LABELS[set.type]||'Normal', _pn=_notesPrev[si];
     return`<div id="sr-wrap-${ei}-${si}">`
@@ -1115,7 +1117,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       /* D-086 — un commentaire de la dernière fois n'est plus écrit en petit dans la case (il s'y tassait sur 3-4
          lignes, et le REPLI de `_prevAligne` le recopiait sur les lignes en trop) : un point bleu le signale, l'appui
          sur « Précédent » l'affiche avec sa date et sa série (`openSetNote`). Rien n'est enregistré de plus. */
-      +`<div class="sprev${_pn?' a-note':''}" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="${_pn?'Commentaire de la dernière fois — touche pour le lire':'Ajouter une note'}">${p?`<div class="sprev-v"><span class="sprev-n">${p.reps}×${p.kg}</span><wbr>${_prevTypeBadge(p)}<wbr>${_prevRirBadge(p)}</div>`:'<div class="sprev-v">—</div>'}${_setPrevNote(set,p)}${_pn?'<span class="sprev-pt" aria-hidden="true"></span>':''}</div>`
+      +`<div class="sprev${_pn?' a-note':''}" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="${_pn?'Commentaire de la dernière fois — touche pour le lire':'Ajouter une note'}">${pv?`<div class="sprev-v"><span class="sprev-n">${pv.reps}×${pv.kg}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}</div>`:'<div class="sprev-v">—</div>'}${_setPrevNote(set,p)}${_pn?'<span class="sprev-pt" aria-hidden="true"></span>':''}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<div class="srm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`
@@ -1165,7 +1167,10 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<span style="font-size:11px;color:var(--t2);line-height:1.4;">${isDown?'Baisse le poids sans repos — repos unique après le dernier drop.':'Monte le poids — repos normal entre les séries.'}</span>`
       +`</div>`;
   }else{
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Type</span><span>Précédent</span><span>Reps</span><span>KG</span><span>1RM</span><span>✓</span></div>`;
+    /* 📋 D-093 — « Précédent ▾ » : un geste DISTINCT de la note de série (la case, elle, ouvre toujours la note). Seulement
+       quand l'exercice a une dernière fois : sans historique, l'en-tête reste un simple titre. */
+    const _pH=prev.length?`<span class="sprev-hw"><button class="sprev-h" onclick="event.stopPropagation();openDernieresSeances(${ei})" aria-label="Précédent — comparer les 4 dernières séances de l'exercice">Précédent ▾</button></span>`:'<span>Précédent</span>';
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Type</span>${_pH}<span>Reps</span><span>KG</span><span>1RM</span><span>✓</span></div>`;
     useRows=rows;
   }
 
@@ -1302,6 +1307,7 @@ function openExMenu(ei,hasGif){
     +(hasUserPhoto?mRow('🖼️','Voir la photo',`closeExMenu();_viewExPhoto('${safeNm}')`):'')
     +(hasUserPhoto?mRow('🗑️','Retirer la photo',`closeExMenu();removeExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
+    +mRow('📋','4 dernières séances',`closeExMenu();openDernieresSeances(${ei})`)   // D-093 : la comparaison série par série
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">🗑️</span>`
@@ -1371,6 +1377,77 @@ function openExHistory(name){
   el.classList.add('open');
 }
 function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)el.classList.remove('open');}
+/* 📋 « 4 DERNIÈRES SÉANCES » (brief « Séance » du 19/10/2026, D-093) — comparer sans quitter la séance.
+   Michel, en recette : « Précédent » ne montre que la dernière fois ; il veut voir les 4 dernières séances où l'exercice a
+   été fait, série par série. ⛔ LECTURE SEULE : ouvrir et fermer n'écrit rien (ni séance, ni historique, ni stockage).
+   ⭐ CE QUI EST COMPARÉ : les séries de TRAVAIL, par RANG (la 1ʳᵉ avec la 1ʳᵉ…), chaque séance dans sa colonne, de la plus
+   ancienne à la plus récente. Une série absente à ce rang = « — » : jamais une série répétée ni empruntée à une autre
+   séance. Les échauffements restent consultables, À PART — ils ne se comparent pas au travail (même partage que
+   `_prevAligneDetail`, R2). Deux séances du même jour = deux colonnes (« 1ʳᵉ », « 2ᵉ », dans l'ordre d'enregistrement,
+   avec l'heure de début quand elle est connue). ⛔ AUCUN VERDICT : ni flèche, ni écart, ni pourcentage — 5 × 100 puis
+   10 × 80 ne disent pas à eux seuls qui progresse (le format de répétitions a changé). La courbe des charges reste dans
+   « Statistiques », qui ne change pas. */
+const _P4_MAX = 4;
+function _p4Serie(s){
+  const n=(s.reps!==undefined&&s.reps!==null&&s.reps!=='')?s.reps:'?';
+  return _escNote(String(n))+' × '+_escNote(String((s.kg!==undefined&&s.kg!==null&&s.kg!=='')?s.kg:0));
+}
+function openDernieresSeances(ei){
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; if(!ex) return;
+  const liste=_seancesExercice(ex.name,_P4_MAX).slice().sort((a,b)=>_cmpSeances(b.sess,a.sess));   // la plus ancienne à gauche
+  let ov=document.getElementById('ov-prev4');
+  if(!ov){
+    ov=document.createElement('div');ov.className='overlay';ov.id='ov-prev4';
+    ov.style.alignItems='flex-end';
+    ov.onclick=e=>{if(e.target===ov)closeDernieresSeances();};
+    document.body.appendChild(ov);
+  }
+  const ech=_estPalierEch;   // R2 : « est-ce un palier d'échauffement ? » a déjà son propriétaire
+  const nb=liste.length;
+  const titre=nb>=2?nb+' dernières séances':(nb===1?'La dernière séance':_P4_MAX+' dernières séances');
+  // Les en-têtes : la date ; le même jour, le rang d'enregistrement (1ʳᵉ, 2ᵉ…) et l'heure de début quand elle est connue.
+  const parJour={}; liste.forEach(v=>{const d=String(v.sess.date||'');(parJour[d]=parJour[d]||[]).push(v);});
+  const dateCourte=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||''));return m?m[3]+'/'+m[2]:'?';};
+  const libelle=v=>{const d=String(v.sess.date||''), memes=parJour[d]||[];
+    if(memes.length<2) return {date:dateCourte(d), rang:'', h:''};
+    const k=memes.indexOf(v)+1, h=v.sess.startHour;
+    return {date:dateCourte(d), rang:k===1?'1ʳᵉ':k+'ᵉ', h:(h!==undefined&&h!==null&&h!==''&&!isNaN(+h))?(+h)+' h':''};};
+  const cols=liste.map(v=>({v, l:libelle(v), trav:v.sets.filter(s=>!ech(s)), echs:v.sets.filter(ech)}));
+  const nRangs=cols.reduce((m,c)=>Math.max(m,c.trav.length),0);
+  let corps='';
+  if(!nb){
+    corps='<div class="p4-vide">Pas encore de séance avec cet exercice — elle apparaîtra ici après ta première séance.</div>';
+  }else{
+    const th=cols.map(c=>`<th class="p4-h" data-cle="${_escNote(String(c.v.sess.ts||c.v.sess.id||''))}"><span class="p4-d">${c.l.date}</span>${c.l.rang?`<span class="p4-rg">${c.l.rang}${c.l.h?' · '+c.l.h:''}</span>`:''}</th>`).join('');
+    const cellule=s=>{
+      const t=s.type||'N', x=(t!=='N'&&!ech(s))?`<span class="p4-t p4-t-${t==='X'?'x':'o'}">${_escNote(t)}</span>`:'';
+      const r=_reserveHistoTxt(s);
+      return `<td class="p4-c"><span class="p4-s">${_p4Serie(s)}</span>${x}${r?`<span class="p4-rir">${_escNote(r)}</span>`:''}${(s.note&&String(s.note).trim())?'<span class="p4-n" title="Note de série">💬</span>':''}</td>`;
+    };
+    const vide='<td class="p4-c" data-vide="1">—</td>';
+    let lignes='';
+    for(let k=0;k<nRangs;k++) lignes+=`<tr class="p4-r" data-rang="${k+1}"><th class="p4-k">${k+1}</th>${cols.map(c=>c.trav[k]?cellule(c.trav[k]):vide).join('')}</tr>`;
+    const echRow=`<tr class="p4-ech"><th class="p4-k" title="Échauffements">É</th>${cols.map(c=>c.echs.length?`<td class="p4-ech-c">${c.echs.map(_p4Serie).join('<br>')}</td>`:'<td class="p4-ech-c" data-vide="1">—</td>').join('')}</tr>`;
+    // Les notes, en lecture seule, chacune avec SA séance (et son rang le même jour) : notes de série puis note de l'exercice.
+    const notes=[];
+    cols.forEach(c=>{
+      const ou=c.l.date+(c.l.rang?' ('+c.l.rang+')':'');
+      c.trav.forEach((s,k)=>{const t=(s.note&&String(s.note).trim())||'';if(t)notes.push(`<div class="p4-note"><b>${ou}</b> · série de travail ${k+1} : « ${_escNote(t)} »</div>`);});
+      c.echs.forEach((s,k)=>{const t=(s.note&&String(s.note).trim())||'';if(t)notes.push(`<div class="p4-note"><b>${ou}</b> · échauffement ${k+1} : « ${_escNote(t)} »</div>`);});
+      const ne=(typeof c.v.ex.note==='string')?c.v.ex.note.trim():'';
+      if(ne) notes.push(`<div class="p4-note"><b>${ou}</b> · note de l'exercice : « ${_escNote(ne)} »</div>`);
+    });
+    corps=`<div class="p4-wrap"><table class="p4-grille"><thead><tr><th class="p4-k"></th>${th}</tr></thead><tbody>${lignes}${echRow}</tbody></table></div>`
+      +(notes.length?`<div class="p4-notes">${notes.join('')}</div>`:'')
+      +'<div class="p4-leg">Une ligne = un rang de série de travail (1ʳᵉ, 2ᵉ…), de la séance la plus ancienne à la plus récente. « — » = pas de série à ce rang. Les échauffements sont à part (ligne É). X = échec ; « 0 ou échec » = noté avant la mise à jour du 19/10. 💬 = une note sur la série. Lecture seule.</div>';
+  }
+  ov.innerHTML=`<div class="p4-sheet">`
+    +`<div class="p4-top"><div class="p4-tt"><div class="p4-titre">${titre}</div><div class="p4-ex">${_escNote(ex.name)}</div></div>`
+    +`<button class="p4-fermer" onclick="closeDernieresSeances()" aria-label="Fermer">✕</button></div>`
+    +corps+`</div>`;
+  ov.classList.add('open');
+}
+function closeDernieresSeances(){const el=document.getElementById('ov-prev4');if(el)el.classList.remove('open');}
 // Le bandeau qui explique le trou. ⛔ Il ne se montre QUE quand la courbe est réellement
 // incomplète — pas « à chaque fois qu'une fenêtre est ouverte » : un avertissement permanent
 // cesse d'être lu (R24/R25). Il NOMME la date, sinon on ne sait pas de quelle séance il parle.
@@ -1586,6 +1663,8 @@ const RIR_MAX = 4;
 function _prevRirBadge(p){
   const n=_rirDeSet(p);
   if(n===null||(p&&p.type==='X')) return '';
+  /* D-093 : un ancien 0 (tapé sur l'ancien bouton « échec ») se lit « 0/X » — « 0 ou échec », en court. */
+  if(_rir0Ambigu(p)) return `<span class="prev-rir" title="0 ou échec — noté avant la mise à jour du 19/10">·${_estRpe()?'@10':'0'}/X</span>`;
   return `<span class="prev-rir">·${_reserveBadgeTxt(n)}</span>`;
 }
 
@@ -1725,11 +1804,32 @@ function _rpeDeRir(n){ return (n===null||n===undefined)?null:(10-n); }
    confusion exacte que ft-v1154 a corrigée partout ailleurs. Un blanc se voit ; un chiffre
    crédible et faux ne se voit pas (R29). Inatteignable aujourd'hui (les appelants bornent n),
    d'où le choix de le rendre inoffensif plutôt que de compter sur eux pour toujours. */
+/* ⛔⛔ D-093 (recette iPhone de Michel, 19/10/2026) — R30 : LE BOUTON « 0 » NE S'APPELLE PLUS « échec ».
+   Il écrivait `rir:0` sous le mot « échec » : un RIR 0 RÉUSSI et un vrai échec se notaient par le MÊME geste, alors que
+   ft-v1154 avait tranché que ce sont deux données (le tag `X` porte l'échec, `rir` la réserve). L'échec a maintenant
+   SON bouton, « Échec », qui pose le tag `X` (décision de Michel : une seule donnée pour l'échec) ; « 0 » dit 0. */
 function _reserveBoutonTxt(n){
   const rpe=_rpeDeRir(n);
   if(rpe===null) return '';
   if(_estRpe()) return (n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(rpe));
-  return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+':String(n)));
+  return (n>=RIR_MAX?RIR_MAX+'+':String(n));
+}
+/* 🏷️ D-093 — « QUELLE QUESTION LA RÉPONSE A-T-ELLE EUE ? » `rirV:2` = réponse donnée au sélecteur à six choix
+   (Échec | 0 | 1 | 2 | 3 | 4+), où « 0 » ne peut plus vouloir dire « échec ». Sans lui, un 0 ne se distingue pas d'un 0
+   tapé sur l'ancien bouton « échec ». ⛔ Les anciennes réponses ne sont NI réécrites NI reclassées (décision de Michel) :
+   un ancien 0 se lit « 0 ou échec » — l'app ne devine pas lequel des deux c'était (R29). */
+const RIR_V = 2;
+function _rirReponseNouvelle(set){ return !!(set && (+set.rirV)>=RIR_V); }
+function _rir0Ambigu(set){ return _rirDeSet(set)===0 && !_rirReponseNouvelle(set); }
+/* Le libellé LONG d'une réserve dans un historique (détail d'une séance, « 4 dernières séances ») : « RIR 2 », « RIR 4+ »,
+   « 0 ou échec » pour un ancien 0 ; en RPE « RPE 8 », « RPE ≤6 », « RPE 10 ou échec ». Rien pour un `X` (son type le dit),
+   un échauffement ou une série non notée — jamais un chiffre inventé. Un seul propriétaire pour tous les historiques (R2). */
+function _reserveHistoTxt(set){
+  const n=_rirDeSet(set);
+  if(n===null) return '';
+  if(_estRpe()) return 'RPE '+(n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(_rpeDeRir(n)))+(_rir0Ambigu(set)?' ou échec':'');
+  if(_rir0Ambigu(set)) return '0 ou échec';
+  return 'RIR '+(n>=RIR_MAX?RIR_MAX+'+':String(n));
 }
 /* La question posée dans la barre de repos. ⛔ Elle NOMME l'échelle : sans ça, « 8 » veut dire
    deux choses opposées selon le réglage, et personne ne peut savoir laquelle. */
@@ -1790,12 +1890,24 @@ function _prevAligneDetail(prev, sets){
 function _prevAligne(prev, sets){ return _prevAligneDetail(prev, sets).map(d=>d.p); }
 /* D-086 — la séance « dernière fois » d'un exercice, avec sa date : la même que lit `getPrev` (R2), qui n'en garde que
    les séries. La 1ʳᵉ séance (la plus récente) où l'exercice a au moins une série faite. */
-function _prevSeance(name){
-  for(const s of S.sessions){
-    const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);
-    if(ex){const sets=(ex.sets||[]).filter(x=>x.done!==false);if(sets.length)return {sess:s,ex,sets};}
-  }return null;
+/* 📋 D-093 — et les N dernières : `_seancesExercice` est le PROPRIÉTAIRE (R2). La colonne « Précédent » et la feuille
+   « 4 dernières séances » lisent donc la même règle — sa dernière colonne EST la séance de « Précédent ». Même ordre que tout
+   l'historique (`S.sessions`, rangée par `_cmpSeances` au chargement, en fin de séance, à l'import et après restauration),
+   et l'on s'arrête dès qu'on en a N : la colonne est recalculée à chaque rendu. Une séance où l'exercice n'a aucune série
+   faite ne compte pas. ⚠️ Limite gardée telle quelle : si l'exercice figure deux fois dans une séance, seul le 1ᵉʳ bloc est lu. */
+function _seancesExercice(name, n){
+  const out=[];
+  for(const s of (S.sessions||[])){
+    const ex=(s&&(s.exs||s.exercises)||[]).find(e=>e&&e.name===name);
+    if(!ex) continue;
+    const sets=(ex.sets||[]).filter(x=>x&&x.done!==false);
+    if(!sets.length) continue;
+    out.push({sess:s,ex,sets});
+    if(n&&out.length>=n) break;
+  }
+  return out;
 }
+function _prevSeance(name){ return _seancesExercice(name,1)[0]||null; }
 function getPrev(name){ const v=_prevSeance(name); return v?v.sets:[]; }
 /* ⏱️ D-086 (recette de Michel, 18/10) — LES DURÉES PROPOSÉES DANS « RÉGLER » : 30 s et 45 s rejoignent 1:00 / 1:30 / 2:00.
    Une seule liste (R2) : les boutons `rp-*` du panneau, leur surbrillance et les 4 endroits de `toggleSet` qui la posent
@@ -4981,7 +5093,12 @@ function _showSessionEnd(sess,bestPr,prCount,premieresRefs){
 }
 function _renderSeStats(sess,prCount,premieresRefs){
   const el=document.getElementById('se-stats');if(!el)return;
-  let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
+  let nSets=0, nValid=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done){nValid++;if(s.type!=='É'&&s.type!=='W')nSets++;}}));
+  /* 🧮 D-093 (recette iPhone du 19/10) — LA TUILE « VOLUME » DISAIT LE TRAVAIL SOUS UN NOM DE TOTAL : « 4200 kg » sous
+     « Volume », juste après une carte qui annonçait « 5 600 kg · dont 4 200 kg de travail » (D-092). Elle dit maintenant le
+     TOTAL, échauffements compris, et le travail à part — mêmes chiffres, même format que la carte (`_workVol`, R2).
+     ⛔ La séance ENREGISTRÉE ne change pas : `sess.volume` reste le travail (Progrès, l'Accueil, Milo, l'export le lisent). */
+  const _volTot=Math.round(_workVol(sess,true)), _volTrav=Math.round(sess.volume||0), _kg=n=>n.toLocaleString('fr-FR');
   /* ⏱️➕ LA TUILE « DURÉE » COMPTE LE CARDIO (18/08/2026) — une seule source, `_dureeTotaleMin`
      (app.js), qui sait ce qui est déjà dans le chrono et ce qui ne l'est pas. Le chrono démarre
      à la 1ʳᵉ série depuis le 14/08 : sans ça, une séance qui commence par 20 min de vélo affiche
@@ -4997,8 +5114,8 @@ function _renderSeStats(sess,prCount,premieresRefs){
   const _refs=(premieresRefs||[]).filter(Boolean);
   if(_refs.length){const _e=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
     tiles.push('<div class="se-stat se-ref" style="grid-column:1/3;"><div class="se-stat-v" style="font-size:15px;">📌 Première référence enregistrée</div><div class="se-stat-l">'+_refs.map(_e).join(' · ')+'</div></div>');}
-  tiles.push('<div class="se-stat"><div class="se-stat-v">'+(sess.volume||0)+' kg</div><div class="se-stat-l">Volume</div></div>');
-  tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries</div></div>');
+  tiles.push('<div class="se-stat"><div class="se-stat-v">'+_kg(_volTot)+' kg</div><div class="se-stat-l">Volume total'+(_volTot!==_volTrav?' · dont '+_kg(_volTrav)+' kg de travail':'')+'</div></div>');
+  tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries de travail'+(nValid!==nSets?' · '+nValid+' validées':'')+'</div></div>');
   if(dur)tiles.push('<div class="se-stat"><div class="se-stat-v">'+dur+' min</div><div class="se-stat-l">'+durSub+'</div></div>');
   if(sess.calories)tiles.push('<div class="se-stat"><div class="se-stat-v">'+sess.calories+'</div><div class="se-stat-l">kcal brûlées</div></div>');
   el.innerHTML=tiles.join('');
@@ -5809,7 +5926,7 @@ function _renderRirRow(){
 }
 function _rirQuestionHtml(c,avecNom){
   const set=S.wkt.exs[c.ei].sets[c.si];
-  const cur=_rirDeSet(set);
+  const cur=_rirDeSet(set), ancien0=_rir0Ambigu(set);
   /* ⭐ L'ÉCHEC EST DÉJÀ RÉPONDU : si la série porte le tag `X`, la question n'a plus lieu d'être
      et on le DIT au lieu de redemander (R2).
      ⛔ MAIS ON NE SURLIGNE PLUS « 0 » (ft-v1154) : depuis que `_rirDeSet` rend `null` sur un X,
@@ -5817,27 +5934,40 @@ function _rirQuestionHtml(c,avecNom){
      0 » sur une série où une répétition a été TENTÉE et n'est pas passée : c'est un cran au-delà,
      pas la même donnée (décision de Michel). Le libellé, lui, dit bien l'échec. */
   const fige=(set.type==='X');
+  /* ⭐ D-093 (décision de Michel, 19/10) — « Échec » EST le tag `X` : la même donnée que la pastille de la série, posée
+     d'ici ou de là. Il est donc coché quand la série est en `X`, et les autres réponses restent possibles (changer d'avis
+     repasse la série en `N`). ⛔ Un ancien 0 (sans `rirV`) ne coche RIEN : il peut avoir voulu dire « échec » — on le
+     dit, on ne le reclasse pas. */
   const btn=n=>{
-    const on=(cur===n);
+    const on=(!fige&&cur===n&&!(n===0&&ancien0));
     /* ⛔ LE LIBELLÉ VIENT DU VOCABULAIRE, PAS D'ICI : la VALEUR envoyée à `setRir` reste le RIR
        dans les deux échelles — c'est ce qui fait qu'on ne stocke jamais deux choses (R2). */
-    return `<button class="rir-b${on?' on':''}"${fige?' disabled':''} onclick="setRir(${c.ei},${c.si},${n})">${_reserveBoutonTxt(n)}</button>`;
+    return `<button class="rir-b${on?' on':''}" onclick="setRir(${c.ei},${c.si},${n})">${_reserveBoutonTxt(n)}</button>`;
   };
+  const btnEchec=`<button class="rir-b rir-ech${fige?' on':''}" onclick="setRir(${c.ei},${c.si},'X')" title="Une répétition tentée n'est pas passée (tag X)">Échec</button>`;
   const nom=avecNom?('<b class="rir-nom">'+String(S.wkt.exs[c.ei].name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</b> — '):'';
-  let html='<div class="rir-lbl">'+nom+(fige?_reserveEchecTxt():_reserveQuestion())+'</div><div class="rir-row">';
+  let html='<div class="rir-lbl">'+nom+(fige?_reserveEchecTxt():_reserveQuestion())
+    +(ancien0?' <span class="rir-anc">· noté « 0 ou échec »</span>':'')+'</div><div class="rir-row">';
   /* ⛔ L'ORDRE S'INVERSE EN RPE, exprès : le barème se lit du plus léger au maximum (6 → 10),
-     et quelqu'un qui a CHOISI le RPE le lit dans ce sens. En RIR on garde l'échec en tête. */
-  if(_estRpe()){ for(let n=RIR_MAX;n>=0;n--) html+=btn(n); }
-  else         { for(let n=0;n<=RIR_MAX;n++) html+=btn(n); }
+     et quelqu'un qui a CHOISI le RPE le lit dans ce sens. En RIR on garde l'échec en tête ; en RPE il vient après 10
+     (un cran AU-DELÀ du maximum, comme le `X` est un cran au-delà de RIR 0). */
+  if(_estRpe()){ for(let n=RIR_MAX;n>=0;n--) html+=btn(n); html+=btnEchec; }
+  else         { html+=btnEchec; for(let n=0;n<=RIR_MAX;n++) html+=btn(n); }
   /* ⛔ ET ON PEUT RETIRER SA RÉPONSE : sans ça, un tap par erreur deviendrait une mesure
-     définitive. `null` n'est pas 0, il faut pouvoir y revenir (R29). */
-  if(cur!==null&&!fige) html+='<button class="rir-b rir-x" onclick="setRir('+c.ei+','+c.si+',null)" title="Retirer">✕</button>';
+     définitive. `null` n'est pas 0, il faut pouvoir y revenir (R29). Vaut aussi pour « Échec ». */
+  if(cur!==null||fige) html+='<button class="rir-b rir-x" onclick="setRir('+c.ei+','+c.si+',null)" title="Retirer">✕</button>';
   return html+'</div>';
 }
+/* D-093 — UNE RÉPONSE À LA FOIS : « Échec » pose le tag `X` et retire la réserve ; un chiffre (0 à 4) repasse une série
+   `X` en `N` et pose `rir` + `rirV` ; « ✕ » retire tout (une série `X` redevient `N`). ⛔ Jamais un RIR 0 transformé en
+   échec, ni l'inverse : chaque bascule vient d'un tap. ⚠️ La pastille de type (`cycleType`) ne touche pas au `rir`, c'est
+   voulu (ft-v1154) — sa valeur revient si la série repasse en `N` par la pastille. */
 function setRir(ei,si,n){
   const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];
-  if(!set||set.type==='X') return;
-  if(n===null) delete set.rir; else set.rir=Math.max(0,Math.min(RIR_MAX,Math.round(+n)||0));
+  if(!set) return;
+  if(n==='X'){ set.type='X'; delete set.rir; delete set.rirV; }
+  else if(n===null){ if(set.type==='X') set.type='N'; delete set.rir; delete set.rirV; }
+  else{ if(set.type==='X') set.type='N'; set.rir=Math.max(0,Math.min(RIR_MAX,Math.round(+n)||0)); set.rirV=RIR_V; }
   persist(); _renderRirRow(); renderExBlocks();
   if(navigator.vibrate)navigator.vibrate(30);
 }
