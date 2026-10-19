@@ -1326,3 +1326,46 @@ la carte n'y est décrite nulle part aujourd'hui). Pop-up : probablement pas (ri
 
 **À faire** : feu vert de Michel pour publier le clone (un push de `claude/clone-d091-pub` sur master, `clone/` seul) ; recette iPhone au doigt ;
 production = autre décision ; ② ci-dessus.
+
+### 🧪 D-091 + D-092 SUR LE CLONE DE TEST — PUBLIÉ (19/10/2026, feu vert de Michel : « clone uniquement, aucune mise en production »)
+
+**Quoi.** Le commit qualifié `ed05faa1` (branche `claude/clone-d091-pub` = master `75288092` + `clone/` régénéré par `tools/clone_build.py` depuis
+`e8ffb71c`) poussé **tel quel** sur master à 17:10:00 UTC, en avance rapide (`75288092..ed05faa1`), sans force. **6 fichiers, tous sous `clone/`**
+(`CLONE-SOURCE.json`, `index.html`, `log.js`, `setup.js`, `style.css`, `tracking.js`). Master n'avait pas bougé depuis la qualification (revérifié
+juste avant le push ; aucune autre session ouverte). Aucune fonctionnalité ajoutée ; ni Apps Script, ni Worker, ni fichier de la production touchés.
+
+**Avant le push.** Branche = master + 1 commit, 0 fichier hors `clone/` ; les **11 fichiers JS du clone = le code testé `e8ffb71c` au caractère près**
+une fois retirée la garde de 2 lignes posée par le générateur, `style.css` aussi (chemins `../` remis) ; `check_regles` code 0 ; workflows : seul
+Pages se déclenche (Apps Script et Worker filtrés par chemins, banc Milo manuel seulement).
+
+**Après le push (API GitHub).** Run Pages **n°1355 succès** (17:10:04 → 17:10:33, 29 s), **seul workflow** de ce commit ; déploiement
+`github-pages` 7179930783 **success** à 17:10:33 (https://michdu75-commits.github.io/forcetracker/) ; comparaison `75288092...ed05faa1` : 1 commit,
+6 fichiers, 0 hors `clone/` ; `sw.js` racine `ft-v1256` ; `clone/CLONE-SOURCE.json` : source `e8ffb71c`, isolement 22 / 0 ; **racine de la production
+identique** (0 fichier hors `clone/`). Le workflow publie tout le dépôt au commit poussé (`checkout` → `upload-pages-artifact`, `path: .`) ; artefact
+de 98 200 175 octets contre 98 197 166 au déploiement précédent (+3 009 ; contenu de `clone/` : +3 047).
+**Non relisible d'ici, mesuré** : le site (`CONNECT tunnel failed, 403` vers github.io) et l'artefact (redirection vers
+`productionresultssa13.blob.core.windows.net`, 403 au CONNECT) → le contrôle à l'écran, c'est la recette iPhone de Michel.
+
+**Isolement clone / production, rejoué sur les fichiers PUBLIÉS** (`git archive ed05faa1`) dans l'espace réseau isolé : banc
+`tools/banc_clone_isolation.js` **22 / 0** (prod remplie puis photographiée brute, clone utilisé normalement puis agressivement, prod rephotographiée :
+identique ; fail-closed) ; puits : **57 tentatives de sortie, toutes refusées** (dont 10 Apps Script, 5 Worker, 2 API Anthropic, canaris compris). Aucun test sur réseau ouvert.
+⚠️ **Incident de l'outil, corrigé** : le mandataire de la session a changé de port en cours de journée (33961 → 43843) ; le 1ᵉʳ rejeu (17:12) a tourné
+avec le puits sur l'ancien port — isolement intact (aucune route ; mandataire injoignable, ECONNREFUSED) mais **sorties non comptées**. L'outil (hors
+dépôt) suit désormais `HTTPS_PROXY`, et sa garde exige les 3 refus 403 du puits avant de lancer quoi que ce soit (éprouvée : puits mal placé →
+commande non lancée ; bien placé → lancée) ; banc rejoué. Les lots de 13:24 à 15:16 ne sont pas concernés (leurs canaris montrent les 3 refus 403
+avant et après).
+
+**Message du commit publié.** Écrit à la préparation, avant le feu vert : il dit « PRÉPARÉ EN LOCAL, NON PUBLIÉ ». Publié tel quel — le corriger
+aurait demandé de réécrire l'historique de master (push forcé, exclu). *Leçon : un commit préparé pour une publication porte un message neutre.*
+
+**Retour arrière (non fait, nouvelle autorisation)** : `git revert ed05faa1` puis push sur master → `clone/` revient à D-088 (`75288092`) ;
+production intouchée dans les deux sens.
+
+**Durées** : estimé ≈ 15 min ; réel **11 min** jusqu'aux documents compris (17:07 → 17:18 UTC ; PDF et rapport en plus). Pages : 29 s, comme
+mesuré. Plus court que prévu malgré deux imprévus — le port du mandataire (puits replacé, garde durcie et éprouvée, banc rejoué ≈ 4 min) et les deux
+vérifications refusées par le mandataire (site, artefact ≈ 2 min) — parce que les contrôles par l'API et les documents, préparés d'avance, ont pris
+moins que les 10 min prévues.
+
+**Reste** : recette iPhone de Michel sur https://michdu75-commits.github.io/forcetracker/clone/ ; la branche source `claude/ux-fig-face-dos-v2`
+(code, tests, registre, cette fiche) n'existe qu'**en local** — la pousser = autre autorisation ; chronomètre persistant et libellés de l'écran de fin :
+chantiers séparés (décision de Michel, 19/10) ; règle d'or #11 avec une éventuelle mise en production.
