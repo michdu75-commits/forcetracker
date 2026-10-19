@@ -789,7 +789,7 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
   color:var(--sea);white-space:nowrap;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
 /* 📋 D-093 — la feuille « 4 dernières séances » : même famille que « Statistiques » (feuille du bas). La grille tient dans la
    largeur (360 → 430 px) : colonnes égales, le texte passe à la ligne plutôt qu'un défilement horizontal. Lecture seule. */
-#ov-prev4 .p4-sheet{width:100%;max-width:430px;max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border-radius:16px 16px 0 0;
+#ov-prev4 .p4-sheet{width:100%;max-width:430px;max-height:86dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border-radius:16px 16px 0 0;
   padding:14px 12px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);box-sizing:border-box;}
 .p4-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
 .p4-tt{flex:1;min-width:0;}
