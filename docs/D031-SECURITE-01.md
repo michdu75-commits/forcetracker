@@ -108,7 +108,10 @@ outil de mutation, par la recette annexe, par la passe).
 - **Le cliquet** (`D031S-VII`, dans la passe) : un NOUVEAU point d'entrée non gardé rougit (①) ; les anciens sont
   inscrits dans `tests/garde_existants.json` et cette liste **ne fait que rétrécir** (② : un inscrit devenu gardé doit
   en sortir, une ligne qui ne désigne plus rien aussi) ; les chemins de lancement officiels chargent le garde (③ : la
-  passe, la recette annexe, `tools/sous_garde.sh`).
+  passe, la recette annexe, `tools/sous_garde.sh`) ; et la liste **ne peut pas GRANDIR** (⑤, ajouté le 20/10 : chaque
+  inscrit doit figurer dans l'inventaire FIGÉ du 19/10, écrit dans le témoin lui-même). ⚠️ *Avant ⑤, inscrire un nouveau
+  banc non gardé dans la liste rendait ① vert — le contournement exact de la décision 2 ; ni ① ni ② ne le voyaient
+  (mutation G11 : seul ⑤ rougit).*
 - **La recette annexe** (`tools/recette_annexe.py`) lance ses 15 suites **sous le garde** (`NODE_OPTIONS --require`),
   sans modifier les suites. Sans le fichier du garde, Node ne démarre pas : ERREUR D'INFRA (fermé par défaut).
 
@@ -119,6 +122,11 @@ externe le **simule** (`route.fulfill`) — le garde laisse passer les simulatio
 `python3 tools/migrer_garde.py <fichier>` les joue avant/après l'ajout de la ligne, dans une copie et un espace réseau
 isolé, et **refuse** si un seul verdict ou le code de sortie change (un écart est rejoué une fois : un banc instable ne
 passe pas pour un effet du garde). En attendant, un ancien se lance gardé par `tools/sous_garde.sh node <fichier>`.
+
+**Les NOUVEAUX bancs** (créés après le 19/10, par exemple sur la branche d'une autre session) ne s'inscrivent jamais :
+ils se gardent, avec la même vérification, par `python3 tools/migrer_garde.py --nouveau <fichier>` (la liste n'est pas
+touchée ; refusé si le fichier est inscrit, déjà gardé, ou ne pilote pas Playwright). Contrôle négatif :
+`python3 tools/mut_migrer_garde.py` (9 cas ; contre l'ancien outil, 3 seulement passent — le contrôle mesure bien le mode).
 Les fichiers « Milo — conservé (décision 3) » ne sont pas migrés (voir la proposition séparée).
 
 ## 9. tests/milo — conservation provisoire (décision 3 de Michel du 19/10/2026)
