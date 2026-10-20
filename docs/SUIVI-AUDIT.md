@@ -1007,6 +1007,44 @@ iPhone, puis décision de publication de Michel.
 
 **🔎 Contre-vérification indépendante (16/10, session-A, après intégration — master `42153711`) : A. CONTRE-VALIDÉ, avec une réserve sur le filet de tests.** Sonde hors dépôt qui pilote les vrais boutons (trouvés par leur texte), sur master et sur l'ancien code `1717edc4` : 17 scénarios + 4 chaînes (0 / 1 / plusieurs / toutes faites, ↓ et ↑, série sautée, ancien format, rechargement), 12 enchaînements aléatoires × 24 actions (288 : 22 Drop, 24 +%, 33 Modifier, 38 Retirer, 69 rechargements, 102 validations), 7 scénarios voisins (remplacement, cartes repliées, modale). **Master : 0 perte** — 50 / 50 contrôles d'égalité stricte (objet JSON complet, types É / N / X, RIR, note, repos, horodatage, 1RM, `maxi`, champ inconnu, ordre ; mémoire, `ft4_wkt`, brouillon, après rechargement) ; ancien code : pertes dans les 13 scénarios à séries faites et dans les 12 enchaînements. Leur banc **19 / 0** et leurs mutations **14 / 14** confirmés (M00 rejouée à la main : 5 ✅ / 14 ❌). Voisins : SEANCE-01 25/0 · intégrité des séances 93/0 · ML-A 34/0 · ML-B 60/0 · unicité 12/0 · C1 29/0 · C2 22/0 · C3 35/0 · Progrès → Séances 80/0. **⚠️ Réserve (sévérité moyenne : aucune perte aujourd'hui, mais une rechute passerait au vert)** : sur 14 mutations indépendantes, le banc B-CC01 en attrape 5 et en laisse passer 9, dont **8 vraies pertes** — ses séries faites sont toutes de type N (un échauffement validé effacé par Drop ; É / X réécrits en N : verts), sans champ `maxi` (passé reconstruit, `maxi` perdu : vert), « Modifier » et « Retirer » seulement en ↓ (pyramide effacée : vert), « tout fait » seulement pour Drop (dernière série perdue par « Modifier » ou « Retirer » : vert) ; la 9ᵉ est d'affichage (cas mixte : la série normale faite redevient un palier). 👉 Recommandation, **décision de Michel** : compléter les témoins avant la publication de la passe Séance (séries faites É et X, `maxi`, ↑ pour « Modifier » / « Retirer », « tout fait » pour « Modifier » / « Retirer », cas mixte, rechargement après « Modifier » / « Retirer ») — tests seulement, aucun code applicatif ; chacune des 14 mutations doit rougir. **7 réserves UX (aucune donnée perdue)** : la 1ʳᵉ était déjà consignée ci-dessus (modale « Modifier » : « Nombre de paliers » sans « restants », % remis par défaut → le % affiché des paliers faits change ; mesuré : −30 % → « −20 % ») ; nouvelles : ① après « Remplacer l'exercice », la série normale faite de l'exercice d'origine s'affiche « Charge de départ » (④ ne tient pas sur ce chemin) ; ② ancien format de dropset : après « Modifier », les séries normales faites comptent comme paliers ; ③ tout fait + Drop / +% : le 1ᵉʳ palier ajouté refait la dernière charge (97,5 → 97,5 → 77,5 — détail que D-082 ② ne tranche pas) ; ④ une série sautée validée dans un dropset ↓ ne lance pas de repos ; ⑤ « Retirer » avec 0 série faite recrée une série (comportement d'avant ; à la lettre, D-082 ① dit « ne crée rien ») ; ⑥ cas limite non testé : si la prochaine série prévue est un échauffement, le dropset part de sa charge. Méthode : `BUGS.md` §78. Rapport PDF hors dépôt (`CV-CC01-dropset-2026-10-16.pdf`).
 
+**↪️ Filet complété (16/10, UX SÉANCE, branche `claude/ux-seance-01`, non intégré)** : 12 témoins `B-CC01-FIL-1 → 12` (échauffement et échec validés, `maxi`, « Modifier » / « Retirer » en montée, tout fait + « Modifier » / « Retirer », cas mixte, rechargement après « Modifier » / « Retirer ») — tests seulement, moteur CC-01 inchangé. ⚠️ Les mutations O1 → O14 de la contre-vérification ne sont ni dans le dépôt ni sur le Drive (cherché le 16/10) : `tools/mut_cc01_dropset.py` porte **MF1 → MF11, RECONSTRUITES, équivalentes aux pertes décrites ci-dessus, pas les originales** — **11 / 11 attrapées**, arbre sain stable avant / après ; pour MF1 → MF9, le premier témoin rouge est un nouveau `FIL` ; pour MF10 / MF11 (rechargement), c'est un ancien (D1 / H1) — l'outil ne nomme que le premier rouge, on n'affirme donc rien sur les autres. Banc **31 / 0**.
+
+### 🏋️ UX SÉANCE — L'ÉCRAN SÉANCE EN DEUX ÉTATS (16-17/10/2026, session-B — cadrage validé par Michel, chantier de nuit) — QUALIFIÉ SUR BRANCHE, NON INTÉGRÉ, NON PUBLIÉ
+
+**Ce qui change (présentation seulement, D-083)** : avant la séance, « Séance libre » puis « Programme » (contexte récup / dernière séance, types en carrousel, cardio et import plus bas) ; pendant, la barre haute devient l'en-tête « Séance en cours » (chrono, séries de TRAVAIL faites / prévues, ⋯, « Terminer ») ; menu ⋯ (pause, date, tout dérouler, grouper, programmes, aide | vider, abandonner) ; « Terminer » = porte unique `terminerSeance` (en-tête, bas, « 🔄 Réessayer ») : 0 série de travail restante → enregistre, sinon « Il reste N séries à faire · Terminer quand même ? » ; le « + » ramène à la même séance, pastille verte, immobile (règle d'or #9) ; repos en dock fixe en bas, préréglages dans « Régler » ; cartes repliées allégées (« Monter / Descendre » dans le ⋯ de l'exercice) ; aide « ? », aide détaillée, point rouge `seance-ux`, pop-up v78, diapo du Guide.
+
+**Ce qui ne change pas** : 0 donnée persistée, 0 clé, 0 migration ; `S.wkt`, `S.sessions`, `set.done`, `_seanceOuverte`, `finishWorkout`, records, moteur de repos, groupes, dropset inchangés — différentiel master ↔ branche `tools/diff_seance_ux.js` **7 / 7 scénarios de données identiques** (horloge, hasard et `runId` figés ; il voit une perte volontaire : 6 / 7) ; prompt réel de Milo identique (seule la ligne d'empreinte des sources diffère).
+
+**Tests** : banc B-UXS **69 / 0** (code de master : 23 / 46) ; contrôle négatif `tools/mut_seance_ux.py` **15 / 15** (M4 corrigée — la 1ʳᵉ version cassait la syntaxe — puis rejouée seule ; M18 équivalente : 0 rouge) ; filet CC-01 ci-dessus ; voisins verts ; annexes calculs et hors-ligne PASS ; `nut_punch01` 36 / 0, `nutri_moteur` 28 / 0 ; **D-031 7 192 ✅ / 0 ❌ sur `858423f3` (tree `4e369644`), 4 conditions vertes**. Témoins re-visés (R30, écrits) : CXXXVIII (mesuré à 390 × 844), PS-S11 (« aucune pop-up n'annonce le filtre » au lieu de « la dernière reste v77 ») — `BUGS.md` §79 ; conduites des bancs voisins (`c38146e1`). **Règle #17 — chaque témoin re-visé vu rougir** (17/10, sur copies jetables, hors dépôt, après la passe) : CXXXI (carrousel remis en colonne), CXIX (message d'écran vide revenu · « Séance libre » sans son propriétaire · « + Créer ma séance » revenu) et CXXXVIII à 390 × 844 (barre à 0,6) → **5 / 5 rouges, chacun sur le témoin visé**, arbre sain 17 / 0 ; conduites re-visées : MC_FIN (porte de fin neutralisée) → rouges dans 5 bancs sur 6 (fil_coach_lot1 20, debrief_demande 7, seance_date 3, cc01_dropset 1, historique_cloud 1) et plantage de session_integrity (la passe n'aurait plus de ligne de total) ; MC_PROG (ligne « Programmes » neutralisée) → travail_existant 13 rouges, dropset_programme et groupes_orphelins plantent (même effet sur la passe) ; MC_PAUSE (ligne « Mettre en pause » neutralisée) → historique_cloud ecran3b 2 rouges, mais **ecran3c 0 rouge** : son témoin T3 vérifie que l'identifiant de séance ne change pas, ce qui reste vrai SANS pause — **préexistant, mesuré identique sur master** (18 / 0 ; la même mutation y fait rougir ecran3b 9 / 2, elle casse donc bien la pause), non corrigé (hors brief). Observation : deux témoins « aucune erreur de page, aucun appel Milo » (ml_a T4g le 16/10, groupes_orphelins C1d le 17/10) ont rougi une fois sous 4 bancs en parallèle ; seuls ils sont verts (C1d 23 / 0 deux fois) et la passe séquentielle D-031 est verte — sensibles à la charge, détail non capturé. Mutations exactes : `HANDOFF-UX-SEANCE-01.json`.
+
+**Règle #17** : 0 donnée persistée · 10 fichiers applicatifs · +626 / −151 · retirés ou fusionnés : `_syncLogHdrBtns`, `_pauseBtnHtml`, l'ancien en-tête et sa rangée Pause ✕ Vider Changer, « + Créer ma séance », la rangée « Tout dérouler / Grouper », les préréglages du bandeau de repos, les 3 portes de fin → `terminerSeance`, la règle « séries de travail » sortie de `toggleSet` vers `_bilanTravailEx`.
+
+**Réserves (non bloquantes)** : le compteur de la carte (« 3/4 séries », toutes lignes) ≠ l'en-tête (séries de travail) — à trancher par Michel ; volume de carte avec échauffements (préexistant) ; types de séance masqués dès qu'une séance est ouverte, cardio noté compris ; clavier iOS + dock et zone de sécurité réelle : recette iPhone ; mode clair en pause (inatteignable) ; `translations.js` chargé par aucune page (dictionnaire tenu, sans effet) ; commentaire résiduel `log.js:160` ; les 7 réserves UX du dropset (contre-vérification CC-01) ne sont **pas** traitées (hors brief).
+
+**À faire** : recette iPhone de Michel ; contre-vérification indépendante (`HANDOFF-UX-SEANCE-01.json`) ; feu vert de Michel pour l'intégration, puis la publication.
+
+### 🎨 UX — INTÉGRATION DES DÉCISIONS DU 17/10/2026 (D-085, décisions A→M de Michel, brief « Claude Principal ») — QUALIFIÉ SUR BRANCHE `claude/ux-seance-02`, NON INTÉGRÉ, NON PUBLIÉ
+
+**Base** : `claude/ux-seance-01` @ `1ab2b38f` + fusion de master `4960ce72` (clone D-084, documentation seulement). Production `ft-v1256` non touchée.
+
+**Ce qui change (présentation seulement)** : jeton « Cobalt » DÉDIÉ à la séance (`--sea` #7C95FF, `--sea-fill` #2F5BFF ; teinte foncée en mode clair) — en-tête, exercice et série actifs, coche validée, exercice fini, « Ajouter un exercice », repos (anneau, temps, barre, « Passer », pilule), « Reprendre » (en-tête et Accueil) ; « Terminer » Cobalt (en-tête, bas, « Terminer quand même ») et le rouge gardé pour Vider / Abandonner / Supprimer ; point bleu plein et ENTIER sur le « + » (le bouton central ne rogne plus), point nouveauté déplacé à gauche, « + » de 44 px et même ombre partout (agrandissement ×1,06 retiré) ; « Séance prête » (`_seancePrete`, affichage seul) ; type de série en badge sur le numéro (même `cycleType`), 1RM dans sa colonne, cibles de 44 px ; barre du bas masquée pendant la saisie d'une série (`kbd-serie`), ligne active ramenée au-dessus du clavier ; cartes de type en texte seul ; onglets « Discussion / Espace Milo » (onglet en mémoire) ; courbes Progrès neutres (record or, progrès vert) ; aides corrigées (point bleu, numéro de série, 1RM, ligne « deux onglets » au « ? » du Coach).
+
+**Ce qui ne change pas** : 0 donnée persistée, 0 clé, 0 migration, 0 propriétaire ; `_seanceOuverte`, `finishWorkout`, `cycleType`, moteur de repos, Milo (moteur, appels, quota, mémoire) inchangés — différentiel des données base ↔ branche `tools/diff_seance_ux.js` **7 / 7 identiques**.
+
+**Tests** : nouveau banc B-UXI (`tests/parcours/ux_integration.js`, `tools/banc_ux_integration.js`) **69 / 0** (base `1ab2b38f` : 27 / 42) ; contrôle négatif `tools/mut_ux_integration.py` **27 / 27** (M00 = 42 rouges ; M26 équivalente : 0 rouge ; arbre sain rejoué à la fin : 0) ; banc B-UXS 69 / 0 (témoins D7 et E3 re-visés sur leur garantie, R30, décisions M et C) ; CC-01 31 / 0.
+
+**Règle #17** : 0 donnée persistée · 8 fichiers applicatifs (`app.js`, `coach.js`, `index.html`, `log.js`, `screens.js`, `setup.js`, `style.css`, `tracking.js`) · +212 / −65 · retirés ou fusionnés : la table d'icônes des types, l'agrandissement du « + » sur Séance, la colonne « Type » (fusionnée dans le numéro), le 1RM logé dans le bouton du type.
+
+**Non appliqué (à trancher par Michel)** : « 🔄 Réessayer » (stockage plein) reste rouge (panneau d'erreur) ; une baisse reste chiffrée en rouge dans Progrès ; puces Super / Drop / +% inchangées ; « Séance libre » (avant séance) garde le rouge de marque ; Guide (captures) et pop-up « Quoi de neuf » non refaits — règle d'or #11 au moment d'une publication.
+
+**Résiduel mesuré** : le « + » de nouvelle discussion de l'en-tête de Milo est coupé à 360 px — **identique sur la base** (préexistant, hors périmètre).
+
+**Passe complète n°1 (sur `5cc04fd9`) : 7 260 ✅ / 1 ❌ — NON VALIDE.** Le rouge était un vrai défaut de ce lot : `.ts-h` déclaré deux fois dans `style.css` (témoin CXL, ft-v1036 — « la 2ᵉ gagne, la 1ʳᵉ trompe le suivant »). Corrigé dans le code (une seule déclaration), le témoin n'a pas été touché ; bancs B-UXI et B-UXS rejoués 69 / 0.
+
+**Passe complète n°2 (sur `6d9b6c90`, arbre `70ace6e8`) : 7 261 ✅ / 0 ❌ — VALIDE, 4 conditions** (`tools/passe_valide.sh`). Depuis : documentation seulement (D-031). Aucun numéro de version posé (rien n'est publié).
+
+**À faire** : recette iPhone de Michel (vrai clavier, encoche, point du « + ») ; feu vert de Michel avant toute intégration ou publication.
+
 ### 🧪 CLONE UX D-085 — préparation (18/10/2026, session-B — mission de Michel) — PRÉPARÉ, CONTRÔLÉ ; ✅ PUBLIÉ LE 18/10 (autorisation de Michel ; Pages n°1353, `ac71030f`)
 
 **Ce qui est fait.** Branche `claude/claude-md-docs-ytabnv` repartie de master `4960ce72` ; `python3 tools/clone_build.py 6d9b6c90` → `clone/` = code du HEAD fonctionnel D-085 (`claude/ux-seance-02`, arbre `70ace6e8`), tamponné (banc d'isolement 22 / 0, empreinte vérifiée par `check_regles`). Générateur, shim, service worker du clone et bancs : **inchangés**. Le code D-085 n'ajoute ni ne retire **aucun** appel de stockage, de réseau, de service worker ou de navigation par rapport à l'ancienne source du clone (`1ab2b38f`) : la surface d'isolement est la même.
@@ -1018,3 +1056,404 @@ iPhone, puis décision de publication de Michel.
 
 Le push du clone D-084 (`4960ce72`, sans `[skip ci]`, session-B) a déclenché le déploiement Pages n°1352 (SUCCESS, 17/10 09:26 UTC), qui publie tout master. Seul fichier servi changé depuis la publication `ft-v1256` (`ef160ddd`) : `log.js` (+59 / −13 : SEANCE-01 + CC-01), **sous la même clé de cache** → deux populations (lu dans `sw.js` : les scripts sont servis « cache d'abord » sans revalidation). Le site en ligne n'a pas pu être relu d'ici (proxy 403 vers github.io) : la preuve est le run et le contenu de master. Le piège était écrit le 16/10 dans `CONTEXTE-ACTUEL` (« le prochain push sans `[skip ci]` le publie ») et n'a pas été relu au moment du push. **Options — ce sont des changements de prod, non autorisés par la mission du clone** : garder tel quel · régulariser par `ft-v1257` (nouvelle clé, annonce, docs) · revenir au `log.js` du 15/10. `BUGS.md` §81.
 ↪️ **Michel a choisi A le 18/10** : SEANCE-01 et CC-01 restent tels quels ; **le problème de cache reste ouvert** (rien n'est régularisé, rien n'est retiré).
+
+### 🛠️ D-086 — CORRECTIONS UX APRÈS LA RECETTE IPHONE DE D-085 (18/10/2026, brief « Claude Principal ») — BRANCHE LOCALE `claude/ux-d086`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-seance-02` @ `08090b33` = code D-085 `6d9b6c90` + clôture documentaire (4 fichiers, aucun applicatif). Dossier de travail séparé ;
+master `dbb50941`, production `ft-v1256` et clone en ligne (`6d9b6c90`) non touchés. ⛔ Aucun push (brief de Michel).
+
+**Les sept corrections (décision D-086)** : ① colonne **Type**, pastille N / É / X sur chaque série, cible 44 × 44, même `cycleType` (remplace le « badge sur le
+numéro » de D-085 G) · ② « Précédent » 15 px (14 px sous 375 px), contraste ≥ 7:1, marqueurs É / X à 11 px, jamais rogné (pire cas mesuré : « 10×142.5 X ») ·
+③ dock [ −15 s ][ ◔ temps ][ +15 s ][ Passer ], « Régler » = 30 s · 45 s · 1:00 · 1:30 · 2:00 · personnalisée, durée reprise à la série de travail suivante par
+`S.exRestPref` (existant, clé `ft4_exRp`) · ④ « Passer » Cobalt en plein écran · ⑤ bandeau de reprise : passe à la ligne, ne déborde plus (538 px → 328 px à 360) ·
+⑥ point bleu du commentaire de la dernière fois, sur sa série EXACTE seulement (`BUGS.md` §82), lu avec son origine dans la fenêtre de note · ⑦ date et heure
+ENREGISTRÉES de chaque message Milo, « Date indisponible » sinon, dessinées hors du texte des bulles.
+
+**Ce qui ne change pas** : 0 donnée persistée, 0 clé, 0 migration, 0 appel réseau ; `cycleType`, `setRestPreset`, `addRT`, `skipRest`, le décompte des 10 s,
+`_seanceOuverte`, `finishWorkout`, les valeurs de « Précédent » (repli compris), le prompt, les quotas, la mémoire et l'ENREGISTREMENT des messages de Milo.
+
+**Tests** : banc B-D086 (`tests/parcours/ux_d086.js`, `tools/banc_ux_d086.js`, 15 points × 360 / 375 / 390 / 430 px) **122 / 0** ; le même banc sur le code D-085
+`6d9b6c90` : **59 verts / 63 rouges** (les verts sont les invariants ; les rouges, les décisions D-086 et les témoins de leur parcours — dont les 2 « pire cas » ③e à 360 / 375 px, ajoutés après un premier essai à 61 / 61 : sur D-085, « Précédent » y est rogné), sans plantage ; contrôle négatif `tools/mut_ux_d086.py` **26 / 26** (M00 + 24 ciblées + 1 équivalente,
+arbre sain rejoué à 0). Bancs voisins rejoués : B-UXI 69 / 0 (4 témoins de D-085 G réécrits, R30) · B-UXS 69 / 0 · B-CC01 31 / 0 ; contrôle négatif de D-085
+`tools/mut_ux_integration.py` rejoué : **27 / 27** (M19 réécrite pour viser la pastille de la colonne Type, R30 ; arbre sain 0 au début et à la fin).
+
+**Règle #17** : 0 donnée persistée · 4 fichiers applicatifs (`log.js`, `style.css`, `index.html`, `coach.js`) · +210 / −68 (correctif CXLI compris) · fusionnés ou retirés : le numéro-bouton
+de type et son badge (`.set-row .tbtn.snum`, `.snum-n`, `.stype-b`, règle daltonienne associée) ; la note de la dernière fois écrite dans la ligne ; le groupe
+`#rest-btns` ; la liste `[60,90,120]` recopiée 5 fois (→ `_REPOS_PRESETS`) ; `getPrev` / `_prevAligne` deviennent les reflets de `_prevSeance` /
+`_prevAligneDetail` (un seul propriétaire).
+
+**À trancher par Michel** : ① où afficher la note d'EXERCICE de la dernière fois (« Note perso ») — elle n'est rattachable à aucune série ; ② poser une heure au
+débrief et à « continuer dans le Coach » (ils entrent dans le fil sans `ts` : c'est un changement d'enregistrement, donc STOP, proposition à part — poser `ts` à leur entrée dans le fil, 2 endroits, le même champ que les autres messages, aucune clé ; le fil reste sur le téléphone, rien ne part sur Internet ; les anciens restent « Date indisponible ») ; ③ abdos :
+repos fixe de 30 s sans mémoire (règle existante) ; ④ choisir 30 s quand plus de 30 s sont déjà écoulées arrête le repos SANS mémoriser la durée (comportement
+existant de `setRestPreset`, non modifié).
+
+**Textes d'aide devenus faux ou incomplets (chantier AIDES-01, non touchés ici)** : `index.html` « Tags de série » — « Touche le numéro de la série… » (FAUX : c'est la
+pastille de la colonne Type) et « Normal (défaut, non affiché) » (FAUX : « N » est affiché) ; « 1:00 · 1:30 · 2:00 dans Régler » (incomplet : + 30 s / 45 s) dans
+`screens.js` (aide « ? » Séance), `coach.js` (aide détaillée), `constants.js` (point rouge `seance-ux` et pop-up v78) ; rien ne décrit encore le point bleu du
+commentaire ni l'heure des messages (règle d'or #11, points 2 à 5, à faire avant la production).
+
+**Résiduels mesurés (préexistants, hors périmètre)** : la liste des discussions rangées de Milo affiche `new Date(c.ts || Date.now())` — une discussion sans date
+y prendrait l'heure de consultation ; la définition de X dans « Tags de série » (« menée jusqu'à l'échec musculaire ») diffère de celle de Michel (« répétition
+tentée et non réussie »).
+
+**Bancs voisins (sélecteur de recette, T1 + T2)** : ml_a 34 / 0 · fil_lot1 39 / 0 · nut_punch01 36 / 0 · ml_b 60 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · milo_pdf1 97 / 0 · auth_ia 25 / 0 · seance_c3 35 / 0 · nutri_moteur 28 / 0 · selecteur_autotest 15 / 0 · annexe 1 DÉFAUT CONNU · 14 PASS — le défaut connu est la suite « discussions » (2 témoins de TAILLE du prompt de Milo, connus depuis ft-v1239) : 35/37 sur D-085 comme sur D-086, mêmes témoins, mêmes tailles.
+
+**Passe complète D-031 (sur `ab8ab183`, arbre `ffa231be`, 83 min) : 7 382 ✅ / 1 ❌ — NON VALIDE.** Le rouge est un **vrai défaut de D-086**, attrapé par le témoin CXLI (ft-v1037) : la pastille de type demandait une graisse 800 en Space Grotesk, police qui s'arrête à 700 (le navigateur ramenait déjà à 700 : rien ne changeait à l'écran). **Corrigé dans `1242ed62`** (700, et la raison écrite à côté). Le témoin CXLI, extrait tel quel du runner et rejoué seul : 3 / 1 rouge sur `ab8ab183`, 4 / 0 sur `1242ed62`, 4 / 0 sur D-085. Rejoués sur `1242ed62` : B-D086 122 / 0 · B-UXI 69 / 0 · B-UXS 69 / 0 · CC-01 31 / 0 · mutations D-086 26 / 26 · captures identiques au pixel près. Conditions : ① total ✅ · ② code 1 (la conséquence du rouge, pas un plantage) · ③ arbre inchangé ✅ · ④ ❌ **par construction** : les 6 commits de master absents de la branche sont la publication du clone (`clone/`, docs, `BUGS.md` — 0 fichier applicatif de la racine, vérifié) ; la branche part de la source D-085, comme demandé ; une fusion master → branche a été tentée pour verdir ④, puis annulée (bloquée par l'outil de sécurité de la session ; non demandée par le brief). ⛔ **Pas de 2ᵉ passe** : le brief n'en autorise qu'une. Depuis la passe : ce correctif (une valeur CSS et son commentaire) et de la documentation.
+
+**À faire** : une passe complète sur l'arbre final, après refusion de master, avant toute intégration (protocole #13) ; recette iPhone de Michel ; feu vert de Michel avant toute régénération du clone, intégration ou
+publication.
+
+### 💬 D-087 — LA NOTE DE LA DERNIÈRE FOIS + CONTRÔLE DE NON-RÉGRESSION DE LA REFONTE (18/10/2026, brief « Claude Principal ») — MÊME BRANCHE LOCALE `claude/ux-d086`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-d086` @ `be27b060` (D-086 qualifié, passe faite) ; code D-087 en `97931827`. Master `dbb50941`, production `ft-v1256` et clone en ligne non
+touchés. ⛔ Aucun push, aucun appel réel à Milo (brief de Michel).
+
+**La fonction (décision D-087)** : un point bleu discret sur le 💬 de « Note perso » quand la DERNIÈRE séance de l'exercice (la même que « Précédent »,
+`_prevSeance`) porte une note ; un appui ouvre la note en LECTURE SEULE avec la date de cette séance (`#ov-ex-note-prev`) ; rien n'est recopié, prérempli ni
+modifié dans la note du jour ; aucun indicateur sans note (une note plus ancienne ne remonte pas). Zone d'appui 44 × 44 qui ne recouvre ni le champ ni les
+boutons voisins ; le « + » central ne bouge pas (mesuré aux 4 largeurs). ⚠️ **Différence visible mesurée** : avec le point, la ligne de note fait **45 px au lieu de
+37** et le texte démarre **13 px plus à droite** (360 → 430 px) ; sans point, rien ne change.
+
+**Conservation et Milo (simulé, 0 appel)** : chemin vérifié champ → `saveExNote` → `S.wkt` → `finishWorkout` (les exercices gardent leur note) → `S.sessions` →
+`buildCoachContext` (`[note: …]` sur la séance, commentaires de série `[💬 …]` sur LEUR série) ; contexte de Milo **identique à l'octet** entre l'ancien code
+(`dbb50941`), D-085 et D-086/087 sur les mêmes données et la même heure (78 856 caractères). ⚠️ Mesuré : le champ porte aussi la consigne d'un programme ou de
+Milo recopiée au chargement (`_loadProgDayVraiment`, `_loadProgVraiment`, `_applyMiloSession`, `_startSessionFromMilo`) et la mention « ⚡ Montée en charge … » :
+le point montre alors ce texte (exemple : « Dos calé, cran 4, 2 s en descente »), comme Milo le reçoit déjà. Proposition à part, NON faite : ne pas montrer le
+point quand la note précédente est identique au champ du jour.
+
+**Tests** : banc B-NOTE (`tests/parcours/notes_d087.js`, `tools/banc_notes_d087.js`, 9 points × 360 / 375 / 390 / 430 px) **70 / 0** ; sur le code d'avant D-087
+(`6a1b2b9e`) **50 / 20** (les 20 rouges sont exactement les témoins du point et de la fiche ; les 50 verts protègent l'existant : conservation, commentaires,
+types, Milo) ; contrôle négatif `tools/mut_notes_d087.py` **21 / 21** (M00 + 19 ciblées + 1 équivalente ; arbre sain 0 au début et à la fin ; un 1ᵉʳ passage à
+19 / 21 venait de l'outil — une ancre non unique, un plantage du banc quand « Fermer » est cassé — corrigés, puis tout rejoué). Bancs voisins (sélecteur) :
+ml_a 34 / 0 · cc01_dropset 31 / 0 · ml_b 60 / 0 · ux_d086 122 / 0 · ux_integration 69 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · seance_ux 69 / 0.
+Pas de passe complète (brief : pas pour une correction minime ; obligatoire avant toute publication, sur le code final intégré).
+
+**Comparaison fonctionnelle ancien code (`dbb50941`) / D-085 (`6d9b6c90`) / D-086-087** — mêmes gestes réels rejoués sur les trois (dossier de session, hors
+dépôt) : **aucune donnée perdue, aucune fonction perdue** dans le périmètre (types, « Précédent », commentaires, note d'exercice, historique, Milo, séries,
+repos, chrono). **Déplacées** (décision D-083) : ↑ / ↓, 📊 et ✕ des cartes repliées → menu ⋯ de la carte ouverte ; Pause, Tout dérouler, Grouper, Programmes,
+Vider, Abandonner → menu ⋯ de la séance ; 1:00 / 1:30 / 2:00 → « Régler » (+ 30 s, 45 s) ; « Skip » → « Passer » ; la poignée « glisser pour créer un superset »
+seulement sur la carte ouverte. **Corrigées** : type visible, commentaire de la dernière fois sur sa série exacte. **Nouvelle** : la note de la dernière fois.
+**⚠️ Une différence à faire trancher par Michel** : « 📷 J'ai déjà un programme ou un historique » n'est plus visible PENDANT une séance (seulement avant) ;
+l'import de programme reste possible par ⋯ → Programmes, **l'import d'historique n'est plus atteignable pendant une séance** (il l'était dans l'ancien écran).
+Non corrigé (hors périmètre validé).
+
+**Prompt réel de Milo** : régénéré depuis le code D-087 sur une COPIE de `tools/dump_prompt.js` (l'outil écrit dans le dépôt principal, chemin codé en dur — il l'a fait une 2ᵉ fois aujourd'hui, remis à l'identique, `BUGS.md` §83 ⑦) : identique à la référence sauf la phrase de l'heure (87 caractères).
+
+**Règle #17** : 0 donnée persistée · 2 fichiers applicatifs (`log.js`, `style.css`) · +34 / −1 · 0 ancien chemin supprimé — la note se lit par le propriétaire
+existant `_prevSeance`, aucune copie.
+
+**À faire** : passe complète sur l'arbre final après refusion de master (protocole #13) ; recette iPhone de Michel ; textes d'aide (chantier AIDES-01 : le point
+de la note n'est décrit nulle part, règle d'or #11) ; feu vert de Michel avant tout push, clone ou publication.
+
+### 📥 BRIEF « D-088 » — FINALISATION DE D-087 ET PROTECTION DES FONCTIONNALITÉS (18/10/2026, décisions **D-089**) — MÊME BRANCHE LOCALE `claude/ux-d086`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-d086` @ `f2457ec8` (D-087 clos). Master `dbb50941`, production `ft-v1256` et clone en ligne non touchés ; dépôt principal propre.
+⛔ Aucun push, aucun appel réel à Milo, ni Nutrition ni AIDES-01, les 3 autres arbitrages de D-086 non touchés (brief de Michel).
+
+**① Import d'historique pendant la séance (« OUI » de Michel).** « … » → « Importer un historique », juste après « Programmes », par le MÊME moteur
+que l'ancien écran (`openImportHist`) : **16 fonctions et les 2 fenêtres d'import identiques au caractère près** à la production (`ft-v1256`). Le moteur
+n'écrit que l'historique (`S.sessions`), ni `S.wkt` ni sa copie de secours ; conflit de date « Les 2 » par défaut, « Remplacer » explicite et limité à la
+séance TERMINÉE ; la fin de séance ne fusionne rien par date et la reprise du brouillon se fait par `runId` — **l'ancien fonctionnement n'écrase pas une
+séance en cours, aucune règle de fusion nouvelle n'était nécessaire** (mesuré dans le code ET par les gestes). L'import de programme garde sa porte.
+Sous-titre de l'entrée sur une ligne (l'ancien passait sur deux jusqu'à 390 px) ↪️ *18/10, mesuré dans le clone (R23) : une ligne à 375 / 390 / 430 px, **deux à 360 px**.* iPhone, mesuré : le « + » ne bouge pas (4 largeurs) ; la feuille du menu
+défile à 375 × 667 (« Abandonner » et « Fermer » sous le bord, atteignables — elle défilait déjà pour « Fermer ») ; à 360 × 740 « Fermer » passe sous le bord.
+
+**② Note de la dernière séance.** Fiche et indicateur : « Note de la dernière séance » ; point gardé même si le texte du jour est identique (la proposition
+de le masquer n'est PAS appliquée) ; aucune origine devinée (`_milo` / `progLabel` décrivent l'exercice / la séance, pas l'auteur) ; aucun stockage ajouté.
+**Contexte de Milo simulé** (4 jeux × 2 questions, horloge figée, 0 requête IA) : **8 contextes identiques à l'octet** entre le code d'avant ce brief, la
+branche et la production ; les notes y figurent (contrôle positif).
+
+**③ Outil du prompt de Milo.** Cause exacte : **deux** chemins codés en dur dans `tools/dump_prompt.js` (`ROOT`, ligne 12 — la lecture ; la sortie,
+ligne 99 — l'écriture). Garde appliqué (+12 lignes) : refus hors de la racine du dépôt principal (code 2, aucune lecture ni écriture) ; les deux lignes
+restent mot pour mot (`tools/gen_milo_consolidation_pdf.py` les remplace texte pour texte). Prouvé uniquement en environnement temporaire (copie, leurre de
+dépôt principal, garde d'écriture préchargé) ; rejoué par le banc à chaque passage (leurre + garde éprouvé sur zone jetable). **Proposition en attente de
+validation** (version qui marche depuis une branche, touche aussi le générateur). Autres outils au chemin codé en dur relevés, non corrigés (`BUGS.md` §83 ⑦).
+
+**Tests** : banc **B-D088** (`tests/parcours/d088_import_notes.js`, `tools/banc_d088.js`) **52 / 0** (code d'avant ce brief : 20 / 32 ; production : 29 / 23) ; contrôle négatif `tools/mut_d088.py` **23 / 23** (arbre sain 0 au début et à la fin) ;
+banc des notes **70 / 0**, `tools/mut_notes_d087.py` **21 / 21** (ancre M14 sur la nouvelle appellation) ; bancs voisins (sélecteur) : ux_d086 122 / 0 · cc01_dropset 31 / 0 · seance_ux 69 / 0 · ux_integration 69 / 0 · ml_a 34 / 0 · ml_b 60 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · debrief_demande 62 / 0 ; annexe 14 PASS + 1 défaut connu (discussions : taille du contexte de Milo, préexistant — contexte identique à l'octet).
+Pas de passe complète (brief : pas pour ces corrections ; obligatoire sur la version préparée pour publication).
+
+**Comparaison ancien parcours / nouveau** (même banc, mêmes gestes, IA d'import simulée) : en production l'ancienne ligne ouvre le même moteur 8 fois sur 8
+et tous les témoins d'import sont verts — seuls rougissent l'entrée du menu, la fiche renommée (le point de D-087 n'y existe pas) et l'outil non confiné ;
+sur le code d'avant ce brief, l'import n'est atteignable par **aucune** porte pendant la séance (0 / 8). Menu « … » : 8 → 9 lignes, « + » identique aux 4 largeurs, toutes les lignes atteignables (témoin `B-D088-IMP-①e`).
+
+**Règle #17** : 0 donnée persistée · 1 fichier applicatif (`log.js`) + 1 outil (`tools/dump_prompt.js`) · +17 / −3 dans `log.js` (2 lignes de code nouvelles, 3 libellés modifiés, le reste en commentaires) · 0 ancien chemin supprimé (le chemin de
+l'ancien écran est réutilisé, aucun moteur ajouté).
+
+**À faire** : passe complète sur l'arbre final après refusion de master ; aides (règle d'or #11 : la ligne du menu, la fiche renommée — chantier AIDES-01) ;
+recette iPhone de Michel ; décision de Michel sur la proposition de l'outil ; feu vert de Michel avant tout push, clone ou publication.
+
+### 🧪 D-088 SUR LE CLONE DE TEST — PUBLIÉ (18/10/2026, autorisation explicite de Michel : le clone SEULEMENT, production `ft-v1256` intouchée)
+
+**Quoi.** `clone/` régénéré par `tools/clone_build.py` depuis `claude/ux-d086` @ `0965619d` = D-088 (`434fa100`) + refusion de master `dbb50941`
+(documentation et clone D-085 : fichiers de l'app identiques à `434fa100`). Commit master `75288092` : **uniquement `clone/`** (5 fichiers : `CLONE-SOURCE.json`,
+`coach.js`, `index.html`, `log.js`, `style.css` — exactement les fichiers de code changés entre D-085 `6d9b6c90` et D-088), sans `[skip ci]`, avance rapide ;
+Pages n°1354 SUCCESS, seul workflow déclenché (Apps Script et Worker filtrés par chemins). La branche `claude/ux-d086` est poussée et porte cette documentation.
+
+**Production.** Avant : arbre de publication = master + `clone/` régénéré, 0 fichier hors `clone/`, `sw.js` `ft-v1256`, `check_regles` code 0 ; fichiers servis
+changés depuis le dernier publié `ac71030f` (`BUGS.md` §81) : `clone/` seulement. Après (API GitHub) : parent `dbb50941`, 1 118 fichiers hors `clone/` identiques,
+`sw.js` `ft-v1256`. Site en ligne non relisible d'ici (proxy : `CONNECT tunnel failed, 403` vers github.io).
+
+**Tests.** Passe complète D-031 **7 505 ✅ / 0 ❌** sur `0965619d` (4 conditions vertes, 83 min) ; annexe 14 PASS + 1 défaut connu (rejouée sans charge ; au 1er passage, pendant la passe : 1 FAIL `pwa-offline` P9, cause mesurée : minutage du témoin) ; isolement 22 / 0, contrôle négatif 8 / 8 ;
+à travers le clone (shim actif) : B-D086 122 / 0, B-NOTE 70 / 0, B-UXI 69 / 0, B-UXS 69 / 0, sonde réseau 11 / 0 ; B-D088 41 / 11 **dont les 11 rouges viennent
+tous de la coupure réseau du clone** (prouvé : une copie du clone avec le SEUL réseau rouvert — mutation MI5 — donne 52 / 0 ; `BUGS.md` §84) ; données
+clone = source 7 / 7 et clone = prod 7 / 7 ; 21 captures avec le vrai service worker du clone, « + » identique à D-085 aux 3 largeurs (règle d'or #9, mesuré).
+
+**Annexe — le rouge du 1er passage.** Lancée pendant la passe, l'annexe a eu 1 FAIL : `pwa-offline` P9 (« le serveur n'a reçu aucune
+requête après la coupure » → 23). Cause mesurée (copie instrumentée du test, hors dépôt) : après s'être activé, le service worker télécharge les images
+d'exercices en arrière-plan (voulu, `sw.js` identique à la prod) ; sur une machine chargée, ce flux est encore en cours à la coupure et le test le compte
+« après ». Rejoué seul : 11 / 0 ; annexe entière rejouée sans charge : 14 PASS + 1 défaut connu. Fragilité du TÉMOIN (minutage), pas de l'app — témoin
+non modifié.
+
+**Ce que le clone ne peut pas montrer (D-084, voulu).** La lecture par l'IA de l'import (« Erreur analyse : Clone de test : réseau coupé vers … », retour à
+l'étape 2, rien n'est écrit) ; les réponses de Milo (la question s'affiche datée, puis une bulle d'erreur datée, badge « Gardien » réservé au clone) ;
+synchro et restauration.
+
+**Réserves pour la recette.** 8 images « muscles » en 404 au tout premier chargement, avant que le service worker du clone prenne la main (déjà vu avec
+D-085) ; diapo « Séance » du Guide = image de la prod ; une page déjà ouverte garde l'ancien clone jusqu'au rechargement ; seule sortie réseau observée :
+l'image QR de partage (lien public de l'app, identique en prod).
+
+**Règle #17** : non déclenchée côté application (0 donnée, 0 fichier applicatif, 0 chemin) — seul `clone/` est régénéré par l'outil existant.
+**Durées** : estimé ≈ 2 h 15 (travail ≈ 50 min, tests ≈ 85 min de passe + ≈ 20 min en parallèle, risques à part) ; mesuré 103 min (17:08 → 18:51 UTC),
+passe 83 min ; aucun risque survenu ; travail non prévu : diagnostic de l'import et de Milo coupés dans le clone, deux artefacts de banc (§84).
+**Suite** : recette iPhone de Michel sur le clone ; intégration dans l'app réelle = nouvelle autorisation explicite ; les 3 arbitrages D-086 restent ouverts.
+
+### 🧍🧍 « TA SÉANCE JUSQU'ICI » : FACE · CHIFFRES · DOS (18/10/2026, décision **D-091**, qui remplace **D-090**) — BRANCHE LOCALE `claude/ux-fig-face-dos-v2`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Base** : `claude/ux-d086` @ `daa1a737` (= code D-088 : fichiers de l'app identiques à `0965619d`). Master `75288092`, production `ft-v1256` et clone
+en ligne non touchés ; dépôt principal propre. ⛔ Aucun push (brief) ; aucun appel réel à Milo ; ni Nutrition, ni OPTI-TEST-02, ni AIDES-01.
+
+**D-090 → D-091 (R30).** La 1ʳᵉ demande du soir (D-090 : une figurine à retourner d'un appui) a été construite et testée sur la branche locale
+`claude/ux-fig-face-dos` (banc 80 / 0, contrôle négatif 24 / 24), puis **remplacée entièrement** par Michel : les deux vues ensemble. Cette branche-là
+reste en local, pour mémoire ; rien n'en a été repris sauf la petite figurine qui sait dessiner le dos (`_mscSVGmini(…, 'dos')`), identique.
+
+**Ce qui change.** « Ta séance jusqu'ici » : la figurine de **face à gauche**, les **chiffres au centre** (durée, séries, volume — empilés), la figurine
+de **dos à droite**, visibles ensemble dès l'ouverture, sans appui ni alternance. Le dos = `_BP`, le dessin de la grande figurine « Muscles travaillés » ;
+les deux sont colorées par le même `_mscScores` (calculé une fois) → `_MG`. Sans paramètre, `_mscSVGmini` rend la face à l'octet : l'Accueil, Progrès et la
+carte du jour gardent une seule vue, de face. Cardio seul : carte inchangée (pas de figurine). Aucune donnée persistée, aucune clé, aucune requête.
+
+**Écart avec les documents UX antérieurs (signalé, demandé par le brief).** La maquette cible du 16/10 et le plan d'intégration prévoyaient **une**
+figurine (de face, « celle des cartes d'historique ») à gauche, les chiffres à droite **et des pastilles de zones** dessous (Pectoraux, Épaules, Triceps) ;
+les pastilles n'ont jamais été construites (D-085) et ne sont pas reprises ici. Les maquettes du 17/10 avaient retiré les figurines (consigne du jour),
+rétablies par D-085 F « silhouette musculaire gardée ». Aucune décision active n'interdit deux vues : D-091 étend D-085 F.
+
+**Mise en page (mesurée).** Figurines de 44 px (petits écrans) à 54 px (430 px), marges et espacements symétriques ; chiffres empilés et centrés.
+Carte : 160 px de haut à 360 px (163 en D-088), 166 à 375, 171 à 390, 186 à 430. Avec les plus longues valeurs (112 min · 24 séries · 37 440 kg) et en
+texte agrandi : rien ne déborde, rien ne se chevauche, aucune valeur coupée. « + » identique au pixel avec et sans la carte, et à D-088 (4 largeurs).
+
+**Tests.** Banc **B-FFD** réécrit (`tests/parcours/fig_face_dos.js`, `tools/banc_fig_face_dos.js`) **64 / 0** — deux oracles indépendants du dessin de
+la petite figurine (la grande figurine ET les données, zone par zone, 10 exercices dont le soulevé de terre), vrais gestes (toucher, coche, sélecteur
+d'exercice, barre du bas, « Terminer la séance », rechargement), 4 largeurs, longues valeurs, texte agrandi, cardio seul. **Sur le code D-088 : 39 rouges / 64** — la nouveauté (2ᵉ figurine, ordre, dos, mise en page à deux vues) ; les 25 autres (chiffres, rien d'écrit, fin de séance, autres figurines, « + », cardio seul) restent verts. Contrôle négatif
+`tools/mut_fig_face_dos.py` **21 / 21** (arbre sain 0 au début et à la fin ; dont 1 équivalente). Bancs voisins (sélecteur) : ux_d086 122 / 0 · seance_ux 69 / 0 · ux_integration 69 / 0 · cc01_dropset 31 / 0 · session_integrity 93 / 0 · seance_date 25 / 0 · debrief_demande 62 / 0 · progres_seances 80 / 0 ; annexe 14 PASS + 1 défaut connu (`discussions`, inchangé) ; `check_regles` code 0 ; sélecteur auto-test 15 / 15 ; `git diff --check`
+propre. Pas de passe complète (brief : obligatoire avant publication). ⚠️ La 1ʳᵉ campagne de contrôles négatifs a trouvé **3 faiblesses du banc** (pas de
+l'app), corrigées puis rejouées : il plantait sur le code D-088 (lecture d'une 2ᵉ figurine absente) ; un témoin relisait la carte après l'avoir réaffichée
+(ce qui effaçait le défaut à détecter) ; une mutation « espacements trop larges » ne cassait rien de visible (la mise en page absorbe), remplacée par
+« figurines collées au bord ».
+
+**Règle #17** : 0 donnée persistée · 3 fichiers applicatifs (`setup.js`, `tracking.js`, `style.css`) · **+27 / −7** lignes (dont 12 de commentaires) ·
+0 ancien chemin supprimé — un chemin RÉUTILISÉ au lieu d'en créer : le dessin et les couleurs de la grande figurine.
+
+**Règle d'or #11** : rien tant que ce n'est pas en production ; à faire avec la mise en production (point rouge, aide « ? » de la Séance, aide détaillée,
+diapo du Guide — chantier AIDES-01). Pop-up : probablement pas (rien à faire pour la personne, rien n'a bougé de place) — à trancher à ce moment-là.
+
+**Remarqué au passage, hors périmètre, non touché.** ① La figurine colore un exercice dès qu'UNE série est cochée, échauffement compris, alors que
+« séries » et « volume » ne comptent que le travail (consigné dans `IDEES-FUTURES.md`, à trancher). ② Même écart dans le message de reprise (`app.js`,
+« Séance en cours — … · N séries validées ») : il compte les échauffements, la carte et l'en-tête non (D-085 ①).
+
+**À faire** : décision de Michel pour le clone ; recette iPhone au doigt ; passe complète D-031 avant toute publication ; règle d'or #11 avec la mise
+en production ; l'Accueil et Progrès doivent-ils montrer aussi le dos (hors périmètre) ?
+
+### 🧍🧍🧮 D-091 FINALISÉE + COMPTAGE D-092 (19/10/2026, « GO pour finaliser D-091 », Michel) — BRANCHE LOCALE `claude/ux-fig-face-dos-v2`, CLONE PRÉPARÉ EN LOCAL (`claude/clone-d091-pub`), RIEN POUSSÉ
+
+**Ce que Michel a demandé.** Valider les deux figurines face · chiffres · dos de « Ta séance jusqu'ici », sans toucher à l'Accueil ni à Progrès ;
+corriger le comptage : **toutes les séries validées, échauffements compris, comptent dans le volume TOTAL et le nombre TOTAL de séries ; les
+statistiques de travail restent distinctes** (registre : **D-092**) ; ni RIR, ni chronomètre ; tests ciblés et contrôles négatifs ; la passe D-031
+seulement sous protection réseau démontrée (zéro appel réel à Milo, Apps Script ou au Worker) ; préparer la publication du clone, arrêt avant tout
+push ou déploiement ; production strictement inchangée.
+
+**Ce qui change (affichage seul).** La carte : « 5 séries · dont 3 de travail », « 3 120 kg · dont 2 240 kg de travail » ; sans échauffement, rien
+n'est ajouté (« 24 séries », « 37 440 kg »). Le « dont N de travail » est le nombre de « N / M » en haut (D-083 ①, inchangée) ; le « dont … kg de
+travail » est exactement le volume de l'écran de fin, de Progrès et de l'Accueil. Le volume vient de LA règle (`_workVol`, 2ᵉ argument optionnel
+`avecEchauffements`) ; sans lui rien ne change : séance enregistrée, Progrès, Accueil, résumés de la semaine, Milo.
+
+**Écart existant corrigé au passage (BUGS §85).** La carte avait sa propre copie de la règle de volume, sans la convention unilatérale : un Curl
+Haltères y valait la moitié du volume enregistré (416 kg affichés, 832 kg enregistrés et montrés à l'écran de fin).
+
+**Mesures.**
+- Banc B-FFD **77 / 0** (10 témoins nouveaux ou réécrits : ④b × 4 largeurs, ⑧a, ⑧d, ⑩a → ⑩g ; valeurs comptées À LA MAIN + formule recalculée
+  dans le test) ; sur le code d'avant (`e4e49152`) : **67 / 10** — exactement les 10 du nouveau contrat.
+- Contrôle négatif `tools/mut_fig_face_dos.py` **32 / 32** (arbre sain 0 rouge au début et à la fin ; M00b = le code de D-091 d'avant le comptage ;
+  M21 → M30 visent chacun un rouage du comptage ; 2 équivalentes ; **M18 retirée** avec sa raison, R30 : elle simulait la règle désormais voulue).
+- Différentiel avant / après (horloge, hasard et identifiants figés, réseau coupé, même séance terminée par la vraie porte) : séance enregistrée,
+  **113 clés de stockage**, écran de fin, Accueil, Progrès et détail de séance **identiques à l'octet** ; seule la carte change.
+- Mise en page : libellés sur une ligne à 360 / 375 / 390 / 430 px, texte agrandi compris ; carte 160 px à 360 px (inchangée) ; « + » immobile.
+- Bancs voisins (sélecteur), dans l'environnement isolé : ux_integration 69 / 0 · progres_seances 80 / 0 · seance_ux 69 / 0 · session_integrity
+  93 / 0 · cc01_dropset 31 / 0 · seance_date 25 / 0 · ux_d086 122 / 0 · debrief_demande 62 / 0 · annexe muscles PASS · fig_face_dos 77 / 0 ;
+  `check_regles` 0 défaut (prompt de référence de Milo : sources inchangées).
+- **Passe complète D-031** : **7 582 ✅ / 0 ❌**, 4 conditions vertes (④ revérifiée hors isolement, `git fetch` étant impossible dedans), sur `e8ffb71c` (13:41 → 15:07 UTC, 86 min) — dans l'environnement isolé (ci-dessous).
+- Bloc annexe de la recette (`tools/recette_annexe.py`, isolé) : **14 PASS** + 1 défaut connu (`discussions`, listé dans `tests/recette/defauts-connus.json`) — rejoué sur master `75288092`, isolé de la même façon : sortie du banc `discussions` **identique** (35 / 37, mêmes 2 rouges connus, taille du prompt de Milo au caractère près : « maison » 71 541, « salle » 76 460, partie en cache 68 781).
+- Clone (local, `claude/clone-d091-pub` = `origin/master` + `clone/` seul) : régénéré par `tools/clone_build.py` depuis `e8ffb71c`, isolement
+  22 / 0, contrôle négatif de l'isolement 8 / 8, bancs rejoués À TRAVERS le clone : B-FFD 77 / 0 · ux_d086 122 / 0 · seance_ux 69 / 0 ·
+  ux_integration 69 / 0 ; racine de la production identique octet pour octet à `75288092` (`ft-v1256`) ; 6 fichiers sous `clone/`.
+
+**Protection réseau démontrée (nouveau, hors dépôt).** Les bancs voisins, la passe complète, l'annexe et le clone ont tourné dans un
+**espace réseau neuf** (`unshare -n`) où n'existent que `lo` et une interface factice **sans aucune route vers l'extérieur** (Chromium se croit
+« en ligne », comme un téléphone, sinon l'app passe en mode hors ligne et des bancs testent autre chose — essayé d'abord, deux bancs ont échoué
+pour cette seule raison) ; à la place du mandataire, un **puits** note chaque tentative de sortie et la refuse (403). Canaris dans le même espace,
+AVANT chaque lot (Node puis Chromium) et APRÈS (Node) : serveur local joignable ; Apps Script, Worker et API Anthropic injoignables en direct
+(DNS / réseau) comme par le mandataire (403) ; Chromium : `navigator.onLine = true`, navigation et `fetch()` vers les trois cibles en échec.
+⚠️ Dans cet espace, `git fetch` est impossible : la condition ④ de la passe (aucune publication concurrente) a été revérifiée HORS isolement,
+après la passe. Une garde refuse de lancer quoi que
+ce soit si une cible est joignable (éprouvée sur 4 cas). Passe complète : **7919 tentatives de sortie, toutes refusées** — dont, vers les trois cibles : 487 × script.google.com, 28 × dry-field-e931.forcetracker-app.workers.dev, 2 × api.anthropic.com (canaris compris). Le puits ne voit que l'hôte (tunnel chiffré), pas la requête : il ne dit pas QUEL banc a tenté chaque appel. Le reste : Chromium lui-même (services Google), l'image QR de partage, Open Food Facts. **Aucune n'a quitté la machine : zéro appel réel à Milo, Apps Script ou au Worker.**
+
+**Avant l'outil d'isolement** (12:49 → 13:13 UTC) : le banc B-FFD avant / après, le contrôle négatif (32 mutations) et le différentiel ont
+tourné sur le réseau normal de la session, **protégés par le banc lui-même** : toute requête de la page hors du serveur local est interceptée et
+annulée AVANT de partir (`route` → `abort`, service worker bloqué), et le témoin ⑩y exige zéro appel d'IA sur tout le parcours. Ce qui n'est pas une
+requête de la page (connexions de Chromium lui-même) n'y est pas couvert — c'est précisément ce que l'espace isolé ajoute.
+
+**Remarqué au passage, hors périmètre, non touché.** ① `tools/banc_clone_isolation.js` (et son contrôle négatif) ouvre la VRAIE app et tente
+exprès des appels vers Apps Script, un Worker et Supabase, sans couper lui-même le réseau : hors isolement, il dépend du mandataire de la session.
+Dans ce lot, tout a été refusé par le puits. ② L'écran de fin affiche « Volume » et « Séries » de TRAVAIL sans le dire (ses chiffres égalent le
+« dont … de travail » de la carte), comme le débrief local — à décider par Michel. ③ Pendant le banc du débrief, Chromium a ouvert 2 tunnels
+vers le Worker sans aucune requête de page (trace : aucune requête partie sur le réseau) ; refusés.
+
+**Règle #17** : D-092 seul : 0 donnée persistée · 2 fichiers applicatifs (`log.js`, `tracking.js`) · **+17 / −7** (dont 11 lignes de commentaire)
+· **1 ancien chemin fusionné** (la copie de la règle de volume de la carte → `_workVol`). D-091 + D-092 : 0 donnée · 4 fichiers (`log.js`,
+`setup.js`, `style.css`, `tracking.js`) · **+44 / −14** · 1 chemin fusionné + 1 réutilisé (le dessin de dos de la grande figurine).
+
+**Règle d'or #11** : rien pour le clone ; à faire avec la mise en production (point rouge, aide « ? » de la Séance, aide détaillée, diapo du Guide —
+la carte n'y est décrite nulle part aujourd'hui). Pop-up : probablement pas (rien à faire, rien n'a bougé de place).
+
+**À faire** : feu vert de Michel pour publier le clone (un push de `claude/clone-d091-pub` sur master, `clone/` seul) ; recette iPhone au doigt ;
+production = autre décision ; ② ci-dessus.
+
+### 🧪 D-091 + D-092 SUR LE CLONE DE TEST — PUBLIÉ (19/10/2026, feu vert de Michel : « clone uniquement, aucune mise en production »)
+
+**Quoi.** Le commit qualifié `ed05faa1` (branche `claude/clone-d091-pub` = master `75288092` + `clone/` régénéré par `tools/clone_build.py` depuis
+`e8ffb71c`) poussé **tel quel** sur master à 17:10:00 UTC, en avance rapide (`75288092..ed05faa1`), sans force. **6 fichiers, tous sous `clone/`**
+(`CLONE-SOURCE.json`, `index.html`, `log.js`, `setup.js`, `style.css`, `tracking.js`). Master n'avait pas bougé depuis la qualification (revérifié
+juste avant le push ; aucune autre session ouverte). Aucune fonctionnalité ajoutée ; ni Apps Script, ni Worker, ni fichier de la production touchés.
+
+**Avant le push.** Branche = master + 1 commit, 0 fichier hors `clone/` ; les **11 fichiers JS du clone = le code testé `e8ffb71c` au caractère près**
+une fois retirée la garde de 2 lignes posée par le générateur, `style.css` aussi (chemins `../` remis) ; `check_regles` code 0 ; workflows : seul
+Pages se déclenche (Apps Script et Worker filtrés par chemins, banc Milo manuel seulement).
+
+**Après le push (API GitHub).** Run Pages **n°1355 succès** (17:10:04 → 17:10:33, 29 s), **seul workflow** de ce commit ; déploiement
+`github-pages` 7179930783 **success** à 17:10:33 (https://michdu75-commits.github.io/forcetracker/) ; comparaison `75288092...ed05faa1` : 1 commit,
+6 fichiers, 0 hors `clone/` ; `sw.js` racine `ft-v1256` ; `clone/CLONE-SOURCE.json` : source `e8ffb71c`, isolement 22 / 0 ; **racine de la production
+identique** (0 fichier hors `clone/`). Le workflow publie tout le dépôt au commit poussé (`checkout` → `upload-pages-artifact`, `path: .`) ; artefact
+de 98 200 175 octets contre 98 197 166 au déploiement précédent (+3 009 ; contenu de `clone/` : +3 047).
+**Non relisible d'ici, mesuré** : le site (`CONNECT tunnel failed, 403` vers github.io) et l'artefact (redirection vers
+`productionresultssa13.blob.core.windows.net`, 403 au CONNECT) → le contrôle à l'écran, c'est la recette iPhone de Michel.
+
+**Isolement clone / production, rejoué sur les fichiers PUBLIÉS** (`git archive ed05faa1`) dans l'espace réseau isolé : banc
+`tools/banc_clone_isolation.js` **22 / 0** (prod remplie puis photographiée brute, clone utilisé normalement puis agressivement, prod rephotographiée :
+identique ; fail-closed) ; puits : **57 tentatives de sortie, toutes refusées** (dont 10 Apps Script, 5 Worker, 2 API Anthropic, canaris compris). Aucun test sur réseau ouvert.
+⚠️ **Incident de l'outil, corrigé** : le mandataire de la session a changé de port en cours de journée (33961 → 43843) ; le 1ᵉʳ rejeu (17:12) a tourné
+avec le puits sur l'ancien port — isolement intact (aucune route ; mandataire injoignable, ECONNREFUSED) mais **sorties non comptées**. L'outil (hors
+dépôt) suit désormais `HTTPS_PROXY`, et sa garde exige les 3 refus 403 du puits avant de lancer quoi que ce soit (éprouvée : puits mal placé →
+commande non lancée ; bien placé → lancée) ; banc rejoué. Les lots de 13:24 à 15:16 ne sont pas concernés (leurs canaris montrent les 3 refus 403
+avant et après).
+
+**Message du commit publié.** Écrit à la préparation, avant le feu vert : il dit « PRÉPARÉ EN LOCAL, NON PUBLIÉ ». Publié tel quel — le corriger
+aurait demandé de réécrire l'historique de master (push forcé, exclu). *Leçon : un commit préparé pour une publication porte un message neutre.*
+
+**Retour arrière (non fait, nouvelle autorisation)** : `git revert ed05faa1` puis push sur master → `clone/` revient à D-088 (`75288092`) ;
+production intouchée dans les deux sens.
+
+**Durées** : estimé ≈ 15 min ; réel **11 min** jusqu'aux documents compris (17:07 → 17:18 UTC ; PDF et rapport en plus). Pages : 29 s, comme
+mesuré. Plus court que prévu malgré deux imprévus — le port du mandataire (puits replacé, garde durcie et éprouvée, banc rejoué ≈ 4 min) et les deux
+vérifications refusées par le mandataire (site, artefact ≈ 2 min) — parce que les contrôles par l'API et les documents, préparés d'avance, ont pris
+moins que les 10 min prévues.
+
+**Reste** : recette iPhone de Michel sur https://michdu75-commits.github.io/forcetracker/clone/ ; la branche source `claude/ux-fig-face-dos-v2`
+(code, tests, registre, cette fiche) n'existe qu'**en local** — la pousser = autre autorisation ; chronomètre persistant et libellés de l'écran de fin :
+chantiers séparés (décision de Michel, 19/10) ; règle d'or #11 avec une éventuelle mise en production.
+### 🔁 RETOUR DE RECETTE iPhone DE D-088 (19/10/2026) — RIR EN SUPERSET ET BARRE DU BAS AU PREMIER LANCEMENT — BRANCHE LOCALE `claude/rir-superset-d088`, NON POUSSÉE, AUCUN CODE DE L'APP MODIFIÉ
+
+**Le retour (Michel).** ① En prod, au repos d'un superset, une question de réserve par exercice ; dans le clone D-088, « une seule question générale ».
+② Au premier lancement du clone sur iPhone, la barre du bas trop basse, replacée après quelques gestes ou un rechargement. Les captures annoncées ne sont
+pas arrivées dans la session (dernier envoi reçu : 18/10 18:24 UTC, le clone D-085).
+
+**① Diagnostic — aucune régression dans le code.** Fonction par fonction, le moteur du RIR est IDENTIQUE entre la prod `ft-v1256` (racine de master
+`75288092`) et D-088 (`0965619d`) : `_renderRirRow`, `_rirQuestionHtml`, `setRir`, `_rirDeSet`, `skipRest`, `_stopRestTimerOnly`, `_restTick`,
+`_nextInGroup`, `_ssMembers`, `createSupersetFrom`, `_doAddToGroup`, `addExercise`, `finishWorkout`. Dans `toggleSet` et `startRest` ne changent que les
+durées proposées (D-086), `_exTermine` (même règle, D-085) et l'appel à `_dockDegager` (affichage). Aucun essai réservé au clone (`__FT_CLONE__`) ne touche
+la séance. Dix parcours par vrais gestes (ordre normal, ordre inversé, échauffements, repos en cours, repos terminé, « Passer », changement d'écran,
+rechargement, trois exercices, superset créé par « ⚡ Super ») donnent le même écran sur la prod, sur D-088 et À TRAVERS le clone publié.
+**Quand la question unique et sans nom apparaît — sur les deux versions** : une seule série attend sa réponse quand le repos démarre. (a) Le 2ᵉ exercice
+du superset validé en premier : c'est lui qui lance le repos du tour. Or au rechargement, et dans une séance montée à la main, l'app ouvre la carte du
+DERNIER exercice (`_expandedEx = exCount-1` ; un programme chargé, lui, ouvre le premier : `_loadProgDayVraiment`). La question du 1ᵉʳ exercice arrive alors
+au repos suivant, nommée, sur sa bonne série. (b) La page rechargée entre les deux séries : la question en attente (`_rirPending`) ne vit qu'en mémoire.
+**Hypothèse la plus probable pour la recette** (non prouvable sans les captures) : dans le clone, séance de test montée à la main ou rechargée → carte du
+2ᵉ exercice ouverte → validé en premier → une seule question ; en prod, séance du programme → 1ᵉʳ exercice ouvert → deux questions.
+**Enregistrement, restauration, usage** : sur les deux versions, chaque réponse s'écrit sur SA série (`set.rir`), est dans le brouillon (`ft4_wkt`), survit
+au rechargement, passe dans la séance terminée, l'export (colonne RIR), le contexte de Milo (« S1 35×12 RIR1 », construit localement, aucun appel) et
+« Précédent » à la séance suivante.
+
+**② Barre du bas — non reproduite.** Mesurée dans Chromium (360 / 375 / 390 / 430 px, profil vierge, service worker actif) : même position en prod et dans
+le clone, au premier chargement (relevés de 150 ms à 6 s), après rechargement et à la 2ᵉ ouverture. Le CSS de la barre (`.nav`, `#root{height:100dvh}`,
+`env(safe-area-inset-bottom)`) est le même qu'en prod et date de juin (`097df966`). Au premier lancement, la page se recharge d'elle-même jusqu'à 3 fois en
+2 secondes (prise de contrôle par le service worker), en prod comme dans le clone. Seule différence propre au clone : la balise `viewport` arrive après le script
+d'isolement (ligne ~152 au lieu de 8) — aucun effet mesuré. Cause non démontrée ici (pas d'iPhone) : un défaut d'iOS au premier lancement d'une app
+fraîchement installée reste l'hypothèse ; la prod, déjà installée, n'y est presque jamais exposée.
+
+**Ce que porte la branche.** Aucun code de l'app. Banc `tests/parcours/rir_superset.js` (blocs B-RSS-① à ⑤, 52 témoins : quatre largeurs, chaîne des
+données, ordre inversé, rechargement, trois exercices, échauffements, dropset, exercice seul) + `tools/banc_rir_superset.js` + contrôle négatif
+`tools/mut_rir_superset.py` ; branché dans la passe et le registre (`SEANCE-RIR-SUPERSET-01`). Banc : **D-088 52 / 0 · prod `ft-v1256` 52 / 0**.
+Contrôle négatif : **17 / 17 conformes**, arbre sain 0 rouge au début et à la fin — dont P00 (tout le code de la prod remis : reste vert) et M2 (le symptôme décrit : le superset n'accumule plus → rouge).
+
+**Propositions — décision de Michel attendue, rien de codé.** (a) Nommer l'exercice dans la question dès qu'elle concerne un superset, même seule.
+(b) Garder la question en attente au rechargement (la liste dans le brouillon de séance ; règle #17 : une donnée persistée de plus, dans `ft4_wkt`).
+(c) Au rechargement (et en séance montée à la main), ouvrir la première série à faire dans l'ordre de la séance et du superset, pas le dernier exercice.
+(d) Barre du bas : une mesure réservée au clone (hauteurs et marges relevées au lancement puis après) pour obtenir les chiffres de l'iPhone — demande une
+mise à jour du clone.
+
+**Règle #17** : non déclenchée côté application (0 donnée, 0 fichier applicatif, 0 chemin).
+**Durée** : ≈ 55 min (05:28 → ≈ 06:25 UTC) — diagnostic et sondes ≈ 25 min, banc ≈ 10 min, contrôle négatif ≈ 20 min (machine), doc ≈ 10 min. Pas de passe
+complète (aucun code de l'app ; obligatoire avant toute publication).
+
+### 🏋️ SÉANCE — CORRECTIONS DE LA RECETTE IPHONE DU 19/10 + « PRÉCÉDENT » SUR 4 SÉANCES (19/10/2026, brief « Claude Principal », décisions **D-093**) — BRANCHE LOCALE `claude/seance-recette-precedent`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Le retour (recette de Michel sur le clone `e8ffb71c`).** ① « 2 / 4 séries » : juste (rien à corriger, protégé). ② Écran de fin : « 4200 kg » sous
+« Volume » alors que la séance totalisait 5 600 kg (1 400 kg d'échauffements). ③ Le premier bouton de la barre de repos, « échec », enregistrait un RIR 0.
+④ Le RIR noté n'apparaissait pas dans le détail d'une séance (il était dans l'export PDF). ⑤ « Précédent » ne montre que la dernière fois ; Michel veut
+comparer les 4 dernières séances de l'exercice. Décisions de Michel (19/10) : « Échec » = le tag X ; anciens 0 « 0 ou échec », rien de réécrit ;
+« kg total » corrigé à l'affichage seulement.
+
+**Causes (mesurées).** ② et le « kg total » du détail lisaient `sess.volume` — le TRAVAIL, sémantique voulue — sous un nom de total (`BUGS.md` §86).
+③ ft-v1154 avait séparé RIR 0 et `X` dans la donnée, le prompt et l'aide détaillée, mais pas le libellé du bouton ni deux textes d'aide (§86).
+« Précédent » : le repli de `_prevAligne` (la dernière série répétée) s'affichait comme un historique (§87).
+
+**Ce qui est fait (code de l'app : `log.js`, `setup.js`, `style.css`, aides dans `screens.js`, `constants.js`, `app.js`, `coach.js`).**
+Sélecteur **Échec · 0 · 1 · 2 · 3 · 4+** (en RPE : ≤6 · 7 · 8 · 9 · 10 · Échec) ; « Échec » pose/retire le tag X, un chiffre repasse en N avec
+`rir` + `rirV: 2`, « ✕ » retire tout ; un ancien 0 ne coche rien et se signale. L'écran de fin : « Volume total · dont … kg de travail » et « Séries
+de travail · N validées » ; la séance enregistrée garde le travail. Le détail : « X kg total · dont Y kg de travail » + la réserve sous chaque série
+(`_reserveHistoTxt`). « Précédent » n'affiche que la série exacte de la dernière fois (« — » au-delà) ; la suggestion grise garde le repli. Nouvelle
+feuille **« 4 dernières séances »** (en-tête « Précédent ▾ » ou ⋯ → « 4 dernières séances ») : séries de travail par rang, échauffements à part,
+« — », même jour en deux colonnes (« 1ʳᵉ · 9 h », « 2ᵉ · 19 h »), RIR / X / notes, légende, aucun verdict, lecture seule ; `_seancesExercice`
+propriétaire de « la dernière fois » et « les N dernières fois ». Aides (règle d'or #11) : point rouge, aide « ? », aide détaillée, Guide, pop-up v79.
+
+**Tests.** Banc `tests/parcours/seance_recette.js` (blocs B-SR-① à ⑦, **77 témoins**, 4 largeurs, les 14 familles du brief) : **77 / 0**
+sur le code ; sur le code d'avant (`400b9034`) **24 verts / 53 rouges** — les verts sont les invariants protégés, les rouges le nouveau
+contrat. Il conduit aussi la chaîne complète (réponses au dock → « Terminer » → séance enregistrée → détail → rechargement) et la
+restauration locale (`_applyRestoreData`, aucune requête), et relit les six sources d'aide. Contrôle négatif `tools/mut_seance_recette.py` :
+**45 / 45 conformes** (arbre sain 0 rouge au début et à la fin ; la 1ʳᵉ campagne, 38 / 39, a fait durcir le témoin ④d — `BUGS.md` §88). Témoins existants mis à jour (R30) : runner CXLII
+(6 boutons), CL (ordre), B-CCCIV (libellés, ancien 0), XIX ④ (le repli n'est plus affiché), B-D086-①a/③a, B-RSS-①b/①c, B-FFD-⑩e ; ancres de
+mutation déplacées : `mut_rir_superset.py` M5, `mut_ux_d086.py` M4/M7. Voisins (sélecteur) : **18 / 18 verts** (`ux_integration` après mise à jour de B-UXI-F5 sur sa garantie, R30 — `BUGS.md` §88). Prompt de Milo
+**identique** entre l'ancien et le nouveau code (400 lignes, seule la ligne des empreintes de fichiers change). 1ʳᵉ passe complète D-031 (sur `87c349cd`) : 7 710 ✅ / 1 ❌ — **un seul rouge, et c'est le mien** : CCLXXVI (depuis le 08/09, aucune limite d'interface en `vh`, règle de cohérence) ; la nouvelle feuille portait `max-height:86vh` → `86dvh` (`b1840bc7`, une ligne de `style.css`, rien d'autre). *Aucun petit banc ne regardait cette règle : c'est la passe ENTIÈRE qui l'a vue.* 2ᵉ passe, en entier : **7 711 ✅ / 0 ❌** sur `b1840bc7` (4 conditions vertes, dans l'espace réseau isolé) ; annexe : 14 PASS + 1 défaut connu (discussions) ; mutations rejouées sur ce même arbre : **45 / 45** conformes.
+
+**Réserves.** ① Milo reçoit toujours « RIR0 » pour un ancien « échec » (aucun changement de contexte sans banc R34) — `JOURNAL-DE-TEST.md`. ②
+« Statistiques » reste la courbe de la charge max (échauffements compris, flèche ±kg / %, même date sans rang) — signalé, pas modifié. ③ « Échec »
+posé depuis la barre de repos ne rallonge pas le repos en cours (comme la pastille posée après la coche). ④ Un exercice présent deux fois dans une
+séance : seul le 1ᵉʳ bloc est lu (comme « Précédent »). ⑤ Le texte de l'aide « Tags de série » (« la lettre s'affiche sur le numéro ») est périmé depuis
+D-086 — hors périmètre, non corrigé.
+
+**Règle #17** : déclenchée — **1 donnée persistée** ajoutée (`rirV` sur une série, seulement sur les réponses nouvelles) · 0 clé de stockage · **7
+fichiers applicatifs** · **+242 − 35** lignes (net +207) · **3 anciens chemins** supprimés ou fusionnés (`_prevSeance` → `_seancesExercice` ; le
+libellé « échec » du cran 0 ; l'affichage du repli dans « Précédent »).
+
+**Clone (local, non poussé).** Candidat `claude/clone-seance-recette` @ `c77c4fe6` : un seul commit au-dessus de master `ed05faa1`, `clone/` seul (source `b1840bc7`) ; isolement 22 / 0 ; B-SR 77 / 0, rir_superset 52 / 0, ux_d086 122 / 0, fig_face_dos 77 / 0, seance_ux 69 / 0, ux_integration 69 / 0 rejoués À TRAVERS le clone. Production `ft-v1256` intouchée. ⏭️ Feu vert de Michel pour publier le clone, puis recette iPhone.
+⚠️ **Contrôle négatif de l'isolement : 7 / 8 pendant la passe complète, puis 8 / 8 rejoué seul, deux fois.** La mutation MI6 (le service worker du clone vide TOUS les caches) n'a pas été vue une fois, alors qu'elle l'avait été aux exécutions précédentes. **Sonde sur une copie** (3 passages avec MI6, 1 sans ; une ligne d'impression ajoutée au banc copié) : caches de la prod avant `["ft-images","ft-v1256"]`, après `["ft-v1256"]` — **`ft-v1256` réapparaît alors que tout a été vidé** : le service worker de la prod le recrée dès qu'il sert une page (son gestionnaire de navigation ouvre `ft-vNN`). B-CLONE-15, qui compare les NOMS des caches, ne voit donc la suppression que par `ft-images`, créé en arrière-plan à l'installation. *Prouvé : la réapparition. Non observé : un relevé de départ sans `ft-images` — la cause probable du 7 / 8.* Le code de D-093 ne touche ni au service worker ni à l'isolement. Piste, non faite ici (l'outil appartient à D-084) : relire les caches hors de la portée du service worker de la prod, ou comparer leur contenu.
+**Publication sur le clone de test (20/10, feu vert de Michel : « aucun passage en production »).** Contrôles avant, tous sur l'arbre EXACT publié (`git archive c77c4fe6`) et dans l'espace réseau isolé : `clone/` seul (9 fichiers, 0 hors `clone/`, un seul commit au-dessus de `ed05faa1`) ; workflows — seul Pages se déclenche (Apps Script et Worker filtrés par chemins, banc Milo manuel) ; isolement 22 / 0 et contrôle négatif **8 / 8** (MI6 vue) ; reproductibilité — le générateur relancé depuis `b1840bc7` redonne le même `clone/` au caractère près, hors la provenance embarquée dans `index.html` (nom de la référence, date), empreinte identique `24c8671e…` ; le diff D-093 n'ajoute ni ne retire aucune API de stockage, de cache ou de réseau ; `check_regles` code 0 ; la branche Sécurité D-031 de Nutrition n'est pas sur origin et ne peut pas être dans le candidat. Ligne du journal de partage poussée sur la branche de session AVANT d'agir (règle #13), close après. Push master `ed05faa1..c77c4fe6` en avance rapide, sans force (11:40 UTC) ; **Pages n°1356 succès (27 s), seul workflow** ; déploiement `github-pages` du commit `c77c4fe6` en succès ; API : `sw.js` racine `ft-v1256`, `clone/CLONE-SOURCE.json` source `b1840bc7`. Site non relisible d'ici (github.io refusé par le mandataire, lecture web : nom introuvable) → le contrôle à l'écran est la recette iPhone de Michel. Retour arrière, si besoin et sur sa décision : `git revert c77c4fe6` poussé sur master remet le clone D-091 + D-092, sans toucher la production.
+**Durée** : 19/10, 18:37 → 20/10 00:58 UTC (chantier) ; publication 20/10, 11:27 → 11:45 UTC.

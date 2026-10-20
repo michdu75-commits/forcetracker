@@ -162,7 +162,9 @@ module.exports.ecran = async function (t, b, PORT) {
     await pg.waitForTimeout(500); return txt.replace(/\s+/g, ' '); };
   /* 🔁 DEBRIEF-ON-DEMAND-01 : terminer n'appelle plus Milo. Ces blocs éprouvent ce qui se passe QUAND la personne
      le demande — `terminer` clique donc « Analyser cette séance avec Milo », comme elle (sauf `sansAnalyse`). */
-  const terminer = async (X, re, sansAnalyse) => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); const f = await clic(X.pg, 'button[onclick="finishWorkout()"]');
+  /* UX SÉANCE (16/10/2026, R30) — la porte de fin est `terminerSeance()` (« Terminer » de l'en-tête et du bas) : s'il reste des séries de TRAVAIL, elle demande « Terminer quand même ? » et on confirme, comme la personne. La conduite change ; ce que le banc mesure ne change pas. */
+  const confirmerFin = async X => { await X.pg.waitForTimeout(150); if (await X.pg.evaluate(() => { const o = document.getElementById('ov-confirm'); return !!(o && o.classList.contains('open')); })) await X.pg.click('#confirm-ok'); };
+  const terminer = async (X, re, sansAnalyse) => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); const f = await clic(X.pg, '.topbar button[onclick="terminerSeance()"]'); await confirmerFin(X);
     if (!sansAnalyse) { await X.pg.waitForTimeout(300); await clic(X.pg, '#se-debrief .se-dbf-go'); }
     return { clic: f, ecran: await attendreDebrief(X.pg, re || /DEBRIEF-SI01|n'a pas pu|Hors ligne/) }; };
   const lire = pg => pg.evaluate(() => {

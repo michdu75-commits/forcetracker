@@ -115,6 +115,28 @@ function _etatTravailWkt(){
   if(_cardioNoteMin()>0 || exs.some(e=>e&&(e.sets||[]).some(s=>s&&s.done))) return 'TRAVAIL';
   return exs.length?'PREPARATION':'RIEN';
 }
+/* 🏋️ UX SÉANCE (16/10/2026, décision ① de Michel) — « N / M séries » ET « IL RESTE N SÉRIES » COMPTENT LES SÉRIES
+   DE TRAVAIL. ⛔ AUCUNE RÈGLE NOUVELLE : c'est celle que `toggleSet` emploie depuis le 25/08 pour dire qu'un exercice
+   est fini (« il n'y reste aucune série de travail »), sortie ici dans UN propriétaire pour que l'en-tête de séance,
+   la confirmation de fin et la carte « terminée » ne la recopient pas (R2).
+   Un palier d'échauffement (`É`, ou l'ancien `W` qu'une vieille sauvegarde peut ramener) ne compte pas ; un échec
+   (`X`) COMPTE — c'est une série faite pour de vrai.
+   ⚠️ CE N'EST PAS `_serieDeTravail` (plus bas) : celle-là répond à « cette série a-t-elle une réserve à déclarer ? »
+   et exclut donc aussi `X`. Deux questions, deux propriétaires — les fusionner changerait l'une des deux. */
+function _estPalierEch(s){ return !!(s && (s.type==='É' || s.type==='W')); }
+function _bilanTravailEx(ex){
+  let total=0, faites=0;
+  for(const s of ((ex&&ex.sets)||[])){ if(!s||_estPalierEch(s)) continue; total++; if(s.done) faites++; }
+  return {total, faites, restantes:total-faites};
+}
+function _bilanTravailWkt(){
+  let total=0, faites=0;
+  for(const ex of ((typeof S!=='undefined'&&S.wkt&&S.wkt.exs)||[])){ const b=_bilanTravailEx(ex); total+=b.total; faites+=b.faites; }
+  return {total, faites, restantes:total-faites};
+}
+// « Exercice terminé » : plus aucune série de travail à faire, et au moins une faite (sans travail validé, rien ne
+// dit qu'on en a fini — R29). Lu par `toggleSet` (avance au suivant) ET par la carte repliée (marque « terminé »).
+function _exTermine(ex){ const b=_bilanTravailEx(ex); return b.restantes===0 && b.faites>0; }
 function _fmtElapsed(){
   if(!S.wkt||!S.wkt.startTs){
     const c=_cardioNoteMin();
@@ -136,21 +158,87 @@ function _startWktChrono(){
 }
 function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChronoIv=null;}}
 // Bouton Pause/Reprendre (affiché tant que la séance tourne, avec ou sans exos)
-function _pauseBtnHtml(){
-  if(!S.wkt||!S.wkt.startTs)return'';
-  const p=_isWktPaused();
-  const ico=p
-    ?'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>'
-    :'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
-  return '<button id="wkt-pause-btn" onclick="toggleWktPause()" style="padding:7px 10px;border-radius:10px;border:1px solid '+(p?'rgba(255,159,10,.45)':'var(--sep)')+';background:'+(p?'rgba(255,159,10,.14)':'var(--bg3)')+';color:'+(p?'var(--orange)':'var(--t2)')+';font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;">'+ico+(p?'Reprendre':'Pause')+'</button>';
+/* 🏋️ UX SÉANCE (16/10/2026, décision ② de Michel) — L'EN-TÊTE DE LA SÉANCE OUVERTE VIT DANS LA BARRE HAUTE.
+   Pendant une séance, la barre de marque (logo, aide « ? », partage, Sheets) laisse la place à ce qui sert À LA
+   SALLE : l'état (en cours / en pause), le chrono, « N / M séries » de TRAVAIL, le menu ⋯ et « Terminer ». Les
+   autres écrans gardent la barre de marque (la règle CSS ne joue que sur `#root.on-log.seance-on`).
+   ⛔ AUCUN ÉTAT NOUVEAU : tout se lit sur `S.wkt` par les propriétaires existants (`_seanceOuverte`,
+   `_isWktPaused`, `_fmtElapsed`, `_bilanTravailWkt`, `_contenuFinSeance`). Le seul ajout est une CLASSE
+   d'affichage (`#root.seance-on`), recalculée à chaque rendu — jamais stockée.
+   ⭐ Et c'est ce même rendu qui tient le bouton central à jour (pastille + libellé, décision ⑤) : une séance
+   ouverte = UNE vérité, lue à un seul endroit.
+   R30 : l'ancien en-tête de l'écran (« Séance » + chrono + Pause ✕ Vider Changer) n'est pas perdu, il est RANGÉ :
+   le chrono est ici, Pause / Vider / Abandonner / Programmes sont dans le menu ⋯ (`openWktMenu`), la reprise
+   d'une pause est ici (bouton ▶). Chaque action garde son propriétaire. */
+/* 🏷️ « SÉANCE PRÊTE » (décision M de Michel, 17/10/2026 — D-085). Un programme chargé dont aucune série n'est faite
+   n'est pas « en cours » : on le DIT « prête ». ⛔ AFFICHAGE SEUL — `_seanceOuverte()` (la règle métier lue par
+   l'Accueil, la Nutrition, la reprise et le point du « + ») ne change pas : une séance prête reste OUVERTE.
+   Prête = ouverte, chrono pas encore parti (`startTs` se pose à la 1ʳᵉ série validée), rien à enregistrer (aucune
+   série faite, aucun cardio noté) — les propriétaires existants répondent, rien n'est stocké. */
+function _seancePrete(){
+  if(!_seanceOuverte()||S.wkt.startTs) return false;
+  const c=(typeof _contenuFinSeance==='function')?_contenuFinSeance():{fait:false,cardio:false};
+  return !c.fait && !c.cardio && !(_cardioNoteMin()>0);
 }
-// Rafraîchit l'affichage chrono + bouton sans re-render complet
-function _syncWktPauseUI(){
-  const c=document.getElementById('wkt-chrono');
-  if(c){c.textContent=_fmtElapsed();c.style.color=_isWktPaused()?'var(--orange)':'var(--t3)';}
-  const b=document.getElementById('wkt-pause-btn');
-  if(b)b.outerHTML=_pauseBtnHtml();
+function _renderEnteteSeance(){
+  const ouverte=_seanceOuverte();
+  const root=document.getElementById('root'); if(root) root.classList.toggle('seance-on',ouverte);
+  const nb=document.getElementById('nb-log'); if(nb) nb.setAttribute('aria-label',ouverte?'Revenir à ta séance':'Démarrer une séance');
+  const el=document.getElementById('tb-seance'); if(!el) return;
+  if(!ouverte){ el.innerHTML=''; return; }
+  const p=_isWktPaused(), b=_bilanTravailWkt(), c=_contenuFinSeance(), exs=S.wkt.exs||[], pret=_seancePrete();
+  const lbl=S.wkt.progLabel||((!exs.length&&_cardioNoteMin()>0)?'Cardio':'Séance libre');
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // L'unité et le libellé sont dans LEUR élément : la traduction (translations.js) ne remplace qu'un texte EXACT.
+  // ⚠️ Ce dictionnaire n'est chargé par AUCUNE page aujourd'hui (mesuré le 16/10 ; connu depuis 348556e1) : sans effet visible.
+  const progres=b.total?(b.faites+' / '+b.total+' <span>'+(b.total>1?'séries':'série')+'</span>'):'';
+  const ic=(d,f)=>'<svg viewBox="0 0 24 24" aria-hidden="true" '+(f?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"')+'>'+d+'</svg>';
+  const segs=exs.map(ex=>{ const x=_bilanTravailEx(ex), pct=x.total?Math.round(x.faites/x.total*100):0;
+    return '<i'+(_exTermine(ex)?' class="ok"':'')+'><b style="width:'+pct+'%"></b></i>'; }).join('');
+  el.innerHTML='<div class="tbs-r'+(p?' tbs-pause':'')+(pret?' tbs-pret':'')+'">'
+    +'<div class="tbs-meta"><b class="tbs-etat"><span class="tbs-live" aria-hidden="true"></span>'+(p?'Séance en pause':pret?'Séance prête':'Séance en cours')+'</b>'
+    +(pret
+      // prête : « Push · 0 / 7 séries » — pas de chrono (il n'est pas parti) ; l'élément reste là, caché, pour son propriétaire
+      ?'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono" hidden>'+_fmtElapsed()+'</span><span>'+esc(lbl)+'</span>'+(progres?' · '+progres:'')+'</span></div>'
+      :'<span class="tbs-l2"><span id="wkt-chrono" class="tbs-chrono">'+_fmtElapsed()+'</span>'+(progres?' · '+progres:'')+' · <span>'+esc(lbl)+'</span></span></div>')
+    +(p?'<button id="wkt-pause-btn" class="tbs-btn tbs-rep" onclick="toggleWktPause()" aria-label="Reprendre la séance" title="Reprendre">'+ic('<path d="M7 4l13 8-13 8z"/>',1)+'</button>':'')
+    +'<button class="tbs-btn" onclick="openWktMenu()" aria-label="Plus d\'actions sur la séance" aria-haspopup="dialog">'+ic('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>',1)+'</button>'
+    +((c.fait||c.cardio)?'<button class="tbs-fin" onclick="terminerSeance()">'+ic('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>')+'Terminer</button>':'')
+    +'</div>'
+    +(exs.length?'<div id="tbs-segs" class="tbs-segs" role="img" aria-label="Progression : '+b.faites+' série'+(b.faites>1?'s':'')+' de travail sur '+b.total+'">'+segs+'</div>':'');
 }
+/* ⌨️ CLAVIER OUVERT PENDANT LA SAISIE D'UNE SÉRIE (décision H de Michel, 17/10/2026 — D-085).
+   Pendant qu'on tape des reps ou une charge, la barre du bas se MASQUE (elle revient à la fermeture du clavier) et la
+   ligne en cours est ramenée au-dessus du clavier. ⛔ Affichage seul : une classe sur `#root` (`kbd-serie`), posée par le
+   focus d'un champ de série de l'écran Séance et retirée quand plus aucun ne l'a — rien n'est stocké, aucune donnée ne
+   change. ⚠️ Sur iOS le clavier ne rétrécit pas `innerHeight` : la hauteur visible se lit sur `visualViewport` (même
+   règle que app.js). Le vrai clavier iPhone n'est pas reproductible ici : recette iPhone obligatoire. */
+function _estChampSerie(el){ return !!(el&&el.classList&&el.classList.contains('sinp')&&el.closest&&el.closest('#s-log')); }
+function _garderLigneVisible(el){
+  try{
+    const row=el.closest('.set-row')||el, scr=el.closest('.screen'); if(!scr) return;
+    const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+    const r=row.getBoundingClientRect(), bas=vh-16, haut=96;   // 96 : sous l'en-tête de séance
+    if(r.bottom>bas) scr.scrollTop+=r.bottom-bas;
+    else if(r.top<haut) scr.scrollTop-=haut-r.top;
+  }catch(e){}
+}
+function _clavierSerie(on,el){
+  const root=document.getElementById('root'); if(!root) return;
+  root.classList.toggle('kbd-serie',!!on);
+  if(on&&el){ _garderLigneVisible(el); setTimeout(()=>{ if(document.activeElement===el) _garderLigneVisible(el); },320); }
+}
+document.addEventListener('focusin',e=>{ if(_estChampSerie(e.target)) _clavierSerie(true,e.target); });
+document.addEventListener('focusout',e=>{
+  if(!_estChampSerie(e.target)) return;
+  // le focus passe souvent d'un champ au suivant (reps → kg) : on attend de savoir où il va avant de rendre la barre
+  setTimeout(()=>{ if(!_estChampSerie(document.activeElement)) _clavierSerie(false); },60);
+});
+if(window.visualViewport) window.visualViewport.addEventListener('resize',()=>{
+  const a=document.activeElement; if(_estChampSerie(a)) _garderLigneVisible(a);
+});
+// Rafraîchit l'en-tête après une pause / une reprise (le chrono, l'état et le bouton ▶ vivent au même endroit).
+function _syncWktPauseUI(){ _renderEnteteSeance(); }
 // Met la séance en pause ou la reprend — fige/relance le chrono de durée.
 // Le temps en pause n'est PAS compté dans la durée finale de la séance.
 function toggleWktPause(){
@@ -223,9 +311,113 @@ function startWorkout(){
   _syncWakeLock();
 }
 function _fmtWktDate(d){
+  // UX SÉANCE (16/10) : le jour même, la puce de date dit « Aujourd'hui » (cible validée) ; sinon la date longue.
+  if(d===today()) return 'Aujourd\'hui';
   const dt=new Date(d+'T12:00:00');
   return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 }
+/* 🏋️ UX SÉANCE (16/10/2026, cadrage validé par Michel) — AVANT LA SÉANCE : « Séance libre », puis « Programme »,
+   puis le contexte du jour (récup + dernière séance, SECONDAIRE), puis les types de séance, et seulement ensuite le
+   cardio et l'import. Les boutons sont dans la page (index.html, `#log-avant`) ; ce rendu ne remplit que ce qui
+   dépend des données. ⛔ Rien d'inventé : la récup vient de `calcRecoveryScore`/`getRecoveryInfo` (Accueil), le nom
+   de la dernière séance de `_calSessLabel` (calendrier), sa figurine de `_mscSVGmini(_mscScores(…))` (Progrès). */
+function _renderAvantSeance(){
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const sub=document.getElementById('la-prog-sub');
+  if(sub){ const pr=(S.programmes||[]).filter(p=>p&&p.name);
+    sub.textContent=pr.length?(pr.length+' programme'+(pr.length>1?'s':'')+' · '+pr.slice(0,3).map(p=>p.name).join(', ')):'Crée ou importe ton programme'; }
+  const ctx=document.getElementById('la-ctx'); if(!ctx) return;
+  if(_seanceOuverte()){ ctx.innerHTML=''; return; }
+  let html='';
+  try{
+    const der=(S.sessions||[])[0]||null;            // la plus récente : `_trierSeances` range S.sessions (state.js)
+    let score=null; try{ if(typeof calcRecoveryScore==='function') score=calcRecoveryScore(); }catch(e){ score=null; }
+    const info=(score!==null&&typeof getRecoveryInfo==='function')?getRecoveryInfo(score):null;
+    const parts=[];
+    if(info) parts.push('<span class="la-recup" style="--c:'+info.color+'"><i></i>Récup '+score+' · '+esc(info.label)+'</span>');
+    if(der&&der.date){
+      const nom=(typeof _calSessLabel==='function')?_calSessLabel(der):(der.progLabel||'Séance');
+      const quand=new Date(der.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+      parts.push('<span class="la-der">Dernière séance : <b>'+esc(nom)+'</b> · '+esc(quand)+'</span>');
+    }
+    let fig='';
+    if(der&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
+      try{ fig=_mscSVGmini(_mscScores(der.exs||der.exercises||[])).replace('width:32px','width:28px'); }catch(e){ fig=''; }
+    }
+    if(parts.length) html='<div class="la-ctx">'+(fig?'<div class="la-fig" role="img" aria-label="Muscles travaillés à la dernière séance">'+fig+'</div>':'')
+      +'<div class="la-ctx-t">'+parts.join('')+'</div></div>';
+  }catch(e){ html=''; }
+  ctx.innerHTML=html;
+}
+/* 🏁 UX SÉANCE (16/10/2026, cadrage validé — « Terminer intelligent ») — LA porte de fin de séance.
+   Le « Terminer » de l'en-tête, le « 🏁 Terminer la séance » du bas et le « 🔄 Réessayer » après un stockage plein
+   passent TOUS ici (un propriétaire, R2), et c'est toujours `finishWorkout()` qui enregistre — inchangé.
+   ⭐ La question ne se pose que si elle a un sens : 0 série de TRAVAIL restante (échauffements sautés compris,
+   décision ①) → on enregistre tout de suite ; sinon « Il reste N séries à faire · Terminer quand même ? ».
+   ⛔ « Continuer la séance » ne touche à RIEN. Une séance de cardio seul n'a aucune série : elle s'enregistre. */
+function terminerSeance(){
+  if(!S.wkt) return;
+  const n=_bilanTravailWkt().restantes;
+  if(n<=0) return finishWorkout();
+  showConfirm('Il reste '+n+' série'+(n>1?'s':'')+' à faire','Terminer quand même ?',()=>finishWorkout(),'Terminer quand même','Continuer la séance');
+  document.getElementById('ov-confirm').classList.add('cf-seance');   // D-085 (décision B) : Terminer = Cobalt
+}
+/* ⋯ UX SÉANCE (16/10/2026, cadrage validé) — LE MENU DE LA SÉANCE. Il RANGE les actions rares qui encombraient
+   l'écran ; chaque ligne appelle le propriétaire EXISTANT, rien n'est réécrit : pause → `toggleWktPause`, date →
+   le champ `#s-date` (même étiquette qu'avant la séance), tout dérouler → `toggleExpandAll`, grouper →
+   `toggleGroupMode`, programmes → `openProgModal`, aide → `showHelp`, vider → `clearAllEx`, abandonner →
+   `clearWkt` (ces deux-là gardent leur propre confirmation). Les actions à risque sont séparées, en bas.
+   ⛔ Fermer le menu n'a aucun effet de bord (pas de marqueur à poser) : le repli générique suffit (R15). */
+function openWktMenu(){
+  if(!_seanceOuverte()) return;
+  let ov=document.getElementById('ov-wkt-menu');
+  if(!ov){
+    ov=document.createElement('div');ov.className='overlay';ov.id='ov-wkt-menu';
+    ov.style.alignItems='flex-end';
+    ov.onclick=e=>{if(e.target===ov)closeWktMenu();};
+    document.body.appendChild(ov);
+  }
+  const exs=(S.wkt&&S.wkt.exs)||[], p=_isWktPaused();
+  const ic=d=>'<span class="wm-ic"><svg viewBox="0 0 24 24" aria-hidden="true">'+d+'</svg></span>';
+  const ligne=(icone,titre,sous,action,cls)=>'<button class="wm-row'+(cls?' '+cls:'')+'" onclick="'+action+'">'+icone
+    +'<span class="wm-t"><b>'+titre+'</b>'+(sous?'<small>'+sous+'</small>':'')+'</span></button>';
+  const quand=_fmtWktDate(S.wkt.date||today());
+  const min=S.wkt.startTs?Math.floor(_wktElapsedMs()/60000):null;
+  const meta=[S.wkt.progLabel||'',quand,min!==null?min+' min':''].filter(Boolean).join(' · ');
+  let g1='';
+  if(S.wkt.startTs) g1+=ligne(ic(p?'<path d="M7 4l13 8-13 8z"/>':'<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'),
+    p?'Reprendre la séance':'Mettre en pause', p?'Le chrono repart d\'où il s\'était arrêté':'Le chrono s\'arrête, rien n\'est perdu','closeWktMenu();toggleWktPause()');
+  g1+='<label class="wm-row" for="s-date" onclick="closeWktMenu()">'+ic('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>')
+    +'<span class="wm-t"><b>Date de la séance</b></span><span class="wm-v">'+quand+'</span></label>';
+  if(exs.length>=2){
+    g1+=ligne(ic(S.expandAll?'<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>':'<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>'),
+      S.expandAll?'Un exercice à la fois':'Tout dérouler', S.expandAll?'Seul l\'exercice en cours reste ouvert':'Voir les séries de tous les exercices','closeWktMenu();toggleExpandAll()');
+    g1+=ligne(ic('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),'Grouper des exercices','Superset ou circuit','closeWktMenu();toggleGroupMode()');
+  }
+  g1+=ligne(ic('<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>'),
+    'Programmes','Charger un programme, ou enregistrer celle-ci','closeWktMenu();openProgModal()');
+  /* 📥 Brief « D-088 » (décision de Michel, 18/10) — IMPORTER UN HISTORIQUE PENDANT LA SÉANCE. L'ancien écran le permettait (la
+     ligne « J'ai déjà un programme ou un historique » restait visible pendant la séance) ; D-085 l'a rangée dans l'écran d'avant
+     séance seulement. ⛔ Même moteur, aucun second : `openImportHist`, la porte de l'ancien bouton. Les séances importées vont dans
+     l'HISTORIQUE (`S.sessions`) — `finalImportHist` n'écrit ni `S.wkt` ni son brouillon (banc B-D088). Le programme garde sa porte
+     (« Programmes » → « Importer un programme »). Icône « import » et non le calendrier de l'ancien bouton : « Date de la séance »
+     le porte déjà dans ce menu. Sous-titre sur UNE ligne comme les autres : l'ancien (« Séances déjà réalisées → historique + stats +
+     PRs aux bonnes dates ») passait sur deux lignes jusqu'à 390 px et allongeait la feuille (mesuré). */
+  g1+=ligne(ic('<path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/>'),
+    'Importer un historique','Séances passées → historique, stats et records','closeWktMenu();openImportHist()');
+  g1+=ligne(ic('<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),'Aide de l\'écran Séance','','closeWktMenu();showHelp()');
+  let g2='';
+  if(exs.length) g2+=ligne(ic('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>'),
+    'Vider la séance','Retire les exercices, la séance reste ouverte','closeWktMenu();clearAllEx()','wm-danger');
+  g2+=ligne(ic('<circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'),
+    'Abandonner la séance','Rien ne sera enregistré','closeWktMenu();clearWkt()','wm-danger');
+  ov.innerHTML='<div class="wm-sheet" role="dialog" aria-label="Menu de la séance"><div class="wm-grab" aria-hidden="true"></div>'
+    +'<div class="wm-h"><b>'+(p?'Séance en pause':_seancePrete()?'Séance prête':'Séance en cours')+'</b>'+(meta?'<span>'+meta.replace(/</g,'&lt;')+'</span>':'')+'</div>'
+    +'<div class="wm-g">'+g1+'</div><div class="wm-g">'+g2+'</div>'
+    +'<button class="wm-x" onclick="closeWktMenu()">Fermer</button></div>';
+  ov.classList.add('open');
+}
+function closeWktMenu(){const ov=document.getElementById('ov-wkt-menu');if(ov)ov.classList.remove('open');}
 function _setLogDate(d,auto){
   if(S.wkt){S.wkt.date=d;if(!auto)_wktDateChoisie=S.wkt;persist();}
   const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
@@ -307,7 +499,9 @@ function _typeSeanceHtml(){
   try{
     if(typeof DISC_SEANCE==='undefined'||typeof DISC_CADRE==='undefined') return '';
     const ordre=['muscu','bodybuilding','powerbuilding','powerlifting','haltero'];
-    const ICO={muscu:'🏋️',bodybuilding:'💪',powerbuilding:'⚡',powerlifting:'🥇',haltero:'🤸'};
+    /* 🎨 D-085 (décision E de Michel, 17/10) : les petits emojis des types (🏋️ 💪 ⚡ 🥇 🤸) sont RETIRÉS — cartes en
+       TEXTE SEUL, sobres : le titre, le cadre reps / repos et la hiérarchie typographique suffisent (R30 : retrait écrit).
+       ⛔ Rien à voir avec la silhouette musculaire de Force Tracker, qui reste (contexte, « Ta séance jusqu'ici »). */
     const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
     /* ⭐ LA LIGNE COURTE SE DÉDUIT DU CADRE, elle ne se réécrit pas : `DISC_CADRE` est la
        source. Réécrire « 1-5 reps » à la main créerait une 2ᵉ vérité qui se périmerait (R2).
@@ -325,7 +519,7 @@ function _typeSeanceHtml(){
       const nEx=(DISC_SEANCE[d]||[]).length;
       const actif=(S.discipline||'muscu')===d;
       return '<button class="ts-carte'+(actif?' ts-actif':'')+'" onclick="lancerTypeSeance(\''+d+'\')">'
-        +'<div class="ts-h"><span class="ts-ico">'+ICO[d]+'</span>'
+        +'<div class="ts-h">'
         +'<span class="ts-nom">'+esc(lbl)+'</span>'
         +(actif?'<span class="ts-tag">la tienne</span>':'')
         +'<span class="ts-info" onclick="event.stopPropagation();ouvrirCadreType(\''+d+'\')" '
@@ -391,24 +585,19 @@ function renderLog(){
   if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
   /* ⑤ la ligne « Scanner / Importer » suit l'usage (ft-v1024) — voir `_renderImportRow`. */
   try{_renderImportRow();}catch(e){}
-  /* 🏋️ Les types de séances : SEULEMENT sur un écran vide (ft-v1026). Dès qu'un exercice
-     est posé, ils disparaissent — ils proposent un départ, ils ne commentent pas un travail
-     en cours (R24 : jamais en travers). */
+  /* 🏋️ Les types de séances : SEULEMENT avant la séance (ft-v1026). Dès qu'une séance est ouverte, ils
+     disparaissent — ils proposent un départ, ils ne commentent pas un travail en cours (R24 : jamais en travers).
+     ⚠️ UX SÉANCE (16/10) : « avant la séance » se lit désormais sur `_seanceOuverte()` (la définition unique, R2)
+     et plus sur « aucun exercice » : un cardio noté OUVRE la séance (décision ④ : la séance existe, on ajoute). */
   try{
     const _tz=document.getElementById('log-types');
-    if(_tz) _tz.innerHTML=(S.wkt&&S.wkt.exs&&S.wkt.exs.length)?'':( (typeof _typeSeanceHtml==='function')?_typeSeanceHtml():'' );
+    if(_tz) _tz.innerHTML=_seanceOuverte()?'':( (typeof _typeSeanceHtml==='function')?_typeSeanceHtml():'' );
   }catch(e){}
-  const hdr=document.getElementById('log-hdr');
-  const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
-  if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
-    +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
-    +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:'+(_isWktPaused()?'var(--orange)':'var(--t3)')+';letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
-    +'<span id="log-hdr-btns" style="display:flex;gap:8px;">'
-    +_pauseBtnHtml()
-    +(hasExs?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>':'')
-    +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
-    +'</span>'
-    +'</div>';
+  /* 🏋️ UX SÉANCE (16/10/2026) — l'ancien en-tête de l'écran (« Séance » + chrono + Pause ✕ Vider Changer) n'est plus
+     écrit ici : avant la séance, le titre et la date sont dans la page (`#log-hdr`, index.html) ; pendant, l'en-tête
+     vit dans la barre haute (`_renderEnteteSeance`) et les actions rares dans le menu ⋯ (`openWktMenu`). */
+  _renderAvantSeance();
+  _renderEnteteSeance();
   _startWktChrono();
   // Refresh immédiat des timers au retour sur l'écran (ne pas attendre le prochain tick)
   if(restIv)_restTick();
@@ -827,7 +1016,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const ex=S.wkt.exs[ei];
   const exCount=S.wkt.exs.length;
   const prev=getPrev(ex.name);
-  const prevAl=_prevAligne(prev, ex.sets);   // rapprochement PAR RÔLE (voir _prevAligne)
+  /* rapprochement PAR RÔLE (voir _prevAligneDetail). ⛔ D-093 : la colonne n'affiche que la série EXACTE de la dernière
+     fois (`exact`) — au-delà, « — ». Le repli (la dernière série répétée) ne sert plus qu'aux suggestions grises des champs. */
+  const prevDet=_prevAligneDetail(prev, ex.sets), prevAl=prevDet.map(d=>d.p);
   const doneSets=ex.sets.filter(s=>s.done);
   // ⚠️ Même règle que le tonnage de la séance : un unilatéral compte double (la série se
   // refait de l'autre côté). Si ce chiffre-ci ne doublait pas, l'exercice et la séance
@@ -877,46 +1068,59 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
        un bloc absent. */
     const notePreview=(ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${_tempoChip(ex)}</div>`:'')
       + _intensiteBandeau(ex);
-    const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
+    /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — UNE CARTE REPLIÉE SE LIT, ELLE NE S'ENCOMBRE PLUS.
+       Elle dit le nom, les séries faites et ce que ça représente ; un exercice FINI (plus aucune série de travail à
+       faire, au moins une faite — `_exTermine`, la règle qui fait déjà avancer au suivant) porte la marque « terminé ».
+       R30 — rien n'est retiré, tout est RANGÉ : ↑ ↓ sont dans le menu ⋯ de l'exercice (« Monter » / « Descendre »),
+       📊 y est déjà (« Statistiques »), ✕ aussi (« Supprimer l'exercice », appui maintenu) ; ⚡ Super / 📉 Drop /
+       📈 +% restent sur la carte OUVERTE, au moment où on fait l'exercice ; la poignée de glisser-déposer aussi.
+       Une carte repliée n'est plus grisée (`opacity:.75`) : « les autres restent lisibles » (cadrage). */
+    const _fini=!_groupMode&&!inGroup&&_exTermine(ex);
+    const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':'';
     const clickAttr=_groupMode
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
       :` onclick="toggleExBlock(${ei})" style="cursor:pointer;${selStyle}"`;
-    return`<div class="ex-block${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
+    return`<div class="ex-block ex-mini${_fini?' ex-fini':''}${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
       +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'};align-items:center;">`
       +_cThumbHtml
       +`<div style="flex:1;min-width:0;">`
       +`<div class="ex-name" style="font-size:14px">${_escNote(ex.name)}${_uniTag} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
-      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
-        +((!ex.group&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
-        +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
-        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${_escAttrJs(ex.name)}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
+      +(_fini?`<span class="ex-fini-b" data-fini="1" role="img" aria-label="Exercice terminé"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>`:'')
       +`</div>`
       +notePreview
-      +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
-        ?`<div style="display:flex;gap:4px;padding:2px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
-          +`<button class="btn-xs" style="font-size:10px;color:var(--orange);border-color:rgba(255,109,0,.2);padding:2px 7px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
-          +`<button class="btn-xs" style="font-size:10px;color:#BF5AF2;border-color:rgba(191,90,242,.2);padding:2px 7px;" onclick="openDropsetConfig(${ei},'down')">📉 Drop</button>`
-          +`<button class="btn-xs" style="font-size:10px;color:var(--green);border-color:rgba(0,230,118,.2);padding:2px 7px;" onclick="openDropsetConfig(${ei},'up')">📈 +%</button>`
-          +`</div>`
-        :'')
       +`</div>`;
   }
 
   // Vue développée
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
+  const _curSi=ex.sets.findIndex(x=>x&&!x.done);   // UX SÉANCE : la série à faire maintenant (affichage seul)
+  const _notesPrev=_notesPrecedentes(ex);            // D-086 : commentaire de la dernière fois, SEULEMENT sur sa série exacte
+  const _noteExPrev=_noteExPrecedente(ex);           // D-087 : la note générale de l'exercice la dernière fois (ou null)
   const _rowsHtml=ex.sets.map((set,si)=>{
-    const p=prevAl[si];
+    const p=prevAl[si], pv=(prevDet[si]&&prevDet[si].exact)?p:null;   // pv : ce qu'on AFFICHE ; p : la suggestion grise
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
+    const _tt=set.type||'N', _tl=SET_TYPE_LABELS[set.type]||'Normal', _pn=_notesPrev[si];
     return`<div id="sr-wrap-${ei}-${si}">`
-      +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
+      +`<div class="set-row${set.done?' done-row':''}${si===_curSi?' set-cur':''}" id="sr-${ei}-${si}">`
+      /* 🎨 D-086 (recette iPhone de Michel, 18/10) — LE TYPE A SA COLONNE, VISIBLE SUR CHAQUE SÉRIE.
+         D-085 (décision G) l'avait posé en petit badge sur le numéro : une série normale n'affichait rien, et rien ne
+         disait qu'on pouvait le changer — Michel ne l'a pas trouvé. Maintenant le numéro est du texte, puis une
+         PASTILLE « N » / « É » / « X » sur chaque ligne, dans une cible d'appui de 44 × 44.
+         ⛔ Même action qu'avant (`cycleType`, inchangé, avec son toast) ; mêmes ids (`tbtn-…`, `trm-…`) que lisent
+         `updateRMLive` et les bancs. La pastille porte `.tbtn` + le type : ses couleurs et les modes daltoniens
+         existants s'appliquent tels quels. Le 1RM garde SA colonne (D-085). */
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}${_prevRirBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
+      +`<button class="stype" onclick="cycleType(${ei},${si})" id="tbtn-${ei}-${si}" title="${_tl} — appuie pour changer le type" aria-label="Série ${si+1} : ${_tl} — appuie pour changer le type"><span class="tbtn ${_tt}">${_tt}</span></button>`
+      /* D-086 — un commentaire de la dernière fois n'est plus écrit en petit dans la case (il s'y tassait sur 3-4
+         lignes, et le REPLI de `_prevAligne` le recopiait sur les lignes en trop) : un point bleu le signale, l'appui
+         sur « Précédent » l'affiche avec sa date et sa série (`openSetNote`). Rien n'est enregistré de plus. */
+      +`<div class="sprev${_pn?' a-note':''}" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="${_pn?'Commentaire de la dernière fois — touche pour le lire':'Ajouter une note'}">${pv?`<div class="sprev-v"><span class="sprev-n">${pv.reps}×${pv.kg}</span><wbr>${_prevTypeBadge(pv)}<wbr>${_prevRirBadge(pv)}</div>`:'<div class="sprev-v">—</div>'}${_setPrevNote(set,p)}${_pn?'<span class="sprev-pt" aria-hidden="true"></span>':''}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
-      +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
+      +`<div class="srm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</div>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
       +`</div></div>`;
   });
@@ -929,7 +1133,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     const isDown=direction==='down';
     const p0=_dropDebut(ex);                         // CC-01 : avant p0, des séries normales faites avant le dropset
     const curPi=ex.sets.findIndex((s,i)=>i>=p0&&!s.done);
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>Reps</span><span>KG</span><span></span><span>✓</span></div>`;
+    // D-086 : la ligne a 7 colonnes (le type a la sienne) — le libellé du palier couvre « Type » + « Précédent ».
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span class="ds-lbl">Palier</span><span>Reps</span><span>KG</span><span></span><span>✓</span></div>`;
     useRows=ex.sets.map((set,si)=>{
       if(si<p0)return _rowsHtml[si];                // une série normale reste une série normale
       const isDone=set.done;
@@ -940,7 +1145,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       if(isCur){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
           +`<div class="snum" style="color:var(--orange);font-weight:800;">${si+1}</div>`
-          +`<div style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
+          +`<div class="ds-lbl" style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
           +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
           +`<input class="sinp" type="text" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
           +`<div></div>`
@@ -949,7 +1154,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       }else{
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row${isDone?' done-row':''}" id="sr-${ei}-${si}" style="${!isDone?'opacity:.55;':''}">`
           +`<div class="snum">${si+1}</div>`
-          +`<div style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
+          +`<div class="ds-lbl" style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
           +`<div style="text-align:center;font-size:13px;color:${isDone?'var(--t2)':'var(--t3)'};">${set.reps||'?'}</div>`
           +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
           +`<div></div>`
@@ -962,7 +1167,10 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<span style="font-size:11px;color:var(--t2);line-height:1.4;">${isDown?'Baisse le poids sans repos — repos unique après le dernier drop.':'Monte le poids — repos normal entre les séries.'}</span>`
       +`</div>`;
   }else{
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>Reps</span><span>KG</span><span>Type</span><span>✓</span></div>`;
+    /* 📋 D-093 — « Précédent ▾ » : un geste DISTINCT de la note de série (la case, elle, ouvre toujours la note). Seulement
+       quand l'exercice a une dernière fois : sans historique, l'en-tête reste un simple titre. */
+    const _pH=prev.length?`<span class="sprev-hw"><button class="sprev-h" onclick="event.stopPropagation();openDernieresSeances(${ei})" aria-label="Précédent — comparer les 4 dernières séances de l'exercice">Précédent ▾</button></span>`:'<span>Précédent</span>';
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Type</span>${_pH}<span>Reps</span><span>KG</span><span>1RM</span><span>✓</span></div>`;
     useRows=rows;
   }
 
@@ -979,7 +1187,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
      +`<span>${suiteText}</span>`
      +`</div>`:`` ;
 
-  return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
+  return`<div class="ex-block${(!inGroup&&ei===_expandedEx)?' ex-actif':''}${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
     +`<img src="${_thumbSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:${hasLocalGif?'cover':'contain'};${hasLocalGif?'':'padding:3px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`
     +`<div style="flex:1;min-width:0;">`
@@ -1003,7 +1211,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       return`<div class="ex-foot">${footBtn}</div>`;
     })()
     +`<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
-    +`<span style="font-size:14px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>`
+    +(_noteExPrev
+      ?`<button class="exn-prev" id="exn-prev-${ei}" onclick="openExNotePrev(${ei})" title="Note de la dernière séance (${_dateNoteFR(_noteExPrev.date)}) — touche pour la lire" aria-label="Note de la dernière séance, du ${_dateNoteFR(_noteExPrev.date)} — touche pour la lire">💬<span class="exn-pt" aria-hidden="true"></span></button>`
+      :`<span style="font-size:14px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>`)
     +`<textarea id="ex-note-${ei}" rows="1" placeholder="Note perso (trop léger, fatigue, douleur…)" oninput="saveExNote(${ei},this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="flex:1;resize:none;overflow:hidden;border:none;background:transparent;color:var(--t2);font-size:12px;font-family:inherit;padding:4px 2px;line-height:1.4;min-height:26px;outline:none;caret-color:var(--red);">${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`
     +_tempoChip(ex)   // 🐢 ce que l'app a COMPRIS de la consigne, à côté de la consigne elle-même
     +`</div>`
@@ -1048,13 +1258,13 @@ function _buildExHistChart(data){
   let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">`;
   if(n>1){
     const area=`M${px(0)},${py(data[0].kg)} `+data.slice(1).map((d,i)=>`L${px(i+1)},${py(d.kg)}`).join(' ')+` L${px(n-1)},${H-PB} L${px(0)},${H-PB} Z`;
-    s+=`<path d="${area}" fill="rgba(255,45,85,.08)"/>`;
+    s+=`<path d="${area}" fill="rgba(242,243,245,.06)"/>`;   // D-085 (décision J) : courbe de progression neutre
     const line=data.map((d,i)=>`${i===0?'M':'L'}${px(i)},${py(d.kg)}`).join(' ');
-    s+=`<path d="${line}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s+=`<path d="${line}" fill="none" stroke="var(--t1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   }
   data.forEach((d,i)=>{
     const cx=px(i),cy=py(d.kg);
-    s+=`<circle cx="${cx}" cy="${cy}" r="4" fill="var(--red)" stroke="var(--bg2)" stroke-width="2"/>`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="4" fill="var(--t1)" stroke="var(--bg2)" stroke-width="2"/>`;
     const above=cy>PT+16;
     s+=`<text x="${cx}" y="${above?cy-9:cy+16}" text-anchor="middle" font-size="11" fill="var(--t1)" font-weight="700" font-family="system-ui,sans-serif">${d.kg}kg</text>`;
     const dl=d.date?d.date.split('-').slice(1).reverse().join('/'):'';
@@ -1086,12 +1296,18 @@ function openExMenu(ei,hasGif){
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${_escNote(nm)}</div>`
     +mRow('🔄','Remplacer l\'exercice',`openExPickerForReplace(${ei})`)
     +((ei>0 && !ex.group && !ex.dropset)?mRow('⚡','Superset avec l\'exercice du dessus',`closeExMenu();supersetWithPrev(${ei})`):'')
+    /* 🏋️ UX SÉANCE (16/10) — ↑ ↓ quittent la carte repliée et viennent ICI (cadrage validé) : même propriétaire,
+       `moveExBlock`, qui déplace le bloc entier (un superset reste d'un seul tenant) et ne fait rien en bord de liste.
+       Les membres d'un superset gardent leurs flèches DANS le groupe (`moveInGroup`, carte ouverte). */
+    +((!ex.group && ei>0)?mRow('⬆️','Monter',`closeExMenu();moveExBlock(${ei},-1)`):'')
+    +((!ex.group && ei<S.wkt.exs.length-1)?mRow('⬇️','Descendre',`closeExMenu();moveExBlock(${ei},1)`):'')
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
     +(hasUserPhoto?mRow('🖼️','Voir la photo',`closeExMenu();_viewExPhoto('${safeNm}')`):'')
     +(hasUserPhoto?mRow('🗑️','Retirer la photo',`closeExMenu();removeExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
+    +mRow('📋','4 dernières séances',`closeExMenu();openDernieresSeances(${ei})`)   // D-093 : la comparaison série par série
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">🗑️</span>`
@@ -1161,6 +1377,77 @@ function openExHistory(name){
   el.classList.add('open');
 }
 function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)el.classList.remove('open');}
+/* 📋 « 4 DERNIÈRES SÉANCES » (brief « Séance » du 19/10/2026, D-093) — comparer sans quitter la séance.
+   Michel, en recette : « Précédent » ne montre que la dernière fois ; il veut voir les 4 dernières séances où l'exercice a
+   été fait, série par série. ⛔ LECTURE SEULE : ouvrir et fermer n'écrit rien (ni séance, ni historique, ni stockage).
+   ⭐ CE QUI EST COMPARÉ : les séries de TRAVAIL, par RANG (la 1ʳᵉ avec la 1ʳᵉ…), chaque séance dans sa colonne, de la plus
+   ancienne à la plus récente. Une série absente à ce rang = « — » : jamais une série répétée ni empruntée à une autre
+   séance. Les échauffements restent consultables, À PART — ils ne se comparent pas au travail (même partage que
+   `_prevAligneDetail`, R2). Deux séances du même jour = deux colonnes (« 1ʳᵉ », « 2ᵉ », dans l'ordre d'enregistrement,
+   avec l'heure de début quand elle est connue). ⛔ AUCUN VERDICT : ni flèche, ni écart, ni pourcentage — 5 × 100 puis
+   10 × 80 ne disent pas à eux seuls qui progresse (le format de répétitions a changé). La courbe des charges reste dans
+   « Statistiques », qui ne change pas. */
+const _P4_MAX = 4;
+function _p4Serie(s){
+  const n=(s.reps!==undefined&&s.reps!==null&&s.reps!=='')?s.reps:'?';
+  return _escNote(String(n))+' × '+_escNote(String((s.kg!==undefined&&s.kg!==null&&s.kg!=='')?s.kg:0));
+}
+function openDernieresSeances(ei){
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; if(!ex) return;
+  const liste=_seancesExercice(ex.name,_P4_MAX).slice().sort((a,b)=>_cmpSeances(b.sess,a.sess));   // la plus ancienne à gauche
+  let ov=document.getElementById('ov-prev4');
+  if(!ov){
+    ov=document.createElement('div');ov.className='overlay';ov.id='ov-prev4';
+    ov.style.alignItems='flex-end';
+    ov.onclick=e=>{if(e.target===ov)closeDernieresSeances();};
+    document.body.appendChild(ov);
+  }
+  const ech=_estPalierEch;   // R2 : « est-ce un palier d'échauffement ? » a déjà son propriétaire
+  const nb=liste.length;
+  const titre=nb>=2?nb+' dernières séances':(nb===1?'La dernière séance':_P4_MAX+' dernières séances');
+  // Les en-têtes : la date ; le même jour, le rang d'enregistrement (1ʳᵉ, 2ᵉ…) et l'heure de début quand elle est connue.
+  const parJour={}; liste.forEach(v=>{const d=String(v.sess.date||'');(parJour[d]=parJour[d]||[]).push(v);});
+  const dateCourte=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||''));return m?m[3]+'/'+m[2]:'?';};
+  const libelle=v=>{const d=String(v.sess.date||''), memes=parJour[d]||[];
+    if(memes.length<2) return {date:dateCourte(d), rang:'', h:''};
+    const k=memes.indexOf(v)+1, h=v.sess.startHour;
+    return {date:dateCourte(d), rang:k===1?'1ʳᵉ':k+'ᵉ', h:(h!==undefined&&h!==null&&h!==''&&!isNaN(+h))?(+h)+' h':''};};
+  const cols=liste.map(v=>({v, l:libelle(v), trav:v.sets.filter(s=>!ech(s)), echs:v.sets.filter(ech)}));
+  const nRangs=cols.reduce((m,c)=>Math.max(m,c.trav.length),0);
+  let corps='';
+  if(!nb){
+    corps='<div class="p4-vide">Pas encore de séance avec cet exercice — elle apparaîtra ici après ta première séance.</div>';
+  }else{
+    const th=cols.map(c=>`<th class="p4-h" data-cle="${_escNote(String(c.v.sess.ts||c.v.sess.id||''))}"><span class="p4-d">${c.l.date}</span>${c.l.rang?`<span class="p4-rg">${c.l.rang}${c.l.h?' · '+c.l.h:''}</span>`:''}</th>`).join('');
+    const cellule=s=>{
+      const t=s.type||'N', x=(t!=='N'&&!ech(s))?`<span class="p4-t p4-t-${t==='X'?'x':'o'}">${_escNote(t)}</span>`:'';
+      const r=_reserveHistoTxt(s);
+      return `<td class="p4-c"><span class="p4-s">${_p4Serie(s)}</span>${x}${r?`<span class="p4-rir">${_escNote(r)}</span>`:''}${(s.note&&String(s.note).trim())?'<span class="p4-n" title="Note de série">💬</span>':''}</td>`;
+    };
+    const vide='<td class="p4-c" data-vide="1">—</td>';
+    let lignes='';
+    for(let k=0;k<nRangs;k++) lignes+=`<tr class="p4-r" data-rang="${k+1}"><th class="p4-k">${k+1}</th>${cols.map(c=>c.trav[k]?cellule(c.trav[k]):vide).join('')}</tr>`;
+    const echRow=`<tr class="p4-ech"><th class="p4-k" title="Échauffements">É</th>${cols.map(c=>c.echs.length?`<td class="p4-ech-c">${c.echs.map(_p4Serie).join('<br>')}</td>`:'<td class="p4-ech-c" data-vide="1">—</td>').join('')}</tr>`;
+    // Les notes, en lecture seule, chacune avec SA séance (et son rang le même jour) : notes de série puis note de l'exercice.
+    const notes=[];
+    cols.forEach(c=>{
+      const ou=c.l.date+(c.l.rang?' ('+c.l.rang+')':'');
+      c.trav.forEach((s,k)=>{const t=(s.note&&String(s.note).trim())||'';if(t)notes.push(`<div class="p4-note"><b>${ou}</b> · série de travail ${k+1} : « ${_escNote(t)} »</div>`);});
+      c.echs.forEach((s,k)=>{const t=(s.note&&String(s.note).trim())||'';if(t)notes.push(`<div class="p4-note"><b>${ou}</b> · échauffement ${k+1} : « ${_escNote(t)} »</div>`);});
+      const ne=(typeof c.v.ex.note==='string')?c.v.ex.note.trim():'';
+      if(ne) notes.push(`<div class="p4-note"><b>${ou}</b> · note de l'exercice : « ${_escNote(ne)} »</div>`);
+    });
+    corps=`<div class="p4-wrap"><table class="p4-grille"><thead><tr><th class="p4-k"></th>${th}</tr></thead><tbody>${lignes}${echRow}</tbody></table></div>`
+      +(notes.length?`<div class="p4-notes">${notes.join('')}</div>`:'')
+      +'<div class="p4-leg">Une ligne = un rang de série de travail (1ʳᵉ, 2ᵉ…), de la séance la plus ancienne à la plus récente. « — » = pas de série à ce rang. Les échauffements sont à part (ligne É). X = échec ; « 0 ou échec » = noté avant la mise à jour du 19/10. 💬 = une note sur la série. Lecture seule.</div>';
+  }
+  ov.innerHTML=`<div class="p4-sheet">`
+    +`<div class="p4-top"><div class="p4-tt"><div class="p4-titre">${titre}</div><div class="p4-ex">${_escNote(ex.name)}</div></div>`
+    +`<button class="p4-fermer" onclick="closeDernieresSeances()" aria-label="Fermer">✕</button></div>`
+    +corps+`</div>`;
+  ov.classList.add('open');
+}
+function closeDernieresSeances(){const el=document.getElementById('ov-prev4');if(el)el.classList.remove('open');}
 // Le bandeau qui explique le trou. ⛔ Il ne se montre QUE quand la courbe est réellement
 // incomplète — pas « à chaque fois qu'une fenêtre est ouverte » : un avertissement permanent
 // cesse d'être lu (R24/R25). Il NOMME la date, sinon on ne sait pas de quelle séance il parle.
@@ -1191,21 +1478,77 @@ function _escNote(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').r
 // Échappe une valeur destinée à un '…' JS DANS un attribut "…" (ex. onclick="f('${_escAttrJs(nom)}')").
 // D'abord échappement JS (backslash + apostrophe), puis échappement HTML d'attribut ("<>&) → aucune évasion possible.
 function _escAttrJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* ⛔ D-086 (18/10/2026) — R30 : LA NOTE DE LA DERNIÈRE FOIS N'EST PLUS ÉCRITE ICI. Cette fonction l'affichait en
+   italique 9,5 px sous la valeur « Précédent » (`p.note`) : elle s'y tassait sur 3 ou 4 lignes, et surtout le REPLI de
+   `_prevAligne` (plus de séries qu'avant → on répète la dernière) la recopiait sur des lignes qui n'étaient PAS sa
+   série — mesuré : la note de la 4ᵉ série d'avant s'affichait aussi sur la 5ᵉ ligne. Elle est maintenant signalée par
+   un point bleu, sur sa série EXACTE seulement (`_notesPrecedentes`), et se lit dans `openSetNote` avec son origine.
+   Reste ici la note que la personne écrit AUJOURD'HUI sur cette série (or), inchangée. */
 function _setPrevNote(set,p){
   if(set&&set.note)return `<div style="font-size:9.5px;color:var(--gold);line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(set.note)}</div>`;
-  if(p&&p.note)return `<div style="font-size:9.5px;color:var(--t3);font-style:italic;line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(p.note)}</div>`;
   return '';
 }
+/* 💬 D-086 — LE COMMENTAIRE DE LA DERNIÈRE FOIS, SÉRIE PAR SÉRIE, SANS JAMAIS LE PRÊTER À UNE AUTRE.
+   Les commentaires vivent à deux niveaux (mesuré dans le code) : la note d'une SÉRIE (`set.note`, écrite par
+   `saveSetNote`) et la note de l'EXERCICE (`ex.note`, le champ « Note perso »). Seule la première désigne une série ;
+   la seconde n'est JAMAIS rattachée à une ligne ici (décision de Michel attendue sur où l'afficher).
+   ⛔ Même séance que la colonne « Précédent » (`_prevSeance`), même rapprochement par rôle (`_prevAligneDetail`) — et
+   seulement quand la série d'avant correspond EXACTEMENT : sur une ligne obtenue par repli, la valeur reste affichée
+   comme avant, mais aucune note n'y est attachée. Lecture seule : rien n'est enregistré.
+   Rend, par série d'aujourd'hui, `{texte, date, num, nom}` ou `null`. */
+function _notesPrecedentes(ex){
+  const v=ex&&_prevSeance(ex.name); if(!v) return (ex&&ex.sets||[]).map(()=>null);
+  return _prevAligneDetail(v.sets, ex.sets).map(d=>{
+    const t=(d.exact&&d.p&&typeof d.p.note==='string')?d.p.note.trim():'';
+    if(!t) return null;
+    return {texte:t, date:String(v.sess&&v.sess.date||''), num:(v.ex.sets||[]).indexOf(d.p)+1, nom:String(v.ex.name||'')};
+  });
+}
+/* 💬 D-087 (décision de Michel, 18/10) — LA NOTE GÉNÉRALE DE L'EXERCICE LA DERNIÈRE FOIS, À CÔTÉ DE « NOTE PERSO ».
+   Elle appartient à l'EXERCICE d'une séance (« Matériel Fitness Park », « pivot différent, charges non comparables »),
+   jamais à une série : elle ne se mélange ni aux commentaires de série (`_notesPrecedentes`) ni au type N / É / X.
+   ⛔ Même séance que la colonne « Précédent » (`_prevSeance`, R2) : la note explique les chiffres qu'on a sous les yeux.
+   ⛔ LECTURE SEULE : rien n'est recopié, prérempli ni modifié dans la note du jour (`ex.note` de la séance en cours).
+   ⚠️ Mesuré dans le code : le champ porte aussi la consigne d'un programme ou de Milo, recopiée au chargement
+   (`_loadProgDayVraiment`, `_applyMiloSession`…) — c'est donc LA note de l'exercice telle qu'elle a été enregistrée.
+   Rend `{texte, date, nom}` ou `null` (aucune note la dernière fois → aucun indicateur).
+   🏷️ Brief « D-088 » (Michel, 18/10) : la fenêtre dit « Note de la dernière séance » — un nom NEUTRE, parce que ce texte peut être
+   une observation personnelle, une indication de matériel, une consigne de programme ou de Milo, et qu'on ne devine PAS l'origine
+   d'un texte en le lisant. Aucune provenance fiable n'existe pour la note elle-même (`_milo`, `progLabel` disent d'où vient
+   l'EXERCICE, pas qui a écrit la note, que la personne peut avoir réécrite). ⛔ Le point reste même si le texte est identique à
+   celui du champ du jour (la proposition de le masquer est écartée). */
+function _noteExPrecedente(ex){
+  const v=ex&&_prevSeance(ex.name);
+  const t=(v&&v.ex&&typeof v.ex.note==='string')?v.ex.note.trim():'';
+  return t?{texte:t, date:String(v.sess&&v.sess.date||''), nom:String(v.ex.name||'')}:null;
+}
+function openExNotePrev(ei){
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; const np=ex&&_noteExPrecedente(ex); if(!np)return;
+  let ov=document.getElementById('ov-ex-note-prev');
+  if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-ex-note-prev';ov.onclick=e=>{if(e.target===ov)closeExNotePrev();};document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="modal" style="max-width:360px;">
+    <div class="modal-handle"></div>
+    <div class="sn-prev" id="exn-prev-fiche"><div class="sn-prev-t">💬 Note de la dernière séance</div><div class="sn-prev-o">Séance du ${_dateNoteFR(np.date)} · ${_escNote(np.nom)}</div><div class="sn-prev-x" style="white-space:pre-wrap;">« ${_escNote(np.texte)} »</div></div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Lecture seule : ta note d'aujourd'hui ne change pas.</div>
+    <button class="btn btn-bg2" style="width:100%;" onclick="closeExNotePrev()">Fermer</button>
+  </div>`;
+  ov.classList.add('open');
+}
+function closeExNotePrev(){const ov=document.getElementById('ov-ex-note-prev');if(ov)ov.classList.remove('open');}
+// « 2026-10-16 » → « 16/10/2026 » ; une date illisible n'est pas réinventée.
+function _dateNoteFR(d){ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||'')); return m?m[3]+'/'+m[2]+'/'+m[1]:'date inconnue'; }
 let _setNoteCtx=null;
 function openSetNote(ei,si){
   const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(!set)return;
   _setNoteCtx={ei,si};
+  const _np=_notesPrecedentes(S.wkt.exs[ei])[si];   // D-086 : le commentaire de la dernière fois, s'il est à CETTE série
   let ov=document.getElementById('ov-set-note');
   if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-set-note';ov.onclick=e=>{if(e.target===ov)closeSetNote();};document.body.appendChild(ov);}
   ov.innerHTML=`<div class="modal" style="max-width:360px;">
     <div class="modal-handle"></div>
     <div style="font-weight:800;font-size:16px;margin-bottom:3px;text-align:center;">💬 Note — série ${si+1}</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Une info à retrouver la prochaine fois (réglage machine, sensation, technique…). Elle s'affichera dans « précédent ».</div>
+    ${_np?`<div class="sn-prev" id="sn-prev"><div class="sn-prev-t">💬 Commentaire de la dernière fois</div><div class="sn-prev-o">Séance du ${_dateNoteFR(_np.date)} · série ${_np.num} · ${_escNote(_np.nom)}</div><div class="sn-prev-x">« ${_escNote(_np.texte)} »</div></div>`:''}
     <textarea id="set-note-ta" rows="3" style="width:100%;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);padding:10px;font-size:15px;font-family:var(--font);resize:none;box-sizing:border-box;outline:none;" placeholder="Ex: cran 4 sur la machine, prise serrée, dos bien calé…">${_escNote(set.note)}</textarea>
     <div style="margin-top:12px;display:flex;gap:8px;">
       ${set.note?`<button class="btn btn-bg2" style="flex:1;color:var(--red);" onclick="deleteSetNote()">🗑 Retirer</button>`:''}
@@ -1245,9 +1588,12 @@ function renderExBlocks(){
        qu'en ft-v1012, où le message envoyait faire un détour juste au-dessus du raccourci.
        ⛔ Et il RÉTRÉCIT : avec les cartes en dessous, l'écran n'est plus vide — un gros bloc
        de texte au milieu du rien était la réponse à un problème qui n'existe plus. */
-    c.innerHTML=`<div class="empty">Choisis par quoi tu commences 👇</div>`;
+    /* 🏋️ UX SÉANCE (16/10/2026) — PLUS DE MESSAGE ICI : avant la séance, l'écran porte « Séance libre » et
+       « Programme » (index.html, `#log-avant`) — un 3ᵉ texte qui renverrait vers eux serait un panneau de plus à tenir
+       juste (ft-v1012/ft-v1026 : deux fois, ce message a désigné un bouton qui n'existait plus). */
+    c.innerHTML='';
     if(typeof renderLogFinish==='function')renderLogFinish(); // vide le bloc "Terminer la séance" (sinon fantôme après suppression/vidage)
-    _syncLogHdrBtns();return;
+    _renderEnteteSeance();return;
   }
   const exCount=S.wkt.exs.length;
   if(_expandedEx===null||_expandedEx>=exCount)_expandedEx=exCount-1;
@@ -1274,12 +1620,10 @@ function renderExBlocks(){
         ?`<button class="btn btn-sm ft-press" style="flex:2;background:var(--orange);border-color:var(--orange);color:#fff;" onclick="createSuperset()">⚡ Lier en supersérie (${selCount})</button>`
         :`<button class="btn btn-bg2 btn-sm" style="flex:2;opacity:.45;" disabled>Sélectionne 2+ exos</button>`)
       +`</div>`;
-  } else if(exCount>=2){
-    topBar=`<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px;">`
-      +`<button class="btn-xs" style="color:var(--t2);border-color:var(--sep);font-size:12px;padding:4px 10px;" onclick="toggleExpandAll()">${S.expandAll?'⊟ Concentration':'⊞ Tout dérouler'}</button>`
-      +`<button class="btn-xs" style="color:var(--orange);border-color:rgba(255,109,0,.4);font-size:12px;padding:4px 10px;" onclick="toggleGroupMode()">⚡ Grouper</button>`
-      +`</div>`;
   }
+  /* UX SÉANCE (16/10) — « ⊞ Tout dérouler » et « ⚡ Grouper » ont quitté cette rangée pour le menu ⋯ de la séance
+     (`openWktMenu`, mêmes propriétaires `toggleExpandAll` / `toggleGroupMode`). La barre du MODE groupe, elle, reste
+     ici : une fois le mode lancé, « Annuler » et « Lier » doivent être sous les yeux, à côté des cartes à cocher. */
 
   c.innerHTML=topBar+parts.map((part,pIdx)=>{
     if(part.type==='single') return _renderExHtml(part.ei,false,undefined,undefined,pIdx,parts.length);
@@ -1288,7 +1632,7 @@ function renderExBlocks(){
   // Notes d'exercice affichées EN ENTIER dès le départ (sinon tronquées à 1 ligne jusqu'au 1er tap)
   c.querySelectorAll('textarea[id^="ex-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
   renderLogFinish();
-  _syncLogHdrBtns();
+  _renderEnteteSeance();
 }
 // ⚠️ LA COLONNE « PRÉCÉDENT » DISAIT « 5×70 » SANS DIRE QUE C'ÉTAIT UN ÉCHAUFFEMENT (ft-v827).
 // Retour de Michel, capture à l'appui : « là il n'y a rien de marqué, on ne sait pas si c'est de
@@ -1303,7 +1647,8 @@ function _prevTypeBadge(p){
   const t=p&&p.type;
   if(!t||t==='N') return '';                                  // série normale → rien, pas de bruit
   const col={'É':'var(--blue)','W':'var(--blue)','X':'var(--red)','E':'var(--red)','D':'#BF5AF2'}[t]||'var(--t3)';
-  return `<sup style="font-size:9px;font-weight:800;color:${col};margin-left:2px;">${t}</sup>`;
+  // D-086 : marqueur plus lisible (11 px au lieu de 9) — même lettre, même couleur (`var(--blue)` / `var(--red)`).
+  return `<sup style="font-size:11px;font-weight:800;color:${col};margin-left:2px;line-height:0;">${t}</sup>`;
 }
 
 /* 💪 CE QUE LE RIR SERT VRAIMENT : le revoir LA FOIS D'APRÈS (ft-v1038).
@@ -1318,6 +1663,8 @@ const RIR_MAX = 4;
 function _prevRirBadge(p){
   const n=_rirDeSet(p);
   if(n===null||(p&&p.type==='X')) return '';
+  /* D-093 : un ancien 0 (tapé sur l'ancien bouton « échec ») se lit « 0/X » — « 0 ou échec », en court. */
+  if(_rir0Ambigu(p)) return `<span class="prev-rir" title="0 ou échec — noté avant la mise à jour du 19/10">·${_estRpe()?'@10':'0'}/X</span>`;
   return `<span class="prev-rir">·${_reserveBadgeTxt(n)}</span>`;
 }
 
@@ -1457,11 +1804,32 @@ function _rpeDeRir(n){ return (n===null||n===undefined)?null:(10-n); }
    confusion exacte que ft-v1154 a corrigée partout ailleurs. Un blanc se voit ; un chiffre
    crédible et faux ne se voit pas (R29). Inatteignable aujourd'hui (les appelants bornent n),
    d'où le choix de le rendre inoffensif plutôt que de compter sur eux pour toujours. */
+/* ⛔⛔ D-093 (recette iPhone de Michel, 19/10/2026) — R30 : LE BOUTON « 0 » NE S'APPELLE PLUS « échec ».
+   Il écrivait `rir:0` sous le mot « échec » : un RIR 0 RÉUSSI et un vrai échec se notaient par le MÊME geste, alors que
+   ft-v1154 avait tranché que ce sont deux données (le tag `X` porte l'échec, `rir` la réserve). L'échec a maintenant
+   SON bouton, « Échec », qui pose le tag `X` (décision de Michel : une seule donnée pour l'échec) ; « 0 » dit 0. */
 function _reserveBoutonTxt(n){
   const rpe=_rpeDeRir(n);
   if(rpe===null) return '';
   if(_estRpe()) return (n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(rpe));
-  return (n===0?'échec':(n>=RIR_MAX?RIR_MAX+'+':String(n)));
+  return (n>=RIR_MAX?RIR_MAX+'+':String(n));
+}
+/* 🏷️ D-093 — « QUELLE QUESTION LA RÉPONSE A-T-ELLE EUE ? » `rirV:2` = réponse donnée au sélecteur à six choix
+   (Échec | 0 | 1 | 2 | 3 | 4+), où « 0 » ne peut plus vouloir dire « échec ». Sans lui, un 0 ne se distingue pas d'un 0
+   tapé sur l'ancien bouton « échec ». ⛔ Les anciennes réponses ne sont NI réécrites NI reclassées (décision de Michel) :
+   un ancien 0 se lit « 0 ou échec » — l'app ne devine pas lequel des deux c'était (R29). */
+const RIR_V = 2;
+function _rirReponseNouvelle(set){ return !!(set && (+set.rirV)>=RIR_V); }
+function _rir0Ambigu(set){ return _rirDeSet(set)===0 && !_rirReponseNouvelle(set); }
+/* Le libellé LONG d'une réserve dans un historique (détail d'une séance, « 4 dernières séances ») : « RIR 2 », « RIR 4+ »,
+   « 0 ou échec » pour un ancien 0 ; en RPE « RPE 8 », « RPE ≤6 », « RPE 10 ou échec ». Rien pour un `X` (son type le dit),
+   un échauffement ou une série non notée — jamais un chiffre inventé. Un seul propriétaire pour tous les historiques (R2). */
+function _reserveHistoTxt(set){
+  const n=_rirDeSet(set);
+  if(n===null) return '';
+  if(_estRpe()) return 'RPE '+(n>=RIR_MAX?'≤'+_rpeDeRir(RIR_MAX):String(_rpeDeRir(n)))+(_rir0Ambigu(set)?' ou échec':'');
+  if(_rir0Ambigu(set)) return '0 ou échec';
+  return 'RIR '+(n>=RIR_MAX?RIR_MAX+'+':String(n));
 }
 /* La question posée dans la barre de repos. ⛔ Elle NOMME l'échelle : sans ça, « 8 » veut dire
    deux choses opposées selon le réglage, et personne ne peut savoir laquelle. */
@@ -1506,22 +1874,47 @@ function _reserveBadgeTxt(n){
    échauffement ↔ échauffement, travail ↔ travail, chacun dans son ordre.
    ⚠️ Et si la dernière fois ne contient aucun échauffement (le cas le plus courant — presque
    personne ne les note), la ligne reste VIDE : mieux vaut un tiret qu'un repère faux (R29). */
-function _prevAligne(prev, sets){
+/* D-086 — UN SEUL PROPRIÉTAIRE DU RAPPROCHEMENT (R2) : `_prevAligneDetail` dit en plus, pour chaque ligne, si la série
+   d'avant lui correspond EXACTEMENT (`exact`) ou si elle vient du REPLI (la dernière, répétée). La colonne « Précédent »
+   garde ses valeurs telles quelles (`_prevAligne`, mêmes 8 appelants) ; seul le commentaire exige `exact`. */
+function _prevAligneDetail(prev, sets){
   const ech = s => !!(s && (s.type==='É' || s.type==='W'));
   const pe=[], pt=[];
   (prev||[]).forEach(s=>{ (ech(s)?pe:pt).push(s); });
   let ie=0, it=0;
   return (sets||[]).map(s=>{
-    if(ech(s)){ const p = pe[ie] || pe[pe.length-1] || null; ie++; return p; }
-    const p = pt[it] || pt[pt.length-1] || null; it++; return p;
+    if(ech(s)){ const x = pe[ie]; const p = x || pe[pe.length-1] || null; ie++; return {p, exact:!!x}; }
+    const x = pt[it]; const p = x || pt[pt.length-1] || null; it++; return {p, exact:!!x};
   });
 }
-function getPrev(name){
-  for(const s of S.sessions){
-    const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);
-    if(ex){const sets=(ex.sets||[]).filter(s=>s.done!==false);if(sets.length)return sets;}
-  }return[];
+function _prevAligne(prev, sets){ return _prevAligneDetail(prev, sets).map(d=>d.p); }
+/* D-086 — la séance « dernière fois » d'un exercice, avec sa date : la même que lit `getPrev` (R2), qui n'en garde que
+   les séries. La 1ʳᵉ séance (la plus récente) où l'exercice a au moins une série faite. */
+/* 📋 D-093 — et les N dernières : `_seancesExercice` est le PROPRIÉTAIRE (R2). La colonne « Précédent » et la feuille
+   « 4 dernières séances » lisent donc la même règle — sa dernière colonne EST la séance de « Précédent ». Même ordre que tout
+   l'historique (`S.sessions`, rangée par `_cmpSeances` au chargement, en fin de séance, à l'import et après restauration),
+   et l'on s'arrête dès qu'on en a N : la colonne est recalculée à chaque rendu. Une séance où l'exercice n'a aucune série
+   faite ne compte pas. ⚠️ Limite gardée telle quelle : si l'exercice figure deux fois dans une séance, seul le 1ᵉʳ bloc est lu. */
+function _seancesExercice(name, n){
+  const out=[];
+  for(const s of (S.sessions||[])){
+    const ex=(s&&(s.exs||s.exercises)||[]).find(e=>e&&e.name===name);
+    if(!ex) continue;
+    const sets=(ex.sets||[]).filter(x=>x&&x.done!==false);
+    if(!sets.length) continue;
+    out.push({sess:s,ex,sets});
+    if(n&&out.length>=n) break;
+  }
+  return out;
 }
+function _prevSeance(name){ return _seancesExercice(name,1)[0]||null; }
+function getPrev(name){ const v=_prevSeance(name); return v?v.sets:[]; }
+/* ⏱️ D-086 (recette de Michel, 18/10) — LES DURÉES PROPOSÉES DANS « RÉGLER » : 30 s et 45 s rejoignent 1:00 / 1:30 / 2:00.
+   Une seule liste (R2) : les boutons `rp-*` du panneau, leur surbrillance et les 4 endroits de `toggleSet` qui la posent
+   la lisent ici. ⛔ Le moteur ne change pas : `setRestPreset` règle le repos en cours et mémorise la durée de
+   l'exercice dans `S.exRestPref` (clé existante `ft4_exRp`) — c'est elle que la série suivante reprend.
+   ⛔ Déclarée AVANT ses usages (`toggleSet`, `_highlightRestPreset`), comme `RIR_MAX`. */
+const _REPOS_PRESETS=[30,45,60,90,120];
 /* 🔢 ft-v1057 : `numFR` et pas `parseFloat` — la valeur arrive du HTML en ARGUMENT
    (`this.value`), donc elle echappait a la recherche sur `.value`. C'est le champ le
    PLUS utilise de l'app : `parseFloat('62,5')` y rendait 62, la moitie du poids. */
@@ -1591,7 +1984,7 @@ function toggleSet(ei,si){
     _restStep=isAbdo?5:15;
     _restEx=isAbdo?null:exName;
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
-    if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
+    if(mb)mb.textContent=`−${_restStep}\u00a0s`;if(pb)pb.textContent=`+${_restStep}\u00a0s`;   // D-086 : « −15 s » (espace insécable)
     /* ⏱️ LE REPOS REGARDE CE QUI VIENT APRÈS, PAS SEULEMENT CE QU'ON VIENT DE FAIRE (17/08/2026)
        Michel, pendant sa séance du 16/08 : *« si je supprime un échauffement, le temps de repos ne
        sera pas bon entre les deux »*. Il a raison, et c'est structurel : le repos se lisait sur le
@@ -1641,7 +2034,7 @@ function toggleSet(ei,si){
         // Dernier palier → repos
         if(lbl)lbl.textContent='📉 Série dégressive terminée';
         startRest(sec);
-        if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+        if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
         if(navigator.vibrate)navigator.vibrate([50]);
         renderExBlocks();return;
       }
@@ -1676,7 +2069,7 @@ function toggleSet(ei,si){
       _restDoneCb=()=>{_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);};
       const lbl=document.getElementById('rest-label');
       if(lbl)lbl.textContent=groupType==='pyramid-up'?'📈 Pyramide +':'📉 Pyramide −';
-      if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+      if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
       if(navigator.vibrate)navigator.vibrate([50]);
       return;
     } else if(groupType==='drop'&&S.wkt.exs[ei].group){
@@ -1695,7 +2088,7 @@ function toggleSet(ei,si){
         startRest(sec);   // ⚠️ la consigne d'avance se pose APRÈS (startRest efface _restDoneCb)
         _restDoneCb=()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
         if(lbl)lbl.textContent='⚡ Tour suivant';
-        if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+        if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
         if(navigator.vibrate)navigator.vibrate([50]);
         return;
       }
@@ -1726,11 +2119,8 @@ function toggleSet(ei,si){
        ⚠️ UNE SÉRIE DE TRAVAIL non cochée bloque toujours (elle peut encore être faite), et un
        exercice qui n'aurait QUE des paliers n'avance pas non plus : sans série de travail
        validée, rien ne dit qu'on en a fini avec lui (R29 — le coût de l'erreur décide). */
-    const _estEch = s => !!(s && (s.type==='É' || s.type==='W'));
-    const _sets = S.wkt.exs[ei].sets || [];
-    const _travailRestant = _sets.some(s => !s.done && !_estEch(s));
-    const _travailFait     = _sets.some(s =>  s.done && !_estEch(s));
-    const _tousFaits = !_travailRestant && _travailFait;
+    // UX SÉANCE (16/10) : la règle n'a pas changé, elle a quitté ce bloc pour son propriétaire (`_exTermine`, R2).
+    const _tousFaits = _exTermine(S.wkt.exs[ei]);
     let _suiv=null;
     if(_tousFaits && !S.wkt.exs[ei].group){
       for(let k=ei+1;k<S.wkt.exs.length;k++){
@@ -1763,7 +2153,7 @@ function toggleSet(ei,si){
       const _n=String(S.wkt.exs[_suiv].name||'');
       if(_lb&&!_lb.textContent)_lb.textContent='⏭️ Ensuite : '+(_n.length>26?_n.slice(0,25).trim()+'…':_n);
     }
-    if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+    if(!isAbdo&&_REPOS_PRESETS.includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
     if(navigator.vibrate)navigator.vibrate([50]);
   }
   renderExBlocks();
@@ -1786,6 +2176,7 @@ function openUniHelp(nom){
 function closeUniHelp(){document.getElementById('ov-uni-help').classList.remove('open');}
 let _confirmCb=null,_confirmAltCb=null;
 function showConfirm(title,msg,cb,okLabel,altLabel,altCb){
+  document.getElementById('ov-confirm').classList.remove('cf-seance');   // D-085 : bouton rouge par défaut (seule la fin de séance le passe en Cobalt)
   document.getElementById('confirm-title').textContent=title;
   document.getElementById('confirm-msg').textContent=msg;
   _confirmCb=cb;_confirmAltCb=altCb||null;
@@ -3318,22 +3709,9 @@ function clearAllEx(){
     toast('Séance vidée','info');
   },'Vider');
 }
-// Sync boutons ✕/Changer dans l'en-tête + repositionne le FAB
-// Appellé à chaque renderExBlocks() pour rester cohérent sans passer par renderLog() entier
-function _syncLogHdrBtns(){
-  const el=document.getElementById('log-hdr-btns');
-  if(!el)return;
-  const hasExs=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
-  el.innerHTML=_pauseBtnHtml()+(hasExs
-    ?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>'
-     +'<button onclick="clearAllEx()" style="padding:7px 10px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Vider</button>'
-     +'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>'
-    :'');
-  // ⛔ `requestAnimationFrame(_positionFab)` retiré le 11/08/2026 avec la fonction elle-même :
-  //    elle repositionnait un bouton flottant `#fab-session` qui n'existe plus (docké dans la
-  //    barre depuis un redesign). Le bouton central est désormais protégé par la MESURE —
-  //    règle d'or #9, témoin permanent dans les tests de parcours. Détail dans `app.js`.
-}
+/* ⛔ `_syncLogHdrBtns` RETIRÉE LE 16/10/2026 (UX SÉANCE, R30) : elle réécrivait la rangée « Pause ✕ Vider Changer »
+   de l'ancien en-tête. Ces boutons sont rangés dans le menu ⋯ de la séance (`openWktMenu`) ; ses deux appels dans
+   `renderExBlocks` appellent maintenant `_renderEnteteSeance` (en-tête de la barre haute + bouton central). */
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
 let _rmHoldTimer=null;
 function _rmHoldStart(btn,ei){
@@ -4530,13 +4908,18 @@ function _initSheetHandles(){
 // Une courbe qui change toute seule dans le passé est pire qu'une courbe imparfaite.
 // → Le jour où on décidera de corriger l'historique, ce sera une migration explicite qui
 //   pose `uniConv:1` sur les séances reprises, pas un changement de cette fonction.
-function _workVol(sess){
+//
+// 🧮 D-092 (Michel, 19/10/2026) — `avecEchauffements` : le volume TOTAL de « Ta séance jusqu'ici » compte AUSSI les paliers
+// d'échauffement. Une seule règle de volume (R2) : même filtre, même convention unilatérale, seul le tri des paliers change.
+// ⛔ Sans ce 2ᵉ argument rien ne bouge : la séance enregistrée (`sess.volume`), Progrès, l'Accueil et les résumés de la
+// semaine gardent le volume de TRAVAIL.
+function _workVol(sess, avecEchauffements){
   let v=0;
   const dbl=!!(sess&&sess.uniConv);
   (sess.exs||sess.exercises||[]).forEach(ex=>{
     const k=(dbl&&typeof estUnilateral==='function'&&estUnilateral(ex.name))?2:1;
     (ex.sets||[]).forEach(s=>{
-      if(s.done&&s.type!=='É'&&s.type!=='W'&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
+      if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
     });
   });
   return v;
@@ -4710,7 +5093,12 @@ function _showSessionEnd(sess,bestPr,prCount,premieresRefs){
 }
 function _renderSeStats(sess,prCount,premieresRefs){
   const el=document.getElementById('se-stats');if(!el)return;
-  let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
+  let nSets=0, nValid=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done){nValid++;if(s.type!=='É'&&s.type!=='W')nSets++;}}));
+  /* 🧮 D-093 (recette iPhone du 19/10) — LA TUILE « VOLUME » DISAIT LE TRAVAIL SOUS UN NOM DE TOTAL : « 4200 kg » sous
+     « Volume », juste après une carte qui annonçait « 5 600 kg · dont 4 200 kg de travail » (D-092). Elle dit maintenant le
+     TOTAL, échauffements compris, et le travail à part — mêmes chiffres, même format que la carte (`_workVol`, R2).
+     ⛔ La séance ENREGISTRÉE ne change pas : `sess.volume` reste le travail (Progrès, l'Accueil, Milo, l'export le lisent). */
+  const _volTot=Math.round(_workVol(sess,true)), _volTrav=Math.round(sess.volume||0), _kg=n=>n.toLocaleString('fr-FR');
   /* ⏱️➕ LA TUILE « DURÉE » COMPTE LE CARDIO (18/08/2026) — une seule source, `_dureeTotaleMin`
      (app.js), qui sait ce qui est déjà dans le chrono et ce qui ne l'est pas. Le chrono démarre
      à la 1ʳᵉ série depuis le 14/08 : sans ça, une séance qui commence par 20 min de vélo affiche
@@ -4726,8 +5114,8 @@ function _renderSeStats(sess,prCount,premieresRefs){
   const _refs=(premieresRefs||[]).filter(Boolean);
   if(_refs.length){const _e=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
     tiles.push('<div class="se-stat se-ref" style="grid-column:1/3;"><div class="se-stat-v" style="font-size:15px;">📌 Première référence enregistrée</div><div class="se-stat-l">'+_refs.map(_e).join(' · ')+'</div></div>');}
-  tiles.push('<div class="se-stat"><div class="se-stat-v">'+(sess.volume||0)+' kg</div><div class="se-stat-l">Volume</div></div>');
-  tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries</div></div>');
+  tiles.push('<div class="se-stat"><div class="se-stat-v">'+_kg(_volTot)+' kg</div><div class="se-stat-l">Volume total'+(_volTot!==_volTrav?' · dont '+_kg(_volTrav)+' kg de travail':'')+'</div></div>');
+  tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries de travail'+(nValid!==nSets?' · '+nValid+' validées':'')+'</div></div>');
   if(dur)tiles.push('<div class="se-stat"><div class="se-stat-v">'+dur+' min</div><div class="se-stat-l">'+durSub+'</div></div>');
   if(sess.calories)tiles.push('<div class="se-stat"><div class="se-stat-v">'+sess.calories+'</div><div class="se-stat-l">kcal brûlées</div></div>');
   el.innerHTML=tiles.join('');
@@ -5061,7 +5449,7 @@ function _showSaveError(){
   el.innerHTML=`<div style="margin-top:12px;background:rgba(255,45,85,.10);border:1.5px solid var(--red);border-radius:14px;padding:16px;">
     <div style="font-weight:700;color:var(--red);margin-bottom:6px;">⚠️ Impossible d'enregistrer la séance</div>
     <div style="font-size:13px;color:var(--t2);margin-bottom:12px;">Stockage plein. Ta séance est <strong>toujours là</strong> — libère de l'espace puis réessaie, ou note tes données avant de fermer.</div>
-    <button class="btn btn-red" onclick="finishWorkout()" style="width:100%;">🔄 Réessayer</button>
+    <button class="btn btn-red" onclick="terminerSeance()" style="width:100%;">🔄 Réessayer</button>
     <button class="btn btn-bg2" onclick="this.closest('div[style]').remove();" style="width:100%;margin-top:8px;">Continuer la séance</button>
   </div>`;
 }
@@ -5113,9 +5501,9 @@ function _updPill(){
   pillTime.textContent=(_dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
   const pct=Math.max(0,Math.min(100,left/restTot*100));
   pillFill.style.width=pct+'%';
-  const c=_dep?'var(--gold)':pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+  const c=_dep?'var(--gold)':pct>50?'var(--sea)':pct>20?'var(--gold)':'var(--red)';   // D-085 : Cobalt pendant le repos
   pillFill.style.background=c;
-  pill.style.borderColor=pct>50?'rgba(52,211,153,.5)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
+  pill.style.borderColor=pct>50?'var(--sea-a2)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
 }
 
 function _restTick(){
@@ -5381,6 +5769,28 @@ function startRest(sec){
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
   _pillIv=setInterval(_updPill,500);
+  setTimeout(_dockDegager,80);   // UX SÉANCE : affichage seul — la série suivante ne reste pas sous le dock
+}
+/* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — LE DOCK DE REPOS NE CACHE JAMAIS LA SÉRIE SUIVANTE.
+   Le repos s'affiche en bas, au-dessus de la barre de navigation, SANS pousser la liste (la barre collante d'avant la
+   décalait à chaque série). Le prix connu : il peut recouvrir le bas de l'écran. Donc, quand un repos démarre, si la
+   prochaine série à faire de l'exercice ouvert tombe sous le dock, on fait défiler juste ce qu'il faut pour la poser
+   au-dessus. ⛔ LECTURE SEULE DE L'ÉCRAN : ni `S.wkt`, ni le chrono (`restIv`/`restStartTs`) ne sont touchés.
+   Lancé APRÈS le rendu (`toggleSet` redessine les cartes juste après `startRest`). */
+function _dockDegager(){
+  try{
+    if(window._curScreen!=='log') return;
+    const bar=document.getElementById('rest-bar'), sc=document.getElementById('s-log');
+    if(!bar||!sc||!bar.classList.contains('show')) return;
+    // La série SUIVANTE = la 1ʳᵉ non faite APRÈS celle qu'on vient de valider (la cible du RIR, posée par `toggleSet`).
+    // Exercice fini → rien à faire ici : l'avance au suivant (fin du repos, `_restDoneCb`) fait défiler d'elle-même.
+    const cib=Array.isArray(_rirCible)?_rirCible[_rirCible.length-1]:_rirCible; if(!cib) return;
+    const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[cib.ei]; if(!ex) return;
+    const k=(ex.sets||[]).findIndex((x,i)=>i>cib.si&&x&&!x.done); if(k<0) return;
+    const ligne=document.getElementById('sr-'+cib.ei+'-'+k); if(!ligne) return;
+    const haut=bar.getBoundingClientRect().top-12, r=ligne.getBoundingClientRect();
+    if(r.bottom>haut) sc.scrollTop+=Math.ceil(r.bottom-haut);
+  }catch(e){}
 }
 
 /* ── LE CHRONO CONTINUE EN NÉGATIF (14/08/2026, idée de Michel) ────────────────────────
@@ -5421,9 +5831,17 @@ function updRest(){
   // La barre, elle, reste bornée à 0 : une largeur négative n'a pas de sens.
   const pct=Math.max(0,Math.min(100,reste/restTot*100));
   fillEl.style.width=pct+'%';
-  const c=dep?'var(--gold)':pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
-  const bc=dep?'rgba(255,214,0,.45)':pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
+  /* 🎨 D-085 (Michel, 17/10) : le repos QUI COURT est en bleu séance (Cobalt) ; les paliers de fin (or, rouge) et le
+     dépassement (or) sont inchangés — ils disent le temps qui reste, pas la séance. */
+  const c=dep?'var(--gold)':pct>50?'var(--sea)':pct>20?'var(--gold)':'var(--red)';
+  const bc=dep?'rgba(255,214,0,.45)':pct>50?'var(--sea-a2)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
   timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
+  /* 🏋️ UX SÉANCE (16/10) — le dock montre la même progression sur un ANNEAU, et le total réglé à côté de « Repos ».
+     Affichage seul : mêmes `pct`, `c` et `restTot` que la barre ci-dessus (rien n'est recalculé ailleurs, R2). */
+  const rg=document.getElementById('rest-ring');
+  if(rg){ rg.style.strokeDashoffset=String(100-pct); rg.style.stroke=c; }
+  const tt=document.getElementById('rest-tot');
+  if(tt){ const a=Math.max(0,Math.round(restTot)||0); tt.textContent=' · '+Math.floor(a/60)+':'+String(a%60).padStart(2,'0'); }
 }
 
 // Arrête chrono + barre + pastille SANS fermer l'overlay décompte (utilisé au GO,
@@ -5508,7 +5926,7 @@ function _renderRirRow(){
 }
 function _rirQuestionHtml(c,avecNom){
   const set=S.wkt.exs[c.ei].sets[c.si];
-  const cur=_rirDeSet(set);
+  const cur=_rirDeSet(set), ancien0=_rir0Ambigu(set);
   /* ⭐ L'ÉCHEC EST DÉJÀ RÉPONDU : si la série porte le tag `X`, la question n'a plus lieu d'être
      et on le DIT au lieu de redemander (R2).
      ⛔ MAIS ON NE SURLIGNE PLUS « 0 » (ft-v1154) : depuis que `_rirDeSet` rend `null` sur un X,
@@ -5516,33 +5934,47 @@ function _rirQuestionHtml(c,avecNom){
      0 » sur une série où une répétition a été TENTÉE et n'est pas passée : c'est un cran au-delà,
      pas la même donnée (décision de Michel). Le libellé, lui, dit bien l'échec. */
   const fige=(set.type==='X');
+  /* ⭐ D-093 (décision de Michel, 19/10) — « Échec » EST le tag `X` : la même donnée que la pastille de la série, posée
+     d'ici ou de là. Il est donc coché quand la série est en `X`, et les autres réponses restent possibles (changer d'avis
+     repasse la série en `N`). ⛔ Un ancien 0 (sans `rirV`) ne coche RIEN : il peut avoir voulu dire « échec » — on le
+     dit, on ne le reclasse pas. */
   const btn=n=>{
-    const on=(cur===n);
+    const on=(!fige&&cur===n&&!(n===0&&ancien0));
     /* ⛔ LE LIBELLÉ VIENT DU VOCABULAIRE, PAS D'ICI : la VALEUR envoyée à `setRir` reste le RIR
        dans les deux échelles — c'est ce qui fait qu'on ne stocke jamais deux choses (R2). */
-    return `<button class="rir-b${on?' on':''}"${fige?' disabled':''} onclick="setRir(${c.ei},${c.si},${n})">${_reserveBoutonTxt(n)}</button>`;
+    return `<button class="rir-b${on?' on':''}" onclick="setRir(${c.ei},${c.si},${n})">${_reserveBoutonTxt(n)}</button>`;
   };
+  const btnEchec=`<button class="rir-b rir-ech${fige?' on':''}" onclick="setRir(${c.ei},${c.si},'X')" title="Une répétition tentée n'est pas passée (tag X)">Échec</button>`;
   const nom=avecNom?('<b class="rir-nom">'+String(S.wkt.exs[c.ei].name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</b> — '):'';
-  let html='<div class="rir-lbl">'+nom+(fige?_reserveEchecTxt():_reserveQuestion())+'</div><div class="rir-row">';
+  let html='<div class="rir-lbl">'+nom+(fige?_reserveEchecTxt():_reserveQuestion())
+    +(ancien0?' <span class="rir-anc">· noté « 0 ou échec »</span>':'')+'</div><div class="rir-row">';
   /* ⛔ L'ORDRE S'INVERSE EN RPE, exprès : le barème se lit du plus léger au maximum (6 → 10),
-     et quelqu'un qui a CHOISI le RPE le lit dans ce sens. En RIR on garde l'échec en tête. */
-  if(_estRpe()){ for(let n=RIR_MAX;n>=0;n--) html+=btn(n); }
-  else         { for(let n=0;n<=RIR_MAX;n++) html+=btn(n); }
+     et quelqu'un qui a CHOISI le RPE le lit dans ce sens. En RIR on garde l'échec en tête ; en RPE il vient après 10
+     (un cran AU-DELÀ du maximum, comme le `X` est un cran au-delà de RIR 0). */
+  if(_estRpe()){ for(let n=RIR_MAX;n>=0;n--) html+=btn(n); html+=btnEchec; }
+  else         { html+=btnEchec; for(let n=0;n<=RIR_MAX;n++) html+=btn(n); }
   /* ⛔ ET ON PEUT RETIRER SA RÉPONSE : sans ça, un tap par erreur deviendrait une mesure
-     définitive. `null` n'est pas 0, il faut pouvoir y revenir (R29). */
-  if(cur!==null&&!fige) html+='<button class="rir-b rir-x" onclick="setRir('+c.ei+','+c.si+',null)" title="Retirer">✕</button>';
+     définitive. `null` n'est pas 0, il faut pouvoir y revenir (R29). Vaut aussi pour « Échec ». */
+  if(cur!==null||fige) html+='<button class="rir-b rir-x" onclick="setRir('+c.ei+','+c.si+',null)" title="Retirer">✕</button>';
   return html+'</div>';
 }
+/* D-093 — UNE RÉPONSE À LA FOIS : « Échec » pose le tag `X` et retire la réserve ; un chiffre (0 à 4) repasse une série
+   `X` en `N` et pose `rir` + `rirV` ; « ✕ » retire tout (une série `X` redevient `N`). ⛔ Jamais un RIR 0 transformé en
+   échec, ni l'inverse : chaque bascule vient d'un tap. ⚠️ La pastille de type (`cycleType`) ne touche pas au `rir`, c'est
+   voulu (ft-v1154) — sa valeur revient si la série repasse en `N` par la pastille. */
 function setRir(ei,si,n){
   const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];
-  if(!set||set.type==='X') return;
-  if(n===null) delete set.rir; else set.rir=Math.max(0,Math.min(RIR_MAX,Math.round(+n)||0));
+  if(!set) return;
+  if(n==='X'){ set.type='X'; delete set.rir; delete set.rirV; }
+  else if(n===null){ if(set.type==='X') set.type='N'; delete set.rir; delete set.rirV; }
+  else{ if(set.type==='X') set.type='N'; set.rir=Math.max(0,Math.min(RIR_MAX,Math.round(+n)||0)); set.rirV=RIR_V; }
   persist(); _renderRirRow(); renderExBlocks();
   if(navigator.vibrate)navigator.vibrate(30);
 }
 let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null,_editingCustomExName=null;
+/* D-086 : la liste des durées proposées est `_REPOS_PRESETS` (déclarée avant `toggleSet`, qui la lit). */
 function _highlightRestPreset(sec){
-  [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
+  _REPOS_PRESETS.forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
 function setRestPreset(sec){
   if(!restStartTs){startRest(sec);return;}
@@ -10213,8 +10645,10 @@ function continueInCoach(){
     const msgs=document.getElementById('coach-msgs');
     if(msgs){
       msgs.innerHTML='';
-      renderCoachMsg('user','Analyse mon programme "'+_lastProgAnalysisProg.name+'".');
-      renderCoachMsg('coach',_lastProgAnalysisReply,{coupee:_lastProgAnalysisCoupee});
+      /* D-086 : ces deux messages entrent dans le fil SANS heure (enregistrement inchangé — proposition à part) :
+         l'écran le dit (« Date indisponible ») plutôt que d'afficher l'heure d'ouverture du fil. */
+      renderCoachMsg('user','Analyse mon programme "'+_lastProgAnalysisProg.name+'".',{ts:null});
+      renderCoachMsg('coach',_lastProgAnalysisReply,{coupee:_lastProgAnalysisCoupee,ts:null});
     }
     const suggs=document.getElementById('coach-suggs');
     if(suggs)suggs.style.display='none';

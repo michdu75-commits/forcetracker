@@ -3546,21 +3546,52 @@ function _toggleSleepSaveBtn(v){
    NOMMER (le message qui dit « appuie sur … en bas »), le recopier aurait garanti que les deux
    divergent : on aurait envoyé quelqu'un chercher un bouton qui ne s'appelle plus comme ça. */
 function _labelFinSeance(){
-  const hasDone=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.some(ex=>(ex.sets||[]).some(s=>s.done)));
-  return hasDone?'🏁 Terminer la séance':'🏁 Enregistrer le cardio';
+  return _contenuFinSeance().fait?'🏁 Terminer la séance':'🏁 Enregistrer le cardio';
 }
+/* 🏁 « Y A-T-IL QUELQUE CHOSE À ENREGISTRER ? » — UN propriétaire (UX SÉANCE, 16/10/2026, R2). La réponse était
+   écrite ici, dans le bloc du bas ; l'en-tête de séance (barre haute) pose désormais la même question pour montrer
+   — ou non — son « Terminer ». Deux copies de la condition auraient fini par montrer un « Terminer » d'un côté et
+   rien de l'autre. Une série validée OU des minutes de cardio notées (avant/après) : la règle n'a pas changé. */
+function _contenuFinSeance(){
+  if(!S.wkt) return {fait:false,cardio:false};
+  return {fait:!!(S.wkt.exs&&S.wkt.exs.some(ex=>(ex.sets||[]).some(s=>s.done))),
+          cardio:!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration))};
+}
+/* 🏋️ UX SÉANCE (16/10/2026) — LE BAS DE LA SÉANCE : « Ta séance jusqu'ici » + « Terminer la séance ».
+   🧮 LES CHIFFRES (D-092, Michel, 19/10/2026 — remplace le choix du 16/10, qui ne comptait ici que le travail) :
+   « séries » et « volume » sont des TOTAUX — toutes les séries validées, échauffements compris. Le TRAVAIL reste dit à
+   part, quand il diffère : « dont N de travail ». Ce N est le compte de « N / M » en haut (`_bilanTravailWkt`, D-083 ①) :
+   les deux nombres se recoupent à l'écran au lieu de se contredire. Les deux volumes viennent de LA règle de volume
+   (`_workVol`, R2), avec la convention unilatérale de la séance enregistrée (`uniConv:1`, comme `finishWorkout`) : le
+   « dont … kg de travail » est donc exactement le volume que l'écran de fin, Progrès et l'Accueil afficheront.
+   ⛔ Le bouton passe par `terminerSeance()`, LA porte de fin (décision ④ du cadrage) : celle du haut et celle du
+   bas posent donc la même question, avec les mêmes mots. */
 function renderLogFinish(){
   const el=document.getElementById('log-finish');if(!el)return;
   if(!S.wkt){el.innerHTML='';return;}
-  const hasCardio=!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration));
-  const hasDone=!!(S.wkt.exs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done)));
+  const c=_contenuFinSeance(), hasCardio=c.cardio, hasDone=c.fait;
   if(!hasDone&&!hasCardio){el.innerHTML='';return;} // rien à enregistrer (ni série validée, ni cardio)
-  let summary='';
+  let kv='', figF='', figD='', cardioTxt='';
   if(hasDone){
-    const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
-    const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
-    const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
-    summary=`${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume`;
+    const b=(typeof _bilanTravailWkt==='function')?_bilanTravailWkt():{faites:0};
+    const nTot=S.wkt.exs.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s&&s.done).length,0);
+    const vs={exs:S.wkt.exs,uniConv:1}, volDe=avec=>Math.round((typeof _workVol==='function')?_workVol(vs,avec):0);
+    const vol=volDe(true), volTrav=volDe(false), kg=n=>n.toLocaleString('fr-FR');
+    const min=S.wkt.startTs?Math.floor(((typeof _wktElapsedMs==='function')?_wktElapsedMs():0)/60000):null;
+    const tuile=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
+    kv=`<div class="lf-kv">${min!==null?tuile(min+' min','durée'):''}${tuile(nTot,'série'+(nTot>1?'s':'')+(nTot!==b.faites?' · dont '+b.faites+' de travail':''))}${tuile(kg(vol)+' kg','volume'+(vol!==volTrav?' · dont '+kg(volTrav)+' kg de travail':''))}</div>`;
+    /* 🧍🧍 FACE · CHIFFRES · DOS (18/10/2026, décision D-091 de Michel) — les deux vues de la séance, ENSEMBLE et sans appui :
+       la face à gauche, le dos à droite (le dessin de dos de la grande figurine « Muscles travaillés »), colorées par les MÊMES
+       données (`_mscScores`, calculé une fois pour les deux). Ni bouton, ni bascule, ni alternance : deux images. La taille
+       suit l'écran (CSS `.lf-2fig`) — d'où `width:100%` : le dessin remplit sa colonne. */
+    try{
+      const faits=S.wkt.exs.filter(ex=>(ex.sets||[]).some(s=>s.done));
+      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
+        const res=_mscScores(faits);
+        const vue=v=>`<div class="lf-fig lf-fig-${v}" role="img" aria-label="Muscles travaillés dans cette séance, vue de ${v}">${_mscSVGmini(res,v).replace('width:32px','width:100%')}</div>`;
+        figF=vue('face'); figD=vue('dos');
+      }
+    }catch(e){ figF=figD=''; }
   }
   if(hasCardio){
     // Les deux moments sont nommés dans le résumé : « avant 10min · après 20min » — sans ça,
@@ -3569,14 +3600,12 @@ function renderLogFinish(){
     const bouts=[];
     if(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration)bouts.push('avant '+S.wkt.cardioAvant.duration+'min');
     if(S.wkt.cardio&&S.wkt.cardio.duration)bouts.push('après '+S.wkt.cardio.duration+'min');
-    const cardioTxt=`🏃 Cardio ${bouts.join(' · ')}${kcal?` · ~${kcal}kcal`:''}`;
-    summary = summary ? summary+' · '+cardioTxt : cardioTxt;
+    cardioTxt=`🏃 Cardio ${bouts.join(' · ')}${kcal?` · ~${kcal}kcal`:''}`;
   }
   const label = _labelFinSeance();
-  el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
-    <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${summary}</div>
-    <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">${label}</button>
-  </div>`;
+  el.innerHTML=`<div class="lf-titre">Ta séance jusqu'ici</div>
+    <div class="lf-bilan${figF&&figD?' lf-2fig':''}">${figF}<div class="lf-t">${kv}${cardioTxt?`<div class="lf-cardio">${cardioTxt}</div>`:''}</div>${figD}</div>
+    <button class="btn lf-fin" onclick="terminerSeance()">${label}</button>`;   // D-085 (décision B) : Terminer = Cobalt, le rouge est réservé au destructif
 }
 
 // Note de sommeil selon la DURÉE — interpolation linéaire entre points d'ancrage, donc

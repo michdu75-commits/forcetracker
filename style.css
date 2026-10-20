@@ -37,6 +37,11 @@ img {
   --t1: #F2F3F5; --t2: #8A8F99; --t3: #6B7180;
   --red: #FF6A73; --red2: #EF3E57; --green: #34D399; --blue: #5BA8FF;
   --gold: #EAB308; --orange: #FF8A72; --purp: #A855F7;
+  /* 🎨 BLEU SÉANCE « COBALT » — décision de Michel du 17/10/2026 (D-085). Un jeton DÉDIÉ au mode séance, distinct de
+     `--blue` (liens, eau, données) : on ne recolore PAS tous les bleus de l'app, seulement ce qui dit « tu es en séance ».
+     --sea = texte, indicateurs, anneaux (#7C95FF, 7,03:1 sur le fond) · --sea-fill = remplissage avec texte blanc
+     (#2F5BFF, 5,17:1) · --sea-a / --sea-a2 = fonds et contours teintés. */
+  --sea: #7C95FF; --sea-fill: #2F5BFF; --sea-a: rgba(124,149,255,.14); --sea-a2: rgba(124,149,255,.38);
   --r: 16px; --r-sm: 10px;
   --font: 'Manrope', -apple-system, sans-serif;
   --font-cond: 'Space Grotesk', sans-serif;
@@ -47,6 +52,9 @@ img {
   --sep: #CBCCD6; --t1: #12121E; --t2: #4A4A6A; --t3: #8888AA;
   --red: #D91843; --green: #00A856; --blue: #1565C0;
   --gold: #CC8800; --orange: #CC5200;
+  /* D-085 : le Cobalt clair (#7C95FF) ne fait que ~2,8:1 sur fond clair — même parade que --green ci-dessus,
+     la teinte FONCÉE du jeton. Pas une refonte du mode clair : seulement ne pas le rendre moins lisible. */
+  --sea: #2F5BFF; --sea-a: rgba(47,91,255,.10); --sea-a2: rgba(47,91,255,.35);
 }
 #root.light-mode .topbar {
   background: #0C0D11;
@@ -163,25 +171,88 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .slq-btn.active .slq-bar{background:var(--green);}
 .slq-bar-off{background:rgba(255,255,255,.1)!important;}
 
-/* REST BAR */
-#rest-bar{position:sticky;top:52px;z-index:20;display:none;flex-direction:column;align-items:center;
-  gap:4px;padding:5px 12px 6px;margin:0 -14px;
-  background:var(--bg2);border:1px solid rgba(52,211,153,.3);border-radius:0 0 16px 16px;
-  transition:border-color .4s;}
+/* REST BAR — LE DOCK DE REPOS (UX SÉANCE, 16/10/2026, cadrage validé par Michel).
+   Il était COLLANT en haut de la liste (`position:sticky`) et la poussait de ~150 px à chaque série validée.
+   Il est maintenant FIXÉ en bas, juste au-dessus de la barre de navigation, et ne décale plus rien ; l'espace de
+   fin de liste grandit pendant le repos (règle `#rest-bar.show ~ .scroll-spacer`) et `_dockDegager` (log.js) remonte
+   la série suivante si elle tombe dessous. ⛔ Le moteur ne change pas (`startRest`/`updRest`/`restIv`/`restStartTs`).
+   ⚠️ La largeur suit `#root` (430 px max, centré) : `left:50%` + `translateX(-50%)`, pas `left/right` — sur un écran
+   plus large que le téléphone, le dock déborderait de l'app. Le bas tient compte de l'encoche (safe-area). */
+#rest-bar{position:fixed;left:50%;transform:translateX(-50%);width:calc(min(100vw,430px) - 24px);
+  bottom:calc(max(env(safe-area-inset-bottom),8px) + 76px);z-index:25;display:none;flex-direction:column;
+  padding:12px 12px 12px 14px;border-radius:22px;background:var(--bg2);border:1px solid var(--sea-a2);
+  box-shadow:0 24px 54px -12px rgba(0,0,0,.95);box-sizing:border-box;transition:border-color .4s;}
 #rest-bar.show{display:flex;}
-#rest-time{font-family:var(--font-cond);font-size:26px;font-weight:700;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--green);transition:color .4s;}
+#rest-bar.show ~ .scroll-spacer{height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px + 200px);}
+.rd-top{display:flex;align-items:center;gap:12px;}
+.rd-ring{width:52px;height:52px;flex:none;}
+.rd-ring svg{width:100%;height:100%;display:block;transform:rotate(-90deg);}
+.rd-ring-bg{fill:none;stroke:var(--sep);stroke-width:3.2;}
+.rd-ring-fg{fill:none;stroke:var(--sea);stroke-width:3.2;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:0;transition:stroke-dashoffset .3s linear,stroke .4s;}
+.rd-tt{flex:1;min-width:0;}
+.rd-l{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--sea);white-space:nowrap;}
+.rd-tot{letter-spacing:.04em;color:var(--t2);}
+.rd-time{display:flex;align-items:center;gap:6px;margin-top:2px;padding:0;background:none;border:none;cursor:pointer;color:inherit;font-family:var(--font-cond);touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.rd-pen{width:15px;height:15px;stroke:var(--t2);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+#rest-time{font-family:var(--font-cond);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--sea);transition:color .4s;}
 #rest-label:empty{display:none;}          /* ligne label masquée quand vide → gagne ~15px de hauteur */
+#rest-over{font-size:11px;color:var(--gold);line-height:1.3;}
+#rest-over:empty{display:none;}
 /* Écran GO : après 5 s sans tap, cycle de couleurs (attrape-l'œil) */
 #ov-rest-countdown.go-cycle{animation:goCycle 3.2s linear infinite;}
 @keyframes goCycle{0%{background:#00e676;}20%{background:#2979FF;}40%{background:#AA00FF;}60%{background:#FF6C00;}80%{background:#FF2D55;}100%{background:#00e676;}}
-#rest-wrap{width:100%;max-width:260px;height:5px;background:var(--sep);border-radius:3px;overflow:hidden;}
-#rest-bar .rbtn{padding:5px 9px;font-size:12px;border-radius:7px;}
-#rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s linear,background .4s;}
-#rest-btns{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;}
+/* La barre linéaire reste (`updRest` y écrit la progression) mais c'est l'ANNEAU qui la montre dans le dock. */
+#rest-wrap{display:none;}
+#rest-bar .rbtn{height:42px;min-width:46px;padding:0 10px;border-radius:12px;border:none;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);font-size:13px;font-weight:800;color:var(--t1);}
+#rest-bar .rd-skip{color:#fff;background:var(--sea-fill);box-shadow:none;}
+#rest-fill{height:100%;background:var(--sea);border-radius:3px;transition:width .5s linear,background .4s;}
+#rest-btns{display:flex;gap:6px;align-items:center;flex:none;}
+#rest-rir{margin-top:12px;padding-top:10px;border-top:1px solid var(--sep);}
+#rest-rir:empty{display:none;}
+#rest-bar .rir-lbl{font-size:13.5px;font-weight:700;color:var(--t1);text-align:left;margin-top:0;}
+#rest-bar .rir-row{justify-content:stretch;flex-wrap:nowrap;margin-top:9px;}
+#rest-bar .rir-b{flex:1;min-width:0;height:42px;}
+/* 💪 D-093 — SIX RÉPONSES (Échec | 0 | 1 | 2 | 3 | 4+) + « ✕ » sur UNE ligne, aucune sous 36 px à 360 px (mesuré). « Échec » est
+   un mot : un peu plus de place et une police resserrée ; « ✕ » garde une largeur fixe. L'ancien 0 se signale en petit. */
+#rest-bar .rir-row{gap:5px;}
+#rest-bar .rir-b{padding:0 2px;}
+#rest-bar .rir-b.rir-ech{flex:1.4;font-size:12.5px;letter-spacing:-.01em;}
+#rest-bar .rir-b.rir-x{flex:0 0 36px;}
+#rest-bar .rir-anc{font-size:11.5px;font-weight:600;color:var(--t3);}
+/* Les préréglages 1:00 / 1:30 / 2:00 vivent dans « Régler » (décision ③). */
+.re-presets{display:flex;gap:8px;margin-bottom:16px;}
+.re-presets .rbtn{flex:1;font-size:15px;font-weight:800;padding:11px 0;border-radius:12px;}
+/* Texte lu par les lecteurs d'écran, invisible à l'écran (le crayon ✎ dit « Régler » aux yeux). */
+.vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+/* ⏱️ D-086 (recette iPhone de Michel, 18/10) — LE DOCK SE LIT [ −15 s ] [ ◔ temps ] [ +15 s ] [ Passer ].
+   Le temps est au CENTRE, entre les deux boutons qui le règlent, en grand ; l'anneau reste, dans le bouton du temps ;
+   « Passer » au bout, en Cobalt. Toucher le temps ouvre « Régler ». Les libellés de repos (`#rest-label`, `#rest-over`)
+   passent sous la rangée. ⛔ Affichage seul : `startRest` / `updRest` / `addRT` / `skipRest` ne changent pas. */
+#rest-bar .rd-top{gap:6px;}
+#rest-bar .rbtn{height:48px;min-width:52px;padding:0 9px;white-space:nowrap;}
+#rest-bar .rd-skip{padding:0 12px;}
+#rest-bar .rd-time{flex:1;min-width:0;height:52px;justify-content:center;gap:8px;margin:0;padding:0 8px;border-radius:16px;background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);}
+#rest-bar .rd-ring{width:34px;height:34px;}
+#rest-bar .rd-tt{display:flex;flex-direction:column;align-items:flex-start;flex:none;min-width:0;}
+#rest-bar .rd-l{font-size:9.5px;letter-spacing:.1em;line-height:1.1;}
+#rest-bar #rest-time{font-size:32px;line-height:1;}
+#rest-bar .rd-pen{width:13px;height:13px;}
+#rest-bar #rest-label,#rest-bar #rest-over{margin-top:6px;text-align:center;}
+/* Gaucher : « Passer » passe à gauche, mais −15 s / temps / +15 s gardent leur ordre (se lisent toujours de gauche à droite). */
+#root.lh #rest-bar .rd-top{flex-direction:row;}
+#root.lh #rest-bar .rd-skip{order:-1;}
+/* « Régler » : 30 s · 45 s · 1:00 · 1:30 · 2:00 sur une rangée, puis la durée personnalisée ; Valider et la durée choisie
+   en Cobalt (couleur du repos), plus en rouge. */
+#ov-rest-edit .re-presets{gap:6px;margin-bottom:12px;}
+#ov-rest-edit .re-presets .rbtn{min-height:44px;padding:0;font-size:14px;}
+#ov-rest-edit .rbtn.rp-active{background:var(--sea-fill);border-color:var(--sea-fill);color:#fff;}
+.re-perso{margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);text-align:center;}
+#ov-rest-edit .re-ok{background:var(--sea-fill);box-shadow:0 4px 16px rgba(47,91,255,.3);}
+#root.a11y-lv #ov-rest-edit .re-ok{background:var(--sea-fill)!important;box-shadow:0 4px 16px rgba(47,91,255,.3)!important;}
 
 /* PILL CHRONO FLOTTANTE */
 #rest-pill{display:none;flex-shrink:0;height:38px;padding:0 14px;
-  background:#0e1016;border-bottom:1px solid rgba(52,211,153,.4);
+  background:#0e1016;border-bottom:1px solid var(--sea-a2);
   align-items:center;gap:8px;cursor:pointer;touch-action:manipulation;overflow:hidden;
   -webkit-tap-highlight-color:transparent;transition:border-color .4s;
   position:relative;z-index:30;}
@@ -189,7 +260,7 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 #rest-pill-time{font-family:var(--font-cond);font-size:15px;font-weight:700;
   font-variant-numeric:tabular-nums;color:#fff;letter-spacing:0;min-width:34px;}
 #rest-pill-bar{flex:1;height:3px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;}
-#rest-pill-fill{height:100%;border-radius:2px;background:var(--green);transition:width .5s linear,background .4s;}
+#rest-pill-fill{height:100%;border-radius:2px;background:var(--sea);transition:width .5s linear,background .4s;}
 .rbtn{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid var(--sep);background:rgba(255,255,255,.06);color:var(--t1);cursor:pointer;font-family:var(--font);font-weight:600;}
 .rbtn.rp-active{background:var(--red);color:#fff;border-color:var(--red);}
 .imp-dot{width:8px;height:8px;border-radius:4px;background:var(--sep);transition:all .3s;}
@@ -419,9 +490,26 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .nb-ctr{color:var(--t3);}
 .nb-ctr.active{color:var(--red);}
 /* Bouton central « + » — docké DANS la barre (fini le flottant #fab-session) */
-.nb-plus{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px -6px rgba(239,62,87,.6);transition:box-shadow .2s,transform .15s;}
+.nb-plus{position:relative;width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px -6px rgba(239,62,87,.6);transition:box-shadow .2s,transform .15s;}
 .nb-plus svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
-#root.on-log .nb-plus{box-shadow:0 8px 20px -6px rgba(239,62,87,.85);transform:scale(1.06);}
+/* 🎨 D-085 (décision D de Michel, 17/10) : le « + » garde la MÊME taille et la MÊME ombre sur tous les écrans — l'ancien
+   grossissement (×1,06) et l'ombre renforcée sur l'écran Séance sont retirés (R30 : retrait écrit). Sa place ne change pas :
+   6 entrées, « + » volontairement décentré vers la gauche pour le pouce (choix de Michel, ce n'est pas un bug). */
+/* 🟢 UX SÉANCE (16/10/2026, décision ⑤ de Michel) — UNE SÉANCE EST OUVERTE : PASTILLE VERTE SUR LE « + ».
+   Purement INFORMATIVE : elle ne change ni la taille ni la position du bouton (positionnée en absolu DANS `.nb-plus`,
+   règle d'or #9 — le bouton est mesuré par le banc), et elle ne lit aucune donnée nouvelle : la classe
+   `#root.seance-on` est posée par `_renderEnteteSeance` d'après `_seanceOuverte()`. Le libellé du bouton suit aussi
+   (« Revenir à ta séance »). Couleur par variable : les modes daltonisme la reprennent. */
+/* 🎨 D-085 (décision C de Michel, 17/10) : la pastille verte devient un POINT BLEU PLEIN (jeton séance), sans anneau.
+   ⛔ Ce qui l'allume ne change pas : `#root.seance-on`, d'après `_seanceOuverte()` (une séance prête l'allume aussi).
+   Elle était ROGNÉE en demi-disque par la règle générale `button{overflow:hidden}` : le bouton central laisse déborder
+   (`#nb-log`), sans changer sa taille ni sa place. Et le point « nouveauté » du « + » passe à GAUCHE : les deux ne se
+   superposent plus. */
+#root.seance-on .nb-plus::after{content:'';position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 2.5px var(--bg);pointer-events:none;}
+#nb-log{overflow:visible;}
+#nb-log .new-dot{right:auto;left:calc(50% - 26px);top:-2px;}
+/* ⌨️ D-085 (décision H) : barre du bas masquée pendant la saisie d'une série (classe posée par log.js, `_clavierSerie`). */
+#root.kbd-serie .nav{display:none;}
 
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}
@@ -547,8 +635,8 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 
 /* WORKOUT */
 .ex-block{background:var(--bg2);border-radius:var(--r);overflow:hidden;border:1px solid var(--sep);}
-.ex-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--sep);background:linear-gradient(90deg,rgba(255,45,85,.08),transparent);}
-.ex-name{font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--red);letter-spacing:.3px;}
+.ex-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--sep);background:rgba(255,255,255,.02);}
+.ex-name{font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--t1);letter-spacing:.3px;}
 .ex-meta{font-size:14px;color:var(--t3);margin-top:2px;font-weight:600;}
 /* Pastille « 🔀 par bras / par jambe » — exercice unilatéral (11/08/2026).
    Discrète mais tapable : elle ouvre l'aide qui dit QUEL POIDS NOTER, la seule
@@ -574,6 +662,7 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 #rest-label{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sinp{background:var(--bg3);border:1px solid var(--sep);border-radius:8px;padding:8px 4px;font-size:16px;font-weight:800;font-family:var(--font);color:var(--t1);text-align:center;width:100%;outline:none;transition:border-color .15s;}
 .sinp:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(255,45,85,.15);}
+#s-log .sinp:focus{border-color:var(--sea);box-shadow:0 0 0 2px var(--sea-a);}
 .tbtn{font-size:13px;font-weight:800;border:1px solid var(--sep);border-radius:6px;padding:4px 2px;cursor:pointer;text-align:center;background:var(--bg3);color:var(--t2);width:100%;font-family:var(--font);touch-action:manipulation;letter-spacing:.05em;display:flex;flex-direction:column;align-items:center;gap:1px;}
 .tbtn-rm{font-size:8.5px;font-weight:700;opacity:.8;line-height:1;letter-spacing:0;}
 .tbtn.N{border-color:rgba(240,240,255,.12);color:var(--t3);}
@@ -591,6 +680,245 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .chk{width:30px;height:30px;border-radius:50%;border:2px solid var(--sep);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-family:var(--font);padding:0;transition:all .2s;touch-action:manipulation;}
 .chk.done{background:var(--green);border-color:var(--green);color:#000;box-shadow:0 2px 8px rgba(0,230,118,.3);}
 .ex-foot{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--sep);}
+
+/* ═══ 🏋️ UX SÉANCE (16/10/2026, cadrage validé par Michel) ═══════════════════════════════════════════════════
+   Refonte de PRÉSENTATION de l'écran Séance : aucune donnée, aucune clé, aucun moteur ne change. Deux états, une
+   même page, basculés par une CLASSE d'affichage (`#root.seance-on`, posée par `_renderEnteteSeance` d'après
+   `_seanceOuverte()`) :
+   · AVANT — titre + date, « Séance libre » puis « Programme », contexte du jour, types, « Autres options » ;
+   · PENDANT — l'en-tête vit dans la barre haute, les cartes, « Ajouter un exercice », le cardio, le bilan, « Terminer ».
+   Couleurs par VARIABLES partout où un mode (clair, daltonisme) doit pouvoir les reprendre. */
+
+/* ① En-tête de séance dans la barre haute (décision ②) — la barre de marque reste sur les autres écrans. */
+.tb-seance{display:none;flex:1;min-width:0;}
+#root.on-log.seance-on .topbar .tb-marque{display:none!important;}   /* !important : ces blocs portent un `display:flex` EN LIGNE (index.html) */
+#root.on-log.seance-on .topbar .tb-seance{display:block;}
+.tbs-r{display:flex;align-items:center;gap:8px;min-height:44px;}
+.tbs-meta{flex:1;min-width:0;}
+.tbs-etat{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;color:#F2F3F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tbs-live{width:9px;height:9px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 4px var(--sea-a);flex:none;}
+.tbs-pret .tbs-live{background:var(--t3);box-shadow:0 0 0 4px rgba(255,255,255,.06);}
+.tbs-pause .tbs-live{background:var(--orange);box-shadow:0 0 0 4px rgba(255,138,114,.16);}
+.tbs-l2{display:block;margin-top:4px;padding-left:18px;font-size:12.5px;color:#9AA0AA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tbs-chrono{font-family:var(--font-cond);font-size:15px;font-weight:700;color:#F2F3F5;font-variant-numeric:tabular-nums;}
+.tbs-pause .tbs-chrono{color:var(--orange);}
+.topbar .tbs-btn{width:40px;height:40px;border-radius:12px;border:none;padding:0;background:#1B1E26;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#C9CDD5;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.topbar .tbs-btn svg{width:20px;height:20px;}
+.topbar .tbs-rep{color:#fff;background:var(--sea-fill);box-shadow:none;}   /* reprendre = action de séance (Cobalt, D-085) ; l'ÉTAT « en pause » garde sa couleur */
+.topbar .tbs-fin{height:40px;padding:0 13px;border-radius:12px;border:none;background:var(--sea-fill);box-shadow:none;color:#fff;font-family:var(--font);font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px;flex:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.topbar .tbs-fin svg{width:16px;height:16px;}
+.tbs-segs{display:flex;gap:4px;margin-top:10px;}
+.tbs-segs i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden;display:block;}
+.tbs-segs i b{display:block;height:100%;border-radius:3px;background:var(--sea);}
+.tbs-segs i.ok b{background:var(--sea);opacity:.6;}
+
+/* ② Avant la séance — titre + date, puis les deux actions, le contexte, les types et « Autres options ». */
+.log-ttl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;}
+.log-h1{margin:0;font-family:var(--font-cond);font-size:28px;font-weight:700;letter-spacing:-.025em;line-height:1;color:var(--t1);}
+.log-chip-date{display:flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:12px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);font-size:13.5px;font-weight:700;color:var(--t1);cursor:pointer;white-space:nowrap;min-width:0;max-width:66%;-webkit-tap-highlight-color:transparent;}
+.log-chip-date svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+.log-chip-date span{overflow:hidden;text-overflow:ellipsis;}
+.log-chip-date .log-chip-chev{width:14px;height:14px;stroke:var(--t3);}
+#root.light-mode #log-hdr{background:rgba(231,232,236,.96)!important;}
+.log-avant{display:flex;flex-direction:column;gap:12px;}
+.la-go{position:relative;display:flex;flex-direction:column;gap:10px;}
+.la-glow{position:absolute;left:-14px;right:-14px;top:-46px;height:170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,106,115,.16),rgba(255,106,115,0));pointer-events:none;}
+.la-cta1{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:70px;padding:12px 18px 12px 12px;border:none;border-radius:18px;background:linear-gradient(135deg,#FF6A73 0%,#EF3E57 100%);color:#fff;font-family:var(--font);text-align:left;cursor:pointer;box-shadow:0 14px 30px -12px rgba(239,62,87,.8),inset 0 1px 0 rgba(255,255,255,.25);touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.la-cta1-ic{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none;}
+.la-cta1-ic svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;}
+.la-cta-t{flex:1;min-width:0;display:block;}
+.la-cta-t b{display:block;font-size:18px;font-weight:800;letter-spacing:-.01em;}
+.la-cta-t small{display:block;font-size:12.5px;font-weight:600;opacity:.92;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.la-arr{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+.la-cta2{display:flex;align-items:center;gap:14px;width:100%;min-height:66px;padding:10px 16px 10px 12px;border:none;border-radius:18px;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);color:var(--t1);font-family:var(--font);text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.la-cta2-ic{width:46px;height:46px;border-radius:14px;background:rgba(91,168,255,.12);display:flex;align-items:center;justify-content:center;flex:none;}
+.la-cta2-ic svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.la-cta2 .la-cta-t b{font-size:16.5px;}
+.la-cta2 .la-cta-t small{color:var(--t2);opacity:1;}
+.la-chev{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+.la-ctx{display:flex;align-items:center;gap:13px;padding:9px 14px 9px 12px;border-radius:16px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);}
+.la-fig{flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));}
+.la-ctx-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+.la-recup{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border-radius:999px;background:var(--bg3);color:var(--c,var(--t2));font-size:12px;font-weight:700;}
+.la-recup i{width:7px;height:7px;border-radius:50%;background:var(--c,var(--t2));display:block;}
+.la-der{font-size:13px;color:var(--t2);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.la-der b{color:var(--t1);font-weight:700;}
+.la-sec{margin:10px 2px 0;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);}
+/* Pendant la séance : le bloc « avant » se range, « Ajouter un exercice » apparaît (décision ④). */
+.log-add{display:none;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border-radius:18px;background:var(--sea-a);border:1.5px dashed var(--sea-a2);color:var(--sea);font-family:var(--font);font-size:16px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.log-add svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;}
+#root.seance-on .log-add{display:flex;}
+#root.seance-on #log-hdr,#root.seance-on #log-avant,#root.seance-on #log-types,#root.seance-on #la-autres,#root.seance-on #log-import-wrap{display:none!important;}
+
+/* ③ Cartes : l'exercice ouvert est souligné, la série à faire aussi ; un exercice fini est compact et marqué. */
+.ex-block.ex-actif{border-color:var(--sea-a2);box-shadow:0 18px 40px -26px rgba(47,91,255,.45);}
+.set-row.set-cur{background:var(--sea-a);}
+.set-row.set-cur .snum{color:var(--sea);}
+/* 🎨 D-086 (recette iPhone de Michel, 18/10) — LE TYPE A SA COLONNE. Il remplace la décision G de D-085 (« le type sur
+   le numéro », un petit badge qui n'apparaissait que pour É / X : Michel ne l'a pas trouvé à l'usage). La ligne se lit
+   # · Type · Précédent · Reps · KG · 1RM · ✓ — le 1RM garde SA colonne (D-085), la coche aussi.
+   La place vient des écarts (5 → 3 px), des marges et de la colonne Reps (64 → 50 px) : « Précédent » GAGNE de la
+   largeur (mesuré à 360 px : 49 px avant, 64 après). La pastille (colonne de 36 px) et le ✓ ont une zone d'appui de
+   44 × 44 — le bouton de la pastille déborde de 4 px dans les écarts, qui sont vides.
+   ⚠️ `.tbtn` est sur la PASTILLE, exprès : le banc CC-01 s'en sert pour reconnaître une ligne de série normale, et
+   les couleurs de type et les modes daltoniens existants (`.tbtn.É`, `.tbtn.X`, `#root.cb-*`) s'y appliquent tels quels.
+   R30 — retiré : `.set-row .tbtn.snum`, `.snum-n`, `.stype-b` (le numéro-bouton et son badge de D-085). */
+#s-log .sets-hdr,#s-log .set-row{grid-template-columns:14px 36px minmax(0,1fr) 50px 54px 38px 44px;column-gap:3px;padding-left:8px;padding-right:4px;}
+#s-log .set-row{padding-top:5px;padding-bottom:5px;}
+#s-log .sets-hdr span{font-size:10px;letter-spacing:.02em;}
+#s-log .sets-hdr span:first-child{text-align:center;}
+#s-log .ds-lbl{grid-column:span 2;}
+.set-row .stype{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0 -4px;padding:0;border:none;border-radius:12px;background:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+/* 700 et non 800 : Space Grotesk s'arrête à 700 — 800 était ramené à 700 sans rien changer à l'écran (témoin CXLI, ft-v1037 ; trouvé par la passe complète D-086). */
+.set-row .stype .tbtn{display:flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;border-radius:9px;font-family:var(--font-cond);font-size:15px;font-weight:700;line-height:1;letter-spacing:0;pointer-events:none;}
+.set-row .stype .tbtn.N{color:var(--t2);border-color:var(--sep);background:var(--bg3);}
+/* D-086 — « Précédent » plus lisible : chiffres compacts (Space Grotesk), 15 px, contraste nettement relevé (gris clair
+   au lieu de --t3) ; le nombre ne se coupe jamais (`.sprev-n`) — s'il n'y a vraiment pas la place (« 10×142.5 X » à
+   360 px), c'est le marqueur É / X ou le RIR qui passe à la ligne (`<wbr>`), jamais le nombre, jamais rogné. Le point bleu signale un commentaire de la dernière fois SUR CETTE série. */
+#s-log .sprev{position:relative;overflow:visible;font-family:var(--font-cond);font-size:15px;font-weight:600;line-height:1.2;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#C3C7D0;}
+#root.light-mode #s-log .sprev{color:var(--t2);}
+#s-log .sprev-n{white-space:nowrap;}
+@media (max-width:374px){ #s-log .sprev{font-size:14px;letter-spacing:-.02em;} }   /* pire cas mesuré : « 10×142.5 » tient dans 64 px */
+#s-log .sprev .prev-rir{font-size:11px;color:var(--t2);white-space:nowrap;}
+#s-log .sprev-pt{position:absolute;top:-2px;right:0;width:8px;height:8px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 2px var(--bg2);}
+/* La fenêtre « Note — série N » montre le commentaire de la dernière fois, avec son origine (D-086). */
+/* 📋 D-093 — « Précédent ▾ » : la porte vers « 4 dernières séances », dans l'en-tête des séries. Une pastille visible (on voit
+   qu'elle se touche), centrée dans sa colonne ; la case « Précédent » de chaque série garde la note. */
+#s-log .sets-hdr .sprev-h{display:flex;align-items:center;justify-content:center;width:100%;height:28px;margin:0;padding:0 4px;border:none;border-radius:14px;
+  background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
+  color:var(--sea);white-space:nowrap;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+/* 📋 D-093 — la feuille « 4 dernières séances » : même famille que « Statistiques » (feuille du bas). La grille tient dans la
+   largeur (360 → 430 px) : colonnes égales, le texte passe à la ligne plutôt qu'un défilement horizontal. Lecture seule. */
+#ov-prev4 .p4-sheet{width:100%;max-width:430px;max-height:86dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border-radius:16px 16px 0 0;
+  padding:14px 12px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);box-sizing:border-box;}
+.p4-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.p4-tt{flex:1;min-width:0;}
+.p4-titre{font-weight:800;font-size:15px;color:var(--t1);}
+.p4-ex{margin-top:2px;font-size:12.5px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p4-fermer{flex:none;width:36px;height:36px;border-radius:50%;border:none;background:var(--bg3);font-size:15px;color:var(--t2);cursor:pointer;touch-action:manipulation;}
+.p4-grille{width:100%;table-layout:fixed;border-collapse:collapse;font-family:var(--font-cond);font-variant-numeric:tabular-nums;}
+.p4-grille th,.p4-grille td{padding:6px 2px;border-top:1px solid var(--sep);text-align:center;vertical-align:top;word-break:break-word;}
+.p4-grille thead th{border-top:none;padding-bottom:4px;}
+.p4-k{width:20px;font-size:11px;font-weight:700;color:var(--t3);}
+.p4-h{font-size:12.5px;font-weight:800;color:var(--t1);line-height:1.2;}
+.p4-h .p4-d{display:block;}
+.p4-h .p4-rg{display:block;font-size:10.5px;font-weight:600;color:var(--t2);}
+.p4-c{font-size:14px;font-weight:600;line-height:1.25;color:var(--t1);}
+.p4-c[data-vide]{color:var(--t3);font-weight:400;}
+.p4-s{display:block;}
+.p4-t{display:inline-block;margin-top:2px;padding:0 5px;border-radius:5px;font-size:11px;font-weight:800;line-height:16px;}
+.p4-t-x{color:#fff;background:var(--red);}
+.p4-t-o{color:var(--t2);background:var(--bg3);}
+.p4-rir{display:block;margin-top:2px;font-size:11px;font-weight:600;color:var(--t2);}
+.p4-n{display:block;font-size:11px;line-height:1.2;}
+.p4-ech th,.p4-ech-c{font-size:12px;font-weight:500;color:var(--t2);}
+.p4-ech-c[data-vide]{color:var(--t3);}
+.p4-notes{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.p4-note{font-size:12.5px;line-height:1.4;color:var(--t2);word-break:break-word;}
+.p4-note b{color:var(--t1);}
+.p4-leg{margin-top:10px;font-size:11.5px;line-height:1.4;color:var(--t3);}
+.p4-vide{padding:16px 4px;font-size:13px;line-height:1.45;color:var(--t2);text-align:center;}
+/* 💪 D-093 — la réserve d'une série dans le détail d'une séance (Progrès) : une ligne sous la série, en lecture seule. */
+.sd-rir{margin:0 0 6px 20px;font-size:11.5px;font-weight:600;color:var(--t2);}
+.sn-prev{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--sea-a);box-shadow:inset 0 0 0 1px var(--sea-a2);}
+.sn-prev-t{font-size:12px;font-weight:800;color:var(--sea);}
+.sn-prev-o{margin-top:2px;font-size:11.5px;color:var(--t2);}
+.sn-prev-x{margin-top:6px;font-size:14px;line-height:1.4;color:var(--t1);word-break:break-word;}
+/* 💬 D-087 — la note générale de la dernière fois : un point bleu sur le 💬 de « Note perso ». Zone d'appui 44 × 44 (iPhone) :
+   elle prend la marge gauche et la hauteur de la ligne de note, sans recouvrir le champ ni les boutons voisins ; le 💬 reste à sa place. */
+.exn-prev{position:relative;flex-shrink:0;display:flex;align-items:flex-start;justify-content:flex-start;width:44px;height:44px;margin:-4px -6px -6px -8px;padding:9px 0 0 8px;border:none;border-radius:10px;background:none;font-size:14px;line-height:1;color:var(--t3);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.exn-prev .exn-pt{position:absolute;top:5px;left:22px;width:8px;height:8px;border-radius:50%;background:var(--sea);box-shadow:0 0 0 2px var(--bg2);}
+.srm{font-family:var(--font-cond);font-size:12px;font-weight:700;color:var(--t3);text-align:center;white-space:nowrap;overflow:hidden;}
+#s-log .chk{width:44px;height:44px;border:none;background:none;position:relative;isolation:isolate;color:#fff;}
+#s-log .chk::before{content:'';position:absolute;left:7px;top:7px;width:30px;height:30px;box-sizing:border-box;border-radius:50%;border:2px solid var(--sep);z-index:-1;transition:all .2s;}
+#s-log .chk.done{background:none;border:none;box-shadow:none;}
+#s-log .chk.done::before{background:var(--sea-fill);border-color:var(--sea-fill);box-shadow:0 2px 8px rgba(47,91,255,.35);}
+#s-log .set-row.set-cur .chk:not(.done)::before{border-color:var(--sea);}
+.ex-mini .ex-hdr{padding:11px 14px;border-bottom:none;}
+.ex-fini-b{width:28px;height:28px;border-radius:50%;background:var(--sea-fill);display:flex;align-items:center;justify-content:center;flex:none;margin-left:8px;box-shadow:0 5px 14px -5px rgba(47,91,255,.7);}
+.ex-fini-b svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ④ Bas de séance — « Ta séance jusqu'ici » puis « Terminer la séance » (même porte que l'en-tête). */
+.lf-titre{margin:10px 2px 10px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);}
+.lf-bilan{display:flex;gap:16px;align-items:center;border-radius:20px;padding:14px 16px 14px 18px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);}
+.lf-fig{flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5));}
+.lf-t{flex:1;min-width:0;}
+.lf-kv{display:flex;gap:18px;flex-wrap:wrap;}
+.lf-kv div b{display:block;font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.1;color:var(--t1);white-space:nowrap;}
+.lf-kv div span{display:block;font-size:11.5px;color:var(--t2);margin-top:2px;}
+.lf-cardio{margin-top:8px;font-size:12.5px;color:var(--t2);font-weight:600;}
+/* 🧍🧍 Face · chiffres · dos (18/10/2026, D-091) : la face à gauche, le dos à droite, les chiffres empilés au centre (une colonne
+   de trois lignes tient entre deux figurines même à 360 px, et la pile (≈ 132 px) a la hauteur d'une figurine : à 360 px la carte
+   garde sa hauteur). Figurines de 44 px (petits écrans) à 54 px (430 px), espacements et marges symétriques. */
+.lf-2fig{gap:clamp(8px,3vw,14px);padding:14px clamp(12px,4vw,18px);}
+.lf-2fig .lf-fig{width:clamp(44px,12.5vw,54px);}
+.lf-2fig .lf-t{text-align:center;}
+.lf-2fig .lf-kv{flex-direction:column;flex-wrap:nowrap;align-items:center;gap:6px;}
+.lf-fin{margin-top:12px;font-size:17px;padding:16px;letter-spacing:.3px;background:var(--sea-fill);color:#fff;box-shadow:0 10px 24px -10px rgba(47,91,255,.6);}   /* D-085 : Terminer = Cobalt */
+/* D-085 (décision B) : dans la question « Il reste N séries », « Terminer quand même » est une fin de séance, pas une
+   suppression → Cobalt. La classe est posée par `terminerSeance` et retirée par `showConfirm` à chaque ouverture :
+   toutes les autres confirmations (Supprimer, Vider, Abandonner…) gardent leur bouton rouge. */
+#ov-confirm.cf-seance #confirm-ok{background:var(--sea-fill);box-shadow:0 4px 20px rgba(47,91,255,.3);}
+
+/* ⑤ Menu ⋯ de la séance — actions rares rangées, actions à risque séparées en bas. */
+.wm-sheet{width:100%;max-width:430px;background:var(--bg2);border-radius:24px 24px 0 0;padding:8px 14px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -24px 60px rgba(0,0,0,.6);max-height:88dvh;overflow-y:auto;box-sizing:border-box;}
+.wm-grab{width:38px;height:5px;border-radius:3px;background:var(--sep);margin:2px auto 10px;}
+.wm-h{padding:0 6px 12px;}
+.wm-h b{display:block;font-family:var(--font-cond);font-size:19px;font-weight:700;color:var(--t1);}
+.wm-h span{display:block;font-size:12.5px;color:var(--t2);margin-top:3px;}
+.wm-g{border-radius:18px;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);overflow:hidden;margin-bottom:10px;}
+.wm-g:empty{display:none;}
+.wm-row{display:flex;align-items:center;gap:13px;width:100%;min-height:56px;padding:9px 14px 9px 12px;background:none;border:none;font-family:var(--font);color:var(--t1);text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+.wm-row+.wm-row{border-top:1px solid var(--sep);}
+.wm-ic{width:36px;height:36px;border-radius:11px;background:var(--bg2);color:var(--t2);display:flex;align-items:center;justify-content:center;flex:none;}
+.wm-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.wm-t{flex:1;min-width:0;}
+.wm-t b{display:block;font-size:15px;font-weight:700;}
+.wm-t small{display:block;font-size:12px;color:var(--t2);margin-top:1px;}
+.wm-v{font-size:13px;font-weight:700;color:var(--t2);white-space:nowrap;}
+.wm-danger .wm-ic{background:rgba(255,106,115,.12);color:var(--red);}
+.wm-danger .wm-t b{color:var(--red);}
+.wm-x{display:flex;align-items:center;justify-content:center;width:100%;height:52px;border-radius:16px;background:var(--bg3);border:none;font-family:var(--font);font-size:15px;font-weight:800;color:var(--t1);cursor:pointer;}
+
+/* ⑥ Petits écrans (≤ 374 px : iPhone SE, mini, Android 360) — mêmes éléments, un peu moins d'air. */
+@media (max-width:374px){
+  .topbar .tbs-fin{padding:0 11px;}
+  .tbs-l2{padding-left:0;}
+  .la-cta-t b{font-size:17px;}
+  .rd-ring{width:44px;height:44px;}
+  #rest-time{font-size:26px;}
+  #rest-bar .rd-ring{width:30px;height:30px;}                 /* D-086 */
+  #rest-bar #rest-time{font-size:28px;}
+  #rest-bar .rbtn{min-width:48px;padding:0 7px;}
+  #rest-bar .rd-time{gap:6px;padding:0 6px;}
+  #rest-bar .rbtn{min-width:42px;padding:0 8px;}
+  #rest-bar{padding:12px 10px 12px 12px;}
+  .rd-top{gap:10px;}
+  .lf-kv{gap:14px;}
+}
+
+/* ⑦ Texte agrandi (accessibilité) — les nouveaux éléments suivent la même échelle que le reste de l'écran. */
+#root.a11y-lv .tbs-etat            { font-size: 17px !important; }
+#root.a11y-lv .tbs-l2              { font-size: 14px !important; }
+#root.a11y-lv .la-cta-t b          { font-size: 20px !important; }
+#root.a11y-lv .la-cta-t small      { font-size: 14px !important; }
+#root.a11y-lv .log-h1              { font-size: 31px !important; }
+#root.a11y-lv .log-add             { font-size: 18px !important; }
+#root.a11y-lv .wm-t b              { font-size: 17px !important; }
+#root.a11y-lv .wm-t small          { font-size: 14px !important; }
+#root.a11y-lv .lf-kv div b         { font-size: 24px !important; }
+#root.a11y-lv #rest-time           { font-size: 32px !important; }
+#root.a11y-lv #rest-bar .rir-lbl   { font-size: 15px !important; }
+/* Texte agrandi : les boutons du dock grossissent (règle `.rbtn` plus haut) — ils passent sur leur propre rangée
+   plutôt que d'écraser le temps restant (mesuré à 360 px : « 2:00 » coupé par « −15s »). */
+#root.a11y-lv .rd-top              { flex-wrap: wrap; }
+#root.a11y-lv #rest-btns           { flex-basis: 100%; }
+#root.a11y-lv #rest-btns .rbtn     { flex: 1; }
+/* D-086 : plus de groupe `#rest-btns` — le bouton du temps prend la 1ʳᵉ rangée, −15 s / +15 s / Passer la 2ᵉ. */
+#root.a11y-lv #rest-bar .rd-time   { flex-basis: 100%; order: -1; }
+#root.a11y-lv #rest-bar .rbtn      { flex: 1; }
+#root.a11y-lv #s-log .sprev        { font-size: 17px !important; }
+#root.a11y-lv .set-row .stype .tbtn { font-size: 17px !important; }
 
 /* PR LIST */
 .pr-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--sep);gap:10px;}
@@ -887,6 +1215,17 @@ html.is-clone .ob-clone-only{ display:block; }
 .coach-screen{flex-direction:column;padding:0 0 calc(66px + max(env(safe-area-inset-bottom),8px)) 0!important;gap:0!important;}
 .screen.active.coach-screen{display:flex;overflow:hidden;}
 .coach-header{padding:2px 16px 6px;border-bottom:none;background:transparent;flex-shrink:0;}   /* header compacté (ft-v977) : 8/12 → 2/6 */
+/* 🎨 D-085 (décision I) — onglets « Discussion / Espace Milo ». Les classes `ct-disc` / `ct-espace` sont posées par
+   coach.js (`_appliquerOngletCoach`) ; elles l'emportent sur les `style.display` posés ailleurs (d'où !important). */
+.coach-tabs{display:flex;gap:2px;margin:0 14px 8px;padding:3px;border-radius:12px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);flex-shrink:0;}
+.coach-tabs button{flex:1;height:38px;border:none;border-radius:10px;background:none;color:var(--t2);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation;}
+.coach-tabs button.on{background:var(--bg3);color:var(--t1);box-shadow:0 1px 0 rgba(255,255,255,.04);}
+#s-coach.ct-espace #coach-home{display:flex!important;}
+#s-coach.ct-espace #coach-msgs,#s-coach.ct-espace #coach-suggs{display:none!important;}   /* « Analyses photo de Milo » reste visible dans les deux onglets */
+#s-coach.ct-disc #coach-home{display:none!important;}
+#s-coach.ct-disc #coach-msgs{display:flex!important;flex-direction:column;}
+#s-coach.ct-disc #coach-suggs{display:flex!important;}
+#s-coach.ct-disc #coach-msgs:empty::before{content:'Pose ta question à Milo, ou pars d\2019 une suggestion ci-dessous.';margin:auto 0 0;font-size:14px;color:var(--t2);text-align:center;padding:0 12px;}
 .coach-header-title{font-family:var(--font-cond);font-size:21px;font-weight:700;letter-spacing:-.02em;color:var(--t1);}
 .coach-header-sub{font-size:11px;color:var(--t3);font-weight:600;margin-top:1px;line-height:1.25;}   /* header compacté (ft-v977) */
 /* ⚠️ overflow-x:hidden EST OBLIGATOIRE, ce n'est pas un réglage cosmétique (bug Michel 08/08 :
@@ -910,6 +1249,11 @@ html.is-clone .ob-clone-only{ display:block; }
 .msg-bubble{max-width:86%;overflow-wrap:anywhere;padding:11px 14px;border-radius:18px;font-size:15px;line-height:1.6;font-weight:500;}
 .msg-user{align-self:flex-end;background:linear-gradient(135deg,#FF6A73,#EF3E57);color:#fff;border-bottom-right-radius:4px;}
 .msg-coach{align-self:flex-start;background:var(--bg2);color:var(--t1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);border-bottom-left-radius:4px;}
+/* 🕒 D-086 (recette de Michel, 18/10) — la date et l'heure de CHAQUE message, en bas de la bulle, discrètes. Dessinées
+   depuis l'attribut `data-heure` (posé par `renderCoachMsg`) : elles n'entrent pas dans le texte de la bulle. */
+.msg-bubble[data-heure]::after{content:attr(data-heure);display:block;margin-top:6px;font-size:11px;font-weight:600;line-height:1.2;letter-spacing:.01em;opacity:.62;}
+.msg-user[data-heure]::after{text-align:right;}
+.msg-coach[data-heure]::after{color:var(--t2);opacity:1;}
 .msg-typing{align-self:flex-start;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:12px 16px;border-radius:18px;border-bottom-left-radius:4px;display:flex;gap:5px;align-items:center;}
 .typing-dot{width:7px;height:7px;border-radius:50%;background:var(--t3);animation:typing-bounce .8s infinite;}
 .typing-dot:nth-child(2){animation-delay:.15s;}
@@ -1089,7 +1433,11 @@ html.is-clone .ob-clone-only{ display:block; }
 .cal-item{font-size:14px;color:var(--t2);display:flex;justify-content:space-between;}
 .cal-item strong{color:var(--t1);}
 .cal-today-card{background:var(--bg2);border-radius:var(--r-sm);padding:12px 14px;border:1px solid rgba(255,45,85,.2);display:flex;justify-content:space-between;align-items:center;}
-#toast{position:absolute;top:100px;left:50%;transform:translateX(-50%) translateY(-8px);padding:12px 22px;border-radius:24px;font-size:14px;font-weight:700;color:#fff;opacity:0;pointer-events:none;white-space:nowrap;z-index:600;transition:opacity .2s,transform .2s;letter-spacing:.3px;}
+/* D-086 (recette iPhone de Michel, 18/10) : un message long (« Séance en cours — 1 exercice · 2 séries validées ·
+   Appuie sur Reprendre ») débordait des DEUX côtés de l'écran (538 px de large à 360 px, mesuré) parce que le toast
+   était forcé sur une seule ligne. Il garde sa largeur naturelle s'il tient, sinon il passe à la ligne, centré, sans
+   jamais dépasser l'écran (16 px de marge de chaque côté). Texte inchangé ; il ne capte toujours aucun appui. */
+#toast{position:absolute;top:100px;left:50%;transform:translateX(-50%) translateY(-8px);padding:12px 22px;border-radius:24px;font-size:14px;font-weight:700;color:#fff;opacity:0;pointer-events:none;white-space:normal;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center;line-height:1.35;z-index:600;transition:opacity .2s,transform .2s;letter-spacing:.3px;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #toast.success{background:linear-gradient(135deg,#00C853,#00E676);color:#000;}
 #toast.error{background:linear-gradient(135deg,#FF2D55,#FF4D6D);}
@@ -1276,8 +1624,14 @@ html.ob-done #onboarding{display:none;}
 #root.cb-trit .tbtn.D{border-color:rgba(0,155,119,.5)!important;background:rgba(0,155,119,.1)!important;}
 
 /* ─── GAUCHER ────────────────────────────────────────────── */
-#root.lh #rest-bar          { flex-direction:column; }
+/* UX SÉANCE (16/10) : le dock est une rangée [anneau · temps · boutons] — pour un gaucher, elle s'inverse (boutons à
+   gauche, sous le pouce) ; même chose pour l'en-tête de séance (⋯ et « Terminer » à gauche). */
+#root.lh .rd-top            { flex-direction:row-reverse; }
 #root.lh #rest-btns         { flex-direction:row-reverse; }
+#root.lh .tbs-r             { flex-direction:row-reverse; }
+#root.lh .tbs-meta          { text-align:right; }
+#root.lh .tbs-etat          { justify-content:flex-end; }
+#root.lh .tbs-l2            { padding-left:0; }
 #root.lh .ex-hdr-btns       { order:-1; }
 
 /* ─── Impression / export PDF d'un programme ─────────────────── */
@@ -1707,21 +2061,30 @@ html.ob-done #onboarding{display:none;}
    on remplit ~700 px de vide avec quelque chose d'utile, pas avec du décor. */
 .ts-bloc{margin-top:14px;}
 .ts-titre{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:9px;padding-left:2px;}
-.ts-liste{display:flex;flex-direction:column;gap:8px;}
-.ts-carte{width:100%;text-align:left;background:var(--bg2);border:none;box-shadow:inset 0 0 0 1px var(--sep);
+/* UX SÉANCE (16/10/2026) — les types deviennent un CARROUSEL (cible validée) : ils restent tous là, mais ils ne
+   repoussent plus le cardio et l'import sous trois écrans de cartes. Le carrousel sort jusqu'aux bords de l'écran. */
+.ts-liste{display:flex;flex-direction:row;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -14px;padding:2px 14px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.ts-liste::-webkit-scrollbar{display:none;}
+.ts-carte{flex:none;width:180px;scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;background:var(--bg2);border:none;box-shadow:inset 0 0 0 1px var(--sep);
   border-radius:14px;padding:12px 14px;font-family:var(--font);cursor:pointer;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:box-shadow .15s;}
-.ts-carte:active{box-shadow:inset 0 0 0 1px var(--red2);}
+.ts-carte:active{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);}
 /* La discipline DÉJÀ choisie est signalée — pas mise en avant : c'est un repère, pas une
    recommandation. L'app ne décide pas à la place de la personne (R29). */
-.ts-carte.ts-actif{box-shadow:inset 0 0 0 1.5px var(--red2);}
-.ts-h{display:flex;align-items:center;gap:8px;}
-.ts-ico{font-size:17px;flex:none;}
-.ts-nom{font-size:14.5px;font-weight:700;color:var(--t1);min-width:0;}
-.ts-tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);
-  background:rgba(255,45,85,.12);border-radius:6px;padding:2px 6px;flex:none;}
+.ts-carte.ts-actif{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5);}   /* D-085 : repère neutre (le rouge est réservé à la marque et au destructif) */
+.ts-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:22px;}   /* D-085 : hauteur gardée sans icône (cartes alignées) */
+/* Carte de carrousel (180 px) : « la tienne » · ⓘ sur la 1ʳᵉ ligne, le NOM dessous (comme la cible validée) —
+   sur une seule ligne, le nom et l'étiquette se chevauchaient. L'ordre est visuel seulement (rendu inchangé).
+   D-085 : plus d'icône (texte seul) ; la 1ʳᵉ ligne garde sa hauteur (min-height posé sur `.ts-h` ci-dessus — une
+   seule déclaration par sélecteur, témoin CXL) pour que les cartes restent alignées. */
+.ts-h .ts-tag{order:1;}
+.ts-h .ts-info{order:2;}
+.ts-h .ts-nom{order:3;flex-basis:100%;margin-top:6px;}
+.ts-nom{font-size:15.5px;font-weight:800;color:var(--t1);min-width:0;letter-spacing:-.01em;line-height:1.25;}
+.ts-tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t2);
+  background:var(--bg3);border-radius:6px;padding:2px 6px;flex:none;}
 .ts-info{margin-left:auto;flex:none;font-size:15px;color:var(--t3);padding:2px 4px;line-height:1;}
-.ts-cadre{margin-top:5px;font-size:11.5px;color:var(--t2);line-height:1.4;}
+.ts-cadre{margin-top:6px;font-size:12.5px;color:var(--t2);line-height:1.4;}
 .ts-exs{margin-top:3px;font-size:11px;color:var(--t3);line-height:1.4;}
 /* 🐢 Pastille de tempo (ft-v1028) — discrète, elle informe et ne réclame rien. */
 .tempo-chip{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:999px;background:var(--bg3);

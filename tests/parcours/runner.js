@@ -4663,8 +4663,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       Z.inverse[0]==='100×5'||Z.inverse[0]==='5×100', 'reçu : '+Z.inverse.join(' · '));
     t('⚠️ non-régression : sans échauffement des deux côtés, rien ne change',
       Z.simple[0]==='10×60' && Z.simple[1]==='10×65', 'reçu : '+Z.simple.join(' · '));
-    t('⚠️ repli : une série de travail en plus répète la dernière série de TRAVAIL (jamais un palier)',
-      Z.repli.every(x=>x==='5×120'), 'reçu : '+Z.repli.join(' · '));
+    /* ⛔ R30 — D-093 (brief « Séance » du 19/10/2026, recette iPhone de Michel : « ne jamais inventer ou dupliquer des séries »).
+       Ce témoin figeait le REPLI affiché (15/08/2026 : une série de travail en plus répétait la dernière). La colonne n'affiche plus
+       que la série EXACTE de la dernière fois : au-delà, « — ». Le repli reste pour la SUGGESTION grise des champs (B-SR-⑤c), et la
+       1ʳᵉ série garde sa série d'avant, jamais un palier : c'est la garantie d'origine du bloc. */
+    t('⚠️ une série de travail en plus n\'affiche plus la dernière série d\'avant répétée : « — » (la 1ʳᵉ garde 5×120, jamais un palier)',
+      Z.repli[0]==='5×120' && Z.repli.slice(1).every(x=>x==='—'), 'reçu : '+Z.repli.join(' · '));
   }
 }
 
@@ -13266,16 +13270,20 @@ console.log('\n-- CXIX. Créer un programme depuis zéro (écran Séance ②/5) 
    séance, et lui) : nommer un seul bouton est devenu faux, et le message a été relu.
    👉 Ce qu'on fige désormais : s'il NOMME un bouton, ce bouton doit exister. S'il n'en
    nomme aucun — le cas depuis ft-v1026 — il ne peut pas se contredire, et c'est valide. */
-t('⭐ le message de l\'écran vide ne désigne jamais un bouton qui n\'existe pas',
+/* ⚠️⚠️ TÉMOIN RE-VISÉ LE 16/10/2026 (UX SÉANCE, R30, décision ④ de Michel) — « + Créer ma séance » a été REMPLACÉ :
+   « Séance libre » AVANT la séance, « Ajouter un exercice » PENDANT (même propriétaire, `openExPicker()`). Et le message
+   de l'écran vide a DISPARU : les deux actions sont désormais les boutons eux-mêmes (`#log-avant`) — deux fois déjà
+   (ft-v1012, ft-v1026) ce texte a désigné un bouton qui n'existait plus ; sans texte, il ne peut plus mentir.
+   Ce qu'on fige : (a) aucun message d'écran vide ne revient dans log.js ; (b) les deux portes existent, avec leur
+   propriétaire ; (c) les anciens libellés ne reviennent pas. */
+t('⭐ l\'écran Séance nomme ses VRAIS boutons : « Séance libre » et « Ajouter un exercice » existent, « + Créer ma séance » non',
   (()=>{const h=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const l=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
-        const m=l.match(/<div class="empty">([^<]*)</);
-        const txt=m?m[1]:'';
-        const cite=txt.match(/[«"]\s*(\+[^»"]+?)\s*[»"]/);
-        const okCite=!cite || h.indexOf('>'+cite[1]+'</button>')>=0;
-        return h.indexOf('>+ Créer ma séance</button>')>=0
-            && h.indexOf('>+ Ajouter</button>')<0
-            && !!txt && okCite;})());
+        return !/<div class="empty">/.test(l)
+            && /onclick="openExPicker\(\)"><span class="la-cta1-ic">[\s\S]{0,400}?<b>Séance libre<\/b>/.test(h)
+            && /id="log-add-ex"[^>]*onclick="openExPicker\(\)"[\s\S]{0,400}?Ajouter un exercice<\/button>/.test(h)
+            && h.indexOf('>+ Créer ma séance</button>')<0
+            && h.indexOf('>+ Ajouter</button>')<0;})());
 
 /* == BLOC CXX - L'EXPORT « AVEC MES DISCUSSIONS » PERDAIT LA DISCUSSION DU MOMENT (ft-v1013) ==
    Michel : « compare la difference des exportations pour tout le monde et celle que je fais en
@@ -14601,6 +14609,7 @@ console.log('\n-- CXXXI. Les types de séances remplissent l\'écran vide (ft-v1
     const z=document.getElementById('log-types');
     o.n=z.querySelectorAll('.ts-carte').length;
     o.h=Math.round(z.getBoundingClientRect().height);
+    { const li=z.querySelector('.ts-liste'); o.defile=li?(li.scrollWidth-li.clientWidth):-1; }   // UX SÉANCE (16/10) : carrousel
     o.actif=(z.querySelector('.ts-actif .ts-nom')||{}).textContent||'';
     /* ⛔ AUCUNE ligne de cadre ne doit être une phrase TRONQUÉE. On exige le motif chiffré. */
     o.cadres=[...z.querySelectorAll('.ts-cadre')].map(e=>e.textContent.trim());
@@ -14633,8 +14642,14 @@ console.log('\n-- CXXXI. Les types de séances remplissent l\'écran vide (ft-v1
   });
   if(G.err)t('CXXXI n\'a pas pu tourner',false,G.err);
   else{
-    t('⭐⭐ les 5 types remplissent l\'écran vide (le vide était la plainte d\'origine)',
-      G.n===5 && G.h>300, JSON.stringify({cartes:G.n,hauteur:G.h}));
+    /* ⚠️⚠️ TÉMOIN RE-VISÉ LE 16/10/2026 (UX SÉANCE, R30) — il exigeait une COLONNE de plus de 300 px : les 5 cartes
+       remplissaient l'écran vide, c'était la plainte d'origine (« quand on arrive c'est vide »). L'écran avant séance
+       porte désormais « Séance libre », « Programme » et le contexte du jour AVANT les types (cadrage validé par
+       Michel) : l'écran n'est plus vide, et les 5 types passent en CARROUSEL pour ne plus repousser le cardio et
+       l'import sous trois écrans. Ce qu'on garde : les 5 types sont tous là et lisibles ; ce qui change : ils
+       défilent de côté au lieu d'empiler 300 px. */
+    t('⭐⭐ les 5 types sont tous là, en carrousel lisible (l\'écran vide est rempli par « Séance libre » et « Programme » d\'abord)',
+      G.n===5 && G.h>100 && G.defile>0, JSON.stringify({cartes:G.n,hauteur:G.h,defile:G.defile}));
     t('⛔⛔ AUCUNE ligne de cadre n\'est une phrase TRONQUÉE — que du motif chiffré',
       G.tousChiffres===true, JSON.stringify(G.cadres));
     t('⭐ (a) un tap monte la séance du type — et elle porte les REPS de la discipline',
@@ -15409,7 +15424,12 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
    on epingle donc l'opacite, avec sa raison. La preuve visuelle est la capture avant/apres. */
 console.log('\n-- CXXXVIII. La barre « Seance » ne laisse plus lire dessous (ft-v1032) --');
 {
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:430,height:932},timezoneId:'Europe/Paris'});
+  /* UX SÉANCE (16/10/2026, R30 — re-visé, écrit) : l'écran « avant séance » est devenu compact (« Séance libre » /
+     « Programme », contexte, types en carrousel horizontal). À 430×932 il ne défile plus que de 20 px — la condition du
+     défaut n'existe plus à CETTE taille, et le témoin « MORD » ci-dessous rougissait pour cette raison. Mesuré sur la
+     même graine : 390×844 → 108 px, 375×667 → 302 px, 360×780 → 207 px. Le témoin se mesure donc à 390×844, là où du
+     contenu passe encore sous la barre ; ce qu'il protège (barre collante, opaque ≥ 0,9, floutée) ne change pas. */
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const pg=await cx.newPage();
   await pg.addInitScript(seedScript({ft4_discipline:'powerbuilding'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
@@ -15784,8 +15804,10 @@ console.log('\n-- CXLII. Le RIR : il t\'en restait combien ? (ft-v1038) --');
     t('⛔ une valeur hors bornes est refusée plutôt que tronquée',
       G.f.horsBorne===null, 'rir:9 → '+G.f.horsBorne);
     /* ⭐⭐ LE VRAI CHEMIN — c'est lui qui a attrapé l'erreur d'ordre (startRest vide la cible). */
+    /* ⛔ R30 — D-093 (décision de Michel, 19/10/2026) : SIX réponses (Échec | 0 | 1 | 2 | 3 | 4+), il y en avait cinq (« échec »
+       écrivait un 0). La garantie ne change pas : la question est posée, sur le vrai chemin. */
     t('⭐⭐ valider une série de TRAVAIL pose la question dans la barre de repos',
-      /restait combien/i.test(G.question) && G.nbBoutons===5, JSON.stringify({q:G.question,n:G.nbBoutons}));
+      /restait combien/i.test(G.question) && G.nbBoutons===6, JSON.stringify({q:G.question,n:G.nbBoutons}));
     t('⭐ un tap enregistre la réserve et se voit',
       G.apresTap===2 && G.marque===true, JSON.stringify({rir:G.apresTap,marque:G.marque}));
     t('⛔ on peut RETIRER sa réponse (un tap par erreur n\'est pas définitif)',
@@ -16740,8 +16762,9 @@ console.log('\n-- CL. Le RPE : un vocabulaire, pas un 2e système (ft-v1046) --'
       /restait combien/.test(P.rir.q) && /quel RPE/.test(P.rpe.q)
       && P.rirBadge==='2r' && P.rpeBadge==='@8', JSON.stringify([P.rir.q,P.rpe.q,P.rirBadge,P.rpeBadge]));
     /* ⛔ L'ordre s'inverse exprès. */
+    /* ⛔ R30 — D-093 : en RIR l'échelle part de « Échec » (le tag X) puis 0 — avant, « échec » écrivait un 0. */
     t('⛔ l\'ordre des boutons s\'inverse en RPE (le barème se lit de 6 vers 10)',
-      P.rir.boutons.slice(0,5).join(',')==='échec,1,2,3,4+'
+      P.rir.boutons.slice(0,5).join(',')==='Échec,0,1,2,3'
       && P.rpe.boutons.slice(0,5).join(',')==='≤6,7,8,9,10', JSON.stringify([P.rir.boutons,P.rpe.boutons]));
     /* ⛔ Aucun demi-point : on n'affiche pas une précision qu'on ne mesure pas. */
     t('⛔ aucun demi-point (8,5 · 9,5) : l\'app ne les mesure pas, les afficher serait une fausse précision',
@@ -34063,13 +34086,17 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   t('B-CCCIV ① le propriétaire de la conversion RPE existe', R.owner===true);
   t('B-CCCIV ① ... et il convertit juste (0→10 … 4→6)', R.ownerOK==='10,9,8,7,6', 'reçu : '+R.ownerOK);
   t('B-CCCIV ① ⛔ R29 — il rend `null` quand il ne sait pas, jamais un chiffre', R.ownerNull===true);
-  t('B-CCCIV ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR', R.rirBouton==='échec|1|2|3|4+', 'reçu : '+R.rirBouton);
+  /* ⛔ R30 — D-093 (19/10/2026) : le cran 0 se lit « 0 » ; l'échec a son propre bouton (le tag X). Ce témoin figeait
+     « échec » pour le cran 0 : c'est la règle qu'il protégeait qui a été corrigée, sur décision de Michel. */
+  t('B-CCCIV ⭐ AUCUN LIBELLÉ N\'A BOUGÉ — boutons RIR (0 se lit « 0 » depuis D-093)', R.rirBouton==='0|1|2|3|4+', 'reçu : '+R.rirBouton);
   t('B-CCCIV ⭐ ... badges RIR', R.rirBadge==='0r|1r|2r|3r|4+r', 'reçu : '+R.rirBadge);
   t('B-CCCIV ⭐ ... boutons RPE', R.rpeBouton==='10|9|8|7|≤6', 'reçu : '+R.rpeBouton);
   t('B-CCCIV ⭐ ... badges RPE', R.rpeBadge==='@10|@9|@8|@7|@≤6', 'reçu : '+R.rpeBadge);
   t('B-CCCIV ⭐ ... et la colonne « précédent » par son VRAI appel (§58), X compris',
-    R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir">·0r</span>|<span class="prev-rir">·4+r</span>|'
-    && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir">·@10</span>|<span class="prev-rir">·@≤6</span>|',
+    /* ⛔ R30 — D-093 : un 0 SANS marqueur `rirV` (réponse de l'ancien bouton « échec ») se lit « 0/X » (« 0 ou échec ») —
+       décision de Michel : l'app ne devine pas lequel des deux c'était. */
+    R.prevRir==='<span class="prev-rir">·2r</span>|<span class="prev-rir" title="0 ou échec — noté avant la mise à jour du 19/10">·0/X</span>|<span class="prev-rir">·4+r</span>|'
+    && R.prevRpe==='<span class="prev-rir">·@8</span>|<span class="prev-rir" title="0 ou échec — noté avant la mise à jour du 19/10">·@10/X</span>|<span class="prev-rir">·@≤6</span>|',
     'RIR '+R.prevRir+' · RPE '+R.prevRpe);
   t('B-CCCIV ⛔⛔ hors de l\'échelle, l\'app NE DIT RIEN (plus de « 10 » pour une série non notée)',
     R.horsEchelleRpe==='|||' && R.horsEchelleRir==='|', 'RPE ['+R.horsEchelleRpe+'] · RIR ['+R.horsEchelleRir+']');
@@ -39720,6 +39747,58 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      « ✕ Retirer dropset » ne touchent plus que la suite non faite (décisions de Michel du 16/10). Blocs B-CC01-*.
      Banc : tools/banc_cc01_dropset.js · contrôle négatif : tools/mut_cc01_dropset.py. */
   await require('./cc01_dropset.js').ecran(t, b, PORT);
+  /* 🏋️ UX SÉANCE (session-B, 16/10/2026, cadrage validé par Michel) — l'écran Séance en deux états : avant (« Séance libre »,
+     « Programme », contexte, types, autres options), pendant (en-tête « Séance en cours » dans la barre haute : chrono,
+     séries de TRAVAIL faites / prévues, ⋯, « Terminer » qui demande s'il reste des séries) ; menu ⋯ ; bouton central (même
+     séance, pastille, immobile) ; dock de repos en bas (préréglages dans « Régler »). Présentation seulement : les
+     propriétaires des données sont inchangés (différentiel : tools/diff_seance_ux.js). Blocs B-UXS-*.
+     Banc : tools/banc_seance_ux.js · contrôle négatif : tools/mut_seance_ux.py. */
+  await require('./seance_ux.js').ecran(t, b, PORT);
+  /* 🎨 UX — INTÉGRATION DES DÉCISIONS DU 17/10/2026 (D-085, décisions A→M de Michel) — jeton Cobalt de séance, « Terminer »
+     Cobalt (rouge réservé au destructif), point bleu entier sur le « + » de taille constante, « Séance prête », type en badge
+     sur le numéro + colonne 1RM, barre du bas masquée pendant la saisie d'une série, cartes de type en texte seul, onglets
+     « Discussion / Espace Milo », courbes Progrès neutres. Présentation seulement (aucune clé, aucune donnée). Blocs B-UXI-*.
+     Banc : tools/banc_ux_integration.js · contrôle négatif : tools/mut_ux_integration.py. */
+  await require('./ux_integration.js').ecran(t, b, PORT);
+  /* 🛠️ D-086 (session-B, 18/10/2026) — corrections UX après la recette iPhone de D-085 : colonne Type visible (pastille N / É / X
+     sur chaque série), « Précédent » lisible, commentaire de la dernière fois signalé sur sa série EXACTE, dock de repos
+     [−15 s][temps][+15 s][Passer] + 30 s / 45 s dans « Régler », « Passer » Cobalt en plein écran, bandeau de reprise qui passe
+     à la ligne, date et heure enregistrées de chaque message Milo. Présentation seulement (aucune clé, aucune donnée). Blocs
+     B-D086-*. Banc : tools/banc_ux_d086.js · contrôle négatif : tools/mut_ux_d086.py. */
+  await require('./ux_d086.js').ecran(t, b, PORT);
+  /* 💬 D-087 (18/10/2026, décision de Michel) — LA NOTE GÉNÉRALE DE L'EXERCICE LA DERNIÈRE FOIS : point bleu sur le 💬 de
+     « Note perso », fiche en LECTURE SEULE avec la date de la séance, jamais recopiée ; conservation des notes, commentaires
+     de série sans contamination, types N / É / X indépendants, contexte de Milo SIMULÉ (aucun appel), 360 / 375 / 390 / 430 px.
+     Blocs B-NOTE-*. Banc : tools/banc_notes_d087.js · contrôle négatif : tools/mut_notes_d087.py. */
+  await require('./notes_d087.js').ecran(t, b, PORT);
+  /* 📥 Brief « D-088 » (18/10/2026, décisions de Michel, registre D-089) — « Importer un historique » de retour dans le menu
+     « … » de la séance (même moteur que l'ancien écran, IA d'import SIMULÉE), la séance en cours jamais touchée (import,
+     annulation, fermeture, rechargement, analyse vide, historique vide, remplacement explicite), l'import de programme intact,
+     « Note de la dernière séance » (point gardé si le texte est identique), et l'outil du prompt de Milo confiné (leurre de
+     dépôt + garde d'écriture). Blocs B-D088-*. Banc : tools/banc_d088.js · contrôle négatif : tools/mut_d088.py. */
+  await require('./d088_import_notes.js').ecran(t, b, PORT);
+  /* 🧍🧍 « TA SÉANCE JUSQU'ICI » : FACE · CHIFFRES · DOS (18/10/2026, décision D-091 de Michel) — la figurine de face à gauche,
+     les chiffres au centre, la figurine de dos à droite, visibles ensemble sans appui ni alternance ; les vraies figurines
+     (`_mscSVGmini`, le dos étant le dessin de la grande figurine `_BP`) colorées par le même moteur — comparées à la grande
+     figurine et aux données, zone par zone. Mise en page à 360 / 375 / 390 / 430 px (longues valeurs, texte agrandi), « + »
+     mesuré, rien d'écrit, autres figurines de face, cardio seul inchangé. Blocs B-FFD-*.
+     ⑩ LE COMPTAGE (19/10/2026, décision D-092 de Michel) : séries et volume TOTAUX, échauffements compris ; le travail dit à
+     part (« dont N de travail ») ; « N / M », « Il reste N » et la séance enregistrée gardent le travail.
+     Banc : tools/banc_fig_face_dos.js · contrôle négatif : tools/mut_fig_face_dos.py. */
+  await require('./fig_face_dos.js').ecran(t, b, PORT);
+  /* 💪🔗 RIR EN SUPERSET (19/10/2026, retour de recette iPhone de Michel sur le clone D-088) — au repos d'un superset, UNE
+     question par mouvement, nommée, chacune enregistrée sur SA série jusqu'à la séance terminée, l'export, Milo (contexte
+     construit, jamais envoyé) et « Précédent » ; superset de trois, échauffements, dropset et exercice seul inchangés ; ordre
+     inversé et rechargement : aucune réponse au mauvais mouvement. Vert sur la prod ft-v1256 ET sur D-088 (même moteur).
+     Blocs B-RSS-*. Banc : tools/banc_rir_superset.js · contrôle négatif : tools/mut_rir_superset.py. */
+  await require('./rir_superset.js').ecran(t, b, PORT);
+  /* 🏋️ SÉANCE — CORRECTIONS DE LA RECETTE IPHONE DU 19/10/2026 + « PRÉCÉDENT » SUR 4 SÉANCES (décisions de Michel du 19/10, D-093) :
+     le compteur de travail (protégé), l'écran de fin (volume TOTAL, travail à part ; la séance enregistrée garde le travail), le
+     sélecteur Échec | 0 | 1 | 2 | 3 | 4+ (« Échec » = le tag X ; un ancien 0 se lit « 0 ou échec »), le RIR dans le détail d'une
+     séance (export et Milo inchangés), « Précédent » sans série dupliquée, la feuille « 4 dernières séances » (séries de travail par
+     rang, échauffements à part, deux séances du même jour distinctes, aucun verdict, rien d'écrit) ; dropset, superset, exercice
+     remplacé ; 360 → 430 px. Blocs B-SR-*. Banc : tools/banc_seance_recette.js · contrôle négatif : tools/mut_seance_recette.py. */
+  await require('./seance_recette.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

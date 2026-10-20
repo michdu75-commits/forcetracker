@@ -1437,8 +1437,9 @@ function _renderCoachThread(){
     if(m.role==='user' && m._silent) return; // consigne interne (débrief auto) : jamais affichée
     const t = (typeof m.content === 'string') ? m.content
             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
-    if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
-    else if(t) renderCoachMsg('coach', t, {coupee: m.coupee});   // MILO-PDF1 : le marqueur revient avec la bulle
+    // D-086 : chaque bulle porte l'heure ENREGISTRÉE avec le message (`m.ts`) — jamais l'heure où l'on ouvre le fil.
+    if(m.role === 'user') renderCoachMsg('user', t || '[photo]', {ts: m.ts});
+    else if(t) renderCoachMsg('coach', t, {coupee: m.coupee, ts: m.ts});   // MILO-PDF1 : le marqueur revient avec la bulle
   });
   /* ⚡ LE BOUTON « COMMENCER CETTE SÉANCE » SURVIT À LA FERMETURE DE L'APP (14/08/2026)
      Michel, en allant à la salle : *« je lui ai demandé de me lancer la séance, je ferme
@@ -1607,6 +1608,7 @@ function newCoachChat(){
   coachHistory = [];
   try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
   const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
+  _coachOnglet=null;                            // D-085 : plus de discussion → retour à l'onglet automatique
   updateCoachHeader();
   if(typeof toast==='function') toast('Nouvelle discussion','info');
 }
@@ -1672,13 +1674,34 @@ function deleteCoachConv(id){
   if(typeof toast==='function') toast('Discussion supprimée','info');
 }
 
+/* 🎨 ONGLETS « DISCUSSION / ESPACE MILO » (décision I de Michel, 17/10/2026 — D-085). Le contenu ne change pas :
+   « Espace Milo » montre l'accueil de Milo (#coach-home), « Discussion » montre le fil (#coach-msgs + suggestions).
+   ⛔ AFFICHAGE SEUL : ni le moteur, ni les appels, ni le quota, ni la mémoire ne bougent. L'onglet choisi vit EN
+   MÉMOIRE (aucune clé) : `null` = automatique — « Espace Milo » tant qu'il n'y a aucune discussion (exactement l'écran
+   d'arrivée d'avant), « Discussion » dès qu'il y en a une (exactement l'écran d'avant). Envoyer un message ramène
+   toujours sur « Discussion ». La saisie reste visible dans les deux onglets : on peut écrire à Milo d'un geste. */
+let _coachOnglet=null;
+function _ongletCoachEffectif(){ return _coachOnglet || ((coachHistory&&coachHistory.length)?'disc':'espace'); }
+function _appliquerOngletCoach(){
+  const scr=document.getElementById('s-coach'); if(!scr) return;
+  const o=_ongletCoachEffectif();
+  scr.classList.toggle('ct-espace',o==='espace');
+  scr.classList.toggle('ct-disc',o==='disc');
+  [['ctab-disc','disc'],['ctab-espace','espace']].forEach(([id,k])=>{
+    const b=document.getElementById(id); if(!b) return;
+    b.classList.toggle('on',o===k); b.setAttribute('aria-selected',o===k?'true':'false');
+  });
+}
+function coachTab(t){ _coachOnglet=(t==='espace')?'espace':'disc'; _appliquerOngletCoach(); }
 function _showCoachChat(){
+  _coachOnglet='disc';                          // un échange commence ou reprend : on le montre
   const home=document.getElementById('coach-home');
   const msgs=document.getElementById('coach-msgs');
   const suggs=document.getElementById('coach-suggs');
   if(home)home.style.display='none';
   if(msgs){msgs.style.display='flex';msgs.style.flexDirection='column';}
   if(suggs)suggs.style.display='flex';
+  _appliquerOngletCoach();
 }
 function _updateCoachCtxTags(){
   const morphoTag=document.getElementById('coach-ctx-morpho');
@@ -2845,6 +2868,7 @@ function updateCoachHeader() {
     if(msgs && msgs.children.length===0) _renderCoachThread();
     if(newBtn)newBtn.style.display='flex';
   }
+  _appliquerOngletCoach();                      // D-085 : onglets Discussion / Espace Milo
   const badge = document.getElementById('coach-quota-badge');
   if (!badge) return;
   if (S.premium) {
@@ -5352,11 +5376,26 @@ async function _miloRaterEnvoyer(){
     if(typeof toast==='function')toast('Envoyé à Michel 📩 Merci !','success');
   }catch(e){ if(typeof toast==='function')toast('Pas de réseau — c\'est noté quand même 👍','info'); }
 }
+/* 🕒 D-086 (recette de Michel, 18/10) — LA DATE ET L'HEURE D'UN MESSAGE, TELLES QU'ENREGISTRÉES.
+   « 18/10/2026 · 11:32 », à l'heure locale du téléphone. ⛔ Sans heure enregistrée (messages d'avant le 25/08/2026,
+   débrief, « continuer dans le Coach »), on écrit « Date indisponible » : jamais l'heure à laquelle on regarde le fil,
+   jamais une date devinée. Affichage seul : l'historique, son ordre et son enregistrement ne changent pas. */
+function _heureMsgTxt(ts){
+  const n = (ts === null || ts === undefined || ts === '') ? NaN : Number(ts);
+  if (!isFinite(n) || n < Date.UTC(2020, 0, 1)) return 'Date indisponible';
+  const d = new Date(n);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'})
+    + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+}
 function renderCoachMsg(role, text, opts) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
   const div = document.createElement('div');
   div.className = 'msg-bubble ' + (role === 'user' ? 'msg-user' : 'msg-coach');
+  /* D-086 : l'heure se lit dans un ATTRIBUT, dessinée par le CSS (`::after`) — elle n'entre donc ni dans le texte de
+     la bulle (que relisent le 👎 « à côté », le partage, le PDF et les cartes séance), ni dans `dataset.raw`.
+     Posée seulement quand l'appelant la fournit : les cartes et outils d'administration n'en portent pas. */
+  if (opts && Object.prototype.hasOwnProperty.call(opts, 'ts')) div.dataset.heure = _heureMsgTxt(opts.ts);
   let _gFlags = [];
   if (role === 'coach') {
     /* 🛡️ LE GARDIEN TOURNE MAINTENANT POUR TOUT LE MONDE (21/08/2026), plus seulement sur le
@@ -5479,6 +5518,7 @@ function renderCoachMsg(role, text, opts) {
   }
   msgs.appendChild(div);
   _coachAuBas();
+  return div;   // D-086 : `sendToCoach` y pose l'heure du message juste après l'avoir enregistré
 }
 // Nettoie le markdown pour un partage texte propre (+ sécurité : retire tout bloc technique)
 function _coachPlain(text){
@@ -5757,8 +5797,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
   if (_estHorsSujet(msg, hasImg, opts)) {
     if (inp) inp.value = '';
     if (coachHistory.length === 0) _showCoachChat();
-    renderCoachMsg('user', displayMsg || msg);
-    renderCoachMsg('coach', _REPONSE_HORS_SUJET);
+    const _tsL = Date.now();   // D-086 : l'échange a lieu maintenant (il n'est pas enregistré, voir plus haut)
+    renderCoachMsg('user', displayMsg || msg, {ts: _tsL});
+    renderCoachMsg('coach', _REPONSE_HORS_SUJET, {ts: _tsL});
     return false;
   }
 
@@ -5771,8 +5812,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     if (_rep) {
       if (inp) inp.value = '';
       if (coachHistory.length === 0) _showCoachChat();
-      renderCoachMsg('user', displayMsg || msg);
-      renderCoachMsg('coach', _rep);
+      const _tsL = Date.now();   // D-086 : même chose que le refus hors sujet
+      renderCoachMsg('user', displayMsg || msg, {ts: _tsL});
+      renderCoachMsg('coach', _rep, {ts: _tsL});
       return false;
     }
   }
@@ -5793,6 +5835,8 @@ async function sendToCoach(customMsg, displayMsg, opts) {
   const suggs = document.getElementById('coach-suggs');
 
   // Bulle utilisateur avec image optionnelle — sauf débrief auto (opts.silent : Milo vient à toi, pas de bulle « toi »)
+  // D-086 : la bulle reçoit l'heure ENREGISTRÉE avec le message (`_msgU.ts`, ligne inchangée plus bas) — posée juste après.
+  let _bulleU = null;
   if (opts.silent) {
     /* pas de bulle utilisateur */
   } else if (hasImg) {
@@ -5803,10 +5847,11 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       div.innerHTML = (msg ? '<p style="margin:0 0 6px">' + msg.replace(/</g,'&lt;') + '</p>' : '') +
         '<img src="data:' + imgType + ';base64,' + imgData + '" style="max-width:180px;border-radius:8px;display:block;">';
       msgs.appendChild(div);
+      _bulleU = div;
       _coachAuBas();
     }
   } else {
-    renderCoachMsg('user', displayMsg || msg);
+    _bulleU = renderCoachMsg('user', displayMsg || msg);
   }
 
   const userHistContent = hasImg
@@ -5815,6 +5860,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     : msg;
   const _msgU = { role: 'user', content: userHistContent, ts: Date.now(), ...(opts.silent?{_silent:true}:{}) };
   coachHistory.push(_msgU);
+  if (_bulleU) _bulleU.dataset.heure = _heureMsgTxt(_msgU.ts);   // D-086 : affichage seul
   showTyping();
 
   try {
@@ -5937,7 +5983,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
        que chaque voie qui pose une carte séance puisse lui rattacher la séance proposée, y compris la
        traduction qui revient APRÈS l'enregistrement. Désigné par sa référence, jamais par son texte. */
     const _msgA = { role: 'assistant', content: reply, ts: Date.now(), ...(_coupee?{coupee:_coupee}:{}) };
-    renderCoachMsg('coach', _disp, {coupee: _coupee});
+    renderCoachMsg('coach', _disp, {coupee: _coupee, ts: _msgA.ts});   // D-086 : l'heure enregistrée avec la réponse
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds, null, _msgA);
     else if (_dsCervelet) {
@@ -5998,7 +6044,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
        connexion », qui est faux et fait chercher au mauvais endroit. */
     if (!opts.silent) renderCoachMsg('coach', e && e.duServeur
       ? String(e.message)
-      : 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
+      : 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.', {ts: Date.now()});   // D-086 : l'erreur arrive maintenant
   }
 
   coachBusy = false;
@@ -8402,7 +8448,7 @@ const _DRAWER_CONTENT = {
         +pcard('👟','Les chaussures','Haltéro/squat : chaussure à talon rigide (meilleure profondeur, buste plus droit). Soulevé de terre : semelle PLATE et fine (chausson, Converse) pour être stable et proche du sol. Évite les grosses semelles moelleuses sous la barre.',[{src:'accessoires/chaussures.jpg'}])
         +pcard('🧗‍♂️','Craie / magnésie','Assèche les mains → bien meilleure prise sur la barre. Indispensable sur les soulevés lourds. Existe en <b>bloc/poudre</b> (le plus efficace) ou en <b>version liquide</b>, plus propre et souvent autorisée quand ta salle interdit la poudre.',[{src:'accessoires/magnesie-bloc.jpg',cap:'Bloc / poudre'},{src:'accessoires/magnesie-liquide.jpg',cap:'Liquide'}])
         +sec('🔥 Les techniques — monte en intensité')
-        +card('⚡','Superset','Deux exercices ENCHAÎNÉS sans repos (ex. biceps + triceps). Gain de temps + grosse congestion. Dans Force Tracker : bouton « ⚡ Grouper » en séance, ou « Superset » dans l\'éditeur de programme.')
+        +card('⚡','Superset','Deux exercices ENCHAÎNÉS sans repos (ex. biceps + triceps). Gain de temps + grosse congestion. Dans Force Tracker : « Grouper des exercices » dans le menu ⋯ de la séance, ou « Superset » dans l\'éditeur de programme.')
         +card('📉','Drop set','Tu vas à l\'échec, puis tu BAISSES la charge (~20%) et tu continues sans repos, une ou plusieurs fois. Brutal pour finir un muscle. Dispo via le bouton 📉 Drop.')
         +card('⏸️','Rest-pause','À l\'échec, tu poses la barre 10-15s, puis tu arraches quelques reps de plus. Permet plus de reps avec la même charge lourde.')
         +card('🔺','Pyramide','Tu montes la charge en baissant les reps série après série (ex. 12→10→8→6), ou l\'inverse. Bon mélange volume + force. Bouton 📈 +% en séance.')
@@ -8442,7 +8488,9 @@ const _DRAWER_CONTENT = {
            vert. Sans ②, l'absence se lit comme un oubli. */
         {ic:'\u{1F44E}',t:'« Milo a répondu à côté » — et ce qu\'on en fait',d:'Sous chaque réponse de Milo il y a un bouton <b>« 👎 à côté »</b>. Quatre motifs, un tap : la réponse <b>ne répondait pas</b> à ta question · elle était <b>trop vague</b> · elle contenait quelque chose de <b>faux</b> · <b>il a oublié</b> quelque chose que tu lui avais dit.<br><br>⛔ <b>Rien de ta conversation n\'est envoyé.</b> Le motif est compté <b>sur ton téléphone</b>, et c\'est tout. Si tu veux <b>en plus</b> que Michel puisse voir l\'échange pour corriger le problème, il y a une case à cocher — <b>décochée par défaut</b>, et rien ne part tant que tu ne la coches pas.<br><br>⭐ <b>À quoi ça sert vraiment.</b> Quand Milo répond à côté, ce n\'est pas seulement agaçant : c\'est un appel qui a coûté quelque chose pour rien. Chaque signalement devient un <b>cas de test permanent</b> — un scénario qui sera rejoué à chaque version pour vérifier que le problème ne revient pas. Les meilleurs tests de l\'app viennent tous de vrais ratés vécus, pas de cas inventés.<br><br>⚠️ <b>Et il n\'y a pas de pouce vert, c\'est voulu.</b> Un 👍/👎 sous chaque réponse transformerait ta conversation en formulaire de satisfaction, et dirait surtout qui est poli. Un raté, on peut le corriger ; un « c\'était bien », on n\'en fait rien.<br><br>⛔ Le motif <b>« il a oublié »</b> n\'est pas là par politesse : c\'est le seul qui, s\'il revient souvent, dit que la <b>mémoire</b> de Milo ne tient pas — c\'est-à-dire la promesse principale de l\'app.'},
         {ic:'📍',t:'Une charge sans repère le dit',d:'Quand <b>Milo</b> construit ta séance, il pré-remplit les charges. Sur un exercice que tu as <b>déjà fait</b>, il se cale sur ton historique et sur ton 1RM — et si la charge dépasse ce que tu tiens, le bandeau ⚡ te le signale. Mais sur un exercice que <b>tu n\'as jamais noté ici</b>, l\'app n\'a <b>aucun repère dans ton historique</b> — et ça ne veut pas dire que tu ne le pratiques pas, seulement qu\'elle n\'en sait rien : le chiffre vient de nulle part. Elle l\'écrit alors noir sur blanc — <b>« point de départ à ajuster, pas une mesure »</b> — plutôt que de le laisser passer pour une prescription calibrée. ⚠️ <b>Rien n\'est retiré ni corrigé</b> : tu gardes la charge, tu décides. Et dès que tu notes ta première série, l\'app a son repère : le message ne revient plus.'},
-        {ic:'💪',t:'Le RIR — ce qu\'il te restait dans le moteur',d:'Le <b>RIR</b> (répétitions en réserve) dit à quel point tu as forcé : <b>2</b> = tu aurais pu en faire 2 de plus, <b>0</b> = ta dernière répétition est passée mais une de plus serait partie à l\'échec. ⛔ <b>À ne pas confondre avec le tag X</b> : <b>RIR 0</b> = série <b>réussie</b> à la limite ; <b>X</b> = tu as <b>tenté</b> une répétition et elle <b>n\'est pas passée</b> — c\'est un cran au-delà. Exemple : 95×3 et tu réussis la 3ᵉ → RIR 0 ; tu tentes la 4ᵉ et elle cale → X. Après chaque série de <b>travail</b>, la barre de repos pose la question — un tap, facultatif, retirable. ⚠️ <b>Rien n\'est deviné</b> : une série que tu ne notes pas reste « non notée », jamais « échec ». 👉 <b>À quoi ça sert</b> : (1) tu le <b>revois avant de refaire la série</b>, dans la colonne « précédent » — <i>8×80·2r</i> te dit s\'il faut monter ; (2) <b>Milo le reçoit</b>, et c\'est ce qui lui manquait : il connaît depuis toujours le cadre de ta discipline (<i>« garder 1 à 3 répétitions en réserve »</i> en musculation, <i>« jamais à l\'échec »</i> en force athlétique) sans avoir aucun moyen de savoir si tu le respectais. ⛔ Pas d\'échauffement : une série de chauffe n\'a pas de réserve à déclarer. <b>🎚️ ET SI TU TRAVAILLES EN RPE</b> — <b>Profil → Échelle d\'effort</b> te laisse basculer. Le RPE et le RIR sont la <b>même mesure dite dans l\'autre sens</b> : <i>RPE = 10 − RIR</i>, donc <b>10 = RIR 0</b> (aucune de plus), 9 = il t\'en restait 1, 8 = il t\'en restait 2, et ainsi de suite. ⛔ Basculer <b>ne convertit rien et n\'efface rien</b> : l\'app ne stocke qu\'une seule valeur, et l\'affiche dans la langue que tu as choisie — ton historique entier se relit, et tu peux revenir quand tu veux. La question posée après la série, le badge de la colonne « précédent » (<i>8×80·@8</i>) et <b>Milo</b> suivent tous les trois. ⚠️ <b>Pas de demi-points</b> (8,5 · 9,5) : ils existent dans le barème, mais l\'app ne les <b>mesure</b> pas — les afficher serait une précision qu\'on n\'a pas. ⚠️ Et l\'ordre des boutons s\'inverse, exprès : en RIR on part de l\'échec, en RPE on va de 6 à 10, parce que c\'est comme ça que le barème se lit.'},
+        {ic:'💪',t:'Le RIR — ce qu\'il te restait dans le moteur',d:'Le <b>RIR</b> (répétitions en réserve) dit à quel point tu as forcé : <b>2</b> = tu aurais pu en faire 2 de plus, <b>0</b> = ta dernière répétition est passée mais une de plus serait partie à l\'échec. ⛔ <b>À ne pas confondre avec le tag X</b> : <b>RIR 0</b> = série <b>réussie</b> à la limite ; <b>X</b> = tu as <b>tenté</b> une répétition et elle <b>n\'est pas passée</b> — c\'est un cran au-delà. Exemple : 95×3 et tu réussis la 3ᵉ → RIR 0 ; tu tentes la 4ᵉ et elle cale → X. Après chaque série de <b>travail</b>, la barre de repos pose la question — <b>Échec · 0 · 1 · 2 · 3 · 4+</b>, un tap, facultatif, retirable. <b>Échec</b> pose le tag <b>X</b> : la même donnée que la pastille de la série, d\'ici ou de là. ⚠️ <b>Avant le 19/10/2026</b>, le bouton « échec » enregistrait un <b>0</b> : ces anciennes réponses s\'affichent <b>« 0 ou échec »</b> — l\'app ne devine pas lequel des deux c\'était, et ne les réécrit pas. ⚠️ <b>Rien n\'est deviné</b> : une série que tu ne notes pas reste « non notée », jamais « échec ». 👉 <b>À quoi ça sert</b> : (1) tu le <b>revois avant de refaire la série</b>, dans la colonne « précédent » — <i>8×80·2r</i> te dit s\'il faut monter ; (2) <b>Milo le reçoit</b>, et c\'est ce qui lui manquait : il connaît depuis toujours le cadre de ta discipline (<i>« garder 1 à 3 répétitions en réserve »</i> en musculation, <i>« jamais à l\'échec »</i> en force athlétique) sans avoir aucun moyen de savoir si tu le respectais. ⛔ Pas d\'échauffement : une série de chauffe n\'a pas de réserve à déclarer. <b>🎚️ ET SI TU TRAVAILLES EN RPE</b> — <b>Profil → Échelle d\'effort</b> te laisse basculer. Le RPE et le RIR sont la <b>même mesure dite dans l\'autre sens</b> : <i>RPE = 10 − RIR</i>, donc <b>10 = RIR 0</b> (aucune de plus), 9 = il t\'en restait 1, 8 = il t\'en restait 2, et ainsi de suite. ⛔ Basculer <b>ne convertit rien et n\'efface rien</b> : l\'app ne stocke qu\'une seule valeur, et l\'affiche dans la langue que tu as choisie — ton historique entier se relit, et tu peux revenir quand tu veux. La question posée après la série, le badge de la colonne « précédent » (<i>8×80·@8</i>) et <b>Milo</b> suivent tous les trois. ⚠️ <b>Pas de demi-points</b> (8,5 · 9,5) : ils existent dans le barème, mais l\'app ne les <b>mesure</b> pas — les afficher serait une précision qu\'on n\'a pas. ⚠️ Et l\'ordre des boutons s\'inverse, exprès : en RIR on part de l\'échec, en RPE on va de 6 à 10 (puis Échec, un cran au-delà de 10), parce que c\'est comme ça que le barème se lit.'},
+        /* 📋 D-093 — règle d'or #11, point 4 : le POURQUOI (R25) — pourquoi par rang, pourquoi pas de verdict. */
+        {ic:'📋',t:'« 4 dernières séances » — comparer sans quitter ta séance',d:'En séance, touche <b>« Précédent ▾ »</b> (en haut de la colonne) — ou <b>⋯ → 4 dernières séances</b>. Une feuille s\'ouvre par-dessus ta séance : les <b>4 dernières séances</b> où tu as fait cet exercice, de la plus ancienne à la plus récente, <b>série par série</b>. ⭐ <b>Ce qui est comparé</b> : tes séries de <b>travail</b>, par <b>rang</b> (ta 1ʳᵉ avec ta 1ʳᵉ…), avec ta réserve (RIR), tes échecs (X) et tes notes. Une série qui n\'existait pas ce jour-là s\'affiche « — » : <b>rien n\'est répété ni emprunté</b> à une autre séance. Les <b>échauffements</b> sont à part (ligne É) : ils ne se comparent pas au travail. Deux séances le <b>même jour</b> restent deux colonnes (« 1ʳᵉ », « 2ᵉ »). ⛔ <b>Aucun verdict</b> : ni flèche, ni pourcentage — 5 × 100 puis 10 × 80 ne disent pas à eux seuls si tu as progressé ; tu lis les chiffres, tu décides. 👉 La <b>case</b> « Précédent » d\'une série ouvre toujours sa note, et la colonne ne montre plus que ce que tu as <b>vraiment fait</b> la dernière fois (avant, une 5ᵉ ligne recopiait la 4ᵉ série). La courbe des charges reste dans <b>⋯ → Statistiques</b>. Lecture seule : rien n\'est modifié.'},
         /* 🏃 ft-v1118 — L'AIDE DÉTAILLÉE EST L'ENDROIT DU *POURQUOI*. Elle porte les trois
            choses qu'aucune autre surface ne dit : ① ce qui distingue *noter* de *enregistrer*,
            et pourquoi l'app a besoin des deux (on saisit son cardio avant de l'avoir fini) ;
@@ -8451,6 +8499,10 @@ const _DRAWER_CONTENT = {
            une question ouverte. */
         {ic:'🏃',t:'Noter un cardio ≠ enregistrer la séance',d:'Le bloc <b>Cardio</b> de l\'écran Séance sert à <b>noter</b> : le type (tapis, vélo, rameur…), l\'intensité et la durée, <b>avant</b> la muscu (échauffement) ou <b>après</b> (cardio de fin). Son bouton s\'appelle <b>« ✓ C\'est noté »</b> et il ne fait qu\'une chose : ranger ta saisie et replier le bloc. <b>Il n\'enregistre pas ta séance</b>, et c\'est voulu — on saisit souvent son cardio <b>pendant</b> qu\'on s\'entraîne, pas à la fin.<br><br>⭐ <b>Un seul bouton rouge par écran, et c\'est celui qui enregistre.</b> En bas de l\'écran Séance : <b>« 🏁 Terminer la séance »</b> si tu as validé des séries, <b>« 🏁 Enregistrer le cardio »</b> si tu n\'as fait que du cardio. Avant le 04/09/2026 le bouton du bloc était rouge lui aussi et disait « Enregistrer le cardio » : <b>deux boutons, presque les mêmes mots, un seul enregistrait</b>. Rien ne permettait de les distinguer.<br><br>⚠️ <b>Ce que ça coûtait</b> : une séance de cardio seul n\'a aucun exercice, et plusieurs endroits de l\'app en déduisaient « il n\'y a rien ». Tu pouvais noter 45 min de tapis, repasser par l\'Accueil, retaper le bouton rouge — et ta saisie disparaissait sans un mot. C\'est corrigé : tant qu\'une séance attend, l\'Accueil affiche <b>« ↩ Reprendre la séance »</b>, l\'app te le redit à l\'ouverture, et une copie de secours est gardée.<br><br>⭐ <b>Une séance de cardio seul est une vraie séance</b> : elle a sa durée, ses calories (calculées depuis le MET du type et ton poids), elle apparaît dans ton calendrier, elle ferme une séance annoncée à Milo, et Milo en tient compte. ⚠️ En revanche elle pèse encore <b>peu</b> sur ton score de récupération — ce barème-là reste à régler, et on ne l\'invente pas.'},
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ en bas de l\'écran (le « + »). Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries — et c\'est un <b>MAXIMUM</b>, pas un temps à attendre : tu peux repartir avant, c\'est permis. Il ne s\'arrête plus à zéro, il continue en +0:12, +0:45… avec « au-delà de ton repos max ». ⚠️ Ce n\'est ni un reproche ni une erreur d\'affichage : c\'est une information, parce que le repos réellement pris vaut souvent 2 à 3 fois le repos réglé. Au-delà de 15 min il s\'arrête seul (ce n\'est plus un repos). Astuce : dans la recherche d\'exercices, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en tête, avec une ★ — tu retrouves tes mouvements habituels sans scroller.'},
+        /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — règle d'or #11, point 4 : l'aide détaillée de la nouvelle forme de
+           l'écran. L'endroit du POURQUOI : ce qui sert à la salle reste sous la main, le rare est rangé — et ce qui NE
+           change PAS (séries, records, historique, moteur du repos). */
+        {ic:'🏋️',t:'L\'écran Séance : ce qui a changé, et pourquoi',d:'Depuis le <b>16/10/2026</b>, l\'écran Séance garde sous la main ce qui sert <b>à la salle</b> et range le reste. <b>Avant</b> la séance : « Séance libre » ou « Programme », puis ta récup et ta dernière séance, les types de séance, et plus bas le cardio et l\'import. <b>Pendant</b> : la barre du haut devient l\'<b>en-tête de la séance</b> — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas, comme pour savoir si un exercice est fini), ⋯ et « Terminer ». Les actions rares (pause, date, tout dérouler, grouper, programmes, vider, abandonner) sont dans <b>⋯</b>, l\'aide « ? » aussi. <b>« Terminer »</b> enregistre tout de suite si toutes tes séries de travail sont faites ; sinon il te dit combien il en reste — tu continues ou tu termines quand même, rien n\'est perdu. Le <b>repos</b> s\'affiche en bas et ne décale plus ta liste ; 1:00 · 1:30 · 2:00 sont dans <b>Régler</b> (touche le temps ✎). Un <b>point bleu</b> sur le « + » rappelle qu\'une séance est ouverte : le « + » te ramène à <b>la même</b> séance, il n\'en crée jamais une deuxième. ⛔ <b>Rien ne change</b> dans tes séries, tes records ou ton historique.'},
         /* ⚠️ « Timer : É 45s » est devenu FAUX le 31/08 (ft-v1082) : le repos d'un palier suit
            maintenant sa charge. Une aide qui annonce un chiffre que l'app n'applique plus est
            pire qu'une aide absente, parce qu'on la croit (R23). Le détail va dans l'entrée 🔥
@@ -8462,7 +8514,7 @@ const _DRAWER_CONTENT = {
            ③ pourquoi le nombre de paliers baisse sans que rien n'ait été supprimé — sans ③,
            « il a enlevé mes séries » est la lecture la plus naturelle. */
         {ic:'🔥',t:'Ton échauffement se dose à ta charge',d:'Quand Milo te propose une séance, l\'app <b>complète sa montée en charge</b> si elle la trouve trop courte — et elle gère le <b>repos entre les paliers</b>. Deux choses ont changé le 31/08, toutes les deux mesurées sur de vraies séances. <b>① LE REPOS SUIVAIT LE TYPE DE SÉRIE, PAS LA CHARGE.</b> Un palier d\'échauffement donnait <b>45 secondes, à plat</b>, quel que soit le poids. Mesuré sur une montée vers <b>130 kg</b> : tu passais à <b>115 kg — 88 % de ta charge du jour — quarante-cinq secondes</b> après un palier à 100. Le repos se lit maintenant sur la charge du palier <b>qui vient</b> : <b>45 s</b> tant qu\'on est léger, <b>90 s</b> dès 75 % de ta charge de travail, <b>2 min</b> dès 85 %. Ce sont exactement les <b>mêmes seuils</b> que ceux qui décident du nombre de répétitions d\'un palier (5 → 3 → 2 → 1) : un palier qui mérite d\'être fait en une répétition mérite d\'être abordé reposé. La barre affiche « <b>palier lourd</b> » quand elle applique ça — sinon un chrono qui passe de 45 s à 2 min se lirait comme un bug. ⛔ <b>DEUX BORNES, ET ELLES COMPTENT.</b> On ne <b>raccourcit</b> jamais rien : 45 s reste le plancher. Et on ne dépasse <b>jamais ton propre repos de travail</b> — si tu l\'as réglé à 1 min, un palier lourd prend 1 min, parce que se reposer plus entre deux échauffements qu\'entre deux séries lourdes n\'aurait aucun sens. ⏳ Et comme partout dans l\'app, <b>c\'est un maximum, pas un compte à rebours</b> : tu peux repartir avant. <b>② L\'APP AJOUTAIT LE MÊME NOMBRE DE PALIERS À TOUTES LES CHARGES.</b> Son plafond était de <b>5, en dur</b>. Or Milo écrit presque toujours 3 paliers avec de gros écarts, donc elle en insérait 2 <b>à chaque fois</b> : mesuré, <b>5 paliers et 19 répétitions d\'échauffement de 60 kg jusqu\'à 150 kg</b>, à l\'identique. <i>Un squat à 60 kg recevait le protocole d\'un squat à 150.</i> Le plafond vaut désormais ce que l\'app produirait <b>si elle construisait la montée elle-même</b> pour cette charge — un barème qui sait déjà doser (2 paliers à 50 kg, 3 à 70, 4 à 130). Une seule réponse à la question « combien de paliers cette charge mérite-t-elle ». <b>⛔ ET ELLE N\'ENLÈVE JAMAIS RIEN.</b> Le nombre de séries ne <b>diminue jamais</b> par rapport à ce que Milo t\'a écrit — c\'est une règle posée depuis août, après un cas réel où l\'app affichait 5 séries pour 6 annoncées dans le chat. Ce qui change, c\'est qu\'elle arrête d\'en <b>rajouter</b>. Si ta montée s\'est raccourcie, c\'est que les paliers en trop venaient de l\'app, pas de Milo.'},
-        {ic:'⚡',t:'Super-séries & Pyramides',d:'Deux façons de créer un superset : 1) le bouton "⚡ Grouper" (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie". 2) Plus rapide : attrape la petite poignée (6 points, à côté du ⋯) sur un exercice et glisse-le sur un autre → le superset se crée tout seul. Ça marche EN SÉANCE et dans l\'ÉDITEUR DE PROGRAMME (✏️ — glisse une carte sur une autre). Enchaînement sans repos entre eux, avance automatique + vibration entre les blocs. Pour défaire : "↩ Retirer". Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%).'},
+        {ic:'⚡',t:'Super-séries & Pyramides',d:'Deux façons de créer un superset : 1) ⋯ → « Grouper des exercices » (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie". 2) Plus rapide : attrape la petite poignée (6 points, à côté du ⋯) sur un exercice et glisse-le sur un autre → le superset se crée tout seul. Ça marche EN SÉANCE et dans l\'ÉDITEUR DE PROGRAMME (✏️ — glisse une carte sur une autre). Enchaînement sans repos entre eux, avance automatique + vibration entre les blocs. Pour défaire : "↩ Retirer". Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%).'},
         {ic:'🔥',t:'D\'où vient ton métabolisme de base',d:'Le <b>BMR</b> (onglet Nutrition) est ce que ton corps brûle au repos, sans rien faire. C\'est <b>60 à 70 % de ta dépense totale</b> — de loin le plus gros morceau, donc celui où la précision compte le plus. L\'app peut le calculer de deux façons, et elle <b>dit toujours laquelle</b> sur la ligne juste sous le chiffre. <b>① Formule générique (Mifflin-St Jeor)</b> : poids, taille, âge, sexe. C\'est ce qu\'utilisent la plupart des applis — mais elle ne connaît que ton poids TOTAL, donc elle traite 84 kg de muscle exactement comme 84 kg de gras, et elle sous-estime les personnes musclées. <b>② Sur ta masse maigre (Katch-McArdle)</b> : <i>370 + 21,6 × ta masse maigre en kg</i>. Elle s\'active dès que tu as un <b>bilan corporel</b> (Progrès → Corps &amp; santé) ou un <b>% de masse grasse</b> noté sur une pesée. L\'écart est réel : sur un gabarit de 84 kg à 15 % de masse grasse, c\'est <b>~180 kcal par jour</b>. <b>Quand l\'app REFUSE de l\'utiliser</b> : si ton bilan a plus de 3 mois, ou si ton poids a bougé de plus de 5 % depuis — parce qu\'on ne sait pas si ces kilos sont du muscle ou du gras, et deviner fausserait tout le reste. Elle te le dit alors, elle ne bascule jamais en silence. <b>Et le chiffre de ta balance ?</b> Il est enregistré et Milo le voit, mais il n\'entre pas dans le calcul : chaque marque a sa formule maison, invérifiable. On préfère une formule publiée, appliquée à TA mesure — un chiffre que tu peux refaire toi-même sur un coin de table.'},
         {ic:'🔀',t:'Les exercices « un côté à la fois »',d:'48 exercices de l\'app sont <b>unilatéraux</b> : la série se refait de l\'autre côté (rowing haltère, curl haltères, fentes, squat bulgare, élévations latérales à un bras, extension quadriceps unilatérale…). En séance, ils portent une pastille <b>🔀 « par bras »</b> ou <b>« par jambe »</b> à côté de leur nom — tape-la pour tout revoir. <b>QUEL POIDS NOTER</b> — une seule règle, valable partout dans l\'app : <b>tu notes le poids qui BOUGE pendant la répétition</b>. Un seul haltère monte (rowing haltère, curl alterné, élévation à un bras) → note son poids à lui, 28, jamais 56. Les deux bougent en même temps (squat bulgare avec deux haltères, développé incliné) → note le total, 60. <b>COMBIEN DE SÉRIES</b> : tu saisis <b>3</b>, comme d\'habitude — pas 6. L\'app sait qu\'il faut refaire chaque série de l\'autre côté, et <b>compte ton tonnage en double</b> toute seule. Ton <b>record</b>, lui, reste calculé sur la charge d\'un seul côté : c\'est la vraie charge que ton muscle a tenue. ⚠️ Un côté plus faible que l\'autre ne peut pas se noter séparément aujourd\'hui — ça doublerait la saisie pour tout le monde ; dis-le si ça te manque. Tes séances déjà enregistrées ne bougent pas.'},
         /* 🗂️ PROGRES-SEANCES-01 (14/10/2026) — règle d'or #11, point 4 : l'aide détaillée de la nouvelle organisation. */
@@ -8490,7 +8542,9 @@ const _DRAWER_CONTENT = {
         {ic:'📸',t:'Import de programme',d:'Bouton 📸 dans la séance pour importer depuis une photo, un fichier Word (.docx) ou Excel (.xlsx). Le Coach IA extrait automatiquement les exercices, séries et charges.'},
         {ic:'📷',t:'Photo sur tes exercices',d:'Tu peux coller une photo sur N\'IMPORTE quel exercice (perso OU de la bibliothèque) : ⋯ sur l\'exercice → "Ajouter/Changer la photo". Idéal pour reconnaître TA machine sur un exercice existant (ex. ta chest press sur "Chest Press Machine Inclinée"). Dans la liste de choix, tape la vignette à gauche pour voir la photo en grand (sans ajouter l\'exercice). Ta photo est privée à ton compte. Pour créer un exercice inexistant : "+ Créer un exercice".'},
         {ic:'✏️',t:'Modifier un exercice perso',d:'Tape le ⋯ sur un exercice perso → "Modifier l\'exercice" (ou le ✎ dans la liste de choix). Tu peux changer son nom, son groupe musculaire et les muscles ciblés — ton historique et tes records suivent le nouveau nom, rien n\'est perdu. Ça ne touche que TES exercices perso (privés à ton compte).'},
-        {ic:'⏸️',t:'Pause & Vider la séance',d:'Nouveau : en haut de la séance, "Pause" fige le chrono de durée si tu t\'interromps (le temps en pause n\'est pas compté) — "Reprendre" relance. "Vider" retire tous les exercices d\'un coup (utile si tu as chargé le mauvais programme), la séance reste ouverte et ton historique n\'est pas touché. Le "✕" annule complètement la séance.'},
+        /* UX SÉANCE (16/10/2026) — ces trois actions vivent désormais dans le menu ⋯ de la séance (plus de « Pause » ni de « ✕ »
+           en haut) : le texte suit, sinon il désignerait des boutons qui n'existent plus (la leçon de ft-v1012 / ft-v1026). */
+        {ic:'⏸️',t:'Pause & Vider la séance',d:'Dans le menu <b>⋯</b> de la séance : « Mettre en pause » fige le chrono de durée si tu t\'interromps (le temps en pause n\'est pas compté) — ▶ en haut, ou « Reprendre la séance » dans ⋯, le relance. « Vider la séance » retire tous les exercices d\'un coup (utile si tu as chargé le mauvais programme), la séance reste ouverte et ton historique n\'est pas touché. « Abandonner la séance » l\'annule complètement : rien n\'est enregistré.'},
         {ic:'🔗',t:'La colonne « précédent » est vide ? c\'est un NOM, pas une perte',d:'La colonne <b>précédent</b> cherche tes anciennes séries <b>au nom exact de l\'exercice</b>. Si une séance proposée par Milo écrit <i>« Développé Épaules Assis Machine »</i> alors que ton historique porte <i>« Développé Épaules Assis Machine <b>(Shoulder Press)</b> »</i>, l\'app y voit <b>deux exercices différents</b> — d\'où un tiret à la place de tes charges, et une progression qui repart de zéro. ⛔ <b>Rien n\'est perdu dans ce cas</b> : tes séries sont toujours là, rangées sous l\'autre nom. ⭐ <b>Depuis le 06/09, la porte est fermée</b> : un nom qui ne diffère que par le suffixe entre parenthèses est <b>recollé au nom du catalogue</b> avant que la séance ne démarre. ⚠️ <b>Et seulement celui-là</b> : <i>« Développé Épaules Machine »</i> et <i>« Développé Épaules Assis Machine »</i> restent deux machines <b>différentes</b> — mélanger leurs charges serait pire que le tiret, parce que tu les croirais. 👉 <b>Si le tiret persiste</b>, c\'est que tu fais vraiment cet exercice pour la première fois — ou qu\'il est rangé sous un nom que le catalogue ne connaît pas (un exercice que tu as créé).'},
         {ic:'📈',t:'Progrès & PRs',d:'Les PRs se calculent automatiquement via Brzycki (1RM estimé). Progrès → <b>Exercices</b> → graphique par exercice · Progrès → <b>Corps &amp; santé</b> → courbe de poids · Progrès → <b>Badges</b> → 18 récompenses à débloquer · Progrès → <b>Séances</b> → tout ton historique, par année et par mois. Sur le graphe d\'un exercice : les boutons 3 mois / 6 mois / 1 an / Tout choisissent la période, et si tu tapes un point tu vois la charge de ce jour-là + un bouton « Voir cette séance » qui ouvre son détail. Tu peux aussi fixer un OBJECTIF de force (1RM visé) sous le graphe → barre de progression + ligne repère verte sur ta courbe. Tap sur une séance pour voir/modifier les séries — et sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances). Sur chaque carte d\'historique, le MUSCLE travaillé (ou le nom de la séance du programme) ressort en gros titre et les calories passent en petit. Et tu peux FILTRER ton historique par groupe musculaire : des chips (« Pectoraux », « Quadriceps »…) sous « Historique séances » — tape-en un pour ne voir que ces séances.'},
         {ic:'⚖️',t:'Graphique de poids',d:'Onglet Progrès → Corps &amp; santé. Tape un point de la courbe pour modifier ou supprimer cette pesée (poids + date). Les boutons 1 mois / 3 mois / 6 mois / Tout choisissent la période affichée.'},

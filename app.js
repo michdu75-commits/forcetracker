@@ -8734,7 +8734,9 @@ const APP_GUIDE_SLIDES=[
   {img:'guide/recup-moniteur.jpg', t:'Ta récup, deux styles 💚', cap:'<b>Menu → Apparence → Carte récup</b> : garde l\'<b>anneau</b>, ou passe au <b>moniteur</b> — ton score en gros, une jauge où le <b>rouge</b> est ce qu\'il te reste à récupérer et le <b>vert</b> ce que tu as récupéré, avec un vrai tracé de cœur qui défile. Mêmes données, à toi de choisir.'},
   {img:'guide/etat-du-jour.jpg',tap:[.5,.38],  t:'Comment tu te sens aujourd\'hui ?', cap:'En 1-2 taps sur l\'Accueil : ton <b>énergie</b>, ton <b>moral</b> (😔 → 😄) et une éventuelle <b>gêne/douleur</b> (tape la zone). <b>Milo</b> adapte ses conseils du jour — il protège une zone qui fait mal, et si ton moral est bas il se fait plus <b>doux</b> (jamais un psy). Optionnel, ça repart à zéro chaque jour.'},
   {img:'guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet, plus <b>Milo, ton coach IA</b>, est précis et personnalisé (récup et calories aussi). Un <b>% de remplissage</b> t\'aide à ne rien oublier.'},
-  {img:'guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
+  /* 🏋️ UX SÉANCE (16/10/2026) — capture refaite : l'en-tête « Séance en cours » remplace la barre du logo pendant la séance,
+     et le doigt montre la coche de la série EN COURS (celle que l'écran met en avant). Profil de démonstration fictif. */
+  {img:'guide/seance.jpg',     tap:[.877,.481],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche : le <b>repos</b> démarre en bas. En haut, « <b>Séance en cours</b> » : ton chrono, tes séries de travail, <b>⋯</b> et <b>Terminer</b>. Tes <b>records</b> se calculent tout seuls.'},
   {icon:'⏳', t:'Ton repos est un MAXIMUM ⏳', cap:'Le temps de repos n\'est pas un compte à rebours qu\'il faut attendre : c\'est une <b>borne à ne pas dépasser</b>. <b>Tu peux repartir avant, c\'est permis</b> — c\'est ainsi que les coachs écrivent leurs programmes (« repos maximum : 1 à 2 min »). Le chrono ne s\'arrête donc plus à zéro : il continue en <b>+0:12</b>, <b>+0:45</b>… ⚠️ Ce n\'est <b>pas un reproche</b> — un repos plus long est parfois exactement ce qu\'il faut. C\'est simplement une information que tu n\'avais pas : sur de vraies séances, le repos pris vaut <b>2 à 3 fois</b> le repos réglé.'},
   // ⚠️ Diapo SANS image (format `icon:`, comme les 3 premières) : il n'existe pas de capture
   // du bloc cardio, et une diapo utile vaut mieux qu'une diapo repoussée en attendant la photo.
@@ -8788,7 +8790,10 @@ const APP_GUIDE_SLIDES=[
   {icon:'📍', t:'Un chiffre qui ne vient de nulle part le dit', cap:'Quand <b>Milo</b> propose une charge sur un exercice que <b>tu n\'as jamais noté dans l\'app</b>, il n\'a <b>aucun repère dans ton historique</b> — même si tu le pratiques depuis des années. L\'app te le dit au lieu de laisser le chiffre passer pour une mesure : <b>c\'est un point de départ à ajuster</b>. Dès ta première série notée, elle a son repère — et le message disparaît.'},
   /* ⛔ SANS IMAGE : une capture montrerait une charge et un exercice précis, que le lecteur
      n'a pas — et la diapo se lirait comme une recommandation d'intensité. */
-  {icon:'💪', t:'À quel point tu as forcé', cap:'Après une série, la barre de repos te demande <b>« il t\'en restait combien ? »</b>. Un tap — <b>échec, 1, 2, 3, 4+</b> — et c\'est <b>facultatif</b>. Tu le <b>revois la fois d\'après</b> pour savoir s\'il faut monter, et <b>Milo</b> peut enfin vérifier le cadre de ta discipline au lieu de le supposer.'},
+  {icon:'💪', t:'À quel point tu as forcé', cap:'Après une série, la barre de repos te demande <b>« il t\'en restait combien ? »</b>. Un tap — <b>Échec, 0, 1, 2, 3, 4+</b> — et c\'est <b>facultatif</b>. <b>0</b> = ta dernière répétition est passée ; <b>Échec</b> = une répétition n\'est pas passée (la série passe en X). Tu le <b>revois la fois d\'après</b> pour savoir s\'il faut monter, et <b>Milo</b> peut enfin vérifier le cadre de ta discipline au lieu de le supposer.'},
+  /* 📋 D-093 — règle d'or #11, point 5. ⛔ SANS IMAGE : une capture montrerait les séries et les charges de quelqu'un d'autre,
+     et se lirait comme une progression à imiter — or la feuille, justement, ne juge rien. */
+  {icon:'📋', t:'Tes 4 dernières séances, côte à côte', cap:'En séance, touche <b>« Précédent ▾ »</b> en haut de la colonne (ou <b>⋯ → 4 dernières séances</b>) : les 4 dernières fois où tu as fait l\'exercice, <b>série par série</b>, avec ta réserve, tes échecs et tes notes. « — » = pas de série à ce rang ; les échauffements sont à part. <b>Aucun verdict</b> : tu lis, tu décides.'},
   /* ⛔ SANS IMAGE : la carte n'apparaît que quand il y a un souvenir à relier — une capture
      montrerait un cas qui n'est pas celui du lecteur, et laisserait croire qu'elle est permanente. */
   {icon:'🕰️', t:'Il se souvient de ce que tu as vécu', cap:'Chaque check-in que tu remplis reste. Quand tu notes une douleur que tu avais <b>déjà eue il y a longtemps</b>, l\'Accueil te rappelle <b>quand</b> et <b>combien de temps</b> elle avait duré. Il <b>décrit</b> ce que tu avais noté — il ne prédit rien.'},
@@ -9769,7 +9774,9 @@ if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.
   // n'a pas d'exercice, et « 0 exercice » se lirait comme une panne.
   const quoi=nEx?(nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+(cMin?' · '+cMin+' min de cardio':''))
                 :(cMin+' min de cardio en attente');
-  setTimeout(()=>toast('Séance en cours — '+quoi+' · Appuie sur Reprendre','info'),1000);
+  // D-085 : une séance chargée sans aucune série n'est pas « en cours », elle est « prête » (affichage seul).
+  const etat=(typeof _seancePrete==='function'&&_seancePrete())?'Séance prête':'Séance en cours';
+  setTimeout(()=>toast(etat+' — '+quoi+' · Appuie sur Reprendre','info'),1000);
 }
 _initSwipe();
 _blockEdgeBackSwipe(); // iOS : neutralise le geste "retour" bord gauche (page blanche)

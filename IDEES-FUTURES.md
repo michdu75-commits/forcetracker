@@ -11,6 +11,54 @@ Fichier de notes : fonctionnalités et directions à explorer. Rien ici n'est en
 
 ---
 
+## 🧍 VUE DE DOS DANS LA FIGURINE DE « TA SÉANCE JUSQU'ICI » — DEMANDE DE MICHEL *(18/10/2026)*
+
+↪️ ***18/10/2026, soir — DÉCIDÉE PAR MICHEL ET CONSTRUITE sur la branche LOCALE `claude/ux-fig-face-dos-v2`, NON POUSSÉE, NON
+PUBLIÉE*** : **D-091** — la figurine de face à gauche, les chiffres au centre, la figurine de dos à droite, visibles ensemble, sans appui.
+Elle remplace **D-090** (une figurine à retourner d'un appui), construite puis abandonnée le même soir. Clone puis production : décisions
+séparées. L'Accueil et Progrès restent une seule vue, de face (hors périmètre). Le texte ci-dessous est l'état constaté AVANT, gardé tel quel (R30).
+↪️ ***19/10/2026 — VALIDÉE PAR MICHEL (« GO pour finaliser D-091 »), avec le comptage D-092*** : « séries » et « volume » de la carte sont
+des TOTAUX (échauffements compris), le travail dit à part (« dont N de travail »). ⇒ Le point « À trancher en même temps » ci-dessous
+change de nature : la carte compte désormais comme la figurine (tout ce qui est validé) ; « N / M » en haut garde le travail (D-083 ①).
+La question « un échauffement SEUL doit-il colorer la figurine ? » n'a pas été posée en tant que telle : la figurine est validée telle quelle.
+
+**PISTE · NON CONSTRUITE · décision de Michel attendue.** Constaté par Michel sur iPhone (clone D-085, séance avec
+soulevé de terre) : « Ta séance jusqu'ici » ne montre que la silhouette **de face** ; il veut voir aussi les muscles postérieurs.
+- **Affichage (mesuré dans le code de `claude/ux-d086` @ `3c0acce0`, D-088 compris)** : la petite figurine `_mscSVGmini`
+  (`setup.js`) ne dessine que la **vue avant** (`_FP`). Elle sert à « Ta séance jusqu'ici » (`renderLogFinish`, `tracking.js`),
+  à la carte « dernière séance » de l'Accueil et aux cartes de Progrès. La **vue de dos existe déjà** : la grande figurine
+  `_mscSVG` (`log.js`) dessine avant + dos (`_FP` + `_BP`) dans la fenêtre « Muscles travaillés » (`showMuscleMap`). La limite
+  est même écrite dans le code depuis le 13/08 (commentaire de la figurine papier : « un jour soulevé de terre serait une
+  figurine entièrement grise ») — réglée pour le papier seulement.
+- **Données (mesurées séparément)** : justes. « Soulevé de Terre » comme « Souleve de terre » = fessiers, ischios, lombaires
+  (principaux) ; trapèzes, dorsaux, quadriceps, avant-bras (secondaires). **10 des 22 groupes ne sont dessinés que de dos**
+  (trapèzes, dorsaux, deltoïde postérieur, triceps, lombaires, fessiers, ischios, mollets, soléaire, extenseurs du poignet) :
+  la petite figurine ne peut jamais les montrer. ⇒ Ce n'est pas le calcul qui manque, c'est l'affichage.
+- **À trancher en même temps** (comportement existant, non décidé) : `_mscScores` compte un exercice dès qu'UNE série est
+  cochée, **échauffement compris**, alors que « séries » et « volume » juste à côté ne comptent que les séries de travail
+  (D-085 ①) — un exercice qui n'a qu'un échauffement colore ses muscles.
+- **Décisions existantes** : D-085 F « silhouette musculaire gardée » (rien sur la vue de dos) ; hors périmètre de D-088.
+- **Ce qu'il faudrait (affichage seul, ni nouvelle donnée ni nouveau dessin)** : avant + dos côte à côte (les deux dessins
+  existent), ou une figurine touchable qui ouvre la fenêtre « Muscles travaillés » déjà existante ; vérifier la largeur à
+  360 px et que le « + » ne bouge pas (règle d'or #9) ; décider si l'Accueil et Progrès suivent.
+
+---
+
+## 🏃 FUTUR — AUTRE ACTIVITÉ *(décision L de Michel, 17/10/2026 — `D-085`)*
+
+**FUTUR — Autre activité : idée produit validée comme piste à étudier, mais non implémentée dans ce chantier.**
+**PISTE · NON CONSTRUITE.** Pouvoir noter une activité qui n'est ni de la musculation ni du cardio
+(un sport, une sortie, une activité de la vie). Rien n'est construit : ni écran, ni donnée, ni clé.
+- **Aujourd'hui (mesuré sur `claude/ux-seance-02`)** : l'écran Séance propose « Séance libre »,
+  « Programme », les types de séance, puis le **cardio**, à part, dans « Autres options »
+  (décision K) ; aucune entrée « Autre activité » — un témoin le vérifie (`B-UXI-F4`).
+- ⚠️ **Avant de la construire** : c'est une **donnée nouvelle** (règle d'or #17 et R3 : qui la produit,
+  qui l'exploite, quel comportement change — calories, récupération, Milo ?) et elle touche
+  l'existant « autre sport » du profil (`S.coachQuiz.answers.othersport`, déjà compté dans le TDEE par
+  `calcSportExtra` et transmis à Milo). À cadrer avec Michel, pas à déduire.
+
+---
+
 ## 📚 PROGRAMME STRUCTURÉ ET VERSIONNÉ — décision de Michel du 25/09/2026 *(consignée le 04/10)*
 
 **DÉCISION VALIDÉE — `D-048` · NON CONSTRUITE.** Tout programme intégré devient une **donnée

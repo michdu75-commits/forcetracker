@@ -110,7 +110,9 @@ module.exports.ecran = async function (t, b, PORT) {
   const fermerFin = pg => clic(pg, '[onclick="closeSessionEnd()"]');
   const terminer = async X => {
     const a = await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300);
-    const f = await clic(X.pg, 'button[onclick="finishWorkout()"]');
+    /* UX SÉANCE (16/10/2026, R30) — la porte de fin est `terminerSeance()` (« Terminer » de l'en-tête et du bas) : s'il reste des séries de TRAVAIL, elle demande « Terminer quand même ? » et on confirme, comme la personne. La conduite change ; ce que le banc mesure ne change pas. */
+    const f = await clic(X.pg, '.topbar button[onclick="terminerSeance()"]');
+    await (async X => { await X.pg.waitForTimeout(150); if (await X.pg.evaluate(() => { const o = document.getElementById('ov-confirm'); return !!(o && o.classList.contains('open')); })) await X.pg.click('#confirm-ok'); })(X);
     /* 🔁 DEBRIEF-ON-DEMAND-01 : terminer n'appelle plus Milo — la personne clique « Analyser cette séance avec Milo ». */
     await X.pg.waitForTimeout(300); await clic(X.pg, '#se-debrief .se-dbf-go');
     const t0 = Date.now(); let txt = '';

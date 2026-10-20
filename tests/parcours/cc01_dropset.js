@@ -118,7 +118,9 @@ async function ecran(t, b, PORT) {
     await X.pg.evaluate(() => toggleSet(0, 2));
     await X.pg.waitForTimeout(150);
     await X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
-    await clic(X, 'button[onclick="finishWorkout()"]');
+    /* UX SÉANCE (16/10/2026, R30) — la porte de fin est `terminerSeance()` (« Terminer » de l'en-tête et du bas) : s'il reste des séries de TRAVAIL, elle demande « Terminer quand même ? » et on confirme, comme la personne. La conduite change ; ce que le banc mesure ne change pas. */
+    await clic(X, '.topbar button[onclick="terminerSeance()"]');
+    await (async X => { await X.pg.waitForTimeout(150); if (await X.pg.evaluate(() => { const o = document.getElementById('ov-confirm'); return !!(o && o.classList.contains('open')); })) await X.pg.click('#confirm-ok'); })(X);
     await X.pg.waitForTimeout(1600);
     const h = await X.pg.evaluate(() => { const s = (S.sessions || [])[0]; return s ? JSON.parse(JSON.stringify(s.exs[0].sets)) : null; });
     t('B-CC01-D3 ⭐ la séance ENREGISTRÉE garde les 2 séries faites identiques, plus le palier validé',
@@ -212,6 +214,132 @@ async function ecran(t, b, PORT) {
     t('B-CC01-I1 série sautée entre deux séries faites : les 3 premières restent telles quelles à leur place, seul le futur (après la dernière faite) devient le dropset',
       ok && e.sets && memes(e.sets.slice(0, 3), [FAIT1, SAUTEE, FAIT2]) && memes(kgs(e.sets), ['100x8✓', '92.5x7', '92.5x7✓', '92.5x7', '75x7']),
       _det({ ok, sets: kgs(e.sets) }));
+    await X.cx.close();
+  }
+
+  /* ══ B-CC01-FIL — LE FILET COMPLÉTÉ (UX SÉANCE, 16/10/2026 — réserve de la contre-vérification CC-01) ══════════════
+     La contre-vérification indépendante (session-A, 16/10) a fait passer 8 PERTES réelles à travers ce banc : ses séries
+     faites étaient toutes de type N, sans `maxi`, « Modifier » et « Retirer » seulement en ↓, « tout fait » seulement pour
+     Drop, et aucun rechargement après « Modifier » / « Retirer » ; une 9ᵉ mutation, d'affichage (cas mixte), passait aussi.
+     ⛔ TESTS SEULEMENT : le moteur CC-01 ne change pas (décision : ne pas rouvrir le correctif).
+     ⚠️ Les mutations O1 → O14 de la contre-vérification ne sont ni dans le dépôt ni sur le Drive (cherché le 16/10) :
+     elles sont RECONSTRUITES, ÉQUIVALENTES aux pertes que décrit la fiche CC-01 (`docs/SUIVI-AUDIT.md`) — pas les originales —,
+     dans `tools/mut_cc01_dropset.py` (MF1 → MF11) — et chacune doit faire rougir SON témoin ci-dessous.
+     Conduit : les vrais boutons (« 📉 Drop », « 📈 +% », « ⚙️ Modifier paliers », « ✕ Retirer dropset »), la vraie modale,
+     le rechargement. Observe : chaque série faite, objet JSON complet ; `ex.dropset` ; `ft4_wkt` et le brouillon ; les
+     lignes affichées. Ne couvre pas : groupes / supersets, programme importé (inchangés). */
+  const ECH = { kg: 60, reps: 10, done: true, type: 'É', rm1: 80, rest: 45, at: 15 };
+  const ECHEC = { kg: 100, reps: 6, done: true, type: 'X', rm1: 0, rest: 240, at: 200, rir: 0 };
+  {
+    const X = await ouvrir(WKT([ECH, FAIT1, PREVUE(), PREVUE()]));
+    const ok = await methode(X, DROP, 3, 20);
+    const e = await etat(X);
+    t('B-CC01-FIL-1 ⭐ « 📉 Drop » après un ÉCHAUFFEMENT validé puis une série validée : les deux restent intacts, l\'échauffement garde son type É',
+      ok && e.sets && memes(e.sets[0], ECH) && memes(e.sets[1], FAIT1) && memes(kgs(e.sets), ['60x10✓', '100x8✓', '92.5x7', '75x7', '60x7']),
+      _det({ ok, s0: e.sets && e.sets[0], s1: e.sets && e.sets[1], sets: kgs(e.sets) }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir(WKT([ECH, PREVUE(), PREVUE()]));
+    const ok = await methode(X, DROP, 2, 20);
+    const e = await etat(X);
+    t('B-CC01-FIL-2 ⭐ « 📉 Drop » quand la seule série validée est un ÉCHAUFFEMENT : il reste à sa place, le dropset part de la série prévue',
+      ok && e.sets && memes(e.sets[0], ECH) && memes(kgs(e.sets), ['60x10✓', '92.5x7', '75x7']), _det({ ok, s0: e.sets && e.sets[0], sets: kgs(e.sets) }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir(WKT([FAIT1, ECHEC, PREVUE()]));
+    const ok = await methode(X, PLUS, 2, 10);
+    const e = await etat(X);
+    t('B-CC01-FIL-3 ⭐ « 📈 +% » après une série d\'ÉCHEC validée : elle garde son type X (rien n\'est réécrit en N)',
+      ok && e.sets && memes(e.sets[0], FAIT1) && memes(e.sets[1], ECHEC) && memes(kgs(e.sets), ['100x8✓', '100x6✓', '92.5x7', '102.5x7']),
+      _det({ ok, s1: e.sets && e.sets[1], sets: kgs(e.sets) }));
+    await X.cx.close();
+  }
+  {
+    const MAXI = { kg: 20, reps: 15, done: true, type: 'N', maxi: true, rm1: 0, at: 60 };
+    const X = await ouvrir(WKT([MAXI, { kg: 20, reps: 0, done: false, type: 'N', maxi: true }]));
+    const ok = await methode(X, DROP, 2, 20);
+    const e = await etat(X);
+    t('B-CC01-FIL-4 ⭐ une série « maxi » validée garde son champ `maxi` après « 📉 Drop » (le passé n\'est pas reconstruit)',
+      ok && e.sets && memes(e.sets[0], MAXI) && memes(kgs(e.sets), ['20x15✓', '20x15', '15x15']), _det({ ok, s0: e.sets && e.sets[0], sets: kgs(e.sets) }));
+    await X.cx.close();
+  }
+  // ↑ : une pyramide montante avec 2 paliers faits (le 2ᵉ en « maxi »)
+  const U1 = { kg: 100, reps: 8, done: true, type: 'N', rm1: 124, at: 20 };
+  const U2 = { kg: 110, reps: 6, done: true, type: 'N', rm1: 0, at: 50, rir: 1, maxi: true };
+  const PYR = () => WKT([U1, U2, { kg: 120, reps: 6, done: false, type: 'N' }]);
+  const MODIF_UP = '#s-log button[onclick="openDropsetConfig(0,\'up\')"]';
+  {
+    const X = await ouvrir(PYR());
+    await X.pg.evaluate(() => { S.wkt.exs[0].dropset = { paliers: 3, pct: 10, direction: 'up' }; persist(); });
+    const ok = await methode(X, MODIF_UP, 2, 10);
+    const e = await etat(X);
+    t('B-CC01-FIL-5 ⭐ « ⚙️ Modifier paliers » en MONTÉE avec 2 paliers faits : les 2 faits intacts, 2 paliers restants depuis la dernière charge faite (120 / 132,5)',
+      ok && e.sets && memes(e.sets.slice(0, 2), [U1, U2]) && memes(kgs(e.sets), ['100x8✓', '110x6✓', '120x6', '132.5x6'])
+        && memes(e.dropset, { paliers: 4, pct: 10, direction: 'up' }), _det({ ok, sets: kgs(e.sets), ds: e.dropset }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir(PYR());
+    await X.pg.evaluate(() => { S.wkt.exs[0].dropset = { paliers: 3, pct: 10, direction: 'up' }; persist(); });
+    await seance(X);
+    const ok = await clic(X, '#s-log button[onclick="removeDropset(0)"]');
+    const e = await etat(X);
+    t('B-CC01-FIL-6 ⭐ « ✕ Retirer dropset » en MONTÉE avec 2 paliers faits : ils restent intacts, seule la partie non faite part, aucune série créée',
+      ok && memes(e.sets, [U1, U2]) && e.dropset === null && memes(e.disque, [U1, U2]), _det({ ok, sets: e.sets, ds: e.dropset }));
+    await X.cx.close();
+  }
+  // TOUT FAIT : 3 paliers ↓ validés (le dernier à l'échec, RIR 0)
+  const T1 = { kg: 100, reps: 8, done: true, type: 'N', rm1: 124, at: 20 };
+  const T2 = { kg: 80, reps: 8, done: true, type: 'N', rm1: 99, at: 45 };
+  const T3 = { kg: 65, reps: 8, done: true, type: 'N', rm1: 81, at: 70, rir: 0, note: 'à fond' };
+  const TOUT = () => WKT([T1, T2, T3]);
+  const MODIF_DOWN = '#s-log button[onclick="openDropsetConfig(0,\'down\')"]';
+  {
+    const X = await ouvrir(TOUT());
+    await X.pg.evaluate(() => { S.wkt.exs[0].dropset = { paliers: 3, pct: 20, direction: 'down' }; persist(); });
+    const ok = await methode(X, MODIF_DOWN, 2, 20);
+    const e = await etat(X);
+    const apres = e.sets;
+    t('B-CC01-FIL-7 ⭐ TOUT FAIT + « ⚙️ Modifier paliers » : les 3 paliers faits restent (le DERNIER compris), 2 paliers s\'ajoutent depuis la dernière charge (52,5 / 42,5)',
+      ok && apres && memes(apres.slice(0, 3), [T1, T2, T3]) && memes(kgs(apres), ['100x8✓', '80x8✓', '65x8✓', '52.5x8', '42.5x8'])
+        && memes(e.dropset, { paliers: 5, pct: 20, direction: 'down' }), _det({ ok, sets: kgs(apres), ds: e.dropset }));
+    await X.recharger();
+    const r = await etat(X);
+    t('B-CC01-FIL-10 ⭐ RECHARGEMENT après « ⚙️ Modifier paliers » : mémoire, ft4_wkt et brouillon identiques à l\'état d\'après l\'action (rien ne revient, rien ne se perd)',
+      !!apres && memes(r.sets, apres) && memes(r.disque, apres) && memes(r.brouillon, apres) && memes(r.dropset, { paliers: 5, pct: 20, direction: 'down' }),
+      _det({ sets: kgs(r.sets), disque: kgs(r.disque), brouillon: kgs(r.brouillon), ds: r.dropset }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir(TOUT());
+    await X.pg.evaluate(() => { S.wkt.exs[0].dropset = { paliers: 3, pct: 20, direction: 'down' }; persist(); });
+    await seance(X);
+    const ok = await clic(X, '#s-log button[onclick="removeDropset(0)"]');
+    const e = await etat(X);
+    t('B-CC01-FIL-8 ⭐ TOUT FAIT + « ✕ Retirer dropset » : les 3 paliers faits restent (le DERNIER compris), plus de dropset, rien de créé',
+      ok && memes(e.sets, [T1, T2, T3]) && e.dropset === null, _det({ ok, sets: e.sets, ds: e.dropset }));
+    await X.recharger();
+    const r = await etat(X);
+    t('B-CC01-FIL-11 ⭐ RECHARGEMENT après « ✕ Retirer dropset » : toujours les 3 séries faites et plus de dropset (mémoire, ft4_wkt, brouillon)',
+      memes(r.sets, [T1, T2, T3]) && memes(r.disque, [T1, T2, T3]) && memes(r.brouillon, [T1, T2, T3]) && r.dropset === null,
+      _det({ sets: kgs(r.sets), disque: kgs(r.disque), brouillon: kgs(r.brouillon), ds: r.dropset }));
+    await X.cx.close();
+  }
+  {
+    // CAS MIXTE : une série NORMALE faite avant le dropset, puis 1 palier fait ; « Modifier » 2 paliers.
+    const PM = { kg: 90, reps: 8, done: true, type: 'N', rm1: 0, at: 300 };
+    const X = await ouvrir(WKT([FAIT1, PM, { kg: 72.5, reps: 8, done: false, type: 'N' }]));
+    await X.pg.evaluate(() => { S.wkt.exs[0].dropset = { paliers: 2, pct: 20, direction: 'down' }; persist(); });
+    const ok = await methode(X, MODIF_DOWN, 2, 20);
+    const e = await etat(X);
+    const l = await lignes(X);
+    t('B-CC01-FIL-9 ⭐ CAS MIXTE + « ⚙️ Modifier paliers » : la série normale faite AVANT le dropset reste affichée comme une série NORMALE (D-082 ④)',
+      ok && e.sets && memes(e.sets.slice(0, 2), [FAIT1, PM]) && memes(kgs(e.sets), ['100x8✓', '90x8✓', '72.5x8', '57.5x8'])
+        && memes(e.dropset, { paliers: 3, pct: 20, direction: 'down' }) && l[0] === 'normale' && l.length === 4 && l.slice(1).every(x => x !== 'normale'),
+      _det({ ok, sets: kgs(e.sets), ds: e.dropset, l }));
+    t('B-CC01-FIL-12 aucune erreur de page sur le filet', X.errs.length === 0, X.errs.slice(0, 2).join(' | '));
     await X.cx.close();
   }
 }

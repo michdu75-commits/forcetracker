@@ -125,11 +125,16 @@ module.exports.source = function (t, ROOT, fs, path) {
       JSON.stringify({ defs, grilles, retires, viseRetire, pb: pb.slice(0, 80) })); }
   /* PS-S11 — D-079 / D-080, règle d'or #11 : PAS de pop-up (décision de Michel : aucune annonce au-delà de v77), mais un point
      rouge qui dit le nouveau geste. */
+  /* UX SÉANCE (16/10/2026, R30 — re-visé, écrit) : ce témoin figeait « la dernière pop-up reste v77 ». La pop-up v78 (écran
+     Séance, D-083, méritée : des repères ont bougé) le faisait rougir sans que D-079 soit en cause. La garantie de D-079 est
+     « AUCUNE pop-up n'annonce le filtre multi de l'historique » : c'est elle qu'on vérifie maintenant (v77 reste présente). */
   { const ct = fs.readFileSync(path.join(ROOT, 'constants.js'), 'utf8');
-    const vmax = Math.max(...[...ct.matchAll(/\{v:(\d+),/g)].map(m => +m[1]));
+    const pops = [...ct.matchAll(/\{v:(\d+),[^\n]*/g)].map(m => m[0]);
+    const annonceFiltre = pops.filter(x => /Filtrer les séances|un ou plusieurs muscles/.test(x)).length;
+    const v77 = pops.some(x => /^\{v:77,/.test(x));
     const pt = (ct.match(/\{id:'sess-filtre-multi'[^}]*\}/) || [''])[0];
-    t('PS-S11 D-079 : aucune pop-up « Quoi de neuf » nouvelle (la dernière reste v77) et un point rouge Progrès dit « Filtrer les séances », plusieurs muscles',
-      vmax === 77 && /screen:'progress'/.test(pt) && /Filtrer les séances/.test(pt) && /un ou plusieurs/.test(pt), JSON.stringify({ vmax, pt: pt.slice(0, 90) })); }
+    t('PS-S11 D-079 : aucune pop-up « Quoi de neuf » n\'annonce le filtre de l\'historique (v77 reste la dernière de Progrès) et un point rouge Progrès dit « Filtrer les séances », plusieurs muscles',
+      annonceFiltre === 0 && v77 && /screen:'progress'/.test(pt) && /Filtrer les séances/.test(pt) && /un ou plusieurs/.test(pt), JSON.stringify({ annonceFiltre, v77, pt: pt.slice(0, 90) })); }
   t('PS-S7 le calendrier vise la séance par sa clé : plus aucun `goSessionsHistory()` NU dans le calendrier',
     !/goSessionsHistory\(\)/.test(cal) && /goSessionsHistory\(/.test(cal), (cal.match(/goSessionsHistory\([^)]{0,40}/g) || []).join(' | '));
 };

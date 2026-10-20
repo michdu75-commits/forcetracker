@@ -116,9 +116,19 @@ module.exports.ecran = async function (t, b, PORT) {
     await X.pg.waitForFunction(() => [...document.querySelectorAll('#coach-msgs .coach-seance-carte button')].some(b => /Oui/.test(b.textContent)), null, { timeout: 12000 }).catch(() => {});
     const ok = await clic(X.pg, '#coach-msgs .coach-seance-carte button', 'Oui'); await X.pg.waitForTimeout(600); return ok;
   };
+  /* UX SÉANCE (16/10/2026, R30) — « Programme(s) » : avant la séance, c'est le bouton de l'écran Séance ; PENDANT, il est
+     rangé dans le menu ⋯ de l'en-tête (l'ancien « 📋 Changer » y vit). Même propriétaire : `openProgModal()`. La conduite
+     change ; ce que le banc mesure ne change pas. */
+  const ouvrirProgrammes = async X => {
+    if (await X.pg.evaluate(() => { const b = document.querySelector('#log-avant button[onclick="openProgModal()"]'); return !!(b && b.offsetParent); }))
+      return clic(X.pg, '#log-avant button[onclick="openProgModal()"]');
+    await X.pg.click('.topbar button[aria-label*="actions sur la séance"]'); await X.pg.waitForTimeout(250);
+    const r = X.pg.locator('#ov-wkt-menu button', { hasText: 'Programmes' }); if (!(await r.count())) return false;
+    await r.first().click(); await X.pg.waitForTimeout(300); return true;
+  };
   const programme = async X => {
     await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300);
-    await clic(X.pg, '[onclick="openProgModal()"]'); await X.pg.waitForTimeout(300);
+    await ouvrirProgrammes(X); await X.pg.waitForTimeout(300);
     const ok = await clic(X.pg, '[onclick="loadProg(0)"]'); await X.pg.waitForTimeout(500); return ok;
   };
   const identique = (a, b) => JSON.stringify(a) === JSON.stringify(b);

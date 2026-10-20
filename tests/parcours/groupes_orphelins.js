@@ -95,6 +95,16 @@ function outils(b, PORT) {
     return false;
   };
   const allerSeance = async X => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(400); };
+  /* UX SÉANCE (16/10/2026, R30) — « Programme(s) » : avant la séance, c'est le bouton de l'écran Séance ; PENDANT, il est
+     rangé dans le menu ⋯ de l'en-tête (l'ancien « 📋 Changer » y vit). Même propriétaire : `openProgModal()`. La conduite
+     change ; ce que le banc mesure ne change pas. */
+  const ouvrirProgrammes = async X => {
+    if (await X.pg.evaluate(() => { const b = document.querySelector('#log-avant button[onclick="openProgModal()"]'); return !!(b && b.offsetParent); }))
+      return clic(X.pg, '#log-avant button[onclick="openProgModal()"]');
+    await X.pg.click('.topbar button[aria-label*="actions sur la séance"]'); await X.pg.waitForTimeout(250);
+    const r = X.pg.locator('#ov-wkt-menu button', { hasText: 'Programmes' }); if (!(await r.count())) return false;
+    await r.first().click(); await X.pg.waitForTimeout(300); return true;
+  };
   const recharger = async X => { await X.pg.reload(); await X.pg.waitForTimeout(1500); };
   const etat = X => X.pg.evaluate(() => ({ wkt: S.wkt ? JSON.parse(JSON.stringify(S.wkt)) : null, disque: JSON.parse(localStorage.getItem('ft4_wkt') || 'null'),
     progs: JSON.parse(JSON.stringify(S.programmes || [])) }));
@@ -125,12 +135,12 @@ function outils(b, PORT) {
   const seulGroupeRetire = (av, ap, noms) => av.length === ap.length && av.every((e, k) =>
     noms.includes(e.name) ? egal(ap[k], sansGroupe(e)) : egal(ap[k], e));
 
-  return { ouvrir, clic, fermerAutres, allerSeance, recharger, etat, idx, libelles, retirer, supprimer, seulGroupeRetire, js };
+  return { ouvrir, clic, fermerAutres, allerSeance, ouvrirProgrammes, recharger, etat, idx, libelles, retirer, supprimer, seulGroupeRetire, js };
 }
 
 module.exports.ecran = async function (t, b, PORT) {
   console.log('\n═══ B-CDV (session-B). LOT 6 / ML-B — un groupe ne reste jamais actif à moins de deux membres (écran) ═══');
-  const { ouvrir, clic, fermerAutres, allerSeance, recharger, etat, idx, libelles, retirer, supprimer, seulGroupeRetire, js } = outils(b, PORT);
+  const { ouvrir, clic, fermerAutres, allerSeance, ouvrirProgrammes, recharger, etat, idx, libelles, retirer, supprimer, seulGroupeRetire, js } = outils(b, PORT);
 
   const S0 = (n, extra) => Object.assign({ kg: 40 + n, reps: 10, type: 'N', done: false, rm1: 0 }, extra || {});
   const DS = { paliers: 3, pct: 20, direction: 'down', _futur: { v: 2 } };
@@ -181,12 +191,12 @@ module.exports.ecran = async function (t, b, PORT) {
     t('T8b … et le survivant rechargé est identique à celui d\'avant le rechargement', egal(r.wkt.exs.find(e => e.name === 'Développé couché'), surv), '');
     // Même garantie en passant par un programme : sauvegarde → rechargement → « ▶ Charger ».
     await allerSeance(X);
-    const a = await clic(X.pg, 'button[onclick="openProgModal()"]');
+    const a = await ouvrirProgrammes(X);
     await X.pg.fill('#prog-name-inp', 'Prog ML-B');
     const s = await clic(X.pg, '#prog-save-section button', 'Sauvegarder comme programme');
     await X.pg.evaluate(() => { const m = document.getElementById('mod-prog'); if (m) m.classList.remove('open'); });
     await recharger(X); await allerSeance(X);
-    await clic(X.pg, 'button[onclick="openProgModal()"]');
+    await ouvrirProgrammes(X);
     const pi = await X.pg.evaluate(() => (S.programmes || []).findIndex(p => p.name === 'Prog ML-B'));
     const ch = await clic(X.pg, '[onclick="loadProg(' + pi + ')"]');
     await X.pg.waitForTimeout(300);
@@ -330,7 +340,13 @@ module.exports.creation = async function (t, b, PORT) {
     { name: 'Presse à cuisses', dropset: DS, note: 'dropset', sets: [S0(6), S0(7), S0(8)] },
     { name: 'Élévations latérales', sets: [S0(9)] } ] });
   const orph = exs => { const n = {}; exs.forEach(e => { if (e.group) n[e.group] = (n[e.group] || 0) + 1; }); return Object.keys(n).filter(k => n[k] < 2); };
-  const superSur = async (X, nom) => { await allerSeance(X); const i = await idx(X, nom); return i >= 0 && await clic(X.pg, 'button[onclick="createSupersetFrom(' + i + ')"]'); };
+  /* UX SÉANCE (16/10/2026, R30) — « ⚡ Super » ne vit plus que sur la carte OUVERTE (la carte repliée se lit, elle ne porte
+     plus de boutons) : comme la personne, on ouvre d'abord la carte de l'exercice, puis on touche « ⚡ Super ». Même
+     propriétaire (`createSupersetFrom`) ; ce que le banc mesure ne change pas. */
+  const superSur = async (X, nom) => { await allerSeance(X); const i = await idx(X, nom); if (i < 0) return false;
+    const sel = 'button[onclick="createSupersetFrom(' + i + ')"]';
+    if (!(await X.pg.evaluate(s => [...document.querySelectorAll(s)].some(e => e.offsetParent !== null), sel))) await clic(X.pg, '#ex-block-' + i + ' .ex-hdr');
+    return clic(X.pg, sel); };
   const pickerOuvert = X => X.pg.evaluate(() => document.getElementById('mod-ex').classList.contains('open') && _exPickerMode === 'addToGroup');
   const choisir = async (X, q, txt) => { await X.pg.fill('#ex-search', q); await X.pg.waitForTimeout(250); return clic(X.pg, '#ex-list .ex-pick', txt); };
 
@@ -450,7 +466,10 @@ module.exports.creation = async function (t, b, PORT) {
   {
     const X = await ouvrir({ ft4_wkt: WKT() });
     await allerSeance(X);
-    const g = await clic(X.pg, 'button[onclick="toggleGroupMode()"]');
+    /* UX SÉANCE (16/10/2026, R30) — « ⚡ Grouper » est rangé dans le menu ⋯ de la séance (même propriétaire : `toggleGroupMode`). */
+    await X.pg.click('.topbar button[aria-label*="actions sur la séance"]'); await X.pg.waitForTimeout(250);
+    const _gr = X.pg.locator('#ov-wkt-menu button', { hasText: 'Grouper des exercices' });
+    const g = (await _gr.count()) > 0; if (g) { await _gr.first().click(); await X.pg.waitForTimeout(250); }
     const sel = [];
     for (const nom of ['Squat', 'Rowing barre', 'Élévations latérales']) { const i = await idx(X, nom); sel.push(await clic(X.pg, '#ex-block-' + i)); }
     const lier = await clic(X.pg, 'button[onclick="createSuperset()"]');

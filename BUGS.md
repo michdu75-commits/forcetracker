@@ -4625,6 +4625,54 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 
 **À quoi on le reconnaît.** Un rouge qui touche des scénarios hors de portée de la mutation, et qui porte sur une donnée posée pendant le test (horodatage, durée, identifiant). 👉 *Une référence n'est valide que si elle est produite dans les mêmes conditions que ce qu'on compare ; et le contrôle de l'arbre sain se fait avec la MÊME comparaison que les mutants, avant d'interpréter un seul rouge.* Même famille que §61 (c'est l'outil de mesure qui se trompait, pas le code mesuré), dans l'autre sens : là-bas des rouges cachés, ici des rouges fabriqués.
 
+## §79 — ⛔ UN TÉMOIN QUI FIGE UNE VALEUR DU MOMENT ROUGIT AU LOT SUIVANT, SANS DÉFAUT *(16/10/2026, UX SÉANCE — branche, avant intégration)*
+
+**Symptôme.** Deux témoins anciens rougissent sur la branche UX SÉANCE alors que rien de ce qu'ils protègent n'a cassé :
+`PS-S11` (lot Progrès D-079) exigeait « la dernière pop-up « Quoi de neuf » reste **v77** » — or ce lot ajoute légitimement la v78
+(écran Séance, règle d'or #11, D-083) ; `CXXXVIII` (barre « Séance » opaque, ft-v1032) exigeait que l'écran Séance vide défile de
+plus de 50 px **à 430 × 932** — or l'écran « avant séance » est devenu compact (20 px à cette taille, 108 px à 390 × 844).
+
+**Cause.** Chaque témoin encodait une **valeur contingente** (un numéro de version, une taille d'écran) au lieu de sa **garantie**.
+La garantie de D-079 est « aucune pop-up n'annonce le filtre de l'historique » ; celle de CXXXVIII est « la barre est collante,
+opaque ≥ 0,9 et floutée, mesurée là où du contenu passe dessous ». Le prochain lot qui change la valeur, sans toucher la garantie,
+fait rougir le témoin.
+
+**Correctif (R30, écrit à côté du témoin).** PS-S11 vérifie maintenant qu'aucune entrée `WHATS_NEW` n'annonce le filtre (vert sur
+le code sain, **rouge** sous une pop-up injectée qui l'annonce) ; CXXXVIII se mesure à 390 × 844. Les deux re-visées disent pourquoi.
+
+**Et la mutation qui ne mutait rien (même famille que §74).** Dans `tools/mut_seance_ux.py`, la 1ʳᵉ version de M4 (« le + crée une
+2ᵉ séance ») supprimait un `if(…)` et laissait un `else` orphelin : **erreur de syntaxe**. L'outil l'a classée INVALIDE au lieu de
+la compter comme « attrapée » — c'est exactement pour ça qu'il vérifie la syntaxe avant de lancer le banc. Corrigée en `if(true)`,
+elle fait rougir B-UXS-E4 et E5.
+
+**À quoi on le reconnaît.** Un témoin qui rougit sur un lot qui ne touche pas son sujet, et dont le libellé contient une **valeur
+exacte** (« reste v77 », « 430 × 932 », « 3 lignes », « défile de 50 px »). 👉 *Avant de « réparer » le code pour satisfaire un vieux
+témoin, chercher la GARANTIE qu'il protège ; le re-viser sur elle, et le prouver sur une mutation qui casse la garantie.*
+
+## §80 — ⛔ UNE RÈGLE GÉNÉRALE `button{overflow:hidden}` ROGNE UNE PASTILLE POSÉE EN DÉBORDEMENT *(17/10/2026, UX INTÉGRATION / D-085 — branche `claude/ux-seance-02`, non publié)*
+
+**Symptôme.** La pastille de séance du « + » (le petit rond posé en haut à droite du bouton central) s'affichait en **demi-disque** :
+elle est dessinée **en débordement** (`top:-4px; right:-4px`), et le bouton qui la porte hérite de la règle générale
+`button{overflow:hidden}` — tout ce qui dépasse est coupé. Au même endroit, le point rouge « nouveauté » du même bouton tombait
+**sur** la pastille (même coin). Et le « + » **grossissait** (×1,06, ombre renforcée) sur l'écran Séance seulement : sa taille
+changeait d'un écran à l'autre (règle d'or #9 : le mesurer, pas le regarder).
+
+**Cause.** Aucune n'est une erreur de logique : la pastille était juste (allumée par `#root.seance-on`, d'après `_seanceOuverte()`),
+c'est son **conteneur** qui la rognait. Personne ne le voit en lisant le CSS de la pastille — il faut remonter les ancêtres.
+
+**Correctif (D-085, décisions C et D de Michel).** `#nb-log{overflow:visible}` (le bouton central seulement, ni sa taille ni sa
+place ne changent) ; le point « nouveauté » du « + » passe à gauche ; l'agrandissement sur l'écran Séance est retiré (R30, retrait
+écrit). La pastille devient un **point bleu plein** (jeton de séance).
+
+**Le témoin qui le voit, et comment.** `B-UXI-C3` calcule le rectangle du point et remonte **chaque ancêtre** jusqu'à la barre : si
+l'un n'est pas `overflow:visible` et que le point dépasse de sa boîte, il est rogné → rouge. `B-UXI-C4` mesure l'intersection avec
+le point « nouveauté » (créé s'il est absent). `B-UXI-C1` compare position, taille, ombre et transformation du « + » sur cinq
+écrans, séance ouverte ou non. Éprouvés par mutation : M7 (overflow remis), M8 (point nouveauté remis à droite), M9 (agrandissement
+remis) — `tools/mut_ux_integration.py`.
+
+**À quoi on le reconnaît.** Un élément décoratif placé en **position négative** (badge, pastille, compteur) qui paraît coupé net :
+chercher un `overflow:hidden` sur un **ancêtre**, souvent une règle générale (`button`, `.card`), pas sur l'élément lui-même.
+
 ## §81 — ⛔⛔ « INTÉGRÉ À MASTER, NON PUBLIÉ » NE TIENT QUE JUSQU'AU PREMIER PUSH SANS `[skip ci]` *(18/10/2026, constaté en préparant le clone D-085 — session-B, aucun code de l'app modifié)*
 
 **Symptôme.** Le 18/10, les documents d'état disaient encore : « master = production `ft-v1256` + SEANCE-01 et CC-01 intégrés, non publiés ». C'était faux depuis le 17/10 à 09:26 UTC.
@@ -4636,3 +4684,177 @@ cas ; dire ce qu'**est** « Extension Triceps » est une décision de Michel. Fi
 **Ce qui a été fait.** Rien n'est corrigé en production : garder, régulariser par une version, ou revenir en arrière est une décision de Michel (règle d'or #15). Les documents d'état sont rectifiés (`docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`). ↪️ **Décision de Michel (18/10) : option A — garder tel quel** ; le problème de cache reste ouvert.
 
 **À quoi on le reconnaît.** Un état « intégré, non publié » sur master, puis n'importe quel push sur master sans `[skip ci]`, quelle qu'en soit la raison — même pour un dossier à part comme `/clone/`. Le piège était même écrit le 16/10 (« le prochain push sans `[skip ci]` le publie ») : il n'a pas été relu au moment de pousser. 👉 *Avant tout push sur master sans `[skip ci]`, lister les fichiers servis qui ont changé depuis le dernier commit publié (`git diff --stat <dernier publié> HEAD -- . ':!docs/**' ':!tests/**' ':!tools/**' ':!*.md'`) : tout ce qui n'est pas l'objet de la publication part avec elle.* Rien ne le vérifie automatiquement aujourd'hui (piste notée, non construite). Même famille que le « déploiement silencieux », à l'envers : le déploiement n'a pas échoué en silence, il a **réussi** en silence.
+
+## §82 — ⛔ UN REPLI QUI RÉPÈTE UNE VALEUR NE DOIT PAS RÉPÉTER CE QUI LUI EST ATTACHÉ : LA NOTE D'UNE SÉRIE RECOPIÉE SUR D'AUTRES *(18/10/2026, D-086 — branche locale `claude/ux-d086`, non publié ; défaut PRÉSENT en production `ft-v1256`)*
+
+> Numéro **§82** et non §81 : master porte déjà un §81 (clone D-085, 18/10) que cette branche n'a pas encore ; les deux se
+> rejoindront sans collision à l'intégration.
+
+**Symptôme.** Dans la colonne « Précédent » de l'écran Séance, le commentaire écrit sur une série la dernière fois
+(« 💬 Échec à la 7e ») s'affichait aussi sur des lignes qui n'étaient **pas** cette série. Mesuré (captures D-086 « avant »,
+360 → 430 px) : la séance d'avant avait 4 séries dont la 4ᵉ commentée ; aujourd'hui il y en a 5 → la note de la 4ᵉ apparaît sur la
+4ᵉ **et** sur la 5ᵉ ligne. Rien n'est faux dans les données ; c'est l'affichage qui prête une note à la mauvaise série.
+
+**Cause.** `_prevAligne` rapproche les séries par rôle et, quand la dernière fois en avait moins, **répète la dernière** (« repli ») :
+pour une VALEUR (« 6×90 ») c'est un repère utile et assumé (décision du 15/08/2026, témoin XIX ④ « REPLI » du runner). Mais `_setPrevNote` lisait
+`p.note` sur le même objet : la note, attachée à UNE série précise, était répétée avec la valeur. *Une approximation acceptable
+pour un chiffre devient une fausse attribution pour un texte.*
+
+**Correctif (D-086, correction ⑥ du brief de Michel).** `_prevAligneDetail` dit en plus, pour chaque ligne, si la série d'avant
+correspond **exactement** (`exact`) ou vient du repli ; `_prevAligne` en est le reflet (mêmes valeurs, mêmes 8 appelants). Le
+commentaire n'est plus écrit dans la ligne : un **point bleu** le signale sur sa série exacte seulement (`_notesPrecedentes`), et il
+se lit dans la fenêtre de note avec son origine (séance du JJ/MM/AAAA · série N · exercice). La note d'**exercice** (« Note perso »)
+n'est jamais rattachée à une ligne. Lecture seule : rien n'est enregistré.
+
+**Le témoin qui le voit.** `B-D086-⑩a` (point sur les séries 2 et 4, pas sur la 5ᵉ remplie par repli) · `B-D086-⑩b` (aucune note
+écrite dans les lignes, ni d'une autre séance ni d'un autre exercice) · `B-D086-⑩g` (la ligne de repli n'attribue aucun commentaire)
+· `B-D086-③a` (les VALEURS de « Précédent », repli compris, sont inchangées). Éprouvés par mutation : M9 (le point ignore `exact`),
+M10 (la note d'exercice prêtée à la 1ʳᵉ série), M12 (la note réécrite dans la ligne) — `tools/mut_ux_d086.py`.
+
+**À quoi on le reconnaît.** Une valeur « par défaut » ou « répétée » (repli, dernière connue, valeur précédente) qui transporte avec
+elle un **objet** — une note, un identifiant, une date. Le repli peut être juste pour la valeur et faux pour tout ce qui l'accompagne :
+le séparer explicitement (`exact`) plutôt que de laisser l'objet voyager avec.
+
+## §83 — ⛔ UN BANC QUI MESURE AU MAUVAIS ENDROIT ROUGIT (OU VERDIT) POUR UNE AUTRE RAISON : SIX PIÈGES DE MÉTHODE EN UNE JOURNÉE *(18/10/2026, D-087 — branche locale `claude/ux-d086`, non poussée)*
+
+> Erreurs de MÉTHODE (les miennes, dans mes bancs et mes sondes), pas des défauts de l'app : aucune n'a touché le code servi.
+> Numéro **§83** : suit §82 sur cette branche (master porte §81).
+
+**Symptômes et causes, mesurés.** ① « Aucune requête pendant la lecture » rougissait : le compteur partait du **chargement** de la
+page, où l'app tente déjà sa vérification serveur et une image QR (coupées) → mesurer la **fenêtre du geste** (écart avant / après).
+② « Aucune requête vers Milo » rougissait sur la fin de séance : le Worker sert aussi la **synchronisation** (`cloudSave`) — son adresse
+ne dit pas « Milo » → reconnaître Milo par l'**action** du corps, liste figée dans le banc (relue dans l'app, une mutation qui
+retirerait « coach » de sa liste passerait inaperçue). ③ « La note est gardée » rougissait : l'app range l'exercice sous son **nom
+du catalogue** (« Rowing Barre » → « Rowing Barre (Tirage Horizontal) ») → écrire les données de test avec les noms du catalogue.
+④ « Pas d'indicateur sans note » aurait **verdi pour rien** si l'historique n'était pas retrouvé du tout (nom différent) → un témoin
+d'ABSENCE porte un **contrôle positif** (« Précédent » est bien retrouvé pour cet exercice). ⑤ Une mutation (« Fermer » cassé)
+faisait **planter** le banc plus loin (une fiche restée ouverte bloquait le clic suivant) : un plantage n'attrape rien → le banc doit
+survivre au défaut qu'il teste (son propre témoin le voit, la suite continue). ⑥ Dans la comparaison ancien / nouveau, des commandes
+« INTROUVABLES » ne l'étaient que pour la sonde : bouton sous la barre du bas (il faut faire défiler, comme le pouce), carte repliée
+(il faut l'ouvrir d'abord, comme la personne).
+⑦ **Deux fois le même jour** (D-086 puis D-087) : `tools/dump_prompt.js` LIT et ÉCRIT le **dépôt principal** (chemin codé en dur,
+`/home/user/forcetracker`) ; lancé depuis un dossier de travail, il a réécrit `docs/PROMPT-MILO-REEL.txt` du dépôt principal à partir du
+code de master (non commité, remis à l'identique aussitôt chaque fois) et n'a **rien** vérifié du code du dossier de travail. → vérifier sur
+une COPIE de l'outil pointée vers le dossier de travail (fait : seule la phrase de l'heure diffère). Proposition, NON faite (outil partagé,
+hors périmètre) : `ROOT = path.dirname(__dirname)` et la sortie relative à ROOT.
+↪️ **Suite (brief « D-088 », même jour, décision D-089)** : la cause exacte est **deux** chemins codés en dur — `const ROOT=` (ligne 12, la
+LECTURE) et la sortie de `fs.writeFileSync` (ligne 99, l'ÉCRITURE). **Garde appliqué** : l'outil refuse de tourner ailleurs qu'à la racine de
+ROOT (`fs.realpathSync(process.cwd()) !== ROOT` → code 2, aucune lecture ni écriture) ; les deux lignes restent mot pour mot parce que
+`tools/gen_milo_consolidation_pdf.py` les **remplace texte pour texte** pour se rediriger (corriger l'outil seul aurait cassé ce générateur
+en silence). **Prouvé uniquement dans un environnement temporaire** : copie de l'outil, LEURRE de dépôt principal, garde d'écriture préchargé
+(`node -r`) — l'outil d'origine tente l'écriture (bloquée), l'outil corrigé refuse depuis une copie ou un sous-dossier et n'écrit que son
+fichier depuis la racine ; dépôt principal et dossier de travail inchangés. **Proposition en attente de validation** (transversale) :
+`ROOT` et la sortie relatifs à l'outil (ou passés par variables d'environnement), et le générateur qui passe ces variables au lieu de
+remplacer du texte. ⚠️ **D'autres outils du dépôt portent le même chemin** (relevé, non corrigé — hors périmètre) : 6 `tools/mut_*.py`
+(`SRC='/home/user/forcetracker'` : lancés depuis une branche, ils clonent et éprouvent **master** sans le dire — lecture seule) ·
+`tools/sonde_fuites_nutrition.js` (lecture seule) · 10 générateurs de PDF qui LISENT par défaut le dépôt principal (sortie dans `/tmp`,
+racine réglable par variable d'environnement) · et 4 anciens générateurs (`gen_audit_pdf`, `gen_bug_reprise_pdf`, `gen_dossier_pdf`,
+`gen_miseaupoint_pdf`) qui **écrivent** dans `/home/user/forcetracker/docs/` — les seuls, avec `dump_prompt.js`, à pouvoir le salir.
+
+**Suite — quatre pièges de méthode de plus (brief « D-088 », mêmes erreurs de banc, aucune dans l'app).** ⑧ Capturer les messages en
+posant `Object.defineProperty(window,'toast',…)` AVANT le chargement : la déclaration `function toast(){}` de l'app **remplace** la
+propriété — le témoin ne voyait aucun message → envelopper la vraie fonction APRÈS le chargement. ⑨ Pour comparer avec l'ancien écran,
+la sonde touchait « 📷 J'ai déjà un programme ou un historique » à chaque ouverture : ce bouton **replie** le panneau s'il est déjà ouvert,
+et « l'ancien chemin » semblait absent → ne le toucher que si le bouton voulu n'est pas déjà à l'écran. ⑩ « La séance en cours est
+intacte » comparait la mémoire et le stockage mais **pas la copie de secours** (`ft4_wkt_draft`, règle d'or #3) : une mutation qui
+l'effaçait serait passée → le témoin exige que la copie de secours soit toujours CETTE séance. ⑪ Le garde d'écriture comparait des
+chemins **sans suivre les liens** (un leurre fait de liens symboliques vers l'arbre testé laissait passer une écriture) ni les adresses
+`file://` → chemins réels comparés, et le garde est d'abord **éprouvé sur une zone jetable** (témoin `B-D088-OUTIL-⑪-0`).
+
+**Le témoin qui le voit.** `B-NOTE-⑨b` / `⑨d` (écart pendant le geste + liste d'actions d'IA) · `B-NOTE-③a` / `③b` (« Précédent »
+retrouvé, puis point absent) · `tools/mut_notes_d087.py` 21 / 21 (M9 rougit sans plantage ; arbre sain rejoué à 0 à la fin) ·
+`B-D088-OUTIL-⑪-0` et `①a`-`①e` (l'outil du prompt, leurre + garde éprouvé) · `B-D088-IMP-⑥a` (le message vu) · `B-D088-IMP-②b`
+(copie de secours comprise) · `tools/mut_d088.py`.
+
+**À quoi on le reconnaît.** Un rouge dont le détail parle d'autre chose que du geste testé (une adresse au démarrage, un nom
+d'exercice différent), ou un vert qui resterait vert si la fonction n'existait pas. Avant de conclure « l'app a perdu X », refaire le
+geste **comme la personne** (faire défiler, ouvrir la carte) et vérifier que la sonde a bien atteint l'endroit voulu.
+
+## §84 — ⛔ REJOUER UN BANC À TRAVERS LE CLONE : UN ROUGE N'EST PAS UN DÉFAUT TANT QU'ON N'A PAS PROUVÉ SA CAUSE *(18/10/2026, publication de D-088 sur le clone — session-B, aucun code de l'app modifié)*
+
+**Symptôme.** Rejoués à travers le clone (shim d'isolement actif), deux bancs rougissent alors qu'ils sont verts sur leur arbre source : B-D086 120 / 2 (⑮b à
+360 et 430 px) et B-D088 41 / 11 (tous les témoins d'import d'historique et d'import de programme).
+
+**Causes (mesurées).** ① ⑮b espionne `Storage.prototype.setItem` dans un script posé AVANT le shim : il voit la clé RÉELLE, préfixée `cl_` par le shim, et
+la compare à des noms écrits en clair (`ft4_seen_ft`, `ft4_gardienStats`). Rendre à l'espion le nom côté application (adaptation ④ du lanceur, hors dépôt) :
+122 / 0. ② B-D088 simule l'IA d'import en interceptant le réseau ; le shim rejette l'appel AVANT le réseau (« Clone de test : réseau coupé vers … ») — c'est
+sa raison d'être (D-084). Preuve par **mutation inverse** : sur une COPIE du clone dont SEUL le réseau est rouvert (la mutation MI5 du contrôle négatif), 52 / 0.
+
+**À quoi on le reconnaît.** Un banc vert sur sa source, rouge dans le clone, sur des témoins qui touchent le stockage brut ou le réseau.
+
+**La règle.** On ne classe pas un rouge « artefact » à l'œil : on retire **la seule** différence suspectée (une copie, une adaptation nommée) et on montre que
+le rouge disparaît — ni plus, ni moins. ⚠️ Et une sonde qui affirme « aucune requête ne sort » se trompe de périmètre : le shim coupe les canaux de DONNÉES
+(fetch, XHR, beacon, WebSocket, EventSource), pas les images — l'image QR de partage (lien public de l'app) sort, comme en production. *Un témoin dit ce que
+le système promet, pas plus.*
+
+## §85 — ⛔ UNE COPIE DE LA RÈGLE DE VOLUME DANS UN AFFICHAGE : UN UNILATÉRAL Y VALAIT LA MOITIÉ *(19/10/2026, finalisation de D-091 + comptage D-092 — branche locale `claude/ux-fig-face-dos-v2`)*
+
+**Symptôme.** Pendant la séance, « Ta séance jusqu'ici » affichait 416 kg pour un Curl Haltères (3 séries de travail) ; « Terminer » enregistrait 832 kg,
+et l'écran de fin, Progrès et l'Accueil montraient 832. Personne ne l'avait signalé : la carte disparaît au moment où l'écran de fin s'ouvre.
+
+**Cause (mesurée).** La carte (16/10) recalculait le volume elle-même, en recopiant le filtre de `_workVol` mais pas sa **convention unilatérale**
+(`uniConv` : un unilatéral se note par côté, son volume est doublé — 11/08/2026). Deux calculs du même chiffre : famille « les deux sources qui se
+contredisent » (R2). Trouvé en écrivant le témoin du comptage D-092 (un unilatéral était dans le scénario exprès), pas par un retour.
+
+**Correction.** La carte lit LA règle (`_workVol`, qui reçoit un 2ᵉ argument optionnel `avecEchauffements` pour le total D-092), avec la même convention
+que `finishWorkout` (`uniConv:1`). Témoins B-FFD-⑩d (la carte) et ⑩e (le « dont … kg de travail » = l'écran de fin = la séance enregistrée, par la vraie
+porte « Terminer »), mutations M23 et M29.
+
+**À quoi on le reconnaît.** Un même chiffre (volume, séries, durée) calculé à deux endroits par deux expressions qui « disent la même chose ». La
+recopie oublie toujours la partie la moins visible de la règle — ici le cas unilatéral, ailleurs les échecs `X` (le commentaire de `_effortConnu`, `log.js`, décrit la même recopie qui « oublierait la moitié `X` »).
+*Un affichage n'a pas le droit de posséder une règle : il la lit.*
+
+## §86 — ⛔⛔ UN LIBELLÉ QUI DIT UNE CHOSE, UNE DONNÉE QUI EN DIT UNE AUTRE : « ÉCHEC » ÉCRIVAIT 0, « VOLUME » ET « KG TOTAL » DISAIENT LE TRAVAIL *(19/10/2026, recette iPhone de Michel sur le clone — chantier SÉANCE, branche locale `claude/seance-recette-precedent`, non publié ; défauts PRÉSENTS en production `ft-v1256`)*
+
+**Symptômes (recette du 19/10, mesurés).** ① Dans la barre de repos, le premier bouton s'appelait « échec » et enregistrait `rir: 0` — un RIR 0
+**réussi** et un vrai échec se notaient par le même geste. ② L'écran de fin affichait « 4200 kg » sous « Volume » juste après une carte qui annonçait
+« 5 600 kg · dont 4 200 kg de travail » (D-092) : le travail présenté comme le tout. ③ Le détail d'une séance (Progrès) disait « 4200 kg total » pour la
+même raison. ④ L'aide « ? » de l'onglet Séance écrivait encore « échec = 0 en réserve — c'est la même chose que le tag X », et l'échelle d'effort du Profil
+« 0 = échec » / « 10 = échec ».
+
+**Cause.** ft-v1154 (06/09) avait tranché, avec Michel, qu'un RIR 0 et un `X` sont **deux données** — et corrigé le code, le prompt de Milo et l'aide
+détaillée. Mais **le bouton** gardait son mot (`_reserveBoutonTxt(0)` → « échec ») et deux textes d'aide n'avaient pas suivi. Pour le volume, la tuile
+et le sous-titre lisaient `sess.volume` — le **travail**, sémantique historique voulue — sous un **nom de total**. *Le calcul était juste ; c'est le
+nom posé dessus qui mentait.*
+
+**Correction (D-093, décisions de Michel du 19/10).** « Échec » devient un bouton à part qui pose **le tag X** ; « 0 » écrit un RIR 0 marqué
+`rirV: 2` ; un ancien 0 (sans marqueur) se lit « 0 ou échec », **rien n'est réécrit**. L'écran de fin dit « Volume total · dont … kg de travail » et
+« Séries de travail · N validées » ; le détail « X kg total · dont Y kg de travail » (affichage seul) ; `sess.volume`, l'export et Milo inchangés. Les
+cinq textes d'aide sont alignés. Témoins B-SR-②③④ (`tests/parcours/seance_recette.js`), mutations M01-M18 (`tools/mut_seance_recette.py`).
+
+**À quoi on le reconnaît.** Un **mot** sur un bouton ou au-dessus d'un chiffre qui n'a pas suivi une décision prise sur la **donnée**. Quand une
+décision change le sens d'une valeur, chercher **tous** les endroits qui la NOMMENT — bouton, tuile, aide « ? », aide détaillée, Guide, pop-up —
+pas seulement ceux qui la calculent. *ft-v1154 a corrigé trois textes sur cinq : les deux oubliés sont ceux qu'on lit le plus.*
+
+## §87 — ⛔ UN REPLI AFFICHÉ COMME UN HISTORIQUE : « PRÉCÉDENT » RÉPÉTAIT LA DERNIÈRE SÉRIE AU-DELÀ DE LA DERNIÈRE FOIS *(19/10/2026, même chantier)*
+
+**Symptôme.** La dernière fois : 4 séries de travail ; aujourd'hui : 6. Les lignes 5 et 6 de « Précédent » affichaient la 4ᵉ série d'avant,
+répétée — deux séries qui n'ont jamais existé, présentées comme l'historique.
+
+**Cause.** Le repli de `_prevAligne` (15/08/2026) répète la dernière série quand il y en a moins qu'aujourd'hui : juste comme **suggestion** de charge
+(les chiffres gris dans les champs), faux comme **historique affiché**. D-086 (§82) avait séparé la NOTE du repli (`exact`), pas la VALEUR.
+
+**Correction (D-093 — « ne jamais inventer ou dupliquer des séries »).** La case n'affiche que la série **exacte** de la dernière fois (`pv`), « — »
+au-delà ; les suggestions grises gardent le repli (`p`). La feuille « 4 dernières séances » applique la même règle : « — » pour une série absente à un
+rang, jamais une série recopiée. Témoins B-SR-⑤a, ⑤c, ⑥d ; runner XIX ④ et B-D086-③a mis à jour (R30) ; mutations M19, M20, M28.
+
+**À quoi on le reconnaît.** Une valeur de **commodité** (repli, dernière connue, valeur par défaut) qui sort de son rôle — une suggestion qu'on
+laisse s'afficher à l'endroit où la personne lit des **faits**. Le repli peut rester ; il ne doit pas se présenter comme mesuré.
+
+## §88 — ⛔ PROUVER « RIEN N'A CHANGÉ » AVEC UN MORCEAU DE TEXTE : « RIR0 » ACCEPTAIT « RIR0? », « Précédent » REFUSAIT « Précédent ▾ » *(19/10/2026, même chantier — deux pièges de méthode, attrapés avant toute livraison)*
+
+**① Le témoin qui ne voyait pas un ajout (trouvé par le contrôle négatif).** 1ʳᵉ campagne : 38 / 39. La mutation M18 ajoutait un « ? » après
+l'ancien RIR 0 dans ce que Milo reçoit — un reclassement silencieux — et **aucun témoin ne rougissait** : B-SR-④d cherchait `/S3 60×9 RIR0/`, vrai
+pour « RIR0 » comme pour « RIR0? ». *Un témoin d'« inchangé » écrit comme une PRÉSENCE voit une suppression, jamais un ajout.* Corrigé : ④d
+compare la ligne envoyée à Milo série par série, au caractère près, avec une fin bornée ; vert sur le code d'avant (rien n'a changé), rouge sous M18.
+2ᵉ campagne : 45 / 45.
+
+**② Le témoin qui lisait un libellé au lieu d'une garantie (trouvé par les bancs voisins).** B-UXI-F5 (D-086) garantit « la colonne Précédent
+reste » mais l'écrivait `hdr.includes('Précédent')` — l'égalité exacte d'un libellé. D-093 ajoute « ▾ » quand l'exercice a un historique : 68 / 1,
+pour une colonne bien présente. Mis à jour sur sa garantie (`/^Précédent( ▾)?$/`, R30) ; la mutation M19 de `mut_ux_integration.py` le rougit
+toujours.
+
+**À quoi on le reconnaît.** Les deux sont le même défaut, à l'envers : **un témoin trop lâche** (un `includes` qui laisse passer un ajout) et **un
+témoin trop serré** (une égalité sur le mot alors qu'il protège une structure). *Prouver une absence de changement, c'est comparer le TOUT ;
+protéger une présence, c'est viser ce qui doit rester, pas son orthographe du jour.* Le premier ne se voit qu'au contrôle négatif, le second
+qu'au banc voisin — d'où les deux, à chaque fois.

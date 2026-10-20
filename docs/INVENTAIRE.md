@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v1256`, dernier commit 2026-10-18).
+> Généré depuis **le code** (version `ft-v1256`, dernier commit 2026-10-19).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -20,8 +20,8 @@
 | Lignes de menu | 17 | 3 |
 | Fenêtres (modales) | 66 | 15 |
 | Actions du serveur | 51 | 3 |
-| Fonctions JS | 631 | — |
-| Nouveautés annoncées | 71 | — |
+| Fonctions JS | 639 | — |
+| Nouveautés annoncées | 73 | — |
 
 ## 🖥️ Écrans
 
@@ -192,6 +192,8 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 79 | 💪 | « Échec » et « 0 », enfin séparés |
+| 78 | 🏋️ | L'écran Séance s'allège |
 | 77 | 🗂️ | Progrès : Séances d'abord |
 | 76 | ✨ | L'avis de Milo se demande |
 | 75 | 🗂️ | Le menu est rangé en 4 rayons |

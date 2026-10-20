@@ -117,7 +117,9 @@ module.exports.ecran = async function (t, b, PORT) {
     }
     return false;
   };
-  const terminer = async X => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(250); const ok = await clic(X.pg, 'button[onclick="finishWorkout()"]'); await X.pg.waitForTimeout(400); return ok; };
+  /* UX SÉANCE (16/10/2026, R30) — la porte de fin est `terminerSeance()` (« Terminer » de l'en-tête et du bas) : s'il reste des séries de TRAVAIL, elle demande « Terminer quand même ? » et on confirme, comme la personne. La conduite change ; ce que le banc mesure ne change pas. */
+  const confirmerFin = async X => { await X.pg.waitForTimeout(150); if (await X.pg.evaluate(() => { const o = document.getElementById('ov-confirm'); return !!(o && o.classList.contains('open')); })) await X.pg.click('#confirm-ok'); };
+  const terminer = async X => { await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(250); const ok = await clic(X.pg, '.topbar button[onclick="terminerSeance()"]'); await confirmerFin(X); await X.pg.waitForTimeout(400); return ok; };
   const fermerFin = X => clic(X.pg, '[onclick="closeSessionEnd()"]');
   const coach = async (X, ms) => { await clic(X.pg, '#nb-coach'); await X.pg.waitForTimeout(ms || 1500); };
   const versProgres = async X => { await clic(X.pg, '#nb-progress');

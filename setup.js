@@ -980,23 +980,25 @@ ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;fl
 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
   <defs>
     <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#FF2D55" stop-opacity=".45"/>
-      <stop offset="70%" stop-color="#FF2D55" stop-opacity=".06"/>
-      <stop offset="100%" stop-color="#FF2D55" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#F2F3F5" stop-opacity=".16"/>
+      <stop offset="70%" stop-color="#F2F3F5" stop-opacity=".03"/>
+      <stop offset="100%" stop-color="#F2F3F5" stop-opacity="0"/>
     </linearGradient>
   </defs>
   ${ticks.map(v=>`<line x1="${pad.l}" y1="${toY(v).toFixed(1)}" x2="${W-pad.r}" y2="${toY(v).toFixed(1)}" style="stroke:var(--sep);" stroke-width="1" stroke-dasharray="4 3"/>`).join('')}
   ${ticks.filter((_,i)=>i%2===0).map(v=>`<text x="${pad.l-6}" y="${(toY(v)+3.5).toFixed(1)}" text-anchor="end" style="fill:var(--t3);font-size:9.5px;font-family:-apple-system,sans-serif;font-weight:600;">${Math.round(v)}</text>`).join('')}
   <path d="${area}" fill="url(#cg)"/>
-  <path d="${line}" style="stroke:var(--red);" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 🎨 D-085 (décision J de Michel, 17/10) : la courbe de progression est NEUTRE (blanche) — une couleur permanente lui
+       prêterait un sens qu'elle n'a pas (une courbe peut descendre). Le record reste en or, le progrès chiffré en vert. -->
+  <path d="${line}" style="stroke:var(--t1);" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   ${goal>0?`<line x1="${pad.l}" y1="${toY(goal).toFixed(1)}" x2="${W-pad.r}" y2="${toY(goal).toFixed(1)}" style="stroke:#22C55E;" stroke-width="1.5" stroke-dasharray="5 4" opacity=".9"/><text x="${W-pad.r}" y="${(toY(goal)-4).toFixed(1)}" text-anchor="end" style="fill:#22C55E;font-size:9px;font-weight:700;font-family:-apple-system,sans-serif;">Objectif ${fmt(goal)}</text>`:''}
-  ${pts.map((p,i)=>{const cx=toX(i).toFixed(1),cy=toY(p.rm1).toFixed(1),isPR=i===prIdx;return(isPR?`<circle cx="${cx}" cy="${cy}" r="11" fill="rgba(255,214,0,.18)"/>`:'')+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(isPR?6:4)+'" style="fill:'+(isPR?'var(--gold)':'var(--red)')+';stroke:var(--bg);" stroke-width="2.5"/><circle cx="'+cx+'" cy="'+cy+'" r="16" fill="transparent" style="cursor:pointer;" onclick="showChartTooltip('+i+')"/>';}).join('')}
+  ${pts.map((p,i)=>{const cx=toX(i).toFixed(1),cy=toY(p.rm1).toFixed(1),isPR=i===prIdx;return(isPR?`<circle cx="${cx}" cy="${cy}" r="11" fill="rgba(255,214,0,.18)"/>`:'')+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(isPR?6:4)+'" style="fill:'+(isPR?'var(--gold)':'var(--t1)')+';stroke:var(--bg);" stroke-width="2.5"/><circle cx="'+cx+'" cy="'+cy+'" r="16" fill="transparent" style="cursor:pointer;" onclick="showChartTooltip('+i+')"/>';}).join('')}
   ${xIdxs.map(i=>`<text x="${toX(i).toFixed(1)}" y="${H-6}" text-anchor="middle" style="fill:var(--t3);font-size:9px;font-family:-apple-system,sans-serif;">${new Date(pts[i].date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</text>`).join('')}
 </svg>
 <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(41,121,255,.06);border:1px solid rgba(41,121,255,.15);border-radius:10px;padding:9px 12px;margin-top:8px;min-height:42px;">
   <span style="font-size:12px;color:var(--t3);font-weight:600;" id="tt-hint">Tape un point pour les détails</span>
   <div style="text-align:right;display:none;" id="tt-vals">
-    <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);" id="tt-rm"></div>
+    <div style="font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--t1);" id="tt-rm"></div>
     <div style="font-size:13px;color:var(--t2);" id="tt-set"></div>
   </div>
 </div>
@@ -1275,7 +1277,13 @@ function openSessDetail(id){
     const e=_estimCalTempsReel(sess);
     if(e&&sess.calories) estim=` · 🔬 ~${e.kcal} kcal en comptant le temps réel`;
   }
-  document.getElementById('sd-sub').innerHTML=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}${estim}`;
+  /* 🧮 D-093 (décision de Michel, 19/10/2026 — affichage seul) — « 4200 kg total » désignait le TRAVAIL : les paliers
+     d'échauffement n'y étaient pas. Le total les compte maintenant, et le travail est dit à part quand il diffère.
+     ⛔ Rien n'est recalculé ni réécrit : le travail affiché est `sess.volume` tel qu'enregistré (la carte de l'historique
+     le montre aussi) ; seuls les échauffements s'y ajoutent, par LA règle de volume (`_workVol`, R2). */
+  const _vTrav=Math.round(sess.volume||0), _vEch=(typeof _workVol==='function')?Math.max(0,Math.round(_workVol(sess,true)-_workVol(sess))):0;
+  const _kgfr=n=>n.toLocaleString('fr-FR');
+  document.getElementById('sd-sub').innerHTML=`${_kgfr(_vTrav+_vEch)} kg total${_vEch>0?' · dont '+_kgfr(_vTrav)+' kg de travail':''}${duree}${cals}${eff}${estim}`;
 
   _renderHealthInbox(sess);
   _updateSdMuscles(sess);
@@ -1463,9 +1471,15 @@ function _renderSessDetailContent(){
       </div>
       ${ex.note?`<div style="font-size:12px;color:var(--gold);font-style:italic;line-height:1.4;margin-bottom:8px;">💬 ${ex.note}</div>`:''}
       ${maxRM>0?`<div style="font-size:13px;color:var(--t1);font-weight:700;margin-bottom:8px;">🎯 Meilleur 1RM potentiel : <span style="font-weight:800">${fmt(maxRM)} kg</span></div>`:''}
-      ${(()=>{ let _n=0; return ex.sets.map((s,si)=>{ if(!s.done) return ''; _n++; return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <span style="font-size:11px;color:var(--t3);min-width:14px">${_n}</span>
-        <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
+      ${(()=>{ let _n=0; return ex.sets.map((s,si)=>{ if(!s.done) return ''; _n++;
+        /* 💪 D-093 — LE RIR SE LIT ENFIN DANS L'HISTORIQUE DÉTAILLÉ. Il partait dans l'export PDF et chez Milo, mais ce
+           détail ne l'affichait nulle part (recette du 19/10). Une ligne sous la série, seulement quand il existe :
+           « RIR 2 », « 0 ou échec » pour un ancien 0 — rien pour un échauffement, un `X` (son type le dit) ou une série
+           non notée (`_reserveHistoTxt`, le même propriétaire que « 4 dernières séances »). Lecture seule. */
+        const _rt=(typeof _reserveHistoTxt==='function')?_reserveHistoTxt(s):'';
+        return `<div class="sd-set"><div style="display:flex;gap:6px;align-items:center;margin-bottom:${_rt?'2':'6'}px">
+        <span class="sd-num" style="font-size:11px;color:var(--t3);min-width:14px">${_n}</span>
+        <span class="sd-type" style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
         <input type="number" min="1" inputmode="numeric" value="${_champNum(s.reps)}"
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',this.value)">
@@ -1476,7 +1490,7 @@ function _renderSessDetailContent(){
         <span style="color:var(--t2);font-size:12px">kg</span>
         ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
-      </div>`; }).join(''); })()}
+      </div>${_rt?`<div class="sd-rir"${_rt.indexOf('ou échec')>=0?' title="Noté avant la mise à jour du 19/10 : l\'ancien bouton « échec » enregistrait un 0"':''}>${_rt}</div>`:''}</div>`; }).join(''); })()}
       ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série — ajoutes-en une</div>':''}
       <button class="btn btn-bg2" style="width:100%;margin-top:4px;padding:6px;font-size:12px;color:var(--t2)" onclick="addSessSet(${ei})">+ Ajouter une série</button>
     </div>`;
@@ -1709,11 +1723,17 @@ function closeSessDetail(){
   if(_sdDelTimer){clearTimeout(_sdDelTimer);_sdDelTimer=null;}
 }
 
-function _mscSVGmini({sc,ind}){
+/* 🧍 FACE / DOS (18/10/2026, D-091) — `vue === 'dos'` dessine la vue ARRIÈRE (`_BP`, le dessin de dos de la grande figurine
+   « Muscles travaillés »), avec exactement les mêmes couleurs : `_MG` rattache déjà chaque groupe à ses zones avant ET arrière,
+   donc rien n'est recalculé ni deviné. Cadrage : le même décalage que la grande figurine (`_mscSVG`, vue avant centrée en x 17,
+   vue arrière en x 52), même taille (32 × 94).
+   ⛔ Sans `vue`, la sortie reste la vue avant À L'OCTET PRÈS : l'Accueil, Progrès et la carte du jour l'appellent ainsi. */
+function _mscSVGmini({sc,ind},vue){
   const pd={};
   Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const[f,k]=v>=2?['#FF5555','#AA0010']:v>=1?['#FF9500','#AA5500']:isI?['#8FA9C4','#5B7C9E']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
   const pt=([id,d])=>{const c=id?(pd[id]||{f:'#C07060',k:'#7A3828'}):{f:'#D89070',k:'#A86040'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.28':'0.18'}" stroke-linejoin="round"/>`;};
-  return `<svg viewBox="1 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${_FP.map(pt).join('')}</svg>`;
+  const dos=vue==='dos';
+  return `<svg viewBox="${dos?36:1} 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${(dos?_BP:_FP).map(pt).join('')}</svg>`;
 }
 function showSessMuscleMap(i,ev){
   ev&&ev.stopPropagation();
@@ -3037,8 +3057,9 @@ const DISC_DESCS={
    qui connaissent le RPE »*. Personne n'est interrogé là-dessus à l'inscription ; qui ne connaît
    pas garde le RIR sans rien faire. */
 const ECH_DESCS={
-  rir:'<b>RIR — répétitions en réserve.</b> Après une série, l\'app demande combien de répétitions tu aurais encore pu faire. <b>0 = échec.</b> C\'est l\'échelle par défaut, et la plus directe à répondre.',
-  rpe:'<b>RPE — effort perçu (échelle de 6 à 10).</b> <b>10 = échec</b>, 9 = il t\'en restait 1, 8 = il t\'en restait 2… C\'est la <b>même mesure que le RIR</b>, dite dans l\'autre sens : ton historique se relit tout seul, rien n\'est perdu. ⚠️ Sans demi-points (pas de 8,5) : l\'app ne les mesure pas, et les afficher serait une fausse précision.'
+  /* D-093 — « 0 = échec » et « 10 = échec » contredisaient ft-v1154 (RIR 0 = série RÉUSSIE à la limite ; l'échec = le tag X). */
+  rir:'<b>RIR — répétitions en réserve.</b> Après une série, l\'app demande combien de répétitions tu aurais encore pu faire. <b>0</b> = ta dernière répétition est passée, une de plus n\'aurait pas tenu ; <b>Échec</b> = une répétition tentée n\'est pas passée (la série passe en <b>X</b>). C\'est l\'échelle par défaut, et la plus directe à répondre.',
+  rpe:'<b>RPE — effort perçu (échelle de 6 à 10).</b> <b>10</b> = ta dernière répétition est passée, une de plus n\'aurait pas tenu ; 9 = il t\'en restait 1, 8 = il t\'en restait 2… <b>Échec</b> = une répétition tentée n\'est pas passée (la série passe en <b>X</b>). C\'est la <b>même mesure que le RIR</b>, dite dans l\'autre sens : ton historique se relit tout seul, rien n\'est perdu. ⚠️ Sans demi-points (pas de 8,5) : l\'app ne les mesure pas, et les afficher serait une fausse précision.'
 };
 function setEchelleReserve(e){
   S.echelleReserve=(e==='rpe')?'rpe':'rir';

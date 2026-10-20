@@ -216,6 +216,45 @@ les mêmes 5 points** (fait partie de la « Clôture obligatoire », pas optionn
 
 ---
 
+## ⏱️ Estimer une tâche — la méthode validée (**D-088**, Michel, 18/10/2026)
+
+**D'où ça vient** : D-086 avait été estimé **6 à 8 h** ; il a duré **3 h 44**. Michel : *« Je ne vais pas me plaindre
+que ça soit moins long, par contre il va falloir être un peu plus juste. »* Une estimation trop prudente n'est pas
+une précaution : elle fausse les arbitrages (on renonce à un lot « trop long », on bloque une soirée pour rien).
+
+**Les cinq points, à chaque estimation :**
+
+1. **Partir des durées MESURÉES**, avec leur contexte (quel banc, combien de témoins, en parallèle ou non) — jamais
+   d'une impression.
+2. **Séparer** le temps de **développement** (lire, coder, écrire les témoins, documenter) et le temps
+   d'**exécution des tests** (bancs, mutations, passe complète), qui est mécanique et se mesure.
+3. **Dire à part le risque de reprise** — p. ex. une 2ᵉ passe complète *si elle est nécessaire et autorisée*, un
+   témoin à re-viser, une décision à attendre. Il ne gonfle pas le chiffre central : il s'ajoute, nommé.
+4. **Donner une estimation centrale raisonnable** (« ≈ 2 h 45 ») plutôt qu'une fourchette trop prudente.
+5. **Dans le rapport final, comparer estimé et réel**, et expliquer les écarts — c'est ce qui recale les repères.
+
+**Repères mesurés** (conteneur de session, 4 processeurs ; un repère se remplace par une NOUVELLE mesure) :
+
+| Étape | Durée mesurée | Contexte de la mesure |
+|---|---|---|
+| Passe complète D-031 (`tools/passe_valide.sh`) | **~80 min** (83 min le 18/10) | ~7 400 témoins, une seule à la fois |
+| Passe complète D-031 **dans un espace réseau isolé** (`unshare -n` + puits, outil hors dépôt au 19/10) | **86 min** (19/10) | 7 582 témoins ; l'isolement ne coûte rien de mesurable (canaris : ~1 min avant, quelques secondes après) |
+| Contrôle négatif (mutations) d'un lot | **12 à 16 min** (7 min en 2 files parallèles) · 12 min 30 (21 mutations, banc de 32 s) · 25 min 30 min (23 mutations, banc de 60 s) · **~17 min** (32 mutations, banc de ~75 s, 3 files, 19/10) — **≈ nombre de mutations × durée du banc ÷ files** | 20 à 27 mutations, arbre copié, banc rejoué à chaque fois |
+| Bancs voisins choisis par `tools/recette_selecteur.py` | **~20 min** (5 min 30 en 2 files) | 6 à 8 bancs Playwright |
+| Contrôle ciblé (un banc ou un témoin seul) | **1 à 2 min** | un banc de 30 à 120 témoins |
+| Codage d'une correction d'écran bornée | **~40 min** (D-086) · **~12 min** (D-087) | code seul, hors tests et documentation |
+
+**Historique estimé / réel** (à compléter à chaque tâche estimée) :
+
+| Tâche | Estimé | Réel | Écart expliqué |
+|---|---|---|---|
+| D-086 — 7 corrections UX (18/10) | 6 à 8 h | **3 h 44** | fourchette « par sécurité » sur un travail en grande partie déjà cadré (code ≈ 40 min) ; la passe complète (83 min) était le vrai poste |
+| D-087 — note de la dernière fois + contrôle de non-régression (18/10) | **≈ 2 h 45** (≈ 2 h de travail + ≈ 45 min de tests ; risques à part : +30 min si un témoin est à re-viser, +80 min si une passe complète est demandée) | **52 min** de travail et de contrôles (13:38 → 14:30), puis le PDF et le rapport | encore trop haut, ×3 : ① les tests (mutations 7 min, bancs voisins 5 min 30) ont tourné **en 2 files, pendant** l'écriture de la comparaison et des documents — compter leur durée murale, pas leur somme ; ② le code était petit (12 min) et la comparaison a été **automatisée** (le même script rejoué sur 3 versions) au lieu d'une inspection à la main ; ③ aucun des deux risques ne s'est produit |
+| Brief « D-088 » — import d'historique pendant la séance, « Note de la dernière séance », outil du prompt confiné (18/10, D-089) | **≈ 1 h 40** (≈ 1 h 20 de travail + ≈ 20 min de tests en durée murale ; risques à part : +20 min pour piloter l'import dans le banc, +15 min si l'import touchait la séance ; passe complète non prévue, +80 min si demandée) | **73 min** de travail et de contrôles (15:27 → 16:40), puis le PDF et le rapport | ≈ −27 % : ① le moteur existait — 2 lignes de code et 3 libellés, aucune logique neuve ; ② les tests (mutations 12 min 30 puis 25 min 30, bancs voisins + annexe 22 min, comparaisons 3 min) ont tourné **en 2 files, pendant** l'écriture — durée murale, pas leur somme ; ③ le risque « piloter l'import dans le banc » s'est produit (capture du message, panneau de l'ancienne ligne qui se replie) et a été absorbé (≈ 10 min) ; « l'import touche la séance » ne s'est pas produit. Poste dominant de la fin : la campagne de mutations D-088 (banc de 60 s × 23) |
+| Publication du clone D-091 + D-092 (19/10) | **≈ 15 min** (push 2 min, Pages ~30 s, contrôles par l'API 5 min, documents 5 min ; risque à part : refusion + 2ᵉ passe ≈ 1 h 45 si master bougeait) | **11 min** (17:07 → 17:18, documents compris ; PDF et rapport en plus), master inchangé | un peu moins que prévu : Pages 29 s comme mesuré, contrôles par l'API et documents préparés d'avance plus rapides que les 10 min prévues — malgré deux imprévus, le port du mandataire changé en cours de journée (puits replacé, garde durcie et éprouvée, banc d'isolement rejoué ≈ 4 min) et les vérifications du site et de l'artefact refusées par le mandataire (≈ 2 min) |
+
+---
+
 ## 🎯 Objectif
 
 Le code n'est qu'une **partie** du travail. Une brique n'est terminée que

@@ -87,9 +87,19 @@ module.exports.ecran = async function (t, b, PORT) {
   const recharger = async X => { await X.pg.reload(); await X.pg.waitForTimeout(1500); };
   const etat = X => X.pg.evaluate(() => ({ progs: JSON.parse(JSON.stringify(S.programmes || [])), wkt: S.wkt ? JSON.parse(JSON.stringify(S.wkt)) : null,
     progsDisque: JSON.parse(localStorage.getItem('ft4_progs') || '[]'), wktDisque: JSON.parse(localStorage.getItem('ft4_wkt') || 'null') }));
+  /* UX SÉANCE (16/10/2026, R30) — « Programme(s) » : avant la séance, c'est le bouton de l'écran Séance ; PENDANT, il est
+     rangé dans le menu ⋯ de l'en-tête (l'ancien « 📋 Changer » y vit). Même propriétaire : `openProgModal()`. La conduite
+     change ; ce que le banc mesure ne change pas. */
+  const ouvrirProgrammes = async X => {
+    if (await X.pg.evaluate(() => { const b = document.querySelector('#log-avant button[onclick="openProgModal()"]'); return !!(b && b.offsetParent); }))
+      return clic(X.pg, '#log-avant button[onclick="openProgModal()"]');
+    await X.pg.click('.topbar button[aria-label*="actions sur la séance"]'); await X.pg.waitForTimeout(250);
+    const r = X.pg.locator('#ov-wkt-menu button', { hasText: 'Programmes' }); if (!(await r.count())) return false;
+    await r.first().click(); await X.pg.waitForTimeout(300); return true;
+  };
   const sauver = async (X, nom) => {
     await allerSeance(X);
-    const a = await clic(X.pg, 'button[onclick="openProgModal()"]');
+    const a = await ouvrirProgrammes(X);
     await X.pg.fill('#prog-name-inp', nom);
     const s = await clic(X.pg, '#prog-save-section button', 'Sauvegarder comme programme');
     await X.pg.evaluate(() => { const m = document.getElementById('mod-prog'); if (m) m.classList.remove('open'); });
@@ -97,7 +107,7 @@ module.exports.ecran = async function (t, b, PORT) {
   };
   const charger = async (X, nom, jour) => {
     await allerSeance(X);
-    await clic(X.pg, 'button[onclick="openProgModal()"]');
+    await ouvrirProgrammes(X);
     const i = await X.pg.evaluate(n => (S.programmes || []).findIndex(p => p.name === n), nom);
     const a = await clic(X.pg, '[onclick="loadProg(' + i + ')"]');
     let d = true;

@@ -38,6 +38,12 @@ const SEANCE = (date, label, ex, o) => { const id = ++_seq; return Object.assign
   startHour: 18, duration: 3600, progLabel: label || '' }, o || {}); };
 const DEM = 'Dis-moi comment se passent mes dernières séances de musculation';
 const cp = x => JSON.parse(JSON.stringify(x));
+/* UX SÉANCE (16/10/2026, R30) — la porte de fin est `terminerSeance()` (« Terminer » de l'en-tête et du bas) : s'il reste des séries de TRAVAIL, elle demande « Terminer quand même ? » et on confirme, comme la personne. La conduite change ; ce que le banc mesure ne change pas. */
+const confirmerFin = async X => { await X.pg.waitForTimeout(150); if (await X.pg.evaluate(() => { const o = document.getElementById('ov-confirm'); return !!(o && o.classList.contains('open')); })) await X.pg.click('#confirm-ok'); };
+/* UX SÉANCE (16/10/2026, R30) — « Mettre en pause » est rangé dans le menu ⋯ de l'en-tête de séance ; la REPRISE reste un
+   bouton de l'en-tête (`#wkt-pause-btn`, visible seulement en pause). Même propriétaire : `toggleWktPause()`. */
+const mettreEnPause = async X => { await X.pg.click('.topbar button[aria-label*="actions sur la séance"]'); await X.pg.waitForTimeout(250);
+  await X.pg.locator('#ov-wkt-menu button', { hasText: 'Mettre en pause' }).first().click(); await X.pg.waitForTimeout(200); };
 
 module.exports.source = function (t, ROOT, fs, path) {
   console.log('\n═══ B-CCCXCVII (session-B). LOT 3 — un seul propriétaire de l\'ordre, une union sans perte (source) ═══');
@@ -147,7 +153,7 @@ module.exports.ecran = async function (t, b, PORT) {
     await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(400);
     if (date) await X.pg.evaluate(d => { const i = document.getElementById('s-date'); i.value = d; i.dispatchEvent(new Event('change', { bubbles: true })); }, date);
     const dateWkt = await X.pg.evaluate(() => S.wkt && S.wkt.date);
-    const ok = await clic(X.pg, 'button[onclick="finishWorkout()"]');
+    const ok = await clic(X.pg, '.topbar button[onclick="terminerSeance()"]'); await confirmerFin(X);
     await X.pg.waitForTimeout(2200);
     await X.pg.evaluate(() => { try { if (typeof closeSessionEnd === 'function') closeSessionEnd(); } catch (e) {} });
     return { ok, dateWkt };
@@ -410,10 +416,10 @@ module.exports.ecran3b = async function (t, b, PORT) {
     if (date) await X.pg.evaluate(d => { const i = document.getElementById('s-date'); i.value = d; i.dispatchEvent(new Event('change', { bubbles: true })); }, date);
     /* ⏱️ Une pause PLUS LONGUE que la marge du lien (5 s) : sinon une horloge qui ignorerait la pause
        tomberait quand même dans la marge, et le témoin ne pourrait pas rougir. */
-    if (pause) { await X.pg.waitForTimeout(1200); await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(7500);
+    if (pause) { await X.pg.waitForTimeout(1200); await mettreEnPause(X); await X.pg.waitForTimeout(7500);
       if (pause === 'reprise') { await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(1200); } }
     await X.pg.evaluate(() => { window.__perdre = true; });
-    const ok = await clic(X.pg, 'button[onclick="finishWorkout()"]'); await X.pg.waitForTimeout(2200);
+    const ok = await clic(X.pg, '.topbar button[onclick="terminerSeance()"]'); await confirmerFin(X); await X.pg.waitForTimeout(2200);
     await X.pg.evaluate(() => { try { if (typeof closeSessionEnd === 'function') closeSessionEnd(); } catch (e) {} });
     return ok;
   };
@@ -546,7 +552,7 @@ module.exports.ecran3c = async function (t, b, PORT) {
     await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300);
     if (date) await X.pg.evaluate(d => { const i = document.getElementById('s-date'); i.value = d; i.dispatchEvent(new Event('change', { bubbles: true })); }, date);
     await X.pg.evaluate(() => { window.__perdre = true; });
-    const ok = await clic(X.pg, 'button[onclick="finishWorkout()"]'); await X.pg.waitForTimeout(2200);
+    const ok = await clic(X.pg, '.topbar button[onclick="terminerSeance()"]'); await confirmerFin(X); await X.pg.waitForTimeout(2200);
     await X.pg.evaluate(() => { try { closeSessionEnd(); } catch (e) {} }); return ok;
   };
   const redemarrer = async X => { await X.pg.reload(); await X.pg.waitForTimeout(1500); return lire(X); };
@@ -596,7 +602,7 @@ module.exports.ecran3c = async function (t, b, PORT) {
     // ── T3 pause / reprise ────────────────────────────────────────────────────────────────────
     { const X = await ouvrir({ ft4_wkt: W() });
       await valider(X); const r = (await lire(X)).runMem;
-      await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(800); const p1 = await lire(X);
+      await mettreEnPause(X); await X.pg.waitForTimeout(800); const p1 = await lire(X);
       const p2 = await redemarrer(X);
       await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); await clic(X.pg, '#wkt-pause-btn'); await X.pg.waitForTimeout(800); const p3 = await lire(X);
       t('[T3] pause, rechargement pendant la pause, reprise : `runId` inchangé à chaque étape', [p1.runMem, p2.runMem, p3.runMem, p1.runBrouillon, p3.runBrouillon].every(x => x === r) && UUID.test(r || ''), js([r, p1.runMem, p2.runMem, p3.runMem]));
@@ -643,7 +649,7 @@ module.exports.ecran3c = async function (t, b, PORT) {
     { const old = [ETR({ id: 1600000000001, ts: 1600000000001, date: J(10), duration: 1800 }), ETR({ id: 1600000000002, ts: 1600000000002, date: J(20), duration: 1800 })];
       const X = await ouvrir({ ft4_sessions: old, ft4_wkt: W() });
       const e0 = await lire(X); await valider(X); const r = (await lire(X)).runMem;
-      await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); await clic(X.pg, 'button[onclick="finishWorkout()"]'); await X.pg.waitForTimeout(2200);
+      await clic(X.pg, '#nb-log'); await X.pg.waitForTimeout(300); await clic(X.pg, '.topbar button[onclick="terminerSeance()"]'); await confirmerFin(X); await X.pg.waitForTimeout(2200);
       await X.pg.evaluate(() => { try { closeSessionEnd(); } catch (e) {} });
       const e1 = await redemarrer(X);
       t('[T9] anciennes séances sans `runId` : chargées sans erreur, jamais enrichies d\'un `runId` inventé ; la nouvelle séance porte le sien',
