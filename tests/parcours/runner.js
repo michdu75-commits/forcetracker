@@ -39851,6 +39851,10 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      garde le TRAVAIL ; un échauffement ne fait jamais un record. Valeurs calculées à la main. Banc : tools/banc_d091_volume_prepare.js
      · contrôle négatif : python3 tools/mut_d091_volume_prepare.py <arbre-qui-porte-D-091>. */
   await require('./d091_volume_prepare.js').ecran(t, b, PORT);
+  /* ❓ AIDES (lot final ft-v1257, 20/10/2026) — ce que les aides affirment, contre ce que l'écran fait vraiment (audit des aides
+     du clone du 17/10, vérifié sur le code D-093). Blocs B-AID-*. Banc : tools/banc_aides_audit.js · contrôle négatif :
+     tools/mut_aides_audit.py. */
+  await require('./aides_audit.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);
