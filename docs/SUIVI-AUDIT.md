@@ -1412,3 +1412,47 @@ mise à jour du clone.
 **Règle #17** : non déclenchée côté application (0 donnée, 0 fichier applicatif, 0 chemin).
 **Durée** : ≈ 55 min (05:28 → ≈ 06:25 UTC) — diagnostic et sondes ≈ 25 min, banc ≈ 10 min, contrôle négatif ≈ 20 min (machine), doc ≈ 10 min. Pas de passe
 complète (aucun code de l'app ; obligatoire avant toute publication).
+
+### 🏋️ SÉANCE — CORRECTIONS DE LA RECETTE IPHONE DU 19/10 + « PRÉCÉDENT » SUR 4 SÉANCES (19/10/2026, brief « Claude Principal », décisions **D-093**) — BRANCHE LOCALE `claude/seance-recette-precedent`, NON POUSSÉE, NON INTÉGRÉE, NON PUBLIÉE
+
+**Le retour (recette de Michel sur le clone `e8ffb71c`).** ① « 2 / 4 séries » : juste (rien à corriger, protégé). ② Écran de fin : « 4200 kg » sous
+« Volume » alors que la séance totalisait 5 600 kg (1 400 kg d'échauffements). ③ Le premier bouton de la barre de repos, « échec », enregistrait un RIR 0.
+④ Le RIR noté n'apparaissait pas dans le détail d'une séance (il était dans l'export PDF). ⑤ « Précédent » ne montre que la dernière fois ; Michel veut
+comparer les 4 dernières séances de l'exercice. Décisions de Michel (19/10) : « Échec » = le tag X ; anciens 0 « 0 ou échec », rien de réécrit ;
+« kg total » corrigé à l'affichage seulement.
+
+**Causes (mesurées).** ② et le « kg total » du détail lisaient `sess.volume` — le TRAVAIL, sémantique voulue — sous un nom de total (`BUGS.md` §86).
+③ ft-v1154 avait séparé RIR 0 et `X` dans la donnée, le prompt et l'aide détaillée, mais pas le libellé du bouton ni deux textes d'aide (§86).
+« Précédent » : le repli de `_prevAligne` (la dernière série répétée) s'affichait comme un historique (§87).
+
+**Ce qui est fait (code de l'app : `log.js`, `setup.js`, `style.css`, aides dans `screens.js`, `constants.js`, `app.js`, `coach.js`).**
+Sélecteur **Échec · 0 · 1 · 2 · 3 · 4+** (en RPE : ≤6 · 7 · 8 · 9 · 10 · Échec) ; « Échec » pose/retire le tag X, un chiffre repasse en N avec
+`rir` + `rirV: 2`, « ✕ » retire tout ; un ancien 0 ne coche rien et se signale. L'écran de fin : « Volume total · dont … kg de travail » et « Séries
+de travail · N validées » ; la séance enregistrée garde le travail. Le détail : « X kg total · dont Y kg de travail » + la réserve sous chaque série
+(`_reserveHistoTxt`). « Précédent » n'affiche que la série exacte de la dernière fois (« — » au-delà) ; la suggestion grise garde le repli. Nouvelle
+feuille **« 4 dernières séances »** (en-tête « Précédent ▾ » ou ⋯ → « 4 dernières séances ») : séries de travail par rang, échauffements à part,
+« — », même jour en deux colonnes (« 1ʳᵉ · 9 h », « 2ᵉ · 19 h »), RIR / X / notes, légende, aucun verdict, lecture seule ; `_seancesExercice`
+propriétaire de « la dernière fois » et « les N dernières fois ». Aides (règle d'or #11) : point rouge, aide « ? », aide détaillée, Guide, pop-up v79.
+
+**Tests.** Banc `tests/parcours/seance_recette.js` (blocs B-SR-① à ⑦, **77 témoins**, 4 largeurs, les 14 familles du brief) : **77 / 0**
+sur le code ; sur le code d'avant (`400b9034`) **24 verts / 53 rouges** — les verts sont les invariants protégés, les rouges le nouveau
+contrat. Il conduit aussi la chaîne complète (réponses au dock → « Terminer » → séance enregistrée → détail → rechargement) et la
+restauration locale (`_applyRestoreData`, aucune requête), et relit les six sources d'aide. Contrôle négatif `tools/mut_seance_recette.py` :
+**45 / 45 conformes** (arbre sain 0 rouge au début et à la fin ; la 1ʳᵉ campagne, 38 / 39, a fait durcir le témoin ④d — `BUGS.md` §88). Témoins existants mis à jour (R30) : runner CXLII
+(6 boutons), CL (ordre), B-CCCIV (libellés, ancien 0), XIX ④ (le repli n'est plus affiché), B-D086-①a/③a, B-RSS-①b/①c, B-FFD-⑩e ; ancres de
+mutation déplacées : `mut_rir_superset.py` M5, `mut_ux_d086.py` M4/M7. Voisins (sélecteur) : **18 / 18 verts** (`ux_integration` après mise à jour de B-UXI-F5 sur sa garantie, R30 — `BUGS.md` §88). Prompt de Milo
+**identique** entre l'ancien et le nouveau code (400 lignes, seule la ligne des empreintes de fichiers change). 1ʳᵉ passe complète D-031 (sur `87c349cd`) : 7 710 ✅ / 1 ❌ — **un seul rouge, et c'est le mien** : CCLXXVI (depuis le 08/09, aucune limite d'interface en `vh`, règle de cohérence) ; la nouvelle feuille portait `max-height:86vh` → `86dvh` (`b1840bc7`, une ligne de `style.css`, rien d'autre). *Aucun petit banc ne regardait cette règle : c'est la passe ENTIÈRE qui l'a vue.* 2ᵉ passe, en entier : **7 711 ✅ / 0 ❌** sur `b1840bc7` (4 conditions vertes, dans l'espace réseau isolé) ; annexe : 14 PASS + 1 défaut connu (discussions) ; mutations rejouées sur ce même arbre : **45 / 45** conformes.
+
+**Réserves.** ① Milo reçoit toujours « RIR0 » pour un ancien « échec » (aucun changement de contexte sans banc R34) — `JOURNAL-DE-TEST.md`. ②
+« Statistiques » reste la courbe de la charge max (échauffements compris, flèche ±kg / %, même date sans rang) — signalé, pas modifié. ③ « Échec »
+posé depuis la barre de repos ne rallonge pas le repos en cours (comme la pastille posée après la coche). ④ Un exercice présent deux fois dans une
+séance : seul le 1ᵉʳ bloc est lu (comme « Précédent »). ⑤ Le texte de l'aide « Tags de série » (« la lettre s'affiche sur le numéro ») est périmé depuis
+D-086 — hors périmètre, non corrigé.
+
+**Règle #17** : déclenchée — **1 donnée persistée** ajoutée (`rirV` sur une série, seulement sur les réponses nouvelles) · 0 clé de stockage · **7
+fichiers applicatifs** · **+242 − 35** lignes (net +207) · **3 anciens chemins** supprimés ou fusionnés (`_prevSeance` → `_seancesExercice` ; le
+libellé « échec » du cran 0 ; l'affichage du repli dans « Précédent »).
+
+**Clone (local, non poussé).** Candidat `claude/clone-seance-recette` @ `c77c4fe6` : un seul commit au-dessus de master `ed05faa1`, `clone/` seul (source `b1840bc7`) ; isolement 22 / 0 ; B-SR 77 / 0, rir_superset 52 / 0, ux_d086 122 / 0, fig_face_dos 77 / 0, seance_ux 69 / 0, ux_integration 69 / 0 rejoués À TRAVERS le clone. Production `ft-v1256` intouchée. ⏭️ Feu vert de Michel pour publier le clone, puis recette iPhone.
+⚠️ **Contrôle négatif de l'isolement : 7 / 8 pendant la passe complète, puis 8 / 8 rejoué seul, deux fois.** La mutation MI6 (le service worker du clone vide TOUS les caches) n'a pas été vue une fois, alors qu'elle l'avait été aux exécutions précédentes. **Sonde sur une copie** (3 passages avec MI6, 1 sans ; une ligne d'impression ajoutée au banc copié) : caches de la prod avant `["ft-images","ft-v1256"]`, après `["ft-v1256"]` — **`ft-v1256` réapparaît alors que tout a été vidé** : le service worker de la prod le recrée dès qu'il sert une page (son gestionnaire de navigation ouvre `ft-vNN`). B-CLONE-15, qui compare les NOMS des caches, ne voit donc la suppression que par `ft-images`, créé en arrière-plan à l'installation. *Prouvé : la réapparition. Non observé : un relevé de départ sans `ft-images` — la cause probable du 7 / 8.* Le code de D-093 ne touche ni au service worker ni à l'isolement. Piste, non faite ici (l'outil appartient à D-084) : relire les caches hors de la portée du service worker de la prod, ou comparer leur contenu.
+**Durée** : 19/10, 18:37 → 20/10 00:58 UTC.

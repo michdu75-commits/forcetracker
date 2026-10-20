@@ -4840,3 +4840,21 @@ rang, jamais une série recopiée. Témoins B-SR-⑤a, ⑤c, ⑥d ; runner XIX �
 
 **À quoi on le reconnaît.** Une valeur de **commodité** (repli, dernière connue, valeur par défaut) qui sort de son rôle — une suggestion qu'on
 laisse s'afficher à l'endroit où la personne lit des **faits**. Le repli peut rester ; il ne doit pas se présenter comme mesuré.
+
+## §88 — ⛔ PROUVER « RIEN N'A CHANGÉ » AVEC UN MORCEAU DE TEXTE : « RIR0 » ACCEPTAIT « RIR0? », « Précédent » REFUSAIT « Précédent ▾ » *(19/10/2026, même chantier — deux pièges de méthode, attrapés avant toute livraison)*
+
+**① Le témoin qui ne voyait pas un ajout (trouvé par le contrôle négatif).** 1ʳᵉ campagne : 38 / 39. La mutation M18 ajoutait un « ? » après
+l'ancien RIR 0 dans ce que Milo reçoit — un reclassement silencieux — et **aucun témoin ne rougissait** : B-SR-④d cherchait `/S3 60×9 RIR0/`, vrai
+pour « RIR0 » comme pour « RIR0? ». *Un témoin d'« inchangé » écrit comme une PRÉSENCE voit une suppression, jamais un ajout.* Corrigé : ④d
+compare la ligne envoyée à Milo série par série, au caractère près, avec une fin bornée ; vert sur le code d'avant (rien n'a changé), rouge sous M18.
+2ᵉ campagne : 45 / 45.
+
+**② Le témoin qui lisait un libellé au lieu d'une garantie (trouvé par les bancs voisins).** B-UXI-F5 (D-086) garantit « la colonne Précédent
+reste » mais l'écrivait `hdr.includes('Précédent')` — l'égalité exacte d'un libellé. D-093 ajoute « ▾ » quand l'exercice a un historique : 68 / 1,
+pour une colonne bien présente. Mis à jour sur sa garantie (`/^Précédent( ▾)?$/`, R30) ; la mutation M19 de `mut_ux_integration.py` le rougit
+toujours.
+
+**À quoi on le reconnaît.** Les deux sont le même défaut, à l'envers : **un témoin trop lâche** (un `includes` qui laisse passer un ajout) et **un
+témoin trop serré** (une égalité sur le mot alors qu'il protège une structure). *Prouver une absence de changement, c'est comparer le TOUT ;
+protéger une présence, c'est viser ce qui doit rester, pas son orthographe du jour.* Le premier ne se voit qu'au contrôle négatif, le second
+qu'au banc voisin — d'où les deux, à chaque fois.
