@@ -4770,6 +4770,8 @@ retrouvé, puis point absent) · `tools/mut_notes_d087.py` 21 / 21 (M9 rougit sa
 d'exercice différent), ou un vert qui resterait vert si la fonction n'existait pas. Avant de conclure « l'app a perdu X », refaire le
 geste **comme la personne** (faire défiler, ouvrir la carte) et vérifier que la sonde a bien atteint l'endroit voulu.
 
+↪️ **Suite (20/10/2026, audit des aides, lot final ft-v1257) — le même piège dans un témoin de la PASSE, pas d'un banc.** « Plus aucune aide ne décrit un bouton « 📉 −10% » » (`tests/parcours/runner.js`) ne lisait que `index.html` ; la phrase vivait dans `screens.js` (l'aide « ? » de Séance) → **vert pendant qu'elle s'affichait**. Corrigé : il lit le corpus des textes visibles, comme ses voisins — prouvé sur copies : rouge sur le code d'avant, vert après ; et le banc B-AID lit les aides **telles qu'affichées**. *Un témoin d'ABSENCE se prouve rouge sur le code qui porte le défaut : sans ça, on ne sait pas s'il regarde au bon endroit.*
+
 ## §84 — ⛔ REJOUER UN BANC À TRAVERS LE CLONE : UN ROUGE N'EST PAS UN DÉFAUT TANT QU'ON N'A PAS PROUVÉ SA CAUSE *(18/10/2026, publication de D-088 sur le clone — session-B, aucun code de l'app modifié)*
 
 **Symptôme.** Rejoués à travers le clone (shim d'isolement actif), deux bancs rougissent alors qu'ils sont verts sur leur arbre source : B-D086 120 / 2 (⑮b à
