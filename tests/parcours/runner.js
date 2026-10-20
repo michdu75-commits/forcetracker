@@ -22068,8 +22068,11 @@ console.log('\n-- CXCIX. La 3ᵉ porte du retour · le cloud · les textes péri
     !/[Rr]epos\s*20\s?s.{0,30}palier/.test(CORPUS), '');
   t('⭐ plus aucune surface ne décrit le volume par muscle « sur les 7 derniers jours »',
     !/7 derniers jours glissants/.test(CORPUS), '');
+  /* ⛔ CE TÉMOIN NE LISAIT QUE index.html (20/10/2026, audit des aides) : la phrase « 📉 −10% » vivait dans screens.js, il
+     était VERT pendant qu'elle s'affichait (`BUGS.md` §83 : un témoin qui regarde ailleurs ne protège rien). Il lit
+     maintenant le même corpus que ses voisins — rouge sur le code d'avant, vert après ; B-AID-②d lit les aides AFFICHÉES. */
   t('⭐ plus aucune aide ne décrit un bouton « 📉 −10% » : le pied d\'exercice en porte 3 (Super · Drop · +%)',
-    !/📉 −10%/.test(sansCom('index.html')), '');
+    !/📉 −10%/.test(CORPUS), '');
   /* ⑨ TÉMOIN DE RÈGLE (façon ft-v1081) : un compteur écrit à la main se périme au premier ajout.
      Celui-ci compare l'annonce au CONTENU RÉEL, il rougira au prochain badge. */
   const nbBadges=(()=>{const s=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
