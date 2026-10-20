@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — SÉANCE : corrections de la recette iPhone du 19/10/2026 + « Précédent » sur 4 séances (décisions de Michel du 19/10, D-093) :
    le compteur de travail (protégé), le volume total et le travail à part, le sélecteur de réserve Échec | 0 | 1 | 2 | 3 | 4+,
    le RIR dans le détail d'une séance, une colonne « Précédent » qui ne duplique plus, et la feuille « 4 dernières séances ».

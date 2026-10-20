@@ -1,7 +1,8 @@
 /* ═════════════════════════════════════════════════════════════════════════════════════════════
-   📐 D031S-B — VOLUME ET ÉCHAUFFEMENTS : TÉMOINS PRÉPARÉS POUR D-091 / D-092 — ⛔ NON BRANCHÉS (D-031-SÉCURITÉ-01, 19/10/2026)
-   ⛔⛔ CE FICHIER N'EST PAS CHARGÉ PAR LA PASSE. Il prépare, de façon INDÉPENDANTE du code de Principal, les témoins de la
-   règle décidée par Michel :
+   📐 D031S-B — VOLUME ET ÉCHAUFFEMENTS : TÉMOINS PRÉPARÉS POUR D-091 / D-092 (D-031-SÉCURITÉ-01, 19/10/2026)
+   ✅ BRANCHÉS DANS LA PASSE le 20/10/2026 par Principal, avec la livraison de D-091 (lot final ft-v1257) — ils étaient « non
+   branchés » jusque-là, en attente de D-091 (passation § 6). Ils préparent, de façon INDÉPENDANTE du code de Principal, les
+   témoins de la règle décidée par Michel :
      · toutes les séries VALIDÉES, échauffements compris, entrent dans le volume TOTAL et le nombre TOTAL de séries ;
      · les séries de TRAVAIL et leur volume restent identifiables séparément ;
      · les records, le 1RM, le RIR et les règles de Milo ne changent pas implicitement.

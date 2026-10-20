@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — LE RIR EN SUPERSET (19/10/2026, retour de recette iPhone de Michel sur le clone D-088) : au repos d'un superset, une
    question PAR MOUVEMENT, nommée, chacune enregistrée sur SA série jusqu'à la séance terminée, l'export, Milo et « Précédent ».
    Blocs B-RSS-*. Destiné à la passe complète (tests/parcours/runner.js). Vert sur la prod ft-v1256 ET sur D-088 (même moteur).

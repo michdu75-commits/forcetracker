@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* BANC — D031S-B (D-031-SÉCURITÉ-01, 19/10/2026) : les témoins PRÉPARÉS de D-091 (volume et échauffements), seuls.
-   ⛔ NON BRANCHÉS dans la passe : à brancher par Principal quand D-091 est livré. Sur le code d'avant D-091, les
-   témoins du TOTAL rougissent — c'est attendu. Garde réseau chargé en première ligne.
+   ✅ BRANCHÉS dans la passe le 20/10/2026 (Principal, livraison de D-091 avec ft-v1257). Ce lanceur les joue seuls. Sur le
+   code d'avant D-091, les témoins du TOTAL rougissent — c'est attendu. Garde réseau chargé en première ligne.
    Usage : node tools/banc_d091_volume_prepare.js */
 require('../tests/_garde_reseau.js');
 const IDF = require('../tests/identites_fictives.js');

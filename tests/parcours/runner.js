@@ -39845,6 +39845,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      rang, échauffements à part, deux séances du même jour distinctes, aucun verdict, rien d'écrit) ; dropset, superset, exercice
      remplacé ; 360 → 430 px. Blocs B-SR-*. Banc : tools/banc_seance_recette.js · contrôle négatif : tools/mut_seance_recette.py. */
   await require('./seance_recette.js').ecran(t, b, PORT);
+  /* 📐 D031S-B — LES TÉMOINS PRÉPARÉS DE D-091 (D-031-SÉCURITÉ-01, Claude Nutrition, 19/10/2026), BRANCHÉS le 20/10 par Principal
+     avec la livraison de D-091 (lot final ft-v1257), comme le prévoyait la passation (docs/D031-SECURITE-01.md § 6) : le panneau
+     « Ta séance jusqu'ici » compte les échauffements validés dans les TOTAUX et dit le travail à part ; la séance enregistrée
+     garde le TRAVAIL ; un échauffement ne fait jamais un record. Valeurs calculées à la main. Banc : tools/banc_d091_volume_prepare.js
+     · contrôle négatif : python3 tools/mut_d091_volume_prepare.py <arbre-qui-porte-D-091>. */
+  await require('./d091_volume_prepare.js').ecran(t, b, PORT);
   /* 🚪 ONBOARDING-QUICK-01 (session-B, 06/10/2026) — la première arrivée sans l'historique de l'app, l'email validé et
      expliqué, la vérification bornée sans écriture à l'aveugle, « Passer » sur petit iPhone. Banc : tools/banc_onboarding_quick.js. */
   await require('./onboarding_quick.js').ecran(t, b, PORT);

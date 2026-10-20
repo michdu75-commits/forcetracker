@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — « Ta séance jusqu'ici » : FACE · CHIFFRES · DOS (18/10/2026, décision D-091) : la figurine de face à gauche, les chiffres
    au centre, la figurine de dos à droite, visibles ensemble sans appui ; mêmes figurines, couleurs et moteur ; aucune donnée écrite.
    Blocs B-FFD-*. Destiné à la passe complète (tests/parcours/runner.js).
