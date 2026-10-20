@@ -4858,3 +4858,21 @@ toujours.
 témoin trop serré** (une égalité sur le mot alors qu'il protège une structure). *Prouver une absence de changement, c'est comparer le TOUT ;
 protéger une présence, c'est viser ce qui doit rester, pas son orthographe du jour.* Le premier ne se voit qu'au contrôle négatif, le second
 qu'au banc voisin — d'où les deux, à chaque fois.
+
+## §89 — ⛔ UN NOM QUI NE RETROUVE PAS SA DONNÉE : LA COLONNE « seance » DE L'EXPORT EST VIDE *(20/10/2026, recette iPhone de D-093 — trouvé par Michel, pas par un test)*
+
+**Le constat.** Dans l'export CSV de l'historique, la colonne `seance` est vide. **Mesuré dans le code** : elle lit `s.name || s.label`, alors que
+`finishWorkout` enregistre le nom d'une séance sous **`progLabel`** — et une séance libre n'en a aucun. Aucun écrivain ne pose `name` sur une séance
+enregistrée ; `label` n'existe que sur une séance proposée par Milo. Le même code est en production `ft-v1256` : **ce n'est pas une régression de D-093.**
+
+**Ce que ça empêche.** Distinguer deux séances du même jour dans l'export « sans débriefs » : ni nom, ni heure, ni identifiant (`seance_id` n'existe
+que dans l'export « avec débriefs », D-044).
+
+**Pourquoi rien ne l'a vu.** Aucun témoin ne vérifie qu'une colonne de l'export est REMPLIE pour une séance réelle : ils vérifient la liste des colonnes,
+ou comparent l'export à la fonction qui le produit (`_histoLignes`). *Un contrôle qui compare un résultat à la formule qui l'a produit ne peut pas rougir.*
+
+**Non corrigé — décision de Michel attendue.** Lire `progLabel` tient en une ligne ; ajouter une heure ou un identifiant change le format « sans », figé
+par D-044 et ses témoins. Classé : amélioration après la production (`docs/SUIVI-AUDIT.md`, R4).
+
+**À quoi on le reconnaît.** La famille « un nom qui ne retrouve pas sa donnée » (R36 ; ft-v1147 → ft-v1163) : deux endroits nomment la même chose
+autrement, rien ne plante, la colonne est juste vide.
