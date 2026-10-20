@@ -14,6 +14,10 @@ Pour chaque fichier inscrit « a migrer » dans tests/garde_existants.json :
 ⛔ Les fichiers « Milo — conserve (decision 3) » sont refuses (decision de Michel : on n'y touche pas).
 Usage : python3 tools/migrer_garde.py <fichier> [...]        (MIGRER_SEC=1 : affiche les ecarts complets)
         python3 tools/migrer_garde.py --essai <fichier> [...] (mesure seulement : ne touche ni au fichier ni a la liste)
+        python3 tools/migrer_garde.py --nouveau <fichier> [...]
+            un banc NON INSCRIT (cree apres le 19/10, p. ex. par une autre session) qui pilote Playwright sans le garde :
+            meme verification avant/apres ; la liste des anciens n'est PAS touchee (elle ne peut pas grandir : D031S-VII ⑤).
+            Refuse un fichier inscrit, deja garde, ou qui ne pilote pas Playwright.
 """
 import json, os, re, shutil, subprocess, sys, tempfile, time
 
@@ -70,6 +74,14 @@ def jouer(arbre, fichier):
     return {'code': code, 'v': verdicts(out), 'n': len(verdicts(out)), 'duree': round(time.time() - t0, 1), 'out': out}
 
 
+def nouveaux_cliquet(arbre):
+    """Les nouveaux points d'entree Playwright SANS garde selon le cliquet de la passe (D031S-VII ①) — sa definition, pas une copie."""
+    r = subprocess.run(['node', '-e', "process.stdout.write(JSON.stringify(require('./tests/parcours/garde_reseau.js').cliquet().nouveaux))"],
+                       cwd=arbre, capture_output=True, text=True)
+    if r.returncode: raise SystemExit('  !! le cliquet ne repond pas :\n' + r.stderr[-400:])
+    return set(json.loads(r.stdout))
+
+
 def ecart(a, b):
     # ⛔ un délai dépassé ne prouve rien (deux délais « identiques » ne sont pas une mesure) : refusé, jamais migré
     if 'DELAI' in (a['code'], b['code']): return 'non mesurable : delai depasse (%s s) avant=%s apres=%s' % (DELAI, a['code'], b['code'])
@@ -84,6 +96,7 @@ def ecart(a, b):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     essai = '--essai' in sys.argv
+    nouveau = '--nouveau' in sys.argv
     if not args:
         print(__doc__); return 2
     doc = json.load(open(LISTE, encoding='utf-8'))
@@ -95,8 +108,15 @@ def main():
     for f in args:
         f = os.path.relpath(os.path.abspath(f), SRC) if os.path.isabs(f) else f
         x = inscrits.get(f)
-        if not x: refuses.append((f, 'non inscrit dans tests/garde_existants.json')); print('  REFUSE   %s (non inscrit)' % f); continue
-        if x['etat'] != 'à migrer': refuses.append((f, x['etat'])); print('  REFUSE   %s (%s)' % (f, x['etat'])); continue
+        if nouveau:
+            # ⛔ un NOUVEAU banc : il doit etre, pour le cliquet lui-meme, un point d'entree Playwright SANS garde et NON inscrit
+            if x: refuses.append((f, 'inscrit dans la liste : sans --nouveau')); print('  REFUSE   %s (inscrit : sans --nouveau)' % f); continue
+            if f not in nouveaux_cliquet(arbre):
+                refuses.append((f, 'pas un nouveau point d\'entree sans garde (deja garde, ne pilote pas Playwright, ou absent)'))
+                print('  REFUSE   %s (pas un nouveau banc sans garde)' % f); continue
+        else:
+            if not x: refuses.append((f, 'non inscrit dans tests/garde_existants.json (un banc NOUVEAU : --nouveau)')); print('  REFUSE   %s (non inscrit : --nouveau ?)' % f); continue
+            if x['etat'] != 'à migrer': refuses.append((f, x['etat'])); print('  REFUSE   %s (%s)' % (f, x['etat'])); continue
         if not f.endswith('.js'): refuses.append((f, 'pas un fichier .js (migration a la main)')); print('  REFUSE   %s (pas .js)' % f); continue
         cible = os.path.join(arbre, f)
         original = open(cible, encoding='utf-8').read()
@@ -121,8 +141,9 @@ def main():
         print('  IDENTIQUE %-51s code %s · %d temoin(s) · %.0f s / %.0f s' % (f, apres['code'], apres['n'], avant['duree'], apres['duree']), flush=True)
         if not essai:                           # enregistre TOUT DE SUITE : une vague interrompue garde ce qu'elle a prouve
             shutil.copyfile(cible, os.path.join(SRC, f))
-            doc['fichiers'] = [x for x in doc['fichiers'] if x['fichier'] != f]
-            open(LISTE, 'w', encoding='utf-8').write(json.dumps(doc, ensure_ascii=False, indent=1) + '\n')
+            if not nouveau:                     # un ancien migre SORT de la liste ; un nouveau n'y a jamais ete
+                doc['fichiers'] = [x for x in doc['fichiers'] if x['fichier'] != f]
+                open(LISTE, 'w', encoding='utf-8').write(json.dumps(doc, ensure_ascii=False, indent=1) + '\n')
     shutil.rmtree(tmp, ignore_errors=True)
     print('\n%d migre(s)%s, %d refuse(s) ou en ecart' % (len(migres), ' (ESSAI : rien ecrit)' if essai else '', len(refuses)))
     for f, r in refuses: print('   - %s : %s' % (f, r[:160]))

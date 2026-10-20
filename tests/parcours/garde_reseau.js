@@ -217,6 +217,82 @@ module.exports.pointsEntree = () => {
   }
   return r;
 };
+/* ⛔ L'INVENTAIRE FIGÉ des anciens (état du 19/10/2026 après la 1ʳᵉ vague, arbre 80a28407 : 70 fichiers). La liste vivante
+   (tests/garde_existants.json) doit en rester un SOUS-ENSEMBLE : un ancien migré ou supprimé en sort, mais AUCUN fichier n'y
+   entre. Sans cet inventaire, inscrire un NOUVEAU banc dans la liste rendait D031S-VII ① vert — le contournement exact de la
+   décision 2 (trou mesuré le 20/10). ⛔ Ne jamais AJOUTER de nom ici : un nouveau banc se GARDE (tools/migrer_garde.py --nouveau). */
+const INVENTAIRE_FIGE_19_10 = new Set([
+  'tests/anneau/runner.js',
+  'tests/calculs/runner.js',
+  'tests/calendrier-milo/runner.js',
+  'tests/calendrier/runner.js',
+  'tests/croises/runner.js',
+  'tests/discussions/runner.js',
+  'tests/milo/ab-memoire.js',
+  'tests/milo/eval.js',
+  'tests/milo/r34_banc.js',
+  'tests/milo/runner.js',
+  'tests/muscles/runner.js',
+  'tests/questionnaire/runner.js',
+  'tests/recette/pwa_offline.js',
+  'tools/audit-prompt.js',
+  'tools/audit_milo_liens.js',
+  'tools/audit_nutri_moteur.js',
+  'tools/banc_cc01_dropset.js',
+  'tools/banc_clone_isolation.js',
+  'tools/banc_d088.js',
+  'tools/banc_debrief_demande.js',
+  'tools/banc_debrief_provenance.js',
+  'tools/banc_forensique_profil.js',
+  'tools/banc_fp01.js',
+  'tools/banc_import_echauffement.js',
+  'tools/banc_notes_d087.js',
+  'tools/banc_nutri_objectifs.js',
+  'tools/banc_progres_seances.js',
+  'tools/banc_seance_c1.js',
+  'tools/banc_seance_c2.js',
+  'tools/banc_seance_c3.js',
+  'tools/banc_seance_date.js',
+  'tools/banc_seance_unicite.js',
+  'tools/banc_seance_ux.js',
+  'tools/banc_session_integrity.js',
+  'tools/banc_travail_lot2.js',
+  'tools/banc_ux_d086.js',
+  'tools/banc_ux_integration.js',
+  'tools/banc_v8.js',
+  'tools/banc_v9.js',
+  'tools/cache-coupure.js',
+  'tools/captures-nutrition.js',
+  'tools/captures.js',
+  'tools/contre_audit_nutri.js',
+  'tools/corpus_nutri.js',
+  'tools/corpus_nutri_mg.js',
+  'tools/diag_seance01.js',
+  'tools/diff_nutri_lipides25.js',
+  'tools/diff_seance_ux.js',
+  'tools/dump_prompt.js',
+  'tools/exercices-muscles.js',
+  'tools/export_catalogue.js',
+  'tools/export_synonymes.js',
+  'tools/gen_reference_catalogue.js',
+  'tools/grille_import_map.js',
+  'tools/instantane_1b23.js',
+  'tools/instantane_douane.js',
+  'tools/instantane_food_lot_b.js',
+  'tools/instantane_foodlog_identite.js',
+  'tools/instantane_records.js',
+  'tools/instantane_ref100.js',
+  'tools/instantane_rythme_questions.js',
+  'tools/instantane_seance_audit.js',
+  'tools/mut_banc_portabilite.py',
+  'tools/r34_contexte.js',
+  'tools/ref_pdf_sans_si01.js',
+  'tools/remesure_nutrition.js',
+  'tools/simul_nutri_v2.js',
+  'tools/sonde_fuites_nutrition.js',
+  'tools/verrou_faits.js',
+  'tools/verrou_nutri.js',
+]);
 module.exports.cliquet = () => {
   const liste = JSON.parse(fs.readFileSync(path.join(RACINE, 'tests', 'garde_existants.json'), 'utf8'));
   const inscrits = new Map(liste.fichiers.map(x => [x.fichier, x]));
@@ -227,6 +303,7 @@ module.exports.cliquet = () => {
     nouveaux: pts.filter(p => !p.garde && !inscrits.has(p.f)).map(p => p.f),
     aRetirer: [...inscrits.keys()].filter(f => parF.has(f) && parF.get(f).garde),
     perimes: [...inscrits.keys()].filter(f => !parF.has(f)),
+    intrus: [...inscrits.keys()].filter(f => !INVENTAIRE_FIGE_19_10.has(f)),
   };
 };
 // ℹ️ compatibilité : le compte affiché au début de la passe vient du même scanner (R2 : une seule définition)
@@ -272,6 +349,8 @@ module.exports.obligatoire = function (t) {
     c.nouveaux.length === 0, c.nouveaux.slice(0, 8).join(' · ') + (c.nouveaux.length ? ' — charger le garde en 1ʳᵉ ligne : require(\'../tests/_garde_reseau.js\')' : ''));
   t('D031S-VII ② la liste des anciens (tests/garde_existants.json) ne fait que RÉTRÉCIR : aucun inscrit devenu gardé, aucune ligne périmée',
     c.aRetirer.length === 0 && c.perimes.length === 0, 'à retirer : ' + c.aRetirer.slice(0, 6).join(' · ') + ' | périmés : ' + c.perimes.slice(0, 6).join(' · '));
+  t('D031S-VII ⑤ la liste des anciens ne peut pas GRANDIR : chaque inscrit figure dans l\'inventaire figé du 19/10 — un nouveau banc se GARDE, il ne s\'inscrit pas',
+    c.intrus.length === 0, 'inscrit(s) hors inventaire : ' + c.intrus.slice(0, 6).join(' · ') + ' — le garder : python3 tools/migrer_garde.py --nouveau <fichier>');
   const ch = module.exports.cheminsGardes();
   t('D031S-VII ③ les chemins de lancement officiels chargent le garde : la passe, la recette annexe (ses 15 suites), tools/sous_garde.sh',
     Object.values(ch).every(Boolean), Object.entries(ch).filter(([, v]) => !v).map(([k]) => k).join(' · '));
