@@ -1,7 +1,7 @@
 {
-  "ref": "claude/ux-fig-face-dos-v2",
-  "sha": "e8ffb71cb9a869afbcac6d5591493d8ad711259a",
-  "genere_le": "2026-10-19 13:42 UTC",
+  "ref": "claude/seance-recette-precedent",
+  "sha": "b1840bc7115ededd435faffd114d8f1d4efb129f",
+  "genere_le": "2026-10-19 22:43 UTC",
   "fichiers": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "app.js"
   ],
   "banc_isolation": "22 OK / 0 rouge",
-  "empreinte": "0ac835d6169e0439a54b7426447256d3a92e6ac032ac442470c2fa9350866a19"
+  "empreinte": "24c8671e1655dbe981b52950e86d83604855cfc96ad990f2520513a4e69d5bb1"
 }
