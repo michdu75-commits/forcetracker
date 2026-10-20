@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — le bloc B-CCCLII seul (T01 + propriétés du moteur nutritionnel).
    ⛔ NON BRANCHÉ dans le runner de la passe complète : ces témoins figent un ÉTAT qui attend
       une décision de Michel. On les branchera au moment où cette décision sera prise. */

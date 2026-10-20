@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — FOOD SEMANTICS V1 / FS-05B (corpus MULTI-SOURCE de la recherche d'aliments), blocs B-CDXLI
    (structure du corpus), B-CDXLII (le corpus conduit par la VRAIE FRAPPE : CIQUAL, fast-food, Open Food Facts
    FIGÉ ; MUST et SHOULD rougissent, limites et observations sont signalées sans rougir) et B-CDXLIII

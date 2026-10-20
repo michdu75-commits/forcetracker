@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — les blocs B-CCCXXXVIII (source) et B-CCCXXXIX (conduit) seuls.
    ⭐ Il existe pour que le contrôle négatif rejoue 17 mutations en SECONDES au lieu de
    relancer une passe complète de 25 minutes à chaque fois. */

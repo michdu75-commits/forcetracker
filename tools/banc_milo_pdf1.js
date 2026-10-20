@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — MILO-PDF1 : une réponse coupée par la limite de longueur ne passe plus pour
    complète (B-CCCLXXVIII source, B-CCCLXXIX Worker conduit avec une API simulée, B-CCCLXXX écran).
    ⭐ Il existe pour le contrôle négatif (`tools/mut_milo_pdf1.py`) ET parce que le Worker n'est pas

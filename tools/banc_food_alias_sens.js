@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — NUT-LOT-A (13/10/2026) : les tables générées, alias + fast-food Quick. Blocs B-AS-D (les données
    générées), B-AS-G (les générateurs exécutés sur une COPIE de l'arbre) et B-AS-E (l'écran, par la VRAIE FRAPPE).
    Il existe pour que le contrôle négatif (`tools/mut_food_alias_sens.py`) rejoue ses mutations vite.

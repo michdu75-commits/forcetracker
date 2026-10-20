@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — FOOD SEMANTICS V1 / FS-05 (corpus de référence des recherches alimentaires), blocs B-CDXXXVIII
    (structure du corpus), B-CDXXXIX (le corpus conduit sur la vraie base, en ligne et hors ligne : MUST et SHOULD
    rougissent, les limites connues sont signalées sans rougir) et B-CDXL (déterminisme). Il existe pour que le

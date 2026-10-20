@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* Banc NUT-JOURNAL-QTY-GUARD-01 (LOT-C) — garde de quantite du Journal Nutrition, ajout ET modification.
  *
  * [!!] BANC A PART parce que le bloc de comportement est ASYNCHRONE. Le runner imprime son

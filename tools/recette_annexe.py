@@ -30,6 +30,19 @@ RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONF = os.path.join(RACINE, 'tests', 'recette', 'suites-annexes.json')
 CONNUS = os.path.join(RACINE, 'tests', 'recette', 'defauts-connus.json')
 DELAI = int(os.environ.get('RECETTE_DELAI', '900'))
+GARDE = os.path.join(RACINE, 'tests', '_garde_reseau.js')
+
+
+def _env_garde():
+    """⛔ D-031-SÉCURITÉ-01 (décision de Michel du 19/10/2026 : la protection réseau est OBLIGATOIRE) : chaque suite
+    tourne SOUS LE GARDE RÉSEAU sans être modifiée — Node le charge avant la suite (`--require`) ; il refuse toute sortie
+    et se PROUVE à chaque lancement de navigateur. Fermé par défaut : sans le fichier du garde, on s'arrête ici, et une
+    suite dont Node ne trouve pas le garde ne démarre pas (ERREUR D'INFRA)."""
+    if not os.path.exists(GARDE):
+        raise SystemExit('⛔ garde réseau introuvable (' + GARDE + ') : aucune suite ne tourne sans lui.')
+    e = dict(os.environ)
+    e['NODE_OPTIONS'] = ('--require "' + GARDE + '" ' + e.get('NODE_OPTIONS', '')).strip()
+    return e
 
 
 def rouges_de(sortie):
@@ -103,7 +116,7 @@ def lancer(suite):
     avant = etat_git()
     t0 = time.time()
     try:
-        r = subprocess.run(suite['commande'], cwd=RACINE, capture_output=True, text=True, timeout=DELAI)
+        r = subprocess.run(suite['commande'], cwd=RACINE, capture_output=True, text=True, timeout=DELAI, env=_env_garde())
         code, sortie, depasse = r.returncode, r.stdout + r.stderr, False
     except subprocess.TimeoutExpired as e:
         code, sortie, depasse = None, (e.stdout or b'').decode('utf-8', 'replace') if isinstance(e.stdout, bytes) else (e.stdout or ''), True

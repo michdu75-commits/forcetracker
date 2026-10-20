@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — NUT-D042-01 (D-042 : le générique pertinent avant le fast-food, la marque quand on la nomme),
    blocs B-D42-A (structure du corpus), B-D42-B (le corpus par la VRAIE FRAPPE : génériques, marques, formes, hors
    ligne, sources absentes, journal), B-D42-J (« Déjà noté par toi » inchangé) et B-D42-T (premier affichage).

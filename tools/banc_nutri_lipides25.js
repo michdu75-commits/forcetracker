@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — NUT-LIPIDES-25-01 (lipides des modes standards à 25 % de la cible), blocs B-CDXXV (source),
    B-CDXXVI (moteur conduit + grille) et B-CDXXVII (écran, aperçu, rechargement, Milo). Il existe pour que le
    contrôle négatif (`tools/mut_nutri_lipides25.py`) rejoue ses mutations en secondes au lieu d'une passe

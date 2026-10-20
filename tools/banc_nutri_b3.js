@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — Nutrition lot 1 (B3), blocs B-CDXV (source) → B-CDXVIII (moteur, écran, Milo).
    Il existe pour que le contrôle négatif (`tools/mut_nutri_b3.py`) rejoue ses mutations en
    minutes au lieu d'une passe complète. Usage : node tools/banc_nutri_b3.js (racine ou clone). */

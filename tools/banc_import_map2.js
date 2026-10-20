@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC — IMPORT-MAP-02 (session-B) : le matériel se lit à sa place (B-IMAP2-A/I/Q/D/X/H + corpus externe B-IMAP2-C).
    Destiné à la passe complète (tests/parcours/runner.js) après validation du checkpoint.
    Sert aussi au contrôle négatif : `python3 tools/mut_import_map2.py` (M1 → M7 et mutations déguisées).

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('../tests/_garde_reseau.js');   // ⛔ GARDE RÉSEAU EN 1ʳᵉ INSTRUCTION (D-031-SÉCURITÉ-01 — migration vérifiée avant/après : tools/migrer_garde.py)
 /* BANC CIBLÉ — Nutrition lot 2 (NUT-DASH1), blocs B-CDXX (source) et B-CDXXI (tableau de bord et onglet
    Nutrition rendus). Il existe pour que le contrôle négatif (`tools/mut_nutri_dash1.py`) rejoue ses
    mutations en secondes au lieu d'une passe complète. Usage : node tools/banc_nutri_dash1.js (racine ou clone). */
