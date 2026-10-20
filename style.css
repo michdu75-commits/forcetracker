@@ -859,6 +859,7 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
    suppression → Cobalt. La classe est posée par `terminerSeance` et retirée par `showConfirm` à chaque ouverture :
    toutes les autres confirmations (Supprimer, Vider, Abandonner…) gardent leur bouton rouge. */
 #ov-confirm.cf-seance #confirm-ok{background:var(--sea-fill);box-shadow:0 4px 20px rgba(47,91,255,.3);}
+#ov-session-end .se-fin{background:var(--sea-fill);color:#fff;box-shadow:0 4px 20px rgba(47,91,255,.3);}   /* lot final ft-v1257 : le « Terminer » de la fin = action de séance → Cobalt (D-085 B : le rouge = le destructif) ; même geste */
 
 /* ⑤ Menu ⋯ de la séance — actions rares rangées, actions à risque séparées en bas. */
 .wm-sheet{width:100%;max-width:430px;background:var(--bg2);border-radius:24px 24px 0 0;padding:8px 14px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -24px 60px rgba(0,0,0,.6);max-height:88dvh;overflow-y:auto;box-sizing:border-box;}

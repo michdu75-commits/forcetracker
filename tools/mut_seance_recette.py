@@ -21,6 +21,10 @@ SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = '400b9034'          # le code d'avant le chantier : « echec » = 0, « Precedent » repete, « Volume » = le travail
 LG, SE, CS, SC, CT, AP, CO, ST = 'log.js', 'setup.js', 'style.css', 'screens.js', 'constants.js', 'app.js', 'coach.js', 'state.js'
 FICHIERS = (LG, SE, CS, SC, CT, AP, CO, ST)
+# lot final ft-v1257 (20/10) : index.html et la capture du Guide deviennent mutables pour les mutations CIBLEES (M45 →) ;
+# M00 (le code d'AVANT) n'y touche pas. Une capture se mute en la remplacant par SA version a une revision git (ancre None).
+IX, IMG, IMG_AVANT = 'index.html', 'guide/seance.jpg', '3d01b2c2'   # 3d01b2c2 : la capture du 16/10 (l'ecran d'avant D-085)
+FICHIERS_MUT = FICHIERS + (IX,)
 
 MUT = [
     ('M00 le code d\'AVANT le chantier (400b9034), mot pour mot', 'AVANT', 'GARDE',
@@ -130,6 +134,44 @@ MUT = [
     ('M43 [deguisee] la DERNIERE annonce « Quoi de neuf » sur la reserve reprend l\'ancienne liste (sans 0)',
      [(CT, "① Après une série, la réserve se note <b>Échec · 0 · 1 · 2 · 3 · 4+</b>", "① Après une série, la réserve se note <b>échec · 1 · 2 · 3 · 4+</b>")],
      'GARDE', ('B-SR-③n',)),
+    # ── ⑧ le lot final ft-v1257 (consigne de Michel du 20/10) : aides N / E / X, capture du Guide, « Terminer » de la fin, carte
+    ('M45 l\'aide « ? » de Seance redit « touche le numero » et « N non affiche » (l\'ancienne phrase)',
+     [(SC, "N = Normal, par défaut · X = Échec musculaire. Chaque série porte sa <b>pastille</b> N, É ou X (colonne « Type ») : touche-la pour changer",
+           "N = Normal, par défaut, non affiché · X = Échec musculaire. La lettre s\\'affiche sur le <b>numéro</b> de la série : touche-le pour changer")],
+     'GARDE', ('B-SR-⑧a',)),
+    ('M46 [deguisee] l\'aide « ? » garde la pastille mais redit « non affiche »',
+     [(SC, "N = Normal, par défaut · X = Échec musculaire. Chaque série porte", "N = Normal, par défaut, non affiché · X = Échec musculaire. Chaque série porte")],
+     'GARDE', ('B-SR-⑧a',)),
+    ('M47 « Types de serie » remontre « — » pour Normal (la lettre N disparait de l\'aide)',
+     [(IX, 'border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">N</span>', 'border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">—</span>')],
+     'GARDE', ('B-SR-⑧b',)),
+    ('M48 [deguisee] la consigne de « Types de serie » redit « touche le numero de la serie »',
+     [(IX, "Touche la pastille N / É / X de la série (colonne « Type »), en séance,", "Touche le numéro de la série, en séance,")], 'GARDE', ('B-SR-⑧b',)),
+    ('M49 l\'aide detaillee redit « N … non affiche »',
+     [(CO, "N = Normal, par défaut · X = Échec musculaire. Tape la pastille de la série pour changer.",
+           "N = Normal, par défaut, non affiché · X = Échec musculaire. Tape la pastille pour changer.")], 'GARDE', ('B-SR-⑧c',)),
+    ('M50 la diapo « Ta seance » reprend l\'ancienne capture (16/10, « Terminer » rouge)', [(IMG, None, IMG_AVANT)], 'GARDE', ('B-SR-⑧f',)),
+    ('M51 [deguisee] le doigt de la diapo pointe la 3e serie (deja faite) au lieu de la serie en cours',
+     [(AP, "{img:'guide/seance.jpg',     tap:[.895,.48],", "{img:'guide/seance.jpg',     tap:[.895,.415],")], 'GARDE', ('B-SR-⑧g',)),
+    ('M52 le « Terminer » de la fin redevient rouge (btn-red)',
+     [(IX, '<button class="btn se-fin" onclick="closeSessionEnd()"', '<button class="btn btn-red" onclick="closeSessionEnd()"')], 'GARDE', ('B-SR-⑧i',)),
+    ('M53 [deguisee] le Cobalt de la fin prend la teinte TEXTE (--sea) au lieu du remplissage : faux en sombre',
+     [(CS, "#ov-session-end .se-fin{background:var(--sea-fill);", "#ov-session-end .se-fin{background:var(--sea);")], 'GARDE', ('B-SR-⑧i',)),
+    ('M54 [deguisee] le « Terminer » de la fin perd son texte blanc',
+     [(CS, "#ov-session-end .se-fin{background:var(--sea-fill);color:#fff;", "#ov-session-end .se-fin{background:var(--sea-fill);")], 'GARDE', ('B-SR-⑧i',)),
+    ('M55 le « Terminer » de la fin envoie au Coach au lieu de l\'Accueil (le geste change)',
+     [(IX, '<button class="btn se-fin" onclick="closeSessionEnd()"', '<button class="btn se-fin" onclick="closeSessionEnd(\'coach\')"')], 'GARDE', ('B-SR-⑧j',)),
+    ('M56 la carte de l\'historique redit « kg » seul',
+     [(SE, "Math.round(s.volume||0)+' kg de travail</span>'", "Math.round(s.volume||0)+' kg</span>'")], 'GARDE', ('B-SR-②g', 'B-SR-⑧l')),
+    ('M57 [deguisee] la carte dit « kg de travail » mais avec le TOTAL (echauffements compris)',
+     [(SE, "parts.push('<span class=\"sess-vol2\">'+Math.round(s.volume||0)+' kg de travail</span>')",
+           "parts.push('<span class=\"sess-vol2\">'+Math.round(_workVol(s,true))+' kg de travail</span>')")], 'GARDE', ('B-SR-②g',)),
+    ('M58 [deguisee] la ligne de la carte ne passe plus a la ligne (elle deborde a 320 px)',
+     [(CS, ".sess-meta{font-size:12px;color:var(--t2);margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;}",
+           ".sess-meta{font-size:12px;color:var(--t2);margin-bottom:6px;display:flex;align-items:center;flex-wrap:nowrap;white-space:nowrap;gap:4px;}")], 'GARDE', ('B-SR-⑧l',)),
+    ('M59 [equivalente] le Cobalt de la fin change d\'ombre : rien ne rougit',
+     [(CS, "#ov-session-end .se-fin{background:var(--sea-fill);color:#fff;box-shadow:0 4px 20px rgba(47,91,255,.3);}",
+           "#ov-session-end .se-fin{background:var(--sea-fill);color:#fff;box-shadow:0 2px 10px rgba(47,91,255,.25);}")], 'OK'),
     ('M44 [equivalente] une annonce PASSEE (v62, datee) garde l\'ancienne liste : elle n\'est pas lue, rien ne rougit',
      [(CT, "un tap : <b>échec · 1 · 2 · 3 · 4+</b>. ⚠️ Facultatif", "un tap : <b>échec · 1 · 2 · 3 · 4+</b> (texte d\\'époque). ⚠️ Facultatif")], 'OK'),
     ('M38 [equivalente] le bouton de fermeture de la feuille change de fond',
@@ -181,16 +223,24 @@ def une(m, avant):
             for f in FICHIERS:
                 open(os.path.join(arbre, f), 'w', encoding='utf-8').write(avant[f])
         else:
-            srcs = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
+            srcs = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS_MUT}
             invalide = []
             for f, av, ap in remplacements:
+                if av is None:   # un fichier BINAIRE remplace par sa version a la revision `ap` (la capture d'avant)
+                    data = subprocess.run(['git', 'show', ap + ':' + f], cwd=SRC, capture_output=True).stdout
+                    cur = open(os.path.join(arbre, f), 'rb').read()
+                    if not data or data == cur:
+                        invalide.append('%s@%s (introuvable ou identique)' % (f, ap))
+                    else:
+                        open(os.path.join(arbre, f), 'wb').write(data)
+                    continue
                 if srcs[f].count(av) != 1:
                     invalide.append('%s:%s (x%d)' % (f, av[:50], srcs[f].count(av)))
                 else:
                     srcs[f] = srcs[f].replace(av, ap, 1)
             if invalide:
                 return nom, None, 'INVALIDE (ancre absente ou multiple : %s)' % invalide, []
-            for f in FICHIERS:
+            for f in FICHIERS_MUT:
                 open(os.path.join(arbre, f), 'w', encoding='utf-8').write(srcs[f])
             # une mutation qui casse la SYNTAXE ne prouve rien (elle rougit tout) : on la refuse
             for f in FICHIERS:

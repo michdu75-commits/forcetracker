@@ -2236,7 +2236,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="se-debrief" id="se-debrief"></div>
     </div>
     <div class="se-mood" id="se-mood"></div>
-    <button class="btn btn-red" onclick="closeSessionEnd()" style="width:100%;margin-top:14px;padding:14px;font-size:16px;">Terminer</button>
+    <button class="btn se-fin" onclick="closeSessionEnd()" style="width:100%;margin-top:14px;padding:14px;font-size:16px;">Terminer</button>
     <button class="btn btn-bg2" onclick="closeSessionEnd('coach')" style="width:100%;margin-top:8px;padding:12px;font-size:14px;">💬 Continuer avec Milo</button>
   </div>
 </div>
@@ -2448,8 +2448,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <div><div style="font-weight:700;font-size:14px">Échauffement</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série légère de préparation. <strong>Exclue du volume et des PRs.</strong> Timer <strong>selon la charge du palier suivant</strong> : 45 s tant que c'est léger, 90 s à partir de 75 % de ta charge de travail, 2 min à partir de 85 % — jamais plus que ton propre repos. Précède automatiquement la 1ère série si tu as un historique.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
-        <span style="font-size:13px;font-weight:800;background:var(--bg3);border:1px solid rgba(240,240,255,.15);color:var(--t3);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">—</span>
-        <div><div style="font-weight:700;font-size:14px">Normal <span style="font-weight:400;font-size:12px;color:var(--t3)">(défaut, non affiché)</span></div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série de travail standard. <strong>Compte dans le volume et le 1RM.</strong> Timer selon ta préférence.</div></div>
+        <span style="font-size:13px;font-weight:800;background:var(--bg3);border:1px solid rgba(240,240,255,.15);color:var(--t3);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">N</span>
+        <div><div style="font-weight:700;font-size:14px">Normal <span style="font-weight:400;font-size:12px;color:var(--t3)">(par défaut)</span></div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série de travail standard. <strong>Compte dans le volume et le 1RM.</strong> Timer selon ta préférence.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.5);color:var(--red);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">X</span>
@@ -2459,7 +2459,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6">
       💡 Le <strong>1RM estimé</strong> s'affiche en temps réel dans la colonne 1RM de chaque série. Le <strong>volume</strong> affiché = séries de travail uniquement (échauffement exclu).
     </div>
-    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Touche le numéro de la série, en séance, pour changer le tag — le nom s'affiche en toast</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Touche la pastille N / É / X de la série (colonne « Type »), en séance, pour changer le tag — le nom s'affiche en toast</div>
     <div style="border-top:1px solid var(--sep);padding-top:16px;margin-bottom:12px">
       <div style="font-weight:800;font-size:15px;margin-bottom:12px;text-align:center">Chaînes d'exercices</div>
       <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5">Dans le footer d'un exercice, des boutons permettent d'enchaîner automatiquement plusieurs exercices ou séries :</div>

@@ -8507,7 +8507,7 @@ const _DRAWER_CONTENT = {
            maintenant sa charge. Une aide qui annonce un chiffre que l'app n'applique plus est
            pire qu'une aide absente, parce qu'on la croit (R23). Le détail va dans l'entrée 🔥
            juste en dessous — ici on renvoie, on ne réexplique pas (R25). */
-        {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Tape la pastille pour changer. Timer : <b>É de 45 s à 2 min selon la charge du palier</b> (voir « Ton échauffement se dose à ta charge ») · N 2:10 · X 4min.'},
+        {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut · X = Échec musculaire. Tape la pastille de la série pour changer. Timer : <b>É de 45 s à 2 min selon la charge du palier</b> (voir « Ton échauffement se dose à ta charge ») · N 2:10 · X 4min.'},
         /* 🔥 ft-v1082 — L'AIDE DÉTAILLÉE EST L'ENDROIT DU *POURQUOI*. Elle porte les trois choses
            qu'aucune autre surface ne dit : ① le chiffre mesuré qui a motivé le correctif ;
            ② les deux bornes (jamais moins qu'avant, jamais plus que TON repos de travail) ;

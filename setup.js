@@ -1873,7 +1873,7 @@ function _sessCarteHtml(s){
     if(_tag)parts.push('<span class="sess-date2">'+fmtD(s.date)+'</span>');
     // ⛔ « 0 kg » n'apprend rien sur un cardio, et laisse croire à une séance vide. On le retire
     //    UNIQUEMENT dans ce cas — une séance avec exercices garde sa ligne de volume, même à 0.
-    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg</span>');
+    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg de travail</span>');   // lot final ft-v1257 (Michel) : `volume` = le travail — le même nombre que « dont … kg de travail » du détail, qui dit le total
     // ⏱️ La durée était stockée depuis toujours et n'apparaissait NULLE PART (voir le
     //    commentaire du détail de séance plus haut). Ici on la met dans la liste : c'est
     //    là qu'on compare plusieurs séances d'un coup d'œil.

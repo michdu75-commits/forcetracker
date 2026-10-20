@@ -72,6 +72,15 @@ const HISTO_RIR = () => [
       S_(60, 8, 1, 'N', { rir: 0, rirV: 2 }), S_(60, 6, 1, 'X'), S_(55, 10, 1)] } ], { volume: 3330 }),
   sess('2026-10-10', 18, [{ name: SQ, sets: [S_(100, 5, 1), S_(100, 5, 1)] }]) ];
 const TAILLES = [[360, 740], [375, 667], [390, 844], [430, 932]];
+/* ⑧ LA SCÈNE DE LA DIAPO « TA SÉANCE » DU GUIDE (guide/seance.jpg, refaite pour le lot final du 20/10) — la même que la capture :
+   « Pousser », développé couché É 60 × 10 ✓, 80 × 8 ✓, 87,5 × 6 ✓, 87,5 × 6 en cours ; développé militaire et dips à faire. */
+const DM = 'Développé Militaire';
+const WKT_GUIDE = () => ({ date: '__TODAY__', startHour: 18, startTs: Date.now() - 23 * 60000, progLabel: 'Pousser', exs: [
+  { name: DC, sets: [S_(60, 10, 1, 'É'), S_(80, 8, 1), S_(87.5, 6, 1), S_(87.5, 6)] },
+  { name: DM, sets: [S_(45, 8), S_(45, 8), S_(45, 8)] },
+  { name: 'Dips', sets: [S_(0, 12), S_(0, 10), S_(0, 9)] } ] });
+const HISTO_GUIDE = () => [sess('2026-10-16', 18, [{ name: DC, sets: [S_(60, 10, 1, 'É'), S_(80, 8, 1), S_(85, 6, 1), S_(85, 6, 1)] },
+  { name: DM, sets: [S_(42.5, 8, 1), S_(42.5, 8, 1), S_(42.5, 8, 1)] }, { name: 'Dips', sets: [S_(0, 12, 1), S_(0, 10, 1), S_(0, 9, 1)] }], { progLabel: 'Pousser', volume: 2680 })];   // travail : 80 × 8 + 2 × 85 × 6 + 3 × 42,5 × 8 = 2 680 kg (compté à la main)
 /* Le bilan du mois écoulé est déjà « annoncé » (sinon sa pop-up s'ouvre 2,2 s après le chargement, par-dessus les gestes). Posé
    DANS la graine, pas à côté : à travers le clone, seule la graine reçoit le préfixe du clone. Mois de Paris, comme l'app. */
 const moisPrecedent = () => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit' }).format(new Date()).split('-');
@@ -220,7 +229,10 @@ async function ecran(t, b, PORT) {
     t('B-SR-②f ⭐ le détail de la séance (Progrès) : « 5 600 kg total · dont 4 200 kg de travail » (avant : « 4200 kg total », le travail présenté comme le total)',
       /5 600 kg total/.test(nb(sub)) && /dont 4 200 kg de travail/.test(nb(sub)), sub.slice(0, 120));
     const carteProgres = await X.pg.evaluate(() => { const s = S.sessions[0]; try { return _sessCarteHtml(s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); } catch (e) { return 'ERR ' + e.message; } });
-    t('B-SR-②g la carte de l\'historique (Progrès, liste) n\'est PAS touchée : elle garde le volume enregistré « 4200 kg »', /4200 kg/.test(carteProgres), carteProgres.slice(0, 160));
+    /* Réécrit le 20/10 (lot final ft-v1257, décision de Michel : la carte dit « kg de travail ») : la carte garde le volume
+       ENREGISTRÉ — le même nombre que « dont … kg de travail » du détail — et le NOMME, pour ne plus se lire comme le total. */
+    t('B-SR-②g la carte de l\'historique (Progrès, liste) garde le volume enregistré et le nomme : « 4200 kg de travail » — jamais le total 5 600',
+      /4200 kg de travail/.test(carteProgres) && !/5\s?600/.test(nb(carteProgres)), carteProgres.slice(0, 160));
     t('B-SR-②h aucune erreur de page, aucun appel d\'IA (fin de séance comprise)', X.errs.length === 0 && appelsIA(X).length === 0, X.errs.concat(appelsIA(X)).join(' | ').slice(0, 200));
     await X.cx.close();
     for (const [W, H] of TAILLES.filter(([w]) => w !== 390)) {
@@ -590,6 +602,130 @@ async function ecran(t, b, PORT) {
       _det({ okMenu, nomR, col: colR && colR.map(c => c.v), okR, cles: PR && PR.cles }));
     t('B-SR-⑦f aucune erreur de page, aucun appel d\'IA (dropset, superset, remplacement)', R.errs.length === 0 && appelsIA(R).length === 0, R.errs.concat(appelsIA(R)).join(' | ').slice(0, 200));
     await R.cx.close();
+  }
+  /* ══ ⑧ LE LOT FINAL ft-v1257 (consigne de Michel du 20/10, audit production ↔ clone : A1, A2, A3 et la réserve R1) ══════════
+     ① les aides des séries décrivent la PASTILLE N / É / X que chaque série porte (D-086 ①) — l'aide « ? » de Séance, la fenêtre
+       « Types de série » et l'aide détaillée : plus de « touche le numéro », plus de « N non affiché » ;
+     ② la capture de la diapo « Ta séance » du Guide montre l'écran d'aujourd'hui : son « Terminer » a la couleur de celui de
+       l'écran, et le doigt de la diapo tombe sur le ✓ de la série en cours ;
+     ③ le « Terminer » de la fenêtre de fin de séance est en Cobalt (le rouge est réservé au destructif, D-085 B), en sombre, en
+       clair et en vision basse — et il fait exactement ce qu'il faisait (fermer, revenir à l'Accueil, la séance enregistrée) ;
+     ④ la carte de l'historique dit « kg de travail » : le même nombre que « dont … kg de travail » du détail.
+     ⛔ Ce que ces témoins ne couvrent pas : le rendu de la capture sur l'iPhone (taille du texte, netteté). ══════════════════════ */
+  {
+    const X = await ouvrir({ sessions: HISTO_GUIDE(), wkt: WKT_X() });
+    // les pastilles réellement affichées sur les séries (É, N, X, N) : c'est ce que les aides doivent décrire
+    await ouvrirEx(X, 0);
+    const pastilles = await X.pg.evaluate(() => [0, 1, 2, 3].map(si => { const b = document.querySelector('#tbtn-0-' + si + ' .tbtn'); return b ? b.textContent.trim() : null; }));
+    // ① l'aide « ? » de Séance, par son vrai chemin : ⋯ de la séance → « Aide de l'écran Séance »
+    const okMenu = await clic(X.pg, '[onclick*="openWktMenu("]');
+    const okAide = okMenu && await clic(X.pg, '#ov-wkt-menu [onclick*="showHelp()"]');
+    const aideTags = await X.pg.evaluate(() => { const it = [...document.querySelectorAll('#help-content .help-item-text')].find(e => /Tags de série/.test(e.textContent));
+      return it ? it.textContent.replace(/\s+/g, ' ') : ''; });
+    await nettoyer(X.pg);
+    t('B-SR-⑧a ⭐ l\'aide « ? » de Séance (⋯ → Aide de l\'écran Séance) décrit la PASTILLE de la série : « pastille », N, É et X — plus « touche le numéro », plus « non affiché »',
+      _det(pastilles) === _det(['É', 'N', 'X', 'N']) && okAide && /pastille/i.test(aideTags) && /N = Normal/.test(aideTags) && /É = Échauffement/.test(aideTags) && /X = Échec/.test(aideTags)
+        && !/num[ée]ro/i.test(aideTags) && !/non affich/i.test(aideTags), _det({ pastilles, okAide, aideTags: aideTags.slice(0, 220) }));
+    // ① la fenêtre « Types de série », par son vrai chemin : ⋯ de l'exercice → « Types de série »
+    await X.pg.evaluate(() => openExMenu(0, false)); await X.pg.waitForTimeout(250);
+    const okTypes = await clic(X.pg, '#ov-ex-menu button', 'Types de série');
+    const th = await X.pg.evaluate(() => { const ov = document.getElementById('ov-type-help'); if (!ov || !ov.classList.contains('open')) return null;
+      const lignes = [...ov.querySelectorAll('div')].filter(d => d.children.length === 2 && d.children[0].tagName === 'SPAN' && d.children[0].textContent.trim().length <= 2);
+      return { badges: lignes.map(d => d.children[0].textContent.trim()), noms: lignes.map(d => ((d.children[1].querySelector('div') || {}).textContent || '').replace(/\s+/g, ' ').trim()),
+        types: (typeof SET_TYPES !== 'undefined' ? SET_TYPES.slice() : []), libelles: (typeof SET_TYPE_LABELS !== 'undefined' ? Object.assign({}, SET_TYPE_LABELS) : {}),
+        texte: ov.textContent.replace(/\s+/g, ' ') }; });
+    await nettoyer(X.pg);
+    t('B-SR-⑧b ⭐ « Types de série » (⋯ → Types de série) montre les MÊMES lettres que les pastilles (N, É, X — chacune avec son nom), plus de « — » ; la consigne dit de toucher la pastille, plus le numéro ; plus de « non affiché »',
+      okTypes && !!th && _det(th.badges.slice().sort()) === _det(th.types.slice().sort()) && th.badges.every((b, i) => th.noms[i].indexOf(th.libelles[b]) === 0)
+        && /pastille/i.test(th.texte) && !/num[ée]ro de la s[ée]rie/i.test(th.texte) && !/non affich/i.test(th.texte), _det(th && { badges: th.badges, noms: th.noms, types: th.types }));
+    // ① l'aide détaillée (Menu → Aide détaillée)
+    const det = await X.pg.evaluate(() => { if (typeof openDrawerContent !== 'function') return 'absente'; openDrawerContent('help');
+      const b = document.getElementById('drawer-cnt-body'); const txt = b ? b.textContent.replace(/\s+/g, ' ') : '';
+      const i = txt.indexOf('Tags de série'); return i < 0 ? '' : txt.slice(i, i + 260); });
+    await nettoyer(X.pg);
+    t('B-SR-⑧c l\'aide détaillée (« Tags de série ») ne dit plus « N … non affiché » : elle parle de la pastille',
+      /Tags de série/.test(det) && /pastille/i.test(det) && !/non affich/i.test(det), det.slice(0, 200));
+    t('B-SR-⑧d aucune erreur de page, aucun appel d\'IA (aides)', X.errs.length === 0 && appelsIA(X).length === 0, X.errs.concat(appelsIA(X)).join(' | ').slice(0, 200));
+    await X.cx.close();
+  }
+  {
+    // ② la diapo « Ta séance » du Guide, mesurée CONTRE l'écran actuel (390 × 844, le format de la capture)
+    const G = await ouvrir({ sessions: HISTO_GUIDE(), wkt: WKT_GUIDE() });
+    await ouvrirEx(G, 0);
+    const g = await G.pg.evaluate(async () => {
+      const sl = (typeof APP_GUIDE_SLIDES !== 'undefined' ? APP_GUIDE_SLIDES : []).filter(s => s && s.t === 'Ta séance');
+      if (sl.length !== 1) return { n: sl.length };
+      const s = sl[0], img = new Image(); img.src = s.img;
+      const ok = await new Promise(r => { img.onload = () => r(true); img.onerror = () => r(false); });
+      if (!ok) return { n: 1, img: s.img, charge: false };
+      const W = innerWidth, H = innerHeight, c = document.createElement('canvas'); c.width = W; c.height = H;
+      const cx = c.getContext('2d'); cx.drawImage(img, 0, 0, W, H);
+      const fin = document.querySelector('#tb-seance .tbs-fin'), chk = document.querySelector('#sr-0-3 .chk');
+      if (!fin || !chk) return { n: 1, charge: true, fin: !!fin, chk: !!chk };
+      const b = fin.getBoundingClientRect();
+      const d = cx.getImageData(Math.round(b.left + 4), Math.round(b.top + 4), Math.max(1, Math.round(b.width - 8)), Math.max(1, Math.round(b.height - 8))).data;
+      const R = [], V = [], B = []; for (let i = 0; i < d.length; i += 4) { R.push(d[i]); V.push(d[i + 1]); B.push(d[i + 2]); }
+      const med = a => a.sort((x, y) => x - y)[a.length >> 1];
+      const vivant = getComputedStyle(fin).backgroundColor.match(/\d+/g).slice(0, 3).map(Number);
+      const k = chk.getBoundingClientRect();
+      return { n: 1, charge: true, nw: img.naturalWidth, nh: img.naturalHeight, image: [med(R), med(V), med(B)], vivant, tap: s.tap,
+        chk: [k.left, k.top, k.right, k.bottom], W, H, cap: s.cap || '' }; });
+    const dist = g && g.image && g.vivant ? Math.round(Math.hypot(g.image[0] - g.vivant[0], g.image[1] - g.vivant[1], g.image[2] - g.vivant[2])) : null;
+    t('B-SR-⑧e la diapo « Ta séance » existe une seule fois, son image se charge au format de l\'écran (780 × 1688 = 390 × 844 en ×2)',
+      !!g && g.n === 1 && g.charge === true && g.nw === 780 && g.nh === 1688, _det(g && { n: g.n, charge: g.charge, nw: g.nw, nh: g.nh }));
+    t('B-SR-⑧f ⭐ la capture montre l\'écran d\'AUJOURD\'HUI : à l\'endroit du « Terminer » de l\'écran, l\'image a SA couleur (Cobalt) — l\'ancienne capture le montrait rouge',
+      dist !== null && dist <= 60, _det({ image: g && g.image, vivant: g && g.vivant, dist }));
+    const tx = g && g.tap ? g.tap[0] * g.W : -1, ty = g && g.tap ? g.tap[1] * g.H : -1, M = 6;
+    t('B-SR-⑧g ⭐ le doigt de la diapo tombe sur le ✓ de la série EN COURS (4ᵉ série du développé couché) de l\'écran d\'aujourd\'hui',
+      !!g && !!g.chk && tx >= g.chk[0] - M && tx <= g.chk[2] + M && ty >= g.chk[1] - M && ty <= g.chk[3] + M, _det({ tap: g && g.tap, px: [Math.round(tx), Math.round(ty)], chk: g && g.chk && g.chk.map(Math.round) }));
+    t('B-SR-⑧h aucune erreur de page, aucun appel d\'IA (diapo du Guide)', G.errs.length === 0 && appelsIA(G).length === 0, G.errs.concat(appelsIA(G)).join(' | ').slice(0, 200));
+    await G.cx.close();
+  }
+  {
+    // ③ le « Terminer » de la fenêtre de fin de séance : la couleur des actions de séance, le même geste
+    const X = await ouvrir({ wkt: WKT_RECETTE(true) });
+    const avant = await X.pg.evaluate(() => (S.sessions || []).length);
+    const r = await terminer(X);
+    const couleurs = await X.pg.evaluate(async () => {
+      const root = document.getElementById('root'), ov = document.getElementById('ov-session-end');
+      const btn = ov && [...ov.querySelectorAll('button')].find(b => b.textContent.trim() === 'Terminer');
+      if (!btn) return null;
+      const sonde = document.createElement('div'); sonde.style.background = 'var(--sea-fill)'; ov.appendChild(sonde);
+      const lire = async cls => { root.classList.add(...cls); await new Promise(z => setTimeout(z, 350));
+        const cs = getComputedStyle(btn), o = { mode: cls.join('+') || 'sombre', fond: cs.backgroundColor, image: cs.backgroundImage, texte: cs.color, cobalt: getComputedStyle(sonde).backgroundColor, rouge: btn.classList.contains('btn-red') };
+        root.classList.remove(...cls); return o; };
+      const out = [await lire([]), await lire(['light-mode']), await lire(['a11y-lv'])];
+      sonde.remove(); await new Promise(z => setTimeout(z, 350));
+      return { out, onclick: btn.getAttribute('onclick'), texte: btn.textContent.trim() }; });
+    t('B-SR-⑧i ⭐ fin de séance : le bouton « Terminer » est en Cobalt (la couleur des actions de séance, le jeton --sea-fill), texte blanc, sans dégradé rouge — en sombre, en clair et en vision basse',
+      r.okT && !!couleurs && couleurs.out.every(o => o.fond === o.cobalt && o.image === 'none' && o.texte === 'rgb(255, 255, 255)' && !o.rouge), _det(couleurs));
+    // le même geste qu'avant : fermer, revenir à l'Accueil, la séance reste enregistrée
+    const okClic = await clic(X.pg, '#ov-session-end button', 'Terminer');
+    const apres = await X.pg.evaluate(() => ({ ouverte: document.getElementById('ov-session-end').classList.contains('open'), ecran: window._curScreen, n: (S.sessions || []).length, seance: _seanceOuverte() }));
+    t('B-SR-⑧j le « Terminer » de la fin fait exactement ce qu\'il faisait : onclick closeSessionEnd() inchangé, la fenêtre se ferme, retour à l\'Accueil, la séance est enregistrée une fois',
+      !!couleurs && couleurs.onclick === 'closeSessionEnd()' && couleurs.texte === 'Terminer' && okClic && !apres.ouverte && apres.ecran === 'home' && apres.n === avant + 1 && !apres.seance,
+      _det({ onclick: couleurs && couleurs.onclick, okClic, apres, avant }));
+    t('B-SR-⑧k aucune erreur de page, aucun appel d\'IA (fin de séance)', X.errs.length === 0 && appelsIA(X).length === 0, X.errs.concat(appelsIA(X)).join(' | ').slice(0, 200));
+    await X.cx.close();
+  }
+  {
+    // ④ la carte de l'historique : « kg de travail », le même nombre que le détail ; elle tient sur iPhone
+    const sansEch = sess(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date()), 7, [{ name: DC, sets: [S_(60, 10, 1), S_(60, 10, 1), S_(60, 8, 1)] }], { volume: 1680, duration: 3900, calories: 420 });   // 600 + 600 + 480 ; durée et calories : la ligne la plus longue
+    for (const [W, H] of [[320, 640]].concat(TAILLES)) {
+      const Q = await ouvrir({ sessions: [sansEch].concat(HISTO_GUIDE()), w: W, h: H });
+      const q = await Q.pg.evaluate(async () => { goSessionsHistory(); await new Promise(z => setTimeout(z, 700));
+        const cartes = [...document.querySelectorAll('#sess-list .sess-card')];
+        const c0 = cartes.find(c => /Développé Couché/.test(c.textContent) && !/Pousser/.test(c.textContent));
+        const v = c0 && c0.querySelector('.sess-vol2'), m = c0 && c0.querySelector('.sess-meta');
+        const rv = v && v.getBoundingClientRect(), rc = c0 && c0.getBoundingClientRect();
+        const s = S.sessions.find(x => !x.progLabel); openSessDetail(s.ts || s.id);
+        const sub = ((document.getElementById('sd-sub') || {}).textContent || '').replace(/\s+/g, ' ');
+        return { n: cartes.length, vol: v ? v.textContent.trim() : null, sub, deborde: !!m && m.scrollWidth > m.clientWidth + 0.5,
+          dedans: !!rv && !!rc && rv.left >= rc.left - 0.5 && rv.right <= rc.right + 0.5, docW: document.documentElement.scrollWidth, vw: innerWidth }; });
+      t('B-SR-⑧l ' + W + ' px : une séance sans échauffement — la carte dit « 1680 kg de travail », le détail « 1 680 kg total » (le même nombre) ; la ligne (date · volume · durée · calories) passe à la ligne dans la carte, pas de défilement horizontal',
+        q.vol === '1680 kg de travail' && /^1\s?680 kg total/.test(nb(q.sub)) && !q.deborde && q.dedans && q.docW <= q.vw, _det(q));
+      await Q.cx.close();
+    }
   }
 }
 
