@@ -68,6 +68,12 @@ Mesuré sur le code de master (banc ci-dessous, vrais clics, données inventées
 - **T0** : `git diff --check` propre · `check_regles.py` vert (seul avertissement : `PROMPT-MILO-REEL.txt` périmé, déjà
   signalé sur master) · `recette_selecteur.py --auto-test` 15 / 0.
 
+- **Passe complète D-031 Sécurité : 7 823 ✅ / 0 ❌** sur `35bd9b11` (tree `6f7378e1`), **4 conditions vertes**
+  (`tools/passe_valide.sh`, réseau coupé par l'isolement système ; ④ revérifiée hors isolement par un vrai fetch : master
+  `bdfc6d27`, retard 0), 104 min, SORTIE = 0. Les 32 témoins M6 y sont verts. Depuis : documentation seulement (D-031).
+
+**Statut : prêt à intégrer — sans fusion ni publication tant que Michel n'a pas dit oui.** Aucun numéro de version n'est posé.
+
 ## 4. Rejouer
 
 ```
