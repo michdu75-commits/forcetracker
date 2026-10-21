@@ -39694,6 +39694,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      ligne, hors ligne, journal amorcé), B-LB-I (instantané de la base), B-LB-C (compléments), contrôle négatif
      `tools/mut_nut_lot_b.py`. */
   await require('./food_lot_b.js').ecran(t, b, PORT);
+  /* 🧹 NUT-M6-REJEU-01 (21/10/2026, ordre de travail de Michel) : le rejeu d'un repas habituel et l'ajout rapide ne
+     lisent plus l'écran d'ajout (marqueur `ecran:false` porté par la provenance, 4 lectures gardées, provenance rendue
+     dans un `finally`) ; les 4 « Ajouter » depuis l'écran ne changent pas. Blocs B-NM6-S / A / Q / MQ (vrais clics,
+     données inventées), cliquet de source B-NM6-C plus bas ; banc `tools/banc_nut_m6_rejeu.js`, contrôle négatif
+     `tools/mut_nut_m6_rejeu.py`. */
+  await require('./nut_m6_rejeu.js').ecran(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40721,6 +40727,7 @@ require('./food_d042.js').source(t, ROOT, fs, path);
 require('./food_variants.js').source(t, ROOT, fs, path);
 require('./food_alias_sens.js').source(t, ROOT, fs, path);
 require('./food_lot_b.js').source(t, ROOT, fs, path);
+require('./nut_m6_rejeu.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);
