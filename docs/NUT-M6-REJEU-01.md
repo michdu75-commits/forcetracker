@@ -37,10 +37,23 @@ Mesuré sur le code de master (banc ci-dessous, vrais clics, données inventées
   S4, S5 (contamination), MQ ③ et ⑤ (provenance qui fuit après une panne), 9 témoins du cliquet de source.
 - **Branché dans la passe complète** (comportement dans la section navigateur, cliquet B-NM6-C dans la section synchrone)
   et **déclaré au registre de recette** (scénario NUTRI-JOURNAL-01, avec les 6 fonctions qui manquaient).
-- **En cours au moment de ce commit** : le contrôle négatif (16 mutations), les bancs voisins désignés par le sélecteur
-  (`journal_qty_guard`, `repas_actif`, `ia_ref100`, `pots_nutrition`, l'annexe), les instantanés `instantane_douane` et
-  `instantane_1b23` (master ↔ branche), puis la passe complète D-031 Sécurité. Les résultats seront écrits ici et dans
-  `docs/SUIVI-AUDIT.md` à la clôture du lot.
+- **Contrôle négatif `tools/mut_nut_m6_rejeu.py` : 16 / 16 conformes**, sur des copies de l'arbre (arbre sain d'abord :
+  32 / 0). Chaque mutation doit rougir **les témoins prévus**, pas seulement « un » témoin :
+
+  | Mutation | Témoins qui rougissent |
+  |---|---|
+  | N1 → N4 : une des 4 gardes retirée | son scénario (S1+S5, S2+S2b, S3, S4) + sa ligne du cliquet (⑥ → ⑨) |
+  | N5 : le rejeu ne pose plus le marqueur | les 6 scénarios contaminés + cliquet ② |
+  | N5b : l'ajout rapide ne pose plus le marqueur | **cliquet ③ seul** (aucun changement de comportement : c'est son rôle) |
+  | N6 : « fermé par défaut » | les 4 « Ajouter » + MQ ⑤ + cliquet ⑤ |
+  | N7 : l'oracle lui-même (source semée à 120 g, attendu 125 g écrit à la main) | les 8 scénarios S0 → S6 |
+  | N8 : remise à zéro de l'écran en tête du rejeu (interdite) | S⑦ |
+  | N9 / N10 : les `finally` retirés | MQ ③ + cliquet ⑩ / MQ ④ ⑤ + cliquet ⑪ |
+  | N11 : un 4ᵉ écrivain de `_provFood` | cliquet ① |
+  | N12 : le marqueur descend dans la ligne | MQ ① + les 8 scénarios + Q ① ② + cliquet ⑤ |
+  | N13 : `_provFood` ne lit plus le marqueur · N14 : `addFoodEntry` le pose | 6 scénarios + ⑤ · les 4 « Ajouter » + MQ ⑤ + ④ |
+  | MC1 : un commentaire seul (contre-épreuve) | aucun (32 / 0) |
+- **Bancs voisins, instantanés master ↔ branche, passe complète** : voir plus bas et `docs/SUIVI-AUDIT.md`.
 
 ## 4. Rejouer
 
