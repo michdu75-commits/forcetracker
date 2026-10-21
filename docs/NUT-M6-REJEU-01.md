@@ -2,7 +2,9 @@
 
 > **Ordre de travail prioritaire de Michel du 21/10/2026** (Nutrition = priorité n°1, M6 d'abord).
 > Session-A (couloir Nutrition). Branche dédiée **`claude/nut-m6-rejeu-01`**, depuis master `bdfc6d27` (`ft-v1257`).
-> **Non fusionné, non publié, aucune version, aucun déploiement, aucune donnée réelle touchée.**
+> ⏳ **Publication autorisée par Michel le 21/10 (ce lot seul) en `ft-v1258`, à exécuter par Claude Principal ; commit de version
+> préparé par session-A, NON PUBLIÉ.** Le résultat réel du déploiement est consigné après coup, jamais avant. Pages seulement :
+> ni Apps Script, ni Worker, aucune donnée réelle touchée.
 > Décision : **D-094** · catalogue des bugs : **`BUGS.md` §90**.
 
 ## 1. Le défaut
@@ -72,7 +74,7 @@ Mesuré sur le code de master (banc ci-dessous, vrais clics, données inventées
   (`tools/passe_valide.sh`, réseau coupé par l'isolement système ; ④ revérifiée hors isolement par un vrai fetch : master
   `bdfc6d27`, retard 0), 104 min, SORTIE = 0. Les 32 témoins M6 y sont verts. Depuis : documentation seulement (D-031).
 
-**Statut : prêt à intégrer — sans fusion ni publication tant que Michel n'a pas dit oui.** Aucun numéro de version n'est posé.
+**Statut (21/10, 10:50) : prêt à intégrer.** ↪️ **Publication autorisée par Michel le 21/10 pour ce lot seul** : voir §6 et §7.
 
 ## 4. Rejouer
 
@@ -90,8 +92,40 @@ python3 tools/mut_nut_m6_rejeu.py N5            # une seule mutation
 - Une panne au milieu d'un rejeu laisse les aliments déjà traités **en mémoire** (non enregistrés) : comportement d'avant,
   inchangé, hors périmètre.
 
-## 6. Pour intégrer (seulement avec l'accord de Michel)
+## 6. Intégration et publication (feu vert conditionnel de Michel, 21/10 : ce lot seul, `ft-v1258`)
+
+*Ce qui était prévu, gardé tel quel :*
 
 Refusionner master s'il a bougé, rejouer le banc et la passe complète D-031 (4 conditions), poser le numéro de version
 au moment du push seulement. ⚖️ **Pas de pop-up** : c'est un correctif, rien n'est à faire pour la personne et aucun
 repère ne bouge. Aucune aide à réécrire (aucun texte ne décrivait le comportement fautif).
+
+**Fait le 21/10** : master `bdfc6d27` inchangé depuis la création de la branche (vérifié sur le serveur, aucun run en cours,
+aucune ligne 🟡 au journal de partage), donc **aucune refusion** ; depuis la passe complète, **documentation seulement**
+(`35bd9b11` → tête : 4 fichiers `docs/`) ; fichiers intégrés : `app.js` (seul fichier applicatif) + bancs, outils, registre,
+documents ; aucun fichier serveur (`Code.js`, `appsscript.json`, `.claspignore`, `worker.js`, `wrangler.toml`, `.github/`) ni
+`state.js` ; aucune clé de stockage nouvelle ; aucune donnée personnelle (données de test inventées « (test) », aucune adresse).
+Le numéro `ft-v1258` est posé au commit de publication seulement (clé de cache de `sw.js`, entête de `CLAUDE.md`).
+
+## 7. Retour arrière (préparé ; À REJOUER À BLANC avant la publication — non rejoué le 21/10)
+
+⛔ Jamais lancé sans décision de Michel, jamais par un push forcé, et **jamais avec une clé de cache déjà diffusée** :
+`ft-v1257` est diffusée et `ft-v1258` le sera dès la publication : le retour arrière emploie **`ft-v1259`** (ou la suivante libre).
+Il remet l'**ancien code** (le seul fichier applicatif du lot, `app.js`, tel qu'en `ft-v1257`) ; il ne touche à **aucune
+donnée** — rien n'a été écrit dans les données par M6, il n'y a donc rien à défaire côté utilisateurs.
+
+```
+git fetch origin master && git checkout -B retour-m6 origin/master
+git checkout bdfc6d27 -- app.js                        # app.js de ft-v1257 (tag local : avant-ft-v1258)
+# sw.js : const CACHE = 'ft-v1258' → 'ft-v1259' (garder la ligne de description, en ajouter une) ;
+# CLAUDE.md : entête « ft-v1259 (prochaine : ft-v1260) » + entrée ft-v1259 (journal > 8 entrées : déménager la plus
+#   ancienne à la FIN de docs/JOURNAL-ARCHIVE.md) ; docs/CONTEXTE-ACTUEL.md : puce « Version en ligne »
+python3 tools/check_regles.py                          # vert attendu
+git commit -am "ft-v1259 — retour arrière de M6 : app.js de ft-v1257, nouvelle clé de cache"
+git push origin HEAD:master                            # avance rapide uniquement, jamais --force
+```
+
+Ce qu'il faut savoir avant de le lancer : les **32 témoins M6 restent dans le dépôt** et rougiront dans la passe (attendu : 17 rouges,
+ceux mesurés sur `ft-v1257` le 21/10 au matin — `app.js` y redevient identique à l'octet) — c'est attendu et honnête, le défaut M6 revient avec l'ancien code ; **on ne les débranche
+pas**. Les lignes ajoutées entre-temps par l'app (`ft-v1258`) restent valides : elles ont le format d'avant (le marqueur
+n'entre jamais dans une ligne — témoin B-NM6-MQ ①).
