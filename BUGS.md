@@ -4878,3 +4878,33 @@ par D-044 et ses témoins. Classé : amélioration après la production (`docs/S
 
 **À quoi on le reconnaît.** La famille « un nom qui ne retrouve pas sa donnée » (R36 ; ft-v1147 → ft-v1163) : deux endroits nomment la même chose
 autrement, rien ne plante, la colonne est juste vide.
+
+## §90 — ⛔⛔ L'ÉCRAN D'AJOUT SERT DE MÉMOIRE : UN ÉCRIVAIN QUI NE L'OUVRE JAMAIS LE LISAIT QUAND MÊME (M6) *(21/10/2026, NUT-M6-REJEU-01 — branche `claude/nut-m6-rejeu-01`, non publié)*
+
+**Le constat.** « Tes repas habituels » (`rejouerRepas`) écrit ses lignes par `_provFood`, qui lit **quatre** états de l'écran d'ajout :
+le bloc grammes, l'ancre en grammes, la portion, la trace de fiabilité. Or « Annuler » et « Ajouter » ferment l'écran **sans le
+remettre à zéro** : chaque aliment rejoué héritait de l'aliment affiché juste avant. Mesuré le 20/10 sur ft-v1256, **remesuré à
+l'identique le 21/10 sur ft-v1257** (banc B-NM6, vrais clics, données inventées) : après une huile notée à 5 g, la banane, le shake
+et le yaourt rejoués à **5 g** ; après un riz repris à 200 g, un shake à 200 g avec un faux pour-100 g de **78** et un pain à **125** ;
+après une saisie en portions, le pain rejoué en « part » de 80 g ; une trace NON_RESOLU recopiée sur quatre aliments sains.
+
+**Pourquoi rien ne l'a vu.** Deux commentaires affirmaient la protection : « `rejouerRepas` tourne écran fermé » et « la quantité
+vient de l'ITEM, jamais du DOM ». **Les deux étaient faux** — un écran fermé garde son état. Et les témoins existants appellent
+`_provFood` **directement**, comme s'ils étaient l'écran. *Un commentaire qui affirme une protection dispense de la mesurer.*
+
+**Le correctif (D-094, décision de Michel).** Un marqueur `ecran:false` porté par la **provenance** des deux écrivains hors écran
+(`rejouerRepas`, `quickAddFood`), qui coupe les **4** lectures ; `addFoodEntry` inchangé. Ni remise à zéro de l'écran, ni « fermé
+par défaut ». Banc : **15 OK / 17 rouges** sur le code de master → **32 OK / 0 rouge**.
+
+**⭐ Et le risque que le correctif ouvrait lui-même.** Un marqueur resté posé après une panne ferait ignorer l'écran au prochain
+« Ajouter » : la saisie à la main perdrait ses portions **en silence**. D'où les deux `finally` (provenance rendue dans le rejeu,
+effacée dans l'ajout rapide), éprouvés par **panne injectée** (B-NM6-MQ ③ ④ ⑤). Au passage, la panne injectée a montré un défaut
+**d'avant** : sur master, un ajout rapide qui plante laissait sa provenance « liste / reprise » sur la saisie suivante à la main.
+
+**Ce qu'il ne fait pas.** Il ne répare **aucune ligne déjà contaminée** (le patch d'historique v1.2 reste une simulation, non
+appliquée) et n'empêche pas une source **déjà contaminée** (favori, repas habituel) de se recopier fidèlement : c'est le lot **M3**.
+
+**À quoi on le reconnaît.** La famille « le DOM sert de mémoire entre deux aliments » (ft-v1180, ft-v1191, phase 0a) — un état qui
+décrit l'aliment affiché survit à l'aliment ; **ici, il survit à la fermeture de l'écran et il est relu par un écrivain qui ne l'a
+jamais ouvert**. Le cliquet B-NM6-C fige la règle : *tout écrivain hors écran porte le marqueur, et un 4ᵉ appelant de `_provFood`
+doit se déclarer.*

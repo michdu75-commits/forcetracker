@@ -1,0 +1,65 @@
+# 🍽️ NUT-M6-REJEU-01 — le rejeu d'un repas habituel ne lit plus l'écran d'ajout (M6)
+
+> **Ordre de travail prioritaire de Michel du 21/10/2026** (Nutrition = priorité n°1, M6 d'abord).
+> Session-A (couloir Nutrition). Branche dédiée **`claude/nut-m6-rejeu-01`**, depuis master `bdfc6d27` (`ft-v1257`).
+> **Non fusionné, non publié, aucune version, aucun déploiement, aucune donnée réelle touchée.**
+> Décision : **D-094** · catalogue des bugs : **`BUGS.md` §90**.
+
+## 1. Le défaut
+
+« Tes repas habituels » (`rejouerRepas`) écrit ses lignes par `_provFood`, qui lisait **quatre** états de l'écran d'ajout.
+Cet état survit à « Annuler » et à « Ajouter » : chaque aliment rejoué héritait de l'aliment affiché juste avant.
+Mesuré sur le code de master (banc ci-dessous, vrais clics, données inventées) :
+
+| Geste avant le rejeu | Ce que le rejeu écrivait (master) |
+|---|---|
+| Huile 5 g, « Ajouter » (S1) — ou « Annuler » (S5) | banane, shake, yaourt à **5 g** (le shake passe de « 1 portion » à « 5 g ») |
+| Riz repris à 200 g, « Ajouter » (S2) | shake à **200 g** avec un faux pour-100 g de **78** ; pain avec un faux pour-100 g de **125** |
+| Riz, 150 tapés (S2b) | shake à 150 g, pour-100 g **104** ; pain **166,7** |
+| Saisie à la main, ×2 « part » de 80 g (S3) | pain en « part » de 80 g, pour-100 g **156,3** |
+| Barre au pour-100 g incohérent, 50 g (S4) | 4 aliments sains marqués **NON_RESOLU**, et à 50 g |
+
+## 2. Le correctif (G2, décision de Michel) — `app.js` seul
+
+- `_provFood` lit un marqueur porté par la provenance, `_afSrc.ecran===false`, et garde ses **4** lectures de l'écran.
+- `rejouerRepas` et `quickAddFood` posent `ecran:false` ; **`addFoodEntry` inchangé** (l'ajout depuis l'écran lit l'écran).
+- La provenance est **rendue dans un `finally`** (rejeu) et **effacée dans un `finally`** (ajout rapide) : une panne
+  au milieu ne laisse ni provenance ni marqueur posés. *Le second est un choix de Claude, mesuré : sans lui, une panne
+  de l'ajout rapide laissait le marqueur posé écran ouvert, et la saisie suivante à la main perdait ses portions.*
+- Ni remise à zéro de l'écran, ni « fermé par défaut », aucune donnée persistée, aucune ligne existante modifiée.
+- Deux commentaires faux corrigés (« `rejouerRepas` tourne écran fermé », « la quantité vient de l'ITEM, jamais du DOM »).
+- Taille : **+14 / −10 lignes de code** (+43 / −14 avec les commentaires).
+
+## 3. Les tests
+
+- **Banc `tools/banc_nut_m6_rejeu.js`** (32 témoins, vrais clics, données inventées, garde réseau en 1ʳᵉ instruction) :
+  **15 OK / 17 rouges sur le code de master → 32 OK / 0 rouge** sur le code corrigé. Rouges sur master : S1, S2, S2b, S3,
+  S4, S5 (contamination), MQ ③ et ⑤ (provenance qui fuit après une panne), 9 témoins du cliquet de source.
+- **Branché dans la passe complète** (comportement dans la section navigateur, cliquet B-NM6-C dans la section synchrone)
+  et **déclaré au registre de recette** (scénario NUTRI-JOURNAL-01, avec les 6 fonctions qui manquaient).
+- **En cours au moment de ce commit** : le contrôle négatif (16 mutations), les bancs voisins désignés par le sélecteur
+  (`journal_qty_guard`, `repas_actif`, `ia_ref100`, `pots_nutrition`, l'annexe), les instantanés `instantane_douane` et
+  `instantane_1b23` (master ↔ branche), puis la passe complète D-031 Sécurité. Les résultats seront écrits ici et dans
+  `docs/SUIVI-AUDIT.md` à la clôture du lot.
+
+## 4. Rejouer
+
+```
+node tools/banc_nut_m6_rejeu.js                 # le banc (se garde lui-même : garde réseau en 1re instruction)
+python3 tools/mut_nut_m6_rejeu.py               # le contrôle négatif (16 mutations, sur des copies)
+python3 tools/mut_nut_m6_rejeu.py N5            # une seule mutation
+```
+
+## 5. Ce que ce lot ne fait pas
+
+- **Aucune ligne déjà contaminée n'est réparée.** Le patch d'historique v1.2 (21/10) reste une simulation, non appliquée.
+- **Une source déjà contaminée** (favori, repas habituel noté avec une mauvaise quantité) **se recopie fidèlement** :
+  le rejeu copie sa source, c'est le lot **M3**.
+- Une panne au milieu d'un rejeu laisse les aliments déjà traités **en mémoire** (non enregistrés) : comportement d'avant,
+  inchangé, hors périmètre.
+
+## 6. Pour intégrer (seulement avec l'accord de Michel)
+
+Refusionner master s'il a bougé, rejouer le banc et la passe complète D-031 (4 conditions), poser le numéro de version
+au moment du push seulement. ⚖️ **Pas de pop-up** : c'est un correctif, rien n'est à faire pour la personne et aucun
+repère ne bouge. Aucune aide à réécrire (aucun texte ne décrivait le comportement fautif).
