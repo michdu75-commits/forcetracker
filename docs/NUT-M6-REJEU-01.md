@@ -63,6 +63,8 @@ Mesuré sur le code de master (banc ci-dessous, vrais clics, données inventées
 - **Instantanés master ↔ branche** : `instantane_1b23` **identique à l'octet** ; `instantane_douane` **identique une fois
   retirés les 21 identifiants de lignes** — des UUID tirés au hasard à chaque création de ligne (les 42 relevés sur les deux
   exécutions sont tous distincts).
+- **Annexe de recette** (15 suites hors passe, isolement réseau du système) : **14 PASS + 1 défaut connu** (`discussions` :
+  la taille du prompt de Milo, 71 630 / 76 549 caractères) — **identique sur master à l'unité près**, sans lien avec M6.
 - **T0** : `git diff --check` propre · `check_regles.py` vert (seul avertissement : `PROMPT-MILO-REEL.txt` périmé, déjà
   signalé sur master) · `recette_selecteur.py --auto-test` 15 / 0.
 
