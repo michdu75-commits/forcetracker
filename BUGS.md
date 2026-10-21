@@ -4908,3 +4908,11 @@ appliquée) et n'empêche pas une source **déjà contaminée** (favori, repas h
 décrit l'aliment affiché survit à l'aliment ; **ici, il survit à la fermeture de l'écran et il est relu par un écrivain qui ne l'a
 jamais ouvert**. Le cliquet B-NM6-C fige la règle : *tout écrivain hors écran porte le marqueur, et un 4ᵉ appelant de `_provFood`
 doit se déclarer.*
+
+**Et un témoin voisin a rougi sans défaut — le §79, encore.** `B-CCCXLVI ⑮` (banc de la référence pour 100 g) vérifiait le
+**texte exact** de la condition de la trace de fiabilité, `if(_z&&_z.etat!=='COHERENT'){`. Le correctif y ajoute la garde décidée
+`ecran&&` : le texte change, l'invariant (*une ligne COHÉRENTE ne grossit pas d'une trace*) reste vrai. Le témoin accepte
+désormais cette garde devant, et rien d'autre ; son outil de mutations (`tools/mut_ia_ref100.py` M12) s'ancrait sur la même
+ligne et la suit. Éprouvé : vert sur master, vert sur la branche, **rouge quand l'exclusion de COHERENT est retirée**.
+⚠️ La simulation du 20/10 annonçait « 0 témoin existant rouge » pour cette forme : elle n'avait rejoué que les blocs CCXCI,
+CCCV, CCXCIX et CCCII. *Un « aucun témoin ne rougit » ne vaut que pour les témoins rejoués.*
