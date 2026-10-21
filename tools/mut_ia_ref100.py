@@ -101,9 +101,11 @@ MUT = [
      'rouge', '« ia » devient une origine utilisateur (le resolveur ne la touche plus)'),
 
     # ── LA TRACE QUI PART AVEC LA LIGNE ──────────────────────────────────────────
+    # 🔁 21/10/2026 (NUT-M6-REJEU-01) : l'ancre suit la ligne, qui porte désormais la garde M6 `ecran &&` (D-094) ;
+    #    la mutation reste la même — retirer l'exclusion de COHERENT, et elle seule.
     ('M12', AP,
-     "    if(_z && _z.etat!=='COHERENT'){",
-     "    if(_z){",
+     "    if(ecran && _z && _z.etat!=='COHERENT'){",
+     "    if(ecran && _z){",
      'rouge', 'toute ligne porte desormais une trace (elle ne doit pas grossir pour rien)'),
 
     ('M13', AP,

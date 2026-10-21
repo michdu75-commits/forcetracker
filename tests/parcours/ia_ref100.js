@@ -98,8 +98,13 @@ module.exports.source = function (t, ROOT, fs, path) {
     (nu.match(/_afFiab=(?!=)/g) || []).length === 3
       && /_bcNutr\.fiab\)\?_bcNutr\.fiab:\(\(typeof_afFiab==='object'&&_afFiab\)\?_afFiab:null\)/.test(nu),
     'la priorité a changé ou `_afFiab` s\'écrit ailleurs');
+  /* 🔁 NUT-M6-REJEU-01 (21/10/2026) — CE TÉMOIN LISAIT LE TEXTE EXACT DE LA CONDITION, et il a rougi sur un
+     correctif juste : M6 (D-094) y ajoute `ecran&&` (un écrivain hors écran ne relit plus la trace de l'écran).
+     L'invariant qu'il garde, lui, n'a pas bougé — *une ligne COHÉRENTE ne grossit pas d'une trace* — donc il
+     accepte la garde M6 devant, et rien d'autre. Toujours éprouvé : `tools/mut_ia_ref100.py` M12 (l'exclusion de
+     COHERENT retirée) le fait rougir. */
   t('B-CCCXLVI ⑮ ⛔ une ligne cohérente ne grossit toujours pas d\'une trace',
-    /if\(_z&&_z\.etat!=='COHERENT'\)\{/.test(nu), 'toute ligne porte désormais une trace');
+    /if\((?:ecran&&)?_z&&_z\.etat!=='COHERENT'\)\{/.test(nu), 'toute ligne porte désormais une trace');
 
   /* ── ⛔ PÉRIMÈTRE : ce que ce chantier ne touche pas ─────────────────────── */
   t('B-CCCXLVI ⑯ ⛔ `_ref100` garde exactement ses deux substitutions',
