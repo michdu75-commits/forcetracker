@@ -3,6 +3,8 @@
 > **21/10/2026, 12:52 UTC — écrite par session-A (Claude Nutrition). RIEN N'EST PUBLIÉ.** origin/master = `bdfc6d27`,
 > inchangé. Aucune fusion, aucun push sur master, aucun déploiement, aucune donnée réelle touchée.
 > ⏸️ **En attente de l'instruction de transfert de Michel** : ce document ne vaut pas feu vert de publication.
+>
+> ↪️ **21/10/2026, 14:12 UTC — passation reprise et close par Claude Principal (session-B)**, sur feu vert conditionnel de Michel : contrôles restants conformes (§4), `ft-v1258` publiée (master `da523380`, Pages run n°1358 réussi). Détail : `docs/SUIVI-AUDIT.md` et `docs/JOURNAL-DE-PARTAGE.md`. *Le reste de ce document est gardé tel qu'écrit au moment de la passation.*
 
 ## 0. Pourquoi cette passation
 

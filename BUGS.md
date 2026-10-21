@@ -4879,7 +4879,7 @@ par D-044 et ses témoins. Classé : amélioration après la production (`docs/S
 **À quoi on le reconnaît.** La famille « un nom qui ne retrouve pas sa donnée » (R36 ; ft-v1147 → ft-v1163) : deux endroits nomment la même chose
 autrement, rien ne plante, la colonne est juste vide.
 
-## §90 — ⛔⛔ L'ÉCRAN D'AJOUT SERT DE MÉMOIRE : UN ÉCRIVAIN QUI NE L'OUVRE JAMAIS LE LISAIT QUAND MÊME (M6) *(21/10/2026, NUT-M6-REJEU-01 — branche `claude/nut-m6-rejeu-01`, non publié)*
+## §90 — ⛔⛔ L'ÉCRAN D'AJOUT SERT DE MÉMOIRE : UN ÉCRIVAIN QUI NE L'OUVRE JAMAIS LE LISAIT QUAND MÊME (M6) *(21/10/2026, NUT-M6-REJEU-01 — branche `claude/nut-m6-rejeu-01`, non publié · ↪️ publié en `ft-v1258` le 21/10/2026)*
 
 **Le constat.** « Tes repas habituels » (`rejouerRepas`) écrit ses lignes par `_provFood`, qui lit **quatre** états de l'écran d'ajout :
 le bloc grammes, l'ancre en grammes, la portion, la trace de fiabilité. Or « Annuler » et « Ajouter » ferment l'écran **sans le

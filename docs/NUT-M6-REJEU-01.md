@@ -3,8 +3,8 @@
 > **Ordre de travail prioritaire de Michel du 21/10/2026** (Nutrition = priorité n°1, M6 d'abord).
 > Session-A (couloir Nutrition). Branche dédiée **`claude/nut-m6-rejeu-01`**, depuis master `bdfc6d27` (`ft-v1257`).
 > ⏳ **Publication autorisée par Michel le 21/10 (ce lot seul) en `ft-v1258` ; commit de version préparé par session-A, repris
-> par Claude Principal (session-B) le 21/10 après les contrôles restants (§6).** Le résultat réel du déploiement est consigné
-> après vérification, jamais avant. Pages seulement :
+> par Claude Principal (session-B) le 21/10 après les contrôles restants (§6).** ↪️ ✅ **PUBLIÉE le 21/10/2026** (master `bdfc6d27` → `da523380`, avance rapide, un seul push ; Pages run n°1358 réussi sur `da523380` (déploiement GitHub `7228331992` « success », 14:12:30 UTC) ; ni Apps Script ni Worker déclenchés (aucun fichier serveur)).
+> Pages seulement :
 > ni Apps Script, ni Worker, aucune donnée réelle touchée.
 > Décision : **D-094** · catalogue des bugs : **`BUGS.md` §90**.
 
