@@ -2,8 +2,9 @@
 
 > **Ordre de travail prioritaire de Michel du 21/10/2026** (Nutrition = priorité n°1, M6 d'abord).
 > Session-A (couloir Nutrition). Branche dédiée **`claude/nut-m6-rejeu-01`**, depuis master `bdfc6d27` (`ft-v1257`).
-> ⏳ **Publication autorisée par Michel le 21/10 (ce lot seul) en `ft-v1258`, à exécuter par Claude Principal ; commit de version
-> préparé par session-A, NON PUBLIÉ.** Le résultat réel du déploiement est consigné après coup, jamais avant. Pages seulement :
+> ⏳ **Publication autorisée par Michel le 21/10 (ce lot seul) en `ft-v1258` ; commit de version préparé par session-A, repris
+> par Claude Principal (session-B) le 21/10 après les contrôles restants (§6).** Le résultat réel du déploiement est consigné
+> après vérification, jamais avant. Pages seulement :
 > ni Apps Script, ni Worker, aucune donnée réelle touchée.
 > Décision : **D-094** · catalogue des bugs : **`BUGS.md` §90**.
 
@@ -107,7 +108,9 @@ documents ; aucun fichier serveur (`Code.js`, `appsscript.json`, `.claspignore`,
 `state.js` ; aucune clé de stockage nouvelle ; aucune donnée personnelle (données de test inventées « (test) », aucune adresse).
 Le numéro `ft-v1258` est posé au commit de publication seulement (clé de cache de `sw.js`, entête de `CLAUDE.md`).
 
-## 7. Retour arrière (préparé ; À REJOUER À BLANC avant la publication — non rejoué le 21/10)
+**Repris par Claude Principal (session-B) le 21/10** (passation `docs/PASSATION-FT-V1258-M6.md`, le prompt de publication ayant d'abord été adressé par erreur à Nutrition) : master toujours `bdfc6d27`, aucune autre publication en cours ; seul `sw.js` a changé côté servi depuis la passe complète (clé de cache), donc rien n'est requalifié en entier. Contrôles restants, sur l'arbre préparé `44b3ae31`, réseau coupé : annexe de recette complète (T2, 15 suites) **14 PASS + 1 défaut connu** (`discussions`, ses 2 rouges listés, valeurs identiques à master `bdfc6d27` rejoué le même jour : 71 544 / 76 463 / 68 781 caractères) ; PWA hors ligne (T1) **PASS** ; aucune tentative de sortie des suites ; fumée (Service Worker et cache `ft-v1258`, « À propos » = `ft-v1258`, aucune pop-up, 6 écrans et leurs aides, Guide, séance libre jusqu'à « Terminer », **0 erreur JavaScript** ; contrôle négatif : la même sonde attendant `ft-v1257` rougit) ; retour arrière rejoué **à blanc** le 21/10 par session-B sur un arbre jetable, jamais poussé : `app.js` identique à l'octet à `ft-v1257`, seul `sw.js` diffère parmi les fichiers servis, clé `ft-v1259`, règles vertes, banc M6 **15 OK / 17 rouges** (l'attendu), fumée `ft-v1259` sans erreur JavaScript.
+
+## 7. Retour arrière (préparé ; rejoué À BLANC le 21/10 par session-B avant la publication — rien poussé)
 
 ⛔ Jamais lancé sans décision de Michel, jamais par un push forcé, et **jamais avec une clé de cache déjà diffusée** :
 `ft-v1257` est diffusée et `ft-v1258` le sera dès la publication : le retour arrière emploie **`ft-v1259`** (ou la suivante libre).
