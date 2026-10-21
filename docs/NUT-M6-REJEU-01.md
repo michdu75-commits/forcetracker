@@ -53,7 +53,18 @@ Mesuré sur le code de master (banc ci-dessous, vrais clics, données inventées
   | N12 : le marqueur descend dans la ligne | MQ ① + les 8 scénarios + Q ① ② + cliquet ⑤ |
   | N13 : `_provFood` ne lit plus le marqueur · N14 : `addFoodEntry` le pose | 6 scénarios + ⑤ · les 4 « Ajouter » + MQ ⑤ + ④ |
   | MC1 : un commentaire seul (contre-épreuve) | aucun (32 / 0) |
-- **Bancs voisins, instantanés master ↔ branche, passe complète** : voir plus bas et `docs/SUIVI-AUDIT.md`.
+- **Bancs voisins** (désignés par `tools/recette_selecteur.py --diff`, lancés l'un après l'autre, sous garde) :
+  `journal_qty_guard` **21 / 0** · `repas_actif` **24 / 0** · `pots_nutrition` **48 / 0** · `ia_ref100` **35 / 1 → 36 / 0**
+  (voir ci-dessous) · `nut_m6_rejeu` **32 / 0**.
+- **Le seul rouge voisin était un témoin de FORME, sans défaut.** `B-CCCXLVI ⑮` lisait le texte exact de la condition de la
+  trace de fiabilité ; le correctif y ajoute la garde décidée `ecran&&`. Il suit désormais l'invariant (*une ligne cohérente
+  ne grossit pas d'une trace*) : vert sur master, vert sur la branche, rouge quand l'exclusion de COHERENT est retirée. Son
+  outil de mutations s'ancrait sur la même ligne (M12) : l'ancre suit, **22 / 22 conformes** (`tools/mut_ia_ref100.py`).
+- **Instantanés master ↔ branche** : `instantane_1b23` **identique à l'octet** ; `instantane_douane` **identique une fois
+  retirés les 21 identifiants de lignes** — des UUID tirés au hasard à chaque création de ligne (les 42 relevés sur les deux
+  exécutions sont tous distincts).
+- **T0** : `git diff --check` propre · `check_regles.py` vert (seul avertissement : `PROMPT-MILO-REEL.txt` périmé, déjà
+  signalé sur master) · `recette_selecteur.py --auto-test` 15 / 0.
 
 ## 4. Rejouer
 
