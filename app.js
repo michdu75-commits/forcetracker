@@ -1308,6 +1308,20 @@ function _afNoteEtat(nom){
    a retouché les chiffres, la source n'explique plus le résultat, et le dire est plus honnête que
    de laisser croire qu'il vient d'Open Food Facts. Comparaison déterministe, aucun écouteur. */
 function _provFood(vals){
+  /* 🧹⛔⛔ NUT-M6-REJEU-01 (21/10/2026) — UN ÉCRIVAIN HORS ÉCRAN NE LIT PAS L'ÉCRAN D'AJOUT.
+     Les QUATRE lectures de l'écran ci-dessous (bloc grammes, ancre en grammes, portions, trace de
+     fiabilité) décrivent l'aliment AFFICHÉ — or cet état survit à la fermeture de l'écran
+     (« Annuler » ne remet rien à zéro). Mesuré sur ft-v1256 puis ft-v1257 : après une huile notée
+     à 5 g, un repas habituel rejoué ressortait avec la banane, le shake et le yaourt à **5 g** ; un
+     riz repris à 200 g donnait au shake un faux pour-100 g de 78 ; une trace de fiabilité se
+     recopiait sur quatre aliments qui n'en avaient pas.
+     ⭐ Le marqueur est porté par la PROVENANCE (`_afSrc.ecran===false`), pas par un paramètre : la
+     signature ne bouge pas, et seuls les écrivains hors écran le posent (`rejouerRepas`,
+     `quickAddFood`). `addFoodEntry` ne le pose pas : l'ajout depuis l'écran lit l'écran, comme
+     avant. ⛔ Ni remise à zéro de l'écran ni « fermé par défaut » (mesurés le 20/10 : 1 et 7
+     témoins rouges, sans gain). Un 4ᵉ écrivain qui l'oublierait est arrêté par le cliquet
+     B-NM6-C de la passe. ⛔ Le marqueur ne descend jamais dans la ligne : liste blanche. */
+  const ecran=!(_afSrc && _afSrc.ecran===false);
   const p={v:FOOD_LOG_V, saisie:'manuel', origine:'utilisateur',
            q:null, u:null, etat:null, sourceId:null, per100:null, modifie:false};
   if(_afSrc){
@@ -1415,13 +1429,14 @@ function _provFood(vals){
      ⚠️⚠️ HONNÊTETÉ SUR CE TEST : **aucun témoin ne l'exige aujourd'hui**, et c'est mesuré — la
      mutation qui le retire rend **0 rouge**. Ses trois appelants sont déjà couverts ailleurs :
      `addFoodEntry` refuse avant d'arriver ici · `quickAddFood` appelle `_afOublierAliment` qui
-     cache le bloc · `rejouerRepas` tourne écran fermé. *Les deux protections se couvrent* — le
-     cas exact de ft-v1189.
+     cache le bloc · `rejouerRepas` porte `ecran:false` (M6). ⚠️ Ce commentaire disait « tourne
+     écran fermé » : FAUX, un écran fermé garde son état — c'était exactement le défaut M6.
+     *Les deux protections se couvrent* — le cas exact de ft-v1189.
      ⭐ IL RESTE POUR UNE RAISON NOMMABLE, PAS PAR PRUDENCE VAGUE : si le garde-fou d'écriture
      était un jour restreint au seul scan (une question ouverte posée à Michel), ce test
      redeviendrait **la seule** protection sur ce chemin. *Une protection dont on sait dire quand
      elle servira n'est pas du code mort ; une qu'on garde « au cas où » en est.* */
-  if(row&&row.style.display!=='none'&&_bcNutr&&g>0&&_bcQtyPose){ p.q=g; p.u='g'; }
+  if(ecran&&row&&row.style.display!=='none'&&_bcNutr&&g>0&&_bcQtyPose){ p.q=g; p.u='g'; }
   /* ⚖️ LE POIDS DÉCLARÉ À LA MAIN DESCEND JUSQU'À LA DONNÉE (ft-v1051) — R4, et c'est LA
      moitié qui manquait : sans ces lignes, la personne voit son poids à l'écran, les 4 valeurs
      se recalculent… et rien n'est enregistré. *L'app aurait su, et n'aurait rien retenu.*
@@ -1432,7 +1447,7 @@ function _provFood(vals){
      l'aliment aura son `per100` et le champ en grammes s'ouvrira tout seul.
      ⛔ On n'écrase JAMAIS un `per100` déjà connu (scan, CIQUAL) : une déclaration à la main ne
      passe pas devant une valeur mesurée (R32 — mesuré > estimé > déclaré). */
-  if(!p.per100 && typeof _afRef==='object' && _afRef && _afRef.u==='g' && _afRef.q>0 && vals){
+  if(ecran && !p.per100 && typeof _afRef==='object' && _afRef && _afRef.u==='g' && _afRef.q>0 && vals){
     /* ⚠️ ON DIVISE PAR LA QUANTITÉ AFFICHÉE, PAS PAR `_afRef.q` — et la nuance coûte cher.
        `_afRef.q` est la quantité de RÉFÉRENCE (celle déclarée au départ) ; `_afRef.base` sont
        les valeurs qui vont avec. Mais si la personne a ensuite tapé 80 après avoir déclaré 40,
@@ -1474,7 +1489,7 @@ function _provFood(vals){
      « portions » — une unité qu'il n'a pas choisie (R29).
      ⛔ ET ON NE PASSE JAMAIS DEVANT UNE QUANTITÉ DÉJÀ POSÉE (`!p.q`) : les grammes et le
      pour-100 g sont plus précis, ils gardent la main (R32 — mesuré > estimé > déclaré). */
-  if(!p.q && _afPortionPose && _afUnite==='portion' && typeof _afRef==='object' && _afRef && _afRef.u==='' && vals){
+  if(ecran && !p.q && _afPortionPose && _afUnite==='portion' && typeof _afRef==='object' && _afRef && _afRef.u==='' && vals){
     const n=(typeof _afPortions==='number' && _afPortions>0)?_afPortions:1;
     p.q=n; p.u='portion';
     /* 🏷️ ft-v1186 — LA DÉFINITION DESCEND AVEC LA QUANTITÉ (R4). Sans ces lignes, la personne
@@ -1504,7 +1519,7 @@ function _provFood(vals){
        repas décrit sans poids, le seul chemin qui ne peut pas avoir de `_bcNutr` (ft-v1232). */
     const _z=(typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab) ? _bcNutr.fiab
             : ((typeof _afFiab==='object' && _afFiab) ? _afFiab : null);
-    if(_z && _z.etat!=='COHERENT'){
+    if(ecran && _z && _z.etat!=='COHERENT'){
       const z=_z;
       p.fiab={ etat:z.etat, methode:z.methode, raison:z.raison,
                brut:z.brut, retenu:z.kcal, champ:z.champ, champSource:z.champSource,
@@ -3560,19 +3575,22 @@ function rejouerRepas(sig, meal){
   if(!S.foodLog)S.foodLog=[];
   const av=(typeof _afSrc!=='undefined')?_afSrc:null;
   if(typeof _afSetSrc==='function')_afSetSrc({saisie:'liste',origine:'reprise'});
-  r.items.forEach(e=>{
+  try{ r.items.forEach(e=>{
     const vals={kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0};
     /* 🍽️⛔ ft-v1183 — LE REJEU RECOPIE LA QUANTITÉ DE L'ITEM, IL NE LA JETTE PLUS. Cette ligne
        forçait `q:null, u:null` : c'était le seul moyen d'empêcher `_provFood` de ramasser un
        reste d'écran, l'écran d'ajout n'étant pas ouvert ici. Le résultat était le même défaut
        que `quickAddFood` avant ft-v1176 — des lignes que plus rien ne peut redimensionner.
        ⭐ On garde la protection (la quantité vient de l'ITEM, jamais du DOM) et on transmet ce
-       qui est écrit. *Sans ça, rejouer un repas tuerait les portions qu'on vient de sauver.* */
+       qui est écrit. *Sans ça, rejouer un repas tuerait les portions qu'on vient de sauver.*
+       ⚠️ « jamais du DOM » N'ÉTAIT PAS VRAI avant NUT-M6-REJEU-01 (21/10/2026) : `_provFood`
+       relisait l'écran d'ajout resté en mémoire. C'est le marqueur `ecran:false` ci-dessous qui
+       rend cette phrase vraie. */
     const qOk=_qReprenable(e);
     /* ⛔ PAS de `sourceId`/`etat` ici, et ce n'est pas un oubli : le rejeu n'en a jamais posé.
        Les ajouter changerait la provenance enregistrée — décision produit, sous-étape 1b-ii. */
     if(typeof _afSetSrc==='function')_afSetSrc(
-      Object.assign({saisie:'liste',origine:'reprise'}, _srcRepriseQ(e, qOk)));
+      Object.assign({saisie:'liste',origine:'reprise',ecran:false}, _srcRepriseQ(e, qOk)));   // M6 : hors écran
     const prov=(typeof _provFood==='function')?_provFood(vals):{};
     /* 🔑⛔⛔ `id` EST POSÉ ICI, DANS LE LITTÉRAL, ET SURTOUT PAS VIA `_provFood`. Cette
        fonction-là est une LISTE BLANCHE : trois avertissements en majuscules y disent déjà qu'un
@@ -3585,8 +3603,11 @@ function rejouerRepas(sig, meal){
       qOk?{}:{q:null,u:null});
     _douaneLigne(_l,'rejouerRepas');   /* 🛃 observation seule : ni correction, ni blocage */
     S.foodLog.push(_l);
-  });
-  if(typeof _afSetSrc==='function')_afSetSrc(av);   // on rend le marqueur (R15)
+  }); }finally{
+    /* on rend le marqueur (R15) — DANS UN `finally` depuis M6 : une erreur au milieu du rejeu ne
+       doit pas laisser posée la provenance d'un aliment (ni son `ecran:false`). */
+    if(typeof _afSetSrc==='function')_afSetSrc(av);
+  }
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   renderFoodJournal();
@@ -4438,8 +4459,11 @@ function quickAddFood(i){
   /* 🏷️ ft-v1186 — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant : le nom et le
      poids de la portion voyagent avec la quantité, dans `_srcRepriseQ`.
      ⭐ `sourceId`/`etat` restent ICI, en plus : cette porte-ci les a toujours posés (R33 — la
-     provenance ne ment pas), et le rejeu ne les a jamais eus. L'écart est transporté. */
-  _afSetSrc(Object.assign({saisie:'liste', origine:'reprise'},
+     provenance ne ment pas), et le rejeu ne les a jamais eus. L'écart est transporté.
+     🧹 NUT-M6-REJEU-01 — `ecran:false` : écrivain hors écran, comme `rejouerRepas`. Aucun
+     changement de comportement ici (l'écran vient d'être remis à zéro juste au-dessus) : c'est ce
+     qui rend la règle simple — *tout écrivain hors écran porte le marqueur*. */
+  try{ _afSetSrc(Object.assign({saisie:'liste', origine:'reprise', ecran:false},
                           _srcRepriseQ(it, _qOk),
                           /* ⚠️ `per100` arrive par `_srcRepriseQ` juste au-dessus ; le
                              proprietaire le repose a la MEME valeur (les deux lisent
@@ -4450,7 +4474,12 @@ function quickAddFood(i){
   const _l=Object.assign({date:_journalJourActif(),meal:_afMealActif(),name:(it.name||'').slice(0,80),ts:Date.now(),id:_foodLineId()},_vals,_provFood(_vals));
   _douaneLigne(_l,'quickAddFood');   /* 🛃 observation seule : ni correction, ni blocage */
   S.foodLog.push(_l);
-  _afSetSrc(null);
+  }finally{
+    /* M6 : la provenance s'efface MÊME SI l'ajout plante. Sinon elle resterait posée, écran ouvert,
+       avec son `ecran:false` : le « Ajouter » suivant ignorerait l'écran et la saisie à la main
+       perdrait ses portions (mesuré par panne injectée, B-NM6-MQ ⑤). */
+    _afSetSrc(null);
+  }
   _unhideFood(it.name);
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
