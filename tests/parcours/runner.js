@@ -39854,6 +39854,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      rang, échauffements à part, deux séances du même jour distinctes, aucun verdict, rien d'écrit) ; dropset, superset, exercice
      remplacé ; 360 → 430 px. Blocs B-SR-*. Banc : tools/banc_seance_recette.js · contrôle négatif : tools/mut_seance_recette.py. */
   await require('./seance_recette.js').ecran(t, b, PORT);
+  /* ⏱️ SEANCE-REPOS-01 (session-C, Claude Séance, 22/10/2026, décisions de Michel — D-099) — le repos en cours survit à la
+     fermeture de l'app : rangé dans la séance active (`S.wkt.repos = {debut, total}`), repris à l'heure réelle après un
+     rechargement, un retour au premier plan ou une réouverture hors ligne ; dépassement en négatif jusqu'à 5 min après la fin
+     théorique, puis abandonné et effacé ; jamais dans le brouillon ni la séance enregistrée ; Milo inchangé. Blocs C-REP-*.
+     Banc : tools/banc_seance_repos.js · contrôle négatif : tools/mut_seance_repos.py. */
+  await require('./seance_repos.js').ecran(t, b, PORT);
   /* 📐 D031S-B — LES TÉMOINS PRÉPARÉS DE D-091 (D-031-SÉCURITÉ-01, Claude Nutrition, 19/10/2026), BRANCHÉS le 20/10 par Principal
      avec la livraison de D-091 (lot final ft-v1257), comme le prévoyait la passation (docs/D031-SECURITE-01.md § 6) : le panneau
      « Ta séance jusqu'ici » compte les échauffements validés dans les TOTAUX et dit le travail à part ; la séance enregistrée
@@ -40752,6 +40758,7 @@ require('./session_integrity.js').source(t, ROOT, fs, path);
 require('./debrief_demande.js').source(t, ROOT, fs, path);
 require('./progres_seances.js').source(t, ROOT, fs, path);
 require('./seance_date.js').source(t, ROOT, fs, path);
+require('./seance_repos.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

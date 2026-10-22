@@ -1154,7 +1154,10 @@ function persist(){
        `_seanceOuverte()` (log.js) est le propriétaire unique de la question (R2) ; le repli sert
        aux appels de `persist()` qui pourraient précéder le chargement de log.js. */
     if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
-      localStorage.setItem('ft4_wkt_draft',JSON.stringify(S.wkt));
+      /* ⏱️ SEANCE-REPOS-01 (22/10/2026, décision 3 de Michel — D-099) : le brouillon garde la SÉANCE, pas le repos en cours
+         (`S.wkt.repos`, log.js) — il sert à ne pas perdre une séance, et un repos repris d'un brouillon serait un fantôme.
+         Sans repos, le texte est identique à l'octet à `JSON.stringify(S.wkt)`. Coordonné avec Claude Principal (22/10). */
+      localStorage.setItem('ft4_wkt_draft',JSON.stringify(Object.assign({},S.wkt,{repos:undefined})));
     }else{
       localStorage.removeItem('ft4_wkt_draft');
     }

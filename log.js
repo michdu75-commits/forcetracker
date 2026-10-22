@@ -5469,9 +5469,13 @@ function _restLeft(){
   if(!restStartTs)return 0;
   return restTot-Math.floor((Date.now()-restStartTs)/1000);
 }
-/* ⏹️ 15 min : au-delà, ce n'est plus un repos mais une séance interrompue (ft-v1030).
-   Un seul propriétaire pour ce nombre — `_restTick` et `_updPill` le lisent tous les deux. */
-const REST_DEPASSEMENT_MAX = 900;
+/* ⏹️ 5 MIN APRÈS LA FIN THÉORIQUE DU REPOS, IL EST ABANDONNÉ (décision 1 de Michel, 22/10/2026 — SEANCE-REPOS-01, D-099).
+   Repos de 2 min parti à 15 h 00 : décompte jusqu'à 15 h 02, dépassement affiché en négatif jusqu'à 15 h 07, abandonné et
+   effacé à partir de 15 h 07 — compté depuis `restStartTs + restTot`, jamais depuis le dernier affichage.
+   Un seul propriétaire pour ce nombre : `_restTick` (l'arrêt, app ouverte), `_updPill` (la pilule s'efface) et
+   `_reposReprendre` (rien n'est repris au-delà, app rouverte) le lisent tous les trois — une seule règle, quel que soit le chemin.
+   ⛔ Il valait 900 (15 min, ft-v1030) : un choix de construction de Claude, que la décision de Michel remplace. */
+const REST_DEPASSEMENT_MAX = 300;
 
 // ─── AUDIO : AUCUN ───────────────────────────────────────────
 // ⚠️ Le timer est 100% SILENCIEUX (vibration + visuel uniquement).
@@ -5493,8 +5497,8 @@ function _updPill(){
   const pillFill=document.getElementById('rest-pill-fill');
   if(!pillTime||!pillFill)return;
   /* ⚠️ ELLE NE DISPARAÎT PLUS À ZÉRO (14/08/2026) — même raison que le chrono principal :
-     le dépassement est précisément ce qu'on veut voir. Elle s'efface au-delà de 15 min, où
-     il ne s'agit plus d'un repos mais d'une séance interrompue. */
+     le dépassement est précisément ce qu'on veut voir. Elle s'efface 5 min après la fin du
+     repos (`REST_DEPASSEMENT_MAX`, décision de Michel du 22/10 — elle disait « 15 min »). */
   if(left<=-REST_DEPASSEMENT_MAX){pill.classList.remove('show');return;}
   const _dep=left<0, _abs=Math.abs(left);
   const m=Math.floor(_abs/60),s=_abs%60;
@@ -5566,10 +5570,11 @@ function _restTick(){
     }
     // ⛔ AUCUN `return` ICI : le dépassement est précisément ce qu'on veut voir.
   }
-  /* ⏹️ L'ARRÊT DE SÉCURITÉ, ET IL N'A QU'UN SEUL PROPRIÉTAIRE (R2) : au-delà de ce délai il ne
-     s'agit plus d'un repos mais d'une séance interrompue — un chrono qui tourne toute la nuit
-     n'informe personne. `_updPill` employait déjà ce nombre en dur de son côté ; il le lit
-     maintenant ici, pour que les deux ne puissent pas diverger. */
+  /* ⏹️ L'ARRÊT DE SÉCURITÉ, ET IL N'A QU'UN SEUL PROPRIÉTAIRE (R2) : au-delà de ce délai le repos
+     est abandonné — un chrono qui tourne toute la nuit n'informe personne. `_updPill` employait déjà
+     ce nombre en dur de son côté ; il le lit maintenant ici, pour que les deux ne puissent pas
+     diverger. Depuis SEANCE-REPOS-01 il vaut 5 min (décision de Michel), et `stopRest()` efface
+     aussi l'état rangé dans la séance (`_reposMemoriser`). */
   if(left<=-REST_DEPASSEMENT_MAX){ stopRest(); return; }
   updRest();
   _updPill();
@@ -5769,6 +5774,7 @@ function startRest(sec){
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
   _pillIv=setInterval(_updPill,500);
+  _reposMemoriser();             // SEANCE-REPOS-01 : le repos est rangé dans la séance active (il survit à une fermeture)
   setTimeout(_dockDegager,80);   // UX SÉANCE : affichage seul — la série suivante ne reste pas sous le dock
 }
 /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — LE DOCK DE REPOS NE CACHE JAMAIS LA SÉRIE SUIVANTE.
@@ -5866,6 +5872,60 @@ function _stopRestTimerOnly(){
 function stopRest(){
   _closeRestCountdown();
   _stopRestTimerOnly();
+  _reposMemoriser();             // SEANCE-REPOS-01 : un repos arrêté ne doit pas revenir au prochain démarrage
+}
+/* ⏱️ SEANCE-REPOS-01 — LE REPOS EN COURS SURVIT À LA FERMETURE DE L'APP (22/10/2026, décisions de Michel — D-099).
+   iOS tue souvent une PWA restée en arrière-plan : le repos vivait en mémoire seulement (`restStartTs`, `restTot`), il
+   repartait donc de zéro ou disparaissait. Il est maintenant rangé DANS la séance active, avec la structure fixée par
+   Michel — `S.wkt.repos = {debut, total}` — et rien d'autre : ⛔ aucune clé de stockage nouvelle, il voyage avec `ft4_wkt`.
+   ⭐ UN SEUL ÉCRIVAIN (R2) : `_reposMemoriser` recopie l'état du moteur (`restStartTs`, `restTot`) ; il est appelé là où cet
+   état change — `startRest`, `stopRest` (donc « Passer », le tap sur GO, la fin, l'abandon, « Vider », la pause, l'arrêt à
+   5 min), −15 s / +15 s, « Régler », les préréglages. Le moteur reste la source ; `repos` n'en est que le reflet sur le disque.
+   ⚠️ IL N'ÉCRIT QUE `ft4_wkt`, et seulement quand la valeur change : pas `persist()` — qui écrirait toutes les clés et
+   relancerait la synchronisation à chaque −15 s, pour une donnée qui ne part jamais au cloud. Jamais en mode démo (personas
+   de test : « plus aucune écriture locale »), comme `persist()`.
+   ⛔ LE BROUILLON DE SECOURS NE LE PORTE PAS (décision 3 de Michel) : `persist()` l'écrit sans ce champ (state.js), et
+   `finishWorkout` choisit les champs de la séance enregistrée — `repos` n'y entre pas. Milo ne le lit pas non plus : le
+   contexte prend les exercices et le libellé de la séance en cours, rien d'autre (témoin C-REP-H1). */
+function _reposMemoriser(){
+  try{
+    if(typeof S==='undefined'||!S.wkt) return;
+    if(restStartTs) S.wkt.repos={debut:restStartTs,total:restTot};
+    else if(S.wkt.repos!==undefined) delete S.wkt.repos;
+    else return;                                       // rien n'a changé : pas d'écriture
+    if(window._demoMode) return;
+    localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+  }catch(e){}
+}
+/* ⏱️ LA REPRISE, AU DÉMARRAGE (appelée par app.js à la place de l'ancien `stopRest()` — voir là-bas pourquoi).
+   Le repos revient à l'heure RÉELLE, jamais redémarré (décision 2 de Michel) : le moteur reprend `debut` et `total` tels
+   quels, et `_restLeft()` fait le reste — en négatif s'il est déjà dépassé (le fonctionnement existant, ft-v1030).
+   ⛔ RIEN N'EST REPRIS, ET LA VALEUR EST EFFACÉE, quand : la séance n'est pas réellement active (`_wktEnCours` : ouverte et
+   pas en pause — une séance en pause n'a jamais de repos, `toggleWktPause` l'arrête) · la valeur est douteuse (pas un
+   nombre, durée nulle ou de plus d'une heure, départ dans le futur — horloge reculée : on ne devine pas, R29) · le repos a
+   expiré (5 min après la fin théorique, `REST_DEPASSEMENT_MAX`, le même seuil que l'app ouverte).
+   ⛔ PAS DE FANTÔME : un repos déjà fini ne rejoue ni la vibration de fin ni l'écran GO (`_restBeeped`) ; un repos encore
+   en cours finit comme un autre (décompte des 10 dernières secondes, GO).
+   ⚠️ CE QUI NE REVIENT PAS — limites écrites, hors périmètre du lot : la question du RIR de la série qui venait d'être
+   validée, l'étiquette (« ⏭️ Ensuite : … », « Échauffement »…), l'avance automatique du superset ou de l'exercice suivant
+   (`_restDoneCb`, une fonction en mémoire), le pas de 5 s des abdos et la mémoire de durée par exercice (`_restEx`). */
+function _reposReprendre(){
+  const r=(typeof S!=='undefined'&&S.wkt)?S.wkt.repos:undefined;
+  const debut=(r&&typeof r==='object')?r.debut:NaN, total=(r&&typeof r==='object')?r.total:NaN;
+  const lisible=typeof debut==='number'&&isFinite(debut)&&typeof total==='number'&&isFinite(total)
+    &&total>0&&total<=3600&&debut<=Date.now()+5000;
+  if(!lisible||!_wktEnCours()){ stopRest(); return false; }     // efface aussi une valeur douteuse ou orpheline
+  restTot=total; restStartTs=debut;
+  if(_restLeft()<=-REST_DEPASSEMENT_MAX){ stopRest(); return false; }   // abandonné : 5 min après la fin théorique
+  _restBeeped=_restLeft()<=0;                                   // déjà fini : ni vibration ni écran GO en retard
+  _countdownSecs=new Set();
+  const bar=document.getElementById('rest-bar'); if(bar) bar.classList.add('show');
+  updRest(); _updPill();
+  if(restIv)clearInterval(restIv);
+  restIv=setInterval(_restTick,250);
+  if(_pillIv)clearInterval(_pillIv);
+  _pillIv=setInterval(_updPill,500);
+  return true;
 }
 let _afTimer=null;
 // Après saisie des reps (1re case), auto-focus la case KG (2e case) après un court délai.
@@ -5983,6 +6043,7 @@ function setRestPreset(sec){
   // Garde restStartTs (début du repos), change seulement la cible totale
   // → _restLeft() = sec - elapsed (temps restant = cible - déjà écoulé)
   restTot=sec;_restBeeped=false;_countdownSecs=new Set();
+  _reposMemoriser();             // SEANCE-REPOS-01 : la nouvelle durée survit à une fermeture
   if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=sec;persist();}
   _highlightRestPreset(sec);updRest();_updPill();
 }
@@ -5991,6 +6052,7 @@ function addRT(s){
   // Recalcule restStartTs pour que _restLeft() reflète la nouvelle durée
   const newLeft=Math.max(5,Math.min(_restLeft()+s,600));
   restStartTs=Date.now()-(restTot-newLeft)*1000;
+  _reposMemoriser();             // SEANCE-REPOS-01 : −15 s / +15 s survivent à une fermeture
   updRest();
 }
 // ⚠️ « Skip » doit HONORER l'avance en attente, pas la jeter (ft-v825). `stopRest()` remet
@@ -6020,6 +6082,7 @@ function applyRestEdit(){
   else{
     // repart du nouveau total (compte à rebours frais depuis la valeur saisie)
     restTot=total;restStartTs=Date.now();_restBeeped=false;_countdownSecs=new Set();
+    _reposMemoriser();           // SEANCE-REPOS-01 : « Régler » survit à une fermeture
     _closeRestCountdown();
     updRest();_updPill();
   }
