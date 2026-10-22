@@ -3632,3 +3632,11 @@ Mesuré (code) : la courbe « Poids max · 5 dernières séances » (`_getExHist
 `X` compris —, ignore les répétitions, et affiche « 📈/📉 ±N kg (±N %) » entre la 1ʳᵉ et la dernière séance : 5 × 100 puis 10 × 80 s'y lit
 « 📉 −20 kg (−20 %) », la fausse régression que le brief interdit dans la comparaison. Deux séances du même jour y sont deux points portant la même
 date (« 16/10 », sans rang). Hors périmètre : signalé, pas modifié (le brief demande de documenter les limites, pas de refondre). État : **à trier**.
+
+### 🟡 APRÈS UNE MIGRATION NUTRITION, MILO VOIT DES TOTAUX QUI ONT CHANGÉ — ET UNE MACRO INCONNUE Y COMPTE 0 (22/10/2026 — Nutrition V2, jalon 1, rien construit)
+Mesuré (code, 0 appel) : `buildCoachContext` envoie à Milo les totaux des 7 derniers jours notés, additionnés comme `_foodTotals` (`e.kcal||0`…).
+Avec Nutrition V2, une correction d'historique acceptée change ces totaux (sur l'extrait réel du 20/10, 73 lignes changeraient des valeurs), et une
+macro inconnue (désormais absente, plus jamais écrite 0) y compte quand même 0. ❓ **Doute** : Milo commente-t-il comme un changement d'apports ce qui
+n'est qu'une correction d'historique, et s'appuie-t-il sur un total où une macro manque sans le savoir ? Vérifiable par du code : la présence et le
+calcul oui (contexte simulé) ; la lecture par Milo ⚠️ seulement avec un appel réel (banc R34). État : **à trier** — à trancher par Michel (dire
+« corrigé » ou « partiel » à Milo = changement de contexte, banc avant / après).
