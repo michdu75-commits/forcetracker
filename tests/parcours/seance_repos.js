@@ -686,7 +686,7 @@ function source(t, ROOT, fs, path) {
   const faux = Object.keys(aides).filter(k => (aides[k].match(/(?:^|[^0-9])(\d+) min(?:utes)? après la fin/g) || []).some(m => !/(^|[^0-9])15 min/.test(m)));
   const nDit = Object.keys(aides).reduce((n, k) => n + (aides[k].match(/(?:^|[^0-9])15 min(?:utes)? après la fin/g) || []).length, 0);
   const dit = Object.keys(aides).filter(k => /(^|[^0-9])15 min(utes)? après la fin/.test(aides[k]));
-  t('C-REP-S5 règle d\'or #11 : les aides (« ? » Séance, aide détaillée, Guide, points rouges) disent « 15 min après la fin » — plus aucune ne dit « 5 min » ni l\'ancien « au-delà de 15 min »',
+  t('C-REP-S5 règle d\'or #11 : les aides (« ? » Séance, aide détaillée, Guide, points rouges) disent « 15 min après la fin » (5 textes) — aucune ne donne une autre durée',
     !faux.length && dit.length === 4 && nDit === 5 && /id:'repos-persistant'/.test(aides['points rouges']), _det({ faux, dit, nDit }));
 }
 
