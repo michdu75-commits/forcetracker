@@ -2,8 +2,13 @@
 
 > Préparé le 22/10/2026 sur la branche isolée `claude/nut-inventaire-lecture-seule`, **corrigé le même
 > jour** après la contre-analyse demandée par Michel.
-> ⛔ **NON DÉPLOYÉ.** Le workflow Apps Script ne se déclenche que sur `master`. Le déploiement attend
-> l'accord explicite de Michel.
+> ✅ **DÉPLOYÉ LE 22/10/2026 (GO limité A1 de Michel)** : Apps Script @192, run n°123 du workflow
+> `deploy-appsscript.yml` lancé à la main sur master `236764c5` (le commit de tête porte `[skip ci]` :
+> Pages n'a pas été redéployé, l'app reste `ft-v1258`). `clasp push` n'a envoyé que `appsscript.json` et
+> `Code.js` ; `?test=1` online ; `authStatus` OK. ⚠️ Les deux routes n'ont **jamais été appelées** en
+> production : aucun bouton (carte Admin A2 préparée, non publiée) et le réseau de la session Claude
+> refuse `script.google.com`. ⛔ Le GO ne vaut que pour ces deux routes : ni extraction, ni migration,
+> ni restauration.
 
 ## ⛔ Correction : `storeHealth` n'est PAS une voie « zéro risque »
 
@@ -104,7 +109,7 @@ l'original » : cette règle naïve efface les repas saisis depuis la bascule (p
 
 ## Autorisations nécessaires (aucune n'est accordée par ce document)
 
-- Déployer `nutInventory` / `nutBackupAudit` (aucun scope OAuth nouveau ; jeton `IDEES_TOKEN2` existant).
+- ~~Déployer `nutInventory` / `nutBackupAudit`~~ — **accordé et fait le 22/10 (A1, @192)**.
 - Choisir comment les lancer (carte Admin ou lien GET) — sans ce choix, le déploiement ne donne
   rien de lisible.
 - Lecture de la console Supabase (agrégats seulement) si le miroir doit entrer dans la comparaison.
