@@ -1581,7 +1581,7 @@ disent « 15 min après la fin » ; les durées de repos prévues (programmes, p
 plafonds **non touchés** (fonctions modifiées listées depuis le diff : aucune du moteur, ni `finishWorkout`, `toggleSet`,
 `_wktElapsedMs`) ; témoins C-REP-I1/I2 (séance enregistrée identique à l'octet, 3 sources de durée × 5 états du repos, ancrée sur
 master) et C-REP-J1/J2 (fermeture pendant un repos : rien compté deux fois, une seule séance) ; comparateur master ↔ branche
-15 / 15 identiques (contre-épreuve : 6 / 15 rouges avec une faute injectée). **La revue adverse a trouvé deux défauts du lot du
+15 / 15 identiques sur l'arbre final (contre-épreuve : 6 / 15 rouges avec une faute injectée). **La revue adverse a trouvé deux défauts du lot du
 MATIN, corrigés** (`BUGS.md` §95) : « +15 s » tôt dans le repos puis fermeture effaçait le repos (garde jugeant le départ au lieu
 du restant — C-REP-D1b) ; un 2ᵉ onglet périmé réécrivait SA séance à l'expiration de son repos, ressuscitant une séance terminée
 ailleurs (double comptage) ou effaçant des séries récentes (C-REP-K1/K2/K3). Banc **61 / 0** (46 / 15 rouges sur le code du

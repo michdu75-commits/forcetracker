@@ -192,8 +192,10 @@ fermeture. Ne pas modifier les durées de repos prévues dans les programmes dan
   séance enregistrée est **identique à l'octet** (calories, détail, durée, horodatages, chaque champ hors `runId`), et ancrée sur
   les valeurs **mesurées sur master** (74 kcal / 1 600 s · 126 kcal / 1 060 s · 74 kcal / 1 600 s).
 - **Comparateur master ↔ branche** (hors dépôt, mêmes gestes, même horloge, 15 scénarios dont des fermetures pendant le repos et
-  des reprises au-delà de l'expiration) : **15 / 15 identiques à l'octet**. ⛔ Contre-épreuve : la même comparaison contre une copie
-  de la branche où la durée de séance dépend du repos rougit **6 / 15** (1 600 → 720 s, 126 → 65 kcal) — il sait voir une dérive.
+  des reprises au-delà de l'expiration) : **15 / 15 identiques à l'octet sur l'arbre FINAL** (`0d0d4269`, après les deux
+  correctifs de la revue et la fusion de master ; déjà 15 / 15 avant les correctifs). ⛔ Contre-épreuve : la même comparaison contre
+  une copie de la branche (version d'avant les correctifs) où la durée de séance dépend du repos rougit **6 / 15** (1 600 → 720 s,
+  126 → 65 kcal) — il sait voir une dérive.
 - **Pas de double comptage après fermeture et reprise** — témoins **C-REP-J1 / J2** : la même séance jouée sans fermer, puis en
   fermant l'app pendant le repos (60 s : le repos revient ; 1 500 s : il a expiré) → séance enregistrée identique, chrono de séance
   (`startTs`, `pausedTotal`, horodatages) intact à la reprise, **une seule** séance en mémoire et sur le disque, brouillon supprimé,
