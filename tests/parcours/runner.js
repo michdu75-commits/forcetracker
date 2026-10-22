@@ -32807,12 +32807,16 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     t('CCLXXX ③ ⛔ UNE PORTION NE S\'AFFICHE JAMAIS SANS SA DÉFINITION (consigne de Michel) — et ce qu\'on ignore est dit',
       /2 portions/.test(P.x2.texte) && /300 kcal/.test(P.x2.texte) && /assiette/.test(P.x2.texte) && /250 g/.test(P.x2.texte)
       && /poids inconnu/.test(P.x2sans.texte), P.x2.texte+' | sans poids : '+P.x2sans.texte);
-    t('CCLXXX ④ REPRISE PAR « MES ALIMENTS » : la fiche recalcule (120 kcal / 100 g), 500 g proposés (2 × 250), 600 kcal réenregistrés',
-      !!P.reprise && P.reprise.bc===true && P.reprise.kcal100===120 && /500 g/.test(P.reprise.pastille)
-      && P.reprise.ligne.ajoute===true && P.reprise.ligne.kcal===600 && P.reprise.ligne.q===500 && P.reprise.ligne.u==='g',
+    /* 🥗 D-103 (Michel, 22/10, tranche D-101 ⑯) — la pastille dit « 2 portions (500 g) », et la reprise prise TELLE QUELLE reste
+       2 assiettes de 250 g (la forme qu'écrivent « + Ajouter » et « Tes repas habituels ») : mêmes 600 kcal, par le moteur.
+       Avant D-103, elle disait « 500 g » et la ligne neuve passait en grammes (`q:500, u:'g'`). */
+    t('CCLXXX ④ REPRISE PAR « MES ALIMENTS » : la fiche recalcule (120 kcal / 100 g), « 2 portions (500 g) » proposés (D-103) — prise telle quelle, elle RESTE 2 × 250 g, 600 kcal',
+      !!P.reprise && P.reprise.bc===true && P.reprise.kcal100===120 && /2 portions \(500 g\)/.test(P.reprise.pastille)
+      && P.reprise.ligne.ajoute===true && P.reprise.ligne.kcal===600 && P.reprise.ligne.q===2 && P.reprise.ligne.u==='portion'
+      && P.reprise.ligne.pw===250,
       JSON.stringify(P.reprise));
     t('CCLXXX ⑤ ⭐ LA PORTE JUMELLE (recherche dans le journal) fait exactement pareil — R8',
-      !!P.recherche && P.recherche.kcal100===120 && /500 g/.test(P.recherche.pastille), JSON.stringify(P.recherche));
+      !!P.recherche && P.recherche.kcal100===120 && /2 portions \(500 g\)/.test(P.recherche.pastille), JSON.stringify(P.recherche));
     t('CCLXXX ⑥ POIDS CONNU PLUS TARD : 2 assiettes pesées 500 g → q=500 g, per100 = 120 kcal',
       P.pesee.ajoute===true && P.pesee.q===500 && P.pesee.u==='g' && P.pesee.per100 && P.pesee.per100.kcal===120
       && P.pesee.kcal===600, JSON.stringify(P.pesee));
@@ -33466,9 +33470,10 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       && Q.deuxSteaks.ligne.lab==='steak' && Q.deuxSteaks.ligne.pw===125
       && Q.deuxSteaks.ligne.kcal===600 && Q.deuxSteaks.ligne.per100
       && Q.deuxSteaks.ligne.per100.kcal===240, JSON.stringify(Q.deuxSteaks&&Q.deuxSteaks.ligne));
-    t('CCLXXXIV ② ⛔ L\'ÉCRAN DIT LE NOM ET LA MASSE TOTALE, qui est DÉRIVÉE (250 g), jamais stockée',
+    /* 🥗 D-103 : la masse totale se dit dans LA forme commune, « 2 portions (250 g) » (avant : « Soit 250 g en tout »). */
+    t('CCLXXXIV ② ⛔ L\'ÉCRAN DIT LE NOM ET LA MASSE TOTALE, qui est DÉRIVÉE (« 2 portions (250 g) », D-103), jamais stockée',
       Q.deuxSteaks && /1 steak \(125 g\)/.test(Q.deuxSteaks.def)
-      && /250 g en tout/.test(Q.deuxSteaks.def), Q.deuxSteaks&&Q.deuxSteaks.def);
+      && /2 portions \(250 g\)/.test(Q.deuxSteaks.def), Q.deuxSteaks&&Q.deuxSteaks.def);
     /* 🥗 D-099 — SANS POIDS, RIEN NE S'ENREGISTRE : l'écran le dit, et aucun poids n'est inventé. */
     t('CCLXXXIV ③ ⛔⛔ POIDS INCONNU : l\'écran LE DIT, aucun poids n\'est inventé, et rien ne part sans lui (D-099)',
       Q.sansPoids && /1 assiette, poids inconnu/.test(Q.sansPoids.def) && /Indique le poids d'une portion/.test(Q.sansPoids.def)
@@ -33486,10 +33491,13 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     t('CCLXXXIV ⑥ ⛔ NON-RÉGRESSION : l\'onglet ⚖️ grammes est INCHANGÉ (500 g -> q:500, u:g, per100 120)',
       Q.grammes && Q.grammes.ajoute===true && Q.grammes.q===500 && Q.grammes.u==='g' && Q.grammes.per100
       && Q.grammes.per100.kcal===120, JSON.stringify(Q.grammes));
-    t('CCLXXXIV ⑦ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS (figée, D-101 ③) — 2 × steak (125 g) proposé, 600 tels que notés',
+    /* 🥗 D-103 : une ancienne ligne (V1) n'a pas de poids de portion FIABLE (il a pu être hérité de l'écran, M6) — la pastille dit
+       « 2 portions », sans gramme ; la portion (steak, 125 g) reste dans la quantité reprise, rien n'est perdu ni inventé. */
+    t('CCLXXXIV ⑦ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS (figée, D-101 ③) — « 2 portions » proposées SANS gramme affirmé (D-103), 600 tels que notés',
       Q.reprise && Q.reprise.fige===true && !!Q.reprise.qte && Q.reprise.qte.unite==='portion' && Q.reprise.qte.val===2
       && Q.reprise.qte.portion.libelle==='steak' && Q.reprise.qte.portion.poids===125
-      && /2 × steak \(125 g\)/.test(Q.reprise.pastille.replace(/\u00A0/g,' ')) && /portions/.test(Q.reprise.titre)
+      && /↩ 2 portions \(la dernière fois\)/.test(Q.reprise.pastille.replace(/\u00A0/g,' '))
+      && !/125|250/.test(Q.reprise.pastille) && /portions/.test(Q.reprise.titre)
       && Q.reprise.ecran===600, JSON.stringify(Q.reprise));
     t('CCLXXXIV ⑧ ⛔ NON-RÉGRESSION ft-v1042 : un aliment en GRAMMES ouvre bien son champ grammes',
       Q.scanGrammes && Q.scanGrammes.blocGrammes===true && Q.scanGrammes.bcNutr===true,
@@ -33499,9 +33507,10 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       && Q.aVersB.ecran===200 && Q.aVersB.ligne.ajoute===false, JSON.stringify(Q.aVersB));
     t('CCLXXXIV ⑩ ⛔ ÉTIQUETTE ABSENTE -> « portion non définie », aucune invention — et rien ne part sans nom ni poids',
       Q.sansNom && /non définie/.test(Q.sansNom.def) && Q.sansNom.ligne.ajoute===false, JSON.stringify(Q.sansNom));
-    t('CCLXXXIV ⑪ ⭐ 601 kcal / 3 parts de 150 g : DIX cycles reprise → ajout, chacun ENREGISTRÉ, sans une dérive (601 · 450 g)',
+    /* 🥗 D-103 : chaque cycle reprend la pastille « 3 portions (450 g) » TELLE QUELLE — la ligne reste 3 parts (avant : 450 g). */
+    t('CCLXXXIV ⑪ ⭐ 601 kcal / 3 parts de 150 g : DIX cycles reprise → ajout, chacun ENREGISTRÉ, sans une dérive (601 · 3 parts, D-103)',
       Q.dixCycles && Q.dixCycles.length===10
-      && Q.dixCycles.every(c=>c.ajoute===true && c.kcal===601 && c.q===450 && c.u==='g'), JSON.stringify(Q.dixCycles));
+      && Q.dixCycles.every(c=>c.ajoute===true && c.kcal===601 && c.q===3 && c.u==='portion'), JSON.stringify(Q.dixCycles));
     t('CCLXXXIV ⑫ L\'EXPORT CSV porte `portion_label` et `portion_poids_g`',
       Q.csv && Q.csv.indexOf('portion_label')>=0 && Q.csv.indexOf('portion_poids_g')>=0,
       JSON.stringify(Q.csv));
@@ -33713,8 +33722,9 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     t('CCLXXXV ① ⭐⭐ « 2 STEAKS » S\'OUVRE EN PORTIONS, PAS EN GRAMMES (2 portions, aucune quantité déduite)',
       V.editPortion && V.editPortion.grammes===false && V.editPortion.unite==='portion' && V.editPortion.q==='2',
       JSON.stringify(V.editPortion));
-    t('CCLXXXV ② ⭐ LA DÉFINITION EST DITE, EN LECTURE SEULE : « 1 portion = 1 steak (125 g) » — plus de champ pour la retoucher (D-101 ⑩)',
-      V.editPortion && /1 portion = 1 steak \(125 g\)/.test(V.editPortion.txt) && V.editPortion.anciens
+    t('CCLXXXV ② ⭐ LA DÉFINITION EST DITE, EN LECTURE SEULE : « 1 portion = 1 steak — poids non vérifié » (D-103 : le poids d\'une ancienne ligne n\'est pas affirmé) — plus de champ pour la retoucher (D-101 ⑩)',
+      /* 🥗 D-103 : une ancienne ligne n'affirme pas le poids noté d'une portion (non vérifiable) — le nom, oui. */
+      V.editPortion && /1 portion = 1 steak — poids non vérifié/.test(V.editPortion.txt) && !/125 g/.test(V.editPortion.txt) && V.editPortion.anciens
       && !V.editPortion.anciens.pnom && !V.editPortion.anciens.ppoids && !V.editPortion.anciens.prop && !V.editPortion.anciens.pdef,
       JSON.stringify(V.editPortion));
     t('CCLXXXV ③ ⛔ ... ET L\'ÉCRAN DIT QUE LES VALEURS NOTÉES NE SONT PAS RECALCULÉES (pas de fiche vérifiée, M1)',
@@ -33771,7 +33781,8 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       JSON.stringify(V.decimaleGrammes));
     t('CCLXXXV ⑱ ⭐ AUCUNE DÉRIVE CUMULATIVE : DIX cycles, chacun ENREGISTRÉ — valeurs et pour-100 g identiques au caractère près, le 10ᵉ égal au 2ᵉ',
       V.cycles && !V.cycleErr && V.cycles.n===10 && V.cycles.ajouts.length===10 && V.cycles.ajouts.every(x=>x===true)
-      && V.cycles.deux===V.cycles.dix && /^355\|30\|44\|6\|140\|g\|/.test(V.cycles.dix)
+      /* 🥗 D-103 : la reprise prise telle quelle reste « 1 part de 140 g » — les DIX empreintes sont identiques (avant : 140 g dès le 2ᵉ). */
+      && V.cycles.deux===V.cycles.dix && V.cycles.un===V.cycles.dix && /^355\|30\|44\|6\|1\|portion\|140\|/.test(V.cycles.dix)
       && V.cycles.un.split('|').slice(0,4).join('|')===V.cycles.dix.split('|').slice(0,4).join('|')
       && V.cycles.un.split('|').pop()===V.cycles.dix.split('|').pop(),
       JSON.stringify(V.cycles)+(V.cycleErr?' · '+V.cycleErr:''));

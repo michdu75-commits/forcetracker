@@ -671,3 +671,48 @@ branche, ou un appareil de test). Les gestes, dans l'ordre :
 8. **Journal** : « ? » pour une valeur inconnue, « total partiel » en haut du jour. **Export CSV** : vrais noms de repas,
    colonnes `statut` et `valeurs_inconnues`.
 9. Le bouton central « + » Séance n'a pas bougé (règle d'or #9 — aucun fichier Séance touché par ce jalon).
+10. **D-103 — « 3 portions (450 g) »** (ajouté le 22/10, après la validation de Michel) : noter « 3 parts de 150 g » d'un aliment
+    scanné ou cherché (onglet 🍽️) ; dans « Mes aliments », la ligne dit « 3 portions (450 g) · … kcal » ; la reprendre : la
+    pastille dit « ↩ 3 portions (450 g) (la dernière fois) », le champ reste **vide** ; la toucher puis « Ajouter » : la ligne
+    neuve dit encore « 3 portions (450 g) » (mêmes valeurs) ; la reprendre, toucher la pastille, **taper 300** : la ligne est
+    en grammes (300 g). Une **ancienne** ligne en portions (d'avant V2) dit « 2 portions », **sans gramme**, partout — et
+    « Modifier » écrit « 1 portion = 1 steak — poids non vérifié ». Les aides « ? », l'aide détaillée (« Nutrition — combien
+    tu en as mangé »), la diapo du Guide et la pop-up v80 disent ces gestes.
+
+### 14.3 D-103 — « 3 portions (450 g) » (Michel, 22/10/2026, tranche D-101 ⑯)
+
+**La décision** (registre : D-103, *Michel*, VALIDÉ) : quand un aliment a une portion connue et fiable, les deux s'affichent
+ensemble, « 3 portions (450 g) », de la même façon partout où l'information existe ; les grammes et ml restent la référence du
+calcul ; jamais de poids inventé ; un poids non fiable → on le demande ou on reste en grammes ; rien de pré-rempli ; rien de ce
+qui est enregistré ne bouge ; aucune ancienne ligne recalculée.
+
+**Ce qui était là avant** (cartographie du 22/10, mesurée dans le code) : la même quantité s'écrivait de **cinq façons** —
+« 3 × part » (« Mes aliments »), « 3 × part (150 g) » (reprise figée, messages : la parenthèse y était le poids d'UNE portion),
+« Soit 450 g en tout » (onglet portions), « 1 portion = 1 part (150 g). » (« Modifier »), « ↩ 450 g » (reprise à fiche, qui
+**enregistrait** ensuite la ligne neuve en grammes : la forme se perdait d'une reprise à l'autre — l'écart ⑯ lui-même).
+
+**Ce qui change (branche, non publié)** :
+- un **seul formateur** (`_n2QteTexte(q, fiable)`, R2) : « 150 g » · « 3 portions (450 g) » · « 3 portions » ; la parenthèse
+  dit désormais toujours le **total**, au dixième (`_nbFR`) ;
+- **« fiable » se vérifie dans le code** (`_n2PortionFiable`) : une ligne V2 **pesée** (`n2.m==='p'` — le poids d'une portion
+  y a été tapé dans l'écran d'ajout, seule porte qui en crée un) dont la fiche redonne **exactement** les valeurs enregistrées,
+  hors valeurs corrigées à la main. ⛔ Jamais fiables : une **ancienne** ligne (son poids a pu être hérité de l'écran — M6,
+  `BUGS.md` §90 — et aucun critère ne les distingue), une ligne **déclarée** (son poids est une copie d'ancienne ligne), un
+  **favori** dont la définition a été réécrite sans ses valeurs (ft-v1186 ⑤) ;
+- la pastille de reprise à fiche dit « ↩ 3 portions (450 g) (la dernière fois) » ; **prise telle quelle**, la ligne neuve
+  **reste des portions** (la forme qu'écrivent « + Ajouter » et « Tes repas habituels », le moteur calcule les mêmes valeurs) ;
+  retouchée, c'est une quantité en grammes ; une portion non fiable ne propose **aucune** masse ;
+- « Modifier » d'une ligne à fiche : « 3 portions (450 g) · 1 portion = 1 part (150 g). », suivi à chaque frappe ; d'une ligne
+  sans fiche : « 1 portion = 1 steak — poids non vérifié. » (le poids noté reste dans la ligne et dans l'export) ;
+- l'onglet portions : « Tu notes 3 portions (450 g) — 1 portion = 1 part (150 g) · … » ;
+- trois textes d'écran qui contredisaient D-099 / D-101 ① : « Pré-rempli — ajuste la quantité » → « Repris — choisis la
+  quantité » ; « multiplie les 4 valeurs » ; « facultatif » (le nom d'une portion est indispensable).
+
+**Ce qui ne change PAS, exprès** : le journal du jour, la carte « Tes repas habituels » et les suggestions « Déjà noté par toi »
+n'affichent **aucune** quantité aujourd'hui (ni en grammes ni en portions) — en ajouter une n'est pas une adaptation de ⑯, c'est
+une décision à part (**demandée à Michel**). L'export garde ses colonnes brutes (`quantite`, `unite`, `portion_label`,
+`portion_poids_g`). Aucune donnée persistée nouvelle, aucune ligne enregistrée réécrite (P14 ⑭ le vérifie octet par octet).
+
+**Témoins** : `nut2_parcours.js` P14 (15 témoins, attendus écrits à la main) ; 7 témoins de la passe réécrits sur ce contrat
+(CCLXXX ④⑤, CCLXXXIV ②⑦⑪, CCLXXXV ②⑱) ; contrôles négatifs `tools/mut_nut2_parcours.py` MP36 → MP50 et
+`tools/mut_temoins_v2.py` R36 → R39.

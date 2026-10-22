@@ -57,7 +57,7 @@ MUT = [
        "  if(R.fiche || (src && src.per100 && (R.fiche={base:'g', p100:src.per100, cle:src.sourceId||null, source:'utilisateur', fiab:'declaree'}))){\n    e.mode='pesee'; e.fiche=R.fiche;")],
      ['CCLXXV ④']),
     ('R07 reprise pesée : « la dernière fois » n\'est plus proposée', ['CCLXXV', 'CCLXXX', 'CCLXXXIV', 'CCLXXXV', 'CCLXXXVII'],
-     [('app.js', "    _bcProposerDerniere(qDer);", "    _bcProposerDerniere(0);")],
+     [('app.js', "    _bcProposerDerniere(qDer, (qDer>0 && q.unite==='portion') ? q : null);", "    _bcProposerDerniere(0);")],
      ['CCLXXX ④', 'CCLXXXIV ⑪', 'CCLXXXV ⑱', 'CCLXXXVII ⑮']),
     ('R08 la référence tapée est arrondie à l\'ENTIER avant le moteur (ft-v1188 rouvert)', ['CCCIV', 'CCLXXXV'],
      [('app.js', "    p100[c]=(ref===100)?(+x):(+x)*100/ref;", "    p100[c]=(ref===100)?(+x):Math.round((+x)*100/ref);")],
@@ -167,6 +167,19 @@ MUT = [
      [('app.js', "      : _ref100(R.nom, p.kcal, p.prot, p.carbs, p.fat, {normaliser:false, origine:'reprise'});",
        "      : {name:R.nom, kcal100:p.kcal, prot100:p.prot, carbs100:p.carbs, fat100:p.fat, absents:[]};")],
      ['CCXC ⭐ les 9 portes', 'CCCV ㉒']),
+    # ── D-103 (Michel, 22/10, tranche D-101 ⑯) : les témoins de la passe RÉÉCRITS ce jour-là (CCLXXX ④⑤, CCLXXXIV ②⑦⑪, CCLXXXV ②⑱) ──
+    ('R36 D-103 : la parenthèse redonne le poids d\'UNE portion au lieu du TOTAL', ['CCLXXX', 'CCLXXXIV'],
+     [('app.js', "_n2PortionsMot(q.val)+' ('+_nbFR(q.val*p.poids)+' '+p.unite+')'", "_n2PortionsMot(q.val)+' ('+_nbFR(p.poids)+' '+p.unite+')'")],
+     ['CCLXXX ④', 'CCLXXX ⑤', 'CCLXXXIV ②']),
+    ('R37 D-103 : une portion au poids NON fiable (ancienne ligne) affiche quand même ses grammes', ['CCLXXXIV'],
+     [('app.js', "  return (fiable && p && +p.poids>0) ?", "  return (p && +p.poids>0) ?")],
+     ['CCLXXXIV ⑦']),
+    ('R38 D-103 : « Modifier » affirme le poids noté d\'une ancienne portion', ['CCLXXXV'],
+     [('app.js', "  if(!(n>0) || !_n2PortionFiable(_efR)) return nom+' — poids non vérifié.';", "  if(!(n>0)) return nom+' ('+_nbFR(p.poids)+' '+p.unite+').';")],
+     ['CCLXXXV ②']),
+    ('R39 D-103 : la pastille « la dernière fois » prise telle quelle redevient des GRAMMES', ['CCLXXX', 'CCLXXXIV', 'CCLXXXV'],
+     [('app.js', "    const quantite=(P && _bcQtyOrigine==='proposee' && v===P.masse)", "    const quantite=(false)")],
+     ['CCLXXX ④', 'CCLXXXIV ⑪', 'CCLXXXV ⑱']),
 ]
 
 

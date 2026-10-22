@@ -21,7 +21,7 @@
 | Fenêtres (modales) | 66 | 15 |
 | Actions du serveur | 53 | 3 |
 | Fonctions JS | 639 | — |
-| Nouveautés annoncées | 73 | — |
+| Nouveautés annoncées | 74 | — |
 
 ## 🖥️ Écrans
 
@@ -194,6 +194,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 80 | ⚖️ | Nutrition : les grammes d’abord |
 | 79 | 💪 | « Échec » et « 0 », enfin séparés |
 | 78 | 🏋️ | L'écran Séance s'allège |
 | 77 | 🗂️ | Progrès : Séances d'abord |

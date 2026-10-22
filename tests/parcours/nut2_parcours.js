@@ -136,6 +136,24 @@ function fixtureCorrectifs() {
   } catch (e) {} })();`;
 }
 
+/* ── P14 — D-103 (Michel, 22/10, tranche D-101 ⑯) : « 3 portions (450 g) » partout où le poids d'une portion est connu ET
+   fiable ; sans grammes sinon. Une ancienne ligne (V1) en portions, avec un poids noté qu'aucun critère ne peut vérifier
+   (M6 : il a pu être hérité de l'écran). Les lignes V2 sont écrites par le moteur sur la page même (P14 ci-dessous). ── */
+const D103_ANCIENNE = { id: 'nv2t-S1-00000001', meal: 'diner', name: 'Steak P14 (test)', kcal: 500, prot: 40, carbs: 0, fat: 36,
+  v: 1, saisie: 'manuel', origine: 'utilisateur', q: 2, u: 'portion', portionLabel: 'steak', portionWeightG: 125, etat: null, sourceId: null,
+  per100: { kcal: 200, prot: 16, carbs: 0, fat: 14.4 } };
+function fixtureD103() {
+  return `(() => { try {
+    if (sessionStorage.getItem('__nv2t')) return; sessionStorage.setItem('__nv2t', '1');
+    localStorage.clear();
+    localStorage.setItem('ft4_ob2','1'); localStorage.setItem('ft4_guide_shown','1'); localStorage.setItem('ft4_wn_seen','99');
+    const pad = n => String(n).padStart(2,'0');
+    const t = new Date(); t.setDate(t.getDate()-1); const hier = t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());
+    localStorage.setItem('ft4_foodlog', JSON.stringify([Object.assign({}, ${JSON.stringify(D103_ANCIENNE)}, { date: hier, ts: 1760000000000 })]));
+    localStorage.setItem('ft4_savedfoods', '[]');
+  } catch (e) {} })();`;
+}
+
 /* ── LES GESTES — au pointeur ; un geste raté rend FAUX (il ne ressemble jamais à un vert) ── */
 const clic = async (pg, sel) => { try { await pg.click(sel, { timeout: 4000 }); return true; } catch (e) { return false; } };
 const taper = async (pg, sel, v) => { try { await pg.fill(sel, String(v)); await pg.waitForTimeout(140); return true; } catch (e) { return false; } };
@@ -726,6 +744,189 @@ async function ecran(t, b, PORT) {
       && o4.g && o4.avant === null && o4.apres === 'proposee' && o4.q === 150 && o4.kcal === 195, J({ v2, origines }));
     t('B-NV2P P13 ⑩ aucune erreur de page sur les correctifs', p13.erreurs.length === 0 && v2.length === 0, J({ erreurs: p13.erreurs, v2 }));
   } finally { await p13.cx.close(); }
+
+  /* ═══ P14 D-103 — « 3 PORTIONS (450 G) » (Michel, 22/10, tranche D-101 ⑯) ═══
+     Une quantité se dit d'UNE façon partout où l'app la montre ; le total en grammes n'apparaît que si le poids d'UNE
+     portion est connu ET fiable (ligne V2 pesée dont la fiche redonne exactement ses valeurs). Les grammes restent la
+     référence du calcul ; rien n'est pré-rempli ; AUCUNE ligne enregistrée ne bouge. ⛔ Attendus écrits à la main :
+     riz 130 · 2,7 · 28 · 0,7 pour 100 g → 450 g = 585 · 12,15 → 12 · 126 · 3,15 → 3 ; 300 g = 390 · 8,1 → 8 · 84 · 2,1 → 2 ;
+     2 portions de 150 g = 300 g (mêmes valeurs). Yaourt 80 · 4 · 10 · 3 pour 100 g, 1,5 × 125 g = 187,5 g. */
+  const p14 = await ouvrir(b, PORT, fixtureD103());
+  try {
+    const pg = p14.pg;
+    await capterToasts(pg);
+    const RIZ = { kcal: 130, prot: 2.7, carbs: 28, fat: 0.7 };
+    const v2 = await pg.evaluate((RIZ) => {
+      const pad = (n) => String(n).padStart(2, '0'), J0 = (k) => { const x = new Date(); x.setDate(x.getDate() - k); return x.getFullYear() + '-' + pad(x.getMonth() + 1) + '-' + pad(x.getDate()); };
+      const err = [], L = [];
+      const ecrire = (o) => { const r = NUT2.ligneNouvelle(o); if (r.ok) L.push(r.ligne); else err.push(o.nom + ':' + r.erreur); return r.ok ? r.ligne : null; };
+      const pesee = (id, k, repas, nom, p100, q, extra) => Object.assign({ id: id, ts: Date.now() - 9e6 + k * 1000, date: J0(k), repas: repas, nom: nom,
+        origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee', fiche: { base: 'g', p100: p100, cle: '3000000000' + id.slice(5, 7).replace('F', '5') + '01', source: 'off', fiab: 'source' },
+        quantite: q }, extra || {});
+      const riz3 = { val: 3, unite: 'portion', origine: 'portion', portion: { libelle: 'part', poids: 150, unite: 'g' } };
+      /* F1 « Riz » — 3 parts de 150 g, deux jours de suite (un repas habituel) */
+      ecrire(pesee('nv2t-F1-00000002', 2, 'dejeuner', 'Riz P14 (test)', RIZ, riz3));
+      ecrire(pesee('nv2t-F1-00000003', 1, 'dejeuner', 'Riz P14 (test)', RIZ, riz3));
+      /* F6 « Yaourt » — 1,5 pot de 125 g */
+      ecrire(pesee('nv2t-F6-00000004', 1, 'collation', 'Yaourt P14 (test)', { kcal: 80, prot: 4, carbs: 10, fat: 3 },
+        { val: 1.5, unite: 'portion', origine: 'portion', portion: { libelle: 'pot', poids: 125, unite: 'g' } }));
+      /* F5 « Thon » — 150 g */
+      ecrire(pesee('nv2t-F5-00000005', 1, 'diner', 'Thon P14 (test)', { kcal: 110, prot: 26, carbs: 0, fat: 1 }, { val: 150, unite: 'g', origine: 'tapee' }));
+      /* F4 « Galette » — 2 parts de 100 g, kcal CORRIGÉES à la main (300 au lieu de 360) : le poids reste fiable */
+      ecrire(pesee('nv2t-F4-00000006', 1, 'diner', 'Galette P14 (test)', { kcal: 180, prot: 6, carbs: 30, fat: 4 },
+        { val: 2, unite: 'portion', origine: 'portion', portion: { libelle: 'part', poids: 100, unite: 'g' } },
+        { corrections: [{ c: 'kcal', v: 300, le: Date.now() - 9e6, avant: 360 }] }));
+      /* F7 « Galette d » — 2 parts de 140 g DÉCLARÉES (une copie d'ancienne ligne : poids non fiable) */
+      ecrire({ id: 'nv2t-F7-00000007', ts: Date.now() - 8e6, date: J0(1), repas: 'collation', nom: 'Crêpe P14 (test)',
+        origine: { saisie: 'liste', origine: 'reprise' }, mode: 'declaree', declare: { kcal: 355, prot: 30, carbs: 44, fat: 6 },
+        quantite: { val: 2, unite: 'portion', origine: 'proposee', portion: { libelle: 'part', poids: 140, unite: 'g' } } });
+      L.forEach((l) => S.foodLog.push(l));
+      /* F3 un FAVORI V2 « Pot » dont la définition a été réécrite APRÈS coup (125 → 150 g, ses valeurs inchangées : ft-v1186 ⑤) */
+      const pot = NUT2.ligneNouvelle(pesee('nv2t-F3-00000008', 3, 'collation', 'Pot P14 (test)', { kcal: 82, prot: 4, carbs: 12, fat: 2 },
+        { val: 2, unite: 'portion', origine: 'portion', portion: { libelle: 'pot', poids: 125, unite: 'g' } }));
+      if (pot.ok) { const f = { name: pot.ligne.name, kcal: pot.ligne.kcal, prot: pot.ligne.prot, carbs: pot.ligne.carbs, fat: pot.ligne.fat,
+        per100: pot.ligne.per100, q: 2, u: 'portion', portionLabel: 'pot', portionWeightG: 150, sourceId: pot.ligne.sourceId,
+        n2: { s: 1, m: 'p', f: pot.ligne.n2.f } }; S.savedFoods = [f]; } else err.push('pot:' + pot.erreur);
+      persist(); renderFoodJournal(); return err;
+    }, RIZ);
+    const fermer = () => pg.evaluate(() => { try { closeAddFood(); } catch (e) {} document.querySelectorAll('.overlay.open').forEach((x) => x.classList.remove('open')); });
+    const vider = () => pg.evaluate(() => { const v = (window.__toasts || []).slice(); window.__toasts = []; return v; });
+    const nb = (x) => String(x || '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+    const avantTout = J({ log: await journal(pg), fav: await pg.evaluate(() => JSON.parse(JSON.stringify(S.savedFoods || []))) });
+    const idsAvant = (await journal(pg)).map((x) => x.id);
+
+    /* ① « Mes aliments » : la quantité dite sur chaque ligne de la liste */
+    await fermer();
+    let g = await ouvrirAjout(pg);
+    const liste = await pg.evaluate(() => {
+      const o = {}; (_afQuickItems || []).forEach((it, i) => { const el = document.querySelectorAll('#af-quick-list div[onclick^="quickFillFood"]')[i];
+        o[it.name] = (el && el.children[1]) ? el.children[1].textContent : null; }); return o; });
+    const L1 = (n) => nb(liste[n]);
+    t('B-NV2P P14 ① ⭐⭐ « MES ALIMENTS » (favoris, récents) : « 3 portions (450 g) » · « 1,5 portion (187,5 g) » · « 150 g » — une portion au poids FIABLE dit ses grammes (le TOTAL entre parenthèses)',
+      g && /^3 portions \(450 g\) · 585 kcal/.test(L1('Riz P14 (test)')) && /^1,5 portion \(187,5 g\) · /.test(L1('Yaourt P14 (test)'))
+      && /^150 g · 165 kcal/.test(L1('Thon P14 (test)')) && /^2 portions \(200 g\) · 300 kcal/.test(L1('Galette P14 (test)')), J(liste));
+    t('B-NV2P P14 ② ⛔⛔ … une portion au poids NON FIABLE ne dit AUCUN gramme : ancienne ligne (« 2 portions », pas « 125 g » ni « 250 g »), ligne déclarée, favori dont la définition a été réécrite (« 2 portions », pas « 300 g »)',
+      /^2 portions · 500 kcal/.test(L1('Steak P14 (test)')) && /^2 portions · 355 kcal/.test(L1('Crêpe P14 (test)'))
+      && /^2 portions · /.test(L1('Pot P14 (test)'))
+      && !/\d g\)/.test(L1('Steak P14 (test)') + L1('Crêpe P14 (test)') + L1('Pot P14 (test)')), J(liste));
+
+    /* ② ③ la REPRISE À L'ÉCRAN d'une ligne à fiche en portions fiables : proposée, jamais posée ; prise telle quelle, elle reste des portions */
+    const prendre = (nom) => pg.evaluate((n) => { const i = (_afQuickItems || []).findIndex((x) => x && x.name === n); if (i >= 0) quickFillFood(i); return i; }, nom);
+    const bcEtat = () => pg.evaluate(() => { const b = document.getElementById('af-bc-last'), t2 = document.getElementById('af-bc-total');
+      return { vu: !!(b && b.style.display === 'inline-block'), txt: b ? b.textContent : '', q: b ? (b.dataset.q || null) : null,
+        champ: (document.getElementById('af-bc-grams') || {}).value, total: t2 && t2.style.display !== 'none' ? t2.textContent : '' }; });
+    g = (await prendre('Riz P14 (test)')) >= 0; await pause(pg, 300);
+    const r2 = await bcEtat(), n2a = (await journal(pg)).length;
+    t('B-NV2P P14 ③ ⭐⭐ REPRISE À L\'ÉCRAN (« Mes aliments ») : la pastille dit « ↩ 3 portions (450 g) (la dernière fois) » — champ VIDE, rien d\'ajouté (D-101 ①)',
+      g && r2.vu && nb(r2.txt) === '↩ 3 portions (450 g) (la dernière fois)' && r2.q === '450' && r2.champ === '' && n2a === idsAvant.length, J(r2));
+    /* ⑤ la même reprise par la recherche dans ton journal (« Déjà noté par toi », saisie « historique ») */
+    await fermer(); g = await ouvrirAjout(pg);
+    await pg.evaluate(() => { _afSuggLoc = _afSuggLocales('Riz P14'); if (_afSuggLoc.length) _afSuggPrendreLocale(0); }); await pause(pg, 300);
+    const r7 = await bcEtat(), prov7 = await pg.evaluate(() => _n2Provenance());
+    t('B-NV2P P14 ⑦ ⭐ HISTORIQUE (« Déjà noté par toi ») : la même pastille, la même forme — « ↩ 3 portions (450 g) (la dernière fois) », champ vide',
+      r7.vu && nb(r7.txt) === '↩ 3 portions (450 g) (la dernière fois)' && r7.champ === '' && prov7 && prov7.saisie === 'historique', J({ r7, prov7 }));
+
+    await fermer(); g = await ouvrirAjout(pg);
+    g = g && (await prendre('Riz P14 (test)')) >= 0; await pause(pg, 300);
+    await vider();
+    g = await clic(pg, '#af-bc-last'); await pause(pg, 250);
+    const r3 = await bcEtat();
+    g = g && await ajouter(pg);
+    const n3 = neuves(await journal(pg), idsAvant), l3 = n3[0] || null;
+    const forme = (l) => l ? { q: l.q, u: l.u, pl: l.portionLabel, pw: l.portionWeightG, kcal: l.kcal, prot: l.prot, carbs: l.carbs, fat: l.fat,
+      per100: l.per100, m: l.n2 && l.n2.m, qo: l.n2 && l.n2.qo, sourceId: l.sourceId } : null;
+    t('B-NV2P P14 ④ ⭐⭐ … PRISE TELLE QUELLE, ELLE RESTE DES PORTIONS : champ 450, « pour tes 3 portions (450 g) », et la ligne est 3 parts de 150 g = 585 · 12 · 126 · 3 (à la main), pesée, quantité « proposée »',
+      g && r3.champ === '450' && /pour tes 3 portions \(450 g\)/.test(nb(r3.total)) && n3.length === 1 && l3 && l3.q === 3 && l3.u === 'portion'
+      && l3.portionLabel === 'part' && l3.portionWeightG === 150 && l3.kcal === 585 && l3.prot === 12 && l3.carbs === 126 && l3.fat === 3
+      && l3.n2 && l3.n2.m === 'p' && l3.n2.qo === 'proposee', J({ r3, l3: forme(l3) }));
+    /* la jumelle : « + Ajouter » et « Tes repas habituels » sur la même ligne */
+    await fermer(); g = await ouvrirAjout(pg);
+    const idsA = (await journal(pg)).map((x) => x.id);
+    await pg.evaluate(() => { const i = (_afQuickItems || []).findIndex((x) => x && x.name === 'Riz P14 (test)'); if (i >= 0) quickAddFood(i); }); await pause(pg, 300);
+    const lA = neuves(await journal(pg), idsA)[0] || null;
+    const idsR = (await journal(pg)).map((x) => x.id);
+    await pg.evaluate(() => { const h = (_repasHabituels() || []).find((x) => x && (x.items || []).some((it) => it && it.name === 'Riz P14 (test)')); if (h) rejouerRepas(h.sig, 'dejeuner'); });
+    await pause(pg, 300);
+    const lR = neuves(await journal(pg), idsR).find((x) => x && x.name === 'Riz P14 (test)') || null;
+    const sansQo = (f) => { if (!f) return f; const c = Object.assign({}, f); delete c.qo; return c; };
+    t('B-NV2P P14 ⑤ ⭐⭐ JUMELLES (D-103) : l\'écran, « + Ajouter » et « Tes repas habituels » écrivent LA MÊME FORME pour la même ligne (3 parts de 150 g, mêmes valeurs, même fiche)',
+      !!(l3 && lA && lR) && J(forme(lA)) === J(forme(l3)) && J(sansQo(forme(lR))) === J(sansQo(forme(l3))), J({ ecran: forme(l3), ajout: forme(lA), rejeu: forme(lR) }));
+
+    /* ④ la pastille prise, puis le champ RETOUCHÉ : c'est une quantité en grammes, comme avant */
+    await fermer(); g = await ouvrirAjout(pg);
+    g = g && (await prendre('Riz P14 (test)')) >= 0; await pause(pg, 250);
+    g = g && await clic(pg, '#af-bc-last'); await pause(pg, 200);
+    g = g && await taper(pg, '#af-bc-grams', '300'); await pause(pg, 200);
+    const r6 = await bcEtat(); const ids6 = (await journal(pg)).map((x) => x.id);
+    g = g && await ajouter(pg);
+    const l6 = neuves(await journal(pg), ids6)[0] || null;
+    t('B-NV2P P14 ⑥ ⛔ … la pastille prise PUIS le champ retouché (300) : une quantité en GRAMMES tapée — 300 g = 390 · 8 · 84 · 2 (à la main), « pour tes 300 g »',
+      g && /pour tes 300 g/.test(nb(r6.total)) && l6 && l6.q === 300 && l6.u === 'g' && !l6.portionLabel && l6.kcal === 390 && l6.prot === 8
+      && l6.carbs === 84 && l6.fat === 2 && l6.n2 && l6.n2.qo === 'tapee', J({ r6, l6: forme(l6) }));
+
+    /* ⑥ le favori à la définition réécrite : sa portion n'est pas fiable — aucune masse proposée, rien de posé */
+    await fermer(); g = await ouvrirAjout(pg);
+    g = g && (await prendre('Pot P14 (test)')) >= 0; await pause(pg, 300);
+    const r8 = await bcEtat();
+    t('B-NV2P P14 ⑧ ⛔⛔ POIDS NON FIABLE À L\'ÉCRAN (favori réécrit 125 → 150 g sans ses valeurs) : AUCUNE masse proposée (ni 250 ni 300 g), champ vide — la personne tape ses grammes',
+      g && !r8.vu && r8.champ === '' && !/\d/.test(nb(r8.txt)), J(r8));
+
+    /* ⑦ la reprise FIGÉE d'une ancienne ligne en portions : « 2 portions », jamais ses grammes */
+    await fermer(); g = await ouvrirAjout(pg);
+    g = g && (await prendre('Steak P14 (test)')) >= 0; await pause(pg, 300);
+    const r9 = await pg.evaluate(() => { const pp = document.getElementById('af-prop-pastille'), row = document.getElementById('af-prop-row');
+      return { fige: !!(_afRef && _afRef.fige), pastille: pp ? pp.textContent : '', q: pp ? pp.dataset.q : null, bloc: row ? row.textContent : '', champ: (document.getElementById('af-prop') || {}).value }; });
+    await vider();
+    g = g && await taper(pg, '#af-prop', '3'); const ids9 = (await journal(pg)).length;
+    g = g && await ajouter(pg);
+    const m9 = await vider(), a9 = (await journal(pg)).length > ids9;
+    t('B-NV2P P14 ⑨ ⛔⛔ ANCIENNE LIGNE (FIGÉE) : « ↩ 2 portions (la dernière fois) », valeurs « pour 2 portions » — AUCUN gramme affirmé (ni 125 ni 250 g), champ vide',
+      g && r9.fige && nb(r9.pastille) === '↩ 2 portions (la dernière fois)' && r9.q === '2' && /pour 2 portions\)/.test(nb(r9.bloc))
+      && !/125|250/.test(nb(r9.pastille) + nb(r9.bloc)) && r9.champ === '', J(r9));
+    t('B-NV2P P14 ⑩ ⛔ … une AUTRE quantité (3) sur ses valeurs non retouchées est refusée — le message dit « pour 2 portions », sans gramme',
+      !a9 && m9.some((m) => /Ces valeurs valent pour 2 portions :/.test(nb(m))) && !m9.some((m) => /125 g|250 g/.test(m)), J(m9));
+
+    /* ⑧ « Modifier » : la ligne à fiche en portions dit « 3 portions (450 g) » et suit le nombre tapé ; l'ancienne ligne n'affirme pas son poids */
+    await fermer();
+    const ouvrirModif = async (id) => { await fermer(); const ok2 = await pg.evaluate((i) => { try { openEditFood(i); return true; } catch (e) { return false; } }, id); await pause(pg, 280); return ok2; };
+    const efTxt = () => pg.evaluate(() => (document.getElementById('ef-qty-row') || { textContent: '' }).textContent);
+    g = await ouvrirModif('nv2t-F1-00000003');
+    const m1 = nb(await efTxt());
+    g = g && await taper(pg, '#ef-prop', '2'); await pause(pg, 200);
+    const m2 = nb(await efTxt()), k2 = await pg.evaluate(() => (document.getElementById('ef-kcal') || {}).value);
+    t('B-NV2P P14 ⑪ ⭐⭐ « MODIFIER » (ligne à fiche, portions fiables) : « 3 portions (450 g) · 1 portion = 1 part (150 g) » — et 2 tapé : « 2 portions (300 g) », 390 kcal (à la main)',
+      g && /3 portions \(450 g\) · 1 portion = 1 part \(150 g\)/.test(m1) && /2 portions \(300 g\)/.test(m2) && k2 === '390', J({ m1, m2, k2 }));
+    g = await ouvrirModif('nv2t-S1-00000001');
+    const m3 = nb(await efTxt());
+    t('B-NV2P P14 ⑫ ⛔⛔ « MODIFIER » une ANCIENNE ligne en portions : « 1 portion = 1 steak — poids non vérifié » — le poids noté (125 g) n\'est pas affirmé à l\'écran',
+      g && /1 portion = 1 steak — poids non vérifié/.test(m3) && !/125 g|250 g/.test(m3), m3);
+    await fermer();
+
+    /* ⑨ l'écran de saisie, onglet portions : la même forme */
+    g = await ouvrirAjout(pg);
+    g = g && await taper(pg, '#af-desc', 'Plat P14 (test)');
+    for (const [id, v] of [['#af-kcal', '300'], ['#af-prot', '20'], ['#af-carbs', '30'], ['#af-fat', '10']]) g = g && await taper(pg, id, v);
+    try { await pg.locator('#af-fat').blur(); } catch (e) { g = false; }
+    await pause(pg, 200);
+    const def = () => pg.evaluate(() => (document.getElementById('af-pdef') || { textContent: '' }).textContent);
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afSetUnite(\'portion\')"]'); await pause(pg, 220);
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afApplyPortion(3)"]'); await pause(pg, 220);
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afPortionNom(\'part\')"]'); await pause(pg, 200);
+    const d0 = nb(await def());
+    g = g && await taper(pg, '#af-ppoids', '150'); await pause(pg, 220);
+    const d1 = nb(await def());
+    t('B-NV2P P14 ⑬ ⭐ ÉCRAN DE SAISIE (onglet portions) : sans poids « Tu notes 3 portions » (aucun gramme, le poids est DEMANDÉ) ; avec 150 g « Tu notes 3 portions (450 g) »',
+      g && /^Tu notes 3 portions — 1 portion = 1 part, poids inconnu/.test(d0) && /Indique le poids d'une portion/.test(d0)
+      && /^Tu notes 3 portions \(450 g\) — 1 portion = 1 part \(150 g\)/.test(d1), J({ d0, d1 }));
+    await fermer();
+
+    /* ⛔⛔ et RIEN de ce qui était enregistré n'a bougé : afficher n'écrit jamais */
+    const apres = await journal(pg), favApres = await pg.evaluate(() => JSON.parse(JSON.stringify(S.savedFoods || [])));
+    const anciennes = apres.filter((x) => idsAvant.indexOf(x.id) >= 0);
+    t('B-NV2P P14 ⑭ ⛔⛔ AFFICHER N\'ÉCRIT JAMAIS : les 7 lignes et le favori d\'avant sont intacts octet par octet (calories, macros, quantités, identifiants, provenance)',
+      J({ log: anciennes, fav: favApres }) === avantTout && anciennes.length === idsAvant.length, J({ n: anciennes.length, attendu: idsAvant.length }));
+    t('B-NV2P P14 ⑮ aucune erreur de page sur D-103', p14.erreurs.length === 0 && v2.length === 0, J({ erreurs: p14.erreurs, v2 }));
+  } finally { await p14.cx.close(); }
 }
 
 module.exports = { ecran };
