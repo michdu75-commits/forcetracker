@@ -1,7 +1,7 @@
 # ⏱️ SEANCE-REPOS-01 — le repos en cours survit à la fermeture de l'app
 
-> **Statut (22/10/2026) : développé et testé sur la branche `claude/dreamy-bell-pu88ia` (session-C, Claude Séance) —
-> NON intégré à master, NON publié, clone NON régénéré.** Feu vert de Michel du 22/10 : développement et tests seulement,
+> **Statut (22/10/2026, 14:31 UTC) : développé et testé sur la branche `claude/dreamy-bell-pu88ia` (session-C, Claude Séance) —
+> passe complète D-031 VALIDE (7 866 / 0) — NON intégré à master, NON publié, clone NON régénéré, aucun numéro de version posé.** Feu vert de Michel du 22/10 : développement et tests seulement,
 > STOP ensuite. Décisions : registre `docs/DECISIONS.md`, **D-100** (⚠️ numéro à reconfirmer à l'intégration : D-099 a été pris
 > le même jour par Claude Nutrition sur `claude/nutrition-v2` — le code ne cite aucun numéro, seulement ce fichier).
 
@@ -69,8 +69,8 @@ constante, mais ferait deux règles.
 | **Prompt de Milo** (contexte construit, jamais envoyé) | **identique à l'octet** entre master `f82a7c07` et la branche (77 697 caractères), avec ou sans repos rangé |
 | **Retour arrière à blanc** (ancien code, `ft4_wkt` écrit par le nouveau) | aucune erreur, aucun chrono, séance intacte ; « Terminer » enregistre une séance sans `repos` |
 | `check_regles`, `git diff --check`, auto-test du sélecteur | verts (alerte connue sans lien : `PROMPT-MILO-REEL.txt` signalé périmé — le prompt réel, lui, est identique) |
-| **Passe complète D-031 n°1** (4 conditions, réseau isolé, sur `ff718da6`, 11:01 → 12:33 UTC, 92 min) | **7 865 ✅ / 1 ❌ — NON VALIDE** : `B-NP01-A` (rechargement en pleine séance, banc `nut_punch01`) comparait **tout** `S.wkt` à l'octet ; le seul écart mesuré était `repos` — un repos expiré, effacé au rechargement comme décidé, et présent dans l'instantané parce que celui-ci devançait le tick. **Témoin périmé** réécrit sur sa garantie (la séance sans `repos`, tout le reste à l'octet) : 36 / 0 sur la branche **et** sur master, mutation MA20 toujours gardée (`BUGS.md` §92) ; `banc:nut_punch01` ajouté aux tests associés |
-| **Passe complète D-031 n°2** (4 conditions, réseau isolé) | ⏳ en cours |
+| **Passe complète D-031 n°1** (4 conditions, réseau isolé, sur `ff718da6`, 11:01 → 12:33 UTC, 92 min) | **7 865 ✅ / 1 ❌ — NON VALIDE** : `B-NP01-A` (rechargement en pleine séance, banc `nut_punch01`) comparait **tout** `S.wkt` à l'octet ; le seul écart mesuré était `repos` — un repos expiré, effacé au rechargement comme décidé, et présent dans l'instantané parce que celui-ci devançait le tick. **Témoin périmé** réécrit sur sa garantie (la séance sans `repos`, tout le reste à l'octet) : 36 / 0 sur la branche **et** sur master, mutation MA20 toujours gardée (`BUGS.md` §93) ; `banc:nut_punch01` ajouté aux tests associés |
+| **Passe complète D-031 n°2** (4 conditions, réseau isolé + garde, sur `ffa5ee4e`, 12:57:42 → 14:30:44 UTC, 93 min) | **7 866 ✅ / 0 ❌ — VALIDE**, 4 conditions vertes ; ④ revérifiée hors isolement par un vrai `git fetch` (master `f82a7c07`, retard 0). Depuis : documentation seulement (D-031) |
 
 ⚠️ **Ce que les témoins ne couvrent pas** : Safari / l'iPhone réel (une PWA tuée par iOS est simulée par un rechargement ; un
 retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibilité ressentie, les limites du §6.
@@ -136,3 +136,14 @@ retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibili
 - **Anciens chemins supprimés ou fusionnés : 2** — l'écouteur `visibilitychange` d'`app.js` (coupure à −5 s) disparaît, fusionné
   dans le seuil unique `REST_DEPASSEMENT_MAX` ; le `stopRest()` de démarrage est absorbé par `_reposReprendre` (même effet quand il
   n'y a rien à reprendre).
+
+## 11. Intégration — ce qu'il faudra fusionner (mesuré le 22/10, 14:31 UTC)
+
+- **master n'a pas bougé** (`f82a7c07`) : la branche s'y fusionne en avance rapide tant qu'aucune autre publication ne passe avant.
+- **Nutrition V2** (`claude/nutrition-v2`, 30 fichiers) partage 6 fichiers avec ce lot : `app.js` et `screens.js` — **zones
+  distinctes** (Nutrition : lignes < 7 500 d'`app.js` et `renderFoodJournal` ; ce lot : la diapo du Guide, le démarrage, l'aide
+  « ? » de Séance), `tests/recette/registre.json` (lignes différentes), `docs/DECISIONS.md`, `docs/JOURNAL-DE-PARTAGE.md` et
+  `BUGS.md` (ajouts au même endroit : conflits de texte triviaux, garder les deux).
+- **Numéros** : Nutrition a pris D-096 → D-099 puis **D-101** — **D-100 reste celui de ce lot** ; Nutrition a un `BUGS.md` §92 → ce
+  lot écrit **§91 et §93**. Le code ne cite aucun numéro.
+- **À rejouer après toute fusion** : le banc `tools/banc_seance_repos.js`, les voisins du sélecteur et la passe complète (D-031).
