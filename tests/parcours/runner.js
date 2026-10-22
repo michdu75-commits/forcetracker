@@ -36869,6 +36869,22 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       const ecrite=(S.foodLog||[])[0]||null;
       o.invalid_ecrit_quand_meme=[ (S.foodLog||[]).length,
                                    ecrite? _douaneLigne(ecrite,'test').etat : 'RIEN' ];
+      /* 🥗 V2 (jalon 4) — le moteur n'écrit plus les −10 kcal (valeur INCONNUE, jamais un chiffre inventé) : la douane voit
+         donc une ligne à laquelle il manque l'énergie, et rend WARN, plus INVALID. Aucun écrivain réel ne peut plus
+         poser une ligne qu'elle jugerait INVALID — le moteur valide AVANT elle. La garantie qui reste à épreuver est
+         la sienne : *son verdict ne bloque rien*. On la FORCE donc à rendre INVALID, et le vrai écrivain écrit quand même. */
+      S.foodLog=[];
+      try{ _afSetSrc(null); }catch(e){}
+      try{ _afOublierAliment(); }catch(e){}
+      { const vraie=window._douaneLigne; let rendu=null;
+        window._douaneLigne=function(l,p){ const r=vraie(l,p); rendu='INVALID'; return Object.assign({}, r, {etat:'INVALID'}); };
+        try{
+          _afQuickItems=[{name:'Ligne saine (douane forcée)', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', fav:false}];
+          _afMeal='dejeuner';
+          quickAddFood(0);
+        }finally{ window._douaneLigne=vraie; }
+        o.invalid_force=[ (S.foodLog||[]).length, rendu ];
+      }
 
       /* ⑦ ⛔ ELLE N'ÉCRIT PAS DANS `S.foodLog` : on l'appelle 5 fois, la longueur ne bouge pas. */
       S.foodLog=[Object.assign(LIGNE_SAINE(),{ts:7})];
@@ -36909,8 +36925,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     X.entree_intacte.every(m=>m[1]===true), JSON.stringify(X.entree_intacte));
   t('CCCIII ⑦ ⛔⛔ ELLE NE BLOQUE RIEN — une ligne qu\'elle juge INVALID est enregistrée quand '+
     'même (consigne explicite : le mode observation ne refuse aucune écriture)',
-    X.invalid_ecrit_quand_meme && X.invalid_ecrit_quand_meme[0]===1 &&
-    X.invalid_ecrit_quand_meme[1]==='INVALID', JSON.stringify(X.invalid_ecrit_quand_meme));
+    X.invalid_ecrit_quand_meme && X.invalid_ecrit_quand_meme[0]===1 && X.invalid_ecrit_quand_meme[1]==='WARN'
+    && X.invalid_force && X.invalid_force[0]===1 && X.invalid_force[1]==='INVALID',
+    JSON.stringify({naturel:X.invalid_ecrit_quand_meme, force:X.invalid_force}));
   t('CCCIII ⑧ ⛔ ELLE N\'ÉCRIT PAS DANS `S.foodLog` : 5 appels, longueur inchangée',
     X.foodlog_intact && X.foodlog_intact[0]===X.foodlog_intact[1], JSON.stringify(X.foodlog_intact));
   t('CCCIII ⑨ ⛔ SON CARNET D\'OBSERVATION RESTE PRIVÉ : ni dans `S`, ni dans le stockage du '+
@@ -37024,20 +37041,29 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     const carnet=()=>{ try{ return JSON.parse(localStorage.getItem(CLE)||'null'); }catch(e){ return null; } };
     const ecrire=(it)=>{ _afQuickItems=[Object.assign({fav:false},it)]; _afMeal='dejeuner';
                          quickAddFood(0); };
+    /* 🥗 V2 (jalon 4) — une ligne à FICHE DE CONFIANCE, écrite par le moteur (OK pour la douane). Une ancienne ligne sans
+       fiche vérifiable est re-notée « déclarée », SANS pour-100 g (M1) : la douane — gelée — la signale en WARN
+       (`grammes_sans_per100`) ; c'est observé, pas un défaut. */
+    let _k=0;
+    const fiche=(nom,p100,q,cle)=>{ const r=NUT2.ligneNouvelle({id:'ccciv-ligne-'+(_k++)+'-0000', ts:Date.now()-9e5+_k,
+      date:today(), repas:'dejeuner', nom:nom, origine:{saisie:'code-tape', origine:'off'}, mode:'pesee',
+      fiche:{base:'g', p100:p100, cle:cle||null, source:'off', fiab:'source'}, quantite:q});
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
 
     /* ① Au départ le carnet n'existe pas, et UNE VRAIE écriture le crée. */
     vider();
     o.avant = carnet();
-    ecrire({name:'Poulet', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g',
-            per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    ecrire(fiche('Poulet', {kcal:133,prot:20,carbs:0,fat:5.3}, {val:150, unite:'g', origine:'tapee'}));
     const c1=carnet();
     o.apres_une_ligne = c1 ? [c1.n, c1.etats.OK, c1.etats.WARN, c1.etats.INVALID] : null;
 
-    /* ② Le verdict compté est bien celui que la douane rend. */
+    /* ② Le verdict compté est bien celui que la douane rend.
+       🥗 V2 : « 2 bols » SANS poids n'est plus une quantité (D-099) — aucun écrivain ne l'écrit, la douane ne peut plus le
+       voir. Le WARN réel d'aujourd'hui : une ancienne ligne en grammes re-notée sans fiche (`grammes_sans_per100`). */
     vider();
-    ecrire({name:'Bol', kcal:120, prot:3, carbs:14, fat:5, q:2, u:'portion', portionLabel:'bol'});
+    ecrire({name:'Bol', kcal:120, prot:3, carbs:14, fat:5, q:200, u:'g'});
     const c2=carnet();
-    o.warn_compte = c2 ? [c2.etats.OK, c2.etats.WARN, (c2.regles||{}).portion_sans_poids] : null;
+    o.warn_compte = c2 ? [c2.etats.OK, c2.etats.WARN, (c2.regles||{}).grammes_sans_per100] : null;
 
     /* ③ Les écrivains sont distingués — on en conduit DEUX pour de vrai. */
     vider();
@@ -37056,12 +37082,15 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     ecrire({name:'N', kcal:100, prot:5, carbs:10, fat:3});
     const c4=carnet();
     o.formes = c4 && c4.ecrivains.quickAddFood ? c4.ecrivains.quickAddFood.formes : null;
+    /* 🥗 V2 (garde-fou du 10/09) : « N » n'a aucune quantité — l'écrivain ne l'écrit PAS (il ouvre l'écran et la demande) */
+    o.nPasEcrit = !(S.foodLog||[]).some(l=>l && l.name==='N') && (S.foodLog||[]).length===2;
+    try{ closeAddFood(); }catch(e){}
 
     /* ⑤ Le compteur de source est un BOOLÉEN — il suit la divergence de ft-v1205 sans jamais
        garder l'identifiant. */
     vider();
-    ecrire({name:'S1', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g',
-            sourceId:'off:1234567890', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    /* 🥗 V2 (D-101 ⑩) : un identifiant de source ne se recopie que d'une FICHE DE CONFIANCE — S1 en porte une. */
+    ecrire(fiche('S1', {kcal:100,prot:5,carbs:10,fat:3}, {val:100, unite:'g', origine:'tapee'}, 'off:1234567890'));
     ecrire({name:'S2', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
     const c5=carnet();
     const E5=c5&&c5.ecrivains.quickAddFood;
@@ -37141,7 +37170,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     Array.isArray(X.type) && X.type.every(v=>v==='function'), JSON.stringify(X.type));
   t('CCCIV ② ⭐ une VRAIE écriture crée le carnet et l\'incrémente (avant : rien)',
     X.avant===null && Array.isArray(X.apres_une_ligne) && X.apres_une_ligne[0]===1
-    && X.apres_une_ligne[1]===1, JSON.stringify([X.avant, X.apres_une_ligne]));
+    && X.apres_une_ligne[1]===1 && X.apres_une_ligne[2]===0, JSON.stringify([X.avant, X.apres_une_ligne]));
   t('CCCIV ③ ⭐ le verdict compté est celui que la douane rend — et la RÈGLE est comptée par nom',
     Array.isArray(X.warn_compte) && X.warn_compte[0]===0 && X.warn_compte[1]===1
     && X.warn_compte[2]===1, JSON.stringify(X.warn_compte));
@@ -37149,11 +37178,11 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     Array.isArray(X.par_ecrivain) && X.par_ecrivain.length===2
     && X.par_ecrivain.indexOf('quickAddFood')>=0 && X.par_ecrivain.indexOf('rejouerRepas')>=0,
     JSON.stringify(X.par_ecrivain));
-  t('CCCIV ⑤ ⭐ les FORMES sont classées depuis `u`/`q` seuls : grammes · portion · sans_quantite',
-    X.formes && X.formes.grammes===1 && X.formes.portion===1 && X.formes.sans_quantite===1,
-    JSON.stringify(X.formes));
-  t('CCCIV ⑥ ⛔⛔ LE COMPTEUR DE SOURCE EST UN BOOLÉEN — il suit la divergence de ft-v1205 '+
-    '(`rejouerRepas` perd `sourceId`) sans jamais garder l\'identifiant lui-même',
+  t('CCCIV ⑤ ⭐ les FORMES sont classées depuis `u`/`q` seuls : grammes · portion — et une ligne SANS quantité n\'est plus écrite (V2, garde-fou du 10/09), donc jamais comptée',
+    X.formes && X.formes.grammes===1 && X.formes.portion===1 && !X.formes.sans_quantite && X.nPasEcrit===true,
+    JSON.stringify({formes:X.formes, nPasEcrit:X.nPasEcrit}));
+  t('CCCIV ⑥ ⛔⛔ LE COMPTEUR DE SOURCE EST UN BOOLÉEN — il compte la présence d\'une source (fiche de confiance, D-101 ⑩) '+
+    'sans jamais garder l\'identifiant lui-même',
     Array.isArray(X.source_booleen) && X.source_booleen[0]===1 && X.source_booleen[1]===1
     && X.source_booleen[2]===true, JSON.stringify(X.source_booleen));
   t('CCCIV ⑦ ⭐ LE CATALOGUE DES 21 RÈGLES SE RENSEIGNE TOUT SEUL — aucune liste recopiée, donc '+
@@ -37572,7 +37601,9 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
       return { kcal:v('af-kcal'), prot:v('af-prot'), carbs:v('af-carbs'), fat:v('af-fat'),
                qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh() };
     };
-    o.scan   = await jouer('scan');
+    /* 🥗 V2 (jalon 4) : la caméra écrit `camera-code-local` — l'ancien « scan » est une valeur LUE, plus écrite, et le moteur
+       refuse d'enregistrer une provenance inconnue (sans ça, la ligne lue plus bas serait ABSENTE). */
+    o.scan   = await jouer('camera-code-local');
     /* ⛔⛔ ft-v1208 (validation iPhone) — LA PORTE TAPÉE EST CONDUITE PAR SA VRAIE FONCTION.
        Avant, ce témoin passait `saisie:'manuel'` — **une valeur qui n'existe pas en production** :
        `_manualBarcode` enregistre `'code-tape'`. Le résultat était juste par accident.
@@ -37590,12 +37621,12 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
                qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh(),
                saisie:(_afSrc||{}).saisie }; })();
     FICHE_COURANTE=FICHE_SANS_KJ;
-    o.sansKj = await jouer('scan');
+    o.sansKj = await jouer('camera-code-local');
     /* ⛔ ON REJOUE LA VRAIE FICHE AVANT DE LIRE LA LIGNE : sans ça, les témoins de traçabilité
        mesureraient l'état laissé par la fiche appauvrie. *Remettre la source ne suffit pas, il
        faut rejouer le chemin* — deux témoins l'ont dit en rougissant. */
     FICHE_COURANTE=FICHE;
-    o.scan = await jouer('scan');
+    o.scan = await jouer('camera-code-local');
     /* ⛔ on compare les DEUX RÉSOLUTIONS ENTIÈRES, pas seulement la valeur affichée */
     o.identiques = JSON.stringify(o.scan.bc.fiab)===JSON.stringify(o.tape.bc.fiab)
                 && o.scan.kcal===o.tape.kcal;
@@ -37704,7 +37735,7 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     X.identiques===true && X.tape && X.tape.prot===X.scan.prot && X.tape.carbs===X.scan.carbs
     && X.tape.fat===X.scan.fat && X.tape.qty===X.scan.qty,
     JSON.stringify([X.scan&&X.scan.kcal, X.tape&&X.tape.kcal]));
-  t('CCCVI ③bis ⛔ … ET LA PROVENANCE, ELLE, DISTINGUE BIEN LES DEUX : `scan` contre `code-tape`. '+
+  t('CCCVI ③bis ⛔ … ET LA PROVENANCE, ELLE, DISTINGUE BIEN LES DEUX : `camera-code-local` (l\'ancien « scan ») contre `code-tape`. '+
     '*Le résultat est le même, la façon dont il est entré ne l\'est pas* — c\'est le contrat posé '+
     'le 23/08 après un retour de Michel',
     X.tape && X.tape.saisie==='code-tape', 'saisie enregistrée : '+JSON.stringify(X.tape&&X.tape.saisie));

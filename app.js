@@ -1631,8 +1631,11 @@ function _n2Reprendre(src, saisie){
     const f=R.fiche, p=f.p100;
     /* Le pour-100 g de la fiche passe par le constructeur unique (`_ref100`) : recopié TEL QUEL (`normaliser:false`),
        avec une origine de la personne — le résolveur ne réécrit jamais une reprise, il la classe seulement. */
-    _bcNutr=_ref100(R.nom, p.kcal, p.prot, p.carbs, p.fat,
-                    {normaliser:false, origine:(saisie==='historique')?'historique':'reprise'});
+    /* ⚠️ Deux appels écrits en clair, pas un ternaire sur `origine` : la liste FERMÉE des origines passées à `_ref100` se
+       lit dans le code (témoin CCCV ㉒ — une porte débranchée ou une origine inventée doit s'y voir). */
+    _bcNutr=(saisie==='historique')
+      ? _ref100(R.nom, p.kcal, p.prot, p.carbs, p.fat, {normaliser:false, origine:'historique'})
+      : _ref100(R.nom, p.kcal, p.prot, p.carbs, p.fat, {normaliser:false, origine:'reprise'});
     _bcNutr.base=f.base;
     _afSetSrc({saisie:saisie, origine:'reprise', sourceId:f.cle||null, etat:f.etat||null,
                n2f:{source:f.source, fiab:f.fiab, version:f.version||null}});
