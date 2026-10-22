@@ -44,17 +44,20 @@ MUT = [
   [('app.js', r"let _afMeal=null;", "let _afMeal='petitdej';")], 'ROUGE'),
 
  # ══ LE PROPRIETAIRE EST CONTOURNE ═════════════════════════════════════════════
+ # Nutrition V2 (jalon 4, 22/10/2026) : les deux ecrivains ne s assemblent plus sur place, ils donnent une ENTREE
+ # au moteur — le repas y entre par `_n2EntreeEcran` (l ecran) et par l appel `_n2Reajouter` de `quickAddFood`.
+ # Memes mutations, memes garanties, ancres deplacees.
  ('M05  le formulaire ecrit la variable brute au lieu du proprietaire',
-  [('app.js', r"const _e=Object\.assign\(\{date:_journalJourActif\(\),meal:_afMealActif\(\),",
-    "const _e=Object.assign({date:_journalJourActif(),meal:_afMeal,")], 'ROUGE'),
+  [('app.js', r"(  const e=Object\.assign\(\{id:id, ts:Date\.now\(\), date:_journalJourActif\(\), )repas:_afMealActif\(\),",
+    r"\1repas:_afMeal,")], 'ROUGE'),
 
  ('M06  la reprise d un aliment ecrit la variable brute',
-  [('app.js', r"const _l=Object\.assign\(\{date:_journalJourActif\(\),meal:_afMealActif\(\),",
-    "const _l=Object.assign({date:_journalJourActif(),meal:_afMeal,")], 'ROUGE'),
+  [('app.js', r"  const r=_n2Reajouter\(it\._src\|\|it, _afMealActif\(\), _journalJourActif\(\), 'quickAddFood'\);",
+    "  const r=_n2Reajouter(it._src||it, _afMeal, _journalJourActif(), 'quickAddFood');")], 'ROUGE'),
 
  ('M07  la DONNEE part dans un autre repas que celui affiche (onglet juste, ecriture fausse)',
-  [('app.js', r"const _e=Object\.assign\(\{date:_journalJourActif\(\),meal:_afMealActif\(\),",
-    "const _e=Object.assign({date:_journalJourActif(),meal:_afMealDefautHoraire(),")], 'ROUGE'),
+  [('app.js', r"(  const e=Object\.assign\(\{id:id, ts:Date\.now\(\), date:_journalJourActif\(\), )repas:_afMealActif\(\),",
+    r"\1repas:_afMealDefautHoraire(),")], 'ROUGE'),
 
  ('M08  les puces affichent la variable brute : rien de selectionne sans choix',
   [('app.js', r"    const sel=m\.k===_afMealActif\(\);", "    const sel=m.k===_afMeal;")],

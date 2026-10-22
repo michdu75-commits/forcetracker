@@ -90,10 +90,15 @@ module.exports.source = function (t, ROOT, fs, path) {
     viaProprietaire >= 4 && horsProprietaire === 0,
     'via le propriétaire : ' + viaProprietaire + ' · lectures brutes hors zone : ' + horsProprietaire);
 
-  /* ⭐ Les deux ÉCRIVAINS du journal nomment le propriétaire : c'est là que la donnée se fige. */
+  /* ⭐ Les deux ÉCRIVAINS du journal nomment le propriétaire : c'est là que la donnée se fige.
+     🥗 NUTRITION V2 (jalon 4, 22/10/2026) — même garantie, nouvel endroit : les lignes ne sont plus assemblées sur
+     place (`meal:_afMealActif()` dans un `Object.assign`), elles sont construites par le moteur à partir d'une
+     ENTRÉE ; le repas du propriétaire y entre par `_n2EntreeEcran` (l'écran) et par l'appel `_n2Reajouter` de
+     `quickAddFood` (« Mes aliments »). Toujours éprouvé : `tools/mut_repas_actif.py` M05 / M06. */
+  const ecrivainsRepas = [/repas:_afMealActif\(\)/.test(corps('_n2EntreeEcran').replace(/\s+/g, '')),
+    /_n2Reajouter\([^,()]+(?:\|\|[^,()]+)?,_afMealActif\(\),/.test(corps('quickAddFood').replace(/\s+/g, ''))].filter(Boolean).length;
   t('B-CCCXXXVI ⑤ ⭐⭐ les DEUX écrivains du journal écrivent le repas du propriétaire',
-    (A.match(/meal:_afMealActif\(\)/g) || []).length === 2,
-    (A.match(/meal:_afMealActif\(\)/g) || []).length + ' écrivain(s)');
+    ecrivainsRepas === 2, ecrivainsRepas + ' écrivain(s)');
 
   /* ⭐ Le choix manuel reste le seul à écrire l'état. */
   /* ⚠️ ON EXCLUT LA DÉCLARATION. Premier jet : le motif comptait aussi `let _afMeal=null`,
@@ -163,14 +168,25 @@ module.exports.ecran = async function (t, b, PORT) {
       return s ? s.innerText.replace(/\s+/g, ' ').trim() : '(aucune)';
     };
     const actif = () => (typeof _afMealActif === 'function') ? _afMealActif() : '(absent)';
+    /* 🥗 NUTRITION V2 (jalon 4, 22/10/2026) — LE GESTE CHANGE, LA GARANTIE NON. Une saisie à la main exige
+       désormais son POIDS (D-099 ; contrat V2 : « une quantité absente n'enregistre rien ») : on tape donc les
+       valeurs comme la personne (les événements `input` / `change` de production partent), puis 100 g dans le
+       champ « Combien pesait… ». ⛔ Ce banc garde le REPAS, pas la quantité : un ajout refusé rend FAUX (le nombre
+       de lignes est compté), il ne ressemble jamais à un vert (BUGS.md §61). */
+    /* ⚠️ `blur` aussi : le champ « Combien pesait » pose son poids dans l'ancre à la SORTIE du champ (`onblur`), comme
+       un doigt qui quitte le clavier — sans lui, le poids est tapé mais jamais pris (mesuré au 1ᵉʳ jet). */
+    const champ = (id, v) => { const el = document.getElementById(id); el.value = v;
+      el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+      el.dispatchEvent(new Event('blur')); };
     const ajouter = async (nom, kcal) => {
       try {
         document.getElementById('af-desc').value = nom;
-        document.getElementById('af-kcal').value = String(kcal);
-        document.getElementById('af-prot').value = '10';
-        document.getElementById('af-carbs').value = '10';
-        document.getElementById('af-fat').value = '1';
-        addFoodEntry(); await pause(450); return true;
+        champ('af-kcal', String(kcal)); champ('af-prot', '10'); champ('af-carbs', '10'); champ('af-fat', '1');
+        await pause(60);
+        if (!document.getElementById('af-poids')) { o.err = 'pas de champ « Combien pesait » pour ' + nom; return false; }
+        champ('af-poids', '100'); await pause(60);
+        const n0 = (S.foodLog || []).length;
+        addFoodEntry(); await pause(450); return (S.foodLog || []).length === n0 + 1;
       } catch (e) { o.err = String(e && e.message || e); return false; }
     };
     const journal = () => (S.foodLog || []).map(e => e.name + '=' + e.meal);
@@ -209,9 +225,12 @@ module.exports.ecran = async function (t, b, PORT) {
       openAddFood(); await pause(300);
       o.u5avant = actif();
       try {
-        _afQuickItems = [{ name: 'YAOURT', kcal: 60, prot: 5, carbs: 7, fat: 1, fav: false }];
+        /* 🥗 V2 : l'aliment repris porte sa QUANTITÉ (125 g) — sans elle, « + Ajouter » ne complète rien et rouvre
+           l'écran (contrat V2) : ce banc-ci garde le repas, il doit donc reprendre un aliment ré-notable tel quel. */
+        _afQuickItems = [{ name: 'YAOURT', kcal: 60, prot: 5, carbs: 7, fat: 1, q: 125, u: 'g', fav: false }];
+        const n0 = (S.foodLog || []).length;
         quickAddFood(0); await pause(450);
-        o.u5ok = true;
+        o.u5ok = (S.foodLog || []).length === n0 + 1;
       } catch (e) { o.u5ok = false; o.u5err = String(e && e.message || e); }
       o.u5 = { actif: actif(), journal: journal() };
 
@@ -256,11 +275,15 @@ module.exports.ecran = async function (t, b, PORT) {
           /* ⛔ on ROUVRE avant chaque aliment, comme la personne le fait vraiment */
           openAddFood(); await pause(220);
           if (_afMealActif() !== repas) o.erreurs.push('avant ' + nom + ' : ' + _afMealActif());
+          /* 🥗 V2 : valeurs tapées comme la personne, puis le poids (D-099) — voir `ajouter` plus haut. */
+          const champ = (id, v) => { const el = document.getElementById(id); el.value = v;
+            el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.dispatchEvent(new Event('blur')); };
           document.getElementById('af-desc').value = nom;
-          document.getElementById('af-kcal').value = '100';
-          document.getElementById('af-prot').value = '5';
-          document.getElementById('af-carbs').value = '10';
-          document.getElementById('af-fat').value = '2';
+          champ('af-kcal', '100'); champ('af-prot', '5'); champ('af-carbs', '10'); champ('af-fat', '2');
+          await pause(60);
+          if (document.getElementById('af-poids')) champ('af-poids', '100'); else o.erreurs.push('pas de champ poids pour ' + nom);
+          await pause(60);
           addFoodEntry(); await pause(400);
         }
       }
