@@ -1453,6 +1453,8 @@ function doPost(e) {
   if (body.action === 'revokeToken')       return handleRevokeToken_(body);
   if (body.action === 'authIdentity')      return handleAuthIdentity_(body);
   if (body.action === 'migStats')          return handleMigStats_(body);
+  if (body.action === 'nutInventory')      return handleNutInventory_(body);
+  if (body.action === 'nutBackupAudit')    return handleNutBackupAudit_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'logSearchMiss')     return handleLogSearchMiss_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
@@ -2035,6 +2037,126 @@ function handleMigStats_(body) {
   try { Object.keys(sp.getProperties()).forEach(function(k){ if (k.indexOf(_JET_PREFIXE_) === 0) n++; }); } catch (e2) {}
   return json_({status:'ok', jour:m.date || '', avecJeton:m.avec || 0, sansJeton:m.sans || 0,
                 jetonsEnRegistre:n, ferme:_MIG_FERME_});
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   📊 NUT-INVENTAIRE — COMPTAGE EN LECTURE SEULE DES JOURNAUX NUTRITION (préparé 22/10/2026)
+   Branche isolée claude/nut-inventaire-lecture-seule. ⛔ NE PAS DÉPLOYER sans l'accord de Michel.
+   Route ADMIN authentifiée (même jeton IDEES_TOKEN2 que storeHealth / migStats).
+   ⛔⛔ LECTURE SEULE, et c'est l'invariant central : ces deux fonctions n'appellent QUE des
+      lectures (getKeys, getProperty, DriveApp getFolderById / getFiles / getBlob). Aucune écriture :
+      ni setProperty, ni deleteProperty, ni createFile, ni setContent, ni setTrashed. Un témoin
+      le prouve (prend un instantané des propriétés avant/après et exige l'égalité).
+   ⛔⛔ AUCUNE DONNÉE PERSONNELLE EN SORTIE NI DANS LES LOGS : jamais d'e-mail, de nom d'aliment,
+      de contenu de repas, de macro individuelle, de date de naissance. RIEN que des nombres
+      agrégés. L'identité d'un compte n'apparaît nulle part (R36 : ce qui décrit la personne
+      reste chez elle ; on ne récolte ici que des COMPTES).
+   ⚠️ Échelle : parcourt tous les comptes en une exécution. Volume actuel faible (ok). Si le
+      nombre de comptes explosait un jour, pagigner (ce n'est pas le cas aujourd'hui). */
+function handleNutInventory_(body) {
+  if (!_checkIdeesTok_(body && body.token)) return json_({status:'error', error:'token'});
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var keys = sp.getKeys();
+    var comptes = 0, avecFoodLog = 0, avecSavedFoods = 0, entreesTotal = 0, entreesValides = 0;
+    var sansDate = 0, sansId = 0, auPlafond = 0, datesAberrantes = 0, jsonIllisible = 0, videMaisSaved = 0;
+    var jours = Object.create(null), annee = Object.create(null);
+    var minD = null, maxD = null;
+    var buckets = {'0':0, '1-10':0, '11-50':0, '51-200':0, '201-1000':0, '1001-7999':0, '8000+':0};
+    var RE = /^\d{4}-\d{2}-\d{2}$/;
+    var auj = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Paris', 'yyyy-MM-dd');
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k.indexOf('u_') !== 0) continue;           // uniquement les comptes utilisateurs
+      comptes++;
+      var data;
+      try { data = JSON.parse(_unpackUser_(sp.getProperty(k))); }
+      catch (e) { jsonIllisible++; continue; }
+      var prof = (data && data.profile) || {};
+      var fl = Array.isArray(prof.foodLog) ? prof.foodLog : [];
+      var sf = Array.isArray(prof.savedFoods) ? prof.savedFoods : [];
+      if (sf.length > 0) avecSavedFoods++;
+      var n = fl.length;
+      if (n === 0) buckets['0']++;
+      else if (n <= 10) buckets['1-10']++;
+      else if (n <= 50) buckets['11-50']++;
+      else if (n <= 200) buckets['51-200']++;
+      else if (n <= 1000) buckets['201-1000']++;
+      else if (n < 8000) buckets['1001-7999']++;
+      else buckets['8000+']++;
+      if (n === 0) { if (sf.length > 0) videMaisSaved++; continue; }
+      avecFoodLog++;
+      if (n >= 8000) auPlafond++;                    // peut avoir été tronqué à l'envoi (cap client 8000)
+      for (var j = 0; j < n; j++) {
+        var en = fl[j] || {}; entreesTotal++;
+        var d = String(en.date || '');
+        var okDate = RE.test(d);
+        if (!okDate) { sansDate++; }
+        else if (d < '2026-06-01' || d > auj) { datesAberrantes++; }  // avant la naissance du produit, ou futur
+        else { jours[d] = 1; if (!minD || d < minD) minD = d; if (!maxD || d > maxD) maxD = d;
+               var an = d.slice(0,4); annee[an] = (annee[an] || 0) + 1; }
+        if (!(typeof en.id === 'string' && en.id.length >= 8)) sansId++;
+        var aMacro = (en.kcal > 0) || (en.prot > 0) || (en.carbs > 0) || (en.fat > 0);
+        if (okDate && aMacro) entreesValides++;      // "récupérable utilement" = date lisible + au moins une valeur
+      }
+    }
+    return json_({status:'ok', genere:new Date().toISOString(),
+      comptes:comptes, avecFoodLog:avecFoodLog, avecSavedFoods:avecSavedFoods,
+      entreesTotal:entreesTotal, entreesValides:entreesValides,
+      joursCouverts:Object.keys(jours).length, borneMin:minD, borneMax:maxD,
+      entreesParAnnee:annee, histogrammeTailles:buckets,
+      anomalies:{ sansDate:sansDate, sansId:sansId, foodLogVideAvecSavedFoods:videMaisSaved,
+                  auPlafond8000:auPlafond, datesAberrantes:datesAberrantes, comptesJsonIllisible:jsonIllisible },
+      note:'lecture seule - aucune donnee personnelle - cap envoi client 8000/compte (cf auPlafond8000 et risque _pa_)'});
+  } catch (err) { return json_({status:'error', error:'nut_inventory', detail:String(err && err.message)}); }
+}
+
+/* Fraîcheur / intégrité / disponibilité des sauvegardes Drive — LECTURE SEULE. Ne crée, ne
+   modifie, ne met à la corbeille AUCUN fichier (règle d'or #18). Ne sort que des nombres. */
+function handleNutBackupAudit_(body) {
+  if (!_checkIdeesTok_(body && body.token)) return json_({status:'error', error:'token'});
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var id = sp.getProperty('ft_backup_drive_folder_id');
+    var folder = null;
+    if (id) { try { folder = DriveApp.getFolderById(id); } catch (e) {} }
+    if (!folder) {                                   // LECTURE : on cherche, on ne crée PAS (≠ _getDriveBackupFolder_)
+      var it0 = DriveApp.getFoldersByName('ForceTracker-Backups');
+      if (it0.hasNext()) folder = it0.next();
+    }
+    if (!folder) return json_({status:'ok', dossierTrouve:false,
+      note:'dossier ForceTracker-Backups introuvable - la sauvegarde nocturne n a peut-etre jamais tourne'});
+    var it = folder.getFiles(), nb = 0, dernier = null, dernierT = 0;
+    while (it.hasNext()) {
+      var f = it.next();
+      if (f.getName().indexOf('backup-') !== 0) continue;
+      nb++;
+      var t = f.getLastUpdated().getTime();
+      if (t > dernierT) { dernierT = t; dernier = f; }
+    }
+    if (!dernier) return json_({status:'ok', dossierTrouve:true, nbFichiers:0,
+      note:'dossier present mais aucun fichier backup-*'});
+    var dd = dernier.getLastUpdated();
+    var ageJours = Math.floor((Date.now() - dd.getTime()) / 86400000);
+    var lisible = false, comptesBk = 0, avecFlBk = 0, entreesBk = 0, userCountDeclare = null;
+    try {
+      var obj = JSON.parse(dernier.getBlob().getDataAsString());
+      lisible = true;
+      userCountDeclare = (obj && typeof obj.user_count === 'number') ? obj.user_count : null;
+      var arr = (obj && Array.isArray(obj.users)) ? obj.users : [];
+      comptesBk = arr.length;
+      for (var a = 0; a < arr.length; a++) {
+        var pr = (arr[a] && arr[a].data && arr[a].data.profile) || {};
+        var fl = Array.isArray(pr.foodLog) ? pr.foodLog : [];
+        if (fl.length) { avecFlBk++; entreesBk += fl.length; }
+      }
+    } catch (e) { lisible = false; }
+    return json_({status:'ok', dossierTrouve:true, nbFichiers:nb,
+      dernierNom:dernier.getName(), dernierDateISO:dd.toISOString(), dernierOctets:dernier.getSize(),
+      ageJours:ageJours, dernierLisible:lisible, userCountDeclare:userCountDeclare,
+      comptesDansDernier:comptesBk, avecFoodLogDansDernier:avecFlBk, entreesFoodLogDansDernier:entreesBk,
+      note:'lecture seule - aucun fichier cree/modifie/supprime - aucune donnee personnelle en sortie'});
+  } catch (err) { return json_({status:'error', error:'nut_backup_audit', detail:String(err && err.message)}); }
 }
 
 function handleSendConfirmCode_(body) {
