@@ -313,10 +313,15 @@ module.exports.ecran = async function (t, b, PORT) {
       const L1 = await journal(pg);
       const g2 = (await ouvrirAjout(pg)) && (await prendre(pg, 'Riz (test)')) && (await taper(pg, '#af-prop', 150)) && (await ajoutRapide(pg, 'Pain (test)'));
       const n2 = nouvelles(L1, await journal(pg));
+      /* 🥗 V2 (jalon 4, 22/10) — un aliment SANS quantité se reprend comme une saisie à la main pré-remplie : l'écran DEMANDE
+         le poids (champ `af-poids`, présent et vide) ; plus de ligne de proposition (`af-prop`) ni de référence nommée.
+         ⛔ Rien de la reprise FIGÉE du riz ne survit : ni sa référence, ni ses 150 g, dans aucun champ. */
       const ecr = await pg.evaluate(() => ({ nom: (document.getElementById('af-desc') || {}).value, kcal: (document.getElementById('af-kcal') || {}).value,
-        prop: (document.getElementById('af-prop') || { value: 'ABSENT' }).value, ref: (typeof _afRef !== 'undefined' && _afRef) ? _afRef.nom : null }));
+        poids: (document.getElementById('af-poids') || { value: 'ABSENT' }).value, prop: (document.getElementById('af-prop') || { value: '' }).value,
+        fige: !!(typeof _afRef !== 'undefined' && _afRef && _afRef.fige), refNom: (typeof _afRef !== 'undefined' && _afRef && _afRef.nom) || null }));
       t('B-NM6-Q ② « + » sur le pain (sans quantité) alors que l\'écran porte le riz à 150 g → aucune ligne ; l\'écran s\'ouvre sur le pain, quantité VIDE',
-        g2 && n2.length === 0 && ecr.nom === 'Pain (test)' && ecr.kcal === '250' && ecr.prop === '' && ecr.ref === 'Pain (test)' && erreurs.length === 0,
+        g2 && n2.length === 0 && ecr.nom === 'Pain (test)' && ecr.kcal === '250' && ecr.poids === '' && ecr.prop === ''
+        && !ecr.fige && ecr.refNom !== 'Riz (test)' && erreurs.length === 0,
         (g2 ? '' : 'GESTE RATÉ · ') + JSON.stringify({ lignes: n2.length, ecr }) + (erreurs.length ? ' · erreurs JS : ' + erreurs.join(' | ') : ''));
     } finally { await cx.close(); }
   }

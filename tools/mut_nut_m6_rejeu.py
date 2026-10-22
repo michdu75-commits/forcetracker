@@ -59,6 +59,12 @@ MUT = [
      ['B-NM6-A A1', 'B-NM6-A A4'], 'GARDE'),
     ('N15 un champ d\'ecran descend dans la ligne enregistree', [(A, PUSH, "  }else S.foodLog.push(Object.assign(r.ligne, porte==='rejouerRepas'?{ecran:false}:{}));")],
      ['B-NM6-MQ ①'] + S('S0'), 'GARDE'),
+    # 22/10 (fin du jalon 4) : Q ② a été réécrit sur l'écran V2 (une reprise SANS quantité ouvre la saisie à la main, le
+    # poids DEMANDÉ dans `af-poids`) — sa mutation : une quantité est posée quand même (celle du riz, 150).
+    ('N16 l\'ajout rapide d\'un aliment SANS quantite ouvre l\'ecran avec une quantite posee (150, celle du riz)',
+     [(A, "    _afRef=null;\n    _afMajAncre(true);\n  }else{",
+       "    _afRef=null;\n    _afMajAncre(true);\n    { const p=document.getElementById('af-poids'); if(p) p.value='150'; }\n  }else{")],
+     ['B-NM6-Q ②'], 'GARDE'),
     ('MC1 [negatif] commentaire seulement dans _n2Reajouter (cite document, _afSrc, _bcNutr, _provFood(, _n2Extras)',
      [(A, RA_TETE, RA_TETE + "  /* lecture interdite ici : document. _afSrc _bcNutr _provFood( _n2Extras() */\n")], [], 'OK'),
 ]

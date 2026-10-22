@@ -106,6 +106,13 @@ MUT = [
    "  const origine='tapee';", 'B-NV2P P13 ⑨'),
   ('MP33 « Modifier » sans geste : les portions d\'une ligne à fiche deviennent « tapées »', 'app.js',
    "origine:(q.val===n) ? ((e && e.n2 && e.n2.qo) || 'proposee') : 'tapee',", "origine:'tapee',", 'B-NV2P P13 ⑨'),
+  # Venues du contrôle négatif des témoins de la passe (tools/mut_temoins_v2.py, 22/10) : AUCUN témoin de la passe ne les
+  # voyait — l'origine d'une reprise à l'écran n'y est pas lue, et le garde de l'onglet portions n'y est jamais SEUL.
+  ('MP34 reprise figée à l\'écran : l\'origine n\'est plus « reprise » (D-101 ⑩, n°4)', 'app.js',
+   "    _afSetSrc({saisie:saisie, origine:'reprise'});\n    _afRef={base:R.valeurs",
+   "    _afSetSrc({saisie:saisie, origine:'utilisateur'});\n    _afRef={base:R.valeurs", 'B-NV2P P12 ⑥'),
+  ('MP35 retour à l\'onglet portions (×1) : l\'ancien poids d\'une portion se recolle en silence (D-101 ⑬)', 'app.js',
+   "  if(_afUnite==='portion' && _uAvant!=='portion') _afPortionPoids=0;", "", 'B-NV2P P13 ⑪'),
 ]
 
 def copier_app(dest):

@@ -32790,8 +32790,12 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   if(P.err){ t('CCLXXX bloc exécuté',false,P.err); }
   else{
     /* 🥗 D-099 — LE ×2 SANS POIDS NE PART PLUS (il fossilisait une quantité inconvertible). */
+    /* ⛔ La RAISON du refus est lue (le poids), pas seulement le refus : la portion n'a pas encore de nom ici, et une
+       mutation qui inventait le poids (100 g) voyait la ligne refusée quand même — faute de nom — sans que ce témoin
+       rougisse (contrôle négatif du 22/10, tools/mut_temoins_v2.py R02). */
     t('CCLXXX ① ⛔ D-099 : « ×2 » SANS le poids d\'une portion ne multiplie rien et ne s\'enregistre PAS — l\'écran demande le poids',
-      P.x2sans.ecran[0]===300 && P.x2sans.ligne.ajoute===false && /Indique le poids d'une portion/.test(P.x2sans.texte),
+      P.x2sans.ecran[0]===300 && P.x2sans.ligne.ajoute===false && /Indique le poids d'une portion/.test(P.x2sans.texte)
+      && (P.x2sans.ligne.dit||[]).some(m=>/Indique le poids d'une portion/.test(m)),
       JSON.stringify({ecran:P.x2sans.ecran, ajoute:P.x2sans.ligne.ajoute, dit:P.x2sans.ligne.dit}));
     t('CCLXXX ①b ⭐⭐ « ×2 » d\'une assiette PESÉE (250 g) S\'ENREGISTRE : q=2 · u=portion · nom · poids · totaux 600',
       P.x2.ligne.ajoute===true && P.x2.ligne.q===2 && P.x2.ligne.u==='portion' && P.x2.ligne.lbl==='assiette' && P.x2.ligne.pw===250

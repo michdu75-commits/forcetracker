@@ -660,6 +660,31 @@ async function ecran(t, b, PORT) {
       && /poids inconnu/.test(e6Apres.def) && /Indique le poids d'une portion/.test(e6Apres.def) && !e6Ajout
       && e6Msg.some((m) => /portions|poids|grammes/i.test(m)), J({ e6Avant, e6Apres, e6Ajout, e6Msg }));
 
+    /* ⑪ (placé après ⑥, son voisin) D-101 ⑬ — RETOUR À L'ONGLET PORTIONS avec « ×1 » : le seul chemin où le garde de l'onglet (`_afSetUnite`)
+       protège SEUL. Avec ×2, une valeur retouchée remet déjà le poids à zéro ; avec ×1, rien d'autre. Mesuré au contrôle
+       négatif du 22/10 : sans ce témoin, retirer ce garde ne faisait rougir AUCUN témoin de la passe (MP35). */
+    await fermer();
+    g = await ouvrirAjout(pg);
+    g = g && await taper(pg, '#af-desc', 'Dose1 P13 (test)');
+    for (const [id, v] of [['#af-kcal', '156'], ['#af-prot', '26'], ['#af-carbs', '1'], ['#af-fat', '1']]) g = g && await taper(pg, id, v);
+    try { await pg.locator('#af-fat').blur(); } catch (e) { g = false; }
+    await pause(pg, 200);
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afSetUnite(\'portion\')"]'); await pause(pg, 220);
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afApplyPortion(1)"]'); await pause(pg, 220);
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afPortionNom(\'dose\')"]'); await pause(pg, 220);
+    g = g && await taper(pg, '#af-ppoids', '30'); await pause(pg, 200);
+    const e6bAvant = await etatPortion();
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afSetUnite(\'g\')"]'); await pause(pg, 220);
+    g = g && await clic(pg, '#af-prop-row button[onclick="_afSetUnite(\'portion\')"]'); await pause(pg, 250);
+    const e6bApres = await etatPortion();
+    const n6b = (await journal(pg)).length; await vider();
+    await ajouter(pg);
+    const e6bAjout = (await journal(pg)).length > n6b, e6bMsg = await vider();
+    t('B-NV2P P13 ⑪ ⛔⛔ RETOUR À L\'ONGLET PORTIONS (×1) : « 1 dose de 30 g » → grammes → portions — le poids de 30 g est REDEMANDÉ (D-101 ⑬), rien ne part sans lui',
+      g && e6bAvant.n === 1 && e6bAvant.pw === 30 && e6bApres.n === 1 && e6bApres.pw === 0
+      && /Indique le poids d'une portion/.test(e6bApres.def) && !e6bAjout && e6bMsg.some((m) => /portion|poids|grammes/i.test(m)),
+      J({ e6bAvant, e6bApres, e6bAjout, e6bMsg }));
+
     /* ⑦ défense en profondeur : une reprise FIGÉE n'est jamais redimensionnée, même par les fonctions internes de rescale */
     await fermer();
     g = await ouvrirAjout(pg);
