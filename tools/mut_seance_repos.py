@@ -11,9 +11,13 @@ Chaque mutation GARDE exige un TEMOIN PRECIS (4e champ) parmi les rouges : on pr
 Un PLANTAGE du banc (code de sortie hors 0/1, ligne PLANTAGE, ou pas de ligne de total) n'est JAMAIS « garde ».
 Une mutation qui casse la SYNTAXE est refusee (elle rougirait tout, elle ne prouve rien).
 Usage : python3 tools/mut_seance_repos.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges · MUT_J=1 par defaut)
+        MUT_PARTS=N MUT_PART=k : ne joue que la k-ieme part (1..N) des mutations choisies — pour couper une longue campagne en
+        processus paralleles (chacun mesure et rejoue l'arbre sain).
+[!!] CHAQUE RESULTAT EST IMPRIME DES QU'IL TOMBE (22/10 apres-midi) : la 1re version n'imprimait qu'a la fin — une campagne de
+     51 mutations coupee par une limite de temps a 2 h a tout perdu, aucun resultat ecrit. Le bilan final reste imprime a la fin.
 """
 import os, re, shutil, subprocess, sys, tempfile
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = 'f82a7c07'
@@ -223,19 +227,23 @@ def main():
     shutil.rmtree(tmp0, ignore_errors=True)
     if rouges or plantage:
         print('  !! ARBRE SAIN DEJA ROUGE OU EN PLANTAGE — controle refuse :', ([plantage] if plantage else []) + rouges[:3]); return 1
-    print('  arbre sain : 0 rouge (point de depart valide) · MUT_J=%s\n' % os.environ.get('MUT_J', '1'))
+    print('  arbre sain : 0 rouge (point de depart valide) · MUT_J=%s\n' % os.environ.get('MUT_J', '1'), flush=True)
     choix = [m for m in MUT if not filtres or any(m[0].startswith(f) for f in filtres)]
-    with ThreadPoolExecutor(max_workers=int(os.environ.get('MUT_J', '1'))) as ex:
-        res = list(ex.map(lambda m: une(m, avant), choix))
+    parts, part = int(os.environ.get('MUT_PARTS', '1')), int(os.environ.get('MUT_PART', '1'))
+    choix = [m for i, m in enumerate(choix) if i % parts == part - 1]
+    print('  part %d/%d : %d mutation(s)' % (part, parts, len(choix)), flush=True)
     conformes = 0
-    for nom, ok, obtenu, rouges in res:
-        if ok is None:
-            print('  INVALIDE  %s %s' % (nom, obtenu)); continue
-        conformes += ok
-        print('  %s  %-100s %-6s %2d rouge(s)  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), rouges[0] if rouges else ''))
-        if os.environ.get('MUT_DETAIL'):
-            for r in rouges[1:]:
-                print('        ' + r)
+    with ThreadPoolExecutor(max_workers=int(os.environ.get('MUT_J', '1'))) as ex:
+        futs = [ex.submit(une, m, avant) for m in choix]
+        for fu in as_completed(futs):
+            nom, ok, obtenu, rouges = fu.result()
+            if ok is None:
+                print('  INVALIDE  %s %s' % (nom, obtenu), flush=True); continue
+            conformes += ok
+            print('  %s  %-100s %-6s %2d rouge(s)  %s' % ('OK ' if ok else '!! ', nom, obtenu, len(rouges), rouges[0] if rouges else ''), flush=True)
+            if os.environ.get('MUT_DETAIL'):
+                for r in rouges[1:]:
+                    print('        ' + r, flush=True)
     tmp1, a1 = cloner()
     rouges1, plantage1 = banc(a1)
     shutil.rmtree(tmp1, ignore_errors=True)
