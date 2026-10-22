@@ -91,16 +91,17 @@ try { (() => {
     const r = N.calcule(RIZ, { val: 1, unite: 'portion', portion: { libelle: 'dose' } });
     return !r.ok && r.erreur === 'PORTION_SANS_POIDS' || J(r);
   });
-  essai('B-NV2-C ⑩ fiche PAR PORTION (« part » de 300 kcal) : 2 parts = 600 · 24 · 60 · 28 ; des grammes dessus : REFUS', () => {
+  essai('B-NV2-C ⑩ ⛔ D-099 : une fiche « par portion » (300 kcal la part, poids inconnu) N\'EXISTE PAS — refus, en portions comme en grammes', () => {
     const PART = { base: 'portion', libelle: 'part', pourUne: { kcal: 300, prot: 12, carbs: 30, fat: 14 } };
-    const a = N.calcule(PART, { val: 2, unite: 'portion', portion: { libelle: 'Part' } });
+    const a = N.calcule(PART, { val: 2, unite: 'portion', portion: { libelle: 'part' } });
     const b = N.calcule(PART, { val: 150, unite: 'g' });
-    return a.ok && J(a.valeurs) === J({ kcal: 600, prot: 24, carbs: 60, fat: 28 }) && !b.ok && b.erreur === 'UNITE_INCOMPATIBLE' || J([a, b]);
+    return !a.ok && a.erreur === 'BASE_INCONNUE' && !b.ok && b.erreur === 'BASE_INCONNUE' || J([a, b]);
   });
-  essai('B-NV2-C ⑪ ⛔ 2 « steaks » sur une fiche « part » : REFUS (deux portions différentes ne se multiplient pas)', () => {
-    const r = N.calcule({ base: 'portion', libelle: 'part', pourUne: { kcal: 300 } },
-      { val: 2, unite: 'portion', portion: { libelle: 'steak' } });
-    return !r.ok && r.erreur === 'PORTION_DIFFERENTE' || J(r);
+  essai('B-NV2-C ⑪ ⛔ D-099 : une portion de volume (1 canette de 330 ml) sur une fiche pour 100 ml se calcule ; en ml sur une fiche pour 100 g, refus', () => {
+    const COLA = { base: 'ml', p100: { kcal: 42, prot: 0, carbs: 10.6, fat: 0 } };
+    const a = N.calcule(COLA, { val: 1, unite: 'portion', portion: { libelle: 'canette', poids: 330, unite: 'ml' } });
+    const b = N.calcule(RIZ, { val: 1, unite: 'portion', portion: { libelle: 'bol', poids: 250, unite: 'ml' } });
+    return a.ok && a.valeurs.kcal === 139 && !b.ok && b.erreur === 'UNITE_INCOMPATIBLE' || J([a, b]);
   });
   essai('B-NV2-C ⑫ ⛔ quantité 0, négative, NaN, infinie, texte, nulle, absente : REFUS à chaque fois', () => {
     const mauvaises = [0, -5, NaN, Infinity, '150', null, undefined];
@@ -197,12 +198,17 @@ try { (() => {
       .map((c) => N.ligneNouvelle(ent(Object.assign({ corrections: c }, PESEE))));
     return r.every((x) => !x.ok && x.erreur === 'CORRECTION_INVALIDE') || J(r);
   });
-  essai('B-NV2-E ⑬ une ligne DÉCLARÉE (« 1 assiette », 800 kcal) : valeurs telles quelles, pas de fiche, macros inconnues ABSENTES', () => {
+  essai('B-NV2-E ⑬ une ligne DÉCLARÉE (400 g, 800 kcal) : valeurs telles quelles, pas de fiche, macros inconnues ABSENTES', () => {
     const r = N.ligneNouvelle(ent({ nom: 'Repas au restaurant', origine: { saisie: 'manuel', origine: 'utilisateur' }, mode: 'declaree',
-      declare: { kcal: 800 }, quantite: { val: 1, unite: 'portion', portion: { libelle: 'assiette' } } }));
+      declare: { kcal: 800 }, quantite: { val: 400, unite: 'g' } }));
     const L = r.ligne;
     return r.ok && L.kcal === 800 && !('prot' in L) && !('carbs' in L) && !('fat' in L) && L.per100 === null && L.sourceId === null &&
-      L.n2.m === 'd' && L.n2.st === 'declaree' && J(L.n2.manque) === J(['prot', 'carbs', 'fat']) && L.portionLabel === 'assiette' || J(r);
+      L.q === 400 && L.u === 'g' && L.n2.m === 'd' && L.n2.st === 'declaree' && J(L.n2.manque) === J(['prot', 'carbs', 'fat']) || J(r);
+  });
+  essai('B-NV2-E ⑬b ⛔ D-099 : « 1 assiette » SANS poids n\'est pas une quantité — refus, en déclarée comme en pesée', () => {
+    const a = N.ligneNouvelle(ent({ mode: 'declaree', declare: { kcal: 800 }, quantite: { val: 1, unite: 'portion', portion: { libelle: 'assiette' } } }));
+    const b = N.ligneNouvelle(ent({ mode: 'pesee', fiche: RIZ, quantite: { val: 1, unite: 'portion', portion: { libelle: 'bol' } } }));
+    return !a.ok && a.erreur === 'PORTION_SANS_POIDS' && !b.ok && b.erreur === 'PORTION_SANS_POIDS' || J([a, b]);
   });
   essai('B-NV2-E ⑭ ⛔ une ligne déclarée SANS quantité, ou à 0 : REFUS (garde-fou du 10/09 : une quantité réellement choisie)', () => {
     const r = [ent({ mode: 'declaree', declare: { kcal: 800 } }),

@@ -15,6 +15,10 @@
      ② ligneNouvelle(entree)     — l'écrivain des NOUVELLES lignes : il RENVOIE la ligne, il n'écrit nulle part.
      ③ lireAncienne(ligne, ctx)  — l'adaptateur des anciennes lignes, en LECTURE SEULE.
 
+   ⭐ D-099 (Michel, 22/10) : *« les grammes et les millilitres sont prioritaires dans la saisie »* ; une portion nommée
+      (« 2 steaks ») reste une possibilité SECONDAIRE, et seulement quand son poids (ou volume) est connu — jamais une
+      quantité ambiguë, jamais imposée par défaut. D'où : pas de fiche « par portion », pas de portion sans poids.
+
    ⭐ CE QUI EST FERMÉ PAR CONSTRUCTION (causes racines du dossier de nuit du 21/10) :
      · une ligne ne reçoit jamais la quantité ou la fiche d'une autre : l'appelant fournit un objet COMPLET,
        l'écrivain ne lit rien d'autre (CR-1) ;
@@ -42,9 +46,8 @@
   function fini(x) { return typeof x === 'number' && isFinite(x); }
   function ko(code, detail) { return { ok: false, erreur: code, detail: detail || '' }; }
   function texte(x) { return typeof x === 'string' ? x.trim() : ''; }
-  function libelleNorm(x) { return texte(x).toLowerCase().replace(/\s+/g, ' '); }
 
-  /* Un jeu de valeurs (pour 100 g, pour 100 ml ou pour UNE portion). Chaque champ PRÉSENT est un nombre
+  /* Un jeu de valeurs (pour 100 g ou pour 100 ml). Chaque champ PRÉSENT est un nombre
      fini ≥ 0 ; un champ absent (clé manquante, `null`, `undefined`) est INCONNU — jamais 0 (contrat du 22/10).
      Rend une COPIE : rien de ce qui sort ne partage d'objet avec ce qui est entré. */
   function lireValeurs(v) {
@@ -68,7 +71,8 @@
   }
 
   /* ═══ ① LE CALCUL ═══
-     fiche    = { base:'g'|'ml', p100:{…} }  ou  { base:'portion', libelle, pourUne:{…} }  (+ densite:{gParMl, source})
+     fiche    = { base:'g'|'ml', p100:{…} }  (+ densite:{gParMl, source})
+     ⛔ D-099 : il n'existe PAS de fiche « par portion » — une portion sans poids connu n'est pas une quantité.
      quantite = { val > 0, unite:'g'|'ml'|'portion', portion?:{ libelle, poids, unite:'g'|'ml' } }
      ⭐ Conversions permises, et SEULEMENT elles : portion → masse par le poids d'UNE portion ; ml ↔ g par une
         densité SOURCÉE. Tout le reste est REFUSÉ — jamais « 1 ml = 1 g », jamais un poids de portion deviné.
@@ -78,25 +82,12 @@
   function calcule(fiche, q) {
     if (!fiche || typeof fiche !== 'object') return ko('FICHE_ABSENTE');
     var base = fiche.base;
-    if (base !== 'g' && base !== 'ml' && base !== 'portion') return ko('BASE_INCONNUE', String(base));
-    var lv = lireValeurs(base === 'portion' ? fiche.pourUne : fiche.p100);
+    if (base !== 'g' && base !== 'ml') return ko('BASE_INCONNUE', String(base));
+    var lv = lireValeurs(fiche.p100);
     if (!lv.ok) return ko('FICHE_INVALIDE', lv.erreur + (lv.detail ? ':' + lv.detail : ''));
     if (!q || typeof q !== 'object' || !fini(q.val) || !(q.val > 0)) return ko('QUANTITE_INVALIDE');
     if (q.unite !== 'g' && q.unite !== 'ml' && q.unite !== 'portion') return ko('UNITE_INCONNUE', String(q.unite));
     var out = {}, manque = [], i, c;
-
-    if (base === 'portion') {
-      if (q.unite !== 'portion') return ko('UNITE_INCOMPATIBLE', q.unite + ' sur une fiche par portion');
-      /* ⛔ Deux portions de choses différentes ne se multiplient pas (« 2 steaks » sur une fiche « 1 part »). */
-      if (q.portion && texte(q.portion.libelle) && texte(fiche.libelle) &&
-          libelleNorm(q.portion.libelle) !== libelleNorm(fiche.libelle)) return ko('PORTION_DIFFERENTE');
-      for (i = 0; i < CHAMPS.length; i++) {
-        c = CHAMPS[i];
-        if (c in lv.valeurs) out[c] = Math.round(q.val * lv.valeurs[c]); else manque.push(c);
-      }
-      return { ok: true, valeurs: out, manque: manque, masse: null };
-    }
-
     var masse = q.val, u = q.unite;
     if (u === 'portion') {
       var p = q.portion;
@@ -141,8 +132,11 @@
     var q = e.quantite;
     if (!q || typeof q !== 'object' || !fini(q.val) || !(q.val > 0)) return ko('QUANTITE_INVALIDE');
     if (q.unite !== 'g' && q.unite !== 'ml' && q.unite !== 'portion') return ko('UNITE_INCONNUE', String(q.unite));
-    /* ⛔ `ft-v1186` ① : une portion se NOMME (« steak », « part », « dose »), le nom n'est jamais deviné. */
+    /* ⛔ `ft-v1186` ① : une portion se NOMME (« steak », « part », « dose »), le nom n'est jamais deviné ;
+       ⛔ D-099 : et elle n'existe que si son poids (ou volume) est connu — sinon, ce n'est pas une quantité. */
     if (q.unite === 'portion' && (!q.portion || !texte(q.portion.libelle))) return ko('PORTION_SANS_LIBELLE');
+    if (q.unite === 'portion' && (!fini(q.portion.poids) || !(q.portion.poids > 0) ||
+        (q.portion.unite !== 'g' && q.portion.unite !== 'ml'))) return ko('PORTION_SANS_POIDS');
     if (q.origine !== undefined && ORIGINES_QTE.indexOf(q.origine) < 0) return ko('ORIGINE_QUANTITE_INCONNUE', String(q.origine));
 
     var L = { date: e.date, meal: repas, name: nom.slice(0, NOM_MAX), ts: e.ts, id: e.id, v: 1,
@@ -151,8 +145,8 @@
     var n2 = { s: VERSION, m: null, st: null, qo: q.origine || 'tapee', manque: [], no: [], corr: [] };
     if (q.unite === 'portion') {
       L.portionLabel = texte(q.portion.libelle).slice(0, LIBELLE_MAX);
-      if (q.portion.unite === 'g' && fini(q.portion.poids) && q.portion.poids > 0) L.portionWeightG = q.portion.poids;
-      else if (q.portion.unite === 'ml' && fini(q.portion.poids) && q.portion.poids > 0) n2.pv = { val: q.portion.poids, unite: 'ml' };
+      if (q.portion.unite === 'g') L.portionWeightG = q.portion.poids;
+      else n2.pv = { val: q.portion.poids, unite: 'ml' };
     }
 
     var calc;
@@ -163,14 +157,9 @@
       var r = calcule(f, q);
       if (!r.ok) return r;
       calc = r.valeurs; n2.manque = r.manque;
-      if (f.base === 'portion') {
-        n2.f = { src: f.source, ver: f.version || null, fiab: f.fiab, base: 'portion',
-                 libelle: texte(f.libelle) || null, pourUne: lireValeurs(f.pourUne).valeurs };
-      } else {
-        L.per100 = lireValeurs(f.p100).valeurs;                  // une COPIE de la fiche qui a servi
-        n2.f = { src: f.source, ver: f.version || null, fiab: f.fiab, base: f.base };
-        if (f.densite) n2.f.densite = { gParMl: f.densite.gParMl, source: texte(f.densite.source) };
-      }
+      L.per100 = lireValeurs(f.p100).valeurs;                    // une COPIE de la fiche qui a servi
+      n2.f = { src: f.source, ver: f.version || null, fiab: f.fiab, base: f.base };
+      if (f.densite) n2.f.densite = { gParMl: f.densite.gParMl, source: texte(f.densite.source) };
       L.sourceId = texte(f.cle) ? texte(f.cle).slice(0, 32) : null;
       L.etat = texte(f.etat) || null;
       n2.m = 'p'; n2.st = FIABILITES[f.fiab];
