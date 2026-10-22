@@ -163,6 +163,10 @@ MUT = [
      [('app.js', "    if(q && q.unite==='portion'){\n      el.innerHTML='<div style=\"margin-bottom:12px;\">'+tete('Quantité (portions)'",
        "    if(false){\n      el.innerHTML='<div style=\"margin-bottom:12px;\">'+tete('Quantité (portions)'")],
      ['CCLXXX ⑪', 'CCLXXX ⑫']),
+    ('R35 une porte de reprise contourne `_ref100` (sa référence écrite à la main)', ['CCCIV', 'BCCCXI'],
+     [('app.js', "      : _ref100(R.nom, p.kcal, p.prot, p.carbs, p.fat, {normaliser:false, origine:'reprise'});",
+       "      : {name:R.nom, kcal100:p.kcal, prot100:p.prot, carbs100:p.carbs, fat100:p.fat, absents:[]};")],
+     ['CCXC ⭐ les 9 portes', 'CCCV ㉒']),
 ]
 
 
@@ -213,9 +217,14 @@ def main():
     shutil.rmtree(tmp0, ignore_errors=True)
     sains = {lib: etat(out, tot, lib) for m in choisies for lib in m[3]}
     pas_vert = {k: v for k, v in sains.items() if v != 'vert'}
-    print('  arbre SAIN : %d témoin(s) attendu(s), %d vert(s)' % (len(sains), len(sains) - len(pas_vert)))
+    rouges_sains = [l.strip()[2:120] for l in out.split('\n') if re.match(r'^\s+❌', l)]
+    print('  arbre SAIN : %d témoin(s) attendu(s), %d vert(s) ; %d rouge(s) en tout' % (len(sains), len(sains) - len(pas_vert), len(rouges_sains)))
     if pas_vert:
         print('  !! un témoin attendu n\'est pas VERT sur l\'arbre sain — contrôle refusé :', pas_vert); return 1
+    # ⛔ 22/10 : un rouge AILLEURS sur l'arbre sain (CCXC, flux B) est passé inaperçu — un arbre « sain » qui rougit
+    #    n'est pas sain. Le contrôle refuse de juger tant que la passe réduite saine n'est pas ENTIÈREMENT verte.
+    if rouges_sains or not tot:
+        print('  !! l\'arbre SAIN n\'est pas entièrement vert — contrôle refusé :', ' | '.join(rouges_sains) or 'PAS DE TOTAL'); return 1
     conformes = 0
     for nom, bl, edits, attendus in choisies:
         tmp, arbre = cloner()

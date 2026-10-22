@@ -34646,11 +34646,13 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      `_ref100`*. Une porte de plus la RENFORCE — et ce témoin a rougi pour le dire, ce qui est
      exactement son travail. ⚠️ Il n'a PAS été mis à 10 « pour faire passer » : le banc ciblé
      du chantier exige en plus qu'`estimateFoodAI` ne recopie aucune once de la loi. */
-  /* 🥗 9 → 8 PORTES AU JALON 4 (22/10/2026), ET LE NOMBRE SE DÉPLACE AVEC SA RAISON (R30) : les deux reprises
-     (« Mes aliments » et la recherche dans le journal) n'en font plus qu'UNE — `_n2Reprendre`, qui reprend la fiche par
-     le moteur. ⛔ La garantie ne bouge pas : aucune porte ne contourne `_ref100` (le témoin « à la main » ci-dessus). */
-  t('CCXC ⭐ les 8 portes passent par `_ref100` (8 appels + 1 déclaration)',
-    appels===9, appels+' occurrences');
+  /* 🥗 TOUJOURS 9 PORTES AU JALON 4 (22/10/2026). Les deux reprises (« Mes aliments » et la recherche dans le journal)
+     passent par la même fonction, `_n2Reprendre` — mais chacune garde SON appel, l'origine écrite en clair (CCCV ㉒ lit
+     ces origines dans le code). ⚠️ Ce témoin était passé à « 8 » le matin même, quand les deux appels n'en faisaient
+     qu'un ; il a rougi dans la passe complète du soir, après qu'ils ont été re-séparés (`BUGS.md` §94). Le nombre est
+     revenu à celui de master, avec sa raison (R30). */
+  t('CCXC ⭐ les 9 portes passent par `_ref100` (9 appels + 1 déclaration)',
+    appels===10, appels+' occurrences');
 }
 
 /* ═══════════ CCXCI · CCXCII · CCXCIII · CCXCIV · CCXCVI · CCXCVIII · CCXCIX · CCC · CCCI — RETIRÉS AU JALON 4 DE
