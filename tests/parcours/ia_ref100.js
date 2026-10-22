@@ -187,7 +187,7 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCXLVII ① ⭐⭐ CAS A · une estimation cohérente n\'est pas touchée',
     o.form.kcal === '500' && (o.l || {}).kcal === 500 && (o.l || {}).prot === 40, JSON.stringify(o.form));
   t('B-CCCXLVII ② ⛔ CAS A · et elle ne porte AUCUNE trace (la ligne ne grossit pas)',
-    (o.l || {}).fiab === null, JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab === null, JSON.stringify((o.l || {}).fiab));
   /* ⚠️ RÉGRESSION QUE J'AI INTRODUITE PUIS MESURÉE : en posant `_bcNutr`, la ligne perdait
      le `per100` qu'elle portait AVANT ce chantier (142,9 pour 500 kcal / 350 g). */
   /* 🥗 V2 : la ligne garde la fiche QUI A SERVI — 500 kcal pour 350 g, soit 142,857… pour 100 g, NON arrondie
@@ -203,7 +203,7 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCXLVII ⑤ ⭐⭐ CAS B · la trace atteint enfin la DONNÉE (elle était `null`)',
     (o.l || {}).fiab && (o.l || {}).fiab.etat === 'DERIVE_ESTIMABLE'
       && (o.l || {}).fiab.raison === 'plancher_energetique'
-      && (o.l || {}).fiab.brut === 60 && (o.l || {}).fiab.retenu === 215, JSON.stringify(o.l.fiab));
+      && (o.l || {}).fiab.brut === 60 && (o.l || {}).fiab.retenu === 215, JSON.stringify((o.l || {}).fiab));
   t('B-CCCXLVII ⑥ ⛔ CAS B · et l\'écran EXPLIQUE la substitution (jamais silencieuse)',
     /🔬/.test(o.avert) && /215/.test(o.avert), o.avert.slice(0, 90));
 
@@ -212,10 +212,10 @@ module.exports.ecran = async function (t, b, PORT) {
   t('B-CCCXLVII ⑦ ⭐⭐ CAS C · sans poids, RIEN n\'est réécrit',
     o.form.kcal === '120' && !!o.l && (o.l || {}).kcal === 120, JSON.stringify(o.form));
   t('B-CCCXLVII ⑧ ⭐⭐ CAS C · … mais le verdict est quand même enregistré',
-    (o.l || {}).fiab && (o.l || {}).fiab.raison === 'plancher_energetique', JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab && (o.l || {}).fiab.raison === 'plancher_energetique', JSON.stringify((o.l || {}).fiab));
   t('B-CCCXLVII ⑨ ⛔⛔ CAS C · et la trace ne ment pas : `retenu` vaut `brut`',
     (o.l || {}).fiab && (o.l || {}).fiab.etat === 'NON_RESOLU' && (o.l || {}).fiab.methode === 'observation'
-      && (o.l || {}).fiab.retenu === (o.l || {}).fiab.brut && (o.l || {}).fiab.retenu === 120, JSON.stringify(o.l.fiab));
+      && (o.l || {}).fiab.retenu === (o.l || {}).fiab.brut && (o.l || {}).fiab.retenu === 120, JSON.stringify((o.l || {}).fiab));
   /* 🥗 V2 : sans masse, plus RIEN ne s'enregistre (D-099) — donc aucun pour-100 g ne peut être inventé ; quand la
      personne donne 200 g, la fiche est celle de SES valeurs pour SA masse (120 kcal / 200 g = 60 pour 100 g). */
   t('B-CCCXLVII ⑩ ⛔ CAS C · sans masse, RIEN n\'est enregistré ; la masse donnée, la fiche suit (60 pour 100 g)',
@@ -270,12 +270,12 @@ module.exports.ecran = async function (t, b, PORT) {
      personne n'a donnée. */
   o = await jouer({ status:'ok', name:'Plat', kcal:120, prot:40, carbs:null, fat:30, g:200 });
   t('B-CCCXLVII ⑰ ⭐⭐ CAS H · une macro `null` est ABSENTE : on ne dérive pas (R29)',
-    (o.l || {}).fiab && (o.l || {}).fiab.etat === 'NON_RESOLU' && (o.l || {}).kcal === 120, JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab && (o.l || {}).fiab.etat === 'NON_RESOLU' && (o.l || {}).kcal === 120, JSON.stringify((o.l || {}).fiab));
 
   /* ⛔ R15 — le verdict ne doit PAS se coller au repas suivant. */
   o = await jouer({ status:'ok', name:'Poulet riz', kcal:500, prot:40, carbs:55, fat:10, g:350 });
   t('B-CCCXLVII ⑱ ⛔⛔ le verdict du repas PRÉCÉDENT ne contamine pas le suivant (R15)',
-    (o.l || {}).fiab === null, JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab === null, JSON.stringify((o.l || {}).fiab));
 
   t('B-CCCXLVII ⑲ ⛔ aucune erreur de page sur tout le parcours', errs.length === 0, errs.join(' | '));
   await cx.close();

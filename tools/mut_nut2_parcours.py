@@ -5,7 +5,7 @@ tools/banc_nut2_parcours.js sait-il ROUGIR ?
 Chaque mutation casse UNE garantie du branchement, sur une COPIE complète de l'app (jamais le dépôt) ; le banc sert
 la copie (NUT2P_RACINE) et doit rougir, sur le témoin attendu. Un plantage (code 2, ou pas de ligne de total) n'est
 jamais compté comme « attrapé ». L'arbre sain est rejoué avant ET après.
-Usage : python3 tools/mut_nut2_parcours.py"""
+Usage : python3 tools/mut_nut2_parcours.py [PREFIXE[,PREFIXE...]]   (sans argument : toutes les mutations)"""
 import os, re, shutil, subprocess, sys, tarfile, tempfile, io
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BANC = os.path.join(RACINE, 'tools', 'banc_nut2_parcours.js')
@@ -39,8 +39,8 @@ MUT = [
    "  const _f=(v>0? v : ref)/ref, _o={}; Object.keys(_vals).forEach(c=>{ _o[c]=Math.round((+_vals[c]||0)*_f); }); const _r={ok:true, valeurs:_o};",
    'B-NV2P P2 ④'),
   ('MP11 modification : une ancienne ligne modifiée perd sa copie d\'origine', 'app.js',
-   "  const base={id:e.id, ts:(typeof e.ts==='number' && isFinite(e.ts)) ? e.ts : Date.now(), date:e.date, repas:_editFoodMeal, nom:nom,\n              remplace:e,",
-   "  const base={id:e.id, ts:(typeof e.ts==='number' && isFinite(e.ts)) ? e.ts : Date.now(), date:e.date, repas:_editFoodMeal, nom:nom,\n              remplace:Object.assign({}, e, {n2:{s:1}}),",
+   "  const base={id:e.id, ts:Number.isFinite(e.ts) ? e.ts : Date.now(), date:e.date, repas:_editFoodMeal, nom:nom,\n              remplace:e,",
+   "  const base={id:e.id, ts:Number.isFinite(e.ts) ? e.ts : Date.now(), date:e.date, repas:_editFoodMeal, nom:nom,\n              remplace:Object.assign({}, e, {n2:{s:1}}),",
    'B-NV2P P6 ③'),
   ('MP12 modification : une quantité absente est remplie à l\'ouverture (déduite des valeurs)', 'app.js',
    "  const val=(q && q.unite===_efUniteDecl) ? q.val : '';", "  const val=(q && q.unite===_efUniteDecl) ? q.val : 100;", 'B-NV2P P6 ④'),
@@ -51,6 +51,61 @@ MUT = [
    "    if(R.qte && !_afValeursTapees && !(q.unite===R.qte.unite && q.val===R.qte.val))", "    if(false)", 'B-NV2P P11 ③'),
   ('MP15 reprise figée : retoucher une valeur efface la quantité tapée', 'app.js',
    "  const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;", "  const f=document.getElementById('af-prop');", 'B-NV2P P11 ④'),
+  # P12 — les portes jumelles des reprises (D-101 ⑩) : chaque garantie retirée doit rougir son témoin.
+  ('MP16 jumelles : le repas habituel écrit une AUTRE provenance que « + Ajouter »', 'app.js',
+   "           origine:{saisie:'liste', origine:'reprise'}, quantite:Object.assign({}, R.quantite, {origine:'proposee'})};",
+   "           origine:{saisie:'liste', origine:(porte==='rejouerRepas')?'utilisateur':'reprise'}, quantite:Object.assign({}, R.quantite, {origine:'proposee'})};",
+   'B-NV2P P12 ①'),
+  ('MP17 M1 : une ligne NON vérifiée devient une fiche (son pour-100 g et son code-barres repris)', 'app.js',
+   "  if(R.fiche){\n    e.mode='pesee'; e.fiche=R.fiche;",
+   "  if(R.fiche || (src && src.per100 && (R.fiche={base:'g', p100:src.per100, cle:src.sourceId||null, source:'utilisateur', fiab:'declaree'}))){\n    e.mode='pesee'; e.fiche=R.fiche;",
+   'B-NV2P P12 ②'),
+  ('MP18 D-099 : une reprise en portions devient des grammes', 'app.js',
+   "           origine:{saisie:'liste', origine:'reprise'}, quantite:Object.assign({}, R.quantite, {origine:'proposee'})};",
+   "           origine:{saisie:'liste', origine:'reprise'}, quantite:(R.quantite.unite==='portion')?{val:R.quantite.val*R.quantite.portion.poids, unite:'g', origine:'proposee'}:Object.assign({}, R.quantite, {origine:'proposee'})};",
+   'B-NV2P P12 ③'),
+  ('MP19 D-099 : des ml repris deviennent des grammes (« 1 ml = 1 g »)', 'app.js',
+   "           origine:{saisie:'liste', origine:'reprise'}, quantite:Object.assign({}, R.quantite, {origine:'proposee'})};",
+   "           origine:{saisie:'liste', origine:'reprise'}, quantite:(R.quantite.unite==='ml')?{val:R.quantite.val, unite:'g', origine:'proposee'}:Object.assign({}, R.quantite, {origine:'proposee'})};",
+   'B-NV2P P12 ③'),
+  ('MP20 jumelles à l\'écran : la recherche du journal reprend SANS la quantité d\'avant', 'app.js',
+   "    if(!_n2Reprendre(e, 'historique')) return;",
+   "    if(!_n2Reprendre(Object.assign({}, e, {q:null}), 'historique')) return;",
+   'B-NV2P P12 ⑥'),
+  ('MP21 fiche V2 reprise : la quantité d\'avant n\'est plus proposée', 'app.js',
+   "    _bcProposerDerniere(qDer);", "    _bcProposerDerniere(0);", 'B-NV2P P12 ⑦'),
+  ('MP22 une ligne V2 reprise perd son code-barres (la fiche ne le porte plus)', 'app.js',
+   "    e.mode='pesee'; e.fiche=R.fiche;", "    e.mode='pesee'; e.fiche=Object.assign({}, R.fiche, {cle:null, etat:null});",
+   'B-NV2P P12 ④'),
+  # P13 — les correctifs trouvés en révisant les témoins V1 (22/10) : chacun retiré doit rougir SON témoin.
+  ('MP23 « Modifier » : une autre quantité passe avec les valeurs notées pour l\'ancienne (D-101 ⑧, la jumelle)', 'app.js',
+   "    if(q0 && !_efValeursTapees && !(q.unite===q0.unite && q.val===q0.val",
+   "    if(false && q0 && !_efValeursTapees && !(q.unite===q0.unite && q.val===q0.val", 'B-NV2P P13 ①'),
+  ('MP24 « Mettre X kcal » dans « Modifier » ne passe plus par la saisie : l\'écran dit X, la ligne garde la frappe', 'app.js',
+   "  if(el) _efSaisieValeur(el); else _efCoherence();", "  _efCoherence();", 'B-NV2P P13 ③'),
+  ('MP25 « Modifier » : la quantité tapée ne relance plus le contrôle', 'app.js',
+   '" oninput="_efCoherence()"', '"', 'B-NV2P P13 ④'),
+  ('MP26 le contrôle de masse redevient aveugle à la quantité de « Modifier » (ef-q)', 'app.js',
+   "  if(pfx==='ef' && typeof _efUniteDecl!=='undefined' && _efUniteDecl==='g'){ const d=lu('q'); if(d>0) return d; }", "", 'B-NV2P P13 ④'),
+  ('MP27 reprise figée : la pastille pose la quantité SANS le contrôle (ft-v1104 rouvert)', 'app.js',
+   "  _afCoherence();\n}\nfunction _afPrendreFige(){", "}\nfunction _afPrendreFige(){", 'B-NV2P P13 ⑤'),
+  ('MP28 portions : le poids d\'avant survit quand l\'écran devient « 1 portion » de ce qui en valait deux', 'app.js',
+   "  if(relit){ if(_afPortions!==1) _afPortionPoids=0; _afPortions=1; _afPortionPose=false; }",
+   "  if(relit){ _afPortions=1; _afPortionPose=false; }", 'B-NV2P P13 ⑥'),
+  ('MP29 reprise figée redimensionnée par `_afApplyProp`', 'app.js',
+   "  if(!_afRef || _afRef.fige) return;\n  _qtyRescale('af', _afRef.base, _afRef.q, (document.getElementById('af-prop')||{}).value);",
+   "  if(!_afRef) return;\n  _qtyRescale('af', _afRef.base, _afRef.q, (document.getElementById('af-prop')||{}).value);", 'B-NV2P P13 ⑦'),
+  ('MP30 reprise figée redimensionnée par `_afProp`', 'app.js',
+   "  if(!_afRef || _afRef.fige) return;   // 🥗⛔ une reprise figée n'est jamais recalculée (voir `_afApplyProp`)",
+   "  if(!_afRef) return;", 'B-NV2P P13 ⑦'),
+  ('MP31 un code-barres lu sans origine dite reprend l\'ancien « scan » (refusé par le moteur)', 'app.js',
+   "  _offRemplirFormulaire(p, ean, saisie||'camera-code-local', codeDouteux===true);",
+   "  _offRemplirFormulaire(p, ean, saisie||'scan', codeDouteux===true);", 'B-NV2P P13 ⑧'),
+  ('MP32 « Modifier » sans geste : la quantité DÉCLARÉE devient « tapée »', 'app.js',
+   "  const origine=(q0 && q0.unite===u && q0.val===v) ? ((e && e.n2 && e.n2.qo) || 'proposee') : 'tapee';",
+   "  const origine='tapee';", 'B-NV2P P13 ⑨'),
+  ('MP33 « Modifier » sans geste : les portions d\'une ligne à fiche deviennent « tapées »', 'app.js',
+   "origine:(q.val===n) ? ((e && e.n2 && e.n2.qo) || 'proposee') : 'tapee',", "origine:'tapee',", 'B-NV2P P13 ⑨'),
 ]
 
 def copier_app(dest):
@@ -78,7 +133,9 @@ try:
     print('  arbre sain : %s' % (total.group(0) if total else 'PAS DE TOTAL (code %d)' % code))
     if code != 0 or not total or total.group(2) != '0': print(s[-2500:]); sys.exit(1)
     conformes = 0
-    for nom, fic, avant, apres, attendu in MUT:
+    filtres = [f for f in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if f]
+    choisies = [m for m in MUT if not filtres or any(m[0].startswith(f + ' ') for f in filtres)]
+    for nom, fic, avant, apres, attendu in choisies:
         d = os.path.join(tmp, 'm'); shutil.rmtree(d, ignore_errors=True); shutil.copytree(sain, d)
         f = os.path.join(d, fic); t = io.open(f, encoding='utf-8').read()
         if t.count(avant) != 1:
@@ -94,7 +151,7 @@ try:
         print('  %s %s — %d rouge(s), attendu %s : %s' % ('OK  ' if bon else 'KO  ', nom, len(rouges), attendu, ', '.join(rouges) or 'aucun'))
     code, total, rouges, s = banc(sain)
     print('  arbre sain rejoué à la fin : %s' % (total.group(0) if total else 'PAS DE TOTAL'))
-    print('%d/%d conformes' % (conformes, len(MUT)))
-    sys.exit(0 if conformes == len(MUT) and code == 0 and total and total.group(2) == '0' else 1)
+    print('%d/%d conformes' % (conformes, len(choisies)))
+    sys.exit(0 if choisies and conformes == len(choisies) and code == 0 and total and total.group(2) == '0' else 1)
 finally:
     shutil.rmtree(tmp, ignore_errors=True)

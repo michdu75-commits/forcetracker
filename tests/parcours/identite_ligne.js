@@ -41,21 +41,38 @@ module.exports = function(t, ROOT, fs, path){
 
   console.log('\n-- B-CCCXVI. L\'identité d\'une ligne du journal alimentaire (source) --');
 
-  /* ① UN SEUL PROPRIÉTAIRE POUR FABRIQUER UNE IDENTITÉ (R2) */
-  t('B-CCCXVI ① `_foodLineId` est le seul fabricant d\'identité, appelé par les 3 créateurs',
+  /* ① UN SEUL PROPRIÉTAIRE POUR FABRIQUER UNE IDENTITÉ (R2).
+     🥗 V2 (jalon 4) — les 3 créateurs ne construisent plus leur ligne eux-mêmes : ils passent par les DEUX
+     constructeurs d'entrée du pont (`_n2EntreeEcran` pour l'écran d'ajout, `_n2Reajouter` pour une reprise hors
+     écran), et ce sont eux qui appellent `_foodLineId()`. Le compte attendu passe de 3 à 2 ; l'invariant ne
+     bouge pas : un seul fabricant, appelé à la création, nulle part ailleurs. */
+  const V2=nu12(fs.readFileSync(path.join(ROOT,'nutrition-v2.js'),'utf8'));
+  t('B-CCCXVI ① `_foodLineId` est le seul fabricant d\'identité, appelé par les 2 constructeurs du pont',
     /function _foodLineId\(\)/.test(S12) &&
     (S12.match(/function _foodLineId/g)||[]).length===1 &&
-    (A12.match(/_foodLineId\(\)/g)||[]).length===3,
-    'appels dans app.js : '+((A12.match(/_foodLineId\(\)/g)||[]).length)+' (attendu 3)');
+    (A12.match(/_foodLineId\(\)/g)||[]).length===2 &&
+    ['_n2EntreeEcran','_n2Reajouter'].every(fn=>(corps12(srcA,fn).match(/_foodLineId\(\)/g)||[]).length===1),
+    'appels dans app.js : '+((A12.match(/_foodLineId\(\)/g)||[]).length)+' (attendu 2 : _n2EntreeEcran, _n2Reajouter)');
 
-  /* ② LES TROIS ÉCRIVAINS CRÉATEURS POSENT L'IDENTITÉ À L'ÉCRITURE.
-     ⛔ Trouvé par contrôle négatif : retirer l'identité d'un écrivain ne fait PAS rougir le
-     comportement — le filet du rendu la repose. Ce témoin-ci tient le contrat. */
-  ['rejouerRepas','quickAddFood','addFoodEntry'].forEach(fn=>{
-    const b=corps12(srcA,fn);
-    t('B-CCCXVI ② `'+fn+'` pose l\'identité DANS le littéral de la ligne',
-      /id:_foodLineId\(\)/.test(b) && /ts:Date\.now\(\)/.test(b), fn);
+  /* ② L'IDENTITÉ EST POSÉE DANS LE LITTÉRAL DE L'ENTRÉE, À LA CRÉATION — ET LES 3 CRÉATEURS Y PASSENT.
+     ⛔ Trouvé par contrôle négatif (T-01) : retirer l'identité d'un écrivain ne fait PAS rougir le comportement —
+     le filet du rendu la repose. En V2 le moteur la REFUSE (`ID_INVALIDE`) ; ce témoin tient le contrat à la source,
+     et vérifie qu'aucun créateur ne contourne le pont (ni littéral à lui, ni `push` direct dans le journal). */
+  ['_n2EntreeEcran','_n2Reajouter'].forEach(fn=>{
+    const b=corps12(srcA,fn).replace(/\s+/g,'');
+    t('B-CCCXVI ② `'+fn+'` pose l\'identité DANS le littéral de l\'entrée',
+      /\{id:id,ts:Date\.now\(\)/.test(b), fn);
   });
+  [['addFoodEntry','_n2EntreeEcran'],['quickAddFood','_n2Reajouter'],['rejouerRepas','_n2Reajouter']].forEach(([fn,via])=>{
+    const b=corps12(srcA,fn);
+    t('B-CCCXVI ② `'+fn+'` crée sa ligne par `'+via+'` (jamais un littéral à lui, jamais un `push` direct)',
+      b.length>0 && new RegExp(via+'\\(').test(b) && !/foodLog\.push\(/.test(b) && !/_foodLineId\(/.test(b), fn);
+  });
+  t('B-CCCXVI ②bis ⭐ le moteur recopie l\'identité dans la ligne, REFUSE une entrée sans identité, '+
+    'et le seul `push` du journal est celui de l\'écrivain unique',
+    /typeof e\.id !== 'string'[^\n]*return ko\('ID_INVALIDE'\)/.test(V2) && /ts: e\.ts, id: e\.id/.test(V2) &&
+    (A12.match(/foodLog\.push\(/g)||[]).length===1 && /foodLog\.push\(/.test(corps12(srcA,'_n2Enregistrer')),
+    '`push` dans app.js : '+((A12.match(/foodLog\.push\(/g)||[]).length));
 
   /* ③ ⛔ `saveEditFood` N'EN POSE PAS, ET C'EST VOLONTAIRE (R30).
      Il modifie une ligne EN PLACE. Lui imposer le même geste lui ferait changer d'identité à
@@ -141,9 +158,20 @@ module.exports = function(t, ROOT, fs, path){
     t('B-CCCXVI ⑫ ⛔ la douane garde ses 21 règles, dont 9 INVALID',
       R.length===21 && R.filter(x=>x.indexOf('INVALID')>=0).length===9,
       R.length+' règles / '+R.filter(x=>x.indexOf('INVALID')>=0).length+' INVALID');
-    t('B-CCCXVI ⑫bis ⛔ les 4 écrivains sont toujours observés par la douane',
-      ['addFoodEntry','quickAddFood','rejouerRepas','saveEditFood']
-        .every(w=>new RegExp("_douaneLigne\\([^,]+,'"+w+"'\\)").test(A12)), '');
+    /* 🥗 V2 (jalon 4) — la douane n'est plus appelée par chaque porte : l'écrivain unique `_n2Enregistrer`
+       l'appelle UNE fois, sur la ligne qu'il va écrire, sous le nom HISTORIQUE de la porte (gel du 13/09 : même
+       carnet, mêmes noms d'écrivains). Le témoin tient les trois moitiés : un seul appel (sinon une ligne serait
+       comptée deux fois au carnet), fait par l'écrivain unique, et chacune des 4 portes lui passe son nom. */
+    const EN=corps12(srcA,'_n2Enregistrer').replace(/\s+/g,'');
+    t('B-CCCXVI ⑫bis ⛔ les 4 écrivains sont toujours observés par la douane (une fois, par l\'écrivain unique, sous leur nom)',
+      (A12.match(/(?<!function )_douaneLigne\(/g)||[]).length===1 &&
+      /_douaneLigne\(r\.ligne,porte\)/.test(EN) &&
+      /return_n2Enregistrer\(e,porte\)/.test(corps12(srcA,'_n2Reajouter').replace(/\s+/g,'')) &&
+      [['addFoodEntry',/_n2Enregistrer\([^)]*,\s*'addFoodEntry'\)/],
+       ['saveEditFood',/_n2Enregistrer\([^)]*,\s*'saveEditFood'\)/],
+       ['quickAddFood',/_n2Reajouter\([^\n]*'quickAddFood'\)/],
+       ['rejouerRepas',/_n2Reajouter\([^\n]*'rejouerRepas'\)/]].every(([w,re])=>re.test(corps12(srcA,w))),
+      'appels de la douane hors définition : '+((A12.match(/(?<!function )_douaneLigne\(/g)||[]).length));
   }
 
   /* ⭐⭐ ⑬ LE PIÈGE QUI M'A EU, RENDU MESURABLE. Ce fichier prévient QUARANTE-HUIT FOIS en
