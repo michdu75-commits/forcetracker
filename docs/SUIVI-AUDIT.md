@@ -1585,7 +1585,7 @@ master) et C-REP-J1/J2 (fermeture pendant un repos : rien compté deux fois, une
 MATIN, corrigés** (`BUGS.md` §95) : « +15 s » tôt dans le repos puis fermeture effaçait le repos (garde jugeant le départ au lieu
 du restant — C-REP-D1b) ; un 2ᵉ onglet périmé réécrivait SA séance à l'expiration de son repos, ressuscitant une séance terminée
 ailleurs (double comptage) ou effaçant des séries récentes (C-REP-K1/K2/K3). Banc **61 / 0** (46 / 15 rouges sur le code du
-matin, 25 / 36 sur ft-v1258) · contrôle négatif «MUTATIONS» · voisins «VOISINS» · annexe 14 PASS + 1 défaut connu (identique à
+matin, 25 / 36 sur ft-v1258) · contrôle négatif «MUTATIONS» · voisins **791 / 0** (13 bancs, arbre final) · annexe 14 PASS + 1 défaut connu (identique à
 master à la même minute) · prompt de Milo identique à l'octet · **passe complète D-031 : 7 884 ✅ / 0 ❌, VALIDE** (sur `0d0d4269`,
 branche fusionnée avec master `6c0a400d`). Règle d'or #17 sur le lot entier : **1** donnée, **6** fichiers, **+131 / −19** (code seul
 **+49 / −10**), **2** anciens chemins + le plafond de « +15 s » à un seul propriétaire. Détail : `docs/SEANCE-REPOS-01.md` §12.

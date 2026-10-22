@@ -225,7 +225,7 @@ registre a un identifiant propre (`SEANCE-REPOS-PERSIST-01`, l'ancien doublonnai
 |---|---|
 | **Banc** `tools/banc_seance_repos.js` (61 témoins) | **61 OK / 0** sur l'arbre final · **46 / 15 rouges** sur le code du matin (`e4afb36b` : 900 s, aides, « +15 s », deux onglets — et I1, dont deux variantes ne peuvent pas exister à 5 min ; ses calories y étaient déjà identiques) · **25 / 36 rouges** sur master `f82a7c07` (ft-v1258) |
 | **Contrôle négatif** `tools/mut_seance_repos.py` (51 mutations, chacune exige SON témoin) | «MUTATIONS» |
-| **Bancs voisins** (sélecteur, T1 + T2) sur l'arbre final | «VOISINS» |
+| **Bancs voisins** (sélecteur, T1 + T2) sur l'arbre final (rejoués APRÈS les deux correctifs de la revue) | `aides_audit` 18 · `ux_integration` 69 · `lot3` 87 · `ux_d086` 122 · `rir_superset` 52 · `seance_ux` 69 · `ml_a` 34 · `seance_recette` 93 · `session_integrity` 93 · `nut_punch01` 36 · `cc01_dropset` 31 · `seance_date` 25 · `debrief_demande` 62 — **791 OK / 0 rouge** |
 | **Annexe de recette** (15 suites) | **14 PASS + 1 défaut connu** (`discussions`) — valeurs **identiques à master rejoué à la même minute** (71 725 / 76 644 / 68 781 ; l'écart avec ce matin vient de l'heure, pas du lot) |
 | **Prompt de Milo** | **identique à l'octet** à master (77 697 caractères), avec ou sans repos |
 | **Retour arrière à blanc** | l'ancien code ouvre un `ft4_wkt` avec `repos` sans erreur, sans chrono, séance intacte ; « Terminer » l'enregistre sans `repos` |
