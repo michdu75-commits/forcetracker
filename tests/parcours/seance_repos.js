@@ -256,6 +256,23 @@ async function ecran(t, b, PORT) {
     await fermer(X);
   }
   {
+    /* ⚠️ Trouvé par la revue adverse de l'avenant (22/10 après-midi) : « +15 s » TÔT dans le repos range un départ
+       équivalent DANS LE FUTUR (le restant dépasse alors la durée) — et la reprise refusait tout départ à plus de 5 s dans le
+       futur (garde « horloge reculée ») : fermer l'app dans les secondes qui suivent EFFAÇAIT le repos. */
+    const X = await ouvrir();
+    await cocher(X, 0, 1);                                         // 15:00:00, repos de 2:00
+    await heure(X, S_(1));
+    const p1 = await clic(X, '#rest-btn-plus'), p2 = await clic(X, '#rest-btn-plus');   // 1:59 → 2:14 → 2:29
+    const d = await lire(X);
+    const auDemarrage = await recharger(X, S_(10));                 // téléphone verrouillé 9 s
+    const r = await lire(X);
+    // 2:29 restant à 15:00:01 → départ équivalent 15:00:30 (dans le futur) → à 15:00:10 il reste 2:20
+    t('C-REP-D1b ⭐⭐ « +15 s » deux fois dès le début, puis fermeture 9 s plus tard : le repos REVIENT (2:20), il n\'est pas pris pour une horloge reculée',
+      p1 && p2 && _det(d.lsRepos) === _det({ debut: S_(30), total: 120 }) && auDemarrage.tourne && r.dock && r.temps === '2:20' && _det(r.lsRepos) === _det({ debut: S_(30), total: 120 }),
+      _det({ clics: [p1, p2], disque: d.lsRepos && { debut: d.lsRepos.debut - T0, total: d.lsRepos.total }, tourne: auDemarrage.tourne, temps: r.temps, apres: r.lsRepos }));
+    await fermer(X);
+  }
+  {
     const X = await ouvrir();
     await cocher(X, 0, 1);
     await heure(X, S_(10));
@@ -407,6 +424,8 @@ async function ecran(t, b, PORT) {
       ['séance en pause', WKT({ pausedAt: S_(-30), repos: { debut: S_(-20), total: 120 } })],
       ['séance vide, jamais commencée', { date: '2026-10-22', exs: [], repos: { debut: S_(-20), total: 120 } }],
       ['départ dans le futur (horloge reculée)', WKT({ repos: { debut: S_(3600), total: 120 } })],
+      // « +15 s » peut ranger un départ futur (C-REP-D1b), mais jamais un restant de plus de 10 min : 15:08:20 + 2:00 = 10:20 restants
+      ['départ futur au-delà de ce que « +15 s » peut produire (10:20 restants)', WKT({ repos: { debut: S_(500), total: 120 } })],
       ['durée nulle', WKT({ repos: { debut: S_(-20), total: 0 } })],
       ['durée illisible', WKT({ repos: { debut: S_(-20), total: 'abc' } })],
       ['départ absent', WKT({ repos: { total: 120 } })],
@@ -419,7 +438,7 @@ async function ecran(t, b, PORT) {
       res.push({ nom, tourne: r.tourne, pilule: r.pilule, dockVu: r.dockVu, disque: r.lsRepos, err: X.errs.length });
       await fermer(X);
     }
-    t('C-REP-G2 ⭐ rien n\'est repris pour une séance qui n\'est pas réellement active ni pour une valeur douteuse — et la valeur est effacée du disque (7 cas)',
+    t('C-REP-G2 ⭐ rien n\'est repris pour une séance qui n\'est pas réellement active ni pour une valeur douteuse — et la valeur est effacée du disque (8 cas)',
       res.every(r => !r.tourne && !r.pilule && r.dockVu === 0 && r.disque === '∅' && r.err === 0), _det(res.filter(r => r.tourne || r.pilule || r.dockVu || r.disque !== '∅' || r.err)));
   }
   {

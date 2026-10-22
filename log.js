@@ -5480,6 +5480,9 @@ function _restLeft(){
    après-midi, ouverte ET fermée). Ce nombre ne touche ni les durées de repos prévues (programmes, préréglages), ni les
    calories : le moteur calorique ne lit pas le chrono de repos (voir `calcSessionCalories`, app.js). */
 const REST_DEPASSEMENT_MAX = 900;
+/* « +15 s » ne fait jamais dépasser 10 min de restant. Un seul propriétaire pour ce nombre : `addRT` (le plafond) et
+   `_reposReprendre` (un restant au-delà ne peut pas venir de l'app : la valeur est douteuse). */
+const REST_PLUS_MAX = 600;
 
 // ─── AUDIO : AUCUN ───────────────────────────────────────────
 // ⚠️ Le timer est 100% SILENCIEUX (vibration + visuel uniquement).
@@ -5917,8 +5920,13 @@ function _reposMemoriser(){
 function _reposReprendre(){
   const r=(typeof S!=='undefined'&&S.wkt)?S.wkt.repos:undefined;
   const debut=(r&&typeof r==='object')?r.debut:NaN, total=(r&&typeof r==='object')?r.total:NaN;
+  /* ⚠️ « HORLOGE RECULÉE » SE JUGE SUR LE RESTANT, PAS SUR LE DÉPART (corrigé le 22/10 après-midi, revue de l'avenant) :
+     « +15 s » tôt dans le repos range un départ équivalent dans le futur (`addRT`) — la 1ʳᵉ version refusait tout départ à
+     plus de 5 s dans le futur, et EFFAÇAIT donc ce repos si l'app se fermait dans les secondes suivantes (C-REP-D1b). Ce que
+     l'app ne produit jamais, c'est un RESTANT supérieur à la durée ou au plafond de « +15 s » (`REST_PLUS_MAX`) : au-delà
+     (+5 s de tolérance), la valeur ne vient pas d'elle — horloge reculée ou donnée abîmée — et on ne devine pas (R29). */
   const lisible=typeof debut==='number'&&isFinite(debut)&&typeof total==='number'&&isFinite(total)
-    &&total>0&&total<=3600&&debut<=Date.now()+5000;
+    &&total>0&&total<=3600&&debut+total*1000<=Date.now()+(Math.max(total,REST_PLUS_MAX)+5)*1000;
   if(!lisible||!_wktEnCours()){ stopRest(); return false; }     // efface aussi une valeur douteuse ou orpheline
   restTot=total; restStartTs=debut;
   if(_restLeft()<=-REST_DEPASSEMENT_MAX){ stopRest(); return false; }   // abandonné : 15 min après la fin théorique
@@ -6055,7 +6063,9 @@ function setRestPreset(sec){
 function addRT(s){
   if(!restStartTs)return;
   // Recalcule restStartTs pour que _restLeft() reflète la nouvelle durée
-  const newLeft=Math.max(5,Math.min(_restLeft()+s,600));
+  // ⚠️ Allongé TÔT dans le repos, le restant dépasse la durée : le départ équivalent est alors DANS LE FUTUR (c'est voulu,
+  //    la barre garde sa durée). `_reposReprendre` doit l'accepter — voir sa garde.
+  const newLeft=Math.max(5,Math.min(_restLeft()+s,REST_PLUS_MAX));
   restStartTs=Date.now()-(restTot-newLeft)*1000;
   _reposMemoriser();             // SEANCE-REPOS-01 : −15 s / +15 s survivent à une fermeture
   updRest();
