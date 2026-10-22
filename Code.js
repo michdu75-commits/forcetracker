@@ -1360,6 +1360,13 @@ function doPost(e) {
     if (!body.authCode && e.parameter.authCode) body.authCode = e.parameter.authCode;
   }
 
+  /* 📊 NUT-INVENTAIRE — LECTURE SEULE DE BOUT EN BOUT (correction du 22/10/2026, demandée par Michel).
+     Ces deux routes sont servies ICI, AVANT `ensurePremiumEmails_()` : ce garde-fou peut écrire
+     PREMIUM_EMAILS (et journaliser la liste des adresses premium). Servies plus bas, elles auraient
+     pu provoquer une écriture INDIRECTE. Avant elles, seule la lecture de la requête s'exécute. */
+  if (body.action === 'nutInventory')   return handleNutInventory_(body);
+  if (body.action === 'nutBackupAudit') return handleNutBackupAudit_(body);
+
   ensurePremiumEmails_();
 
   // ── GARDE-FOU COÛT IA ─────────────────────────────────────────────
@@ -1453,8 +1460,6 @@ function doPost(e) {
   if (body.action === 'revokeToken')       return handleRevokeToken_(body);
   if (body.action === 'authIdentity')      return handleAuthIdentity_(body);
   if (body.action === 'migStats')          return handleMigStats_(body);
-  if (body.action === 'nutInventory')      return handleNutInventory_(body);
-  if (body.action === 'nutBackupAudit')    return handleNutBackupAudit_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'logSearchMiss')     return handleLogSearchMiss_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
@@ -2040,41 +2045,50 @@ function handleMigStats_(body) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════
-   📊 NUT-INVENTAIRE — COMPTAGE EN LECTURE SEULE DES JOURNAUX NUTRITION (préparé 22/10/2026)
+   📊 NUT-INVENTAIRE — COMPTAGE EN LECTURE SEULE DES JOURNAUX NUTRITION (22/10/2026, corrigé le même jour)
    Branche isolée claude/nut-inventaire-lecture-seule. ⛔ NE PAS DÉPLOYER sans l'accord de Michel.
-   Route ADMIN authentifiée (même jeton IDEES_TOKEN2 que storeHealth / migStats).
-   ⛔⛔ LECTURE SEULE, et c'est l'invariant central : ces deux fonctions n'appellent QUE des
-      lectures (getKeys, getProperty, DriveApp getFolderById / getFiles / getBlob). Aucune écriture :
-      ni setProperty, ni deleteProperty, ni createFile, ni setContent, ni setTrashed. Un témoin
-      le prouve (prend un instantané des propriétés avant/après et exige l'égalité).
-   ⛔⛔ AUCUNE DONNÉE PERSONNELLE EN SORTIE NI DANS LES LOGS : jamais d'e-mail, de nom d'aliment,
-      de contenu de repas, de macro individuelle, de date de naissance. RIEN que des nombres
-      agrégés. L'identité d'un compte n'apparaît nulle part (R36 : ce qui décrit la personne
-      reste chez elle ; on ne récolte ici que des COMPTES).
-   ⚠️ Échelle : parcourt tous les comptes en une exécution. Volume actuel faible (ok). Si le
-      nombre de comptes explosait un jour, pagigner (ce n'est pas le cas aujourd'hui). */
+   Routes ADMIN (jeton IDEES_TOKEN2), servies EN TÊTE de doPost, avant ensurePremiumEmails_ (qui
+   peut écrire) : la lecture seule vaut depuis l'entrée HTTP, pas seulement dans le handler.
+   ⛔⛔ LECTURE SEULE : uniquement getKeys / getProperty / DriveApp getFolderById, getFoldersByName,
+      getFiles, getBlob. Aucun setProperty, deleteProperty, createFile, setContent, setTrashed,
+      aucun envoi de courriel, aucune écriture de classeur, aucun appel réseau, aucun Logger.
+   ⛔⛔ AUCUNE DONNÉE PERSONNELLE EN SORTIE : jamais d'e-mail, de nom d'aliment, de contenu de repas.
+      Les e-mails servent de clé EN MÉMOIRE pour comparer les sources, ils ne sortent jamais. En cas
+      d'erreur, un CODE fixe, jamais le message (un message d'erreur peut citer la donnée lue).
+   ⚠️ Échelle : parcourt tous les comptes en une exécution (volume actuel faible). */
+function _nutPourChaqueCompte_(sp, fn) {
+  var keys = sp.getKeys();
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (k.indexOf('u_') !== 0) continue;             // uniquement les comptes utilisateurs
+    var data = null;
+    try { data = JSON.parse(_unpackUser_(sp.getProperty(k))); } catch (e) { data = null; }
+    if (!data || typeof data !== 'object') { fn(k.slice(2), null, null); continue; }
+    var prof = data.profile || {};
+    fn(k.slice(2), Array.isArray(prof.foodLog) ? prof.foodLog : [], Array.isArray(prof.savedFoods) ? prof.savedFoods : []);
+  }
+}
+/* Clé de comparaison d'une ligne : son id s'il est valide, sinon une empreinte (date|nom|repas|kcal).
+   ⛔ Reste EN MÉMOIRE : jamais rendue ni journalisée. */
+function _nutCleLigne_(e) {
+  if (e && typeof e.id === 'string' && e.id.length >= 8) return 'i:' + e.id;
+  return 'f:' + [e && e.date, e && e.name, e && e.meal, e && e.kcal].join('|');
+}
+
 function handleNutInventory_(body) {
   if (!_checkIdeesTok_(body && body.token)) return json_({status:'error', error:'token'});
   try {
     var sp = PropertiesService.getScriptProperties();
-    var keys = sp.getKeys();
     var comptes = 0, avecFoodLog = 0, avecSavedFoods = 0, entreesTotal = 0, entreesValides = 0;
-    var sansDate = 0, sansId = 0, auPlafond = 0, datesAberrantes = 0, jsonIllisible = 0, videMaisSaved = 0;
+    var sansDate = 0, sansId = 0, auPlafond = 0, datesAberrantes = 0, jsonIllisible = 0, videMaisSaved = 0, idsEnDouble = 0;
     var jours = Object.create(null), annee = Object.create(null);
     var minD = null, maxD = null;
     var buckets = {'0':0, '1-10':0, '11-50':0, '51-200':0, '201-1000':0, '1001-7999':0, '8000+':0};
     var RE = /^\d{4}-\d{2}-\d{2}$/;
     var auj = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Paris', 'yyyy-MM-dd');
-    for (var i = 0; i < keys.length; i++) {
-      var k = keys[i];
-      if (k.indexOf('u_') !== 0) continue;           // uniquement les comptes utilisateurs
+    _nutPourChaqueCompte_(sp, function(email, fl, sf) {
       comptes++;
-      var data;
-      try { data = JSON.parse(_unpackUser_(sp.getProperty(k))); }
-      catch (e) { jsonIllisible++; continue; }
-      var prof = (data && data.profile) || {};
-      var fl = Array.isArray(prof.foodLog) ? prof.foodLog : [];
-      var sf = Array.isArray(prof.savedFoods) ? prof.savedFoods : [];
+      if (fl === null) { jsonIllisible++; return; }
       if (sf.length > 0) avecSavedFoods++;
       var n = fl.length;
       if (n === 0) buckets['0']++;
@@ -2084,9 +2098,10 @@ function handleNutInventory_(body) {
       else if (n <= 1000) buckets['201-1000']++;
       else if (n < 8000) buckets['1001-7999']++;
       else buckets['8000+']++;
-      if (n === 0) { if (sf.length > 0) videMaisSaved++; continue; }
+      if (n === 0) { if (sf.length > 0) videMaisSaved++; return; }
       avecFoodLog++;
       if (n >= 8000) auPlafond++;                    // peut avoir été tronqué à l'envoi (cap client 8000)
+      var vus = Object.create(null);
       for (var j = 0; j < n; j++) {
         var en = fl[j] || {}; entreesTotal++;
         var d = String(en.date || '');
@@ -2095,30 +2110,34 @@ function handleNutInventory_(body) {
         else if (d < '2026-06-01' || d > auj) { datesAberrantes++; }  // avant la naissance du produit, ou futur
         else { jours[d] = 1; if (!minD || d < minD) minD = d; if (!maxD || d > maxD) maxD = d;
                var an = d.slice(0,4); annee[an] = (annee[an] || 0) + 1; }
-        if (!(typeof en.id === 'string' && en.id.length >= 8)) sansId++;
+        if (typeof en.id === 'string' && en.id.length >= 8) { if (vus[en.id]) idsEnDouble++; vus[en.id] = 1; }
+        else sansId++;
         var aMacro = (en.kcal > 0) || (en.prot > 0) || (en.carbs > 0) || (en.fat > 0);
         if (okDate && aMacro) entreesValides++;      // "récupérable utilement" = date lisible + au moins une valeur
       }
-    }
+    });
     return json_({status:'ok', genere:new Date().toISOString(),
       comptes:comptes, avecFoodLog:avecFoodLog, avecSavedFoods:avecSavedFoods,
       entreesTotal:entreesTotal, entreesValides:entreesValides,
       joursCouverts:Object.keys(jours).length, borneMin:minD, borneMax:maxD,
       entreesParAnnee:annee, histogrammeTailles:buckets,
-      anomalies:{ sansDate:sansDate, sansId:sansId, foodLogVideAvecSavedFoods:videMaisSaved,
+      anomalies:{ sansDate:sansDate, sansId:sansId, idsEnDouble:idsEnDouble, foodLogVideAvecSavedFoods:videMaisSaved,
                   auPlafond8000:auPlafond, datesAberrantes:datesAberrantes, comptesJsonIllisible:jsonIllisible },
-      note:'lecture seule - aucune donnee personnelle - cap envoi client 8000/compte (cf auPlafond8000 et risque _pa_)'});
-  } catch (err) { return json_({status:'error', error:'nut_inventory', detail:String(err && err.message)}); }
+      note:'lecture seule - aucune donnee personnelle - cap envoi client 8000/compte (cf auPlafond8000)'});
+  } catch (err) { return json_({status:'error', error:'nut_inventory'}); }
 }
 
-/* Fraîcheur / intégrité / disponibilité des sauvegardes Drive — LECTURE SEULE. Ne crée, ne
-   modifie, ne met à la corbeille AUCUN fichier (règle d'or #18). Ne sort que des nombres. */
+/* TOUTES les sauvegardes Drive (pas seulement la dernière) + comparaison ANONYME avec le serveur.
+   LECTURE SEULE (règle d'or #18) : ne crée, ne modifie, ne met à la corbeille aucun fichier.
+   ⛔ Une ligne présente dans une sauvegarde et absente du serveur est AMBIGUË : l'app ne garde
+   aucune trace de suppression (removeFoodEntry = splice), donc on ne sait pas si la personne l'a
+   supprimée ou si elle a été perdue (_pa_ remplace). Elle est COMPTÉE, jamais restaurée d'office. */
 function handleNutBackupAudit_(body) {
   if (!_checkIdeesTok_(body && body.token)) return json_({status:'error', error:'token'});
   try {
     var sp = PropertiesService.getScriptProperties();
-    var id = sp.getProperty('ft_backup_drive_folder_id');
-    var folder = null;
+    var max = Math.max(1, Math.min(parseInt(body && body.max, 10) || 400, 2000));
+    var folder = null, id = sp.getProperty('ft_backup_drive_folder_id');
     if (id) { try { folder = DriveApp.getFolderById(id); } catch (e) {} }
     if (!folder) {                                   // LECTURE : on cherche, on ne crée PAS (≠ _getDriveBackupFolder_)
       var it0 = DriveApp.getFoldersByName('ForceTracker-Backups');
@@ -2126,37 +2145,64 @@ function handleNutBackupAudit_(body) {
     }
     if (!folder) return json_({status:'ok', dossierTrouve:false,
       note:'dossier ForceTracker-Backups introuvable - la sauvegarde nocturne n a peut-etre jamais tourne'});
-    var it = folder.getFiles(), nb = 0, dernier = null, dernierT = 0;
+    var liste = [], it = folder.getFiles();
     while (it.hasNext()) {
-      var f = it.next();
-      if (f.getName().indexOf('backup-') !== 0) continue;
-      nb++;
-      var t = f.getLastUpdated().getTime();
-      if (t > dernierT) { dernierT = t; dernier = f; }
+      var f = it.next(), nm = f.getName();
+      if (nm.indexOf('backup-') !== 0) continue;
+      liste.push({ f: f, nom: nm, t: f.getLastUpdated().getTime() });
     }
-    if (!dernier) return json_({status:'ok', dossierTrouve:true, nbFichiers:0,
-      note:'dossier present mais aucun fichier backup-*'});
-    var dd = dernier.getLastUpdated();
-    var ageJours = Math.floor((Date.now() - dd.getTime()) / 86400000);
-    var lisible = false, comptesBk = 0, avecFlBk = 0, entreesBk = 0, userCountDeclare = null;
-    try {
-      var obj = JSON.parse(dernier.getBlob().getDataAsString());
-      lisible = true;
-      userCountDeclare = (obj && typeof obj.user_count === 'number') ? obj.user_count : null;
-      var arr = (obj && Array.isArray(obj.users)) ? obj.users : [];
-      comptesBk = arr.length;
-      for (var a = 0; a < arr.length; a++) {
-        var pr = (arr[a] && arr[a].data && arr[a].data.profile) || {};
-        var fl = Array.isArray(pr.foodLog) ? pr.foodLog : [];
-        if (fl.length) { avecFlBk++; entreesBk += fl.length; }
-      }
-    } catch (e) { lisible = false; }
-    return json_({status:'ok', dossierTrouve:true, nbFichiers:nb,
-      dernierNom:dernier.getName(), dernierDateISO:dd.toISOString(), dernierOctets:dernier.getSize(),
-      ageJours:ageJours, dernierLisible:lisible, userCountDeclare:userCountDeclare,
-      comptesDansDernier:comptesBk, avecFoodLogDansDernier:avecFlBk, entreesFoodLogDansDernier:entreesBk,
-      note:'lecture seule - aucun fichier cree/modifie/supprime - aucune donnee personnelle en sortie'});
-  } catch (err) { return json_({status:'error', error:'nut_backup_audit', detail:String(err && err.message)}); }
+    liste.sort(function(a, b) { return b.t - a.t; });            // du plus récent au plus ancien
+    var lus = liste.slice(0, max);
+    // État serveur actuel : clés des lignes par compte (EN MÉMOIRE seulement).
+    var serveur = Object.create(null);
+    _nutPourChaqueCompte_(sp, function(email, fl) {
+      if (fl === null) return;
+      var s = Object.create(null); fl.forEach(function(e) { s[_nutCleLigne_(e)] = 1; });
+      serveur[String(email).toLowerCase().trim()] = s;
+    });
+    // Chaque sauvegarde : agrégats par fichier + union des clés par compte (EN MÉMOIRE).
+    var fichiers = [], union = Object.create(null);
+    lus.forEach(function(x) {
+      var r = { nom: x.nom, dateISO: new Date(x.t).toISOString(), octets: x.f.getSize(),
+                lisible: false, comptes: 0, avecFoodLog: 0, entrees: 0 };
+      try {
+        var obj = JSON.parse(x.f.getBlob().getDataAsString());
+        var users = (obj && Array.isArray(obj.users)) ? obj.users : [];
+        r.lisible = true; r.comptes = users.length;
+        users.forEach(function(u) {
+          var em = String((u && u.email) || '').toLowerCase().trim();
+          var fl = (u && u.data && u.data.profile && Array.isArray(u.data.profile.foodLog)) ? u.data.profile.foodLog : [];
+          if (fl.length) { r.avecFoodLog++; r.entrees += fl.length; }
+          if (!em) return;
+          var s = union[em] || (union[em] = Object.create(null));
+          fl.forEach(function(e) { s[_nutCleLigne_(e)] = 1; });
+        });
+      } catch (e) { r.lisible = false; }
+      fichiers.push(r);
+    });
+    var cmp = { comptesServeur: Object.keys(serveur).length, comptesDansSauvegardes: Object.keys(union).length,
+                comptesSeulementDansSauvegardes: 0, comptesAvecLignesAbsentesDuServeur: 0,
+                lignesDansSauvegardesAbsentesDuServeur: 0, lignesServeurAbsentesDesSauvegardes: 0 };
+    Object.keys(union).forEach(function(em) {
+      var sv = serveur[em];
+      if (!sv) { cmp.comptesSeulementDansSauvegardes++; sv = Object.create(null); }
+      var n = 0; Object.keys(union[em]).forEach(function(c) { if (!sv[c]) n++; });
+      if (n) { cmp.comptesAvecLignesAbsentesDuServeur++; cmp.lignesDansSauvegardesAbsentesDuServeur += n; }
+    });
+    Object.keys(serveur).forEach(function(em) {
+      var u = union[em] || Object.create(null);
+      Object.keys(serveur[em]).forEach(function(c) { if (!u[c]) cmp.lignesServeurAbsentesDesSauvegardes++; });
+    });
+    var d0 = liste.length ? new Date(liste[0].t) : null;
+    return json_({status:'ok', dossierTrouve:true, nbFichiers:liste.length, fichiersLus:lus.length,
+      fichiersNonLus:liste.length - lus.length,
+      dernierDateISO: d0 ? d0.toISOString() : null,
+      ageJours: d0 ? Math.floor((Date.now() - d0.getTime()) / 86400000) : null,
+      fichiersIllisibles: fichiers.filter(function(r) { return !r.lisible; }).length,
+      fichiers:fichiers, comparaison:cmp,
+      note:'lecture seule - aucune donnee personnelle - lignesDansSauvegardesAbsentesDuServeur = AMBIGUES '
+         + '(supprimees par la personne OU perdues : aucune trace de suppression) - a revoir, jamais restaurees d office'});
+  } catch (err) { return json_({status:'error', error:'nut_backup_audit'}); }
 }
 
 function handleSendConfirmCode_(body) {

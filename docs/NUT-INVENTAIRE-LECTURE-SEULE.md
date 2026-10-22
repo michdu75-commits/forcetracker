@@ -1,54 +1,70 @@
 # NUT-INVENTAIRE — comptage des journaux Nutrition en LECTURE SEULE
 
-> Préparé le 22/10/2026 sur la branche isolée `claude/nut-inventaire-lecture-seule`.
-> ⛔ **NON DÉPLOYÉ.** Le workflow Apps Script ne se déclenche que sur `master` : tant que ce
-> code reste sur cette branche, il n'est pas en ligne. Le déploiement attend l'accord de Michel.
+> Préparé le 22/10/2026 sur la branche isolée `claude/nut-inventaire-lecture-seule`, **corrigé le même
+> jour** après la contre-analyse demandée par Michel.
+> ⛔ **NON DÉPLOYÉ.** Le workflow Apps Script ne se déclenche que sur `master`. Le déploiement attend
+> l'accord explicite de Michel.
 
-## À quoi ça sert
+## ⛔ Correction : `storeHealth` n'est PAS une voie « zéro risque »
 
-Produire, **avant la migration Nutrition V2**, un inventaire chiffré des journaux alimentaires,
-**sans extraire aucun contenu** et **sans toucher aucun compte**. Deux routes serveur ajoutées à
-`Code.js`, réservées à un administrateur authentifié (même jeton `IDEES_TOKEN2` que `storeHealth`).
+La première version de ce document recommandait la carte Admin « Santé du système » (`storeHealth`)
+comme premier chiffre « sans risque ». **C'était faux** : cette route écrit `PING_DIAG` (un test
+d'écriture). Elle n'est donc pas en lecture seule et **n'est plus recommandée** ici. Aujourd'hui,
+**aucune route déjà en production** ne donne le nombre de comptes sans écrire : l'inventaire réel
+passe par le déploiement autorisé de `nutInventory`.
 
-## Les deux routes (POST, action)
+## Les deux routes (POST, action) — lecture seule depuis l'entrée HTTP
 
-### `nutInventory`
-Parcourt les comptes (`u_*`) en lecture seule et rend **uniquement des nombres** :
-- `comptes` · `avecFoodLog` · `avecSavedFoods`
-- `entreesTotal` · `entreesValides` (date lisible + au moins une valeur de macro)
-- `joursCouverts` · `borneMin` · `borneMax` · `entreesParAnnee`
-- `histogrammeTailles` (répartition anonyme des tailles de journal)
-- `anomalies` : `sansDate`, `sansId`, `foodLogVideAvecSavedFoods`, `auPlafond8000`,
-  `datesAberrantes`, `comptesJsonIllisible`
+Elles sont servies **en tête de `doPost`**, juste après la lecture de la requête et **avant
+`ensurePremiumEmails_()`** : ce garde-fou peut écrire `PREMIUM_EMAILS` (et journaliser la liste des
+adresses premium). Dans la version précédente (commit `26c67499`), les routes passaient après lui et
+pouvaient donc provoquer une **écriture indirecte** — défaut prouvé par un contrôle négatif, puis
+fermé. En cas d'erreur, elles renvoient un **code fixe**, jamais le message (un message d'erreur peut
+citer la donnée lue). Aucune ligne de `Logger`.
 
-### `nutBackupAudit`
-Lit le dossier Drive `ForceTracker-Backups` en lecture seule (⛔ ne crée, ne modifie, ne met à la
-corbeille **aucun** fichier) et rend : `dossierTrouve`, `nbFichiers`, `dernierNom`, `dernierDateISO`,
-`dernierOctets`, `ageJours` (fraîcheur), `dernierLisible` (intégrité JSON), `userCountDeclare`,
-`comptesDansDernier`, `avecFoodLogDansDernier`, `entreesFoodLogDansDernier`.
+- `nutInventory` — nombres seulement : comptes, comptes avec `foodLog` non vide, entrées totales et
+  valides, jours couverts, bornes, histogramme anonyme des tailles, anomalies (`sansDate`, `sansId`,
+  `idsEnDouble`, `auPlafond8000`, `datesAberrantes`, `comptesJsonIllisible`,
+  `foodLogVideAvecSavedFoods`).
+- `nutBackupAudit` — **toutes** les sauvegardes `backup-*` du dossier `ForceTracker-Backups` (pas
+  seulement la dernière ; plafond `max` déclaré, jamais silencieux) : par fichier, date, taille,
+  lisibilité, comptes, entrées ; puis une **comparaison anonyme avec le serveur** :
+  `lignesDansSauvegardesAbsentesDuServeur`, `lignesServeurAbsentesDesSauvegardes`,
+  `comptesSeulementDansSauvegardes`. Ne crée jamais le dossier s'il manque.
 
-## Garanties (prouvées par les tests, hors dépôt)
+## ⚠️ Ce que la fusion existante NE garantit PAS (mesuré sur la vraie fonction de production)
 
-- **Lecture seule** : les handlers n'appellent que des lectures. Un test prend un instantané des
-  Script Properties avant/après un appel **direct** du handler et exige l'égalité ; un autre vérifie
-  qu'aucune méthode d'écriture Drive n'est appelée. 25 témoins verts / 0 rouge.
-  *(Note : `doPost` lance par ailleurs `ensurePremiumEmails_`, un garde-fou pré-existant qui peut
-  écrire `PREMIUM_EMAILS` — ce n'est pas ces fonctions.)*
-- **Aucune donnée personnelle en sortie ni dans les logs** : jamais d'e-mail, de nom d'aliment, de
-  contenu de repas, de macro individuelle (R36).
+La restauration (`_fusionnerFoodLogRestauration` puis `_foodLogIdentifier`) est sûre pour : les
+doublons d'une même lignée, les repas identiques à ids distincts, les collisions d'id **à l'intérieur
+d'une même source**, et elle est idempotente. Elle a cinq **limites** mesurées :
 
-## Comment l'exécuter (quand Michel l'autorise)
+1. **Collision d'id entre deux sources** (un exemplaire de chaque côté, contenus différents) : traitée
+   comme une édition, le repas de l'autre source est **perdu**.
+2. **Deux vrais repas identiques sans id**, un par source : un seul est conservé.
+3. **Éditions divergentes** du même repas : l'appareil gagne, l'autre édition est écartée **sans signal**.
+4. **Suppressions** : `removeFoodEntry` ne garde aucune trace ; une fusion avec une sauvegarde plus
+   ancienne **ressuscite** le repas supprimé.
+5. **L'ordre des sources** change le résultat.
 
-1. Vérifier que `IDEES_TOKEN2` est bien posé dans les Script Properties.
-2. Déployer la branche (ou copier les deux fonctions + leurs routes dans le projet Apps Script).
-3. Appeler la web app en POST : `{"action":"nutInventory","token":"<IDEES_TOKEN2>"}` puis
-   `{"action":"nutBackupAudit","token":"<IDEES_TOKEN2>"}`.
-4. Sans déployer : la carte **Profil → Admin → Santé du système** (`storeHealth`, déjà en prod)
-   donne déjà le nombre de clés `u_` et les 15 plus grosses — un premier chiffre sans aucun code.
+👉 Conséquence pour le protocole : une ligne présente dans une sauvegarde et absente du serveur est
+**ambiguë** (supprimée par la personne, ou perdue par `_pa_`). Elle est **comptée et présentée**, jamais
+restaurée d'office (R29 : une erreur qui touche la personne → elle tranche).
 
-## Autorisations nécessaires
+## Sources à comparer (toutes celles qui sont accessibles et autorisées)
 
-- `IDEES_TOKEN2` présent (déjà le cas en prod pour les autres cartes Admin).
-- Pour `nutBackupAudit` : l'exécution Apps Script tourne sous `forcetracker.app@gmail.com`, qui
-  possède `ForceTracker-Backups` — l'accès Drive est donc déjà là, en lecture.
-- Aucune permission nouvelle, aucun scope OAuth ajouté.
+Appareil (export JSON complet, par la personne) · serveur (`u_`) · **chaque** sauvegarde Drive datée ·
+miroir Supabase (`ft_comptes` : **une seule** photo par compte, la dernière ; lecture par la console,
+requête SELECT d'agrégats uniquement, sur autorisation).
+
+## Retour arrière après migration — règle
+
+Le retour arrière **rend tout ce que V2 contient au moment du retour** (repas saisis après la bascule
+et éditions comprises) **plus** les lignes legacy qui n'avaient pas été migrées. Une ligne migrée puis
+supprimée après la bascule reste supprimée (grâce au **manifeste de migration**). ⛔ Jamais « recharger
+l'original » : cette règle naïve efface les repas saisis depuis la bascule (prouvé par contrôle négatif).
+
+## Autorisations nécessaires (aucune n'est accordée par ce document)
+
+- Déployer `nutInventory` / `nutBackupAudit` (aucun scope OAuth nouveau ; jeton `IDEES_TOKEN2` existant).
+- Lecture de la console Supabase (agrégats seulement) si le miroir doit entrer dans la comparaison.
+- Décision produit : traces de suppression et manifeste de migration côté V2 (périmètre Claude Nutrition).
