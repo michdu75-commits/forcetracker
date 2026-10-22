@@ -1564,7 +1564,7 @@ diapo du Guide, point rouge d'origine corrigés (15 → 5 min) + point rouge `re
 **31 / 31** (arbre sain 0 rouge au début et à la fin, 37 min) · 12 bancs voisins **755 / 0** · annexe **14 PASS + 1 défaut connu**
 (`discussions`, valeurs identiques à master le même jour) · prompt de Milo **identique à l'octet** à master (77 697 caractères, avec
 ou sans repos) · retour arrière **à blanc** (ancien code + `ft4_wkt` avec `repos` : sans erreur, sans chrono, séance intacte) ·
-passe complète D-031 : voir ci-dessous.
+passe complète D-031 **n°1 : 7 865 ✅ / 1 ❌, non valide** — `B-NP01-A` (rechargement en pleine séance) comparait tout `S.wkt` à l'octet ; seul écart mesuré : `repos`, un repos expiré effacé au rechargement comme décidé, que l'instantané portait encore parce qu'il devançait le tick. Témoin réécrit sur sa garantie (la séance sans `repos`) : 36 / 0 sur la branche et sur master, mutation MA20 toujours gardée (`BUGS.md` §92). Passe complète **n°2** : voir ci-dessous.
 
 **Limites (écrites, hors périmètre).** Ce qui ne revient pas après un rechargement : la question du RIR, l'étiquette du dock,
 l'avance automatique (superset, exercice suivant), le pas de 5 s des abdos, la mémoire de durée par exercice ; aucune alerte app

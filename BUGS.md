@@ -4941,3 +4941,23 @@ son histoire est écrite à sa place (R30).
 **À quoi on le reconnaît.** Deux règles pour la même chose, posées à des mois d'écart, et la plus ancienne gagne sur un chemin
 que personne ne teste — la famille « le correctif posé d'un seul côté » (ft-v851 → ft-v1030), vue cette fois depuis l'autre bout :
 *avant d'écrire une règle nouvelle, chercher les anciennes qui décident de la même chose — et lire la date et la raison de chacune.*
+
+## §92 — ⛔ UNE ÉGALITÉ À L'OCTET SUR UN OBJET VIVANT : LE TÉMOIN DE RECHARGEMENT A ROUGI SUR LE SEUL ÉTAT ÉPHÉMÈRE, ET SEULEMENT PARCE QU'IL DEVANÇAIT LE TICK *(22/10/2026, 1ʳᵉ passe complète de SEANCE-REPOS-01 — session-C, branche `claude/dreamy-bell-pu88ia`)*
+
+**Le constat.** Passe complète **7 865 ✅ / 1 ❌** : `B-NP01-A ⛔ rechargement en pleine séance : la séance ouverte revient À
+L'IDENTIQUE` (banc `nut_punch01`, contrat Séance → Nutrition) comparait **tout** `S.wkt` à l'octet avant et après un rechargement.
+SEANCE-REPOS-01 y range désormais l'état du chrono de repos (`repos`). Mesuré sur une copie instrumentée : **`repos` était la SEULE
+différence** — un repos parti à 18:30 (2:10), expiré à 18:37:10, présent dans l'instantané pris à 18:40, **effacé au rechargement**
+(décision de Michel : 5 min après la fin théorique, l'état persistant est effacé).
+
+**Pourquoi l'instantané le portait encore.** Le banc saute l'horloge (`setFixedTime`) puis lit `S.wkt` **aussitôt** : le tick qui
+efface en mémoire (toutes les 250 ms) n'était pas encore passé. *Le témoin dépendait d'une course* — vert si le tick gagne, rouge
+sinon — sans rien dire de la séance elle-même (séries, codes, cardio, chrono identiques à l'octet).
+
+**Ce qui a été fait (R30, règle #17).** Le témoin compare désormais la **séance** sans `repos` (tout le reste à l'octet, comme avant),
+avec sa raison écrite ; vert sur la branche (36 / 0) **et** sur le code exact de master (36 / 0) ; sa mutation dédiée `MA20` (le
+rechargement perd le chrono de la séance) le fait toujours rougir (2 / 2 conformes avec MA21). `banc:nut_punch01` rejoint les tests
+associés de SEANCE-REPOS-01 : le sélecteur ne l'avait pas proposé pour ce diff — **c'est la passe ENTIÈRE qui l'a vu**.
+
+**À quoi on le reconnaît.** Une égalité à l'octet sur un objet que d'autres lots enrichissent : elle protège tout, donc aussi ce qui
+doit légitimement changer. *Comparer ce qu'on garantit (la séance), pas l'objet qui le transporte.*

@@ -69,7 +69,8 @@ constante, mais ferait deux règles.
 | **Prompt de Milo** (contexte construit, jamais envoyé) | **identique à l'octet** entre master `f82a7c07` et la branche (77 697 caractères), avec ou sans repos rangé |
 | **Retour arrière à blanc** (ancien code, `ft4_wkt` écrit par le nouveau) | aucune erreur, aucun chrono, séance intacte ; « Terminer » enregistre une séance sans `repos` |
 | `check_regles`, `git diff --check`, auto-test du sélecteur | verts (alerte connue sans lien : `PROMPT-MILO-REEL.txt` signalé périmé — le prompt réel, lui, est identique) |
-| **Passe complète D-031** (4 conditions) | ⏳ en cours |
+| **Passe complète D-031 n°1** (4 conditions, réseau isolé, sur `ff718da6`, 11:01 → 12:33 UTC, 92 min) | **7 865 ✅ / 1 ❌ — NON VALIDE** : `B-NP01-A` (rechargement en pleine séance, banc `nut_punch01`) comparait **tout** `S.wkt` à l'octet ; le seul écart mesuré était `repos` — un repos expiré, effacé au rechargement comme décidé, et présent dans l'instantané parce que celui-ci devançait le tick. **Témoin périmé** réécrit sur sa garantie (la séance sans `repos`, tout le reste à l'octet) : 36 / 0 sur la branche **et** sur master, mutation MA20 toujours gardée (`BUGS.md` §92) ; `banc:nut_punch01` ajouté aux tests associés |
+| **Passe complète D-031 n°2** (4 conditions, réseau isolé) | ⏳ en cours |
 
 ⚠️ **Ce que les témoins ne couvrent pas** : Safari / l'iPhone réel (une PWA tuée par iOS est simulée par un rechargement ; un
 retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibilité ressentie, les limites du §6.

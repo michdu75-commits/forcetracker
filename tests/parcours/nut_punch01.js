@@ -210,8 +210,15 @@ module.exports.contrat = async function (t, b, PORT) {
   const avantRech = await X.pg.evaluate(() => JSON.stringify(S.wkt));
   await X.recharger();
   const R1 = await X.pg.evaluate(() => ({ wkt: JSON.stringify(S.wkt), n: __np.nutri() }));
+  /* ⏱️ SEANCE-REPOS-01 (22/10/2026, Claude Séance — docs/SEANCE-REPOS-01.md) : « à l'identique » porte sur la SÉANCE (séries,
+     codes, cardio, chrono), pas sur l'état du chrono de repos rangé avec elle (`S.wkt.repos`) — un repos encore en cours revient,
+     un repos expiré est effacé au rechargement (décision de Michel). Ici, le dernier repos (18:30, 2:10) a expiré à 18:37:10 :
+     effacé au rechargement de 18:40, à juste titre. Le comparer faisait aussi dépendre ce témoin d'une COURSE — l'instantané est
+     pris juste après le saut d'horloge, avant le tick qui l'efface en mémoire (mesuré : `repos` était la SEULE différence).
+     ⛔ Tout le reste de la séance est comparé à l'octet, comme avant (contrôle négatif : `tools/mut_nut_punch01.py` MA20). */
+  const _seance = w => { const o = JSON.parse(w); if (o && typeof o === 'object') delete o.repos; return JSON.stringify(o); };
   t('B-NP01-A ⛔ rechargement en pleine séance : la séance ouverte revient À L\'IDENTIQUE (séries, codes, cardio, chrono)',
-    R1.wkt === avantRech && R1.n.js === 'encours', R1.wkt.slice(0, 160));
+    _seance(R1.wkt) === _seance(avantRech) && R1.n.js === 'encours', R1.wkt.slice(0, 160));
 
   /* Fin de séance par le VRAI `finishWorkout`, à 19 h 05. */
   await X.heure('2026-10-03T19:05:00+02:00');
