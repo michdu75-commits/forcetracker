@@ -226,7 +226,7 @@ registre a un identifiant propre (`SEANCE-REPOS-PERSIST-01`, l'ancien doublonnai
 | Contrôle | Résultat |
 |---|---|
 | **Banc** `tools/banc_seance_repos.js` (61 témoins) | **61 OK / 0** sur l'arbre final · **46 / 15 rouges** sur le code du matin (`e4afb36b` : 900 s, aides, « +15 s », deux onglets — et I1, dont deux variantes ne peuvent pas exister à 5 min ; ses calories y étaient déjà identiques) · **25 / 36 rouges** sur master `f82a7c07` (ft-v1258) |
-| **Contrôle négatif** `tools/mut_seance_repos.py` (52 mutations sur des copies de l'arbre : 49 doivent rougir et exigent chacune SON témoin, 3 doivent rester vertes — 1 équivalente, 2 neutres) | «MUTATIONS» |
+| **Contrôle négatif** `tools/mut_seance_repos.py` (52 mutations sur des copies de l'arbre : 49 doivent rougir et exigent chacune SON témoin, 3 doivent rester vertes — 1 équivalente, 2 neutres) | **52 / 52 conformes**, en 3 parts parallèles (arbre sain 0 rouge au début et à la fin de chacune) ; dont les calories (MC1 durée dépendant du repos · MC2 temps fermé compté deux fois · MC3 repos compté par le moteur · MC4 séance enregistrée deux fois), les deux onglets (MK1-MK3), « +15 s » (MD1-MD3), les seuils en dur (M30, M30b, M31, M9d), 899 / 901 s. ⚠️ 1ʳᵉ campagne **perdue** : coupée par la limite de 2 h des tâches de fond, l'outil n'imprimait qu'à la fin — il imprime désormais chaque résultat dès qu'il tombe |
 | **Bancs voisins** (sélecteur, T1 + T2) sur l'arbre final (rejoués APRÈS les deux correctifs de la revue) | `aides_audit` 18 · `ux_integration` 69 · `lot3` 87 · `ux_d086` 122 · `rir_superset` 52 · `seance_ux` 69 · `ml_a` 34 · `seance_recette` 93 · `session_integrity` 93 · `nut_punch01` 36 · `cc01_dropset` 31 · `seance_date` 25 · `debrief_demande` 62 — **791 OK / 0 rouge** |
 | **Annexe de recette** (15 suites) | **14 PASS + 1 défaut connu** (`discussions`) — valeurs **identiques à master rejoué à la même minute** (71 725 / 76 644 / 68 781 ; l'écart avec ce matin vient de l'heure, pas du lot) |
 | **Prompt de Milo** | **identique à l'octet** à master (77 697 caractères), avec ou sans repos |
@@ -236,6 +236,11 @@ registre a un identifiant propre (`SEANCE-REPOS-PERSIST-01`, l'ancien doublonnai
 
 ⚠️ **Fusion de master pendant le lot** : master a reçu à 18:22 UTC les routes admin Nutrition de Claude Principal (`Code.js` seul,
 @192, + docs) ; fusionnées dans la branche (conflit de texte du journal de partage, les deux lignes gardées) **avant** la passe.
+⚠️⚠️ **Et depuis la passe, master a publié `ft-v1259`** (22:12 UTC, Claude Principal : carte Admin « Inventaire Nutrition » —
+`app.js` zone Admin, `index.html`, `sw.js`, `runner.js`, registre). **La passe de ce lot est donc PÉRIMÉE pour l'intégration** : avant
+toute fusion sur master, refusionner master (mesuré : un seul conflit, `docs/INVENTAIRE.md`, fichier généré — le régénérer ;
+`app.js`, `runner.js` et le registre fusionnent seuls), puis rejouer le banc, les voisins et la passe complète. La branche n'a pas
+été refusionnée exprès : son sommet reste l'arbre qualifié (`0d0d4269` + documentation).
 
 ### 12.5 Ce que l'avenant ne fait pas
 

@@ -19,7 +19,7 @@
 | Écrans | 7 | 0 |
 | Lignes de menu | 17 | 3 |
 | Fenêtres (modales) | 66 | 15 |
-| Actions du serveur | 51 | 3 |
+| Actions du serveur | 53 | 5 |
 | Fonctions JS | 639 | — |
 | Nouveautés annoncées | 73 | — |
 
@@ -97,6 +97,8 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `migStats` | ❓ |
 | `migrateBackups` | ✅ |
 | `morphoAnalysis` | ✅ |
+| `nutBackupAudit` | ❓ |
+| `nutInventory` | ❓ |
 | `pushHealth` | ✅ |
 | `readBarcode` | ✅ |
 | `revokeToken` | ❓ |
