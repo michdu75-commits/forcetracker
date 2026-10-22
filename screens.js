@@ -3854,6 +3854,9 @@ function renderFoodJournal(){
   }else{
     html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
   }
+  /* 🥗 V2 (jalon 4) : une valeur inconnue n'est pas comptée — et l'écran le DIT (avec ou sans objectif), au lieu de
+     laisser croire à un total complet (« aucune valeur inventée pour compléter un champ manquant », Michel, 22/10). */
+  html+=(typeof _n2TotalPartiel==='function') ? _n2TotalPartiel(tot) : '';
 
   /* 🧠 LA CARTE « CE QUE L'APP A APPRIS DE TON ALIMENTATION » N'EST PLUS ICI (26/08/2026,
      ft-v1025) — elle est passée dans l'onglet MACROS, sur décision de Michel. La raison est
@@ -3996,9 +3999,9 @@ function renderFoodJournal(){
         html+=`<div onclick="openEditFood('${_h}')" style="background:var(--bg3);border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;">`
           +`<div style="flex:1;min-width:0;">`
             +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
-            +`<div style="font-size:11px;color:var(--t3);">P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0} · ✎ modifier</div>`
+            +`<div style="font-size:11px;color:var(--t3);">P ${_n2Val(e.prot)} · G ${_n2Val(e.carbs)} · L ${_n2Val(e.fat)}${_n2Badge(e)} · ✎ modifier</div>`
           +`</div>`
-          +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
+          +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${_n2Val(e.kcal)}</span>`
           +`<button onclick="event.stopPropagation();confirmRemoveFood('${_h}')" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
         +`</div>`;
       });
