@@ -31,6 +31,12 @@ citer la donnée lue). Aucune ligne de `Logger`.
   lisibilité, comptes, entrées ; puis une **comparaison anonyme avec le serveur** :
   `lignesDansSauvegardesAbsentesDuServeur`, `lignesServeurAbsentesDesSauvegardes`,
   `comptesSeulementDansSauvegardes`. Ne crée jamais le dossier s'il manque.
+  ⚠️ Une ligne est reconnue **par son id OU par son contenu** (tous les champs sauf l'id), et une
+  absente n'est comptée **qu'une fois** même si elle revient dans plusieurs sauvegardes : une
+  ancienne ligne reçoit un id **aléatoire à chaque chargement** de l'app tant qu'aucun
+  enregistrement ne l'écrit (mesuré dans Chromium), donc le même repas peut porter un id différent
+  dans chaque sauvegarde. Par l'id seul, il était compté « absent », une fois par sauvegarde
+  (corrigé le 22/10, témoins H17-H19, contrôles négatifs NC7-NC9).
 
 ## ⚠️ Ce que la fusion existante NE garantit PAS (mesuré sur la vraie fonction de production)
 
@@ -45,10 +51,25 @@ d'une même source**, et elle est idempotente. Elle a cinq **limites** mesurées
 4. **Suppressions** : `removeFoodEntry` ne garde aucune trace ; une fusion avec une sauvegarde plus
    ancienne **ressuscite** le repas supprimé.
 5. **L'ordre des sources** change le résultat.
+6. **Une ancienne ligne exportée deux fois** porte deux ids différents (posés au chargement, au
+   hasard) : deux exports du même téléphone fusionnés l'un avec l'autre la **dédoublent**.
 
 👉 Conséquence pour le protocole : une ligne présente dans une sauvegarde et absente du serveur est
 **ambiguë** (supprimée par la personne, ou perdue par `_pa_`). Elle est **comptée et présentée**, jamais
 restaurée d'office (R29 : une erreur qui touche la personne → elle tranche).
+
+## L'export JSON complet du téléphone (vérifié dans Chromium le 22/10, données fictives)
+
+Chemin réel Menu ☰ → « Exporter mes données » → « Exporter tout ». Sur 8 605 lignes et 260 favoris :
+le fichier contient **toutes** les lignes (pas de plafond à 8 000, contrairement à l'envoi au
+serveur), chacune **identique champ par champ** à ce que l'app a en mémoire, ids et références
+compris (`sourceId`, `per100`, portion, doute, kcal dérivée, code douteux), **tous** les favoris
+(pas de plafond à 200), et **pas** l'adresse e-mail. 17 témoins verts ; 5 mutations (troncature à
+8 000, ids retirés, références retirées, favoris à 200, journal exclu) font chacune rougir au moins
+un témoin. Limites : l'export « séances seulement » ne contient **pas** la nutrition ; l'app n'a
+**aucune** fonction pour relire ce fichier ; une ancienne ligne sans id y porte l'id posé au
+chargement (voir limite 6) — **on compare un export au serveur par le contenu**, jamais par l'id
+seul, et on ne fusionne jamais deux exports du même téléphone.
 
 ## Sources à comparer (toutes celles qui sont accessibles et autorisées)
 

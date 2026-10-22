@@ -2068,11 +2068,35 @@ function _nutPourChaqueCompte_(sp, fn) {
     fn(k.slice(2), Array.isArray(prof.foodLog) ? prof.foodLog : [], Array.isArray(prof.savedFoods) ? prof.savedFoods : []);
   }
 }
-/* Clé de comparaison d'une ligne : son id s'il est valide, sinon une empreinte (date|nom|repas|kcal).
-   ⛔ Reste EN MÉMOIRE : jamais rendue ni journalisée. */
-function _nutCleLigne_(e) {
-  if (e && typeof e.id === 'string' && e.id.length >= 8) return 'i:' + e.id;
-  return 'f:' + [e && e.date, e && e.name, e && e.meal, e && e.kcal].join('|');
+/* Les DEUX clés d'une ligne pour comparer les sources : son id (s'il est valide) ET son empreinte
+   (tous les champs sauf l'id, triés : la même forme que _empreinteFood dans state.js).
+   ⚠️ Pourquoi pas l'id seul : une ANCIENNE ligne reçoit un id ALÉATOIRE à chaque chargement de l'app,
+   écrit seulement au premier enregistrement (mesuré dans Chromium le 22/10). Le même repas peut donc
+   porter un id différent dans chaque sauvegarde et au serveur ; par l'id seul, il serait compté absent
+   (et une fois par sauvegarde). Pourquoi pas l'empreinte seule : un repas MODIFIÉ garde son id.
+   ⛔ Restent EN MÉMOIRE : jamais rendues ni journalisées. */
+function _nutIdLigne_(e) {
+  return (e && typeof e.id === 'string' && e.id.length >= 8) ? e.id : null;
+}
+function _nutEmpreinte_(e) {
+  function tri(v) {
+    if (Array.isArray(v)) return v.map(tri);
+    if (v && typeof v === 'object') {
+      var o = {};
+      Object.keys(v).filter(function(k) { return k !== 'id'; }).sort().forEach(function(k) { o[k] = tri(v[k]); });
+      return o;
+    }
+    return v;
+  }
+  try { return JSON.stringify(tri(e)); } catch (x) { return 'illisible:' + Math.random(); }  // jamais égale : comptée, pas cachée
+}
+/* Un ensemble de lignes vu par ses deux clés : `ajoute(e)` l'enregistre, `vu(e)` est vrai si l'id OU l'empreinte y est. */
+function _nutEnsemble_() {
+  var ids = Object.create(null), emps = Object.create(null);
+  return {
+    vu: function(e) { var id = _nutIdLigne_(e); return !!((id && ids[id]) || emps[_nutEmpreinte_(e)]); },
+    ajoute: function(e) { var id = _nutIdLigne_(e); if (id) ids[id] = 1; emps[_nutEmpreinte_(e)] = 1; }
+  };
 }
 
 function handleNutInventory_(body) {
@@ -2153,15 +2177,16 @@ function handleNutBackupAudit_(body) {
     }
     liste.sort(function(a, b) { return b.t - a.t; });            // du plus récent au plus ancien
     var lus = liste.slice(0, max);
-    // État serveur actuel : clés des lignes par compte (EN MÉMOIRE seulement).
+    // État serveur actuel, par compte (EN MÉMOIRE seulement).
     var serveur = Object.create(null);
     _nutPourChaqueCompte_(sp, function(email, fl) {
       if (fl === null) return;
-      var s = Object.create(null); fl.forEach(function(e) { s[_nutCleLigne_(e)] = 1; });
-      serveur[String(email).toLowerCase().trim()] = s;
+      var s = _nutEnsemble_(); fl.forEach(s.ajoute);
+      serveur[String(email).toLowerCase().trim()] = { ens: s, fl: fl };
     });
-    // Chaque sauvegarde : agrégats par fichier + union des clés par compte (EN MÉMOIRE).
-    var fichiers = [], union = Object.create(null);
+    // Chaque sauvegarde : agrégats par fichier, union par compte, et lignes absentes du serveur
+    // comptées UNE fois même si elles reviennent sous un autre id ou dans plusieurs sauvegardes (EN MÉMOIRE).
+    var fichiers = [], union = Object.create(null), absentes = Object.create(null);
     lus.forEach(function(x) {
       var r = { nom: x.nom, dateISO: new Date(x.t).toISOString(), octets: x.f.getSize(),
                 lisible: false, comptes: 0, avecFoodLog: 0, entrees: 0 };
@@ -2174,8 +2199,14 @@ function handleNutBackupAudit_(body) {
           var fl = (u && u.data && u.data.profile && Array.isArray(u.data.profile.foodLog)) ? u.data.profile.foodLog : [];
           if (fl.length) { r.avecFoodLog++; r.entrees += fl.length; }
           if (!em) return;
-          var s = union[em] || (union[em] = Object.create(null));
-          fl.forEach(function(e) { s[_nutCleLigne_(e)] = 1; });
+          var vu = union[em] || (union[em] = _nutEnsemble_()), sv = serveur[em];
+          fl.forEach(function(e) {
+            vu.ajoute(e);
+            if (sv && sv.ens.vu(e)) return;                                   // présente au serveur (par l'id OU le contenu)
+            var a = absentes[em] || (absentes[em] = { ens: _nutEnsemble_(), n: 0 });
+            if (!a.ens.vu(e)) a.n++;                                          // une absente déjà comptée n'est pas recomptée
+            a.ens.ajoute(e);
+          });
         });
       } catch (e) { r.lisible = false; }
       fichiers.push(r);
@@ -2183,15 +2214,13 @@ function handleNutBackupAudit_(body) {
     var cmp = { comptesServeur: Object.keys(serveur).length, comptesDansSauvegardes: Object.keys(union).length,
                 comptesSeulementDansSauvegardes: 0, comptesAvecLignesAbsentesDuServeur: 0,
                 lignesDansSauvegardesAbsentesDuServeur: 0, lignesServeurAbsentesDesSauvegardes: 0 };
-    Object.keys(union).forEach(function(em) {
-      var sv = serveur[em];
-      if (!sv) { cmp.comptesSeulementDansSauvegardes++; sv = Object.create(null); }
-      var n = 0; Object.keys(union[em]).forEach(function(c) { if (!sv[c]) n++; });
-      if (n) { cmp.comptesAvecLignesAbsentesDuServeur++; cmp.lignesDansSauvegardesAbsentesDuServeur += n; }
+    Object.keys(union).forEach(function(em) { if (!serveur[em]) cmp.comptesSeulementDansSauvegardes++; });
+    Object.keys(absentes).forEach(function(em) {
+      if (absentes[em].n) { cmp.comptesAvecLignesAbsentesDuServeur++; cmp.lignesDansSauvegardesAbsentesDuServeur += absentes[em].n; }
     });
     Object.keys(serveur).forEach(function(em) {
-      var u = union[em] || Object.create(null);
-      Object.keys(serveur[em]).forEach(function(c) { if (!u[c]) cmp.lignesServeurAbsentesDesSauvegardes++; });
+      var vu = union[em];
+      serveur[em].fl.forEach(function(e) { if (!vu || !vu.vu(e)) cmp.lignesServeurAbsentesDesSauvegardes++; });
     });
     var d0 = liste.length ? new Date(liste[0].t) : null;
     return json_({status:'ok', dossierTrouve:true, nbFichiers:liste.length, fichiersLus:lus.length,
