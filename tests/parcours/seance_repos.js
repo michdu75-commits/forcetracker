@@ -165,6 +165,9 @@ async function ecran(t, b, PORT) {
     t('C-REP-B1 ⭐⭐ retour à 15:16:59 (14 min 59 s après la fin prévue) : le dock dit +14:59 et « au-delà de ton repos max », sans écran GO ni vibration',
       auDemarrage.tourne && b.dock && b.temps === '+14:59' && /au-delà de ton repos max/.test(b.au_dela) && !b.decompte && b.vib === 0,
       _det({ tourne: auDemarrage.tourne, dock: b.dock, temps: b.temps, au_dela: b.au_dela, decompte: b.decompte, vib: b.vib }));
+    // la PILULE (hors de l'écran Séance, donc lue au démarrage, avant d'aller sur Séance) : elle a son propre arrêt
+    t('C-REP-B1b la pilule, au même instant (15:16:59, hors de l\'écran Séance) : visible, +14:59 — elle lit le même seuil',
+      auDemarrage.pilule && auDemarrage.pTemps === '+14:59', _det({ pilule: auDemarrage.pilule, pTemps: auDemarrage.pTemps, ecran: auDemarrage.ecran }));
     await heure(X, S_(120 + 900));                                // 15:17:00
     const b2 = await lire(X);
     t('C-REP-B2 ⭐ … et à 15:17:00 le repos est abandonné : dock et pilule fermés, état persistant effacé (mémoire et disque)',
@@ -222,6 +225,12 @@ async function ecran(t, b, PORT) {
     const v1 = await lire(X);
     t('C-REP-C1 ⭐⭐ retour au premier plan 30 s après la fin : le repos est toujours là, en négatif (+0:30) — il n\'est plus coupé',
       v1.tourne && v1.dock && v1.temps === '+0:30', _det({ tourne: v1.tourne, dock: v1.dock, temps: v1.temps }));
+    await X.pg.clock.setFixedTime(new Date(S_(120 + 300)));
+    await X.pg.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await X.pg.waitForTimeout(300);
+    const v15 = await lire(X);
+    t('C-REP-C1b retour au premier plan à 15:07:00 (l\'ancien seuil de 5 min) : toujours là, +5:00, toujours rangé',
+      v15.tourne && v15.dock && v15.temps === '+5:00' && _det(v15.lsRepos) === _det({ debut: T0, total: 120 }), _det({ tourne: v15.tourne, temps: v15.temps, disque: v15.lsRepos }));
     await X.pg.clock.setFixedTime(new Date(S_(120 + 900)));
     await X.pg.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
     await X.pg.waitForTimeout(300);
@@ -464,6 +473,94 @@ async function ecran(t, b, PORT) {
     t('C-REP-H3 l\'avance à l\'exercice suivant tient : « ⏭️ Ensuite : Développé Couché », puis « Passer » ouvre le développé couché',
       /Ensuite : Développé Couché/.test(lbl) && ouvert === 1, _det({ etiquette: lbl, ouvert }));
     await fermer(X);
+  }
+
+  /* ── I. LES CALORIES NE BOUGENT PAS — avenant du 22/10 après-midi, consigne de Michel ──────────────────
+     « Ne modifier ni le moteur calorique ni les règles de plafonnement ; vérifier que les calories restent identiques à
+     données de séance équivalentes ; vérifier l'absence de double comptage après fermeture et reprise. »
+     Le moteur (`calcSessionCalories`, app.js) ne lit pas le chrono de repos : il lit la séance figée par « Terminer »
+     (`set.at`, `sess.duration`), `S.defRest`, le poids, les records. Ces témoins le prouvent par le RÉSULTAT, pas par la
+     lecture du code : la séance ENREGISTRÉE (durée, horodatages, calories et leur détail, chaque champ) est comparée à
+     l'octet. Conduit : de vraies coches, « Passer », « Régler », de vrais rechargements, « Terminer ». Observé : la séance
+     enregistrée en mémoire et sur le disque, le chrono de séance (`startTs`, `pausedTotal`, `at`), le brouillon. Ne couvre
+     pas : Safari réel, une séance avec cardio, la pause (elle arrête le repos — F5). */
+  const enreg = X => X.pg.evaluate(() => {
+    const disque = JSON.parse(localStorage.getItem('ft4_sessions') || '[]');
+    const proj = s => { if (!s) return null; const o = JSON.parse(JSON.stringify(s)); delete o.runId; return o; };   // runId : tiré au hasard
+    const s = S.sessions[0] || null;
+    return { n: S.sessions.length, nDisque: disque.length, brouillon: localStorage.getItem('ft4_wkt_draft'),
+      seance: JSON.stringify(proj(s)), disque: JSON.stringify(proj(disque[0] || null)),
+      src: s && s.calData ? s.calData.dureeSrc : null, kcal: s ? s.calories : null, duree: s ? s.duration : null,
+      repos: !!(s && 'repos' in s), actif: !!(S.wkt && (S.wkt.exs || []).length) }; });
+  const moteur = X => X.pg.evaluate(() => ({ st: S.wkt.startTs, pt: S.wkt.pausedTotal || 0, pa: S.wkt.pausedAt || null,
+    ats: S.wkt.exs.map(e => e.sets.map(x => x.done ? (x.at === undefined ? 'sans' : x.at) : null)) }));
+  const terminer = async X => { const ok = await clic(X, '.tbs-fin'); await confirmer(X); return ok; };
+  {
+    // ÉGALITÉ — mêmes séries, coche à 15:00:00, fin à 15:16:40 (pour un repos de 2:00, 14:40 après sa fin : il tourne
+    // encore avec 15 min) ; seul l'état du repos à la fin change, par de vrais gestes. Trois sources de durée.
+    const FIN = S_(1000);
+    const SC = [
+      { nom: 'horodatage', w: WKT({ exs: [{ name: SQ, sets: [Object.assign(serie(1), { at: 300 }), serie(0), serie(0)] }] }), src: 'horodatage' },
+      { nom: 'chrono', w: WKT({ startTs: T0 - 60000 }), src: 'chrono' },      // un seul `at` : la durée vient du chrono
+      { nom: 'estimée', w: WKT(), src: 'estimee' } ];                       // 26 min pour 2 séries : chrono douteux
+    for (const sc of SC) {
+      const R = {};
+      for (const v of ['aucun', 'actif', 'expire_ouvert', 'restaure', 'expire_au_retour']) {
+        const X = await ouvrir({ wkt: sc.w });
+        await cocher(X, 0, 1);                                         // 15:00:00, le repos de 2:00 démarre
+        let obs = false;
+        if (v === 'aucun') { const p = await clic(X, '#rest-bar .rd-skip'); await heure(X, FIN); obs = p && !(await lire(X)).tourne; }
+        if (v === 'actif') { await heure(X, FIN); const l = await lire(X); obs = l.tourne && l.temps === '+14:40'; }
+        if (v === 'expire_ouvert' || v === 'expire_au_retour') {        // « Régler » 0:05 : fini à 15:00:05, expiré à 15:15:05
+          await clic(X, '#rest-regler'); await X.pg.fill('#re-min', '0'); await X.pg.fill('#re-sec', '5'); await clic(X, '#ov-rest-edit .re-ok');
+          if (v === 'expire_ouvert') { await heure(X, FIN); const l = await lire(X); obs = !l.tourne && l.lsRepos === '∅'; }
+          else { const d = await recharger(X, FIN); obs = !d.tourne && (await lire(X)).lsRepos === '∅'; } }
+        if (v === 'restaure') { const d = await recharger(X, S_(60)); await heure(X, FIN); obs = d.tourne && (await lire(X)).tourne; }
+        const m = await moteur(X);
+        const fin = await terminer(X);
+        R[v] = { obs: obs && fin, m, e: await enreg(X) };
+        await fermer(X);
+      }
+      const ref = R.aucun;
+      const memes = Object.keys(R).filter(k => _det(R[k].m) === _det(ref.m) && R[k].e.seance === ref.e.seance && R[k].e.disque === ref.e.seance);
+      t('C-REP-I1 [' + sc.nom + '] ⭐⭐ ⛔ calories, durée et horodatages de la séance enregistrée IDENTIQUES À L\'OCTET avec un repos passé / en cours / expiré app ouverte / restauré après fermeture / expiré au retour',
+        Object.keys(R).every(k => R[k].obs) && memes.length === 5 && ref.e.src === sc.src && ref.e.kcal > 0 && ref.e.n === 1,
+        _det({ obs: Object.keys(R).filter(k => !R[k].obs), differents: Object.keys(R).filter(k => memes.indexOf(k) < 0), src: ref.e.src, kcal: ref.e.kcal,
+          duree: ref.e.duree, kcalVariantes: Object.keys(R).map(k => k + ':' + R[k].e.kcal + '/' + R[k].e.duree) }));
+      t('C-REP-I2 [' + sc.nom + '] une seule séance enregistrée par variante (mémoire = disque = 1), jamais de champ `repos`, plus de séance active',
+        Object.keys(R).every(k => R[k].e.n === 1 && R[k].e.nDisque === 1 && !R[k].e.repos && !R[k].e.actif),
+        _det(Object.keys(R).map(k => k + ':' + R[k].e.n + '/' + R[k].e.nDisque + (R[k].e.repos ? ' AVEC repos' : '') + (R[k].e.actif ? ' ACTIVE' : ''))));
+    }
+  }
+  {
+    // PAS DE DOUBLE COMPTAGE — la même séance jouée deux fois : une fois sans jamais fermer l'app, une fois en la fermant
+    // pendant le repos (absence de 60 s : le repos revient ; de 1500 s : il a expiré entre-temps).
+    const W = WKT({ exs: [{ name: SQ, sets: [Object.assign(serie(1), { at: 300 }), serie(0), serie(0)] }] });
+    for (const absence of [60, 1500]) {
+      const jouer = async ferme => {
+        const X = await ouvrir({ wkt: W });
+        await cocher(X, 0, 1);                                         // 15:00:00, at = 600, repos lancé
+        const avant = await moteur(X);
+        let d = null;
+        if (ferme) d = await recharger(X, S_(absence)); else await heure(X, S_(absence));
+        const apres = await moteur(X);
+        await heure(X, S_(absence + 100)); await cocher(X, 0, 2);       // la série suivante, 100 s après le retour
+        await heure(X, S_(absence + 160));
+        const fin = await terminer(X);
+        const e = await enreg(X);
+        const r2 = await recharger(X, S_(absence + 400));                 // rouvrir après la fin : rien ne doit renaître
+        const e2 = await enreg(X);
+        await fermer(X);
+        return { d, avant, apres, fin, e, e2, r2 };
+      };
+      const A = await jouer(false), B = await jouer(true);
+      t('C-REP-J1 [' + absence + ' s] ⭐⭐ ⛔ fermer puis rouvrir pendant un repos : la séance enregistrée (calories, durée, horodatages) est IDENTIQUE à la même séance jamais fermée — le temps fermé n\'est compté qu\'une fois, comme du temps réel',
+        A.fin && B.fin && A.e.seance === B.e.seance && A.e.kcal > 0 && _det(B.avant) === _det(B.apres) && (absence === 60 ? B.d.tourne : !B.d.tourne),
+        _det({ kcal: [A.e.kcal, B.e.kcal], duree: [A.e.duree, B.e.duree], chronoAvant: B.avant, chronoApres: B.apres, reprise: B.d && B.d.tourne }));
+      t('C-REP-J2 [' + absence + ' s] une seule séance, en mémoire et sur le disque, brouillon supprimé ; un rechargement après la fin ne fait rien renaître (ni séance, ni repos)',
+        [A, B].every(r => r.e.n === 1 && r.e.nDisque === 1 && r.e.brouillon === null && r.e2.n === 1 && r.e2.nDisque === 1 && !r.e2.actif && !r.r2.tourne && r.e2.seance === r.e.seance),
+        _det([A, B].map(r => ({ n: r.e.n, disque: r.e.nDisque, brouillon: r.e.brouillon, n2: r.e2.n, actif2: r.e2.actif, tourne2: r.r2.tourne }))));
+    }
   }
 }
 

@@ -212,9 +212,11 @@ module.exports.contrat = async function (t, b, PORT) {
   const R1 = await X.pg.evaluate(() => ({ wkt: JSON.stringify(S.wkt), n: __np.nutri() }));
   /* ⏱️ SEANCE-REPOS-01 (22/10/2026, Claude Séance — docs/SEANCE-REPOS-01.md) : « à l'identique » porte sur la SÉANCE (séries,
      codes, cardio, chrono), pas sur l'état du chrono de repos rangé avec elle (`S.wkt.repos`) — un repos encore en cours revient,
-     un repos expiré est effacé au rechargement (décision de Michel). Ici, le dernier repos (18:30, 2:10) a expiré à 18:37:10 :
-     effacé au rechargement de 18:40, à juste titre. Le comparer faisait aussi dépendre ce témoin d'une COURSE — l'instantané est
-     pris juste après le saut d'horloge, avant le tick qui l'efface en mémoire (mesuré : `repos` était la SEULE différence).
+     un repos expiré est effacé au rechargement (décision de Michel). Le 22/10 au matin (seuil de 5 min), le dernier repos
+     (18:30, 2:10) avait expiré à 18:37:10 : effacé au rechargement de 18:40, à juste titre ; le comparer faisait aussi dépendre
+     ce témoin d'une COURSE — l'instantané était pris juste après le saut d'horloge, avant le tick qui l'efface en mémoire
+     (mesuré : `repos` était la SEULE différence, `BUGS.md` §93). Depuis l'avenant du 22/10 après-midi (15 min, D-102), ce
+     repos court jusqu'à 18:47:10 et revient à l'identique au rechargement de 18:40 ; la garantie reste portée par la SÉANCE.
      ⛔ Tout le reste de la séance est comparé à l'octet, comme avant (contrôle négatif : `tools/mut_nut_punch01.py` MA20). */
   const _seance = w => { const o = JSON.parse(w); if (o && typeof o === 'object') delete o.repos; return JSON.stringify(o); };
   t('B-NP01-A ⛔ rechargement en pleine séance : la séance ouverte revient À L\'IDENTIQUE (séries, codes, cardio, chrono)',

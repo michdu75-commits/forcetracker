@@ -4935,7 +4935,7 @@ ft-v1258) — `stopRest()` y remettait seulement l'écran à zéro.
 
 **Le correctif (décisions de Michel du 22/10, `docs/SEANCE-REPOS-01.md`).** La garantie est **remplacée**, pas contournée :
 `_reposReprendre()` au démarrage (reprise à l'heure réelle, sinon la même remise à zéro qu'avant) et **un seul** seuil,
-`REST_DEPASSEMENT_MAX` (5 min après la fin théorique), lu app ouverte, au retour et au redémarrage. L'écouteur −5 s a disparu ;
+`REST_DEPASSEMENT_MAX` (5 min après la fin théorique ; **15 min depuis l'avenant du 22/10 après-midi, D-102**), lu app ouverte, au retour et au redémarrage. L'écouteur −5 s a disparu ;
 son histoire est écrite à sa place (R30).
 
 **À quoi on le reconnaît.** Deux règles pour la même chose, posées à des mois d'écart, et la plus ancienne gagne sur un chemin
@@ -4950,7 +4950,9 @@ que personne ne teste — la famille « le correctif posé d'un seul côté » (
 L'IDENTIQUE` (banc `nut_punch01`, contrat Séance → Nutrition) comparait **tout** `S.wkt` à l'octet avant et après un rechargement.
 SEANCE-REPOS-01 y range désormais l'état du chrono de repos (`repos`). Mesuré sur une copie instrumentée : **`repos` était la SEULE
 différence** — un repos parti à 18:30 (2:10), expiré à 18:37:10, présent dans l'instantané pris à 18:40, **effacé au rechargement**
-(décision de Michel : 5 min après la fin théorique, l'état persistant est effacé).
+(décision de Michel : 5 min après la fin théorique, l'état persistant est effacé). ↪️ *Depuis l'avenant D-102 (15 min), ce repos
+court jusqu'à 18:47:10 et **revient** au rechargement de 18:40 : la course disparaît, et le témoin — qui compare la séance sans
+`repos` — reste juste. Le texte ci-dessous décrit le cas du matin, gardé (R30).*
 
 **Pourquoi l'instantané le portait encore.** Le banc saute l'horloge (`setFixedTime`) puis lit `S.wkt` **aussitôt** : le tick qui
 efface en mémoire (toutes les 250 ms) n'était pas encore passé. *Le témoin dépendait d'une course* — vert si le tick gagne, rouge

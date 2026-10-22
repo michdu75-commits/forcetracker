@@ -1,5 +1,9 @@
 # ⏱️ SEANCE-REPOS-01 — le repos en cours survit à la fermeture de l'app
 
+> **↪️ AVENANT DU 22/10 APRÈS-MIDI (D-102, décision validée de Michel) : expiration 15 MIN après la fin théorique, app ouverte OU
+> fermée — `REST_DEPASSEMENT_MAX` 300 → 900 s ; dépassement en négatif, restauration après fermeture et repos hors brouillon
+> inchangés ; moteur calorique et plafonds NON touchés, désormais prouvés par témoins. Détail et contrôles : §12.**
+>
 > **Statut (22/10/2026, 14:31 UTC) : développé et testé sur la branche `claude/dreamy-bell-pu88ia` (session-C, Claude Séance) —
 > passe complète D-031 VALIDE (7 866 / 0) — NON intégré à master, NON publié, clone NON régénéré, aucun numéro de version posé.** Feu vert de Michel du 22/10 : développement et tests seulement,
 > STOP ensuite. Décisions : registre `docs/DECISIONS.md`, **D-100** (⚠️ numéro à reconfirmer à l'intégration : D-099 a été pris
@@ -37,6 +41,8 @@ Michel a demandé de vérifier sa raison **avant** de coder, et de s'arrêter si
 1. **Expiration : 5 min après la fin THÉORIQUE du repos.** Repos de 2 min parti à 15 h 00 : décompte jusqu'à 15 h 02, temps dépassé
    affiché de 15 h 02 à 15 h 07, **abandonné et effacé à partir de 15 h 07** — calculé depuis l'heure théorique de fin, jamais
    depuis le dernier affichage.
+   ↪️ **Remplacée l'après-midi par D-102** : **15 min** après la fin théorique, app ouverte **ou** fermée — même repos de 2 min :
+   négatif de 15 h 02 à 15 h 17, abandonné et effacé à partir de 15 h 17. *Le texte du matin est gardé (R30).*
 2. **Repos dépassé : affiché en négatif** à la réouverture (fonctionnement existant), **aucun redémarrage artificiel**.
 3. **Brouillon de secours : NON** — le repos n'entre pas dans `ft4_wkt_draft`. Structure `S.wkt.repos = {debut, total}`, **aucune
    clé de stockage nouvelle**. Ne restaurer que si la séance est réellement active ; les anciennes séances sans le champ ne changent pas.
@@ -47,13 +53,14 @@ Michel a demandé de vérifier sa raison **avant** de coder, et de s'arrêter si
 |---|---|---|
 | `log.js` | `_reposMemoriser` (nouvelle) | **le seul écrivain** de `S.wkt.repos` : recopie `{debut: restStartTs, total: restTot}`, ou l'efface quand aucun repos ne tourne ; n'écrit **que** `ft4_wkt`, seulement si la valeur change, jamais en mode démo |
 | `log.js` | `_reposReprendre` (nouvelle) | **la reprise**, au démarrage : seulement si la séance est active (`_wktEnCours` : ouverte et pas en pause) et la valeur lisible (nombres, durée de 1 s à 1 h, départ pas dans le futur), et si le repos n'a pas expiré ; sinon `stopRest()` (l'écran remis à zéro, la valeur effacée). Un repos déjà fini ne rejoue ni vibration ni écran GO |
-| `log.js` | `REST_DEPASSEMENT_MAX` | **900 → 300 s** : la même règle app ouverte, au retour au premier plan et au redémarrage (un seul propriétaire, R2) |
+| `log.js` | `REST_DEPASSEMENT_MAX` | **900 → 300 s** (matin) **→ 900 s** (avenant D-102 : app ouverte, retour au comportement de `ft-v1258` ; la nouveauté est que la même règle s'applique app fermée) : la même règle app ouverte, au retour au premier plan et au redémarrage (un seul propriétaire, R2) |
 | `log.js` | `startRest`, `stopRest`, `setRestPreset`, `addRT`, `applyRestEdit` | un appel à `_reposMemoriser()` là où l'état du repos change (donc aussi « Passer », le tap sur GO, la fin, l'abandon, « Vider », la pause, qui passent par `stopRest`) |
 | `app.js` | démarrage | `stopRest()` + l'écouteur −5 s → **`_reposReprendre()`** ; l'histoire de la garantie écrite à sa place |
 | `state.js` | `persist()` | **une ligne** : `ft4_wkt_draft` s'écrit sans `repos` (`Object.assign({},S.wkt,{repos:undefined})` — identique à l'octet quand aucun repos ne tourne). Coordonné avec Claude Principal (22/10, aucune objection) |
-| `screens.js`, `coach.js`, `app.js`, `constants.js` | aides | « ? » de Séance, aide détaillée, diapo du Guide « Ton repos est un MAXIMUM », point rouge d'origine (`repos-maximum`) : « 15 min » → « 5 min après la fin » + « l'app se ferme ? il t'attend » ; **nouveau point rouge** `repos-persistant`. ⚖️ **Pas de pop-up** (R25) : rien à faire, aucun repère déplacé |
+| `screens.js`, `coach.js`, `app.js`, `constants.js` | aides | « ? » de Séance, aide détaillée, diapo du Guide « Ton repos est un MAXIMUM », point rouge d'origine (`repos-maximum`) : « au-delà de 15 min » → « 5 min après la fin » (matin) → **« 15 min après la fin »** (avenant D-102) + « l'app se ferme ? il t'attend » ; **nouveau point rouge** `repos-persistant`. ⚖️ **Pas de pop-up** (R25) : rien à faire, aucun repère déplacé |
 
-⭐ **Un choix à confirmer par Michel** : la règle des 5 min s'applique **aussi app ouverte** (avant : le chrono continuait en
+✅ **TRANCHÉ PAR MICHEL (D-102, 22/10 après-midi)** : 15 min, app ouverte **et** fermée, une seule règle. *Ce qui suit est la question telle
+qu'elle était posée le matin (R30).* ⭐ **Un choix à confirmer par Michel** : la règle des 5 min s'applique **aussi app ouverte** (avant : le chrono continuait en
 négatif jusqu'à 15 min, un choix de Claude en ft-v1030). C'est la lecture littérale de la décision 1 (« à partir de 15 h 07 : le
 repos est abandonné ») et la seule qui donne **une** règle pour un même repos ; revenir à 15 min app ouverte tient en une
 constante, mais ferait deux règles.
@@ -101,7 +108,8 @@ retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibili
 | supersets, RIR, avance à l'exercice suivant | C-REP-H2, H3 + bancs voisins `rir_superset`, `seance_recette`, `ux_d086`, `seance_ux`… |
 | le « + » central bouge | C-REP-A8 (règle d'or #9) |
 | écritures en trop | C-REP-G3 (le repos n'écrit que `ft4_wkt`), G4 (rien en mode démo) |
-| app ouverte : le chrono s'arrête plus tôt (5 min au lieu de 15) | voulu (décision 1) ; C-REP-B5 / B6 ; à confirmer par Michel (§4) |
+| app ouverte : le chrono s'arrête plus tôt (5 min au lieu de 15) | *(matin)* voulu (décision 1) ; C-REP-B5 / B6 ↪️ **levé par D-102** : 15 min ouverte ou fermée ; C-REP-B0, B5a, C1b (15:07:00 ne coupe plus rien), B1, B1b, B5, B6, B2, B3, C2 |
+| les calories ou la durée de la séance dépendent du repos (consigne de Michel, avenant) | moteur **non touché** ; C-REP-I1 / I2 (séance enregistrée identique à l'octet, 5 états de repos × 3 sources de durée), C-REP-J1 / J2 (fermeture pendant un repos : rien compté deux fois, une seule séance) — §12 |
 
 ## 8. Retour arrière
 
@@ -110,8 +118,9 @@ retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibili
   `ft-v1258` (`git checkout f82a7c07 -- <fichiers>`) et monter la clé de cache. ✅ **Rejoué à blanc le 22/10** (hors dépôt, réseau
   coupé) : l'**ancien** code ouvre un `ft4_wkt` écrit par le nouveau (avec `repos`) **sans erreur, sans chrono, la séance intacte**, et
   « Terminer » enregistre une séance **sans** `repos`. Le champ resté dans `ft4_wkt` est simplement ignoré jusqu'à la fin de la séance.
-- **Revenir à 15 min app ouverte seulement** : `REST_DEPASSEMENT_MAX` est l'unique constante (mais la reprise suivrait aussi :
-  la séparer ferait deux règles).
+- **Revenir à 15 min app ouverte seulement** *(matin)* : `REST_DEPASSEMENT_MAX` est l'unique constante (mais la reprise suivrait aussi :
+  la séparer ferait deux règles). ↪️ **Depuis D-102** : revenir à **5 min** = remettre la constante à 300 (et les 5 aides, et les
+  témoins C-REP-B*) — une constante, toujours une seule règle.
 
 ## 9. Recette sur le clone — état de préparation
 
@@ -121,8 +130,8 @@ retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibili
   (le clone actuel montre D-093, `b1840bc7`).
 - ⚠️ **Le clone ne peut pas tout recetter** : son service worker n'a **aucun cache** (D-084, par construction) — la réouverture
   **hors ligne** ne se recette donc que sur la vraie app, une fois publiée. Tout le reste se recette sur le clone : verrouiller le
-  téléphone ou changer d'appli pendant un repos, rouvrir (temps réel) ; revenir après 4 min 59 de dépassement (négatif) puis après
-  5 min (rien) ; −15 s / +15 s / « Régler » puis fermer ; « Terminer », « Abandonner », pause pendant un repos ; le « + » central.
+  téléphone ou changer d'appli pendant un repos, rouvrir (temps réel) ; revenir après 5 min de dépassement (toujours là, +5:00), après 14 min 59
+  (négatif) puis après 15 min (rien) ; −15 s / +15 s / « Régler » puis fermer ; « Terminer », « Abandonner », pause pendant un repos ; le « + » central.
 - Dans le clone, Milo et la synchronisation sont coupés (D-084) : ce lot n'en dépend pas.
 
 ## 10. Règle d'or #17 — les 4 compteurs (code applicatif seulement)
