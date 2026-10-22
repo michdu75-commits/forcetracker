@@ -4916,3 +4916,28 @@ désormais cette garde devant, et rien d'autre ; son outil de mutations (`tools/
 ligne et la suit. Éprouvé : vert sur master, vert sur la branche, **rouge quand l'exclusion de COHERENT est retirée**.
 ⚠️ La simulation du 20/10 annonçait « 0 témoin existant rouge » pour cette forme : elle n'avait rejoué que les blocs CCXCI,
 CCCV, CCXCIX et CCCII. *Un « aucun témoin ne rougit » ne vaut que pour les témoins rejoués.*
+
+## §91 — ⛔ UNE GARANTIE POSÉE À L'AVEUGLE CONTREDISAIT, DEPUIS LE RETOUR AU PREMIER PLAN, UNE DÉCISION PRISE APRÈS ELLE *(22/10/2026, SEANCE-REPOS-01 — session-C, branche `claude/dreamy-bell-pu88ia`, non publié)*
+
+**Le constat.** `app.js` portait depuis ft-v144 (01/07/2026, commit `e3367525`) : « Garantie : le timer de repos ne survit jamais
+à un redémarrage ni à un retour au premier plan » — `stopRest()` au démarrage, et un écouteur qui **coupait le repos au retour
+dans l'app dès 5 s de dépassement**. Or depuis ft-v1030 (le repos est un MAXIMUM, il continue en négatif) et ft-v1075 (« téléphone
+dans la poche, on revient et on lit GO, sans savoir si ça fait 20 secondes ou 4 minutes »), le dépassement est **une information
+voulue**. Mesuré sur `ft-v1258` (banc C-REP-C1) : retour au premier plan 30 s après la fin → le dock **disparaît**. *Le seul moment
+où le dépassement devait servir — le retour dans l'app — était celui où une règle plus ancienne l'effaçait.*
+
+**Pourquoi rien ne l'a vu.** Les témoins de ft-v1030 font avancer l'horloge **sans** jamais simuler un retour au premier plan ;
+l'écouteur de `app.js` n'y passe donc pas. Et la garantie était écrite comme un fait (« ne survit jamais »), pas comme une décision
+datée avec sa raison : rien ne disait qu'elle venait d'un **correctif à l'aveugle** posé pendant la panne « séance coincée »,
+dont la vraie cause a été trouvée ensuite ailleurs (erreurs TDZ propres à Safari, v144 → v153, `docs/GALERES-ET-LECONS.md`).
+⭐ Et au démarrage, elle ne protégeait **rien** : le repos n'a jamais été enregistré (vérifié dans `log.js` de ft-v143 comme de
+ft-v1258) — `stopRest()` y remettait seulement l'écran à zéro.
+
+**Le correctif (décisions de Michel du 22/10, `docs/SEANCE-REPOS-01.md`).** La garantie est **remplacée**, pas contournée :
+`_reposReprendre()` au démarrage (reprise à l'heure réelle, sinon la même remise à zéro qu'avant) et **un seul** seuil,
+`REST_DEPASSEMENT_MAX` (5 min après la fin théorique), lu app ouverte, au retour et au redémarrage. L'écouteur −5 s a disparu ;
+son histoire est écrite à sa place (R30).
+
+**À quoi on le reconnaît.** Deux règles pour la même chose, posées à des mois d'écart, et la plus ancienne gagne sur un chemin
+que personne ne teste — la famille « le correctif posé d'un seul côté » (ft-v851 → ft-v1030), vue cette fois depuis l'autre bout :
+*avant d'écrire une règle nouvelle, chercher les anciennes qui décident de la même chose — et lire la date et la raison de chacune.*
