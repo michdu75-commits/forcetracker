@@ -1146,6 +1146,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadDouaneAdmin()" style="padding:11px;font-size:14px;">📊 Voir le rapport</button>
       <div id="admin-douane" style="margin-top:4px;"></div>
     </div>
+    <!-- 🍽️ INVENTAIRE NUTRITION (22/10/2026, GO limité A2 de Michel : PRÉPARÉ, NON PUBLIÉ sans son accord).
+         Lit les deux routes de diagnostic déployées en lecture seule (A1, Apps Script @192).
+         ⛔ Le jeton part dans le CORPS d'un POST, jamais dans l'adresse. ⛔ Que des nombres. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🍽️ Inventaire Nutrition</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Combien de comptes ont un journal alimentaire sur le serveur, combien d'entrées, et ce que disent les <strong>sauvegardes de la nuit</strong>. <strong>Que des nombres</strong> : aucun aliment, aucune adresse. Rien n'est modifié.</div>
+      <button class="btn btn-bg2" onclick="loadNutInventaireAdmin('nutInventory')" style="padding:11px;font-size:14px;">📊 Compter les journaux</button>
+      <button class="btn btn-bg2" onclick="loadNutInventaireAdmin('nutBackupAudit')" style="padding:11px;font-size:14px;">🗄️ Comparer avec les sauvegardes (jusqu'à 5 min)</button>
+      <div id="admin-nutinv" style="margin-top:4px;"></div>
+    </div>
     <!-- 🍽️ HABITUDES — LA MESURE AVANT LA RÈGLE (17/09/2026, demande de Michel).
          ⛔⛔ CET OUTIL EXISTE PARCE QU'ON REFUSE D'INVENTER UN SEUIL. La règle actuelle de
          « tes repas habituels » est `s.n >= 2`, sans horizon ni dénominateur — c'est pourquoi

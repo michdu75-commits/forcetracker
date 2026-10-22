@@ -39144,6 +39144,11 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      Premium » présente le jeton ; la carte des comptes dit qu'elle affiche des adresses. Vrai Code.js en local (doGet /
      doPost réels), adresses fictives example.test uniquement. Banc : tools/banc_sec_admin.js. */
   await require('./sec_admin.js').ecran(t, b, PORT);
+  /* 🍽️ NUT-INVENTAIRE · A2 (session-B, 22/10/2026, GO limité de Michel : PRÉPARÉ, NON PUBLIÉ) — la carte Admin
+     « Inventaire Nutrition » : réservée à l'admin, jeton dans le CORPS d'un POST (jamais dans l'adresse), une liste
+     blanche de nombres, valeurs échappées, jeton refusé oublié, rien rangé sur l'appareil. Serveur simulé, données
+     inventées. Banc : tools/banc_nut_inventaire_admin.js ; contrôle négatif : tools/mut_nut_inventaire_admin.py. */
+  await require('./nut_inventaire_admin.js').ecran(t, b, PORT);
   /* 🏷️ IMPORT-MAP-01 (session-B, 10/10/2026) — un rapprochement automatique ne change jamais le matériel écrit
      (machine ≠ barre ≠ haltères ≠ poulie ≠ Smith) ; un nom sans matériel vers une variante qui en écrit un → confirmation
      (décision de Michel) ; historique, charges et records d'un autre exercice jamais récupérés par l'import. Banc :
@@ -39983,6 +39988,7 @@ require('./food_variants.js').source(t, ROOT, fs, path);
 require('./food_alias_sens.js').source(t, ROOT, fs, path);
 require('./food_lot_b.js').source(t, ROOT, fs, path);
 require('./nut_m6_rejeu.js').source(t, ROOT, fs, path);
+require('./nut_inventaire_admin.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

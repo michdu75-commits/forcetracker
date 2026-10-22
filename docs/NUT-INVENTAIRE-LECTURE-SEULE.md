@@ -6,8 +6,8 @@
 > `deploy-appsscript.yml` lancé à la main sur master `236764c5` (le commit de tête porte `[skip ci]` :
 > Pages n'a pas été redéployé, l'app reste `ft-v1258`). `clasp push` n'a envoyé que `appsscript.json` et
 > `Code.js` ; `?test=1` online ; `authStatus` OK. ⚠️ Les deux routes n'ont **jamais été appelées** en
-> production : aucun bouton (carte Admin A2 préparée, non publiée) et le réseau de la session Claude
-> refuse `script.google.com`. ⛔ Le GO ne vaut que pour ces deux routes : ni extraction, ni migration,
+> production au 22/10 : la carte Admin A2 est **publiée en `ft-v1259`** (GO limité de Michel), le premier
+> inventaire réel reste à lancer par Michel ; le réseau de la session Claude refuse `script.google.com`. ⛔ Le GO ne vaut que pour ces deux routes : ni extraction, ni migration,
 > ni restauration.
 
 ## ⛔ Correction : `storeHealth` n'est PAS une voie « zéro risque »
@@ -115,7 +115,7 @@ l'original » : cette règle naïve efface les repas saisis depuis la bascule (p
 - Lecture de la console Supabase (agrégats seulement) si le miroir doit entrer dans la comparaison.
 - Décision produit : traces de suppression et manifeste de migration côté V2 (périmètre Claude Nutrition).
 
-## A2 — la carte Admin « Inventaire Nutrition » (préparée le 22/10, NON PUBLIÉE)
+## A2 — la carte Admin « Inventaire Nutrition » (préparée le 22/10, ✅ PUBLIÉE en `ft-v1259` le 22/10)
 
 Branche `claude/nut-inventaire-carte-admin` (`0fb75f7c`). Profil → Admin → groupe « Surveillance », deux boutons :
 « 📊 Compter les journaux » (`nutInventory`) et « 🗄️ Comparer avec les sauvegardes » (`nutBackupAudit`, jusqu'à
@@ -123,5 +123,6 @@ Branche `claude/nut-inventaire-carte-admin` (`0fb75f7c`). Profil → Admin → g
 mais envoyé **dans le corps d'un POST**, jamais dans l'adresse ; une **liste blanche de nombres** (un champ inattendu
 du serveur ne s'affiche pas), valeurs échappées ; aucun résultat rangé sur l'appareil. Banc
 `tools/banc_nut_inventaire_admin.js` 20/0, contrôle négatif `tools/mut_nut_inventaire_admin.py` 10/10.
-⛔ Publication = nouvelle version de l'app (`sw.js`, passe complète) : **accord supplémentaire de Michel requis**.
+✅ Publiée en `ft-v1259` (GO limité « PUBLICATION A2 » de Michel, 22/10 ; master `3d6953c4`, Pages run n°1359 réussi, aucun run Apps Script) : passe complète **7 843 ✅ / 0 ❌** sur `9c527110`. **Retour arrière** (jamais lancé sans décision de Michel) : `git revert` du commit fonctionnel A2 (`app.js`, `index.html`, banc, runner, registre reviennent à master `6c0a400d`) + clé de cache **jamais diffusée** `ft-v1260` ; rejoué à blanc le 22/10 sur un arbre jetable, rien poussé.
+**Premier inventaire réel (Michel, iPhone)** : Menu → À propos = `ft-v1259` · 5 tapes sur le logo + code admin · Profil → 🔧 Admin → Surveillance → « 🍽️ Inventaire Nutrition » → « 📊 Compter les journaux » (jeton admin si demandé) · puis « 🗄️ Comparer avec les sauvegardes » (jusqu'à 5 min, app ouverte) · capture d'écran. Rien n'est modifié.
 
