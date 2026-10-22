@@ -1540,3 +1540,37 @@ Michel, 21/10 : *« Nutrition est maintenant la priorité principale »*, M6 d'a
 **Règle d'or #17 (code applicatif)** : **0** donnée persistée · **1** fichier (`app.js`) · **+43 / −14** lignes (code **+14 / −10**) · **0** ancien chemin supprimé ou fusionné.
 
 **↪️ Publication (21/10/2026, feu vert conditionnel de Michel, ce lot seul ; passation de Claude Nutrition à Claude Principal).** Contrôles avant fusion, faits par session-B, réseau coupé (espace réseau isolé + garde ; aucune tentative de sortie des suites) : master `bdfc6d27` inchangé et aucune publication concurrente (vérifié sur le serveur) · annexe de recette complète (T2) sur l'arbre préparé `44b3ae31` : **14 PASS + 1 défaut connu** (`discussions`, valeurs identiques à master rejoué le même jour) · PWA hors ligne (T1) **PASS** · retour arrière rejoué **à blanc** en `ft-v1259` sur un arbre jetable (`app.js` identique à l'octet à `ft-v1257`, seul `sw.js` servi diffère, règles vertes, banc M6 **15 OK / 17 rouges** attendus, fumée `ft-v1259` sans erreur ; jamais poussé) · fumée sur l'arbre exact `da523380` (Service Worker et cache `ft-v1258`, « À propos », aucune pop-up, 6 écrans et leurs aides, Guide, séance libre, **0 erreur JavaScript** ; contrôle négatif rouge) · `check_regles` vert (1 alerte connue sans lien), `git diff --check` propre, `push --dry-run` en avance rapide. Puis **un seul push** en avance rapide (`bdfc6d27` → `da523380`), jamais forcé : Pages run n°1358 réussi sur `da523380` (déploiement GitHub `7228331992` « success », 14:12:30 UTC) ; ni Apps Script ni Worker déclenchés (aucun fichier serveur). ⚠️ le domaine public `michdu75-commits.github.io` n'est pas joignable depuis la session (mandataire : CONNECT 403) : la version réellement servie se confirme sur l'iPhone (Menu → À propos = `ft-v1258`). ⛔ Aucune donnée réelle touchée (517 entrées, favoris, repas habituels, Iso Zero), ni M1 → M4. Le PDF de la passation n'a pas été retrouvé (ni dans le dépôt, ni sur Drive, ni dans ce conteneur : les sessions ont des conteneurs séparés) ; sa version écrite, `docs/PASSATION-FT-V1258-M6.md`, a été lue en entier.
+
+### ⏱️ SEANCE-REPOS-01 — LE REPOS EN COURS SURVIT À LA FERMETURE DE L'APP (22/10/2026, session-C Claude Séance, feu vert et décisions de Michel du 22/10) — DÉVELOPPÉ ET TESTÉ SUR LA BRANCHE `claude/dreamy-bell-pu88ia`, NON INTÉGRÉ, NON PUBLIÉ, CLONE NON RÉGÉNÉRÉ
+
+**Le défaut (mesuré sur `ft-v1258`).** Le repos vivait en mémoire seulement : iOS ferme une PWA restée en arrière-plan, et à la
+réouverture le repos avait disparu. Au retour au premier plan sans fermeture, `app.js` le **coupait** dès 5 s de dépassement — le
+dépassement en négatif (ft-v1030, ft-v1075) ne se voyait jamais au retour (`BUGS.md` §91).
+
+**La garantie d'`app.js` — examinée AVANT de coder (consigne de Michel).** « Le timer de repos ne survit jamais à un redémarrage ni à
+un retour au premier plan » : commit `e3367525` (ft-v144, 01/07), correctif à l'aveugle pendant la panne « séance coincée », dont la
+cause était ailleurs (erreurs TDZ de Safari, v144 → v153). Le repos n'a jamais été enregistré : au démarrage, `stopRest()` ne
+remettait que l'écran à zéro. **Rien d'essentiel d'incompatible → pas de STOP** ; garantie remplacée, son histoire écrite à sa place.
+
+**Le correctif (décisions de Michel).** `S.wkt.repos = {debut, total}` (aucune clé nouvelle), un seul écrivain `_reposMemoriser`
+(`ft4_wkt` seul, jamais en mode démo), une seule reprise `_reposReprendre` au démarrage (séance active, valeur lisible, non expirée ;
+pas de vibration ni d'écran GO en retard) ; **un seul seuil** `REST_DEPASSEMENT_MAX` = 5 min après la fin théorique, app ouverte comme
+au retour (⭐ il valait 15 min app ouverte, un choix de Claude en ft-v1030 — **à confirmer par Michel**) ; le brouillon de secours
+s'écrit sans le repos (`state.js`, une ligne, coordonnée avec Claude Principal : aucune objection). Aides « ? » Séance, aide détaillée,
+diapo du Guide, point rouge d'origine corrigés (15 → 5 min) + point rouge `repos-persistant`, pas de pop-up. Registre : **D-100**
+(⚠️ numéro à reconfirmer à l'intégration — D-099 pris le même jour par Claude Nutrition ; le code ne cite aucun numéro).
+
+**Tests (réseau coupé, 0 appel à Milo).** Banc C-REP-* **17 OK / 26 rouges sur `ft-v1258` → 43 / 0** · contrôle négatif
+**31 / 31** (arbre sain 0 rouge au début et à la fin, 37 min) · 12 bancs voisins **755 / 0** · annexe **14 PASS + 1 défaut connu**
+(`discussions`, valeurs identiques à master le même jour) · prompt de Milo **identique à l'octet** à master (77 697 caractères, avec
+ou sans repos) · retour arrière **à blanc** (ancien code + `ft4_wkt` avec `repos` : sans erreur, sans chrono, séance intacte) ·
+passe complète D-031 : voir ci-dessous.
+
+**Limites (écrites, hors périmètre).** Ce qui ne revient pas après un rechargement : la question du RIR, l'étiquette du dock,
+l'avance automatique (superset, exercice suivant), le pas de 5 s des abdos, la mémoire de durée par exercice ; aucune alerte app
+fermée ; l'export complet emporte `repos` pendant un repos ; Safari / iPhone réel non vérifiés ; la réouverture hors ligne ne se
+recette pas sur le clone (son service worker n'a pas de cache).
+
+**Règle d'or #17 (code applicatif).** **1** donnée persistée (`repos` dans `ft4_wkt`, 0 clé) · **6** fichiers (`log.js`, `app.js`,
+`state.js`, `screens.js`, `coach.js`, `constants.js`) · **+100 / −19** lignes (code seul **+41 / −10**) · **2** anciens chemins
+supprimés ou fusionnés (l'écouteur −5 s d'`app.js`, le `stopRest()` de démarrage). Détail : `docs/SEANCE-REPOS-01.md`.

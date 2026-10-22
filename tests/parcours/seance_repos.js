@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
    ⏱️ SEANCE-REPOS-01 — LE REPOS EN COURS SURVIT À LA FERMETURE DE L'APP (blocs C-REP-*) — session-C (Claude Séance),
-   22/10/2026, feu vert et décisions de Michel du 22/10 (registre : D-099).
+   22/10/2026, feu vert et décisions de Michel du 22/10 (docs/SEANCE-REPOS-01.md).
    ① le repos en cours est rangé dans la séance ACTIVE, `S.wkt.repos = {debut, total}` — rien d'autre, aucune clé nouvelle ;
    ② il revient à l'heure RÉELLE après une fermeture, un rechargement ou un retour dans la PWA — jamais redémarré ;
    ③ expiration 5 min après la fin THÉORIQUE (`debut + total`) : jusque-là le dépassement s'affiche en négatif, ensuite le

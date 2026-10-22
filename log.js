@@ -5469,7 +5469,7 @@ function _restLeft(){
   if(!restStartTs)return 0;
   return restTot-Math.floor((Date.now()-restStartTs)/1000);
 }
-/* ⏹️ 5 MIN APRÈS LA FIN THÉORIQUE DU REPOS, IL EST ABANDONNÉ (décision 1 de Michel, 22/10/2026 — SEANCE-REPOS-01, D-099).
+/* ⏹️ 5 MIN APRÈS LA FIN THÉORIQUE DU REPOS, IL EST ABANDONNÉ (décision 1 de Michel, 22/10/2026 — SEANCE-REPOS-01, docs/SEANCE-REPOS-01.md).
    Repos de 2 min parti à 15 h 00 : décompte jusqu'à 15 h 02, dépassement affiché en négatif jusqu'à 15 h 07, abandonné et
    effacé à partir de 15 h 07 — compté depuis `restStartTs + restTot`, jamais depuis le dernier affichage.
    Un seul propriétaire pour ce nombre : `_restTick` (l'arrêt, app ouverte), `_updPill` (la pilule s'efface) et
@@ -5874,7 +5874,7 @@ function stopRest(){
   _stopRestTimerOnly();
   _reposMemoriser();             // SEANCE-REPOS-01 : un repos arrêté ne doit pas revenir au prochain démarrage
 }
-/* ⏱️ SEANCE-REPOS-01 — LE REPOS EN COURS SURVIT À LA FERMETURE DE L'APP (22/10/2026, décisions de Michel — D-099).
+/* ⏱️ SEANCE-REPOS-01 — LE REPOS EN COURS SURVIT À LA FERMETURE DE L'APP (22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md).
    iOS tue souvent une PWA restée en arrière-plan : le repos vivait en mémoire seulement (`restStartTs`, `restTot`), il
    repartait donc de zéro ou disparaissait. Il est maintenant rangé DANS la séance active, avec la structure fixée par
    Michel — `S.wkt.repos = {debut, total}` — et rien d'autre : ⛔ aucune clé de stockage nouvelle, il voyage avec `ft4_wkt`.

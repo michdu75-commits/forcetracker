@@ -542,7 +542,7 @@ const FEAT_SI = {
   testeur:       () => { try{ return typeof _isTester==='function' && _isTester(); }catch(e){ return false; } }
 };
 const NEW_FEATURES=[
-  /* ⏱️ POINT ROUGE sur SÉANCE (SEANCE-REPOS-01, 22/10/2026, décisions de Michel — D-099) — le repos survit à la fermeture de
+  /* ⏱️ POINT ROUGE sur SÉANCE (SEANCE-REPOS-01, 22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md) — le repos survit à la fermeture de
      l'app. ⛔ Sans `spot`, comme les entrées voisines : le dock n'existe que pendant un repos. ⛔ PAS DE POP-UP (R25) : rien
      n'est à faire et aucun repère n'a bougé — le repos revient là où on l'attend. */
   {id:'repos-persistant', screen:'log', desc:'Nouveau : <b>ton repos survit à la fermeture de l\'app</b>. Téléphone verrouillé, autre appli, app rechargée : en revenant, tu retrouves le chrono <b>à l\'heure réelle</b> — jamais remis à zéro. Déjà fini ? Il continue en <b>+0:45</b>… et <b>5 min après la fin</b>, il s\'arrête tout seul.'},

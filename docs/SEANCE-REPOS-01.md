@@ -11,7 +11,9 @@
   arrière-plan : à la réouverture, **le repos avait disparu** (et la série suivante repartait sans repos affiché).
 - Au **retour au premier plan** sans fermeture, `app.js` **coupait** le repos dès 5 s de dépassement : le dépassement en négatif
   (ft-v1030, ft-v1075) ne se voyait donc jamais au moment où on revient dans l'app — celui où il sert.
-- Banc `tools/banc_seance_repos.js` sur le code de master : **15 OK / 27 rouges** (les 27 rouges = ce qui est construit ici).
+- Banc `tools/banc_seance_repos.js` (version finale, 43 témoins) sur le code exact de master `f82a7c07` : **17 OK / 26 rouges** — les 26
+  rouges = ce qui est construit ici ; les 17 verts = les invariants protégés (pas de fantôme, séance intacte, « + » immobile, Milo, fin
+  de séance, superset, avance à l'exercice suivant).
 
 ## 2. La garantie d'`app.js` — pourquoi elle existait, pourquoi elle part (R30)
 
@@ -56,9 +58,21 @@ négatif jusqu'à 15 min, un choix de Claude en ft-v1030). C'est la lecture litt
 repos est abandonné ») et la seule qui donne **une** règle pour un même repos ; revenir à 15 min app ouverte tient en une
 constante, mais ferait deux règles.
 
-## 5. Les tests
+## 5. Les tests (22/10/2026, réseau coupé : garde réseau, aucune requête externe, 0 appel à Milo)
 
-⏳ *(chiffres posés à la fin de la campagne)*
+| Contrôle | Résultat |
+|---|---|
+| **Banc** `tools/banc_seance_repos.js` (blocs C-REP-*, 43 témoins : vrais gestes, vrais rechargements, horloge pilotée, réouverture hors ligne par le vrai service worker) | **17 OK / 26 rouges sur `ft-v1258`** (master `f82a7c07` exact ; les rouges = ce qui est construit) → **43 OK / 0 rouge** sur l'arbre final |
+| **Contrôle négatif** `tools/mut_seance_repos.py` (31 mutations sur des copies de l'arbre, dont 9 déguisées, 1 équivalente, 1 neutre ; chaque mutation qui doit rougir exige SON témoin) | **31 / 31 conformes** ; arbre sain 0 rouge au début et à la fin (37 min, 2 files) |
+| **Bancs voisins** (sélecteur `tools/recette_selecteur.py --diff master`, T1 + T2) | `aides_audit` 18/0 · `ux_integration` 69/0 · `lot3` 87/0 · `ux_d086` 122/0 · `rir_superset` 52/0 · `seance_ux` 69/0 · `ml_a` 34/0 · `seance_recette` 93/0 · `session_integrity` 93/0 · `cc01_dropset` 31/0 · `seance_date` 25/0 · `debrief_demande` 62/0 — **755 OK / 0 rouge** |
+| **Annexe de recette** (`tools/recette_annexe.py`, 15 suites sous garde ; `persist` est un carrefour) | **14 PASS + 1 défaut connu** (`discussions`, ses 2 rouges listés) — valeurs identiques à master rejoué le même jour : 71 541 / 76 460 / 68 781 caractères (−3 face au 21/10 : « mercredi » → « jeudi » dans le prompt) |
+| **Prompt de Milo** (contexte construit, jamais envoyé) | **identique à l'octet** entre master `f82a7c07` et la branche (77 697 caractères), avec ou sans repos rangé |
+| **Retour arrière à blanc** (ancien code, `ft4_wkt` écrit par le nouveau) | aucune erreur, aucun chrono, séance intacte ; « Terminer » enregistre une séance sans `repos` |
+| `check_regles`, `git diff --check`, auto-test du sélecteur | verts (alerte connue sans lien : `PROMPT-MILO-REEL.txt` signalé périmé — le prompt réel, lui, est identique) |
+| **Passe complète D-031** (4 conditions) | ⏳ en cours |
+
+⚠️ **Ce que les témoins ne couvrent pas** : Safari / l'iPhone réel (une PWA tuée par iOS est simulée par un rechargement ; un
+retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibilité ressentie, les limites du §6.
 
 ## 6. Ce que ce lot ne fait pas (limites écrites)
 
@@ -100,8 +114,24 @@ constante, mais ferait deux règles.
 
 ## 9. Recette sur le clone — état de préparation
 
-⏳ *(rempli à la fin)*
+- **Prêt à être généré, rien fait** : `python3 tools/clone_build.py claude/dreamy-bell-pu88ia` régénère `clone/` depuis cette
+  branche, puis le banc d'isolement (`tools/banc_clone_isolation.js`) et le tampon ; la publication du clone (un push de `clone/`
+  sur master) demande **l'accord de Michel** — et une **coordination avec Claude Nutrition**, qui attend aussi le clone pour la V2
+  (le clone actuel montre D-093, `b1840bc7`).
+- ⚠️ **Le clone ne peut pas tout recetter** : son service worker n'a **aucun cache** (D-084, par construction) — la réouverture
+  **hors ligne** ne se recette donc que sur la vraie app, une fois publiée. Tout le reste se recette sur le clone : verrouiller le
+  téléphone ou changer d'appli pendant un repos, rouvrir (temps réel) ; revenir après 4 min 59 de dépassement (négatif) puis après
+  5 min (rien) ; −15 s / +15 s / « Régler » puis fermer ; « Terminer », « Abandonner », pause pendant un repos ; le « + » central.
+- Dans le clone, Milo et la synchronisation sont coupés (D-084) : ce lot n'en dépend pas.
 
 ## 10. Règle d'or #17 — les 4 compteurs (code applicatif seulement)
 
-⏳ *(rempli à la fin)*
+- **Données persistées ajoutées : 1** — `repos` (`{debut, total}`) dans la séance active (`S.wkt`, clé `ft4_wkt` existante) ;
+  **0 clé de stockage**, 0 migration.
+- **Fichiers applicatifs touchés : 6** — `log.js`, `app.js`, `state.js` (1 ligne), `screens.js`, `coach.js`, `constants.js`
+  (les 3 derniers : textes d'aide).
+- **Lignes : +100 / −19** (net +81), dont la plupart en commentaires écrits à côté de ce qu'ils protègent ; **le code seul : +41 / −10**
+  (mesuré sans les commentaires, analyseur `acorn`).
+- **Anciens chemins supprimés ou fusionnés : 2** — l'écouteur `visibilitychange` d'`app.js` (coupure à −5 s) disparaît, fusionné
+  dans le seuil unique `REST_DEPASSEMENT_MAX` ; le `stopRest()` de démarrage est absorbé par `_reposReprendre` (même effet quand il
+  n'y a rien à reprendre).

@@ -9768,7 +9768,7 @@ function _setAppVersionEls(){
   }).catch(()=>{});
 }
 (async()=>{let cv='?';try{const ks=await caches.keys();cv=ks.find(k=>k.startsWith('ft-v'))||'?';}catch(e){}try{_setAppVersionEls();}catch(e){}console.log('[FT] boot',cv,'— _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);})();
-/* ⏱️ SEANCE-REPOS-01 (22/10/2026, décisions de Michel — D-099) : LE REPOS EN COURS SURVIT À UN REDÉMARRAGE.
+/* ⏱️ SEANCE-REPOS-01 (22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md) : LE REPOS EN COURS SURVIT À UN REDÉMARRAGE.
    `_reposReprendre()` (log.js) le reprend à l'heure réelle s'il est rangé dans la séance active et pas expiré ; sinon il fait
    exactement ce que faisait la ligne d'avant (`stopRest()` : l'écran du repos remis à zéro) et efface ce qui traînait.
    ⛔⛔ R30 — CE QUI VIVAIT ICI, ET POURQUOI IL EST PARTI. Depuis ft-v144 (01/07/2026, commit e3367525, « séance coincée au
