@@ -178,7 +178,7 @@ MUT = [
      [('app.js', "  if(!(n>0) || !_n2PortionFiable(_efR)) return nom+' — poids non vérifié.';", "  if(!(n>0)) return nom+' ('+_nbFR(p.poids)+' '+p.unite+').';")],
      ['CCLXXXV ②']),
     ('R39 D-103 : la pastille « la dernière fois » prise telle quelle redevient des GRAMMES', ['CCLXXX', 'CCLXXXIV', 'CCLXXXV'],
-     [('app.js', "    const quantite=(P && _bcQtyOrigine==='proposee' && v===P.masse)", "    const quantite=(false)")],
+     [('app.js', "    const P=_bcPortionPrise, prise=!!(P && _bcQtyOrigine==='proposee' && v===P.masse);", "    const P=_bcPortionPrise, prise=false;")],
      ['CCLXXX ④', 'CCLXXXIV ⑪', 'CCLXXXV ⑱']),
 ]
 

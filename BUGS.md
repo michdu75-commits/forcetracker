@@ -5020,3 +5020,40 @@ c'est ce qu'elle devait faire. Toujours donner la durée maximale (2 h) à une p
 
 **À quoi on le reconnaît (suite).** Une mutation qui ne fait rougir AUCUN témoin : avant de corriger l'attente, chercher si
 un autre garde couvre le même chemin (double protection) — et si aucun ne le couvre, c'est un témoin qui manque.
+
+---
+
+## §96 — ⛔⛔ UNE RELECTURE ADVERSE TROUVE CE QUE LES TÉMOINS N'AVAIENT PAS LA FORME DE VOIR : UNE MASSE ARRONDIE, UNE PORTE QUI REDÉFINIT, DES CORRECTIONS PERDUES *(22-23/10/2026, NUTRITION V2 — D-103, branche `claude/nutrition-v2`, non publié ; trouvés par une relecture indépendante, pas par un rouge)*
+
+> *(Numéro : §95 est celui de Claude Séance sur `claude/dreamy-bell-pu88ia` ; celui-ci est le §96 — à reconfirmer à l'intégration.)*
+
+**Le contexte.** D-103 (Michel, 22/10) : « 3 portions (450 g) » quand le poids d'une portion est fiable. Implémenté, banc P14
+vert (15 témoins), contrôles négatifs 16/16 et 5/5 — puis une **relecture adverse** (trois relecteurs aux angles distincts, chaque
+constat soumis à un vérificateur chargé de le réfuter) : **16 constats confirmés, 1 réfuté**. Aucun ne touchait une donnée déjà
+enregistrée ; quatre étaient des défauts de code, le reste des phrases d'aide fausses et des trous de témoins.
+
+**Les défauts de code** (tous corrigés, chacun avec son témoin P14 et sa mutation) :
+1. **La masse arrondie pour l'écran, exacte pour la ligne.** La pastille posait 49,9 (1,5 × 33,3 = 49,95 arrondi au dixième)
+   dans le champ ; l'écran calculait sur 49,9 g, le moteur enregistrait 49,95 g → **4 g de protéines à l'écran, 5 dans la
+   ligne** (mesuré par le relecteur : 1 256 cas sur 5 602 poids réalistes). Correctif : l'écran calcule sur la masse EXACTE quand
+   la pastille est prise telle quelle (`_bcApplyGrams`). Témoin ⑰, mutations MP60, MP61.
+2. **Une nouvelle porte qui redéfinit un favori.** Garder la forme « portions » à la reprise faisait passer la ligne neuve par
+   `_majDefFavori` (ft-v1186 ⑤) : un simple toucher réécrivait le poids d'un favori **sans ses valeurs**. Reprendre n'est pas
+   redéfinir — la pastille ne touche plus le favori (les portes jumelles ne le touchaient déjà pas). Témoin ⑲, MP56.
+3. **La reprise à l'écran perdait les corrections** (jalon 4) : 360 kcal recalculées là où « + Ajouter » écrivait les 300
+   corrigées. Elle les reprend désormais, comme « Modifier ». Témoin ⑤b, MP54.
+4. **Un favori par l'étoile perdait les corrections de sa ligne** (jalon 4) : il n'était plus « fiable » et « + Ajouter »
+   réécrivait le calcul. Elles sont copiées, comme sa fiche. Témoin ⑱, MP55.
+
+**Le défaut qui reste, faute de décision** : à la **2ᵉ** modification d'une ancienne ligne, sa copie d'origine (`n2.av`) n'est
+plus reportée (le moteur reconstruit `n2` à neuf) — contraire à D-101 ④. Le correctif tient en une ligne du moteur, mais le moteur
+est hors du périmètre accordé ce jour : **soumis à Michel**. En attendant, les aides ne promettent plus « Modifier garde
+l'original ».
+
+**À quoi on le reconnaît.** Des témoins verts et des mutations conformes prouvent que ce qu'on a pensé à vérifier est vérifié —
+pas que tout ce qui compte l'est. Les quatre défauts avaient la même forme : **un chemin que l'implémentation venait d'ouvrir
+(ou de rendre visible) et qu'aucun témoin n'empruntait** — une masse inexacte en binaire (toutes les masses testées étaient
+rondes), un favori du même nom qu'une ligne récente, une ligne corrigée reprise à l'écran. 👉 *Après un changement de forme
+enregistrée, chercher les écrivains et les lecteurs qui réagissent à cette forme (ici `_majDefFavori`, qui ne regardait que
+`u==='portion'`), pas seulement ceux qu'on a modifiés.*
+

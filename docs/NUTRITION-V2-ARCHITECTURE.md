@@ -713,6 +713,14 @@ n'affichent **aucune** quantité aujourd'hui (ni en grammes ni en portions) — 
 une décision à part (**demandée à Michel**). L'export garde ses colonnes brutes (`quantite`, `unite`, `portion_label`,
 `portion_poids_g`). Aucune donnée persistée nouvelle, aucune ligne enregistrée réécrite (P14 ⑭ le vérifie octet par octet).
 
-**Témoins** : `nut2_parcours.js` P14 (15 témoins, attendus écrits à la main) ; 7 témoins de la passe réécrits sur ce contrat
-(CCLXXX ④⑤, CCLXXXIV ②⑦⑪, CCLXXXV ②⑱) ; contrôles négatifs `tools/mut_nut2_parcours.py` MP36 → MP50 et
+**La relecture adverse (22-23/10, `BUGS.md` §96)** — trois relecteurs indépendants, chaque constat soumis à un vérificateur chargé
+de le réfuter : 16 confirmés, 1 réfuté. Corrigés : l'écran calcule sur la masse exacte (1,5 × 33,3 g) ; la pastille prise ne
+redéfinit pas un favori ; la reprise à l'écran et l'étoile gardent les corrections de la ligne ; « Modifier » vidé redit la quantité
+du calcul ; le message de reprise ne montre plus une pastille absente ; cinq phrases d'aide rendues vraies (« ? » sur la ligne de
+l'aliment, ml pour une boisson scannée, fiche **vérifiée**, statut sans accent, « Modifier » remplace la ligne). ⛔ **Non corrigé,
+soumis à Michel** : à la 2ᵉ modification d'une ancienne ligne, sa copie d'origine (`n2.av`) n'est plus reportée (une ligne du
+moteur, hors du périmètre accordé).
+
+**Témoins** : `nut2_parcours.js` P14 (23 témoins, attendus écrits à la main) ; 7 témoins de la passe réécrits sur ce contrat
+(CCLXXX ④⑤, CCLXXXIV ②⑦⑪, CCLXXXV ②⑱) ; contrôles négatifs `tools/mut_nut2_parcours.py` MP36 → MP61 et
 `tools/mut_temoins_v2.py` R36 → R39.

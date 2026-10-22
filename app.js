@@ -1572,11 +1572,13 @@ function _n2EntreeEcran(nom, vals, bcActif){
        portions — la forme qu'écrivent « + Ajouter » et « Tes repas habituels » pour la même ligne. Le moteur fait la
        conversion (portion → masse par le poids d'UNE portion) : les valeurs sont celles des 450 g. Tapé ou retouché,
        c'est une quantité en grammes, comme avant. */
-    const P=_bcPortionPrise;
-    const quantite=(P && _bcQtyOrigine==='proposee' && v===P.masse)
+    const P=_bcPortionPrise, prise=!!(P && _bcQtyOrigine==='proposee' && v===P.masse);
+    const quantite=prise
       ? {val:P.q.val, unite:'portion', origine:'proposee', portion:Object.assign({}, P.q.portion)}
       : {val:v, unite:(_bcNutr.base==='ml')?'ml':'g', origine:(_bcQtyOrigine==='proposee')?'proposee':'tapee'};
-    return {ok:true, entree:Object.assign(e, {mode:'pesee', fiche:_n2FicheBc(), quantite:quantite,
+    /* `pastillePortions` : la quantité vient de la pastille, aucun poids de portion n'a été DONNÉ — l'appelant ne s'en sert pas
+       pour redéfinir un favori (relecture adverse du 22/10 : un toucher réécrivait le poids d'un favori sans ses valeurs). */
+    return {ok:true, pastillePortions:prise, entree:Object.assign(e, {mode:'pesee', fiche:_n2FicheBc(), quantite:quantite,
       corrections:_n2CorrectionsEcran(_afCorr)})};
   }
   const R=_afRef;
@@ -1650,6 +1652,10 @@ function _n2Reprendre(src, saisie){
                n2f:{source:f.source, fiab:f.fiab, version:f.version||null}});
     const g=document.getElementById('af-bc-grams'); if(g) g.value='';
     _bcQtyPose=false;
+    /* Une valeur corrigée à la main reste corrigée à la reprise — la jumelle de « Modifier » (`openEditFood`) et de « + Ajouter »
+       (`_n2Reajouter`) : sans elle, l'écran recalculait 360 kcal où les deux autres portes en écrivent 300 (relecture du 22/10). */
+    _afCorr={}; (R.corrections||[]).forEach(x=>{ if(R.valeurs[x.c]===x.v) _afCorr[x.c]={v:x.v, avant:x.avant, le:x.le}; });
+    if(typeof _afMontrerCorr==='function') _afMontrerCorr();
     /* La quantité de la dernière fois, en PASTILLE (ft-v1051 : proposée, jamais imposée) — dans l'unité de la fiche.
        ⭐ D-103 : des portions FIABLES se proposent « ↩ 3 portions (450 g) » et, prises telles quelles, restent des
        portions (la ligne neuve est celle qu'écrit « + Ajouter » — la même forme par toutes les portes). ⛔ Une portion
@@ -1823,10 +1829,10 @@ function _efApplyFiche(){
   if(!_efR || !_efR.fiche) return;
   const f=_efR.fiche, q=_efR.quantite;
   if(q && q.unite==='portion'){
-    const n=numFR((document.getElementById('ef-prop')||{}).value);
-    const r=NUT2.calcule(f, {val:(n>0?n:q.val), unite:'portion', portion:q.portion});
-    const pq=document.getElementById('ef-pqte');   // D-103 : la quantité dite suit le nombre tapé
-    if(pq && n>0) pq.innerHTML='<b>'+_escFood(_n2QteTexte({val:n, unite:'portion', portion:q.portion}, true))+'</b>';
+    const n=numFR((document.getElementById('ef-prop')||{}).value), nq=(n>0?n:q.val);
+    const r=NUT2.calcule(f, {val:nq, unite:'portion', portion:q.portion});
+    const pq=document.getElementById('ef-pqte');   // D-103 : la quantité dite suit le CALCUL (le nombre tapé, ou celui d'origine)
+    if(pq) pq.innerHTML='<b>'+_escFood(_n2QteTexte({val:nq, unite:'portion', portion:q.portion}, true))+'</b>';
     _n2Afficher('ef', r, _efCorr); _efCalc=r.ok?r.valeurs:null; _efCoherence(); return;
   }
   _qtyRescale('ef', f.p100, 100, (document.getElementById('ef-grams')||{}).value, f.base, _N2_CHAMPS.filter(c=>!(c in f.p100)));
@@ -3109,9 +3115,14 @@ function _qtyRescale(pre, base, ref, saisie, unite, absents){
 }
 function _bcApplyGrams(){
   if(!_bcNutr)return;
-  /* ⭐ UN POUR-100 G EST UNE RÉFÉRENCE DE 100 — même moteur que toutes les autres routes. */
+  /* ⭐ UN POUR-100 G EST UNE RÉFÉRENCE DE 100 — même moteur que toutes les autres routes.
+     D-103 : les portions de la dernière fois prises TELLES QUELLES (le champ dit « 49,9 », arrondi au dixième) se calculent sur
+     la masse EXACTE que le moteur enregistrera (1,5 × 33,3 = 49,95 g) — sinon l'écran annonce des valeurs que la ligne n'aura
+     pas (relecture adverse du 22/10 : 4 g de protéines à l'écran, 5 dans la ligne). */
+  const s=(document.getElementById('af-bc-grams')||{}).value, P=_bcPortionPrise;
+  const saisie=(P && _bcQtyOrigine==='proposee' && numFR(s)===P.masse) ? P.q.val*P.q.portion.poids : s;
   const g=_qtyRescale('af', {kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
-                      100, (document.getElementById('af-bc-grams')||{}).value, _bcNutr.base, _bcNutr.absents);
+                      100, saisie, _bcNutr.base, _bcNutr.absents);
   _bcMontrerTotal(g||0);
   _afMontrerCorr();
 }
@@ -4544,7 +4555,8 @@ function quickFillFood(i){
   _n2Apres([it._src||it], ()=>{
     if(!_n2Reprendre(it._src||it, 'liste')) return;
     /* D-101 ① / D-103 : rien n'est pré-rempli — la quantité se CHOISIT (« Pré-rempli » disait le contraire). */
-    toast('Repris — choisis la quantité (touche la pastille ou tape-la), puis « Ajouter au journal » ✅','info');
+    const pas=['af-bc-last','af-prop-pastille'].some(id=>{ const b=document.getElementById(id); return !!b && b.offsetParent!==null; });
+    toast('Repris — choisis la quantité ('+(pas?'touche la pastille ou tape-la':'tape-la')+'), puis « Ajouter au journal » ✅','info');
   });
 }
 function quickAddFood(i){
@@ -4585,6 +4597,9 @@ function toggleFavFood(i){
       const n2={s:1, m:s.n2.m};
       if(s.n2.f) n2.f=JSON.parse(JSON.stringify(s.n2.f));
       if(s.n2.pv) n2.pv=JSON.parse(JSON.stringify(s.n2.pv));
+      /* D-103 : ses corrections aussi — sans elles, le favori d'une ligne corrigée n'était plus « fiable » (« 2 portions » sans
+         gramme là où sa ligne dit « 2 portions (200 g) ») et « + Ajouter » réécrivait le calcul au lieu de la valeur corrigée. */
+      if(Array.isArray(s.n2.corr) && s.n2.corr.length) n2.corr=JSON.parse(JSON.stringify(s.n2.corr));
       fav.n2=n2;
       ['kcal','prot','carbs','fat'].forEach(c=>{ if(!(c in s) || s[c]===undefined || s[c]===null) delete fav[c]; });
     }
@@ -6166,7 +6181,10 @@ function addFoodEntry(){
   const _rr=_n2Enregistrer(_en.entree,'addFoodEntry');
   if(!_rr.ok){ toast(_n2Message(_rr),'error'); return; }
   const _e=_rr.ligne;
-  _majDefFavori(_e);   // 🏷️ ft-v1186 — le favori ne garde pas une définition périmée (décision de Michel)
+  /* 🏷️ ft-v1186 — le favori ne garde pas une définition périmée (décision de Michel) ; ⛔ D-103 : sauf quand la quantité vient
+     de la pastille « la dernière fois » — reprendre n'est pas redéfinir (les portes jumelles « + Ajouter » et « Tes repas
+     habituels » ne touchent pas le favori non plus). */
+  if(!_en.pastillePortions) _majDefFavori(_e);
   _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
   _unhideFood(name);
   persist();
@@ -8730,7 +8748,7 @@ const APP_GUIDE_SLIDES=[
   /* 🥗 RÈGLE D'OR #11, POINT 5 — NUTRITION V2 (jalon 4 : D-099, D-101 ; D-103, Michel, 22/10/2026). SANS IMAGE, comme sa
      voisine : aucune capture de l'écran d'ajout V2 n'existe (elle se refera avec la capture Nutrition). Titre « Ta nutrition… » :
      le banc des aides exclut les aides Nutrition par leur titre (décision de Michel du 20/10). */
-  {icon:'⚖️', t:'Ta nutrition : combien tu en as mangé', cap:'<b>Les grammes d\'abord</b> (les <b>ml</b> pour une boisson) : <b>sans quantité, rien ne s\'enregistre</b> — l\'app ne devine pas ce que tu as mangé.<br><br>🍽️ <b>Une portion</b> (« 2 steaks ») se note avec son <b>nom</b> et le <b>poids d\'UNE portion</b>. Quand ce poids est connu, l\'app dit les deux : « <b>3 portions (450 g)</b> » — les grammes restent la base du calcul.<br><br>👆 <b>Rien n\'est pré-rempli</b> : poids estimé, paquet, « ↩ la dernière fois » sont des <b>pastilles</b>, un toucher suffit.<br><br>❓ Une valeur inconnue s\'affiche « <b>?</b> », jamais 0, et le jour dit « <b>Total partiel</b> ».'},
+  {icon:'⚖️', t:'Ta nutrition : combien tu en as mangé', cap:'<b>Les grammes d\'abord</b> (les <b>ml</b> juste à côté — une boisson scannée se compte en ml) : <b>sans quantité, rien ne s\'enregistre</b> — l\'app ne devine pas ce que tu as mangé.<br><br>🍽️ <b>Une portion</b> (« 2 steaks ») se note avec son <b>nom</b> et le <b>poids d\'UNE portion</b>. Quand ce poids est connu, l\'app dit les deux : « <b>3 portions (450 g)</b> » — les grammes restent la base du calcul.<br><br>👆 <b>Rien n\'est pré-rempli</b> : poids estimé, paquet, « ↩ la dernière fois » sont des <b>pastilles</b>, un toucher suffit.<br><br>❓ Une valeur inconnue s\'affiche « <b>?</b> » sur la ligne de l\'aliment, jamais 0, et le jour dit « <b>Total partiel</b> ».'},
   {icon:'🍽️', t:'Ta nutrition, de haut en bas', cap:'L\'onglet <b>Macros</b> va du <b>jour</b> vers le <b>durable</b>. En haut, ta journée : ce que tu as mangé, <b>trois anneaux</b> (protéines · glucides · lipides) et <b>« ce qu\'il te reste, en vrai »</b> — traduit en <b>tes</b> aliments, pas en grammes abstraits. Dessous, le bouton pour <b>noter</b>, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition, charge/décharge) et « Mes réglages alimentaires » (mode, jeûne, régime, allergies). Un appui les ouvre — leur titre te dit déjà l\'essentiel. 🏃 <b>Ton niveau d\'activité doit venir de toi</b> : sans lui, pas de plan inventé ; s\'il date d\'avant, une carte te demande de le <b>confirmer ou le changer</b>.'},
   {img:'guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Tape <b>Programme</b> : tout part de là. <b>📷 Importer</b> (photo ou PDF — l\'IA le lit et <b>garde tes jours</b> : Push, Pull, Legs…), <b>🏗️ Générer</b> avec Milo, <b>+ Créer</b> le tien, ou <b>💾 sauvegarder</b> la séance en cours. ⚠️ Plusieurs jours ? <b>Passe par l\'import</b> : un programme créé à la main est forcément une séance unique. \u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i> \ud83c\udfc3 <b>Le cardio d\'un programme va dans le bloc Cardio</b>, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes. Le bouton <b>✏️</b> modifie un programme enregistré : reps, <b>temps de repos</b> série par série, et un <b>💬 commentaire</b> par exercice (consigne, réglage machine…). Débutant ? Un parcours guidé t\'attend.'},
   /* 🗂️ PROGRES-SEANCES-INTEGRATION-01 (14/10) : capture refaite — l'ancienne montrait 3 onglets avec « Exercices » actif.
