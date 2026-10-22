@@ -4984,8 +4984,11 @@ produire), plafond de « +15 s » à un seul propriétaire. Témoin C-REP-D1b ; 
 `ft4_wkt`, et il s'exécute **sans geste** (l'expiration, par le tick ou le retour au premier plan). Deux onglets ouverts : l'onglet
 resté en arrière-plan, à l'expiration de SON repos, remettait sa séance périmée sur le disque — une séance déjà terminée dans
 l'autre onglet **revenait** (à terminer une 2ᵉ fois : volume et calories comptés deux fois), ou des séries validées entre-temps
-**disparaissaient** (règle d'or #3). Le filet multi-onglets existant (`_ftAutreOnglet`, state.js) ne couvre que `persist()`, qui
-suit toujours un geste. Sur master, aucun chemin n'écrivait `ft4_wkt` sans geste. **Correctif** : n'écrire QUE le champ `repos`,
+**disparaissaient** (règle d'or #3). Le filet multi-onglets existant (`_ftAutreOnglet`, state.js) ne couvre que `persist()` — qui fusionne avec le disque avant
+d'écrire. Sur master, aucun chemin n'écrivait `ft4_wkt` sans geste **hors du démarrage**, ni **en dehors de `persist()`**
+(`autoConnect` appelle `persist()` sur une réponse réseau, `_recoverDraft` écrit au démarrage d'un onglet frais — précision
+apportée par la relecture de l'avenant ; le commentaire de `_reposMemoriser` dit « `persist()`, déclenché par un geste », raccourci à
+reprendre à la prochaine modification de `log.js`). **Correctif** : n'écrire QUE le champ `repos`,
 dans la séance **du disque**, seulement si c'est la **même** séance (`runId`, sinon départ et date), et n'effacer que **son propre**
 repos. Témoins C-REP-K1 (séance terminée ailleurs : ne revient pas) · K2 (séries et repos plus récents de l'autre onglet : intacts)
 · K3 (jamais dans une autre séance) ; mutations MK1 (la version du matin) · MK2 · MK3.

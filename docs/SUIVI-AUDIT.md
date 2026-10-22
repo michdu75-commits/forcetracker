@@ -1552,7 +1552,7 @@ un retour au premier plan » : commit `e3367525` (ft-v144, 01/07), correctif à 
 cause était ailleurs (erreurs TDZ de Safari, v144 → v153). Le repos n'a jamais été enregistré : au démarrage, `stopRest()` ne
 remettait que l'écran à zéro. **Rien d'essentiel d'incompatible → pas de STOP** ; garantie remplacée, son histoire écrite à sa place.
 
-**Le correctif (décisions de Michel).** `S.wkt.repos = {debut, total}` (aucune clé nouvelle), un seul écrivain `_reposMemoriser`
+**Le correctif (décisions de Michel)** *(texte du matin, gardé — R30 ; ↪️ le seuil de 5 min « à confirmer » a été TRANCHÉ l'après-midi : 15 min, app ouverte et fermée, D-102 — voir « AVENANT » ci-dessous)*. `S.wkt.repos = {debut, total}` (aucune clé nouvelle), un seul écrivain `_reposMemoriser`
 (`ft4_wkt` seul, jamais en mode démo), une seule reprise `_reposReprendre` au démarrage (séance active, valeur lisible, non expirée ;
 pas de vibration ni d'écran GO en retard) ; **un seul seuil** `REST_DEPASSEMENT_MAX` = 5 min après la fin théorique, app ouverte comme
 au retour (⭐ il valait 15 min app ouverte, un choix de Claude en ft-v1030 — **à confirmer par Michel**) ; le brouillon de secours

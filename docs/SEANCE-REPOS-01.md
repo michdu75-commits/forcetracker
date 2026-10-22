@@ -20,7 +20,7 @@
   arrière-plan : à la réouverture, **le repos avait disparu** (et la série suivante repartait sans repos affiché).
 - Au **retour au premier plan** sans fermeture, `app.js` **coupait** le repos dès 5 s de dépassement : le dépassement en négatif
   (ft-v1030, ft-v1075) ne se voyait donc jamais au moment où on revient dans l'app — celui où il sert.
-- Banc `tools/banc_seance_repos.js` (version finale, 43 témoins) sur le code exact de master `f82a7c07` : **17 OK / 26 rouges** — les 26
+- Banc `tools/banc_seance_repos.js` (*matin* : version d'alors, 43 témoins ; 61 depuis l'avenant, §12.4) sur le code exact de master `f82a7c07` : **17 OK / 26 rouges** — les 26
   rouges = ce qui est construit ici ; les 17 verts = les invariants protégés (pas de fantôme, séance intacte, « + » immobile, Milo, fin
   de séance, superset, avance à l'exercice suivant).
 
@@ -56,8 +56,8 @@ Michel a demandé de vérifier sa raison **avant** de coder, et de s'arrêter si
 
 | Fichier | Fonction | Changement |
 |---|---|---|
-| `log.js` | `_reposMemoriser` (nouvelle) | **le seul écrivain** de `S.wkt.repos` : recopie `{debut: restStartTs, total: restTot}`, ou l'efface quand aucun repos ne tourne ; n'écrit **que** `ft4_wkt`, seulement si la valeur change, jamais en mode démo |
-| `log.js` | `_reposReprendre` (nouvelle) | **la reprise**, au démarrage : seulement si la séance est active (`_wktEnCours` : ouverte et pas en pause) et la valeur lisible (nombres, durée de 1 s à 1 h, départ pas dans le futur), et si le repos n'a pas expiré ; sinon `stopRest()` (l'écran remis à zéro, la valeur effacée). Un repos déjà fini ne rejoue ni vibration ni écran GO |
+| `log.js` | `_reposMemoriser` (nouvelle) | **le seul écrivain** de `S.wkt.repos` : recopie `{debut: restStartTs, total: restTot}`, ou l'efface quand aucun repos ne tourne ; n'écrit **que** `ft4_wkt`, là où l'état du repos change (rien quand aucun repos ne tourne ni n'était rangé), jamais en mode démo. ↪️ *Avenant (revue)* : il n'écrit plus que le **champ `repos`**, dans la **même** séance du disque, et n'efface que son propre repos (§12.3, `BUGS.md` §95) |
+| `log.js` | `_reposReprendre` (nouvelle) | **la reprise**, au démarrage : seulement si la séance est active (`_wktEnCours` : ouverte et pas en pause) et la valeur lisible (nombres, durée de 1 s à 1 h, *matin :* départ pas dans le futur — ↪️ *avenant (revue)* : un départ futur est normal après « +15 s », la garde juge le **restant**, au plus `max(durée, REST_PLUS_MAX)` + 5 s, §12.3), et si le repos n'a pas expiré ; sinon `stopRest()` (l'écran remis à zéro, la valeur effacée). Un repos déjà fini ne rejoue ni vibration ni écran GO |
 | `log.js` | `REST_DEPASSEMENT_MAX` | **900 → 300 s** (matin) **→ 900 s** (avenant D-102 : app ouverte, retour au comportement de `ft-v1258` ; la nouveauté est que la même règle s'applique app fermée) : la même règle app ouverte, au retour au premier plan et au redémarrage (un seul propriétaire, R2) |
 | `log.js` | `startRest`, `stopRest`, `setRestPreset`, `addRT`, `applyRestEdit` | un appel à `_reposMemoriser()` là où l'état du repos change (donc aussi « Passer », le tap sur GO, la fin, l'abandon, « Vider », la pause, qui passent par `stopRest`) |
 | `app.js` | démarrage | `stopRest()` + l'écouteur −5 s → **`_reposReprendre()`** ; l'histoire de la garantie écrite à sa place |
@@ -75,7 +75,7 @@ constante, mais ferait deux règles.
 | Contrôle | Résultat |
 |---|---|
 | **Banc** `tools/banc_seance_repos.js` (blocs C-REP-*, 43 témoins : vrais gestes, vrais rechargements, horloge pilotée, réouverture hors ligne par le vrai service worker) | **17 OK / 26 rouges sur `ft-v1258`** (master `f82a7c07` exact ; les rouges = ce qui est construit) → **43 OK / 0 rouge** sur l'arbre final |
-| **Contrôle négatif** `tools/mut_seance_repos.py` (31 mutations sur des copies de l'arbre, dont 9 déguisées, 1 équivalente, 1 neutre ; chaque mutation qui doit rougir exige SON témoin) | **31 / 31 conformes** ; arbre sain 0 rouge au début et à la fin (37 min, 2 files) |
+| **Contrôle négatif** `tools/mut_seance_repos.py` (*matin* : 31 mutations sur des copies de l'arbre, dont 8 déguisées — « 9 » écrit le matin était faux, recompté par la relecture de l'avenant — 1 équivalente, 1 neutre ; chaque mutation qui doit rougir exige SON témoin) | **31 / 31 conformes** ; arbre sain 0 rouge au début et à la fin (37 min, 2 files) |
 | **Bancs voisins** (sélecteur `tools/recette_selecteur.py --diff master`, T1 + T2) | `aides_audit` 18/0 · `ux_integration` 69/0 · `lot3` 87/0 · `ux_d086` 122/0 · `rir_superset` 52/0 · `seance_ux` 69/0 · `ml_a` 34/0 · `seance_recette` 93/0 · `session_integrity` 93/0 · `cc01_dropset` 31/0 · `seance_date` 25/0 · `debrief_demande` 62/0 — **755 OK / 0 rouge** |
 | **Annexe de recette** (`tools/recette_annexe.py`, 15 suites sous garde ; `persist` est un carrefour) | **14 PASS + 1 défaut connu** (`discussions`, ses 2 rouges listés) — valeurs identiques à master rejoué le même jour : 71 541 / 76 460 / 68 781 caractères (−3 face au 21/10 : « mercredi » → « jeudi » dans le prompt) |
 | **Prompt de Milo** (contexte construit, jamais envoyé) | **identique à l'octet** entre master `f82a7c07` et la branche (77 697 caractères), avec ou sans repos rangé |
@@ -162,7 +162,7 @@ retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibili
   « ? » de Séance), `tests/recette/registre.json` (lignes différentes), `docs/DECISIONS.md`, `docs/JOURNAL-DE-PARTAGE.md` et
   `BUGS.md` (ajouts au même endroit : conflits de texte triviaux, garder les deux).
 - **Numéros** : Nutrition a pris D-096 → D-099 puis **D-101** — **D-100 reste celui de ce lot** ; Nutrition a un `BUGS.md` §92 → ce
-  lot écrit **§91 et §93**. Le code ne cite aucun numéro.
+  lot écrit **§91 et §93**, puis **§95** et **D-102** pour l'avenant (Nutrition V2 a depuis pris le §94). Le code ne cite aucun numéro.
 - **À rejouer après toute fusion** : le banc `tools/banc_seance_repos.js`, les voisins du sélecteur et la passe complète (D-031).
 
 ## 12. Avenant du 22/10 après-midi — 15 min (D-102), la protection des calories, et deux défauts trouvés par la revue
@@ -224,7 +224,7 @@ registre a un identifiant propre (`SEANCE-REPOS-PERSIST-01`, l'ancien doublonnai
 | Contrôle | Résultat |
 |---|---|
 | **Banc** `tools/banc_seance_repos.js` (61 témoins) | **61 OK / 0** sur l'arbre final · **46 / 15 rouges** sur le code du matin (`e4afb36b` : 900 s, aides, « +15 s », deux onglets — et I1, dont deux variantes ne peuvent pas exister à 5 min ; ses calories y étaient déjà identiques) · **25 / 36 rouges** sur master `f82a7c07` (ft-v1258) |
-| **Contrôle négatif** `tools/mut_seance_repos.py` (51 mutations, chacune exige SON témoin) | «MUTATIONS» |
+| **Contrôle négatif** `tools/mut_seance_repos.py` (52 mutations sur des copies de l'arbre : 49 doivent rougir et exigent chacune SON témoin, 3 doivent rester vertes — 1 équivalente, 2 neutres) | «MUTATIONS» |
 | **Bancs voisins** (sélecteur, T1 + T2) sur l'arbre final (rejoués APRÈS les deux correctifs de la revue) | `aides_audit` 18 · `ux_integration` 69 · `lot3` 87 · `ux_d086` 122 · `rir_superset` 52 · `seance_ux` 69 · `ml_a` 34 · `seance_recette` 93 · `session_integrity` 93 · `nut_punch01` 36 · `cc01_dropset` 31 · `seance_date` 25 · `debrief_demande` 62 — **791 OK / 0 rouge** |
 | **Annexe de recette** (15 suites) | **14 PASS + 1 défaut connu** (`discussions`) — valeurs **identiques à master rejoué à la même minute** (71 725 / 76 644 / 68 781 ; l'écart avec ce matin vient de l'heure, pas du lot) |
 | **Prompt de Milo** | **identique à l'octet** à master (77 697 caractères), avec ou sans repos |

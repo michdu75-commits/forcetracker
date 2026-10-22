@@ -14,7 +14,7 @@ Usage : python3 tools/mut_seance_repos.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1
         MUT_PARTS=N MUT_PART=k : ne joue que la k-ieme part (1..N) des mutations choisies — pour couper une longue campagne en
         processus paralleles (chacun mesure et rejoue l'arbre sain).
 [!!] CHAQUE RESULTAT EST IMPRIME DES QU'IL TOMBE (22/10 apres-midi) : la 1re version n'imprimait qu'a la fin — une campagne de
-     51 mutations coupee par une limite de temps a 2 h a tout perdu, aucun resultat ecrit. Le bilan final reste imprime a la fin.
+     52 mutations coupee par une limite de temps a 2 h a tout perdu, aucun resultat ecrit. Le bilan final reste imprime a la fin.
 """
 import os, re, shutil, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
