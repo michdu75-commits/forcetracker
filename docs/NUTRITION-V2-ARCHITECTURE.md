@@ -6,6 +6,13 @@
 > journaux historiques ; *« une V2 sans récupération fiable de l'historique ne sera pas considérée comme terminée »*.
 > Les mesures sur un journal réel (§4.3) viennent de l'extrait du 20/10, **lu sans écrire** ; ce document n'en porte que
 > des **agrégats** (aucun nom d'aliment, aucune ligne). Le détail ligne par ligne reste hors du dépôt (`audits/`, exclu).
+>
+> ↪️ **Mise à jour du 22/10 (08:50 UTC) — répartition décidée par Michel (D-098)** : l'inventaire, la sécurisation et la
+> récupération des anciens journaux passent à **Claude Principal**. Nutrition V2 garde le moteur et un **adaptateur des
+> anciennes lignes en lecture seule** (§2.5), *« sans jamais modifier les originaux ni inventer de quantités manquantes »*.
+> Les §4 à §7 (classement A/B/C/D, migration, scénarios zéro perte) restent la **proposition de référence** pour ce
+> chantier, que Nutrition V2 ne mène plus. **Jalon 2 livré** : `nutrition-v2.js` (non branché à l'app), banc 53 / 0,
+> contrôle négatif 20 / 20 (§8).
 
 ---
 
@@ -63,7 +70,9 @@ par un garde ajouté après coup.
   journaux sur deux appareils.
 - **Les champs actuels gardent leur sens** et **sont** les données V2 : `date`, `meal`, `name`, `kcal` `prot` `carbs`
   `fat`, `q` `u`, `per100`, `sourceId`, `etat`, `portionLabel` `portionWeightG`, `id`, `ts`. Rien n'est recopié.
-- **Chaque ligne gagne un objet `n2`** qui porte seulement ce qui manque à V1 :
+- **Chaque ligne ÉCRITE PAR V2 porte un objet `n2`** qui porte seulement ce qui manque à V1. ⛔ Une **ancienne** ligne
+  n'est jamais réécrite par V2 : l'adaptateur en calcule une vue à la volée (§2.5) ; l'enrichir ou la réparer relève de
+  la récupération (Claude Principal, D-098), avec ton feu vert.
 
 ```
 n2 = {
@@ -133,6 +142,23 @@ fonction, avec un objet **complet** construit par l'appelant — **jamais** l'é
   servi). Un favori sans fiche vérifiée est un modèle **déclaré**, qui le dit à chaque ajout.
 - **Repas habituel** : toujours **déduit** du journal (aucun stockage). Le rejouer recalcule chaque élément pesé ; un
   élément déclaré est recopié **avec** son statut ; l'écran d'ajout n'est jamais lu (D-094).
+
+### 2.5 L'adaptateur des anciennes lignes — `lireAncienne(ligne, ctx)`, en lecture seule (construit au jalon 2)
+
+- **Il ne modifie rien** : ni champ, ni sous-objet ; la vue qu'il rend ne partage aucun objet avec la ligne (banc : 16
+  lignes gelées, 0 octet changé ; mutation « il écrit sur l'ancienne ligne » : 18 témoins rouges).
+- **Il n'invente rien** : quantité absente → absente ; unité absente → absente (jamais « g ») ; « 1 portion » sans poids
+  → une portion sans poids ; repas inconnu ou ancien (`brunch`, `midi`) → tel quel, absent → `null` (jamais
+  « déjeuner ») ; valeur illisible → absente et notée (jamais 0).
+- **Les valeurs de la vue sont celles enregistrées**, au chiffre près. `q`, `u`, `per100` sont **notés** : ils ne servent
+  à recalculer que si la ligne est **recalculable** — fiche retrouvée **à l'identique** (±0,05) dans la table CIQUAL
+  embarquée que nomme `sourceId`, et valeurs qui en découlent exactement. Ce n'est **pas** un classement de
+  récupération (A/B/C/D) : c'est la seule condition pour qu'une modification future de la quantité repasse par le calcul.
+- **Ce qu'il note** (une liste de codes, rien de plus) : `sans-id`, `sans-version`, `sans-quantite`,
+  `quantite-sans-unite`, `unite-sans-quantite`, `portion-sans-poids`, `fiche-sans-quantite`, `quantite-sans-fiche`,
+  `fiche-non-verifiee`, `repas-absent`, `date-illisible`, `valeur-illisible:<champ>`, `saisie-inconnue`.
+- `lireJournal` lit tout un journal : **une vue par ligne, dans l'ordre**, les lignes illisibles comprises (elles
+  donnent une vue en échec, elles ne disparaissent pas) ; deux copies identiques restent deux vues.
 
 ---
 
@@ -324,10 +350,10 @@ reste dans l'instantané (§6.1).
    la suite. Il n'est **jamais** réécrit. En plus, l'app **propose** de télécharger l'export complet (qui existe déjà).
    Si l'instantané échoue (navigation privée, stockage refusé) : **aucune correction n'est proposée**, la conversion
    reste en mémoire.
-3. **Conversion sans perte** : chaque ligne sans `n2` en reçoit un, calculé par une fonction pure. **Le signal est
-   l'absence, pas un drapeau** (même principe que la compatibilité des lignes et la migration des pots IA, écrit dans
-   `state.js` : *« ce n'est pas un drapeau « migration faite » »*). Une ligne revenue du nuage sans `n2` est convertie à
-   son tour. Aucun chiffre ne bouge à cette étape.
+3. **Lecture sans perte** : V2 lit chaque ancienne ligne par l'adaptateur (§2.5), **sans rien y écrire** ; une ligne
+   revenue du nuage se lit de la même façon. *(Version d'origine de cette étape : « chaque ligne sans `n2` en reçoit
+   un » — remplacée le 22/10 par la consigne de Michel : on ne modifie jamais les originaux.)* Les étapes 2 et 4 à 7
+   relèvent de la récupération, chantier de Claude Principal (D-098).
 4. **Inventaire** : une fiche par ligne d'origine (id, empreinte, forme, classe, règles, preuve) ; contrôle : autant de
    fiches que de lignes, par jour et par repas.
 5. **Propositions** (B, C) : calculées à partir de l'original, avec leur règle, leur preuve et leurs chiffres avant /
@@ -394,8 +420,8 @@ prouvent **sans le clone** (bancs sur la branche, données fictives) ; le clone 
 | Jalon | Contenu | Preuve de sortie |
 |---|---|---|
 | **J1** ✅ | contrat, schéma, inventaire V1, matrice A/B/C/D mesurée (ce document) | — |
-| **J2 — moteur** | `nut2Calcule`, l'écrivain, les accesseurs, la conversion sans perte ; **un seul fichier applicatif neuf**, `nutrition-v2.js`, à la racine | banc Node + oracle écrit à la main ; mutations ; aucune ligne V1 modifiée par la conversion |
-| **J3 — récupérateur** | règles B/C/D génériques portées depuis la v1.2, inventaire, instantané IndexedDB, retour arrière, relance | jeux G0 → G8 ; **même verdict que la v1.2** sur la copie réelle autorisée (hors dépôt), aux écarts D-095 près ; banc d'isolement du clone étendu à l'instantané |
+| **J2 — moteur** ✅ | `calcule`, l'écrivain des nouvelles lignes, l'adaptateur des anciennes en lecture seule ; **un seul fichier applicatif neuf**, `nutrition-v2.js`, à la racine, **non branché** | banc `tools/banc_nut2_moteur.js` **53 / 0** (oracle écrit à la main, générations fictives) ; contrôle négatif `tools/mut_nut2_moteur.py` **20 / 20** ; aucune ancienne ligne modifiée |
+| **J3 — récupérateur** ↪️ | **confié à Claude Principal (D-098)** : inventaire, sauvegarde, réparations, migration — la matrice §4 et les règles §5-§7 lui servent de proposition | — |
 | **J4 — écrans sur le clone** | recherche, quantité (g / ml / portion), ajout, historique, favoris-modèles, modification avec corrections tracées, écran « ton historique » (A/B/C/D, accord, retour arrière) | bancs d'écran ; passe complète D-031 ; **publication du clone avec ton feu vert** ; recette iPhone |
 | **J5 — recette adverse** | V1 contre V2 sur toutes les générations, copie réelle, 8 000 lignes, hors ligne, stockage plein, interruption | tous les invariants du §7 ; passe complète |
 | **J6 — migration réelle préparée** | procédure par compte, sauvegarde, retour arrière, format nuage, branchement au chemin d'identité | dossier + répétition à blanc ; **aucun lancement sans ton feu vert** |
@@ -452,6 +478,10 @@ n'existe pour un lot de cette taille** : les durées de développement ci-dessou
 | J6 migration préparée | 3 h | 1 h 30 | 4 h 30 |
 | **Total** | **32 h** | **11 h 30** | **43 h 30** |
 
+**Réel du jalon 2** (D-088 ⑤) : estimé 6 h 30 (5 h + 1 h 30) ; réel **≈ 13 min** (08:38 → 08:51 UTC), sur un périmètre
+réduit — moteur non branché, récupération passée à Claude Principal. Mes estimations de développement sont trop hautes ;
+celles des jalons 4 à 6 seront recalibrées sur cette mesure.
+
 **Risque de reprise, à part** : retours de ta recette iPhone sur les écrans (+4 à 6 h) · écarts entre les règles v1.2
 (Python) et leur portage (+2 h) · toute publication sur master pendant une passe la périme (+91 min) · le chemin
 d'identité de Principal, dont la date ne dépend pas de ce chantier. **Recette iPhone et décisions : hors estimation.**
@@ -505,7 +535,7 @@ Q-M : l'avertissement « sec ») ; au jalon 6, la date de fermeture des écritur
   avant le chemin d'identité).
 - Les fragilités du §3.5 sont lues dans le code, **pas reproduites**.
 
-**Règle d'or #17 (prévision, code applicatif)** : données persistées ajoutées **1** (l'instantané IndexedDB) + le champ
-`n2` sur les lignes existantes, sans nouvelle clé de journal · fichiers applicatifs **+1** (`nutrition-v2.js`), modifiés
-ensuite : `app.js`, `screens.js`, `state.js`, `setup.js`, `index.html`, `sw.js` · lignes : à mesurer au jalon 4 ·
-anciens chemins supprimés : **six** visés (§8).
+**Règle d'or #17 — jalon 2 (mesuré, code applicatif)** : données persistées ajoutées **0** · fichiers applicatifs touchés
+**1** (`nutrition-v2.js`, nouveau, non servi) · lignes **+330 / −0** · anciens chemins supprimés **0** (rien n'est branché ;
+les six chemins visés au §8 partent à la bascule). *Prévision révisée* : l'instantané IndexedDB et toute écriture sur les
+anciennes lignes sortent du périmètre de V2 (D-098).

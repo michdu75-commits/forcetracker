@@ -37,7 +37,10 @@ ZONES_FICHIER = {'worker.js': 'fichier:worker.js', 'Code.js': 'fichier:Code.js',
                  'data/alias.json': 'fichier:data/alias.json',
                  # la base fast-food se range face à CIQUAL selon D-042 : un diff qui ne touche qu'elle
                  # doit déclencher les bancs multi-source et D-042 (FS-05B, NUT-D042-01)
-                 'data/marques.json': 'fichier:data/marques.json'}
+                 'data/marques.json': 'fichier:data/marques.json',
+                 # Nutrition V2 (jalon 2, 22/10/2026) : le moteur n'est pas encore servi (hors de SERVIS), mais un diff
+                 # qui ne touche que lui doit déclencher son banc (NUT2-MOTEUR-01)
+                 'nutrition-v2.js': 'fichier:nutrition-v2.js'}
 # déclarations de premier niveau : `function f(`, `async function f(`, `const f =`, et les fonctions
 # nommées auto-exécutées au démarrage `(function _recoverDraft(){…})()` / `(async function autoConnect(`
 DECL = re.compile(r'^\(?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=')
