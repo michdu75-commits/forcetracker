@@ -4976,7 +4976,47 @@ CCLXXXV ⑱. *Un vert qui compare un état à lui-même ne mesure rien.* Le mêm
 
 **Le correctif de méthode.** Chaque geste qui doit écrire **compte** la ligne qu'il ajoute (`ajoute`, toasts captés) ; un
 témoin qui juge « rien ne part » vérifie l'absence d'ajout, pas la dernière ligne. Témoins des six défauts : `B-NV2P P13 ①→⑨`
-(`tests/parcours/nut2_parcours.js`), mutations **MP23 → MP33** ; décisions consignées dans **D-101 ⑪ → ⑯** (PROPOSÉ).
+(`tests/parcours/nut2_parcours.js`), mutations **MP23 → MP33** (puis MP34, MP35, ci-dessous) ; décisions consignées dans **D-101 ⑪ → ⑯** (PROPOSÉ).
 
 **À quoi on le reconnaît.** Un témoin réécrit qui passe du premier coup sur un comportement qui a CHANGÉ : avant de le croire,
 lui faire rater exprès (mutation) — et vérifier qu'un geste censé écrire a **écrit**.
+
+**Puis le contrôle négatif de ces témoins réécrits** (`tools/mut_temoins_v2.py` : 34 mutations de `app.js`, chacune sur
+une copie, réseau isolé, passe réduite aux blocs visés) : **34/34** — mais le premier jet en ratait six, et **aucune n'était
+un défaut du code** :
+- quatre attentes visaient un témoin qui ne porte pas cette garantie (la mutation était attrapée ailleurs). L'un d'eux
+  (CCLXXX ①) restait vert pour une AUTRE raison : la portion était refusée **faute de nom**, pas faute de poids — il lit
+  désormais la raison du refus ;
+- ⭐ **une double protection cache chacun de ses gardes** : CCLXXI ⑤ est tenu par le garde de l'onglet ET par la relecture
+  qui remet le poids à zéro — retirer l'un ne fait rien rougir. Le chemin où le garde de l'onglet est SEUL (×1, D-101 ⑬)
+  n'avait **aucun** témoin : `B-NV2P P13 ⑪` + MP35 ;
+- ⭐ **une mutation que rien ne voit est une garantie sans témoin**, pas une mutation ratée : l'origine d'une reprise à
+  l'écran n'était lue par aucun témoin de la passe (elle l'était par `nut2_parcours` P12 ⑥ : MP34) ;
+- et un témoin **périmé par mon propre correctif** de l'après-midi : B-NM6-Q ② lisait la ligne de proposition (`af-prop`)
+  qu'une reprise sans quantité n'affiche plus (elle ouvre la saisie à la main, poids demandé) — réécrit, mutation N16.
+
+**Et un rouge que mon propre contrôle laissait passer.** Pour que CCCV ㉒ lise les origines dans le code, la reprise à
+l'écran a re-séparé ses deux appels à `_ref100` (« reprise », « historique ») — et CCXC, que j'avais passé à « 8 portes »
+le matin quand ils n'en faisaient qu'un, a rougi : le code était revenu à **9 appels**, comme sur master. Le contrôle
+négatif ne l'a pas vu : son arbre sain ne vérifiait **que** les témoins attendus. CCXC est revenu à 9, avec sa raison ;
+l'outil refuse désormais de juger si l'arbre sain n'est pas **entièrement** vert ; mutation R35 (une porte qui contourne
+`_ref100`). *Un arbre « sain » qui rougit ailleurs n'est pas sain.* C'est la passe complète qui l'a trouvé — c'est son
+travail.
+
+**Et une suite annexe restée sur le contrat V1.** Le bloc 12 de `tests/calculs/runner.js` (« la provenance de chaque ligne »,
+hors passe complète) attendait une saisie SANS poids enregistrée, la provenance « scan » et un drapeau `modifie` : rouge sous
+V2, et d'abord **masqué** par une « erreur d'infrastructure » (la suite avait tourné pendant que je modifiais le dépôt). Réécrit
+sur les mêmes garanties (rien ne part sans poids ; la quantité tapée, la source et le pour-100 g gardés ; une retouche est une
+correction tracée ; la provenance ne survit pas), avec de vraies frappes ; contrôle négatif `tools/mut_calculs_provenance.py`
+(la provenance est rendue DEUX fois — à l'ouverture et à l'enregistrement : sa mutation retire les deux).
+
+**Piège d'outillage, à ne pas refaire.** Lancé avec `TMPDIR` dans le scratchpad (≈ 100 caractères), Chromium ne démarre
+pas : il crée une socket sous `TMPDIR`, une socket Unix est limitée à 108 caractères, il meurt (SIGTRAP) — et **tous** les
+témoins sortent « plantage ». L'outil a refusé de conclure (arbre sain non vert) : c'est ce qu'il devait faire. Correctif :
+un `TMPDIR` court (un lien vers le même dossier). **Et le second, le même soir** : une passe complète lancée en tâche de
+fond **sans limite de durée explicite** est coupée à **30 min** par l'environnement — le navigateur meurt, et chaque module
+suivant sort « a PLANTÉ après 0 témoin ». La passe a refusé de se dire verte (SEC-04, pas de ligne de total) : là encore,
+c'est ce qu'elle devait faire. Toujours donner la durée maximale (2 h) à une passe lancée en fond.
+
+**À quoi on le reconnaît (suite).** Une mutation qui ne fait rougir AUCUN témoin : avant de corriger l'attente, chercher si
+un autre garde couvre le même chemin (double protection) — et si aucun ne le couvre, c'est un témoin qui manque.

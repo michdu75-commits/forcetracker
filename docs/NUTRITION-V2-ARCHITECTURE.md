@@ -626,7 +626,9 @@ D-101 ⑪ → ⑮) : le contrôle de masse était aveugle sur la quantité de «
 312 kcal » s'enregistrait) ; une reprise figée restait redimensionnable par un chemin interne ; « Mettre X kcal » dans
 « Modifier » affichait X et enregistrait la frappe précédente, et la jumelle de D-101 ⑧ y manquait ; l'ancienne provenance
 `scan`, refusée par le moteur, servait encore de repli au code-barres (rien ne s'écrivait) ; « Modifier » sans geste
-réécrivait l'origine de la quantité en « tapée ». Figé par `nut2_parcours.js` P13 (10 témoins, 11 mutations MP23 → MP33).
+réécrivait l'origine de la quantité en « tapée ». Figé par `nut2_parcours.js` P13 (11 témoins, 13 mutations MP23 → MP35).
+Les témoins de la passe complète réécrits sur le contrat V2 sont eux-mêmes éprouvés : `tools/mut_temoins_v2.py`, 33 mutations
+de `app.js`, **34/34** (le premier jet en ratait six — des attentes à revoir, aucun défaut du code ; `BUGS.md` §94).
 ⚠️ **Un écart reste ouvert, à trancher par Michel (D-101 ⑯)** : la reprise **à l'écran** d'une ligne V2 pesée en portions
 propose sa masse (« ↩ 450 g ») quand les reprises hors écran gardent « 3 parts » — mêmes valeurs, forme différente.
 
