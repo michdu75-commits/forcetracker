@@ -114,3 +114,14 @@ l'original » : cette règle naïve efface les repas saisis depuis la bascule (p
   rien de lisible.
 - Lecture de la console Supabase (agrégats seulement) si le miroir doit entrer dans la comparaison.
 - Décision produit : traces de suppression et manifeste de migration côté V2 (périmètre Claude Nutrition).
+
+## A2 — la carte Admin « Inventaire Nutrition » (préparée le 22/10, NON PUBLIÉE)
+
+Branche `claude/nut-inventaire-carte-admin` (`0fb75f7c`). Profil → Admin → groupe « Surveillance », deux boutons :
+« 📊 Compter les journaux » (`nutInventory`) et « 🗄️ Comparer avec les sauvegardes » (`nutBackupAudit`, jusqu'à
+5 min). Réservée à l'admin ; même jeton et même mémoire que les autres cartes (`_adminTok`, oublié s'il est refusé),
+mais envoyé **dans le corps d'un POST**, jamais dans l'adresse ; une **liste blanche de nombres** (un champ inattendu
+du serveur ne s'affiche pas), valeurs échappées ; aucun résultat rangé sur l'appareil. Banc
+`tools/banc_nut_inventaire_admin.js` 20/0, contrôle négatif `tools/mut_nut_inventaire_admin.py` 10/10.
+⛔ Publication = nouvelle version de l'app (`sw.js`, passe complète) : **accord supplémentaire de Michel requis**.
+
