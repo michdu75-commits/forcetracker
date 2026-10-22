@@ -3640,3 +3640,6 @@ macro inconnue (désormais absente, plus jamais écrite 0) y compte quand même 
 n'est qu'une correction d'historique, et s'appuie-t-il sur un total où une macro manque sans le savoir ? Vérifiable par du code : la présence et le
 calcul oui (contexte simulé) ; la lecture par Milo ⚠️ seulement avec un appel réel (banc R34). État : **à trier** — à trancher par Michel (dire
 « corrigé » ou « partiel » à Milo = changement de contexte, banc avant / après).
+↪️ *22/10, jalon 4 (branche `claude/nutrition-v2`) : c'est désormais le cas réel côté écran — une ligne V2 dont une macro est inconnue n'a plus la
+clé, et le haut du journal écrit « total partiel ». **Milo, lui, ne le sait pas** : `coach.js` additionne toujours `(+e.kcal||0)` (inchangé, hors
+périmètre du jalon). Le doute reste entier, et il a maintenant un cas concret à mesurer.*

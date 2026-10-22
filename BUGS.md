@@ -4916,3 +4916,31 @@ désormais cette garde devant, et rien d'autre ; son outil de mutations (`tools/
 ligne et la suit. Éprouvé : vert sur master, vert sur la branche, **rouge quand l'exclusion de COHERENT est retirée**.
 ⚠️ La simulation du 20/10 annonçait « 0 témoin existant rouge » pour cette forme : elle n'avait rejoué que les blocs CCXCI,
 CCCV, CCXCIX et CCCII. *Un « aucun témoin ne rougit » ne vaut que pour les témoins rejoués.*
+
+## §92 — ⛔ UN PARCOURS ENCHAÎNÉ SUR UNE SEULE PAGE MASQUE UNE DÉPENDANCE D'ORDRE : LA TABLE CIQUAL N'ÉTAIT CHARGÉE QU'À LA PREMIÈRE RECHERCHE *(22/10/2026, NUTRITION V2 jalon 4 — branche `claude/nutrition-v2`, non publié ; deux défauts de MON branchement, attrapés avant tout commit)*
+
+**Le défaut.** V2 ne recalcule une ancienne ligne que si sa fiche est **retrouvée à l'identique** dans la table CIQUAL embarquée
+(`NUT2.reprise`, D-095). Or `_ciqualCharger()` n'était appelée **qu'à la première recherche** (`_afSuggInput`). Mesuré par sonde,
+sur une page neuve, une ancienne ligne CIQUAL parfaitement vérifiable : « Mes aliments » → reprise **figée** ; « + » → ligne
+**déclarée** ; « Modifier » → **non vérifiée**. Après une seule recherche, les trois gestes la recalculaient. *Le même aliment se
+recalculait ou non selon un geste fait avant, invisible.*
+
+**Pourquoi le banc ne l'a pas vu.** Le banc des parcours V2 jouait la recherche (P2) **avant** la modification d'une ancienne ligne
+vérifiée (P6 ⑤), sur la **même page** : P2 chargeait la table, P6 ⑤ passait. ⭐ *Un parcours enchaîné prouve ce qui marche dans
+CET ordre ; une dépendance d'ordre ne se voit que sur une page NEUVE.* Le défaut a été trouvé en **lisant le code** (« quand la
+table est-elle chargée ? »), puis mesuré — pas par un rouge.
+
+**Le correctif.** Une reprise qui a besoin de la table l'**attend** (`_n2Apres`, locale, une fois par session) : « Mes aliments »,
+« + », le repas habituel, « Modifier ». Hors ligne sans table, la ligne reste non vérifiée — le repli sûr, jamais l'inverse.
+Témoins sur **page neuve** : `B-NV2P P11 ① ②`, `B-NM6-S S1` / `B-NM6-A A1` ; mutations MP13 et N12.
+
+**Et le second, dans la même lecture : redessiner effaçait la quantité tapée.** Une reprise **figée** (ancienne ligne sans fiche
+vérifiée) : on tape 150, on retouche les calories — le `change` rappelle `_afMajAncre(true)`, qui **reconstruit** le bloc ; le
+champ revenait vide, et « Ajouter » répondait « Combien en as-tu mangé ? ». *C'est ft-v1159 (« la frappe ne reconstruit jamais le
+bloc »), réintroduit par un bloc neuf.* Et dans la même zone, un vrai trou de données : une AUTRE quantité que celle notée,
+valeurs non retouchées, enregistrait 150 g avec les calories de 200 g. Corrigé (D-101 ⑧) : la quantité tapée survit, une autre
+quantité exige des valeurs retouchées. Témoins `B-NV2P P11 ③ ④`, `B-NM6-A A2b` ; mutations MP14, MP15, N13.
+
+**À quoi on le reconnaît.** Une fonction pure qui reçoit un **contexte** (`ctx.ciqual`) : si ce contexte se remplit tard, la
+fonction rend un verdict différent sans que rien ne le dise. 👉 *Avant de faire confiance à un contexte, chercher QUAND il se
+remplit.*
