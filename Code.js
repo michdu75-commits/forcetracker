@@ -1360,6 +1360,13 @@ function doPost(e) {
     if (!body.authCode && e.parameter.authCode) body.authCode = e.parameter.authCode;
   }
 
+  /* 📊 NUT-INVENTAIRE — LECTURE SEULE DE BOUT EN BOUT (correction du 22/10/2026, demandée par Michel).
+     Ces deux routes sont servies ICI, AVANT `ensurePremiumEmails_()` : ce garde-fou peut écrire
+     PREMIUM_EMAILS (et journaliser la liste des adresses premium). Servies plus bas, elles auraient
+     pu provoquer une écriture INDIRECTE. Avant elles, seule la lecture de la requête s'exécute. */
+  if (body.action === 'nutInventory')   return handleNutInventory_(body);
+  if (body.action === 'nutBackupAudit') return handleNutBackupAudit_(body);
+
   ensurePremiumEmails_();
 
   // ── GARDE-FOU COÛT IA ─────────────────────────────────────────────
@@ -2035,6 +2042,207 @@ function handleMigStats_(body) {
   try { Object.keys(sp.getProperties()).forEach(function(k){ if (k.indexOf(_JET_PREFIXE_) === 0) n++; }); } catch (e2) {}
   return json_({status:'ok', jour:m.date || '', avecJeton:m.avec || 0, sansJeton:m.sans || 0,
                 jetonsEnRegistre:n, ferme:_MIG_FERME_});
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════
+   📊 NUT-INVENTAIRE — COMPTAGE EN LECTURE SEULE DES JOURNAUX NUTRITION (22/10/2026, corrigé le même jour)
+   Branche isolée claude/nut-inventaire-lecture-seule. ⛔ NE PAS DÉPLOYER sans l'accord de Michel.
+   Routes ADMIN (jeton IDEES_TOKEN2), servies EN TÊTE de doPost, avant ensurePremiumEmails_ (qui
+   peut écrire) : la lecture seule vaut depuis l'entrée HTTP, pas seulement dans le handler.
+   ⛔⛔ LECTURE SEULE : uniquement getKeys / getProperty / DriveApp getFolderById, getFoldersByName,
+      getFiles, getBlob. Aucun setProperty, deleteProperty, createFile, setContent, setTrashed,
+      aucun envoi de courriel, aucune écriture de classeur, aucun appel réseau, aucun Logger.
+   ⛔⛔ AUCUNE DONNÉE PERSONNELLE EN SORTIE : jamais d'e-mail, de nom d'aliment, de contenu de repas.
+      Les e-mails servent de clé EN MÉMOIRE pour comparer les sources, ils ne sortent jamais. En cas
+      d'erreur, un CODE fixe, jamais le message (un message d'erreur peut citer la donnée lue).
+   ⚠️ Échelle : parcourt tous les comptes en une exécution (volume actuel faible). */
+function _nutPourChaqueCompte_(sp, fn) {
+  var keys = sp.getKeys();
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (k.indexOf('u_') !== 0) continue;             // uniquement les comptes utilisateurs
+    var data = null;
+    try { data = JSON.parse(_unpackUser_(sp.getProperty(k))); } catch (e) { data = null; }
+    if (!data || typeof data !== 'object') { fn(k.slice(2), null, null); continue; }
+    var prof = data.profile || {};
+    fn(k.slice(2), Array.isArray(prof.foodLog) ? prof.foodLog : [], Array.isArray(prof.savedFoods) ? prof.savedFoods : []);
+  }
+}
+/* Les DEUX clés d'une ligne pour comparer les sources : son id (s'il est valide) ET son empreinte
+   (tous les champs sauf l'id, triés : la même forme que _empreinteFood dans state.js).
+   ⚠️ Pourquoi pas l'id seul : une ANCIENNE ligne reçoit un id ALÉATOIRE à chaque chargement de l'app,
+   écrit seulement au premier enregistrement (mesuré dans Chromium le 22/10). Le même repas peut donc
+   porter un id différent dans chaque sauvegarde et au serveur ; par l'id seul, il serait compté absent
+   (et une fois par sauvegarde). Pourquoi pas l'empreinte seule : un repas MODIFIÉ garde son id.
+   ⛔ Restent EN MÉMOIRE : jamais rendues ni journalisées. */
+function _nutIdLigne_(e) {
+  return (e && typeof e.id === 'string' && e.id.length >= 8) ? e.id : null;
+}
+function _nutEmpreinte_(e) {
+  function tri(v) {
+    if (Array.isArray(v)) return v.map(tri);
+    if (v && typeof v === 'object') {
+      var o = {};
+      Object.keys(v).filter(function(k) { return k !== 'id'; }).sort().forEach(function(k) { o[k] = tri(v[k]); });
+      return o;
+    }
+    return v;
+  }
+  try { return JSON.stringify(tri(e)); } catch (x) { return 'illisible:' + Math.random(); }  // jamais égale : comptée, pas cachée
+}
+/* Les deux clés d'une ligne, calculées UNE fois (l'empreinte coûte : on la lit dans chaque sauvegarde). */
+function _nutCles_(e) { return { id: _nutIdLigne_(e), emp: _nutEmpreinte_(e) }; }
+/* Un ensemble de lignes vu par ses deux clés : `ajoute(c)` l'enregistre, `vu(c)` est vrai si l'id OU l'empreinte y est. */
+function _nutEnsemble_() {
+  var ids = Object.create(null), emps = Object.create(null);
+  return {
+    vu: function(c) { return !!((c.id && ids[c.id]) || emps[c.emp]); },
+    ajoute: function(c) { if (c.id) ids[c.id] = 1; emps[c.emp] = 1; }
+  };
+}
+
+function handleNutInventory_(body) {
+  if (!_checkIdeesTok_(body && body.token)) return json_({status:'error', error:'token'});
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var comptes = 0, avecFoodLog = 0, avecSavedFoods = 0, entreesTotal = 0, entreesValides = 0;
+    var sansDate = 0, sansId = 0, auPlafond = 0, datesAberrantes = 0, jsonIllisible = 0, videMaisSaved = 0, idsEnDouble = 0;
+    var jours = Object.create(null), annee = Object.create(null);
+    var minD = null, maxD = null;
+    var buckets = {'0':0, '1-10':0, '11-50':0, '51-200':0, '201-1000':0, '1001-7999':0, '8000+':0};
+    var RE = /^\d{4}-\d{2}-\d{2}$/;
+    var auj = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Europe/Paris', 'yyyy-MM-dd');
+    _nutPourChaqueCompte_(sp, function(email, fl, sf) {
+      comptes++;
+      if (fl === null) { jsonIllisible++; return; }
+      if (sf.length > 0) avecSavedFoods++;
+      var n = fl.length;
+      if (n === 0) buckets['0']++;
+      else if (n <= 10) buckets['1-10']++;
+      else if (n <= 50) buckets['11-50']++;
+      else if (n <= 200) buckets['51-200']++;
+      else if (n <= 1000) buckets['201-1000']++;
+      else if (n < 8000) buckets['1001-7999']++;
+      else buckets['8000+']++;
+      if (n === 0) { if (sf.length > 0) videMaisSaved++; return; }
+      avecFoodLog++;
+      if (n >= 8000) auPlafond++;                    // peut avoir été tronqué à l'envoi (cap client 8000)
+      var vus = Object.create(null);
+      for (var j = 0; j < n; j++) {
+        var en = fl[j] || {}; entreesTotal++;
+        var d = String(en.date || '');
+        var okDate = RE.test(d);
+        if (!okDate) { sansDate++; }
+        else if (d < '2026-06-01' || d > auj) { datesAberrantes++; }  // avant la naissance du produit, ou futur
+        else { jours[d] = 1; if (!minD || d < minD) minD = d; if (!maxD || d > maxD) maxD = d;
+               var an = d.slice(0,4); annee[an] = (annee[an] || 0) + 1; }
+        if (typeof en.id === 'string' && en.id.length >= 8) { if (vus[en.id]) idsEnDouble++; vus[en.id] = 1; }
+        else sansId++;
+        var aMacro = (en.kcal > 0) || (en.prot > 0) || (en.carbs > 0) || (en.fat > 0);
+        if (okDate && aMacro) entreesValides++;      // "récupérable utilement" = date lisible + au moins une valeur
+      }
+    });
+    return json_({status:'ok', genere:new Date().toISOString(),
+      comptes:comptes, avecFoodLog:avecFoodLog, avecSavedFoods:avecSavedFoods,
+      entreesTotal:entreesTotal, entreesValides:entreesValides,
+      joursCouverts:Object.keys(jours).length, borneMin:minD, borneMax:maxD,
+      entreesParAnnee:annee, histogrammeTailles:buckets,
+      anomalies:{ sansDate:sansDate, sansId:sansId, idsEnDouble:idsEnDouble, foodLogVideAvecSavedFoods:videMaisSaved,
+                  auPlafond8000:auPlafond, datesAberrantes:datesAberrantes, comptesJsonIllisible:jsonIllisible },
+      note:'lecture seule - aucune donnee personnelle - cap envoi client 8000/compte (cf auPlafond8000)'});
+  } catch (err) { return json_({status:'error', error:'nut_inventory'}); }
+}
+
+/* TOUTES les sauvegardes Drive (pas seulement la dernière) + comparaison ANONYME avec le serveur.
+   LECTURE SEULE (règle d'or #18) : ne crée, ne modifie, ne met à la corbeille aucun fichier.
+   ⛔ Une ligne présente dans une sauvegarde et absente du serveur est AMBIGUË : l'app ne garde
+   aucune trace de suppression (removeFoodEntry = splice), donc on ne sait pas si la personne l'a
+   supprimée ou si elle a été perdue (_pa_ remplace). Elle est COMPTÉE, jamais restaurée d'office.
+   ⏱️ BUDGET DE TEMPS : le dossier n'est jamais purgé (une sauvegarde par nuit depuis fin juin, chacune
+   avec tous les comptes) et une exécution Apps Script s'arrête à 6 min. Passé 4 min 30, on cesse de
+   lire (les plus anciennes restent) et on le DIT (arretParLeTemps, fichiersNonLus) : une couverture
+   partielle déclarée, jamais une erreur muette ni une couverture partielle silencieuse. */
+var NUT_AUDIT_BUDGET_MS_ = 270000;
+function handleNutBackupAudit_(body) {
+  if (!_checkIdeesTok_(body && body.token)) return json_({status:'error', error:'token'});
+  try {
+    var t0 = Date.now();
+    var sp = PropertiesService.getScriptProperties();
+    var max = Math.max(1, Math.min(parseInt(body && body.max, 10) || 400, 2000));
+    var folder = null, id = sp.getProperty('ft_backup_drive_folder_id');
+    if (id) { try { folder = DriveApp.getFolderById(id); } catch (e) {} }
+    if (!folder) {                                   // LECTURE : on cherche, on ne crée PAS (≠ _getDriveBackupFolder_)
+      var it0 = DriveApp.getFoldersByName('ForceTracker-Backups');
+      if (it0.hasNext()) folder = it0.next();
+    }
+    if (!folder) return json_({status:'ok', dossierTrouve:false,
+      note:'dossier ForceTracker-Backups introuvable - la sauvegarde nocturne n a peut-etre jamais tourne'});
+    var liste = [], it = folder.getFiles();
+    while (it.hasNext()) {
+      var f = it.next(), nm = f.getName();
+      if (nm.indexOf('backup-') !== 0) continue;
+      liste.push({ f: f, nom: nm, t: f.getLastUpdated().getTime() });
+    }
+    liste.sort(function(a, b) { return b.t - a.t; });            // du plus récent au plus ancien
+    var lus = liste.slice(0, max);
+    // État serveur actuel, par compte (EN MÉMOIRE seulement).
+    var serveur = Object.create(null);
+    _nutPourChaqueCompte_(sp, function(email, fl) {
+      if (fl === null) return;
+      var s = _nutEnsemble_(), cles = fl.map(_nutCles_); cles.forEach(s.ajoute);
+      serveur[String(email).toLowerCase().trim()] = { ens: s, cles: cles };
+    });
+    // Chaque sauvegarde : agrégats par fichier, union par compte, et lignes absentes du serveur
+    // comptées UNE fois même si elles reviennent sous un autre id ou dans plusieurs sauvegardes (EN MÉMOIRE).
+    var fichiers = [], union = Object.create(null), absentes = Object.create(null), arretTemps = false;
+    for (var i = 0; i < lus.length; i++) {
+      if (Date.now() - t0 > NUT_AUDIT_BUDGET_MS_) { arretTemps = true; break; }
+      var x = lus[i];
+      var r = { nom: x.nom, dateISO: new Date(x.t).toISOString(), octets: x.f.getSize(),
+                lisible: false, comptes: 0, avecFoodLog: 0, entrees: 0 };
+      try {
+        var obj = JSON.parse(x.f.getBlob().getDataAsString());
+        var users = (obj && Array.isArray(obj.users)) ? obj.users : [];
+        r.lisible = true; r.comptes = users.length;
+        users.forEach(function(u) {
+          var em = String((u && u.email) || '').toLowerCase().trim();
+          var fl = (u && u.data && u.data.profile && Array.isArray(u.data.profile.foodLog)) ? u.data.profile.foodLog : [];
+          if (fl.length) { r.avecFoodLog++; r.entrees += fl.length; }
+          if (!em) return;
+          var vu = union[em] || (union[em] = _nutEnsemble_()), sv = serveur[em];
+          fl.forEach(function(e) {
+            var c = _nutCles_(e);
+            vu.ajoute(c);
+            if (sv && sv.ens.vu(c)) return;                                   // présente au serveur (par l'id OU le contenu)
+            var a = absentes[em] || (absentes[em] = { ens: _nutEnsemble_(), n: 0 });
+            if (!a.ens.vu(c)) a.n++;                                          // une absente déjà comptée n'est pas recomptée
+            a.ens.ajoute(c);
+          });
+        });
+      } catch (e) { r.lisible = false; }
+      fichiers.push(r);
+    }
+    var cmp = { comptesServeur: Object.keys(serveur).length, comptesDansSauvegardes: Object.keys(union).length,
+                comptesSeulementDansSauvegardes: 0, comptesAvecLignesAbsentesDuServeur: 0,
+                lignesDansSauvegardesAbsentesDuServeur: 0, lignesServeurAbsentesDesSauvegardes: 0 };
+    Object.keys(union).forEach(function(em) { if (!serveur[em]) cmp.comptesSeulementDansSauvegardes++; });
+    Object.keys(absentes).forEach(function(em) {
+      if (absentes[em].n) { cmp.comptesAvecLignesAbsentesDuServeur++; cmp.lignesDansSauvegardesAbsentesDuServeur += absentes[em].n; }
+    });
+    Object.keys(serveur).forEach(function(em) {
+      var vu = union[em];
+      serveur[em].cles.forEach(function(c) { if (!vu || !vu.vu(c)) cmp.lignesServeurAbsentesDesSauvegardes++; });
+    });
+    var d0 = liste.length ? new Date(liste[0].t) : null;
+    return json_({status:'ok', dossierTrouve:true, nbFichiers:liste.length, fichiersLus:fichiers.length,
+      fichiersNonLus:liste.length - fichiers.length, arretParLeTemps:arretTemps,
+      dernierDateISO: d0 ? d0.toISOString() : null,
+      ageJours: d0 ? Math.floor((Date.now() - d0.getTime()) / 86400000) : null,
+      fichiersIllisibles: fichiers.filter(function(r) { return !r.lisible; }).length,
+      fichiers:fichiers, comparaison:cmp,
+      note:'lecture seule - aucune donnee personnelle - lignesDansSauvegardesAbsentesDuServeur = AMBIGUES '
+         + '(supprimees par la personne OU perdues : aucune trace de suppression) - a revoir, jamais restaurees d office'});
+  } catch (err) { return json_({status:'error', error:'nut_backup_audit'}); }
 }
 
 function handleSendConfirmCode_(body) {
