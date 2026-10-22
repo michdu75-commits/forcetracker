@@ -4961,7 +4961,42 @@ sinon — sans rien dire de la séance elle-même (séries, codes, cardio, chron
 **Ce qui a été fait (R30, règle #17).** Le témoin compare désormais la **séance** sans `repos` (tout le reste à l'octet, comme avant),
 avec sa raison écrite ; vert sur la branche (36 / 0) **et** sur le code exact de master (36 / 0) ; sa mutation dédiée `MA20` (le
 rechargement perd le chrono de la séance) le fait toujours rougir (2 / 2 conformes avec MA21). `banc:nut_punch01` rejoint les tests
-associés de SEANCE-REPOS-01 : le sélecteur ne l'avait pas proposé pour ce diff — **c'est la passe ENTIÈRE qui l'a vu**.
+associés de la fiche du registre de ce lot (`SEANCE-REPOS-PERSIST-01` depuis le 22/10 après-midi : son 1ᵉʳ identifiant,
+`SEANCE-REPOS-01`, doublonnait une fiche de master — revue de l'avenant) : le sélecteur ne l'avait pas proposé pour ce diff — **c'est la passe ENTIÈRE qui l'a vu**.
 
 **À quoi on le reconnaît.** Une égalité à l'octet sur un objet que d'autres lots enrichissent : elle protège tout, donc aussi ce qui
 doit légitimement changer. *Comparer ce qu'on garantit (la séance), pas l'objet qui le transporte.*
+
+## §95 — ⛔ DEUX DÉFAUTS DU LOT DU MATIN, TROUVÉS PAR LA REVUE ADVERSE DE L'AVENANT : UNE GARDE QUI JUGEAIT LA MAUVAISE GRANDEUR, ET UN ÉCRIVAIN SANS GESTE QUI ÉCRASAIT L'ÉTAT PARTAGÉ *(22/10/2026 après-midi, SEANCE-REPOS-01 avenant D-102 — session-C, branche `claude/dreamy-bell-pu88ia`, non publié ; ⚠️ numéro à reconfirmer à l'intégration : §92 et §94 sont ceux de Nutrition V2)*
+
+**Ce qui s'est passé.** L'avenant (15 min au lieu de 5) a été soumis à une revue adverse à quatre angles (code · calories · témoins ·
+documentation), chaque constat vérifié par deux sceptiques. Elle a trouvé deux défauts **du lot du matin**, que ni le banc (43 / 0),
+ni le contrôle négatif (31 / 31), ni la passe complète (7 866 / 0) n'avaient vus — parce qu'aucun témoin ne conduisait ces chemins.
+
+**① La reprise prenait « +15 s » pour une horloge reculée.** `addRT` garde la durée et déplace le départ : allongé TÔT dans le
+repos, le restant dépasse la durée, donc le départ équivalent est **dans le futur** (2:00 parti à 15:00:00, deux « +15 s » à
+15:00:01 → départ 15:00:30). La reprise refusait tout départ à plus de 5 s dans le futur : verrouiller le téléphone dans les
+secondes qui suivent **effaçait le repos**. Le témoin D1 existant rechargeait juste APRÈS le départ équivalent — il ne pouvait pas
+le voir. **Correctif** : la garde juge le **restant** (jamais plus que `max(durée, REST_PLUS_MAX)` + 5 s — ce que l'app ne peut pas
+produire), plafond de « +15 s » à un seul propriétaire. Témoin C-REP-D1b ; mutations MD1 (la garde du matin) · MD2 · MD3.
+
+**② Un onglet périmé réécrivait la séance.** `_reposMemoriser` écrivait la séance **en mémoire** (`JSON.stringify(S.wkt)`) dans
+`ft4_wkt`, et il s'exécute **sans geste** (l'expiration, par le tick ou le retour au premier plan). Deux onglets ouverts : l'onglet
+resté en arrière-plan, à l'expiration de SON repos, remettait sa séance périmée sur le disque — une séance déjà terminée dans
+l'autre onglet **revenait** (à terminer une 2ᵉ fois : volume et calories comptés deux fois), ou des séries validées entre-temps
+**disparaissaient** (règle d'or #3). Le filet multi-onglets existant (`_ftAutreOnglet`, state.js) ne couvre que `persist()`, qui
+suit toujours un geste. Sur master, aucun chemin n'écrivait `ft4_wkt` sans geste. **Correctif** : n'écrire QUE le champ `repos`,
+dans la séance **du disque**, seulement si c'est la **même** séance (`runId`, sinon départ et date), et n'effacer que **son propre**
+repos. Témoins C-REP-K1 (séance terminée ailleurs : ne revient pas) · K2 (séries et repos plus récents de l'autre onglet : intacts)
+· K3 (jamais dans une autre séance) ; mutations MK1 (la version du matin) · MK2 · MK3.
+
+**À quoi on les reconnaît.** ① Une garde « valeur impossible » écrite sur une grandeur (le départ) alors que l'invariant porte
+sur une autre (le restant) : elle refuse des états que l'app produit elle-même. *Avant d'écrire « impossible », lister TOUS les
+écrivains de la valeur.* ② Une écriture déclenchée par une **minuterie** qui recopie un état en mémoire dans un stockage
+**partagé** : dès qu'il y a deux lecteurs-écrivains, la mémoire est périmée. *Une écriture sans geste ne doit écrire que ce
+qu'elle possède — un champ, pas l'objet entier.*
+
+**Ce qui les protège aujourd'hui.** Les témoins et mutations nommés ci-dessus (`tests/parcours/seance_repos.js`,
+`tools/mut_seance_repos.py`). Et la leçon de méthode : *un banc vert, un contrôle négatif conforme et une passe complète valide ne
+disent rien des chemins qu'aucun témoin ne conduit* — la revue adverse, elle, cherche justement ces chemins-là.
+

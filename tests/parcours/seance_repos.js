@@ -518,10 +518,14 @@ async function ecran(t, b, PORT) {
     // ÉGALITÉ — mêmes séries, coche à 15:00:00, fin à 15:16:40 (pour un repos de 2:00, 14:40 après sa fin : il tourne
     // encore avec 15 min) ; seul l'état du repos à la fin change, par de vrais gestes. Trois sources de durée.
     const FIN = S_(1000);
+    /* ⚓ `master` : calories et durée MESURÉES sur master `f82a7c07` (ft-v1258, sans ce lot) avec les mêmes gestes et la même
+       séance (comparateur master ↔ branche du 22/10, 15/15 identiques à l'octet) — comparer les variantes entre elles ne
+       verrait pas une dérive COMMUNE à toutes. ⚠️ Si le moteur calorique change un jour volontairement, ces deux nombres
+       changent avec lui : c'est voulu, ce témoin doit alors être relu, pas contourné. */
     const SC = [
-      { nom: 'horodatage', w: WKT({ exs: [{ name: SQ, sets: [Object.assign(serie(1), { at: 300 }), serie(0), serie(0)] }] }), src: 'horodatage' },
-      { nom: 'chrono', w: WKT({ startTs: T0 - 60000 }), src: 'chrono' },      // un seul `at` : la durée vient du chrono
-      { nom: 'estimée', w: WKT(), src: 'estimee' } ];                       // 26 min pour 2 séries : chrono douteux
+      { nom: 'horodatage', w: WKT({ exs: [{ name: SQ, sets: [Object.assign(serie(1), { at: 300 }), serie(0), serie(0)] }] }), src: 'horodatage', master: { kcal: 74, duree: 1600 } },
+      { nom: 'chrono', w: WKT({ startTs: T0 - 60000 }), src: 'chrono', master: { kcal: 126, duree: 1060 } },      // un seul `at` : la durée vient du chrono
+      { nom: 'estimée', w: WKT(), src: 'estimee', master: { kcal: 74, duree: 1600 } } ];                       // 26 min pour 2 séries : chrono douteux
     for (const sc of SC) {
       const R = {};
       for (const v of ['aucun', 'actif', 'expire_ouvert', 'restaure', 'expire_au_retour']) {
@@ -543,7 +547,7 @@ async function ecran(t, b, PORT) {
       const ref = R.aucun;
       const memes = Object.keys(R).filter(k => _det(R[k].m) === _det(ref.m) && R[k].e.seance === ref.e.seance && R[k].e.disque === ref.e.seance);
       t('C-REP-I1 [' + sc.nom + '] ⭐⭐ ⛔ calories, durée et horodatages de la séance enregistrée IDENTIQUES À L\'OCTET avec un repos passé / en cours / expiré app ouverte / restauré après fermeture / expiré au retour',
-        Object.keys(R).every(k => R[k].obs) && memes.length === 5 && ref.e.src === sc.src && ref.e.kcal > 0 && ref.e.n === 1,
+        Object.keys(R).every(k => R[k].obs) && memes.length === 5 && ref.e.src === sc.src && ref.e.kcal === sc.master.kcal && ref.e.duree === sc.master.duree && ref.e.n === 1,
         _det({ obs: Object.keys(R).filter(k => !R[k].obs), differents: Object.keys(R).filter(k => memes.indexOf(k) < 0), src: ref.e.src, kcal: ref.e.kcal,
           duree: ref.e.duree, kcalVariantes: Object.keys(R).map(k => k + ':' + R[k].e.kcal + '/' + R[k].e.duree) }));
       t('C-REP-I2 [' + sc.nom + '] une seule séance enregistrée par variante (mémoire = disque = 1), jamais de champ `repos`, plus de séance active',
@@ -581,6 +585,76 @@ async function ecran(t, b, PORT) {
         _det([A, B].map(r => ({ n: r.e.n, disque: r.e.nDisque, brouillon: r.e.brouillon, n2: r.e2.n, actif2: r.e2.actif, tourne2: r.r2.tourne }))));
     }
   }
+
+  /* ── K. DEUX ONGLETS — trouvé par la revue adverse de l'avenant (22/10 après-midi) ─────────────────────────────────
+     Le rangement du repos s'exécute SANS geste (à l'expiration). La 1ʳᵉ version écrivait alors la séance EN MÉMOIRE de
+     l'onglet par-dessus `ft4_wkt` : un onglet resté ouvert, périmé, ressuscitait une séance déjà terminée ailleurs (2ᵉ séance
+     enregistrée : volume et calories comptés deux fois) ou effaçait des séries validées depuis. Conduit : deux vrais onglets
+     du même navigateur (stockage partagé), de vraies coches, « Terminer », l'expiration par le tick et le retour au premier
+     plan, un « +15 s ». Observé : `ft4_wkt` et `ft4_sessions` sur le disque, une réouverture. Ne couvre pas : Safari réel. */
+  const deuxOnglets = async () => {
+    const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris', locale: 'fr-FR', hasTouch: true });
+    await cx.route(u => !/^http:\/\/localhost:/.test(String(u)), rt => rt.abort());
+    const init = Object.assign({}, BASE, { ft4_wkt: JSON.stringify(WKT()), ft4_wkt_draft: JSON.stringify(WKT()) });
+    const p0 = await cx.newPage(); await p0.goto('http://localhost:' + PORT + '/__vide__');   // même origine, aucun script
+    await p0.evaluate(D => { localStorage.clear(); Object.keys(D).forEach(k => localStorage.setItem(k, D[k])); }, init);
+    await p0.close();
+    const onglet = async t0 => { const pg = await cx.newPage(); const errs = []; pg.on('pageerror', x => errs.push(String(x.message).slice(0, 160)));
+      await pg.clock.setFixedTime(new Date(t0)); await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
+      const X = { cx, pg, errs, req: [] }; await nettoyer(X); await versSeance(X); return X; };
+    return { cx, onglet };
+  };
+  const expirerDans = async (X, t1) => { await heure(X, t1); await X.pg.evaluate(() => document.dispatchEvent(new Event('visibilitychange'))); await X.pg.waitForTimeout(400); };
+  {
+    const K = await deuxOnglets();
+    const A = await K.onglet(T0);
+    await cocher(A, 0, 1);                                         // 15:00:00 dans A : repos de 2:00, rangé
+    await heure(A, S_(30));
+    const B = await K.onglet(S_(30));                              // B ouvert à 15:00:30 : il reprend le même repos
+    const b0 = await lire(B);
+    await heure(A, S_(60));
+    const fin = await terminer(A);                                 // A termine la séance à 15:01:00
+    await expirerDans(B, S_(120 + 900 + 5));                       // 15:17:05 : le repos de B, périmé, expire
+    const b1 = await lire(B);
+    const disque = await B.pg.evaluate(() => { const w = JSON.parse(localStorage.getItem('ft4_wkt') || 'null');
+      return { exs: w && w.exs ? w.exs.length : 0, n: JSON.parse(localStorage.getItem('ft4_sessions') || '[]').length }; });
+    const C = await K.onglet(S_(120 + 960));                       // une réouverture plus tard
+    const c = await C.pg.evaluate(() => ({ actif: !!(S.wkt && (S.wkt.exs || []).length), n: S.sessions.length }));
+    t('C-REP-K1 ⭐⭐ ⛔ deux onglets : la séance terminée dans A ne REVIENT PAS quand le repos de B (resté ouvert, périmé) expire — pas de 2ᵉ séance à enregistrer, pas de double comptage',
+      b0.tourne && fin && !b1.tourne && disque.exs === 0 && disque.n === 1 && !c.actif && c.n === 1 && !A.errs.length && !B.errs.length,
+      _det({ bReprend: b0.tourne, fin, bTourne: b1.tourne, disque, c, errs: A.errs.concat(B.errs) }));
+    await K.cx.close();
+  }
+  {
+    const K = await deuxOnglets();
+    const A = await K.onglet(T0);
+    await cocher(A, 0, 1);                                         // 15:00:00 : repos {15:00, 2:00}
+    const B = await K.onglet(S_(30));
+    const b0 = await lire(B);
+    await heure(A, S_(60)); await cocher(A, 0, 2);                 // 15:01:00 dans A : série 3 validée, nouveau repos {15:01, 2:00}
+    const a1 = await lire(A);
+    await expirerDans(B, S_(120 + 900 + 5));                       // 15:17:05 : le repos {15:00} de B expire ; celui de A court encore
+    const d = await B.pg.evaluate(() => { const w = JSON.parse(localStorage.getItem('ft4_wkt') || 'null');
+      return { faites: w && w.exs ? w.exs[0].sets.filter(x => x.done).length : -1, repos: w && w.repos !== undefined ? w.repos : '∅' }; });
+    t('C-REP-K2 ⭐⭐ ⛔ deux onglets : l\'expiration du repos de B (périmé) n\'écrase ni les séries validées depuis dans A, ni le repos plus récent de A',
+      b0.tourne && _det(a1.lsRepos) === _det({ debut: S_(60), total: 120 }) && d.faites === 3 && _det(d.repos) === _det({ debut: S_(60), total: 120 }),
+      _det({ bReprend: b0.tourne, a1: a1.lsRepos, disque: d }));
+    await K.cx.close();
+  }
+  {
+    const K = await deuxOnglets();
+    const B = await K.onglet(T0);
+    await cocher(B, 0, 1);                                         // repos {15:00, 2:00} dans cet onglet
+    // depuis, un autre onglet a remplacé la séance du disque par une AUTRE séance (autre runId), avec son propre repos
+    const autre = { date: '2026-10-22', startHour: 15, startTs: S_(5), runId: 'autre-seance-0000', exs: [{ name: DC, sets: [serie(1), serie(0)] }], repos: { debut: S_(5), total: 90 } };
+    await B.pg.evaluate(w => localStorage.setItem('ft4_wkt', JSON.stringify(w)), autre);
+    await heure(B, S_(10));
+    const plus = await clic(B, '#rest-btn-plus');                  // un réglage du repos (aucune sauvegarde générale)
+    const d = await B.pg.evaluate(() => localStorage.getItem('ft4_wkt'));
+    t('C-REP-K3 ⛔ un réglage du repos n\'écrit jamais dans une AUTRE séance que la sienne : l\'autre séance reste à l\'octet',
+      plus && d === JSON.stringify(autre), _det({ plus, disque: (d || '').slice(0, 160) }));
+    await K.cx.close();
+  }
 }
 
 /* Témoins de SOURCE : un seul propriétaire pour chaque règle (R2), et la garantie d'app.js remplacée, pas contournée. */
@@ -588,8 +662,12 @@ function source(t, ROOT, fs, path) {
   const lit = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const log = lit('log.js'), app = lit('app.js'), st = lit('state.js');
   const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\n}', i); return j < 0 ? '' : src.slice(i, j + 2); };
-  t('C-REP-S1 une seule règle d\'expiration : `REST_DEPASSEMENT_MAX` vaut 900 s (15 min après la fin théorique, app ouverte ou fermée — décision de Michel du 22/10 après-midi)',
-    /\nconst REST_DEPASSEMENT_MAX = 900;/.test(log) && (log.match(/REST_DEPASSEMENT_MAX/g) || []).length >= 4);
+  // le CODE seul (commentaires retirés) : exactement 3 lecteurs du seuil, un par chemin — l'arrêt app ouverte, la pilule, la
+  // reprise — et aucun d'eux ne porte un nombre en dur (la 1ʳᵉ version comptait « au moins 4 » commentaires compris)
+  const code = log.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/[^\n]*/g, '$1');
+  const lecteurs = ['_restTick', '_updPill', '_reposReprendre'].filter(f => /-REST_DEPASSEMENT_MAX\b/.test(corps(code, f)) && !/<=?-\d{2,4}\b/.test(corps(code, f)));
+  t('C-REP-S1 une seule règle d\'expiration : `REST_DEPASSEMENT_MAX` vaut 900 s (15 min après la fin théorique, app ouverte ou fermée — décision de Michel du 22/10 après-midi), lue par ses 3 chemins et rien d\'autre',
+    /\nconst REST_DEPASSEMENT_MAX = 900;/.test(log) && (code.match(/-REST_DEPASSEMENT_MAX\b/g) || []).length === 3 && lecteurs.length === 3, _det({ lecteurs }));
   // les commentaires citent la structure (`S.wkt.repos = {debut, total}`) : on compte le CODE seulement
   const ecr = (log.replace(/\/\*[\s\S]*?\*\//g, '').match(/S\.wkt\.repos\s*=(?!=)/g) || []).length;
   t('C-REP-S2 un seul écrivain : `S.wkt.repos` n\'est posé qu\'à UN endroit (`_reposMemoriser`), qui l\'efface aussi',
@@ -603,10 +681,13 @@ function source(t, ROOT, fs, path) {
   const aides = { '? Séance': lit('screens.js'), 'aide détaillée': lit('coach.js'), 'points rouges': lit('constants.js'), 'Guide': lit('app.js') };
   // ⚠️ « 15 min après la fin » CONTIENT « 5 min après la fin » : sans la borne (pas de chiffre devant), l'ancien texte et le
   //    nouveau se confondraient, et ce témoin resterait vert sur une aide qui dit encore 5 min.
-  const faux = Object.keys(aides).filter(k => /au-delà de 15 min il s|Au-delà de 15 min il s|Au-delà de 15 minutes le chrono|(^|[^0-9])5 min(utes)? après la fin/.test(aides[k]));
+  // toute durée autre que 15 dite « N min après la fin » est fausse ; et les 5 textes (« ? », aide détaillée, Guide, les deux
+  // points rouges) disent 15 — compter les OCCURRENCES, pas les fichiers : constants.js en porte deux
+  const faux = Object.keys(aides).filter(k => (aides[k].match(/(?:^|[^0-9])(\d+) min(?:utes)? après la fin/g) || []).some(m => !/(^|[^0-9])15 min/.test(m)));
+  const nDit = Object.keys(aides).reduce((n, k) => n + (aides[k].match(/(?:^|[^0-9])15 min(?:utes)? après la fin/g) || []).length, 0);
   const dit = Object.keys(aides).filter(k => /(^|[^0-9])15 min(utes)? après la fin/.test(aides[k]));
   t('C-REP-S5 règle d\'or #11 : les aides (« ? » Séance, aide détaillée, Guide, points rouges) disent « 15 min après la fin » — plus aucune ne dit « 5 min » ni l\'ancien « au-delà de 15 min »',
-    !faux.length && dit.length === 4 && /id:'repos-persistant'/.test(aides['points rouges']), _det({ faux, dit }));
+    !faux.length && dit.length === 4 && nDit === 5 && /id:'repos-persistant'/.test(aides['points rouges']), _det({ faux, dit, nDit }));
 }
 
 module.exports = { ecran, source };

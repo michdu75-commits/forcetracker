@@ -5894,15 +5894,30 @@ function stopRest(){
    de test : « plus aucune écriture locale »), comme `persist()`.
    ⛔ LE BROUILLON DE SECOURS NE LE PORTE PAS (décision 3 de Michel) : `persist()` l'écrit sans ce champ (state.js), et
    `finishWorkout` choisit les champs de la séance enregistrée — `repos` n'y entre pas. Milo ne le lit pas non plus : le
-   contexte prend les exercices et le libellé de la séance en cours, rien d'autre (témoin C-REP-H1). */
+   contexte prend les exercices et le libellé de la séance en cours, rien d'autre (témoin C-REP-H1).
+   ⛔⛔ IL N'ÉCRIT QUE LE CHAMP `repos`, DANS LA SÉANCE DU DISQUE — JAMAIS LA SÉANCE QU'IL A EN MÉMOIRE (corrigé le 22/10
+   après-midi, revue de l'avenant). Il s'exécute sans geste : à l'expiration (`_restTick` → `stopRest`), un onglet resté
+   ouvert en arrière-plan écrivait SA séance, périmée, par-dessus `ft4_wkt` — une séance déjà terminée dans un autre onglet
+   revenait (enregistrée deux fois : volume et calories comptés deux fois) ou des séries validées entre-temps disparaissaient
+   (règle d'or #3). Le filet multi-onglets existant (`_ftAutreOnglet`, state.js) ne couvre que `persist()`, déclenché par un
+   geste. Donc : ① on relit `ft4_wkt` ; ② ce n'est pas la MÊME séance (`runId`, sinon départ et date) ou il n'y en a plus
+   → on ne touche à rien ; ③ effacer ne retire du disque que le repos que CET onglet y croyait (un repos plus récent posé
+   par l'autre onglet reste). Témoins C-REP-K1 / K2. */
 function _reposMemoriser(){
   try{
     if(typeof S==='undefined'||!S.wkt) return;
+    const avant=S.wkt.repos;
     if(restStartTs) S.wkt.repos={debut:restStartTs,total:restTot};
     else if(S.wkt.repos!==undefined) delete S.wkt.repos;
     else return;                                       // rien n'a changé : pas d'écriture
     if(window._demoMode) return;
-    localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+    const d=JSON.parse(localStorage.getItem('ft4_wkt')||'null'), w=S.wkt;
+    const meme=!!(d&&typeof d==='object'&&(d.runId&&w.runId?d.runId===w.runId:(d.startTs===w.startTs&&d.date===w.date)));
+    if(!meme) return;                                  // une autre séance, ou plus de séance : rien
+    if(w.repos) d.repos=w.repos;
+    else if(avant&&d.repos&&d.repos.debut===avant.debut&&d.repos.total===avant.total) delete d.repos;
+    else return;                                       // le disque porte un autre repos (un autre onglet) : on le laisse
+    localStorage.setItem('ft4_wkt',JSON.stringify(d));
   }catch(e){}
 }
 /* ⏱️ LA REPRISE, AU DÉMARRAGE (appelée par app.js à la place de l'ancien `stopRest()` — voir là-bas pourquoi).
@@ -5910,7 +5925,8 @@ function _reposMemoriser(){
    quels, et `_restLeft()` fait le reste — en négatif s'il est déjà dépassé (le fonctionnement existant, ft-v1030).
    ⛔ RIEN N'EST REPRIS, ET LA VALEUR EST EFFACÉE, quand : la séance n'est pas réellement active (`_wktEnCours` : ouverte et
    pas en pause — une séance en pause n'a jamais de repos, `toggleWktPause` l'arrête) · la valeur est douteuse (pas un
-   nombre, durée nulle ou de plus d'une heure, départ dans le futur — horloge reculée : on ne devine pas, R29) · le repos a
+   nombre, durée nulle ou de plus d'une heure, restant que l'app ne peut pas produire — horloge reculée : on ne devine pas,
+   R29 ; ⚠️ un départ dans le futur, lui, est normal après « +15 s », voir la garde) · le repos a
    expiré (15 min après la fin théorique, `REST_DEPASSEMENT_MAX`, le même seuil que l'app ouverte).
    ⛔ PAS DE FANTÔME : un repos déjà fini ne rejoue ni la vibration de fin ni l'écran GO (`_restBeeped`) ; un repos encore
    en cours finit comme un autre (décompte des 10 dernières secondes, GO).
