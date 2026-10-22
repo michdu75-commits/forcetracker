@@ -5469,13 +5469,17 @@ function _restLeft(){
   if(!restStartTs)return 0;
   return restTot-Math.floor((Date.now()-restStartTs)/1000);
 }
-/* ⏹️ 5 MIN APRÈS LA FIN THÉORIQUE DU REPOS, IL EST ABANDONNÉ (décision 1 de Michel, 22/10/2026 — SEANCE-REPOS-01, docs/SEANCE-REPOS-01.md).
-   Repos de 2 min parti à 15 h 00 : décompte jusqu'à 15 h 02, dépassement affiché en négatif jusqu'à 15 h 07, abandonné et
-   effacé à partir de 15 h 07 — compté depuis `restStartTs + restTot`, jamais depuis le dernier affichage.
+/* ⏹️ 15 MIN APRÈS LA FIN THÉORIQUE DU REPOS, IL EST ABANDONNÉ — APP OUVERTE OU FERMÉE (décision de Michel, 22/10/2026
+   après-midi — SEANCE-REPOS-01, docs/SEANCE-REPOS-01.md).
+   Repos de 2 min parti à 15 h 00 : décompte jusqu'à 15 h 02, dépassement affiché en négatif jusqu'à 15 h 17, abandonné et
+   effacé à partir de 15 h 17 — compté depuis `restStartTs + restTot`, jamais depuis le dernier affichage.
    Un seul propriétaire pour ce nombre : `_restTick` (l'arrêt, app ouverte), `_updPill` (la pilule s'efface) et
    `_reposReprendre` (rien n'est repris au-delà, app rouverte) le lisent tous les trois — une seule règle, quel que soit le chemin.
-   ⛔ Il valait 900 (15 min, ft-v1030) : un choix de construction de Claude, que la décision de Michel remplace. */
-const REST_DEPASSEMENT_MAX = 300;
+   ⛔ Son histoire, gardée (R30) : 900 (15 min, ft-v1030, un choix de construction de Claude, app ouverte seulement) →
+   300 (5 min, décision du 22/10 au matin, appliquée ouverte ET fermée) → 900 (15 min, nouvelle décision validée du 22/10
+   après-midi, ouverte ET fermée). Ce nombre ne touche ni les durées de repos prévues (programmes, préréglages), ni les
+   calories : le moteur calorique ne lit pas le chrono de repos (voir `calcSessionCalories`, app.js). */
+const REST_DEPASSEMENT_MAX = 900;
 
 // ─── AUDIO : AUCUN ───────────────────────────────────────────
 // ⚠️ Le timer est 100% SILENCIEUX (vibration + visuel uniquement).
@@ -5497,8 +5501,9 @@ function _updPill(){
   const pillFill=document.getElementById('rest-pill-fill');
   if(!pillTime||!pillFill)return;
   /* ⚠️ ELLE NE DISPARAÎT PLUS À ZÉRO (14/08/2026) — même raison que le chrono principal :
-     le dépassement est précisément ce qu'on veut voir. Elle s'efface 5 min après la fin du
-     repos (`REST_DEPASSEMENT_MAX`, décision de Michel du 22/10 — elle disait « 15 min »). */
+     le dépassement est précisément ce qu'on veut voir. Elle s'efface 15 min après la fin du
+     repos (`REST_DEPASSEMENT_MAX`, décision de Michel du 22/10 après-midi — 15 min jusqu'au 22/10, puis 5 min le 22/10
+     au matin, puis de nouveau 15 min, app ouverte ou fermée). */
   if(left<=-REST_DEPASSEMENT_MAX){pill.classList.remove('show');return;}
   const _dep=left<0, _abs=Math.abs(left);
   const m=Math.floor(_abs/60),s=_abs%60;
@@ -5573,7 +5578,7 @@ function _restTick(){
   /* ⏹️ L'ARRÊT DE SÉCURITÉ, ET IL N'A QU'UN SEUL PROPRIÉTAIRE (R2) : au-delà de ce délai le repos
      est abandonné — un chrono qui tourne toute la nuit n'informe personne. `_updPill` employait déjà
      ce nombre en dur de son côté ; il le lit maintenant ici, pour que les deux ne puissent pas
-     diverger. Depuis SEANCE-REPOS-01 il vaut 5 min (décision de Michel), et `stopRest()` efface
+     diverger. Depuis SEANCE-REPOS-01 il vaut 15 min (décision de Michel), et `stopRest()` efface
      aussi l'état rangé dans la séance (`_reposMemoriser`). */
   if(left<=-REST_DEPASSEMENT_MAX){ stopRest(); return; }
   updRest();
@@ -5880,7 +5885,7 @@ function stopRest(){
    Michel — `S.wkt.repos = {debut, total}` — et rien d'autre : ⛔ aucune clé de stockage nouvelle, il voyage avec `ft4_wkt`.
    ⭐ UN SEUL ÉCRIVAIN (R2) : `_reposMemoriser` recopie l'état du moteur (`restStartTs`, `restTot`) ; il est appelé là où cet
    état change — `startRest`, `stopRest` (donc « Passer », le tap sur GO, la fin, l'abandon, « Vider », la pause, l'arrêt à
-   5 min), −15 s / +15 s, « Régler », les préréglages. Le moteur reste la source ; `repos` n'en est que le reflet sur le disque.
+   15 min), −15 s / +15 s, « Régler », les préréglages. Le moteur reste la source ; `repos` n'en est que le reflet sur le disque.
    ⚠️ IL N'ÉCRIT QUE `ft4_wkt`, et seulement quand la valeur change : pas `persist()` — qui écrirait toutes les clés et
    relancerait la synchronisation à chaque −15 s, pour une donnée qui ne part jamais au cloud. Jamais en mode démo (personas
    de test : « plus aucune écriture locale »), comme `persist()`.
@@ -5903,7 +5908,7 @@ function _reposMemoriser(){
    ⛔ RIEN N'EST REPRIS, ET LA VALEUR EST EFFACÉE, quand : la séance n'est pas réellement active (`_wktEnCours` : ouverte et
    pas en pause — une séance en pause n'a jamais de repos, `toggleWktPause` l'arrête) · la valeur est douteuse (pas un
    nombre, durée nulle ou de plus d'une heure, départ dans le futur — horloge reculée : on ne devine pas, R29) · le repos a
-   expiré (5 min après la fin théorique, `REST_DEPASSEMENT_MAX`, le même seuil que l'app ouverte).
+   expiré (15 min après la fin théorique, `REST_DEPASSEMENT_MAX`, le même seuil que l'app ouverte).
    ⛔ PAS DE FANTÔME : un repos déjà fini ne rejoue ni la vibration de fin ni l'écran GO (`_restBeeped`) ; un repos encore
    en cours finit comme un autre (décompte des 10 dernières secondes, GO).
    ⚠️ CE QUI NE REVIENT PAS — limites écrites, hors périmètre du lot : la question du RIR de la série qui venait d'être
@@ -5916,7 +5921,7 @@ function _reposReprendre(){
     &&total>0&&total<=3600&&debut<=Date.now()+5000;
   if(!lisible||!_wktEnCours()){ stopRest(); return false; }     // efface aussi une valeur douteuse ou orpheline
   restTot=total; restStartTs=debut;
-  if(_restLeft()<=-REST_DEPASSEMENT_MAX){ stopRest(); return false; }   // abandonné : 5 min après la fin théorique
+  if(_restLeft()<=-REST_DEPASSEMENT_MAX){ stopRest(); return false; }   // abandonné : 15 min après la fin théorique
   _restBeeped=_restLeft()<=0;                                   // déjà fini : ni vibration ni écran GO en retard
   _countdownSecs=new Set();
   const bar=document.getElementById('rest-bar'); if(bar) bar.classList.add('show');

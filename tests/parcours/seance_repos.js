@@ -3,8 +3,10 @@
    22/10/2026, feu vert et décisions de Michel du 22/10 (docs/SEANCE-REPOS-01.md).
    ① le repos en cours est rangé dans la séance ACTIVE, `S.wkt.repos = {debut, total}` — rien d'autre, aucune clé nouvelle ;
    ② il revient à l'heure RÉELLE après une fermeture, un rechargement ou un retour dans la PWA — jamais redémarré ;
-   ③ expiration 5 min après la fin THÉORIQUE (`debut + total`) : jusque-là le dépassement s'affiche en négatif, ensuite le
-     repos est abandonné et son état persistant effacé — au premier plan comme au retour ;
+   ③ expiration 15 min après la fin THÉORIQUE (`debut + total`) : jusque-là le dépassement s'affiche en négatif, ensuite le
+     repos est abandonné et son état persistant effacé — au premier plan comme au retour (avenant du 22/10 après-midi : le
+     seuil était de 5 min le matin ; les témoins B0 et B5a gardent l'ancien instant d'abandon, 15:07:00, pour prouver qu'il
+     ne coupe plus rien) ;
    ④ les réglages (−15 s, +15 s, « Régler », préréglages) suivent ; « Passer », la fin, l'abandon, « Vider » et la pause l'effacent ;
    ⑤ seul `ft4_wkt` le porte : jamais le brouillon de secours (`ft4_wkt_draft`), jamais la séance enregistrée ;
    ⑥ rien n'est restauré pour une séance qui n'est pas réellement active (en pause, vide, absente) ni pour une valeur douteuse.
@@ -143,18 +145,29 @@ async function ecran(t, b, PORT) {
     await fermer(X);
   }
 
-  /* ── B. LE DÉPASSEMENT : 4:59 AFFICHÉ, 5:00 ABANDONNÉ ─────────────────────────────────────────────── */
+  /* ── B. LE DÉPASSEMENT : 14:59 AFFICHÉ, 15:00 ABANDONNÉ (5:00 NE COUPE PLUS RIEN) ────────────────── */
+  {
+    // l'ANCIEN instant d'abandon (5 min après la fin, décision du 22/10 au matin) : il ne doit plus rien couper
+    const X = await ouvrir();
+    await cocher(X, 0, 1);
+    const auDemarrage = await recharger(X, S_(120 + 300));       // 15:07:00
+    const b = await lire(X);
+    t('C-REP-B0 ⭐⭐ rouvert à 15:07:00 (5 min après la fin prévue, l\'ancien seuil) : le repos est toujours là, en négatif (+5:00), rien n\'est effacé',
+      auDemarrage.tourne && b.dock && b.temps === '+5:00' && _det(b.lsRepos) === _det({ debut: T0, total: 120 }) && !b.decompte && b.vib === 0,
+      _det({ tourne: auDemarrage.tourne, dock: b.dock, temps: b.temps, disque: b.lsRepos, decompte: b.decompte, vib: b.vib }));
+    await fermer(X);
+  }
   {
     const X = await ouvrir();
     await cocher(X, 0, 1);
-    const auDemarrage = await recharger(X, S_(120 + 299));       // 15:06:59
+    const auDemarrage = await recharger(X, S_(120 + 899));       // 15:16:59
     const b = await lire(X);
-    t('C-REP-B1 ⭐⭐ retour à 15:06:59 (4 min 59 s après la fin prévue) : le dock dit +4:59 et « au-delà de ton repos max », sans écran GO ni vibration',
-      auDemarrage.tourne && b.dock && b.temps === '+4:59' && /au-delà de ton repos max/.test(b.au_dela) && !b.decompte && b.vib === 0,
+    t('C-REP-B1 ⭐⭐ retour à 15:16:59 (14 min 59 s après la fin prévue) : le dock dit +14:59 et « au-delà de ton repos max », sans écran GO ni vibration',
+      auDemarrage.tourne && b.dock && b.temps === '+14:59' && /au-delà de ton repos max/.test(b.au_dela) && !b.decompte && b.vib === 0,
       _det({ tourne: auDemarrage.tourne, dock: b.dock, temps: b.temps, au_dela: b.au_dela, decompte: b.decompte, vib: b.vib }));
-    await heure(X, S_(120 + 300));                                // 15:07:00
+    await heure(X, S_(120 + 900));                                // 15:17:00
     const b2 = await lire(X);
-    t('C-REP-B2 ⭐ … et à 15:07:00 le repos est abandonné : dock et pilule fermés, état persistant effacé (mémoire et disque)',
+    t('C-REP-B2 ⭐ … et à 15:17:00 le repos est abandonné : dock et pilule fermés, état persistant effacé (mémoire et disque)',
       !b2.tourne && !b2.dock && !b2.pilule && b2.repos === '∅' && b2.lsRepos === '∅', _det({ tourne: b2.tourne, dock: b2.dock, repos: b2.repos, disque: b2.lsRepos }));
     await fermer(X);
   }
@@ -162,9 +175,9 @@ async function ecran(t, b, PORT) {
     const X = await ouvrir();
     await cocher(X, 0, 1);
     const pre = await lire(X);
-    const auDemarrage = await recharger(X, S_(120 + 300));       // rouvert à 15:07:00 pile
+    const auDemarrage = await recharger(X, S_(120 + 900));       // rouvert à 15:17:00 pile
     const b = await lire(X);
-    t('C-REP-B3 ⭐⭐ rouvert à 15:07:00 (5 min après la fin prévue) : rien ne reprend, et le repos rangé avant la fermeture est EFFACÉ du disque',
+    t('C-REP-B3 ⭐⭐ rouvert à 15:17:00 (15 min après la fin prévue) : rien ne reprend, et le repos rangé avant la fermeture est EFFACÉ du disque',
       _det(pre.lsRepos) === _det({ debut: T0, total: 120 }) && !auDemarrage.tourne && !auDemarrage.pilule && auDemarrage.dockVu === 0 && !b.dock && b.repos === '∅' && b.lsRepos === '∅',
       _det({ avantFermeture: pre.lsRepos, tourne: auDemarrage.tourne, pilule: auDemarrage.pilule, dockVu: auDemarrage.dockVu, dock: b.dock, repos: b.repos, disque: b.lsRepos }));
     t('C-REP-B3b … la séance, elle, est intacte (seul le repos part)',
@@ -184,13 +197,17 @@ async function ecran(t, b, PORT) {
     // AU PREMIER PLAN, sans fermeture : la même règle (un seul seuil, un seul propriétaire)
     const X = await ouvrir();
     await cocher(X, 0, 1);
-    await heure(X, S_(120 + 299));
-    const f1 = await lire(X);
-    t('C-REP-B5 app restée ouverte : à 15:06:59 le dock dit +4:59',
-      f1.tourne && f1.dock && f1.temps === '+4:59', _det({ tourne: f1.tourne, temps: f1.temps }));
     await heure(X, S_(120 + 300));
+    const f0 = await lire(X);
+    t('C-REP-B5a ⭐ app restée ouverte : à 15:07:00 (l\'ancien seuil de 5 min) le repos tourne encore, +5:00, toujours rangé sur le disque',
+      f0.tourne && f0.dock && f0.temps === '+5:00' && _det(f0.lsRepos) === _det({ debut: T0, total: 120 }), _det({ tourne: f0.tourne, temps: f0.temps, disque: f0.lsRepos }));
+    await heure(X, S_(120 + 899));
+    const f1 = await lire(X);
+    t('C-REP-B5 app restée ouverte : à 15:16:59 le dock dit +14:59',
+      f1.tourne && f1.dock && f1.temps === '+14:59', _det({ tourne: f1.tourne, temps: f1.temps }));
+    await heure(X, S_(120 + 900));
     const f2 = await lire(X);
-    t('C-REP-B6 ⭐ app restée ouverte : à 15:07:00 le repos s\'arrête et son état persistant est effacé (le même seuil qu\'au retour)',
+    t('C-REP-B6 ⭐ app restée ouverte : à 15:17:00 le repos s\'arrête et son état persistant est effacé (le même seuil qu\'au retour)',
       !f2.tourne && !f2.dock && f2.repos === '∅' && f2.lsRepos === '∅', _det({ tourne: f2.tourne, dock: f2.dock, repos: f2.repos, disque: f2.lsRepos }));
     await fermer(X);
   }
@@ -205,11 +222,11 @@ async function ecran(t, b, PORT) {
     const v1 = await lire(X);
     t('C-REP-C1 ⭐⭐ retour au premier plan 30 s après la fin : le repos est toujours là, en négatif (+0:30) — il n\'est plus coupé',
       v1.tourne && v1.dock && v1.temps === '+0:30', _det({ tourne: v1.tourne, dock: v1.dock, temps: v1.temps }));
-    await X.pg.clock.setFixedTime(new Date(S_(120 + 300)));
+    await X.pg.clock.setFixedTime(new Date(S_(120 + 900)));
     await X.pg.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
     await X.pg.waitForTimeout(300);
     const v2 = await lire(X);
-    t('C-REP-C2 … et un retour 5 min après la fin trouve le repos abandonné et effacé',
+    t('C-REP-C2 … et un retour 15 min après la fin trouve le repos abandonné et effacé',
       !v2.tourne && !v2.dock && v2.lsRepos === '∅', _det({ tourne: v2.tourne, dock: v2.dock, disque: v2.lsRepos }));
     await fermer(X);
   }
@@ -455,8 +472,8 @@ function source(t, ROOT, fs, path) {
   const lit = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const log = lit('log.js'), app = lit('app.js'), st = lit('state.js');
   const corps = (src, nom) => { const i = src.indexOf('function ' + nom + '('); if (i < 0) return ''; const j = src.indexOf('\n}', i); return j < 0 ? '' : src.slice(i, j + 2); };
-  t('C-REP-S1 une seule règle d\'expiration : `REST_DEPASSEMENT_MAX` vaut 300 s (5 min après la fin théorique, décision 1 de Michel)',
-    /\nconst REST_DEPASSEMENT_MAX = 300;/.test(log) && (log.match(/REST_DEPASSEMENT_MAX/g) || []).length >= 4);
+  t('C-REP-S1 une seule règle d\'expiration : `REST_DEPASSEMENT_MAX` vaut 900 s (15 min après la fin théorique, app ouverte ou fermée — décision de Michel du 22/10 après-midi)',
+    /\nconst REST_DEPASSEMENT_MAX = 900;/.test(log) && (log.match(/REST_DEPASSEMENT_MAX/g) || []).length >= 4);
   // les commentaires citent la structure (`S.wkt.repos = {debut, total}`) : on compte le CODE seulement
   const ecr = (log.replace(/\/\*[\s\S]*?\*\//g, '').match(/S\.wkt\.repos\s*=(?!=)/g) || []).length;
   t('C-REP-S2 un seul écrivain : `S.wkt.repos` n\'est posé qu\'à UN endroit (`_reposMemoriser`), qui l\'efface aussi',
@@ -468,9 +485,11 @@ function source(t, ROOT, fs, path) {
     /setItem\('ft4_wkt_draft',JSON\.stringify\(Object\.assign\(\{\},S\.wkt,\{repos:undefined\}\)\)\)/.test(st));
   // règle d'or #11 : l'aide « ? » de Séance, l'aide détaillée, la diapo du Guide, le point rouge d'origine et le nouveau
   const aides = { '? Séance': lit('screens.js'), 'aide détaillée': lit('coach.js'), 'points rouges': lit('constants.js'), 'Guide': lit('app.js') };
-  const faux = Object.keys(aides).filter(k => /au-delà de 15 min il s|Au-delà de 15 min il s|Au-delà de 15 minutes le chrono/.test(aides[k]));
-  const dit = Object.keys(aides).filter(k => /5 min(utes)? après la fin/.test(aides[k]));
-  t('C-REP-S5 règle d\'or #11 : les aides (« ? » Séance, aide détaillée, Guide, points rouges) disent « 5 min après la fin » — plus aucune ne dit « 15 min »',
+  // ⚠️ « 15 min après la fin » CONTIENT « 5 min après la fin » : sans la borne (pas de chiffre devant), l'ancien texte et le
+  //    nouveau se confondraient, et ce témoin resterait vert sur une aide qui dit encore 5 min.
+  const faux = Object.keys(aides).filter(k => /au-delà de 15 min il s|Au-delà de 15 min il s|Au-delà de 15 minutes le chrono|(^|[^0-9])5 min(utes)? après la fin/.test(aides[k]));
+  const dit = Object.keys(aides).filter(k => /(^|[^0-9])15 min(utes)? après la fin/.test(aides[k]));
+  t('C-REP-S5 règle d\'or #11 : les aides (« ? » Séance, aide détaillée, Guide, points rouges) disent « 15 min après la fin » — plus aucune ne dit « 5 min » ni l\'ancien « au-delà de 15 min »',
     !faux.length && dit.length === 4 && /id:'repos-persistant'/.test(aides['points rouges']), _det({ faux, dit }));
 }
 

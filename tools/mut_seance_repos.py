@@ -17,8 +17,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = 'f82a7c07'
-LO, AP, ST, CO, SC = 'log.js', 'app.js', 'state.js', 'coach.js', 'screens.js'
-FICHIERS = (LO, AP, ST, CO, SC)
+LO, AP, ST, CO, SC, CN = 'log.js', 'app.js', 'state.js', 'coach.js', 'screens.js', 'constants.js'
+FICHIERS = (LO, AP, ST, CO, SC, CN)
 FICHIERS_AVANT = (LO, AP, ST)
 
 MEM_START = "  _reposMemoriser();             // SEANCE-REPOS-01 : le repos est rangé dans la séance active (il survit à une fermeture)\n"
@@ -46,11 +46,19 @@ MUT = [
     ('M7 [deguisee] la reprise REDEMARRE le repos (depart = maintenant)',
      [(LO, "  restTot=total; restStartTs=debut;", "  restTot=total; restStartTs=Date.now();")], 'GARDE', 'C-REP-A3'),
     ('M8 la reprise n\'applique plus l\'expiration (le repos clignote avant l\'arret au 1er tick)',
-     [(LO, "  if(_restLeft()<=-REST_DEPASSEMENT_MAX){ stopRest(); return false; }   // abandonné : 5 min après la fin théorique\n", "")], 'GARDE', 'C-REP-B3'),
-    ('M9 expiration remise a 15 min (900 s)',
-     [(LO, "const REST_DEPASSEMENT_MAX = 300;", "const REST_DEPASSEMENT_MAX = 900;")], 'GARDE', 'C-REP-B2'),
-    ('M9b [deguisee] expiration a 301 s (une seconde de trop)',
-     [(LO, "const REST_DEPASSEMENT_MAX = 300;", "const REST_DEPASSEMENT_MAX = 301;")], 'GARDE', 'C-REP-B2'),
+     [(LO, "  if(_restLeft()<=-REST_DEPASSEMENT_MAX){ stopRest(); return false; }   // abandonné : 15 min après la fin théorique\n", "")], 'GARDE', 'C-REP-B3'),
+    # avenant du 22/10 apres-midi (decision de Michel) : 900 s. M9 remet l'ANCIENNE valeur du matin (300 s) — c'est la
+    # regression la plus probable, et elle doit faire rougir le temoin qui rouvre a l'ancien instant d'abandon.
+    ('M9 expiration remise a 5 min (300 s, la decision du matin)',
+     [(LO, "const REST_DEPASSEMENT_MAX = 900;", "const REST_DEPASSEMENT_MAX = 300;")], 'GARDE', 'C-REP-B0'),
+    ('M9a la meme regression vue app OUVERTE (300 s)',
+     [(LO, "const REST_DEPASSEMENT_MAX = 900;", "const REST_DEPASSEMENT_MAX = 300;")], 'GARDE', 'C-REP-B5a'),
+    ('M9b [deguisee] expiration a 901 s (une seconde de trop)',
+     [(LO, "const REST_DEPASSEMENT_MAX = 900;", "const REST_DEPASSEMENT_MAX = 901;")], 'GARDE', 'C-REP-B2'),
+    ('M9c [deguisee] expiration a 899 s (une seconde trop tot)',
+     [(LO, "const REST_DEPASSEMENT_MAX = 900;", "const REST_DEPASSEMENT_MAX = 899;")], 'GARDE', 'C-REP-B1'),
+    ('M9d [deguisee] la pilule garde l\'ancien seuil en dur (deux regles pour le meme repos)',
+     [(LO, "  if(left<=-REST_DEPASSEMENT_MAX){pill.classList.remove('show');return;}", "  if(left<=-300){pill.classList.remove('show');return;}")], 'GARDE', 'C-REP-B5a'),
     ('M10 la reprise ignore la pause (seance ouverte suffit)',
      [(LO, "  if(!lisible||!_wktEnCours()){ stopRest(); return false; }", "  if(!lisible||!_seanceOuverte()){ stopRest(); return false; }")], 'GARDE', 'C-REP-G2'),
     ('M11 la reprise accepte un depart dans le futur (horloge reculee)',
@@ -90,8 +98,12 @@ MUT = [
      [(LO, "  if(!lisible||!_wktEnCours()){ stopRest(); return false; }", "  if(!lisible||!_wktEnCours()){ return false; }")], 'GARDE', 'C-REP-G2'),
     ('M28 la reprise ne montre pas le dock',
      [(LO, "  const bar=document.getElementById('rest-bar'); if(bar) bar.classList.add('show');\n  updRest(); _updPill();", "  updRest(); _updPill();")], 'GARDE', 'C-REP-A4'),
-    ('M29 l\'aide « ? » de Seance redit « 15 min »',
-     [(SC, "5 min après la fin, il s\\'arrête seul. <b>L\\'app se ferme", "au-delà de 15 min il s\\'arrête seul. <b>L\\'app se ferme")], 'GARDE', 'C-REP-S5'),
+    ('M29 l\'aide « ? » de Seance redit l\'ancien « au-dela de 15 min »',
+     [(SC, "15 min après la fin, il s\\'arrête seul. <b>L\\'app se ferme", "au-delà de 15 min il s\\'arrête seul. <b>L\\'app se ferme")], 'GARDE', 'C-REP-S5'),
+    ('M29b [deguisee] l\'aide « ? » de Seance dit encore « 5 min apres la fin » (contenue dans « 15 min apres la fin »)',
+     [(SC, "15 min après la fin, il s\\'arrête seul. <b>L\\'app se ferme", "5 min après la fin, il s\\'arrête seul. <b>L\\'app se ferme")], 'GARDE', 'C-REP-S5'),
+    ('M29c le point rouge « repos-persistant » dit encore 5 min',
+     [(CN, "et <b>15 min après la fin</b>, il s\\'arrête tout seul.", "et <b>5 min après la fin</b>, il s\\'arrête tout seul.")], 'GARDE', 'C-REP-S5'),
 ]
 
 
