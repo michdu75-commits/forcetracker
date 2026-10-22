@@ -5,15 +5,17 @@
    consigne de Michel du 22/10 : *« un adaptateur compatible avec les anciennes données, sans jamais
    modifier les originaux ni inventer de quantités manquantes »*. Cadre : `docs/NUTRITION-V2-ARCHITECTURE.md`.
 
-   ⛔ NON BRANCHÉ À L'APP À CE JALON : aucun fichier servi ne charge ce fichier (`index.html` inchangé).
+   🔌 BRANCHÉ AUX ÉCRANS AU JALON 4 (sur la branche `claude/nutrition-v2`, non publié) : chargé par `index.html`
+      avant `app.js`, qui est le SEUL à l'appeler (le « pont V2 », zone Nutrition d'`app.js`).
    ⛔ Il ne RÉPARE, ne RECLASSE et ne RÉÉCRIT aucune ancienne ligne : l'inventaire, la sauvegarde et la
       récupération des anciens journaux sont le chantier de Claude Principal (consigne du 22/10).
 
-   Ce qu'il contient, et rien d'autre — trois fonctions PURES (aucun écran, aucun stockage, aucune heure,
+   Ce qu'il contient, et rien d'autre — des fonctions PURES (aucun écran, aucun stockage, aucune heure,
    aucun réseau : tout ce qu'elles savent leur est passé en paramètre) :
      ① calcule(fiche, quantite)  — LA fonction de calcul. Les valeurs consommées ne sortent que d'ici.
      ② ligneNouvelle(entree)     — l'écrivain des NOUVELLES lignes : il RENVOIE la ligne, il n'écrit nulle part.
      ③ lireAncienne(ligne, ctx)  — l'adaptateur des anciennes lignes, en LECTURE SEULE.
+     ④ reprise(ligne, ctx)       — ce qu'une ligne (V2 ou ancienne) permet de reprendre, en LECTURE SEULE.
 
    ⭐ D-099 (Michel, 22/10) : *« les grammes et les millilitres sont prioritaires dans la saisie »* ; une portion nommée
       (« 2 steaks ») reste une possibilité SECONDAIRE, et seulement quand son poids (ou volume) est connu — jamais une
@@ -42,6 +44,13 @@
   var ORIGINES = ['utilisateur', 'off', 'etiquette', 'ia', 'ciqual', 'marque', 'reprise'];
   var FIABILITES = { source: 'fiable', estimee: 'estimee', declaree: 'declaree' };   // fiche → statut de ligne
   var ORIGINES_QTE = ['tapee', 'portion', 'proposee', 'estimee'];
+  /* Les notes qu'un APPELANT peut poser (jalon 4) — liste fermée : le moteur pose les siennes lui-même.
+     `reprise-non-verifiee` = nom, valeurs et quantité recopiés d'une ancienne ligne dont la fiche n'est pas vérifiée. */
+  var NOTES_ENTREE = ['reprise-non-verifiee'];
+  /* Ce que V1 portait déjà et qu'une ligne V2 garde (mêmes noms de champs, liste BLANCHE, jalon 4) :
+     `fiab` = la trace du résolveur d'énergie (ft-v1207/ft-v1232 : la trace part avec la ligne) ;
+     `codeDouteux` (code-barres lu sans clé vérifiée), `doute` (valeur signalée par une enseigne), `kcalDerivee`. */
+  var TRACE_CLES = ['etat', 'methode', 'raison', 'brut', 'retenu', 'champ', 'champSource', 'confiance', 'origine'];
 
   function fini(x) { return typeof x === 'number' && isFinite(x); }
   function ko(code, detail) { return { ok: false, erreur: code, detail: detail || '' }; }
@@ -113,7 +122,9 @@
                 mode:'pesee',    fiche:{ base, p100|pourUne, cle?, source, version?, fiab, etat?, libelle?, densite? },
                                  quantite:{ val, unite, origine?, portion? }
               | mode:'declaree', declare:{…}, quantite:{ val, unite, portion? },
-                corrections?:[{ c, v, le, avant? }] }
+                corrections?:[{ c, v, le, avant? }],
+                notes?:['reprise-non-verifiee'],   remplace?:<la ligne que celle-ci remplace (même id)>,
+                trace?:{ etat, methode, raison, brut, retenu, … },   signaux?:{ codeDouteux, doute, kcalDerivee } }
      ⛔ Il RENVOIE la ligne : l'enregistrer (journal, sauvegarde) est l'affaire de l'appelant.
      ⭐ Les champs plats de V1 gardent leur sens et SONT les données (`per100` est la fiche g / ml, `q`/`u`
         la quantité) : rien n'est recopié en double (R2). `n2` porte seulement ce qui manque à V1. */
@@ -160,6 +171,9 @@
       L.per100 = lireValeurs(f.p100).valeurs;                    // une COPIE de la fiche qui a servi
       n2.f = { src: f.source, ver: f.version || null, fiab: f.fiab, base: f.base };
       if (f.densite) n2.f.densite = { gParMl: f.densite.gParMl, source: texte(f.densite.source) };
+      /* ⭐ Le NOM de l'aliment de la fiche (jalon 4) : si la personne renomme la ligne, on sait encore quelle fiche a
+         servi — un nom changé ne cache jamais les valeurs d'un autre aliment (contrat du 22/10). */
+      if (texte(f.libelle)) n2.f.lib = texte(f.libelle).slice(0, NOM_MAX);
       L.sourceId = texte(f.cle) ? texte(f.cle).slice(0, 32) : null;
       L.etat = texte(f.etat) || null;
       n2.m = 'p'; n2.st = FIABILITES[f.fiab];
@@ -192,6 +206,47 @@
       finales[x.c] = x.v;
     }
     for (i = 0; i < CHAMPS.length; i++) { c = CHAMPS[i]; if (c in finales) L[c] = finales[c]; }   // absent = ABSENT
+
+    /* La trace du résolveur et les signaux de saisie : recopiés champ par champ (liste blanche), jamais l'objet
+       de l'appelant — rien de ce qui sort ne partage d'objet avec ce qui est entré. */
+    if (e.trace !== undefined && e.trace !== null) {
+      if (typeof e.trace !== 'object' || Array.isArray(e.trace)) return ko('TRACE_INVALIDE');
+      var tr = {}, nt = 0;
+      for (i = 0; i < TRACE_CLES.length; i++) {
+        x = e.trace[TRACE_CLES[i]];
+        if (typeof x === 'string' || fini(x)) { tr[TRACE_CLES[i]] = (typeof x === 'string') ? x.slice(0, 60) : x; nt++; }
+      }
+      if (nt) L.fiab = tr;
+    }
+    if (e.signaux !== undefined && e.signaux !== null) {
+      var sg = e.signaux;
+      if (typeof sg !== 'object' || Array.isArray(sg)) return ko('SIGNAUX_INVALIDES');
+      if (sg.codeDouteux === true) L.codeDouteux = true;
+      if (sg.kcalDerivee === true) L.kcalDerivee = true;
+      if (texte(sg.doute)) L.doute = texte(sg.doute).slice(0, 90);
+    }
+    /* Les notes de l'appelant : une liste FERMÉE, jamais un texte libre. */
+    if (e.notes !== undefined) {
+      if (!Array.isArray(e.notes)) return ko('NOTE_INVALIDE');
+      for (i = 0; i < e.notes.length; i++) {
+        if (NOTES_ENTREE.indexOf(e.notes[i]) < 0) return ko('NOTE_INVALIDE', String(e.notes[i]));
+        if (n2.no.indexOf(e.notes[i]) < 0) n2.no.push(e.notes[i]);
+      }
+    }
+    /* ⭐ UNE MODIFICATION À LA MAIN EST CONSERVÉE ET TRACÉE (jalon 4) : quand une ligne est remplacée par sa version
+       modifiée, elle ne peut remplacer QU'ELLE-MÊME (même `id`) ; une ANCIENNE ligne (sans `n2`) garde sa copie
+       d'origine intégrale dans `n2.av` — rien de ce qu'elle portait n'est perdu. Une ligne V2 n'en a pas besoin :
+       ses corrections sont déjà tracées une à une (`n2.corr`). */
+    if (e.remplace !== undefined && e.remplace !== null) {
+      var rp = e.remplace;
+      if (typeof rp !== 'object' || Array.isArray(rp)) return ko('REMPLACE_INVALIDE');
+      if (rp.id !== e.id) return ko('REMPLACE_AUTRE_LIGNE');
+      if (!rp.n2) {
+        var av;
+        try { av = JSON.parse(JSON.stringify(rp)); } catch (err) { return ko('REMPLACE_INVALIDE'); }
+        n2.av = av;
+      }
+    }
     L.n2 = n2;
     return { ok: true, ligne: L };
   }
@@ -302,6 +357,60 @@
     return { base: 'g', p100: p.valeurs, cle: vue.provenance.sourceId, source: 'ciqual', version: 'CIQUAL-2025', fiab: 'source' };
   }
 
+  /* ═══ ④ CE QU'UNE LIGNE PERMET DE REPRENDRE (jalon 4) — lecture seule, ligne V2 OU ancienne ═══
+     Pour l'ajout rapide, un repas habituel, un favori, une reprise depuis le journal ou une modification.
+     Rend { ok, statut, nom, valeurs, fiche, quantite, corrections } :
+       · statut   'v2'           — ligne écrite par V2 : sa fiche (si pesée) et sa quantité sont celles qu'elle porte ;
+                  'verifiee'     — ancienne ligne `recalculable` (fiche CIQUAL retrouvée à l'identique) ;
+                  'non-verifiee' — ancienne ligne sans fiche vérifiée : nom et valeurs seulement, quantité « notée ».
+       · fiche    une fiche de CONFIANCE prête pour `calcule`, ou null — ⛔ une fiche notée mais non vérifiée n'est
+                  JAMAIS rendue (M1 : un pour-100 g fabriqué ne se propage plus) ;
+       · quantite la quantité de la ligne si elle est VALIDE (g, ml, ou portion avec son nom ET son poids — D-099),
+                  sinon null — ⛔ jamais complétée, jamais une unité supposée.
+     Rien n'est écrit sur la ligne : tout ce qui sort est copié. */
+  function quantiteValide(q, u, libelle, poids, unitePoids) {
+    if (!fini(q) || !(q > 0)) return null;
+    if (u === 'g' || u === 'ml') return { val: q, unite: u };
+    if (u === 'portion' && texte(libelle) && fini(poids) && poids > 0 && (unitePoids === 'g' || unitePoids === 'ml')) {
+      return { val: q, unite: 'portion', portion: { libelle: texte(libelle).slice(0, LIBELLE_MAX), poids: poids, unite: unitePoids } };
+    }
+    return null;
+  }
+  function reprise(l, ctx) {
+    if (!l || typeof l !== 'object' || Array.isArray(l)) return { ok: false, erreur: 'LIGNE_ILLISIBLE' };
+    var i, c, x, valeurs = {};
+    for (i = 0; i < CHAMPS.length; i++) { c = CHAMPS[i]; x = l[c]; if (fini(x) && x >= 0) valeurs[c] = x; }
+    var nom = typeof l.name === 'string' ? l.name : '';
+    var n2 = l.n2;
+    if (n2 && typeof n2 === 'object' && n2.s === VERSION) {
+      var fiche = null, f = n2.f;
+      if (n2.m === 'p' && f && (f.base === 'g' || f.base === 'ml') && texte(f.src) && FIABILITES[f.fiab]) {
+        var lv = lireValeurs(l.per100);
+        if (lv.ok) {
+          fiche = { base: f.base, p100: lv.valeurs, cle: (typeof l.sourceId === 'string' && l.sourceId) ? l.sourceId : null,
+                    source: f.src, version: f.ver || null, fiab: f.fiab, etat: (typeof l.etat === 'string' && l.etat) ? l.etat : null };
+          if (f.densite && fini(f.densite.gParMl)) fiche.densite = { gParMl: f.densite.gParMl, source: f.densite.source };
+          if (texte(f.lib)) fiche.libelle = f.lib;
+        }
+      }
+      var pv = n2.pv;
+      var quantite = quantiteValide(l.q, l.u, l.portionLabel,
+                                    pv ? pv.val : l.portionWeightG, pv ? 'ml' : 'g');
+      var corr = [];
+      if (Array.isArray(n2.corr)) for (i = 0; i < n2.corr.length; i++) {
+        x = n2.corr[i];
+        if (x && CHAMPS.indexOf(x.c) >= 0 && fini(x.v)) corr.push({ c: x.c, v: x.v, avant: fini(x.avant) ? x.avant : null, le: fini(x.le) ? x.le : null });
+      }
+      return { ok: true, statut: 'v2', mode: n2.m, nom: nom, valeurs: valeurs, fiche: fiche, quantite: quantite, corrections: corr };
+    }
+    var r = lireAncienne(l, ctx);
+    if (!r.ok) return r;
+    var v = r.vue, qn = v.qteNotee, q = null;
+    if (qn) q = quantiteValide(qn.val, qn.unite, qn.portion && qn.portion.libelle, qn.portion && qn.portion.poids, qn.portion && qn.portion.unite);
+    return { ok: true, statut: v.recalculable ? 'verifiee' : 'non-verifiee', mode: null, nom: v.nom, valeurs: v.valeurs,
+             fiche: ficheVerifiee(v), quantite: q, corrections: [] };
+  }
+
   /* Tout un journal, en lecture : une vue par ligne, DANS L'ORDRE, sans en perdre une (une ligne illisible
      donne une vue en échec, elle ne disparaît pas). */
   function lireJournal(liste, ctx) {
@@ -312,7 +421,7 @@
   }
 
   var NUT2 = { VERSION: VERSION, CHAMPS: CHAMPS.slice(), calcule: calcule, ligneNouvelle: ligneNouvelle,
-               lireAncienne: lireAncienne, lireJournal: lireJournal, ficheVerifiee: ficheVerifiee };
+               lireAncienne: lireAncienne, lireJournal: lireJournal, ficheVerifiee: ficheVerifiee, reprise: reprise };
   if (Object.freeze) { Object.freeze(NUT2.CHAMPS); Object.freeze(NUT2); }
   if (typeof module !== 'undefined' && module.exports) module.exports = NUT2;
   else racine.NUT2 = NUT2;

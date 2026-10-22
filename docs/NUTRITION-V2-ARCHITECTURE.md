@@ -539,3 +539,47 @@ Q-M : l'avertissement « sec ») ; au jalon 6, la date de fermeture des écritur
 **1** (`nutrition-v2.js`, nouveau, non servi) · lignes **+330 / −0** · anciens chemins supprimés **0** (rien n'est branché ;
 les six chemins visés au §8 partent à la bascule). *Prévision révisée* : l'instantané IndexedDB et toute écriture sur les
 anciennes lignes sortent du périmètre de V2 (D-098).
+
+---
+
+## 14. Jalon 4 — le branchement aux écrans (plan du 22/10, D-099)
+
+> Feu vert de Michel (22/10) : intégrer le moteur aux écrans Nutrition, sur `claude/nutrition-v2`, avec les tests.
+> Rien n'est fusionné, publié ni servi au clone sans nouveau feu vert. Les anciennes lignes ne sont **jamais**
+> réécrites par un automatisme ; leur récupération reste à Claude Principal (D-098).
+
+**Principe** : les écrans gardent leur forme ; ce qui change est **dessous**. Chaque nombre consommé sort de
+`NUT2.calcule`, chaque ligne nouvelle sort de `NUT2.ligneNouvelle`, et chaque ancienne ligne se lit par
+`NUT2.lireAncienne`. Le pont vit dans `app.js` (zone Nutrition) : il construit un objet **complet** au moment du geste,
+puis appelle le moteur ; il ne calcule rien lui-même.
+
+| Avant (V1) | Après (V2) | Pourquoi |
+|---|---|---|
+| `_qtyRescale` (4 routes), `_afProp`, `_efProp`, l'estimation IA, les idées « pour le reste », la carte d'une marque calculent chacun | **un seul calcul** : `NUT2.calcule(fiche, quantité)` | consigne : le moteur est la seule référence |
+| `_provFood` lit l'écran et devine `q`, `u`, `per100` ; `_per100Derive` fabrique un pour-100 g à partir des valeurs | l'appelant donne `{fiche, quantité, provenance, corrections}` ; le pour-100 g d'une ligne est **la fiche qui a servi** | M1, M6, CR-1, CR-5 |
+| une macro inconnue devient 0 (`_ref100`, champs vides) | elle reste **absente**, affichée « ? » ; les totaux disent combien de lignes l'ignorent | contrat, « aucune valeur inventée » |
+| onglet « portions » par défaut ; ×2 multiplie sans poids | **grammes / ml par défaut** ; une portion exige son **nom et son poids** | D-099 |
+| poids supposé par l'IA ou nombre lu dans la phrase **pré-remplis** et enregistrés sans geste | **pastilles** (un toucher) ; le champ reste vide | garde-fou large du 10/09, option A, D-075 |
+| une correction à la main est écrasée par le recalcul suivant | elle **reste**, tracée (`n2.corr`) ; « revenir au calcul » la retire | CR-2 |
+| modifier une ligne la réécrit en place (`modifie`) | la ligne est **remplacée** par une ligne V2 (même `id`, même `ts`) ; une ancienne ligne garde sa copie d'origine (`n2.av`) | modification conservée et tracée |
+| une boisson scannée se compte en grammes | la fiche dit **g ou ml** (unité déclarée par la fiche produit) ; pas de conversion sans densité | contrat g / ml |
+
+**Ce qu'une ancienne ligne peut encore donner** (lecture seule, `lireAncienne`) :
+- **recalculable** (fiche CIQUAL retrouvée à l'identique) → elle se reprend comme une ligne V2 : fiche + quantité ;
+- **sinon** → son nom et ses valeurs se reprennent **telles quelles**, sa quantité notée peut être recopiée **avec**
+  les valeurs (jamais recalculée, jamais transformée en fiche), et la nouvelle ligne le dit
+  (`st:'declaree'`, `qo:'proposee'`, note `reprise-non-verifiee`). ⛔ Une quantité absente n'est jamais complétée :
+  la reprise ouvre alors l'écran et demande la quantité.
+
+**Ce qui part** (compte exact au rapport) : `_provFood`, `_per100Derive` (côté écriture), l'écriture de `modifie`,
+le calcul propre de `_qtyRescale` / `_afProp` / `_efProp`, la quantité déduite à la réouverture
+(`round(kcal / pour100 × 100)`), le défaut « portions ».
+
+**Ce qui ne bouge pas** : la douane (21 règles, carnet, format — gel du 13/09 ; elle observe chaque ligne V2 avec le
+nom historique de sa porte) · les clés de stockage · `state.js` (chargement, fusion de restauration : Principal) ·
+`Code.js`, `worker.js` · Milo · Séance · le clone (régénéré seulement sur feu vert).
+
+**Ordre de construction** — chaque lot finit vert (bancs Nutrition voisins + contrôles), commité, poussé :
+J4-0 chargement du moteur · J4-1 calcul unique · J4-2 écrivain unique + D-099 · J4-3 lecture (journal, totaux,
+favoris, repas habituels, export) · J4-4 bancs des parcours + témoins V1 révisés · J4-5 passe complète, rapport,
+recette iPhone.

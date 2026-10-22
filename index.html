@@ -3891,6 +3891,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
      ⚠️ AUCUN APPEL RÉSEAU : c'est un `<script>`, pas un `fetch` — l'ouverture reste
      instantanée, même hors ligne (règle d'or 4). -->
 <script src="capacites-ia.js"></script>
+<!-- 🥗 NUTRITION V2 — le moteur (D-096, jalon 4). Il calcule les valeurs consommées, écrit les lignes nouvelles et
+     lit les anciennes SANS les modifier. Pur comme `capacites-ia.js` : aucun écran, aucun stockage, aucun réseau —
+     chargé avant `app.js`, qui est le seul à l'appeler. ⛔ Précaché dans `sw.js` dans le même mouvement (leçon de
+     `supabase.js`). -->
+<script src="nutrition-v2.js"></script>
 <script src="constants.js"></script>
 <script src="state.js"></script>
 <script src="supabase.js"></script>

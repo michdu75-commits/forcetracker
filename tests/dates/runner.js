@@ -66,7 +66,7 @@ t('New York, 23 h 30 → le jour en cours, pas le lendemain',
 // ── 2. Le motif interdit ne doit revenir dans AUCUN fichier de l'app ─────────
 // (Code.js et worker.js tournent sur un serveur, pas dans le téléphone : hors périmètre.)
 const FICHIERS=['constants.js','state.js','screens.js','log.js','setup.js',
-                'tracking.js','coach.js','food-health.js','app.js','translations.js'];
+                'tracking.js','coach.js','food-health.js','app.js','translations.js','nutrition-v2.js'];
 /* ⛔⛔ LES BANCS D'ESSAI AUSSI (05/09/2026) — LE TROU QUE SESSION-A A DÉCLARÉ EN LE LAISSANT.
    Dans la nuit du 04 au 05, **11 témoins du banc de parcours sont passés au rouge d'un coup**,
    sur du code applicatif parfaitement sain. Cause : les fixtures dataient en `toISOString()`

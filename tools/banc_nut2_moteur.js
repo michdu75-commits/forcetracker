@@ -220,6 +220,43 @@ try { (() => {
     const b = N.ligneNouvelle(ent({ mode: 'devine', fiche: RIZ, quantite: { val: 1, unite: 'g' } }));
     return a.ok && a.ligne.name.length === 80 && !b.ok && b.erreur === 'MODE_INCONNU' || J([a, b]);
   });
+  /* ── Jalon 4 : ce dont les écrans ont besoin ── */
+  essai('B-NV2-E ⑯ les notes de l\'appelant : liste FERMÉE (« reprise-non-verifiee » acceptée, une autre ou un texte : refus)', () => {
+    const a = N.ligneNouvelle(ent(Object.assign({ notes: ['reprise-non-verifiee'] }, PESEE)));
+    const b = N.ligneNouvelle(ent(Object.assign({ notes: ['comme-je-veux'] }, PESEE)));
+    const c = N.ligneNouvelle(ent(Object.assign({ notes: 'reprise-non-verifiee' }, PESEE)));
+    return a.ok && a.ligne.n2.no.indexOf('reprise-non-verifiee') >= 0 && b.erreur === 'NOTE_INVALIDE' && c.erreur === 'NOTE_INVALIDE' || J([a, b, c]);
+  });
+  essai('B-NV2-E ⑰ ⛔⛔ une modification CONSERVÉE : une ancienne ligne remplacée garde sa copie intégrale (n2.av), et ne remplace qu\'ELLE-MÊME', () => {
+    const vieille = geler({ id: 'vieille-0001', date: '2026-09-01', meal: 'diner', name: 'Pâtes du soir', kcal: 510, prot: 18, carbs: 102, fat: 3,
+                            ts: 1756720000000, v: 1, saisie: 'scan', origine: 'off', q: 140, u: 'g', per100: { kcal: 364, prot: 13, carbs: 73, fat: 2 },
+                            modifie: false, fiab: { etat: 'NON_RESOLU' } });
+    const avant = J(vieille);
+    const a = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0001', remplace: vieille }));
+    const b = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'autre-ligne-01', remplace: vieille }));
+    const v2 = N.ligneNouvelle(ent(PESEE)).ligne;
+    const c = N.ligneNouvelle(Object.assign(ent(PESEE), { remplace: v2 }));
+    return a.ok && J(a.ligne.n2.av) === avant && a.ligne.n2.av !== vieille && J(vieille) === avant &&
+      b.erreur === 'REMPLACE_AUTRE_LIGNE' && c.ok && !('av' in c.ligne.n2) || J([a.ligne && a.ligne.n2, b, c.ligne && c.ligne.n2]);
+  });
+  essai('B-NV2-E ⑱ le nom de l\'aliment de la fiche est gardé (n2.f.lib) — et seulement s\'il est donné', () => {
+    const a = N.ligneNouvelle(ent({ nom: 'Mon riz', mode: 'pesee', fiche: Object.assign({}, RIZ, { libelle: 'Riz blanc, cuit' }), quantite: { val: 150, unite: 'g' } }));
+    const b = N.ligneNouvelle(ent(PESEE));
+    return a.ok && a.ligne.n2.f.lib === 'Riz blanc, cuit' && a.ligne.name === 'Mon riz' && b.ok && !('lib' in b.ligne.n2.f) || J([a, b]);
+  });
+  essai('B-NV2-E ⑲ la trace du résolveur suit la ligne (champ `fiab` de V1) — liste BLANCHE, copiée, rien d\'autre', () => {
+    const tr = { etat: 'NON_RESOLU', methode: 'observation', brut: 48, retenu: 48, confiance: 'source', secret: 'ne-doit-pas-passer' };
+    const a = N.ligneNouvelle(ent(Object.assign({ trace: tr }, PESEE)));
+    const b = N.ligneNouvelle(ent(Object.assign({ trace: 'NON_RESOLU' }, PESEE)));
+    return a.ok && J(a.ligne.fiab) === J({ etat: 'NON_RESOLU', methode: 'observation', brut: 48, retenu: 48, confiance: 'source' }) &&
+      a.ligne.fiab !== tr && b.erreur === 'TRACE_INVALIDE' && !('fiab' in N.ligneNouvelle(ent(PESEE)).ligne) || J([a.ligne && a.ligne.fiab, b]);
+  });
+  essai('B-NV2-E ⑳ les signaux de saisie de V1 sont gardés tels quels (code douteux, doute d\'enseigne coupé à 90, kcal dérivées)', () => {
+    const a = N.ligneNouvelle(ent(Object.assign({ signaux: { codeDouteux: true, doute: 'd'.repeat(120), kcalDerivee: true } }, PESEE)));
+    const b = N.ligneNouvelle(ent(Object.assign({ signaux: { codeDouteux: 'oui', kcalDerivee: 1 } }, PESEE)));
+    return a.ok && a.ligne.codeDouteux === true && a.ligne.kcalDerivee === true && a.ligne.doute.length === 90 &&
+      b.ok && !('codeDouteux' in b.ligne) && !('kcalDerivee' in b.ligne) || J([a.ligne, b.ligne]);
+  });
 
   console.log('\n═══ B-NV2-A. L\'ADAPTATEUR DES ANCIENNES LIGNES — LECTURE SEULE ═══');
   /* Des lignes FICTIVES, une par génération du format (docs/NUTRITION-V2-ARCHITECTURE.md §3.2), GELÉES. */
@@ -363,6 +400,62 @@ try { (() => {
     return !r.ok && r.vues.length === 0 || J(r);
   });
 
+  console.log('\n═══ B-NV2-R. CE QU\'UNE LIGNE PERMET DE REPRENDRE (jalon 4) — lecture seule ═══');
+  const LV2 = N.ligneNouvelle(ent(PESEE)).ligne;
+  const LV2C = N.ligneNouvelle(ent(Object.assign({ corrections: [{ c: 'kcal', v: 560, le: 1761120001000 }] }, PESEE))).ligne;
+  const LV2P = N.ligneNouvelle(ent({ nom: 'Steak fictif', mode: 'pesee',
+    fiche: { base: 'g', p100: { kcal: 129, prot: 20, carbs: 0, fat: 5 }, source: 'utilisateur', fiab: 'declaree' },
+    quantite: { val: 2, unite: 'portion', origine: 'portion', portion: { libelle: 'steak', poids: 125, unite: 'g' } } })).ligne;
+  const LV2D = N.ligneNouvelle(ent({ nom: 'Plat fictif', mode: 'declaree', declare: { kcal: 450, prot: 20 }, quantite: { val: 300, unite: 'g' } })).ligne;
+  geler([LV2, LV2C, LV2P, LV2D]);
+  const AV_R = J([LV2, LV2C, LV2P, LV2D, G]);
+  essai('B-NV2-R ① une ligne V2 pesée rend SA fiche et SA quantité (attendus à la main : riz 360/7,4/79/0,6 · 150 g · 540/11/119/1)', () => {
+    const r = N.reprise(LV2, ctx);
+    return r.ok && r.statut === 'v2' && r.mode === 'p' &&
+      J(r.fiche) === J({ base: 'g', p100: { kcal: 360, prot: 7.4, carbs: 79, fat: 0.6 }, cle: 'ciqual:9999', source: 'ciqual', version: null, fiab: 'source', etat: null }) &&
+      J(r.quantite) === J({ val: 150, unite: 'g' }) && J(r.valeurs) === J({ kcal: 540, prot: 11, carbs: 119, fat: 1 }) || J(r);
+  });
+  essai('B-NV2-R ② une correction à la main suit la reprise (c, v, avant, le)', () => {
+    const r = N.reprise(LV2C, ctx);
+    return r.ok && J(r.corrections) === J([{ c: 'kcal', v: 560, avant: 540, le: 1761120001000 }]) && r.valeurs.kcal === 560 || J(r);
+  });
+  essai('B-NV2-R ③ une portion V2 rend « 2 × steak de 125 g » (nom ET poids), jamais « 250 g »', () => {
+    const r = N.reprise(LV2P, ctx);
+    return r.ok && J(r.quantite) === J({ val: 2, unite: 'portion', portion: { libelle: 'steak', poids: 125, unite: 'g' } }) || J(r);
+  });
+  essai('B-NV2-R ④ une ligne V2 déclarée : pas de fiche (rien à recalculer), sa quantité, ses valeurs telles quelles', () => {
+    const r = N.reprise(LV2D, ctx);
+    return r.ok && r.mode === 'd' && r.fiche === null && J(r.quantite) === J({ val: 300, unite: 'g' }) && J(r.valeurs) === J({ kcal: 450, prot: 20 }) || J(r);
+  });
+  essai('B-NV2-R ⑤ une ancienne ligne VÉRIFIÉE (CIQUAL 9810 à l\'identique) rend la fiche CIQUAL et sa quantité', () => {
+    const r = N.reprise(G.VERIF, ctx);
+    return r.ok && r.statut === 'verifiee' && r.fiche && r.fiche.source === 'ciqual' && r.fiche.cle === 'ciqual:9810' &&
+      J(r.fiche.p100) === J({ kcal: 364, prot: 13.1, carbs: 72.7, fat: 1.6 }) && J(r.quantite) === J({ val: 140, unite: 'g' }) || J(r);
+  });
+  essai('B-NV2-R ⑥ ⛔⛔ une ancienne ligne NON vérifiée ne prête AUCUNE fiche (scan d\'hier, pour-100 g fabriqué) : nom, valeurs, quantité notée', () => {
+    const a = N.reprise(G.G1, ctx), b = N.reprise(G.FABRIQUEE, ctx);
+    return a.ok && a.statut === 'non-verifiee' && a.fiche === null && J(a.quantite) === J({ val: 45, unite: 'g' }) &&
+      J(a.valeurs) === J({ kcal: 210, prot: 4, carbs: 30, fat: 8 }) && b.ok && b.fiche === null || J([a, b]);
+  });
+  essai('B-NV2-R ⑦ ⛔⛔ une quantité absente, sans unité, ou « 1 portion » sans poids n\'est JAMAIS complétée (null)', () => {
+    const r = ['G3', 'G4b', 'F7', 'G8', 'G0'].map((k) => N.reprise(G[k], ctx));
+    return r.every((x) => x.ok && x.quantite === null) || J(r.map((x) => x.quantite));
+  });
+  essai('B-NV2-R ⑧ une ancienne portion AVEC nom et poids reste une portion (2 × steak de 125 g), sans fiche prêtée', () => {
+    const r = N.reprise(G.G4, ctx);
+    return r.ok && r.fiche === null && J(r.quantite) === J({ val: 2, unite: 'portion', portion: { libelle: 'steak', poids: 125, unite: 'g' } }) || J(r);
+  });
+  essai('B-NV2-R ⑨ ⛔ un n2 trafiqué (fiabilité inconnue, version autre) ne prête pas de fiche', () => {
+    const faux = JSON.parse(J(LV2)); faux.n2.f.fiab = 'parfaite';
+    const autre = JSON.parse(J(LV2)); autre.n2.s = 99;
+    const a = N.reprise(faux, ctx), b = N.reprise(autre, ctx);
+    return a.ok && a.fiche === null && b.ok && b.statut !== 'v2' && b.fiche === null || J([a, b]);
+  });
+  essai('B-NV2-R ⑩ ⛔⛔ la reprise ne touche à rien (lignes gelées, JSON identique) et ne rend que des COPIES', () => {
+    const r = N.reprise(LV2, ctx);
+    return J([LV2, LV2C, LV2P, LV2D, G]) === AV_R && r.fiche.p100 !== LV2.per100 && r.valeurs !== LV2 || 'une ligne a bougé ou un objet est partagé';
+  });
+
   console.log('\n═══ B-NV2-P. PURETÉ : aucune entrée modifiée, même résultat à chaque appel ═══');
   essai('B-NV2-P ① le calcul et l\'écrivain ne touchent pas à ce qu\'on leur passe (entrées gelées, JSON identique)', () => {
     const e = geler(JSON.parse(J(ent(Object.assign({ corrections: [{ c: 'prot', v: 30, le: 1 }] }, PESEE)))));
@@ -375,9 +468,9 @@ try { (() => {
     const c = J(N.lireJournal(LISTE, ctx)), d = J(N.lireJournal(LISTE, ctx));
     return a === b && c === d || 'résultats différents';
   });
-  essai('B-NV2-P ③ le moteur n\'expose que ses 5 fonctions, gelé (rien ne peut le remplacer en cours de route)', () => {
+  essai('B-NV2-P ③ le moteur n\'expose que ses 6 fonctions, gelé (rien ne peut le remplacer en cours de route)', () => {
     const k = Object.keys(N).sort().join(',');
-    return Object.isFrozen(N) && k === 'CHAMPS,VERSION,calcule,ficheVerifiee,ligneNouvelle,lireAncienne,lireJournal' || k;
+    return Object.isFrozen(N) && k === 'CHAMPS,VERSION,calcule,ficheVerifiee,ligneNouvelle,lireAncienne,lireJournal,reprise' || k;
   });
   essai('B-NV2-P ④ ⛔ le fichier ne lit ni écran, ni stockage, ni réseau, ni horloge (aucune de ces API dans son code)', () => {
     const src = fs.readFileSync(CIBLE, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');

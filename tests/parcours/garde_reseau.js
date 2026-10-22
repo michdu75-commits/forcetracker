@@ -371,7 +371,7 @@ module.exports.identites = async function (t, b, PORT) {
   const ro = IDF.roles(), manquants = Object.entries(ro).filter(([, v]) => !v).map(([k]) => k);
   t('D031S-III ① les identités que l\'app reconnaît sont LUES dans son code (fondateur, Christophe, Eline, Emma, boîte à idées, 4 listes) — aucune recopiée',
     manquants.length === 0 && IDF.adressesReelles().length >= 5, manquants.length ? 'introuvable(s) dans le code : ' + manquants.join(', ') : IDF.adressesReelles().length + ' identité(s)');
-  const fichiers = ['index.html', 'constants.js', 'app.js', 'coach.js', 'tracking.js', 'log.js', 'setup.js', 'screens.js', 'state.js'];
+  const fichiers = ['index.html', 'constants.js', 'app.js', 'coach.js', 'tracking.js', 'log.js', 'setup.js', 'screens.js', 'state.js', 'nutrition-v2.js'];
   const servis = {}; for (const f of fichiers) servis[f] = await recuperer(PORT, f);
   const fuite = fichiers.filter(f => IDF.compterReelles(servis[f]) > 0 || !servis[f]);
   t('D031S-III ② l\'app servie aux tests ne porte AUCUNE identité réelle (listes, comparaisons en dur, textes)',
