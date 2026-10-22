@@ -32,6 +32,7 @@
     "banc:auth_signup_strict": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_auth_signup_strict.js", "controle_negatif": "python3 tools/mut_auth_signup_strict.py"},
     "banc:import_echauffement": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_import_echauffement.js", "controle_negatif": "python3 tools/mut_import_echauffement.py"},
     "banc:sec_admin": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_sec_admin.js", "controle_negatif": "python3 tools/mut_sec_admin.py"},
+    "banc:nut_inventaire_admin": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_nut_inventaire_admin.js", "controle_negatif": "python3 tools/mut_nut_inventaire_admin.py"},
     "banc:import_map": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_import_map.js", "controle_negatif": "python3 tools/mut_import_map.py"},
     "banc:import_map_alias": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_import_map_alias.js", "controle_negatif": "python3 tools/mut_import_map.py"},
     "banc:import_map2": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_import_map2.js", "controle_negatif": "python3 tools/mut_import_map2.py"},

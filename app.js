@@ -10819,6 +10819,70 @@ async function _healthDeploys(){
     return _healthRow('🚀','Mises en ligne','warn','État non lisible ('+_escIdea(String(e&&e.message||e))+') — à vérifier sur l\'onglet Actions de GitHub.');
   }
 }
+/* 🍽️ INVENTAIRE NUTRITION — CARTE ADMIN (22/10/2026, GO limité A2 de Michel : PRÉPARÉ, NON PUBLIÉ).
+   Lit les deux routes de diagnostic déployées en A1 (`nutInventory`, `nutBackupAudit`, Code.js),
+   en lecture seule de bout en bout côté serveur (docs/NUT-INVENTAIRE-LECTURE-SEULE.md).
+   ⛔ LE JETON PART DANS LE CORPS D'UN POST, JAMAIS DANS L'ADRESSE (consigne de Michel du 22/10) — à la
+   différence des cartes voisines, qui l'envoient en GET. Même jeton et même mémoire (`_adminTok`), même
+   oubli s'il est refusé (`_adminTokRefuse`) : rien de neuf n'est rangé sur l'appareil, pas même le résultat.
+   ⛔ QUE DES NOMBRES : on n'affiche qu'une LISTE BLANCHE de champs, jamais « tout ce que le serveur rend »,
+   et ce qui en vient s'échappe quand même. */
+const _NUT_INV_DELAI={nutInventory:60000, nutBackupAudit:330000};   // la 2ᵉ s'arrête seule à 4 min 30 côté serveur
+function _nutInvN(v){ const n=Number(v); return Number.isFinite(n)?n.toLocaleString('fr-FR'):'?'; }
+async function _nutInvAppel(action,tok){
+  try{
+    const ctl=('AbortController' in window)?new AbortController():null;
+    const to=setTimeout(()=>{try{ctl&&ctl.abort();}catch(e){}},_NUT_INV_DELAI[action]);
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:action,token:tok}),...(ctl?{signal:ctl.signal}:{})});
+    clearTimeout(to);
+    return await r.json();
+  }catch(e){ return {status:'error',error:(e&&e.name==='AbortError')?'trop lent':'réseau'}; }
+}
+function _nutInvRendu(d){
+  const N=_nutInvN, a=d.anomalies||{}, h=d.histogrammeTailles||{};
+  const ANOM=[['sansDate','sans date lisible'],['datesAberrantes','datées hors période'],['sansId','sans identifiant'],
+    ['idsEnDouble','identifiants en double'],['auPlafond8000','compte(s) à 8 000 lignes (peut-être tronqué(s) à l\'envoi)'],
+    ['foodLogVideAvecSavedFoods','compte(s) sans journal mais avec des favoris'],['comptesJsonIllisible','compte(s) illisible(s)']];
+  const vues=ANOM.filter(x=>+a[x[0]]>0);
+  const TAILLES=['0','1-10','11-50','51-200','201-1000','1001-7999','8000+'];
+  return _healthRow('👥','Comptes','ok',N(d.comptes)+' comptes · <b>'+N(d.avecFoodLog)+' avec un journal</b> · '+N(d.avecSavedFoods)+' avec des favoris')
+    +_healthRow('🍽️','Entrées','ok',N(d.entreesTotal)+' lignes, dont '+N(d.entreesValides)+' utilisables (date + au moins une valeur) · '
+      +N(d.joursCouverts)+' jours couverts'+(d.borneMin?' · du '+_escIdea(d.borneMin)+' au '+_escIdea(d.borneMax):''))
+    +_healthRow('📊','Taille des journaux','ok',TAILLES.map(k=>k+' lignes : '+N(h[k]||0)).join(' · '))
+    +_healthRow('⚠️','Anomalies',vues.length?'warn':'ok',vues.length?vues.map(x=>N(a[x[0]])+' '+x[1]).join(' · '):'aucune')
+    +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Lecture seule, que des nombres'+(d.genere?' — '+_escIdea(String(d.genere).slice(0,16).replace('T',' '))+' UTC':'')+'.</div>';
+}
+function _nutAuditRendu(d){
+  const N=_nutInvN;
+  if(d.dossierTrouve===false) return _healthRow('🗄️','Sauvegardes','ko','Dossier des sauvegardes introuvable — la sauvegarde de la nuit n\'a peut-être jamais tourné.');
+  const c=d.comparaison||{}, partiel=!!d.arretParLeTemps||(+d.fichiersNonLus>0);
+  const vieux=+d.ageJours>1;
+  let h=_healthRow('🗄️','Sauvegardes',(partiel||vieux||+d.fichiersIllisibles>0)?'warn':'ok',
+    N(d.nbFichiers)+' fichiers · '+N(d.fichiersLus)+' lus · '+N(d.fichiersNonLus)+' non lus'
+    +(d.arretParLeTemps?'<br>⏱️ <b>Arrêt après 4 min 30 : couverture PARTIELLE</b> (les plus anciennes n\'ont pas été lues).':'')
+    +(+d.fichiersIllisibles>0?'<br>'+N(d.fichiersIllisibles)+' fichier(s) illisible(s).':'')
+    +(d.dernierDateISO?'<br>Dernière : '+_escIdea(String(d.dernierDateISO).slice(0,10))+' (il y a '+N(d.ageJours)+' j)':''));
+  const amb=+c.lignesDansSauvegardesAbsentesDuServeur>0;
+  h+=_healthRow('🔍','Comparaison avec le serveur',amb?'warn':'ok',
+    N(c.comptesServeur)+' comptes au serveur · '+N(c.comptesDansSauvegardes)+' dans les sauvegardes · '+N(c.comptesSeulementDansSauvegardes)+' seulement dans les sauvegardes'
+    +'<br><b>'+N(c.lignesDansSauvegardesAbsentesDuServeur)+' ligne(s) des sauvegardes absente(s) du serveur</b> ('+N(c.comptesAvecLignesAbsentesDuServeur)+' compte(s))'
+    +(amb?' — ambiguës : supprimées par la personne OU perdues. À revoir, <b>jamais restaurées d\'office</b>.':'')
+    +'<br>'+N(c.lignesServeurAbsentesDesSauvegardes)+' ligne(s) du serveur dans aucune sauvegarde (récentes, en général).');
+  return h+'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Lecture seule, que des nombres. Aucun fichier n\'est créé ni modifié.</div>';
+}
+async function loadNutInventaireAdmin(action){
+  const box=document.getElementById('admin-nutinv');
+  if(!box||!_NUT_INV_DELAI[action])return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  const tok=_adminTok();
+  if(!tok){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Jeton admin requis.</div>'; return; }
+  box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">'+(action==='nutBackupAudit'?'Lecture des sauvegardes… (jusqu\'à 5 minutes)':'Comptage…')+'</div>';
+  const d=await _nutInvAppel(action,tok);
+  if(_adminTokRefuse(d)){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Jeton refusé — relance, il te sera redemandé.</div>'; return; }
+  if(!d||d.status!=='ok'){ box.innerHTML=_healthRow('🍽️','Inventaire Nutrition','ko','Pas de réponse exploitable ('+_escIdea((d&&d.error)||'?')+'). Rien n\'a été modifié.'); return; }
+  box.innerHTML=action==='nutBackupAudit'?_nutAuditRendu(d):_nutInvRendu(d);
+}
 async function loadHealthAdmin(){
   const box=document.getElementById('admin-health');
   if(!box)return;
