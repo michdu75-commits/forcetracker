@@ -37,6 +37,11 @@ citer la donnée lue). Aucune ligne de `Logger`.
   enregistrement ne l'écrit (mesuré dans Chromium), donc le même repas peut porter un id différent
   dans chaque sauvegarde. Par l'id seul, il était compté « absent », une fois par sauvegarde
   (corrigé le 22/10, témoins H17-H19, contrôles négatifs NC7-NC9).
+  ⏱️ Le dossier n'est jamais purgé (une sauvegarde par nuit depuis fin juin, tous les comptes dans
+  chacune) et Apps Script coupe une exécution à 6 min : la route **s'arrête d'elle-même après
+  4 min 30 et le dit** (`arretParLeTemps`, `fichiersNonLus`) — les plus anciennes restent alors à
+  lire. Un paramètre de reprise ne sera ajouté que si le premier passage réel le montre nécessaire
+  (témoin H20, contrôle négatif NC10).
 
 ## ⚠️ Ce que la fusion existante NE garantit PAS (mesuré sur la vraie fonction de production)
 
@@ -84,8 +89,23 @@ et éditions comprises) **plus** les lignes legacy qui n'avaient pas été migr�
 supprimée après la bascule reste supprimée (grâce au **manifeste de migration**). ⛔ Jamais « recharger
 l'original » : cette règle naïve efface les repas saisis depuis la bascule (prouvé par contrôle négatif).
 
+## Points ouverts (mesurés le 22/10)
+
+- **Aucun bouton** ne lance ces routes, et la session Claude ne peut pas les appeler : le réseau de
+  l'environnement refuse `script.google.com` (`CONNECT tunnel failed, response 403`), et le jeton
+  admin n'est que sur le téléphone de Michel (`ft4_admin_tok`). Options : une petite carte Admin
+  (lot d'interface, recommandé) ou une variante GET ouverte comme lien (le jeton passe alors dans
+  l'adresse, comme pour les cartes Admin existantes).
+- **Perte possible au serveur aujourd'hui** : `profile.foodLog = _pa_(body.foodLog, profile.foodLog)`
+  remplace le journal du serveur par toute liste non vide plus courte ; les séances ont un garde
+  contre le rétrécissement, pas le journal (changement de production : décision de Michel).
+- Journaux restés sur le téléphone : seul l'export complet de la personne les capture, et l'app ne
+  sait pas relire un export (outil de reprise : V2).
+
 ## Autorisations nécessaires (aucune n'est accordée par ce document)
 
 - Déployer `nutInventory` / `nutBackupAudit` (aucun scope OAuth nouveau ; jeton `IDEES_TOKEN2` existant).
+- Choisir comment les lancer (carte Admin ou lien GET) — sans ce choix, le déploiement ne donne
+  rien de lisible.
 - Lecture de la console Supabase (agrégats seulement) si le miroir doit entrer dans la comparaison.
 - Décision produit : traces de suppression et manifeste de migration côté V2 (périmètre Claude Nutrition).

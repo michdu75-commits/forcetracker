@@ -2090,12 +2090,14 @@ function _nutEmpreinte_(e) {
   }
   try { return JSON.stringify(tri(e)); } catch (x) { return 'illisible:' + Math.random(); }  // jamais égale : comptée, pas cachée
 }
-/* Un ensemble de lignes vu par ses deux clés : `ajoute(e)` l'enregistre, `vu(e)` est vrai si l'id OU l'empreinte y est. */
+/* Les deux clés d'une ligne, calculées UNE fois (l'empreinte coûte : on la lit dans chaque sauvegarde). */
+function _nutCles_(e) { return { id: _nutIdLigne_(e), emp: _nutEmpreinte_(e) }; }
+/* Un ensemble de lignes vu par ses deux clés : `ajoute(c)` l'enregistre, `vu(c)` est vrai si l'id OU l'empreinte y est. */
 function _nutEnsemble_() {
   var ids = Object.create(null), emps = Object.create(null);
   return {
-    vu: function(e) { var id = _nutIdLigne_(e); return !!((id && ids[id]) || emps[_nutEmpreinte_(e)]); },
-    ajoute: function(e) { var id = _nutIdLigne_(e); if (id) ids[id] = 1; emps[_nutEmpreinte_(e)] = 1; }
+    vu: function(c) { return !!((c.id && ids[c.id]) || emps[c.emp]); },
+    ajoute: function(c) { if (c.id) ids[c.id] = 1; emps[c.emp] = 1; }
   };
 }
 
@@ -2155,10 +2157,16 @@ function handleNutInventory_(body) {
    LECTURE SEULE (règle d'or #18) : ne crée, ne modifie, ne met à la corbeille aucun fichier.
    ⛔ Une ligne présente dans une sauvegarde et absente du serveur est AMBIGUË : l'app ne garde
    aucune trace de suppression (removeFoodEntry = splice), donc on ne sait pas si la personne l'a
-   supprimée ou si elle a été perdue (_pa_ remplace). Elle est COMPTÉE, jamais restaurée d'office. */
+   supprimée ou si elle a été perdue (_pa_ remplace). Elle est COMPTÉE, jamais restaurée d'office.
+   ⏱️ BUDGET DE TEMPS : le dossier n'est jamais purgé (une sauvegarde par nuit depuis fin juin, chacune
+   avec tous les comptes) et une exécution Apps Script s'arrête à 6 min. Passé 4 min 30, on cesse de
+   lire (les plus anciennes restent) et on le DIT (arretParLeTemps, fichiersNonLus) : une couverture
+   partielle déclarée, jamais une erreur muette ni une couverture partielle silencieuse. */
+var NUT_AUDIT_BUDGET_MS_ = 270000;
 function handleNutBackupAudit_(body) {
   if (!_checkIdeesTok_(body && body.token)) return json_({status:'error', error:'token'});
   try {
+    var t0 = Date.now();
     var sp = PropertiesService.getScriptProperties();
     var max = Math.max(1, Math.min(parseInt(body && body.max, 10) || 400, 2000));
     var folder = null, id = sp.getProperty('ft_backup_drive_folder_id');
@@ -2181,13 +2189,15 @@ function handleNutBackupAudit_(body) {
     var serveur = Object.create(null);
     _nutPourChaqueCompte_(sp, function(email, fl) {
       if (fl === null) return;
-      var s = _nutEnsemble_(); fl.forEach(s.ajoute);
-      serveur[String(email).toLowerCase().trim()] = { ens: s, fl: fl };
+      var s = _nutEnsemble_(), cles = fl.map(_nutCles_); cles.forEach(s.ajoute);
+      serveur[String(email).toLowerCase().trim()] = { ens: s, cles: cles };
     });
     // Chaque sauvegarde : agrégats par fichier, union par compte, et lignes absentes du serveur
     // comptées UNE fois même si elles reviennent sous un autre id ou dans plusieurs sauvegardes (EN MÉMOIRE).
-    var fichiers = [], union = Object.create(null), absentes = Object.create(null);
-    lus.forEach(function(x) {
+    var fichiers = [], union = Object.create(null), absentes = Object.create(null), arretTemps = false;
+    for (var i = 0; i < lus.length; i++) {
+      if (Date.now() - t0 > NUT_AUDIT_BUDGET_MS_) { arretTemps = true; break; }
+      var x = lus[i];
       var r = { nom: x.nom, dateISO: new Date(x.t).toISOString(), octets: x.f.getSize(),
                 lisible: false, comptes: 0, avecFoodLog: 0, entrees: 0 };
       try {
@@ -2201,16 +2211,17 @@ function handleNutBackupAudit_(body) {
           if (!em) return;
           var vu = union[em] || (union[em] = _nutEnsemble_()), sv = serveur[em];
           fl.forEach(function(e) {
-            vu.ajoute(e);
-            if (sv && sv.ens.vu(e)) return;                                   // présente au serveur (par l'id OU le contenu)
+            var c = _nutCles_(e);
+            vu.ajoute(c);
+            if (sv && sv.ens.vu(c)) return;                                   // présente au serveur (par l'id OU le contenu)
             var a = absentes[em] || (absentes[em] = { ens: _nutEnsemble_(), n: 0 });
-            if (!a.ens.vu(e)) a.n++;                                          // une absente déjà comptée n'est pas recomptée
-            a.ens.ajoute(e);
+            if (!a.ens.vu(c)) a.n++;                                          // une absente déjà comptée n'est pas recomptée
+            a.ens.ajoute(c);
           });
         });
       } catch (e) { r.lisible = false; }
       fichiers.push(r);
-    });
+    }
     var cmp = { comptesServeur: Object.keys(serveur).length, comptesDansSauvegardes: Object.keys(union).length,
                 comptesSeulementDansSauvegardes: 0, comptesAvecLignesAbsentesDuServeur: 0,
                 lignesDansSauvegardesAbsentesDuServeur: 0, lignesServeurAbsentesDesSauvegardes: 0 };
@@ -2220,11 +2231,11 @@ function handleNutBackupAudit_(body) {
     });
     Object.keys(serveur).forEach(function(em) {
       var vu = union[em];
-      serveur[em].fl.forEach(function(e) { if (!vu || !vu.vu(e)) cmp.lignesServeurAbsentesDesSauvegardes++; });
+      serveur[em].cles.forEach(function(c) { if (!vu || !vu.vu(c)) cmp.lignesServeurAbsentesDesSauvegardes++; });
     });
     var d0 = liste.length ? new Date(liste[0].t) : null;
-    return json_({status:'ok', dossierTrouve:true, nbFichiers:liste.length, fichiersLus:lus.length,
-      fichiersNonLus:liste.length - lus.length,
+    return json_({status:'ok', dossierTrouve:true, nbFichiers:liste.length, fichiersLus:fichiers.length,
+      fichiersNonLus:liste.length - fichiers.length, arretParLeTemps:arretTemps,
       dernierDateISO: d0 ? d0.toISOString() : null,
       ageJours: d0 ? Math.floor((Date.now() - d0.getTime()) / 86400000) : null,
       fichiersIllisibles: fichiers.filter(function(r) { return !r.lisible; }).length,
