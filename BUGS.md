@@ -4944,3 +4944,39 @@ quantité exige des valeurs retouchées. Témoins `B-NV2P P11 ③ ④`, `B-NM6-A
 **À quoi on le reconnaît.** Une fonction pure qui reçoit un **contexte** (`ctx.ciqual`) : si ce contexte se remplit tard, la
 fonction rend un verdict différent sans que rien ne le dise. 👉 *Avant de faire confiance à un contexte, chercher QUAND il se
 remplit.*
+
+## §94 — ⛔⛔ RÉVISER UN TÉMOIN, C'EST AUSSI L'ÉPROUVER : SIX DÉFAUTS DE MON BRANCHEMENT ET UNE FAMILLE DE VERTS SANS OBJET *(22/10/2026, NUTRITION V2 jalon 4 — branche `claude/nutrition-v2`, non publié ; trouvés en révisant les témoins V1 sur le contrat V2, pas par un rouge)*
+
+> *(Numéro : §91 et §93 sont ceux de Claude Séance sur `claude/dreamy-bell-pu88ia` ; celui-ci est le §94 — à reconfirmer à l'intégration.)*
+
+**Le contexte.** Brancher le moteur V2 aux écrans a fait rougir des centaines de témoins écrits pour V1. Les réécrire « pour
+qu'ils passent » aurait été facile ; les réécrire sur leur **invariant** (règle d'or #17) a obligé à rejouer chaque geste — et
+ces gestes ont trouvé six défauts **réels** de mon branchement, tous corrigés le jour même :
+
+1. **Le contrôle de masse était aveugle sur « Modifier »** : la quantité d'une ligne sans fiche se dit dans `ef-q`, que
+   `_qtyGrammesEcran` ne lisait pas, et la frappe ne relançait rien. 28 g de macros « tenaient » dans 5 g — ft-v1103 rouvert.
+   **Et sur la reprise figée** : toucher « ↩ 5 g (la dernière fois) » posait la quantité sans le contrôle — ft-v1104 rouvert.
+2. **Le poids d'UNE portion survivait à un changement de sens de « 1 portion »** (retour à l'onglet portions, valeur
+   retouchée qui fait de l'écran « 1 portion » de ce qui en valait deux). Mesuré : « 1 dose (30 g) = 312 kcal » s'enregistrait,
+   soit **173 g de protéines pour 100 g**, sans un mot. Désormais le poids est **redemandé**.
+3. **Une reprise figée était redimensionnable** par les fonctions internes (`_afApplyProp`, `_afProp`) : son champ ne
+   rescalait pas, mais un autre chemin le pouvait. Désormais aucun chemin.
+4. **« Mettre X kcal » dans « Modifier »** : sur une ligne à fiche, l'écran affichait X et la ligne enregistrait la frappe
+   précédente (999) ; et sur une ligne sans fiche, la jumelle de D-101 ⑧ manquait — une autre quantité passait avec les
+   valeurs notées pour l'ancienne.
+5. **L'ancienne provenance `scan` servait encore de repli** à trois portes du code-barres : le moteur la refuse
+   (`PROVENANCE_INCONNUE`), donc un code lu sans origine dite **n'écrivait rien**. Repli : `camera-code-local`.
+6. **« Modifier » sans rien toucher réécrivait l'origine de la quantité en « tapée »** (`n2.qo`), sur les deux branches.
+
+**Et la famille de verts sans objet.** Plusieurs témoins V1 comparaient **la dernière ligne du journal** à un attendu
+(« le 10ᵉ cycle égale le 1ᵉʳ », « la quantité interdite n'est pas là »). Sous V2, la reprise sans quantité est refusée : rien ne
+s'ajoutait, la dernière ligne restait **la fixture elle-même**, et le témoin restait vert — CCLXXX ⑩ ⑮, CCLXXXIV ⑪,
+CCLXXXV ⑱. *Un vert qui compare un état à lui-même ne mesure rien.* Le même défaut de lecture donne aussi l'inverse, un
+**faux rouge** : CCLXXVIII ③ lisait la fixture (380 g) comme si c'était la ligne de l'omelette, qui n'avait pas été ajoutée.
+
+**Le correctif de méthode.** Chaque geste qui doit écrire **compte** la ligne qu'il ajoute (`ajoute`, toasts captés) ; un
+témoin qui juge « rien ne part » vérifie l'absence d'ajout, pas la dernière ligne. Témoins des six défauts : `B-NV2P P13 ①→⑨`
+(`tests/parcours/nut2_parcours.js`), mutations **MP23 → MP33** ; décisions consignées dans **D-101 ⑪ → ⑯** (PROPOSÉ).
+
+**À quoi on le reconnaît.** Un témoin réécrit qui passe du premier coup sur un comportement qui a CHANGÉ : avant de le croire,
+lui faire rater exprès (mutation) — et vérifier qu'un geste censé écrire a **écrit**.

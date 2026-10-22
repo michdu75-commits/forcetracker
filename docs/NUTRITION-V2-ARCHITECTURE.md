@@ -583,3 +583,89 @@ nom historique de sa porte) · les clés de stockage · `state.js` (chargement, 
 J4-0 chargement du moteur · J4-1 calcul unique · J4-2 écrivain unique + D-099 · J4-3 lecture (journal, totaux,
 favoris, repas habituels, export) · J4-4 bancs des parcours + témoins V1 révisés · J4-5 passe complète, rapport,
 recette iPhone.
+
+### 14.1 État au 22/10/2026 (fin du jalon 4, branche `claude/nutrition-v2`, rien publié)
+
+**Construit.** Le pont (`app.js`, « LE PONT NUTRITION V2 ») traduit l'écran en entrée complète et montre ce que le moteur
+rend ; il ne calcule rien. Écrivain unique `_n2Enregistrer` (3 appelants déclarés : l'écran, la reprise hors écran,
+la modification) ; seule porte qui lit l'écran : `_n2EntreeEcran` ; re-noter hors écran : `_n2Reajouter` (ne lit que la
+ligne d'origine). `_provFood` est retiré (R30, raison écrite dans `app.js`).
+
+**Ce qui change pour la personne** (D-099, D-101 — à valider à la recette iPhone) :
+1. une saisie à la main demande son **poids** (ou son volume) ; l'onglet **grammes** est celui par défaut ; une portion
+   demande son **nom et son poids** ;
+2. aucune quantité n'est pré-remplie : le poids de l'IA, la portion du fabricant, la quantité de la dernière fois sont
+   des **pastilles** ;
+3. une valeur inconnue s'affiche **« ? »** et le haut du jour dit **« total partiel »** ;
+4. un ancien aliment **sans fiche vérifiée** (tout ce qui ne vient pas de CIQUAL à l'identique) se reprend **tel quel** :
+   ses valeurs ne se recalculent plus quand la quantité change — une autre quantité demande de corriger les valeurs,
+   ou de retrouver l'aliment par la **recherche** ou le **scan** (qui, eux, recalculent) ;
+5. un repas habituel ne recopie plus un aliment **sans quantité connue** (aucune, ou « 1 portion » sans poids) : le
+   message le **nomme** ; le « + » d'un tel aliment ouvre l'écran et demande la quantité ;
+6. modifier une ancienne ligne demande sa quantité si elle manque, et **garde la ligne d'origine** en copie ; comme à
+   l'ajout, une **autre** quantité que celle notée demande de corriger les valeurs (elles ne se recalculent pas) ;
+7. une boisson scannée se compte en **ml** ;
+8. l'export porte les vrais noms de repas et deux colonnes (`statut`, `valeurs_inconnues`).
+
+**Trois défauts de mon branchement, mesurés puis corrigés avant le premier commit du code** (`BUGS.md` §92) : la table
+CIQUAL n'était chargée qu'à la première recherche (une ancienne ligne vérifiable était « non vérifiée » avant) ; une
+reprise figée effaçait la quantité tapée au redessin et acceptait une autre quantité avec les anciennes valeurs ; une
+énergie substituée par le résolveur (estimation IA avec poids) n'était plus expliquée à l'écran.
+
+**Les reprises, porte par porte (D-101 ⑩, PROPOSÉ).** Une même ligne reprise par « + Ajouter », « Tes repas habituels »,
+« Mes aliments » ou la recherche dans le journal donne **la même ligne** et **le même écran** (seule la saisie dit la
+porte : `liste` / `historique`). Les quatre écarts que V1 transportait exprès (`docs/SOUS-ETAPES-1B-3.md` §3) prennent fin :
+le code-barres d'une ligne re-notée ne vient plus que d'une **fiche de confiance** (et alors aux deux écrivains) ; une
+portion **avec son poids** est une quantité partout ; l'origine d'une reprise est « reprise » ; le `0` / `null` de la
+liste et des favoris est inchangé. L'écran « Modifier » ne retouche plus le poids d'UNE portion (on corrige en grammes).
+Figé par `nut2_parcours.js` P12 (8 témoins, 7 mutations).
+
+**Six autres défauts de mon branchement, trouvés en révisant les témoins V1 sur le contrat V2** (`BUGS.md` §94, corrigés,
+D-101 ⑪ → ⑮) : le contrôle de masse était aveugle sur la quantité de « Modifier » et sur la pastille d'une reprise figée
+(ft-v1103/1104 rouverts) ; le poids d'une portion survivait quand « 1 portion » changeait de sens (« 1 dose (30 g) =
+312 kcal » s'enregistrait) ; une reprise figée restait redimensionnable par un chemin interne ; « Mettre X kcal » dans
+« Modifier » affichait X et enregistrait la frappe précédente, et la jumelle de D-101 ⑧ y manquait ; l'ancienne provenance
+`scan`, refusée par le moteur, servait encore de repli au code-barres (rien ne s'écrivait) ; « Modifier » sans geste
+réécrivait l'origine de la quantité en « tapée ». Figé par `nut2_parcours.js` P13 (10 témoins, 11 mutations MP23 → MP33).
+⚠️ **Un écart reste ouvert, à trancher par Michel (D-101 ⑯)** : la reprise **à l'écran** d'une ligne V2 pesée en portions
+propose sa masse (« ↩ 450 g ») quand les reprises hors écran gardent « 3 parts » — mêmes valeurs, forme différente.
+
+**Ce que le jalon 4 a retiré, et c'est écrit (R30)** : `_provFood` et ses huit aides (`_per100Derive`,
+`_per100SuitLaPortion`, `_srcRepriseQ`, `_qReprenable`, `_srcProvenance`, `_qGrammes`, `_afReprendreGrammes`,
+`_afReprendreDefPortion`) — note datée dans `app.js` ; et les neuf blocs de la passe complète qui les épinglaient
+(CCXCI · CCXCII · CCXCIII · CCXCIV · CCXCVI · CCXCVIII · CCXCIX · CCC · CCCI), note datée dans `runner.js` qui dit où vit
+maintenant chaque garantie. ⚠️ **Reste du code mort, NON retiré dans ce lot** : la mécanique V1 de l'écran « Modifier »
+(`_efRef` n'est plus jamais posée ; `_efProp`, `_efApplyPortion`, `_efSetUnite`, `_efMajDefPortion`,
+`_efPortionNomSaisi`, `_efPortionPoidsSaisi` n'ont plus d'écran qui les appelle) — elle touche des fonctions partagées
+(`_coherenceKcal`, `_qtyRescale`) : à retirer dans un lot de nettoyage séparé, avec les témoins qui la citent.
+
+**Ce qui ne bouge pas, et reste à faire ailleurs** : les anciennes lignes restent V1 tant que la personne ne les modifie
+pas (migration et récupération : Claude Principal, D-098) ; la douane (gelée) observe les lignes V2 sous le nom de leur
+porte et signale en `WARN` les lignes en ml et les lignes déclarées en grammes sans fiche — observation seulement ;
+`state.js` (identifiants posés au chargement des anciennes lignes sans `id`, chantier de Principal), Milo, le Worker
+(une macro absente y devient encore 0 côté serveur), Séance.
+
+**Avant toute publication** (règle d'or #11) : réécrire les aides Nutrition qui deviennent fausses (aide « ? » du
+journal, aide détaillée « Journal alimentaire », diapo du Guide) et poser le point rouge ; la pop-up se mérite (la
+personne doit faire un geste nouveau : donner un poids). Le clone ne montre pas les anciennes lignes (il part vide).
+
+### 14.2 La recette iPhone du jalon 4 (à faire par Michel, données fictives, jamais sur son vrai journal)
+
+⛔ La branche n'est pas publiée et le clone part vide : la recette demande un **feu vert distinct** (publier le clone de la
+branche, ou un appareil de test). Les gestes, dans l'ordre :
+
+1. **Ajout à la main** (« Plat test », 450 kcal) : l'onglet ⚖️ grammes est choisi d'office ; sans poids, « Ajouter » refuse
+   et dit pourquoi ; avec 300 g, la ligne part.
+2. **Portions** : onglet 🍽️, ×2, « steak », 125 g → les valeurs doublent ; sans poids, ×2 ne multiplie rien et l'écran le
+   demande. Retoucher une valeur après « 2 doses de 30 g » : l'écran devient « 1 portion », le poids est redemandé.
+3. **Recherche CIQUAL** : champ quantité vide, rien ne part sans quantité ; 140 g → valeurs calculées.
+4. **Scan** (ou code tapé) : champ vide, pastilles « portion fabricant » / « paquet » ; une boisson se compte en ml.
+5. **« Mes aliments »** sur une ancienne ligne : valeurs reprises telles quelles, pastille « ↩ … (la dernière fois) » ; une
+   autre quantité est refusée tant que les valeurs ne sont pas retouchées (le message propose la recherche ou le scan).
+6. **« Modifier »** : une ligne en portions s'ouvre en portions, sa définition est dite en lecture seule ; « Enregistrer »
+   sans rien toucher ne change rien ; une autre quantité exige des valeurs retouchées ; « Mettre X kcal » met X dans la ligne.
+7. **Favoris** et **« Tes repas habituels »** : la même ligne par les deux portes ; un aliment sans quantité connue n'est
+   pas recopié, il est nommé.
+8. **Journal** : « ? » pour une valeur inconnue, « total partiel » en haut du jour. **Export CSV** : vrais noms de repas,
+   colonnes `statut` et `valeurs_inconnues`.
+9. Le bouton central « + » Séance n'a pas bougé (règle d'or #9 — aucun fichier Séance touché par ce jalon).
