@@ -2,9 +2,14 @@
 
 > **↪️ AVENANT DU 22/10 APRÈS-MIDI (D-102, décision validée de Michel) : expiration 15 MIN après la fin théorique, app ouverte OU
 > fermée — `REST_DEPASSEMENT_MAX` 300 → 900 s ; dépassement en négatif, restauration après fermeture et repos hors brouillon
-> inchangés ; moteur calorique et plafonds NON touchés, désormais prouvés par témoins. Détail et contrôles : §12.**
+> inchangés ; moteur calorique et plafonds NON touchés, désormais prouvés par témoins. La revue adverse de l'avenant a trouvé
+> DEUX défauts du lot du matin, corrigés (`BUGS.md` §95). Détail et contrôles : §12.**
 >
-> **Statut (22/10/2026, 14:31 UTC) : développé et testé sur la branche `claude/dreamy-bell-pu88ia` (session-C, Claude Séance) —
+> **Statut de l'avenant (22/10/2026, 20:28 UTC) : développé et testé sur la même branche, fusionnée avec master `6c0a400d` —
+> passe complète D-031 VALIDE (7 884 / 0, sur `0d0d4269`) — NON intégré à master, NON publié, clone NON régénéré, aucun numéro de
+> version.**
+>
+> **Statut du lot du matin (22/10/2026, 14:31 UTC, gardé — R30) : développé et testé sur la branche `claude/dreamy-bell-pu88ia` (session-C, Claude Séance) —
 > passe complète D-031 VALIDE (7 866 / 0) — NON intégré à master, NON publié, clone NON régénéré, aucun numéro de version posé.** Feu vert de Michel du 22/10 : développement et tests seulement,
 > STOP ensuite. Décisions : registre `docs/DECISIONS.md`, **D-100** (⚠️ numéro à reconfirmer à l'intégration : D-099 a été pris
 > le même jour par Claude Nutrition sur `claude/nutrition-v2` — le code ne cite aucun numéro, seulement ce fichier).
@@ -140,11 +145,14 @@ retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibili
   **0 clé de stockage**, 0 migration.
 - **Fichiers applicatifs touchés : 6** — `log.js`, `app.js`, `state.js` (1 ligne), `screens.js`, `coach.js`, `constants.js`
   (les 3 derniers : textes d'aide).
-- **Lignes : +100 / −19** (net +81), dont la plupart en commentaires écrits à côté de ce qu'ils protègent ; **le code seul : +41 / −10**
-  (mesuré sans les commentaires, analyseur `acorn`).
+- **Lignes : +131 / −19** (net +112) sur l'arbre de l'avenant contre master `f82a7c07` *(le matin : +100 / −19)*, dont la plupart en
+  commentaires écrits à côté de ce qu'ils protègent ; **le code seul : +49 / −10** *(le matin : +41 / −10)* — mesuré sans les
+  commentaires, analyseur `acorn`. L'avenant seul : +53 / −22 lignes, dont la constante 300 → 900, les 5 aides, et les deux
+  correctifs de la revue (`_reposMemoriser`, la garde de `_reposReprendre`, `REST_PLUS_MAX`).
 - **Anciens chemins supprimés ou fusionnés : 2** — l'écouteur `visibilitychange` d'`app.js` (coupure à −5 s) disparaît, fusionné
   dans le seuil unique `REST_DEPASSEMENT_MAX` ; le `stopRest()` de démarrage est absorbé par `_reposReprendre` (même effet quand il
-  n'y a rien à reprendre).
+  n'y a rien à reprendre). *Avenant* : le plafond de « +15 s » (600 s, écrit en dur dans `addRT`) a maintenant **un seul propriétaire**
+  (`REST_PLUS_MAX`), lu aussi par la reprise — aucune donnée, aucun fichier en plus.
 
 ## 11. Intégration — ce qu'il faudra fusionner (mesuré le 22/10, 14:31 UTC)
 
@@ -156,3 +164,80 @@ retour depuis l'arrière-plan par l'événement `visibilitychange`), la lisibili
 - **Numéros** : Nutrition a pris D-096 → D-099 puis **D-101** — **D-100 reste celui de ce lot** ; Nutrition a un `BUGS.md` §92 → ce
   lot écrit **§91 et §93**. Le code ne cite aucun numéro.
 - **À rejouer après toute fusion** : le banc `tools/banc_seance_repos.js`, les voisins du sélecteur et la passe complète (D-031).
+
+## 12. Avenant du 22/10 après-midi — 15 min (D-102), la protection des calories, et deux défauts trouvés par la revue
+
+**La décision (Michel, validée)** : « expiration 15 minutes après la fin théorique du repos, application ouverte ou fermée.
+Remplacer l'actuel seuil de 300 secondes par 900 secondes. Conserver le dépassement affiché en négatif et la restauration après
+fermeture. Ne pas modifier les durées de repos prévues dans les programmes dans ce lot. » Registre : **D-102** (remplace D-100 ①).
+
+### 12.1 Ce qui change
+
+| Fichier | Changement |
+|---|---|
+| `log.js` | `REST_DEPASSEMENT_MAX` **300 → 900** (une constante, lue par ses 3 chemins : arrêt app ouverte, pilule, reprise) ; commentaires (son histoire : 900 → 300 → 900, R30) |
+| `screens.js`, `coach.js`, `constants.js` ×2, `app.js` (Guide) | les 5 aides : « 5 min après la fin » → **« 15 min après la fin »** — ⚖️ toujours pas de pop-up (rien à faire, aucun repère déplacé ; les points rouges existants portent le texte) |
+| durées de repos prévues (programmes, préréglages, `S.defRest`, `S.exRestPref`, plafond de « +15 s ») | **inchangées** — vérifié dans le diff : aucune n'est liée à `REST_DEPASSEMENT_MAX` |
+
+### 12.2 Les calories (consigne de Michel : « ne modifier ni le moteur calorique ni les règles de plafonnement »)
+
+- **Le moteur n'est pas touché, et c'est mesuré, pas affirmé** : les fonctions que le lot modifie (analyse du diff contre master par
+  `acorn`) sont `_updPill`, `_restTick`, `startRest`, `stopRest`, `_reposMemoriser`, `_reposReprendre`, `setRestPreset`, `addRT`,
+  `applyRestEdit` (log.js), le démarrage et la diapo du Guide (app.js), une ligne de `persist` (state.js, le brouillon sans repos).
+  **Aucune** ligne de `calcSessionCalories`, `_dureeEffective`, `_dureeSeanceMin`, `_estimCalTempsReel`, `_dureeDouteuse`,
+  `finishWorkout`, `toggleSet` ni `_wktElapsedMs`. Le moteur lit la séance figée par « Terminer » (`set.at`, `sess.duration`),
+  `S.defRest`, le poids, les records — **jamais** le chrono de repos.
+- **Calories identiques à données de séance équivalentes** — témoins **C-REP-I1 / I2** : 3 sources de durée (horodatages, chrono,
+  estimation) × 5 états du repos à la fin (passé, en cours, expiré app ouverte, restauré après fermeture, expiré au retour) : la
+  séance enregistrée est **identique à l'octet** (calories, détail, durée, horodatages, chaque champ hors `runId`), et ancrée sur
+  les valeurs **mesurées sur master** (74 kcal / 1 600 s · 126 kcal / 1 060 s · 74 kcal / 1 600 s).
+- **Comparateur master ↔ branche** (hors dépôt, mêmes gestes, même horloge, 15 scénarios dont des fermetures pendant le repos et
+  des reprises au-delà de l'expiration) : **15 / 15 identiques à l'octet**. ⛔ Contre-épreuve : la même comparaison contre une copie
+  de la branche où la durée de séance dépend du repos rougit **6 / 15** (1 600 → 720 s, 126 → 65 kcal) — il sait voir une dérive.
+- **Pas de double comptage après fermeture et reprise** — témoins **C-REP-J1 / J2** : la même séance jouée sans fermer, puis en
+  fermant l'app pendant le repos (60 s : le repos revient ; 1 500 s : il a expiré) → séance enregistrée identique, chrono de séance
+  (`startTs`, `pausedTotal`, horodatages) intact à la reprise, **une seule** séance en mémoire et sur le disque, brouillon supprimé,
+  rien ne renaît après un nouveau rechargement. Et **deux onglets** (C-REP-K, §12.3).
+
+### 12.3 Deux défauts du lot du MATIN, trouvés par la revue adverse de l'avenant (`BUGS.md` §95)
+
+La revue (4 angles, chaque constat vérifié par deux sceptiques) a remonté 18 constats : 14 confirmés, 2 déjà corrigés quand les
+sceptiques les ont relus (« +15 s » ci-dessous, vérifié d'abord par moi ; le doublon du registre), 2 écartés. Deux sont des défauts
+de code — **tous deux dans le lot du matin**, invisibles au banc (43 / 0), au contrôle négatif (31 / 31) et à la passe (7 866 / 0), faute de témoin qui conduise
+ces chemins :
+
+1. **« +15 s » tôt dans le repos, puis fermeture → repos effacé.** `addRT` range alors un départ équivalent **dans le futur** ;
+   la reprise refusait tout départ à plus de 5 s dans le futur (garde « horloge reculée »). **Corrigé** : la garde juge le
+   **restant** (jamais plus que `max(durée, REST_PLUS_MAX)` + 5 s), plafond de « +15 s » à un seul propriétaire. Témoin
+   **C-REP-D1b** ; G2 passe à 8 cas (un restant impossible de 10:20 reste refusé).
+2. **Deux onglets : un onglet périmé réécrivait SA séance à l'expiration de son repos** (sans geste) → une séance terminée ailleurs
+   **revenait** (à enregistrer une 2ᵉ fois : volume et calories comptés deux fois), ou des séries validées entre-temps
+   **disparaissaient**. **Corrigé** : `_reposMemoriser` n'écrit plus que le champ `repos`, dans la séance **du disque**, seulement
+   si c'est la **même** séance, et n'efface que **son propre** repos. Témoins **C-REP-K1 / K2 / K3** (deux vrais onglets).
+
+Les autres constats confirmés (documentation périmée, témoins trop faibles) sont corrigés : C-REP-S1 compte le CODE seul (3 lecteurs
+exacts, aucun seuil en dur), C-REP-S5 refuse toute autre durée et compte les 5 textes, I1 est ancré sur master, la fiche du
+registre a un identifiant propre (`SEANCE-REPOS-PERSIST-01`, l'ancien doublonnait une fiche de master).
+
+### 12.4 Les contrôles de l'avenant (22/10, réseau coupé, 0 appel à Milo)
+
+| Contrôle | Résultat |
+|---|---|
+| **Banc** `tools/banc_seance_repos.js` (61 témoins) | **61 OK / 0** sur l'arbre final · **46 / 15 rouges** sur le code du matin (`e4afb36b` : 900 s, aides, « +15 s », deux onglets — et I1, dont deux variantes ne peuvent pas exister à 5 min ; ses calories y étaient déjà identiques) · **25 / 36 rouges** sur master `f82a7c07` (ft-v1258) |
+| **Contrôle négatif** `tools/mut_seance_repos.py` (51 mutations, chacune exige SON témoin) | «MUTATIONS» |
+| **Bancs voisins** (sélecteur, T1 + T2) sur l'arbre final | «VOISINS» |
+| **Annexe de recette** (15 suites) | **14 PASS + 1 défaut connu** (`discussions`) — valeurs **identiques à master rejoué à la même minute** (71 725 / 76 644 / 68 781 ; l'écart avec ce matin vient de l'heure, pas du lot) |
+| **Prompt de Milo** | **identique à l'octet** à master (77 697 caractères), avec ou sans repos |
+| **Retour arrière à blanc** | l'ancien code ouvre un `ft4_wkt` avec `repos` sans erreur, sans chrono, séance intacte ; « Terminer » l'enregistre sans `repos` |
+| `check_regles`, `git diff --check`, sélecteur (auto-test) | verts |
+| **Passe complète D-031** (sur `0d0d4269` = la branche fusionnée avec master `6c0a400d`, 18:47 → 20:28 UTC, 101 min, réseau isolé + garde) | **7 884 ✅ / 0 ❌ — VALIDE**, 4 conditions vertes ; ④ revérifiée hors isolement par un vrai `git fetch` (master `6c0a400d`, retard 0). Depuis : documentation seulement (D-031) |
+
+⚠️ **Fusion de master pendant le lot** : master a reçu à 18:22 UTC les routes admin Nutrition de Claude Principal (`Code.js` seul,
+@192, + docs) ; fusionnées dans la branche (conflit de texte du journal de partage, les deux lignes gardées) **avant** la passe.
+
+### 12.5 Ce que l'avenant ne fait pas
+
+- Rien de neuf côté iPhone réel : la recette Safari reste à faire (§9) ; la fermeture iOS est simulée par un rechargement.
+- Le filet multi-onglets de `persist()` (`_ftAutreOnglet`) n'est pas touché : un **geste** dans un onglet périmé (cocher une série)
+  écrit toujours sa séance comme avant ce lot — comportement existant, hors périmètre.
+- Les numéros (D-102, §95) sont à reconfirmer à l'intégration avec Nutrition V2.

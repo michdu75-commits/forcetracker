@@ -1574,3 +1574,18 @@ recette pas sur le clone (son service worker n'a pas de cache).
 **Règle d'or #17 (code applicatif).** **1** donnée persistée (`repos` dans `ft4_wkt`, 0 clé) · **6** fichiers (`log.js`, `app.js`,
 `state.js`, `screens.js`, `coach.js`, `constants.js`) · **+100 / −19** lignes (code seul **+41 / −10**) · **2** anciens chemins
 supprimés ou fusionnés (l'écouteur −5 s d'`app.js`, le `stopRest()` de démarrage). Détail : `docs/SEANCE-REPOS-01.md`.
+
+**↪️ AVENANT DU 22/10 APRÈS-MIDI (D-102, décision validée de Michel) — 15 MIN, APP OUVERTE OU FERMÉE.** `REST_DEPASSEMENT_MAX`
+300 → **900 s** ; le dépassement en négatif, la restauration après fermeture et le repos hors brouillon sont conservés ; les 5 aides
+disent « 15 min après la fin » ; les durées de repos prévues (programmes, préréglages) ne changent pas. ⛔ **Calories** : moteur et
+plafonds **non touchés** (fonctions modifiées listées depuis le diff : aucune du moteur, ni `finishWorkout`, `toggleSet`,
+`_wktElapsedMs`) ; témoins C-REP-I1/I2 (séance enregistrée identique à l'octet, 3 sources de durée × 5 états du repos, ancrée sur
+master) et C-REP-J1/J2 (fermeture pendant un repos : rien compté deux fois, une seule séance) ; comparateur master ↔ branche
+15 / 15 identiques (contre-épreuve : 6 / 15 rouges avec une faute injectée). **La revue adverse a trouvé deux défauts du lot du
+MATIN, corrigés** (`BUGS.md` §95) : « +15 s » tôt dans le repos puis fermeture effaçait le repos (garde jugeant le départ au lieu
+du restant — C-REP-D1b) ; un 2ᵉ onglet périmé réécrivait SA séance à l'expiration de son repos, ressuscitant une séance terminée
+ailleurs (double comptage) ou effaçant des séries récentes (C-REP-K1/K2/K3). Banc **61 / 0** (46 / 15 rouges sur le code du
+matin, 25 / 36 sur ft-v1258) · contrôle négatif «MUTATIONS» · voisins «VOISINS» · annexe 14 PASS + 1 défaut connu (identique à
+master à la même minute) · prompt de Milo identique à l'octet · **passe complète D-031 : 7 884 ✅ / 0 ❌, VALIDE** (sur `0d0d4269`,
+branche fusionnée avec master `6c0a400d`). Règle d'or #17 sur le lot entier : **1** donnée, **6** fichiers, **+131 / −19** (code seul
+**+49 / −10**), **2** anciens chemins + le plafond de « +15 s » à un seul propriétaire. Détail : `docs/SEANCE-REPOS-01.md` §12.
