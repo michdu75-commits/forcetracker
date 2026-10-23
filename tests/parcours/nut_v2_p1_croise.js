@@ -278,6 +278,30 @@ async function croise(t, b, PORT) {
         && canon(parSid(F2, EAN_B)) === canon(parSid(S0.F0, EAN_B)), J(F2.map(f => [f.sourceId, f.portionWeightG])));
     } finally { await A.cx.close(); }
   }
+
+  /* ═══ A — RÈGLE D'OR #11 (points 2 à 5) : les QUATRE supports disent « à vérifier » de la même façon — point rouge, aide
+         « ? » de l'onglet, aide détaillée, diapo du Guide. Mission du 23/10, §8 : la diapo du Guide ne le disait pas. ═══ */
+  {
+    const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
+    try {
+      await cx.route('**/*', r => { const u = new URL(r.request().url()); return (u.hostname === 'localhost' || u.hostname === '127.0.0.1') ? r.continue() : r.abort(); });
+      const pg = await cx.newPage(); await pg.goto('http://localhost:' + PORT + '/index.html'); await pause(pg, 1500);
+      const S4 = await pg.evaluate(() => {
+        const txt = v => String(v == null ? '' : v).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+        const nf = (typeof NEW_FEATURES !== 'undefined' ? NEW_FEATURES : []).find(x => x && x.id === 'nutri-v2-quantites');
+        const gd = (typeof APP_GUIDE_SLIDES !== 'undefined' ? APP_GUIDE_SLIDES : []).find(s => s && /combien tu en as mangé/.test(s.t || ''));
+        const plat = o => { const out = []; (function f(x) { if (typeof x === 'string') out.push(x); else if (x && typeof x === 'object') Object.keys(x).forEach(k => f(x[k])); })(o); return out; };
+        const aide = plat(typeof _HELP_DATA !== 'undefined' ? _HELP_DATA : null).map(txt).filter(s => /Reprendre un aliment déjà noté/.test(s));
+        const tiroir = plat(typeof _DRAWER_CONTENT !== 'undefined' ? _DRAWER_CONTENT : null).map(txt).filter(s => /Les grammes d'abord/.test(s));
+        return { point: nf ? txt(nf.desc) : '', guide: gd ? txt(gd.cap) : null, aide: aide.join(' ¦ '), tiroir: tiroir.join(' ¦ ') };
+      });
+      const dit = s => /«\s?à vérifier\s?»/i.test(s || '') && /contredisent/.test(s || '');   // \s : espace normale OU insécable
+      t('B-NIX A ① RÈGLE D\'OR #11 : point rouge, aide « ? », aide détaillée ET diapo du Guide disent qu\'un aliment dont les valeurs se contredisent est « à vérifier » (il ne se recopie plus en silence)',
+        dit(S4.point) && dit(S4.aide) && dit(S4.tiroir) && dit(S4.guide), J({ point: !!dit(S4.point), aide: !!dit(S4.aide), tiroir: !!dit(S4.tiroir), guide: S4.guide === null ? 'diapo introuvable' : !!dit(S4.guide) }));
+      t('B-NIX A ② … et l\'aide, l\'aide détaillée et le Guide disent que « + Ajouter » ouvre alors l\'écran (rien ne s\'écrit sans « Ajouter »)',
+        [S4.aide, S4.tiroir, S4.guide].every(s => /«\s\+\sAjouter\s»\souvre/.test(s || '')), J({ guide: (S4.guide || '').slice(-260) }));
+    } finally { await cx.close(); }
+  }
 }
 
 module.exports = { croise };

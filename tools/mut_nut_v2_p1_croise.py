@@ -29,6 +29,8 @@ MUT = [
     ("C05 D-110 sans `n = 0` : les copies que Drive n'a pas gardees sont retirees de la zone",
      'Code.js', "        n = 0; differe = true;                         // D-110 : RIEN ne sort de la zone (rien n'a été écrit dans Drive)\n",
      "        differe = true;\n", 'GARDE'),
+    ("C07 la diapo du Guide ne dit plus « a verifier » (regle d'or #11, point 5) : les quatre supports ne disent plus la meme chose",
+     'app.js', "<br><br>⚠️ <b>«&nbsp;à vérifier&nbsp;»</b> : un aliment dont les valeurs se contredisent ne se recopie plus en silence — «&nbsp;+&nbsp;Ajouter&nbsp;» ouvre l\\'écran, et rien ne s\\'écrit sans «&nbsp;Ajouter&nbsp;». Deux produits du même nom (deux codes-barres) restent <b>deux aliments</b>.", "", 'GARDE'),
     ("C06 (temoin de controle) un COMMENTAIRE de l'identite V2 modifie : le banc doit rester VERT",
      'app.js', "/* ⭐⭐ INCIDENT DU 23/10 — L'IDENTITÉ D'UN ALIMENT : son identifiant de produit (code-barres, `ciqual:…`) quand il en a un,\n",
      "/* ⭐⭐ INCIDENT DU 23/10 — L'IDENTITE D'UN ALIMENT : son identifiant de produit (code-barres, ciqual) quand il en a un,\n", 'OK'),
