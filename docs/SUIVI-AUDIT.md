@@ -1599,6 +1599,6 @@ permanent), chacun sur son groupe ; cadre **88 × 51 ancré en bas** qui masque 
 maquette, 3 à 17 lignes, mesuré) sans étirer ni recolorer ; en-tête d'un groupe ouvert en ligne ; préchargement `sw.js` (pas de
 version). ⚠️ **Mollets n'a pas de vignette dans le paquet** : elle garde son image actuelle (style différent) — **une vignette mollets
 manque**. Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **18 / 0** (7 / 11 rouges sur le code
-d'avant) · contrôle négatif «MUTVIG» · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) ·
+d'avant) · contrôle négatif **17 / 17** (1ᵉʳ tour 16 / 17 : un témoin ne mesurait que le 1ᵉʳ caractère d'un libellé — corrigé, campagne rejouée) · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) · bouton central **immobile** (mesuré avant / après) · voisins «VOISINSVIG» · passe «PASSEVIG» ·
 captures avant / après dans le PDF. Règle d'or #17 : **0** donnée · **3** fichiers + 7 images · **+33 / −10** · **0** ancien chemin.
 Détail : `docs/SEANCE-UX-IMAGES.md`.

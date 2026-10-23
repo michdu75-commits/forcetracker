@@ -6126,7 +6126,7 @@ function applyRestEdit(){
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
 /* 🖼️ SEANCE-UX-IMAGES (23/10/2026, demande de Michel — docs/SEANCE-UX-IMAGES.md) — LES VIGNETTES DES GROUPES DE « CHOISIR UN
-   EXERCICE ». Les 7 images du paquet de Michel, copiées À L'OCTET (empreintes SHA-256 du manifeste, témoin C-VIG-F1) sous
+   EXERCICE ». Les 7 images du paquet de Michel, copiées À L'OCTET (empreintes SHA-256 du manifeste, témoin C-VIG-S1) sous
    `muscles/vignettes/` — ⚠️ DES NOMS NOUVEAUX, EXPRÈS : les images vivent dans un cache du téléphone qui ne se vide jamais
    (`ft-images`, sw.js) ; une image remplacée sous le même nom resterait l'ancienne chez tout le monde.
    ⛔ Le cadre (taille, recadrage) a UN propriétaire : la classe `.ex-grp-vig` (style.css). Il masque le liseré du haut des
