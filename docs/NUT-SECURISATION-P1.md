@@ -230,6 +230,23 @@ code garde `recupNut` dans le compte sans jamais le renvoyer (`loadProfile` list
 
 ---
 
+## 11. ↪️ Intégration avec Nutrition V2 et `D-110` (23/10, branche `claude/nut-v2-p1-integration`) — NON DÉPLOYÉ
+
+- **FIX-A′ écrit** (`19b87ffb`, `Code.js` seul) : pour les **favoris**, une panne de Drive au débordement ne refuse plus
+  l'envoi — rien ne sort de la zone, elle attend au-delà de sa borne jusqu'à un **plafond** de 120 000 caractères (deux
+  fois la borne), événement `differe:'drive'` ; au-delà du plafond, le refus de `D-109` revient. Le journal garde `D-109`.
+- **Éprouvé** sur les sept points demandés par Michel (saturation, dépassements successifs, pannes longues, envois
+  concurrents, restaurations pendant et après la panne, intégrité, retour arrière) : NSP1-75 → NSP1-82, banc croisé B-NIX
+  (vraie app V2 ↔ vrai `Code.js`), `tools/preuve_retour_arriere_d110.js`. Détail et chiffres :
+  `docs/INTEGRATION-NUT-V2-P1.md` §4.
+- **Retour arrière (complète le §8)** : prouvé — le `Code.js` de @192 relit et réécrit un compte dont la zone des favoris
+  dépasse sa borne, sans la renvoyer à l'app et en la gardant à l'octet ; redéployé en avant, rien n'est perdu.
+- **Risque résiduel** : au-delà du plafond (panne prolongée ET centaines de versions changées). Fermé côté appareil par
+  `D-112` (proposé : « Restaurer » ajoute les favoris au lieu de les remplacer).
+- ⛔ **Statut** : `D-110` reste **PROPOSÉ** — sa validation par Michel est la condition de tout déploiement Apps Script.
+
+---
+
 ## Annexe — le texte d'avant la finalisation, gardé tel quel (R30)
 
 > Écrit le 23/10 vers 01:40 UTC, **avant** la décision de Michel (option B, `D-108`) et avant que la borne ne soit corrigée

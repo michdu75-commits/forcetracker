@@ -5128,6 +5128,20 @@ union (ft-v1241 séances, ft-v1247 journal) — la même famille côté **client
 `_packUser_` ne se relisait pas et n'osait jamais compresser — la première mesure de taille affichait **167 Ko « compressés »**
 pour 30 Ko réels. *Une mesure qui passe par un double doit d'abord prouver que le double fait ce que fait le vrai.*
 
+**↪️ Intégration Nutrition V2 × P1 (23/10, branche `claude/nut-v2-p1-integration`) — `D-110` écrit et éprouvé, NON
+déployé.** FIX-A′ (`Code.js` seul, `19b87ffb`) : pour les **favoris**, une panne de Drive ne refuse plus l'envoi — rien ne
+sort de la zone (`n = 0`), elle attend au-delà de sa borne jusqu'à un **plafond** (`NUT_RECUP_PLAFOND_FAVORIS_ = 120000`,
+deux fois la borne) ; l'événement dit `differe:'drive'`, le journal du serveur dit « ACCEPTÉ » sans donnée personnelle ;
+au-delà du plafond, le refus de `D-109` revient. Le **journal garde `D-109`** (sa restauration fusionne : un refus n'y perd
+rien). Éprouvé : panne longue (NSP1-80), deux appareils (NSP1-79), deux envois **simultanés** (NSP1-82, nouveau), capacité
+(NSP1-81 : ≈ 14 500 octets de plus par compte quand la zone double), restauration pendant ET après la panne avec la vraie app
+V2 (B-NIX X1), retour arrière vers @192 sans rien perdre de la zone (`tools/preuve_retour_arriere_d110.js`). B-NSP1
+**82 / 0**, contrôle négatif **45 / 45** ; banc croisé **16 / 0**, contrôle négatif **8 / 8**. La vérification 5 rejouée sur
+l'arbre intégré : **0 version introuvable** ; avec le serveur de la prod, 5 + 5 anciennes versions perdues (le défaut que P1
+corrige). ⚠️ **Risque résiduel dit** : au-delà du plafond (panne de Drive prolongée ET centaines de versions de favoris
+changées), un envoi est refusé et une restauration avant le retour de Drive perd ce qu'il portait — fermé côté appareil par
+`D-112` (proposé). 👉 *Un plafond n'est pas une garantie, c'est une frontière : elle se mesure (NSP1-80) et elle se dit.*
+
 ## §98 — ⛔⛔ UNE REPRISE AFFICHAIT UNE CHOSE ET EN ÉCRIVAIT UNE AUTRE : DEUX CALCULS, UNE IDENTITÉ PAR LE NOM, DES RÉFÉRENCES QUI SE CONTREDISENT RECOPIÉES EN SILENCE *(23/10/2026, NUTRITION V2 — incident prioritaire, mission de Michel ; branche `claude/nutrition-v2`, non publié ; reproduit AVANT correction sur données inventées)*
 
 > *(Numéro : §97 est celui de Claude Principal sur `claude/nut-securisation-p1`, §99 celui de Claude Séance sur
@@ -5203,3 +5217,39 @@ fonctions changées n'est pas une formalité : les bancs dédiés étaient verts
 **À quoi on le reconnaît.** *Un affichage et une écriture qui calculent chacun de leur côté finissent par diverger — la seule
 question est quand* (R2). Et *un nom n'est pas une identité* : il relie ce qui n'a pas d'identifiant, il ne doit jamais séparer
 ni confondre ce qui en a un.
+
+## §100 — ⛔ « RESTAURER » REMPLACE LES FAVORIS : CE QUI N'EST PAS ENCORE PARTI AU SERVEUR EST PERDU — ET SEULS LES 200 PREMIERS FAVORIS PARTENT *(23/10/2026, intégration Nutrition V2 × P1 — branche `claude/nut-v2-p1-integration` ; deux défauts PRÉEXISTANTS, prod comprise, mesurés, NON corrigés · numéro choisi après le §99 de `dreamy-bell`)*
+
+**Le constat (vraie app V2 + vrai `Code.js`, données inventées).** ① Hors ligne, la portion d'un favori est redéfinie
+(pot 125 → 150 g) ; l'envoi ne part pas ; « 🔄 Restaurer mon compte » remet la version du serveur (125 g) — **la
+modification locale est perdue**, sans message (B-NIX X3, « limite dite »). Le journal, lui, ne perd rien : sa
+restauration **fusionne** (ft-v1247), celle des favoris **remplace** (`_applyRestoreData` : `S.savedFoods=d.savedFoods`).
+② `_cloudSync` n'envoie que `savedFoods.slice(0,200)`, et un favori s'ajoute **à la fin** (`toggleFavFood` : `push`) :
+au-delà de 200 favoris, les **plus récents** n'atteignent jamais le serveur, et « Restaurer » ou un nouvel appareil les
+perd. Ni l'un ni l'autre ne vient de V2 ou de P1 : la prod (@192 + `ft-v1259`) les a tous les deux.
+
+**Pourquoi rien ne l'a vu.** La restauration par union a été écrite collection par collection (séances ft-v1241, journal
+ft-v1247) — **les favoris sont restés sur l'ancien modèle** : la phrase du §33 encore (*une règle corrigée dans une
+collection et pas dans sa voisine*). Et la troncature à 200 est une borne d'envoi sans borne de saisie : *une limite qui
+coupe la fin d'une liste coupe ce qu'on vient d'ajouter.*
+
+**Ce qui est proposé, pas appliqué.** ① `D-112` (FIX-B′) : la restauration **ajoute** les favoris du serveur que l'appareil
+n'a pas, par **identité de produit** (`_n2Cle`), le téléphone gagne. Prototype hors dépôt : X3 basculé, rien d'autre ; le
+coût mesuré (deux appareils) est écrit dans `D-112`. ② La troncature : à trancher avec la décision sur les favoris
+(envoyer la liste entière — la zone P1 et sa borne la protègent côté serveur — ou garder les 200 **derniers**). ⛔
+Changement de comportement de l'app → décision de Michel.
+
+**À quoi on le reconnaît.** Une porte qui **remplace** une donnée locale par la copie du serveur n'est sûre que si tout ce
+que l'appareil sait est **déjà** au serveur. *Un refus côté serveur, une coupure réseau ou une troncature d'envoi
+transforment ce remplacement en perte.*
+
+**⭐ Trois leçons de méthode, payées le même jour.** ① Le contrôle négatif du banc croisé a d'abord **planté** au lieu de
+rougir (un `[0]` sans garde dans X3) : *un plantage n'est pas un rouge* — le banc a été durci avant de conclure. ② Un
+scénario à deux appareils donnait deux résultats différents d'un lancement à l'autre : la synchro **différée** (4 s) d'un
+appareil partait au milieu du scénario. *Un test multi-appareils qui ne maîtrise pas les synchros différées mesure
+l'horloge, pas le code* — une synchro explicite annule désormais la synchro différée en attente. ③ La passe complète de
+l'intégration a trouvé **un témoin d'avant V2 resté en place** (CII ⑥ : « la quantité efface la correction à la main ») —
+rouge aussi sur la branche V2 **seule**, vert sur master : la passe **réduite** de V2 ne le couvrait pas. Il a été réécrit sur
+`D-096` (Michel : « une modification manuelle est conservée et tracée ») — la correction reste, le calcul pour 50 g (24 · 5)
+se lit à côté, « ↺ Revenir au calcul » le remet — et son contrôle négatif rougit 3 fois sur 3. *Un sous-ensemble ne remplace
+pas la passe complète : le protocole le disait, le cas l'a montré.*

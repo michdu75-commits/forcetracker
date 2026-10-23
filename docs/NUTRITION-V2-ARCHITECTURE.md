@@ -14,6 +14,12 @@
 > chantier, que Nutrition V2 ne mène plus. **Jalon 2 livré** : `nutrition-v2.js` (non branché à l'app), banc 53 / 0,
 > contrôle négatif 20 / 20 (§8).
 
+> ↪️ **23/10 (soir) — INTÉGRATION AVEC NUT-SECURISATION-P1** (Claude Principal, branche `claude/nut-v2-p1-integration`,
+> non publiée, non fusionnée) : l'app V2 est intégrée **telle quelle** (aucun code V2 modifié), plus une phrase de la diapo
+> du Guide (« à vérifier », règle d'or #11). Recette croisée P1 × V2 (B-NIX) **16 / 0** ; `D-111` reste sur la règle A
+> (recommandation : B restreint) ; `D-112` proposé (la restauration des favoris ajoute au lieu de remplacer). Rapport :
+> `docs/INTEGRATION-NUT-V2-P1.md`.
+
 ---
 
 ## En bref
