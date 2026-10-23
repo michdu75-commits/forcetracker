@@ -470,9 +470,12 @@ async function _csvFichier(colonnes, lignes, nomCourt, unite){
    elle, toutes les lignes se ressemblent et on ne peut plus juger laquelle croire (R33). */
 /* 🏷️ ft-v1186 — DEUX COLONNES DE PLUS : sans elles, l'export perd exactement l'information
    qu'on vient de sauver — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant. */
-const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source'];
+const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source','statut','valeurs_inconnues'];
 async function exportNutritionCsv(){
-  const REPAS = {matin:'Petit-déjeuner', midi:'Déjeuner', soir:'Dîner', collation:'Collation'};
+  /* 🥗 V2 (jalon 4) — LES NOMS DE REPAS SONT CEUX DE L'APP (`FOOD_MEALS`). La table d'avant utilisait des clés
+     qui n'existent pas (matin, midi, soir) : trois repas sur cinq sortaient sous leur clé brute (STR-14).
+     ⛔ Une clé inconnue reste ce qu'elle est — jamais rangée d'office en déjeuner (D-050). */
+  const REPAS = {}; (typeof FOOD_MEALS!=='undefined' ? FOOD_MEALS : []).forEach(m => { REPAS[m.k] = m.lbl; });
   const L = (S.foodLog || [])
     .slice()
     .sort((a,b) => String(b && b.date || '').localeCompare(String(a && a.date || ''))
@@ -487,7 +490,10 @@ async function exportNutritionCsv(){
       proteines_g: (e && e.prot != null) ? e.prot : '',
       glucides_g: (e && e.carbs != null) ? e.carbs : '',
       lipides_g: (e && e.fat != null) ? e.fat : '',
-      saisie: e && e.saisie || '', source: e && e.origine || ''
+      saisie: e && e.saisie || '', source: e && e.origine || '',
+      /* 🥗 V2 : fiable · estimee · declaree pour une ligne V2 ; « ancienne » pour une ligne d'avant V2 (lue telle quelle). */
+      statut: (e && e.n2 && e.n2.st) ? e.n2.st : 'ancienne',
+      valeurs_inconnues: (e && e.n2 && Array.isArray(e.n2.manque)) ? e.n2.manque.join(' ') : ''
     }));
   await _csvFichier(NUTRI_COLONNES, L, 'nutrition', 'lignes');
 }

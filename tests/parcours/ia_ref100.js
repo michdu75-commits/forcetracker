@@ -70,8 +70,15 @@ module.exports.source = function (t, ROOT, fs, path) {
     'l\'absence est redevenue un zéro');
 
   /* ── LES DEUX BRANCHES, ET CE QUI LES SÉPARE ─────────────────────────────── */
-  t('B-CCCXLVI ⑨ ⭐ avec un poids, la porte pose une vraie référence pour-100 g',
-    /if\(_iaG\)\{_bcNutr=_iaRef;/.test(EST), 'la référence n\'est plus posée');
+  /* 🥗 NUTRITION V2 (jalon 4, 22/10/2026) — ⑨ DISAIT « avec un poids, la porte pose `_bcNutr` ». Plus maintenant, et
+     c'est voulu : posé ici, il remplaçait la saisie par un bloc pour-100 g pré-rempli. Avec un poids, la porte donne
+     désormais à l'écran les valeurs ET le poids de l'IA (`window._afIaGrammes`), et l'écran PROPOSE ce poids en
+     pastille (garde-fou du 10/09, option A : rien ne s'enregistre sans geste) ; la fiche de la ligne est celle de
+     ces valeurs pour ce poids (`_n2Fiche`, conduit en B-CCCXLVII ③). La garantie de ⑨ — une vraie référence
+     quand le poids est connu — est gardée ; son support change. */
+  t('B-CCCXLVI ⑨ ⭐ avec un poids, la porte donne à l\'écran les valeurs ET le poids de l\'IA (pas de `_bcNutr` posé)',
+    /window\._afIaGrammes=\(d\.g>0&&d\.g<=5000\)\?d\.g:0;/.test(EST) && /_afMajAncre\(true\)/.test(EST) && !/_bcNutr=/.test(EST),
+    'la porte ne transmet plus le poids, ou pose de nouveau un pour-100 g');
   t('B-CCCXLVI ⑩ ⛔⛔ SANS poids, aucune référence pour-100 g n\'est inventée',
     !/else\{[^}]*_bcNutr=/.test(EST), 'un pour-100 g est fabriqué sans masse');
   t('B-CCCXLVI ⑪ ⛔⛔ … et rien n\'est réécrit dans ce cas (correction silencieuse interdite)',
@@ -95,7 +102,9 @@ module.exports.source = function (t, ROOT, fs, path) {
     /* ⚠️ ET `_afFiab=` MATCHE À L'INTÉRIEUR DE `_afFiab==='object'` — le piège de la
        sous-chaîne (`BUGS.md` n°1), qui m'a rendu 4 au lieu de 3. Une AFFECTATION est un `=`
        qui n'est pas suivi d'un autre `=`. */
-    (nu.match(/_afFiab=(?!=)/g) || []).length === 3
+    /* 🥗 V2 : QUATRE affectations, pas trois — la porte IA écrit `_afFiab` dans ses DEUX branches (avec un poids,
+       elle ne pose plus `_bcNutr`, qui portait la trace). L'invariant est le même : nulle part ailleurs. */
+    (nu.match(/_afFiab=(?!=)/g) || []).length === 4 && (EST.match(/_afFiab=(?!=)/g) || []).length === 2
       && /_bcNutr\.fiab\)\?_bcNutr\.fiab:\(\(typeof_afFiab==='object'&&_afFiab\)\?_afFiab:null\)/.test(nu),
     'la priorité a changé ou `_afFiab` s\'écrit ailleurs');
   /* 🔁 NUT-M6-REJEU-01 (21/10/2026) — CE TÉMOIN LISAIT LE TEXTE EXACT DE LA CONDITION, et il a rougi sur un
@@ -103,8 +112,9 @@ module.exports.source = function (t, ROOT, fs, path) {
      L'invariant qu'il garde, lui, n'a pas bougé — *une ligne COHÉRENTE ne grossit pas d'une trace* — donc il
      accepte la garde M6 devant, et rien d'autre. Toujours éprouvé : `tools/mut_ia_ref100.py` M12 (l'exclusion de
      COHERENT retirée) le fait rougir. */
+  /* 🥗 V2 : la trace part avec la ligne par `_n2Extras` (`_provFood` est retiré, R30) — même condition. */
   t('B-CCCXLVI ⑮ ⛔ une ligne cohérente ne grossit toujours pas d\'une trace',
-    /if\((?:ecran&&)?_z&&_z\.etat!=='COHERENT'\)\{/.test(nu), 'toute ligne porte désormais une trace');
+    /if\(z&&z\.etat&&z\.etat!=='COHERENT'\)\{/.test(corps('_n2Extras').replace(/\s+/g, '')), 'toute ligne porte désormais une trace');
 
   /* ── ⛔ PÉRIMÈTRE : ce que ce chantier ne touche pas ─────────────────────── */
   t('B-CCCXLVI ⑯ ⛔ `_ref100` garde exactement ses deux substitutions',
@@ -151,58 +161,77 @@ module.exports.ecran = async function (t, b, PORT) {
     const coh = document.getElementById('af-coherence') || {};
     const vu = !!(coh.style && coh.style.display !== 'none');
     const form = { kcal: lu('af-kcal'), prot: lu('af-prot'), carbs: lu('af-carbs'), fat: lu('af-fat') };
+    /* 🥗 NUTRITION V2 (jalon 4) — LE GESTE DE LA PERSONNE, PAS UN RACCOURCI : le poids estimé par l'IA est une
+       PASTILLE (garde-fou du 10/09, option A) qu'on touche ; sans poids, « Ajouter » est refusé (D-099) — ce refus
+       est relevé — puis la personne tape 200 g. Le résolveur, l'écran et l'enregistrement restent ceux de la prod. */
+    let refusSansPoids = null;
+    const past = document.getElementById('af-prop-pastille');
+    if (past && past.style.display !== 'none') { past.click(); await new Promise(x => setTimeout(x, 150)); }
+    else if (Object.keys(_n2LireChamps('af')).length) {
+      addFoodEntry(); await new Promise(x => setTimeout(x, 250));
+      refusSansPoids = (S.foodLog || []).length === 0;
+      const p = document.getElementById('af-poids');
+      if (p) { p.value = '200'; p.dispatchEvent(new Event('input', { bubbles: true })); p.dispatchEvent(new Event('blur')); }
+      await new Promise(x => setTimeout(x, 150));
+    }
     addFoodEntry(); await new Promise(x => setTimeout(x, 400));
     const l = (S.foodLog || [])[0] || null;
-    return { form, avert: vu ? (coh.innerText || '') : '',
-             l: l ? { kcal: l.kcal, prot: l.prot, carbs: l.carbs, fat: l.fat,
+    return { form, avert: vu ? (coh.innerText || '') : '', refusSansPoids,
+             l: l ? { kcal: l.kcal, prot: l.prot, carbs: l.carbs, fat: l.fat, q: l.q, u: l.u,
                       fiab: l.fiab || null, per100: l.per100 || null } : null };
   }, rep);
 
+  /* ⛔ `(o.l || {})` : sans ligne, un témoin ROUGIT au lieu de planter (un plantage ne dit plus lequel a échoué). */
   // ═══ A — énergie et macros cohérentes : RIEN ne doit changer ═══════════════
   let o = await jouer({ status:'ok', name:'Poulet riz', kcal:500, prot:40, carbs:55, fat:10, g:350 });
   t('B-CCCXLVII ① ⭐⭐ CAS A · une estimation cohérente n\'est pas touchée',
-    o.form.kcal === '500' && o.l.kcal === 500 && o.l.prot === 40, JSON.stringify(o.form));
+    o.form.kcal === '500' && (o.l || {}).kcal === 500 && (o.l || {}).prot === 40, JSON.stringify(o.form));
   t('B-CCCXLVII ② ⛔ CAS A · et elle ne porte AUCUNE trace (la ligne ne grossit pas)',
-    o.l.fiab === null, JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab === null, JSON.stringify((o.l || {}).fiab));
   /* ⚠️ RÉGRESSION QUE J'AI INTRODUITE PUIS MESURÉE : en posant `_bcNutr`, la ligne perdait
      le `per100` qu'elle portait AVANT ce chantier (142,9 pour 500 kcal / 350 g). */
-  t('B-CCCXLVII ③ ⭐ CAS A · le pour-100 g d\'avant est toujours là (aucune régression)',
-    o.l.per100 && o.l.per100.kcal === 142.9, JSON.stringify(o.l.per100));
+  /* 🥗 V2 : la ligne garde la fiche QUI A SERVI — 500 kcal pour 350 g, soit 142,857… pour 100 g, NON arrondie
+     (contrat V2 : aucun calcul ne repart d'une valeur arrondie ; V1 gardait 142,9). Et la quantité est le poids
+     proposé par l'IA, choisi d'un toucher. */
+  t('B-CCCXLVII ③ ⭐ CAS A · la ligne garde la fiche qui a servi (500 kcal / 350 g) et le poids choisi (350 g)',
+    !!o.l && (o.l || {}).per100 && Math.abs(o.l.per100.kcal - 500 * 100 / 350) < 1e-9 && (o.l || {}).q === 350 && (o.l || {}).u === 'g', JSON.stringify(o.l && [(o.l || {}).per100, (o.l || {}).q]));
 
   // ═══ B — énergie incompatible avec les macros, POIDS connu ════════════════
   o = await jouer({ status:'ok', name:'Steak huile', kcal:120, prot:40, carbs:0, fat:30, g:200 });
   t('B-CCCXLVII ④ ⭐⭐ CAS B · le résolveur applique sa règle normale (120 → 430)',
-    o.form.kcal === '430' && o.l.kcal === 430, JSON.stringify(o.form));
+    o.form.kcal === '430' && (o.l || {}).kcal === 430, JSON.stringify(o.form));
   t('B-CCCXLVII ⑤ ⭐⭐ CAS B · la trace atteint enfin la DONNÉE (elle était `null`)',
-    o.l.fiab && o.l.fiab.etat === 'DERIVE_ESTIMABLE'
-      && o.l.fiab.raison === 'plancher_energetique'
-      && o.l.fiab.brut === 60 && o.l.fiab.retenu === 215, JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab && (o.l || {}).fiab.etat === 'DERIVE_ESTIMABLE'
+      && (o.l || {}).fiab.raison === 'plancher_energetique'
+      && (o.l || {}).fiab.brut === 60 && (o.l || {}).fiab.retenu === 215, JSON.stringify((o.l || {}).fiab));
   t('B-CCCXLVII ⑥ ⛔ CAS B · et l\'écran EXPLIQUE la substitution (jamais silencieuse)',
     /🔬/.test(o.avert) && /215/.test(o.avert), o.avert.slice(0, 90));
 
   // ═══ C — même incohérence, SANS poids ═════════════════════════════════════
   o = await jouer({ status:'ok', name:'Steak huile', kcal:120, prot:40, carbs:0, fat:30 });
   t('B-CCCXLVII ⑦ ⭐⭐ CAS C · sans poids, RIEN n\'est réécrit',
-    o.form.kcal === '120' && o.l.kcal === 120, JSON.stringify(o.form));
+    o.form.kcal === '120' && !!o.l && (o.l || {}).kcal === 120, JSON.stringify(o.form));
   t('B-CCCXLVII ⑧ ⭐⭐ CAS C · … mais le verdict est quand même enregistré',
-    o.l.fiab && o.l.fiab.raison === 'plancher_energetique', JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab && (o.l || {}).fiab.raison === 'plancher_energetique', JSON.stringify((o.l || {}).fiab));
   t('B-CCCXLVII ⑨ ⛔⛔ CAS C · et la trace ne ment pas : `retenu` vaut `brut`',
-    o.l.fiab && o.l.fiab.etat === 'NON_RESOLU' && o.l.fiab.methode === 'observation'
-      && o.l.fiab.retenu === o.l.fiab.brut && o.l.fiab.retenu === 120, JSON.stringify(o.l.fiab));
-  t('B-CCCXLVII ⑩ ⛔ CAS C · aucun pour-100 g inventé sans masse',
-    o.l.per100 === null, JSON.stringify(o.l.per100));
+    (o.l || {}).fiab && (o.l || {}).fiab.etat === 'NON_RESOLU' && (o.l || {}).fiab.methode === 'observation'
+      && (o.l || {}).fiab.retenu === (o.l || {}).fiab.brut && (o.l || {}).fiab.retenu === 120, JSON.stringify((o.l || {}).fiab));
+  /* 🥗 V2 : sans masse, plus RIEN ne s'enregistre (D-099) — donc aucun pour-100 g ne peut être inventé ; quand la
+     personne donne 200 g, la fiche est celle de SES valeurs pour SA masse (120 kcal / 200 g = 60 pour 100 g). */
+  t('B-CCCXLVII ⑩ ⛔ CAS C · sans masse, RIEN n\'est enregistré ; la masse donnée, la fiche suit (60 pour 100 g)',
+    o.refusSansPoids === true && !!o.l && (o.l || {}).q === 200 && !!(o.l || {}).per100 && (o.l || {}).per100.kcal === 60, JSON.stringify([o.refusSansPoids, o.l && (o.l || {}).per100]));
   t('B-CCCXLVII ⑪ ⛔ CAS C · l\'avertissement d\'écart reste affiché',
     /ne colle pas/.test(o.avert), o.avert.slice(0, 90));
 
   // ═══ D — énergie absente, macros présentes ════════════════════════════════
   o = await jouer({ status:'ok', name:'Omelette', prot:20, carbs:2, fat:15, g:150 });
   t('B-CCCXLVII ⑫ ⭐⭐ CAS D · une énergie absente est estimée (elle valait 0)',
-    o.l.kcal === 223 && o.l.fiab && o.l.fiab.raison === 'energie_absente', JSON.stringify(o.l));
+    (o.l || {}).kcal === 223 && (o.l || {}).fiab && (o.l || {}).fiab.raison === 'energie_absente', JSON.stringify(o.l));
 
   // ═══ E — une macro manque (absente ≠ zéro) ════════════════════════════════
   o = await jouer({ status:'ok', name:'Soupe', kcal:90, prot:3, fat:2, g:250 });
   t('B-CCCXLVII ⑬ ⭐ CAS E · la loi est un PLANCHER : 90 ≥ 4×3 + 9×2, donc rien à résoudre',
-    o.l.fiab === null && o.l.kcal === 90, JSON.stringify(o.l));
+    (o.l || {}).fiab === null && (o.l || {}).kcal === 90, JSON.stringify(o.l));
 
   // ═══ F — valeurs nulles / invalides ═══════════════════════════════════════
   o = await jouer({ status:'ok', name:'Vide', kcal:'abc', prot:null, carbs:undefined, fat:'' });
@@ -217,7 +246,7 @@ module.exports.ecran = async function (t, b, PORT) {
     return JSON.parse(JSON.stringify(r.fiab));
   });
   o = await jouer({ status:'ok', name:'Steak huile', kcal:120, prot:40, carbs:0, fat:30, g:200 });
-  const ia = o.l.fiab;
+  const ia = (o.l || {}).fiab;
   t('B-CCCXLVII ⑮ ⭐⭐ CAS G · même verdict que CIQUAL sur la même incohérence',
     ia && ia.etat === comp.etat && ia.methode === comp.methode && ia.raison === comp.raison
       && ia.brut === comp.brut && ia.retenu === comp.kcal && ia.champ === comp.champ,
@@ -241,12 +270,12 @@ module.exports.ecran = async function (t, b, PORT) {
      personne n'a donnée. */
   o = await jouer({ status:'ok', name:'Plat', kcal:120, prot:40, carbs:null, fat:30, g:200 });
   t('B-CCCXLVII ⑰ ⭐⭐ CAS H · une macro `null` est ABSENTE : on ne dérive pas (R29)',
-    o.l.fiab && o.l.fiab.etat === 'NON_RESOLU' && o.l.kcal === 120, JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab && (o.l || {}).fiab.etat === 'NON_RESOLU' && (o.l || {}).kcal === 120, JSON.stringify((o.l || {}).fiab));
 
   /* ⛔ R15 — le verdict ne doit PAS se coller au repas suivant. */
   o = await jouer({ status:'ok', name:'Poulet riz', kcal:500, prot:40, carbs:55, fat:10, g:350 });
   t('B-CCCXLVII ⑱ ⛔⛔ le verdict du repas PRÉCÉDENT ne contamine pas le suivant (R15)',
-    o.l.fiab === null, JSON.stringify(o.l.fiab));
+    (o.l || {}).fiab === null, JSON.stringify((o.l || {}).fiab));
 
   t('B-CCCXLVII ⑲ ⛔ aucune erreur de page sur tout le parcours', errs.length === 0, errs.join(' | '));
   await cx.close();

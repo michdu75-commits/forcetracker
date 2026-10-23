@@ -102,6 +102,8 @@ const PRECACHE = [
      balise échoue, et un `try/catch` avale l'absence. On n'ajoute pas un script servi
      sans l'ajouter ici dans le même mouvement. */
   './capacites-ia.js',
+  /* 🥗 Le moteur Nutrition V2 (jalon 4) : servi par `index.html`, donc précaché ici dans le même mouvement. */
+  './nutrition-v2.js',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js', './food-health.js',
   /* ⛔⛔ `supabase.js` MANQUAIT ICI, ET C'ETAIT LE SEUL DES 10 (31/08/2026). Trouve en

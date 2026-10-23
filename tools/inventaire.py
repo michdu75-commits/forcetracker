@@ -27,7 +27,7 @@ def rd(f):
 
 HTML  = rd('index.html')
 JS    = {f: rd(f) for f in ('app.js','coach.js','constants.js','log.js','screens.js',
-                            'setup.js','state.js','tracking.js','food-health.js')}
+                            'setup.js','state.js','tracking.js','food-health.js','nutrition-v2.js')}
 BACK  = rd('Code.js') + rd('worker.js')
 # La doc où l'on cherche si une chose est mentionnée (pour repérer les orphelines)
 DOCS  = (rd('CLAUDE.md') + rd('docs/JOURNAL-ARCHIVE.md') + rd('IDEES-FUTURES.md')

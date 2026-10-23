@@ -150,8 +150,14 @@ module.exports.source = function(t, ROOT, fs, path){
   console.log('\n-- B-CCCXXIV. Périmètre du chantier Nutrition (source) --');
   t('B-CCCXXIV ① ⛔⛔ l\'ACCUEIL est GELÉ : `renderHome` et `_renderHomeHero` intacts',
     /(?:^|\n)function renderHome\(/.test(scr) && /(?:^|\n)function _renderHomeHero\(/.test(scr), '');
-  t('B-CCCXXIV ② ⛔⛔ la DOUANE est GELÉE : 4 écrivains, aucune règle devenue bloquante',
-    (A.match(/_douaneLigne\(/g)||[]).length === 5, '');
+  /* 🥗 V2 (jalon 4) — la douane n'est plus appelée par chacune des 4 portes : l'écrivain unique `_n2Enregistrer`
+     l'appelle UNE fois, sur la ligne qu'il va écrire, sous le nom historique de la porte (les 4 noms sont tenus par
+     B-CCCXVI ⑫bis). « Aucune règle devenue bloquante » se lit dans la forme de l'appel : son résultat est ignoré et
+     une exception de la douane ne bloque pas l'écriture. Avant : 5 occurrences (définition + 4 portes). */
+  t('B-CCCXXIV ② ⛔⛔ la DOUANE est GELÉE : observée une fois par l\'écrivain unique, aucune règle devenue bloquante',
+    (A.match(/(?<!function )_douaneLigne\(/g)||[]).length === 1
+    && /try\{_douaneLigne\(r\.ligne,porte\);\}catch\(e\)\{\}/.test(sp(_nuC(_corps('_n2Enregistrer', app)))),
+    'appels hors définition : '+((A.match(/(?<!function )_douaneLigne\(/g)||[]).length));
   t('B-CCCXXIV ③ ⛔⛔ la CIBLE n\'est pas touchée : `calcTDEE` et `calcMacros` intactes',
     /function calcTDEE\(/.test(fs.readFileSync(path.join(ROOT,'state.js'),'utf8'))
     && /function calcMacros\(/.test(fs.readFileSync(path.join(ROOT,'state.js'),'utf8')), '');

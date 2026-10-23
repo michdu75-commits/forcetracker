@@ -859,7 +859,7 @@ try:
     import re as _re16
     _RACINE16 = pathlib.Path(__file__).resolve().parent.parent
     _FICS16 = ['constants.js', 'state.js', 'screens.js', 'log.js', 'setup.js',
-               'tracking.js', 'coach.js', 'food-health.js', 'app.js']
+               'tracking.js', 'coach.js', 'food-health.js', 'nutrition-v2.js', 'app.js']
     _vus16 = {}
     for _f16 in _FICS16:
         _p16 = _RACINE16 / _f16

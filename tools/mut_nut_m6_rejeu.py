@@ -15,50 +15,69 @@ import os, re, shutil, subprocess, sys, tempfile
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 A = 'app.js'
 B = 'tests/parcours/nut_m6_rejeu.js'
-G1 = "if(ecran&&row&&row.style.display!=='none'"
-G2 = "if(ecran && !p.per100 && typeof _afRef==='object'"
-G3 = "if(ecran && !p.q && _afPortionPose"
-G4 = "if(ecran && _z && _z.etat!=='COHERENT'){"
-MARQ = "const ecran=!(_afSrc && _afSrc.ecran===false);"
-RJ_SRC = "Object.assign({saisie:'liste',origine:'reprise',ecran:false}, _srcRepriseQ(e, qOk))"
-QA_SRC = "try{ _afSetSrc(Object.assign({saisie:'liste', origine:'reprise', ecran:false},"
-RJ_FIN = "  }); }finally{"
-QA_FIN = "  S.foodLog.push(_l);\n  }finally{"
-AF_PROV = "    _provFood({kcal,prot,carbs,fat}));"
+# 🥗 22/10/2026 (Nutrition V2, jalon 4) — LES MUTATIONS SUIVENT LE NOUVEAU SUPPORT DE LA MEME GARANTIE. `_provFood` et son
+#    marqueur sont retires (R30) ; un aliment re-note passe par `_n2Reajouter`, qui ne lit que la ligne d'origine. Chaque
+#    mutation ci-dessous REINTRODUIT une facon de lire l'ecran (ou de completer / d'inventer) pendant un rejeu.
+RA_ORIG = "origine:{saisie:'liste', origine:'reprise'}, quantite:Object.assign({}, R.quantite, {origine:'proposee'})};"
+RA_FIN = "  return _n2Enregistrer(e, porte);"
+RA_QVIDE = "  if(!R.quantite) return {ok:false, aCompleter:true};"
+RA_FICHE = "  if(R.fiche){\n    e.mode='pesee'; e.fiche=R.fiche;"
+RA_TETE = "function _n2Reajouter(src, repas, date, porte, apercu){\n"
 RJ_TETE = "function rejouerRepas(sig, meal){\n"
+RJ_MSG = "+(reste.length?' · à noter à la main (quantité inconnue) : '+reste.map(court).join(', '):''),"
+# 23/10/2026 (incident des reprises, D-111) — `_n2Apercu` MONTRE ce que « + Ajouter » ecrirait, par la MEME construction :
+#    il passe l'argument d'apercu, et `_n2Reajouter` rend la ligne AVANT tout `_n2Enregistrer`.
+AP_DEF = "function _n2Apercu(src, verifiees){ return _n2Reajouter(src, 'apercu', today(), 'apercu', {verifiees:verifiees}); }"
+RA_QUEUE = "  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};\n  if(raison) return {ok:false, incoherente:true, raison:raison};\n  return _n2Enregistrer(e, porte);\n"
+CIQ = "  if(!(lignes||[]).some(_n2BesoinCiqual)) return suite();"
+FIGE_GARDE = "  const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;"
+AF_LIT = "  const _en=_n2EntreeEcran(name, _vals, !!(_bcRow && _bcRow.style.display!=='none' && _bcNutr));"
+PUSH = "  }else S.foodLog.push(r.ligne);"
 
 S = lambda *c: ['B-NM6-S ' + x for x in c]
 C = lambda *c: ['B-NM6-C ' + x for x in c]
 
 MUT = [
-    ('N1 garde « bloc grammes » retiree', [(A, G1, G1.replace('ecran&&', ''))], S('S1', 'S5') + C('⑥'), 'GARDE'),
-    ('N2 garde « ancre en grammes » retiree', [(A, G2, G2.replace('ecran && ', ''))], S('S2 ', 'S2b') + C('⑦'), 'GARDE'),
-    ('N3 garde « portions » retiree', [(A, G3, G3.replace('ecran && ', ''))], S('S3') + C('⑧'), 'GARDE'),
-    ('N4 garde « trace de fiabilite » retiree', [(A, G4, G4.replace('ecran && ', ''))], S('S4') + C('⑨'), 'GARDE'),
-    ('N5 le rejeu ne pose plus le marqueur', [(A, RJ_SRC, RJ_SRC.replace(',ecran:false', ''))],
-     S('S1', 'S2 ', 'S2b', 'S3', 'S4', 'S5') + C('②'), 'GARDE'),
-    ('N5b l\'ajout rapide ne pose plus le marqueur (comportement inchange : seul le cliquet le voit)',
-     [(A, QA_SRC, QA_SRC.replace(', ecran:false', ''))], C('③'), 'GARDE'),
-    ('N6 « ferme par defaut » : l\'ajout depuis l\'ecran ne lit plus l\'ecran',
-     [(A, MARQ, "const ecran=!!(_afSrc && _afSrc.ecran===true);")], ['B-NM6-A A1', 'B-NM6-A A2', 'B-NM6-A A3', 'B-NM6-A A4'] + C('⑤'), 'GARDE'),
-    ('N7 l\'oracle : la source du yaourt est semee a 120 g (l\'oracle attend 125 g, ecrit a la main)',
+    ('N1 le rejeu prend la provenance de l\'ecran', [(A, RA_ORIG, RA_ORIG.replace("origine:{saisie:'liste', origine:'reprise'}", "origine:_n2Provenance()"))],
+     S('S0') + C('④'), 'GARDE'),
+    ('N2 le rejeu emporte la trace de fiabilite de l\'ecran', [(A, RA_FIN, "  return _n2Enregistrer(Object.assign(e, _n2Extras()), porte);")],
+     S('S4') + C('④'), 'GARDE'),
+    ('N3 le rejeu prend les grammes du bloc « Quantite »', [(A, RA_ORIG, RA_ORIG.replace("{origine:'proposee'})};",
+        "{origine:'proposee'}, (typeof _bcNutr==='object'&&_bcNutr&&numFR((document.getElementById('af-bc-grams')||{}).value)>0)?{val:numFR(document.getElementById('af-bc-grams').value)}:{})};"))],
+     S('S1', 'S5') + C('④'), 'GARDE'),
+    ('N4 le rejeu complete une quantite absente (100 g)', [(A, RA_QVIDE, "  if(!R.quantite) R.quantite={val:100, unite:'g'};")], S('S0'), 'GARDE'),
+    ('N5 M1 : le rejeu propage un pour-100 g NON verifie', [(A, RA_FICHE, "  if(!R.fiche && src.per100 && src.q>0 && src.u==='g') R.fiche={base:'g', p100:src.per100, source:'reprise', fiab:'declaree'};\n" + RA_FICHE)],
+     S('S0'), 'GARDE'),
+    ('N6 remise a zero de l\'ecran en tete du rejeu (interdite)', [(A, RJ_TETE, RJ_TETE + "  try{ _afOublierAliment(); }catch(e){}\n")], ['B-NM6-S ⑦'] + C('⑥'), 'GARDE'),
+    ('N7 le rejeu pose une provenance', [(A, RJ_TETE, RJ_TETE + "  _afSetSrc({saisie:'liste', origine:'reprise'});\n")], ['B-NM6-MQ ②'] + C('⑥'), 'GARDE'),
+    ('N8 un 4e ecrivain appelle _n2Enregistrer sans se declarer', [(A, RJ_TETE, "function _m6EcrivainOublie(e){ return _n2Enregistrer(e, 'x'); }\n" + RJ_TETE)], C('①'), 'GARDE'),
+    ('N9 `_provFood` revient (R30)', [(A, RJ_TETE, "function _provFood(v){ return {}; }\n" + RJ_TETE)], C('⑦'), 'GARDE'),
+    ('N10 l\'oracle : la source du yaourt est semee a 120 g (l\'oracle attend 125 g, ecrit a la main)',
      [(B, "{ name: 'Yaourt (test)', kcal: 75, prot: 5, carbs: 6, fat: 3, q: 125, u: 'g', per100:",
           "{ name: 'Yaourt (test)', kcal: 75, prot: 5, carbs: 6, fat: 3, q: 120, u: 'g', per100:")], S('S0', 'S6'), 'GARDE'),
-    ('N8 remise a zero de l\'ecran en tete du rejeu (variante alpha, interdite)',
-     [(A, RJ_TETE, RJ_TETE + "  try{ _afOublierAliment(); }catch(e){}\n")], ['B-NM6-S ⑦'], 'GARDE'),
-    ('N9 le rejeu ne rend plus la provenance dans un finally (rendue apres la boucle, comme avant)',
-     [(A, RJ_FIN, "  }); }catch(e){ throw e; }{")], ['B-NM6-MQ ③'] + C('⑩'), 'GARDE'),
-    ('N10 l\'ajout rapide n\'efface plus sa provenance dans un finally',
-     [(A, QA_FIN, "  S.foodLog.push(_l);\n  }catch(e){ throw e; }{")], ['B-NM6-MQ ④', 'B-NM6-MQ ⑤'] + C('⑪'), 'GARDE'),
-    ('N11 un 4e ecrivain appelle _provFood sans se declarer',
-     [(A, RJ_TETE, "function _m6EcrivainOublie(v){ return _provFood(v); }\n" + RJ_TETE)], C('①'), 'GARDE'),
-    ('N12 le marqueur descend dans la ligne enregistree',
-     [(A, "  return p;\n}\nfunction _loadZXing(){", "  if(!ecran) p.ecran=false;\n  return p;\n}\nfunction _loadZXing(){")],
-     ['B-NM6-MQ ①', 'B-NM6-S S0'] + C('⑤'), 'GARDE'),
-    ('N13 _provFood ne lit plus le marqueur', [(A, MARQ, "const ecran=true;")], S('S1', 'S2 ', 'S2b', 'S3', 'S4', 'S5') + C('⑤'), 'GARDE'),
-    ('N14 addFoodEntry pose le marqueur', [(A, AF_PROV, "    (_afSetSrc(Object.assign({},_afSrc||{},{ecran:false})),_provFood({kcal,prot,carbs,fat})));")],
-     ['B-NM6-A A1', 'B-NM6-A A2', 'B-NM6-A A3', 'B-NM6-A A4'] + C('④'), 'GARDE'),
-    ('MC1 [negatif] commentaire seulement dans _provFood', [(A, MARQ, "/* commentaire sans effet */ " + MARQ)], [], 'OK'),
+    ('N11 le message du rejeu ne nomme plus les aliments non completes', [(A, RJ_MSG, "+(reste.length?' · à noter à la main':''),")], S('S0'), 'GARDE'),
+    ('N12 une ancienne ligne CIQUAL n\'attend plus la table (reprise figee avant toute recherche)', [(A, CIQ, "  return suite();")],
+     S('S1') + ['B-NM6-A A1'], 'GARDE'),
+    ('N13 reprise figee : la quantite tapee s\'efface au redessin', [(A, FIGE_GARDE, "  const f=document.getElementById('af-prop');")], ['B-NM6-A A2b'], 'GARDE'),
+    ('N14 « ferme par defaut » : « Ajouter » ne lit plus le bloc « Quantite »', [(A, AF_LIT, "  const _en=_n2EntreeEcran(name, _vals, false);")],
+     ['B-NM6-A A1', 'B-NM6-A A4'], 'GARDE'),
+    ('N15 un champ d\'ecran descend dans la ligne enregistree', [(A, PUSH, "  }else S.foodLog.push(Object.assign(r.ligne, porte==='rejouerRepas'?{ecran:false}:{}));")],
+     ['B-NM6-MQ ①'] + S('S0'), 'GARDE'),
+    # 22/10 (fin du jalon 4) : Q ② a été réécrit sur l'écran V2 (une reprise SANS quantité ouvre la saisie à la main, le
+    # poids DEMANDÉ dans `af-poids`) — sa mutation : une quantité est posée quand même (celle du riz, 150).
+    ('N16 l\'ajout rapide d\'un aliment SANS quantite ouvre l\'ecran avec une quantite posee (150, celle du riz)',
+     [(A, "    _afRef=null;\n    _afMajAncre(true);\n  }else{",
+       "    _afRef=null;\n    _afMajAncre(true);\n    { const p=document.getElementById('af-poids'); if(p) p.value='150'; }\n  }else{")],
+     ['B-NM6-Q ②'], 'GARDE'),
+    ('N17 l\'apercu ne passe plus l\'argument d\'apercu (il ECRIRAIT la ligne qu\'il montre)',
+     [(A, AP_DEF, AP_DEF.replace(", {verifiees:verifiees});", ");"))], C('②'), 'GARDE'),
+    ('N18 _n2Reajouter ecrit AVANT de rendre l\'apercu', [(A, RA_QUEUE,
+       "  if(raison && !apercu) return {ok:false, incoherente:true, raison:raison};\n  const w=_n2Enregistrer(e, porte);\n"
+       "  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};\n  return w;\n")], C('②'), 'GARDE'),
+    ('N19 un 3e re-noteur appelle _n2Reajouter sans se declarer', [(A, RJ_TETE, "function _m6RenoteurOublie(e){ return _n2Reajouter(e, 'dejeuner', today(), 'x'); }\n" + RJ_TETE)],
+     C('②'), 'GARDE'),
+    ('MC1 [negatif] commentaire seulement dans _n2Reajouter (cite document, _afSrc, _bcNutr, _provFood(, _n2Extras)',
+     [(A, RA_TETE, RA_TETE + "  /* lecture interdite ici : document. _afSrc _bcNutr _provFood( _n2Extras() */\n")], [], 'OK'),
 ]
 
 
