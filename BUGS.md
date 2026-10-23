@@ -5057,3 +5057,12 @@ rondes), un favori du même nom qu'une ligne récente, une ligne corrigée repri
 enregistrée, chercher les écrivains et les lecteurs qui réagissent à cette forme (ici `_majDefFavori`, qui ne regardait que
 `u==='portion'`), pas seulement ceux qu'on a modifiés.*
 
+**Et deux défauts de MES témoins, trouvés par le contrôle négatif de cette correction (23/10)** :
+- **un témoin qui n'empruntait pas le chemin qu'il nommait** : ⑥b retapait la masse sur la pastille du riz — mais à ce moment, la
+  dernière ligne de riz était les 300 g de ⑥ : la pastille était en **grammes**, et ⑥b vert sans rien éprouver (MP52 et MP53
+  survivaient). Réécrit sur le yaourt, dont la dernière ligne est en portions, et il vérifie d'abord le texte de la pastille ;
+- **un témoin qui dépendait de l'HEURE** (P12 ①, jalon 4) : l'ajout rapide tombe dans le repas proposé par l'heure — avant 11 h,
+  « Petit-déj », le repas de la ligne testée : l'habitude, notée aujourd'hui, était alors écartée et le témoin rougissait **la
+  moitié de la journée** (vert de 22 h à minuit, rouge à 00 h 05). Le repas des ajouts est désormais fixé dans P12 et P14.
+  👉 *Un témoin qui passe le soir et rougit le matin n'est pas « instable » : il dépend d'une donnée qu'il ne fixe pas.*
+

@@ -495,6 +495,10 @@ async function ecran(t, b, PORT) {
           proposee: (pp && pp.style.display !== 'none') ? pp.dataset.q : null, prov: _n2Provenance(),
           fiche: (bc && _bcNutr) ? (({ cle, etat, source, fiab }) => ({ cle, etat, source, fiab }))(_n2FicheBc()) : null }; };
       const out = { ecrivains: {}, ecrans: {} }, vt = window.toast;
+      /* ⏰ Le repas de l'ajout rapide est FIXÉ (« Dîner ») : il suivait l'HEURE, et avant 11 h il tombait dans « Petit-déj », le
+         repas de C1 — l'habitude notée aujourd'hui était alors écartée et ① rougissait la moitié de la journée (mesuré le 23/10
+         à 00:05 UTC). Le soir, c'était déjà « Dîner » : ce témoin a toujours été vert dans cette configuration-là. */
+      setFoodMeal('diner');
       for (const k of Object.keys(CAS)) {
         const nom = CAS[k].name, meal = CAS[k].meal;
         /* ① « + Ajouter » dans « Mes aliments » */
@@ -796,6 +800,9 @@ async function ecran(t, b, PORT) {
     }, RIZ);
     const fermer = () => pg.evaluate(() => { try { closeAddFood(); } catch (e) {} document.querySelectorAll('.overlay.open').forEach((x) => x.classList.remove('open')); });
     const vider = () => pg.evaluate(() => { const v = (window.__toasts || []).slice(); window.__toasts = []; return v; });
+    /* ⏰ Le repas des ajouts est FIXÉ (« Collation 2 », qu'aucune ligne de la fixture n'emploie) : à l'heure du déjeuner, un ajout
+       de riz en « Déjeuner » aurait écarté l'habitude du riz (notée aujourd'hui) — la leçon de P12 ①, le 23/10. */
+    await pg.evaluate(() => setFoodMeal('collation2'));
     const nb = (x) => String(x || '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
     const avantTout = J({ log: await journal(pg), fav: await pg.evaluate(() => JSON.parse(JSON.stringify(S.savedFoods || []))) });
     const idsAvant = (await journal(pg)).map((x) => x.id);
@@ -888,18 +895,22 @@ async function ecran(t, b, PORT) {
     t('B-NV2P P14 ⑥ ⛔ … la pastille prise PUIS le champ retouché (300) : une quantité en GRAMMES tapée — 300 g = 390 · 8 · 84 · 2 (à la main), « pour tes 300 g »',
       g && /pour tes 300 g/.test(nb(r6.total)) && l6 && l6.q === 300 && l6.u === 'g' && !l6.portionLabel && l6.kcal === 390 && l6.prot === 8
       && l6.carbs === 84 && l6.fat === 2 && l6.n2 && l6.n2.qo === 'tapee', J({ r6, l6: forme(l6) }));
-    /* ⑥b la MÊME masse retapée (450) : la personne a tapé — c'est une quantité en grammes (D-103 ③), pas « les portions de la
-       dernière fois » (relecture du 22/10 : ⑥ retapait 300, qui diffère de 450, et ne voyait pas l'origine). */
+    /* ⑥b la MÊME masse retapée : la personne a tapé — c'est une quantité en grammes (D-103 ③), pas « les portions de la dernière
+       fois » (relecture du 22/10 : ⑥ retapait 300, qui diffère de 450, et ne voyait pas l'origine). ⚠️ Sur le YAOURT, dont la
+       dernière ligne est en portions : le riz, à ce moment, a pour dernière ligne les 300 g de ⑥ — sa pastille serait en grammes,
+       et le témoin vert sans rien éprouver (mesuré : MP52 et MP53 survivaient). Le champ est vidé puis retapé : deux frappes. */
     await fermer(); g = await ouvrirAjout(pg);
-    g = g && (await prendre('Riz P14 (test)')) >= 0; await pause(pg, 250);
+    g = g && (await prendre('Yaourt P14 (test)')) >= 0; await pause(pg, 250);
+    const r6a = await bcEtat();
     g = g && await clic(pg, '#af-bc-last'); await pause(pg, 200);
-    g = g && await taper(pg, '#af-bc-grams', '450'); await pause(pg, 200);
+    g = g && await taper(pg, '#af-bc-grams', ''); g = g && await taper(pg, '#af-bc-grams', '187.5'); await pause(pg, 200);
     const r6b = await bcEtat(); const ids6b = (await journal(pg)).map((x) => x.id);
     g = g && await ajouter(pg);
     const l6b = neuves(await journal(pg), ids6b)[0] || null;
-    t('B-NV2P P14 ⑥b ⛔ … la pastille prise puis la MÊME masse retapée (450) : TAPÉE, donc 450 g en grammes — 585 · 12 · 126 · 3 (à la main), « pour tes 450 g »',
-      g && /pour tes 450 g/.test(nb(r6b.total)) && !/portion/.test(nb(r6b.total)) && l6b && l6b.q === 450 && l6b.u === 'g' && !l6b.portionLabel
-      && l6b.kcal === 585 && l6b.prot === 12 && l6b.carbs === 126 && l6b.fat === 3 && l6b.n2 && l6b.n2.qo === 'tapee', J({ r6b, l6b: forme(l6b) }));
+    t('B-NV2P P14 ⑥b ⛔ … la pastille « 1,5 portion (187,5 g) » prise puis la MÊME masse retapée : TAPÉE, donc 187,5 g en grammes — 150 · 8 · 19 · 6 (à la main), « pour tes 187,5 g »',
+      g && nb(r6a.txt) === '↩ 1,5 portion (187,5 g) (la dernière fois)' && /pour tes 187,5 g/.test(nb(r6b.total)) && !/portion/.test(nb(r6b.total))
+      && l6b && l6b.q === 187.5 && l6b.u === 'g' && !l6b.portionLabel
+      && l6b.kcal === 150 && l6b.prot === 8 && l6b.carbs === 19 && l6b.fat === 6 && l6b.n2 && l6b.n2.qo === 'tapee', J({ r6a, r6b, l6b: forme(l6b) }));
 
     /* ⑥ le favori à la définition réécrite : sa portion n'est pas fiable — aucune masse proposée, rien de posé */
     await fermer(); g = await ouvrirAjout(pg);
