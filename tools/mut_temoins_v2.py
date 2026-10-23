@@ -181,7 +181,7 @@ MUT = [
     ('R39 D-103 : la pastille « la dernière fois » prise telle quelle redevient des GRAMMES', ['CCLXXX', 'CCLXXXIV', 'CCLXXXV'],
      [('app.js', "    const P=_bcPortionPrise, prise=!!(P && _bcQtyOrigine==='proposee' && v===P.masse);", "    const P=_bcPortionPrise, prise=false;")],
      ['CCLXXX ④', 'CCLXXXIV ⑪', 'CCLXXXV ⑱']),
-    # ⭐⭐ INCIDENT DU 23/10 (D-111) — cinq témoins de la passe RÉÉCRITS sur le nouveau contrat (l'identité est le produit ;
+    # ⭐⭐ INCIDENT DU 23/10 (D-111) — six témoins de la passe RÉÉCRITS sur le nouveau contrat (l'identité est le produit ;
     #    une valeur inconnue reste absente ; une référence qui se contredit ne se recopie plus). Chacun doit rougir.
     ('R40 D-111 : l\'étoile ignore l\'état de l\'élément — un 2ᵉ favori de la MÊME identité se crée', ['CCLXXXV'],
      [('app.js', "  if(it.fav){\n    let idx=S.savedFoods.indexOf(it._src);", "  if(false){\n    let idx=S.savedFoods.indexOf(it._src);")],
