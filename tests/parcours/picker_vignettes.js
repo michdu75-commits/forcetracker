@@ -2,7 +2,8 @@
    🖼️ SEANCE-UX-IMAGES — LES VIGNETTES ANATOMIQUES DE « CHOISIR UN EXERCICE » (blocs C-VIG-*) — session-C (Claude Séance),
    23/10/2026, paquet et consignes de Michel (docs/SEANCE-UX-IMAGES.md).
    ① 7 vignettes du paquet, copiées À L'OCTET (SHA-256 du manifeste), sous des noms NOUVEAUX (`muscles/vignettes/`) ;
-   ② chacune sur SON groupe ; MOLLETS garde son image (le paquet n'en a pas ; « Corps complet » n'est utilisée nulle part) ;
+   ② chacune sur SON groupe ; MOLLETS a la sienne, venue à part (2ᵉ paquet, 23/10 matin : la carte de `08_mollets.png` sans son
+     fond blanc, chaque pixel conservé identique) ; « Corps complet » n'est utilisée nulle part ;
    ③ cadre 88 × 51 ancré en bas : le liseré du haut (fond et bord de carte de la maquette, 3 à 17 lignes) est masqué, rien
      n'est étiré ; même cadre dans l'en-tête d'un groupe ouvert, sans rétrécir ;
    ④ libellés, catégories (`tags`), bouton « 🫀 Anatomie » et recherche : inchangés ; les autres écrans ne reçoivent pas ces
@@ -31,7 +32,9 @@ const VIG = [
   { src: 'muscles/vignettes/05_jambes.png', liseré: 11, sha: 'd1c970d2fdf1eca5030f76d199ddef3c7710bcf1410d81fcf4ea116352f616f5' },
   { src: 'muscles/vignettes/06_fessiers_ischios_lombaires.png', liseré: 16, sha: 'c6000d133f51de5a186c2c2505862779e29383c870071b606c18d970964faa1f' },
   { src: 'muscles/vignettes/07_abdominaux.png', liseré: 17, sha: '046dfd4e6c75da34fcc8bc0cfc935e64f5b49733566bd2036a2aeb8491a33d0c' },
-  { src: 'muscles/muscle mollet.png' } ];                                  // Mollets : son image d'avant, inchangée
+  // Mollets (2ᵉ paquet) : PAS de liseré — l'original était une carte arrondie sur un grand fond blanc (2172 × 724, sha256
+  // 11f4582a…856e) ; le dépôt garde la carte seule, 996 × 724 (fond blanc retiré, pixels identiques) — empreinte ci-dessous
+  { src: 'muscles/vignettes/08_mollets.png', sha: '59605168c31134b904ba1f878082c0425d70c4444e5e34f7409c8764bde0f499', mollets: true } ];
 // ce qui fait les catégories et le bouton « Anatomie » — figé tel qu'avant le lot (master f82a7c07)
 const TAGS = [['Pectoraux'], ['Dos'], ['Épaules', 'Trapèzes'], ['Biceps', 'Triceps'], ['Jambes'], ['Fessiers', 'Lombaires'], ['Abdominaux'], ['Mollets']];
 const ANAT = ['anatomy/pectoreaux/schema pectoreaux.png', 'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png',
@@ -91,14 +94,36 @@ async function ecran(t, b, PORT) {
     if (w === 390) {
       t('C-VIG-A1 les 8 groupes, dans le même ordre et avec les mêmes libellés qu\'avant (aucune catégorie ajoutée ni retirée — « Corps complet » n\'en devient pas une)',
         _det(T.map(x => x.label)) === _det(LABELS), _det(T.map(x => x.label)));
-      t('C-VIG-A2 ⭐⭐ chaque tuile porte SA vignette (correspondance stricte du paquet) ; Mollets garde son image — ni « Corps complet », ni une vignette d\'un autre groupe',
-        _det(T.map(x => x.src)) === _det(VIG.map(v => v.src)) && !T.some(x => /corps_complet/.test(x.src || '')) && !/vignettes\//.test(T[7].src || ''),
+      t('C-VIG-A2 ⭐⭐ chaque tuile porte SA vignette (correspondance stricte) ; Mollets porte la sienne (`08_mollets.png`) — ni « Corps complet », ni son ancienne image, ni la vignette d\'un autre groupe',
+        _det(T.map(x => x.src)) === _det(VIG.map(v => v.src)) && !T.some(x => /corps_complet|muscle mollet/.test(x.src || '')),
         _det(T.map(x => x.src)));
-      t('C-VIG-A3 les 8 images se chargent ; les 7 du paquet à leur taille native (183 px de large : rien n\'a été redimensionné ni remplacé)',
-        T.every(x => x.charge) && T.slice(0, 7).every(x => x.nat && x.nat[0] === 183), _det(T.map(x => [x.charge, x.nat])));
+      t('C-VIG-A3 les 8 images se chargent ; les 7 du 1ᵉʳ paquet à leur taille native (183 px de large), Mollets à celle de sa carte (996 × 724) : rien n\'a été redimensionné',
+        T.every(x => x.charge) && T.slice(0, 7).every(x => x.nat && x.nat[0] === 183) && _det(T[7].nat) === '[996,724]', _det(T.map(x => [x.charge, x.nat])));
       t('C-VIG-A5 ⭐⭐ le liseré du haut est MASQUÉ sur chaque vignette du paquet (lignes masquées ≥ lignes du liseré mesurées), sans étirement (cover, ancré en bas)',
         T.slice(0, 7).every((x, i) => x.fit === 'cover' && x.pos === '50% 100%' && x.masquees >= VIG[i].liseré),
         _det(T.slice(0, 7).map((x, i) => ({ fit: x.fit, pos: x.pos, masquees: Math.round(x.masquees * 10) / 10, liseré: VIG[i].liseré }))));
+      // Mollets : CALCULÉ sur les pixels de l'image (canvas) et la position réellement rendue (taille, object-position, arrondi)
+      const mol = await X.pg.evaluate(() => {
+        const im = document.querySelectorAll('#ex-list .ex-grp-tile img')[7]; if (!im || !im.naturalWidth) return null;
+        const r = im.getBoundingClientRect(), cs = getComputedStyle(im), W = r.width, H = r.height, nw = im.naturalWidth, nh = im.naturalHeight;
+        if (cs.objectFit !== 'cover') return { fit: cs.objectFit };
+        const s = Math.max(W / nw, H / nh), pos = cs.objectPosition.split(' ').map(v => parseFloat(v) / 100);
+        const ox = (W - nw * s) * pos[0], oy = (H - nh * s) * pos[1], R = parseFloat(cs.borderTopLeftRadius) || 0;
+        const c = document.createElement('canvas'); c.width = nw; c.height = nh; const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+        const d = g.getImageData(0, 0, nw, nh).data, at = (x, y) => { const k = (y * nw + x) * 4; return [d[k], d[k + 1], d[k + 2]]; };
+        const orange = p => p[0] > 150 && p[0] > p[1] + 50 && p[0] > p[2] + 60;
+        const x0 = -ox / s, y0 = -oy / s, x1 = (W - ox) / s, y1 = (H - oy) / s;
+        let org = 0, coupe = 0;
+        for (let y = 0; y < nh; y += 2) for (let x = 0; x < nw; x += 2) if (orange(at(x, y))) { org++; if (x < x0 || x >= x1 || y < y0 || y >= y1) coupe++; }
+        let blanc = 0, tot = 0;
+        for (let j = 0; j < H * 3; j++) for (let i = 0; i < W * 3; i++) { const fx = (i + .5) / 3, fy = (j + .5) / 3;
+          const cx = fx < R ? R : fx > W - R ? W - R : fx, cy = fy < R ? R : fy > H - R ? H - R : fy;
+          if ((fx - cx) ** 2 + (fy - cy) ** 2 > R * R) continue;
+          const p = at(Math.min(nw - 1, Math.max(0, Math.floor((fx - ox) / s))), Math.min(nh - 1, Math.max(0, Math.floor((fy - oy) / s))));
+          tot++; if (Math.min(p[0], p[1], p[2]) > 235) blanc++; }
+        return { fit: cs.objectFit, pos: cs.objectPosition, nat: [nw, nh], blancPct: Math.round(blanc / tot * 10000) / 100, orange: org, orangeCoupe: coupe }; });
+      t('C-VIG-A6 ⭐ Mollets : sa vignette remplit le cadre comme les autres — moins de 0,5 % de fond blanc visible, et AUCUN muscle ciblé (orange) coupé (calculé sur les pixels de l\'image et sa position réellement rendue)',
+        !!mol && mol.fit === 'cover' && mol.blancPct < 0.5 && mol.orange > 1000 && mol.orangeCoupe === 0, _det(mol));
     }
     t('C-VIG-A4 [' + w + ' px] chaque vignette s\'affiche en 88 × 51, aucune tuile sous 44 px de haut (zone tactile), aucun débordement horizontal',
       T.length === 8 && T.every(x => x.aff && x.aff[0] === 88 && x.aff[1] === 51 && x.hTuile >= 44) && !dep && !X.errs.length,
@@ -227,7 +252,7 @@ async function ecran(t, b, PORT) {
       while (performance.now() - t0 < 45000) { try { const c = await caches.open('ft-images'); let ok = 0;
         for (const s of srcs) if (await c.match('./' + s) || await c.match(s)) ok++;
         if (ok === srcs.length && navigator.serviceWorker.controller) return true; } catch (e) {} await new Promise(r => setTimeout(r, 300)); }
-      return false; }, VIG.slice(0, 7).map(v => v.src)).catch(() => false);
+      return false; }, VIG.map(v => v.src)).catch(() => false);
     await X.cx.setOffline(true);
     let servi = null;
     try { const rep = await X.pg.reload({ waitUntil: 'load', timeout: 15000 }); servi = !!(rep && rep.fromServiceWorker()); }
@@ -245,16 +270,16 @@ function source(t, ROOT, fs, path) {
   const crypto = require('crypto');
   const lit = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const sha = f => { try { return crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, f))).digest('hex'); } catch (e) { return 'absent'; } };
-  const empreintes = VIG.slice(0, 7).map(v => sha(v.src));
-  t('C-VIG-S1 ⭐⭐ les 7 fichiers du dépôt sont À L\'OCTET ceux du paquet de Michel (empreintes SHA-256 de son manifeste) ; « Corps complet » n\'est pas dans le dépôt',
+  const empreintes = VIG.map(v => sha(v.src));
+  t('C-VIG-S1 ⭐⭐ les 7 fichiers du 1ᵉʳ paquet sont À L\'OCTET ceux de Michel (empreintes de son manifeste), Mollets est la carte du 2ᵉ paquet (empreinte figée) ; « Corps complet » n\'est pas dans le dépôt',
     empreintes.every((h, i) => h === VIG[i].sha) && !fs.existsSync(path.join(ROOT, 'muscles/vignettes/08_corps_complet.png')),
     _det(empreintes.map((h, i) => h === VIG[i].sha ? 'ok' : VIG[i].src + ' ' + h.slice(0, 12))));
   // ⚠️ la 1ʳᵉ version cherchait le TEXTE dans sw.js : les 3 lignes mises en commentaire, elle restait verte avec 0 vignette
   //    préchargée (revue adverse du 23/10). La liste est maintenant ÉVALUÉE, comme `EX_GROUPS` ci-dessous.
   const sw = lit('sw.js'), j0 = sw.indexOf('const PRECACHE = ['), j1 = sw.indexOf('\n];', j0);
   let P = null; try { P = new Function(sw.slice(j0, j1 + 3) + '\nreturn PRECACHE;')(); } catch (e) { P = null; }
-  const manquent = P ? VIG.slice(0, 7).filter(v => !P.includes('./' + v.src)).map(v => v.src) : ['PRECACHE illisible'];
-  t('C-VIG-S2 le service worker précharge les 7 vignettes (liste PRECACHE évaluée)', !manquent.length, _det(manquent));
+  const manquent = P ? VIG.filter(v => !P.includes('./' + v.src)).map(v => v.src) : ['PRECACHE illisible'];
+  t('C-VIG-S2 le service worker précharge les 8 vignettes (liste PRECACHE évaluée)', !manquent.length, _det(manquent));
   // les catégories et l'anatomie : extraites du vrai `EX_GROUPS` du fichier (évalué isolément)
   const log = lit('log.js'), i0 = log.indexOf('const EX_GROUPS=['), i1 = log.indexOf('\n];', i0);
   let G = null; try { G = new Function(log.slice(i0, i1 + 3) + '\nreturn EX_GROUPS;')(); } catch (e) { G = null; }
@@ -265,7 +290,7 @@ function source(t, ROOT, fs, path) {
   const emploient = fichiers.filter(f => /muscles\/vignettes\/|corps_complet/.test(lit(f)));
   const mgImg = (log.match(/const _MG_IMG=\{[\s\S]*?\n\};/) || [''])[0];
   t('C-VIG-S4 ⛔ ces vignettes ne vivent QUE dans le sélecteur : seul `log.js` (EX_GROUPS) les nomme, la table des vignettes des autres écrans (`_MG_IMG`) ne les contient pas',
-    _det(emploient) === '["log.js"]' && !!mgImg && !/vignettes\/|corps_complet/.test(mgImg) && (log.match(/src="muscles\/vignettes\//g) || []).length === 7 && !/corps_complet/.test(log),
+    _det(emploient) === '["log.js"]' && !!mgImg && !/vignettes\/|corps_complet/.test(mgImg) && (log.match(/src="muscles\/vignettes\//g) || []).length === 8 && !/corps_complet/.test(log),
     _det({ emploient, mgImg: mgImg.length, n: (log.match(/src="muscles\/vignettes\//g) || []).length }));
 }
 

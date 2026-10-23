@@ -4,6 +4,10 @@
 > aussi SEANCE-REPOS-01 — NON intégré à master, NON publié, clone NON régénéré, aucun numéro de version.** Paquet et consignes de
 > Michel du 23/10 (ZIP `FORCE-TRACKER-SEANCE-UX-IMAGES-2026-10-22`). Décisions : `docs/DECISIONS.md` **D-104** (Michel) et
 > **D-105** (choix de construction, à valider) — ⚠️ numéros à reconfirmer à l'intégration (Nutrition V2 a pris D-101 et D-103).
+> **Ajout du 23/10 au matin — la vignette Mollets** (2ᵉ ZIP de Michel, `FORCE-TRACKER-MOLLETS-VIGNETTE`) : décisions **D-106**
+> (Michel : `08_mollets.png` remplace l'image de Mollets, **rien d'autre**) et **D-107** (Claude : retirer son fond blanc, ancrer
+> à 35 % — à valider). ⚠️ La passe complète ci-dessous (7 923 / 0) est **antérieure** à cet ajout : il a ses tests ciblés (§5) ; la
+> passe complète est à refaire avant toute intégration.
 
 ## 1. La demande
 
@@ -38,17 +42,32 @@
 | Jambes | `05_jambes.png` | `muscles/vignettes/05_jambes.png` |
 | Fessiers / Ischios / Lombaires | `06_fessiers_ischios_lombaires.png` | `muscles/vignettes/06_fessiers_ischios_lombaires.png` |
 | Abdominaux | `07_abdominaux.png` | `muscles/vignettes/07_abdominaux.png` |
-| **Mollets** | ⚠️ **aucune dans le paquet** | **garde son image actuelle** (`muscles/muscle mollet.png`), en attendant une vignette mollets |
+| **Mollets** | ⚠️ aucune dans le 1ᵉʳ paquet → **`08_mollets.png` du 2ᵉ paquet** (23/10 matin) | `muscles/vignettes/08_mollets.png` — la carte **sans son fond blanc** (§3 bis) |
 | *(aucun groupe)* | `08_corps_complet.png` | **non copiée, utilisée nulle part** |
+
+## 3 bis. La vignette Mollets (2ᵉ paquet, 23/10 matin)
+
+- **Livré** : un seul fichier, `08_mollets.png`, **2172 × 724**, SHA-256 `11f4582abb89743ca0e45165daaac36ba0ca450d42cf16499a6c2ac68db7856e`,
+  sans manifeste ni consigne. **Ce n'est pas une vignette cadrée comme les 7 autres** : c'est une **carte arrondie** (fond bleu
+  nuit) posée au milieu d'un grand **fond blanc** — la carte va de x = 588 à 1583, sur toute la hauteur.
+- **Tel quel**, le cadre 88 × 51 aurait montré **21 % de blanc** (deux bandes sur les côtés, mesuré).
+- **Ce qui est dans le dépôt** (décision **D-107**, Claude, à valider) : la carte seule — boîte (588, 0) → (1584, 724),
+  **996 × 724**, **chaque pixel conservé identique à l'original** (vérifié pixel par pixel), sans redimensionner ni retoucher.
+  SHA-256 du fichier du dépôt : `59605168c31134b904ba1f878082c0425d70c4444e5e34f7409c8764bde0f499`. Il ne reste du blanc que dans
+  les 4 coins arrondis de la carte (2,7 % de l'image).
+- **Son ancrage** : 35 % de sa hauteur (`.ex-grp-vig-mollets`) — mesuré sur 6 positions : c'est celle qui ne coupe **aucun
+  muscle ciblé** (l'orange commence à la ligne 55 ; centrée, 1,1 % de l'orange partait) et ne laisse voir que **0,18 %** de blanc
+  (les coins). Cachés : 51 lignes en haut (les genoux), 95 en bas (les talons).
+- Poids : 765 Ko (l'ancienne image de Mollets : 1,8 Mo) — les 8 tuiles passent de 2,1 à **1,0 Mo**.
 
 ## 4. Mise en œuvre
 
 | Fichier | Changement |
 |---|---|
-| `muscles/vignettes/` (7 PNG, ~260 Ko) | les fichiers du paquet **à l'octet** — ⚠️ **sous des noms NOUVEAUX** : les images vivent dans un cache du téléphone qui ne se vide jamais (`ft-images`) ; une image remplacée sous le même nom resterait l'ancienne chez tout le monde |
-| `log.js` — `EX_GROUPS`, en-tête d'un groupe ouvert | seule la source des 7 images change (et la classe d'affichage) ; **libellés, `tags` (les catégories) et `anatomy` (le bouton « Anatomie ») inchangés** ; dans l'en-tête d'un groupe ouvert, le libellé devient un élément (`.ex-grp-header-label`) pour pouvoir passer sous l'image **seulement** s'il ne tient pas à côté |
-| `style.css` — `.ex-grp-icon`, `.ex-grp-vig`, `.ex-grp-vig-centre`, `.ex-grp-header`, `.ex-grp-header-label` | cadre **88 × 51**, **plus large que les vignettes** (1,73 contre 1,41 à 1,51), rempli sans étirer (`cover`) et **ancré en bas** : il en coupe le haut — 15 à 24 lignes source, **12 à 18 %** —, c'est-à-dire le **liseré** (3 à 17 lignes) puis **0 à 12 lignes de dessin** (cous, mentons) ; **aucun muscle ciblé (orange) coupé**, sauf 2 à 5 pixels sur Jambes (selon le seuil) ; rien sur les côtés ; sans recolorer. Le conteneur de la tuile prend la taille de l'image (**un seul propriétaire de la taille** : `.ex-grp-vig` ; l'arrondi est redit par le conteneur, qui porte le fond) ; fond rouge des anciennes tuiles retiré ; l'image ne rétrécit pas (`flex-shrink:0`) ; l'en-tête d'un groupe ouvert met l'image et le libellé **côte à côte quand le libellé tient** (390 px : les 8), sinon le libellé passe dessous comme avant le lot ; Mollets centrée |
-| `sw.js` | les 7 vignettes ajoutées à la liste de **préchargement** (le sélecteur s'ouvre hors ligne) — ⛔ **pas** le numéro de version ; signalé à Claude Principal et Claude Nutrition avant d'écrire |
+| `muscles/vignettes/` (7 PNG, ~260 Ko, + `08_mollets.png`, 765 Ko) | les 7 fichiers du paquet **à l'octet** (Mollets : §3 bis) — ⚠️ **sous des noms NOUVEAUX** : les images vivent dans un cache du téléphone qui ne se vide jamais (`ft-images`) ; une image remplacée sous le même nom resterait l'ancienne chez tout le monde |
+| `log.js` — `EX_GROUPS`, en-tête d'un groupe ouvert | seule la source des 8 images change (et la classe d'affichage) ; **libellés, `tags` (les catégories) et `anatomy` (le bouton « Anatomie ») inchangés** ; dans l'en-tête d'un groupe ouvert, le libellé devient un élément (`.ex-grp-header-label`) pour pouvoir passer sous l'image **seulement** s'il ne tient pas à côté |
+| `style.css` — `.ex-grp-icon`, `.ex-grp-vig`, `.ex-grp-vig-mollets`, `.ex-grp-header`, `.ex-grp-header-label` | cadre **88 × 51**, **plus large que les vignettes** (1,73 contre 1,41 à 1,51), rempli sans étirer (`cover`) et **ancré en bas** : il en coupe le haut — 15 à 24 lignes source, **12 à 18 %** —, c'est-à-dire le **liseré** (3 à 17 lignes) puis **0 à 12 lignes de dessin** (cous, mentons) ; **aucun muscle ciblé (orange) coupé**, sauf 2 à 5 pixels sur Jambes (selon le seuil) ; rien sur les côtés ; sans recolorer. Le conteneur de la tuile prend la taille de l'image (**un seul propriétaire de la taille** : `.ex-grp-vig` ; l'arrondi est redit par le conteneur, qui porte le fond) ; fond rouge des anciennes tuiles retiré ; l'image ne rétrécit pas (`flex-shrink:0`) ; l'en-tête d'un groupe ouvert met l'image et le libellé **côte à côte quand le libellé tient** (390 px : les 8), sinon le libellé passe dessous comme avant le lot ; Mollets ancrée à 35 % (`.ex-grp-vig-mollets`, qui remplace `.ex-grp-vig-centre` de l'ancienne image) |
+| `sw.js` | les 8 vignettes ajoutées à la liste de **préchargement** (le sélecteur s'ouvre hors ligne) — ⛔ **pas** le numéro de version ; signalé à Claude Principal et Claude Nutrition avant d'écrire |
 
 **⚠️ Défaut trouvé par la revue adverse du 23/10, corrigé avant toute intégration** : la 1ʳᵉ version mettait l'en-tête d'un
 groupe ouvert en ligne **sans retour possible** — à **320 px**, « Abdominaux » poussait le bouton « 🫀 Anatomie » **20 px** hors de
@@ -81,8 +100,8 @@ recette de Michel) ; le mode clair ; la précision anatomique des illustrations 
 
 ## 6. Ce que ce lot ne fait pas (limites écrites)
 
-- **Mollets n'a pas de vignette du nouveau style** : son image actuelle (rouge, autre facture) tranche avec les 7 autres. Il
-  faut **une vignette mollets** indépendante (pas extrapolée, pas « Corps complet ») pour finir.
+- **Mollets** : sa vignette est arrivée à part (2ᵉ paquet) et elle est branchée (§3 bis). ⚠️ Son fichier n'est **pas** l'octet
+  livré : c'est la même image sans son fond blanc (D-107, à valider).
 - **« Corps complet »** : aucun groupe ne l'utilise. Avant-bras (5 exercices) et Full Body (17) n'ont pas de tuile aujourd'hui —
   en ajouter une serait une **catégorie nouvelle**, donc une décision de Michel.
 - Les sous-titres de la maquette (« Grand pectoral • Petit pectoral »…), son bandeau et sa barre de navigation ne sont **pas**
@@ -92,21 +111,23 @@ recette de Michel) ; le mode clair ; la précision anatomique des illustrations 
   montrera les nouvelles vignettes à sa prochaine génération.
 - Les anciennes images (`muscles/*.png`) restent : les autres écrans s'en servent (`_MG_IMG`, vérifié).
 - **À la publication**, chaque téléphone déjà installé verra **une fois** la barre « 📦 Installation de l'appli… » : le service
-  worker télécharge les 7 images qui manquent à son cache d'images (≈ 260 Ko) — c'est son fonctionnement normal (`precacheImages`).
+  worker télécharge les 8 images qui manquent à son cache d'images (≈ 1 Mo) — c'est son fonctionnement normal (`precacheImages`).
 
 ## 7. Retour arrière
 
 - **Tant que rien n'est intégré** : ne pas fusionner. Master et la production ne sont pas touchés.
 - **Après publication** : remettre `log.js` (`EX_GROUPS` et la ligne de l'en-tête d'un groupe ouvert), `style.css` (5 règles :
-  `.ex-grp-icon`, `.ex-grp-vig`, `.ex-grp-vig-centre`, `.ex-grp-header`, `.ex-grp-header-label`) et `sw.js` (5 lignes) tels
-  qu'avant, monter la clé de cache. Les 7 fichiers peuvent rester (inutilisés) ou partir ; ceux déjà en cache sur les téléphones y restent sans effet.
+  `.ex-grp-icon`, `.ex-grp-vig`, `.ex-grp-vig-mollets`, `.ex-grp-header`, `.ex-grp-header-label`) et `sw.js` (6 lignes) tels
+  qu'avant, monter la clé de cache. Les 8 fichiers peuvent rester (inutilisés) ou partir ; ceux déjà en cache sur les téléphones y restent sans effet.
+- **Pour la seule vignette Mollets** : remettre la ligne Mollets d'`EX_GROUPS` (`muscles/muscle mollet.png`, classe
+  `ex-grp-vig-centre`), la règle `.ex-grp-vig-centre{object-position:50% 50%;}` et retirer la ligne de préchargement.
 
 ## 8. Règle d'or #17 — les 4 compteurs (code applicatif seulement)
 
 - **Données persistées ajoutées : 0** (aucune clé, aucune donnée).
-- **Fichiers applicatifs touchés : 3** (`log.js`, `style.css`, `sw.js`) **+ 7 images nouvelles** (`muscles/vignettes/`).
-- **Lignes : +42 / −11** (`log.js` +21 / −9, `style.css` +16 / −2, `sw.js` +5) ; **le code seul**, sans les commentaires :
-  `log.js` **+9 / −9** (les 8 lignes d'`EX_GROUPS` réécrites et la ligne de l'en-tête), `sw.js` **+3** (préchargement),
-  `style.css` **5 règles** (2 modifiées, 3 ajoutées).
+- **Fichiers applicatifs touchés : 3** (`log.js`, `style.css`, `sw.js`) **+ 8 images nouvelles** (`muscles/vignettes/`).
+- **Lignes : +49 / −11** pour tout le lot (`log.js` +25 / −9, `style.css` +18 / −2, `sw.js` +6), dont l'ajout Mollets **+13 / −6**
+  (commentaires compris) ; **le code seul**, sans les commentaires : `log.js` **+9 / −9** (les 8 lignes d'`EX_GROUPS` réécrites et
+  la ligne de l'en-tête), `sw.js` **+4** (préchargement), `style.css` **5 règles** (2 modifiées, 3 ajoutées).
 - **Anciens chemins supprimés ou fusionnés : 0** — aucun : les anciennes images servent encore ailleurs ; la taille du cadre a
   désormais **un** propriétaire (la classe `.ex-grp-vig`, que le conteneur suit) au lieu de 8 styles en ligne différents.

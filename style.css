@@ -1176,10 +1176,12 @@ html.is-clone .ob-clone-only{ display:block; }
    1,41 à 1,51 ; 183 px de large), rempli sans étirer (`cover`) et ANCRÉ EN BAS : il en coupe le haut — 15 à 24 lignes source,
    12 à 18 % (51 px affichés = 106 lignes sur 121 à 130) —, c'est-à-dire le liseré (fond et bord de carte de la maquette pris
    dans le découpage, 3 à 17 lignes) puis 0 à 12 lignes de dessin (cous, mentons) ; aucun muscle ciblé (orange) coupé, sauf
-   2 à 5 pixels sur Jambes. Rien sur les côtés. Mollets (ancienne image, mollets au milieu) : centrée. Inline : la même image
-   sert à l'en-tête d'un groupe ouvert. */
+   2 à 5 pixels sur Jambes. Rien sur les côtés. Inline : la même image sert à l'en-tête d'un groupe ouvert. */
 .ex-grp-vig{width:88px;height:51px;flex-shrink:0;object-fit:cover;object-position:50% 100%;border-radius:10px;display:inline-block;vertical-align:middle;} /* flex-shrink:0 : rétrécie, elle laisserait revoir le liseré */
-.ex-grp-vig-centre{object-position:50% 50%;}
+/* Mollets (2ᵉ paquet, 23/10) : la carte seule (996 × 724, plus haute que le cadre) — ancrée à 35 % de sa hauteur : c'est la
+   position mesurée qui ne coupe AUCUN muscle ciblé (le haut des mollets commence à la ligne 55 ; centrée, 1,1 % de l'orange
+   partait) et ne laisse voir presque rien des coins blancs de la carte (0,18 % du cadre). Témoin C-VIG-A6. */
+.ex-grp-vig-mollets{object-position:50% 35%;}
 .ex-grp-info{flex:1;}
 .ex-grp-label{font-size:14px;font-weight:400;color:var(--t1);}
 .ex-grp-count{font-size:13px;color:var(--t3);margin-top:2px;font-weight:600;}

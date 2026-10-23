@@ -6132,8 +6132,12 @@ const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
    ⛔ La taille et le recadrage du cadre ont UN propriétaire : la classe `.ex-grp-vig` (style.css) — le conteneur de la tuile
    prend la taille de l'image. Le cadre masque le liseré du haut des vignettes (fond et bord de carte de la maquette, pris dans
    le découpage : 3 à 17 lignes selon l'image) sans étirer ni recolorer — l'image est ancrée en bas.
-   ⛔ MOLLETS GARDE SON IMAGE (décision de Michel, 23/10) : le paquet n'a pas de vignette mollets, sa 8ᵉ image est « Corps
-   complet » — elle n'est utilisée NULLE PART (aucun groupe « Corps complet » ici : ce serait une catégorie nouvelle).
+   ⛔ MOLLETS : SA VIGNETTE EST VENUE À PART (2ᵉ paquet de Michel, 23/10 matin, `08_mollets.png`). Le 1ᵉʳ paquet n'en avait pas,
+   et sa 8ᵉ image, « Corps complet », n'est utilisée NULLE PART (aucun groupe « Corps complet » ici : ce serait une catégorie
+   nouvelle). Le fichier livré était une carte arrondie posée sur un grand fond BLANC (2172 × 724) : tel quel, 21 % du cadre
+   aurait été blanc. Le fichier du dépôt est cette image avec le fond blanc retiré — la carte seule, 996 × 724, chaque pixel
+   conservé identique à l'original (témoin C-VIG-A6 ; provenance dans docs/SEANCE-UX-IMAGES.md) — et il est ancré à 35 % de
+   sa hauteur (`.ex-grp-vig-mollets`) : aucun muscle ciblé coupé.
    ⛔ Ces vignettes ne servent QU'ICI (tuiles et en-tête d'un groupe ouvert) : les vignettes de mouvement des autres écrans
    viennent de `_MG_IMG`, inchangée ; le bouton « 🫀 Anatomie » lit `anatomy`, inchangé ; libellés et `tags` (donc les
    catégories, la recherche et la reconnaissance des exercices) inchangés. */
@@ -6145,7 +6149,7 @@ const EX_GROUPS=[
   {label:'Jambes',                  tags:['Jambes'],              icon:`<img src="muscles/vignettes/05_jambes.png" alt="" class="ex-grp-vig">`,                     anatomy:'anatomy/jambes/jambes avant/jambes face avant.png'},
   {label:'Fessiers / Ischios / Lombaires', tags:['Fessiers','Lombaires'], icon:`<img src="muscles/vignettes/06_fessiers_ischios_lombaires.png" alt="" class="ex-grp-vig">`, anatomy:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
   {label:'Abdominaux',              tags:['Abdominaux'],          icon:`<img src="muscles/vignettes/07_abdominaux.png" alt="" class="ex-grp-vig">`,                 anatomy:'anatomy/abdominaux/schema abdominaux.png'},
-  {label:'Mollets',                 tags:['Mollets'],             icon:`<img src="muscles/muscle mollet.png" alt="" class="ex-grp-vig ex-grp-vig-centre">`,         anatomy:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
+  {label:'Mollets',                 tags:['Mollets'],             icon:`<img src="muscles/vignettes/08_mollets.png" alt="" class="ex-grp-vig ex-grp-vig-mollets">`,   anatomy:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
 ];
 let _exGrp=null;
 

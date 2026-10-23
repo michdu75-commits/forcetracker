@@ -1597,8 +1597,9 @@ branche fusionnée avec master `6c0a400d`). Règle d'or #17 sur le lot entier : 
 préservées. **Fait** : 7 PNG **à l'octet** (SHA-256 du manifeste) sous des **noms nouveaux** (`muscles/vignettes/`, cache d'images
 permanent), chacun sur son groupe ; cadre **88 × 51 ancré en bas** qui masque le **liseré du découpage** (fond et bord de carte de la
 maquette, 3 à 17 lignes, mesuré) sans étirer ni recolorer ; en-tête d'un groupe ouvert en ligne ; préchargement `sw.js` (pas de
-version). ⚠️ **Mollets n'a pas de vignette dans le paquet** : elle garde son image actuelle (style différent) — **une vignette mollets
-manque**. ⚠️ **La revue adverse a trouvé un vrai défaut, corrigé avant toute intégration** : à 320 px, l'en-tête d'un groupe ouvert
+version). **Mollets** : pas de vignette dans le 1ᵉʳ paquet ; **la sienne est venue dans un 2ᵉ paquet (23/10 matin, D-106)** et
+elle est branchée — le fichier livré était une carte sur un grand fond blanc (21 % du cadre aurait été blanc) : le dépôt garde la carte
+seule, pixels identiques, ancrée à 35 % pour ne couper aucun muscle (D-107, à valider ; témoin C-VIG-A6) ; tests ciblés «MOLTESTS». ⚠️ **La revue adverse a trouvé un vrai défaut, corrigé avant toute intégration** : à 320 px, l'en-tête d'un groupe ouvert
 débordait (Abdominaux : « Anatomie » poussé 20 px hors de la feuille) — l'en-tête passe maintenant à la ligne quand le libellé ne
 tient pas, témoin **C-VIG-B4** (`BUGS.md` §99) ; et un témoin faible (le préchargement cherché comme du texte) renforcé.
 Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **19 / 0** (8 / 11 rouges sur le code

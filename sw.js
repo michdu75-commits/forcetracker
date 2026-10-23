@@ -159,6 +159,7 @@ const PRECACHE = [
   './muscles/vignettes/01_pectoraux.png','./muscles/vignettes/02_dos_dorsaux.png','./muscles/vignettes/03_epaules_trapezes.png',
   './muscles/vignettes/04_bras_biceps_triceps.png','./muscles/vignettes/05_jambes.png',
   './muscles/vignettes/06_fessiers_ischios_lombaires.png','./muscles/vignettes/07_abdominaux.png',
+  './muscles/vignettes/08_mollets.png',
   // GIFs exercices pectoraux + fessiers
   './exercises/developpe-couche.webp',
   './exercises/developpe-couche-halteres-exercice-musculation.webp',

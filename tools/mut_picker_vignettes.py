@@ -21,6 +21,7 @@ LO, CS, SW = 'log.js', 'style.css', 'sw.js'
 FICHIERS = (LO, CS, SW)
 V = "muscles/vignettes/"
 OCTET = 'OCTET'   # mutation binaire : un octet ajoute a la fin d'un fichier image
+BLANC = 'BLANC'   # mutation binaire : la vignette Mollets remise dans son fond blanc d'origine (2172 x 724, carte a x = 588)
 
 MUT = [
     ("M00 code d'AVANT le lot remis mot pour mot (02898d6c : log.js, style.css, sw.js)", 'AVANT', 'GARDE', 'C-VIG-A2'),
@@ -28,9 +29,9 @@ MUT = [
      [(LO, 'src="' + V + '01_pectoraux.png"', 'src="' + V + 'TMP.png"'), (LO, 'src="' + V + '02_dos_dorsaux.png"', 'src="' + V + '01_pectoraux.png"'),
       (LO, 'src="' + V + 'TMP.png"', 'src="' + V + '02_dos_dorsaux.png"')], 'GARDE', 'C-VIG-A2'),
     ('MV2 Mollets recoit « Corps complet » (l\'image interdite par Michel)',
-     [(LO, 'src="muscles/muscle mollet.png" alt="" class="ex-grp-vig ex-grp-vig-centre"', 'src="' + V + '08_corps_complet.png" alt="" class="ex-grp-vig ex-grp-vig-centre"')], 'GARDE', 'C-VIG-A2'),
+     [(LO, 'src="' + V + '08_mollets.png" alt="" class="ex-grp-vig ex-grp-vig-mollets"', 'src="' + V + '08_corps_complet.png" alt="" class="ex-grp-vig ex-grp-vig-mollets"')], 'GARDE', 'C-VIG-A2'),
     ('MV3 [deguisee] Mollets recoit la vignette d\'un autre groupe (abdominaux)',
-     [(LO, 'src="muscles/muscle mollet.png" alt="" class="ex-grp-vig ex-grp-vig-centre"', 'src="' + V + '07_abdominaux.png" alt="" class="ex-grp-vig ex-grp-vig-centre"')], 'GARDE', 'C-VIG-A2'),
+     [(LO, 'src="' + V + '08_mollets.png" alt="" class="ex-grp-vig ex-grp-vig-mollets"', 'src="' + V + '07_abdominaux.png" alt="" class="ex-grp-vig ex-grp-vig-mollets"')], 'GARDE', 'C-VIG-A2'),
     ('MV4 [deguisee] cadre centre au lieu d\'ancre en bas (le liseré du haut revient)',
      [(CS, "object-fit:cover;object-position:50% 100%;border-radius:10px;", "object-fit:cover;object-position:50% 50%;border-radius:10px;")], 'GARDE', 'C-VIG-A5'),
     # MV5 était GARDE (C-VIG-B1) tant que l'en-tête était une rangée SANS retour : l'image s'y écrasait. Depuis le correctif
@@ -65,6 +66,16 @@ MUT = [
      [(LO, "  const src=_exImg(e.n);", "  const src=_exImg(e.n)||'" + V + "01_pectoraux.png';")], 'GARDE', 'C-VIG-D1'),
     ('MV14 un libelle de groupe change',
      [(LO, "{label:'Abdominaux',              tags:['Abdominaux'],", "{label:'Abdos',              tags:['Abdominaux'],")], 'GARDE', 'C-VIG-A1'),
+    # ↓ la vignette Mollets (2e paquet de Michel, 23/10 matin) : la carte de `08_mollets.png` sans son fond blanc, ancree a 35 %
+    ('MV18 Mollets reprend son ancienne image',
+     [(LO, 'src="' + V + '08_mollets.png" alt=""', 'src="muscles/muscle mollet.png" alt=""')], 'GARDE', 'C-VIG-A2'),
+    ('MV19 [deguisee] le fichier Mollets tel que livre (la carte dans son grand fond blanc) : 21 % du cadre blanc', BLANC, 'GARDE', 'C-VIG-A6'),
+    ('MV20 [deguisee] Mollets centree (50 % au lieu de 35 %) : le haut des mollets est coupe',
+     [(CS, ".ex-grp-vig-mollets{object-position:50% 35%;}", ".ex-grp-vig-mollets{object-position:50% 50%;}")], 'GARDE', 'C-VIG-A6'),
+    ('MV21 [deguisee] Mollets perd son ancrage (en bas, comme les autres) : le haut des mollets est coupe',
+     [(LO, 'class="ex-grp-vig ex-grp-vig-mollets"', 'class="ex-grp-vig"')], 'GARDE', 'C-VIG-A6'),
+    ('MN3 [equivalente] Mollets ancree a 33 % au lieu de 35 % (aucun muscle coupe, presque aucun blanc : le temoin juge le resultat, pas la valeur)',
+     [(CS, ".ex-grp-vig-mollets{object-position:50% 35%;}", ".ex-grp-vig-mollets{object-position:50% 33%;}")], 'OK'),
     ('MN1 [neutre] un commentaire change',
      [(LO, "LES VIGNETTES DES GROUPES DE « CHOISIR UN\n   EXERCICE ».", "LES VIGNETTES DES GROUPES.\n   (commentaire)")], 'OK'),
     ('MN2 [equivalente] « center bottom » au lieu de « 50% 100% » (meme position calculee)',
@@ -116,6 +127,10 @@ def une(m, avant):
         elif remplacements == OCTET:
             with open(os.path.join(arbre, V + '05_jambes.png'), 'ab') as fh:
                 fh.write(b'\0')
+        elif remplacements == BLANC:
+            from PIL import Image   # deja employe par tools/images.py
+            f = os.path.join(arbre, V + '08_mollets.png'); carte = Image.open(f).convert('RGB')
+            fond = Image.new('RGB', (2172, 724), (253, 253, 253)); fond.paste(carte, (588, 0)); fond.save(f)
         else:
             srcs = {f: open(os.path.join(arbre, f), encoding='utf-8').read() for f in FICHIERS}
             invalide = []
