@@ -5032,3 +5032,32 @@ sans que le témoin le sache* (même famille que C-VIG-S3, qui évaluait déjà 
 **Ce qui le protège aujourd'hui.** `tests/parcours/picker_vignettes.js` (C-VIG-B4, C-VIG-S2) et `tools/mut_picker_vignettes.py`
 (MV15 → B4, MV16 → B1, MV17 → S2). Et, encore une fois, la leçon du §95 : *la revue adverse cherche les chemins qu'aucun témoin
 ne conduit* — ici, une largeur.
+
+## §100 — ⛔ LES JUMELLES DU §85 : LA RÈGLE DE VOLUME ÉTAIT RECOPIÉE À DEUX AUTRES ENDROITS, ET « ENREGISTRER » RECALCULE TOUT *(23/10/2026, contre-vérification de l'audit transversal Séance de ChatGPT — session-C, branche `claude/dreamy-bell-pu88ia` ; **TROUVÉ, NON CORRIGÉ** : phase 1 = analyse seule, décision de Michel attendue ; ⚠️ numéro à reconfirmer à l'intégration : §92, §94, §96, §98 sont ceux de Nutrition V2, §97 celui de Claude Principal)*
+
+**Symptômes (mesurés dans la vraie app, réseau coupé, données fictives — master `4ab7f860` = branche).** ① Une séance avec un
+unilatéral (Arraché Haltère 30 kg × 10 « par bras ») et un développé couché (100 × 5) est enregistrée à **1 100 kg** ; le
+panneau du jour du calendrier dit **« 0,8 t »**. ② Ouvrir cette séance et appuyer sur « 💾 Enregistrer » **sans rien changer**
+fait passer son volume stocké de **600 à 300** — et recalcule ses calories avec le poids **du jour** (82 → 95 kg :
+**97 → 112 kcal**). ③ Corriger la durée par ⏱️ ne recalcule pas les calories (317 kcal pour 90 min au lieu de 440), et rouvre le
+détail depuis la séance stockée : une charge tapée mais pas encore enregistrée **disparaît** (120 → 100).
+
+**Cause.** La même que le §85 : la règle de volume (`_workVol`, avec la convention unilatérale `uniConv` du 11/08) recopiée là
+où on affiche ou ré-enregistre — `_calSessVol` (`screens.js:2220`) et `saveSessEdits` (`setup.js:1693`) refont `kg × reps` sans
+doubler l'unilatéral. Le §85 a corrigé **une** copie (« Ta séance jusqu'ici ») ; **deux autres sont restées**. Et
+`saveSessEdits` recalcule **tout** (volume, records à la hausse, calories avec `S.bw` du jour) à chaque appui, même sans
+changement — alors que la matrice de recette de l'audit l'attend en toutes lettres : *« aucun chiffre ne doit changer sans
+raison »*. Le runner du calendrier testait `_calSessVol` avec N, É, W et séries non faites… **jamais avec `uniConv`**.
+
+**Contre-épreuves.** Sur une copie de master où SEULE la ligne suspecte lit `_workVol` : le calendrier dit **« 1,1 t »**, et
+« Enregistrer » garde **600** ; une séance ancienne sans `uniConv` reste **600** dans les deux cas (pas de doublement rétroactif).
+Scripts : `tools/contre_verif_seance_2026_10_23/` ; rapport complet : `docs/CONTRE-VERIF-AUDIT-SEANCE-2026-10-23.md`.
+
+**À quoi on le reconnaît.** Le même que le §85, et il faut le relire : *un affichage n'a pas le droit de posséder une règle : il la
+lit.* Et le corollaire R8 que le §85 n'a pas appliqué : **quand on trouve une copie, chercher ses jumelles tout de suite** —
+`grep 'kg\*.*reps\|kg||0)\*(s.reps'` sur les fichiers d'écran les aurait montrées. S'y ajoute une 2ᵉ forme : *un « Enregistrer »
+qui recalcule ce que la personne n'a pas touché réécrit l'histoire sans le dire.*
+
+**Ce qui le protège aujourd'hui.** Rien de permanent : les reproductions sont hors passe. ⛔ Les séances unilatérales déjà
+modifiées depuis le 11/08 portent un volume divisé par deux — **ne pas les réécrire** sans décision de Michel (diagnostic en
+lecture seule d'abord, voir le rapport §4, lot 1).

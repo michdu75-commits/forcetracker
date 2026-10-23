@@ -139,6 +139,30 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 MILO REÇOIT « LE PLUS : FESSIERS » POUR DES SÉANCES DE LEG CURL — et « ischio-jambiers » dans le même contexte (23/10/2026)
+
+**Ce qui déclenche la question** : contre-vérification de l'audit transversal Séance (session-C). Le fait du registre
+« Groupes musculaires (30 j) » lit le **groupe du catalogue** (`tracking.js:2393`), où les 6 Leg Curl sont rangés en
+« Fessiers » (définition du projet : Fessiers = fessiers + ischios) ; le bloc volume du **même** contexte lit les muscles
+(`hamstrings`). Mesuré, vraie app : 4 séances de leg curl + 1 de développé → « le plus : Fessiers · le moins : Pectoraux »
+**et** « hamstrings : 4 séries ». **Vérifiable par du code ?** Le FAIT transmis : oui (prouvé, `catalogue_verif.js`). Ce que
+Milo en conclut (dit-il « tu travailles bien tes fessiers » à quelqu'un qui ne fait que des leg curls ?) : non mesuré
+(0 appel). **État : à trier** — lié au lot 3 du rapport `docs/CONTRE-VERIF-AUDIT-SEANCE-2026-10-23.md`.
+
+### 🟡 UN ÉCHAUFFEMENT « W » RESTAURÉ GONFLE LE VOLUME PAR MUSCLE QUE MILO REÇOIT (23/10/2026)
+
+**Ce qui déclenche la question** : même contre-vérification (F03). `_volumeParMuscle` exclut `É` mais pas l'ancien `W` ; une
+restauration d'ancien compte réintroduit des `W` après la migration (commentaire `log.js:1726`). Mesuré : N, N, É, W → Milo
+reçoit « Pectoraux : 1,5 séries/semaine » au lieu de 1. **Vérifiable par du code ?** Oui (contre-épreuve : 1 avec le filtre).
+Combien de vrais comptes portent encore des `W` : **inconnu** (données réelles non lues). **État : à trier.**
+
+### 🟡 LE SCORE DE RÉCUPÉRATION DIT « IDÉAL POUR TENTER DES RECORDS » SANS AUCUNE NUIT NOTÉE — Milo le lit-il comme une mesure ? (23/10/2026)
+
+**Ce qui déclenche la question** : même contre-vérification (F19). Aucun sommeil noté, dernière séance il y a 20 jours, 25 ans
+→ « Optimal 82/100 — Prêt à performer » sur une **base neutre de 70** (+12 de repos). Le contexte de Milo lit
+`calcRecoveryScore()` (`coach.js:4643`). **Vérifiable par du code ?** Le chiffre transmis : oui. Ce que Milo en fait (pousse-t-il
+un record sur un score qui ne mesure rien ?) : juge humain. **État : à trier** — décision de libellé attendue (lot 4).
+
 ### 🟡 LE BOUTON « ÉCHEC » ARRIVE CHEZ MILO COMME « RIR0 », QU'IL LIT « SÉRIE RÉUSSIE » — que comprend-il vraiment ? (14/10/2026)
 
 **Ce qui déclenche la question** : audit delta Historique / Progrès du 14/10, sur l'export réel (63 séances). Le bouton

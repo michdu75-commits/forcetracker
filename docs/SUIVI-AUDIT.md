@@ -1606,3 +1606,25 @@ Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Ban
 d'avant ; avant le correctif : 18 / 1) · contrôle négatif **20 / 20** (MV5 devenue équivalente avec le correctif — mesuré, pas supposé) · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) · bouton central **immobile** (mesuré avant / après) · voisins **0 rouge** (annexe 14 PASS + 1 défaut connu, chiffres de master) · passe complète **7 923 ✅ / 0 ❌** sur `756c97a3` (4 conditions) ·
 captures avant / après dans le PDF. Règle d'or #17 : **0** donnée · **3** fichiers + 7 images · **+42 / −11** · **0** ancien chemin.
 Détail : `docs/SEANCE-UX-IMAGES.md`.
+
+### 🔎 AUDIT TRANSVERSAL SÉANCE DE CHATGPT (23/10/2026) — CONTRE-VÉRIFIÉ PAR LA SESSION-C, RIEN CORRIGÉ (phase 1 = analyse seule, décision de Michel attendue)
+
+**La demande** (Michel) : comparer chaque constat au code de master et de la branche Séance, le reproduire par des tests réels
+avec contrôles négatifs, le classer, proposer un plan de correction priorisé **sans modifier l'historique**, signaler les
+dépendances avec Claude Principal et Claude Nutrition. ⛔ Aucune correction, fusion ni publication sans son accord.
+**Le score** (master `4ab7f860` = l'arbre audité `57553711` pour le code ; mêmes chiffres sur la branche `7f359f15`) :
+
+| État | Constats |
+|---|---|
+| ✅ **confirmés, à corriger** | **P1** : F01 (calendrier : unilatéral compté à moitié) · F02 (« Enregistrer » sans changement : volume 600 → 300, et calories recalculées au poids du jour 97 → 112) · F08 (record fantôme après suppression — connu depuis le 02/09, décision produit) · **P2** : F03 (W dans le volume par muscle) · F04 (« Primaires » par cumul) · F05 (règle générique avant les muscles choisis) · F06 (tuile Nutrition, une seule séance) · F09 (repos ignorés par le moteur calorique) · F12 (Oiseau 5,5) · F13 (aide Nutrition contraire au calcul) · F15 (17 noms sans image) · F19 (« Optimal, idéal pour des records » sans sommeil) · **P3** : F07 (couleur du calendrier en cache) · F10 (`totalMin`, sans lecteur) |
+| 🆕 **nouveaux, hors audit** | N1 — corriger la durée efface une modification non enregistrée du même écran · N2 — la durée corrigée ne recalcule pas les calories (317 au lieu de 440) · le fait « Groupes musculaires (30 j) » envoyé à Milo dit « Fessiers » pour des leg curls · 21 noms sans tuile du sélecteur · 6 fichiers jamais affichés mais précachés (551 289 octets) |
+| ⚠️ **faits vrais, conclusion infirmée** | F11 (le détail calories n'est affiché nulle part : `renderCalorieBreakdown` sans appelant) · F14 (Leg Curl en Fessiers = définition du projet, pas une erreur) · index « 1 903 » (1 901 déclarations + 2 fonctions auto-exécutées) |
+| 🟢 **déjà corrigé / conforme** | `res.ok` de la synchro (26/08) · stockage plein (repli 50 signalé, drapeau, brouillon intact) · tous les cas de la matrice qui protègent les données (A01, A02, A09, A11, A12, B03, B04, C09, E01, E02, E04) · F16 (Spoto : rien d'automatique) |
+| ❔ **non vérifié** | F18 et A15-A17 (iPhone réel) · C10 (données réelles) · D04-D05 (validation humaine) · E03 (domaine de Claude Principal, D-110) · valeurs du Compendium (site inaccessible : `CONNECT tunnel failed, response 403`) |
+
+**Ce qui reste, par lot** (rien n'est commencé) : ① une seule règle pour les chiffres d'une séance (F01, F02, N1, N2 ; diagnostic
+en lecture seule des séances déjà touchées avant toute décision) · ② records (F08, décision) · ③ figurine et muscles (F03, F04, F05,
+fait Milo) · ④ affichages et aides (F06 et F13 → Claude Nutrition, F07, F19) · ⑤ moteur calorique (F09-F12, gelé sans accord) ·
+⑥ catalogue et images (F15, tuiles, précache). Preuves : 26 scénarios et 6 contre-épreuves (`tools/contre_verif_seance_2026_10_23/`),
+20 bancs Séance rejoués **920 / 0** + calendrier 10/0, muscles 241/241, calculs 339/0. Détail et matrice des 62 cas :
+`docs/CONTRE-VERIF-AUDIT-SEANCE-2026-10-23.md` ; bug de famille : `BUGS.md` §100.
