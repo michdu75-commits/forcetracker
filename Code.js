@@ -1562,6 +1562,89 @@ function _pa_(b, e){ if(b===undefined)return e; const bi=b||[],ei=e||[]; return(
 // Objet  : {} n'écrase pas un objet existant non-vide
 function _po_(b, e){ if(b===undefined)return e; const bk=Object.keys(b||{}).length,ek=Object.keys(e||{}).length; return(bk>0||ek===0)?b:e; }
 
+/* 🛡️ NUT-SECURISATION-P1 — LE JOURNAL ALIMENTAIRE ET LES FAVORIS NE PERDENT PLUS RIEN EN SILENCE
+   (23/10/2026, GO limité de Michel : branche isolée, NON DÉPLOYÉ).
+   AVANT : `_pa_` — tout envoi non vide REMPLAÇAIT la liste du serveur en entier (NUT-INVENTAIRE-02,
+   rejoué sur la vraie route : 40 → 30 sans trace, 500 → 1 pour un appareil remis à zéro). Les séances
+   ont un garde-fou depuis le 02/08 ; le journal et les favoris n'en avaient aucun.
+   ⭐ APRÈS : l'envoi s'applique comme avant (ajouts, corrections, suppressions : l'app reste maître de son
+   journal), MAIS toute ligne du serveur absente de l'envoi, et l'ancienne version de toute ligne corrigée,
+   est d'abord COPIÉE dans une zone de récupération (`existing.recupNut`, à la RACINE du compte : ni
+   `loadProfile` ni les routes A1 ne la lisent) — dans la MÊME écriture que le journal (`saveUserData_`) :
+   il n'existe aucun ordre où une ligne quitte le journal sans être déjà dans la zone.
+   ⛔ RIEN N'EST RÉINTRODUIT D'OFFICE dans le journal actif : une absence est AMBIGUË (suppression voulue
+   ou écrasement par un appareil en retard). Elle est conservée et signalée, jamais tranchée ici.
+   ⚖️ Le rétrécissement brutal (≥ 30 lignes et moins de 60 % gardées, le seuil des séances) est SIGNALÉ,
+   pas refusé : le refus est une décision ouverte, présentée à Michel (rapport NUT-SECURISATION-P1).
+   🔑 Appariement : d'abord par identifiant (consommé une fois : un identifiant en double par erreur ne
+   couvre qu'une ligne), puis par CONTENU en multi-ensemble (les anciennes lignes ont un identifiant
+   instable, NUT-INVENTAIRE-02). Mêmes clés que l'audit A1 (`_nutIdLigne_`, `_nutEmpreinte_`). */
+/* Bornes MESURÉES (vraie compression, banc B-NSP1) : 200 000 caractères ≈ 520 repas ≈ 30 000 octets stockés — de quoi
+   garder un écrasement COMPLET du plus gros journal réel (≤ 491 lignes au 22/10) ; 60 000 ≈ les 200 favoris que l'app
+   envoie au plus. Le plafond de TOUT le stockage est de 512 000 octets (panne du 29/07) : la zone ne doit jamais le menacer. */
+var NUT_RECUP_BORNES_ = { foodLog: { lignes: 8000, car: 200000 }, savedFoods: { lignes: 1000, car: 60000 } };
+var NUT_RECUP_MAX_EVTS_ = 50;
+function _nutEcartees_(actuel, recu) {
+  var empR = recu.map(_nutEmpreinte_), empA = actuel.map(_nutEmpreinte_), parId = Object.create(null);
+  var pris = [], vu = [], restants = [], libres = Object.create(null), retirees = [], modifiees = [];
+  recu.forEach(function(e, i) { var id = _nutIdLigne_(e); if (id) (parId[id] = parId[id] || []).push(i); });
+  // ① Même identifiant ET même contenu : la ligne n'a pas bougé. Cherché d'abord pour TOUTES les lignes, avant
+  //    toute modification : un identifiant en double par erreur retrouve ainsi sa copie identique, dans n'importe quel ordre.
+  actuel.forEach(function(s, a) {
+    var id = _nutIdLigne_(s), l = id ? parId[id] : null; if (!l) return;
+    for (var j = 0; j < l.length; j++) { if (empR[l[j]] === empA[a]) { pris[l.splice(j, 1)[0]] = true; vu[a] = true; return; } }
+  });
+  // ② Même identifiant, contenu différent : la ligne a été CORRIGÉE — l'ancienne version est gardée. Un identifiant
+  //    ne couvre qu'une ligne : la suivante qui le porte n'a plus de partenaire et passe à ③.
+  actuel.forEach(function(s, a) {
+    if (vu[a]) return;
+    var id = _nutIdLigne_(s), l = id ? parId[id] : null;
+    if (l && l.length) { pris[l.shift()] = true; modifiees.push(s); return; }
+    restants.push(a);
+  });
+  // ③ Sans identifiant commun : par le CONTENU, en multi-ensemble (identifiants historiques instables, NUT-INVENTAIRE-02).
+  recu.forEach(function(e, i) { if (!pris[i]) libres[empR[i]] = (libres[empR[i]] || 0) + 1; });
+  restants.forEach(function(a) { var k = empA[a]; if (libres[k] > 0) libres[k]--; else retirees.push(actuel[a]); });
+  return { retirees: retirees, modifiees: modifiees };
+}
+function _nutProtegerListe_(existing, profile, nom, recu) {
+  var actuel = Array.isArray(profile[nom]) ? profile[nom] : [];
+  if (!Array.isArray(recu)) {                              // un envoi illisible ne remplace rien (avant : stocké tel quel)
+    Logger.log('[FT GARDE-FOU ' + nom + '] envoi non lisible : ignoré, liste conservée');
+    return profile[nom];
+  }
+  if (recu.length === 0 && actuel.length > 0) return profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais
+  var ec = _nutEcartees_(actuel, recu);
+  if (!ec.retirees.length && !ec.modifiees.length) return recu;
+  var brutal = actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances
+  var z = existing.recupNut || (existing.recupNut = { v: 1 });
+  var liste = z[nom] || (z[nom] = []);
+  // Multi-ensemble : un envoi RÉPÉTÉ ne recopie pas ce qu'un envoi précédent a déjà gardé, mais deux repas
+  // identiques retirés ensemble restent DEUX copies.
+  var deja = Object.create(null), cle = function(l) { return (_nutIdLigne_(l) || '') + '|' + _nutEmpreinte_(l); };
+  liste.forEach(function(r) { var k = cle(r.l); deja[k] = (deja[k] || 0) + 1; });
+  var quand = new Date().toISOString(), copiees = 0;
+  function garder(l, motif) {
+    var k = cle(l); if (deja[k] > 0) { deja[k]--; return; }
+    copiees++; liste.push({ t: quand, m: motif, l: JSON.parse(JSON.stringify(l)) });
+  }
+  ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });
+  ec.modifiees.forEach(function(l) { garder(l, 'modifiee'); });
+  // ⛔ BORNÉE : au-delà, on retire les copies les plus ANCIENNES — et on le COMPTE, jamais en silence.
+  var b = NUT_RECUP_BORNES_[nom], tailles = liste.map(function(r) { return JSON.stringify(r).length; });
+  var total = tailles.reduce(function(a, x) { return a + x; }, 0), coupees = 0;
+  while (liste.length && (liste.length > b.lignes || total > b.car)) { total -= tailles.shift(); liste.shift(); coupees++; }
+  if (coupees) z.coupees = (z.coupees || 0) + coupees;
+  var evts = z.evts || (z.evts = []);                     // des NOMBRES seulement : ni adresse, ni aliment
+  evts.push({ t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
+              modifiees: ec.modifiees.length, copiees: copiees, coupees: coupees, brutal: brutal });
+  if (evts.length > NUT_RECUP_MAX_EVTS_) evts.splice(0, evts.length - NUT_RECUP_MAX_EVTS_);
+  Logger.log('[FT GARDE-FOU ' + nom + '] ' + ec.retirees.length + ' retirée(s), ' + ec.modifiees.length + ' modifiée(s) sur '
+             + actuel.length + (brutal ? ' — RÉTRÉCISSEMENT BRUTAL' : '') + ' : ' + copiees + ' copie(s) en zone de récupération'
+             + (coupees ? ', ' + coupees + ' copie(s) ancienne(s) retirée(s) de la zone (pleine)' : ''));
+  return recu;
+}
+
 // ───────────────────────────────────────────────────────────
 
 /**
@@ -1727,8 +1810,9 @@ function handleSaveProfile_(body) {
     if (body.diet          !== undefined) profile.diet          = _ps_(body.diet,          profile.diet);
     if (body.dietRestrictions!== undefined) profile.dietRestrictions = _pa_(body.dietRestrictions, profile.dietRestrictions);
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
-    if (body.foodLog       !== undefined) profile.foodLog       = _pa_(body.foodLog,       profile.foodLog);
-    if (body.savedFoods    !== undefined) profile.savedFoods    = _pa_(body.savedFoods,    profile.savedFoods);
+    // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
+    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog);
+    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods);
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
        ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas

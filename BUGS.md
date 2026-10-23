@@ -4916,3 +4916,31 @@ désormais cette garde devant, et rien d'autre ; son outil de mutations (`tools/
 ligne et la suit. Éprouvé : vert sur master, vert sur la branche, **rouge quand l'exclusion de COHERENT est retirée**.
 ⚠️ La simulation du 20/10 annonçait « 0 témoin existant rouge » pour cette forme : elle n'avait rejoué que les blocs CCXCI,
 CCCV, CCXCIX et CCCII. *Un « aucun témoin ne rougit » ne vaut que pour les témoins rejoués.*
+
+## §97 — ⛔⛔ LE DERNIER APPAREIL QUI ÉCRIT EFFACE LE JOURNAL ALIMENTAIRE DES AUTRES : `_pa_` REMPLACE LA LISTE EN ENTIER *(23/10/2026, NUT-SECURISATION-P1 — branche `claude/nut-securisation-p1`, NON DÉPLOYÉ · numéro choisi après les §95-§96 des branches `dreamy-bell` et `nutrition-v2`)*
+
+**Le constat.** `handleSaveProfile_` écrit le journal et les favoris par `_pa_(body.foodLog, profile.foodLog)`. `_pa_` refuse
+un envoi **vide**, mais **tout envoi non vide remplace la liste du serveur en entier**. Le client envoie toute sa liste locale à
+chaque synchronisation et ne relit jamais le serveur tant que son stockage n'est pas vide. Rejoué sur le vrai `Code.js` (banc
+B-NSP1, données inventées) : un appareil remis à zéro qui saisit un repas → **500 → 1** ; Safari en retard sur l'application
+iPhone (deux stockages distincts) → **300 → 2** ; un appareil en retard → 40 → 30, 60 → 51 ; deux appareils aux historiques
+différents s'effacent l'un l'autre ; favoris **20 → 1** ; une chaîne reçue à la place d'une liste **remplaçait le journal par
+la chaîne**. **Aucune trace** — ni refus, ni journal d'exécution.
+
+**Pourquoi rien ne l'a vu.** Les séances ont un garde-fou depuis le 02/08 (≥ 30 lignes et moins de 60 % gardées) : le journal,
+écrit par la même fonction cinquante lignes plus haut, n'en avait **aucun** — *une règle corrigée dans une collection et pas
+dans sa voisine*, la phrase du §33. ⚠️ Et ce seuil, recopié tel quel, n'aurait vu **ni 40 → 30, ni 20 → 1, ni l'appareil en
+retard** : un seuil sur le NOMBRE de lignes ne distingue pas un écrasement d'une suppression voulue.
+
+**Ce qui est préparé (non déployé).** `_nutProtegerListe_` : l'envoi s'applique comme avant (rien n'est réintroduit d'office :
+une absence est ambiguë), mais toute ligne retirée et l'ancienne version de toute ligne corrigée sont **d'abord copiées** dans
+une zone de récupération `recupNut` à la racine du compte — même écriture que le journal, jamais renvoyée à l'app, bornée, avec
+un événement chiffré sans donnée personnelle. Banc : **24 OK / 32 rouges** sur le `Code.js` de master → **56 / 0** ; contrôle
+négatif **23 / 23**. Détail et décision ouverte (refuser ou non le rétrécissement brutal) : `docs/NUT-SECURISATION-P1.md`.
+
+**À quoi on le reconnaît.** Une liste synchronisée « en entier » par un client qui ne relit pas le serveur : **le dernier qui
+écrit gagne, et ce qu'il n'avait pas disparaît**. Voisins : §33 (le dernier qui écrit efface l'autre), la restauration par
+union (ft-v1241 séances, ft-v1247 journal) — la même famille côté **client**, réglée avant que le côté **serveur** le soit.
+⚠️ **Et un piège de harnais au passage** : le faux `Utilities.base64Decode` du banc A1 rendait un objet au lieu d'octets ;
+`_packUser_` ne se relisait pas et n'osait jamais compresser — la première mesure de taille affichait **167 Ko « compressés »**
+pour 30 Ko réels. *Une mesure qui passe par un double doit d'abord prouver que le double fait ce que fait le vrai.*
