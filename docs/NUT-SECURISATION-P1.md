@@ -6,8 +6,11 @@
 > ⛔ **NON DÉPLOYÉ, NON FUSIONNÉ** (aucun GO de déploiement Apps Script ni de fusion master). Aucun journal réel lu ni
 > modifié, aucune des 10 entrées de NUT-INVENTAIRE-02 restaurée. Ni Nutrition V2, ni Séance, ni moteur calorique ; routes
 > A1 et carte A2 inchangées.
-> ⚠️ **Deux points attendent Michel avant tout déploiement** (§8) : le remplissage réel du stockage (lu dans l'app) et
-> le cas unique où un envoi est **refusé** (`D-109`, proposé).
+> ✅ *Les deux points qui attendaient Michel (§9) sont tranchés le 23/10* : stockage relevé dans l'app à **54 %** (268 Ko
+> sur 500, écriture OK, sauvegarde du jour présente) et `D-109` **validée**. GO conditionnel de publication Apps Script donné.
+> ⛔⛔ **PUBLICATION ARRÊTÉE le 23/10 à la vérification 5 de Michel (§10)** : un envoi de **favoris** refusé (`D-109`) peut
+> être **perdu** si la personne appuie sur « Restaurer mon compte » pendant la panne de Drive. Rien n'est déployé ;
+> décision de Michel attendue (`D-110`, proposé).
 
 ## 1. La cause exacte (mesurée, pas supposée)
 
@@ -178,6 +181,52 @@ Le journal actif n'a pas changé de forme. Aucune migration.
 3. **GO explicite de déploiement Apps Script seul** (`Code.js` ; aucun fichier de l'app, aucune version `ft-vNN`) —
    même procédure que A1 (22/10). Après : `?test=1` online, `authStatus`, puis un premier relevé des événements de zone
    à la sauvegarde de la nuit suivante.
+
+**État au 23/10** : 1 ✅ (54 %) · 2 ✅ (`D-109` validée) · 3 : GO conditionnel donné, **non exercé** — arrêt à la
+vérification 5 (§10).
+
+## 10. ⛔ Vérification 5 avant publication (23/10) — publication ARRÊTÉE
+
+**La question de Michel** : *quand une liste est refusée par le garde-fou, reste-t-elle sur l'appareil pour être
+retransmise, ne peut-elle pas être effacée par un faux succès, et aucune perte silencieuse ne peut-elle en découler ?*
+« Si le point 5 révèle un risque réel de perte : STOP. Ne pas publier. »
+
+**Ce que dit le code de l'app** : la synchronisation part en `no-cors` — l'app ne lit **aucune** réponse, n'efface rien
+après l'envoi et renvoie ses listes entières à la synchronisation suivante : **un faux succès ne peut rien effacer**. Mais
+les deux listes ne se restaurent pas pareil : le journal est **fusionné** (`_fusionnerFoodLogRestauration`, le téléphone
+gagne), les favoris sont **remplacés** (`_applyRestoreData` : `S.savedFoods=d.savedFoods`). Portes de restauration :
+« 🔄 Restaurer mon compte depuis le cloud » (Profil, **visible par tous**), « Restaurer depuis mon email » (Admin),
+l'inscription d'un compte existant, et la restauration automatique d'un appareil sans séance, record ni programme.
+
+**Le banc bout en bout** (hors dépôt, `/tmp/claude-0/-home-user-forcetracker/12f61d67-fd14-50ef-8709-99418240fb44/scratchpad/pub_p1/e2e_refus_v2.js`) : vraie app (Chromium) ↔ vrai `Code.js`
+(vm, Drive en mémoire, panne injectée), compte **protégé par un code perso** (la lecture stricte refuse sinon
+`loadProfile` : la 1ʳᵉ version du banc ne restaurait donc jamais — un vert qui ne prouvait rien), données inventées.
+L'appareil porte 3 retraits, 2 modifications et 4 ajouts ; Drive est en panne **dès l'ouverture** ; puis « Restaurer ».
+
+| Variante | Envoi pendant la panne | Après « Restaurer » | Introuvables (appareil · serveur · zone · Drive) |
+|---|---|---|---|
+| **Branche P1** (`db8699cc`) | les deux listes **refusées** (`D-109`) | journal : tout gardé · **favoris : 0/4 neufs, 0/2 modifiés** | journal **0** · **favoris 6** ⛔ |
+| Témoin : branche P1, **Drive OK** | acceptées | tout gardé | **0** |
+| Comparaison : **master = prod @192** | acceptées (remplacées) | tout gardé | neufs 0 · **anciennes versions : 5 + 5** (le défaut que P1 corrige) |
+| Prototype **FIX-A′** (serveur : favoris jamais refusés) | favoris acceptés, journal refusé | tout gardé | **0** |
+| Prototype **FIX-B** (app : la restauration fusionne les favoris) | les deux refusées | tout gardé (+ 3 favoris retirés revenus) | **0** |
+
+**Conclusion** : la garantie « aucune perte silencieuse » **ne tient pas pour les favoris** pendant une fenêtre de refus.
+Il faut trois conditions réunies (zone des favoris au-delà de sa borne, Drive indisponible à ce moment, restauration avant
+la synchronisation suivante acceptée) — c'est rare, **mais c'est une perte réelle et silencieuse**. Conformément à la
+consigne : **non publié**. Le journal alimentaire, lui, ne perd rien (les repas retirés reviennent après une
+restauration : c'est la fusion existante, pas une perte).
+
+**La correction minimale** (`D-110`, à trancher par Michel) : **FIX-A′**, `Code.js` seul, 6 lignes — pour les favoris, une
+panne de Drive ne refuse plus l'envoi, la zone garde tout au-delà de sa borne jusqu'au prochain déménagement réussi. Elle
+reste dans le périmètre Apps Script, mais rouvre une alternative que `D-109` avait écartée. **FIX-B** (app, une ligne)
+traite la cause côté restauration et couvre aussi le cas préexistant, mais demande une version de l'app. Après la
+décision : tests ciblés (B-NSP1 adapté + contrôle négatif), puis **une** passe complète D-031, puis publication.
+
+**Vérifications 1-4 et 6, faites** : master `32bea1ef` (seul le journal de partage a changé depuis la base `c34d928c`) ·
+`Code.js` de master = celui de la prod @192 (run n°123, `236764c5`) · `Code.js` de la branche = celui testé (`db8699cc`,
+passe 7917/0) · différence = P1 seul, aucun fichier de l'app · B-NSP1 rejoué **74 / 0** · retour arrière sûr : l'ancien
+code garde `recupNut` dans le compte sans jamais le renvoyer (`loadProfile` liste ses champs un par un).
 
 ---
 

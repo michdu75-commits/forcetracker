@@ -4951,6 +4951,14 @@ devenait pour la sonde `checkBackup` « la dernière sauvegarde » — **il aura
 👉 *Avant de ranger un fichier dans un dossier existant, chercher TOUS ceux qui le lisent — et ce qu'ils déduisent du
 fichier le plus récent.*
 
+**⛔ Et le refus lui-même, attrapé à la vérification 5 avant publication (23/10 — NON publié).** `D-109` refuse l'envoi
+d'une liste quand la zone déborde et que Drive ne répond pas : « retardé, jamais perdu », **parce que l'appareil garde
+sa liste**. Vrai… tant que rien ne la remplace. Or « Restaurer mon compte » **remplace** les favoris de l'appareil par
+ceux du serveur — qui, pendant le refus, sont justement les anciens. Rejoué bout en bout (vraie app + vrai `Code.js`) :
+**4 favoris neufs et 2 modifiés introuvables partout** ; le journal, **fusionné** à la restauration, ne perd rien.
+👉 *Un refus « sans perte » ne l'est que si TOUTES les portes qui réécrivent la donnée locale la fusionnent — un refus
+côté serveur se vérifie jusqu'au bout de l'app, pas seulement au serveur.* Décision attendue : `D-110`.
+
 **À quoi on le reconnaît.** Une liste synchronisée « en entier » par un client qui ne relit pas le serveur : **le dernier qui
 écrit gagne, et ce qu'il n'avait pas disparaît**. Voisins : §33 (le dernier qui écrit efface l'autre), la restauration par
 union (ft-v1241 séances, ft-v1247 journal) — la même famille côté **client**, réglée avant que le côté **serveur** le soit.
