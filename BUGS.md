@@ -5135,6 +5135,22 @@ aperçu qui pourrait écrire, un ordre inversé ou un 4ᵉ re-noteur non déclar
 `tools/mut_nut_m6_rejeu.py`). *Un cliquet qui compte des appelants se déplace avec la construction qu'il protège ; il ne se
 relâche pas.*
 
+**Et cinq témoins de la passe complète, attrapés par la passe RÉDUITE (31 blocs) — tous sur l'ancien contrat, aucun sur un
+défaut** :
+- `CCLXXXV ⑫ ⑬` (ft-v1188) figeaient « *le nom EST l'identité d'un favori, il ne porte aucun autre identifiant* » — vrai
+  le 10/09, **faux depuis la V2** (un favori garde son `sourceId`) et contraire à la mission. ⑫ passe désormais par la VRAIE
+  liste (sa fixture reposée à la main testait la recherche par nom de l'étoile, le défaut même) : une identité, un favori ;
+  ⑬ garde le refus d'agir sur une identité ambiguë (même nom, sans code-barres) et exige qu'à deux codes-barres seul le bon
+  favori suive sa définition ;
+- `CCXCV ② ③` (ft-v1198) figeaient les « replis » `kcal: 0`… d'une valeur inconnue — exactement la cause n°5. Le noyau
+  garde ses 9 champs sur une source complète, sans `portionWeightG` ni `fav` (décision produit n°2) ; une valeur inconnue
+  reste absente, un 0 connu reste 0 ;
+- `CCCIV ⑧ ⑪` (ft-v1206) : le canari portait 6 666 g de protéines dans 3 333 g — « + Ajouter » ne le recopie plus, le
+  carnet restait vide et le témoin rougissait par sa PRÉCONDITION, pas par une fuite. Le canari se tient désormais
+  (4 567 g, valeurs à 4 chiffres reconnaissables).
+Leur contrôle négatif : R40 → R48 (`tools/mut_temoins_v2.py`). *Une passe réduite sur les blocs qui touchent les
+fonctions changées n'est pas une formalité : les bancs dédiés étaient verts, et ces cinq-là n'y étaient pas.*
+
 **À quoi on le reconnaît.** *Un affichage et une écriture qui calculent chacun de leur côté finissent par diverger — la seule
 question est quand* (R2). Et *un nom n'est pas une identité* : il relie ce qui n'a pas d'identifiant, il ne doit jamais séparer
 ni confondre ce qui en a un.

@@ -28,6 +28,7 @@ B = {
     'CCCIV': "CCCIV. Les 3 constats",      # entraîne CCXC et B-NV2X (sans en-tête propre)
     'BCCCXI': "B-CCCXI. Le RIR",           # entraîne CCCIII (la douane, sans en-tête propre)
     'CCCVI': "BLOC CCCVI —",
+    'CCXCV': "BLOC CCXCV —",            # incident du 23/10 : le noyau d'un item de liste (`_itemListe`)
 }
 
 MUT = [
@@ -180,6 +181,42 @@ MUT = [
     ('R39 D-103 : la pastille « la dernière fois » prise telle quelle redevient des GRAMMES', ['CCLXXX', 'CCLXXXIV', 'CCLXXXV'],
      [('app.js', "    const P=_bcPortionPrise, prise=!!(P && _bcQtyOrigine==='proposee' && v===P.masse);", "    const P=_bcPortionPrise, prise=false;")],
      ['CCLXXX ④', 'CCLXXXIV ⑪', 'CCLXXXV ⑱']),
+    # ⭐⭐ INCIDENT DU 23/10 (D-111) — cinq témoins de la passe RÉÉCRITS sur le nouveau contrat (l'identité est le produit ;
+    #    une valeur inconnue reste absente ; une référence qui se contredit ne se recopie plus). Chacun doit rougir.
+    ('R40 D-111 : l\'étoile ignore l\'état de l\'élément — un 2ᵉ favori de la MÊME identité se crée', ['CCLXXXV'],
+     [('app.js', "  if(it.fav){\n    let idx=S.savedFoods.indexOf(it._src);", "  if(false){\n    let idx=S.savedFoods.indexOf(it._src);")],
+     ['CCLXXXV ⑫']),
+    ('R41 D-111 : la liste montre une 2ᵉ ligne de la MÊME identité derrière un favori (on pourrait l\'étoiler aussi)', ['CCLXXXV'],
+     [('app.js', "    if((k in vus) && !v) continue;         // déjà listé, et celle-ci n'est pas plus fiable\n", "")],
+     ['CCLXXXV ⑫']),
+    ('R42 D-111 : la redéfinition d\'un favori (ft-v1186 ⑤) le cherche par son NOM (deux codes-barres redeviennent ambigus)', ['CCLXXXV'],
+     [('app.js', "    const k=_n2Cle(e); if(k==='nom:') return;\n    const memes=S.savedFoods.filter(x=>_n2Cle(x)===k);",
+       "    const k=String(e.name||'').trim().toLowerCase(); if(!k) return;\n    const memes=S.savedFoods.filter(x=>String(x.name||'').trim().toLowerCase()===k);")],
+     ['CCLXXXV ⑬']),
+    ('R43 D-111 : une identité AMBIGUË (même nom, sans code-barres) redéfinit quand même le premier favori', ['CCLXXXV'],
+     [('app.js', "    if(memes.length!==1) return;\n    const f=memes[0];", "    if(!memes.length) return;\n    const f=memes[0];")],
+     ['CCLXXXV ⑬']),
+    ('R44 D-111 : une valeur INCONNUE redevient 0 dans le noyau d\'un item (l\'ancien « || 0 »)', ['CCXCV'],
+     [('app.js', "  _N2_CHAMPS.forEach(c => { const x = s[c]; if (typeof x === 'number' && isFinite(x) && x >= 0) o[c] = x; });",
+       "  _N2_CHAMPS.forEach(c => { const x = s[c]; o[c] = (typeof x === 'number' && isFinite(x) && x >= 0) ? x : 0; });")],
+     ['CCXCV ②', 'CCXCV ③']),
+    ('R45 D-111 : un 0 CONNU disparaît du noyau d\'un item (pris pour un inconnu)', ['CCXCV'],
+     [('app.js', "  _N2_CHAMPS.forEach(c => { const x = s[c]; if (typeof x === 'number' && isFinite(x) && x >= 0) o[c] = x; });",
+       "  _N2_CHAMPS.forEach(c => { const x = s[c]; if (typeof x === 'number' && isFinite(x) && x > 0) o[c] = x; });")],
+     ['CCXCV ③']),
+    ('R46 décision produit n°2 : `portionWeightG` entre dans le noyau d\'un item', ['CCXCV'],
+     [('app.js', "  o.portionLabel = s.portionLabel || null;\n  return o;", "  o.portionLabel = s.portionLabel || null;\n  o.portionWeightG = s.portionWeightG;\n  return o;")],
+     ['CCXCV ②']),
+    ('R47 le carnet de la douane garde le NOM de la dernière ligne (une donnée de repas stockée)', ['BCCCXI'],
+     [('app.js', "  E.n++; if(E[res.etat] === undefined) E[res.etat] = 0; E[res.etat]++;",
+       "  E.n++; if(E[res.etat] === undefined) E[res.etat] = 0; E[res.etat]++; E.dernier = String((ligne && (ligne.name || ligne.nom)) || '').slice(0, 40);")],
+     ['CCCIV ⑧']),
+    ('R48 le carnet garde les calories de la dernière ligne, et le rapport les affiche', ['BCCCXI'],
+     [('app.js', "  E.n++; if(E[res.etat] === undefined) E[res.etat] = 0; E[res.etat]++;",
+       "  E.n++; if(E[res.etat] === undefined) E[res.etat] = 0; E[res.etat]++; c.derniere = ligne && ligne.kcal;"),
+      ('app.js', "  L.push('Du ' + c.depuis + ' au ' + c.maj + ' — ' + c.n + ' ligne' + (c.n > 1 ? 's' : '') + ' observée' + (c.n > 1 ? 's' : ''));",
+       "  L.push('Du ' + c.depuis + ' au ' + c.maj + ' — ' + c.n + ' ligne' + (c.n > 1 ? 's' : '') + ' observée' + (c.n > 1 ? 's' : '') + ' · dernière : ' + c.derniere + ' kcal');")],
+     ['CCCIV ⑧', 'CCCIV ⑪']),
 ]
 
 

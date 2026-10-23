@@ -33638,20 +33638,33 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
 
     /* ①g (V1 : le poids retiré emporte le pour-100 g) — RETIRÉ : plus de poids à retirer dans « Modifier ». */
 
-    /* ② DEUX FAVORIS DE MÊME NOM : impossible à créer, et refus d'agir si ça arrivait */
-    const A={name:'Steak hache',kcal:250,prot:20,carbs:0,fat:18,q:1,u:'portion',portionLabel:'steak',portionWeightG:125};
-    const B={name:'STEAK HACHE',kcal:200,prot:18,carbs:0,fat:14,q:1,u:'portion',portionLabel:'steak',portionWeightG:100};
-    S.savedFoods=[]; S.foodLog=[]; S.hiddenFoods=[]; persist();
-    _afQuickItems=[A,B]; toggleFavFood(0);
-    _afQuickItems=[A,B]; toggleFavFood(1);          // ⭐ la fixture se REPOSE : le rendu l'écrase
-    const n2=S.savedFoods.length;
-    _afQuickItems=[A,B]; toggleFavFood(1);
-    o.favUnique={apres2:n2, apres3:S.savedFoods.length};
-    // l'état impossible, forcé : A ne doit PAS écrire sur B
+    /* ② DEUX FAVORIS DE LA MÊME IDENTITÉ : impossible à créer, et refus d'agir si ça arrivait.
+       ⭐⭐ INCIDENT DU 23/10 (D-111) — L'IDENTITÉ EST CELLE DU PRODUIT (`_n2Cle` : le code-barres, puis le nom pour ce qui
+       n'en a pas). Avant : « le nom EST l'identité d'un favori, il ne porte aucun autre identifiant » (ft-v1188, mesuré à
+       l'époque) — faux depuis la V2 (un favori garde son `sourceId`), et la mission de Michel l'interdit : *« ne jamais
+       identifier deux produits uniquement par leur nom lorsqu'ils peuvent être différents »*. L'étoile agit sur l'élément
+       touché ; c'est la LISTE qui n'offre jamais un 2ᵉ favori de la même identité. ⛔ Le témoin passe donc par la VRAIE liste
+       (`_buildFoodQuickItems`), plus par une fixture reposée à la main : l'ancienne version (deux éléments sans `fav` reposés
+       avant chaque clic) testait la recherche par NOM de l'étoile, le défaut même. */
+    const A={date:'2026-09-01',meal:'midi',ts:1,name:'Steak hache',kcal:250,prot:20,carbs:0,fat:18,q:1,u:'portion',portionLabel:'steak',portionWeightG:125};
+    const B={date:'2026-09-02',meal:'midi',ts:2,name:'STEAK HACHE',kcal:200,prot:18,carbs:0,fat:14,q:1,u:'portion',portionLabel:'steak',portionWeightG:100};
+    S.savedFoods=[]; S.foodLog=[A,B]; S.hiddenFoods=[]; persist();
+    const steaks=()=>_buildFoodQuickItems().filter(x=>/^steak hache$/i.test(x.name||''));
+    const etoile=()=>{ _afQuickItems=_buildFoodQuickItems(); const k=_afQuickItems.findIndex(x=>/^steak hache$/i.test(x.name||'')); if(k>=0) toggleFavFood(k); };
+    const l1=steaks().length; etoile(); const n1=S.savedFoods.length;
+    const L2=steaks(); etoile(); const n2=S.savedFoods.length;
+    etoile(); const n3=S.savedFoods.length;
+    o.favUnique={liste1:l1, apres1:n1, liste2:L2.length, liste2fav:L2.length===1 && L2[0].fav===true, apres2:n2, apres3:n3};
+    // l'état, forcé : DEUX favoris du même NOM sans code-barres (une seule identité) → ambigu, on ne touche à rien ;
+    // et deux favoris du même nom à DEUX codes-barres (deux produits) → seul le bon suit, A n'écrit jamais sur B
+    S.savedFoods=[{name:'Steak hache',portionWeightG:100,portionLabel:'steak',kcal:200,prot:18,carbs:0,fat:14},
+                  {name:'Steak hache',portionWeightG:125,portionLabel:'steak',kcal:250,prot:20,carbs:0,fat:18}];
+    _majDefFavori({name:'Steak hache',u:'portion',portionLabel:'pave',portionWeightG:150});
+    o.ambigu=S.savedFoods.map(f=>(f.sourceId||'-')+':'+f.portionWeightG+':'+f.portionLabel).join(' | ');
     S.savedFoods=[{name:'Steak hache',portionWeightG:100,portionLabel:'steak',kcal:200,prot:18,carbs:0,fat:14,sourceId:'off:BBB'},
                   {name:'Steak hache',portionWeightG:125,portionLabel:'steak',kcal:250,prot:20,carbs:0,fat:18,sourceId:'off:AAA'}];
     _majDefFavori({name:'Steak hache',u:'portion',portionLabel:'pave',portionWeightG:150,sourceId:'off:AAA'});
-    o.ambigu=S.savedFoods.map(f=>f.sourceId+':'+f.portionWeightG+':'+f.portionLabel).join(' | ');
+    o.distincts=S.savedFoods.map(f=>f.sourceId+':'+f.portionWeightG+':'+f.portionLabel+':'+f.kcal).join(' | ');
 
     /* ②b (V1 : le favori suit une définition corrigée DEPUIS L'ÉDITION) — RETIRÉ (D-101 ⑩). Qu'un favori suive une
        définition nouvelle SANS que ses macros bougent reste tenu là où une définition change encore : l'écran d'ajout,
@@ -33760,11 +33773,15 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       JSON.stringify({dit:V.scanDeclareDit, ligne:V.scanDeclare}));
     /* ⑪ (V1 : le poids retiré emporte le pour-100 g) — RETIRÉ : plus de poids à retirer dans « Modifier » (D-101 ⑩). */
 
-    /* ②  LES FAVORIS DE MÊME NOM */
-    t('CCLXXXV ⑫ ⭐ DEUX FAVORIS DE MÊME NOM SONT IMPOSSIBLES À CRÉER (l\'étoile retire au lieu d\'ajouter)',
-      V.favUnique && V.favUnique.apres2===0 && V.favUnique.apres3===1, JSON.stringify(V.favUnique));
-    t('CCLXXXV ⑬ ⛔⛔ ... ET SI L\'ÉTAT ARRIVAIT QUAND MÊME : on ne touche à RIEN (100 et 125 intacts)',
-      V.ambigu==='off:BBB:100:steak | off:AAA:125:steak', V.ambigu);
+    /* ②  LES FAVORIS DE LA MÊME IDENTITÉ (D-111 : le produit, plus le nom) */
+    t('CCLXXXV ⑫ ⭐ DEUX FAVORIS DE LA MÊME IDENTITÉ SONT IMPOSSIBLES À CRÉER PAR LA VRAIE LISTE (sans code-barres, le nom est '+
+      'l\'identité : une seule ligne listée ; l\'étoile en fait UN favori, qui prend sa place ; ré-étoilé il se retire)',
+      V.favUnique && V.favUnique.liste1===1 && V.favUnique.apres1===1 && V.favUnique.liste2fav===true
+      && V.favUnique.apres2===0 && V.favUnique.apres3===1, JSON.stringify(V.favUnique));
+    t('CCLXXXV ⑬ ⛔⛔ ... ET SI L\'ÉTAT ARRIVAIT QUAND MÊME : sans code-barres (identité ambiguë) on ne touche à RIEN ; à deux '+
+      'codes-barres (deux produits), seul le bon suit sa définition — A n\'écrit jamais sur B, et ses valeurs ne bougent pas',
+      V.ambigu==='-:100:steak | -:125:steak' && V.distincts==='off:BBB:100:steak:200 | off:AAA:150:pave:250',
+      JSON.stringify({ambigu:V.ambigu, distincts:V.distincts}));
     /* ⑭ ⑮ (V1 : le favori suit une définition corrigée DEPUIS L'ÉDITION, sans que ses macros bougent) — RETIRÉS
        (D-101 ⑩) ; la même garantie, depuis l'écran d'ajout, reste tenue par CCLXXXIV ⑬ ⑭. */
 
@@ -34729,9 +34746,15 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
     o.type=typeof _itemListe;
     /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
-    try{ o.cles=Object.keys(_itemListe({name:'X'})).sort().join(','); }
+    /* ⛔ INCIDENT DU 23/10 (mission D de Michel : *« ne pas convertir une valeur inconnue en zéro »*) — une valeur INCONNUE
+       reste ABSENTE (pas de clé), une valeur CONNUE passe, 0 compris. Les neuf champs se lisent donc sur une source COMPLÈTE,
+       et une source qui porte `portionWeightG`, `fav` ou `sourceId` ne les fait pas entrer dans le noyau (décision produit
+       n°2). Avant, `{name:'X'}` rendait 0 kcal, 0 g de protéines… : un favori à « 0 g » d'une protéine jamais connue. */
+    try{ o.cles=Object.keys(_itemListe({name:'X',kcal:1,prot:2,carbs:3,fat:4,per100:{kcal:1},q:5,u:'g',portionLabel:'p',
+                                          portionWeightG:5,fav:true,sourceId:'off:1'})).sort().join(',');
+         o.clesInconnues=Object.keys(_itemListe({name:'X'})).sort().join(','); }
     catch(e){ o.cles='LÈVE : '+String(e&&e.message||e); }
-    try{ o.nu=JSON.stringify(_itemListe(null)); }
+    try{ o.nu=JSON.stringify(_itemListe(null)); o.zeroConnu=JSON.stringify(_itemListe({name:'P',kcal:52,prot:0})); }
     catch(e){ o.nu='LÈVE : '+String(e&&e.message||e); }
 
     const COMPLET={name:'Lentilles',kcal:198,prot:25,carbs:41,fat:13,
@@ -34784,12 +34807,14 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   if(W.err){ t('CCXCV bloc exécuté', false, W.err); }
   else{
     t('CCXCV ① `_itemListe` existe', W.type==='function', W.type);
-    t('CCXCV ② ⛔⛔ PÉRIMÈTRE — elle rend EXACTEMENT les 9 champs identiques : ni `portionWeightG` '+
-      'ni `fav` dedans (ils DIVERGENT, décision produit n°2)',
-      W.cles==='carbs,fat,kcal,name,per100,portionLabel,prot,q,u', String(W.cles));
-    t('CCXCV ③ une source vide rend les replis, sans rien inventer',
-      W.nu==='{"kcal":0,"prot":0,"carbs":0,"fat":0,"per100":null,"q":0,"u":null,"portionLabel":null}',
-      String(W.nu));
+    t('CCXCV ② ⛔⛔ PÉRIMÈTRE — sur une source complète elle rend EXACTEMENT les 9 champs : ni `portionWeightG` '+
+      'ni `fav` dedans (ils DIVERGENT, décision produit n°2), ni `sourceId` ; et une valeur INCONNUE reste ABSENTE (23/10)',
+      W.cles==='carbs,fat,kcal,name,per100,portionLabel,prot,q,u' && W.clesInconnues==='name,per100,portionLabel,q,u',
+      JSON.stringify({cles:W.cles, inconnues:W.clesInconnues}));
+    t('CCXCV ③ une source vide rend les replis de la quantité et des libellés, SANS aucun 0 inventé — et un 0 CONNU reste 0',
+      W.nu==='{"per100":null,"q":0,"u":null,"portionLabel":null}'
+      && W.zeroConnu==='{"name":"P","kcal":52,"prot":0,"per100":null,"q":0,"u":null,"portionLabel":null}',
+      JSON.stringify({nu:W.nu, zeroConnu:W.zeroConnu}));
 
     t('CCXCV ④ ⭐ BRANCHE FAVORIS : les 9 champs voyagent, et `fav` reste true',
       W.favori && W.favori.name==='Lentilles' && W.favori.kcal===198 && W.favori.q===410
@@ -37121,12 +37146,17 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        ⛔ On vérifie AUSSI que le carnet a bien enregistré : sans ça, un carnet vide passerait
        le test sans rien prouver. */
     vider();
-    ecrire({name:'ZZCANARIMICHELXY', kcal:7777, prot:6666, carbs:5555, fat:4444,
-            q:3333, u:'g', sourceId:'off:ZZCANARISOURCE',
-            per100:{kcal:9999, prot:8888, carbs:2222, fat:1111}});
+    /* ⭐ INCIDENT DU 23/10 (D-111) — LE CANARI DEVIENT POSSIBLE. Il portait 6 666 g de protéines dans 3 333 g, et un pour-100 g
+       qui contredisait ses valeurs : « + Ajouter » ne recopie plus une référence qui se contredit (`_n2Incoherence`), il
+       n'était donc plus écrit, le carnet restait vide, et le témoin rougissait par sa PRÉCONDITION (« il a vraiment
+       enregistré ») — pas par une fuite. Les nombres restent reconnaissables et ils se tiennent : 4 567 g d'un aliment à
+       444,4 kcal · 27,7 P · 33,3 G · 22,2 L pour 100 g (20 296 kcal · 1 265 · 1 521 · 1 014). */
+    ecrire({name:'ZZCANARIMICHELXY', kcal:20296, prot:1265, carbs:1521, fat:1014,
+            q:4567, u:'g', sourceId:'off:ZZCANARISOURCE',
+            per100:{kcal:444.4, prot:27.7, carbs:33.3, fat:22.2}});
     const brut = localStorage.getItem(CLE)||'';
-    const interdits = ['ZZCANARI','ZZCANARISOURCE','7777','6666','5555','4444','3333',
-                       '9999','8888','2222','1111'];
+    const interdits = ['ZZCANARI','ZZCANARISOURCE','20296','1265','1521','1014','4567',
+                       '444.4','27.7','33.3','22.2'];
     o.canari = [ brut.length>0,
                  brut.indexOf('quickAddFood')>=0,          /* il a VRAIMENT enregistré */
                  interdits.filter(x=>brut.indexOf(x)>=0) ];
@@ -37149,7 +37179,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                   r.indexOf('quickAddFood')>=0,
                   r.indexOf('JAMAIS MORDU')>=0,
                   r.indexOf('ZZCANARI')<0,
-                  r.indexOf('7777')<0 ];
+                  r.indexOf('20296')<0 ];
 
     /* ⑩ À zéro ligne, le rapport le DIT au lieu de diviser par zéro. */
     vider();

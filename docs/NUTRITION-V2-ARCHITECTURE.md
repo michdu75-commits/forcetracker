@@ -778,4 +778,5 @@ ni `Code.js`, ni la protection P1, ni le moteur calorique, ni la Séance, ni le 
 valeur inconnue + correction gardée + quantité absente + hors ligne) ; moteur B-NV2-E ㉑ ; contrôles négatifs MP62 → MP84 (et MP9
 réancrée) dans `tools/mut_nut2_parcours.py`, MN32 → MN34 (et MN22 réancrée) dans `tools/mut_nut2_moteur.py` ; le cliquet
 de M6 (`B-NM6-C ②`) compte désormais l'aperçu comme 3ᵉ appelant de la construction, à condition qu'il ne puisse pas écrire
-(N17 → N19 dans `tools/mut_nut_m6_rejeu.py`).
+(N17 → N19 dans `tools/mut_nut_m6_rejeu.py`) ; et cinq témoins de la passe complète réécrits sur ce contrat —
+`CCLXXXV ⑫ ⑬`, `CCXCV ② ③`, `CCCIV ⑧ ⑪` — avec leurs mutations R40 → R48 (`tools/mut_temoins_v2.py`), `BUGS.md` §98.
