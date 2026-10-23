@@ -40734,6 +40734,12 @@ require('./food_alias_sens.js').source(t, ROOT, fs, path);
 require('./food_lot_b.js').source(t, ROOT, fs, path);
 require('./nut_m6_rejeu.js').source(t, ROOT, fs, path);
 require('./nut_inventaire_admin.js').source(t, ROOT, fs, path);
+/* 🛡️ NUT-SECURISATION-P1 (session-B, 23/10/2026, branche isolée — NON DÉPLOYÉ) — le journal alimentaire et les favoris
+   ne perdent plus rien en silence : toute ligne qu'un envoi retire ou corrige est d'abord copiée dans une zone de
+   récupération bornée (`recupNut`, jamais renvoyée à l'app) dont le surplus DÉMÉNAGE, relu, dans le sous-dossier Drive
+   « recup-nut » (Drive en panne : envoi refusé, jamais rien jeté) ; rien n'est réintroduit d'office. Vrai Code.js, Drive
+   en mémoire, données inventées, synchrone. Banc : tools/banc_nut_secu_p1.js · contrôle négatif : tools/mut_nut_secu_p1.py. */
+require('./nut_secu_p1.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

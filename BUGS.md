@@ -4916,3 +4916,52 @@ désormais cette garde devant, et rien d'autre ; son outil de mutations (`tools/
 ligne et la suit. Éprouvé : vert sur master, vert sur la branche, **rouge quand l'exclusion de COHERENT est retirée**.
 ⚠️ La simulation du 20/10 annonçait « 0 témoin existant rouge » pour cette forme : elle n'avait rejoué que les blocs CCXCI,
 CCCV, CCXCIX et CCCII. *Un « aucun témoin ne rougit » ne vaut que pour les témoins rejoués.*
+
+## §97 — ⛔⛔ LE DERNIER APPAREIL QUI ÉCRIT EFFACE LE JOURNAL ALIMENTAIRE DES AUTRES : `_pa_` REMPLACE LA LISTE EN ENTIER *(23/10/2026, NUT-SECURISATION-P1 — branche `claude/nut-securisation-p1`, NON DÉPLOYÉ · numéro choisi après les §95-§96 des branches `dreamy-bell` et `nutrition-v2`)*
+
+**Le constat.** `handleSaveProfile_` écrit le journal et les favoris par `_pa_(body.foodLog, profile.foodLog)`. `_pa_` refuse
+un envoi **vide**, mais **tout envoi non vide remplace la liste du serveur en entier**. Le client envoie toute sa liste locale à
+chaque synchronisation et ne relit jamais le serveur tant que son stockage n'est pas vide. Rejoué sur le vrai `Code.js` (banc
+B-NSP1, données inventées) : un appareil remis à zéro qui saisit un repas → **500 → 1** ; Safari en retard sur l'application
+iPhone (deux stockages distincts) → **300 → 2** ; un appareil en retard → 40 → 30, 60 → 51 ; deux appareils aux historiques
+différents s'effacent l'un l'autre ; favoris **20 → 1** ; une chaîne reçue à la place d'une liste **remplaçait le journal par
+la chaîne**. **Aucune trace** — ni refus, ni journal d'exécution.
+
+**Pourquoi rien ne l'a vu.** Les séances ont un garde-fou depuis le 02/08 (≥ 30 lignes et moins de 60 % gardées) : le journal,
+écrit par la même fonction cinquante lignes plus haut, n'en avait **aucun** — *une règle corrigée dans une collection et pas
+dans sa voisine*, la phrase du §33. ⚠️ Et ce seuil, recopié tel quel, n'aurait vu **ni 40 → 30, ni 20 → 1, ni l'appareil en
+retard** : un seuil sur le NOMBRE de lignes ne distingue pas un écrasement d'une suppression voulue.
+
+**Ce qui est préparé (non déployé, option B validée par Michel — `D-108`).** `_nutProtegerListe_` : l'envoi s'applique
+comme avant (rien n'est réintroduit d'office : une absence est ambiguë), mais toute ligne retirée et l'ancienne version de
+toute ligne corrigée sont **d'abord copiées** dans une zone de récupération `recupNut` à la racine du compte — même écriture
+que le journal, jamais renvoyée à l'app, bornée, avec un événement chiffré sans donnée personnelle. Banc : **26 OK / 48
+rouges** sur le `Code.js` de master → **74 / 0** ; contrôle négatif **37 / 37**. Détail : `docs/NUT-SECURISATION-P1.md`.
+
+**⛔ Le même défaut, revenu par la BORNE — trouvé en finalisant (23/10, condition 3 de Michel).** La 1ʳᵉ version bornait la
+zone en retirant ses copies **les plus anciennes**, « puisqu'elles sont dans les sauvegardes de la nuit ». **Faux** : un repas
+saisi le matin et retiré l'après-midi n'est dans **aucune** sauvegarde. Rejoué : 10 repas du jour + deux écrasements avant la
+nuit → **10 introuvables** ; favoris écrasés lot après lot → **340 perdus** ; **12 témoins rouges** à la découverte (15 sur les 74 du banc
+final). *Une borne qui jette
+est une perte silencieuse qui a changé d'adresse.* Correction : le surplus **déménage** dans un fichier Drive **relu** avant
+de quitter la zone ; si Drive refuse ou relit autre chose, l'envoi de la liste est **refusé** (retardé, jamais perdu —
+`D-109`, proposé). ⚠️ **Et un 3ᵉ piège, attrapé par un témoin avant d'arriver** : rangé à côté des sauvegardes, ce fichier
+devenait pour la sonde `checkBackup` « la dernière sauvegarde » — **il aurait masqué une nuit sans sauvegarde**, la panne de
+36 jours que cette sonde surveille. D'où le sous-dossier `recup-nut/`, qu'aucun lecteur existant ne parcourt.
+👉 *Avant de ranger un fichier dans un dossier existant, chercher TOUS ceux qui le lisent — et ce qu'ils déduisent du
+fichier le plus récent.*
+
+**⛔ Et le refus lui-même, attrapé à la vérification 5 avant publication (23/10 — NON publié).** `D-109` refuse l'envoi
+d'une liste quand la zone déborde et que Drive ne répond pas : « retardé, jamais perdu », **parce que l'appareil garde
+sa liste**. Vrai… tant que rien ne la remplace. Or « Restaurer mon compte » **remplace** les favoris de l'appareil par
+ceux du serveur — qui, pendant le refus, sont justement les anciens. Rejoué bout en bout (vraie app + vrai `Code.js`) :
+**4 favoris neufs et 2 modifiés introuvables partout** ; le journal, **fusionné** à la restauration, ne perd rien.
+👉 *Un refus « sans perte » ne l'est que si TOUTES les portes qui réécrivent la donnée locale la fusionnent — un refus
+côté serveur se vérifie jusqu'au bout de l'app, pas seulement au serveur.* Décision attendue : `D-110`.
+
+**À quoi on le reconnaît.** Une liste synchronisée « en entier » par un client qui ne relit pas le serveur : **le dernier qui
+écrit gagne, et ce qu'il n'avait pas disparaît**. Voisins : §33 (le dernier qui écrit efface l'autre), la restauration par
+union (ft-v1241 séances, ft-v1247 journal) — la même famille côté **client**, réglée avant que le côté **serveur** le soit.
+⚠️ **Et un piège de harnais au passage** : le faux `Utilities.base64Decode` du banc A1 rendait un objet au lieu d'octets ;
+`_packUser_` ne se relisait pas et n'osait jamais compresser — la première mesure de taille affichait **167 Ko « compressés »**
+pour 30 Ko réels. *Une mesure qui passe par un double doit d'abord prouver que le double fait ce que fait le vrai.*
