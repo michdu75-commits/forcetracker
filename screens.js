@@ -264,7 +264,7 @@ const _HELP_DATA={
          d'un repas comptent encore une valeur inconnue comme 0 (point ouvert, non corrigé). */
       {i:'⚖️',t:'<b>Combien tu en as mangé : les grammes d\'abord.</b> L\'ajout d\'un aliment s\'ouvre sur <b>⚖️ En grammes</b> (<b>🥛 En ml</b> juste à côté — une boisson scannée se compte en ml). <b>Sans quantité, rien ne s\'enregistre</b> : l\'app ne devine pas ce que tu as mangé. 🍽️ <b>Une portion</b> (« 2 steaks ») se note avec <b>son nom et le poids d\'UNE portion</b> : sans ce poids, ce n\'est pas une quantité, et l\'écran te le demande — il te le <b>redemande</b> si « 1 portion » change de sens (une valeur retouchée, un retour sur l\'onglet). ⭐ Quand ce poids est connu, l\'app dit les deux : « <b>3 portions (450 g)</b> » — dans « Mes aliments », à la reprise, dans « Modifier » et dans l\'ajout. Le total entre parenthèses est calculé ; les <b>grammes restent la base</b> du calcul. ⚠️ Pour un aliment dont l\'app ne peut pas prouver le poids d\'une portion (noté avant cette façon de compter), elle dit « <b>2 portions</b> », sans grammes : elle n\'affirme pas un poids qu\'elle ne connaît pas.'},
       {i:'👆',t:'<b>Rien n\'est pré-rempli : l\'app propose, tu choisis.</b> Le poids estimé par l\'IA, la portion du fabricant, le paquet entier, « <b>↩ … (la dernière fois)</b> » sont des <b>pastilles</b> : un toucher pose la quantité, sinon le champ reste vide. ❓ Une valeur que la source ne donne pas s\'affiche « <b>?</b> » sur sa ligne du journal — jamais 0 — et le haut du jour dit « <b>Total partiel</b> » : elle n\'est ni comptée, ni inventée.'},
-      {i:'↩️',t:'<b>Reprendre un aliment déjà noté.</b> Depuis « Mes aliments » ou la recherche dans ton journal : s\'il a une <b>fiche vérifiée</b> (code-barres, base d\'aliments ou valeurs pour 100 g notés avec cette façon de compter, ou un aliment de la base retrouvé à l\'identique), ta quantité <b>recalcule</b> ses valeurs. Sinon (un produit scanné avant, par exemple), ses valeurs sont reprises <b>telles quelles</b>, pour la quantité notée la dernière fois : pour une autre quantité, corrige les valeurs — ou retrouve l\'aliment par la recherche ou le scan, et elles se calculeront. ✎ <b>« Modifier » remplace la ligne</b> : une valeur que tu corriges à la main y garde la trace de son calcul.'},
+      {i:'↩️',t:'<b>Reprendre un aliment déjà noté.</b> Depuis « Mes aliments » ou la recherche dans ton journal : s\'il a une <b>fiche vérifiée</b> (code-barres, base d\'aliments ou valeurs pour 100 g notés avec cette façon de compter, ou un aliment de la base retrouvé à l\'identique), ta quantité <b>recalcule</b> ses valeurs. Sinon (un produit scanné avant, par exemple), ses valeurs sont reprises <b>telles quelles</b>, pour la quantité notée la dernière fois : pour une autre quantité, corrige les valeurs — ou retrouve l\'aliment par la recherche ou le scan, et elles se calculeront. ⚠️ <b>« à vérifier »</b> : ses valeurs se contredisent (avec sa fiche, avec la fiche vérifiée du même produit, ou avec sa quantité) — <b>« + Ajouter »</b> ouvre alors l\'écran au lieu de les recopier, et rien ne s\'écrit sans « Ajouter ». <b>« non vérifié »</b> : des valeurs reprises d\'une ancienne ligne qu\'aucune fiche ne confirme. ✎ <b>« Modifier » remplace la ligne</b> : une valeur que tu corriges à la main y garde la trace de son calcul.'},
       /* 🏃 RÈGLE D'OR #11, POINT 3 — D-020 + D-021 (24-25/09/2026). */
       {i:'🏃',t:'<b>Ton niveau d\'activité doit venir de toi.</b> Sans lui (Profil → Activité), l\'app n\'invente pas de plan. S\'il date d\'avant (l\'app mettait « Modéré » toute seule), une carte en haut te demande de le <b>confirmer</b> ou de le <b>modifier</b> — une seule fois.'},
       /* ⚖️ ft-v1159 — CE QU'ON NE DEVINE PAS, ET MICHEL EN EST LA PREUVE : c'est l'AUTEUR de
@@ -3899,18 +3899,24 @@ function renderFoodJournal(){
      un bloc vide serait un reproche déguisé (R24). */
   try{
     const habitudes=(typeof _repasHabituels==='function')?_repasHabituels():[];
+    const vf=(habitudes.length && typeof _n2FichesVerifiees==='function')?_n2FichesVerifiees():null;
     if(habitudes.length){
       html+=`<div style="margin-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;">Tes repas habituels</div>`
         +`<div style="display:flex;flex-direction:column;gap:6px;">`;
       habitudes.forEach((r,idx)=>{
         const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(r.meal):{ic:'🍽️',lbl:''};
-        const k=r.items.reduce((a,e)=>a+(e.kcal||0),0);
-        const p=r.items.reduce((a,e)=>a+(e.prot||0),0);
+        /* ⭐ INCIDENT DU 23/10 — les totaux de CE QUI SERA ÉCRIT (`_habApercu`, app.js), jamais un inconnu compté 0, et ce qui ne
+           le sera pas, compté à part : la carte dit ce que le « + » fera. */
+        const ha=(typeof _habApercu==='function')?_habApercu(r, vf):null;
+        const k=ha ? (ha.nk ? ha.kcal : '?') : r.items.reduce((a,e)=>a+(e.kcal||0),0);
+        const p=ha ? (ha.np ? ha.prot : '?') : r.items.reduce((a,e)=>a+(e.prot||0),0);
+        const totaux=(!ha || ha.n) ? `${k} kcal · ${p} g de protéines${ha && ha.partiel ? ' (total partiel)' : ''} · ` : '';
+        const reste=ha ? ((ha.aVerifier ? ` · ${ha.aVerifier} à vérifier` : '') + (ha.aCompleter ? ` · ${ha.aCompleter} à compléter` : '')) : '';
         const noms=r.items.map(e=>e.name).join(' + ');
         html+=`<button onclick="_habChoisirMoment('hab-m-${idx}')" class="btn btn-bg2" style="display:flex;align-items:center;gap:10px;text-align:left;padding:11px 12px;width:100%;">`
           +`<span style="font-size:18px;flex:none;">${mi.ic}</span>`
           +`<span style="flex:1;min-width:0;"><span style="display:block;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote?_escNote(noms):noms}</span>`
-          +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${k} kcal · ${p} g de protéines · noté ${r.n} fois</span></span>`
+          +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${totaux}noté ${r.n} fois${reste}</span></span>`
           +`<span style="flex:none;color:var(--red);font-size:19px;font-weight:800;">+</span></button>`;
         /* ⏰ LA RANGÉE DES MOMENTS (ft-v1052) — repliée, dépliée par un tap sur la carte.
            ⭐ `FOOD_MEALS` est le seul propriétaire de la liste (R2) : on ne la recopie pas ici.

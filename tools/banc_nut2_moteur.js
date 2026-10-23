@@ -257,6 +257,19 @@ try { (() => {
     return a.ok && a.ligne.codeDouteux === true && a.ligne.kcalDerivee === true && a.ligne.doute.length === 90 &&
       b.ok && !('codeDouteux' in b.ligne) && !('kcalDerivee' in b.ligne) || J([a.ligne, b.ligne]);
   });
+  /* Incident du 23/10 (D-101 ④) : la 1ʳᵉ modification faisait d'une ancienne ligne une ligne V2 — et la 2ᵉ ne recopiait plus
+     sa copie d'origine (mesuré à l'écran, B-NV2P P15 ㉘). */
+  essai('B-NV2-E ㉑ ⛔⛔ la copie d\'origine SURVIT aux modifications suivantes : 2ᵉ et 3ᵉ remplacement, `n2.av` est toujours l\'ancienne ligne, COPIÉE (jamais partagée, jamais la version intermédiaire)', () => {
+    const vieille = geler({ id: 'vieille-0002', date: '2026-09-02', meal: 'collation', name: 'Iso fictif', kcal: 156, prot: 26, carbs: 1, fat: 1,
+                            ts: 1756800000000, v: 1, saisie: 'liste', origine: 'reprise', q: 40, u: 'g', per100: null });
+    const avant = J(vieille);
+    const a = N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', remplace: vieille }));
+    const b = a.ok ? N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', remplace: a.ligne })) : a;
+    const c = b.ok ? N.ligneNouvelle(Object.assign(ent(PESEE), { id: 'vieille-0002', remplace: b.ligne })) : b;
+    return a.ok && b.ok && c.ok && J(b.ligne.n2.av) === avant && J(c.ligne.n2.av) === avant
+      && b.ligne.n2.av !== a.ligne.n2.av && c.ligne.n2.av !== b.ligne.n2.av && b.ligne.n2.av.saisie === 'liste' && J(vieille) === avant
+      || J([a.ligne && a.ligne.n2, b.ligne && b.ligne.n2, c.ligne && c.ligne.n2]);
+  });
 
   console.log('\n═══ B-NV2-A. L\'ADAPTATEUR DES ANCIENNES LIGNES — LECTURE SEULE ═══');
   /* Des lignes FICTIVES, une par génération du format (docs/NUTRITION-V2-ARCHITECTURE.md §3.2), GELÉES. */

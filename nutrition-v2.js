@@ -236,16 +236,22 @@
     /* ⭐ UNE MODIFICATION À LA MAIN EST CONSERVÉE ET TRACÉE (jalon 4) : quand une ligne est remplacée par sa version
        modifiée, elle ne peut remplacer QU'ELLE-MÊME (même `id`) ; une ANCIENNE ligne (sans `n2`) garde sa copie
        d'origine intégrale dans `n2.av` — rien de ce qu'elle portait n'est perdu. Une ligne V2 n'en a pas besoin :
-       ses corrections sont déjà tracées une à une (`n2.corr`). */
+       ses corrections sont déjà tracées une à une (`n2.corr`).
+       ⛔⛔ ET LA COPIE D'ORIGINE SURVIT AUX MODIFICATIONS SUIVANTES (incident du 23/10, D-101 ④) : la 1ʳᵉ modification
+       d'une ancienne ligne en fait une ligne V2 — qui portait `n2.av`, mais que la 2ᵉ ne recopiait plus (« une ligne V2
+       n'en a pas besoin ») : l'original disparaissait au 2ᵉ « Enregistrer » (mesuré, B-NV2P P15 ㉘). Elle passe
+       maintenant de version en version, telle quelle — jamais la version intermédiaire à sa place : la provenance
+       d'origine (saisie, origine, valeurs, quantité) reste celle de la ligne d'avant V2. */
     if (e.remplace !== undefined && e.remplace !== null) {
       var rp = e.remplace;
       if (typeof rp !== 'object' || Array.isArray(rp)) return ko('REMPLACE_INVALIDE');
       if (rp.id !== e.id) return ko('REMPLACE_AUTRE_LIGNE');
-      if (!rp.n2) {
-        var av;
-        try { av = JSON.parse(JSON.stringify(rp)); } catch (err) { return ko('REMPLACE_INVALIDE'); }
-        n2.av = av;
-      }
+      var av = null;
+      try {
+        if (!rp.n2) av = JSON.parse(JSON.stringify(rp));
+        else if (rp.n2.av && typeof rp.n2.av === 'object') av = JSON.parse(JSON.stringify(rp.n2.av));
+      } catch (err) { return ko('REMPLACE_INVALIDE'); }
+      if (av) n2.av = av;
     }
     L.n2 = n2;
     return { ok: true, ligne: L };

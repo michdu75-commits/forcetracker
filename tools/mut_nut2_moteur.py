@@ -72,7 +72,7 @@ MUT = [
   ('MN21 écrivain : une note libre est acceptée (la liste n\'est plus fermée)',
    "if (NOTES_ENTREE.indexOf(e.notes[i]) < 0) return ko('NOTE_INVALIDE', String(e.notes[i]));",
    "if (typeof e.notes[i] !== 'string') return ko('NOTE_INVALIDE', String(e.notes[i]));", 'B-NV2-E ⑯'),
-  ('MN22 écrivain : une ancienne ligne modifiée perd sa copie d\'origine', "        n2.av = av;\n", "\n", 'B-NV2-E ⑰'),
+  ('MN22 écrivain : une ancienne ligne modifiée perd sa copie d\'origine', "      if (av) n2.av = av;\n", "\n", 'B-NV2-E ⑰'),
   ('MN23 écrivain : une ligne peut en remplacer une AUTRE',
    "      if (rp.id !== e.id) return ko('REMPLACE_AUTRE_LIGNE');\n", "\n", 'B-NV2-E ⑰'),
   ('MN24 écrivain : le nom de l\'aliment de la fiche n\'est pas gardé',
@@ -97,6 +97,15 @@ MUT = [
    "      if (nt) L.fiab = tr;", "      if (nt) L.fiab = e.trace;", 'B-NV2-E ⑲'),
   ('MN31 écrivain : un signal « vrai-ish » (texte, 1) devient un signal posé',
    "      if (sg.codeDouteux === true) L.codeDouteux = true;", "      if (sg.codeDouteux) L.codeDouteux = true;", 'B-NV2-E ⑳'),
+  # ── incident du 23/10 (C) : la copie d'origine survit à la 2ᵉ modification ──
+  ('MN32 écrivain : la 2ᵉ modification perd la copie d\'origine (la ligne V2 ne la transmet plus)',
+   "        else if (rp.n2.av && typeof rp.n2.av === 'object') av = JSON.parse(JSON.stringify(rp.n2.av));\n", "\n", 'B-NV2-E ㉑'),
+  ('MN33 écrivain : la copie d\'origine est PARTAGÉE d\'une version à l\'autre (plus copiée)',
+   "        else if (rp.n2.av && typeof rp.n2.av === 'object') av = JSON.parse(JSON.stringify(rp.n2.av));",
+   "        else if (rp.n2.av && typeof rp.n2.av === 'object') av = rp.n2.av;", 'B-NV2-E ㉑'),
+  ('MN34 écrivain : la 2ᵉ modification met la version INTERMÉDIAIRE à la place de l\'original',
+   "        else if (rp.n2.av && typeof rp.n2.av === 'object') av = JSON.parse(JSON.stringify(rp.n2.av));",
+   "        else av = JSON.parse(JSON.stringify(rp));", 'B-NV2-E ㉑'),
 ]
 
 def banc(cible):

@@ -154,19 +154,54 @@ function fixtureD103() {
   } catch (e) {} })();`;
 }
 
+/* ── P15 — L'INCIDENT DU 23/10 (mission de Michel) : des valeurs CORROMPUES lors des REPRISES. Données INVENTÉES, inspirées
+   des anomalies réelles : l'Iso Zero (un scan de 40 g juste, puis un couple 156 kcal / 26 g de protéines recopié de favori en
+   historique), un favori affiché 400 kcal et ajouté 480, la copie d'origine perdue à la 2ᵉ modification, deux produits du
+   même nom. ⛔ Oracles À LA MAIN :
+   Iso (Open Food Facts SIMULÉ) pour 100 g 389 · 88 · 3 · 3 → 40 g = 155,6 → 156 · 35,2 → 35 · 1,2 → 1 · 1,2 → 1 ;
+     50 g = 194,5 → 195 · 44 · 1,5 → 2 · 1,5 → 2.
+   Yaourt A 80 · 4 · 10 · 3 pour 100 g, 1 pot de 125 g = 100 · 5 · 12,5 → 13 · 3,75 → 4 (redéfini à 150 g : 120 · 6 · 15 · 4,5 → 5) ;
+   Yaourt B 120 · 3 · 15 · 5 pour 100 g, 1 pot de 150 g = 180 · 4,5 → 5 · 22,5 → 23 · 7,5 → 8.
+   Pot : 1 pot de 125 g tapé 200 · 10 · 20 · 8 → fiche 160 · 8 · 16 · 6,4 pour 100 g ; 2 pots = 250 g = 400 · 20 · 40 · 16 ;
+     la même fiche pour 2 pots de 150 g = 300 g = 480 · 24 · 48 · 19,2 → 19 (les 480 de « + Ajouter »). ── */
+const EAN_ISO = '3000000000501', EAN_YA = '3000000000502', EAN_YB = '3000000000503';
+const ISO = { status: 1, product: { code: EAN_ISO, product_name_fr: 'Iso P15 (test)', quantity: '1 kg', product_quantity_unit: 'g',
+  nutriments: { 'energy-kcal_100g': 389, proteins_100g: 88, carbohydrates_100g: 3, fat_100g: 3 } } };
+/* Un favori d'AVANT V2 (sans code-barres — mesuré : V1 n'en recopiait aucun) : le pour-100 g de la fiche, mais 26 g de protéines
+   pour 40 g (une correction PARTIELLE, M4) — il se contredit lui-même. */
+const P15_FAV_ISO = { name: 'Iso P15 (test)', kcal: 156, prot: 26, carbs: 1, fat: 1, per100: { kcal: 389, prot: 88, carbs: 3, fat: 3 },
+  q: 40, u: 'g', portionLabel: null, portionWeightG: null };
+/* Une copie d'AVANT V2 du même produit (son code-barres), au pour-100 g DÉRIVÉ de ses propres valeurs : cohérente en elle-même,
+   fausse face à la fiche — seule une fiche VÉRIFIÉE du MÊME code-barres peut le dire. */
+const P15_COPIE_ISO = { meal: 'collation', name: 'Iso P15 (test)', kcal: 156, prot: 26, carbs: 1, fat: 1, v: 1, saisie: 'liste', origine: 'reprise',
+  q: 40, u: 'g', etat: 'tel-que-vendu', sourceId: EAN_ISO, per100: { kcal: 390, prot: 65, carbs: 2.5, fat: 2.5 } };
+function fixtureIncident(cle, favoris) {
+  return `(() => { try {
+    if (sessionStorage.getItem('${cle}')) return; sessionStorage.setItem('${cle}', '1');
+    localStorage.clear();
+    localStorage.setItem('ft4_ob2','1'); localStorage.setItem('ft4_guide_shown','1'); localStorage.setItem('ft4_wn_seen','99');
+    localStorage.setItem('ft4_foodlog', '[]');
+    localStorage.setItem('ft4_savedfoods', JSON.stringify(${JSON.stringify(favoris || [])}));
+  } catch (e) {} })();`;
+}
+
 /* ── LES GESTES — au pointeur ; un geste raté rend FAUX (il ne ressemble jamais à un vert) ── */
 const clic = async (pg, sel) => { try { await pg.click(sel, { timeout: 4000 }); return true; } catch (e) { return false; } };
 const taper = async (pg, sel, v) => { try { await pg.fill(sel, String(v)); await pg.waitForTimeout(140); return true; } catch (e) { return false; } };
 const pause = (pg, ms) => pg.waitForTimeout(ms);
-async function ouvrir(b, PORT, fix) {
+async function ouvrir(b, PORT, fix, off) {
   const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
   const pg = await cx.newPage();
   const erreurs = [];
   pg.on('pageerror', (e) => erreurs.push(String(e && e.message || e).slice(0, 160)));
   pg.on('dialog', (d) => d.accept());
-  /* ⛔ Open Food Facts n'est JAMAIS joint : la fiche du jus est servie ici. */
-  await pg.route(/openfoodfacts/, (r) => r.fulfill({ status: 200, contentType: 'application/json',
-    body: JSON.stringify(r.request().url().indexOf(EAN_JUS) >= 0 ? JUS : { status: 0 }) }));
+  /* ⛔ Open Food Facts n'est JAMAIS joint : les fiches sont servies ici (le jus par défaut ; un bloc peut servir les siennes,
+     et une liste de résultats pour la recherche par nom — vide par défaut, comme avant). */
+  const OFF = off || { produits: { [EAN_JUS]: JUS }, recherche: [] };
+  await pg.route(/openfoodfacts/, (r) => { const u = r.request().url();
+    if (/search/.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ products: OFF.recherche || [] }) });
+    const ean = Object.keys(OFF.produits || {}).find((e) => u.indexOf(e) >= 0);
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ean ? OFF.produits[ean] : { status: 0 }) }); });
   await pg.addInitScript(fix || fixture());
   await pg.goto('http://localhost:' + PORT + '/index.html');
   await pause(pg, 1500);
@@ -1068,6 +1103,380 @@ async function ecran(t, b, PORT) {
       J({ pz, r19, l19: forme(l19), favAvant, favApres19 }));
     t('B-NV2P P14 ⑮ aucune erreur de page sur D-103', p14.erreurs.length === 0 && v2.length === 0, J({ erreurs: p14.erreurs, v2 }));
   } finally { await p14.cx.close(); }
+
+  await incident(t, b, PORT);
 }
 
-module.exports = { ecran };
+/* ═══ P15 L'INCIDENT DU 23/10 — UNE RÉFÉRENCE REPRISE NE S'ÉCRIT QUE TELLE QU'ELLE S'AFFICHE ═══
+   Mission de Michel (23/10) : *« les valeurs affichées avant l'ajout doivent être exactement celles enregistrées dans le
+   journal »* ; une référence ancienne ou incohérente n'écrase pas en silence une référence plus fiable ; jamais deux
+   produits identifiés par leur seul nom ; la copie d'origine survit à la 2ᵉ modification ; une valeur inconnue n'est jamais
+   0. ⛔ Ce bloc a été écrit et JOUÉ SUR LE CODE D'AVANT LE CORRECTIF (ses rouges sont consignés dans `BUGS.md` §98). */
+async function incident(t, b, PORT) {
+  console.log('\n-- B-NV2P P15. L\'INCIDENT DU 23/10 — les reprises ne corrompent plus les valeurs (données inventées) --');
+  const OFFI = { produits: { [EAN_ISO]: ISO }, recherche: [ISO.product] };
+  const nb = (x) => String(x || '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+  const forme = (l) => l ? { q: l.q, u: l.u, kcal: l.kcal, prot: l.prot, carbs: l.carbs, fat: l.fat, sid: l.sourceId || null, m: (l.n2 && l.n2.m) || null } : null;
+  /* Des lignes SEMÉES sur la page, chacune k jours avant (date ET heure cohérentes : l'ordre « le plus récent » en dépend).
+     Une ligne d'avant V2 est posée telle quelle ; une ligne V2 est écrite par le moteur, comme l'app l'écrit. */
+  const semer = (pg, spec) => pg.evaluate((spec) => {
+    const pad = (n) => String(n).padStart(2, '0'), J0 = (k) => { const x = new Date(); x.setDate(x.getDate() - k); return x.getFullYear() + '-' + pad(x.getMonth() + 1) + '-' + pad(x.getDate()); };
+    const err = [];
+    spec.forEach((s) => {
+      const ts = Date.now() - s.k * 864e5;
+      if (s.v2) { const r = NUT2.ligneNouvelle(Object.assign({}, s.v2, { ts: ts, date: J0(s.k) })); if (r.ok) S.foodLog.push(r.ligne); else err.push(s.v2.nom + ':' + r.erreur); }
+      else S.foodLog.push(Object.assign({}, s.v1, { ts: ts, date: J0(s.k) }));
+    });
+    persist(); renderFoodJournal(); return err;
+  }, spec);
+  const items = (pg) => pg.evaluate(() => (_afQuickItems || []).map((it, i) => {
+    const el = document.querySelectorAll('#af-quick-list div[onclick^="quickFillFood"]')[i], s = it._src || {};
+    return { i: i, nom: it.name, fav: !!it.fav, sid: s.sourceId || null, id: s.id || null, m: (s.n2 && s.n2.s === 1) ? s.n2.m : null,
+             txt: (el && el.children[1]) ? el.children[1].textContent : '' }; }));
+  const fermer = (pg) => pg.evaluate(() => { try { closeAddFood(); } catch (e) {} document.querySelectorAll('.overlay.open').forEach((x) => x.classList.remove('open')); });
+  const vider = (pg) => pg.evaluate(() => { const v = (window.__toasts || []).slice(); window.__toasts = []; return v; });
+  const favoris = (pg) => pg.evaluate(() => JSON.parse(JSON.stringify(S.savedFoods || [])));
+  const ids = async (pg) => (await journal(pg)).map((x) => x.id);
+  const ajoutRapide = async (pg, it) => { if (!it) return false; const ok = await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + it.i + ')"]'); await pause(pg, 400); return ok; };
+  const etoile = async (pg, it) => { if (!it) return false; const ok = await clic(pg, '#af-quick-list button[onclick="toggleFavFood(' + it.i + ')"]'); await pause(pg, 300); return ok; };
+  const supprimer = async (pg, it) => { if (!it) return false; let ok = await clic(pg, '#af-quick-list button[onclick="deleteQuickFood(' + it.i + ')"]'); await pause(pg, 250);
+    ok = ok && await clic(pg, '#confirm-ok'); await pause(pg, 300); return ok; };
+  const ecranOuvert = (pg) => pg.evaluate(() => { const o = document.getElementById('ov-add-food'), r = document.getElementById('af-bc-row'), p = document.getElementById('af-bc-last');
+    return { ouvert: !!(o && o.classList.contains('open')), desc: (document.getElementById('af-desc') || {}).value || '', bloc: !!(r && r.style.display !== 'none'),
+             pastille: !!(p && p.style.display === 'inline-block'), fige: (document.getElementById('af-prop-row') || { textContent: '' }).textContent,
+             fiche: (document.getElementById('af-bc-name') || { textContent: '' }).textContent }; });
+  const carte = (pg, re) => pg.evaluate((src) => { const r = new RegExp(src); const x = [...document.querySelectorAll('[onclick^="_habChoisirMoment"]')].find((e) => r.test(e.textContent)); return x ? x.textContent : ''; }, re);
+  const rejouer = (pg, nom) => pg.evaluate((n) => { const h = (_repasHabituels() || []).find((x) => x && (x.items || []).some((it) => it && it.name === n)); if (h) rejouerRepas(h.sig, 'collation2'); return !!h; }, nom);
+
+  /* ── page 1 : L'ISO — un favori d'avant V2 qui se contredit, deux copies d'avant V2 du même code-barres (la plus récente
+     après les lignes justes), deux lignes V2 justes (le scan d'origine, comme le 23/08). ── */
+  const p1 = await ouvrir(b, PORT, fixtureIncident('__nv2u1', [P15_FAV_ISO]), OFFI);
+  try {
+    const pg = p1.pg;
+    await capterToasts(pg);
+    await pg.evaluate(() => setFoodMeal('collation2'));   // ⏰ le repas des ajouts, qu'aucune ligne semée n'emploie (leçon de P12 ①)
+    const v2iso = (id, k) => ({ k: k, v2: { id: id, repas: 'petitdej', nom: 'Iso P15 (test)', origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee',
+      fiche: { base: 'g', p100: { kcal: 389, prot: 88, carbs: 3, fat: 3 }, cle: EAN_ISO, source: 'off', fiab: 'source', etat: 'tel-que-vendu' },
+      quantite: { val: 40, unite: 'g', origine: 'tapee' } } });
+    const err1 = await semer(pg, [v2iso('nv2u-V4-00000004', 4), v2iso('nv2u-V3-00000003', 3),
+      { k: 2, v1: Object.assign({ id: 'nv2u-I2-00000002' }, P15_COPIE_ISO) }, { k: 1, v1: Object.assign({ id: 'nv2u-I1-00000001' }, P15_COPIE_ISO) }]);
+    const semees1 = J(await journal(pg));
+    const iso = (L) => L.filter((x) => x.nom === 'Iso P15 (test)');
+    const favIso = (L) => L.find((x) => x.nom === 'Iso P15 (test)' && x.fav && !x.sid) || null;
+    const verif = (L) => L.find((x) => x.nom === 'Iso P15 (test)' && !x.fav && x.m === 'p') || null;
+    const copie = (L) => L.find((x) => x.nom === 'Iso P15 (test)' && !x.fav && x.sid === EAN_ISO && x.m !== 'p') || null;
+
+    let g = await ouvrirAjout(pg);
+    let L1 = await items(pg);
+    t('B-NV2P P15 ① ⛔⛔ UNE RÉFÉRENCE PLUS FIABLE N\'EST JAMAIS CACHÉE : sous un favori d\'avant V2 du même NOM et sous une copie plus RÉCENTE du même code-barres, la ligne V2 vérifiée est dans « Mes aliments » — 40 g · 156 kcal · P 35 · G 1 · L 1',
+      g && err1.length === 0 && !!verif(L1) && /^40 g · 156 kcal · P 35 · G 1 · L 1/.test(nb(verif(L1).txt)), J({ err1, iso: iso(L1) }));
+    t('B-NV2P P15 ② ⛔⛔ UNE RÉFÉRENCE QUI SE CONTREDIT N\'EST PAS PRÉSENTÉE COMME VÉRIFIÉE : le favori (26 g de protéines pour une fiche à 88 g/100 g) et la copie (≠ la fiche vérifiée du MÊME code-barres) disent « à vérifier » — la ligne vérifiée, non',
+      !!favIso(L1) && /à vérifier/.test(nb(favIso(L1).txt)) && !!copie(L1) && /à vérifier/.test(nb(copie(L1).txt)) && !!verif(L1) && !/à vérifier/.test(nb(verif(L1).txt)), J(iso(L1)));
+    /* ③ la recherche dans ton journal (« Déjà noté par toi ») : la même règle, et la même ligne affichée (quantité, valeurs, état) */
+    const h3 = await pg.evaluate(() => { _afSuggLoc = _afSuggLocales('Iso P15'); _afSuggCiq = []; _afSuggOff = []; _afSuggMarq = []; _afSuggRendu();
+      return { lignes: _afSuggLoc.map((e) => ({ id: e.id, m: (e.n2 && e.n2.s === 1) ? e.n2.m : null, prot: e.prot })),
+               txt: [...document.querySelectorAll('#af-sugg [onclick^="_afSuggPrendreLocale"]')].map((x) => x.textContent) }; });
+    t('B-NV2P P15 ③ ⛔⛔ « DÉJÀ NOTÉ PAR TOI » : la ligne vérifiée est proposée (pas seulement la copie la plus récente), et chaque proposition dit sa quantité et son état — « 40 g · 156 kcal · P 35 » sans réserve, « P 26 » « à vérifier »',
+      h3.lignes.some((x) => x.m === 'p' && x.prot === 35) && h3.txt.some((x) => /40 g · 156 kcal · P 35 · G 1 · L 1/.test(nb(x)) && !/à vérifier/.test(nb(x)))
+      && h3.txt.some((x) => /P 26/.test(nb(x)) && /à vérifier/.test(nb(x))), J(h3));
+
+    /* ④ ⑤ « Tes repas habituels » : la dernière version de l'habitude est la copie — elle n'est pas re-notée en silence */
+    await fermer(pg); await pg.evaluate(() => renderFoodJournal()); await pause(pg, 200);
+    const hab = await carte(pg, 'Iso P15');
+    const idsR = await ids(pg); await vider(pg);
+    const gR = await rejouer(pg, 'Iso P15 (test)'); await pause(pg, 400);
+    const nR = neuves(await journal(pg), idsR), mR = await vider(pg);
+    t('B-NV2P P15 ④ ⛔⛔ « TES REPAS HABITUELS » : la copie qui contredit la fiche vérifiée n\'est PAS re-notée — rien n\'est écrit, et le message la nomme « à vérifier »',
+      gR && nR.length === 0 && mR.some((m) => /à vérifier/i.test(m) && /Iso P15/.test(m)), J({ nR: nR.map(forme), mR }));
+    t('B-NV2P P15 ⑤ ⭐ … et la carte le disait AVANT le geste : « 1 à vérifier », sans un total qui ne s\'écrirait pas (ni 156 kcal, ni 26 g)',
+      /1 à vérifier/.test(nb(hab)) && !/156 kcal/.test(nb(hab)) && !/26 g/.test(nb(hab)), hab);
+
+    /* ⑥ ⑦ ⑧ « + Ajouter » : ce qui se contredit ouvre l'écran (rien d'écrit) ; ce qui est vérifié s'écrit tel qu'affiché */
+    g = await ouvrirAjout(pg); L1 = await items(pg);
+    let av = await ids(pg); await vider(pg);
+    const gF = await ajoutRapide(pg, favIso(L1));
+    const nF = neuves(await journal(pg), av), eF = await ecranOuvert(pg), mF = await vider(pg);
+    t('B-NV2P P15 ⑥ ⛔⛔ « + AJOUTER » SUR LE FAVORI QUI SE CONTREDIT : RIEN n\'est écrit (ni 156 · 26 recopiés, ni un calcul que la liste ne montrait pas) — l\'écran s\'ouvre sur l\'aliment, le message ET l\'écran disent « à vérifier »',
+      gF && nF.length === 0 && eF.ouvert && eF.desc === 'Iso P15 (test)' && mF.some((m) => /à vérifier/i.test(m)) && /À vérifier : ses valeurs ne correspondent pas à la fiche pour 100 g/.test(nb(eF.fige)),
+      J({ nF: nF.map(forme), eF, mF }));
+    await fermer(pg); g = await ouvrirAjout(pg); L1 = await items(pg); av = await ids(pg);
+    const gC = await ajoutRapide(pg, copie(L1));
+    const nC = neuves(await journal(pg), av);
+    t('B-NV2P P15 ⑦ ⛔⛔ « + AJOUTER » SUR LA COPIE (même code-barres, autres valeurs que la fiche vérifiée) : RIEN n\'est écrit',
+      gC && nC.length === 0, J({ gC, nC: nC.map(forme) }));
+    await fermer(pg); g = await ouvrirAjout(pg); L1 = await items(pg); av = await ids(pg);
+    const gV = await ajoutRapide(pg, verif(L1));
+    const nV = neuves(await journal(pg), av);
+    t('B-NV2P P15 ⑧ ⭐⭐ « + AJOUTER » SUR LA LIGNE VÉRIFIÉE : exactement ce que la liste montrait — 40 g · 156 · 35 · 1 · 1 (à la main), par la fiche, code-barres gardé',
+      gV && nV.length === 1 && J(forme(nV[0])) === J({ q: 40, u: 'g', kcal: 156, prot: 35, carbs: 1, fat: 1, sid: EAN_ISO, m: 'p' }), J({ gV, nV: nV.map(forme) }));
+
+    /* ⑨b la RECHERCHE par nom (Open Food Facts simulé) : la même fiche, les mêmes valeurs */
+    await fermer(pg); g = await ouvrirAjout(pg); av = await ids(pg);
+    g = g && await taper(pg, '#af-desc', 'Iso P15');
+    const gO = await pg.evaluate(async () => { _afSuggOff = await _offRechercher('Iso P15'); if (!_afSuggOff.length) return false; _afSuggPrendreOff(0); return true; });
+    await pause(pg, 300);
+    g = g && gO && await taper(pg, '#af-bc-grams', '40'); await pause(pg, 200);
+    g = g && await ajouter(pg);
+    const n9b = neuves(await journal(pg), av);
+    t('B-NV2P P15 ⑨b ⭐ LA RECHERCHE PAR NOM (Open Food Facts simulé) : la même fiche — 40 g = 156 · 35 · 1 · 1, comme la ligne vérifiée et « + Ajouter »',
+      g && n9b.length === 1 && J(forme(n9b[0])) === J({ q: 40, u: 'g', kcal: 156, prot: 35, carbs: 1, fat: 1, sid: EAN_ISO, m: 'p' }), J({ gO, n9b: n9b.map(forme) }));
+
+    /* ⑨ un SCAN frais (code tapé, fiche simulée) — noté APRÈS la recherche (⑨b) : « Mes aliments » montre UN élément par produit,
+       le plus récent vérifié, et c'est ce scan que l'étoile prendra (⑩) */
+    await fermer(pg); g = await ouvrirAjout(pg); av = await ids(pg);
+    g = g && await taper(pg, '#af-bc-manual', EAN_ISO);
+    g = g && await clic(pg, 'button[onclick="_manualBarcode()"]'); await pause(pg, 800);
+    g = g && await taper(pg, '#af-bc-grams', '50'); await pause(pg, 200);
+    const e9 = await pg.evaluate(() => ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('·'));
+    g = g && await ajouter(pg);
+    const n9 = neuves(await journal(pg), av), l9 = n9[0] || null;
+    t('B-NV2P P15 ⑨ ⭐ UN SCAN FRAIS EST JUSTE : 50 g = 195 · 44 · 2 · 2 (à la main) — l\'écran les montrait, la ligne les porte',
+      g && e9 === '195·44·2·2' && n9.length === 1 && J(forme(l9)) === J({ q: 50, u: 'g', kcal: 195, prot: 44, carbs: 2, fat: 2, sid: EAN_ISO, m: 'p' }), J({ e9, n9: n9.map(forme) }));
+    /* ⑩ l'ÉTOILE sur le scan : elle agit sur CETTE ligne, pas sur un nom */
+    await fermer(pg); g = await ouvrirAjout(pg); L1 = await items(pg);
+    const frais = L1.find((x) => !x.fav && x.id === (l9 && l9.id)) || null;
+    const gS = await etoile(pg, frais);
+    const F10 = await favoris(pg);
+    t('B-NV2P P15 ⑩ ⛔⛔ L\'ÉTOILE AGIT SUR CETTE LIGNE, PAS SUR UN NOM : le scan devient un favori (son code-barres, sa fiche, 50 g) — le favori d\'avant V2 du même nom n\'est ni retiré ni remplacé',
+      gS && F10.length === 2 && F10.some((f) => f.sourceId === EAN_ISO && f.n2 && f.n2.m === 'p' && f.q === 50) && F10.some((f) => J(f) === J(P15_FAV_ISO)), J({ frais, F10 }));
+    /* ⑪ ce que la liste affiche est ce qui s'écrit */
+    L1 = await items(pg);
+    const nouv = L1.find((x) => x.fav && x.sid === EAN_ISO) || null;
+    const t11 = nouv ? nb(nouv.txt) : ''; av = await ids(pg);
+    const g11 = await ajoutRapide(pg, nouv);
+    const n11 = neuves(await journal(pg), av);
+    t('B-NV2P P15 ⑪ ⭐⭐ CE QUE LA LISTE AFFICHE EST CE QUI S\'ÉCRIT : le favori dit « 50 g · 195 kcal · P 44 · G 2 · L 2 », « + Ajouter » écrit 50 g · 195 · 44 · 2 · 2',
+      g11 && /^50 g · 195 kcal · P 44 · G 2 · L 2/.test(t11) && n11.length === 1 && J(forme(n11[0])) === J({ q: 50, u: 'g', kcal: 195, prot: 44, carbs: 2, fat: 2, sid: EAN_ISO, m: 'p' }), J({ t11, n11: n11.map(forme) }));
+    /* ⑫ ⑬ « ✕ » sur le favori d'avant V2 : lui seul part — puis, l'étoile du scan retirée, ses lignes reviennent (rien ne les cache par le NOM) */
+    const favAvant12 = J((await favoris(pg)).find((f) => !f.sourceId && f.name === 'Iso P15 (test)') || null);
+    await fermer(pg); g = await ouvrirAjout(pg); L1 = await items(pg);
+    const g12 = await supprimer(pg, favIso(L1));
+    const F12 = await favoris(pg);
+    t('B-NV2P P15 ⑫ ⛔ « ✕ » SUR LE FAVORI D\'AVANT V2 : lui seul disparaît — le favori du scan (même nom, autre aliment) reste ; et il était intact jusque-là',
+      g12 && favAvant12 === J(P15_FAV_ISO) && !F12.some((f) => !f.sourceId && f.name === 'Iso P15 (test)') && F12.some((f) => f.sourceId === EAN_ISO), J({ g12, F12 }));
+    L1 = await items(pg);
+    const g13 = await etoile(pg, L1.find((x) => x.fav && x.sid === EAN_ISO) || null);
+    L1 = await items(pg);
+    t('B-NV2P P15 ⑬ ⛔⛔ … et RIEN NE CACHE PAR LE NOM ce qui appartient à un autre aliment : l\'étoile du scan retirée, les lignes de son code-barres reviennent dans « Mes aliments »',
+      g13 && L1.some((x) => !x.fav && x.sid === EAN_ISO), J({ g13, iso: iso(L1) }));
+
+    const apres1 = await journal(pg);
+    t('B-NV2P P15 ⑭ ⛔⛔ AUCUNE LIGNE ENREGISTRÉE N\'A BOUGÉ : les 4 lignes semées sont intactes, octet par octet (afficher, vérifier, refuser n\'écrivent rien)',
+      J(apres1.filter((x) => JSON.parse(semees1).some((y) => y.id === x.id))) === semees1, 'les lignes semées ont changé');
+    t('B-NV2P P15 ⑮ aucune erreur de page (Iso)', p1.erreurs.length === 0, J(p1.erreurs));
+  } finally { await p1.cx.close(); }
+
+  /* ── page 2 : DEUX PRODUITS DU MÊME NOM, deux codes-barres (Yaourt A : 1 pot de 125 g ; Yaourt B : 1 pot de 150 g). Le favori
+     du Yaourt A existe déjà, tel que l'étoile l'écrit sur sa ligne V2 (son code-barres, sa fiche, son pot de 125 g). ── */
+  const FAV_YA = { name: 'Yaourt P15 (test)', kcal: 100, prot: 5, carbs: 13, fat: 4, per100: { kcal: 80, prot: 4, carbs: 10, fat: 3 }, q: 1, u: 'portion',
+    portionLabel: 'pot', portionWeightG: 125, sourceId: EAN_YA, etat: 'tel-que-vendu', n2: { s: 1, m: 'p', f: { src: 'off', ver: null, fiab: 'source', base: 'g' } } };
+  const p2 = await ouvrir(b, PORT, fixtureIncident('__nv2u2', [FAV_YA]), OFFI);
+  try {
+    const pg = p2.pg;
+    await capterToasts(pg);
+    await pg.evaluate(() => setFoodMeal('collation2'));
+    const yaourt = (id, k, repas, ean, p100, poids) => ({ k: k, v2: { id: id, repas: repas, nom: 'Yaourt P15 (test)', origine: { saisie: 'code-tape', origine: 'off' },
+      mode: 'pesee', fiche: { base: 'g', p100: p100, cle: ean, source: 'off', fiab: 'source', etat: 'tel-que-vendu' },
+      quantite: { val: 1, unite: 'portion', origine: 'portion', portion: { libelle: 'pot', poids: poids, unite: 'g' } } } });
+    const YA = { kcal: 80, prot: 4, carbs: 10, fat: 3 }, YB = { kcal: 120, prot: 3, carbs: 15, fat: 5 };
+    const err2 = await semer(pg, [yaourt('nv2u-YA-00000003', 3, 'collation', EAN_YA, YA, 125),
+      yaourt('nv2u-YB-00000002', 2, 'dejeuner', EAN_YB, YB, 150), yaourt('nv2u-YB-00000001', 1, 'dejeuner', EAN_YB, YB, 150)]);
+    const semees2 = await journal(pg);
+    const y = (L, sid, fav) => L.find((x) => x.nom === 'Yaourt P15 (test)' && x.sid === sid && !!x.fav === !!fav) || null;
+    const ySid = (L, sid) => L.find((x) => x.nom === 'Yaourt P15 (test)' && x.sid === sid) || null;
+    let g = await ouvrirAjout(pg);
+    let L2 = await items(pg);
+    t('B-NV2P P15 ⑯ ⛔⛔ DEUX PRODUITS DU MÊME NOM (deux codes-barres) : les DEUX sont dans « Mes aliments » — le favori « 1 portion (125 g) · 100 kcal » ne cache pas l\'autre, « 1 portion (150 g) · 180 kcal »',
+      g && err2.length === 0 && !!ySid(L2, EAN_YA) && !!ySid(L2, EAN_YB) && /^1 portion \(125 g\) · 100 kcal/.test(nb(ySid(L2, EAN_YA).txt)) && /^1 portion \(150 g\) · 180 kcal/.test(nb(ySid(L2, EAN_YB).txt)),
+      J(L2.filter((x) => x.nom === 'Yaourt P15 (test)')));
+    const h16 = await pg.evaluate(() => _afSuggLocales('Yaourt P15').map((e) => e.sourceId));
+    t('B-NV2P P15 ⑰ ⛔ … et « Déjà noté par toi » propose les deux (un par code-barres), pas le seul plus récent',
+      h16.indexOf(EAN_YA) >= 0 && h16.indexOf(EAN_YB) >= 0, J(h16));
+    /* ⑲ « Modifier » une ligne du Yaourt B (sans rien toucher), quand le SEUL favori de ce nom est celui du Yaourt A : ft-v1186 ⑤
+       rafraîchit la définition DE CE PRODUIT, jamais celle d'un autre qui porte le même nom */
+    await fermer(pg);
+    g = await pg.evaluate(() => { try { openEditFood('nv2u-YB-00000001'); return true; } catch (e) { return false; } }); await pause(pg, 280);
+    g = g && await clic(pg, '#ov-edit-food button[onclick="saveEditFood()"]'); await pause(pg, 300);
+    const F19 = await favoris(pg);
+    const fA = F19.find((f) => f.sourceId === EAN_YA) || F19.find((f) => f.name === 'Yaourt P15 (test)' && f.kcal === 100) || null;
+    t('B-NV2P P15 ⑲ ⛔⛔ « MODIFIER » LE YAOURT B NE REDÉFINIT PAS LE FAVORI DU YAOURT A : son pot reste de 125 g (le nom est le même, le produit non)',
+      g && !!fA && fA.portionWeightG === 125, J(F19));
+    await fermer(pg); g = await ouvrirAjout(pg); L2 = await items(pg);
+    const gB = await etoile(pg, y(L2, EAN_YB));
+    const F18 = await favoris(pg);
+    t('B-NV2P P15 ⑱ ⛔⛔ L\'ÉTOILE SUR LE YAOURT B : un 2ᵉ favori, avec SON code-barres et SON pot de 150 g — celui du Yaourt A (125 g) n\'est ni retiré ni remplacé',
+      gB && F18.length === 2 && F18.some((f) => J(f) === J(FAV_YA)) && F18.some((f) => f.sourceId === EAN_YB && f.portionWeightG === 150), J(F18));
+    /* ⑳ « + Ajouter » sur le favori du Yaourt A : la liste et la ligne disent la même chose */
+    await fermer(pg); g = await ouvrirAjout(pg); L2 = await items(pg);
+    const favA = L2.find((x) => x.fav && x.nom === 'Yaourt P15 (test)' && (x.sid === EAN_YA || /100 kcal/.test(x.txt))) || null;
+    const t20 = favA ? nb(favA.txt) : ''; let av = await ids(pg);
+    const g20 = await ajoutRapide(pg, favA);
+    const n20 = neuves(await journal(pg), av);
+    t('B-NV2P P15 ⑳ ⭐⭐ « + AJOUTER » SUR LE FAVORI DU YAOURT A : la liste dit « 1 portion (125 g) · 100 kcal · P 5 · G 13 · L 4 », la ligne écrit 1 pot de 125 g = 100 · 5 · 13 · 4 (à la main)',
+      g20 && /^1 portion \(125 g\) · 100 kcal · P 5 · G 13 · L 4/.test(t20) && n20.length === 1 && n20[0].q === 1 && n20[0].portionWeightG === 125
+      && J([n20[0].kcal, n20[0].prot, n20[0].carbs, n20[0].fat]) === J([100, 5, 13, 4]), J({ t20, n20: n20.map(forme) }));
+    /* ㉑ l'habitude du Yaourt B (2 jours en déjeuner) : la carte dit ce qui s'écrit, et ça s'écrit */
+    await fermer(pg); await pg.evaluate(() => renderFoodJournal()); await pause(pg, 200);
+    const hab21 = await carte(pg, 'Yaourt P15');
+    av = await ids(pg);
+    const g21 = await rejouer(pg, 'Yaourt P15 (test)'); await pause(pg, 400);
+    const n21 = neuves(await journal(pg), av);
+    t('B-NV2P P15 ㉑ ⭐ « TES REPAS HABITUELS » (Yaourt B) : la carte dit « 180 kcal · 5 g de protéines », et c\'est ce qui s\'écrit — 1 pot de 150 g = 180 · 5 · 23 · 8 (à la main)',
+      g21 && /180 kcal · 5 g de protéines/.test(nb(hab21)) && n21.length === 1 && n21[0].sourceId === EAN_YB && J([n21[0].kcal, n21[0].prot, n21[0].carbs, n21[0].fat]) === J([180, 5, 23, 8]),
+      J({ hab21, n21: n21.map(forme) }));
+    /* ㉒ « ✕ » sur le favori du Yaourt A : il part seul, rien ne cache le Yaourt B par son nom */
+    g = await ouvrirAjout(pg); L2 = await items(pg);
+    const g22 = await supprimer(pg, L2.find((x) => x.fav && x.sid === EAN_YA) || null);
+    L2 = await items(pg); const F22 = await favoris(pg);
+    const g22b = await etoile(pg, L2.find((x) => x.fav && x.sid === EAN_YB) || null);   // l'étoile du B retirée : ses lignes doivent rester visibles
+    L2 = await items(pg);
+    t('B-NV2P P15 ㉒ ⛔⛔ « ✕ » SUR LE FAVORI DU YAOURT A : lui seul part — le favori du Yaourt B reste, et (son étoile retirée) ses lignes restent dans « Mes aliments »',
+      g22 && g22b && !F22.some((f) => f.sourceId === EAN_YA) && F22.some((f) => f.sourceId === EAN_YB) && L2.some((x) => !x.fav && x.sid === EAN_YB), J({ F22, L2: L2.filter((x) => x.nom === 'Yaourt P15 (test)') }));
+    const apres2 = await journal(pg);
+    t('B-NV2P P15 ㉓ ⛔ les lignes du Yaourt A et du 1ᵉʳ Yaourt B sont intactes (seule la ligne « modifiée » a été réécrite, par son geste)',
+      J(apres2.filter((x) => x.id === 'nv2u-YA-00000003' || x.id === 'nv2u-YB-00000002')) === J(semees2.filter((x) => x.id === 'nv2u-YA-00000003' || x.id === 'nv2u-YB-00000002')), 'lignes changées');
+    t('B-NV2P P15 ㉔ aucune erreur de page (deux produits du même nom)', p2.erreurs.length === 0, J(p2.erreurs));
+  } finally { await p2.cx.close(); }
+
+  /* ── page 3 : LE FAVORI 400 / 480 (par le vrai chemin), LA 2ᵉ MODIFICATION, UNE VALEUR INCONNUE, UNE CORRECTION GARDÉE,
+     UNE QUANTITÉ ABSENTE, HORS LIGNE ── */
+  const p3 = await ouvrir(b, PORT, fixtureIncident('__nv2u3', []), OFFI);
+  try {
+    const pg = p3.pg;
+    await capterToasts(pg);
+    await pg.evaluate(() => setFoodMeal('collation2'));
+    const RIZ1 = { id: 'nv2u-R1-00000001', meal: 'diner', name: 'Riz P15 (test)', kcal: 195, prot: 4, carbs: 42, fat: 1, v: 1, saisie: 'manuel', origine: 'utilisateur',
+      q: 150, u: 'g', per100: null, sourceId: null, etat: null };
+    const err3 = await semer(pg, [
+      { k: 3, v1: { id: 'nv2u-Q1-00000001', meal: 'collation', name: 'Pomme P15 (test)', kcal: 52, prot: 0, carbs: 14, fat: 0, v: 1, saisie: 'manuel', origine: 'utilisateur',
+                    q: null, u: null, per100: null, sourceId: null, etat: null } },
+      { k: 3, v1: { id: 'nv2u-S1-00000001', meal: 'collation', name: 'Shaker P15 (test)', kcal: 156, prot: 26, carbs: 1, fat: 1, v: 1, saisie: 'liste', origine: 'reprise',
+                    q: 5, u: 'g', per100: { kcal: 3120, prot: 520, carbs: 20, fat: 20 }, sourceId: null, etat: null } },
+      { k: 2, v1: RIZ1 },
+      { k: 2, v1: { id: 'nv2u-B1-00000001', meal: 'collation', name: 'Barre P15 (test)', kcal: 230, carbs: 30, fat: 10, v: 1, saisie: 'manuel', origine: 'utilisateur',
+                    q: 50, u: 'g', per100: null, sourceId: null, etat: null } },
+      { k: 1, v2: { id: 'nv2u-G1-00000001', repas: 'diner', nom: 'Galette P15 (test)', origine: { saisie: 'code-tape', origine: 'off' }, mode: 'pesee',
+                    fiche: { base: 'g', p100: { kcal: 180, prot: 6, carbs: 30, fat: 4 }, cle: '3000000000504', source: 'off', fiab: 'source' },
+                    quantite: { val: 2, unite: 'portion', origine: 'portion', portion: { libelle: 'part', poids: 100, unite: 'g' } },
+                    corrections: [{ c: 'kcal', v: 300, le: 1, avant: 360 }] } }]);
+    const semees3 = await journal(pg);
+    /* l'ÉCRAN DE SAISIE, onglet portions : un aliment tapé à la main, N portions de P g */
+    const notePortions = async (nom, vals, n, poids) => {
+      let ok = await ouvrirAjout(pg);
+      ok = ok && await taper(pg, '#af-desc', nom);
+      for (const [id, v] of [['#af-kcal', vals[0]], ['#af-prot', vals[1]], ['#af-carbs', vals[2]], ['#af-fat', vals[3]]]) ok = ok && await taper(pg, id, v);
+      try { await pg.locator('#af-fat').blur(); } catch (e) { ok = false; }
+      await pause(pg, 200);
+      ok = ok && await clic(pg, '#af-prop-row button[onclick="_afSetUnite(\'portion\')"]'); await pause(pg, 220);
+      ok = ok && await clic(pg, '#af-prop-row button[onclick="_afApplyPortion(' + n + ')"]'); await pause(pg, 220);
+      ok = ok && await clic(pg, '#af-prop-row button[onclick="_afPortionNom(\'part\')"]'); await pause(pg, 200);
+      ok = ok && await taper(pg, '#af-ppoids', String(poids)); await pause(pg, 250);
+      const av2 = await ids(pg);
+      ok = ok && await ajouter(pg);
+      return { ok: ok, l: neuves(await journal(pg), av2)[0] || null };
+    };
+    /* ㉕ → ㉗ LE 400 / 480 : un pot de 125 g noté deux fois, mis en favori ; puis le même aliment noté en pots de 150 g */
+    const P1 = await notePortions('Pot P15 (test)', [200, 10, 20, 8], 2, 125);
+    await fermer(pg); let g = await ouvrirAjout(pg); let L3 = await items(pg);
+    const gP = await etoile(pg, L3.find((x) => x.nom === 'Pot P15 (test)' && !x.fav) || null);
+    await fermer(pg);
+    const P2 = await notePortions('Pot P15 (test)', [240, 12, 24, 10], 2, 150);
+    const F25 = (await favoris(pg)).find((f) => f.name === 'Pot P15 (test)') || null;
+    t('B-NV2P P15 ㉕ ⭐ LE CHEMIN RÉEL DU 400 / 480 : 2 pots de 125 g = 400 · 20 · 40 · 16, mis en favori ; puis 2 pots de 150 g = 480 · 24 · 48 · 20 — et le favori a pris le nouveau poids (ft-v1186 ⑤ : sa définition suit, ses valeurs restent 400)',
+      P1.ok && gP && P2.ok && !!P1.l && J([P1.l.kcal, P1.l.prot, P1.l.carbs, P1.l.fat, P1.l.q, P1.l.portionWeightG]) === J([400, 20, 40, 16, 2, 125])
+      && !!P2.l && J([P2.l.kcal, P2.l.prot, P2.l.carbs, P2.l.fat, P2.l.q, P2.l.portionWeightG]) === J([480, 24, 48, 20, 2, 150])
+      && !!F25 && F25.portionWeightG === 150 && F25.kcal === 400, J({ P1: forme(P1.l), P2: forme(P2.l), F25 }));
+    await fermer(pg); g = await ouvrirAjout(pg); L3 = await items(pg);
+    const favPot = L3.find((x) => x.fav && x.nom === 'Pot P15 (test)') || null;
+    const t26 = favPot ? nb(favPot.txt) : ''; let av = await ids(pg); await vider(pg);
+    const g26 = await ajoutRapide(pg, favPot);
+    const n26 = neuves(await journal(pg), av), e26 = await ecranOuvert(pg), m26 = await vider(pg);
+    t('B-NV2P P15 ㉖ ⛔⛔ LE 400 / 480 : le favori affiche 400 kcal — « + Ajouter » n\'écrit PAS 480 en silence : RIEN n\'est écrit, l\'écran s\'ouvre sur sa fiche (aucune quantité proposée), la liste et le message disent « à vérifier »',
+      g26 && /^2 portions · 400 kcal/.test(t26) && /à vérifier/.test(t26) && n26.length === 0 && e26.ouvert && e26.bloc && !e26.pastille && m26.some((m) => /à vérifier/i.test(m))
+      && /à vérifier : ses valeurs enregistrées ne correspondent plus à sa fiche/.test(nb(e26.fiche)),
+      J({ t26, n26: n26.map(forme), e26, m26 }));
+    /* ㉗ sur cet écran, la personne dit sa quantité : ce que l'écran montre est ce qui s'écrit */
+    g = e26.ouvert && await taper(pg, '#af-bc-grams', '300'); await pause(pg, 200);
+    const e27 = await pg.evaluate(() => ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('·'));
+    av = await ids(pg);
+    g = g && await ajouter(pg);
+    const n27 = neuves(await journal(pg), av);
+    t('B-NV2P P15 ㉗ ⭐⭐ … la personne tape 300 g : l\'écran montre 480 · 24 · 48 · 19 (sa fiche, à la main) et la ligne est EXACTEMENT celle-là',
+      g && e27 === '480·24·48·19' && n27.length === 1 && J([n27[0].kcal, n27[0].prot, n27[0].carbs, n27[0].fat, n27[0].q, n27[0].u]) === J([480, 24, 48, 19, 300, 'g']), J({ e27, n27: n27.map(forme) }));
+
+    /* ㉘ C — la copie d'origine survit à la DEUXIÈME modification d'une ancienne ligne */
+    await fermer(pg);
+    const modifier = async (id) => { await fermer(pg); let ok = await pg.evaluate((i) => { try { openEditFood(i); return true; } catch (e) { return false; } }, id); await pause(pg, 280);
+      ok = ok && await clic(pg, '#ov-edit-food button[onclick="saveEditFood()"]'); await pause(pg, 300); return ok; };
+    const g28a = await modifier('nv2u-R1-00000001');
+    const r1 = ligne(await journal(pg), 'nv2u-R1-00000001');
+    const g28b = await modifier('nv2u-R1-00000001');
+    const r2 = ligne(await journal(pg), 'nv2u-R1-00000001');
+    const orig = J(Object.assign({}, RIZ1, { ts: (semees3.find((x) => x.id === 'nv2u-R1-00000001') || {}).ts, date: (semees3.find((x) => x.id === 'nv2u-R1-00000001') || {}).date }));
+    const avJ = (l) => (l && l.n2 && l.n2.av) ? J(Object.keys(l.n2.av).sort().reduce((o, k) => (o[k] = l.n2.av[k], o), {})) : null;
+    const origTri = J(Object.keys(JSON.parse(orig)).sort().reduce((o, k) => (o[k] = JSON.parse(orig)[k], o), {}));
+    t('B-NV2P P15 ㉘ ⛔⛔ LA COPIE D\'ORIGINE SURVIT À LA 2ᵉ MODIFICATION : après deux « Enregistrer », `n2.av` est toujours l\'ancienne ligne d\'origine, octet par octet (saisie « manuel », 150 g · 195 kcal)',
+      g28a && g28b && avJ(r1) === origTri && avJ(r2) === origTri, J({ av1: r1 && r1.n2 && r1.n2.av, av2: r2 && r2.n2 && r2.n2.av }));
+
+    /* ㉙ ㉚ D — une valeur INCONNUE reste inconnue, par l'étoile et par « + Ajouter » */
+    g = await ouvrirAjout(pg); L3 = await items(pg);
+    const gD = await etoile(pg, L3.find((x) => x.nom === 'Barre P15 (test)' && !x.fav) || null);
+    const fD = (await favoris(pg)).find((f) => f.name === 'Barre P15 (test)') || null;
+    L3 = await items(pg);
+    const tD = nb((L3.find((x) => x.fav && x.nom === 'Barre P15 (test)') || {}).txt);
+    t('B-NV2P P15 ㉙ ⛔⛔ UNE PROTÉINE INCONNUE N\'EST PAS 0 : le favori pris par l\'étoile n\'a PAS de protéines (aucune clé), et la liste dit « P ? » — et « non vérifié » (une ancienne ligne qu\'aucune fiche ne confirme)',
+      gD && !!fD && !('prot' in fD) && /50 g · 230 kcal · P \? · G 30 · L 10 · non vérifié/.test(tD), J({ fD, tD }));
+    av = await ids(pg);
+    const gD2 = await ajoutRapide(pg, L3.find((x) => x.fav && x.nom === 'Barre P15 (test)') || null);
+    const nD = neuves(await journal(pg), av);
+    t('B-NV2P P15 ㉚ ⛔⛔ … et « + Ajouter » depuis ce favori écrit une ligne SANS protéines (inconnues, jamais 0) : 50 g · 230 · ? · 30 · 10',
+      gD2 && nD.length === 1 && !('prot' in nD[0]) && nD[0].kcal === 230 && nD[0].carbs === 30 && nD[0].fat === 10 && nD[0].q === 50, J(nD));
+
+    /* ㉛ une CORRECTION volontaire n'est pas une incohérence : elle se garde, elle ne se signale pas « à vérifier » */
+    await fermer(pg); g = await ouvrirAjout(pg); L3 = await items(pg);
+    const gK = await etoile(pg, L3.find((x) => x.nom === 'Galette P15 (test)' && !x.fav) || null);
+    L3 = await items(pg);
+    const favG = L3.find((x) => x.fav && x.nom === 'Galette P15 (test)') || null, tG = favG ? nb(favG.txt) : '';
+    av = await ids(pg);
+    const gK2 = await ajoutRapide(pg, favG);
+    const nK = neuves(await journal(pg), av);
+    t('B-NV2P P15 ㉛ ⭐ UNE CORRECTION À LA MAIN N\'EST PAS « À VÉRIFIER » : « 2 portions (200 g) · 300 kcal » sans réserve, et « + Ajouter » écrit 300 (360 → 300 tracé)',
+      gK && gK2 && /^2 portions \(200 g\) · 300 kcal/.test(tG) && !/à vérifier/.test(tG) && nK.length === 1 && nK[0].kcal === 300
+      && nK[0].n2 && J((nK[0].n2.corr || []).map((x) => [x.c, x.v, x.avant])) === J([['kcal', 300, 360]]), J({ tG, nK: nK.map(forme) }));
+    /* ㉜ une quantité ABSENTE : rien n'est écrit, rien n'est inventé, et ce n'est pas « à vérifier » */
+    await fermer(pg); g = await ouvrirAjout(pg); L3 = await items(pg);
+    const pom = L3.find((x) => x.nom === 'Pomme P15 (test)') || null; av = await ids(pg);
+    const gQ = await ajoutRapide(pg, pom);
+    const nQ = neuves(await journal(pg), av);
+    t('B-NV2P P15 ㉜ ⛔ QUANTITÉ ABSENTE : « + Ajouter » n\'écrit rien et n\'invente aucune quantité — et la liste ne la dit pas « à vérifier » (elle est à compléter)',
+      gQ && nQ.length === 0 && !!pom && !/à vérifier/.test(nb(pom.txt)), J({ pom, nQ }));
+    /* ㉜b une valeur IMPOSSIBLE (28 g de macros dans 5 g — la forme exacte d'une ligne contaminée par M6) : « à vérifier », rien d'écrit,
+       et l'écran le dit */
+    await fermer(pg); g = await ouvrirAjout(pg); L3 = await items(pg);
+    const shk = L3.find((x) => x.nom === 'Shaker P15 (test)') || null; av = await ids(pg); await vider(pg);
+    const gS2 = await ajoutRapide(pg, shk);
+    const nS = neuves(await journal(pg), av), eS = await ecranOuvert(pg);
+    t('B-NV2P P15 ㉜b ⛔⛔ UNE VALEUR IMPOSSIBLE (156 kcal · 26 g de protéines notés pour 5 g) : la liste dit « à vérifier », « + Ajouter » n\'écrit RIEN, l\'écran dit « ne peuvent pas tenir dans 5 g »',
+      gS2 && !!shk && /^5 g · 156 kcal/.test(nb(shk.txt)) && /à vérifier/.test(nb(shk.txt)) && nS.length === 0 && eS.ouvert
+      && /À vérifier : ses valeurs ne peuvent pas tenir dans 5 g/.test(nb(eS.fige)), J({ shk, nS: nS.map(forme), eS }));
+    /* ㉝ HORS LIGNE : la reprise ne dépend d'aucun réseau */
+    await fermer(pg);
+    await p3.cx.setOffline(true);
+    g = await ouvrirAjout(pg); L3 = await items(pg); av = await ids(pg);
+    const gH = await ajoutRapide(pg, L3.find((x) => x.fav && x.nom === 'Galette P15 (test)') || null);
+    const nH = neuves(await journal(pg), av);
+    await fermer(pg); g = await ouvrirAjout(pg);
+    await pg.evaluate(() => { _afSuggLoc = _afSuggLocales('Galette P15'); if (_afSuggLoc.length) _afSuggPrendreLocale(0); }); await pause(pg, 300);
+    const rH = await pg.evaluate(() => { const x = document.getElementById('af-bc-last'); return { vu: !!(x && x.style.display === 'inline-block'), txt: x ? x.textContent : '', champ: (document.getElementById('af-bc-grams') || {}).value }; });
+    await p3.cx.setOffline(false);
+    t('B-NV2P P15 ㉝ ⭐ HORS LIGNE : « + Ajouter » sur un favori écrit la même ligne (300 kcal, correction tracée), et la reprise depuis ton journal propose « ↩ 2 portions (200 g) », champ vide',
+      gH && nH.length === 1 && nH[0].kcal === 300 && rH.vu && nb(rH.txt) === '↩ 2 portions (200 g) (la dernière fois)' && rH.champ === '', J({ nH: nH.map(forme), rH }));
+
+    const apres3 = await journal(pg);
+    t('B-NV2P P15 ㉞ ⛔⛔ AUCUNE AUTRE LIGNE N\'A BOUGÉ : la pomme, la barre, le shaker et la galette semés sont intacts, octet par octet (seul le riz a été modifié, par ses deux gestes)',
+      J(apres3.filter((x) => /^nv2u-(Q1|B1|G1|S1)-/.test(x.id))) === J(semees3.filter((x) => /^nv2u-(Q1|B1|G1|S1)-/.test(x.id))), 'lignes changées');
+    t('B-NV2P P15 ㉟ aucune erreur de page (favori 400/480, modifications, inconnues, hors ligne)', p3.erreurs.length === 0 && err3.length === 0, J({ erreurs: p3.erreurs, err3 }));
+  } finally { await p3.cx.close(); }
+}
+
+module.exports = { ecran, incident };

@@ -729,3 +729,53 @@ moteur, hors du périmètre accordé).
 **Témoins** : `nut2_parcours.js` P14 (23 témoins, attendus écrits à la main) ; 7 témoins de la passe réécrits sur ce contrat
 (CCLXXX ④⑤, CCLXXXIV ②⑦⑪, CCLXXXV ②⑱) ; contrôles négatifs `tools/mut_nut2_parcours.py` MP36 → MP61 et
 `tools/mut_temoins_v2.py` R36 → R39.
+
+### 14.4 Incident du 23/10/2026 — une reprise n'écrit que ce qu'elle affiche (mission de Michel, branche `claude/nutrition-v2`, rien publié)
+
+> *« Les valeurs affichées avant l'ajout doivent être exactement celles enregistrées dans le journal. Ne pas ajouter un nouveau
+> bricolage sur les anciens calculs. Identifier d'abord le mécanisme responsable. »* — Michel, 23/10. Décision de réalisation :
+> **D-111** (Claude, PROPOSÉ). Défauts et preuves : `BUGS.md` §98.
+
+**Les mécanismes, reproduits AVANT tout correctif** (banc P15, données inventées : 24 rouges sur 37 sur le code d'avant `7cd3a413`,
+puis 37 verts sur le même banc) :
+- **deux calculs pour une reprise** : la liste affichait les valeurs ENREGISTRÉES du favori ; « + Ajouter » les RECALCULAIT par
+  sa fiche avec sa définition réécrite par ft-v1186 ⑤ (pot 125 → 150 g) → **400 kcal affichées, 480 écrites** — par le vrai
+  chemin (deux saisies en portions, une étoile, « + Ajouter ») ;
+- **l'identité par le NOM** : un favori d'avant V2 (sans code-barres) masquait le scan juste du même nom ; une copie récente
+  masquait la ligne vérifiée ; de deux yaourts du même nom (deux codes-barres) un seul existait ; « Modifier » le yaourt B
+  réécrivait le favori du yaourt A (100 kcal affichées, 120 écrites) ; « ✕ » sur le favori faux masquait le scan juste ;
+  l'étoile d'un scan retirait le favori du même nom ;
+- **la recopie silencieuse** d'une référence qui se contredit (26 g de protéines pour 40 g d'une fiche à 88 g/100 g ; 28 g de
+  macros dans 5 g) par « + Ajouter » et « Tes repas habituels » ;
+- **`n2.av` perdue à la 2ᵉ modification** (le moteur ne la recopiait que d'une ligne SANS `n2`) ;
+- **une valeur inconnue devenue 0** dans un favori (`_itemListe` : `s.prot || 0`), puis écrite 0 par « + Ajouter ».
+
+**Les correctifs (le mécanisme, pas les valeurs)** :
+1. **Une construction, deux usages** : `_n2Reajouter(src, …, apercu)` construit l'entrée d'une reprise une seule fois ; en
+   aperçu, le moteur la calcule sans l'enregistrer (`_n2Apercu`). « Mes aliments », « Déjà noté par toi » et la carte d'une
+   habitude lisent cet aperçu ; « + Ajouter » et « Tes repas habituels » l'écrivent. *L'affichage et l'écriture ne peuvent plus
+   diverger* (R2).
+2. **L'identité d'un aliment** (`_n2Cle`) : son code-barres ou identifiant CIQUAL, le nom seulement pour ce qui n'en a pas ;
+   appliquée à la liste, à l'étoile (elle agit sur l'élément touché), à « ✕ » (il masque une identité : `id:…` / `nom:…` — un
+   nom nu, écrit avant, garde son ancien sens), à « Déjà noté par toi » et à ft-v1186 ⑤ (même produit, plus même nom).
+3. **Un aliment n'en cache un autre que s'il est le même ET au moins aussi fiable** : une référence vérifiée (fiche source)
+   n'est jamais masquée derrière un favori ou une copie qui ne l'est pas.
+4. **`_n2Incoherence`** — quatre causes démontrées, jamais un seuil deviné : *périmé* (la fiche ne redonne plus les valeurs
+   enregistrées), *impossible* (lois de ft-v1103/ft-v1162), *fiche* (les valeurs contredisent le pour-100 g noté avec elles —
+   tolérance = l'arrondi de l'app, comme la vérification CIQUAL du moteur), *diffère* (une fiche vérifiée du MÊME identifiant
+   donne autre chose). La référence se dit « ⚠️ à vérifier » ; « + Ajouter » ouvre l'écran (rien n'est écrit sans « Ajouter ») ;
+   « Tes repas habituels » la nomme sans la recopier ; l'écran dit pourquoi.
+5. Une ligne recopiée d'une référence non vérifiée se dit **« non vérifié »** (et non plus « déclaré ») ; une valeur inconnue
+   reste **absente** dans un favori ; **`n2.av` passe de version en version** (moteur, D-101 ④).
+
+**Ce qui ne change PAS, exprès** : ⛔ **aucune donnée enregistrée n'est modifiée** — ni ligne, ni favori, ni historique (P15 ⑭,
+㉓, ㉞ le vérifient octet par octet) ; ft-v1186 ⑤ (la définition d'un favori suit, ses macros non) est **conservée** — le favori
+redéfini devient « à vérifier » au lieu d'écrire en silence une valeur que la liste ne montrait pas, et la suite est **une question
+à Michel** (D-111) ; aucune clé de stockage nouvelle (`S.hiddenFoods` peut désormais contenir une identité `id:…` / `nom:…`) ;
+ni `Code.js`, ni la protection P1, ni le moteur calorique, ni la Séance, ni le clone.
+
+**Témoins** : `nut2_parcours.js` P15 (37 témoins, trois pages : Iso, deux produits du même nom, favori 400/480 + 2ᵉ modification +
+valeur inconnue + correction gardée + quantité absente + hors ligne) ; moteur B-NV2-E ㉑ ; contrôles négatifs MP62 → MP84 (et MP9
+réancrée) dans `tools/mut_nut2_parcours.py`, MN32 → MN34 (et MN22 réancrée) dans `tools/mut_nut2_moteur.py` ; le cliquet
+de M6 (`B-NM6-C ②`) compte désormais l'aperçu comme 3ᵉ appelant de la construction, à condition qu'il ne puisse pas écrire
+(N17 → N19 dans `tools/mut_nut_m6_rejeu.py`).

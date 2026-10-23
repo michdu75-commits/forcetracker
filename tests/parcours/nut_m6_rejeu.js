@@ -421,10 +421,17 @@ module.exports.source = function (t, ROOT, fs, path) {
   const ecr = appelants('_n2Enregistrer');
   t('B-NM6-C ① `_n2Enregistrer` a exactement 3 appelants : _n2Reajouter, addFoodEntry, saveEditFood (un 4ᵉ écrivain doit se déclarer ici)',
     JSON.stringify(ecr) === JSON.stringify(['_n2Reajouter', 'addFoodEntry', 'saveEditFood']), JSON.stringify(ecr));
-  /* ② LES ÉCRIVAINS HORS ÉCRAN : le rejeu et l'ajout rapide, et eux seuls, re-notent par `_n2Reajouter` */
+  /* ② LES ÉCRIVAINS HORS ÉCRAN : le rejeu et l'ajout rapide, et eux seuls, re-notent par `_n2Reajouter`. ⭐ INCIDENT DU
+     23/10 (D-111) : un 3ᵉ appelant, `_n2Apercu`, MONTRE la ligne que ces deux-là écriraient (une seule construction pour
+     l'affichage et l'écriture — mesuré avant : 400 kcal affichées, 480 écrites) — et il n'écrit JAMAIS : il passe
+     l'argument d'aperçu (un objet), et `_n2Reajouter` rend la ligne AVANT tout `_n2Enregistrer`. */
   const hors = appelants('_n2Reajouter');
-  t('B-NM6-C ② `_n2Reajouter` a exactement 2 appelants : quickAddFood, rejouerRepas',
-    JSON.stringify(hors) === JSON.stringify(['quickAddFood', 'rejouerRepas']), JSON.stringify(hors));
+  const RA2 = corps('_n2Reajouter'), AP = corps('_n2Apercu');
+  const apObjet = /_n2Reajouter\([^;]*,\s*\{[^;]*\}\s*\)/.test(AP);
+  const iAp = RA2.search(/if\s*\(\s*apercu\s*\)\s*return\b/), iEnr = RA2.indexOf('_n2Enregistrer(');
+  t('B-NM6-C ② `_n2Reajouter` a exactement 3 appelants : _n2Apercu (l\'aperçu, qui ne peut pas écrire), quickAddFood, rejouerRepas',
+    JSON.stringify(hors) === JSON.stringify(['_n2Apercu', 'quickAddFood', 'rejouerRepas']) && apObjet && iAp > 0 && iEnr > iAp,
+    JSON.stringify({ hors: hors, apObjet: apObjet, iAp: iAp, iEnr: iEnr }));
   /* ③ LA SEULE PORTE QUI LIT L'ÉCRAN pour en faire une ligne : `_n2EntreeEcran`, appelée par « Ajouter » seulement */
   const lit = appelants('_n2EntreeEcran');
   t('B-NM6-C ③ `_n2EntreeEcran` (la lecture de l\'écran) n\'a qu\'un appelant : addFoodEntry',

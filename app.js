@@ -1665,7 +1665,11 @@ function _n2Reprendre(src, saisie){
               : ((q.unite==='portion' && q.portion && q.portion.unite===f.base && pFiable) ? q.val*q.portion.poids : 0));
     _bcProposerDerniere(qDer, (qDer>0 && q.unite==='portion') ? q : null);
     const nm=document.getElementById('af-bc-name');
-    if(nm) nm.textContent=R.nom+' · '+Math.round(_bcNutr.kcal100)+' kcal/100'+(f.base==='ml'?'ml':'g')+' (ta dernière saisie)';
+    /* ⭐ INCIDENT DU 23/10 — une fiche dont les valeurs enregistrées ne se redonnent plus (favori redéfini après coup) le dit
+       ici aussi : l'écran recalcule par la fiche, et la personne sait que la liste affichait autre chose. */
+    const apR=_n2Apercu(src);
+    if(nm) nm.textContent=R.nom+' · '+Math.round(_bcNutr.kcal100)+' kcal/100'+(f.base==='ml'?'ml':'g')+' (ta dernière saisie)'
+      +((apR.ok && apR.raison) ? ' — ⚠️ à vérifier : '+apR.raison.texte : '');
     _bcMajUnite();
     if(row) row.style.display='block';
     _bcQsrc(null);
@@ -1684,7 +1688,8 @@ function _n2Reprendre(src, saisie){
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
     _afSetSrc({saisie:saisie, origine:'reprise'});
     _afRef={base:R.valeurs, q:q.val, u:q.unite, src:'la dernière fois', fige:true, qte:q, nom:R.nom||'',
-            notes:(R.statut==='non-verifiee')?['reprise-non-verifiee']:null};
+            notes:(R.statut==='non-verifiee')?['reprise-non-verifiee']:null,
+            raison:_n2Incoherence(src, R, null)};    // ⭐ incident du 23/10 : dit À L'ÉCRAN pourquoi elle est « à vérifier »
     _afMajFige();
   }
   _afCoherence();          // une ancienne entrée fausse se signale au moment où on la reprend
@@ -1741,7 +1746,9 @@ function _afMajFige(){
     +pastille
     +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Valeurs de ta dernière saisie'+(q?' (pour '+qTxt+')':'')
     +'. ⚠️ Elles ne se recalculent pas (cet ancien aliment n\'a pas de fiche vérifiée) : pour une autre quantité, corrige-les'
-    +' — ou retrouve l\'aliment par la recherche, ou scanne-le, et elles se calculeront.</div>';
+    +' — ou retrouve l\'aliment par la recherche, ou scanne-le, et elles se calculeront.</div>'
+    +(_afRef.raison ? '<div style="font-size:11.5px;color:var(--orange);margin-top:6px;line-height:1.4;">⚠️ À vérifier : '
+      +_escFood(_afRef.raison.texte)+'. Vérifie-les avant d\'ajouter — ou scanne le produit.</div>' : '');
   const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;
   const p=document.getElementById('af-prop-pastille'); if(p && prise) p.style.display='none';
   el.style.display='block';
@@ -1766,12 +1773,19 @@ function _afQtePoseeFige(){
 }
 
 /* ⭐ RE-NOTER TEL QUEL un aliment déjà noté (ajout rapide, repas habituel) — sans ouvrir ni lire l'écran (D-094).
-   Rend {ok, ligne} · {ok:false, aCompleter:true} (pas de quantité valide) · {ok:false, erreur}. */
-function _n2Reajouter(src, repas, date, porte){
+   Rend {ok, ligne} · {ok:false, aCompleter:true} (pas de quantité valide) · {ok:false, incoherente:true, raison} ·
+   {ok:false, erreur}.
+   ⭐⭐ INCIDENT DU 23/10 (mission de Michel : *« les valeurs affichées avant l'ajout doivent être exactement celles
+   enregistrées »*) — avec `apercu`, la MÊME entrée passe au moteur SANS être enregistrée : c'est ce que « Mes aliments »,
+   « Déjà noté par toi » et la carte d'une habitude AFFICHENT (`_n2Apercu`). Une construction, deux usages : l'affichage et
+   l'écriture ne peuvent plus diverger (R2 — mesuré le 23/10 : un favori affiché 400 kcal et re-noté 480, deux calculs).
+   ⛔ Une référence qui ne peut pas être re-notée TELLE QU'ELLE S'AFFICHE (`_n2Incoherence`) n'est jamais re-notée en
+   silence : l'appelant ouvre l'écran (« + Ajouter ») ou la nomme (« Tes repas habituels »). */
+function _n2Reajouter(src, repas, date, porte, apercu){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return {ok:false, erreur:'MOTEUR_ABSENT'};
   const R=N.reprise(src, _n2Ctx()); if(!R.ok) return R;
   if(!R.quantite) return {ok:false, aCompleter:true};
-  const id=_foodLineId(); if(!id) return {ok:false, erreur:'ID_INVALIDE'};
+  const id=apercu ? 'apercu-00000000' : _foodLineId(); if(!id) return {ok:false, erreur:'ID_INVALIDE'};
   const e={id:id, ts:Date.now(), date:date, repas:repas, nom:String(R.nom||'').slice(0,80),
            origine:{saisie:'liste', origine:'reprise'}, quantite:Object.assign({}, R.quantite, {origine:'proposee'})};
   if(R.fiche){
@@ -1781,7 +1795,72 @@ function _n2Reajouter(src, repas, date, porte){
     e.mode='declaree'; e.declare=R.valeurs;
     if(R.statut==='non-verifiee') e.notes=['reprise-non-verifiee'];
   }
+  const L=N.ligneNouvelle(e); if(!L.ok) return L;
+  const raison=_n2Incoherence(src, R, L.ligne, apercu && apercu.verifiees);
+  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};
+  if(raison) return {ok:false, incoherente:true, raison:raison};
   return _n2Enregistrer(e, porte);
+}
+/* Ce que « + Ajouter » écrirait pour cette référence, et s'il peut l'écrire — SANS rien écrire. `verifiees` : les fiches
+   vérifiées du journal (`_n2FichesVerifiees`), calculées une fois pour toute une liste. */
+function _n2Apercu(src, verifiees){ return _n2Reajouter(src, 'apercu', today(), 'apercu', {verifiees:verifiees}); }
+/* « Vérifiée » : re-notée par une fiche SOURCE (Open Food Facts, CIQUAL, enseigne), et rien à redire. */
+function _n2Verifiee(a){ return !!(a && a.ok && !a.raison && a.R && a.R.fiche && a.R.fiche.fiab==='source'); }
+/* Ce que la liste dit d'une référence, à côté de ses valeurs : l'étiquette que porterait la ligne écrite (`_n2Badge`), ou
+   « ⚠️ à vérifier » si elle ne peut pas être re-notée telle qu'elle s'affiche. */
+function _n2Marque(a){ return (!a || !a.ok) ? '' : (a.raison ? ' · ⚠️ à vérifier' : _n2Badge(a.ligne)); }
+/* ⭐⭐ INCIDENT DU 23/10 — L'IDENTITÉ D'UN ALIMENT : son identifiant de produit (code-barres, `ciqual:…`) quand il en a un,
+   sinon son nom. ⛔ Mission de Michel : *« ne jamais identifier deux produits uniquement par leur nom lorsqu'ils peuvent être
+   différents »* — deux lignes du même nom et de deux codes-barres sont DEUX aliments ; une ligne SANS code-barres et une
+   ligne AVEC ne sont jamais déclarées le même (rien ne le prouve). Le nom ne relie que ce qui n'a pas d'identifiant ; `norm`
+   garde la normalisation propre à chaque lecteur (la recherche dans le journal ignore les accents, la liste non). */
+function _n2Cle(x, norm){
+  const s=(x && typeof x.sourceId==='string') ? x.sourceId.trim() : '', n=String((x && x.name)||'');
+  return s ? 'id:'+s : 'nom:'+(norm ? norm(n) : n.trim().toLowerCase());
+}
+/* Les fiches VÉRIFIÉES du journal, une par identifiant de produit — la plus récente : ce à quoi une référence non vérifiée
+   du MÊME produit se compare (`_n2Incoherence`, cause « differe »). Lecture seule. */
+function _n2FichesVerifiees(){
+  const o={}, N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return o;
+  (S.foodLog||[]).forEach(l=>{
+    const sid=(l && typeof l.sourceId==='string') ? l.sourceId.trim() : ''; if(!sid) return;
+    const R=N.reprise(l, _n2Ctx()); if(!R.ok || !R.fiche || R.fiche.fiab!=='source') return;
+    if(!o[sid] || (+l.ts||0)>o[sid].ts) o[sid]={fiche:R.fiche, ts:+l.ts||0, date:l.date, id:l.id};
+  });
+  return o;
+}
+/* ⭐⭐ INCIDENT DU 23/10 — CE QUI NE PEUT PAS ÊTRE RE-NOTÉ TEL QU'IL S'AFFICHE. Lecture seule (rien n'est écrit, rien n'est
+   « réparé ») ; rend `null` — rien à dire — ou {code, texte}. Quatre causes, chacune vue sur le vrai journal (audit du 19/10,
+   517 lignes) et chacune DÉMONTRÉE (une fiche ou une loi physique), jamais un seuil deviné :
+     perime     — une FICHE qui ne redonne plus les valeurs enregistrées pour sa quantité (un favori dont la définition a été
+                  réécrite après coup, ft-v1186 ⑤ : affiché 400 kcal, re-noté 480) ;
+     impossible — des valeurs qui ne tiennent pas dans leur quantité (les lois de ft-v1103 et ft-v1162 : 28 g de macros dans 5 g) ;
+     fiche      — des valeurs qui ne découlent pas du pour-100 g noté AVEC elles (une correction partielle, M4 : 26 g de
+                  protéines pour 40 g d'une fiche à 88 g/100 g) — tolérance = l'arrondi de l'app (entier, et la décimale gardée
+                  du pour-100 g), comme la vérification CIQUAL du moteur ;
+     differe    — une fiche VÉRIFIÉE du MÊME produit (même code-barres, même identifiant CIQUAL — jamais le seul nom) donne
+                  d'autres valeurs pour cette quantité (une copie qui a survécu à un scan juste, M3).
+   ⛔ Une valeur corrigée à la main sur une fiche n'est pas une incohérence : elle fait partie de la ligne (CR-2). ⛔ Une ligne
+   sans fiche ni code-barres n'est pas « incohérente » faute de preuve : elle est « non vérifiée », et le dit (`_n2Badge`). */
+function _n2Incoherence(src, R, L, verifiees){
+  const N=NUT2, C=N.CHAMPS, v=R.valeurs, q=R.quantite; if(!q) return null;
+  const qt=_n2QteTexte(q, false);
+  if(R.fiche){
+    const d=!!L && C.some(c=>(c in L)!==(c in v) || ((c in L) && L[c]!==v[c]));
+    return d ? {code:'perime', texte:'ses valeurs enregistrées ne correspondent plus à sa fiche pour '+qt} : null;
+  }
+  const mG=(q.unite==='g') ? q.val : ((q.unite==='portion' && q.portion.unite==='g') ? q.val*q.portion.poids : 0);
+  if(mG>0 && (_masseImpossibleVals(mG, v.prot, v.carbs, v.fat) || _kcalImpossibleVals(mG, v.kcal, v.prot, v.carbs, v.fat)))
+    return {code:'impossible', texte:'ses valeurs ne peuvent pas tenir dans '+qt};
+  const m=(q.unite==='portion') ? q.val*q.portion.poids : q.val;
+  const ecart=p=>C.some(c=>(c in v) && !!p && typeof p[c]==='number' && isFinite(p[c]) && Math.abs(v[c]-m*p[c]/100)>0.5+m*0.05/100+1e-9);
+  if(src && src.per100 && typeof src.per100==='object' && ecart(src.per100))
+    return {code:'fiche', texte:'ses valeurs ne correspondent pas à la fiche pour 100 g notée avec elles'};
+  const sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : '';
+  const fv=sid ? (verifiees || _n2FichesVerifiees())[sid] : null;
+  if(fv && fv.id!==src.id && N.calcule(fv.fiche, q).ok && ecart(fv.fiche.p100))
+    return {code:'differe', texte:'ta fiche vérifiée de ce produit (du '+String(fv.date||'').split('-').reverse().slice(0,2).join('/')+') donne d\'autres valeurs pour '+qt};
+  return null;
 }
 
 /* ── L'écran « Modifier l'aliment » ── */
@@ -1850,14 +1929,17 @@ function _n2TotalPartiel(tot){
 }
 /* La quantité qu'un « + Ajouter » reprendrait, DITE sur la ligne (le toucher est alors un choix éclairé) — par le formateur unique (D-103). */
 function _n2QteListe(it){
-  const R=(typeof NUT2==='object'&&NUT2)?NUT2.reprise(it._src||it, _n2Ctx()):null;
+  const R=(it && it._ap && it._ap.R) || ((typeof NUT2==='object'&&NUT2)?NUT2.reprise(it._src||it, _n2Ctx()):null);
   const q=R && R.ok && R.quantite; if(!q) return '';
   return _escFood(_n2QteTexte(q, _n2PortionFiable(R)))+' · ';   // D-103 : « 3 portions (450 g) » si le poids est fiable
 }
 function _n2Badge(e){
   const n2=e && e.n2; if(!n2 || n2.s!==1) return '';
   const m=[];
-  if(n2.st==='estimee') m.push('≈ estimé');
+  /* ⭐ INCIDENT DU 23/10 — une ligne recopiée d'une référence NON VÉRIFIÉE le dit en clair : « déclaré » laissait croire que la
+     personne avait tapé ces chiffres, alors qu'ils viennent d'une ancienne ligne qu'aucune fiche ne confirme (D-101 ⑩). */
+  if(Array.isArray(n2.no) && n2.no.indexOf('reprise-non-verifiee')>=0) m.push('non vérifié');
+  else if(n2.st==='estimee') m.push('≈ estimé');
   else if(n2.st==='declaree') m.push('déclaré');
   if(Array.isArray(n2.corr) && n2.corr.length) m.push('✏️ corrigé');
   if(Array.isArray(n2.no) && n2.no.indexOf('correction-a-revoir')>=0) m.push('à revoir');
@@ -3368,6 +3450,23 @@ function _repasHabituels(){
     .sort((a,b)=>(b.n-a.n)||b.dernier.localeCompare(a.dernier))
     .slice(0,3);
 }
+/* ⭐⭐ INCIDENT DU 23/10 — CE QUE LA CARTE D'UNE HABITUDE ANNONCE EST CE QUE SON « + » ÉCRIT : les totaux de ce qui sera re-noté,
+   par le MÊME aperçu que « + Ajouter » (`_n2Apercu`) ; une valeur inconnue n'est jamais comptée 0 (le total se dit partiel) ;
+   ce qui ne sera PAS re-noté se compte à part (« à vérifier », « à compléter »). Avant : la somme des valeurs enregistrées,
+   un inconnu compté 0, et un aliment non ajouté compté quand même. */
+function _habApercu(r, vf){
+  const o={kcal:0, prot:0, nk:0, np:0, n:0, partiel:false, aVerifier:0, aCompleter:0};
+  ((r && r.items) || []).forEach(e=>{
+    const a=_n2Apercu(e, vf);
+    if(!a.ok){ o.aCompleter++; return; }
+    if(a.raison){ o.aVerifier++; return; }
+    o.n++;
+    const L=a.ligne;
+    if(typeof L.kcal==='number'){ o.kcal+=L.kcal; o.nk++; } else o.partiel=true;
+    if(typeof L.prot==='number'){ o.prot+=L.prot; o.np++; } else o.partiel=true;
+  });
+  return o;
+}
 /* 🛃⭐ ft-v1205 — ÉTAPE 5, LA DOUANE DU JOURNAL ALIMENTAIRE : UN SEUL POINT D'OBSERVATION,
    POSÉ JUSTE AVANT L'ÉCRITURE FINALE DANS `S.foodLog`.
 
@@ -3792,10 +3891,13 @@ function rejouerRepas(sig, meal){
      d'ajout (D-094, NUT-M6-REJEU-01 : le défaut M6 est fermé par construction — aucune lecture d'écran ici).
      ⛔ Un aliment sans quantité valide n'est PAS complété : il n'est pas ajouté, et le message le nomme. */
   _n2Apres(r.items, ()=>{
-    const ajoutes=[], aCompleter=[], refus=[];
+    /* ⭐⭐ INCIDENT DU 23/10 — un aliment qui ne peut pas être re-noté tel qu'il s'affiche (`_n2Incoherence`) n'est pas recopié
+       en silence : il n'est pas ajouté, et le message le nomme « à vérifier » (mesuré : la copie à 26 g de protéines d'un
+       produit dont le scan juste en donne 35 se recopiait à chaque tap). La carte l'annonçait avant le geste (`_habApercu`). */
+    const ajoutes=[], aCompleter=[], aVerifier=[], refus=[];
     r.items.forEach(e=>{
       const x=_n2Reajouter(e, moment, _journalJourActif(), 'rejouerRepas');
-      if(x.ok) ajoutes.push(e.name); else if(x.aCompleter) aCompleter.push(e.name); else refus.push(e.name);
+      if(x.ok) ajoutes.push(e.name); else if(x.aCompleter) aCompleter.push(e.name); else if(x.incoherente) aVerifier.push(e.name); else refus.push(e.name);
     });
     if(ajoutes.length){
       persist();
@@ -3804,11 +3906,12 @@ function rejouerRepas(sig, meal){
       try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
     }
     const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(moment):null;
-    const reste=aCompleter.concat(refus);
-    toast(ajoutes.length+' aliment'+(ajoutes.length>1?'s':'')+' ajouté'+(ajoutes.length>1?'s':'')
-          +(mi&&mi.lbl?' — '+mi.lbl:'')+' 🍽️'
-          +(reste.length?' · à noter à la main (quantité inconnue) : '+reste.map(n=>String(n||'').slice(0,30)).join(', '):''),
-          reste.length?'info':'success');
+    const reste=aCompleter.concat(refus), court=n=>String(n||'').slice(0,30);
+    toast((ajoutes.length ? ajoutes.length+' aliment'+(ajoutes.length>1?'s':'')+' ajouté'+(ajoutes.length>1?'s':'')+(mi&&mi.lbl?' — '+mi.lbl:'')+' 🍽️'
+                          : 'Rien n\'a été ajouté')
+          +(aVerifier.length?' · à vérifier (ses valeurs se contredisent, rien de recopié) : '+aVerifier.map(court).join(', '):'')
+          +(reste.length?' · à noter à la main (quantité inconnue) : '+reste.map(court).join(', '):''),
+          (reste.length||aVerifier.length)?'info':'success');
   });
 }
 /* ⏰ LE CHOIX DU MOMENT — un dépliage, pas une pop-up (ft-v1052).
@@ -4474,30 +4577,47 @@ let _afQuickItems=[];
    ici et `null` la ; mesure champ par champ, `q` vaut `+X.q>0?+X.q:0` aux TROIS sites. D'ou
    l'absence de parametre `{vide:...}` : on n'en a pas besoin pour un seul ecart, et un
    parametre inutile deplace l'ecart DANS le proprietaire au lieu de le laisser visible. */
+/* ⛔⛔ INCIDENT DU 23/10 (D de la mission : *« ne pas convertir une valeur inconnue en zéro »*) — `s.kcal || 0` faisait d'une
+   valeur INCONNUE un 0 : l'étoile sur une ligne sans protéines connues donnait un favori à « 0 g », et « + Ajouter » depuis lui
+   écrivait 0 (mesuré, B-NV2P P15 ㉙ ㉚). Une valeur absente reste ABSENTE (pas de clé), comme dans le moteur (CR-4) ; l'écran
+   l'écrit « ? » (`_n2Val`). Le noyau garde ses champs et leur ordre. */
 function _itemListe(src){
-  const s = src || {};
-  return { name: s.name,
-           kcal: s.kcal || 0, prot: s.prot || 0, carbs: s.carbs || 0, fat: s.fat || 0,
-           per100: s.per100 || null,
-           q: +s.q > 0 ? +s.q : 0,
-           u: s.u || null,
-           portionLabel: s.portionLabel || null };
+  const s = src || {}, o = { name: s.name };
+  _N2_CHAMPS.forEach(c => { const x = s[c]; if (typeof x === 'number' && isFinite(x) && x >= 0) o[c] = x; });
+  o.per100 = s.per100 || null;
+  o.q = +s.q > 0 ? +s.q : 0;
+  o.u = s.u || null;
+  o.portionLabel = s.portionLabel || null;
+  return o;
 }
 
 function _buildFoodQuickItems(){
   /* 🥗 V2 : chaque élément garde SA source (`_src`, jamais enregistrée) — c'est elle que le moteur lit pour
-     savoir ce qu'elle permet de reprendre. Favoris d'abord, puis les derniers aliments, sans doublon de nom. */
+     savoir ce qu'elle permet de reprendre. Favoris d'abord, puis les derniers aliments.
+     ⭐⭐ INCIDENT DU 23/10 (mission de Michel) — UN ALIMENT N'EN CACHE UN AUTRE QUE S'IL EST LE MÊME, ET AU MOINS AUSSI
+     FIABLE. Avant : « sans doublon de NOM » — mesuré : un favori d'avant V2 (26 g de protéines au lieu de 35) cachait le scan
+     juste du même nom, une copie récente cachait la ligne vérifiée, et de deux yaourts du même nom (deux codes-barres) un seul
+     existait. L'identité est maintenant celle du produit (`_n2Cle`), et une référence VÉRIFIÉE n'est jamais cachée derrière
+     une autre qui ne l'est pas. Chaque élément porte son APERÇU (`_ap`) : ce que « + Ajouter » écrirait, et s'il le peut. */
+  const vf=_n2FichesVerifiees(), ap=x=>_n2Apercu(x, vf);
   const favs=(S.savedFoods||[]).map(f=>Object.assign(_itemListe(f),
-    {portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0, fav:true, _src:f}));
-  const seen=new Set(favs.map(f=>(f.name||'').toLowerCase()));
-  const hidden=new Set((S.hiddenFoods||[]).map(x=>(x||'').toLowerCase()));
-  const recent=[];
-  (S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
-    const k=(e.name||'').toLowerCase(); if(!k||seen.has(k)||hidden.has(k))return; seen.add(k);
+    {portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0, fav:true, _src:f, _ap:ap(f)}));
+  const vus={};   // identité → listée (true : par une référence vérifiée ; false : par une qui ne l'est pas)
+  favs.forEach(f=>{ const k=_n2Cle(f._src); vus[k]=(vus[k]===true) || _n2Verifiee(f._ap); });
+  /* « ✕ » masque une IDENTITÉ depuis le 23/10 (`id:…`, `nom:…`) ; un NOM nu, écrit avant, masque encore tout ce qui le porte. */
+  const hidden=new Set((S.hiddenFoods||[]).map(x=>String(x||'').toLowerCase()));
+  const recent=[], lignes=(S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts);
+  for(let j=0; j<lignes.length && favs.length+recent.length<12; j++){
+    const e=lignes[j], nom=String((e&&e.name)||'').toLowerCase(); if(!nom) continue;
+    const k=_n2Cle(e);
+    if(hidden.has(nom) || hidden.has(k.toLowerCase()) || vus[k]===true) continue;
+    const a=ap(e), v=_n2Verifiee(a);
+    if((k in vus) && !v) continue;         // déjà listé, et celle-ci n'est pas plus fiable
+    vus[k]=v;
     recent.push(Object.assign(_itemListe(e),
       {portionWeightG:+e.portionWeightG>0?+e.portionWeightG:0,
-       origine:e.origine||null, sourceId:e.sourceId||null, etat:e.etat||null, fav:false, _src:e}));
-  });
+       origine:e.origine||null, sourceId:e.sourceId||null, etat:e.etat||null, fav:false, _src:e, _ap:a}));
+  }
   return favs.concat(recent).slice(0,12);
 }
 function _renderFoodQuickList(){
@@ -4510,7 +4630,7 @@ function _renderFoodQuickList(){
       +'<button onclick="toggleFavFood('+i+')" title="Favori" style="background:none;border:none;font-size:16px;cursor:pointer;flex-shrink:0;padding:0;line-height:1;color:'+(it.fav?'var(--gold)':'var(--t3)')+';">'+(it.fav?'★':'☆')+'</button>'
       +'<div onclick="quickFillFood('+i+')" style="flex:1;min-width:0;cursor:pointer;">'
         +'<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_escFood(it.name)+'</div>'
-        +'<div style="font-size:11px;color:var(--t3);">'+_n2QteListe(it)+_n2Val((it._src||it).kcal)+' kcal · P '+_n2Val((it._src||it).prot)+' · G '+_n2Val((it._src||it).carbs)+' · L '+_n2Val((it._src||it).fat)+'</div>'
+        +'<div style="font-size:11px;color:var(--t3);">'+_n2QteListe(it)+_n2Val((it._src||it).kcal)+' kcal · P '+_n2Val((it._src||it).prot)+' · G '+_n2Val((it._src||it).carbs)+' · L '+_n2Val((it._src||it).fat)+_n2Marque(it._ap)+'</div>'
       +'</div>'
       +'<button onclick="quickAddFood('+i+')" style="background:var(--bg3);border:none;border-radius:8px;color:var(--red);font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer;flex-shrink:0;">+ Ajouter</button>'
       +'<button onclick="deleteQuickFood('+i+')" title="Supprimer" style="background:none;border:none;color:var(--t3);font-size:15px;cursor:pointer;flex-shrink:0;padding:2px 3px;line-height:1;">✕</button>'
@@ -4520,19 +4640,26 @@ function _renderFoodQuickList(){
 // Supprime un aliment de la liste (avec confirmation) : favori → retiré des favoris ; récent → masqué des suggestions
 function deleteQuickFood(i){
   const it=_afQuickItems[i]; if(!it)return;
-  const nm=it.name||''; const key=nm.toLowerCase();
+  const nm=it.name||'';
   const msg=it.fav?('« '+nm+' » sera retiré de tes favoris.'):('« '+nm+' » n\'apparaîtra plus dans tes aliments récents.');
   const doit=()=>{
-    if(it.fav)S.savedFoods=(S.savedFoods||[]).filter(f=>(f.name||'').toLowerCase()!==key);
+    /* ⭐⭐ INCIDENT DU 23/10 — on retire CET élément, jamais tout ce qui porte son nom : un favori se retire lui-même, et ce
+       qu'on masque est son IDENTITÉ (`_n2Cle` : son code-barres, ou le nom d'un aliment qui n'en a pas). Mesuré le 23/10 :
+       « ✕ » sur un favori d'avant V2 masquait, par le nom, le scan juste du même nom (B-NV2P P15 ⑬, ㉒). */
+    if(it.fav){ const fs=S.savedFoods||[]; let j=fs.indexOf(it._src);
+      if(j<0){ const js=JSON.stringify(it._src); j=fs.findIndex(f=>JSON.stringify(f)===js); }
+      if(j>=0) fs.splice(j,1); }
     if(!S.hiddenFoods)S.hiddenFoods=[];
-    if(!S.hiddenFoods.includes(key))S.hiddenFoods.push(key); // masque aussi un ex-favori pour qu'il ne revienne pas en « récent »
+    const cle=_n2Cle(it._src||it).toLowerCase();
+    if(!S.hiddenFoods.includes(cle))S.hiddenFoods.push(cle); // masque aussi un ex-favori pour qu'il ne revienne pas en « récent »
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     _renderFoodQuickList(); toast('Supprimé de la liste','info');
   };
   if(typeof showConfirm==='function') showConfirm('Supprimer de la liste ?',msg,doit,'Supprimer');
   else doit();
 }
-function _unhideFood(nm){ const k=(nm||'').toLowerCase(); if(k&&S.hiddenFoods&&S.hiddenFoods.length)S.hiddenFoods=S.hiddenFoods.filter(x=>x!==k); }
+/* Ré-afficher ce qu'on vient de noter : son nom (ancien masquage) et son identité (masquage du 23/10 : `nom:…`, `id:…`). */
+function _unhideFood(nm, cle){ const k=(nm||'').toLowerCase(), c=String(cle||'').toLowerCase(); if(k&&S.hiddenFoods&&S.hiddenFoods.length)S.hiddenFoods=S.hiddenFoods.filter(x=>x!==k && x!=='nom:'+k.trim() && (!c || x!==c)); }
 /* ⚖️ LA QUANTITÉ SUR UN ALIMENT REPRIS DE « MES ALIMENTS » (ft-v1042) — Michel, 2 captures :
    « il faut absolument que je puisse mettre le poids sur les aliments réutilisés, qu'ils soient
    rentrés avec le code-barre, ou à la main ou encore avec l'IA ».
@@ -4573,8 +4700,16 @@ function quickAddFood(i){
       toast('Combien en as-tu mangé ? La quantité de la dernière fois n\'est pas connue — choisis-la, puis « Ajouter » ✅','info');
       return;
     }
+    /* ⭐⭐ INCIDENT DU 23/10 — une référence qui ne peut pas être re-notée TELLE QU'ELLE S'AFFICHE ne l'est pas en silence
+       (mesuré : un favori affiché 400 kcal écrivait 480 ; un favori à 26 g de protéines recopiait son erreur). L'écran s'ouvre
+       sur elle : la personne y voit les valeurs, choisit, et confirme par « Ajouter » — rien n'est écrit sans ce geste. */
+    if(!r.ok && r.incoherente){
+      quickFillFood(i);
+      toast('⚠️ À vérifier — « '+String(it.name||'').slice(0,40)+' » : '+r.raison.texte+'. Rien n\'a été ajouté : vérifie les valeurs (ou scanne le produit), puis « Ajouter ».','info');
+      return;
+    }
     if(!r.ok){ toast(_n2Message(r),'error'); return; }
-    _unhideFood(it.name);
+    _unhideFood(it.name, _n2Cle(it._src||it));
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     closeAddFood(); renderFoodJournal();
     try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
@@ -4584,14 +4719,22 @@ function quickAddFood(i){
 function toggleFavFood(i){
   const it=_afQuickItems[i]; if(!it)return;
   if(!S.savedFoods)S.savedFoods=[];
-  const key=(it.name||'').toLowerCase();
-  const idx=S.savedFoods.findIndex(f=>(f.name||'').toLowerCase()===key);
-  if(idx>=0){ S.savedFoods.splice(idx,1); toast('Retiré des favoris','info'); }
+  /* ⭐⭐ INCIDENT DU 23/10 — L'ÉTOILE AGIT SUR CET ÉLÉMENT, JAMAIS SUR UN NOM. Avant, elle cherchait un favori du même NOM et
+     le RETIRAIT : mesuré, l'étoile d'un scan juste supprimait le favori faux du même nom sans créer le bon, et de deux
+     yaourts du même nom (deux codes-barres) un seul pouvait être favori. Un favori se retire lui-même ; une ligne devient un
+     favori — à côté d'un favori du même nom s'il y en a un (ils sont deux aliments, ou l'un vérifié et l'autre non). */
+  if(it.fav){
+    let idx=S.savedFoods.indexOf(it._src);
+    if(idx<0){ const js=JSON.stringify(it._src); idx=S.savedFoods.findIndex(f=>JSON.stringify(f)===js); }
+    if(idx>=0){ S.savedFoods.splice(idx,1); toast('Retiré des favoris','info'); }
+  }
   else {
-    const fav=Object.assign(_itemListe(it), {portionWeightG:+it.portionWeightG>0?+it.portionWeightG:null});
+    const s=it._src||it;
+    const fav=Object.assign(_itemListe(s), {portionWeightG:+s.portionWeightG>0?+s.portionWeightG:null});
+    /* L'identité du produit suit (son code-barres) : sans elle, le favori redeviendrait « un nom » (`_n2Cle`). */
+    if(typeof s.sourceId==='string' && s.sourceId){ fav.sourceId=s.sourceId; fav.etat=s.etat||null; }
     /* 🥗 V2 : un favori pris sur une ligne V2 garde de quoi rester un MODÈLE de confiance (sa fiche, sa
        provenance, sa quantité) — copiés, jamais partagés avec la ligne. Un favori ancien reste tel qu'il était. */
-    const s=it._src;
     if(s && s.n2 && s.n2.s===1){
       fav.sourceId=s.sourceId||null; fav.etat=s.etat||null;
       const n2={s:1, m:s.n2.m};
@@ -4601,7 +4744,6 @@ function toggleFavFood(i){
          gramme là où sa ligne dit « 2 portions (200 g) ») et « + Ajouter » réécrivait le calcul au lieu de la valeur corrigée. */
       if(Array.isArray(s.n2.corr) && s.n2.corr.length) n2.corr=JSON.parse(JSON.stringify(s.n2.corr));
       fav.n2=n2;
-      ['kcal','prot','carbs','fat'].forEach(c=>{ if(!(c in s) || s[c]===undefined || s[c]===null) delete fav[c]; });
     }
     S.savedFoods.push(fav);
     toast('Ajouté aux favoris ⭐','success');
@@ -5861,14 +6003,19 @@ function _afSuggLocales(q, brut){
   /* ⭐ R2 (ft-v963) : son journal se cherche comme le reste — sinon il serait la SEULE des trois
      recherches à ne pas retrouver « amandes » dans son propre « Amande grillée ». */
   const mots=_afMots(n);                      // R2 : un seul propriétaire (ft-v1119)
-  const vus=new Set(), out=[];
+  /* ⭐⭐ INCIDENT DU 23/10 — LA RÈGLE DE « MES ALIMENTS » (`_buildFoodQuickItems`) : une proposition par PRODUIT (`_n2Cle`, le
+     code-barres d'abord), et une ligne VÉRIFIÉE n'est jamais cachée derrière une copie plus récente du même produit. Avant :
+     une par NOM, la plus récente — mesuré, la copie fausse d'hier cachait le scan juste, et de deux yaourts du même nom un
+     seul était proposé (B-NV2P P15 ③, ⑰). */
+  const vus={}, out=[], vf=_n2FichesVerifiees();
   (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
-    if(!e||!e.name) return;
+    if(!e||!e.name||out.length>=5) return;
     const cle=_afNorm(e.name);
-    if(vus.has(cle)) return;
     if(!mots.length ? cle.indexOf(n)<0 : !_afRang(mots, cle)) return;
-    vus.add(cle);
-    if(out.length<5) out.push(e);
+    const k=_n2Cle(e, _afNorm); if(vus[k]===true) return;
+    const v=_n2Verifiee(_n2Apercu(e, vf));
+    if((k in vus) && !v) return;
+    vus[k]=v; out.push(e);
   });
   return out;
 }
@@ -5920,8 +6067,11 @@ function _afSuggRendu(){
   let h='<div style="border:1px solid var(--sep);border-radius:12px;background:var(--bg2);overflow:hidden;margin-bottom:10px;">';
   if(_afSuggLoc.length){
     h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">DÉJÀ NOTÉ PAR TOI</div>';
-    _afSuggLoc.forEach((e,i)=>{ h+=ligne('🕘', e.name,
-      (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),
+    /* ⭐ INCIDENT DU 23/10 — la même ligne que « Mes aliments » : la quantité, les valeurs (« ? » pour une inconnue, jamais 0)
+       et l'état de la référence (« non vérifié », « ⚠️ à vérifier »…) — ce qu'on reprend se voit avant d'être repris. */
+    const vf=_n2FichesVerifiees();
+    _afSuggLoc.forEach((e,i)=>{ const a=_n2Apercu(e, vf); h+=ligne('🕘', e.name,
+      _n2QteListe({_src:e, _ap:a})+_n2Val(e.kcal)+' kcal · P '+_n2Val(e.prot)+' · G '+_n2Val(e.carbs)+' · L '+_n2Val(e.fat)+_n2Marque(a),
       '_afSuggPrendreLocale('+i+')'); });
   }
   /* ⭐⭐ D-042 (Michel, 03/10/2026, confirmée le 10/10) — L'ORDRE FAST-FOOD ↔ GÉNÉRIQUE DÉPEND DE L'INTENTION.
@@ -6118,13 +6268,20 @@ function _afSuggPrendreOff(i){
    la main, chemin futur), modifier A écrirait sur B — mesuré, 150 g atterrissaient sur le mauvais
    produit. On ne devine pas lequel : **on ne fait rien** (R29). *Ne pas agir sur une identité
    ambiguë vaut mieux qu'agir sur la mauvaise ligne* — et ça ne coûte pas un identifiant inventé
-   pour un cas que l'app ne sait pas produire (R3). */
+   pour un cas que l'app ne sait pas produire (R3).
+   ⚠️⚠️ CE QUI PRÉCÈDE N'EST PLUS VRAI DEPUIS L'INCIDENT DU 23/10, ET C'ÉTAIT DÉJÀ FAUX POUR LE NOM SEUL : le nom n'était
+   l'identité que parce que l'étoile ne savait rien d'autre — et « Modifier » un yaourt B (pot de 150 g) réécrivait le favori du
+   yaourt A du MÊME NOM (125 → 150 g : affiché 100 kcal, re-noté 120 — mesuré, B-NV2P P15 ⑲ ⑳). L'identité est maintenant
+   celle du PRODUIT (`_n2Cle` : le code-barres d'abord ; le nom seulement pour ce qui n'en a pas), l'étoile garde le code-barres,
+   et deux favoris du même nom peuvent exister (deux produits). La règle de prudence tient : une identité portée par deux
+   favoris, on ne touche à rien. ⛔ La décision ft-v1186 ⑤ ne change pas : la DÉFINITION suit, jamais les macros. */
 function _majDefFavori(e){
   try{
     if(!e || e.u!=='portion' || !Array.isArray(S.savedFoods)) return;
-    const k=String(e.name||'').toLowerCase(); if(!k) return;
-    if(S.savedFoods.filter(x=>String(x.name||'').toLowerCase()===k).length>1) return;
-    const f=S.savedFoods.find(x=>String(x.name||'').toLowerCase()===k); if(!f) return;
+    const k=_n2Cle(e); if(k==='nom:') return;
+    const memes=S.savedFoods.filter(x=>_n2Cle(x)===k);
+    if(memes.length!==1) return;
+    const f=memes[0];
     if(e.portionLabel && f.portionLabel!==e.portionLabel) f.portionLabel=e.portionLabel;
     if(+e.portionWeightG>0 && +f.portionWeightG!==+e.portionWeightG) f.portionWeightG=+e.portionWeightG;
   }catch(err){}
@@ -6186,7 +6343,7 @@ function addFoodEntry(){
      habituels » ne touchent pas le favori non plus). */
   if(!_en.pastillePortions) _majDefFavori(_e);
   _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
-  _unhideFood(name);
+  _unhideFood(name, _n2Cle(_e));
   persist();
   closeAddFood();
   renderFoodJournal();

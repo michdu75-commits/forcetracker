@@ -5049,6 +5049,8 @@ enregistrée ; quatre étaient des défauts de code, le reste des phrases d'aide
 plus reportée (le moteur reconstruit `n2` à neuf) — contraire à D-101 ④. Le correctif tient en une ligne du moteur, mais le moteur
 est hors du périmètre accordé ce jour : **soumis à Michel**. En attendant, les aides ne promettent plus « Modifier garde
 l'original ».
+↪️ *23/10 : **corrigé** sur ordre de Michel (mission « incident prioritaire ») — le moteur transmet `n2.av` de version en version
+(`BUGS.md` §98, témoins P15 ㉘ et B-NV2-E ㉑).*
 
 **À quoi on le reconnaît.** Des témoins verts et des mutations conformes prouvent que ce qu'on a pensé à vérifier est vérifié —
 pas que tout ce qui compte l'est. Les quatre défauts avaient la même forme : **un chemin que l'implémentation venait d'ouvrir
@@ -5076,3 +5078,63 @@ enregistrée, chercher les écrivains et les lecteurs qui réagissent à cette f
   👉 *Corriger un témoin peut en désarmer un autre plus loin dans le même parcours : après toute réécriture, rejouer TOUTES les
   mutations du banc, pas seulement celles du témoin touché — c'est ce qui l'a vu, et une sélection ne l'aurait pas vu.*
 
+
+## §98 — ⛔⛔ UNE REPRISE AFFICHAIT UNE CHOSE ET EN ÉCRIVAIT UNE AUTRE : DEUX CALCULS, UNE IDENTITÉ PAR LE NOM, DES RÉFÉRENCES QUI SE CONTREDISENT RECOPIÉES EN SILENCE *(23/10/2026, NUTRITION V2 — incident prioritaire, mission de Michel ; branche `claude/nutrition-v2`, non publié ; reproduit AVANT correction sur données inventées)*
+
+> *(Numéro : §97 est celui de Claude Principal sur `claude/nut-securisation-p1`, §99 celui de Claude Séance sur
+> `claude/dreamy-bell-pu88ia` ; celui-ci est le §98 — à reconfirmer à l'intégration.)*
+
+**Le contexte.** Michel : *« une recherche fraîche ou un scan renvoie les bonnes valeurs, mais la reprise depuis les favoris ou
+l'historique peut restituer des valeurs fausses »* (Iso Zero : scan de 40 g juste le 23/08, puis un couple 156 kcal / 26 g de
+protéines recopié de favori en historique ; 517 entrées auditées le 19/10, 150 A/B, 51 recopies). Le banc P15 (`nut2_parcours.js`)
+a été **écrit et joué sur le code d'avant** : 24 rouges sur 37 — puis 37 verts sur le même banc après correctif.
+
+**Les cinq mécanismes, chacun reproduit par les vrais gestes :**
+1. **Deux calculs pour une reprise.** La liste « Mes aliments » affichait les valeurs ENREGISTRÉES d'un favori ; « + Ajouter » les
+   RECALCULAIT par sa fiche, avec une définition de portion réécrite après coup par ft-v1186 ⑤ (pot 125 → 150 g, macros
+   inchangées par décision) → **400 kcal affichées, 480 écrites**. Le même écart naissait d'un produit À CÔTÉ : « Modifier » un
+   yaourt B (pot de 150 g) réécrivait le favori du yaourt A du même nom → 100 kcal affichées, 120 écrites.
+2. **L'identité par le NOM.** Un favori d'avant V2 (V1 ne recopiait aucun code-barres dans un favori) masquait le scan juste du
+   même nom ; une copie récente masquait la ligne vérifiée ; de deux produits du même nom (deux codes-barres) un seul existait
+   dans la liste, dans « Déjà noté par toi » et comme favori ; « ✕ » sur le favori faux masquait le scan juste ; l'étoile d'un
+   scan retirait le favori du même nom au lieu d'en créer un.
+3. **La recopie silencieuse d'une référence qui se contredit** — 26 g de protéines pour 40 g d'une fiche à 88 g/100 g (la
+   correction partielle, M4) ; 28 g de macros dans 5 g (la forme M6) ; une copie différente de la fiche vérifiée du même
+   code-barres — par « + Ajouter » et « Tes repas habituels », sans un mot.
+4. **`n2.av` perdue à la 2ᵉ modification** d'une ancienne ligne (le moteur ne la recopiait que d'une ligne sans `n2`) — c'était
+   le défaut laissé ouvert au §96, faute de périmètre.
+5. **Une valeur inconnue devenue 0** dans un favori (`_itemListe` : `s.prot || 0`), puis écrite 0 par « + Ajouter ».
+
+**Ce qui n'a PAS été trouvé, et c'est dit** : aucun commit ne **calcule** le couple 156 / 26 — il naît d'un geste (une seule macro
+retouchée dans l'ancien « Modifier », M4 : INDICE, le geste n'est pas enregistré). ft-v1110 (03/09, 07:42 UTC, le calibrage à la
+main) précède de quelques heures la première ligne 156 / 26 : **coïncidence de dates écartée par la lecture du code** — le
+calibrage écrit un pour-100 g complet et recalcule les quatre valeurs, il ne peut pas produire un couple partiel. Les commits qui
+portent les mécanismes, eux, sont prouvés par la reproduction : ft-v1186 (`15ff528e`, 09/09) + jalon 4 (`11ed6348`, 22/10) pour
+le 1 ; le dédoublonnage par nom (présent avant ft-v855, `ffe39fa6`, 15/08 — l'origine est hors de l'historique disponible) et
+ft-v1042 (`1e066376`, 27/08 : les favoris gardent quantité et pour-100 g) pour le 2 et le 3 ; `9feec3bd` (22/10) pour le 4 ; le
+`|| 0` du noyau d'item (centralisé par la sous-étape 1b-iii, `30833641`, 12/09 ; le motif est plus ancien) pour le 5.
+
+**Les correctifs** (D-111) : une construction unique de ce qu'une reprise écrirait, lue par l'affichage et par l'écriture
+(`_n2Reajouter` en aperçu) ; l'identité du produit (`_n2Cle`) ; une référence vérifiée jamais masquée ; quatre causes
+d'incohérence démontrées (`_n2Incoherence`) → « ⚠️ à vérifier », l'écran plutôt que la recopie ; « non vérifié » sur une
+recopie ; l'inconnu reste absent ; `n2.av` transmise par le moteur. ⛔ Aucune donnée enregistrée modifiée.
+
+**Et deux défauts de MES témoins, trouvés en les éprouvant :**
+- un témoin qui supposait la liste « une ligne par saisie » : elle montre UN élément par produit (le plus récent vérifié) — le
+  scan à étoiler devait donc être la DERNIÈRE saisie (recherche par nom placée avant) ;
+- un témoin qui n'aurait jamais rougi : « Modifier le yaourt B ne redéfinit pas le favori du A » était joué APRÈS l'étoile du B —
+  deux favoris du même nom, l'ancien code (par le nom) voyait une ambiguïté et ne touchait à rien : vert sans rien éprouver. Il
+  est joué quand le SEUL favori de ce nom est celui du A (MP73 le prouve).
+- et un correctif inobservable, retiré : « ? kcal » dans une proposition CIQUAL — la recherche écarte déjà les 143 aliments sans
+  énergie connue (`_ciqualChercherUne`) ; aucune proposition n'affichait 0.
+
+**Un témoin voisin RÉÉCRIT, pas affaibli** : `B-NM6-C ②` (`nut_m6_rejeu.js`, le cliquet de M6) exigeait **2** appelants de
+`_n2Reajouter` — l'aperçu en est un **3ᵉ**, par construction (c'est le correctif lui-même). Il exige maintenant les trois noms,
+**et** que `_n2Apercu` passe l'argument d'aperçu, **et** que `_n2Reajouter` rende l'aperçu AVANT tout `_n2Enregistrer` : un
+aperçu qui pourrait écrire, un ordre inversé ou un 4ᵉ re-noteur non déclaré le font rougir (N17 → N19,
+`tools/mut_nut_m6_rejeu.py`). *Un cliquet qui compte des appelants se déplace avec la construction qu'il protège ; il ne se
+relâche pas.*
+
+**À quoi on le reconnaît.** *Un affichage et une écriture qui calculent chacun de leur côté finissent par diverger — la seule
+question est quand* (R2). Et *un nom n'est pas une identité* : il relie ce qui n'a pas d'identifiant, il ne doit jamais séparer
+ni confondre ce qui en a un.

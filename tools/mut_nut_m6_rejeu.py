@@ -22,9 +22,13 @@ RA_ORIG = "origine:{saisie:'liste', origine:'reprise'}, quantite:Object.assign({
 RA_FIN = "  return _n2Enregistrer(e, porte);"
 RA_QVIDE = "  if(!R.quantite) return {ok:false, aCompleter:true};"
 RA_FICHE = "  if(R.fiche){\n    e.mode='pesee'; e.fiche=R.fiche;"
-RA_TETE = "function _n2Reajouter(src, repas, date, porte){\n"
+RA_TETE = "function _n2Reajouter(src, repas, date, porte, apercu){\n"
 RJ_TETE = "function rejouerRepas(sig, meal){\n"
-RJ_MSG = "+(reste.length?' · à noter à la main (quantité inconnue) : '+reste.map(n=>String(n||'').slice(0,30)).join(', '):''),"
+RJ_MSG = "+(reste.length?' · à noter à la main (quantité inconnue) : '+reste.map(court).join(', '):''),"
+# 23/10/2026 (incident des reprises, D-111) — `_n2Apercu` MONTRE ce que « + Ajouter » ecrirait, par la MEME construction :
+#    il passe l'argument d'apercu, et `_n2Reajouter` rend la ligne AVANT tout `_n2Enregistrer`.
+AP_DEF = "function _n2Apercu(src, verifiees){ return _n2Reajouter(src, 'apercu', today(), 'apercu', {verifiees:verifiees}); }"
+RA_QUEUE = "  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};\n  if(raison) return {ok:false, incoherente:true, raison:raison};\n  return _n2Enregistrer(e, porte);\n"
 CIQ = "  if(!(lignes||[]).some(_n2BesoinCiqual)) return suite();"
 FIGE_GARDE = "  const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;"
 AF_LIT = "  const _en=_n2EntreeEcran(name, _vals, !!(_bcRow && _bcRow.style.display!=='none' && _bcNutr));"
@@ -65,6 +69,13 @@ MUT = [
      [(A, "    _afRef=null;\n    _afMajAncre(true);\n  }else{",
        "    _afRef=null;\n    _afMajAncre(true);\n    { const p=document.getElementById('af-poids'); if(p) p.value='150'; }\n  }else{")],
      ['B-NM6-Q ②'], 'GARDE'),
+    ('N17 l\'apercu ne passe plus l\'argument d\'apercu (il ECRIRAIT la ligne qu\'il montre)',
+     [(A, AP_DEF, AP_DEF.replace(", {verifiees:verifiees});", ");"))], C('②'), 'GARDE'),
+    ('N18 _n2Reajouter ecrit AVANT de rendre l\'apercu', [(A, RA_QUEUE,
+       "  if(raison && !apercu) return {ok:false, incoherente:true, raison:raison};\n  const w=_n2Enregistrer(e, porte);\n"
+       "  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};\n  return w;\n")], C('②'), 'GARDE'),
+    ('N19 un 3e re-noteur appelle _n2Reajouter sans se declarer', [(A, RJ_TETE, "function _m6RenoteurOublie(e){ return _n2Reajouter(e, 'dejeuner', today(), 'x'); }\n" + RJ_TETE)],
+     C('②'), 'GARDE'),
     ('MC1 [negatif] commentaire seulement dans _n2Reajouter (cite document, _afSrc, _bcNutr, _provFood(, _n2Extras)',
      [(A, RA_TETE, RA_TETE + "  /* lecture interdite ici : document. _afSrc _bcNutr _provFood( _n2Extras() */\n")], [], 'OK'),
 ]
