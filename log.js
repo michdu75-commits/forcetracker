@@ -6125,15 +6125,27 @@ function applyRestEdit(){
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
+/* 🖼️ SEANCE-UX-IMAGES (23/10/2026, demande de Michel — docs/SEANCE-UX-IMAGES.md) — LES VIGNETTES DES GROUPES DE « CHOISIR UN
+   EXERCICE ». Les 7 images du paquet de Michel, copiées À L'OCTET (empreintes SHA-256 du manifeste, témoin C-VIG-F1) sous
+   `muscles/vignettes/` — ⚠️ DES NOMS NOUVEAUX, EXPRÈS : les images vivent dans un cache du téléphone qui ne se vide jamais
+   (`ft-images`, sw.js) ; une image remplacée sous le même nom resterait l'ancienne chez tout le monde.
+   ⛔ Le cadre (taille, recadrage) a UN propriétaire : la classe `.ex-grp-vig` (style.css). Il masque le liseré du haut des
+   vignettes (fond et bord de carte de la maquette, pris dans le découpage : 3 à 17 lignes selon l'image) sans étirer ni
+   recolorer — l'image est ancrée en bas.
+   ⛔ MOLLETS GARDE SON IMAGE (décision de Michel, 23/10) : le paquet n'a pas de vignette mollets, sa 8ᵉ image est « Corps
+   complet » — elle n'est utilisée NULLE PART (aucun groupe « Corps complet » ici : ce serait une catégorie nouvelle).
+   ⛔ Ces vignettes ne servent QU'ICI (tuiles et en-tête d'un groupe ouvert) : les vignettes de mouvement des autres écrans
+   viennent de `_MG_IMG`, inchangée ; le bouton « 🫀 Anatomie » lit `anatomy`, inchangé ; libellés et `tags` (donc les
+   catégories, la recherche et la reconnaissance des exercices) inchangés. */
 const EX_GROUPS=[
-  {label:'Pectoraux',               tags:['Pectoraux'],           icon:`<img src="muscles/muscle pectoreaux.png" style="width:64px;height:64px;object-fit:cover;">`,        anatomy:'anatomy/pectoreaux/schema pectoreaux.png'},
-  {label:'Dos / Dorsaux',           tags:['Dos'],                 icon:`<img src="muscles/muscles dorsaux trapeze.png" style="height:80px;width:auto;object-fit:contain;">`,  anatomy:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
-  {label:'Épaules / Trapèzes',      tags:['Épaules','Trapèzes'],  icon:`<img src="muscles/epaule trapeze.png" style="width:64px;height:64px;object-fit:cover;">`,              anatomy:'anatomy/epaules/schéma epaule arriere.png'},
-  {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'],    icon:`<img src="muscles/muscle bras.png" style="height:80px;width:auto;object-fit:contain;">`,               anatomy:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
-  {label:'Jambes',                  tags:['Jambes'],              icon:`<img src="muscles/muscle avant cuisse.png" style="height:80px;width:auto;object-fit:contain;">`, anatomy:'anatomy/jambes/jambes avant/jambes face avant.png'},
-  {label:'Fessiers / Ischios / Lombaires', tags:['Fessiers','Lombaires'], icon:`<img src="muscles/fessiers ischios.png" style="height:80px;width:auto;object-fit:contain;">`, anatomy:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
-  {label:'Abdominaux',              tags:['Abdominaux'],          icon:`<img src="muscles/muscle abdominaux.png" style="width:64px;height:64px;object-fit:cover;">`,         anatomy:'anatomy/abdominaux/schema abdominaux.png'},
-  {label:'Mollets',                 tags:['Mollets'],             icon:`<img src="muscles/muscle mollet.png" style="width:64px;height:64px;object-fit:cover;">`,            anatomy:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
+  {label:'Pectoraux',               tags:['Pectoraux'],           icon:`<img src="muscles/vignettes/01_pectoraux.png" alt="" class="ex-grp-vig">`,                  anatomy:'anatomy/pectoreaux/schema pectoreaux.png'},
+  {label:'Dos / Dorsaux',           tags:['Dos'],                 icon:`<img src="muscles/vignettes/02_dos_dorsaux.png" alt="" class="ex-grp-vig">`,                anatomy:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
+  {label:'Épaules / Trapèzes',      tags:['Épaules','Trapèzes'],  icon:`<img src="muscles/vignettes/03_epaules_trapezes.png" alt="" class="ex-grp-vig">`,           anatomy:'anatomy/epaules/schéma epaule arriere.png'},
+  {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'],    icon:`<img src="muscles/vignettes/04_bras_biceps_triceps.png" alt="" class="ex-grp-vig">`,        anatomy:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
+  {label:'Jambes',                  tags:['Jambes'],              icon:`<img src="muscles/vignettes/05_jambes.png" alt="" class="ex-grp-vig">`,                     anatomy:'anatomy/jambes/jambes avant/jambes face avant.png'},
+  {label:'Fessiers / Ischios / Lombaires', tags:['Fessiers','Lombaires'], icon:`<img src="muscles/vignettes/06_fessiers_ischios_lombaires.png" alt="" class="ex-grp-vig">`, anatomy:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
+  {label:'Abdominaux',              tags:['Abdominaux'],          icon:`<img src="muscles/vignettes/07_abdominaux.png" alt="" class="ex-grp-vig">`,                 anatomy:'anatomy/abdominaux/schema abdominaux.png'},
+  {label:'Mollets',                 tags:['Mollets'],             icon:`<img src="muscles/muscle mollet.png" alt="" class="ex-grp-vig ex-grp-vig-centre">`,         anatomy:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
 ];
 let _exGrp=null;
 

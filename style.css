@@ -1170,13 +1170,19 @@ html.is-clone .ob-clone-only{ display:block; }
 .ex-subhdr-n{font-size:11px;font-weight:700;opacity:.75;}
 .ex-grp-tile{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
 .ex-grp-tile:active{background:var(--bg2);}
-.ex-grp-icon{flex-shrink:0;width:64px;height:64px;border-radius:12px;background:rgba(255,45,85,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;}
+.ex-grp-icon{flex-shrink:0;width:88px;height:51px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;}
+/* 🖼️ SEANCE-UX-IMAGES (23/10) — LE CADRE DES VIGNETTES DE GROUPE : un seul propriétaire. 88 × 51 (le rapport des vignettes
+   du paquet de Michel, 183 px de large) ; `cover` ANCRÉ EN BAS : il masque le liseré du haut (fond et bord de carte de la
+   maquette pris dans le découpage, 3 à 17 lignes — 51 px affichés = 106 lignes source sur 121 à 130) sans étirer ni
+   recolorer. Mollets (ancienne image, mollets au milieu) : centrée. Inline : la même image sert à l'en-tête d'un groupe ouvert. */
+.ex-grp-vig{width:88px;height:51px;flex-shrink:0;object-fit:cover;object-position:50% 100%;border-radius:10px;display:inline-block;vertical-align:middle;} /* flex-shrink:0 : rétrécie, elle laisserait revoir le liseré */
+.ex-grp-vig-centre{object-position:50% 50%;}
 .ex-grp-info{flex:1;}
 .ex-grp-label{font-size:14px;font-weight:400;color:var(--t1);}
 .ex-grp-count{font-size:13px;color:var(--t3);margin-top:2px;font-weight:600;}
 .ex-grp-arrow{font-size:20px;color:var(--t3);font-weight:700;}
 .ex-grp-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--t2);font-size:15px;font-family:var(--font);cursor:pointer;padding:0 0 12px;font-weight:700;touch-action:manipulation;}
-.ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);margin-bottom:10px;letter-spacing:.3px;}
+.ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);margin-bottom:10px;letter-spacing:.3px;display:flex;align-items:center;gap:10px;} /* SEANCE-UX-IMAGES : vignette et libellé côte à côte — le libellé long passait sous l'image */
 .prog-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);margin-bottom:8px;}
 .prog-card-name{font-size:15px;font-weight:700;}
 .prog-card-detail{font-size:13px;color:var(--t3);margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

@@ -154,6 +154,11 @@ const PRECACHE = [
   './muscles/muscle pectoreaux.png','./muscles/muscles dorsaux trapeze.png','./muscles/epaule trapeze.png',
   './muscles/muscle bras.png','./muscles/muscle avant cuisse.png','./muscles/fessiers ischios.png',
   './muscles/muscle abdominaux.png','./muscles/muscle mollet.png',
+  // 🖼️ SEANCE-UX-IMAGES (23/10) : vignettes des groupes de « Choisir un exercice » — noms NOUVEAUX exprès (ce cache-là ne se
+  //    vide jamais : une image remplacée sous le même nom resterait l'ancienne). Préchargées : le sélecteur s'ouvre hors ligne.
+  './muscles/vignettes/01_pectoraux.png','./muscles/vignettes/02_dos_dorsaux.png','./muscles/vignettes/03_epaules_trapezes.png',
+  './muscles/vignettes/04_bras_biceps_triceps.png','./muscles/vignettes/05_jambes.png',
+  './muscles/vignettes/06_fessiers_ischios_lombaires.png','./muscles/vignettes/07_abdominaux.png',
   // GIFs exercices pectoraux + fessiers
   './exercises/developpe-couche.webp',
   './exercises/developpe-couche-halteres-exercice-musculation.webp',
