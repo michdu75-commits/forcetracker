@@ -8,10 +8,13 @@
    ④ libellés, catégories (`tags`), bouton « 🫀 Anatomie » et recherche : inchangés ; les autres écrans ne reçoivent pas ces
      vignettes ; un exercice INCONNU n'en reçoit jamais une ;
    ⑤ préchargées par le service worker : le sélecteur les affiche hors ligne.
-   Ce que les témoins CONDUISENT : la vraie app servie en local, le vrai sélecteur (tap sur chaque tuile, retour, recherche,
-   « Anatomie »), la création d'un exercice perso, un rechargement hors ligne servi par le vrai service worker, 3 largeurs.
+   Ce que les témoins CONDUISENT : la vraie app servie en local, le vrai sélecteur (un `click()` sur chaque tuile — événement
+   envoyé par le script, sans test de zone tactile —, retour, recherche, « Anatomie »), un exercice perso POSÉ dans le stockage
+   local (`ft4_cuex` — il n'est pas créé par le formulaire), un rechargement hors ligne servi par le vrai service worker,
+   3 largeurs pour les tuiles et 2 petites largeurs (320 / 340 px) pour les 8 groupes ouverts.
    Ce qu'ils OBSERVENT : les tuiles, leurs images (source, chargement, taille native et affichée, recadrage calculé), l'en-tête
-   d'un groupe ouvert, les lignes d'exercices, l'argument passé à `openAnatomyImg`, le cache `ft-images`, les fichiers du dépôt.
+   d'un groupe ouvert (débordement compris), les lignes d'exercices, l'argument passé à `openAnatomyImg`, le cache `ft-images`,
+   la liste `PRECACHE` ÉVALUÉE et les fichiers du dépôt.
    Ce qu'ils NE COUVRENT PAS : Safari / l'iPhone réel, le jugement esthétique (captures avant / après fournies à Michel), le
    mode clair, la précision anatomique des illustrations (non validée médicalement — limite du paquet).
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
@@ -52,7 +55,7 @@ async function ecran(t, b, PORT) {
     const pg = await cx.newPage(); const errs = []; pg.on('pageerror', x => errs.push(String(x.message).slice(0, 160)));
     await pg.goto('http://localhost:' + PORT + '/index.html'); await pg.waitForTimeout(1500);
     const X = { cx, pg, errs };
-    await nettoyer(X);
+    await nettoyer(X); await aide(X);
     return X;
   };
   const nettoyer = X => X.pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
@@ -71,6 +74,11 @@ async function ecran(t, b, PORT) {
       // ancré en bas : les lignes source masquées sont en HAUT — leur nombre = hauteur source − hauteur affichée / échelle
       masquees: (echelle && cs && cs.objectFit === 'cover' && cs.objectPosition === '50% 100%') ? im.naturalHeight - r.height / echelle : -1,
       hTuile: Math.round(tr.height) }; }));
+  // les rectangles des lignes de texte d'un élément (tous ses nœuds de texte non blancs, blancs de bord exclus) — dans la page
+  const aide = X => X.pg.evaluate(() => { window._lignesTexte = el => { const out = []; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) { const tx = n.textContent, k = tx.search(/\S/); if (k < 0) continue;
+      const rg = document.createRange(); rg.setStart(n, k); rg.setEnd(n, tx.replace(/\s+$/, '').length);
+      out.push(...[...rg.getClientRects()].filter(q => q.width > 0)); } return out; }; });
   const debord = X => X.pg.evaluate(() => { const l = document.getElementById('ex-list');
     return l.scrollWidth > l.clientWidth + 1 || document.documentElement.scrollWidth > window.innerWidth + 1; });
   const fermer = X => X.cx.close();
@@ -112,10 +120,9 @@ async function ecran(t, b, PORT) {
         // le libellé est-il À CÔTÉ de l'image (et non dessous) ? TOUTES ses lignes, mesurées par une plage sur tout le texte
         // ⚠️ la 1ʳᵉ version ne mesurait que le 1ᵉʳ caractère : « Fessiers / Ischios / » restait à côté de l'image pendant que
         //    « Lombaires » passait dessous, et le témoin restait vert (mutation MV6, contrôle négatif du 23/10)
-        let cote = false, lignesTxt = 0; if (h && ir) { const tn = [...h.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) {
-          const rg = document.createRange(); const tx = tn.textContent, k = tx.search(/\S/), fin = tx.replace(/\s+$/, '').length;
-          rg.setStart(tn, k); rg.setEnd(tn, fin); const rs = [...rg.getClientRects()].filter(q => q.width > 0); lignesTxt = rs.length;
-          cote = rs.length > 0 && rs.every(q => q.left >= ir.right - 1) && rs[0].top < ir.bottom; } }
+        //    — et il lit le texte où qu'il soit (nœud nu ou élément), pour ne pas dépendre de la structure de l'en-tête
+        let cote = false, lignesTxt = 0; if (h && ir) { const rs = _lignesTexte(h); lignesTxt = rs.length;
+          cote = rs.length > 0 && rs.every(q => q.left >= ir.right - 1) && rs[0].top < ir.bottom; }
         const anat = [...document.querySelectorAll('#ex-list button')].find(bt => /Anatomie/.test(bt.textContent));
         return { label: h ? h.textContent.trim() : '', src: im ? im.getAttribute('src') : null, aff: ir ? [Math.round(ir.width), Math.round(ir.height)] : null, cote, lignesTxt,
           lignes: document.querySelectorAll('#ex-list .ex-pick').length, vigLignes: document.querySelectorAll('#ex-list .ex-pick img[src*="muscles/vignettes/"]').length, anat: !!anat }; });
@@ -132,6 +139,37 @@ async function ecran(t, b, PORT) {
     t('C-VIG-B3 ⛔ le bouton « 🫀 Anatomie » est là sur chaque groupe et ouvre EXACTEMENT le même schéma qu\'avant',
       res.every(r => r.anat) && _det(anat) === _det(ANAT), _det(anat));
     await fermer(X);
+  }
+
+  /* ── B'. LES 8 GROUPES OUVERTS AUX PETITES LARGEURS : rien ne déborde ──────────────────────────────────────
+     ⚠️ Né de la revue adverse du 23/10 : l'en-tête mis en ligne (vignette + libellé) ne pouvait plus passer à la ligne ; à 320 px,
+     « Abdominaux » poussait le bouton « Anatomie » 20 px hors de la feuille et la liste glissait de côté (Pectoraux et Fessiers :
+     1 à 2 px). Aucun témoin ne le voyait : B ne tournait qu'à 390 px et le contrôle de débordement ne regardait que les tuiles.
+     L'invariant est celui d'avant le lot (le code d'avant le tient) : à 320 et 340 px, pour CHAQUE groupe ouvert, ni la liste ni
+     la page ne glissent de côté, le bouton « Anatomie » reste dans la liste, et chaque ligne du libellé reste visible, sans
+     passer sous le bouton. */
+  {
+    const res = [];
+    for (const w of [320, 340]) {
+      const X = await ouvrir({ w });
+      await selecteur(X); await X.pg.evaluate(() => document.fonts && document.fonts.ready);
+      for (let i = 0; i < 8; i++) {
+        await X.pg.evaluate(i => { const el = document.querySelectorAll('#ex-list .ex-grp-tile')[i]; el.click(); }, i);
+        await X.pg.waitForTimeout(150);
+        res.push(await X.pg.evaluate(({ w, i }) => { const l = document.getElementById('ex-list'), h = l.querySelector('.ex-grp-header');
+          const bt = [...l.querySelectorAll('button')].find(b => /Anatomie/.test(b.textContent)), lr = l.getBoundingClientRect(), br = bt ? bt.getBoundingClientRect() : null;
+          const rs = h ? _lignesTexte(h) : [];
+          const ok = !!(h && br) && l.scrollWidth <= l.clientWidth + 1 && document.documentElement.scrollWidth <= window.innerWidth + 1
+            && br.left >= lr.left - 0.5 && br.right <= lr.right + 0.5 && rs.length > 0
+            && rs.every(q => q.left >= lr.left - 0.5 && q.right <= br.left + 0.5);
+          return { w, g: i + 1, ok, liste: Math.round(l.scrollWidth) + '/' + Math.round(l.clientWidth), bouton: br ? Math.round((br.right - lr.right) * 10) / 10 : null }; }, { w, i }));
+        await X.pg.evaluate(() => { const bk = document.querySelector('#ex-list .ex-grp-back'); if (bk) bk.click(); }); await X.pg.waitForTimeout(120);
+      }
+      res.push({ w, errs: X.errs.length });
+      await fermer(X);
+    }
+    t('C-VIG-B4 ⭐ à 320 et 340 px, les 8 groupes ouverts tiennent dans la feuille : rien ne glisse de côté, « Anatomie » reste dans la liste, le libellé reste lisible sans passer sous le bouton',
+      res.filter(r => 'ok' in r).length === 16 && res.every(r => ('ok' in r) ? r.ok : r.errs === 0), _det(res.filter(r => !r.ok)));
   }
 
   /* ── C. LA RECHERCHE : elle trouve toujours, et ne montre jamais une vignette de groupe ───────────────── */
@@ -211,9 +249,12 @@ function source(t, ROOT, fs, path) {
   t('C-VIG-S1 ⭐⭐ les 7 fichiers du dépôt sont À L\'OCTET ceux du paquet de Michel (empreintes SHA-256 de son manifeste) ; « Corps complet » n\'est pas dans le dépôt',
     empreintes.every((h, i) => h === VIG[i].sha) && !fs.existsSync(path.join(ROOT, 'muscles/vignettes/08_corps_complet.png')),
     _det(empreintes.map((h, i) => h === VIG[i].sha ? 'ok' : VIG[i].src + ' ' + h.slice(0, 12))));
-  const sw = lit('sw.js');
-  t('C-VIG-S2 le service worker précharge les 7 vignettes (liste PRECACHE)',
-    VIG.slice(0, 7).every(v => sw.indexOf("'./" + v.src + "'") >= 0));
+  // ⚠️ la 1ʳᵉ version cherchait le TEXTE dans sw.js : les 3 lignes mises en commentaire, elle restait verte avec 0 vignette
+  //    préchargée (revue adverse du 23/10). La liste est maintenant ÉVALUÉE, comme `EX_GROUPS` ci-dessous.
+  const sw = lit('sw.js'), j0 = sw.indexOf('const PRECACHE = ['), j1 = sw.indexOf('\n];', j0);
+  let P = null; try { P = new Function(sw.slice(j0, j1 + 3) + '\nreturn PRECACHE;')(); } catch (e) { P = null; }
+  const manquent = P ? VIG.slice(0, 7).filter(v => !P.includes('./' + v.src)).map(v => v.src) : ['PRECACHE illisible'];
+  t('C-VIG-S2 le service worker précharge les 7 vignettes (liste PRECACHE évaluée)', !manquent.length, _det(manquent));
   // les catégories et l'anatomie : extraites du vrai `EX_GROUPS` du fichier (évalué isolément)
   const log = lit('log.js'), i0 = log.indexOf('const EX_GROUPS=['), i1 = log.indexOf('\n];', i0);
   let G = null; try { G = new Function(log.slice(i0, i1 + 3) + '\nreturn EX_GROUPS;')(); } catch (e) { G = null; }

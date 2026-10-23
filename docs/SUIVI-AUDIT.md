@@ -1598,7 +1598,10 @@ préservées. **Fait** : 7 PNG **à l'octet** (SHA-256 du manifeste) sous des **
 permanent), chacun sur son groupe ; cadre **88 × 51 ancré en bas** qui masque le **liseré du découpage** (fond et bord de carte de la
 maquette, 3 à 17 lignes, mesuré) sans étirer ni recolorer ; en-tête d'un groupe ouvert en ligne ; préchargement `sw.js` (pas de
 version). ⚠️ **Mollets n'a pas de vignette dans le paquet** : elle garde son image actuelle (style différent) — **une vignette mollets
-manque**. Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **18 / 0** (7 / 11 rouges sur le code
-d'avant) · contrôle négatif **17 / 17** (1ᵉʳ tour 16 / 17 : un témoin ne mesurait que le 1ᵉʳ caractère d'un libellé — corrigé, campagne rejouée) · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) · bouton central **immobile** (mesuré avant / après) · voisins «VOISINSVIG» · passe «PASSEVIG» ·
-captures avant / après dans le PDF. Règle d'or #17 : **0** donnée · **3** fichiers + 7 images · **+33 / −10** · **0** ancien chemin.
+manque**. ⚠️ **La revue adverse a trouvé un vrai défaut, corrigé avant toute intégration** : à 320 px, l'en-tête d'un groupe ouvert
+débordait (Abdominaux : « Anatomie » poussé 20 px hors de la feuille) — l'en-tête passe maintenant à la ligne quand le libellé ne
+tient pas, témoin **C-VIG-B4** (`BUGS.md` §99) ; et un témoin faible (le préchargement cherché comme du texte) renforcé.
+Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **19 / 0** (8 / 11 rouges sur le code
+d'avant ; avant le correctif : 18 / 1) · contrôle négatif «MUT3» · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) · bouton central **immobile** (mesuré avant / après) · voisins «VOISINSVIG» · passe «PASSEVIG» ·
+captures avant / après dans le PDF. Règle d'or #17 : **0** donnée · **3** fichiers + 7 images · **+42 / −11** · **0** ancien chemin.
 Détail : `docs/SEANCE-UX-IMAGES.md`.

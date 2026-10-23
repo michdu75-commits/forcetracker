@@ -36,7 +36,15 @@ MUT = [
     ('MV5 [deguisee] la vignette peut retrecir (flex-shrink:0 retire) — dans l\'en-tete, le liseré revient',
      [(CS, ".ex-grp-vig{width:88px;height:51px;flex-shrink:0;", ".ex-grp-vig{width:88px;height:51px;")], 'GARDE', 'C-VIG-B1'),
     ('MV6 l\'en-tete n\'est plus en ligne (le libelle long repasse sous l\'image)',
-     [(CS, "letter-spacing:.3px;display:flex;align-items:center;gap:10px;}", "letter-spacing:.3px;}")], 'GARDE', 'C-VIG-B1'),
+     [(CS, "letter-spacing:.3px;display:flex;align-items:center;gap:10px;flex:1 1 auto;flex-wrap:wrap;}", "letter-spacing:.3px;flex:1 1 auto;}")], 'GARDE', 'C-VIG-B1'),
+    # ↓ les 3 suivantes viennent de la revue adverse du 23/10 (en-tête qui débordait à 320 px ; S2 qui ne lisait que du texte)
+    ('MV15 l\'en-tete ne peut plus passer a la ligne (flex-wrap retire) : a 320 px « Abdominaux » fait deborder la feuille',
+     [(CS, "gap:10px;flex:1 1 auto;flex-wrap:wrap;}", "gap:10px;flex:1 1 auto;}")], 'GARDE', 'C-VIG-B4'),
+    ('MV16 [deguisee] le libelle reprend la largeur de son contenu (base 0 retiree) : les libelles longs passent sous l\'image',
+     [(CS, ".ex-grp-header-label{flex:1 1 0;}", ".ex-grp-header-label{flex:0 1 auto;}")], 'GARDE', 'C-VIG-B1'),
+    ('MV17 [deguisee] les vignettes mises en commentaire dans la liste de prechargement (le texte reste dans sw.js)',
+     [(SW, "  './" + V + "01_pectoraux.png',", "  /* './" + V + "01_pectoraux.png',"),
+      (SW, "'./" + V + "07_abdominaux.png',", "'./" + V + "07_abdominaux.png', */")], 'GARDE', 'C-VIG-S2'),
     ('MV7 cadre 64 x 64 (l\'ancien)',
      [(CS, ".ex-grp-vig{width:88px;height:51px;", ".ex-grp-vig{width:64px;height:64px;")], 'GARDE', 'C-VIG-A4'),
     # ⚠️ hors ligne, elle resterait servie : les tuiles sont dessinees au demarrage, le service worker les met en cache a la volee

@@ -5003,3 +5003,32 @@ qu'elle possède — un champ, pas l'objet entier.*
 `tools/mut_seance_repos.py`). Et la leçon de méthode : *un banc vert, un contrôle négatif conforme et une passe complète valide ne
 disent rien des chemins qu'aucun témoin ne conduit* — la revue adverse, elle, cherche justement ces chemins-là.
 
+
+## §99 — ⛔ UN EN-TÊTE MIS EN LIGNE SANS RETOUR POSSIBLE, ET DEUX TÉMOINS QUI NE REGARDAIENT QUE LÀ OÙ ON AVAIT PENSÉ À REGARDER *(23/10/2026, SEANCE-UX-IMAGES — session-C, branche `claude/dreamy-bell-pu88ia`, non publié ; ⚠️ numéro à reconfirmer à l'intégration : §92, §94, §96 sont ceux de Nutrition V2, §97 celui de Claude Principal)*
+
+**Ce qui s'est passé.** Le lot des vignettes de « Choisir un exercice » avait un banc vert (18 / 0) et un contrôle négatif conforme
+(17 / 17). Une relecture indépendante, à qui l'on n'avait donné que le code, a trouvé un défaut **calculé** — puis mesuré dans le
+rendu : pour mettre la vignette et le libellé d'un groupe ouvert **côte à côte**, l'en-tête était devenu une rangée **sans retour à
+la ligne**. Sa largeur minimale passait de « le mot le plus long » à « vignette + écart + mot le plus long » ; à **320 px**,
+« Abdominaux » poussait le bouton « 🫀 Anatomie » **20 px** hors de la feuille et la liste glissait de côté (Pectoraux, Fessiers :
+1 à 2 px). Avant le lot, rien ne débordait. La consigne du paquet le demandait pourtant en toutes lettres : *« vérifier l'absence
+de débordement »*.
+
+**Pourquoi aucun témoin ne l'a vu.** Le contrôle de débordement tournait à 3 largeurs… **sur les tuiles** ; l'en-tête, modifié dans
+le même lot, n'était testé **qu'à 390 px**. Et un 2ᵉ témoin, celui du préchargement, **cherchait le texte** des chemins dans
+`sw.js` : les lignes mises en commentaire, il restait vert avec **0** vignette préchargée — la mutation qui le « prouvait »
+supprimait la ligne au lieu de la commenter.
+
+**Correctif.** L'en-tête peut passer à la ligne, et le libellé a une **base nulle** : il reste à côté de l'image tant que son mot le
+plus long y tient (390 px : les 8 groupes, comme avant le correctif), sinon il passe dessous, comme avant le lot. Mesuré : aucun
+débordement de 300 à 430 px. Témoin **C-VIG-B4** (les 8 groupes ouverts à 320 et 340 px : rouge avant le correctif, vert avant le
+lot) ; C-VIG-S2 **évalue** la liste `PRECACHE` ; mutations MV15 · MV16 · MV17.
+
+**À quoi on le reconnaît.** Un témoin de mise en page qui tourne à plusieurs largeurs sur UNE vue, pendant que la vue voisine,
+modifiée par le même lot, n'est vue qu'à une largeur. *Chaque élément dont la largeur minimale change se teste à la plus petite
+largeur servie.* Et un témoin de **liste** qui cherche du **texte** : *une liste se lit en l'évaluant, sinon un commentaire la vide
+sans que le témoin le sache* (même famille que C-VIG-S3, qui évaluait déjà `EX_GROUPS`).
+
+**Ce qui le protège aujourd'hui.** `tests/parcours/picker_vignettes.js` (C-VIG-B4, C-VIG-S2) et `tools/mut_picker_vignettes.py`
+(MV15 → B4, MV16 → B1, MV17 → S2). Et, encore une fois, la leçon du §95 : *la revue adverse cherche les chemins qu'aucun témoin
+ne conduit* — ici, une largeur.

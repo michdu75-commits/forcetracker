@@ -6129,9 +6129,9 @@ const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
    EXERCICE ». Les 7 images du paquet de Michel, copiées À L'OCTET (empreintes SHA-256 du manifeste, témoin C-VIG-S1) sous
    `muscles/vignettes/` — ⚠️ DES NOMS NOUVEAUX, EXPRÈS : les images vivent dans un cache du téléphone qui ne se vide jamais
    (`ft-images`, sw.js) ; une image remplacée sous le même nom resterait l'ancienne chez tout le monde.
-   ⛔ Le cadre (taille, recadrage) a UN propriétaire : la classe `.ex-grp-vig` (style.css). Il masque le liseré du haut des
-   vignettes (fond et bord de carte de la maquette, pris dans le découpage : 3 à 17 lignes selon l'image) sans étirer ni
-   recolorer — l'image est ancrée en bas.
+   ⛔ La taille et le recadrage du cadre ont UN propriétaire : la classe `.ex-grp-vig` (style.css) — le conteneur de la tuile
+   prend la taille de l'image. Le cadre masque le liseré du haut des vignettes (fond et bord de carte de la maquette, pris dans
+   le découpage : 3 à 17 lignes selon l'image) sans étirer ni recolorer — l'image est ancrée en bas.
    ⛔ MOLLETS GARDE SON IMAGE (décision de Michel, 23/10) : le paquet n'a pas de vignette mollets, sa 8ᵉ image est « Corps
    complet » — elle n'est utilisée NULLE PART (aucun groupe « Corps complet » ici : ce serait une catégorie nouvelle).
    ⛔ Ces vignettes ne servent QU'ICI (tuiles et en-tête d'un groupe ouvert) : les vignettes de mouvement des autres écrans
@@ -6546,7 +6546,7 @@ function filterEx(){
     list.innerHTML=
       `<button class="ex-grp-back" onclick="_exGrp=null;filterEx();">‹ Groupes musculaires</button>`+
       `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div class="ex-grp-header" style="margin-bottom:0;">${grp.icon} ${grp.label}</div>
+        <div class="ex-grp-header" style="margin-bottom:0;">${grp.icon}<span class="ex-grp-header-label">${grp.label}</span></div>
         ${anatBtn}
       </div>`+
       (f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');

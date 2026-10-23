@@ -1170,11 +1170,14 @@ html.is-clone .ob-clone-only{ display:block; }
 .ex-subhdr-n{font-size:11px;font-weight:700;opacity:.75;}
 .ex-grp-tile{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
 .ex-grp-tile:active{background:var(--bg2);}
-.ex-grp-icon{flex-shrink:0;width:88px;height:51px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;}
-/* 🖼️ SEANCE-UX-IMAGES (23/10) — LE CADRE DES VIGNETTES DE GROUPE : un seul propriétaire. 88 × 51 (le rapport des vignettes
-   du paquet de Michel, 183 px de large) ; `cover` ANCRÉ EN BAS : il masque le liseré du haut (fond et bord de carte de la
-   maquette pris dans le découpage, 3 à 17 lignes — 51 px affichés = 106 lignes source sur 121 à 130) sans étirer ni
-   recolorer. Mollets (ancienne image, mollets au milieu) : centrée. Inline : la même image sert à l'en-tête d'un groupe ouvert. */
+.ex-grp-icon{flex-shrink:0;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;}
+/* 🖼️ SEANCE-UX-IMAGES (23/10) — LE CADRE DES VIGNETTES DE GROUPE : un seul propriétaire de sa taille (le conteneur de la tuile,
+   `.ex-grp-icon`, prend celle de l'image). 88 × 51 : un cadre PLUS LARGE que les vignettes du paquet de Michel (1,73 contre
+   1,41 à 1,51 ; 183 px de large), rempli sans étirer (`cover`) et ANCRÉ EN BAS : il en coupe le haut — 15 à 24 lignes source,
+   12 à 18 % (51 px affichés = 106 lignes sur 121 à 130) —, c'est-à-dire le liseré (fond et bord de carte de la maquette pris
+   dans le découpage, 3 à 17 lignes) puis 0 à 12 lignes de dessin (cous, mentons) ; aucun muscle ciblé (orange) coupé, sauf
+   2 à 5 pixels sur Jambes. Rien sur les côtés. Mollets (ancienne image, mollets au milieu) : centrée. Inline : la même image
+   sert à l'en-tête d'un groupe ouvert. */
 .ex-grp-vig{width:88px;height:51px;flex-shrink:0;object-fit:cover;object-position:50% 100%;border-radius:10px;display:inline-block;vertical-align:middle;} /* flex-shrink:0 : rétrécie, elle laisserait revoir le liseré */
 .ex-grp-vig-centre{object-position:50% 50%;}
 .ex-grp-info{flex:1;}
@@ -1182,7 +1185,12 @@ html.is-clone .ob-clone-only{ display:block; }
 .ex-grp-count{font-size:13px;color:var(--t3);margin-top:2px;font-weight:600;}
 .ex-grp-arrow{font-size:20px;color:var(--t3);font-weight:700;}
 .ex-grp-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--t2);font-size:15px;font-family:var(--font);cursor:pointer;padding:0 0 12px;font-weight:700;touch-action:manipulation;}
-.ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);margin-bottom:10px;letter-spacing:.3px;display:flex;align-items:center;gap:10px;} /* SEANCE-UX-IMAGES : vignette et libellé côte à côte — le libellé long passait sous l'image */
+.ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);margin-bottom:10px;letter-spacing:.3px;display:flex;align-items:center;gap:10px;flex:1 1 auto;flex-wrap:wrap;} /* SEANCE-UX-IMAGES : vignette et libellé côte à côte — le libellé long passait sous l'image */
+/* ⛔ …mais SEULEMENT s'il tient (revue adverse du 23/10, témoin C-VIG-B4) : l'en-tête en ligne sans retour possible faisait
+   déborder la feuille à 320 px (« Abdominaux » : le bouton « 🫀 Anatomie » poussé 20 px dehors, la liste qui glisse de côté).
+   Base 0 : le libellé reste à côté de l'image tant que son mot le plus long y tient (390 px : tous), sinon il passe dessous,
+   comme avant le lot ; l'en-tête prend la place laissée par le bouton, qui ne change pas. */
+.ex-grp-header-label{flex:1 1 0;}
 .prog-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);margin-bottom:8px;}
 .prog-card-name{font-size:15px;font-weight:700;}
 .prog-card-detail{font-size:13px;color:var(--t3);margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
