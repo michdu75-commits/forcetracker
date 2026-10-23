@@ -1599,7 +1599,7 @@ permanent), chacun sur son groupe ; cadre **88 × 51 ancré en bas** qui masque 
 maquette, 3 à 17 lignes, mesuré) sans étirer ni recolorer ; en-tête d'un groupe ouvert en ligne ; préchargement `sw.js` (pas de
 version). **Mollets** : pas de vignette dans le 1ᵉʳ paquet ; **la sienne est venue dans un 2ᵉ paquet (23/10 matin, D-106)** et
 elle est branchée — le fichier livré était une carte sur un grand fond blanc (21 % du cadre aurait été blanc) : le dépôt garde la carte
-seule, pixels identiques, ancrée à 35 % pour ne couper aucun muscle (D-107, à valider ; témoin C-VIG-A6) ; tests ciblés «MOLTESTS». ⚠️ **La revue adverse a trouvé un vrai défaut, corrigé avant toute intégration** : à 320 px, l'en-tête d'un groupe ouvert
+seule, pixels identiques, ancrée à 35 % pour ne couper aucun muscle (D-107, à valider ; témoin C-VIG-A6) ; tests ciblés : banc **20 / 0** (12 / 8 avant l'ajout), contrôle négatif **25 / 25**, comparateur 12 / 12, bouton central immobile, voisins du sélecteur 0 rouge — passe complète **à refaire** avant intégration. ⚠️ **La revue adverse a trouvé un vrai défaut, corrigé avant toute intégration** : à 320 px, l'en-tête d'un groupe ouvert
 débordait (Abdominaux : « Anatomie » poussé 20 px hors de la feuille) — l'en-tête passe maintenant à la ligne quand le libellé ne
 tient pas, témoin **C-VIG-B4** (`BUGS.md` §99) ; et un témoin faible (le préchargement cherché comme du texte) renforcé.
 Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **19 / 0** (8 / 11 rouges sur le code
