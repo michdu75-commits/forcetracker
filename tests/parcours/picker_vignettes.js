@@ -109,12 +109,15 @@ async function ecran(t, b, PORT) {
       await X.pg.waitForTimeout(250); await attendreImages(X);
       const r = await X.pg.evaluate(() => { const h = document.querySelector('#ex-list .ex-grp-header'), im = h && h.querySelector('img');
         const ir = im ? im.getBoundingClientRect() : null;
-        // le libellé est-il À CÔTÉ de l'image (et non dessous) ? le 1ᵉʳ caractère du texte, mesuré par une plage
-        let cote = false; if (h && ir) { const tn = [...h.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) {
-          const rg = document.createRange(); const k = tn.textContent.search(/\S/); rg.setStart(tn, k); rg.setEnd(tn, k + 1); const lr = rg.getBoundingClientRect();
-          cote = lr.left >= ir.right - 1 && lr.top < ir.bottom; } }
+        // le libellé est-il À CÔTÉ de l'image (et non dessous) ? TOUTES ses lignes, mesurées par une plage sur tout le texte
+        // ⚠️ la 1ʳᵉ version ne mesurait que le 1ᵉʳ caractère : « Fessiers / Ischios / » restait à côté de l'image pendant que
+        //    « Lombaires » passait dessous, et le témoin restait vert (mutation MV6, contrôle négatif du 23/10)
+        let cote = false, lignesTxt = 0; if (h && ir) { const tn = [...h.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) {
+          const rg = document.createRange(); const tx = tn.textContent, k = tx.search(/\S/), fin = tx.replace(/\s+$/, '').length;
+          rg.setStart(tn, k); rg.setEnd(tn, fin); const rs = [...rg.getClientRects()].filter(q => q.width > 0); lignesTxt = rs.length;
+          cote = rs.length > 0 && rs.every(q => q.left >= ir.right - 1) && rs[0].top < ir.bottom; } }
         const anat = [...document.querySelectorAll('#ex-list button')].find(bt => /Anatomie/.test(bt.textContent));
-        return { label: h ? h.textContent.trim() : '', src: im ? im.getAttribute('src') : null, aff: ir ? [Math.round(ir.width), Math.round(ir.height)] : null, cote,
+        return { label: h ? h.textContent.trim() : '', src: im ? im.getAttribute('src') : null, aff: ir ? [Math.round(ir.width), Math.round(ir.height)] : null, cote, lignesTxt,
           lignes: document.querySelectorAll('#ex-list .ex-pick').length, vigLignes: document.querySelectorAll('#ex-list .ex-pick img[src*="muscles/vignettes/"]').length, anat: !!anat }; });
       await X.pg.evaluate(() => { const bt = [...document.querySelectorAll('#ex-list button')].find(b => /Anatomie/.test(b.textContent)); if (bt) bt.click(); });
       res.push(r);
@@ -123,7 +126,7 @@ async function ecran(t, b, PORT) {
     const anat = await X.pg.evaluate(() => window.__anat);
     t('C-VIG-B1 ⭐ un groupe ouvert montre en en-tête la MÊME vignette, en 88 × 51 (elle ne rétrécit pas — rétrécie, elle laissait revoir le liseré), le libellé À CÔTÉ',
       res.every((r, i) => r.src === VIG[i].src && r.aff && r.aff[0] === 88 && r.aff[1] === 51 && r.cote && r.label === LABELS[i]),
-      _det(res.map(r => ({ src: r.src, aff: r.aff, cote: r.cote, label: r.label }))));
+      _det(res.map(r => ({ src: r.src, aff: r.aff, cote: r.cote, lignes: r.lignesTxt, label: r.label }))));
     t('C-VIG-B2 chaque groupe liste ses exercices, et aucune ligne d\'exercice ne porte une vignette de groupe',
       res.every(r => r.lignes > 0 && r.vigLignes === 0), _det(res.map(r => [r.lignes, r.vigLignes])));
     t('C-VIG-B3 ⛔ le bouton « 🫀 Anatomie » est là sur chaque groupe et ouvre EXACTEMENT le même schéma qu\'avant',
@@ -175,7 +178,11 @@ async function ecran(t, b, PORT) {
     await fermer(X);
   }
 
-  /* ── E. HORS CONNEXION : préchargées par le vrai service worker ─────────────────────────────────────── */
+  /* ── E. HORS CONNEXION : servies par le vrai service worker ────────────────────────────────────────────
+     ⚠️ CE QUE CE TÉMOIN PROUVE, ET CE QU'IL NE PROUVE PAS (mesuré par le contrôle négatif du 23/10) : les tuiles du sélecteur
+     sont dessinées DÈS LE DÉMARRAGE (`filterEx()` au lancement, app.js) — leurs images sont donc demandées à chaque ouverture et
+     mises en cache À LA VOLÉE par le service worker. Il prouve qu'après une première ouverture en ligne le sélecteur s'affiche
+     hors ligne ; il ne distingue PAS cette mise en cache du préchargement (`PRECACHE`), que seul C-VIG-S2 vérifie. */
   {
     const X = await ouvrir({ sw: true });
     const pret = await X.pg.evaluate(async (srcs) => { const t0 = performance.now();
@@ -189,7 +196,7 @@ async function ecran(t, b, PORT) {
     catch (e) { servi = 'erreur ' + String(e.message || e).slice(0, 60); }
     await X.pg.waitForTimeout(1200); await nettoyer(X); await selecteur(X); await attendreImages(X);
     const T = await tuiles(X);
-    t('C-VIG-E1 ⭐ hors connexion (rechargement servi par le service worker) : les 8 vignettes du sélecteur s\'affichent — les 7 nouvelles sont préchargées',
+    t('C-VIG-E1 ⭐ hors connexion, après une première ouverture en ligne (rechargement servi par le service worker) : les 8 vignettes du sélecteur s\'affichent',
       pret === true && servi === true && T.length === 8 && T.every(x => x.charge), _det({ precharge: pret, servi, charges: T.map(x => x.charge) }));
     await fermer(X);
   }

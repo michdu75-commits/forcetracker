@@ -39,7 +39,9 @@ MUT = [
      [(CS, "letter-spacing:.3px;display:flex;align-items:center;gap:10px;}", "letter-spacing:.3px;}")], 'GARDE', 'C-VIG-B1'),
     ('MV7 cadre 64 x 64 (l\'ancien)',
      [(CS, ".ex-grp-vig{width:88px;height:51px;", ".ex-grp-vig{width:64px;height:64px;")], 'GARDE', 'C-VIG-A4'),
-    ('MV8 une vignette n\'est plus prechargee (hors ligne : image cassee)',
+    # ⚠️ hors ligne, elle resterait servie : les tuiles sont dessinees au demarrage, le service worker les met en cache a la volee
+    #    (mesure du 23/10) — le prechargement est un filet, que seul C-VIG-S2 verifie
+    ('MV8 une vignette n\'est plus prechargee (liste PRECACHE)',
      [(SW, "'./" + V + "07_abdominaux.png',\n", "\n")], 'GARDE', 'C-VIG-S2'),
     ('MV9 [deguisee] un fichier image modifie d\'un octet (ce n\'est plus le fichier du paquet)', OCTET, 'GARDE', 'C-VIG-S1'),
     ('MV10 une categorie change (tags du Dos)',
