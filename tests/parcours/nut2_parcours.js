@@ -884,6 +884,26 @@ async function ecran(t, b, PORT) {
       && lE.prot === 12 && lE.carbs === 60 && lE.fat === 8 && J(corr(lE)) === J([['kcal', 300, 360]]) && J(corr(lQ)) === J([['kcal', 300, 360]]),
       J({ r5b, r5c, k5, ecran: forme(lE), cE: corr(lE), ajout: forme(lQ), cQ: corr(lQ) }));
 
+    /* ⑯ le riz PROPOSÉ « 3 portions (450 g) », non touché, puis — sans fermer — les pâtes notées 450 g la dernière fois : leur
+       pastille prise donne 450 g de pâtes, jamais « 3 parts de 150 g » (la portion d'un aliment ne passe pas au suivant — M6).
+       ⚠️ PLACÉ ICI, AVANT ⑥, exprès : ⑥ note 300 g de riz, après quoi la pastille du riz est en GRAMMES — la prémisse tombait et
+       ⑯ restait vert sans rien éprouver (MP51 survivait, mesuré le 23/10 par le contrôle négatif complet : `BUGS.md` §96). La
+       prémisse est désormais VÉRIFIÉE (r16a) : si un réordonnancement la casse, ⑯ rougit au lieu de mentir. */
+    await fermer(); g = await ouvrirAjout(pg);
+    g = g && (await prendre('Riz P14 (test)')) >= 0; await pause(pg, 250);
+    const r16a = await bcEtat();
+    g = g && (await prendre('Pâtes P14 (test)')) >= 0; await pause(pg, 300);
+    const r16 = await bcEtat();
+    g = g && await clic(pg, '#af-bc-last'); await pause(pg, 200);
+    const r16b = await bcEtat(); const ids16 = (await journal(pg)).map((x) => x.id);
+    g = g && await ajouter(pg);
+    const l16 = neuves(await journal(pg), ids16)[0] || null;
+    t('B-NV2P P14 ⑯ ⛔⛔ LA PORTION NE DÉBORDE PAS : riz proposé « 3 portions (450 g) », puis les pâtes (450 g la dernière fois) — 450 g de pâtes, 675 · 23 · 135 · 5 (à la main), aucune part',
+      g && nb(r16a.txt) === '↩ 3 portions (450 g) (la dernière fois)' && nb(r16.txt) === '↩ 450 g (la dernière fois)'
+      && /pour tes 450 g/.test(nb(r16b.total)) && !/portion/.test(nb(r16b.total))
+      && l16 && l16.name === 'Pâtes P14 (test)' && l16.q === 450 && l16.u === 'g' && !l16.portionLabel && !('portionWeightG' in l16)
+      && l16.kcal === 675 && l16.prot === 23 && l16.carbs === 135 && l16.fat === 5, J({ r16a, r16, r16b, l16: forme(l16) }));
+
     /* ④ la pastille prise, puis le champ RETOUCHÉ : c'est une quantité en grammes, comme avant */
     await fermer(); g = await ouvrirAjout(pg);
     g = g && (await prendre('Riz P14 (test)')) >= 0; await pause(pg, 250);
@@ -925,20 +945,6 @@ async function ecran(t, b, PORT) {
     t('B-NV2P P14 ⑧b ⛔ LE MESSAGE NE MONTRE PAS UNE PASTILLE ABSENTE : « (tape-la) » pour le favori sans pastille, « (touche la pastille ou tape-la) » pour le riz',
       g && m8.some((m) => /Repris — choisis la quantité \(tape-la\)/.test(m)) && !m8.some((m) => /touche la pastille/.test(m))
       && m8r.some((m) => /\(touche la pastille ou tape-la\)/.test(m)), J({ m8, m8r }));
-    /* ⑯ le riz PROPOSÉ « 3 portions (450 g) », non touché, puis — sans fermer — les pâtes notées 450 g la dernière fois : leur
-       pastille prise donne 450 g de pâtes, jamais « 3 parts de 150 g » (la portion d'un aliment ne passe pas au suivant — M6) */
-    await fermer(); g = await ouvrirAjout(pg);
-    g = g && (await prendre('Riz P14 (test)')) >= 0; await pause(pg, 250);
-    g = g && (await prendre('Pâtes P14 (test)')) >= 0; await pause(pg, 300);
-    const r16 = await bcEtat();
-    g = g && await clic(pg, '#af-bc-last'); await pause(pg, 200);
-    const r16b = await bcEtat(); const ids16 = (await journal(pg)).map((x) => x.id);
-    g = g && await ajouter(pg);
-    const l16 = neuves(await journal(pg), ids16)[0] || null;
-    t('B-NV2P P14 ⑯ ⛔⛔ LA PORTION NE DÉBORDE PAS : riz proposé « 3 portions (450 g) », puis les pâtes (450 g la dernière fois) — 450 g de pâtes, 675 · 23 · 135 · 5 (à la main), aucune part',
-      g && nb(r16.txt) === '↩ 450 g (la dernière fois)' && /pour tes 450 g/.test(nb(r16b.total)) && !/portion/.test(nb(r16b.total))
-      && l16 && l16.name === 'Pâtes P14 (test)' && l16.q === 450 && l16.u === 'g' && !l16.portionLabel && !('portionWeightG' in l16)
-      && l16.kcal === 675 && l16.prot === 23 && l16.carbs === 135 && l16.fat === 5, J({ r16, r16b, l16: forme(l16) }));
     /* ⑰ le biscuit : 1,5 × 33,3 g = 49,95 g — la pastille dit « 49,9 g » (au dixième), et l'écran montre EXACTEMENT ce que la
        ligne enregistrera : 49,95 × 9,015 = 4,503 → 5 g de protéines, 49,95 × 3,005 = 1,501 → 2 g de lipides (à la main ; à
        49,9 g ce serait 4 et 1 — relecture du 22/10) ; 180 kcal · 37 g de glucides */

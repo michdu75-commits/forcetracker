@@ -5057,7 +5057,7 @@ rondes), un favori du même nom qu'une ligne récente, une ligne corrigée repri
 enregistrée, chercher les écrivains et les lecteurs qui réagissent à cette forme (ici `_majDefFavori`, qui ne regardait que
 `u==='portion'`), pas seulement ceux qu'on a modifiés.*
 
-**Et deux défauts de MES témoins, trouvés par le contrôle négatif de cette correction (23/10)** :
+**Et trois défauts de MES témoins, trouvés par le contrôle négatif de cette correction (23/10)** :
 - **un témoin qui n'empruntait pas le chemin qu'il nommait** : ⑥b retapait la masse sur la pastille du riz — mais à ce moment, la
   dernière ligne de riz était les 300 g de ⑥ : la pastille était en **grammes**, et ⑥b vert sans rien éprouver (MP52 et MP53
   survivaient). Réécrit sur le yaourt, dont la dernière ligne est en portions, et il vérifie d'abord le texte de la pastille ;
@@ -5065,4 +5065,14 @@ enregistrée, chercher les écrivains et les lecteurs qui réagissent à cette f
   « Petit-déj », le repas de la ligne testée : l'habitude, notée aujourd'hui, était alors écartée et le témoin rougissait **la
   moitié de la journée** (vert de 22 h à minuit, rouge à 00 h 05). Le repas des ajouts est désormais fixé dans P12 et P14.
   👉 *Un témoin qui passe le soir et rougit le matin n'est pas « instable » : il dépend d'une donnée qu'il ne fixe pas.*
+- **un témoin dont la prémisse était tombée sans qu'il le sache** (⑯, trouvé par le contrôle négatif COMPLET, MP1 → MP61,
+  rejoué sur le code final : **60 / 61**, seule MP51 survivait) : « riz proposé en portions, puis les pâtes » — mais à ce
+  moment-là, la dernière ligne de riz était les 300 g de ⑥ : sa pastille était en grammes, et ⑯ ne mordait que grâce à un
+  **reste** laissé plus tôt (sous la mutation, la pastille « 3 portions (450 g) » du riz, proposée en ⑥, survivait jusqu'à ⑯).
+  Le nouveau ⑥b, sur le yaourt, a remplacé ce reste par un autre (« 1,5 portion (187,5 g) ») : ⑯ est resté vert, MP51 a
+  survécu. Déplacé avant ⑥ et,
+  surtout, il **vérifie maintenant sa prémisse** (la pastille du riz doit dire « 3 portions (450 g) ») : si un réordonnancement
+  la casse, il rougit au lieu de mentir.
+  👉 *Corriger un témoin peut en désarmer un autre plus loin dans le même parcours : après toute réécriture, rejouer TOUTES les
+  mutations du banc, pas seulement celles du témoin touché — c'est ce qui l'a vu, et une sélection ne l'aurait pas vu.*
 

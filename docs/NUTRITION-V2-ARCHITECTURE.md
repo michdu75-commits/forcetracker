@@ -654,7 +654,12 @@ personne doit faire un geste nouveau : donner un poids). Le clone ne montre pas 
 ### 14.2 La recette iPhone du jalon 4 (à faire par Michel, données fictives, jamais sur son vrai journal)
 
 ⛔ La branche n'est pas publiée et le clone part vide : la recette demande un **feu vert distinct** (publier le clone de la
-branche, ou un appareil de test). Les gestes, dans l'ordre :
+branche, ou un appareil de test). ⚠️ *(Ajouté le 23/10.)* **Une ancienne ligne ne se fabrique plus à l'écran** : les quatre
+écrivains passent par le moteur V2, donc toute ligne notée dans le clone est une ligne V2. Les gestes qui portent sur une
+ligne **d'avant V2** (5, la fin du 6, et la fin du 10) ne se font pas sur un clone vide : ils sont couverts par les bancs
+(`nut2_parcours.js` P12 · P14 ② ⑨ ⑩ · passe : CCLXXXIV ⑦ · CCLXXXV ②) ; les voir sur l'iPhone demande de préparer des lignes **fictives**
+d'avant V2 dans le clone — un outil qui n'existe pas, à décider. Et le clone sert en ce moment à la recette Séance : il ne
+s'écrase pas sans accord. Les gestes, dans l'ordre :
 
 1. **Ajout à la main** (« Plat test », 450 kcal) : l'onglet ⚖️ grammes est choisi d'office ; sans poids, « Ajouter » refuse
    et dit pourquoi ; avec 300 g, la ligne part.
