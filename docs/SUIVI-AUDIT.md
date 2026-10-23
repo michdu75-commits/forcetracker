@@ -1589,3 +1589,16 @@ matin, 25 / 36 sur ft-v1258) · contrôle négatif **52 / 52** · voisins **791 
 master à la même minute) · prompt de Milo identique à l'octet · **passe complète D-031 : 7 884 ✅ / 0 ❌, VALIDE** (sur `0d0d4269`,
 branche fusionnée avec master `6c0a400d`). Règle d'or #17 sur le lot entier : **1** donnée, **6** fichiers, **+131 / −19** (code seul
 **+49 / −10**), **2** anciens chemins + le plafond de « +15 s » à un seul propriétaire. Détail : `docs/SEANCE-REPOS-01.md` §12.
+
+### 🖼️ SEANCE-UX-IMAGES — LES VIGNETTES ANATOMIQUES DE « CHOISIR UN EXERCICE » (23/10/2026, session-C Claude Séance, paquet et consignes de Michel) — DÉVELOPPÉ ET TESTÉ SUR LA MÊME BRANCHE, NON INTÉGRÉ, NON PUBLIÉ
+
+**La demande** : les vignettes du paquet de Michel dans « Choisir un exercice » **seulement** (ni autres écrans, ni bouton
+« Anatomie ») ; **Mollets conservée**, « Corps complet » **pas** utilisée pour elle ; recherche, catégories et reconnaissance
+préservées. **Fait** : 7 PNG **à l'octet** (SHA-256 du manifeste) sous des **noms nouveaux** (`muscles/vignettes/`, cache d'images
+permanent), chacun sur son groupe ; cadre **88 × 51 ancré en bas** qui masque le **liseré du découpage** (fond et bord de carte de la
+maquette, 3 à 17 lignes, mesuré) sans étirer ni recolorer ; en-tête d'un groupe ouvert en ligne ; préchargement `sw.js` (pas de
+version). ⚠️ **Mollets n'a pas de vignette dans le paquet** : elle garde son image actuelle (style différent) — **une vignette mollets
+manque**. Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **18 / 0** (7 / 11 rouges sur le code
+d'avant) · contrôle négatif «MUTVIG» · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) ·
+captures avant / après dans le PDF. Règle d'or #17 : **0** donnée · **3** fichiers + 7 images · **+33 / −10** · **0** ancien chemin.
+Détail : `docs/SEANCE-UX-IMAGES.md`.
