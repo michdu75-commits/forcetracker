@@ -1602,6 +1602,6 @@ manque**. ⚠️ **La revue adverse a trouvé un vrai défaut, corrigé avant to
 débordait (Abdominaux : « Anatomie » poussé 20 px hors de la feuille) — l'en-tête passe maintenant à la ligne quand le libellé ne
 tient pas, témoin **C-VIG-B4** (`BUGS.md` §99) ; et un témoin faible (le préchargement cherché comme du texte) renforcé.
 Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **19 / 0** (8 / 11 rouges sur le code
-d'avant ; avant le correctif : 18 / 1) · contrôle négatif **20 / 20** (MV5 devenue équivalente avec le correctif — mesuré, pas supposé) · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) · bouton central **immobile** (mesuré avant / après) · voisins «VOISINSVIG» · passe «PASSEVIG» ·
+d'avant ; avant le correctif : 18 / 1) · contrôle négatif **20 / 20** (MV5 devenue équivalente avec le correctif — mesuré, pas supposé) · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) · bouton central **immobile** (mesuré avant / après) · voisins **0 rouge** (annexe 14 PASS + 1 défaut connu, chiffres de master) · passe complète **7 923 ✅ / 0 ❌** sur `756c97a3` (4 conditions) ·
 captures avant / après dans le PDF. Règle d'or #17 : **0** donnée · **3** fichiers + 7 images · **+42 / −11** · **0** ancien chemin.
 Détail : `docs/SEANCE-UX-IMAGES.md`.
