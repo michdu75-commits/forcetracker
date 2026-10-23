@@ -6,8 +6,8 @@
 > `deploy-appsscript.yml` lancé à la main sur master `236764c5` (le commit de tête porte `[skip ci]` :
 > Pages n'a pas été redéployé, l'app reste `ft-v1258`). `clasp push` n'a envoyé que `appsscript.json` et
 > `Code.js` ; `?test=1` online ; `authStatus` OK. ⚠️ Les deux routes n'ont **jamais été appelées** en
-> production : aucun bouton (carte Admin A2 préparée, non publiée) et le réseau de la session Claude
-> refuse `script.google.com`. ⛔ Le GO ne vaut que pour ces deux routes : ni extraction, ni migration,
+> production au 22/10 : la carte Admin A2 est **publiée en `ft-v1259`** (GO limité de Michel), le premier
+> inventaire réel reste à lancer par Michel ; le réseau de la session Claude refuse `script.google.com`. ⛔ Le GO ne vaut que pour ces deux routes : ni extraction, ni migration,
 > ni restauration.
 
 ## ⛔ Correction : `storeHealth` n'est PAS une voie « zéro risque »
@@ -115,7 +115,7 @@ l'original » : cette règle naïve efface les repas saisis depuis la bascule (p
 - Lecture de la console Supabase (agrégats seulement) si le miroir doit entrer dans la comparaison.
 - Décision produit : traces de suppression et manifeste de migration côté V2 (périmètre Claude Nutrition).
 
-## A2 — la carte Admin « Inventaire Nutrition » (préparée le 22/10, NON PUBLIÉE)
+## A2 — la carte Admin « Inventaire Nutrition » (préparée le 22/10, ✅ PUBLIÉE en `ft-v1259` le 22/10)
 
 Branche `claude/nut-inventaire-carte-admin` (`0fb75f7c`). Profil → Admin → groupe « Surveillance », deux boutons :
 « 📊 Compter les journaux » (`nutInventory`) et « 🗄️ Comparer avec les sauvegardes » (`nutBackupAudit`, jusqu'à
@@ -123,5 +123,43 @@ Branche `claude/nut-inventaire-carte-admin` (`0fb75f7c`). Profil → Admin → g
 mais envoyé **dans le corps d'un POST**, jamais dans l'adresse ; une **liste blanche de nombres** (un champ inattendu
 du serveur ne s'affiche pas), valeurs échappées ; aucun résultat rangé sur l'appareil. Banc
 `tools/banc_nut_inventaire_admin.js` 20/0, contrôle négatif `tools/mut_nut_inventaire_admin.py` 10/10.
-⛔ Publication = nouvelle version de l'app (`sw.js`, passe complète) : **accord supplémentaire de Michel requis**.
+✅ Publiée en `ft-v1259` (GO limité « PUBLICATION A2 » de Michel, 22/10 ; master `3d6953c4`, Pages run n°1359 réussi, aucun run Apps Script) : passe complète **7 843 ✅ / 0 ❌** sur `9c527110`. **Retour arrière** (jamais lancé sans décision de Michel) : `git revert` du commit fonctionnel A2 (`app.js`, `index.html`, banc, runner, registre reviennent à master `6c0a400d`) + clé de cache **jamais diffusée** `ft-v1260` ; rejoué à blanc le 22/10 sur un arbre jetable, rien poussé.
+**Premier inventaire réel (Michel, iPhone)** : Menu → À propos = `ft-v1259` · 5 tapes sur le logo + code admin · Profil → 🔧 Admin → Surveillance → « 🍽️ Inventaire Nutrition » → « 📊 Compter les journaux » (jeton admin si demandé) · puis « 🗄️ Comparer avec les sauvegardes » (jusqu'à 5 min, app ouverte) · capture d'écran. Rien n'est modifié.
 
+
+## INV-02 — les premiers résultats réels, lus (23/10/2026, mission de Michel, LECTURE SEULE)
+
+**Résultats de Michel (iPhone, `ft-v1259`)** : 13 comptes au serveur, 2 avec un journal (542 lignes, 62 jours,
+08/07 → 21/10), 1 avec des favoris, aucune anomalie · 157 sauvegardes lues sur 157 · 14 comptes dans les
+sauvegardes, **1 seulement dans les sauvegardes** · **10 lignes des sauvegardes absentes du serveur (1 compte)** ·
+0 ligne du serveur absente des sauvegardes.
+
+**Ce que le code déployé (@192, identique au `Code.js` du dépôt) permet d'en dire** — vérifié par simulation hors
+dépôt sur le vrai `Code.js`, données inventées, réseau coupé (`inv02_simu.js`, 17 / 0) :
+- couverture complète (0 fichier non lu) ; tout ce qui est au serveur a été sauvegardé au moins une nuit ;
+- le compte en plus a **existé puis disparu** (chaque compte est enregistré sous l'e-mail de sa clé, `Code.js:1853`) ;
+- ⚠️ **un compte disparu fait compter TOUTES ses lignes comme « absentes »** (`Code.js:2216`) : les deux chiffres
+  peuvent avoir **une seule cause** ;
+- **trois histoires donnent EXACTEMENT la même carte** : ① un compte de test supprimé qui avait 10 lignes (le code
+  prévoit deux suppressions de comptes de test : `michdu75+test` par `compressStore`, 31/07, et un second par
+  `supprimerCompteTest`, 05/08 — **rien ne prouve qu'elles ont été lancées**, et un seul compte manque) ;
+  ② 10 repas supprimés volontairement ; ③ 10 repas **perdus** par écrasement ;
+- **faux « absent »** possible : un repas d'avant le 16/09 (sans identifiant dans les vieilles sauvegardes) corrigé
+  ensuite compte 1 absente sans aucune perte ;
+- suppression ou perte : **indiscernables** ici (aucune trace de suppression dans l'app).
+
+**Ce qui départage, sans toucher aux données** : la route renvoie DÉJÀ, par sauvegarde, la date, le nombre de
+comptes, de comptes avec journal et de lignes (`fichiers`) — la carte ne l'affiche pas. Cette série sépare ① de
+②/③ et date la chute ; elle ne sépare pas ② de ③.
+
+**Le risque `_pa_`, rejoué par la vraie route `saveProfile`** : tout envoi non vide **remplace** le journal (40 → 30
+sans trace ; 500 → 1 pour un appareil remis à zéro qui ajoute un repas) ; seul un envoi vide est ignoré ; les
+**favoris** suivent la même règle ; les **séances**, elles, ont un garde-fou depuis le 02/08 (refus + trace). Et
+**ouvrir l'app suffit** : au démarrage, le journal du serveur n'est relu que si le téléphone est entièrement vide
+(`app.js`, `autoConnect`), sinon `persist()` déclenche la synchro 4 s plus tard et le journal local remplace —
+un 2ᵉ stockage resté en arrière (Safari ≠ app de l'écran d'accueil sur iPhone, autre appareil) écrase.
+
+**Proposé, NON implémenté** (décision de Michel attendue) : P1 Apps Script seul — une ligne retirée va dans une
+corbeille serveur bornée au lieu d'être jetée, et un rétrécissement brutal (même seuil que les séances) devient une
+union tracée ; P2 afficher la série par sauvegarde dans la carte ; P3 (plus tard, avec Nutrition V2) traces de
+suppression et fusion au démarrage. ⛔ Rien restauré, rien extrait, aucun compte touché, aucun déploiement.
