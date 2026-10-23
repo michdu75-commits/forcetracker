@@ -4932,11 +4932,23 @@ la chaîne**. **Aucune trace** — ni refus, ni journal d'exécution.
 dans sa voisine*, la phrase du §33. ⚠️ Et ce seuil, recopié tel quel, n'aurait vu **ni 40 → 30, ni 20 → 1, ni l'appareil en
 retard** : un seuil sur le NOMBRE de lignes ne distingue pas un écrasement d'une suppression voulue.
 
-**Ce qui est préparé (non déployé).** `_nutProtegerListe_` : l'envoi s'applique comme avant (rien n'est réintroduit d'office :
-une absence est ambiguë), mais toute ligne retirée et l'ancienne version de toute ligne corrigée sont **d'abord copiées** dans
-une zone de récupération `recupNut` à la racine du compte — même écriture que le journal, jamais renvoyée à l'app, bornée, avec
-un événement chiffré sans donnée personnelle. Banc : **24 OK / 32 rouges** sur le `Code.js` de master → **56 / 0** ; contrôle
-négatif **23 / 23**. Détail et décision ouverte (refuser ou non le rétrécissement brutal) : `docs/NUT-SECURISATION-P1.md`.
+**Ce qui est préparé (non déployé, option B validée par Michel — `D-108`).** `_nutProtegerListe_` : l'envoi s'applique
+comme avant (rien n'est réintroduit d'office : une absence est ambiguë), mais toute ligne retirée et l'ancienne version de
+toute ligne corrigée sont **d'abord copiées** dans une zone de récupération `recupNut` à la racine du compte — même écriture
+que le journal, jamais renvoyée à l'app, bornée, avec un événement chiffré sans donnée personnelle. Banc : **26 OK / 48
+rouges** sur le `Code.js` de master → **74 / 0** ; contrôle négatif **37 / 37**. Détail : `docs/NUT-SECURISATION-P1.md`.
+
+**⛔ Le même défaut, revenu par la BORNE — trouvé en finalisant (23/10, condition 3 de Michel).** La 1ʳᵉ version bornait la
+zone en retirant ses copies **les plus anciennes**, « puisqu'elles sont dans les sauvegardes de la nuit ». **Faux** : un repas
+saisi le matin et retiré l'après-midi n'est dans **aucune** sauvegarde. Rejoué : 10 repas du jour + deux écrasements avant la
+nuit → **10 introuvables** ; favoris écrasés lot après lot → **340 perdus** ; **12 témoins rouges**. *Une borne qui jette
+est une perte silencieuse qui a changé d'adresse.* Correction : le surplus **déménage** dans un fichier Drive **relu** avant
+de quitter la zone ; si Drive refuse ou relit autre chose, l'envoi de la liste est **refusé** (retardé, jamais perdu —
+`D-109`, proposé). ⚠️ **Et un 3ᵉ piège, attrapé par un témoin avant d'arriver** : rangé à côté des sauvegardes, ce fichier
+devenait pour la sonde `checkBackup` « la dernière sauvegarde » — **il aurait masqué une nuit sans sauvegarde**, la panne de
+36 jours que cette sonde surveille. D'où le sous-dossier `recup-nut/`, qu'aucun lecteur existant ne parcourt.
+👉 *Avant de ranger un fichier dans un dossier existant, chercher TOUS ceux qui le lisent — et ce qu'ils déduisent du
+fichier le plus récent.*
 
 **À quoi on le reconnaît.** Une liste synchronisée « en entier » par un client qui ne relit pas le serveur : **le dernier qui
 écrit gagne, et ce qu'il n'avait pas disparaît**. Voisins : §33 (le dernier qui écrit efface l'autre), la restauration par

@@ -1575,14 +1575,15 @@ function _po_(b, e){ if(b===undefined)return e; const bk=Object.keys(b||{}).leng
    ⛔ RIEN N'EST RÉINTRODUIT D'OFFICE dans le journal actif : une absence est AMBIGUË (suppression voulue
    ou écrasement par un appareil en retard). Elle est conservée et signalée, jamais tranchée ici.
    ⚖️ Le rétrécissement brutal (≥ 30 lignes et moins de 60 % gardées, le seuil des séances) est SIGNALÉ,
-   pas refusé : le refus est une décision ouverte, présentée à Michel (rapport NUT-SECURISATION-P1).
+   pas refusé : option B, validée par Michel le 23/10 (D-108). Seul refus : la zone déborde ET Drive ne garde
+   pas le surplus (D-109, plus bas) — retardé, jamais perdu.
    🔑 Appariement : d'abord par identifiant (consommé une fois : un identifiant en double par erreur ne
    couvre qu'une ligne), puis par CONTENU en multi-ensemble (les anciennes lignes ont un identifiant
    instable, NUT-INVENTAIRE-02). Mêmes clés que l'audit A1 (`_nutIdLigne_`, `_nutEmpreinte_`). */
-/* Bornes MESURÉES (vraie compression, banc B-NSP1) : 200 000 caractères ≈ 520 repas ≈ 30 000 octets stockés — de quoi
+/* Bornes MESURÉES (vraie compression, banc B-NSP1), en caractères : 200 000 ≈ 520 repas ≈ 30 000 octets stockés — de quoi
    garder un écrasement COMPLET du plus gros journal réel (≤ 491 lignes au 22/10) ; 60 000 ≈ les 200 favoris que l'app
    envoie au plus. Le plafond de TOUT le stockage est de 512 000 octets (panne du 29/07) : la zone ne doit jamais le menacer. */
-var NUT_RECUP_BORNES_ = { foodLog: { lignes: 8000, car: 200000 }, savedFoods: { lignes: 1000, car: 60000 } };
+var NUT_RECUP_BORNES_ = { foodLog: 200000, savedFoods: 60000 };
 var NUT_RECUP_MAX_EVTS_ = 50;
 function _nutEcartees_(actuel, recu) {
   var empR = recu.map(_nutEmpreinte_), empA = actuel.map(_nutEmpreinte_), parId = Object.create(null);
@@ -1607,7 +1608,24 @@ function _nutEcartees_(actuel, recu) {
   restants.forEach(function(a) { var k = empA[a]; if (libres[k] > 0) libres[k]--; else retirees.push(actuel[a]); });
   return { retirees: retirees, modifiees: modifiees };
 }
-function _nutProtegerListe_(existing, profile, nom, recu) {
+/* Le DÉBORDEMENT de la zone part dans un fichier RELU avant d'être retiré de la zone, rangé dans le SOUS-DOSSIER
+   « recup-nut » du dossier des sauvegardes — jamais à côté des sauvegardes : la sonde `checkBackup` prend le fichier le
+   plus RÉCENT du dossier pour la dernière sauvegarde (un débordement de la journée masquerait une nuit sans sauvegarde),
+   et l'audit A1 (`nutBackupAudit`) lit les fichiers « backup-… » du dossier. Aucun des lecteurs existants ne descend
+   dans un sous-dossier. Le nom ne porte aucune donnée personnelle ; le contenu porte le compte, comme les sauvegardes. */
+function _nutDossierRecup_() {
+  var parent = _getDriveBackupFolder_(), it = parent.getFoldersByName('recup-nut');
+  return it.hasNext() ? it.next() : parent.createFolder('recup-nut');
+}
+function _nutDeplacerVersDrive_(email, nom, sortantes) {
+  var contenu = JSON.stringify({ type: 'recupNut', v: 1, compte: email, liste: nom, deplaceLe: new Date().toISOString(), entrees: sortantes });
+  var nomFichier = 'recup-nut-' + Utilities.formatDate(new Date(), 'Europe/Paris', 'yyyy-MM-dd-HHmmss') + '-'
+                 + String(Utilities.getUuid()).slice(0, 8) + '.json';
+  var relu = _nutDossierRecup_().createFile(nomFichier, contenu, 'application/json').getBlob().getDataAsString();
+  if (relu !== contenu) throw new Error('relecture différente de l\'écrit');
+  return nomFichier;
+}
+function _nutProtegerListe_(existing, profile, nom, recu, email) {
   var actuel = Array.isArray(profile[nom]) ? profile[nom] : [];
   if (!Array.isArray(recu)) {                              // un envoi illisible ne remplace rien (avant : stocké tel quel)
     Logger.log('[FT GARDE-FOU ' + nom + '] envoi non lisible : ignoré, liste conservée');
@@ -1618,7 +1636,8 @@ function _nutProtegerListe_(existing, profile, nom, recu) {
   if (!ec.retirees.length && !ec.modifiees.length) return recu;
   var brutal = actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances
   var z = existing.recupNut || (existing.recupNut = { v: 1 });
-  var liste = z[nom] || (z[nom] = []);
+  // On travaille sur une COPIE de la zone : si le débordement ne peut pas être mis à l'abri, rien de ce calcul n'est gardé.
+  var liste = (z[nom] || []).slice();
   // Multi-ensemble : un envoi RÉPÉTÉ ne recopie pas ce qu'un envoi précédent a déjà gardé, mais deux repas
   // identiques retirés ensemble restent DEUX copies.
   var deja = Object.create(null), cle = function(l) { return (_nutIdLigne_(l) || '') + '|' + _nutEmpreinte_(l); };
@@ -1630,19 +1649,41 @@ function _nutProtegerListe_(existing, profile, nom, recu) {
   }
   ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });
   ec.modifiees.forEach(function(l) { garder(l, 'modifiee'); });
-  // ⛔ BORNÉE : au-delà, on retire les copies les plus ANCIENNES — et on le COMPTE, jamais en silence.
-  var b = NUT_RECUP_BORNES_[nom], tailles = liste.map(function(r) { return JSON.stringify(r).length; });
-  var total = tailles.reduce(function(a, x) { return a + x; }, 0), coupees = 0;
-  while (liste.length && (liste.length > b.lignes || total > b.car)) { total -= tailles.shift(); liste.shift(); coupees++; }
-  if (coupees) z.coupees = (z.coupees || 0) + coupees;
-  var evts = z.evts || (z.evts = []);                     // des NOMBRES seulement : ni adresse, ni aliment
-  evts.push({ t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
-              modifiees: ec.modifiees.length, copiees: copiees, coupees: coupees, brutal: brutal });
-  if (evts.length > NUT_RECUP_MAX_EVTS_) evts.splice(0, evts.length - NUT_RECUP_MAX_EVTS_);
+  /* ⛔ BORNÉE, ET RIEN N'EST JAMAIS JETÉ (condition 3 de Michel, 23/10) : une copie peut n'être dans AUCUNE sauvegarde
+     (un repas saisi le jour même, retiré avant la nuit). Au-delà de la borne, les copies les plus ANCIENNES DÉMÉNAGENT
+     dans Drive jusqu'à la moitié de la borne (un fichier par débordement, pas un par synchronisation) — RELUES d'abord,
+     retirées de la zone ensuite. Si Drive refuse ou relit autre chose : l'envoi de cette liste est REFUSÉ, la liste du
+     serveur et la zone restent telles quelles (l'appareil garde les siennes et renverra) — retardé, jamais perdu. */
+  var borne = NUT_RECUP_BORNES_[nom], tailles = liste.map(function(r) { return JSON.stringify(r).length; });
+  var total = tailles.reduce(function(a, x) { return a + x; }, 0), n = 0, fichier = null;
+  if (total > borne) {
+    while (n < liste.length && total > borne / 2) total -= tailles[n++];
+    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n)); }
+    catch (err) {
+      _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
+                          modifiees: ec.modifiees.length, copiees: 0, deplacees: 0, brutal: brutal, refus: 'drive' });
+      Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ : la zone de récupération déborde et Drive n\'a pas gardé le surplus ('
+                 + String(err && err.message || err).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 120)
+                 + ') — liste du serveur conservée (' + actuel.length + '), envoi de ' + recu.length + ' ignoré');
+      return profile[nom];
+    }
+    liste = liste.slice(n);
+    z.deplacees = (z.deplacees || 0) + n;
+  }
+  z[nom] = liste;
+  var e = { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
+            modifiees: ec.modifiees.length, copiees: copiees, deplacees: n, brutal: brutal };
+  if (fichier) e.fichier = fichier;
+  _nutEvenement_(z, e);                                    // des NOMBRES (et un nom de fichier) : ni adresse, ni aliment
   Logger.log('[FT GARDE-FOU ' + nom + '] ' + ec.retirees.length + ' retirée(s), ' + ec.modifiees.length + ' modifiée(s) sur '
              + actuel.length + (brutal ? ' — RÉTRÉCISSEMENT BRUTAL' : '') + ' : ' + copiees + ' copie(s) en zone de récupération'
-             + (coupees ? ', ' + coupees + ' copie(s) ancienne(s) retirée(s) de la zone (pleine)' : ''));
+             + (n ? ', ' + n + ' copie(s) ancienne(s) déménagée(s) dans ' + fichier + ' (relu)' : ''));
   return recu;
+}
+function _nutEvenement_(z, e) {
+  var evts = z.evts || (z.evts = []);
+  evts.push(e);
+  if (evts.length > NUT_RECUP_MAX_EVTS_) evts.splice(0, evts.length - NUT_RECUP_MAX_EVTS_);
 }
 
 // ───────────────────────────────────────────────────────────
@@ -1811,8 +1852,8 @@ function handleSaveProfile_(body) {
     if (body.dietRestrictions!== undefined) profile.dietRestrictions = _pa_(body.dietRestrictions, profile.dietRestrictions);
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
-    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog);
-    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods);
+    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email);
+    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
        ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas

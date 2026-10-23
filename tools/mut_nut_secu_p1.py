@@ -4,8 +4,9 @@
 
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE (Code.js + le banc), jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord. M00 = le Code.js d'AVANT (master, `_pa_` sur le journal).
-Chaque mutation casse UNE garantie du garde-fou dans le VRAI code ; une seule touche un commentaire, et elle doit rester
-VERTE (un banc qui rougit sur un commentaire mesurerait le texte, pas le comportement).
+Chaque mutation casse UNE garantie du garde-fou dans le VRAI code (une ou plusieurs ancres, chacune unique) ; une seule
+touche un commentaire, et elle doit rester VERTE (un banc qui rougit sur un commentaire mesurerait le texte, pas le comportement).
+Depuis la finalisation (option B validee, 23/10) : M23-M36 eprouvent le DEMENAGEMENT vers Drive (relu, sous-dossier, refus si Drive echoue).
 Une mutation qui casse la SYNTAXE est refusee (INVALIDE) : un banc qui plante ne prouve rien (M10 de SEC-ADMIN, 09/10).
 Usage : python3 tools/mut_nut_secu_p1.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -19,10 +20,10 @@ BASE_AVANT = 'origin/master'
 MUT = [
     ("M00 le Code.js d'AVANT (master) : `_pa_` remplace le journal et les favoris sans rien garder", 'AVANT', 'GARDE'),
     ("M01 le journal repasse par `_pa_` (les favoris restent proteges)",
-     "    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog);\n",
+     "    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email);\n",
      "    if (body.foodLog       !== undefined) profile.foodLog       = _pa_(body.foodLog, profile.foodLog);\n", 'GARDE'),
     ("M02 les favoris repassent par `_pa_` (le journal reste protege)",
-     "    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods);\n",
+     "    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);\n",
      "    if (body.savedFoods    !== undefined) profile.savedFoods    = _pa_(body.savedFoods, profile.savedFoods);\n", 'GARDE'),
     ("M03 les lignes RETIREES ne sont plus copiees dans la zone",
      "  ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });\n", "", 'GARDE'),
@@ -45,14 +46,14 @@ MUT = [
     ("M10 la zone est rangee DANS le profil (donc renvoyee par loadProfile)",
      "  var z = existing.recupNut || (existing.recupNut = { v: 1 });\n",
      "  var z = profile.recupNut || (profile.recupNut = { v: 1 });\n", 'GARDE'),
-    ("M11 la zone n'est plus bornee",
-     "  while (liste.length && (liste.length > b.lignes || total > b.car)) { total -= tailles.shift(); liste.shift(); coupees++; }\n",
-     "", 'GARDE'),
-    ("M12 la borne retire les copies les plus RECENTES au lieu des plus anciennes",
-     "  while (liste.length && (liste.length > b.lignes || total > b.car)) { total -= tailles.shift(); liste.shift(); coupees++; }\n",
-     "  while (liste.length && (liste.length > b.lignes || total > b.car)) { total -= tailles.pop(); liste.pop(); coupees++; }\n", 'GARDE'),
-    ("M13 ce qui ne tient pas dans la zone n'est plus COMPTE (perte silencieuse)",
-     "  if (coupees) z.coupees = (z.coupees || 0) + coupees;\n", "", 'GARDE'),
+    ("M11 la zone n'est plus bornee (jamais de demenagement)",
+     "  if (total > borne) {\n", "  if (false) {\n", 'GARDE'),
+    ("M12 ce sont les copies les plus RECENTES qui demenagent au lieu des plus anciennes",
+     [("    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n)); }\n",
+       "    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(liste.length - n)); }\n"),
+      ("    liste = liste.slice(n);\n", "    liste = liste.slice(0, liste.length - n);\n")], 'GARDE'),
+    ("M13 ce qui demenage n'est plus COMPTE dans le compte",
+     "    z.deplacees = (z.deplacees || 0) + n;\n", "", 'GARDE'),
     ("M14 le retrecissement brutal n'est plus signale",
      "  var brutal = actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances\n",
      "  var brutal = false;\n", 'GARDE'),
@@ -74,11 +75,42 @@ MUT = [
      "  var z = existing.recupNut || (existing.recupNut = { v: 1 });\n",
      "  var z = existing.recupNut || (existing.recupNut = { v: 1 });\n"
      "  PropertiesService.getScriptProperties().setProperty('recup_' + (existing.email || ''), '{}');\n", 'GARDE'),
-    ("M21 borne des favoris trop basse (40 000) : un ecrasement des 200 favoris ne tient plus",
-     "savedFoods: { lignes: 1000, car: 60000 } };", "savedFoods: { lignes: 1000, car: 40000 } };", 'GARDE'),
+    ("M21 borne des favoris trop basse (40 000) : un ecrasement des 200 favoris ne tient plus dans la zone",
+     "var NUT_RECUP_BORNES_ = { foodLog: 200000, savedFoods: 60000 };", "var NUT_RECUP_BORNES_ = { foodLog: 200000, savedFoods: 40000 };", 'GARDE'),
     ("M22 (temoin de controle) un COMMENTAIRE du garde-fou modifie : le banc doit rester VERT",
-     "// ⛔ BORNÉE : au-delà, on retire les copies les plus ANCIENNES",
-     "// ⛔ BORNÉE (commentaire modifié) : au-delà, on retire les copies les plus ANCIENNES", 'OK'),
+     "/* ⛔ BORNÉE, ET RIEN N'EST JAMAIS JETÉ (condition 3 de Michel, 23/10)",
+     "/* ⛔ BORNÉE (commentaire modifié), ET RIEN N'EST JAMAIS JETÉ (condition 3 de Michel, 23/10)", 'OK'),
+    ("M23 le surplus est JETE sans etre ecrit dans Drive (l'ancienne eviction : perte silencieuse)",
+     "    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n)); }\n", "    try { fichier = null; }\n", 'GARDE'),
+    ("M24 aucune RELECTURE : un fichier tronque passe pour une reussite",
+     "  if (relu !== contenu) throw new Error('relecture différente de l\\'écrit');\n", "", 'GARDE'),
+    ("M25 Drive en panne : l'envoi s'applique quand meme et le surplus est perdu",
+     "      return profile[nom];\n    }\n    liste = liste.slice(n);\n", "    }\n    liste = liste.slice(n);\n", 'GARDE'),
+    ("M26 le fichier de debordement s'appelle « backup-… » (l'audit A1 le lirait comme une sauvegarde)",
+     "  var nomFichier = 'recup-nut-' +", "  var nomFichier = 'backup-recup-nut-' +", 'GARDE'),
+    ("M27 l'adresse du compte dans le NOM du fichier (donnee personnelle visible dans Drive)",
+     "                 + String(Utilities.getUuid()).slice(0, 8) + '.json';\n", "                 + email + '.json';\n", 'GARDE'),
+    ("M28 un envoi refuse garde quand meme ses copies dans la zone (au-dela de la borne)",
+     "  var liste = (z[nom] || []).slice();\n", "  var liste = z[nom] || (z[nom] = []);\n", 'GARDE'),
+    ("M29 le refus n'est plus date dans les evenements",
+     "      _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,\n",
+     "      if (false) _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,\n", 'GARDE'),
+    ("M30 le refus n'est plus trace dans le journal du serveur",
+     "      Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", "      if (false) Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", 'GARDE'),
+    ("M31 le message d'erreur de Drive est recopie sans masquer une adresse",
+     ".replace(/[^\\s@]+@[^\\s@]+/g, '[adresse]')", "", 'GARDE'),
+    ("M32 une copie de moins ecrite dans Drive que retiree de la zone (decalage d'une ligne)",
+     "    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n)); }\n",
+     "    try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n - 1)); }\n", 'GARDE'),
+    ("M33 pas d'hysteresis : la zone redescend a sa borne seulement (un fichier a chaque synchronisation)",
+     "    while (n < liste.length && total > borne / 2) total -= tailles[n++];\n",
+     "    while (n < liste.length && total > borne) total -= tailles[n++];\n", 'GARDE'),
+    ("M34 borne du journal doublee (400 000) : la zone pese deux fois plus dans le stockage partage",
+     "var NUT_RECUP_BORNES_ = { foodLog: 200000, savedFoods: 60000 };", "var NUT_RECUP_BORNES_ = { foodLog: 400000, savedFoods: 60000 };", 'GARDE'),
+    ("M35 les favoris prennent la borne du journal (200 000)",
+     "  var borne = NUT_RECUP_BORNES_[nom], tailles", "  var borne = NUT_RECUP_BORNES_.foodLog, tailles", 'GARDE'),
+    ("M36 les fichiers de debordement rangés A COTE des sauvegardes (checkBackup les prend pour la derniere sauvegarde)",
+     "  var relu = _nutDossierRecup_().createFile(", "  var relu = _getDriveBackupFolder_().createFile(", 'GARDE'),
 ]
 
 
@@ -132,10 +164,12 @@ def main():
                 print('  INVALIDE  %s (code d\'avant introuvable ou identique)' % nom); shutil.rmtree(arbre, ignore_errors=True); continue
             src = AVANT
         else:
-            av_, ap_ = spec[1], spec[2]
-            if src.count(av_) != 1:
-                print('  INVALIDE  %s (ancre trouvee %d fois)' % (nom, src.count(av_))); shutil.rmtree(arbre, ignore_errors=True); continue
-            src = src.replace(av_, ap_, 1)
+            paires = spec[1] if isinstance(spec[1], list) else [(spec[1], spec[2])]
+            mauvaise = [av_ for av_, _ in paires if src.count(av_) != 1]
+            if mauvaise:
+                print('  INVALIDE  %s (ancre trouvee %d fois)' % (nom, src.count(mauvaise[0]))); shutil.rmtree(arbre, ignore_errors=True); continue
+            for av_, ap_ in paires:
+                src = src.replace(av_, ap_, 1)
         open(chemin, 'w', encoding='utf-8').write(src)
         if not syntaxe_ok(chemin):
             print('  INVALIDE  %s (syntaxe cassee par la mutation)' % nom); shutil.rmtree(arbre, ignore_errors=True); continue

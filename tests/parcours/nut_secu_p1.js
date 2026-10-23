@@ -8,7 +8,8 @@
    OBSERVE : le compte stocké (journal actif + zone de récupération `recupNut`), chaque réponse brute, le journal `Logger`,
      les propriétés avant/après, le fichier de sauvegarde écrit, les compteurs des routes A1.
    NE COUVRE PAS : le vrai déploiement Apps Script, les vraies Script Properties (leur plafond réel de 512 Ko n'est pas
-     simulé : la taille est MESURÉE et affichée), deux envois SIMULTANÉS (aucun verrou dans Code.js — défaut préexistant),
+     simulé : la taille est MESURÉE et affichée), le vrai Drive (création et RELECTURE simulées en mémoire : la relecture
+     d'Apps Script n'est pas éprouvée ici), deux envois SIMULTANÉS (aucun verrou dans Code.js — défaut préexistant),
      le client (P1 ne modifie aucun fichier de l'app : les envois ont la forme de `_cloudSync`, setup.js).
    ⛔⛔ DONNÉES INVENTÉES SEULEMENT : adresses du domaine réservé example.test (RFC 2606), repas « repas-fictif-… »,
      favoris « fav-fictif-… ». La liste premium en dur de Code.js est remplacée avant exécution (remplacement COMPTÉ).
@@ -18,7 +19,7 @@ const fs = require('fs'), vm = require('vm'), crypto = require('crypto'), zlib =
 const RACINE = path.join(__dirname, '..', '..');
 
 const FONDATEUR = 'fondateur@example.test', ALICE = 'alice@example.test', BOB = 'bob@example.test',
-      CAROL = 'carol@example.test', DAVE = 'dave@example.test';
+      CAROL = 'carol@example.test', DAVE = 'dave@example.test', EVE = 'eve@example.test';
 const PII = /example\.test|repas-fictif|fav-fictif/;
 const hex = n => crypto.randomBytes(n).toString('hex');
 const TOK_IDEES = 'idees-' + hex(16);
@@ -54,13 +55,28 @@ function serveur(o) {
     getProperties: () => Object.assign({}, props), getKeys: () => Object.keys(props),
   };
   const iter = l => { let i = 0; return { hasNext: () => i < l.length, next: () => l[i++] }; };
-  const fichier = f => ({ getName: () => f.name, getLastUpdated: () => new Date(f.updated), getSize: () => Buffer.byteLength(f.content),
-    getBlob: () => blob(f.content), getId: () => 'f_' + f.name });
-  const dossier = {
-    getId: () => 'dossier_ft', getName: () => 'ForceTracker-Backups',
-    getFiles: () => iter(fichiers.map(fichier)), getFilesByName: nm => iter(fichiers.filter(x => x.name === nm).map(fichier)),
-    createFile: (nom, contenu) => { const f = { name: String(nom), updated: Date.now(), content: String(contenu) }; fichiers.push(f); return fichier(f); },
-  };
+  let horloge = Date.now();                                 // dates de création STRICTEMENT croissantes (tri par date sans ex æquo)
+  const fichier = f => ({ getName: () => f.name, getLastUpdated: () => new Date(f.updated), getDateCreated: () => new Date(f.updated),
+    getSize: () => Buffer.byteLength(f.content), getBlob: () => blob(f.content), getId: () => 'f_' + f.name });
+  /* Un dossier Drive en mémoire : `X.fichiers` garde TOUS les fichiers (champ `dir` = sous-dossier, '' = le dossier des
+     sauvegardes lui-même) ; `getFiles()` ne rend, comme Drive, que les fichiers DIRECTEMENT dans le dossier. */
+  const sousDossiers = Object.create(null);
+  const faireDossier = (dir, nomD) => ({
+    getId: () => 'dossier_ft' + (dir ? '_' + dir : ''), getName: () => nomD,
+    getFiles: () => iter(fichiers.filter(x => (x.dir || '') === dir).map(fichier)),
+    getFilesByName: nm => iter(fichiers.filter(x => (x.dir || '') === dir && x.name === nm).map(fichier)),
+    getFoldersByName: nm => iter(dir || !sousDossiers[nm] ? [] : [sousDossiers[nm]]),
+    createFolder: nm => { if (dir) throw new Error('sous-sous-dossier non doublé'); return (sousDossiers[nm] = faireDossier(String(nm), String(nm))); },
+    createFile: (nom, contenu) => {
+      // Le message d'erreur porte une adresse (inventée) : le journal du serveur doit la MASQUER, pas la recopier.
+      if (o.drivePanne && o.drivePanne(String(nom))) throw new Error('Drive indisponible (panne simulée) pour proprietaire-fictif@example.test');
+      const f = { name: String(nom), dir, updated: ++horloge, content: String(contenu) }; fichiers.push(f);
+      // Une relecture qui ne rend pas ce qui a été écrit (fichier tronqué, altéré) : la garde doit le voir.
+      if (o.driveAltere && o.driveAltere(String(nom))) { const g = Object.assign({}, f, { content: f.content.slice(0, -2) }); return fichier(g); }
+      return fichier(f);
+    },
+  });
+  const dossier = faireDossier('', 'ForceTracker-Backups');
   const refuse = nom => () => { throw new Error(nom + ' non doublé'); };
   const mails = [];
   const ctx = {
@@ -154,6 +170,29 @@ function perdues(origine, c, nom) {
   origine.forEach(l => { const k = canon(l); const d = dispo.get(k) || 0; if (d > 0) dispo.set(k, d - 1); else n++; });
   return n;
 }
+/** Tout ce que Drive garde pour ce compte : les sauvegardes de la nuit (journal + zone) et les fichiers de débordement. */
+function dansDrive(X, email, nom) {
+  const out = [];
+  X.fichiers.forEach(f => {
+    let o = null; try { o = JSON.parse(f.content); } catch (e) { return; }
+    if (o && Array.isArray(o.users)) o.users.forEach(u => {
+      if (!u || u.email !== email) return; const d = u.data || {};
+      [].concat(Array.isArray((d.profile || {})[nom]) ? d.profile[nom] : [], (((d.recupNut || {})[nom]) || []).map(r => r.l)).forEach(l => out.push(l));
+    });
+    if (o && o.type === 'recupNut' && o.compte === email && o.liste === nom) (o.entrees || []).forEach(r => out.push(r.l));
+  });
+  return out;
+}
+/** Combien de lignes d'`origine` ne se retrouvent NULLE PART : ni journal actif, ni zone, ni Drive (sauvegardes, débordements). */
+function perduesPartout(origine, X, email, nom) {
+  const c = X.lireCompte(email), dispo = new Set();
+  [].concat(Array.isArray(listeDe(c, nom)) ? listeDe(c, nom) : [], lignesZone(c, nom), dansDrive(X, email, nom)).forEach(l => dispo.add(canon(l)));
+  return origine.filter(l => !dispo.has(canon(l))).length;
+}
+const tailleZone = (c, nom) => zoneDe(c, nom).reduce((a, z) => a + JSON.stringify(z).length, 0);
+const fichiersRecup = X => X.fichiers.filter(f => /^recup-nut-/.test(f.name));
+/** Générateur déterministe (graine) : le fuzz rejoue à l'identique. */
+const alea = graine => { let x = graine >>> 0 || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; }; };
 const memes = (a, b) => canon(a) === canon(b);
 const court = (x, n) => String(x == null ? '' : x).slice(0, n || 200);
 const masque = s => String(s == null ? '' : s).replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[adresse]');
@@ -465,23 +504,24 @@ function serveurTests(t0) {
       perdues([n1], c, 'foodLog') === 1 && perdues([n2], c, 'foodLog') === 0, 'n1 absent=' + perdues([n1], c, 'foodLog'));
   }
 
-  // ── 15 · Zone BORNÉE : au-delà, les copies les plus anciennes partent — et c'est COMPTÉ ──
+  // ── 15 · Zone BORNÉE : au-delà, les copies les plus anciennes DÉMÉNAGENT vers Drive (relues), jamais à la poubelle ──
   {
     const X = serveur(); const gros = J(700, { tag: 'z' });
     X.compte(ALICE, { foodLog: copie(gros) });
     X.envoi(ALICE, { foodLog: [ligne(1, { tag: 'zz' })] }); const c = X.lireCompte(ALICE); const e = evts(c).slice(-1)[0] || {};
-    const taille = zoneDe(c, 'foodLog').reduce((a, z) => a + JSON.stringify(z).length, 0), coupees = (c.recupNut || {}).coupees || 0;
+    const taille = tailleZone(c, 'foodLog'), rf = fichiersRecup(X), dep = (c.recupNut || {}).deplacees || 0;
     const derniers = gros.slice(-100);
-    t('⭐ NSP1-48 · 700 lignes écrasées d\'un coup : la zone reste sous sa borne (200 000 caractères) et ce qui n\'y tient pas est COMPTÉ',
-      taille <= 200000 && coupees > 0 && e.coupees === coupees && zoneDe(c, 'foodLog').length + coupees === 700,
-      'zone=' + zoneDe(c, 'foodLog').length + ' coupées=' + coupees + ' taille=' + taille);
-    t('NSP1-49 · … ce sont les plus ANCIENNES qui partent : les 100 repas les plus récents (absents de la sauvegarde de la nuit) sont tous gardés',
-      perdues(derniers, c, 'foodLog') === 0, 'perdues parmi les 100 derniers=' + perdues(derniers, c, 'foodLog'));
-    // Les 200 favoris que l'app envoie au plus, écrasés par 1 : la borne des favoris doit tous les tenir.
+    t('⭐ NSP1-48 · 700 lignes écrasées d\'un coup : la zone reste sous sa borne (200 000 caractères) ; ce qui n\'y tient pas est DÉPLACÉ dans un fichier Drive, compté',
+      taille <= 200000 && dep > 0 && e.deplacees === dep && rf.length === 1 && zoneDe(c, 'foodLog').length + dep === 700 && perduesPartout(gros, X, ALICE, 'foodLog') === 0,
+      'zone=' + zoneDe(c, 'foodLog').length + ' déplacées=' + dep + ' fichiers=' + rf.length + ' taille=' + taille);
+    t('NSP1-49 · … ce sont les plus ANCIENNES qui déménagent : les 100 repas les plus récents restent dans la zone',
+      perdues(derniers, c, 'foodLog') === 0, 'absents de la zone parmi les 100 derniers=' + perdues(derniers, c, 'foodLog'));
+    // Les 200 favoris que l'app envoie au plus, écrasés par 1 : la borne des favoris doit tous les tenir sans déménager.
     const Xf = serveur(); const f200 = F(200).map((f, i) => Object.assign(f, { portionLabel: 'portion-' + i, portionWeightG: 125 }));
     Xf.compte(DAVE, { savedFoods: copie(f200) }); Xf.envoi(DAVE, { savedFoods: [fav(9999)] }); const cf = Xf.lireCompte(DAVE);
-    t('NSP1-53 · les 200 favoris que l\'app envoie au plus, écrasés par 1 : tous gardés, rien de coupé (borne des favoris suffisante)',
-      perdues(f200, cf, 'savedFoods') === 0 && !((cf.recupNut || {}).coupees), 'zone=' + zoneDe(cf, 'savedFoods').length + ' coupées=' + ((cf.recupNut || {}).coupees || 0));
+    t('NSP1-53 · les 200 favoris que l\'app envoie au plus, écrasés par 1 : tous gardés DANS la zone, rien déplacé (borne des favoris suffisante)',
+      perdues(f200, cf, 'savedFoods') === 0 && !((cf.recupNut || {}).deplacees) && fichiersRecup(Xf).length === 0,
+      'zone=' + zoneDe(cf, 'savedFoods').length + ' déplacées=' + ((cf.recupNut || {}).deplacees || 0));
     // Deux appareils qui ont chacun UN repas que l'autre n'a pas, et qui se resynchronisent 60 fois tour à tour.
     const X2 = serveur(); const base = J(10, { tag: 'ev' }), x1 = ligne(1, { tag: 'ev1' }), x2 = ligne(2, { tag: 'ev2' });
     X2.compte(BOB, { foodLog: copie(base) });
@@ -506,6 +546,187 @@ function serveurTests(t0) {
     console.log('   ℹ️  MESURE (Node, saveProfile complet) — journal de 8 000 lignes : envoi inchangé ' + dSame + ' ms · une ligne retirée ' + dUne + ' ms');
     t('NSP1-52 · le plus gros journal envoyé (8 000 lignes) passe le garde-fou sans copie inutile, en un temps raisonnable (< 5 s ici)',
       dSame < 5000 && dUne < 5000 && zoneDe(X4.lireCompte(ALICE), 'foodLog').length === 1, dSame + ' / ' + dUne + ' ms');
+  }
+
+  // ── 16 · DÉBORDEMENT (conditions 2, 3 et 5 de Michel, 23/10) : rien de ce qui n'est pas encore sauvegardé ne se perd ──
+  {
+    // Une nuit : sauvegarde. Le lendemain, AVANT la sauvegarde suivante : 10 repas du jour, puis deux écrasements.
+    const X = serveur(); const vieux = J(700, { tag: 'nv' }), jour = J(10, { tag: 'nj' });
+    X.compte(ALICE, { foodLog: copie(vieux) });
+    X.ctx.backupAllUserData_();                                                    // la nuit : les 700 sont sauvegardés
+    X.envoi(ALICE, { foodLog: copie(vieux).concat(copie(jour)) });                 // le jour : 10 repas, dans AUCUNE sauvegarde
+    X.envoi(ALICE, { foodLog: copie(vieux) });                                     // un appareil en retard les retire
+    X.envoi(ALICE, { foodLog: [ligne(1, { tag: 'nf' })] });                        // un appareil remis à zéro écrase tout
+    const c = X.lireCompte(ALICE);
+    t('⭐⭐ NSP1-56 · la zone déborde dans la journée, AVANT la sauvegarde de la nuit : les 10 repas du jour (dans aucune sauvegarde) ne sont pas perdus',
+      perduesPartout(jour, X, ALICE, 'foodLog') === 0 && perduesPartout(vieux, X, ALICE, 'foodLog') === 0,
+      'repas du jour introuvables=' + perduesPartout(jour, X, ALICE, 'foodLog'));
+    const rf = fichiersRecup(X); let lu = null; try { lu = JSON.parse(rf[0] && rf[0].content); } catch (e) { /* illisible */ }
+    t('⭐ NSP1-57 · … ce qui sort de la zone DÉMÉNAGE dans un fichier « recup-nut-… » du SOUS-DOSSIER « recup-nut » des sauvegardes (jamais « backup-… », que lit l\'audit A1), au nom sans donnée personnelle',
+      rf.length >= 1 && rf.every(f => f.dir === 'recup-nut' && !PII.test(f.name) && !/^backup-/.test(f.name)) && !!lu && lu.type === 'recupNut' && lu.compte === ALICE
+      && lu.liste === 'foodLog' && (lu.entrees || []).length > 0 && tailleZone(c, 'foodLog') <= 200000,
+      rf.map(f => f.name).join(', ') + ' zone=' + tailleZone(c, 'foodLog'));
+    const e = evts(c).filter(x => x.deplacees > 0).slice(-1)[0] || {};
+    t('NSP1-58 · … et l\'événement le dit : combien de copies ont déménagé, dans quel fichier (des nombres et un nom, rien de personnel)',
+      e.deplacees > 0 && rf.some(f => f.name === e.fichier) && !PII.test(JSON.stringify(e)), court(JSON.stringify(e)));
+  }
+  {
+    // Drive refuse le fichier de débordement : rien ne sort de la zone, l'envoi est refusé — retardé, jamais perdu.
+    const X = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) }); const j = J(600, { tag: 'dp' });
+    X.compte(BOB, { foodLog: copie(j) });
+    const r = X.envoi(BOB, { foodLog: [ligne(1, { tag: 'dp1' })] }); const c = X.lireCompte(BOB);
+    t('⭐⭐ NSP1-59 · Drive refuse le fichier de débordement : RIEN ne sort de la zone, l\'envoi du journal est REFUSÉ (le serveur garde ses 600 repas, l\'appareil les siens)',
+      r.j.status === 'ok' && memes(listeDe(c, 'foodLog'), j) && zoneDe(c, 'foodLog').length === 0 && fichiersRecup(X).length === 0,
+      'journal=' + (listeDe(c, 'foodLog') || []).length + ' zone=' + zoneDe(c, 'foodLog').length);
+    t('NSP1-60 · … le refus est daté (événement « drive ») et tracé sans donnée personnelle',
+      (evts(c).slice(-1)[0] || {}).refus === 'drive' && X.journal.some(l => /REFUSÉ/.test(l)) && X.journal.every(l => !PII.test(l)),
+      court(JSON.stringify(evts(c).slice(-1)[0])));
+    // Drive écrit, mais la relecture ne rend pas ce qui a été écrit : un échec, pas une réussite.
+    const X2 = serveur({ driveAltere: nom => /^recup-nut-/.test(nom) });
+    X2.compte(BOB, { foodLog: copie(j) });
+    X2.envoi(BOB, { foodLog: [ligne(1, { tag: 'dp1' })] }); const c2 = X2.lireCompte(BOB);
+    t('⭐ NSP1-61 · Drive écrit mais RELIT autre chose (fichier tronqué) : traité comme un échec — rien ne sort, envoi refusé',
+      memes(listeDe(c2, 'foodLog'), j) && zoneDe(c2, 'foodLog').length === 0 && (evts(c2).slice(-1)[0] || {}).refus === 'drive',
+      'journal=' + (listeDe(c2, 'foodLog') || []).length);
+  }
+  {
+    // Une journée d'écrasements RÉPÉTÉS avant la sauvegarde de la nuit : cinq appareils aux contenus différents, trois tours.
+    const X = serveur(); const base = J(300, { tag: 'jb' }), vus = [];
+    X.compte(CAROL, { foodLog: copie(base) }); vus.push(...base);
+    const appareils = [0, 1, 2, 3, 4].map(k => copie(base.slice(k * 40)).concat(J(150, { tag: 'ja' + k })));
+    let pire = 0, maxZone = 0;
+    for (let tour = 0; tour < 3; tour++) appareils.forEach(a => {
+      X.envoi(CAROL, { foodLog: copie(a) });
+      const c = X.lireCompte(CAROL); (listeDe(c, 'foodLog') || []).forEach(l => vus.push(l));
+      pire = Math.max(pire, perduesPartout(vus, X, CAROL, 'foodLog')); maxZone = Math.max(maxZone, tailleZone(c, 'foodLog'));
+    });
+    t('⭐⭐ NSP1-62 · une journée d\'écrasements RÉPÉTÉS (5 appareils aux contenus différents, 15 envois, AVANT la sauvegarde de la nuit) : à chaque étape, tout repas passé par le serveur se retrouve (journal, zone ou Drive)',
+      pire === 0 && fichiersRecup(X).length >= 1, 'pire introuvables=' + pire + ' fichiers=' + fichiersRecup(X).length);
+    t('NSP1-63 · … et la zone n\'a jamais dépassé sa borne : le stockage partagé n\'est jamais menacé', maxZone <= 200000, 'max zone=' + maxZone);
+    X.ctx.backupAllUserData_();
+    const bk = X.fichiers.filter(f => /^backup-/.test(f.name)).slice(-1)[0]; let o = null; try { o = JSON.parse(bk.content); } catch (e) { /* illisible */ }
+    const u = o && (o.users || []).find(x => x.email === CAROL);
+    t('NSP1-64 · … la sauvegarde de la nuit emporte la zone avec le compte ; les fichiers de débordement restent à côté',
+      !!(u && u.data && u.data.recupNut && Array.isArray(u.data.recupNut.foodLog)) && fichiersRecup(X).length >= 1 && perduesPartout(vus, X, CAROL, 'foodLog') === 0,
+      'recup=' + fichiersRecup(X).length);
+    // L'audit A1 ne lit que les « backup-… » : mêmes compteurs avec ou sans les fichiers de débordement dans le dossier.
+    const audit = fl => { const Y = serveur({ fichiers: fl }); Y.compte(CAROL, { foodLog: copie(base) });
+      const r = Y.post({ action: 'nutBackupAudit', token: TOK_IDEES }); return r.j.status === 'ok' ? canon({ n: r.j.nbFichiers, cmp: r.j.comparaison }) : null; };
+    const tous = X.fichiers.map(f => Object.assign({}, f)), a1 = audit(tous), a2 = audit(tous.filter(f => !/^recup-nut-/.test(f.name)));
+    t('NSP1-65 · l\'audit A1 rend les MÊMES compteurs avec ou sans les fichiers de débordement (il ne lit que les sauvegardes)',
+      !!a1 && a1 === a2, court(a1));
+  }
+  {
+    // Favoris : écrasements répétés au-delà de la borne (60 000) — même règle que le journal.
+    const lots = [0, 1, 2, 3].map(k => F(200).map(f => Object.assign(f, { name: f.name + '-lot' + k, portionLabel: 'portion', portionWeightG: 125 })));
+    const X = serveur(); const vus = [];
+    X.compte(DAVE, { savedFoods: copie(lots[0]) }); vus.push(...lots[0]);
+    let pire = 0, maxZ = 0;
+    [1, 2, 3, 0, 2].forEach(k => {
+      X.envoi(DAVE, { savedFoods: copie(lots[k]) }); const c = X.lireCompte(DAVE);
+      (listeDe(c, 'savedFoods') || []).forEach(l => vus.push(l));
+      pire = Math.max(pire, perduesPartout(vus, X, DAVE, 'savedFoods')); maxZ = Math.max(maxZ, tailleZone(c, 'savedFoods'));
+    });
+    const rf = fichiersRecup(X).filter(f => { try { return JSON.parse(f.content).liste === 'savedFoods'; } catch (e) { return false; } });
+    t('⭐⭐ NSP1-66 · FAVORIS : écrasements répétés au-delà de la borne (4 lots de 200 favoris) — aucun favori perdu, la zone reste sous 60 000, le surplus déménage dans Drive',
+      pire === 0 && maxZ <= 60000 && rf.length >= 1, 'pire=' + pire + ' maxZone=' + maxZ + ' fichiers=' + rf.length);
+    const Xp = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) });
+    Xp.compte(DAVE, { savedFoods: copie(lots[0]) });
+    [1, 2, 3].forEach(k => Xp.envoi(DAVE, { savedFoods: copie(lots[k]) }));
+    const cp = Xp.lireCompte(DAVE);
+    t('⭐ NSP1-67 · FAVORIS + Drive en panne au moment du débordement : envoi refusé, aucun favori qui a été au serveur n\'est perdu',
+      memes(listeDe(cp, 'savedFoods'), lots[1]) && perduesPartout(lots[0].concat(lots[1]), Xp, DAVE, 'savedFoods') === 0 && (evts(cp).slice(-1)[0] || {}).refus === 'drive',
+      'favoris=' + ((listeDe(cp, 'savedFoods') || [])[0] || {}).name + ' ' + court(JSON.stringify(evts(cp).slice(-1)[0])));
+  }
+  {
+    // FUZZ déterministe : bornes RÉDUITES (débordements fréquents), pannes Drive au hasard, trois appareils qui ne relisent
+    // jamais le serveur (comme l'app), des restaurations et des sauvegardes de nuit au hasard.
+    let pire = 0, maxZ = 0, refus = 0, etapes = 0; const ecarts = [];
+    for (let g = 1; g <= 8; g++) {
+      const R = alea(g); let panne = false;
+      const X = serveur({ drivePanne: () => panne });
+      X.ctx.NUT_RECUP_BORNES_ = { foodLog: 6000, savedFoods: 3000 };
+      const vus = new Map(); let n = 0;
+      const neuf = () => ligne(n++, { tag: 'fz' + g });
+      const app = [J(12, { tag: 'fz' + g + 'a' }), [], []];
+      X.compte(ALICE, { foodLog: copie(app[0]) });
+      const noter = () => { (listeDe(X.lireCompte(ALICE), 'foodLog') || []).forEach(l => vus.set(canon(l), l)); };
+      noter();
+      for (let s2 = 0; s2 < 60; s2++, etapes++) {
+        panne = R() < 0.2;
+        const k = Math.floor(R() * 3), op = R(); let a = app[k];
+        if (op < 0.35) a.push(neuf());                                                                   // un repas
+        else if (op < 0.5 && a.length) a.splice(Math.floor(R() * a.length), 1);                         // une suppression
+        else if (op < 0.65 && a.length) { const i = Math.floor(R() * a.length); a[i] = Object.assign(copie(a[i]), { kcal: a[i].kcal + 1, modifie: true }); }   // une correction
+        else if (op < 0.75) { app[k] = copie(listeDe(X.lireCompte(ALICE), 'foodLog') || []); a = app[k]; }   // une restauration
+        else if (op < 0.85) { panne = false; X.ctx.backupAllUserData_(); continue; }                     // la sauvegarde de la nuit
+        X.envoi(ALICE, { foodLog: copie(a) }); noter();
+        const c = X.lireCompte(ALICE), perdu = perduesPartout([...vus.values()], X, ALICE, 'foodLog');
+        if (perdu && ecarts.length < 3) ecarts.push('graine ' + g + ' étape ' + s2 + ' : ' + perdu);
+        pire = Math.max(pire, perdu); maxZ = Math.max(maxZ, tailleZone(c, 'foodLog'));
+      }
+      refus += evts(X.lireCompte(ALICE)).filter(e => e.refus).length;
+    }
+    t('⭐⭐ NSP1-68 · FUZZ (8 graines × 60 étapes, bornes réduites, pannes Drive au hasard, 3 appareils, restaurations et sauvegardes de nuit au hasard) : AUCUNE version passée par le serveur n\'est jamais perdue',
+      pire === 0, ecarts.join(' | ') || ('étapes=' + etapes));
+    t('NSP1-69 · … la zone ne dépasse jamais sa borne, et le chemin « Drive en panne → refus » a bien été éprouvé',
+      maxZ <= 6000 && refus > 0, 'maxZone=' + maxZ + ' refus=' + refus);
+  }
+
+  // ── 17 · Après un débordement, le RYTHME des fichiers ; la reprise quand Drive revient ; le coût d'une zone PLEINE ──
+  {
+    const X = serveur(); const gros = J(700, { tag: 'hy' });
+    X.compte(EVE, { foodLog: copie(gros) });
+    X.envoi(EVE, { foodLog: [ligne(1, { tag: 'hy1' })] });                         // débordement : 1 fichier
+    X.envoi(EVE, { foodLog: [ligne(2, { tag: 'hy2' })] });                         // une seule ligne retirée ensuite
+    const c = X.lireCompte(EVE);
+    t('NSP1-70 · après un débordement, la zone redescend à MOITIÉ de sa borne : la ligne retirée juste après n\'ouvre pas un 2ᵉ fichier (un fichier par débordement, pas un par synchronisation)',
+      fichiersRecup(X).length === 1 && tailleZone(c, 'foodLog') <= 100000 + 1000 && perduesPartout(gros.concat([ligne(1, { tag: 'hy1' })]), X, EVE, 'foodLog') === 0,
+      'fichiers=' + fichiersRecup(X).length + ' zone=' + tailleZone(c, 'foodLog'));
+  }
+  {
+    // Drive refuse, puis revient : le même envoi, renvoyé par l'appareil, passe — et rien ne s'est perdu entre-temps.
+    let panne = true; const X = serveur({ drivePanne: () => panne }); const j = J(600, { tag: 'rv' }), un = [ligne(1, { tag: 'rv1' })];
+    X.compte(BOB, { foodLog: copie(j) });
+    X.envoi(BOB, { foodLog: copie(un) }); const refuse = memes(listeDe(X.lireCompte(BOB), 'foodLog'), j);
+    panne = false; X.envoi(BOB, { foodLog: copie(un) }); const c = X.lireCompte(BOB);
+    t('⭐ NSP1-71 · Drive en panne puis rétabli : l\'envoi refusé passe à la synchronisation suivante, le surplus déménage, rien n\'est perdu',
+      refuse && memes(listeDe(c, 'foodLog'), un) && fichiersRecup(X).length === 1 && perduesPartout(j, X, BOB, 'foodLog') === 0
+      && evts(c).filter(e => e.refus === 'drive').length === 1 && (evts(c).slice(-1)[0] || {}).deplacees > 0,
+      'refusé=' + refuse + ' journal=' + (listeDe(c, 'foodLog') || []).length + ' fichiers=' + fichiersRecup(X).length);
+  }
+  {
+    // Le PIRE cas pour le stockage partagé : une zone PLEINE sur les deux listes, avec des noms aléatoires (peu compressibles).
+    const X = serveur(); const alea8 = () => crypto.randomBytes(15).toString('hex');
+    const remplir = (borne, fab) => { const l = []; let tot = 0; for (let i = 0; ; i++) {
+      const x = fab(i), s2 = JSON.stringify({ t: new Date().toISOString(), m: 'brutal', l: x }).length;
+      if (tot + s2 > borne - 2000) return l; tot += s2; l.push(x); } };
+    const lignes = remplir(200000, i => ligne(i, { tag: 'pc', extra: { name: 'repas-fictif-' + alea8(), id: crypto.randomUUID(), kcal: Math.floor(Math.random() * 900) } }));
+    const favs = remplir(60000, i => Object.assign(fav(i), { name: 'fav-fictif-' + alea8() }));
+    X.compte(EVE, { foodLog: copie(lignes), savedFoods: copie(favs) }); const avant = (X.brut(EVE) || '').length;
+    X.envoi(EVE, { foodLog: [ligne(1, { tag: 'pc1' })], savedFoods: [fav(1)] }); const c = X.lireCompte(EVE);
+    X.ctx.saveUserData_(EVE, Object.assign({}, c, { recupNut: undefined })); const sansZone = (X.brut(EVE) || '').length;
+    X.ctx.saveUserData_(EVE, c); const avecZone = (X.brut(EVE) || '').length;
+    console.log('   ℹ️  MESURE (vraie compression, PIRE CAS : noms aléatoires) — zone PLEINE (journal ' + tailleZone(c, 'foodLog') + ' car. · favoris '
+      + tailleZone(c, 'savedFoods') + ' car.) : ' + (avecZone - sansZone) + ' octets stockés en plus (compte de ' + lignes.length + ' repas avant : ' + avant + ')');
+    t('⭐ NSP1-72 · CAPACITÉ : une zone PLEINE (journal + favoris à leur borne, noms aléatoires) coûte moins de 70 000 octets stockés par compte (plafond de TOUT le stockage : 512 000)',
+      !(c.recupNut || {}).deplacees && tailleZone(c, 'foodLog') > 190000 && tailleZone(c, 'savedFoods') > 55000 && avecZone - sansZone < 70000,
+      'surcoût=' + (avecZone - sansZone) + ' journal=' + tailleZone(c, 'foodLog') + ' favoris=' + tailleZone(c, 'savedFoods'));
+  }
+  {
+    /* La sonde « Santé du système → sauvegardes » (`checkBackup`) annonce le fichier le plus RÉCENT du dossier comme la
+       dernière sauvegarde. Un fichier de débordement écrit dans la journée ne doit pas masquer une sauvegarde de nuit
+       arrêtée (36 jours sans sauvegarde en août : c'est précisément ce que cette sonde surveille). */
+    const X = serveur(); const gros = J(700, { tag: 'cb' });
+    X.compte(ALICE, { foodLog: copie(gros) });
+    X.ctx.backupAllUserData_();
+    const sonde = () => { const r = X.get({ action: 'checkBackup', token: TOK_IDEES }); return r.j.status === 'ok' ? { n: r.j.fileCount, nom: r.j.lastName, d: r.j.lastDate } : null; };
+    const avant = sonde();
+    X.envoi(ALICE, { foodLog: [ligne(1, { tag: 'cb1' })] });                       // débordement : un fichier recup-nut
+    const apres = sonde();
+    t('⭐⭐ NSP1-73 · la sonde des sauvegardes (checkBackup) n\'est pas trompée : après un débordement, la « dernière sauvegarde » reste la sauvegarde de la nuit (fichiers de débordement rangés à part)',
+      !!avant && !!apres && fichiersRecup(X).length === 1 && /^backup-/.test(apres.nom || '') && canon(avant) === canon(apres),
+      'avant=' + court(JSON.stringify(avant)) + ' après=' + court(JSON.stringify(apres)));
   }
 }
 
