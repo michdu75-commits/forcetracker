@@ -33,8 +33,11 @@ MUT = [
      [(LO, 'src="muscles/muscle mollet.png" alt="" class="ex-grp-vig ex-grp-vig-centre"', 'src="' + V + '07_abdominaux.png" alt="" class="ex-grp-vig ex-grp-vig-centre"')], 'GARDE', 'C-VIG-A2'),
     ('MV4 [deguisee] cadre centre au lieu d\'ancre en bas (le liseré du haut revient)',
      [(CS, "object-fit:cover;object-position:50% 100%;border-radius:10px;", "object-fit:cover;object-position:50% 50%;border-radius:10px;")], 'GARDE', 'C-VIG-A5'),
-    ('MV5 [deguisee] la vignette peut retrecir (flex-shrink:0 retire) — dans l\'en-tete, le liseré revient',
-     [(CS, ".ex-grp-vig{width:88px;height:51px;flex-shrink:0;", ".ex-grp-vig{width:88px;height:51px;")], 'GARDE', 'C-VIG-B1'),
+    # MV5 était GARDE (C-VIG-B1) tant que l'en-tête était une rangée SANS retour : l'image s'y écrasait. Depuis le correctif
+    # de la revue adverse (23/10), l'en-tête passe à la ligne au lieu d'écraser l'image : MESURÉ sans cette règle, la vignette
+    # reste en 88 × 51 de 300 à 430 px, en-tête comme tuiles, sans débordement. La règle reste, défensive ; la casse est équivalente.
+    ('MV5 [equivalente depuis le correctif de l\'en-tete] flex-shrink:0 retire de la vignette (elle ne retrecit plus nulle part)',
+     [(CS, ".ex-grp-vig{width:88px;height:51px;flex-shrink:0;", ".ex-grp-vig{width:88px;height:51px;")], 'OK'),
     ('MV6 l\'en-tete n\'est plus en ligne (le libelle long repasse sous l\'image)',
      [(CS, "letter-spacing:.3px;display:flex;align-items:center;gap:10px;flex:1 1 auto;flex-wrap:wrap;}", "letter-spacing:.3px;flex:1 1 auto;}")], 'GARDE', 'C-VIG-B1'),
     # ↓ les 3 suivantes viennent de la revue adverse du 23/10 (en-tête qui débordait à 320 px ; S2 qui ne lisait que du texte)
