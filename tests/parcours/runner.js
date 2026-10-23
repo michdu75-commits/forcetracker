@@ -12003,7 +12003,13 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
                    libelle:(document.getElementById('af-bc-name')||{}).textContent,
                    kcal:document.getElementById('af-kcal').value };
         document.getElementById('af-bc-grams').value='50'; _bcApplyGrams();
-        o.a50g={ kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value };
+        /* 🥗 V2 (D-096, Michel : « une modification manuelle est conservée et tracée ») — à 50 g, la correction RESTE dans
+           les champs, et le calcul pour 50 g se LIT à côté (« calcul : 24 ») ; « ↺ Revenir au calcul » le remet dans les champs. */
+        const corr=document.getElementById('af-corr');
+        o.a50g={ kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value,
+                 corrVue:!!(corr && corr.style.display!=='none'), corrTxt:(corr && corr.textContent)||'' };
+        const rv=corr && corr.querySelector('button[onclick="_afRevenirAuCalcul()"]'); if(rv) rv.click();
+        o.revenu={ bouton:!!rv, kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value };
       }
 
       // ③ une entrée tapée À LA MAIN n'a pas de per100 → pas de bloc, aucun poids inventé
@@ -12033,8 +12039,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
      Aujourd'hui 10,9 x 0,5 = 5,45 -> 5, la vraie valeur. *Un attendu cale sur un artefact
      d'arrondi rougit le jour ou on retire l'artefact : c'est le TEMOIN qu'on corrige, pas le
      code.* Verifie par l'arithmetique sur `data/ciqual.json`, pas deduit. */
-  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 5 g)',
-    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='5', JSON.stringify(Q.a50g));
+  /* ↪️ RÉÉCRIT LE 23/10/2026 (intégration Nutrition V2 × P1, trouvé par sa passe complète ; rouge aussi sur la branche V2
+     seule, vert sur master). L'ancien attendu — « elles suivent la quantité : 24 · 5 » — voulait dire que la quantité
+     EFFAÇAIT la correction à la main pour recalculer depuis la fiche. V2 applique D-096 (Michel, VALIDÉ : « une
+     modification manuelle est conservée et tracée ») : la correction reste, signalée, et le CALCUL pour 50 g se lit à côté.
+     Le chiffre gardé du témoin (24 · 5, le calcul pour 50 g, simple arrondi) est inchangé ; il est lu là où V2 le montre,
+     puis remis dans les champs par le geste « ↺ Revenir au calcul ». Texte d'avant : `git show 04eb7bcb:tests/parcours/runner.js`. */
+  t('⭐ … et à 50 g le CALCUL suit la quantité (24 kcal · 5 g) : en V2 il se lit à côté de la correction gardée (D-096), et « ↺ Revenir au calcul » le remet dans les champs',
+    Q.a50g && Q.a50g.kcal==='29' && Q.a50g.prot==='7' && Q.a50g.corrVue && /calcul : 24\b/.test(Q.a50g.corrTxt) && /calcul : 5\b/.test(Q.a50g.corrTxt)
+    && Q.revenu && Q.revenu.bouton && Q.revenu.kcal==='24' && Q.revenu.prot==='5', JSON.stringify({ a50g:Q.a50g, revenu:Q.revenu }));
   t('⛔⛔ QUANTITÉ : une entrée tapée à la main n\'a PAS le bloc — aucun poids inventé (R29)',
     Q.sansPer100 && Q.sansPer100.bloc===false, JSON.stringify(Q.sansPer100));
 
