@@ -58,7 +58,7 @@ Une fonction, `_nutProtegerListe_`, remplace `_pa_` pour `foodLog` et `savedFood
 
 ## 3. La borne : ce qui déborde DÉMÉNAGE dans Drive, relu — jamais à la poubelle
 
-**Le défaut trouvé en finalisant (mesuré, 12 témoins rouges sur la 1ʳᵉ version).** La zone était bornée en retirant ses
+**Le défaut trouvé en finalisant (mesuré : 12 témoins rouges sur la 1ʳᵉ version au moment de la découverte, 15 sur les 74 du banc final).** La zone était bornée en retirant ses
 copies **les plus anciennes**, avec l'idée qu'elles étaient « dans les sauvegardes de la nuit ». **C'est faux** : un repas
 saisi le matin et retiré l'après-midi n'est dans **aucune** sauvegarde. Rejoué : 10 repas du jour, deux écrasements avant
 la nuit → **les 10 introuvables** ; favoris écrasés lot après lot → **340 favoris perdus**. La perte silencieuse qu'on
@@ -129,7 +129,7 @@ règle que les sauvegardes : jamais supprimé, jamais écrasé).
 - **Banc B-NSP1** (`tests/parcours/nut_secu_p1.js`, `tools/banc_nut_secu_p1.js`) : vrai `Code.js` par `doPost`/`doGet`,
   vraie compression, Drive en mémoire **avec sous-dossiers et pannes injectées** (création refusée, relecture tronquée),
   données inventées (example.test), garde réseau. **74 / 0** sur la branche ; **48 rouges** sur le `Code.js` de master ;
-  la 1ʳᵉ version (éviction) : **12 rouges** ; la version intermédiaire (fichiers à côté des sauvegardes) : **1 rouge**
+  la 1ʳᵉ version (éviction) : **15 rouges** ; la version intermédiaire (fichiers à côté des sauvegardes) : **1 rouge**
   (NSP1-73). Couvre : 500 → 1 · 40 → 30 · deux appareils · iPhone/Safari · ajout depuis un appareil en retard ·
   modification · suppressions · favoris 20 → 1 · envoi répété · identifiants absents, instables, en double · données
   invalides · isolement entre comptes · zone jamais renvoyée · A1 inchangé · sauvegarde nocturne · écriture atomique ·
@@ -143,7 +143,7 @@ règle que les sauvegardes : jamais supprimé, jamais écrasé).
 - **Voisins** (vrai `Code.js`) : sec_admin 69/0 · auth_cloud_closure 9/0 · auth_signup_strict 8/0 · coach_memoire 28/0 ·
   d021_activite 42/0 · pots_nutrition 48/0 · nut_inventaire_admin 20/0 · chaos 56/0 (PostgreSQL local, fuzz
   multi-appareils) · banc HTTP A1 29/0 (hors dépôt).
-- **Passe complète D-031** sur l'arbre final : voir `docs/JOURNAL-DE-PARTAGE.md` (ligne de clôture) et le rapport.
+- **Passe complète D-031 unique** sur l'arbre final : **7917 ✅ / 0 ❌** sur `db8699cc` (arbre `87002186`), 4 conditions vertes (07:58 → 09:29 UTC) ; depuis, documentation seulement.
 
 ## 7. Ce que ça ne fait pas (risque résiduel)
 

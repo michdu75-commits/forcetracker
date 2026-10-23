@@ -4941,7 +4941,8 @@ rouges** sur le `Code.js` de master → **74 / 0** ; contrôle négatif **37 / 3
 **⛔ Le même défaut, revenu par la BORNE — trouvé en finalisant (23/10, condition 3 de Michel).** La 1ʳᵉ version bornait la
 zone en retirant ses copies **les plus anciennes**, « puisqu'elles sont dans les sauvegardes de la nuit ». **Faux** : un repas
 saisi le matin et retiré l'après-midi n'est dans **aucune** sauvegarde. Rejoué : 10 repas du jour + deux écrasements avant la
-nuit → **10 introuvables** ; favoris écrasés lot après lot → **340 perdus** ; **12 témoins rouges**. *Une borne qui jette
+nuit → **10 introuvables** ; favoris écrasés lot après lot → **340 perdus** ; **12 témoins rouges** à la découverte (15 sur les 74 du banc
+final). *Une borne qui jette
 est une perte silencieuse qui a changé d'adresse.* Correction : le surplus **déménage** dans un fichier Drive **relu** avant
 de quitter la zone ; si Drive refuse ou relit autre chose, l'envoi de la liste est **refusé** (retardé, jamais perdu —
 `D-109`, proposé). ⚠️ **Et un 3ᵉ piège, attrapé par un témoin avant d'arriver** : rangé à côté des sauvegardes, ce fichier
