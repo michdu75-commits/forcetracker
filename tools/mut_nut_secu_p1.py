@@ -7,6 +7,7 @@ Point de depart : 0 rouge sur l'arbre sain, mesure d'abord. M00 = le Code.js d'A
 Chaque mutation casse UNE garantie du garde-fou dans le VRAI code (une ou plusieurs ancres, chacune unique) ; une seule
 touche un commentaire, et elle doit rester VERTE (un banc qui rougit sur un commentaire mesurerait le texte, pas le comportement).
 Depuis la finalisation (option B validee, 23/10) : M23-M36 eprouvent le DEMENAGEMENT vers Drive (relu, sous-dossier, refus si Drive echoue).
+Integration Nutrition V2 + P1 (23/10) : M37-M44 eprouvent D-110 (favoris acceptes pendant une panne de Drive, jusqu'a un plafond).
 Une mutation qui casse la SYNTAXE est refusee (INVALIDE) : un banc qui plante ne prouve rien (M10 de SEC-ADMIN, 09/10).
 Usage : python3 tools/mut_nut_secu_p1.py [PREFIXE[,PREFIXE...]]   (MUT_DETAIL=1 : tous les rouges)
 """
@@ -85,7 +86,7 @@ MUT = [
     ("M24 aucune RELECTURE : un fichier tronque passe pour une reussite",
      "  if (relu !== contenu) throw new Error('relecture différente de l\\'écrit');\n", "", 'GARDE'),
     ("M25 Drive en panne : l'envoi s'applique quand meme et le surplus est perdu",
-     "      return profile[nom];\n    }\n    liste = liste.slice(n);\n", "    }\n    liste = liste.slice(n);\n", 'GARDE'),
+     "        return profile[nom];\n      }\n    }\n    liste = liste.slice(n);\n", "      }\n    }\n    liste = liste.slice(n);\n", 'GARDE'),
     ("M26 le fichier de debordement s'appelle « backup-… » (l'audit A1 le lirait comme une sauvegarde)",
      "  var nomFichier = 'recup-nut-' +", "  var nomFichier = 'backup-recup-nut-' +", 'GARDE'),
     ("M27 l'adresse du compte dans le NOM du fichier (donnee personnelle visible dans Drive)",
@@ -93,10 +94,10 @@ MUT = [
     ("M28 un envoi refuse garde quand meme ses copies dans la zone (au-dela de la borne)",
      "  var liste = (z[nom] || []).slice();\n", "  var liste = z[nom] || (z[nom] = []);\n", 'GARDE'),
     ("M29 le refus n'est plus date dans les evenements",
-     "      _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,\n",
-     "      if (false) _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,\n", 'GARDE'),
+     "        _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,\n",
+     "        if (false) _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,\n", 'GARDE'),
     ("M30 le refus n'est plus trace dans le journal du serveur",
-     "      Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", "      if (false) Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", 'GARDE'),
+     "        Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", "        if (false) Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ :", 'GARDE'),
     ("M31 le message d'erreur de Drive est recopie sans masquer une adresse",
      ".replace(/[^\\s@]+@[^\\s@]+/g, '[adresse]')", "", 'GARDE'),
     ("M32 une copie de moins ecrite dans Drive que retiree de la zone (decalage d'une ligne)",
@@ -111,6 +112,26 @@ MUT = [
      "  var borne = NUT_RECUP_BORNES_[nom], tailles", "  var borne = NUT_RECUP_BORNES_.foodLog, tailles", 'GARDE'),
     ("M36 les fichiers de debordement rangés A COTE des sauvegardes (checkBackup les prend pour la derniere sauvegarde)",
      "  var relu = _nutDossierRecup_().createFile(", "  var relu = _getDriveBackupFolder_().createFile(", 'GARDE'),
+    # ── D-110 (FIX-A′, intégration Nutrition V2 + P1, 23/10) : les favoris ne sont plus refusés pour une panne de Drive ──
+    ("M37 D-110 sans PLAFOND : pendant une panne, la zone des favoris grossit sans limite (le stockage partage n'est plus protege)",
+     "      if (nom === 'savedFoods' && totalZone <= NUT_RECUP_PLAFOND_FAVORIS_) {\n", "      if (nom === 'savedFoods') {\n", 'GARDE'),
+    ("M38 D-110 applique au JOURNAL au lieu des favoris (le journal deborde sans refus, les favoris sont refuses)",
+     "      if (nom === 'savedFoods' && totalZone <= NUT_RECUP_PLAFOND_FAVORIS_) {\n", "      if (nom === 'foodLog' && totalZone <= NUT_RECUP_PLAFOND_FAVORIS_) {\n", 'GARDE'),
+    ("M39 D-110 sans `n = 0` : les copies que Drive n'a pas gardees sont RETIREES de la zone (perte silencieuse)",
+     "        n = 0; differe = true;                         // D-110 : RIEN ne sort de la zone (rien n'a été écrit dans Drive)\n",
+     "        differe = true;\n", 'GARDE'),
+    ("M40 D-110 : l'envoi accepte n'est plus signale (aucun evenement « differe »)",
+     "  if (differe) e.differe = 'drive';", "  if (false) e.differe = 'drive';", 'GARDE'),
+    ("M41 plafond des favoris double (240 000) : la zone depasse 2 x sa borne pendant une panne",
+     "var NUT_RECUP_PLAFOND_FAVORIS_ = 120000;", "var NUT_RECUP_PLAFOND_FAVORIS_ = 240000;", 'GARDE'),
+    ("M42 D-110 annule : les favoris sont de nouveau REFUSES pour une panne de Drive (le defaut de la verification 5)",
+     "      if (nom === 'savedFoods' && totalZone <= NUT_RECUP_PLAFOND_FAVORIS_) {\n", "      if (false) {\n", 'GARDE'),
+    ("M43 D-110 : le journal d'execution recopie le message de Drive SANS masquer une adresse",
+     "        Logger.log('[FT GARDE-FOU savedFoods] Drive n\\'a pas gardé le surplus (' + cause + ')",
+     "        Logger.log('[FT GARDE-FOU savedFoods] Drive n\\'a pas gardé le surplus (' + String(err && err.message || err) + ')", 'GARDE'),
+    ("M44 (commentaire) le commentaire de D-110 est modifie : le banc doit rester VERT",
+     "   que sur l'appareil, et « Restaurer mon compte » REMPLACE les favoris de l'appareil par ceux du serveur (le journal, lui,\n",
+     "   que sur l'appareil, et la restauration remplace les favoris de l'appareil par ceux du serveur (le journal, lui,\n", 'OK'),
 ]
 
 

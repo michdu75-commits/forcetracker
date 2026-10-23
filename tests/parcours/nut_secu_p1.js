@@ -630,13 +630,21 @@ function serveurTests(t0) {
     const rf = fichiersRecup(X).filter(f => { try { return JSON.parse(f.content).liste === 'savedFoods'; } catch (e) { return false; } });
     t('⭐⭐ NSP1-66 · FAVORIS : écrasements répétés au-delà de la borne (4 lots de 200 favoris) — aucun favori perdu, la zone reste sous 60 000, le surplus déménage dans Drive',
       pire === 0 && maxZ <= 60000 && rf.length >= 1, 'pire=' + pire + ' maxZone=' + maxZ + ' fichiers=' + rf.length);
+    /* ⛔ RÉÉCRIT LE 23/10 (intégration Nutrition V2 + P1, D-110 PROPOSÉ) — ce témoin figeait « favoris + Drive en panne =
+       envoi REFUSÉ » (D-109). La vérification 5 a mesuré que ce refus PERD des favoris si la personne restaure son compte
+       pendant la panne (sa restauration REMPLACE les favoris de l'appareil) : le contrat change, le témoin le suit — il ne
+       se relâche pas. Il exige maintenant LES DEUX branches : accepté sous le plafond, refusé au-delà. */
     const Xp = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) });
     Xp.compte(DAVE, { savedFoods: copie(lots[0]) });
-    [1, 2, 3].forEach(k => Xp.envoi(DAVE, { savedFoods: copie(lots[k]) }));
+    const pas = [1, 2, 3].map(k => { Xp.envoi(DAVE, { savedFoods: copie(lots[k]) }); const c = Xp.lireCompte(DAVE);
+      return { zone: tailleZone(c, 'savedFoods'), e: evts(c).slice(-1)[0] || {}, actif: canon(listeDe(c, 'savedFoods')) }; });
     const cp = Xp.lireCompte(DAVE);
-    t('⭐ NSP1-67 · FAVORIS + Drive en panne au moment du débordement : envoi refusé, aucun favori qui a été au serveur n\'est perdu',
-      memes(listeDe(cp, 'savedFoods'), lots[1]) && perduesPartout(lots[0].concat(lots[1]), Xp, DAVE, 'savedFoods') === 0 && (evts(cp).slice(-1)[0] || {}).refus === 'drive',
-      'favoris=' + ((listeDe(cp, 'savedFoods') || [])[0] || {}).name + ' ' + court(JSON.stringify(evts(cp).slice(-1)[0])));
+    t('⭐⭐ NSP1-67 · FAVORIS + Drive en panne au débordement (D-110) : les envois PASSENT tant que la zone tient sous son PLAFOND (lot 2 accepté, la zone dépasse sa borne en attendant Drive), au-delà le refus de D-109 reprend (lot 3) — aucun favori passé par le serveur n\'est perdu, la zone ne dépasse jamais le plafond',
+      pas[0].actif === canon(lots[1]) && pas[1].actif === canon(lots[2]) && memes(listeDe(cp, 'savedFoods'), lots[2])
+      && pas[1].e.differe === 'drive' && !pas[1].e.refus && pas[1].zone > 60000 && pas[2].e.refus === 'drive'
+      && Math.max.apply(null, pas.map(x => x.zone)) <= 120000 && fichiersRecup(Xp).length === 0
+      && perduesPartout(lots[0].concat(lots[1], lots[2]), Xp, DAVE, 'savedFoods') === 0,
+      'zones=' + pas.map(x => x.zone).join('/') + ' évts=' + pas.map(x => x.e.differe ? 'différé' : (x.e.refus ? 'refus' : 'normal')).join('/'));
   }
   {
     // FUZZ déterministe : bornes RÉDUITES (débordements fréquents), pannes Drive au hasard, trois appareils qui ne relisent
@@ -712,6 +720,100 @@ function serveurTests(t0) {
     t('⭐ NSP1-72 · CAPACITÉ : une zone PLEINE (journal + favoris à leur borne, noms aléatoires) coûte moins de 70 000 octets stockés par compte (plafond de TOUT le stockage : 512 000)',
       !(c.recupNut || {}).deplacees && tailleZone(c, 'foodLog') > 190000 && tailleZone(c, 'savedFoods') > 55000 && avecZone - sansZone < 70000,
       'surcoût=' + (avecZone - sansZone) + ' journal=' + tailleZone(c, 'foodLog') + ' favoris=' + tailleZone(c, 'savedFoods'));
+  }
+  // ── 18 · D-110 (FIX-A′, PROPOSÉ — vérification 5 du 23/10) : les FAVORIS ne sont plus refusés pour une panne de Drive ──
+  /* Pourquoi : un envoi de favoris refusé n'existe plus que sur l'appareil, et « Restaurer mon compte » REMPLACE les favoris
+     de l'appareil (setup.js, `_applyRestoreData`) — mesuré bout en bout : 4 favoris neufs et 2 modifiés perdus partout.
+     Contrat : pour les favoris, la zone attend Drive au-delà de sa borne, jusqu'à un PLAFOND (2 × la borne) ; au-delà, le
+     refus de D-109 reprend ; le journal garde D-109 tel quel (sa restauration fusionne). */
+  {
+    const lot = k => F(200).map(f => Object.assign(f, { name: f.name + '-d110-' + k, portionLabel: 'portion', portionWeightG: 125 }));
+    let panne = false; const X = serveur({ drivePanne: () => panne });
+    X.compte(EVE, { savedFoods: copie(lot(0)) });
+    X.envoi(EVE, { savedFoods: copie(lot(1)) });                                    // 200 copies : la zone tient sous sa borne
+    const z1 = tailleZone(X.lireCompte(EVE), 'savedFoods');
+    panne = true; const nJ = X.journal.length;
+    const r = X.envoi(EVE, { savedFoods: copie(lot(2)) });                          // 200 de plus : débordement, Drive en panne
+    const c = X.lireCompte(EVE), e = evts(c).slice(-1)[0] || {}, logs = X.journal.slice(nJ);
+    t('⭐⭐ NSP1-75 · D-110 : Drive en panne quand la zone des FAVORIS déborde → l\'envoi est ACCEPTÉ (le serveur a les favoris de l\'appareil), RIEN ne sort de la zone (aucun fichier, aucune copie jetée), l\'événement dit « différé »',
+      r.j.status === 'ok' && memes(listeDe(c, 'savedFoods'), lot(2)) && lignesZone(c, 'savedFoods').length === 400 && fichiersRecup(X).length === 0
+      && e.differe === 'drive' && !e.refus && e.deplacees === 0 && z1 <= 60000 && tailleZone(c, 'savedFoods') > 60000
+      && perduesPartout(lot(0).concat(lot(1), lot(2)), X, EVE, 'savedFoods') === 0,
+      'zone=' + tailleZone(c, 'savedFoods') + ' copies=' + lignesZone(c, 'savedFoods').length + ' évt=' + court(JSON.stringify(e), 160));
+    t('NSP1-76 · … le journal d\'exécution dit « ACCEPTÉ » et la cause, sans aucune donnée personnelle',
+      logs.some(l => /ACCEPTÉ/.test(l) && /Drive indisponible/.test(l)) && logs.every(l => !PII.test(l)), court(logs.join(' ¦ '), 220));
+    panne = false;
+    const moins1 = copie(lot(2)).slice(1);
+    X.envoi(EVE, { savedFoods: moins1 });                                           // Drive revenu : un favori retiré
+    const c2 = X.lireCompte(EVE), e2 = evts(c2).slice(-1)[0] || {};
+    t('⭐ NSP1-77 · … Drive revenu : le prochain envoi qui retire un favori fait DÉMÉNAGER le surplus (relu) — la zone redescend sous sa borne, rien n\'est perdu',
+      memes(listeDe(c2, 'savedFoods'), moins1) && fichiersRecup(X).length === 1 && e2.deplacees > 0 && !e2.differe && tailleZone(c2, 'savedFoods') <= 60000
+      && perduesPartout(lot(0).concat(lot(1), lot(2)), X, EVE, 'savedFoods') === 0,
+      'zone=' + tailleZone(c2, 'savedFoods') + ' fichiers=' + fichiersRecup(X).length + ' déménagées=' + e2.deplacees);
+  }
+  {
+    // Le JOURNAL garde D-109 : dans le MÊME envoi, les deux listes débordent pendant la panne — le journal est refusé,
+    // les favoris passent. (La condition de D-110 ne doit pas fuir vers le journal, ni l'inverse.)
+    const X = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) }); const j = J(600, { tag: 'mx' });
+    const lot = k => F(200).map(f => Object.assign(f, { name: f.name + '-mx-' + k, portionLabel: 'portion', portionWeightG: 125 }));
+    X.compte(FONDATEUR, { foodLog: copie(j), savedFoods: copie(lot(0)) });
+    X.envoi(FONDATEUR, { savedFoods: copie(lot(1)) });
+    X.envoi(FONDATEUR, { foodLog: [ligne(1, { tag: 'mx1' })], savedFoods: copie(lot(2)) });
+    const c = X.lireCompte(FONDATEUR), ev = evts(c).slice(-2);
+    t('⭐⭐ NSP1-78 · le JOURNAL garde D-109 : même panne, même envoi — le journal est REFUSÉ (serveur inchangé), les favoris PASSENT (D-110) ; rien n\'est perdu des deux côtés',
+      memes(listeDe(c, 'foodLog'), j) && memes(listeDe(c, 'savedFoods'), lot(2))
+      && ev.some(e => e.liste === 'foodLog' && e.refus === 'drive') && ev.some(e => e.liste === 'savedFoods' && e.differe === 'drive')
+      && perduesPartout(j, X, FONDATEUR, 'foodLog') === 0 && perduesPartout(lot(0).concat(lot(1), lot(2)), X, FONDATEUR, 'savedFoods') === 0,
+      court(JSON.stringify(ev), 220));
+  }
+  {
+    // Deux appareils qui s'écrasent l'un l'autre PENDANT toute la panne (10 allers-retours) : la zone ne grossit plus après
+    // le premier tour (une version déjà gardée ne se recopie pas), tous les envois passent, rien n'est perdu.
+    const X = serveur({ drivePanne: nom => /^recup-nut-/.test(nom) });
+    const A = F(200).map(f => Object.assign(f, { name: f.name + '-pa' })), B = F(200).map(f => Object.assign(f, { name: f.name + '-pb' }));
+    X.compte(ALICE, { savedFoods: copie(A) }); const zones = [], etats = [];
+    for (let i = 0; i < 10; i++) { const L = i % 2 ? A : B; X.envoi(ALICE, { savedFoods: copie(L) }); const c = X.lireCompte(ALICE);
+      zones.push(tailleZone(c, 'savedFoods')); etats.push(memes(listeDe(c, 'savedFoods'), L)); }
+    t('⭐ NSP1-79 · D-110 : deux appareils s\'écrasent 10 fois pendant la panne — tous les envois passent, la zone se stabilise dès le 2ᵉ envoi (aucune recopie), elle reste sous le plafond, rien n\'est perdu',
+      etats.every(Boolean) && zones.slice(1).every(z => z === zones[1]) && zones[1] <= 120000 && perduesPartout(A.concat(B), X, ALICE, 'savedFoods') === 0,
+      'zones=' + zones.join('/'));
+  }
+  {
+    // PANNE LONGUE : des favoris toujours NOUVEAUX s'accumulent. La zone monte jusqu'au plafond, jamais au-delà ; au-delà le
+    // refus (D-109) prend le relais ; Drive revenu, tout déménage. Aucune version passée par le serveur n'est perdue.
+    let panne = true; const X = serveur({ drivePanne: () => panne }); const vus = []; let maxZ = 0, acc = 0, ref = 0;
+    const lot = k => F(120).map(f => Object.assign(f, { name: f.name + '-pl-' + k, portionLabel: 'portion', portionWeightG: 125 }));
+    X.compte(BOB, { savedFoods: copie(lot(0)) }); vus.push(...lot(0));
+    for (let k = 1; k <= 8; k++) {
+      X.envoi(BOB, { savedFoods: copie(lot(k)) }); const c = X.lireCompte(BOB), e = evts(c).slice(-1)[0] || {};
+      if (e.refus) ref++; else acc++;
+      (listeDe(c, 'savedFoods') || []).forEach(l => vus.push(l)); maxZ = Math.max(maxZ, tailleZone(c, 'savedFoods'));
+    }
+    const pendant = perduesPartout(vus, X, BOB, 'savedFoods');
+    panne = false; const fin = lot(9); X.envoi(BOB, { savedFoods: copie(fin) }); vus.push(...fin);
+    const c = X.lireCompte(BOB);
+    t('⭐⭐ NSP1-80 · PANNE LONGUE (8 lots de favoris nouveaux) : la zone monte jusqu\'au plafond et jamais au-delà, le refus prend le relais au-delà ; Drive revenu, le surplus déménage — aucune version passée par le serveur n\'est perdue, ni pendant ni après',
+      maxZ <= 120000 && acc >= 2 && ref >= 1 && pendant === 0 && perduesPartout(vus, X, BOB, 'savedFoods') === 0
+      && memes(listeDe(c, 'savedFoods'), fin) && fichiersRecup(X).length >= 1 && tailleZone(c, 'savedFoods') <= 60000,
+      'maxZone=' + maxZ + ' acceptés=' + acc + ' refusés=' + ref + ' fichiers=' + fichiersRecup(X).length + ' zone fin=' + tailleZone(c, 'savedFoods'));
+  }
+  {
+    // CAPACITÉ (D-110) : la zone des favoris AU-DELÀ de sa borne (pendant une panne), noms ALÉATOIRES (pire cas pour la
+    // compression) — ce qu'elle coûte de plus, par compte, dans le stockage partagé de 512 000 octets.
+    const alea8 = () => crypto.randomBytes(15).toString('hex');
+    const lot = () => F(200).map(f => Object.assign(f, { name: 'fav-fictif-' + alea8(), kcal: Math.floor(Math.random() * 900) }));
+    let panne = false; const X = serveur({ drivePanne: () => panne });
+    X.compte(CAROL, { savedFoods: lot() });
+    X.envoi(CAROL, { savedFoods: lot() }); const cBorne = X.lireCompte(CAROL);
+    panne = true; X.envoi(CAROL, { savedFoods: lot() }); const cPlaf = X.lireCompte(CAROL);
+    const cout = c => { X.ctx.saveUserData_(CAROL, Object.assign({}, c, { recupNut: undefined })); const sans = (X.brut(CAROL) || '').length;
+      X.ctx.saveUserData_(CAROL, c); return (X.brut(CAROL) || '').length - sans; };
+    const aBorne = cout(cBorne), auDela = cout(cPlaf);
+    console.log('   ℹ️  MESURE D-110 (vraie compression, noms aléatoires) — zone des favoris ' + tailleZone(cBorne, 'savedFoods') + ' car. : '
+      + aBorne + ' octets ; pendant la panne ' + tailleZone(cPlaf, 'savedFoods') + ' car. : ' + auDela + ' octets (plafond 120 000 car.)');
+    t('⭐ NSP1-81 · CAPACITÉ (D-110) : la zone des favoris au-delà de sa borne, pire cas (noms aléatoires), coûte moins de 25 000 octets stockés par compte (mesuré ≈ 14 500 pour 100 000 car. ; plafond de TOUT le stockage : 512 000)',
+      (evts(cPlaf).slice(-1)[0] || {}).differe === 'drive' && tailleZone(cPlaf, 'savedFoods') > 60000 && auDela < 25000,
+      'à la borne=' + aBorne + ' o · au-delà=' + auDela + ' o (' + tailleZone(cPlaf, 'savedFoods') + ' car.)');
   }
   {
     /* La sonde « Santé du système → sauvegardes » (`checkBackup`) annonce le fichier le plus RÉCENT du dossier comme la

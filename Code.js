@@ -1575,8 +1575,9 @@ function _po_(b, e){ if(b===undefined)return e; const bk=Object.keys(b||{}).leng
    ⛔ RIEN N'EST RÉINTRODUIT D'OFFICE dans le journal actif : une absence est AMBIGUË (suppression voulue
    ou écrasement par un appareil en retard). Elle est conservée et signalée, jamais tranchée ici.
    ⚖️ Le rétrécissement brutal (≥ 30 lignes et moins de 60 % gardées, le seuil des séances) est SIGNALÉ,
-   pas refusé : option B, validée par Michel le 23/10 (D-108). Seul refus : la zone déborde ET Drive ne garde
-   pas le surplus (D-109, plus bas) — retardé, jamais perdu.
+   pas refusé : option B, validée par Michel le 23/10 (D-108). Seul refus : la zone du JOURNAL déborde ET Drive ne
+   garde pas le surplus (D-109, plus bas) — retardé, jamais perdu ; pour les FAVORIS, la zone attend Drive au-delà de
+   sa borne, jusqu'à un plafond (D-110, proposé : leur restauration remplace, elle ne fusionne pas).
    🔑 Appariement : d'abord par identifiant (consommé une fois : un identifiant en double par erreur ne
    couvre qu'une ligne), puis par CONTENU en multi-ensemble (les anciennes lignes ont un identifiant
    instable, NUT-INVENTAIRE-02). Mêmes clés que l'audit A1 (`_nutIdLigne_`, `_nutEmpreinte_`). */
@@ -1584,6 +1585,14 @@ function _po_(b, e){ if(b===undefined)return e; const bk=Object.keys(b||{}).leng
    garder un écrasement COMPLET du plus gros journal réel (≤ 491 lignes au 22/10) ; 60 000 ≈ les 200 favoris que l'app
    envoie au plus. Le plafond de TOUT le stockage est de 512 000 octets (panne du 29/07) : la zone ne doit jamais le menacer. */
 var NUT_RECUP_BORNES_ = { foodLog: 200000, savedFoods: 60000 };
+/* ⛔⛔ D-110 (FIX-A′, PROPOSÉ — vérification 5 avant publication, 23/10) : un envoi de FAVORIS refusé (D-109) n'existe plus
+   que sur l'appareil, et « Restaurer mon compte » REMPLACE les favoris de l'appareil par ceux du serveur (le journal, lui,
+   est FUSIONNÉ à la restauration) — mesuré bout en bout : 4 favoris neufs et 2 modifiés introuvables partout. Donc, pour les
+   FAVORIS seulement, une panne de Drive ne refuse plus l'envoi : la zone garde TOUT, au-delà de sa borne, jusqu'au prochain
+   déménagement réussi — rien n'est jeté, rien n'est refusé. ⚖️ Mais pas au-delà de ce PLAFOND (2 × la borne : quelques
+   milliers d'octets stockés de plus au pire, mesuré par le banc), qui protège le stockage partagé de 512 000 octets : au-delà,
+   le refus de D-109 reprend. Le journal garde D-109 tel quel (une zone de journal peut grossir bien plus d'un coup). */
+var NUT_RECUP_PLAFOND_FAVORIS_ = 120000;
 var NUT_RECUP_MAX_EVTS_ = 50;
 function _nutEcartees_(actuel, recu) {
   var empR = recu.map(_nutEmpreinte_), empA = actuel.map(_nutEmpreinte_), parId = Object.create(null);
@@ -1655,17 +1664,24 @@ function _nutProtegerListe_(existing, profile, nom, recu, email) {
      retirées de la zone ensuite. Si Drive refuse ou relit autre chose : l'envoi de cette liste est REFUSÉ, la liste du
      serveur et la zone restent telles quelles (l'appareil garde les siennes et renverra) — retardé, jamais perdu. */
   var borne = NUT_RECUP_BORNES_[nom], tailles = liste.map(function(r) { return JSON.stringify(r).length; });
-  var total = tailles.reduce(function(a, x) { return a + x; }, 0), n = 0, fichier = null;
+  var total = tailles.reduce(function(a, x) { return a + x; }, 0), n = 0, fichier = null, differe = false;
   if (total > borne) {
+    var totalZone = total;
     while (n < liste.length && total > borne / 2) total -= tailles[n++];
     try { fichier = _nutDeplacerVersDrive_(email, nom, liste.slice(0, n)); }
     catch (err) {
-      _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
-                          modifiees: ec.modifiees.length, copiees: 0, deplacees: 0, brutal: brutal, refus: 'drive' });
-      Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ : la zone de récupération déborde et Drive n\'a pas gardé le surplus ('
-                 + String(err && err.message || err).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 120)
-                 + ') — liste du serveur conservée (' + actuel.length + '), envoi de ' + recu.length + ' ignoré');
-      return profile[nom];
+      var cause = String(err && err.message || err).replace(/[^\s@]+@[^\s@]+/g, '[adresse]').slice(0, 120);
+      if (nom === 'savedFoods' && totalZone <= NUT_RECUP_PLAFOND_FAVORIS_) {
+        n = 0; differe = true;                         // D-110 : RIEN ne sort de la zone (rien n'a été écrit dans Drive)
+        Logger.log('[FT GARDE-FOU savedFoods] Drive n\'a pas gardé le surplus (' + cause + ') — envoi ACCEPTÉ quand même, la '
+                   + 'zone garde tout (' + totalZone + ' car., borne ' + borne + ', plafond ' + NUT_RECUP_PLAFOND_FAVORIS_ + ')');
+      } else {
+        _nutEvenement_(z, { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
+                            modifiees: ec.modifiees.length, copiees: 0, deplacees: 0, brutal: brutal, refus: 'drive' });
+        Logger.log('[FT GARDE-FOU ' + nom + '] REFUSÉ : la zone de récupération déborde et Drive n\'a pas gardé le surplus ('
+                   + cause + ') — liste du serveur conservée (' + actuel.length + '), envoi de ' + recu.length + ' ignoré');
+        return profile[nom];
+      }
     }
     liste = liste.slice(n);
     z.deplacees = (z.deplacees || 0) + n;
@@ -1674,6 +1690,7 @@ function _nutProtegerListe_(existing, profile, nom, recu, email) {
   var e = { t: quand, liste: nom, avant: actuel.length, recu: recu.length, retirees: ec.retirees.length,
             modifiees: ec.modifiees.length, copiees: copiees, deplacees: n, brutal: brutal };
   if (fichier) e.fichier = fichier;
+  if (differe) e.differe = 'drive';                      // D-110 : accepté malgré Drive, la zone attend au-delà de sa borne
   _nutEvenement_(z, e);                                    // des NOMBRES (et un nom de fichier) : ni adresse, ni aliment
   Logger.log('[FT GARDE-FOU ' + nom + '] ' + ec.retirees.length + ' retirée(s), ' + ec.modifiees.length + ' modifiée(s) sur '
              + actuel.length + (brutal ? ' — RÉTRÉCISSEMENT BRUTAL' : '') + ' : ' + copiees + ' copie(s) en zone de récupération'
