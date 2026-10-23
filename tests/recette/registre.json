@@ -75,6 +75,7 @@
     "banc:nut_m6_rejeu": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_nut_m6_rejeu.js", "controle_negatif": "python3 tools/mut_nut_m6_rejeu.py"},
     "banc:nut2_moteur":  {"niveau": "T1", "environnement": "LOCAL", "commande": "node tools/banc_nut2_moteur.js", "controle_negatif": "python3 tools/mut_nut2_moteur.py", "duree": "1 s"},
     "banc:nut2_parcours": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_nut2_parcours.js", "controle_negatif": "python3 tools/mut_nut2_parcours.py"},
+    "banc:nut_v2_p1_croise": {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_nut_v2_p1_croise.js", "controle_negatif": "python3 tools/mut_nut_v2_p1_croise.py"},
     "banc:ia_ref100":        {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_ia_ref100.js",         "controle_negatif": "python3 tools/mut_ia_ref100.py"},
     "banc:pots_nutrition":   {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_pots_nutrition.js",    "controle_negatif": "python3 tools/mut_pots_nutrition.py"},
     "banc:nutri_moteur":     {"niveau": "T1", "environnement": "PLAYWRIGHT", "commande": "node tools/banc_nutri_moteur.js",      "controle_negatif": "python3 tools/mut_nutri_moteur.py"},

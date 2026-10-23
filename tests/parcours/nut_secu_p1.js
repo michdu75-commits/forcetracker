@@ -816,6 +816,33 @@ function serveurTests(t0) {
       'à la borne=' + aBorne + ' o · au-delà=' + auDela + ' o (' + tailleZone(cPlaf, 'savedFoods') + ' car.)');
   }
   {
+    /* D-110 × DEUX ENVOIS SIMULTANÉS PENDANT LA PANNE (Code.js n'a aucun verrou — défaut préexistant, 14 bis) : l'appareil 2
+       a lu le compte AVANT l'écriture de l'appareil 1 et écrit APRÈS. Ce qui était déjà au serveur reste gardé ; ce que
+       l'appareil 1 avait envoyé manque jusqu'à SA prochaine synchro (la limite de NSP1-55, inchangée), qui passe encore
+       pendant la panne. Les états intermédiaires sont VÉRIFIÉS (« différé » à chaque envoi) : sinon le test ne prouverait
+       rien sur D-110. */
+    let panne = false; const X = serveur({ drivePanne: () => panne });
+    const lot = k => F(150).map(f => Object.assign(f, { name: f.name + '-cc110-' + k, portionLabel: 'portion', portionWeightG: 125 }));
+    X.compte(BOB, { savedFoods: copie(lot(0)) });
+    X.envoi(BOB, { savedFoods: copie(lot(1)) });                                    // Drive OK : 150 copies, sous la borne
+    const z0 = tailleZone(X.lireCompte(BOB), 'savedFoods');
+    panne = true; const lu = X.brut(BOB);
+    X.envoi(BOB, { savedFoods: copie(lot(2)) });                                    // appareil 1
+    const e1 = evts(X.lireCompte(BOB)).slice(-1)[0] || {};
+    X.props['u_' + BOB] = lu;                                                       // l'appareil 2 avait lu AVANT…
+    X.envoi(BOB, { savedFoods: copie(lot(3)) });                                    // … et écrit APRÈS : il gagne
+    const c2 = X.lireCompte(BOB), e2 = evts(c2).slice(-1)[0] || {};
+    const dejaLa = perduesPartout(lot(0).concat(lot(1)), X, BOB, 'savedFoods'), manque = perduesPartout(lot(2), X, BOB, 'savedFoods');
+    X.envoi(BOB, { savedFoods: copie(lot(2)) });                                    // l'appareil 1 resynchronise, panne toujours là
+    const c3 = X.lireCompte(BOB), e3 = evts(c3).slice(-1)[0] || {};
+    t('⭐⭐ NSP1-82 · D-110 × deux envois SIMULTANÉS pendant la panne : les deux passent (« différé »), rien de ce qui était déjà au serveur n\'est perdu ; l\'envoi écrasé de l\'appareil 1 manque jusqu\'à SA prochaine synchro (limite de NSP1-55), qui passe encore pendant la panne — alors plus rien ne manque',
+      z0 <= 60000 && e1.differe === 'drive' && e2.differe === 'drive' && !e2.refus && memes(listeDe(c2, 'savedFoods'), lot(3)) && dejaLa === 0 && manque === 150
+      && e3.differe === 'drive' && !e3.refus && memes(listeDe(c3, 'savedFoods'), lot(2)) && tailleZone(c3, 'savedFoods') <= 120000
+      && perduesPartout([0, 1, 2, 3].reduce((a, k) => a.concat(lot(k)), []), X, BOB, 'savedFoods') === 0 && fichiersRecup(X).length === 0,
+      'zone0=' + z0 + ' é1=' + court(JSON.stringify(e1), 60) + ' é2=' + court(JSON.stringify(e2), 60) + ' déjà-là perdues=' + dejaLa + ' manque=' + manque
+      + ' é3=' + court(JSON.stringify(e3), 60) + ' zone3=' + tailleZone(c3, 'savedFoods'));
+  }
+  {
     /* La sonde « Santé du système → sauvegardes » (`checkBackup`) annonce le fichier le plus RÉCENT du dossier comme la
        dernière sauvegarde. Un fichier de débordement écrit dans la journée ne doit pas masquer une sauvegarde de nuit
        arrêtée (36 jours sans sauvegarde en août : c'est précisément ce que cette sonde surveille). */

@@ -38996,6 +38996,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      avec son poids), D-101. Bloc B-NV2P (vrais clics, données inventées « (test) », deux fiches CIQUAL publiques, P11 sur
      pages neuves) ; banc `tools/banc_nut2_parcours.js`, contrôle négatif `tools/mut_nut2_parcours.py`. */
   await require('./nut2_parcours.js').ecran(t, b, PORT);
+  /* 🔀 RECETTE CROISÉE NUTRITION V2 × NUT-SECURISATION-P1 (intégration du 23/10/2026, mission de Michel) : la VRAIE app V2
+     parle au VRAI Code.js (P1 + D-110, PROPOSÉ) — deux produits du même nom et de deux codes-barres, la portion de l'un
+     redéfinie, panne de Drive, « Restaurer » avec un code perso (la restauration doit réellement s'appliquer), suppression
+     volontaire qui ne revient pas, et la LIMITE DITE (une modification hors ligne remplacée par « Restaurer », X3). Bloc
+     B-NIX ; banc `tools/banc_nut_v2_p1_croise.js`, contrôle négatif `tools/mut_nut_v2_p1_croise.py`. */
+  await require('./nut_v2_p1_croise.js').croise(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
