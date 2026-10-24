@@ -126,16 +126,16 @@ noté **après** (re-noter, c'est le vouloir).
 |---|---|---|
 | `B-NV2P P14 ① ②`, `P15 ① ③ ⑪ ⑯ ⑳ ㉖ ㉙ ㉛ ㉜b`, `P14 ⑱` (`nut2_parcours.js`) | l'ordre d'affichage change (`D-135`) : « 40 g · 156 kcal » → « 156 kcal · pour 40 g » ; même quantité, mêmes valeurs, mêmes réserves | contrôle négatif `tools/mut_nut2_parcours.py` rejoué (§10) |
 | `MP81` (`tools/mut_nut2_parcours.py`) | son ancre suit la ligne de « Déjà noté par toi », qui passe par `_n2TexteProposition` | même mutation, même témoin attendu (`P15 ③`) |
-| `MP50` (`tools/mut_nut2_parcours.py`) | elle visait `_n2QteListe`, **devenu mort** (sa logique recopiée dans `_n2TexteProposition`, un doublon que j'avais créé — `BUGS.md` §117) : 0 rouge. `_n2QteListe` retiré, l'ancre déplacée sur la ligne qui écrit vraiment la quantité | même mutation, même témoin attendu (`P14 ②`) — rejouée : ⏳ |
+| `MP50` (`tools/mut_nut2_parcours.py`) | elle visait `_n2QteListe`, **devenu mort** (sa logique recopiée dans `_n2TexteProposition`, un doublon que j'avais créé — `BUGS.md` §117) : 0 rouge. `_n2QteListe` retiré, l'ancre déplacée sur la ligne qui écrit vraiment la quantité | même mutation, même témoin attendu (`P14 ②`) — rejouée : **conforme** (P14 ② rouge ; arbre sain 111 / 0) |
 | `N16` (`tools/mut_nut_m6_rejeu.py`) | deux lignes (identité, recherche en ligne) s'intercalent avant `}else{` : l'ancre s'arrête sur la première | même mutation (une quantité posée à l'ouverture) |
 | `AS-FF1 FF2 FF4` (`food_alias_sens.js`), `MS-196 MS-197` (`food_multisource_corpus.js`, OBSERVATION) | « 576 kcal la portion (226 g) » → « 576 kcal · pour la portion (226 g) » | même valeur (le moteur), même portion |
-| `MS-156 MS-157` (`food_multisource_corpus.js`, SHOULD) | les détails Open Food Facts « 380 kcal/100 g » → « 380 kcal · pour 100 g · P 10 · G 10 · L 5 » ; une macro inconnue s'écrit « ? » (la barre en kJ seulement) — trouvés par le banc voisin `food_multisource` rejoué sur l'arbre final (175 / 2) | `tools/mut_food_multisource.py` M2, M10, M11, M12 (réponse jetée, produit sans énergie, plafond, ordre) : ⏳ |
+| `MS-156 MS-157` (`food_multisource_corpus.js`, SHOULD) | les détails Open Food Facts « 380 kcal/100 g » → « 380 kcal · pour 100 g · P 10 · G 10 · L 5 » ; une macro inconnue s'écrit « ? » (la barre en kJ seulement) — trouvés par le banc voisin `food_multisource` rejoué sur l'arbre final (175 / 2) | `tools/mut_food_multisource.py` M2, M10, M11, M12 : **5 / 5** ; MS-157 : mutation ciblée (« ? » → « 0 ») : **rouge, seul** |
 | `tests/recette/registre.json` | `_unhideFood` retiré des déclencheurs (sinon le sélecteur échoue) ; `_n2QteListe` → `_n2TexteProposition` dans ceux de `NUT2-PARCOURS-01` (la fonction qui écrit maintenant la quantité, §117) ; nouveau scénario `NUT2-FIABILITE-01` ; le banc ajouté à `CLOUD-01`, `APPS-SCRIPT-01`, `NUT2-PARCOURS-01` | `selecteur-autotest` vert |
 | `B-NV2P P12 ②` (`nut2_parcours.js`) | `D-130` remplace `D-101` ⑩ n°1 sur l'identité : la copie garde son code-barres et son état, toujours sans fiche ni pour-100 g | MP17 (une fiche fabriquée), MP85 (l'identité perdue) |
 | `B-NM6-C ③` (`nut_m6_rejeu.js`, le cliquet de M6) | « ⭐ Corriger ce favori » (`majFavoriDepuisEcran`) est un 2ᵉ lecteur **déclaré** de l'écran : il en fait un favori et n'écrit jamais le journal | N20 (un 3ᵉ lecteur non déclaré), N21 (la correction écrit le journal) |
 | `B-NFIAB T02 ⑥` (ce lot) | réécrit pendant le lot sur la règle A (liste) + `⑥b` (l'écran) | F1 (écran), F1b (la variante B réintroduite) |
-| `B-NFIAB-X T08 ②` (ce lot) | démarré en ligne, le téléphone « neuf » recevait déjà les masquages au démarrage : F21 (« Restaurer » les perd) ne mordait pas. Il démarre maintenant **hors ligne**, et le témoin vérifie qu'aucun masquage n'était là avant « Restaurer » (`BUGS.md` §117) | F21 et F23 rejouées après la correction : ⏳ |
-| `B-NFIAB-X T07 ①` (ce lot) | une erreur dans la page faisait **planter** le banc sous F15 : elle se dit maintenant en rouge ; F15 modélise vraiment « la remise à zéro part sans sauvegarde » (`BUGS.md` §116) | F15 rejouée : ⏳ |
+| `B-NFIAB-X T08 ②` (ce lot) | démarré en ligne, le téléphone « neuf » recevait déjà les masquages au démarrage : F21 (« Restaurer » les perd) ne mordait pas. Il démarre maintenant **hors ligne**, et le témoin vérifie qu'aucun masquage n'était là avant « Restaurer » (`BUGS.md` §117) | F21 et F23 rejouées après la correction : **2 / 2** (T08 ② et T08 ④ rouges, chacune le sien) |
+| `B-NFIAB-X T07 ①` (ce lot) | une erreur dans la page faisait **planter** le banc sous F15 : elle se dit maintenant en rouge ; F15 modélise vraiment « la remise à zéro part sans sauvegarde » (`BUGS.md` §116) | F15 rejouée : **conforme** (T07 ① rouge, plus de plantage) |
 
 **Le témoin `B-NP01-A` (`nut_punch01`) réécrit par la branche Séance (repos persistant) : relu, ACCEPTÉ.** La comparaison
 « la séance ouverte revient à l'identique au rechargement » n'exclut que `S.wkt.repos` — l'état du chrono de repos, effacé au
@@ -161,9 +161,10 @@ par le vrai `Code.js` en local) :
 
 | Outil | Mutations | Résultat |
 |---|---|---|
-| `tools/mut_nut_fiabilite.py` (arbre sain : croise 13 / 0, écran 35 / 0) | F1, F1b, F2 → F24 (« GARDE »), MC1 (un commentaire : doit rester vert) | ⏳ |
-| `tools/mut_nut2_parcours.py` (arbre sain 111 / 0) — les témoins réécrits | MP17, MP36, MP37, MP39, MP46, MP50, MP55, MP62, MP63, MP66, MP69, MP71, MP76, MP80, MP81, MP83, MP85, MP86 | ⏳ |
-| `tools/mut_nut_m6_rejeu.py` — le cliquet M6 réécrit | N16, N20, N21 | ⏳ |
+| `tools/mut_nut_fiabilite.py` (arbre sain : croise 13 / 0, écran 35 / 0) | F1, F1b, F2 → F24 (« GARDE »), MC1 (un commentaire : doit rester vert) | 1ʳᵉ exécution **24 / 26** : F15 **plantait** (le test ne protégeait pas un appel à la page) et F21 **ne mordait pas** (le téléphone « neuf » démarrait connecté) — témoins corrigés (`BUGS.md` §116, §117), puis **F15 1 / 1** et **F21 + F23 2 / 2** rejouées (arbre sain croise 13 / 0) → **26 / 26** |
+| `tools/mut_nut2_parcours.py` (arbre sain 111 / 0) — les témoins réécrits | MP17, MP36, MP37, MP39, MP46, MP50, MP55, MP62, MP63, MP66, MP69, MP71, MP76, MP80, MP81, MP83, MP85, MP86 | **17 / 18**, puis MP50 rejouée après le retrait du doublon (`BUGS.md` §117) : **1 / 1** (arbre sain 111 / 0 avant et après) → **18 / 18** |
+| `tools/mut_nut_m6_rejeu.py` — le cliquet M6 réécrit | N16, N20, N21 | **3 / 3** (chacune : 28 ou 27 OK, son témoin rouge) |
+| `tools/mut_food_multisource.py` — MS-156 / MS-157 réécrits | M2, M10, M11, M12 (+ M20, prise par le préfixe) | **5 / 5** ; et une mutation ciblée sur une copie (une valeur inconnue s'écrit « 0 » au lieu de « ? ») : **MS-157 rouge, lui seul** (176 / 1) |
 
 **Bancs voisins** (le T1 du sélecteur de recette pour ce diff, rejoué sur l'arbre final) : ⏳
 
@@ -192,7 +193,8 @@ Rien dans `renderNutrition` (la tuile « Séance », F06, est à Claude Séance)
 moteur MET.
 
 **Intégration** : master `98c09ed9` fusionné dans la branche par moi (§8.7 ①, fusion `06a30687`) — documentation seulement ;
-les commits du lot : `f0869fdf` (l'app, les tests, la documentation), **`bb2075b9` (`Code.js` seul)**, puis la clôture (⏳).
+les commits du lot : `f0869fdf` (l'app, les tests, la documentation), **`bb2075b9` (`Code.js` seul)**, `954111d5` (deux témoins
+corrigés pendant la qualification : T08 ②, T07 ①), puis la documentation de clôture (`git log 98c09ed9..claude/nutrition-v2`).
 Prévision `git merge-tree` avec la branche Séance `claude/dreamy-bell-pu88ia` @ `b2a6280a` : **aucun conflit de code** —
 `app.js`, `coach.js`, `constants.js`, `index.html`, `screens.js`, `setup.js`, `state.js`, `runner.js`, `registre.json` se
 fusionnent d'eux-mêmes ; **3 conflits de documentation** (`BUGS.md` : les deux ajoutent des sections en fin de fichier ;
