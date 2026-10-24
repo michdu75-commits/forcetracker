@@ -182,11 +182,11 @@ function _dFigurine(sess){
     return '<div class="vide">Figurine indisponible.</div>';
   const douze=sess.slice(-12), exs=_dExsDe(douze);
   if(!exs.length)return '<div class="vide">Aucune séance récente à représenter.</div>';
-  const d=_mscScores(exs)||{};
+  const d=_mscScoresVus(exs)||{};
   const svg=`<div class="fig">${_mscSVG({sc:d.sc||{},ind:d.ind||{},prim:d.prim})}</div>`;   // F04 : le rouge = les moteurs
   // Combien de fois chaque groupe a été sollicité sur ces 12 séances, en % du plus travaillé.
   const noms=(typeof _MG!=='undefined')?_MG:{}, cnt={};
-  douze.forEach(s=>{ const x=_mscScores(_dExsDe([s]))||{};
+  douze.forEach(s=>{ const x=_mscScoresVus(_dExsDe([s]))||{};
     Object.entries(x.sc||{}).forEach(([k,v])=>{ cnt[k]=(cnt[k]||0)+(v>=2?2:1); }); });
   const mx=Math.max(1,...Object.values(cnt));
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,7)

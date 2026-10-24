@@ -595,12 +595,12 @@ async function ecran(t, b, PORT) {
       const sec = noms.filter(n => { const m = exMuscles(exNomCatalogue(n)); return m && (m.s || []).includes('triceps') && !(m.p || []).includes('triceps'); }).slice(0, 2);
       const exs = n => n.map(x => ({ name: x, sets: [{ kg: 50, reps: 8, done: true, type: 'N' }] }));
       const rouges = o => (_mscSVGmini(o).match(/#FF5555/g) || []).length;
-      const deux = _mscScores(exs(sec)), un = _mscScores(exs(sec.slice(0, 1)));
+      const deux = _mscScoresVus(exs(sec)), un = _mscScoresVus(exs(sec.slice(0, 1)));
       showMuscleMap(exs(sec), null);
       const liste = document.getElementById('mm-list').textContent;
       if (typeof closeMuscleMap === 'function') closeMuscleMap();
       return { sec, score: deux.sc.triceps, rougesDeux: rouges(deux), rougesUn: rouges(un), liste: liste.replace(/\s+/g, ' ').slice(0, 220),
-        pecRouge: (_mscSVGmini(_mscScores(exs(['Développé Couché']))).match(/#FF5555/g) || []).length };
+        pecRouge: (_mscSVGmini(_mscScoresVus(exs(['Développé Couché']))).match(/#FF5555/g) || []).length };
     });
     const prim = (r.liste.match(/Primaires\s*:\s*([^●]*)/) || ['', ''])[1];
     t('C-MUS-A1 ⭐ F04 — un muscle secondaire de deux exercices (triceps, score 2) n\'est pas listé « Primaires »',
@@ -617,19 +617,26 @@ async function ecran(t, b, PORT) {
       S.customExercises = [{ n: 'Curl Maison Zorglub', g: 'Bras', muscles: { p: ['quads'], s: [] } },
         { n: 'Rowing Zorglub', g: 'Dos', muscles: { p: ['lats'], s: ['biceps'] } }, { n: 'Rowing Sans Muscles', g: 'Dos' }];
       persist();
-      const sc = n => _mscScores([{ name: n, sets: [{ kg: 20, reps: 10, done: true, type: 'N' }] }]);
-      const curl = sc('Curl Maison Zorglub');
+      const sc = n => _mscScoresVus([{ name: n, sets: [{ kg: 20, reps: 10, done: true, type: 'N' }] }]);
+      const curl = sc('Curl Maison Zorglub'), rowing = sc('Rowing Zorglub');
       const ts = Date.now() - 864e5;
       S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, exs: [{ name: 'Curl Maison Zorglub', sets: [{ kg: 20, reps: 10, done: true, type: 'N' }] }] }]; persist();
       const vol = _volumeParMuscle(Date.now(), 14).liste.map(l => l.code);
-      return { curl: { prim: Object.keys(curl.prim || {}), sc: curl.sc }, vol,
-        metRowing: getExerciseMET('Rowing Zorglub'), metSans: getExerciseMET('Rowing Sans Muscles'), metCatalogue: getExerciseMET('Rowing Barre') };
+      const metRowing = getExerciseMET('Rowing Zorglub');
+      // le même perso SANS ses muscles cochés : le moteur des calories doit donner exactement la même classe
+      const sauve = S.customExercises[1].muscles; delete S.customExercises[1].muscles; const metRowingSansCoches = getExerciseMET('Rowing Zorglub'); S.customExercises[1].muscles = sauve;
+      return { curl: { prim: Object.keys(curl.prim || {}), sc: curl.sc }, rowing: { prim: Object.keys(rowing.prim || {}), sc: rowing.sc }, vol,
+        metRowing, metRowingSansCoches, metSans: getExerciseMET('Rowing Sans Muscles'), metCatalogue: getExerciseMET('Rowing Barre') };
     });
     t('C-MUS-B1 ⭐ F05 — un perso « Curl Maison Zorglub » coché quadriceps : la figurine dit quadriceps, plus biceps',
       _j(r.curl.prim) === _j(['quads']) && !r.curl.sc.biceps, _j(r.curl));
     t('C-MUS-B2 F05 — la figurine et Progrès disent la même chose (quadriceps)', _j(r.vol) === _j(['quads']), _j(r.vol));
-    t('C-MUS-B3 ⭐ F05 — calories : « Rowing Zorglub » (2 muscles cochés) prend la classe de SES muscles (isolation, 4) ; un perso sans muscles coché garde la règle du nom (5,5)',
-      r.metRowing === 4 && r.metSans === 5.5, _j({ coche: r.metRowing, sansMuscles: r.metSans, catalogue: r.metCatalogue }));
+    /* ↪️ RÉÉCRIT LE 24/10 (D-122, isolation de F05) : il exigeait que les calories suivent les muscles cochés (4 au lieu de 5,5).
+       Le moteur des calories est gelé (§8.3) et l'écart doit être montré à Michel AVANT d'être appliqué : la figurine suit
+       les muscles cochés, les calories gardent la règle du nom. Contrôle négatif : M45 et M46 le font rougir. */
+    t('C-MUS-B3 ⛔ F05 — les CALORIES ne bougent pas : « Rowing Zorglub » coché 2 muscles garde la classe de son nom (5,5), avec ou sans ses muscles cochés, pendant que sa figurine montre SES muscles (dos, biceps)',
+      r.metRowing === 5.5 && r.metRowingSansCoches === 5.5 && r.metSans === 5.5 && _j(r.rowing.prim) === _j(['lats']) && r.rowing.sc.biceps === 1 && Object.keys(r.rowing.sc).length === 2,
+      _j({ coche: r.metRowing, sansCoches: r.metRowingSansCoches, sansMuscles: r.metSans, figurine: r.rowing }));
     await X.cx.close();
   }
   {
@@ -643,13 +650,61 @@ async function ecran(t, b, PORT) {
       const plein = noms.find(n => / \(/.test(n) && exNomCatalogue(n.split(' (')[0]) === n && exMuscles(n) && (exMuscles(n).p || []).length && (exMuscles(n).p || []).concat(exMuscles(n).s || []).indexOf('calves') < 0);
       const nom = plein.split(' (')[0], fiche = exMuscles(exNomCatalogue(nom));
       S.customExercises = [{ n: nom, g: 'Jambes', muscles: { p: ['calves'], s: [] } }]; persist();
-      const o = _mscScores([{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }]);
+      const o = _mscScoresVus([{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }]);
+      const metPerso = getExerciseMET(nom), metFiche = getExerciseMET(plein);
       const ts = Date.now() - 864e5;
       S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, exs: [{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }] }]; persist();
-      return { nom, ficheCatalogue: fiche && fiche.p, prim: Object.keys(o.prim || {}), vol: _volumeParMuscle(Date.now(), 14).liste.map(l => l.code) };
+      return { nom, ficheCatalogue: fiche && fiche.p, prim: Object.keys(o.prim || {}), vol: _volumeParMuscle(Date.now(), 14).liste.map(l => l.code), metPerso, metFiche };
     });
     t('C-MUS-B4 ⭐ F05 — un perso dont le nom se résout sur une fiche du catalogue : SES muscles cochés (mollets) passent avant la fiche, figurine et Progrès',
       Array.isArray(r.ficheCatalogue) && r.ficheCatalogue.length > 0 && r.ficheCatalogue.indexOf('calves') < 0 && _j(r.prim) === _j(['calves']) && _j(r.vol) === _j(['calves']), _j(r));
+    t('C-MUS-B5 ⛔ F05 — … et ses CALORIES restent celles de la fiche du catalogue (le moteur gelé ignore les muscles cochés d\'un nom reconnu)',
+      r.metPerso === r.metFiche && r.metFiche > 0, _j({ perso: r.metPerso, fiche: r.metFiche }));
+    await X.cx.close();
+  }
+  {
+    /* F05, les JUMELLES (R8) : la figurine de la carte de l'historique — un des 16 endroits qui dessinent ou listent les muscles —
+       suit les muscles cochés d'un perso, comme le détail et Progrès. Elle ne rougit que les mollets cochés. */
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
+      const plein = noms.find(n => / \(/.test(n) && exNomCatalogue(n.split(' (')[0]) === n && exMuscles(n) && (exMuscles(n).p || []).length && (exMuscles(n).p || []).concat(exMuscles(n).s || []).indexOf('calves') < 0);
+      const nom = plein.split(' (')[0], fiche = exMuscles(plein);
+      // un muscle DESSINÉ sur la vue de face (la carte montre la face) et absent de la fiche : c'est lui que la personne coche
+      const devant = g => _FP.some(([id]) => id && _MG[g].paths.indexOf(id) >= 0);
+      const coche = Object.keys(_MG).find(g => devant(g) && (fiche.p || []).concat(fiche.s || []).indexOf(g) < 0);
+      S.customExercises = [{ n: nom, g: 'Autres', muscles: { p: [coche], s: [] } }];
+      const ts = Date.now() - 864e5;
+      S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, exs: [{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }] }]; persist();
+      goScreen('s-progress'); if (typeof switchProgTab === 'function') switchProgTab('seances'); renderSessions();
+      const svg = document.querySelector('#sess-list .sess-card [onclick^="showSessMuscleMap"] svg');
+      const attendus = _FP.filter(([id]) => id && _MG[coche].paths.indexOf(id) >= 0).length;
+      return { nom, coche, carte: !!svg, rouges: svg ? (svg.outerHTML.match(/#FF5555/g) || []).length : -1, attendus };
+    });
+    t('C-MUS-C2 ⭐ F05 — la carte de l\'historique dessine le muscle COCHÉ du perso (en rouge, et rien d\'autre — pas la fiche du catalogue)',
+      r.carte && r.attendus > 0 && r.rouges === r.attendus, _j(r));
+    t('C-MUS-C3 aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
+    await X.cx.close();
+  }
+  {
+    /* ⛔⛔ PÉRIMÈTRE (F05, D-122) : le moteur des calories est GELÉ (docs/CHANTIER-NUTRITION-SEANCE.md §8.3). `_mscScores`
+       garde exactement 4 appelants — `getExerciseMET` (les calories), `_mscScoresVus` (qui lui délègue un exercice sans muscles
+       cochés), `_cexSeraitMuet` (« le NOM seul donne-t-il des muscles ? ») et `chargeLeDos` (un avertissement de prudence).
+       Tout ce qui DESSINE ou LISTE passe par `_mscScoresVus`. Un 5ᵉ appelant = un écran qui a perdu les muscles cochés, ou un
+       calcul qui les a gagnés en silence. Les fichiers sont lus tels que l'app les sert. */
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(async () => {
+      const src = [...new Set([...document.scripts].map(x => x.getAttribute('src')).filter(u => u && !/^https?:|^\/\/|^lib\//.test(u)).map(u => u.replace(/\?.*$/, '')).concat(['dashboard.js']))];
+      const appels = [];
+      for (const f of src) {
+        const txt = await (await fetch(f)).text();
+        txt.split('\n').forEach((l, i) => { if (/(^|[^\w$.])_mscScores\(/.test(l) && !/function _mscScores\(/.test(l)) appels.push(f + ':' + (i + 1)); });
+      }
+      const parFichier = {}; appels.forEach(a => { const f = a.split(':')[0]; parFichier[f] = (parFichier[f] || 0) + 1; });
+      return { lus: src.length, appels, parFichier };
+    });
+    t('C-MUS-C1 ⛔⛔ PÉRIMÈTRE — `_mscScores` (moteur des calories, gelé) garde ses 4 appelants : app.js ×1 (getExerciseMET), log.js ×3 ; rien d\'autre ne le lit',
+      r.lus >= 6 && r.appels.length === 4 && r.parFichier['app.js'] === 1 && r.parFichier['log.js'] === 3, _j(r));
     await X.cx.close();
   }
 }

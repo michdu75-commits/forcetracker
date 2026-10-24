@@ -2273,8 +2273,8 @@ function _calSessMix(s){
   if(key in _calColorCache)return _calColorCache[key];
   let mix=null;
   try{
-    if(typeof _mscScores==='function'){
-      const sc=(_mscScores(s.exs||[])||{}).sc||{};
+    if(typeof _mscScoresVus==='function'){
+      const sc=(_mscScoresVus(s.exs||[])||{}).sc||{};
       const tot={haut:0,dos:0,bas:0,tronc:0}; let grand=0;
       for(const g in sc){
         for(const r in _CAL_REGIONS){

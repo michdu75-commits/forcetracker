@@ -6,7 +6,7 @@ C-NUM-* savent-ils ROUGIR ?
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 M00 remet les fichiers de l'app tels qu'ils etaient AVANT la mission (branche Seance 5a7b0a57 = master 999b7947 + repos +
-vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35) et 3 (M36-M44).
+vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35) et 3 (M36-M49).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] ne doit PAS faire rougir.
 Chaque mutation GARDE exige un TEMOIN PRECIS (4e champ) parmi les rouges.
 Un PLANTAGE du banc (code de sortie hors 0/1, ligne PLANTAGE, ou pas de ligne de total) n'est JAMAIS « garde ».
@@ -151,10 +151,9 @@ MUT = [
     ('M39 « Enregistrer » ne propose plus rien apres une baisse',
      [(SE, "  toast('Séance mise à jour ✓','success');\n  _proposerRecordsRecalcules(_rec);", "  toast('Séance mise à jour ✓','success');")],
      'GARDE', 'C-REC-C1'),
-    ('M40 la fiche du catalogue repasse avant les muscles coches du perso',
-     [(LO, "  if(m&&((m.p&&m.p.length)||(m.s&&m.s.length))) return {p:m.p||[], s:m.s||[]};\n  return (typeof exMuscles==='function')",
-           "  const _f=(typeof exMuscles==='function')?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(nom):nom):null; if(_f) return _f;\n  if(m&&((m.p&&m.p.length)||(m.s&&m.s.length))) return {p:m.p||[], s:m.s||[]};\n  return (typeof exMuscles==='function')")],
-     'GARDE', 'C-MUS-B4'),
+    ('M40 l\'affichage oublie les muscles coches du perso (retour aux regles du nom)',
+     [(LO, "    const c=_musclesCoches(ex.name);\n    if(c){", "    const c=null;\n    if(c){")],
+     'GARDE', 'C-MUS-B1'),
     ('M41 _mscNiveau ignore les moteurs (retour au score >= 2)',
      [(LO, "  if(o&&o.prim) return o.prim[g]?2:(v>=1?1:0);", "  if(false) return 0;")],
      'GARDE', 'C-MUS-A1'),
@@ -162,8 +161,26 @@ MUT = [
      [(SE, "const nv=_mscNiveau(o,g);const[f,k]=nv>=2", "const nv=_mscNiveau(o,g);const[f,k]=v>=2")],
      'GARDE', 'C-MUS-A3'),
     ('M43 Progres revient a la fiche du catalogue d\'abord',
-     [(LO, "        const fiche=_musclesEcrits(ex.name);", "        const fiche=(typeof exMuscles==='function')?(exMuscles(exNomCatalogue(ex.name))||_musclesEcrits(ex.name)):_musclesEcrits(ex.name);")],
+     [(LO, "  return _musclesCoches(nom) || ((typeof exMuscles==='function')",
+           "  return ((typeof exMuscles==='function')&&exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(nom):nom)) || _musclesCoches(nom) || ((typeof exMuscles==='function')")],
      'GARDE', 'C-MUS-B4'),
+    ('M45 les calories suivent les muscles coches en silence (getExerciseMET lit l\'affichage)',
+     [(AP, "      const sc = (_mscScores([{name:n, sets:[{done:true}]}]) || {}).sc || {};",
+           "      const sc = (_mscScoresVus([{name:n, sets:[{done:true}]}]) || {}).sc || {};")],
+     'GARDE', 'C-MUS-B3'),
+    ('M46 [deguisee] le moteur gele lit les muscles coches d\'abord (F05 applique aux calories par la bande)',
+     [(LO, "    const _ecrit=(typeof exMuscles==='function')\n      ?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name):null;",
+           "    const _ecrit=_musclesCoches(ex.name)||((typeof exMuscles==='function')\n      ?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name):null);")],
+     'GARDE', 'C-MUS-B3'),
+    ('M47 la carte de l\'historique relit le moteur des calories',
+     [(SE, "    const sc=_mscScoresVus(s.exs||s.exercises||[]);\n    const mini=_mscSVGmini(sc)", "    const sc=_mscScores(s.exs||s.exercises||[]);\n    const mini=_mscSVGmini(sc)")],
+     'GARDE', 'C-MUS-C2'),
+    ('M48 [deguisee] la couleur du calendrier relit le moteur des calories',
+     [(SC, "      const sc=(_mscScoresVus(s.exs||[])||{}).sc||{};", "      const sc=(_mscScores(s.exs||[])||{}).sc||{};")],
+     'GARDE', 'C-MUS-C1'),
+    ('M49 [deguisee] un secondaire seul compte comme moteur dans l\'affichage',
+     [(LO, "if(o.sc[m]>=2) prim[m]=true;", "if(o.sc[m]>=1) prim[m]=true;")],
+     'GARDE', 'C-MUS-A1'),
     ('M44 [negatif] le texte d\'aperçu des records est reformule',
      [(SE, ". Rien ne change si tu le gardes.'", ". Si tu le gardes, rien ne change.'")],
      'OK', None),

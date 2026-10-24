@@ -3586,8 +3586,8 @@ function renderLogFinish(){
        suit l'écran (CSS `.lf-2fig`) — d'où `width:100%` : le dessin remplit sa colonne. */
     try{
       const faits=S.wkt.exs.filter(ex=>(ex.sets||[]).some(s=>s.done));
-      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
-        const res=_mscScores(faits);
+      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScoresVus==='function'){
+        const res=_mscScoresVus(faits);
         const vue=v=>`<div class="lf-fig lf-fig-${v}" role="img" aria-label="Muscles travaillés dans cette séance, vue de ${v}">${_mscSVGmini(res,v).replace('width:32px','width:100%')}</div>`;
         figF=vue('face'); figD=vue('dos');
       }

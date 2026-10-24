@@ -1430,7 +1430,7 @@ function _updateSdMuscles(sess){
   const exs=sess.exs||sess.exercises||[];
   const muscleEl=document.getElementById('sd-muscles');
   if(!muscleEl)return;
-  const res=_mscScores(exs);
+  const res=_mscScoresVus(exs);
   if(!Object.keys(res.sc).length){muscleEl.style.display='none';return;}
   muscleEl.style.display='flex';
   muscleEl.style.alignItems='center';
@@ -1879,14 +1879,14 @@ function showSessMuscleMap(i,ev){
    ⚠️ Inchangé, et exprès hors de ce lot : les pastilles viennent des muscles DOMINANTS, le filtre teste la PRÉSENCE. */
 let _sessFiltres=[];
 function _sessTopMuscle(s){
-  const sc=_mscScores(s.exs||s.exercises||[]);const _sc=sc.sc||{};
+  const sc=_mscScoresVus(s.exs||s.exercises||[]);const _sc=sc.sc||{};
   let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
   return b;
 }
 // Muscles réellement TRAVAILLÉS dans la séance (score ≥ 2 = primaire dans ≥1 exo, ou secondaire ≥2×)
 // → utilisé pour le FILTRE (présence), pas pour le titre. Chips = muscles dominants (jeu compact).
 function _sessMusclesPresent(s){
-  const sc=_mscScores(s.exs||s.exercises||[]).sc||{};
+  const sc=_mscScoresVus(s.exs||s.exercises||[]).sc||{};
   return Object.keys(sc).filter(m=>sc[m]>=2);
 }
 function setSessFilter(code){
@@ -1981,7 +1981,7 @@ function _sessCarteHtml(s){
       +'<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">'
       +'<path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13a5 5 0 0 0 .35-9.96z"/>'
       +'</svg></span>':'';
-    const sc=_mscScores(s.exs||s.exercises||[]);
+    const sc=_mscScoresVus(s.exs||s.exercises||[]);
     const mini=_mscSVGmini(sc).replace('width:32px','width:46px'); // figurine plus grande sur les cartes (retour GPT, ft-v570)
     // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé → devient le TITRE de la carte
     let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}

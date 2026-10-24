@@ -320,7 +320,7 @@ function _fmtWktDate(d){
    puis le contexte du jour (récup + dernière séance, SECONDAIRE), puis les types de séance, et seulement ensuite le
    cardio et l'import. Les boutons sont dans la page (index.html, `#log-avant`) ; ce rendu ne remplit que ce qui
    dépend des données. ⛔ Rien d'inventé : la récup vient de `calcRecoveryScore`/`getRecoveryInfo` (Accueil), le nom
-   de la dernière séance de `_calSessLabel` (calendrier), sa figurine de `_mscSVGmini(_mscScores(…))` (Progrès). */
+   de la dernière séance de `_calSessLabel` (calendrier), sa figurine de `_mscSVGmini(_mscScoresVus(…))` (Progrès). */
 function _renderAvantSeance(){
   const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const sub=document.getElementById('la-prog-sub');
@@ -342,7 +342,7 @@ function _renderAvantSeance(){
     }
     let fig='';
     if(der&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
-      try{ fig=_mscSVGmini(_mscScores(der.exs||der.exercises||[])).replace('width:32px','width:28px'); }catch(e){ fig=''; }
+      try{ fig=_mscSVGmini(_mscScoresVus(der.exs||der.exercises||[])).replace('width:32px','width:28px'); }catch(e){ fig=''; }
     }
     if(parts.length) html='<div class="la-ctx">'+(fig?'<div class="la-fig" role="img" aria-label="Muscles travaillés à la dernière séance">'+fig+'</div>':'')
       +'<div class="la-ctx-t">'+parts.join('')+'</div></div>';
@@ -4547,26 +4547,24 @@ function _mscSVG_F({sc,ind}){
 // Normalise un nom d'exercice : retire les accents + minuscules
 // → « Développé Incliné » == « developpe incline » == « Developpe incline »
 const _naz=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-/* 🧍 LES MUSCLES ÉCRITS D'UN EXERCICE — UN SEUL ENDROIT (mission Séance de Michel du 24/10/2026, F05).
-   ⭐ L'ORDRE : ① les muscles COCHÉS par la personne pour SON exercice perso (son choix explicite) ② la fiche du catalogue
-   (`exMuscles`, nom résolu). Rien n'est deviné ici : les règles sur le nom (`_MEX`) restent l'affaire de `_mscScores`, pour ce
-   qu'on ne connaît pas. Avant, la figurine passait les règles du NOM avant le choix de la personne — mesuré le 23/10 : un perso
+/* 🧍 LES MUSCLES COCHÉS D'UN EXERCICE PERSO, ET LES MUSCLES ÉCRITS — UN SEUL ENDROIT (mission Séance de Michel du
+   24/10/2026, F05). `_musclesCoches` : les muscles que la personne a cochés pour SON exercice perso (son choix explicite),
+   ou `null` s'il n'en a aucun. `_musclesEcrits` : ces muscles cochés d'abord, puis la fiche du catalogue (`exMuscles`, nom
+   résolu). Rien n'est deviné ici : les règles sur le nom (`_MEX`) restent l'affaire de `_mscScores`, pour ce qu'on ne
+   connaît pas. Avant, la figurine passait les règles du NOM avant le choix de la personne — mesuré le 23/10 : un perso
    « Curl Maison Zorglub » coché quadriceps s'affichait biceps sur la figurine pendant que Progrès comptait des quadriceps.
    ⛔ Un perso sans muscle coché n'a pas de fiche : on retombe sur la suite (catalogue, puis règles). */
-function _musclesEcrits(nom){
+function _musclesCoches(nom){
   const cex=(typeof S!=='undefined'&&S.customExercises||[]).find(e=>e&&e.n===nom);
   const m=cex&&cex.muscles;
-  if(m&&((m.p&&m.p.length)||(m.s&&m.s.length))) return {p:m.p||[], s:m.s||[]};
-  return (typeof exMuscles==='function')
-    ? exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(nom):nom) : null;
+  return (m&&((m.p&&m.p.length)||(m.s&&m.s.length))) ? {p:m.p||[], s:m.s||[]} : null;
 }
-/* 🧍 F04 (mission Séance du 24/10/2026) — `prim` : les muscles MOTEURS, primaires dans au moins un exercice. Le score `sc`
-   additionne (+2 primaire, +1 secondaire) et un muscle secondaire de DEUX exercices atteignait 2 — il passait alors pour un
-   muscle principal (rouge, « Primaires »). Mesuré le 23/10 : triceps listé « Primaires », 8 zones rouges au lieu de 6.
-   ⛔ Le score lui-même ne change pas (le calendrier, les calories et les filtres le lisent tel quel) : seuls les dessins et les
-   listes lisent `prim` pour dire « moteur » ou « sollicité ». */
+function _musclesEcrits(nom){
+  return _musclesCoches(nom) || ((typeof exMuscles==='function')
+    ? exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(nom):nom) : null);
+}
 function _mscScores(exs){
-  const sc={},ind={},prim={};
+  const sc={},ind={};
   (exs||[]).forEach(ex=>{
     if(!(ex.sets||[]).some(s=>s.done))return;
     let matched=false;
@@ -4585,16 +4583,50 @@ function _mscScores(exs){
     // que la fiche du 02/08 avait retiré exprès (poitrine appuyée = colonne non chargée).
     // ⛔ Les deux lignes suivantes gardent le nom D'ORIGINE, exprès : les règles `_MEX` et les
     // exercices perso travaillent sur ce que la personne a écrit, pas sur le catalogue.
-    /* ↪️ F05 (24/10/2026) : `_musclesEcrits` — les muscles cochés d'un perso passent AVANT tout le reste, puis la fiche du
-       catalogue. Les règles `_MEX` (le NOM) ne servent plus qu'à ce qu'on ne connaît pas. */
-    const _ecrit=_musclesEcrits(ex.name);
+    const _ecrit=(typeof exMuscles==='function')
+      ?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name):null;
     if(_ecrit){
-      (_ecrit.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;prim[m]=true;});
+      (_ecrit.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
       (_ecrit.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
       return;
     }
     const _nm=_naz(ex.name);
-    for(const r of _MEX){if(r.re.test(_nm)){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;prim[m]=true;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
+    for(const r of _MEX){if(r.re.test(_nm)){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
+    if(!matched){
+      const cex=(S.customExercises||[]).find(e=>e.n===ex.name);
+      if(cex&&cex.muscles){
+        (cex.muscles.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
+        (cex.muscles.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
+      }
+    }
+  });
+  return {sc,ind};
+}
+/* 🧍 CE QUE LES DESSINS ET LES LISTES MONTRENT (mission Séance de Michel du 24/10/2026, F04 · F05) — les muscles de
+   `_mscScores`, avec deux corrections d'AFFICHAGE et sans rien changer au calcul des calories :
+   · F05 — un exercice perso dont la personne a coché les muscles montre SES muscles (avant, les règles du nom passaient
+     d'abord : un perso « Croisé Poulie » coché mollets montrait des pectoraux) ;
+   · F04 — `prim` : les muscles MOTEURS, primaires dans au moins un exercice. Le score additionne (+2 primaire, +1
+     secondaire) et un secondaire de DEUX exercices atteignait 2 : il passait pour un moteur (mesuré le 23/10 : triceps listé
+     « Primaires », 8 zones rouges au lieu de 6). Le score lui-même ne change pas.
+   ⛔⛔ `_mscScores` reste le moteur des CALORIES et il est GELÉ (`getExerciseMET` le lit ; docs/CHANTIER-NUTRITION-SEANCE.md
+   §8.3) : il garde son ordre (fiche, règles du nom, puis muscles cochés). Étendre F05 aux calories change la dépense de
+   certains persos — mesuré le 24/10 : de −6 à +4 kcal sur une séance d'une heure, 0 écart sur les 322 exercices du
+   catalogue — et c'est une décision de Michel, à part (docs/SEANCE-CHIFFRES-2026-10-24.md). Rien n'est recopié : un
+   exercice sans muscles cochés passe par `_mscScores` lui-même, et un exercice SEUL y vaut 2 sur ses moteurs. */
+function _mscScoresVus(exs){
+  const sc={},ind={},prim={};
+  (exs||[]).forEach(ex=>{
+    if(!ex||!(ex.sets||[]).some(s=>s.done))return;
+    const c=_musclesCoches(ex.name);
+    if(c){
+      (c.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;prim[m]=true;});
+      (c.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
+      return;
+    }
+    const o=_mscScores([ex]);
+    Object.keys(o.sc).forEach(m=>{ sc[m]=(sc[m]||0)+o.sc[m]; if(o.sc[m]>=2) prim[m]=true; });
+    Object.keys(o.ind||{}).forEach(m=>{ ind[m]=true; });
   });
   return {sc,ind,prim};
 }
@@ -4828,7 +4860,7 @@ function _mscFocus(o,max){
    ce que fait déjà la vignette du sélecteur d'exercices (log.js ~5710), on ne réinvente
    pas une 2ᵉ façon de calculer les muscles (R2/R13). */
 function _mscScoresPlan(exs){
-  return _mscScores((exs||[]).map(e=>({name:e.name,sets:[{done:true}]})));
+  return _mscScoresVus((exs||[]).map(e=>({name:e.name,sets:[{done:true}]})));
 }
 
 // ─── Figurine « douleur » : réutilise la vraie figurine anatomique (_mscSVG) pour
@@ -4861,7 +4893,7 @@ function _painFig(painSet){
 }
 let _mmCb=null;
 function showMuscleMap(exs,cb){
-  const _o=_mscScores(exs), {sc,ind}=_o;
+  const _o=_mscScoresVus(exs), {sc,ind}=_o;
   document.getElementById('mm-svg').innerHTML=_mscSVG(_o);
   /* F04 (24/10/2026) : « Primaires » = les muscles MOTEURS ; un muscle seulement secondaire reste « Secondaires », avec le
      nombre d'exercices qui le sollicitent quand il y en a plusieurs (« Triceps ×2 ») — il n'est plus promu primaire. */
@@ -5267,7 +5299,7 @@ function _debriefLocal(sess, prCount, opts){
     // ── ① CE QUE TU AS TRAVAILLÉ ──────────────────────────────────────────────────────
     let muscles='', region='';
     try{
-      const o=(typeof _mscScores==='function')?_mscScores(sess.exs):null;
+      const o=(typeof _mscScoresVus==='function')?_mscScoresVus(sess.exs):null;
       if(o && typeof _mscFocus==='function') muscles=_mscFocus(o,3)||'';
     }catch(e){}
     try{
@@ -7076,6 +7108,7 @@ function saveCustomEx(){
 function _cexSeraitMuet(name){
   try{
     if(_cexMusclesP.length||_cexMusclesS.length)return false;   // elle a coché : rien à signaler
+    // ↪️ F05 (24/10/2026) : `_mscScores` exprès, pas `_mscScoresVus` — la question est « le NOM seul donne-t-il des muscles ? »
     const sc=(_mscScores([{name:name,sets:[{done:true}]}])||{}).sc||{};
     return Object.keys(sc).length===0;
   }catch(e){return false;}
@@ -7779,7 +7812,7 @@ function _impThumb(name){
   const box='width:36px;height:36px;border-radius:8px;flex-shrink:0;background:var(--bg3);box-sizing:border-box;';
   let gif=''; try{ gif=_exImg(name)||''; }catch(e){}
   if(gif) return `<img src="${gif}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
-  let musc=''; try{ const {sc}=_mscScores([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
+  let musc=''; try{ const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
   if(musc) return `<img src="${musc}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
   // exo RÉEL de la biblio (sans gif ni muscle deviné) → silhouette de son GROUPE (figurine pertinente, jamais le défaut chest global)
   let grp=''; try{ const cn=exNomCatalogue(name); const ex=EXLIB.find(e=>e.n===cn); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
@@ -9182,6 +9215,7 @@ function _validationSeance(newExs, mode){
       const chargeLeDos=n=>{
         try{
           if(_movPattern(n)!=='hip-hinge') return false;
+          // ↪️ F05 (24/10/2026) : `_mscScores` exprès — un avertissement de prudence ne s'éteint pas parce qu'un muscle n'a pas été coché
           const sc=(_mscScores([{name:n,sets:[{kg:60,reps:8,done:1}]}])||{}).sc||{};
           return (sc['lower-back']||0)>=2;
         }catch(e){ return false; }
@@ -10910,7 +10944,7 @@ const _MG_IMG={
 // → une machine importée (« Chest press machine convergente… ») a TOUJOURS une figurine pertinente.
 function _exMuscleImg(name){
   try{
-    const {sc}=_mscScores([{name,sets:[{done:true}]}]);
+    const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]);
     const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
     if(top&&_MG_IMG[top[0]])return _MG_IMG[top[0]];
   }catch(e){}
@@ -10925,14 +10959,14 @@ function _progExThumb(name){
   // Muscle principal deviné depuis le nom (_MEX, insensible aux accents) → image muscle réaliste
   let src='';
   try{
-    const {sc}=_mscScores([{name,sets:[{done:true}]}]);
+    const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]);
     const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
     if(top)src=_MG_IMG[top[0]]||'';
   }catch(e){}
   if(src) return `<img src="${src}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
   // Repli ultime : figurine anatomique colorée
   let fig='';
-  try{if(typeof _mscSVGmini==='function')fig=_mscSVGmini(_mscScores([{name,sets:[{done:true}]}])).replace('width:32px','width:38px');}catch(e){}
+  try{if(typeof _mscSVGmini==='function')fig=_mscSVGmini(_mscScoresVus([{name,sets:[{done:true}]}])).replace('width:32px','width:38px');}catch(e){}
   return `<div style="${box}display:flex;align-items:center;justify-content:center;overflow:hidden;">${fig}</div>`;
 }
 function _genderGroupSvg(groupName){
