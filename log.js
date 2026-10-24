@@ -4547,8 +4547,26 @@ function _mscSVG_F({sc,ind}){
 // Normalise un nom d'exercice : retire les accents + minuscules
 // → « Développé Incliné » == « developpe incline » == « Developpe incline »
 const _naz=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+/* 🧍 LES MUSCLES ÉCRITS D'UN EXERCICE — UN SEUL ENDROIT (mission Séance de Michel du 24/10/2026, F05).
+   ⭐ L'ORDRE : ① les muscles COCHÉS par la personne pour SON exercice perso (son choix explicite) ② la fiche du catalogue
+   (`exMuscles`, nom résolu). Rien n'est deviné ici : les règles sur le nom (`_MEX`) restent l'affaire de `_mscScores`, pour ce
+   qu'on ne connaît pas. Avant, la figurine passait les règles du NOM avant le choix de la personne — mesuré le 23/10 : un perso
+   « Curl Maison Zorglub » coché quadriceps s'affichait biceps sur la figurine pendant que Progrès comptait des quadriceps.
+   ⛔ Un perso sans muscle coché n'a pas de fiche : on retombe sur la suite (catalogue, puis règles). */
+function _musclesEcrits(nom){
+  const cex=(typeof S!=='undefined'&&S.customExercises||[]).find(e=>e&&e.n===nom);
+  const m=cex&&cex.muscles;
+  if(m&&((m.p&&m.p.length)||(m.s&&m.s.length))) return {p:m.p||[], s:m.s||[]};
+  return (typeof exMuscles==='function')
+    ? exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(nom):nom) : null;
+}
+/* 🧍 F04 (mission Séance du 24/10/2026) — `prim` : les muscles MOTEURS, primaires dans au moins un exercice. Le score `sc`
+   additionne (+2 primaire, +1 secondaire) et un muscle secondaire de DEUX exercices atteignait 2 — il passait alors pour un
+   muscle principal (rouge, « Primaires »). Mesuré le 23/10 : triceps listé « Primaires », 8 zones rouges au lieu de 6.
+   ⛔ Le score lui-même ne change pas (le calendrier, les calories et les filtres le lisent tel quel) : seuls les dessins et les
+   listes lisent `prim` pour dire « moteur » ou « sollicité ». */
 function _mscScores(exs){
-  const sc={},ind={};
+  const sc={},ind={},prim={};
   (exs||[]).forEach(ex=>{
     if(!(ex.sets||[]).some(s=>s.done))return;
     let matched=false;
@@ -4567,24 +4585,25 @@ function _mscScores(exs){
     // que la fiche du 02/08 avait retiré exprès (poitrine appuyée = colonne non chargée).
     // ⛔ Les deux lignes suivantes gardent le nom D'ORIGINE, exprès : les règles `_MEX` et les
     // exercices perso travaillent sur ce que la personne a écrit, pas sur le catalogue.
-    const _ecrit=(typeof exMuscles==='function')
-      ?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name):null;
+    /* ↪️ F05 (24/10/2026) : `_musclesEcrits` — les muscles cochés d'un perso passent AVANT tout le reste, puis la fiche du
+       catalogue. Les règles `_MEX` (le NOM) ne servent plus qu'à ce qu'on ne connaît pas. */
+    const _ecrit=_musclesEcrits(ex.name);
     if(_ecrit){
-      (_ecrit.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
+      (_ecrit.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;prim[m]=true;});
       (_ecrit.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
       return;
     }
     const _nm=_naz(ex.name);
-    for(const r of _MEX){if(r.re.test(_nm)){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
-    if(!matched){
-      const cex=(S.customExercises||[]).find(e=>e.n===ex.name);
-      if(cex&&cex.muscles){
-        (cex.muscles.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
-        (cex.muscles.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
-      }
-    }
+    for(const r of _MEX){if(r.re.test(_nm)){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;prim[m]=true;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
   });
-  return {sc,ind};
+  return {sc,ind,prim};
+}
+/* Niveau d'un muscle pour les dessins et les listes (F04) : 2 = moteur, 1 = sollicité (secondaire, même plusieurs fois),
+   0 = rien. ⛔ Sans `prim` (un objet construit à la main), l'ancienne lecture du score s'applique, à l'identique. */
+function _mscNiveau(o, g){
+  const v=((o&&o.sc)||{})[g]||0;
+  if(o&&o.prim) return o.prim[g]?2:(v>=1?1:0);
+  return v>=2?2:(v>=1?1:0);
 }
 /* 📊 LE VOLUME PAR GROUPE MUSCULAIRE ET PAR SEMAINE (28/08/2026, ft-v1045)
    Dernier morceau du relais de session-A : *« rien n'additionne les séries × muscle × semaine »*.
@@ -4673,13 +4692,10 @@ function _volumeParMuscle(refTs, jours){
         if(!n) return;
         /* ⭐ LE NOM EST RÉSOLU AVANT DE CHERCHER LA FICHE — sans ça, un nom abrégé rate la
            donnée écrite et le muscle n'est pas crédité, EN SILENCE (la leçon de ft-v997). */
-        const fiche=(typeof exMuscles==='function')
-          ? exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name) : null;
-        let prim=(fiche&&fiche.p)||null;
-        if(!prim){                                       // exercice perso : sa fiche à lui
-          const cex=(S.customExercises||[]).find(e=>e.n===ex.name);
-          prim=(cex&&cex.muscles&&cex.muscles.p)||null;
-        }
+        /* ↪️ F05 (24/10/2026) : la même source écrite que la figurine (`_musclesEcrits` : les muscles cochés d'un perso
+           d'abord, puis la fiche du catalogue) — sans les règles du nom, comme avant. */
+        const fiche=_musclesEcrits(ex.name);
+        const prim=(fiche&&fiche.p&&fiche.p.length)?fiche.p:null;
         /* ⛔⛔ ON NE DEVINE PAS — MAIS ON NE SE TAIT PAS NON PLUS (R29).
            Un nom qui ne résout pas (« Traction », « Presse à Cuisses » : des PRÉFIXES de plusieurs
            exercices du catalogue) ou un exercice perso sans muscles cochés ne peut créditer
@@ -4734,7 +4750,8 @@ function showMuscleName(label,evt){
   el.textContent=label;el.style.display='block';
   clearTimeout(el._t);el._t=setTimeout(()=>{el.style.display='none';},2500);
 }
-function _mscSVG({sc,ind}){
+function _mscSVG(o){
+  const sc=(o&&o.sc)||{}, ind=(o&&o.ind)||{};   // F04 : l'objet entier est gardé (son `prim` dit qui est moteur)
   const defs=`<defs>
     <linearGradient id="g-skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E8A888"/><stop offset="100%" stop-color="#B86848"/></linearGradient>
     <linearGradient id="g-base" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C87868"/><stop offset="100%" stop-color="#7A3828"/></linearGradient>
@@ -4745,10 +4762,10 @@ function _mscSVG({sc,ind}){
   </defs>`;
   const ps={};
   Object.entries(_MG).forEach(([g,d])=>{
-    const v=sc[g]||0;const isI=ind[g]&&!v;
+    const v=sc[g]||0;const isI=ind[g]&&!v;const nv=_mscNiveau(o,g);   // F04 : moteur ≠ sollicité
     let gid,sk,filt='';
-    if(v>=2){gid='g-prim';sk='#880010';filt=' filter="url(#f-sh)"';}
-    else if(v>=1){gid='g-sec';sk='#884400';filt=' filter="url(#f-sh)"';}
+    if(nv>=2){gid='g-prim';sk='#880010';filt=' filter="url(#f-sh)"';}
+    else if(nv>=1){gid='g-sec';sk='#884400';filt=' filter="url(#f-sh)"';}
     else if(isI){gid='g-ind';sk='#5B7C9E';filt=' opacity="0.5"';}
     else{gid='g-base';sk='#5A2818';}
     d.paths.forEach(id=>{ps[id]={gid,sk,filt,label:(typeof _MSC_LBL!=='undefined'&&_MSC_LBL[id])||d.label};});
@@ -4785,8 +4802,8 @@ const _MSC_PRINT_COL={
 function _mscSVGprint(o){
   const sc=(o&&o.sc)||{}, ind=(o&&o.ind)||{}, pd={};
   Object.entries(_MG).forEach(([g,d])=>{
-    const v=sc[g]||0, isI=ind[g]&&!v;
-    const c=v>=2?_MSC_PRINT_COL.prim:v>=1?_MSC_PRINT_COL.sec:isI?_MSC_PRINT_COL.ind:_MSC_PRINT_COL.off;
+    const v=sc[g]||0, isI=ind[g]&&!v, nv=_mscNiveau(o,g);   // F04 : moteur ≠ sollicité
+    const c=nv>=2?_MSC_PRINT_COL.prim:nv>=1?_MSC_PRINT_COL.sec:isI?_MSC_PRINT_COL.ind:_MSC_PRINT_COL.off;
     d.paths.forEach(id=>{pd[id]=c;});
   });
   const pt=([id,d])=>{
@@ -4802,7 +4819,7 @@ function _mscSVGprint(o){
    faux serait pire que de ne rien annoncer. */
 function _mscFocus(o,max){
   const sc=(o&&o.sc)||{};
-  return Object.keys(sc).filter(g=>sc[g]>=2&&_MG[g])
+  return Object.keys(sc).filter(g=>_mscNiveau(o,g)>=2&&_MG[g])   // F04 : les MOTEURS, pas les sollicités cumulés
     .sort((a,b)=>sc[b]-sc[a]).slice(0,max||3)
     .map(g=>_MG[g].label).join(' · ');
 }
@@ -4844,10 +4861,12 @@ function _painFig(painSet){
 }
 let _mmCb=null;
 function showMuscleMap(exs,cb){
-  const {sc,ind}=_mscScores(exs);
-  document.getElementById('mm-svg').innerHTML=_mscSVG({sc,ind});
-  const pri=Object.entries(_MG).filter(([g])=>(sc[g]||0)>=2).map(([,d])=>d.label);
-  const sec=Object.entries(_MG).filter(([g])=>(sc[g]||0)===1).map(([,d])=>d.label);
+  const _o=_mscScores(exs), {sc,ind}=_o;
+  document.getElementById('mm-svg').innerHTML=_mscSVG(_o);
+  /* F04 (24/10/2026) : « Primaires » = les muscles MOTEURS ; un muscle seulement secondaire reste « Secondaires », avec le
+     nombre d'exercices qui le sollicitent quand il y en a plusieurs (« Triceps ×2 ») — il n'est plus promu primaire. */
+  const pri=Object.entries(_MG).filter(([g])=>_mscNiveau(_o,g)>=2).map(([,d])=>d.label);
+  const sec=Object.entries(_MG).filter(([g])=>_mscNiveau(_o,g)===1).map(([g,d])=>d.label+((sc[g]||0)>=2?' ×'+sc[g]:''));
   const indir=Object.entries(_MG).filter(([g])=>ind[g]&&!(sc[g]>=1)).map(([,d])=>d.label);
   const li=document.getElementById('mm-list');
   li.innerHTML=(pri.length?`<div><span style="color:#FF2D55;font-weight:600">● Primaires : </span>${pri.join(', ')}</div>`:'')+

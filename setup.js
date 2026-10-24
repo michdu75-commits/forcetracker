@@ -1717,6 +1717,52 @@ function _deplacerRecordsRenommes(){
   _sessRenames=[];
 }
 
+/* 🏅 F08 (mission Séance de Michel du 24/10/2026) — UN RECORD QUI VENAIT D'UNE SÉANCE SUPPRIMÉE OU MODIFIÉE N'EST PLUS GARDÉ
+   EN SILENCE. Mesuré le 23/10 : la séance du 100 × 5 supprimée (ou corrigée à la baisse), le record restait 100 × 5 — et il
+   sert de référence aux charges de Milo, à la montée en charge et au % du max des calories.
+   ⛔⛔ LES CONSIGNES : *« réutiliser l'outil de recalcul existant · préparer un aperçu avant toute opération ayant un impact sur
+   les records · ne pas supprimer automatiquement des records dont l'origine reste incertaine »*.
+   ⭐ D'où trois règles : ① on ne regarde QUE les records dont l'origine est CERTAINE — même date que la séance ET une série
+   valable aux mêmes kg × répétitions dedans (`_serieFaitFoiPourPR`, la règle de la fin de séance) ; un record importé, d'un
+   autre jour ou d'un autre appareil n'est jamais touché ; ② la proposition vient du recalcul existant (`_prsDepuisSeances`) ;
+   ③ RIEN n'est écrit sans le geste de la personne : un aperçu « avant → après », « Mettre à jour » ou « Garder ». */
+function _recordsVenantDe(avant, apres){
+  const out=[];
+  if(!avant||!avant.date) return out;
+  const memeSerie=(st,pr)=>_serieFaitFoiPourPR(st)&&+st.kg===+pr.kg&&+st.reps===+pr.reps;
+  (avant.exs||avant.exercises||[]).forEach(ex=>{
+    const pr=ex&&S.prs&&S.prs[ex.name];
+    if(!pr||pr.date!==avant.date||out.indexOf(ex.name)>=0) return;
+    if(!(ex.sets||[]).some(st=>memeSerie(st,pr))) return;                      // ce n'est pas CETTE séance qui l'a fait
+    const encore=apres&&(apres.exs||apres.exercises||[]).some(e=>e&&e.name===ex.name&&(e.sets||[]).some(st=>memeSerie(st,pr)));
+    if(!encore) out.push(ex.name);
+  });
+  return out;
+}
+function _proposerRecordsRecalcules(noms){
+  if(!noms||!noms.length) return;
+  const r=_prsDepuisSeances();
+  const props=[];
+  noms.forEach(n=>{
+    const avant=S.prs[n]; if(!avant) return;
+    let apres=r.calc[n]?Object.assign({},r.calc[n]):null;
+    if(apres&&r.premiere[n]&&r.premiere[n]===apres.date) apres.premiere=true;   // une 1ʳᵉ fois reste une 1ʳᵉ fois (D-045)
+    if(apres&&Math.abs((+avant.rm1||0)-apres.rm1)<=0.05&&+avant.kg===+apres.kg&&+avant.reps===+apres.reps) return;   // déjà juste
+    props.push({nom:n, avant, apres});
+  });
+  if(!props.length) return;
+  const f=p=>p.kg+' kg × '+p.reps+' ('+fmtD(p.date)+')';
+  const lignes=props.map(p=>p.nom+' : '+f(p.avant)+' → '+(p.apres?f(p.apres):'aucune autre séance ne le porte')).join(' · ');
+  showConfirm(props.length>1?'Records à vérifier':'Record à vérifier',
+    (props.length>1?'Ces records venaient':'Ce record venait')+' de cette séance. D\'après ton historique : '+lignes+'. Rien ne change si tu le gardes.',
+    ()=>{
+      props.forEach(p=>{ if(p.apres) S.prs[p.nom]=p.apres; else delete S.prs[p.nom]; });
+      persist();
+      try{ if(typeof _cloudSync==='function') _cloudSync(); }catch(e){}
+      toast(props.length>1?'Records mis à jour ✅':'Record mis à jour ✅','success');
+    }, 'Mettre à jour', 'Garder');
+}
+
 function deleteSessOrConfirm(){
   if(!_sdDelConfirm){
     _sdDelConfirm=true;
@@ -1733,6 +1779,9 @@ function deleteSessOrConfirm(){
   if(typeof _dbfOublier==='function') _parties.forEach(s=>_dbfOublier(_dbfCle(s)));
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
   toast('Séance supprimée','info');
+  // F08 : un record qui venait de cette séance → aperçu « avant → après », rien sans le geste de la personne
+  const _rec=[]; _parties.forEach(s=>_recordsVenantDe(s,null).forEach(n=>{ if(_rec.indexOf(n)<0)_rec.push(n); }));
+  _proposerRecordsRecalcules(_rec);
 }
 
 /* 🔥 F21 · K1 (mission Séance de Michel du 24/10/2026) — LES CALORIES D'UNE SÉANCE PASSÉE NE BOUGENT QUE SI L'EFFORT BOUGE.
@@ -1789,8 +1838,10 @@ function saveSessEdits(){
   _sessEdits.calData=_k.calData;
   S.sessions[idx]=_sessEdits;
   _deplacerRecordsRenommes();   // ⚠️ APRÈS l'écriture : avant, la séance porterait encore l'ancien nom
+  const _rec=_recordsVenantDe(_avant,_sessEdits);   // F08 : la série qui portait le record a changé (calculé avant de fermer)
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
   toast('Séance mise à jour ✓','success');
+  _proposerRecordsRecalcules(_rec);
 }
 
 function closeSessDetail(){
@@ -1804,9 +1855,10 @@ function closeSessDetail(){
    donc rien n'est recalculé ni deviné. Cadrage : le même décalage que la grande figurine (`_mscSVG`, vue avant centrée en x 17,
    vue arrière en x 52), même taille (32 × 94).
    ⛔ Sans `vue`, la sortie reste la vue avant À L'OCTET PRÈS : l'Accueil, Progrès et la carte du jour l'appellent ainsi. */
-function _mscSVGmini({sc,ind},vue){
+function _mscSVGmini(o,vue){
+  const sc=(o&&o.sc)||{}, ind=(o&&o.ind)||{};   // F04 (24/10/2026) : rouge = muscle MOTEUR (`_mscNiveau`), pas un secondaire cumulé
   const pd={};
-  Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const[f,k]=v>=2?['#FF5555','#AA0010']:v>=1?['#FF9500','#AA5500']:isI?['#8FA9C4','#5B7C9E']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
+  Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const nv=_mscNiveau(o,g);const[f,k]=nv>=2?['#FF5555','#AA0010']:nv>=1?['#FF9500','#AA5500']:isI?['#8FA9C4','#5B7C9E']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
   const pt=([id,d])=>{const c=id?(pd[id]||{f:'#C07060',k:'#7A3828'}):{f:'#D89070',k:'#A86040'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.28':'0.18'}" stroke-linejoin="round"/>`;};
   const dos=vue==='dos';
   return `<svg viewBox="${dos?36:1} 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${(dos?_BP:_FP).map(pt).join('')}</svg>`;

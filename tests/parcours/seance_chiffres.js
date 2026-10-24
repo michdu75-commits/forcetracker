@@ -449,7 +449,8 @@ async function ecran(t, b, PORT) {
       r.sans === true && r.score >= 80 && /estim/i.test(r.info.rec) && !/record|PR/i.test(r.info.rec), _j({ score: r.score, rec: r.info.rec, label: r.info.label }));
     t('C-NUM-I2 F19 — le libellé ne présente pas le score comme une certitude (« estimé »)', /estim/i.test(r.info.label), r.info.label);
     t('C-NUM-I3 ⭐ F19 — Milo ne lit plus « JOUR IDÉAL pour PRs » un jour sans sommeil noté', !/JOUR IDÉAL|PRs/i.test(r.milo) && /estim/i.test(r.milo), r.milo.slice(0, 300));
-    t('C-NUM-I5 F19 — l\'Accueil non plus : pas d\'invitation aux records sans sommeil noté', !/record/i.test(r.hero) && /estim/i.test(r.hero), r.hero.slice(0, 260));
+    t('C-NUM-I5 F19 — l\'Accueil non plus : ni « Prêt à performer », ni invitation aux records, sans sommeil noté',
+      !/record/i.test(r.hero) && !/Prêt à performer/i.test(r.hero) && /estim/i.test(r.hero), r.hero.slice(0, 260));
     t('C-NUM-I4 F19 — avec un sommeil récent, rien ne change : textes et consigne de Milo d\'origine',
       r.sans2 === false && !/estim/i.test(r.info2.rec + r.info2.label) && (r.score2 < 80 || /records/.test(r.info2.rec)) && !/estim/i.test(r.milo2),
       _j({ score: r.score2, info: r.info2, milo: r.milo2.slice(0, 200) }));
@@ -476,6 +477,168 @@ async function ecran(t, b, PORT) {
     t('C-NUM-J3 F22 — le détail de la séance montre « Marche », pas « Elliptique »', /Marche/.test(r.affiche || '') && !/Elliptique/.test(r.affiche || ''), r.affiche);
     t('C-NUM-J4 ⭐ F22 — un tapis de course (« Treadmill », « Tapis de course ») va sur le barème « Tapis » qui existe déjà',
       T['Treadmill'] === 'tapis' && T['Tapis de course'] === 'tapis' && T['Running'] === 'course' && T['Walking'] === 'marche' && T['Indoor Cycling'] === 'velo' && T['Yoga'] === 'autre', _j(r.types));
+    await X.cx.close();
+  }
+
+  /* ══ LOT 3 — RECORDS ET MUSCLES ═══════════════════════════════════════════════════════════════════════════════════
+     ── C-REC — F08 : un record qui venait d'une séance supprimée ou modifiée → aperçu, rien sans le geste de la personne ── */
+  const E = 'Développé Couché';
+  const recBase = (X, opts) => X.pg.evaluate(o => {
+    const j = n => today(Date.now() - n * 864e5), TA = Date.now() - 5 * 864e5, TB = Date.now() - 2 * 864e5;
+    const A = { id: TA, ts: TA, date: j(5), uniConv: 1, exs: [{ name: 'Développé Couché', sets: [{ kg: 60, reps: 5, done: true, type: 'N' }] }] };
+    const B = { id: TB, ts: TB, date: j(2), uniConv: 1, exs: [{ name: 'Développé Couché', sets: [{ kg: 100, reps: 5, done: true, type: 'N' }] }] };
+    S.sessions = o.seul ? [B] : [A, B]; S.sessions.forEach(x => { x.exercises = x.exs; x.volume = Math.round(_workVol(x)); }); _trierSeances(S.sessions);
+    S.prs = { 'Développé Couché': o.pr || { kg: 100, reps: 5, rm1: bz(100, 5), date: j(2) } }; persist();
+    return { TA, TB, jA: j(5), jB: j(2) };
+  }, opts || {});
+  const confirmVu = X => X.pg.evaluate(() => { const o = document.getElementById('ov-confirm');
+    return { ouvert: o.classList.contains('open'), titre: document.getElementById('confirm-title').textContent, msg: document.getElementById('confirm-msg').textContent }; });
+  const supprimer = async (X, ts) => { await X.pg.evaluate(ts => openSessDetail(ts), ts);
+    await X.pg.evaluate(() => { document.getElementById('sd-del-btn').click(); document.getElementById('sd-del-btn').click(); }); };
+  const repondre = (X, oui) => X.pg.evaluate(oui => document.getElementById(oui ? 'confirm-ok' : 'confirm-cancel').click(), oui);
+  const pr = X => X.pg.evaluate(() => { const p = JSON.parse(localStorage.getItem('ft4_prs') || '{}')['Développé Couché']; return p ? { kg: p.kg, reps: p.reps, date: p.date } : null; });
+  {
+    const X = await ouvrir();
+    const f = await recBase(X);
+    await supprimer(X, f.TB);
+    const c = await confirmVu(X); const avant = await pr(X);
+    t('C-REC-A1 ⭐ F08 — la séance du record (100 × 5) supprimée : un aperçu « avant → après » s\'ouvre (100 kg × 5 → 60 kg × 5)',
+      c.ouvert && /record/i.test(c.titre) && /100 kg × 5/.test(c.msg) && /60 kg × 5/.test(c.msg), _j(c));
+    t('C-REC-A2 ⛔ F08 — rien n\'a changé tant que la personne n\'a pas répondu', avant && avant.kg === 100, _j(avant));
+    await repondre(X, false);
+    t('C-REC-A3 F08 — « Garder » : le record reste 100 × 5', _j(await pr(X)) === _j({ kg: 100, reps: 5, date: f.jB }), _j(await pr(X)));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    const f = await recBase(X);
+    await supprimer(X, f.TB); await repondre(X, true);
+    t('C-REC-B1 ⭐ F08 — « Mettre à jour » : le record redevient le meilleur de l\'historique (60 × 5, sa date)', _j(await pr(X)) === _j({ kg: 60, reps: 5, date: f.jA }), _j(await pr(X)));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    const f = await recBase(X);
+    await X.pg.evaluate(ts => openSessDetail(ts), f.TB);
+    await champ(X, 0, 0, 'kg', '80');
+    await enregistrer(X);
+    const c = await confirmVu(X);
+    await repondre(X, true);
+    t('C-REC-C1 ⭐ F08 — la série du record corrigée à la baisse (100 → 80) : aperçu, puis record 80 × 5',
+      c.ouvert && /100 kg × 5/.test(c.msg) && /80 kg × 5/.test(c.msg) && _j(await pr(X)) === _j({ kg: 80, reps: 5, date: f.jB }), _j({ c, pr: await pr(X) }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    const f = await recBase(X, { pr: { kg: 120, reps: 5, rm1: 135, date: '2026-01-15' } });   // record d'ailleurs (import ancien) : origine incertaine
+    await supprimer(X, f.TB);
+    const c = await confirmVu(X);
+    t('C-REC-D1 ⛔ F08 — un record dont l\'origine est incertaine (autre date, importé) : aucun aperçu, il reste intact',
+      !c.ouvert && _j(await pr(X)) === _j({ kg: 120, reps: 5, date: '2026-01-15' }), _j({ c, pr: await pr(X) }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    const f = await recBase(X, { seul: true });
+    await supprimer(X, f.TB);
+    const c = await confirmVu(X);
+    await repondre(X, false);
+    const garde = await pr(X);
+    t('C-REC-E1 F08 — la seule séance de l\'exercice supprimée : l\'aperçu le dit (« aucune autre séance »), « Garder » garde le record',
+      c.ouvert && /aucune autre séance/.test(c.msg) && garde && garde.kg === 100, _j({ c, garde }));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    const f = await recBase(X);
+    await X.pg.evaluate(ts => openSessDetail(ts), f.TB);
+    await champ(X, 0, 0, 'reps', '6');
+    await enregistrer(X);
+    const c = await confirmVu(X);
+    t('C-REC-F1 F08 — la série du record AMÉLIORÉE (100 × 6) : le record monte comme avant, aucun aperçu',
+      !c.ouvert && _j(await pr(X)) === _j({ kg: 100, reps: 6, date: f.jB }), _j({ c, pr: await pr(X) }));
+    t('C-REC-F2 aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
+    await X.cx.close();
+  }
+  {
+    // le même 100 × 5 fait deux jours différents ; le record est daté du PREMIER : supprimer le second ne le touche pas
+    const X = await ouvrir();
+    const f = await X.pg.evaluate(() => {
+      const j = n => today(Date.now() - n * 864e5), TA = Date.now() - 5 * 864e5, TB = Date.now() - 2 * 864e5;
+      const mk = (ts, d) => ({ id: ts, ts, date: d, uniConv: 1, exs: [{ name: 'Développé Couché', sets: [{ kg: 100, reps: 5, done: true, type: 'N' }] }] });
+      S.sessions = [mk(TA, j(5)), mk(TB, j(2))]; S.sessions.forEach(x => { x.exercises = x.exs; }); _trierSeances(S.sessions);
+      S.prs = { 'Développé Couché': { kg: 100, reps: 5, rm1: bz(100, 5), date: j(5) } }; persist(); return { TB, jA: j(5) };
+    });
+    await supprimer(X, f.TB);
+    const c = await confirmVu(X);
+    t('C-REC-G1 ⛔ F08 — le même 100 × 5 refait un autre jour : supprimer la séance qui ne porte PAS la date du record ne propose rien',
+      !c.ouvert && _j(await pr(X)) === _j({ kg: 100, reps: 5, date: f.jA }), _j({ c, pr: await pr(X) }));
+    await X.cx.close();
+  }
+
+  /* ── C-MUS — F04 : moteur ≠ sollicité · F05 : les muscles cochés d'un perso d'abord ────────────────────────────── */
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
+      const sec = noms.filter(n => { const m = exMuscles(exNomCatalogue(n)); return m && (m.s || []).includes('triceps') && !(m.p || []).includes('triceps'); }).slice(0, 2);
+      const exs = n => n.map(x => ({ name: x, sets: [{ kg: 50, reps: 8, done: true, type: 'N' }] }));
+      const rouges = o => (_mscSVGmini(o).match(/#FF5555/g) || []).length;
+      const deux = _mscScores(exs(sec)), un = _mscScores(exs(sec.slice(0, 1)));
+      showMuscleMap(exs(sec), null);
+      const liste = document.getElementById('mm-list').textContent;
+      if (typeof closeMuscleMap === 'function') closeMuscleMap();
+      return { sec, score: deux.sc.triceps, rougesDeux: rouges(deux), rougesUn: rouges(un), liste: liste.replace(/\s+/g, ' ').slice(0, 220),
+        pecRouge: (_mscSVGmini(_mscScores(exs(['Développé Couché']))).match(/#FF5555/g) || []).length };
+    });
+    const prim = (r.liste.match(/Primaires\s*:\s*([^●]*)/) || ['', ''])[1];
+    t('C-MUS-A1 ⭐ F04 — un muscle secondaire de deux exercices (triceps, score 2) n\'est pas listé « Primaires »',
+      r.sec.length === 2 && r.score === 2 && !/Triceps/i.test(prim), _j({ sec: r.sec, prim }));
+    t('C-MUS-A2 F04 — il est listé « Secondaires » avec le nombre d\'exercices qui le sollicitent (« ×2 »)', /Secondaires[^●]*Triceps[^●]*×2/i.test(r.liste), r.liste);
+    t('C-MUS-A3 ⭐ F04 — la figurine ne rougit pas un secondaire cumulé : autant de zones rouges avec deux exercices qu\'avec un',
+      r.rougesDeux === r.rougesUn && r.rougesUn > 0, _j({ deux: r.rougesDeux, un: r.rougesUn }));
+    t('C-MUS-A4 F04 — un vrai moteur reste rouge (pectoraux au développé couché)', r.pecRouge > 0, _j(r.pecRouge));
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      S.customExercises = [{ n: 'Curl Maison Zorglub', g: 'Bras', muscles: { p: ['quads'], s: [] } },
+        { n: 'Rowing Zorglub', g: 'Dos', muscles: { p: ['lats'], s: ['biceps'] } }, { n: 'Rowing Sans Muscles', g: 'Dos' }];
+      persist();
+      const sc = n => _mscScores([{ name: n, sets: [{ kg: 20, reps: 10, done: true, type: 'N' }] }]);
+      const curl = sc('Curl Maison Zorglub');
+      const ts = Date.now() - 864e5;
+      S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, exs: [{ name: 'Curl Maison Zorglub', sets: [{ kg: 20, reps: 10, done: true, type: 'N' }] }] }]; persist();
+      const vol = _volumeParMuscle(Date.now(), 14).liste.map(l => l.code);
+      return { curl: { prim: Object.keys(curl.prim || {}), sc: curl.sc }, vol,
+        metRowing: getExerciseMET('Rowing Zorglub'), metSans: getExerciseMET('Rowing Sans Muscles'), metCatalogue: getExerciseMET('Rowing Barre') };
+    });
+    t('C-MUS-B1 ⭐ F05 — un perso « Curl Maison Zorglub » coché quadriceps : la figurine dit quadriceps, plus biceps',
+      _j(r.curl.prim) === _j(['quads']) && !r.curl.sc.biceps, _j(r.curl));
+    t('C-MUS-B2 F05 — la figurine et Progrès disent la même chose (quadriceps)', _j(r.vol) === _j(['quads']), _j(r.vol));
+    t('C-MUS-B3 ⭐ F05 — calories : « Rowing Zorglub » (2 muscles cochés) prend la classe de SES muscles (isolation, 4) ; un perso sans muscles coché garde la règle du nom (5,5)',
+      r.metRowing === 4 && r.metSans === 5.5, _j({ coche: r.metRowing, sansMuscles: r.metSans, catalogue: r.metCatalogue }));
+    await X.cx.close();
+  }
+  {
+    /* F05, le cas le plus traître : un perso dont le NOM se résout sur une fiche du catalogue. La personne a coché d'autres
+       muscles : c'est son choix qui compte, partout (figurine ET Progrès). */
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      // la forme ABRÉGÉE d'un nom du catalogue (« Hip Thrust Barre » pour « Hip Thrust Barre (Poussée de Hanche) »), qui se
+      // résout sur sa fiche ; la personne y coche les mollets, absents de la fiche
+      const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
+      const plein = noms.find(n => / \(/.test(n) && exNomCatalogue(n.split(' (')[0]) === n && exMuscles(n) && (exMuscles(n).p || []).length && (exMuscles(n).p || []).concat(exMuscles(n).s || []).indexOf('calves') < 0);
+      const nom = plein.split(' (')[0], fiche = exMuscles(exNomCatalogue(nom));
+      S.customExercises = [{ n: nom, g: 'Jambes', muscles: { p: ['calves'], s: [] } }]; persist();
+      const o = _mscScores([{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }]);
+      const ts = Date.now() - 864e5;
+      S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, exs: [{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }] }]; persist();
+      return { nom, ficheCatalogue: fiche && fiche.p, prim: Object.keys(o.prim || {}), vol: _volumeParMuscle(Date.now(), 14).liste.map(l => l.code) };
+    });
+    t('C-MUS-B4 ⭐ F05 — un perso dont le nom se résout sur une fiche du catalogue : SES muscles cochés (mollets) passent avant la fiche, figurine et Progrès',
+      Array.isArray(r.ficheCatalogue) && r.ficheCatalogue.length > 0 && r.ficheCatalogue.indexOf('calves') < 0 && _j(r.prim) === _j(['calves']) && _j(r.vol) === _j(['calves']), _j(r));
     await X.cx.close();
   }
 }
