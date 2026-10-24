@@ -2811,8 +2811,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;color:var(--t3);">Quantité</span>
-        <input id="af-bc-grams" type="text" inputmode="decimal" step="any" value="100" oninput="_bcQtyPose=true;_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
-        <span style="font-size:13px;color:var(--t3);">g</span>
+        <input id="af-bc-grams" type="text" inputmode="decimal" step="any" value="100" oninput="_bcQtyPose=true;_bcQtyOrigine='tapee';_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
+        <span id="af-bc-unite" style="font-size:13px;color:var(--t3);">g</span>
       </div>
       <!-- ⚖️⛔⛔ D'OÙ VIENT LE NOMBRE PRÉ-REMPLI (ft-v1105) — Michel, étiquette à l'appui :
            « c'est cette prot là, toujours le même souci ». Le champ se remplit avec
@@ -2852,6 +2852,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
            diverger, et on ne saurait plus lequel croire. -->
       <div id="af-bc-total" style="display:none;font-size:12.5px;line-height:1.45;color:var(--green);margin-top:8px;font-weight:600;"></div>
       <div id="af-etat-note" style="display:none;font-size:11.5px;line-height:1.4;color:var(--orange);margin-top:7px;"></div>
+      <!-- 🥗 V2 (jalon 4) — UNE VALEUR CORRIGÉE À LA MAIN SE VOIT, ET SE RETIRE : elle reste quand la quantité change
+           (contrat du 22/10 : une correction n'est jamais effacée par un recalcul) ; « ↺ Revenir au calcul » l'enlève. -->
+      <div id="af-corr" style="display:none;font-size:11.5px;line-height:1.45;color:var(--t2);margin-top:7px;"></div>
     </div>
     <!-- ⚖️ LA QUANTITÉ SUR UNE PHRASE LIBRE (ft-v975) — Michel, devant une huile d'olive estimée
          par l'IA : « je ne peux pas mettre de poids ». Le bloc « Quantité (g) » juste au-dessus
@@ -2863,10 +2866,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          un réglage qui commande des chiffres doit se voir en même temps qu'eux. -->
     <div id="af-prop-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Calories (kcal)</div><input id="af-kcal" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines (g)</div><input id="af-prot" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides (g)</div><input id="af-carbs" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
-      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides (g)</div><input id="af-fat" type="number" inputmode="numeric" placeholder="0" oninput="_afCoherence()" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Calories (kcal)</div><input id="af-kcal" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines (g)</div><input id="af-prot" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides (g)</div><input id="af-carbs" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides (g)</div><input id="af-fat" type="number" inputmode="numeric" placeholder="?" oninput="_afSaisieValeur(this)" onchange="_afMajAncre(true)" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
     </div>
     <!-- ⛔⛔ LES CALORIES QUI NE COLLENT PAS À LEURS PROPRES MACROS — EN DIRECT (ft-v972).
          Michel : « et en direct, pas au moment de l'enregistrer ». Il avait noté « 30g de
@@ -3901,6 +3904,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
      ⚠️ AUCUN APPEL RÉSEAU : c'est un `<script>`, pas un `fetch` — l'ouverture reste
      instantanée, même hors ligne (règle d'or 4). -->
 <script src="capacites-ia.js"></script>
+<!-- 🥗 NUTRITION V2 — le moteur (D-096, jalon 4). Il calcule les valeurs consommées, écrit les lignes nouvelles et
+     lit les anciennes SANS les modifier. Pur comme `capacites-ia.js` : aucun écran, aucun stockage, aucun réseau —
+     chargé avant `app.js`, qui est le seul à l'appeler. ⛔ Précaché dans `sw.js` dans le même mouvement (leçon de
+     `supabase.js`). -->
+<script src="nutrition-v2.js"></script>
 <script src="constants.js"></script>
 <script src="state.js"></script>
 <script src="supabase.js"></script>

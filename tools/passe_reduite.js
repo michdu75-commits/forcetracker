@@ -20,7 +20,10 @@ for (const st of ast.body) { if (st.type !== 'ExpressionStatement') continue; le
   if (e && e.type === 'CallExpression' && /FunctionExpression|ArrowFunctionExpression/.test(e.callee.type) && e.callee.async) main = e.callee.body; }
 if (!main) { console.error('fonction principale introuvable'); process.exit(2); }
 const S = main.body, tx = n => src.slice(n.start, n.end);
-const EN_TETE = /console\.log\(\s*'\\n(?:═══|--|──|════)/;
+/* Nutrition V2, jalon 4 (22/10/2026) : les blocs « == BLOC … » portent leur en-tête À L'INTÉRIEUR de leur `{…}` — ils se
+   sélectionnent aussi, et un tel bloc arrête l'entraînement du bloc précédent (sinon il était joué avec lui). */
+const EN_TETE = /console\.log\(\s*'\\n(?:═══|--|──|════|==)/;
+const BLOC_EGAL = (n) => n.type === 'BlockStatement' && /console\.log\(\s*'\\n==/.test(tx(n));
 const iA = S.findIndex(n => /═══ A\. PARCOURS CROISÉ/.test(tx(n)));
 if (iA < 0) { console.error('bloc A introuvable : l\'installation ne peut pas être délimitée'); process.exit(2); }
 const garder = new Set();
@@ -29,7 +32,7 @@ for (const titre of TITRES) {
   const k = S.findIndex(n => tx(n).includes(titre) && EN_TETE.test(tx(n)));
   if (k < 0) { console.error('bloc introuvable : ' + titre); process.exit(3); }
   garder.add(k);
-  for (let j = k + 1; j < S.length && !EN_TETE.test(tx(S[j]).slice(0, 400)); j++) garder.add(j);
+  for (let j = k + 1; j < S.length && !EN_TETE.test(tx(S[j]).slice(0, 400)) && !BLOC_EGAL(S[j]); j++) garder.add(j);
 }
 S.forEach((n, i) => { if (/^await b\.close\(\)|^srv\.close\(\)|TOTAL CROISÉ|^process\.exit/.test(tx(n))) garder.add(i); });
 let out = src;

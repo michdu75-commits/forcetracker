@@ -7171,7 +7171,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     if(typeof _repasHabituels!=='function') return {err:'_repasHabituels absente'};
     const j=n=>{const d=new Date(Date.now()-n*864e5);
       return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
-    const mk=(d,meal,name,kcal,prot)=>({date:d,meal,name,kcal,prot,carbs:0,fat:0,ts:Date.now()+Math.random()*1e3});
+    /* 🥗 V2 (jalon 4, D-101 ③) — chaque ligne porte sa quantité : en V2, un aliment SANS quantité n'est pas re-noté par
+       un repas habituel (il est NOMMÉ à la place, B-NV2P P8 ②). Ce bloc parle de l'HABITUDE, pas de la quantité. */
+    const mk=(d,meal,name,kcal,prot)=>({date:d,meal,name,kcal,prot,carbs:0,fat:0,ts:Date.now()+Math.random()*1e3,q:100,u:'g'});
     S.foodLog=[
       mk(j(1),'petitdej','Shaker protéine',180,35), mk(j(1),'petitdej','Banane',90,1),
       mk(j(2),'petitdej','Shaker protéine',180,35), mk(j(2),'petitdej','Banane',90,1),
@@ -7261,6 +7263,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     document.getElementById('af-desc').value='Shaker protéine';
     document.getElementById('af-kcal').value=180;
     document.getElementById('af-prot').value=35;
+    /* 🥗 V2 (jalon 4, D-099) — une saisie à la main donne son POIDS, sinon rien ne s'enregistre (B-NV2P P3 ②). */
+    { const k=document.getElementById('af-kcal'); k.dispatchEvent(new Event('input',{bubbles:true})); k.dispatchEvent(new Event('change',{bubbles:true}));
+      const p=document.getElementById('af-poids'); if(p){ p.value='300'; p.dispatchEvent(new Event('input',{bubbles:true})); p.dispatchEvent(new Event('blur')); } }
     addFoodEntry();
     await new Promise(r=>setTimeout(r,300));
     switchNuTab('macros',document.getElementById('ntab-macros'));
@@ -9912,9 +9917,17 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.nomRepris = (document.getElementById('af-desc').value==='30g protéine + banane');
     o.listeFermee = ((document.getElementById('af-sugg')||{}).innerHTML||'')==='';
     /* ⛔⑤ ET LA PROVENANCE DIT « historique », PAS « saisie neuve » : la brique 0 sépare
-       exprès COMMENT c'est entré et D'OÙ vient le chiffre. */
-    const prov=_provFood(_afLuFormulaire());
-    o.provenance = (prov.saisie==='historique' && prov.origine==='utilisateur');
+       exprès COMMENT c'est entré et D'OÙ vient le chiffre.
+       🥗 V2 (jalon 4) — `_provFood` est retiré (D-101) : la provenance que la ligne ENREGISTRERAIT se lit là où le pont
+       la prend, `_n2Provenance()` (et la fiche du bloc « Quantité », `_n2FicheBc()`, pour son code et son état).
+       ⚠️ L'origine d'une reprise est « reprise » (V1 recopiait celle de la ligne d'origine, « utilisateur » par défaut —
+       la divergence transportée depuis 1b-ii) : D-101 ⑩, PROPOSÉ, décision de Michel attendue. */
+    const provV2=()=>{ const pv=_n2Provenance(), bc=document.getElementById('af-bc-row');
+                       const f=(bc && bc.style.display!=='none' && _bcNutr) ? _n2FicheBc() : null;   // comme `addFoodEntry`
+                       return {saisie:pv.saisie, origine:pv.origine, sourceId:f?(f.cle||null):null, etat:f?(f.etat||null):null}; };
+    const prov=provV2();
+    o.provenance = (prov.saisie==='historique' && prov.origine==='reprise');
+    o.provLue = JSON.stringify(prov);
     /* ⛔⑥ LE TÉMOIN CENTRAL : AUCUN appel IA n'a été consommé sur tout ce parcours. */
     o.aucunAppelIA = !urls.some(u=>/action=coach|estimate|\/exec/i.test(u));
     o.appels = urls.length;
@@ -9926,7 +9939,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
                  nutriments:{'energy-kcal_100g':350,'proteins_100g':12,'carbohydrates_100g':70,'fat_100g':2}}];
     _afSuggPrendreOff(0);
     o.offRempli = (g('af-kcal')===350);                       // 100 g par défaut
-    const p2=_provFood(_afLuFormulaire());
+    const p2=provV2();
     o.offProv = (p2.saisie==='recherche' && p2.origine==='off' && p2.etat==='tel-que-vendu');
     o.offNote = (((document.getElementById('af-etat-note')||{}).style||{}).display!=='none');
 
@@ -9988,7 +10001,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const ban=_afSuggCiq[0];
     _afSuggPrendreCiqual(0);
     o.rempliCiq = (g('af-kcal')===Math.round(ban[3]));
-    const p3=_provFood(_afLuFormulaire());
+    const p3=provV2();
     o.provCiq = (p3.saisie==='ciqual' && p3.origine==='ciqual' && String(p3.sourceId||'').indexOf('ciqual:')===0);
     /* ⛔ Pas d'état « tel-que-vendu » : CIQUAL dit le cru/cuit DANS LE NOM. */
     o.pasTelQueVendu = (p3.etat===null);
@@ -10036,7 +10049,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐⭐ reprendre une entrée remplit les 4 macros et le nom, sans rien recalculer',
       R.rempli===true && R.nomRepris===true, '');
     t('⛔ ... la provenance dit « historique », pas une saisie neuve (brique 0)',
-      R.provenance===true, '');
+      R.provenance===true, R.provLue||'');
     /* ⛔⛔ La raison d'être de toute la version. */
     t('⛔⛔ AUCUN essai IA n\'est consommé par ce chemin',
       R.aucunAppelIA===true, R.appels+' appel(s) réseau au total');
@@ -10208,6 +10221,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const eHier=S.foodLog.find(e=>e.name==='Hier midi');
     o.editableHier=(typeof openEditFood==='function');
     openEditFood(_tsVersId(eHier.ts));
+    /* 🥗 V2 (jalon 4, D-101 ④ · garde-fou du 10/09) — cette ancienne ligne n'a pas de quantité : la modifier la remplace par
+       une ligne V2, qui en exige une. On la DONNE (la personne la tape) — la garantie du témoin reste la même : un jour
+       passé se MODIFIE, il ne se contente pas d'être visible. */
+    { const q=document.getElementById('ef-q'); if(q) q.value='250'; }
     document.getElementById('ef-kcal').value=520;
     saveEditFood();
     o.hierModifie=(S.foodLog.find(e=>e.ts===eHier.ts)||{}).kcal===520;
@@ -10239,6 +10256,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     openAddFood();
     document.getElementById('af-desc').value='Ajout en remontant';
     document.getElementById('af-kcal').value=200;
+    /* 🥗 V2 (jalon 4, D-099) — une saisie à la main donne son POIDS : sans lui rien ne s'enregistre (B-NV2P P3 ②). Le
+       vrai geste : on tape les calories (le bloc quantité apparaît), puis le poids, puis on ferme le clavier. */
+    { const k=document.getElementById('af-kcal'); k.dispatchEvent(new Event('input',{bubbles:true})); k.dispatchEvent(new Event('change',{bubbles:true}));
+      const p=document.getElementById('af-poids'); if(p){ p.value='150'; p.dispatchEvent(new Event('input',{bubbles:true})); p.dispatchEvent(new Event('blur')); } }
     addFoodEntry();
     const ajoute=S.foodLog.find(e=>e.name==='Ajout en remontant');
     o.backfillDate=ajoute && ajoute.date===jourVise;
@@ -10283,9 +10304,16 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const o={};
     if(typeof _efApplyGrams!=='function'){ o.absente=true; return o; }
     const tsAvecPer100=Date.now(), tsManuel=Date.now()+1;
+    /* 🥗 V2 (jalon 4) — en V2, le champ grammes de « Modifier » est celui d'une ligne À FICHE DE CONFIANCE (une ancienne
+       ligne au pour-100 g non vérifié ne se recalcule plus — M1). La ligne « avec pour-100 g » est donc une ligne V2
+       pesée, écrite par le VRAI écrivain du moteur (même schéma que la production). */
+    const _v2=NUT2.ligneNouvelle({id:_foodLineId(), ts:tsAvecPer100, date:today(), repas:'dejeuner', nom:'Riz (CIQUAL)',
+      origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:100,prot:10,carbs:20,fat:5}, cle:'ciqual:99999', source:'ciqual', fiab:'source'},
+      quantite:{val:150, unite:'g'}});
+    if(!_v2.ok){ o.absente=true; o.err='fixture V2 refusée : '+_v2.erreur; return o; }
     S.foodLog=[
-      {date:today(),meal:'dejeuner',name:'Riz (CIQUAL)',kcal:150,prot:15,carbs:30,fat:8,
-       per100:{kcal:100,prot:10,carbs:20,fat:5},q:150,u:'g',ts:tsAvecPer100},
+      _v2.ligne,
       {date:today(),meal:'diner',name:'Manuel',kcal:80,prot:2,carbs:10,fat:2,per100:null,ts:tsManuel},
     ];
 
@@ -10313,16 +10341,22 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     openEditFood(_tsVersId(tsManuel));
     o.champAbsentManuel=!document.getElementById('ef-grams');
     document.getElementById('ef-kcal').value=90;
+    /* 🥗 V2 (jalon 4, garde-fou du 10/09) — sans quantité, la modification est REFUSÉE (rien n'est inventé)… */
     saveEditFood();
-    const mApres=S.foodLog.find(e=>e.ts===tsManuel);
+    o.manuelRefuseSansQ=(S.foodLog.find(e=>e.ts===tsManuel)||{}).kcal===80;
+    /* … et avec celle que la personne tape, elle passe : c'est SA quantité, jamais une valeur par défaut. */
+    { const q=document.getElementById('ef-q'); if(q) q.value='100'; }
+    document.getElementById('ef-kcal').value=90;
+    saveEditFood();
+    const mApres=S.foodLog.find(e=>e.ts===tsManuel)||{};
     o.manuelSauve=mApres.kcal===90;
-    o.manuelPasDeQ=mApres.q===undefined;
+    o.manuelPasDeQ=(mApres.q===100 && mApres.u==='g');
 
     return o;
   });
 
   console.log('\n-- LXXXV. Modifier le poids d\'une entrée du journal --');
-  if(R.absente){ t('⛔ le recalcul par grammes existe', false, 'fonction absente'); }
+  if(R.absente){ t('⛔ le recalcul par grammes existe', false, R.err||'fonction absente'); }
   else{
     t('⭐ une entrée avec per100 affiche un champ « quantité (g) »', R.champPresent===true, '');
     t('⭐ pré-rempli avec la quantité déjà enregistrée (150 g), pas recalculée', R.grammesInit===true, '');
@@ -10331,8 +10365,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⛔ enregistrer sauve les macros recalculées', R.kcalSauve===true, '');
     t('⛔ ... et la nouvelle quantité (q/u), pour la prochaine modification', R.qSauve===true, '');
     t('⛔⛔ une entrée MANUELLE (per100 null) n\'a PAS de champ grammes', R.champAbsentManuel===true, '');
-    t('⛔ elle reste modifiable comme avant (macros brutes)', R.manuelSauve===true, '');
-    t('⛔ ... et on n\'invente pas une quantité qu\'elle n\'a jamais eue', R.manuelPasDeQ===true, '');
+    t('⛔ elle reste modifiable (macros brutes) — avec la quantité que la personne tape (V2, garde-fou du 10/09)', R.manuelSauve===true, '');
+    t('⛔ ... et on n\'invente pas une quantité qu\'elle n\'a jamais eue : sans quantité tapée, la ligne n\'est PAS modifiée ; avec, c\'est la sienne (100 g)',
+      R.manuelRefuseSansQ===true && R.manuelPasDeQ===true, JSON.stringify({refuse:R.manuelRefuseSansQ, q:R.manuelPasDeQ}));
   }
   await cx.close();
 }
@@ -10836,8 +10871,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   const R=await pg.evaluate(()=>{
     const o={};
     if(typeof _efCoherence!=='function'||typeof _efApplyProp!=='function'){ o.absente=true; return o; }
-    const t=today(), ts1=Date.now(), ts2=Date.now()+1, ts3=Date.now()+2;
+    const t=today(), ts1=Date.now(), ts2=Date.now()+1, ts3=Date.now()+2, ts4=Date.now()+3;
     S.foodLog=[
+      /* 🥗 V2 (jalon 4) — une ancienne ligne AVEC sa quantité, sans fiche vérifiée (la jumelle de B-NV2P P11 ③). */
+      {date:t,meal:'dejeuner',name:'Riz cuit',kcal:260,prot:5,carbs:56,fat:1,q:200,u:'g',ts:ts4},
       /* LA VRAIE LIGNE DE MICHEL, chiffres compris (R17). */
       {date:t,meal:'petitdej',name:'30g de protéines',kcal:1117,prot:26,carbs:1,fat:1,ts:ts1},
       /* sans ancrage : ni per100, ni q, ni quantite dans le nom */
@@ -10846,12 +10883,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       {date:t,meal:'dejeuner',name:'200 g de riz',kcal:260,prot:5,carbs:56,fat:1,ts:ts3},
     ];
 
-    /* ⭐⭐ ① LA QUANTITE EST LUE DANS LE NOM (« 30g ») — aucun per100 necessaire. */
+    /* 🥗 V2 (jalon 4) — ① (la quantité LUE DANS LE NOM devient la référence), ③ (le rescale par proportion) et ④ (les
+       portions sans ancrage) sont RETIRÉS de l'écran « Modifier » (R30) : une ancienne ligne sans fiche vérifiée n'y est plus
+       recalculée (D-101 ③ ⑧ — son couple valeurs / quantité peut être faux, M6), et un nombre écrit dans un nom n'est pas une
+       donnée. L'écran demande la quantité ; pour un calcul, on retrouve l'aliment par la recherche ou le scan (P11, P12). */
     openEditFood(_tsVersId(ts1));
-    const prop=document.getElementById('ef-prop');
-    o.champProp=!!prop;
-    o.propInit=prop?prop.value:'';
-    o.refAffichee=/lu dans le nom/.test((document.getElementById('ov-edit-food')||{}).innerHTML||'');
     /* ⛔⛔ ② L'INCOHERENCE SE VOIT DES L'OUVERTURE, sans rien toucher. */
     const coh=document.getElementById('ef-coherence');
     o.alerteVue=coh&&coh.style.display!=='none';
@@ -10863,23 +10899,29 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     _efCorrigerKcal(117);
     o.corrigeSurDemande=(document.getElementById('ef-kcal')||{}).value==='117';
     o.alerteDisparait=(document.getElementById('ef-coherence')||{}).style.display==='none';
-    /* ⭐⭐ ③ CHANGER LA QUANTITE RESCALE LES 4 VALEURS (30 -> 60 = x2). */
-    document.getElementById('ef-prop').value=60; _efApplyProp();
-    const L=id=>(document.getElementById(id)||{}).value;
-    o.x2 = L('ef-kcal')==='234' && L('ef-prot')==='52' && L('ef-carbs')==='2' && L('ef-fat')==='2';
-    /* ⛔⛔ ET DEUX REGLAGES DE SUITE NE S'EMPILENT PAS (on repart toujours de la base). */
-    document.getElementById('ef-prop').value=90; _efApplyProp();
-    o.pasDEmpilement = L('ef-prot')==='78';        // 26 x 3, pas 26 x 2 x 3
-    document.getElementById('ef-prop').value=30; _efApplyProp();
-    o.retourBase = L('ef-prot')==='26';
+    /* 🥗 V2 — la ligne n'avait pas de quantité : la personne DIT laquelle (30 g), et la correction est enregistrée avec. */
+    { const q=document.getElementById('ef-q'); if(q) q.value='30'; }
     saveEditFood();
+    const l1=S.foodLog.find(e=>e.ts===ts1)||{};
+    o.corrigeeEnregistree=(l1.kcal===117 && l1.q===30 && l1.u==='g');
 
-    /* ⛔ ④ SANS AUCUN ANCRAGE : pas de champ poids invente, mais des PORTIONS. */
+    /* ⛔⛔ 🥗 V2 (D-101 ⑧, la jumelle de B-NV2P P11 ③) — une ancienne ligne À QUANTITÉ, sans fiche : une AUTRE quantité
+       avec les mêmes valeurs ne passe pas (elles valent pour 200 g) ; en les corrigeant, elle passe. */
+    openEditFood(_tsVersId(ts4));
+    { const q=document.getElementById('ef-q'); if(q) q.value='300'; }
+    saveEditFood();
+    const l4a=S.foodLog.find(e=>e.ts===ts4)||{};
+    o.autreQteRefusee=(l4a.q===200 && l4a.kcal===260);
+    openEditFood(_tsVersId(ts4));
+    { const q=document.getElementById('ef-q'); if(q) q.value='300';
+      const k=document.getElementById('ef-kcal'); if(k){ k.value='390'; k.dispatchEvent(new Event('input',{bubbles:true})); } }
+    saveEditFood();
+    const l4b=S.foodLog.find(e=>e.ts===ts4)||{};
+    o.autreQteCorrigee=(l4b.q===300 && l4b.kcal===390);
+
+    /* ⛔ ④ SANS AUCUN ANCRAGE : aucun poids inventé — l'écran demande la quantité, il n'en pose aucune. */
     openEditFood(_tsVersId(ts2));
-    o.pasDeChampPoids=!document.getElementById('ef-prop');
-    o.aDesPortions=/_efApplyPortion/.test((document.getElementById('ov-edit-food')||{}).innerHTML||'');
-    _efApplyPortion(2);
-    o.portionX2=(document.getElementById('ef-kcal')||{}).value==='1330';
+    o.pasDeChampPoids=!document.getElementById('ef-prop') && (document.getElementById('ef-q')||{value:'ABSENT'}).value==='';
 
     /* ⛔⛔ ⑤ UNE LIGNE COHERENTE NE DECLENCHE AUCUNE ALERTE (R19 : pas de cri pour un arrondi). */
     openEditFood(_tsVersId(ts3));
@@ -10937,21 +10979,20 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   console.log('\n-- XCI. La quantité pour toutes les entrées + les kcal qui ne collent pas --');
   if(R.absente){ t('⛔ le rescale par proportion existe', false, 'fonction absente'); }
   else{
-    t('⭐⭐ la quantité est LUE DANS LE NOM (« 30g de protéines ») — aucun per100 nécessaire',
-      R.champProp===true && R.propInit==='30', 'init='+R.propInit);
-    t('⭐ ... et la référence est annoncée à l\'écran', R.refAffichee===true, '');
+
     t('⛔⛔ 1117 kcal pour 26 P / 1 G / 1 L : l\'alerte se voit DÈS L\'OUVERTURE',
       R.alerteVue===true && R.alerteDit117===true && R.alerteDit1117===true, '');
     t('⛔⛔ ... mais RIEN n\'est corrigé tout seul (R29 — on montre, la personne tranche)',
       R.pasAutoCorrige===true, '');
     t('⭐ le bouton corrige quand on le demande, et l\'alerte disparaît',
       R.corrigeSurDemande===true && R.alerteDisparait===true, '');
-    t('⭐⭐ changer la quantité (30 → 60) RESCALE les 4 valeurs', R.x2===true, '');
-    t('⛔⛔ deux réglages de suite ne s\'EMPILENT pas (30→60→90 donne ×3, pas ×6)',
-      R.pasDEmpilement===true && R.retourBase===true, '');
-    t('⛔ sans aucun ancrage : AUCUN poids inventé, on propose des PORTIONS',
-      R.pasDeChampPoids===true && R.aDesPortions===true, '');
-    t('⭐ ... et une portion ×2 double bien les valeurs', R.portionX2===true, '');
+    t('⭐ 🥗 V2 : la ligne sans quantité est enregistrée avec la quantité que la personne DIT (30 g) et sa correction (117)',
+      R.corrigeeEnregistree===true, '');
+    t('⛔⛔ 🥗 V2 (D-101 ⑧) : une AUTRE quantité (300 g) avec les valeurs de 200 g NON retouchées ne passe pas — la ligne n\'est pas modifiée',
+      R.autreQteRefusee===true, '');
+    t('⭐ ... et avec les valeurs corrigées (390 kcal), elle passe : 300 g · 390 kcal', R.autreQteCorrigee===true, '');
+    t('⛔ sans aucun ancrage : AUCUN poids inventé — l\'écran demande la quantité, il n\'en pose aucune',
+      R.pasDeChampPoids===true, '');
     t('⛔⛔ une ligne COHÉRENTE ne déclenche aucune alerte (un contrôle qui crie pour rien meurt)',
       R.pasDAlerteSiCoherent===true, '');
     if(R.pasDeSaisie){ t('⛔ le contrôle existe aussi À LA SAISIE', false, 'fonction absente'); }
@@ -11230,6 +11271,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.ia_visible=visible();
     o.ia_champPoids=!!document.getElementById('af-prop');
     o.ia_valeurInitiale=V('af-prop');
+    /* 🥗 V2 (jalon 4, D-101 ①) — le poids supposé par l'IA n'est plus PRÉ-REMPLI : il devient une PASTILLE (un toucher). */
+    o.ia_pastille=(document.getElementById('af-prop-pastille')||{dataset:{}}).dataset.q;
     o.ia_ditSource=/estim[ée] par l.IA/i.test(bloc().textContent);
     /* ⭐⭐ 15 g -> 20 g : les 4 valeurs suivent en proportion (135 x 20/15 = 180). */
     set('af-prop',20); _afApplyProp();
@@ -11253,6 +11296,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     _afMajAncre();
     o.nom_champPoids=!!document.getElementById('af-prop');
     o.nom_valeur=V('af-prop');
+    o.nom_pastille=(document.getElementById('af-prop-pastille')||{dataset:{}}).dataset.q;
     o.nom_ditSource=/lu dans ta phrase/i.test(bloc().textContent);
     set('af-prop',40); _afApplyProp();
     o.nom_apres40=lus();
@@ -11269,9 +11313,17 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
        structurellement — des multiplicateurs sont offerts, aucun nombre de grammes n'est
        affiché, et le bloc DIT comment obtenir un vrai poids. Michel a demandé que le
        cul-de-sac disparaisse ; la garantie, elle, reste. */
-    o.rien_aDesPortions=bloc().querySelectorAll('button[onclick^="_afApplyPortion"]').length>=5;
+    /* 🥗 V2 (jalon 4, D-099) — les grammes d'abord, la portion en dernier recours : l'onglet « portions » est proposé,
+       et une portion n'est une quantité qu'avec son nom et son POIDS (sans lui, « ×2 » ne multiplie rien). */
+    o.rien_aDesPortions=!!bloc().querySelector('button[onclick="_afSetUnite(\'portion\')"]');
     o.rien_aucunGrammeAffiche=!/\d+\s*g\b/.test(bloc().textContent);
     o.rien_ditPourquoi=/poids/i.test(bloc().textContent)&&/grammes/i.test(bloc().textContent);
+    _afSetUnite('portion');
+    _afApplyPortion(2);
+    o.rien_x2SansPoids=lus();
+    { const n=document.getElementById('af-pnom'), w=document.getElementById('af-ppoids');
+      if(n){ n.value='assiette'; n.dispatchEvent(new Event('input',{bubbles:true})); }
+      if(w){ w.value='250'; w.dispatchEvent(new Event('input',{bubbles:true})); } }
     _afApplyPortion(2);
     o.rien_x2=lus();
 
@@ -11295,8 +11347,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   else{
     t('⛔ un formulaire VIERGE ne propose rien', R.vide_cache===true, '');
     t('⭐⭐ LE CAS DE MICHEL : apres une estimation IA, un vrai champ POIDS apparait, ancre sur le poids suppose',
-      R.ia_visible===true && R.ia_champPoids===true && R.ia_valeurInitiale==='15',
-      'visible='+R.ia_visible+' champ='+R.ia_champPoids+' valeur='+R.ia_valeurInitiale);
+      /* 🥗 V2 (D-101 ①) : le champ est là, VIDE, et le poids de l'IA est PROPOSÉ en pastille (15 g) — jamais pré-rempli. */
+      R.ia_visible===true && R.ia_champPoids===true && R.ia_valeurInitiale==='' && R.ia_pastille==='15',
+      'visible='+R.ia_visible+' champ='+R.ia_champPoids+' valeur='+R.ia_valeurInitiale+' pastille='+R.ia_pastille);
     t('⭐ ... et l\'ecran DIT que ce poids est une estimation, pas une mesure (R32)',
       R.ia_ditSource===true, '');
     t('⭐⭐ 15 g -> 20 g : les 4 valeurs suivent (135 -> 180 kcal, 15 -> 20 g de lipides)',
@@ -11307,15 +11360,16 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⛔⛔ LE POIDS DE L\'IA N\'APPARTIENT QU\'A SA PHRASE : elle change, il ne sert plus',
       R.phraseChangee_pasDePoidsIA===true && R.phraseChangee_portions===true, '');
     t('⭐ sans IA, le nombre ecrit dans la phrase sert de repere (« 20 g d\'huile d\'olive »)',
-      R.nom_champPoids===true && R.nom_valeur==='20' && R.nom_ditSource===true,
-      'champ='+R.nom_champPoids+' valeur='+R.nom_valeur);
+      R.nom_champPoids===true && R.nom_valeur==='' && R.nom_pastille==='20' && R.nom_ditSource===true,
+      'champ='+R.nom_champPoids+' valeur='+R.nom_valeur+' pastille='+R.nom_pastille);
     t('⭐ ... et le doubler double les valeurs', R.nom_apres40==='360/0/0/40', 'lu : '+R.nom_apres40);
     t('⛔⛔ AUCUN ANCRAGE : des MULTIPLICATEURS, et aucun poids inventé (R29)',
       R.rien_pasDeChampPoids===true && R.rien_aDesPortions===true
       && R.rien_aucunGrammeAffiche===true && R.rien_ditPourquoi===true,
       JSON.stringify({champ:R.rien_pasDeChampPoids,mult:R.rien_aDesPortions,
                       zeroGramme:R.rien_aucunGrammeAffiche,dit:R.rien_ditPourquoi}));
-    t('⭐ ... et une portion x2 double bien les 4 valeurs', R.rien_x2==='400/8/40/20', 'lu : '+R.rien_x2);
+    t('⛔ D-099 : « ×2 » SANS le poids d\'une portion ne multiplie rien', R.rien_x2SansPoids==='200/4/20/10', 'lu : '+R.rien_x2SansPoids);
+    t('⭐ ... et avec son nom et son poids, une portion x2 double bien les 4 valeurs', R.rien_x2==='400/8/40/20', 'lu : '+R.rien_x2);
     t('⛔⛔ R2 : un pour-100 g connu GARDE la main (le bloc du scan ne se dedouble pas)',
       R.scan_blocPropCache===true, '');
     t('⛔ R15 : rouvrir le formulaire rend le poids de l\'IA et le bloc',
@@ -11918,8 +11972,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       {const _g=document.getElementById('af-bc-grams');
        if(_g){ _g.value='100'; _g.dispatchEvent(new Event('input',{bubbles:true})); }}
       await new Promise(r=>setTimeout(r,220));
-      document.getElementById('af-kcal').value='29';    // il corrige à la main
-      document.getElementById('af-prot').value='7';
+      /* 🥗 V2 (jalon 4, contrat du 22/10 · CR-2) — il corrige À LA MAIN, par la frappe : sur une fiche, une valeur
+         retouchée est une CORRECTION gardée et tracée par-dessus le calcul (`_afCorr` → `n2.corr`). Le geste réel déclenche
+         la saisie ; poser `.value` seul n'est pas une frappe (l'écran ne le saurait pas). */
+      { const k=document.getElementById('af-kcal'); k.value='29'; k.dispatchEvent(new Event('input',{bubbles:true}));
+        const p=document.getElementById('af-prot'); p.value='7'; p.dispatchEvent(new Event('input',{bubbles:true})); }
       /* ⚠️ ft-v1190 — CE RELEVÉ EXISTE PARCE QUE CE BLOC A ROUGI EN PASSE COMPLÈTE ALORS QU'IL
          PASSAIT EN ISOLÉ, et que le message ne disait pas POURQUOI. *Un témoin qui échoue sans
          dire ce qu'il a vu coûte une passe entière à chaque hypothèse.* */
@@ -11946,7 +12003,13 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
                    libelle:(document.getElementById('af-bc-name')||{}).textContent,
                    kcal:document.getElementById('af-kcal').value };
         document.getElementById('af-bc-grams').value='50'; _bcApplyGrams();
-        o.a50g={ kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value };
+        /* 🥗 V2 (D-096, Michel : « une modification manuelle est conservée et tracée ») — à 50 g, la correction RESTE dans
+           les champs, et le calcul pour 50 g se LIT à côté (« calcul : 24 ») ; « ↺ Revenir au calcul » le remet dans les champs. */
+        const corr=document.getElementById('af-corr');
+        o.a50g={ kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value,
+                 corrVue:!!(corr && corr.style.display!=='none'), corrTxt:(corr && corr.textContent)||'' };
+        const rv=corr && corr.querySelector('button[onclick="_afRevenirAuCalcul()"]'); if(rv) rv.click();
+        o.revenu={ bouton:!!rv, kcal:document.getElementById('af-kcal').value, prot:document.getElementById('af-prot').value };
       }
 
       // ③ une entrée tapée À LA MAIN n'a pas de per100 → pas de bloc, aucun poids inventé
@@ -11976,8 +12039,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
      Aujourd'hui 10,9 x 0,5 = 5,45 -> 5, la vraie valeur. *Un attendu cale sur un artefact
      d'arrondi rougit le jour ou on retire l'artefact : c'est le TEMOIN qu'on corrige, pas le
      code.* Verifie par l'arithmetique sur `data/ciqual.json`, pas deduit. */
-  t('⭐ … mais elles suivent dès qu\'on change la quantité (50 g → 24 kcal · 5 g)',
-    Q.a50g && Q.a50g.kcal==='24' && Q.a50g.prot==='5', JSON.stringify(Q.a50g));
+  /* ↪️ RÉÉCRIT LE 23/10/2026 (intégration Nutrition V2 × P1, trouvé par sa passe complète ; rouge aussi sur la branche V2
+     seule, vert sur master). L'ancien attendu — « elles suivent la quantité : 24 · 5 » — voulait dire que la quantité
+     EFFAÇAIT la correction à la main pour recalculer depuis la fiche. V2 applique D-096 (Michel, VALIDÉ : « une
+     modification manuelle est conservée et tracée ») : la correction reste, signalée, et le CALCUL pour 50 g se lit à côté.
+     Le chiffre gardé du témoin (24 · 5, le calcul pour 50 g, simple arrondi) est inchangé ; il est lu là où V2 le montre,
+     puis remis dans les champs par le geste « ↺ Revenir au calcul ». Texte d'avant : `git show 04eb7bcb:tests/parcours/runner.js`. */
+  t('⭐ … et à 50 g le CALCUL suit la quantité (24 kcal · 5 g) : en V2 il se lit à côté de la correction gardée (D-096), et « ↺ Revenir au calcul » le remet dans les champs',
+    Q.a50g && Q.a50g.kcal==='29' && Q.a50g.prot==='7' && Q.a50g.corrVue && /calcul : 24\b/.test(Q.a50g.corrTxt) && /calcul : 5\b/.test(Q.a50g.corrTxt)
+    && Q.revenu && Q.revenu.bouton && Q.revenu.kcal==='24' && Q.revenu.prot==='5', JSON.stringify({ a50g:Q.a50g, revenu:Q.revenu }));
   t('⛔⛔ QUANTITÉ : une entrée tapée à la main n\'a PAS le bloc — aucun poids inventé (R29)',
     Q.sansPer100 && Q.sansPer100.bloc===false, JSON.stringify(Q.sansPer100));
 
@@ -12113,14 +12183,21 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       return vraiFetch.apply(this,arguments);
     };
     o.saisies=[]; o.douteux=[];
-    const lire=()=>{ const pr=_provFood({kcal:100,prot:10,carbs:5,fat:2})||{};
-                     return {s:pr.saisie, d:('codeDouteux' in pr)?pr.codeDouteux:'(absent)'}; };
+    /* 🥗 V2 (jalon 4) — `_provFood` est retiré (D-101) : la saisie et le drapeau « code douteux » que la ligne
+       ENREGISTRERAIT se lisent là où le pont les prend — `_n2Provenance()` et les signaux de `_n2Extras()` (le
+       moteur les recopie tels quels sur la ligne : `codeDouteux` n'y est posé que lorsqu'il vaut true). */
+    const lire=()=>{ const pv=_n2Provenance(), sg=(_n2Extras()||{}).signaux||{};
+                     return {s:pv.saisie, d:('codeDouteux' in sg)?sg.codeDouteux:'(absent)'}; };
     try{
       openAddFood();
-      // ⭐ CHEMIN 1 — la caméra : elle appelle _lookupBarcode SANS préciser, donc « scan »
+      // ⭐ CHEMIN 1 — la caméra. 🥗 V2 (jalon 4) : son nom est `camera-code-local` (l'ancien « scan », que le moteur LIT
+      //   encore mais n'ÉCRIT plus) — et c'est aussi le repli d'un appel sans origine dite, comme ici (`BUGS.md` §94 :
+      //   le repli « scan » faisait refuser la ligne par le moteur, rien ne s'écrivait).
       await _lookupBarcode('3017620422003');                    let r=lire();
       o.saisies.push(r.s); o.douteux.push(r.d);
-      // ⭐ CHEMIN 2 — la photo décodée par ZXing (clé vérifiée par le lecteur)
+      // ⭐ CHEMIN 2 — la photo décodée par ZXing (clé vérifiée par le lecteur). 🥗 V2 : `photo-code` est ORPHELIN depuis le
+      //   retrait de `onBarcodeFile` (aucun appelant en production) et le moteur le refuserait à l'écriture ; il reste
+      //   DISTINCT ici, c'est tout ce que ce témoin lui demande.
       await _lookupBarcode('3017620422003','photo-code');        r=lire();
       o.saisies.push(r.s); o.douteux.push(r.d);
       // ⭐ CHEMIN 3 — la photo lue par l'IA, avec un code DOUTEUX (un chiffre changé)
@@ -12156,7 +12233,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   {
     const s=(K.saisies||[]).join(',');
     t('⭐⭐ les QUATRE chemins écrivent QUATRE provenances distinctes (elles valaient toutes « scan »)',
-      s==='scan,photo-code,photo-code-ia,code-tape', 'reçu : '+s+(K.err?' · '+K.err:''));
+      s==='camera-code-local,photo-code,photo-code-ia,code-tape', 'reçu : '+s+(K.err?' · '+K.err:''));
     t('⭐⭐ LE CAS DE MICHEL : taper les chiffres au clavier n\'est PLUS enregistré comme un « scan »',
       (K.saisies||[])[3]==='code-tape', 'reçu : '+((K.saisies||[])[3]));
     t('⭐ le drapeau « code douteux » est posé quand la clé est fausse…',
@@ -12644,14 +12721,23 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
                texte:(pr&&pr.textContent||'').replace(/\s+/g,' '),
                extrait:(pr&&pr.textContent||'').replace(/\s+/g,' ').slice(0,60) };
     };
+    /* 🥗 V2 (jalon 4) — les deux lignes sont posées DANS LE JOURNAL telles qu'elles existent, au lieu d'être saisies :
+       ① la forme réelle de Michel (une ligne d'avant V2, `per100:null` ET `q:null`) ; ② une ligne V2 pesée, écrite par le
+       VRAI écrivain du moteur (en V2, une saisie à la main sans poids ne s'enregistre plus — B-NV2P P3 ②). */
     const poser=(per100)=>{
       S.foodLog=[]; try{_afSuggVider();}catch(e){}
-      openAddFood();
-      _bcNutr = per100 ? {name:'Steak haché 5% MG',kcal100:129,prot100:21,carbs100:0,fat100:5} : null;
-      _afSetSrc({saisie:'scan',origine:'off',sourceId:'376',per100:per100||null,etat:per100?'cru':null});
-      const set=(id,v)=>{const e=document.getElementById(id); if(e)e.value=v;};
-      set('af-desc','Steak haché 5% MG'); set('af-kcal',323); set('af-prot',53); set('af-carbs',0); set('af-fat',13);
-      addFoodEntry();
+      if(!per100){
+        S.foodLog=[{id:'cxii-ancienne-0001', date:today(), meal:'dejeuner', ts:Date.now(), name:'Steak haché 5% MG',
+                    kcal:323, prot:53, carbs:0, fat:13, v:1, saisie:'scan', origine:'off', sourceId:'376',
+                    per100:null, q:null, u:null, etat:null}];
+      }else{
+        const r=NUT2.ligneNouvelle({id:_foodLineId(), ts:Date.now(), date:today(), repas:'dejeuner', nom:'Steak haché 5% MG',
+          origine:{saisie:'code-tape', origine:'off'}, mode:'pesee',
+          fiche:{base:'g', p100:per100, cle:'376', source:'off', fiab:'source', etat:'cru'}, quantite:{val:250, unite:'g'}});
+        if(!r.ok) throw new Error('fixture V2 refusée : '+r.erreur);
+        S.foodLog=[r.ligne];
+      }
+      persist();
       return S.foodLog[S.foodLog.length-1]||{};
     };
 
@@ -12659,10 +12745,18 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
     const e1=poser(null);
     o.sansPer100={per100:e1.per100, q:e1.q};
     o.sans=await reprendre('Steak');
+    /* 🥗 V2 (D-099) — une portion n'est une quantité qu'avec son nom et son POIDS : sans lui, « ×2 » ne multiplie rien ;
+       avec lui (une portion de 250 g), le moteur double. */
     if(o.sans.portions && typeof _afApplyPortion==='function'){
+      const lu=()=>({kcal:+document.getElementById('af-kcal').value, prot:+document.getElementById('af-prot').value,
+                     fat:+document.getElementById('af-fat').value});
+      _afSetUnite('portion'); _afApplyPortion(2);
+      o.x2SansPoids=lu();
+      const n=document.getElementById('af-pnom'), w=document.getElementById('af-ppoids');
+      if(n){ n.value='steak'; n.dispatchEvent(new Event('input',{bubbles:true})); }
+      if(w){ w.value='250'; w.dispatchEvent(new Event('input',{bubbles:true})); }
       _afApplyPortion(2);
-      o.x2={kcal:+document.getElementById('af-kcal').value, prot:+document.getElementById('af-prot').value,
-            fat:+document.getElementById('af-fat').value};
+      o.x2=lu();
     }
     // ② NON-RÉGRESSION : avec un pour-100 g, c'est le bloc en GRAMMES qui sert (ft-v984)
     poser({kcal:129,prot:21,carbs:0,fat:5});
@@ -12676,9 +12770,13 @@ console.log('\n-- CXII. La quantité sur un aliment repris SANS pour-100 g (ft-v
      protein (ASL) » — des fiches Open Food Facts INCOMPLÈTES (pas de valeurs /100 g), donc des
      macros tapées à la main, donc `per100:null` ET `q:null` en base. ft-v984 ne pouvait pas
      s'appliquer : sa condition exige un pour-100 g. */
-  tq('⭐⭐ LE CAS DE MICHEL : un aliment repris SANS pour-100 g propose quand même des PORTIONS',
-    Q.sans && Q.sans.portions===true, JSON.stringify(Q.sans));
-  tq('⭐ … et le ×2 double bien les 4 valeurs (323→646, 53→106, 13→26)',
+  /* 🥗 V2 (jalon 4) — « propose quand même des PORTIONS » devient « propose quand même un RÉGLAGE de quantité » : en V2
+     l'écran redevient une saisie à la main pré-remplie (grammes d'abord, la portion en dernier recours — D-099). */
+  tq('⭐⭐ LE CAS DE MICHEL : un aliment repris SANS pour-100 g propose quand même un réglage de quantité (grammes ET portions)',
+    Q.sans && Q.sans.portions===true && /grammes/i.test(Q.sans.texte) && /portions/i.test(Q.sans.texte), JSON.stringify(Q.sans));
+  tq('⛔ D-099 : « ×2 » SANS le poids d\'une portion ne multiplie rien (323 / 53 / 13 restent)',
+    Q.x2SansPoids && Q.x2SansPoids.kcal===323 && Q.x2SansPoids.prot===53 && Q.x2SansPoids.fat===13, JSON.stringify(Q.x2SansPoids));
+  tq('⭐ … et avec le poids d\'une portion, le ×2 double bien les 4 valeurs (323→646, 53→106, 13→26)',
     Q.x2 && Q.x2.kcal===646 && Q.x2.prot===106 && Q.x2.fat===26, JSON.stringify(Q.x2));
   // ⛔ R29 : sans ancre, on n'invente AUCUN poids — on n'offre que des multiplicateurs, vrais
   //    quelle que soit la portion de départ. Le texte doit le dire, pas l'inventer.
@@ -13904,13 +14002,29 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
    try{
     const o={}, t=today();
     S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
+    /* 🥗 V2 (jalon 4) — LES IDÉES NE S'APPUIENT PLUS QUE SUR UNE FICHE DE CONFIANCE (D-101 ⑥, M1) : un aliment noté sans
+       fiche vérifiée (« Shake protéiné : 120 kcal », sans poids ni pour-100 g) ne nourrit plus aucun calcul — son
+       « 2 × Shake » se calculait hors du moteur, sur une portion sans poids (D-099). La fixture note donc SES aliments
+       comme V2 les écrit : pesés sur une fiche, par le moteur lui-même. La garantie ne bouge pas : SES aliments,
+       combinés, à doses plausibles, et le silence anti-TCA. Le shake est pris 3 fois les jours d'avant (30 g) : c'est
+       ce qui fait de lui un aliment qu'il MANGE, pas seulement un favori. */
+    let _k=0;
+    const _h0=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const v2=(d,nom,p100,g,meal,ts)=>{ const r=NUT2.ligneNouvelle({id:'cxxv-ligne-'+(_k++)+'-0000', ts:ts, date:d, repas:meal,
+      nom:nom, origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee', fiche:{base:'g', p100:p100, source:'ciqual', fiab:'source'},
+      quantite:{val:g, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
+    const SHAKE={kcal:380,prot:75,carbs:8,fat:5};
     S.savedFoods=[
-      {name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1},
-      {name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}},
-      {name:'Amandes',kcal:180,prot:6,carbs:4,fat:16,per100:{kcal:600,prot:21,carbs:13,fat:53}}];
+      v2(t,'Shake protéiné',SHAKE,30,'collation',Date.now()-9e6),
+      v2(t,'Blanc de poulet',{kcal:110,prot:23,carbs:0,fat:2.4},150,'dejeuner',Date.now()-9e6),
+      v2(t,'Amandes',{kcal:600,prot:21,carbs:13,fat:53},30,'collation',Date.now()-9e6)];
     S.foodLog=[
-      {date:t,meal:'matin',name:'Flocons avoine',kcal:380,prot:13,carbs:60,fat:8,ts:Date.now()-3e6,per100:{kcal:380,prot:13,carbs:60,fat:8}},
-      {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
+      v2(_h0(3),'Shake protéiné',SHAKE,30,'collation',Date.now()-3e8),
+      v2(_h0(2),'Shake protéiné',SHAKE,30,'collation',Date.now()-2e8),
+      v2(_h0(1),'Shake protéiné',SHAKE,30,'collation',Date.now()-1e8),
+      v2(t,'Flocons avoine',{kcal:380,prot:13,carbs:60,fat:8},100,'petitdej',Date.now()-3e6),
+      v2(t,'Riz basmati',{kcal:350,prot:7,carbs:77,fat:1},100,'dejeuner',Date.now()-1e6)];
     const r=_resteDuJour(t);
     o.reste = r ? (r.prot+'|'+r.carbs+'|'+r.fat) : null;
     /* ⚠️ L'HEURE EST FIGEE A 14 h (ft-v1029) : sans elle ce temoin lit l'horloge REELLE, donc
@@ -13931,13 +14045,12 @@ console.log('\n-- CXXV. Ce qu\'il te reste à manger, traduit en TES aliments (f
        mesurant la première : ① on classe par ce qu'il MANGE (favori, puis fréquence), pas par
        ce qui est le plus dense ; ② mais la PERTINENCE passe avant — mon 1ᵉʳ jet a sorti
        « 2 × Shake protéiné » sur la ligne GLUCIDES, ce qui ne veut rien dire. */
-    S.savedFoods=[{name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1}];   // favori, 10 % de glucides
-    const _e=(d,n,k,p,c,f,per)=>({date:d,meal:'midi',name:n,kcal:k,prot:p,carbs:c,fat:f,ts:Date.now()-Math.random()*1e6,per100:per||null});
-    const _h=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
-    S.foodLog=[ _e(t,'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
-                _e(_h(1),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
-                _e(_h(2),'Riz basmati',350,7,77,1,{kcal:350,prot:7,carbs:77,fat:1}),
-                _e(_h(3),'Pain complet',420,9,85,2,{kcal:250,prot:9,carbs:48,fat:2}) ];  // 1 fois, PLUS dense
+    S.savedFoods=[v2(t,'Shake protéiné',SHAKE,30,'collation',Date.now()-9e6)];   // favori, 8 % de glucides
+    const RIZ={kcal:350,prot:7,carbs:77,fat:1};
+    S.foodLog=[ v2(t,'Riz basmati',RIZ,100,'dejeuner',Date.now()-4e5),
+                v2(_h0(1),'Riz basmati',RIZ,100,'dejeuner',Date.now()-3e5),
+                v2(_h0(2),'Riz basmati',RIZ,100,'dejeuner',Date.now()-2e5),
+                v2(_h0(3),'Pain complet',{kcal:250,prot:9,carbs:48,fat:2},168,'dejeuner',Date.now()-1e5) ];  // 1 fois, PLUS dense
     const id2=_ideesPourLeReste(_resteDuJour(t), 14);   // ⚠️ heure figée, même raison
     const ligneG=(id2.find(x=>x.macro==='carbs')||{}).idee||'';
     o.pasDeShakePourGlucides = ligneG.indexOf('Shake')<0;
@@ -14486,11 +14599,21 @@ console.log('\n-- CXXIX. « Scanner » et « Importer » sont rangés, pas retir
     /* ⛔ ON RESEME LE VRAI JOURNAL AVANT : les deux temoins ci-dessous portent sur du CONTENU,
        pas sur l'onglet. Les laisser dependre de la fixture du test precedent (un seul aliment)
        les rendrait verts ou rouges selon ce qui reste — ils ne mesureraient plus rien. */
+    /* 🥗 V2 (jalon 4) — le même journal, écrit par le MOTEUR sur une fiche pour 100 g (valeurs = la fiche, 100 g notés) :
+       les chiffres affichés ne bougent pas, mais chaque aliment a une fiche de confiance. Sans elle, « ce qu'il te reste »
+       n'a plus rien à proposer (D-101 ⑥ : une ligne sans fiche vérifiée ne nourrit plus aucun calcul) et le témoin ⑦ ne
+       mesurerait plus le CODE PARTAGÉ, seulement l'absence d'idées. */
+    let _k2=0;
+    const e2=(d,m,n,k,pr,ca,fa,h)=>{ const r=NUT2.ligneNouvelle({id:'cxxx-ligne-'+(_k2++)+'-0000',
+      ts:new Date(d+'T'+h+':00').getTime(), date:d, repas:m, nom:n, origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:k,prot:pr,carbs:ca||0,fat:fa||0}, source:'ciqual', fiab:'source'},
+      quantite:{val:100, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture '+n+' : '+r.erreur); return r.ligne; };
     S.foodLog=[];
     for(let d=0;d<4;d++){
-      S.foodLog.push(e(j(d),'petitdej','Flocons + shaker',420,38,50,8,'08:10'));
-      S.foodLog.push(e(j(d),'dejeuner','Poulet riz',700,60,80,12,'12:40'));
-      S.foodLog.push(e(j(d),'diner','Steak patates',650,55,60,20,'19:30'));
+      S.foodLog.push(e2(j(d),'petitdej','Flocons + shaker',420,38,50,8,'08:10'));
+      S.foodLog.push(e2(j(d),'dejeuner','Poulet riz',700,60,80,12,'12:40'));
+      S.foodLog.push(e2(j(d),'diner','Steak patates',650,55,60,20,'19:30'));
     }
     persist();
     switchNuTab('journal',document.getElementById('ntab-journal'));
@@ -14940,13 +15063,26 @@ console.log('\n-- CXXXIV. La bascule du soir : 20 h, décidée par Michel (ft-v1
    try{
     const o={}, t=today();
     S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
-    S.savedFoods=[
-      {name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1},
-      {name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}},
-      {name:'Amandes',kcal:180,prot:6,carbs:4,fat:16,per100:{kcal:600,prot:21,carbs:13,fat:53}}];
-    S.foodLog=[
-      {date:t,meal:'matin',name:'Flocons avoine',kcal:380,prot:13,carbs:60,fat:8,ts:Date.now()-3e6,per100:{kcal:380,prot:13,carbs:60,fat:8}},
-      {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
+    /* 🥗 V2 (jalon 4) — la fixture de CXXV, écrite par le MOTEUR : une idée ne s'appuie plus que sur une fiche de
+       confiance (D-101 ⑥), un shake noté « 120 kcal » sans poids ne nourrit plus aucun calcul (D-099). Le shake est
+       pris 3 fois les jours d'avant (30 g) : c'est sa portion OBSERVÉE qui borne l'idée, le soir comme le jour. */
+    let _k=0;
+    const _h0=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    const v2=(d,nom,p100,g,meal,ts)=>{ const r=NUT2.ligneNouvelle({id:'cxxxiv-ligne-'+(_k++)+'-0000', ts:ts, date:d, repas:meal,
+      nom:nom, origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee', fiche:{base:'g', p100:p100, source:'ciqual', fiab:'source'},
+      quantite:{val:g, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
+    const SHAKE={kcal:380,prot:75,carbs:8,fat:5}, POULET={kcal:110,prot:23,carbs:0,fat:2.4},
+          AMANDES={kcal:600,prot:21,carbs:13,fat:53}, RIZ={kcal:350,prot:7,carbs:77,fat:1};
+    const favs=()=>[ v2(t,'Shake protéiné',SHAKE,30,'collation',Date.now()-9e6),
+                     v2(t,'Blanc de poulet',POULET,150,'dejeuner',Date.now()-9e6),
+                     v2(t,'Amandes',AMANDES,30,'collation',Date.now()-9e6) ];
+    const journal=()=>[ v2(_h0(3),'Shake protéiné',SHAKE,30,'collation',Date.now()-3e8),
+                        v2(_h0(2),'Shake protéiné',SHAKE,30,'collation',Date.now()-2e8),
+                        v2(_h0(1),'Shake protéiné',SHAKE,30,'collation',Date.now()-1e8),
+                        v2(t,'Flocons avoine',{kcal:380,prot:13,carbs:60,fat:8},100,'petitdej',Date.now()-3e6),
+                        v2(t,'Riz basmati',RIZ,100,'dejeuner',Date.now()-1e6) ];
+    S.savedFoods=favs(); S.foodLog=journal();
 
     /* ⛔ LE PAS EXACT, pas « le soir en gros » : 20 h est une decision de Michel, pas un ordre
        de grandeur. 19 h doit etre le jour, 20 h le soir — a l'heure pres. */
@@ -14979,8 +15115,10 @@ console.log('\n-- CXXXIV. La bascule du soir : 20 h, décidée par Michel (ft-v1
     /* ⛔⛔ ANTI-TCA : une macro dont il ne reste qu'un huitieme couvrable DISPARAIT le soir.
        On la fabrique expres — un manque enorme de proteines — et on verifie que la ligne se TAIT
        au lieu d'afficher « il te manque 200 g » avec une idee derisoire a cote. */
-    S.foodLog=[{date:t,meal:'matin',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-3e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
-    S.savedFoods=[{name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}}];
+    /* 🥗 V2 : le riz est noté à 150 g — sa portion OBSERVÉE est la borne du soir (150 g), et c'est ce qui le garde
+       « couvrable » à 21 h ; le poulet n'est qu'un favori (aucune portion observée → le calcul générique, borné). */
+    S.foodLog=[v2(t,'Riz basmati',RIZ,150,'petitdej',Date.now()-3e6)];
+    S.savedFoods=[v2(t,'Blanc de poulet',POULET,150,'dejeuner',Date.now()-9e6)];
     const r2=_resteDuJour(t);
     const j2=_ideesPourLeReste(r2,14), s2=_ideesPourLeReste(r2,21);
     o.manqueProt = r2.prot;
@@ -14992,13 +15130,7 @@ console.log('\n-- CXXXIV. La bascule du soir : 20 h, décidée par Michel (ft-v1
     /* ⭐ LE RENDU ET LE CALCUL NE SE CONTREDISENT PAS — c'est le risque propre a une regle qui
        depend de l'heure : deux lectures de l'horloge a la minute de bascule, et le pied de bloc
        dirait « il est tard » sous une combinaison de 500 g. */
-    S.foodLog=[
-      {date:t,meal:'matin',name:'Flocons avoine',kcal:380,prot:13,carbs:60,fat:8,ts:Date.now()-3e6,per100:{kcal:380,prot:13,carbs:60,fat:8}},
-      {date:t,meal:'midi',name:'Riz basmati',kcal:350,prot:7,carbs:77,fat:1,ts:Date.now()-1e6,per100:{kcal:350,prot:7,carbs:77,fat:1}}];
-    S.savedFoods=[
-      {name:'Shake protéiné',kcal:120,prot:25,carbs:3,fat:1},
-      {name:'Blanc de poulet',kcal:165,prot:31,carbs:0,fat:3.6,per100:{kcal:110,prot:23,carbs:0,fat:2.4}},
-      {name:'Amandes',kcal:180,prot:6,carbs:4,fat:16,per100:{kcal:600,prot:21,carbs:13,fat:53}}];
+    S.foodLog=journal(); S.savedFoods=favs();
     const hJour=_blocResteHTML(t,14), hSoir=_blocResteHTML(t,21);
     o.piedJour  = /Il est tard/.test(hJour);
     o.piedSoir  = /Il est tard/.test(hSoir);
@@ -15345,9 +15477,16 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
     o.heureMesure=new Date().getHours();
     S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';S.nutritionPhase='charge';
     const J=n=>{const d=new Date(t+'T12:00:00');d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
-    const e=(d,meal,name,h,k,p,c,f)=>({date:d,meal:meal,name:name,kcal:k,prot:p,carbs:c,fat:f,
-      ts:new Date(d+'T'+String(h).padStart(2,'0')+':00:00').getTime(),
-      per100:{kcal:k,prot:p,carbs:c,fat:f}});
+    /* 🥗 V2 (jalon 4) — chaque ligne est écrite par le MOTEUR sur une fiche pour 100 g (valeurs = la fiche, 100 g
+       notés) : les chiffres ne bougent pas, mais l'aliment a une fiche de confiance. Sans elle, « ce qu'il te reste »
+       n'a plus rien à proposer (D-101 ⑥) et ce bloc mesurerait l'alignement d'une carte… absente. */
+    let _k=0;
+    const e=(d,meal,name,h,k,p,c,f)=>{ const r=NUT2.ligneNouvelle({id:'cxxxvii-ligne-'+(_k++)+'-0000',
+      ts:new Date(d+'T'+String(h).padStart(2,'0')+':00:00').getTime(), date:d, repas:meal, nom:name,
+      origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:k,prot:p,carbs:c,fat:f}, source:'ciqual', fiab:'source'},
+      quantite:{val:100, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture '+name+' : '+r.erreur); return r.ligne; };
     /* Les 5 repas, pour que les 5 libellés soient présents — dont le plus large. */
     S.foodLog=[];
     [1,3,6,9,15].forEach(dd=>{ const d=J(dd);
@@ -15357,9 +15496,14 @@ console.log('\n-- CXXXVII. Les cartes Nutrition alignées et justifiées (ft-v10
       S.foodLog.push(e(d,'collation2','Iso zero protein (ASL)',17,156,35,2,1));
       S.foodLog.push(e(d,'diner','Oeuf cru',21,140,12,1,10)); });
     S.foodLog.push(e(t,'petitdej','Banane, chair sans peau, crue',10,90,1,23,0));
+    /* Les favoris : un ancien sans fiche (il reste tel quel, et ne nourrit pas les idées) et deux écrits par le moteur. */
+    const _hl=(name,k,p,c,f,g)=>{ const r=NUT2.ligneNouvelle({id:'cxxxvii-fav-'+(_k++)+'-0000', ts:Date.now()-9e6, date:t,
+      repas:'dejeuner', nom:name, origine:{saisie:'ciqual', origine:'ciqual'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:k,prot:p,carbs:c,fat:f}, source:'ciqual', fiab:'source'}, quantite:{val:g, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('favori '+name+' : '+r.erreur); return r.ligne; };
     S.savedFoods=[{name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:2,fat:1},
-      {name:'Steak haché, 5% Matière Grasse, France, VBF (U)',kcal:137,prot:21,carbs:0,fat:5,per100:{kcal:137,prot:21,carbs:0,fat:5}},
-      {name:"Huile d'olive vierge extra",kcal:90,prot:0,carbs:0,fat:10,per100:{kcal:900,prot:0,carbs:0,fat:100}}];
+      _hl('Steak haché, 5% Matière Grasse, France, VBF (U)',137,21,0,5,100),
+      _hl("Huile d'olive vierge extra",900,0,0,100,10)];
     goScreen('nutrition'); renderNutrition();
 
     /* ── ① la carte « ce que l'app a appris » ────────────────────────────── */
@@ -16201,10 +16345,17 @@ console.log('\n-- CXLVI. La quantité sur un aliment repris de « Mes aliments �
    try{
     const o={}, dort=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
     S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
-    /* LES TROIS ORIGINES QUE MICHEL NOMME, telles que l'app les enregistre vraiment. */
+    /* LES TROIS ORIGINES QUE MICHEL NOMME, telles que l'app les enregistre vraiment.
+       🥗 V2 (jalon 4) — le CODE-BARRES est la ligne qu'écrit V2 après un scan : pesée sur la fiche Open Food Facts, par le
+       moteur (150 g × 350 · 7 · 77 · 1 pour 100 g). Une ANCIENNE ligne scannée, elle, n'a pas de fiche vérifiable : sa
+       reprise est figée (valeurs telles que notées, pour la quantité notée — D-101 ③), c'est la jumelle C1 de B-NV2P P12. */
+    const _bc=NUT2.ligneNouvelle({id:'cxlvi-riz-bc-0000', ts:Date.now()-3e6, date:t, repas:'dejeuner', nom:'Riz Basmati (Taureau Ailé)',
+      origine:{saisie:'camera-code-local', origine:'off'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:350,prot:7,carbs:77,fat:1}, cle:'3000000000460', source:'off', fiab:'source', etat:'tel-que-vendu'},
+      quantite:{val:150, unite:'g', origine:'tapee'}});
+    if(!_bc.ok) return {err:'fixture code-barres : '+_bc.erreur};
     S.foodLog=[
-      {date:t,meal:'midi',name:'Riz Basmati (Taureau Ailé)',kcal:525,prot:10,carbs:115,fat:1,ts:Date.now()-3e6,
-       saisie:'code-barres',origine:'openfoodfacts',q:150,u:'g',per100:{kcal:350,prot:7,carbs:77,fat:1}},
+      _bc.ligne,
       {date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1,ts:Date.now()-2e6,
        saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null},
       {date:t,meal:'soir',name:'Oeuf cru',kcal:280,prot:26,carbs:0,fat:20,ts:Date.now()-1e6,
@@ -17388,6 +17539,15 @@ console.log('\n-- CLX. La quantité au choix : grammes ou portions (ft-v1051) --
     ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,k)=>document.getElementById(id).value=[120,3,14,5][k]);
     _afMajAncre(); await dort(120);
     o.portions={bloc:bloc(),unite:_afUnite};
+    /* 🥗 V2 (jalon 4, D-099) — une portion n'est une quantité qu'avec son NOM et son POIDS : sans le poids, « ×2 » ne
+       multiplie RIEN (les valeurs restent celles d'une portion) ; avec lui, le moteur double. */
+    _afSetUnite('portion'); await dort(120);
+    _afApplyPortion(2); await dort(120);
+    o.x2SansPoids={macros:macros()};
+    { const n=document.getElementById('af-pnom'), w=document.getElementById('af-ppoids');
+      if(n){ n.value='part'; n.dispatchEvent(new Event('input',{bubbles:true})); }
+      if(w){ w.value='150'; w.dispatchEvent(new Event('input',{bubbles:true})); } }
+    await dort(80);
     _afApplyPortion(2); await dort(120);
     o.x2={macros:macros()};
     document.getElementById('af-desc').value='200 g de riz';
@@ -17438,11 +17598,14 @@ console.log('\n-- CLX. La quantité au choix : grammes ou portions (ft-v1051) --
       F.reprise.grammes===true && F.reprise.champG==='' && F.reprise.pastille===true,
       JSON.stringify(F.reprise));
     /* ⛔ Un réglage qui survit à son sujet a l'air d'un fait. */
-    t('⛔ l\'unité et le poids déclaré sont REMIS À ZÉRO pour l\'aliment suivant',
-      F.reprise.uniteRAZ==='portion' && F.reprise.poidsRAZ===0,
+    /* 🥗 V2 (jalon 4, D-099) — l'unité revient aux GRAMMES (l'onglet par défaut de V2), plus aux portions. */
+    t('⛔ l\'unité et le poids déclaré sont REMIS À ZÉRO pour l\'aliment suivant (grammes par défaut, D-099)',
+      F.reprise.uniteRAZ==='g' && F.reprise.poidsRAZ===0,
       JSON.stringify({u:F.reprise.uniteRAZ,p:F.reprise.poidsRAZ}));
     /* ⛔ NON-RÉGRESSIONS — ce sont elles qui rendent le reste lisible. */
-    t('⛔ NON-RÉGRESSION : les portions ½/1/1½/2/3 marchent toujours (×2 → 240 kcal)',
+    t('⛔ D-099 : « ×2 » SANS le poids d\'une portion ne multiplie rien (120 kcal restent ceux d\'une portion)',
+      F.x2SansPoids.macros.join('/')==='120/3/14/5', JSON.stringify(F.x2SansPoids.macros));
+    t('⛔ NON-RÉGRESSION : avec son nom et son poids (« part » de 150 g), ×2 double tout → 240 kcal',
       F.x2.macros.join('/')==='240/6/28/10', JSON.stringify(F.x2.macros));
     t('⛔ NON-RÉGRESSION : un poids LU DANS LA PHRASE garde son chemin d\'origine',
       F.phrase.lu===true, F.phrase.bloc.slice(-110));
@@ -17475,10 +17638,16 @@ console.log('\n-- CLXI. « La dernière fois » : proposé, jamais imposé (ft-v
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms)), t=today();
     S.bw=85;S.age=46;S.height=178;S.gender='H';S.goal='muscle';
-    /* LA RATATOUILLE DE MICHEL : un code-barres, donc un pour-100 g, et une boîte de 250 g. */
-    S.foodLog=[{date:t,meal:'midi',name:'Ratatouille (Bonduelle)',kcal:150,prot:3,carbs:18,fat:7,
-      ts:Date.now()-3e6,saisie:'code-barres',origine:'openfoodfacts',q:250,u:'g',
-      per100:{kcal:60,prot:1,carbs:7,fat:3}}];
+    /* LA RATATOUILLE DE MICHEL : un code-barres, donc un pour-100 g, et une boîte de 250 g.
+       🥗 V2 (jalon 4) — en V2, « la dernière fois » se propose dans le bloc « Quantité (g) » pour une ligne À FICHE DE
+       CONFIANCE ; une ancienne ligne au pour-100 g non vérifié se reprend telle quelle, ailleurs (B-NV2P P12 ⑦). La ligne
+       est donc écrite par le VRAI écrivain du moteur, avec la fiche du scan (même schéma que la production). */
+    const _rat=NUT2.ligneNouvelle({id:_foodLineId(), ts:Date.now()-3e6, date:t, repas:'dejeuner', nom:'Ratatouille (Bonduelle)',
+      origine:{saisie:'code-tape', origine:'off'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:60,prot:1,carbs:7,fat:3}, cle:'3083680000000', source:'off', fiab:'source', etat:'tel-que-vendu'},
+      quantite:{val:250, unite:'g'}});
+    if(!_rat.ok) throw new Error('fixture V2 refusée : '+_rat.erreur);
+    S.foodLog=[_rat.ligne];
     S.savedFoods=[]; S.hiddenFoods=[]; persist();
     const ip=document.getElementById('install-popup'); if(ip)ip.classList.add('hidden');
     goScreen('nutrition'); renderNutrition();
@@ -17518,7 +17687,8 @@ console.log('\n-- CLXI. « La dernière fois » : proposé, jamais imposé (ft-v
     const k=_afQuickItems.findIndex(x=>x.name==='Soupe maison');
     quickFillFood(k); await d(220);
     o.sansQ={pastille:vis(chip()), champ:document.getElementById('af-bc-grams').value,
-             grammesVisible:vis(document.getElementById('af-bc-row'))};
+             grammesVisible:vis(document.getElementById('af-bc-row')),
+             poids:(document.getElementById('af-poids')||{value:'ABSENT'}).value};
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,220)};}
   });
@@ -17555,8 +17725,10 @@ console.log('\n-- CLXI. « La dernière fois » : proposé, jamais imposé (ft-v
     t('⛔ la pastille ne survit PAS à l\'ouverture d\'un nouvel aliment',
       F.apresOuverture.pastille===false, 'visible = '+F.apresOuverture.pastille);
     /* ⛔ NON-RÉGRESSION : sans quantité connue, rien à proposer — et rien d'inventé. */
-    t('⛔ NON-RÉGRESSION : un aliment sans quantité connue n\'affiche AUCUNE pastille',
-      F.sansQ.pastille===false && F.sansQ.grammesVisible===true && F.sansQ.champ==='',
+    /* 🥗 V2 (jalon 4) — sans quantité connue (et sans fiche de confiance), l'écran redevient une saisie à la main
+       pré-remplie : aucune pastille, aucun champ pré-rempli, et il DEMANDE pour quel poids valent ces valeurs. */
+    t('⛔ NON-RÉGRESSION : un aliment sans quantité connue n\'affiche AUCUNE pastille, rien de pré-rempli, et l\'écran demande le poids',
+      F.sansQ.pastille===false && F.sansQ.grammesVisible===false && F.sansQ.poids==='',
       JSON.stringify(F.sansQ));
   }
   await cx.close();
@@ -17584,7 +17756,9 @@ console.log('\n-- CLXII. Le favori demande le moment de la journée (ft-v1052) -
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
     const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});};
-    const mk=(dt,m,n,k,p)=>({date:dt,meal:m,name:n,kcal:k,prot:p,carbs:0,fat:0,ts:Date.now()});
+    /* 🥗 V2 (jalon 4) — la ligne porte sa quantité (40 g) : en V2, un aliment sans quantité n'est pas re-noté par un
+       repas habituel (il est NOMMÉ à la place, B-NV2P P8 ②) — et ce bloc parle du MOMENT, pas de la quantité. */
+    const mk=(dt,m,n,k,p)=>({date:dt,meal:m,name:n,kcal:k,prot:p,carbs:0,fat:0,ts:Date.now(),q:40,u:'g'});
     /* Le favori de Michel : noté DEUX fois en « Collation 2 » — c'est le moment OBSERVÉ. */
     S.foodLog=[mk(j(1),'collation2','Iso zero protein (ASL)',156,35),
                mk(j(2),'collation2','Iso zero protein (ASL)',156,35)];
@@ -18840,7 +19014,10 @@ console.log('\n-- CLXVIII. La quantité et les valeurs ne se désappairent plus 
     openAddFood(); await d(200);
     document.getElementById('af-desc').value='Iso zero protein (ASL)';
     ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{document.getElementById(id).value=[117,26,1,1][i];});
-    _afSetUnite('g'); await d(150);
+    /* 🥗 D-099 (Michel, 22/10) — LES GRAMMES SONT L'UNITÉ PAR DÉFAUT : `_afSetUnite('g')` ne redessine plus rien
+       (on y est déjà). Il tenait lieu, quand les portions étaient le défaut, du geste « je passe en grammes ». Le geste
+       réel qui reste est celui de la frappe : fermer le clavier sur une valeur (`change` → `_afMajAncre(true)`). */
+    valider('af-kcal'); await d(150);
     taper('af-poids','30'); valider('af-poids'); await d(200);
     o.depart=lire();
     /* ① le champ vidé */
@@ -19111,51 +19288,59 @@ console.log('\n-- CLXXI. Le choix d\'unité dans « Modifier l\'aliment » (ft-v
     const txt=()=>(document.getElementById('ef-qty-row')||{}).innerText||'';
     const lire=()=>({kcal:+V('ef-kcal'),prot:+V('ef-prot')});
     openEditFood(_tsVersId(ts)); await w(250);
-    o.onglets=/En grammes/.test(txt())&&/En portions/.test(txt());
+    /* 🥗 V2 (jalon 4) — « Modifier » d'une ligne SANS fiche vérifiée : la quantité se DIT (g ou ml d'abord, D-099), les
+       valeurs notées ne se recalculent pas (D-101 ⑧). Plus de poids déclaré puis de proportion (`ef-poids`, `ef-prop`) :
+       ce couple recalculait des valeurs sans fiche — retiré par conception (R30). Une portion sans poids n'est pas une
+       quantité : plus de multiplicateurs sur une ligne qui n'en avait pas. */
+    o.onglets=/En grammes/.test(txt())&&/En ml/.test(txt());
     o.culDeSac=/on ne peut pas inventer un poids/.test(txt());
-    o.portions=['½','1½','2','3'].every(x=>txt().indexOf(x)>=0);
-    _efSetUnite('g'); await w(180);
-    o.demande=/Combien pèse ce que tu as noté/.test(txt());
-    o.champVide=(V('ef-poids')||'')==='';
-    const p=document.getElementById('ef-poids'); p.value='30';
-    p.dispatchEvent(new Event('input',{bubbles:true}));
-    p.dispatchEvent(new Event('blur',{bubbles:true})); await w(200);   // ft-v1159 : le bloc se range au blur
+    o.sansMultiplicateurs=!/En portions/.test(txt()) && txt().indexOf('½')<0 && !document.getElementById('ef-prop');
+    o.demande=/indique combien tu en as mangé/.test(txt());
+    o.champVide=(V('ef-q')||'')==='';
+    const q=document.getElementById('ef-q'); q.value='30';
+    q.dispatchEvent(new Event('input',{bubbles:true})); await w(200);
     /* ⛔ DÉCLARER N'EST PAS RESCALER : dire « ce que j'ai noté pèse 30 g » ne change pas ce qui
        a été mangé — ça dit à quoi correspondent les 156 kcal affichées. */
-    o.declare={champ:V('ef-prop'), v:lire()};
-    const q=document.getElementById('ef-prop'); q.value='40';
-    q.dispatchEvent(new Event('input',{bubbles:true})); await w(180);
-    o.a40=lire();
+    o.declare={champ:V('ef-q'), v:lire()};
     saveEditFood(); await w(250);
     const e=(S.foodLog||[]).find(x=>x.ts===ts);
     o.enregistre={kcal:e.kcal,prot:e.prot,q:e.q,u:e.u};
     openEditFood(_tsVersId(ts)); await w(250);
-    o.reouvert={champ:V('ef-prop'), culDeSac:/inventer un poids/.test(txt())};
+    o.reouvert={champ:V('ef-q'), culDeSac:/inventer un poids/.test(txt())};
+    /* ⛔ D-101 ⑧ (la jumelle de l'écran d'ajout) : ces valeurs valent pour 30 g — 40 g sans les retoucher est refusé. */
+    const vus=[], _t=window.toast; window.toast=(m)=>vus.push(String(m));
+    const q2=document.getElementById('ef-q'); q2.value='40'; q2.dispatchEvent(new Event('input',{bubbles:true}));
+    saveEditFood(); await w(200); window.toast=_t;
+    const e2=(S.foodLog||[]).find(x=>x.ts===ts);
+    o.refus={q:e2.q, kcal:e2.kcal, dit:vus.some(m=>/valent pour 30/.test(m)), toasts:vus.slice(0,2)};
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,180)};}
   },TS);
   if(F.err) t('CLXXI n\'a pas pu tourner', false, F.err);
   else{
     /* ⭐⭐ SA PHRASE, MESURÉE. */
-    t('⭐⭐ SA CAPTURE : « Modifier l\'aliment » offre les DEUX unités, plus seulement des portions',
-      F.onglets===true, JSON.stringify({onglets:F.onglets,portions:F.portions}));
+    t('⭐⭐ SA CAPTURE : « Modifier l\'aliment » demande la quantité en grammes OU en ml, plus seulement des portions',
+      F.onglets===true, JSON.stringify({onglets:F.onglets}));
     t('⛔⛔ le cul-de-sac « mets la quantité dans le nom » a disparu',
       F.culDeSac===false, '');
-    /* ⛔ Non-régression : les portions restent pour qui ne connaît pas le poids. */
-    t('⛔ NON-RÉGRESSION : les 5 multiplicateurs sont toujours là (½ · 1 · 1½ · 2 · 3)',
-      F.portions===true, '');
-    t('⭐ « En grammes » DEMANDE le poids, et le champ est VIDE (rien de pré-rempli — R29)',
+    /* 🥗 D-099 (Michel, 22/10) — LES MULTIPLICATEURS SANS POIDS SONT RETIRÉS (R30) : « ×2 » d'une portion dont on
+       ne connaît pas le poids n'est pas une quantité. Ce témoin gardait leur présence ; il garde maintenant leur ABSENCE. */
+    t('⛔ D-099 : plus aucun multiplicateur sans poids (½ · 1½ · 2 · 3) sur une ligne qui n\'avait pas de portion',
+      F.sansMultiplicateurs===true, '');
+    t('⭐ la quantité est DEMANDÉE, et le champ est VIDE (rien de pré-rempli — R29)',
       F.demande===true && F.champVide===true, JSON.stringify({demande:F.demande,vide:F.champVide}));
     /* ⛔⛔ La subtilité qui rend l'écran juste. */
     t('⛔⛔ DÉCLARER n\'est pas RESCALER : 30 g posé, les 4 valeurs ne bougent pas',
       F.declare.champ==='30' && F.declare.v.kcal===156 && F.declare.v.prot===35, JSON.stringify(F.declare));
-    t('⭐ … et 40 g recalcule bien (156 → 208, 35 → 47)',
-      F.a40.kcal===208 && F.a40.prot===47, JSON.stringify(F.a40));
     /* ⭐⭐ R4 — LE TÉMOIN QUI COMPTE LE PLUS : sans lui, l'app redemande à chaque ouverture. */
-    t('⭐⭐ R4 : le poids DESCEND jusqu\'à la donnée enregistrée (q=40, u=g)',
-      F.enregistre.q===40 && F.enregistre.u==='g' && F.enregistre.kcal===208, JSON.stringify(F.enregistre));
-    t('⭐⭐ … et à la RÉOUVERTURE le champ affiche 40 : le cul-de-sac ne revient jamais',
-      F.reouvert.champ==='40' && F.reouvert.culDeSac===false, JSON.stringify(F.reouvert));
+    t('⭐⭐ R4 : la quantité DESCEND jusqu\'à la donnée enregistrée (q=30, u=g), valeurs intactes (156)',
+      F.enregistre.q===30 && F.enregistre.u==='g' && F.enregistre.kcal===156 && F.enregistre.prot===35, JSON.stringify(F.enregistre));
+    t('⭐⭐ … et à la RÉOUVERTURE le champ affiche 30 : le cul-de-sac ne revient jamais',
+      F.reouvert.champ==='30' && F.reouvert.culDeSac===false, JSON.stringify(F.reouvert));
+    /* 🥗 « 40 g recalcule bien (156 → 208) » est RETIRÉ (R30, D-101 ⑧) : sans fiche vérifiée, rien ne se recalcule.
+       Ce qui le remplace est son contraire mesuré : une autre quantité avec les valeurs de 30 g ne passe pas. */
+    t('⛔⛔ D-101 ⑧ : 40 g SANS retoucher les valeurs de 30 g est REFUSÉ — la ligne reste à 30 g / 156 kcal, et l\'écran dit pourquoi',
+      F.refus.q===30 && F.refus.kcal===156 && F.refus.dit===true, JSON.stringify(F.refus));
   }
   await cx.close();
 }
@@ -19285,7 +19470,9 @@ console.log('\n-- CLXXII. Les cartes d\'entraînement ne s\'affichent que sur «
       openAddFood(); await w(200);
       document.getElementById('af-desc').value='Iso zero protein (ASL)';
       ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{document.getElementById(id).value=[156,35,1,1][i];});
-      _afSetUnite('g'); await w(150);
+      /* 🥗 D-099 — les grammes sont l'unité par défaut : `_afSetUnite('g')` ne redessine plus rien. Le geste réel qui
+         ouvre le bloc est la frappe d'une valeur (fermer le clavier → `_afMajAncre(true)`). */
+      poser('af-kcal','156'); await w(150);
       poser('af-poids','30'); await w(200);
       poser('af-prot','0'); await w(250);
       o.zeroPose=V('af-prot');
@@ -19368,17 +19555,32 @@ console.log('\n-- CLXXII. Les 4 routes de quantité se comportent pareil (ft-v10
     _bcNutr=null; document.getElementById('af-bc-row').style.display='none';
     ['af-kcal','af-prot','af-carbs','af-fat'].forEach((id,i)=>{document.getElementById(id).value=[117,26,1,1][i];});
     document.getElementById('af-desc').value='Iso zero protein (IA)';
-    _afSetUnite('g'); await w(150); poser('af-poids','30'); await w(200);
+    /* 🥗 D-099 — les grammes sont l'unité par défaut : le geste réel est de fermer le clavier sur une valeur. */
+    poser('af-kcal','117'); await w(150); poser('af-poids','30'); await w(200);
     o.B=sonde('af','af-prop',30);
     // C — pour-100 g dans MODIFIER
+    /* 🥗 V2 (jalon 4) — dans « Modifier », seule une fiche de CONFIANCE recalcule (D-101 ⑧). La ligne de la fixture
+       est donc celle qu'écrit V2 (pesée sur l'étiquette par le moteur, 30 g → 117 · 26 · 1 · 1) ; une ancienne ligne
+       avec un pour-100 g non vérifiable s'ouvre en valeurs notées — c'est la route D ci-dessous. */
+    const _c=NUT2.ligneNouvelle({id:'clxxii-iso-0000', ts:ts, date:today(), repas:'petitdej', nom:'Iso zero protein (ASL)',
+      origine:{saisie:'photo-ia', origine:'etiquette'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:388.5,prot:88,carbs:2.8,fat:3.3}, source:'etiquette', fiab:'source'},
+      quantite:{val:30, unite:'g', origine:'tapee'}});
+    if(!_c.ok) return {err:'fixture C : '+_c.erreur};
+    S.foodLog[S.foodLog.findIndex(x=>x&&x.ts===ts)]=_c.ligne;
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openEditFood(_tsVersId(ts)); await w(250);
     o.C=sonde('ef','ef-grams',30);
-    // D — proportion dans MODIFIER
+    // D — 🥗 V2 : une ligne SANS fiche vérifiée dans MODIFIER (l'estimation IA de 156 kcal, sans quantité)
+    /* ⛔ RETIRÉE PAR CONCEPTION (R30, D-101 ⑧) : la « proportion dans Modifier » recalculait des valeurs notées sans
+       fiche, comme si leur couple avec la quantité était sûr — c'est ce couple que M6 a faussé. Ce qui reste à
+       mesurer : la quantité se DIT, les valeurs ne bougent pas, et l'ancien bloc (poids déclaré, proportion) a disparu. */
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openEditFood(_tsVersId(ts+1)); await w(250);
-    _efSetUnite('g'); await w(150); poser('ef-poids','30'); await w(220);
-    o.D=sonde('ef','ef-prop',30);
+    { const l=()=>({k:+V('ef-kcal'),p:+V('ef-prot')});
+      o.D={dep:l(), champQ:!!document.getElementById('ef-q'),
+           ancienBloc:!!(document.getElementById('ef-poids')||document.getElementById('ef-prop')||document.getElementById('ef-grams'))};
+      tape('ef-q','62,5'); await w(120); o.D.vir=l(); tape('ef-q',''); }
     /* ⛔ Et le champ vidé ne doit PAS faire annoncer un total (ft-v966) : la nuance est que les
        VALEURS se replient sur la référence, mais la phrase « pour tes n g » se TAIT. */
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
@@ -19392,36 +19594,51 @@ console.log('\n-- CLXXII. Les 4 routes de quantité se comportent pareil (ft-v10
   },TS);
   if(F.err) t('CLXXII n\'a pas pu tourner', false, F.err);
   else{
-    const R=['A','B','C','D'], nom={A:'pour-100 g·ajout',B:'proportion·ajout',C:'pour-100 g·modif',D:'proportion·modif'};
+    /* 🥗 V2 (jalon 4) — TROIS routes calculent (A, B, C), toutes par le moteur ; la 4ᵉ (D) est retirée par conception. */
+    const R=['A','B','C'], nom={A:'pour-100 g·ajout',B:'proportion·ajout',C:'pour-100 g·modif'};
     /* ⛔ Le témoin a-t-il vu quelque chose ? Sinon les égalités seraient vraies sur du vide. */
-    t('⛔ le témoin a bien VU les 4 routes rendre des valeurs de départ',
+    t('⛔ le témoin a bien VU les 3 routes qui calculent rendre des valeurs de départ',
       R.every(k=>F[k].dep.k>0 && F[k].dep.p>0), JSON.stringify(R.map(k=>nom[k]+':'+F[k].dep.k)));
     /* ⭐⭐ LA DEMANDE DE MICHEL, MESURÉE : la virgule passe PARTOUT. */
-    t('⭐⭐ « 62,5 » est lu par les 4 routes — plus une seule ne jette la virgule',
+    t('⭐⭐ « 62,5 » est lu par les 3 routes — plus une seule ne jette la virgule',
       R.every(k=>F[k].vir.k>F[k].dep.k*1.9 && F[k].vir.k<F[k].dep.k*2.2),
       JSON.stringify(R.map(k=>nom[k]+' '+F[k].dep.k+'→'+F[k].vir.k)));
     /* ⭐⭐ ET LA MÊME RÈGLE SUR LE CHAMP VIDÉ, LES 4 FOIS. */
-    t('⭐⭐ champ vidé : les 4 routes reviennent à LEUR référence — ni 0, ni valeur orpheline',
+    t('⭐⭐ champ vidé : les 3 routes reviennent à LEUR référence — ni 0, ni valeur orpheline',
       R.every(k=>F[k].vid.k>0) && R.every(k=>F[k].vid.k!==F[k].vir.k),
       JSON.stringify(R.map(k=>nom[k]+':'+F[k].vid.k)));
     /* ⛔ Le repli est la RÉFÉRENCE de chaque route, pas un nombre magique commun. */
     t('⛔ … et ce repli EST la référence : 100 g pour un pour-100 g, la dose déclarée sinon',
-      F.A.vid.p===88 && F.C.vid.p===88 && F.B.vid.k===117 && F.D.vid.k===156,
-      JSON.stringify({A:F.A.vid,B:F.B.vid,C:F.C.vid,D:F.D.vid}));
+      F.A.vid.p===88 && F.C.vid.p===88 && F.B.vid.k===117,
+      JSON.stringify({A:F.A.vid,B:F.B.vid,C:F.C.vid}));
+    /* ⛔⛔ D, RETIRÉE PAR CONCEPTION (D-101 ⑧) : sans fiche vérifiée, « Modifier » ne recalcule plus rien. Le témoin exige
+       des valeurs présentes (sinon « elles ne bougent pas » serait vrai sur du vide) et le nouveau champ de quantité. */
+    t('⛔⛔ D-101 ⑧ : dans MODIFIER, une ligne SANS fiche vérifiée ne recalcule plus — « 62,5 » laisse les valeurs notées (156)',
+      F.D.dep.k===156 && F.D.dep.p===35 && F.D.champQ===true && F.D.ancienBloc===false && F.D.vir.k===156 && F.D.vir.p===35,
+      JSON.stringify(F.D));
     /* ⛔⛔ La nuance de ft-v966, qui a rougi pendant l'écriture de cette version. */
     t('⛔⛔ les VALEURS se replient, mais la phrase « pour tes n g » se TAIT (ft-v966)',
       F.totalMuet===true, 'ligne verte affichée : '+(!F.totalMuet));
     /* ⛔ Un seul propriétaire : le jour où une 5ᵉ route apparaît, elle passe par là.
        🔁 D031S (19/10/2026) : ce témoin valait `true` en dur (« vérifié par lecture du code ») — il ne pouvait
-       pas rougir. Il MESURE désormais le code : une définition, et chacune des 4 routes l'appelle. */
+       pas rougir. Il MESURE désormais le code : une définition, et chacune des 4 routes l'appelle.
+       🥗 V2 (jalon 4) — LE PROPRIÉTAIRE DU CALCUL EST LE MOTEUR (`NUT2.calcule`, consigne de Michel du 22/10) :
+       `_qtyRescale` ne multiplie plus rien, il lui passe la référence. Les deux routes de « Modifier » passent par
+       `_efApplyFiche`, qui n'agit que sur une fiche de confiance (D-101 ⑧) et appelle `_qtyRescale` (g / ml) ou le
+       moteur (portions). Le témoin exige donc : chaque route → `_qtyRescale` (directement ou par `_efApplyFiche`),
+       et `_qtyRescale` → `NUT2.calcule`, sans aucune multiplication à lui. */
     const _srcQ=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
     const _corpsQ=(n)=>{ const m=_srcQ.match(new RegExp('function '+n+'\\s*\\(')); if(!m) return null;
       let i=_srcQ.indexOf('{',m.index),p=0,j=i; for(;j<_srcQ.length;j++){ if(_srcQ[j]==='{')p++; else if(_srcQ[j]==='}'){p--; if(!p) return _srcQ.slice(i,j+1);} } return null; };
+    const _fiche=_corpsQ('_efApplyFiche')||'';
     const _routesQ=['_bcApplyGrams','_afApplyProp','_efApplyGrams','_efApplyProp'];
-    const _fautesQ=_routesQ.map(n=>{ const c=_corpsQ(n); return c===null?n+' introuvable':(/_qtyRescale\(/.test(c)?null:n+' sans _qtyRescale'); }).filter(Boolean);
+    const _fautesQ=_routesQ.map(n=>{ const c=_corpsQ(n); if(c===null) return n+' introuvable';
+      return (/_qtyRescale\(/.test(c) || (/_efApplyFiche\(/.test(c) && /_qtyRescale\(/.test(_fiche))) ? null : n+' sans _qtyRescale'; }).filter(Boolean);
     const _defsQ=(_srcQ.match(/function _qtyRescale\s*\(/g)||[]).length;
-    t('⛔ R2 : les 4 routes passent par le MÊME moteur `_qtyRescale`',
-      _fautesQ.length===0 && _defsQ===1, (_fautesQ.join(' · ')||'4 routes')+' · définitions de _qtyRescale : '+_defsQ);
+    const _qr=(_corpsQ('_qtyRescale')||'').replace(/\/\*[\s\S]*?\*\//g,'');
+    t('⛔ R2 : les 4 routes passent par le MÊME moteur `_qtyRescale`, qui confie le calcul à `NUT2.calcule`',
+      _fautesQ.length===0 && _defsQ===1 && /NUT2\.calcule\(/.test(_qr) && !/\*\s*f\b|\bfacteur\b/.test(_qr),
+      (_fautesQ.join(' · ')||'4 routes')+' · définitions de _qtyRescale : '+_defsQ+' · moteur appelé : '+/NUT2\.calcule\(/.test(_qr));
   }
   await cx.close();
 }
@@ -23866,7 +24083,13 @@ console.log('\n-- CCXIII. Une valeur fausse qui se recopie : le « toujours » (
     document.getElementById('af-desc').value='iso'; _afSuggInput(); await w(700);
     const proposee=(_afSuggLoc||[]).length;
     _afSuggPrendreLocale(0); await w(450);
-    const rep={proposee, q:_qtyGrammesEcran('af'), prot:lu('af-prot'), brut:alerte()};
+    /* 🥗 V2 (jalon 4) — LA QUANTITÉ NOTÉE EST PROPOSÉE, JAMAIS POSÉE D'OFFICE (garde-fou du 10/09, D-075) : elle arrive à
+       l'écran sur la pastille « 30 g (la dernière fois) ». La personne la prend — et c'est À CE MOMENT que le contrôle
+       doit parler (avant, aucune quantité n'est choisie : il n'y a rien à comparer). */
+    const pas=document.getElementById('af-prop-pastille');
+    const rep={proposee, pastille:pas?(+pas.dataset.q||0):0, avant:alerte(), prot:lu('af-prot')};
+    if(typeof _afPrendreFige==='function') _afPrendreFige(); await w(250);
+    rep.q=_qtyGrammesEcran('af'); rep.brut=alerte();
     // ② le pour-100 g de la VRAIE étiquette (88 g/100 g), 30 g
     const pose=async(p100,g)=>{
       document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
@@ -23891,9 +24114,9 @@ console.log('\n-- CCXIII. Une valeur fausse qui se recopie : le « toujours » (
     t('⛔ sa ligne fausse EST bien re-proposée depuis son journal (c\'est ça, le « toujours »)',
       R.rep.proposee>=1 && String(R.rep.prot)==='35', 'proposées='+R.rep.proposee+' prot='+R.rep.prot);
     /* ⛔⛔ R4 : la quantité enregistrée doit ATTEINDRE L'ÉCRAN, sinon rien n'a de référence. */
-    t('⛔⛔ … et sa quantité enregistrée (30 g) atteint l\'écran à la reprise (R4)',
-      R.rep.q===30, 'q lue='+R.rep.q);
-    t('⛔⛔ … donc l\'erreur ne se recopie plus en silence : l\'alerte tombe à la reprise',
+    t('⛔⛔ … et sa quantité enregistrée (30 g) atteint l\'écran à la reprise (R4) — PROPOSÉE, puis prise',
+      R.rep.pastille===30 && R.rep.q===30, 'pastille='+R.rep.pastille+' q lue='+R.rep.q);
+    t('⛔⛔ … donc l\'erreur ne se recopie plus en silence : l\'alerte tombe dès que la quantité est posée',
       /ne tiennent pas dans/.test(R.rep.brut), R.rep.brut.replace(/\n/g,' ').slice(0,80));
     /* ⭐ LE CAS QUI COMPTE AUTANT : la VRAIE étiquette doit passer, et tomber JUSTE.
        88 g/100 g × 30 g = 26,4 g de protéines et 116,6 kcal — c'est le pot de Michel. */
@@ -29253,51 +29476,48 @@ console.log('\n-- CCLVII. Le champ « poids de cette portion » répond à la fr
   await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1800);
   const R=await p.evaluate(async()=>{ try{
     const o={};
-    o.fn=['_efDeclarePoids','_afDeclarePoids','_efQtyRender','_afMajAncre','openEditFood','openAddFood']
+    o.fn=['_efQtyRender','_afDeclarePoids','_efCoherence','_afMajAncre','openEditFood','openAddFood']
         .filter(f=>typeof window[f]!=='function');
     /* ⛔ CONTRÔLE n°2 — aucun `onchange` ne doit subsister sur ces deux champs : c'est LE
        mécanisme du défaut, et un `grep` sur la source ne dirait pas ce que le DOM porte. */
     const attrs={};
     // ── ÉCRAN D'ÉDITION ────────────────────────────────────────────────
+    /* 🥗 V2 (jalon 4) — « Modifier » d'une ligne SANS fiche vérifiée : la quantité se DIT dans `ef-q`, et rien ne se
+       recalcule (D-101 ⑧). Le poids déclaré puis la proportion (`ef-poids` → `ef-prop`) sont RETIRÉS par conception
+       (R30) : ils recalculaient des valeurs sans fiche. Ce que ce bloc protège ne change pas — un champ qui répond à
+       la frappe sans être reconstruit (le pavé décimal d'iOS n'a pas d'Entrée), et un sous-titre qui ne promet pas un
+       recalcul qui n'a pas lieu. La moitié « poids déclaré » vit maintenant dans la jumelle (l'écran d'ajout). */
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openEditFood(_tsVersId((S.foodLog||[])[0].ts));
     await new Promise(r=>setTimeout(r,300));
-    _efSetUnite('g'); await new Promise(r=>setTimeout(r,200));
-    const lireEf=()=>({champ:(document.getElementById('ef-poids')||{}).value,
-      aide:((document.getElementById('ef-poids-aide')||{}).textContent||''),
-      titre:((document.querySelector('#ef-qty-row div')||{}).textContent||'').slice(0,60),
+    const lireEf=()=>({champ:(document.getElementById('ef-q')||{}).value,
+      titre:((document.querySelector('#ef-qty-row div > div')||{}).textContent||'').slice(0,60),
+      note:((document.getElementById('ef-qty-row')||{}).textContent||''),
       kcal:(document.getElementById('ef-kcal')||{}).value,
-      vivant:!!document.getElementById('ef-poids')});
+      vivant:!!document.getElementById('ef-q'),
+      anciens:!!(document.getElementById('ef-poids')||document.getElementById('ef-prop'))});
     o.efDepart=lireEf();
-    const el=document.getElementById('ef-poids');
-    attrs.ef={onchange:!!el.getAttribute('onchange'), oninput:!!el.getAttribute('oninput')};
-    /* ⭐⭐ ON MARQUE LE NŒUD : s'il est remplacé par un re-rendu, la marque disparaît. C'est le
-       seul moyen de distinguer « le champ a répondu » de « le champ a été reconstruit ». */
-    el.__temoin=42;
-    el.value='5';  el.dispatchEvent(new Event('input',{bubbles:true}));
-    o.ef5=lireEf(); o.ef5.memeNoeud=(document.getElementById('ef-poids')||{}).__temoin===42;
-    el.value='50'; el.dispatchEvent(new Event('input',{bubbles:true}));
-    o.ef50=lireEf(); o.ef50.memeNoeud=(document.getElementById('ef-poids')||{}).__temoin===42;
-    /* ⛔ champ vidé → on revient à la question, et le poids déclaré retombe à 0 */
-    el.value='';   el.dispatchEvent(new Event('input',{bubbles:true}));
-    o.efVide={aide:((document.getElementById('ef-poids-aide')||{}).textContent||'').slice(0,30), declare:_efPoidsDeclare};
-    el.value='50'; el.dispatchEvent(new Event('input',{bubbles:true}));
-    el.dispatchEvent(new Event('blur',{bubbles:true}));
-    await new Promise(r=>setTimeout(r,250));
-    o.efAncre={prop:(document.getElementById('ef-prop')||{}).value,
-      kcal:(document.getElementById('ef-kcal')||{}).value,
-      titre:((document.querySelector('#ef-qty-row div')||{}).textContent||'').slice(0,60)};
-    const pr=document.getElementById('ef-prop');
-    if(pr){ pr.value='30'; pr.dispatchEvent(new Event('input',{bubbles:true})); }
-    o.efRescale={kcal:(document.getElementById('ef-kcal')||{}).value,
-      prot:(document.getElementById('ef-prot')||{}).value};
+    const el=document.getElementById('ef-q');
+    if(el){
+      attrs.ef={onchange:!!el.getAttribute('onchange'), oninput:!!el.getAttribute('oninput')};
+      /* ⭐⭐ ON MARQUE LE NŒUD : s'il est remplacé par un re-rendu, la marque disparaît. C'est le
+         seul moyen de distinguer « le champ a répondu » de « le champ a été reconstruit ». */
+      el.__temoin=42;
+      el.value='5';  el.dispatchEvent(new Event('input',{bubbles:true}));
+      o.ef5=lireEf(); o.ef5.memeNoeud=(document.getElementById('ef-q')||{}).__temoin===42;
+      el.value='50'; el.dispatchEvent(new Event('input',{bubbles:true}));
+      o.ef50=lireEf(); o.ef50.memeNoeud=(document.getElementById('ef-q')||{}).__temoin===42;
+    }
     // ── LA JUMELLE : ÉCRAN D'AJOUT (R8) ────────────────────────────────
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await new Promise(r=>setTimeout(r,300));
     const d=document.getElementById('af-desc'); if(d) d.value='Iso zero protein';
     ['kcal','prot','carbs','fat'].forEach((k,i)=>{const x=document.getElementById('af-'+k); if(x)x.value=[156,26,1,1][i];});
+    /* 🥗 D-099 : les grammes sont l'unité par défaut — `_afMajAncre(true)` (la fermeture du clavier sur une valeur)
+       ouvre directement la question du poids ; l'ancien `_afSetUnite('g')` ne faisait plus rien. */
     _afMajAncre(true); await new Promise(r=>setTimeout(r,150));
-    _afSetUnite('g'); await new Promise(r=>setTimeout(r,150));
+    const lireAf=()=>({titre:((document.querySelector('#af-prop-row div')||{}).textContent||'').slice(0,60)});
+    o.afDepart=lireAf();
     const ela=document.getElementById('af-poids');
     if(ela){
       attrs.af={onchange:!!ela.getAttribute('onchange'), oninput:!!ela.getAttribute('oninput')};
@@ -29307,12 +29527,17 @@ console.log('\n-- CCLVII. Le champ « poids de cette portion » répond à la fr
       o.af50={aide:((document.getElementById('af-poids-aide')||{}).textContent||''),
         memeNoeud:(document.getElementById('af-poids')||{}).__temoin===42,
         kcal:(document.getElementById('af-kcal')||{}).value};
+      /* ⛔ champ vidé → on revient à la question, et le poids déclaré retombe à 0 */
+      ela.value='';  ela.dispatchEvent(new Event('input',{bubbles:true}));
+      o.afVide={aide:((document.getElementById('af-poids-aide')||{}).textContent||'').slice(0,30), declare:_afPoidsDeclare};
+      ela.value='50'; ela.dispatchEvent(new Event('input',{bubbles:true}));
       ela.dispatchEvent(new Event('blur',{bubbles:true}));
       await new Promise(r=>setTimeout(r,250));
       const pa=document.getElementById('af-prop');
       if(pa){ pa.value='30'; pa.dispatchEvent(new Event('input',{bubbles:true})); }
+      o.afAncre=lireAf();
       o.afRescale={prop:(document.getElementById('af-prop')||{}).value,
-        kcal:(document.getElementById('af-kcal')||{}).value};
+        kcal:(document.getElementById('af-kcal')||{}).value, prot:(document.getElementById('af-prot')||{}).value};
     }
     o.attrs=attrs;
     return o;
@@ -29326,29 +29551,31 @@ console.log('\n-- CCLVII. Le champ « poids de cette portion » répond à la fr
   /* ⭐⭐ LE TÉMOIN QUI PORTE LA VERSION — et il mesure LE PIÈGE, pas le correctif. */
   t('CCLVII ⭐⭐ LE PIÈGE : le champ SURVIT à la frappe (le nœud n\'est pas reconstruit)',
     !!(R.ef5 && R.ef5.memeNoeud===true && R.ef50 && R.ef50.memeNoeud===true && R.ef50.champ==='50'),
-    JSON.stringify({ef5:R.ef5,ef50:R.ef50}));
-  t('CCLVII ⭐⭐ … et l\'app RÉPOND en direct : « ✅ 50 g » dès la frappe (c\'est ce qui manquait)',
-    !!(R.ef50 && /✅/.test(R.ef50.aide) && /50 g/.test(R.ef50.aide)), JSON.stringify(R.ef50&&R.ef50.aide));
-  /* ⛔⛔ LE SOUS-TITRE NE MENT PLUS — c'est le « c'est pas bon non plus » de Michel. */
-  t('CCLVII ⛔⛔ le sous-titre ne promet PLUS « recalcule » au-dessus d\'un champ qui CALE',
+    JSON.stringify({ef5:R.ef5&&{champ:R.ef5.champ,noeud:R.ef5.memeNoeud},ef50:R.ef50&&{champ:R.ef50.champ,noeud:R.ef50.memeNoeud}}));
+  /* ⛔⛔ LE SOUS-TITRE NE MENT PAS — c'est le « c'est pas bon non plus » de Michel. */
+  t('CCLVII ⛔⛔ « Modifier » : le sous-titre ne promet pas « recalcule » — il demande la quantité',
     !!(R.efDepart && !/recalcule/.test(R.efDepart.titre) && /indique/.test(R.efDepart.titre)),
     JSON.stringify(R.efDepart&&R.efDepart.titre));
-  t('CCLVII ⭐ … et il redevient « recalcule » une fois la référence posée — là c\'est vrai',
-    !!(R.efAncre && /recalcule/.test(R.efAncre.titre) && R.efAncre.prop==='50'),
-    JSON.stringify(R.efAncre));
-  /* ⛔ NON-RÉGRESSION : les 4 valeurs se calent (elles NE bougent PAS), puis suivent. */
-  t('CCLVII ⛔ déclarer un poids ne CHANGE PAS les 4 valeurs — elles se calent dessus',
-    !!(R.efDepart && R.efDepart.kcal==='156' && R.ef50 && R.ef50.kcal==='156'),
-    JSON.stringify({depart:R.efDepart&&R.efDepart.kcal, ap50:R.ef50&&R.ef50.kcal}));
-  t('CCLVII ⛔ … et une fois ancré, changer la quantité les fait suivre (50→30 : 156→94 kcal)',
-    !!(R.efRescale && R.efRescale.kcal==='94' && R.efRescale.prot==='16'), JSON.stringify(R.efRescale));
-  t('CCLVII ⛔ champ vidé → on revient à la question, le poids déclaré retombe à 0',
-    !!(R.efVide && !/✅/.test(R.efVide.aide) && /Combien/.test(R.efVide.aide) && R.efVide.declare===0),
-    JSON.stringify(R.efVide));
-  /* ⛔⛔ LA JUMELLE (R8) — un correctif posé d'un seul côté est LA faute que ce projet rattrape. */
-  t('CCLVII ⛔⛔ la JUMELLE : l\'écran d\'AJOUT se comporte exactement pareil',
-    !!(R.af50 && R.af50.memeNoeud===true && /✅/.test(R.af50.aide) && R.af50.kcal==='156'
-       && R.afRescale && R.afRescale.kcal==='94'), JSON.stringify({af50:R.af50,afRescale:R.afRescale}));
+  /* 🥗 V2 (D-101 ⑧) — « il redevient « recalcule » une fois la référence posée » et « 50→30 : 156→94 » sont RETIRÉS
+     de « Modifier » (R30) : sans fiche vérifiée, rien n'y est recalculé. Le témoin garde leur CONTRAIRE, mesuré. */
+  t('CCLVII ⛔⛔ D-101 ⑧ : l\'écran DIT que rien ne se recalcule, et taper 5 puis 50 laisse les 4 valeurs (156)',
+    !!(R.efDepart && /pas recalculées/.test(R.efDepart.note) && R.efDepart.kcal==='156'
+       && R.ef5 && R.ef5.kcal==='156' && R.ef50 && R.ef50.kcal==='156'),
+    JSON.stringify({depart:R.efDepart&&R.efDepart.kcal, a5:R.ef5&&R.ef5.kcal, a50:R.ef50&&R.ef50.kcal}));
+  t('CCLVII ⛔ R30 : l\'ancien couple « poids déclaré → proportion » n\'existe plus dans « Modifier »',
+    !!(R.efDepart && R.efDepart.vivant===true && R.efDepart.anciens===false), JSON.stringify(R.efDepart&&{vivant:R.efDepart.vivant,anciens:R.efDepart.anciens}));
+  /* ⛔⛔ LA JUMELLE (R8) — l'écran d'AJOUT garde le poids déclaré, et c'est là qu'on le mesure maintenant. */
+  t('CCLVII ⭐⭐ AJOUT : l\'app RÉPOND en direct, « ✅ 50 g » dès la frappe (c\'est ce qui manquait)',
+    !!(R.af50 && /✅/.test(R.af50.aide) && /50 g/.test(R.af50.aide) && R.af50.memeNoeud===true), JSON.stringify(R.af50));
+  t('CCLVII ⛔⛔ AJOUT : le sous-titre ne promet « recalcule » qu\'une fois la référence posée — là c\'est vrai',
+    !!(R.afDepart && !/recalcule/.test(R.afDepart.titre) && /indique/.test(R.afDepart.titre)
+       && R.afAncre && /recalcule/.test(R.afAncre.titre)), JSON.stringify({depart:R.afDepart,ancre:R.afAncre}));
+  t('CCLVII ⛔ AJOUT : déclarer un poids ne CHANGE PAS les 4 valeurs — puis 50→30 les fait suivre (156→94 kcal)',
+    !!(R.af50 && R.af50.kcal==='156' && R.afRescale && R.afRescale.kcal==='94' && R.afRescale.prot==='16'),
+    JSON.stringify({af50:R.af50&&R.af50.kcal, rescale:R.afRescale}));
+  t('CCLVII ⛔ AJOUT : champ vidé → on revient à la question, le poids déclaré retombe à 0',
+    !!(R.afVide && !/✅/.test(R.afVide.aide) && /Combien/.test(R.afVide.aide) && R.afVide.declare===0),
+    JSON.stringify(R.afVide));
   t('CCLVII aucune erreur JS pendant tout le bloc', errs.length===0, errs.join(' | '));
   await cx.close();
 }
@@ -29835,7 +30062,7 @@ console.log('\n-- CCLXI. Le scan sans valeurs ouvre le calibrage (ft-v1165) --')
 
     /* ═══ ① LA FICHE SANS VALEURS — le cas de Michel ═══ */
     openAddFood();
-    await _lookupBarcode('SANSVAL3083680085815','scan',false);
+    await _lookupBarcode('SANSVAL3083680085815','code-tape',false);   // 🥗 V2 : une porte RÉELLE — « scan » n'en est plus une (valeur ancienne, lue mais plus écrite) ; le moteur refuse une provenance inconnue
     o.nomPose=(document.getElementById('af-desc')||{}).value||'';
     o.bcNutrNull=(_bcNutr===null);
     o.calibrageOuvert=vis('af-cal-row');
@@ -29862,13 +30089,13 @@ console.log('\n-- CCLXI. Le scan sans valeurs ouvre le calibrage (ft-v1165) --')
     openAddFood();
     _calOuvrir();                                  // la personne l'a ouvert elle-même
     const avant=vis('af-cal-row');
-    await _lookupBarcode('SANSVAL3083680085815','scan',false);
+    await _lookupBarcode('SANSVAL3083680085815','code-tape',false);
     o.bascule={avant:avant, apres:vis('af-cal-row')};
 
     /* ═══ ④ NON-RÉGRESSION : une fiche AVEC ses valeurs suit EXACTEMENT l'ancien chemin ═══ */
     openAddFood();
     o.toasts.length=0;
-    await _lookupBarcode('3083680085815','scan',false);
+    await _lookupBarcode('3083680085815','code-tape',false);
     o.normale={grammes:vis('af-bc-row'), calibrage:vis('af-cal-row'),
                bcNutr:(_bcNutr&&_bcNutr.kcal100)||0, toast:o.toasts.join(' | ')};
 
@@ -29910,7 +30137,7 @@ console.log('\n-- CCLXI. Le scan sans valeurs ouvre le calibrage (ft-v1165) --')
     /* ═══ ⑦ UN NOM DÉJÀ TAPÉ N'EST PAS ÉCRASÉ (on complète, on ne décide pas — R29) ═══ */
     openAddFood();
     poser('af-desc','Ma ratatouille à moi');
-    await _lookupBarcode('SANSVAL3083680085815','scan',false);
+    await _lookupBarcode('SANSVAL3083680085815','code-tape',false);
     o.nomRespecte=(document.getElementById('af-desc')||{}).value;
 
     window.toast=vrai;
@@ -30931,58 +31158,61 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1175) --');
       e.value=v; e.dispatchEvent(new Event('input',{bubbles:true}));
       e.dispatchEvent(new Event('blur',{bubbles:true})); return true;};
 
-    /* ══ A. L'ÉCRAN D'AJOUT — le chemin exact de la vidéo ══ */
+    /* ══ A. L'ÉCRAN D'AJOUT — le chemin exact de la vidéo, rejoué sur le contrat V2 ══
+       🥗 D-099 (Michel, 22/10) : une portion sans son POIDS n'est pas une quantité — « ×2 » ne multiplie plus rien tant
+       que le poids d'une portion n'est pas dit. Le scénario de la vidéo garde donc ses nombres (312/52, 624/104), mais
+       le ×2 passe par une portion PESÉE (une dose de 30 g), et la référence en grammes est celle de deux doses (60 g). */
     fermer(); openAddFood(); await d(350);
     const i=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
     quickFillFood(i); await d(220);
     o.vu = /En grammes/.test(blocA()) && /En portions/.test(blocA());
     o.depart=mac('af');
+    _afSetUnite('portion'); await d(200);
     _afApplyPortion(2); await d(150);
-    o.x2=mac('af');                                   // ① 312 / 52
-    o.poseAvant=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;   /* ⛔ défensif : sur l'arbre d'AVANT la variable n'existe pas, et un ReferenceError ferait sauter TOUT le bloc — le contrôle négatif ne dirait plus rien */                         // FAUX : aucun poids posé, l'écran fait foi
+    o.x2SansPoids=mac('af');                          // ① D-099 : sans poids, rien n'est multiplié
+    o.demandePoids=/Indique le poids d'une portion/.test(blocA());
+    poser('af-pnom','dose'); poser('af-ppoids','30'); await d(150);
+    o.x2=mac('af');                                   // ①b la dose pesée : 312 / 52
+    o.poseAvant=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;
     _afSetUnite('g'); await d(200);
     o.enG=mac('af');                                  // ② toujours 312 / 52 : changer d'unité ne rescale rien
-    poser('af-poids','100'); await d(220);
-    o.declare100=mac('af');                           // ③ ⭐⭐ LE TÉMOIN DE LA VIDÉO
-    o.ref100=/Référence : 100 g/.test(blocA());
-    o.poseApres=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;                         // le drapeau qui départage ft-v1061 et ft-v1175
-    /* ⚠️ 200 g ET NON 50 : à 50 g, l'erreur (÷2) et le rescale (÷2) se compensent et donnent le
-       MÊME nombre des deux côtés — un témoin vert par coïncidence ne mesure rien (ft-v1163). */
-    {const e=document.getElementById('af-prop'); if(e){e.value='200'; _afApplyProp();}} await d(180);
-    o.a200=mac('af');                                 // ④ le double du poids déclaré
+    poser('af-poids','60'); await d(220);
+    o.declare60=mac('af');                            // ③ ⭐⭐ LE TÉMOIN DE LA VIDÉO
+    o.ref60=/Référence : 60 g/.test(blocA());
+    o.poseApres=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null;
+    {const e=document.getElementById('af-prop'); if(e){e.value='120'; _afApplyProp();}} await d(180);
+    o.a120=mac('af');                                 // ④ le double du poids déclaré
+    /* ⑤ RETOUR AUX PORTIONS — 🥗⛔ le poids de la dose (30 g) NE se recolle PAS en silence sur « 1 portion » (qui vaut
+       maintenant la référence posée, 60 g) : il est redemandé. Mesuré le 22/10 avant le correctif : ×1 enregistrait
+       « 1 dose (30 g) = 312 kcal » (173 g de protéines pour 100 g). */
     _afSetUnite('portion'); await d(200);
+    o.retourDemande=/Indique le poids d'une portion/.test(blocA());
+    _afApplyPortion(1); await d(120);
+    { const n0=S.foodLog.length; const vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ addFoodEntry(); }catch(e){} await d(150); window.toast=_t;
+      o.retourRefuse={avant:n0, apres:S.foodLog.length, dit:vus.some(m=>/poids d'une portion/i.test(m))}; }
+    poser('af-ppoids','60'); await d(120);
     _afApplyPortion(0.5); await d(150);
-    o.retourMoitie=mac('af');                         // ⑤ un poids réel est posé → ft-v1061 reprend la main
+    o.retourMoitie=mac('af');                         // un poids réel est posé (60 g) → ft-v1061 : ½ → 156 / 26
 
-    /* ══ B. NON-RÉGRESSION — le chemin qui marchait déjà (grammes SANS portion préalable) ══ */
+    /* ══ B. NON-RÉGRESSION — le chemin qui marchait déjà (grammes SANS portion préalable) ══
+       🥗 D-099 : les grammes sont l'unité par défaut — la reprise ouvre directement la question du poids. */
     fermer(); openAddFood(); await d(350);
     const j=_afQuickItems.findIndex(x=>x.name==='Iso zero protein (ASL)');
     quickFillFood(j); await d(220);
-    _afSetUnite('g'); await d(200);
     poser('af-poids','40'); await d(220);
     o.nrDeclare=mac('af');                            // déclarer n'est PAS rescaler
     {const e=document.getElementById('af-prop'); if(e){e.value='80'; _afApplyProp();}} await d(180);
     o.nr80=mac('af');                                 // 80 g double
 
-    /* ══ C. LA JUMELLE — « Modifier l'aliment » (R8) ══ */
+    /* ══ C. LA JUMELLE « Modifier l'aliment » — RETIRÉE PAR CONCEPTION (R30) ══
+       🥗 D-101 ⑧ + D-099 : dans « Modifier », une ligne SANS fiche vérifiée ne se recalcule plus (ni portions sans poids,
+       ni poids déclaré puis proportion) — c'est exactement le couple valeurs / quantité que M6 a faussé. Ce qui la
+       remplace est mesuré ailleurs : CLXXI (déclarer sans rescaler, refus d'une autre quantité), CLXXII route D,
+       CCLVII (le champ `ef-q` répond à la frappe). On garde ici l'absence de l'ancien bloc. */
     fermer(); openEditFood(_tsVersId(TS)); await d(320);
-    o.vuE = /En grammes/.test(blocE()) && /En portions/.test(blocE());
-    _efApplyPortion(2); await d(150);
-    o.eX2=mac('ef');
-    _efSetUnite('g'); await d(200);
-    poser('ef-poids','100'); await d(220);
-    o.eDeclare=mac('ef');
-    o.eBase=_efRef?Math.round(_efRef.base.kcal):null;  // ⭐⭐ le défaut SILENCIEUX se lit ICI
-    o.eQ=_efRef?_efRef.q:null;
-    {const e=document.getElementById('ef-prop'); if(e){e.value='50'; _efApplyProp();}} await d(180);
-    o.e50=mac('ef');
-    /* ⛔ LE PIÈGE QUE LE CORRECTIF POUVAIT CRÉER : `_efRef` ne doit pas survivre d'un aliment
-       à l'autre — sinon le suivant hériterait de la référence du précédent. */
-    S.foodLog.push({date:t,meal:'midi',name:'Riz cuit',kcal:130,prot:3,carbs:28,fat:0,
-                    ts:TS+1000,saisie:'manuel',origine:'utilisateur',q:100,u:'g',
-                    per100:{kcal:130,prot:3,carbs:28,fat:0}});
-    persist(); fermer(); openEditFood(_tsVersId(TS+1000)); await d(320);
-    o.efRefApres = _efRef ? Math.round(_efRef.base.kcal) : null;   // doit être null (branche per100)
+    o.eAncien=!!(document.getElementById('ef-poids')||document.getElementById('ef-prop')) || /½/.test(blocE());
+    o.eQ=!!document.getElementById('ef-q');
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,240)};}
   });
@@ -30993,47 +31223,35 @@ console.log('\n-- CCLXXI. Portions puis grammes (ft-v1175) --');
     t('CCLXXI ⛔ CONTRÔLE — le bloc quantité de l\'AJOUT est vu, avec ses deux onglets', V.vu===true, '');
     t('CCLXXI ⛔ CONTRÔLE — au départ, la ligne de Michel : 156 kcal / 26 g',
       V.depart[0]==='156'&&V.depart[1]==='26', JSON.stringify(V.depart));
-    t('CCLXXI ① ×2 double bien : 312 kcal / 52 g',
+    /* 🥗 D-099 — LE ×2 SANS POIDS NE MULTIPLIE PLUS (R30 : ce témoin exigeait l'inverse) ; l'écran le dit. */
+    t('CCLXXI ① ⛔ D-099 : sans le poids d\'une portion, ×2 ne multiplie RIEN (156 / 26) et l\'écran le demande',
+      V.x2SansPoids[0]==='156'&&V.x2SansPoids[1]==='26'&&V.demandePoids===true, JSON.stringify({x2:V.x2SansPoids,demande:V.demandePoids}));
+    t('CCLXXI ①b la dose PESÉE (30 g) : ×2 double bien, 312 kcal / 52 g',
       V.x2[0]==='312'&&V.x2[1]==='52', JSON.stringify(V.x2));
     t('CCLXXI ② passer en grammes ne rescale RIEN : toujours 312 / 52',
       V.enG[0]==='312'&&V.enG[1]==='52', JSON.stringify(V.enG));
-    /* ⭐⭐ LE TÉMOIN DE LA VIDÉO. Avant le correctif : 156 / 26 — l'app contredisait sa
-       propre phrase « les 4 valeurs ci-dessous correspondent à ce poids ». */
-    t('CCLXXI ③ ⭐⭐ après avoir déclaré 100 g, les 4 valeurs NE TOMBENT PLUS à 156/26 : 312 / 52',
-      V.declare100[0]==='312'&&V.declare100[1]==='52', JSON.stringify(V.declare100));
-    t('CCLXXI ③b … et la référence écrite dit bien « 100 g »', V.ref100===true, '');
-    /* ⭐⭐ LE DISCRIMINANT RENDU VISIBLE : c'est LUI qui fait cohabiter ft-v1061 et ft-v1175.
-       Sans poids réel posé, l'écran fait foi ; dès qu'il y en a un, la référence est préservée. */
+    /* ⭐⭐ LE TÉMOIN DE LA VIDÉO. Avant ft-v1175 : 156 / 26 — l'app contredisait sa propre phrase. */
+    t('CCLXXI ③ ⭐⭐ après avoir déclaré 60 g, les 4 valeurs NE TOMBENT PAS à 156/26 : 312 / 52',
+      V.declare60[0]==='312'&&V.declare60[1]==='52', JSON.stringify(V.declare60));
+    t('CCLXXI ③b … et la référence écrite dit bien « 60 g »', V.ref60===true, '');
     t('CCLXXI ③c ⭐⭐ le drapeau `_afPoidsPose` bascule : FAUX avant le poids, VRAI après',
       V.poseAvant===false && V.poseApres===true, 'avant='+V.poseAvant+' après='+V.poseApres);
-    t('CCLXXI ④ ⭐ le rescale suivant part de LÀ : 200 g → 624 / 104 (et non 312)',
-      V.a200[0]==='624'&&V.a200[1]==='104', JSON.stringify(V.a200));
-    /* ⛔⛔ ⑤ EST LE TÉMOIN QUE LE BANC D'ESSAI M'A FAIT RÉÉCRIRE, ET C'EST LE PLUS INSTRUCTIF DU
-       BLOC. Je l'attendais à 312 (« ½ de ce qui est à l'écran »). ***C'est ft-v1061 qui a raison,
-       pas moi*** : à cet instant un poids RÉEL a été posé (100 g), donc la référence n'est plus
-       l'écran — elle vaut « 100 g = 312 kcal », et une demi-portion en fait 156. Mon attente
-       d'origine venait d'un correctif TROP LARGE, qui rouvrait sa capture d'étiquette de
-       ft-v1061 (30 g → 208 kcal). *Le témoin d'hier a corrigé le correctif d'aujourd'hui.* */
-    t('CCLXXI ⑤ ⛔⛔ une fois un POIDS RÉEL posé, ft-v1061 reprend la main : ½ → 156 (et non 312)',
+    t('CCLXXI ④ ⭐ le rescale suivant part de LÀ : 120 g → 624 / 104 (et non 312)',
+      V.a120[0]==='624'&&V.a120[1]==='104', JSON.stringify(V.a120));
+    /* ⛔⛔ LE DÉFAUT TROUVÉ LE 22/10 EN RÉVISANT CE BLOC : le poids de la dose survivait au changement de référence. */
+    t('CCLXXI ⑤ ⛔⛔ RETOUR aux portions : le poids d\'une portion est REDEMANDÉ — rien ne s\'enregistre avec l\'ancien (30 g)',
+      V.retourDemande===true && V.retourRefuse.apres===V.retourRefuse.avant && V.retourRefuse.dit===true,
+      JSON.stringify({demande:V.retourDemande,refus:V.retourRefuse}));
+    t('CCLXXI ⑤b ⛔⛔ … et une fois le poids dit (60 g), ft-v1061 reprend la main : ½ → 156 / 26 (et non 312)',
       V.retourMoitie[0]==='156'&&V.retourMoitie[1]==='26', JSON.stringify(V.retourMoitie));
     /* ⛔ NON-RÉGRESSION : le chemin qui marchait doit marcher à l'identique. */
     t('CCLXXI ⑥ NON-RÉGRESSION — sans portion préalable, déclarer 40 g ne bouge rien : 156 / 26',
       V.nrDeclare[0]==='156'&&V.nrDeclare[1]==='26', JSON.stringify(V.nrDeclare));
     t('CCLXXI ⑦ NON-RÉGRESSION — 80 g double : 312 / 52',
       V.nr80[0]==='312'&&V.nr80[1]==='52', JSON.stringify(V.nr80));
-    /* ⛔ LA JUMELLE (R8) — même défaut, mais SILENCIEUX : rien ne tombe à l'écran, c'est la
-       référence qui se désappaire, et le rescale suivant divise depuis la mauvaise base. */
-    t('CCLXXI ⛔ CONTRÔLE — le bloc quantité de l\'ÉDITION est vu, avec ses deux onglets', V.vuE===true, '');
-    t('CCLXXI ⑧ édition : ×2 double bien : 312 / 52',
-      V.eX2[0]==='312'&&V.eX2[1]==='52', JSON.stringify(V.eX2));
-    t('CCLXXI ⑨ édition — après 100 g déclarés, l\'écran garde 312 / 52',
-      V.eDeclare[0]==='312'&&V.eDeclare[1]==='52', JSON.stringify(V.eDeclare));
-    t('CCLXXI ⑨b ⭐⭐ édition — et la RÉFÉRENCE vaut 312 (et non 156) : le défaut SILENCIEUX',
-      V.eBase===312&&V.eQ===100, 'base='+V.eBase+' q='+V.eQ);
-    t('CCLXXI ⑩ édition — le rescale suivant est juste : 50 → 156 (et non 78)',
-      V.e50[0]==='156'&&V.e50[1]==='26', JSON.stringify(V.e50));
-    t('CCLXXI ⑪ ⛔ `_efRef` ne survit PLUS d\'un aliment à l\'autre (le piège du correctif)',
-      V.efRefApres===null, 'base='+V.efRefApres);
+    /* 🥗 ⑧ → ⑪ (la jumelle « Modifier ») sont RETIRÉS (R30, D-101 ⑧) — voir le commentaire du bloc C. */
+    t('CCLXXI ⑧ ⛔ R30 : « Modifier » n\'a plus ni portions sans poids, ni poids déclaré puis proportion — la quantité se dit (`ef-q`)',
+      V.eAncien===false && V.eQ===true, JSON.stringify({ancien:V.eAncien,q:V.eQ}));
   }
 }
 
@@ -31081,7 +31299,7 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
       return vraiFetch(u,i);
     };
     fermer(); openAddFood(); await d(320);
-    await _lookupBarcode('3083680085496','scan'); await d(320);
+    await _lookupBarcode('3083680085496','code-tape'); await d(320);   // 🥗 V2 : une porte RÉELLE — « scan » n'en est plus une (valeur ancienne, lue mais plus écrite) ; le moteur refuse une provenance inconnue
     const bp=document.getElementById('af-bc-paquet');
     o.scan={pastille:vis('af-bc-paquet'), texte:(bp&&bp.textContent)||'',
             champ:val('af-bc-grams'), kcal:val('af-kcal')};
@@ -31093,13 +31311,13 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
     /* ══ C. UNE FICHE SANS POIDS LISIBLE NE PROPOSE RIEN ══ */
     FICHE.quantity='1 L';
     fermer(); openAddFood(); await d(320);
-    await _lookupBarcode('3083680085496','scan'); await d(320);
+    await _lookupBarcode('3083680085496','code-tape'); await d(320);
     o.volume={pastille:vis('af-bc-paquet'), champ:val('af-bc-grams')};
 
     /* ══ D. LE CAS DE MICHEL — fiche TROUVÉE, AUCUNE valeur → calibrage (ft-v1165) ══ */
     FICHE.quantity='250 g'; FICHE.nutriments={};
     fermer(); openAddFood(); await d(320);
-    await _lookupBarcode('3083680085496','scan'); await d(350);
+    await _lookupBarcode('3083680085496','code-tape'); await d(350);
     o.sansVal={calOuvert:vis('af-cal-row'), pastilleAvant:vis('af-bc-paquet')};
     ['kcal','prot','carbs','fat'].forEach((k,i)=>{const e=document.getElementById('af-cal-'+k);
       if(e) e.value=[72,1.5,5.4,4.2][i];});
@@ -31362,6 +31580,18 @@ console.log('\n-- CCLXXII. Le poids du paquet (ft-v1174) --');
    référence et sa quantité de référence sont connues et restent appariées.*
    ⚠️ CE BLOC DOIT RESTER AVANT `b.close()`. Posé après, il ne rate pas : il PLANTE. */
 console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
+/* 🥗 V2 (jalon 4) — L'INVARIANT EST TENU PLUS STRICTEMENT, ET LE BLOC LE MESURE EN DEUX MOITIÉS.
+   Ce que l'audit a montré (274 kcal pour 380 g devenus 274 pour 110 g, un pour-100 g fabriqué à 249, la dérive
+   qui suit) a une cause : on recalculait sur un COUPLE valeurs / quantité qu'on ne pouvait pas vérifier. M6 l'a
+   prouvé une seconde fois. D'où D-101 ③ ⑧ et M1 :
+     · A — une ANCIENNE ligne sans fiche vérifiable (les lignes de l'audit, au chiffre près) se reprend FIGÉE :
+       ses valeurs pour SA quantité ; une autre quantité sans retoucher les valeurs est REFUSÉE ; aucun pour-100 g
+       n'est fabriqué. Le défaut de l'audit (274 pour 110 g, 249/100 g) devient impossible PAR CONSTRUCTION.
+     · B — une ligne écrite par V2 sur une fiche de confiance (les mêmes aliments, pesés) se recalcule par le
+       MOTEUR, depuis sa fiche recopiée telle quelle : 110 g → 79, dix cycles sans dérive, la modification garde
+       la fiche, la source et le nom.
+   Les témoins V1 qui recalculaient une ligne figée par un appel interne (`_afApplyProp()` direct — un geste que
+   personne ne fait) sont remplacés par le geste réel. */
 {
   const Z=await p.evaluate(async()=>{
    try{
@@ -31372,207 +31602,192 @@ console.log('\n-- CCLXXV. L\'invariant de reprise (ft-v1177) --');
     const val=id=>String((document.getElementById(id)||{}).value||'');
     const mac=()=>['af-kcal','af-prot','af-carbs','af-fat'].map(x=>val(x));
     const vis=id=>{const x=document.getElementById(id);return !!x&&x.style.display!=='none';};
-    /* ⛔ On tape la quantité là où elle est réellement offerte : le champ absolu quand un
-       pour-100 g est connu, le champ proportionnel sinon. Une sonde qui viserait un seul des
-       deux ne testerait qu'un des deux chemins. */
-    const poserQ=async(v)=>{
-      let e=document.getElementById('af-bc-grams');
-      if(e && vis('af-bc-row')){ e.value=String(v); e.dispatchEvent(new Event('input',{bubbles:true})); }
-      else { e=document.getElementById('af-prop'); if(e){ e.value=String(v); _afApplyProp(); } }
-      await d(220);
-    };
+    const taper=(id,v)=>{const e=document.getElementById(id); if(!e) return false; e.value=String(v);
+      e.dispatchEvent(new Event('input',{bubbles:true})); return true;};
+    /* La quantité se tape là où elle est réellement offerte : le champ d'une fiche, ou celui de la reprise figée. */
+    const poserQ=async(v)=>{ if(vis('af-bc-row')) taper('af-bc-grams',v); else taper('af-prop',v); await d(220); };
+    const essayer=async()=>{ const n0=(S.foodLog||[]).length, vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ addFoodEntry(); }catch(e){} await d(300); window.toast=_t;
+      const n1=(S.foodLog||[]).length; return {ajoute:n1>n0, dit:vus.slice(0,2), l:(n1>n0)?S.foodLog[n1-1]:null}; };
     const LIGNE=(per100)=>({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',
       kcal:274,prot:4,carbs:23,fat:15,ts:Date.now()-3e6,
       saisie:'historique',origine:'off',q:380,u:'g',per100:per100});
+    let _k=0;
+    const v2=(nom,p100,g,src,extra)=>{ const r=NUT2.ligneNouvelle({id:'cclxxv-ligne-'+(_k++)+'-0000', ts:Date.now()-3e6+_k, date:t,
+      repas:'dejeuner', nom:nom, origine:(src==='off')?{saisie:'code-tape', origine:'off'}:{saisie:'manuel', origine:'utilisateur'},
+      mode:'pesee', fiche:Object.assign({base:'g', p100:p100, source:src, fiab:(src==='off')?'source':'declaree'}, extra||{}),
+      quantite:{val:g, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
+    const RATA={kcal:72,prot:1.1,carbs:6,fat:3.9};
     const semer=(l)=>{S.foodLog=[].concat(l); S.savedFoods=[]; S.hiddenFoods=[]; persist();
                       goScreen('nutrition'); renderNutrition();};
     const iQuick=(nom)=>_afQuickItems.findIndex(x=>x.name===nom);
 
-    /* ══ TEST 1+4 — sans pour-100 g : 380 g ↔ 274 kcal, on demande 110 g ══ */
+    /* ══ A1 — l'ancienne ligne de l'audit (380 g ↔ 274 kcal, sans pour-100 g) : reprise FIGÉE ══ */
     semer(LIGNE(null));
     fermer(); openAddFood(); await d(320);
     quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
-    o.t1ref = _afRef ? {base:_afRef.base.kcal, q:_afRef.q, u:_afRef.u} : null;
-    o.t1champ = val('af-prop');
+    o.a1ref = _afRef ? {base:_afRef.base.kcal, q:_afRef.q, u:_afRef.u, fige:!!_afRef.fige} : null;
+    const pas=document.getElementById('af-prop-pastille');
+    o.a1champ = val('af-prop'); o.a1pastille = pas ? (+pas.dataset.q||0) : 0;
     await poserQ(110);
-    o.t1 = mac();
+    o.a1apres110 = mac();
+    o.a1refus = await essayer();                      // ⛔ 274 kcal pour 110 g : INTERDIT
+    /* ⭐ la quantité NOTÉE, prise : la ligne part avec ses valeurs TELLES QUELLES, et aucun pour-100 g n'est fabriqué */
+    { const p2=document.getElementById('af-prop-pastille'); if(p2) p2.click(); } await d(200);
+    const a1=await essayer();
+    o.a1enr = a1.l ? {q:a1.l.q, u:a1.l.u, kcal:a1.l.kcal, per100:a1.l.per100?a1.l.per100.kcal:null,
+                      notes:(a1.l.n2&&a1.l.n2.no)||[]} : null;
 
-    /* ══ TEST 2 — ce qui est ENREGISTRÉ, puis la reprise suivante à 180 g ══ */
-    addFoodEntry(); await d(320);
-    const b1=(S.foodLog||[]).slice(-1)[0];
-    o.t2enr = {q:b1.q, u:b1.u, kcal:b1.kcal, per100:b1.per100?b1.per100.kcal:null};
+    /* ══ A2 — l'ajout DIRECT de cette ancienne ligne : q, u et valeurs gardés, rien de fabriqué ══ */
+    semer(LIGNE(RATA));
+    fermer(); openAddFood(); await d(320);
+    quickAddFood(iQuick('Ratatouille Cassegrain')); await d(320);
+    const b2=(S.foodLog||[]).slice(-1)[0];
+    o.a2 = {q:b2.q, u:b2.u, per100:b2.per100?b2.per100.kcal:null, kcal:b2.kcal, origine:b2.origine, saisie:b2.saisie,
+            sourceId:(b2.sourceId===undefined)?null:b2.sourceId};
+
+    /* ══ A3 — un ALLER-RETOUR d'unité ne dégèle pas une reprise figée ══ */
+    semer(LIGNE(null));
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
+    _afSetUnite('portion'); await d(220);
+    _afSetUnite('g'); await d(220);
+    o.a3 = {ref:_afRef?{base:_afRef.base.kcal, q:_afRef.q, fige:!!_afRef.fige}:null, kcal:val('af-kcal'),
+            pose:(typeof _afPoidsPose!=='undefined')?_afPoidsPose:null, poids:!!document.getElementById('af-poids')};
+
+    /* ══ A4 — une quantité en ml se reprend telle quelle : aucune densité inventée (R29) ══ */
+    semer({date:t,meal:'collation',name:'Sirop maison',kcal:200,prot:0,carbs:50,fat:0,
+           ts:Date.now()-7e6,saisie:'manuel',origine:'utilisateur',q:250,u:'ml',per100:null});
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Sirop maison')); await d(260);
+    o.a4 = {poids:_afPoidsDeclare, ref:_afRef?{q:_afRef.q, u:_afRef.u, fige:!!_afRef.fige}:null, bc:vis('af-bc-row')};
+
+    /* ══ B1 — la même ratatouille, PESÉE sur sa fiche (V2) : 380 g ↔ 274 kcal, puis 110 g ══ */
+    semer(v2('Ratatouille Cassegrain', RATA, 380, 'off', {cle:'3083680085496', etat:'tel-que-vendu'}));
+    fermer(); openAddFood(); await d(320);
+    quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
+    o.b1bc = vis('af-bc-row');
+    await poserQ(110);
+    o.b1 = mac();
+    const b1r = await essayer();
+    o.b1enr = b1r.l ? {q:b1r.l.q, u:b1r.l.u, kcal:b1r.l.kcal, per100:b1r.l.per100?b1r.l.per100.kcal:null} : null;
     fermer(); openAddFood(); await d(320);
     quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
     await poserQ(180);
-    o.t2 = mac();
+    o.b1a180 = mac();
 
-    /* ══ TEST 3 — avec un pour-100 g : la référence ne bouge JAMAIS ══ */
-    semer(LIGNE({kcal:72,prot:1.1,carbs:6,fat:3.9}));
-    o.t3=[];
+    /* ══ B2 — la référence d'une fiche ne bouge JAMAIS : 100 · 380 · 110 · 180 g ══ */
+    semer(v2('Ratatouille Cassegrain', RATA, 380, 'off'));
+    o.b2=[];
     for(const q of [100,380,110,180]){
       fermer(); openAddFood(); await d(300);
       quickFillFood(iQuick('Ratatouille Cassegrain')); await d(240);
       await poserQ(q);
       const k=+val('af-kcal')||0;
-      o.t3.push({q:q, kcal:k, par100:Math.round(k/q*100)});
+      o.b2.push({q:q, kcal:k, par100:Math.round(k/q*100)});
     }
 
-    /* ══ TEST 5 — quickAddFood : ajout DIRECT, rien ne doit devenir null ══ */
-    semer(LIGNE({kcal:72,prot:1.1,carbs:6,fat:3.9}));
-    fermer(); openAddFood(); await d(320);
-    quickAddFood(iQuick('Ratatouille Cassegrain')); await d(320);
-    const b2=(S.foodLog||[]).slice(-1)[0];
-    o.t5 = {q:b2.q, u:b2.u, per100:b2.per100?b2.per100.kcal:null,
-            kcal:b2.kcal, origine:b2.origine, saisie:b2.saisie};
-    /* ⛔ … et une entrée SANS pour-100 g garde au moins sa quantité (elle reste convertible). */
-    semer(LIGNE(null));
+    /* ══ B3 — l'ajout DIRECT d'une ligne V2 garde q, u ET sa fiche (plus de ligne morte) ══ */
+    semer(v2('Ratatouille Cassegrain', RATA, 380, 'off', {cle:'3083680085496', etat:'tel-que-vendu'}));
     fermer(); openAddFood(); await d(320);
     quickAddFood(iQuick('Ratatouille Cassegrain')); await d(320);
     const b3=(S.foodLog||[]).slice(-1)[0];
-    o.t5b = {q:b3.q, u:b3.u, per100:b3.per100?b3.per100.kcal:null, kcal:b3.kcal};
+    o.b3 = {q:b3.q, u:b3.u, per100:b3.per100?b3.per100.kcal:null, kcal:b3.kcal, origine:b3.origine, sourceId:b3.sourceId||null};
 
-    /* ══ ALLER-RETOUR D'UNITÉ après une reprise — le témoin que le contrôle négatif a réclamé.
-       ⛔⛔ Il vaut plus que sa place : c'est LUI qui a refusé mon premier correctif. J'y avais
-       posé `_afPoidsPose=true` en me disant qu'un poids venu d'une entrée enregistrée est un
-       vrai poids. Mesuré : après ce geste, déclarer 110 g redonnait **274 kcal** — le défaut
-       même que la version corrige. Le drapeau dit « la personne a déclaré un poids pour CE QUI
-       EST AFFICHÉ » ; un poids HÉRITÉ n'est pas cela. ══ */
-    semer(LIGNE(null));
-    fermer(); openAddFood(); await d(320);
-    quickFillFood(iQuick('Ratatouille Cassegrain')); await d(260);
-    await poserQ(110);
-    _afSetUnite('portion'); await d(220);
-    _afSetUnite('g'); await d(220);
-    {const e=document.getElementById('af-poids');
-     if(e){ e.value='110'; e.dispatchEvent(new Event('input',{bubbles:true}));
-            e.dispatchEvent(new Event('blur',{bubbles:true})); }}
-    await d(260);
-    o.tAR = mac();
-
-    /* ══ UNE QUANTITÉ EN ml N'ANCRE RIEN — on n'invente pas de densité (R29) ══ */
-    semer({date:t,meal:'collation',name:'Sirop maison',kcal:200,prot:0,carbs:50,fat:0,
-           ts:Date.now()-7e6,saisie:'manuel',origine:'utilisateur',q:250,u:'ml',per100:null});
-    fermer(); openAddFood(); await d(320);
-    quickFillFood(iQuick('Sirop maison')); await d(260);
-    o.tMl = {unite:_afUnite, poids:_afPoidsDeclare,
-             ref:_afRef?{q:_afRef.q, u:_afRef.u}:null};
-
-    /* ══ TEST 6 — le steak U, ses VRAIS chiffres, par le chemin « Mes aliments » ══ */
-    semer({date:t,meal:'dejeuner',name:'Steak haché 5% (U)',kcal:323,prot:53,carbs:0,fat:13,
-           ts:Date.now()-4e6,saisie:'scan',origine:'off',q:250,u:'g',per100:null});
+    /* ══ B4 — le steak U, ses VRAIS chiffres (250 g ↔ 323 kcal), pesé : 300 g → 388 ══ */
+    semer(v2('Steak haché 5% (U)', {kcal:129.2,prot:21.2,carbs:0,fat:5.2}, 250, 'off'));
     fermer(); openAddFood(); await d(320);
     quickFillFood(iQuick('Steak haché 5% (U)')); await d(260);
     await poserQ(300);
-    o.t6 = mac();   // 323 × 300/250 = 387,6
+    o.b4 = mac();   // 129,2 × 3 = 387,6
 
-    /* ══ TEST 7 — l'Iso Zero : 40 g ↔ 156 kcal, puis 20/40/50 g ══ */
-    semer({date:t,meal:'collation',name:'Iso zero protein (ASL)',kcal:156,prot:35,carbs:1,fat:1,
-           ts:Date.now()-5e6,saisie:'manuel',origine:'utilisateur',q:40,u:'g',per100:null});
-    o.t7=[];
+    /* ══ B5 — l'Iso Zero, noté à la main AVEC son poids (40 g ↔ 156 kcal) : 20 / 40 / 50 g ══ */
+    semer(v2('Iso zero protein (ASL)', {kcal:390,prot:87.5,carbs:2.5,fat:2.5}, 40, 'utilisateur'));
+    o.b5=[];
     for(const q of [20,40,50]){
       fermer(); openAddFood(); await d(300);
       quickFillFood(iQuick('Iso zero protein (ASL)')); await d(240);
       await poserQ(q);
-      o.t7.push({q:q, kcal:+val('af-kcal')||0, prot:+val('af-prot')||0});
+      o.b5.push({q:q, kcal:+val('af-kcal')||0, prot:+val('af-prot')||0});
     }
 
-    /* ══ TEST 9 — modifier une entrée : per100, source et nom ne bougent pas ══ */
-    const TS=Date.now()-6e6;
-    semer({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,fat:15,
-           ts:TS,saisie:'scan',origine:'off',sourceId:'3083680085496',q:380,u:'g',
-           per100:{kcal:72,prot:1.1,carbs:6,fat:3.9}});
-    fermer(); openEditFood(_tsVersId(TS)); await d(330);
-    {const g=document.getElementById('ef-grams');
-     if(g){ g.value='110'; g.dispatchEvent(new Event('input',{bubbles:true})); }}
-    await d(240);
+    /* ══ B6 — modifier la quantité d'une ligne V2 : la fiche, la source et le nom ne bougent pas ══ */
+    const L6=v2('Ratatouille Cassegrain', RATA, 380, 'off', {cle:'3083680085496', etat:'tel-que-vendu'});
+    semer(L6);
+    fermer(); openEditFood(L6.id); await d(330);
+    taper('ef-grams','110'); await d(240);
     saveEditFood(); await d(300);
-    const b4=(S.foodLog||[]).find(x=>x.ts===TS);
-    o.t9 = b4 ? {q:b4.q, kcal:b4.kcal, per100:b4.per100?b4.per100.kcal:null,
-                 origine:b4.origine, sourceId:b4.sourceId, name:b4.name} : null;
+    const b6=(S.foodLog||[]).find(x=>x.id===L6.id);
+    o.b6 = b6 ? {q:b6.q, kcal:b6.kcal, per100:b6.per100?b6.per100.kcal:null,
+                 origine:b6.origine, sourceId:b6.sourceId, name:b6.name} : null;
 
-    /* ══ TEST 10 — DIX cycles ajout → reprise → nouvelle quantité : aucune dérive ══ */
-    semer(LIGNE(null));
-    o.t10=[];
+    /* ══ B7 — DIX cycles ajout → reprise → 200 g : aucune dérive ══ */
+    semer(v2('Ratatouille Cassegrain', RATA, 380, 'off'));
+    o.b7=[];
     for(let c=0;c<10;c++){
       fermer(); openAddFood(); await d(260);
-      const i=iQuick('Ratatouille Cassegrain'); if(i<0){ o.t10.push({perdu:c}); break; }
+      const i=iQuick('Ratatouille Cassegrain'); if(i<0){ o.b7.push({perdu:c}); break; }
       quickFillFood(i); await d(220);
       await poserQ(200);
       addFoodEntry(); await d(240);
       const b=(S.foodLog||[]).slice(-1)[0];
-      o.t10.push({q:b.q, kcal:b.kcal, par100:b.per100?b.per100.kcal:null});
+      o.b7.push({q:b.q, kcal:b.kcal, par100:b.per100?b.per100.kcal:null});
     }
     return o;
    }catch(e){return {err:String(e)+' | '+(e.stack||'').slice(0,300)};}
   });
   if(Z.err) t('CCLXXV n\'a pas pu tourner', false, Z.err);
   else{
-    /* ⛔ CONTRÔLE : sans lui, tous les témoins seraient verts en ne mesurant rien. */
-    t('CCLXXV ⛔ CONTRÔLE — la reprise ancre bien les 274 kcal sur 380 g (et non sur « 1 portion »)',
-      !!Z.t1ref && Z.t1ref.base===274 && Z.t1ref.q===380 && Z.t1ref.u==='g', JSON.stringify(Z.t1ref));
-    t('CCLXXV ⛔ CONTRÔLE — et le champ s\'ouvre sur la dernière quantité connue : 380',
-      Z.t1champ==='380', 'champ='+Z.t1champ);
-    /* ⭐⭐ TEST 1 de l'audit — le témoin qui porte toute la version. */
-    t('CCLXXV ① ⭐⭐ TEST 1 — 380 g ↔ 274 kcal, on demande 110 g → 79 kcal (INTERDIT : 274)',
-      Z.t1[0]==='79', JSON.stringify(Z.t1));
-    t('CCLXXV ② TEST 4 — le calcul est bien 274 × 110/380, pas 274 × 110/110',
-      Z.t1[0]==='79' && Z.t1[1]==='1' && Z.t1[2]==='7' && Z.t1[3]==='4', JSON.stringify(Z.t1));
-    /* ⭐⭐ TEST 2 — la référence dérivée doit valoir ~72, pas 249.
-       ⚠️⚠️ VALEURS RESSERRÉES LE 10/09/2026 (ft-v1188), ET C'EST LE CAS LE PLUS DÉLICAT DE LA
-       VERSION — il faut le lire en entier avant de croire que j'ai desserré un témoin.
-       Le pour-100 g dérivé garde une décimale depuis aujourd'hui (`_per100d1`, point ③ de GPT) :
-       79 kcal pour 110 g rendent **71,8** au lieu de **72**, et la reprise à 180 g affiche
-       **129** au lieu de **130**.
-       ⛔⛔ AU PREMIER REGARD, LA DÉCIMALE A L'AIR MOINS PRÉCISE ICI — et c'est faux. Mesuré :
-         · vérité d'origine .......... 274/380 × 180 = **129,79**
-         · ce que l'app STOCKE ....... **79 kcal pour 110 g** (les totaux sont des ENTIERS)
-         · depuis cette donnée ....... 79/110 × 180 = **129,27**
-         · chemin entier (72) ........ 129,60 → 130   ← plus proche de 129,79 **par chance**
-         · chemin décimal (71,8) ..... 129,24 → 129   ← fidèle à ce qui est RÉELLEMENT stocké
-       👉 ***Le 130 d'avant venait d'une erreur d'arrondi qui pointait dans le bon sens.***
-       L'app ne PEUT PLUS connaître 129,79 : le 79 a été arrondi avant d'être écrit. **129 est la
-       seule réponse juste au regard de la donnée**, et 71,8 est la valeur exacte de « 79 pour
-       110 g ». *Le vrai plancher de précision n'est pas le pour-100 g, ce sont les totaux
-       entiers* — noté dans `docs/JOURNAL-DE-TEST.md`, hors périmètre ici.
-       ⛔ LA GARANTIE FIGÉE N'A PAS BOUGÉ D'UN POUCE : l'interdit est **249** et **448** (le
-       défaut de l'audit, un facteur 3,4). 71,8 et 129 en sont aussi loin que 72 et 130.
-       ⭐ ÉPROUVÉ, PAS SUPPOSÉ : la mutation qui rétablit le défaut d'origine les fait rougir. */
-    t('CCLXXV ③ ⭐⭐ TEST 2 — le pour-100 g enregistré vaut 71,8 (INTERDIT : 249)',
-      Z.t2enr.per100===71.8 && Z.t2enr.q===110 && Z.t2enr.kcal===79, JSON.stringify(Z.t2enr));
-    t('CCLXXV ④ ⭐⭐ TEST 2 — la reprise suivante à 180 g donne 129 kcal (INTERDIT : 448)',
-      Z.t2[0]==='129', JSON.stringify(Z.t2));
-    /* ⭐ TEST 3 — per100 immuable sur quatre quantités. */
-    t('CCLXXV ⑤ TEST 3 — avec un pour-100 g, la référence reste 72 sur 100 · 380 · 110 · 180 g',
-      Z.t3.length===4 && Z.t3.every(x=>Math.abs(x.par100-72)<=1), JSON.stringify(Z.t3));
-    /* ⛔ TEST 5 — quickAddFood ne dégrade plus la ligne. */
-    t('CCLXXV ⑥ ⭐⭐ TEST 5 — l\'ajout DIRECT garde q, u ET le pour-100 g (plus de ligne morte)',
-      Z.t5.q===380 && Z.t5.u==='g' && Z.t5.per100===72 && Z.t5.origine==='reprise',
-      JSON.stringify(Z.t5));
-    t('CCLXXV ⑦ ⛔ … et sans pour-100 g, la quantité au moins survit : la ligne reste convertible',
-      Z.t5b.q===380 && Z.t5b.u==='g' && Z.t5b.kcal===274, JSON.stringify(Z.t5b));
-    /* ⛔ TEST 6 — le steak U, sur ses vrais chiffres. */
-    t('CCLXXV ⑧ TEST 6 — steak U : 250 g ↔ 323 kcal, on demande 300 g → 388 (et non ~194)',
-      Z.t6[0]==='388', JSON.stringify(Z.t6));
-    /* ⛔ TEST 7 — l'Iso Zero ne doit jamais alterner entre portion fixe et grammes. */
-    t('CCLXXV ⑨ TEST 7 — Iso Zero : 40 g ↔ 156 kcal → 20 g = 78 · 40 g = 156 · 50 g = 195',
-      JSON.stringify(Z.t7.map(x=>x.kcal))===JSON.stringify([78,156,195]), JSON.stringify(Z.t7));
-    t('CCLXXV ⑩ ⛔ … et les protéines suivent la même proportion (jamais 35 sur les trois)',
-      JSON.stringify(Z.t7.map(x=>x.prot))===JSON.stringify([18,35,44]), JSON.stringify(Z.t7));
-    /* ⛔ TEST 9 — modifier la quantité ne réécrit pas la référence. */
-    t('CCLXXV ⑪ TEST 9 — modifier la quantité laisse per100, origine, sourceId et nom intacts',
-      !!Z.t9 && Z.t9.per100===72 && Z.t9.origine==='off' && Z.t9.sourceId==='3083680085496'
-      && Z.t9.name==='Ratatouille Cassegrain' && Z.t9.q===110 && Z.t9.kcal===79,
-      JSON.stringify(Z.t9));
-    /* ⭐⭐ LE TÉMOIN QUI A REFUSÉ MON PREMIER CORRECTIF — il gagne sa place deux fois. */
-    t('CCLXXV ⑬ ⭐⭐ un ALLER-RETOUR d\'unité après la reprise ne réapparie rien : 110 g → 79 kcal',
-      Z.tAR[0]==='79', JSON.stringify(Z.tAR));
-    t('CCLXXV ⑭ ⛔ une quantité en `ml` n\'ancre RIEN — aucune densité n\'est inventée (R29)',
-      Z.tMl.poids===0 && Z.tMl.unite==='portion' && !!Z.tMl.ref && Z.tMl.ref.q===1,
-      JSON.stringify(Z.tMl));
-    /* ⭐⭐ TEST 10 — la dérive cumulative, celle qui a mangé son historique en 8 jours. */
-    const derive = Z.t10.length===10 && Z.t10.every(x=>x.q===200 && x.kcal===144 && x.par100===72);
-    t('CCLXXV ⑫ ⭐⭐ TEST 10 — DIX cycles ajout→reprise→200 g : aucune dérive (144 kcal · 72/100 g)',
-      derive, JSON.stringify(Z.t10.slice(0,4))+' … '+JSON.stringify(Z.t10.slice(-1)));
+    /* ══ A — l'ancienne ligne de l'audit ══ */
+    t('CCLXXV ⛔ CONTRÔLE — la reprise de l\'ancienne ligne garde le COUPLE 274 kcal ↔ 380 g, figé (aucune fiche vérifiable)',
+      !!Z.a1ref && Z.a1ref.base===274 && Z.a1ref.q===380 && Z.a1ref.u==='g' && Z.a1ref.fige===true, JSON.stringify(Z.a1ref));
+    t('CCLXXV ⛔ CONTRÔLE — la dernière quantité (380 g) est PROPOSÉE, le champ reste vide (D-101 ①)',
+      Z.a1champ==='' && Z.a1pastille===380, 'champ='+Z.a1champ+' pastille='+Z.a1pastille);
+    /* ⭐⭐ LE DÉFAUT DE L'AUDIT, RENDU IMPOSSIBLE : 274 kcal pour 110 g ne passe plus. */
+    t('CCLXXV ① ⭐⭐ 110 g sans retoucher les valeurs de 380 g : REFUSÉ, rien n\'est ajouté (INTERDIT : 274 kcal pour 110 g)',
+      Z.a1refus.ajoute===false && Z.a1refus.dit.some(m=>/valent pour 380/.test(m)) && Z.a1apres110[0]==='274',
+      JSON.stringify({refus:Z.a1refus.dit, ecran:Z.a1apres110}));
+    t('CCLXXV ② ⭐⭐ la quantité notée, prise : la ligne part TELLE QUELLE (380 g · 274) et le dit (`reprise-non-verifiee`)',
+      !!Z.a1enr && Z.a1enr.q===380 && Z.a1enr.u==='g' && Z.a1enr.kcal===274 && Z.a1enr.notes.indexOf('reprise-non-verifiee')>=0,
+      JSON.stringify(Z.a1enr));
+    t('CCLXXV ③ ⭐⭐ … et AUCUN pour-100 g n\'est fabriqué depuis des totaux non vérifiables (M1 — INTERDIT : 249)',
+      !!Z.a1enr && Z.a1enr.per100===null, JSON.stringify(Z.a1enr));
+    t('CCLXXV ④ ⛔ l\'ajout DIRECT d\'une ancienne ligne garde q, u et valeurs — et ne recopie ni son pour-100 g ni son code-barres (D-101 ⑩)',
+      Z.a2.q===380 && Z.a2.u==='g' && Z.a2.kcal===274 && Z.a2.per100===null && Z.a2.origine==='reprise' && Z.a2.saisie==='liste' && !Z.a2.sourceId,
+      JSON.stringify(Z.a2));
+    /* ⭐⭐ LE TÉMOIN QUI A REFUSÉ LE PREMIER CORRECTIF DE ft-v1177, sous sa forme V2 : un poids HÉRITÉ n'est pas déclaré. */
+    t('CCLXXV ⑤ ⭐⭐ un ALLER-RETOUR d\'unité ne dégèle pas la reprise : toujours 274 pour 380 g, aucun poids « posé »',
+      !!Z.a3.ref && Z.a3.ref.base===274 && Z.a3.ref.q===380 && Z.a3.ref.fige===true && Z.a3.pose===false && Z.a3.poids===false,
+      JSON.stringify(Z.a3));
+    t('CCLXXV ⑥ ⛔ une quantité en `ml` se reprend telle quelle (250 ml, figée) — aucune densité, aucun grammage (R29)',
+      Z.a4.poids===0 && !!Z.a4.ref && Z.a4.ref.q===250 && Z.a4.ref.u==='ml' && Z.a4.ref.fige===true && Z.a4.bc===false,
+      JSON.stringify(Z.a4));
+    /* ══ B — la même chose, PESÉE (fiche de confiance, moteur) ══ */
+    t('CCLXXV ⑦ ⭐⭐ PESÉE : 380 g ↔ 274 kcal, on demande 110 g → 79 kcal (par la fiche, pas par le couple noté)',
+      Z.b1bc===true && Z.b1[0]==='79' && Z.b1[1]==='1' && Z.b1[2]==='7' && Z.b1[3]==='4', JSON.stringify({bc:Z.b1bc, ecran:Z.b1}));
+    t('CCLXXV ⑧ ⭐⭐ … le pour-100 g enregistré est la FICHE recopiée (72), jamais redérivé des totaux (ni 71,8, ni 249)',
+      !!Z.b1enr && Z.b1enr.q===110 && Z.b1enr.kcal===79 && Z.b1enr.per100===72, JSON.stringify(Z.b1enr));
+    t('CCLXXV ⑨ ⭐ … et la reprise suivante à 180 g donne 130 (72 × 1,8 — INTERDIT : 448)',
+      Z.b1a180[0]==='130', JSON.stringify(Z.b1a180));
+    t('CCLXXV ⑩ la référence d\'une fiche reste 72 sur 100 · 380 · 110 · 180 g',
+      Z.b2.length===4 && Z.b2.every(x=>Math.abs(x.par100-72)<=1), JSON.stringify(Z.b2));
+    t('CCLXXV ⑪ ⭐⭐ l\'ajout DIRECT d\'une ligne V2 garde q, u, sa fiche (72) et son code-barres — plus de ligne morte',
+      Z.b3.q===380 && Z.b3.u==='g' && Z.b3.per100===72 && Z.b3.kcal===274 && Z.b3.origine==='reprise' && Z.b3.sourceId==='3083680085496',
+      JSON.stringify(Z.b3));
+    t('CCLXXV ⑫ steak U pesé : 250 g ↔ 323 kcal, on demande 300 g → 388 (et non ~194)',
+      Z.b4[0]==='388', JSON.stringify(Z.b4));
+    t('CCLXXV ⑬ Iso Zero noté avec son poids : 40 g ↔ 156 kcal → 20 g = 78 · 40 g = 156 · 50 g = 195',
+      JSON.stringify(Z.b5.map(x=>x.kcal))===JSON.stringify([78,156,195]), JSON.stringify(Z.b5));
+    t('CCLXXV ⑭ ⛔ … et les protéines suivent la même proportion (jamais 35 sur les trois)',
+      JSON.stringify(Z.b5.map(x=>x.prot))===JSON.stringify([18,35,44]), JSON.stringify(Z.b5));
+    t('CCLXXV ⑮ modifier la quantité d\'une ligne V2 laisse la fiche, l\'origine, le code-barres et le nom intacts',
+      !!Z.b6 && Z.b6.per100===72 && Z.b6.origine==='off' && Z.b6.sourceId==='3083680085496'
+      && Z.b6.name==='Ratatouille Cassegrain' && Z.b6.q===110 && Z.b6.kcal===79, JSON.stringify(Z.b6));
+    /* ⭐⭐ LA DÉRIVE CUMULATIVE, celle qui a mangé son historique en 8 jours. */
+    const derive = Z.b7.length===10 && Z.b7.every(x=>x.q===200 && x.kcal===144 && x.par100===72);
+    t('CCLXXV ⑯ ⭐⭐ DIX cycles ajout→reprise→200 g : aucune dérive (144 kcal · 72/100 g)',
+      derive, JSON.stringify(Z.b7.slice(0,4))+' … '+JSON.stringify(Z.b7.slice(-1)));
   }
 }
 
@@ -31731,6 +31946,14 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
       const el=document.getElementById(id); el.value=v[i];
       el.dispatchEvent(new Event('input',{bubbles:true}));
       el.dispatchEvent(new Event('change',{bubbles:true}));});
+    /* 🥗 V2 (jalon 4) — UNE SAISIE SANS QUANTITÉ CHOISIE N'EST PLUS ENREGISTRÉE (garde-fou du 10/09, D-099) : là où V1
+       écrivait une ligne `q:null`, V2 refuse et demande le poids. Les témoins mesurent donc l'ABSENCE de ligne — la
+       garantie du bloc (« 100 g ne se marient jamais aux 274 kcal ») en sort renforcée — et que les valeurs restent
+       à l'écran (rien n'est perdu). */
+    const ajouter=async()=>{ const n0=(S.foodLog||[]).length, vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ addFoodEntry(); }catch(e){} await d(300); window.toast=_t;
+      return Object.assign(dernier(), {ajoute:(S.foodLog||[]).length>n0, dit:vus.slice(0,2),
+        ecran:['af-kcal','af-prot','af-carbs','af-fat'].map(x=>val(x)).join('/')}); };
 
     /* ⛔ Open Food Facts est injoignable depuis ce conteneur (le proxy le refuse, vérifié) : on
        intercepte `fetch` avec des fiches À LA FORME EXACTE de l'API v2. C'est le SEUL moyen de
@@ -31753,15 +31976,14 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
     /* ══ ① LE CAS DE MICHEL — deux scans, le second sans valeurs ══ */
     S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
     fermer(); openAddFood(); await d(300);
-    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    await _lookupBarcode('1111111111111','code-tape',false); await d(280);   // 🥗 V2 : une porte RÉELLE — « scan » n'en est plus une (valeur ancienne, lue mais plus écrite) ; le moteur refuse une provenance inconnue
     o.apres1={row:vis('af-bc-row'), grams:val('af-bc-grams'), bc:!!_bcNutr};
-    await _lookupBarcode('2222222222222','scan',false); await d(280);
+    await _lookupBarcode('2222222222222','code-tape',false); await d(280);
     o.apres2={row:vis('af-bc-row'), grams:val('af-bc-grams'), bc:!!_bcNutr};
     document.getElementById('af-desc').value='Ratatouille Cassegrain';
     taper([274,4,23,15]); await d(240);
     o.onglets = vis('af-prop-row') && /En grammes/.test(document.getElementById('af-prop-row').textContent||'');
-    addFoodEntry(); await d(300);
-    o.enr1=dernier();
+    o.enr1=await ajouter();
 
     /* ══ ② LA REPRISE de cette entrée ne réinvente aucune référence ══ */
     fermer(); openAddFood(); await d(300);
@@ -31778,7 +32000,7 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
       _bcNutr={name:'X',kcal100:103,prot100:24,carbs100:0,fat100:1};};
     o.portes={};
     ouvrirBloc(); openAddFood(); await d(200);            o.portes.openAddFood=!vis('af-bc-row');
-    ouvrirBloc(); await _lookupBarcode('2222222222222','scan',false); await d(260);
+    ouvrirBloc(); await _lookupBarcode('2222222222222','code-tape',false); await d(260);
                                                           o.portes.bcSansValeurs=!vis('af-bc-row');
     S.foodLog=[{date:t,meal:'diner',name:'Sans per100',kcal:200,prot:5,carbs:20,fat:8,
                 ts:Date.now(),q:0,u:null,per100:null}]; persist();
@@ -31801,15 +32023,14 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
     _afSetSrc({saisie:'manuel',origine:'utilisateur',per100:null});
     document.getElementById('af-desc').value='Ratatouille Cassegrain';
     taper([274,4,23,15]); await d(220);
-    addFoodEntry(); await d(280);
-    o.invariant=dernier();
+    o.invariant=await ajouter();
 
     /* ══ ⑤ NON-RÉGRESSION — un scan NORMAL garde sa quantité et son pour-100 g ══
        ⚖️ ft-v1190 — LE GESTE (option A). Les 100 g venaient du pré-remplissage, qui n'existe
        plus : la personne les TAPE. ⛔ Les valeurs attendues plus bas sont inchangées au
        caractère près (q=100, u='g', per100=103) — c'est le geste qui a changé, pas la garantie. */
     S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
-    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    await _lookupBarcode('1111111111111','code-tape',false); await d(280);
     o.scanRow={row:vis('af-bc-row'), grams:val('af-bc-grams')};
     {const g=document.getElementById('af-bc-grams');
      g.value='100'; g.dispatchEvent(new Event('input',{bubbles:true}));}
@@ -31819,7 +32040,7 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
 
     /* ══ ⑥ NON-RÉGRESSION — la personne tape 250 g dans le bloc ══ */
     S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
-    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    await _lookupBarcode('1111111111111','code-tape',false); await d(280);
     {const g=document.getElementById('af-bc-grams');
      g.value='250'; g.dispatchEvent(new Event('input',{bubbles:true}));}
     await d(240); addFoodEntry(); await d(280);
@@ -31843,9 +32064,11 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
     fermer(); openAddFood(); await d(300);
     {const i=_afQuickItems.findIndex(x=>/Ratatouille/i.test(x.name));
      if(i>=0){ quickFillFood(i); await d(260);
+       /* 🥗 V2 : le GESTE réel (la frappe) — l'ancien appel interne `_afApplyProp()` recalculait l'affichage d'une
+          reprise figée, ce que personne ne peut faire à l'écran ; il est désormais gardé dans le code. */
        const e=document.getElementById('af-prop');
-       if(e){ e.value='110'; _afApplyProp(); await d(220); } }}
-    o.ancrage={champ:val('af-prop'), kcal:+val('af-kcal')||0};
+       if(e){ e.value='110'; e.dispatchEvent(new Event('input',{bubbles:true})); await d(220); } }}
+    o.ancrage={champ:val('af-prop'), kcal:+val('af-kcal')||0, fige:!!(_afRef&&_afRef.fige)};
 
     /* ══ ⑨ LE POIDS DE PAQUET ne vaut jamais 100 (la piste écartée, figée) ══ */
     o.paquet=(typeof _offPoidsPaquet==='function')
@@ -31858,15 +32081,14 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
        sans pour-100 g, par le trou exact réparé ici. *La piste était fausse sur le cas de Michel
        et juste sur le mécanisme.* Le témoin fige que le même correctif ferme aussi cette porte. */
     S.foodLog=[]; persist(); fermer(); openAddFood(); await d(260);
-    await _lookupBarcode('1111111111111','scan',false); await d(280);
+    await _lookupBarcode('1111111111111','code-tape',false); await d(280);
     if(typeof _bcReprendrePaquet==='function') _bcReprendrePaquet();   // ⬅ elle tape « 📦 160 g »
     await d(220);
     o.paquetPose=val('af-bc-grams');
-    await _lookupBarcode('2222222222222','scan',false); await d(280);
+    await _lookupBarcode('2222222222222','code-tape',false); await d(280);
     document.getElementById('af-desc').value='Ratatouille Cassegrain';
     taper([274,4,23,15]); await d(220);
-    addFoodEntry(); await d(280);
-    o.fuitePaquet=dernier();
+    o.fuitePaquet=await ajouter();
 
     window.fetch=vraiFetch;
     return o;
@@ -31885,12 +32107,11 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
       Z.apres1.row===true && Z.apres1.grams==='' && Z.apres1.bc===true, JSON.stringify(Z.apres1));
     t('CCLXXVII ① ⭐⭐ SON CAS — après un 2ᵉ scan SANS valeurs, le bloc pour-100 g est CACHÉ',
       Z.apres2.row===false && Z.apres2.bc===false, JSON.stringify(Z.apres2));
-    t('CCLXXVII ② ⭐⭐ … et l\'entrée ne porte AUCUNE quantité (INTERDIT : 100)',
-      Z.enr1.q===null && Z.enr1.u===null,
-      'q='+Z.enr1.q+' u='+Z.enr1.u);
-    t('CCLXXVII ③ ⛔ … pendant que ses 4 valeurs sont intactes (274/4/23/15)',
-      Z.enr1.kcal===274 && Z.enr1.prot===4 && Z.enr1.carbs===23 && Z.enr1.fat===15,
-      JSON.stringify(Z.enr1));
+    t('CCLXXVII ② ⭐⭐ … et RIEN ne part avec 100 g : sans quantité choisie, l\'ajout est refusé et le poids demandé (INTERDIT : 100)',
+      Z.enr1.ajoute===false && Z.enr1.q!==100 && Z.enr1.dit.some(m=>/Combien/.test(m)),
+      JSON.stringify({ajoute:Z.enr1.ajoute, dit:Z.enr1.dit}));
+    t('CCLXXVII ③ ⛔ … pendant que ses 4 valeurs restent à l\'écran (274/4/23/15) — rien n\'est perdu',
+      Z.enr1.ecran==='274/4/23/15', Z.enr1.ecran);
     t('CCLXXVII ④ ⛔ … et les onglets ⚖️/🍽️ restent offerts (on ne ferme pas la porte de sortie)',
       Z.onglets===true, 'onglets : '+Z.onglets);
     t('CCLXXVII ⑤ ⭐ SA CAPTURE — la reprise n\'affiche plus « Référence : 100 g »',
@@ -31900,9 +32121,9 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
       Z.portes.openAddFood===true && Z.portes.bcSansValeurs===true &&
       Z.portes.quickFillFood===true && Z.portes.afSuggPrendreLocale===true,
       JSON.stringify(Z.portes));
-    t('CCLXXVII ⑦ ⭐⭐ L\'INVARIANT — un bloc visible SANS pour-100 g ne donne plus sa quantité',
-      Z.invariant.q===null && Z.invariant.kcal===274,
-      'q='+Z.invariant.q+' kcal='+Z.invariant.kcal);
+    t('CCLXXVII ⑦ ⭐⭐ L\'INVARIANT — un bloc visible SANS pour-100 g ne donne plus sa quantité (rien ne part avec 100 g)',
+      Z.invariant.ajoute===false && Z.invariant.ecran==='274/4/23/15',
+      JSON.stringify({ajoute:Z.invariant.ajoute, ecran:Z.invariant.ecran, dit:Z.invariant.dit}));
     t('CCLXXVII ⑧ ⛔ LA RAISON DE L\'INVARIANT — le champ porte value="100" EN DUR dans index.html',
       _defautEnDur===true, 'trouvé : '+_defautEnDur);
     t('CCLXXVII ⑨ ⛔ NON-RÉGRESSION — un scan normal enregistre 100 g ET son pour-100 g',
@@ -31914,17 +32135,19 @@ console.log('\n-- CCLXXVII. L\'exclusivité des deux blocs Quantité (ft-v1179) 
     t('CCLXXVII ⑪ ⛔ NON-RÉGRESSION — le chemin ⚖️ grammes garde q=100 ET dérive son pour-100 g',
       Z.grammes100.q===100 && Z.grammes100.u==='g' && Z.grammes100.per100===274,
       JSON.stringify(Z.grammes100));
-    t('CCLXXVII ⑫ ⛔ NON-RÉGRESSION ft-v1177 — 380 g ↔ 274 kcal, on demande 110 g → 79',
-      Z.ancrage.champ==='110' && Z.ancrage.kcal===79,
+    /* 🥗 V2 (D-101 ③ ⑧) — l'ancienne ligne de ft-v1177 (sans fiche vérifiable) se reprend FIGÉE : 110 g tapé ne
+       recalcule rien. Le recalcul « 110 g → 79 » vit maintenant sur une ligne PESÉE — CCLXXV ⑦. */
+    t('CCLXXVII ⑫ ⛔ NON-RÉGRESSION ft-v1177 (V2) — 380 g ↔ 274 kcal repris FIGÉ : 110 g tapé ne recalcule rien',
+      Z.ancrage.champ==='110' && Z.ancrage.kcal===274 && Z.ancrage.fige===true,
       JSON.stringify(Z.ancrage));
     t('CCLXXVII ⑬ ⛔ LA PISTE ÉCARTÉE — un poids de paquet ne vaut JAMAIS 100',
       Array.isArray(Z.paquet) && Z.paquet.join(',')==='380,660,800,1000,375',
       'lus : '+(Z.paquet||[]).join(','));
     t('CCLXXVII ⑭ ⛔⛔ CONTRÔLE — la pastille 📦 pose bien 160 g dans le champ',
       Z.paquetPose==='160', 'champ : '+Z.paquetPose);
-    t('CCLXXVII ⑮ ⭐⭐ LA 2ᵉ ROUTE — un poids de PAQUET tapé ne fuit plus sur l\'aliment suivant (INTERDIT : 160)',
-      Z.fuitePaquet.q===null && Z.fuitePaquet.kcal===274,
-      'q='+Z.fuitePaquet.q+' kcal='+Z.fuitePaquet.kcal);
+    t('CCLXXVII ⑮ ⭐⭐ LA 2ᵉ ROUTE — un poids de PAQUET tapé ne fuit plus sur l\'aliment suivant (rien ne part avec 160 g)',
+      Z.fuitePaquet.ajoute===false && Z.fuitePaquet.q!==160 && Z.fuitePaquet.ecran==='274/4/23/15',
+      JSON.stringify({ajoute:Z.fuitePaquet.ajoute, ecran:Z.fuitePaquet.ecran, dit:Z.fuitePaquet.dit}));
   }
 }
 
@@ -31967,6 +32190,20 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
       await d(240); };
     const RATA=q=>({date:t,meal:'dejeuner',name:'Ratatouille Cassegrain',kcal:274,prot:4,carbs:23,
       fat:15,ts:Date.now()-9000,saisie:'historique',origine:'off',q:q,u:'g',per100:null});
+    /* 🥗 V2 (jalon 4) — TROIS GESTES DEVENUS RÉELS, LES GARANTIES INCHANGÉES.
+       ① Une saisie sans quantité CHOISIE n'est plus enregistrée (garde-fou du 10/09) : là où V1 écrivait `q:null`,
+          V2 refuse — les témoins mesurent l'absence de ligne, et que la quantité INTERDITE n'apparaît nulle part.
+       ② Une ancienne ligne sans fiche vérifiable se reprend FIGÉE (D-101 ③) : sa quantité est PROPOSÉE (pastille).
+       ③ Là où le scénario exige un aliment AVEC son pour-100 g (Skyr), il est écrit par le moteur sur sa fiche. */
+    const ajouter=async()=>{ const n0=(S.foodLog||[]).length, vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ addFoodEntry(); }catch(e){} await d(300); window.toast=_t;
+      return Object.assign(enr(), {ajoute:(S.foodLog||[]).length>n0, dit:vus.slice(0,2)}); };
+    let _k=0;
+    const v2=(nom,p100,g)=>{ const r=NUT2.ligneNouvelle({id:'cclxxviii-ligne-'+(_k++)+'-0000', ts:Date.now()-9500+_k, date:t,
+      repas:'dejeuner', nom:nom, origine:{saisie:'code-tape', origine:'off'}, mode:'pesee',
+      fiche:{base:'g', p100:p100, source:'off', fiab:'source'}, quantite:{val:g, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
+    const pastille=()=>{const b=document.getElementById('af-prop-pastille'); return b?(+b.dataset.q||0):0;};
 
     /* ⛔ Le reseau est bloque : deux fiches, forme exacte de l'API v2 d'Open Food Facts.
        ⭐⭐ IL EN FAUT DEUX, ET C'EST UNE MUTATION QUI L'A DIT. Un scan emprunte l'un OU l'autre
@@ -31990,7 +32227,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     S.foodLog=[RATA(380)]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
     fermer(); openAddFood(); await d(320);
     quickFillFood(iQ('Ratatouille')); await d(280);
-    o.ctrl={ref:_afRef?{q:_afRef.q,u:_afRef.u,base:_afRef.base.kcal}:null, champ:val('af-prop')};
+    o.ctrl={ref:_afRef?{q:_afRef.q,u:_afRef.u,base:_afRef.base.kcal,fige:!!_afRef.fige}:null, champ:val('af-prop'), pastille:pastille()};
 
     /* ══ V1 — aliment B SANS quantite ══ */
     S.foodLog=[RATA(380),{date:t,meal:'diner',name:'Poulet maison',kcal:200,prot:30,carbs:0,fat:8,
@@ -31999,7 +32236,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     fermer(); openAddFood(); await d(300);
     quickFillFood(iQ('Ratatouille')); await d(240);
     quickFillFood(iQ('Poulet'));      await d(260);
-    addFoodEntry(); await d(280); o.v1=enr();
+    o.v1=await ajouter();
 
     /* ══ V2 — aliment B a SA PROPRE quantite : c'est elle qui doit gagner ══ */
     S.foodLog=[RATA(380),{date:t,meal:'diner',name:'Steak U',kcal:300,prot:26,carbs:0,fat:21,
@@ -32008,7 +32245,9 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     fermer(); openAddFood(); await d(300);
     quickFillFood(iQ('Ratatouille')); await d(240);
     quickFillFood(iQ('Steak'));       await d(260);
-    addFoodEntry(); await d(280); o.v2=enr();
+    o.v2ref={q:_afRef?_afRef.q:null, pastille:pastille()};
+    { const pb=document.getElementById('af-prop-pastille'); if(pb) pb.click(); } await d(200);
+    o.v2=await ajouter();
 
     /* ══ V3 — un aliment NEUF tape entierement a la main (aucune porte franchie) ══ */
     S.foodLog=[RATA(380)]; S.savedFoods=[];S.hiddenFoods=[];persist();
@@ -32016,7 +32255,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     quickFillFood(iQ('Ratatouille')); await d(250);
     document.getElementById('af-desc').value='Omelette maison';
     taper([350,25,2,27]); await d(280);
-    addFoodEntry(); await d(280); o.v3=enr();
+    o.v3=await ajouter();
 
     /* ══ V4 — un calibrage d'etiquette ne laisse pas les DEUX blocs affiches ══ */
     S.foodLog=[RATA(380)]; S.savedFoods=[];S.hiddenFoods=[];persist();
@@ -32037,10 +32276,10 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     taper([300,20,30,10]); await d(200);
     await declarer(150);
     o.v5avant={pd:_afPoidsDeclare, pose:_afPoidsPose};
-    await _lookupBarcode('7777777777777','scan',false); await d(320);
+    await _lookupBarcode('7777777777777','code-tape',false); await d(320);   // 🥗 V2 : une porte RÉELLE — « scan » n'en est plus une (valeur ancienne, lue mais plus écrite) ; le moteur refuse une provenance inconnue
     document.getElementById('af-desc').value='Sardines Petit Navire';
     taper([220,25,0,13]); await d(240);
-    addFoodEntry(); await d(280); o.v5=enr();
+    o.v5=await ajouter(); o.v5.pd=_afPoidsDeclare;
 
     /* ══ V5b — LE MEME GESTE, MAIS SUR UNE FICHE QUI A SES VALEURS ══
        L'autre chemin du scan (`_offRemplirFormulaire`), ou la porte de `_lookupBarcode` est la
@@ -32051,7 +32290,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     taper([300,20,30,10]); await d(200);
     await declarer(150);
     o.v5bavant={pd:_afPoidsDeclare, pose:_afPoidsPose};
-    await _lookupBarcode('3333333333333','scan',false); await d(340);
+    await _lookupBarcode('3333333333333','code-tape',false); await d(340);
     o.v5b={pd:_afPoidsDeclare, pose:_afPoidsPose, bcNutr:_bcNutr?_bcNutr.kcal100:null,
            ref:_afRef?{q:_afRef.q,u:_afRef.u}:null};
 
@@ -32124,9 +32363,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
        La declinaison que les autres cas ne couvrent pas : quand A ouvre le bloc pour-100 g,
        c'est `af-bc-grams` (et non `af-prop`) qui porte une quantite. Elle ne doit pas davantage
        traverser vers B. */
-    S.foodLog=[{date:t,meal:'dejeuner',name:'Skyr nature',kcal:120,prot:20,carbs:6,fat:0,
-                ts:Date.now()-9500,saisie:'scan',origine:'off',q:200,u:'g',
-                per100:{kcal:60,prot:10,carbs:3,fat:0}},
+    S.foodLog=[v2('Skyr nature',{kcal:60,prot:10,carbs:3,fat:0},200),
                {date:t,meal:'diner',name:'Soupe maison',kcal:90,prot:3,carbs:12,fat:3,
                 ts:Date.now()-9400,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
     S.savedFoods=[];S.hiddenFoods=[];persist();
@@ -32137,7 +32374,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
      if(g){ g.value='200'; g.dispatchEvent(new Event('input',{bubbles:true})); }}
     await d(240);
     quickFillFood(iQ('Soupe')); await d(280);
-    addFoodEntry(); await d(280); o.v12=enr();
+    o.v12=await ajouter(); o.v12.champBc=val('af-bc-grams'); o.v12.bcNutr=!!_bcNutr;
 
     /* ══ V8 — « + Ajouter » (quickAddFood) juste apres une reprise ══ */
     S.foodLog=[RATA(380),{date:t,meal:'diner',name:'Yaourt nature',kcal:60,prot:5,carbs:6,fat:2,
@@ -32145,16 +32382,18 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     S.savedFoods=[];S.hiddenFoods=[];persist();
     fermer(); openAddFood(); await d(300);
     quickFillFood(iQ('Ratatouille')); await d(250);
-    quickAddFood(iQ('Yaourt')); await d(300);
-    o.v8=enr();
+    { const n0=S.foodLog.length; quickAddFood(iQ('Yaourt')); await d(300);
+      o.v8=Object.assign(enr(), {ajoute:S.foodLog.length>n0, ouvert:vis('af-prop-row'), nomEcran:val('af-desc')}); }
 
     /* ══ V9 — NON-REGRESSION ft-v1177 : 380 g / 274 kcal, on demande 110 g ══ */
     S.foodLog=[RATA(380)]; S.savedFoods=[];S.hiddenFoods=[];persist();
     fermer(); openAddFood(); await d(300);
     quickFillFood(iQ('Ratatouille')); await d(260);
+    /* 🥗 V2 : le GESTE réel (la frappe) — l'appel interne `_afApplyProp()` recalculait l'affichage d'une reprise
+       figée ; il est désormais gardé dans le code (une reprise figée n'est jamais recalculée). */
     {const e=document.getElementById('af-prop');
-     if(e){ e.value='110'; _afApplyProp(); await d(220); }}
-    o.v9={champ:val('af-prop'), kcal:+val('af-kcal')||0};
+     if(e){ e.value='110'; e.dispatchEvent(new Event('input',{bubbles:true})); await d(220); }}
+    o.v9={champ:val('af-prop'), kcal:+val('af-kcal')||0, fige:!!(_afRef&&_afRef.fige)};
 
     /* ══ V10 — NON-REGRESSION : le nom INCHANGE ne perd pas le poids declare ══ */
     S.foodLog=[]; S.savedFoods=[]; persist();
@@ -32168,8 +32407,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
 
     /* ══ V11 — un FAVORI sain se reprend a l'identique (§15 du cahier des charges) ══ */
     S.foodLog=[]; S.hiddenFoods=[];
-    S.savedFoods=[{name:'Skyr nature',kcal:120,prot:20,carbs:6,fat:0,
-                   per100:{kcal:60,prot:10,carbs:3,fat:0},q:200,u:'g'}];
+    S.savedFoods=[v2('Skyr nature',{kcal:60,prot:10,carbs:3,fat:0},200)];
     persist();
     fermer(); openAddFood(); await d(300);
     quickFillFood(iQ('Skyr')); await d(280);
@@ -32182,15 +32420,16 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
   });
   if(Z.err) t('CCLXXVIII n\'a pas pu tourner', false, Z.err);
   else{
-    t('CCLXXVIII ⛔ CONTRÔLE — la reprise ancre bien les 274 kcal sur 380 g',
-      !!Z.ctrl.ref && Z.ctrl.ref.q===380 && Z.ctrl.ref.u==='g' && Z.ctrl.champ==='380',
+    t('CCLXXVIII ⛔ CONTRÔLE — la reprise garde le couple 274 kcal ↔ 380 g (figé) et PROPOSE 380 g, champ vide',
+      !!Z.ctrl.ref && Z.ctrl.ref.q===380 && Z.ctrl.ref.u==='g' && Z.ctrl.ref.fige===true && Z.ctrl.champ==='' && Z.ctrl.pastille===380,
       JSON.stringify(Z.ctrl));
-    t('CCLXXVIII ① ⭐⭐ V1 — un aliment SANS quantité n\'hérite plus de celle du précédent (INTERDIT : 380)',
-      Z.v1.q===null && Z.v1.u===null && Z.v1.per100===null && Z.v1.kcal===200, JSON.stringify(Z.v1));
-    t('CCLXXVIII ② ⭐⭐ V2 — un aliment garde SA quantité, elle n\'est plus écrasée (150, pas 380)',
-      Z.v2.q===150 && Z.v2.u==='g' && Z.v2.per100===200, JSON.stringify(Z.v2));
-    t('CCLXXVIII ③ ⭐⭐ V3 — un aliment tapé À LA MAIN part sans quantité (INTERDIT : 380)',
-      Z.v3.q===null && Z.v3.per100===null && Z.v3.kcal===350, JSON.stringify(Z.v3));
+    t('CCLXXVIII ① ⭐⭐ V1 — un aliment SANS quantité n\'hérite plus de celle du précédent : rien ne part (INTERDIT : 380)',
+      Z.v1.ajoute===false && Z.v1.q!==380 && Z.v1.dit.some(m=>/Combien/.test(m)), JSON.stringify(Z.v1));
+    t('CCLXXVIII ② ⭐⭐ V2 — un aliment garde SA quantité, elle n\'est plus écrasée (150 proposé, pris — pas 380)',
+      Z.v2ref.q===150 && Z.v2ref.pastille===150 && Z.v2.ajoute===true && Z.v2.q===150 && Z.v2.u==='g' && Z.v2.per100===null,
+      JSON.stringify({ref:Z.v2ref, ligne:Z.v2}));
+    t('CCLXXVIII ③ ⭐⭐ V3 — un aliment tapé À LA MAIN ne part pas avec la quantité d\'avant (INTERDIT : 380)',
+      Z.v3.ajoute===false && !(Z.v3.nom==='Omelette maison' && Z.v3.q===380) && Z.v3.dit.some(m=>/Combien/.test(m)), JSON.stringify(Z.v3));
     t('CCLXXVIII ④ ⛔ CONTRÔLE — avant le calibrage, seul le bloc portions/grammes est ouvert',
       Z.v4avant.prop===true && Z.v4avant.bc===false, JSON.stringify(Z.v4avant));
     t('CCLXXVIII ⑤ ⭐⭐ V4 — après un calibrage, les DEUX blocs Quantité ne coexistent plus',
@@ -32198,7 +32437,7 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     t('CCLXXVIII ⑥ ⛔ CONTRÔLE — le poids de 150 g est bien déclaré avant le scan',
       Z.v5avant.pd===150 && Z.v5avant.pose===true, JSON.stringify(Z.v5avant));
     t('CCLXXVIII ⑦ ⭐⭐ V5 — un poids DÉCLARÉ ne fuit plus sur le produit scanné (INTERDIT : 150)',
-      Z.v5.q===null && Z.v5.per100===null && Z.v5.kcal===220, JSON.stringify(Z.v5));
+      Z.v5.ajoute===false && Z.v5.q!==150 && Z.v5.pd===0, JSON.stringify(Z.v5));
     t('CCLXXVIII ⑰ ⛔ CONTRÔLE — les 150 g sont bien déclarés avant le scan d\'une fiche COMPLÈTE',
       Z.v5bavant.pd===150 && Z.v5bavant.pose===true, JSON.stringify(Z.v5bavant));
     t('CCLXXVIII ⑱ ⭐⭐ V5b — l\'AUTRE chemin du scan oublie aussi (INTERDIT : pd=150 sur le thon)',
@@ -32235,12 +32474,15 @@ console.log('\n-- CCLXXVIII. P0 : le propriétaire du changement d\'aliment (ft-
     t('CCLXXVIII ⑮ ⛔ CONTRÔLE — A ouvre bien son bloc pour-100 g',
       Z.v12avant.bc===true && Z.v12avant.bcNutr===60, JSON.stringify(Z.v12avant));
     t('CCLXXVIII ⑯ ⭐⭐ §13 — A AVEC pour-100 g → B SANS : rien de A ne participe à B (INTERDIT : 200)',
-      Z.v12.nom==='Soupe maison' && Z.v12.q===null && Z.v12.per100===null && Z.v12.kcal===90,
+      Z.v12.ajoute===false && Z.v12.q!==200 && Z.v12.bcNutr===false && Z.v12.dit.some(m=>/Combien/.test(m)),
       JSON.stringify(Z.v12));
-    t('CCLXXVIII ⑪ ⭐ V8 — « + Ajouter » après une reprise n\'emporte pas la quantité d\'à côté',
-      Z.v8.nom==='Yaourt nature' && Z.v8.q===null && Z.v8.per100===null, JSON.stringify(Z.v8));
-    t('CCLXXVIII ⑫ ⛔ NON-RÉGRESSION ft-v1177 — 380 g ↔ 274 kcal, on demande 110 g → 79',
-      Z.v9.champ==='110' && Z.v9.kcal===79, JSON.stringify(Z.v9));
+    /* 🥗 D-101 ③ : sans quantité valide, « + Ajouter » ouvre l'écran (rien ne s'écrit d'office). */
+    t('CCLXXVIII ⑪ ⭐ V8 — « + Ajouter » après une reprise n\'emporte pas la quantité d\'à côté : rien ne s\'écrit, l\'écran s\'ouvre sur le yaourt',
+      Z.v8.ajoute===false && Z.v8.nomEcran==='Yaourt nature', JSON.stringify(Z.v8));
+    /* 🥗 V2 (D-101 ③ ⑧) — l'ancienne ligne (sans fiche vérifiable) se reprend FIGÉE : 110 g tapé ne recalcule rien.
+       Le recalcul « 110 g → 79 » vit sur une ligne PESÉE — CCLXXV ⑦. */
+    t('CCLXXVIII ⑫ ⛔ NON-RÉGRESSION ft-v1177 (V2) — 380 g ↔ 274 kcal repris FIGÉ : 110 g tapé ne recalcule rien',
+      Z.v9.champ==='110' && Z.v9.kcal===274 && Z.v9.fige===true, JSON.stringify(Z.v9));
     t('CCLXXVIII ⑬ ⛔ NON-RÉGRESSION — un nom INCHANGÉ ne fait pas perdre le poids déclaré',
       Z.v10.pd===150 && !!Z.v10.ref && Z.v10.ref.q===150 && Z.v10.ref.u==='g', JSON.stringify(Z.v10));
     t('CCLXXVIII ⑭ ⛔ NON-RÉGRESSION — un FAVORI sain se reprend avec son pour-100 g intact',
@@ -32391,6 +32633,12 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
   await pg.goto('http://localhost:'+PORT+'/index.html');
   await pg.waitForTimeout(2400);
+  /* 🥗 V2 (jalon 4) — D-099 (Michel, 22/10) : « les portions nommées peuvent rester une possibilité secondaire
+     uniquement lorsqu'un poids fiable est connu ». Le bloc garde sa garantie (une portion est une vraie unité, elle
+     descend jusqu'à la donnée, elle ne s'affiche jamais sans sa définition) — mais une portion, c'est désormais un
+     NOM et un POIDS. Sans poids : rien ne se multiplie et rien ne s'enregistre (le « 2 portions de 300 » sans poids
+     était une quantité qu'on ne pouvait plus jamais convertir). ⛔ Les témoins COMPTENT les lignes : `der()` seul
+     relisait la dernière ligne de la fixture quand rien n'était ajouté — deux vrais faux verts trouvés en J4. */
   const P=await pg.evaluate(async()=>{
    try{
     const o={}, d=ms=>new Promise(x=>setTimeout(x,ms));
@@ -32400,110 +32648,128 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));}};
     const ecr=()=>['af-kcal','af-prot','af-carbs','af-fat'].map(x=>+((document.getElementById(x)||{}).value||0));
     const der=()=>{const e=S.foodLog[S.foodLog.length-1]||{};
-      return {kcal:e.kcal,prot:e.prot,carbs:e.carbs,fat:e.fat,q:e.q,u:e.u,per100:e.per100};};
+      return {kcal:e.kcal,prot:e.prot,carbs:e.carbs,fat:e.fat,q:e.q,u:e.u,per100:e.per100,lbl:e.portionLabel,pw:e.portionWeightG};};
+    const ajouter=async()=>{ const n0=S.foodLog.length, vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ addFoodEntry(); }catch(e){} await d(300); window.toast=_t;
+      return Object.assign(der(), {ajoute:S.foodLog.length>n0, dit:vus.slice(0,2)}); };
     const saisir=async(nom,k,p,g,l)=>{ document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
       openAddFood(); await d(300);
       set('af-desc',nom); set('af-kcal',k); set('af-prot',p); set('af-carbs',g); set('af-fat',l);
       _afMajAncre(true); await d(200); };
+    const portions=async()=>{ _afSetUnite('portion'); await d(200); };
+    const definir=async(nom,poids)=>{ set('af-pnom',nom); set('af-ppoids',String(poids)); await d(160); };
     const bloc=()=>(document.getElementById('af-prop-row')||{textContent:''}).textContent.replace(/\s+/g,' ');
+    let _k=0;
+    /* La ligne qu'écrit V2 pour « 2 assiettes de 250 g » (300 kcal l'assiette) : fiche déclarée, 120 kcal / 100 g. */
+    const v2p=(nom,date,ts,meal)=>{ const r=NUT2.ligneNouvelle({id:'cclxxx-ligne-'+(_k++)+'-0000', ts:ts, date:date,
+      repas:meal||'dejeuner', nom:nom, origine:{saisie:'manuel', origine:'utilisateur'}, mode:'pesee',
+      fiche:{base:'g', p100:{kcal:120,prot:8,carbs:12,fat:4}, source:'utilisateur', fiab:'declaree'},
+      quantite:{val:2, unite:'portion', origine:'portion', portion:{libelle:'assiette', poids:250, unite:'g'}}});
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
 
-    /* ① LE GESTE DE MICHEL : ×2 sur un plat de 300 kcal */
+    /* ① LE GESTE DE MICHEL : ×2 sur un plat de 300 kcal — D'ABORD SANS POIDS (D-099 : rien ne part) */
     S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
     await saisir('Assiette maison','300','20','30','10');
+    await portions();
     _afApplyPortion(2); await d(220);
+    o.x2sans={ecran:ecr(), texte:bloc()};
+    o.x2sans.ligne=await ajouter();
+    /* ①b … PUIS AVEC SA DÉFINITION : « 1 assiette = 250 g » */
+    await definir('assiette',250);
     o.x2={ecran:ecr(), ref:JSON.parse(JSON.stringify(_afRef)), texte:bloc()};
-    addFoodEntry(); await d(300);
-    o.x2.ligne=der();
+    o.x2.ligne=await ajouter();
 
-    /* ② LA REPRISE PAR « MES ALIMENTS » — la référence doit rester 300 */
+    /* ② LA REPRISE PAR « MES ALIMENTS » — la fiche recalcule ; la dernière quantité (2 × 250 g) est PROPOSÉE */
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await d(320); _renderFoodQuickList(); await d(220);
     const i=(_afQuickItems||[]).findIndex(x=>x.name==='Assiette maison');
     o.repriseIdx=i;
     if(i>=0){ quickFillFood(i); await d(400);
-      o.reprise={ecran:ecr(), base:JSON.parse(JSON.stringify(_afRef.base)), unite:_afUnite, texte:bloc()};
-      addFoodEntry(); await d(300); o.reprise.ligne=der(); }
+      const pd=document.getElementById('af-bc-last');
+      o.reprise={bc:!!(document.getElementById('af-bc-row')&&document.getElementById('af-bc-row').style.display!=='none'),
+                 kcal100:_bcNutr?Math.round(_bcNutr.kcal100):null, pastille:pd?(pd.textContent||'').replace(/ /g,' '):''};
+      if(typeof _bcReprendreDerniere==='function') _bcReprendreDerniere(); await d(200);
+      o.reprise.ecran=ecr(); o.reprise.ligne=await ajouter(); }
 
-    /* ③ LA PORTE JUMELLE : la reprise par la RECHERCHE dans le journal (R8) */
+    /* ③ LA PORTE JUMELLE : la reprise par la RECHERCHE dans le journal (R8) — exactement pareil */
     S.foodLog=S.foodLog.slice(0,1); persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await d(320);
     set('af-desc','Assiette'); if(typeof _afSuggInput==='function')_afSuggInput(); await d(1200);
     if((typeof _afSuggLoc!=='undefined'?_afSuggLoc:[]).length){ _afSuggPrendreLocale(0); await d(400);
-      o.recherche={ecran:ecr(), base:JSON.parse(JSON.stringify(_afRef.base)), unite:_afUnite}; }
+      const pd=document.getElementById('af-bc-last');
+      o.recherche={kcal100:_bcNutr?Math.round(_bcNutr.kcal100):null, pastille:pd?(pd.textContent||'').replace(/ /g,' '):''}; }
 
-    /* ④ LE POIDS CONNU PLUS TARD : 2 portions pesées 500 g → per100 = 120 */
+    /* ④ LE POIDS CONNU PLUS TARD : 2 assiettes (250 g) puis pesées ensemble à 500 g → per100 = 120 */
     S.foodLog=[]; persist();
     await saisir('Gratin','300','20','30','10');
+    await portions(); await definir('assiette',250);
     _afApplyPortion(2); await d(200);
     _afSetUnite('g'); await d(250);
     set('af-poids','500'); const pe=document.getElementById('af-poids');
     if(pe) pe.dispatchEvent(new Event('blur')); _afMajAncre(); await d(280);
-    addFoodEntry(); await d(300); o.pesee=der();
+    o.pesee=await ajouter();
 
-    /* ⑤ ⛔ LE GARDE : onglet ⚖️ GRAMMES sans poids déclaré → PAS d'unité « portion » inventée */
+    /* ⑤ ⛔ LE GARDE : onglet ⚖️ GRAMMES sans poids déclaré → rien ne part (aucune unité inventée) */
     S.foodLog=[]; persist();
     await saisir('Hesitation','250','10','20','8');
-    _afSetUnite('g'); await d(250);
-    addFoodEntry(); await d(300); o.grammesSansPoids=der();
+    o.grammesSansPoids=await ajouter();
 
     /* ⑥ ⛔⛔ A → B : aucune quantité ne traverse d'un aliment à l'autre (ft-v1180) */
     S.foodLog=[]; persist();
     await saisir('Plat A','300','20','30','10');
+    await portions(); await definir('assiette',250);
     _afApplyPortion(3); await d(220);
     await saisir('Plat B','200','10','20','5');
     o.aVersB={ecran:ecr()};
-    addFoodEntry(); await d(300); o.aVersB.ligne=der();
+    o.aVersB.ligne=await ajouter();
 
-    /* ⑦ ⛔ LA RETOUCHE À LA MAIN REMET LE COMPTEUR À 1 (invariant ft-v1061 côté portions) */
+    /* ⑦ ⛔ LA RETOUCHE À LA MAIN : l'écran devient la référence (×1), et le poids d'une portion est REDEMANDÉ */
     S.foodLog=[]; persist();
     await saisir('Soupe','300','20','30','10');
+    await portions(); await definir('assiette',250);
     _afApplyPortion(2); await d(220);
-    set('af-prot','45'); await d(280);      // l'écran devient la référence
-    o.retouche={ecran:ecr()};
-    addFoodEntry(); await d(300); o.retouche.ligne=der();
+    set('af-prot','45'); await d(280);
+    o.retouche={ecran:ecr(), texte:bloc()};
+    o.retouche.ligne=await ajouter();
 
-    /* ⑧ L'AJOUT DIRECT depuis la liste (quickAddFood) recopie la portion */
-    S.foodLog=[{date:today(),meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,
+    /* ⑧ L'AJOUT DIRECT depuis la liste : une portion PESÉE est recopiée (q=2) ; une ancienne SANS poids ouvre l'écran */
+    S.foodLog=[v2p('Assiette maison',today(),Date.now()-90000)]; persist();
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    openAddFood(); await d(320); _renderFoodQuickList(); await d(220);
+    { const j=(_afQuickItems||[]).findIndex(x=>x.name==='Assiette maison'); const n0=S.foodLog.length;
+      if(j>=0){ quickAddFood(j); await d(320); o.direct=Object.assign(der(), {ajoute:S.foodLog.length>n0}); } }
+    S.foodLog=[{date:today(),meal:'midi',name:'Assiette ancienne',kcal:600,prot:40,carbs:60,fat:20,
                 ts:Date.now()-90000,v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null}];
     persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await d(320); _renderFoodQuickList(); await d(220);
-    const j=(_afQuickItems||[]).findIndex(x=>x.name==='Assiette maison');
-    if(j>=0){ quickAddFood(j); await d(320); o.direct=der(); }
+    { const j=(_afQuickItems||[]).findIndex(x=>x.name==='Assiette ancienne'); const n0=S.foodLog.length;
+      if(j>=0){ quickAddFood(j); await d(320);
+        o.directAncien={ajoute:S.foodLog.length>n0, ecran:(document.getElementById('af-desc')||{}).value}; } }
 
-    /* ⑨ L'ÉCRAN D'ÉDITION : « 2 portions » avec sa DÉFINITION, et un ×3 qui s'enregistre */
-    S.foodLog=[{date:today(),meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,
-                ts:777,v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null}];
-    persist();
-    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
-    openEditFood(_tsVersId(777)); await d(400);
-    o.edit={texte:(document.getElementById('ef-qty-row')||{textContent:''}).textContent.replace(/\s+/g,' '),
-            val:(document.getElementById('ef-prop')||{}).value};
-    set('ef-prop','3'); await d(250); saveEditFood(); await d(300);
-    const ee=S.foodLog.find(x=>x.ts===777)||{};
-    o.edit.sauve={kcal:ee.kcal,prot:ee.prot,q:ee.q,u:ee.u};
+    /* ⑨ L'ÉCRAN D'ÉDITION d'une portion PESÉE : « 2 portions » avec sa définition, et un ×3 qui s'enregistre */
+    { const L=v2p('Assiette maison',today(),777,'dejeuner'); S.foodLog=[L]; persist();
+      document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+      openEditFood(L.id); await d(400);
+      o.edit={texte:(document.getElementById('ef-qty-row')||{textContent:''}).textContent.replace(/\s+/g,' '),
+              val:(document.getElementById('ef-prop')||{}).value};
+      set('ef-prop','3'); await d(250); saveEditFood(); await d(300);
+      const ee=S.foodLog.find(x=>x.id===L.id)||{};
+      o.edit.sauve={kcal:ee.kcal,prot:ee.prot,q:ee.q,u:ee.u}; }
 
-    /* ⑨bis ⛔ L'ÉTAT « BOUTONS DE PORTION » DE L'ÉDITION — il n'a NI `ef-grams` NI `ef-prop`,
-       donc `saveEditFood` n'y voyait rien : un ×2 s'affichait et ne s'écrivait nulle part.
-       ⭐ Sans ce témoin, la porte ajoutée dans `saveEditFood` ressemblerait à de la décoration
-       et le contrôle négatif la déclarerait morte (leçon ft-v1180). */
+    /* ⑨bis ⛔ R30 — l'état « boutons de portion » de l'édition (×2 sans poids) n'existe plus : une ancienne ligne sans
+       quantité se corrige en grammes / ml (D-099), et rien n'y est multiplié. */
     S.foodLog=[{date:today(),meal:'midi',name:'Ligne muette',kcal:300,prot:20,carbs:30,fat:10,
                 ts:888,v:1,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
     persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openEditFood(_tsVersId(888)); await d(400);
-    o.editBoutons={aProp:!!document.getElementById('ef-prop'), aGrams:!!document.getElementById('ef-grams')};
-    if(typeof _efApplyPortion==='function'){ _efApplyPortion(2); await d(280);
-      o.editBoutons.ecran=['ef-kcal','ef-prot'].map(x=>+((document.getElementById(x)||{}).value||0));
-      saveEditFood(); await d(300);
-      const e8=S.foodLog.find(x=>x.ts===888)||{};
-      o.editBoutons.sauve={kcal:e8.kcal,prot:e8.prot,q:e8.q,u:e8.u}; }
+    o.editBoutons={aProp:!!document.getElementById('ef-prop'), aGrams:!!document.getElementById('ef-grams'),
+                   aQ:!!document.getElementById('ef-q'),
+                   portions:/En portions|½/.test((document.getElementById('ef-qty-row')||{textContent:''}).textContent)};
 
-    /* ⑨ter ⛔⛔ ÉDITION SANS RIEN TOUCHER : le drapeau côté édition n'avait AUCUN témoin, et
-       le contrôle négatif l'a dit (mutation ⑬ à 0 rouge). *Une porte sans témoin ressemble à de
-       la décoration* — c'est comme ça qu'on retire une vraie protection (leçon ft-v1180).
-       On ouvre une ligne muette, on ne touche à AUCUN bouton, on enregistre : rien ne s'invente. */
+    /* ⑨ter ⛔⛔ ÉDITION SANS RIEN TOUCHER : rien ne s'invente (la ligne n'est pas modifiée sans quantité dite) */
     S.foodLog=[{date:today(),meal:'midi',name:'Ligne muette 2',kcal:300,prot:20,carbs:30,fat:10,
                 ts:889,v:1,saisie:'manuel',origine:'utilisateur',q:null,u:null,per100:null}];
     persist();
@@ -32513,87 +32779,83 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     const e9=S.foodLog.find(x=>x.ts===889)||{};
     o.editSansGeste={q:e9.q, u:e9.u, kcal:e9.kcal};
 
-    /* ⑩ LE REJEU D'UN REPAS ne tue plus la portion */
+    /* ⑩ LE REJEU D'UN REPAS garde la portion PESÉE (q=2) ; une ancienne portion SANS poids est laissée de côté */
     const hier=(()=>{const x=new Date();x.setDate(x.getDate()-1);return today(x.getTime());})();   // RECETTE-01 : le jour de la PAGE, pas celui de Greenwich
     const av=(()=>{const x=new Date();x.setDate(x.getDate()-2);return today(x.getTime());})();
-    S.foodLog=[{date:hier,meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,ts:1001,
+    S.foodLog=[v2p('Assiette maison',hier,1001,'dejeuner'), v2p('Assiette maison',av,1002,'dejeuner')]; persist();
+    { const rh=(typeof _repasHabituels==='function')?_repasHabituels():[]; const n0=S.foodLog.length;
+      o.rejouable=rh.length;
+      if(rh.length){ rejouerRepas(rh[0].sig, rh[0].meal); await d(320); o.rejeu=Object.assign(der(), {ajoute:S.foodLog.length>n0}); } }
+    S.foodLog=[{date:hier,meal:'midi',name:'Assiette ancienne',kcal:600,prot:40,carbs:60,fat:20,ts:1001,
                 v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null},
-               {date:av,meal:'midi',name:'Assiette maison',kcal:600,prot:40,carbs:60,fat:20,ts:1002,
+               {date:av,meal:'midi',name:'Assiette ancienne',kcal:600,prot:40,carbs:60,fat:20,ts:1002,
                 v:1,saisie:'manuel',origine:'utilisateur',q:2,u:'portion',per100:null}];
     persist();
-    const rh=(typeof _repasHabituels==='function')?_repasHabituels():[];
-    o.rejouable=rh.length;
-    if(rh.length){ rejouerRepas(rh[0].sig,'midi'); await d(320); o.rejeu=der(); }
+    { const rh=(typeof _repasHabituels==='function')?_repasHabituels():[]; const n0=S.foodLog.length;
+      const vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      if(rh.length){ rejouerRepas(rh[0].sig, rh[0].meal); await d(320); }
+      window.toast=_t;
+      o.rejeuAncien={rejouable:rh.length, ajoute:S.foodLog.length>n0, nomme:vus.some(m=>/Assiette ancienne/.test(m))}; }
     return o;
    }catch(e){ return {err:String(e&&e.message||e)}; }
   });
   console.log('\n== BLOC CCLXXX — 🍽️ P1 : « portion » devient une vraie unité (ft-v1183) ==');
   if(P.err){ t('CCLXXX bloc exécuté',false,P.err); }
   else{
-    t('CCLXXX ① ⭐⭐ « ×2 » S\'ENREGISTRE : q=2 · u=portion · totaux 600 (avant : q:null, u:null)',
-      P.x2 && P.x2.ligne.q===2 && P.x2.ligne.u==='portion'
+    /* 🥗 D-099 — LE ×2 SANS POIDS NE PART PLUS (il fossilisait une quantité inconvertible). */
+    /* ⛔ La RAISON du refus est lue (le poids), pas seulement le refus : la portion n'a pas encore de nom ici, et une
+       mutation qui inventait le poids (100 g) voyait la ligne refusée quand même — faute de nom — sans que ce témoin
+       rougisse (contrôle négatif du 22/10, tools/mut_temoins_v2.py R02). */
+    t('CCLXXX ① ⛔ D-099 : « ×2 » SANS le poids d\'une portion ne multiplie rien et ne s\'enregistre PAS — l\'écran demande le poids',
+      P.x2sans.ecran[0]===300 && P.x2sans.ligne.ajoute===false && /Indique le poids d'une portion/.test(P.x2sans.texte)
+      && (P.x2sans.ligne.dit||[]).some(m=>/Indique le poids d'une portion/.test(m)),
+      JSON.stringify({ecran:P.x2sans.ecran, ajoute:P.x2sans.ligne.ajoute, dit:P.x2sans.ligne.dit}));
+    t('CCLXXX ①b ⭐⭐ « ×2 » d\'une assiette PESÉE (250 g) S\'ENREGISTRE : q=2 · u=portion · nom · poids · totaux 600',
+      P.x2.ligne.ajoute===true && P.x2.ligne.q===2 && P.x2.ligne.u==='portion' && P.x2.ligne.lbl==='assiette' && P.x2.ligne.pw===250
       && P.x2.ligne.kcal===600 && P.x2.ligne.prot===40 && P.x2.ligne.carbs===60 && P.x2.ligne.fat===20,
-      JSON.stringify(P.x2&&P.x2.ligne));
+      JSON.stringify(P.x2.ligne));
     t('CCLXXX ② ⛔ LA RÉFÉRENCE NE SE RÉÉCRIT PAS : `_afRef.base` reste 300 pendant que l\'écran montre 600',
-      P.x2 && P.x2.ref.base.kcal===300 && P.x2.ecran[0]===600,
-      JSON.stringify(P.x2&&{base:P.x2.ref.base,ecran:P.x2.ecran}));
-    /* ⚠️ MOTIF RESSERRÉ SUR SA GARANTIE LE 09/09 (ft-v1186), ET C'EST ÉCRIT ICI PARCE QU'UN
-       TÉMOIN QU'ON TOUCHE DOIT DIRE LEQUEL, PAR QUI ET QUAND (ft-v1175).
-       · ancien motif : `1 portion = 300 kcal` — il codait la MISE EN FORME du texte ;
-       · ce qui a changé : ft-v1186 ajoute le NOM de la portion, donc la phrase devient
-         « 1 portion = portion non définie, poids inconnu · 300 kcal » ;
-       · la garantie, elle, est INCHANGÉE et même plus forte : *une portion ne s'affiche jamais
-         sans sa définition, et ce qu'on ignore est dit*. Les trois exigences restent vérifiées
-         (le nombre de portions, la valeur d'une portion, le poids annoncé comme inconnu).
-       ⛔ Ce n'est PAS un témoin assoupli pour faire passer du code : le comportement figé est
-       intact, c'est le motif qui figeait plus que lui. Éprouvé : retirer la définition de
-       l'écran le fait toujours rougir (mutation du contrôle négatif). */
-    t('CCLXXX ③ ⛔ UNE PORTION NE S\'AFFICHE JAMAIS SANS SA DÉFINITION (consigne de Michel)',
-      P.x2 && /2 portions/.test(P.x2.texte) && /300 kcal/.test(P.x2.texte)
-      && /poids inconnu/.test(P.x2.texte), P.x2&&P.x2.texte);
-    t('CCLXXX ④ REPRISE PAR « MES ALIMENTS » : écran 600, référence 300, q=2 réenregistré',
-      P.reprise && P.reprise.ecran[0]===600 && P.reprise.base.kcal===300
-      && P.reprise.ligne.q===2 && P.reprise.ligne.u==='portion' && P.reprise.ligne.kcal===600,
+      P.x2.ref.base.kcal===300 && P.x2.ecran[0]===600,
+      JSON.stringify({base:P.x2.ref.base,ecran:P.x2.ecran}));
+    t('CCLXXX ③ ⛔ UNE PORTION NE S\'AFFICHE JAMAIS SANS SA DÉFINITION (consigne de Michel) — et ce qu\'on ignore est dit',
+      /2 portions/.test(P.x2.texte) && /300 kcal/.test(P.x2.texte) && /assiette/.test(P.x2.texte) && /250 g/.test(P.x2.texte)
+      && /poids inconnu/.test(P.x2sans.texte), P.x2.texte+' | sans poids : '+P.x2sans.texte);
+    /* 🥗 D-103 (Michel, 22/10, tranche D-101 ⑯) — la pastille dit « 2 portions (500 g) », et la reprise prise TELLE QUELLE reste
+       2 assiettes de 250 g (la forme qu'écrivent « + Ajouter » et « Tes repas habituels ») : mêmes 600 kcal, par le moteur.
+       Avant D-103, elle disait « 500 g » et la ligne neuve passait en grammes (`q:500, u:'g'`). */
+    t('CCLXXX ④ REPRISE PAR « MES ALIMENTS » : la fiche recalcule (120 kcal / 100 g), « 2 portions (500 g) » proposés (D-103) — prise telle quelle, elle RESTE 2 × 250 g, 600 kcal',
+      !!P.reprise && P.reprise.bc===true && P.reprise.kcal100===120 && /2 portions \(500 g\)/.test(P.reprise.pastille)
+      && P.reprise.ligne.ajoute===true && P.reprise.ligne.kcal===600 && P.reprise.ligne.q===2 && P.reprise.ligne.u==='portion'
+      && P.reprise.ligne.pw===250,
       JSON.stringify(P.reprise));
     t('CCLXXX ⑤ ⭐ LA PORTE JUMELLE (recherche dans le journal) fait exactement pareil — R8',
-      P.recherche && P.recherche.ecran[0]===600 && P.recherche.base.kcal===300
-      && P.recherche.unite==='portion', JSON.stringify(P.recherche));
-    t('CCLXXX ⑥ POIDS CONNU PLUS TARD : 2 portions pesées 500 g → q=500 g, per100 = 120 kcal',
-      P.pesee && P.pesee.q===500 && P.pesee.u==='g' && P.pesee.per100 && P.pesee.per100.kcal===120
+      !!P.recherche && P.recherche.kcal100===120 && /2 portions \(500 g\)/.test(P.recherche.pastille), JSON.stringify(P.recherche));
+    t('CCLXXX ⑥ POIDS CONNU PLUS TARD : 2 assiettes pesées 500 g → q=500 g, per100 = 120 kcal',
+      P.pesee.ajoute===true && P.pesee.q===500 && P.pesee.u==='g' && P.pesee.per100 && P.pesee.per100.kcal===120
       && P.pesee.kcal===600, JSON.stringify(P.pesee));
-    t('CCLXXX ⑦ ⛔⛔ LE GARDE : onglet ⚖️ grammes SANS poids → aucune unité inventée (q:null)',
-      P.grammesSansPoids && P.grammesSansPoids.q==null && P.grammesSansPoids.u==null,
-      JSON.stringify(P.grammesSansPoids));
-    /* ⛔⛔ L'ATTENDU EST `q:null`, ET C'EST LA PASSE COMPLÈTE QUI L'A DICTÉ. Mon premier jet
-       attendait `q:1` — la passe a rendu 7 rouges (ft-v1177/1179/1180), tous « on n'invente pas
-       une quantité qu'elle n'a jamais eue ». La personne n'a rien choisi sur B : rien ne s'écrit. */
-    t('CCLXXX ⑧ ⛔⛔ A → B : le ×3 de A ne contamine pas B, ET rien n\'est inventé (q:null)',
-      P.aVersB && P.aVersB.ecran[0]===200 && P.aVersB.ligne.q==null
-      && P.aVersB.ligne.u==null && P.aVersB.ligne.kcal===200, JSON.stringify(P.aVersB));
-    t('CCLXXX ⑨ ⛔⛔ RETOUCHE À LA MAIN → le choix retombe (q:null), les valeurs sont celles de l\'écran',
-      P.retouche && P.retouche.ligne.q==null && P.retouche.ligne.u==null
-      && P.retouche.ligne.kcal===600 && P.retouche.ligne.prot===45, JSON.stringify(P.retouche));
-    t('CCLXXX ⑩ AJOUT DIRECT depuis la liste : la portion est recopiée (q=2, pas null)',
-      P.direct && P.direct.q===2 && P.direct.u==='portion' && P.direct.kcal===600,
-      JSON.stringify(P.direct));
-    /* ⚠️ Même resserrage que le ③ ci-dessus, même raison, même jour. */
-    t('CCLXXX ⑪ ÉCRAN D\'ÉDITION : « 2 portions » AVEC sa définition, pas « 2 portion » nu',
-      P.edit && /2 portions/.test(P.edit.texte) && /300 kcal/.test(P.edit.texte)
-      && P.edit.val==='2', P.edit&&P.edit.texte);
-    t('CCLXXX ⑫ ⭐ ×3 DANS L\'ÉDITION s\'enregistre : 900 kcal · q=3 · u=portion',
-      P.edit && P.edit.sauve.kcal===900 && P.edit.sauve.prot===60
-      && P.edit.sauve.q===3 && P.edit.sauve.u==='portion', JSON.stringify(P.edit&&P.edit.sauve));
-    t('CCLXXX ⑬ ⭐ L\'ÉTAT « BOUTONS » DE L\'ÉDITION : un ×2 y descend jusqu\'à la donnée (q=2)',
-      P.editBoutons && P.editBoutons.aProp===false && P.editBoutons.aGrams===false
-      && P.editBoutons.ecran && P.editBoutons.ecran[0]===600
-      && P.editBoutons.sauve.q===2 && P.editBoutons.sauve.u==='portion'
-      && P.editBoutons.sauve.kcal===600, JSON.stringify(P.editBoutons));
-    t('CCLXXX ⑭ ⛔⛔ ÉDITION SANS AUCUN GESTE : rien ne s\'invente (q:null) — la porte du drapeau',
-      P.editSansGeste && P.editSansGeste.q==null && P.editSansGeste.u==null
-      && P.editSansGeste.kcal===300, JSON.stringify(P.editSansGeste));
-    t('CCLXXX ⑮ ⛔ LE REJEU D\'UN REPAS ne tue plus la portion (q=2 conservé)',
-      P.rejouable>0 && P.rejeu && P.rejeu.q===2 && P.rejeu.u==='portion' && P.rejeu.kcal===600,
-      JSON.stringify({n:P.rejouable,rejeu:P.rejeu}));
+    t('CCLXXX ⑦ ⛔⛔ LE GARDE : onglet ⚖️ grammes SANS poids → rien ne part, aucune unité inventée',
+      P.grammesSansPoids.ajoute===false && P.grammesSansPoids.dit.some(m=>/Combien/.test(m)), JSON.stringify(P.grammesSansPoids));
+    t('CCLXXX ⑧ ⛔⛔ A → B : le ×3 de A ne contamine pas B — B montre SES 200 kcal et ne part pas sans sa quantité',
+      P.aVersB.ecran[0]===200 && P.aVersB.ligne.ajoute===false, JSON.stringify(P.aVersB));
+    t('CCLXXX ⑨ ⛔⛔ RETOUCHE À LA MAIN → l\'écran devient la référence (×1), le poids d\'une portion est REDEMANDÉ, rien ne part',
+      P.retouche.ecran[0]===600 && P.retouche.ecran[1]===45 && /Indique le poids d'une portion/.test(P.retouche.texte)
+      && P.retouche.ligne.ajoute===false, JSON.stringify(P.retouche));
+    t('CCLXXX ⑩ AJOUT DIRECT : une portion PESÉE est recopiée (q=2, nom, poids) — une ancienne SANS poids ouvre l\'écran, rien ne part',
+      !!P.direct && P.direct.ajoute===true && P.direct.q===2 && P.direct.u==='portion' && P.direct.pw===250 && P.direct.kcal===600
+      && !!P.directAncien && P.directAncien.ajoute===false && P.directAncien.ecran==='Assiette ancienne',
+      JSON.stringify({pesee:P.direct, ancienne:P.directAncien}));
+    t('CCLXXX ⑪ ÉCRAN D\'ÉDITION : « 2 portions » AVEC sa définition (1 assiette, 250 g)',
+      /portions/.test(P.edit.texte) && /assiette/.test(P.edit.texte) && /250 g/.test(P.edit.texte) && P.edit.val==='2', P.edit.texte);
+    t('CCLXXX ⑫ ⭐ ×3 DANS L\'ÉDITION s\'enregistre, par le moteur : 900 kcal · q=3 · u=portion',
+      P.edit.sauve.kcal===900 && P.edit.sauve.prot===60 && P.edit.sauve.q===3 && P.edit.sauve.u==='portion', JSON.stringify(P.edit.sauve));
+    t('CCLXXX ⑬ ⛔ R30 / D-099 : l\'édition d\'une ligne sans quantité n\'offre plus de multiplicateurs sans poids — la quantité se dit',
+      P.editBoutons.aQ===true && P.editBoutons.portions===false && P.editBoutons.aProp===false, JSON.stringify(P.editBoutons));
+    t('CCLXXX ⑭ ⛔⛔ ÉDITION SANS AUCUN GESTE : rien ne s\'invente (q:null) — la ligne n\'est pas modifiée',
+      P.editSansGeste.q==null && P.editSansGeste.u==null && P.editSansGeste.kcal===300, JSON.stringify(P.editSansGeste));
+    t('CCLXXX ⑮ ⛔ LE REJEU D\'UN REPAS garde la portion PESÉE (q=2) — une ancienne sans poids est laissée de côté, et NOMMÉE',
+      P.rejouable>0 && !!P.rejeu && P.rejeu.ajoute===true && P.rejeu.q===2 && P.rejeu.u==='portion' && P.rejeu.kcal===600
+      && P.rejeuAncien.ajoute===false && P.rejeuAncien.nomme===true,
+      JSON.stringify({n:P.rejouable, rejeu:P.rejeu, ancien:P.rejeuAncien}));
   }
   await cx.close();
 }
@@ -33074,39 +33336,55 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     const saisir=async(nom,k,pr,g,l)=>{ document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
       openAddFood(); await d(320); set('af-desc',nom); set('af-kcal',k); set('af-prot',pr);
       set('af-carbs',g); set('af-fat',l); _afMajAncre(true); await d(220); };
+    /* 🥗 V2 (jalon 4) — D-099 : les grammes d'abord, la portion en SECOND onglet, et seulement avec son poids. Les gestes
+       choisissent donc l'onglet « 🍽️ En portions » ; et là où V1 enregistrait une portion SANS poids, V2 refuse — les
+       témoins COMPTENT les lignes (relire la dernière ligne de la fixture ressemblait à un vert). */
+    const portions=async()=>{ _afSetUnite('portion'); await d(200); };
+    const ajouter=async()=>{ const n0=S.foodLog.length, vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ addFoodEntry(); }catch(e){} await d(320); window.toast=_t;
+      return Object.assign(der(), {ajoute:S.foodLog.length>n0, dit:vus.slice(0,2)}); };
+    let _k=0;
+    const v2=(nom,p100,q,extra)=>{ const r=NUT2.ligneNouvelle(Object.assign({id:'cclxxxiv-ligne-'+(_k++)+'-0000', ts:Date.now()-9e5+_k,
+      date:today(), repas:'dejeuner', nom:nom, origine:{saisie:'manuel', origine:'utilisateur'}, mode:'pesee',
+      fiche:{base:'g', p100:p100, source:'utilisateur', fiab:'declaree'}, quantite:q}, extra||{}));
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
 
     /* ① 2 steaks de 125 g : tout descend jusqu'à la donnée, masse totale DÉRIVÉE */
     S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
     await saisir('Steak hache','300','20','30','10');
+    await portions();
     _afApplyPortion(2); await d(220); _afPortionNom('steak'); await d(220);
     set('af-ppoids','125'); await d(240);
     o.deuxSteaks={def:def(), ecran:+(document.getElementById('af-kcal')||{}).value};
-    addFoodEntry(); await d(320); o.deuxSteaks.ligne=der();
+    o.deuxSteaks.ligne=await ajouter();
 
     /* ② poids INCONNU : l'écran le DIT, et rien n'est inventé */
     S.foodLog=[]; persist();
     await saisir('Assiette maison','300','20','30','10');
+    await portions();
     _afApplyPortion(2); await d(220); _afPortionNom('assiette'); await d(240);
     o.sansPoids={def:def()};
-    addFoodEntry(); await d(320); o.sansPoids.ligne=der();
+    o.sansPoids.ligne=await ajouter();
 
     /* ③ ⭐⭐ LE POIDS D'UNE PORTION NE BASCULE PAS L'UNITÉ, ET NE RESCALE RIEN */
     S.foodLog=[]; persist();
     await saisir('Yaourt','120','8','12','4');
-    _afApplyPortion(2); await d(220);
+    await portions();
+    _afApplyPortion(2); await d(220); _afPortionNom('pot'); await d(200);
     const av=[+(document.getElementById('af-kcal')||{}).value,+(document.getElementById('af-prot')||{}).value];
     set('af-ppoids','125'); await d(260);
     o.pasDeBascule={unite:_afUnite, poidsTotal:_afPoidsDeclare, avant:av,
       apres:[+(document.getElementById('af-kcal')||{}).value,+(document.getElementById('af-prot')||{}).value]};
-    addFoodEntry(); await d(320); o.pasDeBascule.ligne=der();
+    o.pasDeBascule.ligne=await ajouter();
 
     /* ④ NON-RÉGRESSION : l'onglet ⚖️ grammes est inchangé (ft-v1183 ⑥) */
     S.foodLog=[]; persist();
     await saisir('Gratin','300','20','30','10');
+    await portions(); _afPortionNom('assiette'); await d(160); set('af-ppoids','250'); await d(200);
     _afApplyPortion(2); await d(200); _afSetUnite('g'); await d(260);
     set('af-poids','500'); const pe=document.getElementById('af-poids');
     if(pe) pe.dispatchEvent(new Event('blur')); _afMajAncre(); await d(300);
-    addFoodEntry(); await d(320); o.grammes=der();
+    o.grammes=await ajouter();
 
     /* ⑤ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS, même si un pour-100 g existe */
     S.foodLog=[{date:today(),meal:'midi',name:'Steak hache',kcal:600,prot:40,carbs:60,fat:20,
@@ -33118,14 +33396,17 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     const i=(_afQuickItems||[]).findIndex(x=>x.name==='Steak hache');
     o.repriseIdx=i;
     if(i>=0){ quickFillFood(i); await d(420);
-      o.reprise={lab:_afPortionLabel, pw:_afPortionPoids, portions:_afPortions, unite:_afUnite,
-                 ecran:+(document.getElementById('af-kcal')||{}).value,
-                 base:(_afRef&&_afRef.base)?_afRef.base.kcal:null}; }
+      /* 🥗 V2 (D-101 ③) — l'ancienne ligne (pour-100 g non vérifiable) se reprend FIGÉE, dans SON unité : 2 steaks de 125 g. */
+      const pb=document.getElementById('af-prop-pastille'), row=document.getElementById('af-prop-row');
+      o.reprise={fige:!!(_afRef&&_afRef.fige), qte:_afRef&&_afRef.qte?JSON.parse(JSON.stringify(_afRef.qte)):null,
+                 pastille:pb?(pb.textContent||''):'', titre:row?(row.textContent||'').slice(0,60):'',
+                 ecran:+(document.getElementById('af-kcal')||{}).value}; }
 
     /* ⑤bis NON-RÉGRESSION ft-v1042 : un aliment en GRAMMES avec pour-100 g ouvre bien le champ grammes */
-    S.foodLog=[{date:today(),meal:'midi',name:'Thon boite',kcal:110,prot:26,carbs:0,fat:1,
-                ts:5151,v:1,saisie:'scan',origine:'openfoodfacts',q:100,u:'g',
-                per100:{kcal:110,prot:26,carbs:0,fat:1}}];
+    /* 🥗 V2 : un aliment en grammes AVEC une fiche de confiance (écrit par le moteur) — une ancienne ligne sans fiche
+       vérifiable se reprend figée (voir ⑦ et CCLXXV). */
+    S.foodLog=[v2('Thon boite',{kcal:110,prot:26,carbs:0,fat:1},{val:100,unite:'g',origine:'tapee'},
+                  {origine:{saisie:'code-tape',origine:'off'}, fiche:{base:'g', p100:{kcal:110,prot:26,carbs:0,fat:1}, source:'off', fiab:'source'}})];
     persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await d(340); _renderFoodQuickList(); await d(240);
@@ -33137,22 +33418,27 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     /* ⑥ A -> B : ni l'étiquette ni le poids ne traversent */
     S.foodLog=[]; persist();
     await saisir('Plat A','300','20','30','10');
+    await portions();
     _afApplyPortion(3); await d(200); _afPortionNom('part'); await d(200);
     set('af-ppoids','200'); await d(240);
     await saisir('Plat B','200','10','20','5');
-    o.aVersB={lab:_afPortionLabel, pw:_afPortionPoids, portions:_afPortions, def:def()};
-    addFoodEntry(); await d(320); o.aVersB.ligne=der();
+    o.aVersB={lab:_afPortionLabel, pw:_afPortionPoids, portions:_afPortions, def:def(), ecran:+(document.getElementById('af-kcal')||{}).value};
+    o.aVersB.ligne=await ajouter();
 
     /* ⑦ étiquette absente -> « non définie », aucune invention */
     S.foodLog=[]; persist();
     await saisir('Truc','450','12','40','20');
+    await portions();
     _afApplyPortion(2); await d(240);
     o.sansNom={def:def()};
-    addFoodEntry(); await d(320); o.sansNom.ligne=der();
+    o.sansNom.ligne=await ajouter();
 
     /* ⑧ 601 kcal / 3 portions : la référence dérivée ne dérive pas (la mesure de Michel) */
-    S.foodLog=[{date:today(),meal:'midi',name:'Plat 601',kcal:601,prot:37,carbs:61,fat:19,
-                ts:601601,v:1,saisie:'manuel',origine:'utilisateur',q:3,u:'portion',per100:null}];
+    /* 🥗 V2 : « 3 portions de 150 g » pour 601 kcal, écrites par le moteur (fiche = 601 / 450 g, recopiée telle quelle à
+       chaque reprise — jamais redérivée des totaux arrondis). Chaque cycle COMPTE sa ligne : une reprise qui ne
+       s'enregistre pas ne peut plus passer pour « aucune dérive ». */
+    S.foodLog=[v2('Plat 601',{kcal:601/4.5,prot:37/4.5,carbs:61/4.5,fat:19/4.5},
+                  {val:3,unite:'portion',origine:'portion',portion:{libelle:'part',poids:150,unite:'g'}})];
     S.savedFoods=[]; persist();
     const cyc=[];
     for(let n=0;n<10;n++){
@@ -33160,9 +33446,11 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       openAddFood(); await d(260); _renderFoodQuickList(); await d(180);
       const k=(_afQuickItems||[]).findIndex(x=>x.name==='Plat 601');
       if(k<0) break;
-      quickFillFood(k); await d(340); addFoodEntry(); await d(280);
+      quickFillFood(k); await d(340);
+      if(typeof _bcReprendreDerniere==='function') _bcReprendreDerniere(); await d(160);
+      const n0=S.foodLog.length; addFoodEntry(); await d(280);
       const e=S.foodLog[S.foodLog.length-1];
-      cyc.push({kcal:e.kcal,q:e.q}); S.foodLog=[e];
+      cyc.push({kcal:e.kcal,q:e.q,u:e.u,ajoute:S.foodLog.length>n0}); S.foodLog=[e];
     }
     o.dixCycles=cyc;
 
@@ -33179,9 +33467,10 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
                                  q:2,u:'portion',portionLabel:'steak',portionWeightG:100}];
     persist();
     await saisir('Steak hache','250','20','30','10');
+    await portions();
     _afApplyPortion(2); await d(200); _afPortionNom('steak'); await d(200);
     set('af-ppoids','125'); await d(240);
-    addFoodEntry(); await d(340);
+    o.favLigne=await ajouter();
     o.favori=JSON.parse(JSON.stringify(S.savedFoods[0]));
     return o;
    }catch(e){ return {err:String(e&&e.message||e)}; }
@@ -33190,49 +33479,56 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   if(Q.err){ t('CCLXXXIV bloc exécuté',false,Q.err); }
   else{
     t('CCLXXXIV ① ⭐⭐ 2 STEAKS DE 125 G : q=2 · u=portion · label · poids · per100 dérivé (240)',
-      Q.deuxSteaks && Q.deuxSteaks.ligne.q===2 && Q.deuxSteaks.ligne.u==='portion'
+      Q.deuxSteaks && Q.deuxSteaks.ligne.ajoute===true && Q.deuxSteaks.ligne.q===2 && Q.deuxSteaks.ligne.u==='portion'
       && Q.deuxSteaks.ligne.lab==='steak' && Q.deuxSteaks.ligne.pw===125
       && Q.deuxSteaks.ligne.kcal===600 && Q.deuxSteaks.ligne.per100
       && Q.deuxSteaks.ligne.per100.kcal===240, JSON.stringify(Q.deuxSteaks&&Q.deuxSteaks.ligne));
-    t('CCLXXXIV ② ⛔ L\'ÉCRAN DIT LE NOM ET LA MASSE TOTALE, qui est DÉRIVÉE (250 g), jamais stockée',
+    /* 🥗 D-103 : la masse totale se dit dans LA forme commune, « 2 portions (250 g) » (avant : « Soit 250 g en tout »). */
+    t('CCLXXXIV ② ⛔ L\'ÉCRAN DIT LE NOM ET LA MASSE TOTALE, qui est DÉRIVÉE (« 2 portions (250 g) », D-103), jamais stockée',
       Q.deuxSteaks && /1 steak \(125 g\)/.test(Q.deuxSteaks.def)
-      && /250 g en tout/.test(Q.deuxSteaks.def), Q.deuxSteaks&&Q.deuxSteaks.def);
-    t('CCLXXXIV ③ ⛔⛔ POIDS INCONNU : l\'écran LE DIT, et aucun poids n\'est inventé',
-      Q.sansPoids && /1 assiette, poids inconnu/.test(Q.sansPoids.def)
-      && Q.sansPoids.ligne.lab==='assiette' && Q.sansPoids.ligne.pw===undefined
-      && Q.sansPoids.ligne.per100===null, JSON.stringify(Q.sansPoids));
+      && /2 portions \(250 g\)/.test(Q.deuxSteaks.def), Q.deuxSteaks&&Q.deuxSteaks.def);
+    /* 🥗 D-099 — SANS POIDS, RIEN NE S'ENREGISTRE : l'écran le dit, et aucun poids n'est inventé. */
+    t('CCLXXXIV ③ ⛔⛔ POIDS INCONNU : l\'écran LE DIT, aucun poids n\'est inventé, et rien ne part sans lui (D-099)',
+      Q.sansPoids && /1 assiette, poids inconnu/.test(Q.sansPoids.def) && /Indique le poids d'une portion/.test(Q.sansPoids.def)
+      && Q.sansPoids.ligne.ajoute===false, JSON.stringify(Q.sansPoids));
     t('CCLXXXIV ④ ⭐⭐ LE POIDS D\'UNE PORTION NE BASCULE PAS L\'UNITÉ (demande n°2 de Michel)',
       Q.pasDeBascule && Q.pasDeBascule.unite==='portion' && Q.pasDeBascule.poidsTotal===0
-      && Q.pasDeBascule.ligne.u==='portion' && Q.pasDeBascule.ligne.q===2,
+      && Q.pasDeBascule.ligne.ajoute===true && Q.pasDeBascule.ligne.u==='portion' && Q.pasDeBascule.ligne.q===2,
       JSON.stringify(Q.pasDeBascule));
-    t('CCLXXXIV ⑤ ⛔ ... ET IL NE RESCALE RIEN : les 4 valeurs ne bougent pas (240/16 avant et après)',
-      Q.pasDeBascule && Q.pasDeBascule.avant[0]===Q.pasDeBascule.apres[0]
-      && Q.pasDeBascule.avant[1]===Q.pasDeBascule.apres[1] && Q.pasDeBascule.apres[0]===240,
+    /* 🥗 D-099 — « il ne rescale rien » DEVIENT « la valeur d'UNE portion ne bouge jamais » : sans poids, ×2 ne
+       multiplie rien (120) ; le poids connu, le moteur calcule 2 × 120 = 240. Le pot reste 120 dans les deux cas. */
+    t('CCLXXXIV ⑤ ⛔ ... ET LA VALEUR D\'UNE PORTION NE BOUGE PAS : sans poids ×2 laisse 120, avec le poids 2 × 120 = 240',
+      Q.pasDeBascule && Q.pasDeBascule.avant[0]===120 && Q.pasDeBascule.avant[1]===8
+      && Q.pasDeBascule.apres[0]===240 && Q.pasDeBascule.apres[1]===16 && Q.pasDeBascule.ligne.kcal===240,
       JSON.stringify(Q.pasDeBascule));
     t('CCLXXXIV ⑥ ⛔ NON-RÉGRESSION : l\'onglet ⚖️ grammes est INCHANGÉ (500 g -> q:500, u:g, per100 120)',
-      Q.grammes && Q.grammes.q===500 && Q.grammes.u==='g' && Q.grammes.per100
+      Q.grammes && Q.grammes.ajoute===true && Q.grammes.q===500 && Q.grammes.u==='g' && Q.grammes.per100
       && Q.grammes.per100.kcal===120, JSON.stringify(Q.grammes));
-    t('CCLXXXIV ⑦ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS même avec un pour-100 g',
-      Q.reprise && Q.reprise.unite==='portion' && Q.reprise.portions===2
-      && Q.reprise.lab==='steak' && Q.reprise.pw===125
-      && Q.reprise.ecran===600 && Q.reprise.base===300, JSON.stringify(Q.reprise));
+    /* 🥗 D-103 : une ancienne ligne (V1) n'a pas de poids de portion FIABLE (il a pu être hérité de l'écran, M6) — la pastille dit
+       « 2 portions », sans gramme ; la portion (steak, 125 g) reste dans la quantité reprise, rien n'est perdu ni inventé. */
+    t('CCLXXXIV ⑦ ⭐⭐ REPRISE : « 2 steaks » revient EN PORTIONS (figée, D-101 ③) — « 2 portions » proposées SANS gramme affirmé (D-103), 600 tels que notés',
+      Q.reprise && Q.reprise.fige===true && !!Q.reprise.qte && Q.reprise.qte.unite==='portion' && Q.reprise.qte.val===2
+      && Q.reprise.qte.portion.libelle==='steak' && Q.reprise.qte.portion.poids===125
+      && /↩ 2 portions \(la dernière fois\)/.test(Q.reprise.pastille.replace(/\u00A0/g,' '))
+      && !/125|250/.test(Q.reprise.pastille) && /portions/.test(Q.reprise.titre)
+      && Q.reprise.ecran===600, JSON.stringify(Q.reprise));
     t('CCLXXXIV ⑧ ⛔ NON-RÉGRESSION ft-v1042 : un aliment en GRAMMES ouvre bien son champ grammes',
       Q.scanGrammes && Q.scanGrammes.blocGrammes===true && Q.scanGrammes.bcNutr===true,
       JSON.stringify(Q.scanGrammes));
-    t('CCLXXXIV ⑨ ⛔⛔ A -> B : ni l\'étiquette ni le poids de portion ne traversent',
+    t('CCLXXXIV ⑨ ⛔⛔ A -> B : ni l\'étiquette ni le poids de portion ne traversent — B montre ses 200 et ne part pas sans quantité',
       Q.aVersB && Q.aVersB.lab==='' && Q.aVersB.pw===0 && Q.aVersB.portions===1
-      && Q.aVersB.ligne.q==null && Q.aVersB.ligne.kcal===200, JSON.stringify(Q.aVersB));
-    t('CCLXXXIV ⑩ ⛔ ÉTIQUETTE ABSENTE -> « portion non définie », aucune invention',
-      Q.sansNom && /non définie/.test(Q.sansNom.def) && Q.sansNom.ligne.lab===undefined
-      && Q.sansNom.ligne.q===2 && Q.sansNom.ligne.u==='portion', JSON.stringify(Q.sansNom));
-    t('CCLXXXIV ⑪ ⭐ 601 kcal / 3 portions : DIX cycles sans une dérive (la mesure de Michel)',
+      && Q.aVersB.ecran===200 && Q.aVersB.ligne.ajoute===false, JSON.stringify(Q.aVersB));
+    t('CCLXXXIV ⑩ ⛔ ÉTIQUETTE ABSENTE -> « portion non définie », aucune invention — et rien ne part sans nom ni poids',
+      Q.sansNom && /non définie/.test(Q.sansNom.def) && Q.sansNom.ligne.ajoute===false, JSON.stringify(Q.sansNom));
+    /* 🥗 D-103 : chaque cycle reprend la pastille « 3 portions (450 g) » TELLE QUELLE — la ligne reste 3 parts (avant : 450 g). */
+    t('CCLXXXIV ⑪ ⭐ 601 kcal / 3 parts de 150 g : DIX cycles reprise → ajout, chacun ENREGISTRÉ, sans une dérive (601 · 3 parts, D-103)',
       Q.dixCycles && Q.dixCycles.length===10
-      && Q.dixCycles.every(c=>c.kcal===601 && c.q===3), JSON.stringify(Q.dixCycles));
+      && Q.dixCycles.every(c=>c.ajoute===true && c.kcal===601 && c.q===3 && c.u==='portion'), JSON.stringify(Q.dixCycles));
     t('CCLXXXIV ⑫ L\'EXPORT CSV porte `portion_label` et `portion_poids_g`',
       Q.csv && Q.csv.indexOf('portion_label')>=0 && Q.csv.indexOf('portion_poids_g')>=0,
       JSON.stringify(Q.csv));
     t('CCLXXXIV ⑬ ⛔ LE FAVORI SE RAFRAÎCHIT : sa DÉFINITION suit (100 g -> 125 g)',
-      Q.favori && Q.favori.portionWeightG===125 && Q.favori.portionLabel==='steak',
+      Q.favLigne && Q.favLigne.ajoute===true && Q.favori && Q.favori.portionWeightG===125 && Q.favori.portionLabel==='steak',
       JSON.stringify(Q.favori));
     /* ⛔⛔ LE TÉMOIN QUI MANQUAIT : la définition est un fait sur l'ALIMENT, les macros un fait
        sur CE repas-là. Sans lui, un correctif trop large qui écraserait les macros du favori
@@ -33270,6 +33566,14 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
    `_afQuickItems`. Un test qui pose la liste à la main puis clique deux fois tape dans le vide
    au 2ᵉ clic — ma première mesure du point ② disait « impossible » pour cette raison, pas pour
    la bonne. On repose la fixture avant chaque clic.
+
+   🥗 V2 (jalon 4, 22/10/2026) — L'ÉCRAN « MODIFIER » NE RETOUCHE PLUS LA DÉFINITION D'UNE PORTION (D-101 ⑩, PROPOSÉ —
+   à trancher par Michel) : il la DIT, en lecture seule. Sur une ligne sans fiche vérifiée, la quantité se corrige (g, ml,
+   ou des portions de LA MÊME définition) sans recalculer les valeurs notées (M1) ; une modification est une ligne neuve
+   qui prend la place de l'ancienne, l'originale gardée entière dans `n2.av` (D-101 ④). Ce que le bloc protège encore :
+   l'ouverture en portions, « enregistrer sans geste ne change rien », le pour-100 g publié jamais écrasé (R32), les
+   favoris de même nom, la décimale du pour-100 g et l'absence de dérive. Les témoins de la définition retouchée dans
+   « Modifier » (V1 : ④ ⑤ ⑥ ⑪ ⑭ ⑮) sont RETIRÉS, chacun avec sa raison à sa place (R30).
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 {
   const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
@@ -33286,116 +33590,140 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));}};
     const has=id=>!!document.getElementById(id);
     const val=id=>(document.getElementById(id)||{}).value;
-    const pdef=()=>(document.getElementById('ef-pdef')||{textContent:''}).textContent.replace(/\s+/g,' ').trim();
     const lig=()=>{const e=S.foodLog[0]||{};
       return {kcal:e.kcal,prot:e.prot,carbs:e.carbs,fat:e.fat,q:e.q,u:e.u,
-              lab:e.portionLabel,pw:e.portionWeightG,per100:e.per100||null};};
+              lab:e.portionLabel,pw:e.portionWeightG,per100:e.per100||null,
+              av:(e.n2&&e.n2.av)?{q:e.n2.av.q,u:e.n2.av.u,pw:e.n2.av.portionWeightG,per100:e.n2.av.per100||null}:null};};
     const STEAK=(ts)=>({ts:ts,date:today(),meal:'midi',name:'Steak hache',
       kcal:500,prot:40,carbs:0,fat:36,q:2,u:'portion',portionLabel:'steak',portionWeightG:125,
       per100:{kcal:200,prot:16,carbs:0,fat:14.4},v:1,saisie:'manuel',origine:'utilisateur'});
     const ouvrir=async(ts)=>{document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
       openEditFood(_tsVersId(ts)); await d(320);};
 
-    /* ①a L'ÉCRAN D'ÉDITION RESTE EN PORTIONS — le pour-100 g ne décide plus de l'unité */
+    const enregistrer=async()=>{ const vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ saveEditFood(); }catch(e){ vus.push('EXC '+(e&&e.message)); } await d(320); window.toast=_t; return vus; };
+    const qte=()=>(document.getElementById('ef-qty-row')||{textContent:''}).textContent.replace(/\s+/g,' ').trim();
+    const ajouter=async()=>{ const n0=S.foodLog.length, vus=[], _t=window.toast; window.toast=m=>vus.push(String(m));
+      try{ addFoodEntry(); }catch(e){ vus.push('EXC '+(e&&e.message)); } await d(320); window.toast=_t;
+      const e=S.foodLog[S.foodLog.length-1]||{};
+      return {ajoute:S.foodLog.length>n0, dit:vus.slice(0,2), q:e.q, u:e.u, per100:e.per100||null}; };
+
+    /* ①a L'ÉCRAN D'ÉDITION RESTE EN PORTIONS — et la définition se DIT, sans champ pour la retoucher (D-101 ⑩) */
     S.foodLog=[STEAK(6100)]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
     await ouvrir(6100);
-    o.editPortion={grammes:has('ef-grams'), prop:val('ef-prop'),
-                   nom:val('ef-pnom'), poids:val('ef-ppoids'), def:pdef()};
+    o.editPortion={grammes:has('ef-grams'), q:val('ef-q'), unite:_efUniteDecl, txt:qte(),
+                   anciens:{pnom:has('ef-pnom'), ppoids:has('ef-ppoids'), prop:has('ef-prop'), pdef:has('ef-pdef')}};
 
-    /* ①b LA DÉFINITION SE MET À JOUR PENDANT LA FRAPPE, sans détruire le champ (ft-v1159) */
-    set('ef-ppoids','150'); await d(240);
-    o.frappe={def:pdef(), champVivant:has('ef-ppoids'), valeur:val('ef-ppoids')};
-
-    /* ①c ENREGISTRER : la définition descend, le pour-100 g SUIT la nouvelle définition */
-    saveEditFood(); await d(320);
-    o.corrige=lig();
-    o.corrigeExact={kcal:Math.round(500/3*10)/10, prot:Math.round(40/3*10)/10, fat:12};
+    /* ①b ①c (V1 : la frappe du poids, puis 125 → 150 à l'enregistrement) — RETIRÉS : plus de champ de définition. */
 
     /* ①d ⛔⛔ LE DÉFAUT D'ORIGINE : ouvrir + enregistrer SANS RIEN TOUCHER ne change rien */
     S.foodLog=[STEAK(6101)]; persist();
-    await ouvrir(6101); saveEditFood(); await d(320);
+    await ouvrir(6101); o.sansGesteDit=await enregistrer();
     o.sansGeste=lig();
 
-    /* ①e NON-RÉGRESSION : un produit SCANNÉ en grammes garde son champ et son pour-100 g */
-    S.foodLog=[{ts:6102,date:today(),meal:'midi',name:'Thon Petit Navire',
-      kcal:260,prot:52,carbs:0,fat:6,q:200,u:'g',per100:{kcal:130,prot:26,carbs:0,fat:3},
-      v:1,saisie:'scan',origine:'off',sourceId:'3165950'}];
+    /* ①e NON-RÉGRESSION : un produit SCANNÉ en grammes garde son champ et son pour-100 g.
+       🥗 V2 : une ligne pesée ÉCRITE PAR LE MOTEUR, avec sa fiche de confiance — une ancienne ligne « scan » sans fiche
+       vérifiable n'en a plus (M1), elle se reprend figée (CCLXXV). */
+    { const r=NUT2.ligneNouvelle({id:'cclxxxv-thon-0000', ts:6102, date:today(), repas:'dejeuner', nom:'Thon Petit Navire',
+        origine:{saisie:'code-tape', origine:'off'}, mode:'pesee',
+        fiche:{base:'g', p100:{kcal:130,prot:26,carbs:0,fat:3}, cle:'3165950', source:'off', fiab:'source'},
+        quantite:{val:200, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture thon : '+r.erreur);
+      S.foodLog=[r.ligne]; }
     persist();
     await ouvrir(6102);
-    o.scanGrammes={grammes:has('ef-grams'), v:val('ef-grams'), poidsPortion:has('ef-ppoids')};
-    saveEditFood(); await d(320); o.scanGrammesApres=lig();
+    o.scanGrammes={grammes:has('ef-grams'), v:val('ef-grams'), q:has('ef-q'), poidsPortion:has('ef-ppoids')};
+    o.scanGrammesDit=await enregistrer(); o.scanGrammesApres=lig();
 
-    /* ①f ⛔⛔ R32 — UN POUR-100 g PUBLIÉ NE SE FAIT PAS ÉCRASER par une définition déclarée */
+    /* ①f ⛔⛔ R32 — UN POUR-100 g PUBLIÉ NE SE FAIT PAS ÉCRASER.
+       🥗 V2 : plus de poids de portion à déclarer dans « Modifier ». « 1 yaourt » sans poids n'est pas une quantité
+       (D-099) : l'écran la DEMANDE (g ou ml) et refuse d'enregistrer sans elle ; donnée, elle ne fabrique AUCUN
+       pour-100 g (les valeurs restent celles notées), et l'originale (97) reste entière dans `n2.av`. */
     S.foodLog=[{ts:6103,date:today(),meal:'midi',name:'Yaourt marque',
       kcal:120,prot:5,carbs:14,fat:4,q:1,u:'portion',portionLabel:'yaourt',
       per100:{kcal:97,prot:4,carbs:11.3,fat:3.2},v:1,saisie:'scan',origine:'off',sourceId:'3033710'}];
     persist();
-    await ouvrir(6103); set('ef-ppoids','125'); await d(200); saveEditFood(); await d(320);
-    o.scanProtege=lig();
+    await ouvrir(6103);
+    o.scanProtegeEcran={ppoids:has('ef-ppoids'), q:val('ef-q'), unite:_efUniteDecl};
+    o.scanProtegeDit=await enregistrer(); o.scanProtege=lig();
+    set('ef-q','125'); await d(200);
+    o.scanDeclareDit=await enregistrer(); o.scanDeclare=lig();
 
-    /* ①g LE POIDS RETIRÉ EMPORTE CE QUI EN DÉPENDAIT (aucune vérité orpheline) */
-    S.foodLog=[STEAK(6104)]; persist();
-    await ouvrir(6104); set('ef-ppoids',''); await d(200); saveEditFood(); await d(320);
-    o.poidsRetire=lig();
+    /* ①g (V1 : le poids retiré emporte le pour-100 g) — RETIRÉ : plus de poids à retirer dans « Modifier ». */
 
-    /* ② DEUX FAVORIS DE MÊME NOM : impossible à créer, et refus d'agir si ça arrivait */
-    const A={name:'Steak hache',kcal:250,prot:20,carbs:0,fat:18,q:1,u:'portion',portionLabel:'steak',portionWeightG:125};
-    const B={name:'STEAK HACHE',kcal:200,prot:18,carbs:0,fat:14,q:1,u:'portion',portionLabel:'steak',portionWeightG:100};
-    S.savedFoods=[]; S.foodLog=[]; S.hiddenFoods=[]; persist();
-    _afQuickItems=[A,B]; toggleFavFood(0);
-    _afQuickItems=[A,B]; toggleFavFood(1);          // ⭐ la fixture se REPOSE : le rendu l'écrase
-    const n2=S.savedFoods.length;
-    _afQuickItems=[A,B]; toggleFavFood(1);
-    o.favUnique={apres2:n2, apres3:S.savedFoods.length};
-    // l'état impossible, forcé : A ne doit PAS écrire sur B
+    /* ② DEUX FAVORIS DE LA MÊME IDENTITÉ : impossible à créer, et refus d'agir si ça arrivait.
+       ⭐⭐ INCIDENT DU 23/10 (D-111) — L'IDENTITÉ EST CELLE DU PRODUIT (`_n2Cle` : le code-barres, puis le nom pour ce qui
+       n'en a pas). Avant : « le nom EST l'identité d'un favori, il ne porte aucun autre identifiant » (ft-v1188, mesuré à
+       l'époque) — faux depuis la V2 (un favori garde son `sourceId`), et la mission de Michel l'interdit : *« ne jamais
+       identifier deux produits uniquement par leur nom lorsqu'ils peuvent être différents »*. L'étoile agit sur l'élément
+       touché ; c'est la LISTE qui n'offre jamais un 2ᵉ favori de la même identité. ⛔ Le témoin passe donc par la VRAIE liste
+       (`_buildFoodQuickItems`), plus par une fixture reposée à la main : l'ancienne version (deux éléments sans `fav` reposés
+       avant chaque clic) testait la recherche par NOM de l'étoile, le défaut même. */
+    const A={date:'2026-09-01',meal:'midi',ts:1,name:'Steak hache',kcal:250,prot:20,carbs:0,fat:18,q:1,u:'portion',portionLabel:'steak',portionWeightG:125};
+    const B={date:'2026-09-02',meal:'midi',ts:2,name:'STEAK HACHE',kcal:200,prot:18,carbs:0,fat:14,q:1,u:'portion',portionLabel:'steak',portionWeightG:100};
+    S.savedFoods=[]; S.foodLog=[A,B]; S.hiddenFoods=[]; persist();
+    const steaks=()=>_buildFoodQuickItems().filter(x=>/^steak hache$/i.test(x.name||''));
+    const etoile=()=>{ _afQuickItems=_buildFoodQuickItems(); const k=_afQuickItems.findIndex(x=>/^steak hache$/i.test(x.name||'')); if(k>=0) toggleFavFood(k); };
+    const l1=steaks().length; etoile(); const n1=S.savedFoods.length;
+    const L2=steaks(); etoile(); const n2=S.savedFoods.length;
+    etoile(); const n3=S.savedFoods.length;
+    o.favUnique={liste1:l1, apres1:n1, liste2:L2.length, liste2fav:L2.length===1 && L2[0].fav===true, apres2:n2, apres3:n3};
+    // l'état, forcé : DEUX favoris du même NOM sans code-barres (une seule identité) → ambigu, on ne touche à rien ;
+    // et deux favoris du même nom à DEUX codes-barres (deux produits) → seul le bon suit, A n'écrit jamais sur B
+    S.savedFoods=[{name:'Steak hache',portionWeightG:100,portionLabel:'steak',kcal:200,prot:18,carbs:0,fat:14},
+                  {name:'Steak hache',portionWeightG:125,portionLabel:'steak',kcal:250,prot:20,carbs:0,fat:18}];
+    _majDefFavori({name:'Steak hache',u:'portion',portionLabel:'pave',portionWeightG:150});
+    o.ambigu=S.savedFoods.map(f=>(f.sourceId||'-')+':'+f.portionWeightG+':'+f.portionLabel).join(' | ');
     S.savedFoods=[{name:'Steak hache',portionWeightG:100,portionLabel:'steak',kcal:200,prot:18,carbs:0,fat:14,sourceId:'off:BBB'},
                   {name:'Steak hache',portionWeightG:125,portionLabel:'steak',kcal:250,prot:20,carbs:0,fat:18,sourceId:'off:AAA'}];
     _majDefFavori({name:'Steak hache',u:'portion',portionLabel:'pave',portionWeightG:150,sourceId:'off:AAA'});
-    o.ambigu=S.savedFoods.map(f=>f.sourceId+':'+f.portionWeightG+':'+f.portionLabel).join(' | ');
+    o.distincts=S.savedFoods.map(f=>f.sourceId+':'+f.portionWeightG+':'+f.portionLabel+':'+f.kcal).join(' | ');
 
-    /* ②b LE FAVORI SUIT UNE DÉFINITION CORRIGÉE DEPUIS L'ÉDITION — définition SEULE */
-    S.savedFoods=[{name:'Steak hache',kcal:250,prot:20,carbs:0,fat:18,
-                   per100:{kcal:200,prot:16,carbs:0,fat:14.4},q:1,u:'portion',
-                   portionLabel:'steak',portionWeightG:125}];
-    S.foodLog=[STEAK(6105)]; persist();
-    await ouvrir(6105); set('ef-ppoids','150'); await d(160); set('ef-pnom','pave'); await d(160);
-    saveEditFood(); await d(320);
-    const f0=S.savedFoods[0]||{};
-    o.favSuit={pw:f0.portionWeightG, lab:f0.portionLabel, kcal:f0.kcal, prot:f0.prot};
+    /* ②b (V1 : le favori suit une définition corrigée DEPUIS L'ÉDITION) — RETIRÉ (D-101 ⑩). Qu'un favori suive une
+       définition nouvelle SANS que ses macros bougent reste tenu là où une définition change encore : l'écran d'ajout,
+       CCLXXXIV ⑬ ⑭. */
 
-    /* ③ LA DÉCIMALE DU POUR-100 g DÉRIVÉ — à l'ajout, en portions ET en grammes */
+    /* ③ LA DÉCIMALE DU POUR-100 g DÉRIVÉ — à l'ajout, en portions ET en grammes.
+       🥗 V2 : le moteur garde le pour-100 g à PLEINE précision (jamais arrondi à l'entier) ; le témoin le lit à une
+       décimale, ce qu'un arrondi entier (le défaut V1 : 8,3 % sur les lipides) casserait. */
     S.foodLog=[]; S.savedFoods=[]; persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await d(320);
     set('af-desc','Galette test'); set('af-kcal','355'); set('af-prot','30');
     set('af-carbs','44'); set('af-fat','6'); _afMajAncre(true); await d(220);
+    _afSetUnite('portion'); await d(200);          // 🥗 V2 (D-099) : les grammes d'abord, les portions sont le second onglet
     _afApplyPortion(1); await d(200); _afPortionNom('part'); await d(200);
     set('af-ppoids','140'); await d(240);
-    addFoodEntry(); await d(320);
-    o.decimalePortion=(S.foodLog[0]||{}).per100||null;
+    o.decimalePortion=await ajouter();
 
     S.foodLog=[]; persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await d(320);
     set('af-desc','Gratin test'); set('af-kcal','355'); set('af-prot','30');
     set('af-carbs','44'); set('af-fat','6'); _afMajAncre(true); await d(220);
-    _afSetUnite('g'); await d(240); set('af-poids','140');
+    set('af-poids','140');                         // 🥗 V2 (D-099) : l'écran s'ouvre DÉJÀ en grammes
     const pe=document.getElementById('af-poids'); if(pe) pe.dispatchEvent(new Event('blur'));
     _afMajAncre(); await d(300);
-    addFoodEntry(); await d(320);
-    o.decimaleGrammes=(S.foodLog[0]||{}).per100||null;
+    o.decimaleGrammes=await ajouter();
 
-    /* ③b AUCUNE DÉRIVE CUMULATIVE : 10 reprises d'affilée, chiffres identiques */
+    /* ③b AUCUNE DÉRIVE CUMULATIVE : 10 cycles d'affilée, chacun ENREGISTRÉ.
+       🥗 V2 : la reprise ne pré-remplit plus la quantité (D-101 ①) — on touche la pastille « ↩ la dernière fois ». Une
+       ligne pesée revient EN GRAMMES (les 140 g qu'elle porte) : le 1ᵉʳ cycle est en portion, les suivants en grammes ;
+       valeurs et pour-100 g ne bougent jamais, et l'empreinte du 10ᵉ égale celle du 2ᵉ au caractère près.
+       ⛔ Chaque cycle COMPTE sa ligne : sous V2, le témoin d'origine restait vert SANS RIEN AJOUTER (la reprise sans
+       quantité est refusée, la ligne du tour précédent était relue, identique à elle-même). */
     S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
     document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
     openAddFood(); await d(300);
     set('af-desc','Cycle test'); set('af-kcal','355'); set('af-prot','30');
     set('af-carbs','44'); set('af-fat','6'); _afMajAncre(true); await d(200);
+    _afSetUnite('portion'); await d(180);
     _afApplyPortion(1); await d(180); _afPortionNom('part'); await d(180);
-    set('af-ppoids','140'); await d(220); addFoodEntry(); await d(300);
+    set('af-ppoids','140'); await d(220);
     const empreinte=e=>[e.kcal,e.prot,e.carbs,e.fat,e.q,e.u,e.portionWeightG,
       e.per100?[e.per100.kcal,e.per100.prot,e.per100.carbs,e.per100.fat].join('/'):'-'].join('|');
-    const c1=empreinte(S.foodLog[0]);
+    const ajouts=[(await ajouter()).ajoute];
+    const emp=[S.foodLog.length?empreinte(S.foodLog[S.foodLog.length-1]):'-'];
     for(let i=2;i<=10;i++){
       S.foodLog=[S.foodLog[S.foodLog.length-1]]; persist();
       document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
@@ -33403,9 +33731,12 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
       _afQuickItems=_buildFoodQuickItems();
       const k=_afQuickItems.findIndex(x=>x.name==='Cycle test');
       if(k<0){ o.cycleErr='introuvable au tour '+i; break; }
-      quickFillFood(k); await d(240); addFoodEntry(); await d(240);
+      quickFillFood(k); await d(240);
+      if(typeof _bcReprendreDerniere==='function') _bcReprendreDerniere(); await d(160);
+      ajouts.push((await ajouter()).ajoute);
+      emp.push(empreinte(S.foodLog[S.foodLog.length-1]));
     }
-    o.cycles={un:c1, dix:empreinte(S.foodLog[S.foodLog.length-1])};
+    o.cycles={un:emp[0], deux:emp[1], dix:emp[emp.length-1], n:emp.length, ajouts:ajouts};
     return o;
    }catch(e){ return {err:String(e&&e.message||e)}; }
   });
@@ -33413,63 +33744,77 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
   console.log('\n== BLOC CCLXXXV — 🔬 les 3 vérifications de GPT avant validation de P1 ==');
   if(V.err){ t('CCLXXXV bloc exécuté',false,V.err); }
   else{
-    /* ①  CORRIGER LA DÉFINITION APRÈS COUP */
-    t('CCLXXXV ① ⭐⭐ « 2 STEAKS » S\'OUVRE EN PORTIONS, PAS EN GRAMMES (le pour-100 g ne décide plus de l\'unité)',
-      V.editPortion && V.editPortion.grammes===false && V.editPortion.prop==='2', JSON.stringify(V.editPortion));
-    t('CCLXXXV ② ⭐ LES DEUX CHAMPS DE DÉFINITION EXISTENT ENFIN, pré-remplis (steak · 125)',
-      V.editPortion && V.editPortion.nom==='steak' && V.editPortion.poids==='125', JSON.stringify(V.editPortion));
-    t('CCLXXXV ③ ⛔ L\'ÉCRAN DIT LA DÉFINITION ET LA MASSE TOTALE DÉRIVÉE (250 g)',
-      /1 steak/.test(V.editPortion.def) && /125 g/.test(V.editPortion.def) && /250 g/.test(V.editPortion.def),
-      V.editPortion.def);
-    t('CCLXXXV ④ ⌨️ LA FRAPPE MET À JOUR LE TEXTE SANS DÉTRUIRE LE CHAMP (leçon ft-v1159)',
-      V.frappe && V.frappe.champVivant===true && V.frappe.valeur==='150'
-      && /150 g/.test(V.frappe.def) && /300 g/.test(V.frappe.def), JSON.stringify(V.frappe));
-    t('CCLXXXV ⑤ ⭐⭐ 125 → 150 : LE POUR-100 g SUIT LA NOUVELLE DÉFINITION (166,7 / 13,3 / 12)',
-      V.corrige && V.corrige.pw===150 && V.corrige.per100
-      && V.corrige.per100.kcal===V.corrigeExact.kcal && V.corrige.per100.prot===V.corrigeExact.prot
-      && V.corrige.per100.fat===V.corrigeExact.fat, JSON.stringify(V.corrige));
-    t('CCLXXXV ⑥ ⛔ ... ET LA QUANTITÉ N\'EST PAS TOUCHÉE : q=2 · u=portion · label gardé',
-      V.corrige && V.corrige.q===2 && V.corrige.u==='portion' && V.corrige.lab==='steak'
-      && V.corrige.kcal===500, JSON.stringify(V.corrige));
+    /* ①  LA LIGNE EN PORTIONS DANS « MODIFIER » */
+    t('CCLXXXV ① ⭐⭐ « 2 STEAKS » S\'OUVRE EN PORTIONS, PAS EN GRAMMES (2 portions, aucune quantité déduite)',
+      V.editPortion && V.editPortion.grammes===false && V.editPortion.unite==='portion' && V.editPortion.q==='2',
+      JSON.stringify(V.editPortion));
+    t('CCLXXXV ② ⭐ LA DÉFINITION EST DITE, EN LECTURE SEULE : « 1 portion = 1 steak — poids non vérifié » (D-103 : le poids d\'une ancienne ligne n\'est pas affirmé) — plus de champ pour la retoucher (D-101 ⑩)',
+      /* 🥗 D-103 : une ancienne ligne n'affirme pas le poids noté d'une portion (non vérifiable) — le nom, oui. */
+      V.editPortion && /1 portion = 1 steak — poids non vérifié/.test(V.editPortion.txt) && !/125 g/.test(V.editPortion.txt) && V.editPortion.anciens
+      && !V.editPortion.anciens.pnom && !V.editPortion.anciens.ppoids && !V.editPortion.anciens.prop && !V.editPortion.anciens.pdef,
+      JSON.stringify(V.editPortion));
+    t('CCLXXXV ③ ⛔ ... ET L\'ÉCRAN DIT QUE LES VALEURS NOTÉES NE SONT PAS RECALCULÉES (pas de fiche vérifiée, M1)',
+      V.editPortion && /pas recalculées/.test(V.editPortion.txt), V.editPortion && V.editPortion.txt);
+    /* ④ ⑤ ⑥ (V1 : la frappe du poids, le pour-100 g qui suit 125 → 150, la quantité intouchée) — RETIRÉS : l'édition
+       ne retouche plus la définition d'une portion (D-101 ⑩). */
     t('CCLXXXV ⑦ ⛔⛔ LE DÉFAUT D\'ORIGINE : ouvrir + enregistrer SANS RIEN TOUCHER ne change rien (avant : q:250, u:g)',
-      V.sansGeste && V.sansGeste.q===2 && V.sansGeste.u==='portion' && V.sansGeste.pw===125
-      && V.sansGeste.lab==='steak' && V.sansGeste.per100 && V.sansGeste.per100.kcal===200,
+      V.sansGeste && /Modifié/.test((V.sansGesteDit||[]).join(' ')) && V.sansGeste.q===2 && V.sansGeste.u==='portion'
+      && V.sansGeste.pw===125 && V.sansGeste.lab==='steak' && V.sansGeste.kcal===500 && V.sansGeste.prot===40
+      && V.sansGeste.fat===36, JSON.stringify({dit:V.sansGesteDit, ligne:V.sansGeste}));
+    t('CCLXXXV ⑦bis ⛔ ... L\'ORIGINALE RESTE ENTIÈRE (n2.av, pour-100 g 200 compris) et AUCUN pour-100 g n\'est fabriqué sur la ligne (M1)',
+      V.sansGeste && V.sansGeste.av && V.sansGeste.av.q===2 && V.sansGeste.av.pw===125
+      && V.sansGeste.av.per100 && V.sansGeste.av.per100.kcal===200 && V.sansGeste.per100===null,
       JSON.stringify(V.sansGeste));
     t('CCLXXXV ⑧ ⛔ NON-RÉGRESSION : un produit SCANNÉ en grammes garde SON champ (200 g), sans champ de portion',
       V.scanGrammes && V.scanGrammes.grammes===true && V.scanGrammes.v==='200'
-      && V.scanGrammes.poidsPortion===false, JSON.stringify(V.scanGrammes));
+      && V.scanGrammes.poidsPortion===false && V.scanGrammes.q===false, JSON.stringify(V.scanGrammes));
     t('CCLXXXV ⑨ ⛔ ... et son pour-100 g publié est INTACT après enregistrement (130/26/0/3)',
-      V.scanGrammesApres && V.scanGrammesApres.u==='g' && V.scanGrammesApres.q===200
-      && V.scanGrammesApres.per100 && V.scanGrammesApres.per100.kcal===130,
-      JSON.stringify(V.scanGrammesApres));
-    t('CCLXXXV ⑩ ⛔⛔ R32 — UN POUR-100 g PUBLIÉ NE SE FAIT PAS ÉCRASER par un poids déclaré (97 reste 97)',
-      V.scanProtege && V.scanProtege.pw===125 && V.scanProtege.per100
-      && V.scanProtege.per100.kcal===97 && V.scanProtege.per100.fat===3.2,
-      JSON.stringify(V.scanProtege));
-    t('CCLXXXV ⑪ ⛔ LE POIDS RETIRÉ EMPORTE CE QUI EN DÉPENDAIT (pas de pour-100 g orphelin)',
-      V.poidsRetire && !V.poidsRetire.pw && !V.poidsRetire.per100
-      && V.poidsRetire.q===2 && V.poidsRetire.u==='portion', JSON.stringify(V.poidsRetire));
+      V.scanGrammesApres && /Modifié/.test((V.scanGrammesDit||[]).join(' ')) && V.scanGrammesApres.u==='g'
+      && V.scanGrammesApres.q===200 && V.scanGrammesApres.kcal===260 && V.scanGrammesApres.per100
+      && V.scanGrammesApres.per100.kcal===130 && V.scanGrammesApres.per100.fat===3,
+      JSON.stringify({dit:V.scanGrammesDit, ligne:V.scanGrammesApres}));
+    t('CCLXXXV ⑩ ⛔⛔ R32 — UN POUR-100 g PUBLIÉ NE SE FAIT PAS ÉCRASER : pas de poids à déclarer, et sans quantité rien ne part (97 reste 97)',
+      V.scanProtegeEcran && V.scanProtegeEcran.ppoids===false && V.scanProtegeEcran.q===''
+      && /Indique la quantité/.test((V.scanProtegeDit||[]).join(' '))
+      && V.scanProtege && V.scanProtege.q===1 && V.scanProtege.u==='portion' && V.scanProtege.av===null
+      && V.scanProtege.per100 && V.scanProtege.per100.kcal===97 && V.scanProtege.per100.fat===3.2,
+      JSON.stringify({ecran:V.scanProtegeEcran, dit:V.scanProtegeDit, ligne:V.scanProtege}));
+    t('CCLXXXV ⑩bis ⛔⛔ ... ET UNE QUANTITÉ DÉCLARÉE (125 g) NE FABRIQUE AUCUN POUR-100 g : valeurs telles que notées (120), 97 gardé dans l\'originale',
+      V.scanDeclare && /Modifié/.test((V.scanDeclareDit||[]).join(' ')) && V.scanDeclare.q===125 && V.scanDeclare.u==='g'
+      && V.scanDeclare.kcal===120 && V.scanDeclare.per100===null
+      && V.scanDeclare.av && V.scanDeclare.av.per100 && V.scanDeclare.av.per100.kcal===97,
+      JSON.stringify({dit:V.scanDeclareDit, ligne:V.scanDeclare}));
+    /* ⑪ (V1 : le poids retiré emporte le pour-100 g) — RETIRÉ : plus de poids à retirer dans « Modifier » (D-101 ⑩). */
 
-    /* ②  LES FAVORIS DE MÊME NOM */
-    t('CCLXXXV ⑫ ⭐ DEUX FAVORIS DE MÊME NOM SONT IMPOSSIBLES À CRÉER (l\'étoile retire au lieu d\'ajouter)',
-      V.favUnique && V.favUnique.apres2===0 && V.favUnique.apres3===1, JSON.stringify(V.favUnique));
-    t('CCLXXXV ⑬ ⛔⛔ ... ET SI L\'ÉTAT ARRIVAIT QUAND MÊME : on ne touche à RIEN (100 et 125 intacts)',
-      V.ambigu==='off:BBB:100:steak | off:AAA:125:steak', V.ambigu);
-    t('CCLXXXV ⑭ ⭐ LE FAVORI SUIT UNE DÉFINITION CORRIGÉE DEPUIS L\'ÉDITION (125 → 150, steak → pave)',
-      V.favSuit && V.favSuit.pw===150 && V.favSuit.lab==='pave', JSON.stringify(V.favSuit));
-    t('CCLXXXV ⑮ ⛔⛔ ... MAIS SES MACROS NE BOUGENT PAS (favori 250/20, repas 500/40)',
-      V.favSuit && V.favSuit.kcal===250 && V.favSuit.prot===20, JSON.stringify(V.favSuit));
+    /* ②  LES FAVORIS DE LA MÊME IDENTITÉ (D-111 : le produit, plus le nom) */
+    t('CCLXXXV ⑫ ⭐ DEUX FAVORIS DE LA MÊME IDENTITÉ SONT IMPOSSIBLES À CRÉER PAR LA VRAIE LISTE (sans code-barres, le nom est '+
+      'l\'identité : une seule ligne listée ; l\'étoile en fait UN favori, qui prend sa place ; ré-étoilé il se retire)',
+      V.favUnique && V.favUnique.liste1===1 && V.favUnique.apres1===1 && V.favUnique.liste2fav===true
+      && V.favUnique.apres2===0 && V.favUnique.apres3===1, JSON.stringify(V.favUnique));
+    t('CCLXXXV ⑬ ⛔⛔ ... ET SI L\'ÉTAT ARRIVAIT QUAND MÊME : sans code-barres (identité ambiguë) on ne touche à RIEN ; à deux '+
+      'codes-barres (deux produits), seul le bon suit sa définition — A n\'écrit jamais sur B, et ses valeurs ne bougent pas',
+      V.ambigu==='-:100:steak | -:125:steak' && V.distincts==='off:BBB:100:steak:200 | off:AAA:150:pave:250',
+      JSON.stringify({ambigu:V.ambigu, distincts:V.distincts}));
+    /* ⑭ ⑮ (V1 : le favori suit une définition corrigée DEPUIS L'ÉDITION, sans que ses macros bougent) — RETIRÉS
+       (D-101 ⑩) ; la même garantie, depuis l'écran d'ajout, reste tenue par CCLXXXIV ⑬ ⑭. */
 
     /* ③  LA PRÉCISION */
+    const d1=x=>Math.round(x*10)/10;
     t('CCLXXXV ⑯ ⭐⭐ LE POUR-100 g DÉRIVÉ D\'UNE PORTION GARDE LA DÉCIMALE (253,6 / 21,4 / 31,4 / 4,3)',
-      V.decimalePortion && V.decimalePortion.kcal===253.6 && V.decimalePortion.prot===21.4
-      && V.decimalePortion.carbs===31.4 && V.decimalePortion.fat===4.3,
+      V.decimalePortion && V.decimalePortion.ajoute===true && V.decimalePortion.u==='portion' && V.decimalePortion.per100
+      && d1(V.decimalePortion.per100.kcal)===253.6 && d1(V.decimalePortion.per100.prot)===21.4
+      && d1(V.decimalePortion.per100.carbs)===31.4 && d1(V.decimalePortion.per100.fat)===4.3,
       JSON.stringify(V.decimalePortion));
     t('CCLXXXV ⑰ ⭐ ... ET CELUI DÉRIVÉ DES GRAMMES AUSSI (la porte jumelle, R8)',
-      V.decimaleGrammes && V.decimaleGrammes.prot===21.4 && V.decimaleGrammes.fat===4.3,
+      V.decimaleGrammes && V.decimaleGrammes.ajoute===true && V.decimaleGrammes.u==='g' && V.decimaleGrammes.q===140
+      && V.decimaleGrammes.per100 && d1(V.decimaleGrammes.per100.prot)===21.4 && d1(V.decimaleGrammes.per100.fat)===4.3,
       JSON.stringify(V.decimaleGrammes));
-    t('CCLXXXV ⑱ ⭐ AUCUNE DÉRIVE CUMULATIVE : le 10ᵉ cycle est identique au 1ᵉʳ, au caractère près',
-      V.cycles && V.cycles.un===V.cycles.dix && !V.cycleErr,
+    t('CCLXXXV ⑱ ⭐ AUCUNE DÉRIVE CUMULATIVE : DIX cycles, chacun ENREGISTRÉ — valeurs et pour-100 g identiques au caractère près, le 10ᵉ égal au 2ᵉ',
+      V.cycles && !V.cycleErr && V.cycles.n===10 && V.cycles.ajouts.length===10 && V.cycles.ajouts.every(x=>x===true)
+      /* 🥗 D-103 : la reprise prise telle quelle reste « 1 part de 140 g » — les DIX empreintes sont identiques (avant : 140 g dès le 2ᵉ). */
+      && V.cycles.deux===V.cycles.dix && V.cycles.un===V.cycles.dix && /^355\|30\|44\|6\|1\|portion\|140\|/.test(V.cycles.dix)
+      && V.cycles.un.split('|').slice(0,4).join('|')===V.cycles.dix.split('|').slice(0,4).join('|')
+      && V.cycles.un.split('|').pop()===V.cycles.dix.split('|').pop(),
       JSON.stringify(V.cycles)+(V.cycleErr?' · '+V.cycleErr:''));
   }
   await cx.close();
@@ -33576,26 +33921,36 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     addFoodEntry(); await d(320);
     o.aVersB.ajoutees=(S.foodLog||[]).length-n2;
 
-    /* ⑥ NON-RÉGRESSION : l'aliment tapé à la main passe toujours */
+    /* ⑥ NON-RÉGRESSION : l'aliment tapé à la main passe toujours.
+       🥗 V2 (garde-fou du 10/09) : AVEC sa quantité — une saisie sans quantité choisie ne s'enregistre plus, quelle que
+       soit la porte. Ce que le témoin garde : le garde du scan ne bloque pas une saisie à la main complète. */
     S.foodLog=[]; S.savedFoods=[]; S.hiddenFoods=[]; persist();
     fermer(); openAddFood(); await d(300);
     set('af-desc','Omelette maison'); set('af-kcal','300'); set('af-prot','20');
     set('af-carbs','2'); set('af-fat','22'); await d(240);
-    addFoodEntry(); await d(320);
-    o.manuel=ligne();
+    set('af-poids','150'); { const pe=id('af-poids'); if(pe) pe.dispatchEvent(new Event('blur')); } await d(260);
+    { const n=(S.foodLog||[]).length; addFoodEntry(); await d(320); o.manuel=(S.foodLog||[]).length>n ? ligne() : null; }
 
-    /* ⑦ NON-RÉGRESSION : une PORTION (P1) passe toujours */
+    /* ⑦ NON-RÉGRESSION : une PORTION (P1) passe toujours.
+       🥗 V2 (D-099) : une portion est un second onglet, et elle n'est une quantité qu'AVEC son nom et son poids (125 g) ;
+       2 × 125 g d'un steak à 250 kcal la portion = 500 kcal. */
     S.foodLog=[]; persist(); fermer(); openAddFood(); await d(300);
     set('af-desc','Steak'); set('af-kcal','250'); set('af-prot','20');
     set('af-carbs','0'); set('af-fat','18'); _afMajAncre(true); await d(220);
-    _afApplyPortion(2); await d(240);
-    addFoodEntry(); await d(320);
-    o.portion=ligne();
+    _afSetUnite('portion'); await d(220);
+    _afApplyPortion(2); await d(240); _afPortionNom('steak'); await d(220);
+    set('af-ppoids','125'); await d(260);
+    { const n=(S.foodLog||[]).length; addFoodEntry(); await d(320); o.portion=(S.foodLog||[]).length>n ? ligne() : null; }
 
-    /* ⑧ LA REPRISE : le champ reste vide (ft-v1051) et la pastille suffit */
-    S.foodLog=[{ts:Date.now()-1e6,date:today(),meal:'midi',name:'Lentilles',
-      kcal:193,prot:11,carbs:25,fat:5,q:205,u:'g',
-      per100:{kcal:94,prot:5.2,carbs:12,fat:2.4},saisie:'scan',origine:'off'}];
+    /* ⑧ LA REPRISE : le champ reste vide (ft-v1051) et la pastille suffit.
+       🥗 V2 : un produit SCANNÉ porte sa fiche — la ligne est écrite par le moteur (une ancienne ligne « scan » sans fiche
+       vérifiable se reprend figée, M1 : c'est CCLXXV). 205 g × 94 · 5,2 · 12 · 2,4 = 193 · 11 · 25 · 5. */
+    { const r=NUT2.ligneNouvelle({id:'cclxxxvii-lentilles-0000', ts:Date.now()-1e6, date:today(), repas:'dejeuner', nom:'Lentilles',
+        origine:{saisie:'camera-code-local', origine:'off'}, mode:'pesee',
+        fiche:{base:'g', p100:{kcal:94,prot:5.2,carbs:12,fat:2.4}, source:'off', fiab:'source'},
+        quantite:{val:205, unite:'g', origine:'tapee'}});
+      if(!r.ok) throw new Error('fixture Lentilles : '+r.erreur);
+      S.foodLog=[r.ligne]; }
     S.savedFoods=[]; S.hiddenFoods=[]; persist();
     fermer(); openAddFood(); await d(320);
     _afQuickItems=_buildFoodQuickItems();
@@ -33696,9 +34051,9 @@ console.log('\n-- CCLXXIX. Les résultats de recherche sont VISIBLES (ft-v1182) 
     /* ⛔⛔ L'ACQUIS DE ft-v1180, TRANSPOSÉ AU DRAPEAU. */
     t('CCLXXXVII ⑫ ⛔⛔ UN GESTE FAIT SUR A NE VAUT PAS CHOIX SUR B (champ vide, rien enregistré)',
       W.aVersB && W.aVersB.champ==='' && W.aVersB.ajoutees===0, JSON.stringify(W.aVersB));
-    t('CCLXXXVII ⑬ ⛔ NON-RÉGRESSION : un aliment TAPÉ À LA MAIN passe toujours (300 kcal)',
-      W.manuel && W.manuel.kcal===300, JSON.stringify(W.manuel));
-    t('CCLXXXVII ⑭ ⛔ NON-RÉGRESSION : une PORTION ×2 (P1) passe toujours (500 kcal · q=2 · portion)',
+    t('CCLXXXVII ⑬ ⛔ NON-RÉGRESSION : un aliment TAPÉ À LA MAIN passe toujours, avec SA quantité (300 kcal · 150 g)',
+      W.manuel && W.manuel.kcal===300 && W.manuel.q===150 && W.manuel.u==='g', JSON.stringify(W.manuel));
+    t('CCLXXXVII ⑭ ⛔ NON-RÉGRESSION : une PORTION ×2 (P1) passe toujours, avec son poids (2 × steak de 125 g : 500 kcal · q=2 · portion)',
       W.portion && W.portion.kcal===500 && W.portion.q===2 && W.portion.u==='portion',
       JSON.stringify(W.portion));
     t('CCLXXXVII ⑮ ⭐ LA REPRISE garde son champ vide et sa pastille (ft-v1051, inchangée)',
@@ -33776,7 +34131,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     /* ① SON CAS : scan -> clic « paquet entier » -> l'alerte doit VENIR A LUI */
     S.foodLog=[];S.savedFoods=[];persist();
     openAddFood(); await d(320);
-    await _lookupBarcode('3021690201123','scan',false); await d(400);
+    await _lookupBarcode('3021690201123','code-tape',false); await d(400);   // 🥗 V2 : une porte RÉELLE — « scan » n'en est plus une (valeur ancienne, lue mais plus écrite) ; le moteur refuse une provenance inconnue
     const sc=scTop();
     const paq=document.getElementById('af-bc-paquet'); if(paq&&vis('af-bc-paquet')) paq.click();
     /* ⚠️⚠️ LA MÊME LEÇON QU'AU CAS ②, ET IL A FALLU DEUX PASSES POUR LA VOIR ICI (12/09/2026).
@@ -34227,7 +34582,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
 
     /* ── PHASE 0a : le poids du paquet meurt avec l'aliment ── */
     openAddFood();
-    await _lookupBarcode('3021690201123','scan',false);
+    await _lookupBarcode('3021690201123','code-tape',false);   // 🥗 V2 : une porte RÉELLE — « scan » n'en est plus une (valeur ancienne, lue mais plus écrite) ; le moteur refuse une provenance inconnue
     o.A_paquet=_bcPaquetG; o.A_pastille=vis('af-bc-paquet');     // non-régression : le hub l'affiche
 
     _afQuickItems=[{name:'Yaourt nature',kcal:60,prot:4,carbs:5,fat:2,
@@ -34237,7 +34592,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     o.B_nom=(document.getElementById('af-desc')||{}).value||'';
 
     /* la jumelle : la reprise depuis le journal, l'autre porte hors hub */
-    openAddFood(); await _lookupBarcode('3021690201123','scan',false);
+    openAddFood(); await _lookupBarcode('3021690201123','code-tape',false);
     o.C_paquetAvant=_bcPaquetG;
     _afSuggLoc=[{name:'Steak hache',kcal:250,prot:26,carbs:0,fat:16,
                  per100:{kcal:166.67,prot:17.33,carbs:0,fat:10.67},q:150,u:'g',origine:'reprise'}];
@@ -34297,8 +34652,12 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      la méthode, la raison, le champ d'origine et la confiance. ⛔ Le témoin reste FERMÉ (une
      liste exacte, pas un « contient ») : c'est lui qui empêche qu'un 7ᵉ champ s'ajoute sans
      décision. */
-  t('CCXC ⛔⛔ `_ref100` rend EXACTEMENT les 6 champs de `_bcNutr` (dont la traçabilité), pas un de plus',
-    R.champs==='carbs100,fat100,fiab,kcal100,name,prot100', R.champs);
+  /* 🥗 V2 (jalon 4, 22/10/2026) — 7 CHAMPS : le 7ᵉ est `absents`, et il est DÉCIDÉ, pas glissé. Sans lui, un champ ABSENT
+     de la fiche arrivait au moteur comme un 0 (`kcal100…` gardent leur 0 pour le code de V1 qui les lit) — or le contrat
+     V2 de Michel (22/10) dit *« aucune valeur nutritionnelle inventée pour compléter un champ manquant »*. Le témoin
+     reste FERMÉ : un 8ᵉ champ le fera rougir. */
+  t('CCXC ⛔⛔ `_ref100` rend EXACTEMENT les 7 champs de `_bcNutr` (dont la traçabilité et les absents de V2), pas un de plus',
+    R.champs==='absents,carbs100,fat100,fiab,kcal100,name,prot100', R.champs);
 }
 
 /* ⛔⛔ ET LE TÉMOIN QUI COMPTE LES ENDROITS — celui qu'aucun parcours ne peut remplacer.
@@ -34328,549 +34687,62 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      `_ref100`*. Une porte de plus la RENFORCE — et ce témoin a rougi pour le dire, ce qui est
      exactement son travail. ⚠️ Il n'a PAS été mis à 10 « pour faire passer » : le banc ciblé
      du chantier exige en plus qu'`estimateFoodAI` ne recopie aucune once de la loi. */
+  /* 🥗 TOUJOURS 9 PORTES AU JALON 4 (22/10/2026). Les deux reprises (« Mes aliments » et la recherche dans le journal)
+     passent par la même fonction, `_n2Reprendre` — mais chacune garde SON appel, l'origine écrite en clair (CCCV ㉒ lit
+     ces origines dans le code). ⚠️ Ce témoin était passé à « 8 » le matin même, quand les deux appels n'en faisaient
+     qu'un ; il a rougi dans la passe complète du soir, après qu'ils ont été re-séparés (`BUGS.md` §94). Le nombre est
+     revenu à celui de master, avec sa raison (R30). */
   t('CCXC ⭐ les 9 portes passent par `_ref100` (9 appels + 1 déclaration)',
     appels===10, appels+' occurrences');
 }
 
-/* ═══════════ CCXCI — ÉTAPE 2 DU PLAN NUTRITION : LE POUR-100 g DÉRIVÉ (12/09/2026) ═══════════
-   TROIS sites retapaient `totaux × 100 / masse`, macro par macro, arrondi à la décimale :
-   `_provFood` branche grammes, `_provFood` branche portions, `saveEditFood`. Ils passent par un
-   propriétaire unique, `_per100Derive`.
-   ⭐⭐ COMME POUR CCXC, CE BLOC NE FAIT PAS LE MÊME MÉTIER QUE L'INSTANTANÉ. `tools/instantane_1b23.js`
-   prouve qu'aucune valeur n'a bougé AUJOURD'HUI (11 sondes, identiques octet pour octet, même
-   sha256). Il est ponctuel. Ce bloc-ci est PERMANENT : il fige les garanties, pas les chiffres
-   d'un jour — et surtout la garantie qu'on ne voit dans aucun instantané : *que la formule n'existe
-   qu'à UN endroit.* */
+/* ═══════════ CCXCI · CCXCII · CCXCIII · CCXCIV · CCXCVI · CCXCVIII · CCXCIX · CCC · CCCI — RETIRÉS AU JALON 4 DE
+   NUTRITION V2 (22/10/2026), ET LEUR RAISON EST ÉCRITE ICI (R30) ═══════════
+   Ces neuf blocs figeaient l'extraction en sous-étapes du plan Nutrition de septembre (`docs/SOUS-ETAPES-1B-3.md`) : les
+   AIDES de l'ancien écrivain `_provFood` et des deux reprises à l'écran de V1, une par une (`_per100Derive`,
+   `_per100SuitLaPortion`, `_srcRepriseQ`, `_qReprenable`, `_srcProvenance`, `_qGrammes`, `_afReprendreGrammes`,
+   `_afReprendreDefPortion`), et les quatre écarts que ces aides TRANSPORTAIENT exprès (§3 du même document).
+   Le jalon 4 retire `_provFood` et ses aides : le moteur V2 les remplace (`NUT2.reprise` → `_n2Reprendre` à l'écran,
+   `_n2Reajouter` sans écran, `_n2Enregistrer` pour écrire). Un témoin qui épingle une fonction retirée ne protège plus
+   rien — *un test protège un invariant, pas une implémentation* (règle d'or #17).
+   CE QUI RESTE VRAI, ET OÙ C'EST GARDÉ MAINTENANT :
+   · CCXCI (étape 2) — un pour-100 g ne se dérive plus des TOTAUX d'une ligne. La seule dérivation qui reste est celle d'une
+     référence tapée à l'écran (`_n2Fiche`, sans arrondi intermédiaire) : le cas de ft-v1188 est rejoué juste en dessous
+     (B-NV2X). La retouche du poids d'une portion dans « Modifier » (« 125 → 150 g, le pour-100 g suit ») n'existe plus :
+     l'écran « Modifier » V2 garde la définition de la portion et sa quantité se corrige en grammes (D-099).
+   · CCXCII (1b-i) · CCXCIII (3-i) · CCXCVI (3-ii) · CCXCVIII (3-iii) · CCXCIX (3-iv) · CCC (3-v) — la quantité reprise :
+     `tests/parcours/nut2_parcours.js` P12 ①③⑤⑦ (les deux écrivains, les deux écrans, portions, ml, sans quantité, la
+     quantité d'avant PROPOSÉE), P11, et `nut_m6_rejeu.js` (B-NM6).
+   · CCXCIV (1b-ii) — la provenance reprise : P12 ①②④⑥, et LXXXII ⑤ (« historique » / « reprise »).
+   · CCCI (1b-v) — la définition de portion n'est plus hydratée dans des variables d'écran : elle voyage DANS la quantité
+     de la ligne (`portion:{libelle, poids}`), et une portion sans poids n'est jamais une quantité (D-099, P12 ⑤).
+   ⚖️ LES QUATRE ÉCARTS TRANSPORTÉS (§3) ET CE QU'ILS DEVIENNENT : n°1 (le code-barres au rejeu) — repris SEULEMENT d'une
+     fiche de confiance, et alors aux DEUX écrivains (P12 ④) ; n°3 (les portions) — tranché par D-099 ; n°4 (l'origine) —
+     « reprise » partout (P12 ①⑥) ; n°2 (`0` / `null` dans la liste et les favoris) — INCHANGÉ, toujours figé par CCXCV.
+     n°1 et n°4 sont D-101 ⑩, PROPOSÉ : la décision de Michel est attendue avant toute publication.
+   Le texte des blocs retirés reste lisible dans l'historique git (`git show ed4a5903:tests/parcours/runner.js`). */
+
+/* ═══ B-NV2X. LE CAS DE ft-v1188, REJOUÉ SUR LE MOTEUR V2 (jalon 4, 22/10/2026) ═══
+   1 part de 140 g valant 355 · 30 · 44 · 6. Arrondi à l'ENTIER, le pour-100 g des lipides tombait à 4, et 280 g
+   affichaient 11 g au lieu de 12 (−8,3 %) — c'est ce qui avait fait passer V1 à la décimale. En V2, la référence tapée
+   devient une fiche SANS aucun arrondi (`_n2Fiche`), et seul le moteur arrondit, à la fin (`NUT2.calcule`).
+   Oracle à la main : 280 / 140 = 2 exactement → 710 · 60 · 88 · 12. */
 {
   await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
   await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
-
-  const R = await p.evaluate(async()=>{
-    const o={};
-    o.fn=typeof _per100Derive;
-
-    /* ⛔ LE CAS DE MICHEL, CELUI QUI A COÛTÉ ft-v1188 : 1 part de 140 g valant 355/30/44/6.
-       En arrondi ENTIER les lipides tombent à 4, et redemander 280 g affiche 11 g au lieu de 12
-       (−8,3 %). C'est la raison d'être de la décimale, et elle se fige ici. */
-    o.michel=JSON.stringify(_per100Derive({kcal:355,prot:30,carbs:44,fat:6},140));
-    // une masse qui tombe mal : 133 g. En `Math.round` on lirait 75 / 5 / 1 / 2.
-    o.decimale=JSON.stringify(_per100Derive({kcal:100,prot:7,carbs:1,fat:3},133));
-    /* ⭐ ELLE REND `null` QUAND ELLE NE SAIT PAS (R29) — et ce `null` n'est pas décoratif :
-       c'est LUI qui, chez `saveEditFood`, efface un pour-100 g devenu orphelin. */
-    o.sansMasse=[_per100Derive({kcal:1,prot:1,carbs:1,fat:1},0),
-                 _per100Derive({kcal:1,prot:1,carbs:1,fat:1},-5),
-                 _per100Derive({kcal:1,prot:1,carbs:1,fat:1},'abc'),
-                 _per100Derive({kcal:1,prot:1,carbs:1,fat:1})];
-    /* ⛔ LE `?:` N'EST PAS DE LA PRUDENCE VAGUE, IL EST PAYÉ : écrit sans lui, `Object.keys(null)`
-       LÈVE, l'`evaluate` entier est rejeté et le bloc DISPARAÎT de la passe — qui ne rougit pas
-       pour autant. C'est §61 : *un témoin qui MEURT ressemble à un témoin qui passe.* Mesuré ici,
-       la mutation « le propriétaire rend toujours null » tuait la sonde ; elle fait maintenant
-       6 rouges nommés. */
-    const un=_per100Derive({kcal:1,prot:1,carbs:1,fat:1},100);
-    o.champs=un?Object.keys(un).sort().join(','):'RIEN';
-
-    /* ── les 3 sites conduits par leur VRAIE porte (BUGS.md §58 : vérifier la fonction n'est
-       pas vérifier l'appel). Mêmes fixtures que l'instantané, à dessein. ── */
-    const prov=(vals,poser)=>{ _afSetSrc(null); _afRef=null; _afPortionPoids=0; _afPortionLabel='';
-                               poser(); const r=_provFood(vals); _afSetSrc(null); return r.per100; };
-    o.grammes=JSON.stringify(prov({kcal:355,prot:30,carbs:44,fat:6},()=>{
-      _afRef={base:{kcal:355,prot:30,carbs:44,fat:6},q:140,u:'g',src:'decl'};
-      const e=document.getElementById('af-prop'); if(e) e.value='140';
-    }));
-    o.portions=JSON.stringify(prov({kcal:400,prot:32,carbs:0,fat:28},()=>{
-      _afSetSrc({saisie:'manuel',origine:'utilisateur'});
-      _afRef={base:{kcal:400,prot:32,carbs:0,fat:28},q:2,u:'',src:'portion'};
-      _afUnite='portion'; _afPortions=2; _afPortionPose=true;
-      _afPortionPoids=125; _afPortionLabel='steak';
-    }));
-    o.portions210=JSON.stringify(prov({kcal:500,prot:20,carbs:60,fat:18},()=>{
-      _afSetSrc({saisie:'manuel',origine:'utilisateur'});
-      _afRef={base:{kcal:500,prot:20,carbs:60,fat:18},q:3,u:'',src:'portion'};
-      _afUnite='portion'; _afPortions=3; _afPortionPose=true;
-      _afPortionPoids=70; _afPortionLabel='part';
-    }));
-    /* ⛔ NON-RÉGRESSION R32 (mesuré > estimé > déclaré) : un pour-100 g SCANNÉ ne se fait jamais
-       écraser par une déclaration de portion. C'est le `!p.per100` du site, pas la formule. */
-    o.scanProtege=JSON.stringify(prov({kcal:400,prot:32,carbs:0,fat:28},()=>{
-      _afSetSrc({saisie:'scan',origine:'off',per100:{kcal:48.3,prot:6.1,carbs:10.1,fat:3.2}});
-      _afRef={base:{kcal:400,prot:32,carbs:0,fat:28},q:2,u:'',src:'portion'};
-      _afUnite='portion'; _afPortions=2; _afPortionPose=true;
-      _afPortionPoids=125; _afPortionLabel='steak';
-    }));
-
-    /* ── 3ᵉ site : l'écran MODIFIER. On corrige 125 → 150 g, le pour-100 g doit SUIVRE. ── */
-    const ligne=()=>({date:'2026-09-12',meal:'midi',ts:99,name:'Steak',kcal:400,prot:32,carbs:0,fat:28,
-                      per100:{kcal:160,prot:12.8,carbs:0,fat:11.2},q:2,u:'portion',
-                      portionLabel:'steak',portionWeightG:125});
-    S.foodLog=[ligne()];
-    openEditFood(_tsVersId(99));
-    const nom=document.getElementById('ef-pnom'); if(nom){ nom.value='steak'; _efPortionNomSaisi(); }
-    const pds=document.getElementById('ef-ppoids'); if(pds){ pds.value='150'; _efPortionPoidsSaisi(); }
-    saveEditFood();
-    let e=(S.foodLog||[]).find(x=>x.ts===99);
-    o.edition=JSON.stringify(e?{per100:e.per100,q:e.q,u:e.u,pw:e.portionWeightG}:null);
-
-    /* ⛔⛔ ET LE CHEMIN DU `null`, celui qu'on oublie de tester : le poids EFFACÉ emporte le
-       pour-100 g qui en dépendait. Sans lui, l'aliment garderait une référence calculée sur une
-       définition que la personne vient de retirer. */
-    S.foodLog=[ligne()];
-    openEditFood(_tsVersId(99));
-    const pds2=document.getElementById('ef-ppoids'); if(pds2){ pds2.value=''; _efPortionPoidsSaisi(); }
-    saveEditFood();
-    e=(S.foodLog||[]).find(x=>x.ts===99);
-    o.poidsRetire=e?('per100' in e)+'/'+('portionWeightG' in e):'ligne perdue';
-
-    /* ⛔ ET LA VÉRIFICATRICE RESTE UNE VÉRIFICATRICE : elle porte la même algèbre, on serait
-       tenté de l'absorber dans le propriétaire — mais elle ne DÉRIVE pas, elle dit si un
-       pour-100 g d'avant VENAIT d'une portion, à 0,6 près. Deux fonctions qui calculent pareil ne
-       font pas la même chose. */
-    o.suitFn=typeof _per100SuitLaPortion;
-    o.suitOui=_per100SuitLaPortion({q:2,pw:125,kcal:400,prot:32,carbs:0,fat:28,
-                                    per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}});
-    o.suitNon=_per100SuitLaPortion({q:2,pw:125,kcal:400,prot:32,carbs:0,fat:28,
-                                    per100:{kcal:48.3,prot:6.1,carbs:10.1,fat:3.2}});
-    o.suitTolere=_per100SuitLaPortion({q:2,pw:125,kcal:400,prot:32,carbs:0,fat:28,
-                                    per100:{kcal:160.5,prot:12.8,carbs:0,fat:11.2}});
-    return o;
+  const R = await p.evaluate(()=>{
+    try{
+      const f=_n2Fiche({kcal:355,prot:30,carbs:44,fat:6},140,'g');
+      const r=NUT2.calcule(f,{val:280,unite:'g'});
+      return {v:r.ok?r.valeurs:r, base:f.base};
+    }catch(e){ return {FATAL:String(e&&e.message||e)}; }
   });
-
-  t('CCXCI ÉTAPE 2 — `_per100Derive` existe', R.fn==='function', R.fn);
-  t('CCXCI ⛔⛔ le cas de ft-v1188 : 355/30/44/6 sur 140 g → 253,6 / 21,4 / 31,4 / 4,3',
-    R.michel==='{"kcal":253.6,"prot":21.4,"carbs":31.4,"fat":4.3}', R.michel);
-  t('CCXCI ⛔ UNE décimale, pas l\'entier (133 g → 75,2 / 5,3 / 0,8 / 2,3)',
-    R.decimale==='{"kcal":75.2,"prot":5.3,"carbs":0.8,"fat":2.3}', R.decimale);
-  t('CCXCI ⛔⛔ sans masse utilisable elle rend `null` — elle ne devine pas (R29)',
-    JSON.stringify(R.sansMasse)==='[null,null,null,null]', JSON.stringify(R.sansMasse));
-  t('CCXCI ⛔ elle rend EXACTEMENT les 4 macros, pas un champ de plus',
-    R.champs==='carbs,fat,kcal,prot', R.champs);
-
-  t('CCXCI ⭐ site 1 — `_provFood` en GRAMMES passe par le propriétaire (140 g)',
-    R.grammes==='{"kcal":253.6,"prot":21.4,"carbs":31.4,"fat":4.3}', R.grammes);
-  t('CCXCI ⭐ site 2 — `_provFood` en PORTIONS (2 × 125 g)',
-    R.portions==='{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2}', R.portions);
-  t('CCXCI ⭐ ... et sur une masse qui tombe mal (3 × 70 g = 210 g)',
-    R.portions210==='{"kcal":238.1,"prot":9.5,"carbs":28.6,"fat":8.6}', R.portions210);
-  t('CCXCI ⛔ non-régression R32 : un pour-100 g SCANNÉ n\'est pas écrasé par la portion',
-    R.scanProtege==='{"kcal":48.3,"prot":6.1,"carbs":10.1,"fat":3.2}', R.scanProtege);
-
-  t('CCXCI ⭐ site 3 — l\'écran MODIFIER : 125 → 150 g, le pour-100 g suit (133,3 / 10,7 / 0 / 9,3)',
-    R.edition==='{"per100":{"kcal":133.3,"prot":10.7,"carbs":0,"fat":9.3},"q":2,"u":"portion","pw":150}',
-    R.edition);
-  t('CCXCI ⛔⛔ ... et le poids EFFACÉ emporte le pour-100 g (le chemin du `null`)',
-    R.poidsRetire==='false/false', R.poidsRetire);
-
-  t('CCXCI ⛔⛔ `_per100SuitLaPortion` VÉRIFIE toujours, elle n\'a pas été absorbée',
-    R.suitFn==='function' && R.suitOui===true && R.suitNon===false && R.suitTolere===true,
-    R.suitFn+' · suit '+R.suitOui+' · ailleurs '+R.suitNon+' · tolérance '+R.suitTolere);
-}
-
-/* ⛔⛔ ET LE TÉMOIN QUI COMPTE LES ENDROITS — la garantie qu'aucun parcours ne peut donner.
-   Un parcours prouve que les 3 sites marchent ; il ne peut pas prouver qu'il n'existe pas une 4ᵉ
-   copie de la formule ailleurs dans le fichier. C'est pourtant EXACTEMENT ce qui est arrivé ici :
-   `Math.round` → `_per100d1` a dû être posé sur 7 portes en ft-v1170, puis sur ces 2 sites-là en
-   ft-v1188 (§59 de `BUGS.md`). On lit donc la SOURCE SERVIE, et on exige un seul propriétaire. */
-{
+  t('B-NV2X ① ⛔⛔ ft-v1188 SUR LE MOTEUR V2 : 355 · 30 · 44 · 6 pour 140 g, redemandés à 280 g → 710 · 60 · 88 · 12 (12 g de lipides, pas 11)',
+    !R.FATAL && R.base==='g' && JSON.stringify(R.v)==='{"kcal":710,"prot":60,"carbs":88,"fat":12}', JSON.stringify(R));
   const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
-  const estCommentaire=l=>{const x=l.trim();
-    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
-  const aLaMain=src.split('\n')
-    .filter(l=>/\{kcal:_per100d1\(/.test(l) && !estCommentaire(l)).length;
-  const appels=(src.match(/_per100Derive\(/g)||[]).length;
-  const verif=(src.match(/_per100SuitLaPortion\(/g)||[]).length;
-  t('CCXCI ⛔⛔ la formule `{kcal:_per100d1(…)}` n\'existe QU\'À UN endroit : le propriétaire',
-    aLaMain===1, aLaMain+' occurrences de code');
-  t('CCXCI ⭐ les 3 sites passent par `_per100Derive` (3 appels + 1 déclaration)',
-    appels===4, appels+' occurrences');
-  t('CCXCI ⛔ `_per100SuitLaPortion` garde sa propre tolérance de 0,6 (elle n\'a pas fondu)',
-    verif===2 && /<=0\.6/.test(src), verif+' occurrences');
-}
-
-/* ═══ CCXCII — SOUS-ÉTAPE 1b-i : LA QUANTITÉ REPRISE D'UNE LIGNE EXISTANTE (12/09/2026) ═══
-   Michel, après la mesure du périmètre : ⛔ *« redécoupe 1b et 3 en sous-étapes plus petites,
-   mesurables et réversibles »* · ⛔⛔ *« je ne veux pas harmoniser maintenant les défauts
-   divergents : on doit les TRANSPORTER explicitement sans les corriger »*.
-
-   ⭐⭐ CE BLOC FIGE DEUX CHOSES DE NATURE OPPOSÉE, ET C'EST VOULU.
-   ① ce que l'extraction garantit (un seul propriétaire, les mêmes valeurs) ;
-   ② ce qu'elle s'INTERDIT — la divergence `sourceId`/`etat` entre les deux portes.
-   *Sans le second, rien n'empêcherait un futur « rangement » d'harmoniser en silence ce que
-   Michel a explicitement demandé de laisser en l'état.* */
-{
-  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
-  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
-
-  const R = await p.evaluate(async()=>{
-    const o={};
-    o.fn=typeof _srcRepriseQ;
-
-    const LIGNE={name:'Steak', kcal:400, prot:32, carbs:0, fat:28,
-                 per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}, q:2, u:'portion',
-                 portionLabel:'steak', portionWeightG:125,
-                 origine:'off', sourceId:'3021690201123', etat:'tel-que-vendu'};
-    const r1=_srcRepriseQ(LIGNE, true);
-    o.champs=r1?Object.keys(r1).sort().join(','):'RIEN';
-    o.avecQ=JSON.stringify(r1);
-    o.sansQ=JSON.stringify(_srcRepriseQ(LIGNE, false));
-    /* ⛔ LE DÉFAUT TRANSPORTÉ TEL QUEL : `portionWeightG` rend `null`, pas `0`. Ça ressemble à
-       une coquille ; c'est ce que le code faisait, donc c'est ce qu'on garde (consigne de
-       Michel). Le jour où ça change, c'est une DÉCISION, et ce témoin la rendra visible.
-       ⚠⚠ ET ON PASSE `false`, PAS `true`, APRÈS MESURE : avec `true` sur une ligne SANS `q`,
-       `+undefined` vaut **NaN** — que `JSON.stringify` sérialise en `null`. Le témoin aurait
-       donc été vert sur un NaN en croyant voir un `null`, et sur un état que les deux portes
-       ne peuvent pas produire (`qOk` n'est vrai que si `+q>0`). *Un témoin qui fige un état
-       inatteignable ne protège rien, et masque le type réel de ce qu'il mesure.* */
-    o.nu=JSON.stringify(_srcRepriseQ({name:'Nu', kcal:1}, false));
-    // `u` retombe sur 'g' quand elle manque — mais seulement si la quantité est acceptée
-    o.uParDefaut=JSON.stringify(_srcRepriseQ({q:150}, true));
-
-    /* ── bout en bout ① : REJOUER UN REPAS ─────────────────────────────────────
-       `_repasHabituels` exige la MÊME signature sur 2 dates, la dernière n'étant pas
-       aujourd'hui — on conduit donc la vraie porte, pas la fonction (BUGS.md §58). */
-    const ITEM=d=>Object.assign({date:d, meal:'midi', ts:Date.parse(d)}, LIGNE);
-    S.foodLog=[ITEM('2026-09-01'), ITEM('2026-09-02')];
-    const sig=(_repasHabituels()[0]||{}).sig||'';
-    o.sig=!!sig;
-    if(sig){
-      const avant=S.foodLog.length;
-      rejouerRepas(sig,'midi');
-      const n=S.foodLog[S.foodLog.length-1];
-      o.rejeu=(S.foodLog.length===avant+1) ? JSON.stringify(
-        {q:n.q,u:n.u,pl:n.portionLabel,pw:n.portionWeightG,p100:!!n.per100}) : 'rien ajoute';
-      /* ⛔⛔ LA DIVERGENCE TRANSPORTÉE : le rejeu n'a JAMAIS posé `sourceId`/`etat`.
-         Les lui donner changerait la provenance ENREGISTRÉE — décision produit (1b-ii). */
-      o.rejeuProv=JSON.stringify({src:n.sourceId, etat:n.etat, origine:n.origine});
-    }
-
-    /* ── bout en bout ② : AJOUTER DEPUIS LA LISTE (la porte jumelle) ───────────── */
-    S.foodLog=[]; _afMeal='midi';
-    _afQuickItems=[Object.assign({}, LIGNE)];
-    quickAddFood(0);
-    const m=(S.foodLog||[])[0]||{};
-    o.direct=JSON.stringify({q:m.q,u:m.u,pl:m.portionLabel,pw:m.portionWeightG,p100:!!m.per100});
-    // ⭐ celle-ci, elle, les pose — et c'est l'autre moitié de l'écart
-    o.directProv=JSON.stringify({src:m.sourceId, etat:m.etat, origine:m.origine});
-    return o;
-  });
-
-  t('CCXCII 1b-i — `_srcRepriseQ` existe', R.fn==='function', R.fn);
-  t('CCXCII ⛔ elle rend EXACTEMENT 5 champs, pas un de plus',
-    R.champs==='per100,portionLabel,portionWeightG,q,u', R.champs);
-  t('CCXCII ⭐ quantité acceptée : `q`, `u` et la définition de portion traversent',
-    R.avecQ==='{"q":2,"u":"portion","per100":{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2},'+
-              '"portionLabel":"steak","portionWeightG":125}', R.avecQ);
-  t('CCXCII ⛔ quantité REFUSÉE : `q` et `u` tombent à `null`, le reste traverse quand même',
-    R.sansQ==='{"q":null,"u":null,"per100":{"kcal":160,"prot":12.8,"carbs":0,"fat":11.2},'+
-              '"portionLabel":"steak","portionWeightG":125}', R.sansQ);
-  t('CCXCII ⛔⛔ le DÉFAUT est transporté tel quel : `portionWeightG` rend `null`, PAS `0`',
-    R.nu==='{"q":null,"u":null,"per100":null,"portionLabel":null,"portionWeightG":null}', R.nu);
-  t('CCXCII ⛔ `u` retombe sur « g » quand elle manque',
-    R.uParDefaut==='{"q":150,"u":"g","per100":null,"portionLabel":null,"portionWeightG":null}',
-    R.uParDefaut);
-
-  t('CCXCII ⛔ CONTRÔLE — le repas habituel est bien reconnu (sinon le témoin suivant ne mesure rien)',
-    R.sig===true, 'signature trouvée : '+R.sig);
-  t('CCXCII ⭐ bout en bout — REJOUER un repas garde « 2 portions de 125 g »',
-    R.rejeu==='{"q":2,"u":"portion","pl":"steak","pw":125,"p100":true}', R.rejeu);
-  t('CCXCII ⛔⛔ ... et le rejeu n\'écrit TOUJOURS PAS `sourceId`/`etat` (écart TRANSPORTÉ, 1b-ii)',
-    R.rejeuProv==='{"src":null,"etat":null,"origine":"reprise"}', R.rejeuProv);
-  t('CCXCII ⭐ bout en bout — AJOUTER depuis la liste garde la même quantité',
-    R.direct==='{"q":2,"u":"portion","pl":"steak","pw":125,"p100":true}', R.direct);
-  t('CCXCII ⭐ ... et cette porte-ci pose BIEN `sourceId`/`etat` — l\'autre moitié de l\'écart',
-    R.directProv==='{"src":"3021690201123","etat":"tel-que-vendu","origine":"reprise"}',
-    R.directProv);
-}
-
-/* ⛔⛔ LES TÉMOINS DE SOURCE — un parcours ne peut pas prouver qu'il n'existe pas une 3ᵉ copie,
-   ni que la sous-étape est restée DANS SON PÉRIMÈTRE. Les deux se lisent dans le fichier servi. */
-{
-  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
-  const estCommentaire=l=>{const x=l.trim();
-    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
-  const lignes=src.split('\n').filter(l=>!estCommentaire(l));
-  const aLaMain=lignes.filter(l=>/q\s*:\s*_?qOk\s*\?/.test(l)).length;
-  const appels=(src.match(/_srcRepriseQ\(/g)||[]).length;
-  /* ⛔⛔ CE TÉMOIN A CHANGÉ DE FORME EN ft-v1196, ET LA GARANTIE S'EST DÉPLACÉE SANS S'AFFAIBLIR.
-     En 1b-i il exigeait que `rejouerRepas` ET `quickAddFood` calculent ENCORE `qOk` **chacun dans
-     son propre corps** — c'était le garde-fou qui empêchait la sous-étape de déborder sur l'étape
-     3. ⭐ **La sous-étape 3-i EST précisément celle qui le retire**, sur décision de Michel
-     (*« continue, une sous-étape à la fois »*) : la règle a désormais un propriétaire,
-     `_qReprenable`.
-     👉 On n'efface donc pas la garantie, **on la retourne** : la règle « avec portions » doit
-     exister à **UN SEUL** endroit, et les deux portes doivent l'APPELER. *La différence entre
-     un témoin qu'on retire et un témoin qui se déplace se mesure : les deux mutations qui le
-     faisaient rougir en 1b-i (une porte qui délègue · la règle retirée d'une porte) le font
-     toujours rougir, par l'autre bout.*
-     ⚠️ ET ON GARDE LE PRINCIPE APPRIS EN 1b-i : on ne compte pas les occurrences d'un motif —
-     *ça ne dit pas QUI décide* — on regarde le corps de chaque fonction. */
-  const corpsDe=n=>{const m=new RegExp('^function '+n+'\\(.*?^\\}','ms').exec(src);
-                    return m?m[0]:'';};
-  const RE_P=/\(!\w+\.u \|\| \w+\.u === 'g' \|\| \w+\.u === 'portion'\)/;
-  const regleAilleurs=lignes.filter(l=>RE_P.test(l)).length;
-  const appellent=['rejouerRepas','quickAddFood']
-    .filter(n=>/_qReprenable\(/.test(corpsDe(n))).length;
-  t('CCXCII ⛔⛔ le bloc `q:qOk?…` n\'existe QU\'À UN endroit : le propriétaire',
-    aLaMain===1, aLaMain+' occurrences de code');
-  t('CCXCII ⭐ les 2 portes passent par `_srcRepriseQ` (2 appels + 1 déclaration)',
-    appels===3, appels+' occurrences');
-  t('CCXCII ⛔⛔ 3-i — la règle « avec portions » n\'existe QU\'À UN endroit : `_qReprenable`',
-    regleAilleurs===1, regleAilleurs+' écritures de la règle');
-  t('CCXCII ⭐ ... et les DEUX portes l\'APPELLENT (la garantie de 1b-i, retournée)',
-    appellent===2, appellent+' fonctions sur 2 appellent `_qReprenable`');
-}
-
-/* ═══ CCXCIII — SOUS-ÉTAPE 3-i : « CETTE QUANTITÉ EST-ELLE REPRENABLE ? » (12/09/2026) ═══
-   La suite naturelle de 1b-i : même couple de fonctions, l'AUTRE moitié de la ligne. Le bloc
-   `{q,u,per100,…}` a son propriétaire depuis ft-v1195 ; le TEST qui décide si la quantité passe
-   restait écrit deux fois → `_qReprenable(src)`.
-
-   ⭐⭐ CE BLOC FIGE AUSSI CE QU'ON N'A PAS FAIT, et c'est la moitié qui compte : les **5** sites
-   « grammes seuls » (3-ii/iii/iv) ne sont **PAS** touchés. *Les deux règles se ressemblent à un
-   `||` près et ne disent pas la même chose* — les fondre serait un changement de comportement,
-   pas une extraction. */
-{
-  await p.evaluate(()=>{ try{ localStorage.clear(); }catch(e){} });
-  await p.goto('http://localhost:'+PORT+'/index.html'); await p.waitForTimeout(1200);
-
-  const R = await p.evaluate(async()=>{
-    const o={};
-    o.fn=typeof _qReprenable;
-
-    /* ⛔ LA TABLE DE VÉRITÉ, conduite sur la fonction de PRODUCTION (pas une règle recopiée :
-       c'est justement le défaut de la sonde `3_regle_avec_portions`, mesuré le 12/09). */
-    const CAS=[{q:120,u:'g'},{q:2,u:'portion'},{q:0,u:'g'},{q:150,u:'ml'},{q:80,u:null},{q:-5,u:'g'}];
-    o.table=JSON.stringify(CAS.map(c=>_qReprenable(c)));
-    /* ⛔ Elle ne PLANTE pas sur rien du tout — les portes l'appellent après un garde, mais une
-       règle qui lève déplace le défaut au lieu de le dire (R29). */
-    /* ⛔⛔ LE `try` N'EST PAS DE LA PRUDENCE VAGUE, IL EST PAYÉ : sans lui, une règle qui LÈVE
-       sur `null` fait rejeter l'`evaluate` entier — le bloc DISPARAÎT de la passe, qui ne
-       rougit pas pour autant (§61). Mesuré ici : la mutation « le garde `src||{}` retiré »
-       tuait la sonde ; elle fait maintenant un rouge NOMMÉ. */
-    try{ o.rien=JSON.stringify([_qReprenable(null), _qReprenable(undefined), _qReprenable({})]); }
-    catch(err){ o.rien='LÈVE : '+String(err && err.message || err); }
-    /* ⛔ Elle rend un BOOLÉEN et ne touche à rien : c'est `_srcRepriseQ` qui décide quoi en faire. */
-    const av={q:2,u:'portion',per100:null};
-    const r=_qReprenable(av);
-    o.pur=(typeof r==='boolean') && JSON.stringify(av)==='{"q":2,"u":"portion","per100":null}';
-
-    /* ── bout en bout, les DEUX portes ─────────────────────────────────────── */
-    const LIGNE=(q,u)=>({name:'Steak', kcal:400, prot:32, carbs:0, fat:28,
-                         per100:{kcal:160,prot:12.8,carbs:0,fat:11.2}, q:q, u:u,
-                         portionLabel:'steak', portionWeightG:125});
-    const parListe=(q,u)=>{ S.foodLog=[]; _afMeal='midi'; _afQuickItems=[LIGNE(q,u)];
-                            quickAddFood(0);
-                            const m=(S.foodLog||[])[0]||{}; return {q:m.q,u:m.u}; };
-    o.listePortion=JSON.stringify(parListe(2,'portion'));
-    o.listeMl=JSON.stringify(parListe(150,'ml'));
-
-    const parRejeu=(q,u)=>{
-      const it=LIGNE(q,u);
-      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},it),
-                 Object.assign({date:'2026-09-02',meal:'midi',ts:2},it)];
-      const sig=(_repasHabituels()[0]||{}).sig||'';
-      if(!sig) return 'pas de repas habituel';
-      const n0=S.foodLog.length; rejouerRepas(sig,'midi');
-      const l=S.foodLog[S.foodLog.length-1];
-      return (S.foodLog.length>n0 && l) ? {q:l.q,u:l.u} : 'rien ajoute';
-    };
-    o.rejeuPortion=JSON.stringify(parRejeu(2,'portion'));
-    o.rejeuMl=JSON.stringify(parRejeu(150,'ml'));
-    return o;
-  });
-
-  t('CCXCIII 3-i — `_qReprenable` existe', R.fn==='function', R.fn);
-  t('CCXCIII ⭐ la table de vérité, conduite sur la PRODUCTION : g ✓ · portion ✓ · 0 ✗ · ml ✗ · sans unité ✓ · négatif ✗',
-    R.table==='[true,true,false,false,true,false]', R.table);
-  t('CCXCIII ⛔ `ml` est REFUSÉ — sans densité, un volume ne dit pas ce que pèse l\'aliment (R29)',
-    JSON.parse(R.table)[3]===false, R.table);
-  t('CCXCIII ⛔ elle ne plante pas sur `null` / `undefined` / objet vide',
-    R.rien==='[false,false,false]', R.rien);
-  t('CCXCIII ⛔ elle rend un BOOLÉEN et ne modifie pas ce qu\'on lui passe', R.pur===true);
-
-  t('CCXCIII ⭐ bout en bout — AJOUTER depuis la liste garde « 2 portions »',
-    R.listePortion==='{"q":2,"u":"portion"}', R.listePortion);
-  t('CCXCIII ⛔ ... et refuse les 150 ml (la ligne part sans quantité, honnêtement inconnue)',
-    R.listeMl==='{"q":null,"u":null}', R.listeMl);
-  t('CCXCIII ⭐ bout en bout — REJOUER un repas garde « 2 portions »',
-    R.rejeuPortion==='{"q":2,"u":"portion"}', R.rejeuPortion);
-  t('CCXCIII ⛔ ... et refuse les 150 ml, exactement pareil',
-    R.rejeuMl==='{"q":null,"u":null}', R.rejeuMl);
-}
-
-/* ⛔⛔ LES TÉMOINS DE SOURCE — et celui du PÉRIMÈTRE est le plus important des deux.
-   Un parcours prouve que la règle marche ; il ne peut pas prouver qu'on n'a pas fait au passage
-   les sous-étapes SUIVANTES. Or 3-ii, 3-iii et 3-iv portent une règle qui ressemble à celle-ci à
-   un `||` près — et les fondre serait un changement de comportement. */
-{
-  const src=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');
-  const estCommentaire=l=>{const x=l.trim();
-    return x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`');};
-  const lignes=src.split('\n').filter(l=>!estCommentaire(l));
-  const appels=(src.match(/_qReprenable\(/g)||[]).length;
-  /* ⛔⛔ LA RÈGLE « GRAMMES SEULS » DOIT ÊTRE ENCORE ÉCRITE **5 FOIS**. Ce n'est pas une dette
-     qu'on tolère, c'est le PÉRIMÈTRE de cette sous-étape : ces 5 sites alimentent un champ en
-     grammes, ils refusent les portions **exprès**. Le jour où ce compte tombe à 1, c'est que
-     3-ii/iii/iv ont été faites — et ce témoin doit alors se DÉPLACER, pas disparaître. */
-  /* ⚠️ LES `\s*` NE SONT PAS DÉCORATIFS : `_provFood` @1232 écrit `(!_afSrc.u || _afSrc.u==='g')`
-     AVEC des espaces autour du `||`, les quatre autres sans. Ma 1ʳᵉ version comptait 4 au lieu
-     de 5 — et c'est la passe de RÉFÉRENCE qui l'a dit, avant la moindre mutation. *Un témoin
-     de source se vérifie d'abord contre le code SAIN : s'il rougit là, il ne mesure pas ce
-     qu'il croit.* */
-  const grammesSeuls=lignes.filter(l=>/q>0\s*&&\s*\(!\w+\.u\s*\|\|\s*\w+\.u\s*===?\s*'g'\)/.test(l)).length;
-  t('CCXCIII ⭐ les 2 portes passent par `_qReprenable` (2 appels + 1 déclaration)',
-    appels===3, appels+' occurrences');
-  /* ⛔⛔ CE TÉMOIN S'EST DÉPLACÉ TROIS FOIS, IL N'A JAMAIS ÉTÉ AFFAIBLI.
-     ① En 3-i il exigeait « la règle est écrite 5 fois » — le garde-fou qui empêchait 3-i de
-     déborder sur 3-ii/iii/iv. ② En ft-v1199 (3-ii) : 3 écritures + 2 appelants de `_qGrammes`.
-     ③ En ft-v1201 (3-iii) : **1 seule écriture** — `_provFood` @1232, le SEUL site qui ÉCRIT
-     `p.q`/`p.u`, réservé à 3-iv — **+ 4 appelants**.
-     ④ En ft-v1202 (3-iv) : **ZÉRO écriture** — la dernière copie a rejoint le propriétaire, qui
-     compte désormais **5 occurrences** (1 déclaration + 4 appels).
-     ⭐ La garantie ne s'affaiblit pas : elle change de forme. Et c'est vérifiable — les mutations
-     qui la faisaient rougir hier la font rougir aujourd'hui, par l'autre bout : le témoin
-     n'autorise plus AUCUNE réécriture de la règle, où que ce soit dans le fichier.
-     ⛔ Il ne se supprime pas maintenant qu'il vaut 0 : à 0 il devient le gardien du RETOUR de la
-     duplication — c'est exactement ce qu'un témoin de source protège et qu'aucun parcours ne
-     peut voir (une 2ᵉ copie de la règle ne change RIEN à l'exécution tant qu'elle dit pareil). */
-  t('CCXCIII ⛔⛔ PÉRIMÈTRE — la règle « grammes seuls » n\'est plus écrite NULLE PART en dur '+
-    '(3-ii, 3-iii et 3-iv faites : un seul propriétaire)',
-    grammesSeuls===0, grammesSeuls+' écritures');
-  /* ⚠️⚠️ CELUI-CI LIT LE CODE SANS SES BLOCS DE COMMENTAIRE ENTIERS, et c'est une correction
-     payée en ft-v1200 puis re-mesurée ici AVANT d'écrire le chiffre. Le filtre ligne-à-ligne
-     employé juste au-dessus (`lignes`) ne retire que les lignes qui COMMENCENT par une étoile,
-     deux barres, une barre-étoile ou un accent grave — or le docblock de `_afReprendreGrammes`
-     cite `_qGrammes(src) > 0` sur une ligne de continuation qui commence par un mot.
-     ⛔ Mesuré : **5** occurrences via `lignes`, **4** hors commentaires. *Le chiffre juste est
-     celui qui ne compte pas ce qui PARLE du code.* */
-  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
-                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
-  const nbG=(codeSeul.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCIII ⭐ …et `_qGrammes` a désormais 4 appelants (1 déclaration + 4 appels : les 2 '+
-    'pastilles de 3-ii, le propriétaire de 3-iii, la liste blanche de 3-iv)',
-    nbG===5, nbG+' occurrences hors commentaires');
-}
-
-/* ══════════ BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ══════════
-   ⛔⛔ ON CONDUIT LES VRAIES PORTES, jamais `_srcProvenance` en direct : vérifier la fonction
-   n'est pas vérifier l'appel (BUGS.md §58), et la version d'avant a montré qu'une sonde qui
-   recopie la règle ne mesure rien. */
-{
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
-  await pg.goto('http://localhost:'+PORT+'/index.html');
-  await pg.waitForTimeout(2300);
-  const V=await pg.evaluate(async()=>{
-   try{
-    const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
-    const PLEIN={name:'Plat A',kcal:200,prot:10,carbs:20,fat:5,q:150,u:'g',
-                 sourceId:'off:123',etat:'valide',
-                 per100:{kcal:133,prot:6.7,carbs:13.3,fat:3.3},origine:'off'};
-    const NU={name:'Plat B',kcal:100,prot:5,carbs:10,fat:2};
-    const lu=()=>{ try{ return (typeof _afSrc!=='undefined'&&_afSrc)?_afSrc:{}; }catch(e){ return {}; } };
-
-    o.type=typeof _srcProvenance;
-    /* ⛔ Le propriétaire rend TROIS clés, pas plus : `origine`/`saisie` doivent rester dehors.
-       Défensif — si la fonction lève, le bloc ne doit pas disparaître de la passe (§61). */
-    try{ o.cles=Object.keys(_srcProvenance(PLEIN)).sort().join(','); }
-    catch(e){ o.cles='LÈVE : '+String(e&&e.message||e); }
-    try{ o.vide=JSON.stringify(_srcProvenance(null)); }
-    catch(e){ o.vide='LÈVE : '+String(e&&e.message||e); }
-
-    /* ── porte 1 : quickFillFood ── */
-    try{ _afOublierAliment(); }catch(e){}
-    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},PLEIN)];
-    quickFillFood(0); await d(160);
-    let v=lu(); o.qf={sourceId:v.sourceId,etat:v.etat,per100:v.per100?v.per100.kcal:null,
-                     origine:v.origine,saisie:v.saisie};
-    try{ _afOublierAliment(); }catch(e){}
-    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},NU)];
-    quickFillFood(0); await d(160);
-    v=lu(); o.qfNu={sourceId:v.sourceId,etat:v.etat,per100:v.per100,origine:v.origine};
-
-    /* ── porte 2 : _afSuggPrendreLocale — elle lit `_afSuggLoc`, PAS `S.foodLog`
-       (ma sonde s'y est fait prendre : `if(!e) return` et elle sortait sans rien faire). */
-    S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},PLEIN)]; persist();
-    try{ _afOublierAliment(); }catch(e){}
-    _afSetSrc(null); _afSuggLoc=_afSuggLocales('Plat A');
-    o.locListe=_afSuggLoc.length;
-    _afSuggPrendreLocale(0); await d(160);
-    v=lu(); o.loc={sourceId:v.sourceId,etat:v.etat,per100:v.per100?v.per100.kcal:null,
-                   origine:v.origine,saisie:v.saisie};
-    S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},NU)]; persist();
-    try{ _afOublierAliment(); }catch(e){}
-    _afSetSrc(null); _afSuggLoc=_afSuggLocales('Plat B');
-    _afSuggPrendreLocale(0); await d(160);
-    v=lu(); o.locNu={origine:v.origine};
-
-    /* ── porte 3 : quickAddFood — elle ÉCRIT ── */
-    S.foodLog=[]; S.savedFoods=[]; persist();
-    try{ _afOublierAliment(); }catch(e){}
-    _afSetSrc(null); _afQuickItems=[Object.assign({fav:false},PLEIN)];
-    quickAddFood(0); await d(260);
-    const l=(S.foodLog||[])[S.foodLog.length-1]||{};
-    o.qa={sourceId:l.sourceId,etat:l.etat,per100:l.per100?l.per100.kcal:null,
-          origine:l.origine,saisie:l.saisie};
-    return o;
-   }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
-  });
-  console.log('\n== BLOC CCXCIV — 🏷️ 1b-ii : la provenance reprise (ft-v1197) ==');
-  if(V.err){ t('CCXCIV bloc exécuté', false, V.err); }
-  else{
-    t('CCXCIV ① `_srcProvenance` existe', V.type==='function', V.type);
-    t('CCXCIV ② ⛔⛔ PÉRIMÈTRE — elle rend EXACTEMENT 3 clés : `origine`/`saisie` restent DEHORS '+
-      '(les unifier changerait ce que le journal dit de lui-même — décision produit n°4)',
-      V.cles==='etat,per100,sourceId', String(V.cles));
-    t('CCXCIV ③ une source vide rend trois `null`, jamais un objet à moitié rempli',
-      V.vide==='{"sourceId":null,"etat":null,"per100":null}', String(V.vide));
-
-    t('CCXCIV ④ ⭐ PORTE « Mes aliments » : les 3 champs voyagent',
-      V.qf && V.qf.sourceId==='off:123' && V.qf.etat==='valide' && V.qf.per100===133,
-      JSON.stringify(V.qf));
-    t('CCXCIV ⑤ ⛔ ÉCART TRANSPORTÉ — elle garde SON repli `reprise` et SA saisie `liste`',
-      V.qf && V.qf.origine==='off' && V.qf.saisie==='liste' && V.qfNu && V.qfNu.origine==='reprise',
-      JSON.stringify([V.qf&&V.qf.origine, V.qf&&V.qf.saisie, V.qfNu&&V.qfNu.origine]));
-    t('CCXCIV ⑥ une reprise sans provenance ne fabrique rien (3 `null`)',
-      V.qfNu && V.qfNu.sourceId===null && V.qfNu.etat===null && V.qfNu.per100===null,
-      JSON.stringify(V.qfNu));
-
-    t('CCXCIV ⑦ ⛔ le témoin conduit VRAIMENT la 2ᵉ porte (liste locale non vide) — sinon tout '+
-      'ce qui suit serait vert sur une fonction qui sort au 3ᵉ caractère',
-      V.locListe>0, 'items='+String(V.locListe));
-    t('CCXCIV ⑧ ⭐ PORTE « recherche du journal » : les 3 mêmes champs voyagent',
-      V.loc && V.loc.sourceId==='off:123' && V.loc.etat==='valide' && V.loc.per100===133,
-      JSON.stringify(V.loc));
-    t('CCXCIV ⑨ ⛔⛔ ÉCART TRANSPORTÉ — elle, c\'est `utilisateur` et `historique`, PAS `reprise`/`liste`',
-      V.loc && V.loc.saisie==='historique' && V.locNu && V.locNu.origine==='utilisateur',
-      JSON.stringify([V.loc&&V.loc.saisie, V.locNu&&V.locNu.origine]));
-
-    t('CCXCIV ⑩ ⭐ PORTE « ajout direct » : la paire est enregistrée sur la ligne',
-      V.qa && V.qa.sourceId==='off:123' && V.qa.etat==='valide', JSON.stringify(V.qa));
-    t('CCXCIV ⑪ ⛔⛔ ET ELLE IGNORE `it.origine` EXPRÈS : une ligne venue d\'un code-barres se '+
-      'réenregistre en `reprise` — on n\'a pas gardé la source sur les favoris, donc en hériter MENTIRAIT (R33)',
-      V.qa && V.qa.origine==='reprise', String(V.qa&&V.qa.origine));
-    t('CCXCIV ⑫ ⭐ `per100` lui vient de `_srcRepriseQ` et le propriétaire le repose à l\'identique',
-      V.qa && V.qa.per100===133, String(V.qa&&V.qa.per100));
-    t('CCXCIV ⑬ 0 erreur JS', errs.length===0, errs.join(' | '));
-  }
-  await cx.close();
-}
-
-/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
-{
-  const src=fs.readFileSync(ROOT+'/app.js','utf8');
-  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
-    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*'));}).join('\n');
-  const nb=(sansComm.match(/_srcProvenance\(/g)||[]).length;
-  t('CCXCIV ⑭ ⭐ les 3 portes passent par `_srcProvenance` (1 déclaration + 3 appels)',
-    nb===4, 'occurrences='+nb);
-  /* ⛔⛔ LE TÉMOIN DE PÉRIMÈTRE : `origine` ne doit JAMAIS entrer dans le propriétaire.
-     On ne compte pas un motif — on lit le CORPS de la fonction, parce que compter les
-     occurrences d'un motif ne dit pas QUI décide (leçon de ft-v1195). */
-  const corps=(sansComm.match(/function _srcProvenance\(src\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCXCIV ⑮ ⛔⛔ PÉRIMÈTRE — ni `origine` ni `saisie` dans le corps du propriétaire : '+
-    'l\'écart des 3 portes est TRANSPORTÉ, pas harmonisé (décision produit n°4, en attente)',
-    corps.length>0 && !/origine/.test(corps) && !/saisie/.test(corps),
-    'corps='+corps.slice(0,120));
+  const corps=(src.match(/function _n2Fiche\([^)]*\)\{[\s\S]*?\n\}/)||[''])[0];
+  t('B-NV2X ② ⛔ la référence devient une fiche SANS arrondi : ni `Math.round` ni `_per100d1` dans `_n2Fiche` (seul le moteur arrondit, à la fin)',
+    corps.length>0 && !/Math\.round|_per100d1|toFixed/.test(corps), 'corps='+corps.slice(0,160));
 }
 
 /* ══════════ BLOC CCXCV — 📋 1b-iii : l'item de liste affichée (ft-v1198) ══════════
@@ -34887,9 +34759,15 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
     o.type=typeof _itemListe;
     /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
-    try{ o.cles=Object.keys(_itemListe({name:'X'})).sort().join(','); }
+    /* ⛔ INCIDENT DU 23/10 (mission D de Michel : *« ne pas convertir une valeur inconnue en zéro »*) — une valeur INCONNUE
+       reste ABSENTE (pas de clé), une valeur CONNUE passe, 0 compris. Les neuf champs se lisent donc sur une source COMPLÈTE,
+       et une source qui porte `portionWeightG`, `fav` ou `sourceId` ne les fait pas entrer dans le noyau (décision produit
+       n°2). Avant, `{name:'X'}` rendait 0 kcal, 0 g de protéines… : un favori à « 0 g » d'une protéine jamais connue. */
+    try{ o.cles=Object.keys(_itemListe({name:'X',kcal:1,prot:2,carbs:3,fat:4,per100:{kcal:1},q:5,u:'g',portionLabel:'p',
+                                          portionWeightG:5,fav:true,sourceId:'off:1'})).sort().join(',');
+         o.clesInconnues=Object.keys(_itemListe({name:'X'})).sort().join(','); }
     catch(e){ o.cles='LÈVE : '+String(e&&e.message||e); }
-    try{ o.nu=JSON.stringify(_itemListe(null)); }
+    try{ o.nu=JSON.stringify(_itemListe(null)); o.zeroConnu=JSON.stringify(_itemListe({name:'P',kcal:52,prot:0})); }
     catch(e){ o.nu='LÈVE : '+String(e&&e.message||e); }
 
     const COMPLET={name:'Lentilles',kcal:198,prot:25,carbs:41,fat:13,
@@ -34942,12 +34820,14 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
   if(W.err){ t('CCXCV bloc exécuté', false, W.err); }
   else{
     t('CCXCV ① `_itemListe` existe', W.type==='function', W.type);
-    t('CCXCV ② ⛔⛔ PÉRIMÈTRE — elle rend EXACTEMENT les 9 champs identiques : ni `portionWeightG` '+
-      'ni `fav` dedans (ils DIVERGENT, décision produit n°2)',
-      W.cles==='carbs,fat,kcal,name,per100,portionLabel,prot,q,u', String(W.cles));
-    t('CCXCV ③ une source vide rend les replis, sans rien inventer',
-      W.nu==='{"kcal":0,"prot":0,"carbs":0,"fat":0,"per100":null,"q":0,"u":null,"portionLabel":null}',
-      String(W.nu));
+    t('CCXCV ② ⛔⛔ PÉRIMÈTRE — sur une source complète elle rend EXACTEMENT les 9 champs : ni `portionWeightG` '+
+      'ni `fav` dedans (ils DIVERGENT, décision produit n°2), ni `sourceId` ; et une valeur INCONNUE reste ABSENTE (23/10)',
+      W.cles==='carbs,fat,kcal,name,per100,portionLabel,prot,q,u' && W.clesInconnues==='name,per100,portionLabel,q,u',
+      JSON.stringify({cles:W.cles, inconnues:W.clesInconnues}));
+    t('CCXCV ③ une source vide rend les replis de la quantité et des libellés, SANS aucun 0 inventé — et un 0 CONNU reste 0',
+      W.nu==='{"per100":null,"q":0,"u":null,"portionLabel":null}'
+      && W.zeroConnu==='{"name":"P","kcal":52,"prot":0,"per100":null,"q":0,"u":null,"portionLabel":null}',
+      JSON.stringify({nu:W.nu, zeroConnu:W.zeroConnu}));
 
     t('CCXCV ④ ⭐ BRANCHE FAVORIS : les 9 champs voyagent, et `fav` reste true',
       W.favori && W.favori.name==='Lentilles' && W.favori.kcal===198 && W.favori.q===410
@@ -35005,122 +34885,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     /function _itemListe\(src\)\{/.test(sansComm), 'signature absente');
 }
 
-/* ══════════ BLOC CCXCVI — 🔢 3-ii : la pastille « ta dernière quantité » (ft-v1199) ══════════ */
-{
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
-  await pg.goto('http://localhost:'+PORT+'/index.html');
-  await pg.waitForTimeout(2300);
-  const X=await pg.evaluate(async()=>{
-   try{
-    const o={}; const d=ms=>new Promise(r=>setTimeout(r,ms));
-    o.type=typeof _qGrammes;
-    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
-    try{
-      o.table=JSON.stringify([
-        _qGrammes({q:150,u:'g'}), _qGrammes({q:80}), _qGrammes({q:2,u:'portion'}),
-        _qGrammes({q:0,u:'g'}),   _qGrammes({q:-5,u:'g'}), _qGrammes({q:250,u:'ml'}),
-        _qGrammes(null), _qGrammes({})]);
-    }catch(e){ o.table='LÈVE : '+String(e&&e.message||e); }
-
-    /* ⛔⛔ LA PASTILLE EST DANS UN GARDE : `if(P && it.u!=='portion' && …)` où P = it.per100.
-       Sans pour-100 g le bloc est SAUTÉ et la pastille n'est jamais appelée — ma 1ʳᵉ sonde
-       n'avait pas de `per100` et les 6 cas rendaient la même valeur, un reliquat. */
-    const P100={kcal:66.7,prot:0.7,carbs:1.3,fat:2};
-    const lire=()=>{ const b=document.getElementById('af-bc-last');
-      return b ? {vue:b.style.display==='inline-block', q:(b.dataset&&b.dataset.q)||'ABSENT'} : 'ABSENT'; };
-    const CAS=[['grammes',{q:150,u:'g'}], ['sans unité',{q:80}], ['portions',{q:2,u:'portion'}],
-               ['zéro',{q:0,u:'g'}], ['négatif',{q:-5,u:'g'}], ['millilitres',{q:250,u:'ml'}]];
-
-    const par=(conduire)=>{ const r={};
-      CAS.forEach(([nom,q])=>{
-        try{ _afOublierAliment(); }catch(e){}
-        /* ⛔ La pastille N'EST PAS rendue par `_afOublierAliment` (seule `openAddFood` le fait) :
-           sans cette ligne, le cas « portions » lirait le reliquat du cas précédent. Défaut RÉEL,
-           mesuré et écrit dans docs/JOURNAL-DE-TEST.md — NON corrigé ici, une extraction ne
-           change aucun comportement. */
-        try{ _bcProposerDerniere(0); }catch(e){}
-        _afSetSrc(null);
-        conduire(Object.assign({name:'Aliment '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100,fav:false}, q));
-        r[nom]=lire();
-      });
-      return r; };
-
-    o.qf = par(it=>{ S.foodLog=[]; S.savedFoods=[]; persist(); _afQuickItems=[it]; quickFillFood(0); });
-    o.loc = par(it=>{ S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},it)]; persist();
-                      _afSuggLoc=_afSuggLocales(it.name);
-                      if(!_afSuggLoc.length) throw new Error('liste locale VIDE');
-                      _afSuggPrendreLocale(0); });
-    return o;
-   }catch(e){return {err:String(e&&e.message||e)+' | '+(e.stack||'').slice(0,200)};}
-  });
-  console.log('\n== BLOC CCXCVI — 🔢 3-ii : la pastille « ta dernière quantité » (ft-v1199) ==');
-  if(X.err){ t('CCXCVI bloc exécuté', false, X.err); }
-  else{
-    t('CCXCVI ① `_qGrammes` existe', X.type==='function', X.type);
-    t('CCXCVI ② ⭐ elle rend un NOMBRE : 150 · 80 · 0 (portions) · 0 · 0 · 0 (ml) · 0 · 0 — '+
-      'et c\'est ce qui evite une duplication en 3-iii/3-iv (`>0` EST la condition)',
-      X.table==='[150,80,0,0,0,0,0,0]', String(X.table));
-
-    ['qf','loc'].forEach((k,i)=>{
-      const nom = i===0 ? 'PORTE « Mes aliments »' : 'PORTE « recherche du journal »';
-      const r = X[k] || {};
-      t('CCXCVI '+(i===0?'③':'⑥')+' ⭐ '+nom+' : les grammes sont reproposés (150), '+
-        'et l\'unité ABSENTE aussi (80)',
-        r['grammes'] && r['grammes'].vue===true && r['grammes'].q==='150'
-        && r['sans unité'] && r['sans unité'].q==='80', JSON.stringify([r['grammes'],r['sans unité']]));
-      t('CCXCVI '+(i===0?'④':'⑦')+' ⛔ '+nom+' : les PORTIONS ne proposent rien — la règle '+
-        'refuse ce que `_qReprenable` accepte, et c\'est voulu',
-        r['portions'] && r['portions'].vue===false, JSON.stringify(r['portions']));
-      t('CCXCVI '+(i===0?'⑤':'⑧')+' ⛔ '+nom+' : zéro, négatif et millilitres ne proposent rien '+
-        '(sans densité, un volume ne dit pas ce que PÈSE l\'aliment — R29)',
-        r['zéro'] && r['zéro'].vue===false && r['négatif'] && r['négatif'].vue===false
-        && r['millilitres'] && r['millilitres'].vue===false,
-        JSON.stringify([r['zéro'],r['négatif'],r['millilitres']]));
-    });
-    t('CCXCVI ⑨ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas — '+
-      'c\'est ce qui rend l\'extraction légitime',
-      JSON.stringify(X.qf)===JSON.stringify(X.loc),
-      JSON.stringify(X.qf)+' vs '+JSON.stringify(X.loc));
-    t('CCXCVI ⑩ 0 erreur JS', errs.length===0, errs.join(' | '));
-  }
-  await cx.close();
-}
-
-/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page. */
-{
-  const src=fs.readFileSync(ROOT+'/app.js','utf8');
-  /* ⛔ Le backtick fait partie des débuts de ligne à écarter : le commentaire du propriétaire
-     CITE `_qGrammes(x) > 0`, et un témoin qui ne distingue pas le code de ce qui en PARLE
-     finit par interdire d'écrire la documentation de ce qu'il protège (leçon ft-v1193). */
-  const sansComm=src.split('\n').filter(l=>{const x=l.trim();
-    return !(x.startsWith('*')||x.startsWith('//')||x.startsWith('/*')||x.startsWith('`'));}).join('\n');
-  /* ⚠️⚠️ CE TÉMOIN A ROUGI EN ft-v1201, ET POUR DEUX RAISONS À LA FOIS — la passe complète l'a
-     attrapé, mes harnais isolés ne l'exécutaient pas.
-     ① Il figeait un état PÉRIMÉ : 3-iii ajoute LÉGITIMEMENT un 3ᵉ appelant (`_afReprendreGrammes`).
-        Comme le témoin de périmètre, il se DÉPLACE — il ne se supprime pas.
-     ② Et il comptait avec le filtre LIGNE-À-LIGNE, qui trouve 5 occurrences là où il y en a 4 :
-        le docblock du nouveau propriétaire CITE `_qGrammes(src) > 0` sur une ligne qui commence
-        par un mot, donc elle survit au filtre.
-     👉 ***J'avais corrigé ce compteur dans le bloc de 3-iii et PAS dans les deux anciens*** —
-     R8, la porte jumelle, dans mes propres témoins. Ils retirent désormais les blocs entiers. */
-  const codeSeulG=src.replace(/\/\*[\s\S]*?\*\//g,'')
-                     .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
-  const nb=(codeSeulG.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVI ⑪ ⭐ `_qGrammes` a 4 appelants (1 déclaration + 4 appels : les 2 pastilles de 3-ii, '+
-    'le propriétaire de 3-iii, la liste blanche de 3-iv)',
-    nb===5, 'occurrences hors commentaires='+nb);
-  const corps=(sansComm.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCXCVI ⑫ ⛔⛔ PÉRIMÈTRE — `_qGrammes` REFUSE les portions : le `|| === \'portion\'` de '+
-    '`_qReprenable` n\'est PAS entré dedans (les fondre serait un changement de comportement)',
-    corps.length>0 && !/portion/.test(corps), 'corps='+corps.slice(0,140));
-  t('CCXCVI ⑬ ⛔ et `_qReprenable` existe TOUJOURS à côté, avec ses portions — deux règles, '+
-    'pas une',
-    /function _qReprenable\(src\)\{/.test(sansComm) && /=== 'portion'/.test(sansComm),
-    'une des deux a disparu');
-}
-
+/* CCXCVI (3-ii) — RETIRÉ AU JALON 4 : voir la note « RETIRÉS AU JALON 4 » avant CCXCV (R30). */
 /* ══════════ BLOC CCXCVII — 🩹 la pastille « ↩ … g (la dernière fois) » qui SURVIVAIT à
    l'aliment suivant. CORRECTIF SÉPARÉ du chantier d'extraction (feu vert explicite de Michel).
 
@@ -35145,9 +34910,19 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     const lire=()=>{ const b=document.getElementById('af-bc-last');
       return b ? {vue:b.style.display==='inline-block', q:(b.dataset&&b.dataset.q)||'ABSENT'} : 'ABSENT'; };
     /* ⛔ On pose la pastille par la VRAIE porte de production, jamais à la main : un état
-       fabriqué prouverait que le correctif nettoie un décor, pas ce que l'app affiche. */
+       fabriqué prouverait que le correctif nettoie un décor, pas ce que l'app affiche.
+       🥗 V2 (jalon 4, 22/10/2026) — en V2, seule une fiche de CONFIANCE propose « la dernière fois » dans le bloc
+       « Quantité » (une ligne non vérifiée reprend sa quantité AVEC ses valeurs, ailleurs : B-NV2P P12 ⑦). La ligne qui
+       pose la pastille est donc une ligne V2 pesée — écrite par le VRAI écrivain du moteur (`NUT2.ligneNouvelle`),
+       pour que la fixture ait exactement le schéma de la production. */
+    const V2=(nom,g)=>{ const r=NUT2.ligneNouvelle({id:_foodLineId(), ts:Date.now(), date:today(), repas:'dejeuner', nom:nom,
+        origine:{saisie:'code-tape', origine:'off'}, mode:'pesee',
+        fiche:{base:'g', p100:P100, cle:'3000000000999', source:'off', fiab:'source', etat:'tel-que-vendu'},
+        quantite:{val:g, unite:'g'}});
+      if(!r.ok) throw new Error('fixture V2 refusée : '+r.erreur);
+      return Object.assign(r.ligne, {fav:false}); };
     const poserA=(g)=>{ _afSetSrc(null);
-      _afQuickItems=[{name:'Aliment A', kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:g, u:'g', fav:false}];
+      _afQuickItems=[V2('Aliment A', g)];
       quickFillFood(0); };
 
     /* ① LE TÉMOIN DU BUG, NU : on pose la pastille, on OUBLIE L'ALIMENT, et rien d'autre.
@@ -35189,7 +34964,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        un aliment B qui a SA PROPRE dernière quantité en grammes doit voir SA pastille apparaître.
        Un correctif qui se contenterait d'éteindre casserait la fonctionnalité en la « réparant ». */
     poserA(150);
-    _afQuickItems=[{name:'Aliment E', kcal:100,prot:1,carbs:2,fat:3, per100:P100, q:200, u:'g', fav:false}];
+    _afQuickItems=[V2('Aliment E', 200)];
     quickFillFood(0);
     o.eContreEpreuve=JSON.stringify(lire());
 
@@ -35285,555 +35060,11 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'les deux drapeaux ne nomment pas la même chose',
     corpsOubli.length>0 && !sousGarde, 'la pastille est passée sous le drapeau du paquet');
   /* ⛔ CONSIGNE EXPLICITE DE MICHEL : ce correctif ne touche à AUCUNE règle métier. */
-  /* ⚠️ LA JUMELLE DU TÉMOIN DE CCXCVI — même double défaut, corrigée dans le même mouvement :
-     l'état figé était périmé (3-iii ajoute un 3ᵉ appelant) ET le compteur était aveugle aux
-     lignes de commentaire qui CITENT l'appel. ⛔ Ce que ce témoin protège ne change pas : il
-     doit toujours vérifier que `_qGrammes` **refuse les portions**, la consigne de ft-v1200. */
-  const nbG=(codeSeul.match(/_qGrammes\(/g)||[]).length;
-  t('CCXCVII ⑭ ⛔ HORS PÉRIMÈTRE — `_qGrammes` est intacte (1 déclaration + 4 appels) et refuse '+
-    'toujours les portions',
-    nbG===5 && /function _qGrammes\(src\)\{/.test(codeSeul) &&
-    !/portion/.test((codeSeul.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
-    'occurrences hors commentaires='+nbG);
-  t('CCXCVII ⑮ ⛔ HORS PÉRIMÈTRE — `_qReprenable` est intacte, portions comprises',
-    /function _qReprenable\(src\)\{/.test(sansComm) &&
-    /=== 'portion'/.test((sansComm.match(/function _qReprenable\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
-    'la règle voisine a bougé');
+  /* ⑭ ⑮ (`_qGrammes` intacte · `_qReprenable` intacte) — RETIRÉS AU JALON 4 avec ces deux aides (R30) : voir la note
+     « RETIRÉS AU JALON 4 » avant CCXCV. */
 }
 
-/* ══════════ BLOC CCXCVIII — 🔢 3-iii : le bloc « poids repris en grammes » (ft-v1201) ══════════
-   ⭐ TEST D'ENTRÉE : 2 copies STRICTEMENT identiques — `quickFillFood` et `_afSuggPrendreLocale`
-   portaient la même condition ET le même corps de 3 lignes, au nom de variable près.
-   ⛔⛔ ET LES CAS SONT L'INVERSE DE CEUX DE 3-ii : le bloc est gardé par `!_bcNutr`, que le bloc
-   du pour-100 g pose lui-même. Les deux sites sont MUTUELLEMENT EXCLUSIFS sur la même entrée —
-   pour atteindre celui-ci il faut un aliment SANS pour-100 g. Des fixtures recopiées de 3-ii
-   n'auraient jamais franchi le garde, et les six cas auraient rendu la même valeur. */
-{
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
-  await pg.goto('http://localhost:'+PORT+'/index.html');
-  await pg.waitForTimeout(2300);
-  const X=await pg.evaluate(async()=>{
-   try{
-    const o={};
-    o.type=typeof _afReprendreGrammes;
-    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
-    try{
-      o.table=JSON.stringify([
-        _afReprendreGrammes({q:150,u:'g'}), _afReprendreGrammes({q:80}),
-        _afReprendreGrammes({q:2,u:'portion'}), _afReprendreGrammes({q:0,u:'g'}),
-        _afReprendreGrammes({q:-5,u:'g'}), _afReprendreGrammes({q:250,u:'ml'}),
-        _afReprendreGrammes(null), _afReprendreGrammes({})]);
-    }catch(e){ o.table='LÈVE : '+String(e&&e.message||e); }
-
-    const lire=()=>({unite:(typeof _afUnite!=='undefined')?_afUnite:'ABSENT',
-                     poids:(typeof _afPoidsDeclare!=='undefined')?_afPoidsDeclare:'ABSENT',
-                     nom:(typeof _afQtyNom!=='undefined')?_afQtyNom:'ABSENT'});
-    /* ⛔ On repart d'un écran à plat par la VRAIE fonction de production : sans ça un cas
-       lirait le reliquat du précédent — le piège payé en ft-v1199. */
-    const plat=()=>{ try{ _afResetUnite(); }catch(e){} };
-
-    const CAS=[['grammes',{q:150,u:'g'}], ['sans unité',{q:80}], ['portions',{q:2,u:'portion',portionLabel:'p',portionWeightG:120}],
-               ['zéro',{q:0,u:'g'}], ['négatif',{q:-5,u:'g'}], ['millilitres',{q:250,u:'ml'}]];
-    const P100={kcal:66.7,prot:0.7,carbs:1.3,fat:2};
-
-    /* ── porte 1 : « Mes aliments » ── */
-    const A={};
-    CAS.forEach(([nom,q])=>{
-      try{ _afOublierAliment(); }catch(e){}
-      plat(); _afSetSrc(null);
-      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,fav:false}, q)];
-      quickFillFood(0);
-      A[nom]=lire();
-    });
-    o.quickFill=JSON.stringify(A);
-
-    /* ── porte 2 : la recherche du journal (R8, la porte jumelle) ── */
-    const B={};
-    CAS.forEach(([nom,q])=>{
-      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1,name:'B '+nom,
-                                kcal:100,prot:1,carbs:2,fat:3}, q)];
-      persist();
-      try{ _afOublierAliment(); }catch(e){}
-      plat(); _afSetSrc(null);
-      _afSuggLoc=_afSuggLocales('B '+nom);
-      B[nom]= _afSuggLoc.length ? (_afSuggPrendreLocale(0), lire()) : 'LISTE VIDE';
-    });
-    o.locale=JSON.stringify(B);
-
-    /* ⭐ LE CAS DE PÉRIMÈTRE : grammes VALIDES mais un pour-100 g présent → le garde `!_bcNutr`
-       doit bloquer. C'est lui qui fige que le garde n'est PAS la règle de quantité. */
-    try{ _afOublierAliment(); }catch(e){}
-    plat(); _afSetSrc(null);
-    _afQuickItems=[{name:'Avec pour-100g',kcal:100,prot:1,carbs:2,fat:3,q:150,u:'g',per100:P100,fav:false}];
-    quickFillFood(0);
-    o.avecPer100=JSON.stringify(lire());
-    o.bcNutrPose=!!(typeof _bcNutr!=='undefined' && _bcNutr);
-
-    /* ⛔ NON-RÉGRESSION ft-v1176 : `_afPoidsPose` ne doit PAS être posé par ce chemin. */
-    try{ _afOublierAliment(); }catch(e){}
-    plat(); _afSetSrc(null);
-    _afQuickItems=[{name:'Sans pose',kcal:100,prot:1,carbs:2,fat:3,q:150,u:'g',fav:false}];
-    quickFillFood(0);
-    o.poidsPose=(typeof _afPoidsPose!=='undefined')?_afPoidsPose:'ABSENT';
-
-    return o;
-   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
-  });
-
-  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
-  t('CCXCVIII ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
-  t('CCXCVIII ① ⭐ `_afReprendreGrammes` existe', X.type==='function', 'type='+X.type);
-  t('CCXCVIII ② ⭐ elle rend VRAI quand la quantité est reprenable en grammes, FAUX sinon — '+
-    'grammes · sans unité acceptés ; portions · 0 · négatif · ml · rien refusés',
-    X.table==='[true,true,false,false,false,false,false,false]', X.table);
-
-  const A=j(X.quickFill)||{}, B=j(X.locale)||{};
-  ['grammes','sans unité'].forEach((n,i)=>{
-    const att=[150,80][i];
-    t('CCXCVIII '+(i===0?'③':'④')+' ⭐ porte « Mes aliments » — '+n+' : le poids est posé ('+att+' g)',
-      !!(A[n]&&A[n].unite==='g'&&A[n].poids===att&&A[n].nom==='A '+n), JSON.stringify(A[n]));
-    t('CCXCVIII '+(i===0?'⑤':'⑥')+' ⛔ PORTE JUMELLE (R8) — recherche du journal, '+n+' : idem',
-      !!(B[n]&&B[n].unite==='g'&&B[n].poids===att&&B[n].nom==='B '+n), JSON.stringify(B[n]));
-  });
-  t('CCXCVIII ⑦ ⛔ portions · zéro · négatif · millilitres ne posent RIEN, aux deux portes',
-    ['portions','zéro','négatif','millilitres'].every(n=>
-      A[n]&&A[n].unite==='portion'&&A[n].poids===0&&A[n].nom==='' &&
-      B[n]&&B[n].unite==='portion'&&B[n].poids===0&&B[n].nom===''),
-    JSON.stringify({A,B}).slice(0,200));
-  t('CCXCVIII ⑧ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LE MÊME RÉSULTAT sur les 6 cas '+
-    '(au nom de l\'aliment près)',
-    JSON.stringify(Object.keys(A).map(n=>[A[n].unite,A[n].poids]))===
-    JSON.stringify(Object.keys(B).map(n=>[B[n].unite,B[n].poids])),
-    JSON.stringify(A)+' | '+JSON.stringify(B));
-  t('CCXCVIII ⑨ ⛔⛔ PÉRIMÈTRE — le garde `!_bcNutr` reste CHEZ LES APPELANTS : une quantité en '+
-    'grammes parfaitement valide ne pose RIEN quand un pour-100 g est présent',
-    !!(j(X.avecPer100)&&j(X.avecPer100).unite==='portion'&&j(X.avecPer100).poids===0) && X.bcNutrPose===true,
-    X.avecPer100+' · _bcNutr posé='+X.bcNutrPose);
-  t('CCXCVIII ⑩ ⛔ NON-RÉGRESSION ft-v1176 — ce chemin ne pose toujours PAS `_afPoidsPose` '+
-    '(le drapeau dit « la personne a déclaré un poids pour ce qui est AFFICHÉ »)',
-    X.poidsPose===false, 'poidsPose='+X.poidsPose);
-  t('CCXCVIII ⑪ 0 erreur JS', errs.length===0, errs.join(' | '));
-  await cx.close();
-}
-
-/* ⚠️ Témoins de SOURCE — ils lisent le fichier, pas la page.
-   ⛔ Les blocs de commentaire sont retirés ENTIERS : la leçon de ft-v1200, où un témoin comptait
-   la ligne qui CITE le motif au lieu de celle qui l'exécute. */
-{
-  const src=fs.readFileSync(ROOT+'/app.js','utf8');
-  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
-                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
-  const nb=(codeSeul.match(/_afReprendreGrammes\(/g)||[]).length;
-  t('CCXCVIII ⑫ ⭐ les 2 portes passent par le propriétaire (1 déclaration + 2 appels)',
-    nb===3, 'occurrences='+nb);
-  const corps=(codeSeul.match(/function _afReprendreGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCXCVIII ⑬ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_bcNutr` n\'est PAS entré dans le propriétaire : '+
-    'c\'est une question sur l\'ÉTAT DE L\'ÉCRAN, pas sur la quantité de la ligne',
-    corps.length>0 && !/_bcNutr/.test(corps), 'corps='+corps.slice(0,140));
-  t('CCXCVIII ⑭ ⭐ …et il s\'appuie sur `_qGrammes` au lieu de réécrire la règle (la promesse '+
-    'de 3-ii, tenue)',
-    /_qGrammes\(/.test(corps), 'le propriétaire réécrit la règle au lieu de l\'appeler');
-  t('CCXCVIII ⑮ ⛔ PÉRIMÈTRE — `_afPoidsPose` n\'est pas posé dans le propriétaire (R30 : on ne '+
-    'touche pas à ce qui marche)',
-    corps.length>0 && !/_afPoidsPose/.test(corps), 'corps='+corps.slice(0,140));
-  t('CCXCVIII ⑯ ⛔ HORS PÉRIMÈTRE — `_qReprenable` est intacte, portions comprises',
-    /function _qReprenable\(src\)\{/.test(codeSeul) &&
-    /=== 'portion'/.test((codeSeul.match(/function _qReprenable\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
-    'la règle voisine a bougé');
-}
-
-/* ══════════ BLOC CCXCIX — ⚖️ 3-iv : la liste blanche de la provenance (ft-v1202) ══════════
-   ⛔⛔ TEST D'ENTRÉE : CE N'EST PAS UNE EXTRACTION, et le plan le disait faux pour la 4ᵉ fois.
-   Il annonçait « les DEUX branches @1232/@1237 » et « le SEUL endroit qui écrit `p.q`/`p.u` ».
-   Mesuré : **1 copie de chaque forme** (elles se ressemblent mais l'une teste les grammes et
-   écrit `u:'g'`, l'autre teste les portions et écrit `u:'portion'`), et **5 écritures** de
-   `p.q`/`p.u` — les 3 autres (@1300 code-barres · @1320 poids déclaré · @1355 portions à
-   l'écran) lisent l'ÉTAT DE L'ÉCRAN, pas `_afSrc`. Aucune n'est une copie.
-   👉 3-iv se réduit donc à BRANCHER la dernière copie écrite sur `_qGrammes`, qui avait déjà
-   3 appelants. Le test d'entrée protège contre la CRÉATION d'un propriétaire pour une forme
-   unique — il n'interdit pas d'ajouter un appelant à un propriétaire qui existe.
-   ⛔ La branche PORTIONS ne bouge pas : 1 écriture, aucun propriétaire existant. */
-{
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
-  await pg.goto('http://localhost:'+PORT+'/index.html');
-  await pg.waitForTimeout(2300);
-  const X=await pg.evaluate(async()=>{
-   try{
-    const o={};
-    const P100={kcal:50,prot:0.5,carbs:1,fat:1.5};
-    const CAS=[['grammes',{q:120,u:'g'}], ['sans unité',{q:80}],
-               ['portions',{q:2,u:'portion',portionLabel:'part',portionWeightG:120}],
-               ['zéro',{q:0,u:'g'}], ['négatif',{q:-5,u:'g'}], ['millilitres',{q:250,u:'ml'}]];
-
-    /* ── porte 1 : l'ajout DIRECT depuis la liste (`quickAddFood`) ── */
-    const A={}; let labA=null;
-    CAS.forEach(([nom,q])=>{
-      S.foodLog=[]; S.savedFoods=[];
-      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100}, q)];
-      _afMeal='midi';
-      try{ quickAddFood(0); }catch(e){}
-      const l=(S.foodLog||[])[0];
-      A[nom]= l ? {q:l.q,u:l.u} : 'RIEN AJOUTÉ';
-      if(nom==='portions'&&l) labA={lab:l.portionLabel,pds:l.portionWeightG};
-    });
-    o.direct=JSON.stringify(A); o.labelDirect=JSON.stringify(labA);
-
-    /* ── porte 2 : le REJEU d'un repas (R8, la porte jumelle) ──
-       ⚠️ `_repasHabituels` exige la MÊME signature sur 2 dates : on conduit la vraie porte
-       avec sa vraie condition d'entrée, jamais `_provFood` en direct (BUGS.md §58). */
-    const B={};
-    CAS.forEach(([nom,q])=>{
-      const base=Object.assign({name:'B '+nom,kcal:100,prot:1,carbs:2,fat:3,per100:P100}, q);
-      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1},base),
-                 Object.assign({date:'2026-09-02',meal:'midi',ts:2},base)];
-      const sig=(_repasHabituels()[0]||{}).sig||'';
-      if(!sig){ B[nom]='PAS DE SIGNATURE'; return; }
-      const avant=S.foodLog.length;
-      try{ rejouerRepas(sig,'midi'); }catch(e){}
-      const l=(S.foodLog||[])[S.foodLog.length-1];
-      B[nom]= (S.foodLog.length>avant && l) ? {q:l.q,u:l.u} : 'RIEN AJOUTÉ';
-    });
-    o.rejeu=JSON.stringify(B);
-
-    /* ⭐ LE CAS DE PÉRIMÈTRE : `_afSrc` ABSENT. Le garde `if(_afSrc)` reste chez l'appelant —
-       la provenance doit sortir « quantité inconnue » sans que le propriétaire soit consulté. */
-    try{ _afSetSrc(null); }catch(e){}
-    try{ const p=_provFood({kcal:100,prot:1,carbs:2,fat:3});
-         o.sansSrc=JSON.stringify({q:p.q,u:p.u}); }catch(e){ o.sansSrc='LÈVE : '+String(e&&e.message||e); }
-
-    return o;
-   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
-  });
-
-  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
-  t('CCXCIX ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
-  const A=j(X.direct)||{}, B=j(X.rejeu)||{};
-  t('CCXCIX ① ⭐ porte DIRECTE — 120 g traversent la liste blanche',
-    !!(A['grammes']&&A['grammes'].q===120&&A['grammes'].u==='g'), JSON.stringify(A['grammes']));
-  t('CCXCIX ② ⭐ porte DIRECTE — une quantité SANS unité est lue en grammes (80 g)',
-    !!(A['sans unité']&&A['sans unité'].q===80&&A['sans unité'].u==='g'), JSON.stringify(A['sans unité']));
-  t('CCXCIX ③ ⛔⛔ HORS PÉRIMÈTRE — la branche PORTIONS n\'a PAS bougé : « 2 portions » '+
-    'traversent toujours, telles quelles',
-    !!(A['portions']&&A['portions'].q===2&&A['portions'].u==='portion'), JSON.stringify(A['portions']));
-  t('CCXCIX ④ ⛔ zéro · négatif · millilitres ressortent sans quantité (honnêtement inconnue, R29)',
-    ['zéro','négatif','millilitres'].every(n=>A[n]&&A[n].q===null&&A[n].u===null),
-    JSON.stringify(A));
-  t('CCXCIX ⑤ ⛔ NON-RÉGRESSION ft-v1183/1180 — l\'étiquette de portion et son poids traversent '+
-    'toujours (une portion sans « de quoi » ne vaut rien)',
-    !!(j(X.labelDirect)&&j(X.labelDirect).lab==='part'&&j(X.labelDirect).pds===120), X.labelDirect);
-  t('CCXCIX ⑥ ⛔ PORTE JUMELLE (R8) — le REJEU d\'un repas donne EXACTEMENT la même table',
-    JSON.stringify(A)===JSON.stringify(B), JSON.stringify(A)+' | '+JSON.stringify(B));
-  t('CCXCIX ⑦ ⛔⛔ PÉRIMÈTRE — sans source, la provenance sort « quantité inconnue » : le garde '+
-    '`if(_afSrc)` est resté CHEZ L\'APPELANT, il n\'est pas entré dans le propriétaire',
-    X.sansSrc==='{"q":null,"u":null}', X.sansSrc);
-  t('CCXCIX ⑧ 0 erreur JS', errs.length===0, errs.join(' | '));
-  await cx.close();
-}
-
-/* ⚠️ Témoins de SOURCE — et Michel l'a posé en consigne après 3-iii : *une dérive de conception
-   peut être invisible à l'exécution*, donc on garde les témoins de source quand ils protègent
-   une frontière que les tests de comportement ne peuvent pas voir. C'est exactement le cas ici :
-   remettre la règle en dur à côté de l'appel ne changerait RIEN à l'écran tant qu'elle dit
-   pareil — et c'est précisément comme ça que deux copies recommencent à diverger. */
-{
-  const src=fs.readFileSync(ROOT+'/app.js','utf8');
-  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
-                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
-  const corps=(codeSeul.match(/function _provFood\(vals\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCXCIX ⑨ ⭐ la liste blanche APPELLE `_qGrammes` (une fois) au lieu de réécrire la règle',
-    corps.length>0 && (corps.match(/_qGrammes\(/g)||[]).length===1,
-    'occurrences dans _provFood='+(corps.match(/_qGrammes\(/g)||[]).length);
-  t('CCXCIX ⑩ ⛔⛔ PÉRIMÈTRE DE SOURCE — les 5 écritures de `p.q` sont TOUJOURS LÀ : les 3 autres '+
-    '(code-barres · poids déclaré · portions à l\'écran) lisent l\'écran, pas `_afSrc` — ce ne '+
-    'sont pas des copies et elles ne bougent pas',
-    (corps.match(/p\.q\s*=/g)||[]).length===5, 'écritures de p.q='+(corps.match(/p\.q\s*=/g)||[]).length);
-  t('CCXCIX ⑪ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_afSrc` n\'est PAS entré dans `_qGrammes` : le garde '+
-    'd\'état reste chez l\'appelant, le métier du propriétaire s\'arrête à la quantité',
-    !/_afSrc/.test((codeSeul.match(/function _qGrammes\(src\)\{[\s\S]*?\n\}/)||[''])[0]),
-    'le propriétaire lit une globale de ses appelants');
-  t('CCXCIX ⑫ ⛔ HORS PÉRIMÈTRE — la branche PORTIONS est toujours écrite en dur, une fois '+
-    '(1 copie, aucun propriétaire : on n\'en crée pas pour une forme unique — R19)',
-    (corps.match(/_afSrc\.u===?'portion'/g)||[]).length===1,
-    'écritures de la branche portions='+(corps.match(/_afSrc\.u===?'portion'/g)||[]).length);
-}
-
-/* ══════════ BLOC CCC — 🍽️ 3-v : la définition de portion reprise (ft-v1203) ══════════
-   ⭐ TEST D'ENTRÉE PASSÉ, et pour la 1ʳᵉ fois depuis 4 sous-étapes le plan dit vrai sur la moitié
-   qu'il décrit : `quickFillFood` et `_afSuggPrendreLocale` portaient
-   `if(X.u==='portion'){ _afPortionLabel=…; _afPortionPoids=… }` **strictement identiques**.
-   ⛔⛔ MAIS L'AUTRE MOITIÉ ÉTAIT DÉJÀ FAITE : le NOMBRE de portions a son propriétaire depuis
-   ft-v1183/1186 (`_afReprendrePortions`), et les deux portes y sont déjà branchées. *Quand un
-   propriétaire existe, on lui ajoute un appelant — on n'en recrée pas un deuxième.*
-   ⚠️⚠️ ET L'ASYMÉTRIE DE CONDITION EST INATTEIGNABLE, MESURÉE : la ligne de la DÉFINITION n'a pas
-   de garde, celle du NOMBRE porte `!_bcNutr` — mais le bloc qui pose `_bcNutr` se garde lui-même
-   par `u!=='portion'`, donc un aliment en portions ne peut PAS le poser. Aucun témoin de
-   comportement ne peut donc protéger cette frontière : les témoins de SOURCE sont seuls. */
-{
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
-  await pg.goto('http://localhost:'+PORT+'/index.html');
-  await pg.waitForTimeout(2300);
-  const X=await pg.evaluate(async()=>{
-   try{
-    const o={};
-    o.type=typeof _afReprendreDefPortion;
-    /* Défensif : si le propriétaire lève, le bloc ne doit pas DISPARAÎTRE de la passe (§61). */
-    try{
-      o.table=JSON.stringify([
-        _afReprendreDefPortion({u:'portion',portionLabel:'part',portionWeightG:120}),
-        _afReprendreDefPortion({u:'portion',portionLabel:'bol'}),
-        _afReprendreDefPortion({u:'g',portionLabel:'jamais',portionWeightG:999}),
-        _afReprendreDefPortion({}), _afReprendreDefPortion(null)]);
-    }catch(e){ o.table='LÈVE : '+String(e&&e.message||e); }
-
-    const lire=()=>({lab:(typeof _afPortionLabel!=='undefined')?_afPortionLabel:'ABSENT',
-                     pds:(typeof _afPortionPoids!=='undefined')?_afPortionPoids:'ABSENT',
-                     n:(typeof _afPortions!=='undefined')?_afPortions:'ABSENT',
-                     bc:!!(typeof _bcNutr!=='undefined' && _bcNutr)});
-    /* ⛔ Remise à plat par la VRAIE fonction de production : sans elle un cas lirait le
-       reliquat du précédent — le piège payé en ft-v1199. */
-    const plat=()=>{ try{ _afResetUnite(); }catch(e){} };
-
-    const CAS=[['complete',{q:2,u:'portion',portionLabel:'part',portionWeightG:120}],
-               ['sans poids',{q:2,u:'portion',portionLabel:'bol'}],
-               ['sans nom',{q:2,u:'portion',portionWeightG:90}],
-               ['en grammes',{q:150,u:'g',portionLabel:'jamais',portionWeightG:999}],
-               ['poids nul',{q:2,u:'portion',portionLabel:'part',portionWeightG:0}],
-               /* ⭐ le cas qui porte un pour-100 g : la DÉFINITION doit quand même être reprise */
-               ['avec pour-100g',{q:2,u:'portion',portionLabel:'pot',portionWeightG:150,
-                                  per100:{kcal:66.7,prot:0.7,carbs:1.3,fat:2}}]];
-
-    /* ── porte 1 : « Mes aliments » ── */
-    const A={};
-    CAS.forEach(([nom,q])=>{
-      S.foodLog=[]; S.savedFoods=[];
-      try{ _afOublierAliment(); }catch(e){}
-      plat(); _afSetSrc(null);
-      _afQuickItems=[Object.assign({name:'A '+nom,kcal:100,prot:1,carbs:2,fat:3,fav:false}, q)];
-      quickFillFood(0);
-      A[nom]=lire();
-    });
-    o.quickFill=JSON.stringify(A);
-
-    /* ── porte 2 : la recherche du journal (R8, la porte jumelle) ── */
-    const B={};
-    CAS.forEach(([nom,q])=>{
-      S.foodLog=[Object.assign({date:'2026-09-01',meal:'midi',ts:1,name:'B '+nom,
-                                kcal:100,prot:1,carbs:2,fat:3}, q)];
-      persist();
-      try{ _afOublierAliment(); }catch(e){}
-      plat(); _afSetSrc(null);
-      _afSuggLoc=_afSuggLocales('B '+nom);
-      B[nom]= _afSuggLoc.length ? (_afSuggPrendreLocale(0), lire()) : 'LISTE VIDE';
-    });
-    o.locale=JSON.stringify(B);
-
-    return o;
-   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
-  });
-
-  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
-  t('CCC ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
-  t('CCC ① ⭐ `_afReprendreDefPortion` existe', X.type==='function', 'type='+X.type);
-  t('CCC ② ⭐ elle rend VRAI sur une portion, FAUX sur les grammes, l\'objet vide et `null`',
-    X.table==='[true,true,false,false,false]', X.table);
-
-  const A=j(X.quickFill)||{}, B=j(X.locale)||{};
-  t('CCC ③ ⭐ porte « Mes aliments » — la définition complète revient (part / 120 g)',
-    !!(A['complete']&&A['complete'].lab==='part'&&A['complete'].pds===120), JSON.stringify(A['complete']));
-  t('CCC ④ ⛔ PORTE JUMELLE (R8) — recherche du journal : idem',
-    !!(B['complete']&&B['complete'].lab==='part'&&B['complete'].pds===120), JSON.stringify(B['complete']));
-  t('CCC ⑤ ⛔ le garde d\'unité : en GRAMMES rien n\'est repris, aux deux portes '+
-    '(une définition n\'appartient pas à un aliment pesé)',
-    !!(A['en grammes']&&A['en grammes'].lab===''&&A['en grammes'].pds===0 &&
-       B['en grammes']&&B['en grammes'].lab===''&&B['en grammes'].pds===0),
-    JSON.stringify([A['en grammes'],B['en grammes']]));
-  t('CCC ⑥ ⛔ un poids absent, nul ou négatif ressort à 0 — on ne devine pas un poids (R29)',
-    ['sans poids','poids nul'].every(n=>A[n]&&A[n].pds===0&&B[n]&&B[n].pds===0),
-    JSON.stringify([A['sans poids'],A['poids nul']]));
-  t('CCC ⑦ ⛔ un nom absent ressort vide, le poids passe quand même',
-    !!(A['sans nom']&&A['sans nom'].lab===''&&A['sans nom'].pds===90), JSON.stringify(A['sans nom']));
-  t('CCC ⑧ ⭐⭐ LES DEUX PORTES DONNENT EXACTEMENT LA MÊME TABLE sur les 6 cas',
-    JSON.stringify(Object.keys(A).map(n=>[A[n].lab,A[n].pds]))===
-    JSON.stringify(Object.keys(B).map(n=>[B[n].lab,B[n].pds])),
-    JSON.stringify(A)+' | '+JSON.stringify(B));
-  t('CCC ⑨ ⛔ NON-RÉGRESSION ft-v1183 — le NOMBRE de portions est toujours repris (2), et il ne '+
-    'passe PAS par ce propriétaire : il a le sien',
-    ['complete','sans poids','sans nom','poids nul','avec pour-100g'].every(n=>A[n]&&A[n].n===2),
-    JSON.stringify(Object.keys(A).map(n=>[n,A[n].n])));
-  t('CCC ⑩ ⚠️ MESURE, PAS SUPPOSITION — un aliment en PORTIONS ne pose jamais `_bcNutr` : le bloc '+
-    'du pour-100 g se garde lui-même par `u!==\'portion\'`. Le cas « avec pour-100g » le prouve, '+
-    'et sa définition est reprise quand même',
-    !!(A['avec pour-100g']&&A['avec pour-100g'].bc===false&&A['avec pour-100g'].lab==='pot'
-       &&A['avec pour-100g'].pds===150), JSON.stringify(A['avec pour-100g']));
-  t('CCC ⑪ 0 erreur JS', errs.length===0, errs.join(' | '));
-  await cx.close();
-}
-
-/* ⚠️ Témoins de SOURCE — et ici ils ne sont pas un supplément, ils sont les SEULS possibles.
-   L'asymétrie que ce bloc protège (la définition sans garde, le nombre sous `!_bcNutr`) est
-   INATTEIGNABLE par ces deux portes : aucun fixture ne peut la faire rougir à l'exécution.
-   ⭐ C'est la consigne de Michel poussée d'un cran — non plus « invisible à l'exécution » mais
-   « hors d'atteinte ». Un témoin de comportement ne remplacera jamais celui-ci. */
-{
-  const src=fs.readFileSync(ROOT+'/app.js','utf8');
-  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
-                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
-  const m=codeSeul.match(/function _afReprendreDefPortion\(src\)\{[\s\S]*?\n\}/);
-  const corps=m?m[0]:'';
-  const hors=m?(codeSeul.slice(0,m.index)+codeSeul.slice(m.index+corps.length)):codeSeul;
-  const nb=(codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length;
-  t('CCC ⑫ ⭐ les 2 portes passent par le propriétaire (1 déclaration + 2 appels)',
-    nb===3, 'occurrences='+nb);
-  t('CCC ⑬ ⛔⛔ PÉRIMÈTRE DE SOURCE — la définition n\'est plus écrite en dur NULLE PART hors du '+
-    'propriétaire (à 0, ce témoin devient le gardien du RETOUR de la duplication)',
-    hors.split('\n').filter(l=>/_afPortionLabel\s*=\s*String\(\w+\.portionLabel/.test(l)).length===0,
-    'copies restantes hors du propriétaire');
-  t('CCC ⑭ ⛔⛔ PÉRIMÈTRE DE SOURCE — `_bcNutr` n\'est PAS entré dans le propriétaire. AUCUN '+
-    'témoin de comportement ne peut voir cette dérive : elle est inatteignable, pas seulement '+
-    'invisible',
-    corps.length>0 && !/_bcNutr/.test(corps), 'corps='+corps.slice(0,160));
-  t('CCC ⑮ ⛔⛔ PÉRIMÈTRE DE SOURCE — le propriétaire ne touche PAS `_afPortions` : le NOMBRE a '+
-    'déjà le sien (`_afReprendrePortions`), et deux propriétaires pour la même grandeur seraient '+
-    'la duplication que ce chantier supprime (R2)',
-    corps.length>0 && !/_afPortions\b/.test(corps), 'corps='+corps.slice(0,160));
-  t('CCC ⑯ ⛔ HORS PÉRIMÈTRE — la ligne du NOMBRE est TOUJOURS écrite 2 fois chez les appelants, '+
-    'gardée par `!_bcNutr` : on ne l\'a pas absorbée au passage',
-    codeSeul.split('\n').filter(l=>/!_bcNutr\s*&&[\s\S]*_afReprendrePortions/.test(l)).length===2,
-    'lignes du nombre='+codeSeul.split('\n').filter(l=>/!_bcNutr\s*&&[\s\S]*_afReprendrePortions/.test(l)).length);
-  t('CCC ⑰ ⛔ HORS PÉRIMÈTRE — `_afReprendrePortions` est intacte (1 déclaration + 2 appels)',
-    (codeSeul.match(/_afReprendrePortions\(/g)||[]).length===3,
-    'occurrences='+(codeSeul.match(/_afReprendrePortions\(/g)||[]).length);
-  t('CCC ⑱ ⛔⛔ HORS PÉRIMÈTRE — les JUMELLES `_ef*` de l\'écran d\'ÉDITION ne sont pas absorbées : '+
-    'même grandeur, AUTRE écran (séparation documentée le 10/09). Les fondre serait une refonte, '+
-    'pas une extraction',
-    /let _efPortionLabel='', _efPortionPoids=0;/.test(codeSeul) &&
-    !/_efPortion/.test(corps), 'les jumelles ont bougé');
-}
-
-/* ══════════ BLOC CCCI — 📋 1b-v : ÉCARTÉE, et la divergence est JUSTIFIÉE (13/09/2026) ══════════
-   ⛔⛔ CE BLOC NE PROTÈGE PAS UNE EXTRACTION : IL PROTÈGE UNE ABSENCE (R30 — *un retrait volontaire
-   qui ne laisse aucune trace redevient un bug, parce que du code orphelin ressemble à un oubli*).
-
-   ⭐ TEST D'ENTRÉE : balayage complet des 12 écritures des 4 variables de portion, classées par
-   MÉTIER et non par ressemblance — ① hydratation depuis une SOURCE (le propriétaire `_af` de 3-v,
-   ses 2 appelants, **plus `openEditFood`**) · ② saisie à l'ÉCRAN (5 sites) · ③ déclarations et
-   remise à plat (3 sites). 👉 **Il ne reste qu'UN site non propriétarisé, et il écrit d'AUTRES
-   variables.** Une copie : on ne crée pas de propriétaire (R19).
-
-   ⛔⛔ ET LA MESURE VA PLUS LOIN QUE LE COMPTAGE : LES DEUX FORMES NE DOIVENT PAS CONVERGER.
-   L'écran d'AJOUT refuse la définition si l'unité n'est pas « portion » ; l'écran d'ÉDITION
-   l'hydrate sans garde. *Ça ressemble à une incohérence, et c'en est une seulement si on oublie
-   que les deux écrans partent d'états différents* : `openEditFood` force `_efUnite='portion'` à
-   chaque ouverture, donc une définition de portion y a toujours du sens ; l'écran d'ajout, lui,
-   suit l'unité de la source. **Les deux gardes diffèrent à raison.** Les fondre serait exactement
-   l'erreur que ce chantier évite ailleurs. */
-{
-  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
-  const pg=await cx.newPage(); const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
-  await pg.addInitScript(seedScript({ft4_ob2:'1',ft4_guide_shown:'1',ft4_wn_seen:'99'}));
-  await pg.goto('http://localhost:'+PORT+'/index.html');
-  await pg.waitForTimeout(2300);
-  const X=await pg.evaluate(async()=>{
-   try{
-    const o={};
-    /* ⭐ LE CAS QUI PORTE TOUT : une ligne EN GRAMMES qui porte quand même une étiquette de
-       portion. `_provFood` recopie `portionLabel` sans condition d'unité, donc l'état existe. */
-    const LIGNE={q:150, u:'g', portionLabel:'part', portionWeightG:120,
-                 kcal:100, prot:1, carbs:2, fat:3};
-
-    /* ── écran d'ÉDITION ── */
-    S.foodLog=[Object.assign({date:'2026-09-01', meal:'midi', ts:7777, name:'Cas EF'}, LIGNE)];
-    persist();
-    _efPortionLabel='ZZZ'; _efPortionPoids=-1;   // témoin : on doit voir une VRAIE écriture
-    openEditFood(_tsVersId(7777));
-    o.edition=JSON.stringify({label:_efPortionLabel, poids:_efPortionPoids, unite:_efUnite});
-
-    /* ── écran d'AJOUT, MÊME ligne ── */
-    S.foodLog=[]; S.savedFoods=[];
-    try{ _afOublierAliment(); }catch(e){}
-    try{ _afResetUnite(); }catch(e){}
-    _afSetSrc(null);
-    _afPortionLabel='ZZZ'; _afPortionPoids=-1;
-    _afQuickItems=[Object.assign({name:'Cas AF', fav:false}, LIGNE)];
-    quickFillFood(0);
-    o.ajout=JSON.stringify({label:_afPortionLabel, poids:_afPortionPoids, unite:_afUnite});
-
-    /* ── contre-épreuve : la MÊME ligne en PORTIONS doit hydrater les DEUX ── */
-    const P={q:2, u:'portion', portionLabel:'bol', portionWeightG:90,
-             kcal:100, prot:1, carbs:2, fat:3};
-    S.foodLog=[]; S.savedFoods=[];
-    try{ _afOublierAliment(); }catch(e){}
-    try{ _afResetUnite(); }catch(e){}
-    _afSetSrc(null);
-    _afPortionLabel='ZZZ'; _afPortionPoids=-1;
-    _afQuickItems=[Object.assign({name:'Cas AF portions', fav:false}, P)];
-    quickFillFood(0);
-    o.ajoutPortions=JSON.stringify({label:_afPortionLabel, poids:_afPortionPoids});
-
-    return o;
-   }catch(e){ return {FATAL:String(e&&e.message||e)}; }
-  });
-
-  const j=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
-  t('CCCI ⓪ la sonde a tourné (pas de FATAL)', !X.FATAL, X.FATAL||'');
-  const E=j(X.edition)||{}, A=j(X.ajout)||{};
-  t('CCCI ① ⭐⭐ DIVERGENCE MESURÉE — sur une ligne EN GRAMMES portant une étiquette, l\'écran '+
-    'd\'ÉDITION hydrate la définition (part / 120)',
-    E.label==='part' && E.poids===120, JSON.stringify(E));
-  t('CCCI ② ⭐⭐ …et l\'écran d\'AJOUT, sur la MÊME ligne, ne l\'hydrate PAS (vide / 0)',
-    A.label==='' && A.poids===0, JSON.stringify(A));
-  t('CCCI ③ ⛔⛔ ET LA RAISON EST MESURÉE, PAS SUPPOSÉE — les deux écrans ne partent pas du même '+
-    'état : l\'édition ouvre TOUJOURS en « portion », l\'ajout suit l\'unité de la source',
-    E.unite==='portion' && A.unite==='g', 'édition='+E.unite+' · ajout='+A.unite);
-  t('CCCI ④ ⭐ CONTRE-ÉPREUVE — sur une ligne en PORTIONS, l\'écran d\'ajout hydrate bien '+
-    '(la divergence porte sur le garde d\'unité, pas sur la reprise elle-même)',
-    !!(j(X.ajoutPortions)&&j(X.ajoutPortions).label==='bol'&&j(X.ajoutPortions).poids===90),
-    X.ajoutPortions);
-  t('CCCI ⑤ 0 erreur JS', errs.length===0, errs.join(' | '));
-  await cx.close();
-}
-
-/* ⚠️ Témoins de SOURCE — ils figent un ÉCARTEMENT, pas une extraction.
-   ⛔ Sans eux, `openEditFood` ressemble à un site qu'on a oublié de brancher — et le suivant
-   « réparerait » une décision. C'est exactement le cas vécu du calculateur de plaques (R30). */
-{
-  const src=fs.readFileSync(ROOT+'/app.js','utf8');
-  const codeSeul=src.replace(/\/\*[\s\S]*?\*\//g,'')
-                    .split('\n').filter(l=>!l.trim().startsWith('//')).join('\n');
-  const hydratEf=codeSeul.split('\n').filter(l=>/_efPortionLabel\s*=\s*String\(\w+\.portionLabel/.test(l));
-  t('CCCI ⑥ ⛔⛔ TEST D\'ENTRÉE FIGÉ — la forme `_ef*` n\'existe qu\'UNE fois : on ne crée pas de '+
-    'propriétaire pour une forme unique (R19), comme pour 1b-iv',
-    hydratEf.length===1, hydratEf.length+' copies de la forme _ef');
-  const corpsAf=(codeSeul.match(/function _afReprendreDefPortion\(src\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCCI ⑦ ⛔⛔ PÉRIMÈTRE DE SOURCE — le propriétaire de l\'écran d\'AJOUT n\'a pas absorbé les '+
-    'jumelles `_ef*` : même grandeur, AUTRE écran, autre état de départ',
-    corpsAf.length>0 && !/_efPortion/.test(corpsAf), 'corps='+corpsAf.slice(0,140));
-  /* ⚠️ 16/09/2026 — CE MOTIF S'ANCRAIT SUR LE NOM DU PARAMÈTRE (`openEditFood(ts)`), et il
-     est devenu aveugle le jour où ce paramètre a été renommé en `id` (la poignée d'une ligne
-     du journal n'est plus son horodatage — bug T-01). Il ne rougissait pas sur un défaut : il
-     ne trouvait plus la fonction, donc `corpsOuvre` était VIDE et les deux témoins suivants
-     tombaient ensemble. 👉 *On épingle le PROPRIÉTAIRE, jamais la signature de son appel.* */
-  const corpsOuvre=(codeSeul.match(/function openEditFood\([^)]*\)\{[\s\S]*?\n\}/)||[''])[0];
-  t('CCCI ⑧ ⛔⛔ PÉRIMÈTRE DE SOURCE — `openEditFood` n\'appelle PAS le propriétaire de l\'écran '+
-    'd\'ajout : l\'y brancher écrirait dans les MAUVAISES variables et lui imposerait un garde '+
-    'd\'unité que son état de départ contredit',
-    corpsOuvre.length>0 && !/_afReprendreDefPortion/.test(corpsOuvre),
-    'openEditFood appelle le propriétaire de l\'autre écran');
-  t('CCCI ⑨ ⛔ …et l\'écran d\'édition force toujours son unité à « portion » à l\'ouverture — '+
-    'c\'est CE fait qui justifie l\'absence de garde, et s\'il tombe la divergence devient un vrai '+
-    'défaut à réexaminer',
-    /_efUnite='portion';/.test(corpsOuvre), 'le garde d\'entrée de l\'écran d\'édition a changé');
-  t('CCCI ⑩ ⛔ NON-RÉGRESSION 3-v — les 2 portes de l\'écran d\'ajout passent toujours par leur '+
-    'propriétaire (1 déclaration + 2 appels)',
-    (codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length===3,
-    'occurrences='+(codeSeul.match(/_afReprendreDefPortion\(/g)||[]).length);
-}
+/* CCXCVIII (3-iii) · CCXCIX (3-iv) · CCC (3-v) · CCCI (1b-v) — RETIRÉS AU JALON 4 : voir la note « RETIRÉS AU JALON 4 » avant CCXCV (R30). */
 
 /* ══════════ BLOC CCCII — 🔀 ÉTAPE 4 : LE HUB DE PRÉPARATION (ft-v1204) ══════════
    ⭐ CARTOGRAPHIE FAITE AVANT TOUTE LIGNE : **12 fonctions** appellent `_afOublierAliment`,
@@ -37683,12 +36914,32 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
       S.foodLog=[]; S.savedFoods=[];
       try{ _afSetSrc(null); }catch(e){}
       try{ _afOublierAliment(); }catch(e){}
-      _afQuickItems=[{name:'Ligne cassée', kcal:-10, prot:0, carbs:0, fat:0, fav:false}];
+      /* 🥗 V2 (jalon 4) — la ligne cassée porte une quantité (100 g) : sans elle, le MOTEUR V2 refuserait de la re-noter
+         (aucune quantité n'est complétée), et ce témoin mesurerait le moteur au lieu de la douane. Avec elle, le moteur
+         l'écrit — les −10 kcal, invalides, n'y entrent pas (valeur INCONNUE, jamais un chiffre inventé) — et la douane la
+         juge INVALID sans la bloquer : c'est exactement ce que ce témoin protège. */
+      _afQuickItems=[{name:'Ligne cassée', kcal:-10, prot:0, carbs:0, fat:0, q:100, u:'g', fav:false}];
       _afMeal='dejeuner';
       quickAddFood(0);
       const ecrite=(S.foodLog||[])[0]||null;
       o.invalid_ecrit_quand_meme=[ (S.foodLog||[]).length,
                                    ecrite? _douaneLigne(ecrite,'test').etat : 'RIEN' ];
+      /* 🥗 V2 (jalon 4) — le moteur n'écrit plus les −10 kcal (valeur INCONNUE, jamais un chiffre inventé) : la douane voit
+         donc une ligne à laquelle il manque l'énergie, et rend WARN, plus INVALID. Aucun écrivain réel ne peut plus
+         poser une ligne qu'elle jugerait INVALID — le moteur valide AVANT elle. La garantie qui reste à épreuver est
+         la sienne : *son verdict ne bloque rien*. On la FORCE donc à rendre INVALID, et le vrai écrivain écrit quand même. */
+      S.foodLog=[];
+      try{ _afSetSrc(null); }catch(e){}
+      try{ _afOublierAliment(); }catch(e){}
+      { const vraie=window._douaneLigne; let rendu=null;
+        window._douaneLigne=function(l,p){ const r=vraie(l,p); rendu='INVALID'; return Object.assign({}, r, {etat:'INVALID'}); };
+        try{
+          _afQuickItems=[{name:'Ligne saine (douane forcée)', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', fav:false}];
+          _afMeal='dejeuner';
+          quickAddFood(0);
+        }finally{ window._douaneLigne=vraie; }
+        o.invalid_force=[ (S.foodLog||[]).length, rendu ];
+      }
 
       /* ⑦ ⛔ ELLE N'ÉCRIT PAS DANS `S.foodLog` : on l'appelle 5 fois, la longueur ne bouge pas. */
       S.foodLog=[Object.assign(LIGNE_SAINE(),{ts:7})];
@@ -37729,8 +36980,9 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     X.entree_intacte.every(m=>m[1]===true), JSON.stringify(X.entree_intacte));
   t('CCCIII ⑦ ⛔⛔ ELLE NE BLOQUE RIEN — une ligne qu\'elle juge INVALID est enregistrée quand '+
     'même (consigne explicite : le mode observation ne refuse aucune écriture)',
-    X.invalid_ecrit_quand_meme && X.invalid_ecrit_quand_meme[0]===1 &&
-    X.invalid_ecrit_quand_meme[1]==='INVALID', JSON.stringify(X.invalid_ecrit_quand_meme));
+    X.invalid_ecrit_quand_meme && X.invalid_ecrit_quand_meme[0]===1 && X.invalid_ecrit_quand_meme[1]==='WARN'
+    && X.invalid_force && X.invalid_force[0]===1 && X.invalid_force[1]==='INVALID',
+    JSON.stringify({naturel:X.invalid_ecrit_quand_meme, force:X.invalid_force}));
   t('CCCIII ⑧ ⛔ ELLE N\'ÉCRIT PAS DANS `S.foodLog` : 5 appels, longueur inchangée',
     X.foodlog_intact && X.foodlog_intact[0]===X.foodlog_intact[1], JSON.stringify(X.foodlog_intact));
   t('CCCIII ⑨ ⛔ SON CARNET D\'OBSERVATION RESTE PRIVÉ : ni dans `S`, ni dans le stockage du '+
@@ -37759,17 +37011,22 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
      Un écrivain d'une ligne de journal est une fonction qui POUSSE dans `S.foodLog`… ou qui
      MUTE un de ses éléments puis persiste. `saveEditFood` est du second genre : une recherche
      sur `push` la raterait, et c'est exactement ce qui rendait ce recomptage nécessaire. */
+  /* 🥗 V2 (jalon 4, 22/10/2026) — LES TÉMOINS ⑪ ⑫ ⑬ ⑰ SE DÉPLACENT, ILS NE S'AFFAIBLISSENT PAS (R30). En V1, chacun des
+     4 écrivains poussait (ou mutait) lui-même puis appelait la douane : 4 sites. Le jalon 4 met UN SEUL écrivain,
+     `_n2Enregistrer`, qui appelle la douane UNE fois, sous le nom HISTORIQUE de la porte qui l'appelle — le carnet
+     d'observation (format gelé le 13/09) continue donc de voir les 4 écrivains par leur nom. */
   const POUSSEURS=D.map(d=>d[1]).filter(n=>/S\.foodLog\.push\(/.test(corpsDe(n)));
-  t('CCCIII ⑪ ⭐ LES 3 POUSSEURS SONT CEUX ATTENDUS — aucun écrivain n\'est apparu ni n\'a disparu',
-    POUSSEURS.length===3 && ['rejouerRepas','quickAddFood','addFoodEntry']
-      .every(n=>POUSSEURS.indexOf(n)>=0), 'pousseurs='+POUSSEURS.join(','));
-  t('CCCIII ⑫ ⭐⭐ LES 4 ÉCRIVAINS PASSENT PAR LA DOUANE — y compris `saveEditFood`, qui ne '+
-    'pousse RIEN (elle mute en place puis persiste)',
-    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
-      .every(n=>/_douaneLigne\(/.test(corpsDe(n))), 'un écrivain contourne la douane');
-  t('CCCIII ⑬ ⛔ AUCUN AUTRE APPELANT — la douane a exactement 4 sites d\'observation (1 par '+
-    'écrivain), plus sa déclaration',
-    (codeSeul.match(/_douaneLigne\(/g)||[]).length===5,
+  t('CCCIII ⑪ ⭐ UN SEUL écrivain pousse dans le journal, `_n2Enregistrer` (V2) — aucun écrivain n\'est apparu',
+    POUSSEURS.length===1 && POUSSEURS[0]==='_n2Enregistrer', 'pousseurs='+POUSSEURS.join(','));
+  const PORTES={addFoodEntry:/_n2Enregistrer\([^\n]*?'addFoodEntry'\)/, saveEditFood:/_n2Enregistrer\([^\n]*?'saveEditFood'\)/,
+                quickAddFood:/_n2Reajouter\([^\n]*?'quickAddFood'\)/, rejouerRepas:/_n2Reajouter\([^\n]*?'rejouerRepas'\)/};
+  t('CCCIII ⑫ ⭐⭐ LES 4 ÉCRIVAINS PASSENT PAR LA DOUANE — chacun atteint l\'écrivain unique SOUS SON NOM (y compris '+
+    '`saveEditFood`, qui remplace la ligne au lieu de pousser), et l\'écrivain unique passe la ligne à la douane',
+    Object.keys(PORTES).every(n=>PORTES[n].test(corpsDe(n)))
+    && /_n2Enregistrer\(e, porte\)/.test(corpsDe('_n2Reajouter'))
+    && /_douaneLigne\(r\.ligne, porte\)/.test(corpsDe('_n2Enregistrer')), 'un écrivain contourne la douane');
+  t('CCCIII ⑬ ⛔ AUCUN AUTRE APPELANT — la douane a exactement UN site d\'observation (l\'écrivain unique), plus sa déclaration',
+    (codeSeul.match(/_douaneLigne\(/g)||[]).length===2,
     'occurrences='+(codeSeul.match(/_douaneLigne\(/g)||[]).length);
 
   /* ⛔⛔ CE QUE LA DOUANE N'A PAS LE DROIT DE FAIRE — la liste est celle de Michel, mot pour mot. */
@@ -37790,7 +37047,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     'la douane recalcule ce qu\'un propriétaire calcule déjà');
   t('CCCIII ⑰ ⛔⛔ PÉRIMÈTRE DE SOURCE — AUCUN ÉCRIVAIN N\'EST DEVENU CONDITIONNEL : la valeur '+
     'rendue par la douane n\'est testée nulle part, donc elle ne peut bloquer aucune écriture',
-    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood']
+    ['rejouerRepas','quickAddFood','addFoodEntry','saveEditFood','_n2Enregistrer','_n2Reajouter']
       .every(n=>!/(if\s*\(\s*_douaneLigne|_douaneLigne\([^)]*\)\s*[.=!<>&|?]|(const|let|var)\s+\w+\s*=\s*_douaneLigne)/.test(corpsDe(n))),
     'un écrivain lit le verdict de la douane — ce serait un blocage déguisé');
   /* ⭐ LE COMPTE DES RÈGLES EST FIGÉ : 9 structurelles + 12 de cohérence. Sans ce témoin, une
@@ -37839,20 +37096,29 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     const carnet=()=>{ try{ return JSON.parse(localStorage.getItem(CLE)||'null'); }catch(e){ return null; } };
     const ecrire=(it)=>{ _afQuickItems=[Object.assign({fav:false},it)]; _afMeal='dejeuner';
                          quickAddFood(0); };
+    /* 🥗 V2 (jalon 4) — une ligne à FICHE DE CONFIANCE, écrite par le moteur (OK pour la douane). Une ancienne ligne sans
+       fiche vérifiable est re-notée « déclarée », SANS pour-100 g (M1) : la douane — gelée — la signale en WARN
+       (`grammes_sans_per100`) ; c'est observé, pas un défaut. */
+    let _k=0;
+    const fiche=(nom,p100,q,cle)=>{ const r=NUT2.ligneNouvelle({id:'ccciv-ligne-'+(_k++)+'-0000', ts:Date.now()-9e5+_k,
+      date:today(), repas:'dejeuner', nom:nom, origine:{saisie:'code-tape', origine:'off'}, mode:'pesee',
+      fiche:{base:'g', p100:p100, cle:cle||null, source:'off', fiab:'source'}, quantite:q});
+      if(!r.ok) throw new Error('fixture '+nom+' : '+r.erreur); return r.ligne; };
 
     /* ① Au départ le carnet n'existe pas, et UNE VRAIE écriture le crée. */
     vider();
     o.avant = carnet();
-    ecrire({name:'Poulet', kcal:200, prot:30, carbs:0, fat:8, q:150, u:'g',
-            per100:{kcal:133,prot:20,carbs:0,fat:5.3}});
+    ecrire(fiche('Poulet', {kcal:133,prot:20,carbs:0,fat:5.3}, {val:150, unite:'g', origine:'tapee'}));
     const c1=carnet();
     o.apres_une_ligne = c1 ? [c1.n, c1.etats.OK, c1.etats.WARN, c1.etats.INVALID] : null;
 
-    /* ② Le verdict compté est bien celui que la douane rend. */
+    /* ② Le verdict compté est bien celui que la douane rend.
+       🥗 V2 : « 2 bols » SANS poids n'est plus une quantité (D-099) — aucun écrivain ne l'écrit, la douane ne peut plus le
+       voir. Le WARN réel d'aujourd'hui : une ancienne ligne en grammes re-notée sans fiche (`grammes_sans_per100`). */
     vider();
-    ecrire({name:'Bol', kcal:120, prot:3, carbs:14, fat:5, q:2, u:'portion', portionLabel:'bol'});
+    ecrire({name:'Bol', kcal:120, prot:3, carbs:14, fat:5, q:200, u:'g'});
     const c2=carnet();
-    o.warn_compte = c2 ? [c2.etats.OK, c2.etats.WARN, (c2.regles||{}).portion_sans_poids] : null;
+    o.warn_compte = c2 ? [c2.etats.OK, c2.etats.WARN, (c2.regles||{}).grammes_sans_per100] : null;
 
     /* ③ Les écrivains sont distingués — on en conduit DEUX pour de vrai. */
     vider();
@@ -37871,12 +37137,15 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     ecrire({name:'N', kcal:100, prot:5, carbs:10, fat:3});
     const c4=carnet();
     o.formes = c4 && c4.ecrivains.quickAddFood ? c4.ecrivains.quickAddFood.formes : null;
+    /* 🥗 V2 (garde-fou du 10/09) : « N » n'a aucune quantité — l'écrivain ne l'écrit PAS (il ouvre l'écran et la demande) */
+    o.nPasEcrit = !(S.foodLog||[]).some(l=>l && l.name==='N') && (S.foodLog||[]).length===2;
+    try{ closeAddFood(); }catch(e){}
 
     /* ⑤ Le compteur de source est un BOOLÉEN — il suit la divergence de ft-v1205 sans jamais
        garder l'identifiant. */
     vider();
-    ecrire({name:'S1', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g',
-            sourceId:'off:1234567890', per100:{kcal:100,prot:5,carbs:10,fat:3}});
+    /* 🥗 V2 (D-101 ⑩) : un identifiant de source ne se recopie que d'une FICHE DE CONFIANCE — S1 en porte une. */
+    ecrire(fiche('S1', {kcal:100,prot:5,carbs:10,fat:3}, {val:100, unite:'g', origine:'tapee'}, 'off:1234567890'));
     ecrire({name:'S2', kcal:100, prot:5, carbs:10, fat:3, q:100, u:'g', per100:{kcal:100,prot:5,carbs:10,fat:3}});
     const c5=carnet();
     const E5=c5&&c5.ecrivains.quickAddFood;
@@ -37890,12 +37159,17 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        ⛔ On vérifie AUSSI que le carnet a bien enregistré : sans ça, un carnet vide passerait
        le test sans rien prouver. */
     vider();
-    ecrire({name:'ZZCANARIMICHELXY', kcal:7777, prot:6666, carbs:5555, fat:4444,
-            q:3333, u:'g', sourceId:'off:ZZCANARISOURCE',
-            per100:{kcal:9999, prot:8888, carbs:2222, fat:1111}});
+    /* ⭐ INCIDENT DU 23/10 (D-111) — LE CANARI DEVIENT POSSIBLE. Il portait 6 666 g de protéines dans 3 333 g, et un pour-100 g
+       qui contredisait ses valeurs : « + Ajouter » ne recopie plus une référence qui se contredit (`_n2Incoherence`), il
+       n'était donc plus écrit, le carnet restait vide, et le témoin rougissait par sa PRÉCONDITION (« il a vraiment
+       enregistré ») — pas par une fuite. Les nombres restent reconnaissables et ils se tiennent : 4 567 g d'un aliment à
+       444,4 kcal · 27,7 P · 33,3 G · 22,2 L pour 100 g (20 296 kcal · 1 265 · 1 521 · 1 014). */
+    ecrire({name:'ZZCANARIMICHELXY', kcal:20296, prot:1265, carbs:1521, fat:1014,
+            q:4567, u:'g', sourceId:'off:ZZCANARISOURCE',
+            per100:{kcal:444.4, prot:27.7, carbs:33.3, fat:22.2}});
     const brut = localStorage.getItem(CLE)||'';
-    const interdits = ['ZZCANARI','ZZCANARISOURCE','7777','6666','5555','4444','3333',
-                       '9999','8888','2222','1111'];
+    const interdits = ['ZZCANARI','ZZCANARISOURCE','20296','1265','1521','1014','4567',
+                       '444.4','27.7','33.3','22.2'];
     o.canari = [ brut.length>0,
                  brut.indexOf('quickAddFood')>=0,          /* il a VRAIMENT enregistré */
                  interdits.filter(x=>brut.indexOf(x)>=0) ];
@@ -37918,7 +37192,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
                   r.indexOf('quickAddFood')>=0,
                   r.indexOf('JAMAIS MORDU')>=0,
                   r.indexOf('ZZCANARI')<0,
-                  r.indexOf('7777')<0 ];
+                  r.indexOf('20296')<0 ];
 
     /* ⑩ À zéro ligne, le rapport le DIT au lieu de diviser par zéro. */
     vider();
@@ -37956,7 +37230,7 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     Array.isArray(X.type) && X.type.every(v=>v==='function'), JSON.stringify(X.type));
   t('CCCIV ② ⭐ une VRAIE écriture crée le carnet et l\'incrémente (avant : rien)',
     X.avant===null && Array.isArray(X.apres_une_ligne) && X.apres_une_ligne[0]===1
-    && X.apres_une_ligne[1]===1, JSON.stringify([X.avant, X.apres_une_ligne]));
+    && X.apres_une_ligne[1]===1 && X.apres_une_ligne[2]===0, JSON.stringify([X.avant, X.apres_une_ligne]));
   t('CCCIV ③ ⭐ le verdict compté est celui que la douane rend — et la RÈGLE est comptée par nom',
     Array.isArray(X.warn_compte) && X.warn_compte[0]===0 && X.warn_compte[1]===1
     && X.warn_compte[2]===1, JSON.stringify(X.warn_compte));
@@ -37964,11 +37238,11 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     Array.isArray(X.par_ecrivain) && X.par_ecrivain.length===2
     && X.par_ecrivain.indexOf('quickAddFood')>=0 && X.par_ecrivain.indexOf('rejouerRepas')>=0,
     JSON.stringify(X.par_ecrivain));
-  t('CCCIV ⑤ ⭐ les FORMES sont classées depuis `u`/`q` seuls : grammes · portion · sans_quantite',
-    X.formes && X.formes.grammes===1 && X.formes.portion===1 && X.formes.sans_quantite===1,
-    JSON.stringify(X.formes));
-  t('CCCIV ⑥ ⛔⛔ LE COMPTEUR DE SOURCE EST UN BOOLÉEN — il suit la divergence de ft-v1205 '+
-    '(`rejouerRepas` perd `sourceId`) sans jamais garder l\'identifiant lui-même',
+  t('CCCIV ⑤ ⭐ les FORMES sont classées depuis `u`/`q` seuls : grammes · portion — et une ligne SANS quantité n\'est plus écrite (V2, garde-fou du 10/09), donc jamais comptée',
+    X.formes && X.formes.grammes===1 && X.formes.portion===1 && !X.formes.sans_quantite && X.nPasEcrit===true,
+    JSON.stringify({formes:X.formes, nPasEcrit:X.nPasEcrit}));
+  t('CCCIV ⑥ ⛔⛔ LE COMPTEUR DE SOURCE EST UN BOOLÉEN — il compte la présence d\'une source (fiche de confiance, D-101 ⑩) '+
+    'sans jamais garder l\'identifiant lui-même',
     Array.isArray(X.source_booleen) && X.source_booleen[0]===1 && X.source_booleen[1]===1
     && X.source_booleen[2]===true, JSON.stringify(X.source_booleen));
   t('CCCIV ⑦ ⭐ LE CATALOGUE DES 21 RÈGLES SE RENSEIGNE TOUT SEUL — aucune liste recopiée, donc '+
@@ -38123,12 +37397,20 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
     /* on passe par la VRAIE porte CIQUAL, puis on enregistre */
     _bcNutr=_ref100('Lentilles',48.3,6.1,10,3.2,{origine:'ciqual'});
     _afSetSrc({saisie:'recherche',origine:'ciqual'});
-    const pv=_provFood({kcal:93,prot:6,carbs:10,fat:3});
-    o.trace = pv.fiab ? {etat:pv.fiab.etat, brut:pv.fiab.brut, retenu:pv.fiab.retenu,
-                         meth:pv.fiab.methode, conf:pv.fiab.confiance} : 'ABSENTE';
+    /* 🥗 V2 (jalon 4) — `_provFood` est retiré (D-101) : la ligne se construit par le VRAI pont — l'entrée que l'écran
+       compose (`_n2EntreeEcran`, bloc « Quantité » à 100 g), validée et construite par le moteur (`NUT2.ligneNouvelle`),
+       sans rien enregistrer. La trace du résolveur y arrive dans `fiab`, comme avant.
+       ⛔ Un refus du pont n'est jamais lu comme « pas de trace » : il rend `ERR`, et les deux témoins l'exigent absent. */
+    const ligneEcran=(nom)=>{ const gr=document.getElementById('af-bc-grams'); if(gr) gr.value='100';
+      const en=_n2EntreeEcran(nom, null, true); if(!en.ok) return {ERR:en.message};
+      const r=NUT2.ligneNouvelle(en.entree); return r.ok ? r.ligne : {ERR:String(r.erreur||'?')}; };
+    const pv=ligneEcran('Lentilles');
+    o.trace = pv.ERR ? ('REFUS : '+pv.ERR) : (pv.fiab ? {etat:pv.fiab.etat, brut:pv.fiab.brut, retenu:pv.fiab.retenu,
+                         meth:pv.fiab.methode, conf:pv.fiab.confiance} : 'ABSENTE');
     /* ⛔ et une ligne COHÉRENTE ne doit rien gagner du tout */
     _bcNutr=_ref100('Poulet',165,31,0,3.6,{origine:'ciqual'});
-    o.trace_coherent = (_provFood({kcal:165,prot:31,carbs:0,fat:3.6}).fiab===undefined);
+    const pc=ligneEcran('Poulet');
+    o.trace_coherent = (!pc.ERR && pc.fiab===undefined);
 
     /* ── L'ÉCRAN LE DIT-IL ? ── */
     try{ openAddFood(); }catch(e){}
@@ -38379,7 +37661,9 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
       return { kcal:v('af-kcal'), prot:v('af-prot'), carbs:v('af-carbs'), fat:v('af-fat'),
                qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh() };
     };
-    o.scan   = await jouer('scan');
+    /* 🥗 V2 (jalon 4) : la caméra écrit `camera-code-local` — l'ancien « scan » est une valeur LUE, plus écrite, et le moteur
+       refuse d'enregistrer une provenance inconnue (sans ça, la ligne lue plus bas serait ABSENTE). */
+    o.scan   = await jouer('camera-code-local');
     /* ⛔⛔ ft-v1208 (validation iPhone) — LA PORTE TAPÉE EST CONDUITE PAR SA VRAIE FONCTION.
        Avant, ce témoin passait `saisie:'manuel'` — **une valeur qui n'existe pas en production** :
        `_manualBarcode` enregistre `'code-tape'`. Le résultat était juste par accident.
@@ -38397,21 +37681,24 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
                qty:v('af-bc-grams'), bc:JSON.parse(JSON.stringify(_bcNutr)), coh:coh(),
                saisie:(_afSrc||{}).saisie }; })();
     FICHE_COURANTE=FICHE_SANS_KJ;
-    o.sansKj = await jouer('scan');
+    o.sansKj = await jouer('camera-code-local');
     /* ⛔ ON REJOUE LA VRAIE FICHE AVANT DE LIRE LA LIGNE : sans ça, les témoins de traçabilité
        mesureraient l'état laissé par la fiche appauvrie. *Remettre la source ne suffit pas, il
        faut rejouer le chemin* — deux témoins l'ont dit en rougissant. */
     FICHE_COURANTE=FICHE;
-    o.scan = await jouer('scan');
+    o.scan = await jouer('camera-code-local');
     /* ⛔ on compare les DEUX RÉSOLUTIONS ENTIÈRES, pas seulement la valeur affichée */
     o.identiques = JSON.stringify(o.scan.bc.fiab)===JSON.stringify(o.tape.bc.fiab)
                 && o.scan.kcal===o.tape.kcal;
 
-    /* ── LA LIGNE RÉELLEMENT ENREGISTRÉE ── */
-    _afSetSrc({saisie:'scan',origine:'off',sourceId:'3021690201123',etat:'tel-que-vendu',
-               per100:_per100De(_bcNutr)});
-    const pv=_provFood({kcal:+v('af-kcal'),prot:+v('af-prot'),carbs:+v('af-carbs'),fat:+v('af-fat')});
-    o.ligne = pv.fiab ? JSON.parse(JSON.stringify(pv.fiab)) : 'ABSENTE';
+    /* ── LA LIGNE RÉELLEMENT ENREGISTRÉE ──
+       🥗 V2 (jalon 4) — `_provFood` est retiré (D-101) : la ligne est celle que le VRAI geste « Ajouter au journal »
+       enregistre (`addFoodEntry` → pont → moteur), après le scan et les 410 g tapés juste au-dessus — lue dans le
+       journal. Plus vrai que l'ancienne sonde, qui recomposait la provenance à la main. */
+    S.foodLog=[];
+    try{ addFoodEntry(); }catch(e){ o.ajoutErr=String(e&&e.message||e); }
+    const pv=(S.foodLog||[])[0]||{};
+    o.ligne = pv.fiab ? JSON.parse(JSON.stringify(pv.fiab)) : ('ABSENTE'+((S.foodLog||[]).length?'':' (aucune ligne enregistrée)'));
     o.per100 = pv.per100 || null;
 
     /* ── NON-RÉGRESSION : un produit cohérent ne bouge pas d'un iota ── */
@@ -38419,11 +37706,14 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     o.sain = await (async()=>{ S.foodLog=[]; persist();
       document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
       openAddFood(); await d(320);
-      await _lookupBarcode('0000000000000','scan',false); await d(450);
+      await _lookupBarcode('0000000000000','code-tape',false); await d(450);   // 🥗 V2 : une porte RÉELLE — « scan » n'en est plus une (valeur ancienne, lue mais plus écrite) ; le moteur refuse une provenance inconnue
       const g=document.getElementById('af-bc-grams'); g.value='100';
       g.dispatchEvent(new Event('input',{bubbles:true})); await d(350);
-      const pv2=_provFood({kcal:+v('af-kcal'),prot:+v('af-prot'),carbs:+v('af-carbs'),fat:+v('af-fat')});
-      return {kcal:v('af-kcal'), etat:_bcNutr.fiab.etat, coh:coh(), trace:pv2.fiab===undefined}; })();
+      /* 🥗 V2 (jalon 4) : la ligne du vrai geste « Ajouter », lue dans le journal ; l'écran se lit AVANT (le geste le ferme). */
+      const avant={kcal:v('af-kcal'), etat:_bcNutr.fiab.etat, coh:coh()};
+      S.foodLog=[]; try{ addFoodEntry(); }catch(e){}
+      const l2=(S.foodLog||[])[0];
+      return Object.assign(avant, {trace:!!l2 && l2.fiab===undefined}); })();
     FICHE_COURANTE=FICHE;
 
     /* ── LE DISCRIMINANT QUI A TRANCHÉ « A / B / C » : les 8 origines PARLENT ── */
@@ -38505,7 +37795,7 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     X.identiques===true && X.tape && X.tape.prot===X.scan.prot && X.tape.carbs===X.scan.carbs
     && X.tape.fat===X.scan.fat && X.tape.qty===X.scan.qty,
     JSON.stringify([X.scan&&X.scan.kcal, X.tape&&X.tape.kcal]));
-  t('CCCVI ③bis ⛔ … ET LA PROVENANCE, ELLE, DISTINGUE BIEN LES DEUX : `scan` contre `code-tape`. '+
+  t('CCCVI ③bis ⛔ … ET LA PROVENANCE, ELLE, DISTINGUE BIEN LES DEUX : `camera-code-local` (l\'ancien « scan ») contre `code-tape`. '+
     '*Le résultat est le même, la façon dont il est entré ne l\'est pas* — c\'est le contrat posé '+
     'le 23/08 après un retour de Michel',
     X.tape && X.tape.saisie==='code-tape', 'saisie enregistrée : '+JSON.stringify(X.tape&&X.tape.saisie));
@@ -38578,8 +37868,11 @@ console.log('\n== BLOC CCCVI — la capture iPhone, de bout en bout ==');
     (corpsB('_resoudreNutrition').match(/champSource\s*:/g)||[]).length===1
     && !/res\.champSource\s*=/.test(corpsB('_resoudreNutrition')),
     'champSource est réécrit ou dupliqué');
+  /* 🥗 V2 (jalon 4) — la trace descend par `_n2Extras` (le pont) puis par la liste blanche du moteur (`TRACE_CLES` de
+     `nutrition-v2.js`) : `_provFood`, qui la portait, est retiré (D-101). Le parcours ⑤ prouve le bout en bout. */
   t('CCCVI ⑫ ⛔ … et il traverse jusqu\'à la ligne enregistrée (sinon il ne sert à rien)',
-    /champSource\s*:\s*z\.champSource/.test(corpsB('_provFood')),
+    /champSource\s*:\s*z\.champSource/.test(corpsB('_n2Extras'))
+    && /TRACE_CLES\s*=\s*\[[^\]]*'champSource'/.test(fs.readFileSync(ROOT+'/nutrition-v2.js','utf8')),
     'la trace de la ligne ne porte pas le champ source');
   t('CCCVI ⑬ ⛔⛔ AUCUN CAS PARTICULIER RAYNAL — interdiction explicite de Michel : pas de test '+
     'sur le code-barres, pas de 93,2 en dur, pas de nom de produit dans la décision',
@@ -39482,6 +38775,15 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
        interrompue ressemble trait pour trait à une passe verte (BUGS.md §61). */
     const clic=sel=>{ try{ const n=document.querySelector(sel); if(!n) return false; n.click(); return true; }
                       catch(e){ return false; } };
+    /* 🥗 V2 (jalon 4) — DEUX GESTES DEVENUS RÉELS. ① Une saisie manuelle DIT combien on a mangé (D-099 : les grammes
+       d'abord ; garde-fou du 10/09 : aucune ligne sans quantité choisie) : on ferme le clavier sur une valeur (le bloc
+       « Quantité » s'ouvre en grammes), puis on tape le poids. ② Une valeur retouchée se TAPE (événement `input`) :
+       c'est ce qui en fait une correction gardée (CR-2) — poser `.value` sans frappe n'est le geste de personne. */
+    const taper=(id,v)=>{const el=document.getElementById(id); if(!el) return false; el.value=String(v);
+      el.dispatchEvent(new Event('input',{bubbles:true})); return true;};
+    const peser=async g=>{ const k=document.getElementById('af-kcal'); if(k) k.dispatchEvent(new Event('change',{bubbles:true}));
+      await pause(20); const p=document.getElementById('af-poids'); if(!p) return false; p.value=String(g);
+      p.dispatchEvent(new Event('input',{bubbles:true})); p.dispatchEvent(new Event('blur',{bubbles:true})); await pause(20); return true; };
 
     goScreen('s-nutrition'); switchNuTab('journal'); await pause(150);
     /* L'HISTORIQUE, saisi par les vraies portes, sur deux jours passés — c'est la condition
@@ -39492,6 +38794,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
         if(typeof openAddFood==='function') openAddFood(); await pause(35);
         set('af-desc',nom); set('af-kcal',kcal); set('af-prot',10.4); set('af-carbs',20.7); set('af-fat',5.2);
         try{ _afSetSrc(null); }catch(e){}
+        await peser(100);
         addFoodEntry(); await pause(35);
       }
     }
@@ -39514,7 +38817,7 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     const av=photo();
     L[1].el.click(); await pause(220);
     o.ouvre=(document.getElementById('ef-name')||{}).value;
-    set('ef-kcal',4242);
+    taper('ef-kcal',4242);
     o.boutonEnr=clic('[onclick*="saveEditFood"]'); await pause(240);
     const ap=photo();
     const chg=av.filter(a=>{const x=ap.find(y=>y.id===a.id); return x && !metier(a,x);});
@@ -39552,7 +38855,8 @@ console.log('\n== BLOC CCCVII — le chemin réseau du code-barres ==');
     if(L4.length>1){
       L4[1].el.click(); await pause(200);
       o.ouvre4=(document.getElementById('ef-name')||{}).value;
-      set('ef-kcal',7777); clic('[onclick*="saveEditFood"]'); await pause(220);
+      /* 🥗 V2 : une ancienne ligne sans quantité la DIT pour être enregistrée (rien n'est deviné). */
+      taper('ef-kcal',7777); taper('ef-q',100); clic('[onclick*="saveEditFood"]'); await pause(220);
       o.nChg4=photo().filter(x=>x.kcal===7777).length;
     }
 
@@ -39700,6 +39004,17 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      données inventées), cliquet de source B-NM6-C plus bas ; banc `tools/banc_nut_m6_rejeu.js`, contrôle négatif
      `tools/mut_nut_m6_rejeu.py`. */
   await require('./nut_m6_rejeu.js').ecran(t, b, PORT);
+  /* 🥗 NUTRITION V2 — JALON 4 (22/10/2026, feu vert de Michel) : les parcours à l'écran, le moteur branché — recherche,
+     ajout, modification, favoris, repas habituels, scan, export, historique ; D-099 (grammes et ml d'abord, une portion
+     avec son poids), D-101. Bloc B-NV2P (vrais clics, données inventées « (test) », deux fiches CIQUAL publiques, P11 sur
+     pages neuves) ; banc `tools/banc_nut2_parcours.js`, contrôle négatif `tools/mut_nut2_parcours.py`. */
+  await require('./nut2_parcours.js').ecran(t, b, PORT);
+  /* 🔀 RECETTE CROISÉE NUTRITION V2 × NUT-SECURISATION-P1 (intégration du 23/10/2026, mission de Michel) : la VRAIE app V2
+     parle au VRAI Code.js (P1 + D-110, PROPOSÉ) — deux produits du même nom et de deux codes-barres, la portion de l'un
+     redéfinie, panne de Drive, « Restaurer » avec un code perso (la restauration doit réellement s'appliquer), suppression
+     volontaire qui ne revient pas, et la LIMITE DITE (une modification hors ligne remplacée par « Restaurer », X3). Bloc
+     B-NIX ; banc `tools/banc_nut_v2_p1_croise.js`, contrôle négatif `tools/mut_nut_v2_p1_croise.py`. */
+  await require('./nut_v2_p1_croise.js').croise(t, b, PORT);
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);
@@ -40734,6 +40049,12 @@ require('./food_alias_sens.js').source(t, ROOT, fs, path);
 require('./food_lot_b.js').source(t, ROOT, fs, path);
 require('./nut_m6_rejeu.js').source(t, ROOT, fs, path);
 require('./nut_inventaire_admin.js').source(t, ROOT, fs, path);
+/* 🛡️ NUT-SECURISATION-P1 (session-B, 23/10/2026, branche isolée — NON DÉPLOYÉ) — le journal alimentaire et les favoris
+   ne perdent plus rien en silence : toute ligne qu'un envoi retire ou corrige est d'abord copiée dans une zone de
+   récupération bornée (`recupNut`, jamais renvoyée à l'app) dont le surplus DÉMÉNAGE, relu, dans le sous-dossier Drive
+   « recup-nut » (Drive en panne : envoi refusé, jamais rien jeté) ; rien n'est réintroduit d'office. Vrai Code.js, Drive
+   en mémoire, données inventées, synchrone. Banc : tools/banc_nut_secu_p1.js · contrôle négatif : tools/mut_nut_secu_p1.py. */
+require('./nut_secu_p1.js').source(t, ROOT, fs, path);
 require('./activite_provenance.js').source(t, ROOT, fs, path);
 require('./d021_activite.js').source(t, ROOT, fs, path);
 require('./contrat_milo.js').source(t, ROOT, fs, path);

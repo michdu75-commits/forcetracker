@@ -4916,3 +4916,340 @@ désormais cette garde devant, et rien d'autre ; son outil de mutations (`tools/
 ligne et la suit. Éprouvé : vert sur master, vert sur la branche, **rouge quand l'exclusion de COHERENT est retirée**.
 ⚠️ La simulation du 20/10 annonçait « 0 témoin existant rouge » pour cette forme : elle n'avait rejoué que les blocs CCXCI,
 CCCV, CCXCIX et CCCII. *Un « aucun témoin ne rougit » ne vaut que pour les témoins rejoués.*
+
+## §92 — ⛔ UN PARCOURS ENCHAÎNÉ SUR UNE SEULE PAGE MASQUE UNE DÉPENDANCE D'ORDRE : LA TABLE CIQUAL N'ÉTAIT CHARGÉE QU'À LA PREMIÈRE RECHERCHE *(22/10/2026, NUTRITION V2 jalon 4 — branche `claude/nutrition-v2`, non publié ; deux défauts de MON branchement, attrapés avant tout commit)*
+
+**Le défaut.** V2 ne recalcule une ancienne ligne que si sa fiche est **retrouvée à l'identique** dans la table CIQUAL embarquée
+(`NUT2.reprise`, D-095). Or `_ciqualCharger()` n'était appelée **qu'à la première recherche** (`_afSuggInput`). Mesuré par sonde,
+sur une page neuve, une ancienne ligne CIQUAL parfaitement vérifiable : « Mes aliments » → reprise **figée** ; « + » → ligne
+**déclarée** ; « Modifier » → **non vérifiée**. Après une seule recherche, les trois gestes la recalculaient. *Le même aliment se
+recalculait ou non selon un geste fait avant, invisible.*
+
+**Pourquoi le banc ne l'a pas vu.** Le banc des parcours V2 jouait la recherche (P2) **avant** la modification d'une ancienne ligne
+vérifiée (P6 ⑤), sur la **même page** : P2 chargeait la table, P6 ⑤ passait. ⭐ *Un parcours enchaîné prouve ce qui marche dans
+CET ordre ; une dépendance d'ordre ne se voit que sur une page NEUVE.* Le défaut a été trouvé en **lisant le code** (« quand la
+table est-elle chargée ? »), puis mesuré — pas par un rouge.
+
+**Le correctif.** Une reprise qui a besoin de la table l'**attend** (`_n2Apres`, locale, une fois par session) : « Mes aliments »,
+« + », le repas habituel, « Modifier ». Hors ligne sans table, la ligne reste non vérifiée — le repli sûr, jamais l'inverse.
+Témoins sur **page neuve** : `B-NV2P P11 ① ②`, `B-NM6-S S1` / `B-NM6-A A1` ; mutations MP13 et N12.
+
+**Et le second, dans la même lecture : redessiner effaçait la quantité tapée.** Une reprise **figée** (ancienne ligne sans fiche
+vérifiée) : on tape 150, on retouche les calories — le `change` rappelle `_afMajAncre(true)`, qui **reconstruit** le bloc ; le
+champ revenait vide, et « Ajouter » répondait « Combien en as-tu mangé ? ». *C'est ft-v1159 (« la frappe ne reconstruit jamais le
+bloc »), réintroduit par un bloc neuf.* Et dans la même zone, un vrai trou de données : une AUTRE quantité que celle notée,
+valeurs non retouchées, enregistrait 150 g avec les calories de 200 g. Corrigé (D-101 ⑧) : la quantité tapée survit, une autre
+quantité exige des valeurs retouchées. Témoins `B-NV2P P11 ③ ④`, `B-NM6-A A2b` ; mutations MP14, MP15, N13.
+
+**À quoi on le reconnaît.** Une fonction pure qui reçoit un **contexte** (`ctx.ciqual`) : si ce contexte se remplit tard, la
+fonction rend un verdict différent sans que rien ne le dise. 👉 *Avant de faire confiance à un contexte, chercher QUAND il se
+remplit.*
+
+## §94 — ⛔⛔ RÉVISER UN TÉMOIN, C'EST AUSSI L'ÉPROUVER : SIX DÉFAUTS DE MON BRANCHEMENT ET UNE FAMILLE DE VERTS SANS OBJET *(22/10/2026, NUTRITION V2 jalon 4 — branche `claude/nutrition-v2`, non publié ; trouvés en révisant les témoins V1 sur le contrat V2, pas par un rouge)*
+
+> *(Numéro : §91 et §93 sont ceux de Claude Séance sur `claude/dreamy-bell-pu88ia` ; celui-ci est le §94 — à reconfirmer à l'intégration.)*
+
+**Le contexte.** Brancher le moteur V2 aux écrans a fait rougir des centaines de témoins écrits pour V1. Les réécrire « pour
+qu'ils passent » aurait été facile ; les réécrire sur leur **invariant** (règle d'or #17) a obligé à rejouer chaque geste — et
+ces gestes ont trouvé six défauts **réels** de mon branchement, tous corrigés le jour même :
+
+1. **Le contrôle de masse était aveugle sur « Modifier »** : la quantité d'une ligne sans fiche se dit dans `ef-q`, que
+   `_qtyGrammesEcran` ne lisait pas, et la frappe ne relançait rien. 28 g de macros « tenaient » dans 5 g — ft-v1103 rouvert.
+   **Et sur la reprise figée** : toucher « ↩ 5 g (la dernière fois) » posait la quantité sans le contrôle — ft-v1104 rouvert.
+2. **Le poids d'UNE portion survivait à un changement de sens de « 1 portion »** (retour à l'onglet portions, valeur
+   retouchée qui fait de l'écran « 1 portion » de ce qui en valait deux). Mesuré : « 1 dose (30 g) = 312 kcal » s'enregistrait,
+   soit **173 g de protéines pour 100 g**, sans un mot. Désormais le poids est **redemandé**.
+3. **Une reprise figée était redimensionnable** par les fonctions internes (`_afApplyProp`, `_afProp`) : son champ ne
+   rescalait pas, mais un autre chemin le pouvait. Désormais aucun chemin.
+4. **« Mettre X kcal » dans « Modifier »** : sur une ligne à fiche, l'écran affichait X et la ligne enregistrait la frappe
+   précédente (999) ; et sur une ligne sans fiche, la jumelle de D-101 ⑧ manquait — une autre quantité passait avec les
+   valeurs notées pour l'ancienne.
+5. **L'ancienne provenance `scan` servait encore de repli** à trois portes du code-barres : le moteur la refuse
+   (`PROVENANCE_INCONNUE`), donc un code lu sans origine dite **n'écrivait rien**. Repli : `camera-code-local`.
+6. **« Modifier » sans rien toucher réécrivait l'origine de la quantité en « tapée »** (`n2.qo`), sur les deux branches.
+
+**Et la famille de verts sans objet.** Plusieurs témoins V1 comparaient **la dernière ligne du journal** à un attendu
+(« le 10ᵉ cycle égale le 1ᵉʳ », « la quantité interdite n'est pas là »). Sous V2, la reprise sans quantité est refusée : rien ne
+s'ajoutait, la dernière ligne restait **la fixture elle-même**, et le témoin restait vert — CCLXXX ⑩ ⑮, CCLXXXIV ⑪,
+CCLXXXV ⑱. *Un vert qui compare un état à lui-même ne mesure rien.* Le même défaut de lecture donne aussi l'inverse, un
+**faux rouge** : CCLXXVIII ③ lisait la fixture (380 g) comme si c'était la ligne de l'omelette, qui n'avait pas été ajoutée.
+
+**Le correctif de méthode.** Chaque geste qui doit écrire **compte** la ligne qu'il ajoute (`ajoute`, toasts captés) ; un
+témoin qui juge « rien ne part » vérifie l'absence d'ajout, pas la dernière ligne. Témoins des six défauts : `B-NV2P P13 ①→⑨`
+(`tests/parcours/nut2_parcours.js`), mutations **MP23 → MP33** (puis MP34, MP35, ci-dessous) ; décisions consignées dans **D-101 ⑪ → ⑯** (PROPOSÉ).
+
+**À quoi on le reconnaît.** Un témoin réécrit qui passe du premier coup sur un comportement qui a CHANGÉ : avant de le croire,
+lui faire rater exprès (mutation) — et vérifier qu'un geste censé écrire a **écrit**.
+
+**Puis le contrôle négatif de ces témoins réécrits** (`tools/mut_temoins_v2.py` : 34 mutations de `app.js`, chacune sur
+une copie, réseau isolé, passe réduite aux blocs visés) : **34/34** — mais le premier jet en ratait six, et **aucune n'était
+un défaut du code** :
+- quatre attentes visaient un témoin qui ne porte pas cette garantie (la mutation était attrapée ailleurs). L'un d'eux
+  (CCLXXX ①) restait vert pour une AUTRE raison : la portion était refusée **faute de nom**, pas faute de poids — il lit
+  désormais la raison du refus ;
+- ⭐ **une double protection cache chacun de ses gardes** : CCLXXI ⑤ est tenu par le garde de l'onglet ET par la relecture
+  qui remet le poids à zéro — retirer l'un ne fait rien rougir. Le chemin où le garde de l'onglet est SEUL (×1, D-101 ⑬)
+  n'avait **aucun** témoin : `B-NV2P P13 ⑪` + MP35 ;
+- ⭐ **une mutation que rien ne voit est une garantie sans témoin**, pas une mutation ratée : l'origine d'une reprise à
+  l'écran n'était lue par aucun témoin de la passe (elle l'était par `nut2_parcours` P12 ⑥ : MP34) ;
+- et un témoin **périmé par mon propre correctif** de l'après-midi : B-NM6-Q ② lisait la ligne de proposition (`af-prop`)
+  qu'une reprise sans quantité n'affiche plus (elle ouvre la saisie à la main, poids demandé) — réécrit, mutation N16.
+
+**Et un rouge que mon propre contrôle laissait passer.** Pour que CCCV ㉒ lise les origines dans le code, la reprise à
+l'écran a re-séparé ses deux appels à `_ref100` (« reprise », « historique ») — et CCXC, que j'avais passé à « 8 portes »
+le matin quand ils n'en faisaient qu'un, a rougi : le code était revenu à **9 appels**, comme sur master. Le contrôle
+négatif ne l'a pas vu : son arbre sain ne vérifiait **que** les témoins attendus. CCXC est revenu à 9, avec sa raison ;
+l'outil refuse désormais de juger si l'arbre sain n'est pas **entièrement** vert ; mutation R35 (une porte qui contourne
+`_ref100`). *Un arbre « sain » qui rougit ailleurs n'est pas sain.* C'est la passe complète qui l'a trouvé — c'est son
+travail.
+
+**Et une suite annexe restée sur le contrat V1.** Le bloc 12 de `tests/calculs/runner.js` (« la provenance de chaque ligne »,
+hors passe complète) attendait une saisie SANS poids enregistrée, la provenance « scan » et un drapeau `modifie` : rouge sous
+V2, et d'abord **masqué** par une « erreur d'infrastructure » (la suite avait tourné pendant que je modifiais le dépôt). Réécrit
+sur les mêmes garanties (rien ne part sans poids ; la quantité tapée, la source et le pour-100 g gardés ; une retouche est une
+correction tracée ; la provenance ne survit pas), avec de vraies frappes ; contrôle négatif `tools/mut_calculs_provenance.py`
+(la provenance est rendue DEUX fois — à l'ouverture et à l'enregistrement : sa mutation retire les deux).
+
+**Piège d'outillage, à ne pas refaire.** Lancé avec `TMPDIR` dans le scratchpad (≈ 100 caractères), Chromium ne démarre
+pas : il crée une socket sous `TMPDIR`, une socket Unix est limitée à 108 caractères, il meurt (SIGTRAP) — et **tous** les
+témoins sortent « plantage ». L'outil a refusé de conclure (arbre sain non vert) : c'est ce qu'il devait faire. Correctif :
+un `TMPDIR` court (un lien vers le même dossier). **Et le second, le même soir** : une passe complète lancée en tâche de
+fond **sans limite de durée explicite** est coupée à **30 min** par l'environnement — le navigateur meurt, et chaque module
+suivant sort « a PLANTÉ après 0 témoin ». La passe a refusé de se dire verte (SEC-04, pas de ligne de total) : là encore,
+c'est ce qu'elle devait faire. Toujours donner la durée maximale (2 h) à une passe lancée en fond.
+
+**À quoi on le reconnaît (suite).** Une mutation qui ne fait rougir AUCUN témoin : avant de corriger l'attente, chercher si
+un autre garde couvre le même chemin (double protection) — et si aucun ne le couvre, c'est un témoin qui manque.
+
+---
+
+## §96 — ⛔⛔ UNE RELECTURE ADVERSE TROUVE CE QUE LES TÉMOINS N'AVAIENT PAS LA FORME DE VOIR : UNE MASSE ARRONDIE, UNE PORTE QUI REDÉFINIT, DES CORRECTIONS PERDUES *(22-23/10/2026, NUTRITION V2 — D-103, branche `claude/nutrition-v2`, non publié ; trouvés par une relecture indépendante, pas par un rouge)*
+
+> *(Numéro : §95 est celui de Claude Séance sur `claude/dreamy-bell-pu88ia` ; celui-ci est le §96 — à reconfirmer à l'intégration.)*
+
+**Le contexte.** D-103 (Michel, 22/10) : « 3 portions (450 g) » quand le poids d'une portion est fiable. Implémenté, banc P14
+vert (15 témoins), contrôles négatifs 16/16 et 5/5 — puis une **relecture adverse** (trois relecteurs aux angles distincts, chaque
+constat soumis à un vérificateur chargé de le réfuter) : **16 constats confirmés, 1 réfuté**. Aucun ne touchait une donnée déjà
+enregistrée ; quatre étaient des défauts de code, le reste des phrases d'aide fausses et des trous de témoins.
+
+**Les défauts de code** (tous corrigés, chacun avec son témoin P14 et sa mutation) :
+1. **La masse arrondie pour l'écran, exacte pour la ligne.** La pastille posait 49,9 (1,5 × 33,3 = 49,95 arrondi au dixième)
+   dans le champ ; l'écran calculait sur 49,9 g, le moteur enregistrait 49,95 g → **4 g de protéines à l'écran, 5 dans la
+   ligne** (mesuré par le relecteur : 1 256 cas sur 5 602 poids réalistes). Correctif : l'écran calcule sur la masse EXACTE quand
+   la pastille est prise telle quelle (`_bcApplyGrams`). Témoin ⑰, mutations MP60, MP61.
+2. **Une nouvelle porte qui redéfinit un favori.** Garder la forme « portions » à la reprise faisait passer la ligne neuve par
+   `_majDefFavori` (ft-v1186 ⑤) : un simple toucher réécrivait le poids d'un favori **sans ses valeurs**. Reprendre n'est pas
+   redéfinir — la pastille ne touche plus le favori (les portes jumelles ne le touchaient déjà pas). Témoin ⑲, MP56.
+3. **La reprise à l'écran perdait les corrections** (jalon 4) : 360 kcal recalculées là où « + Ajouter » écrivait les 300
+   corrigées. Elle les reprend désormais, comme « Modifier ». Témoin ⑤b, MP54.
+4. **Un favori par l'étoile perdait les corrections de sa ligne** (jalon 4) : il n'était plus « fiable » et « + Ajouter »
+   réécrivait le calcul. Elles sont copiées, comme sa fiche. Témoin ⑱, MP55.
+
+**Le défaut qui reste, faute de décision** : à la **2ᵉ** modification d'une ancienne ligne, sa copie d'origine (`n2.av`) n'est
+plus reportée (le moteur reconstruit `n2` à neuf) — contraire à D-101 ④. Le correctif tient en une ligne du moteur, mais le moteur
+est hors du périmètre accordé ce jour : **soumis à Michel**. En attendant, les aides ne promettent plus « Modifier garde
+l'original ».
+↪️ *23/10 : **corrigé** sur ordre de Michel (mission « incident prioritaire ») — le moteur transmet `n2.av` de version en version
+(`BUGS.md` §98, témoins P15 ㉘ et B-NV2-E ㉑).*
+
+**À quoi on le reconnaît.** Des témoins verts et des mutations conformes prouvent que ce qu'on a pensé à vérifier est vérifié —
+pas que tout ce qui compte l'est. Les quatre défauts avaient la même forme : **un chemin que l'implémentation venait d'ouvrir
+(ou de rendre visible) et qu'aucun témoin n'empruntait** — une masse inexacte en binaire (toutes les masses testées étaient
+rondes), un favori du même nom qu'une ligne récente, une ligne corrigée reprise à l'écran. 👉 *Après un changement de forme
+enregistrée, chercher les écrivains et les lecteurs qui réagissent à cette forme (ici `_majDefFavori`, qui ne regardait que
+`u==='portion'`), pas seulement ceux qu'on a modifiés.*
+
+**Et trois défauts de MES témoins, trouvés par le contrôle négatif de cette correction (23/10)** :
+- **un témoin qui n'empruntait pas le chemin qu'il nommait** : ⑥b retapait la masse sur la pastille du riz — mais à ce moment, la
+  dernière ligne de riz était les 300 g de ⑥ : la pastille était en **grammes**, et ⑥b vert sans rien éprouver (MP52 et MP53
+  survivaient). Réécrit sur le yaourt, dont la dernière ligne est en portions, et il vérifie d'abord le texte de la pastille ;
+- **un témoin qui dépendait de l'HEURE** (P12 ①, jalon 4) : l'ajout rapide tombe dans le repas proposé par l'heure — avant 11 h,
+  « Petit-déj », le repas de la ligne testée : l'habitude, notée aujourd'hui, était alors écartée et le témoin rougissait **la
+  moitié de la journée** (vert de 22 h à minuit, rouge à 00 h 05). Le repas des ajouts est désormais fixé dans P12 et P14.
+  👉 *Un témoin qui passe le soir et rougit le matin n'est pas « instable » : il dépend d'une donnée qu'il ne fixe pas.*
+- **un témoin dont la prémisse était tombée sans qu'il le sache** (⑯, trouvé par le contrôle négatif COMPLET, MP1 → MP61,
+  rejoué sur le code final : **60 / 61**, seule MP51 survivait) : « riz proposé en portions, puis les pâtes » — mais à ce
+  moment-là, la dernière ligne de riz était les 300 g de ⑥ : sa pastille était en grammes, et ⑯ ne mordait que grâce à un
+  **reste** laissé plus tôt (sous la mutation, la pastille « 3 portions (450 g) » du riz, proposée en ⑥, survivait jusqu'à ⑯).
+  Le nouveau ⑥b, sur le yaourt, a remplacé ce reste par un autre (« 1,5 portion (187,5 g) ») : ⑯ est resté vert, MP51 a
+  survécu. Déplacé avant ⑥ et,
+  surtout, il **vérifie maintenant sa prémisse** (la pastille du riz doit dire « 3 portions (450 g) ») : si un réordonnancement
+  la casse, il rougit au lieu de mentir.
+  👉 *Corriger un témoin peut en désarmer un autre plus loin dans le même parcours : après toute réécriture, rejouer TOUTES les
+  mutations du banc, pas seulement celles du témoin touché — c'est ce qui l'a vu, et une sélection ne l'aurait pas vu.*
+
+
+## §97 — ⛔⛔ LE DERNIER APPAREIL QUI ÉCRIT EFFACE LE JOURNAL ALIMENTAIRE DES AUTRES : `_pa_` REMPLACE LA LISTE EN ENTIER *(23/10/2026, NUT-SECURISATION-P1 — branche `claude/nut-securisation-p1`, NON DÉPLOYÉ · numéro choisi après les §95-§96 des branches `dreamy-bell` et `nutrition-v2`)*
+
+**Le constat.** `handleSaveProfile_` écrit le journal et les favoris par `_pa_(body.foodLog, profile.foodLog)`. `_pa_` refuse
+un envoi **vide**, mais **tout envoi non vide remplace la liste du serveur en entier**. Le client envoie toute sa liste locale à
+chaque synchronisation et ne relit jamais le serveur tant que son stockage n'est pas vide. Rejoué sur le vrai `Code.js` (banc
+B-NSP1, données inventées) : un appareil remis à zéro qui saisit un repas → **500 → 1** ; Safari en retard sur l'application
+iPhone (deux stockages distincts) → **300 → 2** ; un appareil en retard → 40 → 30, 60 → 51 ; deux appareils aux historiques
+différents s'effacent l'un l'autre ; favoris **20 → 1** ; une chaîne reçue à la place d'une liste **remplaçait le journal par
+la chaîne**. **Aucune trace** — ni refus, ni journal d'exécution.
+
+**Pourquoi rien ne l'a vu.** Les séances ont un garde-fou depuis le 02/08 (≥ 30 lignes et moins de 60 % gardées) : le journal,
+écrit par la même fonction cinquante lignes plus haut, n'en avait **aucun** — *une règle corrigée dans une collection et pas
+dans sa voisine*, la phrase du §33. ⚠️ Et ce seuil, recopié tel quel, n'aurait vu **ni 40 → 30, ni 20 → 1, ni l'appareil en
+retard** : un seuil sur le NOMBRE de lignes ne distingue pas un écrasement d'une suppression voulue.
+
+**Ce qui est préparé (non déployé, option B validée par Michel — `D-108`).** `_nutProtegerListe_` : l'envoi s'applique
+comme avant (rien n'est réintroduit d'office : une absence est ambiguë), mais toute ligne retirée et l'ancienne version de
+toute ligne corrigée sont **d'abord copiées** dans une zone de récupération `recupNut` à la racine du compte — même écriture
+que le journal, jamais renvoyée à l'app, bornée, avec un événement chiffré sans donnée personnelle. Banc : **26 OK / 48
+rouges** sur le `Code.js` de master → **74 / 0** ; contrôle négatif **37 / 37**. Détail : `docs/NUT-SECURISATION-P1.md`.
+
+**⛔ Le même défaut, revenu par la BORNE — trouvé en finalisant (23/10, condition 3 de Michel).** La 1ʳᵉ version bornait la
+zone en retirant ses copies **les plus anciennes**, « puisqu'elles sont dans les sauvegardes de la nuit ». **Faux** : un repas
+saisi le matin et retiré l'après-midi n'est dans **aucune** sauvegarde. Rejoué : 10 repas du jour + deux écrasements avant la
+nuit → **10 introuvables** ; favoris écrasés lot après lot → **340 perdus** ; **12 témoins rouges** à la découverte (15 sur les 74 du banc
+final). *Une borne qui jette
+est une perte silencieuse qui a changé d'adresse.* Correction : le surplus **déménage** dans un fichier Drive **relu** avant
+de quitter la zone ; si Drive refuse ou relit autre chose, l'envoi de la liste est **refusé** (retardé, jamais perdu —
+`D-109`, proposé). ⚠️ **Et un 3ᵉ piège, attrapé par un témoin avant d'arriver** : rangé à côté des sauvegardes, ce fichier
+devenait pour la sonde `checkBackup` « la dernière sauvegarde » — **il aurait masqué une nuit sans sauvegarde**, la panne de
+36 jours que cette sonde surveille. D'où le sous-dossier `recup-nut/`, qu'aucun lecteur existant ne parcourt.
+👉 *Avant de ranger un fichier dans un dossier existant, chercher TOUS ceux qui le lisent — et ce qu'ils déduisent du
+fichier le plus récent.*
+
+**⛔ Et le refus lui-même, attrapé à la vérification 5 avant publication (23/10 — NON publié).** `D-109` refuse l'envoi
+d'une liste quand la zone déborde et que Drive ne répond pas : « retardé, jamais perdu », **parce que l'appareil garde
+sa liste**. Vrai… tant que rien ne la remplace. Or « Restaurer mon compte » **remplace** les favoris de l'appareil par
+ceux du serveur — qui, pendant le refus, sont justement les anciens. Rejoué bout en bout (vraie app + vrai `Code.js`) :
+**4 favoris neufs et 2 modifiés introuvables partout** ; le journal, **fusionné** à la restauration, ne perd rien.
+👉 *Un refus « sans perte » ne l'est que si TOUTES les portes qui réécrivent la donnée locale la fusionnent — un refus
+côté serveur se vérifie jusqu'au bout de l'app, pas seulement au serveur.* Décision attendue : `D-110`.
+
+**À quoi on le reconnaît.** Une liste synchronisée « en entier » par un client qui ne relit pas le serveur : **le dernier qui
+écrit gagne, et ce qu'il n'avait pas disparaît**. Voisins : §33 (le dernier qui écrit efface l'autre), la restauration par
+union (ft-v1241 séances, ft-v1247 journal) — la même famille côté **client**, réglée avant que le côté **serveur** le soit.
+⚠️ **Et un piège de harnais au passage** : le faux `Utilities.base64Decode` du banc A1 rendait un objet au lieu d'octets ;
+`_packUser_` ne se relisait pas et n'osait jamais compresser — la première mesure de taille affichait **167 Ko « compressés »**
+pour 30 Ko réels. *Une mesure qui passe par un double doit d'abord prouver que le double fait ce que fait le vrai.*
+
+**↪️ Intégration Nutrition V2 × P1 (23/10, branche `claude/nut-v2-p1-integration`) — `D-110` écrit et éprouvé, NON
+déployé.** FIX-A′ (`Code.js` seul, `19b87ffb`) : pour les **favoris**, une panne de Drive ne refuse plus l'envoi — rien ne
+sort de la zone (`n = 0`), elle attend au-delà de sa borne jusqu'à un **plafond** (`NUT_RECUP_PLAFOND_FAVORIS_ = 120000`,
+deux fois la borne) ; l'événement dit `differe:'drive'`, le journal du serveur dit « ACCEPTÉ » sans donnée personnelle ;
+au-delà du plafond, le refus de `D-109` revient. Le **journal garde `D-109`** (sa restauration fusionne : un refus n'y perd
+rien). Éprouvé : panne longue (NSP1-80), deux appareils (NSP1-79), deux envois **simultanés** (NSP1-82, nouveau), capacité
+(NSP1-81 : ≈ 14 500 octets de plus par compte quand la zone double), restauration pendant ET après la panne avec la vraie app
+V2 (B-NIX X1), retour arrière vers @192 sans rien perdre de la zone (`tools/preuve_retour_arriere_d110.js`). B-NSP1
+**82 / 0**, contrôle négatif **45 / 45** ; banc croisé **16 / 0**, contrôle négatif **8 / 8**. La vérification 5 rejouée sur
+l'arbre intégré : **0 version introuvable** ; avec le serveur de la prod, 5 + 5 anciennes versions perdues (le défaut que P1
+corrige). ⚠️ **Risque résiduel dit** : au-delà du plafond (panne de Drive prolongée ET centaines de versions de favoris
+changées), un envoi est refusé et une restauration avant le retour de Drive perd ce qu'il portait — fermé côté appareil par
+`D-112` (proposé). 👉 *Un plafond n'est pas une garantie, c'est une frontière : elle se mesure (NSP1-80) et elle se dit.*
+
+## §98 — ⛔⛔ UNE REPRISE AFFICHAIT UNE CHOSE ET EN ÉCRIVAIT UNE AUTRE : DEUX CALCULS, UNE IDENTITÉ PAR LE NOM, DES RÉFÉRENCES QUI SE CONTREDISENT RECOPIÉES EN SILENCE *(23/10/2026, NUTRITION V2 — incident prioritaire, mission de Michel ; branche `claude/nutrition-v2`, non publié ; reproduit AVANT correction sur données inventées)*
+
+> *(Numéro : §97 est celui de Claude Principal sur `claude/nut-securisation-p1`, §99 celui de Claude Séance sur
+> `claude/dreamy-bell-pu88ia` ; celui-ci est le §98 — à reconfirmer à l'intégration.)*
+
+**Le contexte.** Michel : *« une recherche fraîche ou un scan renvoie les bonnes valeurs, mais la reprise depuis les favoris ou
+l'historique peut restituer des valeurs fausses »* (Iso Zero : scan de 40 g juste le 23/08, puis un couple 156 kcal / 26 g de
+protéines recopié de favori en historique ; 517 entrées auditées le 19/10, 150 A/B, 51 recopies). Le banc P15 (`nut2_parcours.js`)
+a été **écrit et joué sur le code d'avant** : 24 rouges sur 37 — puis 37 verts sur le même banc après correctif.
+
+**Les cinq mécanismes, chacun reproduit par les vrais gestes :**
+1. **Deux calculs pour une reprise.** La liste « Mes aliments » affichait les valeurs ENREGISTRÉES d'un favori ; « + Ajouter » les
+   RECALCULAIT par sa fiche, avec une définition de portion réécrite après coup par ft-v1186 ⑤ (pot 125 → 150 g, macros
+   inchangées par décision) → **400 kcal affichées, 480 écrites**. Le même écart naissait d'un produit À CÔTÉ : « Modifier » un
+   yaourt B (pot de 150 g) réécrivait le favori du yaourt A du même nom → 100 kcal affichées, 120 écrites.
+2. **L'identité par le NOM.** Un favori d'avant V2 (V1 ne recopiait aucun code-barres dans un favori) masquait le scan juste du
+   même nom ; une copie récente masquait la ligne vérifiée ; de deux produits du même nom (deux codes-barres) un seul existait
+   dans la liste, dans « Déjà noté par toi » et comme favori ; « ✕ » sur le favori faux masquait le scan juste ; l'étoile d'un
+   scan retirait le favori du même nom au lieu d'en créer un.
+3. **La recopie silencieuse d'une référence qui se contredit** — 26 g de protéines pour 40 g d'une fiche à 88 g/100 g (la
+   correction partielle, M4) ; 28 g de macros dans 5 g (la forme M6) ; une copie différente de la fiche vérifiée du même
+   code-barres — par « + Ajouter » et « Tes repas habituels », sans un mot.
+4. **`n2.av` perdue à la 2ᵉ modification** d'une ancienne ligne (le moteur ne la recopiait que d'une ligne sans `n2`) — c'était
+   le défaut laissé ouvert au §96, faute de périmètre.
+5. **Une valeur inconnue devenue 0** dans un favori (`_itemListe` : `s.prot || 0`), puis écrite 0 par « + Ajouter ».
+
+**Ce qui n'a PAS été trouvé, et c'est dit** : aucun commit ne **calcule** le couple 156 / 26 — il naît d'un geste (une seule macro
+retouchée dans l'ancien « Modifier », M4 : INDICE, le geste n'est pas enregistré). ft-v1110 (03/09, 07:42 UTC, le calibrage à la
+main) précède de quelques heures la première ligne 156 / 26 : **coïncidence de dates écartée par la lecture du code** — le
+calibrage écrit un pour-100 g complet et recalcule les quatre valeurs, il ne peut pas produire un couple partiel. Les commits qui
+portent les mécanismes, eux, sont prouvés par la reproduction : ft-v1186 (`15ff528e`, 09/09) + jalon 4 (`11ed6348`, 22/10) pour
+le 1 ; le dédoublonnage par nom (présent avant ft-v855, `ffe39fa6`, 15/08 — l'origine est hors de l'historique disponible) et
+ft-v1042 (`1e066376`, 27/08 : les favoris gardent quantité et pour-100 g) pour le 2 et le 3 ; `9feec3bd` (22/10) pour le 4 ; le
+`|| 0` du noyau d'item (centralisé par la sous-étape 1b-iii, `30833641`, 12/09 ; le motif est plus ancien) pour le 5.
+
+**Les correctifs** (D-111) : une construction unique de ce qu'une reprise écrirait, lue par l'affichage et par l'écriture
+(`_n2Reajouter` en aperçu) ; l'identité du produit (`_n2Cle`) ; une référence vérifiée jamais masquée ; quatre causes
+d'incohérence démontrées (`_n2Incoherence`) → « ⚠️ à vérifier », l'écran plutôt que la recopie ; « non vérifié » sur une
+recopie ; l'inconnu reste absent ; `n2.av` transmise par le moteur. ⛔ Aucune donnée enregistrée modifiée.
+
+**Et deux défauts de MES témoins, trouvés en les éprouvant :**
+- un témoin qui supposait la liste « une ligne par saisie » : elle montre UN élément par produit (le plus récent vérifié) — le
+  scan à étoiler devait donc être la DERNIÈRE saisie (recherche par nom placée avant) ;
+- un témoin qui n'aurait jamais rougi : « Modifier le yaourt B ne redéfinit pas le favori du A » était joué APRÈS l'étoile du B —
+  deux favoris du même nom, l'ancien code (par le nom) voyait une ambiguïté et ne touchait à rien : vert sans rien éprouver. Il
+  est joué quand le SEUL favori de ce nom est celui du A (MP73 le prouve).
+- et un correctif inobservable, retiré : « ? kcal » dans une proposition CIQUAL — la recherche écarte déjà les 143 aliments sans
+  énergie connue (`_ciqualChercherUne`) ; aucune proposition n'affichait 0.
+
+**Un témoin voisin RÉÉCRIT, pas affaibli** : `B-NM6-C ②` (`nut_m6_rejeu.js`, le cliquet de M6) exigeait **2** appelants de
+`_n2Reajouter` — l'aperçu en est un **3ᵉ**, par construction (c'est le correctif lui-même). Il exige maintenant les trois noms,
+**et** que `_n2Apercu` passe l'argument d'aperçu, **et** que `_n2Reajouter` rende l'aperçu AVANT tout `_n2Enregistrer` : un
+aperçu qui pourrait écrire, un ordre inversé ou un 4ᵉ re-noteur non déclaré le font rougir (N17 → N19,
+`tools/mut_nut_m6_rejeu.py`). *Un cliquet qui compte des appelants se déplace avec la construction qu'il protège ; il ne se
+relâche pas.*
+
+**Et six témoins de la passe complète (trois blocs), attrapés par la passe RÉDUITE (31 blocs) — tous sur l'ancien contrat,
+aucun sur un défaut** *(le commit `47386fb7` dit « cinq » : c'est faux, ils sont six — ⑫ ⑬ · ② ③ · ⑧ ⑪)* :
+- `CCLXXXV ⑫ ⑬` (ft-v1188) figeaient « *le nom EST l'identité d'un favori, il ne porte aucun autre identifiant* » — vrai
+  le 10/09, **faux depuis la V2** (un favori garde son `sourceId`) et contraire à la mission. ⑫ passe désormais par la VRAIE
+  liste (sa fixture reposée à la main testait la recherche par nom de l'étoile, le défaut même) : une identité, un favori ;
+  ⑬ garde le refus d'agir sur une identité ambiguë (même nom, sans code-barres) et exige qu'à deux codes-barres seul le bon
+  favori suive sa définition ;
+- `CCXCV ② ③` (ft-v1198) figeaient les « replis » `kcal: 0`… d'une valeur inconnue — exactement la cause n°5. Le noyau
+  garde ses 9 champs sur une source complète, sans `portionWeightG` ni `fav` (décision produit n°2) ; une valeur inconnue
+  reste absente, un 0 connu reste 0 ;
+- `CCCIV ⑧ ⑪` (ft-v1206) : le canari portait 6 666 g de protéines dans 3 333 g — « + Ajouter » ne le recopie plus, le
+  carnet restait vide et le témoin rougissait par sa PRÉCONDITION, pas par une fuite. Le canari se tient désormais
+  (4 567 g, valeurs à 4 chiffres reconnaissables).
+Chacun rougit sous mutation : R40 → R48, **9 / 9 conformes** (`tools/mut_temoins_v2.py`). *Une passe réduite sur les blocs qui touchent les
+fonctions changées n'est pas une formalité : les bancs dédiés étaient verts, et ces cinq-là n'y étaient pas.*
+
+**À quoi on le reconnaît.** *Un affichage et une écriture qui calculent chacun de leur côté finissent par diverger — la seule
+question est quand* (R2). Et *un nom n'est pas une identité* : il relie ce qui n'a pas d'identifiant, il ne doit jamais séparer
+ni confondre ce qui en a un.
+
+## §100 — ⛔ « RESTAURER » REMPLACE LES FAVORIS : CE QUI N'EST PAS ENCORE PARTI AU SERVEUR EST PERDU — ET SEULS LES 200 PREMIERS FAVORIS PARTENT *(23/10/2026, intégration Nutrition V2 × P1 — branche `claude/nut-v2-p1-integration` ; deux défauts PRÉEXISTANTS, prod comprise, mesurés, NON corrigés · numéro choisi après le §99 de `dreamy-bell`)*
+
+**Le constat (vraie app V2 + vrai `Code.js`, données inventées).** ① Hors ligne, la portion d'un favori est redéfinie
+(pot 125 → 150 g) ; l'envoi ne part pas ; « 🔄 Restaurer mon compte » remet la version du serveur (125 g) — **la
+modification locale est perdue**, sans message (B-NIX X3, « limite dite »). Le journal, lui, ne perd rien : sa
+restauration **fusionne** (ft-v1247), celle des favoris **remplace** (`_applyRestoreData` : `S.savedFoods=d.savedFoods`).
+② `_cloudSync` n'envoie que `savedFoods.slice(0,200)`, et un favori s'ajoute **à la fin** (`toggleFavFood` : `push`) :
+au-delà de 200 favoris, les **plus récents** n'atteignent jamais le serveur, et « Restaurer » ou un nouvel appareil les
+perd. Ni l'un ni l'autre ne vient de V2 ou de P1 : la prod (@192 + `ft-v1259`) les a tous les deux.
+
+**Pourquoi rien ne l'a vu.** La restauration par union a été écrite collection par collection (séances ft-v1241, journal
+ft-v1247) — **les favoris sont restés sur l'ancien modèle** : la phrase du §33 encore (*une règle corrigée dans une
+collection et pas dans sa voisine*). Et la troncature à 200 est une borne d'envoi sans borne de saisie : *une limite qui
+coupe la fin d'une liste coupe ce qu'on vient d'ajouter.*
+
+**Ce qui est proposé, pas appliqué.** ① `D-112` (FIX-B′) : la restauration **ajoute** les favoris du serveur que l'appareil
+n'a pas, par **identité de produit** (`_n2Cle`), le téléphone gagne. Prototype hors dépôt : X3 basculé, rien d'autre ; le
+coût mesuré (deux appareils) est écrit dans `D-112`. ② La troncature : à trancher avec la décision sur les favoris
+(envoyer la liste entière — la zone P1 et sa borne la protègent côté serveur — ou garder les 200 **derniers**). ⛔
+Changement de comportement de l'app → décision de Michel.
+
+**À quoi on le reconnaît.** Une porte qui **remplace** une donnée locale par la copie du serveur n'est sûre que si tout ce
+que l'appareil sait est **déjà** au serveur. *Un refus côté serveur, une coupure réseau ou une troncature d'envoi
+transforment ce remplacement en perte.*
+
+**⭐ Trois leçons de méthode, payées le même jour.** ① Le contrôle négatif du banc croisé a d'abord **planté** au lieu de
+rougir (un `[0]` sans garde dans X3) : *un plantage n'est pas un rouge* — le banc a été durci avant de conclure. ② Un
+scénario à deux appareils donnait deux résultats différents d'un lancement à l'autre : la synchro **différée** (4 s) d'un
+appareil partait au milieu du scénario. *Un test multi-appareils qui ne maîtrise pas les synchros différées mesure
+l'horloge, pas le code* — une synchro explicite annule désormais la synchro différée en attente. ③ La passe complète de
+l'intégration a trouvé **un témoin d'avant V2 resté en place** (CII ⑥ : « la quantité efface la correction à la main ») —
+rouge aussi sur la branche V2 **seule**, vert sur master : la passe **réduite** de V2 ne le couvrait pas. Il a été réécrit sur
+`D-096` (Michel : « une modification manuelle est conservée et tracée ») — la correction reste, le calcul pour 50 g (24 · 5)
+se lit à côté, « ↺ Revenir au calcul » le remet — et son contrôle négatif rougit 3 fois sur 3. *Un sous-ensemble ne remplace
+pas la passe complète : le protocole le disait, le cas l'a montré.*

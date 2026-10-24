@@ -24,7 +24,7 @@ import json, os, re, subprocess, sys
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REG = os.path.join(RACINE, 'tests', 'recette', 'registre.json')
 SERVIS = ['app.js', 'log.js', 'coach.js', 'setup.js', 'state.js', 'screens.js', 'tracking.js', 'constants.js',
-          'food-health.js', 'supabase.js', 'capacites-ia.js', 'translations.js']
+          'food-health.js', 'supabase.js', 'capacites-ia.js', 'translations.js', 'nutrition-v2.js']
 SEUIL_CARREFOUR = 20
 MOTIFS = {'motif:audio': r'AudioContext|new Audio\(|\.play\(\)', 'motif:camera': r'getUserMedia'}
 ZONES_FICHIER = {'worker.js': 'fichier:worker.js', 'Code.js': 'fichier:Code.js', 'appsscript.json': 'fichier:appsscript.json',
@@ -37,7 +37,10 @@ ZONES_FICHIER = {'worker.js': 'fichier:worker.js', 'Code.js': 'fichier:Code.js',
                  'data/alias.json': 'fichier:data/alias.json',
                  # la base fast-food se range face à CIQUAL selon D-042 : un diff qui ne touche qu'elle
                  # doit déclencher les bancs multi-source et D-042 (FS-05B, NUT-D042-01)
-                 'data/marques.json': 'fichier:data/marques.json'}
+                 'data/marques.json': 'fichier:data/marques.json',
+                 # Nutrition V2 (jalon 2, 22/10/2026 ; servi depuis le jalon 4, donc aussi dans SERVIS) : un diff qui ne
+                 # touche que le moteur doit déclencher son banc (NUT2-MOTEUR-01)
+                 'nutrition-v2.js': 'fichier:nutrition-v2.js'}
 # déclarations de premier niveau : `function f(`, `async function f(`, `const f =`, et les fonctions
 # nommées auto-exécutées au démarrage `(function _recoverDraft(){…})()` / `(async function autoConnect(`
 DECL = re.compile(r'^\(?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=')

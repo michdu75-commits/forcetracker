@@ -123,16 +123,29 @@ module.exports.ecran = async function (t, b, PORT) {
     JSON.stringify({ past, ajoutees: a9.ajoutees, kcal: a9.ligne && a9.ligne.kcal, q: a9.ligne && a9.ligne.q }));
   if (a9.ligne) await retirer(a9.ligne.id);
 
-  /* A10 — aliment tapé à la main (aucun pour-100 g) : hors portée, inchangé */
+  /* A10 — aliment tapé à la main (aucun pour-100 g).
+     🥗 NUTRITION V2 (jalon 4, 22/10/2026) — CE TÉMOIN DISAIT « s'enregistre comme avant », SANS QUANTITÉ. C'est fini,
+     par décision : D-099 (Michel, 22/10 : grammes et ml d'abord) et le contrat V2 (« une quantité absente, nulle ou
+     illisible n'enregistre rien »). La garantie de ce bloc, elle, s'ÉTEND au lieu de changer : une saisie à la main
+     sans poids ne crée aucune ligne et l'écran dit quoi faire ; avec son poids, elle s'enregistre, valeurs telles
+     que tapées. Les valeurs partent par de vraies frappes (`fill` : les événements de production). */
   await pg.evaluate(() => { document.querySelectorAll('.overlay.open').forEach((o) => o.classList.remove('open')); openAddFood(); });
   await pg.waitForTimeout(150);
-  await pg.evaluate(() => { const s = (id, v) => { const el = document.getElementById(id); el.value = v; };
-    s('af-desc', 'Gâteau maison (test)'); s('af-kcal', '320'); s('af-prot', '5'); s('af-carbs', '40'); s('af-fat', '15');
+  await pg.evaluate(() => { document.getElementById('af-desc').value = 'Gâteau maison (test)';
     const sg = document.getElementById('af-sugg'); if (sg) sg.innerHTML = ''; });
+  for (const [id, v] of [['#af-kcal', '320'], ['#af-prot', '5'], ['#af-carbs', '40'], ['#af-fat', '15']]) await pg.fill(id, v);
+  await pg.locator('#af-fat').blur(); await pg.waitForTimeout(120);
   const a10 = await ajouter();
-  t('B-NJQG-A ⑩ aliment tapé à la main, sans pour-100 g → s\'enregistre comme avant',
-    a10.ajoutees === 1 && a10.ligne.kcal === 320, JSON.stringify({ ajoutees: a10.ajoutees, toast: a10.toast }));
+  t('B-NJQG-A ⑩ aliment tapé à la main SANS poids → aucune ligne, et l\'écran demande le poids (D-099, contrat V2)',
+    a10.ajoutees === 0 && /error/.test(a10.type) && /poids|quantit/i.test(a10.toast), JSON.stringify({ ajoutees: a10.ajoutees, toast: a10.toast }));
   if (a10.ligne) await retirer(a10.ligne.id);
+  const champPoids = await pg.isVisible('#af-poids');
+  if (champPoids) { await pg.fill('#af-poids', '180'); await pg.locator('#af-poids').blur(); await pg.waitForTimeout(120); }
+  const a10b = champPoids ? await ajouter() : { ajoutees: 0, ligne: null };
+  t('B-NJQG-A ⑩b … avec 180 g → 1 ligne, valeurs telles que tapées (320 · 5 · 40 · 15), q = 180 g',
+    a10b.ajoutees === 1 && a10b.ligne.kcal === 320 && a10b.ligne.prot === 5 && a10b.ligne.carbs === 40 && a10b.ligne.fat === 15
+      && a10b.ligne.q === 180 && a10b.ligne.u === 'g', JSON.stringify({ champPoids, ajoutees: a10b.ajoutees, l: a10b.ligne && { kcal: a10b.ligne.kcal, q: a10b.ligne.q, u: a10b.ligne.u } }));
+  if (a10b.ligne) await retirer(a10b.ligne.id);
 
   console.log('\n═══ B-NJQG-M. Modifier : une quantité invalide ne réécrit jamais la ligne ═══');
 
@@ -189,18 +202,34 @@ module.exports.ecran = async function (t, b, PORT) {
   const l7 = JSON.parse(await photo());
   t('B-NJQG-M ⑦ la modification valide survit au rechargement', egal(l7, att200) && l7.q === 200, JSON.stringify(l7 && { kcal: l7.kcal, q: l7.q }));
 
-  /* Non-régression : une ligne sans pour-100 g (pas de champ grammes) se modifie comme avant */
+  /* Une ANCIENNE ligne tapée à la main, sans quantité (pas de champ grammes).
+     🥗 NUTRITION V2 (jalon 4, 22/10/2026) — CE TÉMOIN DISAIT « se modifie comme avant » (kcal changées, aucune
+     quantité). Une modification est désormais une ligne V2 qui prend la place de l'ancienne, et le moteur n'écrit
+     jamais une ligne sans quantité (contrat V2) ; la quantité absente n'est pas déduite non plus (D-095). Donc :
+     sans quantité → refus, ligne STRICTEMENT inchangée (la garantie de ce bloc) ; avec 300 g → enregistrée, et
+     l'ancienne ligne garde sa copie d'origine (`n2.av`). */
   const idMain = await pg.evaluate(() => { const e = { date: today(), meal: 'diner', name: 'Soupe maison (test)', kcal: 120, prot: 4, carbs: 15, fat: 5, ts: Date.now(), id: _foodLineId() };
     S.foodLog.push(e); persist(); return e.id; });
+  const photoMain = () => pg.evaluate((id) => JSON.stringify((S.foodLog || []).find((x) => x && x.id === id) || null), idMain);
+  const avantMain = await photoMain();
   await pg.evaluate((id) => { document.querySelectorAll('.overlay.open').forEach((o) => o.classList.remove('open')); openEditFood(id); }, idMain);
   await pg.waitForTimeout(150);
   const sansChamp = await pg.evaluate(() => !document.getElementById('ef-grams'));
+  const qVide = await pg.evaluate(() => (document.getElementById('ef-q') || { value: 'ABSENT' }).value);
   await pg.fill('#ef-kcal', '150');
+  await pg.evaluate(() => { const el = document.getElementById('toast'); if (el) { el.textContent = ''; el.className = ''; } });
   await pg.click('#ov-edit-food button[onclick="saveEditFood()"]');
   await pg.waitForTimeout(150);
+  const refus8 = await pg.evaluate(() => { const el = document.getElementById('toast'); return { type: el ? el.className : '', toast: el ? el.textContent : '' }; });
+  const apresRefus = await photoMain();
+  t('B-NJQG-M ⑧ ancienne ligne SANS quantité : modifier sans quantité → refus, ligne strictement inchangée (rien de déduit)',
+    sansChamp && qVide === '' && /error/.test(refus8.type) && apresRefus === avantMain, JSON.stringify({ sansChamp, qVide, refus8, change: apresRefus !== avantMain }));
+  const champQ = await pg.isVisible('#ef-q');
+  if (champQ) { await pg.fill('#ef-q', '300'); await pg.click('#ov-edit-food button[onclick="saveEditFood()"]'); await pg.waitForTimeout(150); }
   const l8 = await pg.evaluate((id) => (S.foodLog || []).find((x) => x && x.id === id), idMain);
-  t('B-NJQG-M ⑧ ligne tapée à la main (sans champ grammes) → modification enregistrée comme avant',
-    sansChamp && l8 && l8.kcal === 150, JSON.stringify({ sansChamp, kcal: l8 && l8.kcal }));
+  t('B-NJQG-M ⑧b … avec 300 g → modification enregistrée (150 kcal, 300 g), copie d\'origine gardée',
+    champQ && !!l8 && l8.kcal === 150 && l8.q === 300 && !!l8.n2 && JSON.stringify(l8.n2.av) === avantMain,
+    JSON.stringify({ champQ, kcal: l8 && l8.kcal, q: l8 && l8.q, av: !!(l8 && l8.n2 && l8.n2.av) }));
 
   t('B-NJQG ⑨ aucune erreur de page pendant le parcours', erreurs.length === 0, erreurs.join(' | '));
   await cx.close();
