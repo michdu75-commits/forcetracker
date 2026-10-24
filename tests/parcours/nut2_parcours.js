@@ -575,8 +575,13 @@ async function ecran(t, b, PORT) {
       J(['C1', 'C2', 'C3', 'C4'].map((k) => W[k] && [k, W[k].ajout, W[k].rejeu])).slice(0, 600));
     /* ② une ligne d'avant V2 NON vérifiable : recopiée telle quelle — aucune fiche fabriquée (M1), aucune provenance empruntée */
     const c1 = W.C1 && W.C1.ajout;
-    t('B-NV2P P12 ② ⛔⛔ NON VÉRIFIÉE (code-barres d\'hier) : valeurs ET 150 g recopiés, statut « déclaré », la ligne le dit — pas de pour-100 g, pas de code-barres repris (D-101 ⑩)',
-      !!c1 && memes(vals(c1), { kcal: 195, prot: 4, carbs: 42, fat: 1 }) && c1.q === 150 && c1.u === 'g' && c1.per100 === null && c1.sourceId === null && c1.etat === null &&
+    /* 24/10 (NV2-FIAB, D-130 — remplace D-101 ⑩ n°1, sur l'IDENTITÉ seulement) : la copie garde le code-barres et l'état du
+       PRODUIT — sans eux, sa fiche ne pouvait plus jamais être retrouvée (l'isolat figé de Michel) et la copie échappait aux
+       contrôles de son produit (doublons, « ✕ »). ⛔ Toujours AUCUNE fiche, aucun pour-100 g : ses valeurs restent « déclarées »,
+       « non vérifié » — l'identité dit QUEL produit, jamais d'où viennent les valeurs (R33). Mutations : MP17 (une fiche
+       fabriquée) et MP85 (l'identité perdue). */
+    t('B-NV2P P12 ② ⛔⛔ NON VÉRIFIÉE (code-barres d\'hier) : valeurs ET 150 g recopiés, statut « déclaré », la ligne le dit — pas de pour-100 g, aucune fiche ; l\'identité du produit gardée (D-130)',
+      !!c1 && memes(vals(c1), { kcal: 195, prot: 4, carbs: 42, fat: 1 }) && c1.q === 150 && c1.u === 'g' && c1.per100 === null && c1.sourceId === '3000000000301' && c1.etat === 'tel-que-vendu' &&
       c1.m === 'd' && c1.st === 'declaree' && (c1.no || []).indexOf('reprise-non-verifiee') >= 0 && c1.saisie === 'liste' && c1.origine === 'reprise', J(c1));
     /* ③ D-099 : une portion avec son poids reste une portion ; des ml restent des ml — jamais convertis */
     const c2 = W.C2 && W.C2.ajout, c3 = W.C3 && W.C3.ajout;
@@ -850,11 +855,11 @@ async function ecran(t, b, PORT) {
         o[it.name] = (el && el.children[1]) ? el.children[1].textContent : null; }); return o; });
     const L1 = (n) => nb(liste[n]);
     t('B-NV2P P14 ① ⭐⭐ « MES ALIMENTS » (favoris, récents) : « 3 portions (450 g) » · « 1,5 portion (187,5 g) » · « 150 g » — une portion au poids FIABLE dit ses grammes (le TOTAL entre parenthèses)',
-      g && /^3 portions \(450 g\) · 585 kcal/.test(L1('Riz P14 (test)')) && /^1,5 portion \(187,5 g\) · /.test(L1('Yaourt P14 (test)'))
-      && /^150 g · 165 kcal/.test(L1('Thon P14 (test)')) && /^2 portions \(200 g\) · 300 kcal/.test(L1('Galette P14 (test)')), J(liste));
+      g && /^585 kcal · pour 3 portions \(450 g\) · P /.test(L1('Riz P14 (test)')) && /^[\d?]+ kcal · pour 1,5 portion \(187,5 g\) · P /.test(L1('Yaourt P14 (test)'))
+      && /^165 kcal · pour 150 g · P /.test(L1('Thon P14 (test)')) && /^300 kcal · pour 2 portions \(200 g\) · P /.test(L1('Galette P14 (test)')), J(liste));
     t('B-NV2P P14 ② ⛔⛔ … une portion au poids NON FIABLE ne dit AUCUN gramme : ancienne ligne (« 2 portions », pas « 125 g » ni « 250 g »), ligne déclarée, favori dont la définition a été réécrite (« 2 portions », pas « 300 g »)',
-      /^2 portions · 500 kcal/.test(L1('Steak P14 (test)')) && /^2 portions · 355 kcal/.test(L1('Crêpe P14 (test)'))
-      && /^2 portions · /.test(L1('Pot P14 (test)'))
+      /^500 kcal · pour 2 portions · P /.test(L1('Steak P14 (test)')) && /^355 kcal · pour 2 portions · P /.test(L1('Crêpe P14 (test)'))
+      && /^[\d?]+ kcal · pour 2 portions · P /.test(L1('Pot P14 (test)'))
       && !/\d g\)/.test(L1('Steak P14 (test)') + L1('Crêpe P14 (test)') + L1('Pot P14 (test)')), J(liste));
 
     /* ② ③ la REPRISE À L'ÉCRAN d'une ligne à fiche en portions fiables : proposée, jamais posée ; prise telle quelle, elle reste des portions */
@@ -1072,8 +1077,8 @@ async function ecran(t, b, PORT) {
     const ids18 = (await journal(pg)).map((x) => x.id);
     await pg.evaluate(() => { const i = (_afQuickItems || []).findIndex((x) => x && x.name === 'Galette P14 (test)'); if (i >= 0) quickAddFood(i); }); await pause(pg, 300);
     const l18 = neuves(await journal(pg), ids18)[0] || null;
-    t('B-NV2P P14 ⑱ ⭐ FAVORI PAR L\'ÉTOILE sur une ligne corrigée : « 2 portions (200 g) · 300 kcal » (comme sa ligne), sa correction copiée — et « + Ajouter » écrit 300, correction tracée',
-      g && f18.fav && f18.estFav && J(f18.corr) === J([['kcal', 300, 360]]) && /^2 portions \(200 g\) · 300 kcal/.test(nb(f18.ligne))
+    t('B-NV2P P14 ⑱ ⭐ FAVORI PAR L\'ÉTOILE sur une ligne corrigée : « 300 kcal · pour 2 portions (200 g) » (comme sa ligne), sa correction copiée — et « + Ajouter » écrit 300, correction tracée',
+      g && f18.fav && f18.estFav && J(f18.corr) === J([['kcal', 300, 360]]) && /^300 kcal · pour 2 portions \(200 g\) · P /.test(nb(f18.ligne))
       && l18 && l18.kcal === 300 && l18.q === 2 && l18.u === 'portion' && J(corr(l18)) === J([['kcal', 300, 360]]), J({ f18, l18: forme(l18), c: corr(l18) }));
     /* ⑲ reprendre n'est pas redéfinir : un favori « Pizza » (2 parts de 200 g) et la DERNIÈRE ligne « Pizza » (2 parts de 150 g) —
        la pastille de la ligne prise depuis ton journal écrit 2 parts de 150 g, et le favori reste à 200 g, octet par octet. */
@@ -1168,16 +1173,16 @@ async function incident(t, b, PORT) {
 
     let g = await ouvrirAjout(pg);
     let L1 = await items(pg);
-    t('B-NV2P P15 ① ⛔⛔ UNE RÉFÉRENCE PLUS FIABLE N\'EST JAMAIS CACHÉE : sous un favori d\'avant V2 du même NOM et sous une copie plus RÉCENTE du même code-barres, la ligne V2 vérifiée est dans « Mes aliments » — 40 g · 156 kcal · P 35 · G 1 · L 1',
-      g && err1.length === 0 && !!verif(L1) && /^40 g · 156 kcal · P 35 · G 1 · L 1/.test(nb(verif(L1).txt)), J({ err1, iso: iso(L1) }));
+    t('B-NV2P P15 ① ⛔⛔ UNE RÉFÉRENCE PLUS FIABLE N\'EST JAMAIS CACHÉE : sous un favori d\'avant V2 du même NOM et sous une copie plus RÉCENTE du même code-barres, la ligne V2 vérifiée est dans « Mes aliments » — 156 kcal · pour 40 g · P 35 · G 1 · L 1',
+      g && err1.length === 0 && !!verif(L1) && /^156 kcal · pour 40 g · P 35 · G 1 · L 1/.test(nb(verif(L1).txt)), J({ err1, iso: iso(L1) }));
     t('B-NV2P P15 ② ⛔⛔ UNE RÉFÉRENCE QUI SE CONTREDIT N\'EST PAS PRÉSENTÉE COMME VÉRIFIÉE : le favori (26 g de protéines pour une fiche à 88 g/100 g) et la copie (≠ la fiche vérifiée du MÊME code-barres) disent « à vérifier » — la ligne vérifiée, non',
       !!favIso(L1) && /à vérifier/.test(nb(favIso(L1).txt)) && !!copie(L1) && /à vérifier/.test(nb(copie(L1).txt)) && !!verif(L1) && !/à vérifier/.test(nb(verif(L1).txt)), J(iso(L1)));
     /* ③ la recherche dans ton journal (« Déjà noté par toi ») : la même règle, et la même ligne affichée (quantité, valeurs, état) */
     const h3 = await pg.evaluate(() => { _afSuggLoc = _afSuggLocales('Iso P15'); _afSuggCiq = []; _afSuggOff = []; _afSuggMarq = []; _afSuggRendu();
       return { lignes: _afSuggLoc.map((e) => ({ id: e.id, m: (e.n2 && e.n2.s === 1) ? e.n2.m : null, prot: e.prot })),
                txt: [...document.querySelectorAll('#af-sugg [onclick^="_afSuggPrendreLocale"]')].map((x) => x.textContent) }; });
-    t('B-NV2P P15 ③ ⛔⛔ « DÉJÀ NOTÉ PAR TOI » : la ligne vérifiée est proposée (pas seulement la copie la plus récente), et chaque proposition dit sa quantité et son état — « 40 g · 156 kcal · P 35 » sans réserve, « P 26 » « à vérifier »',
-      h3.lignes.some((x) => x.m === 'p' && x.prot === 35) && h3.txt.some((x) => /40 g · 156 kcal · P 35 · G 1 · L 1/.test(nb(x)) && !/à vérifier/.test(nb(x)))
+    t('B-NV2P P15 ③ ⛔⛔ « DÉJÀ NOTÉ PAR TOI » : la ligne vérifiée est proposée (pas seulement la copie la plus récente), et chaque proposition dit sa quantité et son état — « 156 kcal · pour 40 g · P 35 » sans réserve, « P 26 » « à vérifier »',
+      h3.lignes.some((x) => x.m === 'p' && x.prot === 35) && h3.txt.some((x) => /156 kcal · pour 40 g · P 35 · G 1 · L 1/.test(nb(x)) && !/à vérifier/.test(nb(x)))
       && h3.txt.some((x) => /P 26/.test(nb(x)) && /à vérifier/.test(nb(x))), J(h3));
 
     /* ④ ⑤ « Tes repas habituels » : la dernière version de l'habitude est la copie — elle n'est pas re-notée en silence */
@@ -1245,8 +1250,8 @@ async function incident(t, b, PORT) {
     const t11 = nouv ? nb(nouv.txt) : ''; av = await ids(pg);
     const g11 = await ajoutRapide(pg, nouv);
     const n11 = neuves(await journal(pg), av);
-    t('B-NV2P P15 ⑪ ⭐⭐ CE QUE LA LISTE AFFICHE EST CE QUI S\'ÉCRIT : le favori dit « 50 g · 195 kcal · P 44 · G 2 · L 2 », « + Ajouter » écrit 50 g · 195 · 44 · 2 · 2',
-      g11 && /^50 g · 195 kcal · P 44 · G 2 · L 2/.test(t11) && n11.length === 1 && J(forme(n11[0])) === J({ q: 50, u: 'g', kcal: 195, prot: 44, carbs: 2, fat: 2, sid: EAN_ISO, m: 'p' }), J({ t11, n11: n11.map(forme) }));
+    t('B-NV2P P15 ⑪ ⭐⭐ CE QUE LA LISTE AFFICHE EST CE QUI S\'ÉCRIT : le favori dit « 195 kcal · pour 50 g · P 44 · G 2 · L 2 », « + Ajouter » écrit 50 g · 195 · 44 · 2 · 2',
+      g11 && /^195 kcal · pour 50 g · P 44 · G 2 · L 2/.test(t11) && n11.length === 1 && J(forme(n11[0])) === J({ q: 50, u: 'g', kcal: 195, prot: 44, carbs: 2, fat: 2, sid: EAN_ISO, m: 'p' }), J({ t11, n11: n11.map(forme) }));
     /* ⑫ ⑬ « ✕ » sur le favori d'avant V2 : lui seul part — puis, l'étoile du scan retirée, ses lignes reviennent (rien ne les cache par le NOM) */
     const favAvant12 = J((await favoris(pg)).find((f) => !f.sourceId && f.name === 'Iso P15 (test)') || null);
     await fermer(pg); g = await ouvrirAjout(pg); L1 = await items(pg);
@@ -1286,8 +1291,8 @@ async function incident(t, b, PORT) {
     const ySid = (L, sid) => L.find((x) => x.nom === 'Yaourt P15 (test)' && x.sid === sid) || null;
     let g = await ouvrirAjout(pg);
     let L2 = await items(pg);
-    t('B-NV2P P15 ⑯ ⛔⛔ DEUX PRODUITS DU MÊME NOM (deux codes-barres) : les DEUX sont dans « Mes aliments » — le favori « 1 portion (125 g) · 100 kcal » ne cache pas l\'autre, « 1 portion (150 g) · 180 kcal »',
-      g && err2.length === 0 && !!ySid(L2, EAN_YA) && !!ySid(L2, EAN_YB) && /^1 portion \(125 g\) · 100 kcal/.test(nb(ySid(L2, EAN_YA).txt)) && /^1 portion \(150 g\) · 180 kcal/.test(nb(ySid(L2, EAN_YB).txt)),
+    t('B-NV2P P15 ⑯ ⛔⛔ DEUX PRODUITS DU MÊME NOM (deux codes-barres) : les DEUX sont dans « Mes aliments » — le favori « 100 kcal · pour 1 portion (125 g) » ne cache pas l\'autre, « 180 kcal · pour 1 portion (150 g) »',
+      g && err2.length === 0 && !!ySid(L2, EAN_YA) && !!ySid(L2, EAN_YB) && /^100 kcal · pour 1 portion \(125 g\) · P /.test(nb(ySid(L2, EAN_YA).txt)) && /^180 kcal · pour 1 portion \(150 g\) · P /.test(nb(ySid(L2, EAN_YB).txt)),
       J(L2.filter((x) => x.nom === 'Yaourt P15 (test)')));
     const h16 = await pg.evaluate(() => _afSuggLocales('Yaourt P15').map((e) => e.sourceId));
     t('B-NV2P P15 ⑰ ⛔ … et « Déjà noté par toi » propose les deux (un par code-barres), pas le seul plus récent',
@@ -1312,8 +1317,8 @@ async function incident(t, b, PORT) {
     const t20 = favA ? nb(favA.txt) : ''; let av = await ids(pg);
     const g20 = await ajoutRapide(pg, favA);
     const n20 = neuves(await journal(pg), av);
-    t('B-NV2P P15 ⑳ ⭐⭐ « + AJOUTER » SUR LE FAVORI DU YAOURT A : la liste dit « 1 portion (125 g) · 100 kcal · P 5 · G 13 · L 4 », la ligne écrit 1 pot de 125 g = 100 · 5 · 13 · 4 (à la main)',
-      g20 && /^1 portion \(125 g\) · 100 kcal · P 5 · G 13 · L 4/.test(t20) && n20.length === 1 && n20[0].q === 1 && n20[0].portionWeightG === 125
+    t('B-NV2P P15 ⑳ ⭐⭐ « + AJOUTER » SUR LE FAVORI DU YAOURT A : la liste dit « 100 kcal · pour 1 portion (125 g) · P 5 · G 13 · L 4 », la ligne écrit 1 pot de 125 g = 100 · 5 · 13 · 4 (à la main)',
+      g20 && /^100 kcal · pour 1 portion \(125 g\) · P 5 · G 13 · L 4/.test(t20) && n20.length === 1 && n20[0].q === 1 && n20[0].portionWeightG === 125
       && J([n20[0].kcal, n20[0].prot, n20[0].carbs, n20[0].fat]) === J([100, 5, 13, 4]), J({ t20, n20: n20.map(forme) }));
     /* ㉑ l'habitude du Yaourt B (2 jours en déjeuner) : la carte dit ce qui s'écrit, et ça s'écrit */
     await fermer(pg); await pg.evaluate(() => renderFoodJournal()); await pause(pg, 200);
@@ -1392,7 +1397,7 @@ async function incident(t, b, PORT) {
     const g26 = await ajoutRapide(pg, favPot);
     const n26 = neuves(await journal(pg), av), e26 = await ecranOuvert(pg), m26 = await vider(pg);
     t('B-NV2P P15 ㉖ ⛔⛔ LE 400 / 480 : le favori affiche 400 kcal — « + Ajouter » n\'écrit PAS 480 en silence : RIEN n\'est écrit, l\'écran s\'ouvre sur sa fiche (aucune quantité proposée), la liste et le message disent « à vérifier »',
-      g26 && /^2 portions · 400 kcal/.test(t26) && /à vérifier/.test(t26) && n26.length === 0 && e26.ouvert && e26.bloc && !e26.pastille && m26.some((m) => /à vérifier/i.test(m))
+      g26 && /^400 kcal · pour 2 portions · P /.test(t26) && /à vérifier/.test(t26) && n26.length === 0 && e26.ouvert && e26.bloc && !e26.pastille && m26.some((m) => /à vérifier/i.test(m))
       && /à vérifier : ses valeurs enregistrées ne correspondent plus à sa fiche/.test(nb(e26.fiche)),
       J({ t26, n26: n26.map(forme), e26, m26 }));
     /* ㉗ sur cet écran, la personne dit sa quantité : ce que l'écran montre est ce qui s'écrit */
@@ -1425,7 +1430,7 @@ async function incident(t, b, PORT) {
     L3 = await items(pg);
     const tD = nb((L3.find((x) => x.fav && x.nom === 'Barre P15 (test)') || {}).txt);
     t('B-NV2P P15 ㉙ ⛔⛔ UNE PROTÉINE INCONNUE N\'EST PAS 0 : le favori pris par l\'étoile n\'a PAS de protéines (aucune clé), et la liste dit « P ? » — et « non vérifié » (une ancienne ligne qu\'aucune fiche ne confirme)',
-      gD && !!fD && !('prot' in fD) && /50 g · 230 kcal · P \? · G 30 · L 10 · non vérifié/.test(tD), J({ fD, tD }));
+      gD && !!fD && !('prot' in fD) && /230 kcal · pour 50 g · P \? · G 30 · L 10 · non vérifié/.test(tD), J({ fD, tD }));
     av = await ids(pg);
     const gD2 = await ajoutRapide(pg, L3.find((x) => x.fav && x.nom === 'Barre P15 (test)') || null);
     const nD = neuves(await journal(pg), av);
@@ -1440,8 +1445,8 @@ async function incident(t, b, PORT) {
     av = await ids(pg);
     const gK2 = await ajoutRapide(pg, favG);
     const nK = neuves(await journal(pg), av);
-    t('B-NV2P P15 ㉛ ⭐ UNE CORRECTION À LA MAIN N\'EST PAS « À VÉRIFIER » : « 2 portions (200 g) · 300 kcal » sans réserve, et « + Ajouter » écrit 300 (360 → 300 tracé)',
-      gK && gK2 && /^2 portions \(200 g\) · 300 kcal/.test(tG) && !/à vérifier/.test(tG) && nK.length === 1 && nK[0].kcal === 300
+    t('B-NV2P P15 ㉛ ⭐ UNE CORRECTION À LA MAIN N\'EST PAS « À VÉRIFIER » : « 300 kcal · pour 2 portions (200 g) » sans réserve, et « + Ajouter » écrit 300 (360 → 300 tracé)',
+      gK && gK2 && /^300 kcal · pour 2 portions \(200 g\) · P /.test(tG) && !/à vérifier/.test(tG) && nK.length === 1 && nK[0].kcal === 300
       && nK[0].n2 && J((nK[0].n2.corr || []).map((x) => [x.c, x.v, x.avant])) === J([['kcal', 300, 360]]), J({ tG, nK: nK.map(forme) }));
     /* ㉜ une quantité ABSENTE : rien n'est écrit, rien n'est inventé, et ce n'est pas « à vérifier » */
     await fermer(pg); g = await ouvrirAjout(pg); L3 = await items(pg);
@@ -1457,7 +1462,7 @@ async function incident(t, b, PORT) {
     const gS2 = await ajoutRapide(pg, shk);
     const nS = neuves(await journal(pg), av), eS = await ecranOuvert(pg);
     t('B-NV2P P15 ㉜b ⛔⛔ UNE VALEUR IMPOSSIBLE (156 kcal · 26 g de protéines notés pour 5 g) : la liste dit « à vérifier », « + Ajouter » n\'écrit RIEN, l\'écran dit « ne peuvent pas tenir dans 5 g »',
-      gS2 && !!shk && /^5 g · 156 kcal/.test(nb(shk.txt)) && /à vérifier/.test(nb(shk.txt)) && nS.length === 0 && eS.ouvert
+      gS2 && !!shk && /^156 kcal · pour 5 g · P /.test(nb(shk.txt)) && /à vérifier/.test(nb(shk.txt)) && nS.length === 0 && eS.ouvert
       && /À vérifier : ses valeurs ne peuvent pas tenir dans 5 g/.test(nb(eS.fige)), J({ shk, nS: nS.map(forme), eS }));
     /* ㉝ HORS LIGNE : la reprise ne dépend d'aucun réseau */
     await fermer(pg);

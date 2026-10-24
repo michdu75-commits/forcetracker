@@ -432,10 +432,14 @@ module.exports.source = function (t, ROOT, fs, path) {
   t('B-NM6-C ② `_n2Reajouter` a exactement 3 appelants : _n2Apercu (l\'aperçu, qui ne peut pas écrire), quickAddFood, rejouerRepas',
     JSON.stringify(hors) === JSON.stringify(['_n2Apercu', 'quickAddFood', 'rejouerRepas']) && apObjet && iAp > 0 && iEnr > iAp,
     JSON.stringify({ hors: hors, apObjet: apObjet, iAp: iAp, iEnr: iEnr }));
-  /* ③ LA SEULE PORTE QUI LIT L'ÉCRAN pour en faire une ligne : `_n2EntreeEcran`, appelée par « Ajouter » seulement */
-  const lit = appelants('_n2EntreeEcran');
-  t('B-NM6-C ③ `_n2EntreeEcran` (la lecture de l\'écran) n\'a qu\'un appelant : addFoodEntry',
-    JSON.stringify(lit) === JSON.stringify(['addFoodEntry']), JSON.stringify(lit));
+  /* ③ LA SEULE PORTE QUI LIT L'ÉCRAN pour en faire une LIGNE DU JOURNAL : `_n2EntreeEcran`, appelée par « Ajouter ».
+     24/10 (NV2-FIAB, D-134) : un 2ᵉ appelant DÉCLARÉ, `majFavoriDepuisEcran` (« ⭐ Corriger ce favori ») — un geste DE l'écran,
+     qui le lit par construction pour en faire un FAVORI, et n'écrit JAMAIS le journal (ni `_n2Enregistrer`, ni `S.foodLog`).
+     Un 3ᵉ appelant non déclaré, ou un journal écrit par la correction d'un favori, le font rougir (N20, N21). */
+  const lit = appelants('_n2EntreeEcran'), MF = corps('majFavoriDepuisEcran') || '';
+  const mfSansJournal = MF.length > 0 && MF.indexOf('_n2Enregistrer(') < 0 && !/S\.foodLog/.test(MF);
+  t('B-NM6-C ③ `_n2EntreeEcran` (la lecture de l\'écran) a exactement 2 appelants : addFoodEntry (une ligne) et majFavoriDepuisEcran (un favori, qui n\'écrit jamais le journal)',
+    JSON.stringify(lit) === JSON.stringify(['addFoodEntry', 'majFavoriDepuisEcran']) && mfSansJournal, JSON.stringify({ lit: lit, mfSansJournal: mfSansJournal }));
   /* ④ ⭐⭐ LE CŒUR DE M6 : `_n2Reajouter` ne lit RIEN de l'écran — ni le DOM, ni l'état de l'écran d'ajout, ni les
      fonctions qui le lisent — et sa provenance est écrite en dur (une reprise de la liste). */
   const RA = corps('_n2Reajouter');

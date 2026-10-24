@@ -39015,6 +39015,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      volontaire qui ne revient pas, et la LIMITE DITE (une modification hors ligne remplacée par « Restaurer », X3). Bloc
      B-NIX ; banc `tools/banc_nut_v2_p1_croise.js`, contrôle négatif `tools/mut_nut_v2_p1_croise.py`. */
   await require('./nut_v2_p1_croise.js').croise(t, b, PORT);
+  /* 🔎 NUTRITION V2 · FIABILITÉ DES DONNÉES (mission P1 de Michel, 24/10/2026, lot 6) : la reprise retrouve la fiche par l'IDENTITÉ du
+     produit (code-barres, `ciqual:`) ou offre trois issues ; deux saisies du même produit qui se contredisent se disent « à vérifier » ;
+     « ✕ » et la remise à zéro (admin, préparée, jamais automatique) sont des dates de départ synchronisées ; un favori se corrige sans
+     réécrire le journal ; « kcal · pour Q · P · G · L » partout. Blocs B-NFIAB (à l'écran) et B-NFIAB-X (vrai Code.js en local) ;
+     banc `tools/banc_nut_fiabilite.js`, contrôle négatif `tools/mut_nut_fiabilite.py`. */
+  { const NF = require('./nut_fiabilite.js'); await NF.ecran(t, b, PORT); await NF.croise(t, b, PORT); }
   /* 🏃 B1/B2 (décision Michel, 24/09/2026) : activité jamais choisie ≠ 1,55, relectures bornées.
      Contrôle négatif : `tools/mut_activite_provenance.py`. */
   await require('./activite_provenance.js').ecran(t, b, PORT);

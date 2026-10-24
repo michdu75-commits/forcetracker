@@ -248,6 +248,56 @@ function _fusionnerFoodLogRestauration(local, cloud){
   return {liste:out, ajoutees};
 }
 
+/* 🙈🧹 NV2-FIAB (24/10/2026, mission de Michel) — « ✕ » ET LA REMISE À ZÉRO SONT DES DATES DE DÉPART, SYNCHRONISÉES.
+   `S.hiddenFoods` dit ce que les PROPOSITIONS (« Mes aliments », « Déjà noté par toi », les favoris, les repas habituels,
+   les idées) ne montrent plus. ⛔ Jamais le journal : il reste intact, ses totaux aussi.
+   ⭐ Une entrée = {k, t} : l'identité masquée (`id:…` = code-barres ou `ciqual:…` ; `nom:…` pour un aliment sans
+      identifiant ; un nom nu pour un masquage d'avant le 23/10) et l'INSTANT du masquage. Ce qui a été noté (ou mis en
+      favori) AVANT `t` n'est plus proposé ; ce qui est noté APRÈS revient de lui-même — re-noter, c'est le vouloir.
+   ⭐ `k:'*'` = la REMISE À ZÉRO (décision de Michel du 24/10, Q14) : une seule date, pas une liste qui grossit.
+   ⭐ Fusionner deux appareils est sans perte et sans ordre : par identité, le plus TARD gagne (max de `t`) ; une
+      entrée antérieure à la remise à zéro n'a plus d'effet, elle tombe. C'est ce qui empêche toute réapparition par
+      la synchro, la restauration ou un autre téléphone — chacun applique les mêmes dates.
+   ⛔ Avant : des chaînes, locales, jamais synchronisées (Principal, N2 du 24/10), masquées « jusqu'à ce qu'on le
+      re-note » — elles deviennent {k, t:maintenant}, le même sens dit en date. Une date future (horloge fausse) est
+      ramenée à maintenant ; la liste est bornée, la remise à zéro n'en sort jamais. */
+const _NUT_MASQUES_MAX=300;
+function _nutMasquesNormaliser(liste, maintenant){
+  const now=+maintenant||Date.now(), par=Object.create(null);
+  (Array.isArray(liste)?liste:[]).forEach(x=>{
+    let k='', t=0;
+    if(typeof x==='string'){ k=x; t=now; }
+    else if(x && typeof x==='object' && typeof x.k==='string'){ k=x.k; t=+x.t; }
+    k=String(k||'').trim().toLowerCase().slice(0,120);
+    if(!k || !(isFinite(t) && t>0)) return;
+    if(t>now) t=now;
+    if(!(k in par) || t>par[k]) par[k]=t;
+  });
+  const g=par['*']||0;
+  const out=Object.keys(par).filter(k=>k!=='*' && par[k]>g).map(k=>({k:k, t:par[k]}))
+    .sort((a,b)=>(b.t-a.t)||(a.k<b.k?-1:1)).slice(0, g ? _NUT_MASQUES_MAX-1 : _NUT_MASQUES_MAX);
+  return g ? [{k:'*', t:g}].concat(out) : out;
+}
+function _nutMasquesFusion(a, b, maintenant){
+  return _nutMasquesNormaliser([].concat(Array.isArray(a)?a:[], Array.isArray(b)?b:[]), maintenant);
+}
+/* La date de départ d'un aliment : la plus tardive de la remise à zéro, de son identité (`cle`, celle de `_n2Cle`)
+   et — pour les masquages d'avant le 23/10 seulement — de son nom nu. ⛔ Un `nom:…` ne masque jamais un produit qui
+   a un code-barres : deux produits ne se confondent pas par leur nom (D-111). */
+function _nutDepart(masques, cle, nom){
+  const c=String(cle||'').trim().toLowerCase(), n=String(nom||'').trim().toLowerCase();
+  let t=0;
+  (Array.isArray(masques)?masques:[]).forEach(e=>{
+    if(e && typeof e==='object' && (e.k==='*' || e.k===c || (n && e.k===n))) t=Math.max(t, +e.t||0);
+  });
+  return t;
+}
+/* Les favoris qui restent proposés : un favori porte l'instant où il a été mis (`t`, depuis le 24/10) ; sans lui, il
+   date d'avant — donc d'avant toute remise à zéro et tout « ✕ ». `cle` = la fonction d'identité de l'app (`_n2Cle`). */
+function _nutFavorisVivants(favs, masques, cle){
+  return (Array.isArray(favs)?favs:[]).filter(f=>{ if(!f) return false; const d=_nutDepart(masques, cle(f), f.name); return !d || (+f.t||0) > d; });
+}
+
 /* ═══ 🫙 LA MIGRATION DU POT COMMUN VERS LES TROIS POTS (19/09/2026, phase 3.1) ════════════
    Michel : *« Je veux une migration déterministe et prudente. […] Ne tente pas de
    reconstruire une répartition historique inexistante. »*
@@ -590,7 +640,7 @@ function load(){
        conséquence, rien ne dépend d'un `id` stable d'une session à l'autre. */
     _foodLogIdentifier(S.foodLog);
     S.savedFoods=JSON.parse(localStorage.getItem('ft4_savedfoods')||'[]');
-    S.hiddenFoods=JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]');
+    S.hiddenFoods=_nutMasquesNormaliser(JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]'));   // NV2-FIAB : des dates de départ
     S.foodAiUses=parseInt(localStorage.getItem('ft4_foodai')||'0')||0;
     /* 🫙 LES TROIS POTS SÉPARÉS + LEUR MIGRATION (19/09/2026, phase 3.1).
        ⚠️ `null` VOLONTAIRE quand la clé n'existe pas : c'est le signal « ce pot n'a jamais

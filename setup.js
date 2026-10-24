@@ -1132,6 +1132,9 @@ function _cloudSync(){
       dietNotes:S.dietNotes||'',
       foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
       savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
+      /* NV2-FIAB (24/10) — les masquages (« ✕ ») et la remise à zéro voyagent : des dates de départ, fusionnées par le max
+         (`_nutMasquesNormaliser`). Sans eux, un aliment retiré revenait sur un autre appareil ou après « Restaurer » (N2). */
+      hiddenFoods:_nutMasquesNormaliser(S.hiddenFoods),
       /* 🫙 L'ANCIEN POT PART TOUJOURS — gelé, mais pas retiré du transport : un appareil
          resté sur l'ancienne version le lit encore. Les trois pots séparés partent à côté
          (19/09/2026, phase 3.1). ⛔ Sans eux, une restauration rendrait 25 essais neufs sur
@@ -3697,6 +3700,12 @@ function _applyRestoreData(raw){
      lignes (`_fusionnerFoodLogRestauration`, state.js). Puis l'identité canonique (`_foodLogIdentifier`). */
   try{if(Array.isArray(d.foodLog)){S.foodLog=_fusionnerFoodLogRestauration(S.foodLog,d.foodLog).liste;_foodLogIdentifier(S.foodLog);}}catch(e){console.warn('[FT restore] foodLog',e);}
   try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
+  /* 🙈 NV2-FIAB (24/10, décision de Michel) — CE QUI A ÉTÉ MASQUÉ OU REMIS À ZÉRO NE REVIENT PAS PAR LA RESTAURATION. Les dates
+     de départ du cloud s'AJOUTENT à celles du téléphone (le plus tard gagne : rien n'est démasqué), puis les favoris qui en
+     datent d'avant sortent de la liste — le serveur garde les siens (un envoi vide ne remplace jamais sa liste, P1) : sans ce
+     tri, « Restaurer » ramenait les anciens favoris après une remise à zéro. ⛔ Le journal n'est pas touché. */
+  try{if(Array.isArray(d.hiddenFoods))S.hiddenFoods=_nutMasquesFusion(S.hiddenFoods,d.hiddenFoods);}catch(e){console.warn('[FT restore] hiddenFoods',e);}
+  try{if(typeof _n2Cle==='function')S.savedFoods=_nutFavorisVivants(S.savedFoods,S.hiddenFoods,_n2Cle);}catch(e){console.warn('[FT restore] favoris masqués',e);}
   try{if(typeof d.foodAiUses==='number')S.foodAiUses=Math.max(S.foodAiUses||0,d.foodAiUses);}catch(e){}
   /* 🫙 LES TROIS POTS SÉPARÉS (19/09/2026) — même geste que la ligne au-dessus : un MAXIMUM,
      jamais un remplacement, pour qu'une restauration ne puisse pas RENDRE des essais déjà
