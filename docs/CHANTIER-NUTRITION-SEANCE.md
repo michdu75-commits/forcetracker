@@ -9,7 +9,7 @@
 
 ## 0. En bref
 
-- **Coordination (24/10 au soir) → §8.** Les deux sessions spécialisées corrigent chacune leur couloir sur leur branche ; je prépare l'intégration sur une branche dédiée, sans toucher à master. Mesuré : **1 seul conflit de code** entre les branches (mécanique), des **numéros réservés** pour que personne ne renumérote, un tableau de coordination par chantier, et ce qui manque aux contrôles transversaux. Deux nouvelles questions : **Q21** (la bande FORCE TRACKER « sur l'Accueil seulement » n'est pas construite, et elle porte le « ? ») et **Q22** (GO du clone pour la recette iPhone).
+- **Coordination (24/10 au soir) → §8.** Les deux sessions spécialisées corrigent chacune leur couloir sur leur branche ; je prépare l'intégration sur une branche dédiée, sans toucher à master. Mesuré : **plus aucun conflit de code** entre les trois branches depuis que la session Séance a fusionné master elle-même (le seul, dans `constants.js`, est réglé), des **numéros réservés** pour que personne ne renumérote (Séance avait réservé avant moi : je me suis aligné), un tableau de coordination par chantier, et ce qui manque aux contrôles transversaux. Deux nouvelles questions : **Q21** (la bande FORCE TRACKER « sur l'Accueil seulement » n'est pas construite, et elle porte le « ? ») et **Q22** (GO du clone pour la recette iPhone).
 - **L'état est vérifié en exécutant, pas seulement en lisant.** J'ai rejoué sur le master d'aujourd'hui les 26 scénarios de la contre-vérification Séance du 23/10 : vraie app, réseau coupé, données fictives. Résultat : **les mêmes écarts qu'au 23/10** (F01 à F08, F19, plus 3 défauts de l'édition d'une séance), et **les cas qui protègent les données restent conformes**. Nutrition V2 n'a rien changé côté Séance.
 - **Rien n'est à refaire côté Séance.** La branche porte deux lots finis, testés et documentés, mais non intégrés : le **repos qui survit à la fermeture** (SEANCE-REPOS-01, avec l'expiration à 15 min) et les **8 vignettes** du sélecteur. Un essai de fusion jetable avec master donne **1 seul conflit de code**, une entrée de point rouge, trivial, plus 6 conflits de documentation.
 - **Nutrition : le cas « Iso zero » est reproduit** sur données fictives : deux propositions du même aliment, P 26 et P 35. Deux trous mesurés : « ✕ » ne retire pas l'aliment de « Déjà noté par toi », et ce que l'on masque n'est jamais synchronisé.
@@ -207,13 +207,13 @@ Les harnais de la session Séance sont sur la branche (`tools/contre_verif_seanc
 |---|---|---|---|---|---|
 | `master` (référence) | — | `37fbbbb3` | — | application **identique à l'octet** à `ft-v1260` (`1df57e4c`) ; depuis : outils de la D-031 accélérée et documentation | `ft-v1260` en ligne ; Apps Script @193 ; Worker inchangé |
 | `claude/nutrition-v2` | Claude Nutrition | `1c9428e7` | repartie de master `999b7947` ; +1 commit : sa ligne de journal, portée **par sa branche** et pas par master ; il ne lui manque que `37fbbbb3` (journal) | rien de codé poussé à cette heure | démarrée à 20:35 UTC |
-| `claude/dreamy-bell-pu88ia` | Claude Séance | `99ef3002` | base commune `d93cef0b` (24/10, 06:58) ; **42 commits d'avance, 63 de retard** (publication `ft-v1260`, D-031 accélérée, documentation) | repos persistant (SEANCE-REPOS-01 + `D-102`) · 8 vignettes (`D-104` à `D-107`) · harnais de la contre-vérification du 23/10 · `BUGS` §91, 93, 95, 99, 100 | la session y fusionne master (pas encore poussé) et annonce une **baisse de 130 témoins « voulue »** : à justifier témoin par témoin à la livraison |
+| `claude/dreamy-bell-pu88ia` | Claude Séance (session-C) | `5a7b0a57` | master `999b7947` **fusionné par sa session** (`ce45c79a`, 20:39 UTC) ; 44 commits d'avance, 2 de retard (mes deux commits de documentation) ; sa ligne de journal est portée **par sa branche** | repos persistant (SEANCE-REPOS-01 + `D-102`) · 8 vignettes (`D-104` à `D-107`) · harnais de la contre-vérification du 23/10 · `BUGS` §91, 93, 95, 99, 100 | lots 1 → 5 démarrés à 20:40 UTC ; la session a signalé une **baisse de 130 témoins « voulue »** : à justifier témoin par témoin à la livraison |
 | `claude/integration-nut-seance` | Claude Principal | — | sera créée depuis master au moment d'intégrer | — | après les deux livraisons |
 
 ### 8.2 Les conflits (simulation `git merge-tree`, rien n'est écrit dans le dépôt)
 
-- **master + Séance** : **1 conflit de code**, dans `constants.js` : Séance réécrit la ligne du point rouge `repos-maximum` (« 15 minutes après la fin du repos », `D-102`), juste à côté de `nutri-v2-quantites` ajouté par Nutrition V2. Résolution mécanique : on garde les deux. Et **6 conflits de documentation** : `BUGS.md`, `CONTEXTE-ACTUEL`, `DECISIONS`, `INVENTAIRE` (régénéré), `JOURNAL-ARCHIVE` (les deux ajouts), `JOURNAL-DE-PARTAGE`.
-- **master + Nutrition** : le journal de partage seulement. **Séance + Nutrition** : les 7 mêmes fichiers (Nutrition n'a encore rien codé).
+- **Mesuré à 20:39 UTC**, avant que la session Séance ne fusionne master : **1 conflit de code**, dans `constants.js` (Séance réécrit la ligne du point rouge `repos-maximum`, « 15 minutes après la fin du repos », juste à côté de `nutri-v2-quantites` de Nutrition V2), et 6 conflits de documentation.
+- **Re-mesuré à 20:55 UTC**, après la fusion de master faite par la session Séance (`ce45c79a`) : **aucun conflit de code** entre les trois branches. Le conflit de `constants.js` a été réglé par son responsable (les trois points rouges `repos-maximum`, `repos-persistant` et `nutri-v2-quantites` sont présents ; la résolution sera relue à la livraison). Il reste des conflits de documentation : master + Séance → `CONTEXTE-ACTUEL`, `JOURNAL-DE-PARTAGE` ; Séance + Nutrition et master + Nutrition → `JOURNAL-DE-PARTAGE`.
 - **Un témoin d'un couloir a été réécrit par l'autre** : `B-NP01-A` (banc Nutrition `nut_punch01`) ne compare plus `S.wkt.repos` depuis le repos persistant. C'est justifié et protégé par un contrôle négatif (MA20), mais **Claude Nutrition doit le relire**.
 
 ### 8.3 Fichiers communs et frontières
@@ -234,13 +234,15 @@ Les harnais de la session Séance sont sur la branche (`tools/contre_verif_seanc
 
 ### 8.4 Numéros partagés : réservés pour que personne ne renumérote à la fusion
 
+> ⚠️ **Corrigé à 20:55 UTC.** Ma première version (20:54) donnait `D-114` → `D-123` et §103 → §112 à Nutrition. La session Séance avait réservé `D-114` → `D-129` et §103 → §112 à 20:40, sur **sa** branche : le journal de master ne pouvait pas le montrer. **Le premier qui réserve garde** ; Nutrition et Principal prennent la suite. *C'est la faille écrite en tête du journal de partage — « un fichier ne prévient pas, il faut aller le lire » — et ici il fallait lire une autre branche que master.*
+
 | Espace | Déjà pris | Prochain libre | Claude Nutrition | Claude Séance | Claude Principal |
 |---|---|---|---|---|---|
-| Décisions `D-` | master 096 à 099, 101, 103, 108 à 113 ; Séance 100, 102, 104 à 107 | D-114 | D-114 à D-123 | D-124 à D-133 | D-134 à D-139 |
-| `BUGS.md` § | master 92, 94, 96 à 98, 101, 102 ; Séance 91, 93, 95, 99, 100 | §103 | §103 à §112 | §113 à §122 | §123 à §127 |
+| Décisions `D-` | master 096 à 099, 101, 103, 108 à 113 ; Séance 100, 102, 104 à 107 | D-114 | D-130 à D-139 | **D-114 à D-129** (réservés par sa session) | D-140 à D-144 |
+| `BUGS.md` § | master 92, 94, 96 à 98, 101, 102 ; Séance 91, 93, 95, 99, 100 | §103 | §113 à §122 | **§103 à §112** (réservés par sa session) | §123 à §127 |
 | Pop-up « Quoi de neuf » | v80 | v81 | v81, si elle est méritée (règle #11) | v82, si elle est méritée | confirmé à la publication |
 | Version `ft-vNNNN`, clé `sw.js` | `ft-v1260` | `ft-v1261` | jamais pendant le travail | jamais pendant le travail | posée à la publication |
-| Blocs de témoins | — | — | son préfixe, jamais renommé | son préfixe, jamais renommé | `B-TRV` |
+| Blocs de témoins | — | — | son préfixe, jamais renommé | `C-NUM-*`, `C-REC-*`, `C-REG-*`, `C-IMG-*` | `B-TRV` |
 
 ### 8.5 Tableau de coordination
 
