@@ -54,10 +54,11 @@
 
 ## 5. Avant / après
 
-- **Le banc sur le code de master `98c09ed9`** (même banc, `NUTF_RACINE` = une copie de master) : **16 OK / 27 rouge** —
-  les 27 rouges sont les défauts ci-dessus ; les 16 verts sont les témoins de **non-régression** (scan, CIQUAL exact,
-  code-barres, ml, réouverture, quantités refusées, saisie à la main, étiquette, IA, totaux et contexte de Milo).
-- **Le même banc sur la branche** : _voir §10 (chiffres de la dernière exécution)_.
+- **Le banc final (48 témoins) sur le code de master `98c09ed9`** (même banc, `NUTF_RACINE` = une copie dont les 13 fichiers
+  applicatifs sont ceux de master) : **16 OK / 32 rouge** — les 32 rouges sont les défauts ci-dessus ; les 16 verts sont les
+  témoins de **non-régression** (scan, CIQUAL au chiffre près, code-barres, ml, réouverture, quantités refusées, saisie à la
+  main, étiquette, IA, totaux et ce que Milo lit, aucune erreur de page).
+- **Le même banc sur la branche (arbre final)** : **48 OK / 0 rouge**.
 - **Le contrôle négatif** (`tools/mut_nut_fiabilite.py`, 25 mutations « GARDE » — F1, F1b, F2 → F24 — et 1 témoin « commentaire », MC1) : _voir §10_.
 
 ## 6. Ce qui reste ouvert (dit, pas caché)
@@ -153,7 +154,7 @@ par le vrai `Code.js` en local) :
 
 | Arbre | Résultat |
 |---|---|
-| master `98c09ed9` (copie servie, même banc) | ⏳ |
+| master `98c09ed9` (copie servie, même banc ; les 13 fichiers applicatifs de master) | **16 OK / 32 rouge** (les 16 verts : la non-régression) |
 | branche (arbre final) | **48 OK / 0 rouge** |
 
 **Contrôles négatifs** (chaque défaut corrigé réintroduit dans une copie ; le banc doit rougir au bon témoin) :
