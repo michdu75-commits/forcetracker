@@ -1069,9 +1069,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0)*(_uni?2:1);
   const _uniTag=_uni?`<span class="uni-tag" onclick="event.stopPropagation();openUniHelp('${_escAttrJs(ex.name)}')">🔀 ${uniLabel(ex.name)}</span>`:'';
   const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
-  const _cThumb=_exImg(ex.name)||_exMuscleImg(ex.name); // vignette repliée : photo/gif sinon muscle deviné
-  const _cReal=!!_exImg(ex.name);
-  const _cThumbHtml=(!_groupMode&&!inGroup)?`<img src="${_cThumb}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:40px;height:40px;object-fit:${_cReal?'cover':'contain'};${_cReal?'':'padding:2px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;border:1px solid var(--sep);margin-right:9px;cursor:pointer;" loading="lazy">`:'';
+  const _cThumb=_exImg(ex.name); // vignette repliée : la photo ou l'animation, sinon « Aucune illustration disponible » (24/10/2026)
+  const _cThumbHtml=(!_groupMode&&!inGroup)?(_cThumb?`<img src="${_cThumb}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--sep);margin-right:9px;cursor:pointer;" loading="lazy">`
+    :_vignetteSansIllu(40,ei,ex.name,'margin-right:9px;')):'';
   // En mode sélection, tout apparaît replié pour faciliter les taps
   // S.expandAll (option « tout dérouler », retour Emma) : tous les exercices ouverts en même temps
   const isExpanded=!_groupMode&&(S.expandAll||ei===_expandedEx||exCount===1);
@@ -1136,7 +1136,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   // Vue développée
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
-  const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
+  // la vignette : la photo ou l'animation, sinon « Aucune illustration disponible » (24/10/2026) — plus de muscle deviné
   const _curSi=ex.sets.findIndex(x=>x&&!x.done);   // UX SÉANCE : la série à faire maintenant (affichage seul)
   const _notesPrev=_notesPrecedentes(ex);            // D-086 : commentaire de la dernière fois, SEULEMENT sur sa série exacte
   const _noteExPrev=_noteExPrecedente(ex);           // D-087 : la note générale de l'exercice la dernière fois (ou null)
@@ -1230,7 +1230,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   return`<div class="ex-block${(!inGroup&&ei===_expandedEx)?' ex-actif':''}${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`<img src="${_thumbSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:${hasLocalGif?'cover':'contain'};${hasLocalGif?'':'padding:3px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`
+    +(hasLocalGif?`<img src="${_exImgSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`:_vignetteSansIllu(48,ei,ex.name,''))
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${_escNote(ex.name)}${_uniTag} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
@@ -7859,7 +7859,7 @@ function _impThumb(name){
   let grp=''; try{ const cn=exNomCatalogue(name); const ex=EXLIB.find(e=>e.n===cn); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
   if(grp) return `<img src="${grp}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:4px;">`;
   // vraiment inconnu (hors biblio) → icône haltère neutre
-  return `<div style="${box}display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg></div>`;
+  return `<div style="${box}display:flex;align-items:center;justify-content:center;">${_ICO_HALTERE}</div>`;
 }
 /* ⭐ LA LIGNE ORANGE — jumelle de `_vmConfirmRow` juste dessous, même forme, même endroit (R13).
    Elle dit ce que l'app va faire AVANT de le faire, et laisse la main : « 🔗 Rattacher ».
@@ -10980,6 +10980,18 @@ const _MG_IMG={
   abs:'muscles/muscle abdominaux.png',obliques:'muscles/muscle abdominaux.png',
   calves:'muscles/muscle mollet.png',tibialis:'muscles/muscle mollet.png',
 };
+/* 🖼️ « AUCUNE ILLUSTRATION DISPONIBLE » (mission Séance de Michel du 24/10/2026 ; cahier commun §2.3, F15) — un exercice sans
+   photo ni animation (17 du catalogue, mesurés le 23/10, et tout exercice perso sans photo) ne montre plus, à sa place, une
+   image de muscle DEVINÉE de son nom : la vignette de la séance (repliée et ouverte) montre l'haltère neutre — la même icône
+   que l'exercice inconnu de `_progExThumb` — et la démonstration le dit en toutes lettres. ⛔ Rien n'est attribué à un
+   exercice sans correspondance vérifiée ; les illustrations existantes ne changent pas. Toucher la vignette ouvre toujours la
+   démonstration, où la personne peut ajouter la photo de sa machine. ⏭️ Hors de ce changement : les icônes des listes
+   d'import et de l'éditeur de programme (`_exMuscleImg` y sert d'aide pour reconnaître une ligne). */
+const _SANS_ILLU='Aucune illustration disponible';
+const _ICO_HALTERE='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg>';
+function _vignetteSansIllu(px, ei, name, marge){
+  return `<span class="ex-sans-illu" role="img" aria-label="${_SANS_ILLU}" title="${_SANS_ILLU}" onclick="toggleExGif(${ei},'${_escAttrJs(name)}');event.stopPropagation()" style="width:${px}px;height:${px}px;${marge}">${_ICO_HALTERE}</span>`;
+}
 // SRC de secours quand un exo n'a pas d'image dédiée : devine le muscle principal depuis le nom
 // (moteur _mscScores/_MEX) → image muscle réaliste (PNG anatomie) ; sinon silhouette du groupe.
 // → une machine importée (« Chest press machine convergente… ») a TOUJOURS une figurine pertinente.
@@ -11666,11 +11678,10 @@ function toggleExGif(ei,name){
     // (La vignette 40/48 px garde `cover`, elle : sur un carré, une image carrée n'y perd rien.)
     html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:contain;background:#fff;display:block;" loading="lazy">`;
   } else {
-    // Pas de photo/gif dédié → figurine du muscle deviné du nom (taxonomie) — jamais vide
-    const file=_exMuscleImg(name);
+    /* 🖼️ Pas de photo ni d'animation pour cet exercice → on le DIT (mission Séance du 24/10/2026, cahier commun §2.3). Avant :
+       une grande image de muscle DEVINÉE du nom, présentée comme son illustration. Le groupe du catalogue, lui, est un fait. */
     const ex=EXLIB.find(e=>e.n===exNomCatalogue(name));
-    html+=`<div style="text-align:center;padding:8px 0;"><img src="${file}" style="width:160px;height:auto;display:block;margin:0 auto;"></div>`;
-    html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?ex.g:'Muscle principal deviné'}</div>`;
+    html+=`<div class="ex-sans-illu-demo" role="img" aria-label="${_SANS_ILLU}">${_ICO_HALTERE.replace('width="20" height="20"','width="34" height="34"')}<b>${_SANS_ILLU}</b>${ex?`<span>${_escNote(ex.g)}</span>`:''}</div>`;
     // Machine importée sans image dédiée → proposer d'ajouter la vraie photo (deviendra la vignette + le grand format)
     html+=`<button class="btn btn-bg2" style="width:100%;margin-top:10px;font-size:13px;" onclick="event.stopPropagation();changeExImg(${_argAttr(name)})">📷 Ajouter la photo de ta machine</button>`;
   }

@@ -881,6 +881,11 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .wm-danger .wm-t b{color:var(--red);}
 .wm-on .wm-t b,.wm-on .wm-v{color:var(--sea);}   /* ⏱️ le repos par défaut choisi (mission Séance, 24/10/2026) */
 .wm-note{font-size:12.5px;color:var(--t2);line-height:1.4;margin:-2px 6px 12px;}
+/* 🖼️ « Aucune illustration disponible » (mission Séance, 24/10/2026) : la vignette dit l'absence, la démonstration aussi */
+.ex-sans-illu{display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);cursor:pointer;}
+.ex-sans-illu-demo{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 8px;text-align:center;}
+.ex-sans-illu-demo b{font-size:14px;font-weight:700;color:var(--t2);}
+.ex-sans-illu-demo span{font-size:12px;color:var(--t3);}
 .wm-x{display:flex;align-items:center;justify-content:center;width:100%;height:52px;border-radius:16px;background:var(--bg3);border:none;font-family:var(--font);font-size:15px;font-weight:800;color:var(--t1);cursor:pointer;}
 
 /* ⑥ Petits écrans (≤ 374 px : iPhone SE, mini, Android 360) — mêmes éléments, un peu moins d'air. */

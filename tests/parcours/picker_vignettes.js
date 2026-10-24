@@ -33,8 +33,11 @@ const VIG = [
   { src: 'muscles/vignettes/06_fessiers_ischios_lombaires.png', liseré: 16, sha: 'c6000d133f51de5a186c2c2505862779e29383c870071b606c18d970964faa1f' },
   { src: 'muscles/vignettes/07_abdominaux.png', liseré: 17, sha: '046dfd4e6c75da34fcc8bc0cfc935e64f5b49733566bd2036a2aeb8491a33d0c' },
   // Mollets (2ᵉ paquet) : PAS de liseré — l'original était une carte arrondie sur un grand fond blanc (2172 × 724, sha256
-  // 11f4582a…856e) ; le dépôt garde la carte seule, 996 × 724 (fond blanc retiré, pixels identiques) — empreinte ci-dessous
-  { src: 'muscles/vignettes/08_mollets.png', sha: '59605168c31134b904ba1f878082c0425d70c4444e5e34f7409c8764bde0f499', mollets: true } ];
+  // 11f4582a…856e) ; D-107 (23/10) : la carte seule, 996 × 724 (fond blanc retiré, pixels identiques, sha256 59605168…f499).
+  // ↪️ RÉÉCRIT LE 24/10/2026 (mission Séance de Michel, « compression Mollets » — D-123) : la même carte RÉDUITE au format des
+  // 7 autres (183 px de large, 183 × 133, même rapport largeur / hauteur donc même cadrage), 765 389 → 33 747 octets ;
+  // le dessin n'est pas retouché. Empreinte ci-dessous.
+  { src: 'muscles/vignettes/08_mollets.png', sha: '1495db12df76b22ccaaf556f418c8c40f790086f23754ac385722bdeb10686e0', mollets: true } ];
 // ce qui fait les catégories et le bouton « Anatomie » — figé tel qu'avant le lot (master f82a7c07)
 const TAGS = [['Pectoraux'], ['Dos'], ['Épaules', 'Trapèzes'], ['Biceps', 'Triceps'], ['Jambes'], ['Fessiers', 'Lombaires'], ['Abdominaux'], ['Mollets']];
 const ANAT = ['anatomy/pectoreaux/schema pectoreaux.png', 'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png',
@@ -97,8 +100,9 @@ async function ecran(t, b, PORT) {
       t('C-VIG-A2 ⭐⭐ chaque tuile porte SA vignette (correspondance stricte) ; Mollets porte la sienne (`08_mollets.png`) — ni « Corps complet », ni son ancienne image, ni la vignette d\'un autre groupe',
         _det(T.map(x => x.src)) === _det(VIG.map(v => v.src)) && !T.some(x => /corps_complet|muscle mollet/.test(x.src || '')),
         _det(T.map(x => x.src)));
-      t('C-VIG-A3 les 8 images se chargent ; les 7 du 1ᵉʳ paquet à leur taille native (183 px de large), Mollets à celle de sa carte (996 × 724) : rien n\'a été redimensionné',
-        T.every(x => x.charge) && T.slice(0, 7).every(x => x.nat && x.nat[0] === 183) && _det(T[7].nat) === '[996,724]', _det(T.map(x => [x.charge, x.nat])));
+      /* ↪️ RÉÉCRIT LE 24/10/2026 (D-123) : il exigeait Mollets à 996 × 724 ; la carte est réduite au format des 7 autres. */
+      t('C-VIG-A3 les 8 images se chargent, toutes au format du paquet : 183 px de large (Mollets 183 × 133, sa carte réduite au même format)',
+        T.every(x => x.charge) && T.slice(0, 7).every(x => x.nat && x.nat[0] === 183) && _det(T[7].nat) === '[183,133]', _det(T.map(x => [x.charge, x.nat])));
       t('C-VIG-A5 ⭐⭐ le liseré du haut est MASQUÉ sur chaque vignette du paquet (lignes masquées ≥ lignes du liseré mesurées), sans étirement (cover, ancré en bas)',
         T.slice(0, 7).every((x, i) => x.fit === 'cover' && x.pos === '50% 100%' && x.masquees >= VIG[i].liseré),
         _det(T.slice(0, 7).map((x, i) => ({ fit: x.fit, pos: x.pos, masquees: Math.round(x.masquees * 10) / 10, liseré: VIG[i].liseré }))));
@@ -113,17 +117,20 @@ async function ecran(t, b, PORT) {
         const d = g.getImageData(0, 0, nw, nh).data, at = (x, y) => { const k = (y * nw + x) * 4; return [d[k], d[k + 1], d[k + 2]]; };
         const orange = p => p[0] > 150 && p[0] > p[1] + 50 && p[0] > p[2] + 60;
         const x0 = -ox / s, y0 = -oy / s, x1 = (W - ox) / s, y1 = (H - oy) / s;
-        let org = 0, coupe = 0;
-        for (let y = 0; y < nh; y += 2) for (let x = 0; x < nw; x += 2) if (orange(at(x, y))) { org++; if (x < x0 || x >= x1 || y < y0 || y >= y1) coupe++; }
+        let org = 0, coupe = 0, ech = 0;
+        for (let y = 0; y < nh; y += 2) for (let x = 0; x < nw; x += 2) { ech++; if (orange(at(x, y))) { org++; if (x < x0 || x >= x1 || y < y0 || y >= y1) coupe++; } }
         let blanc = 0, tot = 0;
         for (let j = 0; j < H * 3; j++) for (let i = 0; i < W * 3; i++) { const fx = (i + .5) / 3, fy = (j + .5) / 3;
           const cx = fx < R ? R : fx > W - R ? W - R : fx, cy = fy < R ? R : fy > H - R ? H - R : fy;
           if ((fx - cx) ** 2 + (fy - cy) ** 2 > R * R) continue;
           const p = at(Math.min(nw - 1, Math.max(0, Math.floor((fx - ox) / s))), Math.min(nh - 1, Math.max(0, Math.floor((fy - oy) / s))));
           tot++; if (Math.min(p[0], p[1], p[2]) > 235) blanc++; }
-        return { fit: cs.objectFit, pos: cs.objectPosition, nat: [nw, nh], blancPct: Math.round(blanc / tot * 10000) / 100, orange: org, orangeCoupe: coupe }; });
+        return { fit: cs.objectFit, pos: cs.objectPosition, nat: [nw, nh], blancPct: Math.round(blanc / tot * 10000) / 100, orange: org, orangePct: Math.round(org / ech * 1000) / 10, orangeCoupe: coupe }; });
       t('C-VIG-A6 ⭐ Mollets : sa vignette remplit le cadre comme les autres — moins de 0,5 % de fond blanc visible, et AUCUN muscle ciblé (orange) coupé (calculé sur les pixels de l\'image et sa position réellement rendue)',
-        !!mol && mol.fit === 'cover' && mol.blancPct < 0.5 && mol.orange > 1000 && mol.orangeCoupe === 0, _det(mol));
+        /* ↪️ RÉÉCRIT LE 24/10/2026 (D-123) : « assez d'orange pour que le témoin mesure quelque chose » se disait en PIXELS
+           (> 1 000 sur la carte de 996 px) ; la carte réduite au format des 7 autres en compte 889. La garde devient une PART de
+           l'image (≥ 5 % — la carte en a environ 14 %), qui ne dépend plus de sa taille. Le reste du témoin ne change pas. */
+        !!mol && mol.fit === 'cover' && mol.blancPct < 0.5 && mol.orangePct >= 5 && mol.orangeCoupe === 0, _det(mol));
     }
     t('C-VIG-A4 [' + w + ' px] chaque vignette s\'affiche en 88 × 51, aucune tuile sous 44 px de haut (zone tactile), aucun débordement horizontal',
       T.length === 8 && T.every(x => x.aff && x.aff[0] === 88 && x.aff[1] === 51 && x.hTuile >= 44) && !dep && !X.errs.length,

@@ -681,7 +681,7 @@ async function ecran(t, b, PORT) {
       S.customExercises = [{ n: nom, g: 'Autres', muscles: { p: [coche], s: [] } }];
       const ts = Date.now() - 864e5;
       S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, exs: [{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }] }]; persist();
-      goScreen('s-progress'); if (typeof switchProgTab === 'function') switchProgTab('seances'); renderSessions();
+      goScreen('progress'); if (typeof switchProgTab === 'function') switchProgTab('seances'); renderSessions();
       const svg = document.querySelector('#sess-list .sess-card [onclick^="showSessMuscleMap"] svg');
       const attendus = _FP.filter(([id]) => id && _MG[coche].paths.indexOf(id) >= 0).length;
       return { nom, coche, carte: !!svg, rouges: svg ? (svg.outerHTML.match(/#FF5555/g) || []).length : -1, attendus };
@@ -725,9 +725,9 @@ async function ecran(t, b, PORT) {
     S.wkt = { date: today(), startTs: Date.now() - 10 * 60000, startHour: 17,
       exs: [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5, done: false, type: 'N' }, { kg: 100, reps: 5, done: false, type: 'N' }] },
             { name: 'Développé Couché', sets: [{ kg: 60, reps: 8, done: false, type: 'N' }] }] };
-    persist(); goScreen('s-log'); renderLog();
+    persist(); goScreen('log'); renderLog();
   });
-  const profil = X => ev(X, () => { goScreen('s-setup'); renderSetup(); const el = document.getElementById('rest-sel');
+  const profil = X => ev(X, () => { goScreen('setup'); renderSetup(); const el = document.getElementById('rest-sel');
     return { val: el.value, idx: el.selectedIndex, vu: el.selectedIndex >= 0 ? el.options[el.selectedIndex].textContent : '(vide)', opts: [...el.options].map(o => o.value) }; });
   {
     const X = await ouvrir();
@@ -764,7 +764,12 @@ async function ecran(t, b, PORT) {
       sur(() => apres.defRest === 90 && apres.ls === '90' && !apres.ouvert && /1:30/.test(apres.toast) && /Profil/.test(apres.toast)), voir(() => _j(apres)));
     const p = await profil(X);
     t('C-REG-B4 ⭐ UNE SEULE SOURCE — le Profil montre aussitôt 90 s', sur(() => p.val === '90'), voir(() => _j(p)));
-    await ev(X, () => { goScreen('s-log'); renderLog(); });
+    const ret = await ev(X, () => { goScreen('log'); renderLog(); openWktMenu(); document.getElementById('wm-repos').click();
+      const sh = document.querySelector('#ov-wkt-menu .wm-sheet'); const choix = [...sh.querySelectorAll('.wm-g .wm-row')].map(x => x.textContent.replace(/\s+/g, '').replace('✓', ''));
+      closeWktMenu(); return { choix, profil: (goScreen('setup'), renderSetup(), [...document.getElementById('rest-sel').options].map(o => o.value)) }; });
+    t('C-REG-B9 ⛔ à 90 s, on peut toujours revenir à la valeur d\'installation : 2:10 reste proposé, dans la séance ET dans le Profil',
+      sur(() => ret.choix.indexOf('2:10') >= 0 && ret.profil.indexOf('130') >= 0 && ret.choix.length === 6), voir(() => _j(ret)));
+    await ev(X, () => { goScreen('log'); renderLog(); });
     const r = await ev(X, () => { toggleSet(0, 0); const tot = restTot; stopRest(); return tot; });
     t('C-REG-B5 ⭐ la série suivante lance bien un repos de 90 s (le chrono lit la même valeur)', sur(() => r === 90), voir(() => String(r)));
     const fab1 = await fab();
@@ -806,6 +811,78 @@ async function ecran(t, b, PORT) {
     t('C-REG-D1 ⭐ UNE SEULE SOURCE, dans l\'autre sens — 60 s enregistrés dans le Profil, le menu de la séance dit 1:00',
       sur(() => r.defRest === 60 && r.ls === '60' && v === '1:00'), voir(() => _j({ r, v })));
     t('C-REG-D2 aucune erreur de page', sur(() => X.errs.length === 0), voir(() => X.errs.join(' | ')));
+    await X.cx.close();
+  }
+
+  /* ══ LOT 5 — IMAGES ═════════════════════════════════════════════════════════════════════════════════════════════════
+     ── C-IMG — « Aucune illustration disponible » au lieu d'une image de muscle DEVINÉE (vignettes de la séance, démonstration) ──
+     Conduit : le vrai rendu de la séance (`renderLog`, carte repliée et carte ouverte), la vraie démonstration (`toggleExGif`).
+     Observe : ce qui est dessiné à la place de l'illustration, son libellé accessible, la place du « + » central.
+     Ne couvre pas : l'iPhone réel ; les icônes des listes d'import et de l'éditeur de programme (hors de ce changement). */
+  {
+    const X = await ouvrir();
+    const r = await ev(X, () => {
+      const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
+      const sans = noms.filter(n => !_exImg(n)), avec = noms.find(n => _exImg(n));
+      const A = sans[0];
+      S.wkt = { date: today(), startTs: Date.now() - 5 * 60000, startHour: 17,
+        exs: [{ name: A, sets: [{ kg: 20, reps: 10, done: false, type: 'N' }] }, { name: avec, sets: [{ kg: 40, reps: 8, done: false, type: 'N' }] }] };
+      S.expandAll = false; persist(); goScreen('log');
+      const fab = () => { const q = document.querySelector('#nb-log .nb-plus').getBoundingClientRect(); return [q.left, q.top, q.width, q.height].map(Math.round).join(','); };
+      const vignette = ei => { const c = document.getElementById('sr-' + ei + '-0'); const bloc = c ? c.closest('.ex-block') || c.parentElement.closest('div') : null;
+        const tout = [...document.querySelectorAll('#wkt-exs [onclick^="toggleExGif(' + ei + ',"]')];
+        return tout.map(e => ({ tag: e.tagName, src: e.getAttribute('src') || '', label: e.getAttribute('aria-label') || '', w: Math.round(e.getBoundingClientRect().width) })); };
+      _expandedEx = 1; renderLog(); const replie = vignette(0), fab1 = fab();
+      _expandedEx = 0; renderLog(); const ouvert = vignette(0), autre = vignette(1), fab2 = fab();
+      toggleExGif(0, A); const demoA = (document.getElementById('ex-gif-0') || {}).innerHTML || '';
+      _expandedEx = 1; renderLog(); toggleExGif(1, avec); const demoB = (document.getElementById('ex-gif-1') || {}).innerHTML || '';
+      return { nSans: sans.length, A, avec, imgAvec: _exImg(avec), replie, ouvert, autre, demoA, demoB, fab1, fab2 };
+    });
+    const muscleDevine = l => (l || []).some(v => /muscles\//.test(v.src));
+    t('C-IMG-A1 ⭐ un exercice du catalogue sans illustration (carte repliée) : « Aucune illustration disponible », plus d\'image de muscle devinée',
+      sur(() => r.replie.length >= 1 && r.replie.every(v => v.tag === 'SPAN' && v.label === 'Aucune illustration disponible') && !muscleDevine(r.replie)), voir(() => _j({ A: r.A, replie: r.replie })));
+    t('C-IMG-A2 ⭐ … carte ouverte : la même chose (48 px)', sur(() => r.ouvert.some(v => v.tag === 'SPAN' && v.label === 'Aucune illustration disponible' && v.w === 48) && !muscleDevine(r.ouvert)), voir(() => _j(r.ouvert)));
+    t('C-IMG-A3 ⭐ la démonstration le dit en toutes lettres, sans image de muscle, et propose toujours d\'ajouter sa photo',
+      sur(() => /Aucune illustration disponible/.test(r.demoA) && !/muscles\//.test(r.demoA) && /Ajouter la photo/.test(r.demoA)), voir(() => r.demoA.replace(/\s+/g, ' ').slice(0, 300)));
+    t('C-IMG-A4 ⛔ un exercice qui a son illustration la garde : vignette et démonstration montrent SON image',
+      sur(() => r.autre.some(v => v.tag === 'IMG' && v.src === r.imgAvec) && r.demoB.indexOf(r.imgAvec) >= 0), voir(() => _j({ avec: r.avec, img: r.imgAvec, autre: r.autre })));
+    t('C-IMG-A5 ⛔ règle d\'or #9 — le « + » central est au même endroit, carte repliée ou ouverte', sur(() => r.fab1 === r.fab2 && r.fab1 !== '0,0,0,0'), voir(() => r.fab1 + ' / ' + r.fab2));
+    t('C-IMG-A6 aucune erreur de page', sur(() => X.errs.length === 0), voir(() => X.errs.join(' | ')));
+    await X.cx.close();
+  }
+  {
+    // un exercice PERSO avec sa photo : rien ne change ; sans photo : « Aucune illustration disponible »
+    const X = await ouvrir();
+    const r = await ev(X, () => {
+      const px = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+      S.customExercises = [{ n: 'Machine Maison Photo', g: 'Dos', img: px }, { n: 'Machine Maison Sans Photo', g: 'Dos', muscles: { p: ['lats'], s: [] } }];
+      S.wkt = { date: today(), startTs: Date.now() - 5 * 60000, startHour: 17,
+        exs: [{ name: 'Machine Maison Photo', sets: [{ kg: 20, reps: 10, done: false, type: 'N' }] }, { name: 'Machine Maison Sans Photo', sets: [{ kg: 20, reps: 10, done: false, type: 'N' }] }] };
+      S.expandAll = true; persist(); goScreen('log'); renderLog();
+      const v = ei => [...document.querySelectorAll('#wkt-exs [onclick^="toggleExGif(' + ei + ',"]')].map(e => ({ tag: e.tagName, src: (e.getAttribute('src') || '').slice(0, 30), label: e.getAttribute('aria-label') || '' }));
+      return { photo: v(0), sans: v(1), px: px.slice(0, 30) };
+    });
+    t('C-IMG-B1 ⛔ un perso avec SA photo la garde ; un perso sans photo dit « Aucune illustration disponible »',
+      sur(() => r.photo.some(x => x.tag === 'IMG' && x.src === r.px) && r.sans.length >= 1 && r.sans.every(x => x.label === 'Aucune illustration disponible')), voir(() => _j(r)));
+    await X.cx.close();
+  }
+  {
+    /* ── C-IMG-C — le PRÉCACHE : rien de jamais affiché n'y est (551 289 octets, dont 386 881 retéléchargés à chaque version).
+       Les fichiers sont lus tels que l'app les sert ; « affiché » = nommé quelque part dans le code servi (EX_YT, tables,
+       styles, HTML). ⚠️ L'inverse (toute illustration préchargée) N'EST PAS une garantie de l'app aujourd'hui : 156 des 305
+       illustrations ne sont pas préchargées (mesuré le 24/10, `BUGS.md` §105) — c'est une décision de Michel, pas un témoin. */
+    const X = await ouvrir();
+    const r = await ev(X, async () => {
+      const sw = await (await fetch('sw.js')).text();
+      const pre = sw.slice(sw.indexOf('const PRECACHE'), sw.indexOf('PRECACHE_SENTINEL')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      const images = (pre.match(/'\.\/((?:exercises|machine)\/[^']+\.(?:webp|png|jpe?g|gif))'/g) || []).map(x => x.slice(3, -1));
+      const src = [...new Set([...document.scripts].map(x => x.getAttribute('src')).filter(u => u && !/^https?:|^\/\/|^lib\//.test(u)).map(u => u.replace(/\?.*$/, '')).concat(['index.html', 'style.css']))];
+      let tout = ''; for (const f of src) tout += await (await fetch(f)).text();
+      const jamais = images.filter(f => tout.indexOf(f) < 0);
+      return { nPre: images.length, jamais };
+    });
+    t('C-IMG-C1 ⭐ aucun fichier préchargé n\'est « jamais affiché » (les 6 du 23/10 — 551 Ko — ne le sont plus ; les fichiers restent dans le dépôt)',
+      sur(() => r.nPre > 100 && r.jamais.length === 0), voir(() => _j({ nPre: r.nPre, jamais: r.jamais })));
     await X.cx.close();
   }
 }

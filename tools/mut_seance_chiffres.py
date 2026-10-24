@@ -6,7 +6,7 @@ C-NUM-* savent-ils ROUGIR ?
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 M00 remet les fichiers de l'app tels qu'ils etaient AVANT la mission (branche Seance 5a7b0a57 = master 999b7947 + repos +
-vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35) 3 (M36-M49) et 4 (M50-M57).
+vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35), 3 (M36-M49), 4 (M50-M57) et 5 (M60-M66).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] ne doit PAS faire rougir.
 Chaque mutation GARDE exige un TEMOIN PRECIS (4e champ) parmi les rouges.
 Un PLANTAGE du banc (code de sortie hors 0/1, ligne PLANTAGE, ou pas de ligne de total) n'est JAMAIS « garde ».
@@ -20,9 +20,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = '5a7b0a57'
-LO, SE, AP, ST, SC, DA, CO, TR = 'log.js', 'setup.js', 'app.js', 'state.js', 'screens.js', 'dashboard.js', 'coach.js', 'tracking.js'
-FICHIERS = (LO, SE, AP, ST, SC, DA, CO, TR)
-FICHIERS_AVANT = (LO, SE, AP, ST, SC, DA, CO, TR)
+LO, SE, AP, ST, SC, DA, CO, TR, SW = 'log.js', 'setup.js', 'app.js', 'state.js', 'screens.js', 'dashboard.js', 'coach.js', 'tracking.js', 'sw.js'
+FICHIERS = (LO, SE, AP, ST, SC, DA, CO, TR, SW)
+FICHIERS_AVANT = (LO, SE, AP, ST, SC, DA, CO, TR, SW)
 
 MUT = [
     ("M00 code d'AVANT la mission remis mot pour mot (5a7b0a57)", 'AVANT', 'GARDE', 'C-NUM-A1'),
@@ -184,7 +184,7 @@ MUT = [
     # ── lot 4 : le repos par défaut depuis la séance (C-REG) ─────────────────────────────────────────────────────────
     ('M50 la liste commune perd 130 s (le Profil redevient vide pour le reglage d\'installation)',
      [(LO, "const REPOS_DEFAUT_CHOIX=[60,90,120,130,180,300];", "const REPOS_DEFAUT_CHOIX=[60,90,120,180,300];")],
-     'GARDE', 'C-REG-A1'),
+     'GARDE', 'C-REG-B9'),
     ('M51 le menu de la seance n\'a plus la ligne « Repos par defaut »',
      [(LO, "  g1+='<button class=\"wm-row\" id=\"wm-repos\" onclick=\"openWktMenuRepos()\">'", "  if(0)g1+='<button class=\"wm-row\" id=\"wm-repos\" onclick=\"openWktMenuRepos()\">'")],
      'GARDE', 'C-REG-B1'),
@@ -208,6 +208,30 @@ MUT = [
      'OK', None),
     ('M55 [negatif] le sous-titre de la feuille du repos est reformule',
      [(LO, "<span>Pour toutes tes séances · le même réglage que dans ton Profil</span>", "<span>Le même réglage que dans ton Profil · pour toutes tes séances</span>")],
+     'OK', None),
+    # ── lot 5 : « Aucune illustration disponible » et précache (C-IMG) ───────────────────────────────────────────────
+    ('M60 la vignette repliee redevient un muscle devine',
+     [(LO, "  const _cThumb=_exImg(ex.name); // vignette repliée", "  const _cThumb=_exImg(ex.name)||_exMuscleImg(ex.name); // vignette repliée")],
+     'GARDE', 'C-IMG-A1'),
+    ('M61 la vignette ouverte redevient un muscle devine',
+     [(LO, ":_vignetteSansIllu(48,ei,ex.name,''))", ":`<img src=\"${_exMuscleImg(ex.name)}\" style=\"width:48px;height:48px\">`)")],
+     'GARDE', 'C-IMG-A2'),
+    ('M62 la demonstration remontre la grande image du muscle devine',
+     [(LO, "    html+=`<div class=\"ex-sans-illu-demo\" role=\"img\" aria-label=\"${_SANS_ILLU}\">",
+           "    html+=`<img src=\"${_exMuscleImg(name)}\" style=\"width:160px\">`;\n    if(0)html+=`<div class=\"ex-sans-illu-demo\" role=\"img\" aria-label=\"${_SANS_ILLU}\">")],
+     'GARDE', 'C-IMG-A3'),
+    ('M63 [deguisee] la vignette sans illustration ne dit plus qu\'il n\'y en a pas',
+     [(LO, "  return `<span class=\"ex-sans-illu\" role=\"img\" aria-label=\"${_SANS_ILLU}\" title=\"${_SANS_ILLU}\"",
+           "  return `<span class=\"ex-sans-illu\" role=\"img\" aria-label=\"Illustration\" title=\"Illustration\"")],
+     'GARDE', 'C-IMG-A1'),
+    ('M64 le precache reprend un fichier jamais affiche',
+     [(SW, "  './machine/press-jambes-2.jpg','./machine/press-jambes-6.jpg',", "  './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-6.jpg',")],
+     'GARDE', 'C-IMG-C1'),
+    ('M66 [deguisee] un exercice qui A son illustration montre « aucune illustration »',
+     [(LO, "  const _cThumbHtml=(!_groupMode&&!inGroup)?(_cThumb?", "  const _cThumbHtml=(!_groupMode&&!inGroup)?(false?")],
+     'GARDE', 'C-IMG-A4'),
+    ('M65 [negatif] le commentaire du precache est reformule',
+     [(SW, "change. Un fichier remis en usage doit revenir dans cette liste. */", "change. Tout fichier remis en usage revient dans cette liste. */")],
      'OK', None),
     ('M44 [negatif] le texte d\'aperçu des records est reformule',
      [(SE, ". Rien ne change si tu le gardes.'", ". Si tu le gardes, rien ne change.'")],
