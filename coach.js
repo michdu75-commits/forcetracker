@@ -570,7 +570,7 @@ function _memoireLongue(){
     }
     // ③ VOLUME total — le chiffre qui dit « tu as fait du chemin »
     let tonnes=0;
-    parDate.forEach(s=>{ tonnes += (+s.volume||+s.vol||0); });
+    parDate.forEach(s=>{ tonnes += (typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0)); });   // la règle unique du volume (mission Séance, 24/10)
     const L=[];
     L.push(`- Première séance enregistrée : ${_dateLongue(debut)} (il y a ${jours} jours) · ${sess.length} séances au total`);
     // Silence prolongé : un fait important que la fenêtre des 5 dernières séances ne montre pas
@@ -3656,7 +3656,7 @@ function buildCoachContext(msg, opts) {
        « n'en saute aucun » sans le nombre demande au modèle de compter tout seul dans une ligne
        dense — c'est un prompt qui compense une donnée absente (R8). Le chiffre, lui, est calculé. */
     const _nbEx=(s.exs||s.exercises||[]).filter(e=>(e.sets||[]).some(x=>x.done)).length;
-    return `${_dateLisible(s.date)} (${_nbEx} exercice${_nbEx>1?'s':''}): ${exStr} — ${s.volume}kg vol total`
+    return `${_dateLisible(s.date)} (${_nbEx} exercice${_nbEx>1?'s':''}): ${exStr} — ${(typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0))}kg vol total`
       +(cardioStr?` — cardio: ${cardioStr}`:'');
   };
   const recentSessions = _sessVues.map(s => _ligneSeance(s, true)).join('\n') || 'Aucune séance';
@@ -4640,8 +4640,9 @@ ${(()=>{
 })()}
 RÉCUPÉRATION & SOMMEIL:
 ${(()=>{
-  const score=calcRecoveryScore();
-  const info=getRecoveryInfo(score);
+  const _rd=calcRecoveryDetail();
+  const score=_rd.score, _sansS=!!_rd.sansSommeil;   // F19 (mission Séance du 24/10/2026) : sans sommeil récent, une estimation
+  const info=getRecoveryInfo(score,_sansS);
   const todayStr=today();
   /* ⭐⭐ MILO LIT LES MÊMES NUITS QUE LE SCORE (30/08) — `_nuit`/`_nuitsRecentes` sont le seul
      propriétaire (R2). Avant, ce bloc relisait `S.sleepLog` de son côté : l'écran et Milo
@@ -4686,7 +4687,7 @@ ${avgH?'- Moyenne sommeil (3j): '+avgH+'h'+(last3.some(n=>n.source==='mesure')?'
 ${ec?'- ÉCART MESURE/SAISIE: sa montre dit '+ec.hMes+'h là où il/elle avait noté '+ec.hSaisie+'h ('
    +(ec.ecart>0?'+':'')+Math.round(ec.ecart*60)+' min). C\'est un FAIT, pas une faute : on ne note pas ses nuits au chronomètre. Tu peux le mentionner UNE fois si c\'est utile à la décision du jour (charge, récup), jamais comme un reproche et jamais deux fois.':''}
 - Conseil récupération: ${info.rec}
-- Implication entraînement: ${score===null?'Demander les données de sommeil à l\'athlète':score<40?'Proposer UNIQUEMENT repos actif, étirements ou séance très légère. Déconseiller fortement tout effort maximal.':score<60?'Séance possible mais pas de records. Volume modéré, technique, pas de maxima.':score<80?'Séance normale. Peut progresser mais réserver les PRs pour les jours optimal.':'JOUR IDÉAL pour PRs et séances intensives. Corps en pleine capacité de récupération.'}`;
+- Implication entraînement: ${score===null?'Demander les données de sommeil à l\'athlète':(_sansS&&score>=60)?'Score ESTIMÉ, aucun sommeil noté ces 3 derniers jours : séance normale possible, mais ne présente pas la journée comme idéale pour des records sur ce seul chiffre — demande-lui comment il ou elle a dormi.':score<40?'Proposer UNIQUEMENT repos actif, étirements ou séance très légère. Déconseiller fortement tout effort maximal.':score<60?'Séance possible mais pas de records. Volume modéré, technique, pas de maxima.':score<80?'Séance normale. Peut progresser mais réserver les PRs pour les jours optimal.':'JOUR IDÉAL pour PRs et séances intensives. Corps en pleine capacité de récupération.'}`;
 })()}
 
 
@@ -6262,7 +6263,7 @@ function _dbfDesignation(sess){
     const d=(typeof _dateLisible==='function')?_dateLisible(sess.date):(sess.date||'');
     const exs=(sess.exs||sess.exercises||[]).filter(e=>(e&&(e.sets||[]).some(x=>x&&x.done)));
     const n=exs.length;
-    const vol=sess.volume||sess.vol||0;
+    const vol=(typeof _volTravail==='function'?_volTravail(sess):(+sess.volume||+sess.vol||0));   // la règle unique du volume (mission Séance, 24/10)
     return d+(n?' ('+n+' exercice'+(n>1?'s':'')+')':'')+(vol?' — '+vol+'kg de volume':'');
   }catch(e){ return ''; }
 }

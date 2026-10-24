@@ -2277,9 +2277,9 @@ function _volumeParMoitie(jours){
       const k = Math.round((new Date(t+'T12:00:00') - new Date(d+'T12:00:00'))/864e5);
       if(!(k>=0 && k<j)) return;
       const m = k < j/2 ? 0 : 1;
-      (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{
-        if(x && x.done!==false && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps);
-      }));
+      /* 🧮 F25 (mission Séance du 24/10/2026) — la règle unique du volume de travail (`_volTravail`, log.js) : sa copie ici
+         ignorait la convention unilatérale de la séance ET comptait les échauffements (aucun filtre de type). */
+      v[m]+= (typeof _volTravail==='function') ? _volTravail(sess) : 0;
     });
     return {recent:Math.round(v[0]), avant:Math.round(v[1])};
   }catch(e){ return null; }

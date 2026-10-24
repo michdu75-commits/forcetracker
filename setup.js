@@ -335,9 +335,12 @@ function _histoLignes(avecDebriefs){
              (une répétition a été TENTÉE et n'est pas passée, c'est au-delà de RIR 0), et un
              fichier exporté se relit ailleurs, sans personne pour rattraper la nuance. */
           const r=(typeof _rirDeSet==='function')?_rirDeSet(st):null;
+          /* 🧮 L'export suit la convention de la séance (mission Séance du 24/10/2026) : une série unilatérale notée par
+             côté (`uniConv`) porte le volume des DEUX côtés, comme la séance enregistrée — la colonne kg, elle, reste ce qui
+             a été noté (par côté). Sans ça, la somme des lignes ne refaisait pas le volume de la séance. */
           out.push({date:s.date, seance:nom, exercise:ex.name, set_num:i+1,
                     type:st.type||'N', kg:kg, reps:reps,
-                    rir:(r===null?'':r), volume:Math.round(kg*reps)});
+                    rir:(r===null?'':r), volume:Math.round(kg*reps*_facteurUni(s, ex.name))});
         });
       });
       for(let k=_n0;k<out.length;k++) out[k].seance_id=sid;     // lu seulement par l'export « avec »
@@ -529,6 +532,15 @@ function _pdfTexte(t){
     .replace(_PDF_A_TRADUIRE, c=>_PDF_TRADUIT[c])
     .replace(/[^\x00-\xFF\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/g,'');
 }
+/* 🧾 F23 (mission Séance du 24/10/2026) — L'EN-TÊTE DU PDF COMPTE DES SÉANCES ET DES JOURS, SÉPARÉMENT. Il comptait les
+   DATES et les appelait « séances » : deux séances le même jour en faisaient une. Une séance = sa clé (`seance_id`, posée
+   sur chaque ligne par `_histoLignes`) ; un jour d'entraînement = une date. Les séries restent les lignes de séries. */
+function _histoEntete(L){
+  const seances=new Set(L.map(r=>r.seance_id||r.date)).size, jours=new Set(L.map(r=>r.date)).size;
+  const series=L.filter(r=>r.type!=='CARDIO'&&r.type!=='DEBRIEF').length;
+  return seances+' séance'+(seances>1?'s':'')+' sur '+jours+' jour'+(jours>1?'s':'')+' d\'entraînement · '
+    +series+' série'+(series>1?'s':'')+' · exporté le '+new Date().toLocaleDateString('fr-FR');
+}
 async function exportHistoPdf(){
   const L=_histoLignes();
   if(!L.length){ toast('Aucune séance à exporter','info'); return; }
@@ -543,8 +555,7 @@ async function exportHistoPdf(){
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120);
     /* ⛔ LE DOCUMENT DIT CE QU'IL CONTIENT ET CE QU'IL NE CONTIENT PAS — il va sortir de l'app
        (mail, coach, kiné) et il doit se lire seul, sans l'app à côté. */
-    const seances=[...new Set(L.map(r=>r.date))].length;
-    doc.text(seances+' séances · '+L.length+' séries · exporté le '+new Date().toLocaleDateString('fr-FR'),M,y); y+=12;
+    doc.text(_histoEntete(L),M,y); y+=12;
     doc.text('Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).'
       +(_histoAvecDebriefs?' Débriefs Milo inclus, sous leur séance.':''),M,y); y+=6;
     doc.setTextColor(0);
@@ -1396,10 +1407,16 @@ function utiliserActiviteMontre(i){
 }
 /* Le nom d'Apple Santé (« Walking », « Marche à pied », « Indoor Cycling »…) vers les types que
    l'app connaît. ⚠️ Inconnu → « autre », jamais un type deviné : le barème calorique en dépend. */
+/* ⌚ F22 (mission Séance du 24/10/2026) — trois types produits ici n'ont PAS de barème dans `CARDIO_MET` : ils se calculent
+   avec celui d'« Autre » (`calcCardioKcal` y retombe) — ⛔ aucun barème inventé, le moteur est gelé (le diagnostic MET dit
+   ce que ça coûte). Mais ils GARDENT LEUR NOM à l'écran : « marche » brut dans l'historique et « Elliptique » dans le
+   détail, c'était faux deux fois. Et un TAPIS de course va sur le barème « Tapis », qui existe déjà. */
+const CARDIO_NOMS_MONTRE={marche:'Marche', course:'Course', natation:'Natation'};
 function _typeCardioDepuisMontre(nom){
   const n=String(nom||'').toLowerCase();
+  if(/tapis|treadmill/.test(n))                   return 'tapis';
   if(/march|walk|randonn|hik/.test(n))            return 'marche';
-  if(/cours|run|jog|tapis|treadmill/.test(n))     return 'course';
+  if(/cours|run|jog/.test(n))                     return 'course';
   if(/vélo|velo|cycl|bike|spinning/.test(n))      return 'velo';
   if(/rameur|row/.test(n))                        return 'rameur';
   if(/ellipt/.test(n))                            return 'elliptique';
@@ -1464,6 +1481,10 @@ function editSessDuree(){
   const t=String(v).trim();
   const m=t?parseInt(t.replace(/[^0-9]/g,''),10):0;
   if(t && (!m||m<1||m>600)){ toast('Durée attendue entre 1 et 600 minutes','error'); return; }
+  /* Confirmer la durée déjà affichée n'est pas une correction : rien n'est écrit. Sans cette garde, la séance passerait en
+     durée « saisie » et le calcul pourrait changer ses calories pour une durée identique (signalé par le diagnostic MET du
+     24/10 ; le moteur, lui, n'est pas touché). */
+  if(t && s.duration && m===Math.round(s.duration/60)){ toast('Durée inchangée','info'); return; }
   const _avant=JSON.parse(JSON.stringify(s));
   if(!t){ delete s.duration; delete s.durationDite; }
   else{ s.duration=m*60; s.durationDite=true; }
@@ -1539,6 +1560,7 @@ function _renderSessDetailContent(){
       <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${k?` <span style="font-weight:600;color:var(--green)">· ~${k} kcal</span>`:''}</div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <select onchange="setSessCardio('type',this.value,'${moment}')" style="${selSty}">
+          ${(c&&c.type&&!CARDIO_LABELS[c.type]&&CARDIO_NOMS_MONTRE[c.type])?`<option value="${c.type}" selected>${CARDIO_NOMS_MONTRE[c.type]} (calculé comme « Autre »)</option>`:''}
           ${Object.keys(CARDIO_LABELS).map(t=>`<option value="${t}" ${(c?c.type:'elliptique')===t?'selected':''}>${CARDIO_LABELS[t]}</option>`).join('')}
         </select>
         <select onchange="setSessCardio('intensity',this.value,'${moment}')" style="${selSty}">

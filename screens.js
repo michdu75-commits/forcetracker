@@ -899,7 +899,7 @@ function _renderHomeHero(){
     ? {score:null,factors:[],tips:[],dayPains:_detail.dayPains}
     : _detail;
   const score=detail.score;
-  const info=getRecoveryInfo(score);
+  const info=getRecoveryInfo(score,detail.sansSommeil);   // F19 : sans sommeil récent, une estimation
   const ringColor=score!==null?info.color:'var(--t3)';
   // L'arc parcourt l'échelle : il DÉMARRE au rouge et arrive à la couleur du score.
   const arcC=_ringScale(score||0);   // couleur du score : sert au halo et à la pastille
@@ -933,7 +933,7 @@ function _renderHomeHero(){
         +'</b> — pense à <b>terminer ta séance</b> pour qu\'elle soit enregistrée.</span></div>';
     }
   }
-  const heroLabel=score===null?'Enregistre ton sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
+  const heroLabel=score===null?'Enregistre ton sommeil':detail.sansSommeil?'Estimation sans sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
   const heroDesc=score===null?'Renseigne ton sommeil ce soir pour obtenir ton score de récupération.':info.rec.length>90?info.rec.substring(0,90).replace(/\s+\S*$/,'')+'…':info.rec;
   const pillHtml=score!==null?'<div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:'+ringColor+';box-shadow:0 0 8px '+ringColor+';"></span><span style="font-size:12px;font-weight:700;color:'+ringColor+';">Récup '+info.label+'</span></div>':'';
   // Restylage maquette : gros chiffre + barre de progression (au lieu de l'anneau). Mêmes données, CTA conservé.
@@ -1161,7 +1161,7 @@ function openRecoWhy(){
   const d=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():null;
   const body=document.getElementById('reco-why-body');
   if(!d||d.score==null||!body)return;
-  const info=getRecoveryInfo(d.score);
+  const info=getRecoveryInfo(d.score,d.sansSommeil);
   const factorsHtml=(d.factors||[]).map(f=>{
     const col=f.base?'var(--t2)':(f.val>0?'#34D399':'#FF8A72');
     const valTxt=f.base?(f.val+' /100'):((f.val>0?'+':'')+f.val);
@@ -2224,13 +2224,11 @@ function _calPrDays(){
 let _calSelDay=null;   // ymd du jour ouvert dans le panneau de détail (null = aucun)
 
 // Volume (kg × reps) d'une séance — mêmes exclusions que les PR : séries non faites, É (échauffement), W
+/* 🧮 F01 (mission Séance du 24/10/2026) — LE CALENDRIER LIT LA RÈGLE UNIQUE (`_volTravail` → `_workVol`, log.js). Sa copie
+   ignorait la convention unilatérale de la séance (`uniConv`, charge notée par côté) : mesuré le 23/10, une séance
+   enregistrée à 1 100 kg s'affichait « 0,8 t » ici. Mêmes exclusions qu'avant (non faites, É, W). */
 function _calSessVol(s){
-  let v=0;
-  (s.exs||[]).forEach(ex=>{(ex.sets||[]).forEach(st=>{
-    if(!st.done||!st.kg||!st.reps||st.type==='É'||st.type==='W')return;
-    v+=st.kg*st.reps;
-  });});
-  return v;
+  return _volTravail(s);
 }
 function _calVolByDay(){
   const o={};
@@ -2266,7 +2264,12 @@ function _calSessMix(s){
   // ⚠️ la clé doit tenir compte de TOUS les exercices : deux séances du même jour avec
   // le même nombre d'exos et le même premier exo partageraient sinon la même couleur
   // (trouvé par CAL-003 : « Squat + DC + Rowing » héritait de la couleur de « Squat + Presse + Leg Curl »).
-  const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');
+  /* ⚠️ F07 (mission Séance du 24/10/2026) — LA CLÉ PORTE TOUT CE QUI CHANGE LE RÉSULTAT de `_mscScores` : un exercice ne
+     compte que s'il a au moins une série FAITE, et un exercice perso se lit avec ses muscles cochés. Avec les seuls noms,
+     une séance modifiée (mêmes exercices, autres séries faites) gardait sa couleur jusqu'au redémarrage — mesuré : « bas
+     86 % » au lieu de « haut 100 % ». */
+  const _cex=n=>{ const c=(S.customExercises||[]).find(e=>e&&e.n===n); return c&&c.muscles?JSON.stringify(c.muscles):''; };
+  const key=s.date+'|'+(s.exs||[]).map(e=>((e&&e.name)||'')+':'+((e&&(e.sets||[]).some(x=>x&&x.done))?1:0)+_cex(e&&e.name)).join('~');
   if(key in _calColorCache)return _calColorCache[key];
   let mix=null;
   try{
@@ -3389,8 +3392,12 @@ function renderNutrition(){try{
       : '';
   }
   const todayStr=today();
-  const todaySess=S.sessions.find(s=>s.date===todayStr);
-  const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;
+  /* 🧮 F06 (mission Séance du 24/10/2026) — TOUTES les séances du jour, pas la première trouvée : mesuré le 23/10, deux
+     séances de 250 et 350 kcal affichaient 350. La tuile additionne, et son libellé dit combien (« 2 séances ») — le
+     libellé plutôt que la valeur, pour que « 600 kcal » tienne dans la tuile à 320 px. */
+  const _sessJour=(S.sessions||[]).filter(s=>s&&s.date===todayStr);
+  const sessCals=_sessJour.reduce((a,s)=>a+(+s.calories||0),0);
+  {const _l=document.getElementById('nu-session-lbl'); if(_l)_l.textContent=_sessJour.length>1?_sessJour.length+' séances':'Séance';}
   /* ⚠️ « aucune » et plus « — (pas de séance) » (ft-v1025) : le libellé long ne tenait pas dans
      la tuile à 390 px et se coupait EN TRAVERS de son propre titre (« — (pas de / Séance
      séance) », vu à la capture). Le défaut existait avant ce chantier ; il devient visible

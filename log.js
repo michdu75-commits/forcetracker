@@ -331,8 +331,8 @@ function _renderAvantSeance(){
   let html='';
   try{
     const der=(S.sessions||[])[0]||null;            // la plus récente : `_trierSeances` range S.sessions (state.js)
-    let score=null; try{ if(typeof calcRecoveryScore==='function') score=calcRecoveryScore(); }catch(e){ score=null; }
-    const info=(score!==null&&typeof getRecoveryInfo==='function')?getRecoveryInfo(score):null;
+    let score=null, _sansS=false; try{ if(typeof calcRecoveryDetail==='function'){ const _d=calcRecoveryDetail(); score=_d.score; _sansS=!!_d.sansSommeil; } }catch(e){ score=null; }
+    const info=(score!==null&&typeof getRecoveryInfo==='function')?getRecoveryInfo(score,_sansS):null;   // F19
     const parts=[];
     if(info) parts.push('<span class="la-recup" style="--c:'+info.color+'"><i></i>Récup '+score+' · '+esc(info.label)+'</span>');
     if(der&&der.date){
@@ -4666,8 +4666,10 @@ function _volumeParMuscle(refTs, jours){
       out.seances++;
       (s.exs||s.exercises||[]).forEach(ex=>{
         if(!ex||!ex.name) return;
-        /* ⛔ Séries de TRAVAIL réellement faites — cf. ci-dessus. */
-        const n=(ex.sets||[]).filter(st=>st&&st.done&&st.type!=='É').length;
+        /* ⛔ Séries de TRAVAIL réellement faites — cf. ci-dessus. ↪️ F03 (mission Séance du 24/10/2026) : les anciennes
+           séries « W » (l'échauffement d'avant le tag É) sont exclues comme partout ailleurs (`_workVol`,
+           `_serieFaitFoiPourPR`) — mesuré : 3 séries de pectoraux au lieu de 2, et Milo lisait 1,5 série/semaine au lieu de 1. */
+        const n=(ex.sets||[]).filter(st=>st&&st.done&&st.type!=='É'&&st.type!=='W').length;
         if(!n) return;
         /* ⭐ LE NOM EST RÉSOLU AVANT DE CHERCHER LA FICHE — sans ça, un nom abrégé rate la
            donnée écrite et le muscle n'est pas crédité, EN SILENCE (la leçon de ft-v997). */
@@ -4913,11 +4915,15 @@ function _initSheetHandles(){
 // d'échauffement. Une seule règle de volume (R2) : même filtre, même convention unilatérale, seul le tri des paliers change.
 // ⛔ Sans ce 2ᵉ argument rien ne bouge : la séance enregistrée (`sess.volume`), Progrès, l'Accueil et les résumés de la
 // semaine gardent le volume de TRAVAIL.
+/* ×2 pour un exercice unilatéral d'une séance notée sous la convention unilatérale (`uniConv`), ×1 sinon. Un seul
+   propriétaire : le volume d'une séance et chaque ligne de l'export le lisent ici (mission Séance du 24/10/2026). */
+function _facteurUni(sess, nom){
+  return (sess&&sess.uniConv&&typeof estUnilateral==='function'&&estUnilateral(nom))?2:1;
+}
 function _workVol(sess, avecEchauffements){
   let v=0;
-  const dbl=!!(sess&&sess.uniConv);
   (sess.exs||sess.exercises||[]).forEach(ex=>{
-    const k=(dbl&&typeof estUnilateral==='function'&&estUnilateral(ex.name))?2:1;
+    const k=_facteurUni(sess, ex.name);
     (ex.sets||[]).forEach(s=>{
       if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
     });
@@ -5181,7 +5187,8 @@ function _cardioClair(c){
   try{
     const L=(typeof CARDIO_LABELS!=='undefined')?CARDIO_LABELS:{};
     const I=(typeof CARDIO_INTENSITES!=='undefined')?CARDIO_INTENSITES:{};
-    return (c&&c.duration)?`${L[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+(I[c.intensity]||c.intensity)+')':''}`:'';
+    const M=(typeof CARDIO_NOMS_MONTRE!=='undefined')?CARDIO_NOMS_MONTRE:{};   // F22 : marche, course, natation (montre)
+    return (c&&c.duration)?`${L[c.type]||M[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+(I[c.intensity]||c.intensity)+')':''}`:'';
   }catch(e){ return ''; }
 }
 // Tout le cardio d'une séance, sans le moment — pour les endroits qui n'ont pas d'exercices

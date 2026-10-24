@@ -279,6 +279,205 @@ async function ecran(t, b, PORT) {
     t('C-NUM-C8 aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
     await X.cx.close();
   }
+  {
+    // confirmer la durée DÉJÀ affichée (60) n'est pas une correction : rien n'est écrit, rien ne bouge
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      const ts = Date.now() - 864e5;
+      const s = { id: ts, ts, date: today(ts), uniConv: 1, duration: 3610,
+        exs: [{ name: 'Squat Barre', sets: [1, 2, 3].map(i => ({ kg: 100, reps: 5, done: true, type: 'N', at: ts + i * 60000 })) }] };
+      s.exercises = s.exs; s.volume = Math.round(_workVol(s)); S.bw = 82; const c = calcSessionCalories(s); s.calories = c.total; s.calData = c;
+      S.sessions = [s]; persist(); return { ts, s: JSON.parse(JSON.stringify(s)) };
+    });
+    await X.pg.evaluate(ts => openSessDetail(ts), r.ts);
+    await duree(X, '60');
+    const ap = (await stocke(X))[0];
+    t('C-NUM-C11 confirmer la durée déjà affichée (60 min) ne change rien : ni la durée, ni « saisie », ni les calories',
+      ap.duration === 3610 && !ap.durationDite && ap.calories === r.s.calories && _j(ap.calData) === _j(r.s.calData),
+      _j({ duree: ap.duration, dite: ap.durationDite, kcal: ap.calories, avant: r.s.calories }));
+    await X.cx.close();
+  }
+
+  /* ══ LOT 2 — LES MÊMES CHIFFRES PARTOUT ══════════════════════════════════════════════════════════════════════════
+     ── C-NUM-D — F01 · F25 · exports · Milo · tableau de bord : la convention unilatérale d'une séance, une seule règle.
+     Trois séances : celle du jour terminée par le vrai `finishWorkout` (unilatéral 30 kg par côté × 10 + un palier É
+     + Développé Couché 100 × 5 → 1 100 kg de travail), une ANCIENNE (d'avant la convention, sans `uniConv` : 600 kg
+     notés en total) et une séance déjà réduite de moitié par une édition passée (600 réels, 300 rangés). */
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(async () => {
+      S.bw = 82; S.prs = {}; persist();
+      const U = Object.keys(EX_UNI).map(id => exNom(id)).filter(n => n && estUnilateral(n))[0];
+      const j = n => today(Date.now() - n * 864e5);
+      const vieille = { id: 1001, ts: Date.now() - 3 * 864e5, date: j(3), volume: 600, exs: [{ name: U, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }] };
+      const moitie = { id: 1002, ts: Date.now() - 5 * 864e5, date: j(5), uniConv: 1, volume: 300, exs: [{ name: U, sets: [{ kg: 30, reps: 10, done: true, type: 'N' }] }] };
+      [vieille, moitie].forEach(x => { x.exercises = x.exs; });
+      S.sessions = [vieille, moitie]; _trierSeances(S.sessions); persist();
+      S.wkt = { date: today(), exs: [{ name: U, sets: [{ kg: 20, reps: 10, done: true, type: 'É', at: 30000 }, { kg: 30, reps: 10, done: true, type: 'N', at: 60000 }] },
+        { name: 'Développé Couché', sets: [{ kg: 100, reps: 5, done: true, type: 'N', at: 120000 }] }], startHour: 17, startTs: Date.now() - 20 * 60000 };
+      await finishWorkout();
+      const jour = S.sessions.find(x => x.date === today());
+      const vb = _calVolByDay();
+      const csv = d => _histoLignes(false).filter(x => x.date === d && x.exercise === U && x.type === 'N').reduce((a, x) => a + (+x.volume || 0), 0);
+      const ctx = buildCoachContext('bonjour');
+      const lignes = ctx.split('\n').filter(l => /kg vol total/.test(l));
+      const nb = l => { const m = l.match(/(\d+)kg vol total/); return m ? +m[1] : null; };
+      return { U, sauve: jour.volume, cal: { jour: vb[today()], vieille: vb[j(3)], moitie: vb[j(5)] },
+        tendance: _volumeParMoitie(14), csv: { jour: csv(today()), vieille: csv(j(3)), moitie: csv(j(5)) },
+        milo: lignes.map(nb), dbf: { jour: _dbfDesignation(jour), moitie: _dbfDesignation(S.sessions.find(x => x.id === 1002)) },
+        moitieRangee: JSON.parse(localStorage.getItem('ft4_sessions')).find(x => x.id === 1002).volume };
+    });
+    t('C-NUM-D1 ⭐ F01 — le calendrier compte la séance du jour comme la séance enregistrée : 1 100 kg (et non 800)',
+      r.sauve === 1100 && r.cal.jour === 1100, 'enregistrée ' + r.sauve + ' · calendrier ' + r.cal.jour);
+    t('C-NUM-D2 F01 — la séance d\'avant la convention garde ses 600 kg ; la séance réduite de moitié vaut 600 au calendrier',
+      r.cal.vieille === 600 && r.cal.moitie === 600, _j(r.cal));
+    t('C-NUM-D3 ⭐ F25 — la tendance de volume suit la même règle (unilatéral ×2, échauffements exclus) : 2 300 kg sur la moitié récente',
+      r.tendance && r.tendance.recent === 2300, _j(r.tendance));
+    t('C-NUM-D4 ⭐ export (CSV / PDF) — la ligne de travail unilatérale porte le volume des deux côtés (600) ; l\'ancienne séance reste à 600',
+      r.csv.jour === 600 && r.csv.vieille === 600 && r.csv.moitie === 600, _j(r.csv));
+    t('C-NUM-D5 Milo — la liste des séances qu\'il reçoit dit 1 100, 600 et 600 kg (la séance réduite de moitié comprise)',
+      _j(r.milo.slice().sort((a, b) => b - a)) === _j([1100, 600, 600]), _j(r.milo));
+    t('C-NUM-D6 Milo — la fiche du débrief dit 1100 kg pour la séance du jour, 600 kg pour la séance réduite de moitié',
+      /1100kg de volume/.test(r.dbf.jour) && /600kg de volume/.test(r.dbf.moitie), _j(r.dbf));
+    t('C-NUM-D7 ⛔ et rien n\'est réécrit en silence : la séance réduite de moitié garde 300 sur le disque', r.moitieRangee === 300, 'rangé ' + r.moitieRangee);
+    t('C-NUM-D9 aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
+    /* le tableau de bord ordinateur (même origine, même stockage) : « Charge totale » sur 30 jours. ⚠️ Dans le MÊME onglet :
+       un nouvel onglet aurait un `sessionStorage` vide et le script d'initialisation du montage viderait le stockage. */
+    await X.pg.goto('http://localhost:' + PORT + '/dashboard.html'); await X.pg.waitForTimeout(1200);
+    const charge = await X.pg.evaluate(() => { const h = String(_dBas()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+      const m = h.match(/Charge totale\s+([\d.,]+) T/); return m ? m[1] : h.slice(0, 160); });
+    t('C-NUM-D8 tableau de bord ordinateur — « Charge totale » sur 30 jours : 2,3 T (1 100 + 600 + 600)', charge === '2.3', 'lu : ' + charge);
+    await X.cx.close();
+  }
+
+  /* ── C-NUM-E — F03 : les anciennes séries « W » ne sont pas des séries de travail ────────────────────────────── */
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      const mk = types => ({ id: 2001, ts: Date.now() - 864e5, date: today(Date.now() - 864e5), uniConv: 1,
+        exs: [{ name: 'Développé Couché', sets: types.map(t => ({ kg: 80, reps: 8, done: true, type: t })) }] });
+      const pec = () => { const v = _volumeParMuscle(Date.now(), 14); const l = v.liste.find(x => x.code === 'pec'); return l ? l.series : 0; };
+      S.sessions = [mk(['N', 'N', 'É', 'W'])]; const avecW = pec();
+      const ctx = (typeof _ctxVolumeMuscles === 'function') ? _ctxVolumeMuscles() : '';
+      S.sessions = [mk(['N', 'N'])]; const deuxN = pec();
+      return { avecW, deuxN, milo: (ctx.match(/[^\n]*[Pp]ectora[^\n]*/) || [''])[0].slice(0, 160) };
+    });
+    t('C-NUM-E1 ⭐ F03 — une ancienne série « W » ne compte pas dans le volume par muscle : 2 séries de pectoraux, comme sans elle',
+      r.avecW === 2 && r.deuxN === 2, _j(r));
+    t('C-NUM-E2 F03 — Milo lit 1 série par semaine de pectoraux (et non 1,5)', /Pectoraux\s*:\s*1 s/.test(r.milo) && !/1[.,]5/.test(r.milo), r.milo);
+    await X.cx.close();
+  }
+
+  /* ── C-NUM-F — F07 : la couleur du calendrier suit la séance modifiée, sans redémarrage ──────────────────────── */
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      const s = { id: 5001, ts: Date.now() - 864e5, date: today(Date.now() - 864e5), uniConv: 1,
+        exs: [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5, done: true, type: 'N' }] }, { name: 'Développé Couché', sets: [{ kg: 80, reps: 5, done: false, type: 'N' }] }] };
+      S.sessions = [s]; persist();
+      const avant = _calSessMix(s);
+      s.exs[0].sets[0].done = false; s.exs[1].sets[0].done = true;     // mêmes noms, autres séries faites
+      const apres = _calSessMix(s);
+      return { avant: avant && avant.reg, apres: apres && apres.reg };
+    });
+    t('C-NUM-F1 ⭐ F07 — mêmes exercices, autres séries faites : la couleur passe aussitôt de « bas » à « haut » (plus de cache périmé)',
+      r.avant === 'bas' && r.apres === 'haut', _j(r));
+    await X.cx.close();
+  }
+
+  /* ── C-NUM-G — F06 : la tuile « Séance » de Nutrition additionne les séances du jour ─────────────────────────── */
+  {
+    const X = await ouvrir();
+    const lireTuile = () => X.pg.evaluate(() => { renderNutrition();
+      const v = document.getElementById('nu-session-cal'), l = v && v.closest('.nu-stat') && v.closest('.nu-stat').querySelector('.nu-stat-lbl');
+      const b = v.closest('.nu-stat').getBoundingClientRect(), bv = v.getBoundingClientRect(), bl = l.getBoundingClientRect();
+      return { val: v.textContent.replace(/[\u202f\u00a0]/g, ' ').trim(), lbl: l.textContent.trim(), deborde: v.scrollWidth > v.clientWidth + 1 || bv.right > b.right + 0.5 || bl.right > bv.left + 0.5 || b.height > 60 }; });
+    await X.pg.evaluate(() => { const mk = (id, kcal) => ({ id, ts: id, date: today(), calories: kcal, exs: [] });
+      S.sessions = [mk(Date.now() - 3600e3, 350), mk(Date.now() - 7200e3, 250)]; persist(); goScreen('nutrition', document.getElementById('nb-nutrition')); });
+    const deux = await lireTuile();
+    await X.pg.evaluate(() => { S.sessions = S.sessions.slice(0, 1); persist(); });
+    const une = await lireTuile();
+    await X.pg.evaluate(() => { S.sessions = []; persist(); });
+    const zero = await lireTuile();
+    await X.pg.setViewportSize({ width: 320, height: 700 });
+    await X.pg.evaluate(() => { const mk = (id, kcal) => ({ id, ts: id, date: today(), calories: kcal, exs: [] });
+      S.sessions = [mk(Date.now() - 3600e3, 1350), mk(Date.now() - 7200e3, 1250)]; persist(); });
+    const etroit = await lireTuile();
+    t('C-NUM-G1 ⭐ F06 — deux séances aujourd\'hui (250 + 350 kcal) : la tuile dit 600 kcal et « 2 séances »',
+      deux.val === '600 kcal' && /2 séances/.test(deux.lbl), _j(deux));
+    t('C-NUM-G2 F06 — une séance : 350 kcal et « Séance » ; aucune : « aucune »',
+      une.val === '350 kcal' && /^Séance$/.test(une.lbl) && zero.val === 'aucune', _j({ une, zero }));
+    t('C-NUM-G3 F06 — rien ne déborde de la tuile, même à 320 px avec 2 600 kcal', !deux.deborde && !etroit.deborde && etroit.val === '2 600 kcal', _j({ deux, etroit }));
+    await X.cx.close();
+  }
+
+  /* ── C-NUM-H — F23 : l'export PDF distingue les séances des jours d'entraînement ─────────────────────────────── */
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      const j = n => today(Date.now() - n * 864e5);
+      const mk = (id, d, nom) => ({ id, ts: id, date: d, progLabel: nom, exs: [{ name: 'Développé Couché', sets: [{ kg: 80, reps: 5, done: true, type: 'N' }] }] });
+      S.sessions = [mk(Date.now() - 3600e3, today(), 'Matin'), mk(Date.now() - 1800e3, today(), 'Soir'), mk(Date.now() - 3 * 864e5, j(3), 'Pecs')];
+      S.sessions.forEach(x => x.exercises = x.exs); _trierSeances(S.sessions); persist();
+      return { entete: (typeof _histoEntete === 'function') ? _histoEntete(_histoLignes(false)) : null };
+    });
+    t('C-NUM-H1 ⭐ F23 — l\'en-tête de l\'export PDF dit 3 séances sur 2 jours d\'entraînement (et non « 2 séances »)',
+      r.entete && /3 séances/.test(r.entete) && /2 jours/.test(r.entete), _j(r));
+    await X.cx.close();
+  }
+
+  /* ── C-NUM-I — F19 : sans sommeil récent, le score de récupération est une estimation ────────────────────────── */
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      /* le cas mesuré le 23/10 (F19 « jeune ») : 25 ans, dernière séance il y a 20 jours, aucun sommeil noté → 82 */
+      S.age = 25; S.sleepLog = [];
+      S.sessions = [{ id: 7001, ts: Date.now() - 20 * 864e5, date: today(Date.now() - 20 * 864e5), uniConv: 1, exs: [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5, done: true, type: 'N' }] }] }];
+      persist();
+      const d = calcRecoveryDetail(); const info = getRecoveryInfo(d.score, d.sansSommeil);
+      renderHome(); const hero = ((document.getElementById('home-hero') || document.body).textContent || '').replace(/\s+/g, ' ');
+      const ctx = buildCoachContext('bonjour');
+      const milo = (ctx.split('\n').filter(l => /Implication entraînement|Score récupération|Conseil récupération/.test(l))).join(' | ');
+      // avec un sommeil récent (8 h la nuit dernière, 8 h les deux précédentes), rien ne change
+      const t0 = Date.now(); S.sleepLog = [0, 1, 2].map(k => ({ date: today(t0 - k * 864e5), hours: 8, quality: 4 })); persist();
+      const d2 = calcRecoveryDetail(); const info2 = getRecoveryInfo(d2.score, d2.sansSommeil);
+      const ctx2 = buildCoachContext('bonjour');
+      const milo2 = (ctx2.split('\n').filter(l => /Implication entraînement|Conseil récupération/.test(l))).join(' | ');
+      return { score: d.score, sans: d.sansSommeil, info, milo, hero: hero.slice(0, 400), score2: d2.score, sans2: d2.sansSommeil, info2, milo2 };
+    });
+    t('C-NUM-I1 ⭐ F19 — sans sommeil récent, même à 82 : le conseil se dit « estimation » et n\'encourage pas à tenter des records',
+      r.sans === true && r.score >= 80 && /estim/i.test(r.info.rec) && !/record|PR/i.test(r.info.rec), _j({ score: r.score, rec: r.info.rec, label: r.info.label }));
+    t('C-NUM-I2 F19 — le libellé ne présente pas le score comme une certitude (« estimé »)', /estim/i.test(r.info.label), r.info.label);
+    t('C-NUM-I3 ⭐ F19 — Milo ne lit plus « JOUR IDÉAL pour PRs » un jour sans sommeil noté', !/JOUR IDÉAL|PRs/i.test(r.milo) && /estim/i.test(r.milo), r.milo.slice(0, 300));
+    t('C-NUM-I5 F19 — l\'Accueil non plus : pas d\'invitation aux records sans sommeil noté', !/record/i.test(r.hero) && /estim/i.test(r.hero), r.hero.slice(0, 260));
+    t('C-NUM-I4 F19 — avec un sommeil récent, rien ne change : textes et consigne de Milo d\'origine',
+      r.sans2 === false && !/estim/i.test(r.info2.rec + r.info2.label) && (r.score2 < 80 || /records/.test(r.info2.rec)) && !/estim/i.test(r.milo2),
+      _j({ score: r.score2, info: r.info2, milo: r.milo2.slice(0, 200) }));
+    await X.cx.close();
+  }
+
+  /* ── C-NUM-J — F22 : les activités de la montre gardent leur nom, sans barème inventé ────────────────────────── */
+  {
+    const X = await ouvrir();
+    const r = await X.pg.evaluate(() => {
+      const types = ['Walking', 'Marche à pied', 'Running', 'Course à pied', 'Swimming', 'Treadmill', 'Tapis de course', 'Indoor Cycling', 'Rowing', 'Elliptical', 'Yoga'].map(n => [n, _typeCardioDepuisMontre(n)]);
+      const c = { type: _typeCardioDepuisMontre('Walking'), intensity: 'modere', duration: 30 };
+      const kcalMarche = calcCardioKcal(c), kcalAutre = calcCardioKcal({ type: 'autre', intensity: 'modere', duration: 30 });
+      // le détail d'une séance avec ce cardio : le choix affiché doit être « Marche », pas « Elliptique »
+      const ts = Date.now() - 864e5;
+      S.sessions = [{ id: ts, ts, date: today(ts), exs: [], cardio: c }]; persist(); openSessDetail(ts);
+      const sel = [...document.querySelectorAll('#sd-content select')].find(x => (x.getAttribute('onchange') || '').indexOf("'type'") > 0 && (x.getAttribute('onchange') || '').indexOf("'apres'") > 0);
+      const affiche = sel ? sel.options[sel.selectedIndex].textContent : null;
+      return { types, clair: _cardioClair(c), kcalMarche, kcalAutre, affiche };
+    });
+    const T = Object.fromEntries(r.types);
+    t('C-NUM-J1 ⭐ F22 — « Walking » s\'affiche « Marche 30 min », pas « marche » ni « Autre »', /^Marche 30 min/.test(r.clair), r.clair);
+    t('C-NUM-J2 ⛔ F22 — aucun barème inventé : une marche se calcule exactement comme « Autre » (moteur gelé)', r.kcalMarche === r.kcalAutre && r.kcalMarche > 0, r.kcalMarche + ' / ' + r.kcalAutre);
+    t('C-NUM-J3 F22 — le détail de la séance montre « Marche », pas « Elliptique »', /Marche/.test(r.affiche || '') && !/Elliptique/.test(r.affiche || ''), r.affiche);
+    t('C-NUM-J4 ⭐ F22 — un tapis de course (« Treadmill », « Tapis de course ») va sur le barème « Tapis » qui existe déjà',
+      T['Treadmill'] === 'tapis' && T['Tapis de course'] === 'tapis' && T['Running'] === 'course' && T['Walking'] === 'marche' && T['Indoor Cycling'] === 'velo' && T['Yoga'] === 'autre', _j(r.types));
+    await X.cx.close();
+  }
 }
 
 module.exports = { ecran };
