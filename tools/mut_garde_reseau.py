@@ -23,7 +23,13 @@ ARGS_PROXY = "const ARGS_NAV = ['--proxy-server=' + PROXY_MORT, '--proxy-bypass-
 ARGS_SANS = "const ARGS_NAV = ['--proxy-bypass-list"
 NAV_GARDE = "  if (lance && !ligne.includes('--proxy-server=' + PROXY_MORT)) {"
 CLIENT_PW = "const RE_CLIENT_PW = /playwright-core[\\\\/]lib[\\\\/]client[\\\\/](browserType|browser|browserContext|network)\\.js$/;"
-ENTREE = "  if (!types.length || !types.every(t => DEJA.has(Object.getPrototypeOf(t))) || !patches.Browser || !patches.Route) {"
+ENTREE = "  if (!types.length || !types.every(t => DEJA.has(Object.getPrototypeOf(t))) || (!paquet && (!patches.Browser || !patches.Route))) {"
+# Playwright « en paquet » (>= 1.63, 24/10/2026) : les classes se patchent depuis les objets remis (voir PAQUET dans le garde)
+PAQUET_ENTREE = "  if (types.length && !patches.Browser && !patches.Route) for (const t of types) {"
+# chaque mutation ne vaut que pour la forme de Playwright qu'elle vise : l'autre forme n'a pas ce chemin (sans objet, non comptée)
+CLASSIQUE_SEUL = {'M15', 'M16', 'M17'}
+PAQUET_SEUL = {'M15p', 'M16p', 'M17p', 'M24', 'M25', 'M26'}
+PW_CLIENT_FICHIER = os.path.join(os.path.realpath('/opt/node22/lib/node_modules/playwright'), '..', 'playwright-core', 'lib', 'client', 'browserType.js')
 
 LANCE = 'lau' + 'nch'   # D031S-VII : voir le commentaire des mutations G1 a G7
 MUT = [
@@ -69,6 +75,19 @@ MUT = [
      [(G, CLIENT_PW, "const RE_CLIENT_PW = /^$^/;"), (G, ENTREE, "  if (false) {")], 'PLANTAGE'),
     ('M17 Playwright non reconnu, verification d\'entree ET garde des enfants desactives : le temoin ① le voit',
      [(G, CLIENT_PW, "const RE_CLIENT_PW = /^$^/;"), (G, ENTREE, "  if (false) {"), (G, NAV_GARDE, "  if (false) {")], '①'),
+    ('M15p Playwright EN PAQUET non reconnu (le patch depuis les objets est coupe) : le chargement refuse (ferme par defaut)',
+     [(G, PAQUET_ENTREE, "  if (false) for (const t of types) {")], 'PLANTAGE'),
+    ('M16p Playwright EN PAQUET non reconnu ET verification d\'entree desactivee : le garde des enfants refuse encore le lancement',
+     [(G, PAQUET_ENTREE, "  if (false) for (const t of types) {"), (G, ENTREE, "  if (false) {")], 'PLANTAGE'),
+    ('M17p Playwright EN PAQUET non reconnu, verification d\'entree ET garde des enfants desactives : le temoin ① le voit',
+     [(G, PAQUET_ENTREE, "  if (false) for (const t of types) {"), (G, ENTREE, "  if (false) {"), (G, NAV_GARDE, "  if (false) {")], '①'),
+    ('M24 EN PAQUET, la classe Browser n\'est plus patchee au lancement : le navigateur est ferme, le lancement leve (ferme par defaut)',
+     [(G, "      if (PAQUET.has(BT.prototype)) patcherPaquet('Browser', nav);", "      if (false) patcherPaquet('Browser', nav);")], 'PLANTAGE'),
+    ('M25 EN PAQUET, la classe des contextes n\'est plus patchee (unrouteAll retirerait le refus) -> refuse DES LE LANCEMENT',
+     [(G, "  patcherPaquet('BrowserContext', c);\n", "  ;\n")], "PREUVE:la classe des contextes n'est pas patchée"),
+    ('M26 EN PAQUET, la classe des routes n\'est plus patchee (decisions des tests perdues) -> refuse DES LE LANCEMENT',
+     [(G, "const refusParDefaut = (rt) => { patcherPaquet('Route', rt); DEFAUT.add", "const refusParDefaut = (rt) => { DEFAUT.add"),
+      (G, "routeVue = rt; patcherPaquet('Route', rt); return rt.continue();", "routeVue = rt; return rt.continue();")], "PREUVE:la classe des routes n'est pas patchée"),
     ('M18 la porte des contextes n\'est plus enveloppee (les contextes naissent sans refus par defaut) -> refuse DES LE LANCEMENT (preuve D031S-2 ; avant : temoin ④)',
      [(G, "    B.prototype[nom] = async function (...a) { const c = await nc0.apply(this, a); await installerContexte(c); return c; };",
            "    B.prototype[nom] = nc0;")], "PREUVE:le contexte est né SANS refus par défaut"),
@@ -182,8 +201,15 @@ def main():
     m = re.search(r'(\d+) OK / (\d+) rouge', out0)
     print('  arbre sain, espace reseau isole : 0 rouge (%s OK) — point de depart valide\n' % (m.group(1) if m else '?'))
     conformes = total = 0
+    paquet_pw = not os.path.exists(PW_CLIENT_FICHIER)
+    print('  Playwright %s\n' % ('EN PAQUET (>= 1.63 : un seul fichier client) — M15/M16/M17 sans objet, M15p/M16p/M17p et M24-M26 actives'
+                                 if paquet_pw else 'PAR FICHIERS (lib/client/*.js) — M15p/M16p/M17p et M24-M26 sans objet'))
     for nom, remplacements, cible in MUT:
         if filtres and not any(nom.startswith(f) for f in filtres):
+            continue
+        code = nom.split()[0]
+        if (paquet_pw and code in CLASSIQUE_SEUL) or (not paquet_pw and code in PAQUET_SEUL):
+            print('  --   %-112s sans objet ici (forme de Playwright differente), non comptee' % nom[:112])
             continue
         total += 1
         tmp, arbre = cloner()

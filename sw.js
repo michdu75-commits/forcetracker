@@ -4,7 +4,8 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v1259'; // (!) ft-v1259 = ADMIN : carte Profil -> Admin -> Surveillance -> Inventaire Nutrition (A2) : lance les deux diagnostics en lecture seule deja deployes (nutInventory, nutBackupAudit, Apps Script @192) ; jeton admin existant dans le CORPS d un POST, jamais dans l adresse ; liste blanche de nombres, valeurs echappees ; aucun resultat range sur l appareil - app.js (zone Admin) + index.html (section Admin) seulement, aucune donnee persistee, rien d ecrit cote serveur
+const CACHE = 'ft-v1260'; // (!) ft-v1260 = NUTRITION V2 : un seul moteur (nutrition-v2.js, precache) calcule chaque valeur consommee et ecrit chaque ligne nouvelle ; ajout en grammes / ml d abord, une portion seulement avec le poids d UNE portion (3 portions (450 g)) ; rien n est pre-rempli ni invente (valeur inconnue = ?, total partiel) ; une reprise ecrit ce qu elle affiche (D-111 regle A) ; une correction a la main reste (D-096) ; anciennes lignes lues sans jamais etre modifiees (D-098) ; pop-up v80 - Code.js inchange (Apps Script @193, P1 + D-110), aucune cle de stockage nouvelle
+// (!) ft-v1259 = ADMIN : carte Profil -> Admin -> Surveillance -> Inventaire Nutrition (A2) : lance les deux diagnostics en lecture seule deja deployes (nutInventory, nutBackupAudit, Apps Script @192) ; jeton admin existant dans le CORPS d un POST, jamais dans l adresse ; liste blanche de nombres, valeurs echappees ; aucun resultat range sur l appareil - app.js (zone Admin) + index.html (section Admin) seulement, aucune donnee persistee, rien d ecrit cote serveur
 // (!) ft-v1258 = NUTRITION M6 (NUT-M6-REJEU-01, D-094) : le rejeu d un repas habituel et l ajout rapide ne lisent plus l ecran d ajout (marqueur ecran:false porte par la provenance ; 4 lectures gardees : grammes, pour-100 g, portions, fiabilite ; addFoodEntry inchange ; provenance rendue dans un finally ; le marqueur n entre jamais dans une ligne) - app.js seul, aucune donnee persistee, aucune ligne existante modifiee
 // (!) ft-v1257 = SEANCE REFAITE (D-083 -> D-093 : en-tete de seance, Terminer intelligent, repos en bas, pastille N/E/X, Cobalt, note precedente, Ta seance jusqu'ici face-chiffres-dos et totaux, reserve Echec/0/1/2/3/4+, RIR au detail, Precedent sans doublon, 4 dernieres seances) + lot final du 20/10 (aides N/E/X, capture du Guide, Terminer de fin en Cobalt, carte : kg de travail, 35 aides fausses ou perimees corrigees) + S-01 et CC-01 sous leur cle + harnais de tests D-031 Securite (aucun code applicatif)
 // (!) ft-v1255 = PROGRES -> SEANCES + BADGES -> MENU : Progres s ouvre sur Seances (Seances | Exercices | Corps & sante) ; tout l historique par annee puis par mois, plus de plafond de 20, le mois en cours ouvert ; Seances ce mois et le calendrier menent a la bonne seance (cle ts||id) ; volume par muscle 14 | 28 jours (28 par defaut), Milo garde 14 jours ; pop-up Quoi de neuf v77 ; les Badges passent dans le Menu (Ton suivi -> Badges, renderBadges inchange, D-078). Aucune donnee persistee nouvelle. Worker et Apps Script inchanges.
@@ -102,6 +103,8 @@ const PRECACHE = [
      balise échoue, et un `try/catch` avale l'absence. On n'ajoute pas un script servi
      sans l'ajouter ici dans le même mouvement. */
   './capacites-ia.js',
+  /* 🥗 Le moteur Nutrition V2 (jalon 4) : servi par `index.html`, donc précaché ici dans le même mouvement. */
+  './nutrition-v2.js',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js', './food-health.js',
   /* ⛔⛔ `supabase.js` MANQUAIT ICI, ET C'ETAIT LE SEUL DES 10 (31/08/2026). Trouve en

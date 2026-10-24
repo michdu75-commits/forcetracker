@@ -82,11 +82,13 @@ MUT = [
      "  try{ ; }catch(e){}",
      'rouge', 'R15 : le verdict du repas PRECEDENT se colle au suivant'),
 
+    # 🥗 22/10/2026 (Nutrition V2, jalon 4) : `_provFood` est retire (R30) ; la trace part avec la ligne par
+    #    `_n2Extras`. M09, M12, M13 et M14 suivent leur code a son nouvel endroit — memes mutations, memes garanties.
     ('M09', AP,
-     "    const _z=(typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab) ? _bcNutr.fiab\n"
-     "            : ((typeof _afFiab==='object' && _afFiab) ? _afFiab : null);",
-     "    const _z=((typeof _afFiab==='object' && _afFiab) ? _afFiab\n"
-     "            : ((typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab) ? _bcNutr.fiab : null));",
+     "  const z=(typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab) ? _bcNutr.fiab\n"
+     "        : ((typeof _afFiab==='object' && _afFiab) ? _afFiab : null);",
+     "  const z=((typeof _afFiab==='object' && _afFiab) ? _afFiab\n"
+     "        : ((typeof _bcNutr==='object' && _bcNutr && _bcNutr.fiab) ? _bcNutr.fiab : null));",
      'rouge', 'la priorite s inverse : un verdict sans pour-100 g passe devant celui qui en a un'),
 
     # ── L ORIGINE : le point le plus silencieux ──────────────────────────────────
@@ -104,19 +106,27 @@ MUT = [
     # 🔁 21/10/2026 (NUT-M6-REJEU-01) : l'ancre suit la ligne, qui porte désormais la garde M6 `ecran &&` (D-094) ;
     #    la mutation reste la même — retirer l'exclusion de COHERENT, et elle seule.
     ('M12', AP,
-     "    if(ecran && _z && _z.etat!=='COHERENT'){",
-     "    if(ecran && _z){",
+     "  if(z && z.etat && z.etat!=='COHERENT'){",
+     "  if(z && z.etat){",
      'rouge', 'toute ligne porte desormais une trace (elle ne doit pas grossir pour rien)'),
 
     ('M13', AP,
-     "      p.fiab={ etat:z.etat, methode:z.methode, raison:z.raison,",
-     "      p.fiab={ etat:z.etat, methode:z.methode, raison:'',",
+     "    o.trace={etat:z.etat, methode:z.methode, raison:z.raison,",
+     "    o.trace={etat:z.etat, methode:z.methode, raison:'',",
      'rouge', 'la raison ne part plus avec la ligne'),
 
     ('M14', AP,
-     "      (_iaG&&_iaRef)?{per100:_per100De(_iaRef)}:{},",
-     "      {},",
-     'rouge', 'REGRESSION : la ligne reperd son pour-100 g'),
+     "    return {ok:true, entree:Object.assign(e, {mode:'pesee', fiche:_n2Fiche(R.base, R.q, R.u, _n2SourceFicheProp()), quantite:q})};",
+     "    return {ok:true, entree:Object.assign(e, {mode:'declaree', declare:R.base, quantite:q})};",
+     'rouge', 'REGRESSION : la ligne reperd son pour-100 g (la fiche qui a servi)'),
+    ('M21', AP,
+     "    window._afIaGrammes=(d.g>0&&d.g<=5000)?d.g:0;",
+     "    window._afIaGrammes=0;",
+     'rouge', 'V2 : le poids estime par l IA n atteint plus l ecran (plus de pastille)'),
+    ('M22', AP,
+     "    : ((typeof _afFiab==='object' && _afFiab && +window._afIaGrammes>0) ? _afFiab : null));",
+     "    : null);",
+     'rouge', 'V2 : une energie substituee par le resolveur (estimation IA avec poids) n est plus EXPLIQUEE a l ecran'),
 
     # ⚠️ LE DEFAUT D ORDRE QUE J AI REELLEMENT COMMIS : l oubli apres la pose efface la trace
     #    dans la milliseconde, sans lever la moindre erreur.

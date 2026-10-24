@@ -1420,8 +1420,11 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
        verifie de bout en bout par le bloc CCLXXVII du parcours, qui conduit le vrai
        `_lookupBarcode` (25 g ici, 100 g et 250 g la-bas) et lit ce que l'app ECRIT.
        *Un test qui n'emploie pas le schema de la production ne teste rien, il rassure.* */
-    const scanBloc=(n)=>{ _bcNutr={name:n.name,kcal100:n.kcal,prot100:n.prot||0,
-                                   carbs100:n.carbs||0,fat100:n.fat||0};
+    /* 🥗 V2 (jalon 4, 22/10) — la fiche du scan se construit par le constructeur UNIQUE (`_ref100`), comme le vrai scan :
+       elle porte sa base (g / ml) et ses champs absents ; un objet recopié à la main n'est plus une fiche de la prod. */
+    const scanBloc=(n)=>{ _bcNutr=(typeof _ref100==='function')
+                            ? _ref100(n.name, n.kcal, n.prot||0, n.carbs||0, n.fat||0, {origine:'off'})
+                            : {name:n.name,kcal100:n.kcal,prot100:n.prot||0,carbs100:n.carbs||0,fat100:n.fat||0};
                           if(bcRow())bcRow().style.display='block'; };
     /* ft-v1190 — ON TAPE LA QUANTITE POUR DE VRAI (option A, decision Michel du 10/09/2026).
        `set('af-bc-grams', 25)` posait `.value` SANS evenement : l'app n'y voyait aucun geste et
@@ -1432,35 +1435,47 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
        change (25 g, sa source, son identifiant, son pour-100 g). */
     const taperGrammes=(v)=>{ const el=document.getElementById('af-bc-grams');
                               if(el){ el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); } };
-    // ── ① saisie 100 % MANUELLE ────────────────────────────────────────────────
+    /* 🥗 V2 (jalon 4, 22/10) — LES MÊMES GARANTIES, SUR LE CONTRAT V2 (D-099, garde-fou du 10/09) : une saisie sans poids
+       n'est plus une ligne (rien ne part, rien n'est inventé) ; la provenance de la caméra est `camera-code-local`
+       (l'ancien « scan » est LU, plus écrit) ; une valeur retouchée sur une fiche est une CORRECTION tracée (`n2.corr`),
+       plus un drapeau `modifie`. Toute frappe est un vrai geste (événement `input`), comme `taperGrammes` (ft-v1190). */
+    const taper=(id,v)=>{ const el=document.getElementById(id); if(!el) return false; el.value=String(v);
+                          el.dispatchEvent(new Event('input',{bubbles:true})); return true; };
+    const poserPoids=(v)=>{ const ok=taper('af-poids',v); const el=document.getElementById('af-poids');
+                            if(el) el.dispatchEvent(new Event('blur')); return ok; };
+    const relire=()=>{ if(typeof _afMajAncre==='function') _afMajAncre(true); };
+    const nb=()=>S.foodLog.length;
+    // ── ① saisie 100 % MANUELLE, SANS poids : RIEN ne part (aucune quantité inventée) ─
     openAddFood();
     set('af-desc','Poulet maison'); set('af-kcal',300); set('af-prot',40); set('af-carbs',0); set('af-fat',12);
-    addFoodEntry();
-    o.manuel=S.foodLog[S.foodLog.length-1];
+    relire();
+    { const n0=nb(); addFoodEntry(); o.manuelSansPoids={ajoute:nb()>n0};
+    // ── ①b … AVEC son poids (250 g) : la ligne part, telle qu'elle a été dite ────────
+      o.poidsPose=poserPoids(250);
+      addFoodEntry(); o.manuel=(nb()>n0)?S.foodLog[nb()-1]:null; }
     // ── ② SCAN Open Food Facts, quantite connue, valeurs non retouchees ────────
     openAddFood();
-    src({saisie:'scan',origine:'off',sourceId:'3017620422003',
-      per100:{kcal:539,prot:6.3,carbs:57.5,fat:30.9},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
+    src({saisie:'camera-code-local',origine:'off',sourceId:'3017620422003'});
     scanBloc({name:'Pate a tartiner',kcal:539,prot:6.3,carbs:57.5,fat:30.9});
     taperGrammes(25);
-    set('af-desc','Pate a tartiner'); set('af-kcal',135); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
+    set('af-desc','Pate a tartiner');
     addFoodEntry();
-    o.scan=S.foodLog[S.foodLog.length-1];
-    // ── ③ SCAN puis la personne RETOUCHE les macros a la main ──────────────────
+    o.scan=S.foodLog[nb()-1];
+    // ── ③ SCAN puis la personne RETOUCHE les kcal a la main (une vraie frappe) ──────
     openAddFood();
-    src({saisie:'scan',origine:'off',sourceId:'3017620422003',
-      per100:{kcal:539},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
+    src({saisie:'camera-code-local',origine:'off',sourceId:'3017620422003'});
     scanBloc({name:'Pate a tartiner',kcal:539,prot:6.3,carbs:57.5,fat:30.9});
     taperGrammes(25);
-    set('af-desc','Pate a tartiner'); set('af-kcal',200); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
+    set('af-desc','Pate a tartiner'); taper('af-kcal',200);
     addFoodEntry();
-    o.retouche=S.foodLog[S.foodLog.length-1];
-    // ── ④ la saisie SUIVANTE ne doit PAS heriter de la provenance precedente ───
+    o.retouche=S.foodLog[nb()-1];
+    // ── ④ la saisie SUIVANTE (avec son poids) ne doit PAS heriter de la provenance precedente ─
     openAddFood();
     set('af-desc','Pomme'); set('af-kcal',80); set('af-prot',0); set('af-carbs',20); set('af-fat',0);
+    relire(); poserPoids(150);
     addFoodEntry();
-    o.apresScan=S.foodLog[S.foodLog.length-1];
-    o.n=S.foodLog.length;
+    o.apresScan=S.foodLog[nb()-1];
+    o.n=nb();
     S.foodLog=[]; persist();
     return o;
   });
@@ -1469,22 +1484,28 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
   if(J.err){ t('X le bloc tourne', false, J.err); }
   else{
     const E=x=>x||{};
-    t('⭐⭐ SAISIE MANUELLE : origine « utilisateur », et AUCUNE quantite inventee',
-      E(J.manuel).v===1 && E(J.manuel).saisie==='manuel' && E(J.manuel).origine==='utilisateur'
-      && E(J.manuel).q===null && E(J.manuel).etat===null, JSON.stringify(J.manuel));
-    t('⭐⭐ SCAN : la QUANTITE est enfin enregistree (25 g), avec la source et son identifiant',
-      E(J.scan).q===25 && E(J.scan).u==='g' && E(J.scan).origine==='off' && E(J.scan).sourceId==='3017620422003',
-      JSON.stringify(J.scan));
+    const C=x=>(E(x).n2 && Array.isArray(x.n2.corr)) ? x.n2.corr : null;
+    t('⭐⭐ SAISIE MANUELLE SANS POIDS : RIEN ne part — aucune quantité inventée (D-099)',
+      E(J.manuelSansPoids).ajoute===false, JSON.stringify(J.manuelSansPoids));
+    t('⭐⭐ SAISIE MANUELLE AVEC SON POIDS : origine « utilisateur », la quantité est CELLE TAPÉE (250 g), les valeurs dites',
+      J.poidsPose===true && E(J.manuel).v===1 && E(J.manuel).saisie==='manuel' && E(J.manuel).origine==='utilisateur'
+      && E(J.manuel).q===250 && E(J.manuel).u==='g' && E(J.manuel).kcal===300 && !E(J.manuel).sourceId
+      && E(J.manuel).etat===null, JSON.stringify(J.manuel));
+    t('⭐⭐ SCAN : la QUANTITE est enregistree (25 g), avec la source et son identifiant',
+      E(J.scan).q===25 && E(J.scan).u==='g' && E(J.scan).saisie==='camera-code-local' && E(J.scan).origine==='off'
+      && E(J.scan).sourceId==='3017620422003', JSON.stringify(J.scan));
     t('⭐ ... et les valeurs au 100 g sont gardees (c\'est ce qui permettra de recalculer)',
       !!(E(J.scan).per100 && E(J.scan).per100.kcal===539), JSON.stringify(E(J.scan).per100));
-    t('/!\\ valeurs NON retouchees → modifie = false', E(J.scan).modifie===false, 'modifie='+E(J.scan).modifie);
-    t('⭐⭐ VALEURS RETOUCHEES A LA MAIN : `modifie` le dit (la source n\'explique plus le chiffre)',
-      E(J.retouche).modifie===true, 'modifie='+E(J.retouche).modifie);
+    t('/!\\ valeurs NON retouchees → aucune correction tracée', !!C(J.scan) && C(J.scan).length===0,
+      JSON.stringify(E(J.scan).n2));
+    t('⭐⭐ VALEURS RETOUCHEES A LA MAIN : la ligne le dit — correction tracée (200 au lieu du calcul de la fiche)',
+      E(J.retouche).kcal===200 && !!C(J.retouche) && C(J.retouche).some(x=>x.c==='kcal' && x.v===200 && x.avant!==200),
+      JSON.stringify(E(J.retouche).n2));
     t('⭐⭐ LA PROVENANCE NE SURVIT PAS A LA SAISIE SUIVANTE (sinon le journal ment)',
-      E(J.apresScan).origine==='utilisateur' && E(J.apresScan).q===null && !E(J.apresScan).sourceId,
-      JSON.stringify(J.apresScan));
+      E(J.apresScan).origine==='utilisateur' && E(J.apresScan).saisie==='manuel' && E(J.apresScan).q===150
+      && !E(J.apresScan).sourceId, JSON.stringify(J.apresScan));
     t('/!\\ l\'etat cru/cuit reste `null` partout : il viendra de la base, il ne se devine pas',
-      [J.manuel,J.scan,J.retouche,J.apresScan].every(e=>e.etat===null));
+      [J.manuel,J.scan,J.retouche,J.apresScan].every(e=>!!e && e.etat===null));
     t('les 4 entrees sont bien enregistrees', J.n===4, 'n='+J.n);
   }
 }
