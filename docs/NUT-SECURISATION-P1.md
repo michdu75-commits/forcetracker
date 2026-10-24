@@ -247,6 +247,19 @@ code garde `recupNut` dans le compte sans jamais le renvoyer (`loadProfile` list
 
 ---
 
+## 12. ✅ Déployé seul côté Apps Script — @193, 24/10/2026, 00:58 UTC (GO de Michel, 24/10 : « P1 serveur uniquement »)
+
+- **Ce qui est parti** : le `Code.js` de cette branche (blob `bb793186` = P1 + `D-110`), **seul**, sur master `9a72e107`
+  (avance rapide depuis `164a1579`, `[skip ci]`), puis le workflow Apps Script lancé à la main (run n°124). L'app reste
+  `ft-v1259` ; **Nutrition V2 n'est pas publiée** ; aucune donnée utilisateur n'est modifiée par le déploiement.
+- **`D-110` VALIDÉ par Michel le 24/10** ; `D-111` = règle A ; `D-112` reportée.
+- **Vérifié avant** sur l'arbre publié : bout en bout app `ft-v1259` + ce `Code.js` 10 / 0 (Drive en panne), 9 / 0
+  (Drive OK), prod @192 7 / 2 ; B-NSP1 82 / 0 ; retour arrière 6 / 0 (contrôles rouges) et essayé à blanc ; bancs serveur
+  du sélecteur verts ; passe complète D-031 sur `9a72e107`.
+- **Retour arrière** (§8) : un commit sur master qui remet le `Code.js` de @192 (blob `8430bf87`) + le même workflow.
+
+---
+
 ## Annexe — le texte d'avant la finalisation, gardé tel quel (R30)
 
 > Écrit le 23/10 vers 01:40 UTC, **avant** la décision de Michel (option B, `D-108`) et avant que la borne ne soit corrigée
