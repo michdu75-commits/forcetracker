@@ -1208,23 +1208,11 @@ function _dureeDouteuse(sess){
   return false;
 }
 
-function openSessDetail(id){
-  const sess=S.sessions.find(s=>(s.ts||s.id)===id);
-  if(!sess)return;
-  _sessId=id;
-  _sessEdits=JSON.parse(JSON.stringify(sess));
-  /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
-     Le contrôle négatif a montré qu'aucune des deux ne pouvait faire rougir un témoin — elles se
-     couvraient l'une l'autre. La seconde est donc retirée (R19). ⛔ Et je dis ce que la mesure
-     dit VRAIMENT : même celle-ci n'a aucun cas d'échec atteignable, parce que le garde
-     `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien
-     nom, donc aucun record ne bouge. Elle reste parce qu'elle garantit qu'une fenêtre s'ouvre
-     TOUJOURS propre, pas parce qu'un témoin l'exige. */
-  _sessRenames=[];
-  _sdDelConfirm=false;
-  if(_sdDelTimer)clearTimeout(_sdDelTimer);
-  const db=document.getElementById('sd-del-btn');
-  if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
+/* 🧾 L'EN-TÊTE DU DÉTAIL D'UNE SÉANCE (titre, volume, durée, calories) — sorti d'`openSessDetail` le 24/10/2026 (mission
+   Séance, K2) pour pouvoir le REDESSINER sans rouvrir le détail. ⛔ Rouvrir le détail recopie la séance enregistrée dans
+   `_sessEdits` et efface ce que la personne a tapé sans l'enregistrer encore : c'est exactement ce que faisait la correction
+   de la durée (une charge tapée 120 revenait à 100). Le contenu de l'en-tête n'a pas changé. */
+function _sdEntete(sess){
   document.getElementById('sd-title').textContent=fmtD(sess.date);
   const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
   /* ⏱️ LA DURÉE RÉELLE DE LA SÉANCE — elle EXISTAIT et ne remontait jamais (13/08/2026).
@@ -1285,11 +1273,33 @@ function openSessDetail(id){
   }
   /* 🧮 D-093 (décision de Michel, 19/10/2026 — affichage seul) — « 4200 kg total » désignait le TRAVAIL : les paliers
      d'échauffement n'y étaient pas. Le total les compte maintenant, et le travail est dit à part quand il diffère.
-     ⛔ Rien n'est recalculé ni réécrit : le travail affiché est `sess.volume` tel qu'enregistré (la carte de l'historique
-     le montre aussi) ; seuls les échauffements s'y ajoutent, par LA règle de volume (`_workVol`, R2). */
-  const _vTrav=Math.round(sess.volume||0), _vEch=(typeof _workVol==='function')?Math.max(0,Math.round(_workVol(sess,true)-_workVol(sess))):0;
+     ⛔ Rien n'est réécrit : le travail affiché est lu sur les séries par LA règle de volume (`_volTravail` → `_workVol`,
+     R2) — le même chiffre que la carte de l'historique et le calendrier ; seuls les échauffements s'y ajoutent.
+     ↪️ 24/10/2026 (mission Séance, F02 · Q5) : il lisait la copie rangée `sess.volume`, que le défaut F02 avait réduite de
+     moitié sur des séances unilatérales éditées — le détail disait alors 300 kg là où les séries en faisaient 600. */
+  const _vTrav=_volTravail(sess), _vEch=(typeof _workVol==='function')?Math.max(0,Math.round(_workVol(sess,true)-_workVol(sess))):0;
   const _kgfr=n=>n.toLocaleString('fr-FR');
   document.getElementById('sd-sub').innerHTML=`${_kgfr(_vTrav+_vEch)} kg total${_vEch>0?' · dont '+_kgfr(_vTrav)+' kg de travail':''}${duree}${cals}${eff}${estim}`;
+}
+
+function openSessDetail(id){
+  const sess=S.sessions.find(s=>(s.ts||s.id)===id);
+  if(!sess)return;
+  _sessId=id;
+  _sessEdits=JSON.parse(JSON.stringify(sess));
+  /* ⚠️ UNE SEULE remise à zéro, et c'est MESURÉ : j'en avais posé deux (ici et à la fermeture).
+     Le contrôle négatif a montré qu'aucune des deux ne pouvait faire rougir un témoin — elles se
+     couvraient l'une l'autre. La seconde est donc retirée (R19). ⛔ Et je dis ce que la mesure
+     dit VRAIMENT : même celle-ci n'a aucun cas d'échec atteignable, parce que le garde
+     `encoreLa` fait déjà le travail — une séance fermée sans enregistrer porte encore l'ancien
+     nom, donc aucun record ne bouge. Elle reste parce qu'elle garantit qu'une fenêtre s'ouvre
+     TOUJOURS propre, pas parce qu'un témoin l'exige. */
+  _sessRenames=[];
+  _sdDelConfirm=false;
+  if(_sdDelTimer)clearTimeout(_sdDelTimer);
+  const db=document.getElementById('sd-del-btn');
+  if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
+  _sdEntete(sess);
 
   _renderHealthInbox(sess);
   _updateSdMuscles(sess);
@@ -1417,8 +1427,12 @@ function _updateSdMuscles(sess){
 }
 
 /* Saisie de la durée d'une séance — sert aux séances importées (photo d'une feuille) et à
-   celles d'avant les horodatages. ⚠️ Elle ne recalcule AUCUNE calorie : `sess.calories` reste
-   figé (même principe qu'`uniConv`). Elle alimente l'estimation 🔬 et les comparaisons. */
+   celles d'avant les horodatages. Elle alimente aussi l'estimation 🔬 et les comparaisons.
+   ↪️ 24/10/2026 (mission Séance de Michel, K1 · K2) — ce commentaire disait « elle ne recalcule AUCUNE calorie :
+   `sess.calories` reste figé ». Michel demande l'inverse : *« la durée modifiée sans actualisation cohérente des calories »*
+   est un défaut. La durée fait partie de l'effort : ses calories suivent maintenant, par la règle de `_kcalApresEdition`
+   (la VARIATION d'effort appliquée aux calories d'origine — jamais un recalcul au poids du jour). Et le détail ouvert n'est
+   plus rouvert : une modification tapée et pas encore enregistrée y reste (K2). */
 function editSessDuree(){
   // ⚠️ Même clé que `openSessDetail` : (ts || id), pas `id` seul — sinon on éditerait la
   //    mauvaise séance sur les entrées où les deux diffèrent.
@@ -1448,15 +1462,24 @@ function editSessDuree(){
   const v=prompt(entete,cur);
   if(v===null)return;
   const t=String(v).trim();
+  const m=t?parseInt(t.replace(/[^0-9]/g,''),10):0;
+  if(t && (!m||m<1||m>600)){ toast('Durée attendue entre 1 et 600 minutes','error'); return; }
+  const _avant=JSON.parse(JSON.stringify(s));
   if(!t){ delete s.duration; delete s.durationDite; }
-  else{
-    const m=parseInt(t.replace(/[^0-9]/g,''),10);
-    if(!m||m<1||m>600){ toast('Durée attendue entre 1 et 600 minutes','error'); return; }
-    s.duration=m*60; s.durationDite=true;
-  }
+  else{ s.duration=m*60; s.durationDite=true; }
+  const _k=_kcalApresEdition(_avant,s);   // K1 : les calories suivent la durée, à l'échelle de la séance d'origine
+  s.calories=_k.calories; s.calData=_k.calData;
   persist();
   try{ if(typeof _cloudSyncSessions==='function')_cloudSyncSessions(); }catch(e){}
-  openSessDetail(s.ts||s.id);
+  /* K2 — le détail ouvert sur CETTE séance n'est pas rouvert : `openSessDetail` recopierait la séance enregistrée dans
+     `_sessEdits` et effacerait ce qui a été tapé sans être enregistré. On y reporte seulement la durée (et les calories
+     qui vont avec), puis on redessine l'en-tête. « Enregistrer » enregistrera ensuite le tout. */
+  if(_sessEdits && (_sessEdits.ts||_sessEdits.id)===(s.ts||s.id)){
+    if(s.duration){ _sessEdits.duration=s.duration; _sessEdits.durationDite=true; }
+    else{ delete _sessEdits.duration; delete _sessEdits.durationDite; }
+    _sessEdits.calories=s.calories; _sessEdits.calData=s.calData;
+    _sdEntete(s);
+  }else openSessDetail(s.ts||s.id);
   renderSessions();
   toast(t?'Durée enregistrée ✅':'Durée effacée — mieux vaut rien qu\'un chiffre faux','success');
 }
@@ -1690,13 +1713,40 @@ function deleteSessOrConfirm(){
   toast('Séance supprimée','info');
 }
 
+/* 🔥 F21 · K1 (mission Séance de Michel du 24/10/2026) — LES CALORIES D'UNE SÉANCE PASSÉE NE BOUGENT QUE SI L'EFFORT BOUGE.
+   ⛔⛔ LE DÉFAUT, MESURÉ (contre-vérification du 23/10) : « Enregistrer » sans rien changer recalculait les calories avec le
+   poids, les records et le repos par défaut D'AUJOURD'HUI — une séance faite à 82 kg passait de 97 à 112 kcal après une prise
+   de poids à 95 kg. Et corriger la durée (60 → 90 min) ne les recalculait pas du tout (317 gardés au lieu de 440).
+   ⭐ LA RÈGLE : le moteur (APPELÉ, jamais modifié — gelé) calcule l'avant et l'après DANS LE MÊME CONTEXTE (poids, records,
+   repos d'aujourd'hui). Même résultat → l'effort n'a pas changé → les calories d'origine et leur détail restent tels quels.
+   Résultat différent → on applique aux calories D'ORIGINE la seule VARIATION d'effort (rapport après / avant) : tout ce que
+   la séance avait de propre (le poids de ce jour-là, ses records, son repos) reste dans l'échelle, et le poids du jour n'y
+   entre pas. Tout le moteur est proportionnel au poids : une séance faite à 82 kg et corrigée à 95 kg retombe exactement sur
+   le calcul à 82 kg.
+   ⛔ Aucune donnée nouvelle (pas de poids rangé dans la séance, règle #17) et rien de rétroactif : seule la séance que la
+   personne modifie elle-même change. Sans calories d'origine (une séance qui n'en a jamais eu), on ne peut garder aucune
+   échelle : on prend le calcul du jour, comme avant. */
+function _kcalApresEdition(avant, apres){
+  const ref=+(avant&&avant.calories)||0;
+  const cA=_calDataSeance(avant), cN=_calDataSeance(apres);
+  if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // même effort : rien ne bouge
+  if(!(ref>0) || !(cA.total>0)) return {calories:cN.total, calData:cN};
+  const k=ref/cA.total, sc=v=>Math.round(v*k);
+  const calData=Object.assign({}, cN, {total:sc(cN.total)});
+  if(cN.cardio) calData.cardio=sc(cN.cardio);
+  if(cN.breakdown){ calData.breakdown={}; Object.keys(cN.breakdown).forEach(n=>{ calData.breakdown[n]=sc(cN.breakdown[n]); }); }
+  return {calories:calData.total, calData};
+}
+
 function saveSessEdits(){
   if(!_sessEdits||_sessId===null)return;
   const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
   if(idx===-1)return;
-  let vol=0;
-  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
-  _sessEdits.volume=Math.round(vol);
+  const _avant=S.sessions[idx];
+  /* 🧮 F02 (mission Séance du 24/10/2026) — LA RÈGLE DE VOLUME N'EST PLUS RECOPIÉE ICI : la copie ignorait la convention
+     unilatérale (`uniConv`) et divisait par deux, à chaque « Enregistrer », le volume d'une séance unilatérale (600 → 300,
+     pendant que le résumé de la semaine disait toujours 600). C'est `_workVol`, la règle de la fin de séance. */
+  _sessEdits.volume=Math.round(_workVol(_sessEdits));
   /* 🏅 C1 (13/09/2026) — LA RÈGLE D'ÉLIGIBILITÉ N'EST PLUS RECOPIÉE ICI. Elle disait exactement
      la même chose que `_serieFaitFoiPourPR` (log.js), et c'est précisément le problème : deux
      écritures d'une même règle finissent par diverger, la seule question est quand (**R2**).
@@ -1712,11 +1762,9 @@ function saveSessEdits(){
       if(!cur||s.rm1>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:s.rm1,date:_sessEdits.date};
     }
   }));
-  const calData=calcSessionCalories(_sessEdits);
-  const cardioKcal=(typeof calcCardioKcal==='function')?(calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null)):0;
-  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
-  _sessEdits.calories=calData.total;
-  _sessEdits.calData=calData;
+  const _k=_kcalApresEdition(_avant,_sessEdits);   // F21 : rien ne bouge si l'effort n'a pas bougé
+  _sessEdits.calories=_k.calories;
+  _sessEdits.calData=_k.calData;
   S.sessions[idx]=_sessEdits;
   _deplacerRecordsRenommes();   // ⚠️ APRÈS l'écriture : avant, la séance porterait encore l'ancien nom
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
@@ -1879,7 +1927,7 @@ function _sessCarteHtml(s){
     if(_tag)parts.push('<span class="sess-date2">'+fmtD(s.date)+'</span>');
     // ⛔ « 0 kg » n'apprend rien sur un cardio, et laisse croire à une séance vide. On le retire
     //    UNIQUEMENT dans ce cas — une séance avec exercices garde sa ligne de volume, même à 0.
-    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg de travail</span>');   // lot final ft-v1257 (Michel) : `volume` = le travail — le même nombre que « dont … kg de travail » du détail, qui dit le total
+    if(!_cardioSeul)parts.push('<span class="sess-vol2">'+_volTravail(s)+' kg de travail</span>');   // lot final ft-v1257 (Michel) : `volume` = le travail — le même nombre que « dont … kg de travail » du détail, qui dit le total
     // ⏱️ La durée était stockée depuis toujours et n'apparaissait NULLE PART (voir le
     //    commentaire du détail de séance plus haut). Ici on la met dans la liste : c'est
     //    là qu'on compare plusieurs séances d'un coup d'œil.
@@ -1927,7 +1975,7 @@ function _dbfFenetre(id){
   if(sub){
     const nEx=s?(s.exs||s.exercises||[]).length:0;
     sub.textContent=s?[(s.progLabel||''),fmtD(s.date),nEx?nEx+' exercice'+(nEx>1?'s':''):'',
-                       s.volume?Math.round(s.volume)+' kg':''].filter(Boolean).join(' · ')
+                       _volTravail(s)?_volTravail(s)+' kg':''].filter(Boolean).join(' · ')
                      :'Séance introuvable dans l\'historique';
   }
   const ov=document.getElementById('ov-debrief-milo');if(ov)ov.classList.add('open');

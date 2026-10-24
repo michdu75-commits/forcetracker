@@ -39180,6 +39180,12 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      cadre 88 × 51 ancré en bas (liseré masqué), catégories / recherche / « Anatomie » / autres écrans inchangés, hors ligne.
      Blocs C-VIG-*. Banc : tools/banc_picker_vignettes.js · contrôle négatif : tools/mut_picker_vignettes.py. */
   await require('./picker_vignettes.js').ecran(t, b, PORT);
+  /* 🧮 MISSION SÉANCE DU 24/10/2026 (session-C, Claude Séance, mission de Michel — docs/SEANCE-CHIFFRES-2026-10-24.md) — les
+     chiffres d'une séance ne changent plus en silence : « Enregistrer » sans changer l'effort garde les calories (F21) et le
+     volume unilatéral (F02) ; une séance déjà réduite de moitié s'affiche juste sans être réécrite (Q5) ; corriger la durée
+     met les calories à jour à l'échelle de la séance (K1) sans effacer ce qui est tapé (K2). Blocs C-NUM-*.
+     Banc : tools/banc_seance_chiffres.js · contrôle négatif : tools/mut_seance_chiffres.py. */
+  await require('./seance_chiffres.js').ecran(t, b, PORT);
   /* 📐 D031S-B — LES TÉMOINS PRÉPARÉS DE D-091 (D-031-SÉCURITÉ-01, Claude Nutrition, 19/10/2026), BRANCHÉS le 20/10 par Principal
      avec la livraison de D-091 (lot final ft-v1257), comme le prévoyait la passation (docs/D031-SECURITE-01.md § 6) : le panneau
      « Ta séance jusqu'ici » compte les échauffements validés dans les TOTAUX et dit le travail à part ; la séance enregistrée

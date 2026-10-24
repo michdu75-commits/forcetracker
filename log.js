@@ -4925,6 +4925,34 @@ function _workVol(sess, avecEchauffements){
   return v;
 }
 
+/* 🧮 LE VOLUME DE TRAVAIL D'UNE SÉANCE ENREGISTRÉE, TEL QUE TOUS LES ÉCRANS LE MONTRENT (mission Séance de Michel du
+   24/10/2026 : F01 · F02 · F25 · Q5). ⛔ UNE SEULE RÈGLE, `_workVol` ci-dessus, celle de la fin de séance, avec la
+   convention de la séance elle-même (`uniConv` : charge notée par côté, volume ×2 pour un exercice unilatéral ; une
+   séance d'avant le 11/08 garde la sienne). Le calendrier, la tendance, la carte de l'historique, le détail, le tableau de
+   bord et Milo la lisaient chacun à leur façon — mesuré le 23/10 : la même séance valait 1 100 kg enregistrés, 800 au
+   calendrier, et 300 après une simple édition.
+   ⭐ ON LIT LES SÉRIES, PAS LA COPIE RANGÉE : `sess.volume` n'est qu'une copie, et le défaut F02 l'a réduite de moitié sur
+   des séances unilatérales éditées depuis le 11/08. Lire les séries montre le bon chiffre SANS réécrire la séance (Q5) :
+   elle ne change que si la personne l'enregistre elle-même.
+   ⛔ Repli sur la copie rangée seulement quand les séries ne donnent rien (anciennes séances sans série validée) : le même
+   repli que le résumé de la semaine (`_workVol(s)||s.volume`, app.js) depuis toujours. */
+function _volTravail(sess){
+  if(!sess) return 0;
+  const w=_workVol(sess);
+  return Math.round(w>0 ? w : (+sess.volume||+sess.vol||0));
+}
+
+/* 🔥 LES CALORIES D'UNE SÉANCE, CARDIO COMPRIS — UN SEUL ENDROIT (mission Séance du 24/10/2026). La fin de séance et la
+   modification d'une séance passée faisaient le même calcul chacune de leur côté (moteur + cardio d'avant + cardio
+   d'après) : deux écritures d'une même règle finissent par diverger (R2). ⛔ Le moteur n'est pas touché : il est
+   seulement APPELÉ (moteur calorique gelé, consigne de Michel). */
+function _calDataSeance(sess){
+  const calData=calcSessionCalories(sess);
+  const cardioKcal=calcCardioKcal(sess.cardioAvant||null)+calcCardioKcal(sess.cardio||null);
+  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
+  return calData;
+}
+
 let _finishing=false;
 /* 🏅 UN SEUL PROPRIÉTAIRE DE « CETTE SÉRIE PEUT-ELLE FAIRE UN RECORD ? » (01/09/2026).
    La règle était écrite ici, en fin de séance, et nulle part ailleurs. Le jour où un 2ᵉ endroit
@@ -4998,9 +5026,7 @@ async function finishWorkout(){
   // Deux moments possibles (02/08) : `cardio` = APRÈS (champ historique), `cardioAvant` = échauffement.
   if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
   if(S.wkt?.cardioAvant?.duration) sess.cardioAvant={...S.wkt.cardioAvant};
-  const calData=calcSessionCalories(sess);
-  const cardioKcal=calcCardioKcal(sess.cardioAvant||null)+calcCardioKcal(sess.cardio||null);
-  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
+  const calData=_calDataSeance(sess);   // le même calcul que la modification d'une séance passée (un seul endroit)
   sess.calories=calData.total;sess.calData=calData;
 
   // ── SAUVEGARDE LOCALE : séances d'abord, wkt effacé après confirmation ──
