@@ -26,7 +26,8 @@
         rester à zéro, D031S-II ② le vérifie). Détail par requête (destination, action, sort) dans
         `FT_GARDE_JOURNAL/garde-<pid>.jsonl` quand cette variable nomme un dossier.
    ⛔ FERMÉ PAR DÉFAUT : toute copie de Playwright chargée est patchée ; une copie dont la
-   structure est inconnue fait ÉCHOUER le chargement au lieu de laisser un navigateur sans garde.
+   structure est inconnue fait ÉCHOUER le chargement au lieu de laisser un navigateur sans garde. Depuis Playwright 1.63
+   (client « en paquet », un seul fichier), les mêmes quatre classes se patchent depuis les objets remis (voir `PAQUET`).
    Les variables d'environnement dont le NOM ressemble à un secret (clé, jeton, mot de passe…)
    sont retirées du processus et de ses enfants : un test ne peut pas lire une vraie clé.
 
@@ -202,10 +203,20 @@ const optionsSures = (o) => {
   delete r.proxy;
   return r;
 };
-const refusParDefaut = (rt) => { DEFAUT.add(rt.request()); return rt.abort('blockedbyclient'); };
+/* ⭐ PLAYWRIGHT « EN PAQUET » (≥ 1.63 — constaté le 24/10/2026, conteneur renouvelé : 1.56 → 1.63). Le client n'est plus
+   un fichier par classe (`lib/client/browserType.js`…) mais UN fichier (`lib/coreBundle.js`) qui n'exporte aucune classe :
+   `RE_CLIENT_PW` ne voit plus rien. Les MÊMES quatre classes se patchent alors depuis les objets que Playwright remet —
+   BrowserType à l'entrée (`chromium`, `firefox`, `webkit`), Browser au lancement, BrowserContext au premier contexte,
+   Route à la première route — TOUJOURS avant que le navigateur soit rendu au test, et la preuve au lancement vérifie
+   ensuite que les trois dernières tiennent (sinon le navigateur est fermé et le lancement lève : fermé par défaut). */
+const PAQUET = new WeakSet();         // les BrowserType d'une copie « en paquet »
+const classeDe = (o) => { const p = o && Object.getPrototypeOf(o); return p && p.constructor; };
+const patcherPaquet = (quoi, o) => { const C = classeDe(o); if (C && C.prototype && !DEJA.has(C.prototype)) patcherClient('(paquet) ' + quoi, { [quoi]: C }); };
+const refusParDefaut = (rt) => { patcherPaquet('Route', rt); DEFAUT.add(rt.request()); return rt.abort('blockedbyclient'); };
 const poserRefus = (c) => c.route(RE_NON_LOCAL, refusParDefaut);
 async function installerContexte(c) {
   if (!c || CONTEXTES.has(c)) return;
+  patcherPaquet('BrowserContext', c);
   CONTEXTES.add(c); compte.contextes++;
   // ⛔ LA PREMIÈRE ROUTE, donc la DERNIÈRE consultée : tout ce que les tests ne simulent pas finit ici
   await poserRefus(c);
@@ -244,6 +255,7 @@ function patcherClient(fichier, ex) {
     BT.prototype.launch = async function (o) {
       compte.lancements++;
       const nav = await la0.call(this, optionsSures(o));
+      if (PAQUET.has(BT.prototype)) patcherPaquet('Browser', nav);      // en paquet : la classe Browser se patche ici, avant tout contexte
       // ⛔ fermé par défaut : un navigateur dont la classe n'est pas patchée créerait des contextes sans refus par défaut
       if (!nav || !DEJA.has(Object.getPrototypeOf(nav))) { try { await nav.close(); } catch (e) {} throw erreurGarde('navigateur d\'une copie de Playwright non patchée', 'EGARDE'); }
       // ⛔ LA PREUVE AU LANCEMENT (décision de Michel du 19/10/2026 : « la protection doit échouer en mode fermé si elle ne
@@ -252,7 +264,7 @@ function patcherClient(fichier, ex) {
       catch (e) { compte.preuvesEchouees++; try { await nav.close(); } catch (e2) {} throw e; }
       return nav;
     };
-    for (const nom of ['launchPersistentContext', 'connect', 'connectOverCDP', 'launchServer']) {
+    for (const nom of ['launchPersistentContext', 'connect', 'connectOverCDP', 'launchServer', '_connect', '_connectToWorker']) {
       if (typeof BT.prototype[nom] === 'function') BT.prototype[nom] = function () { throw erreurGarde(nom + ' (chemin de lancement non contrôlé)', 'EGARDE'); };
     }
   }
@@ -287,18 +299,27 @@ async function preuveLancement(nav) {
   const c = await nav.newContext();
   try {
     if (!CONTEXTES.has(c)) throw echecPreuve('le contexte est né SANS refus par défaut');
+    if (!DEJA.has(Object.getPrototypeOf(c))) throw echecPreuve('la classe des contextes n\'est pas patchée (unrouteAll retirerait le refus par défaut)');
     const p = await c.newPage();
     const e1 = await p.goto('http://preuve.d031s.invalid/', { timeout: 10000 }).then(() => 'la page a RÉPONDU', (e) => String(e.message));
     if (!/ERR_BLOCKED_BY_CLIENT/.test(e1)) throw echecPreuve('refus par défaut non prouvé (' + e1.split('\n')[0].slice(0, 90) + ')');
-    await c.route('**/*', (rt) => rt.continue());
+    let routeVue = null;
+    await c.route('**/*', (rt) => { routeVue = rt; patcherPaquet('Route', rt); return rt.continue(); });
     const e2 = await p.goto('http://preuve-proxy.d031s.invalid/', { timeout: 10000 }).then(() => 'la page a RÉPONDU', (e) => String(e.message));
     if (!/ERR_PROXY_CONNECTION_FAILED|ERR_TUNNEL_CONNECTION_FAILED|ERR_NAME_NOT_RESOLVED/.test(e2)) throw echecPreuve('proxy mort non prouvé (' + e2.split('\n')[0].slice(0, 90) + ')');
+    if (!routeVue || !DEJA.has(Object.getPrototypeOf(routeVue))) throw echecPreuve('la classe des routes n\'est pas patchée (les décisions des tests ne seraient plus enregistrées)');
   } finally { try { await c.close(); } catch (e) {} }
 }
 // ⛔ fermé par défaut, copie par copie : les navigateurs qu'une copie de Playwright exporte doivent avoir une classe patchée
 const verifierEntree = (ex) => {
   const types = ['chromium', 'firefox', 'webkit'].map(n => ex && ex[n]).filter(Boolean);
-  if (!types.length || !types.every(t => DEJA.has(Object.getPrototypeOf(t))) || !patches.Browser || !patches.Route) {
+  // en paquet : AUCUNE classe vue fichier par fichier — les BrowserType se patchent depuis les objets exportés
+  if (types.length && !patches.Browser && !patches.Route) for (const t of types) {
+    const C = classeDe(t);
+    if (C && C.prototype && !DEJA.has(C.prototype) && typeof C.prototype.launch === 'function') { patcherClient('(paquet) BrowserType', { BrowserType: C }); PAQUET.add(C.prototype); }
+  }
+  const paquet = types.length > 0 && types.every(t => PAQUET.has(Object.getPrototypeOf(t)));
+  if (!types.length || !types.every(t => DEJA.has(Object.getPrototypeOf(t))) || (!paquet && (!patches.Browser || !patches.Route))) {
     throw erreurGarde('Playwright chargé sous une forme inconnue (BrowserType ' + patches.BrowserType + ', Browser ' + patches.Browser + ', Route ' + patches.Route + ') — aucun navigateur ne partira sans garde', 'EGARDE');
   }
 };
