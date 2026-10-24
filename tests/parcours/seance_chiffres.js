@@ -538,6 +538,17 @@ async function ecran(t, b, PORT) {
     await X.cx.close();
   }
   {
+    // le MÊME 100 × 5 que le record, mais le record est daté d'un autre jour dont la séance n'est plus là (import ancien) :
+    // la séance supprimée l'a seulement ÉGALÉ — l'origine reste incertaine, donc rien n'est proposé (la date fait foi)
+    const X = await ouvrir();
+    const f = await recBase(X, { pr: { kg: 100, reps: 5, rm1: 112.5, date: '2026-01-15' } });
+    await supprimer(X, f.TB);
+    const c = await confirmVu(X);
+    t('C-REC-D2 ⛔ F08 — la séance supprimée a seulement ÉGALÉ un record daté d\'un autre jour (100 × 5) : aucun aperçu, il reste intact',
+      !c.ouvert && _j(await pr(X)) === _j({ kg: 100, reps: 5, date: '2026-01-15' }), _j({ c, pr: await pr(X) }));
+    await X.cx.close();
+  }
+  {
     const X = await ouvrir();
     const f = await recBase(X, { seul: true });
     await supprimer(X, f.TB);

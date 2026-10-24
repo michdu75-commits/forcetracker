@@ -139,7 +139,7 @@ MUT = [
     # ── LOT 3 : records et muscles ──────────────────────────────────────────────────────────────────────────────────
     ('M36 [deguisee] l\'origine du record n\'exige plus la meme date (un 100 x 5 d\'un autre jour suffit)',
      [(SE, "    if(!pr||pr.date!==avant.date||out.indexOf(ex.name)>=0) return;", "    if(!pr||out.indexOf(ex.name)>=0) return;")],
-     'GARDE', 'C-REC-G1'),
+     'GARDE', 'C-REC-D2'),
     ('M37 le recalcul est applique sans attendre la reponse (ecriture automatique)',
      [(SE, "  showConfirm(props.length>1?'Records à vérifier':'Record à vérifier',",
            "  props.forEach(p=>{ if(p.apres) S.prs[p.nom]=p.apres; else delete S.prs[p.nom]; }); persist();\n  showConfirm(props.length>1?'Records à vérifier':'Record à vérifier',")],
