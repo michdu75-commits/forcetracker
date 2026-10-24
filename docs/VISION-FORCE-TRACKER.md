@@ -14,6 +14,12 @@ existe**. Elle ne remplace pas la Constitution — elle l'éclaire.
 > **Cette Vision n'est pas un choix de positionnement : elle vient d'une expérience vécue
 > d'être réduit à une catégorie.** C'est ce qui la rend non négociable — le détail dans
 > `docs/ORIGINE-DES-REGLES.md`.
+>
+> ↪️ **Précisé le 24/10/2026, par Michel** : cette expérience a **enrichi** la Vision ; elle
+> n'est pas le point de départ du projet. Force Tracker a commencé, au plus tard en juin 2026,
+> comme un outil que Michel voulait **pour lui-même** — *« sans aucune ambition
+> commerciale »*. Les trois couches (départ · vision · événements) :
+> `docs/ORIGINE-DES-REGLES.md`.
 
 ---
 

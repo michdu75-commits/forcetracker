@@ -34,7 +34,16 @@
 ## 1. CE QU'EST FORCE TRACKER, ET POUR QUI
 
 **Force Tracker** est une application web de suivi de musculation (PWA), conçue pour mobile
-(largeur max 430 px), servie par GitHub Pages. Elle est née le **17 juin 2026**.
+(largeur max 430 px), servie par GitHub Pages. Elle existe depuis **au moins début juin 2026** : plus ancienne trace
+certaine le 8 juin (l'app en ligne), dépôt GitHub depuis le 11 juin. *(↪️ Corrigé le 24/10/2026 : ce
+paragraphe disait « née le 17 juin 2026 », une date non vérifiable et postérieure aux premières traces.
+Aucune date exacte de naissance n'est retenue.)*
+
+Michel l'a commencée **pour lui-même** : une application de musculation et de force athlétique adaptée à
+sa façon de s'entraîner, parce que celles qu'il avait essayées faisaient vite payer — *« sans aucune
+ambition commerciale »*. Sa philosophie depuis : *« une application gratuite réellement complète,
+utilisable pendant des années, et des options payantes uniquement pour ceux qui veulent beaucoup
+plus »*. *(Ajouté le 24/10/2026, mots de Michel.)*
 
 Son auteur, **Michel**, n'est **ni développeur ni programmeur**. Il conçoit le produit, tranche
 les décisions, et teste sur le terrain. C'est un point de méthode, pas une anecdote : toute

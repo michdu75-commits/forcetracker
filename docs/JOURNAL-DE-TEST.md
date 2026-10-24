@@ -1611,8 +1611,8 @@ un compte faux de ×3. **À observer avant de trancher** : est-ce que ça arrive
 
 ### 🟢 Ne pas juger sur un âge ou une donnée isolée
 **21/08/2026.** Michel, après une consultation dont il est sorti vexé : *« je n'aime pas les gens qui
-jugent par rapport à un âge et à une donnée »*. C'est l'**origine de l'esprit du produit**
-(`docs/ORIGINE-DES-REGLES.md`).
+jugent par rapport à un âge et à une donnée »*. Cette consultation a **enrichi l'esprit du produit** — ce
+n'est pas l'origine du projet (↪️ précisé le 24/10/2026, `docs/ORIGINE-DES-REGLES.md`).
 **Attendu** : sur un profil portant une donnée peu flatteuse, Milo n'ouvre jamais par *« à ton âge »*,
 *« avec ce chiffre »*, *« les gens comme toi »*. Il montre ce qu'il observe, puis propose.
 **Vérifiable ?** Oui — les tournures sont mécaniquement repérables.

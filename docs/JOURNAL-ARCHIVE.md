@@ -18118,3 +18118,22 @@ Fichiers : `log.js`, `coach.js`, `setup.js`, `screens.js`, `app.js`, `constants.
 Tests : bancs de lot AN 16/0 · AC 9/0 · AS 8/0 · CP 16/0 · OBQ 25/0 · IMP-WU 11/0 · débrief 58/0 · SESSION-INTEGRITY 93/0 ; contrôles négatifs 65/65 conformes ; répétitions 31/32 vertes + 5/5 au rejeu (1 rouge isolé du banc débrief, consigné) ; parcours croisé 8/0 ; annexe 14 PASS + 1 défaut connu identique à master. Passe complète n°1 sur `4b1983e5` : 5 964 ✅ / 3 ❌ — trois **témoins périmés** du runner (annonces de Christophe et d'Eline testées sans repère d'inscription ; avantage Premium renommé par D-052), causes prouvées sur copie, mis à jour sur leur garantie (`547e7f40`, 6 mutations conformes). Passe complète n°2 sur `fddcfde4` : **5 967 ✅ / 0 ❌**, 4 conditions vertes. Après elle : documentation seulement (D-031).
 
 Fichiers : `app.js`, `coach.js`, `log.js`, `setup.js`, `constants.js`, `state.js`, `screens.js`, `index.html`, `style.css`, `tracking.js`, `capacites-ia.js`, 7 bancs nouveaux (`tests/parcours/auth_cloud_closure.js`, `auth_new_device.js`, `auth_signup_strict.js`, `cookie_profile.js`, `debrief_demande.js`, `import_echauffement.js`, `onboarding_quick.js`, avec leurs lanceurs `tools/banc_*.js` et contrôles `tools/mut_*.py`), `tests/parcours/runner.js`, `tests/recette/registre.json`, `docs/DECISIONS.md` (D-052), `docs/IA-FREE-PREMIUM.md`, `docs/IDEMPOTENCE-DEBRIEF.md`, `docs/PROMPT-MILO-REEL.txt`, `BUGS.md`, `CLAUDE.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/SUIVI-AUDIT.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`, `sw.js`. sw.js ft-v1251. |
+
+
+---
+
+## ↪️ Correction du 24/10/2026 — les dates des débuts *(ajoutée à la fin : l'archive ne se réécrit jamais)*
+
+Plusieurs passages de cette archive disent que **l'app est née le 17 juin 2026** et que **le suivi Git n'a
+démarré que le 30 juin**. Vérifié le 24/10/2026 sur l'historique complet du dépôt (GitHub) et sur le Drive
+de Michel : c'est faux, ou invérifiable. Les passages restent tels quels ; voici ce qui est vrai.
+
+| Ce qui est écrit plus haut | Ce qui est vrai |
+|---|---|
+| *« L'app est née le **17 juin 2026** (première maquette) mais le suivi Git n'a démarré que le **30 juin** »* (« Les tout DÉBUTS — ft-v1 → ft-v127 ») | L'app tournait en ligne le **8 juin** (*« Force Tracker v2.2 — Juin 2026 »*, Drive) ; premier commit GitHub le **11 juin** (`52a6aa55`, *« Initial commit: Force Tracker v2.8 »*) ; `ft-v1` le 15 juin (`29d84b5c`). Ce que représente le 17 juin n'a pas pu être vérifié. ⚠️ Ce bloc se dit lui-même *« reconstruit depuis Git »* à partir de `ft-v1` : Git couvrait donc déjà la deuxième moitié de juin. |
+| `ft-v494` : *« « À propos » affiche la date de naissance de l'app (17 juin 2026) »* | Exact pour ce qu'il décrit : c'est l'affichage voulu par Michel le 19/07. Toujours en place ; il ne change que sur sa décision. |
+| *« l'app est née le 17 juin »* comme argument — brique 7 (*« personne n'a un an d'historique »*) et `ft-v1087` (*« un record du 14/06… la séance ne peut pas être dans l'historique »*) | La date est fausse, les conclusions tiennent : personne n'avait un an d'historique en août, et la règle des records compare la date du record à la plus ancienne séance de son exercice, pas à une date de naissance. Des séances existent dès le 12 juin. |
+
+⛔ **Aucune date exacte de naissance n'est retenue** (consigne de Michel, 24/10/2026). La motivation de
+départ dite par Michel, les preuves, et la distinction entre départ, vision et événements :
+`docs/ORIGINE-DES-REGLES.md`.
