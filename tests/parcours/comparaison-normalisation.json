@@ -1,0 +1,17 @@
+[
+ [
+  "^(B-D086-⑫a ⭐ \\d+ px : un message sans heure enregistrée dit « Date indisponible » — jamais l'heure de consultation \\()\\d{2}/\\d{2}/\\d{4} · \\d{2}:\\d{2}(\\))$",
+  "\\1<date · heure de la passe>\\2",
+  "le libellé AFFICHE l'heure à laquelle la passe le joue (tests/parcours/ux_d086.js l. 299, variable `maintenant`) : il change d'une passe à l'autre, séquentielle ou répartie"
+ ],
+ [
+  "^(PS-E13 la plus vieille séance \\(32ᵉ, )\\d{4}-\\d{2}-\\d{2}(\\) s'ouvre en détail par sa carte)$",
+  "\\1<date calculée depuis le jour de la passe>\\2",
+  "le jeu de séances de tests/parcours/progres_seances.js (l. 287) est daté depuis AUJOURD'HUI : la date affichée change d'un jour à l'autre, séquentiel ou réparti"
+ ],
+ [
+  "^(PS-E14 la séance du )\\d{4}-\\d{2}-\\d{2}( \\(hors des 20 dernières, autre année\\) montre « 💬 Voir le débrief Milo »)$",
+  "\\1<date calculée depuis le jour de la passe>\\2",
+  "même jeu de séances (tests/parcours/progres_seances.js l. 299) : date calculée depuis le jour de la passe"
+ ]
+]
