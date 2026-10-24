@@ -94,6 +94,21 @@ async function ecran(t, b, PORT) {
     t('C-NUM-A5 aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
     await X.cx.close();
   }
+  {
+    /* F21, l'autre moitié du contexte : le repos par défaut (lu par le moteur) change entre la fin de séance et « Enregistrer ».
+       Garder les calories, c'est garder AUSSI leur détail tel qu'il a été calculé ce jour-là — pas un recalcul du jour
+       ramené au même total (le contrôle négatif du 24/10 a montré que le cas du poids seul ne les distinguait pas). */
+    const X = await ouvrir();
+    const r = await terminer(X, [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5 }, { kg: 100, reps: 5 }, { kg: 100, reps: 5 }] }]);
+    await X.pg.evaluate(() => { S.defRest = 60; persist(); });
+    await X.pg.evaluate(id => openSessDetail(id), r.id);
+    await enregistrer(X);
+    const apres = (await stocke(X))[0];
+    t('C-NUM-A7 ⭐ F21 — « Enregistrer » sans rien changer, après un changement du repos par défaut (130 → 60 s) : calories ET détail d\'origine gardés',
+      apres.calories === r.s.calories && _j(apres.calData) === _j(r.s.calData),
+      'avant ' + r.s.calories + ' / repos ' + r.s.calData.restMin + ' min · après ' + apres.calories + ' / repos ' + apres.calData.restMin + ' min');
+    await X.cx.close();
+  }
 
   {
     /* La fin de séance passe maintenant par le MÊME calcul que la modification (`_calDataSeance`) : le cardio d'avant et
