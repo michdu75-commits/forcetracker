@@ -5363,6 +5363,12 @@ qui recalcule ce que la personne n'a pas touché réécrit l'histoire sans le di
 modifiées depuis le 11/08 portent un volume divisé par deux — **ne pas les réécrire** sans décision de Michel (diagnostic en
 lecture seule d'abord, voir le rapport §4, lot 1).
 
+↪️ **24/10/2026 — CORRIGÉ sur la branche Séance (mission de Michel, lots 1 et 2, non publié)** : « Enregistrer » suit `_workVol`
+et ne bouge plus les calories sans changement d'effort (D-114) ; la durée corrigée met les calories à jour et garde la
+modification en cours (D-115) ; le calendrier, la tendance, l'export, le tableau de bord et Milo lisent la même règle (D-116) ;
+les séances déjà divisées s'affichent juste **sans être réécrites**. Témoins C-NUM-A → D (`tests/parcours/seance_chiffres.js`),
+vus rouges sur master. Détail : `docs/SEANCE-CHIFFRES-2026-10-24.md`, §103 ci-dessous.
+
 ## §101 — ⛔ « RESTAURER » REMPLACE LES FAVORIS : CE QUI N'EST PAS ENCORE PARTI AU SERVEUR EST PERDU — ET SEULS LES 200 PREMIERS FAVORIS PARTENT *(23/10/2026, intégration Nutrition V2 × P1 — branche `claude/nut-v2-p1-integration` ; deux défauts PRÉEXISTANTS, prod comprise, mesurés, NON corrigés · ↪️ **renuméroté §100 → §101 le 24/10, avant sa publication** : le §100 de `dreamy-bell` (session-C, 23/10 18:50 UTC) était antérieur au mien (21:07) — je l'avais choisi « après le §99 » sans revoir la branche ; c'est donc le mien qui bouge, pas le sien)*
 
 **Le constat (vraie app V2 + vrai `Code.js`, données inventées).** ① Hors ligne, la portion d'un favori est redéfinie
@@ -5426,3 +5432,87 @@ pas une bonne nouvelle. *Un découpage qui ne refuse jamais finit par doubler.* 
 l'heure dans son nom n'est plus comparable d'une passe à l'autre ; le corriger, c'est modifier un test (preuve propre et
 accord de Michel) — d'ici là, il se normalise **nommément**, jamais par motif large.
 
+## §103 — ⛔⛔ UNE SÉANCE PASSÉE CHANGEAIT EN SILENCE À « ENREGISTRER », ET SES CHIFFRES DIFFÉRAIENT D'UN ÉCRAN À L'AUTRE *(24/10/2026, mission Séance de Michel — session-C, branche `claude/dreamy-bell-pu88ia` ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptômes (mesurés sur master, vraie app, réseau coupé, données fictives).** « Enregistrer » sans rien changer : calories
+recalculées au poids **du jour** (82 → 95 kg : **97 → 112 kcal**) et volume unilatéral **divisé par deux** (600 → 300) ;
+corriger la durée (60 → 90 min) gardait les calories de 60 min et effaçait une charge tapée ; le calendrier disait **0,8 t**
+pour une séance enregistrée à 1 100 kg ; la tendance de volume, l'export CSV, le tableau de bord et la liste envoyée à Milo
+refaisaient `kg × reps` sans l'unilatéral ; une ancienne série « W » comptait comme travail dans le volume par muscle
+(**3** séries de pectoraux au lieu de 2, Milo lisait 1,5 série/semaine au lieu de 1) ; le cache de couleur du calendrier ne
+voyait pas une série cochée de plus ; la tuile « Séance » de Nutrition ne prenait que la 1ʳᵉ séance du jour (**350 au lieu de
+600 kcal**) ; l'en-tête de l'export PDF comptait des jours pour des séances ; un cardio Apple Santé « Walking » s'affichait
+« Elliptique » ; un score de récupération SANS sommeil disait « Prêt à performer » et invitait aux records.
+
+**Cause, une seule famille.** Une règle (le volume de travail, les calories d'une séance) **recopiée** là où on affiche ou
+ré-enregistre, et un « Enregistrer » qui **recalcule ce que la personne n'a pas touché** (§85, §100 : les jumelles n'avaient
+pas toutes été trouvées). *Un affichage n'a pas le droit de posséder une règle : il la lit.*
+
+**Correctif.** `_workVol` / `_volTravail` lus partout (D-116) ; `_kcalApresEdition` : même effort → rien ne bouge, effort
+changé → rapport appliqué aux calories d'origine (D-114) ; K2 (D-115) ; F06, F19, F22, F23 (D-117 → D-119). Aucune séance
+ancienne réécrite. Le moteur calorique est APPELÉ, jamais modifié.
+
+**Ce qui le protège.** `tests/parcours/seance_chiffres.js` (blocs C-NUM-A → J), branché dans la passe, contrôle négatif
+`tools/mut_seance_chiffres.py` (M1 → M35). ⭐ La leçon de méthode : *chercher les jumelles TOUT DE SUITE* — `grep` sur
+`kg*reps`, `.volume||`, `calcSessionCalories(` dans tous les fichiers d'écran, `dashboard.js` compris.
+
+## §104 — ⛔ UN RECORD RESTAIT CELUI D'UNE SÉANCE SUPPRIMÉE, ET UNE GARDE « DÉJÀ JUSTE » A CACHÉ UNE MUTATION *(24/10/2026, mission Séance, lot 3 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptôme.** Supprimer la séance d'un record (100 × 5), ou corriger sa série à la baisse, laissait le record à 100 × 5 —
+sans séance pour le porter. **Correctif** (D-120) : un aperçu « avant → après » calculé par l'outil existant, rien sans le
+geste, un record d'origine incertaine jamais proposé. **⚠️ Méthode** : la 1ʳᵉ campagne a donné 10/11 — la mutation « l'origine
+n'exige plus la même date » restait verte parce que le témoin G1 recalculait un record **déjà juste** (le même 100 × 5 refait
+un autre jour) et la garde « déjà juste » taisait l'aperçu. *Une garde de non-régression peut masquer la mutation qu'un autre
+témoin devait attraper.* Témoin ajouté : **C-REC-D2** (un record seulement ÉGALÉ, daté d'un import).
+
+## §105 — ⛔ DEUX LISTES D'IMAGES QUI DIVERGENT : 6 FICHIERS PRÉCHARGÉS JAMAIS AFFICHÉS, ET 156 ILLUSTRATIONS JAMAIS PRÉCHARGÉES *(24/10/2026, mission Séance, lot 5 ; le 1ᵉʳ **CORRIGÉ**, le 2ᵉ **CONSTATÉ, NON CORRIGÉ** — décision de Michel)*
+
+**Mesuré.** ① 6 fichiers de la liste `PRECACHE` (`sw.js`) ne sont nommés **nulle part** dans le code servi (551 289 octets) ;
+les 4 de `machine/` sont hors de `IMG_RE`, donc dans le cache **versionné** : 386 881 octets retéléchargés à chaque version.
+② **156 des 305** illustrations d'exercices (`EX_YT`) ne sont **pas** dans `PRECACHE` (15,3 Mo) : elles se téléchargent à la
+première vue, puis vont dans le tiroir stable. Hors ligne à la salle, sur un téléphone neuf, elles **manquent** tant qu'elles
+n'ont pas été vues une fois. **Cause** : deux listes pour la même information (R2) — les animations ajoutées après ft-v214 l'ont
+été à `EX_YT` sans l'être toujours à `PRECACHE`. **Correctif ①** (D-125) : retirés du préchargement, fichiers gardés ; témoin
+**C-IMG-C1** (« aucun fichier préchargé n'est jamais affiché »). **②** : précharger 15 Mo de plus est une décision de données
+mobiles (ft-v436) — **à Michel**. ⚠️ *Mon premier témoin affirmait « toute illustration est préchargée » : c'était une
+supposition sur l'app, pas une garantie qu'elle donne — retiré avant d'être livré (R28).*
+
+## §106 — ⛔ LA FIGURINE APPELAIT « PRINCIPAL » UN SECONDAIRE CUMULÉ, ET L'ORACLE D'UN BANC FIGEAIT LA RÈGLE FAUSSE *(24/10/2026, mission Séance, lot 3 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptôme.** Deux exercices où le triceps est secondaire : score 2 → listé « Primaires », dessiné en rouge (8 zones rouges au
+lieu de 6). **Cause** : un seuil en marche d'escalier (« score ≥ 2 ») confondait « moteur » et « souvent sollicité ».
+**Correctif** (D-121) : `prim` = primaire dans au moins un exercice. **⚠️ Le banc voisin `fig_face_dos` a rougi** : son
+oracle recalculait « principal » avec la même règle fausse — il ne protégeait pas l'invariant, il recopiait l'implémentation.
+Oracle **réécrit** (les moteurs lus dans la fiche), et éprouvé : il rougit sous M41, M42 et M49.
+
+## §107 — ⛔ LE CHOIX DE LA PERSONNE PASSAIT APRÈS LA RÈGLE DU NOM, ET LE CORRIGER CHANGEAIT LES CALORIES PAR LA BANDE *(24/10/2026, mission Séance, lot 3 ; **CORRIGÉ pour l'affichage, calories en attente de Michel**)*
+
+**Symptôme.** Un perso « Croisé Poulie » coché mollets montrait des pectoraux ; un « Curl Maison » coché quadriceps, des
+biceps — pendant que Progrès comptait les muscles cochés. **Cause** : premier match gagnant (la fiche, puis la règle du nom,
+le choix de la personne en dernier). **Le piège** : `_mscScores` est aussi le moteur des CALORIES (`getExerciseMET` compte
+ses muscles) ; le corriger là déplaçait la dépense de certains persos (mesuré : −6 à +4 kcal par séance d'une heure) sans que
+personne l'ait décidé. **Correctif** (D-122) : `_mscScores` identique à l'octet à master ; l'affichage passe par
+`_mscScoresVus`. Témoins C-MUS-B3 (réécrit), B5, C1 (périmètre : 4 appelants du moteur), C2.
+
+## §108 — ⛔ LE PROFIL AFFICHAIT « REPOS DÉFAUT » VIDE POUR TOUS CEUX QUI N'Y AVAIENT JAMAIS TOUCHÉ *(24/10/2026, mission Séance, lot 4 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Mesuré.** Le sélecteur proposait 60 / 90 / 120 / 180 / 300 s ; la valeur d'installation est **130 s** (`REPOS_DEFAUT`) : la
+case restait **vide** (le chrono appliquait bien 130 s). Une valeur restaurée hors liste (75 s) aussi. **Cause** : une liste en
+dur dans `index.html`, distincte de la constante (R2). **Correctif** (D-126) : une liste (`reposDefautChoix`), un écrivain
+(`choisirReposDefaut`), la valeur hors liste montrée telle quelle ; le menu ⋯ de la séance lit la même. Témoins C-REG-A → D.
+*Aucun témoin ne lisait ce sélecteur : il était vide depuis le 12/09 (ft-v1195, 130 s) sans que rien rougisse.*
+
+## §109 — ⛔ UNE IMAGE DE MUSCLE « DEVINÉE » ÉTAIT PRÉSENTÉE COMME L'ILLUSTRATION D'UN EXERCICE *(24/10/2026, mission Séance, lot 5 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptôme.** Pour les 17 exercices du catalogue sans animation (et tout perso sans photo), la vignette et la démonstration
+montraient l'image du muscle « deviné » du nom — rien ne disait qu'il ne s'agissait pas de l'exercice. **Correctif** (D-124) :
+« Aucune illustration disponible » aux 3 surfaces ; R29 (*quand l'app ne sait pas, elle le dit*). Témoins C-IMG-A1 → B1.
+
+## §110 — ⛔ CE QUE LE DIAGNOSTIC MET A TROUVÉ, ET QUI RESTE TEL QUEL (MOTEUR GELÉ) *(24/10/2026, mission Séance, `docs/DIAGNOSTIC-MET-2026-10-24.md` ; **CONSTATÉ, NON CORRIGÉ** — décision de Michel)*
+
+① **Séries cochées en bloc** : des horodatages sous le plancher physique deviennent la durée → **211 kcal au lieu de 337**
+(−37 %), sans ⚠️. ② **Cardio d'après, chrono seul** : ses minutes payées deux fois (transition + cardio) → **488 au lieu de
+427**. ③ **« Tapis » en sous-chaîne** : « Étirements / Gainage / Crunch sur tapis » (persos) comptés **8,0** comme un burpee.
+④ Le gainage noté en secondes compté en répétitions de 3 s. ⑤ Deux chiffres sur le même écran (337 et « 🔬 ~287 »).
+⑥ 33 classements douteux nés de la règle « 3 muscles ou plus ». Recommandations simulées R1 → R8, chiffrées ; aucune
+appliquée. *Ce sont les familles « premier match gagnant » (mots-clés en sous-chaîne) et « seuil en marche d'escalier ».*
