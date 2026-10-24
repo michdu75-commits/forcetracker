@@ -1628,3 +1628,19 @@ fait Milo) · ④ affichages et aides (F06 et F13 → Claude Nutrition, F07, F19
 ⑥ catalogue et images (F15, tuiles, précache). Preuves : 26 scénarios et 6 contre-épreuves (`tools/contre_verif_seance_2026_10_23/`),
 20 bancs Séance rejoués **920 / 0** + calendrier 10/0, muscles 241/241, calculs 339/0. Détail et matrice des 62 cas :
 `docs/CONTRE-VERIF-AUDIT-SEANCE-2026-10-23.md` ; bug de famille : `BUGS.md` §100.
+
+↪️ **24/10/2026 — MISSION SÉANCE DE MICHEL (P1) : CHANGEMENTS D'ÉTAT** *(branche `claude/dreamy-bell-pu88ia`, **non intégrée,
+non publiée** ; détail : `docs/SEANCE-CHIFFRES-2026-10-24.md`)* :
+
+| Constat | État au 24/10 |
+|---|---|
+| F01 · F02 · N1 (K2) · N2 (K1) · F21 | **corrigés sur la branche** (D-114 → D-116) — aucune séance ancienne réécrite |
+| F03 · F06 · F07 · F19 · F22 · F23 · F25 | **corrigés sur la branche** (D-117 → D-119) |
+| F08 | **corrigé sur la branche** : aperçu avant → après, rien sans le geste (D-120) |
+| F04 | **corrigé sur la branche** (D-121) |
+| F05 | **corrigé pour l'affichage** (D-122) ; **calories inchangées**, l'extension (R8) attend Michel |
+| F15 · précache · Mollets | « Aucune illustration disponible » (D-124) · 6 fichiers retirés du préchargement (D-125) · Mollets 34 Ko (D-123, **à valider à l'œil**) ; 17 illustrations à produire et 156 non préchargées : **décisions de Michel** |
+| 21 noms sans tuile | **non fait** (une tuile « Autres » à valider) |
+| F09 → F12 (moteur calorique) | **diagnostic seul** (`docs/DIAGNOSTIC-MET-2026-10-24.md`, R1 → R8 simulées) : rien appliqué, moteur gelé |
+| F13 | domaine Nutrition (inchangé ici) |
+| nouveau : « Repos défaut » vide dans le Profil | **corrigé sur la branche** ; réglable aussi depuis la séance (D-126) |
