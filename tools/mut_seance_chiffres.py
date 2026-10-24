@@ -6,7 +6,8 @@ C-NUM-* savent-ils ROUGIR ?
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 M00 remet les fichiers de l'app tels qu'ils etaient AVANT la mission (branche Seance 5a7b0a57 = master 999b7947 + repos +
-vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35), 3 (M36-M49), 4 (M50-M57) et 5 (M60-M66).
+vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35), 3 (M36-M49), 4 (M50-M57), 5 (M60-M66) et la cloture
+(M67-M69 : les temoins rouges sur master par absence, sans mutation propre).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] ne doit PAS faire rougir.
 Chaque mutation GARDE exige un TEMOIN PRECIS (4e champ) parmi les rouges.
 Un PLANTAGE du banc (code de sortie hors 0/1, ligne PLANTAGE, ou pas de ligne de total) n'est JAMAIS « garde ».
@@ -244,6 +245,19 @@ MUT = [
      [(SE, "  if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // même effort : rien ne bouge",
            "  if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // effort identique : on garde tout")],
      'OK', None),
+    # ── clôture (24/10) : les 3 témoins qui rougissaient sur master par ABSENCE (la fonction ou le geste n'y existe pas) sans
+    #    être la cible d'aucune mutation. Rouge sur master ne prouvait rien pour eux : chacun reçoit sa propre mutation.
+    ('M67 [deguisee] le score se dit « estime » meme avec un sommeil note (F19 applique a tout le monde)',
+     [(TR, "          sansSommeil:!hasSleep,", "          sansSommeil:true,")],
+     'GARDE', 'C-NUM-I4'),
+    ('M68 [deguisee] le moteur gele lit les muscles coches AVANT la fiche du catalogue (calories d\'un nom reconnu deplacees)',
+     [(LO, "    if(_ecrit){\n", "    const _cc=(typeof _musclesCoches==='function')&&_musclesCoches(ex.name);\n"
+                             "    if(_cc){(_cc.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});(_cc.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});return;}\n"
+                             "    if(_ecrit){\n")],
+     'GARDE', 'C-MUS-B5'),
+    ('M69 la feuille du repos garde l\'ancienne liste figee (60, 90, 120, 180, 300 : sans 130, autre que celle du Profil)',
+     [(LO, "+'<div class=\"wm-g\">'+reposDefautChoix().map(", "+'<div class=\"wm-g\">'+[60,90,120,180,300].map(")],
+     'GARDE', 'C-REG-B2'),
 ]
 
 

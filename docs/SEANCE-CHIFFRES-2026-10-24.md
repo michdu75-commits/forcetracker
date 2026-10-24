@@ -56,7 +56,7 @@
 
 | Sujet | Où en est-on | Ce que je propose |
 |---|---|---|
-| **F05 étendu aux calories** (R8) | **non appliqué** ; mesuré contre master : **0 écart sur les 322 exercices du catalogue** ; persos cochés au nom reconnu : **−6 à +4 kcal** par séance d'une heure (−5 % à +3 %) ; ⚠️ un perso composé avec moins de 3 muscles cochés devient « isolation » (squat coché quadriceps seuls : 6,5 → 4,0) | **ne pas l'étendre maintenant** : le nombre de muscles cochés ne doit pas décider seul de la dépense — à trancher avec R6 (la règle des 3 muscles) |
+| **F05 étendu aux calories** (R8) | **non appliqué** ; mesuré contre master : **0 écart sur les 322 exercices du catalogue** ; persos cochés au nom reconnu : **−6 à +4 kcal** par séance d'une heure (−4 % à +3 % ; −5 % à +3 % sur une séance de 20 min) ; ⚠️ un perso composé avec moins de 3 muscles cochés devient « isolation » (squat coché quadriceps seuls : 6,5 → 4,0) | **ne pas l'étendre maintenant** : le nombre de muscles cochés ne doit pas décider seul de la dépense — à trancher avec R6 (la règle des 3 muscles) |
 | **Poids de la barre** | non remis : retiré avec le calculateur de plaques (ft-v726, ta décision), `S.barW` ne sert à aucun calcul | le laisser absent, sauf si tu veux qu'il serve à quelque chose (calculateur, échauffements) |
 | **156 illustrations non préchargées** (15,3 Mo) | constat préexistant (`BUGS.md` §105) : absentes hors ligne tant qu'elles n'ont pas été vues une fois | à toi : précharger coûte 15 Mo de données mobiles à l'installation |
 | **17 exercices sans illustration** | « Aucune illustration disponible » affiché ; aucune image attribuée | les produire puis te les faire valider une par une (liste au §8) |
@@ -115,10 +115,10 @@ motif_exercice 17 / 0 · aides_audit 18 / 0 · seance_ux 69 / 0 · ux_d086 122 /
 
 **Calories — F05 et moteur** (outil hors passe, master contre branche, données fictives) : catalogue **322 noms, 0 MET
 différent** ; 10 persos fictifs : **0 écart** (F05 n'atteint pas les calories). Tableau de l'écart SI F05 était étendu
-(R8), mesuré avant l'isolement : Rowing Zorglub (2 muscles cochés) 5,5 → 4,0, séance d'une heure 137 → 133 kcal ; Curl
-Spécial (3 cochés) 4,0 → 5,5, 133 → 137 ; Développé Couché Maison (1 coché) 5,5 → 4,0, 137 → 133 ; Squat Maison (1 coché)
-6,5 → 4,0, 139 → 133 ; Élévation Latérale Maison (3 cochés) 4,0 → 5,5, 133 → 137 ; persos au nom inconnu ou sans muscles
-cochés : inchangés.
+(R8), remesuré sur l'arbre d'avant l'isolement (`b2a6280a`) : « Rowing Zorglub » (2 muscles cochés) 5,5 → 4,0, séance
+d'une heure 137 → 133 kcal ; « Curl Spécial Zottman Maison » (3 cochés) 4,0 → 5,5, 133 → 137 ; « Développé Couché Maison »
+(1 coché) 5,5 → 4,0, 137 → 133 ; « Squat Maison Sac De Sable » (1 coché) 6,5 → 4,0, 139 → 133 ; « Élévation Latérale Maison »
+(3 cochés) 4,0 → 5,5, 133 → 137 ; persos au nom inconnu ou sans muscles cochés : inchangés.
 
 **Ce que Milo reçoit (R34)** — `tools/r34_seance.js`, master contre branche, données égales, horloge gelée :
 - séance normale (volume enregistré par la fin de séance, sommeil noté) : **contexte identique à l'octet** (77 327 car.) ;
@@ -128,13 +128,22 @@ cochés : inchangés.
   lignes de conseil (F19).
 👉 ⚠️ **Le banc de Milo avec appels réels (R34) n'a pas tourné** (pas de clé ici) : ces écarts sont *montrés*, pas *jugés*.
 
-**Diagnostic MET** rejoué sur la tête finale : 13 scénarios, résultats identiques au brouillon à une exception près —
-la **date** affichée sur les cartes d'AFFICHAGE (« ven. 23 oct. » → « sam. 24 oct. » : le banc date les séances de la
-veille et la relecture a passé minuit, heure de Paris) ; kg, durées et kcal identiques (`docs/DIAGNOSTIC-MET-2026-10-24.md`).
+**Diagnostic MET** rejoué sur l'arbre final (`35c058a0`) : ses 13 scénarios donnent **exactement** les résultats de la
+relecture précédente (`14153e66`), à l'octet ; celle-ci ne différait du brouillon que par la **date** affichée sur les cartes
+d'AFFICHAGE (« ven. 23 oct. » → « sam. 24 oct. » : le banc date les séances de la veille et la relecture avait passé minuit,
+heure de Paris) ; kg, durées et kcal identiques (`docs/DIAGNOSTIC-MET-2026-10-24.md`).
 
 ### 4 bis. Campagne complète sur l'arbre final
 
-*(rempli à la fin de la campagne : `tools/mut_seance_chiffres.py` entier + `tools/mut_picker_vignettes.py` entier.)*
+Arbre figé `35c058a0` (copie de travail, réseau coupé) :
+
+- **`tools/mut_seance_chiffres.py` entier : 65 / 65 conformes** — M00 (le code d'avant) + 64 mutations, dont **16 déguisées**,
+  **5 négatives** (une retouche sans effet ne doit **pas** rougir) et **1 équivalente** (M57, rien d'observable). En **deux
+  passages** : le premier a été **coupé par la limite de temps des tâches de fond** (30 min) après **57** mutations jugées,
+  toutes conformes ; le second a rejoué les **8** qui restaient (M15, M35, M44, M62 → M66) : **8 / 8**, arbre sain vert
+  **avant et après** (banc stable). Aucune mutation invalide, aucune jugée deux fois.
+- **`tools/mut_picker_vignettes.py` entier : 25 / 25 conformes** (dont MV5, équivalente depuis le correctif de l'en-tête, comme
+  attendu), arbre sain vert avant et après.
 
 ---
 
