@@ -5,9 +5,11 @@
 > 24/10 (« spécification à valider, pas ordre de développement ») : il **prépare**, il ne décide rien à la place de Michel.
 > État mesuré sur master `18f924a5`, dont l'application est identique à l'octet à `ft-v1260` (`1df57e4c`).
 > Branche Séance : `claude/dreamy-bell-pu88ia` @ `99ef3002`.
+> ↪️ **Mise à jour du 24/10 au soir — mission de coordination de Michel** : Claude Nutrition corrige la Nutrition (lot 6), Claude Séance corrige la Séance (lots 0 à 5), Claude Principal coordonne, intègre et qualifie. Branches, conflits, numéros réservés, tableau de coordination et contrôles transversaux : **§8**.
 
 ## 0. En bref
 
+- **Coordination (24/10 au soir) → §8.** Les deux sessions spécialisées corrigent chacune leur couloir sur leur branche ; je prépare l'intégration sur une branche dédiée, sans toucher à master. Mesuré : **1 seul conflit de code** entre les branches (mécanique), des **numéros réservés** pour que personne ne renumérote, un tableau de coordination par chantier, et ce qui manque aux contrôles transversaux. Deux nouvelles questions : **Q21** (la bande FORCE TRACKER « sur l'Accueil seulement » n'est pas construite, et elle porte le « ? ») et **Q22** (GO du clone pour la recette iPhone).
 - **L'état est vérifié en exécutant, pas seulement en lisant.** J'ai rejoué sur le master d'aujourd'hui les 26 scénarios de la contre-vérification Séance du 23/10 : vraie app, réseau coupé, données fictives. Résultat : **les mêmes écarts qu'au 23/10** (F01 à F08, F19, plus 3 défauts de l'édition d'une séance), et **les cas qui protègent les données restent conformes**. Nutrition V2 n'a rien changé côté Séance.
 - **Rien n'est à refaire côté Séance.** La branche porte deux lots finis, testés et documentés, mais non intégrés : le **repos qui survit à la fermeture** (SEANCE-REPOS-01, avec l'expiration à 15 min) et les **8 vignettes** du sélecteur. Un essai de fusion jetable avec master donne **1 seul conflit de code**, une entrée de point rouge, trivial, plus 6 conflits de documentation.
 - **Nutrition : le cas « Iso zero » est reproduit** sur données fictives : deux propositions du même aliment, P 26 et P 35. Deux trous mesurés : « ✕ » ne retire pas l'aliment de « Déjà noté par toi », et ce que l'on masque n'est jamais synchronisé.
@@ -125,6 +127,8 @@ Source : « Audit des aides du clone.md » (Drive, 17/10), lu en entier, y compr
 
 ## 4. Plan d'intégration commun — une branche, sept lots, une passe complète
 
+> ↪️ **Organisation remplacée le 24/10 au soir par le §8** (deux branches spécialisées et une branche d'intégration). Le contenu des lots, leurs témoins et leurs décisions restent valables.
+
 **Principes** : une branche dédiée depuis master à jour (`claude/chantier-nut-seance`), lot par lot, chaque lot ouvert par un **témoin vu rouge sur master**, puis la correction minimale, le contrôle négatif et les bancs voisins. **Aucune passe complète avant le gel du lot.** Aucune réécriture d'historique, aucun recalcul rétroactif sans consentement, moteur calorique gelé.
 
 | Lot | Contenu | Prérequis | Témoins rouges (à prouver d'abord) | Risque inter-onglets |
@@ -192,3 +196,140 @@ Source : « Audit des aides du clone.md » (Drive, 17/10), lu en entier, y compr
 ## 7. Reproduire
 
 Les harnais de la session Séance sont sur la branche (`tools/contre_verif_seance_2026_10_23/`). Pour les rejouer sur master, il faut une copie hors dépôt (`git archive origin/master`), y placer le dossier des harnais, puis lancer `tools/sous_garde.sh node <harnais>.js <copie>` : réseau coupé, données fictives. La sonde Nutrition de ce document est restée hors dépôt (script de session) : elle sera réécrite en banc au lot 6.
+
+## 8. Coordination — qui fait quoi depuis le 24/10 au soir (Claude Principal)
+
+> **Mission de Michel du 24/10 (P1)** : *Claude Nutrition corrige Nutrition, Claude Séance corrige Séance, Claude Principal coordonne, intègre et qualifie.* Les lots du §4 restent le contenu du travail ; ils ont maintenant **un responsable et une branche chacun**, et l'intégration se fait sur une **branche dédiée**. GO de Michel : coordination, analyse, préparation non destructive. ⛔ Ni fusion sur master, ni publication, ni déploiement, ni purge réelle sans son accord explicite. Ce paragraphe se met à jour à chaque livraison.
+
+### 8.1 Les branches (mesuré le 24/10 à 21 h UTC, après `git fetch --all`)
+
+| Branche | Responsable | Tête | Par rapport à master | Contenu | État |
+|---|---|---|---|---|---|
+| `master` (référence) | — | `37fbbbb3` | — | application **identique à l'octet** à `ft-v1260` (`1df57e4c`) ; depuis : outils de la D-031 accélérée et documentation | `ft-v1260` en ligne ; Apps Script @193 ; Worker inchangé |
+| `claude/nutrition-v2` | Claude Nutrition | `1c9428e7` | repartie de master `999b7947` ; +1 commit : sa ligne de journal, portée **par sa branche** et pas par master ; il ne lui manque que `37fbbbb3` (journal) | rien de codé poussé à cette heure | démarrée à 20:35 UTC |
+| `claude/dreamy-bell-pu88ia` | Claude Séance | `99ef3002` | base commune `d93cef0b` (24/10, 06:58) ; **42 commits d'avance, 63 de retard** (publication `ft-v1260`, D-031 accélérée, documentation) | repos persistant (SEANCE-REPOS-01 + `D-102`) · 8 vignettes (`D-104` à `D-107`) · harnais de la contre-vérification du 23/10 · `BUGS` §91, 93, 95, 99, 100 | la session y fusionne master (pas encore poussé) et annonce une **baisse de 130 témoins « voulue »** : à justifier témoin par témoin à la livraison |
+| `claude/integration-nut-seance` | Claude Principal | — | sera créée depuis master au moment d'intégrer | — | après les deux livraisons |
+
+### 8.2 Les conflits (simulation `git merge-tree`, rien n'est écrit dans le dépôt)
+
+- **master + Séance** : **1 conflit de code**, dans `constants.js` : Séance réécrit la ligne du point rouge `repos-maximum` (« 15 minutes après la fin du repos », `D-102`), juste à côté de `nutri-v2-quantites` ajouté par Nutrition V2. Résolution mécanique : on garde les deux. Et **6 conflits de documentation** : `BUGS.md`, `CONTEXTE-ACTUEL`, `DECISIONS`, `INVENTAIRE` (régénéré), `JOURNAL-ARCHIVE` (les deux ajouts), `JOURNAL-DE-PARTAGE`.
+- **master + Nutrition** : le journal de partage seulement. **Séance + Nutrition** : les 7 mêmes fichiers (Nutrition n'a encore rien codé).
+- **Un témoin d'un couloir a été réécrit par l'autre** : `B-NP01-A` (banc Nutrition `nut_punch01`) ne compare plus `S.wkt.repos` depuis le repos persistant. C'est justifié et protégé par un contrôle négatif (MA20), mais **Claude Nutrition doit le relire**.
+
+### 8.3 Fichiers communs et frontières
+
+| Zone | Claude Nutrition | Claude Séance | Règle |
+|---|---|---|---|
+| `log.js`, vignettes, précache des images (`sw.js`) | — | oui | Séance seule |
+| `nutrition-v2.js` | oui | — | Nutrition seule |
+| `app.js` | zone Nutrition | reprise du repos au démarrage (`_reposReprendre`), Guide (`APP_GUIDE_SLIDES`) | ⛔ **moteur MET gelé** : `CARDIO_MET`, `calcCardioKcal`, `calcCardioKcalTotal`, `_MET_REGIONS`, `getExerciseMET`, `calcSessionCalories` (et `_movPattern`, `_mscScores` dans `log.js`) |
+| `screens.js` | `renderNutrition`, aide Nutrition | Accueil, calendrier, aide Séance | dans `renderNutrition`, **seule la tuile « Séance »** (F06, `S.sessions.find`) est à Séance |
+| `coach.js` | aide détaillée Nutrition | aide détaillée Séance | `buildCoachContext` est un **carrefour** : toute différence du prompt de Milo, à données égales, est montrée avant / après (R34) |
+| `setup.js` | restauration (favoris, masquage) | Progrès, édition d'une séance, export PDF (F23) | fonctions distinctes |
+| `state.js` | une clé au plus (règle #17) | le brouillon sans `repos` (déjà fait) | `persist` et `load` sont des **carrefours** : annexe entière et passe complète |
+| `constants.js` | `NEW_FEATURES` dans son bloc | `NEW_FEATURES` dans son bloc | jamais en tête du tableau |
+| `Code.js` | ⚠️ **seulement si** le masquage ou la remise à zéro doivent se synchroniser : `saveProfile` n'enregistre que les champs de sa **liste blanche**, et `hiddenFoods` n'y est pas | — | cela ferait un **déploiement Apps Script à part**, avec son propre GO |
+| `index.html`, `style.css` | section Nutrition | section Séance, sélecteur | blocs distincts |
+| `tests/parcours/runner.js`, `tests/recette/registre.json`, documentation | oui | oui | conflits de liste attendus, résolus mécaniquement |
+
+### 8.4 Numéros partagés : réservés pour que personne ne renumérote à la fusion
+
+| Espace | Déjà pris | Prochain libre | Claude Nutrition | Claude Séance | Claude Principal |
+|---|---|---|---|---|---|
+| Décisions `D-` | master 096 à 099, 101, 103, 108 à 113 ; Séance 100, 102, 104 à 107 | D-114 | D-114 à D-123 | D-124 à D-133 | D-134 à D-139 |
+| `BUGS.md` § | master 92, 94, 96 à 98, 101, 102 ; Séance 91, 93, 95, 99, 100 | §103 | §103 à §112 | §113 à §122 | §123 à §127 |
+| Pop-up « Quoi de neuf » | v80 | v81 | v81, si elle est méritée (règle #11) | v82, si elle est méritée | confirmé à la publication |
+| Version `ft-vNNNN`, clé `sw.js` | `ft-v1260` | `ft-v1261` | jamais pendant le travail | jamais pendant le travail | posée à la publication |
+| Blocs de témoins | — | — | son préfixe, jamais renommé | son préfixe, jamais renommé | `B-TRV` |
+
+### 8.5 Tableau de coordination
+
+**Claude Nutrition · `claude/nutrition-v2`**
+
+| # | Chantier | État (24/10) | Dépend de | Risques | Tests attendus | Condition d'intégration |
+|---|---|---|---|---|---|---|
+| N-a | 40 g changés en 35 ou 50 g : quantités et macros recalculées ; protéine isolate figée | en cours, rien de poussé | une fiche fiable (`D-096`) | réécrire une ligne ancienne (interdit, `D-098`) | témoin rouge sur master puis vert ; ancienne ligne relue à l'octet | enregistré = affiché, pour une fiche CIQUAL, Open Food Facts et personnelle |
+| N-b | Steak haché scanné (200 g / 130 kcal / 22 g) : quantité prise pour du « pour 100 g » | en cours | — | réparer le scan en cassant la saisie manuelle | le cas scanné rejoué sur données fictives, rouge puis vert | quantité scannée et valeur pour 100 g jamais confondues |
+| N-c | Traçabilité CIQUAL / Open Food Facts | en cours | — | perdre la référence en modifiant | référence relue après modification, reprise et restauration | aucune ligne nouvelle sans sa source |
+| N-d | Doublons et valeurs contradictoires (cas « Iso zero ») ; fiche personnelle corrigible | en cours | Q16 (le contrôle kcal / macros touche la douane gelée : feu vert explicite) | réécrire le journal passé | cas Iso zero (P 26 contre P 35) rouge puis vert | journal passé intact à l'octet |
+| N-e | « ✕ », masquage, favoris, récents, « Déjà noté par toi » | en cours | Q14, Q16 ; `Code.js` si le masquage se synchronise | `_cloudSync` est un carrefour ; masquage perdu à « Restaurer » | « ✕ » respecté par « Déjà noté par toi » ; le masquage survit au rechargement, à « Restaurer » et à un 2ᵉ appareil simulé | sans redéploiement serveur, ou avec son GO |
+| N-f | Remise à zéro des propositions (N1) | préparée, **sans exécution** | Q14, Q15 ; GO spécifique de Michel | confondre propositions et repas consommés | aperçu exact du périmètre sur données fictives ; journal identique avant / après | rien d'exécuté sur des données réelles |
+| N-g | Enregistrement et restauration cohérents (`D-112` : « Restaurer » remplace les favoris ; 200 envoyés au plus) | à confirmer avec la session | Q17 ; `Code.js` possible | favoris perdus à la restauration | restauration sur appareil neuf simulé | `D-112` traitée ou laissée hors lot, et dit |
+| N-h | Aides Nutrition (§2.6) et banc des aides étendu à la Nutrition | prévu (lot 6) | F13 (texte seulement) | une aide qui décrit l'ancien écran | `aides_audit` étendu, avec mutations | chaque phrase touchée dit ce que l'écran fait |
+| N-i | Présentation du journal : kcal → quantité → P → G → L | annoncé par la session | — | surcharge ; rendu iPhone | capture à 390 px ; contrôle iPhone | cohérente avec le reste de Nutrition |
+
+**Claude Séance · `claude/dreamy-bell-pu88ia`**
+
+| # | Chantier | État (24/10) | Dépend de | Risques | Tests attendus | Condition d'intégration |
+|---|---|---|---|---|---|---|
+| S-a | Séance passée qui change en silence à « Enregistrer » (F21, F02, K1, K2) | à faire | Q4, Q5 | recalcul rétroactif (interdit) ; moteur MET gelé | F02 (600 → 300), F21 (97 → 112), K1, K2 rouges sur master puis verts | une séance non modifiée ne bouge pas, relue à l'octet |
+| S-b | Tonnage unilatéral, les mêmes chiffres partout (F01, F25, F07, F23) | à faire | — | une formule par écran | F01 (1 100 kg contre « 0,8 t ») ; `B-TRV` | un seul calcul lu partout |
+| S-c | Séries d'échauffement (F03, F25) | à faire | `D-092` (total et travail) | casser `D-092` | F03 (3 séries contre 2) | « travail » sans échauffement partout où il est écrit |
+| S-d | Records (F08) | à faire | Q6 | effacer un record invérifiable | F08 (100 × 5 gardé) ; recalcul ciblé avec aperçu | aucun effacement silencieux |
+| S-e | Muscles principaux et secondaires (F04) ; exercices perso (F05) | à faire | Q7, Q8 (F05 change les calories de certains exercices perso : accord de Michel) | toucher aux calories par la bande | F04 (8 zones contre 6), F05 ; banc calories avant / après | l'écart de calories montré à Michel avant |
+| S-f | Chrono de repos persistant | **fait sur la branche** (banc 61 / 0, mutations 52 / 52) | Q1 (confirmer `D-102`) | iOS : rien ne sonne quand l'app est fermée | rejoué sur l'intégration ; iPhone : 1, 3, 5, 15 et 17 min, interruption, hors ligne | contrôles iPhone faits |
+| S-g | Réglages Séance et Profil | à faire | Q2, Q18 | deux propriétaires pour une valeur | réglage changé d'un côté = même valeur de l'autre ; séances passées intactes | une seule source |
+| S-h | Vignettes et illustrations | 8 vignettes **faites sur la branche** ; le reste à faire | Q3, Q12, Q13 | iPhone hors ligne ; poids de la vignette Mollets | `picker_vignettes` ; capture iPhone | jamais une image approximative à la place d'une image absente |
+| S-i | Cohérence Progrès / Nutrition / Milo (F06, F19) | à faire | Q9, Q11 | `renderNutrition` partagé avec Nutrition | F06 (350 au lieu de 600 kcal), F19 | `B-TRV` vert |
+| S-j | Contre-vérification des MET (F09 à F12 ; femmes et hommes, pratiques, intensités) | diagnostic seulement | accord de Michel pour toute modification | inventer une précision | propositions écrites et sourcées | **aucune** modification du moteur dans cette publication |
+
+**Claude Principal · intégration**
+
+| # | Chantier | État (24/10) | Dépend de | Risques | Tests attendus | Condition |
+|---|---|---|---|---|---|---|
+| P-a | Carte des branches, des conflits et des numéros | **fait** (§8.1 à §8.4) | — | une session qui ne la lit pas | — | réservations transmises aux deux sessions |
+| P-b | Banc transversal `B-TRV` | à préparer maintenant | — | doublonner un banc d'une session | ses rouges sur master, chacun rattaché à son responsable | vert sur l'intégration |
+| P-c | Données existantes et retour arrière | à préparer maintenant | — | — | dans les deux sens, à l'octet | verts |
+| P-d | Branche d'intégration, fusions | après les deux livraisons | §8.7 | un conflit mal résolu | bancs des deux sessions rejoués sur l'arbre fusionné | aucun conflit de code non mécanique résolu seul |
+| P-e | Qualification globale | après | R1 à R4 | passe périmée par une publication concurrente | sélecteur de recette, annexe, garde MET, prompt de Milo, passe classique | 0 rouge, ou rouge expliqué et accepté par Michel |
+| P-f | Recette iPhone sur le clone | liste à préparer | Q22 (GO de déploiement du clone) | WebKit ≠ Chromium | contrôles T4 | faite par Michel |
+| P-g | Publication et retour arrière | squelette (§8.9) | GO de Michel | publier sur la seule foi des tests verts | retour arrière rejoué à blanc | décision de Michel |
+| P-h | Bande FORCE TRACKER sur l'Accueil seulement | **pas construite** (mesuré) | Q21 | le « ? » disparaît avec elle | sonde du 24/10 | Q21 tranchée |
+
+### 8.6 Contrôles transversaux : ce qui existe déjà, ce qui manque
+
+| Interaction | Déjà couvert sur master | Manque (préparé par Claude Principal) |
+|---|---|---|
+| Séance → Nutrition | contrat `nut_punch01` (date, heure, séries, codes) ; `nutri_moteur` ; TDEE identique avec ou sans séance (mesuré) | deux séances le même jour : la tuile (F06) dit la même somme que l'historique |
+| Séance → Progrès | `progres_seances`, `d091_volume_prepare`, `session_integrity`, annexe calendrier ; F01, F02, F03, F08 mesurés par les harnais du 23/10, hors passe | une même séance (unilatéral, échauffements, record) donne les mêmes tonnage, séries de travail et record sur l'Accueil, le calendrier, Progrès, la fin de séance et l'export CSV |
+| Séance → Milo | annexes `milo-noyau`, `donnees`, `calendrier-milo`, `discussions` ; `contrat_milo` ; bancs du débrief | Milo reçoit les chiffres de l'écran (tonnage, volume par muscle, records, récupération) ; prompt comparé avant / après l'intégration |
+| Nutrition → Milo | prompt identique à l'octet avant / après V2 (contrôle ponctuel du 24/10) | une valeur inconnue n'est pas comptée comme 0 sans le dire ; la provenance arrive jusqu'à Milo |
+| Nutrition → synchro | `foodlog_restore`, `nut_secu_p1`, `nut_v2_p1_croise`, chaos ; sonde du 24/10 (hors dépôt) | masquage, fiche corrigée et repas consommé survivent à « Restaurer » et à un 2ᵉ appareil simulé ; journal identique |
+| Profil → Séance | le repos par défaut a un seul propriétaire (`REPOS_DEFAUT`) | une valeur changée d'un côté est la même de l'autre (repos, barre) ; séances passées intactes |
+| Aides « ? » | `aides_audit` 18 / 0, sans la Nutrition | relecture finale de chaque phrase d'aide touchée par l'un ou l'autre couloir |
+| Exports, restaurations, historique | contre-épreuves et retour arrière de `ft-v1260` (scripts de session) | **données existantes** écrites par `ft-v1260`, relues par l'intégration à l'octet (séances, journal, favoris, réglages, records) ; et l'inverse pour le retour arrière |
+
+**Ce que je prépare maintenant, sans attendre les deux sessions** (≈ 6 h en tout, rien sur master, rien de publié) : ① le banc `B-TRV` sur données fictives, réseau coupé, rejoué sur master pour connaître les rouges d'aujourd'hui (≈ 3 h, plus ≈ 30 min d'exécution) · ② la contre-épreuve « données existantes » et le retour arrière, élargis aux séances, à partir du script de `ft-v1260` (≈ 1 h 30) · ③ une garde « moteur MET inchangé » sur les fonctions gelées du §8.3 (≈ 20 min) · ④ la liste des contrôles iPhone, tirée du sélecteur de recette et du cahier (≈ 30 min) · ⑤ le squelette de publication et de retour arrière (≈ 30 min).
+
+### 8.7 Ce que chaque session livre pour entrer dans l'intégration
+
+1. sa branche **à jour de master** (fusion faite par elle), poussée, avec le commit exact ;
+2. chaque correction avec son **témoin vu rouge sur master puis vert**, son contrôle négatif et ses bancs voisins ;
+3. tout témoin **réécrit ou retiré**, nommé, avec sa raison (les 130 annoncés côté Séance compris) ;
+4. les décisions utilisées (dans ses numéros réservés) et celles qui attendent Michel ;
+5. les fichiers touchés hors de son couloir, et pourquoi ;
+6. la preuve qu'aucune séance ni aucun journal ancien n'est réécrit, et que le moteur MET n'a pas bougé ;
+7. **aucune passe complète exigée à ce stade** : elle se fait une seule fois, sur l'intégration.
+
+### 8.8 L'intégration : stratégie et ordre recommandé
+
+1. Branche `claude/integration-nut-seance` créée depuis master à ce moment-là ; **master n'est pas touché**.
+2. **Séance d'abord** : la plus grosse et la plus ancienne (42 commits, deux lots déjà qualifiés), déjà remise à jour de master par sa session. Ses bancs sont rejoués sur l'arbre intégré.
+3. **Nutrition ensuite** : partie de master, plus petite ; ses conflits avec Séance tombent sur les zones communes du §8.3 et se règlent une fois.
+4. Une fusion `--no-ff` par branche, pour que chaque lot reste traçable par ses commits. Aucune fonction recopiée à la main. Un conflit de code qui n'est pas mécanique repart chez son responsable.
+5. Contrôles : sélecteur de recette sur le diff entier, `B-TRV`, contre-épreuves, garde MET, prompt de Milo avant / après, annexe entière (carrefours `persist`, `buildCoachContext`, `_cloudSync`).
+6. **Une seule passe complète, la classique** : la publication tombera dans une semaine où aucune classique n'a encore tourné (le 24/10 est un samedi), donc R4 la demande de toute façon. Une correction après la passe est qualifiée selon son impact : bancs ciblés, puis répartie si elle reste locale.
+7. Recette iPhone sur le clone (Q22), puis le rapport de publication en 10 points demandé par Michel, et sa décision.
+
+### 8.9 Publication et retour arrière (squelette, complété à la livraison)
+
+- **L'app (Pages)** : `ft-v1261`. Retour arrière : l'application de `ft-v1260` avec la clé `ft-v1262`, **rejoué à blanc avant de publier** ; et les données écrites par `ft-v1261` relues par `ft-v1260` (contre-épreuve inverse).
+- **Le serveur (Apps Script)** : seulement si la synchro du masquage ou de la remise à zéro est retenue. `Code.js` part alors à part, avant ou après l'app (sans danger dans les deux sens : un champ inconnu est ignoré), avec son propre retour arrière (@193).
+- **La remise à zéro réelle des propositions n'est jamais dans la publication** : GO spécifique, sauvegarde vérifiée, aperçu exact du périmètre, simulation sur données fictives. Les repas consommés n'en font jamais partie.
+
+### 8.10 Deux nouvelles questions pour Michel
+
+| # | Question | Ce que je propose |
+|---|---|---|
+| Q21 | « La bande FORCE TRACKER reste visible sur l'Accueil uniquement » : c'est cité comme une décision prise, mais elle n'est **pas dans le registre**, et elle n'est **pas construite** (mesuré sur `ft-v1260` : la barre fait 93 px et s'affiche sur les 6 onglets). Elle porte aussi le « ? », le partage et « Sheets » : la cacher ailleurs fait disparaître l'aide (mesuré). Où va le « ? » sur les autres onglets, qui la construit, et entre-t-elle dans cette publication ? | l'inscrire au registre ; choisir la place du « ? » sur une maquette avant de coder ; **hors de cette publication**, qui reste centrée sur la fiabilité des données |
+| Q22 | Régénérer le clone pour la recette iPhone, c'est pousser le dossier `clone/` sur master, donc un déploiement Pages (la prod n'est pas touchée). GO au moment de la recette ? | oui, au moment de la recette, pas avant |
