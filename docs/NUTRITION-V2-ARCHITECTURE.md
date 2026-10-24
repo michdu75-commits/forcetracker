@@ -2,6 +2,7 @@
 
 > **22/10/2026 · session-A (Claude Nutrition) · branche `claude/nutrition-v2`** (depuis master `f82a7c07`, `ft-v1258`).
 > **Statut : PROPOSITION.** Rien n'est construit, rien n'est en production, aucune donnée réelle n'est écrite.
+> ↪️ **24/10/2026 — PUBLIÉE EN `ft-v1260`** (GO de Michel, app seulement ; master `1df57e4c`). ⚠️ La récupération de l'historique (**D-098**, Claude Principal) reste à mener : au sens de **D-096**, V2 n'est pas « terminée » tant qu'elle ne l'est pas. Aucune ancienne ligne n'a été réécrite.
 > Décision de départ : **D-096** (Michel, 22/10) — reconstruire le cœur Nutrition sur le clone, et récupérer les
 > journaux historiques ; *« une V2 sans récupération fiable de l'historique ne sera pas considérée comme terminée »*.
 > Les mesures sur un journal réel (§4.3) viennent de l'extrait du 20/10, **lu sans écrire** ; ce document n'en porte que

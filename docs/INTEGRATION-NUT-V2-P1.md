@@ -6,7 +6,7 @@
 > **`ft-v1259`**. Aucune donnée réelle lue, modifiée ou restaurée ; aucun appel payant à Milo ; données de test **inventées**.
 
 > ↪️ **24/10/2026** : sur GO de Michel, **P1 + `D-110` sont déployés seuls côté Apps Script (@193, 24/10/2026, 00:58 UTC)** — `Code.js`
-> seul sur master (`9a72e107`) ; `D-110` VALIDÉ ; `D-111` = règle A ; `D-112` reportée. **La V2 reste à publier.**
+> seul sur master (`9a72e107`) ; `D-110` VALIDÉ ; `D-111` = règle A ; `D-112` reportée. ~~La V2 reste à publier.~~ ↪️ **24/10 : Nutrition V2 publiée en `ft-v1260`** (GO de Michel ; master `d93cef0b` → `1df57e4c`, Pages run n°1360 ; `Code.js` inchangé, Apps Script @193).
 
 ---
 
