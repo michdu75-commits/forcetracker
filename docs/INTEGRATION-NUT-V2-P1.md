@@ -90,7 +90,7 @@ deux codes-barres `30000000009xx`, `example.test`.
 |---|---|---|
 | **X1** | 2 homonymes → favoris → portion de l'un redéfinie (125 → 150 g, « à vérifier ») → panne Drive → synchro → **Restaurer** pendant la panne → valeurs justes → Drive revenu → synchro → **Restaurer** après | 10 / 10 |
 | **X2** | « ✕ » volontaire sur un favori pendant la panne → Restaurer → il **ne revient pas** ; sa copie est gardée à part, jamais réintroduite | 3 / 3 |
-| **X3** · limite dite | hors ligne, la nouvelle définition n'atteint pas le serveur ; « Restaurer » remet l'ancienne (préexistant, `BUGS.md` §100) | 1 / 1 (la limite est **mesurée**) |
+| **X3** · limite dite | hors ligne, la nouvelle définition n'atteint pas le serveur ; « Restaurer » remet l'ancienne (préexistant, `BUGS.md` §101) | 1 / 1 (la limite est **mesurée**) |
 | **A** | règle d'or #11 : point rouge, aide « ? », aide détaillée **et diapo du Guide** disent « à vérifier » et « + Ajouter » ouvre l'écran | 2 / 2 (rouges avant la phrase du Guide) |
 
 **Contrôle négatif 8 / 8** : le `Code.js` d'avant `D-110` (8 rouges), celui de la prod (3), l'identité retombée sur le nom
@@ -154,7 +154,7 @@ suppression synchronisées — nouveau format et nouveau contrat de synchronisat
 - Copies lors de la suppression complète d'un compte : non traité.
 - Audit exhaustif de la base alimentaire : plus tard, après Séance.
 - **Trouvés en route (préexistants, prod comprise)** : ① « Restaurer » **remplace** les favoris (X3, `D-112`) ; ② seuls les
-  **200 premiers** favoris partent au serveur (`savedFoods.slice(0,200)`, les plus récents étant à la fin) — `BUGS.md` §100.
+  **200 premiers** favoris partent au serveur (`savedFoods.slice(0,200)`, les plus récents étant à la fin) — `BUGS.md` §101.
 
 ## 9. Recette iPhone (données fictives, à faire par toi — le test automatique ne remplace pas le doigt)
 Sur un compte **de test** (pas le tien) : ① scanner deux produits du **même nom** et de codes-barres différents (ou les

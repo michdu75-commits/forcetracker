@@ -5218,7 +5218,7 @@ fonctions changées n'est pas une formalité : les bancs dédiés étaient verts
 question est quand* (R2). Et *un nom n'est pas une identité* : il relie ce qui n'a pas d'identifiant, il ne doit jamais séparer
 ni confondre ce qui en a un.
 
-## §100 — ⛔ « RESTAURER » REMPLACE LES FAVORIS : CE QUI N'EST PAS ENCORE PARTI AU SERVEUR EST PERDU — ET SEULS LES 200 PREMIERS FAVORIS PARTENT *(23/10/2026, intégration Nutrition V2 × P1 — branche `claude/nut-v2-p1-integration` ; deux défauts PRÉEXISTANTS, prod comprise, mesurés, NON corrigés · numéro choisi après le §99 de `dreamy-bell`)*
+## §101 — ⛔ « RESTAURER » REMPLACE LES FAVORIS : CE QUI N'EST PAS ENCORE PARTI AU SERVEUR EST PERDU — ET SEULS LES 200 PREMIERS FAVORIS PARTENT *(23/10/2026, intégration Nutrition V2 × P1 — branche `claude/nut-v2-p1-integration` ; deux défauts PRÉEXISTANTS, prod comprise, mesurés, NON corrigés · ↪️ **renuméroté §100 → §101 le 24/10, avant sa publication** : le §100 de `dreamy-bell` (session-C, 23/10 18:50 UTC) était antérieur au mien (21:07) — je l'avais choisi « après le §99 » sans revoir la branche ; c'est donc le mien qui bouge, pas le sien)*
 
 **Le constat (vraie app V2 + vrai `Code.js`, données inventées).** ① Hors ligne, la portion d'un favori est redéfinie
 (pot 125 → 150 g) ; l'envoi ne part pas ; « 🔄 Restaurer mon compte » remet la version du serveur (125 g) — **la
