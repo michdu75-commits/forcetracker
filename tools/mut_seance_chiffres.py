@@ -6,7 +6,7 @@ C-NUM-* savent-ils ROUGIR ?
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 M00 remet les fichiers de l'app tels qu'ils etaient AVANT la mission (branche Seance 5a7b0a57 = master 999b7947 + repos +
-vignettes), mot pour mot. Lots 1 (M1-M15, M33) et 2 (M16-M32, M34, M35).
+vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35) et 3 (M36-M44).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] ne doit PAS faire rougir.
 Chaque mutation GARDE exige un TEMOIN PRECIS (4e champ) parmi les rouges.
 Un PLANTAGE du banc (code de sortie hors 0/1, ligne PLANTAGE, ou pas de ligne de total) n'est JAMAIS « garde ».
@@ -136,6 +136,37 @@ MUT = [
     ('M32 le detail affiche « Elliptique » pour une marche',
      [(SE, "${(c&&c.type&&!CARDIO_LABELS[c.type]&&CARDIO_NOMS_MONTRE[c.type])?", "${(false)?")],
      'GARDE', 'C-NUM-J3'),
+    # ── LOT 3 : records et muscles ──────────────────────────────────────────────────────────────────────────────────
+    ('M36 [deguisee] l\'origine du record n\'exige plus la meme date (un 100 x 5 d\'un autre jour suffit)',
+     [(SE, "    if(!pr||pr.date!==avant.date||out.indexOf(ex.name)>=0) return;", "    if(!pr||out.indexOf(ex.name)>=0) return;")],
+     'GARDE', 'C-REC-G1'),
+    ('M37 le recalcul est applique sans attendre la reponse (ecriture automatique)',
+     [(SE, "  showConfirm(props.length>1?'Records à vérifier':'Record à vérifier',",
+           "  props.forEach(p=>{ if(p.apres) S.prs[p.nom]=p.apres; else delete S.prs[p.nom]; }); persist();\n  showConfirm(props.length>1?'Records à vérifier':'Record à vérifier',")],
+     'GARDE', 'C-REC-A2'),
+    ('M38 la suppression d\'une seance ne propose plus rien',
+     [(SE, "  const _rec=[]; _parties.forEach(s=>_recordsVenantDe(s,null).forEach(n=>{ if(_rec.indexOf(n)<0)_rec.push(n); }));\n  _proposerRecordsRecalcules(_rec);",
+           "  const _rec=[];")],
+     'GARDE', 'C-REC-A1'),
+    ('M39 « Enregistrer » ne propose plus rien apres une baisse',
+     [(SE, "  toast('Séance mise à jour ✓','success');\n  _proposerRecordsRecalcules(_rec);", "  toast('Séance mise à jour ✓','success');")],
+     'GARDE', 'C-REC-C1'),
+    ('M40 la fiche du catalogue repasse avant les muscles coches du perso',
+     [(LO, "  if(m&&((m.p&&m.p.length)||(m.s&&m.s.length))) return {p:m.p||[], s:m.s||[]};\n  return (typeof exMuscles==='function')",
+           "  const _f=(typeof exMuscles==='function')?exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(nom):nom):null; if(_f) return _f;\n  if(m&&((m.p&&m.p.length)||(m.s&&m.s.length))) return {p:m.p||[], s:m.s||[]};\n  return (typeof exMuscles==='function')")],
+     'GARDE', 'C-MUS-B4'),
+    ('M41 _mscNiveau ignore les moteurs (retour au score >= 2)',
+     [(LO, "  if(o&&o.prim) return o.prim[g]?2:(v>=1?1:0);", "  if(false) return 0;")],
+     'GARDE', 'C-MUS-A1'),
+    ('M42 [deguisee] la mini-figurine relit le score cumule',
+     [(SE, "const nv=_mscNiveau(o,g);const[f,k]=nv>=2", "const nv=_mscNiveau(o,g);const[f,k]=v>=2")],
+     'GARDE', 'C-MUS-A3'),
+    ('M43 Progres revient a la fiche du catalogue d\'abord',
+     [(LO, "        const fiche=_musclesEcrits(ex.name);", "        const fiche=(typeof exMuscles==='function')?(exMuscles(exNomCatalogue(ex.name))||_musclesEcrits(ex.name)):_musclesEcrits(ex.name);")],
+     'GARDE', 'C-MUS-B4'),
+    ('M44 [negatif] le texte d\'aperçu des records est reformule',
+     [(SE, ". Rien ne change si tu le gardes.'", ". Si tu le gardes, rien ne change.'")],
+     'OK', None),
     # ── negatif : ne doit rien faire rougir ─────────────────────────────────────────────────────────────────────────
     ('M35 [negatif] le commentaire de la tuile Nutrition est reformule',
      [(SC, "libellé plutôt que la valeur, pour que « 600 kcal » tienne dans la tuile à 320 px.", "libellé plutôt que la valeur : « 600 kcal » tient ainsi dans la tuile à 320 px.")],
