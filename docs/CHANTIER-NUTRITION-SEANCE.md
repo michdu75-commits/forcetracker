@@ -11,7 +11,8 @@
 - **L'état est vérifié en exécutant, pas seulement en lisant.** J'ai rejoué sur le master d'aujourd'hui les 26 scénarios de la contre-vérification Séance du 23/10 : vraie app, réseau coupé, données fictives. Résultat : **les mêmes écarts qu'au 23/10** (F01 à F08, F19, plus 3 défauts de l'édition d'une séance), et **les cas qui protègent les données restent conformes**. Nutrition V2 n'a rien changé côté Séance.
 - **Rien n'est à refaire côté Séance.** La branche porte deux lots finis, testés et documentés, mais non intégrés : le **repos qui survit à la fermeture** (SEANCE-REPOS-01, avec l'expiration à 15 min) et les **8 vignettes** du sélecteur. Un essai de fusion jetable avec master donne **1 seul conflit de code**, une entrée de point rouge, trivial, plus 6 conflits de documentation.
 - **Nutrition : le cas « Iso zero » est reproduit** sur données fictives : deux propositions du même aliment, P 26 et P 35. Deux trous mesurés : « ✕ » ne retire pas l'aliment de « Déjà noté par toi », et ce que l'on masque n'est jamais synchronisé.
-- **Le plan tient en 7 lots sur une seule branche, et une seule passe complète finale** : la répartie (~37 min), ou la classique (~96 min) si aucune classique n'a déjà tourné dans la semaine de publication (R4). Estimation centrale : **≈ 17 h 30 de travail + ≈ 7 h 30 de tests** (≈ 8 h 30 si la passe finale doit être la classique), risques à part (§5).
+- **Le plan tient en 7 lots sur une seule branche, et une seule passe complète finale** : la répartie (~37 min), ou la classique (~96 min) si aucune classique n'a déjà tourné dans la semaine de publication (R4). Estimation centrale : **≈ 18 h 15 de travail + ≈ 7 h 45 de tests** (≈ 8 h 45 si la passe finale doit être la classique), risques à part (§5).
+- **Aides « ? » (complément du 24/10)** : l'audit des aides du 17/10 a été revérifié sur le code actuel, sans le refaire. Ses constats Séance, Accueil, Coach et Profil sont **corrigés** (`ft-v1257`), et le banc `aides_audit` rejoué donne 18 / 0. **Restent valables** : 4 phrases fausses ou contradictoires dans les aides Nutrition, un « \*\*pas\*\* » affiché tel quel dans l'aide détaillée, et des aides Nutrition encore plus longues qu'au 17/10 (42 points, ~28 000 caractères). Les corrections entrent au lot 6 (§2.6) ; l'aide contextuelle de chaque onglet est préservée.
 - **Chrono de repos, la dernière décision explicite est `D-102`** (Michel, 22/10 après-midi, VALIDÉE) : **expiration 15 min après la fin théorique du repos, application ouverte ou fermée**. Elle a remplacé les 5 min du matin (`D-100` ①). Elle n'est pas ambiguë ; je demande seulement de la confirmer (§6, Q1).
 
 ## 1. Ce qui a été lu, ce qui a été exécuté
@@ -95,6 +96,26 @@ Légende : **mesuré** = rejoué aujourd'hui sur master · **lu** = constaté da
 | **N1** | « Déjà noté par toi », la partie « récents » de « Mes aliments » et « Tes repas habituels » se **calculent depuis le journal** : on ne peut pas les « vider » sans toucher au journal, **sauf à ajouter un mécanisme** (une date de départ ou une liste de masquage synchronisée, donc une donnée nouvelle, règle #17). Les favoris (`S.savedFoods`) sont synchronisés : le serveur P1 garde ceux qu'on retire dans sa zone de récupération, sans jamais les renvoyer à l'app ; « Restaurer » ne remplace que si le serveur en a | décision |
 | N3 | `D-098` : les 10 entrées identifiées, reconstruction v1.2 (`D-095`) en simulation, rien appliqué · `D-112` reportée (« Restaurer » remplace les favoris) · valeurs inconnues comptées 0 par la carte des repas habituels, l'en-tête d'un repas, Milo et le Worker (à mesurer au banc, R34) · repas habituels regroupés par nom · F06 et F13 (écran Nutrition) | P1/P2 |
 
+### 2.6 Aides « ? » — l'audit du 17/10 revérifié (complément du 24/10)
+
+Source : « Audit des aides du clone.md » (Drive, 17/10), lu en entier, y compris le relevé mot pour mot des 6 aides et de l'aide détaillée (87 cartes). Ses deux exemplaires sont identiques à l'octet. **L'audit n'est pas refait** : chaque constat est vérifié sur master (application = `ft-v1260`).
+
+| Constat de l'audit (17/10) | Sur master au 24/10 | Preuve |
+|---|---|---|
+| Affichage : « \*\* » visibles, icônes doublées, « U0001F4C5 » (Séance 2 et 3, aide détaillée) | corrigé (`ft-v1257`), **sauf** la carte « Journal alimentaire » de l'aide détaillée, qui affiche encore « \*\*pas\*\* » (Subway) | banc `aides_audit` 18 / 0 (il exclut Nutrition) ; lecture de `coach.js` |
+| « NN » (Accueil 12) · Big 3 (Accueil 19) · cycle dans le Profil (Accueil 20) · badges sur l'Accueil (Accueil 21) | corrigés | banc `aides_audit` ①b, ③a à ③c |
+| Séance 12 « −10% » · 18 « 📊 » · 19 « ℹ️ » · 20 « 📸 Word / Excel » | corrigés | banc `aides_audit` ②b à ②e |
+| Coach 15 (Premium non dit) · Profil 1 (14 contre 15 entrées) · Profil 4 (sections) | corrigés | banc `aides_audit` ④a à ④c |
+| Nutrition 28 et carte « Cardio en séance » : le cardio « s'ajoute au TDEE » | **toujours faux, à 2 endroits** (c'est F13) | lecture ; rejeu B16 : TDEE identique avec ou sans séance |
+| Nutrition 5 contre 13 : 128 contre 123 produits de fast-food ; aide détaillée : « 4 lignes sur 27 » à côté de « de 27 à 128 » | **toujours contradictoire** | lecture |
+| Nutrition 34 : « ✎ Ajuster mes calories » placé « sous l'anneau » | **toujours faux** : le bouton est dans « Comment c'est calculé » (`#nu-adjust` dans `#nu-acc-calc`), comme le disent le point 21 et l'aide détaillée | lecture de `index.html` |
+| Nutrition 4 et 6 : « coca light » donne la bonne ligne ? | **à mesurer** : l'audit ne l'avait pas retesté ; `D-070` ne règle que « coca zéro / 0 / 0 % », et « coca light » est une dette connue de `ft-v1254` | — |
+| Aides trop longues (Nutrition 24 364 caractères, dont un point de 3 253 ; Séance 37 points ; carte « Journal alimentaire » 10 151 caractères) | **toujours vrai, et ça a grossi** : Nutrition 42 points, 27 995 caractères (le plus long : 3 757) ; Séance 37 points, 15 567 caractères | mesure |
+| Doublons (Séance, Nutrition, Accueil, Coach, et entre onglets) | non recomptés un par un ; les aides ont grossi depuis, le constat tient | — |
+| Écrans sans aide propre : Menu (« ? » recouvert), Cycle de force (aide de l'Accueil), séance en cours (« ? » masqué, aide par ⋯), sous-onglets | inchangé, et voulu (D-083 pour la séance en cours) | lecture (`showHelp`, `style.css`) |
+
+👉 **Ce qui entre dans le lot 6** : corriger les 4 phrases Nutrition (TDEE à 2 endroits, 128 / 123 / 27, « sous l'anneau ») et le « \*\*pas\*\* » ; mesurer « coca light » puis dire ce que la recherche fait vraiment ; étendre le banc `aides_audit` à la Nutrition, avec ses mutations, pour qu'elles ne reviennent pas. **Chaque correction du chantier met aussi à jour son aide** (règle d'or #11) : repos qui survit à la fermeture (déjà écrit sur la branche Séance), volume et calories d'une séance éditée, « aucune illustration disponible », tuile Nutrition à plusieurs séances, fiche personnelle et « ✕ ». ⛔ **L'aide contextuelle de chaque onglet est gardée telle quelle dans sa forme** (un « ? » par onglet, la même modale) ; le guide interactif à flèches reste une amélioration future.
+
 ## 3. Travaux Séance déjà réalisés — à ne pas refaire
 
 - **Publiés (`ft-v1257`)** : les deux états de l'écran Séance (D-083), Cobalt et rouge destructif (D-085), la pastille N/É/X et « Précédent » (D-086), la note de la dernière fois (D-087), l'import d'historique (D-089), « Ta séance jusqu'ici » face/chiffres/dos (D-091/092), la réserve Échec · 0 · 1 · 2 · 3 · 4+ et les 4 dernières séances (D-093).
@@ -114,7 +135,7 @@ Légende : **mesuré** = rejoué aujourd'hui sur master · **lu** = constaté da
 | **3 — Records et muscles** | F08 (recalcul **ciblé avec aperçu**), F04 (libellé), F05 (le choix de la personne d'abord, banc calories avant/après, R34) | Q6, Q7, Q8 | F08, F04, F05 | Milo (charges proposées), calories des persos |
 | **4 — Chrono et réglages** | contrôles du repos après fusion, scénarios iPhone (clone), feuille de réglages dans Séance qui réutilise ceux du Profil | Q1, Q2, Q18 | réglage modifié dans Séance = même valeur dans Profil ; rien de réécrit dans les séances | Profil, Séance |
 | **5 — Images** | « aucune illustration disponible » au lieu du muscle deviné (3 endroits), liste des 17, vignettes (lot 0), précache nettoyé, poids de la vignette Mollets | Q3, Q12, Q13 | repli générique visible aujourd'hui pour les 17 | Séance, import, programmes |
-| **6 — Nutrition** | **N2 d'abord** (fiche personnelle corrigible ou retirable, « ✕ » respecté par la recherche, masquage qui survit à la synchro, incohérence signalée), **puis N1** (remise à zéro ciblée, seulement si la séparation fiches / journal est prouvée), F13, valeurs inconnues restantes | Q14 à Q17 | « ✕ » ignoré par « Déjà noté par toi » ; cas Iso zero ; masquage perdu à la restauration | Nutrition, synchro, restauration, Milo |
+| **6 — Nutrition** | **N2 d'abord** (fiche personnelle corrigible ou retirable, « ✕ » respecté par la recherche, masquage qui survit à la synchro, incohérence signalée), **puis N1** (remise à zéro ciblée, seulement si la séparation fiches / journal est prouvée), F13, les 4 phrases d'aide Nutrition encore fausses et le « \*\*pas\*\* » (§2.6), « coca light » mesuré, banc des aides étendu à la Nutrition, valeurs inconnues restantes | Q14 à Q17, Q20 | « ✕ » ignoré par « Déjà noté par toi » ; cas Iso zero ; masquage perdu à la restauration | Nutrition, synchro, restauration, Milo |
 
 **Passes D-031 (le minimum, R1 à R4)** :
 - pendant le travail : témoin rouge → correction → banc → contrôle négatif → voisins. **Aucune passe complète** ;
@@ -134,12 +155,12 @@ Légende : **mesuré** = rejoué aujourd'hui sur master · **lu** = constaté da
 | 3 — Records et muscles | ≈ 2 h | ≈ 1 h (dont banc calories avant/après) |
 | 4 — Chrono et réglages | ≈ 1 h 30 | ≈ 45 min (+ recette iPhone de Michel ≈ 30 min) |
 | 5 — Images | ≈ 1 h | ≈ 30 min |
-| 6 — Nutrition (N2, N1, N3) | ≈ 4 h 30 | ≈ 1 h 30 |
+| 6 — Nutrition (N2, N1, N3, aides du 17/10) | ≈ 5 h 15 | ≈ 1 h 45 |
 | Aides (règle d'or #11), documentation, journal | ≈ 1 h 30 | — |
 | Gel : passe complète, annexe, fumée, retour arrière, rapport | ≈ 30 min | ≈ 1 h 15 (répartie) ou ≈ 2 h 15 (classique) |
-| **Total central** | **≈ 17 h 30** | **≈ 7 h 30** (répartie) ou **≈ 8 h 30** (classique) |
+| **Total central** | **≈ 18 h 15** | **≈ 7 h 45** (répartie) ou **≈ 8 h 45** (classique) |
 
-**Risques, à part** : une décision qui tarde, et le lot qui l'attend glisse sans bloquer les autres · une 2ᵉ passe complète (+ 37 à 96 min) · N1 arrêté net si la séparation fiches / journal n'est pas prouvable (règle du cahier) · reprises après la recette iPhone (≈ 1 à 2 h) · conflits si une autre session publie pendant le travail (refusion + passe périmée) · le poids de la vignette Mollets sur un iPhone hors ligne. **Le calendrier réel dépend surtout des 19 décisions du §6** : sans elles, seuls les lots 0, 1 (partiel), 2 (partiel) et 5 (partiel) peuvent avancer.
+**Risques, à part** : une décision qui tarde, et le lot qui l'attend glisse sans bloquer les autres · une 2ᵉ passe complète (+ 37 à 96 min) · N1 arrêté net si la séparation fiches / journal n'est pas prouvable (règle du cahier) · reprises après la recette iPhone (≈ 1 à 2 h) · conflits si une autre session publie pendant le travail (refusion + passe périmée) · le poids de la vignette Mollets sur un iPhone hors ligne. **Le calendrier réel dépend surtout des 20 décisions du §6** : sans elles, seuls les lots 0, 1 (partiel), 2 (partiel) et 5 (partiel) peuvent avancer.
 
 ## 6. Décisions à prendre (avant de coder le lot concerné)
 
@@ -164,6 +185,7 @@ Légende : **mesuré** = rejoué aujourd'hui sur master · **lu** = constaté da
 | Q17 | N3 : `D-098` (les 10 entrées) et `D-112` (restauration des favoris) dans ce lot, ou après ? | `D-112` dans le lot, car elle conditionne N1 ; `D-098` après, avec son propre GO (données réelles) | 6 |
 | Q18 | Réglages dans Séance : lesquels ? (repos, poids de la barre, tout déplier ; unités lb et sons inexistants) | repos et poids de la barre, en lisant ceux du Profil ; ni unités ni sons dans ce lot | 4 |
 | Q19 | Intégrer la branche Séance par **fusion contrôlée** (décisions et documents compris), ou par copie sélective des seuls fichiers de l'app ? | fusion contrôlée : son diff est entièrement utile, et une copie sélective perdrait ses décisions et ses tests | 0 |
+| Q20 | Aides trop longues et doublons (audit du 17/10, toujours vrai) : réécrire l'aide Nutrition (42 points, ~28 000 caractères) et l'aide Séance (37 points), en gardant un « ? » par onglet ? | pas dans ce lot : seulement corriger les phrases fausses, une à une ; une réécriture éditoriale à part, avec ton accord, car elle change ce que chacun lit | 6 |
 
 **Hors de ce lot (gelés ou à décider à part)** : le moteur calorique (F09 à F12, et la validation scientifique : 10 vraies séances consenties), le guide interactif, les plats favoris, la modularisation de `log.js`.
 
