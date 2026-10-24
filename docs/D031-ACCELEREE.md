@@ -1,8 +1,10 @@
 # ⚡ D-031 accélérée — la passe complète, ENTIÈRE, jouée en 3 processus
 
-> **Statut : PROPOSITION (`D-113`) — qualifiée le 24/10/2026 sur la branche `claude/d031-acceleree`, NON ADOPTÉE.**
-> ⛔ Tant que Michel n'a pas donné son GO distinct, **la passe officielle reste `bash tools/passe_valide.sh`**
-> (règle d'or #13, `D-031`), et rien de ce qui suit ne remplace quoi que ce soit.
+> **Statut : ADOPTÉE le 24/10/2026 (`D-113`, VALIDÉE par Michel)** — *proposée et qualifiée le même jour sur la branche
+> `claude/d031-acceleree`, intégrée à master par la fusion `3bc75ab9`, sans publication ni redéploiement.*
+> Michel, mot pour mot : *« Je valide : le protocole de sécurité R1 à R4 ; une passe classique de contrôle au moins une fois par semaine où une publication intervient ; aucun rééquilibrage supplémentaire des trois processus pour le moment ; la validation de D-113 après intégration conforme. »*
+> ⛔ La passe classique `bash tools/passe_valide.sh` n'est **pas retirée** : elle reste **obligatoire** dans les cas
+> R1 → R4 (§5), et `D-031` (sur quel arbre la passe doit avoir tourné) s'applique aux deux formes.
 > Origine : l'expérience OPTI-TEST-02 (session-A, 23-24/10, sur copies de `ft-v1259` ; six fichiers livrés sur
 > `claude/opti-test-02-livraison` @ `bf5d584f`, empreintes sha256 vérifiées), puis la qualification ci-dessous
 > (session-B, 24/10, sur le code de `ft-v1260`).
@@ -71,7 +73,7 @@ python3 tools/comparer_passes.py <réf> <cand> --normaliser tests/parcours/compa
   ⛔ **Jamais de règle pour faire disparaître un écart de la passe répartie** : une règle ne s'ajoute que si elle est
   **établie entre deux passes CLASSIQUES** (R0 ↔ R1), et la sortie compte chaque libellé touché.
 
-## 5. ⚖️ Politique proposée — quand la classique reste obligatoire, quand la répartie suffit
+## 5. ⚖️ Politique — quand la classique reste obligatoire, quand la répartie suffit (validée par Michel le 24/10)
 
 **La répartie suffit** pour la passe complète finale (`D-031`) d'une livraison, **aux trois conditions** :
 1. `passe_repartie.py` dit **PASSE RÉPARTIE VALIDE** (les 8 conditions) ;
@@ -88,7 +90,7 @@ python3 tools/comparer_passes.py <réf> <cand> --normaliser tests/parcours/compa
   classique tranche** avant d'accuser le code. Rouge confirmé = vrai défaut ; vert en classique = **anomalie de la
   répartie** → retour à la classique jusqu'au diagnostic. ⛔ Jamais de vert présenté sans ces conditions.
 - **R3 · refus du découpeur** (structure inconnue du runner) → classique ; c'est automatique (code 3, message).
-- **R4 · contrôle de dérive** : une classique **au moins une fois par semaine où l'on publie**, sur le même commit qu'une
+- **R4 · contrôle de dérive** : une classique **au moins une fois par semaine où une publication intervient**, sur le même commit qu'une
   répartie, comparée. C'est le seul filet contre une **dépendance d'ordre entre modules** (un module qui ne passe
   que parce qu'un autre, désormais dans un autre processus, a laissé un état) — aucune des 8 conditions ne la voit.
 
@@ -110,7 +112,8 @@ tests/parcours/repartition-3.json tests/parcours/comparaison-normalisation.json`
 - **Modules hors répartition** : un module ajouté au runner sans entrée dans `repartition-3.json` tourne **dans le
   processus 0** — couvert, jamais perdu, mais il **allonge** le processus 0. Le 24/10 : 2 modules Nutrition V2
   (`nut2_parcours.js`, `nut_v2_p1_croise.js`), mesurés §8. Une nouvelle répartition se **mesure** et se requalifie
-  (R1), elle ne s'écrit pas à la main.
+  (R1), elle ne s'écrit pas à la main. ↪️ *Michel, 24/10 : « aucun rééquilibrage supplémentaire des trois processus pour
+  le moment ».*
 - **Les 4 libellés horodatés** restent dans les tests : les corriger, c'est modifier des tests (preuve propre et
   accord de Michel).
 - **Conteneur qui redémarre** (2 fois en 12 h pendant OPTI-TEST-02) : une passe coupée n'a pas de ligne de total → elle

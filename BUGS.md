@@ -5254,7 +5254,7 @@ rouge aussi sur la branche V2 **seule**, vert sur master : la passe **réduite**
 se lit à côté, « ↺ Revenir au calcul » le remet — et son contrôle négatif rougit 3 fois sur 3. *Un sous-ensemble ne remplace
 pas la passe complète : le protocole le disait, le cas l'a montré.*
 
-## §102 — ⛔ UN DÉCOUPEUR QUI DOUBLE SANS REFUSER, ET QUATRE LIBELLÉS QUI AFFICHENT L'HORLOGE *(24/10/2026, OPTI-TEST-02 → D-031 accélérée — branche `claude/d031-acceleree`, `D-113` PROPOSÉ ; outils de test seulement, aucun code de l'app)*
+## §102 — ⛔ UN DÉCOUPEUR QUI DOUBLE SANS REFUSER, ET QUATRE LIBELLÉS QUI AFFICHENT L'HORLOGE *(24/10/2026, OPTI-TEST-02 → D-031 accélérée — branche `claude/d031-acceleree`, fusionnée le 24/10 (`3bc75ab9`) ; `D-113` VALIDÉE par Michel ; outils de test seulement, aucun code de l'app)*
 
 **Le constat (session-A, OPTI-TEST-02, sur copies de `ft-v1259`).** ① Le premier découpeur de la passe en
 plusieurs processus avait été écrit pour un runner **antérieur** au harnais D-031 Sécurité. Sur le runner
@@ -5268,7 +5268,7 @@ sont pas — et une comparaison qui les fait taire à la main peut faire taire n
 **Pourquoi rien ne l'aurait vu.** Un contrôle compté trois fois **passe trois fois** : aucun rouge, aucune erreur, un
 total en hausse. *Un total plus grand ressemble à un meilleur total.* Et le découpeur était seul juge de son découpage.
 
-**Ce qui le ferme (`D-113`, proposé).** Un découpeur **fermé par défaut** (`tools/decouper_passe.js` : toute instruction
+**Ce qui le ferme (`D-113`, validée par Michel le 24/10).** Un découpeur **fermé par défaut** (`tools/decouper_passe.js` : toute instruction
 qu'il ne sait pas classer arrête la découpe) **et** un contre-vérificateur **qui ne partage pas son code**
 (`tools/verifier_decoupe.js` : chaque instruction gardée exactement une fois, hors de l'infrastructure ; rien de réécrit).
 La comparaison classique ↔ répartie (`tools/comparer_passes.py`) se fait sur des **multiensembles** de (libellé,

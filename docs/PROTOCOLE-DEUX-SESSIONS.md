@@ -18,10 +18,12 @@
 > changement fonctionnel ou du harnais** ; documentation, journaux, numéro de version et numéro de cache de
 > `sw.js` ajoutés après elle ne la périment pas. Texte exact de Michel au §2.
 >
-> ⏳ **PROPOSITION DU 24/10/2026 (`D-113`, NON ADOPTÉE)** : la passe complète, **entière**, jouée en **3 processus**
+> ✅ **ADOPTÉE LE 24/10/2026 (`D-113`, VALIDÉE par Michel ; proposée et qualifiée le même jour)** : la passe complète,
+> **entière**, jouée en **3 processus**
 > (`python3 tools/passe_repartie.py 3`, ≈ 37 min au lieu de ≈ 96 le 24/10) avec **8 conditions**, et une politique qui dit quand la
-> classique reste obligatoire — qualifiée le 24/10 sur la branche `claude/d031-acceleree`. ⛔ **Tant que Michel n'a pas
-> donné son GO, la passe officielle reste `tools/passe_valide.sh`.** Détail : `docs/D031-ACCELEREE.md`.
+> classique reste obligatoire — qualifiée le 24/10, fusionnée dans master (`3bc75ab9`). ⛔ **La classique
+> `tools/passe_valide.sh` reste obligatoire en R1 → R4**, dont **au moins une fois par semaine où une publication
+> intervient**. Détail : `docs/D031-ACCELEREE.md`.
 >
 > ⛔ Nutrition non approchée.
 > ⛔ Aucun framework, aucun build, aucune CI : tout ce qui suit tient avec les outils du dépôt.

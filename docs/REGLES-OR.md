@@ -176,6 +176,16 @@ les vérifie, et **chacune vient d'un échec vécu le 13/09** :
 ⚠️ **Et les rouges se comptent ancrés en début de ligne** (`^\s+❌`) : un `❌` dans le **libellé**
 d'un témoin n'est pas un échec. *Vécu : `grep -c "❌"` annonçait 3 rouges pour 0.*
 
+**⑤ bis — LA PASSE RÉPARTIE (`D-113`, VALIDÉE par Michel le 24/10/2026).** La passe complète peut se jouer
+**entière** en 3 processus : `python3 tools/passe_repartie.py 3` (~37 min au lieu de ~96, mesuré le 24/10), avec
+**8 conditions** — les 4 ci-dessus dans chaque processus, plus 0 rouge réel, aucun plantage ni défaut de garde,
+les témoins du garde présents et verts dans chaque processus, et les copies temporaires retirées. ⛔ **La
+classique `tools/passe_valide.sh` reste OBLIGATOIRE** : **R1** requalification (classique + répartie sur le même
+commit, comparaison identique) quand change un des 6 fichiers, l'infrastructure du runner ou du garde,
+l'environnement ou la répartition · **R2** confirmer tout rouge ou toute anomalie de la répartie · **R3** refus
+du découpeur · **R4** au moins **une fois par semaine où une publication intervient**. Elle tourne **seule** sur
+la machine, hors des fenêtres de minuit. Détail : `docs/D031-ACCELEREE.md`.
+
 **⑥ SI UNE AUTRE SESSION PUBLIE PENDANT LA PASSE, LA PASSE EST PÉRIMÉE.** On refusionne, on vérifie
 les témoins de périmètre, on renumérote si besoin, **on relance**. ⛔ *Aucun feu vert sur l'ancienne
 passe.*
