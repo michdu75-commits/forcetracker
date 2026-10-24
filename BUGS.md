@@ -5253,3 +5253,30 @@ rouge aussi sur la branche V2 **seule**, vert sur master : la passe **réduite**
 `D-096` (Michel : « une modification manuelle est conservée et tracée ») — la correction reste, le calcul pour 50 g (24 · 5)
 se lit à côté, « ↺ Revenir au calcul » le remet — et son contrôle négatif rougit 3 fois sur 3. *Un sous-ensemble ne remplace
 pas la passe complète : le protocole le disait, le cas l'a montré.*
+
+## §102 — ⛔ UN DÉCOUPEUR QUI DOUBLE SANS REFUSER, ET QUATRE LIBELLÉS QUI AFFICHENT L'HORLOGE *(24/10/2026, OPTI-TEST-02 → D-031 accélérée — branche `claude/d031-acceleree`, `D-113` PROPOSÉ ; outils de test seulement, aucun code de l'app)*
+
+**Le constat (session-A, OPTI-TEST-02, sur copies de `ft-v1259`).** ① Le premier découpeur de la passe en
+plusieurs processus avait été écrit pour un runner **antérieur** au harnais D-031 Sécurité. Sur le runner
+d'aujourd'hui, il **triplait en silence** 4 instructions — 3 contrôles du garde (`D031S-III`, `IV`, `V`) et le module
+`d031s_rir_superset` — **sans rien refuser** : la passe finissait verte, avec un total **plus grand**. ② Quatre témoins
+**affichent l'horloge** de la passe : `B-D086-⑫a` ×2 (l'heure, `tests/parcours/ux_d086.js` l. 299), `PS-E13` et
+`PS-E14` (une date calculée depuis le jour, `tests/parcours/progres_seances.js` l. 287 et 299). Deux passes
+**classiques** du même code ne portent donc pas les mêmes libellés : une comparaison naïve « voit » des écarts qui n'en
+sont pas — et une comparaison qui les fait taire à la main peut faire taire n'importe quoi.
+
+**Pourquoi rien ne l'aurait vu.** Un contrôle compté trois fois **passe trois fois** : aucun rouge, aucune erreur, un
+total en hausse. *Un total plus grand ressemble à un meilleur total.* Et le découpeur était seul juge de son découpage.
+
+**Ce qui le ferme (`D-113`, proposé).** Un découpeur **fermé par défaut** (`tools/decouper_passe.js` : toute instruction
+qu'il ne sait pas classer arrête la découpe) **et** un contre-vérificateur **qui ne partage pas son code**
+(`tools/verifier_decoupe.js` : chaque instruction gardée exactement une fois, hors de l'infrastructure ; rien de réécrit).
+La comparaison classique ↔ répartie (`tools/comparer_passes.py`) se fait sur des **multiensembles** de (libellé,
+verdict) ; la normalisation est **limitée** à 3 règles pour ces 4 libellés, **établies entre deux classiques**, et chaque
+libellé touché est **compté** dans la sortie.
+
+**À quoi on le reconnaît.** Un outil qui **réorganise** des tests (découpe, parallélise, filtre) doit prouver *chaque
+contrôle exactement une fois* par un vérificateur indépendant — et un total qui **monte** sans nouveau test est un signal,
+pas une bonne nouvelle. *Un découpage qui ne refuse jamais finit par doubler.* Côté libellés : un témoin qui écrit
+l'heure dans son nom n'est plus comparable d'une passe à l'autre ; le corriger, c'est modifier un test (preuve propre et
+accord de Michel) — d'ici là, il se normalise **nommément**, jamais par motif large.
