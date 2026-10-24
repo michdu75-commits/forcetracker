@@ -1510,13 +1510,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
           <div id="act-src-hint" style="display:none;font-size:11.5px;color:var(--gold);margin-top:5px;line-height:1.35;">À confirmer — ancien réglage, peut-être celui par défaut de l'app. Choisis ton niveau puis enregistre.</div>
         </div>
         <div class="fg"><label>Repos défaut</label>
-          <select id="rest-sel">
-            <option value="60">60s</option>
-            <option value="90">90s</option>
-            <option value="120" selected>120s</option>
-            <option value="180">180s</option>
-            <option value="300">300s</option>
-          </select>
+          <select id="rest-sel"><!-- les durées : `reposDefautChoix` (log.js), la même liste que le menu ⋯ de la séance --></select>
         </div>
       </div>
       <div class="fg">

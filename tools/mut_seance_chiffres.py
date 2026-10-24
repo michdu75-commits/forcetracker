@@ -6,7 +6,7 @@ C-NUM-* savent-ils ROUGIR ?
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 M00 remet les fichiers de l'app tels qu'ils etaient AVANT la mission (branche Seance 5a7b0a57 = master 999b7947 + repos +
-vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35) et 3 (M36-M49).
+vignettes), mot pour mot. Lots 1 (M1-M15, M33), 2 (M16-M32, M34, M35) 3 (M36-M49) et 4 (M50-M57).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] ne doit PAS faire rougir.
 Chaque mutation GARDE exige un TEMOIN PRECIS (4e champ) parmi les rouges.
 Un PLANTAGE du banc (code de sortie hors 0/1, ligne PLANTAGE, ou pas de ligne de total) n'est JAMAIS « garde ».
@@ -181,6 +181,34 @@ MUT = [
     ('M49 [deguisee] un secondaire seul compte comme moteur dans l\'affichage',
      [(LO, "if(o.sc[m]>=2) prim[m]=true;", "if(o.sc[m]>=1) prim[m]=true;")],
      'GARDE', 'C-MUS-A1'),
+    # ── lot 4 : le repos par défaut depuis la séance (C-REG) ─────────────────────────────────────────────────────────
+    ('M50 la liste commune perd 130 s (le Profil redevient vide pour le reglage d\'installation)',
+     [(LO, "const REPOS_DEFAUT_CHOIX=[60,90,120,130,180,300];", "const REPOS_DEFAUT_CHOIX=[60,90,120,180,300];")],
+     'GARDE', 'C-REG-A1'),
+    ('M51 le menu de la seance n\'a plus la ligne « Repos par defaut »',
+     [(LO, "  g1+='<button class=\"wm-row\" id=\"wm-repos\" onclick=\"openWktMenuRepos()\">'", "  if(0)g1+='<button class=\"wm-row\" id=\"wm-repos\" onclick=\"openWktMenuRepos()\">'")],
+     'GARDE', 'C-REG-B1'),
+    ('M52 [deguisee] choisir le repos par defaut efface les durees propres aux exercices',
+     [(LO, "function choisirReposDefaut(sec){ const v=parseInt(sec,10); if(!_reposValide(v)) return false; S.defRest=v; return true; }",
+           "function choisirReposDefaut(sec){ const v=parseInt(sec,10); if(!_reposValide(v)) return false; S.defRest=v; S.exRestPref={}; return true; }")],
+     'GARDE', 'C-REG-C2'),
+    ('M53 [deguisee] choisir le repos par defaut change aussi le repos en cours',
+     [(LO, "    if(!choisirReposDefaut(choix)) return;\n", "    if(!choisirReposDefaut(choix)) return;\n    if(restStartTs) restTot=reposDefaut();\n")],
+     'GARDE', 'C-REG-C1'),
+    ('M54 le Profil garde sa propre liste figee (sans 130)',
+     [(SE, "  if(restEl){ if(typeof reposDefautChoix==='function') restEl.innerHTML=reposDefautChoix()", "  if(restEl){ if(typeof reposDefautChoix!=='function') restEl.innerHTML=reposDefautChoix()")],
+     'GARDE', 'C-REG-A1'),
+    ('M56 le choix fait dans la seance n\'est pas enregistre sur l\'appareil',
+     [(LO, "    persist(); try{ if(typeof _cloudSyncDebounced==='function') _cloudSyncDebounced(); }catch(e){}\n    closeWktMenu();",
+           "    try{ if(typeof _cloudSyncDebounced==='function') _cloudSyncDebounced(); }catch(e){}\n    closeWktMenu();")],
+     'GARDE', 'C-REG-B3'),
+    ('M57 [equivalente] le Profil ecrit S.defRest sans le seul ecrivain (son selecteur ne propose que des valeurs valides : rien d\'observable)',
+     [(SE, "  if(rest){ if(typeof choisirReposDefaut==='function') choisirReposDefaut(rest); else S.defRest=rest; }",
+           "  if(rest){ S.defRest=rest; }")],
+     'OK', None),
+    ('M55 [negatif] le sous-titre de la feuille du repos est reformule',
+     [(LO, "<span>Pour toutes tes séances · le même réglage que dans ton Profil</span>", "<span>Le même réglage que dans ton Profil · pour toutes tes séances</span>")],
+     'OK', None),
     ('M44 [negatif] le texte d\'aperçu des records est reformule',
      [(SE, ". Rien ne change si tu le gardes.'", ". Si tu le gardes, rien ne change.'")],
      'OK', None),

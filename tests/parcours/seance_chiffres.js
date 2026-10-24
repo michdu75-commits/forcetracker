@@ -587,10 +587,15 @@ async function ecran(t, b, PORT) {
     await X.cx.close();
   }
 
+  /* Ces deux blocs (lots 3 et 4) s'exécutent aussi sur le code d'AVANT : une fonction qui n'y existe pas encore rend le
+     témoin ROUGE, avec sa raison, au lieu d'arrêter le banc (chaque correction doit être VUE rouge sur master). */
+  const ev = (X, fn, arg) => X.pg.evaluate(fn, arg).catch(e => ({ __erreur: String(e && e.message || e).slice(0, 200) }));
+  const sur = f => { try { return !!f(); } catch (e) { return false; } };
+  const voir = f => { try { return f(); } catch (e) { return 'erreur : ' + (e && e.message); } };
   /* ── C-MUS — F04 : moteur ≠ sollicité · F05 : les muscles cochés d'un perso d'abord ────────────────────────────── */
   {
     const X = await ouvrir();
-    const r = await X.pg.evaluate(() => {
+    const r = await ev(X, () => {
       const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
       const sec = noms.filter(n => { const m = exMuscles(exNomCatalogue(n)); return m && (m.s || []).includes('triceps') && !(m.p || []).includes('triceps'); }).slice(0, 2);
       const exs = n => n.map(x => ({ name: x, sets: [{ kg: 50, reps: 8, done: true, type: 'N' }] }));
@@ -602,18 +607,18 @@ async function ecran(t, b, PORT) {
       return { sec, score: deux.sc.triceps, rougesDeux: rouges(deux), rougesUn: rouges(un), liste: liste.replace(/\s+/g, ' ').slice(0, 220),
         pecRouge: (_mscSVGmini(_mscScoresVus(exs(['Développé Couché']))).match(/#FF5555/g) || []).length };
     });
-    const prim = (r.liste.match(/Primaires\s*:\s*([^●]*)/) || ['', ''])[1];
+    const prim = voir(() => (r.liste.match(/Primaires\s*:\s*([^●]*)/) || ['', ''])[1]);
     t('C-MUS-A1 ⭐ F04 — un muscle secondaire de deux exercices (triceps, score 2) n\'est pas listé « Primaires »',
-      r.sec.length === 2 && r.score === 2 && !/Triceps/i.test(prim), _j({ sec: r.sec, prim }));
-    t('C-MUS-A2 F04 — il est listé « Secondaires » avec le nombre d\'exercices qui le sollicitent (« ×2 »)', /Secondaires[^●]*Triceps[^●]*×2/i.test(r.liste), r.liste);
+      sur(() => r.sec.length === 2 && r.score === 2 && !/Triceps/i.test(prim)), voir(() => _j({ sec: r.sec, prim })));
+    t('C-MUS-A2 F04 — il est listé « Secondaires » avec le nombre d\'exercices qui le sollicitent (« ×2 »)', sur(() => /Secondaires[^●]*Triceps[^●]*×2/i.test(r.liste)), voir(() => r.liste));
     t('C-MUS-A3 ⭐ F04 — la figurine ne rougit pas un secondaire cumulé : autant de zones rouges avec deux exercices qu\'avec un',
-      r.rougesDeux === r.rougesUn && r.rougesUn > 0, _j({ deux: r.rougesDeux, un: r.rougesUn }));
-    t('C-MUS-A4 F04 — un vrai moteur reste rouge (pectoraux au développé couché)', r.pecRouge > 0, _j(r.pecRouge));
+      sur(() => r.rougesDeux === r.rougesUn && r.rougesUn > 0), voir(() => _j({ deux: r.rougesDeux, un: r.rougesUn })));
+    t('C-MUS-A4 F04 — un vrai moteur reste rouge (pectoraux au développé couché)', sur(() => r.pecRouge > 0), voir(() => _j(r.pecRouge)));
     await X.cx.close();
   }
   {
     const X = await ouvrir();
-    const r = await X.pg.evaluate(() => {
+    const r = await ev(X, () => {
       S.customExercises = [{ n: 'Curl Maison Zorglub', g: 'Bras', muscles: { p: ['quads'], s: [] } },
         { n: 'Rowing Zorglub', g: 'Dos', muscles: { p: ['lats'], s: ['biceps'] } }, { n: 'Rowing Sans Muscles', g: 'Dos' }];
       persist();
@@ -629,21 +634,21 @@ async function ecran(t, b, PORT) {
         metRowing, metRowingSansCoches, metSans: getExerciseMET('Rowing Sans Muscles'), metCatalogue: getExerciseMET('Rowing Barre') };
     });
     t('C-MUS-B1 ⭐ F05 — un perso « Curl Maison Zorglub » coché quadriceps : la figurine dit quadriceps, plus biceps',
-      _j(r.curl.prim) === _j(['quads']) && !r.curl.sc.biceps, _j(r.curl));
-    t('C-MUS-B2 F05 — la figurine et Progrès disent la même chose (quadriceps)', _j(r.vol) === _j(['quads']), _j(r.vol));
+      sur(() => _j(r.curl.prim) === _j(['quads']) && !r.curl.sc.biceps), voir(() => _j(r.curl)));
+    t('C-MUS-B2 F05 — la figurine et Progrès disent la même chose (quadriceps)', sur(() => _j(r.vol) === _j(['quads'])), voir(() => _j(r.vol)));
     /* ↪️ RÉÉCRIT LE 24/10 (D-122, isolation de F05) : il exigeait que les calories suivent les muscles cochés (4 au lieu de 5,5).
        Le moteur des calories est gelé (§8.3) et l'écart doit être montré à Michel AVANT d'être appliqué : la figurine suit
        les muscles cochés, les calories gardent la règle du nom. Contrôle négatif : M45 et M46 le font rougir. */
     t('C-MUS-B3 ⛔ F05 — les CALORIES ne bougent pas : « Rowing Zorglub » coché 2 muscles garde la classe de son nom (5,5), avec ou sans ses muscles cochés, pendant que sa figurine montre SES muscles (dos, biceps)',
-      r.metRowing === 5.5 && r.metRowingSansCoches === 5.5 && r.metSans === 5.5 && _j(r.rowing.prim) === _j(['lats']) && r.rowing.sc.biceps === 1 && Object.keys(r.rowing.sc).length === 2,
-      _j({ coche: r.metRowing, sansCoches: r.metRowingSansCoches, sansMuscles: r.metSans, figurine: r.rowing }));
+      sur(() => r.metRowing === 5.5 && r.metRowingSansCoches === 5.5 && r.metSans === 5.5 && _j(r.rowing.prim) === _j(['lats']) && r.rowing.sc.biceps === 1 && Object.keys(r.rowing.sc).length === 2),
+      voir(() => _j({ coche: r.metRowing, sansCoches: r.metRowingSansCoches, sansMuscles: r.metSans, figurine: r.rowing })));
     await X.cx.close();
   }
   {
     /* F05, le cas le plus traître : un perso dont le NOM se résout sur une fiche du catalogue. La personne a coché d'autres
        muscles : c'est son choix qui compte, partout (figurine ET Progrès). */
     const X = await ouvrir();
-    const r = await X.pg.evaluate(() => {
+    const r = await ev(X, () => {
       // la forme ABRÉGÉE d'un nom du catalogue (« Hip Thrust Barre » pour « Hip Thrust Barre (Poussée de Hanche) »), qui se
       // résout sur sa fiche ; la personne y coche les mollets, absents de la fiche
       const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
@@ -657,16 +662,16 @@ async function ecran(t, b, PORT) {
       return { nom, ficheCatalogue: fiche && fiche.p, prim: Object.keys(o.prim || {}), vol: _volumeParMuscle(Date.now(), 14).liste.map(l => l.code), metPerso, metFiche };
     });
     t('C-MUS-B4 ⭐ F05 — un perso dont le nom se résout sur une fiche du catalogue : SES muscles cochés (mollets) passent avant la fiche, figurine et Progrès',
-      Array.isArray(r.ficheCatalogue) && r.ficheCatalogue.length > 0 && r.ficheCatalogue.indexOf('calves') < 0 && _j(r.prim) === _j(['calves']) && _j(r.vol) === _j(['calves']), _j(r));
+      sur(() => Array.isArray(r.ficheCatalogue) && r.ficheCatalogue.length > 0 && r.ficheCatalogue.indexOf('calves') < 0 && _j(r.prim) === _j(['calves']) && _j(r.vol) === _j(['calves'])), voir(() => _j(r)));
     t('C-MUS-B5 ⛔ F05 — … et ses CALORIES restent celles de la fiche du catalogue (le moteur gelé ignore les muscles cochés d\'un nom reconnu)',
-      r.metPerso === r.metFiche && r.metFiche > 0, _j({ perso: r.metPerso, fiche: r.metFiche }));
+      sur(() => r.metPerso === r.metFiche && r.metFiche > 0), voir(() => _j({ perso: r.metPerso, fiche: r.metFiche })));
     await X.cx.close();
   }
   {
     /* F05, les JUMELLES (R8) : la figurine de la carte de l'historique — un des 16 endroits qui dessinent ou listent les muscles —
        suit les muscles cochés d'un perso, comme le détail et Progrès. Elle ne rougit que les mollets cochés. */
     const X = await ouvrir();
-    const r = await X.pg.evaluate(() => {
+    const r = await ev(X, () => {
       const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
       const plein = noms.find(n => / \(/.test(n) && exNomCatalogue(n.split(' (')[0]) === n && exMuscles(n) && (exMuscles(n).p || []).length && (exMuscles(n).p || []).concat(exMuscles(n).s || []).indexOf('calves') < 0);
       const nom = plein.split(' (')[0], fiche = exMuscles(plein);
@@ -682,8 +687,8 @@ async function ecran(t, b, PORT) {
       return { nom, coche, carte: !!svg, rouges: svg ? (svg.outerHTML.match(/#FF5555/g) || []).length : -1, attendus };
     });
     t('C-MUS-C2 ⭐ F05 — la carte de l\'historique dessine le muscle COCHÉ du perso (en rouge, et rien d\'autre — pas la fiche du catalogue)',
-      r.carte && r.attendus > 0 && r.rouges === r.attendus, _j(r));
-    t('C-MUS-C3 aucune erreur de page', X.errs.length === 0, X.errs.join(' | '));
+      sur(() => r.carte && r.attendus > 0 && r.rouges === r.attendus), voir(() => _j(r)));
+    t('C-MUS-C3 aucune erreur de page', sur(() => X.errs.length === 0), voir(() => X.errs.join(' | ')));
     await X.cx.close();
   }
   {
@@ -693,7 +698,7 @@ async function ecran(t, b, PORT) {
        Tout ce qui DESSINE ou LISTE passe par `_mscScoresVus`. Un 5ᵉ appelant = un écran qui a perdu les muscles cochés, ou un
        calcul qui les a gagnés en silence. Les fichiers sont lus tels que l'app les sert. */
     const X = await ouvrir();
-    const r = await X.pg.evaluate(async () => {
+    const r = await ev(X, async () => {
       const src = [...new Set([...document.scripts].map(x => x.getAttribute('src')).filter(u => u && !/^https?:|^\/\/|^lib\//.test(u)).map(u => u.replace(/\?.*$/, '')).concat(['dashboard.js']))];
       const appels = [];
       for (const f of src) {
@@ -704,7 +709,103 @@ async function ecran(t, b, PORT) {
       return { lus: src.length, appels, parFichier };
     });
     t('C-MUS-C1 ⛔⛔ PÉRIMÈTRE — `_mscScores` (moteur des calories, gelé) garde ses 4 appelants : app.js ×1 (getExerciseMET), log.js ×3 ; rien d\'autre ne le lit',
-      r.lus >= 6 && r.appels.length === 4 && r.parFichier['app.js'] === 1 && r.parFichier['log.js'] === 3, _j(r));
+      sur(() => r.lus >= 6 && r.appels.length === 4 && r.parFichier['app.js'] === 1 && r.parFichier['log.js'] === 3), voir(() => _j(r)));
+    await X.cx.close();
+  }
+
+  /* ══ LOT 4 — RÉGLAGES DEPUIS LA SÉANCE ═════════════════════════════════════════════════════════════════════════════
+     ── C-REG — le repos par défaut : UNE valeur (`S.defRest`), deux portes (Profil · menu ⋯ de la séance), un écrivain ──
+     Conduit : le vrai Profil (`renderSetup`, le sélecteur, « Enregistrer »), le vrai menu ⋯ (`openWktMenu`, la ligne
+     « Repos par défaut », ses boutons), la vraie validation d'une série (`toggleSet`, qui lance le repos).
+     Observe : `S.defRest`, `ft4_rest`, le sélecteur du Profil, la feuille du menu, la durée du repos lancé (`restTot`), les
+     séances passées (`ft4_sessions`), la place du « + » central (règle d'or #9).
+     Ne couvre pas : l'iPhone réel, la synchro serveur (coupée), le poids de la barre (retiré exprès, ft-v726 : son absence
+     est figée par la passe). */
+  const seanceOuverte = X => ev(X, () => {
+    S.wkt = { date: today(), startTs: Date.now() - 10 * 60000, startHour: 17,
+      exs: [{ name: 'Squat Barre', sets: [{ kg: 100, reps: 5, done: false, type: 'N' }, { kg: 100, reps: 5, done: false, type: 'N' }] },
+            { name: 'Développé Couché', sets: [{ kg: 60, reps: 8, done: false, type: 'N' }] }] };
+    persist(); goScreen('s-log'); renderLog();
+  });
+  const profil = X => ev(X, () => { goScreen('s-setup'); renderSetup(); const el = document.getElementById('rest-sel');
+    return { val: el.value, idx: el.selectedIndex, vu: el.selectedIndex >= 0 ? el.options[el.selectedIndex].textContent : '(vide)', opts: [...el.options].map(o => o.value) }; });
+  {
+    const X = await ouvrir();
+    const a = await profil(X);
+    t('C-REG-A1 ⭐ le Profil montre le VRAI repos par défaut (130 s, celui de l\'installation) — il s\'affichait vide',
+      sur(() => a.val === '130' && a.idx >= 0 && /130/.test(a.vu)), voir(() => _j(a)));
+    await ev(X, () => { localStorage.setItem('ft4_rest', '75'); S.defRest = 75; });
+    const b = await profil(X);
+    t('C-REG-A2 ⛔ une valeur hors liste (75 s, restaurée d\'un ancien appareil) est montrée telle quelle, jamais remplacée',
+      sur(() => b.val === '75' && /75/.test(b.vu) && b.opts.indexOf('75') >= 0), voir(() => _j(b)));
+    await ev(X, () => { S.defRest = 130; persist(); });
+    await X.cx.close();
+  }
+  {
+    const X = await ouvrir();
+    await seanceOuverte(X);
+    const passe = await ev(X, () => { const ts = Date.now() - 3 * 864e5;
+      S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, duration: 3000, calories: 250, exs: [{ name: 'Squat Barre', sets: [{ kg: 90, reps: 5, done: true, type: 'N' }] }] }];
+      persist(); return localStorage.getItem('ft4_sessions'); });
+    const fab = () => ev(X, () => { const r = document.querySelector('#nb-log .nb-plus').getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)].join(','); });
+    const fab0 = await fab();
+    const m = await ev(X, () => { openWktMenu(); const row = document.getElementById('wm-repos');
+      return { ligne: !!row, valeur: row ? row.querySelector('.wm-v').textContent : '', texte: row ? row.textContent.replace(/\s+/g, ' ').trim() : '' }; });
+    t('C-REG-B1 ⭐ le menu ⋯ de la séance a « Repos par défaut », avec la valeur en cours (2:10)',
+      sur(() => m.ligne && m.valeur === '2:10' && /Profil/.test(m.texte)), voir(() => _j(m)));
+    const f = await ev(X, () => { document.getElementById('wm-repos').click();
+      const sh = document.querySelector('#ov-wkt-menu .wm-sheet'); const on = sh.querySelector('.wm-on');
+      return { titre: sh.querySelector('.wm-h b').textContent, choix: [...sh.querySelectorAll('.wm-g .wm-row')].map(b => b.textContent.replace(/\s+/g, '').replace('✓', '')), coche: on ? on.textContent.replace(/\s+/g, '').replace('✓', '') : '' }; });
+    t('C-REG-B2 la feuille propose la même liste que le Profil, la valeur en cours cochée (2:10)',
+      sur(() => f.titre === 'Repos par défaut' && f.coche === '2:10' && _j(f.choix) === _j(['1:00', '1:30', '2:00', '2:10', '3:00', '5:00'])), voir(() => _j(f)));
+    await ev(X, () => { const b = [...document.querySelectorAll('#ov-wkt-menu .wm-g .wm-row')].find(x => /1:30/.test(x.textContent)); b.click(); });
+    const apres = await ev(X, () => ({ defRest: S.defRest, ls: localStorage.getItem('ft4_rest'), ouvert: document.getElementById('ov-wkt-menu').classList.contains('open'), toast: (window.__T || []).slice(-1)[0] || '' }));
+    t('C-REG-B3 ⭐ choisir 1:30 dans la séance règle LA préférence : 90 s en mémoire et sur l\'appareil, le menu se ferme, c\'est dit',
+      sur(() => apres.defRest === 90 && apres.ls === '90' && !apres.ouvert && /1:30/.test(apres.toast) && /Profil/.test(apres.toast)), voir(() => _j(apres)));
+    const p = await profil(X);
+    t('C-REG-B4 ⭐ UNE SEULE SOURCE — le Profil montre aussitôt 90 s', sur(() => p.val === '90'), voir(() => _j(p)));
+    await ev(X, () => { goScreen('s-log'); renderLog(); });
+    const r = await ev(X, () => { toggleSet(0, 0); const tot = restTot; stopRest(); return tot; });
+    t('C-REG-B5 ⭐ la série suivante lance bien un repos de 90 s (le chrono lit la même valeur)', sur(() => r === 90), voir(() => String(r)));
+    const fab1 = await fab();
+    t('C-REG-B6 ⛔ règle d\'or #9 — le « + » central n\'a pas bougé (menu ouvert, choix, fermeture)', sur(() => fab0 === fab1 && fab0 !== '0,0,0,0'), voir(() => fab0 + ' → ' + fab1));
+    const passeApres = await ev(X, () => localStorage.getItem('ft4_sessions'));
+    t('C-REG-B7 ⛔ les séances passées ne changent pas (ft4_sessions identique à l\'octet)', sur(() => typeof passe === 'string' && passeApres === passe), voir(() => ''));
+    t('C-REG-B8 aucune erreur de page', sur(() => X.errs.length === 0), voir(() => X.errs.join(' | ')));
+    await X.cx.close();
+  }
+  {
+    // le réglage d'une SÉANCE reste distinct de la préférence générale (consigne de Michel)
+    const X = await ouvrir();
+    await seanceOuverte(X);
+    const r = await ev(X, () => {
+      S.exRestPref = { 'Développé Couché': 75 }; persist();
+      toggleSet(0, 0); const enCours = restTot;                // un repos tourne (130 s, le défaut)
+      openWktMenu(); document.getElementById('wm-repos').click();
+      const note = (document.querySelector('#ov-wkt-menu .wm-note') || {}).textContent || '';
+      const b = [...document.querySelectorAll('#ov-wkt-menu .wm-g .wm-row')].find(x => /3:00/.test(x.textContent)); b.click();
+      const pendant = restTot; stopRest();
+      toggleSet(1, 0); const propre = restTot; stopRest();
+      return { enCours, pendant, propre, pref: S.exRestPref['Développé Couché'], defRest: S.defRest, note };
+    });
+    t('C-REG-C1 ⛔ changer le repos par défaut ne touche pas au repos EN COURS (130 s restent 130 s)', sur(() => r.enCours === 130 && r.pendant === 130 && r.defRest === 180), voir(() => _j(r)));
+    t('C-REG-C2 ⛔ … ni à la durée qu\'un exercice a reçue pendant un repos (le développé couché garde ses 75 s)', sur(() => r.propre === 75 && r.pref === 75), voir(() => _j(r)));
+    t('C-REG-C3 la feuille le dit : « 1 exercice de cette séance garde sa propre durée »', sur(() => /1 exercice de cette séance garde sa propre durée/.test(r.note)), voir(() => r.note));
+    const p = await profil(X);
+    t('C-REG-C4 et le Profil suit (180 s)', sur(() => p.val === '180'), voir(() => _j(p)));
+    await X.cx.close();
+  }
+  {
+    // l'autre sens : Profil → séance, par le vrai « Enregistrer »
+    const X = await ouvrir();
+    await profil(X);
+    const r = await ev(X, () => { const el = document.getElementById('rest-sel'); el.value = '60'; el.dispatchEvent(new Event('change', { bubbles: true }));
+      saveProfile(); return { defRest: S.defRest, ls: localStorage.getItem('ft4_rest') }; });
+    await seanceOuverte(X);
+    const v = await ev(X, () => { openWktMenu(); const row = document.getElementById('wm-repos'); return row ? row.querySelector('.wm-v').textContent : ''; });
+    t('C-REG-D1 ⭐ UNE SEULE SOURCE, dans l\'autre sens — 60 s enregistrés dans le Profil, le menu de la séance dit 1:00',
+      sur(() => r.defRest === 60 && r.ls === '60' && v === '1:00'), voir(() => _j({ r, v })));
+    t('C-REG-D2 aucune erreur de page', sur(() => X.errs.length === 0), voir(() => X.errs.join(' | ')));
     await X.cx.close();
   }
 }

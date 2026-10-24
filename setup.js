@@ -3477,7 +3477,10 @@ function renderSetup(){
   /* D-021 : un 1,55 à confirmer le DIT sous le sélecteur — prérempli n'est pas choisi. */
   {const h=document.getElementById('act-src-hint'); if(h){ const _e=(typeof etatActivite==='function')?etatActivite():''; h.style.display=_e==='a_confirmer'?'':'none'; }}
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
-  const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
+  /* ⏱️ Mission Séance du 24/10/2026 : les durées viennent de la même liste que le menu ⋯ de la séance (`reposDefautChoix`,
+     log.js) — 130 s compris, sinon le sélecteur s'affichait VIDE pour tous ceux qui n'avaient jamais rien réglé. */
+  const restEl=document.getElementById('rest-sel');
+  if(restEl){ if(typeof reposDefautChoix==='function') restEl.innerHTML=reposDefautChoix().map(v=>'<option value="'+v+'">'+v+'s</option>').join(''); restEl.value=String(reposDefaut()); }
   const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
   const profilEmailLbl=document.getElementById('profil-email-lbl');
   const profilSyncDot=document.getElementById('profil-sync-dot');
@@ -3589,7 +3592,7 @@ function saveProfile(){
   }
   if(act!=null){ choisirActivite(act); actEl.dataset.touche=''; }   // D-021 : valeur ET provenance, un seul écrivain
   // (poids de la barre : propriétaire unique = setBarWeight(), dans le calculateur de plaques)
-  if(rest) S.defRest=rest;
+  if(rest){ if(typeof choisirReposDefaut==='function') choisirReposDefaut(rest); else S.defRest=rest; }   // un seul écrivain (log.js)
   const csEl=document.getElementById('cycle-start-inp');
   const cdEl=document.getElementById('cycle-dur-inp');
   const contraEl2=document.getElementById('contra-sel');

@@ -389,6 +389,10 @@ function openWktMenu(){
     p?'Reprendre la séance':'Mettre en pause', p?'Le chrono repart d\'où il s\'était arrêté':'Le chrono s\'arrête, rien n\'est perdu','closeWktMenu();toggleWktPause()');
   g1+='<label class="wm-row" for="s-date" onclick="closeWktMenu()">'+ic('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>')
     +'<span class="wm-t"><b>Date de la séance</b></span><span class="wm-v">'+quand+'</span></label>';
+  /* ⏱️ Mission Séance du 24/10/2026 : le repos par défaut se change SANS quitter la séance — c'est la même préférence
+     que Profil → « Repos défaut » (voir `choisirReposDefaut`), pas un réglage de plus. */
+  g1+='<button class="wm-row" id="wm-repos" onclick="openWktMenuRepos()">'+ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9.5 2h5"/>')
+    +'<span class="wm-t"><b>Repos par défaut</b><small>Le même réglage que dans ton Profil</small></span><span class="wm-v">'+_fmtRepos(reposDefaut())+'</span></button>';
   if(exs.length>=2){
     g1+=ligne(ic(S.expandAll?'<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>':'<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>'),
       S.expandAll?'Un exercice à la fois':'Tout dérouler', S.expandAll?'Seul l\'exercice en cours reste ouvert':'Voir les séries de tous les exercices','closeWktMenu();toggleExpandAll()');
@@ -418,6 +422,43 @@ function openWktMenu(){
   ov.classList.add('open');
 }
 function closeWktMenu(){const ov=document.getElementById('ov-wkt-menu');if(ov)ov.classList.remove('open');}
+/* ⏱️ LE REPOS PAR DÉFAUT — UNE SEULE VALEUR, DEUX PORTES (mission Séance de Michel du 24/10/2026 : « une seule source de
+   vérité entre Profil et Séance »). La valeur reste `S.defRest` (lue par `reposDefaut`, state.js) ; Profil (« Enregistrer »)
+   et le menu ⋯ de la séance l'écrivent par `choisirReposDefaut`, et proposent la même liste (`reposDefautChoix`).
+   ⛔⛔ 130 s est dans la liste parce que c'est la valeur de l'installation (`REPOS_DEFAUT`) : le sélecteur du Profil ne
+   proposait que 60 / 90 / 120 / 180 / 300 et s'affichait VIDE pour tous ceux qui n'avaient jamais rien réglé — mesuré le
+   24/10, alors que le chrono appliquait bien 130 s. Une valeur hors liste (restaurée d'un ancien appareil : `_reposValide`
+   accepte 10 → 900 s) est montrée telle quelle, jamais remplacée.
+   ⛔ Le réglage d'une SÉANCE reste distinct : ni le repos en cours, ni la durée qu'un exercice a reçue pendant un repos
+   (« Régler », préréglages → `S.exRestPref`) ne changent ; le menu le dit quand des exercices de la séance en ont une.
+   ⛔ Pas de poids de barre ici : son réglage est parti avec le calculateur de plaques, retiré par Michel (ft-v726, R30),
+   et `S.barW` ne sert plus à aucun calcul. */
+const REPOS_DEFAUT_CHOIX=[60,90,120,130,180,300];
+function reposDefautChoix(){
+  const v=reposDefaut();
+  return REPOS_DEFAUT_CHOIX.indexOf(v)<0 ? REPOS_DEFAUT_CHOIX.concat([v]).sort((a,b)=>a-b) : REPOS_DEFAUT_CHOIX.slice();
+}
+function choisirReposDefaut(sec){ const v=parseInt(sec,10); if(!_reposValide(v)) return false; S.defRest=v; return true; }
+const _fmtRepos=v=>v<60?v+' s':Math.floor(v/60)+':'+String(v%60).padStart(2,'0');   // comme les préréglages : « 45 s », « 2:10 »
+function openWktMenuRepos(choix){
+  const ov=document.getElementById('ov-wkt-menu'); if(!ov) return;
+  if(choix!==undefined){
+    if(!choisirReposDefaut(choix)) return;
+    persist(); try{ if(typeof _cloudSyncDebounced==='function') _cloudSyncDebounced(); }catch(e){}
+    closeWktMenu();
+    if(typeof toast==='function') toast('Repos par défaut : '+_fmtRepos(reposDefaut())+' — le même dans ton Profil','success');
+    return;
+  }
+  const cur=reposDefaut();
+  const propres=[...new Set(((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(n=>n&&S.exRestPref&&S.exRestPref[n]))].length;
+  ov.innerHTML='<div class="wm-sheet" role="dialog" aria-label="Repos par défaut"><div class="wm-grab" aria-hidden="true"></div>'
+    +'<div class="wm-h"><b>Repos par défaut</b><span>Pour toutes tes séances · le même réglage que dans ton Profil</span></div>'
+    +'<div class="wm-g">'+reposDefautChoix().map(v=>'<button class="wm-row'+(v===cur?' wm-on':'')+'" aria-pressed="'+(v===cur)+'" onclick="openWktMenuRepos('+v+')">'
+      +'<span class="wm-t"><b>'+_fmtRepos(v)+'</b></span>'+(v===cur?'<span class="wm-v">✓</span>':'')+'</button>').join('')+'</div>'
+    +(propres?'<p class="wm-note">'+propres+' exercice'+(propres>1?'s':'')+' de cette séance '+(propres>1?'gardent leur':'garde sa')+' propre durée, réglée pendant un repos.</p>':'')
+    +'<button class="wm-x" onclick="openWktMenu()">Retour</button></div>';
+  ov.classList.add('open');
+}
 function _setLogDate(d,auto){
   if(S.wkt){S.wkt.date=d;if(!auto)_wktDateChoisie=S.wkt;persist();}
   const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
