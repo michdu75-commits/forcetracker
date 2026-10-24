@@ -6,7 +6,7 @@ C-NUM-* savent-ils ROUGIR ?
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE, jamais au depot (BUGS.md §60).
 Point de depart : 0 rouge sur l'arbre sain, mesure d'abord ; l'arbre sain est REJOUE a la fin (banc instable = campagne refusee).
 M00 remet les fichiers de l'app tels qu'ils etaient AVANT la mission (branche Seance 5a7b0a57 = master 999b7947 + repos +
-vignettes), mot pour mot.
+vignettes), mot pour mot. Lots 1 (M1-M15, M33) et 2 (M16-M32, M34, M35).
 Les mutations [deguisee] cassent l'invariant sans toucher a la ligne evidente ; [negatif] ne doit PAS faire rougir.
 Chaque mutation GARDE exige un TEMOIN PRECIS (4e champ) parmi les rouges.
 Un PLANTAGE du banc (code de sortie hors 0/1, ligne PLANTAGE, ou pas de ligne de total) n'est JAMAIS « garde ».
@@ -20,9 +20,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVANT = '5a7b0a57'
-LO, SE, AP, ST, SC, DA, CO = 'log.js', 'setup.js', 'app.js', 'state.js', 'screens.js', 'dashboard.js', 'coach.js'
-FICHIERS = (LO, SE, AP, ST, SC, DA, CO)
-FICHIERS_AVANT = (LO, SE, AP, ST, SC, DA, CO)
+LO, SE, AP, ST, SC, DA, CO, TR = 'log.js', 'setup.js', 'app.js', 'state.js', 'screens.js', 'dashboard.js', 'coach.js', 'tracking.js'
+FICHIERS = (LO, SE, AP, ST, SC, DA, CO, TR)
+FICHIERS_AVANT = (LO, SE, AP, ST, SC, DA, CO, TR)
 
 MUT = [
     ("M00 code d'AVANT la mission remis mot pour mot (5a7b0a57)", 'AVANT', 'GARDE', 'C-NUM-A1'),
@@ -75,7 +75,71 @@ MUT = [
     ('M14 l\'en-tete n\'est pas redessine apres la duree',
      [(SE, "    _sdEntete(s);\n  }else openSessDetail(s.ts||s.id);", "  }else openSessDetail(s.ts||s.id);")],
      'GARDE', 'C-NUM-C2'),
+    ('M33 confirmer la meme duree reecrit la seance (garde retiree)',
+     [(SE, "  if(t && s.duration && m===Math.round(s.duration/60)){ toast('Durée inchangée','info'); return; }\n", "")],
+     'GARDE', 'C-NUM-C11'),
+    # ── LOT 2 : les memes chiffres partout ──────────────────────────────────────────────────────────────────────────
+    ('M16 le calendrier recalcule sans la convention (ancienne copie)',
+     [(SC, "  return _volTravail(s);", "  let v=0;(s.exs||[]).forEach(ex=>{(ex.sets||[]).forEach(st=>{if(!st.done||!st.kg||!st.reps||st.type==='É'||st.type==='W')return;v+=st.kg*st.reps;});});return v;")],
+     'GARDE', 'C-NUM-D1'),
+    ('M17 la tendance recompte toutes les series faites, sans convention',
+     [(ST, "      v[m]+= (typeof _volTravail==='function') ? _volTravail(sess) : 0;",
+           "      (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x && x.done!==false && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps); }));")],
+     'GARDE', 'C-NUM-D3'),
+    ('M18 l\'export oublie le facteur unilateral',
+     [(SE, "volume:Math.round(kg*reps*_facteurUni(s, ex.name))", "volume:Math.round(kg*reps)")],
+     'GARDE', 'C-NUM-D4'),
+    ('M19 Milo relit la copie rangee dans la liste des seances',
+     [(CO, "${exStr} — ${(typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0))}kg vol total", "${exStr} — ${s.volume}kg vol total")],
+     'GARDE', 'C-NUM-D5'),
+    ('M20 la fiche du debrief relit la copie rangee',
+     [(CO, "    const vol=(typeof _volTravail==='function'?_volTravail(sess):(+sess.volume||+sess.vol||0));", "    const vol=sess.volume||sess.vol||0;")],
+     'GARDE', 'C-NUM-D6'),
+    ('M21 le tableau de bord relit la copie rangee (charge sur 30 jours)',
+     [(DA, "    if(best>0)rm.push(best); vol.push((typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0))); });",
+           "    if(best>0)rm.push(best); vol.push(+s.volume||+s.vol||0); });")],
+     'GARDE', 'C-NUM-D8'),
+    ('M34 [deguisee] le facteur unilateral ignore la convention de la seance (x2 meme avant le 11/08)',
+     [(LO, "  return (sess&&sess.uniConv&&typeof estUnilateral==='function'&&estUnilateral(nom))?2:1;", "  return (sess&&typeof estUnilateral==='function'&&estUnilateral(nom))?2:1;")],
+     'GARDE', 'C-NUM-D2'),
+    ('M22 les anciennes series W recomptent dans le volume par muscle',
+     [(LO, "st.type!=='É'&&st.type!=='W').length;", "st.type!=='É').length;")],
+     'GARDE', 'C-NUM-E1'),
+    ('M23 la cle du cache de couleur revient aux seuls noms',
+     [(SC, "  const key=s.date+'|'+(s.exs||[]).map(e=>((e&&e.name)||'')+':'+((e&&(e.sets||[]).some(x=>x&&x.done))?1:0)+_cex(e&&e.name)).join('~');",
+           "  const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');")],
+     'GARDE', 'C-NUM-F1'),
+    ('M24 la tuile Nutrition ne prend que la premiere seance du jour',
+     [(SC, "  const sessCals=_sessJour.reduce((a,s)=>a+(+s.calories||0),0);", "  const sessCals=(_sessJour[0]&&+_sessJour[0].calories)||0;")],
+     'GARDE', 'C-NUM-G1'),
+    ('M25 [deguisee] la tuile additionne mais ne dit pas combien de seances',
+     [(SC, "_l.textContent=_sessJour.length>1?_sessJour.length+' séances':'Séance';", "_l.textContent='Séance';")],
+     'GARDE', 'C-NUM-G1'),
+    ('M26 l\'en-tete du PDF compte les dates comme des seances',
+     [(SE, "  const seances=new Set(L.map(r=>r.seance_id||r.date)).size, jours=", "  const seances=new Set(L.map(r=>r.date)).size, jours=")],
+     'GARDE', 'C-NUM-H1'),
+    ('M27 le conseil de recuperation ignore l\'absence de sommeil',
+     [(TR, "  if(!sansSommeil) return r;", "  return r;")],
+     'GARDE', 'C-NUM-I1'),
+    ('M28 Milo relit « JOUR IDEAL pour PRs » sans sommeil note',
+     [(CO, "(_sansS&&score>=60)?", "(false)?")],
+     'GARDE', 'C-NUM-I3'),
+    ('M29 l\'Accueil redit « Pret a performer » sans sommeil note',
+     [(SC, "detail.sansSommeil?'Estimation sans sommeil':", "")],
+     'GARDE', 'C-NUM-I5'),
+    ('M30 l\'activite de la montre s\'affiche avec sa cle brute',
+     [(LO, "${L[c.type]||M[c.type]||c.type||'cardio'}", "${L[c.type]||c.type||'cardio'}")],
+     'GARDE', 'C-NUM-J1'),
+    ('M31 le tapis de course retombe sur « course » (bareme Autre)',
+     [(SE, "  if(/tapis|treadmill/.test(n))                   return 'tapis';\n", "")],
+     'GARDE', 'C-NUM-J4'),
+    ('M32 le detail affiche « Elliptique » pour une marche',
+     [(SE, "${(c&&c.type&&!CARDIO_LABELS[c.type]&&CARDIO_NOMS_MONTRE[c.type])?", "${(false)?")],
+     'GARDE', 'C-NUM-J3'),
     # ── negatif : ne doit rien faire rougir ─────────────────────────────────────────────────────────────────────────
+    ('M35 [negatif] le commentaire de la tuile Nutrition est reformule',
+     [(SC, "libellé plutôt que la valeur, pour que « 600 kcal » tienne dans la tuile à 320 px.", "libellé plutôt que la valeur : « 600 kcal » tient ainsi dans la tuile à 320 px.")],
+     'OK', None),
     ('M15 [negatif] un commentaire de la regle des calories est reformule',
      [(SE, "  if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // même effort : rien ne bouge",
            "  if(cA.total===cN.total) return {calories:avant.calories, calData:avant.calData};   // effort identique : on garde tout")],
