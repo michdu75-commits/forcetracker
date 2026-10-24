@@ -801,6 +801,29 @@ async function ecran(t, b, PORT) {
     await X.cx.close();
   }
   {
+    /* Règle d'or #11 pour « Repos par défaut » dans ⋯ (une porte nouvelle) — et l'aide reste joignable PENDANT la séance :
+       la barre du haut (et son « ? ») cède la place à « Séance en cours », l'aide passe par ⋯ → « Aide de l'écran Séance ». */
+    const X = await ouvrir();
+    await seanceOuverte(X);
+    const r = await ev(X, () => {
+      openWktMenu();
+      const aide = [...document.querySelectorAll('#ov-wkt-menu .wm-row')].find(b => /Aide de l'écran Séance/.test(b.textContent));
+      if (aide) aide.click();
+      const titre = document.getElementById('help-title').textContent, ouverte = document.getElementById('ov-help').classList.contains('open');
+      const texte = document.getElementById('help-content').textContent.replace(/\s+/g, ' ');
+      closeHelp();
+      const point = (NEW_FEATURES || []).find(f => f.id === 'repos-defaut-seance');
+      const guide = (APP_GUIDE_SLIDES || []).map(x => x.cap || '').join(' ');
+      return { aide: !!aide, titre, ouverte, porte: /⋯ \(pause, date, repos par défaut,/.test(texte), timer: /N = ton repos par défaut/.test(texte) && !/N = 2:10/.test(texte),
+        point: !!point && point.screen === 'log', guide: /Repos par défaut/.test(guide) };
+    });
+    t('C-REG-E1 ⭐ pendant la séance, l\'aide de l\'écran se joint par ⋯ → « Aide de l\'écran Séance » (elle s\'ouvre sur « ⚡ Séance »)',
+      sur(() => r.aide && r.ouverte && r.titre === '⚡ Séance'), voir(() => _j(r)));
+    t('C-REG-E2 règle d\'or #11 — l\'aide « ? » cite « repos par défaut » dans ⋯ et ne fige plus « N = 2:10 » ; point rouge et diapo du Guide le disent',
+      sur(() => r.porte && r.timer && r.point && r.guide), voir(() => _j(r)));
+    await X.cx.close();
+  }
+  {
     // l'autre sens : Profil → séance, par le vrai « Enregistrer »
     const X = await ouvrir();
     await profil(X);

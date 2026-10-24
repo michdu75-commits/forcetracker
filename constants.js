@@ -546,6 +546,9 @@ const NEW_FEATURES=[
      l'app. ⛔ Sans `spot`, comme les entrées voisines : le dock n'existe que pendant un repos. ⛔ PAS DE POP-UP (R25) : rien
      n'est à faire et aucun repère n'a bougé — le repos revient là où on l'attend. */
   {id:'repos-persistant', screen:'log', desc:'Nouveau : <b>ton repos survit à la fermeture de l\'app</b>. Téléphone verrouillé, autre appli, app rechargée : en revenant, tu retrouves le chrono <b>à l\'heure réelle</b> — jamais remis à zéro. Déjà fini ? Il continue en <b>+0:45</b>… et <b>15 min après la fin</b>, il s\'arrête tout seul.'},
+  /* ⏱️ POINT ROUGE sur SÉANCE (mission Séance du 24/10/2026) — « Repos par défaut » entre dans le menu ⋯ de la séance. ⛔ Sans
+     `spot` : le menu n'existe que pendant une séance. ⛔ PAS DE POP-UP (R25) : rien n'est à faire, aucun repère n'a bougé. */
+  {id:'repos-defaut-seance', screen:'log', desc:'Nouveau : <b>⋯ → « Repos par défaut »</b> pendant la séance — c\'est le <b>même réglage</b> que dans ton Profil, change-le d\'un côté, l\'autre suit. La durée qu\'un exercice a reçue pendant un repos reste la sienne.'},
   /* 📋 POINT ROUGE sur SÉANCE (D-093, 19/10/2026) — « 4 dernières séances » et le sélecteur Échec | 0 | 1 | 2 | 3 | 4+. ⛔ Sans
      `spot`, comme les entrées voisines : l'en-tête « Précédent ▾ » n'existe que sur un exercice ouvert qui a un historique. */
   {id:'prev-4-seances', screen:'log', desc:'Nouveau : <b>« Précédent ▾ »</b> (en haut de la colonne, ou <b>⋯ → 4 dernières séances</b>) compare tes <b>4 dernières séances</b> de l\'exercice, série par série — sans verdict. Et la réserve se note <b>Échec · 0 · 1 · 2 · 3 · 4+</b> : <b>Échec</b> = la série passe en X, <b>0</b> = ta dernière répétition est passée.'},

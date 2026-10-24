@@ -8508,7 +8508,9 @@ const _DRAWER_CONTENT = {
            maintenant sa charge. Une aide qui annonce un chiffre que l'app n'applique plus est
            pire qu'une aide absente, parce qu'on la croit (R23). Le détail va dans l'entrée 🔥
            juste en dessous — ici on renvoie, on ne réexplique pas (R25). */
-        {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut · X = Échec musculaire. Tape la pastille de la série pour changer. Timer : <b>É de 45 s à 2 min selon la charge du palier</b> (voir « Ton échauffement se dose à ta charge ») · N 2:10 · X 4min.'},
+        {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut · X = Échec musculaire. Tape la pastille de la série pour changer. Timer : <b>É de 45 s à 2 min selon la charge du palier</b> (voir « Ton échauffement se dose à ta charge ») · N = ton <b>repos par défaut</b> (2:10 à l\'installation) · X 4min.'},
+        /* ⏱️ Mission Séance du 24/10/2026 — règle d'or #11, point 4 : le POURQUOI de « Repos par défaut » dans ⋯. */
+        {ic:'⏱️',t:'Ton repos par défaut, sans quitter la séance',d:'Pendant la séance, <b>⋯ → « Repos par défaut »</b> le change en deux gestes. Ce n\'est <b>pas un réglage de plus</b> : c\'est <b>le même</b> que « Repos défaut » dans ton Profil — change-le d\'un côté, l\'autre suit. ⭐ Il ne touche ni au <b>repos en cours</b>, ni à la durée qu\'un exercice a reçue <b>pendant un repos</b> (« Régler », 30 s · 45 s · 1:00…) : celle-là reste la sienne, et la feuille te dit combien d\'exercices de la séance en ont une. ⚠️ La valeur d\'installation, <b>2:10</b>, est maintenant visible dans le Profil : elle n\'y était pas proposée, et la case s\'affichait vide.'},
         /* 🔥 ft-v1082 — L'AIDE DÉTAILLÉE EST L'ENDROIT DU *POURQUOI*. Elle porte les trois choses
            qu'aucune autre surface ne dit : ① le chiffre mesuré qui a motivé le correctif ;
            ② les deux bornes (jamais moins qu'avant, jamais plus que TON repos de travail) ;
