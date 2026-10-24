@@ -166,7 +166,45 @@ par le vrai `Code.js` en local) :
 | `tools/mut_nut_m6_rejeu.py` — le cliquet M6 réécrit | N16, N20, N21 | **3 / 3** (chacune : 28 ou 27 OK, son témoin rouge) |
 | `tools/mut_food_multisource.py` — MS-156 / MS-157 réécrits | M2, M10, M11, M12 (+ M20, prise par le préfixe) | **5 / 5** ; et une mutation ciblée sur une copie (une valeur inconnue s'écrit « 0 » au lieu de « ? ») : **MS-157 rouge, lui seul** (176 / 1) |
 
-**Bancs voisins** (le T1 du sélecteur de recette pour ce diff, rejoué sur l'arbre final) : ⏳
+**Bancs voisins** — le T1 du sélecteur de recette pour ce diff, plus les bancs T2 de la Nutrition, rejoués sur l'arbre final ;
+et une **passe réduite** : les 61 blocs de la passe complète qui citent une fonction touchée (sur 251 ; la passe complète,
+elle, se joue une seule fois, sur l'intégration — §8.7 ⑦). Chiffres lus dans les journaux d'exécution :
+
+| Banc | Résultat (OK / rouge) | Durée |
+|---|---|---|
+| `aides_audit` | 18 / 0 | 4 s |
+| `nut_m6_rejeu` | 29 / 0 | 65 s |
+| `nut_v2_p1_croise` | 16 / 0 | 52 s |
+| `repas_actif` | 24 / 0 | 18 s |
+| `ia_ref100` | 36 / 0 | 17 s |
+| `journal_qty_guard` | 23 / 0 | 21 s |
+| `food_reference` | 136 / 0 | 19 s |
+| `food_d042` | 73 / 0 | 34 s |
+| `food_lot_b` | 73 / 0 | 35 s |
+| `food_variants` | 131 / 0 | 233 s |
+| `food_alias_sens` | 77 / 0 | 19 s |
+| `lot3` | 87 / 0 | 236 s |
+| `poids_chaine` | 78 / 0 | 43 s |
+| `foodlog_restore` | 35 / 0 | 38 s |
+| `habitudes_alim` | 37 / 0 | 4 s |
+| `ordre_repas` | 39 / 0 | 13 s |
+| `nut_secu_p1` | 82 / 0 | 3 s |
+| `sec_admin` | 69 / 0 | 74 s |
+| `nut2_moteur` | 70 / 0 | 0 s |
+| `nut_punch01` | 36 / 0 | 33 s |
+| `chaos` | 56 / 0 | 15 s |
+| `annexe pwa-offline` | PASS | 11 s |
+| `food_multisource` | 175 / 2 avant la réécriture de MS-156 / MS-157 → **177 / 0** après | 113 s |
+| `food_semantics` (T2) | 44 / 0 | 276 s |
+| `food_formes` (T2) | 46 / 0 | 6 s |
+| `food_prefs` (T2) | 39 / 0 | 14 s |
+| `pots_nutrition` (T2) | 48 / 0 | 25 s |
+| `nutri_moteur` (T2) | 28 / 0 | 6 s |
+| passe réduite (61 blocs) | **2003 ✅ · 0 ❌** | 640 s |
+| annexe calculs | PASS | 97 s |
+
+`food_multisource` a d'abord rendu **2 rouges** : MS-156 et MS-157 lisaient encore l'ancien ordre d'affichage des résultats
+Open Food Facts — réécrits (§9), puis 177 / 0. `chaos` (vrai PostgreSQL local, vrai `Code.js`) : 56 / 0.
 
 **Ce que Milo reçoit** : le prompt complet construit par la vraie app avec les mêmes données inventées (une ligne V2,
 deux anciennes lignes dont le steak fabriqué) fait **76 388 caractères sur master et 76 388 sur la branche, identiques
