@@ -5390,3 +5390,10 @@ la mutation frappait du code que plus rien n'exécute. Corrigé : `_n2QteListe` 
 `_n2TexteProposition`), son déclencheur du registre de recette reporté sur `_n2TexteProposition`, l'ancre de MP50 déplacée
 sur la ligne qui écrit vraiment la quantité. *Une mutation qui ne mord plus ne dit pas toujours que le témoin est faible :
 elle peut dire que le code visé est mort — et un code mort qui ressemble au vivant est un doublon (R2).*
+
+⚠️ **Le même soir, F21 n'a pas mordu non plus — pour une 3ᵉ raison** : « Restaurer » qui ne reprend plus les masquages du
+serveur laissait `B-NFIAB-X T08 ②` VERT (13 / 0). Le téléphone « neuf » du test démarrait **déjà connecté** : le démarrage
+(`autoConnect`) rapportait les masquages avant même « Restaurer ». Deux chemins menaient au même état, le témoin ne savait pas
+lequel l'avait produit. Corrigé : l'appareil démarre **hors ligne** (le démarrage ne peut rien charger), le réseau revient,
+puis « Restaurer » ; et le témoin vérifie d'abord qu'aucun masquage n'était là avant. Le démarrage garde son propre témoin
+(T08 ④, F23 le fait rougir). *Quand deux chemins mènent au même état, un témoin d'état ne prouve aucun des deux.*

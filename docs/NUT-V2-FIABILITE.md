@@ -133,6 +133,8 @@ noté **après** (re-noter, c'est le vouloir).
 | `B-NV2P P12 ②` (`nut2_parcours.js`) | `D-130` remplace `D-101` ⑩ n°1 sur l'identité : la copie garde son code-barres et son état, toujours sans fiche ni pour-100 g | MP17 (une fiche fabriquée), MP85 (l'identité perdue) |
 | `B-NM6-C ③` (`nut_m6_rejeu.js`, le cliquet de M6) | « ⭐ Corriger ce favori » (`majFavoriDepuisEcran`) est un 2ᵉ lecteur **déclaré** de l'écran : il en fait un favori et n'écrit jamais le journal | N20 (un 3ᵉ lecteur non déclaré), N21 (la correction écrit le journal) |
 | `B-NFIAB T02 ⑥` (ce lot) | réécrit pendant le lot sur la règle A (liste) + `⑥b` (l'écran) | F1 (écran), F1b (la variante B réintroduite) |
+| `B-NFIAB-X T08 ②` (ce lot) | démarré en ligne, le téléphone « neuf » recevait déjà les masquages au démarrage : F21 (« Restaurer » les perd) ne mordait pas. Il démarre maintenant **hors ligne**, et le témoin vérifie qu'aucun masquage n'était là avant « Restaurer » (`BUGS.md` §117) | F21 et F23 rejouées après la correction : ⏳ |
+| `B-NFIAB-X T07 ①` (ce lot) | une erreur dans la page faisait **planter** le banc sous F15 : elle se dit maintenant en rouge ; F15 modélise vraiment « la remise à zéro part sans sauvegarde » (`BUGS.md` §116) | F15 rejouée : ⏳ |
 
 **Le témoin `B-NP01-A` (`nut_punch01`) réécrit par la branche Séance (repos persistant) : relu, ACCEPTÉ.** La comparaison
 « la séance ouverte revient à l'identique au rechargement » n'exclut que `S.wkt.repos` — l'état du chrono de repos, effacé au
@@ -188,8 +190,14 @@ Aucune séance n'est lue ni écrite par ce lot ; le journal ancien n'est jamais 
 Rien dans `renderNutrition` (la tuile « Séance », F06, est à Claude Séance), ni dans `buildCoachContext`, ni dans le
 moteur MET.
 
-**Intégration** : master `98c09ed9` fusionné dans la branche par moi (§8.7 ①) — documentation seulement. ⏳ (commit exact,
-prévision de conflits avec `claude/dreamy-bell-pu88ia`).
+**Intégration** : master `98c09ed9` fusionné dans la branche par moi (§8.7 ①, fusion `06a30687`) — documentation seulement ;
+les commits du lot : `f0869fdf` (l'app, les tests, la documentation), **`bb2075b9` (`Code.js` seul)**, puis la clôture (⏳).
+Prévision `git merge-tree` avec la branche Séance `claude/dreamy-bell-pu88ia` @ `b2a6280a` : **aucun conflit de code** —
+`app.js`, `coach.js`, `constants.js`, `index.html`, `screens.js`, `setup.js`, `state.js`, `runner.js`, `registre.json` se
+fusionnent d'eux-mêmes ; **3 conflits de documentation** (`BUGS.md` : les deux ajoutent des sections en fin de fichier ;
+`CONTEXTE-ACTUEL`, `JOURNAL-DE-PARTAGE` : une ligne chacun). ⚠️ Une fusion sans conflit n'est pas une preuve : les zones
+touchées des deux côtés (`APP_GUIDE_SLIDES`, `NEW_FEATURES`, `setup.js`, `state.js`) se relisent, et les bancs des deux
+sessions se rejouent sur l'arbre fusionné (§8.8 ⑤).
 
 **Règle d'or #17 (code applicatif seulement)** : données persistées ajoutées **2** (le champ `hiddenFoods` du profil
 serveur ; la date `t` d'un favori — aucune clé de stockage nouvelle, `ft4_hiddenfoods` change de forme) · fichiers

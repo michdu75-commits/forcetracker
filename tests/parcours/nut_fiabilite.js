@@ -476,12 +476,18 @@ async function croiseFiab(t, b, PORT) {
   t('B-NFIAB-X T08 ① « ✕ » PART AU SERVEUR : la date de départ de l\'identité est dans le profil (avant : jamais synchronisée)',
     g && srv1.some((e) => e.k === 'id:' + EAN_ISO && e.t > 0), J({ g, i1, srv1, loc: await p1.evaluate(() => S.hiddenFoods) }));
 
-  /* Appareil 2 (téléphone neuf) : « Restaurer » → l'isolat reste masqué ; le journal arrive entier */
+  /* Appareil 2 (téléphone neuf) : il DÉMARRE HORS LIGNE (le démarrage ne peut rien charger du serveur), puis « Restaurer » une fois
+     le réseau revenu → l'isolat reste masqué ; le journal arrive entier. ⚠️ Démarré en ligne, le démarrage rapportait DÉJÀ les
+     masquages (`autoConnect`) : le témoin restait vert même quand « Restaurer » les perdait (F21 ne mordait pas, 24/10). Ici, c'est
+     bien « Restaurer » qui les rapporte — le démarrage a son propre témoin (T08 ④, F23). */
+  etat.reseauCoupe = true;
   const D2 = await CR.appareil(b, PORT, X, etat, tok, 'nfiab-a2', { ft4_admin_ok: '1' }); const p2 = D2.pg;
+  const masquesAvant2 = await p2.evaluate(() => (S.hiddenFoods || []).length);
+  etat.reseauCoupe = false;
   await CR.restaurer(p2);
   const j2 = await CR.journalApp(p2), deja2 = await p2.evaluate((e) => { try { openAddFood(); } catch (x) {} const n = _afSuggLocales('iso zero').filter((l) => l.sourceId === e).length; try { closeAddFood(); } catch (x) {} return n; }, EAN_ISO);
-  t('B-NFIAB-X T08 ② ⭐ TÉLÉPHONE NEUF + « Restaurer » : l\'isolat masqué sur l\'autre appareil ne réapparaît pas (« Déjà noté par toi » vide pour lui), le journal arrive entier (' + journalInit.length + ' lignes)',
-    deja2 === 0 && j2.length === journalInit.length, J({ deja2, n: j2.length }));
+  t('B-NFIAB-X T08 ② ⭐ TÉLÉPHONE NEUF (démarré hors ligne) + « Restaurer » : aucun masquage avant, puis l\'isolat masqué sur l\'autre appareil ne réapparaît pas (« Déjà noté par toi » vide pour lui), le journal arrive entier (' + journalInit.length + ' lignes)',
+    masquesAvant2 === 0 && deja2 === 0 && j2.length === journalInit.length, J({ masquesAvant2, deja2, n: j2.length }));
 
   /* Appareil 1 : la REMISE À ZÉRO préparée — périmètre, sauvegarde (fichier capté), exécution confirmée */
   const totalAvant = await totaux(p1);

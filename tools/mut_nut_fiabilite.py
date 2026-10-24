@@ -131,14 +131,16 @@ def cloner():
 
 
 def main():
-    seul = sys.argv[1] if len(sys.argv) > 1 else None
+    # un ou plusieurs prefixes separes par des virgules (« F21,F23 ») : on ne rejoue que celles-la (et leurs parties saines)
+    seuls = [x for x in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if x]
+    choisie = lambda nom: not seuls or any(nom.startswith(x + ' ') for x in seuls)
     # ⛔ Toutes les ancres d'abord, sur le depot (lecture seule) : une ancre absente ou multiple arrete tout AVANT le premier banc.
     for nom, rempl, _, _, _ in MUT:
         for f, old, _new in rempl:
             n = open(os.path.join(SRC, f), encoding='utf-8').read().count(old)
             if n != 1:
                 print('  !! ANCRE INTROUVABLE OU MULTIPLE (%d) dans %s : %s' % (n, f, nom)); return 1
-    parties = sorted(set(m[4] for m in MUT if not seul or m[0].startswith(seul + ' ')))
+    parties = sorted(set(m[4] for m in MUT if choisie(m[0])))
     for p in parties:
         tmp0, a0 = cloner()
         rc, res, _ = banc(a0, p)
@@ -149,7 +151,7 @@ def main():
     print()
     conformes, total = 0, 0
     for nom, rempl, attendus, attendu, partie in MUT:
-        if seul and not nom.startswith(seul + ' '):
+        if not choisie(nom):
             continue
         total += 1
         tmp, arbre = cloner()
