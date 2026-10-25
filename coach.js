@@ -570,7 +570,7 @@ function _memoireLongue(){
     }
     // ③ VOLUME total — le chiffre qui dit « tu as fait du chemin »
     let tonnes=0;
-    parDate.forEach(s=>{ tonnes += (+s.volume||+s.vol||0); });
+    parDate.forEach(s=>{ tonnes += (typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0)); });   // la règle unique du volume (mission Séance, 24/10)
     const L=[];
     L.push(`- Première séance enregistrée : ${_dateLongue(debut)} (il y a ${jours} jours) · ${sess.length} séances au total`);
     // Silence prolongé : un fait important que la fenêtre des 5 dernières séances ne montre pas
@@ -3656,7 +3656,7 @@ function buildCoachContext(msg, opts) {
        « n'en saute aucun » sans le nombre demande au modèle de compter tout seul dans une ligne
        dense — c'est un prompt qui compense une donnée absente (R8). Le chiffre, lui, est calculé. */
     const _nbEx=(s.exs||s.exercises||[]).filter(e=>(e.sets||[]).some(x=>x.done)).length;
-    return `${_dateLisible(s.date)} (${_nbEx} exercice${_nbEx>1?'s':''}): ${exStr} — ${s.volume}kg vol total`
+    return `${_dateLisible(s.date)} (${_nbEx} exercice${_nbEx>1?'s':''}): ${exStr} — ${(typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0))}kg vol total`
       +(cardioStr?` — cardio: ${cardioStr}`:'');
   };
   const recentSessions = _sessVues.map(s => _ligneSeance(s, true)).join('\n') || 'Aucune séance';
@@ -4640,8 +4640,9 @@ ${(()=>{
 })()}
 RÉCUPÉRATION & SOMMEIL:
 ${(()=>{
-  const score=calcRecoveryScore();
-  const info=getRecoveryInfo(score);
+  const _rd=calcRecoveryDetail();
+  const score=_rd.score, _sansS=!!_rd.sansSommeil;   // F19 (mission Séance du 24/10/2026) : sans sommeil récent, une estimation
+  const info=getRecoveryInfo(score,_sansS);
   const todayStr=today();
   /* ⭐⭐ MILO LIT LES MÊMES NUITS QUE LE SCORE (30/08) — `_nuit`/`_nuitsRecentes` sont le seul
      propriétaire (R2). Avant, ce bloc relisait `S.sleepLog` de son côté : l'écran et Milo
@@ -4686,7 +4687,7 @@ ${avgH?'- Moyenne sommeil (3j): '+avgH+'h'+(last3.some(n=>n.source==='mesure')?'
 ${ec?'- ÉCART MESURE/SAISIE: sa montre dit '+ec.hMes+'h là où il/elle avait noté '+ec.hSaisie+'h ('
    +(ec.ecart>0?'+':'')+Math.round(ec.ecart*60)+' min). C\'est un FAIT, pas une faute : on ne note pas ses nuits au chronomètre. Tu peux le mentionner UNE fois si c\'est utile à la décision du jour (charge, récup), jamais comme un reproche et jamais deux fois.':''}
 - Conseil récupération: ${info.rec}
-- Implication entraînement: ${score===null?'Demander les données de sommeil à l\'athlète':score<40?'Proposer UNIQUEMENT repos actif, étirements ou séance très légère. Déconseiller fortement tout effort maximal.':score<60?'Séance possible mais pas de records. Volume modéré, technique, pas de maxima.':score<80?'Séance normale. Peut progresser mais réserver les PRs pour les jours optimal.':'JOUR IDÉAL pour PRs et séances intensives. Corps en pleine capacité de récupération.'}`;
+- Implication entraînement: ${score===null?'Demander les données de sommeil à l\'athlète':(_sansS&&score>=60)?'Score ESTIMÉ, aucun sommeil noté ces 3 derniers jours : séance normale possible, mais ne présente pas la journée comme idéale pour des records sur ce seul chiffre — demande-lui comment il ou elle a dormi.':score<40?'Proposer UNIQUEMENT repos actif, étirements ou séance très légère. Déconseiller fortement tout effort maximal.':score<60?'Séance possible mais pas de records. Volume modéré, technique, pas de maxima.':score<80?'Séance normale. Peut progresser mais réserver les PRs pour les jours optimal.':'JOUR IDÉAL pour PRs et séances intensives. Corps en pleine capacité de récupération.'}`;
 })()}
 
 
@@ -6262,7 +6263,7 @@ function _dbfDesignation(sess){
     const d=(typeof _dateLisible==='function')?_dateLisible(sess.date):(sess.date||'');
     const exs=(sess.exs||sess.exercises||[]).filter(e=>(e&&(e.sets||[]).some(x=>x&&x.done)));
     const n=exs.length;
-    const vol=sess.volume||sess.vol||0;
+    const vol=(typeof _volTravail==='function'?_volTravail(sess):(+sess.volume||+sess.vol||0));   // la règle unique du volume (mission Séance, 24/10)
     return d+(n?' ('+n+' exercice'+(n>1?'s':'')+')':'')+(vol?' — '+vol+'kg de volume':'');
   }catch(e){ return ''; }
 }
@@ -8498,7 +8499,7 @@ const _DRAWER_CONTENT = {
            séance de cardio seul déclenche vraiment — sans ça, « ça compte quand même ? » reste
            une question ouverte. */
         {ic:'🏃',t:'Noter un cardio ≠ enregistrer la séance',d:'Le bloc <b>Cardio</b> de l\'écran Séance sert à <b>noter</b> : le type (tapis, vélo, rameur…), l\'intensité et la durée, <b>avant</b> la muscu (échauffement) ou <b>après</b> (cardio de fin). Son bouton s\'appelle <b>« ✓ C\'est noté »</b> et il ne fait qu\'une chose : ranger ta saisie et replier le bloc. <b>Il n\'enregistre pas ta séance</b>, et c\'est voulu — on saisit souvent son cardio <b>pendant</b> qu\'on s\'entraîne, pas à la fin.<br><br>⭐ <b>Un seul bouton enregistre : le grand bouton bleu du bas de l\'écran Séance</b> (le même que « Terminer » en haut) : <b>« 🏁 Terminer la séance »</b> si tu as validé des séries, <b>« 🏁 Enregistrer le cardio »</b> si tu n\'as fait que du cardio. Avant le 04/09/2026 le bouton du bloc avait la même couleur et disait « Enregistrer le cardio » : <b>deux boutons, presque les mêmes mots, un seul enregistrait</b>. Rien ne permettait de les distinguer.<br><br>⚠️ <b>Ce que ça coûtait</b> : une séance de cardio seul n\'a aucun exercice, et plusieurs endroits de l\'app en déduisaient « il n\'y a rien ». Tu pouvais noter 45 min de tapis, repasser par l\'Accueil, retaper le bouton rouge — et ta saisie disparaissait sans un mot. C\'est corrigé : tant qu\'une séance attend, l\'Accueil affiche <b>« ↩ Reprendre la séance »</b>, l\'app te le redit à l\'ouverture, et une copie de secours est gardée.<br><br>⭐ <b>Une séance de cardio seul est une vraie séance</b> : elle a sa durée, ses calories (calculées depuis le MET du type et ton poids), elle apparaît dans ton calendrier, elle ferme une séance annoncée à Milo, et Milo en tient compte. ⚠️ En revanche elle pèse encore <b>peu</b> sur ton score de récupération — ce barème-là reste à régler, et on ne l\'invente pas.'},
-        {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central « + » en bas de l\'écran. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries — et c\'est un <b>MAXIMUM</b>, pas un temps à attendre : tu peux repartir avant, c\'est permis. Il ne s\'arrête plus à zéro, il continue en +0:12, +0:45… avec « au-delà de ton repos max ». ⚠️ Ce n\'est ni un reproche ni une erreur d\'affichage : c\'est une information, parce que le repos réellement pris vaut souvent 2 à 3 fois le repos réglé. Au-delà de 15 min il s\'arrête seul (ce n\'est plus un repos). Astuce : dans la recherche d\'exercices, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en tête, avec une ★ — tu retrouves tes mouvements habituels sans scroller.'},
+        {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central « + » en bas de l\'écran. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries — et c\'est un <b>MAXIMUM</b>, pas un temps à attendre : tu peux repartir avant, c\'est permis. Il ne s\'arrête plus à zéro, il continue en +0:12, +0:45… avec « au-delà de ton repos max ». ⚠️ Ce n\'est ni un reproche ni une erreur d\'affichage : c\'est une information, parce que le repos réellement pris vaut souvent 2 à 3 fois le repos réglé. 15 min après la fin, il s\'arrête seul (ce n\'est plus un repos). Et si l\'app se ferme pendant ton repos (téléphone verrouillé, autre appli), il t\'attend : en la rouvrant, tu le retrouves à l\'heure réelle. Astuce : dans la recherche d\'exercices, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en tête, avec une ★ — tu retrouves tes mouvements habituels sans scroller.'},
         /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — règle d'or #11, point 4 : l'aide détaillée de la nouvelle forme de
            l'écran. L'endroit du POURQUOI : ce qui sert à la salle reste sous la main, le rare est rangé — et ce qui NE
            change PAS (séries, records, historique, moteur du repos). */
@@ -8507,7 +8508,9 @@ const _DRAWER_CONTENT = {
            maintenant sa charge. Une aide qui annonce un chiffre que l'app n'applique plus est
            pire qu'une aide absente, parce qu'on la croit (R23). Le détail va dans l'entrée 🔥
            juste en dessous — ici on renvoie, on ne réexplique pas (R25). */
-        {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut · X = Échec musculaire. Tape la pastille de la série pour changer. Timer : <b>É de 45 s à 2 min selon la charge du palier</b> (voir « Ton échauffement se dose à ta charge ») · N 2:10 · X 4min.'},
+        {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut · X = Échec musculaire. Tape la pastille de la série pour changer. Timer : <b>É de 45 s à 2 min selon la charge du palier</b> (voir « Ton échauffement se dose à ta charge ») · N = ton <b>repos par défaut</b> (2:10 à l\'installation) · X 4min.'},
+        /* ⏱️ Mission Séance du 24/10/2026 — règle d'or #11, point 4 : le POURQUOI de « Repos par défaut » dans ⋯. */
+        {ic:'⏱️',t:'Ton repos par défaut, sans quitter la séance',d:'Pendant la séance, <b>⋯ → « Repos par défaut »</b> le change en deux gestes. Ce n\'est <b>pas un réglage de plus</b> : c\'est <b>le même</b> que « Repos défaut » dans ton Profil — change-le d\'un côté, l\'autre suit. ⭐ Il ne touche ni au <b>repos en cours</b>, ni à la durée qu\'un exercice a reçue <b>pendant un repos</b> (« Régler », 30 s · 45 s · 1:00…) : celle-là reste la sienne, et la feuille te dit combien d\'exercices de la séance en ont une. ⚠️ La valeur d\'installation, <b>2:10</b>, est maintenant visible dans le Profil : elle n\'y était pas proposée, et la case s\'affichait vide.'},
         /* 🔥 ft-v1082 — L'AIDE DÉTAILLÉE EST L'ENDROIT DU *POURQUOI*. Elle porte les trois choses
            qu'aucune autre surface ne dit : ① le chiffre mesuré qui a motivé le correctif ;
            ② les deux bornes (jamais moins qu'avant, jamais plus que TON repos de travail) ;

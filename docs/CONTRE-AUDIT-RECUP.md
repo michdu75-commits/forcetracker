@@ -90,6 +90,11 @@ pénalité = max(6, min(38, round(load × 1,7)))
 projet est le **journal des versions** (`docs/JOURNAL-ARCHIVE.md`, 642 entrées) — c'est lui qui a
 été fouillé.
 
+↪️ *Corrigé le 24/10/2026* : la première phrase est fausse. `86e1857` est une **fusion** du 28/08
+(`ft-v1044`), pas le premier commit : c'était la limite d'un clone tronqué. Le dépôt remonte au
+**11/06/2026** (`52a6aa55`) ; l'historique complet se lit sur GitHub. La fouille du journal, elle, reste
+valable.
+
 | Constante | Version | Date | Ce qui l'a motivée, dans les mots du journal |
 |---|---|---|---|
 | **pénalité proportionnelle** (fin du −25 fixe) | `ft-v254` | 06/07/2026 | Michel : *« juste des abdos donnait le même résultat qu'un gros leg day »*. Objectif écrit : *« d'environ −10 pour une petite séance (abdos) à −30 pour une grosse »*. |

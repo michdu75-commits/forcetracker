@@ -1154,7 +1154,10 @@ function persist(){
        `_seanceOuverte()` (log.js) est le propriétaire unique de la question (R2) ; le repli sert
        aux appels de `persist()` qui pourraient précéder le chargement de log.js. */
     if((typeof _seanceOuverte==='function')?_seanceOuverte():!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
-      localStorage.setItem('ft4_wkt_draft',JSON.stringify(S.wkt));
+      /* ⏱️ SEANCE-REPOS-01 (22/10/2026, décision 3 de Michel — docs/SEANCE-REPOS-01.md) : le brouillon garde la SÉANCE, pas le repos en cours
+         (`S.wkt.repos`, log.js) — il sert à ne pas perdre une séance, et un repos repris d'un brouillon serait un fantôme.
+         Sans repos, le texte est identique à l'octet à `JSON.stringify(S.wkt)`. Coordonné avec Claude Principal (22/10). */
+      localStorage.setItem('ft4_wkt_draft',JSON.stringify(Object.assign({},S.wkt,{repos:undefined})));
     }else{
       localStorage.removeItem('ft4_wkt_draft');
     }
@@ -2274,9 +2277,9 @@ function _volumeParMoitie(jours){
       const k = Math.round((new Date(t+'T12:00:00') - new Date(d+'T12:00:00'))/864e5);
       if(!(k>=0 && k<j)) return;
       const m = k < j/2 ? 0 : 1;
-      (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{
-        if(x && x.done!==false && +x.kg>0 && +x.reps>0) v[m]+= (+x.kg)*(+x.reps);
-      }));
+      /* 🧮 F25 (mission Séance du 24/10/2026) — la règle unique du volume de travail (`_volTravail`, log.js) : sa copie ici
+         ignorait la convention unilatérale de la séance ET comptait les échauffements (aucun filtre de type). */
+      v[m]+= (typeof _volTravail==='function') ? _volTravail(sess) : 0;
     });
     return {recent:Math.round(v[0]), avant:Math.round(v[1])};
   }catch(e){ return null; }

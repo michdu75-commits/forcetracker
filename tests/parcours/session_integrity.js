@@ -97,6 +97,10 @@ const SEANCES_PDF = () => [
    La date d'export est la seule partie variable ; elle est neutralisée des deux côtés. */
 const REF_PDF_SANS = ["Historique d'entraînement","3 séances · 8 séries · exporté le <date>","Séries validées uniquement. Aucune donnée de santé (ni poids de corps, ni âge, ni sexe).","Mardi 8 septembre 2026","Exercice","Série","Type","kg","Reps","RIR","Volume","Shoulder Press","1","N","60","8","480","Shoulder Press","2","N","70","8","560","Développé Couché","1","N","80","5","400","Développé Couché","2","N","80","5","400","Mardi 1 septembre 2026","Exercice","Série","Type","kg","Reps","RIR","Volume","Squat","1","N","100","5","500","Squat","2","É","100","5","500","Squat","3","N","100","5","500","Mardi 25 août 2026","Exercice","Série","Type","kg","Reps","RIR","Volume","Curl Biceps Haltères","1","N","15","10","150"];
 const normPdf = L => L.map(s => s.replace(/exporté le \d{2}\/\d{2}\/\d{4}/, 'exporté le <date>'));
+/* ↪️ 24/10/2026 (mission Séance de Michel, F23) — la ligne d'en-tête de la référence disait « 3 séances » pour ce jeu de données,
+   qui en contient QUATRE sur trois jours (deux le 08/09) : c'était le défaut F23 lui-même, figé ici. Seule cette ligne change ;
+   tout le reste du PDF « sans débriefs » doit rester EXACTEMENT celui de master c3c830ab. */
+const REF_PDF_SANS_F23 = REF_PDF_SANS.map((s, i) => i === 1 ? "4 séances sur 3 jours d'entraînement · 8 séries · exporté le <date>" : s);
 module.exports.PDF = { lirePdf, SEANCES_PDF, normPdf };
 
 module.exports.ecran = async function (t, b, PORT) {
@@ -655,8 +659,8 @@ module.exports.ecran = async function (t, b, PORT) {
       avec.length > 0 && !avec.some(s => /\x00/.test(s)), js(avec.filter(s => /\x00/.test(s)).map(s => s.replace(/\x00/g, '').slice(0, 60))));
     t('F3 ⛔ un nom de programme avec emoji et flèche ne casse pas le titre du débrief ; un long débrief se lit en entier, dans l\'ordre',
       !!bC && bC.length > 1 && nz(bC.join(' ')) === nz(TC.replace(/→/g, '->')), js({ n: bC && bC.length, debut: bC && bC[0] }));
-    t('F4 ⛔⛔ export SANS débriefs : EXACTEMENT le PDF de master c3c830ab (même texte, même ordre ; seule la date d\'export est neutralisée)',
-      JSON.stringify(normPdf(sans)) === JSON.stringify(REF_PDF_SANS), js(normPdf(sans).filter((s, i) => s !== REF_PDF_SANS[i]).slice(0, 4)));
+    t('F4 ⛔⛔ export SANS débriefs : EXACTEMENT le PDF de master c3c830ab (même texte, même ordre ; seule la date d\'export est neutralisée), sauf l\'en-tête F23 (4 séances sur 3 jours)',
+      JSON.stringify(normPdf(sans)) === JSON.stringify(REF_PDF_SANS_F23), js(normPdf(sans).filter((s, i) => s !== REF_PDF_SANS_F23[i]).slice(0, 4)));
     t('F-err aucune erreur de page, 0 appel réel', X.errs.length === 0 && X.st.reels === 0, X.errs.join(' | '));
     await X.cx.close();
   }

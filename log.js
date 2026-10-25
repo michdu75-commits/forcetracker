@@ -320,7 +320,7 @@ function _fmtWktDate(d){
    puis le contexte du jour (récup + dernière séance, SECONDAIRE), puis les types de séance, et seulement ensuite le
    cardio et l'import. Les boutons sont dans la page (index.html, `#log-avant`) ; ce rendu ne remplit que ce qui
    dépend des données. ⛔ Rien d'inventé : la récup vient de `calcRecoveryScore`/`getRecoveryInfo` (Accueil), le nom
-   de la dernière séance de `_calSessLabel` (calendrier), sa figurine de `_mscSVGmini(_mscScores(…))` (Progrès). */
+   de la dernière séance de `_calSessLabel` (calendrier), sa figurine de `_mscSVGmini(_mscScoresVus(…))` (Progrès). */
 function _renderAvantSeance(){
   const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const sub=document.getElementById('la-prog-sub');
@@ -331,8 +331,8 @@ function _renderAvantSeance(){
   let html='';
   try{
     const der=(S.sessions||[])[0]||null;            // la plus récente : `_trierSeances` range S.sessions (state.js)
-    let score=null; try{ if(typeof calcRecoveryScore==='function') score=calcRecoveryScore(); }catch(e){ score=null; }
-    const info=(score!==null&&typeof getRecoveryInfo==='function')?getRecoveryInfo(score):null;
+    let score=null, _sansS=false; try{ if(typeof calcRecoveryDetail==='function'){ const _d=calcRecoveryDetail(); score=_d.score; _sansS=!!_d.sansSommeil; } }catch(e){ score=null; }
+    const info=(score!==null&&typeof getRecoveryInfo==='function')?getRecoveryInfo(score,_sansS):null;   // F19
     const parts=[];
     if(info) parts.push('<span class="la-recup" style="--c:'+info.color+'"><i></i>Récup '+score+' · '+esc(info.label)+'</span>');
     if(der&&der.date){
@@ -342,7 +342,7 @@ function _renderAvantSeance(){
     }
     let fig='';
     if(der&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
-      try{ fig=_mscSVGmini(_mscScores(der.exs||der.exercises||[])).replace('width:32px','width:28px'); }catch(e){ fig=''; }
+      try{ fig=_mscSVGmini(_mscScoresVus(der.exs||der.exercises||[])).replace('width:32px','width:28px'); }catch(e){ fig=''; }
     }
     if(parts.length) html='<div class="la-ctx">'+(fig?'<div class="la-fig" role="img" aria-label="Muscles travaillés à la dernière séance">'+fig+'</div>':'')
       +'<div class="la-ctx-t">'+parts.join('')+'</div></div>';
@@ -389,6 +389,10 @@ function openWktMenu(){
     p?'Reprendre la séance':'Mettre en pause', p?'Le chrono repart d\'où il s\'était arrêté':'Le chrono s\'arrête, rien n\'est perdu','closeWktMenu();toggleWktPause()');
   g1+='<label class="wm-row" for="s-date" onclick="closeWktMenu()">'+ic('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>')
     +'<span class="wm-t"><b>Date de la séance</b></span><span class="wm-v">'+quand+'</span></label>';
+  /* ⏱️ Mission Séance du 24/10/2026 : le repos par défaut se change SANS quitter la séance — c'est la même préférence
+     que Profil → « Repos défaut » (voir `choisirReposDefaut`), pas un réglage de plus. */
+  g1+='<button class="wm-row" id="wm-repos" onclick="openWktMenuRepos()">'+ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9.5 2h5"/>')
+    +'<span class="wm-t"><b>Repos par défaut</b><small>Le même réglage que dans ton Profil</small></span><span class="wm-v">'+_fmtRepos(reposDefaut())+'</span></button>';
   if(exs.length>=2){
     g1+=ligne(ic(S.expandAll?'<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>':'<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>'),
       S.expandAll?'Un exercice à la fois':'Tout dérouler', S.expandAll?'Seul l\'exercice en cours reste ouvert':'Voir les séries de tous les exercices','closeWktMenu();toggleExpandAll()');
@@ -418,6 +422,43 @@ function openWktMenu(){
   ov.classList.add('open');
 }
 function closeWktMenu(){const ov=document.getElementById('ov-wkt-menu');if(ov)ov.classList.remove('open');}
+/* ⏱️ LE REPOS PAR DÉFAUT — UNE SEULE VALEUR, DEUX PORTES (mission Séance de Michel du 24/10/2026 : « une seule source de
+   vérité entre Profil et Séance »). La valeur reste `S.defRest` (lue par `reposDefaut`, state.js) ; Profil (« Enregistrer »)
+   et le menu ⋯ de la séance l'écrivent par `choisirReposDefaut`, et proposent la même liste (`reposDefautChoix`).
+   ⛔⛔ 130 s est dans la liste parce que c'est la valeur de l'installation (`REPOS_DEFAUT`) : le sélecteur du Profil ne
+   proposait que 60 / 90 / 120 / 180 / 300 et s'affichait VIDE pour tous ceux qui n'avaient jamais rien réglé — mesuré le
+   24/10, alors que le chrono appliquait bien 130 s. Une valeur hors liste (restaurée d'un ancien appareil : `_reposValide`
+   accepte 10 → 900 s) est montrée telle quelle, jamais remplacée.
+   ⛔ Le réglage d'une SÉANCE reste distinct : ni le repos en cours, ni la durée qu'un exercice a reçue pendant un repos
+   (« Régler », préréglages → `S.exRestPref`) ne changent ; le menu le dit quand des exercices de la séance en ont une.
+   ⛔ Pas de poids de barre ici : son réglage est parti avec le calculateur de plaques, retiré par Michel (ft-v726, R30),
+   et `S.barW` ne sert plus à aucun calcul. */
+const REPOS_DEFAUT_CHOIX=[60,90,120,130,180,300];
+function reposDefautChoix(){
+  const v=reposDefaut();
+  return REPOS_DEFAUT_CHOIX.indexOf(v)<0 ? REPOS_DEFAUT_CHOIX.concat([v]).sort((a,b)=>a-b) : REPOS_DEFAUT_CHOIX.slice();
+}
+function choisirReposDefaut(sec){ const v=parseInt(sec,10); if(!_reposValide(v)) return false; S.defRest=v; return true; }
+const _fmtRepos=v=>v<60?v+' s':Math.floor(v/60)+':'+String(v%60).padStart(2,'0');   // comme les préréglages : « 45 s », « 2:10 »
+function openWktMenuRepos(choix){
+  const ov=document.getElementById('ov-wkt-menu'); if(!ov) return;
+  if(choix!==undefined){
+    if(!choisirReposDefaut(choix)) return;
+    persist(); try{ if(typeof _cloudSyncDebounced==='function') _cloudSyncDebounced(); }catch(e){}
+    closeWktMenu();
+    if(typeof toast==='function') toast('Repos par défaut : '+_fmtRepos(reposDefaut())+' — le même dans ton Profil','success');
+    return;
+  }
+  const cur=reposDefaut();
+  const propres=[...new Set(((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(n=>n&&S.exRestPref&&S.exRestPref[n]))].length;
+  ov.innerHTML='<div class="wm-sheet" role="dialog" aria-label="Repos par défaut"><div class="wm-grab" aria-hidden="true"></div>'
+    +'<div class="wm-h"><b>Repos par défaut</b><span>Pour toutes tes séances · le même réglage que dans ton Profil</span></div>'
+    +'<div class="wm-g">'+reposDefautChoix().map(v=>'<button class="wm-row'+(v===cur?' wm-on':'')+'" aria-pressed="'+(v===cur)+'" onclick="openWktMenuRepos('+v+')">'
+      +'<span class="wm-t"><b>'+_fmtRepos(v)+'</b></span>'+(v===cur?'<span class="wm-v">✓</span>':'')+'</button>').join('')+'</div>'
+    +(propres?'<p class="wm-note">'+propres+' exercice'+(propres>1?'s':'')+' de cette séance '+(propres>1?'gardent leur':'garde sa')+' propre durée, réglée pendant un repos.</p>':'')
+    +'<button class="wm-x" onclick="openWktMenu()">Retour</button></div>';
+  ov.classList.add('open');
+}
 function _setLogDate(d,auto){
   if(S.wkt){S.wkt.date=d;if(!auto)_wktDateChoisie=S.wkt;persist();}
   const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
@@ -1028,9 +1069,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0)*(_uni?2:1);
   const _uniTag=_uni?`<span class="uni-tag" onclick="event.stopPropagation();openUniHelp('${_escAttrJs(ex.name)}')">🔀 ${uniLabel(ex.name)}</span>`:'';
   const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
-  const _cThumb=_exImg(ex.name)||_exMuscleImg(ex.name); // vignette repliée : photo/gif sinon muscle deviné
-  const _cReal=!!_exImg(ex.name);
-  const _cThumbHtml=(!_groupMode&&!inGroup)?`<img src="${_cThumb}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:40px;height:40px;object-fit:${_cReal?'cover':'contain'};${_cReal?'':'padding:2px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;border:1px solid var(--sep);margin-right:9px;cursor:pointer;" loading="lazy">`:'';
+  const _cThumb=_exImg(ex.name); // vignette repliée : la photo ou l'animation, sinon « Aucune illustration disponible » (24/10/2026)
+  const _cThumbHtml=(!_groupMode&&!inGroup)?(_cThumb?`<img src="${_cThumb}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--sep);margin-right:9px;cursor:pointer;" loading="lazy">`
+    :_vignetteSansIllu(40,ei,ex.name,'margin-right:9px;')):'';
   // En mode sélection, tout apparaît replié pour faciliter les taps
   // S.expandAll (option « tout dérouler », retour Emma) : tous les exercices ouverts en même temps
   const isExpanded=!_groupMode&&(S.expandAll||ei===_expandedEx||exCount===1);
@@ -1095,7 +1136,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   // Vue développée
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
-  const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
+  // la vignette : la photo ou l'animation, sinon « Aucune illustration disponible » (24/10/2026) — plus de muscle deviné
   const _curSi=ex.sets.findIndex(x=>x&&!x.done);   // UX SÉANCE : la série à faire maintenant (affichage seul)
   const _notesPrev=_notesPrecedentes(ex);            // D-086 : commentaire de la dernière fois, SEULEMENT sur sa série exacte
   const _noteExPrev=_noteExPrecedente(ex);           // D-087 : la note générale de l'exercice la dernière fois (ou null)
@@ -1189,7 +1230,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   return`<div class="ex-block${(!inGroup&&ei===_expandedEx)?' ex-actif':''}${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`<img src="${_thumbSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:${hasLocalGif?'cover':'contain'};${hasLocalGif?'':'padding:3px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`
+    +(hasLocalGif?`<img src="${_exImgSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`:_vignetteSansIllu(48,ei,ex.name,''))
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${_escNote(ex.name)}${_uniTag} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
@@ -4547,6 +4588,22 @@ function _mscSVG_F({sc,ind}){
 // Normalise un nom d'exercice : retire les accents + minuscules
 // → « Développé Incliné » == « developpe incline » == « Developpe incline »
 const _naz=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+/* 🧍 LES MUSCLES COCHÉS D'UN EXERCICE PERSO, ET LES MUSCLES ÉCRITS — UN SEUL ENDROIT (mission Séance de Michel du
+   24/10/2026, F05). `_musclesCoches` : les muscles que la personne a cochés pour SON exercice perso (son choix explicite),
+   ou `null` s'il n'en a aucun. `_musclesEcrits` : ces muscles cochés d'abord, puis la fiche du catalogue (`exMuscles`, nom
+   résolu). Rien n'est deviné ici : les règles sur le nom (`_MEX`) restent l'affaire de `_mscScores`, pour ce qu'on ne
+   connaît pas. Avant, la figurine passait les règles du NOM avant le choix de la personne — mesuré le 23/10 : un perso
+   « Curl Maison Zorglub » coché quadriceps s'affichait biceps sur la figurine pendant que Progrès comptait des quadriceps.
+   ⛔ Un perso sans muscle coché n'a pas de fiche : on retombe sur la suite (catalogue, puis règles). */
+function _musclesCoches(nom){
+  const cex=(typeof S!=='undefined'&&S.customExercises||[]).find(e=>e&&e.n===nom);
+  const m=cex&&cex.muscles;
+  return (m&&((m.p&&m.p.length)||(m.s&&m.s.length))) ? {p:m.p||[], s:m.s||[]} : null;
+}
+function _musclesEcrits(nom){
+  return _musclesCoches(nom) || ((typeof exMuscles==='function')
+    ? exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(nom):nom) : null);
+}
 function _mscScores(exs){
   const sc={},ind={};
   (exs||[]).forEach(ex=>{
@@ -4585,6 +4642,41 @@ function _mscScores(exs){
     }
   });
   return {sc,ind};
+}
+/* 🧍 CE QUE LES DESSINS ET LES LISTES MONTRENT (mission Séance de Michel du 24/10/2026, F04 · F05) — les muscles de
+   `_mscScores`, avec deux corrections d'AFFICHAGE et sans rien changer au calcul des calories :
+   · F05 — un exercice perso dont la personne a coché les muscles montre SES muscles (avant, les règles du nom passaient
+     d'abord : un perso « Croisé Poulie » coché mollets montrait des pectoraux) ;
+   · F04 — `prim` : les muscles MOTEURS, primaires dans au moins un exercice. Le score additionne (+2 primaire, +1
+     secondaire) et un secondaire de DEUX exercices atteignait 2 : il passait pour un moteur (mesuré le 23/10 : triceps listé
+     « Primaires », 8 zones rouges au lieu de 6). Le score lui-même ne change pas.
+   ⛔⛔ `_mscScores` reste le moteur des CALORIES et il est GELÉ (`getExerciseMET` le lit ; docs/CHANTIER-NUTRITION-SEANCE.md
+   §8.3) : il garde son ordre (fiche, règles du nom, puis muscles cochés). Étendre F05 aux calories change la dépense de
+   certains persos — mesuré le 24/10 : de −6 à +4 kcal sur une séance d'une heure, 0 écart sur les 322 exercices du
+   catalogue — et c'est une décision de Michel, à part (docs/SEANCE-CHIFFRES-2026-10-24.md). Rien n'est recopié : un
+   exercice sans muscles cochés passe par `_mscScores` lui-même, et un exercice SEUL y vaut 2 sur ses moteurs. */
+function _mscScoresVus(exs){
+  const sc={},ind={},prim={};
+  (exs||[]).forEach(ex=>{
+    if(!ex||!(ex.sets||[]).some(s=>s.done))return;
+    const c=_musclesCoches(ex.name);
+    if(c){
+      (c.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;prim[m]=true;});
+      (c.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
+      return;
+    }
+    const o=_mscScores([ex]);
+    Object.keys(o.sc).forEach(m=>{ sc[m]=(sc[m]||0)+o.sc[m]; if(o.sc[m]>=2) prim[m]=true; });
+    Object.keys(o.ind||{}).forEach(m=>{ ind[m]=true; });
+  });
+  return {sc,ind,prim};
+}
+/* Niveau d'un muscle pour les dessins et les listes (F04) : 2 = moteur, 1 = sollicité (secondaire, même plusieurs fois),
+   0 = rien. ⛔ Sans `prim` (un objet construit à la main), l'ancienne lecture du score s'applique, à l'identique. */
+function _mscNiveau(o, g){
+  const v=((o&&o.sc)||{})[g]||0;
+  if(o&&o.prim) return o.prim[g]?2:(v>=1?1:0);
+  return v>=2?2:(v>=1?1:0);
 }
 /* 📊 LE VOLUME PAR GROUPE MUSCULAIRE ET PAR SEMAINE (28/08/2026, ft-v1045)
    Dernier morceau du relais de session-A : *« rien n'additionne les séries × muscle × semaine »*.
@@ -4666,18 +4758,17 @@ function _volumeParMuscle(refTs, jours){
       out.seances++;
       (s.exs||s.exercises||[]).forEach(ex=>{
         if(!ex||!ex.name) return;
-        /* ⛔ Séries de TRAVAIL réellement faites — cf. ci-dessus. */
-        const n=(ex.sets||[]).filter(st=>st&&st.done&&st.type!=='É').length;
+        /* ⛔ Séries de TRAVAIL réellement faites — cf. ci-dessus. ↪️ F03 (mission Séance du 24/10/2026) : les anciennes
+           séries « W » (l'échauffement d'avant le tag É) sont exclues comme partout ailleurs (`_workVol`,
+           `_serieFaitFoiPourPR`) — mesuré : 3 séries de pectoraux au lieu de 2, et Milo lisait 1,5 série/semaine au lieu de 1. */
+        const n=(ex.sets||[]).filter(st=>st&&st.done&&st.type!=='É'&&st.type!=='W').length;
         if(!n) return;
         /* ⭐ LE NOM EST RÉSOLU AVANT DE CHERCHER LA FICHE — sans ça, un nom abrégé rate la
            donnée écrite et le muscle n'est pas crédité, EN SILENCE (la leçon de ft-v997). */
-        const fiche=(typeof exMuscles==='function')
-          ? exMuscles((typeof exNomCatalogue==='function')?exNomCatalogue(ex.name):ex.name) : null;
-        let prim=(fiche&&fiche.p)||null;
-        if(!prim){                                       // exercice perso : sa fiche à lui
-          const cex=(S.customExercises||[]).find(e=>e.n===ex.name);
-          prim=(cex&&cex.muscles&&cex.muscles.p)||null;
-        }
+        /* ↪️ F05 (24/10/2026) : la même source écrite que la figurine (`_musclesEcrits` : les muscles cochés d'un perso
+           d'abord, puis la fiche du catalogue) — sans les règles du nom, comme avant. */
+        const fiche=_musclesEcrits(ex.name);
+        const prim=(fiche&&fiche.p&&fiche.p.length)?fiche.p:null;
         /* ⛔⛔ ON NE DEVINE PAS — MAIS ON NE SE TAIT PAS NON PLUS (R29).
            Un nom qui ne résout pas (« Traction », « Presse à Cuisses » : des PRÉFIXES de plusieurs
            exercices du catalogue) ou un exercice perso sans muscles cochés ne peut créditer
@@ -4732,7 +4823,8 @@ function showMuscleName(label,evt){
   el.textContent=label;el.style.display='block';
   clearTimeout(el._t);el._t=setTimeout(()=>{el.style.display='none';},2500);
 }
-function _mscSVG({sc,ind}){
+function _mscSVG(o){
+  const sc=(o&&o.sc)||{}, ind=(o&&o.ind)||{};   // F04 : l'objet entier est gardé (son `prim` dit qui est moteur)
   const defs=`<defs>
     <linearGradient id="g-skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E8A888"/><stop offset="100%" stop-color="#B86848"/></linearGradient>
     <linearGradient id="g-base" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C87868"/><stop offset="100%" stop-color="#7A3828"/></linearGradient>
@@ -4743,10 +4835,10 @@ function _mscSVG({sc,ind}){
   </defs>`;
   const ps={};
   Object.entries(_MG).forEach(([g,d])=>{
-    const v=sc[g]||0;const isI=ind[g]&&!v;
+    const v=sc[g]||0;const isI=ind[g]&&!v;const nv=_mscNiveau(o,g);   // F04 : moteur ≠ sollicité
     let gid,sk,filt='';
-    if(v>=2){gid='g-prim';sk='#880010';filt=' filter="url(#f-sh)"';}
-    else if(v>=1){gid='g-sec';sk='#884400';filt=' filter="url(#f-sh)"';}
+    if(nv>=2){gid='g-prim';sk='#880010';filt=' filter="url(#f-sh)"';}
+    else if(nv>=1){gid='g-sec';sk='#884400';filt=' filter="url(#f-sh)"';}
     else if(isI){gid='g-ind';sk='#5B7C9E';filt=' opacity="0.5"';}
     else{gid='g-base';sk='#5A2818';}
     d.paths.forEach(id=>{ps[id]={gid,sk,filt,label:(typeof _MSC_LBL!=='undefined'&&_MSC_LBL[id])||d.label};});
@@ -4783,8 +4875,8 @@ const _MSC_PRINT_COL={
 function _mscSVGprint(o){
   const sc=(o&&o.sc)||{}, ind=(o&&o.ind)||{}, pd={};
   Object.entries(_MG).forEach(([g,d])=>{
-    const v=sc[g]||0, isI=ind[g]&&!v;
-    const c=v>=2?_MSC_PRINT_COL.prim:v>=1?_MSC_PRINT_COL.sec:isI?_MSC_PRINT_COL.ind:_MSC_PRINT_COL.off;
+    const v=sc[g]||0, isI=ind[g]&&!v, nv=_mscNiveau(o,g);   // F04 : moteur ≠ sollicité
+    const c=nv>=2?_MSC_PRINT_COL.prim:nv>=1?_MSC_PRINT_COL.sec:isI?_MSC_PRINT_COL.ind:_MSC_PRINT_COL.off;
     d.paths.forEach(id=>{pd[id]=c;});
   });
   const pt=([id,d])=>{
@@ -4800,7 +4892,7 @@ function _mscSVGprint(o){
    faux serait pire que de ne rien annoncer. */
 function _mscFocus(o,max){
   const sc=(o&&o.sc)||{};
-  return Object.keys(sc).filter(g=>sc[g]>=2&&_MG[g])
+  return Object.keys(sc).filter(g=>_mscNiveau(o,g)>=2&&_MG[g])   // F04 : les MOTEURS, pas les sollicités cumulés
     .sort((a,b)=>sc[b]-sc[a]).slice(0,max||3)
     .map(g=>_MG[g].label).join(' · ');
 }
@@ -4809,7 +4901,7 @@ function _mscFocus(o,max){
    ce que fait déjà la vignette du sélecteur d'exercices (log.js ~5710), on ne réinvente
    pas une 2ᵉ façon de calculer les muscles (R2/R13). */
 function _mscScoresPlan(exs){
-  return _mscScores((exs||[]).map(e=>({name:e.name,sets:[{done:true}]})));
+  return _mscScoresVus((exs||[]).map(e=>({name:e.name,sets:[{done:true}]})));
 }
 
 // ─── Figurine « douleur » : réutilise la vraie figurine anatomique (_mscSVG) pour
@@ -4842,10 +4934,12 @@ function _painFig(painSet){
 }
 let _mmCb=null;
 function showMuscleMap(exs,cb){
-  const {sc,ind}=_mscScores(exs);
-  document.getElementById('mm-svg').innerHTML=_mscSVG({sc,ind});
-  const pri=Object.entries(_MG).filter(([g])=>(sc[g]||0)>=2).map(([,d])=>d.label);
-  const sec=Object.entries(_MG).filter(([g])=>(sc[g]||0)===1).map(([,d])=>d.label);
+  const _o=_mscScoresVus(exs), {sc,ind}=_o;
+  document.getElementById('mm-svg').innerHTML=_mscSVG(_o);
+  /* F04 (24/10/2026) : « Primaires » = les muscles MOTEURS ; un muscle seulement secondaire reste « Secondaires », avec le
+     nombre d'exercices qui le sollicitent quand il y en a plusieurs (« Triceps ×2 ») — il n'est plus promu primaire. */
+  const pri=Object.entries(_MG).filter(([g])=>_mscNiveau(_o,g)>=2).map(([,d])=>d.label);
+  const sec=Object.entries(_MG).filter(([g])=>_mscNiveau(_o,g)===1).map(([g,d])=>d.label+((sc[g]||0)>=2?' ×'+sc[g]:''));
   const indir=Object.entries(_MG).filter(([g])=>ind[g]&&!(sc[g]>=1)).map(([,d])=>d.label);
   const li=document.getElementById('mm-list');
   li.innerHTML=(pri.length?`<div><span style="color:#FF2D55;font-weight:600">● Primaires : </span>${pri.join(', ')}</div>`:'')+
@@ -4913,16 +5007,48 @@ function _initSheetHandles(){
 // d'échauffement. Une seule règle de volume (R2) : même filtre, même convention unilatérale, seul le tri des paliers change.
 // ⛔ Sans ce 2ᵉ argument rien ne bouge : la séance enregistrée (`sess.volume`), Progrès, l'Accueil et les résumés de la
 // semaine gardent le volume de TRAVAIL.
+/* ×2 pour un exercice unilatéral d'une séance notée sous la convention unilatérale (`uniConv`), ×1 sinon. Un seul
+   propriétaire : le volume d'une séance et chaque ligne de l'export le lisent ici (mission Séance du 24/10/2026). */
+function _facteurUni(sess, nom){
+  return (sess&&sess.uniConv&&typeof estUnilateral==='function'&&estUnilateral(nom))?2:1;
+}
 function _workVol(sess, avecEchauffements){
   let v=0;
-  const dbl=!!(sess&&sess.uniConv);
   (sess.exs||sess.exercises||[]).forEach(ex=>{
-    const k=(dbl&&typeof estUnilateral==='function'&&estUnilateral(ex.name))?2:1;
+    const k=_facteurUni(sess, ex.name);
     (ex.sets||[]).forEach(s=>{
       if(s.done&&(avecEchauffements||(s.type!=='É'&&s.type!=='W'))&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
     });
   });
   return v;
+}
+
+/* 🧮 LE VOLUME DE TRAVAIL D'UNE SÉANCE ENREGISTRÉE, TEL QUE TOUS LES ÉCRANS LE MONTRENT (mission Séance de Michel du
+   24/10/2026 : F01 · F02 · F25 · Q5). ⛔ UNE SEULE RÈGLE, `_workVol` ci-dessus, celle de la fin de séance, avec la
+   convention de la séance elle-même (`uniConv` : charge notée par côté, volume ×2 pour un exercice unilatéral ; une
+   séance d'avant le 11/08 garde la sienne). Le calendrier, la tendance, la carte de l'historique, le détail, le tableau de
+   bord et Milo la lisaient chacun à leur façon — mesuré le 23/10 : la même séance valait 1 100 kg enregistrés, 800 au
+   calendrier, et 300 après une simple édition.
+   ⭐ ON LIT LES SÉRIES, PAS LA COPIE RANGÉE : `sess.volume` n'est qu'une copie, et le défaut F02 l'a réduite de moitié sur
+   des séances unilatérales éditées depuis le 11/08. Lire les séries montre le bon chiffre SANS réécrire la séance (Q5) :
+   elle ne change que si la personne l'enregistre elle-même.
+   ⛔ Repli sur la copie rangée seulement quand les séries ne donnent rien (anciennes séances sans série validée) : le même
+   repli que le résumé de la semaine (`_workVol(s)||s.volume`, app.js) depuis toujours. */
+function _volTravail(sess){
+  if(!sess) return 0;
+  const w=_workVol(sess);
+  return Math.round(w>0 ? w : (+sess.volume||+sess.vol||0));
+}
+
+/* 🔥 LES CALORIES D'UNE SÉANCE, CARDIO COMPRIS — UN SEUL ENDROIT (mission Séance du 24/10/2026). La fin de séance et la
+   modification d'une séance passée faisaient le même calcul chacune de leur côté (moteur + cardio d'avant + cardio
+   d'après) : deux écritures d'une même règle finissent par diverger (R2). ⛔ Le moteur n'est pas touché : il est
+   seulement APPELÉ (moteur calorique gelé, consigne de Michel). */
+function _calDataSeance(sess){
+  const calData=calcSessionCalories(sess);
+  const cardioKcal=calcCardioKcal(sess.cardioAvant||null)+calcCardioKcal(sess.cardio||null);
+  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
+  return calData;
 }
 
 let _finishing=false;
@@ -4998,9 +5124,7 @@ async function finishWorkout(){
   // Deux moments possibles (02/08) : `cardio` = APRÈS (champ historique), `cardioAvant` = échauffement.
   if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
   if(S.wkt?.cardioAvant?.duration) sess.cardioAvant={...S.wkt.cardioAvant};
-  const calData=calcSessionCalories(sess);
-  const cardioKcal=calcCardioKcal(sess.cardioAvant||null)+calcCardioKcal(sess.cardio||null);
-  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
+  const calData=_calDataSeance(sess);   // le même calcul que la modification d'une séance passée (un seul endroit)
   sess.calories=calData.total;sess.calData=calData;
 
   // ── SAUVEGARDE LOCALE : séances d'abord, wkt effacé après confirmation ──
@@ -5155,7 +5279,8 @@ function _cardioClair(c){
   try{
     const L=(typeof CARDIO_LABELS!=='undefined')?CARDIO_LABELS:{};
     const I=(typeof CARDIO_INTENSITES!=='undefined')?CARDIO_INTENSITES:{};
-    return (c&&c.duration)?`${L[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+(I[c.intensity]||c.intensity)+')':''}`:'';
+    const M=(typeof CARDIO_NOMS_MONTRE!=='undefined')?CARDIO_NOMS_MONTRE:{};   // F22 : marche, course, natation (montre)
+    return (c&&c.duration)?`${L[c.type]||M[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+(I[c.intensity]||c.intensity)+')':''}`:'';
   }catch(e){ return ''; }
 }
 // Tout le cardio d'une séance, sans le moment — pour les endroits qui n'ont pas d'exercices
@@ -5215,7 +5340,7 @@ function _debriefLocal(sess, prCount, opts){
     // ── ① CE QUE TU AS TRAVAILLÉ ──────────────────────────────────────────────────────
     let muscles='', region='';
     try{
-      const o=(typeof _mscScores==='function')?_mscScores(sess.exs):null;
+      const o=(typeof _mscScoresVus==='function')?_mscScoresVus(sess.exs):null;
       if(o && typeof _mscFocus==='function') muscles=_mscFocus(o,3)||'';
     }catch(e){}
     try{
@@ -5469,9 +5594,20 @@ function _restLeft(){
   if(!restStartTs)return 0;
   return restTot-Math.floor((Date.now()-restStartTs)/1000);
 }
-/* ⏹️ 15 min : au-delà, ce n'est plus un repos mais une séance interrompue (ft-v1030).
-   Un seul propriétaire pour ce nombre — `_restTick` et `_updPill` le lisent tous les deux. */
+/* ⏹️ 15 MIN APRÈS LA FIN THÉORIQUE DU REPOS, IL EST ABANDONNÉ — APP OUVERTE OU FERMÉE (décision de Michel, 22/10/2026
+   après-midi — SEANCE-REPOS-01, docs/SEANCE-REPOS-01.md).
+   Repos de 2 min parti à 15 h 00 : décompte jusqu'à 15 h 02, dépassement affiché en négatif jusqu'à 15 h 17, abandonné et
+   effacé à partir de 15 h 17 — compté depuis `restStartTs + restTot`, jamais depuis le dernier affichage.
+   Un seul propriétaire pour ce nombre : `_restTick` (l'arrêt, app ouverte), `_updPill` (la pilule s'efface) et
+   `_reposReprendre` (rien n'est repris au-delà, app rouverte) le lisent tous les trois — une seule règle, quel que soit le chemin.
+   ⛔ Son histoire, gardée (R30) : 900 (15 min, ft-v1030, un choix de construction de Claude, app ouverte seulement) →
+   300 (5 min, décision du 22/10 au matin, appliquée ouverte ET fermée) → 900 (15 min, nouvelle décision validée du 22/10
+   après-midi, ouverte ET fermée). Ce nombre ne touche ni les durées de repos prévues (programmes, préréglages), ni les
+   calories : le moteur calorique ne lit pas le chrono de repos (voir `calcSessionCalories`, app.js). */
 const REST_DEPASSEMENT_MAX = 900;
+/* « +15 s » ne fait jamais dépasser 10 min de restant. Un seul propriétaire pour ce nombre : `addRT` (le plafond) et
+   `_reposReprendre` (un restant au-delà ne peut pas venir de l'app : la valeur est douteuse). */
+const REST_PLUS_MAX = 600;
 
 // ─── AUDIO : AUCUN ───────────────────────────────────────────
 // ⚠️ Le timer est 100% SILENCIEUX (vibration + visuel uniquement).
@@ -5493,8 +5629,9 @@ function _updPill(){
   const pillFill=document.getElementById('rest-pill-fill');
   if(!pillTime||!pillFill)return;
   /* ⚠️ ELLE NE DISPARAÎT PLUS À ZÉRO (14/08/2026) — même raison que le chrono principal :
-     le dépassement est précisément ce qu'on veut voir. Elle s'efface au-delà de 15 min, où
-     il ne s'agit plus d'un repos mais d'une séance interrompue. */
+     le dépassement est précisément ce qu'on veut voir. Elle s'efface 15 min après la fin du
+     repos (`REST_DEPASSEMENT_MAX`, décision de Michel du 22/10 après-midi — 15 min jusqu'au 22/10, puis 5 min le 22/10
+     au matin, puis de nouveau 15 min, app ouverte ou fermée). */
   if(left<=-REST_DEPASSEMENT_MAX){pill.classList.remove('show');return;}
   const _dep=left<0, _abs=Math.abs(left);
   const m=Math.floor(_abs/60),s=_abs%60;
@@ -5566,10 +5703,11 @@ function _restTick(){
     }
     // ⛔ AUCUN `return` ICI : le dépassement est précisément ce qu'on veut voir.
   }
-  /* ⏹️ L'ARRÊT DE SÉCURITÉ, ET IL N'A QU'UN SEUL PROPRIÉTAIRE (R2) : au-delà de ce délai il ne
-     s'agit plus d'un repos mais d'une séance interrompue — un chrono qui tourne toute la nuit
-     n'informe personne. `_updPill` employait déjà ce nombre en dur de son côté ; il le lit
-     maintenant ici, pour que les deux ne puissent pas diverger. */
+  /* ⏹️ L'ARRÊT DE SÉCURITÉ, ET IL N'A QU'UN SEUL PROPRIÉTAIRE (R2) : au-delà de ce délai le repos
+     est abandonné — un chrono qui tourne toute la nuit n'informe personne. `_updPill` employait déjà
+     ce nombre en dur de son côté ; il le lit maintenant ici, pour que les deux ne puissent pas
+     diverger. Depuis SEANCE-REPOS-01 il vaut 15 min (décision de Michel), et `stopRest()` efface
+     aussi l'état rangé dans la séance (`_reposMemoriser`). */
   if(left<=-REST_DEPASSEMENT_MAX){ stopRest(); return; }
   updRest();
   _updPill();
@@ -5769,6 +5907,7 @@ function startRest(sec){
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
   _pillIv=setInterval(_updPill,500);
+  _reposMemoriser();             // SEANCE-REPOS-01 : le repos est rangé dans la séance active (il survit à une fermeture)
   setTimeout(_dockDegager,80);   // UX SÉANCE : affichage seul — la série suivante ne reste pas sous le dock
 }
 /* 🏋️ UX SÉANCE (16/10/2026, cadrage validé) — LE DOCK DE REPOS NE CACHE JAMAIS LA SÉRIE SUIVANTE.
@@ -5866,6 +6005,81 @@ function _stopRestTimerOnly(){
 function stopRest(){
   _closeRestCountdown();
   _stopRestTimerOnly();
+  _reposMemoriser();             // SEANCE-REPOS-01 : un repos arrêté ne doit pas revenir au prochain démarrage
+}
+/* ⏱️ SEANCE-REPOS-01 — LE REPOS EN COURS SURVIT À LA FERMETURE DE L'APP (22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md).
+   iOS tue souvent une PWA restée en arrière-plan : le repos vivait en mémoire seulement (`restStartTs`, `restTot`), il
+   repartait donc de zéro ou disparaissait. Il est maintenant rangé DANS la séance active, avec la structure fixée par
+   Michel — `S.wkt.repos = {debut, total}` — et rien d'autre : ⛔ aucune clé de stockage nouvelle, il voyage avec `ft4_wkt`.
+   ⭐ UN SEUL ÉCRIVAIN (R2) : `_reposMemoriser` recopie l'état du moteur (`restStartTs`, `restTot`) ; il est appelé là où cet
+   état change — `startRest`, `stopRest` (donc « Passer », le tap sur GO, la fin, l'abandon, « Vider », la pause, l'arrêt à
+   15 min), −15 s / +15 s, « Régler », les préréglages. Le moteur reste la source ; `repos` n'en est que le reflet sur le disque.
+   ⚠️ IL N'ÉCRIT QUE `ft4_wkt`, et seulement quand la valeur change : pas `persist()` — qui écrirait toutes les clés et
+   relancerait la synchronisation à chaque −15 s, pour une donnée qui ne part jamais au cloud. Jamais en mode démo (personas
+   de test : « plus aucune écriture locale »), comme `persist()`.
+   ⛔ LE BROUILLON DE SECOURS NE LE PORTE PAS (décision 3 de Michel) : `persist()` l'écrit sans ce champ (state.js), et
+   `finishWorkout` choisit les champs de la séance enregistrée — `repos` n'y entre pas. Milo ne le lit pas non plus : le
+   contexte prend les exercices et le libellé de la séance en cours, rien d'autre (témoin C-REP-H1).
+   ⛔⛔ IL N'ÉCRIT QUE LE CHAMP `repos`, DANS LA SÉANCE DU DISQUE — JAMAIS LA SÉANCE QU'IL A EN MÉMOIRE (corrigé le 22/10
+   après-midi, revue de l'avenant). Il s'exécute sans geste : à l'expiration (`_restTick` → `stopRest`), un onglet resté
+   ouvert en arrière-plan écrivait SA séance, périmée, par-dessus `ft4_wkt` — une séance déjà terminée dans un autre onglet
+   revenait (enregistrée deux fois : volume et calories comptés deux fois) ou des séries validées entre-temps disparaissaient
+   (règle d'or #3). Le filet multi-onglets existant (`_ftAutreOnglet`, state.js) ne couvre que `persist()`, déclenché par un
+   geste. Donc : ① on relit `ft4_wkt` ; ② ce n'est pas la MÊME séance (`runId`, sinon départ et date) ou il n'y en a plus
+   → on ne touche à rien ; ③ effacer ne retire du disque que le repos que CET onglet y croyait (un repos plus récent posé
+   par l'autre onglet reste). Témoins C-REP-K1 / K2. */
+function _reposMemoriser(){
+  try{
+    if(typeof S==='undefined'||!S.wkt) return;
+    const avant=S.wkt.repos;
+    if(restStartTs) S.wkt.repos={debut:restStartTs,total:restTot};
+    else if(S.wkt.repos!==undefined) delete S.wkt.repos;
+    else return;                                       // rien n'a changé : pas d'écriture
+    if(window._demoMode) return;
+    const d=JSON.parse(localStorage.getItem('ft4_wkt')||'null'), w=S.wkt;
+    const meme=!!(d&&typeof d==='object'&&(d.runId&&w.runId?d.runId===w.runId:(d.startTs===w.startTs&&d.date===w.date)));
+    if(!meme) return;                                  // une autre séance, ou plus de séance : rien
+    if(w.repos) d.repos=w.repos;
+    else if(avant&&d.repos&&d.repos.debut===avant.debut&&d.repos.total===avant.total) delete d.repos;
+    else return;                                       // le disque porte un autre repos (un autre onglet) : on le laisse
+    localStorage.setItem('ft4_wkt',JSON.stringify(d));
+  }catch(e){}
+}
+/* ⏱️ LA REPRISE, AU DÉMARRAGE (appelée par app.js à la place de l'ancien `stopRest()` — voir là-bas pourquoi).
+   Le repos revient à l'heure RÉELLE, jamais redémarré (décision 2 de Michel) : le moteur reprend `debut` et `total` tels
+   quels, et `_restLeft()` fait le reste — en négatif s'il est déjà dépassé (le fonctionnement existant, ft-v1030).
+   ⛔ RIEN N'EST REPRIS, ET LA VALEUR EST EFFACÉE, quand : la séance n'est pas réellement active (`_wktEnCours` : ouverte et
+   pas en pause — une séance en pause n'a jamais de repos, `toggleWktPause` l'arrête) · la valeur est douteuse (pas un
+   nombre, durée nulle ou de plus d'une heure, restant que l'app ne peut pas produire — horloge reculée : on ne devine pas,
+   R29 ; ⚠️ un départ dans le futur, lui, est normal après « +15 s », voir la garde) · le repos a
+   expiré (15 min après la fin théorique, `REST_DEPASSEMENT_MAX`, le même seuil que l'app ouverte).
+   ⛔ PAS DE FANTÔME : un repos déjà fini ne rejoue ni la vibration de fin ni l'écran GO (`_restBeeped`) ; un repos encore
+   en cours finit comme un autre (décompte des 10 dernières secondes, GO).
+   ⚠️ CE QUI NE REVIENT PAS — limites écrites, hors périmètre du lot : la question du RIR de la série qui venait d'être
+   validée, l'étiquette (« ⏭️ Ensuite : … », « Échauffement »…), l'avance automatique du superset ou de l'exercice suivant
+   (`_restDoneCb`, une fonction en mémoire), le pas de 5 s des abdos et la mémoire de durée par exercice (`_restEx`). */
+function _reposReprendre(){
+  const r=(typeof S!=='undefined'&&S.wkt)?S.wkt.repos:undefined;
+  const debut=(r&&typeof r==='object')?r.debut:NaN, total=(r&&typeof r==='object')?r.total:NaN;
+  /* ⚠️ « HORLOGE RECULÉE » SE JUGE SUR LE RESTANT, PAS SUR LE DÉPART (corrigé le 22/10 après-midi, revue de l'avenant) :
+     « +15 s » tôt dans le repos range un départ équivalent dans le futur (`addRT`) — la 1ʳᵉ version refusait tout départ à
+     plus de 5 s dans le futur, et EFFAÇAIT donc ce repos si l'app se fermait dans les secondes suivantes (C-REP-D1b). Ce que
+     l'app ne produit jamais, c'est un RESTANT supérieur à la durée ou au plafond de « +15 s » (`REST_PLUS_MAX`) : au-delà
+     (+5 s de tolérance), la valeur ne vient pas d'elle — horloge reculée ou donnée abîmée — et on ne devine pas (R29). */
+  const lisible=typeof debut==='number'&&isFinite(debut)&&typeof total==='number'&&isFinite(total)
+    &&total>0&&total<=3600&&debut+total*1000<=Date.now()+(Math.max(total,REST_PLUS_MAX)+5)*1000;
+  if(!lisible||!_wktEnCours()){ stopRest(); return false; }     // efface aussi une valeur douteuse ou orpheline
+  restTot=total; restStartTs=debut;
+  if(_restLeft()<=-REST_DEPASSEMENT_MAX){ stopRest(); return false; }   // abandonné : 15 min après la fin théorique
+  _restBeeped=_restLeft()<=0;                                   // déjà fini : ni vibration ni écran GO en retard
+  _countdownSecs=new Set();
+  const bar=document.getElementById('rest-bar'); if(bar) bar.classList.add('show');
+  updRest(); _updPill();
+  if(restIv)clearInterval(restIv);
+  restIv=setInterval(_restTick,250);
+  if(_pillIv)clearInterval(_pillIv);
+  _pillIv=setInterval(_updPill,500);
+  return true;
 }
 let _afTimer=null;
 // Après saisie des reps (1re case), auto-focus la case KG (2e case) après un court délai.
@@ -5983,14 +6197,18 @@ function setRestPreset(sec){
   // Garde restStartTs (début du repos), change seulement la cible totale
   // → _restLeft() = sec - elapsed (temps restant = cible - déjà écoulé)
   restTot=sec;_restBeeped=false;_countdownSecs=new Set();
+  _reposMemoriser();             // SEANCE-REPOS-01 : la nouvelle durée survit à une fermeture
   if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=sec;persist();}
   _highlightRestPreset(sec);updRest();_updPill();
 }
 function addRT(s){
   if(!restStartTs)return;
   // Recalcule restStartTs pour que _restLeft() reflète la nouvelle durée
-  const newLeft=Math.max(5,Math.min(_restLeft()+s,600));
+  // ⚠️ Allongé TÔT dans le repos, le restant dépasse la durée : le départ équivalent est alors DANS LE FUTUR (c'est voulu,
+  //    la barre garde sa durée). `_reposReprendre` doit l'accepter — voir sa garde.
+  const newLeft=Math.max(5,Math.min(_restLeft()+s,REST_PLUS_MAX));
   restStartTs=Date.now()-(restTot-newLeft)*1000;
+  _reposMemoriser();             // SEANCE-REPOS-01 : −15 s / +15 s survivent à une fermeture
   updRest();
 }
 // ⚠️ « Skip » doit HONORER l'avance en attente, pas la jeter (ft-v825). `stopRest()` remet
@@ -6020,6 +6238,7 @@ function applyRestEdit(){
   else{
     // repart du nouveau total (compte à rebours frais depuis la valeur saisie)
     restTot=total;restStartTs=Date.now();_restBeeped=false;_countdownSecs=new Set();
+    _reposMemoriser();           // SEANCE-REPOS-01 : « Régler » survit à une fermeture
     _closeRestCountdown();
     updRest();_updPill();
   }
@@ -6031,15 +6250,31 @@ function applyRestEdit(){
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
+/* 🖼️ SEANCE-UX-IMAGES (23/10/2026, demande de Michel — docs/SEANCE-UX-IMAGES.md) — LES VIGNETTES DES GROUPES DE « CHOISIR UN
+   EXERCICE ». Les 7 images du paquet de Michel, copiées À L'OCTET (empreintes SHA-256 du manifeste, témoin C-VIG-S1) sous
+   `muscles/vignettes/` — ⚠️ DES NOMS NOUVEAUX, EXPRÈS : les images vivent dans un cache du téléphone qui ne se vide jamais
+   (`ft-images`, sw.js) ; une image remplacée sous le même nom resterait l'ancienne chez tout le monde.
+   ⛔ La taille et le recadrage du cadre ont UN propriétaire : la classe `.ex-grp-vig` (style.css) — le conteneur de la tuile
+   prend la taille de l'image. Le cadre masque le liseré du haut des vignettes (fond et bord de carte de la maquette, pris dans
+   le découpage : 3 à 17 lignes selon l'image) sans étirer ni recolorer — l'image est ancrée en bas.
+   ⛔ MOLLETS : SA VIGNETTE EST VENUE À PART (2ᵉ paquet de Michel, 23/10 matin, `08_mollets.png`). Le 1ᵉʳ paquet n'en avait pas,
+   et sa 8ᵉ image, « Corps complet », n'est utilisée NULLE PART (aucun groupe « Corps complet » ici : ce serait une catégorie
+   nouvelle). Le fichier livré était une carte arrondie posée sur un grand fond BLANC (2172 × 724) : tel quel, 21 % du cadre
+   aurait été blanc. Le fichier du dépôt est cette image avec le fond blanc retiré — la carte seule, 996 × 724, chaque pixel
+   conservé identique à l'original (témoin C-VIG-A6 ; provenance dans docs/SEANCE-UX-IMAGES.md) — et il est ancré à 35 % de
+   sa hauteur (`.ex-grp-vig-mollets`) : aucun muscle ciblé coupé.
+   ⛔ Ces vignettes ne servent QU'ICI (tuiles et en-tête d'un groupe ouvert) : les vignettes de mouvement des autres écrans
+   viennent de `_MG_IMG`, inchangée ; le bouton « 🫀 Anatomie » lit `anatomy`, inchangé ; libellés et `tags` (donc les
+   catégories, la recherche et la reconnaissance des exercices) inchangés. */
 const EX_GROUPS=[
-  {label:'Pectoraux',               tags:['Pectoraux'],           icon:`<img src="muscles/muscle pectoreaux.png" style="width:64px;height:64px;object-fit:cover;">`,        anatomy:'anatomy/pectoreaux/schema pectoreaux.png'},
-  {label:'Dos / Dorsaux',           tags:['Dos'],                 icon:`<img src="muscles/muscles dorsaux trapeze.png" style="height:80px;width:auto;object-fit:contain;">`,  anatomy:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
-  {label:'Épaules / Trapèzes',      tags:['Épaules','Trapèzes'],  icon:`<img src="muscles/epaule trapeze.png" style="width:64px;height:64px;object-fit:cover;">`,              anatomy:'anatomy/epaules/schéma epaule arriere.png'},
-  {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'],    icon:`<img src="muscles/muscle bras.png" style="height:80px;width:auto;object-fit:contain;">`,               anatomy:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
-  {label:'Jambes',                  tags:['Jambes'],              icon:`<img src="muscles/muscle avant cuisse.png" style="height:80px;width:auto;object-fit:contain;">`, anatomy:'anatomy/jambes/jambes avant/jambes face avant.png'},
-  {label:'Fessiers / Ischios / Lombaires', tags:['Fessiers','Lombaires'], icon:`<img src="muscles/fessiers ischios.png" style="height:80px;width:auto;object-fit:contain;">`, anatomy:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
-  {label:'Abdominaux',              tags:['Abdominaux'],          icon:`<img src="muscles/muscle abdominaux.png" style="width:64px;height:64px;object-fit:cover;">`,         anatomy:'anatomy/abdominaux/schema abdominaux.png'},
-  {label:'Mollets',                 tags:['Mollets'],             icon:`<img src="muscles/muscle mollet.png" style="width:64px;height:64px;object-fit:cover;">`,            anatomy:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
+  {label:'Pectoraux',               tags:['Pectoraux'],           icon:`<img src="muscles/vignettes/01_pectoraux.png" alt="" class="ex-grp-vig">`,                  anatomy:'anatomy/pectoreaux/schema pectoreaux.png'},
+  {label:'Dos / Dorsaux',           tags:['Dos'],                 icon:`<img src="muscles/vignettes/02_dos_dorsaux.png" alt="" class="ex-grp-vig">`,                anatomy:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
+  {label:'Épaules / Trapèzes',      tags:['Épaules','Trapèzes'],  icon:`<img src="muscles/vignettes/03_epaules_trapezes.png" alt="" class="ex-grp-vig">`,           anatomy:'anatomy/epaules/schéma epaule arriere.png'},
+  {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'],    icon:`<img src="muscles/vignettes/04_bras_biceps_triceps.png" alt="" class="ex-grp-vig">`,        anatomy:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
+  {label:'Jambes',                  tags:['Jambes'],              icon:`<img src="muscles/vignettes/05_jambes.png" alt="" class="ex-grp-vig">`,                     anatomy:'anatomy/jambes/jambes avant/jambes face avant.png'},
+  {label:'Fessiers / Ischios / Lombaires', tags:['Fessiers','Lombaires'], icon:`<img src="muscles/vignettes/06_fessiers_ischios_lombaires.png" alt="" class="ex-grp-vig">`, anatomy:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
+  {label:'Abdominaux',              tags:['Abdominaux'],          icon:`<img src="muscles/vignettes/07_abdominaux.png" alt="" class="ex-grp-vig">`,                 anatomy:'anatomy/abdominaux/schema abdominaux.png'},
+  {label:'Mollets',                 tags:['Mollets'],             icon:`<img src="muscles/vignettes/08_mollets.png" alt="" class="ex-grp-vig ex-grp-vig-mollets">`,   anatomy:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
 ];
 let _exGrp=null;
 
@@ -6440,7 +6675,7 @@ function filterEx(){
     list.innerHTML=
       `<button class="ex-grp-back" onclick="_exGrp=null;filterEx();">‹ Groupes musculaires</button>`+
       `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div class="ex-grp-header" style="margin-bottom:0;">${grp.icon} ${grp.label}</div>
+        <div class="ex-grp-header" style="margin-bottom:0;">${grp.icon}<span class="ex-grp-header-label">${grp.label}</span></div>
         ${anatBtn}
       </div>`+
       (f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');
@@ -6914,6 +7149,7 @@ function saveCustomEx(){
 function _cexSeraitMuet(name){
   try{
     if(_cexMusclesP.length||_cexMusclesS.length)return false;   // elle a coché : rien à signaler
+    // ↪️ F05 (24/10/2026) : `_mscScores` exprès, pas `_mscScoresVus` — la question est « le NOM seul donne-t-il des muscles ? »
     const sc=(_mscScores([{name:name,sets:[{done:true}]}])||{}).sc||{};
     return Object.keys(sc).length===0;
   }catch(e){return false;}
@@ -7617,13 +7853,13 @@ function _impThumb(name){
   const box='width:36px;height:36px;border-radius:8px;flex-shrink:0;background:var(--bg3);box-sizing:border-box;';
   let gif=''; try{ gif=_exImg(name)||''; }catch(e){}
   if(gif) return `<img src="${gif}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
-  let musc=''; try{ const {sc}=_mscScores([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
+  let musc=''; try{ const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
   if(musc) return `<img src="${musc}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
   // exo RÉEL de la biblio (sans gif ni muscle deviné) → silhouette de son GROUPE (figurine pertinente, jamais le défaut chest global)
   let grp=''; try{ const cn=exNomCatalogue(name); const ex=EXLIB.find(e=>e.n===cn); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
   if(grp) return `<img src="${grp}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:4px;">`;
   // vraiment inconnu (hors biblio) → icône haltère neutre
-  return `<div style="${box}display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg></div>`;
+  return `<div style="${box}display:flex;align-items:center;justify-content:center;">${_ICO_HALTERE}</div>`;
 }
 /* ⭐ LA LIGNE ORANGE — jumelle de `_vmConfirmRow` juste dessous, même forme, même endroit (R13).
    Elle dit ce que l'app va faire AVANT de le faire, et laisse la main : « 🔗 Rattacher ».
@@ -9020,6 +9256,7 @@ function _validationSeance(newExs, mode){
       const chargeLeDos=n=>{
         try{
           if(_movPattern(n)!=='hip-hinge') return false;
+          // ↪️ F05 (24/10/2026) : `_mscScores` exprès — un avertissement de prudence ne s'éteint pas parce qu'un muscle n'a pas été coché
           const sc=(_mscScores([{name:n,sets:[{kg:60,reps:8,done:1}]}])||{}).sc||{};
           return (sc['lower-back']||0)>=2;
         }catch(e){ return false; }
@@ -10743,12 +10980,24 @@ const _MG_IMG={
   abs:'muscles/muscle abdominaux.png',obliques:'muscles/muscle abdominaux.png',
   calves:'muscles/muscle mollet.png',tibialis:'muscles/muscle mollet.png',
 };
+/* 🖼️ « AUCUNE ILLUSTRATION DISPONIBLE » (mission Séance de Michel du 24/10/2026 ; cahier commun §2.3, F15) — un exercice sans
+   photo ni animation (17 du catalogue, mesurés le 23/10, et tout exercice perso sans photo) ne montre plus, à sa place, une
+   image de muscle DEVINÉE de son nom : la vignette de la séance (repliée et ouverte) montre l'haltère neutre — la même icône
+   que l'exercice inconnu de `_progExThumb` — et la démonstration le dit en toutes lettres. ⛔ Rien n'est attribué à un
+   exercice sans correspondance vérifiée ; les illustrations existantes ne changent pas. Toucher la vignette ouvre toujours la
+   démonstration, où la personne peut ajouter la photo de sa machine. ⏭️ Hors de ce changement : les icônes des listes
+   d'import et de l'éditeur de programme (`_exMuscleImg` y sert d'aide pour reconnaître une ligne). */
+const _SANS_ILLU='Aucune illustration disponible';
+const _ICO_HALTERE='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg>';
+function _vignetteSansIllu(px, ei, name, marge){
+  return `<span class="ex-sans-illu" role="img" aria-label="${_SANS_ILLU}" title="${_SANS_ILLU}" onclick="toggleExGif(${ei},'${_escAttrJs(name)}');event.stopPropagation()" style="width:${px}px;height:${px}px;${marge}">${_ICO_HALTERE}</span>`;
+}
 // SRC de secours quand un exo n'a pas d'image dédiée : devine le muscle principal depuis le nom
 // (moteur _mscScores/_MEX) → image muscle réaliste (PNG anatomie) ; sinon silhouette du groupe.
 // → une machine importée (« Chest press machine convergente… ») a TOUJOURS une figurine pertinente.
 function _exMuscleImg(name){
   try{
-    const {sc}=_mscScores([{name,sets:[{done:true}]}]);
+    const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]);
     const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
     if(top&&_MG_IMG[top[0]])return _MG_IMG[top[0]];
   }catch(e){}
@@ -10763,14 +11012,14 @@ function _progExThumb(name){
   // Muscle principal deviné depuis le nom (_MEX, insensible aux accents) → image muscle réaliste
   let src='';
   try{
-    const {sc}=_mscScores([{name,sets:[{done:true}]}]);
+    const {sc}=_mscScoresVus([{name,sets:[{done:true}]}]);
     const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
     if(top)src=_MG_IMG[top[0]]||'';
   }catch(e){}
   if(src) return `<img src="${src}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
   // Repli ultime : figurine anatomique colorée
   let fig='';
-  try{if(typeof _mscSVGmini==='function')fig=_mscSVGmini(_mscScores([{name,sets:[{done:true}]}])).replace('width:32px','width:38px');}catch(e){}
+  try{if(typeof _mscSVGmini==='function')fig=_mscSVGmini(_mscScoresVus([{name,sets:[{done:true}]}])).replace('width:32px','width:38px');}catch(e){}
   return `<div style="${box}display:flex;align-items:center;justify-content:center;overflow:hidden;">${fig}</div>`;
 }
 function _genderGroupSvg(groupName){
@@ -11429,11 +11678,10 @@ function toggleExGif(ei,name){
     // (La vignette 40/48 px garde `cover`, elle : sur un carré, une image carrée n'y perd rien.)
     html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:contain;background:#fff;display:block;" loading="lazy">`;
   } else {
-    // Pas de photo/gif dédié → figurine du muscle deviné du nom (taxonomie) — jamais vide
-    const file=_exMuscleImg(name);
+    /* 🖼️ Pas de photo ni d'animation pour cet exercice → on le DIT (mission Séance du 24/10/2026, cahier commun §2.3). Avant :
+       une grande image de muscle DEVINÉE du nom, présentée comme son illustration. Le groupe du catalogue, lui, est un fait. */
     const ex=EXLIB.find(e=>e.n===exNomCatalogue(name));
-    html+=`<div style="text-align:center;padding:8px 0;"><img src="${file}" style="width:160px;height:auto;display:block;margin:0 auto;"></div>`;
-    html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?ex.g:'Muscle principal deviné'}</div>`;
+    html+=`<div class="ex-sans-illu-demo" role="img" aria-label="${_SANS_ILLU}">${_ICO_HALTERE.replace('width="20" height="20"','width="34" height="34"')}<b>${_SANS_ILLU}</b>${ex?`<span>${_escNote(ex.g)}</span>`:''}</div>`;
     // Machine importée sans image dédiée → proposer d'ajouter la vraie photo (deviendra la vignette + le grand format)
     html+=`<button class="btn btn-bg2" style="width:100%;margin-top:10px;font-size:13px;" onclick="event.stopPropagation();changeExImg(${_argAttr(name)})">📷 Ajouter la photo de ta machine</button>`;
   }

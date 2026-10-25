@@ -437,7 +437,7 @@ const _HELP_DATA={
       /* 📋 D-093 — règle d'or #11, point 3 : ce qu'on ne devine pas, c'est que l'en-tête « Précédent » se touche (la case,
          elle, ouvre la note de la série) — et qu'il n'y a aucun verdict dans la comparaison. */
       {i:'📋',t:'<b>Comparer tes 4 dernières séances</b> : touche <b>« Précédent ▾ »</b>, en haut de la colonne (ou <b>⋯ → 4 dernières séances</b>). Tes séries de <b>travail</b> s\'alignent par rang, de la plus ancienne séance à la plus récente, avec la réserve, les échecs (X) et tes notes ; « — » = pas de série à ce rang, rien n\'est répété. Les échauffements sont à part. ⛔ Aucun verdict : tu lis, tu décides. La <b>case</b> « Précédent » d\'une série ouvre toujours sa note ; la colonne ne montre plus que les séries <b>vraiment faites</b> la dernière fois.'},
-      {i:'🏋️',t:'<b>L\'écran Séance a deux états</b> (depuis le 16/10/2026). <b>Avant</b> : « Séance libre » (tu ajoutes tes exercices un à un) ou « Programme ». <b>Pendant</b> : l\'en-tête « Séance en cours » remplace la barre du haut — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas), le bouton <b>⋯</b> (pause, date, tout dérouler, grouper, programmes, importer un historique, aide, vider, abandonner) et <b>« Terminer »</b>. S\'il reste des séries de travail, « Terminer » te le dit avant d\'enregistrer — « Continuer la séance » ne change rien. Le repos s\'affiche <b>en bas</b> ; touche le temps (✎) pour <b>régler</b> : 30 s · 45 s · 1:00 · 1:30 · 2:00 ou une durée exacte. Une carte repliée ne porte plus de boutons : <b>« Monter » / « Descendre »</b> sont dans le ⋯ de l\'exercice.'},
+      {i:'🏋️',t:'<b>L\'écran Séance a deux états</b> (depuis le 16/10/2026). <b>Avant</b> : « Séance libre » (tu ajoutes tes exercices un à un) ou « Programme ». <b>Pendant</b> : l\'en-tête « Séance en cours » remplace la barre du haut — chrono, <b>séries de travail faites / prévues</b> (les échauffements ne comptent pas), le bouton <b>⋯</b> (pause, date, <b>repos par défaut</b>, tout dérouler, grouper, programmes, importer un historique, aide, vider, abandonner) et <b>« Terminer »</b>. S\'il reste des séries de travail, « Terminer » te le dit avant d\'enregistrer — « Continuer la séance » ne change rien. Le repos s\'affiche <b>en bas</b> ; touche le temps (✎) pour <b>régler</b> : 30 s · 45 s · 1:00 · 1:30 · 2:00 ou une durée exacte. Une carte repliée ne porte plus de boutons : <b>« Monter » / « Descendre »</b> sont dans le ⋯ de l\'exercice.'},
       /* 📷 ft-v1155 — CE QU'ON NE DEVINE PAS, et Michel en est la preuve : il a cherché comment
          charger SON programme et n'a pas trouvé l'import. « Si moi je ne le vois pas, les
          utilisateurs ne vont pas le voir non plus. » ⛔ L'aide dit la LIMITE en même temps que la
@@ -470,7 +470,7 @@ const _HELP_DATA={
       {i:'🎽',t:'<b>Le repos exigé suit ta discipline</b> : l\'avertissement « repos trop court pour du lourd » ne dit plus la même chose à tout le monde. Il lit le <b>cadre de ta discipline</b> — celui que tu vois dans Profil — et le conseil cite <b>sa</b> plage (<i>3 à 5 min</i> en force athlétique). ⚠️ Il ne se relâche jamais en dessous du repère d\'origine : il resserre seulement là où ton cadre est plus exigeant.'},
       {i:'📍',t:'<b>Charge sans repère</b> : si Milo propose un poids sur un exercice que tu n\'as <b>jamais noté dans l\'app</b>, un 📍 le signale sous l\'exercice. C\'est un <b>point de départ</b>, pas une mesure — il n\'a rien dans ton historique sur lequel se caler — <b>même si tu le pratiques depuis des années ailleurs</b>. Dès ta première série notée, le message disparaît et le contrôle d\'intensité (⚡) prend le relais.'},
       {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut · X = Échec musculaire. Chaque série porte sa <b>pastille</b> N, É ou X (colonne « Type ») : touche-la pour changer, le nom complet s\'affiche en toast. Le 1RM estimé a sa propre colonne.'},
-      {i:'⏱️',t:'Timer adaptatif : É = 45s <b>si le palier suivant est léger</b>, <b>90s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 % (la barre affiche alors « palier lourd ») — jamais plus que ton repos de travail · N = 2:10 · X = 4min. Boutons −15s/+15s ; les presets 30 s/45 s/1:00/1:30/2:00 sont dans « Régler » (touche le temps ✎). <b>C\'est un MAXIMUM, pas un temps à attendre</b> : tu peux repartir avant, c\'est permis. Le chrono ne s\'arrête plus à zéro — il continue en +0:12, +0:45… avec « au-delà de ton repos max ». Ce n\'est pas un reproche, c\'est une information ; au-delà de 15 min il s\'arrête seul.'},
+      {i:'⏱️',t:'Timer adaptatif : É = 45s <b>si le palier suivant est léger</b>, <b>90s</b> à partir de 75 % de ta charge de travail, <b>2 min</b> à partir de 85 % (la barre affiche alors « palier lourd ») — jamais plus que ton repos de travail · N = <b>ton repos par défaut</b> (2:10 à l\'installation ; il se règle pendant la séance dans <b>⋯ → « Repos par défaut »</b>, ou dans Profil — c\'est le même réglage) · X = 4min. Boutons −15s/+15s ; les presets 30 s/45 s/1:00/1:30/2:00 sont dans « Régler » (touche le temps ✎). <b>C\'est un MAXIMUM, pas un temps à attendre</b> : tu peux repartir avant, c\'est permis. Le chrono ne s\'arrête plus à zéro — il continue en +0:12, +0:45… avec « au-delà de ton repos max ». Ce n\'est pas un reproche, c\'est une information ; 15 min après la fin, il s\'arrête seul. <b>L\'app se ferme pendant un repos ?</b> Il t\'attend : en la rouvrant, tu le retrouves à l\'heure réelle, jamais remis à zéro.'},
       {i:'⚡',t:'Super-séries : ⋯ → « Grouper des exercices » dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Sur la carte ouverte d\'un exercice : 📉 Drop (série dégressive) et 📈 +% (pyramide montante) — tu choisis le nombre de paliers et le pourcentage.'},
       {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
       {i:'✋',t:'Superset au doigt : sur un exercice pas encore en superset, attrape la petite poignée (6 points, à côté du ⋯) et glisse-le sur un autre exercice → le superset se crée tout seul. Plus rapide que « Grouper des exercices » (menu ⋯). Pour défaire : "↩ Retirer". Marche aussi dans l\'éditeur de programme (✏️) : glisse une carte exercice sur une autre.'},
@@ -488,7 +488,7 @@ const _HELP_DATA={
          astuces désignaient des boutons qui n'existent plus (la leçon de ft-v1012 / ft-v1026). */
       {i:'⏸️',t:'<b>⋯ → « Mettre en pause »</b> : fige le chrono de durée si tu dois t\'interrompre (appel, pause…). Le temps en pause n\'est pas compté dans la durée de la séance. Touche <b>▶</b> en haut (ou « Reprendre la séance » dans ⋯) pour relancer.'},
       {i:'🗑️',t:'<b>⋯ → « Vider la séance »</b> : retire tous les exercices d\'un coup si tu as chargé le mauvais programme. La séance reste ouverte et ton historique n\'est pas touché. (« Abandonner la séance », juste en dessous, l\'annule complètement.)'},
-      {i:'📷',t:'Photo sur n\'importe quel exercice : tape le ⋯ sur un exercice (perso OU de la bibliothèque) → "Ajouter/Changer la photo". Pratique pour coller la photo de TA machine sur un exercice existant. Dans la liste de choix, tape la petite photo à gauche pour la voir en grand (ça n\'ajoute pas l\'exercice). Ta photo reste privée à ton compte.'},
+      {i:'📷',t:'Photo sur n\'importe quel exercice : tape le ⋯ sur un exercice (perso OU de la bibliothèque) → "Ajouter/Changer la photo". Pratique pour coller la photo de TA machine sur un exercice existant. Dans la liste de choix, tape la petite photo à gauche pour la voir en grand (ça n\'ajoute pas l\'exercice). Ta photo reste privée à ton compte. Un exercice qui n\'a <b>ni photo ni animation</b> le dit : « <b>Aucune illustration disponible</b> » (plus d\'image de muscle devinée à sa place) — c\'est là que ta photo est la plus utile.'},
       {i:'✏️',t:'Modifier un exercice perso : tape le ⋯ sur l\'exercice → "Modifier l\'exercice" (ou le ✎ dans la liste). Tu peux changer le nom, le groupe et les muscles — sans perdre ton historique ni tes records. Ne marche que sur TES exercices perso (les autres restent intacts).'},
       {i:'⚖️',t:'<b>Quel poids noter ?</b> Pour une <b>barre</b>, note la charge <b>totale</b>, barre comprise (barre de 20 kg + 60 kg de disques = <b>80</b>). Pour une <b>machine</b> (presse, poulie…), note simplement <b>ce que tu charges</b> : le poids du chariot varie d\'une machine à l\'autre et ne se compte pas. L\'important est de faire <b>toujours pareil</b> — c\'est ce qui rend tes progrès comparables dans le temps.'},
       {i:'⏱️',t:'<b>Ton repos est retenu par exercice.</b> Quand tu règles le chronomètre pendant une séance (les boutons −/+ ou en tapant la durée), l\'app <b>garde ta valeur pour CET exercice</b> et la réapplique les fois suivantes. Tu peux donc avoir 4 min sur le squat et 60 s sur les élévations, sans y penser. <b>Milo aussi le sait</b> : il reprend tes réglages dans les séances qu\'il te propose, et il en tient compte pour te dire si ta séance rentre dans ton temps.'},
@@ -899,7 +899,7 @@ function _renderHomeHero(){
     ? {score:null,factors:[],tips:[],dayPains:_detail.dayPains}
     : _detail;
   const score=detail.score;
-  const info=getRecoveryInfo(score);
+  const info=getRecoveryInfo(score,detail.sansSommeil);   // F19 : sans sommeil récent, une estimation
   const ringColor=score!==null?info.color:'var(--t3)';
   // L'arc parcourt l'échelle : il DÉMARRE au rouge et arrive à la couleur du score.
   const arcC=_ringScale(score||0);   // couleur du score : sert au halo et à la pastille
@@ -933,7 +933,7 @@ function _renderHomeHero(){
         +'</b> — pense à <b>terminer ta séance</b> pour qu\'elle soit enregistrée.</span></div>';
     }
   }
-  const heroLabel=score===null?'Enregistre ton sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
+  const heroLabel=score===null?'Enregistre ton sommeil':detail.sansSommeil?'Estimation sans sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
   const heroDesc=score===null?'Renseigne ton sommeil ce soir pour obtenir ton score de récupération.':info.rec.length>90?info.rec.substring(0,90).replace(/\s+\S*$/,'')+'…':info.rec;
   const pillHtml=score!==null?'<div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:'+ringColor+';box-shadow:0 0 8px '+ringColor+';"></span><span style="font-size:12px;font-weight:700;color:'+ringColor+';">Récup '+info.label+'</span></div>':'';
   // Restylage maquette : gros chiffre + barre de progression (au lieu de l'anneau). Mêmes données, CTA conservé.
@@ -1161,7 +1161,7 @@ function openRecoWhy(){
   const d=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():null;
   const body=document.getElementById('reco-why-body');
   if(!d||d.score==null||!body)return;
-  const info=getRecoveryInfo(d.score);
+  const info=getRecoveryInfo(d.score,d.sansSommeil);
   const factorsHtml=(d.factors||[]).map(f=>{
     const col=f.base?'var(--t2)':(f.val>0?'#34D399':'#FF8A72');
     const valTxt=f.base?(f.val+' /100'):((f.val>0?'+':'')+f.val);
@@ -2224,13 +2224,11 @@ function _calPrDays(){
 let _calSelDay=null;   // ymd du jour ouvert dans le panneau de détail (null = aucun)
 
 // Volume (kg × reps) d'une séance — mêmes exclusions que les PR : séries non faites, É (échauffement), W
+/* 🧮 F01 (mission Séance du 24/10/2026) — LE CALENDRIER LIT LA RÈGLE UNIQUE (`_volTravail` → `_workVol`, log.js). Sa copie
+   ignorait la convention unilatérale de la séance (`uniConv`, charge notée par côté) : mesuré le 23/10, une séance
+   enregistrée à 1 100 kg s'affichait « 0,8 t » ici. Mêmes exclusions qu'avant (non faites, É, W). */
 function _calSessVol(s){
-  let v=0;
-  (s.exs||[]).forEach(ex=>{(ex.sets||[]).forEach(st=>{
-    if(!st.done||!st.kg||!st.reps||st.type==='É'||st.type==='W')return;
-    v+=st.kg*st.reps;
-  });});
-  return v;
+  return _volTravail(s);
 }
 function _calVolByDay(){
   const o={};
@@ -2266,12 +2264,17 @@ function _calSessMix(s){
   // ⚠️ la clé doit tenir compte de TOUS les exercices : deux séances du même jour avec
   // le même nombre d'exos et le même premier exo partageraient sinon la même couleur
   // (trouvé par CAL-003 : « Squat + DC + Rowing » héritait de la couleur de « Squat + Presse + Leg Curl »).
-  const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');
+  /* ⚠️ F07 (mission Séance du 24/10/2026) — LA CLÉ PORTE TOUT CE QUI CHANGE LE RÉSULTAT de `_mscScores` : un exercice ne
+     compte que s'il a au moins une série FAITE, et un exercice perso se lit avec ses muscles cochés. Avec les seuls noms,
+     une séance modifiée (mêmes exercices, autres séries faites) gardait sa couleur jusqu'au redémarrage — mesuré : « bas
+     86 % » au lieu de « haut 100 % ». */
+  const _cex=n=>{ const c=(S.customExercises||[]).find(e=>e&&e.n===n); return c&&c.muscles?JSON.stringify(c.muscles):''; };
+  const key=s.date+'|'+(s.exs||[]).map(e=>((e&&e.name)||'')+':'+((e&&(e.sets||[]).some(x=>x&&x.done))?1:0)+_cex(e&&e.name)).join('~');
   if(key in _calColorCache)return _calColorCache[key];
   let mix=null;
   try{
-    if(typeof _mscScores==='function'){
-      const sc=(_mscScores(s.exs||[])||{}).sc||{};
+    if(typeof _mscScoresVus==='function'){
+      const sc=(_mscScoresVus(s.exs||[])||{}).sc||{};
       const tot={haut:0,dos:0,bas:0,tronc:0}; let grand=0;
       for(const g in sc){
         for(const r in _CAL_REGIONS){
@@ -3389,8 +3392,12 @@ function renderNutrition(){try{
       : '';
   }
   const todayStr=today();
-  const todaySess=S.sessions.find(s=>s.date===todayStr);
-  const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;
+  /* 🧮 F06 (mission Séance du 24/10/2026) — TOUTES les séances du jour, pas la première trouvée : mesuré le 23/10, deux
+     séances de 250 et 350 kcal affichaient 350. La tuile additionne, et son libellé dit combien (« 2 séances ») — le
+     libellé plutôt que la valeur, pour que « 600 kcal » tienne dans la tuile à 320 px. */
+  const _sessJour=(S.sessions||[]).filter(s=>s&&s.date===todayStr);
+  const sessCals=_sessJour.reduce((a,s)=>a+(+s.calories||0),0);
+  {const _l=document.getElementById('nu-session-lbl'); if(_l)_l.textContent=_sessJour.length>1?_sessJour.length+' séances':'Séance';}
   /* ⚠️ « aucune » et plus « — (pas de séance) » (ft-v1025) : le libellé long ne tenait pas dans
      la tuile à 390 px et se coupait EN TRAVERS de son propre titre (« — (pas de / Séance
      séance) », vu à la capture). Le défaut existait avant ce chantier ; il devient visible

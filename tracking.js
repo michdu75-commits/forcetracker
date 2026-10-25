@@ -3586,8 +3586,8 @@ function renderLogFinish(){
        suit l'écran (CSS `.lf-2fig`) — d'où `width:100%` : le dessin remplit sa colonne. */
     try{
       const faits=S.wkt.exs.filter(ex=>(ex.sets||[]).some(s=>s.done));
-      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScores==='function'){
-        const res=_mscScores(faits);
+      if(faits.length&&typeof _mscSVGmini==='function'&&typeof _mscScoresVus==='function'){
+        const res=_mscScoresVus(faits);
         const vue=v=>`<div class="lf-fig lf-fig-${v}" role="img" aria-label="Muscles travaillés dans cette séance, vue de ${v}">${_mscSVGmini(res,v).replace('width:32px','width:100%')}</div>`;
         figF=vue('face'); figD=vue('dos');
       }
@@ -4238,6 +4238,7 @@ function calcRecoveryDetail(refTs){
   factors.forEach(f=>{ if(!f.base&&f.val<0&&permanents.indexOf(f)<0) manque.push({ic:f.ic,label:f.label,cout:-f.val}); });
   manque.sort((a,b)=>b.cout-a.cout);
   return {score,base,factors,tips:tips.slice(0,2),dayPains,
+          sansSommeil:!hasSleep,   // F19 : aucune nuit connue sur les 3 derniers jours → le score est une estimation
           plafond, plafondAbsolu,
           plafondFacteurs:permanents.map(f=>({ic:f.ic,label:f.label,val:f.val})), manque};
 }
@@ -4367,19 +4368,32 @@ function _recupSparkline(h){
   return '<div style="display:flex;align-items:flex-end;gap:4px;height:'+H+'px;">'+bars+'</div>';
 }
 function calcRecoveryScore(){return calcRecoveryDetail().score;}
-function getRecoveryInfo(score){
+/* 🛌 F19 (mission Séance du 24/10/2026) — SANS SOMMEIL RÉCENT, LE SCORE EST UNE ESTIMATION, ET IL LE DIT. Sans aucune nuit
+   connue sur 3 jours, la base « sommeil » vaut 70 par défaut (neutre, invisible) : le score reste utile, mais il ne mesure
+   pas la récupération. Mesuré le 23/10 : à 25 ans, sans sommeil noté, « Optimal 82 — idéal pour tenter des records ».
+   ⛔ Michel : *« ne pas présenter le score comme une certitude ni encourager automatiquement à tenter des records »*.
+   `sansSommeil` (de `calcRecoveryDetail`) ajoute « (estimé) » au libellé et remplace le conseil ; sans lui (ou avec un
+   sommeil récent), tout reste à l'identique. Le score et ses couleurs ne changent pas. */
+function getRecoveryInfo(score, sansSommeil){
   if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};
-  if(score<40)return{label:'Fatigué',color:'var(--red)',icon:'🔴',rec:'Récupération insuffisante — séance légère ou repos complet recommandé. Priorise le sommeil ce soir.'};
-  if(score<60)return{label:'Modéré',color:'var(--orange)',icon:'🟠',rec:'Récupération partielle — évite les charges maximales. Séance technique ou volume modéré.'};
-  if(score<80)return{label:'Bon',color:'var(--gold)',icon:'🟡',rec:'Bonne récupération — séance normale possible. Pas le moment idéal pour des PRs.'};
-  return{label:'Optimal',color:'var(--green)',icon:'🟢',rec:'Récupération excellente ! Corps prêt pour une séance intensive — idéal pour tenter des records.'};
+  let r;
+  if(score<40)r={label:'Fatigué',color:'var(--red)',icon:'🔴',rec:'Récupération insuffisante — séance légère ou repos complet recommandé. Priorise le sommeil ce soir.'};
+  else if(score<60)r={label:'Modéré',color:'var(--orange)',icon:'🟠',rec:'Récupération partielle — évite les charges maximales. Séance technique ou volume modéré.'};
+  else if(score<80)r={label:'Bon',color:'var(--gold)',icon:'🟡',rec:'Bonne récupération — séance normale possible. Pas le moment idéal pour des PRs.'};
+  else r={label:'Optimal',color:'var(--green)',icon:'🟢',rec:'Récupération excellente ! Corps prêt pour une séance intensive — idéal pour tenter des records.'};
+  if(!sansSommeil) return r;
+  return Object.assign({}, r, {label:r.label+' (estimé)',
+    rec:'Estimation sans sommeil noté ces 3 derniers jours — '
+      +(score<40?'récupération insuffisante : séance légère ou repos.':score<60?'évite les charges maximales.':score<80?'séance normale possible.':'rien ne signale de fatigue.')
+      +' Note ta nuit pour un score fiable.'});
 }
 
 function renderRecoveryCard(){
   if(window._curScreen==='home'){_renderHomeHero();return;}
   const el=document.getElementById('recovery-card');if(!el)return;
-  const score=calcRecoveryScore();
-  const info=getRecoveryInfo(score);
+  const _rd=calcRecoveryDetail();
+  const score=_rd.score;
+  const info=getRecoveryInfo(score,_rd.sansSommeil);
   const todayStr=today();
   const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
   const qLabels={1:'😴 Mauvais',2:'😐 Moyen',3:'😊 Bon',4:'⚡ Excellent'};

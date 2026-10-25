@@ -8873,7 +8873,7 @@ const APP_GUIDE_SLIDES=[
   /* 🏋️ UX SÉANCE (16/10/2026) — capture refaite : l'en-tête « Séance en cours » remplace la barre du logo pendant la séance,
      et le doigt montre la coche de la série EN COURS (celle que l'écran met en avant). Profil de démonstration fictif. */
   {img:'guide/seance.jpg',     tap:[.895,.48],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche : le <b>repos</b> démarre en bas. En haut, « <b>Séance en cours</b> » : ton chrono, tes séries de travail, <b>⋯</b> et <b>Terminer</b>. Tes <b>records</b> se calculent tout seuls.'},
-  {icon:'⏳', t:'Ton repos est un MAXIMUM ⏳', cap:'Le temps de repos n\'est pas un compte à rebours qu\'il faut attendre : c\'est une <b>borne à ne pas dépasser</b>. <b>Tu peux repartir avant, c\'est permis</b> — c\'est ainsi que les coachs écrivent leurs programmes (« repos maximum : 1 à 2 min »). Le chrono ne s\'arrête donc plus à zéro : il continue en <b>+0:12</b>, <b>+0:45</b>… ⚠️ Ce n\'est <b>pas un reproche</b> — un repos plus long est parfois exactement ce qu\'il faut. C\'est simplement une information que tu n\'avais pas : sur de vraies séances, le repos pris vaut <b>2 à 3 fois</b> le repos réglé.'},
+  {icon:'⏳', t:'Ton repos est un MAXIMUM ⏳', cap:'Le temps de repos n\'est pas un compte à rebours qu\'il faut attendre : c\'est une <b>borne à ne pas dépasser</b>. <b>Tu peux repartir avant, c\'est permis</b> — c\'est ainsi que les coachs écrivent leurs programmes (« repos maximum : 1 à 2 min »). Le chrono ne s\'arrête donc plus à zéro : il continue en <b>+0:12</b>, <b>+0:45</b>… ⚠️ Ce n\'est <b>pas un reproche</b> — un repos plus long est parfois exactement ce qu\'il faut. C\'est simplement une information que tu n\'avais pas : sur de vraies séances, le repos pris vaut <b>2 à 3 fois</b> le repos réglé. Et si l\'app se ferme pendant un repos, il <b>t\'attend</b> : tu le retrouves à l\'heure réelle (15 min après la fin, il s\'arrête seul). Ton <b>repos par défaut</b> se règle pendant la séance : <b>⋯ → « Repos par défaut »</b>.'},
   // ⚠️ Diapo SANS image (format `icon:`, comme les 3 premières) : il n'existe pas de capture
   // du bloc cardio, et une diapo utile vaut mieux qu'une diapo repoussée en attendant la photo.
   {icon:'⚡', t:'Quand le temps manque', cap:'Milo connaît ton <b>rythme réel</b> et la <b>durée vraie</b> de tes séances (l\'app les chronomètre). Si ce qu\'il te propose ne rentre pas, il te le <b>dit avec le calcul</b> au lieu de promettre — et il peut <b>grouper deux accessoires en superset</b> pour te rendre des minutes. 🚫 Jamais sur tes mouvements lourds : là, la fatigue coûte des kilos.'},
@@ -9879,11 +9879,22 @@ function _setAppVersionEls(){
   }).catch(()=>{});
 }
 (async()=>{let cv='?';try{const ks=await caches.keys();cv=ks.find(k=>k.startsWith('ft-v'))||'?';}catch(e){}try{_setAppVersionEls();}catch(e){}console.log('[FT] boot',cv,'— _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);})();
-// Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan
-stopRest();
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&restStartTs&&_restLeft()<=-5)stopRest();
-});
+/* ⏱️ SEANCE-REPOS-01 (22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md) : LE REPOS EN COURS SURVIT À UN REDÉMARRAGE.
+   `_reposReprendre()` (log.js) le reprend à l'heure réelle s'il est rangé dans la séance active et pas expiré ; sinon il fait
+   exactement ce que faisait la ligne d'avant (`stopRest()` : l'écran du repos remis à zéro) et efface ce qui traînait.
+   ⛔⛔ R30 — CE QUI VIVAIT ICI, ET POURQUOI IL EST PARTI. Depuis ft-v144 (01/07/2026, commit e3367525, « séance coincée au
+   redémarrage ») : « Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan » —
+   `stopRest()` au démarrage, et un écouteur qui coupait le repos au retour au premier plan dès 5 s de dépassement.
+   · Le repos n'a JAMAIS été enregistré (vérifié à ft-v143 comme à ft-v1258) : au démarrage, `stopRest()` ne faisait que
+     remettre l'écran à zéro. Cette part est gardée, dans `_reposReprendre`.
+   · La panne « séance coincée » avait une autre cause, trouvée ensuite : des erreurs propres à Safari (TDZ, ft-v144 → v153,
+     `docs/GALERES-ET-LECONS.md`). La garantie était un correctif à l'aveugle posé pendant la panne.
+   · La coupure à −5 s datait du dépassement clignotant (« overtime », retiré en ft-v166). Depuis ft-v1030 / ft-v1075, le
+     dépassement est une information voulue ; cette coupure le cachait justement au retour dans l'app — le moment où il sert.
+   👉 Remplacée par la décision de Michel : reprise à l'heure réelle, dépassement affiché en négatif, abandon 15 min après la
+   fin théorique (`REST_DEPASSEMENT_MAX`, log.js — le même seuil app ouverte, au retour et au redémarrage). Au retour au
+   premier plan, l'écouteur de log.js (`_restTick`) applique ce seuil : un second écouteur ici en ferait deux règles (R2). */
+_reposReprendre();
 // ⚠️ Élément optionnel. ⚠️ CE COMMENTAIRE DISAIT « app.js est aussi chargé par dashboard.html » —
 // c'est FAUX depuis que le tableau de bord a retiré ce chargement (voir dashboard.html, qui écrit
 // la décision et sa raison). La garde reste utile telle quelle, mais sa justification était

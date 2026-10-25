@@ -121,7 +121,7 @@ Deux mesures croisées : commits git dont le diff touche la fonction, et entrée
 | Timer repos | ~24 | 19 | Récurrent depuis le début. Sous tests partiels. |
 | Check-in du jour | ~20 | 15 | 3 refontes visuelles (emoji → tuiles → déplié). Vient d'être harmonisé (ft-v661) : GELER. |
 | Figurine muscles | ~10 | 24 | Le gros du travail est récent et TESTÉ (45/45). |
-| **FAB « + »** | **3-4** | **5** | ⭐ Surprise : le « modifié 30 fois » de mémoire ne se voit PAS dans git — les retouches datent d'avant le suivi git (époque Claude Design) ou sont noyées dans des commits plus larges. Aujourd'hui : 3 fonctions, 1 règle d'or (n°9), stable. **Recommandation : garder tel quel, ne plus toucher.** |
+| **FAB « + »** | **3-4** | **5** | ⭐ Surprise : le « modifié 30 fois » de mémoire ne se voit PAS dans git — les retouches datent d'avant le suivi git (époque Claude Design) ou sont noyées dans des commits plus larges. *(↪️ Corrigé le 24/10/2026 : pas d'« avant le suivi git » pour ce bouton — Git commence le 11/06 et le bouton central y est créé le 12/06, `90d73feb`. Reste l'autre explication : des retouches noyées dans des commits plus larges.)* Aujourd'hui : 3 fonctions, 1 règle d'or (n°9), stable. **Recommandation : garder tel quel, ne plus toucher.** |
 | sw.js (535) / CLAUDE.md (433) | — | — | Ce n'est pas du churn : c'est le compteur de versions et le journal — leur rôle est d'être touchés à chaque livraison. |
 
 **Aucune zone ne mérite une SUPPRESSION à mes yeux** : les zones sur-retouchées sont soit le

@@ -2096,6 +2096,9 @@ En remontant au **tout premier `CLAUDE.md` (30/06/2026, 27 Ko)** via Git, consta
 (ft-v1 → ft-v127) n'a **jamais** eu de journal version par version — elle était documentée **autrement**,
 par un **catalogue de fonctionnalités rangé par THÈME** (Entraînement · Cloud sync · Nutrition · Cycle de
 force · Badges · EXLIB · Programmes…), avec les dates. **C'est exactement l'inventaire décrit ci-dessus.**
+↪️ *Corrigé le 24/10/2026* : ce n'était pas le tout premier `CLAUDE.md`. Le premier date du **11/06/2026**
+(`0e19fd39`) ; celui du 30/06 (`d4ccce18`) est une mise à jour. Les versions du 11 au 30 juin n'avaient
+donc pas été relues pour ce constat.
 
 **Vérification faite : les 32 sections de ce premier fichier sont TOUTES encore présentes aujourd'hui**
 (dans `docs/JOURNAL-ARCHIVE.md` et `CLAUDE.md`). **Rien n'a été perdu** dans les allègements successifs.
