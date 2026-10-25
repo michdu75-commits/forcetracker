@@ -38,7 +38,7 @@
 | **F07** | la couleur du calendrier ne suivait pas une série cochée de plus | clé de cache incomplète | la clé porte l'état des séries et les muscles cochés | — |
 | **F06** | tuile « Séance » de Nutrition : 1ʳᵉ séance seulement (**350 au lieu de 600 kcal**) | `find` au lieu d'une somme | somme du jour, « 2 séances » ; rien ne déborde à 320 px | D-117 |
 | **F23** | en-tête de l'export PDF : des jours comptés pour des séances | compte par date | « N séances sur J jours d'entraînement » | — |
-| **F22** | « Walking » d'Apple Santé affiché « Elliptique » | table sans marche / course / natation | nommés à l'écran, **calculés comme « Autre »** (aucun barème inventé) | D-119 |
+| **F22** | « Walking » d'Apple Santé affiché « Elliptique » | table sans marche / course / natation | nommés à l'écran, **calculés comme « Autre »** (aucun barème inventé) ; un tapis importé reste « course », comme en `ft-v1260` (25/10, §12) | D-119 |
 | **F19** | sans sommeil noté sur 3 jours : « Prêt à performer », invitation aux records | le score ne disait pas qu'il était estimé | « (estimé) », « Estimation sans sommeil », pas de records ; même consigne pour Milo | D-118 |
 | **F08** | supprimer / baisser la séance d'un record le laissait en place | rien ne relisait le record | **aperçu** avant → après (outil existant), rien sans le geste, origine incertaine → rien | D-120 |
 | **F04** | un secondaire de deux exercices passait « principal » (8 zones rouges au lieu de 6) | seuil « score ≥ 2 » | `prim` = moteur dans au moins un exercice ; « Secondaires … ×2 » | D-121 |
@@ -75,7 +75,7 @@
 
 | Arbre | Résultat |
 |---|---|
-| **master** (`98c09ed9`, code d'avant la mission) | **30 OK / 72 rouges** — les 30 verts sont des gardes de non-régression (« rien n'est réécrit », « le + ne bouge pas », « l'aide se joint par ⋯ »…), verts par construction |
+| **master** (`93dfbb75`, même application que `98c09ed9`) | **31 OK / 71 rouges** — les 31 verts sont des gardes de non-régression (« rien n'est réécrit », « le + ne bouge pas », « l'aide se joint par ⋯ », « un tapis importé coûte ce qu'il coûtait »…), verts par construction. *(30 / 72 le 24/10 : J4 est devenu une garde le 25/10, §12.)* |
 | **branche** | **102 OK / 0 rouge** |
 
 **Chaque correction et ses témoins** (§8.7, point 2) — rouges sur master, verts sur la branche ; à droite, les gardes vertes
@@ -92,14 +92,14 @@ des deux côtés (« rien n'est réécrit », « le + ne bouge pas », « aucune
 | F06 | C-NUM-G1, G3 | G2 |
 | F23 | C-NUM-H1 | — |
 | F19 | C-NUM-I1, I2, I3, I4\*, I5 | — |
-| F22 | C-NUM-J1, J3, J4 | J2 |
+| F22 | C-NUM-J1, J3 | J2, J4 |
 | F08 | C-REC-A1, B1, C1, E1 | A2, A3, D1, D2, F1, F2, G1 |
 | F04 | C-MUS-A1\*, A2, A3\*, A4 | — |
 | F05 (et son périmètre) | C-MUS-B1, B2, B3\*, B4\*, B5\*, C1, C2 | C3 |
 | Repos par défaut (Profil + ⋯) | C-REG-A1, A2, B1, B2\*, B3, B4, B5, B9\*, C1\*, C2\*, C3, C4, D1, E2 | B6, B7, B8, D2, E1 |
 | Images | C-IMG-A1, A2, A3, B1, C1 | A4, A5, A6 |
 
-\* **10 de ces 72 rouges** ne montrent pas le défaut : ils échouent parce que la fonction ou le geste qu'ils conduisent
+\* **10 de ces 71 rouges** ne montrent pas le défaut : ils échouent parce que la fonction ou le geste qu'ils conduisent
 n'existe pas sur master (`_mscScoresVus`, le champ `sansSommeil`, la ligne « Repos par défaut » du ⋯). Pour eux, seule une
 **mutation** prouve quelque chose — chacun a la sienne : C-MUS-A1 ← M41, M49 · A3 ← M42 · B3 ← M45, M46 · B4 ← M43 ·
 **B5 ← M68** · **C-NUM-I4 ← M67** · **C-REG-B2 ← M69** · B9 ← M50 · C1 ← M53 · C2 ← M52. ⚠️ M67 → M69 ont été ajoutées **à la
@@ -178,6 +178,10 @@ n'existe plus »*.
 | `picker_vignettes.js` — empreinte Mollets | `59605168…` | `1495db12…` | nouveau fichier (D-123) | « un octet de plus » |
 | `seance_chiffres.js` C-MUS-B3 (créé dans cette mission) | calories des muscles cochés (4,0) | calories de la règle du nom (5,5), figurine des muscles cochés | F05 isolé des calories (D-122) | M45, M46 |
 | `seance_chiffres.js` C-MUS-B4 / B5 — la fixture (créée dans cette mission ; réécrite à la clôture) | 1ᵉʳ nom trouvé : « Croisé Poulie (Cable Crossover) », une isolation (4,0) | un composé dont le MET dépend des muscles : « Dips Triceps (Buste Droit) » (5,5) ; B5 exige en plus une fiche au-dessus de l'isolation | **B5 ne pouvait pas rougir** : un mollet coché seul reste une isolation (4,0 des deux côtés) — démasqué par la mutation ciblée M68 (`BUGS.md` §111) | M68 |
+| `seance_chiffres.js` C-NUM-J4 (créé dans cette mission ; réécrit le 25/10) | « Treadmill » → barème « Tapis » | « Treadmill » reste « course », et ses calories en intensité forte = celles d'« Autre » (ft-v1260) | il exigeait un changement de calories fait sans décision (9,5 au lieu de 8,0) et contredisait D-119 et le témoin XXXII du runner | M31 (inversée) |
+| `runner.js` XXXII « un type inconnu tombe sur « autre » » | — (**inchangé**) | — | c'est le **code** qui revient à master (`_typeCardioDepuisMontre` identique à l'octet) | RP1 |
+| `runner.js` CCXXVI ter ② ③ — la fixture | `volume: 2560` pour **une** série de 80 × 8 (640 kg) | 4 séries de 80 × 8 = 2560 | depuis D-116 la carte lit les séries : la fixture se contredisait (comme OD-12) ; ⚠️ elle ne distingue plus « copie rangée » de « séries », exprès — C-NUM-B5 / B6 gardent ce point | RP2 |
+| `runner.js` B-CCCVI ⑥ « la règle du VOLUME reste distincte de celle des records » | le **texte** de l'ancienne boucle de `saveSessEdits` | l'**invariant** : volume par `_workVol` (sans recopie), `_workVol` sans `_serieFaitFoiPourPR` et avec sa propre règle | il épinglait l'implémentation que D-116 a remplacée | RP3a (numériquement neutre), RP3b |
 
 ---
 
@@ -283,7 +287,7 @@ Supination Haltère · Rotation Machine Obliques · Thrusters Haltères · Tirag
 |---|---|
 | données persistées ajoutées | **0** (aucune clé ; le repos par défaut garde `ft4_rest`) |
 | fichiers applicatifs touchés | **13** (`log.js`, `setup.js`, `screens.js`, `tracking.js`, `coach.js`, `dashboard.js`, `state.js`, `constants.js`, `app.js`, `index.html`, `style.css`, `sw.js`, `muscles/vignettes/08_mollets.png`) |
-| lignes ajoutées − retirées | **+447 − 151** (commentaires compris) |
+| lignes ajoutées − retirées | **+448 − 150** (commentaires compris ; +447 − 151 le 24/10, avant le retour au « course » du tapis importé) |
 | anciens chemins supprimés / fusionnés | **9** : 6 recopies de la règle de volume → `_volTravail` / `_workVol` · le calcul de fin de séance et celui de l'édition → `_calDataSeance` · la liste du Profil en dur → `reposDefautChoix` · l'icône haltère en double → `_ICO_HALTERE` |
 
 ---
@@ -295,3 +299,26 @@ Supination Haltère · Rotation Machine Obliques · Thrusters Haltères · Tirag
 MET + règle #11 · `58828924` décisions et BUGS · `35c058a0` fusion de master · (`3251c2ad`, `21d71bf8` : tableau des briques
 régénéré) · `d403c862` passation · `cfcb45e3` campagne et M67 → M69 · `0f23b087` témoin C-MUS-B5 réécrit · la
 clôture (documentation). **Code applicatif inchangé depuis `35c058a0`.**
+
+---
+
+## 12. Retour de Claude Principal (25/10) — les 4 rouges de la passe sur l'arbre intégré
+
+La passe répartie sur `claude/integration-nut-seance` a trouvé **4 rouges côté Séance**, que mes 25 bancs voisins ne
+pouvaient pas voir : ils vivent dans le grand runner (`tests/parcours/runner.js`). Traités sur cette branche, master non
+touché.
+
+| # | Rouge | Cause | Ce qui est fait | Preuve |
+|---|---|---|---|---|
+| ① | XXXII « un type inconnu tombe sur « autre » » : « Treadmill Running » donnait « tapis » | le lot 2 (`cff47f0d`) envoyait un tapis importé sur le barème « Tapis » : 9,5 au lieu de 8,0 MET en intensité forte — **des calories changées sans décision**, contre D-119 | retour au comportement de `ft-v1260` (`_typeCardioDepuisMontre` **identique à l'octet** à master) ; D-119 précisée ; J4 réécrit sur l'invariant de calories. Le barème « Tapis » pour un tapis importé devient une **alternative pour Michel** | XXXII vert ; J4 vert sur la branche **et** sur master ; RP1 ; M31 inversée |
+| ② | CCXXVI ter ② ③ (cartes de l'historique) | fixture `volume: 2560` pour une série de 640 kg ; depuis D-116 la carte lit les séries | fixture cohérente : 4 × 80 × 8 = 2560 (comme OD-12) | verts ; RP2 |
+| ③ | B-CCCVI ⑥ (témoin de source) | il exigeait le texte de l'ancienne boucle de `saveSessEdits` | réécrit sur l'invariant : volume par `_workVol`, records par `_serieFaitFoiPourPR`, deux règles distinctes | vert ; RP3a (numériquement neutre : seul un témoin de source la voit), RP3b |
+| ④ | le contexte de Milo (R34) : 3 lignes changent à données égales | — | **non touché — décision de Michel** : exception écrite à R34 (corrections de faits, réversibles), ou texte d'avant pour Milo jusqu'au banc réel | — |
+
+**Contrôles du 25/10** : passe réduite aux blocs XXXII + CCXXVI ter + B-CCCVI (`tools/passe_reduite.js`, réseau isolé) :
+**292 témoins, 0 rouge** ; contrôle négatif `tools/mut_seance_runner.py` (nouveau, le moteur de `mut_temoins_v2.py`
+importé, pas recopié) : **5 / 5** (dont 1 négative) ; banc de la mission : branche **102 / 0**, master **31 / 71** ;
+mutations du banc touchées par ① rejouées (`M00`, `M30` → `M32`) : **4 / 4**, arbre sain vert avant et après (M31 inversée
+rougit J4 ; M00, le code d'avant, rougit 71 témoins au lieu de 72 : J4 est devenu une garde).
+⚠️ **La leçon** (`BUGS.md` §112) : mon témoin J4 disait le contraire d'un témoin du runner (XXXII), et aucun de mes bancs
+voisins ne le jouait. *Deux témoins qui portent la même règle en sens contraires : un seul peut être vert.*

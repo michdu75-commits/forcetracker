@@ -5529,3 +5529,18 @@ master seulement **par absence** (la fonction n'y existe pas) sans être la cibl
 ni mot-clé haltéro / cardio / porté, ni charnière de hanche, ≥ 3 muscles), et B5 exige une fiche **au-dessus** de
 l'isolation : si la fixture redevient insensible, le témoin rougit au lieu de se taire. *Famille « un vert qui ne peut pas
 rougir » ; leçon : « rouge sur master » ne prouve rien pour un témoin qui échoue par ABSENCE — seule une mutation le peut.*
+
+## §112 — ⛔ MON TÉMOIN DISAIT LE CONTRAIRE D'UN TÉMOIN DU RUNNER, ET MES BANCS VOISINS NE LE JOUAIENT PAS *(25/10/2026, retour de Claude Principal sur la mission Séance ; **CORRIGÉ sur la branche**)*
+
+**Le cas.** La passe répartie sur l'arbre intégré a trouvé 4 rouges côté Séance, invisibles dans mes 25 bancs voisins.
+Le plus instructif : mon témoin **C-NUM-J4** exigeait qu'un tapis importé d'Apple Santé passe sur le barème « Tapis »,
+pendant que le témoin **XXXII** du grand runner exigeait « course » (calculé comme « Autre »). Les deux portaient **la
+même règle en sens contraires** — un seul pouvait être vert, et j'avais choisi le mien sans le savoir. Pire : mon choix
+changeait des **calories** (9,5 au lieu de 8,0 MET en intensité forte), ce que ma propre décision D-119 interdisait
+(« calculés comme Autre »). **Les deux autres** : une fixture (CCXXVI ter) qui rangeait un volume que ses séries ne font
+pas — invisible tant que la carte lisait la copie rangée, rouge dès que D-116 l'a fait lire les séries ; et un témoin de
+SOURCE (B-CCCVI ⑥) qui épinglait le texte d'une boucle que D-116 a remplacée. **Correctif** : le code revient à
+`ft-v1260` pour le tapis ; la fixture dit la même chose des deux côtés ; le témoin de source garde l'**invariant**
+(deux règles, deux propriétaires) au lieu du texte ; chacun éprouvé (`tools/mut_seance_runner.py`, 5 / 5).
+*Leçon : avant d'écrire un témoin, chercher dans le runner les témoins qui lisent la même fonction
+(`grep` du nom de la fonction dans `tests/`) — et les jouer avec les bancs voisins.*

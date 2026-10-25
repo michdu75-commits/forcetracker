@@ -464,19 +464,26 @@ async function ecran(t, b, PORT) {
       const types = ['Walking', 'Marche à pied', 'Running', 'Course à pied', 'Swimming', 'Treadmill', 'Tapis de course', 'Indoor Cycling', 'Rowing', 'Elliptical', 'Yoga'].map(n => [n, _typeCardioDepuisMontre(n)]);
       const c = { type: _typeCardioDepuisMontre('Walking'), intensity: 'modere', duration: 30 };
       const kcalMarche = calcCardioKcal(c), kcalAutre = calcCardioKcal({ type: 'autre', intensity: 'modere', duration: 30 });
+      // un tapis importé, compté en intensité FORTE (la seule où « Tapis » et « Autre » diffèrent : 9,5 contre 8,0)
+      const kcalTapisFort = calcCardioKcal({ type: _typeCardioDepuisMontre('Treadmill'), intensity: 'intense', duration: 30 }),
+            kcalAutreFort = calcCardioKcal({ type: 'autre', intensity: 'intense', duration: 30 });
       // le détail d'une séance avec ce cardio : le choix affiché doit être « Marche », pas « Elliptique »
       const ts = Date.now() - 864e5;
       S.sessions = [{ id: ts, ts, date: today(ts), exs: [], cardio: c }]; persist(); openSessDetail(ts);
       const sel = [...document.querySelectorAll('#sd-content select')].find(x => (x.getAttribute('onchange') || '').indexOf("'type'") > 0 && (x.getAttribute('onchange') || '').indexOf("'apres'") > 0);
       const affiche = sel ? sel.options[sel.selectedIndex].textContent : null;
-      return { types, clair: _cardioClair(c), kcalMarche, kcalAutre, affiche };
+      return { types, clair: _cardioClair(c), kcalMarche, kcalAutre, affiche, kcalTapisFort, kcalAutreFort };
     });
     const T = Object.fromEntries(r.types);
     t('C-NUM-J1 ⭐ F22 — « Walking » s\'affiche « Marche 30 min », pas « marche » ni « Autre »', /^Marche 30 min/.test(r.clair), r.clair);
     t('C-NUM-J2 ⛔ F22 — aucun barème inventé : une marche se calcule exactement comme « Autre » (moteur gelé)', r.kcalMarche === r.kcalAutre && r.kcalMarche > 0, r.kcalMarche + ' / ' + r.kcalAutre);
     t('C-NUM-J3 F22 — le détail de la séance montre « Marche », pas « Elliptique »', /Marche/.test(r.affiche || '') && !/Elliptique/.test(r.affiche || ''), r.affiche);
-    t('C-NUM-J4 ⭐ F22 — un tapis de course (« Treadmill », « Tapis de course ») va sur le barème « Tapis » qui existe déjà',
-      T['Treadmill'] === 'tapis' && T['Tapis de course'] === 'tapis' && T['Running'] === 'course' && T['Walking'] === 'marche' && T['Indoor Cycling'] === 'velo' && T['Yoga'] === 'autre', _j(r.types));
+    /* ↪️ RÉÉCRIT 25/10 (retour de Claude Principal) : J4 exigeait « Treadmill » → barème « Tapis ». C'était un changement de
+       CALORIES (intensité forte 9,5 au lieu de 8,0) fait sans décision de Michel, et contraire à D-119 (« calculés comme Autre »)
+       et au témoin XXXII du runner. J4 garde maintenant l'INVARIANT : un tapis importé coûte ce qu'il coûtait en ft-v1260. */
+    t('C-NUM-J4 ⛔ F22 — un tapis de course (« Treadmill », « Tapis de course ») reste « course » : ses calories restent celles de ft-v1260 (comme « Autre », même en intensité forte) — le barème « Tapis » est à Michel (D-119)',
+      T['Treadmill'] === 'course' && T['Tapis de course'] === 'course' && T['Running'] === 'course' && T['Walking'] === 'marche' && T['Indoor Cycling'] === 'velo' && T['Yoga'] === 'autre'
+      && r.kcalTapisFort === r.kcalAutreFort && r.kcalTapisFort > 0, _j({ types: r.types, fort: [r.kcalTapisFort, r.kcalAutreFort] }));
     await X.cx.close();
   }
 

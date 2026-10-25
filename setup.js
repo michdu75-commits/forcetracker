@@ -1410,13 +1410,15 @@ function utiliserActiviteMontre(i){
 /* ⌚ F22 (mission Séance du 24/10/2026) — trois types produits ici n'ont PAS de barème dans `CARDIO_MET` : ils se calculent
    avec celui d'« Autre » (`calcCardioKcal` y retombe) — ⛔ aucun barème inventé, le moteur est gelé (le diagnostic MET dit
    ce que ça coûte). Mais ils GARDENT LEUR NOM à l'écran : « marche » brut dans l'historique et « Elliptique » dans le
-   détail, c'était faux deux fois. Et un TAPIS de course va sur le barème « Tapis », qui existe déjà. */
+   détail, c'était faux deux fois.
+   ⛔ Un TAPIS de course reste « course » (calculé comme « Autre »), comme en ft-v1260 : le barème « Tapis » existe, mais il
+   compte l'intensité forte à 9,5 au lieu de 8,0 — ce sont des calories, donc une décision de Michel (D-119), pas un
+   correctif d'affichage. (Retour de Claude Principal, 25/10 : la passe sur l'arbre intégré l'avait vu.) */
 const CARDIO_NOMS_MONTRE={marche:'Marche', course:'Course', natation:'Natation'};
 function _typeCardioDepuisMontre(nom){
   const n=String(nom||'').toLowerCase();
-  if(/tapis|treadmill/.test(n))                   return 'tapis';
   if(/march|walk|randonn|hik/.test(n))            return 'marche';
-  if(/cours|run|jog/.test(n))                     return 'course';
+  if(/cours|run|jog|tapis|treadmill/.test(n))     return 'course';
   if(/vélo|velo|cycl|bike|spinning/.test(n))      return 'velo';
   if(/rameur|row/.test(n))                        return 'rameur';
   if(/ellipt/.test(n))                            return 'elliptique';

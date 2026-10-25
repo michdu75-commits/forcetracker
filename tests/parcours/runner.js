@@ -25944,12 +25944,15 @@ console.log('\n-- CCXXVI ter. Le cardio se reconnaît dans l\'historique (ft-v11
                  cardio:{type:'tapis',duration:45,intensity:'modere'}}];
     o.cardioSeul=lire();
     /* ② NON-RÉGRESSION : une muscu SANS cardio ne bouge pas d'un caractère */
+    /* ↪️ 25/10 (retour de Claude Principal) : la fixture rangeait volume:2560 pour UNE série de 80 × 8 (640 kg). Depuis D-116,
+       la carte lit le volume dans les SÉRIES (la copie rangée peut être fausse, elle n'est plus crue) : 4 × 80 × 8 = 2560,
+       la fixture dit enfin la même chose des deux côtés (même correction que OD-12, debrief_demande). */
     S.sessions=[{id:ts+1,ts:ts+1,date:t,volume:2560,duration:45*60,calories:250,
-                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]}];
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'}]}]}];
     o.muscuSeule=lire();
     /* ③ une muscu AVEC cardio : le cardio s'ajoute, les exercices restent */
     S.sessions=[{id:ts+2,ts:ts+2,date:t,volume:2560,duration:60*60,calories:400,
-                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}],
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'}]}],
                  cardioAvant:{type:'velo',duration:10,intensity:'leger'}}];
     o.muscuAvecCardio=lire();
     /* ④ le mois compte-t-il cette séance ? (le calendrier lit les DATES, pas le volume) */
@@ -35821,8 +35824,22 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        dans le volume ? » et « fait-elle foi pour un record ? » sont deux questions, et rien ne
        garantit qu'elles resteront d'accord. *Une dérive invisible à l'exécution ne se tient que
        par la source.* */
+    /* ↪️ RÉÉCRIT LE 25/10 (retour de Claude Principal sur la mission Séance) : ce témoin exigeait le TEXTE de l'ancienne
+       boucle de volume de `saveSessEdits`. D-116 l'a remplacée par `_workVol`, la règle de la fin de séance (la recopie
+       divisait par deux, à chaque « Enregistrer », le volume d'une séance unilatérale). L'INVARIANT ne change pas, et c'est
+       lui qu'on garde : DEUX questions, DEUX propriétaires — le volume par `_workVol`, les records par
+       `_serieFaitFoiPourPR` — et aucun n'emprunte l'autre. Éprouvé par tools/mut_seance_runner.py (RP3a, RP3b). */
+    const corps=(src,nom)=>{ const i=src.indexOf('function '+nom+'('); if(i<0) return '';
+      const k=src.indexOf('{',src.indexOf(')',i)); let d=0, j=k;
+      for(;j<src.length;j++){ if(src[j]==='{')d++; else if(src[j]==='}'){ d--; if(!d) break; } }
+      return src.slice(k,j+1); };
+    const cSave=corps(su,'saveSessEdits'), cVol=corps(lg,'_workVol');
     t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — la règle du VOLUME reste distincte de celle des records',
-      /_sessEdits\.exs\.forEach\(ex=>ex\.sets\.forEach\(s=>\{if\(s\.done&&s\.type!=='É'&&s\.type!=='W'\)vol\+=/.test(su), '');
+      /_sessEdits\.volume=Math\.round\(_workVol\(_sessEdits\)\)/.test(cSave)    // le volume : par SON propriétaire…
+      && !/vol\+=|\.kg\s*\*\s*s\.reps|\(s\.kg\|\|0\)\s*\*/.test(cSave)                // … sans recopie dans saveSessEdits
+      && cVol.length>0 && !/_serieFaitFoiPourPR/.test(cVol)                           // _workVol n'emprunte pas la règle des records…
+      && /s\.type!=='É'&&s\.type!=='W'/.test(cVol),                                  // … il garde la sienne
+      'saveSessEdits '+cSave.length+' car. · _workVol '+cVol.length+' car.');
     /* ⛔ NUTRITION — consigne absolue de Michel : rien de ce chantier ne l'approche. */
     t('B-CCCVI ⑦ ⛔ NUTRITION — le propriétaire des records n\'est appelé nulle part dans `app.js`',
       !/_serieFaitFoiPourPR/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8'))), '');

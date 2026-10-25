@@ -131,8 +131,11 @@ MUT = [
     ('M30 l\'activite de la montre s\'affiche avec sa cle brute',
      [(LO, "${L[c.type]||M[c.type]||c.type||'cardio'}", "${L[c.type]||c.type||'cardio'}")],
      'GARDE', 'C-NUM-J1'),
-    ('M31 le tapis de course retombe sur « course » (bareme Autre)',
-     [(SE, "  if(/tapis|treadmill/.test(n))                   return 'tapis';\n", "")],
+    # ↪️ M31 INVERSÉE le 25/10 (retour de Claude Principal) : le tapis reste « course » ; la mutation remet l'ancien choix de la
+    #    branche (barème « Tapis », des calories changées sans décision) et J4 doit rougir.
+    ('M31 le tapis de course part sur le bareme « Tapis » (l\'ancien choix de la branche : calories changees sans decision)',
+     [(SE, "  if(/march|walk|randonn|hik/.test(n))            return 'marche';\n",
+           "  if(/tapis|treadmill/.test(n))                   return 'tapis';\n  if(/march|walk|randonn|hik/.test(n))            return 'marche';\n")],
      'GARDE', 'C-NUM-J4'),
     ('M32 le detail affiche « Elliptique » pour une marche',
      [(SE, "${(c&&c.type&&!CARDIO_LABELS[c.type]&&CARDIO_NOMS_MONTRE[c.type])?", "${(false)?")],
