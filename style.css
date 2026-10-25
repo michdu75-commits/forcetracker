@@ -879,6 +879,13 @@ details.jr-sec[open]>summary::after{transform:rotate(45deg);}
 .wm-v{font-size:13px;font-weight:700;color:var(--t2);white-space:nowrap;}
 .wm-danger .wm-ic{background:rgba(255,106,115,.12);color:var(--red);}
 .wm-danger .wm-t b{color:var(--red);}
+.wm-on .wm-t b,.wm-on .wm-v{color:var(--sea);}   /* ⏱️ le repos par défaut choisi (mission Séance, 24/10/2026) */
+.wm-note{font-size:12.5px;color:var(--t2);line-height:1.4;margin:-2px 6px 12px;}
+/* 🖼️ « Aucune illustration disponible » (mission Séance, 24/10/2026) : la vignette dit l'absence, la démonstration aussi */
+.ex-sans-illu{display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);cursor:pointer;}
+.ex-sans-illu-demo{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 8px;text-align:center;}
+.ex-sans-illu-demo b{font-size:14px;font-weight:700;color:var(--t2);}
+.ex-sans-illu-demo span{font-size:12px;color:var(--t3);}
 .wm-x{display:flex;align-items:center;justify-content:center;width:100%;height:52px;border-radius:16px;background:var(--bg3);border:none;font-family:var(--font);font-size:15px;font-weight:800;color:var(--t1);cursor:pointer;}
 
 /* ⑥ Petits écrans (≤ 374 px : iPhone SE, mini, Android 360) — mêmes éléments, un peu moins d'air. */
@@ -1170,13 +1177,29 @@ html.is-clone .ob-clone-only{ display:block; }
 .ex-subhdr-n{font-size:11px;font-weight:700;opacity:.75;}
 .ex-grp-tile{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
 .ex-grp-tile:active{background:var(--bg2);}
-.ex-grp-icon{flex-shrink:0;width:64px;height:64px;border-radius:12px;background:rgba(255,45,85,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;}
+.ex-grp-icon{flex-shrink:0;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;}
+/* 🖼️ SEANCE-UX-IMAGES (23/10) — LE CADRE DES VIGNETTES DE GROUPE : un seul propriétaire de sa taille (le conteneur de la tuile,
+   `.ex-grp-icon`, prend celle de l'image). 88 × 51 : un cadre PLUS LARGE que les vignettes du paquet de Michel (1,73 contre
+   1,41 à 1,51 ; 183 px de large), rempli sans étirer (`cover`) et ANCRÉ EN BAS : il en coupe le haut — 15 à 24 lignes source,
+   12 à 18 % (51 px affichés = 106 lignes sur 121 à 130) —, c'est-à-dire le liseré (fond et bord de carte de la maquette pris
+   dans le découpage, 3 à 17 lignes) puis 0 à 12 lignes de dessin (cous, mentons) ; aucun muscle ciblé (orange) coupé, sauf
+   2 à 5 pixels sur Jambes. Rien sur les côtés. Inline : la même image sert à l'en-tête d'un groupe ouvert. */
+.ex-grp-vig{width:88px;height:51px;flex-shrink:0;object-fit:cover;object-position:50% 100%;border-radius:10px;display:inline-block;vertical-align:middle;} /* flex-shrink:0 : rétrécie, elle laisserait revoir le liseré */
+/* Mollets (2ᵉ paquet, 23/10) : la carte seule (996 × 724, plus haute que le cadre) — ancrée à 35 % de sa hauteur : c'est la
+   position mesurée qui ne coupe AUCUN muscle ciblé (le haut des mollets commence à la ligne 55 ; centrée, 1,1 % de l'orange
+   partait) et ne laisse voir presque rien des coins blancs de la carte (0,18 % du cadre). Témoin C-VIG-A6. */
+.ex-grp-vig-mollets{object-position:50% 35%;}
 .ex-grp-info{flex:1;}
 .ex-grp-label{font-size:14px;font-weight:400;color:var(--t1);}
 .ex-grp-count{font-size:13px;color:var(--t3);margin-top:2px;font-weight:600;}
 .ex-grp-arrow{font-size:20px;color:var(--t3);font-weight:700;}
 .ex-grp-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--t2);font-size:15px;font-family:var(--font);cursor:pointer;padding:0 0 12px;font-weight:700;touch-action:manipulation;}
-.ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);margin-bottom:10px;letter-spacing:.3px;}
+.ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:700;color:var(--red);margin-bottom:10px;letter-spacing:.3px;display:flex;align-items:center;gap:10px;flex:1 1 auto;flex-wrap:wrap;} /* SEANCE-UX-IMAGES : vignette et libellé côte à côte — le libellé long passait sous l'image */
+/* ⛔ …mais SEULEMENT s'il tient (revue adverse du 23/10, témoin C-VIG-B4) : l'en-tête en ligne sans retour possible faisait
+   déborder la feuille à 320 px (« Abdominaux » : le bouton « 🫀 Anatomie » poussé 20 px dehors, la liste qui glisse de côté).
+   Base 0 : le libellé reste à côté de l'image tant que son mot le plus long y tient (390 px : tous), sinon il passe dessous,
+   comme avant le lot ; l'en-tête prend la place laissée par le bouton, qui ne change pas. */
+.ex-grp-header-label{flex:1 1 0;}
 .prog-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);margin-bottom:8px;}
 .prog-card-name{font-size:15px;font-weight:700;}
 .prog-card-detail{font-size:13px;color:var(--t3);margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

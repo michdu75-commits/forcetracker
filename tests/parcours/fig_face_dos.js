@@ -73,9 +73,15 @@ const AIDE = `(()=>{
       kv:[...c.querySelectorAll('.lf-kv > div')].map(d=>[(d.querySelector('span')||{}).textContent,(d.querySelector('b')||{}).textContent]),
       cardio:(c.querySelector('.lf-cardio')||{}).textContent||'' }; };
   window.__ffdOracle=()=>{ const faits=((S.wkt&&S.wkt.exs)||[]).filter(ex=>(ex.sets||[]).some(s=>s.done)); const r=_mscScores(faits);
-    const big=new DOMParser().parseFromString(_mscSVG(r),'image/svg+xml'); const g=[...big.querySelectorAll('path')].map(p=>NG[p.getAttribute('fill')]||'?');
+    /* ↪️ RÉÉCRIT LE 24/10/2026 (mission Séance, F04 — D-121) : « principal » = muscle MOTEUR, primaire dans la FICHE d'au moins un
+       exercice fait — plus « score ≥ 2 », qui faisait d'un secondaire de deux exercices un principal (mesuré : 8 zones rouges au
+       lieu de 6). La grande figurine de l'app dessine depuis _mscScoresVus ; l'oracle, lui, lit les moteurs dans la fiche
+       (exMuscles), sans passer par la règle de l'app. Contrôle négatif : M41, M42, M49 (tools/mut_seance_chiffres.py). */
+    const prim={}; faits.forEach(ex=>{ const f=exMuscles(exNomCatalogue(ex.name)), o=f?null:_mscScores([ex]);
+      (f?(f.p||[]):Object.keys(o.sc).filter(m=>o.sc[m]>=2)).forEach(m=>{prim[m]=true;}); });
+    const big=new DOMParser().parseFromString(_mscSVG(typeof _mscScoresVus==='function'?_mscScoresVus(faits):r),'image/svg+xml'); const g=[...big.querySelectorAll('path')].map(p=>NG[p.getAttribute('fill')]||'?');
     const grp={}; Object.entries(_MG).forEach(([k,d])=>d.paths.forEach(id=>{grp[id]=k;}));
-    const niv=k=>{const v=r.sc[k]||0; return v>=2?'p':v>=1?'s':(r.ind[k]&&!v)?'i':'b';};
+    const niv=k=>{const v=r.sc[k]||0; return prim[k]?'p':v>=1?'s':(r.ind[k]&&!v)?'i':'b';};
     const att=a=>a.map(([id])=>id?(grp[id]?niv(grp[id]):'b'):'peau');
     /* ⑩ D-092, recalculé ICI sans la règle de l'app : chaque série validée compte dans les TOTAUX, échauffements compris ; le
        TRAVAIL exclut É / W ; le volume d'un unilatéral est doublé (la séance enregistrée l'est : uniConv). */

@@ -18132,3 +18132,21 @@ Fichiers : `app.js`, `coach.js`, `log.js`, `setup.js`, `constants.js`, `state.js
 Tests : banc **B-SEC-S + B-SEC-E** (`tests/parcours/sec_admin.js`, `tools/banc_sec_admin.js`) **69/0** — vrai `Code.js` exécuté par `doGet` / `doPost`, puis la vraie app contre lui, adresses fictives `example.test` uniquement ; **23 rouges sur master**. ⛔ Contrôle négatif `tools/mut_sec_admin.py` : **17/17** (M10 d'abord « rougie » par un plantage, relancée avec une ancre juste ; l'outil refuse désormais une mutation qui casse la syntaxe). Voisins : chaos 56/0 · lot3 87/0 · AN 16/0 · AC 9/0 · AS 8/0 · CP 16/0 · s2b 71/0 · annexe 14 PASS + 1 défaut connu identique à master. Passe complète sur `6738624e` : **6 036 ✅ / 0 ❌**, 4 conditions vertes ; contre-vérification indépendante : banc 69/69, master 23 rouges, mutations 17/17, passe rejouée 6 036/0. Après la passe : documentation, numéro de version et clé de cache seulement (D-031).
 
 Fichiers : `Code.js` (diagnostic premium, `testGardeFou`, deux commentaires), `app.js` (`_toggleAdminMode`, `loadAuthStatusAdmin`), `setup.js` (`debugPremiumCheck`), `index.html` (texte de la carte des comptes), `tests/parcours/sec_admin.js`, `tools/banc_sec_admin.js` et `tools/mut_sec_admin.py` (nouveaux), `tests/parcours/runner.js`, `tests/recette/registre.json`, `BUGS.md` (§71), `docs/SUIVI-AUDIT.md`, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-TEST.md`, `docs/JOURNAL-DE-PARTAGE.md`, `docs/ALERTE-SECURITE-BOITE-IDEES.md`, `docs/JOURNAL-ARCHIVE.md`, `docs/INVENTAIRE.md`, `sw.js`, `CLAUDE.md`. sw.js ft-v1252. |
+
+---
+
+## ↪️ Correction du 24/10/2026 — les dates des débuts *(ajoutée à la fin : l'archive ne se réécrit jamais)*
+
+Plusieurs passages de cette archive disent que **l'app est née le 17 juin 2026** et que **le suivi Git n'a
+démarré que le 30 juin**. Vérifié le 24/10/2026 sur l'historique complet du dépôt (GitHub) et sur le Drive
+de Michel : c'est faux, ou invérifiable. Les passages restent tels quels ; voici ce qui est vrai.
+
+| Ce qui est écrit plus haut | Ce qui est vrai |
+|---|---|
+| *« L'app est née le **17 juin 2026** (première maquette) mais le suivi Git n'a démarré que le **30 juin** »* (« Les tout DÉBUTS — ft-v1 → ft-v127 ») | L'app tournait en ligne le **8 juin** (*« Force Tracker v2.2 — Juin 2026 »*, Drive) ; premier commit GitHub le **11 juin** (`52a6aa55`, *« Initial commit: Force Tracker v2.8 »*) ; `ft-v1` le 15 juin (`29d84b5c`). Ce que représente le 17 juin n'a pas pu être vérifié. ⚠️ Ce bloc se dit lui-même *« reconstruit depuis Git »* à partir de `ft-v1` : Git couvrait donc déjà la deuxième moitié de juin. |
+| `ft-v494` : *« « À propos » affiche la date de naissance de l'app (17 juin 2026) »* | Exact pour ce qu'il décrit : c'est l'affichage voulu par Michel le 19/07. Toujours en place ; il ne change que sur sa décision. |
+| *« l'app est née le 17 juin »* comme argument — brique 7 (*« personne n'a un an d'historique »*) et `ft-v1087` (*« un record du 14/06… la séance ne peut pas être dans l'historique »*) | La date est fausse, les conclusions tiennent : personne n'avait un an d'historique en août, et la règle des records compare la date du record à la plus ancienne séance de son exercice, pas à une date de naissance. Des séances existent dès le 12 juin. |
+
+⛔ **Aucune date exacte de naissance n'est retenue** (consigne de Michel, 24/10/2026). La motivation de
+départ dite par Michel, les preuves, et la distinction entre départ, vision et événements :
+`docs/ORIGINE-DES-REGLES.md`.

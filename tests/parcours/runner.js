@@ -25944,12 +25944,15 @@ console.log('\n-- CCXXVI ter. Le cardio se reconnaît dans l\'historique (ft-v11
                  cardio:{type:'tapis',duration:45,intensity:'modere'}}];
     o.cardioSeul=lire();
     /* ② NON-RÉGRESSION : une muscu SANS cardio ne bouge pas d'un caractère */
+    /* ↪️ 25/10 (retour de Claude Principal) : la fixture rangeait volume:2560 pour UNE série de 80 × 8 (640 kg). Depuis D-116,
+       la carte lit le volume dans les SÉRIES (la copie rangée peut être fausse, elle n'est plus crue) : 4 × 80 × 8 = 2560,
+       la fixture dit enfin la même chose des deux côtés (même correction que OD-12, debrief_demande). */
     S.sessions=[{id:ts+1,ts:ts+1,date:t,volume:2560,duration:45*60,calories:250,
-                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]}];
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'}]}]}];
     o.muscuSeule=lire();
     /* ③ une muscu AVEC cardio : le cardio s'ajoute, les exercices restent */
     S.sessions=[{id:ts+2,ts:ts+2,date:t,volume:2560,duration:60*60,calories:400,
-                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}],
+                 exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'},{kg:80,reps:8,done:true,type:'N'}]}],
                  cardioAvant:{type:'velo',duration:10,intensity:'leger'}}];
     o.muscuAvecCardio=lire();
     /* ④ le mois compte-t-il cette séance ? (le calendrier lit les DATES, pas le volume) */
@@ -35821,8 +35824,22 @@ console.log('\n== BLOC CCLXXXVIII — l\'avertissement kcal/macros vient a la vu
        dans le volume ? » et « fait-elle foi pour un record ? » sont deux questions, et rien ne
        garantit qu'elles resteront d'accord. *Une dérive invisible à l'exécution ne se tient que
        par la source.* */
+    /* ↪️ RÉÉCRIT LE 25/10 (retour de Claude Principal sur la mission Séance) : ce témoin exigeait le TEXTE de l'ancienne
+       boucle de volume de `saveSessEdits`. D-116 l'a remplacée par `_workVol`, la règle de la fin de séance (la recopie
+       divisait par deux, à chaque « Enregistrer », le volume d'une séance unilatérale). L'INVARIANT ne change pas, et c'est
+       lui qu'on garde : DEUX questions, DEUX propriétaires — le volume par `_workVol`, les records par
+       `_serieFaitFoiPourPR` — et aucun n'emprunte l'autre. Éprouvé par tools/mut_seance_runner.py (RP3a, RP3b). */
+    const corps=(src,nom)=>{ const i=src.indexOf('function '+nom+'('); if(i<0) return '';
+      const k=src.indexOf('{',src.indexOf(')',i)); let d=0, j=k;
+      for(;j<src.length;j++){ if(src[j]==='{')d++; else if(src[j]==='}'){ d--; if(!d) break; } }
+      return src.slice(k,j+1); };
+    const cSave=corps(su,'saveSessEdits'), cVol=corps(lg,'_workVol');
     t('B-CCCVI ⑥ ⛔ PÉRIMÈTRE — la règle du VOLUME reste distincte de celle des records',
-      /_sessEdits\.exs\.forEach\(ex=>ex\.sets\.forEach\(s=>\{if\(s\.done&&s\.type!=='É'&&s\.type!=='W'\)vol\+=/.test(su), '');
+      /_sessEdits\.volume=Math\.round\(_workVol\(_sessEdits\)\)/.test(cSave)    // le volume : par SON propriétaire…
+      && !/vol\+=|\.kg\s*\*\s*s\.reps|\(s\.kg\|\|0\)\s*\*/.test(cSave)                // … sans recopie dans saveSessEdits
+      && cVol.length>0 && !/_serieFaitFoiPourPR/.test(cVol)                           // _workVol n'emprunte pas la règle des records…
+      && /s\.type!=='É'&&s\.type!=='W'/.test(cVol),                                  // … il garde la sienne
+      'saveSessEdits '+cSave.length+' car. · _workVol '+cVol.length+' car.');
     /* ⛔ NUTRITION — consigne absolue de Michel : rien de ce chantier ne l'approche. */
     t('B-CCCVI ⑦ ⛔ NUTRITION — le propriétaire des records n\'est appelé nulle part dans `app.js`',
       !/_serieFaitFoiPourPR/.test(sansCom(fs.readFileSync(path.join(ROOT,'app.js'),'utf8'))), '');
@@ -39169,6 +39186,23 @@ await require('./accueil_mini.js').ecran(t, b, PORT);
      rang, échauffements à part, deux séances du même jour distinctes, aucun verdict, rien d'écrit) ; dropset, superset, exercice
      remplacé ; 360 → 430 px. Blocs B-SR-*. Banc : tools/banc_seance_recette.js · contrôle négatif : tools/mut_seance_recette.py. */
   await require('./seance_recette.js').ecran(t, b, PORT);
+  /* ⏱️ SEANCE-REPOS-01 (session-C, Claude Séance, 22/10/2026, décisions de Michel — docs/SEANCE-REPOS-01.md) — le repos en cours survit à la
+     fermeture de l'app : rangé dans la séance active (`S.wkt.repos = {debut, total}`), repris à l'heure réelle après un
+     rechargement, un retour au premier plan ou une réouverture hors ligne ; dépassement en négatif jusqu'à 15 min après la fin
+     théorique (avenant du 22/10 après-midi ; 5 min le matin), puis abandonné et effacé ; jamais dans le brouillon ni la séance enregistrée ; Milo inchangé. Blocs C-REP-*.
+     Banc : tools/banc_seance_repos.js · contrôle négatif : tools/mut_seance_repos.py. */
+  await require('./seance_repos.js').ecran(t, b, PORT);
+  /* 🖼️ SEANCE-UX-IMAGES (session-C, Claude Séance, 23/10/2026, paquet de Michel — docs/SEANCE-UX-IMAGES.md) — les vignettes
+     anatomiques de « Choisir un exercice » : 7 images du paquet (à l'octet), chacune sur son groupe, Mollets garde la sienne,
+     cadre 88 × 51 ancré en bas (liseré masqué), catégories / recherche / « Anatomie » / autres écrans inchangés, hors ligne.
+     Blocs C-VIG-*. Banc : tools/banc_picker_vignettes.js · contrôle négatif : tools/mut_picker_vignettes.py. */
+  await require('./picker_vignettes.js').ecran(t, b, PORT);
+  /* 🧮 MISSION SÉANCE DU 24/10/2026 (session-C, Claude Séance, mission de Michel — docs/SEANCE-CHIFFRES-2026-10-24.md) — les
+     chiffres d'une séance ne changent plus en silence : « Enregistrer » sans changer l'effort garde les calories (F21) et le
+     volume unilatéral (F02) ; une séance déjà réduite de moitié s'affiche juste sans être réécrite (Q5) ; corriger la durée
+     met les calories à jour à l'échelle de la séance (K1) sans effacer ce qui est tapé (K2). Blocs C-NUM-*.
+     Banc : tools/banc_seance_chiffres.js · contrôle négatif : tools/mut_seance_chiffres.py. */
+  await require('./seance_chiffres.js').ecran(t, b, PORT);
   /* 📐 D031S-B — LES TÉMOINS PRÉPARÉS DE D-091 (D-031-SÉCURITÉ-01, Claude Nutrition, 19/10/2026), BRANCHÉS le 20/10 par Principal
      avec la livraison de D-091 (lot final ft-v1257), comme le prévoyait la passation (docs/D031-SECURITE-01.md § 6) : le panneau
      « Ta séance jusqu'ici » compte les échauffements validés dans les TOTAUX et dit le travail à part ; la séance enregistrée
@@ -40079,6 +40113,8 @@ require('./session_integrity.js').source(t, ROOT, fs, path);
 require('./debrief_demande.js').source(t, ROOT, fs, path);
 require('./progres_seances.js').source(t, ROOT, fs, path);
 require('./seance_date.js').source(t, ROOT, fs, path);
+require('./seance_repos.js').source(t, ROOT, fs, path);
+require('./picker_vignettes.js').source(t, ROOT, fs, path);
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

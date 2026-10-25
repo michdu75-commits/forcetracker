@@ -148,6 +148,48 @@ retour du 25/10). Sonde de Claude Principal (arbre intégré `b37ddf3a`, donnée
 40g prot »), sans dire lesquels sont incomplets — il ne le dit que pour **aujourd'hui**.
 **Vérifiable par du code ?** Le FAIT transmis : oui (mesuré). Ce que Milo en conclut (« tu es en gros déficit ») : non mesuré
 (0 appel). Marquer ces jours change ce que Milo reçoit → **R34** (banc avant / après). **État : à trier** — décision de Michel.
+### 🟡 CE QUE MILO REÇOIT CHANGE AVEC LA BRANCHE SÉANCE : LES ÉCARTS SONT MONTRÉS, AUCUN N'EST JUGÉ (24/10/2026)
+
+**Ce qui déclenche la question** : mission Séance (session-C, branche `claude/dreamy-bell-pu88ia`). `tools/r34_seance.js`
+compare le contexte de Milo master contre branche, données égales, horloge gelée. Séance normale : **identique à l'octet**.
+Les écarts n'existent que dans 4 cas, et pour chacun je ne sais pas ce que Milo en fait (0 appel réel, pas de clé) :
+① **sans sommeil noté** : « 67/100 (Bon) » devient « (Bon (estimé)) », avec la consigne de ne pas pousser un record sur une
+estimation (F19, D-118) — **Milo obéit-il ?** Vérifiable par du code : oui, en partie (la réponse ne propose pas de tentative
+de record) ; le ton, non. ② un exercice perso aux **muscles cochés** : « Mollets 0,5 » apparaît dans le volume par muscle
+(F05) — Milo en parle-t-il comme d'un muscle vraiment travaillé, ou s'étonne-t-il d'un nom d'exercice qui ne dit pas
+« mollets » ? Non mesuré. ③ une ancienne série « W » : « Pectoraux 1,5 → 1 série/sem » (F03) — le fait est corrigé, ce que
+Milo en concluait avant ne l'est pas. ④ une séance **sans volume enregistré** (import) : master envoyait « **undefinedkg**
+vol total », la branche « 2920kg » — qu'est-ce que Milo répondait à « undefinedkg » ? Inconnu. **État : à trier** — à
+mesurer au banc avant / après (**R34**) avant toute publication qui porte ces changements.
+
+### 🟡 MILO REÇOIT « LE PLUS : FESSIERS » POUR DES SÉANCES DE LEG CURL — et « ischio-jambiers » dans le même contexte (23/10/2026)
+
+**Ce qui déclenche la question** : contre-vérification de l'audit transversal Séance (session-C). Le fait du registre
+« Groupes musculaires (30 j) » lit le **groupe du catalogue** (`tracking.js:2393`), où les 6 Leg Curl sont rangés en
+« Fessiers » (définition du projet : Fessiers = fessiers + ischios) ; le bloc volume du **même** contexte lit les muscles
+(`hamstrings`). Mesuré, vraie app : 4 séances de leg curl + 1 de développé → « le plus : Fessiers · le moins : Pectoraux »
+**et** « hamstrings : 4 séries ». **Vérifiable par du code ?** Le FAIT transmis : oui (prouvé, `catalogue_verif.js`). Ce que
+Milo en conclut (dit-il « tu travailles bien tes fessiers » à quelqu'un qui ne fait que des leg curls ?) : non mesuré
+(0 appel). **État : à trier** — lié au lot 3 du rapport `docs/CONTRE-VERIF-AUDIT-SEANCE-2026-10-23.md`.
+
+### 🟡 UN ÉCHAUFFEMENT « W » RESTAURÉ GONFLE LE VOLUME PAR MUSCLE QUE MILO REÇOIT (23/10/2026)
+
+**Ce qui déclenche la question** : même contre-vérification (F03). `_volumeParMuscle` exclut `É` mais pas l'ancien `W` ; une
+restauration d'ancien compte réintroduit des `W` après la migration (commentaire `log.js:1726`). Mesuré : N, N, É, W → Milo
+reçoit « Pectoraux : 1,5 séries/semaine » au lieu de 1. **Vérifiable par du code ?** Oui (contre-épreuve : 1 avec le filtre).
+Combien de vrais comptes portent encore des `W` : **inconnu** (données réelles non lues). **État : à trier.**
+↪️ **24/10** : sur la branche Séance (non publiée), `W` est exclu comme `É` partout (`BUGS.md` §103) — Milo reçoit 1. La
+question du nombre de vrais comptes concernés reste ouverte.
+
+### 🟡 LE SCORE DE RÉCUPÉRATION DIT « IDÉAL POUR TENTER DES RECORDS » SANS AUCUNE NUIT NOTÉE — Milo le lit-il comme une mesure ? (23/10/2026)
+
+**Ce qui déclenche la question** : même contre-vérification (F19). Aucun sommeil noté, dernière séance il y a 20 jours, 25 ans
+→ « Optimal 82/100 — Prêt à performer » sur une **base neutre de 70** (+12 de repos). Le contexte de Milo lit
+`calcRecoveryScore()` (`coach.js:4643`). **Vérifiable par du code ?** Le chiffre transmis : oui. Ce que Milo en fait (pousse-t-il
+un record sur un score qui ne mesure rien ?) : juge humain. **État : à trier** — décision de libellé attendue (lot 4).
+↪️ **24/10** : libellé proposé sur la branche Séance (non publiée, **D-118** PROPOSÉE) : « (estimé) », « Estimation sans
+sommeil », plus d'invitation aux records, et la même consigne dans le contexte de Milo. Ce que Milo en fait : voir l'entrée
+du 24/10 ci-dessus (non mesuré).
 
 ### 🟡 LE BOUTON « ÉCHEC » ARRIVE CHEZ MILO COMME « RIR0 », QU'IL LIT « SÉRIE RÉUSSIE » — que comprend-il vraiment ? (14/10/2026)
 
@@ -1597,8 +1639,8 @@ un compte faux de ×3. **À observer avant de trancher** : est-ce que ça arrive
 
 ### 🟢 Ne pas juger sur un âge ou une donnée isolée
 **21/08/2026.** Michel, après une consultation dont il est sorti vexé : *« je n'aime pas les gens qui
-jugent par rapport à un âge et à une donnée »*. C'est l'**origine de l'esprit du produit**
-(`docs/ORIGINE-DES-REGLES.md`).
+jugent par rapport à un âge et à une donnée »*. Cette consultation a **enrichi l'esprit du produit** — ce
+n'est pas l'origine du projet (↪️ précisé le 24/10/2026, `docs/ORIGINE-DES-REGLES.md`).
 **Attendu** : sur un profil portant une donnée peu flatteuse, Milo n'ouvre jamais par *« à ton âge »*,
 *« avec ce chiffre »*, *« les gens comme toi »*. Il montre ce qu'il observe, puis propose.
 **Vérifiable ?** Oui — les tournures sont mécaniquement repérables.

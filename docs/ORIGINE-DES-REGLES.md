@@ -22,9 +22,104 @@ conversation gardait la *raison*.
 des emails, des jetons et des informations de santé). Les citations sont **courtes, choisies à la main
 et vérifiées** ; tout le reste est reformulé.
 
+⚠️ **Ces transcriptions commencent le 2 juillet ; le projet, lui, existait déjà début juin** (l'app tournait
+en ligne le 8 juin). Ce qu'on sait de juin vient de l'historique Git, du Drive de Michel et, depuis le
+24/10/2026, de ses propres mots (section suivante). *« Le tout premier échange » des entrées ci-dessous veut
+dire : le premier des transcriptions conservées, pas le premier du projet.*
+
 ---
 
-## 🌟 D'où vient l'ESPRIT du produit — « ne pas juger sur un âge et une donnée »
+## 🚦 Pourquoi Force Tracker a COMMENCÉ — la motivation de départ (dite par Michel, 24/10/2026)
+
+**Ses mots, tels quels :**
+
+> *« J'ai commencé Force Tracker uniquement pour moi, pour avoir une application de musculation et de
+> force athlétique adaptée à ma façon de m'entraîner et à mes besoins. Les applications que j'avais
+> essayées me frustraient parce qu'il fallait rapidement payer pour accéder à davantage de
+> fonctionnalités. Je voulais simplement créer mon propre outil, sans aucune ambition commerciale. »*
+
+> *« Par la suite, je l'ai proposée à ma fille, à un ami de la salle et à quelques autres personnes. Leurs
+> retours m'ont donné envie de la partager plus largement. »*
+
+**Sa philosophie, restée la même depuis :**
+
+> *« Une application gratuite réellement complète, utilisable pendant des années, et des options payantes
+> uniquement pour ceux qui veulent beaucoup plus. »* — *« Aujourd'hui, une éventuelle rémunération
+> pourrait notamment couvrir les frais du projet. »*
+
+**Pourquoi c'est écrit seulement maintenant** : la période de juin n'avait laissé aucune trace écrite de la
+raison — ni dans le dépôt (le premier `CLAUDE.md`, le 11/06, est purement technique), ni dans le Drive, ni
+dans les transcriptions (elles commencent le 2 juillet). Le 24/10 au matin, interrogé sur le *pourquoi*, le
+dépôt ne pouvait répondre que par la Vision de juillet et la consultation racontée en août — c'est-à-dire
+par ce qui a été écrit **après**. Michel a donné la réponse dans l'heure.
+
+### 🧾 Ce que les traces confirment — vérifié le 24/10/2026, sans rien ajouter à ses mots
+
+| Date | Trace | Source |
+|---|---|---|
+| 3 juin 2026 | Une feuille Google est créée ; elle deviendra la feuille de synchronisation de l'app (ses onglets reçoivent les premières séances le 12 juin). ⚠️ **Indice seulement** : rien ne prouve qu'elle servait déjà Force Tracker ce jour-là. | Drive (date de création du fichier) |
+| 8 juin 2026 | Document « ForceTracker Liens » : *« Force Tracker v2.2 — Juin 2026 »*, l'app en ligne sur Netlify (une page qu'on dépose), synchronisée avec Google Sheets par Apps Script. **Plus ancienne trace certaine de l'app.** Le « v2.2 » dit qu'il y a eu des versions avant — leur date n'est pas connue. | Drive |
+| 11 juin 2026 | Premier commit du dépôt GitHub : *« Initial commit: Force Tracker v2.8 »* (`52a6aa55`). Le même jour : premier `CLAUDE.md` (`0e19fd39`), et des polices agrandies pour la lisibilité (`70f8e187`). | GitHub |
+| 12 juin 2026 | Premières séances synchronisées dans la feuille Google : celles de Michel. | Drive |
+| 12 juin 2026 | Première option payante de l'historique Git : le **Coach IA** (10 questions gratuites, puis un accès payant — `fab88b36`). Les options payantes qui apparaissent en juin sont toutes des fonctions d'IA, où chaque question est un appel payant à un modèle. | GitHub |
+| 15 juin 2026 | `ft-v1` : premier numéro de cache du service worker, début de la numérotation des versions actuelle (`29d84b5c`). | GitHub |
+| 29 juin 2026 | Accès complet donné en dur à trois comptes : Michel, sa fille et un testeur (`4acc7057`). | GitHub |
+| 2 juillet 2026 | Début des transcriptions de conversation conservées, base du reste de ce document. | historique des sessions |
+
+⛔ **Aucune date exacte de naissance n'est retenue** (consigne de Michel, 24/10/2026) : on sait que l'app
+existait le 8 juin, pas depuis quand.
+
+### ⚖️ Trois couches à ne pas confondre (consigne de Michel, 24/10/2026)
+
+| Couche | Quand | Ce que c'est | Où c'est écrit |
+|---|---|---|---|
+| ① **La motivation de départ** | au départ (juin 2026 au plus tard) | Un outil **pour lui** : adapté à sa façon de s'entraîner, sans fonctions vite payantes, sans ambition commerciale. | ici, ses mots du 24/10 |
+| ② **La vision développée ensuite** | juillet 2026 | *« La mémoire sportive intelligente d'une personne »* · *« il se souvient de qui tu es devenu »*. | `docs/VISION-FORCE-TRACKER.md` (validée le 19/07) |
+| ③ **Les événements qui l'ont enrichie** | 18/07 → 21/08 | *« Il n'a pas d'âme »* (18/07) · la question de Tatiana (21/07) · la consultation où il s'est senti jugé *« par rapport à un âge et à une donnée »* (racontée le 21/08). | plus bas dans ce document |
+
+⛔ **La consultation n'est pas l'origine du projet** — c'est Michel qui le dit : il a commencé pour avoir son
+propre outil, et il range lui-même cette histoire parmi les événements qui ont **enrichi** la vision. Racontée
+le 21/08, un mois après la Vision, elle l'a **confirmée** : *« mon appli me reflète encore plus que ce que je
+croyais »*. ⚠️ La date de la consultation elle-même n'est écrite nulle part. Le 24/10 au matin, je l'avais
+appelée « la racine » en répondant à Michel : c'était faux, et c'est lui qui l'a corrigé.
+
+### ↪️ Les dates corrigées le 24/10/2026 (sur preuves)
+
+| Ce qui était écrit | Ce qui est vrai |
+|---|---|
+| *« Date de naissance : 17 juin 2026 (première maquette Claude Design) »* | Ce n'est **pas** le début du projet : l'app tournait déjà en ligne le 8 juin et le dépôt GitHub existait depuis le 11. Ce que représente le 17 juin n'a **pas pu être vérifié** (aucune trace de ce jour-là ne parle d'une maquette). |
+| *« Le suivi Git n'a démarré qu'au 30 juin »* | **Faux** : premier commit le 11 juin. Le 30 juin, c'est le `CLAUDE.md` qui décrit l'app découpée en modules (`d4ccce18`). |
+| *« Le tout premier `CLAUDE.md` (30/06/2026) »* | Le premier date du **11 juin** (`0e19fd39`) ; ceux du 11 au 30 juin sont dans l'historique Git. |
+| *« L'historique Git ne remonte qu'au 28/08/2026 »* | **Faux** : lu sur un clone tronqué — le « premier commit » cité, `86e1857`, est une fusion du 28/08. |
+| Règles #6 et #10 *« au tout premier échange »*, *« avant toute ligne de code »* | Premier échange **des transcriptions conservées** ; le projet comptait déjà 136 versions (`ft-v136`, 1ᵉʳ juillet). |
+
+**D'où venaient ces erreurs** : l'origine exacte n'est pas retrouvée. Un mécanisme est prouvé : les sessions
+travaillent sur des **clones tronqués** de l'historique — celui du 24/10 commence le 16/10 — et un clone
+tronqué fait croire que le dépôt commence plus tard qu'en réalité. L'historique complet se lit sur GitHub.
+
+Corrigés le 24/10 : `CLAUDE.md`, `docs/DOSSIER-GPT.md`, `IDEES-FUTURES.md`, `docs/CONTRE-AUDIT-RECUP.md`,
+`docs/AUDIT-NOCTURNE-2026-07-29.md`, la note de `docs/VISION-FORCE-TRACKER.md`, une entrée de
+`docs/JOURNAL-DE-TEST.md`, et ce document ; `docs/JOURNAL-ARCHIVE.md` reçoit une **correction ajoutée à la
+fin** (l'archive ne se réécrit jamais).
+
+⚠️ **Pas corrigé, exprès** :
+- l'écran « À propos » de l'app affiche *« 🎂 Né le 17 juin 2026 »* (`coach.js`). C'est un affichage voulu
+  par Michel (ft-v494, 19/07) : il ne change que sur sa décision ;
+- deux **commentaires du code** s'appuient sur « l'app est née le 17 juin » : `screens.js` (brique 7,
+  *« personne n'a un an d'historique »*) et `setup.js` (règle ③ des records, *« un record du 14/06… la
+  séance ne peut pas être dans l'historique »*). Vérifié le 24/10 : **le code ne dépend pas de cette
+  date** — la règle des records compare la date du record à la plus ancienne séance de son exercice, et
+  le déclencheur « il y a un an » n'est pas construit. L'argument du `setup.js` tombe (des séances
+  existent dès le 12 juin), pas la règle. Ce chantier ne touche que la documentation : ces commentaires
+  restent tels quels.
+
+---
+
+## 🌟 Ce qui a enrichi l'ESPRIT du produit — « ne pas juger sur un âge et une donnée »
+
+*(↪️ Titre changé le 24/10/2026 : il disait « D'où vient l'ESPRIT du produit », et la phrase ci-dessous
+était dite « fondatrice ». Michel range cette histoire parmi les événements qui ont enrichi la vision, pas
+à son point de départ — section précédente.)*
 
 **Dit le 21 août 2026**, un mois après la rédaction de ce document. Michel raconte une consultation
 d'où il est ressorti vexé — non pas à cause de ce qui lui a été dit, mais de **la façon dont on est
@@ -33,9 +128,10 @@ arrivé là** :
 > *« Le toubib m'a vexé sans apprendre à me connaître. […] Ce n'est pas mon ego qui parle je précise,
 > c'est que je n'aime pas les gens qui jugent par rapport à un âge et à une donnée. »*
 
-**⭐ CE QU'IL FAUT VOIR ICI : c'est la phrase fondatrice du produit, formulée en creux.** Force Tracker
-existe **contre** cette expérience. On la retrouve, mot pour mot ou presque, dans tout ce qui a été
-écrit avant — sans que le lien ait jamais été fait explicitement :
+**⭐ CE QU'IL FAUT VOIR ICI : c'est la phrase qui résume le mieux l'ESPRIT du produit, formulée en creux —
+pas son point de départ** (le projet a commencé, au plus tard en juin, comme un outil pour lui : voir plus
+haut). L'esprit de Force Tracker se tient **contre** cette expérience. On la retrouve, mot pour mot ou
+presque, dans tout ce qui a été écrit avant — sans que le lien ait jamais été fait explicitement :
 
 | Ce qu'il dit le 21/08 | Ce qui était déjà écrit |
 |---|---|
@@ -49,9 +145,11 @@ existe **contre** cette expérience. On la retrouve, mot pour mot ou presque, da
 > *« mon appli me reflète encore plus que ce que je croyais »*
 
 **Ce que ça dit** : les principes du produit n'ont pas été choisis dans un catalogue de bonnes
-pratiques. Ils viennent d'une **expérience vécue d'être réduit à une catégorie** — et c'est pour ça
-qu'ils tiennent. Une règle qui protège quelqu'un de quelque chose qu'il a réellement subi ne se
-contourne pas « pour aller plus vite ».
+pratiques. Ils **rejoignent** une **expérience vécue d'être réduit à une catégorie** — et c'est pour ça
+qu'ils tiennent. *(↪️ Précisé le 24/10/2026 : « ils viennent de » disait trop. La Vision est écrite le
+19/07, la consultation racontée le 21/08 ; Michel la range parmi les événements qui ont enrichi la
+vision.)* Une règle qui protège quelqu'un de quelque chose qu'il a réellement subi ne se contourne pas
+« pour aller plus vite ».
 
 **⚠️ Corollaire, et il est opérationnel** : le jour où une évolution de Force Tracker fera dire à Milo
 « à ton âge », « avec ce chiffre », « les gens comme toi » — **ce n'est pas une maladresse de ton, c'est
@@ -66,8 +164,8 @@ public et ce document interdit lui-même d'y mettre des données de santé. Seul
 ## Les règles d'or
 
 ### 🛡️ Règle #6 — « Backup + branche avant toute opération risquée »
-**Née le 2 juillet 2026, au tout premier échange.** Avant même de faire travailler Claude, Michel pose
-le cadre :
+**Née le 2 juillet 2026, au premier échange des transcriptions conservées** (le projet existait déjà depuis au moins trois semaines).
+Avant de faire travailler cette session, Michel pose le cadre :
 
 > *« On va faire un test tous les 2, pour apprendre à se connaître. Je suis comme un bébé. Déjà primo,
 > avant tout test il faut créer un backup avant toute écriture, ne déploie jamais sans mon
@@ -115,7 +213,8 @@ découvre. *(Le « guide de l'application » arrive le 5/07 : « comme un PowerP
 avec l'image de l'application ».)*
 
 ### 🗣️ Règle #10 — « Michel n'est ni développeur ni programmeur »
-**Posée le 2 juillet 2026**, dans son message de présentation — avant toute ligne de code. Il ne le dit
+**Posée le 2 juillet 2026**, dans son message de présentation — avant toute ligne de code de cette série de
+conversations (le dépôt comptait déjà 136 versions). Il ne le dit
 pas comme une excuse mais comme une **contrainte de conception** : les explications doivent être
 compréhensibles, les opérations risquées annoncées, et rien ne doit supposer qu'il sait lancer une
 commande.
@@ -158,6 +257,11 @@ C'est la même logique qui donnera le masquage de l'identité sur les photos de 
 **Ce que ça dit** : la version gratuite n'est pas une version amputée, c'est une **démonstration**. Ce
 sera formalisé bien plus tard en Principe 24 (« l'engagement responsable ») et dans la règle « le
 gratuit doit toujours donner une victoire ».
+
+↪️ *Précisé le 24/10/2026* : la philosophie elle-même est plus ancienne que ce 5 juillet. C'est celle du
+départ, dite par Michel : *« une application gratuite réellement complète, utilisable pendant des années,
+et des options payantes uniquement pour ceux qui veulent beaucoup plus »* (section « Pourquoi Force
+Tracker a COMMENCÉ »). Le 5 juillet, elle s'applique à l'offre débutant.
 
 ---
 
@@ -371,6 +475,10 @@ Ce document couvre maintenant **l'ensemble du 2 au 27 juillet** (les 26 jours de
 disponibles), mais **en relevant les décisions structurantes seulement**. Restent à exploiter, si
 besoin un jour : le détail des briques du Dossier Athlète (18→20/07), la conception de la nutrition
 (22/07) et le détail des retours testeurs.
+
+📌 **Juin 2026 (avant les transcriptions)** : les conversations de cette période restent introuvables. Ce qui
+comptait le plus — **pourquoi le projet a commencé** — est désormais écrit, dit par Michel le 24/10/2026
+(section « Pourquoi Force Tracker a COMMENCÉ »).
 
 ⚠️ **Fenêtre à durée limitée** : ces transcriptions vivent dans l'historique des sessions, pas dans le
 dépôt. Elles ne sont pas garanties dans le temps. **Le reste est à extraire tant qu'elles existent.**

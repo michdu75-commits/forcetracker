@@ -1540,3 +1540,107 @@ Michel, 21/10 : *« Nutrition est maintenant la priorité principale »*, M6 d'a
 **Règle d'or #17 (code applicatif)** : **0** donnée persistée · **1** fichier (`app.js`) · **+43 / −14** lignes (code **+14 / −10**) · **0** ancien chemin supprimé ou fusionné.
 
 **↪️ Publication (21/10/2026, feu vert conditionnel de Michel, ce lot seul ; passation de Claude Nutrition à Claude Principal).** Contrôles avant fusion, faits par session-B, réseau coupé (espace réseau isolé + garde ; aucune tentative de sortie des suites) : master `bdfc6d27` inchangé et aucune publication concurrente (vérifié sur le serveur) · annexe de recette complète (T2) sur l'arbre préparé `44b3ae31` : **14 PASS + 1 défaut connu** (`discussions`, valeurs identiques à master rejoué le même jour) · PWA hors ligne (T1) **PASS** · retour arrière rejoué **à blanc** en `ft-v1259` sur un arbre jetable (`app.js` identique à l'octet à `ft-v1257`, seul `sw.js` servi diffère, règles vertes, banc M6 **15 OK / 17 rouges** attendus, fumée `ft-v1259` sans erreur ; jamais poussé) · fumée sur l'arbre exact `da523380` (Service Worker et cache `ft-v1258`, « À propos », aucune pop-up, 6 écrans et leurs aides, Guide, séance libre, **0 erreur JavaScript** ; contrôle négatif rouge) · `check_regles` vert (1 alerte connue sans lien), `git diff --check` propre, `push --dry-run` en avance rapide. Puis **un seul push** en avance rapide (`bdfc6d27` → `da523380`), jamais forcé : Pages run n°1358 réussi sur `da523380` (déploiement GitHub `7228331992` « success », 14:12:30 UTC) ; ni Apps Script ni Worker déclenchés (aucun fichier serveur). ⚠️ le domaine public `michdu75-commits.github.io` n'est pas joignable depuis la session (mandataire : CONNECT 403) : la version réellement servie se confirme sur l'iPhone (Menu → À propos = `ft-v1258`). ⛔ Aucune donnée réelle touchée (517 entrées, favoris, repas habituels, Iso Zero), ni M1 → M4. Le PDF de la passation n'a pas été retrouvé (ni dans le dépôt, ni sur Drive, ni dans ce conteneur : les sessions ont des conteneurs séparés) ; sa version écrite, `docs/PASSATION-FT-V1258-M6.md`, a été lue en entier.
+
+### ⏱️ SEANCE-REPOS-01 — LE REPOS EN COURS SURVIT À LA FERMETURE DE L'APP (22/10/2026, session-C Claude Séance, feu vert et décisions de Michel du 22/10) — DÉVELOPPÉ ET TESTÉ SUR LA BRANCHE `claude/dreamy-bell-pu88ia`, NON INTÉGRÉ, NON PUBLIÉ, CLONE NON RÉGÉNÉRÉ
+
+**Le défaut (mesuré sur `ft-v1258`).** Le repos vivait en mémoire seulement : iOS ferme une PWA restée en arrière-plan, et à la
+réouverture le repos avait disparu. Au retour au premier plan sans fermeture, `app.js` le **coupait** dès 5 s de dépassement — le
+dépassement en négatif (ft-v1030, ft-v1075) ne se voyait jamais au retour (`BUGS.md` §91).
+
+**La garantie d'`app.js` — examinée AVANT de coder (consigne de Michel).** « Le timer de repos ne survit jamais à un redémarrage ni à
+un retour au premier plan » : commit `e3367525` (ft-v144, 01/07), correctif à l'aveugle pendant la panne « séance coincée », dont la
+cause était ailleurs (erreurs TDZ de Safari, v144 → v153). Le repos n'a jamais été enregistré : au démarrage, `stopRest()` ne
+remettait que l'écran à zéro. **Rien d'essentiel d'incompatible → pas de STOP** ; garantie remplacée, son histoire écrite à sa place.
+
+**Le correctif (décisions de Michel)** *(texte du matin, gardé — R30 ; ↪️ le seuil de 5 min « à confirmer » a été TRANCHÉ l'après-midi : 15 min, app ouverte et fermée, D-102 — voir « AVENANT » ci-dessous)*. `S.wkt.repos = {debut, total}` (aucune clé nouvelle), un seul écrivain `_reposMemoriser`
+(`ft4_wkt` seul, jamais en mode démo), une seule reprise `_reposReprendre` au démarrage (séance active, valeur lisible, non expirée ;
+pas de vibration ni d'écran GO en retard) ; **un seul seuil** `REST_DEPASSEMENT_MAX` = 5 min après la fin théorique, app ouverte comme
+au retour (⭐ il valait 15 min app ouverte, un choix de Claude en ft-v1030 — **à confirmer par Michel**) ; le brouillon de secours
+s'écrit sans le repos (`state.js`, une ligne, coordonnée avec Claude Principal : aucune objection). Aides « ? » Séance, aide détaillée,
+diapo du Guide, point rouge d'origine corrigés (15 → 5 min) + point rouge `repos-persistant`, pas de pop-up. Registre : **D-100**
+(⚠️ numéro à reconfirmer à l'intégration — D-099 pris le même jour par Claude Nutrition ; le code ne cite aucun numéro).
+
+**Tests (réseau coupé, 0 appel à Milo).** Banc C-REP-* **17 OK / 26 rouges sur `ft-v1258` → 43 / 0** · contrôle négatif
+**31 / 31** (arbre sain 0 rouge au début et à la fin, 37 min) · 12 bancs voisins **755 / 0** · annexe **14 PASS + 1 défaut connu**
+(`discussions`, valeurs identiques à master le même jour) · prompt de Milo **identique à l'octet** à master (77 697 caractères, avec
+ou sans repos) · retour arrière **à blanc** (ancien code + `ft4_wkt` avec `repos` : sans erreur, sans chrono, séance intacte) ·
+passe complète D-031 **n°1 : 7 865 ✅ / 1 ❌, non valide** — `B-NP01-A` (rechargement en pleine séance) comparait tout `S.wkt` à l'octet ; seul écart mesuré : `repos`, un repos expiré effacé au rechargement comme décidé, que l'instantané portait encore parce qu'il devançait le tick. Témoin réécrit sur sa garantie (la séance sans `repos`) : 36 / 0 sur la branche et sur master, mutation MA20 toujours gardée (`BUGS.md` §93). Passe complète **n°2 : 7 866 ✅ / 0 ❌, VALIDE** (sur `ffa5ee4e`, 12:57 → 14:30 UTC, 93 min, réseau isolé + garde ; ④ revérifiée hors isolement : master `f82a7c07`, retard 0). Depuis : documentation seulement (D-031). **Aucun numéro de version : rien n'est publié.**
+
+**Limites (écrites, hors périmètre).** Ce qui ne revient pas après un rechargement : la question du RIR, l'étiquette du dock,
+l'avance automatique (superset, exercice suivant), le pas de 5 s des abdos, la mémoire de durée par exercice ; aucune alerte app
+fermée ; l'export complet emporte `repos` pendant un repos ; Safari / iPhone réel non vérifiés ; la réouverture hors ligne ne se
+recette pas sur le clone (son service worker n'a pas de cache).
+
+**Règle d'or #17 (code applicatif).** **1** donnée persistée (`repos` dans `ft4_wkt`, 0 clé) · **6** fichiers (`log.js`, `app.js`,
+`state.js`, `screens.js`, `coach.js`, `constants.js`) · **+100 / −19** lignes (code seul **+41 / −10**) · **2** anciens chemins
+supprimés ou fusionnés (l'écouteur −5 s d'`app.js`, le `stopRest()` de démarrage). Détail : `docs/SEANCE-REPOS-01.md`.
+
+**↪️ AVENANT DU 22/10 APRÈS-MIDI (D-102, décision validée de Michel) — 15 MIN, APP OUVERTE OU FERMÉE.** `REST_DEPASSEMENT_MAX`
+300 → **900 s** ; le dépassement en négatif, la restauration après fermeture et le repos hors brouillon sont conservés ; les 5 aides
+disent « 15 min après la fin » ; les durées de repos prévues (programmes, préréglages) ne changent pas. ⛔ **Calories** : moteur et
+plafonds **non touchés** (fonctions modifiées listées depuis le diff : aucune du moteur, ni `finishWorkout`, `toggleSet`,
+`_wktElapsedMs`) ; témoins C-REP-I1/I2 (séance enregistrée identique à l'octet, 3 sources de durée × 5 états du repos, ancrée sur
+master) et C-REP-J1/J2 (fermeture pendant un repos : rien compté deux fois, une seule séance) ; comparateur master ↔ branche
+15 / 15 identiques sur l'arbre final (contre-épreuve : 6 / 15 rouges avec une faute injectée). **La revue adverse a trouvé deux défauts du lot du
+MATIN, corrigés** (`BUGS.md` §95) : « +15 s » tôt dans le repos puis fermeture effaçait le repos (garde jugeant le départ au lieu
+du restant — C-REP-D1b) ; un 2ᵉ onglet périmé réécrivait SA séance à l'expiration de son repos, ressuscitant une séance terminée
+ailleurs (double comptage) ou effaçant des séries récentes (C-REP-K1/K2/K3). Banc **61 / 0** (46 / 15 rouges sur le code du
+matin, 25 / 36 sur ft-v1258) · contrôle négatif **52 / 52** · voisins **791 / 0** (13 bancs, arbre final) · annexe 14 PASS + 1 défaut connu (identique à
+master à la même minute) · prompt de Milo identique à l'octet · **passe complète D-031 : 7 884 ✅ / 0 ❌, VALIDE** (sur `0d0d4269`,
+branche fusionnée avec master `6c0a400d`). Règle d'or #17 sur le lot entier : **1** donnée, **6** fichiers, **+131 / −19** (code seul
+**+49 / −10**), **2** anciens chemins + le plafond de « +15 s » à un seul propriétaire. Détail : `docs/SEANCE-REPOS-01.md` §12.
+
+### 🖼️ SEANCE-UX-IMAGES — LES VIGNETTES ANATOMIQUES DE « CHOISIR UN EXERCICE » (23/10/2026, session-C Claude Séance, paquet et consignes de Michel) — DÉVELOPPÉ ET TESTÉ SUR LA MÊME BRANCHE, NON INTÉGRÉ, NON PUBLIÉ
+
+**La demande** : les vignettes du paquet de Michel dans « Choisir un exercice » **seulement** (ni autres écrans, ni bouton
+« Anatomie ») ; **Mollets conservée**, « Corps complet » **pas** utilisée pour elle ; recherche, catégories et reconnaissance
+préservées. **Fait** : 7 PNG **à l'octet** (SHA-256 du manifeste) sous des **noms nouveaux** (`muscles/vignettes/`, cache d'images
+permanent), chacun sur son groupe ; cadre **88 × 51 ancré en bas** qui masque le **liseré du découpage** (fond et bord de carte de la
+maquette, 3 à 17 lignes, mesuré) sans étirer ni recolorer ; en-tête d'un groupe ouvert en ligne ; préchargement `sw.js` (pas de
+version). **Mollets** : pas de vignette dans le 1ᵉʳ paquet ; **la sienne est venue dans un 2ᵉ paquet (23/10 matin, D-106)** et
+elle est branchée — le fichier livré était une carte sur un grand fond blanc (21 % du cadre aurait été blanc) : le dépôt garde la carte
+seule, pixels identiques, ancrée à 35 % pour ne couper aucun muscle (D-107, à valider ; témoin C-VIG-A6) ; tests ciblés : banc **20 / 0** (12 / 8 avant l'ajout), contrôle négatif **25 / 25**, comparateur 12 / 12, bouton central immobile, voisins du sélecteur 0 rouge — passe complète **à refaire** avant intégration. ⚠️ **La revue adverse a trouvé un vrai défaut, corrigé avant toute intégration** : à 320 px, l'en-tête d'un groupe ouvert
+débordait (Abdominaux : « Anatomie » poussé 20 px hors de la feuille) — l'en-tête passe maintenant à la ligne quand le libellé ne
+tient pas, témoin **C-VIG-B4** (`BUGS.md` §99) ; et un témoin faible (le préchargement cherché comme du texte) renforcé.
+Décisions **D-104** (Michel) / **D-105** (choix de construction, PROPOSÉ). Banc C-VIG-* **19 / 0** (8 / 11 rouges sur le code
+d'avant ; avant le correctif : 18 / 1) · contrôle négatif **20 / 20** (MV5 devenue équivalente avec le correctif — mesuré, pas supposé) · comparateur avant ↔ après **12 / 12** (8 groupes, 30 recherches, 30 intitulés libres) · bouton central **immobile** (mesuré avant / après) · voisins **0 rouge** (annexe 14 PASS + 1 défaut connu, chiffres de master) · passe complète **7 923 ✅ / 0 ❌** sur `756c97a3` (4 conditions) ·
+captures avant / après dans le PDF. Règle d'or #17 : **0** donnée · **3** fichiers + 7 images · **+42 / −11** · **0** ancien chemin.
+Détail : `docs/SEANCE-UX-IMAGES.md`.
+
+### 🔎 AUDIT TRANSVERSAL SÉANCE DE CHATGPT (23/10/2026) — CONTRE-VÉRIFIÉ PAR LA SESSION-C, RIEN CORRIGÉ (phase 1 = analyse seule, décision de Michel attendue)
+
+**La demande** (Michel) : comparer chaque constat au code de master et de la branche Séance, le reproduire par des tests réels
+avec contrôles négatifs, le classer, proposer un plan de correction priorisé **sans modifier l'historique**, signaler les
+dépendances avec Claude Principal et Claude Nutrition. ⛔ Aucune correction, fusion ni publication sans son accord.
+**Le score** (master `4ab7f860` = l'arbre audité `57553711` pour le code ; mêmes chiffres sur la branche `7f359f15`) :
+
+| État | Constats |
+|---|---|
+| ✅ **confirmés, à corriger** | **P1** : F01 (calendrier : unilatéral compté à moitié) · F02 (« Enregistrer » sans changement : volume 600 → 300, et calories recalculées au poids du jour 97 → 112) · F08 (record fantôme après suppression — connu depuis le 02/09, décision produit) · **P2** : F03 (W dans le volume par muscle) · F04 (« Primaires » par cumul) · F05 (règle générique avant les muscles choisis) · F06 (tuile Nutrition, une seule séance) · F09 (repos ignorés par le moteur calorique) · F12 (Oiseau 5,5) · F13 (aide Nutrition contraire au calcul) · F15 (17 noms sans image) · F19 (« Optimal, idéal pour des records » sans sommeil) · **P3** : F07 (couleur du calendrier en cache) · F10 (`totalMin`, sans lecteur) |
+| 🆕 **nouveaux, hors audit** | N1 — corriger la durée efface une modification non enregistrée du même écran · N2 — la durée corrigée ne recalcule pas les calories (317 au lieu de 440) · le fait « Groupes musculaires (30 j) » envoyé à Milo dit « Fessiers » pour des leg curls · 21 noms sans tuile du sélecteur · 6 fichiers jamais affichés mais précachés (551 289 octets) |
+| ⚠️ **faits vrais, conclusion infirmée** | F11 (le détail calories n'est affiché nulle part : `renderCalorieBreakdown` sans appelant) · F14 (Leg Curl en Fessiers = définition du projet, pas une erreur) · index « 1 903 » (1 901 déclarations + 2 fonctions auto-exécutées) |
+| 🟢 **déjà corrigé / conforme** | `res.ok` de la synchro (26/08) · stockage plein (repli 50 signalé, drapeau, brouillon intact) · tous les cas de la matrice qui protègent les données (A01, A02, A09, A11, A12, B03, B04, C09, E01, E02, E04) · F16 (Spoto : rien d'automatique) |
+| ❔ **non vérifié** | F18 et A15-A17 (iPhone réel) · C10 (données réelles) · D04-D05 (validation humaine) · E03 (domaine de Claude Principal, D-110) · valeurs du Compendium (site inaccessible : `CONNECT tunnel failed, response 403`) |
+
+**Ce qui reste, par lot** (rien n'est commencé) : ① une seule règle pour les chiffres d'une séance (F01, F02, N1, N2 ; diagnostic
+en lecture seule des séances déjà touchées avant toute décision) · ② records (F08, décision) · ③ figurine et muscles (F03, F04, F05,
+fait Milo) · ④ affichages et aides (F06 et F13 → Claude Nutrition, F07, F19) · ⑤ moteur calorique (F09-F12, gelé sans accord) ·
+⑥ catalogue et images (F15, tuiles, précache). Preuves : 26 scénarios et 6 contre-épreuves (`tools/contre_verif_seance_2026_10_23/`),
+20 bancs Séance rejoués **920 / 0** + calendrier 10/0, muscles 241/241, calculs 339/0. Détail et matrice des 62 cas :
+`docs/CONTRE-VERIF-AUDIT-SEANCE-2026-10-23.md` ; bug de famille : `BUGS.md` §100.
+
+↪️ **24/10/2026 — MISSION SÉANCE DE MICHEL (P1) : CHANGEMENTS D'ÉTAT** *(branche `claude/dreamy-bell-pu88ia`, **non intégrée,
+non publiée** ; détail : `docs/SEANCE-CHIFFRES-2026-10-24.md`)* :
+
+| Constat | État au 24/10 |
+|---|---|
+| F01 · F02 · N1 (K2) · N2 (K1) · F21 | **corrigés sur la branche** (D-114 → D-116) — aucune séance ancienne réécrite |
+| F03 · F06 · F07 · F19 · F22 · F23 · F25 | **corrigés sur la branche** (D-117 → D-119) |
+| F08 | **corrigé sur la branche** : aperçu avant → après, rien sans le geste (D-120) |
+| F04 | **corrigé sur la branche** (D-121) |
+| F05 | **corrigé pour l'affichage** (D-122) ; **calories inchangées**, l'extension (R8) attend Michel |
+| F15 · précache · Mollets | « Aucune illustration disponible » (D-124) · 6 fichiers retirés du préchargement (D-125) · Mollets 34 Ko (D-123, **à valider à l'œil**) ; 17 illustrations à produire et 156 non préchargées : **décisions de Michel** |
+| 21 noms sans tuile | **non fait** (une tuile « Autres » à valider) |
+| F09 → F12 (moteur calorique) | **diagnostic seul** (`docs/DIAGNOSTIC-MET-2026-10-24.md`, R1 → R8 simulées) : rien appliqué, moteur gelé |
+| F13 | domaine Nutrition (inchangé ici) |
+| nouveau : « Repos défaut » vide dans le Profil | **corrigé sur la branche** ; réglable aussi depuis la séance (D-126) |

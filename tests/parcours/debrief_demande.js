@@ -358,8 +358,12 @@ module.exports.ecran = async function (t, b, PORT) {
     await X.cx.close();
   }
   /* ═════════ OD-12 / OD-13 — deux séances, le même jour ═════════ */
+  /* ↪️ 24/10/2026 (mission Séance, Q5) : B portait `volume: 777` pour des séries qui en font 470 (70×5 + 12×10) — un marqueur
+     qui ne correspondait à rien. Depuis que tous les écrans lisent le volume sur les SÉRIES (`_volTravail`), la désignation
+     de B disait 470 et le témoin ne la reconnaissait plus. Les séries font maintenant vraiment 777 (77×7 + 17×14) : le
+     marqueur et ce que le témoin vérifie sont inchangés. */
   const SB = () => ({ id: Date.now() - 2 * 3600e3, ts: Date.now() - 2 * 3600e3, date: J, volume: 777, exs: [
-    { name: 'Squat', sets: [{ kg: 70, reps: 5, type: 'N', done: true }] }, { name: 'Curl Biceps Haltères', sets: [{ kg: 12, reps: 10, type: 'N', done: true }] }] });
+    { name: 'Squat', sets: [{ kg: 77, reps: 7, type: 'N', done: true }] }, { name: 'Curl Biceps Haltères', sets: [{ kg: 17, reps: 14, type: 'N', done: true }] }] });
   {
     const B = SB(); const bid = String(B.id);
     const X = await ouvrir({ wkt: WKT([YATES()]), sessions: HIST().concat([B]),

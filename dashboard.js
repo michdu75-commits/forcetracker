@@ -141,7 +141,7 @@ function _dCourbePoids(){
   return _dCourbe(w.map(x=>({date:x.date,exs:[{sets:[{kg:+x.kg||+x.bw,reps:1,done:true,type:'N'}]}]})));
 }
 function _dBarres(sess){
-  const v=sess.map(s=>+s.volume||+s.vol||0).filter(x=>x>=0);
+  const v=sess.map(s=>(typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0))).filter(x=>x>=0);   // la règle unique du volume (mission Séance, 24/10)
   if(!v.length)return '<div class="vide">Aucun volume enregistré.</div>';
   const W=560,H=190,mx=Math.max(...v)||1, n=v.length, bw=Math.max(2,(W-24)/n-2);
   let b='';
@@ -182,11 +182,11 @@ function _dFigurine(sess){
     return '<div class="vide">Figurine indisponible.</div>';
   const douze=sess.slice(-12), exs=_dExsDe(douze);
   if(!exs.length)return '<div class="vide">Aucune séance récente à représenter.</div>';
-  const d=_mscScores(exs)||{};
-  const svg=`<div class="fig">${_mscSVG({sc:d.sc||{},ind:d.ind||{}})}</div>`;
+  const d=_mscScoresVus(exs)||{};
+  const svg=`<div class="fig">${_mscSVG({sc:d.sc||{},ind:d.ind||{},prim:d.prim})}</div>`;   // F04 : le rouge = les moteurs
   // Combien de fois chaque groupe a été sollicité sur ces 12 séances, en % du plus travaillé.
   const noms=(typeof _MG!=='undefined')?_MG:{}, cnt={};
-  douze.forEach(s=>{ const x=_mscScores(_dExsDe([s]))||{};
+  douze.forEach(s=>{ const x=_mscScoresVus(_dExsDe([s]))||{};
     Object.entries(x.sc||{}).forEach(([k,v])=>{ cnt[k]=(cnt[k]||0)+(v>=2?2:1); }); });
   const mx=Math.max(1,...Object.values(cnt));
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,7)
@@ -231,7 +231,7 @@ function _dBas(){
   s30.forEach(s=>{ let best=0;
     (s.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(!x||!x.done||x.type==='É'||x.type==='W')return;
       const r=(typeof bz==='function')?bz(+x.kg||0,+x.reps||0):0; if(r>best)best=r; }));
-    if(best>0)rm.push(best); vol.push(+s.volume||+s.vol||0); });
+    if(best>0)rm.push(best); vol.push((typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0))); });
   // Régularité = semaines avec au moins une séance, sur les 8 dernières.
   // ⚠️ Définition écrite exprès : « 94 % » ne veut rien dire si on ne dit pas de quoi.
   const sem=new Set(); _dSess(56).forEach(s=>{ const d=new Date(s.date+'T12:00:00');
@@ -248,7 +248,7 @@ function _dBas(){
   const an=new Date().getFullYear();
   const sa=(S.sessions||[]).filter(s=>s&&s.date&&+s.date.slice(0,4)===an);
   const min=sa.reduce((a,s)=>a+(+s.duration||0),0);
-  const volAn=sa.reduce((a,s)=>a+(+s.volume||+s.vol||0),0);
+  const volAn=sa.reduce((a,s)=>a+(typeof _volTravail==='function'?_volTravail(s):(+s.volume||+s.vol||0)),0);
   let cardio=0; sa.forEach(s=>['cardio','cardioPre','cardioPost'].forEach(k=>{const c=s[k];
     if(c&&typeof c==='object'&&+c.min)cardio+=+c.min; else if(+c)cardio+=+c;}));
   let kcal=null;

@@ -157,6 +157,12 @@ const PRECACHE = [
   './muscles/muscle pectoreaux.png','./muscles/muscles dorsaux trapeze.png','./muscles/epaule trapeze.png',
   './muscles/muscle bras.png','./muscles/muscle avant cuisse.png','./muscles/fessiers ischios.png',
   './muscles/muscle abdominaux.png','./muscles/muscle mollet.png',
+  // 🖼️ SEANCE-UX-IMAGES (23/10) : vignettes des groupes de « Choisir un exercice » — noms NOUVEAUX exprès (ce cache-là ne se
+  //    vide jamais : une image remplacée sous le même nom resterait l'ancienne). Préchargées : le sélecteur s'ouvre hors ligne.
+  './muscles/vignettes/01_pectoraux.png','./muscles/vignettes/02_dos_dorsaux.png','./muscles/vignettes/03_epaules_trapezes.png',
+  './muscles/vignettes/04_bras_biceps_triceps.png','./muscles/vignettes/05_jambes.png',
+  './muscles/vignettes/06_fessiers_ischios_lombaires.png','./muscles/vignettes/07_abdominaux.png',
+  './muscles/vignettes/08_mollets.png',
   // GIFs exercices pectoraux + fessiers
   './exercises/developpe-couche.webp',
   './exercises/developpe-couche-halteres-exercice-musculation.webp',
@@ -175,7 +181,7 @@ const PRECACHE = [
   // Fessiers / Ischios / Jambes / Soulevés de terre
   './exercises/souleve-de-terre.webp','./exercises/souleve-de-terre-sumo.webp','./exercises/rack-pull.webp',
   './exercises/good-morning-exercice.webp','./exercises/extension-lombaire-au-banc-45.webp',
-  './exercises/homme-faisant-un-squat-avec-barre.webp','./exercises/front-squat-avec-halteres.webp',
+  './exercises/homme-faisant-un-squat-avec-barre.webp',
   './exercises/squat-goblet-kettlebell.webp','./exercises/fente-avant-barre-femme.webp',
   './exercises/leg-curl-allonge.webp','./exercises/leg-curl-assis-machine.webp',
   './exercises/souleve-de-terre-jambes-tendues.webp','./exercises/souleve-de-terre-roumain-kettlebell.webp','./exercises/souleve-de-terre-roumain-landmine.webp',
@@ -204,7 +210,7 @@ const PRECACHE = [
   './exercises/overhead-squat.webp','./exercises/pin-squat.webp','./exercises/sissy-squat.webp','./exercises/cossack-squat.webp','./exercises/squat-bande-elastique.webp',
   './exercises/squat-statique-contre-mur-exercice-chaise.webp','./exercises/presse-cuisse-iso-laterale-hammer-stenght.webp','./exercises/sled-push-hyrox.webp','./exercises/croix-de-fer-halteres.webp',
   './exercises/leg-abduction-machine-v2.webp','./exercises/leg-adduction-machine-v2.webp',
-  './exercises/chest-press-machine-declinee.webp','./exercises/dips-triceps-paralleles.webp','./exercises/montees-banc-lateral-halteres.webp',
+  './exercises/chest-press-machine-declinee.webp','./exercises/dips-triceps-paralleles.webp',
   './exercises/dips-assiste-machine.webp','./exercises/developpe-nuque-barre-guidee.webp',
   './exercises/dips-assis-machine-avec-poids.webp',
   // Épaules + Trapèzes (lot 2026-07-06)
@@ -224,8 +230,13 @@ const PRECACHE = [
   './exercises/thruster.webp','./exercises/thruster-kettlebell.webp','./exercises/russian-twist-avec-developpe-epaule.webp',
   './exercises/shoulder-press-machine.webp',
   // Images machines press jambes
-  './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
-  './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
+  /* 🧹 Mission Séance du 24/10/2026 (cahier commun §2.3, F15) : 6 fichiers que l'app n'affiche NULLE PART ne sont plus
+     préchargés (551 289 octets) : `press-jambes-1.png`, `-3.jpg`, `-4.jpg`, `-5.jpg` (`machine/` — hors de `IMG_RE`, donc dans
+     le cache VERSIONNÉ : 386 881 octets retéléchargés à chaque version) et `front-squat-avec-halteres.webp`,
+     `montees-banc-lateral-halteres.webp` (`exercises/`, remplacés le 01/08 ; tiroir stable des images : téléchargés une fois).
+     ⛔ Les fichiers RESTENT dans le dépôt : leur sort est une décision non prise (journal du 08/08) — ici seul le préchargement
+     change. Un fichier remis en usage doit revenir dans cette liste. */
+  './machine/press-jambes-2.jpg','./machine/press-jambes-6.jpg',
   // Anatomie
   './anatomy/corps entier/schema homme entier face avant arriere et côté.png',
   './anatomy/pectoreaux/schema pectoreaux.png',

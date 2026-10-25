@@ -4917,6 +4917,31 @@ ligne et la suit. Éprouvé : vert sur master, vert sur la branche, **rouge quan
 ⚠️ La simulation du 20/10 annonçait « 0 témoin existant rouge » pour cette forme : elle n'avait rejoué que les blocs CCXCI,
 CCCV, CCXCIX et CCCII. *Un « aucun témoin ne rougit » ne vaut que pour les témoins rejoués.*
 
+## §91 — ⛔ UNE GARANTIE POSÉE À L'AVEUGLE CONTREDISAIT, DEPUIS LE RETOUR AU PREMIER PLAN, UNE DÉCISION PRISE APRÈS ELLE *(22/10/2026, SEANCE-REPOS-01 — session-C, branche `claude/dreamy-bell-pu88ia`, non publié)*
+
+**Le constat.** `app.js` portait depuis ft-v144 (01/07/2026, commit `e3367525`) : « Garantie : le timer de repos ne survit jamais
+à un redémarrage ni à un retour au premier plan » — `stopRest()` au démarrage, et un écouteur qui **coupait le repos au retour
+dans l'app dès 5 s de dépassement**. Or depuis ft-v1030 (le repos est un MAXIMUM, il continue en négatif) et ft-v1075 (« téléphone
+dans la poche, on revient et on lit GO, sans savoir si ça fait 20 secondes ou 4 minutes »), le dépassement est **une information
+voulue**. Mesuré sur `ft-v1258` (banc C-REP-C1) : retour au premier plan 30 s après la fin → le dock **disparaît**. *Le seul moment
+où le dépassement devait servir — le retour dans l'app — était celui où une règle plus ancienne l'effaçait.*
+
+**Pourquoi rien ne l'a vu.** Les témoins de ft-v1030 font avancer l'horloge **sans** jamais simuler un retour au premier plan ;
+l'écouteur de `app.js` n'y passe donc pas. Et la garantie était écrite comme un fait (« ne survit jamais »), pas comme une décision
+datée avec sa raison : rien ne disait qu'elle venait d'un **correctif à l'aveugle** posé pendant la panne « séance coincée »,
+dont la vraie cause a été trouvée ensuite ailleurs (erreurs TDZ propres à Safari, v144 → v153, `docs/GALERES-ET-LECONS.md`).
+⭐ Et au démarrage, elle ne protégeait **rien** : le repos n'a jamais été enregistré (vérifié dans `log.js` de ft-v143 comme de
+ft-v1258) — `stopRest()` y remettait seulement l'écran à zéro.
+
+**Le correctif (décisions de Michel du 22/10, `docs/SEANCE-REPOS-01.md`).** La garantie est **remplacée**, pas contournée :
+`_reposReprendre()` au démarrage (reprise à l'heure réelle, sinon la même remise à zéro qu'avant) et **un seul** seuil,
+`REST_DEPASSEMENT_MAX` (5 min après la fin théorique ; **15 min depuis l'avenant du 22/10 après-midi, D-102**), lu app ouverte, au retour et au redémarrage. L'écouteur −5 s a disparu ;
+son histoire est écrite à sa place (R30).
+
+**À quoi on le reconnaît.** Deux règles pour la même chose, posées à des mois d'écart, et la plus ancienne gagne sur un chemin
+que personne ne teste — la famille « le correctif posé d'un seul côté » (ft-v851 → ft-v1030), vue cette fois depuis l'autre bout :
+*avant d'écrire une règle nouvelle, chercher les anciennes qui décident de la même chose — et lire la date et la raison de chacune.*
+
 ## §92 — ⛔ UN PARCOURS ENCHAÎNÉ SUR UNE SEULE PAGE MASQUE UNE DÉPENDANCE D'ORDRE : LA TABLE CIQUAL N'ÉTAIT CHARGÉE QU'À LA PREMIÈRE RECHERCHE *(22/10/2026, NUTRITION V2 jalon 4 — branche `claude/nutrition-v2`, non publié ; deux défauts de MON branchement, attrapés avant tout commit)*
 
 **Le défaut.** V2 ne recalcule une ancienne ligne que si sa fiche est **retrouvée à l'identique** dans la table CIQUAL embarquée
@@ -4944,6 +4969,31 @@ quantité exige des valeurs retouchées. Témoins `B-NV2P P11 ③ ④`, `B-NM6-A
 **À quoi on le reconnaît.** Une fonction pure qui reçoit un **contexte** (`ctx.ciqual`) : si ce contexte se remplit tard, la
 fonction rend un verdict différent sans que rien ne le dise. 👉 *Avant de faire confiance à un contexte, chercher QUAND il se
 remplit.*
+
+## §93 — ⛔ UNE ÉGALITÉ À L'OCTET SUR UN OBJET VIVANT : LE TÉMOIN DE RECHARGEMENT A ROUGI SUR LE SEUL ÉTAT ÉPHÉMÈRE, ET SEULEMENT PARCE QU'IL DEVANÇAIT LE TICK *(22/10/2026, 1ʳᵉ passe complète de SEANCE-REPOS-01 — session-C, branche `claude/dreamy-bell-pu88ia`)*
+
+> Numéro **§93** et non §92 : la branche Nutrition V2 (`claude/nutrition-v2`) porte déjà son propre §92 (22/10) ; les deux se rangeront à l'intégration.
+
+**Le constat.** Passe complète **7 865 ✅ / 1 ❌** : `B-NP01-A ⛔ rechargement en pleine séance : la séance ouverte revient À
+L'IDENTIQUE` (banc `nut_punch01`, contrat Séance → Nutrition) comparait **tout** `S.wkt` à l'octet avant et après un rechargement.
+SEANCE-REPOS-01 y range désormais l'état du chrono de repos (`repos`). Mesuré sur une copie instrumentée : **`repos` était la SEULE
+différence** — un repos parti à 18:30 (2:10), expiré à 18:37:10, présent dans l'instantané pris à 18:40, **effacé au rechargement**
+(décision de Michel : 5 min après la fin théorique, l'état persistant est effacé). ↪️ *Depuis l'avenant D-102 (15 min), ce repos
+court jusqu'à 18:47:10 et **revient** au rechargement de 18:40 : la course disparaît, et le témoin — qui compare la séance sans
+`repos` — reste juste. Le texte ci-dessous décrit le cas du matin, gardé (R30).*
+
+**Pourquoi l'instantané le portait encore.** Le banc saute l'horloge (`setFixedTime`) puis lit `S.wkt` **aussitôt** : le tick qui
+efface en mémoire (toutes les 250 ms) n'était pas encore passé. *Le témoin dépendait d'une course* — vert si le tick gagne, rouge
+sinon — sans rien dire de la séance elle-même (séries, codes, cardio, chrono identiques à l'octet).
+
+**Ce qui a été fait (R30, règle #17).** Le témoin compare désormais la **séance** sans `repos` (tout le reste à l'octet, comme avant),
+avec sa raison écrite ; vert sur la branche (36 / 0) **et** sur le code exact de master (36 / 0) ; sa mutation dédiée `MA20` (le
+rechargement perd le chrono de la séance) le fait toujours rougir (2 / 2 conformes avec MA21). `banc:nut_punch01` rejoint les tests
+associés de la fiche du registre de ce lot (`SEANCE-REPOS-PERSIST-01` depuis le 22/10 après-midi : son 1ᵉʳ identifiant,
+`SEANCE-REPOS-01`, doublonnait une fiche de master — revue de l'avenant) : le sélecteur ne l'avait pas proposé pour ce diff — **c'est la passe ENTIÈRE qui l'a vu**.
+
+**À quoi on le reconnaît.** Une égalité à l'octet sur un objet que d'autres lots enrichissent : elle protège tout, donc aussi ce qui
+doit légitimement changer. *Comparer ce qu'on garantit (la séance), pas l'objet qui le transporte.*
 
 ## §94 — ⛔⛔ RÉVISER UN TÉMOIN, C'EST AUSSI L'ÉPROUVER : SIX DÉFAUTS DE MON BRANCHEMENT ET UNE FAMILLE DE VERTS SANS OBJET *(22/10/2026, NUTRITION V2 jalon 4 — branche `claude/nutrition-v2`, non publié ; trouvés en révisant les témoins V1 sur le contrat V2, pas par un rouge)*
 
@@ -5022,6 +5072,43 @@ c'est ce qu'elle devait faire. Toujours donner la durée maximale (2 h) à une p
 un autre garde couvre le même chemin (double protection) — et si aucun ne le couvre, c'est un témoin qui manque.
 
 ---
+
+## §95 — ⛔ DEUX DÉFAUTS DU LOT DU MATIN, TROUVÉS PAR LA REVUE ADVERSE DE L'AVENANT : UNE GARDE QUI JUGEAIT LA MAUVAISE GRANDEUR, ET UN ÉCRIVAIN SANS GESTE QUI ÉCRASAIT L'ÉTAT PARTAGÉ *(22/10/2026 après-midi, SEANCE-REPOS-01 avenant D-102 — session-C, branche `claude/dreamy-bell-pu88ia`, non publié ; ⚠️ numéro à reconfirmer à l'intégration : §92 et §94 sont ceux de Nutrition V2)*
+
+**Ce qui s'est passé.** L'avenant (15 min au lieu de 5) a été soumis à une revue adverse à quatre angles (code · calories · témoins ·
+documentation), chaque constat vérifié par deux sceptiques. Elle a trouvé deux défauts **du lot du matin**, que ni le banc (43 / 0),
+ni le contrôle négatif (31 / 31), ni la passe complète (7 866 / 0) n'avaient vus — parce qu'aucun témoin ne conduisait ces chemins.
+
+**① La reprise prenait « +15 s » pour une horloge reculée.** `addRT` garde la durée et déplace le départ : allongé TÔT dans le
+repos, le restant dépasse la durée, donc le départ équivalent est **dans le futur** (2:00 parti à 15:00:00, deux « +15 s » à
+15:00:01 → départ 15:00:30). La reprise refusait tout départ à plus de 5 s dans le futur : verrouiller le téléphone dans les
+secondes qui suivent **effaçait le repos**. Le témoin D1 existant rechargeait juste APRÈS le départ équivalent — il ne pouvait pas
+le voir. **Correctif** : la garde juge le **restant** (jamais plus que `max(durée, REST_PLUS_MAX)` + 5 s — ce que l'app ne peut pas
+produire), plafond de « +15 s » à un seul propriétaire. Témoin C-REP-D1b ; mutations MD1 (la garde du matin) · MD2 · MD3.
+
+**② Un onglet périmé réécrivait la séance.** `_reposMemoriser` écrivait la séance **en mémoire** (`JSON.stringify(S.wkt)`) dans
+`ft4_wkt`, et il s'exécute **sans geste** (l'expiration, par le tick ou le retour au premier plan). Deux onglets ouverts : l'onglet
+resté en arrière-plan, à l'expiration de SON repos, remettait sa séance périmée sur le disque — une séance déjà terminée dans
+l'autre onglet **revenait** (à terminer une 2ᵉ fois : volume et calories comptés deux fois), ou des séries validées entre-temps
+**disparaissaient** (règle d'or #3). Le filet multi-onglets existant (`_ftAutreOnglet`, state.js) ne couvre que `persist()` — qui fusionne avec le disque avant
+d'écrire. Sur master, aucun chemin n'écrivait `ft4_wkt` sans geste **hors du démarrage**, ni **en dehors de `persist()`**
+(`autoConnect` appelle `persist()` sur une réponse réseau, `_recoverDraft` écrit au démarrage d'un onglet frais — précision
+apportée par la relecture de l'avenant ; le commentaire de `_reposMemoriser` dit « `persist()`, déclenché par un geste », raccourci à
+reprendre à la prochaine modification de `log.js`). **Correctif** : n'écrire QUE le champ `repos`,
+dans la séance **du disque**, seulement si c'est la **même** séance (`runId`, sinon départ et date), et n'effacer que **son propre**
+repos. Témoins C-REP-K1 (séance terminée ailleurs : ne revient pas) · K2 (séries et repos plus récents de l'autre onglet : intacts)
+· K3 (jamais dans une autre séance) ; mutations MK1 (la version du matin) · MK2 · MK3.
+
+**À quoi on les reconnaît.** ① Une garde « valeur impossible » écrite sur une grandeur (le départ) alors que l'invariant porte
+sur une autre (le restant) : elle refuse des états que l'app produit elle-même. *Avant d'écrire « impossible », lister TOUS les
+écrivains de la valeur.* ② Une écriture déclenchée par une **minuterie** qui recopie un état en mémoire dans un stockage
+**partagé** : dès qu'il y a deux lecteurs-écrivains, la mémoire est périmée. *Une écriture sans geste ne doit écrire que ce
+qu'elle possède — un champ, pas l'objet entier.*
+
+**Ce qui les protège aujourd'hui.** Les témoins et mutations nommés ci-dessus (`tests/parcours/seance_repos.js`,
+`tools/mut_seance_repos.py`). Et la leçon de méthode : *un banc vert, un contrôle négatif conforme et une passe complète valide ne
+disent rien des chemins qu'aucun témoin ne conduit* — la revue adverse, elle, cherche justement ces chemins-là.
+
 
 ## §96 — ⛔⛔ UNE RELECTURE ADVERSE TROUVE CE QUE LES TÉMOINS N'AVAIENT PAS LA FORME DE VOIR : UNE MASSE ARRONDIE, UNE PORTE QUI REDÉFINIT, DES CORRECTIONS PERDUES *(22-23/10/2026, NUTRITION V2 — D-103, branche `claude/nutrition-v2`, non publié ; trouvés par une relecture indépendante, pas par un rouge)*
 
@@ -5218,6 +5305,70 @@ fonctions changées n'est pas une formalité : les bancs dédiés étaient verts
 question est quand* (R2). Et *un nom n'est pas une identité* : il relie ce qui n'a pas d'identifiant, il ne doit jamais séparer
 ni confondre ce qui en a un.
 
+## §99 — ⛔ UN EN-TÊTE MIS EN LIGNE SANS RETOUR POSSIBLE, ET DEUX TÉMOINS QUI NE REGARDAIENT QUE LÀ OÙ ON AVAIT PENSÉ À REGARDER *(23/10/2026, SEANCE-UX-IMAGES — session-C, branche `claude/dreamy-bell-pu88ia`, non publié ; ⚠️ numéro à reconfirmer à l'intégration : §92, §94, §96 sont ceux de Nutrition V2, §97 celui de Claude Principal)*
+
+**Ce qui s'est passé.** Le lot des vignettes de « Choisir un exercice » avait un banc vert (18 / 0) et un contrôle négatif conforme
+(17 / 17). Une relecture indépendante, à qui l'on n'avait donné que le code, a trouvé un défaut **calculé** — puis mesuré dans le
+rendu : pour mettre la vignette et le libellé d'un groupe ouvert **côte à côte**, l'en-tête était devenu une rangée **sans retour à
+la ligne**. Sa largeur minimale passait de « le mot le plus long » à « vignette + écart + mot le plus long » ; à **320 px**,
+« Abdominaux » poussait le bouton « 🫀 Anatomie » **20 px** hors de la feuille et la liste glissait de côté (Pectoraux, Fessiers :
+1 à 2 px). Avant le lot, rien ne débordait. La consigne du paquet le demandait pourtant en toutes lettres : *« vérifier l'absence
+de débordement »*.
+
+**Pourquoi aucun témoin ne l'a vu.** Le contrôle de débordement tournait à 3 largeurs… **sur les tuiles** ; l'en-tête, modifié dans
+le même lot, n'était testé **qu'à 390 px**. Et un 2ᵉ témoin, celui du préchargement, **cherchait le texte** des chemins dans
+`sw.js` : les lignes mises en commentaire, il restait vert avec **0** vignette préchargée — la mutation qui le « prouvait »
+supprimait la ligne au lieu de la commenter.
+
+**Correctif.** L'en-tête peut passer à la ligne, et le libellé a une **base nulle** : il reste à côté de l'image tant que son mot le
+plus long y tient (390 px : les 8 groupes, comme avant le correctif), sinon il passe dessous, comme avant le lot. Mesuré : aucun
+débordement de 300 à 430 px. Témoin **C-VIG-B4** (les 8 groupes ouverts à 320 et 340 px : rouge avant le correctif, vert avant le
+lot) ; C-VIG-S2 **évalue** la liste `PRECACHE` ; mutations MV15 · MV16 · MV17.
+
+**À quoi on le reconnaît.** Un témoin de mise en page qui tourne à plusieurs largeurs sur UNE vue, pendant que la vue voisine,
+modifiée par le même lot, n'est vue qu'à une largeur. *Chaque élément dont la largeur minimale change se teste à la plus petite
+largeur servie.* Et un témoin de **liste** qui cherche du **texte** : *une liste se lit en l'évaluant, sinon un commentaire la vide
+sans que le témoin le sache* (même famille que C-VIG-S3, qui évaluait déjà `EX_GROUPS`).
+
+**Ce qui le protège aujourd'hui.** `tests/parcours/picker_vignettes.js` (C-VIG-B4, C-VIG-S2) et `tools/mut_picker_vignettes.py`
+(MV15 → B4, MV16 → B1, MV17 → S2). Et, encore une fois, la leçon du §95 : *la revue adverse cherche les chemins qu'aucun témoin
+ne conduit* — ici, une largeur.
+
+## §100 — ⛔ LES JUMELLES DU §85 : LA RÈGLE DE VOLUME ÉTAIT RECOPIÉE À DEUX AUTRES ENDROITS, ET « ENREGISTRER » RECALCULE TOUT *(23/10/2026, contre-vérification de l'audit transversal Séance de ChatGPT — session-C, branche `claude/dreamy-bell-pu88ia` ; **TROUVÉ, NON CORRIGÉ** : phase 1 = analyse seule, décision de Michel attendue ; ⚠️ numéro à reconfirmer à l'intégration : §92, §94, §96, §98 sont ceux de Nutrition V2, §97 celui de Claude Principal)*
+
+**Symptômes (mesurés dans la vraie app, réseau coupé, données fictives — master `4ab7f860` = branche).** ① Une séance avec un
+unilatéral (Arraché Haltère 30 kg × 10 « par bras ») et un développé couché (100 × 5) est enregistrée à **1 100 kg** ; le
+panneau du jour du calendrier dit **« 0,8 t »**. ② Ouvrir cette séance et appuyer sur « 💾 Enregistrer » **sans rien changer**
+fait passer son volume stocké de **600 à 300** — et recalcule ses calories avec le poids **du jour** (82 → 95 kg :
+**97 → 112 kcal**). ③ Corriger la durée par ⏱️ ne recalcule pas les calories (317 kcal pour 90 min au lieu de 440), et rouvre le
+détail depuis la séance stockée : une charge tapée mais pas encore enregistrée **disparaît** (120 → 100).
+
+**Cause.** La même que le §85 : la règle de volume (`_workVol`, avec la convention unilatérale `uniConv` du 11/08) recopiée là
+où on affiche ou ré-enregistre — `_calSessVol` (`screens.js:2220`) et `saveSessEdits` (`setup.js:1693`) refont `kg × reps` sans
+doubler l'unilatéral. Le §85 a corrigé **une** copie (« Ta séance jusqu'ici ») ; **deux autres sont restées**. Et
+`saveSessEdits` recalcule **tout** (volume, records à la hausse, calories avec `S.bw` du jour) à chaque appui, même sans
+changement — alors que la matrice de recette de l'audit l'attend en toutes lettres : *« aucun chiffre ne doit changer sans
+raison »*. Le runner du calendrier testait `_calSessVol` avec N, É, W et séries non faites… **jamais avec `uniConv`**.
+
+**Contre-épreuves.** Sur une copie de master où SEULE la ligne suspecte lit `_workVol` : le calendrier dit **« 1,1 t »**, et
+« Enregistrer » garde **600** ; une séance ancienne sans `uniConv` reste **600** dans les deux cas (pas de doublement rétroactif).
+Scripts : `tools/contre_verif_seance_2026_10_23/` ; rapport complet : `docs/CONTRE-VERIF-AUDIT-SEANCE-2026-10-23.md`.
+
+**À quoi on le reconnaît.** Le même que le §85, et il faut le relire : *un affichage n'a pas le droit de posséder une règle : il la
+lit.* Et le corollaire R8 que le §85 n'a pas appliqué : **quand on trouve une copie, chercher ses jumelles tout de suite** —
+`grep 'kg\*.*reps\|kg||0)\*(s.reps'` sur les fichiers d'écran les aurait montrées. S'y ajoute une 2ᵉ forme : *un « Enregistrer »
+qui recalcule ce que la personne n'a pas touché réécrit l'histoire sans le dire.*
+
+**Ce qui le protège aujourd'hui.** Rien de permanent : les reproductions sont hors passe. ⛔ Les séances unilatérales déjà
+modifiées depuis le 11/08 portent un volume divisé par deux — **ne pas les réécrire** sans décision de Michel (diagnostic en
+lecture seule d'abord, voir le rapport §4, lot 1).
+
+↪️ **24/10/2026 — CORRIGÉ sur la branche Séance (mission de Michel, lots 1 et 2, non publié)** : « Enregistrer » suit `_workVol`
+et ne bouge plus les calories sans changement d'effort (D-114) ; la durée corrigée met les calories à jour et garde la
+modification en cours (D-115) ; le calendrier, la tendance, l'export, le tableau de bord et Milo lisent la même règle (D-116) ;
+les séances déjà divisées s'affichent juste **sans être réécrites**. Témoins C-NUM-A → D (`tests/parcours/seance_chiffres.js`),
+vus rouges sur master. Détail : `docs/SEANCE-CHIFFRES-2026-10-24.md`, §103 ci-dessous.
+
 ## §101 — ⛔ « RESTAURER » REMPLACE LES FAVORIS : CE QUI N'EST PAS ENCORE PARTI AU SERVEUR EST PERDU — ET SEULS LES 200 PREMIERS FAVORIS PARTENT *(23/10/2026, intégration Nutrition V2 × P1 — branche `claude/nut-v2-p1-integration` ; deux défauts PRÉEXISTANTS, prod comprise, mesurés, NON corrigés · ↪️ **renuméroté §100 → §101 le 24/10, avant sa publication** : le §100 de `dreamy-bell` (session-C, 23/10 18:50 UTC) était antérieur au mien (21:07) — je l'avais choisi « après le §99 » sans revoir la branche ; c'est donc le mien qui bouge, pas le sien)*
 
 **Le constat (vraie app V2 + vrai `Code.js`, données inventées).** ① Hors ligne, la portion d'un favori est redéfinie
@@ -5280,3 +5431,116 @@ contrôle exactement une fois* par un vérificateur indépendant — et un total
 pas une bonne nouvelle. *Un découpage qui ne refuse jamais finit par doubler.* Côté libellés : un témoin qui écrit
 l'heure dans son nom n'est plus comparable d'une passe à l'autre ; le corriger, c'est modifier un test (preuve propre et
 accord de Michel) — d'ici là, il se normalise **nommément**, jamais par motif large.
+
+## §103 — ⛔⛔ UNE SÉANCE PASSÉE CHANGEAIT EN SILENCE À « ENREGISTRER », ET SES CHIFFRES DIFFÉRAIENT D'UN ÉCRAN À L'AUTRE *(24/10/2026, mission Séance de Michel — session-C, branche `claude/dreamy-bell-pu88ia` ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptômes (mesurés sur master, vraie app, réseau coupé, données fictives).** « Enregistrer » sans rien changer : calories
+recalculées au poids **du jour** (82 → 95 kg : **97 → 112 kcal**) et volume unilatéral **divisé par deux** (600 → 300) ;
+corriger la durée (60 → 90 min) gardait les calories de 60 min et effaçait une charge tapée ; le calendrier disait **0,8 t**
+pour une séance enregistrée à 1 100 kg ; la tendance de volume, l'export CSV, le tableau de bord et la liste envoyée à Milo
+refaisaient `kg × reps` sans l'unilatéral ; une ancienne série « W » comptait comme travail dans le volume par muscle
+(**3** séries de pectoraux au lieu de 2, Milo lisait 1,5 série/semaine au lieu de 1) ; le cache de couleur du calendrier ne
+voyait pas une série cochée de plus ; la tuile « Séance » de Nutrition ne prenait que la 1ʳᵉ séance du jour (**350 au lieu de
+600 kcal**) ; l'en-tête de l'export PDF comptait des jours pour des séances ; un cardio Apple Santé « Walking » s'affichait
+« Elliptique » ; un score de récupération SANS sommeil disait « Prêt à performer » et invitait aux records.
+
+**Cause, une seule famille.** Une règle (le volume de travail, les calories d'une séance) **recopiée** là où on affiche ou
+ré-enregistre, et un « Enregistrer » qui **recalcule ce que la personne n'a pas touché** (§85, §100 : les jumelles n'avaient
+pas toutes été trouvées). *Un affichage n'a pas le droit de posséder une règle : il la lit.*
+
+**Correctif.** `_workVol` / `_volTravail` lus partout (D-116) ; `_kcalApresEdition` : même effort → rien ne bouge, effort
+changé → rapport appliqué aux calories d'origine (D-114) ; K2 (D-115) ; F06, F19, F22, F23 (D-117 → D-119). Aucune séance
+ancienne réécrite. Le moteur calorique est APPELÉ, jamais modifié.
+
+**Ce qui le protège.** `tests/parcours/seance_chiffres.js` (blocs C-NUM-A → J), branché dans la passe, contrôle négatif
+`tools/mut_seance_chiffres.py` (M1 → M35). ⭐ La leçon de méthode : *chercher les jumelles TOUT DE SUITE* — `grep` sur
+`kg*reps`, `.volume||`, `calcSessionCalories(` dans tous les fichiers d'écran, `dashboard.js` compris.
+
+## §104 — ⛔ UN RECORD RESTAIT CELUI D'UNE SÉANCE SUPPRIMÉE, ET UNE GARDE « DÉJÀ JUSTE » A CACHÉ UNE MUTATION *(24/10/2026, mission Séance, lot 3 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptôme.** Supprimer la séance d'un record (100 × 5), ou corriger sa série à la baisse, laissait le record à 100 × 5 —
+sans séance pour le porter. **Correctif** (D-120) : un aperçu « avant → après » calculé par l'outil existant, rien sans le
+geste, un record d'origine incertaine jamais proposé. **⚠️ Méthode** : la 1ʳᵉ campagne a donné 10/11 — la mutation « l'origine
+n'exige plus la même date » restait verte parce que le témoin G1 recalculait un record **déjà juste** (le même 100 × 5 refait
+un autre jour) et la garde « déjà juste » taisait l'aperçu. *Une garde de non-régression peut masquer la mutation qu'un autre
+témoin devait attraper.* Témoin ajouté : **C-REC-D2** (un record seulement ÉGALÉ, daté d'un import).
+
+## §105 — ⛔ DEUX LISTES D'IMAGES QUI DIVERGENT : 6 FICHIERS PRÉCHARGÉS JAMAIS AFFICHÉS, ET 156 ILLUSTRATIONS JAMAIS PRÉCHARGÉES *(24/10/2026, mission Séance, lot 5 ; le 1ᵉʳ **CORRIGÉ**, le 2ᵉ **CONSTATÉ, NON CORRIGÉ** — décision de Michel)*
+
+**Mesuré.** ① 6 fichiers de la liste `PRECACHE` (`sw.js`) ne sont nommés **nulle part** dans le code servi (551 289 octets) ;
+les 4 de `machine/` sont hors de `IMG_RE`, donc dans le cache **versionné** : 386 881 octets retéléchargés à chaque version.
+② **156 des 305** illustrations d'exercices (`EX_YT`) ne sont **pas** dans `PRECACHE` (15,3 Mo) : elles se téléchargent à la
+première vue, puis vont dans le tiroir stable. Hors ligne à la salle, sur un téléphone neuf, elles **manquent** tant qu'elles
+n'ont pas été vues une fois. **Cause** : deux listes pour la même information (R2) — les animations ajoutées après ft-v214 l'ont
+été à `EX_YT` sans l'être toujours à `PRECACHE`. **Correctif ①** (D-125) : retirés du préchargement, fichiers gardés ; témoin
+**C-IMG-C1** (« aucun fichier préchargé n'est jamais affiché »). **②** : précharger 15 Mo de plus est une décision de données
+mobiles (ft-v436) — **à Michel**. ⚠️ *Mon premier témoin affirmait « toute illustration est préchargée » : c'était une
+supposition sur l'app, pas une garantie qu'elle donne — retiré avant d'être livré (R28).*
+
+## §106 — ⛔ LA FIGURINE APPELAIT « PRINCIPAL » UN SECONDAIRE CUMULÉ, ET L'ORACLE D'UN BANC FIGEAIT LA RÈGLE FAUSSE *(24/10/2026, mission Séance, lot 3 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptôme.** Deux exercices où le triceps est secondaire : score 2 → listé « Primaires », dessiné en rouge (8 zones rouges au
+lieu de 6). **Cause** : un seuil en marche d'escalier (« score ≥ 2 ») confondait « moteur » et « souvent sollicité ».
+**Correctif** (D-121) : `prim` = primaire dans au moins un exercice. **⚠️ Le banc voisin `fig_face_dos` a rougi** : son
+oracle recalculait « principal » avec la même règle fausse — il ne protégeait pas l'invariant, il recopiait l'implémentation.
+Oracle **réécrit** (les moteurs lus dans la fiche), et éprouvé : il rougit sous M41, M42 et M49.
+
+## §107 — ⛔ LE CHOIX DE LA PERSONNE PASSAIT APRÈS LA RÈGLE DU NOM, ET LE CORRIGER CHANGEAIT LES CALORIES PAR LA BANDE *(24/10/2026, mission Séance, lot 3 ; **CORRIGÉ pour l'affichage, calories en attente de Michel**)*
+
+**Symptôme.** Un perso « Croisé Poulie » coché mollets montrait des pectoraux ; un « Curl Maison » coché quadriceps, des
+biceps — pendant que Progrès comptait les muscles cochés. **Cause** : premier match gagnant (la fiche, puis la règle du nom,
+le choix de la personne en dernier). **Le piège** : `_mscScores` est aussi le moteur des CALORIES (`getExerciseMET` compte
+ses muscles) ; le corriger là déplaçait la dépense de certains persos (mesuré : −6 à +4 kcal par séance d'une heure) sans que
+personne l'ait décidé. **Correctif** (D-122) : `_mscScores` identique à l'octet à master ; l'affichage passe par
+`_mscScoresVus`. Témoins C-MUS-B3 (réécrit), B5, C1 (périmètre : 4 appelants du moteur), C2.
+
+## §108 — ⛔ LE PROFIL AFFICHAIT « REPOS DÉFAUT » VIDE POUR TOUS CEUX QUI N'Y AVAIENT JAMAIS TOUCHÉ *(24/10/2026, mission Séance, lot 4 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Mesuré.** Le sélecteur proposait 60 / 90 / 120 / 180 / 300 s ; la valeur d'installation est **130 s** (`REPOS_DEFAUT`) : la
+case restait **vide** (le chrono appliquait bien 130 s). Une valeur restaurée hors liste (75 s) aussi. **Cause** : une liste en
+dur dans `index.html`, distincte de la constante (R2). **Correctif** (D-126) : une liste (`reposDefautChoix`), un écrivain
+(`choisirReposDefaut`), la valeur hors liste montrée telle quelle ; le menu ⋯ de la séance lit la même. Témoins C-REG-A → D.
+*Aucun témoin ne lisait ce sélecteur : il était vide depuis le 12/09 (ft-v1195, 130 s) sans que rien rougisse.*
+
+## §109 — ⛔ UNE IMAGE DE MUSCLE « DEVINÉE » ÉTAIT PRÉSENTÉE COMME L'ILLUSTRATION D'UN EXERCICE *(24/10/2026, mission Séance, lot 5 ; **CORRIGÉ sur la branche, non publié**)*
+
+**Symptôme.** Pour les 17 exercices du catalogue sans animation (et tout perso sans photo), la vignette et la démonstration
+montraient l'image du muscle « deviné » du nom — rien ne disait qu'il ne s'agissait pas de l'exercice. **Correctif** (D-124) :
+« Aucune illustration disponible » aux 3 surfaces ; R29 (*quand l'app ne sait pas, elle le dit*). Témoins C-IMG-A1 → B1.
+
+## §110 — ⛔ CE QUE LE DIAGNOSTIC MET A TROUVÉ, ET QUI RESTE TEL QUEL (MOTEUR GELÉ) *(24/10/2026, mission Séance, `docs/DIAGNOSTIC-MET-2026-10-24.md` ; **CONSTATÉ, NON CORRIGÉ** — décision de Michel)*
+
+① **Séries cochées en bloc** : des horodatages sous le plancher physique deviennent la durée → **211 kcal au lieu de 337**
+(−37 %), sans ⚠️. ② **Cardio d'après, chrono seul** : ses minutes payées deux fois (transition + cardio) → **488 au lieu de
+427**. ③ **« Tapis » en sous-chaîne** : « Étirements / Gainage / Crunch sur tapis » (persos) comptés **8,0** comme un burpee.
+④ Le gainage noté en secondes compté en répétitions de 3 s. ⑤ Deux chiffres sur le même écran (337 et « 🔬 ~287 »).
+⑥ 33 classements douteux nés de la règle « 3 muscles ou plus ». Recommandations simulées R1 → R8, chiffrées ; aucune
+appliquée. *Ce sont les familles « premier match gagnant » (mots-clés en sous-chaîne) et « seuil en marche d'escalier ».*
+
+## §111 — ⛔ UN TÉMOIN QUI NE POUVAIT PAS ROUGIR : SA FIXTURE ÉTAIT UNE ISOLATION, ET UNE ISOLATION LE RESTE *(25/10/2026, mission Séance, clôture ; **CORRIGÉ dans le banc**, aucun code applicatif)*
+
+**Le cas.** `C-MUS-B5` garantit qu'un exercice perso au nom **reconnu** garde les calories de sa fiche, quels que soient les
+muscles cochés. Sa fixture prenait le 1ᵉʳ nom abrégé du catalogue : « Croisé Poulie (Cable Crossover) », une **isolation**
+(MET 4,0). La personne y coche un mollet : **une isolation aussi** (moins de 3 muscles → 4,0). Le témoin comparait 4,0 à 4,0 —
+il ne pouvait **pas** rougir, quel que soit le moteur. **Comment on l'a vu** : à la clôture, trois témoins rougissaient sur
+master seulement **par absence** (la fonction n'y existe pas) sans être la cible d'aucune mutation ; chacun a reçu la sienne
+(M67 → M69). M67 et M69 ont mordu ; **M68** (le moteur lit les muscles cochés **avant** la fiche) n'a fait rougir que B3.
+**Correctif** : la fixture prend un **composé** dont le MET dépend vraiment des muscles (« Dips Triceps (Buste Droit) », 5,5 ;
+ni mot-clé haltéro / cardio / porté, ni charnière de hanche, ≥ 3 muscles), et B5 exige une fiche **au-dessus** de
+l'isolation : si la fixture redevient insensible, le témoin rougit au lieu de se taire. *Famille « un vert qui ne peut pas
+rougir » ; leçon : « rouge sur master » ne prouve rien pour un témoin qui échoue par ABSENCE — seule une mutation le peut.*
+
+## §112 — ⛔ MON TÉMOIN DISAIT LE CONTRAIRE D'UN TÉMOIN DU RUNNER, ET MES BANCS VOISINS NE LE JOUAIENT PAS *(25/10/2026, retour de Claude Principal sur la mission Séance ; **CORRIGÉ sur la branche**)*
+
+**Le cas.** La passe répartie sur l'arbre intégré a trouvé 4 rouges côté Séance, invisibles dans mes 25 bancs voisins.
+Le plus instructif : mon témoin **C-NUM-J4** exigeait qu'un tapis importé d'Apple Santé passe sur le barème « Tapis »,
+pendant que le témoin **XXXII** du grand runner exigeait « course » (calculé comme « Autre »). Les deux portaient **la
+même règle en sens contraires** — un seul pouvait être vert, et j'avais choisi le mien sans le savoir. Pire : mon choix
+changeait des **calories** (9,5 au lieu de 8,0 MET en intensité forte), ce que ma propre décision D-119 interdisait
+(« calculés comme Autre »). **Les deux autres** : une fixture (CCXXVI ter) qui rangeait un volume que ses séries ne font
+pas — invisible tant que la carte lisait la copie rangée, rouge dès que D-116 l'a fait lire les séries ; et un témoin de
+SOURCE (B-CCCVI ⑥) qui épinglait le texte d'une boucle que D-116 a remplacée. **Correctif** : le code revient à
+`ft-v1260` pour le tapis ; la fixture dit la même chose des deux côtés ; le témoin de source garde l'**invariant**
+(deux règles, deux propriétaires) au lieu du texte ; chacun éprouvé (`tools/mut_seance_runner.py`, 5 / 5).
+*Leçon : avant d'écrire un témoin, chercher dans le runner les témoins qui lisent la même fonction
+(`grep` du nom de la fonction dans `tests/`) — et les jouer avec les bancs voisins.*
