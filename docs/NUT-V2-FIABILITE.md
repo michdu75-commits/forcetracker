@@ -576,7 +576,7 @@ déploiement, suppression réelle ni donnée réelle. Recette iPhone sur compte 
 
 ### 13.9 Pour l'intégration (handoff)
 
-**Branche** `claude/nutrition-v2`, **HEAD de code `5a3a21a0`** (puis un dernier commit de documentation `[skip ci]`) — à jour de master `5c8fedb2` (fusionné en `b4c60c85`). ⛔ Rien sur master,
+**Branche** `claude/nutrition-v2`, **HEAD de code `5a3a21a0`** (ensuite, documentation seulement, `[skip ci]`) — à jour de master `5c8fedb2` (fusionné en `b4c60c85`). ⛔ Rien sur master,
 rien publié, rien déployé.
 
 **Commits de la mission** (dans l'ordre) :
@@ -585,10 +585,10 @@ rien publié, rien déployé.
 |---|---|
 | `7941d673` | journal de partage : ma ligne « en cours », poussée avant de coder `[skip ci]` |
 | `ebc751ee` | application + tests : `app.js` (E2b ; textes de la remise à zéro), `index.html` (carte Admin), `tests/parcours/nut_fiabilite.js`, `tools/mut_nut_fiabilite.py`, `tests/recette/registre.json` |
-| `01d1c88e` | **`Code.js` seul** (`D-141`, `D-137`) + `tools/mut_nut_secu_p1.py` (ancres M02 / M03 / M16) — **NON déployé** |
-| `ab606683` | documentation (en cours) `[skip ci]` |
+| `01d1c88e` | **`Code.js`** (`D-141`, `D-137`) + `tools/mut_nut_secu_p1.py` (ancres M02 / M03 / M16) ; au même commit, alignés sur son texte : l'ancre `RAZ_ORDRE` de `tools/mut_nut_fiabilite.py` et un message du banc — **aucun fichier de l'app** ; **NON déployé** |
+| `ab606683` | documentation (en cours) : `BUGS.md` §121 – §122, `docs/DECISIONS.md` (`D-136`, `D-137` ; `D-133` → REMPLACÉE → `D-141`), dossier §13.1 – §13.4, `docs/CONTEXTE-ACTUEL.md` `[skip ci]` |
 | `5a3a21a0` | outils de test : M00 (`mut_nut_secu_p1`) et C01 (`mut_nut_v2_p1_croise`) comparent de nouveau P1 au `Code.js` d'avant P1 (base fixe `677cf50b`, master @192) — préexistant, constaté ici `[skip ci]` |
-| (dernier) | documentation (fin) : `BUGS.md` §121 – §122, `docs/DECISIONS.md` (`D-136`, `D-137` ; `D-133` → REMPLACÉE → `D-141`), `docs/NUT-V2-FIABILITE.md` §13, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md` (ligne close) `[skip ci]` |
+| `87e469d7` (+ la correction de cette table) | documentation (fin) : dossier §13.5 – §13.9, `docs/CONTEXTE-ACTUEL.md` (les tests), `docs/JOURNAL-DE-PARTAGE.md` (ligne close) `[skip ci]` |
 
 **Fonctions touchées.** `app.js` : `_n2FichesVerifiees` (une ligne : seules les références encore proposées, `_n2Propose`) ;
 `nutRazPerimetre`, `nutRazExecuter` (textes). `Code.js` : `_nutRazDate_`, `_nutRazTri_`, `_nutRazFavoris_` (nouvelles) ;
