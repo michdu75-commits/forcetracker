@@ -33,6 +33,7 @@ CIQ = "  if(!(lignes||[]).some(_n2BesoinCiqual)) return suite();"
 FIGE_GARDE = "  const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;"
 AF_LIT = "  const _en=_n2EntreeEcran(name, _vals, !!(_bcRow && _bcRow.style.display!=='none' && _bcNutr));"
 PUSH = "  }else S.foodLog.push(r.ligne);"
+MF_TETE = "function majFavoriDepuisEcran(){\n"
 
 S = lambda *c: ['B-NM6-S ' + x for x in c]
 C = lambda *c: ['B-NM6-C ' + x for x in c]
@@ -66,8 +67,10 @@ MUT = [
     # 22/10 (fin du jalon 4) : Q ② a été réécrit sur l'écran V2 (une reprise SANS quantité ouvre la saisie à la main, le
     # poids DEMANDÉ dans `af-poids`) — sa mutation : une quantité est posée quand même (celle du riz, 150).
     ('N16 l\'ajout rapide d\'un aliment SANS quantite ouvre l\'ecran avec une quantite posee (150, celle du riz)',
-     [(A, "    _afRef=null;\n    _afMajAncre(true);\n  }else{",
-       "    _afRef=null;\n    _afMajAncre(true);\n    { const p=document.getElementById('af-poids'); if(p) p.value='150'; }\n  }else{")],
+     # 24/10 (NV2-FIAB) : deux lignes (l'identite du produit suit, sa fiche se cherche en ligne) s'intercalent avant `}else{` ;
+     # l'ancre s'arrete donc sur la premiere d'entre elles — la mutation est la meme : une quantite posee a l'ouverture.
+     [(A, "    _afRef=null;\n    _afMajAncre(true);\n    if(_sid && _afSrc)",
+       "    _afRef=null;\n    _afMajAncre(true);\n    { const p=document.getElementById('af-poids'); if(p) p.value='150'; }\n    if(_sid && _afSrc)")],
      ['B-NM6-Q ②'], 'GARDE'),
     ('N17 l\'apercu ne passe plus l\'argument d\'apercu (il ECRIRAIT la ligne qu\'il montre)',
      [(A, AP_DEF, AP_DEF.replace(", {verifiees:verifiees});", ");"))], C('②'), 'GARDE'),
@@ -76,6 +79,10 @@ MUT = [
        "  if(apercu) return {ok:true, ligne:L.ligne, R:R, raison:raison};\n  return w;\n")], C('②'), 'GARDE'),
     ('N19 un 3e re-noteur appelle _n2Reajouter sans se declarer', [(A, RJ_TETE, "function _m6RenoteurOublie(e){ return _n2Reajouter(e, 'dejeuner', today(), 'x'); }\n" + RJ_TETE)],
      C('②'), 'GARDE'),
+    # 24/10 (NV2-FIAB, D-134) : C ③ admet un 2e lecteur de l'ecran DECLARE (la correction d'un favori), qui n'ecrit jamais le journal.
+    ('N20 un 3e lecteur de l\'ecran, non declare, appelle _n2EntreeEcran', [(A, MF_TETE, "function _m6LecteurOublie(){ return _n2EntreeEcran('x', {}, false); }\n" + MF_TETE)],
+     C('③'), 'GARDE'),
+    ('N21 corriger un favori ECRIT le journal (_n2Enregistrer)', [(A, MF_TETE, MF_TETE + "  if(false) _n2Enregistrer({}, 'x');\n")], C('③'), 'GARDE'),
     ('MC1 [negatif] commentaire seulement dans _n2Reajouter (cite document, _afSrc, _bcNutr, _provFood(, _n2Extras)',
      [(A, RA_TETE, RA_TETE + "  /* lecture interdite ici : document. _afSrc _bcNutr _provFood( _n2Extras() */\n")], [], 'OK'),
 ]

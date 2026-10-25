@@ -145,7 +145,9 @@ MUT = [
   ('MP49 D-103 : le refus d\'une autre quantité affirme le poids d\'une ancienne portion', 'app.js',
    "'Ces valeurs valent pour '+_n2QteTexte(R.qte, false)+' : corrige-les", "'Ces valeurs valent pour '+_n2QteTexte(R.qte, true)+' : corrige-les", 'B-NV2P P14 ⑩'),
   ('MP50 D-103 : la liste « Mes aliments » affirme le poids de toute portion', 'app.js',
-   "  return _escFood(_n2QteTexte(q, _n2PortionFiable(R)))+' · ';", "  return _escFood(_n2QteTexte(q, true))+' · ';", 'B-NV2P P14 ②'),
+   # 24/10 (NV2-FIAB) : `_n2QteListe` est fusionné dans `_n2TexteProposition` (un seul texte pour les deux listes) — l'ancre suit.
+   "  const pour=q ? 'pour '+_escFood(_n2QteTexte(q, _n2PortionFiable(R))) : 'quantité à préciser';",
+   "  const pour=q ? 'pour '+_escFood(_n2QteTexte(q, true)) : 'quantité à préciser';", 'B-NV2P P14 ②'),
   # ── la relecture adverse du 22/10 : un témoin, et sa mutation, pour chaque trou trouvé ──
   ('MP51 la portion proposée pour un aliment survit et s\'applique à l\'aliment SUIVANT (M6)', 'app.js',
    "  _bcDernPortion=null; _bcPortionPrise=null;", "  _bcPortionPrise=null;", 'B-NV2P P14 ⑯'),
@@ -228,7 +230,8 @@ MUT = [
    "  if(Array.isArray(n2.no) && n2.no.indexOf('reprise-non-verifiee')>=0) m.push('non vérifié');\n  else if(n2.st==='estimee')",
    "  if(n2.st==='estimee')", 'B-NV2P P15 ㉙'),
   ('MP81 « Déjà noté par toi » redevient muet (sans quantité, inconnu = 0, sans état)', 'app.js',
-   "      _n2QteListe({_src:e, _ap:a})+_n2Val(e.kcal)+' kcal · P '+_n2Val(e.prot)+' · G '+_n2Val(e.carbs)+' · L '+_n2Val(e.fat)+_n2Marque(a),",
+   # 24/10 (NV2-FIAB) : l'ancre suit la ligne, qui passe maintenant par `_n2TexteProposition` (un seul propriétaire du texte, §6).
+   "      _n2TexteProposition(e, a),",
    "      (e.kcal||0)+' kcal · P '+(e.prot||0)+' · G '+(e.carbs||0)+' · L '+(e.fat||0),", 'B-NV2P P15 ③'),
   ('MP82 l\'écran d\'une reprise figée ne dit plus pourquoi elle est « à vérifier »', 'app.js',
    "            raison:_n2Incoherence(src, R, null)};", "            raison:null};", 'B-NV2P P15 ⑥'),
@@ -236,6 +239,14 @@ MUT = [
    "      +((apR.ok && apR.raison) ? ' — ⚠️ à vérifier : '+apR.raison.texte : '');", "      +'';", 'B-NV2P P15 ㉖'),
   ('MP84 la 2ᵉ modification perd la copie d\'origine (moteur, vu à l\'écran)', 'nutrition-v2.js',
    "        else if (rp.n2.av && typeof rp.n2.av === 'object') av = JSON.parse(JSON.stringify(rp.n2.av));\n", "\n", 'B-NV2P P15 ㉘'),
+  # 24/10 (NV2-FIAB, D-130) : P12 ② réécrit — la copie déclarée garde l'IDENTITÉ du produit (jamais une fiche) ; sans elle, rouge.
+  ('MP85 une recopie déclarée perd l\'identité du produit (le code-barres redevient un simple nom)', 'nutrition-v2.js',
+   "      if (texte(e.cle)) L.sourceId = texte(e.cle).slice(0, 32);\n", "", 'B-NV2P P12 ②'),
+  # 24/10 (NV2-FIAB, D-135) : P14 ① ② ⑱, P15 ① ③ ⑪ ⑯ ⑳ ㉖ ㉙ ㉛ ㉜b réécrits sur l'ordre « kcal · pour Q · P · G · L » — l'ancien
+  #   ordre revenu les fait rougir (⑪, ⑳ et ㉛ n'avaient pas de mutation à eux : celle-ci les couvre, ses rouges les listent).
+  ('MP86 l\'ancien ordre d\'affichage revient (la quantité avant les calories)', 'app.js',
+   "  return f(v.kcal)+' kcal · '+pour+' · P '+f(v.prot)+' · G '+f(v.carbs)+' · L '+f(v.fat);",
+   "  return pour+' · '+f(v.kcal)+' kcal · P '+f(v.prot)+' · G '+f(v.carbs)+' · L '+f(v.fat);", 'B-NV2P P15 ⑪'),
 ]
 
 def copier_app(dest):

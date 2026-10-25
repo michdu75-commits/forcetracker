@@ -1156,6 +1156,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadNutInventaireAdmin('nutBackupAudit')" style="padding:11px;font-size:14px;">🗄️ Comparer avec les sauvegardes (jusqu'à 5 min)</button>
       <div id="admin-nutinv" style="margin-top:4px;"></div>
     </div>
+    <!-- 🧹 NV2-FIAB (24/10/2026, décision de Michel, Q14 → Q17) — REMISE À ZÉRO DES PROPOSITIONS NUTRITION : PRÉPARÉE, JAMAIS
+         AUTOMATIQUE. Favoris, « Déjà noté par toi », récents, repas habituels : ce qui est PROPOSÉ. ⛔ Le journal daté n'est pas
+         touché. Ordre imposé : le périmètre exact → la sauvegarde → l'exécution (confirmée). Réservé à l'admin. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🧹 Remise à zéro des propositions (Nutrition)</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Ne propose plus tes <strong>favoris</strong>, « <strong>Déjà noté par toi</strong> », les <strong>récents</strong> ni les <strong>repas habituels</strong> d'avant — sur tous tes appareils, même après « Restaurer ». <strong>Ton journal daté n'est pas touché</strong>, ni ses totaux : les propositions renaissent de ce que tu noteras ensuite.</div>
+      <button class="btn btn-bg2" onclick="nutRazPerimetre()" style="padding:11px;font-size:14px;">🔎 Voir le périmètre exact</button>
+      <button class="btn btn-bg2" onclick="nutRazSauvegarder()" style="padding:11px;font-size:14px;">💾 Télécharger la sauvegarde</button>
+      <button class="btn btn-bg2" onclick="nutRazExecuter()" style="padding:11px;font-size:14px;">🧹 Remettre à zéro…</button>
+      <label class="btn btn-bg2" style="padding:11px;font-size:14px;text-align:center;cursor:pointer;">♻️ Rétablir des favoris depuis une sauvegarde<input type="file" accept="application/json,.json" onchange="nutRazRetablir(this)" style="display:none;"></label>
+      <div id="admin-nutraz" style="margin-top:4px;"></div>
+    </div>
     <!-- 🍽️ HABITUDES — LA MESURE AVANT LA RÈGLE (17/09/2026, demande de Michel).
          ⛔⛔ CET OUTIL EXISTE PARCE QU'ON REFUSE D'INVENTER UN SEUIL. La règle actuelle de
          « tes repas habituels » est `s.n >= 2`, sans horizon ni dénominateur — c'est pourquoi
@@ -2910,6 +2922,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     </div>
     <div id="af-coherence" style="display:none;font-size:12px;line-height:1.45;color:var(--orange);background:var(--bg3);border-radius:10px;padding:10px 11px;margin-bottom:10px;"></div>
     <button class="btn btn-red" onclick="addFoodEntry()" style="width:100%;margin-bottom:8px;">✅ Ajouter au journal</button>
+    <!-- NV2-FIAB (24/10, Michel : « une saisie personnelle doit pouvoir être corrigée… sans réécrire le journal ») — visible seulement
+         quand l'écran reprend un FAVORI : il le remplace par ce qui est à l'écran (calculé par le moteur), le journal ne bouge pas. -->
+    <button id="af-fav-maj" class="btn btn-bg2" onclick="majFavoriDepuisEcran()" style="display:none;width:100%;margin-bottom:8px;">⭐ Corriger ce favori avec ces valeurs (ton journal ne change pas)</button>
     <button class="btn btn-bg2" onclick="closeAddFood()" style="width:100%;">Annuler</button>
   </div>
 </div>

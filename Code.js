@@ -1697,6 +1697,33 @@ function _nutProtegerListe_(existing, profile, nom, recu, email) {
              + (n ? ', ' + n + ' copie(s) ancienne(s) déménagée(s) dans ' + fichier + ' (relu)' : ''));
   return recu;
 }
+/* 🙈 NV2-FIAB (24/10/2026, mission de Michel) — LES MASQUAGES (« ✕ ») ET LA REMISE À ZÉRO DES PROPOSITIONS NUTRITION.
+   Des DATES DE DÉPART {k, t} : `k` = l'identité d'un aliment (`id:…`, `ciqual:…`, `nom:…`) ou `*` (la remise à zéro), `t` = l'instant.
+   ⭐ La fusion ne peut que MASQUER : par identité, le plus tard gagne ; une entrée antérieure à la remise à zéro tombe. Un appareil
+      resté sur une ancienne version (qui n'envoie rien) ou qui envoie une liste plus courte ne fait donc rien réapparaître.
+   ⛔ Bornée (300 entrées, la remise à zéro gardée en premier) ; une date dans le futur (horloge fausse) est ramenée à maintenant.
+   ⛔ Le journal (`foodLog`) n'est jamais touché ici : ce sont des propositions qu'on masque, pas des repas. */
+var NUT_MASQUES_MAX_ = 300;
+function _nutMasquesFusion_(existant, recu) {
+  var maintenant = Date.now(), par = {};
+  function prendre(liste) {
+    if (!Array.isArray(liste)) return;
+    liste.forEach(function(x) {
+      if (!x || typeof x !== 'object' || typeof x.k !== 'string') return;
+      var k = String(x.k).trim().toLowerCase().slice(0, 120), t = Number(x.t);
+      if (!k || !(isFinite(t) && t > 0)) return;
+      if (t > maintenant) t = maintenant;
+      if (!par.hasOwnProperty(k) || t > par[k]) par[k] = t;
+    });
+  }
+  prendre(existant); prendre(recu);
+  var g = par['*'] || 0;
+  var out = Object.keys(par).filter(function(k) { return k !== '*' && par[k] > g; })
+    .map(function(k) { return { k: k, t: par[k] }; })
+    .sort(function(a, b) { return (b.t - a.t) || (a.k < b.k ? -1 : 1); })
+    .slice(0, g ? NUT_MASQUES_MAX_ - 1 : NUT_MASQUES_MAX_);
+  return g ? [{ k: '*', t: g }].concat(out) : out;
+}
 function _nutEvenement_(z, e) {
   var evts = z.evts || (z.evts = []);
   evts.push(e);
@@ -1871,6 +1898,7 @@ function handleSaveProfile_(body) {
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
     if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email);
     if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);
+    if (body.hiddenFoods   !== undefined) profile.hiddenFoods   = _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);   // NV2-FIAB : masquages + remise à zéro
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
        ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas
