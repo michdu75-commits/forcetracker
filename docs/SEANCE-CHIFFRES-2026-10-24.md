@@ -47,7 +47,7 @@
 | **Réglages** | aucun réglage depuis la séance | — | ⋯ → « **Repos par défaut** » (même valeur que le Profil) ; le réglage d'une séance reste distinct ; **pas de poids de barre** (retiré par toi en ft-v726) | D-126 |
 | **F15** | 17 exercices : image de muscle **devinée** comme illustration | repli « muscle deviné » | « **Aucune illustration disponible** » aux 3 surfaces | D-124 |
 | **Précache** | 6 fichiers jamais affichés préchargés (551 289 octets ; 386 881 à chaque version) | deux listes d'images | retirés du préchargement, fichiers gardés | D-125 |
-| **Mollets** | 765 Ko pour une case de 88 × 51 | fichier à la taille de la carte d'origine | 183 × 133, même cadrage, 33 747 octets | D-123 |
+| **Mollets** | 765 Ko pour une case de 88 × 51 (le fichier du lot vignettes, **sur cette branche**, jamais publié — absent de master) | fichier à la taille de la carte d'origine | 183 × 133, même cadrage, 33 747 octets | D-123 |
 | **Aide pendant la séance** | — (vérifié) | — | l'aide se joint par **⋯ → « Aide de l'écran Séance »** (témoin C-REG-E1) | — |
 
 ---
@@ -106,8 +106,9 @@ n'existe pas sur master (`_mscScoresVus`, le champ `sansSommeil`, la ligne « Re
 clôture** : ces trois témoins n'étaient la cible d'aucune mutation, et **M68 a montré que B5 ne pouvait pas rougir** (sa
 fixture était une isolation) — fixture corrigée (§5, `BUGS.md` §111), campagne complète rejouée (§4 bis).
 
-**Contrôle négatif** `tools/mut_seance_chiffres.py` (**65 mutations** : M1 → M57 et M60 → M66 sur les lots 1 → 5, dont des
-**déguisées** et des **négatives**, plus « M00 = le code d'avant remis mot pour mot ») : campagnes par lot toutes conformes après correction des témoins qui
+**Contrôle négatif** `tools/mut_seance_chiffres.py` (**68 mutations** : M1 → M57 et M60 → M66 sur les lots 1 → 5, M67 → M69
+ajoutées à la clôture, dont des **déguisées** et des **négatives**, plus « M00 = le code d'avant remis mot pour mot ») :
+campagnes par lot toutes conformes après correction des témoins qui
 manquaient (M1, M29, M36, M50 : un témoin ajouté chaque fois — §104 de `BUGS.md`) ; **campagne complète sur l'arbre
 final : voir §4 bis**.
 
@@ -140,15 +141,18 @@ heure de Paris) ; kg, durées et kcal identiques (`docs/DIAGNOSTIC-MET-2026-10-2
 
 ### 4 bis. Campagne complète sur l'arbre final
 
-Arbre figé `35c058a0` (copie de travail, réseau coupé) :
-
-- **`tools/mut_seance_chiffres.py` entier : 65 / 65 conformes** — M00 (le code d'avant) + 64 mutations, dont **16 déguisées**,
-  **5 négatives** (une retouche sans effet ne doit **pas** rougir) et **1 équivalente** (M57, rien d'observable). En **deux
-  passages** : le premier a été **coupé par la limite de temps des tâches de fond** (30 min) après **57** mutations jugées,
-  toutes conformes ; le second a rejoué les **8** qui restaient (M15, M35, M44, M62 → M66) : **8 / 8**, arbre sain vert
-  **avant et après** (banc stable). Aucune mutation invalide, aucune jugée deux fois.
-- **`tools/mut_picker_vignettes.py` entier : 25 / 25 conformes** (dont MV5, équivalente depuis le correctif de l'en-tête, comme
-  attendu), arbre sain vert avant et après.
+1. **Première campagne** (arbre `35c058a0`, 65 mutations) : **65 / 65 conformes**, en deux passages — le premier a été
+   **coupé par la limite de temps des tâches de fond** (30 min) après **57** mutations jugées, toutes conformes ; le second a
+   rejoué les 8 restantes (M15, M35, M44, M62 → M66) : **8 / 8**, arbre sain vert avant et après.
+2. **Trois mutations ciblées ajoutées à la clôture** (M67 → M69), pour les trois témoins rouges sur master **par absence** qui
+   n'avaient pas de mutation propre (I4, B5, B2) : M67 et M69 mordent ; **M68 ne mord pas** — C-MUS-B5 ne pouvait pas
+   rougir (sa fixture était une isolation) → fixture corrigée (§5, `BUGS.md` §111).
+3. **Campagne complète rejouée** sur `0f23b087` (fixture corrigée) : **68 / 68 conformes** — M00 (le code d'avant, 72 rouges)
+   et 67 mutations, dont **18 déguisées**, **5 négatives** (une retouche sans effet ne doit **pas** rougir) et **1 équivalente**
+   (M57, rien d'observable) ; arbre sain vert **avant et après** (banc stable), aucune mutation invalide ; **M68 fait
+   maintenant rougir C-MUS-B5**.
+4. **`tools/mut_picker_vignettes.py` entier : 25 / 25 conformes** (dont MV5, équivalente depuis le correctif de l'en-tête,
+   comme attendu), arbre sain vert avant et après.
 
 ---
 
@@ -219,6 +223,7 @@ n'existe plus »*.
 ## 8. Recettes iPhone à faire par Michel (sur le clone, après intégration — Q22)
 
 **Repos (D-102, à ne pas refaire, seulement vérifier)** — une séance, une série cochée, un repos de 2:00 :
+
 1. app ouverte jusqu'à la fin du repos, puis 1 min de plus : « +1:00 » en doré, « au-delà de ton repos max » ;
 2. verrouiller le téléphone 1 min, 3 min, 5 min, puis revenir : le chrono est **à l'heure réelle** ;
 3. fermer l'app (balayer) et rouvrir après 1, 3 et 5 min : le repos revient à l'heure réelle ;
@@ -228,6 +233,7 @@ n'existe plus »*.
 7. ⛔ **aucune sonnerie n'est promise quand l'app est fermée** (une PWA iOS ne le peut pas).
 
 **Nouveautés et corrections de cette mission** :
+
 8. ⋯ → « Repos par défaut » : choisir 1:30, puis Profil → « Repos défaut » dit 90 s ; et l'inverse ;
 9. Profil sans réglage : « Repos défaut » affiche **130 s** (plus une case vide) ;
 10. une séance passée : « Enregistrer » sans rien changer → calories et volume identiques ; corriger la durée → calories
