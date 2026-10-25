@@ -483,3 +483,134 @@ de **tous** les comptes, c'est une autre décision ; ③ garder « ♻️ Rétab
 - **Stockage** : la zone grossit de la taille des favoris retirés (bornée à 60 000 caractères, plafond 120 000 pendant une
   panne de Drive). Règle de P1 avant de déployer : **Santé du système ≤ 55 %**.
 - **Outils voisins mis à jour** : `tools/mut_nut_secu_p1.py` (ancres M02, M03, M16 : les lignes de P1 portent le motif).
+
+### 13.5 Tests exécutés (données inventées, réseau coupé, 0 appel Milo)
+
+Données inventées (comptes `@example.test`, aliments fictifs), réseau coupé par le garde des bancs, **0 appel Milo**,
+aucune donnée réelle, aucun déploiement. Arbre testé : `ebc751ee` + `01d1c88e` + `5a3a21a0` (outils de test seulement) — bancs
+voisins, modes serveur, chaos, annexe et passe réduite sur cet arbre final ; le HEAD livré n'y ajoute que de la documentation.
+⚠️ Le contrôle négatif B-NFIAB a commencé sur l'arbre d'avant une correction de texte (`35331051` : même code ; seuls un
+commentaire de `Code.js`, l'ancre `RAZ_ORDRE` de l'outil et un message du banc différaient) et s'est fini sur l'arbre final
+(l'outil copie l'arbre à chaque mutation) ; ses 63 ancres ont été revérifiées sur l'arbre final : 63 / 63 trouvées une fois.
+
+| Banc / contrôle | Résultat | Ce qu'il prouve |
+|---|---|---|
+| B-NFIAB écran, **code d'avant** (`fc0a558d`) avec le banc final | **45 / 5** — exactement E2b ① ② ③ ④ ④b | les témoins E2b ① ② ③ ④ ④b sont **rouges** sur le code d'avant ; ⑤ ⑥ ⑦ (contrôles légitimes, scan juste) verts |
+| B-NFIAB écran, branche | **50 / 0** (arbre sain de chaque groupe du contrôle négatif) | E2b vert ; N08, saisie à zéro, D-131, D-130 inchangés |
+| B-NFIAB-X croisé, `Code.js` de la **branche** (`D-141`) | **78 / 0** (banc complet : écran 50 + croisé 28) | Q15 ① → ⑨, T07, T08 (contrat `D-141`), T08L, T12 |
+| B-NFIAB-X croisé, `Code.js` de **master** (@193) | **15 / 0**, 13 « sans objet » (ni verts ni rouges) | le banc s'adapte : les témoins `D-141` passent « sans objet », rien de rouge |
+| B-NFIAB-X croisé, `Code.js` d'**avant `D-141`** (`fc0a558d`, masquages gardés) | **21 / 0**, 7 « sans objet » (Q15 ① ③ ④ ⑤ ⑥ ⑦, T08 ⑧) ; T08 ③ joué au contrat `D-133` | idem ; le contrat `D-133` (masquage seul) reste vérifié |
+| Contrôle négatif B-NFIAB (`tools/mut_nut_fiabilite.py`) | **57 / 57 conformes** en trois groupes (17 + 18 + 22) ; arbres sains 50 / 0 (écran, ×2) et 28 / 0 (croisé) — D7 → D10 relancées (4 / 4) après l'arrêt du groupe sur l'ancre de D7 (le commentaire corrigé pendant la course) | E1 → E4 (E2b), D1 → D10 (`D-141`), F5 / F22 révisées, et toutes les mutations d'avant |
+| Banc P1 (`nut_secu_p1`) | **82 / 0** | sans motif, P1 se comporte comme avant |
+| Contrôle négatif P1 (`mut_nut_secu_p1`) | **45 / 45** — 44 au premier passage, puis M00 relancée : 1 / 1 (56 rouges) | ancres M02 / M03 / M16 suivies ; ⚠️ M00 comparait P1 à… P1 : son « `Code.js` d'avant » était master, qui porte P1 depuis le 23/10 (`9a72e107`) — préexistant, sans lien avec `D-141` ; base fixée à `677cf50b` (master @192, juste avant P1), commit `5a3a21a0` |
+| Contrôle négatif V2 × P1 (`mut_nut_v2_p1_croise`) | **8 / 8** — 7 au premier passage, puis C01 relancée : 1 / 1 (3 rouges) | même défaut que M00 pour C01 (« la prod @192 » = master), même correction |
+| Bancs voisins désignés par le sélecteur (+ `pots_nutrition`) — **18 bancs, 826 / 0** | `aides_audit` 18 / 0 · `journal_qty_guard` 23 / 0 · `nut2_parcours` 111 / 0 · `seance_recette` 93 / 0 · `nut2_moteur` 70 / 0 · `nut_secu_p1` 82 / 0 · `nut_m6_rejeu` 29 / 0 · `pots_nutrition` 48 / 0 · `nut_v2_p1_croise` 16 / 0 · `repas_actif` 24 / 0 · `sec_admin` 69 / 0 · `ia_ref100` 36 / 0 · `lot3` 87 / 0 · `auth_new_device` 16 / 0 · `auth_cloud_closure` 9 / 0 · `auth_signup_strict` 8 / 0 · `cookie_profile` 16 / 0 · `s2b_bascule` 71 / 0 | non-régression : parcours Nutrition, Séance, P1, sécurité de l'admin, comptes et synchro |
+| Annexe de recette (toutes les suites) | **14 PASS + 1 défaut connu** (`discussions`, ses 2 rouges listés : 71 545 / 76 464 / 68 782 caractères — **identiques** au code d'avant `fc0a558d` rejoué le même jour) ; `pwa-offline` PASS | le défaut connu de la taille du contexte de Milo, inchangé |
+| Banc de chaos (vrai `Code.js`, vrai PostgreSQL local) | **56 / 0** | P1, synchro et serveur sous pannes, concurrence et fuzz (8 graines) — la base PostgreSQL jetable a dû être recréée (le conteneur avait redémarré), socket local seulement |
+| Passe réduite : les blocs de la passe complète qui citent les fonctions changées ou leurs appelants (XXXIII, LXXXI, CLXII, CCVII, CCXLI, CCLXXV, CCLXXVIII, CCLXXX, CCLXXXV, CCLXXXVII, CCX, CCCIII, B-CCCXIII, B-CCCXVII — avec leurs sous-blocs) | **989 / 0**, puis **CCX seul : 46 / 0** (un titre mal écrit par moi, « `== BLOC CCX` », avait joué CCXCV à sa place) | la passe complète D-031 reste à Claude Principal, sur l'arbre d'intégration |
+| Contexte de Milo, à données égales (R34) | **identique à l'octet**, 76 188 caractères (`fc0a558d` / après) | rien de ce que Milo reçoit ne change |
+| Moteur MET | **8 fonctions identiques à master, 0 écart** | hors périmètre, non touché |
+| T0 : `git diff --check`, `check_regles`, auto-test du sélecteur | **verts** : `diff --check` propre ; `check_regles` sans erreur (seul l'avertissement connu, non bloquant : `docs/PROMPT-MILO-REEL.txt` périmé) ; sélecteur **15 / 0** | |
+| Banc de la carte Admin d'inventaire (`nut_inventaire_admin`) | **20 / 0** | le sélecteur rattache le commentaire de la remise à zéro à `loadNutInventaireAdmin`, sa voisine dans `app.js` : non modifiée, vérifiée quand même |
+
+### 13.6 Limites et décisions restantes
+
+- **Rien n'est vérifié sur un vrai téléphone** : E2b et `D-141` attendent la recette sur compte de test (`NUT-VAL-05`), après
+  intégration, GO serveur et déploiement.
+- **La copie Drive réelle dans `saveProfile` n'est pas éprouvée en production** (limite déjà écrite de P1) ; avec `D-141`, les
+  copies restent d'ordinaire dans la zone — Drive n'intervient que si elle déborde.
+- **Une ancienne version de l'app** (favoris non datés) sur un appareil pas encore mis à jour : après une remise à zéro, un
+  favori qu'elle ajouterait serait pris pour un ancien (retiré, copié).
+- **Un favori créé hors ligne sur un 2ᵉ appareil avant la remise à zéro, jamais synchronisé** : retiré de cet appareil à sa
+  reconnexion (la date), sans copie au serveur — le fichier de sauvegarde vient du 1ᵉʳ appareil. Cas rare, nommé.
+- **Un « ✕ » isolé n'est pas appliqué au serveur** (seule la remise à zéro l'est) : un appareil en retard peut y remettre un
+  favori retiré par « ✕ » ; l'app l'écarte toujours par la date (préexistant).
+- **Les favoris se synchronisent toujours « le dernier qui écrit gagne »** avec copie en zone (P1, préexistant ; `D-112`
+  reportée).
+- **La restauration admin remplace tout le compte** (journal, zone) — préexistant ; seuls favoris et masquages y sont gardés.
+- **Le contrôle négatif relit l'arbre de travail à chaque mutation** : le modifier pendant la course fausse le résultat — vécu
+  deux fois aujourd'hui, par moi (des copies effacées en cours de route ; puis un commentaire de `Code.js` corrigé pendant la course :
+  l'ancre de D7 a manqué, le groupe s'est arrêté, D7 → D10 relancées sur l'arbre final). Idée consignée, **non faite** (hors
+  périmètre) : figer une copie de l'arbre au départ de l'outil.
+- **Pas de passe complète D-031** (passe réduite aux blocs concernés) : c'est à Claude Principal, sur l'arbre d'intégration.
+- **Décisions en attente de Michel** : `D-136` et `D-137` (proposées) ; les trois questions sur la zone de récupération, les sauvegardes nocturnes et « ♻️ Rétablir » ; le GO serveur (déploiement
+  de `Code.js`) ; le GO de recette ; puis, seulement après, le GO d'exécution réelle de la remise à zéro.
+
+### 13.7 Compteurs (règle 17 — code de l'app et du serveur)
+
+| Compteur | Valeur |
+|---|---|
+| Données persistées ajoutées | **0 clé nouvelle** — au serveur, les copies de la zone portent le motif « raz » et ses événements un champ `motif` (structures existantes de P1) |
+| Fichiers applicatifs touchés | **3** : `app.js`, `index.html`, `Code.js` (commit séparé, non déployé) |
+| Lignes ajoutées − retirées | **+88 − 13** (net + 75) : `app.js` + 20 − 8 (dont 1 ligne de code pour E2b, le reste en commentaires et textes), `index.html` + 1 − 1, `Code.js` + 67 − 4 |
+| Anciens chemins supprimés ou fusionnés | **2 fusionnés, 0 supprimé** : la comparaison de `D-131` suit la règle même des listes (`_n2Propose`, un seul propriétaire) ; la suppression au serveur passe par P1 (aucune seconde mécanique de copie — ma 1ʳᵉ version en avait une, retirée) |
+
+### 13.8 Registre et passation (règle d'or 19) — à reporter par Claude Principal
+
+> **Lus avant la mission** (Drive, lecture seule, accès testé à 13:31 UTC) : le registre « SUIVI DES BUGS — FORCE TRACKER »,
+> vue « Consolidé 25-10 » (59 lignes ; en entier pour les tickets ci-dessous), et la « PASSATION MAÎTRE » — ses blocs du 25/10
+> (retours S6 / S7, règle 19, Q15 et validation). Le connecteur ne modifie pas un fichier existant (règle 18) : **Claude
+> Principal** reporte ce bloc, mêmes IDs, même date (25/10/2026), rien d'effacé.
+> Revérifié avant la livraison (14:36 UTC, métadonnées seulement) : registre modifié pour la dernière fois à 13:12 UTC,
+> passation à 13:13 UTC — la lecture de 13:31 est donc la plus récente ; les « anciennes valeurs » ci-dessous sont à jour.
+
+| ID | Ancienne valeur (Consolidé 25-10) | Nouvelle valeur proposée |
+|---|---|---|
+| `NUT-VERIFY-01` | « Reproduit par sonde indépendante rapportée ; ouvert, non corrigé dans PDF » · « Conserver OUVERT jusqu'à un témoin dédié rouge→vert » | **Corrigé sur branche** `claude/nutrition-v2` (commit `ebc751ee`) : seules les saisies encore proposées se comparent (`D-136`, proposée). Témoins `B-NFIAB E2b ① ② ③ ④ ④b` rouges sur `fc0a558d`, verts après ; ⑤ ⑥ ⑦ (contrôles légitimes, scan juste) verts des deux côtés ; mutations E1 → E4, F5. Journal intact. Publication : aucune. iPhone : à faire sur compte de test. |
+| `NUT-FOR-04` (Q15) | « Q15 décidé le 25/10 ; suppression réelle à construire/valider, non exécutée » | **Suppression réelle PRÉPARÉE** (`D-137`, proposée ; `Code.js` commit `01d1c88e`, NON déployé) : au serveur, la date de remise à zéro supprime les favoris d'avant par la protection P1 (copie en zone d'abord) ; un appareil en retard, « Restaurer » ou une restauration admin d'avant ne les ramènent plus ; journal, profils et autres comptes intacts. **Aucune exécution.** Zone P1 et sauvegardes nocturnes : non purgées, 3 questions à Michel. `D-133` → REMPLACÉE → `D-141`. |
+| `SERVEUR-CODEJS-01` | « Dépendance démontrée sur banc ; nouveau changement Q15 à qualifier » | `Code.js` de la branche = `bb2075b9` (masquages) + `01d1c88e` (`D-141` par P1, restauration admin gardée, motif optionnel de P1). Banc à trois modes (branche, master, avant `D-141`) ; banc P1 et son contrôle négatif rejoués. **NON déployé** ; déploiement à part avec GO (`[skip ci]` puis lancement à la main) ; ⛔ jamais de remise à zéro réelle avant ce déploiement. |
+| `NUT-VAL-01` | « Validation finale non acquise ; Q15 exige désormais effacement réel serveur » | Mécanisme d'effacement réel **préparé** (sauvegarde obligatoire côté téléphone, copie avant suppression côté serveur) ; validation finale toujours non acquise : déploiement, recette compte de test, GO. |
+| `NUT-VAL-02` | « Dépendance serveur démontrée sur banc ; recette réelle non faite » | Réapparition **fermée sur banc** pour la synchro, un autre appareil, « Restaurer » et la restauration admin (`Q15 ③ ⑥`, `T08 ④ ⑤ ⑧`, `T08L ③ ④`) ; recette réelle à faire. |
+| `NUT-VAL-05` | « Non exécuté dans le PDF ; obligatoire avant Nutrition terminée » · « Clone après GO Q22 … Puis après GO serveur/publication : synchro et Restaurer en compte test AVANT vrai compte » | Inchangé (toujours **à faire**), deux scénarios ajoutés à la recette : **E2b** (produit fictif saisi faux deux fois, remise à zéro, saisie juste → ni « à vérifier » ni refus) et **`D-141`** (après déploiement de `Code.js` : remise à zéro sur compte de test → favoris d'avant absents au serveur et sur un 2ᵉ appareil, « Restaurer » ne les rend pas, un favori neuf se synchronise). |
+| `INTEGRATION-NS-01` | « … Claude Nutrition clôt ses retours, Principal … refusionne » | Branche Nutrition avancée (HEAD : partie « Pour l'intégration ») : **à refusionner** ; `Code.js` en commit séparé ; `tools/mut_nut_secu_p1.py` (ancres M02 / M03 / M16) mis à jour avec lui. Passe complète D-031 sur l'arbre final : à Principal. |
+
+**Source proposée** : « S8 — rapport de clôture ciblée Nutrition, 25/10 » (le registre s'arrête à S7).
+
+**Passation maître — paragraphe proposé** : *« COMPLÉMENT — 25/10/2026 (fin d'après-midi) — CLÔTURE CIBLÉE NUTRITION (S8,
+Claude Nutrition). NUT-VERIFY-01 (E2b) corrigé sur branche : seules les saisies encore proposées se comparent, journal intact,
+contrôles légitimes et scan inchangés (D-136, proposée). NUT-FOR-04 / Q15 : suppression réelle des anciens favoris PRÉPARÉE au
+serveur par la protection P1 (D-137, proposée ; Code.js en commit séparé, NON déployé) ; appareil en retard, Restaurer et
+restauration admin ne les ramènent plus ; zone de récupération et sauvegardes nocturnes non purgées — trois questions à Michel
+(copies de la zone, conservation des sauvegardes, « Rétablir »). D-133 remplacée par D-141. Aucune fusion, publication,
+déploiement, suppression réelle ni donnée réelle. Recette iPhone sur compte de test et GO serveur toujours requis. »*
+
+### 13.9 Pour l'intégration (handoff)
+
+**Branche** `claude/nutrition-v2`, **HEAD de code `5a3a21a0`** (puis un dernier commit de documentation `[skip ci]`) — à jour de master `5c8fedb2` (fusionné en `b4c60c85`). ⛔ Rien sur master,
+rien publié, rien déployé.
+
+**Commits de la mission** (dans l'ordre) :
+
+| Commit | Contenu |
+|---|---|
+| `7941d673` | journal de partage : ma ligne « en cours », poussée avant de coder `[skip ci]` |
+| `ebc751ee` | application + tests : `app.js` (E2b ; textes de la remise à zéro), `index.html` (carte Admin), `tests/parcours/nut_fiabilite.js`, `tools/mut_nut_fiabilite.py`, `tests/recette/registre.json` |
+| `01d1c88e` | **`Code.js` seul** (`D-141`, `D-137`) + `tools/mut_nut_secu_p1.py` (ancres M02 / M03 / M16) — **NON déployé** |
+| `ab606683` | documentation (en cours) `[skip ci]` |
+| `5a3a21a0` | outils de test : M00 (`mut_nut_secu_p1`) et C01 (`mut_nut_v2_p1_croise`) comparent de nouveau P1 au `Code.js` d'avant P1 (base fixe `677cf50b`, master @192) — préexistant, constaté ici `[skip ci]` |
+| (dernier) | documentation (fin) : `BUGS.md` §121 – §122, `docs/DECISIONS.md` (`D-136`, `D-137` ; `D-133` → REMPLACÉE → `D-141`), `docs/NUT-V2-FIABILITE.md` §13, `docs/CONTEXTE-ACTUEL.md`, `docs/JOURNAL-DE-PARTAGE.md` (ligne close) `[skip ci]` |
+
+**Fonctions touchées.** `app.js` : `_n2FichesVerifiees` (une ligne : seules les références encore proposées, `_n2Propose`) ;
+`nutRazPerimetre`, `nutRazExecuter` (textes). `Code.js` : `_nutRazDate_`, `_nutRazTri_`, `_nutRazFavoris_` (nouvelles) ;
+`_nutProtegerListe_` (motif optionnel ; sans lui, inchangée) ; `handleSaveProfile_` (ordre : masquages fusionnés → `D-141` →
+P1) ; `handleAdminRestore_` (masquages fusionnés, favoris d'avant non remis).
+
+**À faire à l'intégration (Claude Principal)** :
+
+1. Fusionner le HEAD dans l'arbre d'intégration — conflits attendus en **documentation seulement** (journal de partage,
+   `DECISIONS.md`, `BUGS.md`, `CONTEXTE-ACTUEL.md`) : garder les deux côtés. Numéros vérifiés libres sur master,
+   `claude/dreamy-bell-pu88ia` et `claude/integration-nut-seance` : `D-136`, `D-137`, §121, §122.
+2. **Passe complète D-031** sur l'arbre d'intégration (la mienne est réduite à 14 blocs) ; le sélecteur
+   (`python3 tools/recette_selecteur.py --diff <base>`) désigne `NUT2-FIABILITE-01` et les suites voisines.
+3. `Code.js` peut rester hors d'une première intégration : l'app et les bancs s'adaptent au `Code.js` servi (témoins `D-141`
+   « sans objet », `T08 ③` suit alors le contrat `D-133`) — vérifié dans les trois modes. ⚠️ Mais alors le texte de la carte
+   Admin (« supprimés … du serveur ») ne serait vrai qu'après le déploiement : **la remise à zéro ne s'exécute pas avant**.
+4. **Déploiement Apps Script** : à part, avec le GO de Michel ; commit `[skip ci]` sur master puis lancement à la main du
+   workflow ; vérifier `?test=1` et **Santé du système ≤ 55 %** avant ; retour arrière : @193.
+5. **Recette iPhone** (`NUT-VAL-05`) sur compte de test : E2b (un produit fictif saisi faux deux fois, remise à zéro, saisie
+   juste → pas de « à vérifier ») ; `D-141` (remise à zéro, puis : favoris d'avant absents au serveur et sur un 2ᵉ appareil,
+   « Restaurer » ne les rend pas, un favori neuf se synchronise).
+6. ⛔ **Remise à zéro réelle du compte de Michel** : seulement après 4 et 5, et sur son GO d'exécution.
+7. Contrôle négatif : `python3 tools/mut_nut_fiabilite.py [préfixes]` (57 mutations ; ex. `E1,E2,E3,E4` ou `D1,…,D10`) —
+   les mutations `D` passent « sans objet » si `Code.js` ne porte pas `_nutRazFavoris_(`.
+8. Registre et passation : le bloc « Registre et passation » est à reporter (le connecteur ne modifie pas un fichier existant).
