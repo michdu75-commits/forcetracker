@@ -69,7 +69,7 @@ if n_court != n_long:
 # ⚠️ Et il se lit dans les EN-TÊTES de règle, jamais dans le texte libre : citer « règle 16 »
 #   dans un commentaire ne fabrique pas une règle (famille « on mesure le CODE, pas ce qui en
 #   PARLE » — ft-v1193/1203/1205/1210/1216/1220).
-REGLES_ATTENDUES = 18  # 13/10/2026 : ajout de la règle #18 (Drive), décision de Michel · 04/10 : #17 (complexité)
+REGLES_ATTENDUES = 19  # 25/10/2026 : #19 (suivi commun : registre Drive + passation), consigne de Michel · 13/10 : #18 (Drive) · 04/10 : #17 (complexité)
 if len(n_court) != REGLES_ATTENDUES:
     erreurs.append(
         f"compteur des règles d'or : {len(n_court)} déclarées, {REGLES_ATTENDUES} attendues — "
