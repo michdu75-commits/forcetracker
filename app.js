@@ -1326,6 +1326,14 @@ function _n2Ctx(){
   }
   return {ciqual:(code)=>(_n2CiqIdx && _n2CiqIdx[String(code)])||null};
 }
+/* ⭐ NUT-CIQ-HL-01 (Claude Principal, 25/10 soir — sa sonde C2k) — POURQUOI une ancienne ligne ne se recalcule pas. Une ligne
+   CIQUAL (`ciqual:…`) dont la TABLE n'a pas pu être chargée (hors ligne : `data/ciqual.json` se télécharge à la demande, il n'est
+   pas dans le cache — R30) n'est pas « sans fiche » : c'est sa RÉFÉRENCE qui manque, pour l'instant. L'écran disait « cet ancien
+   aliment n'a pas de fiche vérifiée » — faux. ⛔ Le refus d'une autre quantité reste (D-101 ⑨ : sans la table, rien ne se
+   recalcule) : seule la PHRASE change, dans l'ajout et dans « Modifier ». Lecture seule. */
+function _n2CiqualAbsente(sid){
+  return /^ciqual:/.test(String(sid||'').trim()) && !(typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a));
+}
 /* ⛔⛔ …MAIS LA TABLE N'ÉTAIT CHARGÉE QU'À LA PREMIÈRE RECHERCHE (mesuré le 22/10) : avant toute recherche, « Mes
    aliments », « + » et « Modifier » traitaient une ancienne ligne CIQUAL parfaitement vérifiable en NON vérifiée —
    le même aliment se recalculait ou non selon un geste fait avant, invisible. Une reprise qui en a besoin ATTEND
@@ -1771,8 +1779,11 @@ function _afMajFige(){
     +'<input id="af-prop" type="text" inputmode="decimal" step="any" placeholder="quantité en '+u+'" oninput="_afPropPoserFige(\'tapee\')" style="'+style+'">'
     +pastille
     +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Valeurs de ta dernière saisie'+(q?' (pour '+qTxt+')':'')
-    +'. ⚠️ Elles ne se recalculent pas (cet ancien aliment n\'a pas de fiche vérifiée) : pour une autre quantité, corrige-les'
-    +' — ou retrouve sa fiche ci-dessous (recherche, scan, étiquette), et elles se calculeront.</div>'
+    +'. ⚠️ '+(_n2CiqualAbsente(_afRef.cle)
+      ? 'Elles ne se recalculent pas pour l\'instant : sa référence CIQUAL n\'est pas disponible (la table n\'a pas pu être chargée — hors ligne ?).'
+        +' Une fois connecté, « 🔎 Retrouver l\'aliment » la chargera, et elles se calculeront pour ta quantité ; d\'ici là, pour une autre quantité, corrige-les.'
+      : 'Elles ne se recalculent pas (cet ancien aliment n\'a pas de fiche vérifiée) : pour une autre quantité, corrige-les'
+        +' — ou retrouve sa fiche ci-dessous (recherche, scan, étiquette), et elles se calculeront.')+'</div>'
     +(_afRef.raison ? '<div style="font-size:11.5px;color:var(--orange);margin-top:6px;line-height:1.4;">⚠️ À vérifier : '
       +_escFood(_afRef.raison.texte)+'. Vérifie-les avant d\'ajouter — ou retrouve sa fiche ci-dessous.</div>' : '')
     +_n2IssuesHtml(_afRef.etatRecherche);
@@ -1854,6 +1865,12 @@ async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
                        : 'Fiche introuvable pour l\'instant (hors ligne, ou produit inconnu) : scanne-le, retrouve-le, ou saisis son étiquette.');
     return false;
   }
+  /* ⭐ NUT-QTY-02 (Claude Principal, 25/10 soir — sa sonde C7a, Open Food Facts en 1,5 s) — LA QUANTITÉ POSÉE PENDANT LA RECHERCHE
+     SURVIT À LA FICHE. Mesuré : 180 tapé dans l'écran figé AVANT la réponse ; la fiche arrivait par le chemin du scan, qui oublie
+     l'aliment d'avant (`_afOublierAliment`) et vide le champ (`_afPreparerEcran`) — le bloc « Quantité » s'affichait VIDE et
+     « Ajouter » répondait « Combien en as-tu mangé ? » : rien d'écrit, 180 perdu. Elle est relevée ICI (après les contrôles
+     ci-dessus : jamais pour un autre aliment) et reposée plus bas, telle quelle — tapée, ou prise sur la pastille. */
+  const qPose=(_afRef && _afRef.fige) ? _afQtePoseeFige() : null;
   _offAppliquerProduit(p, ean, saisie, false);
   /* La quantité de la dernière fois, PROPOSÉE (jamais posée) — et seulement dans l'unité de la fiche trouvée (g ou ml). */
   if(qDer>0 && typeof _bcNutr==='object' && _bcNutr && (uDer||'g')===(_bcNutr.base||'g')) _bcProposerDerniere(qDer);
@@ -1863,6 +1880,20 @@ async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
     const c=NUT2.calcule(_n2FicheBc(), {val:qDer, unite:_bcNutr.base||'g'});
     if(c.ok && _N2_CHAMPS.some(k=>(k in vAnc) && (k in c.valeurs) && vAnc[k]!==c.valeurs[k]))
       dit+=' — ta saisie disait '+_n2Val(vAnc.kcal)+' kcal · P '+_n2Val(vAnc.prot)+' pour '+_nbFR(qDer)+' '+(_bcNutr.base||'g');
+  }
+  /* NUT-QTY-02 : la quantité relevée se repose, et l'écran le dit. ⛔ Seulement dans l'unité de la fiche (g ou ml) : des grammes ne
+     deviennent jamais des ml, ni des portions des grammes — rien n'est converti ni deviné ; sinon l'écran dit de la retaper. */
+  if(qPose && _bcNutr){
+    const u=(_bcNutr.base==='ml') ? 'ml' : 'g';
+    if(qPose.unite===u){
+      const g=document.getElementById('af-bc-grams'); if(g) g.value=qPose.val;
+      _bcPortionPrise=null;
+      _bcQtyPose=true; _bcQtyOrigine=qPose.origine;   // le geste d'avant, tel quel (une frappe, ou une pastille touchée)
+      _bcApplyGrams();                                // R2 : le même calcul que la saisie à la main
+      const b=document.getElementById('af-bc-last');  // la pastille déjà prise ne se repropose pas
+      if(b && qPose.origine==='proposee' && parseFloat(b.dataset.q)===qPose.val) b.style.display='none';
+      dit+=' — ta quantité ('+_n2QteTexte(qPose, false)+') est gardée';
+    }else dit+=' — tu avais tapé '+_n2QteTexte(qPose, false)+' : cette fiche compte en '+u+', tape ta quantité en '+u;
   }
   const nm=document.getElementById('af-bc-name'); if(nm && _bcNutr) nm.textContent+=dit;
   return true;
@@ -6926,7 +6957,9 @@ function _efQtyRender(){
     +'<div style="display:flex;gap:6px;margin-bottom:7px;">'+onglet('g','⚖️ En grammes')+onglet('ml','🥛 En ml')+(portionOk?onglet('portion','🍽️ En portions'):'')+'</div>'
     +'<input id="ef-q" type="text" inputmode="decimal" step="any" value="'+val+'" placeholder="'+(_efUniteDecl==='portion'?'nombre de portions':'quantité en '+_efUniteDecl)+'" oninput="_efCoherence()" style="'+style+'">'
     +note((portionOk && _efUniteDecl==='portion' ? _efPortionNote(q, null)+' ' : '')
-      +'Les valeurs sont celles notées : elles ne sont <b>pas recalculées</b> (pas de fiche vérifiée). Si la quantité change, corrige-les.')
+      +'Les valeurs sont celles notées : elles ne sont <b>pas recalculées</b> '+(_n2CiqualAbsente(e.sourceId)   // NUT-CIQ-HL-01
+        ? 'pour l\'instant — sa référence CIQUAL n\'est pas disponible (la table n\'a pas pu être chargée : hors ligne ?). Si la quantité change, corrige-les.'
+        : '(pas de fiche vérifiée). Si la quantité change, corrige-les.'))
     +'</div>';
 }
 /* D-103 — ce que vaut la quantité en portions de « Modifier », par le formateur unique. Fiable (fiche de confiance, poids
