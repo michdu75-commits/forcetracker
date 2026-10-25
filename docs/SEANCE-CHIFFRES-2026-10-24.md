@@ -298,7 +298,9 @@ Supination Haltère · Rotation Machine Obliques · Thrusters Haltères · Tirag
 `b2a6280a` / `64d0d709` lot 3 (dont F05 isolé des calories) · `399c4c31` lot 4 · `14153e66` lot 5 · `54065ea3` diagnostic
 MET + règle #11 · `58828924` décisions et BUGS · `35c058a0` fusion de master · (`3251c2ad`, `21d71bf8` : tableau des briques
 régénéré) · `d403c862` passation · `cfcb45e3` campagne et M67 → M69 · `0f23b087` témoin C-MUS-B5 réécrit · la
-clôture (documentation). **Code applicatif inchangé depuis `35c058a0`.**
+clôture (documentation) · **25/10** : `8ff18b31` fusion de master (`93dfbb75`) · `093a42e7` retour de Claude Principal
+(§12). **Code applicatif** : inchangé depuis `35c058a0`, sauf `_typeCardioDepuisMontre` (setup.js), revenu identique à
+master le 25/10.
 
 ---
 
