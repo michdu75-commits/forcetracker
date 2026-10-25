@@ -84,12 +84,17 @@ RAZ_ORDRE = ("    if (body.hiddenFoods   !== undefined) profile.hiddenFoods   = 
 
 # NUT-QTY-02 (25/10 soir) : la quantite posee pendant la recherche en ligne survit a la fiche ; NUT-CIQ-HL-01 : la table CIQUAL
 # absente n'est pas « pas de fiche » (la protection D-101 ⑨ reste)
-QPOSE = "  const qPose=(_afRef && _afRef.fige) ? _afQtePoseeFige() : null;\n"
+QPOSE = "  const qPose=_afQtePoseeReprise();\n"
 QUNITE = "    if(qPose.unite===u){\n"
 QHIDE = "      if(b && qPose.origine==='proposee' && parseFloat(b.dataset.q)===qPose.val) b.style.display='none';\n"
 QORIG = "      _bcQtyPose=true; _bcQtyOrigine=qPose.origine;   // le geste d'avant, tel quel (une frappe, ou une pastille touchée)\n"
 QDIT = "      dit+=' — ta quantité ('+_n2QteTexte(qPose, false)+') est gardée';\n"
-QELSE = "    }else dit+=' — tu avais tapé '+_n2QteTexte(qPose, false)+' : cette fiche compte en '+u+', tape ta quantité en '+u;\n"
+QELSE = "    }else dit+=' — tu avais indiqué '+_n2QteTexte(qPose, false)+' : cette fiche compte en '+u+', tape ta quantité en '+u;\n"
+QPREBLUR = "  if(_afPropPose && _afPoidsDeclare>0 && (_afUnite==='g' || _afUnite==='ml')) return {val:_afPoidsDeclare, unite:_afUnite, origine:'tapee'};\n"
+QRU = "  if(R && (R.u==='g' || R.u==='ml') && R.q>0) return _afQtePosee(R.u);\n"
+QPORT = "  if(_afUnite==='portion'){\n    if(!(_afPortionPose && +_afPortions>0)) return null;\n"
+QFIN = QPREBLUR + "  return null;\n}\n"
+QREPCOMM = "   ⛔ Elle ne lit que des GESTES (`_afPropPose`, `_afPortionPose`) : un nombre proposé et pas pris n'est rien.\n"
 QCOMM = "SURVIT À LA FICHE. Mesuré : 180 tapé dans l'écran figé AVANT la réponse ; la fiche arrivait par le chemin du scan, qui oublie\n"
 CABS = "function _n2CiqualAbsente(sid){\n  return /^ciqual:/.test(String(sid||'').trim()) && !(typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a));\n}\n"
 FIGE_REFUS = "    if(R.qte && !_afValeursTapees && !(q.unite===R.qte.unite && q.val===R.qte.val))\n"
@@ -219,9 +224,9 @@ MUT = [
      [(CJ, RAZ_MOTIF, "  ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });\n")], X('Q15 ①', 'Q15 ⑦', 'T08 ③'), 'GARDE', 'croise'),
     # ── NUT-QTY-02 · NUT-CIQ-HL-01 (mission de Michel, 25/10 soir) ──
     ('Q1 la quantite posee pendant la recherche en ligne n\'est plus relevee (le defaut NUT-QTY-02 : 180 perdu a l\'arrivee de la fiche)',
-     [(A, QPOSE, "  const qPose=null;\n")], E('Q2 ①', 'Q2 ②', 'Q2 ③', 'Q2 ④'), 'GARDE', 'ecran'),
+     [(A, QPOSE, "  const qPose=null;\n")], E('Q2 ①', 'Q2 ②', 'Q2 ③', 'Q2 ④', 'Q2 ⑦', 'Q2 ⑧', 'Q2 ⑨'), 'GARDE', 'ecran'),
     ('Q2 la quantite passe dans une AUTRE unite (180 g poses comme 180 ml : une densite inventee)',
-     [(A, QUNITE, "    if(true){\n")], E('Q2 ④'), 'GARDE', 'ecran'),
+     [(A, QUNITE, "    if(true){\n")], E('Q2 ④', 'Q2 ⑨'), 'GARDE', 'ecran'),
     ('Q3 « 0 » (ou un champ vide) devient une quantite posee',
      [(A, QPOSE, "  const qPose=(_afRef && _afRef.fige) ? {val:numFR((document.getElementById('af-prop')||{}).value)||0, unite:(_afRef.u==='ml')?'ml':'g', origine:'tapee'} : null;\n")],
      E('Q2 ⑤'), 'GARDE', 'ecran'),
@@ -231,7 +236,17 @@ MUT = [
     ('Q6 l\'origine du geste se perd (une pastille prise devient une quantite « tapee »)',
      [(A, QORIG, "      _bcQtyPose=true; _bcQtyOrigine='tapee';\n")], E('Q2 ③'), 'GARDE', 'ecran'),
     ('Q7 la quantite est gardee SANS le dire', [(A, QDIT, "")], E('Q2 ②'), 'GARDE', 'ecran'),
-    ('Q8 une autre unite : la quantite se perd sans rien dire', [(A, QELSE, "    }\n")], E('Q2 ④'), 'GARDE', 'ecran'),
+    ('Q8 une autre unite : la quantite se perd sans rien dire', [(A, QELSE, "    }\n")], E('Q2 ④', 'Q2 ⑨'), 'GARDE', 'ecran'),
+    ('Q9 la jumelle rouverte : seule la reprise FIGEE garde sa quantite (le correctif d\'avant, b41089f7) — l\'ancien scan SANS quantite la perd',
+     [(A, QPOSE, "  const qPose=(_afRef && _afRef.fige) ? _afQtePoseeFige() : null;\n")], E('Q2 ⑦', 'Q2 ⑧', 'Q2 ⑨'), 'GARDE', 'ecran'),
+    ('Q10 le poids tape AVANT la sortie du champ n\'est plus lu (180 perdu si la fiche arrive pendant la frappe)',
+     [(A, QPREBLUR, "")], E('Q2 ⑦'), 'GARDE', 'ecran'),
+    ('Q11 la quantite CORRIGEE apres la sortie du champ n\'est plus lue : le premier poids (180) l\'emporte sur le dernier (200)',
+     [(A, QRU, "")], E('Q2 ⑧'), 'GARDE', 'ecran'),
+    ('Q12 des portions choisies avant la fiche se perdent sans rien dire',
+     [(A, QPORT, "  if(false){\n    if(!(_afPortionPose && +_afPortions>0)) return null;\n")], E('Q2 ⑨'), 'GARDE', 'ecran'),
+    ('Q13 rien de pose, et pourtant une quantite : le « 1 » de l\'ancre devient 1 g a l\'arrivee de la fiche',
+     [(A, QFIN, QPREBLUR + "  return (R && R.q>0) ? {val:R.q, unite:'g', origine:'tapee'} : null;\n}\n")], E('Q2 ⑩'), 'GARDE', 'ecran'),
     ('C1 la table CIQUAL absente se dit de nouveau « pas de fiche verifiee » (le defaut NUT-CIQ-HL-01)',
      [(A, CABS, CABS.replace("  return /^ciqual:/", "  return false && /^ciqual:/"))], E('CHL ①', 'CHL ④'), 'GARDE', 'ecran'),
     ('C2 « reference indisponible » pour TOUTE ligne ciqual:, table chargee ou non (la condition n\'est plus la table)',
@@ -239,6 +254,7 @@ MUT = [
     ('C3 la protection saute : hors ligne, une autre quantite s\'ecrit avec les valeurs d\'avant (D-101 ⑨ ignoree)',
      [(A, FIGE_REFUS, "    if(false)\n")], E('CHL ②', 'T02 ①'), 'GARDE', 'ecran'),
     ('MC2 [negatif] commentaire seulement dans le correctif NUT-QTY-02', [(A, QCOMM, QCOMM.replace("Mesuré :", "Mesuré (commentaire) :"))], [], 'OK', 'ecran'),
+    ('MC3 [negatif] commentaire seulement dans le lecteur de la jumelle (`_afQtePoseeReprise`)', [(A, QREPCOMM, QREPCOMM.replace("GESTES", "GESTES (commentaire)"))], [], 'OK', 'ecran'),
     # ── l'oracle (ecrit a la main) et le controle « commentaire » ──
     ('F24 l\'oracle : 35 g d\'isolat attendus a 135 kcal au lieu de 136 (l\'oracle est bien LU)',
      [(B, ORACLE, ORACLE.replace("kcal: 136", "kcal: 135"))], E('T01 ①'), 'GARDE', 'ecran'),

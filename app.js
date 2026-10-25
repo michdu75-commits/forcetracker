@@ -1836,6 +1836,25 @@ function _afQtePoseeFige(){
   if(R.qte && R.qte.unite==='portion') return {val:v, unite:'portion', origine:o, portion:Object.assign({}, R.qte.portion)};
   return {val:v, unite:(R.u==='ml')?'ml':'g', origine:o};
 }
+/* ⭐ NUT-QTY-02 — LA QUANTITÉ POSÉE SUR L'ÉCRAN D'UNE REPRISE, QUEL QUE SOIT SON ÉTAT, quand sa fiche arrive en ligne
+   (`_n2RetrouverEnLigne`). Les deux reprises sans fiche de confiance ont chacune leur champ : la reprise FIGÉE (`#af-prop`) et
+   la reprise SANS quantité (« poids de ce que tu as mangé », `#af-poids` puis `#af-prop`, ou des portions). Mesuré (sonde du
+   25/10 soir, la jumelle de la sonde C7a) : dans les deux, la fiche arrivée vidait le champ. Lecture seule ; rien de posé → null.
+   ⛔ Elle ne lit que des GESTES (`_afPropPose`, `_afPortionPose`) : un nombre proposé et pas pris n'est rien.
+   ⚖️ Les lecteurs de l'écriture (`_n2EntreeEcran` ② ③ ④, R2) ; un seul ajout : le poids tapé AVANT la sortie du champ, que
+   `_afDeclarePoids` a déjà posé et que `_afMajAncre` n'a pas encore redessiné. */
+function _afQtePoseeReprise(){
+  const R=_afRef;
+  if(R && R.fige) return _afQtePoseeFige();
+  if(_afUnite==='portion'){
+    if(!(_afPortionPose && +_afPortions>0)) return null;
+    return {val:+_afPortions, unite:'portion', origine:'tapee',
+            portion:{libelle:String(_afPortionLabel||'').trim(), poids:(+_afPortionPoids>0)?+_afPortionPoids:0, unite:'g'}};
+  }
+  if(R && (R.u==='g' || R.u==='ml') && R.q>0) return _afQtePosee(R.u);
+  if(_afPropPose && _afPoidsDeclare>0 && (_afUnite==='g' || _afUnite==='ml')) return {val:_afPoidsDeclare, unite:_afUnite, origine:'tapee'};
+  return null;
+}
 /* ═══ NV2-FIAB (24/10/2026, mission de Michel) — RETROUVER LA FICHE D'UN ALIMENT REPRIS ═══════════════════════════════════
    *« Si une ancienne saisie ne possède réellement aucune fiche fiable, ne pas fabriquer de valeurs. Proposer clairement de
    retrouver l'aliment, de rescanner son code-barres ou de saisir son étiquette. Le cas figé ne doit plus constituer une
@@ -1869,8 +1888,10 @@ async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
      SURVIT À LA FICHE. Mesuré : 180 tapé dans l'écran figé AVANT la réponse ; la fiche arrivait par le chemin du scan, qui oublie
      l'aliment d'avant (`_afOublierAliment`) et vide le champ (`_afPreparerEcran`) — le bloc « Quantité » s'affichait VIDE et
      « Ajouter » répondait « Combien en as-tu mangé ? » : rien d'écrit, 180 perdu. Elle est relevée ICI (après les contrôles
-     ci-dessus : jamais pour un autre aliment) et reposée plus bas, telle quelle — tapée, ou prise sur la pastille. */
-  const qPose=(_afRef && _afRef.fige) ? _afQtePoseeFige() : null;
+     ci-dessus : jamais pour un autre aliment) et reposée plus bas, telle quelle — tapée, ou prise sur la pastille.
+     ⭐ Et par les DEUX reprises qui arrivent ici (R8, la jumelle mesurée le même soir) : la figée, et celle d'un ancien scan
+     SANS quantité, dont le poids tapé dans « poids de ce que tu as mangé » se perdait de la même façon (`_afQtePoseeReprise`). */
+  const qPose=_afQtePoseeReprise();
   _offAppliquerProduit(p, ean, saisie, false);
   /* La quantité de la dernière fois, PROPOSÉE (jamais posée) — et seulement dans l'unité de la fiche trouvée (g ou ml). */
   if(qDer>0 && typeof _bcNutr==='object' && _bcNutr && (uDer||'g')===(_bcNutr.base||'g')) _bcProposerDerniere(qDer);
@@ -1893,7 +1914,7 @@ async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
       const b=document.getElementById('af-bc-last');  // la pastille déjà prise ne se repropose pas
       if(b && qPose.origine==='proposee' && parseFloat(b.dataset.q)===qPose.val) b.style.display='none';
       dit+=' — ta quantité ('+_n2QteTexte(qPose, false)+') est gardée';
-    }else dit+=' — tu avais tapé '+_n2QteTexte(qPose, false)+' : cette fiche compte en '+u+', tape ta quantité en '+u;
+    }else dit+=' — tu avais indiqué '+_n2QteTexte(qPose, false)+' : cette fiche compte en '+u+', tape ta quantité en '+u;
   }
   const nm=document.getElementById('af-bc-name'); if(nm && _bcNutr) nm.textContent+=dit;
   return true;

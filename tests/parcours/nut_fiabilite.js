@@ -58,10 +58,11 @@ const A = {
   ciq100: { kcal: 130, prot: 22, carbs: 0, fat: 5 }, ciq200: { kcal: 260, prot: 44, carbs: 1, fat: 9 }, ciq250: { kcal: 325, prot: 55, carbs: 1, fat: 12 },
   stk200: { kcal: 258, prot: 42, carbs: 0, fat: 10 }, jus250: { kcal: 113, prot: 2, carbs: 25, fat: 0 },
   etiq150: { kcal: 141, prot: 8, carbs: 18, fat: 4 }, ia200: { kcal: 250, prot: 15, carbs: 25, fat: 10 },
-  /* NUT-QTY-02 : isolat 388,5 · 88 · 2,8 · 3,3 × 1,8 = 699,3 · 158,4 · 5,04 · 5,94 → 699 · 158 · 5 · 6.
+  /* NUT-QTY-02 : isolat 388,5 · 88 · 2,8 · 3,3 × 1,8 = 699,3 · 158,4 · 5,04 · 5,94 → 699 · 158 · 5 · 6 ;
+       × 2 = 777 · 176 · 5,6 · 6,6 → 777 · 176 · 6 · 7.
      NUT-CIQ-HL-01 : pâtes 9811 167 · 6,7 · 31,4 · 1,1 × 1,3 = 217,1 · 8,71 · 40,82 · 1,43 → 217 · 9 · 41 · 1 ;
      × 1,8 = 300,6 · 12,06 · 56,52 · 1,98 → 301 · 12 · 57 · 2 (le chiffre du test « 130 → 180 » de Claude Principal). */
-  iso180: { kcal: 699, prot: 158, carbs: 5, fat: 6 }, pates130: { kcal: 217, prot: 9, carbs: 41, fat: 1 }, pates180: { kcal: 301, prot: 12, carbs: 57, fat: 2 },
+  iso180: { kcal: 699, prot: 158, carbs: 5, fat: 6 }, iso200: { kcal: 777, prot: 176, carbs: 6, fat: 7 }, pates130: { kcal: 217, prot: 9, carbs: 41, fat: 1 }, pates180: { kcal: 301, prot: 12, carbs: 57, fat: 2 },
 };
 const T = (o) => o.kcal + '/' + o.prot + '/' + o.carbs + '/' + o.fat;
 
@@ -92,6 +93,10 @@ const ISO_PROT_J = { id: 'nfiab-isoprot-0001', date: jour(5), ts: ilya(5), meal:
 /* Un ancien jus SCANNÉ en V1 — V1 notait tout en grammes : 250 « g », sa fiche d'aujourd'hui compte en ml. */
 const JUS_ANC_G = { id: 'nfiab-jus-anc-g001', date: jour(3), ts: ilya(3), meal: 'collation', name: 'Jus (test)', q: 250, u: 'g', kcal: 113, prot: 2, carbs: 25, fat: 0,
   per100: { kcal: 45, prot: 0.7, carbs: 10, fat: 0.1 }, sourceId: EAN_JUS, saisie: 'scan', origine: 'off', etat: 'tel-que-vendu', v: 1 };
+/* Le même isolat, scanné en V1 mais noté SANS quantité (`q:null`) : sa reprise n'est pas figée — l'écran demande « poids de ce
+   que tu as mangé » (la jumelle de NUT-QTY-02, 2ᵉ appel de `_n2RetrouverEnLigne`). */
+const ISO_SANSQ = { id: 'nfiab-iso-sansq-0001', date: jour(3), ts: ilya(3), meal: 'collation', name: 'Iso zero (test)', q: null, u: null,
+  kcal: 156, prot: 35, carbs: 1, fat: 1, per100: null, sourceId: EAN_ISO, saisie: 'scan', origine: 'off', etat: 'tel-que-vendu', v: 1 };
 /* Des pâtes CIQUAL d'avant V2 (9811 « Pâtes sèches, standard, cuites, sans sel ajouté » : 167 · 6,7 · 31,4 · 1,1 pour 100 g), notées aujourd'hui. */
 const PATES_P100 = { kcal: 167, prot: 6.7, carbs: 31.4, fat: 1.1 };
 const ANC_PATES = { id: 'nfiab-pates-anc-001', date: jour(0), ts: Date.now() - 36e5, meal: 'dejeuner', name: 'Pâtes sèches, standard, cuites, sans sel ajouté',
@@ -727,8 +732,8 @@ async function ecranFiab(t, b, PORT) {
       const tot = o.servis.length === 0;
       const lu = await attendreFiche(o, pg); const st = await etatQ(pg);
       const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
-      t('B-NFIAB Q2 ④ ⛔ RIEN N\'EST CONVERTI : l\'ancien jus noté en grammes, sa fiche compte en ml — 180 n\'est PAS posé comme 180 ml ; l\'écran DIT « tu avais tapé 180 g » et de taper la quantité en ml, et « Ajouter » n\'écrit rien',
-        g && tot && lu && st.bc && st.base === 'ml' && st.gr === '' && st.pose === false && /tu avais tapé 180 g/.test(nb(st.nom)) && /tape ta quantité en ml/.test(nb(st.nom))
+      t('B-NFIAB Q2 ④ ⛔ RIEN N\'EST CONVERTI : l\'ancien jus noté en grammes, sa fiche compte en ml — 180 n\'est PAS posé comme 180 ml ; l\'écran DIT « tu avais indiqué 180 g » et de taper la quantité en ml, et « Ajouter » n\'écrit rien',
+        g && tot && lu && st.bc && st.base === 'ml' && st.gr === '' && st.pose === false && /tu avais indiqué 180 g/.test(nb(st.nom)) && /tape ta quantité en ml/.test(nb(st.nom))
         && n1 === n0 && /Combien en as-tu mangé/.test(msg), J({ tot, lu, st, n0, n1, msg }));
       await fin(o); }
     /* ④ ⛔ « 0 » tapé avant la réponse n'est pas une quantité */
@@ -750,6 +755,59 @@ async function ecranFiab(t, b, PORT) {
       const st = await etatQ(pg);
       t('B-NFIAB Q2 ⑥ ⛔ UNE QUANTITÉ TAPÉE POUR UN ALIMENT NE PASSE JAMAIS À UN AUTRE : 180 tapé pour l\'isolat, le steak CIQUAL choisi avant la réponse — l\'écran reste le steak, son champ VIDE, rien de posé',
         g && tard && st.bc && /Boeuf, steak haché 5% MG cru/.test(st.nom) && !/Iso/.test(st.nom) && st.gr === '' && st.pose === false, J({ tard, st }));
+      await fin(o); }
+
+    /* ═══ LA JUMELLE (R8, mesurée le même soir) : un ancien scan SANS quantité (`q:null`). Sa reprise n'est pas figée : l'écran
+       demande « poids de ce que tu as mangé » (`#af-poids`, puis `#af-prop` à la sortie du champ). Le même chemin de la fiche
+       (2ᵉ appel de `_n2RetrouverEnLigne`) vidait ce champ : 180 perdu, « Ajouter » → « Combien en as-tu mangé ? ». */
+    const reprendreSansQ = async (o, pg) => { let g = o.ok && await ouvrirAjout(pg);
+      g = g && await clic(pg, '#af-quick-list div[onclick="quickFillFood(0)"]'); await pause(pg, 250);
+      return g && await pg.evaluate(() => !(_afRef && _afRef.fige) && !!document.getElementById('af-poids')); };
+    /* ⑦ 180 tapé dans « poids de ce que tu as mangé », sans quitter le champ */
+    { const o = await ouvrir(b, PORT, fixture('q2f', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 2500 }); const pg = o.pg;
+      let g = await reprendreSansQ(o, pg); g = g && await taper(pg, '#af-poids', '180');
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg); const v = await ecran(pg);
+      const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const msg = await dernierToast(pg);
+      const L = await journal(pg), l = neuves(L, av)[0] || null;
+      t('B-NFIAB Q2 ⑦ ⭐⭐ LA JUMELLE — un ancien scan SANS quantité : 180 tapé dans « poids de ce que tu as mangé » AVANT la fiche (sans quitter le champ) RESTE posé (tapé) ; l\'écran calcule 699·158·5·6 par la fiche et le DIT ; « Ajouter » écrit 180 g, fiche « source », quantité « tapée » — l\'ancienne ligne intacte',
+        g && tot && lu && st.bc && st.gr === '180' && st.pose === true && st.orig === 'tapee' && v === T(A.iso180) && /ta quantité \(180 g\) est gardée/.test(nb(st.nom))
+        && !!l && l.q === 180 && l.u === 'g' && memes(vals(l), A.iso180) && l.sourceId === EAN_ISO && l.n2 && l.n2.f.fiab === 'source' && l.n2.qo === 'tapee'
+        && J(L.find((x) => x && x.id === ISO_SANSQ.id)) === J(ISO_SANSQ), J({ tot, lu, st, v, msg, l }));
+      await fin(o); }
+    /* ⑧ 180 tapé, le champ quitté (l'écran se redessine : `#af-prop` = 180), puis CORRIGÉ à 200 : c'est 200 qui reste */
+    { const o = await ouvrir(b, PORT, fixture('q2g', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 2500 }); const pg = o.pg;
+      let g = await reprendreSansQ(o, pg); g = g && await taper(pg, '#af-poids', '180');
+      await pg.evaluate(() => { const x = document.getElementById('af-poids'); if (x) x.blur(); }); await pause(pg, 200);
+      g = g && await taper(pg, '#af-prop', '200');
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg); const v = await ecran(pg);
+      const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const l = neuves(await journal(pg), av)[0] || null;
+      t('B-NFIAB Q2 ⑧ … le champ quitté puis la quantité CORRIGÉE à 200 avant la fiche : c\'est 200 qui reste (la dernière chose dite, pas la première) — 777·176·6·7 par la fiche, « ta quantité (200 g) est gardée », la ligne : 200 g, « tapée »',
+        g && tot && lu && st.bc && st.gr === '200' && st.pose === true && st.orig === 'tapee' && v === T(A.iso200) && /ta quantité \(200 g\) est gardée/.test(nb(st.nom))
+        && !!l && l.q === 200 && l.u === 'g' && memes(vals(l), A.iso200) && l.n2 && l.n2.qo === 'tapee', J({ tot, lu, st, v, l }));
+      await fin(o); }
+    /* ⑨ ⛔ des PORTIONS choisies avant la fiche (×2) : jamais converties en grammes — l'écran le dit, rien n'est écrit */
+    { const o = await ouvrir(b, PORT, fixture('q2h', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 2500 }); const pg = o.pg;
+      let g = await reprendreSansQ(o, pg);
+      g = g && await clic(pg, '#af-prop-row button[onclick="_afSetUnite(\'portion\')"]'); await pause(pg, 150);
+      g = g && await clic(pg, '#af-prop-row button[onclick="_afApplyPortion(2)"]'); await pause(pg, 150);
+      const choisi = await pg.evaluate(() => _afUnite === 'portion' && _afPortionPose === true && _afPortions === 2);
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg);
+      const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+      t('B-NFIAB Q2 ⑨ ⛔ RIEN N\'EST CONVERTI : « ×2 portions » choisi avant la fiche (qui compte en g) n\'est PAS posé en grammes ; l\'écran DIT « tu avais indiqué 2 portions » et de taper la quantité en g, et « Ajouter » n\'écrit rien',
+        g && choisi && tot && lu && st.bc && st.base === 'g' && st.gr === '' && st.pose === false && /tu avais indiqué 2 portions/.test(nb(st.nom))
+        && /tape ta quantité en g/.test(nb(st.nom)) && n1 === n0 && /Combien en as-tu mangé/.test(msg), J({ choisi, tot, lu, st, n0, n1, msg }));
+      await fin(o); }
+    /* ⑩ ⛔ rien de posé (le champ laissé vide) : rien n'est inventé à l'arrivée de la fiche — ni le « 1 » de l'ancre, ni un poids */
+    { const o = await ouvrir(b, PORT, fixture('q2i', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 1500 }); const pg = o.pg;
+      const g = await reprendreSansQ(o, pg);
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg);
+      const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+      t('B-NFIAB Q2 ⑩ ⛔ RIEN DE POSÉ, RIEN D\'INVENTÉ : le champ laissé vide, la fiche arrive — le champ reste vide, rien de posé, rien de « gardé » ni d\'« indiqué » ; « Ajouter » demande la quantité et n\'écrit rien',
+        g && lu && st.bc && st.gr === '' && st.pose === false && !/gardée|tu avais indiqué/.test(nb(st.nom)) && n1 === n0 && /Combien en as-tu mangé/.test(msg),
+        J({ lu, st, n0, n1, msg }));
       await fin(o); }
   }
 
