@@ -16,7 +16,7 @@ MUT = [
     ("C00 le Code.js d'AVANT D-110 (P1 seul : les favoris sont REFUSES pendant une panne de Drive — le defaut de la verification 5)",
      'Code.js', ('REV', '5ead88db'), None, 'GARDE'),
     ("C01 le Code.js de la PROD (@192, sans P1 : la liste du serveur remplacee sans rien garder)",
-     'Code.js', ('REV', 'origin/master'), None, 'GARDE'),
+     'Code.js', ('REV', '677cf50b'), None, 'GARDE'),   # master juste AVANT P1 ; ⛔ pas « origin/master » : il porte P1 depuis 9a72e107 (23/10)
     ("C02 l'identite V2 retombe sur le NOM (deux produits du meme nom = un seul aliment)",
      'app.js', "  const s=(x && typeof x.sourceId==='string') ? x.sourceId.trim() : '', n=String((x && x.name)||'');\n",
      "  const s='', n=String((x && x.name)||'');\n", 'GARDE'),
