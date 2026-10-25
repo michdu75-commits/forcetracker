@@ -5516,3 +5516,16 @@ montraient l'image du muscle « deviné » du nom — rien ne disait qu'il ne s'
 ④ Le gainage noté en secondes compté en répétitions de 3 s. ⑤ Deux chiffres sur le même écran (337 et « 🔬 ~287 »).
 ⑥ 33 classements douteux nés de la règle « 3 muscles ou plus ». Recommandations simulées R1 → R8, chiffrées ; aucune
 appliquée. *Ce sont les familles « premier match gagnant » (mots-clés en sous-chaîne) et « seuil en marche d'escalier ».*
+
+## §111 — ⛔ UN TÉMOIN QUI NE POUVAIT PAS ROUGIR : SA FIXTURE ÉTAIT UNE ISOLATION, ET UNE ISOLATION LE RESTE *(25/10/2026, mission Séance, clôture ; **CORRIGÉ dans le banc**, aucun code applicatif)*
+
+**Le cas.** `C-MUS-B5` garantit qu'un exercice perso au nom **reconnu** garde les calories de sa fiche, quels que soient les
+muscles cochés. Sa fixture prenait le 1ᵉʳ nom abrégé du catalogue : « Croisé Poulie (Cable Crossover) », une **isolation**
+(MET 4,0). La personne y coche un mollet : **une isolation aussi** (moins de 3 muscles → 4,0). Le témoin comparait 4,0 à 4,0 —
+il ne pouvait **pas** rougir, quel que soit le moteur. **Comment on l'a vu** : à la clôture, trois témoins rougissaient sur
+master seulement **par absence** (la fonction n'y existe pas) sans être la cible d'aucune mutation ; chacun a reçu la sienne
+(M67 → M69). M67 et M69 ont mordu ; **M68** (le moteur lit les muscles cochés **avant** la fiche) n'a fait rougir que B3.
+**Correctif** : la fixture prend un **composé** dont le MET dépend vraiment des muscles (« Dips Triceps (Buste Droit) », 5,5 ;
+ni mot-clé haltéro / cardio / porté, ni charnière de hanche, ≥ 3 muscles), et B5 exige une fiche **au-dessus** de
+l'isolation : si la fixture redevient insensible, le témoin rougit au lieu de se taire. *Famille « un vert qui ne peut pas
+rougir » ; leçon : « rouge sur master » ne prouve rien pour un témoin qui échoue par ABSENCE — seule une mutation le peut.*

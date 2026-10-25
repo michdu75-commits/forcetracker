@@ -100,18 +100,23 @@ des deux côtés (« rien n'est réécrit », « le + ne bouge pas », « aucune
 | Images | C-IMG-A1, A2, A3, B1, C1 | A4, A5, A6 |
 
 \* **10 de ces 72 rouges** ne montrent pas le défaut : ils échouent parce que la fonction ou le geste qu'ils conduisent
-n'existe pas sur master (`_mscScoresVus`, le champ `sansSommeil`, la ligne « Repos par défaut » du ⋯). Pour eux, la preuve
-qui compte est la **mutation** (M41 → M49, M50 → M57) : on casse la correction et ils rougissent.
+n'existe pas sur master (`_mscScoresVus`, le champ `sansSommeil`, la ligne « Repos par défaut » du ⋯). Pour eux, seule une
+**mutation** prouve quelque chose — chacun a la sienne : C-MUS-A1 ← M41, M49 · A3 ← M42 · B3 ← M45, M46 · B4 ← M43 ·
+**B5 ← M68** · **C-NUM-I4 ← M67** · **C-REG-B2 ← M69** · B9 ← M50 · C1 ← M53 · C2 ← M52. ⚠️ M67 → M69 ont été ajoutées **à la
+clôture** : ces trois témoins n'étaient la cible d'aucune mutation, et **M68 a montré que B5 ne pouvait pas rougir** (sa
+fixture était une isolation) — fixture corrigée (§5, `BUGS.md` §111), campagne complète rejouée (§4 bis).
 
 **Contrôle négatif** `tools/mut_seance_chiffres.py` (**65 mutations** : M1 → M57 et M60 → M66 sur les lots 1 → 5, dont des
 **déguisées** et des **négatives**, plus « M00 = le code d'avant remis mot pour mot ») : campagnes par lot toutes conformes après correction des témoins qui
 manquaient (M1, M29, M36, M50 : un témoin ajouté chaque fois — §104 de `BUGS.md`) ; **campagne complète sur l'arbre
 final : voir §4 bis**.
 
-**Bancs voisins rejoués** (arbre final ou lot 5) : fig_face_dos 77 / 0 · muscles 241 / 241 · progres_seances 80 / 0 ·
-seance_recette 93 / 0 · calendrier 10 / 10 · calendrier-milo 25 / 25 · d091 8 / 0 · session_integrity 93 / 0 ·
-debrief_demande 62 / 0 · debrief_provenance 24 / 0 · picker_vignettes 20 / 0 · travail_lot2 48 / 0 · seance_c1 29 / 0 ·
-motif_exercice 17 / 0 · aides_audit 18 / 0 · seance_ux 69 / 0 · ux_d086 122 / 0.
+**Bancs voisins rejoués** sur l'arbre final (code de `35c058a0`, **25 bancs, tous en code 0** ; OK / rouges, sauf muscles,
+calendrier et calendrier_milo : réussis / total) : fig_face_dos 77 / 0 · muscles 241 / 241 · progres_seances 80 / 0 · seance_recette 93 / 0 · calendrier 10 / 10 ·
+calendrier_milo 25 / 25 · d091 8 / 0 · session_integrity 93 / 0 · debrief_provenance 24 / 0 · picker_vignettes 20 / 0 ·
+travail_lot2 48 / 0 · seance_c1 29 / 0 · debrief_demande 62 / 0 · seance_c2 22 / 0 · seance_c3 35 / 0 ·
+aides_audit 18 / 0 · seance_ux 69 / 0 · ux_d086 122 / 0 · motif_exercice 17 / 0 · notes_d087 70 / 0 ·
+rir_superset 52 / 0 · seance_repos 61 / 0 · cc01_dropset 31 / 0 · seance_unicite 12 / 0 · seance_date 25 / 0.
 
 **Calories — F05 et moteur** (outil hors passe, master contre branche, données fictives) : catalogue **322 noms, 0 MET
 différent** ; 10 persos fictifs : **0 écart** (F05 n'atteint pas les calories). Tableau de l'écart SI F05 était étendu
@@ -168,6 +173,7 @@ n'existe plus »*.
 | `picker_vignettes.js` C-VIG-A6 | garde « > 1 000 pixels orange » | garde « ≥ 5 % de l'image » | la garde dépendait de la taille du fichier | mutation « fond blanc » |
 | `picker_vignettes.js` — empreinte Mollets | `59605168…` | `1495db12…` | nouveau fichier (D-123) | « un octet de plus » |
 | `seance_chiffres.js` C-MUS-B3 (créé dans cette mission) | calories des muscles cochés (4,0) | calories de la règle du nom (5,5), figurine des muscles cochés | F05 isolé des calories (D-122) | M45, M46 |
+| `seance_chiffres.js` C-MUS-B4 / B5 — la fixture (créée dans cette mission ; réécrite à la clôture) | 1ᵉʳ nom trouvé : « Croisé Poulie (Cable Crossover) », une isolation (4,0) | un composé dont le MET dépend des muscles : « Dips Triceps (Buste Droit) » (5,5) ; B5 exige en plus une fiche au-dessus de l'isolation | **B5 ne pouvait pas rougir** : un mollet coché seul reste une isolation (4,0 des deux côtés) — démasqué par la mutation ciblée M68 (`BUGS.md` §111) | M68 |
 
 ---
 
@@ -281,4 +287,5 @@ Supination Haltère · Rotation Machine Obliques · Thrusters Haltères · Tirag
 `5a7b0a57` ligne de journal · `a6e9e430` / `84ac1a81` lot 1 · `cff47f0d` / `81468296` lot 2 · `101bd21c` / `d67cf279` /
 `b2a6280a` / `64d0d709` lot 3 (dont F05 isolé des calories) · `399c4c31` lot 4 · `14153e66` lot 5 · `54065ea3` diagnostic
 MET + règle #11 · `58828924` décisions et BUGS · `35c058a0` fusion de master · (`3251c2ad`, `21d71bf8` : tableau des briques
-régénéré) · la clôture (documentation).
+régénéré) · `d403c862` passation · `cfcb45e3` campagne et M67 → M69 · `0f23b087` témoin C-MUS-B5 réécrit · la
+clôture (documentation). **Code applicatif inchangé depuis `35c058a0`.**
