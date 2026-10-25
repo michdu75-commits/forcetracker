@@ -139,6 +139,16 @@ réponse dépend du goût reste 🟣 — elle n'est pas moins importante, elle s
 
 ## Les entrées
 
+### 🟡 UNE JOURNÉE À MOITIÉ NOTÉE ARRIVE CHEZ MILO COMME UN VRAI JOUR BAS — qu'en conclut-il ? (25/10/2026)
+
+**Ce qui déclenche la question** : Michel a laissé **exprès** des journées incomplètes (il n'avait plus confiance dans les données,
+retour du 25/10). Sonde de Claude Principal (arbre intégré `b37ddf3a`, données inventées) : 4 jours complets à 2 300 kcal et 2 jours
+« petit-déjeuner seul » à 500 kcal. La carte « Ta semaine » et la tendance les **mettent de côté** (`_joursAlimComplets`, ft-v1108 :
+« 2 jours à moitié notés mis de côté », moyenne 2 300) ; le bloc nutrition de Milo, lui, liste les 6 jours **bruts** (« 500 kcal ·
+40g prot »), sans dire lesquels sont incomplets — il ne le dit que pour **aujourd'hui**.
+**Vérifiable par du code ?** Le FAIT transmis : oui (mesuré). Ce que Milo en conclut (« tu es en gros déficit ») : non mesuré
+(0 appel). Marquer ces jours change ce que Milo reçoit → **R34** (banc avant / après). **État : à trier** — décision de Michel.
+
 ### 🟡 LE BOUTON « ÉCHEC » ARRIVE CHEZ MILO COMME « RIR0 », QU'IL LIT « SÉRIE RÉUSSIE » — que comprend-il vraiment ? (14/10/2026)
 
 **Ce qui déclenche la question** : audit delta Historique / Progrès du 14/10, sur l'export réel (63 séances). Le bouton
