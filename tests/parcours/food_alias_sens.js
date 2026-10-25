@@ -163,10 +163,10 @@ for (const [k, [, re, raison]] of Object.entries(CORRIGES))
 for (const [k, [, re, raison]] of Object.entries(INCHANGES))
   CAS.push({ id: 'AS-' + String(n++).padStart(2, '0'), q: FRAPPE[k] || k, ctx: 'en', top: re, raison });
 const FF = [
-  { id: 'AS-FF1', q: 'dosette salade fromage blanc', ctx: 'en', ligne: 'Dosette salade fromage blanc ciboulette', detail: '^576 kcal la portion \\(226 g\\)', doute: true, raison: 'la dosette à 576 kcal reste, mais ⚠️ (valeurs d\'un autre produit)' },
-  { id: 'AS-FF2', q: 'grande rustiques', ctx: 'en', ligne: 'Grande Rustiques ·', detail: '^576 kcal la portion \\(226 g\\)', doute: true, raison: 'les Grande Rustiques gardent leurs valeurs, avec leur ⚠️' },
+  { id: 'AS-FF1', q: 'dosette salade fromage blanc', ctx: 'en', ligne: 'Dosette salade fromage blanc ciboulette', detail: '^576 kcal · pour la portion \\(226 g\\)', doute: true, raison: 'la dosette à 576 kcal reste, mais ⚠️ (valeurs d\'un autre produit)' },
+  { id: 'AS-FF2', q: 'grande rustiques', ctx: 'en', ligne: 'Grande Rustiques ·', detail: '^576 kcal · pour la portion \\(226 g\\)', doute: true, raison: 'les Grande Rustiques gardent leurs valeurs, avec leur ⚠️' },
   { id: 'AS-FF3', q: 'grande frites supplément sauce ranch', ctx: 'en', ligne: 'Grande Frites supplément Sauce Ranch ·', doute: true, raison: 'les frites « supplément sauce » aux valeurs d\'une petite frite : ⚠️' },
-  { id: 'AS-FF4', q: 'double cheeseburger bacon', ctx: 'en', ligne: DCB, detail: '^2808 kcal la portion \\(996 g\\)', doute: true, raison: 'CV-NUT-NEW-004 : trouvable, valeurs intactes, ⚠️ visible' },
+  { id: 'AS-FF4', q: 'double cheeseburger bacon', ctx: 'en', ligne: DCB, detail: '^2808 kcal · pour la portion \\(996 g\\)', doute: true, raison: 'CV-NUT-NEW-004 : trouvable, valeurs intactes, ⚠️ visible' },
   { id: 'AS-FF5', q: 'double cheeseburger', ctx: 'en', ligne: 'Double Cheeseburger ·', doute: false, raison: 'contrôle : le doute n\'est pas étendu au Double Cheeseburger' },
   { id: 'AS-FF6', q: 'big mac', ctx: 'en', ligne: 'Big Mac', doute: false, raison: 'contrôle : pas de doute inventé' },
 ];

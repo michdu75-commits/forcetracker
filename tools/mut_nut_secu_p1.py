@@ -3,7 +3,8 @@
 """CONTROLE NEGATIF — NUT-SECURISATION-P1 (session-B, 23/10/2026) : les temoins B-NSP1 savent-ils ROUGIR ?
 
 [!!] DANS LA COPIE MUTEE : chaque mutation est appliquee a un ARBRE COPIE (Code.js + le banc), jamais au depot (BUGS.md §60).
-Point de depart : 0 rouge sur l'arbre sain, mesure d'abord. M00 = le Code.js d'AVANT (master, `_pa_` sur le journal).
+Point de depart : 0 rouge sur l'arbre sain, mesure d'abord. M00 = le Code.js d'AVANT P1 (master @192, `_pa_` sur le journal) — une base FIXE : depuis le 23/10 (9a72e107), master porte
+P1 lui-meme, et « origin/master » comparait P1 a P1 (M00 non conforme, 0 rouge, constate le 25/10).
 Chaque mutation casse UNE garantie du garde-fou dans le VRAI code (une ou plusieurs ancres, chacune unique) ; une seule
 touche un commentaire, et elle doit rester VERTE (un banc qui rougit sur un commentaire mesurerait le texte, pas le comportement).
 Depuis la finalisation (option B validee, 23/10) : M23-M36 eprouvent le DEMENAGEMENT vers Drive (relu, sous-dossier, refus si Drive echoue).
@@ -16,18 +17,18 @@ import os, re, shutil, subprocess, sys, tempfile
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CO = 'Code.js'
 COPIES = ('Code.js', 'tests/_garde_reseau.js', 'tests/parcours/nut_secu_p1.js', 'tools/banc_nut_secu_p1.js')
-BASE_AVANT = 'origin/master'
+BASE_AVANT = '677cf50b'   # master juste AVANT P1 (@192) ; ⛔ pas « origin/master » : il porte P1 depuis 9a72e107 (23/10)
 
 MUT = [
-    ("M00 le Code.js d'AVANT (master) : `_pa_` remplace le journal et les favoris sans rien garder", 'AVANT', 'GARDE'),
+    ("M00 le Code.js d'AVANT P1 (master @192, 677cf50b) : `_pa_` remplace le journal et les favoris sans rien garder", 'AVANT', 'GARDE'),
     ("M01 le journal repasse par `_pa_` (les favoris restent proteges)",
      "    if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email);\n",
      "    if (body.foodLog       !== undefined) profile.foodLog       = _pa_(body.foodLog, profile.foodLog);\n", 'GARDE'),
     ("M02 les favoris repassent par `_pa_` (le journal reste protege)",
-     "    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);\n",
+     "    if (body.savedFoods    !== undefined && _favRecus !== null) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', _favRecus, email);\n",
      "    if (body.savedFoods    !== undefined) profile.savedFoods    = _pa_(body.savedFoods, profile.savedFoods);\n", 'GARDE'),
     ("M03 les lignes RETIREES ne sont plus copiees dans la zone",
-     "  ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });\n", "", 'GARDE'),
+     "  ec.retirees.forEach(function(l) { garder(l, motif || (brutal ? 'brutal' : 'retiree')); });\n", "", 'GARDE'),
     ("M04 l'ancienne version d'une ligne MODIFIEE n'est plus copiee",
      "  ec.modifiees.forEach(function(l) { garder(l, 'modifiee'); });\n", "", 'GARDE'),
     ("M05 deduplication en ENSEMBLE (deux repas identiques retires ensemble => une seule copie)",
@@ -62,7 +63,7 @@ MUT = [
      "    Logger.log('[FT GARDE-FOU ' + nom + '] envoi non lisible : ignoré, liste conservée');\n    return profile[nom];\n",
      "    return recu;\n", 'GARDE'),
     ("M16 la regle existante « le vide ne gagne jamais » est perdue au passage",
-     "  if (recu.length === 0 && actuel.length > 0) return profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais\n",
+     "  if (recu.length === 0 && actuel.length > 0 && motif !== 'raz') return profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais\n",
      "", 'GARDE'),
     ("M17 le journal du serveur cite un aliment retire (donnee personnelle)",
      "  Logger.log('[FT GARDE-FOU ' + nom + '] ' + ec.retirees.length",

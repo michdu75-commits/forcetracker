@@ -5544,3 +5544,212 @@ SOURCE (B-CCCVI ⑥) qui épinglait le texte d'une boucle que D-116 a remplacée
 (deux règles, deux propriétaires) au lieu du texte ; chacun éprouvé (`tools/mut_seance_runner.py`, 5 / 5).
 *Leçon : avant d'écrire un témoin, chercher dans le runner les témoins qui lisent la même fonction
 (`grep` du nom de la fonction dans `tests/`) — et les jouer avec les bancs voisins.*
+---
+
+## §113 — ⛔⛔ UNE ANCIENNE LIGNE SCANNÉE RESTAIT FIGÉE À VIE, ET SA RECOPIE PERDAIT LE CODE-BARRES : L'ISOLAT « 156 · 35 · 1 · 1 » POUR 35 G COMME POUR 50 G *(24/10/2026, NUTRITION V2 · FIABILITÉ DES DONNÉES — mission P1 de Michel ; branche `claude/nutrition-v2`, NON publié ; reproduit sur le code de master `98c09ed9` par le banc B-NFIAB, données inventées)*
+
+**Ce que Michel a vu (iPhone, 24/10).** Un isolat repris (40 g · 156 kcal · 35 P · 1 G · 1 L) : 35 g puis 50 g laissaient
+156 · 35 · 1 · 1, avec « la fiche n'est pas vérifiée ».
+
+**La cause, démontrée.** ① `NUT2.lireAncienne` ne vérifie une ancienne ligne **que** contre la fiche CIQUAL embarquée
+(`ciqual:…`) : une ligne scannée avant V2 (un code-barres) n'est **jamais** vérifiable → reprise **figée**, à vie, même quand
+un scan V2 du même produit existe dans le journal. ② La recopie « déclarée » (`ligneNouvelle`, mode `d`) n'écrivait pas
+d'identité : `sourceId:null` — le produit redevenait un simple nom, et sa fiche ne pouvait plus jamais être retrouvée.
+③ L'écran figé ne proposait **aucune issue**. *(Témoins rouges sur master : T02 ② ③ ④ ⑤ ⑥.)*
+
+**Ce qui le ferme (`D-130`).** Dans l'**écran d'ajout**, la fiche se retrouve par l'**identité seulement**
+(`_n2FicheIdentite`, `_n2RepriseIdentite`) : `ciqual:NNNN` → la fiche CIQUAL elle-même ; un code-barres → la fiche vérifiée
+la plus récente du journal, sinon la fiche Open Food Facts lue en ligne par le chemin du scan (`_n2RetrouverEnLigne` →
+`_offAppliquerProduit`) ; l'écran dit ce que disait la saisie, et c'est « Ajouter » qui écrit. Sans fiche, trois boutons
+(🔎 Retrouver · 📷 Scanner · 🏷️ Étiquette) et l'état de la recherche. Un résultat arrivé après un changement d'aliment est
+ignoré (`_n2RechJeton`, T02 ⑦). La recopie garde `sourceId` / `etat` — jamais une fiche. ⛔ **Hors de l'écran, la règle A de
+`D-111` tient** (Michel, 24/10) : une référence qui contredit la fiche vérifiée de son produit reste « à vérifier » dans la
+liste, et « + Ajouter » ouvre l'écran au lieu de la recalculer. ⛔ Aucune ancienne ligne n'est réécrite (`D-098`) : T02 ⑤
+relit l'ancienne ligne à l'octet.
+
+**⚠️ Et une erreur de MA première version, attrapée par les témoins voisins** : je recalculais aussi HORS de l'écran (la
+liste affichait le favori à 26 g « ✓ fiche du produit » avec les valeurs de la fiche, et « + Ajouter » les écrivait) —
+exactement la variante B que Michel avait écartée le matin même. Les témoins `B-NV2P P15` (règle A, 37 témoins) l'ont rendue
+rouge : six rouges (P15 ① ② ③ ④ ⑤ ⑦), tous sur ce point. *Un témoin voisin qui rougit n'est pas un obstacle à « réparer » : il rappelait une
+décision prise.* La mutation F1b du contrôle négatif la réintroduit exprès.
+
+**À quoi on le reconnaît.** Une reprise qui ne bouge plus quand la quantité change, et qui dit « non vérifié » pour un
+produit qu'on a pourtant scanné. *Une identité perdue à la recopie ne se retrouve jamais : c'est à la recopie qu'il faut
+la garder.*
+
+## §114 — ⛔⛔ UN POUR-100 G FABRIQUÉ, RECOPIÉ PUIS PROPOSÉ EN SILENCE : LE STEAK « 200 G · 130 KCAL · 22 G » ; ET LE MÊME PRODUIT À 155 OU 156 KCAL SELON LA PORTE *(24/10/2026, même mission, même branche ; reproduit sur master)*
+
+**Ce que Michel a vu.** « Déjà noté par toi » : *Steak haché 5 % MG — 200 g · 130 kcal · 22 g de protéines*, alors qu'il
+l'avait scanné. Ce n'est **pas** une confusion avec CIQUAL (« Boeuf, steak haché 5 % MG cru », 130 · 21,9 · 0,3 · 4,6) :
+le produit scanné est un steak **de marque** (fiche Open Food Facts 129 · 21 · 0 · 5), relevé dans l'export du 19/10
+(`audits/2026-10-21-nutrition-reconstruction-complete/`).
+
+**La cause, démontrée dans l'export et rejouée sur données inventées de même forme.** Le 01/09, une ligne de **300 g**
+porte **194 kcal** : ou bien les valeurs de 150 g (hypothèse A de la reconstruction), ou bien une quantité juste et des
+valeurs divisées par 2 (hypothèse B, 387 kcal) — l'export ne permet pas de trancher, et on ne tranche pas. Dans les deux
+cas, la dérivation du pour-100 g (M1) en tire **65 · 11 · 0 · 3** au lieu de 129 · 21 · 0 · 5 : la moitié. Recopiée de reprise en reprise (C2), elle donne au 16/10 et au 18/10
+**200 g · 130 · 22 · 0 · 6** — numériquement le « pour 100 g » du vrai produit, d'où l'impression d'une quantité prise pour
+du « pour 100 g ». La naissance du 01/09 relève de M1 / M6 (fermés en `ft-v1258` et en V2) ; **ce qui restait ouvert,
+c'est la propagation** : V2 proposait ces lignes sans réserve et « + Ajouter » les ré-écrivait (`sourceId:null`).
+*(Rouges sur master : T06 ① ③ ④.)*
+
+**Et une deuxième porte qui contredisait la première.** La recherche Open Food Facts **arrondissait** l'énergie pour 100 g à
+l'entier (`_afSuggKcal100`) quand le scan gardait une décimale : le même isolat (388,5 kcal / 100 g) donnait **155** kcal pour
+40 g scanné et **156** cherché par son nom — et une étoile sur la ligne cherchée figeait 156 dans le favori. *(Rouges sur
+master : T09 ① ⑤.)*
+
+**Ce qui le ferme.** `D-131` : deux saisies de la **même identité** dont les valeurs ramenées à 100 g s'écartent au-delà de
+l'arrondi et de 2 % → « ⚠️ à vérifier », « + Ajouter » n'écrit rien et l'écran dit les deux chiffres et la date
+(« 65 kcal pour 100 g ici, 129,2 le 23/08 ») ; en ligne, la fiche du code-barres se retrouve (`D-130`) et 200 g =
+258 · 42 · 0 · 10. L'énergie pour 100 g d'un produit n'a plus qu'**un** propriétaire, à une décimale, pour le scan
+comme pour la recherche (`_afSuggKcal100` → `_offAppliquerProduit`, R2).
+
+**À quoi on le reconnaît.** Un aliment dont la valeur « pour la quantité notée » ressemble trait pour trait à une valeur
+« pour 100 g » : chercher un facteur 2 né plus tôt, puis recopié. *Un pour-100 g se lit dans une fiche ; déduit d'une saisie,
+il hérite de toutes ses erreurs.*
+
+## §115 — ⛔ « ✕ » ÉTAIT LOCAL, IGNORÉ PAR « DÉJÀ NOTÉ PAR TOI », ET REVENAIT PAR « RESTAURER » OU UN AUTRE TÉLÉPHONE *(24/10/2026, même mission — N2 du plan de Claude Principal ; reproduit sur master)*
+
+**La cause.** `S.hiddenFoods` était une liste de chaînes **locale** : ni dans l'envoi de `_cloudSync`, ni dans la liste
+blanche de `saveProfile` (`Code.js`), ni relue par « Restaurer » ou au démarrage ; la recherche dans le journal
+(`_afSuggLocales`) ne la lisait pas ; et elle était **retirée** quand on re-notait l'aliment (`_unhideFood`), donc un autre
+appareil ne pouvait pas savoir qu'elle avait existé. Une remise à zéro des propositions était, de ce fait, impossible à
+tenir d'un appareil à l'autre. *(Rouges sur master : N2 ①, T08 ① → ⑦.)*
+
+**Ce qui le ferme (`D-132`, `D-133`).** Des **dates de départ** `{k, t}` (identité ou `*`), fusionnées par le max au
+téléphone et au serveur, appliquées partout où l'on propose, à « Restaurer » et au démarrage ; `_unhideFood` retiré
+(R30, la raison écrite à sa place) : une saisie postérieure revient d'elle-même. ⚠️ `Code.js` : **déploiement Apps
+Script à part**, avec son GO.
+
+**À quoi on le reconnaît.** Une préférence de la personne qui ne vit que sur un téléphone. *Un masquage qu'on efface pour
+« démasquer » ne peut pas se synchroniser : il faut une date, pas une absence.*
+
+## §116 — ⛔ MÉTHODE : CHROMIUM NE DÉMARRE PAS QUAND `TMPDIR` EST TROP LONG — LE CONTRÔLE NÉGATIF « PLANTAIT » SUR UN ARBRE SAIN *(24/10/2026, même mission ; outil de test seulement)*
+
+`TMPDIR=<dossier de session, 85 caractères> python3 tools/mut_nut_fiabilite.py` : l'arbre **sain** sortait « 0 OK / 1 rouge »
+(`browserType.launch: … has been closed`). Chromium crée ses sockets dans `TMPDIR` ; un chemin trop long l'empêche de
+démarrer. Le même banc, lancé sans ce `TMPDIR`, était vert. **Ce qui le ferme** : l'outil garde `TMPDIR` pour ses copies et
+le **retire** de l'environnement du banc (Chromium reprend son dossier par défaut). ⚠️ Les autres `tools/mut_*.py` qui
+documentent « les copies vont dans `$TMPDIR` » ont le même piège s'ils sont lancés avec un `TMPDIR` long : un plantage
+n'est jamais un verdict, mais il coûte une passe. *Un banc qui plante sur un arbre sain ne dit rien du code : regarder
+d'abord ce qui l'entoure.*
+⚠️ **Rechute le même soir, par moi** : les bancs voisins relancés avec le même `TMPDIR` long — 20 « plantages » en
+1 seconde chacun, seul le banc de chaos (sans navigateur) passait. Relancés sans ce `TMPDIR` : verts. *La leçon écrite
+une heure plus tôt n'a pas suffi : le réflexe à prendre est de ne jamais exporter `TMPDIR` vers un banc qui lance Chromium.*
+⚠️ **Et un 2ᵉ plantage du même soir, d'une autre cause** : la mutation F15 (« la remise à zéro part SANS sauvegarde »)
+faisait planter le banc — la confirmation lisait `_nutRazSauve.nom`, l'exception remontait de la page par un `evaluate` que
+le test ne protégeait pas. Deux corrections : le test rend une erreur de la page en **rouge** (jamais en plantage), et F15
+modélise vraiment le défaut (la remise à zéro part). *Un témoin qui plante quand le code est faux ne protège rien : il faut
+qu'il rougisse.*
+
+## §117 — ⛔ MÉTHODE : UNE MUTATION QUI NE MORDAIT PLUS A TROUVÉ UN DOUBLON QUE J'AVAIS CRÉÉ (`_n2QteListe` devenu mort, sa logique recopiée) *(24/10/2026, même mission ; R2)*
+
+En réunissant les cinq textes de proposition en un seul (`_n2TexteProposition`, `D-135`), j'ai **recopié** la logique de la
+quantité (`NUT2.reprise`, puis `_n2QteTexte(q, _n2PortionFiable(R))`) au lieu de la réutiliser — et les deux appelants de
+`_n2QteListe` (« Mes aliments », « Déjà noté par toi ») sont passés au nouveau texte : `_n2QteListe` n'avait plus **aucun**
+appelant. Rien ne le voyait : le banc des parcours était vert (111 / 0), un code mort ne casse rien. **C'est le contrôle
+négatif qui l'a dit** : MP50 (« la liste affirme le poids de toute portion ») mutait la ligne de `_n2QteListe` → **0 rouge**,
+la mutation frappait du code que plus rien n'exécute. Corrigé : `_n2QteListe` retiré (sa raison écrite à côté de
+`_n2TexteProposition`), son déclencheur du registre de recette reporté sur `_n2TexteProposition`, l'ancre de MP50 déplacée
+sur la ligne qui écrit vraiment la quantité. *Une mutation qui ne mord plus ne dit pas toujours que le témoin est faible :
+elle peut dire que le code visé est mort — et un code mort qui ressemble au vivant est un doublon (R2).*
+
+⚠️ **Le même soir, F21 n'a pas mordu non plus — pour une 3ᵉ raison** : « Restaurer » qui ne reprend plus les masquages du
+serveur laissait `B-NFIAB-X T08 ②` VERT (13 / 0). Le téléphone « neuf » du test démarrait **déjà connecté** : le démarrage
+(`autoConnect`) rapportait les masquages avant même « Restaurer ». Deux chemins menaient au même état, le témoin ne savait pas
+lequel l'avait produit. Corrigé : l'appareil démarre **hors ligne** (le démarrage ne peut rien charger), le réseau revient,
+puis « Restaurer » ; et le témoin vérifie d'abord qu'aucun masquage n'était là avant. Le démarrage garde son propre témoin
+(T08 ④, F23 le fait rougir). *Quand deux chemins mènent au même état, un témoin d'état ne prouve aucun des deux.*
+
+## §118 — ⛔⛔ UNE ENTRÉE VIDE (`null`) DANS LE JOURNAL FAISAIT TOMBER LE JOURNAL DU JOUR, CE QUE MILO LIT, « AJOUTER » ET LA RECHERCHE *(25/10/2026, retour de Claude Principal sur NV2-FIAB — « N08 » ; PRÉEXISTANT, reproduit sur master `93dfbb75` ; corrigé sur `claude/nutrition-v2`, non publié)*
+
+**Ce qui se passait.** Une entrée `null` dans `S.foodLog` (d'où qu'elle vienne : rien dans le code actuel n'en écrit, mais
+une restauration la garde telle quelle) : erreur au démarrage, journal du jour vide (`renderFoodJournal`, `e.date`), et le
+contexte de Milo ne se construisait plus (`_profilAlimentaire`, `e.kcal`). L'export et la synchro passaient déjà.
+
+**Ce qui le ferme.** Les 2 lignes de Principal, mot pour mot (`.filter(e => e && typeof e === 'object')` dans
+`_profilAlimentaire`, `e && e.date === td` dans `renderFoodJournal`). ⚠️ **Et quatre de plus, de même cause, trouvées en
+élargissant son témoin** : ses conditions (aucun profil calorique, une ligne du jour placée AVANT les entrées vides) laissaient
+passer `_resteDuJour` (la carte « ce qu'il te reste », que le journal du jour affiche — il tombait avec elle dès que le profil
+est complet), et trois tris dont le comparateur lit `.ts` (`_buildFoodQuickItems` : « Ajouter » ; `_afSuggLocales` : « Déjà
+noté par toi » ; `_mesAliments` : les idées pour le reste). Mêmes gestes : les entrées vides sont **ignorées, jamais
+réécrites** (le journal garde ses 4 entrées). Contexte de Milo identique à l'octet sans entrée vide (76 275 caractères,
+avant/après et contre master). Témoins `B-NFIAB N08 ① ② ③` (rouges sur master et sur `beda2652`), mutations N08a → N08f.
+
+**À quoi on le reconnaît.** Une liste persistée lue champ par champ, ou triée, sans `e &&`. *Un témoin qui reproduit les
+conditions de celui qui a trouvé le défaut ne prouve que ces conditions-là : un profil complet et un autre ordre en ont trouvé
+quatre de plus.* ⚠️ Limite : revue des lecteurs de `S.foodLog` dans les fichiers de l'app (64 occurrences) et sonde des
+écrans principaux ; pas de recherche exhaustive dans les autres listes persistées.
+
+## §119 — ⛔ UNE ANCIENNE SAISIE SANS QUANTITÉ NI VALEURS ÉTAIT UNE IMPASSE : L'ÉCRAN DEMANDAIT UN POIDS SANS ENDROIT OÙ LE DIRE *(25/10/2026, retour de Claude Principal ; reproduit sur master et sur `beda2652` ; corrigé sur `claude/nutrition-v2`)*
+
+**Ce qui se passait.** `{kcal:0, prot:0, carbs:0, fat:0, q:null, per100:null}` reprise (« + Ajouter », « Mes aliments »,
+« Déjà noté par toi ») : la reprise sans quantité rend l'écran à la saisie à la main, et `_afMajAncre` cache le bloc
+quantité tant qu'**aucune** valeur n'est posée (ft-v1065, « rien à rescaler ») ; les issues n'étaient dessinées que pour
+le cas figé (`_afRef.fige`). Résultat : 0 · 0 · 0 · 0, ni champ ni issue, et « Ajouter » répondait « Combien pesait ce que
+tu as mangé ? » — rien ne s'écrivait (sûr), mais on ne pouvait pas en sortir.
+
+**Ce qui le ferme.** Les mêmes issues qu'une reprise sans fiche (`_n2IssuesHtml`, **un seul propriétaire** désormais pour
+le cas figé et celui-ci — R2), une phrase qui dit pourquoi, et la même phrase dans « Ajouter » et les toasts.
+⛔ **Aucun champ « quantité » pour ces 0, exprès** : accepter une quantité avec eux affirmerait, en silence, qu'ils valaient
+pour elle. La marque (`_afRepriseVide`, en mémoire seulement) meurt avec l'aliment (`_afOublierAliment`, R15) et un autre
+nom n'en hérite pas. Témoins `ZÉRO ① → ④` (① ② rouges avant ; ③ ④ sont des gardes, verts avant aussi, que Z3/Z4 font rougir) ;
+mutations Z1 → Z7 et F4.
+
+**À quoi on le reconnaît.** Un écran qui demande une chose sans donner l'endroit pour la faire.
+
+## §120 — ⛔ MÉTHODE : SIX TÉMOINS SUPPOSAIENT UN CODE.JS PAS ENCORE DÉPLOYÉ *(25/10/2026, retour de Claude Principal : 42 / 6 sur l'intégration sans le Code.js de `bb2075b9`)*
+
+Les témoins de synchro des masquages (`B-NFIAB-X T08 ① ② ③ ④ ⑤ ⑦`) supposaient un serveur qui garde `hiddenFoods` —
+le commit `Code.js` séparé, à déployer **seulement** sur GO de Michel. Sur une intégration sans lui, ils rougissaient sans
+que l'app ait changé : ils mesuraient l'environnement. **Ce qui le ferme** : ces six témoins ne se jouent que si la liste
+blanche de `saveProfile` du Code.js servi contient `hiddenFoods` ; sinon ils sont listés **SANS OBJET** (jamais comptés verts).
+Les garanties **locales** (`T08L ① ② ③` : « ✕ » et la remise à zéro tiennent au rechargement et à « Restaurer » sur le même
+téléphone) se jouent dans les deux modes. ⚠️ **Et la condition est elle-même vérifiée** : `T08 ⓪` compare ce que dit la liste
+blanche à ce que le serveur (le vrai Code.js, en local) fait d'un « ✕ » synchronisé — sinon un témoin conditionnel devient un
+interrupteur qui éteint les rouges. F19 (le serveur lit les masquages sans les garder) rougit ⓪ et la synchro ; F19b (la ligne
+retirée, c'est le Code.js de master) reste vert en le disant ; FL1 → FL3 font rougir les garanties locales sur ce Code.js.
+*Un témoin vert sur sa branche et rouge à l'intégration, sans que l'app ait changé, mesurait l'environnement.*
+
+## §121 — ⛔⛔ APRÈS LA REMISE À ZÉRO, D'ANCIENNES SAISIES FAUSSES FAISAIENT DIRE « À VÉRIFIER » À UNE SAISIE JUSTE *(25/10/2026, E2b · registre `NUT-VERIFY-01`, constat de Claude Principal ; reproduit sur `claude/nutrition-v2` @ `fc0a558d` par le banc B-NFIAB, données inventées ; corrigé sur la même branche, non publié)*
+
+**Ce qui se passait.** Remise à zéro hier ; deux anciennes saisies du steak, 200 g · 130 kcal (le pour-100 g FABRIQUÉ à 65,
+§114), à J-6 et J-5 ; une saisie neuve et juste, 258 · 42 · 0 · 10 pour 200 g, même code-barres → « ⚠️ à vérifier » dans
+« Mes aliments » et « Déjà noté par toi », « + Ajouter » refusé (*« tes saisies de ce produit ne concordent pas : 129 kcal
+pour 100 g ici, 65 le … »*), et le repas habituel compté « 1 à vérifier », son « + » refusé. Sans les deux anciennes :
+« déclaré ». Même chose avec « ✕ » au lieu de la remise à zéro, et avec un ancien favori encore sur l'appareil.
+
+**La cause.** La comparaison de `D-131` (`_n2Contradiction`, références rangées par `_n2FichesVerifiees`) prenait **toutes**
+les saisies du produit, y compris celles que la remise à zéro ou « ✕ » avait retirées des propositions : ce qu'on ne propose
+plus jugeait encore ce qu'on propose.
+
+**Ce qui le ferme** (`D-136`). Une ligne : seules les références encore **proposées** (`_n2Propose`, la règle des listes) se
+comparent. ⛔ Le journal n'est pas touché ; ⛔ les fiches **vérifiées par la source** (scan, CIQUAL) restent des références
+même d'avant la remise à zéro — une saisie neuve fausse se dit encore « à vérifier » (E2b ⑥), et la reprise par identité
+(`D-130`) les retrouve toujours ; deux saisies encore proposées qui se contredisent restent « à vérifier » (E2b ⑤) ; le scan
+juste est inchangé (E2b ⑦). Témoins `B-NFIAB E2b ① ② ③ ④ ④b` rouges avant, verts après ; ⑤ ⑥ ⑦ verts des deux côtés (les
+contrôles qu'il ne fallait pas éteindre) ; mutations E1 → E4 (dont E4, la sur-correction qui retirerait aussi les fiches
+vérifiées) et F5 étendue.
+
+**À quoi on le reconnaît.** Un contrôle qui compare à une liste dont on a retiré des éléments — sans retirer les mêmes de
+la comparaison. *Retirer d'une liste ne suffit pas : il faut retirer de tout ce qui la lit.*
+
+## §122 — ⛔ LA REMISE À ZÉRO N'ÉTAIT QU'UN MASQUAGE AU SERVEUR : LES ANCIENS FAVORIS Y RESTAIENT, ET UN TÉLÉPHONE EN RETARD OU UNE RESTAURATION ADMIN POUVAIENT LES Y REMETTRE *(25/10/2026, Q15 · `D-141`, registre `NUT-FOR-04` / `SERVEUR-CODEJS-01` ; mesuré avec le vrai Code.js en local ; préparé sur `claude/nutrition-v2`, Code.js NON déployé)*
+
+**Ce qui se passait (`D-133`, branche d'avant).** La date `*` écartait les anciens favoris **à l'affichage** ; au serveur ils
+restaient (un envoi vide ne remplace jamais la liste, P1). Deux chemins pouvaient les remettre en circulation : un appareil
+resté en retard renvoyait sa liste (P1 l'acceptait), et la restauration admin d'une sauvegarde de la nuit réécrivait tout le
+compte — anciens favoris **et** masquages d'avant, donc **sans** la date de remise à zéro (`handleAdminRestore_`, sans garde).
+
+**Ce qui le ferme** (`D-137`, préparé). Au serveur, après la fusion des masquages : tout favori d'avant la date (ou sans
+date) quitte la liste active, qu'il y soit ou qu'il arrive — **par la protection P1** (motif « raz ») : copié d'abord dans la
+zone de récupération, son surplus relu dans Drive ; Drive en panne → la suppression passe, la zone garde tout jusqu'au plafond
+(`D-110`) ; au-delà, refus cette fois (`D-109`). La restauration admin fusionne les masquages du compte et n'y remet pas les
+favoris d'avant. Témoins `B-NFIAB-X Q15 ① → ⑨`, `T08 ③` (nouveau contrat), `T08 ⑧`, `T08L ④` ; mutations D1 → D10 et F22
+(révisée : le serveur n'en renvoyant plus, c'est `T08L ④` qui garde le filtre de l'app).
+⚠️ **Méthode** : ma 1ʳᵉ version copiait dans un fichier Drive à part et REFUSAIT l'envoi si Drive tombait — mesuré contraire à
+`D-110` (validée par Michel : pour les favoris, une panne de Drive ne refuse plus l'envoi, un favori neuf refusé se perdant à
+« Restaurer »). *Une décision validée est une contrainte (règle d'or 15) : on réutilise ce qu'elle a construit.*
+
+**À quoi on le reconnaît.** Une suppression qui n'existe que dans l'affichage d'un appareil : elle tient tant que tous les
+chemins d'écriture passent par cet appareil — et une restauration n'y passe pas.

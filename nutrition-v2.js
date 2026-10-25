@@ -121,7 +121,7 @@
      entree = { id, ts, date, repas, nom, origine:{saisie, origine},
                 mode:'pesee',    fiche:{ base, p100|pourUne, cle?, source, version?, fiab, etat?, libelle?, densite? },
                                  quantite:{ val, unite, origine?, portion? }
-              | mode:'declaree', declare:{…}, quantite:{ val, unite, portion? },
+              | mode:'declaree', declare:{…}, quantite:{ val, unite, portion? }, cle?, etat?,
                 corrections?:[{ c, v, le, avant? }],
                 notes?:['reprise-non-verifiee'],   remplace?:<la ligne que celle-ci remplace (même id)>,
                 trace?:{ etat, methode, raison, brut, retenu, … },   signaux?:{ codeDouteux, doute, kcalDerivee } }
@@ -183,6 +183,12 @@
       calc = dv.valeurs;
       for (var k = 0; k < CHAMPS.length; k++) if (!(CHAMPS[k] in calc)) n2.manque.push(CHAMPS[k]);
       n2.m = 'd'; n2.st = 'declaree';
+      /* ⭐ NV2-FIAB (24/10) — L'IDENTITÉ DU PRODUIT SURVIT À UNE RECOPIE. Une ligne déclarée n'a pas de fiche, mais elle
+         peut dire DE QUEL produit elle parle (son code-barres, `ciqual:…`) : avant, une reprise d'un aliment scanné écrivait
+         `sourceId:null` — le produit redevenait un simple nom, et sa fiche ne pouvait plus jamais être retrouvée (mesuré :
+         sonde du 24/10, « + Ajouter » d'un ancien scan). ⛔ Ce n'est PAS une fiche : rien n'est calculé avec. */
+      if (texte(e.cle)) L.sourceId = texte(e.cle).slice(0, 32);
+      if (texte(e.etat)) L.etat = texte(e.etat);
     } else {
       return ko('MODE_INCONNU', String(e.mode));
     }

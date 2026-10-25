@@ -84,7 +84,7 @@ function preparer(etat) {
 }
 
 /* ── Un appareil : la vraie app, stockage semé UNE fois (les rechargements gardent l'état), réseau routé ── */
-async function appareil(b, PORT, X, etat, tok, tag) {
+async function appareil(b, PORT, X, etat, tok, tag, plus) {   // `plus` : un stockage de départ en plus (NV2-FIAB, B-NFIAB)
   const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 }, timezoneId: 'Europe/Paris' });
   const st = { sorties: [], envois: 0, chargements: 0 };
   const CONST = (() => { let s = fs.readFileSync(path.join(RACINE, 'constants.js'), 'utf8');
@@ -115,6 +115,7 @@ async function appareil(b, PORT, X, etat, tok, tag) {
   const pg = await cx.newPage(); const erreurs = []; pg.on('pageerror', e => erreurs.push(String(e && e.message || e).slice(0, 160))); pg.on('dialog', d => d.accept());
   const stock = { ft4_email: ALICE, ft4_name: 'Alice', ft4_devtoken: tok, ft4_devtoken_compte: ALICE, ft4_authcode: CODE_PERSO, ft4_ok: '1', ft4_ob2: '1',
     ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_sessions: J([0, 1, 2].map(seance)), ft4_foodlog: '[]', ft4_savedfoods: '[]' };
+  Object.assign(stock, plus || {});
   await pg.addInitScript(`(()=>{try{ if(sessionStorage.getItem('${tag}'))return; sessionStorage.setItem('${tag}','1'); localStorage.clear();
     const D=${J(stock)}; Object.keys(D).forEach(k=>localStorage.setItem(k,D[k]));}catch(e){}})();`);
   await pg.goto('http://localhost:' + PORT + '/index.html'); await pause(pg, 3500);
@@ -304,4 +305,6 @@ async function croise(t, b, PORT) {
   }
 }
 
-module.exports = { croise };
+module.exports = { croise,
+  /* NV2-FIAB (24/10) : les mêmes outils, prêtés au banc B-NFIAB (R13 — un serveur simulé, une façon de conduire un appareil). */
+  outils: { serveur, preparer, appareil, restaurer, synchroniser, redemarrer, favoris, journalApp, ALICE, FONDATEUR, CODE_PERSO } };

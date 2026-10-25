@@ -1322,7 +1322,7 @@ const _N2_CHAMPS=['kcal','prot','carbs','fat'];
 let _n2CiqIdx=null;
 function _n2Ctx(){
   if(!_n2CiqIdx && typeof _ciqual==='object' && _ciqual && Array.isArray(_ciqual.a)){
-    const ix={}; _ciqual.a.forEach(r=>{ ix[String(r[0])]={kcal:r[3],prot:r[4],carbs:r[5],fat:r[6]}; }); _n2CiqIdx=ix;
+    const ix={}; _ciqual.a.forEach(r=>{ ix[String(r[0])]={kcal:r[3],prot:r[4],carbs:r[5],fat:r[6],nom:r[1]}; }); _n2CiqIdx=ix;
   }
   return {ciqual:(code)=>(_n2CiqIdx && _n2CiqIdx[String(code)])||null};
 }
@@ -1334,7 +1334,7 @@ function _n2Ctx(){
 let _n2CiqTente=false;
 function _n2BesoinCiqual(l){
   return !_n2CiqTente && !(typeof _ciqual==='object' && _ciqual) && typeof _ciqualCharger==='function'
-    && !!l && !(l.n2 && l.n2.s===1) && typeof l.sourceId==='string' && /^ciqual:/.test(l.sourceId);
+    && !!l && !(l.n2 && l.n2.s===1 && l.n2.m==='p') && typeof l.sourceId==='string' && /^ciqual:/.test(l.sourceId);   // NV2-FIAB : une copie déclarée garde aussi son identité
 }
 function _n2Apres(lignes, suite){
   if(!(lignes||[]).some(_n2BesoinCiqual)) return suite();
@@ -1538,7 +1538,10 @@ function _n2Provenance(){
 /* La fiche d'une référence SOUS les valeurs (estimation de l'IA, poids indiqué, portion pesée). */
 function _n2SourceFicheProp(){
   if(!_afValeursTapees && _afSrc && _afSrc.origine==='ia') return {source:'ia', fiab:'estimee'};
-  return {source:'utilisateur', fiab:'declaree'};
+  /* NV2-FIAB (24/10) : une reprise sans quantité garde l'identité de son produit (code-barres, CIQUAL) — la fiche reste « déclarée ». */
+  const o={source:'utilisateur', fiab:'declaree'};
+  if(_afSrc && _afSrc.origine==='reprise' && typeof _afSrc.sourceId==='string' && _afSrc.sourceId) o.cle=String(_afSrc.sourceId).slice(0,32);
+  return o;
 }
 /* Ce que V1 portait déjà et que la ligne garde : la trace du résolveur d'énergie, les signaux de la saisie. */
 function _n2Extras(){
@@ -1589,7 +1592,8 @@ function _n2EntreeEcran(nom, vals, bcActif){
        les corrige, ou retrouve l'aliment par la recherche (ou le scan) pour qu'elles se calculent. */
     if(R.qte && !_afValeursTapees && !(q.unite===R.qte.unite && q.val===R.qte.val))
       return {ok:false, message:'Ces valeurs valent pour '+_n2QteTexte(R.qte, false)+' : corrige-les pour ta quantité, ou retrouve l\'aliment par la recherche (ou scanne-le) pour qu\'elles se calculent — rien n\'a été ajouté.'};
-    return {ok:true, entree:Object.assign(e, {mode:'declaree', declare:vals, quantite:q}, R.notes?{notes:R.notes.slice()}:{})};
+    return {ok:true, entree:Object.assign(e, {mode:'declaree', declare:vals, quantite:q}, R.notes?{notes:R.notes.slice()}:{},
+      R.cle?{cle:R.cle, etat:R.etat||''}:{})};   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
   }
   if(R && (R.u==='g' || R.u==='ml') && R.q>0){   // ③ des valeurs qui valent pour un poids (ou un volume) connu
     const q=_afQtePosee(R.u); if(!q) return {ok:false, message:COMBIEN};
@@ -1603,6 +1607,8 @@ function _n2EntreeEcran(nom, vals, bcActif){
       quantite:{val:+_afPortions, unite:'portion', origine:'portion',
                 portion:{libelle:String(_afPortionLabel).trim(), poids:+_afPortionPoids, unite:'g'}}})};
   }
+  if(_afRepriseVide && _afRepriseVide.nom===String(nom||'').trim() && !_N2_CHAMPS.some(c=>(+vals[c])>0))
+    return {ok:false, message:_N2_VIDE+' Rien n\'a été ajouté.'};
   return {ok:false, message:'Combien pesait ce que tu as mangé ? Indique le poids en grammes (ou le volume en ml).'};
 }
 
@@ -1632,7 +1638,11 @@ function _bcMajUnite(){ const s=document.getElementById('af-bc-unite'); if(s) s.
 /* ⭐ Reprendre un aliment DANS l'écran d'ajout (« Mes aliments », la recherche dans ton journal). */
 function _n2Reprendre(src, saisie){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return false;
-  const R=N.reprise(src, _n2Ctx()); if(!R.ok) return false;
+  /* ⭐ NV2-FIAB (24/10) : sans fiche de confiance, celle de son IDENTITÉ (CIQUAL, ou un scan de ce code-barres depuis V2) —
+     la quantité se calcule alors comme pour un scan. ⛔ Rien n'est deviné ni emprunté à un aliment du même nom. */
+  const R=_n2RepriseIdentite(N.reprise(src, _n2Ctx()), src); if(!R.ok) return false;
+  const _sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : '', _ean=/^\d{8,14}$/.test(_sid) ? _sid : '';
+  const _jeton=++_n2RechJeton;
   const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
   set('af-desc', R.nom||'');
   _N2_CHAMPS.forEach(c=>set('af-'+c, (c in R.valeurs)?R.valeurs[c]:''));
@@ -1668,7 +1678,15 @@ function _n2Reprendre(src, saisie){
     /* ⭐ INCIDENT DU 23/10 — une fiche dont les valeurs enregistrées ne se redonnent plus (favori redéfini après coup) le dit
        ici aussi : l'écran recalcule par la fiche, et la personne sait que la liste affichait autre chose. */
     const apR=_n2Apercu(src);
-    if(nm) nm.textContent=R.nom+' · '+Math.round(_bcNutr.kcal100)+' kcal/100'+(f.base==='ml'?'ml':'g')+' (ta dernière saisie)'
+    /* NV2-FIAB : une fiche retrouvée par l'identité se NOMME — et si ta saisie disait autre chose pour la même quantité, l'écran le dit. */
+    let _dit=' (ta dernière saisie)';
+    if(R.parIdentite){
+      _dit=(f.source==='ciqual') ? ' (fiche CIQUAL retrouvée par son identifiant)' : ' (fiche du produit retrouvée par son code-barres)';
+      const _c=q ? NUT2.calcule(f, q) : null, _v=R.valeurs;
+      if(_c && _c.ok && _N2_CHAMPS.some(k=>(k in _v) && (k in _c.valeurs) && _v[k]!==_c.valeurs[k]))
+        _dit+=' — ta saisie disait '+_n2Val(_v.kcal)+' kcal · P '+_n2Val(_v.prot)+' pour '+_n2QteTexte(q, false);
+    }
+    if(nm) nm.textContent=R.nom+' · '+_nbFR(_bcNutr.kcal100)+' kcal/100'+(f.base==='ml'?'ml':'g')+_dit   // NV2-FIAB (§6) : la référence, à la française, comme partout
       +((apR.ok && apR.raison) ? ' — ⚠️ à vérifier : '+apR.raison.texte : '');
     _bcMajUnite();
     if(row) row.style.display='block';
@@ -1683,14 +1701,22 @@ function _n2Reprendre(src, saisie){
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
     _afSetSrc({saisie:saisie, origine:'reprise'});
     _afRef=null;
+    /* Retour de Claude Principal (25/10) : sans aucune valeur non plus, l'écran le dit et donne les issues (`_afMajVide`). */
+    _afRepriseVide=_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''};
     _afMajAncre(true);
+    if(_sid && _afSrc) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
+    if(_ean) _n2RetrouverEnLigne(_ean, _jeton, saisie, 0, R.nom||'');
   }else{
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
     _afSetSrc({saisie:saisie, origine:'reprise'});
     _afRef={base:R.valeurs, q:q.val, u:q.unite, src:'la dernière fois', fige:true, qte:q, nom:R.nom||'',
             notes:(R.statut==='non-verifiee')?['reprise-non-verifiee']:null,
             raison:_n2Incoherence(src, R, null)};    // ⭐ incident du 23/10 : dit À L'ÉCRAN pourquoi elle est « à vérifier »
+    Object.assign(_afRef, {cle:_sid||null, etat:(src && src.etat) ? String(src.etat) : null, ean:_ean});   // NV2-FIAB : l'identité du produit
     _afMajFige();
+    /* ⭐ NV2-FIAB (24/10) — LE CAS FIGÉ N'EST PLUS UNE IMPASSE : un produit qui a un code-barres retrouve sa fiche en ligne,
+       comme un scan (Open Food Facts) ; hors ligne, l'écran propose de le retrouver, de le scanner ou de saisir l'étiquette. */
+    if(_ean) _n2RetrouverEnLigne(_ean, _jeton, saisie, (q.unite==='g' || q.unite==='ml') ? q.val : 0, R.nom||'', q.unite, R.valeurs);
   }
   _afCoherence();          // une ancienne entrée fausse se signale au moment où on la reprend
   _afNoteEtat(R.nom||'');
@@ -1746,11 +1772,39 @@ function _afMajFige(){
     +pastille
     +'<div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Valeurs de ta dernière saisie'+(q?' (pour '+qTxt+')':'')
     +'. ⚠️ Elles ne se recalculent pas (cet ancien aliment n\'a pas de fiche vérifiée) : pour une autre quantité, corrige-les'
-    +' — ou retrouve l\'aliment par la recherche, ou scanne-le, et elles se calculeront.</div>'
+    +' — ou retrouve sa fiche ci-dessous (recherche, scan, étiquette), et elles se calculeront.</div>'
     +(_afRef.raison ? '<div style="font-size:11.5px;color:var(--orange);margin-top:6px;line-height:1.4;">⚠️ À vérifier : '
-      +_escFood(_afRef.raison.texte)+'. Vérifie-les avant d\'ajouter — ou scanne le produit.</div>' : '');
+      +_escFood(_afRef.raison.texte)+'. Vérifie-les avant d\'ajouter — ou retrouve sa fiche ci-dessous.</div>' : '')
+    +_n2IssuesHtml(_afRef.etatRecherche);
   const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;
   const p=document.getElementById('af-prop-pastille'); if(p && prise) p.style.display='none';
+  el.style.display='block';
+}
+/* ⭐ NV2-FIAB (24/10, mission de Michel) — LE CAS FIGÉ N'EST PLUS UNE IMPASSE : trois issues, écrites en boutons (avant, une
+   phrase sans aucun bouton), et l'état de la recherche de la fiche par son code-barres quand il en a un.
+   ⚖️ UN SEUL PROPRIÉTAIRE (R2) : le cas figé (`_afMajFige`) et l'ancienne saisie sans quantité ni valeurs (`_afMajVide`)
+   écrivent les MÊMES issues, d'ici. */
+function _n2IssuesHtml(etat){
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'
+    +[['🔎 Retrouver l\'aliment','_n2RetrouverRecherche()'],['📷 Scanner le code-barres','scanBarcode()'],['🏷️ Saisir l\'étiquette (pour 100 g)','_n2EtiquetteFige()']]
+      .map(b=>'<button type="button" onclick="'+b[1]+'" style="min-height:44px;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg2);'
+        +'color:var(--t1);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+b[0]+'</button>').join('')
+    +'</div><div id="af-retrouver-etat" style="display:'+(etat?'block':'none')+';font-size:11px;color:var(--t3);margin-top:6px;line-height:1.4;">'
+    +_escFood(etat||'')+'</div>';
+}
+/* ⭐ RETOUR DE CLAUDE PRINCIPAL (25/10) — UNE ANCIENNE SAISIE SANS QUANTITÉ NI VALEURS (`kcal:0 … q:null, per100:null`) N'EST PLUS
+   UNE IMPASSE. Mesuré : reprise (« Mes aliments », « + Ajouter », « Déjà noté par toi »), l'écran montrait 0 · 0 · 0 · 0 sans
+   aucun champ ni issue, et « Ajouter » demandait « Combien pesait… » sans endroit où le dire. Rien ne s'écrivait (sûr), mais on
+   ne pouvait pas en sortir. Elle a maintenant les issues d'une reprise sans fiche (`_n2IssuesHtml`), et ses valeurs se tapent.
+   ⛔ AUCUN CHAMP « QUANTITÉ » ICI, EXPRÈS : il n'y a pas de couple « valeurs / quantité » à garder — accepter une quantité avec
+   ces 0 affirmerait, en silence, qu'ils valaient pour elle (la même raison que la reprise sans quantité, `_n2Reprendre`).
+   `_afRepriseVide` = {nom, etat} tant que l'écran montre CETTE reprise ; il meurt avec l'aliment (`_afOublierAliment`, R15),
+   et un autre nom n'en hérite pas (`_afMajAncre`). En mémoire seulement : rien n'est stocké. */
+let _afRepriseVide=null;
+const _N2_VIDE='Cette ancienne saisie n\'a ni quantité ni valeurs : rien ne se calcule à partir d\'elle. Retrouve l\'aliment, scanne son code-barres ou saisis son étiquette — ou tape ses valeurs.';
+function _afMajVide(){
+  const el=document.getElementById('af-prop-row'); if(!el || !_afRepriseVide) return;
+  el.innerHTML='<div style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+_escFood(_N2_VIDE)+'</div>'+_n2IssuesHtml(_afRepriseVide.etat);
   el.style.display='block';
 }
 function _afPropPoserFige(origine){
@@ -1771,6 +1825,60 @@ function _afQtePoseeFige(){
   if(R.qte && R.qte.unite==='portion') return {val:v, unite:'portion', origine:o, portion:Object.assign({}, R.qte.portion)};
   return {val:v, unite:(R.u==='ml')?'ml':'g', origine:o};
 }
+/* ═══ NV2-FIAB (24/10/2026, mission de Michel) — RETROUVER LA FICHE D'UN ALIMENT REPRIS ═══════════════════════════════════
+   *« Si une ancienne saisie ne possède réellement aucune fiche fiable, ne pas fabriquer de valeurs. Proposer clairement de
+   retrouver l'aliment, de rescanner son code-barres ou de saisir son étiquette. Le cas figé ne doit plus constituer une
+   impasse. »* Trois issues, et une automatique :
+     · la fiche de son code-barres, lue en ligne (Open Food Facts) par le MÊME chemin qu'un scan (`_offAppliquerProduit`) — la
+       quantité de la dernière fois revient en pastille (même unité seulement), rien n'est pré-rempli ;
+     · « 🔎 Retrouver l'aliment » : la recherche (CIQUAL, produits, ton journal) sur son nom — on choisit une fiche ;
+     · « 📷 Scanner » ; « 🏷️ Saisir l'étiquette » : le calibrage pour 100 g, qui garde le code-barres du produit.
+   ⛔ Un résultat qui arrive APRÈS que l'écran a changé d'aliment (un autre choisi, le nom changé, l'écran fermé) est ignoré :
+   il ne s'applique jamais à autre chose que ce qu'il cherchait (`_n2RechJeton`, rendu par `_afOublierAliment`). */
+let _n2RechJeton=0;
+function _n2EtatRetrouver(texte){
+  if(_afRef && _afRef.fige) _afRef.etatRecherche=texte;
+  else if(_afRepriseVide) _afRepriseVide.etat=texte;
+  const el=document.getElementById('af-retrouver-etat');
+  if(el){ el.textContent=texte; el.style.display=texte?'block':'none'; }
+}
+async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
+  if(typeof _offFetchProduct!=='function') return false;
+  _n2EtatRetrouver('🔎 Recherche de la fiche de ce produit (code-barres '+ean+')…');
+  let p=null; try{ p=await _offFetchProduct(ean); }catch(e){ p=null; }
+  const ov=document.getElementById('ov-add-food');
+  if(jeton!==_n2RechJeton || (ov && !ov.classList.contains('open')) || _afNomCourant()!==String(nom||'').trim()) return false;
+  const n=(p && p.nutriments) || {}, num=x=>typeof x==='number' && isFinite(x);
+  if(!p || !['energy-kcal_100g','energy_100g','proteins_100g','carbohydrates_100g','fat_100g'].some(k=>num(n[k]))){
+    _n2EtatRetrouver(p ? 'La fiche de ce produit n\'a aucune valeur : saisis son étiquette (pour 100 g).'
+                       : 'Fiche introuvable pour l\'instant (hors ligne, ou produit inconnu) : scanne-le, retrouve-le, ou saisis son étiquette.');
+    return false;
+  }
+  _offAppliquerProduit(p, ean, saisie, false);
+  /* La quantité de la dernière fois, PROPOSÉE (jamais posée) — et seulement dans l'unité de la fiche trouvée (g ou ml). */
+  if(qDer>0 && typeof _bcNutr==='object' && _bcNutr && (uDer||'g')===(_bcNutr.base||'g')) _bcProposerDerniere(qDer);
+  /* L'écran se NOMME, et si ta saisie disait autre chose pour la même quantité, il le dit (même phrase que la fiche retrouvée en local). */
+  let dit=' (fiche retrouvée par son code-barres)';
+  if(vAnc && qDer>0 && _bcNutr && (uDer||'g')===(_bcNutr.base||'g')){
+    const c=NUT2.calcule(_n2FicheBc(), {val:qDer, unite:_bcNutr.base||'g'});
+    if(c.ok && _N2_CHAMPS.some(k=>(k in vAnc) && (k in c.valeurs) && vAnc[k]!==c.valeurs[k]))
+      dit+=' — ta saisie disait '+_n2Val(vAnc.kcal)+' kcal · P '+_n2Val(vAnc.prot)+' pour '+_nbFR(qDer)+' '+(_bcNutr.base||'g');
+  }
+  const nm=document.getElementById('af-bc-name'); if(nm && _bcNutr) nm.textContent+=dit;
+  return true;
+}
+function _n2RetrouverRecherche(){
+  const d=document.getElementById('af-desc'); if(!d) return;
+  if(_afRef && _afRef.nom) d.value=_afRef.nom;
+  try{ _afSuggInput(); }catch(e){}
+  try{ d.focus(); _amenerALaVue(document.getElementById('af-sugg')); }catch(e){}
+  toast('Choisis l\'aliment dans la liste (CIQUAL, produits) : ses valeurs se calculeront pour ta quantité.','info');
+}
+function _n2EtiquetteFige(){
+  const row=document.getElementById('af-cal-row');
+  if(row && row.style.display==='none' && typeof _calOuvrir==='function') _calOuvrir();
+  try{ _amenerALaVue(row); }catch(e){}
+}
 
 /* ⭐ RE-NOTER TEL QUEL un aliment déjà noté (ajout rapide, repas habituel) — sans ouvrir ni lire l'écran (D-094).
    Rend {ok, ligne} · {ok:false, aCompleter:true} (pas de quantité valide) · {ok:false, incoherente:true, raison} ·
@@ -1783,6 +1891,10 @@ function _afQtePoseeFige(){
    silence : l'appelant ouvre l'écran (« + Ajouter ») ou la nomme (« Tes repas habituels »). */
 function _n2Reajouter(src, repas, date, porte, apercu){
   const N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return {ok:false, erreur:'MOTEUR_ABSENT'};
+  /* ⛔ NV2-FIAB (24/10) : AUCUNE fiche d'identité ici — la règle A de D-111 (Michel, 24/10 : « conserver la règle A ») : une
+     référence qui contredit la fiche vérifiée de son produit se dit « à vérifier », et « + Ajouter » / « Tes repas habituels »
+     ne la recalculent pas en silence. La fiche retrouvée par l'identité ne sert QUE dans l'écran (`_n2Reprendre`), où la
+     personne voit les valeurs et confirme par « Ajouter ». */
   const R=N.reprise(src, _n2Ctx()); if(!R.ok) return R;
   if(!R.quantite) return {ok:false, aCompleter:true};
   const id=apercu ? 'apercu-00000000' : _foodLineId(); if(!id) return {ok:false, erreur:'ID_INVALIDE'};
@@ -1793,6 +1905,10 @@ function _n2Reajouter(src, repas, date, porte, apercu){
     if(R.corrections.length) e.corrections=R.corrections.map(x=>({c:x.c, v:x.v, le:Date.now(), avant:x.avant}));
   }else{
     e.mode='declaree'; e.declare=R.valeurs;
+    /* ⛔ NV2-FIAB (24/10) : la recopie GARDE l'identité du produit — avant, elle écrivait `sourceId:null` et le produit scanné
+       redevenait un simple nom, impossible à retrouver ensuite (sonde du 24/10). Ce n'est pas une fiche : rien n'est calculé avec. */
+    const _sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : '';
+    if(_sid){ e.cle=_sid; if(src.etat) e.etat=String(src.etat); }
     if(R.statut==='non-verifiee') e.notes=['reprise-non-verifiee'];
   }
   const L=N.ligneNouvelle(e); if(!L.ok) return L;
@@ -1821,13 +1937,89 @@ function _n2Cle(x, norm){
 /* Les fiches VÉRIFIÉES du journal, une par identifiant de produit — la plus récente : ce à quoi une référence non vérifiée
    du MÊME produit se compare (`_n2Incoherence`, cause « differe »). Lecture seule. */
 function _n2FichesVerifiees(){
-  const o={}, N=(typeof NUT2==='object'&&NUT2)?NUT2:null; if(!N) return o;
+  const o={}, N=(typeof NUT2==='object'&&NUT2)?NUT2:null;
+  /* NV2-FIAB (24/10) : au passage, les références de chaque identité (journal et favoris) — ce à quoi une référence non
+     vérifiée se compare (`_n2Contradiction`). Une propriété cachée : les lecteurs existants ne lisent que `o[sid]`.
+     ⭐ E2b · NUT-VERIFY-01 (25/10) : seulement celles qui sont encore PROPOSÉES (`_n2Propose`). Une saisie que la remise à zéro
+     ou « ✕ » a retirée des propositions ne juge plus une saisie notée ensuite — mesuré : deux anciennes saisies fausses (65 kcal
+     pour 100 g) faisaient dire « à vérifier » à une saisie juste (129), et en bloquaient « + Ajouter » et le repas habituel.
+     ⛔ Le journal n'est pas touché ; ⛔ les fiches vérifiées par la SOURCE (`o[sid]`) restent toutes : elles décrivent le produit,
+     pas une proposition (D-136). */
+  const refs={}; Object.defineProperty(o, '_refs', {value:refs, enumerable:false});
+  if(!N) return o;
+  const ranger=(x, fav)=>{ const sid=(x && typeof x.sourceId==='string') ? x.sourceId.trim() : '';
+    if(sid && _n2Propose(x, fav ? x.t : x.ts)) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };
   (S.foodLog||[]).forEach(l=>{
-    const sid=(l && typeof l.sourceId==='string') ? l.sourceId.trim() : ''; if(!sid) return;
+    const sid=ranger(l, false); if(!sid) return;
     const R=N.reprise(l, _n2Ctx()); if(!R.ok || !R.fiche || R.fiche.fiab!=='source') return;
     if(!o[sid] || (+l.ts||0)>o[sid].ts) o[sid]={fiche:R.fiche, ts:+l.ts||0, date:l.date, id:l.id};
   });
+  (S.savedFoods||[]).forEach(f=>ranger(f, true));
   return o;
+}
+/* ⭐⭐ NV2-FIAB (24/10, mission de Michel : *« retrouver la fiche d'origine si une identité fiable permet de le faire »*) — LA FICHE
+   D'UN ALIMENT RETROUVÉE PAR SON IDENTITÉ, jamais par son nom. Avant, une reprise ne recalculait qu'avec la fiche NOTÉE dans la
+   ligne, et seule une ligne CIQUAL pouvait la faire vérifier : tout produit scanné avant V2 restait FIGÉ à vie (mesuré, sonde du
+   24/10 : l'isolat à 156 · 35 · 1 · 1 pour 35 g comme pour 50 g, « Ajouter » refusé, aucune issue à l'écran).
+     · `ciqual:NNNN` → la fiche CIQUAL embarquée elle-même (la source, pas la copie notée — qui a pu être fabriquée, M1) ;
+     · un code-barres → la fiche VÉRIFIÉE la plus récente de ce code-barres dans le journal (un scan fait depuis V2).
+   ⛔ Rend null sinon : aucune fiche n'est inventée, déduite des valeurs, ou empruntée à un aliment du même nom. */
+function _n2FicheIdentite(src){
+  const sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : ''; if(!sid) return null;
+  const m=/^ciqual:(\d+)$/.exec(sid);
+  if(m){
+    const r=_n2Ctx().ciqual(m[1]); if(!r) return null;
+    const p100={}; _N2_CHAMPS.forEach(c=>{ const x=r[c]; if(typeof x==='number' && isFinite(x) && x>=0) p100[c]=x; });
+    if(!Object.keys(p100).length) return null;
+    return {base:'g', p100:p100, cle:sid, source:'ciqual', fiab:'source', etat:null, libelle:String(r.nom||''),
+            version:'CIQUAL-'+((typeof _ciqual==='object'&&_ciqual&&_ciqual.version)||'2025')};
+  }
+  const v=_n2FichesVerifiees()[sid];
+  return v ? v.fiche : null;
+}
+/* La reprise d'un aliment DANS L'ÉCRAN, complétée par la fiche de son IDENTITÉ quand il n'en a pas de confiance — la personne
+   voit les valeurs recalculées, l'écran dit ce que disait sa saisie, et rien ne s'écrit sans « Ajouter ». ⛔ Jamais hors de
+   l'écran : la règle A de D-111 (Michel, 24/10) y tient (`_n2Reajouter`). Sa quantité ne suit que si la fiche sait la calculer
+   en GRAMMES ou en ML : le poids d'une portion d'avant V2 n'est jamais fiable (D-103), la quantité se redemande. Lecture seule. */
+function _n2RepriseIdentite(R0, src){
+  if(!R0 || !R0.ok || R0.fiche) return R0;
+  const F=_n2FicheIdentite(src); if(!F) return R0;
+  const q=R0.quantite, qOK=!!q && (q.unite==='g' || q.unite==='ml') && NUT2.calcule(F, q).ok;
+  return Object.assign({}, R0, {fiche:F, parIdentite:true, corrections:[], quantite:qOK ? q : null});
+}
+/* ⭐ NV2-FIAB (24/10) — DEUX SAISIES DU MÊME PRODUIT QUI NE PEUVENT PAS ÊTRE VRAIES ENSEMBLE : même identité (code-barres,
+   `ciqual:…` — jamais le seul nom, D-111), et des valeurs qui, ramenées à 100 g (ou 100 ml), s'écartent au-delà de l'arrondi de
+   l'app et de 2 %. Mesuré sur le vrai journal (21/10) : le steak haché scanné à 129 kcal pour 100 g le 23/08, puis noté à 65
+   pendant sept semaines (un pour-100 g FABRIQUÉ le 01/09, M1) ; l'isolat à 35 g de protéines pour 40 g, à côté d'un favori à 26.
+   ⛔ Rien n'est tranché — on ne sait pas laquelle est juste : la référence affichée se dit « à vérifier », et l'écran dit comment
+   trancher (retrouver la fiche, scanner, l'étiquette). ⛔ Une valeur corrigée à la main n'entre pas dans la comparaison (CR-2) ;
+   une portion n'est une masse que sur une ligne V2 pesée (son poids a été tapé, D-099). Lecture seule. */
+function _n2Contradiction(src, v, vf){
+  const sid=(src && typeof src.sourceId==='string') ? src.sourceId.trim() : ''; if(!sid) return null;
+  const masse=x=>{ if(!x || !(+x.q>0)) return null;
+    if(x.u==='g' || x.u==='ml') return {m:+x.q, u:x.u};
+    if(x.u==='portion' && x.n2 && x.n2.s===1 && x.n2.m==='p' && +x.portionWeightG>0) return {m:+x.q*(+x.portionWeightG), u:'g'};
+    return null; };
+  const corr=x=>(x && x.n2 && Array.isArray(x.n2.corr)) ? x.n2.corr.map(c=>c && c.c) : [];
+  const ms=masse(src); if(!ms) return null;
+  const refs=((vf || _n2FichesVerifiees())._refs || {})[sid] || [], cs=corr(src);
+  const L={kcal:' kcal', prot:' g de protéines', carbs:' g de glucides', fat:' g de lipides'};
+  for(const a of refs){
+    const o=a.x; if(!o || o===src || (o.id && src.id && o.id===src.id)) continue;
+    const mo=masse(o); if(!mo || mo.u!==ms.u) continue;
+    const co=corr(o);
+    for(const c of _N2_CHAMPS){
+      if(cs.indexOf(c)>=0 || co.indexOf(c)>=0) continue;
+      const vs=v && v[c], vo=o[c];
+      if(typeof vs!=='number' || typeof vo!=='number' || !isFinite(vs) || !isFinite(vo)) continue;
+      const rs=vs/ms.m, ro=vo/mo.m;
+      if(Math.abs(rs-ro) > 0.5/ms.m+0.5/mo.m+0.02*Math.max(rs,ro)+1e-9){
+        const ou=a.fav ? 'dans ton favori' : ('le '+String(o.date||'').split('-').reverse().slice(0,2).join('/'));
+        return 'tes saisies de ce produit ne concordent pas : '+_nbFR(rs*100)+L[c]+' pour 100 '+ms.u+' ici, '+_nbFR(ro*100)+' '+ou;
+      }
+    }
+  }
+  return null;
 }
 /* ⭐⭐ INCIDENT DU 23/10 — CE QUI NE PEUT PAS ÊTRE RE-NOTÉ TEL QU'IL S'AFFICHE. Lecture seule (rien n'est écrit, rien n'est
    « réparé ») ; rend `null` — rien à dire — ou {code, texte}. Quatre causes, chacune vue sur le vrai journal (audit du 19/10,
@@ -1860,6 +2052,8 @@ function _n2Incoherence(src, R, L, verifiees){
   const fv=sid ? (verifiees || _n2FichesVerifiees())[sid] : null;
   if(fv && fv.id!==src.id && N.calcule(fv.fiche, q).ok && ecart(fv.fiche.p100))
     return {code:'differe', texte:'ta fiche vérifiée de ce produit (du '+String(fv.date||'').split('-').reverse().slice(0,2).join('/')+') donne d\'autres valeurs pour '+qt};
+  const contr=_n2Contradiction(src, v, verifiees);       // NV2-FIAB (24/10) : deux saisies du même produit qui se contredisent
+  if(contr) return {code:'contredit', texte:contr};
   return null;
 }
 
@@ -1927,11 +2121,31 @@ function _n2TotalPartiel(tot){
   return '<div style="font-size:11.5px;color:var(--t3);margin-top:6px;line-height:1.4;">⚠️ Total partiel : '+n+' aliment'+(n>1?'s':'')
     +' sans valeur connue pour '+k.map(c=>L[c]).join(', ')+' — non compté'+(n>1?'s':'')+', jamais remplacé par 0.</div>';
 }
-/* La quantité qu'un « + Ajouter » reprendrait, DITE sur la ligne (le toucher est alors un choix éclairé) — par le formateur unique (D-103). */
-function _n2QteListe(it){
-  const R=(it && it._ap && it._ap.R) || ((typeof NUT2==='object'&&NUT2)?NUT2.reprise(it._src||it, _n2Ctx()):null);
-  const q=R && R.ok && R.quantite; if(!q) return '';
-  return _escFood(_n2QteTexte(q, _n2PortionFiable(R)))+' · ';   // D-103 : « 3 portions (450 g) » si le poids est fiable
+/* ⭐ NV2-FIAB (24/10, demande de Michel) — UNE SEULE FAÇON D'ÉCRIRE LES VALEURS D'UNE PROPOSITION : calories → quantité →
+   protéines → glucides → lipides, et la quantité DIT à quoi valent les chiffres : « pour 100 g » (une RÉFÉRENCE : CIQUAL, un
+   produit, une enseigne) ou « pour 200 g » (ce qui a été NOTÉ — ce que « + Ajouter » écrira). Avant : « 200 g · 130 kcal ·
+   P 22 » sous « Déjà noté par toi », « 130 kcal/100 g · P 21.9 » sous CIQUAL — deux ordres, et rien ne disait que l'un était
+   mangé et l'autre une référence (le steak du 24/10 : 130 kcal des deux côtés, pour 200 g et pour 100 g).
+   ⛔ Purement VISUEL : rien n'est calculé ici, les valeurs sont celles qu'on lui donne. Une valeur inconnue s'écrit « ? ».
+   `ref` = une référence (décimales gardées, virgule française) ; sinon des valeurs notées (entières). */
+function _n2LigneValeurs(v, pour, ref){
+  const f=x=>(x===undefined || x===null || x==='' || !isFinite(+x)) ? '?' : (ref ? _nbFR(+x) : String(x));
+  v=v||{};
+  return f(v.kcal)+' kcal · '+pour+' · P '+f(v.prot)+' · G '+f(v.carbs)+' · L '+f(v.fat);
+}
+/* La ligne d'une proposition tirée de ton journal ou de tes favoris : ce que « + Ajouter » ÉCRIRAIT (l'aperçu) quand il le peut,
+   sinon ce qui a été noté — avec sa quantité et son état. ⭐ NV2-FIAB : une fiche retrouvée par l'identité du produit le dit.
+   La quantité est celle qu'un « + Ajouter » reprendrait, par le formateur unique (D-103 : « 3 portions (450 g) » seulement si le
+   poids d'une portion est fiable). Elle remplace `_n2QteListe`, qui disait la même chose pour les deux mêmes listes (R2). */
+function _n2TexteProposition(src, a){
+  const R=(a && a.R) || ((typeof NUT2==='object'&&NUT2)?NUT2.reprise(src, _n2Ctx()):null);
+  const q=R && R.ok && R.quantite;
+  const v=(a && a.ok && !a.raison && a.ligne) ? a.ligne : (src||{});
+  const pour=q ? 'pour '+_escFood(_n2QteTexte(q, _n2PortionFiable(R))) : 'quantité à préciser';
+  /* Une référence d'avant V2 sans quantité n'a pas d'aperçu : elle se dit quand même « non vérifié » (Michel, 24/10 : *« les données
+     historiques sans référence fiable doivent être identifiées comme non vérifiées »*). */
+  const nv=(!(a && a.ok) && R && R.ok && R.statut==='non-verifiee') ? ' · non vérifié' : '';
+  return _n2LigneValeurs(v, pour, false)+_n2Marque(a)+nv;
 }
 function _n2Badge(e){
   const n2=e && e.n2; if(!n2 || n2.s!==1) return '';
@@ -2913,6 +3127,12 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   try{ p=await _offFetchProduct(ean); }
   catch(e){ toast('Réseau indisponible pour la recherche produit','error'); return; }
   if(!p){ toast('Produit introuvable dans la base (code '+ean+') — saisis à la main','error'); return; }
+  _offAppliquerProduit(p, ean, saisie, codeDouteux);
+}
+/* 🔀 NV2-FIAB (24/10) — SORTI DE `_lookupBarcode` : poser un produit Open Food Facts DÉJÀ LU sur l'écran d'ajout. Deux appelants,
+   un seul chemin (R2) : le scan, et la reprise d'un aliment dont la fiche se retrouve par son code-barres (`_n2RetrouverEnLigne`).
+   ⛔ Rien n'y change : c'est le corps de `_lookupBarcode` après la lecture, au caractère près. */
+function _offAppliquerProduit(p, ean, saisie, codeDouteux){
   /* 📦 ft-v1174 — MIS DE CÔTÉ **AVANT** LE BRANCHEMENT « aucune valeur », et c'est le point.
      Une fiche sans tableau nutritionnel part au calibrage (ft-v1165) et l'objet produit
      disparaît avec elle — or c'est précisément ce produit-là qui a le plus besoin de son poids. */
@@ -2936,7 +3156,7 @@ async function _lookupBarcode(ean, saisie, codeDouteux){
   const _catLue = Array.isArray(p&&p.categories_tags) ? p.categories_tags.join(' ')
                                                      : String((p&&p.categories_tags)||'');
   const n=p.nutriments||{};
-  const kcal100=_per100d1(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
+  const kcal100=_afSuggKcal100(p);   // NV2-FIAB : un seul propriétaire de l'énergie pour 100 g d'un produit (scan = recherche)
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (scan code-barres). */
   try{ _afOublierAliment(); }catch(e){}
   _bcCategories=_catLue;          // ⬅ APRES l'oubli, sinon elle serait effacee aussitot
@@ -2994,7 +3214,7 @@ function _afPreparerEcran(nut, portion, etiquettePortion, sourcePortion, suffixe
   _bcProposerPortion(g, etiquettePortion);
   _bcQsrc(g, sourcePortion);
   const nameEl = document.getElementById('af-bc-name');
-  if(nameEl) nameEl.textContent = nut.name + ' · ' + nut.kcal100 + ' kcal/100' + (nut.base==='ml'?'ml':'g') + (suffixeNom || '');
+  if(nameEl) nameEl.textContent = nut.name + ' · ' + _nbFR(nut.kcal100) + ' kcal/100' + (nut.base==='ml'?'ml':'g') + (suffixeNom || '');   // NV2-FIAB (§6) : virgule française
   _bcMajUnite();   // 🥗 V2 : le champ dit son unité (celle de la fiche)
   const row = document.getElementById('af-bc-row'); if(row) row.style.display = 'block';
   const descEl = document.getElementById('af-desc'); if(descEl) descEl.value = nut.name;
@@ -3127,6 +3347,8 @@ function _calAppliquer(){
      effacé ICI, dans une porte que je n'avais pas regardée.
      👉 *C'est la porte jumelle (R8), à l'intérieur même du correctif censé fermer une fuite.*
      On met de côté, on oublie, on repose — comme partout ailleurs dans ce fichier. */
+  /* NV2-FIAB (24/10) : l'étiquette d'un produit REPRIS (son code-barres connu) reste celle de ce produit — l'identité suit. */
+  const _sidCal=(_afRef && _afRef.fige && _afRef.cle) ? _afRef.cle : ((_afSrc && _afSrc.origine==='reprise' && _afSrc.sourceId) ? _afSrc.sourceId : null);
   try{ _afOublierAliment({garderPaquet:true}); }catch(e){}   // on calibre CE produit, pas un autre
   _bcNutr=_ref100(nom, kcal, prot, carbs, fat, {maxNom:80, origine:'manuel'});
   /* ⭐ LE CHEMIN DE CIQUAL, MOT POUR MOT — produit vide, pas de portion déclarée (donc 100 g
@@ -3137,7 +3359,7 @@ function _calAppliquer(){
      report, le produit qui a le PLUS besoin de son poids serait justement le seul à le perdre.
      ⛔ Et c'est bien le texte BRUT qu'on repasse, pas des grammes : `_offRemplirFormulaire`
      reste le seul endroit qui interprète (R2). */
-  _offRemplirFormulaire({serving_quantity:0, quantity:_bcPaquetTxt, nutriments:{}}, null, 'etiquette-main', false, 'etiquette');
+  _offRemplirFormulaire({serving_quantity:0, quantity:_bcPaquetTxt, nutriments:{}}, _sidCal, 'etiquette-main', false, 'etiquette');
   _calOuvrir();   // on referme : le bloc quantité prend le relais juste au-dessus
   toast('Produit calibré ⚖️ — tape ta quantité','success');
 }
@@ -3394,6 +3616,9 @@ function _repasHabituels(){
   const par={}, norm=n=>String(n||'').toLowerCase().trim();
   (S.foodLog||[]).forEach(e=>{
     if(!e||!e.date||!e.name)return;
+    /* NV2-FIAB (24/10, décision de Michel) : la remise à zéro vide aussi les repas habituels — ils renaissent des repas notés
+       ENSUITE — et un aliment masqué (« ✕ ») n'y entre plus. ⛔ Le journal, lui, ne bouge pas. */
+    if(!_n2Propose(e, e.ts))return;
     const k=e.date+'|'+(e.meal||'');
     (par[k]=par[k]||[]).push(e);
   });
@@ -3958,7 +4183,7 @@ function _foodTotals(date){
 const _PA_MIN_JOURS = 3;          // en dessous, on ne prétend rien observer
 const _PA_SOLIDE    = 14;         // à partir de là, on parle d'habitudes
 function _profilAlimentaire(){
-  const fl = Array.isArray(S.foodLog) ? S.foodLog : [];
+  const fl = (Array.isArray(S.foodLog) ? S.foodLog : []).filter(e => e && typeof e === 'object');
   if(!fl.length) return null;
   const cleN = n => (n||'').trim().toLowerCase();
 
@@ -4139,7 +4364,7 @@ function _resteDuJour(date){
   const r = k => Math.round(k);
   return {
     date:d,
-    rien: !(S.foodLog||[]).some(e=>e.date===d),      // ⚠️ « rien noté » ≠ « rien mangé »
+    rien: !(S.foodLog||[]).some(e=>e&&e.date===d),      // ⚠️ « rien noté » ≠ « rien mangé »
     kcal:  r(cible.calories - tot.kcal),
     prot:  r((cible.prot_g||0)  - tot.prot),
     carbs: r((cible.carbs_g||0) - tot.carbs),
@@ -4176,8 +4401,9 @@ function _mesAliments(max){
     out.push({name:n, kcal:kcal, prot:prot, carbs:carbs, fat:fat,
               per100:_f?_f.p100:null, _fiche:_f, fav:!!fav, freq:(freq[k]||0)});
   };
-  (S.savedFoods||[]).forEach(e=>prendre(e,true));
-  (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>prendre(e,false));
+  /* NV2-FIAB (24/10) : les idées aussi sont des propositions — un aliment masqué, ou d'avant la remise à zéro, n'en est plus une. */
+  (S.savedFoods||[]).forEach(e=>{ if(_n2Propose(e, e && e.t)) prendre(e,true); });
+  (S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{ if(_n2Propose(e, e && e.ts)) prendre(e,false); });
   return out.slice(0, max||40);
 }
 
@@ -4600,17 +4826,18 @@ function _buildFoodQuickItems(){
      existait. L'identité est maintenant celle du produit (`_n2Cle`), et une référence VÉRIFIÉE n'est jamais cachée derrière
      une autre qui ne l'est pas. Chaque élément porte son APERÇU (`_ap`) : ce que « + Ajouter » écrirait, et s'il le peut. */
   const vf=_n2FichesVerifiees(), ap=x=>_n2Apercu(x, vf);
-  const favs=(S.savedFoods||[]).map(f=>Object.assign(_itemListe(f),
+  /* NV2-FIAB (24/10) : un favori masqué (« ✕ » ailleurs, sur un autre appareil) ou d'avant la remise à zéro n'est plus proposé. */
+  const favs=(S.savedFoods||[]).filter(f=>_n2Propose(f, f && f.t)).map(f=>Object.assign(_itemListe(f),
     {portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0, fav:true, _src:f, _ap:ap(f)}));
   const vus={};   // identité → listée (true : par une référence vérifiée ; false : par une qui ne l'est pas)
   favs.forEach(f=>{ const k=_n2Cle(f._src); vus[k]=(vus[k]===true) || _n2Verifiee(f._ap); });
-  /* « ✕ » masque une IDENTITÉ depuis le 23/10 (`id:…`, `nom:…`) ; un NOM nu, écrit avant, masque encore tout ce qui le porte. */
-  const hidden=new Set((S.hiddenFoods||[]).map(x=>String(x||'').toLowerCase()));
-  const recent=[], lignes=(S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts);
+  /* « ✕ » masque une IDENTITÉ depuis le 23/10 (`id:…`, `nom:…`) ; un NOM nu, écrit avant, masque encore tout ce qui le porte.
+     NV2-FIAB (24/10) : c'est une date de départ (`_n2Propose`) — et la remise à zéro en est une, pour tout. */
+  const recent=[], lignes=(S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>b.ts-a.ts);
   for(let j=0; j<lignes.length && favs.length+recent.length<12; j++){
     const e=lignes[j], nom=String((e&&e.name)||'').toLowerCase(); if(!nom) continue;
     const k=_n2Cle(e);
-    if(hidden.has(nom) || hidden.has(k.toLowerCase()) || vus[k]===true) continue;
+    if(!_n2Propose(e, e.ts) || vus[k]===true) continue;
     const a=ap(e), v=_n2Verifiee(a);
     if((k in vus) && !v) continue;         // déjà listé, et celle-ci n'est pas plus fiable
     vus[k]=v;
@@ -4630,7 +4857,7 @@ function _renderFoodQuickList(){
       +'<button onclick="toggleFavFood('+i+')" title="Favori" style="background:none;border:none;font-size:16px;cursor:pointer;flex-shrink:0;padding:0;line-height:1;color:'+(it.fav?'var(--gold)':'var(--t3)')+';">'+(it.fav?'★':'☆')+'</button>'
       +'<div onclick="quickFillFood('+i+')" style="flex:1;min-width:0;cursor:pointer;">'
         +'<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_escFood(it.name)+'</div>'
-        +'<div style="font-size:11px;color:var(--t3);">'+_n2QteListe(it)+_n2Val((it._src||it).kcal)+' kcal · P '+_n2Val((it._src||it).prot)+' · G '+_n2Val((it._src||it).carbs)+' · L '+_n2Val((it._src||it).fat)+_n2Marque(it._ap)+'</div>'
+        +'<div style="font-size:11px;color:var(--t3);">'+_n2TexteProposition(it._src||it, it._ap)+'</div>'
       +'</div>'
       +'<button onclick="quickAddFood('+i+')" style="background:var(--bg3);border:none;border-radius:8px;color:var(--red);font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer;flex-shrink:0;">+ Ajouter</button>'
       +'<button onclick="deleteQuickFood('+i+')" title="Supprimer" style="background:none;border:none;color:var(--t3);font-size:15px;cursor:pointer;flex-shrink:0;padding:2px 3px;line-height:1;">✕</button>'
@@ -4651,15 +4878,22 @@ function deleteQuickFood(i){
       if(j>=0) fs.splice(j,1); }
     if(!S.hiddenFoods)S.hiddenFoods=[];
     const cle=_n2Cle(it._src||it).toLowerCase();
-    if(!S.hiddenFoods.includes(cle))S.hiddenFoods.push(cle); // masque aussi un ex-favori pour qu'il ne revienne pas en « récent »
+    /* NV2-FIAB (24/10) — on masque une IDENTITÉ à partir de MAINTENANT (une date de départ, `_nutMasquesNormaliser`) : tout ce
+       qui a été noté avant ne revient plus, ni par « Déjà noté par toi », ni par la synchro, ni par un autre appareil ; ce qui
+       est noté après revient de lui-même (re-noter, c'est le vouloir). Masque aussi un ex-favori pour qu'il ne revienne pas en « récent ». */
+    S.hiddenFoods=_nutMasquesFusion(S.hiddenFoods, [{k:cle, t:Date.now()}]);
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     _renderFoodQuickList(); toast('Supprimé de la liste','info');
   };
   if(typeof showConfirm==='function') showConfirm('Supprimer de la liste ?',msg,doit,'Supprimer');
   else doit();
 }
-/* Ré-afficher ce qu'on vient de noter : son nom (ancien masquage) et son identité (masquage du 23/10 : `nom:…`, `id:…`). */
-function _unhideFood(nm, cle){ const k=(nm||'').toLowerCase(), c=String(cle||'').toLowerCase(); if(k&&S.hiddenFoods&&S.hiddenFoods.length)S.hiddenFoods=S.hiddenFoods.filter(x=>x!==k && x!=='nom:'+k.trim() && (!c || x!==c)); }
+/* 🗑️ `_unhideFood` (né avec « ✕ », élargi aux identités par D-111) EST RETIRÉ LE 24/10 (NV2-FIAB) — R30 : la raison est écrite là où il vivait. Il RETIRAIT un
+   masquage quand on re-notait l'aliment. Les masquages sont maintenant des DATES (`_nutDepart`) : une ligne notée après « ✕ » est
+   plus récente que lui, elle revient d'elle-même — sans rien retirer, donc sans qu'un autre appareil puisse le « remasquer ».
+   ⛔ Ne pas le « réparer ». */
+/* Un aliment est-il encore PROPOSÉ ? `quand` = l'instant où il a été noté (une ligne : `ts`) ou mis en favori (`t`). */
+function _n2Propose(x, quand){ const d=_nutDepart(S.hiddenFoods, _n2Cle(x), x && x.name); return !d || (+quand||0) > d; }
 /* ⚖️ LA QUANTITÉ SUR UN ALIMENT REPRIS DE « MES ALIMENTS » (ft-v1042) — Michel, 2 captures :
    « il faut absolument que je puisse mettre le poids sur les aliments réutilisés, qu'ils soient
    rentrés avec le code-barre, ou à la main ou encore avec l'IA ».
@@ -4681,8 +4915,10 @@ function quickFillFood(i){
   const it=_afQuickItems[i]; if(!it)return;
   _n2Apres([it._src||it], ()=>{
     if(!_n2Reprendre(it._src||it, 'liste')) return;
+    _afFavSource=it.fav ? it._src : null; _afFavMontrer();   // NV2-FIAB : un favori repris peut se corriger
     /* D-101 ① / D-103 : rien n'est pré-rempli — la quantité se CHOISIT (« Pré-rempli » disait le contraire). */
     const pas=['af-bc-last','af-prop-pastille'].some(id=>{ const b=document.getElementById(id); return !!b && b.offsetParent!==null; });
+    if(_afRepriseVide){ toast(_N2_VIDE,'info'); return; }
     toast('Repris — choisis la quantité ('+(pas?'touche la pastille ou tape-la':'tape-la')+'), puis « Ajouter au journal » ✅','info');
   });
 }
@@ -4697,7 +4933,8 @@ function quickAddFood(i){
     const r=_n2Reajouter(it._src||it, _afMealActif(), _journalJourActif(), 'quickAddFood');
     if(!r.ok && r.aCompleter){
       quickFillFood(i);
-      toast('Combien en as-tu mangé ? La quantité de la dernière fois n\'est pas connue — choisis-la, puis « Ajouter » ✅','info');
+      toast(_afRepriseVide ? 'Rien n\'a été ajouté. '+_N2_VIDE
+                           : 'Combien en as-tu mangé ? La quantité de la dernière fois n\'est pas connue — choisis-la, puis « Ajouter » ✅','info');
       return;
     }
     /* ⭐⭐ INCIDENT DU 23/10 — une référence qui ne peut pas être re-notée TELLE QU'ELLE S'AFFICHE ne l'est pas en silence
@@ -4709,7 +4946,6 @@ function quickAddFood(i){
       return;
     }
     if(!r.ok){ toast(_n2Message(r),'error'); return; }
-    _unhideFood(it.name, _n2Cle(it._src||it));
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     closeAddFood(); renderFoodJournal();
     try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
@@ -4730,6 +4966,20 @@ function toggleFavFood(i){
   }
   else {
     const s=it._src||it;
+    const fav=_favDepuisLigne(s);
+    /* NV2-FIAB (24/10) : l'instant où il devient favori — c'est ce qui le distingue des favoris d'avant une remise à zéro ou
+       un « ✕ » (`_nutFavorisVivants`), sur cet appareil comme sur les autres. */
+    fav.t=Date.now();
+    S.savedFoods.push(fav);
+    toast('Ajouté aux favoris ⭐','success');
+  }
+  persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  _renderFoodQuickList();
+}
+/* Le favori que devient une ligne (une ligne du journal, ou ce que l'écran vient de construire) — un seul constructeur (R2) :
+   l'étoile, et la correction d'un favori (NV2-FIAB). */
+function _favDepuisLigne(s){
+  {   // ce bloc garde l'indentation d'origine de ces lignes (sorties de `toggleFavFood`) : des contrôles négatifs les ancrent
     const fav=Object.assign(_itemListe(s), {portionWeightG:+s.portionWeightG>0?+s.portionWeightG:null});
     /* L'identité du produit suit (son code-barres) : sans elle, le favori redeviendrait « un nom » (`_n2Cle`). */
     if(typeof s.sourceId==='string' && s.sourceId){ fav.sourceId=s.sourceId; fav.etat=s.etat||null; }
@@ -4745,11 +4995,39 @@ function toggleFavFood(i){
       if(Array.isArray(s.n2.corr) && s.n2.corr.length) n2.corr=JSON.parse(JSON.stringify(s.n2.corr));
       fav.n2=n2;
     }
-    S.savedFoods.push(fav);
-    toast('Ajouté aux favoris ⭐','success');
+    return fav;
   }
-  persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+}
+/* ⭐ NV2-FIAB (24/10/2026) — CORRIGER UN FAVORI. Michel : *« une saisie personnelle doit pouvoir être corrigée ou retirée sans
+   réécrire rétroactivement le journal »* ; Principal (N2) : *« un favori ne peut que s'étoiler ou se retirer, jamais se
+   corriger »* — le favori à 26 g de protéines pour 156 kcal (M4) restait faux pour toujours.
+   ⭐ Le favori repris dans l'écran d'ajout (`quickFillFood`) s'y corrige comme une saisie : on choisit une fiche (scan, recherche,
+   étiquette) ou on retouche les valeurs, on pose la quantité — puis « ⭐ Corriger ce favori » le REMPLACE par ce que l'écran
+   construit, par le MOTEUR (mêmes refus qu'« Ajouter » : pas de quantité, pas d'écriture).
+   ⛔ Le journal n'est pas touché. ⛔ Les anciennes copies de ce favori (un autre téléphone, le serveur) ne reviennent pas : son
+   identité est masquée à l'instant de la correction, et le favori corrigé est daté juste après (`_nutDepart`). */
+let _afFavSource=null;   // le favori repris dans l'écran (null sinon) — rendu par `_afOublierAliment`
+function _afFavMontrer(){ const b=document.getElementById('af-fav-maj'); if(b) b.style.display=_afFavSource?'block':'none'; }
+function majFavoriDepuisEcran(){
+  const fs=S.savedFoods||[], i=fs.indexOf(_afFavSource);
+  if(!_afFavSource || i<0){ toast('Ce favori n\'existe plus — rien n\'a été changé.','error'); return false; }
+  const name=String((document.getElementById('af-desc')||{}).value||'').trim(), vals=_n2LireChamps('af');
+  if(!name){ toast('Donne un nom à l\'aliment','error'); return false; }
+  if(!Object.keys(vals).length){ toast('Renseigne au moins les calories','error'); return false; }
+  const row=document.getElementById('af-bc-row'), bc=!!(row && row.style.display!=='none' && _bcNutr);
+  if(bc && !(_bcQtyPose && numFR((document.getElementById('af-bc-grams')||{}).value)>0)){
+    toast('Combien en as-tu pour ce favori ? Touche une pastille ou tape ton poids.','error'); return false; }
+  const en=_n2EntreeEcran(name, vals, bc); if(!en.ok){ toast(en.message,'error'); return false; }
+  const r=NUT2.ligneNouvelle(en.entree); if(!r.ok){ toast(_n2Message(r),'error'); return false; }
+  const t=Date.now(), ancien=fs[i], fav=_favDepuisLigne(r.ligne);
+  fav.t=t+1;
+  S.hiddenFoods=_nutMasquesFusion(S.hiddenFoods, [{k:_n2Cle(ancien).toLowerCase(), t:t}]);
+  fs[i]=fav;
+  _afFavSource=null; _afFavMontrer();
+  persist(); if(typeof _cloudSyncDebounced==='function') _cloudSyncDebounced();
   _renderFoodQuickList();
+  toast('Favori corrigé ⭐ — ton journal n\'a pas changé.','success');
+  return true;
 }
 function _renderAfMealChips(){
   const el=document.getElementById('af-meal-chips');if(!el)return;
@@ -6008,8 +6286,11 @@ function _afSuggLocales(q, brut){
      une par NOM, la plus récente — mesuré, la copie fausse d'hier cachait le scan juste, et de deux yaourts du même nom un
      seul était proposé (B-NV2P P15 ③, ⑰). */
   const vus={}, out=[], vf=_n2FichesVerifiees();
-  (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
+  (S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
     if(!e||!e.name||out.length>=5) return;
+    /* ⛔ NV2-FIAB (24/10, N2 de Principal) : « ✕ » retirait l'aliment de « Mes aliments » mais « Déjà noté par toi » le proposait
+       encore (cette recherche ignorait les masquages) — et la remise à zéro s'applique ici aussi. */
+    if(!_n2Propose(e, e.ts)) return;
     const cle=_afNorm(e.name);
     if(!mots.length ? cle.indexOf(n)<0 : !_afRang(mots, cle)) return;
     const k=_n2Cle(e, _afNorm); if(vus[k]===true) return;
@@ -6040,9 +6321,12 @@ function _afSuggNom(p){
   return ((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')
     +(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60);
 }
+/* ⛔ NV2-FIAB (24/10) — L'ÉNERGIE POUR 100 g D'UN PRODUIT OPEN FOOD FACTS SE LIT D'UNE SEULE FAÇON (R2) : avec la décimale gardée par
+   l'app (`_per100d1`), comme le scan. Avant, la RECHERCHE par nom l'arrondissait à l'entier : le même isolat (388,5 kcal pour 100 g)
+   donnait 155 kcal pour 40 g scanné et 156 cherché par son nom — deux résultats pour une même fiche et une même quantité. */
 function _afSuggKcal100(p){
   const n=p.nutriments||{};
-  return Math.round(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
+  return _per100d1(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
 }
 function _afSuggRendu(){
   const el=document.getElementById('af-sugg'); if(!el) return;
@@ -6071,7 +6355,7 @@ function _afSuggRendu(){
        et l'état de la référence (« non vérifié », « ⚠️ à vérifier »…) — ce qu'on reprend se voit avant d'être repris. */
     const vf=_n2FichesVerifiees();
     _afSuggLoc.forEach((e,i)=>{ const a=_n2Apercu(e, vf); h+=ligne('🕘', e.name,
-      _n2QteListe({_src:e, _ap:a})+_n2Val(e.kcal)+' kcal · P '+_n2Val(e.prot)+' · G '+_n2Val(e.carbs)+' · L '+_n2Val(e.fat)+_n2Marque(a),
+      _n2TexteProposition(e, a),
       '_afSuggPrendreLocale('+i+')'); });
   }
   /* ⭐⭐ D-042 (Michel, 03/10/2026, confirmée le 10/10) — L'ORDRE FAST-FOOD ↔ GÉNÉRIQUE DÉPEND DE L'INTENTION.
@@ -6096,8 +6380,10 @@ function _afSuggRendu(){
          douteuse. *C'est le mécanisme qui a fabriqué son pot de protéine faux.*
          👉 On montre la valeur ET ce qui clochе, avec le chiffre qui permet de juger
          (« 38 kcal/pièce »). R29 : informer sans décider. */
+      /* NV2-FIAB : même ordre que les autres sections ; la portion de l'enseigne est calculée par le MOTEUR (aucune multiplication ici). */
+      const _pv={kcal:a[3], prot:a[4], carbs:a[5], fat:a[6]}, _fp=p ? NUT2.calcule(_n2Fiche(_pv, 100, 'g'), {val:+p, unite:'g'}) : null;
       ff+=ligne(a[9]?'⚠️':'🍔', a[1]+' <span style="color:var(--t3);font-weight:500;">· '+a[0]+'</span>',
-        (p? (Math.round(a[3]*p/100)+' kcal la portion ('+p+' g)') : (a[3]+' kcal/100 g'))
+        ((_fp && _fp.ok) ? _n2LigneValeurs(_fp.valeurs, 'pour la portion ('+p+' g)', false) : _n2LigneValeurs(_pv, 'pour 100 g', true))
         + (a[8]? ' · <span style="color:var(--orange);">kcal calculées</span>' : '')
         + (a[9]? '<br><span style="color:var(--orange);">⚠️ '+_marqueEsc(String(a[9]))+'</span>' : ''),
         '_afSuggPrendreMarque('+i+')'); });
@@ -6107,14 +6393,17 @@ function _afSuggRendu(){
   if(_afSuggCiq.length){
     ciq+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">ALIMENTS (CIQUAL · ANSES)</div>';
     _afSuggCiq.forEach((a,i)=>{ ciq+=ligne('🥗', a[1],
-      (a[3]||0)+' kcal/100 g · P '+(a[4]==null?'?':a[4])+' · G '+(a[5]==null?'?':a[5])+' · L '+(a[6]==null?'?':a[6]),
+      _n2LigneValeurs({kcal:a[3], prot:a[4], carbs:a[5], fat:a[6]}, 'pour 100 g', true),   // NV2-FIAB : une RÉFÉRENCE, et elle le dit
       '_afSuggPrendreCiqual('+i+')'); });
   }
   h+=_afGeneriqueDevant((document.getElementById('af-desc')||{}).value||'', _afSuggCiq) ? ciq+ff : ff+ciq;
   if(_afSuggOff.length){
     h+='<div style="font-size:11px;color:var(--t3);padding:7px 11px 4px;font-weight:700;">PRODUITS DE MARQUE (OPEN FOOD FACTS)</div>';
-    _afSuggOff.forEach((p,i)=>{ h+=ligne('🔎', _afSuggNom(p),
-      _afSuggKcal100(p)+' kcal/100 g', '_afSuggPrendreOff('+i+')'); });
+    _afSuggOff.forEach((p,i)=>{ const n=p.nutriments||{}, num=x=>(typeof x==='number' && isFinite(x)) ? x : null;
+      /* NV2-FIAB : les macros de la fiche (elles manquaient) et l'unité de la fiche — 100 g ou 100 ml. */
+      h+=ligne('🔎', _afSuggNom(p),
+        _n2LigneValeurs({kcal:_afSuggKcal100(p), prot:num(n['proteins_100g']), carbs:num(n['carbohydrates_100g']), fat:num(n['fat_100g'])},
+                        'pour 100 '+(_offBase(p)==='ml'?'ml':'g'), true), '_afSuggPrendreOff('+i+')'); });
   }
   /* ⚠️ LA MENTION DE LA SOURCE N'EST PAS DÉCORATIVE : la table Ciqual est publiée sous
      Licence Ouverte / Etalab, qui autorise la réutilisation À CONDITION de citer la source. */
@@ -6343,7 +6632,6 @@ function addFoodEntry(){
      habituels » ne touchent pas le favori non plus). */
   if(!_en.pastillePortions) _majDefFavori(_e);
   _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
-  _unhideFood(name, _n2Cle(_e));
   persist();
   closeAddFood();
   renderFoodJournal();
@@ -7437,6 +7725,9 @@ function _afOublierAliment(opts){
   try{ window._afIaGrammes=0; window._afIaDesc=''; }catch(e){}
   /* 🥗 V2 : le calcul, les corrections à la main et « valeurs tapées » appartiennent à l'aliment d'AVANT. */
   _afCalc=null; _afCorr={}; _afValeursTapees=false;
+  try{ _n2RechJeton++; }catch(e){}   // NV2-FIAB : la fiche cherchée pour l'aliment d'avant ne s'applique plus
+  try{ _afFavSource=null; _afFavMontrer(); }catch(e){}   // NV2-FIAB : le favori repris appartient à l'aliment d'avant
+  try{ _afRepriseVide=null; }catch(e){}   // la reprise sans quantité ni valeurs appartient à l'aliment d'avant
   try{ _afMontrerCorr(); _bcMajUnite(); }catch(e){}
 }
 /* Décide de la source et (re)construit le bloc. ⚠️ Appelée seulement quand la SOURCE des valeurs
@@ -7483,7 +7774,11 @@ function _afMajAncre(srcChange){
      connaît que les protéines) et surtout la frappe : on efface les calories pour les retaper,
      et le réglage de quantité s'évapore sous les doigts. *Un proxy commode — les calories pour
      « il y a des valeurs » — devient faux dès qu'une valeur légitime vaut zéro.* */
-  if(!(base.kcal>0||base.prot>0||base.carbs>0||base.fat>0)){ _afPropCacher(); return; }   // rien à rescaler tant qu'AUCUNE valeur n'est posée
+  if(!(base.kcal>0||base.prot>0||base.carbs>0||base.fat>0)){   // rien à rescaler tant qu'AUCUNE valeur n'est posée
+    _afPropCacher();
+    if(_afRepriseVide && _afRepriseVide.nom===_afNomCourant()) _afMajVide();   // …mais une reprise sans rien garde ses issues
+    return;
+  }
   /* ⛔⛔ L'INVARIANT DE TOUT CE BLOC (ft-v1061) : `_afRef.base` sont TOUJOURS les valeurs de
      `_afRef.q`. Or `base` vient d'être RELU À L'ÉCRAN — et l'écran, après un rescale, montre les
      valeurs de la quantité TAPÉE, pas celles de l'ancienne référence.
@@ -8905,7 +9200,7 @@ const APP_GUIDE_SLIDES=[
   /* 🥗 RÈGLE D'OR #11, POINT 5 — NUTRITION V2 (jalon 4 : D-099, D-101 ; D-103, Michel, 22/10/2026). SANS IMAGE, comme sa
      voisine : aucune capture de l'écran d'ajout V2 n'existe (elle se refera avec la capture Nutrition). Titre « Ta nutrition… » :
      le banc des aides exclut les aides Nutrition par leur titre (décision de Michel du 20/10). */
-  {icon:'⚖️', t:'Ta nutrition : combien tu en as mangé', cap:'<b>Les grammes d\'abord</b> (les <b>ml</b> juste à côté — une boisson scannée se compte en ml) : <b>sans quantité, rien ne s\'enregistre</b> — l\'app ne devine pas ce que tu as mangé.<br><br>🍽️ <b>Une portion</b> (« 2 steaks ») se note avec son <b>nom</b> et le <b>poids d\'UNE portion</b>. Quand ce poids est connu, l\'app dit les deux : « <b>3 portions (450 g)</b> » — les grammes restent la base du calcul.<br><br>👆 <b>Rien n\'est pré-rempli</b> : poids estimé, paquet, « ↩ la dernière fois » sont des <b>pastilles</b>, un toucher suffit.<br><br>❓ Une valeur inconnue s\'affiche « <b>?</b> » sur la ligne de l\'aliment, jamais 0, et le jour dit « <b>Total partiel</b> ».<br><br>⚠️ <b>«&nbsp;à vérifier&nbsp;»</b> : un aliment dont les valeurs se contredisent ne se recopie plus en silence — «&nbsp;+&nbsp;Ajouter&nbsp;» ouvre l\'écran, et rien ne s\'écrit sans «&nbsp;Ajouter&nbsp;». Deux produits du même nom (deux codes-barres) restent <b>deux aliments</b>.'},
+  {icon:'⚖️', t:'Ta nutrition : combien tu en as mangé', cap:'<b>Les grammes d\'abord</b> (les <b>ml</b> juste à côté — une boisson scannée se compte en ml) : <b>sans quantité, rien ne s\'enregistre</b> — l\'app ne devine pas ce que tu as mangé.<br><br>🍽️ <b>Une portion</b> (« 2 steaks ») se note avec son <b>nom</b> et le <b>poids d\'UNE portion</b>. Quand ce poids est connu, l\'app dit les deux : « <b>3 portions (450 g)</b> » — les grammes restent la base du calcul.<br><br>👆 <b>Rien n\'est pré-rempli</b> : poids estimé, paquet, « ↩ la dernière fois » sont des <b>pastilles</b>, un toucher suffit.<br><br>❓ Une valeur inconnue s\'affiche « <b>?</b> » sur la ligne de l\'aliment, jamais 0, et le jour dit « <b>Total partiel</b> ».<br><br>⚠️ <b>«&nbsp;à vérifier&nbsp;»</b> : un aliment dont les valeurs se contredisent ne se recopie plus en silence — «&nbsp;+&nbsp;Ajouter&nbsp;» ouvre l\'écran, et rien ne s\'écrit sans «&nbsp;Ajouter&nbsp;». Deux produits du même nom (deux codes-barres) restent <b>deux aliments</b>.<br><br>🔎 Un produit scanné avant se recalcule par <b>la fiche de son code-barres</b> ; <b>✕</b> retire un aliment de tes propositions, sur tous tes appareils, sans toucher à ton journal.'},
   {icon:'🍽️', t:'Ta nutrition, de haut en bas', cap:'L\'onglet <b>Macros</b> va du <b>jour</b> vers le <b>durable</b>. En haut, ta journée : ce que tu as mangé, <b>trois anneaux</b> (protéines · glucides · lipides) et <b>« ce qu\'il te reste, en vrai »</b> — traduit en <b>tes</b> aliments, pas en grammes abstraits. Dessous, le bouton pour <b>noter</b>, ta séance du jour, ce que l\'app a appris de ton alimentation, ta semaine. <b>Tout en bas, deux lignes repliées</b> : « Comment c\'est calculé » (BMR, TDEE, répartition, charge/décharge) et « Mes réglages alimentaires » (mode, jeûne, régime, allergies). Un appui les ouvre — leur titre te dit déjà l\'essentiel. 🏃 <b>Ton niveau d\'activité doit venir de toi</b> : sans lui, pas de plan inventé ; s\'il date d\'avant, une carte te demande de le <b>confirmer ou le changer</b>.'},
   {img:'guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Tape <b>Programme</b> : tout part de là. <b>📷 Importer</b> (photo ou PDF — l\'IA le lit et <b>garde tes jours</b> : Push, Pull, Legs…), <b>🏗️ Générer</b> avec Milo, <b>+ Créer</b> le tien, ou <b>💾 sauvegarder</b> la séance en cours. ⚠️ Plusieurs jours ? <b>Passe par l\'import</b> : un programme créé à la main est forcément une séance unique. \u26a0\ufe0f L\'aper\u00e7u d\'import <b>marque en orange</b> les exercices qu\'il ne conna\u00eet pas et qui vont \u00eatre <b>cr\u00e9\u00e9s</b>. Un exercice cr\u00e9\u00e9 n\'a <b>ni photo, ni figurine, ni historique</b> \u2014 le bouton <b>\u00ab \ud83d\udd17 Rattacher \u00bb</b> le relie \u00e0 celui de ton catalogue et tout revient. <i>Exemple : \u00ab Presse 45 degr\u00e9s \u00bb \u2192 <b>Press Jambes 45\u00b0</b>.</i> \ud83c\udfc3 <b>Le cardio d\'un programme va dans le bloc Cardio</b>, plus dans la liste des exercices. Une ligne du genre \u00ab Cardio l\u00e9ger \u2014 8 minutes \u00bb n\'est pas un exercice : elle n\'a ni charge ni figurine, et elle faussait ton tonnage. \u2b50 \u00c7a marche AUSSI sur les programmes d\u00e9j\u00e0 import\u00e9s, au moment de les charger \u2014 rien \u00e0 r\u00e9importer. \u26d4 Deux limites : un cardio au MILIEU de la s\u00e9ance reste un exercice, et un exercice qui porte une CHARGE n\'est jamais d\u00e9plac\u00e9, m\u00eame si sa note parle de minutes. Le bouton <b>✏️</b> modifie un programme enregistré : reps, <b>temps de repos</b> série par série, et un <b>💬 commentaire</b> par exercice (consigne, réglage machine…). Débutant ? Un parcours guidé t\'attend.'},
   /* 🗂️ PROGRES-SEANCES-INTEGRATION-01 (14/10) : capture refaite — l'ancienne montrait 3 onglets avec « Exercices » actif.
@@ -11005,6 +11300,103 @@ async function loadNutInventaireAdmin(action){
   if(!d||d.status!=='ok'){ box.innerHTML=_healthRow('🍽️','Inventaire Nutrition','ko','Pas de réponse exploitable ('+_escIdea((d&&d.error)||'?')+'). Rien n\'a été modifié.'); return; }
   box.innerHTML=action==='nutBackupAudit'?_nutAuditRendu(d):_nutInvRendu(d);
 }
+/* ═══ 🧹 NV2-FIAB (24/10/2026) — LA REMISE À ZÉRO DES PROPOSITIONS NUTRITION : PRÉPARÉE, JAMAIS AUTOMATIQUE ═══════════════════════
+   Décision de Michel (24/10, Q14 → Q17) : *« repartir avec des propositions alimentaires propres »* — les favoris, « Déjà noté par
+   toi », les récents, les repas habituels (et les idées, qui en découlent). ⛔⛔ *« Ne pas supprimer le journal daté de mes repas
+   consommés »* : il n'est JAMAIS touché ici, ses totaux non plus. ⛔ *« Son exécution sur mes données réelles nécessite encore mon
+   GO explicite »* : rien ne se déclenche seul — trois gestes, dans cet ordre, réservés à l'admin :
+     ① « Voir le périmètre exact » (ce qui disparaîtra, ce qui reste) ; ② « Télécharger la sauvegarde » (les favoris et les
+     masquages, rétablissables par ④) ; ③ « Remettre à zéro… » — refusé sans ②, puis une confirmation qui redit les chiffres.
+   ⭐ Le mécanisme est UNE date de départ (`k:'*'`, `_nutMasquesNormaliser`) : synchronisée, fusionnée par le max, elle s'applique
+   au démarrage des autres appareils (`autoConnect`) et à chaque « Restaurer » — aucune réapparition, sans liste qui grossit (Q14).
+   ⭐ D-141 (Michel, 25/10 : *« suppression réelle des anciennes listes personnelles, côté serveur ET sur les appareils »*) : les
+   favoris d'avant sont SUPPRIMÉS ici, sur ce téléphone ; le serveur les supprime à son tour à l'envoi qui suit (`_nutRazFavoris_`,
+   Code.js — par la protection P1 : copiés d'abord dans sa zone de récupération, jamais renvoyée à l'app), puis chaque autre
+   appareil à sa connexion. La date reste la garantie de l'app :
+   tant qu'un serveur pas encore à jour, ou une vieille sauvegarde, en renverrait un, il est écarté (« Restaurer », démarrage).
+   « Déjà noté par toi », les récents et les repas habituels ne sont pas des listes enregistrées : ils naissent du journal, qui
+   reste intact — la date les fait renaître de ce qui sera noté ensuite. */
+let _nutRazSauve=null;   // la sauvegarde téléchargée dans CETTE session : sans elle, pas d'exécution
+function _nutRazEmpreinte(x){ const s=JSON.stringify(x===undefined?null:x); let h=5381; for(let i=0;i<s.length;i++) h=((h*33)^s.charCodeAt(i))>>>0; return h.toString(16)+'/'+s.length; }
+function _nutRazPerimetre(){
+  const favs=_nutFavorisVivants(S.savedFoods, S.hiddenFoods, _n2Cle), ids=new Set();
+  (S.foodLog||[]).forEach(l=>{ if(l && l.name && _n2Propose(l, l.ts)) ids.add(_n2Cle(l).toLowerCase()); });
+  let hab=0; try{ hab=_repasHabituels().length; }catch(e){}
+  return {favoris:favs.length, aliments:ids.size, repas:hab, journal:(S.foodLog||[]).length, empreinteJournal:_nutRazEmpreinte(S.foodLog||[])};
+}
+function _nutRazDire(html){ const b=document.getElementById('admin-nutraz'); if(b) b.innerHTML=html; }
+function nutRazPerimetre(){
+  if(!_isAdminUnlocked()){ _nutRazDire('<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'); return null; }
+  const P=_nutRazPerimetre();
+  _nutRazDire(_healthRow('🧹','Sera supprimé','warn',P.favoris+' favori(s) — de ce téléphone, du serveur (après une copie gardée à part, jamais reproposée) et de tes autres appareils')
+    +_healthRow('🧹','Ne sera plus proposé','warn',P.aliments+' aliment(s) proposé(s) par « Déjà noté par toi » et les récents · '
+      +P.repas+' repas habituel(s) proposé(s)')
+    +_healthRow('📓','Reste intact','ok','ton journal daté : <b>'+P.journal+' ligne(s)</b>, leurs valeurs et les totaux de chaque jour — rien n\'y est écrit ni retiré')
+    +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Rien n\'a été modifié. Ensuite : 💾 la sauvegarde, puis 🧹.</div>');
+  return P;
+}
+async function nutRazSauvegarder(){
+  if(!_isAdminUnlocked()){ _nutRazDire('<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'); return; }
+  const P=_nutRazPerimetre(), le=new Date().toISOString();
+  const contenu=JSON.stringify({type:'ft-nutrition-propositions', v:1, le:le, perimetre:P,
+    savedFoods:JSON.parse(JSON.stringify(S.savedFoods||[])), hiddenFoods:_nutMasquesNormaliser(S.hiddenFoods)}, null, 1);
+  const favsSauves=_nutRazEmpreinte(S.savedFoods||[]);   // ce que le fichier contient — comparé au moment d'exécuter
+  const nom='forcetracker-propositions-'+le.slice(0,10)+'.json';
+  const r=(typeof _donnerFichier==='function') ? await _donnerFichier(contenu, nom, 'application/json') : 'echec';
+  /* ⛔ Un partage annulé ou impossible n'est pas une sauvegarde ; un résultat incertain (iPhone) se fait CONFIRMER. */
+  const marquer=()=>{ _nutRazSauve={le:le, nom:nom, empreinte:_nutRazEmpreinte(contenu), favs:favsSauves};
+    _nutRazDire(_healthRow('💾','Sauvegarde','ok','« '+_escFood(nom)+' » — '+P.favoris+' favori(s). Tu peux maintenant remettre à zéro.')); };
+  if(r==='ok') return marquer();
+  if(r==='inconnu' && typeof showConfirm==='function')
+    return showConfirm('As-tu bien reçu le fichier ?','« '+nom+' » — vérifie qu\'il est dans tes fichiers avant de continuer.', marquer, 'Oui, je l\'ai');
+  _nutRazDire(_healthRow('💾','Sauvegarde','ko','Pas de fichier ('+r+') — la remise à zéro reste bloquée.'));
+}
+function nutRazExecuter(){
+  if(!_isAdminUnlocked()){ _nutRazDire('<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'); return false; }
+  if(!_nutRazSauve){ _nutRazDire(_healthRow('🧹','Remise à zéro','ko','Télécharge d\'abord la sauvegarde (💾) : la remise à zéro ne part pas sans elle.')); return false; }
+  /* ⛔ UNE SAUVEGARDE PÉRIMÉE N'EN EST PAS UNE : un favori posé (ou retiré) après le fichier n'y serait pas — il disparaîtrait sans
+     rien pour le rétablir. Les masquages, eux, ne font que cacher : la remise à zéro les englobe. */
+  if(_nutRazSauve.favs!==_nutRazEmpreinte(S.savedFoods||[])){ _nutRazDire(_healthRow('🧹','Remise à zéro','ko','Tes favoris ont changé depuis la sauvegarde : refais-la (💾) avant de remettre à zéro.')); return false; }
+  const P=_nutRazPerimetre();
+  const go=()=>{
+    const avant=_nutRazEmpreinte(S.foodLog||[]);
+    S.hiddenFoods=_nutMasquesFusion(S.hiddenFoods, [{k:'*', t:Date.now()}]);
+    S.savedFoods=_nutFavorisVivants(S.savedFoods, S.hiddenFoods, _n2Cle);
+    persist();
+    try{ clearTimeout(_syncTimer); }catch(e){}
+    if(typeof _cloudSync==='function') try{ _cloudSync(); }catch(e){}
+    const apres=_nutRazPerimetre(), intact=(_nutRazEmpreinte(S.foodLog||[])===avant) && apres.journal===P.journal;
+    _nutRazDire(_healthRow('🧹','Remise à zéro', intact?'ok':'ko', (intact?'Faite.':'⚠️ CONTRÔLE : le journal a changé — signale-le.')
+      +' Favoris : '+P.favoris+' → '+apres.favoris+' · aliments proposés : '+P.aliments+' → '+apres.aliments+' · repas habituels : '+P.repas+' → '+apres.repas
+      +' · journal : '+apres.journal+' ligne(s), '+(intact?'identique':'DIFFÉRENT')+'.'));
+    try{ if(typeof _renderFoodQuickList==='function') _renderFoodQuickList(); renderFoodJournal(); }catch(e){}
+  };
+  if(typeof showConfirm==='function')
+    showConfirm('Remettre à zéro les propositions ?', P.favoris+' favori(s) seront SUPPRIMÉS (ce téléphone, le serveur, tes autres appareils) ; '+P.aliments+' aliment(s) proposé(s) et '+P.repas
+      +' repas habituel(s) ne seront plus proposés. Ton journal ('+P.journal+' lignes) n\'est pas touché. Sauvegarde : « '+_nutRazSauve.nom+' ».', go, 'Remettre à zéro');
+  else go();
+  return true;
+}
+/* ④ Rétablir les favoris d'une sauvegarde : ils redeviennent des favoris d'AUJOURD'HUI (postérieurs à la remise à zéro), sans
+   doublon d'identité ; ⛔ les masquages et le journal ne sont pas touchés. */
+function nutRazRetablir(input){
+  const f=input && input.files && input.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    let d=null; try{ d=JSON.parse(String(rd.result||'')); }catch(e){}
+    if(!d || d.type!=='ft-nutrition-propositions' || !Array.isArray(d.savedFoods)){ _nutRazDire(_healthRow('♻️','Rétablir','ko','Ce fichier n\'est pas une sauvegarde des propositions.')); return; }
+    const vus=new Set((S.savedFoods||[]).map(x=>_n2Cle(x)+'|'+_nutRazEmpreinte([x.kcal,x.prot,x.carbs,x.fat,x.q,x.u])));
+    let n=0; const t=Date.now();
+    d.savedFoods.forEach((x,i)=>{ if(!x || typeof x!=='object' || !x.name) return;
+      const k=_n2Cle(x)+'|'+_nutRazEmpreinte([x.kcal,x.prot,x.carbs,x.fat,x.q,x.u]); if(vus.has(k)) return; vus.add(k);
+      if(!S.savedFoods) S.savedFoods=[];
+      S.savedFoods.push(Object.assign(JSON.parse(JSON.stringify(x)), {t:t+i})); n++; });
+    persist(); if(typeof _cloudSyncDebounced==='function') _cloudSyncDebounced();
+    _nutRazDire(_healthRow('♻️','Rétablir','ok',n+' favori(s) rétabli(s) depuis « '+_escFood(f.name)+' ».'));
+  };
+  rd.readAsText(f);
+  try{ input.value=''; }catch(e){}
+}
 async function loadHealthAdmin(){
   const box=document.getElementById('admin-health');
   if(!box)return;
@@ -11490,6 +11882,11 @@ async function _ftBootstrapJeton(){
            récent n'existe pas — contrairement aux séances, où l'inverse serait une perte. */
         if(Array.isArray(d2.healthInbox)) S.healthInbox=d2.healthInbox;
         if(Array.isArray(d2.healthDaily)) S.healthDaily=d2.healthDaily;
+        /* 🙈 NV2-FIAB (24/10) — UN « ✕ » OU UNE REMISE À ZÉRO FAITS SUR UN AUTRE APPAREIL ARRIVENT ICI, avec le profil déjà chargé
+           (aucun appel en plus, règle d'or #4). Ils ne font que MASQUER : on ajoute des dates de départ (le plus tard gagne), puis
+           les favoris qui en datent d'avant sortent — rien n'est jamais ajouté ni démasqué par ce chemin. */
+        try{ const _m=d2.profile&&d2.profile.hiddenFoods;
+          if(Array.isArray(_m)&&_m.length){ S.hiddenFoods=_nutMasquesFusion(S.hiddenFoods,_m); S.savedFoods=_nutFavorisVivants(S.savedFoods,S.hiddenFoods,_n2Cle); } }catch(e){}
         persist();
         try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
         window._premiumPending=false;
