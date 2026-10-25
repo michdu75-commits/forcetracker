@@ -398,3 +398,4 @@ FORCE TRACKER », vue « Consolidé 25-10 ») :
   le commit porte `[skip ci]` — et se lance aussi **à la main**. La pratique validée (A1 @192 le 22/10, P1 @193 le 24/10 : commit
   `9a72e107` en `[skip ci]`, puis exécution n°124 lancée à la main) est donc : **`[skip ci]`, puis lancement à la main, avec le GO
   de Michel, retour arrière prêt**.
+- **Q21 tranchée (`D-142`)** : la bande « FORCE TRACKER » sur l'Accueil seulement (registre `UI-BANDEAU-01`) — décidée, non construite.
