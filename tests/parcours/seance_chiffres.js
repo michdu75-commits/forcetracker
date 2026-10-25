@@ -651,20 +651,26 @@ async function ecran(t, b, PORT) {
     const r = await ev(X, () => {
       // la forme ABRÉGÉE d'un nom du catalogue (« Hip Thrust Barre » pour « Hip Thrust Barre (Poussée de Hanche) »), qui se
       // résout sur sa fiche ; la personne y coche les mollets, absents de la fiche
+      // ↪️ RÉÉCRIT 24/10 (clôture) : la fiche doit être un exercice COMPOSÉ dont le MET dépend VRAIMENT des muscles (pas de
+      // mot-clé haltéro / cardio / porté, pas de charnière de hanche, ≥ 3 muscles). Le 1ᵉʳ nom trouvé avant était « Croisé
+      // Poulie », une isolation (4,0) : un mollet coché seul reste une isolation (4,0) — C-MUS-B5 ne pouvait PAS rougir, et
+      // la mutation M68 (le moteur lit les muscles cochés avant la fiche) l'a montré. Ici, un mollet seul ferait tomber le MET.
       const noms = [...new Set(Object.values(EXLIB).flat().map(e => typeof e === 'string' ? e : (e && (e.n || e.name))).filter(Boolean))];
-      const plein = noms.find(n => / \(/.test(n) && exNomCatalogue(n.split(' (')[0]) === n && exMuscles(n) && (exMuscles(n).p || []).length && (exMuscles(n).p || []).concat(exMuscles(n).s || []).indexOf('calves') < 0);
+      const motCle = n => OLYMPIC_KW.concat(CARDIO_KW).some(k => n.toLowerCase().includes(k.toLowerCase())) || /farmer|fermier|\bcarry\b|porte lourd|suitcase carry/i.test(n);
+      const plein = noms.find(n => / \(/.test(n) && exNomCatalogue(n.split(' (')[0]) === n && exMuscles(n) && (exMuscles(n).p || []).length && (exMuscles(n).p || []).concat(exMuscles(n).s || []).indexOf('calves') < 0
+        && !motCle(n) && _movPattern(n) !== 'hip-hinge' && (exMuscles(n).p || []).concat(exMuscles(n).s || []).length >= 3);
       const nom = plein.split(' (')[0], fiche = exMuscles(exNomCatalogue(nom));
       S.customExercises = [{ n: nom, g: 'Jambes', muscles: { p: ['calves'], s: [] } }]; persist();
       const o = _mscScoresVus([{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }]);
       const metPerso = getExerciseMET(nom), metFiche = getExerciseMET(plein);
       const ts = Date.now() - 864e5;
       S.sessions = [{ id: ts, ts, date: today(ts), uniConv: 1, exs: [{ name: nom, sets: [{ kg: 60, reps: 10, done: true, type: 'N' }] }] }]; persist();
-      return { nom, ficheCatalogue: fiche && fiche.p, prim: Object.keys(o.prim || {}), vol: _volumeParMuscle(Date.now(), 14).liste.map(l => l.code), metPerso, metFiche };
+      return { nom, ficheCatalogue: fiche && fiche.p, prim: Object.keys(o.prim || {}), vol: _volumeParMuscle(Date.now(), 14).liste.map(l => l.code), metPerso, metFiche, metIso: MET_ISO };
     });
     t('C-MUS-B4 ⭐ F05 — un perso dont le nom se résout sur une fiche du catalogue : SES muscles cochés (mollets) passent avant la fiche, figurine et Progrès',
       sur(() => Array.isArray(r.ficheCatalogue) && r.ficheCatalogue.length > 0 && r.ficheCatalogue.indexOf('calves') < 0 && _j(r.prim) === _j(['calves']) && _j(r.vol) === _j(['calves'])), voir(() => _j(r)));
     t('C-MUS-B5 ⛔ F05 — … et ses CALORIES restent celles de la fiche du catalogue (le moteur gelé ignore les muscles cochés d\'un nom reconnu)',
-      sur(() => r.metPerso === r.metFiche && r.metFiche > 0), voir(() => _j({ perso: r.metPerso, fiche: r.metFiche })));
+      sur(() => r.metPerso === r.metFiche && r.metFiche > r.metIso), voir(() => _j({ nom: r.nom, perso: r.metPerso, fiche: r.metFiche, isolation: r.metIso })));
     await X.cx.close();
   }
   {
