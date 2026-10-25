@@ -67,7 +67,8 @@ CHARGE = "    S.hiddenFoods=_nutMasquesNormaliser(JSON.parse(localStorage.getIte
 # SOURCE restent (D-136)
 E2B_RANGER = "    if(sid && _n2Propose(x, fav ? x.t : x.ts)) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };"
 E2B_FICHE = "    const sid=ranger(l, false); if(!sid) return;\n"
-# Q15 / D-141 (cloture ciblee, 25/10) : la remise a zero SUPPRIME les anciens favoris au serveur (copie Drive relue d'abord)
+# Q15 / D-141 (cloture ciblee, 25/10) : la remise a zero SUPPRIME les anciens favoris au serveur, par P1 (motif « raz » : copie
+# en zone de recuperation d'abord, surplus relu dans Drive)
 RAZ_ENTREE = "function _nutRazFavoris_(existing, profile, recu, email) {\n  var raz = _nutRazDate_(profile.hiddenFoods);\n"
 RAZ_P1 = "  var garde = _nutProtegerListe_(existing, profile, 'savedFoods', a.vivants, email, 'raz');\n"
 RAZ_ENVOI = "  return b ? b.vivants : recu;\n}\n"
@@ -78,7 +79,7 @@ RAZ_ADMIN_F = "  if (_raz && Array.isArray(data.profile.savedFoods)) data.profil
 RAZ_ADMIN_M = "  if (_masques.length) data.profile.hiddenFoods = _masques;\n"
 RAZ_ORDRE = ("    if (body.hiddenFoods   !== undefined) profile.hiddenFoods   = _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);   // NV2-FIAB : masquages + remise à zéro\n"
              "    // 🗑️ D-141 : APRÈS la fusion des masquages (la date de remise à zéro la plus récente) et AVANT P1 — les favoris d'avant elle sont\n"
-             "    //    supprimés (copie Drive relue d'abord), au serveur comme dans l'envoi ; P1 ne voit ensuite que les favoris d'après.\n"
+             "    //    supprimés par P1, motif « raz » (copiés d'abord en zone de récupération), au serveur comme dans l'envoi ; P1 ne voit ensuite que les favoris d'après.\n"
              "    const _favRecus = _nutRazFavoris_(existing, profile, body.savedFoods, email);\n")
 
 MUT = [

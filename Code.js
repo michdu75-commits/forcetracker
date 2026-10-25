@@ -1634,13 +1634,16 @@ function _nutDeplacerVersDrive_(email, nom, sortantes) {
   if (relu !== contenu) throw new Error('relecture différente de l\'écrit');
   return nomFichier;
 }
-function _nutProtegerListe_(existing, profile, nom, recu, email) {
+/* `motif` (D-141, optionnel) : « raz » — l'envoi est l'ORDRE de la remise à zéro (la liste des favoris d'après elle) : une liste
+   vide n'y est pas un appareil neuf mais une décision (la règle « le vide ne gagne jamais » ne s'y applique pas), et les copies
+   portent ce motif. Sans motif : le comportement de P1, inchangé. */
+function _nutProtegerListe_(existing, profile, nom, recu, email, motif) {
   var actuel = Array.isArray(profile[nom]) ? profile[nom] : [];
   if (!Array.isArray(recu)) {                              // un envoi illisible ne remplace rien (avant : stocké tel quel)
     Logger.log('[FT GARDE-FOU ' + nom + '] envoi non lisible : ignoré, liste conservée');
     return profile[nom];
   }
-  if (recu.length === 0 && actuel.length > 0) return profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais
+  if (recu.length === 0 && actuel.length > 0 && motif !== 'raz') return profile[nom];   // règle existante de _pa_ : le vide ne gagne jamais
   var ec = _nutEcartees_(actuel, recu);
   if (!ec.retirees.length && !ec.modifiees.length) return recu;
   var brutal = actuel.length >= 30 && (actuel.length - ec.retirees.length) < actuel.length * 0.6;   // le seuil des séances
@@ -1656,7 +1659,7 @@ function _nutProtegerListe_(existing, profile, nom, recu, email) {
     var k = cle(l); if (deja[k] > 0) { deja[k]--; return; }
     copiees++; liste.push({ t: quand, m: motif, l: JSON.parse(JSON.stringify(l)) });
   }
-  ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });
+  ec.retirees.forEach(function(l) { garder(l, motif || (brutal ? 'brutal' : 'retiree')); });
   ec.modifiees.forEach(function(l) { garder(l, 'modifiee'); });
   /* ⛔ BORNÉE, ET RIEN N'EST JAMAIS JETÉ (condition 3 de Michel, 23/10) : une copie peut n'être dans AUCUNE sauvegarde
      (un repas saisi le jour même, retiré avant la nuit). Au-delà de la borne, les copies les plus ANCIENNES DÉMÉNAGENT
@@ -1691,6 +1694,7 @@ function _nutProtegerListe_(existing, profile, nom, recu, email) {
             modifiees: ec.modifiees.length, copiees: copiees, deplacees: n, brutal: brutal };
   if (fichier) e.fichier = fichier;
   if (differe) e.differe = 'drive';                      // D-110 : accepté malgré Drive, la zone attend au-delà de sa borne
+  if (motif) e.motif = motif;                            // D-141 : « raz », la remise à zéro
   _nutEvenement_(z, e);                                    // des NOMBRES (et un nom de fichier) : ni adresse, ni aliment
   Logger.log('[FT GARDE-FOU ' + nom + '] ' + ec.retirees.length + ' retirée(s), ' + ec.modifiees.length + ' modifiée(s) sur '
              + actuel.length + (brutal ? ' — RÉTRÉCISSEMENT BRUTAL' : '') + ' : ' + copiees + ' copie(s) en zone de récupération'
@@ -1723,6 +1727,53 @@ function _nutMasquesFusion_(existant, recu) {
     .sort(function(a, b) { return (b.t - a.t) || (a.k < b.k ? -1 : 1); })
     .slice(0, g ? NUT_MASQUES_MAX_ - 1 : NUT_MASQUES_MAX_);
   return g ? [{ k: '*', t: g }].concat(out) : out;
+}
+/* 🗑️ D-141 (Q15, décision de Michel du 25/10 ; PRÉPARÉ SUR BRANCHE, NON DÉPLOYÉ) — LA REMISE À ZÉRO SUPPRIME VRAIMENT LES
+   ANCIENS FAVORIS DU SERVEUR. Avant (D-133) : la date `*` les ÉCARTAIT, mais le serveur les gardait (un envoi vide ne remplace
+   jamais sa liste, P1), et un téléphone resté en retard pouvait les renvoyer. Après : tout favori mis AVANT la remise à zéro
+   (sans date `t` = d'avant toute remise à zéro : la règle de l'app, `_nutFavorisVivants`) quitte la liste active du compte,
+   qu'il soit déjà au serveur ou qu'un appareil le renvoie.
+   ⭐ PAR LA PROTECTION P1, PAS À CÔTÉ (R2) : la suppression est un envoi de P1 (`_nutProtegerListe_`, motif « raz ») — ce qui
+   quitte la liste est d'abord COPIÉ dans la zone de récupération (jamais renvoyée à l'app), son surplus déménage dans Drive,
+   RELU ; Drive en panne → la suppression passe et la zone garde tout jusqu'au plafond (D-110, Michel) ; au-delà, l'envoi de
+   favoris est REFUSÉ cette fois et rien n'est supprimé (D-109) — retardé, jamais perdu. ⛔ Le journal (`foodLog`) n'est
+   jamais touché ; ni la zone, ni les sauvegardes nocturnes ne sont purgées (leur sort attend une décision de Michel).
+   ⛔ Seule la remise à zéro (`*`) supprime ici : un « ✕ » isolé suit le chemin ordinaire (l'envoi de l'app, P1). */
+function _nutRazDate_(masques) {
+  var t = 0;
+  (Array.isArray(masques) ? masques : []).forEach(function(e) { if (e && e.k === '*' && Number(e.t) > t) t = Number(e.t); });
+  return t;
+}
+function _nutRazTri_(liste, raz) {
+  var vivants = [], anciens = [];
+  (Array.isArray(liste) ? liste : []).forEach(function(f) {
+    if (f && typeof f === 'object' && (Number(f.t) || 0) > raz) vivants.push(f); else if (f) anciens.push(f);
+  });
+  return { vivants: vivants, anciens: anciens };
+}
+/* Appelée par `handleSaveProfile_` APRÈS la fusion des masquages : retire de `profile.savedFoods` les favoris d'avant la remise à
+   zéro — ceux du serveur, et ceux qu'un appareil renvoie et que le serveur n'a plus (ils sont copiés eux aussi) — et rend l'envoi
+   que P1 appliquera ensuite, sans ses favoris d'avant ; `null` si P1 a refusé (D-109 : l'envoi de favoris est refusé cette fois). */
+function _nutRazFavoris_(existing, profile, recu, email) {
+  var raz = _nutRazDate_(profile.hiddenFoods);
+  if (!raz) return recu;
+  var avant = Array.isArray(profile.savedFoods) ? profile.savedFoods : [];
+  var a = _nutRazTri_(avant, raz), b = Array.isArray(recu) ? _nutRazTri_(recu, raz) : null;
+  var vus = Object.create(null);
+  avant.forEach(function(f) { vus[_nutEmpreinte_(f)] = 1; });
+  var enPlus = (b ? b.anciens : []).filter(function(f) { var k = _nutEmpreinte_(f); if (vus[k]) return false; vus[k] = 1; return true; });
+  if (!a.anciens.length && !enPlus.length) return b ? b.vivants : recu;
+  var sauve = profile.savedFoods;
+  profile.savedFoods = avant.concat(enPlus);                       // P1 voit tout ce qui part : il le copie avant de le retirer
+  var garde = _nutProtegerListe_(existing, profile, 'savedFoods', a.vivants, email, 'raz');
+  if (garde !== a.vivants) {                                       // refusé (D-109) : rien de supprimé, rien de repris
+    profile.savedFoods = sauve;
+    Logger.log('[FT D-141 savedFoods] suppression différée : la zone ne peut pas garder les copies (Drive indisponible au-delà du plafond)');
+    return null;
+  }
+  profile.savedFoods = garde;
+  Logger.log('[FT D-141 savedFoods] ' + (a.anciens.length + enPlus.length) + ' favori(s) d\'avant la remise à zéro retiré(s) — copiés d\'abord (zone de récupération)');
+  return b ? b.vivants : recu;
 }
 function _nutEvenement_(z, e) {
   var evts = z.evts || (z.evts = []);
@@ -1897,8 +1948,11 @@ function handleSaveProfile_(body) {
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
     // 🛡️ NUT-SECURISATION-P1 : plus de `_pa_` ici — rien de ce que le serveur avait ne part sans copie (voir _nutProtegerListe_).
     if (body.foodLog       !== undefined) profile.foodLog       = _nutProtegerListe_(existing, profile, 'foodLog',    body.foodLog,    email);
-    if (body.savedFoods    !== undefined) profile.savedFoods    = _nutProtegerListe_(existing, profile, 'savedFoods', body.savedFoods, email);
     if (body.hiddenFoods   !== undefined) profile.hiddenFoods   = _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);   // NV2-FIAB : masquages + remise à zéro
+    // 🗑️ D-141 : APRÈS la fusion des masquages (la date de remise à zéro la plus récente) et AVANT P1 — les favoris d'avant elle sont
+    //    supprimés par P1, motif « raz » (copiés d'abord en zone de récupération), au serveur comme dans l'envoi ; P1 ne voit ensuite que les favoris d'après.
+    const _favRecus = _nutRazFavoris_(existing, profile, body.savedFoods, email);
+    if (body.savedFoods    !== undefined && _favRecus !== null) profile.savedFoods = _nutProtegerListe_(existing, profile, 'savedFoods', _favRecus, email);
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
     /* 🫙 LES TROIS POTS IA SÉPARÉS DE LA NUTRITION (19/09/2026, phase 3.1).
        ⛔ LA LISTE BLANCHE EST LA RAISON DE CES TROIS LIGNES : ce qu'elle ne nomme pas
@@ -4542,6 +4596,15 @@ function handleAdminRestore_(body) {
   if (!email) return json_({status:'error', error:'email required'});
   const data = body.data;
   if (!data || !data.profile) return json_({status:'error', error:'data.profile required'});
+
+  /* 🗑️ D-141 : une sauvegarde d'AVANT une remise à zéro ne fait pas revenir ce qu'elle a supprimé. Les masquages du compte (dont
+     la date `*`) sont FUSIONNÉS à ceux de la sauvegarde — le plus tard gagne, la remise à zéro n'en sort jamais —, et ses favoris
+     d'avant cette date ne sont pas remis dans la liste active (ils restent dans le fichier de sauvegarde lui-même). */
+  const _avant = loadUserData_(email);
+  const _masques = _nutMasquesFusion_(_avant && _avant.profile && _avant.profile.hiddenFoods, data.profile.hiddenFoods);
+  if (_masques.length) data.profile.hiddenFoods = _masques;
+  const _raz = _nutRazDate_(_masques);
+  if (_raz && Array.isArray(data.profile.savedFoods)) data.profile.savedFoods = _nutRazTri_(data.profile.savedFoods, _raz).vivants;
 
   data.email = email;
   data.updatedAt = new Date().toISOString();

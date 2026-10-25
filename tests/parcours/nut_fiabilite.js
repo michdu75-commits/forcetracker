@@ -775,7 +775,7 @@ async function croiseFiab(t, b, PORT) {
   /* Un témoin de la SUPPRESSION RÉELLE (D-141) : joué si le serveur supprime, sinon SANS OBJET (ni vert, ni rouge). */
   const tD = (nom, cond, detail) => { if (SUPPR) return t(nom, cond, detail);
     sansObjet.push(nom); console.log('  --   ' + nom + '   SANS OBJET (le Code.js servi ne supprime pas les anciens favoris : D-141 absent)'); };
-  console.log('   D-141 : ' + (SUPPR ? 'le Code.js servi SUPPRIME les favoris d\'avant la remise à zéro (copie Drive relue d\'abord)' : 'le Code.js servi ne les supprime pas — témoins de la suppression SANS OBJET'));
+  console.log('   D-141 : ' + (SUPPR ? 'le Code.js servi SUPPRIME les favoris d\'avant la remise à zéro (par P1 : copiés d\'abord en zone de récupération)' : 'le Code.js servi ne les supprime pas — témoins de la suppression SANS OBJET'));
   serveurQ15(t, tD);
   const etat = { drivePanne: false, reseauCoupe: false };
   const { X, tok } = CR.preparer(etat);
