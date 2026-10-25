@@ -5447,3 +5447,46 @@ blanche à ce que le serveur (le vrai Code.js, en local) fait d'un « ✕ » syn
 interrupteur qui éteint les rouges. F19 (le serveur lit les masquages sans les garder) rougit ⓪ et la synchro ; F19b (la ligne
 retirée, c'est le Code.js de master) reste vert en le disant ; FL1 → FL3 font rougir les garanties locales sur ce Code.js.
 *Un témoin vert sur sa branche et rouge à l'intégration, sans que l'app ait changé, mesurait l'environnement.*
+
+## §121 — ⛔⛔ APRÈS LA REMISE À ZÉRO, D'ANCIENNES SAISIES FAUSSES FAISAIENT DIRE « À VÉRIFIER » À UNE SAISIE JUSTE *(25/10/2026, E2b · registre `NUT-VERIFY-01`, constat de Claude Principal ; reproduit sur `claude/nutrition-v2` @ `fc0a558d` par le banc B-NFIAB, données inventées ; corrigé sur la même branche, non publié)*
+
+**Ce qui se passait.** Remise à zéro hier ; deux anciennes saisies du steak, 200 g · 130 kcal (le pour-100 g FABRIQUÉ à 65,
+§114), à J-6 et J-5 ; une saisie neuve et juste, 258 · 42 · 0 · 10 pour 200 g, même code-barres → « ⚠️ à vérifier » dans
+« Mes aliments » et « Déjà noté par toi », « + Ajouter » refusé (*« tes saisies de ce produit ne concordent pas : 129 kcal
+pour 100 g ici, 65 le … »*), et le repas habituel compté « 1 à vérifier », son « + » refusé. Sans les deux anciennes :
+« déclaré ». Même chose avec « ✕ » au lieu de la remise à zéro, et avec un ancien favori encore sur l'appareil.
+
+**La cause.** La comparaison de `D-131` (`_n2Contradiction`, références rangées par `_n2FichesVerifiees`) prenait **toutes**
+les saisies du produit, y compris celles que la remise à zéro ou « ✕ » avait retirées des propositions : ce qu'on ne propose
+plus jugeait encore ce qu'on propose.
+
+**Ce qui le ferme** (`D-136`). Une ligne : seules les références encore **proposées** (`_n2Propose`, la règle des listes) se
+comparent. ⛔ Le journal n'est pas touché ; ⛔ les fiches **vérifiées par la source** (scan, CIQUAL) restent des références
+même d'avant la remise à zéro — une saisie neuve fausse se dit encore « à vérifier » (E2b ⑥), et la reprise par identité
+(`D-130`) les retrouve toujours ; deux saisies encore proposées qui se contredisent restent « à vérifier » (E2b ⑤) ; le scan
+juste est inchangé (E2b ⑦). Témoins `B-NFIAB E2b ① ② ③ ④ ④b` rouges avant, verts après ; ⑤ ⑥ ⑦ verts des deux côtés (les
+contrôles qu'il ne fallait pas éteindre) ; mutations E1 → E4 (dont E4, la sur-correction qui retirerait aussi les fiches
+vérifiées) et F5 étendue.
+
+**À quoi on le reconnaît.** Un contrôle qui compare à une liste dont on a retiré des éléments — sans retirer les mêmes de
+la comparaison. *Retirer d'une liste ne suffit pas : il faut retirer de tout ce qui la lit.*
+
+## §122 — ⛔ LA REMISE À ZÉRO N'ÉTAIT QU'UN MASQUAGE AU SERVEUR : LES ANCIENS FAVORIS Y RESTAIENT, ET UN TÉLÉPHONE EN RETARD OU UNE RESTAURATION ADMIN POUVAIENT LES Y REMETTRE *(25/10/2026, Q15 · `D-141`, registre `NUT-FOR-04` / `SERVEUR-CODEJS-01` ; mesuré avec le vrai Code.js en local ; préparé sur `claude/nutrition-v2`, Code.js NON déployé)*
+
+**Ce qui se passait (`D-133`, branche d'avant).** La date `*` écartait les anciens favoris **à l'affichage** ; au serveur ils
+restaient (un envoi vide ne remplace jamais la liste, P1). Deux chemins pouvaient les remettre en circulation : un appareil
+resté en retard renvoyait sa liste (P1 l'acceptait), et la restauration admin d'une sauvegarde de la nuit réécrivait tout le
+compte — anciens favoris **et** masquages d'avant, donc **sans** la date de remise à zéro (`handleAdminRestore_`, sans garde).
+
+**Ce qui le ferme** (`D-137`, préparé). Au serveur, après la fusion des masquages : tout favori d'avant la date (ou sans
+date) quitte la liste active, qu'il y soit ou qu'il arrive — **par la protection P1** (motif « raz ») : copié d'abord dans la
+zone de récupération, son surplus relu dans Drive ; Drive en panne → la suppression passe, la zone garde tout jusqu'au plafond
+(`D-110`) ; au-delà, refus cette fois (`D-109`). La restauration admin fusionne les masquages du compte et n'y remet pas les
+favoris d'avant. Témoins `B-NFIAB-X Q15 ① → ⑨`, `T08 ③` (nouveau contrat), `T08 ⑧`, `T08L ④` ; mutations D1 → D10 et F22
+(révisée : le serveur n'en renvoyant plus, c'est `T08L ④` qui garde le filtre de l'app).
+⚠️ **Méthode** : ma 1ʳᵉ version copiait dans un fichier Drive à part et REFUSAIT l'envoi si Drive tombait — mesuré contraire à
+`D-110` (validée par Michel : pour les favoris, une panne de Drive ne refuse plus l'envoi, un favori neuf refusé se perdant à
+« Restaurer »). *Une décision validée est une contrainte (règle d'or 15) : on réutilise ce qu'elle a construit.*
+
+**À quoi on le reconnaît.** Une suppression qui n'existe que dans l'affichage d'un appareil : elle tient tant que tous les
+chemins d'écriture passent par cet appareil — et une restauration n'y passe pas.

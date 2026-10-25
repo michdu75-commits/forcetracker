@@ -391,3 +391,95 @@ Totaux de la partie écran (OK / rouge) : master **16 / 26** · `beda2652` **37 
 | `INTEGRATION-NS-01` | « Intégration mesurée b37ddf3a (Nutrition beda2652) » | Branche Nutrition avancée (`eea860ec` + documentation) : **à refusionner**. ⚠️ Si les 2 lignes de N08 sont déjà sur la copie d'intégration, y ajouter les 4 autres. Contrôle négatif 43 / 43, voisins verts, passe réduite 997 / 0 ; pas de passe complète. |
 | `NUT-QTY-01`, `NUT-FOR-03`, `NUT-IDENT-01`, `NUT-FOR-04`, `NUT-PERSO-01` | « claude/nutrition-v2 @ beda2652 » | Branche avancée à `eea860ec` (+ doc) **sans changer leur périmètre** ; leurs témoins rejoués verts. |
 | `NUT-VERIFY-01` (E2b) | « après correction Nutrition en cours » | **Non commencé** — c'est la suite, après ces trois points. |
+
+## 13. Clôture ciblée du 25/10 (mission de Michel) — E2b / `NUT-VERIFY-01` et la préparation de Q15 / `D-141`
+
+> Branche `claude/nutrition-v2` ; ni master, ni publication, ni déploiement Apps Script, **aucune suppression réelle,
+> aucune donnée réelle** (comptes et aliments inventés, réseau coupé, 0 appel Milo). `Code.js` en **commit séparé, NON
+> déployé**. Décisions : `D-136`, `D-137` (Claude, PROPOSÉ) ; `D-133` → **REMPLACÉE → `D-141`**. Bugs : `BUGS.md` §121,
+> §122. Tickets : `NUT-VERIFY-01`, `NUT-FOR-04`, `SERVEUR-CODEJS-01`, `NUT-VAL-01`, `NUT-VAL-02`, `INTEGRATION-NS-01`.
+> ⛔ **Non rouverts** (déjà livrés, §12) : N08, l'ancienne saisie à zéro, les témoins de synchro selon le Code.js servi.
+
+### 13.1 E2b / `NUT-VERIFY-01` — une saisie juste ne se dit plus « à vérifier » à cause d'anciennes saisies écartées
+
+**Le constat** (registre, sonde de Claude Principal) : remise à zéro hier ; deux anciennes saisies du steak à 200 g ·
+130 kcal (le pour-100 g fabriqué à 65, §114), à J-6 et J-5 ; une saisie neuve et juste, 258 · 42 · 0 · 10 pour 200 g, même
+code-barres → « ⚠️ à vérifier ». **Reproduit** sur la branche telle que livrée (`fc0a558d`, données inventées) — et plus large
+que le constat : « + Ajouter » refusé, le repas habituel compté « 1 à vérifier » et son « + » refusé, la même chose après
+« ✕ » et avec un ancien favori encore sur l'appareil.
+
+**La cause** : la comparaison de `D-131` (`_n2Contradiction`, références rangées par `_n2FichesVerifiees`) prenait toutes les
+saisies du produit, **y compris celles que la remise à zéro ou « ✕ » avait retirées des propositions**.
+
+**La correction** (`D-136`, `app.js`, une ligne) : seules les références encore **proposées** (`_n2Propose`, la règle même
+des listes) se comparent. ⛔ Le journal n'est pas touché ; ⛔ les fiches **vérifiées par la source** (scan Open Food Facts,
+CIQUAL) restent des références même d'avant la remise à zéro (elles décrivent le produit — une saisie neuve fausse se dit
+encore « à vérifier », et la reprise par identité `D-130` les retrouve toujours) ; ⛔ deux saisies encore proposées qui se
+contredisent restent « à vérifier » (`D-131`) ; le scan juste est inchangé.
+
+| Témoin (`B-NFIAB E2b`) | `fc0a558d` | après |
+|---|---|---|
+| ① le cas du registre (« Mes aliments », « Déjà noté par toi ») · ② « + Ajouter » · ③ le repas habituel · ④ après « ✕ » | **rouges** | verts |
+| ④b un ancien favori faux encore sur l'appareil | **rouge** (mutation E1 = le code d'avant) | vert |
+| ⑤ sans remise à zéro, les saisies se contredisent toujours · ⑥ la fiche du scan d'avant juge une saisie fausse · ⑦ le scan juste | verts | verts — F5 et E4 les font rougir |
+
+### 13.2 Q15 / `D-141` — la suppression réelle, préparée (⛔ rien d'exécuté)
+
+Les cinq points de la mission, et où chacun se prouve :
+
+1. **Suppression ciblée des anciennes listes personnelles du compte.** Sur l'appareil, les favoris d'avant sont retirés de
+   `S.savedFoods` à l'exécution (déjà le cas). « Déjà noté par toi », les récents et les repas habituels **ne sont pas des
+   listes enregistrées** : ils naissent du journal, qui reste intact — la date `*` les fait renaître de ce qui sera noté
+   ensuite. **Au serveur** (`Code.js`, `_nutRazFavoris_`, `D-137`) : après la fusion des masquages, tout favori d'avant la
+   date (ou sans date `t`) quitte la liste active **du seul compte concerné** — **par la protection P1** (motif « raz ») :
+   copié d'abord dans sa zone de récupération, jamais renvoyée à l'app. Témoins `Q15 ①`, `T08 ③`.
+2. **Aucune réapparition** : un appareil en retard qui renvoie un ancien favori ne le fait pas reprendre (`Q15 ③`, `T08 ⑧`) ;
+   un autre appareil au démarrage (`T08 ④`) ; « 🔄 Restaurer » (`T08 ⑤`, `T08L ③`) ; et même un serveur qui en renverrait un
+   (`T08L ④`) ; la **restauration admin d'une sauvegarde d'avant** fusionne les masquages du compte et ne remet pas les
+   favoris d'avant (`Q15 ⑥`) — avant, elle réécrivait tout le compte, date de remise à zéro comprise.
+3. **Les nouveaux favoris** (datés `t`) se gardent et se synchronisent normalement (`T08 ⑥`, `Q15 ③`).
+4. **Protection** : au serveur, journal, profil et séances identiques à l'octet (`Q15 ② ⑧`) ; sur l'appareil, journal
+   identique, totaux et contexte de Milo inchangés (`T07 ③`, `T12 ①`) ; un autre compte n'est jamais touché (`Q15 ⑨`).
+5. **Une sauvegarde exploitable d'abord** : sur l'appareil, le fichier téléchargé est obligatoire, refusé s'il est périmé,
+   rétablissable (`T07 ① ② ④`) ; au serveur, rien ne part sans copie — P1 copie avant de retirer, le surplus de la zone est
+   **relu** dans Drive ; Drive en panne → la suppression passe et la zone garde tout jusqu'au plafond (`D-110`, `Q15 ④`) ;
+   au-delà, l'envoi de favoris est refusé cette fois et rien n'est supprimé (`D-109`, `Q15 ⑤`).
+
+⚠️ **Ce que la 1ʳᵉ version faisait de travers** (mesuré, corrigé avant livraison) : une copie Drive à part, et un **refus**
+de l'envoi si Drive tombait — contraire à `D-110`, validée par Michel (pour les favoris, une panne de Drive ne refuse plus
+l'envoi : un favori neuf refusé se perd à « Restaurer »). D'où la réutilisation de P1 : une seule mécanique de copie (R2).
+
+### 13.3 La zone de récupération P1 et les sauvegardes nocturnes — ce qui se passe (⛔ rien n'est purgé)
+
+| Où | Ce qui y reste après la remise à zéro | Revient-il dans l'app ? | Purge |
+|---|---|---|---|
+| Zone de récupération P1 (`recupNut.savedFoods`, dans le compte) | les favoris retirés, motif « raz » (et ceux retirés avant, par « ✕ » ou un envoi plus court) ; bornée à 60 000 caractères | **jamais** (ni `loadProfile`, ni les routes A1) | aucune |
+| `ForceTracker-Backups/recup-nut/` (Drive) | le surplus le plus ancien de la zone, **relu** avant de la quitter | **jamais** | aucune |
+| Sauvegardes nocturnes `backup-AAAA-MM-JJ.json` | les instantanés des nuits d'avant, anciens favoris compris | seulement par une **restauration admin** — qui ne les remet plus dans la liste active (`Q15 ⑥`) | aucune (« jamais supprimées automatiquement ») |
+| Le fichier téléchargé par Michel (② de la carte Admin) | ses favoris et masquages au moment de la sauvegarde | seulement par « ♻️ Rétablir » — un geste volontaire, les favoris redeviennent d'aujourd'hui | à lui |
+
+**Questions rendues à Michel (rien n'est décidé, rien n'est purgé)** : ① les copies « raz » de la zone de récupération — les
+garder (défaut, la règle de P1) ou les purger après la remise à zéro, sur un GO et avec un protocole ; ② les sauvegardes
+nocturnes qui contiennent les anciens favoris — les garder (défaut) ; une règle de conservation toucherait **toutes** les données
+de **tous** les comptes, c'est une autre décision ; ③ garder « ♻️ Rétablir » (le seul chemin de retour, volontaire).
+
+### 13.4 Conséquences précises d'une future modification de `Code.js`
+
+- **Ce que le `Code.js` de la branche change par rapport à la production (@193)** : ① `saveProfile` garde et fusionne les
+  masquages (`hiddenFoods`, commit `bb2075b9`) ; ② `D-141` : la date `*` du compte supprime ses favoris d'avant, par P1 ;
+  ③ la restauration admin fusionne les masquages et ne remet pas les favoris d'avant ; ④ P1 reçoit un motif optionnel
+  (« raz ») — **sans lui, son comportement est inchangé** (banc P1 82 / 0).
+- **Inerte tant qu'aucune remise à zéro n'est exécutée** : aucun compte n'a de date `*` au serveur (la production ne garde
+  même pas les masquages, et la remise à zéro est une carte Admin non publiée). Déployé seul, il ne fait que garder les
+  masquages.
+- ⛔ **Ordre obligatoire** : ne **jamais** exécuter la remise à zéro réelle avant ce déploiement — sinon les anciens favoris
+  restent au serveur et reviennent par un autre appareil ou une restauration (la production ne connaît pas la date).
+- **Mode de livraison** (réconcilié par Claude Principal) : le workflow Apps Script part tout seul si `Code.js` change sur
+  master, sauf commit `[skip ci]` ; pratique validée : commit `[skip ci]`, puis lancement à la main **avec le GO**. Retour
+  arrière : redéployer @193 — les favoris déjà supprimés restent dans la zone (et le fichier de Michel permet « ♻️ Rétablir »).
+- **Une ancienne version de l'app** (sans favoris datés, `ft-v1260`) sur un appareil pas encore mis à jour : après une remise à
+  zéro, un favori qu'elle ajouterait (sans `t`) serait pris pour un ancien et retiré (copié). L'app se met à jour au lancement ;
+  à vérifier sur le compte de test.
+- **Stockage** : la zone grossit de la taille des favoris retirés (bornée à 60 000 caractères, plafond 120 000 pendant une
+  panne de Drive). Règle de P1 avant de déployer : **Santé du système ≤ 55 %**.
+- **Outils voisins mis à jour** : `tools/mut_nut_secu_p1.py` (ancres M02, M03, M16 : les lignes de P1 portent le motif).
