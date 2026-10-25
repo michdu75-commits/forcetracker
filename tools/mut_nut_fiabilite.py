@@ -16,6 +16,7 @@ import os, re, shutil, subprocess, sys, tempfile
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 A, ST, SE, CJ, N2, B = 'app.js', 'state.js', 'setup.js', 'Code.js', 'nutrition-v2.js', 'tests/parcours/nut_fiabilite.js'
+SC = 'screens.js'
 
 E = lambda *c: ['B-NFIAB ' + x for x in c]       # partie ecran
 X = lambda *c: ['B-NFIAB-X ' + x for x in c]     # partie croisee (vrai Code.js en local)
@@ -44,6 +45,24 @@ SANS_SAUVE = "  if(!_nutRazSauve){ _nutRazDire("
 PERIMEE = "  if(_nutRazSauve.favs!==_nutRazEmpreinte(S.savedFoods||[])){"
 RAZ_GO = "    S.savedFoods=_nutFavorisVivants(S.savedFoods, S.hiddenFoods, _n2Cle);\n    persist();\n"
 ORACLE = "iso35: { kcal: 136, prot: 31, carbs: 1, fat: 1 }"
+N08_MILO = "  const fl = (Array.isArray(S.foodLog) ? S.foodLog : []).filter(e => e && typeof e === 'object');\n"
+N08_JOUR = "const entries=(S.foodLog||[]).filter(e=>e&&e.date===td).sort((a,b)=>b.ts-a.ts);"
+# N08, l'ordre defavorable (temoin elargi le 25/10) : les quatre lecteurs qui tombaient encore apres les 2 lignes de Principal
+N08_RESTE = "    rien: !(S.foodLog||[]).some(e=>e&&e.date===d),"
+N08_IDEES = "  (S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{ if(_n2Propose(e, e && e.ts)) prendre(e,false); });"
+N08_LISTE = "  const recent=[], lignes=(S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>b.ts-a.ts);"
+N08_DEJA = "  (S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{\n    if(!e||!e.name||out.length>=5) return;"
+# ZERO (retour de Claude Principal, 25/10) : l'ancienne saisie sans quantite ni valeurs a les issues d'une reprise sans fiche
+Z_MARQUE = "    _afRepriseVide=_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''};\n"
+Z_DESSIN = "    if(_afRepriseVide && _afRepriseVide.nom===_afNomCourant()) _afMajVide();   // …mais une reprise sans rien garde ses issues\n"
+Z_NOM = "if(_afRepriseVide && _afRepriseVide.nom===_afNomCourant()) _afMajVide();"
+Z_OUBLI = "  try{ _afRepriseVide=null; }catch(e){}   // la reprise sans quantité ni valeurs appartient à l'aliment d'avant\n"
+Z_AJOUT = "  if(_afRepriseVide && _afRepriseVide.nom===String(nom||'').trim() && !_N2_CHAMPS.some(c=>(+vals[c])>0))\n    return {ok:false, message:_N2_VIDE+' Rien n\\'a été ajouté.'};\n"
+Z_HTML = "  el.innerHTML='<div style=\"font-size:11.5px;color:var(--t2);line-height:1.45;\">'+_escFood(_N2_VIDE)+'</div>'+_n2IssuesHtml(_afRepriseVide.etat);"
+Z_TOAST = "toast(_afRepriseVide ? 'Rien n\\'a été ajouté. '+_N2_VIDE"
+# T08 conditionnels : le serveur LIT les masquages mais ne les garde plus (la liste blanche les nomme encore)
+SERVEUR_LU = "    if (body.hiddenFoods   !== undefined) void _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);"
+CHARGE = "    S.hiddenFoods=_nutMasquesNormaliser(JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]'));   // NV2-FIAB : des dates de départ\n"
 
 MUT = [
     # ── la reprise d'un aliment : son IDENTITE, sa fiche retrouvee, ses issues ──
@@ -60,7 +79,7 @@ MUT = [
      [(A, ENLIGNE, ENLIGNE.replace("  if(typeof _offFetchProduct!=='function') return false;\n", "  return false;\n"))],
      E('T02 ②', 'T02 ④', 'T02 ⑤', 'T06 ④'), 'GARDE', 'ecran'),
     ('F3 une fiche arrivee EN RETARD s\'applique a l\'aliment choisi entre-temps', [(A, PERIME, "")], E('T02 ⑦'), 'GARDE', 'ecran'),
-    ('F4 le cas fige n\'a plus d\'issue a l\'ecran (ni retrouver, ni scanner, ni etiquette)', [(A, ISSUES, "[]")], E('T02 ②'), 'GARDE', 'ecran'),
+    ('F4 le cas fige n\'a plus d\'issue a l\'ecran (ni retrouver, ni scanner, ni etiquette) — ni la saisie a zero (meme proprietaire)', [(A, ISSUES, "[]")], E('T02 ②', 'ZÉRO ①'), 'GARDE', 'ecran'),
     ('F5 deux saisies du meme produit qui se contredisent ne se signalent plus',
      [(A, CONTR, CONTR + "  return null;\n")], E('T06 ①', 'T06 ③'), 'GARDE', 'ecran'),
     ('F6 « Deja note par toi » ignore de nouveau les masquages (« ✕ »)', [(A, DEJA, "")], E('N2 ①'), 'GARDE', 'ecran'),
@@ -93,13 +112,48 @@ MUT = [
      X('T07 ③', 'T12 ①'), 'GARDE', 'croise'),
     # ── la synchronisation des masquages et de la remise a zero ──
     ('F18 les masquages ne partent plus au serveur (synchro)', [(SE, ENVOI, "")], X('T08 ①', 'T08 ②'), 'GARDE', 'croise'),
-    ('F19 le serveur n\'enregistre plus les masquages (liste blanche de saveProfile)', [(CJ, SERVEUR, "")], X('T08 ①', 'T08 ②', 'T08 ③'), 'GARDE', 'croise'),
+    # ⚖️ 25/10 : retirer la ligne de la liste blanche, c'est le Code.js de master — le banc passe en garanties locales (F19b, vert).
+    #    Le DEFAUT, c'est un serveur qui LIT les masquages sans les garder : T08 ⓪ (le mode ne concorde plus) et la synchro rougissent.
+    ('F19 le serveur LIT les masquages mais ne les enregistre plus (la liste blanche les nomme encore)', [(CJ, SERVEUR, SERVEUR_LU)],
+     X('T08 ⓪', 'T08 ①', 'T08 ②', 'T08 ③'), 'GARDE', 'croise'),
+    ('F19b [mode] la liste blanche sans `hiddenFoods` (le Code.js de master) : le banc passe en garanties locales, le dit, et reste vert',
+     [(CJ, SERVEUR, "")], [], 'OK', 'croise'),
+    # ── les garanties LOCALES (sur le Code.js de master : c'est la ou elles sont seules a proteger) ──
+    ('FL1 [Code.js de master] « Restaurer » REMPLACE les masquages locaux par ceux du serveur (ici : aucun)',
+     [(CJ, SERVEUR, ""), (SE, RESTAURE_M, "  try{S.hiddenFoods=Array.isArray(d.hiddenFoods)?d.hiddenFoods:[];}catch(e){console.warn('[FT restore] hiddenFoods',e);}\n")],
+     X('T08L ②'), 'GARDE', 'croise'),
+    ('FL2 [Code.js de master] « Restaurer » rend les favoris d\'avant la remise a zero (la date locale ne les ecarte plus)',
+     [(CJ, SERVEUR, ""), (SE, RESTAURE_F, "")], X('T08L ③'), 'GARDE', 'croise'),
+    ('FL3 [Code.js de master] au rechargement, l\'app oublie les masquages enregistres sur le telephone',
+     [(CJ, SERVEUR, ""), (ST, CHARGE, "    S.hiddenFoods=[];\n")], X('T08L ①'), 'GARDE', 'croise'),
     ('F20 le serveur REMPLACE la liste au lieu de la fusionner (un telephone en retard efface la remise a zero)',
      [(CJ, FUSION_SRV, FUSION_SRV.replace("  prendre(existant); prendre(recu);\n", "  prendre(recu);\n"))], X('T08 ⑦'), 'GARDE', 'croise'),
     ('F21 « Restaurer » ne reprend plus les masquages du serveur', [(SE, RESTAURE_M, "")], X('T08 ②'), 'GARDE', 'croise'),
     ('F22 « Restaurer » rend les favoris d\'avant la remise a zero', [(SE, RESTAURE_F, "")], X('T08 ⑤'), 'GARDE', 'croise'),
     ('F23 au demarrage, les masquages venus d\'un autre appareil ne s\'appliquent plus',
      [(A, DEMARRE, "          }catch(e){}")], X('T08 ④'), 'GARDE', 'croise'),
+    # ── N08 (retour de Claude Principal, 25/10) : une entree vide (`null`) dans le journal ne fait plus rien tomber ──
+    ('N08a ce que Milo lit relit de nouveau les entrees vides (`_profilAlimentaire` sans filtre : le contexte ne se construit plus)',
+     [(A, N08_MILO, "  const fl = Array.isArray(S.foodLog) ? S.foodLog : [];\n")], E('N08 ①', 'N08 ②'), 'GARDE', 'ecran'),
+    ('N08b le journal du jour relit de nouveau les entrees vides (`renderFoodJournal` : l\'affichage tombe)',
+     [(SC, N08_JOUR, "const entries=(S.foodLog||[]).filter(e=>e.date===td).sort((a,b)=>b.ts-a.ts);")], E('N08 ①'), 'GARDE', 'ecran'),
+    ('N08c la carte « ce qu\'il te reste » relit les entrees vides (`_resteDuJour` : le journal du jour tombe avec elle)',
+     [(A, N08_RESTE, "    rien: !(S.foodLog||[]).some(e=>e.date===d),")], E('N08 ③'), 'GARDE', 'ecran'),
+    ('N08d les idees pour le reste trient de nouveau les entrees vides (`_mesAliments`)',
+     [(A, N08_IDEES, N08_IDEES.replace(".filter(e=>e&&typeof e==='object')", ".slice()"))], E('N08 ③'), 'GARDE', 'ecran'),
+    ('N08e « Ajouter » trie de nouveau les entrees vides (`_buildFoodQuickItems` : « Mes aliments » tombe)',
+     [(A, N08_LISTE, N08_LISTE.replace(".filter(e=>e&&typeof e==='object')", ".slice()"))], E('N08 ③'), 'GARDE', 'ecran'),
+    ('N08f « Deja note par toi » trie de nouveau les entrees vides (`_afSuggLocales`)',
+     [(A, N08_DEJA, N08_DEJA.replace(".filter(e=>e&&typeof e==='object')", ".slice()"))], E('N08 ③'), 'GARDE', 'ecran'),
+    # ── ZERO (retour de Claude Principal, 25/10) : l'ancienne saisie sans quantite ni valeurs n'est plus une impasse ──
+    ('Z1 la reprise sans quantite ni valeurs ne se marque plus (l\'ecran redevient une impasse)', [(A, Z_MARQUE, "    _afRepriseVide=null;\n")], E('ZÉRO ①', 'ZÉRO ②'), 'GARDE', 'ecran'),
+    ('Z2 l\'ecran ne dessine plus ses issues', [(A, Z_DESSIN, "")], E('ZÉRO ①', 'ZÉRO ②'), 'GARDE', 'ecran'),
+    ('Z3 sa marque survit a l\'aliment (l\'oubli de l\'aliment ne la rend plus)', [(A, Z_OUBLI, "")], E('ZÉRO ③'), 'GARDE', 'ecran'),
+    ('Z4 un AUTRE nom herite de ses issues', [(A, Z_NOM, "if(_afRepriseVide) _afMajVide();")], E('ZÉRO ③'), 'GARDE', 'ecran'),
+    ('Z5 « Ajouter » redemande « Combien pesait… » (un poids qu\'on ne peut ecrire nulle part)', [(A, Z_AJOUT, "")], E('ZÉRO ①', 'ZÉRO ②'), 'GARDE', 'ecran'),
+    ('Z6 un champ « quantite » est propose pour ces 0 (accepter une quantite affirmerait qu\'ils valaient pour elle)',
+     [(A, Z_HTML, Z_HTML.replace("el.innerHTML='", "el.innerHTML='<input id=\"af-prop\" type=\"text\" inputmode=\"decimal\">'+'"))], E('ZÉRO ①', 'ZÉRO ②'), 'GARDE', 'ecran'),
+    ('Z7 « + Ajouter » annonce de nouveau « choisis la quantite » (sans champ ou la choisir)', [(A, Z_TOAST, Z_TOAST.replace('toast(_afRepriseVide ?', 'toast(false ?'))], E('ZÉRO ①'), 'GARDE', 'ecran'),
     # ── l'oracle (ecrit a la main) et le controle « commentaire » ──
     ('F24 l\'oracle : 35 g d\'isolat attendus a 135 kcal au lieu de 136 (l\'oracle est bien LU)',
      [(B, ORACLE, ORACLE.replace("kcal: 136", "kcal: 135"))], E('T01 ①'), 'GARDE', 'ecran'),

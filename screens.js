@@ -3767,7 +3767,7 @@ function renderFoodJournal(){
      aucune poignée et deviendrait **ni éditable ni supprimable** — précisément le défaut que
      Michel interdit nommément à l'étape 3. */
   if(typeof _foodLogIdentifier==='function') _foodLogIdentifier(S.foodLog);
-  const entries=(S.foodLog||[]).filter(e=>e.date===td).sort((a,b)=>b.ts-a.ts);
+  const entries=(S.foodLog||[]).filter(e=>e&&e.date===td).sort((a,b)=>b.ts-a.ts);
 
   let html='';
   // Navigation jour par jour — même repère visuel que le calendrier de l'Accueil (R13).

@@ -1607,6 +1607,8 @@ function _n2EntreeEcran(nom, vals, bcActif){
       quantite:{val:+_afPortions, unite:'portion', origine:'portion',
                 portion:{libelle:String(_afPortionLabel).trim(), poids:+_afPortionPoids, unite:'g'}}})};
   }
+  if(_afRepriseVide && _afRepriseVide.nom===String(nom||'').trim() && !_N2_CHAMPS.some(c=>(+vals[c])>0))
+    return {ok:false, message:_N2_VIDE+' Rien n\'a été ajouté.'};
   return {ok:false, message:'Combien pesait ce que tu as mangé ? Indique le poids en grammes (ou le volume en ml).'};
 }
 
@@ -1699,6 +1701,8 @@ function _n2Reprendre(src, saisie){
     _bcNutr=null; if(row) row.style.display='none'; _bcQsrc(null); _bcMontrerTotal(0);
     _afSetSrc({saisie:saisie, origine:'reprise'});
     _afRef=null;
+    /* Retour de Claude Principal (25/10) : sans aucune valeur non plus, l'écran le dit et donne les issues (`_afMajVide`). */
+    _afRepriseVide=_N2_CHAMPS.some(c=>(+R.valeurs[c])>0) ? null : {nom:String(R.nom||'').trim(), etat:''};
     _afMajAncre(true);
     if(_sid && _afSrc) _afSrc.sourceId=_sid.slice(0,32);   // NV2-FIAB : l'identité du produit suit (jamais une fiche)
     if(_ean) _n2RetrouverEnLigne(_ean, _jeton, saisie, 0, R.nom||'');
@@ -1771,16 +1775,36 @@ function _afMajFige(){
     +' — ou retrouve sa fiche ci-dessous (recherche, scan, étiquette), et elles se calculeront.</div>'
     +(_afRef.raison ? '<div style="font-size:11.5px;color:var(--orange);margin-top:6px;line-height:1.4;">⚠️ À vérifier : '
       +_escFood(_afRef.raison.texte)+'. Vérifie-les avant d\'ajouter — ou retrouve sa fiche ci-dessous.</div>' : '')
-    /* ⭐ NV2-FIAB (24/10, mission de Michel) — LE CAS FIGÉ N'EST PLUS UNE IMPASSE : trois issues, écrites en boutons (avant, une
-       phrase sans aucun bouton), et l'état de la recherche de la fiche par son code-barres quand il en a un. */
-    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'
+    +_n2IssuesHtml(_afRef.etatRecherche);
+  const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;
+  const p=document.getElementById('af-prop-pastille'); if(p && prise) p.style.display='none';
+  el.style.display='block';
+}
+/* ⭐ NV2-FIAB (24/10, mission de Michel) — LE CAS FIGÉ N'EST PLUS UNE IMPASSE : trois issues, écrites en boutons (avant, une
+   phrase sans aucun bouton), et l'état de la recherche de la fiche par son code-barres quand il en a un.
+   ⚖️ UN SEUL PROPRIÉTAIRE (R2) : le cas figé (`_afMajFige`) et l'ancienne saisie sans quantité ni valeurs (`_afMajVide`)
+   écrivent les MÊMES issues, d'ici. */
+function _n2IssuesHtml(etat){
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'
     +[['🔎 Retrouver l\'aliment','_n2RetrouverRecherche()'],['📷 Scanner le code-barres','scanBarcode()'],['🏷️ Saisir l\'étiquette (pour 100 g)','_n2EtiquetteFige()']]
       .map(b=>'<button type="button" onclick="'+b[1]+'" style="min-height:44px;padding:7px 12px;border-radius:9px;border:1px solid var(--sep);background:var(--bg2);'
         +'color:var(--t1);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;">'+b[0]+'</button>').join('')
-    +'</div><div id="af-retrouver-etat" style="display:'+(_afRef.etatRecherche?'block':'none')+';font-size:11px;color:var(--t3);margin-top:6px;line-height:1.4;">'
-    +_escFood(_afRef.etatRecherche||'')+'</div>';
-  const f=document.getElementById('af-prop'); if(f && garde) f.value=garde;
-  const p=document.getElementById('af-prop-pastille'); if(p && prise) p.style.display='none';
+    +'</div><div id="af-retrouver-etat" style="display:'+(etat?'block':'none')+';font-size:11px;color:var(--t3);margin-top:6px;line-height:1.4;">'
+    +_escFood(etat||'')+'</div>';
+}
+/* ⭐ RETOUR DE CLAUDE PRINCIPAL (25/10) — UNE ANCIENNE SAISIE SANS QUANTITÉ NI VALEURS (`kcal:0 … q:null, per100:null`) N'EST PLUS
+   UNE IMPASSE. Mesuré : reprise (« Mes aliments », « + Ajouter », « Déjà noté par toi »), l'écran montrait 0 · 0 · 0 · 0 sans
+   aucun champ ni issue, et « Ajouter » demandait « Combien pesait… » sans endroit où le dire. Rien ne s'écrivait (sûr), mais on
+   ne pouvait pas en sortir. Elle a maintenant les issues d'une reprise sans fiche (`_n2IssuesHtml`), et ses valeurs se tapent.
+   ⛔ AUCUN CHAMP « QUANTITÉ » ICI, EXPRÈS : il n'y a pas de couple « valeurs / quantité » à garder — accepter une quantité avec
+   ces 0 affirmerait, en silence, qu'ils valaient pour elle (la même raison que la reprise sans quantité, `_n2Reprendre`).
+   `_afRepriseVide` = {nom, etat} tant que l'écran montre CETTE reprise ; il meurt avec l'aliment (`_afOublierAliment`, R15),
+   et un autre nom n'en hérite pas (`_afMajAncre`). En mémoire seulement : rien n'est stocké. */
+let _afRepriseVide=null;
+const _N2_VIDE='Cette ancienne saisie n\'a ni quantité ni valeurs : rien ne se calcule à partir d\'elle. Retrouve l\'aliment, scanne son code-barres ou saisis son étiquette — ou tape ses valeurs.';
+function _afMajVide(){
+  const el=document.getElementById('af-prop-row'); if(!el || !_afRepriseVide) return;
+  el.innerHTML='<div style="font-size:11.5px;color:var(--t2);line-height:1.45;">'+_escFood(_N2_VIDE)+'</div>'+_n2IssuesHtml(_afRepriseVide.etat);
   el.style.display='block';
 }
 function _afPropPoserFige(origine){
@@ -1814,6 +1838,7 @@ function _afQtePoseeFige(){
 let _n2RechJeton=0;
 function _n2EtatRetrouver(texte){
   if(_afRef && _afRef.fige) _afRef.etatRecherche=texte;
+  else if(_afRepriseVide) _afRepriseVide.etat=texte;
   const el=document.getElementById('af-retrouver-etat');
   if(el){ el.textContent=texte; el.style.display=texte?'block':'none'; }
 }
@@ -4152,7 +4177,7 @@ function _foodTotals(date){
 const _PA_MIN_JOURS = 3;          // en dessous, on ne prétend rien observer
 const _PA_SOLIDE    = 14;         // à partir de là, on parle d'habitudes
 function _profilAlimentaire(){
-  const fl = Array.isArray(S.foodLog) ? S.foodLog : [];
+  const fl = (Array.isArray(S.foodLog) ? S.foodLog : []).filter(e => e && typeof e === 'object');
   if(!fl.length) return null;
   const cleN = n => (n||'').trim().toLowerCase();
 
@@ -4333,7 +4358,7 @@ function _resteDuJour(date){
   const r = k => Math.round(k);
   return {
     date:d,
-    rien: !(S.foodLog||[]).some(e=>e.date===d),      // ⚠️ « rien noté » ≠ « rien mangé »
+    rien: !(S.foodLog||[]).some(e=>e&&e.date===d),      // ⚠️ « rien noté » ≠ « rien mangé »
     kcal:  r(cible.calories - tot.kcal),
     prot:  r((cible.prot_g||0)  - tot.prot),
     carbs: r((cible.carbs_g||0) - tot.carbs),
@@ -4372,7 +4397,7 @@ function _mesAliments(max){
   };
   /* NV2-FIAB (24/10) : les idées aussi sont des propositions — un aliment masqué, ou d'avant la remise à zéro, n'en est plus une. */
   (S.savedFoods||[]).forEach(e=>{ if(_n2Propose(e, e && e.t)) prendre(e,true); });
-  (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{ if(_n2Propose(e, e && e.ts)) prendre(e,false); });
+  (S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{ if(_n2Propose(e, e && e.ts)) prendre(e,false); });
   return out.slice(0, max||40);
 }
 
@@ -4802,7 +4827,7 @@ function _buildFoodQuickItems(){
   favs.forEach(f=>{ const k=_n2Cle(f._src); vus[k]=(vus[k]===true) || _n2Verifiee(f._ap); });
   /* « ✕ » masque une IDENTITÉ depuis le 23/10 (`id:…`, `nom:…`) ; un NOM nu, écrit avant, masque encore tout ce qui le porte.
      NV2-FIAB (24/10) : c'est une date de départ (`_n2Propose`) — et la remise à zéro en est une, pour tout. */
-  const recent=[], lignes=(S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts);
+  const recent=[], lignes=(S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>b.ts-a.ts);
   for(let j=0; j<lignes.length && favs.length+recent.length<12; j++){
     const e=lignes[j], nom=String((e&&e.name)||'').toLowerCase(); if(!nom) continue;
     const k=_n2Cle(e);
@@ -4887,6 +4912,7 @@ function quickFillFood(i){
     _afFavSource=it.fav ? it._src : null; _afFavMontrer();   // NV2-FIAB : un favori repris peut se corriger
     /* D-101 ① / D-103 : rien n'est pré-rempli — la quantité se CHOISIT (« Pré-rempli » disait le contraire). */
     const pas=['af-bc-last','af-prop-pastille'].some(id=>{ const b=document.getElementById(id); return !!b && b.offsetParent!==null; });
+    if(_afRepriseVide){ toast(_N2_VIDE,'info'); return; }
     toast('Repris — choisis la quantité ('+(pas?'touche la pastille ou tape-la':'tape-la')+'), puis « Ajouter au journal » ✅','info');
   });
 }
@@ -4901,7 +4927,8 @@ function quickAddFood(i){
     const r=_n2Reajouter(it._src||it, _afMealActif(), _journalJourActif(), 'quickAddFood');
     if(!r.ok && r.aCompleter){
       quickFillFood(i);
-      toast('Combien en as-tu mangé ? La quantité de la dernière fois n\'est pas connue — choisis-la, puis « Ajouter » ✅','info');
+      toast(_afRepriseVide ? 'Rien n\'a été ajouté. '+_N2_VIDE
+                           : 'Combien en as-tu mangé ? La quantité de la dernière fois n\'est pas connue — choisis-la, puis « Ajouter » ✅','info');
       return;
     }
     /* ⭐⭐ INCIDENT DU 23/10 — une référence qui ne peut pas être re-notée TELLE QU'ELLE S'AFFICHE ne l'est pas en silence
@@ -6253,7 +6280,7 @@ function _afSuggLocales(q, brut){
      une par NOM, la plus récente — mesuré, la copie fausse d'hier cachait le scan juste, et de deux yaourts du même nom un
      seul était proposé (B-NV2P P15 ③, ⑰). */
   const vus={}, out=[], vf=_n2FichesVerifiees();
-  (S.foodLog||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
+  (S.foodLog||[]).filter(e=>e&&typeof e==='object').sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(e=>{
     if(!e||!e.name||out.length>=5) return;
     /* ⛔ NV2-FIAB (24/10, N2 de Principal) : « ✕ » retirait l'aliment de « Mes aliments » mais « Déjà noté par toi » le proposait
        encore (cette recherche ignorait les masquages) — et la remise à zéro s'applique ici aussi. */
@@ -7694,6 +7721,7 @@ function _afOublierAliment(opts){
   _afCalc=null; _afCorr={}; _afValeursTapees=false;
   try{ _n2RechJeton++; }catch(e){}   // NV2-FIAB : la fiche cherchée pour l'aliment d'avant ne s'applique plus
   try{ _afFavSource=null; _afFavMontrer(); }catch(e){}   // NV2-FIAB : le favori repris appartient à l'aliment d'avant
+  try{ _afRepriseVide=null; }catch(e){}   // la reprise sans quantité ni valeurs appartient à l'aliment d'avant
   try{ _afMontrerCorr(); _bcMajUnite(); }catch(e){}
 }
 /* Décide de la source et (re)construit le bloc. ⚠️ Appelée seulement quand la SOURCE des valeurs
@@ -7740,7 +7768,11 @@ function _afMajAncre(srcChange){
      connaît que les protéines) et surtout la frappe : on efface les calories pour les retaper,
      et le réglage de quantité s'évapore sous les doigts. *Un proxy commode — les calories pour
      « il y a des valeurs » — devient faux dès qu'une valeur légitime vaut zéro.* */
-  if(!(base.kcal>0||base.prot>0||base.carbs>0||base.fat>0)){ _afPropCacher(); return; }   // rien à rescaler tant qu'AUCUNE valeur n'est posée
+  if(!(base.kcal>0||base.prot>0||base.carbs>0||base.fat>0)){   // rien à rescaler tant qu'AUCUNE valeur n'est posée
+    _afPropCacher();
+    if(_afRepriseVide && _afRepriseVide.nom===_afNomCourant()) _afMajVide();   // …mais une reprise sans rien garde ses issues
+    return;
+  }
   /* ⛔⛔ L'INVARIANT DE TOUT CE BLOC (ft-v1061) : `_afRef.base` sont TOUJOURS les valeurs de
      `_afRef.q`. Or `base` vient d'être RELU À L'ÉCRAN — et l'écran, après un rescale, montre les
      valeurs de la quantité TAPÉE, pas celles de l'ancienne référence.

@@ -27,6 +27,8 @@
      Étiquette (94 · 5,2 · 12 · 2,4) → 150 g = 141 · 7,8 → 8 · 18 · 3,6 → 4. IA (500 · 30 · 50 · 20 pour 400 g) → 200 g = 250 · 15 · 25 · 10.
    ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 'use strict';
+const fs = require('fs');
+const path = require('path');
 const N2 = require('../../nutrition-v2.js');
 const CR = require('./nut_v2_p1_croise.js').outils;
 
@@ -442,14 +444,147 @@ async function ecranFiab(t, b, PORT) {
       g && J(fic) === J([1, 2]) && nF3 === 0 && J(await journal(pg)) === J([ANC_ISO, STK_823]), J({ fic, nF3 }));
     await fin(o); }
 
+  /* ═══ N08 (retour de Claude Principal, 25/10) — UNE ENTRÉE VIDE (`null`) DANS LE JOURNAL. Préexistant (master) : elle faisait
+     tomber le contexte de Milo (`_profilAlimentaire`) et le journal du jour (`renderFoodJournal`). La correction ne RÉÉCRIT rien :
+     l'entrée vide est ignorée à la lecture. ⚠️ Ses erreurs de page sont SON verdict (N08 ①), pas celui du témoin Z ci-dessous. ═══ */
+  { const N08_A = { id: 'n08-riz-000000001', date: jour(0), ts: ilya(0) - 3 * 3600e3, meal: 'dejeuner', name: 'Riz (test N08)', q: 150, u: 'g',
+      kcal: 195, prot: 4, carbs: 42, fat: 0, per100: { kcal: 130, prot: 2.7, carbs: 28.2, fat: 0.3 }, v: 1, saisie: 'liste', origine: 'reprise' };
+    const N08_B = { id: 'n08-yaourt-0000002', date: jour(0), ts: ilya(0) - 2 * 3600e3, meal: 'collation', name: 'Yaourt (test N08)', q: 125, u: 'g',
+      kcal: 90, prot: 5, carbs: 12, fat: 2, per100: null, v: 1, saisie: 'manuel', origine: 'utilisateur' };
+    const o = await ouvrir(b, PORT, fixture('n08', [N08_A, null, N08_B, null]), null); const pg = o.pg;
+    const r = await pg.evaluate(() => {
+      const out = { erreurs: [] };
+      try { renderFoodJournal(); } catch (e) { out.erreurs.push('journal : ' + e.message); }
+      out.lignes = document.querySelectorAll('#food-journal div[onclick^="openEditFood"]').length;
+      const neutre = (s) => s && s.replace(/\b\d{1,2}[h:]\d{2}\b/g, 'HH:MM');
+      const ctx = (L) => { const avant = S.foodLog; try { if (L) S.foodLog = L; const c = buildCoachContext(''); return neutre(typeof c === 'string' ? c : JSON.stringify(c)); }
+        catch (e) { out.erreurs.push('milo : ' + e.message); return null; } finally { S.foodLog = avant; } };
+      const avec = ctx(null), sans = ctx((S.foodLog || []).filter((e) => e));
+      out.ctxLong = avec ? avec.length : 0; out.ctxEgal = !!avec && avec === sans;
+      return out; });
+    const ex = await pg.evaluate(async () => { const v = window._donnerFichier; let f = null; window._donnerFichier = async (c, nom) => { f = { c: String(c), nom }; return 'ok'; };
+      try { await exportNutritionCsv(); } catch (e) { return { err: e.message }; } finally { window._donnerFichier = v; }
+      const c = f ? f.c : ''; return { riz: c.indexOf('Riz (test N08)') >= 0, yaourt: c.indexOf('Yaourt (test N08)') >= 0 }; });
+    const sy = await pg.evaluate(async () => { try { const p = _cloudSync(); if (p && p.then) await p.catch(() => {}); return 'ok'; } catch (e) { return 'ERREUR ' + e.message; } });
+    await pause(pg, 300);
+    const Lfin = await journal(pg);
+    t('B-NFIAB N08 ① ⛔ UNE ENTRÉE VIDE (`null`) DANS LE JOURNAL NE FAIT PLUS RIEN TOMBER : aucune erreur au démarrage ni à l\'affichage, le journal du jour montre ses 2 vraies lignes, l\'export et la synchro passent',
+      o.ok && o.erreurs.length === 0 && r.erreurs.length === 0 && r.lignes === 2 && !ex.err && ex.riz && ex.yaourt && sy === 'ok', J({ e: o.erreurs.slice(0, 3), r, ex, sy }));
+    t('B-NFIAB N08 ② ce que Milo lit se construit, et c\'est EXACTEMENT ce qu\'il lirait sans les entrées vides — elles sont ignorées, rien n\'est réécrit (le journal garde ses 4 entrées, les 2 vraies à l\'octet)',
+      r.ctxLong > 1000 && r.ctxEgal && Lfin.length === 4 && J(Lfin[0]) === J(N08_A) && Lfin[1] === null && J(Lfin[2]) === J(N08_B) && Lfin[3] === null,
+      J({ ctxLong: r.ctxLong, ctxEgal: r.ctxEgal, n: Lfin.length }));
+    await o.cx.close(); }
+  /* ③ L'ORDRE DÉFAVORABLE — trouvé en ÉLARGISSANT le témoin de Principal (25/10) : ses conditions (aucun profil calorique, une ligne
+     du jour AVANT les entrées vides) laissaient passer quatre lecteurs qui tombaient encore. Ici, un profil COMPLET (la carte « ce qu'il
+     te reste » se calcule, et le journal du jour l'affiche), une entrée vide EN TÊTE, puis « Ajouter » (« Mes aliments », « Déjà noté
+     par toi ») et les idées pour le reste. Mesuré avant correction : le journal du jour, la carte, « Ajouter » et la recherche tombaient. */
+  { const N08_C = { id: 'n08-riz-000000003', date: jour(1), ts: ilya(1), meal: 'dejeuner', name: 'Riz (test N08)', q: 150, u: 'g',
+      kcal: 195, prot: 4, carbs: 42, fat: 0, per100: { kcal: 130, prot: 2.7, carbs: 28.2, fat: 0.3 }, v: 1, saisie: 'liste', origine: 'reprise' };
+    const N08_D = { id: 'n08-yaourt-0000004', date: jour(0), ts: ilya(0) - 3600e3, meal: 'collation', name: 'Yaourt (test N08)', q: 125, u: 'g',
+      kcal: 90, prot: 5, carbs: 12, fat: 2, per100: null, v: 1, saisie: 'manuel', origine: 'utilisateur' };
+    const o = await ouvrir(b, PORT, fixture('n08c', [null, N08_C, null, N08_D], [], { ft4_bw: '80', ft4_ht: '180', ft4_age: '40', ft4_act: '1.55' }), null);
+    const pg = o.pg;
+    const r = await pg.evaluate(() => { const err = [], essai = (nom, f) => { try { return f(); } catch (e) { err.push(nom + ' : ' + e.message); return null; } };
+      const reste = essai('reste', () => _resteDuJour(today()));
+      essai('journal', () => renderFoodJournal());
+      const lignes = document.querySelectorAll('#food-journal div[onclick^="openEditFood"]').length;
+      essai('ajout', () => openAddFood());
+      const mes = (typeof _afQuickItems !== 'undefined' && _afQuickItems || []).map((it) => it.name);
+      const deja = essai('deja', () => _afSuggLocales('riz').map((l) => l.id)) || [];
+      const idees = essai('idees', () => _ideesPourLeReste(reste, 12));
+      essai('fermer', () => closeAddFood());
+      return { err, reste: !!reste, lignes, mes, deja, idees: Array.isArray(idees) }; });
+    t('B-NFIAB N08 ③ ⭐ L\'ORDRE DÉFAVORABLE (profil calorique complet, entrée vide EN TÊTE) : la carte « ce qu\'il te reste », le journal du jour, « Ajouter » (« Mes aliments »), « Déjà noté par toi » et les idées se construisent — rien ne tombe',
+      o.ok && o.erreurs.length === 0 && r.err.length === 0 && r.reste && r.lignes === 1 && r.mes.indexOf('Riz (test N08)') >= 0 && r.mes.indexOf('Yaourt (test N08)') >= 0
+      && r.deja.indexOf(N08_C.id) >= 0 && r.idees, J({ e: o.erreurs, r }));
+    await o.cx.close(); }
+
+  /* ═══ ZÉRO — retour de Claude Principal (25/10) : une ANCIENNE saisie sans quantité NI valeurs ({kcal:0 … q:null, per100:null}).
+     Avant : reprise (« + Ajouter », « Déjà noté par toi ») → 0 · 0 · 0 · 0, AUCUN champ ni issue, et « Ajouter » demandait
+     « Combien pesait… » sans endroit où le dire — rien ne s'écrivait (sûr), mais c'était une impasse. Après : les issues d'une
+     reprise sans fiche, et ses valeurs se tapent. ⛔ Toujours rien d'écrit sans un geste. ═══ */
+  { const ZERO = { id: 'nfiab-zero-000001', date: jour(2), ts: ilya(2), meal: 'dejeuner', name: 'Gratin maison (test)', kcal: 0, prot: 0, carbs: 0, fat: 0,
+      q: null, per100: null, v: 1, saisie: 'manuel', origine: 'utilisateur' };
+    const ISSUES_Z = ['Retrouver l\'aliment', 'Scanner le code-barres', 'Saisir l\'étiquette'];
+    const etat = (pg) => pg.evaluate(() => { const r = document.getElementById('af-prop-row'), v = (id) => { const x = document.getElementById(id); return !!x && x.offsetParent !== null; };
+      return { ouvert: document.getElementById('ov-add-food').classList.contains('open'), vis: !!r && r.offsetParent !== null, txt: r ? r.innerText.replace(/\s+/g, ' ') : '',
+        boutons: r ? [...r.querySelectorAll('button')].map((x) => x.textContent.trim()) : [], qte: v('af-prop') || v('af-bc-grams') || v('af-poids') }; });
+    const sansImpasse = (st) => st.ouvert && st.vis && /ni quantité ni valeurs/.test(st.txt) && ISSUES_Z.every((x) => st.boutons.some((y) => y.indexOf(x) >= 0)) && !st.qte;
+    const o = await ouvrir(b, PORT, fixture('zero', [ZERO, ANC_ISO]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), iZ = (M.find((x) => x.nom === ZERO.name) || {}).i, iI = (M.find((x) => x.sid === EAN_ISO) || {}).i;
+    const av = (await journal(pg)).map((x) => x && x.id);
+    g = g && iZ >= 0 && await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + iZ + ')"]'); await pause(pg, 700);
+    const st1 = await etat(pg), toast1 = await dernierToast(pg);
+    await ajouter(pg); const toastAj = await dernierToast(pg);
+    const gEt = await clic(pg, '#af-prop-row button[onclick="_n2EtiquetteFige()"]'); await pause(pg, 250);
+    const cal = await pg.evaluate(() => { const x = document.getElementById('af-cal-row'); return !!x && x.style.display !== 'none'; });
+    const gRe = await clic(pg, '#af-prop-row button[onclick="_n2RetrouverRecherche()"]'); await pause(pg, 300); const toastRe = await dernierToast(pg);
+    const rien1 = neuves(await journal(pg), av).length === 0;
+    t('B-NFIAB ZÉRO ① ⭐ « + AJOUTER » SUR UNE ANCIENNE SAISIE SANS QUANTITÉ NI VALEURS N\'EST PLUS UNE IMPASSE : rien n\'est écrit, l\'écran dit pourquoi et donne les issues d\'une reprise sans fiche (🔎 Retrouver · 📷 Scanner · 🏷️ Étiquette — elles répondent), aucun champ « quantité » pour ces 0 ; « Ajouter » le redit au lieu de « Combien pesait… »',
+      g && rien1 && sansImpasse(st1) && /^Rien n'a été ajouté\./.test(toast1) && /ni quantité ni valeurs/.test(toastAj) && !/Combien pesait/.test(toastAj)
+      && gEt && cal && gRe && /Choisis l'aliment dans la liste/.test(toastRe), J({ st1, toast1, toastAj, cal, toastRe, rien1 }));
+    /* ② la même ancienne saisie reprise depuis « Déjà noté par toi » (la recherche) */
+    await pg.evaluate(() => { try { closeAddFood(); } catch (e) {} }); g = await ouvrirAjout(pg);
+    g = g && await taper(pg, '#af-desc', 'gratin maison'); await pg.evaluate(() => { try { _afSuggInput(); } catch (e) {} });
+    let k = -1; for (let n = 0; n < 16 && k < 0; n++) { await pause(pg, 250); k = await pg.evaluate((id) => (typeof _afSuggLoc !== 'undefined' && _afSuggLoc || []).findIndex((e) => e && e.id === id), ZERO.id); }
+    g = g && k >= 0 && await clic(pg, '#af-sugg [onclick="_afSuggPrendreLocale(' + k + ')"]'); await pause(pg, 700);
+    const st2 = await etat(pg); await ajouter(pg); const toastAj2 = await dernierToast(pg);
+    t('B-NFIAB ZÉRO ② la même saisie reprise depuis « Déjà noté par toi » : les mêmes issues, aucun champ « quantité », « Ajouter » n\'écrit rien et dit pourquoi',
+      g && sansImpasse(st2) && /ni quantité ni valeurs/.test(toastAj2) && neuves(await journal(pg), av).length === 0, J({ k, st2, toastAj2 }));
+    /* ③ ce qui la marque meurt avec elle : un autre nom n'hérite pas de ses issues, un autre aliment repris non plus */
+    g = g && await taper(pg, '#af-desc', 'Autre plat (test)'); try { await pg.locator('#af-desc').blur(); } catch (e) { g = false; } await pause(pg, 200);
+    const st3 = await etat(pg);
+    /* le nom effacé, « Mes aliments » revient ; on y reprend l'isolat (cas figé) — l'écran ne s'est pas fermé entre-temps */
+    g = g && await taper(pg, '#af-desc', ''); try { await pg.locator('#af-desc').blur(); } catch (e) { g = false; } await pause(pg, 300);
+    const gI = await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + iI + ')"]'); g = g && gI; await pause(pg, 900);
+    const st4 = await etat(pg), toast4 = await dernierToast(pg);
+    t('B-NFIAB ZÉRO ③ ⛔ CE QUI LA MARQUE NE SURVIT PAS À SON SUJET : sous un autre nom, ses issues s\'effacent ; l\'isolat repris ensuite (cas figé) ne reçoit pas sa phrase — ni à l\'écran, ni dans le toast',
+      g && !/ni quantité ni valeurs/.test(st3.txt) && !/ni quantité ni valeurs/.test(st4.txt) && !/ni quantité ni valeurs/.test(toast4) && /^Repris — choisis la quantité/.test(toast4), J({ gI, st3, st4, toast4 }));
+    await fin(o); }
+  /* ④ l'issue « tape ses valeurs » mène au journal : 300·20·30·10 pour 250 g, déclarées par la personne ; l'ancienne saisie intacte */
+  { const ZERO = { id: 'nfiab-zero-000002', date: jour(2), ts: ilya(2), meal: 'dejeuner', name: 'Gratin maison (test)', kcal: 0, prot: 0, carbs: 0, fat: 0,
+      q: null, per100: null, v: 1, saisie: 'manuel', origine: 'utilisateur' };
+    const o = await ouvrir(b, PORT, fixture('zero4', [ZERO]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    g = g && await clic(pg, '#af-quick-list div[onclick="quickFillFood(0)"]'); await pause(pg, 700);
+    for (const [id, v] of [['#af-kcal', '300'], ['#af-prot', '20'], ['#af-carbs', '30'], ['#af-fat', '10']]) g = g && await taper(pg, id, v);
+    try { await pg.locator('#af-fat').blur(); } catch (e) { g = false; }
+    await pause(pg, 200); g = g && await taper(pg, '#af-poids', '250'); try { await pg.locator('#af-poids').blur(); } catch (e) { g = false; }
+    const av = (await journal(pg)).map((x) => x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NFIAB ZÉRO ④ ⭐ L\'ISSUE « TAPE SES VALEURS » MÈNE AU JOURNAL : 300·20·30·10 pour 250 g, gardées telles quelles (« déclarées ») — et l\'ancienne saisie à 0 est INTACTE',
+      g && !!l && memes(vals(l), { kcal: 300, prot: 20, carbs: 30, fat: 10 }) && l.q === 250 && l.u === 'g' && l.n2 && l.n2.st === 'declaree'
+      && J(L.find((x) => x.id === ZERO.id)) === J(ZERO), J({ l, toast: await dernierToast(pg) }));
+    await fin(o); }
+
   /* Les sorties sont COUPÉES par construction (route) : on les liste ; aucune ne vise l'IA ni Milo (le Worker). */
   t('B-NFIAB Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
     ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));
 }
 
 /* ═════ T07 · T08 · T12 — SYNCHRO, RESTAURATION, AUTRES APPAREILS, REMISE À ZÉRO (vrai Code.js en local) ═════ */
+/* ⚖️ RETOUR DE CLAUDE PRINCIPAL (25/10) — LA SYNCHRO DES MASQUAGES DÉPEND DU CODE.JS SERVI, ET LE BANC LE DIT.
+   Six témoins (T08 ① ② ③ ④ ⑤ ⑦) supposent un Code.js dont la liste blanche de `saveProfile` garde `hiddenFoods` — le commit
+   séparé de cette branche, à déployer seulement sur GO de Michel. Sur un Code.js sans elle (celui de master), ils sont SANS OBJET :
+   listés à part, JAMAIS comptés verts. Les garanties LOCALES (T08L : « ✕ » et la remise à zéro tiennent au rechargement et à
+   « Restaurer » sur le MÊME téléphone) se jouent dans LES DEUX modes. ⛔ Un mode choisi par erreur ne passe pas en silence :
+   T08 ⓪ compare ce que dit la liste blanche à ce que le serveur (le vrai Code.js, en local) FAIT d'un « ✕ » synchronisé. */
+const RACINE_SRV = process.env.NUT2X_RACINE || path.join(__dirname, '..', '..');   // la même racine que le serveur simulé
+function masquesDansListeBlanche() {
+  let src = ''; try { src = fs.readFileSync(path.join(RACINE_SRV, 'Code.js'), 'utf8'); } catch (e) { return false; }
+  const i = src.indexOf('function handleSaveProfile_('); if (i < 0) return false;
+  const j = src.indexOf('\nfunction ', i + 10);
+  return /\bbody\.hiddenFoods\b/.test(src.slice(i, j < 0 ? src.length : j));
+}
+
 async function croiseFiab(t, b, PORT) {
   console.log('\n-- B-NFIAB-X. Synchro, restauration, autres appareils, remise à zéro (vrai Code.js en local) --');
+  const SRV = masquesDansListeBlanche(), sansObjet = [];
+  console.log('   MODE : ' + (SRV ? 'le Code.js servi GARDE les masquages (`hiddenFoods` dans la liste blanche de saveProfile) — synchro entre appareils ET garanties locales'
+    : 'le Code.js servi NE GARDE PAS les masquages (pas de `hiddenFoods` dans la liste blanche de saveProfile) — garanties LOCALES seulement ; les 6 témoins de synchro entre appareils sont SANS OBJET'));
+  /* Un témoin de synchro entre appareils : joué si le serveur garde les masquages, sinon listé SANS OBJET (ni vert, ni rouge). */
+  const tS = (nom, cond, detail) => { if (SRV) return t(nom, cond, detail);
+    sansObjet.push(nom); console.log('  --   ' + nom + '   SANS OBJET (le Code.js servi ne garde pas les masquages)'); };
   const etat = { drivePanne: false, reseauCoupe: false };
   const { X, tok } = CR.preparer(etat);
   const journalInit = [ANC_ISO, STK_823, STK_901, STK_1016, Object.assign({}, V2_ISO)];
@@ -473,8 +608,25 @@ async function croiseFiab(t, b, PORT) {
   let g = i1 >= 0 && await clic(p1, '#af-quick-list button[onclick="deleteQuickFood(' + i1 + ')"]'); await pause(p1, 250); g = g && await clic(p1, '#confirm-ok'); await pause(p1, 300);
   await CR.synchroniser(p1);
   const srv1 = ((X.compte(CR.ALICE) || {}).profile || {}).hiddenFoods || [];
-  t('B-NFIAB-X T08 ① « ✕ » PART AU SERVEUR : la date de départ de l\'identité est dans le profil (avant : jamais synchronisée)',
+  const loc1 = await p1.evaluate((e) => (S.hiddenFoods || []).some((h) => h && h.k === 'id:' + e), EAN_ISO);
+  t('B-NFIAB-X T08 ⓪ LE MODE EST LE BON : la liste blanche de saveProfile ' + (SRV ? 'contient' : 'ne contient pas') + ' `hiddenFoods`, et le serveur (le vrai Code.js, en local) '
+    + (SRV ? 'garde' : 'ne garde pas') + ' le « ✕ » synchronisé — ce que dit sa liste et ce qu\'il fait concordent',
+    g && loc1 && SRV === srv1.length > 0, J({ SRV, loc1, srv1 }));
+  tS('B-NFIAB-X T08 ① « ✕ » PART AU SERVEUR : la date de départ de l\'identité est dans le profil (avant : jamais synchronisée)',
     g && srv1.some((e) => e.k === 'id:' + EAN_ISO && e.t > 0), J({ g, i1, srv1, loc: await p1.evaluate(() => S.hiddenFoods) }));
+
+  /* GARANTIES LOCALES (les deux modes) : sur le MÊME téléphone, « ✕ » tient au rechargement et à « 🔄 Restaurer » — rien de ce que
+     renvoie le serveur ne le défait (la liste locale est FUSIONNÉE, jamais remplacée). */
+  const masqueIso = (pg) => pg.evaluate((e) => { try { openAddFood(); } catch (x) {}
+    const r = { m: (S.hiddenFoods || []).some((h) => h && h.k === 'id:' + e), deja: _afSuggLocales('iso zero').filter((l) => l.sourceId === e).length,
+      fav: (_afQuickItems || []).some((it) => it.fav && (it._src || {}).sourceId === e) };
+    try { closeAddFood(); } catch (x) {} return r; }, EAN_ISO);
+  await CR.redemarrer(p1); const L1 = await masqueIso(p1), n1r = (await CR.journalApp(p1)).length;
+  t('B-NFIAB-X T08L ① ⭐ SUR LE MÊME TÉLÉPHONE, « ✕ » TIENT AU RECHARGEMENT : sa date de départ est toujours là, l\'isolat n\'est plus proposé (ni favori, ni « Déjà noté par toi »), le journal entier',
+    L1.m && L1.deja === 0 && !L1.fav && n1r === journalInit.length, J({ L1, n: n1r }));
+  await CR.restaurer(p1); const L2 = await masqueIso(p1), n1s = (await CR.journalApp(p1)).length;
+  t('B-NFIAB-X T08L ② ⭐ … ET À « 🔄 RESTAURER » : ce que renvoie le serveur ne fait pas revenir l\'isolat — le masquage local est gardé (fusionné, jamais remplacé), le journal arrive entier',
+    L2.m && L2.deja === 0 && !L2.fav && n1s === journalInit.length, J({ L2, n: n1s }));
 
   /* Appareil 2 (téléphone neuf) : il DÉMARRE HORS LIGNE (le démarrage ne peut rien charger du serveur), puis « Restaurer » une fois
      le réseau revenu → l'isolat reste masqué ; le journal arrive entier. ⚠️ Démarré en ligne, le démarrage rapportait DÉJÀ les
@@ -486,7 +638,7 @@ async function croiseFiab(t, b, PORT) {
   etat.reseauCoupe = false;
   await CR.restaurer(p2);
   const j2 = await CR.journalApp(p2), deja2 = await p2.evaluate((e) => { try { openAddFood(); } catch (x) {} const n = _afSuggLocales('iso zero').filter((l) => l.sourceId === e).length; try { closeAddFood(); } catch (x) {} return n; }, EAN_ISO);
-  t('B-NFIAB-X T08 ② ⭐ TÉLÉPHONE NEUF (démarré hors ligne) + « Restaurer » : aucun masquage avant, puis l\'isolat masqué sur l\'autre appareil ne réapparaît pas (« Déjà noté par toi » vide pour lui), le journal arrive entier (' + journalInit.length + ' lignes)',
+  tS('B-NFIAB-X T08 ② ⭐ TÉLÉPHONE NEUF (démarré hors ligne) + « Restaurer » : aucun masquage avant, puis l\'isolat masqué sur l\'autre appareil ne réapparaît pas (« Déjà noté par toi » vide pour lui), le journal arrive entier (' + journalInit.length + ' lignes)',
     masquesAvant2 === 0 && deja2 === 0 && j2.length === journalInit.length, J({ masquesAvant2, deja2, n: j2.length }));
 
   /* Appareil 1 : la REMISE À ZÉRO préparée — périmètre, sauvegarde (fichier capté), exécution confirmée */
@@ -514,8 +666,17 @@ async function croiseFiab(t, b, PORT) {
   t('B-NFIAB-X T12 ① les totaux du journal et ce que Milo lit de la nutrition sont INCHANGÉS par la remise à zéro (les propositions ne sont pas des repas)',
     totalApres === totalAvant && !/ERREUR/.test(totalAvant) && ctxApres === ctxAvant && !/^ERREUR/.test(ctxAvant) && ctxAvant.length > 1000, J({ totalAvant, totalApres, n: ctxAvant.length }));
   const srv2 = (X.compte(CR.ALICE) || {}).profile || {};
-  t('B-NFIAB-X T08 ③ la remise à zéro est au serveur (une seule date, `*`) ; ses favoris restent au serveur (un envoi vide ne remplace jamais sa liste) — c\'est la date qui les écarte',
+  tS('B-NFIAB-X T08 ③ la remise à zéro est au serveur (une seule date, `*`) ; ses favoris restent au serveur (un envoi vide ne remplace jamais sa liste) — c\'est la date qui les écarte',
     (srv2.hiddenFoods || []).some((e) => e.k === '*' && e.t > 0) && (srv2.savedFoods || []).length === 1, J({ m: srv2.hiddenFoods, f: (srv2.savedFoods || []).length }));
+
+  /* GARANTIE LOCALE (les deux modes) : sur ce téléphone, la remise à zéro tient au rechargement et à « 🔄 Restaurer ». Le serveur
+     garde ses anciens favoris (un envoi vide ne remplace jamais sa liste) : « Restaurer » les rapporte, et c'est la date LOCALE qui
+     les écarte. */
+  await CR.redemarrer(p1); const propR = await propositions(p1);
+  await CR.restaurer(p1); const propS = await propositions(p1), jS = empreinte(await CR.journalApp(p1));
+  const favSrv = (((X.compte(CR.ALICE) || {}).profile || {}).savedFoods || []).length;
+  t('B-NFIAB-X T08L ③ ⭐⭐ SUR CE TÉLÉPHONE, LA REMISE À ZÉRO TIENT AU RECHARGEMENT ET À « 🔄 RESTAURER » : aucun favori, aucune proposition ancienne — alors que le serveur garde encore ses favoris d\'avant — et le journal identique à l\'octet',
+    favSrv >= 1 && [propR, propS].every((p) => p.mes === 0 && p.deja === 0 && p.hab === 0 && p.favs === 0) && jS === jAvant, J({ propR, propS, favSrv }));
 
   /* Appareil 2, resté HORS LIGNE pendant la remise à zéro : il « ✕ » un autre aliment et synchronise SA liste (sans la remise à
      zéro). Le serveur fusionne (le plus tard gagne) : la remise à zéro n'en sort jamais. */
@@ -525,20 +686,20 @@ async function croiseFiab(t, b, PORT) {
     persist(); });
   await CR.synchroniser(p2);
   const srv3 = ((X.compte(CR.ALICE) || {}).profile || {}).hiddenFoods || [];
-  t('B-NFIAB-X T08 ⑦ ⭐ UN TÉLÉPHONE RESTÉ SUR UNE ANCIENNE LISTE (hors ligne pendant la remise à zéro) SYNCHRONISE : le serveur garde la remise à zéro ET ajoute son « ✕ » — rien ne se perd, rien ne réapparaît',
+  tS('B-NFIAB-X T08 ⑦ ⭐ UN TÉLÉPHONE RESTÉ SUR UNE ANCIENNE LISTE (hors ligne pendant la remise à zéro) SYNCHRONISE : le serveur garde la remise à zéro ET ajoute son « ✕ » — rien ne se perd, rien ne réapparaît',
     srv3.some((e) => e.k === '*' && e.t > 0) && srv3.some((e) => e.k === 'nom:autre aliment (test)'), J(srv3));
 
   /* Appareil 2 : au DÉMARRAGE (sans « Restaurer »), la remise à zéro faite ailleurs s'applique */
   await CR.redemarrer(p2); await pause(p2, 1500);
   const prop2 = await propositions(p2), j2b = await CR.journalApp(p2);
-  t('B-NFIAB-X T08 ④ ⭐ L\'AUTRE APPAREIL, AU DÉMARRAGE : la remise à zéro faite ailleurs s\'applique — aucun favori, aucune proposition ancienne, son journal intact',
+  tS('B-NFIAB-X T08 ④ ⭐ L\'AUTRE APPAREIL, AU DÉMARRAGE : la remise à zéro faite ailleurs s\'applique — aucun favori, aucune proposition ancienne, son journal intact',
     prop2.mes === 0 && prop2.deja === 0 && prop2.favs === 0 && j2b.length === journalInit.length, J({ prop2, n: j2b.length }));
 
   /* Appareil 3 : un téléphone neuf restauré APRÈS la remise à zéro — rien ne revient */
   const D3 = await CR.appareil(b, PORT, X, etat, tok, 'nfiab-a3', {}); const p3 = D3.pg;
   await CR.restaurer(p3);
   const prop3 = await propositions(p3), j3 = await CR.journalApp(p3);
-  t('B-NFIAB-X T08 ⑤ ⭐⭐ UN 3ᵉ TÉLÉPHONE RESTAURÉ APRÈS : les favoris du serveur sont écartés par la date, aucune ancienne proposition ne revient, le journal est restauré ENTIER',
+  tS('B-NFIAB-X T08 ⑤ ⭐⭐ UN 3ᵉ TÉLÉPHONE RESTAURÉ APRÈS : les favoris du serveur sont écartés par la date, aucune ancienne proposition ne revient, le journal est restauré ENTIER',
     prop3.favs === 0 && prop3.mes === 0 && prop3.deja === 0 && j3.length === journalInit.length, J({ prop3, n: j3.length }));
 
   /* La vie continue : un aliment noté APRÈS la remise à zéro est proposé ; une étoile posée ensuite survit à « Restaurer » */
@@ -567,6 +728,7 @@ async function croiseFiab(t, b, PORT) {
   /* Comme B-NIX : toute sortie hors du serveur simulé est COUPÉE (jamais réussie). Les appels au Worker viennent du démarrage de l'app
      (Milo, hors de ce banc) : coupés, comptés, jamais servis. */
   t('B-NFIAB-X Z aucune erreur de page ; aucune sortie réseau réussie (toutes coupées hors du serveur simulé)', errs.length === 0, J({ errs: errs.slice(0, 4), sorties: [...new Set(sorties)] }));
+  if (sansObjet.length) console.log('   SANS OBJET (' + sansObjet.length + ', ni verts ni rouges) — le Code.js servi ne garde pas les masquages : ' + sansObjet.map((n) => n.replace(/^B-NFIAB-X (\S+ \S+).*$/, '$1')).join(' · '));
   for (const D of [D1, D2, D3]) await D.cx.close();
 }
 
