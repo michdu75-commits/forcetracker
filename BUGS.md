@@ -5397,3 +5397,53 @@ serveur laissait `B-NFIAB-X T08 ②` VERT (13 / 0). Le téléphone « neuf » du
 lequel l'avait produit. Corrigé : l'appareil démarre **hors ligne** (le démarrage ne peut rien charger), le réseau revient,
 puis « Restaurer » ; et le témoin vérifie d'abord qu'aucun masquage n'était là avant. Le démarrage garde son propre témoin
 (T08 ④, F23 le fait rougir). *Quand deux chemins mènent au même état, un témoin d'état ne prouve aucun des deux.*
+
+## §118 — ⛔⛔ UNE ENTRÉE VIDE (`null`) DANS LE JOURNAL FAISAIT TOMBER LE JOURNAL DU JOUR, CE QUE MILO LIT, « AJOUTER » ET LA RECHERCHE *(25/10/2026, retour de Claude Principal sur NV2-FIAB — « N08 » ; PRÉEXISTANT, reproduit sur master `93dfbb75` ; corrigé sur `claude/nutrition-v2`, non publié)*
+
+**Ce qui se passait.** Une entrée `null` dans `S.foodLog` (d'où qu'elle vienne : rien dans le code actuel n'en écrit, mais
+une restauration la garde telle quelle) : erreur au démarrage, journal du jour vide (`renderFoodJournal`, `e.date`), et le
+contexte de Milo ne se construisait plus (`_profilAlimentaire`, `e.kcal`). L'export et la synchro passaient déjà.
+
+**Ce qui le ferme.** Les 2 lignes de Principal, mot pour mot (`.filter(e => e && typeof e === 'object')` dans
+`_profilAlimentaire`, `e && e.date === td` dans `renderFoodJournal`). ⚠️ **Et quatre de plus, de même cause, trouvées en
+élargissant son témoin** : ses conditions (aucun profil calorique, une ligne du jour placée AVANT les entrées vides) laissaient
+passer `_resteDuJour` (la carte « ce qu'il te reste », que le journal du jour affiche — il tombait avec elle dès que le profil
+est complet), et trois tris dont le comparateur lit `.ts` (`_buildFoodQuickItems` : « Ajouter » ; `_afSuggLocales` : « Déjà
+noté par toi » ; `_mesAliments` : les idées pour le reste). Mêmes gestes : les entrées vides sont **ignorées, jamais
+réécrites** (le journal garde ses 4 entrées). Contexte de Milo identique à l'octet sans entrée vide (76 275 caractères,
+avant/après et contre master). Témoins `B-NFIAB N08 ① ② ③` (rouges sur master et sur `beda2652`), mutations N08a → N08f.
+
+**À quoi on le reconnaît.** Une liste persistée lue champ par champ, ou triée, sans `e &&`. *Un témoin qui reproduit les
+conditions de celui qui a trouvé le défaut ne prouve que ces conditions-là : un profil complet et un autre ordre en ont trouvé
+quatre de plus.* ⚠️ Limite : revue des lecteurs de `S.foodLog` dans les fichiers de l'app (64 occurrences) et sonde des
+écrans principaux ; pas de recherche exhaustive dans les autres listes persistées.
+
+## §119 — ⛔ UNE ANCIENNE SAISIE SANS QUANTITÉ NI VALEURS ÉTAIT UNE IMPASSE : L'ÉCRAN DEMANDAIT UN POIDS SANS ENDROIT OÙ LE DIRE *(25/10/2026, retour de Claude Principal ; reproduit sur master et sur `beda2652` ; corrigé sur `claude/nutrition-v2`)*
+
+**Ce qui se passait.** `{kcal:0, prot:0, carbs:0, fat:0, q:null, per100:null}` reprise (« + Ajouter », « Mes aliments »,
+« Déjà noté par toi ») : la reprise sans quantité rend l'écran à la saisie à la main, et `_afMajAncre` cache le bloc
+quantité tant qu'**aucune** valeur n'est posée (ft-v1065, « rien à rescaler ») ; les issues n'étaient dessinées que pour
+le cas figé (`_afRef.fige`). Résultat : 0 · 0 · 0 · 0, ni champ ni issue, et « Ajouter » répondait « Combien pesait ce que
+tu as mangé ? » — rien ne s'écrivait (sûr), mais on ne pouvait pas en sortir.
+
+**Ce qui le ferme.** Les mêmes issues qu'une reprise sans fiche (`_n2IssuesHtml`, **un seul propriétaire** désormais pour
+le cas figé et celui-ci — R2), une phrase qui dit pourquoi, et la même phrase dans « Ajouter » et les toasts.
+⛔ **Aucun champ « quantité » pour ces 0, exprès** : accepter une quantité avec eux affirmerait, en silence, qu'ils valaient
+pour elle. La marque (`_afRepriseVide`, en mémoire seulement) meurt avec l'aliment (`_afOublierAliment`, R15) et un autre
+nom n'en hérite pas. Témoins `ZÉRO ① → ④` (① ② rouges avant ; ③ ④ sont des gardes, verts avant aussi, que Z3/Z4 font rougir) ;
+mutations Z1 → Z7 et F4.
+
+**À quoi on le reconnaît.** Un écran qui demande une chose sans donner l'endroit pour la faire.
+
+## §120 — ⛔ MÉTHODE : SIX TÉMOINS SUPPOSAIENT UN CODE.JS PAS ENCORE DÉPLOYÉ *(25/10/2026, retour de Claude Principal : 42 / 6 sur l'intégration sans le Code.js de `bb2075b9`)*
+
+Les témoins de synchro des masquages (`B-NFIAB-X T08 ① ② ③ ④ ⑤ ⑦`) supposaient un serveur qui garde `hiddenFoods` —
+le commit `Code.js` séparé, à déployer **seulement** sur GO de Michel. Sur une intégration sans lui, ils rougissaient sans
+que l'app ait changé : ils mesuraient l'environnement. **Ce qui le ferme** : ces six témoins ne se jouent que si la liste
+blanche de `saveProfile` du Code.js servi contient `hiddenFoods` ; sinon ils sont listés **SANS OBJET** (jamais comptés verts).
+Les garanties **locales** (`T08L ① ② ③` : « ✕ » et la remise à zéro tiennent au rechargement et à « Restaurer » sur le même
+téléphone) se jouent dans les deux modes. ⚠️ **Et la condition est elle-même vérifiée** : `T08 ⓪` compare ce que dit la liste
+blanche à ce que le serveur (le vrai Code.js, en local) fait d'un « ✕ » synchronisé — sinon un témoin conditionnel devient un
+interrupteur qui éteint les rouges. F19 (le serveur lit les masquages sans les garder) rougit ⓪ et la synchro ; F19b (la ligne
+retirée, c'est le Code.js de master) reste vert en le disant ; FL1 → FL3 font rougir les garanties locales sur ce Code.js.
+*Un témoin vert sur sa branche et rouge à l'intégration, sans que l'app ait changé, mesurait l'environnement.*

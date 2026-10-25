@@ -197,10 +197,12 @@ def main():
     parties = sorted(set(m[4] for m in MUT if choisie(m[0])))
     for p in parties:
         tmp0, a0 = cloner()
-        rc, res, _ = banc(a0, p)
+        rc, res, r0 = banc(a0, p)
         shutil.rmtree(tmp0, ignore_errors=True)
-        if rc != 0:
-            print('  !! ARBRE SAIN DEJA ROUGE OU PLANTE (%s) — controle refuse : %s' % (p, res)); return 1
+        if rc != 0:   # un refus dit QUEL temoin (25/10 : un rouge de l'arbre sain, sous charge, restait anonyme)
+            print('  !! ARBRE SAIN DEJA ROUGE OU PLANTE (%s) — controle refuse : %s' % (p, res))
+            for r in r0: print('       rouge : ' + r[:160])
+            return 1
         print('  arbre sain, partie %s : %s (point de depart valide)' % (p, res))
     print()
     conformes, total = 0, 0

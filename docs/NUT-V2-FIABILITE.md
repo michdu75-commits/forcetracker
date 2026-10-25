@@ -3,7 +3,8 @@
 > **Mission P1 de Michel du 24/10/2026** (« Claude Nutrition corrige Nutrition, Claude Principal coordonne, intègre et
 > qualifie »). Branche `claude/nutrition-v2`, **NON fusionnée, NON publiée, rien de redéployé, aucune donnée réelle
 > touchée**. Ce dossier suit la liste de `docs/CHANTIER-NUTRITION-SEANCE.md` §8.7 (ce que chaque session livre).
-> Décisions : `D-130` → `D-135` (réservées à Claude Nutrition, §8.4). Bugs : `BUGS.md` §113 → §117.
+> Décisions : `D-130` → `D-135` (réservées à Claude Nutrition, §8.4). Bugs : `BUGS.md` §113 → §117, puis §118 → §120
+> pour les trois conditions de Claude Principal du 25/10 (**§12**).
 > Banc : `tools/banc_nut_fiabilite.js` (module `tests/parcours/nut_fiabilite.js`, blocs **B-NFIAB** et **B-NFIAB-X**) ·
 > contrôle négatif : `tools/mut_nut_fiabilite.py`.
 
@@ -269,3 +270,124 @@ sur le vrai journal de Michel :
 7. **La lecture** : « 156 kcal · pour 40 g · P 35 · G 1 · L 1 » tient sur la largeur d'un iPhone, sans débordement.
 8. **Le premier toucher** : taper un nom puis toucher directement le champ de quantité — le toucher est-il perdu (vu en
    Chromium, §6 ⑥) ?
+
+---
+
+## 12. Retours de Claude Principal du 25/10 (verdict B) — les trois conditions
+
+> Branche `claude/nutrition-v2` après `beda2652` ; `Code.js` **non touché** ; ni master, ni publication, ni déploiement.
+> Bugs : `BUGS.md` §118 → §120. Témoins nouveaux : `B-NFIAB N08 ① ② ③`, `ZÉRO ① → ④`, `B-NFIAB-X T08 ⓪`, `T08L ① ② ③`.
+
+**① N08 — une entrée vide (`null`) dans le journal.** Les 2 lignes de Principal sont intégrées **mot pour mot**
+(`_profilAlimentaire`, `renderFoodJournal`). ⚠️ **Elles ne suffisaient pas** : son témoin (aucun profil calorique, une ligne
+du jour placée avant les entrées vides) laissait passer quatre lecteurs de même cause, mesurés en élargissant le témoin
+(profil complet, entrée vide **en tête**) : `_resteDuJour` (la carte « ce qu'il te reste », que le journal du jour affiche :
+avec un profil complet, le journal tombait encore), `_buildFoodQuickItems` (« Ajouter »), `_afSuggLocales` (« Déjà noté par
+toi ») et `_mesAliments` (les idées pour le reste). Même garde, même règle : les entrées vides sont **ignorées, jamais
+réécrites**. Contexte de Milo **identique à l'octet** sans entrée vide : 76 275 caractères avant/après et contre master
+(Principal en mesure 81 145 sur sa copie d'intégration, qui porte aussi Séance).
+
+**② L'ancienne saisie à zéro** `{kcal:0, prot:0, carbs:0, fat:0, q:null, per100:null}`. Reprise (« + Ajouter », « Mes
+aliments », « Déjà noté par toi ») : l'écran dit pourquoi (*« Cette ancienne saisie n'a ni quantité ni valeurs : rien ne se
+calcule à partir d'elle. Retrouve l'aliment, scanne son code-barres ou saisis son étiquette — ou tape ses valeurs. »*) et
+donne **les mêmes trois issues** qu'une reprise sans fiche — un seul propriétaire désormais (`_n2IssuesHtml`, R2). « Ajouter »
+et les toasts redisent la phrase au lieu de « Combien pesait… ». ⛔ **Aucun champ « quantité » pour ces 0, exprès** : en accepter
+une affirmerait qu'ils valaient pour elle. Les valeurs tapées mènent au journal (ZÉRO ④ : 300 · 20 · 30 · 10 pour 250 g,
+déclarées, l'ancienne saisie intacte). Aide détaillée Nutrition : une phrase ajoutée. Pas de pop-up (un correctif).
+
+**③ Les témoins de synchro, selon le Code.js servi.** Sans `hiddenFoods` dans la liste blanche de `saveProfile` (le Code.js de
+master, donc l'intégration sans GO serveur), les six témoins `T08 ① ② ③ ④ ⑤ ⑦` sont **SANS OBJET** — listés, jamais
+comptés verts ; avec elle (le commit `Code.js` séparé), ils se jouent. `T08 ⓪` vérifie que le mode annoncé concorde avec ce que
+le serveur (le vrai Code.js, en local) fait d'un « ✕ » synchronisé. Les garanties **locales** se jouent dans les deux modes :
+`T08L ①` « ✕ » tient au rechargement, `T08L ②` à « Restaurer » sur le même téléphone, `T08L ③` la remise à zéro aussi (le
+serveur garde ses anciens favoris, la date locale les écarte).
+
+### 12.1 Rouge avant, vert après
+
+| Témoin | master `93dfbb75` | branche `beda2652` | branche après |
+|---|---|---|---|
+| N08 ① ② (entrée vide, conditions de Principal) | rouges | rouges | verts |
+| N08 ③ (profil complet, entrée vide en tête) | rouge | rouge (aussi avec les 2 lignes seules) | vert |
+| ZÉRO ① ② (l'impasse) | rouges | rouges | verts |
+| ZÉRO ③ ④ (gardes : la marque ne déborde pas ; l'issue « tape ses valeurs ») | verts | verts | verts — Z3, Z4 les font rougir |
+| T08 ⓪ · T08L ① ② ③ | — (nouveaux) | — | verts dans les deux modes |
+
+Totaux de la partie écran (OK / rouge) : master **16 / 26** · `beda2652` **37 / 5** (exactement les 5 témoins nouveaux) · avec les
+2 lignes de Principal seules **41 / 1** (N08 ③) · après **42 / 0**.
+
+### 12.2 Les deux modes de la synchro (banc entier, écran + croisé)
+
+| Code.js servi | Mode annoncé par le banc | Résultat |
+|---|---|---|
+| celui de la branche (garde `hiddenFoods`) | synchro entre appareils ET garanties locales | **59 / 0** (T08 ⓪ → ⑦, T08L ① ② ③) |
+| celui de master (ne le garde pas) | garanties locales seulement | **53 / 0**, et **6 témoins SANS OBJET** listés (T08 ① ② ③ ④ ⑤ ⑦), jamais comptés verts |
+
+### 12.3 Contrôle négatif, voisins, contexte de Milo
+
+| Contrôle | Résultat |
+|---|---|
+| `tools/mut_nut_fiabilite.py`, les 43 mutations (arbre sain : écran 42 / 0, croisé 17 / 0) | **43 / 43 conformes** |
+| dont celles de ce retour : N08a → N08f, Z1 → Z7, F19 (ré-exprimée), F19b, FL1 → FL3, F4 (étendue) | 19 / 19 |
+
+| Banc | Résultat | Durée |
+|---|---|---|
+| aides_audit | 18 / 0 | 6 s |
+| journal_qty_guard | 23 / 0 | 27 s |
+| nut2_parcours | 111 / 0 | 134 s |
+| seance_recette | 93 / 0 | 167 s |
+| nut2_moteur | 70 / 0 | 1 s |
+| nut_secu_p1 | 82 / 0 | 7 s |
+| nut_m6_rejeu | 29 / 0 | 74 s |
+| pots_nutrition | 48 / 0 | 31 s |
+| nut_v2_p1_croise | 16 / 0 | 57 s |
+| repas_actif | 24 / 0 | 19 s |
+| ia_ref100 | 36 / 0 | 17 s |
+| nut_fiabilite (Code.js de la branche : mode serveur) | 59 / 0 | 172 s |
+| nut_fiabilite (Code.js de master : mode local) | 53 / 0 | 171 s |
+| annexe (toutes les suites) | 14 PASS + 1 défaut connu (`discussions`, ses 2 rouges listés, préexistant) | 445 s |
+| passe réduite (26 blocs) | **997 ✅ · 0 ❌** | 330 s |
+
+- **Contexte de Milo** (R34), à données égales et sans entrée vide : **identique à l'octet**, 76 275 caractères — `beda2652`
+  contre la branche après, et master contre la branche après.
+- **Moteur MET** : les 8 fonctions et constantes gelées sont identiques à master (aucun fichier de Séance touché).
+- `check_regles` vert ; sélecteur de recette (auto-test) **15 / 0** ; `git diff --check` propre.
+
+### 12.4 Ce qui reste ouvert
+
+- **Pour l'intégration** : si les 2 lignes de N08 ont déjà été posées sur la copie d'intégration, il faut aussi les **4 autres**
+  — avec un profil calorique complet, le journal du jour et « Ajouter » tombent encore sans elles (N08 ③).
+- **Un rouge isolé, non expliqué** : la 1ʳᵉ tentative d'un des trois groupes du contrôle négatif a été refusée (arbre sain :
+  1 rouge sous charge, trois bancs en parallèle). Relancé : 42 / 0 puis 15 / 15 ; **non reproduit en 6 exécutions** sous la
+  même charge ; témoin non identifié — `tools/mut_nut_fiabilite.py` nomme désormais le rouge qui fait refuser l'arbre sain.
+- **Les autres listes enregistrées** (séances, pesées, sommeil…) n'ont pas été passées au même crible que `S.foodLog`.
+- **La ligne écrite par l'issue « tape ses valeurs »** garde la porte « reprise » et la fiabilité « déclarée », comme toute
+  reprise sans quantité.
+- **Pas de passe complète** (§8.7 ⑦) ; passe réduite aux 26 blocs qui citent une fonction touchée.
+- **Recette iPhone** (à ajouter à §11) : une ancienne saisie à 0 (si le compte de test en a une) → « + Ajouter » → la phrase et
+  les 3 boutons ; « Retrouver » lance la recherche ; « Étiquette » ouvre le calibrage ; rien n'est enregistré sans valeurs.
+
+### 12.5 Compteurs (règle 17, code de l'app seulement)
+
+| Compteur | Valeur |
+|---|---|
+| Données persistées ajoutées | **0** — la marque de la saisie à zéro vit en mémoire, rien n'est stocké |
+| Fichiers applicatifs touchés | **3** : `app.js`, `screens.js`, `coach.js` (une phrase d'aide) ; `Code.js` non touché |
+| Lignes ajoutées − retirées | **+48 − 16** (net + 32), dont `app.js` + 46 − 14 |
+| Anciens chemins supprimés ou fusionnés | **1 fusionné** : les trois issues, dessinées en ligne dans le cas figé, ont un seul propriétaire (`_n2IssuesHtml`) partagé avec la saisie à zéro ; 0 supprimé |
+
+### 12.6 Registre et passation (règle d'or 19) — le bloc à reporter, ⛔ rien n'est écrit sur Drive par cette session
+
+> **Lu avant de livrer** (Drive, lecture seule, accès testé) : le registre « SUIVI DES BUGS — FORCE TRACKER », vue
+> « Consolidé 25-10 » (les 54 lignes ; en entier pour les tickets ci-dessous), et la « PASSATION MAÎTRE » — ses deux blocs du
+> 25/10 (complément Q15 / validation, point de pilotage), pas l'historique plus ancien. La règle 19 est arrivée sur master
+> **pendant** cette mission (`58755762`) : la lecture a été faite à la livraison, pas avant le code. Le connecteur ne modifie
+> pas un fichier existant (règle 18) : **Claude Principal** reporte ce bloc, mêmes IDs, même date, rien d'effacé.
+
+| ID | Ancienne valeur (Consolidé 25-10) | Nouvelle valeur proposée (25/10/2026) |
+|---|---|---|
+| `NUT-LIMITES-01` (entrée null) | « À qualifier ; limites déclarées » · reste : « reproduire séparément ; distinguer null synthétique et vrai parcours » | **Corrigé sur branche** `claude/nutrition-v2`, code `eea860ec` : une entrée `null` (synthétique : aucun écrivain actuel n'en écrit ; une restauration la garde si elle existe) faisait tomber le démarrage, le journal du jour, le contexte de Milo et, avec un profil complet, « ce qu'il te reste », « Ajouter » et « Déjà noté par toi ». Témoins `B-NFIAB N08 ① ② ③` rouges sur master et `beda2652`, verts après ; mutations N08a → N08f. Publication : aucune. iPhone : non (non reproductible sans données fabriquées). **Reste** : le « premier tap quantité Chromium » (l'autre moitié du ticket), non traité ; origine réelle d'un `null`, non démontrée. |
+| `NUT-ZERO-01` (**proposé**, nouveau) | — | Ancienne saisie sans quantité ni valeurs : la reprise était une impasse. **Corrigé sur branche** (`eea860ec`) : les 3 issues d'une reprise sans fiche, aucune quantité acceptée pour ces 0. Témoins `ZÉRO ① → ④`, mutations Z1 → Z7. iPhone : à faire. Lien possible, **non qualifié** : « crème fraîche ajoutée à zéro » (`NUT-IDENT-01`) et « aliment ajouté à zéro » (recette de la passation) — ce correctif couvre la **reprise** d'une ancienne saisie à zéro, pas l'ajout d'un aliment à zéro. |
+| `NUT-VAL-02` / `SERVEUR-CODEJS-01` | « avec Code.js Nutrition 48/0 ; sans 42/6 » | La dépendance demeure ; le banc la **dit** au lieu de rougir : avec le Code.js de la branche **59 / 0** ; avec celui de master **53 / 0 + 6 témoins SANS OBJET** (listés, jamais verts) ; `T08 ⓪` vérifie le mode ; garanties locales `T08L ① ② ③` vertes dans les deux modes. Q15 (`D-141`) : effacement réel **non construit** ici. |
+| `INTEGRATION-NS-01` | « Intégration mesurée b37ddf3a (Nutrition beda2652) » | Branche Nutrition avancée (`eea860ec` + documentation) : **à refusionner**. ⚠️ Si les 2 lignes de N08 sont déjà sur la copie d'intégration, y ajouter les 4 autres. Contrôle négatif 43 / 43, voisins verts, passe réduite 997 / 0 ; pas de passe complète. |
+| `NUT-QTY-01`, `NUT-FOR-03`, `NUT-IDENT-01`, `NUT-FOR-04`, `NUT-PERSO-01` | « claude/nutrition-v2 @ beda2652 » | Branche avancée à `eea860ec` (+ doc) **sans changer leur périmètre** ; leurs témoins rejoués verts. |
+| `NUT-VERIFY-01` (E2b) | « après correction Nutrition en cours » | **Non commencé** — c'est la suite, après ces trois points. |
