@@ -614,3 +614,182 @@ P1) ; `handleAdminRestore_` (masquages fusionnés, favoris d'avant non remis).
 7. Contrôle négatif : `python3 tools/mut_nut_fiabilite.py [préfixes]` (57 mutations ; ex. `E1,E2,E3,E4` ou `D1,…,D10`) —
    les mutations `D` passent « sans objet » si `Code.js` ne porte pas `_nutRazFavoris_(`.
 8. Registre et passation : le bloc « Registre et passation » est à reporter (le connecteur ne modifie pas un fichier existant).
+
+## 14. Deux bugs du 2ᵉ tour d'intégration (mission de Michel, 25/10 soir) — `NUT-QTY-02` et `NUT-CIQ-HL-01`
+
+> Branche `claude/nutrition-v2` ; ni master, ni publication, ni action serveur, **aucune donnée réelle** (comptes et aliments
+> inventés, réseau coupé, 0 appel Milo). Côté application, seul `app.js` change ; `Code.js` n'est pas touché. ⛔ **`D-101`
+> inchangée** : sans fiche fiable, une autre quantité reste refusée (⑧ ⑨ — la décision produit reste à Michel, `NUT-QTY-01`).
+> Aucune décision nouvelle : deux choix locaux et réversibles, dans le droit fil de `D-099` / `D-103` (rien n'est converti ni
+> deviné). Bugs : `BUGS.md` §123, §124. Tickets : `NUT-QTY-02`, `NUT-CIQ-HL-01` (liés : `NUT-QTY-01`, `NUT-VAL-05`).
+
+### 14.1 `NUT-QTY-02` — la quantité posée pendant la recherche en ligne survit à l'arrivée de la fiche
+
+**Le constat** (registre, sonde C7a de Claude Principal, Open Food Facts simulé en 1,5 s) : reprise d'un ancien produit scanné,
+180 tapé avant la réponse ; la fiche arrive, l'écran bascule sur le bloc du scan, la quantité est perdue, « Ajouter » refuse
+(« Combien en as-tu mangé ? »), rien n'est écrit. **Reproduit** sur la branche (`db20a203`, données inventées) — et plus large :
+la pastille « ↩ 40 g (la dernière fois) » touchée avant la réponse se perdait aussi.
+
+**La jumelle (R8), trouvée en cherchant, mesurée avant d'y toucher** : `_n2RetrouverEnLigne` a **deux** appelants. Le second
+est la reprise d'un ancien scan noté **sans** quantité (`q:null`) : l'écran demande « poids de ce que tu as mangé ». Sonde sur
+une copie de l'arbre déjà corrigé pour le premier (`b41089f7`) : 180 tapé là, avec ou sans quitter le champ, avec ou sans
+pour-100 g d'avant → **perdu à l'arrivée de la fiche, 3 cas sur 3**.
+
+**La cause** : la fiche arrive par le chemin du scan (`_offAppliquerProduit`), qui oublie l'aliment d'avant
+(`_afOublierAliment`) et prépare un écran neuf (`_afPreparerEcran` vide le champ). Personne ne relevait ce qui était posé.
+
+**La correction** (`app.js`) : `_afQtePoseeReprise` lit la quantité **posée par un geste** sur l'écran d'une reprise, quel que
+soit son état (figée ; sans quantité : poids tapé avant ou après la sortie du champ, quantité corrigée ensuite, portions) — par
+les lecteurs mêmes de l'écriture (`_n2EntreeEcran`, R2). `_n2RetrouverEnLigne` la relève **après** ses contrôles (le jeton,
+l'écran encore ouvert, le même nom : jamais pour un autre aliment) et **avant** le chemin du scan, puis la repose dans le bloc
+du scan avec son origine (tapée ou proposée) et le calcul de la saisie à la main (`_bcApplyGrams`) ; l'écran le dit (« ta
+quantité (180 g) est gardée ») ; la pastille déjà prise ne se repropose pas. ⛔ **Seulement dans l'unité de la fiche** : des
+grammes ne deviennent jamais des ml, ni des portions des grammes — l'écran dit « tu avais indiqué 180 g : cette fiche compte en
+ml, tape ta quantité en ml » et rien ne s'écrit. ⛔ « 0 », un champ laissé vide, le « 1 » de l'ancre : rien n'est posé.
+⛔ `D-101` n'est pas touchée (la fiche, elle, est vérifiée : la quantité se calcule par elle).
+
+| Témoin (`B-NFIAB Q2`) | `db20a203` (avant) | `b41089f7` (1ʳᵉ correction) | après |
+|---|---|---|---|
+| ① 180 tapé dans la reprise figée avant la fiche : gardé, 699 · 158 · 5 · 6 par la fiche, la ligne à 180 g « tapée » | **rouge** | vert | vert |
+| ② l'écran le dit : « ta quantité (180 g) est gardée » | **rouge** | vert | vert |
+| ③ la pastille « ↩ 40 g » touchée avant : gardée « proposée », pas reproposée | **rouge** | vert | vert |
+| ④ jus noté en g, fiche en ml : rien de converti, l'écran le dit, rien d'écrit | **rouge** | **rouge** (le mot : « tapé » → « indiqué ») | vert |
+| ⑤ « 0 » n'est pas une quantité · ⑥ jamais pour un autre aliment | vert | vert | vert |
+| ⑦ la jumelle : 180 dans « poids de ce que tu as mangé », sans quitter le champ | **rouge** | **rouge** | vert |
+| ⑧ la jumelle : champ quitté, puis corrigé à 200 → c'est 200 (777 · 176 · 6 · 7) | **rouge** | **rouge** | vert |
+| ⑨ la jumelle : « ×2 portions », fiche en g → rien de converti, l'écran le dit | **rouge** | **rouge** | vert |
+| ⑩ la jumelle : rien de posé → rien d'inventé (ni le « 1 » de l'ancre) | vert | vert | vert |
+
+Banc écran entier (66 témoins, même banc final sur les trois codes) : `db20a203` **57 / 9** · `b41089f7` **62 / 4** · après
+**66 / 0**.
+
+### 14.2 `NUT-CIQ-HL-01` — hors ligne : « sa référence CIQUAL n'est pas disponible pour l'instant »
+
+**Le constat** (registre, sonde C2k de Claude Principal, production `ft-v1260` ET intégration) : une ancienne ligne CIQUAL
+reprise quand `data/ciqual.json` ne se télécharge pas (hors ligne : la table n'est pas dans le cache, R30). Le refus d'une autre
+quantité est voulu (`D-101` ⑨) — mais l'écran disait « cet ancien aliment n'a pas de fiche vérifiée ». **Reproduit** (pâtes
+9811, 130 g · 217 kcal), dans l'ajout et dans « Modifier ».
+
+**La correction** (`app.js`) : `_n2CiqualAbsente(sid)` (un propriétaire, lecture seule) — une ligne `ciqual:` dont la table
+n'est pas chargée. Les deux phrases deviennent :
+
+| Écran | Avant | Après (table absente) |
+|---|---|---|
+| Ajout (reprise figée) | « Elles ne se recalculent pas (cet ancien aliment n'a pas de fiche vérifiée) : pour une autre quantité, corrige-les — ou retrouve sa fiche ci-dessous… » | « Elles ne se recalculent pas pour l'instant : sa référence CIQUAL n'est pas disponible (la table n'a pas pu être chargée — hors ligne ?). Une fois connecté, « 🔎 Retrouver l'aliment » la chargera, et elles se calculeront pour ta quantité ; d'ici là, pour une autre quantité, corrige-les. » |
+| « Modifier » | « … elles ne sont pas recalculées (pas de fiche vérifiée). Si la quantité change, corrige-les. » | « … elles ne sont pas recalculées pour l'instant — sa référence CIQUAL n'est pas disponible (la table n'a pas pu être chargée : hors ligne ?). Si la quantité change, corrige-les. » |
+
+⛔ **La protection reste** : 180 g est toujours refusé tant que la table manque (`D-101` ⑨), et rien n'est écrit. ⛔ Une ligne
+vraiment sans fiche (ni code-barres, ni CIQUAL), ou un code que la table **chargée** n'a pas, garde la phrase d'avant.
+⭐ **Ce que l'écran promet se vérifie** : reconnecté, « 🔎 Retrouver l'aliment » charge la table, la fiche 9811 se choisit, et
+180 g = 301 · 12 · 57 · 2 s'écrit.
+
+| Témoin (`B-NFIAB CHL`) | `db20a203` (avant) | après |
+|---|---|---|
+| ① ajout, table absente : « référence CIQUAL … pas disponible pour l'instant », jamais « n'a pas de fiche vérifiée » | **rouge** | vert |
+| ④ « Modifier », table absente : le même message, et les valeurs ne se recalculent toujours pas | **rouge** | vert |
+| ② la protection reste : 217 · 9 · 41 · 1 « pour 130 g », 180 g refusé, rien d'écrit | vert | vert |
+| ③ reconnecté : « Retrouver l'aliment » charge la table, 180 g = 301 · 12 · 57 · 2 écrit, l'ancienne ligne intacte | vert | vert |
+| ⑤ une ligne vraiment sans fiche garde la phrase d'avant · ⑥ table chargée, code inconnu : la phrase d'avant | vert | vert |
+
+### 14.3 Tests exécutés (données inventées, réseau coupé, 0 appel Milo)
+
+Données inventées (aliments « (test) », codes-barres 30000000007xx, la fiche CIQUAL publique 9811), Open Food Facts **simulé**
+(réponse retardée de 1,5 à 2,5 s), table CIQUAL **coupée** pour le hors-ligne, réseau coupé par le garde des bancs, **0 appel
+Milo**, aucune donnée réelle. Arbre testé : `a012752d` (le HEAD livré n'y ajoute que de la documentation).
+
+| Banc / contrôle | Résultat | Ce qu'il prouve |
+|---|---|---|
+| B-NFIAB écran, **code d'origine** `db20a203` avec le banc final | **57 / 9** — exactement Q2 ① ② ③ ④ ⑦ ⑧ ⑨ et CHL ① ④ | les deux défauts (et la jumelle) sont **rouges** avant ; les protections Q2 ⑤ ⑥ ⑩, CHL ② ③ ⑤ ⑥ vertes |
+| B-NFIAB écran, **1ʳᵉ correction** `b41089f7` avec le banc final | **62 / 4** — Q2 ⑦ ⑧ ⑨ (la jumelle) et Q2 ④ (le seul mot « tapé » → « indiqué ») | la jumelle était réelle, et seule la 2ᵉ correction la ferme |
+| B-NFIAB écran, **après** (`a012752d`) | **66 / 0** (arbre sain de chaque groupe du contrôle négatif, ×3) | NUT-QTY-02, jumelle, NUT-CIQ-HL-01 verts ; **E2b ① → ⑦**, scans (T01, T02), favoris (F), journal, N08, saisie à zéro inchangés |
+| B-NFIAB croisé (vrai `Code.js` en local : synchro, « Restaurer », 2ᵉ appareil, remise à zéro préparée) | **28 / 0** | favoris, masquages, `D-141` côté app : inchangés |
+| Sonde de la jumelle (copie de `b41089f7`, hors dépôt) | **0 / 3** : 180 perdu dans les 3 formes | la jumelle **mesurée avant** d'y toucher |
+| Contrôle négatif lancé d'abord sur `b41089f7` | **10 / 10 conformes, arrêté** quand la jumelle est apparue | remplacé par la course complète sur l'arbre final (ci-dessous) |
+| Contrôle négatif B-NFIAB (`tools/mut_nut_fiabilite.py`), sur `a012752d` | **75 / 75 conformes** en trois groupes (21 + 21 + 33) ; arbres sains écran 66 / 0 (×3), croisé 28 / 0 ; commentaires seuls MC1 · MC2 · MC3 verts | chaque mutation rougit **le bon** témoin : Q1 → Q2 ① ② ③ ④ ⑦ ⑧ ⑨ · Q9 (le correctif d'avant) → ⑦ ⑧ ⑨ · Q10 → ⑦ · Q11 → ⑧ · Q12 → ⑨ · Q13 → ⑩ · Q2 / Q8 → ④ ⑨ · C1 → CHL ① ④ · C2 → CHL ⑥ · C3 (le refus `D-101` ⑨ retiré) → CHL ② et T02 ① ; et toutes celles d'avant : E1 → E4 (E2b), D1 → D10 (`D-141`), F1 → F24 (scans, favoris, identité), N08a → f, Z1 → Z7 (journal) |
+| **Passe complète D-031 répartie** (`tools/passe_repartie.py 3`, `D-113`), sur `a012752d` | **8 052 ✅ / 0 ❌** (équivalent séquentiel **8 014 ✅ / 0 ❌**), **les 8 conditions vertes**, 39,8 min | toute la passe, dont ses modules Nutrition : `nut2_parcours` (scans, favoris, journal, export), `nut_m6_rejeu`, `nut_fiabilite` (E2b), `nut_secu_p1`, `nut_v2_p1_croise`, repas habituels, `ia_ref100`, pots… |
+| Bancs hors passe : `journal_qty_guard` · `nut2_moteur` | **23 / 0** · **70 / 0** | le journal refuse toujours une quantité illisible ; le moteur est inchangé |
+| Annexe de recette (toutes les suites) | **14 PASS + 1 défaut connu** (`discussions`, ses 2 rouges listés : 71 729 / 76 648 / 68 782 caractères — **identiques** au code d'avant `db20a203` rejoué à la même heure) ; `pwa-offline` PASS | le défaut connu de la taille du contexte de Milo, inchangé |
+| T0 : `git diff --check`, `check_regles`, auto-test du sélecteur | **verts** sur `a012752d` puis sur le commit de documentation : `diff --check` propre ; `check_regles` sans erreur (seul l'avertissement connu, non bloquant : `docs/PROMPT-MILO-REEL.txt` périmé) ; sélecteur **15 / 0** | |
+| Contexte de Milo (R34), moteur MET, Séance, `Code.js` | contexte **identique à l'octet** avant / après (80 284 octets, profil de démonstration neutre, même empreinte) ; seul `app.js` change parmi les fichiers servis ; les fonctions du moteur MET (`getExerciseMET`, `_MET_REGIONS`) sont hors du diff | hors périmètre, non touchés |
+
+### 14.4 Limites et décisions restantes
+
+- **`D-101` ⑧ ⑨ inchangée (consigne de Michel)** : sans fiche fiable, une autre quantité reste refusée — dans l'ajout comme dans
+  « Modifier », hors ligne comme en ligne. La décision produit reste à Michel (`NUT-QTY-01`). Seul le **message** du cas
+  « table CIQUAL absente » change.
+- **Hors ligne, « 🔎 Retrouver l'aliment » ne peut pas charger la table** (pas de réseau) : l'écran le dit maintenant (« une
+  fois connecté »). Le **toast du refus** (« … ou retrouve l'aliment par la recherche (ou scanne-le) ») n'est pas modifié : il
+  appartient au refus de `D-101`, n'affirme rien de faux, mais ne précise pas « une fois connecté ». Proposé, non fait.
+- **Une seule tentative automatique de chargement de la table par session** pour les reprises (`_n2CiqTente`, préexistant) :
+  après un échec hors ligne, la reprise suivante ne retente pas d'elle-même ; « 🔎 Retrouver l'aliment » (et toute recherche)
+  la retente — vérifié (`CHL ③`).
+- **Rien n'est converti** : une quantité posée dans une autre unité que la fiche (grammes ↔ ml ↔ portions) n'est pas reportée ;
+  l'écran dit de la retaper (`Q2 ④ ⑨`). Choix local et réversible, dans le droit fil de `D-099` / `D-103` ; convertir des
+  portions dont le poids est fiable serait une décision produit.
+- **Un scan manuel (📷) ou un aliment choisi dans la recherche reste un NOUVEL aliment** : la quantité tapée n'y passe pas, même
+  si c'est le même produit (préexistant, `Q2 ⑥` le protège). Seule la fiche que la reprise va chercher d'elle-même garde la
+  quantité.
+- **Rien n'est vérifié sur un vrai téléphone** (Safari / WebKit, réseau réellement lent, mode avion) : recette `NUT-VAL-05`.
+- **Le contrôle négatif relit l'arbre de travail à chaque mutation** : je l'ai arrêté à 10 mutations quand la jumelle est
+  apparue, puis relancé **en entier** sur l'arbre final. Idée consignée (non faite) : figer une copie de l'arbre au départ.
+
+### 14.5 Compteurs (règle 17 — code de l'application)
+
+| Compteur | Valeur |
+|---|---|
+| Données persistées ajoutées | **0** (aucune clé, aucun champ de ligne nouveau ; la ligne écrite garde la forme V2 : `n2.qo` dit déjà tapée / proposée) |
+| Fichiers applicatifs touchés | **1** : `app.js` (`Code.js` non touché) |
+| Lignes ajoutées − retirées | **+57 − 3** (net + 54) : 36 lignes de code, 21 de commentaire |
+| Anciens chemins supprimés ou fusionnés | **0 supprimé** ; aucun lecteur dupliqué : la quantité posée se lit par **un** lecteur (`_afQtePoseeReprise`) qui réutilise ceux de l'écriture (`_afQtePoseeFige`, `_afQtePosee`) ; les deux phrases « référence indisponible » ont **un** propriétaire (`_n2CiqualAbsente`) |
+
+### 14.6 Registre et passation (règle d'or 19) — à reporter par Claude Principal
+
+> **Lus avant la mission** (Drive, lecture seule) : le registre « SUIVI DES BUGS — FORCE TRACKER », vue « Consolidé 25-10 »
+> (61 lignes, dont `NUT-QTY-02` et `NUT-CIQ-HL-01` ajoutées par Claude Principal au 2ᵉ tour), et la « PASSATION MAÎTRE ». Le
+> connecteur ne modifie pas un fichier existant (règle 18) : **Claude Principal** reporte ce bloc, mêmes IDs, même date
+> (25/10/2026), rien d'effacé.
+> Revérifié avant la livraison (métadonnées seulement) : registre et passation modifiés pour la dernière fois à 18:33 UTC —
+> ma lecture de 18:41 est donc la plus récente ; les « anciennes valeurs » ci-dessous sont à jour.
+
+| ID | Ancienne valeur (Consolidé 25-10) | Nouvelle valeur proposée |
+|---|---|---|
+| `NUT-QTY-02` | État : « Nouveau 25/10 soir — reproduit, ouvert » · Prochaine action : « Corriger (garder la quantité posée, ou ne pas basculer sans le dire) ; témoin rouge → vert + contrôle négatif » | **Corrigé sur branche** `claude/nutrition-v2` (`b41089f7` + `a012752d`) : la quantité posée avant la fiche en ligne survit à son arrivée, et l'écran le dit — dans les **deux** reprises (figée ; ancien scan **sans** quantité, la jumelle trouvée en cherchant) ; même unité seulement (rien de converti). Témoins `B-NFIAB Q2 ① ② ③ ④ ⑦ ⑧ ⑨` rouges sur `db20a203` (57 / 9), verts après (66 / 0) ; `⑤ ⑥ ⑩` verts des deux côtés ; contrôle négatif **75 / 75 conformes** (dont Q1 → Q13 et C1 → C3). **Non intégré, non publié** ; iPhone à faire (`NUT-VAL-05`). |
+| `NUT-CIQ-HL-01` | État : « Nouveau 25/10 soir — reproduit, ouvert » · Prochaine action : « Corriger le MESSAGE (pas le refus) ; le bouton « Retrouver » ne marche pas non plus hors ligne » | **Corrigé sur branche** (`b41089f7`) : table CIQUAL absente → « sa référence CIQUAL n'est pas disponible pour l'instant (… hors ligne ?) », dans l'ajout et dans « Modifier » ; le refus (`D-101` ⑨) **reste** ; une ligne vraiment sans fiche garde la phrase d'avant. « Retrouver » hors ligne ne peut pas charger la table : l'écran dit « une fois connecté » ; reconnecté, il la charge et 180 g se calcule (`CHL ③`). Témoins `CHL ① ④` rouges avant, verts après ; `② ③ ⑤ ⑥` verts des deux côtés. **Non intégré, non publié** ; iPhone à faire. |
+| `NUT-QTY-01` | « Test dédié Principal … NON corrigé au sens « 180 accepté » pour une ligne SANS fiche vérifiée … C'est D-101 ⑧/⑨ … DÉCISION de Michel » | **Inchangé** (consigne de Michel du 25/10 soir : `D-101` non modifiée). Le cas « ligne CIQUAL, table non chargée » : refus identique, **message désormais juste** (`NUT-CIQ-HL-01`). |
+| `NUT-VAL-05` | « Scénarios de recette prêts … (a) clone, 7 points ; (b) production, compte de TEST, 5 points … » | Deux scénarios ajoutés : **(c)** reprise d'un ancien scan (figé, puis sans quantité), réseau lent → 180 tapé avant la fiche → gardé et dit, la ligne à 180 g ; **(d)** mode avion, ancienne ligne CIQUAL → « référence … pas disponible pour l'instant » et 180 refusé ; réseau rétabli → « Retrouver l'aliment » → 180 g calculé. |
+| `INTEGRATION-NS-01` | (2ᵉ tour : `claude/integration-nut-seance-2` @ `9f0d1e77`) | Branche Nutrition avancée (`db20a203` → HEAD, voir « Pour l'intégration ») : **à refusionner** ; côté application `app.js` seul ; **aucun `Code.js`**. |
+
+**Source proposée** : « rapport ciblé Nutrition du 25/10 soir — `NUT-QTY-02` et `NUT-CIQ-HL-01` » (le registre s'arrête à
+S7 ; mon rapport de l'après-midi proposait S8 : la numérotation est à Claude Principal).
+
+**Passation maître — paragraphe proposé** : *« COMPLÉMENT — 25/10/2026 (soir) — NUT-QTY-02 et NUT-CIQ-HL-01 (Claude
+Nutrition). NUT-QTY-02 corrigé sur branche : à la reprise d'un ancien produit scanné, la quantité posée avant l'arrivée de la
+fiche en ligne (180 g tapés, ou la pastille touchée) est gardée et l'écran le dit — dans la reprise figée ET dans celle d'un
+ancien scan sans quantité (jumelle trouvée en cherchant) ; rien n'est converti entre grammes, ml et portions. NUT-CIQ-HL-01
+corrigé sur branche : hors ligne, une ancienne ligne CIQUAL dit que sa référence est indisponible pour l'instant, plus « pas de
+fiche vérifiée » ; le refus d'une autre quantité reste (D-101 inchangée, décision de Michel en attente). Aucune fusion,
+publication, action serveur ni donnée réelle ; recette iPhone sur compte de test à faire. »*
+
+### 14.7 Pour l'intégration (handoff)
+
+**Branche** `claude/nutrition-v2` — dernier commit de code et de tests `a012752d`, puis le commit de documentation — à jour de master `3cdae1ea` (fusionné en `db20a203`). ⛔ Rien sur master, rien
+publié, rien déployé ; **aucun `Code.js`**.
+
+| Commit | Contenu |
+|---|---|
+| `f8a956e9` | journal de partage : ma ligne « en cours », poussée avant de coder `[skip ci]` |
+| `b41089f7` | `app.js` (NUT-QTY-02 : la reprise figée ; NUT-CIQ-HL-01 : `_n2CiqualAbsente`, deux phrases) + `tests/parcours/nut_fiabilite.js` (Q2 ① → ⑥, CHL ① → ⑥) + `tools/mut_nut_fiabilite.py` (Q1 → Q8, C1 → C3, MC2) + `tests/recette/registre.json` |
+| `a012752d` | `app.js` (la jumelle : `_afQtePoseeReprise`, « tu avais indiqué ») + témoins Q2 ⑦ → ⑩ + mutations Q9 → Q13, MC3 |
+| (commit de documentation) | documentation : `BUGS.md` §123 – §124, ce dossier §14, `docs/CONTEXTE-ACTUEL.md`, `docs/INVENTAIRE.md`, `docs/JOURNAL-DE-PARTAGE.md` (ligne close) `[skip ci]` |
+
+**À faire à l'intégration (Claude Principal)** :
+
+1. Fusionner le HEAD dans l'arbre d'intégration — conflits attendus en **documentation seulement** (journal de partage,
+   `BUGS.md`, `CONTEXTE-ACTUEL.md`) : garder les deux côtés. §123 et §124 vérifiés libres sur master,
+   `claude/integration-nut-seance-2` et `claude/dreamy-bell-pu88ia`.
+2. Passe complète D-031 sur l'arbre d'intégration ; le sélecteur (`python3 tools/recette_selecteur.py --diff <base>`) désigne
+   `NUT2-FIABILITE-01` et `NUT2-PARCOURS-01`.
+3. Contrôle négatif : `python3 tools/mut_nut_fiabilite.py Q1,…,Q13,C1,C2,C3,MC2,MC3` (ou le jeu complet, 75 mutations ;
+   ⛔ ne pas modifier l'arbre pendant la course).
+4. Recette iPhone (`NUT-VAL-05`, compte de test) : scénarios (c) et (d) ci-dessus.
+5. Registre et passation : reporter le bloc §14.6.
