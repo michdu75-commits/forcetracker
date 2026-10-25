@@ -381,3 +381,20 @@ fois** (scan ou recherche), puis revient de lui-même.
 deux anciennes saisies du steak `200 g · 130 kcal` (65 kcal / 100 g, code-barres `3000000009915`) d'il y a 5 et 6 jours, puis une
 saisie déclarée `258 · 42 · 0 · 10` pour 200 g du même code-barres → « Mes aliments » dit « ⚠️ à vérifier » ; sans les deux
 anciennes : « déclaré ». Témoin rouge sur la branche, vert après ; un scan reste non touché ; contrôle négatif.
+
+↪️ **25/10, après-midi — ce que la consigne de Michel change à §8.12** (règle d'or **19** ; registre Drive « SUIVI DES BUGS —
+FORCE TRACKER », vue « Consolidé 25-10 ») :
+- **Les identifiants du registre** : V1 → V6 = `NUT-VAL-01` → `NUT-VAL-06` ; E2b = `NUT-VERIFY-01` ; Q15 = `NUT-FOR-04` ; le serveur =
+  `SERVEUR-CODEJS-01` ; l'intégration = `INTEGRATION-NS-01` ; les journées incomplètes vues par Milo = `MILO-JOURS-PARTIELS`. Un
+  rapport cite ces IDs ; l'état d'un ticket se lit dans le registre, il ne se recopie pas ici.
+- **Q15 tranchée en principe (`D-141`) : suppression RÉELLE** des anciennes listes personnelles, au serveur et sur les appareils,
+  journal intact — **aucun GO d'exécution**. Le mécanisme « date de départ » mesuré plus haut (sonde E1 9 / 9, banc 48 / 0) **ne
+  suffit plus** à V1 : l'effacement réel est à construire et à requalifier ; au serveur, il passe par `Code.js` (aujourd'hui un envoi
+  vide ne remplace jamais la liste, protection P1). ❓ **Non tranché, à demander à Michel avant de construire** : les copies que P1 garde
+  dans la zone de récupération du serveur (jamais renvoyées à l'app) et les sauvegardes nocturnes font-elles partie de la
+  « suppression réelle » ? *Ne pas l'extrapoler.*
+- **Le mode de livraison du serveur, réconcilié** (le registre le demandait) : les deux affirmations sont vraies. Le workflow
+  `deploy-appsscript.yml` **se déclenche tout seul** quand `Code.js`, `appsscript.json` ou `.claspignore` change sur master — sauf si
+  le commit porte `[skip ci]` — et se lance aussi **à la main**. La pratique validée (A1 @192 le 22/10, P1 @193 le 24/10 : commit
+  `9a72e107` en `[skip ci]`, puis exécution n°124 lancée à la main) est donc : **`[skip ci]`, puis lancement à la main, avec le GO
+  de Michel, retour arrière prêt**.

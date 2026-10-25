@@ -537,3 +537,53 @@ corbeille sans son accord explicite.
 ↪️ **14/10/2026 — texte aligné sur la formulation de Michel** à l'intégration sur master : une
 lecture non destructive suffit pour tester l'accès ; STOP immédiat si une permission interactive est
 nécessaire ; aucun nettoyage Drive autonome. Les points 2 à 4 sont inchangés depuis le 13/10.
+
+---
+
+**19. 📋 SUIVI COMMUN — LE REGISTRE DRIVE ET LA PASSATION MAÎTRE SONT LES RÉFÉRENCES DE PILOTAGE.**
+
+*Consigne permanente de Michel, 25/10/2026 — « une consigne permanente d'organisation et de traçabilité, pas le lancement d'un
+nouveau chantier ». Elle vaut pour Claude Principal, Claude Nutrition et Claude Séance.*
+
+### 📍 LES DEUX DOCUMENTS (privés : seul Michel y a accès, vérifié le 25/10)
+
+| Document | Rôle | Identifiant Google Drive |
+|---|---|---|
+| « SUIVI DES BUGS — FORCE TRACKER » (Google Sheets) | **le registre** : la **source de vérité des tickets** ; la vue « Consolidé » porte l'état courant, les onglets Bugs, Archive et Évolutions gardent l'historique | `1pQFsSrDsosR4zpGHg1iwGMolr2vsjzSSeKxx4fQN_e4` |
+| « PASSATION MAÎTRE — FORCE TRACKER » (Google Docs) | **la passation** : la synthèse de pilotage, qui renvoie au registre par les mêmes IDs ; le point le plus récent est en tête | `1fdkw2FgkUwu-AIqp8RxmZlrCUff7Z1n5W3Th9KUU1Tg` |
+
+### ⚙️ CE QU'ELLE EXIGE
+
+1. **Avant toute mission, consulter les informations et les tickets pertinents les plus récents** — la vue « Consolidé » du
+   registre et le point en tête de la passation. **Si Drive est inaccessible : le signaler et demander un export**, sans jamais
+   supposer avoir lu les documents. ⚠️ *La lecture « texte » du tableur ne rend que les premières lignes de chaque onglet : on
+   l'exporte en entier (`.xlsx`) pour le lire vraiment.* Et un document trop long pour être lu en entier se dit : *« lu : telle
+   partie »*, jamais « lu ».
+2. **Ne jamais rouvrir automatiquement un bug corrigé sans nouvelle preuve** (même esprit que la **#15**).
+3. **Distinguer strictement quatre états**, chacun avec sa preuve :
+   - *corrigé sur branche* — branche, commit, tests, auteur, date ;
+   - *intégré* — l'arbre où il a rejoint les autres corrections ;
+   - *publié* — version, date, preuve du déploiement ;
+   - *vérifié sur iPhone* — version, appareil, scénario, date, résultat.
+   Une CI, un banc vert ou un test réel de Milo ne valent **pas** une recette iPhone.
+4. **Dans chaque rapport de livraison** : les **IDs** concernés, les **preuves**, les **corrections** apportées, les
+   **limites** et les **décisions en attente**.
+5. **Prévoir la mise à jour du registre et de la passation après chaque livraison ou décision**, **sans supprimer
+   l'historique** : retrouver l'ID canonique (ou en créer un si le sujet est distinct), mettre à jour séparément les quatre
+   états, noter *ancienne valeur → nouvelle valeur* avec la date et la source, puis la même date de synchronisation dans les
+   deux documents. Si un seul des deux est mis à jour : *« synchronisation partielle »*, à réconcilier.
+
+### ⚠️ LA LIMITE DE L'OUTIL, MESURÉE
+
+Le connecteur Google Drive ne modifie **pas** le contenu d'un fichier existant : `update_file` ne change que le nom, la
+description, le dossier et le verrou (constaté le 25/10 sur la définition de l'outil, comme la **#18** l'avait mesuré le 13/10).
+Une session Claude ne peut donc **pas** écrire elle-même dans le registre ni dans la passation : **le bloc de mise à jour se
+fournit dans le rapport**, prêt à reporter, avec les IDs. Créer un fichier NOUVEAU reste permis (#18, point 4) si Michel le
+préfère au copier-coller.
+
+### 🧭 CE QUE LE DÉPÔT GARDE, ET CE QU'IL NE RECOPIE PAS
+
+Le dépôt reste la mémoire **du code** : le journal de partage (*qui travaille sur quoi, maintenant*), le registre des décisions
+`D-xxx`, `BUGS.md` (les **familles** de bugs et leurs leçons), les fichiers de chantier. **L'état d'un ticket se lit dans le
+registre et se cite par son ID — il ne se recopie pas** (**R2** : deux endroits qui portent la même information finissent par
+diverger).
