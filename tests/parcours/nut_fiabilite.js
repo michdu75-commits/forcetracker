@@ -557,6 +557,109 @@ async function ecranFiab(t, b, PORT) {
       && J(L.find((x) => x.id === ZERO.id)) === J(ZERO), J({ l, toast: await dernierToast(pg) }));
     await fin(o); }
 
+  /* ═══ E2b · NUT-VERIFY-01 (clôture ciblée du 25/10) — APRÈS LA REMISE À ZÉRO, D'ANCIENNES SAISIES FAUSSES NE FONT PLUS DOUTER
+     D'UNE SAISIE JUSTE. Constat de Claude Principal (sonde indépendante, registre NUT-VERIFY-01) : remise à zéro hier ; deux anciennes
+     saisies du steak à 200 g · 130 kcal (le pour-100 g FABRIQUÉ à 65, M1) à J-6 et J-5 ; une saisie NEUVE et juste, 258 · 42 · 0 · 10
+     pour 200 g, même code-barres → « ⚠️ à vérifier ». Sans les deux anciennes : « déclaré ». La comparaison D-131 (`_n2Contradiction`)
+     prenait TOUTES les saisies du produit, y compris celles que la remise à zéro (ou « ✕ ») a retirées des propositions.
+     ⭐ Attendu (registre) : les ignorer POUR LA COMPARAISON — le journal intact (à l'octet), les contrôles légitimes gardés (deux
+     saisies encore proposées qui se contredisent ⑤ ; une fiche vérifiée par la SOURCE, même d'avant la remise à zéro ⑥), un scan
+     juste inchangé ⑦. ⛔ Données inventées ; Open Food Facts servi d'ici (⑦) ou coupé. ═══ */
+  { const STK65 = { kcal: 65, prot: 11, carbs: 0, fat: 3 }, ANC6 = STK('nfiab-e2b-anc-j6', 6, 200, [130, 22, 0, 6], STK65, 'liste'),
+      ANC5 = STK('nfiab-e2b-anc-j5', 5, 200, [130, 22, 0, 6], STK65, 'liste');
+    /* une saisie NEUVE, déclarée par la personne (aucune fiche), avec le code-barres du produit — écrite par le vrai moteur */
+    const DECL = (id, k, v) => N2.ligneNouvelle({ id, ts: ilya(k), date: jour(k), repas: 'dejeuner', nom: 'Steak haché 5% (test)',
+      origine: { saisie: 'manuel', origine: 'utilisateur' }, mode: 'declaree', declare: v, quantite: { val: 200, unite: 'g', origine: 'tapee' },
+      cle: EAN_STK, etat: 'tel-que-vendu' }).ligne;
+    const RAZ = (k) => ({ ft4_hiddenfoods: J([{ k: '*', t: ilya(k) }]) });
+    const steak = (M) => M.filter((x) => x.sid === EAN_STK);
+    const juste = (s) => /^258 kcal · pour 200 g · P 42 · G 0 · L 10 · déclaré/.test(nb(s)) && !/à vérifier/.test(s);
+    const intactes = (L, ...anc) => anc.every((a) => J(L.find((x) => x && x.id === a.id)) === J(a));
+    /* ① ⭐ le cas du registre : remise à zéro hier, la saisie juste notée il y a 12 h — « Mes aliments », « Déjà noté par toi », « + Ajouter » */
+    { const N = DECL('nfiab-e2b-neuve-01', 0.5, A.stk200);
+      const o = await ouvrir(b, PORT, fixture('e2b1', [ANC6, ANC5, N], [], RAZ(1)), null); const pg = o.pg;
+      let g = o.ok && await ouvrirAjout(pg);
+      const M = steak(await mesAliments(pg)), D = await dejaNote(pg, 'steak');
+      const av = (await journal(pg)).map((x) => x && x.id);
+      g = g && M.length === 1 && await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + M[0].i + ')"]'); await pause(pg, 800);
+      const L = await journal(pg), nv = neuves(L, av), toast = await dernierToast(pg);
+      t('B-NFIAB E2b ① ⭐⭐ NUT-VERIFY-01 — APRÈS LA REMISE À ZÉRO, DEUX ANCIENNES SAISIES FAUSSES (65 kcal / 100 g) NE FONT PLUS DOUTER DE LA SAISIE JUSTE : « 258 kcal · pour 200 g · P 42 · G 0 · L 10 · déclaré » dans « Mes aliments » ET « Déjà noté par toi », sans « à vérifier » ; les anciennes ne sont pas proposées',
+        g && M.length === 1 && juste(M[0].txt) && D.length === 1 && juste(D[0]), J({ M, D }));
+      t('B-NFIAB E2b ② « + Ajouter » la re-note telle qu\'elle s\'affiche (258·42·0·10 pour 200 g, son code-barres) — et les deux anciennes saisies restent dans le journal, À L\'OCTET',
+        g && nv.length === 1 && memes(vals(nv[0]), A.stk200) && nv[0].q === 200 && nv[0].u === 'g' && nv[0].sourceId === EAN_STK && L.length === 4 && intactes(L, ANC6, ANC5, N),
+        J({ nv, toast, n: L.length }));
+      await fin(o); }
+    /* ③ les repas habituels nés APRÈS la remise à zéro : la carte ne compte plus la saisie juste « à vérifier », et son « + » la re-note */
+    { const N2a = DECL('nfiab-e2b-hab-0002', 2, A.stk200), N1a = DECL('nfiab-e2b-hab-0001', 1, A.stk200);
+      const o = await ouvrir(b, PORT, fixture('e2b3', [ANC6, ANC5, N2a, N1a], [], RAZ(3)), null); const pg = o.pg;
+      const carte = await pg.evaluate(() => { const x = [...document.querySelectorAll('button[onclick^="_habChoisirMoment"]')].find((y) => /Steak haché 5% \(test\)/.test(y.textContent));
+        return x ? x.innerText.replace(/\s+/g, ' ') : ''; });
+      const av = (await journal(pg)).map((x) => x && x.id);
+      let g = o.ok && await clic(pg, 'button[onclick^="_habChoisirMoment"]'); await pause(pg, 200);
+      g = g && await clic(pg, 'button[onclick^="rejouerRepas("][onclick*="\'dejeuner\'"]'); await pause(pg, 600);
+      const L = await journal(pg), nv = neuves(L, av), toast = await dernierToast(pg);
+      t('B-NFIAB E2b ③ ⭐ « TES REPAS HABITUELS » nés après la remise à zéro : la carte annonce « 258 kcal · 42 g de protéines · noté 2 fois », sans « à vérifier », et son « + » re-note 258·42·0·10 pour 200 g — les anciennes saisies intactes',
+        /258 kcal · 42 g de protéines · noté 2 fois/.test(carte) && !/à vérifier/.test(carte) && g && nv.length === 1 && memes(vals(nv[0]), A.stk200) && nv[0].q === 200
+        && !/à vérifier/.test(toast) && intactes(L, ANC6, ANC5, N2a, N1a), J({ carte, nv, toast }));
+      await fin(o); }
+    /* ④ le même cas, mais les anciennes retirées par « ✕ » (le masquage de CE produit) au lieu de la remise à zéro */
+    { const N = DECL('nfiab-e2b-neuve-04', 0.5, A.stk200);
+      const o = await ouvrir(b, PORT, fixture('e2b4', [ANC6, ANC5, N], [], { ft4_hiddenfoods: J([{ k: 'id:' + EAN_STK, t: ilya(1) }]) }), null); const pg = o.pg;
+      const g = o.ok && await ouvrirAjout(pg);
+      const M = steak(await mesAliments(pg)), D = await dejaNote(pg, 'steak');
+      t('B-NFIAB E2b ④ les anciennes saisies retirées par « ✕ » (masquage de CE code-barres) ne font pas davantage douter de la saisie juste notée ensuite : « … · déclaré », sans « à vérifier »',
+        g && M.length === 1 && juste(M[0].txt) && D.length === 1 && juste(D[0]), J({ M, D }));
+      await fin(o); }
+    /* ④b un ANCIEN FAVORI faux (mis avant la remise à zéro, encore sur l'appareil — p. ex. un téléphone pas encore resynchronisé) ne juge pas
+       davantage la saisie juste : il n'est plus proposé, donc il ne compare plus */
+    { const N = DECL('nfiab-e2b-neuve-4b', 0.5, A.stk200);
+      const FAV = { name: 'Steak haché 5% (test)', kcal: 130, prot: 22, carbs: 0, fat: 6, per100: STK65, q: 200, u: 'g', sourceId: EAN_STK, t: ilya(8) };
+      const o = await ouvrir(b, PORT, fixture('e2b4b', [N], [FAV], RAZ(1)), null); const pg = o.pg;
+      const g = o.ok && await ouvrirAjout(pg);
+      const M = steak(await mesAliments(pg)), D = await dejaNote(pg, 'steak');
+      t('B-NFIAB E2b ④b un ANCIEN FAVORI faux (mis avant la remise à zéro, encore sur l\'appareil) ne fait pas douter de la saisie juste notée ensuite : il n\'est pas proposé, et la saisie dit « … · déclaré », sans « à vérifier »',
+        g && M.length === 1 && !M[0].fav && juste(M[0].txt) && D.length === 1 && juste(D[0]), J({ M, D }));
+      await fin(o); }
+    /* ⑤ CONTRÔLE LÉGITIME GARDÉ — sans remise à zéro ni « ✕ », les trois saisies sont toutes proposées : elles se contredisent (D-131) */
+    { const N = DECL('nfiab-e2b-neuve-05', 0.5, A.stk200);
+      const o = await ouvrir(b, PORT, fixture('e2b5', [ANC6, ANC5, N]), null); const pg = o.pg;
+      let g = o.ok && await ouvrirAjout(pg);
+      const M = steak(await mesAliments(pg)), mN = M.find((x) => /^258 kcal/.test(nb(x.txt))) || {};
+      const av = (await journal(pg)).map((x) => x && x.id);
+      g = g && mN.i >= 0 && await clic(pg, '#af-quick-list button[onclick="quickAddFood(' + mN.i + ')"]'); await pause(pg, 900);
+      const nv = neuves(await journal(pg), av);
+      t('B-NFIAB E2b ⑤ CONTRÔLE LÉGITIME GARDÉ : SANS remise à zéro ni « ✕ », la même saisie juste et les deux anciennes sont toutes proposées — elles se contredisent, « ⚠️ à vérifier », et « + Ajouter » n\'écrit rien',
+        g && /^258 kcal · pour 200 g · P 42 · G 0 · L 10 · ⚠️ à vérifier/.test(nb(mN.txt)) && nv.length === 0, J({ M, nv }));
+      await fin(o); }
+    /* ⑥ CONTRÔLE LÉGITIME GARDÉ — une fiche VÉRIFIÉE PAR LA SOURCE (le scan d'il y a 3 jours à 129 kcal / 100 g, d'avant la remise à zéro) juge
+       encore une saisie neuve FAUSSE (130 kcal pour 200 g) : la remise à zéro retire des propositions, elle ne retire pas la fiche du produit */
+    { const SCAN = N2.ligneNouvelle({ id: 'nfiab-e2b-scan-0001', ts: ilya(3), date: jour(3), repas: 'dejeuner', nom: 'Steak haché 5% (test)',
+        origine: { saisie: 'camera-code-local', origine: 'off' }, mode: 'pesee', fiche: { base: 'g', p100: { kcal: 129, prot: 21, carbs: 0, fat: 5 }, cle: EAN_STK,
+        source: 'off', fiab: 'source', etat: 'tel-que-vendu' }, quantite: { val: 200, unite: 'g', origine: 'tapee' } }).ligne;
+      const FAUX = DECL('nfiab-e2b-fausse-01', 0.5, { kcal: 130, prot: 22, carbs: 0, fat: 6 });
+      const o = await ouvrir(b, PORT, fixture('e2b6', [SCAN, FAUX], [], RAZ(1)), null); const pg = o.pg;
+      const g = o.ok && await ouvrirAjout(pg);
+      const M = steak(await mesAliments(pg));
+      const ap = await pg.evaluate((id) => { const e = (S.foodLog || []).find((x) => x && x.id === id); const a = _n2Apercu(e, _n2FichesVerifiees());
+        return { ok: !!(a && a.ok), code: a && a.raison ? a.raison.code : null, txt: a && a.raison ? a.raison.texte : '' }; }, FAUX.id);
+      t('B-NFIAB E2b ⑥ CONTRÔLE LÉGITIME GARDÉ : la fiche VÉRIFIÉE PAR LA SOURCE (scan Open Food Facts d\'AVANT la remise à zéro) juge encore une saisie neuve FAUSSE — « 130 kcal · pour 200 g · … · ⚠️ à vérifier », cause « ta fiche vérifiée de ce produit (du …) donne d\'autres valeurs »',
+        g && M.length === 1 && /^130 kcal · pour 200 g · P 22 · G 0 · L 6 · ⚠️ à vérifier/.test(nb(M[0].txt)) && ap.code === 'differe' && /ta fiche vérifiée de ce produit \(du \d\d\/\d\d\)/.test(ap.txt),
+        J({ M, ap }));
+      await fin(o); }
+    /* ⑦ LE SCAN JUSTE, APRÈS LA REMISE À ZÉRO, AVEC LES ANCIENNES SAISIES FAUSSES DANS LE JOURNAL : ses valeurs, inchangées */
+    { const o = await ouvrir(b, PORT, fixture('e2b7', [ANC6, ANC5], [], RAZ(1)), { produits: { [EAN_STK]: OFF_STK } }); const pg = o.pg;
+      let g = o.ok && await ouvrirAjout(pg);
+      const lu = await pg.evaluate(async (c) => { try { _bcSetEtat('SCANNING'); } catch (e) {} return await _bcTraiterCode(c); }, EAN_STK);
+      await pause(pg, 500); g = g && await taper(pg, '#af-bc-grams', 200);
+      const v = await ecran(pg), nom = await pg.evaluate(() => (document.getElementById('af-bc-name') || {}).textContent || '');
+      const av = (await journal(pg)).map((x) => x && x.id); g = g && await ajouter(pg);
+      const L = await journal(pg), l = neuves(L, av)[0] || null;
+      t('B-NFIAB E2b ⑦ LE SCAN JUSTE, après la remise à zéro et avec les anciennes saisies fausses au journal : 200 g = 258·42·0·10, aucun « à vérifier », la ligne écrite garde la fiche (129·21·0·5, « source ») — les anciennes intactes',
+        g && lu === true && v === T(A.stk200) && !/à vérifier/.test(nom) && !!l && memes(vals(l), A.stk200) && l.q === 200
+        && memes(l.per100, { kcal: 129, prot: 21, carbs: 0, fat: 5 }) && l.n2 && l.n2.f.fiab === 'source' && intactes(L, ANC6, ANC5), J({ lu, v, nom, l }));
+      await fin(o); }
+  }
+
   /* Les sorties sont COUPÉES par construction (route) : on les liste ; aucune ne vise l'IA ni Milo (le Worker). */
   t('B-NFIAB Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
     ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));
@@ -570,21 +673,110 @@ async function ecranFiab(t, b, PORT) {
    « Restaurer » sur le MÊME téléphone) se jouent dans LES DEUX modes. ⛔ Un mode choisi par erreur ne passe pas en silence :
    T08 ⓪ compare ce que dit la liste blanche à ce que le serveur (le vrai Code.js, en local) FAIT d'un « ✕ » synchronisé. */
 const RACINE_SRV = process.env.NUT2X_RACINE || path.join(__dirname, '..', '..');   // la même racine que le serveur simulé
-function masquesDansListeBlanche() {
+function dansSaveProfile(re) {
   let src = ''; try { src = fs.readFileSync(path.join(RACINE_SRV, 'Code.js'), 'utf8'); } catch (e) { return false; }
   const i = src.indexOf('function handleSaveProfile_('); if (i < 0) return false;
   const j = src.indexOf('\nfunction ', i + 10);
-  return /\bbody\.hiddenFoods\b/.test(src.slice(i, j < 0 ? src.length : j));
+  return re.test(src.slice(i, j < 0 ? src.length : j));
+}
+function masquesDansListeBlanche() { return dansSaveProfile(/\bbody\.hiddenFoods\b/); }
+
+/* ═════ Q15 · D-141 (clôture ciblée du 25/10) — LA SUPPRESSION RÉELLE DES ANCIENS FAVORIS AU SERVEUR ═════
+   Le vrai Code.js en local, SANS navigateur (des envois tels que l'app les fait), deux comptes inventés : Carol (la remise à
+   zéro) et Bob (un autre utilisateur, jamais touché). ⚖️ Comme T08 : sur un Code.js qui ne supprime pas (master, ou la branche
+   d'avant D-141), les témoins de la suppression sont SANS OBJET — listés, jamais comptés verts ; ceux qui PROTÈGENT (journal,
+   profil, séances, autre compte) se jouent dans tous les modes. ⛔ Données inventées ; aucune sortie réseau (aucun navigateur). */
+function serveurQ15(t, tD) {
+  const etat = { drivePanne: false };
+  const { X } = CR.preparer(etat);   // bornes RÉDUITES du banc (favoris : zone 900 car., plafond 1 800) — le même rapport que la vraie
+  const C = 'carol@example.test', D = 'dave@example.test', E = 'erin@example.test', BOB = 'bob@example.test', ADMIN = 'jeton-admin-fictif-q15-0001';
+  const now = Date.now(), raz = now - 3600e3;
+  const ANC_SANS_T = { name: 'Ancien sans date (test Q15)', kcal: 100, prot: 5, carbs: 10, fat: 3 };
+  const ANC_DATE = { name: 'Ancien daté (test Q15)', kcal: 200, prot: 10, carbs: 20, fat: 6, t: now - 864e5 };
+  const NEUF = { name: 'Neuf (test Q15)', kcal: 50, prot: 2, carbs: 5, fat: 1, t: now - 60e3 };
+  const NEUF2 = { name: 'Neuf 2 (test Q15)', kcal: 60, prot: 3, carbs: 6, fat: 1, t: now - 30e3 };
+  const LIGNE = { id: 'q15-ligne-0000001', date: jour(5), ts: ilya(5), meal: 'dejeuner', name: 'Riz (test Q15)', kcal: 130, prot: 3, carbs: 28, fat: 0, q: 100, u: 'g', v: 1 };
+  const SEANCE = { id: 4001, ts: ilya(2), date: jour(2), volume: 400, exs: [{ name: 'Squat à la Barre', sets: [{ kg: 60, reps: 5, type: 'N', done: true }] }] };
+  /* n anciens favoris (sans date : d'avant toute remise à zéro), assez longs pour remplir la zone réduite du banc */
+  const anciens = (n, tag) => Array.from({ length: n }, (_, k) => ({ name: 'Ancien favori numéro ' + (k + 1) + ' du compte ' + tag + ' (test Q15)', kcal: 100 + k, prot: 5, carbs: 10, fat: 3 }));
+  X.ctx.saveUserData_(C, { email: C, profile: { name: 'Carol', bw: 61, foodLog: [LIGNE], savedFoods: [ANC_SANS_T, ANC_DATE, NEUF] }, prs: {}, sessions: [SEANCE] });
+  X.ctx.saveUserData_(D, { email: D, profile: { name: 'Dave', foodLog: [], savedFoods: anciens(8, 'Dave').concat([NEUF]) }, prs: {}, sessions: [] });
+  X.ctx.saveUserData_(E, { email: E, profile: { name: 'Erin', foodLog: [], savedFoods: anciens(15, 'Erin').concat([NEUF]) }, prs: {}, sessions: [] });
+  X.ctx.saveUserData_(BOB, { email: BOB, profile: { name: 'Bob', foodLog: [Object.assign({}, LIGNE, { id: 'q15-ligne-bob-0001' })], savedFoods: [ANC_SANS_T] }, prs: {}, sessions: [] });
+  X.props.ADMIN_TOKEN = ADMIN;
+  const bobAvant = J(X.compte(BOB)), avant = JSON.parse(J(X.compte(C)));   // `avant` : la « sauvegarde de la nuit » d'avant la remise à zéro
+  const toks = { [C]: X.ctx._jetonPoser_(C, 'tel'), [D]: X.ctx._jetonPoser_(D, 'tel'), [E]: X.ctx._jetonPoser_(E, 'tel') };
+  const post = (b, qui) => { const q = qui || C; try { return JSON.parse(X.post(Object.assign({ action: 'saveProfile', email: q, token: toks[q] }, b))); } catch (e) { return { status: 'ERREUR ' + e.message }; } };
+  const prof = (qui) => ((X.compte(qui || C) || {}).profile || {});
+  const noms = (l) => J((l || []).map((f) => f && f.name));
+  const zone = (qui) => (((X.compte(qui || C) || {}).recupNut) || {});
+  const evts = (qui) => (zone(qui).evts || []);
+  /* les COPIES de la remise à zéro (motif « raz ») : dans la zone de récupération du compte, et ce qui en a déménagé dans Drive
+     (le sous-dossier `recup-nut` des sauvegardes, relu) — jamais renvoyées à l'app */
+  const copiesRaz = (qui) => {
+    const q = qui || C, z = (zone(q).savedFoods || []).filter((x) => x && x.m === 'raz').map((x) => x.l && x.l.name);
+    const d = X.fichiers.filter((f) => f.dir === 'recup-nut').map((f) => { try { return JSON.parse(f.content); } catch (e) { return null; } })
+      .filter((x) => x && x.type === 'recupNut' && x.liste === 'savedFoods' && x.compte === q)
+      .reduce((acc, x) => acc.concat((x.entrees || []).filter((y) => y && y.m === 'raz').map((y) => y.l && y.l.name)), []);
+    return { zone: z.length, drive: d.length, noms: z.concat(d).sort() };
+  };
+
+  /* ① la remise à zéro arrive (l'app l'envoie aussitôt) avec un envoi de favoris VIDE */
+  const r1 = post({ hiddenFoods: [{ k: '*', t: raz }], savedFoods: [] });
+  const c1 = copiesRaz();
+  tD('B-NFIAB-X Q15 ① ⭐⭐ D-141 — LA REMISE À ZÉRO SUPPRIME VRAIMENT LES ANCIENS FAVORIS DU SERVEUR, même sur un envoi VIDE (avant : « un envoi vide ne remplace jamais ») : il ne reste que le favori mis APRÈS ; les deux d\'avant (dont un sans date) sont d\'abord COPIÉS par la protection P1 (zone de récupération, motif « raz », jamais renvoyée à l\'app), puis retirés — l\'événement le dit (des nombres)',
+    r1.status === 'ok' && noms(prof().savedFoods) === J([NEUF.name]) && J(c1.noms) === J([ANC_DATE.name, ANC_SANS_T.name].sort())
+    && evts().some((e) => e.motif === 'raz' && e.retirees === 2 && e.copiees === 2), J({ r1, favs: noms(prof().savedFoods), c1, ev: evts().slice(-1) }));
+  t('B-NFIAB-X Q15 ② ⛔ LA REMISE À ZÉRO NE TOUCHE NI LE JOURNAL, NI LE PROFIL, NI LES SÉANCES AU SERVEUR (tous les modes) : identiques à l\'octet, le journal compris',
+    r1.status === 'ok' && J(prof().foodLog) === J(avant.profile.foodLog) && prof().name === 'Carol' && prof().bw === 61 && J((X.compte(C) || {}).sessions) === J(avant.sessions),
+    J({ r1, journal: (prof().foodLog || []).length }));
+  /* ② un appareil resté en retard renvoie un ancien favori, avec deux neufs */
+  const r3 = post({ savedFoods: [ANC_SANS_T, NEUF, NEUF2] });
+  tD('B-NFIAB-X Q15 ③ ⭐ UN APPAREIL EN RETARD RENVOIE UN ANCIEN FAVORI : le serveur ne le reprend pas, et ne le recopie pas (sa copie est déjà gardée : une seule) ; les favoris d\'APRÈS se synchronisent normalement',
+    r3.status === 'ok' && noms(prof().savedFoods) === J([NEUF.name, NEUF2.name]) && J(copiesRaz().noms) === J(c1.noms), J({ favs: noms(prof().savedFoods), copies: copiesRaz() }));
+  /* ③ Drive en panne, la zone DÉBORDE mais reste sous le plafond (8 anciens) : la suppression passe, la zone garde tout (D-110) */
+  etat.drivePanne = true;
+  const r4 = post({ hiddenFoods: [{ k: '*', t: raz }], savedFoods: [NEUF] }, D);
+  const c4 = copiesRaz(D), ev4 = evts(D).slice(-1)[0] || null;
+  tD('B-NFIAB-X Q15 ④ ⛔ DRIVE EN PANNE, LA ZONE DÉBORDE (8 anciens favoris, sous le plafond) : la suppression passe quand même et la zone garde les 8 copies au-delà de sa borne (D-110, validée par Michel : un envoi de favoris n\'est plus refusé pour une panne de Drive) — événement « differe »',
+    r4.status === 'ok' && noms(prof(D).savedFoods) === J([NEUF.name]) && c4.zone === 8 && c4.drive === 0 && !!ev4 && ev4.differe === 'drive' && ev4.motif === 'raz',
+    J({ favs: noms(prof(D).savedFoods), c4, ev4 }));
+  /* ④ Drive en panne et la zone dépasserait son PLAFOND (15 anciens) : refus (D-109) — rien de supprimé, rien de repris, l'envoi attend */
+  const NEUF3 = { name: 'Neuf 3 (test Q15)', kcal: 70, prot: 4, carbs: 7, fat: 2, t: now };
+  const listeE = prof(E).savedFoods;
+  const r5a = post({ hiddenFoods: [{ k: '*', t: raz }], savedFoods: [NEUF, NEUF3] }, E);
+  const refus = { meme: J(prof(E).savedFoods) === J(listeE), c: copiesRaz(E), ev: evts(E).slice(-1)[0] || null };
+  etat.drivePanne = false;
+  const r5b = post({ savedFoods: [NEUF, NEUF3] }, E);
+  const c5 = copiesRaz(E);
+  tD('B-NFIAB-X Q15 ⑤ ⛔ DRIVE EN PANNE ET LA ZONE AU-DELÀ DE SON PLAFOND (15 anciens) : REFUS (D-109) — la liste du serveur reste telle quelle, aucune copie partielle, l\'envoi attend ; Drive revenu, le même envoi passe : les 15 copies gardées (zone + Drive, relu), seuls les favoris d\'après restent',
+    r5a.status === 'ok' && refus.meme && refus.c.noms.length === 0 && !!refus.ev && refus.ev.refus === 'drive'
+    && r5b.status === 'ok' && noms(prof(E).savedFoods) === J([NEUF.name, NEUF3.name]) && c5.noms.length === 15 && c5.drive > 0,
+    J({ refus, apres: noms(prof(E).savedFoods), c5 }));
+  /* ⑤ l'admin restaure la sauvegarde d'AVANT la remise à zéro (les anciens favoris dedans, aucune date `*`) */
+  let r6 = null; try { r6 = JSON.parse(X.post({ action: 'adminRestore', adminToken: ADMIN, email: C, data: JSON.parse(J(avant)) })); } catch (e) { r6 = { status: 'ERREUR ' + e.message }; }
+  tD('B-NFIAB-X Q15 ⑥ ⭐⭐ UNE SAUVEGARDE D\'AVANT RESTAURÉE PAR L\'ADMIN NE RAMÈNE PAS LES ANCIENS FAVORIS : la date de remise à zéro du compte est gardée (fusionnée), seuls les favoris d\'après restent actifs, le journal de la sauvegarde est restauré tel quel',
+    !!r6 && r6.status === 'ok' && noms(prof().savedFoods) === J([NEUF.name]) && (prof().hiddenFoods || []).some((e) => e.k === '*' && e.t === raz) && J(prof().foodLog) === J(avant.profile.foodLog),
+    J({ r6, favs: noms(prof().savedFoods), m: prof().hiddenFoods }));
+  t('B-NFIAB-X Q15 ⑨ ⛔ UN AUTRE COMPTE N\'EST JAMAIS TOUCHÉ (tous les modes) : Bob, qui n\'a fait aucune remise à zéro, est identique à l\'octet — son ancien favori compris',
+    J(X.compte(BOB)) === bobAvant, J({ bob: noms(((X.compte(BOB) || {}).profile || {}).savedFoods) }));
 }
 
 async function croiseFiab(t, b, PORT) {
   console.log('\n-- B-NFIAB-X. Synchro, restauration, autres appareils, remise à zéro (vrai Code.js en local) --');
   const SRV = masquesDansListeBlanche(), sansObjet = [];
+  /* D-141 : le serveur SUPPRIME-t-il les favoris d'avant la remise à zéro (il faut aussi qu'il garde la date : SRV) ? */
+  const SUPPR = SRV && dansSaveProfile(/_nutRazFavoris_\(/);
   console.log('   MODE : ' + (SRV ? 'le Code.js servi GARDE les masquages (`hiddenFoods` dans la liste blanche de saveProfile) — synchro entre appareils ET garanties locales'
     : 'le Code.js servi NE GARDE PAS les masquages (pas de `hiddenFoods` dans la liste blanche de saveProfile) — garanties LOCALES seulement ; les 6 témoins de synchro entre appareils sont SANS OBJET'));
   /* Un témoin de synchro entre appareils : joué si le serveur garde les masquages, sinon listé SANS OBJET (ni vert, ni rouge). */
   const tS = (nom, cond, detail) => { if (SRV) return t(nom, cond, detail);
     sansObjet.push(nom); console.log('  --   ' + nom + '   SANS OBJET (le Code.js servi ne garde pas les masquages)'); };
+  /* Un témoin de la SUPPRESSION RÉELLE (D-141) : joué si le serveur supprime, sinon SANS OBJET (ni vert, ni rouge). */
+  const tD = (nom, cond, detail) => { if (SUPPR) return t(nom, cond, detail);
+    sansObjet.push(nom); console.log('  --   ' + nom + '   SANS OBJET (le Code.js servi ne supprime pas les anciens favoris : D-141 absent)'); };
+  console.log('   D-141 : ' + (SUPPR ? 'le Code.js servi SUPPRIME les favoris d\'avant la remise à zéro (copie Drive relue d\'abord)' : 'le Code.js servi ne les supprime pas — témoins de la suppression SANS OBJET'));
+  serveurQ15(t, tD);
   const etat = { drivePanne: false, reseauCoupe: false };
   const { X, tok } = CR.preparer(etat);
   const journalInit = [ANC_ISO, STK_823, STK_901, STK_1016, Object.assign({}, V2_ISO)];
@@ -652,7 +844,15 @@ async function croiseFiab(t, b, PORT) {
   const P = await p1.evaluate(() => (typeof nutRazPerimetre === 'function' ? nutRazPerimetre() : null));
   await p1.evaluate(async () => { if (typeof nutRazSauvegarder === 'function') await nutRazSauvegarder(); });
   const fichier = await p1.evaluate(() => window.__fichier);
+  const srvAvantRaz = JSON.parse(J(X.compte(CR.ALICE) || {}));
+  etat.drivePanne = true;   // D-141 : la remise à zéro part pendant une panne de Drive — au serveur, rien ne doit partir sans copie
   await p1.evaluate(() => { try { if (typeof nutRazExecuter === 'function') nutRazExecuter(); } catch (e) {} }); await pause(p1, 300); g = await clic(p1, '#confirm-ok'); await pause(p1, 1500);
+  const srvPanne = (X.compte(CR.ALICE) || {}).profile || {}, evPanne = ((((X.compte(CR.ALICE) || {}).recupNut) || {}).evts || []).slice(-1)[0] || null;
+  /* la copie de l'ancien favori (motif « raz ») : dans la zone de récupération d'Alice, ou ce qui en a déménagé dans Drive */
+  const copieIsoNom = () => (((((X.compte(CR.ALICE) || {}).recupNut) || {}).savedFoods || []).some((x) => x && x.m === 'raz' && x.l && x.l.name === 'Iso zero protein (test)'))
+    || X.fichiers.filter((f) => f.dir === 'recup-nut').some((f) => { try { return (JSON.parse(f.content).entrees || []).some((x) => x && x.m === 'raz' && x.l && x.l.name === 'Iso zero protein (test)'); } catch (e) { return false; } });
+  const copiePanne = copieIsoNom();
+  etat.drivePanne = false;
   const propApres = await propositions(p1), jApres = empreinte(await CR.journalApp(p1));
   const ctxApres = await contexteNutri(p1);
   const totalApres = await totaux(p1);
@@ -665,9 +865,18 @@ async function croiseFiab(t, b, PORT) {
     g && propAvant.mes > 0 && propApres.mes === 0 && propApres.deja === 0 && propApres.hab === 0 && propApres.favs === 0 && jApres === jAvant, J({ propAvant, propApres }));
   t('B-NFIAB-X T12 ① les totaux du journal et ce que Milo lit de la nutrition sont INCHANGÉS par la remise à zéro (les propositions ne sont pas des repas)',
     totalApres === totalAvant && !/ERREUR/.test(totalAvant) && ctxApres === ctxAvant && !/^ERREUR/.test(ctxAvant) && ctxAvant.length > 1000, J({ totalAvant, totalApres, n: ctxAvant.length }));
-  const srv2 = (X.compte(CR.ALICE) || {}).profile || {};
-  tS('B-NFIAB-X T08 ③ la remise à zéro est au serveur (une seule date, `*`) ; ses favoris restent au serveur (un envoi vide ne remplace jamais sa liste) — c\'est la date qui les écarte',
+  tD('B-NFIAB-X Q15 ⑦ la remise à zéro faite PENDANT UNE PANNE DE DRIVE : au serveur, la date est arrivée et l\'ancien favori est retiré quand même — copié d\'abord dans la zone de récupération (Drive n\'est nécessaire que si la zone déborde) : rien n\'est perdu, rien n\'attend',
+    (srvPanne.hiddenFoods || []).some((e) => e.k === '*' && e.t > 0) && (srvPanne.savedFoods || []).length === 0 && copiePanne && !!evPanne && evPanne.motif === 'raz',
+    J({ f: (srvPanne.savedFoods || []).length, copiePanne, ev: evPanne }));
+  await CR.synchroniser(p1);   // Drive revenu : l'envoi suivant de l'app
+  const compte2 = X.compte(CR.ALICE) || {}, srv2 = compte2.profile || {};
+  if (SUPPR) t('B-NFIAB-X T08 ③ ⭐⭐ (D-141) la remise à zéro est au serveur (une seule date, `*`) ET ses anciens favoris en sont SUPPRIMÉS (0 favori) — après une copie gardée par la protection P1 (motif « raz » : zone de récupération, ou Drive relu si elle déborde)',
+    (srv2.hiddenFoods || []).some((e) => e.k === '*' && e.t > 0) && (srv2.savedFoods || []).length === 0 && copieIsoNom(), J({ m: srv2.hiddenFoods, f: (srv2.savedFoods || []).length, copie: copieIsoNom() }));
+  else tS('B-NFIAB-X T08 ③ (D-133, serveur sans D-141) la remise à zéro est au serveur (une seule date, `*`) ; ses favoris restent au serveur (un envoi vide ne remplace jamais sa liste) — c\'est la date qui les écarte',
     (srv2.hiddenFoods || []).some((e) => e.k === '*' && e.t > 0) && (srv2.savedFoods || []).length === 1, J({ m: srv2.hiddenFoods, f: (srv2.savedFoods || []).length }));
+  t('B-NFIAB-X Q15 ⑧ ⛔ AU SERVEUR, LE JOURNAL, LE PROFIL ET LES SÉANCES D\'ALICE SONT IDENTIQUES À L\'OCTET après la remise à zéro et sa suppression (tous les modes)',
+    J(srv2.foodLog) === J((srvAvantRaz.profile || {}).foodLog) && srv2.name === (srvAvantRaz.profile || {}).name && J(compte2.sessions) === J(srvAvantRaz.sessions) && (srv2.foodLog || []).length === journalInit.length,
+    J({ n: (srv2.foodLog || []).length }));
 
   /* GARANTIE LOCALE (les deux modes) : sur ce téléphone, la remise à zéro tient au rechargement et à « 🔄 Restaurer ». Le serveur
      garde ses anciens favoris (un envoi vide ne remplace jamais sa liste) : « Restaurer » les rapporte, et c'est la date LOCALE qui
@@ -675,8 +884,9 @@ async function croiseFiab(t, b, PORT) {
   await CR.redemarrer(p1); const propR = await propositions(p1);
   await CR.restaurer(p1); const propS = await propositions(p1), jS = empreinte(await CR.journalApp(p1));
   const favSrv = (((X.compte(CR.ALICE) || {}).profile || {}).savedFoods || []).length;
-  t('B-NFIAB-X T08L ③ ⭐⭐ SUR CE TÉLÉPHONE, LA REMISE À ZÉRO TIENT AU RECHARGEMENT ET À « 🔄 RESTAURER » : aucun favori, aucune proposition ancienne — alors que le serveur garde encore ses favoris d\'avant — et le journal identique à l\'octet',
-    favSrv >= 1 && [propR, propS].every((p) => p.mes === 0 && p.deja === 0 && p.hab === 0 && p.favs === 0) && jS === jAvant, J({ propR, propS, favSrv }));
+  t('B-NFIAB-X T08L ③ ⭐⭐ SUR CE TÉLÉPHONE, LA REMISE À ZÉRO TIENT AU RECHARGEMENT ET À « 🔄 RESTAURER » : aucun favori, aucune proposition ancienne — '
+    + (SUPPR ? 'le serveur n\'a plus ses favoris d\'avant (D-141)' : 'alors que le serveur garde encore ses favoris d\'avant') + ' — et le journal identique à l\'octet',
+    (SUPPR ? favSrv === 0 : favSrv >= 1) && [propR, propS].every((p) => p.mes === 0 && p.deja === 0 && p.hab === 0 && p.favs === 0) && jS === jAvant, J({ propR, propS, favSrv }));
 
   /* Appareil 2, resté HORS LIGNE pendant la remise à zéro : il « ✕ » un autre aliment et synchronise SA liste (sans la remise à
      zéro). Le serveur fusionne (le plus tard gagne) : la remise à zéro n'en sort jamais. */
@@ -688,6 +898,9 @@ async function croiseFiab(t, b, PORT) {
   const srv3 = ((X.compte(CR.ALICE) || {}).profile || {}).hiddenFoods || [];
   tS('B-NFIAB-X T08 ⑦ ⭐ UN TÉLÉPHONE RESTÉ SUR UNE ANCIENNE LISTE (hors ligne pendant la remise à zéro) SYNCHRONISE : le serveur garde la remise à zéro ET ajoute son « ✕ » — rien ne se perd, rien ne réapparaît',
     srv3.some((e) => e.k === '*' && e.t > 0) && srv3.some((e) => e.k === 'nom:autre aliment (test)'), J(srv3));
+  const fav3 = await CR.favoris(p2), favSrv3 = ((((X.compte(CR.ALICE) || {}).profile) || {}).savedFoods || []);
+  tD('B-NFIAB-X T08 ⑧ ⭐⭐ (D-141) CE TÉLÉPHONE EN RETARD AVAIT ENCORE L\'ANCIEN FAVORI ET L\'A RENVOYÉ : le serveur ne l\'a PAS repris (0 favori au serveur) — aucune réapparition par la synchro',
+    fav3.some((f) => f && f.name === 'Iso zero protein (test)') && favSrv3.length === 0, J({ local: fav3.map((f) => f && f.name), serveur: favSrv3.map((f) => f && f.name) }));
 
   /* Appareil 2 : au DÉMARRAGE (sans « Restaurer »), la remise à zéro faite ailleurs s'applique */
   await CR.redemarrer(p2); await pause(p2, 1500);
@@ -715,6 +928,13 @@ async function croiseFiab(t, b, PORT) {
   t('B-NFIAB-X T08 ⑥ la vie continue : un aliment noté après la remise à zéro est proposé, et son étoile survit à « Restaurer » sur l\'autre téléphone (et elle seule)',
     g && f3.length === 1 && f3[0].name === 'Yaourt après (test)' && f3[0].t > 0, J(f3));
 
+  /* T08L ④ (tous les modes) : le serveur RENVOIE un ancien favori — une sauvegarde restaurée telle quelle par un serveur d'avant
+     D-141, ou un serveur pas encore à jour. « 🔄 Restaurer » sur le téléphone : la date locale l'écarte encore (défense de l'app). */
+  { const brut = X.compte(CR.ALICE); brut.profile.savedFoods = (brut.profile.savedFoods || []).concat([Object.assign({}, FAV_ISO_NOM)]); X.ctx.saveUserData_(CR.ALICE, brut); }
+  await CR.restaurer(p1); const favI = await CR.favoris(p1), propI = await propositions(p1);
+  t('B-NFIAB-X T08L ④ ⭐ MÊME SI LE SERVEUR RENVOIE UN ANCIEN FAVORI (une sauvegarde d\'avant restaurée telle quelle, un serveur pas encore à jour), « 🔄 Restaurer » ne le reprend pas : seul le favori d\'après revient',
+    favI.length === 1 && favI[0].name === 'Yaourt après (test)' && propI.favs === 1, J({ favI: favI.map((f) => f && f.name), propI }));
+
   /* ④ Rétablir les favoris depuis la sauvegarde (le fichier de T07) */
   const jAvantRet = empreinte(await CR.journalApp(p1));
   await p1.evaluate((contenu) => { const f = new File([contenu], 'sauvegarde.json', { type: 'application/json' }); if (typeof nutRazRetablir === 'function') nutRazRetablir({ files: [f], value: '' }); }, fichier ? fichier.c : '{}');
@@ -728,7 +948,7 @@ async function croiseFiab(t, b, PORT) {
   /* Comme B-NIX : toute sortie hors du serveur simulé est COUPÉE (jamais réussie). Les appels au Worker viennent du démarrage de l'app
      (Milo, hors de ce banc) : coupés, comptés, jamais servis. */
   t('B-NFIAB-X Z aucune erreur de page ; aucune sortie réseau réussie (toutes coupées hors du serveur simulé)', errs.length === 0, J({ errs: errs.slice(0, 4), sorties: [...new Set(sorties)] }));
-  if (sansObjet.length) console.log('   SANS OBJET (' + sansObjet.length + ', ni verts ni rouges) — le Code.js servi ne garde pas les masquages : ' + sansObjet.map((n) => n.replace(/^B-NFIAB-X (\S+ \S+).*$/, '$1')).join(' · '));
+  if (sansObjet.length) console.log('   SANS OBJET (' + sansObjet.length + ', ni verts ni rouges) — le Code.js servi ne garde pas les masquages, ou ne supprime pas les anciens favoris (D-141) : ' + sansObjet.map((n) => n.replace(/^B-NFIAB-X (\S+ \S+).*$/, '$1')).join(' · '));
   for (const D of [D1, D2, D3]) await D.cx.close();
 }
 

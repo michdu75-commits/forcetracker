@@ -63,6 +63,23 @@ Z_TOAST = "toast(_afRepriseVide ? 'Rien n\\'a été ajouté. '+_N2_VIDE"
 # T08 conditionnels : le serveur LIT les masquages mais ne les garde plus (la liste blanche les nomme encore)
 SERVEUR_LU = "    if (body.hiddenFoods   !== undefined) void _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);"
 CHARGE = "    S.hiddenFoods=_nutMasquesNormaliser(JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]'));   // NV2-FIAB : des dates de départ\n"
+# E2b · NUT-VERIFY-01 (cloture ciblee, 25/10) : seules les saisies encore PROPOSEES se comparent (D-131) ; les fiches verifiees par la
+# SOURCE restent (D-136)
+E2B_RANGER = "    if(sid && _n2Propose(x, fav ? x.t : x.ts)) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };"
+E2B_FICHE = "    const sid=ranger(l, false); if(!sid) return;\n"
+# Q15 / D-141 (cloture ciblee, 25/10) : la remise a zero SUPPRIME les anciens favoris au serveur (copie Drive relue d'abord)
+RAZ_ENTREE = "function _nutRazFavoris_(existing, profile, recu, email) {\n  var raz = _nutRazDate_(profile.hiddenFoods);\n"
+RAZ_P1 = "  var garde = _nutProtegerListe_(existing, profile, 'savedFoods', a.vivants, email, 'raz');\n"
+RAZ_ENVOI = "  return b ? b.vivants : recu;\n}\n"
+RAZ_REFUS = "  if (garde !== a.vivants) {                                       // refusé (D-109) : rien de supprimé, rien de repris\n"
+RAZ_GARDE = "  profile.savedFoods = garde;\n"
+RAZ_MOTIF = "  ec.retirees.forEach(function(l) { garder(l, motif || (brutal ? 'brutal' : 'retiree')); });\n"
+RAZ_ADMIN_F = "  if (_raz && Array.isArray(data.profile.savedFoods)) data.profile.savedFoods = _nutRazTri_(data.profile.savedFoods, _raz).vivants;\n"
+RAZ_ADMIN_M = "  if (_masques.length) data.profile.hiddenFoods = _masques;\n"
+RAZ_ORDRE = ("    if (body.hiddenFoods   !== undefined) profile.hiddenFoods   = _nutMasquesFusion_(profile.hiddenFoods, body.hiddenFoods);   // NV2-FIAB : masquages + remise à zéro\n"
+             "    // 🗑️ D-141 : APRÈS la fusion des masquages (la date de remise à zéro la plus récente) et AVANT P1 — les favoris d'avant elle sont\n"
+             "    //    supprimés (copie Drive relue d'abord), au serveur comme dans l'envoi ; P1 ne voit ensuite que les favoris d'après.\n"
+             "    const _favRecus = _nutRazFavoris_(existing, profile, body.savedFoods, email);\n")
 
 MUT = [
     # ── la reprise d'un aliment : son IDENTITE, sa fiche retrouvee, ses issues ──
@@ -81,7 +98,7 @@ MUT = [
     ('F3 une fiche arrivee EN RETARD s\'applique a l\'aliment choisi entre-temps', [(A, PERIME, "")], E('T02 ⑦'), 'GARDE', 'ecran'),
     ('F4 le cas fige n\'a plus d\'issue a l\'ecran (ni retrouver, ni scanner, ni etiquette) — ni la saisie a zero (meme proprietaire)', [(A, ISSUES, "[]")], E('T02 ②', 'ZÉRO ①'), 'GARDE', 'ecran'),
     ('F5 deux saisies du meme produit qui se contredisent ne se signalent plus',
-     [(A, CONTR, CONTR + "  return null;\n")], E('T06 ①', 'T06 ③'), 'GARDE', 'ecran'),
+     [(A, CONTR, CONTR + "  return null;\n")], E('T06 ①', 'T06 ③', 'E2b ⑤'), 'GARDE', 'ecran'),
     ('F6 « Deja note par toi » ignore de nouveau les masquages (« ✕ »)', [(A, DEJA, "")], E('N2 ①'), 'GARDE', 'ecran'),
     ('F7 une recopie « declaree » perd l\'identite du produit (`sourceId:null`)', [(N2, SID, "")], E('T02 ③'), 'GARDE', 'ecran'),
     ('F8 l\'energie pour 100 g d\'un produit est de nouveau ARRONDIE a l\'entier (156 au lieu de 155 pour 40 g)',
@@ -129,7 +146,7 @@ MUT = [
     ('F20 le serveur REMPLACE la liste au lieu de la fusionner (un telephone en retard efface la remise a zero)',
      [(CJ, FUSION_SRV, FUSION_SRV.replace("  prendre(existant); prendre(recu);\n", "  prendre(recu);\n"))], X('T08 ⑦'), 'GARDE', 'croise'),
     ('F21 « Restaurer » ne reprend plus les masquages du serveur', [(SE, RESTAURE_M, "")], X('T08 ②'), 'GARDE', 'croise'),
-    ('F22 « Restaurer » rend les favoris d\'avant la remise a zero', [(SE, RESTAURE_F, "")], X('T08 ⑤'), 'GARDE', 'croise'),
+    ('F22 « Restaurer » rend les favoris d\'avant la remise a zero (le serveur D-141 n\'en renvoie plus : T08L ④ lui en fait renvoyer)', [(SE, RESTAURE_F, "")], X('T08L ④'), 'GARDE', 'croise'),
     ('F23 au demarrage, les masquages venus d\'un autre appareil ne s\'appliquent plus',
      [(A, DEMARRE, "          }catch(e){}")], X('T08 ④'), 'GARDE', 'croise'),
     # ── N08 (retour de Claude Principal, 25/10) : une entree vide (`null`) dans le journal ne fait plus rien tomber ──
@@ -154,6 +171,39 @@ MUT = [
     ('Z6 un champ « quantite » est propose pour ces 0 (accepter une quantite affirmerait qu\'ils valaient pour elle)',
      [(A, Z_HTML, Z_HTML.replace("el.innerHTML='", "el.innerHTML='<input id=\"af-prop\" type=\"text\" inputmode=\"decimal\">'+'"))], E('ZÉRO ①', 'ZÉRO ②'), 'GARDE', 'ecran'),
     ('Z7 « + Ajouter » annonce de nouveau « choisis la quantite » (sans champ ou la choisir)', [(A, Z_TOAST, Z_TOAST.replace('toast(_afRepriseVide ?', 'toast(false ?'))], E('ZÉRO ①'), 'GARDE', 'ecran'),
+    # ── E2b · NUT-VERIFY-01 (cloture ciblee, 25/10) ──
+    ('E1 les saisies retirees par la remise a zero ou « ✕ » jugent de nouveau une saisie notee ensuite (le defaut E2b)',
+     [(A, E2B_RANGER, "    if(sid) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };")],
+     E('E2b ①', 'E2b ②', 'E2b ③', 'E2b ④', 'E2b ④b'), 'GARDE', 'ecran'),
+    ('E2 seuls les FAVORIS retires jugent de nouveau (le journal reste filtre)',
+     [(A, E2B_RANGER, "    if(sid && (fav || _n2Propose(x, x.ts))) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };")],
+     E('E2b ④b'), 'GARDE', 'ecran'),
+    ('E3 seules les saisies du JOURNAL retirees jugent de nouveau (les favoris restent filtres)',
+     [(A, E2B_RANGER, "    if(sid && (!fav || _n2Propose(x, x.t))) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };")],
+     E('E2b ①', 'E2b ②', 'E2b ③', 'E2b ④'), 'GARDE', 'ecran'),
+    ('E4 sur-correction : la remise a zero retire aussi les fiches verifiees par la SOURCE (le controle « differe » s\'eteint)',
+     [(A, E2B_FICHE, "    const sid=ranger(l, false); if(!sid || !_n2Propose(l, l.ts)) return;\n")], E('E2b ⑥'), 'GARDE', 'ecran'),
+    # ── Q15 / D-141 (cloture ciblee, 25/10) : la suppression reelle au serveur, PAR la protection P1 ──
+    ('D1 le serveur ne supprime plus les anciens favoris (retour a D-133 : la date les ecarte, le serveur les garde)',
+     [(CJ, RAZ_ENTREE, RAZ_ENTREE.replace("{\n", "{\n  return recu;\n", 1))], X('Q15 ①', 'Q15 ③', 'T08 ③', 'T08 ⑧'), 'GARDE', 'croise'),
+    ('D2 la suppression part SANS copie (P1 contourne : rien pour retrouver ce que le serveur avait)',
+     [(CJ, RAZ_P1, "  var garde = a.vivants;\n")], X('Q15 ①', 'Q15 ⑦', 'T08 ③'), 'GARDE', 'croise'),
+    ('D3 un ancien favori RENVOYE par un appareil en retard est repris par le serveur',
+     [(CJ, RAZ_ENVOI, "  return recu;\n}\n")], X('Q15 ③', 'T08 ⑧'), 'GARDE', 'croise'),
+    ('D4 au-dela du plafond, Drive en panne : la suppression passe SANS copie au lieu d\'attendre (D-109 ignoree)',
+     [(CJ, RAZ_REFUS, "  if (garde !== a.vivants) garde = a.vivants;\n  if (false) {\n")], X('Q15 ⑤'), 'GARDE', 'croise'),
+    ('D5 la restauration admin d\'une sauvegarde d\'avant ramene les anciens favoris',
+     [(CJ, RAZ_ADMIN_F, "")], X('Q15 ⑥'), 'GARDE', 'croise'),
+    ('D6 la restauration admin d\'une sauvegarde d\'avant efface la date de remise a zero du compte',
+     [(CJ, RAZ_ADMIN_M, "")], X('Q15 ⑥'), 'GARDE', 'croise'),
+    ('D7 la suppression lit la date AVANT la fusion des masquages (la remise a zero qui arrive ne supprime rien)',
+     [(CJ, RAZ_ORDRE, RAZ_ORDRE.split("\n")[3] + "\n" + "\n".join(RAZ_ORDRE.split("\n")[:3]) + "\n")], X('Q15 ①'), 'GARDE', 'croise'),
+    ('D8 la suppression touche le JOURNAL du serveur (des repas consommes disparaissent)',
+     [(CJ, RAZ_GARDE, RAZ_GARDE + "  profile.foodLog = _nutRazTri_(profile.foodLog, raz).vivants;\n")], X('Q15 ②', 'Q15 ⑧'), 'GARDE', 'croise'),
+    ('D9 l\'ordre de la remise a zero passe sans son motif (« le vide ne gagne jamais » bloque la suppression)',
+     [(CJ, RAZ_P1, RAZ_P1.replace(", email, 'raz');", ", email);"))], X('Q15 ①', 'T08 ③'), 'GARDE', 'croise'),
+    ('D10 les copies de la remise a zero ne portent plus leur motif (indiscernables d\'un retrait ordinaire)',
+     [(CJ, RAZ_MOTIF, "  ec.retirees.forEach(function(l) { garder(l, brutal ? 'brutal' : 'retiree'); });\n")], X('Q15 ①', 'Q15 ⑦', 'T08 ③'), 'GARDE', 'croise'),
     # ── l'oracle (ecrit a la main) et le controle « commentaire » ──
     ('F24 l\'oracle : 35 g d\'isolat attendus a 135 kcal au lieu de 136 (l\'oracle est bien LU)',
      [(B, ORACLE, ORACLE.replace("kcal: 136", "kcal: 135"))], E('T01 ①'), 'GARDE', 'ecran'),
@@ -189,12 +239,19 @@ def main():
     seuls = [x for x in (sys.argv[1] if len(sys.argv) > 1 else '').split(',') if x]
     choisie = lambda nom: not seuls or any(nom.startswith(x + ' ') for x in seuls)
     # ⛔ Toutes les ancres d'abord, sur le depot (lecture seule) : une ancre absente ou multiple arrete tout AVANT le premier banc.
+    # ⚖️ Sauf une : une mutation du serveur (D-141) sur un Code.js qui n'a pas D-141 (celui de master, ou une integration sans le
+    #    GO serveur) est SANS OBJET — listee, jamais comptee conforme (comme les temoins tD du banc).
+    cj = open(os.path.join(SRC, CJ), encoding='utf-8').read()
+    sans_d141 = '_nutRazFavoris_(' not in cj
+    sans_objet = set()
     for nom, rempl, _, _, _ in MUT:
         for f, old, _new in rempl:
             n = open(os.path.join(SRC, f), encoding='utf-8').read().count(old)
+            if n == 0 and f == CJ and sans_d141 and nom.startswith('D'):
+                sans_objet.add(nom); continue
             if n != 1:
                 print('  !! ANCRE INTROUVABLE OU MULTIPLE (%d) dans %s : %s' % (n, f, nom)); return 1
-    parties = sorted(set(m[4] for m in MUT if choisie(m[0])))
+    parties = sorted(set(m[4] for m in MUT if choisie(m[0]) and m[0] not in sans_objet))
     for p in parties:
         tmp0, a0 = cloner()
         rc, res, r0 = banc(a0, p)
@@ -209,6 +266,8 @@ def main():
     for nom, rempl, attendus, attendu, partie in MUT:
         if not choisie(nom):
             continue
+        if nom in sans_objet:
+            print('  --  %-92s SANS OBJET (le Code.js du depot n\'a pas D-141)' % nom[:92]); continue
         total += 1
         tmp, arbre = cloner()
         for f, old, new in rempl:

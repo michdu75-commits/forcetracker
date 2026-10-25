@@ -1938,11 +1938,17 @@ function _n2Cle(x, norm){
    du MÊME produit se compare (`_n2Incoherence`, cause « differe »). Lecture seule. */
 function _n2FichesVerifiees(){
   const o={}, N=(typeof NUT2==='object'&&NUT2)?NUT2:null;
-  /* NV2-FIAB (24/10) : au passage, TOUTES les références de chaque identité (journal et favoris) — ce à quoi une référence non
-     vérifiée se compare (`_n2Contradiction`). Une propriété cachée : les lecteurs existants ne lisent que `o[sid]`. */
+  /* NV2-FIAB (24/10) : au passage, les références de chaque identité (journal et favoris) — ce à quoi une référence non
+     vérifiée se compare (`_n2Contradiction`). Une propriété cachée : les lecteurs existants ne lisent que `o[sid]`.
+     ⭐ E2b · NUT-VERIFY-01 (25/10) : seulement celles qui sont encore PROPOSÉES (`_n2Propose`). Une saisie que la remise à zéro
+     ou « ✕ » a retirée des propositions ne juge plus une saisie notée ensuite — mesuré : deux anciennes saisies fausses (65 kcal
+     pour 100 g) faisaient dire « à vérifier » à une saisie juste (129), et en bloquaient « + Ajouter » et le repas habituel.
+     ⛔ Le journal n'est pas touché ; ⛔ les fiches vérifiées par la SOURCE (`o[sid]`) restent toutes : elles décrivent le produit,
+     pas une proposition (D-136). */
   const refs={}; Object.defineProperty(o, '_refs', {value:refs, enumerable:false});
   if(!N) return o;
-  const ranger=(x, fav)=>{ const sid=(x && typeof x.sourceId==='string') ? x.sourceId.trim() : ''; if(sid) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };
+  const ranger=(x, fav)=>{ const sid=(x && typeof x.sourceId==='string') ? x.sourceId.trim() : '';
+    if(sid && _n2Propose(x, fav ? x.t : x.ts)) (refs[sid]=refs[sid]||[]).push({x:x, fav:fav}); return sid; };
   (S.foodLog||[]).forEach(l=>{
     const sid=ranger(l, false); if(!sid) return;
     const R=N.reprise(l, _n2Ctx()); if(!R.ok || !R.fiche || R.fiche.fiab!=='source') return;
@@ -11292,8 +11298,13 @@ async function loadNutInventaireAdmin(action){
      masquages, rétablissables par ④) ; ③ « Remettre à zéro… » — refusé sans ②, puis une confirmation qui redit les chiffres.
    ⭐ Le mécanisme est UNE date de départ (`k:'*'`, `_nutMasquesNormaliser`) : synchronisée, fusionnée par le max, elle s'applique
    au démarrage des autres appareils (`autoConnect`) et à chaque « Restaurer » — aucune réapparition, sans liste qui grossit (Q14).
-   Les favoris sont retirés ici ; le serveur garde les siens (un envoi vide ne remplace jamais sa liste, P1), et ils restent
-   écartés par la date — le téléphone d'à côté, la restauration, un nouveau téléphone. */
+   ⭐ D-141 (Michel, 25/10 : *« suppression réelle des anciennes listes personnelles, côté serveur ET sur les appareils »*) : les
+   favoris d'avant sont SUPPRIMÉS ici, sur ce téléphone ; le serveur les supprime à son tour à l'envoi qui suit (`_nutRazFavoris_`,
+   Code.js — par la protection P1 : copiés d'abord dans sa zone de récupération, jamais renvoyée à l'app), puis chaque autre
+   appareil à sa connexion. La date reste la garantie de l'app :
+   tant qu'un serveur pas encore à jour, ou une vieille sauvegarde, en renverrait un, il est écarté (« Restaurer », démarrage).
+   « Déjà noté par toi », les récents et les repas habituels ne sont pas des listes enregistrées : ils naissent du journal, qui
+   reste intact — la date les fait renaître de ce qui sera noté ensuite. */
 let _nutRazSauve=null;   // la sauvegarde téléchargée dans CETTE session : sans elle, pas d'exécution
 function _nutRazEmpreinte(x){ const s=JSON.stringify(x===undefined?null:x); let h=5381; for(let i=0;i<s.length;i++) h=((h*33)^s.charCodeAt(i))>>>0; return h.toString(16)+'/'+s.length; }
 function _nutRazPerimetre(){
@@ -11306,7 +11317,8 @@ function _nutRazDire(html){ const b=document.getElementById('admin-nutraz'); if(
 function nutRazPerimetre(){
   if(!_isAdminUnlocked()){ _nutRazDire('<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'); return null; }
   const P=_nutRazPerimetre();
-  _nutRazDire(_healthRow('🧹','Disparaîtra des propositions','warn',P.favoris+' favori(s) · '+P.aliments+' aliment(s) proposé(s) par « Déjà noté par toi » et les récents · '
+  _nutRazDire(_healthRow('🧹','Sera supprimé','warn',P.favoris+' favori(s) — de ce téléphone, du serveur (après une copie gardée à part, jamais reproposée) et de tes autres appareils')
+    +_healthRow('🧹','Ne sera plus proposé','warn',P.aliments+' aliment(s) proposé(s) par « Déjà noté par toi » et les récents · '
       +P.repas+' repas habituel(s) proposé(s)')
     +_healthRow('📓','Reste intact','ok','ton journal daté : <b>'+P.journal+' ligne(s)</b>, leurs valeurs et les totaux de chaque jour — rien n\'y est écrit ni retiré')
     +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Rien n\'a été modifié. Ensuite : 💾 la sauvegarde, puis 🧹.</div>');
@@ -11349,8 +11361,8 @@ function nutRazExecuter(){
     try{ if(typeof _renderFoodQuickList==='function') _renderFoodQuickList(); renderFoodJournal(); }catch(e){}
   };
   if(typeof showConfirm==='function')
-    showConfirm('Remettre à zéro les propositions ?', P.favoris+' favori(s), '+P.aliments+' aliment(s) proposé(s) et '+P.repas
-      +' repas habituel(s) ne seront plus proposés, sur tous tes appareils. Ton journal ('+P.journal+' lignes) n\'est pas touché. Sauvegarde : « '+_nutRazSauve.nom+' ».', go, 'Remettre à zéro');
+    showConfirm('Remettre à zéro les propositions ?', P.favoris+' favori(s) seront SUPPRIMÉS (ce téléphone, le serveur, tes autres appareils) ; '+P.aliments+' aliment(s) proposé(s) et '+P.repas
+      +' repas habituel(s) ne seront plus proposés. Ton journal ('+P.journal+' lignes) n\'est pas touché. Sauvegarde : « '+_nutRazSauve.nom+' ».', go, 'Remettre à zéro');
   else go();
   return true;
 }
