@@ -4894,7 +4894,14 @@ function _buildFoodQuickItems(){
      une autre qui ne l'est pas. Chaque élément porte son APERÇU (`_ap`) : ce que « + Ajouter » écrirait, et s'il le peut. */
   const vf=_n2FichesVerifiees(), ap=x=>_n2Apercu(x, vf);
   /* NV2-FIAB (24/10) : un favori masqué (« ✕ » ailleurs, sur un autre appareil) ou d'avant la remise à zéro n'est plus proposé. */
-  const favs=(S.savedFoods||[]).filter(f=>_n2Propose(f, f && f.t)).map(f=>Object.assign(_itemListe(f),
+  /* NANC (26/10) : deux favoris IDENTIQUES (mêmes champs, seule la date `t` peut différer — une fusion de deux appareils) ne font
+     qu'UNE proposition. Seul le doublon exact tombe : deux favoris de même identité mais de valeurs différentes restent tous les deux
+     (l'un peut être le juste, M4) — c'est la personne qui tranche, jamais l'app. Rien n'est effacé de `S.savedFoods`. */
+  const _favVus=new Set();
+  const favs=(S.savedFoods||[]).filter(f=>_n2Propose(f, f && f.t)).filter(f=>{
+    let e; try{ e=JSON.stringify(Object.assign({}, f, {t:0})); }catch(x){ return true; }
+    if(_favVus.has(e)) return false; _favVus.add(e); return true;
+  }).map(f=>Object.assign(_itemListe(f),
     {portionWeightG:+f.portionWeightG>0?+f.portionWeightG:0, fav:true, _src:f, _ap:ap(f)}));
   const vus={};   // identité → listée (true : par une référence vérifiée ; false : par une qui ne l'est pas)
   favs.forEach(f=>{ const k=_n2Cle(f._src); vus[k]=(vus[k]===true) || _n2Verifiee(f._ap); });
@@ -5029,7 +5036,12 @@ function toggleFavFood(i){
   if(it.fav){
     let idx=S.savedFoods.indexOf(it._src);
     if(idx<0){ const js=JSON.stringify(it._src); idx=S.savedFoods.findIndex(f=>JSON.stringify(f)===js); }
-    if(idx>=0){ S.savedFoods.splice(idx,1); toast('Retiré des favoris','info'); }
+    if(idx>=0){
+      /* NANC : un doublon exact (même favori, copie d'un autre appareil) est retiré avec lui — sinon l'étoile éteinte le ferait revenir. */
+      const eq=f=>{ try{ return JSON.stringify(Object.assign({}, f, {t:0}))===JSON.stringify(Object.assign({}, it._src, {t:0})); }catch(x){ return false; } };
+      S.savedFoods.splice(idx,1);
+      for(let k=S.savedFoods.length-1;k>=0;k--) if(eq(S.savedFoods[k])) S.savedFoods.splice(k,1);
+      toast('Retiré des favoris','info'); }
   }
   else {
     const s=it._src||it;

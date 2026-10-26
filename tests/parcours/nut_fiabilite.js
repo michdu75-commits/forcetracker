@@ -979,6 +979,25 @@ async function ecranFiab(t, b, PORT) {
       !!c2 && !!c4 && c2.slice(15).join('|') === '||||' && c4.slice(15).join('|') === '||||' && !!c3 && c3.slice(16).join(';') === '167;0;31,4;', J({ c2: c2 && c2.slice(15), c3: c3 && c3.slice(15), c4: c4 && c4.slice(15) }));
     t('B-NFIAB EXP ④ L\'EXPORT NE TOUCHE À RIEN : le journal est identique à l\'octet avant et après, et le fichier porte son nom daté', avant === apres && /^forcetracker-nutrition_\d{4}-\d{2}-\d{2}\.csv$/.test(ex.nom || ''), J({ nom: ex.nom }));
     await fin(o); }
+  /* ═══ NANC · ANCIENNES DONNÉES (26/10/2026) — DEUX FAVORIS IDENTIQUES NE FONT QU'UNE PROPOSITION ═══
+     Mesuré (sonde jetable, avant correctif) : deux copies exactes d'un même favori CIQUAL (fusion de deux appareils) s'affichaient
+     deux fois dans « Mes aliments », et l'étoile éteinte sur l'une faisait revenir l'autre. Deux favoris de MÊME identité mais de
+     valeurs DIFFÉRENTES restent tous les deux (l'un peut être le juste, M4) ; rien n'est effacé de `S.savedFoods` à l'affichage. */
+  { const F1 = { name: 'Pâtes sèches, standard, cuites, sans sel ajouté', kcal: 217, prot: 9, carbs: 41, fat: 1, per100: PATES_P100, q: 130, u: 'g', sourceId: 'ciqual:9811', t: Date.now() - 1000 };
+    const F2 = Object.assign({}, F1, { t: Date.now() - 500 });                       // copie exacte d'un autre appareil (seule la date diffère)
+    const F3 = Object.assign({}, F1, { prot: 26, kcal: 300 });                       // même identité, valeurs différentes : un AUTRE favori
+    const o = await ouvrir(b, PORT, fixture('nanc1', [], [F1, F2, F3]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), nFav = M.filter((x) => x.fav).length;
+    const brut = await pg.evaluate(() => (S.savedFoods || []).length);
+    t('B-NFIAB NANC ① DEUX FAVORIS IDENTIQUES = UNE PROPOSITION ; un favori de même identité mais de valeurs différentes reste ; `S.savedFoods` garde ses 3 entrées (rien d\'effacé)',
+      g && nFav === 2 && brut === 3, J({ nFav, brut }));
+    const iF = M.findIndex((x) => x.fav && /sel ajouté/.test(x.nom));
+    await pg.evaluate((i) => toggleFavFood(i), iF); await pause(pg, 300);
+    const restes = await pg.evaluate(() => (S.savedFoods || []).map((f) => f.prot));
+    t('B-NFIAB NANC ② L\'ÉTOILE ÉTEINTE RETIRE AUSSI SA COPIE EXACTE (sinon elle reviendrait) ; le favori de valeurs différentes reste',
+      g && J(restes) === J([26]), J({ restes }));
+    await fin(o); }
   /* Les sorties sont COUPÉES par construction (route) : on les liste ; aucune ne vise l'IA ni Milo (le Worker). */
   t('B-NFIAB Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
     ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));
