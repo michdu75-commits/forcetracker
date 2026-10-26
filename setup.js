@@ -470,7 +470,17 @@ async function _csvFichier(colonnes, lignes, nomCourt, unite){
    elle, toutes les lignes se ressemblent et on ne peut plus juger laquelle croire (R33). */
 /* 🏷️ ft-v1186 — DEUX COLONNES DE PLUS : sans elles, l'export perd exactement l'information
    qu'on vient de sauver — « 2 portions » sans dire de QUOI ne vaut pas mieux qu'avant. */
-const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source','statut','valeurs_inconnues'];
+const NUTRI_COLONNES = ['date','repas','aliment','quantite','unite','portion_label','portion_poids_g','kcal','proteines_g','glucides_g','lipides_g','saisie','source','statut','valeurs_inconnues',
+  /* 🔎 TRAÇABILITÉ (26/10/2026, après le cas POM'POTES / riz Taureau Ailé) — AJOUTÉES EN FIN : les 15 premières colonnes, leur ordre et leurs
+     valeurs ne bougent pas. `source_id` = l'identité de la ligne telle que STOCKÉE (code-barres, `ciqual:N`…), `*_100` = son pour-100 g / 100 ml
+     tel que stocké (`per100`). ⛔ Une donnée absente sort VIDE — jamais 0, jamais déduite d'un autre champ ni du nom. Décimales à la VIRGULE
+     (Excel FR lit « 388,5 » comme un nombre ; avec un point il lit du texte ou une date). Lecture seule : rien n'est écrit dans le journal. */
+  'source_id','kcal_100','proteines_100','glucides_100','lipides_100'];
+/* Un pour-100 g STOCKÉ, à la française ; absent, illisible ou non fini → '' (jamais 0). */
+function _csvPour100(e, k){
+  const v = e && e.per100 && typeof e.per100 === 'object' ? e.per100[k] : null;
+  return (typeof v === 'number' && isFinite(v)) ? String(v).replace('.', ',') : '';
+}
 async function exportNutritionCsv(){
   /* 🥗 V2 (jalon 4) — LES NOMS DE REPAS SONT CEUX DE L'APP (`FOOD_MEALS`). La table d'avant utilisait des clés
      qui n'existent pas (matin, midi, soir) : trois repas sur cinq sortaient sous leur clé brute (STR-14).
@@ -493,7 +503,10 @@ async function exportNutritionCsv(){
       saisie: e && e.saisie || '', source: e && e.origine || '',
       /* 🥗 V2 : fiable · estimee · declaree pour une ligne V2 ; « ancienne » pour une ligne d'avant V2 (lue telle quelle). */
       statut: (e && e.n2 && e.n2.st) ? e.n2.st : 'ancienne',
-      valeurs_inconnues: (e && e.n2 && Array.isArray(e.n2.manque)) ? e.n2.manque.join(' ') : ''
+      valeurs_inconnues: (e && e.n2 && Array.isArray(e.n2.manque)) ? e.n2.manque.join(' ') : '',
+      source_id: (e && typeof e.sourceId === 'string') ? e.sourceId : '',
+      kcal_100: _csvPour100(e, 'kcal'), proteines_100: _csvPour100(e, 'prot'),
+      glucides_100: _csvPour100(e, 'carbs'), lipides_100: _csvPour100(e, 'fat')
     }));
   await _csvFichier(NUTRI_COLONNES, L, 'nutrition', 'lignes');
 }

@@ -951,6 +951,34 @@ async function ecranFiab(t, b, PORT) {
     t('B-NFIAB D101 ⑥ (exclusion épinglée) un autre aliment repris du journal ne reçoit pas les 180 g de la soupe ; ses valeurs restent celles de 130 g, et sans quantité rien ne s\'écrit',
       g && !st.prop && st.ecran === T(A.pates130) && n1 === n0, J({ st, n0, n1 }));
     await fin(o); }
+
+  /* ═══ EXP · EXPORT NUTRITION — TRAÇABILITÉ (26/10/2026, cas POM'POTES / riz Taureau Ailé) ═══
+     Cinq colonnes EN FIN (source_id, kcal_100, proteines_100, glucides_100, lipides_100) ; les 15 premières, leur ordre et leurs valeurs ne
+     bougent pas ; une donnée absente sort VIDE (jamais 0) ; un vrai 0 reste « 0 » ; décimales à la virgule ; le journal n'est pas touché. */
+  { const EAN = '3000000000771', mk = (id, nom, o) => Object.assign({ id, date: jour(1), ts: ilya(1), meal: 'dejeuner', name: nom, q: 180, u: 'g', kcal: 103, prot: 1, carbs: 22, fat: 1, v: 1, saisie: 'historique', origine: 'off' }, o);
+    const E1 = mk('exp-scan-000000001', 'Compote (test EXP)', { sourceId: EAN, per100: { kcal: 57.2, prot: 0.5, carbs: 12.1, fat: 0.3 } });
+    const E2 = mk('exp-ancien-00000002', 'Ancien sans identité (test EXP)', { sourceId: null, per100: null, origine: 'utilisateur', saisie: 'manuel' });
+    const E3 = mk('exp-zero-000000003', 'Zéro et manquant (test EXP)', { sourceId: 'ciqual:9811', per100: { kcal: 167, prot: 0, carbs: 31.4, fat: null }, origine: 'ciqual', saisie: 'ciqual' });
+    const E4 = mk('exp-sansclef-0000004', 'Très ancien sans champ (test EXP)', { origine: 'utilisateur' }); delete E4.per100; delete E4.sourceId;
+    const o = await ouvrir(b, PORT, fixture('exp1', [E1, E2, E3, E4]), null); const pg = o.pg;
+    const avant = J(await journal(pg));
+    const ex = await pg.evaluate(async () => { const v = window._donnerFichier; let f = null; window._donnerFichier = async (c, nom) => { f = { c: String(c), nom }; return 'ok'; };
+      try { await exportNutritionCsv(); } catch (e) { return { err: e.message }; } finally { window._donnerFichier = v; }
+      return f ? { c: f.c, nom: f.nom } : { err: 'aucun fichier' }; });
+    const apres = J(await journal(pg));
+    const lignes = (ex.c || '').replace(/^﻿/, '').split('\n'), cols = (lignes[0] || '').split(';');
+    const par = (nom) => { const l = lignes.slice(1).find((x) => x.indexOf(nom) >= 0); return l ? l.split(';').map((x) => x.replace(/^"(.*)"$/, '$1')) : null; };   // `_csvEchappe` met entre guillemets une cellule qui porte une virgule : Excel les lit comme un nombre
+    const A15 = ['date', 'repas', 'aliment', 'quantite', 'unite', 'portion_label', 'portion_poids_g', 'kcal', 'proteines_g', 'glucides_g', 'lipides_g', 'saisie', 'source', 'statut', 'valeurs_inconnues'];
+    const c1 = par('Compote (test EXP)'), c2 = par('Ancien sans identité'), c3 = par('Zéro et manquant'), c4 = par('Très ancien');
+    t('B-NFIAB EXP ① LES 15 COLONNES D\'AVANT NE BOUGENT PAS (même ordre, mêmes valeurs) ; 5 colonnes de traçabilité EN FIN ; aucune ligne perdue',
+      !ex.err && cols.slice(0, 15).join(',') === A15.join(',') && cols.slice(15).join(',') === 'source_id,kcal_100,proteines_100,glucides_100,lipides_100'
+      && lignes.length === 5 && !!c1 && c1.slice(0, 15).join(';') === [jour(1), 'Déjeuner', 'Compote (test EXP)', '180', 'g', '', '', '103', '1', '22', '1', 'historique', 'off', 'ancienne', ''].join(';'), J({ err: ex.err, cols, c1 }));
+    t('B-NFIAB EXP ② LA TRAÇABILITÉ EST CELLE QUI EST STOCKÉE : code-barres et pour-100 g de la compote à la virgule (57,2 · 0,5 · 12,1 · 0,3), « ciqual:9811 » pour les pâtes',
+      !!c1 && c1.slice(15).join(';') === [EAN, '57,2', '0,5', '12,1', '0,3'].join(';') && !!c3 && c3[15] === 'ciqual:9811', J({ c1: c1 && c1.slice(15), c3: c3 && c3.slice(15) }));
+    t('B-NFIAB EXP ③ ⛔ UNE ABSENCE RESTE VIDE, JAMAIS 0 : ligne sans identité ni pour-100 g (null, ou champ absent) → 5 cellules vides ; un vrai 0 reste « 0 », un champ manquant (lipides null) sort vide',
+      !!c2 && !!c4 && c2.slice(15).join('|') === '||||' && c4.slice(15).join('|') === '||||' && !!c3 && c3.slice(16).join(';') === '167;0;31,4;', J({ c2: c2 && c2.slice(15), c3: c3 && c3.slice(15), c4: c4 && c4.slice(15) }));
+    t('B-NFIAB EXP ④ L\'EXPORT NE TOUCHE À RIEN : le journal est identique à l\'octet avant et après, et le fichier porte son nom daté', avant === apres && /^forcetracker-nutrition_\d{4}-\d{2}-\d{2}\.csv$/.test(ex.nom || ''), J({ nom: ex.nom }));
+    await fin(o); }
   /* Les sorties sont COUPÉES par construction (route) : on les liste ; aucune ne vise l'IA ni Milo (le Worker). */
   t('B-NFIAB Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
     ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));
