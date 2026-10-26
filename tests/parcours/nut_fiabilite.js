@@ -871,6 +871,58 @@ async function ecranFiab(t, b, PORT) {
       g && st.table && st.fige && /n'a pas de fiche vérifiée/.test(st.note) && !/référence CIQUAL/.test(st.note), J({ M, st }));
     await fin(o); }
 
+  /* ═══ D101 · D-101 ⑧/⑨ (Michel, 26/10) — LA QUANTITÉ POSÉE SUR UNE ANCIENNE LIGNE SURVIT À LA FICHE CHOISIE ═══
+     130 g → 180 g sur une ancienne ligne CIQUAL, table injoignable : les 180 restent à l'écran, rien n'est écrit, les valeurs de 130 g ne
+     sont JAMAIS présentées comme celles de 180 g ; la connexion revient, « Retrouver l'aliment » → la fiche CIQUAL choisie dans la liste :
+     les 180 g sont REPOSÉS (sans les retaper) et les valeurs se calculent pour 180 g (301·12·57·2). Mesuré rouge avant : le champ revenait
+     VIDE et l'écran montrait les valeurs POUR 100 g (167·7·31·1) sans quantité. Oracle à la main : 167 × 1,8 = 300,6 → 301 ;
+     6,7 × 1,8 = 12,06 → 12 ; 31,4 × 1,8 = 56,52 → 57 ; 1,1 × 1,8 = 1,98 → 2. */
+  { let coupee = true;
+    const o = await ouvrir(b, PORT, fixture('d101a', [ANC_PATES, ANC_SOUPE]), null, { ciqualCoupee: () => coupee }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), ip = (M.find((x) => x.sid === 'ciqual:9811') || {}).i;
+    g = g && ip >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + ip + ')"]'); await pause(pg, 900);
+    g = g && await taper(pg, '#af-prop', '180');
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length;
+    const apresRefus = await pg.evaluate(() => ({ prop: (document.getElementById('af-prop') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/') }));
+    t('B-NFIAB D101 ① ⛔ HORS LIGNE : les 180 g tapés RESTENT visibles après le refus ; les valeurs de 130 g (217·9·41·1) ne sont pas celles de 180 g ; rien n\'est écrit',
+      g && apresRefus.prop === '180' && apresRefus.ecran === T(A.pates130) && n1 === n0, J({ apresRefus, n0, n1 }));
+    coupee = false;
+    await pg.evaluate(() => { const x = [...document.querySelectorAll('#af-prop-row button')].find((y) => /Retrouver l'aliment/.test(y.textContent)); if (x) x.click(); });
+    let i = -1; for (let k = 0; k < 30 && i < 0; k++) { await pause(pg, 250); i = await pg.evaluate(() => (typeof _afSuggCiq !== 'undefined' && _afSuggCiq || []).findIndex((a) => a && a[0] === 9811)); }
+    const pris = i >= 0 && await clic(pg, '#af-sugg [onclick="_afSuggPrendreCiqual(' + i + ')"]'); await pause(pg, 300);
+    const st = await pg.evaluate(() => ({ qte: (document.getElementById('af-bc-grams') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/'),
+      nom: (document.getElementById('af-bc-name') || {}).textContent || '' }));
+    const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NFIAB D101 ② ⭐⭐ LA FICHE CHOISIE REPOSE LES 180 g (sans les retaper) : 180 g affichés, 301·12·57·2, la phrase le dit ; « Ajouter » écrit 180 g, ciqual:9811 « source » ; l\'ancienne ligne de 130 g intacte',
+      g && pris && st.qte === '180' && st.ecran === T(A.pates180) && /ta quantité \(180 g\) est gardée/.test(st.nom)
+      && !!l && l.q === 180 && memes(vals(l), A.pates180) && l.sourceId === 'ciqual:9811' && l.n2 && l.n2.f.fiab === 'source'
+      && J(L.find((x) => x && x.id === ANC_PATES.id)) === J(ANC_PATES), J({ pris, st, l }));
+    await fin(o); }
+  /* ③ voisin — ancienne ligne SANS fiche (jamais de fiche à retrouver ici) : 180 g tapés, refus, 180 g toujours visibles, rien écrit */
+  { const o = await ouvrir(b, PORT, fixture('d101b', [ANC_SOUPE]), null, { ciqualCoupee: () => true }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), is = (M.find((x) => x.nom === 'Soupe maison (test)') || {}).i;
+    g = g && is >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + is + ')"]'); await pause(pg, 800);
+    g = g && await taper(pg, '#af-prop', '180');
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+    const apres = await pg.evaluate(() => (document.getElementById('af-prop') || {}).value);
+    t('B-NFIAB D101 ③ voisin : une ancienne ligne SANS fiche (soupe 300 g · 120 kcal) — 180 g refusés en le disant, 180 toujours à l\'écran, rien d\'écrit, aucune valeur inventée',
+      g && apres === '180' && n1 === n0 && /valent pour 300 g/.test(msg), J({ apres, n0, n1, msg }));
+    await fin(o); }
+  /* ④ voisin — la fiche choisie SANS qu'aucune quantité ait été tapée : rien n'est pré-rempli (D-101 ①) */
+  { let coupee = true;
+    const o = await ouvrir(b, PORT, fixture('d101c', [ANC_PATES]), null, { ciqualCoupee: () => coupee }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), ip = (M.find((x) => x.sid === 'ciqual:9811') || {}).i;
+    g = g && ip >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + ip + ')"]'); await pause(pg, 900); coupee = false;
+    await pg.evaluate(() => { const x = [...document.querySelectorAll('#af-prop-row button')].find((y) => /Retrouver l'aliment/.test(y.textContent)); if (x) x.click(); });
+    let i = -1; for (let k = 0; k < 30 && i < 0; k++) { await pause(pg, 250); i = await pg.evaluate(() => (typeof _afSuggCiq !== 'undefined' && _afSuggCiq || []).findIndex((a) => a && a[0] === 9811)); }
+    const pris = i >= 0 && await clic(pg, '#af-sugg [onclick="_afSuggPrendreCiqual(' + i + ')"]'); await pause(pg, 300);
+    const qte = await pg.evaluate(() => (document.getElementById('af-bc-grams') || {}).value);
+    t('B-NFIAB D101 ④ voisin : aucune quantité tapée avant → la fiche choisie ne pré-remplit rien (champ vide)', g && pris && (qte === '' || qte == null), J({ pris, qte }));
+    await fin(o); }
+
   /* Les sorties sont COUPÉES par construction (route) : on les liste ; aucune ne vise l'IA ni Milo (le Worker). */
   t('B-NFIAB Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
     ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));

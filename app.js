@@ -1872,6 +1872,32 @@ function _n2EtatRetrouver(texte){
   const el=document.getElementById('af-retrouver-etat');
   if(el){ el.textContent=texte; el.style.display=texte?'block':'none'; }
 }
+/* ⭐ D-101 ⑧/⑨ (Michel, 26/10) — LA QUANTITÉ POSÉE SUR UNE REPRISE SURVIT À LA FICHE, par quelque porte qu'elle arrive : la
+   fiche retrouvée en ligne (`_n2RetrouverEnLigne`) ET la fiche CHOISIE dans la recherche (`_afSuggPrendreCiqual`, `_afSuggPrendreOff`).
+   Mesuré le 26/10 : 180 tapé sur une ancienne ligne CIQUAL (130 g) hors ligne, puis « Retrouver l'aliment » → la fiche 9811 choisie
+   → le champ revenait VIDE et l'écran montrait les valeurs POUR 100 g (167·7·31·1) sans quantité. Un seul propriétaire de « reposer »
+   (R2) : la quantité relevée AVANT la sortie de l'aliment d'avant se repose dans le champ de la fiche, par le même calcul que la saisie.
+   ⛔ Seulement dans l'unité de la fiche (g ou ml) : rien n'est converti. Rend la phrase à dire (vide si rien n'était posé). */
+function _n2QteRepriseAvantFiche(){
+  return (_afRef && _afRef.fige) || _afRepriseVide ? _afQtePoseeReprise() : null;
+}
+function _n2ReposerQte(qPose){
+  if(!(qPose && _bcNutr)) return '';
+  let dit='';
+  const u=(_bcNutr.base==='ml') ? 'ml' : 'g';
+  {
+    if(qPose.unite===u){
+      const g=document.getElementById('af-bc-grams'); if(g) g.value=qPose.val;
+      _bcPortionPrise=null;
+      _bcQtyPose=true; _bcQtyOrigine=qPose.origine;   // le geste d'avant, tel quel (une frappe, ou une pastille touchée)
+      _bcApplyGrams();                                // R2 : le même calcul que la saisie à la main
+      const b=document.getElementById('af-bc-last');  // la pastille déjà prise ne se repropose pas
+      if(b && qPose.origine==='proposee' && parseFloat(b.dataset.q)===qPose.val) b.style.display='none';
+      dit+=' — ta quantité ('+_n2QteTexte(qPose, false)+') est gardée';
+    }else dit+=' — tu avais indiqué '+_n2QteTexte(qPose, false)+' : cette fiche compte en '+u+', tape ta quantité en '+u;
+  }
+  return dit;
+}
 async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
   if(typeof _offFetchProduct!=='function') return false;
   _n2EtatRetrouver('🔎 Recherche de la fiche de ce produit (code-barres '+ean+')…');
@@ -1904,18 +1930,7 @@ async function _n2RetrouverEnLigne(ean, jeton, saisie, qDer, nom, uDer, vAnc){
   }
   /* NUT-QTY-02 : la quantité relevée se repose, et l'écran le dit. ⛔ Seulement dans l'unité de la fiche (g ou ml) : des grammes ne
      deviennent jamais des ml, ni des portions des grammes — rien n'est converti ni deviné ; sinon l'écran dit de la retaper. */
-  if(qPose && _bcNutr){
-    const u=(_bcNutr.base==='ml') ? 'ml' : 'g';
-    if(qPose.unite===u){
-      const g=document.getElementById('af-bc-grams'); if(g) g.value=qPose.val;
-      _bcPortionPrise=null;
-      _bcQtyPose=true; _bcQtyOrigine=qPose.origine;   // le geste d'avant, tel quel (une frappe, ou une pastille touchée)
-      _bcApplyGrams();                                // R2 : le même calcul que la saisie à la main
-      const b=document.getElementById('af-bc-last');  // la pastille déjà prise ne se repropose pas
-      if(b && qPose.origine==='proposee' && parseFloat(b.dataset.q)===qPose.val) b.style.display='none';
-      dit+=' — ta quantité ('+_n2QteTexte(qPose, false)+') est gardée';
-    }else dit+=' — tu avais indiqué '+_n2QteTexte(qPose, false)+' : cette fiche compte en '+u+', tape ta quantité en '+u;
-  }
+  dit+=_n2ReposerQte(qPose);
   const nm=document.getElementById('af-bc-name'); if(nm && _bcNutr) nm.textContent+=dit;
   return true;
 }
@@ -6171,6 +6186,7 @@ function _afSuggPrendreCiqual(i){
   /* ⛔⛔ LE PLUS COÛTEUX DES SIX : `data/ciqual.json` porte les décimales (3 298 aliments sur
      3 484), et on les jetait ici même, à la lecture. */
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (proposition CIQUAL). */
+  const qPose=_n2QteRepriseAvantFiche();   // D-101 ⑧/⑨ : relevée AVANT que l'aliment d'avant s'oublie
   try{ _afOublierAliment(); }catch(e){}
   _bcNutr=_ref100(a[1], a[3], a[4], a[5], a[6], {origine:'ciqual'});
   /* ⚠️ PAS D'ÉTAT « tel-que-vendu » DANS LA PROVENANCE, et c'est une vraie différence avec
@@ -6180,11 +6196,13 @@ function _afSuggPrendreCiqual(i){
      ⭐ La NOTE d'avertissement, elle, continue de se lever (elle lit le nom) : c'est utile,
      puisqu'un « Riz blanc, cru » pèse bien 3 fois moins que le même riz cuit. */
   _offRemplirFormulaire({serving_quantity:0, nutriments:{}}, 'ciqual:'+a[0], 'ciqual');
+  const dit=_n2ReposerQte(qPose);   // avant `attendu` : ce que l'écran montre, quantité comprise
   _afSetSrc({saisie:'ciqual', origine:'ciqual', sourceId:'ciqual:'+a[0], etat:null,
              per100:_per100De(_bcNutr),
              attendu:_afLuFormulaire()});
   _afSuggVider();
-  toast('Ajuste la quantité ✅','success');
+  if(dit){ const nm=document.getElementById('af-bc-name'); if(nm) nm.textContent+=dit; }
+  toast(dit ? 'Ta quantité est gardée ✅' : 'Ajuste la quantité ✅','success');
 }
 /* ═══ 🔎 DES PROPOSITIONS QUAND ON TAPE UN ALIMENT (22/08/2026) ═══════════════════════════
    Michel, après son PREMIER vrai repas noté : *« pour rentrer les aliments il n'y a pas de choix
@@ -6579,14 +6597,17 @@ function _afSuggPrendreOff(i){
   const p=_afSuggOff[i]; if(!p) return;
   const n=p.nutriments||{};
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (recherche Open Food Facts par nom). */
+  const qPose=_n2QteRepriseAvantFiche();   // D-101 ⑧/⑨
   try{ _afOublierAliment(); }catch(e){}
   _bcNutr=_ref100(_afSuggNom(p), _afSuggKcal100(p),
                   n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g'],
                   {origine:'off', champ:_nrjChampPrincipal(n), candidats:_nrjCandidats(n)});
   _bcNutr.base=_offBase(p);   // 🥗 V2 : pour 100 g ou pour 100 ml, selon ce que dit la fiche produit
   _offRemplirFormulaire(p, p.code||null, 'recherche');
+  const dit=_n2ReposerQte(qPose);
   _afSuggVider();
-  toast('Ajuste la quantité ✅','success');
+  if(dit){ const nm=document.getElementById('af-bc-name'); if(nm) nm.textContent+=dit; }
+  toast(dit ? 'Ta quantité est gardée ✅' : 'Ajuste la quantité ✅','success');
 }
 /* 🏷️⛔ ft-v1186 — LE FAVORI NE GARDE PAS UNE DÉFINITION PÉRIMÉE. Décision de Michel : *« ne pas
    laisser une ancienne copie de label/poids survivre silencieusement »*.
