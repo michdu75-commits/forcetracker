@@ -3,7 +3,7 @@ name: ft-integrer
 description: Intégrer des branches Force Tracker sur une branche isolée, préserver les décisions, lancer les contrôles adaptés et préparer la recette, sans publication.
 argument-hint: "<branches/commits à intégrer>"
 disable-model-invocation: true
-model: sonnet
+model: inherit
 effort: medium
 ---
 
@@ -16,4 +16,4 @@ Mission : **$ARGUMENTS**. Si branches, commits ou périmètre manquent, demander
 5. Préparer, sans l'exécuter sur des données réelles, la recette iPhone NUT-VAL-05 (réseau lent, mode avion, scans historiques, 130→180 g, sauvegardes) avec un compte de test. Préserver D-101, Q15 et les décisions actées. Aucune fusion master, publication Pages, action `Code.js`, clone exposé, purge, restauration ou suppression réelle sans chaque GO distinct.
 6. Rendre un bref bilan : commits intégrés, branche et HEAD, écarts, total D-031 et preuves, risques, ce qui attend test iPhone, GO à demander. Respecter règle d'or 14 : PDF autonome daté, bref, hors dépôt, vérifié. Synchroniser registre/passation quand autorisé/possible ; sinon produire un ajout sans écraser l'historique. Une seule sortie finale, aucun processus de rappel/monitoring.
 
-Invocation volontaire seulement : `/ft-integrer`. Modèle Sonnet pour cette exécution.
+Invocation volontaire seulement : `/ft-integrer`. Modèle hérité de la session.
