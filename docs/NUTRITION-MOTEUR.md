@@ -575,6 +575,8 @@ fondation et on la vérifie avant de brancher quoi que ce soit.
    (règle d'or #4) — probablement négligeable, mais **à mesurer**, pas à supposer.
 2. **La fréquence de mise à jour de CIQUAL.** La table bouge rarement (tous les 1-2 ans). Régénérer à
    la main lors d'une publication suffit ; automatiser serait de la sur-ingénierie (R19).
+   ↪️ *25/10/2026 soir — cette position était celle de Claude ; Michel demande d'inscrire la **mise à jour automatique**
+   comme **évolution future** (pas un bug) : `IDEES-FUTURES.md`, registre `EVO-CIQUAL-01`. Rien n'est construit.*
 3. **Les recettes.** Un « repas » reste une liste d'aliments avec des grammes. Faut-il aller jusqu'à la
    recette (étapes, temps) ? **Position par défaut : non** — ce n'est pas le métier du produit, et
    Michel a déjà tranché ce type de question en refusant les fausses précisions.

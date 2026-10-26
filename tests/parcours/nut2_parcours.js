@@ -441,8 +441,8 @@ async function ecran(t, b, PORT) {
   const rPates = csv && csv.rows ? csv.rows.find((r) => r.aliment === 'Pâtes sèches, standard, crues' && r.statut === 'fiable') : null;
   const rMarrons = csv && csv.rows ? csv.rows.find((r) => /marrons/i.test(r.aliment)) : null;
   const rAncien = csv && csv.rows ? csv.rows.find((r) => r.aliment === 'Steak (test)') : null;
-  t('B-NV2P P9 ① EXPORT : deux colonnes en plus (statut, valeurs inconnues), les vrais noms de repas (plus de clé brute)',
-    !!csv && csv.cols && csv.cols.slice(-2).join(',') === 'statut,valeurs_inconnues' && csv.rows.every((r) => ['petitdej', 'dejeuner', 'diner', 'collation', 'collation2'].indexOf(r.repas) < 0), J(csv && (csv.err || csv.cols)));
+  t('B-NV2P P9 ① EXPORT : deux colonnes en plus (statut, valeurs inconnues — en 14ᵉ et 15ᵉ place ; la traçabilité du 26/10 vient après), les vrais noms de repas (plus de clé brute)',
+    !!csv && csv.cols && csv.cols.slice(13, 15).join(',') === 'statut,valeurs_inconnues' && csv.rows.every((r) => ['petitdej', 'dejeuner', 'diner', 'collation', 'collation2'].indexOf(r.repas) < 0), J(csv && (csv.err || csv.cols)));
   t('B-NV2P P9 ② ⛔ une valeur absente sort VIDE (pas 0) et la colonne dit laquelle ; une ancienne ligne sort « ancienne »',
     !!rPates && !!rMarrons && rMarrons.lipides_g === '' && rMarrons.valeurs_inconnues === 'fat' && !!rAncien && rAncien.statut === 'ancienne', J([rMarrons, rAncien && rAncien.statut]));
 

@@ -5753,3 +5753,55 @@ favoris d'avant. Témoins `B-NFIAB-X Q15 ① → ⑨`, `T08 ③` (nouveau contra
 
 **À quoi on le reconnaît.** Une suppression qui n'existe que dans l'affichage d'un appareil : elle tient tant que tous les
 chemins d'écriture passent par cet appareil — et une restauration n'y passe pas.
+
+## §123 — ⛔⛔ À LA REPRISE D'UN ANCIEN SCAN, LA QUANTITÉ POSÉE PENDANT LA RECHERCHE EN LIGNE DISPARAISSAIT QUAND LA FICHE ARRIVAIT *(25/10/2026 soir, registre `NUT-QTY-02`, constat de Claude Principal — sa sonde C7a sur l'intégration `9f0d1e77` ; reproduit sur `claude/nutrition-v2` par le banc B-NFIAB, données inventées ; la jumelle trouvée en cherchant (R8) ; corrigé sur la même branche, non publié)*
+
+**Ce qui se passait.** Reprise d'un ancien produit scanné dont la ligne n'a pas de fiche V2 (« Mes aliments », « + Ajouter ») :
+l'app cherche la fiche du code-barres en ligne (Open Food Facts). 180 tapé pendant la recherche (1,5 s simulées) ; la fiche
+arrive, l'écran bascule sur le bloc du scan — champ « Quantité » **vide**, rien de posé ; « Ajouter » → « Combien en as-tu
+mangé ? Touche une pastille ou tape ton poids. », rien d'écrit. Même chose avec la pastille « ↩ 40 g (la dernière fois) »
+touchée avant la réponse. Tapé après la réponse : juste. ⭐ **La jumelle, par le 2ᵉ appel** : un ancien scan noté **sans**
+quantité (`q:null`) — sa reprise demande « poids de ce que tu as mangé » ; 180 tapé là (avec ou sans quitter le champ, avec
+ou sans pour-100 g d'avant) se perdait de la même façon. *(Absent de `ft-v1260`, qui n'a pas cette recherche en ligne.)*
+
+**La cause.** La fiche arrive par le chemin du scan (`_offAppliquerProduit`), qui oublie l'aliment d'avant
+(`_afOublierAliment`) et prépare un écran neuf (`_afPreparerEcran` vide le champ) : la quantité posée sur l'écran de la
+reprise n'était relevée par personne — ni dans la reprise figée (`#af-prop`), ni dans celle sans quantité (`#af-poids`,
+`_afPoidsDeclare`, ou des portions).
+
+**Ce qui le ferme.** `_afQtePoseeReprise` (lecture seule, un propriétaire) lit la quantité **posée par un geste** sur l'écran
+de la reprise, quel que soit son état — avec les lecteurs de l'écriture (`_n2EntreeEcran`, R2), plus le poids tapé avant la
+sortie du champ. `_n2RetrouverEnLigne` la relève APRÈS ses contrôles (le jeton, l'écran encore ouvert, le même nom — jamais
+pour un autre aliment) et AVANT le chemin du scan, puis la repose dans le bloc du scan avec son origine (tapée ou proposée) et
+le même calcul que la saisie à la main (`_bcApplyGrams`, R2) ; l'écran le dit (« ta quantité (180 g) est gardée ») ; la
+pastille déjà prise ne se repropose pas. ⛔ Seulement dans l'unité de la fiche : des grammes ne deviennent jamais des ml, ni
+des portions des grammes — l'écran dit « tu avais indiqué … : cette fiche compte en ml (ou g), tape ta quantité en ml » et
+rien ne s'écrit. ⛔ « 0 », un champ laissé vide, le « 1 » de l'ancre : rien n'est posé. Témoins `B-NFIAB Q2 ① ② ③ ④ ⑦ ⑧ ⑨`
+rouges avant, verts après ; `Q2 ⑤ ⑥ ⑩` verts des deux côtés (les protections) ; mutations Q1 → Q13.
+
+**À quoi on le reconnaît.** Une réponse asynchrone qui reconstruit l'écran (« on repart d'un écran propre ») pendant que la
+personne y écrivait. *Ce qu'elle a tapé pendant l'attente fait partie de l'état — le reconstruire sans le relever, c'est
+l'effacer.* ⚠️ Et le signal de méthode : le constat portait sur UN appel ; la même fonction en avait DEUX (R8 — *un oubli de
+ce type est rarement isolé*).
+
+## §124 — ⛔ HORS LIGNE, UNE ANCIENNE LIGNE CIQUAL SE DISAIT « SANS FICHE VÉRIFIÉE » ALORS QUE C'ÉTAIT LA TABLE QUI MANQUAIT *(25/10/2026 soir, registre `NUT-CIQ-HL-01`, constat de Claude Principal — sa sonde C2k, production `ft-v1260` ET intégration ; reproduit sur `claude/nutrition-v2`, données inventées ; corrigé sur la même branche, non publié)*
+
+**Ce qui se passait.** Une ancienne ligne de pâtes CIQUAL (`ciqual:9811`, 130 g · 217 kcal), reprise hors ligne : la table
+CIQUAL (`data/ciqual.json`, téléchargée à la demande, pas dans le cache — R30) ne se charge pas, la reprise reste figée et
+refuse 180 g (`D-101` ⑨, voulu) — mais l'écran disait « cet ancien aliment n'a pas de fiche vérifiée », et « Modifier »
+« (pas de fiche vérifiée) ». Faux : sa fiche existe, c'est sa **référence** qui est injoignable pour l'instant. *(Préexistant en
+production.)*
+
+**La cause.** Les deux phrases (`_afMajFige`, `_efQtyRender`) ne distinguaient pas « pas de fiche » de « fiche injoignable » :
+l'état de la table n'était pas lu.
+
+**Ce qui le ferme.** `_n2CiqualAbsente(sid)` (un propriétaire, lecture seule) : une ligne `ciqual:` dont la table n'est pas
+chargée → « sa référence CIQUAL n'est pas disponible pour l'instant (la table n'a pas pu être chargée — hors ligne ?) » et,
+dans l'ajout, comment la retrouver une fois connecté. ⛔ Le refus reste (`D-101` ⑨ : sans la table, rien ne se recalcule) ;
+⛔ une ligne vraiment sans fiche (ni code-barres, ni CIQUAL), ou un code que la table chargée n'a pas, garde la phrase d'avant.
+Témoins `B-NFIAB CHL ① ④` rouges avant, verts après ; `CHL ② ③ ⑤ ⑥` verts des deux côtés (dont ③ : reconnecté,
+« 🔎 Retrouver l'aliment » charge la table et 180 g = 301 · 12 · 57 · 2 s'écrit) ; mutations C1 → C3.
+
+**À quoi on le reconnaît.** Un message qui confond « absent » et « pas joignable ». *« Je n'ai pas » et « je n'arrive pas à
+l'atteindre » ne se réparent pas pareil : le premier renvoie la personne chercher ailleurs, le second lui dit d'attendre le
+réseau.*

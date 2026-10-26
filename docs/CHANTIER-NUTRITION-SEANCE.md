@@ -399,3 +399,49 @@ FORCE TRACKER », vue « Consolidé 25-10 ») :
   `9a72e107` en `[skip ci]`, puis exécution n°124 lancée à la main) est donc : **`[skip ci]`, puis lancement à la main, avec le GO
   de Michel, retour arrière prêt**.
 - **Q21 tranchée (`D-142`)** : la bande « FORCE TRACKER » sur l'Accueil seulement (registre `UI-BANDEAU-01`) — décidée, non construite.
+
+### 8.13 État au 25/10 soir — 2ᵉ tour d'intégration (Claude Principal)
+
+> Mission de Michel du 25/10 soir, **branche isolée seulement** : refusionner les dernières livraisons, passe complète `D-031`
+> avec contre-vérification, test dédié du cas iPhone « 130 g → 180 g », recette iPhone, registre et passation. Rapport complet
+> hors dépôt (PDF du 25/10). ⛔ Aucune fusion vers master, aucune publication, aucun déploiement de `Code.js`, aucune donnée réelle.
+
+- **Branche `claude/integration-nut-seance-2` @ `9f0d1e77`** (l'ancienne `claude/integration-nut-seance` @ `b37ddf3a` est gardée
+  telle quelle) = master `be38ee91` + Séance `a54c09f8` (`22fc2a20`) + Nutrition `aa4b42be` (`3e53dcc6`) ; le `Code.js` remis à
+  l'identique de master @193 (`9f0d1e77`) — celui de Nutrition (`bb2075b9` + `01d1c88e`, `D-141` préparé) reste sur sa branche,
+  testé sur une copie. **0 conflit de code**, 10 conflits de documentation résolus **sans perte** (contrôle à trois : base, nôtre,
+  leur — 0 ligne manquante) ; `INVENTAIRE.md` et `DOSSIER-ATHLETE-SUIVI.md` **régénérés**, jamais résolus à la main.
+- **Tests sur l'arbre intégré** : Séance **102 / 0** · Nutrition **65 / 0** (+ 13 « sans objet » : ils exigent le serveur
+  modifié) et **78 / 0** avec le `Code.js` de Nutrition · moteur MET identique (8 / 8) · sonde E1 9 / 9, E6 inchangée ·
+  contre-vérifications : données de `ft-v1260` relues à l'identique sauf la conversion annoncée des masquages (témoin : la production relisant ses propres données bouge badges, registre et séances de la même façon), retour arrière et restauration combinée sans perte, incidents N01 → N08 identiques au 1ᵉʳ tour sauf N08 et la saisie à zéro (corrigés), annexe 14 PASS + 1 défaut connu, chaos 56 / 0 avec chacun des deux `Code.js` · passe répartie **VALIDE, 8 conditions vertes : 8 168 ✅ · 0 ❌ en équivalent séquentiel (45,2 min ; au 1ᵉʳ tour 8 141 ✅ · 10 ❌), dont 13 témoins « sans objet » (serveur de master servi, vérifié par un témoin de mode)**.
+- **`NUT-VERIFY-01` (E2b) : corrigé et intégré**, vu par la sonde indépendante — « à vérifier » présent sur `b37ddf3a`, absent
+  sur `9f0d1e77` ; le scan (E2b-a) et le témoin (E2b-c) n'ont pas bougé.
+- **`NUT-QTY-01` — le test dédié « récent noté 130 g, refusé à 180 g »** (`sonde_recent180.js`, hors dépôt : 14 formes de ligne,
+  vrai toucher dans « Mes aliments », frappe chiffre par chiffre, production `ft-v1260` **et** intégration). ⛔ Ce n'est pas E2b.
+  - **Juste** pour toute ligne qui garde sa fiche (CIQUAL V2, ancienne `ciqual:9811`, scan V2) : 180 g = **301 · 12 · 57 · 2**
+    (pâtes 9811), persistant, ancienne ligne intacte.
+  - **Refus rouge identique en production et en intégration** — « *Ces valeurs valent pour 130 g : corrige-les pour ta quantité,
+    ou retrouve l'aliment par la recherche (ou scanne-le) pour qu'elles se calculent — rien n'a été ajouté.* » — pour un **ancien
+    favori** (écrit sans identité jusqu'à `ft-v1259` : le cas le plus probable de Michel), une ancienne ligne sans identifiant
+    (avec ou sans pour-100 g), sa recopie « + Ajouter », et une ligne CIQUAL quand la table n'est pas chargée (hors ligne). C'est
+    **`D-101` ⑧ / ⑨, `PROPOSÉ` (Claude), jamais validée par Michel** : décision de Michel requise. La sortie « Retrouver l'aliment
+    » → CIQUAL → 180 donne 301 kcal (bouton sur la branche ; par le champ nom sur `ft-v1260`).
+  - **Deux défauts nouveaux, à corriger par Claude Nutrition** (avec témoin rouge → vert et contrôle négatif) :
+    **`NUT-QTY-02`** (branche seulement) — un ancien scan repris, 180 tapé **avant** la réponse d'Open Food Facts : la fiche arrive,
+    l'écran bascule sur le bloc « Quantité » vide, et « Ajouter » répond en rouge « *Combien en as-tu mangé ? Touche une pastille ou
+    tape ton poids.* » (reproduit avec une réponse en 1,5 s ; tapé après la réponse : juste) ; **`NUT-CIQ-HL-01`** (production et
+    branche) — hors ligne, une ligne CIQUAL ancienne se dit « *cet ancien aliment n'a pas de fiche vérifiée* » alors que c'est la
+    **table** qui manque (`data/ciqual.json` n'est pas préchargée, R30) : le refus est voulu (`D-101` ⑨), le message est faux.
+- **Q15 précisée par Michel** (25/10 soir) : conserver **provisoirement** les sauvegardes, la zone de récupération et le
+  rétablissement volontaire ; **aucune purge** (note ajoutée à `D-141`). Vérifié dans le code de la branche Nutrition : aucune
+  purge ; la suppression au serveur passe par P1 (copie d'abord) ; « ♻️ Rétablir » re-date les favoris, que le serveur garde. La
+  restauration par l'admin d'une **ancienne** sauvegarde ne remet plus les anciens favoris (`D-137`) : à confirmer par Michel.
+- **`EVO-CIQUAL-01`** : la mise à jour automatique de CIQUAL est une **évolution future**, pas un bug (`IDEES-FUTURES.md`).
+- **Recette iPhone** (rapport §4) en deux temps : **(a) clone** (GO Q22) — quantité, ancien favori par un fichier de test,
+  remise à zéro locale et « ♻️ Rétablir », parcours réels, fiche personnelle, journée incomplète, Séance (le « + » ne bouge pas) ;
+  ⚠️ les 8 vignettes nouvelles de Séance (`muscles/vignettes/`) sont des images : le clone les lit à la racine, où elles n'existent
+  pas encore ; **(b) production, compte de TEST, deux appareils** — synchro, « Restaurer », « Rétablir » qui survit à la synchro,
+  Q15, un appareil resté sur l'ancienne version, et les **données historiques** relues sur le vrai compte en lecture seule
+  (captures et export avant / après).
+- **Reste bloquant** : la décision `D-101` ⑧ ; `NUT-QTY-02` et `NUT-CIQ-HL-01` ; le GO `Code.js` ; le contexte de Milo (R34)
+  (inchangé : 3 lignes de Séance, +168 caractères hors partie mise en cache, rien de Nutrition, 0 appel réel) ; les 13 décisions Séance `D-114` → `D-126` (proposées) ; le GO du clone.

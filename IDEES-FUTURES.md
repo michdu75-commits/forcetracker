@@ -11,6 +11,23 @@ Fichier de notes : fonctionnalités et directions à explorer. Rien ici n'est en
 
 ---
 
+## 🥗 MISE À JOUR AUTOMATIQUE DE LA BASE CIQUAL — ÉVOLUTION FUTURE *(consigne de Michel, 25/10/2026 soir · registre `EVO-CIQUAL-01`)*
+
+**ÉVOLUTION · NON CONSTRUITE · ce n'est PAS un bug.** Michel, mot pour mot : *« Inscrire la mise à jour automatique de la base
+CIQUAL comme évolution future, et non comme bug. »*
+- **Aujourd'hui (mesuré)** : la table est **Ciqual 2025 (ANSES, Licence Ouverte / Etalab)**, régénérée **à la main** par
+  `tools/ciqual.py` depuis le fichier `.xlsx` fourni par Michel le 22/08 (`ft-v957`), servie en `data/ciqual.json` et mise en
+  cache **à la demande** (pas préchargée : décision écrite dans `sw.js`, R30). La position « régénérer à la main suffit »
+  (`docs/NUTRITION-MOTEUR.md` §8, question 2) était **celle de Claude**, pas une décision de Michel : elle cède à cette consigne.
+- **Ce que l'évolution devra respecter** (déjà acquis, à ne pas redécouvrir) : ⛔ **aucune ligne passée n'est réécrite** (`D-098`) —
+  une ligne garde les valeurs notées ce jour-là ; chaque ligne V2 garde la **source** de sa fiche, et une nouvelle table doit y laisser
+  sa trace de version (R33) ; ⚠️ la **reprise par identité** (`D-130` : `ciqual:NNNN` → la fiche embarquée) recalculera avec la
+  table **du moment** — une nouvelle version change donc ce que « Mes aliments » propose, jamais ce qui est noté : à dire à l'écran le
+  jour où ça arrive ; une table nouvelle n'est servie qu'après ses oracles (les pâtes 9811 = 167 · 6,7 · 31,4 · 1,1 pour 100 g, et
+  les autres témoins des bancs CIQUAL).
+- **⏭️ Décision requise de Michel quand on l'ouvrira** : automatique ou avec relecture ; à quelle fréquence (la table « bouge rarement,
+  tous les 1-2 ans » selon `docs/NUTRITION-MOTEUR.md` §8 — à vérifier à l'ouverture) ; d'où vient le fichier. **Rien avant la fin de Nutrition V2.**
+
 ## 🧍 VUE DE DOS DANS LA FIGURINE DE « TA SÉANCE JUSQU'ICI » — DEMANDE DE MICHEL *(18/10/2026)*
 
 ↪️ ***18/10/2026, soir — DÉCIDÉE PAR MICHEL ET CONSTRUITE sur la branche LOCALE `claude/ux-fig-face-dos-v2`, NON POUSSÉE, NON

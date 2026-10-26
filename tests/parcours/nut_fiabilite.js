@@ -58,6 +58,11 @@ const A = {
   ciq100: { kcal: 130, prot: 22, carbs: 0, fat: 5 }, ciq200: { kcal: 260, prot: 44, carbs: 1, fat: 9 }, ciq250: { kcal: 325, prot: 55, carbs: 1, fat: 12 },
   stk200: { kcal: 258, prot: 42, carbs: 0, fat: 10 }, jus250: { kcal: 113, prot: 2, carbs: 25, fat: 0 },
   etiq150: { kcal: 141, prot: 8, carbs: 18, fat: 4 }, ia200: { kcal: 250, prot: 15, carbs: 25, fat: 10 },
+  /* NUT-QTY-02 : isolat 388,5 · 88 · 2,8 · 3,3 × 1,8 = 699,3 · 158,4 · 5,04 · 5,94 → 699 · 158 · 5 · 6 ;
+       × 2 = 777 · 176 · 5,6 · 6,6 → 777 · 176 · 6 · 7.
+     NUT-CIQ-HL-01 : pâtes 9811 167 · 6,7 · 31,4 · 1,1 × 1,3 = 217,1 · 8,71 · 40,82 · 1,43 → 217 · 9 · 41 · 1 ;
+     × 1,8 = 300,6 · 12,06 · 56,52 · 1,98 → 301 · 12 · 57 · 2 (le chiffre du test « 130 → 180 » de Claude Principal). */
+  iso180: { kcal: 699, prot: 158, carbs: 5, fat: 6 }, iso200: { kcal: 777, prot: 176, carbs: 6, fat: 7 }, pates130: { kcal: 217, prot: 9, carbs: 41, fat: 1 }, pates180: { kcal: 301, prot: 12, carbs: 57, fat: 2 },
 };
 const T = (o) => o.kcal + '/' + o.prot + '/' + o.carbs + '/' + o.fat;
 
@@ -84,6 +89,25 @@ const FAV_ISO_NOM = { name: 'Iso zero protein (test)', kcal: 156, prot: 26, carb
 const ISO_PROT_J = { id: 'nfiab-isoprot-0001', date: jour(5), ts: ilya(5), meal: 'collation', name: 'Iso zero protein (test)', q: 40, u: 'g',
   kcal: 156, prot: 26, carbs: 1, fat: 1, per100: null, v: 1, saisie: 'liste', origine: 'reprise' };
 
+/* ── NUT-QTY-02 / NUT-CIQ-HL-01 (mission de Michel, 25/10 soir) ── */
+/* Un ancien jus SCANNÉ en V1 — V1 notait tout en grammes : 250 « g », sa fiche d'aujourd'hui compte en ml. */
+const JUS_ANC_G = { id: 'nfiab-jus-anc-g001', date: jour(3), ts: ilya(3), meal: 'collation', name: 'Jus (test)', q: 250, u: 'g', kcal: 113, prot: 2, carbs: 25, fat: 0,
+  per100: { kcal: 45, prot: 0.7, carbs: 10, fat: 0.1 }, sourceId: EAN_JUS, saisie: 'scan', origine: 'off', etat: 'tel-que-vendu', v: 1 };
+/* Le même isolat, scanné en V1 mais noté SANS quantité (`q:null`) : sa reprise n'est pas figée — l'écran demande « poids de ce
+   que tu as mangé » (la jumelle de NUT-QTY-02, 2ᵉ appel de `_n2RetrouverEnLigne`). */
+const ISO_SANSQ = { id: 'nfiab-iso-sansq-0001', date: jour(3), ts: ilya(3), meal: 'collation', name: 'Iso zero (test)', q: null, u: null,
+  kcal: 156, prot: 35, carbs: 1, fat: 1, per100: null, sourceId: EAN_ISO, saisie: 'scan', origine: 'off', etat: 'tel-que-vendu', v: 1 };
+/* Des pâtes CIQUAL d'avant V2 (9811 « Pâtes sèches, standard, cuites, sans sel ajouté » : 167 · 6,7 · 31,4 · 1,1 pour 100 g), notées aujourd'hui. */
+const PATES_P100 = { kcal: 167, prot: 6.7, carbs: 31.4, fat: 1.1 };
+const ANC_PATES = { id: 'nfiab-pates-anc-001', date: jour(0), ts: Date.now() - 36e5, meal: 'dejeuner', name: 'Pâtes sèches, standard, cuites, sans sel ajouté',
+  q: 130, u: 'g', kcal: 217, prot: 9, carbs: 41, fat: 1, per100: PATES_P100, sourceId: 'ciqual:9811', saisie: 'ciqual', origine: 'ciqual', v: 1 };
+/* Une ligne CIQUAL dont le code n'existe PAS dans la table (table chargée) : elle n'a vraiment pas de fiche — la phrase d'avant. */
+const ANC_CIQ_INCONNU = { id: 'nfiab-ciqinc-anc-01', date: jour(0), ts: Date.now() - 54e5, meal: 'collation', name: 'Aliment CIQUAL disparu (test)',
+  q: 100, u: 'g', kcal: 250, prot: 5, carbs: 30, fat: 12, per100: { kcal: 250, prot: 5, carbs: 30, fat: 12 }, sourceId: 'ciqual:999999', saisie: 'ciqual', origine: 'ciqual', v: 1 };
+/* Une ancienne ligne SANS identité (ni code-barres, ni CIQUAL) : elle n'a vraiment pas de fiche — la phrase d'avant lui reste. */
+const ANC_SOUPE = { id: 'nfiab-soupe-anc-001', date: jour(0), ts: Date.now() - 72e5, meal: 'diner', name: 'Soupe maison (test)', q: 300, u: 'g',
+  kcal: 120, prot: 4, carbs: 15, fat: 5, per100: null, v: 1, saisie: 'manuel', origine: 'manuel' };
+
 function fixture(cle, lignes, favs, plus) {
   const D = Object.assign({ ft4_ob2: '1', ft4_guide_shown: '1', ft4_wn_seen: '999', ft4_foodlog: J(lignes || []), ft4_savedfoods: J(favs || []) }, plus || {});
   return `(() => { try { if (sessionStorage.getItem('${cle}')) return; sessionStorage.setItem('${cle}', '1'); localStorage.clear();
@@ -91,12 +115,15 @@ function fixture(cle, lignes, favs, plus) {
 }
 /* Une page : la vraie app ; Open Food Facts servi d'ici (`off` = {produits, recherche}) ou COUPÉ (`off` = null) ; tout le reste
    hors localhost est coupé ET compté. */
-async function ouvrir(b, PORT, fix, off) {
+async function ouvrir(b, PORT, fix, off, opt) {
   const cx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
   const pg = await cx.newPage(); const erreurs = [], sorties = [], servis = [];
   pg.on('pageerror', (e) => erreurs.push(String(e && e.message || e).slice(0, 160))); pg.on('dialog', (d) => d.accept());
   await pg.route('**/*', (r) => {
     const u = new URL(r.request().url());
+    /* `opt.ciqualCoupee()` vrai : la table CIQUAL ne se télécharge pas (hors ligne : elle n'est pas dans le cache, R30) — et elle
+       revient quand la fonction rend faux (la connexion qui revient). */
+    if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && opt && opt.ciqualCoupee && /\/data\/ciqual\.json$/.test(u.pathname) && opt.ciqualCoupee()) return r.abort();
     if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return r.continue();
     if (/openfoodfacts/.test(u.hostname) && off) {
       if (/search/.test(u.pathname)) return r.fulfill({ status: 200, contentType: 'application/json', body: J({ products: off.recherche || [] }) });
@@ -660,6 +687,298 @@ async function ecranFiab(t, b, PORT) {
       await fin(o); }
   }
 
+  /* ═══ Q2 · NUT-QTY-02 (Claude Principal, 25/10 soir — sa sonde C7a) : LA QUANTITÉ TAPÉE AVANT LA FICHE EN LIGNE SURVIT À SON ARRIVÉE ═══
+     Un ancien scan repris (l'isolat à 40 g, sans fiche V2 sur le téléphone) : l'écran figé s'ouvre, la fiche de son code-barres part
+     en ligne (Open Food Facts servi ici avec 1,5 s de retard), et la personne tape 180 PENDANT ce temps. Avant : la fiche arrivait,
+     l'écran passait au bloc « Quantité » VIDE, et « Ajouter » répondait « Combien en as-tu mangé ? » — rien d'écrit, 180 perdu.
+     ⛔ Rien n'est converti ni deviné : une quantité ne passe que dans l'unité de la fiche (g ou ml) ; vide ou 0, elle ne passe pas ;
+     et une quantité tapée pour un aliment ne passe jamais à un autre. ⛔ D-101 n'est pas touchée (la fiche, elle, est vérifiée). */
+  {
+    const attendreFiche = async (o, pg) => { for (let k = 0; k < 40 && !o.servis.length; k++) await pause(pg, 150); await pause(pg, 700); return o.servis.length > 0; };
+    const etatQ = (pg) => pg.evaluate(() => ({ bc: !!_bcNutr, base: _bcNutr ? _bcNutr.base : null,
+      gr: String((document.getElementById('af-bc-grams') || {}).value || ''), pose: _bcQtyPose, orig: _bcQtyOrigine,
+      nom: (document.getElementById('af-bc-name') || {}).textContent || '',
+      past: (() => { const x = document.getElementById('af-bc-last'); return x && x.offsetParent !== null ? x.textContent : ''; })() }));
+    const reprendreFige = async (o, pg) => { let g = o.ok && await ouvrirAjout(pg);
+      g = g && await clic(pg, '#af-quick-list div[onclick="quickFillFood(0)"]'); await pause(pg, 250);
+      return g && await pg.evaluate(() => !!(_afRef && _afRef.fige) && !!document.getElementById('af-prop')); };
+    /* ① le cas de la sonde : 180 tapé AVANT la réponse */
+    { const o = await ouvrir(b, PORT, fixture('q2a', [ANC_ISO]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 1500 }); const pg = o.pg;
+      let g = await reprendreFige(o, pg); g = g && await taper(pg, '#af-prop', '180');
+      const tot = o.servis.length === 0;   // ⚖️ le témoin n'a de sens que si 180 est tapé AVANT que la fiche n'arrive
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg); const v = await ecran(pg);
+      const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const msg = await dernierToast(pg);
+      const L = await journal(pg), l = neuves(L, av)[0] || null;
+      t('B-NFIAB Q2 ① ⭐⭐ NUT-QTY-02 — 180 TAPÉ AVANT LA RÉPONSE D\'OPEN FOOD FACTS (1,5 s) : la fiche arrive et la quantité RESTE posée (180, tapée) ; l\'écran calcule 699·158·5·6 par la fiche, et « Ajouter » écrit 180 g, 699·158·5·6, fiche « source », quantité « tapée », code-barres gardé — l\'ancienne ligne intacte',
+        g && tot && lu && st.bc && st.gr === '180' && st.pose === true && st.orig === 'tapee' && v === T(A.iso180)
+        && !!l && l.q === 180 && l.u === 'g' && memes(vals(l), A.iso180) && l.sourceId === EAN_ISO && l.n2 && l.n2.f.fiab === 'source' && l.n2.qo === 'tapee'
+        && J(L.find((x) => x && x.id === ANC_ISO.id)) === J(ANC_ISO), J({ tot, lu, st, v, msg, l }));
+      t('B-NFIAB Q2 ② l\'écran le DIT, à côté de la fiche retrouvée par son code-barres : « ta quantité (180 g) est gardée »',
+        /fiche retrouvée par son code-barres/.test(st.nom) && /ta quantité \(180 g\) est gardée/.test(nb(st.nom)), st.nom);
+      await fin(o); }
+    /* ② la pastille « la dernière fois » touchée AVANT la réponse : une proposition prise reste prise, et ne se repropose pas */
+    { const o = await ouvrir(b, PORT, fixture('q2b', [ANC_ISO]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 1500 }); const pg = o.pg;
+      let g = await reprendreFige(o, pg); g = g && await clic(pg, '#af-prop-pastille'); await pause(pg, 150);
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg); const v = await ecran(pg);
+      const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const l = neuves(await journal(pg), av)[0] || null;
+      t('B-NFIAB Q2 ③ « ↩ 40 g (la dernière fois) » touchée AVANT la réponse : 40 g reste posé (proposé), 155·35·1·1 par la fiche, la pastille ne se repropose pas ; la ligne : 40 g, quantité « proposée »',
+        g && tot && lu && st.bc && st.gr === '40' && st.pose === true && st.orig === 'proposee' && st.past === '' && v === T(A.iso40)
+        && !!l && l.q === 40 && memes(vals(l), A.iso40) && l.n2 && l.n2.qo === 'proposee', J({ tot, lu, st, v, l }));
+      await fin(o); }
+    /* ③ ⛔ une autre unité : l'ancien jus noté en « g » (V1), sa fiche compte en ml — rien n'est converti (aucune densité inventée) */
+    { const o = await ouvrir(b, PORT, fixture('q2c', [JUS_ANC_G]), { produits: { [EAN_JUS]: OFF_JUS }, delai: 1500 }); const pg = o.pg;
+      let g = await reprendreFige(o, pg); g = g && await taper(pg, '#af-prop', '180');
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg);
+      const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+      t('B-NFIAB Q2 ④ ⛔ RIEN N\'EST CONVERTI : l\'ancien jus noté en grammes, sa fiche compte en ml — 180 n\'est PAS posé comme 180 ml ; l\'écran DIT « tu avais indiqué 180 g » et de taper la quantité en ml, et « Ajouter » n\'écrit rien',
+        g && tot && lu && st.bc && st.base === 'ml' && st.gr === '' && st.pose === false && /tu avais indiqué 180 g/.test(nb(st.nom)) && /tape ta quantité en ml/.test(nb(st.nom))
+        && n1 === n0 && /Combien en as-tu mangé/.test(msg), J({ tot, lu, st, n0, n1, msg }));
+      await fin(o); }
+    /* ④ ⛔ « 0 » tapé avant la réponse n'est pas une quantité */
+    { const o = await ouvrir(b, PORT, fixture('q2d', [ANC_ISO]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 1500 }); const pg = o.pg;
+      let g = await reprendreFige(o, pg); g = g && await taper(pg, '#af-prop', '0');
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg);
+      const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+      t('B-NFIAB Q2 ⑤ ⛔ « 0 » tapé avant la réponse ne devient pas une quantité : le champ reste vide, rien n\'est posé, « Ajouter » la redemande et n\'écrit rien',
+        g && tot && lu && st.bc && st.gr === '' && st.pose === false && !/gardée/.test(st.nom) && n1 === n0 && /Combien en as-tu mangé/.test(msg), J({ tot, lu, st, n0, n1, msg }));
+      await fin(o); }
+    /* ⑤ ⛔ 180 tapé pour l'isolat, puis le steak CIQUAL choisi AVANT la réponse : la quantité ne passe jamais à un autre aliment */
+    { const o = await ouvrir(b, PORT, fixture('q2e', [ANC_ISO]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 3500 }); const pg = o.pg;
+      let g = await reprendreFige(o, pg); g = g && await taper(pg, '#af-prop', '180');
+      const c = await choisirCiqual(pg, 'steak haché 5', 6250); g = g && c.ok; const choisi = Date.now();
+      for (let k = 0; k < 40 && !o.servis.length; k++) await pause(pg, 250);
+      await pause(pg, 700);
+      const tard = o.servis.length > 0 && o.servis[0] > choisi;
+      const st = await etatQ(pg);
+      t('B-NFIAB Q2 ⑥ ⛔ UNE QUANTITÉ TAPÉE POUR UN ALIMENT NE PASSE JAMAIS À UN AUTRE : 180 tapé pour l\'isolat, le steak CIQUAL choisi avant la réponse — l\'écran reste le steak, son champ VIDE, rien de posé',
+        g && tard && st.bc && /Boeuf, steak haché 5% MG cru/.test(st.nom) && !/Iso/.test(st.nom) && st.gr === '' && st.pose === false, J({ tard, st }));
+      await fin(o); }
+
+    /* ═══ LA JUMELLE (R8, mesurée le même soir) : un ancien scan SANS quantité (`q:null`). Sa reprise n'est pas figée : l'écran
+       demande « poids de ce que tu as mangé » (`#af-poids`, puis `#af-prop` à la sortie du champ). Le même chemin de la fiche
+       (2ᵉ appel de `_n2RetrouverEnLigne`) vidait ce champ : 180 perdu, « Ajouter » → « Combien en as-tu mangé ? ». */
+    const reprendreSansQ = async (o, pg) => { let g = o.ok && await ouvrirAjout(pg);
+      g = g && await clic(pg, '#af-quick-list div[onclick="quickFillFood(0)"]'); await pause(pg, 250);
+      return g && await pg.evaluate(() => !(_afRef && _afRef.fige) && !!document.getElementById('af-poids')); };
+    /* ⑦ 180 tapé dans « poids de ce que tu as mangé », sans quitter le champ */
+    { const o = await ouvrir(b, PORT, fixture('q2f', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 2500 }); const pg = o.pg;
+      let g = await reprendreSansQ(o, pg); g = g && await taper(pg, '#af-poids', '180');
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg); const v = await ecran(pg);
+      const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const msg = await dernierToast(pg);
+      const L = await journal(pg), l = neuves(L, av)[0] || null;
+      t('B-NFIAB Q2 ⑦ ⭐⭐ LA JUMELLE — un ancien scan SANS quantité : 180 tapé dans « poids de ce que tu as mangé » AVANT la fiche (sans quitter le champ) RESTE posé (tapé) ; l\'écran calcule 699·158·5·6 par la fiche et le DIT ; « Ajouter » écrit 180 g, fiche « source », quantité « tapée » — l\'ancienne ligne intacte',
+        g && tot && lu && st.bc && st.gr === '180' && st.pose === true && st.orig === 'tapee' && v === T(A.iso180) && /ta quantité \(180 g\) est gardée/.test(nb(st.nom))
+        && !!l && l.q === 180 && l.u === 'g' && memes(vals(l), A.iso180) && l.sourceId === EAN_ISO && l.n2 && l.n2.f.fiab === 'source' && l.n2.qo === 'tapee'
+        && J(L.find((x) => x && x.id === ISO_SANSQ.id)) === J(ISO_SANSQ), J({ tot, lu, st, v, msg, l }));
+      await fin(o); }
+    /* ⑧ 180 tapé, le champ quitté (l'écran se redessine : `#af-prop` = 180), puis CORRIGÉ à 200 : c'est 200 qui reste */
+    { const o = await ouvrir(b, PORT, fixture('q2g', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 2500 }); const pg = o.pg;
+      let g = await reprendreSansQ(o, pg); g = g && await taper(pg, '#af-poids', '180');
+      await pg.evaluate(() => { const x = document.getElementById('af-poids'); if (x) x.blur(); }); await pause(pg, 200);
+      g = g && await taper(pg, '#af-prop', '200');
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg); const v = await ecran(pg);
+      const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const l = neuves(await journal(pg), av)[0] || null;
+      t('B-NFIAB Q2 ⑧ … le champ quitté puis la quantité CORRIGÉE à 200 avant la fiche : c\'est 200 qui reste (la dernière chose dite, pas la première) — 777·176·6·7 par la fiche, « ta quantité (200 g) est gardée », la ligne : 200 g, « tapée »',
+        g && tot && lu && st.bc && st.gr === '200' && st.pose === true && st.orig === 'tapee' && v === T(A.iso200) && /ta quantité \(200 g\) est gardée/.test(nb(st.nom))
+        && !!l && l.q === 200 && l.u === 'g' && memes(vals(l), A.iso200) && l.n2 && l.n2.qo === 'tapee', J({ tot, lu, st, v, l }));
+      await fin(o); }
+    /* ⑨ ⛔ des PORTIONS choisies avant la fiche (×2) : jamais converties en grammes — l'écran le dit, rien n'est écrit */
+    { const o = await ouvrir(b, PORT, fixture('q2h', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 2500 }); const pg = o.pg;
+      let g = await reprendreSansQ(o, pg);
+      g = g && await clic(pg, '#af-prop-row button[onclick="_afSetUnite(\'portion\')"]'); await pause(pg, 150);
+      g = g && await clic(pg, '#af-prop-row button[onclick="_afApplyPortion(2)"]'); await pause(pg, 150);
+      const choisi = await pg.evaluate(() => _afUnite === 'portion' && _afPortionPose === true && _afPortions === 2);
+      const tot = o.servis.length === 0;
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg);
+      const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+      t('B-NFIAB Q2 ⑨ ⛔ RIEN N\'EST CONVERTI : « ×2 portions » choisi avant la fiche (qui compte en g) n\'est PAS posé en grammes ; l\'écran DIT « tu avais indiqué 2 portions » et de taper la quantité en g, et « Ajouter » n\'écrit rien',
+        g && choisi && tot && lu && st.bc && st.base === 'g' && st.gr === '' && st.pose === false && /tu avais indiqué 2 portions/.test(nb(st.nom))
+        && /tape ta quantité en g/.test(nb(st.nom)) && n1 === n0 && /Combien en as-tu mangé/.test(msg), J({ choisi, tot, lu, st, n0, n1, msg }));
+      await fin(o); }
+    /* ⑩ ⛔ rien de posé (le champ laissé vide) : rien n'est inventé à l'arrivée de la fiche — ni le « 1 » de l'ancre, ni un poids */
+    { const o = await ouvrir(b, PORT, fixture('q2i', [ISO_SANSQ]), { produits: { [EAN_ISO]: OFF_ISO }, delai: 1500 }); const pg = o.pg;
+      const g = await reprendreSansQ(o, pg);
+      const lu = await attendreFiche(o, pg); const st = await etatQ(pg);
+      const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+      t('B-NFIAB Q2 ⑩ ⛔ RIEN DE POSÉ, RIEN D\'INVENTÉ : le champ laissé vide, la fiche arrive — le champ reste vide, rien de posé, rien de « gardé » ni d\'« indiqué » ; « Ajouter » demande la quantité et n\'écrit rien',
+        g && lu && st.bc && st.gr === '' && st.pose === false && !/gardée|tu avais indiqué/.test(nb(st.nom)) && n1 === n0 && /Combien en as-tu mangé/.test(msg),
+        J({ lu, st, n0, n1, msg }));
+      await fin(o); }
+  }
+
+  /* ═══ CHL · NUT-CIQ-HL-01 (Claude Principal, 25/10 soir — sa sonde C2k) : HORS LIGNE, LA TABLE CIQUAL ABSENTE N'EST PAS « PAS DE FICHE » ═══
+     Une ancienne ligne CIQUAL (les pâtes 9811, 130 g) reprise quand `data/ciqual.json` ne se télécharge pas (hors ligne : elle n'est
+     pas dans le cache, R30). Le refus d'une autre quantité est VOULU (D-101 ⑨ : sans la table, rien ne se recalcule) — mais l'écran
+     disait « cet ancien aliment n'a pas de fiche vérifiée » : faux, c'est la TABLE qui manque. ⛔ La protection reste ; seul le MESSAGE
+     change, et ce qu'il promet (« une fois connecté, Retrouver l'aliment ») se vérifie. */
+  { let coupee = true;
+    const o = await ouvrir(b, PORT, fixture('chl1', [ANC_PATES, ANC_SOUPE]), null, { ciqualCoupee: () => coupee }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), ip = (M.find((x) => x.sid === 'ciqual:9811') || {}).i;
+    g = g && ip >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + ip + ')"]'); await pause(pg, 900);
+    const st = await pg.evaluate(() => ({ fige: !!(_afRef && _afRef.fige), table: !!(typeof _ciqual === 'object' && _ciqual),
+      note: ((document.getElementById('af-prop-row') || {}).innerText || '').replace(/\s+/g, ' ') }));
+    const v0 = await ecran(pg); g = g && await taper(pg, '#af-prop', '180');
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+    t('B-NFIAB CHL ① ⭐⭐ NUT-CIQ-HL-01 — HORS LIGNE, LA TABLE CIQUAL INJOIGNABLE : l\'ancienne ligne de pâtes (ciqual:9811, 130 g) ne se dit plus « sans fiche vérifiée » ; l\'écran dit que sa référence CIQUAL n\'est pas disponible POUR L\'INSTANT, et comment la retrouver une fois connecté',
+      g && st.fige && !st.table && !/n'a pas de fiche vérifiée/.test(st.note) && /référence CIQUAL n'est pas disponible/.test(st.note)
+      && /pour l'instant/.test(st.note) && /Une fois connecté/.test(st.note), J({ M, st }));
+    t('B-NFIAB CHL ② ⛔ LA PROTECTION RESTE (D-101 ⑨) : les valeurs restent 217·9·41·1 « pour 130 g », 180 g est REFUSÉ en le disant, et rien n\'est écrit',
+      g && v0 === T(A.pates130) && n1 === n0 && /valent pour 130 g/.test(msg), J({ v0, n0, n1, msg }));
+    /* La connexion revient : « 🔎 Retrouver l'aliment » (le bouton de l'écran) charge la table, et la fiche CIQUAL se choisit. */
+    coupee = false;
+    const rb = await pg.evaluate(() => { const x = [...document.querySelectorAll('#af-prop-row button')].find((y) => /Retrouver l'aliment/.test(y.textContent));
+      if (!x) return false; x.click(); return true; });
+    let i = -1; for (let k = 0; k < 30 && i < 0; k++) { await pause(pg, 250); i = await pg.evaluate(() => (typeof _afSuggCiq !== 'undefined' && _afSuggCiq || []).findIndex((a) => a && a[0] === 9811)); }
+    const pris = i >= 0 && await clic(pg, '#af-sugg [onclick="_afSuggPrendreCiqual(' + i + ')"]'); await pause(pg, 250);
+    g = g && rb && pris && await taper(pg, '#af-bc-grams', 180); const v180 = await ecran(pg);
+    const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NFIAB CHL ③ ⭐ CE QUE L\'ÉCRAN PROMET EST VRAI : reconnecté, « 🔎 Retrouver l\'aliment » charge la table, la fiche CIQUAL 9811 se choisit, et 180 g = 301·12·57·2 s\'écrit (ciqual:9811, « source ») — l\'ancienne ligne intacte',
+      g && v180 === T(A.pates180) && !!l && l.q === 180 && memes(vals(l), A.pates180) && l.sourceId === 'ciqual:9811' && l.n2 && l.n2.f.fiab === 'source'
+      && J(L.find((x) => x && x.id === ANC_PATES.id)) === J(ANC_PATES), J({ rb, i, v180, l }));
+    await fin(o); }
+  /* ④ « Modifier » (la jumelle de l'écran d'ajout) et ⑤ la ligne VRAIMENT sans fiche, qui garde la phrase d'avant */
+  { const o = await ouvrir(b, PORT, fixture('chl2', [ANC_PATES, ANC_SOUPE]), null, { ciqualCoupee: () => true }); const pg = o.pg;
+    const noteModif = async (texte) => { const ok = await pg.evaluate((tx) => { const r = [...document.querySelectorAll('#food-journal div[onclick^="openEditFood"]')].find((x) => x.textContent.indexOf(tx) >= 0);
+        if (!r) return false; r.click(); return true; }, texte); await pause(pg, 900);
+      const n = await pg.evaluate(() => ((document.getElementById('ef-qty-row') || {}).innerText || '').replace(/\s+/g, ' '));
+      await pg.evaluate(() => { try { closeEditFood(); } catch (e) {} document.querySelectorAll('.overlay.open').forEach((x) => x.classList.remove('open')); }); await pause(pg, 200);
+      return { ok, n }; };
+    const mp = await noteModif('Pâtes sèches'), ms = await noteModif('Soupe maison (test)');
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), is = (M.find((x) => x.nom === 'Soupe maison (test)') || {}).i;
+    g = g && is >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + is + ')"]'); await pause(pg, 600);
+    const ns = await pg.evaluate(() => ((document.getElementById('af-prop-row') || {}).innerText || '').replace(/\s+/g, ' '));
+    t('B-NFIAB CHL ④ « Modifier » la même ligne de pâtes, table absente : « référence CIQUAL … pas disponible pour l\'instant », jamais « pas de fiche vérifiée » — et les valeurs ne se recalculent toujours pas',
+      mp.ok && /référence CIQUAL n'est pas disponible/.test(mp.n) && /pas recalculées/.test(mp.n) && !/pas de fiche vérifiée/.test(mp.n), J(mp));
+    t('B-NFIAB CHL ⑤ ⚖️ une ancienne ligne VRAIMENT sans fiche (ni code-barres, ni CIQUAL) garde la phrase d\'avant, dans l\'ajout comme dans « Modifier » : « n\'a pas de fiche vérifiée » / « pas de fiche vérifiée »',
+      g && ms.ok && /n'a pas de fiche vérifiée/.test(ns) && !/référence CIQUAL/.test(ns) && /pas de fiche vérifiée/.test(ms.n) && !/référence CIQUAL/.test(ms.n), J({ ms, ns }));
+    await fin(o); }
+
+  /* ⑥ la condition est la TABLE, pas l'étiquette « ciqual: » : table chargée, un code qu'elle n'a pas → la ligne n'a vraiment pas de fiche */
+  { const o = await ouvrir(b, PORT, fixture('chl3', [ANC_CIQ_INCONNU]), null); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), ii = (M.find((x) => x.sid === 'ciqual:999999') || {}).i;
+    g = g && ii >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + ii + ')"]'); await pause(pg, 900);
+    const st = await pg.evaluate(() => ({ fige: !!(_afRef && _afRef.fige), table: !!(typeof _ciqual === 'object' && _ciqual),
+      note: ((document.getElementById('af-prop-row') || {}).innerText || '').replace(/\s+/g, ' ') }));
+    t('B-NFIAB CHL ⑥ ⚖️ LA CONDITION EST LA TABLE : chargée, et un code CIQUAL qu\'elle n\'a pas (ciqual:999999) — la ligne n\'a vraiment pas de fiche, et la phrase d\'avant reste (« n\'a pas de fiche vérifiée »), sans « référence indisponible »',
+      g && st.table && st.fige && /n'a pas de fiche vérifiée/.test(st.note) && !/référence CIQUAL/.test(st.note), J({ M, st }));
+    await fin(o); }
+
+  /* ═══ D101 · D-101 ⑧/⑨ (Michel, 26/10) — LA QUANTITÉ POSÉE SUR UNE ANCIENNE LIGNE SURVIT À LA FICHE CHOISIE ═══
+     130 g → 180 g sur une ancienne ligne CIQUAL, table injoignable : les 180 restent à l'écran, rien n'est écrit, les valeurs de 130 g ne
+     sont JAMAIS présentées comme celles de 180 g ; la connexion revient, « Retrouver l'aliment » → la fiche CIQUAL choisie dans la liste :
+     les 180 g sont REPOSÉS (sans les retaper) et les valeurs se calculent pour 180 g (301·12·57·2). Mesuré rouge avant : le champ revenait
+     VIDE et l'écran montrait les valeurs POUR 100 g (167·7·31·1) sans quantité. Oracle à la main : 167 × 1,8 = 300,6 → 301 ;
+     6,7 × 1,8 = 12,06 → 12 ; 31,4 × 1,8 = 56,52 → 57 ; 1,1 × 1,8 = 1,98 → 2. */
+  { let coupee = true;
+    const o = await ouvrir(b, PORT, fixture('d101a', [ANC_PATES, ANC_SOUPE]), null, { ciqualCoupee: () => coupee }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), ip = (M.find((x) => x.sid === 'ciqual:9811') || {}).i;
+    g = g && ip >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + ip + ')"]'); await pause(pg, 900);
+    g = g && await taper(pg, '#af-prop', '180');
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length;
+    const apresRefus = await pg.evaluate(() => ({ prop: (document.getElementById('af-prop') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/') }));
+    t('B-NFIAB D101 ① ⛔ HORS LIGNE : les 180 g tapés RESTENT visibles après le refus ; les valeurs de 130 g (217·9·41·1) ne sont pas celles de 180 g ; rien n\'est écrit',
+      g && apresRefus.prop === '180' && apresRefus.ecran === T(A.pates130) && n1 === n0, J({ apresRefus, n0, n1 }));
+    coupee = false;
+    await pg.evaluate(() => { const x = [...document.querySelectorAll('#af-prop-row button')].find((y) => /Retrouver l'aliment/.test(y.textContent)); if (x) x.click(); });
+    let i = -1; for (let k = 0; k < 30 && i < 0; k++) { await pause(pg, 250); i = await pg.evaluate(() => (typeof _afSuggCiq !== 'undefined' && _afSuggCiq || []).findIndex((a) => a && a[0] === 9811)); }
+    const pris = i >= 0 && await clic(pg, '#af-sugg [onclick="_afSuggPrendreCiqual(' + i + ')"]'); await pause(pg, 300);
+    const st = await pg.evaluate(() => ({ qte: (document.getElementById('af-bc-grams') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/'),
+      nom: (document.getElementById('af-bc-name') || {}).textContent || '' }));
+    const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NFIAB D101 ② ⭐⭐ LA FICHE CHOISIE REPOSE LES 180 g (sans les retaper) : 180 g affichés, 301·12·57·2, la phrase le dit ; « Ajouter » écrit 180 g, ciqual:9811 « source » ; l\'ancienne ligne de 130 g intacte',
+      g && pris && st.qte === '180' && st.ecran === T(A.pates180) && /ta quantité \(180 g\) est gardée/.test(st.nom)
+      && !!l && l.q === 180 && memes(vals(l), A.pates180) && l.sourceId === 'ciqual:9811' && l.n2 && l.n2.f.fiab === 'source'
+      && J(L.find((x) => x && x.id === ANC_PATES.id)) === J(ANC_PATES), J({ pris, st, l }));
+    await fin(o); }
+  /* ③ voisin — ancienne ligne SANS fiche (jamais de fiche à retrouver ici) : 180 g tapés, refus, 180 g toujours visibles, rien écrit */
+  { const o = await ouvrir(b, PORT, fixture('d101b', [ANC_SOUPE]), null, { ciqualCoupee: () => true }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), is = (M.find((x) => x.nom === 'Soupe maison (test)') || {}).i;
+    g = g && is >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + is + ')"]'); await pause(pg, 800);
+    g = g && await taper(pg, '#af-prop', '180');
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length; const msg = await dernierToast(pg);
+    const apres = await pg.evaluate(() => (document.getElementById('af-prop') || {}).value);
+    t('B-NFIAB D101 ③ voisin : une ancienne ligne SANS fiche (soupe 300 g · 120 kcal) — 180 g refusés en le disant, 180 toujours à l\'écran, rien d\'écrit, aucune valeur inventée',
+      g && apres === '180' && n1 === n0 && /valent pour 300 g/.test(msg), J({ apres, n0, n1, msg }));
+    await fin(o); }
+  /* ④ voisin — la fiche choisie SANS qu'aucune quantité ait été tapée : rien n'est pré-rempli (D-101 ①) */
+  { let coupee = true;
+    const o = await ouvrir(b, PORT, fixture('d101c', [ANC_PATES]), null, { ciqualCoupee: () => coupee }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), ip = (M.find((x) => x.sid === 'ciqual:9811') || {}).i;
+    g = g && ip >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + ip + ')"]'); await pause(pg, 900); coupee = false;
+    await pg.evaluate(() => { const x = [...document.querySelectorAll('#af-prop-row button')].find((y) => /Retrouver l'aliment/.test(y.textContent)); if (x) x.click(); });
+    let i = -1; for (let k = 0; k < 30 && i < 0; k++) { await pause(pg, 250); i = await pg.evaluate(() => (typeof _afSuggCiq !== 'undefined' && _afSuggCiq || []).findIndex((a) => a && a[0] === 9811)); }
+    const pris = i >= 0 && await clic(pg, '#af-sugg [onclick="_afSuggPrendreCiqual(' + i + ')"]'); await pause(pg, 300);
+    const qte = await pg.evaluate(() => (document.getElementById('af-bc-grams') || {}).value);
+    t('B-NFIAB D101 ④ voisin : aucune quantité tapée avant → la fiche choisie ne pré-remplit rien (champ vide)', g && pris && (qte === '' || qte == null), J({ pris, qte }));
+    await fin(o); }
+
+  /* ⑤ D-101 ⑧/⑨ — la fiche MARQUE choisie repose elle aussi les 180 g (Baby Whopper · Burger King, première ligne de data/marques.json :
+     282,9 · 11,4 · 21,9 · 13,3 pour 100 g → 180 g = 509,22 → 509 · 20,52 → 21 · 39,42 → 39 · 23,94 → 24). Rouge avant : champ vide + valeurs pour 100 g. */
+  { const o = await ouvrir(b, PORT, fixture('d101d', [ANC_SOUPE, ANC_PATES]), null, { ciqualCoupee: () => true }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), is = (M.find((x) => x.nom === 'Soupe maison (test)') || {}).i;
+    g = g && is >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + is + ')"]'); await pause(pg, 800);
+    g = g && await taper(pg, '#af-prop', '180');
+    await pg.evaluate(async () => { await _marquesCharger(); _afSuggMarq = [0]; _afSuggPrendreMarque(0); }); await pause(pg, 500);
+    const st = await pg.evaluate(() => ({ qte: (document.getElementById('af-bc-grams') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/'),
+      nom: (document.getElementById('af-bc-name') || {}).textContent || '' }));
+    const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NFIAB D101 ⑤ la fiche MARQUE choisie repose les 180 g : 180 g affichés, 509·21·39·24 (jamais les 120·4·15·5 de la soupe de 300 g), la phrase le dit ; « Ajouter » écrit 180 g ; l\'ancienne ligne intacte',
+      g && st.qte === '180' && st.ecran === '509/21/39/24' && /ta quantité \(180 g\) est gardée/.test(st.nom)
+      && !!l && l.q === 180 && l.kcal === 509 && J(L.find((x) => x && x.id === ANC_SOUPE.id)) === J(ANC_SOUPE), J({ st, l }));
+    await fin(o); }
+  /* ⑥ EXCLUSION ÉPINGLÉE — choisir une AUTRE ligne de son journal (« Déjà noté ») n'est pas retrouver la fiche du même aliment : c'est un autre
+     aliment, avec sa propre quantité. Les 180 g de la soupe ne s'y reportent pas, rien n'est présenté comme 180 g (217·9·41·1 restent « pour 130 g »). */
+  { const o = await ouvrir(b, PORT, fixture('d101e', [ANC_SOUPE, ANC_PATES]), null, { ciqualCoupee: () => true }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), is = (M.find((x) => x.nom === 'Soupe maison (test)') || {}).i;
+    g = g && is >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + is + ')"]'); await pause(pg, 800);
+    g = g && await taper(pg, '#af-prop', '180');
+    await pg.evaluate(() => { _afSuggLoc = [S.foodLog.find((x) => x.sourceId === 'ciqual:9811')]; _afSuggPrendreLocale(0); }); await pause(pg, 900);
+    const st = await pg.evaluate(() => ({ prop: (document.getElementById('af-prop') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/') }));
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length;
+    t('B-NFIAB D101 ⑥ (exclusion épinglée) un autre aliment repris du journal ne reçoit pas les 180 g de la soupe ; ses valeurs restent celles de 130 g, et sans quantité rien ne s\'écrit',
+      g && !st.prop && st.ecran === T(A.pates130) && n1 === n0, J({ st, n0, n1 }));
+    await fin(o); }
+
+  /* ═══ EXP · EXPORT NUTRITION — TRAÇABILITÉ (26/10/2026, cas POM'POTES / riz Taureau Ailé) ═══
+     Cinq colonnes EN FIN (source_id, kcal_100, proteines_100, glucides_100, lipides_100) ; les 15 premières, leur ordre et leurs valeurs ne
+     bougent pas ; une donnée absente sort VIDE (jamais 0) ; un vrai 0 reste « 0 » ; décimales à la virgule ; le journal n'est pas touché. */
+  { const EAN = '3000000000771', mk = (id, nom, o) => Object.assign({ id, date: jour(1), ts: ilya(1), meal: 'dejeuner', name: nom, q: 180, u: 'g', kcal: 103, prot: 1, carbs: 22, fat: 1, v: 1, saisie: 'historique', origine: 'off' }, o);
+    const E1 = mk('exp-scan-000000001', 'Compote (test EXP)', { sourceId: EAN, per100: { kcal: 57.2, prot: 0.5, carbs: 12.1, fat: 0.3 } });
+    const E2 = mk('exp-ancien-00000002', 'Ancien sans identité (test EXP)', { sourceId: null, per100: null, origine: 'utilisateur', saisie: 'manuel' });
+    const E3 = mk('exp-zero-000000003', 'Zéro et manquant (test EXP)', { sourceId: 'ciqual:9811', per100: { kcal: 167, prot: 0, carbs: 31.4, fat: null }, origine: 'ciqual', saisie: 'ciqual' });
+    const E4 = mk('exp-sansclef-0000004', 'Très ancien sans champ (test EXP)', { origine: 'utilisateur' }); delete E4.per100; delete E4.sourceId;
+    const o = await ouvrir(b, PORT, fixture('exp1', [E1, E2, E3, E4]), null); const pg = o.pg;
+    const avant = J(await journal(pg));
+    const ex = await pg.evaluate(async () => { const v = window._donnerFichier; let f = null; window._donnerFichier = async (c, nom) => { f = { c: String(c), nom }; return 'ok'; };
+      try { await exportNutritionCsv(); } catch (e) { return { err: e.message }; } finally { window._donnerFichier = v; }
+      return f ? { c: f.c, nom: f.nom } : { err: 'aucun fichier' }; });
+    const apres = J(await journal(pg));
+    const lignes = (ex.c || '').replace(/^﻿/, '').split('\n'), cols = (lignes[0] || '').split(';');
+    const par = (nom) => { const l = lignes.slice(1).find((x) => x.indexOf(nom) >= 0); return l ? l.split(';').map((x) => x.replace(/^"(.*)"$/, '$1')) : null; };   // `_csvEchappe` met entre guillemets une cellule qui porte une virgule : Excel les lit comme un nombre
+    const A15 = ['date', 'repas', 'aliment', 'quantite', 'unite', 'portion_label', 'portion_poids_g', 'kcal', 'proteines_g', 'glucides_g', 'lipides_g', 'saisie', 'source', 'statut', 'valeurs_inconnues'];
+    const c1 = par('Compote (test EXP)'), c2 = par('Ancien sans identité'), c3 = par('Zéro et manquant'), c4 = par('Très ancien');
+    t('B-NFIAB EXP ① LES 15 COLONNES D\'AVANT NE BOUGENT PAS (même ordre, mêmes valeurs) ; 5 colonnes de traçabilité EN FIN ; aucune ligne perdue',
+      !ex.err && cols.slice(0, 15).join(',') === A15.join(',') && cols.slice(15).join(',') === 'source_id,kcal_100,proteines_100,glucides_100,lipides_100'
+      && lignes.length === 5 && !!c1 && c1.slice(0, 15).join(';') === [jour(1), 'Déjeuner', 'Compote (test EXP)', '180', 'g', '', '', '103', '1', '22', '1', 'historique', 'off', 'ancienne', ''].join(';'), J({ err: ex.err, cols, c1 }));
+    t('B-NFIAB EXP ② LA TRAÇABILITÉ EST CELLE QUI EST STOCKÉE : code-barres et pour-100 g de la compote à la virgule (57,2 · 0,5 · 12,1 · 0,3), « ciqual:9811 » pour les pâtes',
+      !!c1 && c1.slice(15).join(';') === [EAN, '57,2', '0,5', '12,1', '0,3'].join(';') && !!c3 && c3[15] === 'ciqual:9811', J({ c1: c1 && c1.slice(15), c3: c3 && c3.slice(15) }));
+    t('B-NFIAB EXP ③ ⛔ UNE ABSENCE RESTE VIDE, JAMAIS 0 : ligne sans identité ni pour-100 g (null, ou champ absent) → 5 cellules vides ; un vrai 0 reste « 0 », un champ manquant (lipides null) sort vide',
+      !!c2 && !!c4 && c2.slice(15).join('|') === '||||' && c4.slice(15).join('|') === '||||' && !!c3 && c3.slice(16).join(';') === '167;0;31,4;', J({ c2: c2 && c2.slice(15), c3: c3 && c3.slice(15), c4: c4 && c4.slice(15) }));
+    t('B-NFIAB EXP ④ L\'EXPORT NE TOUCHE À RIEN : le journal est identique à l\'octet avant et après, et le fichier porte son nom daté', avant === apres && /^forcetracker-nutrition_\d{4}-\d{2}-\d{2}\.csv$/.test(ex.nom || ''), J({ nom: ex.nom }));
+    await fin(o); }
   /* Les sorties sont COUPÉES par construction (route) : on les liste ; aucune ne vise l'IA ni Milo (le Worker). */
   t('B-NFIAB Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
     ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));
