@@ -923,6 +923,34 @@ async function ecranFiab(t, b, PORT) {
     t('B-NFIAB D101 ④ voisin : aucune quantité tapée avant → la fiche choisie ne pré-remplit rien (champ vide)', g && pris && (qte === '' || qte == null), J({ pris, qte }));
     await fin(o); }
 
+  /* ⑤ D-101 ⑧/⑨ — la fiche MARQUE choisie repose elle aussi les 180 g (Baby Whopper · Burger King, première ligne de data/marques.json :
+     282,9 · 11,4 · 21,9 · 13,3 pour 100 g → 180 g = 509,22 → 509 · 20,52 → 21 · 39,42 → 39 · 23,94 → 24). Rouge avant : champ vide + valeurs pour 100 g. */
+  { const o = await ouvrir(b, PORT, fixture('d101d', [ANC_SOUPE, ANC_PATES]), null, { ciqualCoupee: () => true }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), is = (M.find((x) => x.nom === 'Soupe maison (test)') || {}).i;
+    g = g && is >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + is + ')"]'); await pause(pg, 800);
+    g = g && await taper(pg, '#af-prop', '180');
+    await pg.evaluate(async () => { await _marquesCharger(); _afSuggMarq = [0]; _afSuggPrendreMarque(0); }); await pause(pg, 500);
+    const st = await pg.evaluate(() => ({ qte: (document.getElementById('af-bc-grams') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/'),
+      nom: (document.getElementById('af-bc-name') || {}).textContent || '' }));
+    const av = (await journal(pg)).map((x) => x && x.id); await ajouter(pg); const L = await journal(pg), l = neuves(L, av)[0] || null;
+    t('B-NFIAB D101 ⑤ la fiche MARQUE choisie repose les 180 g : 180 g affichés, 509·21·39·24 (jamais les 120·4·15·5 de la soupe de 300 g), la phrase le dit ; « Ajouter » écrit 180 g ; l\'ancienne ligne intacte',
+      g && st.qte === '180' && st.ecran === '509/21/39/24' && /ta quantité \(180 g\) est gardée/.test(st.nom)
+      && !!l && l.q === 180 && l.kcal === 509 && J(L.find((x) => x && x.id === ANC_SOUPE.id)) === J(ANC_SOUPE), J({ st, l }));
+    await fin(o); }
+  /* ⑥ EXCLUSION ÉPINGLÉE — choisir une AUTRE ligne de son journal (« Déjà noté ») n'est pas retrouver la fiche du même aliment : c'est un autre
+     aliment, avec sa propre quantité. Les 180 g de la soupe ne s'y reportent pas, rien n'est présenté comme 180 g (217·9·41·1 restent « pour 130 g »). */
+  { const o = await ouvrir(b, PORT, fixture('d101e', [ANC_SOUPE, ANC_PATES]), null, { ciqualCoupee: () => true }); const pg = o.pg;
+    let g = o.ok && await ouvrirAjout(pg);
+    const M = await mesAliments(pg), is = (M.find((x) => x.nom === 'Soupe maison (test)') || {}).i;
+    g = g && is >= 0 && await clic(pg, '#af-quick-list div[onclick="quickFillFood(' + is + ')"]'); await pause(pg, 800);
+    g = g && await taper(pg, '#af-prop', '180');
+    await pg.evaluate(() => { _afSuggLoc = [S.foodLog.find((x) => x.sourceId === 'ciqual:9811')]; _afSuggPrendreLocale(0); }); await pause(pg, 900);
+    const st = await pg.evaluate(() => ({ prop: (document.getElementById('af-prop') || {}).value, ecran: ['kcal', 'prot', 'carbs', 'fat'].map((c) => (document.getElementById('af-' + c) || {}).value).join('/') }));
+    const n0 = (await journal(pg)).length; await ajouter(pg); const n1 = (await journal(pg)).length;
+    t('B-NFIAB D101 ⑥ (exclusion épinglée) un autre aliment repris du journal ne reçoit pas les 180 g de la soupe ; ses valeurs restent celles de 130 g, et sans quantité rien ne s\'écrit',
+      g && !st.prop && st.ecran === T(A.pates130) && n1 === n0, J({ st, n0, n1 }));
+    await fin(o); }
   /* Les sorties sont COUPÉES par construction (route) : on les liste ; aucune ne vise l'IA ni Milo (le Worker). */
   t('B-NFIAB Z aucune erreur de page ; aucune requête ne quitte la page (toutes coupées), et AUCUNE ne vise l\'IA ni Milo (le Worker)',
     ERR.length === 0 && !SORTIES.some((h) => /workers\.dev|anthropic/.test(h)), J({ ERR: ERR.slice(0, 4), SORTIES: [...new Set(SORTIES)] }));

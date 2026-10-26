@@ -6160,10 +6160,12 @@ function _afSuggPrendreMarque(i){
   const idx=_afSuggMarq[i]; if(idx==null || !_marques) return;
   const a=_marques.a[idx];
   /* 🧹 ft-v1180 — RESET puis HYDRATATION : on oublie l'aliment PRÉCÉDENT avant de poser celui-ci (proposition marque). */
+  const qPose=_n2QteRepriseAvantFiche();   // D-101 ⑧/⑨ : relevée AVANT que l'aliment d'avant s'oublie
   try{ _afOublierAliment(); }catch(e){}
   _bcNutr=_ref100(a[1]+' · '+a[0], a[3], a[4], a[5], a[6], {origine:'marque'});
   const sid=('marque:'+a[0]+':'+a[1]).slice(0,32);
   _offRemplirFormulaire({serving_quantity:a[7]||0, nutriments:{}}, sid, 'marque', false, 'marque');
+  const dit=_n2ReposerQte(qPose);   // avant `attendu` : ce que l'écran montre, quantité comprise
   /* ⛔ LA PROVENANCE DIT CE QU'ELLE EST, y compris quand les kcal ont été DÉRIVÉES des macros
      (R32 : mesuré / estimé / propriétaire). On ne présente jamais un calcul comme une
      publication. */
@@ -6179,7 +6181,8 @@ function _afSuggPrendreMarque(i){
      le formulaire est le dernier écran avant l'enregistrement. */
   _afNoteEtat(a[9] ? ('⚠️ '+String(a[9])+'. Valeur publiée par '+a[0]+' : à toi de juger.') : _bcNutr.name);
   _afSuggVider();
-  toast(a[9] ? 'Valeur signalée — vérifie avant d\'ajouter ⚠️' : 'Ajuste la quantité ✅', a[9]?'info':'success');
+  if(dit){ const nm=document.getElementById('af-bc-name'); if(nm) nm.textContent+=dit; }
+  toast(a[9] ? 'Valeur signalée — vérifie avant d\'ajouter ⚠️' : (dit ? 'Ta quantité est gardée ✅' : 'Ajuste la quantité ✅'), a[9]?'info':'success');
 }
 function _afSuggPrendreCiqual(i){
   const a=_afSuggCiq[i]; if(!a) return;
