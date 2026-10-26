@@ -3,7 +3,7 @@ name: ft-corriger-bug
 description: Corriger un ticket de bug Force Tracker précis avec preuve avant/après et contrôles de non-régression, sans publication.
 argument-hint: "<ID-ticket et symptôme>"
 disable-model-invocation: true
-model: sonnet
+model: inherit
 effort: medium
 ---
 
@@ -16,4 +16,4 @@ Mission : **$ARGUMENTS**. Si l'ID ou le symptôme est insuffisant, poser une seu
 5. Préserver les décisions validées (dont D-101 : garder la quantité saisie, sans inventer les macros), et l'historique réel. Ne jamais modifier compte réel, journal passé, favoris réels, serveur `Code.js`, master, clone public, ni lancer déploiement, restauration, purge ou fusion sans GO distinct.
 6. Livrer une réponse courte : ticket, cause, commit/branche, preuve rouge→vert, autres contrôles, limites, état exact (« branche » ≠ « intégré » ≠ « publié » ≠ « vérifié iPhone »), prochaine action. Respecter la règle d'or 14 : PDF autonome daté, bref, hors dépôt, vérifié. Mettre à jour le registre et la passation si autorisé/possible, sinon fournir un bloc prêt à reporter. Aucune surveillance, aucun réveil programmé ; une notification finale seulement.
 
-N'invoquer ce Skill que sur demande explicite `/ft-corriger-bug` ; conserver Sonnet pour cette exécution.
+N'invoquer ce Skill que sur demande explicite `/ft-corriger-bug` ; le modèle est celui de la session (hérité).
